@@ -1,0 +1,1242 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>FilterDlg</class>
+ <widget class="QDialog" name="FilterDlg">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>733</width>
+    <height>292</height>
+   </rect>
+  </property>
+  <property name="sizePolicy">
+   <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+    <horstretch>0</horstretch>
+    <verstretch>0</verstretch>
+   </sizepolicy>
+  </property>
+  <property name="minimumSize">
+   <size>
+    <width>733</width>
+    <height>292</height>
+   </size>
+  </property>
+  <property name="windowTitle">
+   <string>Filters Setting</string>
+  </property>
+  <property name="modal">
+   <bool>false</bool>
+  </property>
+  <layout class="QGridLayout" name="gridLayout_2">
+   <item row="2" column="1">
+    <widget class="QDialogButtonBox" name="buttonBox">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+     <property name="standardButtons">
+      <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
+     </property>
+    </widget>
+   </item>
+   <item row="2" column="0">
+    <widget class="QCheckBox" name="immediatelyChecker">
+     <property name="text">
+      <string> immediately</string>
+     </property>
+     <property name="checked">
+      <bool>true</bool>
+     </property>
+    </widget>
+   </item>
+   <item row="0" column="0" colspan="2">
+    <widget class="QGroupBox" name="groupBox">
+     <property name="title">
+      <string>Filters</string>
+     </property>
+     <layout class="QGridLayout" name="gridLayout" columnstretch="0,0,0,0,1,1,1,0">
+      <item row="0" column="0">
+       <widget class="QCheckBox" name="currentVolumeChecker">
+        <property name="text">
+         <string> current volume :</string>
+        </property>
+        <property name="checked">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="4">
+       <widget class="QLabel" name="currentVolumeMinLabel">
+        <property name="minimumSize">
+         <size>
+          <width>48</width>
+          <height>16</height>
+         </size>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>70</width>
+          <height>16</height>
+         </size>
+        </property>
+        <property name="text">
+         <string>      min</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="5">
+       <widget class="QScrollBar" name="minCurrentVolume">
+        <property name="toolTip">
+         <string/>
+        </property>
+        <property name="whatsThis">
+         <string>minimum of volume</string>
+        </property>
+        <property name="maximum">
+         <number>100</number>
+        </property>
+        <property name="pageStep">
+         <number>1</number>
+        </property>
+        <property name="value">
+         <number>0</number>
+        </property>
+        <property name="sliderPosition">
+         <number>0</number>
+        </property>
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="6">
+       <widget class="QScrollBar" name="maxCurrentVolume">
+        <property name="maximum">
+         <number>100</number>
+        </property>
+        <property name="pageStep">
+         <number>1</number>
+        </property>
+        <property name="value">
+         <number>100</number>
+        </property>
+        <property name="sliderPosition">
+         <number>100</number>
+        </property>
+        <property name="tracking">
+         <bool>true</bool>
+        </property>
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="7">
+       <widget class="QLabel" name="currentVolumeMaxLabel">
+        <property name="minimumSize">
+         <size>
+          <width>51</width>
+          <height>16</height>
+         </size>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>70</width>
+          <height>16777215</height>
+         </size>
+        </property>
+        <property name="text">
+         <string>max      </string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="0">
+       <widget class="QCheckBox" name="volumeChecker">
+        <property name="text">
+         <string> mean volume :</string>
+        </property>
+        <property name="checked">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="4">
+       <widget class="QLabel" name="volumeMinLabel">
+        <property name="minimumSize">
+         <size>
+          <width>48</width>
+          <height>16</height>
+         </size>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>70</width>
+          <height>16</height>
+         </size>
+        </property>
+        <property name="text">
+         <string>      min</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="5">
+       <widget class="QScrollBar" name="minVolume">
+        <property name="toolTip">
+         <string/>
+        </property>
+        <property name="whatsThis">
+         <string>minimum of volume</string>
+        </property>
+        <property name="maximum">
+         <number>100</number>
+        </property>
+        <property name="pageStep">
+         <number>1</number>
+        </property>
+        <property name="value">
+         <number>0</number>
+        </property>
+        <property name="sliderPosition">
+         <number>0</number>
+        </property>
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="6">
+       <widget class="QScrollBar" name="maxVolume">
+        <property name="maximum">
+         <number>100</number>
+        </property>
+        <property name="pageStep">
+         <number>1</number>
+        </property>
+        <property name="value">
+         <number>100</number>
+        </property>
+        <property name="sliderPosition">
+         <number>100</number>
+        </property>
+        <property name="tracking">
+         <bool>true</bool>
+        </property>
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="7">
+       <widget class="QLabel" name="volumeMaxLabel">
+        <property name="minimumSize">
+         <size>
+          <width>51</width>
+          <height>16</height>
+         </size>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>70</width>
+          <height>16777215</height>
+         </size>
+        </property>
+        <property name="text">
+         <string>max      </string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="0">
+       <widget class="QCheckBox" name="lifeChecker">
+        <property name="text">
+         <string> life span :</string>
+        </property>
+        <property name="checked">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="4">
+       <widget class="QLabel" name="lifeSpanMinLabel">
+        <property name="maximumSize">
+         <size>
+          <width>70</width>
+          <height>16777215</height>
+         </size>
+        </property>
+        <property name="text">
+         <string>min</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="5">
+       <widget class="QScrollBar" name="minLife">
+        <property name="maximum">
+         <number>100</number>
+        </property>
+        <property name="pageStep">
+         <number>1</number>
+        </property>
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="6">
+       <widget class="QScrollBar" name="maxLife">
+        <property name="maximum">
+         <number>100</number>
+        </property>
+        <property name="pageStep">
+         <number>1</number>
+        </property>
+        <property name="value">
+         <number>100</number>
+        </property>
+        <property name="sliderPosition">
+         <number>100</number>
+        </property>
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="7">
+       <widget class="QLabel" name="lifeSpanMaxLabel">
+        <property name="maximumSize">
+         <size>
+          <width>70</width>
+          <height>16777215</height>
+         </size>
+        </property>
+        <property name="text">
+         <string>max</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="0">
+       <widget class="QCheckBox" name="speedChecker">
+        <property name="text">
+         <string> mean speed  :</string>
+        </property>
+        <property name="checked">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="4">
+       <widget class="QLabel" name="volumeMinLabel_2">
+        <property name="maximumSize">
+         <size>
+          <width>70</width>
+          <height>16</height>
+         </size>
+        </property>
+        <property name="text">
+         <string>min</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="5">
+       <widget class="QScrollBar" name="minSpeed">
+        <property name="toolTip">
+         <string/>
+        </property>
+        <property name="whatsThis">
+         <string>minimum of volume</string>
+        </property>
+        <property name="maximum">
+         <number>100</number>
+        </property>
+        <property name="pageStep">
+         <number>1</number>
+        </property>
+        <property name="value">
+         <number>0</number>
+        </property>
+        <property name="sliderPosition">
+         <number>0</number>
+        </property>
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="6">
+       <widget class="QScrollBar" name="maxSpeed">
+        <property name="maximum">
+         <number>100</number>
+        </property>
+        <property name="pageStep">
+         <number>1</number>
+        </property>
+        <property name="value">
+         <number>100</number>
+        </property>
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="7">
+       <widget class="QLabel" name="volumeMaxLabel_2">
+        <property name="maximumSize">
+         <size>
+          <width>70</width>
+          <height>16777215</height>
+         </size>
+        </property>
+        <property name="text">
+         <string>max</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+        </property>
+       </widget>
+      </item>
+      <item row="4" column="0">
+       <widget class="QCheckBox" name="deformChecker">
+        <property name="text">
+         <string> mean deform :</string>
+        </property>
+        <property name="checked">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+      <item row="4" column="4">
+       <widget class="QLabel" name="lifeSpanMinLabel_2">
+        <property name="maximumSize">
+         <size>
+          <width>70</width>
+          <height>16777215</height>
+         </size>
+        </property>
+        <property name="text">
+         <string>min</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+        </property>
+       </widget>
+      </item>
+      <item row="4" column="5">
+       <widget class="QScrollBar" name="minDeform">
+        <property name="maximum">
+         <number>100</number>
+        </property>
+        <property name="pageStep">
+         <number>1</number>
+        </property>
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+       </widget>
+      </item>
+      <item row="4" column="6">
+       <widget class="QScrollBar" name="maxDeform">
+        <property name="maximum">
+         <number>100</number>
+        </property>
+        <property name="pageStep">
+         <number>1</number>
+        </property>
+        <property name="value">
+         <number>100</number>
+        </property>
+        <property name="sliderPosition">
+         <number>100</number>
+        </property>
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+       </widget>
+      </item>
+      <item row="4" column="7">
+       <widget class="QLabel" name="lifeSpanMaxLabel_2">
+        <property name="maximumSize">
+         <size>
+          <width>70</width>
+          <height>16777215</height>
+         </size>
+        </property>
+        <property name="text">
+         <string>max</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="1">
+       <widget class="QLabel" name="volumeRange">
+        <property name="text">
+         <string>0 ~ 100</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignCenter</set>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="1">
+       <widget class="QLabel" name="lifeRange">
+        <property name="text">
+         <string>0 ~ 100</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignCenter</set>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="1">
+       <widget class="QLabel" name="speedRange">
+        <property name="text">
+         <string>0 ~ 100</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignCenter</set>
+        </property>
+       </widget>
+      </item>
+      <item row="4" column="1">
+       <widget class="QLabel" name="deformRange">
+        <property name="text">
+         <string>0 ~ 100</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignCenter</set>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="1">
+       <widget class="QLabel" name="currentVolumeRange">
+        <property name="text">
+         <string>0 ~ 100</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignCenter</set>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections>
+  <connection>
+   <sender>buttonBox</sender>
+   <signal>accepted()</signal>
+   <receiver>FilterDlg</receiver>
+   <slot>accept()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>486</x>
+     <y>287</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>157</x>
+     <y>274</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>buttonBox</sender>
+   <signal>rejected()</signal>
+   <receiver>FilterDlg</receiver>
+   <slot>reject()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>554</x>
+     <y>287</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>286</x>
+     <y>274</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>lifeChecker</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>minLife</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>140</x>
+     <y>139</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>461</x>
+     <y>136</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>lifeChecker</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>maxLife</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>140</x>
+     <y>139</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>642</x>
+     <y>136</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>speedChecker</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>minSpeed</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>156</x>
+     <y>178</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>461</x>
+     <y>175</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>speedChecker</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>maxSpeed</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>156</x>
+     <y>178</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>642</x>
+     <y>175</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>deformChecker</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>minDeform</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>156</x>
+     <y>217</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>461</x>
+     <y>214</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>deformChecker</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>maxDeform</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>156</x>
+     <y>217</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>642</x>
+     <y>214</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>minVolume</sender>
+   <signal>valueChanged(int)</signal>
+   <receiver>volumeMinLabel</receiver>
+   <slot>setNum(int)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>461</x>
+     <y>97</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>283</x>
+     <y>98</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>maxVolume</sender>
+   <signal>valueChanged(int)</signal>
+   <receiver>volumeMaxLabel</receiver>
+   <slot>setNum(int)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>642</x>
+     <y>97</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>705</x>
+     <y>98</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>minLife</sender>
+   <signal>valueChanged(int)</signal>
+   <receiver>lifeSpanMinLabel</receiver>
+   <slot>setNum(int)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>461</x>
+     <y>136</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>283</x>
+     <y>137</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>maxLife</sender>
+   <signal>valueChanged(int)</signal>
+   <receiver>lifeSpanMaxLabel</receiver>
+   <slot>setNum(int)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>642</x>
+     <y>136</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>705</x>
+     <y>137</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>minSpeed</sender>
+   <signal>valueChanged(int)</signal>
+   <receiver>volumeMinLabel_2</receiver>
+   <slot>setNum(int)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>461</x>
+     <y>175</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>283</x>
+     <y>176</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>maxSpeed</sender>
+   <signal>valueChanged(int)</signal>
+   <receiver>volumeMaxLabel_2</receiver>
+   <slot>setNum(int)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>642</x>
+     <y>175</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>705</x>
+     <y>176</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>minDeform</sender>
+   <signal>valueChanged(int)</signal>
+   <receiver>lifeSpanMinLabel_2</receiver>
+   <slot>setNum(int)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>461</x>
+     <y>214</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>283</x>
+     <y>215</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>maxDeform</sender>
+   <signal>valueChanged(int)</signal>
+   <receiver>lifeSpanMaxLabel_2</receiver>
+   <slot>setNum(int)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>642</x>
+     <y>214</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>705</x>
+     <y>215</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>volumeChecker</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>maxVolume</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>156</x>
+     <y>100</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>642</x>
+     <y>97</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>volumeChecker</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>minVolume</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>156</x>
+     <y>100</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>461</x>
+     <y>97</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>volumeChecker</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>volumeMinLabel</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>144</x>
+     <y>100</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>283</x>
+     <y>98</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>volumeChecker</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>volumeMaxLabel</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>117</x>
+     <y>100</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>705</x>
+     <y>98</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>lifeChecker</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>lifeSpanMinLabel</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>129</x>
+     <y>139</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>283</x>
+     <y>137</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>lifeChecker</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>lifeSpanMaxLabel</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>113</x>
+     <y>139</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>705</x>
+     <y>137</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>speedChecker</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>volumeMinLabel_2</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>156</x>
+     <y>178</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>283</x>
+     <y>176</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>speedChecker</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>volumeMaxLabel_2</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>156</x>
+     <y>178</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>705</x>
+     <y>176</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>deformChecker</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>lifeSpanMinLabel_2</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>156</x>
+     <y>217</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>283</x>
+     <y>215</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>deformChecker</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>lifeSpanMaxLabel_2</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>149</x>
+     <y>217</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>705</x>
+     <y>215</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>minCurrentVolume</sender>
+   <signal>valueChanged(int)</signal>
+   <receiver>currentVolumeMinLabel</receiver>
+   <slot>setNum(int)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>461</x>
+     <y>58</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>283</x>
+     <y>59</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>maxCurrentVolume</sender>
+   <signal>valueChanged(int)</signal>
+   <receiver>currentVolumeMaxLabel</receiver>
+   <slot>setNum(int)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>642</x>
+     <y>58</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>705</x>
+     <y>59</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>currentVolumeChecker</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>currentVolumeMinLabel</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>99</x>
+     <y>61</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>283</x>
+     <y>59</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>currentVolumeChecker</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>minCurrentVolume</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>151</x>
+     <y>61</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>461</x>
+     <y>58</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>currentVolumeChecker</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>maxCurrentVolume</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>87</x>
+     <y>61</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>642</x>
+     <y>58</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>currentVolumeChecker</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>currentVolumeMaxLabel</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>78</x>
+     <y>61</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>705</x>
+     <y>59</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>minCurrentVolume</sender>
+   <signal>valueChanged(int)</signal>
+   <receiver>FilterDlg</receiver>
+   <slot>onValueChanged()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>461</x>
+     <y>58</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>337</x>
+     <y>-14</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>minVolume</sender>
+   <signal>valueChanged(int)</signal>
+   <receiver>FilterDlg</receiver>
+   <slot>onValueChanged()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>461</x>
+     <y>97</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>348</x>
+     <y>-42</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>minLife</sender>
+   <signal>valueChanged(int)</signal>
+   <receiver>FilterDlg</receiver>
+   <slot>onValueChanged()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>461</x>
+     <y>136</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>385</x>
+     <y>-1</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>minSpeed</sender>
+   <signal>valueChanged(int)</signal>
+   <receiver>FilterDlg</receiver>
+   <slot>onValueChanged()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>461</x>
+     <y>175</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>517</x>
+     <y>-5</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>minDeform</sender>
+   <signal>valueChanged(int)</signal>
+   <receiver>FilterDlg</receiver>
+   <slot>onValueChanged()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>461</x>
+     <y>214</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>482</x>
+     <y>-11</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>maxCurrentVolume</sender>
+   <signal>valueChanged(int)</signal>
+   <receiver>FilterDlg</receiver>
+   <slot>onValueChanged()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>642</x>
+     <y>58</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>645</x>
+     <y>-4</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>maxVolume</sender>
+   <signal>valueChanged(int)</signal>
+   <receiver>FilterDlg</receiver>
+   <slot>onValueChanged()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>642</x>
+     <y>97</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>682</x>
+     <y>-14</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>maxLife</sender>
+   <signal>valueChanged(int)</signal>
+   <receiver>FilterDlg</receiver>
+   <slot>onValueChanged()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>642</x>
+     <y>136</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>778</x>
+     <y>-1</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>maxSpeed</sender>
+   <signal>valueChanged(int)</signal>
+   <receiver>FilterDlg</receiver>
+   <slot>onValueChanged()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>642</x>
+     <y>175</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>902</x>
+     <y>13</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>maxDeform</sender>
+   <signal>valueChanged(int)</signal>
+   <receiver>FilterDlg</receiver>
+   <slot>onValueChanged()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>642</x>
+     <y>214</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>898</x>
+     <y>8</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>immediatelyChecker</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>FilterDlg</receiver>
+   <slot>setImmediate(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>50</x>
+     <y>272</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>-5</x>
+     <y>263</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
+ <slots>
+  <signal>valueChanged()</signal>
+  <slot>setImmediate(bool)</slot>
+  <slot>onValueChanged()</slot>
+ </slots>
+</ui>

@@ -1,0 +1,2 @@
+/usr/bin/ar cr ../../bin/libV3DITKRegistration.a  CMakeFiles/V3DITKRegistration.dir/RegistrationDlg.o CMakeFiles/V3DITKRegistration.dir/moc_RegistrationDlg.o
+/usr/bin/ranlib ../../bin/libV3DITKRegistration.a

@@ -1,0 +1,5 @@
+
+SET(PLUGIN_GROUP_NAME "MathMorphology")
+
+CONFIGURE_V3D_PLUGIN(Erode)
+

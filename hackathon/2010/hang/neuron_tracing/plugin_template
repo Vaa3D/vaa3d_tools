@@ -1,0 +1,16 @@
+TITLE="V3dneuron_tracing Plugin"
+PLUGIN_NAME="v3dneuron_tracing"
+PLUGIN_CLASS="V3dneuron_tracingPlugin"
+PLUGIN_DESCRIPTION="This plugin will call v3dneuron_tracing command in dofunc"
+PLUGIN_DATE="2011-07-07"
+PLUGIN_AUTHOR="xiaoh10"
+#PLUGIN_GUI="v3dneuron_tracing_gui.h"
+V3D_MAIN_PATH="../../work/v3d_external/v3d_main"
+
+MENUS=("invoke v3dneuron_tracing")
+FUNCS=("v3dneuron_tracing")
+
+DOFUNC="yes"
+
+#MAINFUNCS=("")
+SYSINVOKES=("v3dneuron_tracing")

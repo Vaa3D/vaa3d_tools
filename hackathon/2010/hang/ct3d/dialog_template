@@ -1,0 +1,87 @@
+CLASS TestDialog1
+
+D QLabel label_subject "Subject Image :"
+D QComboBox combo_subject 
+
+D QLabel label_target "Target Image :"
+D QComboBox combo_target 
+
+D QLabel label_sub_channel "Subject Channel :"
+D QLabel label_tar_channel "Target Channel :"
+
+D QSpinBox channel_sub
+D QSpinBox channel_tar
+
+D QPushButton ok "ok"
+D QPushButton cancel "cancel"
+
+D QGridLayout gridLayout
+
+L 0 0 label_subject
+L 0 1 combo_subject 1 5
+L 1 0 label_sub_channel
+L 1 1 channel_sub 1 1
+L 2 0 label_target
+L 2 1 combo_target 1 5
+L 3 0 label_tar_channel
+L 3 1 channel_tar
+L 5 4 cancel Qt::AlignRight
+L 5 5 ok     Qt::AlignRight
+
+C ok clicked() this accept()
+C cancel clicked() this reject()
+
+C combo_subject currentIndexChanged(int) this update()
+C combo_target currentIndexChanged(int) this update()
+
+C channel_sub valueChanged(int) this update()
+C channel_tar valueChanged(int) this update()
+
+U int i1 | combo_subject->currentIndex()
+U int i2 | combo_target->currentIndex()
+U int c1 | channel_sub->text().toInt()
+U int c2 | channel_tar->text().toInt()
+=================================================
+CLASS TestDialog2
+
+D QLabel label_subject "Subject Image :"
+D QComboBox combo_subject 
+
+D QLabel label_target "Target Image :"
+D QComboBox combo_target 
+
+D QLabel label_sub_channel "Subject Channel :"
+D QLabel label_tar_channel "Target Channel :"
+
+D QSpinBox channel_sub
+D QSpinBox channel_tar
+
+D QPushButton ok "ok"
+D QPushButton cancel "cancel"
+
+D QGridLayout gridLayout
+
+L 0 0 label_subject
+L 0 1 combo_subject 1 5
+L 1 0 label_sub_channel
+L 1 1 channel_sub 1 1
+L 2 0 label_target
+L 2 1 combo_target 1 5
+L 3 0 label_tar_channel
+L 3 1 channel_tar
+L 5 4 cancel Qt::AlignRight
+L 5 5 ok     Qt::AlignRight
+
+C ok clicked() this accept()
+C cancel clicked() this reject()
+
+C combo_subject currentIndexChanged(int) this update()
+C combo_target currentIndexChanged(int) this update()
+
+C channel_sub valueChanged(int) this update()
+C channel_tar valueChanged(int) this update()
+
+U int i1 | combo_subject->currentIndex()
+U int i2 | combo_target->currentIndex()
+U int c1 | channel_sub->text().toInt()
+U int c2 | channel_tar->text().toInt()

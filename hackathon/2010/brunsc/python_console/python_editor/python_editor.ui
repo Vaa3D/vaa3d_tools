@@ -1,0 +1,301 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>python_editor</class>
+ <widget class="QMainWindow" name="python_editor">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>800</width>
+    <height>600</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>MainWindow</string>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <layout class="QGridLayout" name="gridLayout">
+    <property name="margin">
+     <number>0</number>
+    </property>
+    <item row="0" column="0">
+     <widget class="QTabWidget" name="tabWidget">
+      <property name="tabShape">
+       <enum>QTabWidget::Rounded</enum>
+      </property>
+      <property name="currentIndex">
+       <number>0</number>
+      </property>
+      <widget class="QWidget" name="tab">
+       <attribute name="title">
+        <string>Untitled 1</string>
+       </attribute>
+       <layout class="QGridLayout" name="gridLayout_2">
+        <property name="margin">
+         <number>0</number>
+        </property>
+        <item row="0" column="0">
+         <widget class="QTextEdit" name="textEdit">
+          <property name="font">
+           <font>
+            <family>Consolas</family>
+            <pointsize>16</pointsize>
+            <kerning>false</kerning>
+           </font>
+          </property>
+          <property name="cursor" stdset="0">
+           <cursorShape>IBeamCursor</cursorShape>
+          </property>
+          <property name="frameShape">
+           <enum>QFrame::NoFrame</enum>
+          </property>
+          <property name="frameShadow">
+           <enum>QFrame::Plain</enum>
+          </property>
+          <property name="lineWidth">
+           <number>0</number>
+          </property>
+          <property name="lineWrapMode">
+           <enum>QTextEdit::NoWrap</enum>
+          </property>
+          <property name="acceptRichText">
+           <bool>false</bool>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="tab_2">
+       <attribute name="title">
+        <string>Tab 2</string>
+       </attribute>
+      </widget>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QMenuBar" name="menubar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>800</width>
+     <height>22</height>
+    </rect>
+   </property>
+   <widget class="QMenu" name="menuFile">
+    <property name="title">
+     <string>File</string>
+    </property>
+    <addaction name="actionNew"/>
+    <addaction name="actionNew_From_Template"/>
+    <addaction name="separator"/>
+    <addaction name="actionOpen"/>
+    <addaction name="actionOpen_Recent"/>
+    <addaction name="separator"/>
+    <addaction name="actionSave"/>
+    <addaction name="actionSave_as"/>
+    <addaction name="actionSave_All"/>
+    <addaction name="separator"/>
+    <addaction name="actionPrint"/>
+    <addaction name="separator"/>
+    <addaction name="actionClose"/>
+    <addaction name="actionExit"/>
+   </widget>
+   <widget class="QMenu" name="menuEdit">
+    <property name="title">
+     <string>Edit</string>
+    </property>
+    <addaction name="actionUndo"/>
+    <addaction name="actionRedo"/>
+    <addaction name="separator"/>
+    <addaction name="actionSelect_All"/>
+    <addaction name="actionCut"/>
+    <addaction name="actionCopy"/>
+    <addaction name="actionPaste"/>
+    <addaction name="separator"/>
+    <addaction name="actionFind"/>
+    <addaction name="actionFind_Again"/>
+    <addaction name="actionFind_Next"/>
+    <addaction name="actionFind_Previous"/>
+    <addaction name="actionFind_and_Replace"/>
+    <addaction name="actionGo_to_Line"/>
+   </widget>
+   <widget class="QMenu" name="menuTemplates">
+    <property name="title">
+     <string>Source</string>
+    </property>
+    <addaction name="actionToggle_Comment"/>
+    <addaction name="separator"/>
+    <addaction name="actionShift_Right"/>
+    <addaction name="actionShift_Left"/>
+   </widget>
+   <widget class="QMenu" name="menuRun">
+    <property name="title">
+     <string>Run</string>
+    </property>
+    <addaction name="actionRun"/>
+   </widget>
+   <widget class="QMenu" name="menuHelp">
+    <property name="title">
+     <string>Help</string>
+    </property>
+    <addaction name="actionAbout_Python_Editor"/>
+    <addaction name="actionPython_Docs"/>
+   </widget>
+   <addaction name="menuFile"/>
+   <addaction name="menuEdit"/>
+   <addaction name="menuTemplates"/>
+   <addaction name="menuRun"/>
+   <addaction name="menuHelp"/>
+  </widget>
+  <widget class="QStatusBar" name="statusbar"/>
+  <action name="actionNew">
+   <property name="text">
+    <string>New</string>
+   </property>
+  </action>
+  <action name="actionOpen">
+   <property name="text">
+    <string>Open...</string>
+   </property>
+  </action>
+  <action name="actionOpen_Recent">
+   <property name="text">
+    <string>Open Recent</string>
+   </property>
+  </action>
+  <action name="actionSave">
+   <property name="text">
+    <string>Save</string>
+   </property>
+  </action>
+  <action name="actionSave_as">
+   <property name="text">
+    <string>Save As...</string>
+   </property>
+  </action>
+  <action name="actionClose">
+   <property name="text">
+    <string>Close</string>
+   </property>
+  </action>
+  <action name="actionUndo">
+   <property name="text">
+    <string>Undo</string>
+   </property>
+  </action>
+  <action name="actionRedo">
+   <property name="text">
+    <string>Redo</string>
+   </property>
+  </action>
+  <action name="actionSelect_All">
+   <property name="text">
+    <string>Select All</string>
+   </property>
+  </action>
+  <action name="actionCut">
+   <property name="text">
+    <string>Cut</string>
+   </property>
+  </action>
+  <action name="actionCopy">
+   <property name="text">
+    <string>Copy</string>
+   </property>
+  </action>
+  <action name="actionPaste">
+   <property name="text">
+    <string>Paste</string>
+   </property>
+  </action>
+  <action name="actionFind">
+   <property name="text">
+    <string>Find...</string>
+   </property>
+  </action>
+  <action name="actionFind_Next">
+   <property name="text">
+    <string>Find Next</string>
+   </property>
+  </action>
+  <action name="actionFind_Previous">
+   <property name="text">
+    <string>Find Previous</string>
+   </property>
+  </action>
+  <action name="actionFind_and_Replace">
+   <property name="text">
+    <string>Replace...</string>
+   </property>
+  </action>
+  <action name="actionGo_to_Line">
+   <property name="text">
+    <string>Go to Line...</string>
+   </property>
+  </action>
+  <action name="actionRun">
+   <property name="text">
+    <string>Run</string>
+   </property>
+  </action>
+  <action name="actionExit">
+   <property name="text">
+    <string>Exit</string>
+   </property>
+  </action>
+  <action name="actionPrint">
+   <property name="text">
+    <string>Print</string>
+   </property>
+  </action>
+  <action name="actionFind_Again">
+   <property name="text">
+    <string>Find Again</string>
+   </property>
+  </action>
+  <action name="actionSave_All">
+   <property name="text">
+    <string>Save All</string>
+   </property>
+  </action>
+  <action name="actionAbout_Python_Editor">
+   <property name="text">
+    <string>About Python Editor...</string>
+   </property>
+  </action>
+  <action name="actionPython_Docs">
+   <property name="text">
+    <string>Python Docs...</string>
+   </property>
+  </action>
+  <action name="actionTemplates">
+   <property name="text">
+    <string>Templates</string>
+   </property>
+  </action>
+  <action name="actionToggle_Comment">
+   <property name="text">
+    <string>Toggle Comment</string>
+   </property>
+  </action>
+  <action name="actionShift_Right">
+   <property name="text">
+    <string>Shift Right</string>
+   </property>
+  </action>
+  <action name="actionShift_Left">
+   <property name="text">
+    <string>Shift Left</string>
+   </property>
+  </action>
+  <action name="actionNew_From_Template">
+   <property name="text">
+    <string>New From Template</string>
+   </property>
+  </action>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

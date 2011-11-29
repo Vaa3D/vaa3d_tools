@@ -1,0 +1,2502 @@
+<?xml version="1.0" encoding="ascii"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+          "DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+  <title>v3d.Image4DSimple</title>
+  <link rel="stylesheet" href="epydoc.css" type="text/css" />
+  <script type="text/javascript" src="epydoc.js"></script>
+</head>
+
+<body bgcolor="white" text="black" link="blue" vlink="#204080"
+      alink="#204080">
+<!-- ==================== NAVIGATION BAR ==================== -->
+<table class="navbar" border="0" width="100%" cellpadding="0"
+       bgcolor="#a0c0ff" cellspacing="0">
+  <tr valign="middle">
+  <!-- Home link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="v3d-module.html">Home</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Tree link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="module-tree.html">Trees</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Index link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="identifier-index.html">Indices</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Help link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="help.html">Help</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Project homepage -->
+      <th class="navbar" align="right" width="100%">
+        <table border="0" cellpadding="0" cellspacing="0">
+          <tr><th class="navbar" align="center"
+            ><a class="navbar" target="_top" href="http://penglab.janelia.org/proj/v3d/V3D/About_V3D.html">V3D python</a></th>
+          </tr></table></th>
+  </tr>
+</table>
+<table width="100%" cellpadding="0" cellspacing="0">
+  <tr valign="top">
+    <td width="100%">
+      <span class="breadcrumbs">
+        <a href="v3d-module.html">Module&nbsp;v3d</a> ::
+        Class&nbsp;Image4DSimple
+      </span>
+    </td>
+    <td>
+      <table cellpadding="0" cellspacing="0">
+        <!-- hide/show private -->
+        <tr><td align="right"><span class="options">[<a href="javascript:void(0);" class="privatelink"
+    onclick="toggle_private();">hide&nbsp;private</a>]</span></td></tr>
+        <tr><td align="right"><span class="options"
+            >[<a href="frames.html" target="_top">frames</a
+            >]&nbsp;|&nbsp;<a href="v3d.Image4DSimple-class.html"
+            target="_top">no&nbsp;frames</a>]</span></td></tr>
+      </table>
+    </td>
+  </tr>
+</table>
+<!-- ==================== CLASS DESCRIPTION ==================== -->
+<h1 class="epydoc">Class Image4DSimple</h1><p class="nomargin-top"></p>
+<center>
+<center>  <map id="uml_class_diagram_for_v3d_imag" name="uml_class_diagram_for_v3d_imag">
+<area shape="rect" id="node7" href="javascript:void(0);" title="??.instance.__new__" alt="" coords="79,39,196,57"/>
+<area shape="rect" id="node1" href="javascript:void(0);" title="??.instance" alt="" coords="67,6,208,63"/>
+<area shape="rect" id="node6" href="v3d.Image4DSimple-class.html#__instance_size__" title="v3d.Image4DSimple.__instance_size__" alt="" coords="17,108,257,127"/>
+<area shape="rect" id="node6" href="v3d.Image4DSimple-class.html#__init__" title="__init__( (object)arg1) &#45;&gt; None :" alt="" coords="17,129,257,148"/>
+<area shape="rect" id="node6" href="v3d.Image4DSimple-class.html#__reduce__" title="helper for pickle" alt="" coords="17,148,257,167"/>
+<area shape="rect" id="node6" href="v3d.Image4DSimple-class.html#cleanExistData" title="cleanExistData( (Image4DSimple)arg1) &#45;&gt; None :" alt="" coords="17,167,257,185"/>
+<area shape="rect" id="node6" href="v3d.Image4DSimple-class.html#deleteRawDataAndSetPointerToNull" title="deleteRawDataAndSetPointerToNull( (Image4DSimple)arg1) &#45;&gt; None :" alt="" coords="17,185,257,204"/>
+<area shape="rect" id="node6" href="v3d.Image4DSimple-class.html#getCDim" title="getCDim( (Image4DSimple)arg1) &#45;&gt; int :" alt="" coords="17,204,257,223"/>
+<area shape="rect" id="node6" href="v3d.Image4DSimple-class.html#getCustomStructPointer" title="getCustomStructPointer( (Image4DSimple)arg1) &#45;&gt; void* :" alt="" coords="17,223,257,241"/>
+<area shape="rect" id="node6" href="v3d.Image4DSimple-class.html#getDatatype" title="getDatatype( (Image4DSimple)arg1) &#45;&gt; ImagePixelType :" alt="" coords="17,241,257,260"/>
+<area shape="rect" id="node6" href="v3d.Image4DSimple-class.html#getError" title="getError( (Image4DSimple)arg1) &#45;&gt; int :" alt="" coords="17,260,257,279"/>
+<area shape="rect" id="node6" href="v3d.Image4DSimple-class.html#getFileName" title="getFileName( (Image4DSimple)arg1) &#45;&gt; str :" alt="" coords="17,279,257,297"/>
+<area shape="rect" id="node6" href="v3d.Image4DSimple-class.html#getOriginX" title="getOriginX( (Image4DSimple)arg1) &#45;&gt; float :" alt="" coords="17,297,257,316"/>
+<area shape="rect" id="node6" href="v3d.Image4DSimple-class.html#getOriginY" title="getOriginY( (Image4DSimple)arg1) &#45;&gt; float :" alt="" coords="17,316,257,335"/>
+<area shape="rect" id="node6" href="v3d.Image4DSimple-class.html#getOriginZ" title="getOriginZ( (Image4DSimple)arg1) &#45;&gt; float :" alt="" coords="17,335,257,353"/>
+<area shape="rect" id="node6" href="v3d.Image4DSimple-class.html#getPreValidZSliceNum" title="getPreValidZSliceNum( (Image4DSimple)arg1) &#45;&gt; int :" alt="" coords="17,353,257,372"/>
+<area shape="rect" id="node6" href="v3d.Image4DSimple-class.html#valid" title="valid( (Image4DSimple)arg1) &#45;&gt; bool :" alt="" coords="17,391,257,409"/>
+<area shape="rect" id="node2" href="v3d.Image4DSimple-class.html" title="Volume image with dimensions X, Y, Z, and time." alt="" coords="5,83,269,415"/>
+</map>
+  <img src="uml_class_diagram_for_v3d_imag.png" alt='' usemap="#uml_class_diagram_for_v3d_imag" ismap="ismap" class="graph-without-title" />
+</center>
+</center>
+<hr />
+<p>Volume image with dimensions X, Y, Z, and time.</p>
+
+<!-- ==================== INSTANCE METHODS ==================== -->
+<a name="section-InstanceMethods"></a>
+<table class="summary" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr bgcolor="#70b0f0" class="table-header">
+  <td colspan="2" class="table-header">
+    <table border="0" cellpadding="0" cellspacing="0" width="100%">
+      <tr valign="top">
+        <td align="left"><span class="table-header">Instance Methods</span></td>
+        <td align="right" valign="top"
+         ><span class="options">[<a href="#section-InstanceMethods"
+         class="privatelink" onclick="toggle_private();"
+         >hide private</a>]</span></td>
+      </tr>
+    </table>
+  </td>
+</tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.Image4DSimple-class.html#__init__" class="summary-sig-name">__init__</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      __init__( (object)arg1) -&gt; None :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.Image4DSimple-class.html#__reduce__" class="summary-sig-name">__reduce__</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      helper for pickle</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.Image4DSimple-class.html#cleanExistData" class="summary-sig-name">cleanExistData</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      cleanExistData( (Image4DSimple)arg1) -&gt; None :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.Image4DSimple-class.html#deleteRawDataAndSetPointerToNull" class="summary-sig-name">deleteRawDataAndSetPointerToNull</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      deleteRawDataAndSetPointerToNull( (Image4DSimple)arg1) -&gt; None :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.Image4DSimple-class.html#getCDim" class="summary-sig-name">getCDim</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      getCDim( (Image4DSimple)arg1) -&gt; int :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.Image4DSimple-class.html#getCustomStructPointer" class="summary-sig-name">getCustomStructPointer</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      getCustomStructPointer( (Image4DSimple)arg1) -&gt; void* :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.Image4DSimple-class.html#getDatatype" class="summary-sig-name">getDatatype</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      getDatatype( (Image4DSimple)arg1) -&gt; ImagePixelType :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.Image4DSimple-class.html#getError" class="summary-sig-name">getError</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      getError( (Image4DSimple)arg1) -&gt; int :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.Image4DSimple-class.html#getFileName" class="summary-sig-name">getFileName</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      getFileName( (Image4DSimple)arg1) -&gt; str :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.Image4DSimple-class.html#getOriginX" class="summary-sig-name">getOriginX</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      getOriginX( (Image4DSimple)arg1) -&gt; float :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.Image4DSimple-class.html#getOriginY" class="summary-sig-name">getOriginY</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      getOriginY( (Image4DSimple)arg1) -&gt; float :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.Image4DSimple-class.html#getOriginZ" class="summary-sig-name">getOriginZ</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      getOriginZ( (Image4DSimple)arg1) -&gt; float :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.Image4DSimple-class.html#getPreValidZSliceNum" class="summary-sig-name">getPreValidZSliceNum</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      getPreValidZSliceNum( (Image4DSimple)arg1) -&gt; int :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.Image4DSimple-class.html#getRezX" class="summary-sig-name">getRezX</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      getRezX( (Image4DSimple)arg1) -&gt; float :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.Image4DSimple-class.html#getRezY" class="summary-sig-name">getRezY</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      getRezY( (Image4DSimple)arg1) -&gt; float :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.Image4DSimple-class.html#getRezZ" class="summary-sig-name">getRezZ</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      getRezZ( (Image4DSimple)arg1) -&gt; float :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.Image4DSimple-class.html#getTDim" class="summary-sig-name">getTDim</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      getTDim( (Image4DSimple)arg1) -&gt; int :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.Image4DSimple-class.html#getTimePackType" class="summary-sig-name">getTimePackType</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      getTimePackType( (Image4DSimple)arg1) -&gt; TimePackType :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.Image4DSimple-class.html#getTotalBytes" class="summary-sig-name">getTotalBytes</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      getTotalBytes( (Image4DSimple)arg1) -&gt; int :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.Image4DSimple-class.html#getTotalUnitNumber" class="summary-sig-name">getTotalUnitNumber</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      getTotalUnitNumber( (Image4DSimple)arg1) -&gt; int :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.Image4DSimple-class.html#getTotalUnitNumberPerChannel" class="summary-sig-name">getTotalUnitNumberPerChannel</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      getTotalUnitNumberPerChannel( (Image4DSimple)arg1) -&gt; int :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.Image4DSimple-class.html#getTotalUnitNumberPerPlane" class="summary-sig-name">getTotalUnitNumberPerPlane</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      getTotalUnitNumberPerPlane( (Image4DSimple)arg1) -&gt; int :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.Image4DSimple-class.html#getUnitBytes" class="summary-sig-name">getUnitBytes</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      getUnitBytes( (Image4DSimple)arg1) -&gt; int :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.Image4DSimple-class.html#getValidZSliceNum" class="summary-sig-name">getValidZSliceNum</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      getValidZSliceNum( (Image4DSimple)arg1) -&gt; int :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.Image4DSimple-class.html#getXDim" class="summary-sig-name">getXDim</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      getXDim( (Image4DSimple)arg1) -&gt; int :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.Image4DSimple-class.html#getYDim" class="summary-sig-name">getYDim</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      getYDim( (Image4DSimple)arg1) -&gt; int :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.Image4DSimple-class.html#getZDim" class="summary-sig-name">getZDim</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      getZDim( (Image4DSimple)arg1) -&gt; int :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.Image4DSimple-class.html#isSameDataBuffer" class="summary-sig-name">isSameDataBuffer</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      isSameDataBuffer( (Image4DSimple)arg1, (Image4DSimple)p) -&gt; bool :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.Image4DSimple-class.html#isSuccess" class="summary-sig-name">isSuccess</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      isSuccess( (Image4DSimple)arg1) -&gt; int :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.Image4DSimple-class.html#isValidCustomStructPointer" class="summary-sig-name">isValidCustomStructPointer</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      isValidCustomStructPointer( (Image4DSimple)arg1) -&gt; bool :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.Image4DSimple-class.html#setCDim" class="summary-sig-name">setCDim</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      setCDim( (Image4DSimple)arg1, (int)v) -&gt; None :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.Image4DSimple-class.html#setCustomStructPointer" class="summary-sig-name">setCustomStructPointer</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      setCustomStructPointer( (Image4DSimple)arg1, (void*)a) -&gt; None :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.Image4DSimple-class.html#setData" class="summary-sig-name">setData</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      setData( (Image4DSimple)arg1, (int)p, (Image4DSimple)image) -&gt; bool :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.Image4DSimple-class.html#setDatatype" class="summary-sig-name">setDatatype</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      setDatatype( (Image4DSimple)arg1, (ImagePixelType)v) -&gt; None :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.Image4DSimple-class.html#setFileName" class="summary-sig-name">setFileName</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      setFileName( (Image4DSimple)arg1, (str)myfile) -&gt; bool :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.Image4DSimple-class.html#setNewRawDataPointer" class="summary-sig-name">setNewRawDataPointer</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      setNewRawDataPointer( (Image4DSimple)arg1, (int)p) -&gt; bool :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.Image4DSimple-class.html#setOriginX" class="summary-sig-name">setOriginX</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      setOriginX( (Image4DSimple)arg1, (float)a) -&gt; None :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.Image4DSimple-class.html#setOriginY" class="summary-sig-name">setOriginY</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      setOriginY( (Image4DSimple)arg1, (float)a) -&gt; None :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.Image4DSimple-class.html#setOriginZ" class="summary-sig-name">setOriginZ</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      setOriginZ( (Image4DSimple)arg1, (float)a) -&gt; None :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.Image4DSimple-class.html#setPreValidZSliceNum" class="summary-sig-name">setPreValidZSliceNum</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      setPreValidZSliceNum( (Image4DSimple)arg1, (int)v) -&gt; bool :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.Image4DSimple-class.html#setRawDataPointer" class="summary-sig-name">setRawDataPointer</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      setRawDataPointer( (Image4DSimple)arg1, (int)p) -&gt; None :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.Image4DSimple-class.html#setRawDataPointerToNull" class="summary-sig-name">setRawDataPointerToNull</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      setRawDataPointerToNull( (Image4DSimple)arg1) -&gt; None :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.Image4DSimple-class.html#setRezX" class="summary-sig-name">setRezX</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      setRezX( (Image4DSimple)arg1, (float)a) -&gt; bool :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.Image4DSimple-class.html#setRezY" class="summary-sig-name">setRezY</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      setRezY( (Image4DSimple)arg1, (float)a) -&gt; bool :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.Image4DSimple-class.html#setRezZ" class="summary-sig-name">setRezZ</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      setRezZ( (Image4DSimple)arg1, (float)a) -&gt; bool :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.Image4DSimple-class.html#setTDim" class="summary-sig-name">setTDim</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      setTDim( (Image4DSimple)arg1, (int)v) -&gt; None :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.Image4DSimple-class.html#setTimePackType" class="summary-sig-name">setTimePackType</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      setTimePackType( (Image4DSimple)arg1, (TimePackType)v) -&gt; None :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.Image4DSimple-class.html#setValidZSliceNum" class="summary-sig-name">setValidZSliceNum</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      setValidZSliceNum( (Image4DSimple)arg1, (int)v) -&gt; bool :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.Image4DSimple-class.html#setXDim" class="summary-sig-name">setXDim</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      setXDim( (Image4DSimple)arg1, (int)v) -&gt; None :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.Image4DSimple-class.html#setYDim" class="summary-sig-name">setYDim</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      setYDim( (Image4DSimple)arg1, (int)v) -&gt; None :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.Image4DSimple-class.html#setZDim" class="summary-sig-name">setZDim</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      setZDim( (Image4DSimple)arg1, (int)v) -&gt; None :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.Image4DSimple-class.html#valid" class="summary-sig-name">valid</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      valid( (Image4DSimple)arg1) -&gt; bool :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+  <tr>
+    <td colspan="2" class="summary">
+    <p class="indent-wrapped-lines"><b>Inherited from <code><i>unreachable</i>.instance</code></b>:
+      <code>__new__</code>
+      </p>
+    <p class="indent-wrapped-lines"><b>Inherited from <code>object</code></b>:
+      <code>__delattr__</code>,
+      <code>__format__</code>,
+      <code>__getattribute__</code>,
+      <code>__hash__</code>,
+      <code>__reduce_ex__</code>,
+      <code>__repr__</code>,
+      <code>__setattr__</code>,
+      <code>__sizeof__</code>,
+      <code>__str__</code>,
+      <code>__subclasshook__</code>
+      </p>
+    </td>
+  </tr>
+</table>
+<!-- ==================== CLASS VARIABLES ==================== -->
+<a name="section-ClassVariables"></a>
+<table class="summary" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr bgcolor="#70b0f0" class="table-header">
+  <td colspan="2" class="table-header">
+    <table border="0" cellpadding="0" cellspacing="0" width="100%">
+      <tr valign="top">
+        <td align="left"><span class="table-header">Class Variables</span></td>
+        <td align="right" valign="top"
+         ><span class="options">[<a href="#section-ClassVariables"
+         class="privatelink" onclick="toggle_private();"
+         >hide private</a>]</span></td>
+      </tr>
+    </table>
+  </td>
+</tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+        <a name="__instance_size__"></a><span class="summary-name">__instance_size__</span> = <code title="1136">1136</code>
+    </td>
+  </tr>
+</table>
+<!-- ==================== PROPERTIES ==================== -->
+<a name="section-Properties"></a>
+<table class="summary" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr bgcolor="#70b0f0" class="table-header">
+  <td colspan="2" class="table-header">
+    <table border="0" cellpadding="0" cellspacing="0" width="100%">
+      <tr valign="top">
+        <td align="left"><span class="table-header">Properties</span></td>
+        <td align="right" valign="top"
+         ><span class="options">[<a href="#section-Properties"
+         class="privatelink" onclick="toggle_private();"
+         >hide private</a>]</span></td>
+      </tr>
+    </table>
+  </td>
+</tr>
+  <tr>
+    <td colspan="2" class="summary">
+    <p class="indent-wrapped-lines"><b>Inherited from <code>object</code></b>:
+      <code>__class__</code>
+      </p>
+    </td>
+  </tr>
+</table>
+<!-- ==================== METHOD DETAILS ==================== -->
+<a name="section-MethodDetails"></a>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr bgcolor="#70b0f0" class="table-header">
+  <td colspan="2" class="table-header">
+    <table border="0" cellpadding="0" cellspacing="0" width="100%">
+      <tr valign="top">
+        <td align="left"><span class="table-header">Method Details</span></td>
+        <td align="right" valign="top"
+         ><span class="options">[<a href="#section-MethodDetails"
+         class="privatelink" onclick="toggle_private();"
+         >hide private</a>]</span></td>
+      </tr>
+    </table>
+  </td>
+</tr>
+</table>
+<a name="__init__"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">__init__</span>(<span class="sig-arg">...</span>)</span>
+    <br /><em class="fname">(Constructor)</em>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+__init__( (object)arg1) -&gt; None :
+    
+     Volume image with dimensions X, Y, Z, and time.
+    
+
+    C++ signature :
+        void __init__(_object*)
+
+</pre>
+  <dl class="fields">
+    <dt>Overrides:
+        object.__init__
+    </dt>
+  </dl>
+</td></tr></table>
+</div>
+<a name="__reduce__"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">__reduce__</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <p>helper for pickle</p>
+  <dl class="fields">
+    <dt>Overrides:
+        object.__reduce__
+        <dd><em class="note">(inherited documentation)</em></dd>
+    </dt>
+  </dl>
+</td></tr></table>
+</div>
+<a name="cleanExistData"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">cleanExistData</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+cleanExistData( (Image4DSimple)arg1) -&gt; None :
+
+    C++ signature :
+        void cleanExistData(Image4DSimple {lvalue})
+
+cleanExistData( (Image4DSimple)arg1) -&gt; None :
+
+    C++ signature :
+        void cleanExistData(Image4DSimple_wrapper {lvalue})
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="deleteRawDataAndSetPointerToNull"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">deleteRawDataAndSetPointerToNull</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+deleteRawDataAndSetPointerToNull( (Image4DSimple)arg1) -&gt; None :
+
+    C++ signature :
+        void deleteRawDataAndSetPointerToNull(Image4DSimple {lvalue})
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="getCDim"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">getCDim</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+getCDim( (Image4DSimple)arg1) -&gt; int :
+
+    C++ signature :
+        long getCDim(Image4DSimple {lvalue})
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="getCustomStructPointer"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">getCustomStructPointer</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+getCustomStructPointer( (Image4DSimple)arg1) -&gt; void* :
+
+    C++ signature :
+        void* getCustomStructPointer(Image4DSimple {lvalue})
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="getDatatype"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">getDatatype</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+getDatatype( (Image4DSimple)arg1) -&gt; ImagePixelType :
+
+    C++ signature :
+        ImagePixelType getDatatype(Image4DSimple {lvalue})
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="getError"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">getError</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+getError( (Image4DSimple)arg1) -&gt; int :
+
+    C++ signature :
+        int getError(Image4DSimple {lvalue})
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="getFileName"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">getFileName</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+getFileName( (Image4DSimple)arg1) -&gt; str :
+
+    C++ signature :
+        char const* getFileName(Image4DSimple {lvalue})
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="getOriginX"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">getOriginX</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+getOriginX( (Image4DSimple)arg1) -&gt; float :
+
+    C++ signature :
+        double getOriginX(Image4DSimple {lvalue})
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="getOriginY"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">getOriginY</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+getOriginY( (Image4DSimple)arg1) -&gt; float :
+
+    C++ signature :
+        double getOriginY(Image4DSimple {lvalue})
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="getOriginZ"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">getOriginZ</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+getOriginZ( (Image4DSimple)arg1) -&gt; float :
+
+    C++ signature :
+        double getOriginZ(Image4DSimple {lvalue})
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="getPreValidZSliceNum"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">getPreValidZSliceNum</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+getPreValidZSliceNum( (Image4DSimple)arg1) -&gt; int :
+
+    C++ signature :
+        long getPreValidZSliceNum(Image4DSimple {lvalue})
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="getRezX"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">getRezX</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+getRezX( (Image4DSimple)arg1) -&gt; float :
+
+    C++ signature :
+        double getRezX(Image4DSimple {lvalue})
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="getRezY"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">getRezY</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+getRezY( (Image4DSimple)arg1) -&gt; float :
+
+    C++ signature :
+        double getRezY(Image4DSimple {lvalue})
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="getRezZ"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">getRezZ</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+getRezZ( (Image4DSimple)arg1) -&gt; float :
+
+    C++ signature :
+        double getRezZ(Image4DSimple {lvalue})
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="getTDim"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">getTDim</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+getTDim( (Image4DSimple)arg1) -&gt; int :
+
+    C++ signature :
+        long getTDim(Image4DSimple {lvalue})
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="getTimePackType"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">getTimePackType</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+getTimePackType( (Image4DSimple)arg1) -&gt; TimePackType :
+
+    C++ signature :
+        TimePackType getTimePackType(Image4DSimple {lvalue})
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="getTotalBytes"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">getTotalBytes</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+getTotalBytes( (Image4DSimple)arg1) -&gt; int :
+
+    C++ signature :
+        long getTotalBytes(Image4DSimple {lvalue})
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="getTotalUnitNumber"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">getTotalUnitNumber</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+getTotalUnitNumber( (Image4DSimple)arg1) -&gt; int :
+
+    C++ signature :
+        long getTotalUnitNumber(Image4DSimple {lvalue})
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="getTotalUnitNumberPerChannel"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">getTotalUnitNumberPerChannel</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+getTotalUnitNumberPerChannel( (Image4DSimple)arg1) -&gt; int :
+
+    C++ signature :
+        long getTotalUnitNumberPerChannel(Image4DSimple {lvalue})
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="getTotalUnitNumberPerPlane"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">getTotalUnitNumberPerPlane</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+getTotalUnitNumberPerPlane( (Image4DSimple)arg1) -&gt; int :
+
+    C++ signature :
+        long getTotalUnitNumberPerPlane(Image4DSimple {lvalue})
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="getUnitBytes"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">getUnitBytes</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+getUnitBytes( (Image4DSimple)arg1) -&gt; int :
+
+    C++ signature :
+        long getUnitBytes(Image4DSimple {lvalue})
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="getValidZSliceNum"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">getValidZSliceNum</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+getValidZSliceNum( (Image4DSimple)arg1) -&gt; int :
+
+    C++ signature :
+        long getValidZSliceNum(Image4DSimple {lvalue})
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="getXDim"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">getXDim</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+getXDim( (Image4DSimple)arg1) -&gt; int :
+
+    C++ signature :
+        long getXDim(Image4DSimple {lvalue})
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="getYDim"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">getYDim</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+getYDim( (Image4DSimple)arg1) -&gt; int :
+
+    C++ signature :
+        long getYDim(Image4DSimple {lvalue})
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="getZDim"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">getZDim</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+getZDim( (Image4DSimple)arg1) -&gt; int :
+
+    C++ signature :
+        long getZDim(Image4DSimple {lvalue})
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="isSameDataBuffer"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">isSameDataBuffer</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+isSameDataBuffer( (Image4DSimple)arg1, (Image4DSimple)p) -&gt; bool :
+
+    C++ signature :
+        bool isSameDataBuffer(Image4DSimple {lvalue},Image4DSimple*)
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="isSuccess"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">isSuccess</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+isSuccess( (Image4DSimple)arg1) -&gt; int :
+
+    C++ signature :
+        int isSuccess(Image4DSimple {lvalue})
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="isValidCustomStructPointer"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">isValidCustomStructPointer</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+isValidCustomStructPointer( (Image4DSimple)arg1) -&gt; bool :
+
+    C++ signature :
+        bool isValidCustomStructPointer(Image4DSimple {lvalue})
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="setCDim"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">setCDim</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+setCDim( (Image4DSimple)arg1, (int)v) -&gt; None :
+
+    C++ signature :
+        void setCDim(Image4DSimple {lvalue},long)
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="setCustomStructPointer"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">setCustomStructPointer</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+setCustomStructPointer( (Image4DSimple)arg1, (void*)a) -&gt; None :
+
+    C++ signature :
+        void setCustomStructPointer(Image4DSimple {lvalue},void*)
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="setData"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">setData</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+setData( (Image4DSimple)arg1, (int)p, (Image4DSimple)image) -&gt; bool :
+
+    C++ signature :
+        bool setData(Image4DSimple {lvalue},unsigned char*,Image4DSimple*)
+
+setData( (Image4DSimple)arg1, (int)p, (int)s0, (int)s1, (int)s2, (int)s3, (ImagePixelType)dt) -&gt; bool :
+
+    C++ signature :
+        bool setData(Image4DSimple {lvalue},unsigned char*,long,long,long,long,ImagePixelType)
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="setDatatype"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">setDatatype</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+setDatatype( (Image4DSimple)arg1, (ImagePixelType)v) -&gt; None :
+
+    C++ signature :
+        void setDatatype(Image4DSimple {lvalue},ImagePixelType)
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="setFileName"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">setFileName</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+setFileName( (Image4DSimple)arg1, (str)myfile) -&gt; bool :
+
+    C++ signature :
+        bool setFileName(Image4DSimple {lvalue},char const*)
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="setNewRawDataPointer"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">setNewRawDataPointer</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+setNewRawDataPointer( (Image4DSimple)arg1, (int)p) -&gt; bool :
+
+    C++ signature :
+        bool setNewRawDataPointer(Image4DSimple {lvalue},unsigned char*)
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="setOriginX"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">setOriginX</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+setOriginX( (Image4DSimple)arg1, (float)a) -&gt; None :
+
+    C++ signature :
+        void setOriginX(Image4DSimple {lvalue},double)
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="setOriginY"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">setOriginY</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+setOriginY( (Image4DSimple)arg1, (float)a) -&gt; None :
+
+    C++ signature :
+        void setOriginY(Image4DSimple {lvalue},double)
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="setOriginZ"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">setOriginZ</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+setOriginZ( (Image4DSimple)arg1, (float)a) -&gt; None :
+
+    C++ signature :
+        void setOriginZ(Image4DSimple {lvalue},double)
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="setPreValidZSliceNum"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">setPreValidZSliceNum</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+setPreValidZSliceNum( (Image4DSimple)arg1, (int)v) -&gt; bool :
+
+    C++ signature :
+        bool setPreValidZSliceNum(Image4DSimple {lvalue},long)
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="setRawDataPointer"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">setRawDataPointer</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+setRawDataPointer( (Image4DSimple)arg1, (int)p) -&gt; None :
+
+    C++ signature :
+        void setRawDataPointer(Image4DSimple {lvalue},unsigned char*)
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="setRawDataPointerToNull"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">setRawDataPointerToNull</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+setRawDataPointerToNull( (Image4DSimple)arg1) -&gt; None :
+
+    C++ signature :
+        void setRawDataPointerToNull(Image4DSimple {lvalue})
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="setRezX"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">setRezX</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+setRezX( (Image4DSimple)arg1, (float)a) -&gt; bool :
+
+    C++ signature :
+        bool setRezX(Image4DSimple {lvalue},double)
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="setRezY"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">setRezY</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+setRezY( (Image4DSimple)arg1, (float)a) -&gt; bool :
+
+    C++ signature :
+        bool setRezY(Image4DSimple {lvalue},double)
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="setRezZ"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">setRezZ</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+setRezZ( (Image4DSimple)arg1, (float)a) -&gt; bool :
+
+    C++ signature :
+        bool setRezZ(Image4DSimple {lvalue},double)
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="setTDim"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">setTDim</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+setTDim( (Image4DSimple)arg1, (int)v) -&gt; None :
+
+    C++ signature :
+        void setTDim(Image4DSimple {lvalue},long)
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="setTimePackType"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">setTimePackType</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+setTimePackType( (Image4DSimple)arg1, (TimePackType)v) -&gt; None :
+
+    C++ signature :
+        void setTimePackType(Image4DSimple {lvalue},TimePackType)
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="setValidZSliceNum"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">setValidZSliceNum</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+setValidZSliceNum( (Image4DSimple)arg1, (int)v) -&gt; bool :
+
+    C++ signature :
+        bool setValidZSliceNum(Image4DSimple {lvalue},long)
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="setXDim"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">setXDim</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+setXDim( (Image4DSimple)arg1, (int)v) -&gt; None :
+
+    C++ signature :
+        void setXDim(Image4DSimple {lvalue},long)
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="setYDim"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">setYDim</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+setYDim( (Image4DSimple)arg1, (int)v) -&gt; None :
+
+    C++ signature :
+        void setYDim(Image4DSimple {lvalue},long)
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="setZDim"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">setZDim</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+setZDim( (Image4DSimple)arg1, (int)v) -&gt; None :
+
+    C++ signature :
+        void setZDim(Image4DSimple {lvalue},long)
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="valid"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">valid</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+valid( (Image4DSimple)arg1) -&gt; bool :
+
+    C++ signature :
+        bool valid(Image4DSimple {lvalue})
+
+valid( (Image4DSimple)arg1) -&gt; bool :
+
+    C++ signature :
+        bool valid(Image4DSimple_wrapper {lvalue})
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<br />
+<!-- ==================== NAVIGATION BAR ==================== -->
+<table class="navbar" border="0" width="100%" cellpadding="0"
+       bgcolor="#a0c0ff" cellspacing="0">
+  <tr valign="middle">
+  <!-- Home link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="v3d-module.html">Home</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Tree link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="module-tree.html">Trees</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Index link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="identifier-index.html">Indices</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Help link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="help.html">Help</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Project homepage -->
+      <th class="navbar" align="right" width="100%">
+        <table border="0" cellpadding="0" cellspacing="0">
+          <tr><th class="navbar" align="center"
+            ><a class="navbar" target="_top" href="http://penglab.janelia.org/proj/v3d/V3D/About_V3D.html">V3D python</a></th>
+          </tr></table></th>
+  </tr>
+</table>
+<table border="0" cellpadding="0" cellspacing="0" width="100%%">
+  <tr>
+    <td align="left" class="footer">
+    Generated by Epydoc 3.0.1 on Thu Feb 10 11:40:28 2011
+    </td>
+    <td align="right" class="footer">
+      <a target="mainFrame" href="http://epydoc.sourceforge.net"
+        >http://epydoc.sourceforge.net</a>
+    </td>
+  </tr>
+</table>
+
+<script type="text/javascript">
+  <!--
+  // Private objects are initially displayed (because if
+  // javascript is turned off then we want them to be
+  // visible); but by default, we want to hide them.  So hide
+  // them unless we have a cookie that says to show them.
+  checkCookie();
+  // -->
+</script>
+</body>
+</html>

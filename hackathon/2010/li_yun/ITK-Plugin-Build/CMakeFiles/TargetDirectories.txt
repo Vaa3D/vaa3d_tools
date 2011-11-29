@@ -1,0 +1,13 @@
+/home/liyun/V3D/2010_hackathon/li_yun/ITK-Plugin-Build/Source/RegistrationIntegrated/FilterPlugin/CMakeFiles/CastIn.dir
+/home/liyun/V3D/2010_hackathon/li_yun/ITK-Plugin-Build/Source/RegistrationIntegrated/FilterPlugin/CMakeFiles/CastOut.dir
+/home/liyun/V3D/2010_hackathon/li_yun/ITK-Plugin-Build/Source/RegistrationIntegrated/FilterPlugin/CMakeFiles/DisGauSmooth.dir
+/home/liyun/V3D/2010_hackathon/li_yun/ITK-Plugin-Build/Source/RegistrationIntegrated/FilterPlugin/CMakeFiles/ImageSubtract.dir
+/home/liyun/V3D/2010_hackathon/li_yun/ITK-Plugin-Build/Source/RegistrationIntegrated/FilterPlugin/CMakeFiles/Normalize.dir
+/home/liyun/V3D/2010_hackathon/li_yun/ITK-Plugin-Build/Source/RegistrationIntegrated/CMakeFiles/Registration.dir
+/home/liyun/V3D/2010_hackathon/li_yun/ITK-Plugin-Build/Source/RegistrationIntegrated/FilterPlugin/CMakeFiles/Resample.dir
+/home/liyun/V3D/2010_hackathon/li_yun/ITK-Plugin-Build/Source/RegistrationIntegrated/FilterPlugin/CMakeFiles/RescaleIntensity.dir
+/home/liyun/V3D/2010_hackathon/li_yun/ITK-Plugin-Build/Source/RegistrationIntegrated/FilterPlugin/CMakeFiles/SubResample.dir
+/home/liyun/V3D/2010_hackathon/li_yun/ITK-Plugin-Build/Source/Common/CMakeFiles/V3DITKCommon.dir
+/home/liyun/V3D/2010_hackathon/li_yun/ITK-Plugin-Build/Source/Common/CMakeFiles/V3DITKCommonTest.dir
+/home/liyun/V3D/2010_hackathon/li_yun/ITK-Plugin-Build/Source/RegistrationIntegrated/CMakeFiles/V3DITKRegistration.dir
+/home/liyun/V3D/2010_hackathon/li_yun/ITK-Plugin-Build/Source/basic_c_fun/CMakeFiles/V3DInterface.dir

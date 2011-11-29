@@ -1,0 +1,5788 @@
+<?xml version="1.0" encoding="ascii"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+          "DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+  <title>v3d.View3DControl</title>
+  <link rel="stylesheet" href="epydoc.css" type="text/css" />
+  <script type="text/javascript" src="epydoc.js"></script>
+</head>
+
+<body bgcolor="white" text="black" link="blue" vlink="#204080"
+      alink="#204080">
+<!-- ==================== NAVIGATION BAR ==================== -->
+<table class="navbar" border="0" width="100%" cellpadding="0"
+       bgcolor="#a0c0ff" cellspacing="0">
+  <tr valign="middle">
+  <!-- Home link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="v3d-module.html">Home</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Tree link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="module-tree.html">Trees</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Index link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="identifier-index.html">Indices</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Help link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="help.html">Help</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Project homepage -->
+      <th class="navbar" align="right" width="100%">
+        <table border="0" cellpadding="0" cellspacing="0">
+          <tr><th class="navbar" align="center"
+            ><a class="navbar" target="_top" href="http://penglab.janelia.org/proj/v3d/V3D/About_V3D.html">V3D python</a></th>
+          </tr></table></th>
+  </tr>
+</table>
+<table width="100%" cellpadding="0" cellspacing="0">
+  <tr valign="top">
+    <td width="100%">
+      <span class="breadcrumbs">
+        <a href="v3d-module.html">Module&nbsp;v3d</a> ::
+        Class&nbsp;View3DControl
+      </span>
+    </td>
+    <td>
+      <table cellpadding="0" cellspacing="0">
+        <!-- hide/show private -->
+        <tr><td align="right"><span class="options">[<a href="javascript:void(0);" class="privatelink"
+    onclick="toggle_private();">hide&nbsp;private</a>]</span></td></tr>
+        <tr><td align="right"><span class="options"
+            >[<a href="frames.html" target="_top">frames</a
+            >]&nbsp;|&nbsp;<a href="v3d.View3DControl-class.html"
+            target="_top">no&nbsp;frames</a>]</span></td></tr>
+      </table>
+    </td>
+  </tr>
+</table>
+<!-- ==================== CLASS DESCRIPTION ==================== -->
+<h1 class="epydoc">Class View3DControl</h1><p class="nomargin-top"></p>
+<center>
+<center>  <map id="uml_class_diagram_for_v3d_view" name="uml_class_diagram_for_v3d_view">
+<area shape="rect" id="node66" href="javascript:void(0);" title="??.instance.__new__" alt="" coords="47,39,164,57"/>
+<area shape="rect" id="node1" href="javascript:void(0);" title="??.instance" alt="" coords="35,6,176,63"/>
+<area shape="rect" id="node65" href="v3d.View3DControl-class.html#__instance_size__" title="v3d.View3DControl.__instance_size__" alt="" coords="17,108,192,127"/>
+<area shape="rect" id="node65" href="v3d.View3DControl-class.html#__init__" title="__init__( (object)arg1) &#45;&gt; None :" alt="" coords="17,129,192,148"/>
+<area shape="rect" id="node65" href="v3d.View3DControl-class.html#__reduce__" title="helper for pickle" alt="" coords="17,148,192,167"/>
+<area shape="rect" id="node65" href="v3d.View3DControl-class.html#absoluteRotPose" title="absoluteRotPose( (View3DControl)arg1) &#45;&gt; None :" alt="" coords="17,167,192,185"/>
+<area shape="rect" id="node65" href="v3d.View3DControl-class.html#annotationDialog" title="annotationDialog( (View3DControl)arg1, (int)dataClass, (int)surfaceType, (int)index) &#45;&gt; None :" alt="" coords="17,185,192,204"/>
+<area shape="rect" id="node65" href="v3d.View3DControl-class.html#cancelSelect" title="cancelSelect( (View3DControl)arg1) &#45;&gt; None :" alt="" coords="17,204,192,223"/>
+<area shape="rect" id="node65" href="v3d.View3DControl-class.html#changeLineOption" title="changeLineOption( (View3DControl)arg1) &#45;&gt; None :" alt="" coords="17,223,192,241"/>
+<area shape="rect" id="node65" href="v3d.View3DControl-class.html#changeObjShadingOption" title="changeObjShadingOption( (View3DControl)arg1) &#45;&gt; None :" alt="" coords="17,241,192,260"/>
+<area shape="rect" id="node65" href="v3d.View3DControl-class.html#changeVolShadingOption" title="changeVolShadingOption( (View3DControl)arg1) &#45;&gt; None :" alt="" coords="17,260,192,279"/>
+<area shape="rect" id="node65" href="v3d.View3DControl-class.html#createSurfCurrentB" title="createSurfCurrentB( (View3DControl)arg1) &#45;&gt; None :" alt="" coords="17,279,192,297"/>
+<area shape="rect" id="node65" href="v3d.View3DControl-class.html#createSurfCurrentG" title="createSurfCurrentG( (View3DControl)arg1) &#45;&gt; None :" alt="" coords="17,297,192,316"/>
+<area shape="rect" id="node65" href="v3d.View3DControl-class.html#createSurfCurrentR" title="createSurfCurrentR( (View3DControl)arg1) &#45;&gt; None :" alt="" coords="17,316,192,335"/>
+<area shape="rect" id="node65" href="v3d.View3DControl-class.html#dataDim1" title="dataDim1( (View3DControl)arg1) &#45;&gt; int :" alt="" coords="17,335,192,353"/>
+<area shape="rect" id="node65" href="v3d.View3DControl-class.html#dataDim2" title="dataDim2( (View3DControl)arg1) &#45;&gt; int :" alt="" coords="17,353,192,372"/>
+<area shape="rect" id="node65" href="v3d.View3DControl-class.html#zoom" title="zoom( (View3DControl)arg1) &#45;&gt; int :" alt="" coords="17,391,192,409"/>
+<area shape="rect" id="node2" href="v3d.View3DControl-class.html" title="v3d.View3DControl" alt="" coords="5,83,203,415"/>
+</map>
+  <img src="uml_class_diagram_for_v3d_view.png" alt='' usemap="#uml_class_diagram_for_v3d_view" ismap="ismap" class="graph-without-title" />
+</center>
+</center>
+<hr />
+<!-- ==================== INSTANCE METHODS ==================== -->
+<a name="section-InstanceMethods"></a>
+<table class="summary" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr bgcolor="#70b0f0" class="table-header">
+  <td colspan="2" class="table-header">
+    <table border="0" cellpadding="0" cellspacing="0" width="100%">
+      <tr valign="top">
+        <td align="left"><span class="table-header">Instance Methods</span></td>
+        <td align="right" valign="top"
+         ><span class="options">[<a href="#section-InstanceMethods"
+         class="privatelink" onclick="toggle_private();"
+         >hide private</a>]</span></td>
+      </tr>
+    </table>
+  </td>
+</tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.View3DControl-class.html#__init__" class="summary-sig-name">__init__</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      __init__( (object)arg1) -&gt; None :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.View3DControl-class.html#__reduce__" class="summary-sig-name">__reduce__</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      helper for pickle</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.View3DControl-class.html#absoluteRotPose" class="summary-sig-name">absoluteRotPose</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      absoluteRotPose( (View3DControl)arg1) -&gt; None :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.View3DControl-class.html#annotationDialog" class="summary-sig-name">annotationDialog</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      annotationDialog( (View3DControl)arg1, (int)dataClass, (int)surfaceType, (int)index) -&gt; None :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.View3DControl-class.html#cancelSelect" class="summary-sig-name">cancelSelect</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      cancelSelect( (View3DControl)arg1) -&gt; None :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.View3DControl-class.html#changeLineOption" class="summary-sig-name">changeLineOption</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      changeLineOption( (View3DControl)arg1) -&gt; None :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.View3DControl-class.html#changeObjShadingOption" class="summary-sig-name">changeObjShadingOption</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      changeObjShadingOption( (View3DControl)arg1) -&gt; None :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.View3DControl-class.html#changeVolShadingOption" class="summary-sig-name">changeVolShadingOption</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      changeVolShadingOption( (View3DControl)arg1) -&gt; None :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.View3DControl-class.html#createSurfCurrentB" class="summary-sig-name">createSurfCurrentB</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      createSurfCurrentB( (View3DControl)arg1) -&gt; None :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.View3DControl-class.html#createSurfCurrentG" class="summary-sig-name">createSurfCurrentG</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      createSurfCurrentG( (View3DControl)arg1) -&gt; None :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.View3DControl-class.html#createSurfCurrentR" class="summary-sig-name">createSurfCurrentR</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      createSurfCurrentR( (View3DControl)arg1) -&gt; None :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.View3DControl-class.html#dataDim1" class="summary-sig-name">dataDim1</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      dataDim1( (View3DControl)arg1) -&gt; int :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.View3DControl-class.html#dataDim2" class="summary-sig-name">dataDim2</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      dataDim2( (View3DControl)arg1) -&gt; int :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.View3DControl-class.html#dataDim3" class="summary-sig-name">dataDim3</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      dataDim3( (View3DControl)arg1) -&gt; int :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.View3DControl-class.html#dataDim4" class="summary-sig-name">dataDim4</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      dataDim4( (View3DControl)arg1) -&gt; int :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.View3DControl-class.html#dataDim5" class="summary-sig-name">dataDim5</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      dataDim5( (View3DControl)arg1) -&gt; int :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.View3DControl-class.html#doAbsoluteRot" class="summary-sig-name">doAbsoluteRot</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      doAbsoluteRot( (View3DControl)arg1, (int)xRot, (int)yRot, (int)zRot) -&gt; None :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.View3DControl-class.html#enableFrontSlice" class="summary-sig-name">enableFrontSlice</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      enableFrontSlice( (View3DControl)arg1, (bool)arg0) -&gt; None :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.View3DControl-class.html#enableMarkerLabel" class="summary-sig-name">enableMarkerLabel</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      enableMarkerLabel( (View3DControl)arg1, (bool)arg0) -&gt; None :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.View3DControl-class.html#enableOrthoView" class="summary-sig-name">enableOrthoView</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      enableOrthoView( (View3DControl)arg1, (bool)b) -&gt; None :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.View3DControl-class.html#enableShowAxes" class="summary-sig-name">enableShowAxes</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      enableShowAxes( (View3DControl)arg1, (bool)b) -&gt; None :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.View3DControl-class.html#enableShowBoundingBox" class="summary-sig-name">enableShowBoundingBox</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      enableShowBoundingBox( (View3DControl)arg1, (bool)b) -&gt; None :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.View3DControl-class.html#enableSurfStretch" class="summary-sig-name">enableSurfStretch</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      enableSurfStretch( (View3DControl)arg1, (bool)arg0) -&gt; None :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.View3DControl-class.html#enableXSlice" class="summary-sig-name">enableXSlice</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      enableXSlice( (View3DControl)arg1, (bool)arg0) -&gt; None :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.View3DControl-class.html#enableYSlice" class="summary-sig-name">enableYSlice</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      enableYSlice( (View3DControl)arg1, (bool)arg0) -&gt; None :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.View3DControl-class.html#enableZSlice" class="summary-sig-name">enableZSlice</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      enableZSlice( (View3DControl)arg1, (bool)arg0) -&gt; None :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.View3DControl-class.html#frontCut" class="summary-sig-name">frontCut</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      frontCut( (View3DControl)arg1) -&gt; int :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.View3DControl-class.html#hideTool" class="summary-sig-name">hideTool</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      hideTool( (View3DControl)arg1) -&gt; None :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.View3DControl-class.html#incVolumeTimePoint" class="summary-sig-name">incVolumeTimePoint</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      incVolumeTimePoint( (View3DControl)arg1, (float)step) -&gt; None :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.View3DControl-class.html#isAbsoluteRot" class="summary-sig-name">isAbsoluteRot</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      isAbsoluteRot( (View3DControl)arg1) -&gt; bool :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.View3DControl-class.html#isShowAxes" class="summary-sig-name">isShowAxes</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      isShowAxes( (View3DControl)arg1) -&gt; bool :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.View3DControl-class.html#isShowBoundingBox" class="summary-sig-name">isShowBoundingBox</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      isShowBoundingBox( (View3DControl)arg1) -&gt; bool :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.View3DControl-class.html#isVolCompress" class="summary-sig-name">isVolCompress</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      isVolCompress( (View3DControl)arg1) -&gt; bool :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.View3DControl-class.html#loadObjectFromFile" class="summary-sig-name">loadObjectFromFile</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      loadObjectFromFile( (View3DControl)arg1 [, (object)url='']) -&gt; None :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.View3DControl-class.html#loadObjectListFromFile" class="summary-sig-name">loadObjectListFromFile</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      loadObjectListFromFile( (View3DControl)arg1) -&gt; None :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.View3DControl-class.html#lookAlong" class="summary-sig-name">lookAlong</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      lookAlong( (View3DControl)arg1, (float)xLook, (float)yLook, (float)zLook) -&gt; None :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.View3DControl-class.html#modelRotation" class="summary-sig-name">modelRotation</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      modelRotation( (View3DControl)arg1, (int)xRotStep, (int)yRotStep, (int)zRotStep) -&gt; None :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.View3DControl-class.html#reloadData" class="summary-sig-name">reloadData</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      reloadData( (View3DControl)arg1) -&gt; None :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.View3DControl-class.html#renderMode" class="summary-sig-name">renderMode</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      renderMode( (View3DControl)arg1) -&gt; int :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.View3DControl-class.html#resetRotation" class="summary-sig-name">resetRotation</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      resetRotation( (View3DControl)arg1 [, (bool)b_emit=True]) -&gt; None :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.View3DControl-class.html#resetZoomShift" class="summary-sig-name">resetZoomShift</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      resetZoomShift( (View3DControl)arg1) -&gt; None :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.View3DControl-class.html#saveSurfFile" class="summary-sig-name">saveSurfFile</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      saveSurfFile( (View3DControl)arg1) -&gt; None :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.View3DControl-class.html#setBackgroundColor" class="summary-sig-name">setBackgroundColor</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      setBackgroundColor( (View3DControl)arg1) -&gt; None :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.View3DControl-class.html#setBright" class="summary-sig-name">setBright</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      setBright( (View3DControl)arg1) -&gt; None :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.View3DControl-class.html#setCSTransparent" class="summary-sig-name">setCSTransparent</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      setCSTransparent( (View3DControl)arg1, (int)arg0) -&gt; None :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.View3DControl-class.html#setChannelB" class="summary-sig-name">setChannelB</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      setChannelB( (View3DControl)arg1, (bool)b) -&gt; None :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.View3DControl-class.html#setChannelG" class="summary-sig-name">setChannelG</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      setChannelG( (View3DControl)arg1, (bool)b) -&gt; None :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.View3DControl-class.html#setChannelR" class="summary-sig-name">setChannelR</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      setChannelR( (View3DControl)arg1, (bool)b) -&gt; None :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.View3DControl-class.html#setCurChannel" class="summary-sig-name">setCurChannel</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      setCurChannel( (View3DControl)arg1, (int)arg0) -&gt; None :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.View3DControl-class.html#setFrontCut" class="summary-sig-name">setFrontCut</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      setFrontCut( (View3DControl)arg1, (int)s) -&gt; None :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.View3DControl-class.html#setMarkerSize" class="summary-sig-name">setMarkerSize</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      setMarkerSize( (View3DControl)arg1, (int)s) -&gt; None :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.View3DControl-class.html#setRenderMode_Alpha" class="summary-sig-name">setRenderMode_Alpha</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      setRenderMode_Alpha( (View3DControl)arg1, (bool)b) -&gt; None :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.View3DControl-class.html#setRenderMode_Cs3d" class="summary-sig-name">setRenderMode_Cs3d</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      setRenderMode_Cs3d( (View3DControl)arg1, (bool)b) -&gt; None :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.View3DControl-class.html#setRenderMode_Mip" class="summary-sig-name">setRenderMode_Mip</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      setRenderMode_Mip( (View3DControl)arg1, (bool)b) -&gt; None :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.View3DControl-class.html#setShowMarkers" class="summary-sig-name">setShowMarkers</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      setShowMarkers( (View3DControl)arg1, (int)s) -&gt; None :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.View3DControl-class.html#setShowSurfObjects" class="summary-sig-name">setShowSurfObjects</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      setShowSurfObjects( (View3DControl)arg1, (int)s) -&gt; None :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.View3DControl-class.html#setThickness" class="summary-sig-name">setThickness</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      setThickness( (View3DControl)arg1, (float)arg0) -&gt; None :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.View3DControl-class.html#setVolCompress" class="summary-sig-name">setVolCompress</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      setVolCompress( (View3DControl)arg1, (bool)b) -&gt; None :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.View3DControl-class.html#setVolumeTimePoint" class="summary-sig-name">setVolumeTimePoint</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      setVolumeTimePoint( (View3DControl)arg1, (int)t) -&gt; int :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.View3DControl-class.html#setXCS" class="summary-sig-name">setXCS</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      setXCS( (View3DControl)arg1, (int)s) -&gt; None :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.View3DControl-class.html#setXClip0" class="summary-sig-name">setXClip0</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      setXClip0( (View3DControl)arg1, (int)s) -&gt; None :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.View3DControl-class.html#setXClip1" class="summary-sig-name">setXClip1</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      setXClip1( (View3DControl)arg1, (int)s) -&gt; None :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.View3DControl-class.html#setXCut0" class="summary-sig-name">setXCut0</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      setXCut0( (View3DControl)arg1, (int)s) -&gt; None :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.View3DControl-class.html#setXCut1" class="summary-sig-name">setXCut1</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      setXCut1( (View3DControl)arg1, (int)s) -&gt; None :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.View3DControl-class.html#setXRotation" class="summary-sig-name">setXRotation</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      setXRotation( (View3DControl)arg1, (int)angle) -&gt; None :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.View3DControl-class.html#setXShift" class="summary-sig-name">setXShift</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      setXShift( (View3DControl)arg1, (int)s) -&gt; None :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.View3DControl-class.html#setYCS" class="summary-sig-name">setYCS</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      setYCS( (View3DControl)arg1, (int)s) -&gt; None :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.View3DControl-class.html#setYClip0" class="summary-sig-name">setYClip0</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      setYClip0( (View3DControl)arg1, (int)s) -&gt; None :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.View3DControl-class.html#setYClip1" class="summary-sig-name">setYClip1</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      setYClip1( (View3DControl)arg1, (int)s) -&gt; None :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.View3DControl-class.html#setYCut0" class="summary-sig-name">setYCut0</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      setYCut0( (View3DControl)arg1, (int)s) -&gt; None :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.View3DControl-class.html#setYCut1" class="summary-sig-name">setYCut1</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      setYCut1( (View3DControl)arg1, (int)s) -&gt; None :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.View3DControl-class.html#setYRotation" class="summary-sig-name">setYRotation</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      setYRotation( (View3DControl)arg1, (int)angle) -&gt; None :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.View3DControl-class.html#setYShift" class="summary-sig-name">setYShift</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      setYShift( (View3DControl)arg1, (int)s) -&gt; None :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.View3DControl-class.html#setZCS" class="summary-sig-name">setZCS</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      setZCS( (View3DControl)arg1, (int)s) -&gt; None :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.View3DControl-class.html#setZClip0" class="summary-sig-name">setZClip0</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      setZClip0( (View3DControl)arg1, (int)s) -&gt; None :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.View3DControl-class.html#setZClip1" class="summary-sig-name">setZClip1</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      setZClip1( (View3DControl)arg1, (int)s) -&gt; None :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.View3DControl-class.html#setZCut0" class="summary-sig-name">setZCut0</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      setZCut0( (View3DControl)arg1, (int)s) -&gt; None :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.View3DControl-class.html#setZCut1" class="summary-sig-name">setZCut1</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      setZCut1( (View3DControl)arg1, (int)s) -&gt; None :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.View3DControl-class.html#setZRotation" class="summary-sig-name">setZRotation</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      setZRotation( (View3DControl)arg1, (int)angle) -&gt; None :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.View3DControl-class.html#setZShift" class="summary-sig-name">setZShift</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      setZShift( (View3DControl)arg1, (int)s) -&gt; None :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.View3DControl-class.html#setZoom" class="summary-sig-name">setZoom</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      setZoom( (View3DControl)arg1, (int)r) -&gt; None :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.View3DControl-class.html#showGLinfo" class="summary-sig-name">showGLinfo</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      showGLinfo( (View3DControl)arg1) -&gt; None :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.View3DControl-class.html#showTool" class="summary-sig-name">showTool</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      showTool( (View3DControl)arg1) -&gt; None :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.View3DControl-class.html#surfaceDialogHide" class="summary-sig-name">surfaceDialogHide</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      surfaceDialogHide( (View3DControl)arg1) -&gt; None :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.View3DControl-class.html#surfaceSelectDialog" class="summary-sig-name">surfaceSelectDialog</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      surfaceSelectDialog( (View3DControl)arg1 [, (int)curTab=0]) -&gt; None :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.View3DControl-class.html#surfaceSelectTab" class="summary-sig-name">surfaceSelectTab</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      surfaceSelectTab( (View3DControl)arg1 [, (int)curTab=0]) -&gt; None :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.View3DControl-class.html#toggleCellName" class="summary-sig-name">toggleCellName</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      toggleCellName( (View3DControl)arg1) -&gt; None :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.View3DControl-class.html#toggleLineType" class="summary-sig-name">toggleLineType</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      toggleLineType( (View3DControl)arg1) -&gt; None :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.View3DControl-class.html#toggleObjShader" class="summary-sig-name">toggleObjShader</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      toggleObjShader( (View3DControl)arg1) -&gt; None :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.View3DControl-class.html#togglePolygonMode" class="summary-sig-name">togglePolygonMode</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      togglePolygonMode( (View3DControl)arg1) -&gt; None :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.View3DControl-class.html#toggleShader" class="summary-sig-name">toggleShader</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      toggleShader( (View3DControl)arg1) -&gt; None :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.View3DControl-class.html#toggleTex2D3D" class="summary-sig-name">toggleTex2D3D</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      toggleTex2D3D( (View3DControl)arg1) -&gt; None :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.View3DControl-class.html#toggleTexCompression" class="summary-sig-name">toggleTexCompression</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      toggleTexCompression( (View3DControl)arg1) -&gt; None :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.View3DControl-class.html#toggleTexFilter" class="summary-sig-name">toggleTexFilter</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      toggleTexFilter( (View3DControl)arg1) -&gt; None :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.View3DControl-class.html#toggleTexStream" class="summary-sig-name">toggleTexStream</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      toggleTexStream( (View3DControl)arg1) -&gt; None :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.View3DControl-class.html#updateControl" class="summary-sig-name">updateControl</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      updateControl( (View3DControl)arg1) -&gt; None :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.View3DControl-class.html#updateImageData" class="summary-sig-name">updateImageData</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      updateImageData( (View3DControl)arg1) -&gt; None :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.View3DControl-class.html#updateTool" class="summary-sig-name">updateTool</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      updateTool( (View3DControl)arg1) -&gt; None :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.View3DControl-class.html#updateWithTriView" class="summary-sig-name">updateWithTriView</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      updateWithTriView( (View3DControl)arg1) -&gt; None :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.View3DControl-class.html#viewRotation" class="summary-sig-name">viewRotation</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      viewRotation( (View3DControl)arg1, (int)xRotStep, (int)yRotStep, (int)zRotStep) -&gt; None :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.View3DControl-class.html#volumeColormapDialog" class="summary-sig-name">volumeColormapDialog</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      volumeColormapDialog( (View3DControl)arg1) -&gt; None :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.View3DControl-class.html#xCut0" class="summary-sig-name">xCut0</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      xCut0( (View3DControl)arg1) -&gt; int :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.View3DControl-class.html#xCut1" class="summary-sig-name">xCut1</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      xCut1( (View3DControl)arg1) -&gt; int :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.View3DControl-class.html#xRot" class="summary-sig-name">xRot</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      xRot( (View3DControl)arg1) -&gt; int :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.View3DControl-class.html#xShift" class="summary-sig-name">xShift</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      xShift( (View3DControl)arg1) -&gt; int :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.View3DControl-class.html#yCut0" class="summary-sig-name">yCut0</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      yCut0( (View3DControl)arg1) -&gt; int :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.View3DControl-class.html#yCut1" class="summary-sig-name">yCut1</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      yCut1( (View3DControl)arg1) -&gt; int :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.View3DControl-class.html#yRot" class="summary-sig-name">yRot</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      yRot( (View3DControl)arg1) -&gt; int :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.View3DControl-class.html#yShift" class="summary-sig-name">yShift</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      yShift( (View3DControl)arg1) -&gt; int :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.View3DControl-class.html#zCut0" class="summary-sig-name">zCut0</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      zCut0( (View3DControl)arg1) -&gt; int :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.View3DControl-class.html#zCut1" class="summary-sig-name">zCut1</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      zCut1( (View3DControl)arg1) -&gt; int :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.View3DControl-class.html#zRot" class="summary-sig-name">zRot</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      zRot( (View3DControl)arg1) -&gt; int :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.View3DControl-class.html#zShift" class="summary-sig-name">zShift</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      zShift( (View3DControl)arg1) -&gt; int :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.View3DControl-class.html#zoom" class="summary-sig-name">zoom</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      zoom( (View3DControl)arg1) -&gt; int :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+  <tr>
+    <td colspan="2" class="summary">
+    <p class="indent-wrapped-lines"><b>Inherited from <code><i>unreachable</i>.instance</code></b>:
+      <code>__new__</code>
+      </p>
+    <p class="indent-wrapped-lines"><b>Inherited from <code>object</code></b>:
+      <code>__delattr__</code>,
+      <code>__format__</code>,
+      <code>__getattribute__</code>,
+      <code>__hash__</code>,
+      <code>__reduce_ex__</code>,
+      <code>__repr__</code>,
+      <code>__setattr__</code>,
+      <code>__sizeof__</code>,
+      <code>__str__</code>,
+      <code>__subclasshook__</code>
+      </p>
+    </td>
+  </tr>
+</table>
+<!-- ==================== CLASS VARIABLES ==================== -->
+<a name="section-ClassVariables"></a>
+<table class="summary" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr bgcolor="#70b0f0" class="table-header">
+  <td colspan="2" class="table-header">
+    <table border="0" cellpadding="0" cellspacing="0" width="100%">
+      <tr valign="top">
+        <td align="left"><span class="table-header">Class Variables</span></td>
+        <td align="right" valign="top"
+         ><span class="options">[<a href="#section-ClassVariables"
+         class="privatelink" onclick="toggle_private();"
+         >hide private</a>]</span></td>
+      </tr>
+    </table>
+  </td>
+</tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+        <a name="__instance_size__"></a><span class="summary-name">__instance_size__</span> = <code title="16">16</code>
+    </td>
+  </tr>
+</table>
+<!-- ==================== PROPERTIES ==================== -->
+<a name="section-Properties"></a>
+<table class="summary" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr bgcolor="#70b0f0" class="table-header">
+  <td colspan="2" class="table-header">
+    <table border="0" cellpadding="0" cellspacing="0" width="100%">
+      <tr valign="top">
+        <td align="left"><span class="table-header">Properties</span></td>
+        <td align="right" valign="top"
+         ><span class="options">[<a href="#section-Properties"
+         class="privatelink" onclick="toggle_private();"
+         >hide private</a>]</span></td>
+      </tr>
+    </table>
+  </td>
+</tr>
+  <tr>
+    <td colspan="2" class="summary">
+    <p class="indent-wrapped-lines"><b>Inherited from <code>object</code></b>:
+      <code>__class__</code>
+      </p>
+    </td>
+  </tr>
+</table>
+<!-- ==================== METHOD DETAILS ==================== -->
+<a name="section-MethodDetails"></a>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr bgcolor="#70b0f0" class="table-header">
+  <td colspan="2" class="table-header">
+    <table border="0" cellpadding="0" cellspacing="0" width="100%">
+      <tr valign="top">
+        <td align="left"><span class="table-header">Method Details</span></td>
+        <td align="right" valign="top"
+         ><span class="options">[<a href="#section-MethodDetails"
+         class="privatelink" onclick="toggle_private();"
+         >hide private</a>]</span></td>
+      </tr>
+    </table>
+  </td>
+</tr>
+</table>
+<a name="__init__"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">__init__</span>(<span class="sig-arg">...</span>)</span>
+    <br /><em class="fname">(Constructor)</em>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+__init__( (object)arg1) -&gt; None :
+
+    C++ signature :
+        void __init__(_object*)
+
+</pre>
+  <dl class="fields">
+    <dt>Overrides:
+        object.__init__
+    </dt>
+  </dl>
+</td></tr></table>
+</div>
+<a name="__reduce__"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">__reduce__</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <p>helper for pickle</p>
+  <dl class="fields">
+    <dt>Overrides:
+        object.__reduce__
+        <dd><em class="note">(inherited documentation)</em></dd>
+    </dt>
+  </dl>
+</td></tr></table>
+</div>
+<a name="absoluteRotPose"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">absoluteRotPose</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+absoluteRotPose( (View3DControl)arg1) -&gt; None :
+
+    C++ signature :
+        void absoluteRotPose(View3DControl {lvalue})
+
+absoluteRotPose( (View3DControl)arg1) -&gt; None :
+
+    C++ signature :
+        void absoluteRotPose(View3DControl_wrapper {lvalue})
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="annotationDialog"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">annotationDialog</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+annotationDialog( (View3DControl)arg1, (int)dataClass, (int)surfaceType, (int)index) -&gt; None :
+
+    C++ signature :
+        void annotationDialog(View3DControl {lvalue},int,int,int)
+
+annotationDialog( (View3DControl)arg1, (int)arg2, (int)arg3, (int)arg4) -&gt; None :
+
+    C++ signature :
+        void annotationDialog(View3DControl_wrapper {lvalue},int,int,int)
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="cancelSelect"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">cancelSelect</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+cancelSelect( (View3DControl)arg1) -&gt; None :
+
+    C++ signature :
+        void cancelSelect(View3DControl {lvalue})
+
+cancelSelect( (View3DControl)arg1) -&gt; None :
+
+    C++ signature :
+        void cancelSelect(View3DControl_wrapper {lvalue})
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="changeLineOption"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">changeLineOption</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+changeLineOption( (View3DControl)arg1) -&gt; None :
+
+    C++ signature :
+        void changeLineOption(View3DControl {lvalue})
+
+changeLineOption( (View3DControl)arg1) -&gt; None :
+
+    C++ signature :
+        void changeLineOption(View3DControl_wrapper {lvalue})
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="changeObjShadingOption"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">changeObjShadingOption</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+changeObjShadingOption( (View3DControl)arg1) -&gt; None :
+
+    C++ signature :
+        void changeObjShadingOption(View3DControl {lvalue})
+
+changeObjShadingOption( (View3DControl)arg1) -&gt; None :
+
+    C++ signature :
+        void changeObjShadingOption(View3DControl_wrapper {lvalue})
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="changeVolShadingOption"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">changeVolShadingOption</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+changeVolShadingOption( (View3DControl)arg1) -&gt; None :
+
+    C++ signature :
+        void changeVolShadingOption(View3DControl {lvalue})
+
+changeVolShadingOption( (View3DControl)arg1) -&gt; None :
+
+    C++ signature :
+        void changeVolShadingOption(View3DControl_wrapper {lvalue})
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="createSurfCurrentB"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">createSurfCurrentB</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+createSurfCurrentB( (View3DControl)arg1) -&gt; None :
+
+    C++ signature :
+        void createSurfCurrentB(View3DControl {lvalue})
+
+createSurfCurrentB( (View3DControl)arg1) -&gt; None :
+
+    C++ signature :
+        void createSurfCurrentB(View3DControl_wrapper {lvalue})
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="createSurfCurrentG"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">createSurfCurrentG</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+createSurfCurrentG( (View3DControl)arg1) -&gt; None :
+
+    C++ signature :
+        void createSurfCurrentG(View3DControl {lvalue})
+
+createSurfCurrentG( (View3DControl)arg1) -&gt; None :
+
+    C++ signature :
+        void createSurfCurrentG(View3DControl_wrapper {lvalue})
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="createSurfCurrentR"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">createSurfCurrentR</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+createSurfCurrentR( (View3DControl)arg1) -&gt; None :
+
+    C++ signature :
+        void createSurfCurrentR(View3DControl {lvalue})
+
+createSurfCurrentR( (View3DControl)arg1) -&gt; None :
+
+    C++ signature :
+        void createSurfCurrentR(View3DControl_wrapper {lvalue})
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="dataDim1"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">dataDim1</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+dataDim1( (View3DControl)arg1) -&gt; int :
+
+    C++ signature :
+        int dataDim1(View3DControl {lvalue})
+
+dataDim1( (View3DControl)arg1) -&gt; None :
+
+    C++ signature :
+        void dataDim1(View3DControl_wrapper {lvalue})
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="dataDim2"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">dataDim2</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+dataDim2( (View3DControl)arg1) -&gt; int :
+
+    C++ signature :
+        int dataDim2(View3DControl {lvalue})
+
+dataDim2( (View3DControl)arg1) -&gt; None :
+
+    C++ signature :
+        void dataDim2(View3DControl_wrapper {lvalue})
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="dataDim3"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">dataDim3</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+dataDim3( (View3DControl)arg1) -&gt; int :
+
+    C++ signature :
+        int dataDim3(View3DControl {lvalue})
+
+dataDim3( (View3DControl)arg1) -&gt; None :
+
+    C++ signature :
+        void dataDim3(View3DControl_wrapper {lvalue})
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="dataDim4"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">dataDim4</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+dataDim4( (View3DControl)arg1) -&gt; int :
+
+    C++ signature :
+        int dataDim4(View3DControl {lvalue})
+
+dataDim4( (View3DControl)arg1) -&gt; None :
+
+    C++ signature :
+        void dataDim4(View3DControl_wrapper {lvalue})
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="dataDim5"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">dataDim5</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+dataDim5( (View3DControl)arg1) -&gt; int :
+
+    C++ signature :
+        int dataDim5(View3DControl {lvalue})
+
+dataDim5( (View3DControl)arg1) -&gt; None :
+
+    C++ signature :
+        void dataDim5(View3DControl_wrapper {lvalue})
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="doAbsoluteRot"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">doAbsoluteRot</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+doAbsoluteRot( (View3DControl)arg1, (int)xRot, (int)yRot, (int)zRot) -&gt; None :
+
+    C++ signature :
+        void doAbsoluteRot(View3DControl {lvalue},int,int,int)
+
+doAbsoluteRot( (View3DControl)arg1, (int)arg2, (int)arg3, (int)arg4) -&gt; None :
+
+    C++ signature :
+        void doAbsoluteRot(View3DControl_wrapper {lvalue},int,int,int)
+
+doAbsoluteRot( (View3DControl)arg1, (float)xRot, (float)yRot, (float)zRot) -&gt; None :
+
+    C++ signature :
+        void doAbsoluteRot(View3DControl {lvalue},float,float,float)
+
+doAbsoluteRot( (View3DControl)arg1, (float)arg2, (float)arg3, (float)arg4) -&gt; None :
+
+    C++ signature :
+        void doAbsoluteRot(View3DControl_wrapper {lvalue},float,float,float)
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="enableFrontSlice"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">enableFrontSlice</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+enableFrontSlice( (View3DControl)arg1, (bool)arg0) -&gt; None :
+
+    C++ signature :
+        void enableFrontSlice(View3DControl {lvalue},bool)
+
+enableFrontSlice( (View3DControl)arg1, (bool)arg2) -&gt; None :
+
+    C++ signature :
+        void enableFrontSlice(View3DControl_wrapper {lvalue},bool)
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="enableMarkerLabel"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">enableMarkerLabel</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+enableMarkerLabel( (View3DControl)arg1, (bool)arg0) -&gt; None :
+
+    C++ signature :
+        void enableMarkerLabel(View3DControl {lvalue},bool)
+
+enableMarkerLabel( (View3DControl)arg1, (bool)arg2) -&gt; None :
+
+    C++ signature :
+        void enableMarkerLabel(View3DControl_wrapper {lvalue},bool)
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="enableOrthoView"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">enableOrthoView</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+enableOrthoView( (View3DControl)arg1, (bool)b) -&gt; None :
+
+    C++ signature :
+        void enableOrthoView(View3DControl {lvalue},bool)
+
+enableOrthoView( (View3DControl)arg1, (bool)arg2) -&gt; None :
+
+    C++ signature :
+        void enableOrthoView(View3DControl_wrapper {lvalue},bool)
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="enableShowAxes"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">enableShowAxes</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+enableShowAxes( (View3DControl)arg1, (bool)b) -&gt; None :
+
+    C++ signature :
+        void enableShowAxes(View3DControl {lvalue},bool)
+
+enableShowAxes( (View3DControl)arg1, (bool)arg2) -&gt; None :
+
+    C++ signature :
+        void enableShowAxes(View3DControl_wrapper {lvalue},bool)
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="enableShowBoundingBox"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">enableShowBoundingBox</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+enableShowBoundingBox( (View3DControl)arg1, (bool)b) -&gt; None :
+
+    C++ signature :
+        void enableShowBoundingBox(View3DControl {lvalue},bool)
+
+enableShowBoundingBox( (View3DControl)arg1, (bool)arg2) -&gt; None :
+
+    C++ signature :
+        void enableShowBoundingBox(View3DControl_wrapper {lvalue},bool)
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="enableSurfStretch"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">enableSurfStretch</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+enableSurfStretch( (View3DControl)arg1, (bool)arg0) -&gt; None :
+
+    C++ signature :
+        void enableSurfStretch(View3DControl {lvalue},bool)
+
+enableSurfStretch( (View3DControl)arg1, (bool)arg2) -&gt; None :
+
+    C++ signature :
+        void enableSurfStretch(View3DControl_wrapper {lvalue},bool)
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="enableXSlice"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">enableXSlice</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+enableXSlice( (View3DControl)arg1, (bool)arg0) -&gt; None :
+
+    C++ signature :
+        void enableXSlice(View3DControl {lvalue},bool)
+
+enableXSlice( (View3DControl)arg1, (bool)arg2) -&gt; None :
+
+    C++ signature :
+        void enableXSlice(View3DControl_wrapper {lvalue},bool)
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="enableYSlice"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">enableYSlice</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+enableYSlice( (View3DControl)arg1, (bool)arg0) -&gt; None :
+
+    C++ signature :
+        void enableYSlice(View3DControl {lvalue},bool)
+
+enableYSlice( (View3DControl)arg1, (bool)arg2) -&gt; None :
+
+    C++ signature :
+        void enableYSlice(View3DControl_wrapper {lvalue},bool)
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="enableZSlice"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">enableZSlice</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+enableZSlice( (View3DControl)arg1, (bool)arg0) -&gt; None :
+
+    C++ signature :
+        void enableZSlice(View3DControl {lvalue},bool)
+
+enableZSlice( (View3DControl)arg1, (bool)arg2) -&gt; None :
+
+    C++ signature :
+        void enableZSlice(View3DControl_wrapper {lvalue},bool)
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="frontCut"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">frontCut</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+frontCut( (View3DControl)arg1) -&gt; int :
+
+    C++ signature :
+        int frontCut(View3DControl {lvalue})
+
+frontCut( (View3DControl)arg1) -&gt; None :
+
+    C++ signature :
+        void frontCut(View3DControl_wrapper {lvalue})
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="hideTool"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">hideTool</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+hideTool( (View3DControl)arg1) -&gt; None :
+
+    C++ signature :
+        void hideTool(View3DControl {lvalue})
+
+hideTool( (View3DControl)arg1) -&gt; None :
+
+    C++ signature :
+        void hideTool(View3DControl_wrapper {lvalue})
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="incVolumeTimePoint"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">incVolumeTimePoint</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+incVolumeTimePoint( (View3DControl)arg1, (float)step) -&gt; None :
+
+    C++ signature :
+        void incVolumeTimePoint(View3DControl {lvalue},float)
+
+incVolumeTimePoint( (View3DControl)arg1, (float)arg2) -&gt; None :
+
+    C++ signature :
+        void incVolumeTimePoint(View3DControl_wrapper {lvalue},float)
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="isAbsoluteRot"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">isAbsoluteRot</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+isAbsoluteRot( (View3DControl)arg1) -&gt; bool :
+
+    C++ signature :
+        bool isAbsoluteRot(View3DControl {lvalue})
+
+isAbsoluteRot( (View3DControl)arg1) -&gt; None :
+
+    C++ signature :
+        void isAbsoluteRot(View3DControl_wrapper {lvalue})
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="isShowAxes"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">isShowAxes</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+isShowAxes( (View3DControl)arg1) -&gt; bool :
+
+    C++ signature :
+        bool isShowAxes(View3DControl {lvalue})
+
+isShowAxes( (View3DControl)arg1) -&gt; None :
+
+    C++ signature :
+        void isShowAxes(View3DControl_wrapper {lvalue})
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="isShowBoundingBox"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">isShowBoundingBox</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+isShowBoundingBox( (View3DControl)arg1) -&gt; bool :
+
+    C++ signature :
+        bool isShowBoundingBox(View3DControl {lvalue})
+
+isShowBoundingBox( (View3DControl)arg1) -&gt; None :
+
+    C++ signature :
+        void isShowBoundingBox(View3DControl_wrapper {lvalue})
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="isVolCompress"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">isVolCompress</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+isVolCompress( (View3DControl)arg1) -&gt; bool :
+
+    C++ signature :
+        bool isVolCompress(View3DControl {lvalue})
+
+isVolCompress( (View3DControl)arg1) -&gt; None :
+
+    C++ signature :
+        void isVolCompress(View3DControl_wrapper {lvalue})
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="loadObjectFromFile"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">loadObjectFromFile</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+loadObjectFromFile( (View3DControl)arg1 [, (object)url='']) -&gt; None :
+
+    C++ signature :
+        void loadObjectFromFile(View3DControl {lvalue} [,QString=''])
+
+loadObjectFromFile( (View3DControl)arg1, (object)arg2) -&gt; None :
+
+    C++ signature :
+        void loadObjectFromFile(View3DControl_wrapper {lvalue},QString)
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="loadObjectListFromFile"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">loadObjectListFromFile</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+loadObjectListFromFile( (View3DControl)arg1) -&gt; None :
+
+    C++ signature :
+        void loadObjectListFromFile(View3DControl {lvalue})
+
+loadObjectListFromFile( (View3DControl)arg1) -&gt; None :
+
+    C++ signature :
+        void loadObjectListFromFile(View3DControl_wrapper {lvalue})
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="lookAlong"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">lookAlong</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+lookAlong( (View3DControl)arg1, (float)xLook, (float)yLook, (float)zLook) -&gt; None :
+
+    C++ signature :
+        void lookAlong(View3DControl {lvalue},float,float,float)
+
+lookAlong( (View3DControl)arg1, (float)arg2, (float)arg3, (float)arg4) -&gt; None :
+
+    C++ signature :
+        void lookAlong(View3DControl_wrapper {lvalue},float,float,float)
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="modelRotation"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">modelRotation</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+modelRotation( (View3DControl)arg1, (int)xRotStep, (int)yRotStep, (int)zRotStep) -&gt; None :
+
+    C++ signature :
+        void modelRotation(View3DControl {lvalue},int,int,int)
+
+modelRotation( (View3DControl)arg1, (int)arg2, (int)arg3, (int)arg4) -&gt; None :
+
+    C++ signature :
+        void modelRotation(View3DControl_wrapper {lvalue},int,int,int)
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="reloadData"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">reloadData</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+reloadData( (View3DControl)arg1) -&gt; None :
+
+    C++ signature :
+        void reloadData(View3DControl {lvalue})
+
+reloadData( (View3DControl)arg1) -&gt; None :
+
+    C++ signature :
+        void reloadData(View3DControl_wrapper {lvalue})
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="renderMode"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">renderMode</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+renderMode( (View3DControl)arg1) -&gt; int :
+
+    C++ signature :
+        int renderMode(View3DControl {lvalue})
+
+renderMode( (View3DControl)arg1) -&gt; None :
+
+    C++ signature :
+        void renderMode(View3DControl_wrapper {lvalue})
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="resetRotation"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">resetRotation</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+resetRotation( (View3DControl)arg1 [, (bool)b_emit=True]) -&gt; None :
+
+    C++ signature :
+        void resetRotation(View3DControl {lvalue} [,bool=True])
+
+resetRotation( (View3DControl)arg1, (bool)arg2) -&gt; None :
+
+    C++ signature :
+        void resetRotation(View3DControl_wrapper {lvalue},bool)
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="resetZoomShift"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">resetZoomShift</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+resetZoomShift( (View3DControl)arg1) -&gt; None :
+
+    C++ signature :
+        void resetZoomShift(View3DControl {lvalue})
+
+resetZoomShift( (View3DControl)arg1) -&gt; None :
+
+    C++ signature :
+        void resetZoomShift(View3DControl_wrapper {lvalue})
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="saveSurfFile"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">saveSurfFile</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+saveSurfFile( (View3DControl)arg1) -&gt; None :
+
+    C++ signature :
+        void saveSurfFile(View3DControl {lvalue})
+
+saveSurfFile( (View3DControl)arg1) -&gt; None :
+
+    C++ signature :
+        void saveSurfFile(View3DControl_wrapper {lvalue})
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="setBackgroundColor"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">setBackgroundColor</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+setBackgroundColor( (View3DControl)arg1) -&gt; None :
+
+    C++ signature :
+        void setBackgroundColor(View3DControl {lvalue})
+
+setBackgroundColor( (View3DControl)arg1) -&gt; None :
+
+    C++ signature :
+        void setBackgroundColor(View3DControl_wrapper {lvalue})
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="setBright"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">setBright</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+setBright( (View3DControl)arg1) -&gt; None :
+
+    C++ signature :
+        void setBright(View3DControl {lvalue})
+
+setBright( (View3DControl)arg1) -&gt; None :
+
+    C++ signature :
+        void setBright(View3DControl_wrapper {lvalue})
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="setCSTransparent"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">setCSTransparent</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+setCSTransparent( (View3DControl)arg1, (int)arg0) -&gt; None :
+
+    C++ signature :
+        void setCSTransparent(View3DControl {lvalue},int)
+
+setCSTransparent( (View3DControl)arg1, (int)arg2) -&gt; None :
+
+    C++ signature :
+        void setCSTransparent(View3DControl_wrapper {lvalue},int)
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="setChannelB"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">setChannelB</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+setChannelB( (View3DControl)arg1, (bool)b) -&gt; None :
+
+    C++ signature :
+        void setChannelB(View3DControl {lvalue},bool)
+
+setChannelB( (View3DControl)arg1, (bool)arg2) -&gt; None :
+
+    C++ signature :
+        void setChannelB(View3DControl_wrapper {lvalue},bool)
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="setChannelG"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">setChannelG</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+setChannelG( (View3DControl)arg1, (bool)b) -&gt; None :
+
+    C++ signature :
+        void setChannelG(View3DControl {lvalue},bool)
+
+setChannelG( (View3DControl)arg1, (bool)arg2) -&gt; None :
+
+    C++ signature :
+        void setChannelG(View3DControl_wrapper {lvalue},bool)
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="setChannelR"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">setChannelR</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+setChannelR( (View3DControl)arg1, (bool)b) -&gt; None :
+
+    C++ signature :
+        void setChannelR(View3DControl {lvalue},bool)
+
+setChannelR( (View3DControl)arg1, (bool)arg2) -&gt; None :
+
+    C++ signature :
+        void setChannelR(View3DControl_wrapper {lvalue},bool)
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="setCurChannel"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">setCurChannel</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+setCurChannel( (View3DControl)arg1, (int)arg0) -&gt; None :
+
+    C++ signature :
+        void setCurChannel(View3DControl {lvalue},int)
+
+setCurChannel( (View3DControl)arg1, (int)arg2) -&gt; None :
+
+    C++ signature :
+        void setCurChannel(View3DControl_wrapper {lvalue},int)
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="setFrontCut"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">setFrontCut</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+setFrontCut( (View3DControl)arg1, (int)s) -&gt; None :
+
+    C++ signature :
+        void setFrontCut(View3DControl {lvalue},int)
+
+setFrontCut( (View3DControl)arg1, (int)arg2) -&gt; None :
+
+    C++ signature :
+        void setFrontCut(View3DControl_wrapper {lvalue},int)
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="setMarkerSize"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">setMarkerSize</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+setMarkerSize( (View3DControl)arg1, (int)s) -&gt; None :
+
+    C++ signature :
+        void setMarkerSize(View3DControl {lvalue},int)
+
+setMarkerSize( (View3DControl)arg1, (int)arg2) -&gt; None :
+
+    C++ signature :
+        void setMarkerSize(View3DControl_wrapper {lvalue},int)
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="setRenderMode_Alpha"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">setRenderMode_Alpha</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+setRenderMode_Alpha( (View3DControl)arg1, (bool)b) -&gt; None :
+
+    C++ signature :
+        void setRenderMode_Alpha(View3DControl {lvalue},bool)
+
+setRenderMode_Alpha( (View3DControl)arg1, (bool)arg2) -&gt; None :
+
+    C++ signature :
+        void setRenderMode_Alpha(View3DControl_wrapper {lvalue},bool)
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="setRenderMode_Cs3d"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">setRenderMode_Cs3d</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+setRenderMode_Cs3d( (View3DControl)arg1, (bool)b) -&gt; None :
+
+    C++ signature :
+        void setRenderMode_Cs3d(View3DControl {lvalue},bool)
+
+setRenderMode_Cs3d( (View3DControl)arg1, (bool)arg2) -&gt; None :
+
+    C++ signature :
+        void setRenderMode_Cs3d(View3DControl_wrapper {lvalue},bool)
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="setRenderMode_Mip"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">setRenderMode_Mip</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+setRenderMode_Mip( (View3DControl)arg1, (bool)b) -&gt; None :
+
+    C++ signature :
+        void setRenderMode_Mip(View3DControl {lvalue},bool)
+
+setRenderMode_Mip( (View3DControl)arg1, (bool)arg2) -&gt; None :
+
+    C++ signature :
+        void setRenderMode_Mip(View3DControl_wrapper {lvalue},bool)
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="setShowMarkers"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">setShowMarkers</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+setShowMarkers( (View3DControl)arg1, (int)s) -&gt; None :
+
+    C++ signature :
+        void setShowMarkers(View3DControl {lvalue},int)
+
+setShowMarkers( (View3DControl)arg1, (int)arg2) -&gt; None :
+
+    C++ signature :
+        void setShowMarkers(View3DControl_wrapper {lvalue},int)
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="setShowSurfObjects"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">setShowSurfObjects</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+setShowSurfObjects( (View3DControl)arg1, (int)s) -&gt; None :
+
+    C++ signature :
+        void setShowSurfObjects(View3DControl {lvalue},int)
+
+setShowSurfObjects( (View3DControl)arg1, (int)arg2) -&gt; None :
+
+    C++ signature :
+        void setShowSurfObjects(View3DControl_wrapper {lvalue},int)
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="setThickness"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">setThickness</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+setThickness( (View3DControl)arg1, (float)arg0) -&gt; None :
+
+    C++ signature :
+        void setThickness(View3DControl {lvalue},double)
+
+setThickness( (View3DControl)arg1, (float)arg2) -&gt; None :
+
+    C++ signature :
+        void setThickness(View3DControl_wrapper {lvalue},double)
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="setVolCompress"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">setVolCompress</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+setVolCompress( (View3DControl)arg1, (bool)b) -&gt; None :
+
+    C++ signature :
+        void setVolCompress(View3DControl {lvalue},bool)
+
+setVolCompress( (View3DControl)arg1, (bool)arg2) -&gt; None :
+
+    C++ signature :
+        void setVolCompress(View3DControl_wrapper {lvalue},bool)
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="setVolumeTimePoint"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">setVolumeTimePoint</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+setVolumeTimePoint( (View3DControl)arg1, (int)t) -&gt; int :
+
+    C++ signature :
+        int setVolumeTimePoint(View3DControl {lvalue},int)
+
+setVolumeTimePoint( (View3DControl)arg1, (int)arg2) -&gt; None :
+
+    C++ signature :
+        void setVolumeTimePoint(View3DControl_wrapper {lvalue},int)
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="setXCS"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">setXCS</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+setXCS( (View3DControl)arg1, (int)s) -&gt; None :
+
+    C++ signature :
+        void setXCS(View3DControl {lvalue},int)
+
+setXCS( (View3DControl)arg1, (int)arg2) -&gt; None :
+
+    C++ signature :
+        void setXCS(View3DControl_wrapper {lvalue},int)
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="setXClip0"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">setXClip0</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+setXClip0( (View3DControl)arg1, (int)s) -&gt; None :
+
+    C++ signature :
+        void setXClip0(View3DControl {lvalue},int)
+
+setXClip0( (View3DControl)arg1, (int)arg2) -&gt; None :
+
+    C++ signature :
+        void setXClip0(View3DControl_wrapper {lvalue},int)
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="setXClip1"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">setXClip1</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+setXClip1( (View3DControl)arg1, (int)s) -&gt; None :
+
+    C++ signature :
+        void setXClip1(View3DControl {lvalue},int)
+
+setXClip1( (View3DControl)arg1, (int)arg2) -&gt; None :
+
+    C++ signature :
+        void setXClip1(View3DControl_wrapper {lvalue},int)
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="setXCut0"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">setXCut0</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+setXCut0( (View3DControl)arg1, (int)s) -&gt; None :
+
+    C++ signature :
+        void setXCut0(View3DControl {lvalue},int)
+
+setXCut0( (View3DControl)arg1, (int)arg2) -&gt; None :
+
+    C++ signature :
+        void setXCut0(View3DControl_wrapper {lvalue},int)
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="setXCut1"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">setXCut1</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+setXCut1( (View3DControl)arg1, (int)s) -&gt; None :
+
+    C++ signature :
+        void setXCut1(View3DControl {lvalue},int)
+
+setXCut1( (View3DControl)arg1, (int)arg2) -&gt; None :
+
+    C++ signature :
+        void setXCut1(View3DControl_wrapper {lvalue},int)
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="setXRotation"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">setXRotation</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+setXRotation( (View3DControl)arg1, (int)angle) -&gt; None :
+
+    C++ signature :
+        void setXRotation(View3DControl {lvalue},int)
+
+setXRotation( (View3DControl)arg1, (int)arg2) -&gt; None :
+
+    C++ signature :
+        void setXRotation(View3DControl_wrapper {lvalue},int)
+
+setXRotation( (View3DControl)arg1, (float)angle) -&gt; None :
+
+    C++ signature :
+        void setXRotation(View3DControl {lvalue},float)
+
+setXRotation( (View3DControl)arg1, (float)arg2) -&gt; None :
+
+    C++ signature :
+        void setXRotation(View3DControl_wrapper {lvalue},float)
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="setXShift"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">setXShift</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+setXShift( (View3DControl)arg1, (int)s) -&gt; None :
+
+    C++ signature :
+        void setXShift(View3DControl {lvalue},int)
+
+setXShift( (View3DControl)arg1, (int)arg2) -&gt; None :
+
+    C++ signature :
+        void setXShift(View3DControl_wrapper {lvalue},int)
+
+setXShift( (View3DControl)arg1, (float)s) -&gt; None :
+
+    C++ signature :
+        void setXShift(View3DControl {lvalue},float)
+
+setXShift( (View3DControl)arg1, (float)arg2) -&gt; None :
+
+    C++ signature :
+        void setXShift(View3DControl_wrapper {lvalue},float)
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="setYCS"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">setYCS</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+setYCS( (View3DControl)arg1, (int)s) -&gt; None :
+
+    C++ signature :
+        void setYCS(View3DControl {lvalue},int)
+
+setYCS( (View3DControl)arg1, (int)arg2) -&gt; None :
+
+    C++ signature :
+        void setYCS(View3DControl_wrapper {lvalue},int)
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="setYClip0"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">setYClip0</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+setYClip0( (View3DControl)arg1, (int)s) -&gt; None :
+
+    C++ signature :
+        void setYClip0(View3DControl {lvalue},int)
+
+setYClip0( (View3DControl)arg1, (int)arg2) -&gt; None :
+
+    C++ signature :
+        void setYClip0(View3DControl_wrapper {lvalue},int)
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="setYClip1"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">setYClip1</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+setYClip1( (View3DControl)arg1, (int)s) -&gt; None :
+
+    C++ signature :
+        void setYClip1(View3DControl {lvalue},int)
+
+setYClip1( (View3DControl)arg1, (int)arg2) -&gt; None :
+
+    C++ signature :
+        void setYClip1(View3DControl_wrapper {lvalue},int)
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="setYCut0"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">setYCut0</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+setYCut0( (View3DControl)arg1, (int)s) -&gt; None :
+
+    C++ signature :
+        void setYCut0(View3DControl {lvalue},int)
+
+setYCut0( (View3DControl)arg1, (int)arg2) -&gt; None :
+
+    C++ signature :
+        void setYCut0(View3DControl_wrapper {lvalue},int)
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="setYCut1"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">setYCut1</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+setYCut1( (View3DControl)arg1, (int)s) -&gt; None :
+
+    C++ signature :
+        void setYCut1(View3DControl {lvalue},int)
+
+setYCut1( (View3DControl)arg1, (int)arg2) -&gt; None :
+
+    C++ signature :
+        void setYCut1(View3DControl_wrapper {lvalue},int)
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="setYRotation"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">setYRotation</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+setYRotation( (View3DControl)arg1, (int)angle) -&gt; None :
+
+    C++ signature :
+        void setYRotation(View3DControl {lvalue},int)
+
+setYRotation( (View3DControl)arg1, (int)arg2) -&gt; None :
+
+    C++ signature :
+        void setYRotation(View3DControl_wrapper {lvalue},int)
+
+setYRotation( (View3DControl)arg1, (float)angle) -&gt; None :
+
+    C++ signature :
+        void setYRotation(View3DControl {lvalue},float)
+
+setYRotation( (View3DControl)arg1, (float)arg2) -&gt; None :
+
+    C++ signature :
+        void setYRotation(View3DControl_wrapper {lvalue},float)
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="setYShift"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">setYShift</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+setYShift( (View3DControl)arg1, (int)s) -&gt; None :
+
+    C++ signature :
+        void setYShift(View3DControl {lvalue},int)
+
+setYShift( (View3DControl)arg1, (int)arg2) -&gt; None :
+
+    C++ signature :
+        void setYShift(View3DControl_wrapper {lvalue},int)
+
+setYShift( (View3DControl)arg1, (float)s) -&gt; None :
+
+    C++ signature :
+        void setYShift(View3DControl {lvalue},float)
+
+setYShift( (View3DControl)arg1, (float)arg2) -&gt; None :
+
+    C++ signature :
+        void setYShift(View3DControl_wrapper {lvalue},float)
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="setZCS"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">setZCS</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+setZCS( (View3DControl)arg1, (int)s) -&gt; None :
+
+    C++ signature :
+        void setZCS(View3DControl {lvalue},int)
+
+setZCS( (View3DControl)arg1, (int)arg2) -&gt; None :
+
+    C++ signature :
+        void setZCS(View3DControl_wrapper {lvalue},int)
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="setZClip0"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">setZClip0</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+setZClip0( (View3DControl)arg1, (int)s) -&gt; None :
+
+    C++ signature :
+        void setZClip0(View3DControl {lvalue},int)
+
+setZClip0( (View3DControl)arg1, (int)arg2) -&gt; None :
+
+    C++ signature :
+        void setZClip0(View3DControl_wrapper {lvalue},int)
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="setZClip1"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">setZClip1</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+setZClip1( (View3DControl)arg1, (int)s) -&gt; None :
+
+    C++ signature :
+        void setZClip1(View3DControl {lvalue},int)
+
+setZClip1( (View3DControl)arg1, (int)arg2) -&gt; None :
+
+    C++ signature :
+        void setZClip1(View3DControl_wrapper {lvalue},int)
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="setZCut0"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">setZCut0</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+setZCut0( (View3DControl)arg1, (int)s) -&gt; None :
+
+    C++ signature :
+        void setZCut0(View3DControl {lvalue},int)
+
+setZCut0( (View3DControl)arg1, (int)arg2) -&gt; None :
+
+    C++ signature :
+        void setZCut0(View3DControl_wrapper {lvalue},int)
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="setZCut1"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">setZCut1</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+setZCut1( (View3DControl)arg1, (int)s) -&gt; None :
+
+    C++ signature :
+        void setZCut1(View3DControl {lvalue},int)
+
+setZCut1( (View3DControl)arg1, (int)arg2) -&gt; None :
+
+    C++ signature :
+        void setZCut1(View3DControl_wrapper {lvalue},int)
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="setZRotation"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">setZRotation</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+setZRotation( (View3DControl)arg1, (int)angle) -&gt; None :
+
+    C++ signature :
+        void setZRotation(View3DControl {lvalue},int)
+
+setZRotation( (View3DControl)arg1, (int)arg2) -&gt; None :
+
+    C++ signature :
+        void setZRotation(View3DControl_wrapper {lvalue},int)
+
+setZRotation( (View3DControl)arg1, (float)angle) -&gt; None :
+
+    C++ signature :
+        void setZRotation(View3DControl {lvalue},float)
+
+setZRotation( (View3DControl)arg1, (float)arg2) -&gt; None :
+
+    C++ signature :
+        void setZRotation(View3DControl_wrapper {lvalue},float)
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="setZShift"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">setZShift</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+setZShift( (View3DControl)arg1, (int)s) -&gt; None :
+
+    C++ signature :
+        void setZShift(View3DControl {lvalue},int)
+
+setZShift( (View3DControl)arg1, (int)arg2) -&gt; None :
+
+    C++ signature :
+        void setZShift(View3DControl_wrapper {lvalue},int)
+
+setZShift( (View3DControl)arg1, (float)s) -&gt; None :
+
+    C++ signature :
+        void setZShift(View3DControl {lvalue},float)
+
+setZShift( (View3DControl)arg1, (float)arg2) -&gt; None :
+
+    C++ signature :
+        void setZShift(View3DControl_wrapper {lvalue},float)
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="setZoom"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">setZoom</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+setZoom( (View3DControl)arg1, (int)r) -&gt; None :
+
+    C++ signature :
+        void setZoom(View3DControl {lvalue},int)
+
+setZoom( (View3DControl)arg1, (int)arg2) -&gt; None :
+
+    C++ signature :
+        void setZoom(View3DControl_wrapper {lvalue},int)
+
+setZoom( (View3DControl)arg1, (float)r) -&gt; None :
+
+    C++ signature :
+        void setZoom(View3DControl {lvalue},float)
+
+setZoom( (View3DControl)arg1, (float)arg2) -&gt; None :
+
+    C++ signature :
+        void setZoom(View3DControl_wrapper {lvalue},float)
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="showGLinfo"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">showGLinfo</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+showGLinfo( (View3DControl)arg1) -&gt; None :
+
+    C++ signature :
+        void showGLinfo(View3DControl {lvalue})
+
+showGLinfo( (View3DControl)arg1) -&gt; None :
+
+    C++ signature :
+        void showGLinfo(View3DControl_wrapper {lvalue})
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="showTool"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">showTool</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+showTool( (View3DControl)arg1) -&gt; None :
+
+    C++ signature :
+        void showTool(View3DControl {lvalue})
+
+showTool( (View3DControl)arg1) -&gt; None :
+
+    C++ signature :
+        void showTool(View3DControl_wrapper {lvalue})
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="surfaceDialogHide"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">surfaceDialogHide</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+surfaceDialogHide( (View3DControl)arg1) -&gt; None :
+
+    C++ signature :
+        void surfaceDialogHide(View3DControl {lvalue})
+
+surfaceDialogHide( (View3DControl)arg1) -&gt; None :
+
+    C++ signature :
+        void surfaceDialogHide(View3DControl_wrapper {lvalue})
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="surfaceSelectDialog"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">surfaceSelectDialog</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+surfaceSelectDialog( (View3DControl)arg1 [, (int)curTab=0]) -&gt; None :
+
+    C++ signature :
+        void surfaceSelectDialog(View3DControl {lvalue} [,int=0])
+
+surfaceSelectDialog( (View3DControl)arg1, (int)arg2) -&gt; None :
+
+    C++ signature :
+        void surfaceSelectDialog(View3DControl_wrapper {lvalue},int)
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="surfaceSelectTab"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">surfaceSelectTab</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+surfaceSelectTab( (View3DControl)arg1 [, (int)curTab=0]) -&gt; None :
+
+    C++ signature :
+        void surfaceSelectTab(View3DControl {lvalue} [,int=0])
+
+surfaceSelectTab( (View3DControl)arg1, (int)arg2) -&gt; None :
+
+    C++ signature :
+        void surfaceSelectTab(View3DControl_wrapper {lvalue},int)
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="toggleCellName"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">toggleCellName</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+toggleCellName( (View3DControl)arg1) -&gt; None :
+
+    C++ signature :
+        void toggleCellName(View3DControl {lvalue})
+
+toggleCellName( (View3DControl)arg1) -&gt; None :
+
+    C++ signature :
+        void toggleCellName(View3DControl_wrapper {lvalue})
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="toggleLineType"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">toggleLineType</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+toggleLineType( (View3DControl)arg1) -&gt; None :
+
+    C++ signature :
+        void toggleLineType(View3DControl {lvalue})
+
+toggleLineType( (View3DControl)arg1) -&gt; None :
+
+    C++ signature :
+        void toggleLineType(View3DControl_wrapper {lvalue})
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="toggleObjShader"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">toggleObjShader</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+toggleObjShader( (View3DControl)arg1) -&gt; None :
+
+    C++ signature :
+        void toggleObjShader(View3DControl {lvalue})
+
+toggleObjShader( (View3DControl)arg1) -&gt; None :
+
+    C++ signature :
+        void toggleObjShader(View3DControl_wrapper {lvalue})
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="togglePolygonMode"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">togglePolygonMode</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+togglePolygonMode( (View3DControl)arg1) -&gt; None :
+
+    C++ signature :
+        void togglePolygonMode(View3DControl {lvalue})
+
+togglePolygonMode( (View3DControl)arg1) -&gt; None :
+
+    C++ signature :
+        void togglePolygonMode(View3DControl_wrapper {lvalue})
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="toggleShader"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">toggleShader</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+toggleShader( (View3DControl)arg1) -&gt; None :
+
+    C++ signature :
+        void toggleShader(View3DControl {lvalue})
+
+toggleShader( (View3DControl)arg1) -&gt; None :
+
+    C++ signature :
+        void toggleShader(View3DControl_wrapper {lvalue})
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="toggleTex2D3D"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">toggleTex2D3D</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+toggleTex2D3D( (View3DControl)arg1) -&gt; None :
+
+    C++ signature :
+        void toggleTex2D3D(View3DControl {lvalue})
+
+toggleTex2D3D( (View3DControl)arg1) -&gt; None :
+
+    C++ signature :
+        void toggleTex2D3D(View3DControl_wrapper {lvalue})
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="toggleTexCompression"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">toggleTexCompression</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+toggleTexCompression( (View3DControl)arg1) -&gt; None :
+
+    C++ signature :
+        void toggleTexCompression(View3DControl {lvalue})
+
+toggleTexCompression( (View3DControl)arg1) -&gt; None :
+
+    C++ signature :
+        void toggleTexCompression(View3DControl_wrapper {lvalue})
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="toggleTexFilter"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">toggleTexFilter</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+toggleTexFilter( (View3DControl)arg1) -&gt; None :
+
+    C++ signature :
+        void toggleTexFilter(View3DControl {lvalue})
+
+toggleTexFilter( (View3DControl)arg1) -&gt; None :
+
+    C++ signature :
+        void toggleTexFilter(View3DControl_wrapper {lvalue})
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="toggleTexStream"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">toggleTexStream</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+toggleTexStream( (View3DControl)arg1) -&gt; None :
+
+    C++ signature :
+        void toggleTexStream(View3DControl {lvalue})
+
+toggleTexStream( (View3DControl)arg1) -&gt; None :
+
+    C++ signature :
+        void toggleTexStream(View3DControl_wrapper {lvalue})
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="updateControl"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">updateControl</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+updateControl( (View3DControl)arg1) -&gt; None :
+
+    C++ signature :
+        void updateControl(View3DControl {lvalue})
+
+updateControl( (View3DControl)arg1) -&gt; None :
+
+    C++ signature :
+        void updateControl(View3DControl_wrapper {lvalue})
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="updateImageData"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">updateImageData</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+updateImageData( (View3DControl)arg1) -&gt; None :
+
+    C++ signature :
+        void updateImageData(View3DControl {lvalue})
+
+updateImageData( (View3DControl)arg1) -&gt; None :
+
+    C++ signature :
+        void updateImageData(View3DControl_wrapper {lvalue})
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="updateTool"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">updateTool</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+updateTool( (View3DControl)arg1) -&gt; None :
+
+    C++ signature :
+        void updateTool(View3DControl {lvalue})
+
+updateTool( (View3DControl)arg1) -&gt; None :
+
+    C++ signature :
+        void updateTool(View3DControl_wrapper {lvalue})
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="updateWithTriView"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">updateWithTriView</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+updateWithTriView( (View3DControl)arg1) -&gt; None :
+
+    C++ signature :
+        void updateWithTriView(View3DControl {lvalue})
+
+updateWithTriView( (View3DControl)arg1) -&gt; None :
+
+    C++ signature :
+        void updateWithTriView(View3DControl_wrapper {lvalue})
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="viewRotation"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">viewRotation</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+viewRotation( (View3DControl)arg1, (int)xRotStep, (int)yRotStep, (int)zRotStep) -&gt; None :
+
+    C++ signature :
+        void viewRotation(View3DControl {lvalue},int,int,int)
+
+viewRotation( (View3DControl)arg1, (int)arg2, (int)arg3, (int)arg4) -&gt; None :
+
+    C++ signature :
+        void viewRotation(View3DControl_wrapper {lvalue},int,int,int)
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="volumeColormapDialog"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">volumeColormapDialog</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+volumeColormapDialog( (View3DControl)arg1) -&gt; None :
+
+    C++ signature :
+        void volumeColormapDialog(View3DControl {lvalue})
+
+volumeColormapDialog( (View3DControl)arg1) -&gt; None :
+
+    C++ signature :
+        void volumeColormapDialog(View3DControl_wrapper {lvalue})
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="xCut0"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">xCut0</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+xCut0( (View3DControl)arg1) -&gt; int :
+
+    C++ signature :
+        int xCut0(View3DControl {lvalue})
+
+xCut0( (View3DControl)arg1) -&gt; None :
+
+    C++ signature :
+        void xCut0(View3DControl_wrapper {lvalue})
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="xCut1"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">xCut1</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+xCut1( (View3DControl)arg1) -&gt; int :
+
+    C++ signature :
+        int xCut1(View3DControl {lvalue})
+
+xCut1( (View3DControl)arg1) -&gt; None :
+
+    C++ signature :
+        void xCut1(View3DControl_wrapper {lvalue})
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="xRot"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">xRot</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+xRot( (View3DControl)arg1) -&gt; int :
+
+    C++ signature :
+        int xRot(View3DControl {lvalue})
+
+xRot( (View3DControl)arg1) -&gt; None :
+
+    C++ signature :
+        void xRot(View3DControl_wrapper {lvalue})
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="xShift"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">xShift</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+xShift( (View3DControl)arg1) -&gt; int :
+
+    C++ signature :
+        int xShift(View3DControl {lvalue})
+
+xShift( (View3DControl)arg1) -&gt; None :
+
+    C++ signature :
+        void xShift(View3DControl_wrapper {lvalue})
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="yCut0"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">yCut0</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+yCut0( (View3DControl)arg1) -&gt; int :
+
+    C++ signature :
+        int yCut0(View3DControl {lvalue})
+
+yCut0( (View3DControl)arg1) -&gt; None :
+
+    C++ signature :
+        void yCut0(View3DControl_wrapper {lvalue})
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="yCut1"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">yCut1</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+yCut1( (View3DControl)arg1) -&gt; int :
+
+    C++ signature :
+        int yCut1(View3DControl {lvalue})
+
+yCut1( (View3DControl)arg1) -&gt; None :
+
+    C++ signature :
+        void yCut1(View3DControl_wrapper {lvalue})
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="yRot"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">yRot</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+yRot( (View3DControl)arg1) -&gt; int :
+
+    C++ signature :
+        int yRot(View3DControl {lvalue})
+
+yRot( (View3DControl)arg1) -&gt; None :
+
+    C++ signature :
+        void yRot(View3DControl_wrapper {lvalue})
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="yShift"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">yShift</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+yShift( (View3DControl)arg1) -&gt; int :
+
+    C++ signature :
+        int yShift(View3DControl {lvalue})
+
+yShift( (View3DControl)arg1) -&gt; None :
+
+    C++ signature :
+        void yShift(View3DControl_wrapper {lvalue})
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="zCut0"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">zCut0</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+zCut0( (View3DControl)arg1) -&gt; int :
+
+    C++ signature :
+        int zCut0(View3DControl {lvalue})
+
+zCut0( (View3DControl)arg1) -&gt; None :
+
+    C++ signature :
+        void zCut0(View3DControl_wrapper {lvalue})
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="zCut1"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">zCut1</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+zCut1( (View3DControl)arg1) -&gt; int :
+
+    C++ signature :
+        int zCut1(View3DControl {lvalue})
+
+zCut1( (View3DControl)arg1) -&gt; None :
+
+    C++ signature :
+        void zCut1(View3DControl_wrapper {lvalue})
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="zRot"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">zRot</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+zRot( (View3DControl)arg1) -&gt; int :
+
+    C++ signature :
+        int zRot(View3DControl {lvalue})
+
+zRot( (View3DControl)arg1) -&gt; None :
+
+    C++ signature :
+        void zRot(View3DControl_wrapper {lvalue})
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="zShift"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">zShift</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+zShift( (View3DControl)arg1) -&gt; int :
+
+    C++ signature :
+        int zShift(View3DControl {lvalue})
+
+zShift( (View3DControl)arg1) -&gt; None :
+
+    C++ signature :
+        void zShift(View3DControl_wrapper {lvalue})
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="zoom"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">zoom</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+zoom( (View3DControl)arg1) -&gt; int :
+
+    C++ signature :
+        int zoom(View3DControl {lvalue})
+
+zoom( (View3DControl)arg1) -&gt; None :
+
+    C++ signature :
+        void zoom(View3DControl_wrapper {lvalue})
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<br />
+<!-- ==================== NAVIGATION BAR ==================== -->
+<table class="navbar" border="0" width="100%" cellpadding="0"
+       bgcolor="#a0c0ff" cellspacing="0">
+  <tr valign="middle">
+  <!-- Home link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="v3d-module.html">Home</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Tree link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="module-tree.html">Trees</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Index link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="identifier-index.html">Indices</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Help link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="help.html">Help</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Project homepage -->
+      <th class="navbar" align="right" width="100%">
+        <table border="0" cellpadding="0" cellspacing="0">
+          <tr><th class="navbar" align="center"
+            ><a class="navbar" target="_top" href="http://penglab.janelia.org/proj/v3d/V3D/About_V3D.html">V3D python</a></th>
+          </tr></table></th>
+  </tr>
+</table>
+<table border="0" cellpadding="0" cellspacing="0" width="100%%">
+  <tr>
+    <td align="left" class="footer">
+    Generated by Epydoc 3.0.1 on Thu Feb 10 11:40:29 2011
+    </td>
+    <td align="right" class="footer">
+      <a target="mainFrame" href="http://epydoc.sourceforge.net"
+        >http://epydoc.sourceforge.net</a>
+    </td>
+  </tr>
+</table>
+
+<script type="text/javascript">
+  <!--
+  // Private objects are initially displayed (because if
+  // javascript is turned off then we want them to be
+  // visible); but by default, we want to hide them.  So hide
+  // them unless we have a cookie that says to show them.
+  checkCookie();
+  // -->
+</script>
+</body>
+</html>

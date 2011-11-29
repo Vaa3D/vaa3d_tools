@@ -1,0 +1,334 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>main_python_console</class>
+ <widget class="QMainWindow" name="main_python_console">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>522</width>
+    <height>376</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>V3D python console</string>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <layout class="QGridLayout" name="gridLayout">
+    <property name="margin">
+     <number>0</number>
+    </property>
+    <item row="0" column="0">
+     <widget class="QPlainTextEdit" name="plainTextEdit">
+      <property name="font">
+       <font>
+        <family>Courier New</family>
+        <weight>75</weight>
+        <bold>true</bold>
+       </font>
+      </property>
+      <property name="tabStopWidth">
+       <number>4</number>
+      </property>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QMenuBar" name="menubar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>522</width>
+     <height>22</height>
+    </rect>
+   </property>
+   <widget class="QMenu" name="menuEdit">
+    <property name="title">
+     <string>Edit</string>
+    </property>
+    <addaction name="actionUndo"/>
+    <addaction name="actionRedo"/>
+    <addaction name="separator"/>
+    <addaction name="actionCut"/>
+    <addaction name="actionCopy"/>
+    <addaction name="actionPaste"/>
+    <addaction name="separator"/>
+    <addaction name="actionSelect_All"/>
+   </widget>
+   <widget class="QMenu" name="menuHelp">
+    <property name="title">
+     <string>Help</string>
+    </property>
+    <addaction name="actionBrowse_API_documentation"/>
+    <addaction name="actionAbout"/>
+   </widget>
+   <widget class="QMenu" name="menuFile">
+    <property name="title">
+     <string>File</string>
+    </property>
+    <widget class="QMenu" name="menuRun_recent">
+     <property name="title">
+      <string>Run recent</string>
+     </property>
+    </widget>
+    <addaction name="actionRun_script"/>
+    <addaction name="menuRun_recent"/>
+   </widget>
+   <widget class="QMenu" name="menuView">
+    <property name="title">
+     <string>View</string>
+    </property>
+    <addaction name="actionZoom_in"/>
+    <addaction name="actionZoom_out"/>
+   </widget>
+   <addaction name="menuFile"/>
+   <addaction name="menuEdit"/>
+   <addaction name="menuView"/>
+   <addaction name="menuHelp"/>
+  </widget>
+  <widget class="QStatusBar" name="statusbar"/>
+  <action name="actionCut">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>Cut</string>
+   </property>
+  </action>
+  <action name="actionAbout">
+   <property name="text">
+    <string>About V3D python console...</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::AboutRole</enum>
+   </property>
+  </action>
+  <action name="actionUndo">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>Undo</string>
+   </property>
+  </action>
+  <action name="actionRedo">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>Redo</string>
+   </property>
+  </action>
+  <action name="actionCopy">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>Copy</string>
+   </property>
+  </action>
+  <action name="actionPaste">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>Paste</string>
+   </property>
+  </action>
+  <action name="actionDelete">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>Delete</string>
+   </property>
+  </action>
+  <action name="actionSelect_All">
+   <property name="enabled">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Select All</string>
+   </property>
+  </action>
+  <action name="actionRun_script">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>Run script...</string>
+   </property>
+  </action>
+  <action name="actionBrowse_API_documentation">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>Browse API documentation...</string>
+   </property>
+  </action>
+  <action name="actionZoom_in">
+   <property name="text">
+    <string>Zoom in</string>
+   </property>
+  </action>
+  <action name="actionZoom_out">
+   <property name="text">
+    <string>Zoom out</string>
+   </property>
+  </action>
+  <action name="actionSubAction">
+   <property name="text">
+    <string>SubAction</string>
+   </property>
+  </action>
+ </widget>
+ <resources/>
+ <connections>
+  <connection>
+   <sender>actionUndo</sender>
+   <signal>triggered()</signal>
+   <receiver>plainTextEdit</receiver>
+   <slot>undo()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>260</x>
+     <y>189</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>plainTextEdit</sender>
+   <signal>undoAvailable(bool)</signal>
+   <receiver>actionUndo</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>260</x>
+     <y>189</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>actionRedo</sender>
+   <signal>triggered()</signal>
+   <receiver>plainTextEdit</receiver>
+   <slot>redo()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>260</x>
+     <y>189</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>plainTextEdit</sender>
+   <signal>redoAvailable(bool)</signal>
+   <receiver>actionRedo</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>260</x>
+     <y>189</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>actionCut</sender>
+   <signal>triggered()</signal>
+   <receiver>plainTextEdit</receiver>
+   <slot>cut()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>260</x>
+     <y>189</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>actionCopy</sender>
+   <signal>triggered()</signal>
+   <receiver>plainTextEdit</receiver>
+   <slot>copy()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>260</x>
+     <y>189</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>plainTextEdit</sender>
+   <signal>copyAvailable(bool)</signal>
+   <receiver>actionCopy</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>260</x>
+     <y>189</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>actionPaste</sender>
+   <signal>triggered()</signal>
+   <receiver>plainTextEdit</receiver>
+   <slot>paste()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>260</x>
+     <y>189</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>actionSelect_All</sender>
+   <signal>triggered()</signal>
+   <receiver>plainTextEdit</receiver>
+   <slot>selectAll()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>260</x>
+     <y>189</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
+</ui>

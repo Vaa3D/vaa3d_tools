@@ -1,0 +1,3 @@
+ITK_DIR:PATH=/Users/pengh/work/itk_build
+V3D_DIR:PATH=/Users/pengh/work/v3d_2.0/v3d/
+QT_QMAKE_EXECUTABLE:PATH=/usr/local/Troltech/Qt-4.5.2/bin/qmake

@@ -1,0 +1,674 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>window</class>
+ <widget class="QWidget" name="window">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>952</width>
+    <height>764</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>At3D</string>
+  </property>
+  <layout class="QHBoxLayout" name="horizontalLayout" stretch="0,1,0">
+   <item>
+    <widget class="QGroupBox" name="operationGroupBox">
+     <property name="minimumSize">
+      <size>
+       <width>160</width>
+       <height>0</height>
+      </size>
+     </property>
+     <property name="maximumSize">
+      <size>
+       <width>160</width>
+       <height>16777215</height>
+      </size>
+     </property>
+     <property name="title">
+      <string>Operations</string>
+     </property>
+     <layout class="QVBoxLayout" name="verticalLayout_6">
+      <item>
+       <widget class="QGroupBox" name="fileGroupBox">
+        <property name="title">
+         <string>File</string>
+        </property>
+        <layout class="QVBoxLayout" name="verticalLayout">
+         <item>
+          <widget class="QPushButton" name="openButton">
+           <property name="text">
+            <string>Create</string>
+           </property>
+           <property name="autoDefault">
+            <bool>false</bool>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="loadTreesButton">
+           <property name="text">
+            <string>Load Result</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="saveFramesButton">
+           <property name="text">
+            <string>Save Frames</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+      </item>
+      <item>
+       <widget class="QGroupBox" name="editGroupBox">
+        <property name="title">
+         <string>Edit</string>
+        </property>
+        <layout class="QVBoxLayout" name="verticalLayout_2">
+         <item>
+          <widget class="QPushButton" name="applyFilterButton">
+           <property name="text">
+            <string>Apply Filter</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="fineTuningButton">
+           <property name="text">
+            <string>Fine Tuning</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="setColorButton">
+           <property name="text">
+            <string>Set Color</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+      </item>
+      <item>
+       <widget class="QGroupBox" name="statisticsGroupBox">
+        <property name="title">
+         <string>Statistics</string>
+        </property>
+        <layout class="QVBoxLayout" name="verticalLayout_3">
+         <item>
+          <widget class="QPushButton" name="summaryButton">
+           <property name="text">
+            <string>Summary</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="speedButton">
+           <property name="text">
+            <string>Speed</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="volumeButton">
+           <property name="text">
+            <string>Volume</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="deformationButton">
+           <property name="text">
+            <string>Deformation</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="trajectoryButton">
+           <property name="text">
+            <string>Trajectory</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+      </item>
+      <item>
+       <widget class="QGroupBox" name="viewGroupBox">
+        <property name="title">
+         <string>View</string>
+        </property>
+        <layout class="QVBoxLayout" name="verticalLayout_4">
+         <item>
+          <widget class="QPushButton" name="new3DButton">
+           <property name="text">
+            <string>New 3D</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="resetViewButton">
+           <property name="text">
+            <string>Reset View</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="viewTreeButton">
+           <property name="text">
+            <string>View Tree</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item>
+    <widget class="QGroupBox" name="displayGroupBox">
+     <property name="minimumSize">
+      <size>
+       <width>350</width>
+       <height>0</height>
+      </size>
+     </property>
+     <property name="baseSize">
+      <size>
+       <width>0</width>
+       <height>0</height>
+      </size>
+     </property>
+     <property name="title">
+      <string>Display</string>
+     </property>
+     <layout class="QVBoxLayout" name="verticalLayout_5">
+      <item>
+       <widget class="QGroupBox" name="glGroupBox">
+        <property name="title">
+         <string>Time : 1</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QGroupBox" name="controlGroupBox">
+        <property name="minimumSize">
+         <size>
+          <width>0</width>
+          <height>100</height>
+         </size>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>16777215</width>
+          <height>100</height>
+         </size>
+        </property>
+        <property name="title">
+         <string/>
+        </property>
+        <layout class="QGridLayout" name="gridLayout">
+         <item row="0" column="0">
+          <widget class="QPushButton" name="firstButton">
+           <property name="text">
+            <string>First</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="1">
+          <widget class="QPushButton" name="lastButton">
+           <property name="text">
+            <string>Last</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="0">
+          <widget class="QPushButton" name="previousButton">
+           <property name="text">
+            <string>Previous</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="1">
+          <widget class="QPushButton" name="nextButton">
+           <property name="text">
+            <string>Next</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item>
+    <widget class="QGroupBox" name="cellsGroupBox">
+     <property name="minimumSize">
+      <size>
+       <width>200</width>
+       <height>0</height>
+      </size>
+     </property>
+     <property name="maximumSize">
+      <size>
+       <width>200</width>
+       <height>16777215</height>
+      </size>
+     </property>
+     <property name="title">
+      <string>Cells</string>
+     </property>
+     <layout class="QVBoxLayout" name="verticalLayout_7">
+      <item>
+       <widget class="QScrollArea" name="scrollArea">
+        <property name="widgetResizable">
+         <bool>true</bool>
+        </property>
+        <widget class="QWidget" name="scrollAreaWidgetContents">
+         <property name="geometry">
+          <rect>
+           <x>0</x>
+           <y>0</y>
+           <width>166</width>
+           <height>577</height>
+          </rect>
+         </property>
+         <layout class="QVBoxLayout" name="verticalLayout_8"/>
+        </widget>
+       </widget>
+      </item>
+      <item>
+       <widget class="QCheckBox" name="reverseCheckBox">
+        <property name="text">
+         <string>reverse</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QGroupBox" name="groupBox">
+        <layout class="QGridLayout" name="gridLayout_2">
+         <item row="0" column="1">
+          <widget class="QPushButton" name="deleteButton">
+           <property name="text">
+            <string>Delete</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="0">
+          <widget class="QPushButton" name="chooseButton">
+           <property name="text">
+            <string>Choose</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="0" colspan="2">
+          <widget class="QPushButton" name="undoButton">
+           <property name="text">
+            <string>Undo</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections>
+  <connection>
+   <sender>applyFilterButton</sender>
+   <signal>clicked()</signal>
+   <receiver>window</receiver>
+   <slot>onApplyFilter()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>147</x>
+     <y>260</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>10</x>
+     <y>233</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>summaryButton</sender>
+   <signal>clicked()</signal>
+   <receiver>window</receiver>
+   <slot>onSummary()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>139</x>
+     <y>422</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>9</x>
+     <y>393</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>speedButton</sender>
+   <signal>clicked()</signal>
+   <receiver>window</receiver>
+   <slot>onSpeed()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>127</x>
+     <y>456</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>8</x>
+     <y>435</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>volumeButton</sender>
+   <signal>clicked()</signal>
+   <receiver>window</receiver>
+   <slot>onVolume()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>80</x>
+     <y>480</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>8</x>
+     <y>470</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>deformationButton</sender>
+   <signal>clicked()</signal>
+   <receiver>window</receiver>
+   <slot>onDeformation()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>147</x>
+     <y>524</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>8</x>
+     <y>500</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>new3DButton</sender>
+   <signal>clicked()</signal>
+   <receiver>window</receiver>
+   <slot>onNew3D()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>100</x>
+     <y>620</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>7</x>
+     <y>565</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>resetViewButton</sender>
+   <signal>clicked()</signal>
+   <receiver>window</receiver>
+   <slot>onResetView()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>83</x>
+     <y>655</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>8</x>
+     <y>608</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>viewTreeButton</sender>
+   <signal>clicked()</signal>
+   <receiver>window</receiver>
+   <slot>onViewTree()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>147</x>
+     <y>717</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>7</x>
+     <y>685</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>firstButton</sender>
+   <signal>clicked()</signal>
+   <receiver>window</receiver>
+   <slot>onFirst()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>434</x>
+     <y>685</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>173</x>
+     <y>617</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>lastButton</sender>
+   <signal>clicked()</signal>
+   <receiver>window</receiver>
+   <slot>onLast()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>699</x>
+     <y>685</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>686</x>
+     <y>636</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>nextButton</sender>
+   <signal>clicked()</signal>
+   <receiver>window</receiver>
+   <slot>onNext()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>699</x>
+     <y>724</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>681</x>
+     <y>682</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>chooseButton</sender>
+   <signal>clicked()</signal>
+   <receiver>window</receiver>
+   <slot>onChoose()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>838</x>
+     <y>695</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>683</x>
+     <y>606</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>deleteButton</sender>
+   <signal>clicked()</signal>
+   <receiver>window</receiver>
+   <slot>onDelete()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>915</x>
+     <y>695</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>900</x>
+     <y>635</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>previousButton</sender>
+   <signal>clicked()</signal>
+   <receiver>window</receiver>
+   <slot>onPrevious()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>454</x>
+     <y>724</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>178</x>
+     <y>672</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>setColorButton</sender>
+   <signal>clicked()</signal>
+   <receiver>window</receiver>
+   <slot>onSetColor()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>146</x>
+     <y>344</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>7</x>
+     <y>300</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>undoButton</sender>
+   <signal>clicked()</signal>
+   <receiver>window</receiver>
+   <slot>onUndo()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>915</x>
+     <y>729</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>687</x>
+     <y>713</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>reverseCheckBox</sender>
+   <signal>stateChanged(int)</signal>
+   <receiver>window</receiver>
+   <slot>onReverse()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>933</x>
+     <y>640</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>735</x>
+     <y>622</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>openButton</sender>
+   <signal>clicked()</signal>
+   <receiver>window</receiver>
+   <slot>onOpen()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>97</x>
+     <y>72</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>7</x>
+     <y>57</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>saveFramesButton</sender>
+   <signal>clicked()</signal>
+   <receiver>window</receiver>
+   <slot>onSaveFrames()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>60</x>
+     <y>154</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>8</x>
+     <y>137</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>trajectoryButton</sender>
+   <signal>clicked()</signal>
+   <receiver>window</receiver>
+   <slot>onTrajectory()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>80</x>
+     <y>547</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>5</x>
+     <y>538</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
+ <slots>
+  <slot>onOpen()</slot>
+  <slot>onLoadTrees()</slot>
+  <slot>onSaveFrames()</slot>
+  <slot>onApplyFilter()</slot>
+  <slot>onSetColor()</slot>
+  <slot>onSummary()</slot>
+  <slot>onSpeed()</slot>
+  <slot>onVolume()</slot>
+  <slot>onDeformation()</slot>
+  <slot>onNew3D()</slot>
+  <slot>onResetView()</slot>
+  <slot>onViewCells()</slot>
+  <slot>onViewTree()</slot>
+  <slot>onFirst()</slot>
+  <slot>onLast()</slot>
+  <slot>onPrevious()</slot>
+  <slot>onNext()</slot>
+  <slot>onChoose()</slot>
+  <slot>onDelete()</slot>
+  <slot>onUndo()</slot>
+  <slot>onReverse()</slot>
+  <slot>onTrajectory()</slot>
+ </slots>
+</ui>

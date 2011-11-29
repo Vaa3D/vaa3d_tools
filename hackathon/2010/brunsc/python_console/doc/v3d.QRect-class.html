@@ -1,0 +1,2985 @@
+<?xml version="1.0" encoding="ascii"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+          "DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+  <title>v3d.QRect</title>
+  <link rel="stylesheet" href="epydoc.css" type="text/css" />
+  <script type="text/javascript" src="epydoc.js"></script>
+</head>
+
+<body bgcolor="white" text="black" link="blue" vlink="#204080"
+      alink="#204080">
+<!-- ==================== NAVIGATION BAR ==================== -->
+<table class="navbar" border="0" width="100%" cellpadding="0"
+       bgcolor="#a0c0ff" cellspacing="0">
+  <tr valign="middle">
+  <!-- Home link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="v3d-module.html">Home</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Tree link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="module-tree.html">Trees</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Index link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="identifier-index.html">Indices</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Help link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="help.html">Help</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Project homepage -->
+      <th class="navbar" align="right" width="100%">
+        <table border="0" cellpadding="0" cellspacing="0">
+          <tr><th class="navbar" align="center"
+            ><a class="navbar" target="_top" href="http://penglab.janelia.org/proj/v3d/V3D/About_V3D.html">V3D python</a></th>
+          </tr></table></th>
+  </tr>
+</table>
+<table width="100%" cellpadding="0" cellspacing="0">
+  <tr valign="top">
+    <td width="100%">
+      <span class="breadcrumbs">
+        <a href="v3d-module.html">Module&nbsp;v3d</a> ::
+        Class&nbsp;QRect
+      </span>
+    </td>
+    <td>
+      <table cellpadding="0" cellspacing="0">
+        <!-- hide/show private -->
+        <tr><td align="right"><span class="options">[<a href="javascript:void(0);" class="privatelink"
+    onclick="toggle_private();">hide&nbsp;private</a>]</span></td></tr>
+        <tr><td align="right"><span class="options"
+            >[<a href="frames.html" target="_top">frames</a
+            >]&nbsp;|&nbsp;<a href="v3d.QRect-class.html"
+            target="_top">no&nbsp;frames</a>]</span></td></tr>
+      </table>
+    </td>
+  </tr>
+</table>
+<!-- ==================== CLASS DESCRIPTION ==================== -->
+<h1 class="epydoc">Class QRect</h1><p class="nomargin-top"></p>
+<center>
+<center>  <map id="uml_class_diagram_for_v3d_qrec" name="uml_class_diagram_for_v3d_qrec">
+<area shape="rect" id="node31" href="javascript:void(0);" title="??.instance.__new__" alt="" coords="17,39,135,57"/>
+<area shape="rect" id="node1" href="javascript:void(0);" title="??.instance" alt="" coords="5,6,147,63"/>
+<area shape="rect" id="node30" href="v3d.QRect-class.html#__instance_size__" title="v3d.QRect.__instance_size__" alt="" coords="17,108,133,127"/>
+<area shape="rect" id="node30" href="v3d.QRect-class.html#__and__" title="__and__( (QRect)arg1, (QRect)arg2) &#45;&gt; object :" alt="" coords="17,129,133,148"/>
+<area shape="rect" id="node30" href="v3d.QRect-class.html#__iand__" title="__iand__( (object)arg1, (QRect)arg2) &#45;&gt; object :" alt="" coords="17,148,133,167"/>
+<area shape="rect" id="node30" href="v3d.QRect-class.html#__init__" title="__init__( (object)arg1) &#45;&gt; None :" alt="" coords="17,167,133,185"/>
+<area shape="rect" id="node30" href="v3d.QRect-class.html#__ior__" title="__ior__( (object)arg1, (QRect)arg2) &#45;&gt; object :" alt="" coords="17,185,133,204"/>
+<area shape="rect" id="node30" href="v3d.QRect-class.html#__or__" title="__or__( (QRect)arg1, (QRect)arg2) &#45;&gt; object :" alt="" coords="17,204,133,223"/>
+<area shape="rect" id="node30" href="v3d.QRect-class.html#__reduce__" title="helper for pickle" alt="" coords="17,223,133,241"/>
+<area shape="rect" id="node30" href="v3d.QRect-class.html#adjust" title="adjust( (QRect)arg1, (int)dx1, (int)dy1, (int)dx2, (int)dy2) &#45;&gt; None :" alt="" coords="17,241,133,260"/>
+<area shape="rect" id="node30" href="v3d.QRect-class.html#adjusted" title="adjusted( (QRect)arg1, (int)xp1, (int)yp1, (int)xp2, (int)yp2) &#45;&gt; QRect :" alt="" coords="17,260,133,279"/>
+<area shape="rect" id="node30" href="v3d.QRect-class.html#bottom" title="bottom( (QRect)arg1) &#45;&gt; int :" alt="" coords="17,279,133,297"/>
+<area shape="rect" id="node30" href="v3d.QRect-class.html#bottomLeft" title="bottomLeft( (QRect)arg1) &#45;&gt; QPoint :" alt="" coords="17,297,133,316"/>
+<area shape="rect" id="node30" href="v3d.QRect-class.html#bottomRight" title="bottomRight( (QRect)arg1) &#45;&gt; QPoint :" alt="" coords="17,316,133,335"/>
+<area shape="rect" id="node30" href="v3d.QRect-class.html#center" title="center( (QRect)arg1) &#45;&gt; QPoint :" alt="" coords="17,335,133,353"/>
+<area shape="rect" id="node30" href="v3d.QRect-class.html#contains" title="contains( (QRect)arg1, (QPoint)p [, (bool)proper=False]) &#45;&gt; bool :" alt="" coords="17,353,133,372"/>
+<area shape="rect" id="node30" href="v3d.QRect-class.html#y" title="y( (QRect)arg1) &#45;&gt; int :" alt="" coords="17,391,133,409"/>
+<area shape="rect" id="node2" href="v3d.QRect-class.html" title="Copyright (C) 2010 Nokia Corporation and/or its subsidiary(&#45;ies)." alt="" coords="5,83,144,415"/>
+</map>
+  <img src="uml_class_diagram_for_v3d_qrec.png" alt='' usemap="#uml_class_diagram_for_v3d_qrec" ismap="ismap" class="graph-without-title" />
+</center>
+</center>
+<hr />
+<p>Copyright (C) 2010 Nokia Corporation and/or its subsidiary(-ies). All 
+  rights reserved. Contact: Nokia Corporation (qt-info@nokia.com)</p>
+  <p>This file is part of the QtCore module of the Qt Toolkit.</p>
+  <p>$QT_BEGIN_LICENSE:LGPL$ Commercial Usage Licensees holding valid Qt 
+  Commercial licenses may use this file in accordance with the Qt 
+  Commercial License Agreement provided with the Software or, 
+  alternatively, in accordance with the terms contained in a written 
+  agreement between you and Nokia.</p>
+  <p>GNU Lesser General Public License Usage Alternatively, this file may 
+  be used under the terms of the GNU Lesser General Public License version 
+  2.1 as published by the Free Software Foundation and appearing in the 
+  file LICENSE.LGPL included in the packaging of this file.  Please review 
+  the following information to ensure the GNU Lesser General Public License
+  version 2.1 requirements will be met: 
+  http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html.</p>
+  <p>In addition, as a special exception, Nokia gives you certain 
+  additional rights.  These rights are described in the Nokia Qt LGPL 
+  Exception version 1.1, included in the file LGPL_EXCEPTION.txt in this 
+  package.</p>
+  <p>GNU General Public License Usage Alternatively, this file may be used 
+  under the terms of the GNU General Public License version 3.0 as 
+  published by the Free Software Foundation and appearing in the file 
+  LICENSE.GPL included in the packaging of this file.  Please review the 
+  following information to ensure the GNU General Public License version 
+  3.0 requirements will be met: http://www.gnu.org/copyleft/gpl.html.</p>
+  <p>If you have questions regarding the use of this file, please contact 
+  Nokia at qt-info@nokia.com. $QT_END_LICENSE$</p>
+
+<!-- ==================== INSTANCE METHODS ==================== -->
+<a name="section-InstanceMethods"></a>
+<table class="summary" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr bgcolor="#70b0f0" class="table-header">
+  <td colspan="2" class="table-header">
+    <table border="0" cellpadding="0" cellspacing="0" width="100%">
+      <tr valign="top">
+        <td align="left"><span class="table-header">Instance Methods</span></td>
+        <td align="right" valign="top"
+         ><span class="options">[<a href="#section-InstanceMethods"
+         class="privatelink" onclick="toggle_private();"
+         >hide private</a>]</span></td>
+      </tr>
+    </table>
+  </td>
+</tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.QRect-class.html#__and__" class="summary-sig-name">__and__</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      __and__( (QRect)arg1, (QRect)arg2) -&gt; object :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.QRect-class.html#__iand__" class="summary-sig-name">__iand__</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      __iand__( (object)arg1, (QRect)arg2) -&gt; object :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.QRect-class.html#__init__" class="summary-sig-name">__init__</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      __init__( (object)arg1) -&gt; None :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.QRect-class.html#__ior__" class="summary-sig-name">__ior__</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      __ior__( (object)arg1, (QRect)arg2) -&gt; object :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.QRect-class.html#__or__" class="summary-sig-name">__or__</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      __or__( (QRect)arg1, (QRect)arg2) -&gt; object :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.QRect-class.html#__reduce__" class="summary-sig-name">__reduce__</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      helper for pickle</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.QRect-class.html#adjust" class="summary-sig-name">adjust</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      adjust( (QRect)arg1, (int)dx1, (int)dy1, (int)dx2, (int)dy2) -&gt; None :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.QRect-class.html#adjusted" class="summary-sig-name">adjusted</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      adjusted( (QRect)arg1, (int)xp1, (int)yp1, (int)xp2, (int)yp2) -&gt; QRect :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.QRect-class.html#bottom" class="summary-sig-name">bottom</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      bottom( (QRect)arg1) -&gt; int :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.QRect-class.html#bottomLeft" class="summary-sig-name">bottomLeft</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      bottomLeft( (QRect)arg1) -&gt; QPoint :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.QRect-class.html#bottomRight" class="summary-sig-name">bottomRight</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      bottomRight( (QRect)arg1) -&gt; QPoint :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.QRect-class.html#center" class="summary-sig-name">center</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      center( (QRect)arg1) -&gt; QPoint :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.QRect-class.html#contains" class="summary-sig-name">contains</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      contains( (QRect)arg1, (QPoint)p [, (bool)proper=False]) -&gt; bool :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.QRect-class.html#getCoords" class="summary-sig-name">getCoords</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      getCoords( (QRect)arg1, (int)xp1, (int)yp1, (int)xp2, (int)yp2) -&gt; None :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.QRect-class.html#getRect" class="summary-sig-name">getRect</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      getRect( (QRect)arg1, (int)ax, (int)ay, (int)aw, (int)ah) -&gt; None :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.QRect-class.html#height" class="summary-sig-name">height</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      height( (QRect)arg1) -&gt; int :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.QRect-class.html#intersect" class="summary-sig-name">intersect</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      intersect( (QRect)arg1, (QRect)r) -&gt; QRect :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.QRect-class.html#intersected" class="summary-sig-name">intersected</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      intersected( (QRect)arg1, (QRect)other) -&gt; QRect :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.QRect-class.html#intersects" class="summary-sig-name">intersects</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      intersects( (QRect)arg1, (QRect)r) -&gt; bool :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.QRect-class.html#isEmpty" class="summary-sig-name">isEmpty</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      isEmpty( (QRect)arg1) -&gt; bool :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.QRect-class.html#isNull" class="summary-sig-name">isNull</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      isNull( (QRect)arg1) -&gt; bool :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.QRect-class.html#isValid" class="summary-sig-name">isValid</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      isValid( (QRect)arg1) -&gt; bool :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.QRect-class.html#left" class="summary-sig-name">left</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      left( (QRect)arg1) -&gt; int :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.QRect-class.html#moveBottom" class="summary-sig-name">moveBottom</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      moveBottom( (QRect)arg1, (int)pos) -&gt; None :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.QRect-class.html#moveBottomLeft" class="summary-sig-name">moveBottomLeft</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      moveBottomLeft( (QRect)arg1, (QPoint)p) -&gt; None :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.QRect-class.html#moveBottomRight" class="summary-sig-name">moveBottomRight</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      moveBottomRight( (QRect)arg1, (QPoint)p) -&gt; None :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.QRect-class.html#moveCenter" class="summary-sig-name">moveCenter</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      moveCenter( (QRect)arg1, (QPoint)p) -&gt; None :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.QRect-class.html#moveLeft" class="summary-sig-name">moveLeft</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      moveLeft( (QRect)arg1, (int)pos) -&gt; None :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.QRect-class.html#moveRight" class="summary-sig-name">moveRight</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      moveRight( (QRect)arg1, (int)pos) -&gt; None :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.QRect-class.html#moveTo" class="summary-sig-name">moveTo</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      moveTo( (QRect)arg1, (int)ax, (int)ay) -&gt; None :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.QRect-class.html#moveTop" class="summary-sig-name">moveTop</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      moveTop( (QRect)arg1, (int)pos) -&gt; None :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.QRect-class.html#moveTopLeft" class="summary-sig-name">moveTopLeft</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      moveTopLeft( (QRect)arg1, (QPoint)p) -&gt; None :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.QRect-class.html#moveTopRight" class="summary-sig-name">moveTopRight</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      moveTopRight( (QRect)arg1, (QPoint)p) -&gt; None :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.QRect-class.html#normalized" class="summary-sig-name">normalized</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      normalized( (QRect)arg1) -&gt; QRect :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.QRect-class.html#right" class="summary-sig-name">right</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      right( (QRect)arg1) -&gt; int :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.QRect-class.html#setBottom" class="summary-sig-name">setBottom</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      setBottom( (QRect)arg1, (int)pos) -&gt; None :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.QRect-class.html#setBottomLeft" class="summary-sig-name">setBottomLeft</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      setBottomLeft( (QRect)arg1, (QPoint)p) -&gt; None :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.QRect-class.html#setBottomRight" class="summary-sig-name">setBottomRight</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      setBottomRight( (QRect)arg1, (QPoint)p) -&gt; None :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.QRect-class.html#setCoords" class="summary-sig-name">setCoords</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      setCoords( (QRect)arg1, (int)xp1, (int)yp1, (int)xp2, (int)yp2) -&gt; None :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.QRect-class.html#setHeight" class="summary-sig-name">setHeight</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      setHeight( (QRect)arg1, (int)h) -&gt; None :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.QRect-class.html#setLeft" class="summary-sig-name">setLeft</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      setLeft( (QRect)arg1, (int)pos) -&gt; None :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.QRect-class.html#setRect" class="summary-sig-name">setRect</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      setRect( (QRect)arg1, (int)ax, (int)ay, (int)aw, (int)ah) -&gt; None :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.QRect-class.html#setRight" class="summary-sig-name">setRight</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      setRight( (QRect)arg1, (int)pos) -&gt; None :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.QRect-class.html#setSize" class="summary-sig-name">setSize</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      setSize( (QRect)arg1, (QSize)s) -&gt; None :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.QRect-class.html#setTop" class="summary-sig-name">setTop</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      setTop( (QRect)arg1, (int)pos) -&gt; None :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.QRect-class.html#setTopLeft" class="summary-sig-name">setTopLeft</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      setTopLeft( (QRect)arg1, (QPoint)p) -&gt; None :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.QRect-class.html#setTopRight" class="summary-sig-name">setTopRight</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      setTopRight( (QRect)arg1, (QPoint)p) -&gt; None :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.QRect-class.html#setWidth" class="summary-sig-name">setWidth</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      setWidth( (QRect)arg1, (int)w) -&gt; None :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.QRect-class.html#setX" class="summary-sig-name">setX</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      setX( (QRect)arg1, (int)ax) -&gt; None :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.QRect-class.html#setY" class="summary-sig-name">setY</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      setY( (QRect)arg1, (int)ay) -&gt; None :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.QRect-class.html#size" class="summary-sig-name">size</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      size( (QRect)arg1) -&gt; QSize :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.QRect-class.html#top" class="summary-sig-name">top</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      top( (QRect)arg1) -&gt; int :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.QRect-class.html#topLeft" class="summary-sig-name">topLeft</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      topLeft( (QRect)arg1) -&gt; QPoint :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.QRect-class.html#topRight" class="summary-sig-name">topRight</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      topRight( (QRect)arg1) -&gt; QPoint :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.QRect-class.html#translate" class="summary-sig-name">translate</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      translate( (QRect)arg1, (int)dx, (int)dy) -&gt; None :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.QRect-class.html#translated" class="summary-sig-name">translated</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      translated( (QRect)arg1, (int)dx, (int)dy) -&gt; QRect :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.QRect-class.html#unite" class="summary-sig-name">unite</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      unite( (QRect)arg1, (QRect)r) -&gt; QRect :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.QRect-class.html#united" class="summary-sig-name">united</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      united( (QRect)arg1, (QRect)r) -&gt; QRect :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.QRect-class.html#width" class="summary-sig-name">width</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      width( (QRect)arg1) -&gt; int :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.QRect-class.html#x" class="summary-sig-name">x</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      x( (QRect)arg1) -&gt; int :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.QRect-class.html#y" class="summary-sig-name">y</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      y( (QRect)arg1) -&gt; int :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+  <tr>
+    <td colspan="2" class="summary">
+    <p class="indent-wrapped-lines"><b>Inherited from <code><i>unreachable</i>.instance</code></b>:
+      <code>__new__</code>
+      </p>
+    <p class="indent-wrapped-lines"><b>Inherited from <code>object</code></b>:
+      <code>__delattr__</code>,
+      <code>__format__</code>,
+      <code>__getattribute__</code>,
+      <code>__hash__</code>,
+      <code>__reduce_ex__</code>,
+      <code>__repr__</code>,
+      <code>__setattr__</code>,
+      <code>__sizeof__</code>,
+      <code>__str__</code>,
+      <code>__subclasshook__</code>
+      </p>
+    </td>
+  </tr>
+</table>
+<!-- ==================== CLASS VARIABLES ==================== -->
+<a name="section-ClassVariables"></a>
+<table class="summary" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr bgcolor="#70b0f0" class="table-header">
+  <td colspan="2" class="table-header">
+    <table border="0" cellpadding="0" cellspacing="0" width="100%">
+      <tr valign="top">
+        <td align="left"><span class="table-header">Class Variables</span></td>
+        <td align="right" valign="top"
+         ><span class="options">[<a href="#section-ClassVariables"
+         class="privatelink" onclick="toggle_private();"
+         >hide private</a>]</span></td>
+      </tr>
+    </table>
+  </td>
+</tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+        <a name="__instance_size__"></a><span class="summary-name">__instance_size__</span> = <code title="24">24</code>
+    </td>
+  </tr>
+</table>
+<!-- ==================== PROPERTIES ==================== -->
+<a name="section-Properties"></a>
+<table class="summary" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr bgcolor="#70b0f0" class="table-header">
+  <td colspan="2" class="table-header">
+    <table border="0" cellpadding="0" cellspacing="0" width="100%">
+      <tr valign="top">
+        <td align="left"><span class="table-header">Properties</span></td>
+        <td align="right" valign="top"
+         ><span class="options">[<a href="#section-Properties"
+         class="privatelink" onclick="toggle_private();"
+         >hide private</a>]</span></td>
+      </tr>
+    </table>
+  </td>
+</tr>
+  <tr>
+    <td colspan="2" class="summary">
+    <p class="indent-wrapped-lines"><b>Inherited from <code>object</code></b>:
+      <code>__class__</code>
+      </p>
+    </td>
+  </tr>
+</table>
+<!-- ==================== METHOD DETAILS ==================== -->
+<a name="section-MethodDetails"></a>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr bgcolor="#70b0f0" class="table-header">
+  <td colspan="2" class="table-header">
+    <table border="0" cellpadding="0" cellspacing="0" width="100%">
+      <tr valign="top">
+        <td align="left"><span class="table-header">Method Details</span></td>
+        <td align="right" valign="top"
+         ><span class="options">[<a href="#section-MethodDetails"
+         class="privatelink" onclick="toggle_private();"
+         >hide private</a>]</span></td>
+      </tr>
+    </table>
+  </td>
+</tr>
+</table>
+<a name="__and__"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">__and__</span>(<span class="sig-arg">...</span>)</span>
+    <br /><em class="fname">(And operator)</em>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+__and__( (QRect)arg1, (QRect)arg2) -&gt; object :
+
+    C++ signature :
+        _object* __and__(QRect {lvalue},QRect)
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="__iand__"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">__iand__</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+__iand__( (object)arg1, (QRect)arg2) -&gt; object :
+
+    C++ signature :
+        _object* __iand__(boost::python::back_reference&lt;QRect&amp;&gt;,QRect)
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="__init__"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">__init__</span>(<span class="sig-arg">...</span>)</span>
+    <br /><em class="fname">(Constructor)</em>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+__init__( (object)arg1) -&gt; None :
+    
+     Copyright (C) 2010 Nokia Corporation and/or its subsidiary(-ies).
+     All rights reserved.
+     Contact: Nokia Corporation (qt-info@nokia.com)
+    
+     This file is part of the QtCore module of the Qt Toolkit.
+    
+     $QT_BEGIN_LICENSE:LGPL$
+     Commercial Usage
+     Licensees holding valid Qt Commercial licenses may use this file in
+     accordance with the Qt Commercial License Agreement provided with the
+     Software or, alternatively, in accordance with the terms contained in
+     a written agreement between you and Nokia.
+    
+     GNU Lesser General Public License Usage
+     Alternatively, this file may be used under the terms of the GNU Lesser
+     General Public License version 2.1 as published by the Free Software
+     Foundation and appearing in the file LICENSE.LGPL included in the
+     packaging of this file.  Please review the following information to
+     ensure the GNU Lesser General Public License version 2.1 requirements
+     will be met: http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html.
+    
+     In addition, as a special exception, Nokia gives you certain additional
+     rights.  These rights are described in the Nokia Qt LGPL Exception
+     version 1.1, included in the file LGPL_EXCEPTION.txt in this package.
+    
+     GNU General Public License Usage
+     Alternatively, this file may be used under the terms of the GNU
+     General Public License version 3.0 as published by the Free Software
+     Foundation and appearing in the file LICENSE.GPL included in the
+     packaging of this file.  Please review the following information to
+     ensure the GNU General Public License version 3.0 requirements will be
+     met: http://www.gnu.org/copyleft/gpl.html.
+    
+     If you have questions regarding the use of this file, please contact
+     Nokia at qt-info@nokia.com.
+     $QT_END_LICENSE$
+    
+
+    C++ signature :
+        void __init__(_object*)
+
+__init__( (object)arg1, (int)aleft, (int)atop, (int)awidth, (int)aheight) -&gt; None :
+    
+      QRect inline member functions
+    
+
+    C++ signature :
+        void __init__(_object*,int,int,int,int)
+
+__init__( (object)arg1, (QPoint)atopLeft, (QPoint)abottomRight) -&gt; None :
+
+    C++ signature :
+        void __init__(_object*,QPoint,QPoint)
+
+__init__( (object)arg1, (QPoint)atopLeft, (QSize)asize) -&gt; None :
+
+    C++ signature :
+        void __init__(_object*,QPoint,QSize)
+
+</pre>
+  <dl class="fields">
+    <dt>Overrides:
+        object.__init__
+    </dt>
+  </dl>
+</td></tr></table>
+</div>
+<a name="__ior__"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">__ior__</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+__ior__( (object)arg1, (QRect)arg2) -&gt; object :
+
+    C++ signature :
+        _object* __ior__(boost::python::back_reference&lt;QRect&amp;&gt;,QRect)
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="__or__"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">__or__</span>(<span class="sig-arg">...</span>)</span>
+    <br /><em class="fname">(Or operator)</em>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+__or__( (QRect)arg1, (QRect)arg2) -&gt; object :
+
+    C++ signature :
+        _object* __or__(QRect {lvalue},QRect)
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="__reduce__"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">__reduce__</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <p>helper for pickle</p>
+  <dl class="fields">
+    <dt>Overrides:
+        object.__reduce__
+        <dd><em class="note">(inherited documentation)</em></dd>
+    </dt>
+  </dl>
+</td></tr></table>
+</div>
+<a name="adjust"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">adjust</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+adjust( (QRect)arg1, (int)dx1, (int)dy1, (int)dx2, (int)dy2) -&gt; None :
+
+    C++ signature :
+        void adjust(QRect {lvalue},int,int,int,int)
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="adjusted"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">adjusted</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+adjusted( (QRect)arg1, (int)xp1, (int)yp1, (int)xp2, (int)yp2) -&gt; QRect :
+
+    C++ signature :
+        QRect adjusted(QRect {lvalue},int,int,int,int)
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="bottom"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">bottom</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+bottom( (QRect)arg1) -&gt; int :
+
+    C++ signature :
+        int bottom(QRect {lvalue})
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="bottomLeft"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">bottomLeft</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+bottomLeft( (QRect)arg1) -&gt; QPoint :
+
+    C++ signature :
+        QPoint bottomLeft(QRect {lvalue})
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="bottomRight"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">bottomRight</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+bottomRight( (QRect)arg1) -&gt; QPoint :
+
+    C++ signature :
+        QPoint bottomRight(QRect {lvalue})
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="center"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">center</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+center( (QRect)arg1) -&gt; QPoint :
+
+    C++ signature :
+        QPoint center(QRect {lvalue})
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="contains"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">contains</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+contains( (QRect)arg1, (QPoint)p [, (bool)proper=False]) -&gt; bool :
+
+    C++ signature :
+        bool contains(QRect {lvalue},QPoint [,bool=False])
+
+contains( (QRect)arg1, (int)ax, (int)ay) -&gt; bool :
+
+    C++ signature :
+        bool contains(QRect {lvalue},int,int)
+
+contains( (QRect)arg1, (int)ax, (int)ay, (bool)aproper) -&gt; bool :
+
+    C++ signature :
+        bool contains(QRect {lvalue},int,int,bool)
+
+contains( (QRect)arg1, (QRect)r [, (bool)proper=False]) -&gt; bool :
+
+    C++ signature :
+        bool contains(QRect {lvalue},QRect [,bool=False])
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="getCoords"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">getCoords</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+getCoords( (QRect)arg1, (int)xp1, (int)yp1, (int)xp2, (int)yp2) -&gt; None :
+
+    C++ signature :
+        void getCoords(QRect {lvalue},int*,int*,int*,int*)
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="getRect"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">getRect</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+getRect( (QRect)arg1, (int)ax, (int)ay, (int)aw, (int)ah) -&gt; None :
+
+    C++ signature :
+        void getRect(QRect {lvalue},int*,int*,int*,int*)
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="height"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">height</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+height( (QRect)arg1) -&gt; int :
+
+    C++ signature :
+        int height(QRect {lvalue})
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="intersect"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">intersect</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+intersect( (QRect)arg1, (QRect)r) -&gt; QRect :
+
+    C++ signature :
+        QRect intersect(QRect {lvalue},QRect)
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="intersected"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">intersected</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+intersected( (QRect)arg1, (QRect)other) -&gt; QRect :
+
+    C++ signature :
+        QRect intersected(QRect {lvalue},QRect)
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="intersects"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">intersects</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+intersects( (QRect)arg1, (QRect)r) -&gt; bool :
+
+    C++ signature :
+        bool intersects(QRect {lvalue},QRect)
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="isEmpty"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">isEmpty</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+isEmpty( (QRect)arg1) -&gt; bool :
+
+    C++ signature :
+        bool isEmpty(QRect {lvalue})
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="isNull"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">isNull</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+isNull( (QRect)arg1) -&gt; bool :
+
+    C++ signature :
+        bool isNull(QRect {lvalue})
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="isValid"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">isValid</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+isValid( (QRect)arg1) -&gt; bool :
+
+    C++ signature :
+        bool isValid(QRect {lvalue})
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="left"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">left</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+left( (QRect)arg1) -&gt; int :
+
+    C++ signature :
+        int left(QRect {lvalue})
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="moveBottom"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">moveBottom</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+moveBottom( (QRect)arg1, (int)pos) -&gt; None :
+
+    C++ signature :
+        void moveBottom(QRect {lvalue},int)
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="moveBottomLeft"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">moveBottomLeft</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+moveBottomLeft( (QRect)arg1, (QPoint)p) -&gt; None :
+
+    C++ signature :
+        void moveBottomLeft(QRect {lvalue},QPoint)
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="moveBottomRight"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">moveBottomRight</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+moveBottomRight( (QRect)arg1, (QPoint)p) -&gt; None :
+
+    C++ signature :
+        void moveBottomRight(QRect {lvalue},QPoint)
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="moveCenter"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">moveCenter</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+moveCenter( (QRect)arg1, (QPoint)p) -&gt; None :
+
+    C++ signature :
+        void moveCenter(QRect {lvalue},QPoint)
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="moveLeft"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">moveLeft</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+moveLeft( (QRect)arg1, (int)pos) -&gt; None :
+
+    C++ signature :
+        void moveLeft(QRect {lvalue},int)
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="moveRight"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">moveRight</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+moveRight( (QRect)arg1, (int)pos) -&gt; None :
+
+    C++ signature :
+        void moveRight(QRect {lvalue},int)
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="moveTo"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">moveTo</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+moveTo( (QRect)arg1, (int)ax, (int)ay) -&gt; None :
+
+    C++ signature :
+        void moveTo(QRect {lvalue},int,int)
+
+moveTo( (QRect)arg1, (QPoint)p) -&gt; None :
+
+    C++ signature :
+        void moveTo(QRect {lvalue},QPoint)
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="moveTop"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">moveTop</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+moveTop( (QRect)arg1, (int)pos) -&gt; None :
+
+    C++ signature :
+        void moveTop(QRect {lvalue},int)
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="moveTopLeft"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">moveTopLeft</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+moveTopLeft( (QRect)arg1, (QPoint)p) -&gt; None :
+
+    C++ signature :
+        void moveTopLeft(QRect {lvalue},QPoint)
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="moveTopRight"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">moveTopRight</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+moveTopRight( (QRect)arg1, (QPoint)p) -&gt; None :
+
+    C++ signature :
+        void moveTopRight(QRect {lvalue},QPoint)
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="normalized"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">normalized</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+normalized( (QRect)arg1) -&gt; QRect :
+
+    C++ signature :
+        QRect normalized(QRect {lvalue})
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="right"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">right</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+right( (QRect)arg1) -&gt; int :
+
+    C++ signature :
+        int right(QRect {lvalue})
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="setBottom"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">setBottom</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+setBottom( (QRect)arg1, (int)pos) -&gt; None :
+
+    C++ signature :
+        void setBottom(QRect {lvalue},int)
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="setBottomLeft"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">setBottomLeft</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+setBottomLeft( (QRect)arg1, (QPoint)p) -&gt; None :
+
+    C++ signature :
+        void setBottomLeft(QRect {lvalue},QPoint)
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="setBottomRight"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">setBottomRight</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+setBottomRight( (QRect)arg1, (QPoint)p) -&gt; None :
+
+    C++ signature :
+        void setBottomRight(QRect {lvalue},QPoint)
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="setCoords"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">setCoords</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+setCoords( (QRect)arg1, (int)xp1, (int)yp1, (int)xp2, (int)yp2) -&gt; None :
+
+    C++ signature :
+        void setCoords(QRect {lvalue},int,int,int,int)
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="setHeight"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">setHeight</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+setHeight( (QRect)arg1, (int)h) -&gt; None :
+
+    C++ signature :
+        void setHeight(QRect {lvalue},int)
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="setLeft"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">setLeft</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+setLeft( (QRect)arg1, (int)pos) -&gt; None :
+
+    C++ signature :
+        void setLeft(QRect {lvalue},int)
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="setRect"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">setRect</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+setRect( (QRect)arg1, (int)ax, (int)ay, (int)aw, (int)ah) -&gt; None :
+
+    C++ signature :
+        void setRect(QRect {lvalue},int,int,int,int)
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="setRight"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">setRight</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+setRight( (QRect)arg1, (int)pos) -&gt; None :
+
+    C++ signature :
+        void setRight(QRect {lvalue},int)
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="setSize"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">setSize</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+setSize( (QRect)arg1, (QSize)s) -&gt; None :
+
+    C++ signature :
+        void setSize(QRect {lvalue},QSize)
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="setTop"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">setTop</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+setTop( (QRect)arg1, (int)pos) -&gt; None :
+
+    C++ signature :
+        void setTop(QRect {lvalue},int)
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="setTopLeft"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">setTopLeft</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+setTopLeft( (QRect)arg1, (QPoint)p) -&gt; None :
+
+    C++ signature :
+        void setTopLeft(QRect {lvalue},QPoint)
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="setTopRight"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">setTopRight</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+setTopRight( (QRect)arg1, (QPoint)p) -&gt; None :
+
+    C++ signature :
+        void setTopRight(QRect {lvalue},QPoint)
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="setWidth"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">setWidth</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+setWidth( (QRect)arg1, (int)w) -&gt; None :
+
+    C++ signature :
+        void setWidth(QRect {lvalue},int)
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="setX"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">setX</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+setX( (QRect)arg1, (int)ax) -&gt; None :
+
+    C++ signature :
+        void setX(QRect {lvalue},int)
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="setY"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">setY</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+setY( (QRect)arg1, (int)ay) -&gt; None :
+
+    C++ signature :
+        void setY(QRect {lvalue},int)
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="size"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">size</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+size( (QRect)arg1) -&gt; QSize :
+
+    C++ signature :
+        QSize size(QRect {lvalue})
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="top"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">top</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+top( (QRect)arg1) -&gt; int :
+
+    C++ signature :
+        int top(QRect {lvalue})
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="topLeft"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">topLeft</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+topLeft( (QRect)arg1) -&gt; QPoint :
+
+    C++ signature :
+        QPoint topLeft(QRect {lvalue})
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="topRight"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">topRight</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+topRight( (QRect)arg1) -&gt; QPoint :
+
+    C++ signature :
+        QPoint topRight(QRect {lvalue})
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="translate"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">translate</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+translate( (QRect)arg1, (int)dx, (int)dy) -&gt; None :
+
+    C++ signature :
+        void translate(QRect {lvalue},int,int)
+
+translate( (QRect)arg1, (QPoint)p) -&gt; None :
+
+    C++ signature :
+        void translate(QRect {lvalue},QPoint)
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="translated"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">translated</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+translated( (QRect)arg1, (int)dx, (int)dy) -&gt; QRect :
+
+    C++ signature :
+        QRect translated(QRect {lvalue},int,int)
+
+translated( (QRect)arg1, (QPoint)p) -&gt; QRect :
+
+    C++ signature :
+        QRect translated(QRect {lvalue},QPoint)
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="unite"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">unite</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+unite( (QRect)arg1, (QRect)r) -&gt; QRect :
+
+    C++ signature :
+        QRect unite(QRect {lvalue},QRect)
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="united"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">united</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+united( (QRect)arg1, (QRect)r) -&gt; QRect :
+
+    C++ signature :
+        QRect united(QRect {lvalue},QRect)
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="width"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">width</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+width( (QRect)arg1) -&gt; int :
+
+    C++ signature :
+        int width(QRect {lvalue})
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="x"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">x</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+x( (QRect)arg1) -&gt; int :
+
+    C++ signature :
+        int x(QRect {lvalue})
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="y"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">y</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+y( (QRect)arg1) -&gt; int :
+
+    C++ signature :
+        int y(QRect {lvalue})
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<br />
+<!-- ==================== NAVIGATION BAR ==================== -->
+<table class="navbar" border="0" width="100%" cellpadding="0"
+       bgcolor="#a0c0ff" cellspacing="0">
+  <tr valign="middle">
+  <!-- Home link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="v3d-module.html">Home</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Tree link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="module-tree.html">Trees</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Index link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="identifier-index.html">Indices</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Help link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="help.html">Help</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Project homepage -->
+      <th class="navbar" align="right" width="100%">
+        <table border="0" cellpadding="0" cellspacing="0">
+          <tr><th class="navbar" align="center"
+            ><a class="navbar" target="_top" href="http://penglab.janelia.org/proj/v3d/V3D/About_V3D.html">V3D python</a></th>
+          </tr></table></th>
+  </tr>
+</table>
+<table border="0" cellpadding="0" cellspacing="0" width="100%%">
+  <tr>
+    <td align="left" class="footer">
+    Generated by Epydoc 3.0.1 on Thu Feb 10 11:40:28 2011
+    </td>
+    <td align="right" class="footer">
+      <a target="mainFrame" href="http://epydoc.sourceforge.net"
+        >http://epydoc.sourceforge.net</a>
+    </td>
+  </tr>
+</table>
+
+<script type="text/javascript">
+  <!--
+  // Private objects are initially displayed (because if
+  // javascript is turned off then we want them to be
+  // visible); but by default, we want to hide them.  So hide
+  // them unless we have a cookie that says to show them.
+  checkCookie();
+  // -->
+</script>
+</body>
+</html>

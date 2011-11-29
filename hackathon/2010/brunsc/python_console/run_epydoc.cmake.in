@@ -1,0 +1,12 @@
+
+set(ENV{PYTHONPATH} "@V3D_PYTHON_CONSOLE_PLUGIN_OUTPUT_DIR@")
+execute_process(COMMAND 
+    "@EPYDOC_EXECUTABLE@"
+    --html
+    v3d
+    -o "@DOC_DIR@"
+    --name "V3D python"
+    --url "http://penglab.janelia.org/proj/v3d/V3D/About_V3D.html"
+    @EPYDOC_OPTIONS@
+)
+

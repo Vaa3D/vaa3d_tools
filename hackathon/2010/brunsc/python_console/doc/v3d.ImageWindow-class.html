@@ -1,0 +1,1576 @@
+<?xml version="1.0" encoding="ascii"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+          "DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+  <title>v3d.ImageWindow</title>
+  <link rel="stylesheet" href="epydoc.css" type="text/css" />
+  <script type="text/javascript" src="epydoc.js"></script>
+</head>
+
+<body bgcolor="white" text="black" link="blue" vlink="#204080"
+      alink="#204080">
+<!-- ==================== NAVIGATION BAR ==================== -->
+<table class="navbar" border="0" width="100%" cellpadding="0"
+       bgcolor="#a0c0ff" cellspacing="0">
+  <tr valign="middle">
+  <!-- Home link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="v3d-module.html">Home</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Tree link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="module-tree.html">Trees</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Index link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="identifier-index.html">Indices</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Help link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="help.html">Help</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Project homepage -->
+      <th class="navbar" align="right" width="100%">
+        <table border="0" cellpadding="0" cellspacing="0">
+          <tr><th class="navbar" align="center"
+            ><a class="navbar" target="_top" href="http://penglab.janelia.org/proj/v3d/V3D/About_V3D.html">V3D python</a></th>
+          </tr></table></th>
+  </tr>
+</table>
+<table width="100%" cellpadding="0" cellspacing="0">
+  <tr valign="top">
+    <td width="100%">
+      <span class="breadcrumbs">
+        <a href="v3d-module.html">Module&nbsp;v3d</a> ::
+        Class&nbsp;ImageWindow
+      </span>
+    </td>
+    <td>
+      <table cellpadding="0" cellspacing="0">
+        <!-- hide/show private -->
+        <tr><td align="right"><span class="options">[<a href="javascript:void(0);" class="privatelink"
+    onclick="toggle_private();">hide&nbsp;private</a>]</span></td></tr>
+        <tr><td align="right"><span class="options"
+            >[<a href="frames.html" target="_top">frames</a
+            >]&nbsp;|&nbsp;<a href="v3d.ImageWindow-class.html"
+            target="_top">no&nbsp;frames</a>]</span></td></tr>
+      </table>
+    </td>
+  </tr>
+</table>
+<!-- ==================== CLASS DESCRIPTION ==================== -->
+<h1 class="epydoc">Class ImageWindow</h1><p class="nomargin-top"></p>
+<center>
+<center>  <map id="uml_class_diagram_for_v3d_imag_3" name="uml_class_diagram_for_v3d_imag_3">
+<area shape="rect" id="node12" href="javascript:void(0);" title="??.instance.__new__" alt="" coords="41,39,159,57"/>
+<area shape="rect" id="node1" href="javascript:void(0);" title="??.instance" alt="" coords="29,6,171,63"/>
+<area shape="rect" id="node11" href="v3d.ImageWindow-class.html#__instance_size__" title="v3d.ImageWindow.__instance_size__" alt="" coords="17,108,181,127"/>
+<area shape="rect" id="node11" href="v3d.ImageWindow-class.html#image" title="v3d.ImageWindow.image" alt="" coords="17,127,181,145"/>
+<area shape="rect" id="node11" href="v3d.ImageWindow-class.html#localView3DControl" title="v3d.ImageWindow.localView3DControl" alt="" coords="17,145,181,164"/>
+<area shape="rect" id="node11" href="v3d.ImageWindow-class.html#name" title="v3d.ImageWindow.name" alt="" coords="17,164,181,183"/>
+<area shape="rect" id="node11" href="v3d.ImageWindow-class.html#triViewControl" title="v3d.ImageWindow.triViewControl" alt="" coords="17,183,181,201"/>
+<area shape="rect" id="node11" href="v3d.ImageWindow-class.html#view3DControl" title="v3d.ImageWindow.view3DControl" alt="" coords="17,201,181,220"/>
+<area shape="rect" id="node11" href="v3d.ImageWindow-class.html#__init__" title="__init__( (object)arg1, (str)name) &#45;&gt; None :" alt="" coords="17,223,181,241"/>
+<area shape="rect" id="node11" href="v3d.ImageWindow-class.html#__reduce__" title="helper for pickle" alt="" coords="17,241,181,260"/>
+<area shape="rect" id="node11" href="v3d.ImageWindow-class.html#close3DWindow" title="close3DWindow( (ImageWindow)arg1) &#45;&gt; None :" alt="" coords="17,260,181,279"/>
+<area shape="rect" id="node11" href="v3d.ImageWindow-class.html#closeROI3DWindow" title="closeROI3DWindow( (ImageWindow)arg1) &#45;&gt; None :" alt="" coords="17,279,181,297"/>
+<area shape="rect" id="node11" href="v3d.ImageWindow-class.html#current" title="Returns the currently displayed V3D image window." alt="" coords="17,297,181,316"/>
+<area shape="rect" id="node11" href="v3d.ImageWindow-class.html#currentHiddenSelected" title="C++ signature :..." alt="" coords="17,316,181,335"/>
+<area shape="rect" id="node11" href="v3d.ImageWindow-class.html#getImage" title="getImage( (ImageWindow)arg1) &#45;&gt; Image4DSimple :" alt="" coords="17,335,181,353"/>
+<area shape="rect" id="node11" href="v3d.ImageWindow-class.html#getLandmark" title="getLandmark( (ImageWindow)arg1) &#45;&gt; object :" alt="" coords="17,353,181,372"/>
+<area shape="rect" id="node11" href="v3d.ImageWindow-class.html#getLocalView3DControl" title="getLocalView3DControl( (ImageWindow)arg1) &#45;&gt; View3DControl :" alt="" coords="17,372,181,391"/>
+<area shape="rect" id="node11" href="v3d.ImageWindow-class.html#getName" title="getName( (ImageWindow)arg1) &#45;&gt; str :" alt="" coords="17,391,181,409"/>
+<area shape="rect" id="node11" href="v3d.ImageWindow-class.html#getROI" title="getROI( (ImageWindow)arg1) &#45;&gt; object :" alt="" coords="17,409,181,428"/>
+<area shape="rect" id="node11" href="v3d.ImageWindow-class.html#getSWC" title="getSWC( (ImageWindow)arg1) &#45;&gt; NeuronTree :" alt="" coords="17,428,181,447"/>
+<area shape="rect" id="node11" href="v3d.ImageWindow-class.html#getTriviewControl" title="getTriviewControl( (ImageWindow)arg1) &#45;&gt; TriviewControl :" alt="" coords="17,447,181,465"/>
+<area shape="rect" id="node11" href="v3d.ImageWindow-class.html#update" title="update( (ImageWindow)arg1) &#45;&gt; None :" alt="" coords="17,484,181,503"/>
+<area shape="rect" id="node2" href="v3d.ImageWindow-class.html" title="A primary TriView window in the V3D interface." alt="" coords="5,83,192,509"/>
+</map>
+  <img src="uml_class_diagram_for_v3d_imag_3.png" alt='' usemap="#uml_class_diagram_for_v3d_imag_3" ismap="ismap" class="graph-without-title" />
+</center>
+</center>
+<hr />
+<p>A primary TriView window in the V3D interface.</p>
+
+<!-- ==================== INSTANCE METHODS ==================== -->
+<a name="section-InstanceMethods"></a>
+<table class="summary" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr bgcolor="#70b0f0" class="table-header">
+  <td colspan="2" class="table-header">
+    <table border="0" cellpadding="0" cellspacing="0" width="100%">
+      <tr valign="top">
+        <td align="left"><span class="table-header">Instance Methods</span></td>
+        <td align="right" valign="top"
+         ><span class="options">[<a href="#section-InstanceMethods"
+         class="privatelink" onclick="toggle_private();"
+         >hide private</a>]</span></td>
+      </tr>
+    </table>
+  </td>
+</tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.ImageWindow-class.html#__init__" class="summary-sig-name">__init__</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      __init__( (object)arg1, (str)name) -&gt; None :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.ImageWindow-class.html#__reduce__" class="summary-sig-name">__reduce__</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      helper for pickle</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.ImageWindow-class.html#close3DWindow" class="summary-sig-name">close3DWindow</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      close3DWindow( (ImageWindow)arg1) -&gt; None :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.ImageWindow-class.html#closeROI3DWindow" class="summary-sig-name">closeROI3DWindow</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      closeROI3DWindow( (ImageWindow)arg1) -&gt; None :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.ImageWindow-class.html#getImage" class="summary-sig-name">getImage</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      getImage( (ImageWindow)arg1) -&gt; Image4DSimple :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.ImageWindow-class.html#getLandmark" class="summary-sig-name">getLandmark</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      getLandmark( (ImageWindow)arg1) -&gt; object :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.ImageWindow-class.html#getLocalView3DControl" class="summary-sig-name">getLocalView3DControl</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      getLocalView3DControl( (ImageWindow)arg1) -&gt; View3DControl :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.ImageWindow-class.html#getName" class="summary-sig-name">getName</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      getName( (ImageWindow)arg1) -&gt; str :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.ImageWindow-class.html#getROI" class="summary-sig-name">getROI</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      getROI( (ImageWindow)arg1) -&gt; object :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.ImageWindow-class.html#getSWC" class="summary-sig-name">getSWC</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      getSWC( (ImageWindow)arg1) -&gt; NeuronTree :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.ImageWindow-class.html#getTriviewControl" class="summary-sig-name">getTriviewControl</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      getTriviewControl( (ImageWindow)arg1) -&gt; TriviewControl :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.ImageWindow-class.html#getView3DControl" class="summary-sig-name">getView3DControl</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      getView3DControl( (ImageWindow)arg1) -&gt; View3DControl :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.ImageWindow-class.html#open3DWindow" class="summary-sig-name">open3DWindow</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      open3DWindow( (ImageWindow)arg1) -&gt; None :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.ImageWindow-class.html#openROI3DWindow" class="summary-sig-name">openROI3DWindow</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      openROI3DWindow( (ImageWindow)arg1) -&gt; None :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.ImageWindow-class.html#pushImageIn3DWindow" class="summary-sig-name">pushImageIn3DWindow</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      pushImageIn3DWindow( (ImageWindow)arg1) -&gt; None :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.ImageWindow-class.html#pushObjectIn3DWindow" class="summary-sig-name">pushObjectIn3DWindow</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      pushObjectIn3DWindow( (ImageWindow)arg1) -&gt; None :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.ImageWindow-class.html#pushTimepointIn3DWindow" class="summary-sig-name">pushTimepointIn3DWindow</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      pushTimepointIn3DWindow( (ImageWindow)arg1, (int)timepoint) -&gt; int :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.ImageWindow-class.html#screenShot3DWindow" class="summary-sig-name">screenShot3DWindow</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      screenShot3DWindow( (ImageWindow)arg1, (str)BMPfilename) -&gt; bool :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.ImageWindow-class.html#screenShotROI3DWindow" class="summary-sig-name">screenShotROI3DWindow</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      screenShotROI3DWindow( (ImageWindow)arg1, (str)BMPfilename) -&gt; bool :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.ImageWindow-class.html#setImage" class="summary-sig-name">setImage</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      setImage( (ImageWindow)arg1, (Image4DSimple)image) -&gt; bool :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.ImageWindow-class.html#setLandmark" class="summary-sig-name">setLandmark</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      setLandmark( (ImageWindow)arg1, (object)landmark_list) -&gt; bool :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.ImageWindow-class.html#setName" class="summary-sig-name">setName</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      setName( (ImageWindow)arg1, (str)name) -&gt; None :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.ImageWindow-class.html#setROI" class="summary-sig-name">setROI</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      setROI( (ImageWindow)arg1, (object)roi_list) -&gt; bool :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.ImageWindow-class.html#setSWC" class="summary-sig-name">setSWC</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      setSWC( (ImageWindow)arg1, (NeuronTree)nt) -&gt; bool :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.ImageWindow-class.html#update" class="summary-sig-name">update</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      update( (ImageWindow)arg1) -&gt; None :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+  <tr>
+    <td colspan="2" class="summary">
+    <p class="indent-wrapped-lines"><b>Inherited from <code><i>unreachable</i>.instance</code></b>:
+      <code>__new__</code>
+      </p>
+    <p class="indent-wrapped-lines"><b>Inherited from <code>object</code></b>:
+      <code>__delattr__</code>,
+      <code>__format__</code>,
+      <code>__getattribute__</code>,
+      <code>__hash__</code>,
+      <code>__reduce_ex__</code>,
+      <code>__repr__</code>,
+      <code>__setattr__</code>,
+      <code>__sizeof__</code>,
+      <code>__str__</code>,
+      <code>__subclasshook__</code>
+      </p>
+    </td>
+  </tr>
+</table>
+<!-- ==================== STATIC METHODS ==================== -->
+<a name="section-StaticMethods"></a>
+<table class="summary" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr bgcolor="#70b0f0" class="table-header">
+  <td colspan="2" class="table-header">
+    <table border="0" cellpadding="0" cellspacing="0" width="100%">
+      <tr valign="top">
+        <td align="left"><span class="table-header">Static Methods</span></td>
+        <td align="right" valign="top"
+         ><span class="options">[<a href="#section-StaticMethods"
+         class="privatelink" onclick="toggle_private();"
+         >hide private</a>]</span></td>
+      </tr>
+    </table>
+  </td>
+</tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">ImageWindow :</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.ImageWindow-class.html#current" class="summary-sig-name">current</a>()</span><br />
+      Returns the currently displayed V3D image window.</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">ImageWindow :</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.ImageWindow-class.html#currentHiddenSelected" class="summary-sig-name">currentHiddenSelected</a>()</span><br />
+      C++ signature :...</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+</table>
+<!-- ==================== CLASS VARIABLES ==================== -->
+<a name="section-ClassVariables"></a>
+<table class="summary" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr bgcolor="#70b0f0" class="table-header">
+  <td colspan="2" class="table-header">
+    <table border="0" cellpadding="0" cellspacing="0" width="100%">
+      <tr valign="top">
+        <td align="left"><span class="table-header">Class Variables</span></td>
+        <td align="right" valign="top"
+         ><span class="options">[<a href="#section-ClassVariables"
+         class="privatelink" onclick="toggle_private();"
+         >hide private</a>]</span></td>
+      </tr>
+    </table>
+  </td>
+</tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+        <a name="__instance_size__"></a><span class="summary-name">__instance_size__</span> = <code title="20">20</code>
+    </td>
+  </tr>
+</table>
+<!-- ==================== PROPERTIES ==================== -->
+<a name="section-Properties"></a>
+<table class="summary" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr bgcolor="#70b0f0" class="table-header">
+  <td colspan="2" class="table-header">
+    <table border="0" cellpadding="0" cellspacing="0" width="100%">
+      <tr valign="top">
+        <td align="left"><span class="table-header">Properties</span></td>
+        <td align="right" valign="top"
+         ><span class="options">[<a href="#section-Properties"
+         class="privatelink" onclick="toggle_private();"
+         >hide private</a>]</span></td>
+      </tr>
+    </table>
+  </td>
+</tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+        <a href="v3d.ImageWindow-class.html#image" class="summary-name">image</a>
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+        <a href="v3d.ImageWindow-class.html#localView3DControl" class="summary-name">localView3DControl</a>
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+        <a href="v3d.ImageWindow-class.html#name" class="summary-name">name</a>
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+        <a href="v3d.ImageWindow-class.html#triViewControl" class="summary-name">triViewControl</a>
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+        <a href="v3d.ImageWindow-class.html#view3DControl" class="summary-name">view3DControl</a>
+    </td>
+  </tr>
+  <tr>
+    <td colspan="2" class="summary">
+    <p class="indent-wrapped-lines"><b>Inherited from <code>object</code></b>:
+      <code>__class__</code>
+      </p>
+    </td>
+  </tr>
+</table>
+<!-- ==================== METHOD DETAILS ==================== -->
+<a name="section-MethodDetails"></a>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr bgcolor="#70b0f0" class="table-header">
+  <td colspan="2" class="table-header">
+    <table border="0" cellpadding="0" cellspacing="0" width="100%">
+      <tr valign="top">
+        <td align="left"><span class="table-header">Method Details</span></td>
+        <td align="right" valign="top"
+         ><span class="options">[<a href="#section-MethodDetails"
+         class="privatelink" onclick="toggle_private();"
+         >hide private</a>]</span></td>
+      </tr>
+    </table>
+  </td>
+</tr>
+</table>
+<a name="__init__"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">__init__</span>(<span class="sig-arg">...</span>)</span>
+    <br /><em class="fname">(Constructor)</em>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+__init__( (object)arg1, (str)name) -&gt; None :
+    
+     Creates a new V3D Image window.
+    
+     @param name: the name that appears in the title bar of the new window.
+    
+
+    C++ signature :
+        void __init__(_object*,std::string)
+
+</pre>
+  <dl class="fields">
+    <dt>Overrides:
+        object.__init__
+    </dt>
+  </dl>
+</td></tr></table>
+</div>
+<a name="__reduce__"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">__reduce__</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <p>helper for pickle</p>
+  <dl class="fields">
+    <dt>Overrides:
+        object.__reduce__
+        <dd><em class="note">(inherited documentation)</em></dd>
+    </dt>
+  </dl>
+</td></tr></table>
+</div>
+<a name="close3DWindow"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">close3DWindow</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+close3DWindow( (ImageWindow)arg1) -&gt; None :
+
+    C++ signature :
+        void close3DWindow(ImageWindow {lvalue})
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="closeROI3DWindow"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">closeROI3DWindow</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+closeROI3DWindow( (ImageWindow)arg1) -&gt; None :
+
+    C++ signature :
+        void closeROI3DWindow(ImageWindow {lvalue})
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="current"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">current</span>()</span>
+    <br /><em class="fname">Static Method</em>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+     Returns the currently displayed V3D image window.
+    
+
+    C++ signature :
+        ImageWindow current()
+
+</pre>
+  <dl class="fields">
+    <dt>Returns: ImageWindow :</dt>
+  </dl>
+</td></tr></table>
+</div>
+<a name="currentHiddenSelected"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">currentHiddenSelected</span>()</span>
+    <br /><em class="fname">Static Method</em>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+    C++ signature :
+        ImageWindow currentHiddenSelected()
+
+</pre>
+  <dl class="fields">
+    <dt>Returns: ImageWindow :</dt>
+  </dl>
+</td></tr></table>
+</div>
+<a name="getImage"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">getImage</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+getImage( (ImageWindow)arg1) -&gt; Image4DSimple :
+
+    C++ signature :
+        Image4DSimple* getImage(ImageWindow {lvalue})
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="getLandmark"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">getLandmark</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+getLandmark( (ImageWindow)arg1) -&gt; object :
+
+    C++ signature :
+        QList&lt;LocationSimple&gt; getLandmark(ImageWindow {lvalue})
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="getLocalView3DControl"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">getLocalView3DControl</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+getLocalView3DControl( (ImageWindow)arg1) -&gt; View3DControl :
+
+    C++ signature :
+        View3DControl* getLocalView3DControl(ImageWindow {lvalue})
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="getName"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">getName</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+getName( (ImageWindow)arg1) -&gt; str :
+
+    C++ signature :
+        std::string getName(ImageWindow {lvalue})
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="getROI"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">getROI</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+getROI( (ImageWindow)arg1) -&gt; object :
+
+    C++ signature :
+        QList&lt;QPolygon&gt; getROI(ImageWindow {lvalue})
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="getSWC"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">getSWC</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+getSWC( (ImageWindow)arg1) -&gt; NeuronTree :
+
+    C++ signature :
+        NeuronTree getSWC(ImageWindow {lvalue})
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="getTriviewControl"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">getTriviewControl</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+getTriviewControl( (ImageWindow)arg1) -&gt; TriviewControl :
+
+    C++ signature :
+        TriviewControl* getTriviewControl(ImageWindow {lvalue})
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="getView3DControl"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">getView3DControl</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+getView3DControl( (ImageWindow)arg1) -&gt; View3DControl :
+    
+     Returns a View3DControl object, used to manipulate the 3D
+     volume window.
+    
+
+    C++ signature :
+        View3DControl* getView3DControl(ImageWindow {lvalue})
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="open3DWindow"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">open3DWindow</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+open3DWindow( (ImageWindow)arg1) -&gt; None :
+    
+     Creates or opens a 3D volume visualization window showing the
+     same image as this ImageWindow.
+    
+
+    C++ signature :
+        void open3DWindow(ImageWindow {lvalue})
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="openROI3DWindow"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">openROI3DWindow</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+openROI3DWindow( (ImageWindow)arg1) -&gt; None :
+
+    C++ signature :
+        void openROI3DWindow(ImageWindow {lvalue})
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="pushImageIn3DWindow"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">pushImageIn3DWindow</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+pushImageIn3DWindow( (ImageWindow)arg1) -&gt; None :
+
+    C++ signature :
+        void pushImageIn3DWindow(ImageWindow {lvalue})
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="pushObjectIn3DWindow"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">pushObjectIn3DWindow</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+pushObjectIn3DWindow( (ImageWindow)arg1) -&gt; None :
+
+    C++ signature :
+        void pushObjectIn3DWindow(ImageWindow {lvalue})
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="pushTimepointIn3DWindow"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">pushTimepointIn3DWindow</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+pushTimepointIn3DWindow( (ImageWindow)arg1, (int)timepoint) -&gt; int :
+
+    C++ signature :
+        int pushTimepointIn3DWindow(ImageWindow {lvalue},int)
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="screenShot3DWindow"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">screenShot3DWindow</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+screenShot3DWindow( (ImageWindow)arg1, (str)BMPfilename) -&gt; bool :
+
+    C++ signature :
+        bool screenShot3DWindow(ImageWindow {lvalue},std::string)
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="screenShotROI3DWindow"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">screenShotROI3DWindow</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+screenShotROI3DWindow( (ImageWindow)arg1, (str)BMPfilename) -&gt; bool :
+
+    C++ signature :
+        bool screenShotROI3DWindow(ImageWindow {lvalue},std::string)
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="setImage"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">setImage</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+setImage( (ImageWindow)arg1, (Image4DSimple)image) -&gt; bool :
+
+    C++ signature :
+        bool setImage(ImageWindow {lvalue},Image4DSimple*)
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="setLandmark"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">setLandmark</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+setLandmark( (ImageWindow)arg1, (object)landmark_list) -&gt; bool :
+
+    C++ signature :
+        bool setLandmark(ImageWindow {lvalue},QList&lt;LocationSimple&gt; {lvalue})
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="setName"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">setName</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+setName( (ImageWindow)arg1, (str)name) -&gt; None :
+
+    C++ signature :
+        void setName(ImageWindow {lvalue},std::string)
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="setROI"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">setROI</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+setROI( (ImageWindow)arg1, (object)roi_list) -&gt; bool :
+
+    C++ signature :
+        bool setROI(ImageWindow {lvalue},QList&lt;QPolygon&gt; {lvalue})
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="setSWC"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">setSWC</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+setSWC( (ImageWindow)arg1, (NeuronTree)nt) -&gt; bool :
+
+    C++ signature :
+        bool setSWC(ImageWindow {lvalue},NeuronTree {lvalue})
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="update"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">update</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+update( (ImageWindow)arg1) -&gt; None :
+
+    C++ signature :
+        void update(ImageWindow {lvalue})
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<br />
+<!-- ==================== PROPERTY DETAILS ==================== -->
+<a name="section-PropertyDetails"></a>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr bgcolor="#70b0f0" class="table-header">
+  <td colspan="2" class="table-header">
+    <table border="0" cellpadding="0" cellspacing="0" width="100%">
+      <tr valign="top">
+        <td align="left"><span class="table-header">Property Details</span></td>
+        <td align="right" valign="top"
+         ><span class="options">[<a href="#section-PropertyDetails"
+         class="privatelink" onclick="toggle_private();"
+         >hide private</a>]</span></td>
+      </tr>
+    </table>
+  </td>
+</tr>
+</table>
+<a name="image"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <h3 class="epydoc">image</h3>
+  
+  <dl class="fields">
+    <dt>Get Method:</dt>
+    <dd class="value"><span class="summary-sig"><i>unreachable</i>(<span class="summary-sig-arg">...</span>)</span>
+    </dd>
+    <dt>Set Method:</dt>
+    <dd class="value"><span class="summary-sig"><i>unreachable</i>(<span class="summary-sig-arg">...</span>)</span>
+    </dd>
+  </dl>
+</td></tr></table>
+</div>
+<a name="localView3DControl"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <h3 class="epydoc">localView3DControl</h3>
+  
+  <dl class="fields">
+    <dt>Get Method:</dt>
+    <dd class="value"><span class="summary-sig"><i>unreachable</i>(<span class="summary-sig-arg">...</span>)</span>
+    </dd>
+  </dl>
+</td></tr></table>
+</div>
+<a name="name"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <h3 class="epydoc">name</h3>
+  
+  <dl class="fields">
+    <dt>Get Method:</dt>
+    <dd class="value"><span class="summary-sig"><i>unreachable</i>(<span class="summary-sig-arg">...</span>)</span>
+    </dd>
+    <dt>Set Method:</dt>
+    <dd class="value"><span class="summary-sig"><i>unreachable</i>(<span class="summary-sig-arg">...</span>)</span>
+    </dd>
+  </dl>
+</td></tr></table>
+</div>
+<a name="triViewControl"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <h3 class="epydoc">triViewControl</h3>
+  
+  <dl class="fields">
+    <dt>Get Method:</dt>
+    <dd class="value"><span class="summary-sig"><i>unreachable</i>(<span class="summary-sig-arg">...</span>)</span>
+    </dd>
+  </dl>
+</td></tr></table>
+</div>
+<a name="view3DControl"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <h3 class="epydoc">view3DControl</h3>
+  
+  <dl class="fields">
+    <dt>Get Method:</dt>
+    <dd class="value"><span class="summary-sig"><i>unreachable</i>(<span class="summary-sig-arg">...</span>)</span>
+    </dd>
+  </dl>
+</td></tr></table>
+</div>
+<br />
+<!-- ==================== NAVIGATION BAR ==================== -->
+<table class="navbar" border="0" width="100%" cellpadding="0"
+       bgcolor="#a0c0ff" cellspacing="0">
+  <tr valign="middle">
+  <!-- Home link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="v3d-module.html">Home</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Tree link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="module-tree.html">Trees</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Index link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="identifier-index.html">Indices</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Help link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="help.html">Help</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Project homepage -->
+      <th class="navbar" align="right" width="100%">
+        <table border="0" cellpadding="0" cellspacing="0">
+          <tr><th class="navbar" align="center"
+            ><a class="navbar" target="_top" href="http://penglab.janelia.org/proj/v3d/V3D/About_V3D.html">V3D python</a></th>
+          </tr></table></th>
+  </tr>
+</table>
+<table border="0" cellpadding="0" cellspacing="0" width="100%%">
+  <tr>
+    <td align="left" class="footer">
+    Generated by Epydoc 3.0.1 on Thu Feb 10 11:40:28 2011
+    </td>
+    <td align="right" class="footer">
+      <a target="mainFrame" href="http://epydoc.sourceforge.net"
+        >http://epydoc.sourceforge.net</a>
+    </td>
+  </tr>
+</table>
+
+<script type="text/javascript">
+  <!--
+  // Private objects are initially displayed (because if
+  // javascript is turned off then we want them to be
+  // visible); but by default, we want to hide them.  So hide
+  // them unless we have a cookie that says to show them.
+  checkCookie();
+  // -->
+</script>
+</body>
+</html>

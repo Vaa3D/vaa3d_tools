@@ -1,0 +1,70 @@
+CLASS QWidget TestWidget
+
+D QLabel ori_x_label "ori x :"
+D QLineEdit ori_x_edit "50.00"
+
+D QLabel ori_y_label "ori y :"
+D QLineEdit ori_y_edit "50.00"
+
+D QLabel ori_z_label "ori z :"
+D QLineEdit ori_z_edit "0.00"
+
+D QLabel radius_label "radius :"
+D QLineEdit radius_edit "5"
+
+D QLabel step_length_label "step length :"
+D QLineEdit step_length_edit "20"
+
+D QLabel nrows_label "num rows :"
+D QSpinBox nrows_spin | setValue(5)
+
+D QLabel ncols_label "num cols :"
+D QSpinBox ncols_spin | setValue(3)
+
+D QLabel nlayers_label "num layers :"
+D QSpinBox nlayers_spin | setValue(1)
+
+D QPushButton create_button "create"
+D QPushButton clear_button "clear"
+
+D QGridLayout gridLayout
+L 0 0 ori_x_label
+L 0 1 ori_x_edit
+L 1 0 ori_y_label
+L 1 1 ori_y_edit
+L 2 0 ori_z_label
+L 2 1 ori_z_edit
+L 3 0 radius_label
+L 3 1 radius_edit
+L 4 0 step_length_label
+L 4 1 step_length_edit
+L 5 0 nrows_label
+L 5 1 nrows_spin
+L 6 0 ncols_label
+L 6 1 ncols_spin
+L 7 0 nlayers_label
+L 7 1 nlayers_spin
+L 8 0 create_button 1 2
+L 9 0 clear_button 1 2
+
+C ori_x_edit textChanged(const QString &) this update()
+C ori_y_edit textChanged(const QString &) this update()
+C ori_z_edit textChanged(const QString &) this update()
+C radius_edit textChanged(const QString &) this update()
+C step_length_edit textChanged(const QString &) this update()
+C nrows_spin valueChanged(int) this update()
+C ncols_spin valueChanged(int) this update()
+C nlayers_spin valueChanged(int) this update()
+
+R this | setLayout(gridLayout)
+R this | setWindowTitle("Best Spanning Tree")
+
+U double ori_x | ori_x_edit->text().toDouble()
+U double ori_y | ori_y_edit->text().toDouble()
+U double ori_z | ori_z_edit->text().toDouble()
+U double radius | radius_edit->text().toDouble()
+U double step_length | step_length_edit->text().toDouble()
+U int nrows | nrows_spin->text().toInt()
+U int ncols | ncols_spin->text().toInt()
+U int nlayers | nlayers_spin->text().toInt()
+

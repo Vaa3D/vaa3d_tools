@@ -1,0 +1,438 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>FineTuningDialog</class>
+ <widget class="QDialog" name="FineTuningDialog">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1025</width>
+    <height>779</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Dialog</string>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout_5">
+   <item>
+    <widget class="QGroupBox" name="mainGroupBox_2">
+     <property name="title">
+      <string/>
+     </property>
+     <layout class="QHBoxLayout" name="horizontalLayout">
+      <item>
+       <widget class="QGroupBox" name="mainGroupBox">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Maximum" vsizetype="Preferred">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="minimumSize">
+         <size>
+          <width>200</width>
+          <height>0</height>
+         </size>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>200</width>
+          <height>16777215</height>
+         </size>
+        </property>
+        <property name="title">
+         <string>Control</string>
+        </property>
+        <layout class="QVBoxLayout" name="verticalLayout_3">
+         <item>
+          <widget class="QGroupBox" name="operationGroupBox">
+           <property name="title">
+            <string>Operation</string>
+           </property>
+           <layout class="QVBoxLayout" name="verticalLayout">
+            <item>
+             <widget class="QPushButton" name="loadTreeButton">
+              <property name="text">
+               <string>Load Tree</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="loadSingleCellButton">
+              <property name="text">
+               <string>Load Single Cell</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="saveResultButton">
+              <property name="text">
+               <string>Save Result</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+         </item>
+         <item>
+          <widget class="QGroupBox" name="createTreeGroupBox">
+           <property name="title">
+            <string>create tree</string>
+           </property>
+           <layout class="QGridLayout" name="gridLayout">
+            <item row="2" column="2">
+             <widget class="QLineEdit" name="singleEditor"/>
+            </item>
+            <item row="0" column="0">
+             <widget class="QLabel" name="minLabel">
+              <property name="text">
+               <string>min</string>
+              </property>
+             </widget>
+            </item>
+            <item row="0" column="2">
+             <widget class="QLineEdit" name="minEditor"/>
+            </item>
+            <item row="1" column="0">
+             <widget class="QLabel" name="maxLabel">
+              <property name="text">
+               <string>max</string>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="2">
+             <widget class="QLineEdit" name="maxEditor"/>
+            </item>
+            <item row="2" column="0" colspan="2">
+             <widget class="QLabel" name="singleLabel">
+              <property name="text">
+               <string>single</string>
+              </property>
+             </widget>
+            </item>
+            <item row="3" column="0" colspan="3">
+             <widget class="QPushButton" name="createTreeButton">
+              <property name="text">
+               <string>Create Tree</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+         </item>
+         <item>
+          <widget class="QGroupBox" name="infoGroupBox">
+           <property name="title">
+            <string>Information</string>
+           </property>
+           <layout class="QGridLayout" name="gridLayout_2">
+            <item row="1" column="0">
+             <widget class="QLabel" name="heightLabel1">
+              <property name="text">
+               <string>height :</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+              </property>
+             </widget>
+            </item>
+            <item row="2" column="0">
+             <widget class="QLabel" name="depthLabel1">
+              <property name="text">
+               <string>depth :</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+              </property>
+             </widget>
+            </item>
+            <item row="3" column="0" colspan="2">
+             <widget class="Line" name="line">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+             </widget>
+            </item>
+            <item row="4" column="0">
+             <widget class="QLabel" name="mainLabelLabel1">
+              <property name="text">
+               <string>label:</string>
+              </property>
+             </widget>
+            </item>
+            <item row="5" column="0">
+             <widget class="QLabel" name="levelLabel1">
+              <property name="text">
+               <string>level :</string>
+              </property>
+             </widget>
+            </item>
+            <item row="5" column="1">
+             <widget class="QLabel" name="levelLabel2">
+              <property name="text">
+               <string>90</string>
+              </property>
+             </widget>
+            </item>
+            <item row="4" column="1">
+             <widget class="QLabel" name="mainLabelLabel2">
+              <property name="text">
+               <string>-1</string>
+              </property>
+             </widget>
+            </item>
+            <item row="0" column="1">
+             <widget class="QLabel" name="widthLabel2">
+              <property name="text">
+               <string>100</string>
+              </property>
+             </widget>
+            </item>
+            <item row="2" column="1">
+             <widget class="QLabel" name="depthLabel2">
+              <property name="text">
+               <string>30</string>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="1">
+             <widget class="QLabel" name="heightLabel2">
+              <property name="text">
+               <string>120</string>
+              </property>
+             </widget>
+            </item>
+            <item row="0" column="0">
+             <widget class="QLabel" name="widthLabel1">
+              <property name="maximumSize">
+               <size>
+                <width>45</width>
+                <height>16777215</height>
+               </size>
+              </property>
+              <property name="text">
+               <string>width :</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+      </item>
+      <item>
+       <widget class="QGroupBox" name="glGroupBox">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="MinimumExpanding" vsizetype="Preferred">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="title">
+         <string>Display</string>
+        </property>
+        <layout class="QGridLayout" name="gridLayout_3">
+         <item row="1" column="0">
+          <widget class="QScrollBar" name="thresholdScrollBar">
+           <property name="minimum">
+            <number>0</number>
+           </property>
+           <property name="maximum">
+            <number>255</number>
+           </property>
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="1">
+          <widget class="QSpinBox" name="spinBox">
+           <property name="maximumSize">
+            <size>
+             <width>60</width>
+             <height>16777215</height>
+            </size>
+           </property>
+           <property name="minimum">
+            <number>0</number>
+           </property>
+           <property name="maximum">
+            <number>255</number>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="0" colspan="2">
+          <widget class="QWidget" name="glWidget" native="true">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="minimumSize">
+            <size>
+             <width>200</width>
+             <height>0</height>
+            </size>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+      </item>
+      <item>
+       <widget class="QGroupBox" name="cellsGroupBox">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Ignored" vsizetype="Preferred">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="minimumSize">
+         <size>
+          <width>200</width>
+          <height>0</height>
+         </size>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>200</width>
+          <height>16777215</height>
+         </size>
+        </property>
+        <property name="title">
+         <string>Cells</string>
+        </property>
+        <layout class="QGridLayout" name="gridLayout_4">
+         <item row="1" column="0">
+          <widget class="QPushButton" name="chooseButton">
+           <property name="minimumSize">
+            <size>
+             <width>100</width>
+             <height>10</height>
+            </size>
+           </property>
+           <property name="text">
+            <string>Choose</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="0">
+          <widget class="QScrollArea" name="scrollArea">
+           <property name="widgetResizable">
+            <bool>true</bool>
+           </property>
+           <widget class="QWidget" name="scrollAreaWidgetContents_4">
+            <property name="geometry">
+             <rect>
+              <x>0</x>
+              <y>0</y>
+              <width>166</width>
+              <height>583</height>
+             </rect>
+            </property>
+            <layout class="QVBoxLayout" name="verticalLayout_2">
+             <item>
+              <widget class="QWidget" name="cellWidget" native="true"/>
+             </item>
+            </layout>
+           </widget>
+          </widget>
+         </item>
+         <item row="2" column="0">
+          <widget class="QPushButton" name="resetButton">
+           <property name="text">
+            <string>Reset</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item>
+    <widget class="QDialogButtonBox" name="buttonBox">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+     <property name="standardButtons">
+      <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
+     </property>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections>
+  <connection>
+   <sender>buttonBox</sender>
+   <signal>accepted()</signal>
+   <receiver>FineTuningDialog</receiver>
+   <slot>accept()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>12</x>
+     <y>727</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>157</x>
+     <y>274</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>buttonBox</sender>
+   <signal>rejected()</signal>
+   <receiver>FineTuningDialog</receiver>
+   <slot>reject()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>28</x>
+     <y>727</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>286</x>
+     <y>274</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>thresholdScrollBar</sender>
+   <signal>valueChanged(int)</signal>
+   <receiver>spinBox</receiver>
+   <slot>setValue(int)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>464</x>
+     <y>639</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>871</x>
+     <y>637</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>spinBox</sender>
+   <signal>valueChanged(int)</signal>
+   <receiver>thresholdScrollBar</receiver>
+   <slot>setValue(int)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>869</x>
+     <y>646</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>616</x>
+     <y>646</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
+</ui>

@@ -1,0 +1,7 @@
+Building a fat 32/64-bit boost python library on mac can be tricky.
+
+<download boost>
+<unpack boost and cd to boost directory>
+% ./bootstrap.sh --prefix=/usr/local --with-libraries=python
+% sudo ./bjam address-model=32_64 architecture=x86 variant=release link=shared install
+

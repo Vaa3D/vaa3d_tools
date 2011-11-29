@@ -1,0 +1,16 @@
+This folder contains many script files to test whether I can detect the oration angle correctly.
+
+Quick Run : ./stitch_rotate.sh target.tif subject.tif output.txt output.log
+
+== stitch_rotate.sh
+
+process:
+run 12.5% 25% 50% scales, and 0 5 10 15 ... 355 rotations, store in rotate_filename.txt
+
+== stitch_rotate_withconvert.sh
+process:
+rotate and crop by convert@imagemagic
+
+== r_statistic.sh
+used to statistic the output result which is a table, I would like to extract the maximum score value
+and its corresponding rotation angle

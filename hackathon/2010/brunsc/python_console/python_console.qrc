@@ -1,0 +1,15 @@
+<RCC>
+  <qresource prefix="/">
+    <file alias="icons/open-recent.png">icons/200px-Gnome-document-open-recent.svg.png</file>
+    <file alias="icons/cut.png">icons/200px-Gnome-edit-cut.svg.png</file>
+    <file alias="icons/copy.png">icons/200px-Gnome-edit-copy.svg.png</file>
+    <file alias="icons/paste.png">icons/200px-Gnome-edit-paste.svg.png</file>
+    <file alias="icons/undo.png">icons/200px-Gnome-edit-undo.svg.png</file>
+    <file alias="icons/redo.png">icons/200px-Gnome-edit-redo.svg.png</file>
+    <file alias="icons/select-all.png">icons/200px-Gnome-edit-select-all.svg.png</file>
+    <file alias="icons/zoom-in.png">icons/200px-Gnome-zoom-in.svg.png</file>
+    <file alias="icons/zoom-out.png">icons/200px-Gnome-zoom-out.svg.png</file>
+    <file alias="icons/python.png">icons/python-logo-glassy2.png</file>
+    <file alias="icons/run-script.png">icons/RedScriptAlt-128.png</file>
+  </qresource>
+</RCC>

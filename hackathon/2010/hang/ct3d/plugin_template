@@ -1,0 +1,13 @@
+TITLE="Ct3d Plugin"
+PLUGIN_NAME="ct3d"
+PLUGIN_CLASS="Ct3dPlugin"
+PLUGIN_DESCRIPTION="This plugin will invoke ct3d program, which track and segment cells from more than two images"
+PLUGIN_DATE="2011-06-27"
+PLUGIN_AUTHOR="Hang Xiao & Axel Mosig"
+PLUGIN_GUI="ct3d_gui.h"
+V3D_MAIN_PATH="../../../v3d_main"
+
+MENUS=("catch mouse event" "open ct3d")
+FUNCS=("catch_mouse_event" "open_ct3d")
+
+#DOFUNC="yes"

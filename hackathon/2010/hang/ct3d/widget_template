@@ -1,0 +1,99 @@
+CLASS QWidget TestWidget
+D QPushButton from_images_button "Create From Images"
+D QPushButton from_trees_button "Create From Trees"
+D QPushButton load_result_button "Load Result"
+D QPushButton save_result_button "Save Result"
+D QFrame line1 | setFrameShape(QFrame::HLine) | setFrameShadow(QFrame::Raised)
+
+D QPushButton apply_filter_button "Apply Filter"
+D QPushButton fine_tuning_button "Fine Tuning"
+D QPushButton set_color_button "Set Color"
+D QFrame line2 | setFrameShape(QFrame::HLine) | setFrameShadow(QFrame::Sunken)
+
+D QPushButton summary_button "Summary"
+D QPushButton speed_button "Speed"
+D QPushButton volume_button "Volume"
+D QPushButton deformation_button "Deformation"
+D QPushButton trajectory_button "Trajectory"
+D QFrame line3 | setFrameShape(QFrame::HLine) | setFrameShadow(QFrame::Sunken)
+
+D QPushButton go_fist_button "First"
+D QPushButton go_last_button "Last"
+D QPushButton go_prev_button "Previous"
+D QPushButton go_next_button "Next"
+D QFrame line4 | setFrameShape(QFrame::HLine) | setFrameShadow(QFrame::Sunken)
+
+D QPushButton choose_button "Choose"
+D QPushButton delete_button "Delete"
+D QPushButton undo_button "Undo Choose"
+
+D QVBoxLayout vbox1
+L from_images_button
+L from_trees_button
+L load_result_button
+L save_result_button
+L line1
+L apply_filter_button
+L fine_tuning_button
+L set_color_button
+L line2
+L summary_button
+L speed_button
+L volume_button
+L deformation_button
+L trajectory_button
+L line3
+L go_fist_button
+L go_last_button
+L go_prev_button
+L go_next_button
+L line4
+L choose_button
+L delete_button
+L undo_button
+
+D QGroupBox cmds_box "commands" | setLayout(vbox1)  setMinimumWidth(200)
+
+D QScrollArea scroll_area
+D QVBoxLayout vbox2 | addWidget(scroll_area)
+D QGroupBox cells_group "Cells" | setLayout(vbox2)
+
+D QCheckBox reverse_check "reverse"
+D QCheckBox monitor_check "monitor mouse"
+
+D QGridLayout gridbox
+L 0 0 cells_group 1 2
+L 1 0 reverse_check
+L 1 1 monitor_check
+
+D QGroupBox cells_box "cells" | setLayout(gridbox)  setMinimumWidth(250)
+
+D QHBoxLayout hbox 
+L cmds_box 3
+L cells_box 4
+
+R this | setLayout(hbox)
+
+C from_images_button clicked() this onCreateFromImages()
+C from_trees_button clicked() this onCreateFromTrees()
+C load_result_button clicked() this onLoadResult()
+C save_result_button clicked() this onSaveResult()
+
+C apply_filter_button clicked() this onApplyFilter()
+C fine_tuning_button clicked() this onFineTuning() 
+C set_color_button clicked() this onSetColor()
+
+C summary_button clicked() this onSummary()
+C speed_button clicked() this onSpeed()
+C volume_button clicked() this onVolume()
+C deformation_button clicked() this onDeformation()
+C trajectory_button clicked() this onTrajectory()
+
+C go_fist_button clicked() this onFirst()
+C go_last_button clicked() this onLast()
+C go_prev_button clicked() this onPrevious()
+C go_next_button clicked() this onNext()
+
+C choose_button clicked() this onChoose()
+C delete_button clicked() this onDelete()
+C undo_button clicked() this onUndo()

@@ -1,0 +1,3 @@
+Compile on windows
+1. Install Qt (> 4.6)
+2. download libtiff and lpsolve55 develop files

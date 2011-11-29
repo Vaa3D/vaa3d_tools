@@ -1,0 +1,947 @@
+<?xml version="1.0" encoding="ascii"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+          "DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+  <title>v3d.TriviewControl</title>
+  <link rel="stylesheet" href="epydoc.css" type="text/css" />
+  <script type="text/javascript" src="epydoc.js"></script>
+</head>
+
+<body bgcolor="white" text="black" link="blue" vlink="#204080"
+      alink="#204080">
+<!-- ==================== NAVIGATION BAR ==================== -->
+<table class="navbar" border="0" width="100%" cellpadding="0"
+       bgcolor="#a0c0ff" cellspacing="0">
+  <tr valign="middle">
+  <!-- Home link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="v3d-module.html">Home</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Tree link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="module-tree.html">Trees</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Index link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="identifier-index.html">Indices</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Help link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="help.html">Help</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Project homepage -->
+      <th class="navbar" align="right" width="100%">
+        <table border="0" cellpadding="0" cellspacing="0">
+          <tr><th class="navbar" align="center"
+            ><a class="navbar" target="_top" href="http://penglab.janelia.org/proj/v3d/V3D/About_V3D.html">V3D python</a></th>
+          </tr></table></th>
+  </tr>
+</table>
+<table width="100%" cellpadding="0" cellspacing="0">
+  <tr valign="top">
+    <td width="100%">
+      <span class="breadcrumbs">
+        <a href="v3d-module.html">Module&nbsp;v3d</a> ::
+        Class&nbsp;TriviewControl
+      </span>
+    </td>
+    <td>
+      <table cellpadding="0" cellspacing="0">
+        <!-- hide/show private -->
+        <tr><td align="right"><span class="options">[<a href="javascript:void(0);" class="privatelink"
+    onclick="toggle_private();">hide&nbsp;private</a>]</span></td></tr>
+        <tr><td align="right"><span class="options"
+            >[<a href="frames.html" target="_top">frames</a
+            >]&nbsp;|&nbsp;<a href="v3d.TriviewControl-class.html"
+            target="_top">no&nbsp;frames</a>]</span></td></tr>
+      </table>
+    </td>
+  </tr>
+</table>
+<!-- ==================== CLASS DESCRIPTION ==================== -->
+<h1 class="epydoc">Class TriviewControl</h1><p class="nomargin-top"></p>
+<center>
+<center>  <map id="uml_class_diagram_for_v3d_triv" name="uml_class_diagram_for_v3d_triv">
+<area shape="rect" id="node56" href="javascript:void(0);" title="??.instance.__new__" alt="" coords="47,39,164,57"/>
+<area shape="rect" id="node1" href="javascript:void(0);" title="??.instance" alt="" coords="35,6,176,63"/>
+<area shape="rect" id="node55" href="v3d.TriviewControl-class.html#__instance_size__" title="v3d.TriviewControl.__instance_size__" alt="" coords="17,108,193,127"/>
+<area shape="rect" id="node55" href="v3d.TriviewControl-class.html#__init__" title="__init__( (object)arg1) &#45;&gt; None :" alt="" coords="17,129,193,148"/>
+<area shape="rect" id="node55" href="v3d.TriviewControl-class.html#__reduce__" title="helper for pickle" alt="" coords="17,148,193,167"/>
+<area shape="rect" id="node55" href="v3d.TriviewControl-class.html#getCustomStructPointer" title="getCustomStructPointer( (TriviewControl)arg1) &#45;&gt; void* :" alt="" coords="17,167,193,185"/>
+<area shape="rect" id="node55" href="v3d.TriviewControl-class.html#getFocusLocation" title="getFocusLocation( (TriviewControl)inst) &#45;&gt; tuple :" alt="" coords="17,185,193,204"/>
+<area shape="rect" id="node55" href="v3d.TriviewControl-class.html#getPreValidZslice" title="getPreValidZslice( (TriviewControl)arg1) &#45;&gt; int :" alt="" coords="17,204,193,223"/>
+<area shape="rect" id="node55" href="v3d.TriviewControl-class.html#getTriViewColorDispType" title="getTriViewColorDispType( (TriviewControl)inst) &#45;&gt; object :" alt="" coords="17,223,193,241"/>
+<area shape="rect" id="node55" href="v3d.TriviewControl-class.html#getValidZslice" title="getValidZslice( (TriviewControl)arg1) &#45;&gt; int :" alt="" coords="17,241,193,260"/>
+<area shape="rect" id="node55" href="v3d.TriviewControl-class.html#setCustomStructPointer" title="setCustomStructPointer( (TriviewControl)arg1, (void*)a) &#45;&gt; None :" alt="" coords="17,260,193,279"/>
+<area shape="rect" id="node55" href="v3d.TriviewControl-class.html#setFocusLocation" title="setFocusLocation( (TriviewControl)arg1, (int)cx, (int)cy, (int)cz) &#45;&gt; None :" alt="" coords="17,279,193,297"/>
+<area shape="rect" id="node55" href="v3d.TriviewControl-class.html#setFocusLocation2Center" title="setFocusLocation2Center( (TriviewControl)arg1) &#45;&gt; None :" alt="" coords="17,297,193,316"/>
+<area shape="rect" id="node55" href="v3d.TriviewControl-class.html#setPreValidZslice" title="setPreValidZslice( (TriviewControl)arg1, (int)preslice) &#45;&gt; None :" alt="" coords="17,316,193,335"/>
+<area shape="rect" id="node55" href="v3d.TriviewControl-class.html#setTriViewColorDispType" title="setTriViewColorDispType( (TriviewControl)arg1, (int)mytype) &#45;&gt; None :" alt="" coords="17,335,193,353"/>
+<area shape="rect" id="node55" href="v3d.TriviewControl-class.html#setValidZslice" title="setValidZslice( (TriviewControl)arg1, (int)curslice) &#45;&gt; None :" alt="" coords="17,353,193,372"/>
+<area shape="rect" id="node55" href="v3d.TriviewControl-class.html#trigger" title="trigger( (TriviewControl)arg1, (int)curslice) &#45;&gt; None :" alt="" coords="17,372,193,391"/>
+<area shape="rect" id="node55" href="v3d.TriviewControl-class.html#updateMinMax" title="updateMinMax( (TriviewControl)arg1, (int)nFrame) &#45;&gt; None :" alt="" coords="17,391,193,409"/>
+<area shape="rect" id="node2" href="v3d.TriviewControl-class.html" title="v3d.TriviewControl" alt="" coords="5,83,205,415"/>
+</map>
+  <img src="uml_class_diagram_for_v3d_triv.png" alt='' usemap="#uml_class_diagram_for_v3d_triv" ismap="ismap" class="graph-without-title" />
+</center>
+</center>
+<hr />
+<!-- ==================== INSTANCE METHODS ==================== -->
+<a name="section-InstanceMethods"></a>
+<table class="summary" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr bgcolor="#70b0f0" class="table-header">
+  <td colspan="2" class="table-header">
+    <table border="0" cellpadding="0" cellspacing="0" width="100%">
+      <tr valign="top">
+        <td align="left"><span class="table-header">Instance Methods</span></td>
+        <td align="right" valign="top"
+         ><span class="options">[<a href="#section-InstanceMethods"
+         class="privatelink" onclick="toggle_private();"
+         >hide private</a>]</span></td>
+      </tr>
+    </table>
+  </td>
+</tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.TriviewControl-class.html#__init__" class="summary-sig-name">__init__</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      __init__( (object)arg1) -&gt; None :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.TriviewControl-class.html#__reduce__" class="summary-sig-name">__reduce__</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      helper for pickle</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.TriviewControl-class.html#getCustomStructPointer" class="summary-sig-name">getCustomStructPointer</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      getCustomStructPointer( (TriviewControl)arg1) -&gt; void* :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.TriviewControl-class.html#getFocusLocation" class="summary-sig-name">getFocusLocation</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      getFocusLocation( (TriviewControl)inst) -&gt; tuple :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.TriviewControl-class.html#getPreValidZslice" class="summary-sig-name">getPreValidZslice</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      getPreValidZslice( (TriviewControl)arg1) -&gt; int :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.TriviewControl-class.html#getTriViewColorDispType" class="summary-sig-name">getTriViewColorDispType</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      getTriViewColorDispType( (TriviewControl)inst) -&gt; object :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.TriviewControl-class.html#getValidZslice" class="summary-sig-name">getValidZslice</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      getValidZslice( (TriviewControl)arg1) -&gt; int :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.TriviewControl-class.html#setCustomStructPointer" class="summary-sig-name">setCustomStructPointer</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      setCustomStructPointer( (TriviewControl)arg1, (void*)a) -&gt; None :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.TriviewControl-class.html#setFocusLocation" class="summary-sig-name">setFocusLocation</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      setFocusLocation( (TriviewControl)arg1, (int)cx, (int)cy, (int)cz) -&gt; None :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.TriviewControl-class.html#setFocusLocation2Center" class="summary-sig-name">setFocusLocation2Center</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      setFocusLocation2Center( (TriviewControl)arg1) -&gt; None :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.TriviewControl-class.html#setPreValidZslice" class="summary-sig-name">setPreValidZslice</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      setPreValidZslice( (TriviewControl)arg1, (int)preslice) -&gt; None :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.TriviewControl-class.html#setTriViewColorDispType" class="summary-sig-name">setTriViewColorDispType</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      setTriViewColorDispType( (TriviewControl)arg1, (int)mytype) -&gt; None :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.TriviewControl-class.html#setValidZslice" class="summary-sig-name">setValidZslice</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      setValidZslice( (TriviewControl)arg1, (int)curslice) -&gt; None :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.TriviewControl-class.html#trigger" class="summary-sig-name">trigger</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      trigger( (TriviewControl)arg1, (int)curslice) -&gt; None :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="v3d.TriviewControl-class.html#updateMinMax" class="summary-sig-name">updateMinMax</a>(<span class="summary-sig-arg">...</span>)</span><br />
+      updateMinMax( (TriviewControl)arg1, (int)nFrame) -&gt; None :</td>
+          <td align="right" valign="top">
+            
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+  <tr>
+    <td colspan="2" class="summary">
+    <p class="indent-wrapped-lines"><b>Inherited from <code><i>unreachable</i>.instance</code></b>:
+      <code>__new__</code>
+      </p>
+    <p class="indent-wrapped-lines"><b>Inherited from <code>object</code></b>:
+      <code>__delattr__</code>,
+      <code>__format__</code>,
+      <code>__getattribute__</code>,
+      <code>__hash__</code>,
+      <code>__reduce_ex__</code>,
+      <code>__repr__</code>,
+      <code>__setattr__</code>,
+      <code>__sizeof__</code>,
+      <code>__str__</code>,
+      <code>__subclasshook__</code>
+      </p>
+    </td>
+  </tr>
+</table>
+<!-- ==================== CLASS VARIABLES ==================== -->
+<a name="section-ClassVariables"></a>
+<table class="summary" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr bgcolor="#70b0f0" class="table-header">
+  <td colspan="2" class="table-header">
+    <table border="0" cellpadding="0" cellspacing="0" width="100%">
+      <tr valign="top">
+        <td align="left"><span class="table-header">Class Variables</span></td>
+        <td align="right" valign="top"
+         ><span class="options">[<a href="#section-ClassVariables"
+         class="privatelink" onclick="toggle_private();"
+         >hide private</a>]</span></td>
+      </tr>
+    </table>
+  </td>
+</tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+        <a name="__instance_size__"></a><span class="summary-name">__instance_size__</span> = <code title="16">16</code>
+    </td>
+  </tr>
+</table>
+<!-- ==================== PROPERTIES ==================== -->
+<a name="section-Properties"></a>
+<table class="summary" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr bgcolor="#70b0f0" class="table-header">
+  <td colspan="2" class="table-header">
+    <table border="0" cellpadding="0" cellspacing="0" width="100%">
+      <tr valign="top">
+        <td align="left"><span class="table-header">Properties</span></td>
+        <td align="right" valign="top"
+         ><span class="options">[<a href="#section-Properties"
+         class="privatelink" onclick="toggle_private();"
+         >hide private</a>]</span></td>
+      </tr>
+    </table>
+  </td>
+</tr>
+  <tr>
+    <td colspan="2" class="summary">
+    <p class="indent-wrapped-lines"><b>Inherited from <code>object</code></b>:
+      <code>__class__</code>
+      </p>
+    </td>
+  </tr>
+</table>
+<!-- ==================== METHOD DETAILS ==================== -->
+<a name="section-MethodDetails"></a>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr bgcolor="#70b0f0" class="table-header">
+  <td colspan="2" class="table-header">
+    <table border="0" cellpadding="0" cellspacing="0" width="100%">
+      <tr valign="top">
+        <td align="left"><span class="table-header">Method Details</span></td>
+        <td align="right" valign="top"
+         ><span class="options">[<a href="#section-MethodDetails"
+         class="privatelink" onclick="toggle_private();"
+         >hide private</a>]</span></td>
+      </tr>
+    </table>
+  </td>
+</tr>
+</table>
+<a name="__init__"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">__init__</span>(<span class="sig-arg">...</span>)</span>
+    <br /><em class="fname">(Constructor)</em>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+__init__( (object)arg1) -&gt; None :
+
+    C++ signature :
+        void __init__(_object*)
+
+</pre>
+  <dl class="fields">
+    <dt>Overrides:
+        object.__init__
+    </dt>
+  </dl>
+</td></tr></table>
+</div>
+<a name="__reduce__"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">__reduce__</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <p>helper for pickle</p>
+  <dl class="fields">
+    <dt>Overrides:
+        object.__reduce__
+        <dd><em class="note">(inherited documentation)</em></dd>
+    </dt>
+  </dl>
+</td></tr></table>
+</div>
+<a name="getCustomStructPointer"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">getCustomStructPointer</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+getCustomStructPointer( (TriviewControl)arg1) -&gt; void* :
+
+    C++ signature :
+        void* getCustomStructPointer(TriviewControl {lvalue})
+
+getCustomStructPointer( (TriviewControl)arg1) -&gt; None :
+
+    C++ signature :
+        void getCustomStructPointer(TriviewControl_wrapper {lvalue})
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="getFocusLocation"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">getFocusLocation</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+getFocusLocation( (TriviewControl)inst) -&gt; tuple :
+
+    C++ signature :
+        boost::python::tuple getFocusLocation(TriviewControl)
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="getPreValidZslice"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">getPreValidZslice</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+getPreValidZslice( (TriviewControl)arg1) -&gt; int :
+
+    C++ signature :
+        long getPreValidZslice(TriviewControl {lvalue})
+
+getPreValidZslice( (TriviewControl)arg1) -&gt; None :
+
+    C++ signature :
+        void getPreValidZslice(TriviewControl_wrapper {lvalue})
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="getTriViewColorDispType"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">getTriViewColorDispType</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+getTriViewColorDispType( (TriviewControl)inst) -&gt; object :
+
+    C++ signature :
+        boost::python::api::object getTriViewColorDispType(TriviewControl {lvalue})
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="getValidZslice"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">getValidZslice</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+getValidZslice( (TriviewControl)arg1) -&gt; int :
+
+    C++ signature :
+        long getValidZslice(TriviewControl {lvalue})
+
+getValidZslice( (TriviewControl)arg1) -&gt; None :
+
+    C++ signature :
+        void getValidZslice(TriviewControl_wrapper {lvalue})
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="setCustomStructPointer"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">setCustomStructPointer</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+setCustomStructPointer( (TriviewControl)arg1, (void*)a) -&gt; None :
+
+    C++ signature :
+        void setCustomStructPointer(TriviewControl {lvalue},void*)
+
+setCustomStructPointer( (TriviewControl)arg1, (void*)arg2) -&gt; None :
+
+    C++ signature :
+        void setCustomStructPointer(TriviewControl_wrapper {lvalue},void*)
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="setFocusLocation"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">setFocusLocation</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+setFocusLocation( (TriviewControl)arg1, (int)cx, (int)cy, (int)cz) -&gt; None :
+
+    C++ signature :
+        void setFocusLocation(TriviewControl {lvalue},long,long,long)
+
+setFocusLocation( (TriviewControl)arg1, (int)arg2, (int)arg3, (int)arg4) -&gt; None :
+
+    C++ signature :
+        void setFocusLocation(TriviewControl_wrapper {lvalue},long,long,long)
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="setFocusLocation2Center"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">setFocusLocation2Center</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+setFocusLocation2Center( (TriviewControl)arg1) -&gt; None :
+
+    C++ signature :
+        void setFocusLocation2Center(TriviewControl {lvalue})
+
+setFocusLocation2Center( (TriviewControl)arg1) -&gt; None :
+
+    C++ signature :
+        void setFocusLocation2Center(TriviewControl_wrapper {lvalue})
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="setPreValidZslice"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">setPreValidZslice</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+setPreValidZslice( (TriviewControl)arg1, (int)preslice) -&gt; None :
+
+    C++ signature :
+        void setPreValidZslice(TriviewControl {lvalue},long)
+
+setPreValidZslice( (TriviewControl)arg1, (int)arg2) -&gt; None :
+
+    C++ signature :
+        void setPreValidZslice(TriviewControl_wrapper {lvalue},long)
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="setTriViewColorDispType"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">setTriViewColorDispType</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+setTriViewColorDispType( (TriviewControl)arg1, (int)mytype) -&gt; None :
+
+    C++ signature :
+        void setTriViewColorDispType(TriviewControl {lvalue},int)
+
+setTriViewColorDispType( (TriviewControl)arg1, (int)arg2) -&gt; None :
+
+    C++ signature :
+        void setTriViewColorDispType(TriviewControl_wrapper {lvalue},int)
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="setValidZslice"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">setValidZslice</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+setValidZslice( (TriviewControl)arg1, (int)curslice) -&gt; None :
+
+    C++ signature :
+        void setValidZslice(TriviewControl {lvalue},long)
+
+setValidZslice( (TriviewControl)arg1, (int)arg2) -&gt; None :
+
+    C++ signature :
+        void setValidZslice(TriviewControl_wrapper {lvalue},long)
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="trigger"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">trigger</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+trigger( (TriviewControl)arg1, (int)curslice) -&gt; None :
+
+    C++ signature :
+        void trigger(TriviewControl {lvalue},long)
+
+trigger( (TriviewControl)arg1, (int)arg2) -&gt; None :
+
+    C++ signature :
+        void trigger(TriviewControl_wrapper {lvalue},long)
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<a name="updateMinMax"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">updateMinMax</span>(<span class="sig-arg">...</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    >&nbsp;
+    </td>
+  </tr></table>
+  
+  <pre class="literalblock">
+
+updateMinMax( (TriviewControl)arg1, (int)nFrame) -&gt; None :
+
+    C++ signature :
+        void updateMinMax(TriviewControl {lvalue},long)
+
+updateMinMax( (TriviewControl)arg1, (int)arg2) -&gt; None :
+
+    C++ signature :
+        void updateMinMax(TriviewControl_wrapper {lvalue},long)
+
+</pre>
+  <dl class="fields">
+  </dl>
+</td></tr></table>
+</div>
+<br />
+<!-- ==================== NAVIGATION BAR ==================== -->
+<table class="navbar" border="0" width="100%" cellpadding="0"
+       bgcolor="#a0c0ff" cellspacing="0">
+  <tr valign="middle">
+  <!-- Home link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="v3d-module.html">Home</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Tree link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="module-tree.html">Trees</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Index link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="identifier-index.html">Indices</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Help link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="help.html">Help</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Project homepage -->
+      <th class="navbar" align="right" width="100%">
+        <table border="0" cellpadding="0" cellspacing="0">
+          <tr><th class="navbar" align="center"
+            ><a class="navbar" target="_top" href="http://penglab.janelia.org/proj/v3d/V3D/About_V3D.html">V3D python</a></th>
+          </tr></table></th>
+  </tr>
+</table>
+<table border="0" cellpadding="0" cellspacing="0" width="100%%">
+  <tr>
+    <td align="left" class="footer">
+    Generated by Epydoc 3.0.1 on Thu Feb 10 11:40:29 2011
+    </td>
+    <td align="right" class="footer">
+      <a target="mainFrame" href="http://epydoc.sourceforge.net"
+        >http://epydoc.sourceforge.net</a>
+    </td>
+  </tr>
+</table>
+
+<script type="text/javascript">
+  <!--
+  // Private objects are initially displayed (because if
+  // javascript is turned off then we want them to be
+  // visible); but by default, we want to hide them.  So hide
+  // them unless we have a cookie that says to show them.
+  checkCookie();
+  // -->
+</script>
+</body>
+</html>

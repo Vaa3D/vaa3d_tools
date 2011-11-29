@@ -1,0 +1,11 @@
+TITLE="SWC Editor Plugin"
+PLUGIN_NAME="swc_editor"
+PLUGIN_CLASS="SWCEditorPlugin"
+PLUGIN_DESCRIPTION="This is plugin is used to editor swc file"
+PLUGIN_DATE="2011-07-08"
+PLUGIN_AUTHOR="Hang Xiao"
+PLUGIN_GUI="swc_editor_gui.h"
+V3D_MAIN_PATH="../../../v3d_main"
+
+MENUS=("open swc editor" "create network swc")
+FUNCS=("open_sec_editor" "create_network_swc")
