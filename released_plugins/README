@@ -1,0 +1,41 @@
+ 
+This folder contains several V3D plugin demo programs and source codes v0.96.
+The license and user agreement can be found at http://penglab.janelia.org/proj/v3d .
+
+Assume you are using a Mac or Linux machine, you can generate the plugin demos
+by running the command on a bash:
+
+  sh build_plugindemo.sh
+
+The default configuration will be used. Thus for example if you have 32bit Mac 
+compiling environment and run 32bit V3D, this will generate 32bit plugins.
+
+To ensure rebuilding everything, you can run
+
+  sh build_plugindemo.sh -B
+
+For 64bit V3D program, you can run
+
+  sh build_plugindemo.sh -m
+
+If you are using a Windows system and MinGW (32bit), you can run
+
+  build_plugindemo.bat
+
+The basic_c_fun folder contains several V3D plugin interface header files. To
+ensure the compiling, the relative folder structure should not be changed, unless
+you understand how to change the respective include file location in QT project
+file.
+
+You may need to change the destination folder in the .pro file(s), -- the folder name 
+specifies where the generated dynamic library plugin files will be copied to. For
+V3D be able to find a plugin, it should exist in a parallel folder to the V3D executable
+program. 
+
+If you have question, contact the head of the V3D project developing team, Hanchuan Peng
+(pengh@janelia.hhmi.org).
+
+>>> 2010-Jun-26; 2010-May-30; 2010-May-22; 2010-May-15; 2009-Dec-5; 2009-Aug-21 <<<
+
+
+

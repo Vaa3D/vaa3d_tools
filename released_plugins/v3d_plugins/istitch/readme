@@ -1,0 +1,15 @@
+# compilation of image stitching plugin
+
+1. compile fftw library under v3d_2.0/common_lib folder
+
+./configure --enable-float --enable-threads --enable-shared
+make 
+make install
+
+2. compile istitch plugin
+
+qmake
+make
+
+Feb 3, 2011
+Contact us: Hanchuan Peng (pengh@janelia.hhmi.org)

@@ -1,0 +1,75 @@
+Last update: 090925. Yang Yu (Hanchuan Peng lab)
+
+Bio-Formats Plugin 
+
+To build our Image IO plugin using Bio-Formats, the following modules are required:
+
+Boost Thread (http://www.boost.org, recommend version 1.41.0 or higher)
+Cmake (http://www.cmake.org/cmake/resources/software.html)
+Subversion (http://subversion.tigris.org)
+Java Development Kit (http://java.sun.com)
+Apache Ant (http://ant.apache.org)
+
+1. Downloading Bio-Formats (http://www.loci.wisc.edu/software/bio-formats)
+
+svn co -r 5698 https://skyking.microscopy.wisc.edu/svn/java/trunk loci
+svn co -r 35 https://jace.svn.sourceforge.net/svnroot/jace/trunk jace 
+
+# Our current image IO plugin uses loci version 5698 and jace version 35.
+
+2. Compiling Bio-Formats
+
+# More details see https://skyking.microscopy.wisc.edu/trac/java/browser/trunk/components/native/bf-cpp/readme.txt
+
+1) Change to the root directory of the checkout (cd loci);
+2) Execute the command: 
+
+ant tools
+
+3) Change to the components/native/bf-cpp directory (cd components/native/bf-cpp);
+4) Execute the command: 
+
+ant -Djace.home=/path/to/jace
+
+# Where /path/to/jace is the location of your Jace source code checkout.
+# Do not use a relative path, and use forward slashes, even on Windows.
+# On Windows: ant -Djace.home=C:/jace using '/' instead of '\'. Set JAVA_HOME make ant find javac.
+
+# Note for windows x64 compiling, you may change the line of the file "build.properties" 
+# under the folder loci/components/native/bf-cpp to the following:
+cmake.generator.windows = Visual Studio 9 2008 Win64
+
+3. Set the Build Results to your path
+
+# libjace.so / libjace.jnilib / jace.dll Jace shared library
+# libbfjace.so / libbfjace.dylib / bfjace.dll Bio-Formats C++ bindings
+# jace-runtime.jar  Jace Java classes needed at runtime
+# loci_tools.jar  Bio-Formats Java library needed at runtime 
+
+# above libs could be found at /loci/components/native/bf-cpp/build
+# bio-formats.jar at /loci/artifacts
+
+4. Compiling ImageIO plugin:
+
+# Example .pro file suppose corresponding libs copied to ../bioformat_lib/lib (32-bit) or ../bioformat_lib/lib64 (64-bit)
+# and corresponding header files (bio-formats.h, jace.h, loci-common.h and jace) copied to ../bioformat_lib/include 
+
+Execute the command:
+
+qmake
+make
+
+# If using Microsoft Visual C++ execute the command: nmake /f Makefile.Release
+
+# Compilation of bioformat_ex (Readimage_bioformat) will copy dependent libraries to V3D working directory.
+# Compiling 64-bit version loci needs java 6 (1.6.0) or higher.
+
+# note on windows: dependent libboost will be boost_date_time and boost_thread
+
+4. Run ImageIO Plugin
+
+Make sure libjvm.so / libjvm.dylib / jvm.dll in your path. 
+
+
+September 22, 2009
+Contact us: Yang Yu (yuy@janelia.hhmi.org)
