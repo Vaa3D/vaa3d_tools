@@ -10,8 +10,15 @@ INCLUDEPATH  += $$V3DMAINDIR/basic_c_fun
 INCLUDEPATH += $$V3DMAINDIR/jba/newmat11
 INCLUDEPATH += $$V3DMAINDIR/common_lib/include
 
-LIBS += -L$$V3DMAINDIR/common_lib/lib -lv3dtiff
-LIBS += -L$$V3DMAINDIR/jba/c++ -lv3dnewmat
+unix {
+	LIBS += -L$$V3DMAINDIR/common_lib/lib -lv3dtiff
+	LIBS += -L$$V3DMAINDIR/jba/c++ -lv3dnewmat
+}
+
+win32 {
+	LIBS 	     += -L$$V3DMAINDIR/common_lib/winlib -llibtiff 
+	LIBS         += -L$$V3DMAINDIR/common_lib/winlib -llibnewmat 
+}
 
 FORMS         = paradialog.ui
 
