@@ -10,7 +10,6 @@
 #include <math.h>
 #include "sort_swc.h"
 #include "v3d_message.h" 
-#include "../../../v3d_main/basic_c_fun/basic_surf_objs.h"
 #include <unistd.h>
 #include <string.h>
 #include <iostream>
@@ -88,18 +87,6 @@ double computeDist(const NeuronSWC & s1, const NeuronSWC & s2)
 	
 bool SortSWC(const NeuronTree & neurons, QList<NeuronSWC> & lN, V3DLONG newrootid)
 {
-	//double check the data to ensure it is correct!
-	//for (V3DLONG ii=0; ii<neurons.listNeuron.size(); ii++)
-	//{
-	//	p_cur = (NeuronSWC *)(&(neurons.listNeuron.at(ii)));
-		//v3d_msg(QString("x %1 y %2 z %3 r %4\n").arg(p_cur->x).arg(p_cur->y).arg(p_cur->z).arg(p_cur->r),0);
-		
-		//if (p_cur->x<0 || p_cur->y<0 || p_cur->z<0 || p_cur->r<0)
-		//{
-	//		v3d_msg("You have illeagal x,y,z coordinates or radius values. Check your data.");
-	//		return;
-	//	}
-	//}
 	//create a LUT, from the original id to the position in the listNeuron, different neurons with the same x,y,z & r are merged into one position
 	QHash<V3DLONG, V3DLONG> LUT = getUniqueLUT(neurons);
 
@@ -249,6 +236,16 @@ bool SortSWC(const NeuronTree & neurons, QList<NeuronSWC> & lN, V3DLONG newrooti
 				lN.append(S);
 			}
 		}
+	}
+
+	//free space by Yinan Wan, 2012-01-26
+	if (neworder) {delete []neworder; neworder=NULL;}
+	if (numbered) {delete []numbered; numbered=NULL;}
+	if (matrix)
+	{
+		for (int i=0;i<siz;i++)
+			if (matrix[i]) {delete matrix[i]; matrix[i]=NULL;}
+		if (matrix) {delete []matrix; matrix=NULL;}
 	}
 	return(true);
 }
