@@ -1,0 +1,13 @@
+To build vaa3d_tool plugins, the best way is to check out the Vaa3D code as following:
+
+svn co https://svn.janelia.org/penglab/projects/vaa3d/trunk v3d_external
+svn co https://svn.janelia.org/penglab/projects/vaa3d_tools vaa3d_tools
+cd vaa3d_tools
+ln -s ../v3d_external/v3d_main v3d_main
+ln -s ../v3d_external/v3d v3d
+
+The last two lines create symbolic links for necessary header files and output plugins.
+
+by Hanchuan Peng
+2012-02-01
+
