@@ -222,7 +222,7 @@ void printHelp(const V3DPluginArgList & input, V3DPluginArgList & output)
 	cout<<"-i<file name>:\t\t input .swc or .ano file\n";
 	cout<<"-o<file name>:\t\t (not required) output sorted swc file. DEFAUTL: 'inputName_sorted.swc'\n";
 	cout<<"-p<link threshold>:\t (not required) the threshold of link you want the plugin to generate in case the input swc(s) are broken. if you set thres=0, no new link will be generated. DEFAULT: Infinity (all points will be connected automatically).\n";
-	cout<<"Demo:\t ./v3d -x plugins/neuron_uitilities/sort_a_swc/libsort_swc.so -f sort_swc -i test.swc -o test_sorted.swc -p 1\n";
+	cout<<"Demo:\t ./v3d -x plugins/neuron_uitilities/sort_a_swc/libsort_neuron_swc.so -f sort_swc -i test.swc -o test_sorted.swc -p 1\n";
 
 }
 
