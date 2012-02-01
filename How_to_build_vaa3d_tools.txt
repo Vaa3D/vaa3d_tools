@@ -5,8 +5,13 @@ svn co https://svn.janelia.org/penglab/projects/vaa3d_tools vaa3d_tools
 cd vaa3d_tools
 ln -s ../v3d_external/v3d_main v3d_main
 ln -s ../v3d_external/v3d v3d
+cd ../v3d_external
+ln -s ../vaa3d_tools/released_plugins released_plugins_more
+build.macx -B -m -j4
+# or running the alterative for Linux
+# build.linux -B -j4
 
-The last two lines create symbolic links for necessary header files and output plugins.
+The last few lines create symbolic links for necessary header files and output plugins.
 
 by Hanchuan Peng
 2012-02-01
