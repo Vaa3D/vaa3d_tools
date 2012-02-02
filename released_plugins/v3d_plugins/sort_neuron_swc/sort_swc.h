@@ -262,6 +262,14 @@ bool SortSWC(QList<NeuronSWC> & neurons, QList<NeuronSWC> & result, V3DLONG newr
 		v3d_msg("Error!");
 		return false;
 	}
+	
+	//free space by Yinan Wan 12-02-02
+	if (neworder) {delete []neworder; neworder=NULL;}
+	if (numbered) {delete []numbered; numbered=NULL;}
+	if (matrix){
+		for (V3DLONG i=0;i<siz;i++) {delete matrix[i]; matrix[i]=NULL;}
+		if (matrix) {delete []matrix; matrix=NULL;}
+	}
 
 
 	return(true);
