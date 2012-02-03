@@ -90,7 +90,7 @@ void IBioformatIOPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &ca
         
         system(qPrintable(cmd_loci));
 
-	if (!tmpqfile.exists()) printf("Temporary file cannot be generated, error\n");
+	if (!tmpqfile.exists()) v3d_msg("The format is not supported, or something is wrong in your file\n");
 
         
         // load
