@@ -29,6 +29,9 @@ public:
 	
 };
 
+
+QString getAppPath();
+
 #endif
 
 

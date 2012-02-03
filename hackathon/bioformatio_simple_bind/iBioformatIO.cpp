@@ -37,6 +37,7 @@ using namespace std;
 
 //plugin interface
 const QString title = "Image IO Using Bioformat";
+static QString pluginRootPath;
 
 Q_EXPORT_PLUGIN2(imageIO_Bioformat, IBioformatIOPlugin);
 
@@ -67,9 +68,30 @@ void IBioformatIOPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &ca
         QString tmpfile = QDir::tempPath().append("/").append(baseName).append(".tif");
         
         //
-        QString cmd_loci = QString("java -cp loci_tools.jar loci.formats.tools.ImageConverter %1 %2").arg(m_FileName.toStdString().c_str()).arg(tmpfile.toStdString().c_str());
+	QFile tmpqfile(tmpfile);
+	if (tmpqfile.exists()) system(qPrintable(QString("rm -f ")+tmpfile));
+	
+	//look for loci_tools.jar
+	QString lociDir = ("loci_tools.jar");
+	if (!QFile(lociDir).exists())
+	{
+		printf("loci_tools.jar is not in current directory, search v3d app path.\n");
+		lociDir = getAppPath().append("/loci_tools.jar");
+		printf(qPrintable(lociDir));
+		printf("\n");
+		if (!QFile(lociDir).exists())
+		{
+			v3d_msg("cannot find loci_tools.jar, please download it.");
+			return;
+		}
+	}
+	
+        QString cmd_loci = QString("java -cp %1 loci.formats.tools.ImageConverter %2 %3").arg(lociDir.toStdString().c_str()).arg(m_FileName.toStdString().c_str()).arg(tmpfile.toStdString().c_str());
         
         system(qPrintable(cmd_loci));
+
+	if (!tmpqfile.exists()) printf("Temporary file cannot be generated, error\n");
+
         
         // load
         V3DLONG *sz_relative = 0;
@@ -125,6 +147,30 @@ QStringList IBioformatIOPlugin::funclist() const
 bool IBioformatIOPlugin::dofunc(const QString & func_name, const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback,  QWidget * parent)
 {
     //
+}
+
+QString getAppPath()
+{
+	QString v3dAppPath("~/Work/v3d_external/v3d");
+	QDir testPluginsDir = QDir(qApp->applicationDirPath());
+#if defined(Q_OS_WIN)
+	if (testPluginsDir.dirName().toLower() == "debug" || testPluginsDir.dirName().toLower() == "release")
+		testPluginsDir.cdUp();
+#elif defined(Q_OS_MAC)
+	// In a Mac app bundle, plugins directory could be either
+	//  a - below the actual executable i.e. v3d.app/Contents/MacOS/plugins/
+	//  b - parallel to v3d.app i.e. foo/v3d.app and foo/plugins/
+	if (testPluginsDir.dirName() == "MacOS") {
+		QDir testUpperPluginsDir = testPluginsDir;
+		testUpperPluginsDir.cdUp();
+		testUpperPluginsDir.cdUp();
+		testUpperPluginsDir.cdUp(); // like foo/plugins next to foo/v3d.app
+		if (testUpperPluginsDir.cd("plugins")) testPluginsDir = testUpperPluginsDir;
+	}
+#endif
+	v3dAppPath=testPluginsDir.absolutePath();
+
+	return v3dAppPath;
 }
 
 #endif

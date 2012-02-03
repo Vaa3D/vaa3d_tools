@@ -18,6 +18,7 @@ SOURCES       = iBioformatIO.cpp
 SOURCES      += $$V3DMAINDIR/basic_c_fun/stackutil.cpp
 SOURCES      +=	$$V3DMAINDIR/basic_c_fun/mg_utilities.cpp
 SOURCES      +=	$$V3DMAINDIR/basic_c_fun/mg_image_lib.cpp
+SOURCES      += $$V3DMAINDIR/basic_c_fun/v3d_message.cpp
 
 LIBS         += -lm -L$$V3DMAINDIR/common_lib/lib -lv3dtiff
 LIBS         += -lpthread
@@ -25,5 +26,12 @@ LIBS         += -lpthread
 
 TARGET        = $$qtLibraryTarget(imageIO_Bioformat)
 DESTDIR       = ../../v3d/plugins/imageIO_Bioformat
+
+win32 {
+	QMAKE_POST_LINK = copy loci_tools.jar ../../v3d
+}
+else {
+	QMAKE_POST_LINK = cp loci_tools.jar ../../v3d
+}
 
 
