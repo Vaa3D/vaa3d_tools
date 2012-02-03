@@ -1,0 +1,11 @@
+To build this plugin, just following the normal Vaa3D plugin's qmake and make procedure.
+
+To run, you need to download the Loci bioformat jar file from: http://loci.wisc.edu/bio-formats/downloads
+
+and also ensure you have java on your machine.
+
+You need to copy the downloaded file "loci_tools.jar" to the Vaa3D executable folder (i.e. where you will find 'vaa3d', or 'vaa3d.exe', or 'vaa3d64.app', depending on your OS.)
+
+by Hanchuan Peng
+2012-02-01
+
