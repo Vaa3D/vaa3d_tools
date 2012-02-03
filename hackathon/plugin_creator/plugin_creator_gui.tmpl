@@ -1,0 +1,77 @@
+CLASS QDialog GuidingDialog
+
+D QLabel label1 "Plugin Name :"
+D QLineEdit editor1 "test"
+
+D QLabel label2 "Plugin Class Name :"
+D QLineEdit editor2 "TestPlugin"
+
+D QLabel label3 "Window Title :"
+D QLineEdit editor3 "This is Test Plugin"
+
+D QLabel label4 "Plugin Description :"
+D QLineEdit editor4 "This is a test plugin, you can use it as a demo."
+
+D QLabel label5 "Pugin Date :"
+D QLineEdit editor5 "2012-01-01"
+
+D QLabel label6 "Pugin Author :"
+D QLineEdit editor6 "YourName"
+
+D QLabel label7 "v3d_main Path :"
+D QLineEdit editor7 "/V3D/Main/Path"
+
+D QLabel label8 "Menu List : "
+D QLineEdit editor8 "menu1 menu2"
+
+D QLabel label9 "Func List : "
+D QLineEdit editor9 "func1 func2"
+
+D QLabel label10 "Save Folder : "
+D QLineEdit editor10 "/plugin/folder"
+
+D QPushButton ok "ok"
+D QPushButton cancel "cancel"
+
+D QGridLayout gridLayout
+L 0 0 label1
+L 0 1 editor1 1 3
+L 1 0 label2
+L 1 1 editor2 1 3
+L 2 0 label3
+L 2 1 editor3 1 3
+L 3 0 label4
+L 3 1 editor4 1 3
+L 4 0 label5
+L 4 1 editor5 1 3
+L 5 0 label6
+L 5 1 editor6 1 3
+L 6 0 label7
+L 6 1 editor7 1 3
+L 7 0 label8
+L 7 1 editor8 1 3
+L 8 0 label9
+L 8 1 editor9 1 3
+L 9 0 label10
+L 9 1 editor10 1 3
+L 10 2 cancel Qt::AlignRight
+L 10 3 ok     Qt::AlignRight
+
+C ok clicked() this accept()
+C cancel clicked() this reject()
+
+C ok clicked() this update()
+
+R this | setLayout(gridLayout)
+R this | setWindowTitle("Plugin Creator Dialog")
+
+U string plugin_name | editor1->text().toStdString()
+U string plugin_class | editor2->text().toStdString()
+U string win_title | editor3->text().toStdString()
+U string plugin_desp | editor4->text().toStdString()
+U string plugin_date | editor5->text().toStdString()
+U string plugin_author | editor6->text().toStdString()
+U string v3dmain_path | editor7->text().toStdString()
+U string menulst | editor8->text().toStdString()
+U string funclst | editor9->text().toStdString()
+U string save_folder | editor10->text().toStdString()
