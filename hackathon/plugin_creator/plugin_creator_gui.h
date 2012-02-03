@@ -36,8 +36,8 @@ public:
 		label6 = new QLabel(tr("Pugin Author :"));
 		editor6 = new QLineEdit(tr("YourName"));
 
-		label7 = new QLabel(tr("v3d_main Path :"));
-		editor7 = new QLineEdit(tr("/V3D/Main/Path"));
+		label7 = new QLabel(tr("Vaa3D's v3d_main Path :"));
+		editor7 = new QLineEdit(tr("/Path_to_v3d_main_code_folder"));
 
 		label8 = new QLabel(tr("Menu List : "));
 		editor8 = new QLineEdit(tr("menu1 menu2"));

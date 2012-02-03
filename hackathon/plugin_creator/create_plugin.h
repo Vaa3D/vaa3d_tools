@@ -51,8 +51,8 @@ void create_plugin_pro(PluginTemplate & pt)
 	ofs<<"TEMPLATE\t= lib"<<endl;
 	ofs<<"CONFIG\t+= qt plugin warn_off"<<endl;
 	ofs<<"#CONFIG\t+= x86_64"<<endl;
-	ofs<<"V3DMAINPATH = "<<pt.V3D_MAIN_PATH<<endl;
-	ofs<<"INCLUDEPATH\t+= $$V3DMAINPATH/basic_c_fun"<<endl;
+	ofs<<"VAA3DMAINPATH = "<<pt.V3D_MAIN_PATH<<endl;
+	ofs<<"INCLUDEPATH\t+= $$VAA3DMAINPATH/basic_c_fun"<<endl;
 	ofs<<""<<endl;
 	ofs<<"HEADERS\t+= "<<pt.PLUGIN_HEADER<<endl;
 	ofs<<"HEADERS\t+= "<<pt.FUNC_HEADER<<endl;
@@ -358,9 +358,9 @@ string demo_plugin_template()
 	oss<<"WINDOW_TITLE = \"Test Plugin\""<<endl;
 	oss<<"PLUGIN_DESCRIPTION = \"This is a test plugin\""<<endl;
 	oss<<"PLUGIN_DATE = \"2011-06-16\""<<endl;
-	oss<<"PLUGIN_AUTHOR = \"Hang Xiao\""<<endl;
+	oss<<"PLUGIN_AUTHOR = \"Your name\""<<endl;
 	oss<<"#PLUGIN_GUI = \"test_gui.h\""<<endl;
-	oss<<"V3D_MAIN_PATH = \"../../work/v3d_external/v3d_main\""<<endl;
+	oss<<"VAA3D_MAIN_PATH = \"../../work/v3d_external/v3d_main\""<<endl;
 	oss<<endl;
 	oss<<"MENUS=(\"first item\" \"second item\")"<<endl;
 	oss<<"FUNCS=(\"first_item\" \"second_item\")"<<endl;
@@ -522,7 +522,7 @@ PluginTemplate read_plugin_template(string plugin_tmpl_file)
 		pt.PLUGIN_AUTHOR = (name == "PLUGIN_AUTHOR") ? value : pt.PLUGIN_AUTHOR;
 		pt.PLUGIN_GUI = (name == "PLUGIN_GUI") ? value : pt.PLUGIN_GUI;
 		pt.WINDOW_TITLE = (name == "WINDOW_TITLE") ? value : pt.WINDOW_TITLE;
-		pt.V3D_MAIN_PATH = (name == "V3D_MAIN_PATH") ? value : pt.V3D_MAIN_PATH;
+		pt.V3D_MAIN_PATH = (name == "VAA3D_MAIN_PATH") ? value : pt.V3D_MAIN_PATH;
 		pt.MENUS = (name == "MENUS") ? values : pt.MENUS;
 		pt.FUNCS = (name == "FUNCS") ? values : pt.FUNCS;
 		pt.DOFUNC = (name == "DOFUNC") ? (value=="yes") : pt.DOFUNC;
