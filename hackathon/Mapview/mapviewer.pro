@@ -4,7 +4,7 @@ CONFIG       += qt plugin warn_off
 CONFIG       += x86_64
 #CONFIG       +=release
 
-V3DMAINDIR = ../../../v3d_main
+V3DMAINDIR = ../../../vaa3d/v3d_main
 QT_DIR = $$dirname(QMAKE_QMAKE)/..
 
 INCLUDEPATH  += $$V3DMAINDIR/basic_c_fun
@@ -15,7 +15,8 @@ HEADERS      +=colormap.h
 
 HEADERS      += mg_image_lib11.h
 HEADERS      += stackutil-11.h
-HEADERS      += ../../../released_plugins/v3d_plugins/istitch/y_imglib.h
+#HEADERS      += ../../../vaa3d/released_plugins/v3d_plugins/istitch/y_imglib.h
+HEADERS      += $$V3DMAINDIR/../released_plugins/v3d_plugins/istitch/y_imglib.h
 
 HEADERS      += mapviewer.h \
 #		$$V3DMAINDIR/basic_c_fun/stackutil.h \
@@ -34,5 +35,6 @@ LIBS	    += -L$$V3DMAINDIR/common_lib/lib -lv3dtiff
         += -L$$QTDIR/demos/shared/
 #LIBS += -framework CoreServices
 TARGET        = $$qtLibraryTarget(Multi_Level_mapview)
-#DESTDIR       = $$V3DMAINDIR/../v3d/plugins/Multi_Level_mapview
-DESTDIR       = ../../../v3d/plugins/Multi_Level_mapview
+#DESTDIR       = ../../../vaa3d/v3d/plugins/Multi_Level_mapview
+DESTDIR       = $$V3DMAINDIR/../v3d/plugins/Multi_Level_mapview
+
