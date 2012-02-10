@@ -1,23 +1,18 @@
 #ifndef __PLUGIN_CREATOR_GUI_H__
 #define __PLUGIN_CREATOR_GUI_H__
 
+#include <string>
 #include <QtGui>
-#include <v3d_interface.h>
+
+using namespace std;
 
 class GuidingDialog : public QDialog
 {
 	Q_OBJECT
 
 public:
-	GuidingDialog(V3DPluginCallback2 &callback, QWidget * parent) : QDialog(parent)
+	GuidingDialog(QWidget * parent) : QDialog(parent)
 	{
-		this->callback = &callback;
-		curwin = callback.currentImageWindow();
-
-		v3dhandleList win_list = callback.getImageWindowList();
-		QStringList items;
-		for(int i = 0; i < win_list.size(); i++) items << callback.getImageName(win_list[i]);
-
 		label1 = new QLabel(tr("Plugin Name :"));
 		editor1 = new QLineEdit(tr("test"));
 
@@ -158,9 +153,6 @@ public:
 	QPushButton * cancel;
 
 	QGridLayout * gridLayout;
-
-	V3DPluginCallback2 * callback;
-	v3dhandle curwin;
 };
 
 #endif

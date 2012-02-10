@@ -44,27 +44,27 @@ const QString title = QObject::tr("Plugin Creator Plugin");
 
 int create_plugin(V3DPluginCallback2 &callback, QWidget *parent)
 {
-	GuidingDialog *dialog = new GuidingDialog(callback, parent);
+	GuidingDialog dialog(parent);
 
-	if (dialog->exec()!=QDialog::Accepted) return -1;
-	dialog->update();
+	if (dialog.exec()!=QDialog::Accepted) return -1;
+	dialog.update();
 
 	PluginTemplate pt;
-	pt.PLUGIN_NAME = dialog->plugin_name;
-	pt.PLUGIN_CLASS = dialog->plugin_class;
-	pt.WINDOW_TITLE = dialog->win_title;
-	pt.PLUGIN_DESCRIPTION = dialog->plugin_desp;
-	pt.PLUGIN_DATE = dialog->plugin_date;
-	pt.PLUGIN_AUTHOR = dialog->plugin_author;
-	pt.V3D_MAIN_PATH = dialog->v3dmain_path;
-	STRING2VECTSTRING(pt.MENUS, dialog->menulst);
-	STRING2VECTSTRING(pt.FUNCS, dialog->funclst);
+	pt.PLUGIN_NAME = dialog.plugin_name;
+	pt.PLUGIN_CLASS = dialog.plugin_class;
+	pt.WINDOW_TITLE = dialog.win_title;
+	pt.PLUGIN_DESCRIPTION = dialog.plugin_desp;
+	pt.PLUGIN_DATE = dialog.plugin_date;
+	pt.PLUGIN_AUTHOR = dialog.plugin_author;
+	pt.V3D_MAIN_PATH = dialog.v3dmain_path;
+	STRING2VECTSTRING(pt.MENUS, dialog.menulst);
+	STRING2VECTSTRING(pt.FUNCS, dialog.funclst);
 	pt.DOFUNC = true;
 
 	cout<<"menus.size() = "<<pt.MENUS.size()<<endl;
 	cout<<"funcs.size() = "<<pt.FUNCS.size()<<endl;
 
-	string save_folder = dialog->save_folder;
+	string save_folder = dialog.save_folder;
 	if(save_folder[0] == '~') {
 		save_folder.erase(0,1);
 		save_folder = QDir::homePath().toStdString() + save_folder;
