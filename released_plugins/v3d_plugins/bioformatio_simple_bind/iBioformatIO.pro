@@ -24,7 +24,7 @@ LIBS         += -lm -L$$V3DMAINDIR/common_lib/lib -lv3dtiff
 #LIBS         += -lpthread
 
 TARGET        = $$qtLibraryTarget(imageIO_Bioformat)
-DESTDIR       = ../../v3d/plugins/imageIO_Bioformat
+DESTDIR       = ../../v3d/plugins/imageIO/load_image_using_Bioformats
 
 win32 {
 	QMAKE_POST_LINK = copy loci_tools.jar ../../v3d/.
