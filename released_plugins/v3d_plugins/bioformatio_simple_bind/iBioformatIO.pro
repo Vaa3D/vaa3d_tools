@@ -3,7 +3,7 @@ TEMPLATE      = lib
 CONFIG       += qt plugin warn_off
 #CONFIG       += release x86_64
 
-V3DMAINDIR = ../../v3d_main
+V3DMAINDIR = ../../../v3d_main
 
 INCLUDEPATH  += $$V3DMAINDIR/basic_c_fun
 INCLUDEPATH  += $$V3DMAINDIR/common_lib/include
@@ -21,17 +21,16 @@ SOURCES      +=	$$V3DMAINDIR/basic_c_fun/mg_image_lib.cpp
 SOURCES      += $$V3DMAINDIR/basic_c_fun/v3d_message.cpp
 
 LIBS         += -lm -L$$V3DMAINDIR/common_lib/lib -lv3dtiff
-LIBS         += -lpthread
-#LIBS	     += -lv3dfftw3f -lv3dfftw3f_threads
+#LIBS         += -lpthread
 
 TARGET        = $$qtLibraryTarget(imageIO_Bioformat)
 DESTDIR       = ../../v3d/plugins/imageIO_Bioformat
 
 win32 {
-	QMAKE_POST_LINK = copy loci_tools.jar ../../v3d
+	QMAKE_POST_LINK = copy loci_tools.jar ../../v3d/.
 }
 else {
-	QMAKE_POST_LINK = cp loci_tools.jar ../../v3d
+	QMAKE_POST_LINK = cp loci_tools.jar ../../v3d/.
 }
 
 
