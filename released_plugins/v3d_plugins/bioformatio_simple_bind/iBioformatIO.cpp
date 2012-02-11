@@ -153,6 +153,7 @@ QString getAppPath()
 {
 	QString v3dAppPath("~/Work/v3d_external/v3d");
 	QDir testPluginsDir = QDir(qApp->applicationDirPath());
+
 #if defined(Q_OS_WIN)
 	if (testPluginsDir.dirName().toLower() == "debug" || testPluginsDir.dirName().toLower() == "release")
 		testPluginsDir.cdUp();
@@ -169,6 +170,7 @@ QString getAppPath()
 		testPluginsDir.cdUp();
 	}
 #endif
+	
 	v3dAppPath=testPluginsDir.absolutePath();
 
 	return v3dAppPath;
