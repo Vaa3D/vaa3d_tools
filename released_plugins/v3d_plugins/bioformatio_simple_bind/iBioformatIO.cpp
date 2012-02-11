@@ -43,13 +43,13 @@ Q_EXPORT_PLUGIN2(imageIO_Bioformat, IBioformatIOPlugin);
 
 QStringList IBioformatIOPlugin::menulist() const
 {
-    return QStringList() << tr("ImageIO_Bioformat")
+    return QStringList() << tr("load an image using Bioformats Java library")
                          << tr("About");
 }
 
 void IBioformatIOPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
 {
-    if (menu_name == tr("ImageIO_Bioformat"))
+    if (menu_name == tr("load an image using Bioformats Java library"))
     {
         
         // input
@@ -133,7 +133,7 @@ void IBioformatIOPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &ca
     }
     else if (menu_name == tr("About"))
     {
-        QMessageBox::information(parent, "Version info", QString("Image IO using Bioformat Plugin %1 (Dec. 2, 2011) developed by Yang Yu and Hanchuan Peng. (Janelia Research Farm Campus, HHMI)").arg(getPluginVersion()).append("\n"));
+        QMessageBox::information(parent, "Version info", QString("Simple image reading using Bioformats library %1 (2011-2012) developed by Yang Yu, Yinan Wan, and Hanchuan Peng. (Janelia Research Farm Campus, HHMI)").arg(getPluginVersion()).append("\n"));
         return;
     }
 }
