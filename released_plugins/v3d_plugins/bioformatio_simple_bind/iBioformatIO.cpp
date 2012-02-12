@@ -167,14 +167,10 @@ QString getAppPath()
 		testUpperPluginsDir.cdUp();
 		testUpperPluginsDir.cdUp(); // like foo/plugins next to foo/v3d.app
 		if (testUpperPluginsDir.cd("plugins")) testPluginsDir = testUpperPluginsDir;
-		if (testUpperPluginsDir.cd("64bit")) testPluginsDir = testUpperPluginsDir;
-		else if (testUpperPluginsDir.cd("32bit")) testPluginsDir = testUpperPluginsDir;
 	}
 #endif
-
-	testPluginsDir.cd("imageIO");
-	testPluginsDir.cd("load_image_using_Bioformats");
 	
+	testPluginsDir.cdUp();
 	v3dAppPath = testPluginsDir.absolutePath();
 	return v3dAppPath;
 }
