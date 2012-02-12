@@ -44,6 +44,7 @@ Q_EXPORT_PLUGIN2(imageIO_Bioformat, IBioformatIOPlugin);
 QStringList IBioformatIOPlugin::menulist() const
 {
     return QStringList() << tr("load an image using Bioformats Java library")
+                         << tr("click me if you are unhappy with the loading result...")
                          << tr("About");
 }
 
@@ -130,6 +131,14 @@ void IBioformatIOPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &ca
         callback.setImageName(newwin, tmpfile.toStdString().c_str());
         callback.updateImageWindow(newwin);
         
+    }
+    else if (menu_name == tr("click me if you are unhappy with the loading result..."))
+    {
+       v3d_msg("This program is designed to use a system call to invoke the LOCI Bioformats Image IO Java library"
+               " to load an image. It first calls bioformats library to generate a temporary 3D TIF file on your harddrive"
+               " and then use Vaa3D to load that temporary file. Therefore, if you see the wrong loading result, it is"
+               " likely that you will get the same thing is you run the bioformats library directly.", 1);
+       return;
     }
     else if (menu_name == tr("About"))
     {
