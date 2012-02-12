@@ -81,7 +81,7 @@ void IBioformatIOPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &ca
 		printf("\n");
 		if (!QFile(lociDir).exists())
 		{
-			v3d_msg("Cannot find loci_tools.jar, please download it and make sure it is under the folder plugins/load_image_using_Bioformats/");
+			v3d_msg("Cannot find loci_tools.jar, please download it and make sure it is put under the Vaa3D bin folder");
 			return;
 		}
 	}
