@@ -81,7 +81,7 @@ void IBioformatIOPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &ca
 		printf("\n");
 		if (!QFile(lociDir).exists())
 		{
-			v3d_msg("cannot find loci_tools.jar, please download it.");
+			v3d_msg("Cannot find loci_tools.jar, please download it and make sure it is under the folder plugins/load_image_using_Bioformats/");
 			return;
 		}
 	}
@@ -167,12 +167,15 @@ QString getAppPath()
 		testUpperPluginsDir.cdUp();
 		testUpperPluginsDir.cdUp(); // like foo/plugins next to foo/v3d.app
 		if (testUpperPluginsDir.cd("plugins")) testPluginsDir = testUpperPluginsDir;
-		testPluginsDir.cdUp();
+		if (testUpperPluginsDir.cd("64bit")) testPluginsDir = testUpperPluginsDir;
+		else if (testUpperPluginsDir.cd("32bit")) testPluginsDir = testUpperPluginsDir;
 	}
 #endif
-	
-	v3dAppPath=testPluginsDir.absolutePath();
 
+	testPluginsDir.cd("imageIO");
+	testPluginsDir.cd("load_image_using_Bioformats");
+	
+	v3dAppPath = testPluginsDir.absolutePath();
 	return v3dAppPath;
 }
 
