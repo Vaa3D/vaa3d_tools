@@ -1,0 +1,5 @@
+In this folder is a demo plugin to perform binary thresholding on an image. It contains basic functions to do image operations through Vaa3D plugin domenu and dofunc.
+
+Reading the code helps you understand how to write a typical Vaa3D plugin. A complete version of Vaa3D Plugin Design Guide is on its way.
+
+by Yinan Wan 2012-02-13
