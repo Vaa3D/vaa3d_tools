@@ -164,7 +164,7 @@ void create_func_cpp(PluginTemplate &pt)
 			ofs<<"\t//callback.setImageName(newwin, QObject::tr(\""<<pt.FUNCS[i]<<"\"));"<<endl;
 			ofs<<"\t//callback.updateImageWindow(newwin);"<<endl;
 		}
-		else ofs<<"\tv3d_msg(\"${FUNCS[$i]}\");"<<endl;
+		else ofs<<"\tv3d_msg(\""<<pt.FUNCS[i]<<"\");"<<endl;
 
 		ofs<<"\treturn 1;"<<endl;
 		ofs<<"}"<<endl;
@@ -190,13 +190,13 @@ void create_func_cpp(PluginTemplate &pt)
 			{
 				ofs<<"\tchar ** argv;"<<endl;
 				ofs<<"\tint argc = split(paras, argv);"<<endl;
-				ofs<<"\tcout<<\"${MAINFUNCS[$i]}(argc, argv)\"<<endl;"<<endl;
-				ofs<<"\t//${MAINFUNCS[$i]}(argc, argv);"<<endl;
+				ofs<<"\tcout<<\""<<pt.MAINFUNCS[i]<<"(argc, argv)\"<<endl;"<<endl;
+				ofs<<"\t//"<<pt.MAINFUNCS[i]<<"(argc, argv);"<<endl;
 			}
 			if(i < pt.SYSINVOKES.size() && pt.SYSINVOKES[i] != "")
 			{
 				ofs<<"\tcout<<string(\""<<pt.SYSINVOKES[i]<<"\").append(paras).c_str()<<endl;"<<endl;
-				ofs<<"\t//system(string(\"${SYSINVOKES[$i]} \").append(paras).c_str());"<<endl;
+				ofs<<"\t//system(string(\""<<pt.SYSINVOKES[i]<<"\").append(paras).c_str());"<<endl;
 			}
 			ofs<<"\treturn true;"<<endl;
 			ofs<<"}"<<endl;
