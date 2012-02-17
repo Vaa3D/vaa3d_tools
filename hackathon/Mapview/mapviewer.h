@@ -332,6 +332,8 @@ public:
     XMapView *zx_view; //change in Y
 	XMapView *mapview ;
 	
+	QFrame *navigation_view; // navigation window
+	
 	//******************
 public:
 	long cx, cy, cz, cc; // compressed data

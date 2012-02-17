@@ -7,6 +7,7 @@
 #include "v3d_message.h"
 #include <QPainter>
 
+
 //Q_EXPORT_PLUGIN2 ( PluginName, ClassName )
 //The value of PluginName should correspond to the TARGET specified in the plugin's project file.
 Q_EXPORT_PLUGIN2(mapviewer, MAPiewerPlugin);
@@ -1982,7 +1983,36 @@ void ImageSetWidget::createGUI()
 	xy_view->setFixedWidth(xy_view->get_disp_width());
 	xy_view->setFixedHeight(xy_view->get_disp_height());
 	xy_view->setFocusPolicy(Qt::ClickFocus);
+	
+	xy_view->resize(xy_view->get_disp_width(),xy_view->get_disp_height());
+	
 
+	// navigation window view
+	navigation_view = new QFrame(xy_view);
+	// navigation window size
+	int nvx = cx/5;
+	if (nvx<150) {
+		nvx=150;
+	}else if (nvx>200) {
+		nvx=200;
+	}
+	int nvy = (int)(nvx*((float)(cy)/cx));
+	
+	QGridLayout* xyin_layout=new QGridLayout(xy_view);
+	xyin_layout->addWidget(navigation_view);
+	xyin_layout->setAlignment(Qt::AlignBottom|Qt::AlignRight);
+	xyin_layout->setContentsMargins(0,0,0,0);
+	xy_view->setLayout(xyin_layout);
+	
+	QRect rect_nv=QRect(0, 0, nvx, nvy);
+	navigation_view->setFrameRect(rect_nv);	
+	navigation_view->setFixedSize(nvx, nvy);
+	navigation_view->setFrameStyle(QFrame::Raised|QFrame::Box);
+	navigation_view->setWindowOpacity(0.0); //between 0-1
+	
+	
+	qDebug()<<"disp_x_y ..."<<xy_view->get_disp_width()<<xy_view->get_disp_height();	
+	
 	yz_view = new XMapView(viewGroup);
 
 	yz_view->setImgData(imgPlaneX,dtype,Ctype,sz_compressed,x,y,z,xslicesize,yslicesize,zslicesize,compressed1d,p_vmax,p_vmin); //because the second parameter is 0 (NULL pointer), then just load the default maps for this view
@@ -2189,7 +2219,8 @@ void ImageSetWidget::UpGUI()
 	xy_view->setFixedWidth(xy_view->get_disp_width());
 	xy_view->setFixedHeight(xy_view->get_disp_height());
 	xy_view->setFocusPolicy(Qt::ClickFocus);
-
+	
+	
 	yz_view->setImgData(imgPlaneX,dtype,Ctype,sz_compressed,x,y,z,xslicesize,yslicesize,zslicesize,compressed1d,p_vmax,p_vmin); //because the second parameter is 0 (NULL pointer), then just load the default maps for this view
 
 	yz_view->set_disp_width(cz);
