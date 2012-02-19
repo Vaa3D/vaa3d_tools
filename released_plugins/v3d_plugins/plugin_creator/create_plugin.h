@@ -90,8 +90,14 @@ void create_func_cpp(PluginTemplate &pt)
 	ofs<<""<<endl;
 	if(pt.DOFUNC)
 	{
+		ofs<<"/*******************************************************"<<endl;
+		ofs<<" * Split a string into string array"<<endl;
+		ofs<<" * 1. args should be 0"<<endl;
+		ofs<<" * 2. release args if not used any more"<<endl;
+		ofs<<" *******************************************************/"<<endl;
 		ofs<<"int split(const char *paras, char ** &args)"<<endl;
 		ofs<<"{"<<endl;
+		ofs<<"    if(paras == 0) return 0;"<<endl;
 		ofs<<"    int argc = 0;"<<endl;
 		ofs<<"    int len = strlen(paras);"<<endl;
 		ofs<<"    int posb[2048];"<<endl;
@@ -136,13 +142,9 @@ void create_func_cpp(PluginTemplate &pt)
 			ofs<<"\t\tQMessageBox::information(0, title, QObject::tr(\"No image is open.\"));"<<endl;
 			ofs<<"\t\treturn -1;"<<endl;
 			ofs<<"\t}"<<endl;
-			ofs<<"\t//TestDialog dialog(callback, parent);"<<endl;
 			ofs<<""<<endl;
-			ofs<<"\t//if (dialog.exec()!=QDialog::Accepted) return -1;"<<endl;
-			ofs<<""<<endl;
-			ofs<<"\t//dialog.update();"<<endl;
-			ofs<<"\t//int i = dialog.i;"<<endl;
-			ofs<<"\t//int c = dialog.channel;"<<endl;
+			ofs<<"\t//int i = 0;"<<endl;
+			ofs<<"\t//int c = 0"<<endl;
 			ofs<<"\t//Image4DSimple *p4DImage = callback.getImage(win_list[i]);"<<endl;
 
 			ofs<<"\t//if(p4DImage->getCDim() <= c) {v3d_msg(QObject::tr(\"The channel isn't existed.\")); return -1;}"<<endl;
@@ -164,7 +166,7 @@ void create_func_cpp(PluginTemplate &pt)
 			ofs<<"\t//callback.setImageName(newwin, QObject::tr(\""<<pt.FUNCS[i]<<"\"));"<<endl;
 			ofs<<"\t//callback.updateImageWindow(newwin);"<<endl;
 		}
-		else ofs<<"\tv3d_msg(\""<<pt.FUNCS[i]<<"\");"<<endl;
+		else ofs<<"\tv3d_msg(\"Invoke function : "<<pt.FUNCS[i]<<"\");"<<endl;
 
 		ofs<<"\treturn 1;"<<endl;
 		ofs<<"}"<<endl;
