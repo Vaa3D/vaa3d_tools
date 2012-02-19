@@ -94,7 +94,7 @@ void create_func_cpp(PluginTemplate &pt)
 		ofs<<"{"<<endl;
 		ofs<<"    int argc = 0;"<<endl;
 		ofs<<"    int len = strlen(paras);"<<endl;
-		ofs<<"    int posb[200];"<<endl;
+		ofs<<"    int posb[2048];"<<endl;
 		ofs<<"    char * myparas = new char[len];"<<endl;
 		ofs<<"    strcpy(myparas, paras);"<<endl;
 		ofs<<"    for(int i = 0; i < len; i++)"<<endl;
@@ -174,7 +174,7 @@ void create_func_cpp(PluginTemplate &pt)
 			ofs<<"bool "<<pt.FUNCS[i]<<"(const V3DPluginArgList & input, V3DPluginArgList & output)"<<endl;
 			ofs<<"{"<<endl;
 			ofs<<"\tcout<<\"Welcome to "<<pt.FUNCS[i]<<"\"<<endl;"<<endl;
-			ofs<<"\tif(input.size() != 2 || output.size() != 1) return false;"<<endl;
+			ofs<<"\tif(input.size() != 2 || output.size() != 1) return true;"<<endl;
 			ofs<<"\tchar * paras = 0;"<<endl;
 			ofs<<"\tif(((vector<char*> *)(input.at(1).p))->empty()){paras = new char[1]; paras[0]='\\0';}"<<endl;
 			ofs<<"\telse paras = (*(vector<char*> *)(input.at(1).p)).at(0);"<<endl;

@@ -55,7 +55,7 @@ public:
 		gridLayout->addWidget(editor_plugin_class,       1, 1, 1, 9);
 		gridLayout->addWidget(label_win_title,           2, 0, 1, 1);
 		gridLayout->addWidget(editor_win_title,          2, 1, 1, 9);
-		gridLayout->addWidget(label_plugin_description,  3, 1, 1, 1);
+		gridLayout->addWidget(label_plugin_description,  3, 0, 1, 1);
 		gridLayout->addWidget(editor_plugin_description, 3, 1, 1, 9);
 		gridLayout->addWidget(label_plugin_date,         4, 0, 1, 1);
 		gridLayout->addWidget(editor_plugin_date,        4, 1, 1, 9);
