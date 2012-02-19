@@ -56,7 +56,7 @@ int create_plugin(V3DPluginCallback2 &callback, QWidget *parent)
 	pt.PLUGIN_DESCRIPTION = dialog.plugin_desp;
 	pt.PLUGIN_DATE = dialog.plugin_date;
 	pt.PLUGIN_AUTHOR = dialog.plugin_author;
-	pt.V3D_MAIN_PATH = dialog.v3dmain_path;
+	pt.VAA3D_PATH = dialog.vaa3d_path;
 	STRING2VECTSTRING(pt.MENUS, dialog.menulst);
 	STRING2VECTSTRING(pt.FUNCS, dialog.funclst);
 	pt.DOFUNC = true;

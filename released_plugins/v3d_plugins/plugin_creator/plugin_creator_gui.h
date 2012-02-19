@@ -13,65 +13,71 @@ class GuidingDialog : public QDialog
 public:
 	GuidingDialog(QWidget * parent) : QDialog(parent)
 	{
-		label1 = new QLabel(tr("Plugin Name :"));
-		editor1 = new QLineEdit(tr("test"));
+		label_plugin_name = new QLabel(tr("Plugin Name :"));
+		editor_plugin_name = new QLineEdit(tr("test"));
 
-		label2 = new QLabel(tr("Plugin Class Name :"));
-		editor2 = new QLineEdit(tr("TestPlugin"));
+		label_plugin_class = new QLabel(tr("Plugin Class Name :"));
+		editor_plugin_class = new QLineEdit(tr("TestPlugin"));
 
-		label3 = new QLabel(tr("Window Title :"));
-		editor3 = new QLineEdit(tr("This is Test Plugin"));
+		label_win_title = new QLabel(tr("Window Title :"));
+		editor_win_title = new QLineEdit(tr("This is Test Plugin"));
 
-		label4 = new QLabel(tr("Plugin Description :"));
-		editor4 = new QLineEdit(tr("This is a test plugin, you can use it as a demo."));
+		label_plugin_description = new QLabel(tr("Plugin Description :"));
+		editor_plugin_description = new QLineEdit(tr("This is a test plugin, you can use it as a demo."));
 
-		label5 = new QLabel(tr("Pugin Date :"));
-		editor5 = new QLineEdit(tr("2012-01-01"));
+		label_plugin_date = new QLabel(tr("Plugin Date :"));
+		editor_plugin_date = new QLineEdit(tr("2012-01-01"));
 
-		label6 = new QLabel(tr("Pugin Author :"));
-		editor6 = new QLineEdit(tr("YourName"));
+		label_plugin_author = new QLabel(tr("Plugin Author :"));
+		editor_plugin_author = new QLineEdit(tr("YourName"));
 
-		label7 = new QLabel(tr("Vaa3D's v3d_main Path :"));
-		editor7 = new QLineEdit(tr("/Path_to_v3d_main_code_folder"));
+		label_vaa3d_path = new QLabel(tr("Vaa3D Path :"));
+		editor_vaa3d_path = new QLineEdit(tr(""));
+		button_vaa3d_path = new QPushButton(tr("..."));
 
-		label8 = new QLabel(tr("Menu List : "));
-		editor8 = new QLineEdit(tr("menu1 menu2"));
+		label_menu_list = new QLabel(tr("Menu List : "));
+		editor_menu_list = new QLineEdit(tr("menu1 menu2"));
 
-		label9 = new QLabel(tr("Func List : "));
-		editor9 = new QLineEdit(tr("func1 func2"));
+		label_func_list = new QLabel(tr("Func List : "));
+		editor_func_list = new QLineEdit(tr("func1 func2"));
 
-		label10 = new QLabel(tr("Save Folder : "));
-		editor10 = new QLineEdit(tr("/plugin/folder"));
+		label_save_folder = new QLabel(tr("Save Folder : "));
+		editor_save_folder = new QLineEdit(tr(""));
+		button_save_folder = new QPushButton(tr("..."));
 
 		ok = new QPushButton(tr("ok"));
 		cancel = new QPushButton(tr("cancel"));
 
 		gridLayout = new QGridLayout();
-		gridLayout->addWidget(label1, 0, 0);
-		gridLayout->addWidget(editor1, 0, 1, 1, 3);
-		gridLayout->addWidget(label2, 1, 0);
-		gridLayout->addWidget(editor2, 1, 1, 1, 3);
-		gridLayout->addWidget(label3, 2, 0);
-		gridLayout->addWidget(editor3, 2, 1, 1, 3);
-		gridLayout->addWidget(label4, 3, 0);
-		gridLayout->addWidget(editor4, 3, 1, 1, 3);
-		gridLayout->addWidget(label5, 4, 0);
-		gridLayout->addWidget(editor5, 4, 1, 1, 3);
-		gridLayout->addWidget(label6, 5, 0);
-		gridLayout->addWidget(editor6, 5, 1, 1, 3);
-		gridLayout->addWidget(label7, 6, 0);
-		gridLayout->addWidget(editor7, 6, 1, 1, 3);
-		gridLayout->addWidget(label8, 7, 0);
-		gridLayout->addWidget(editor8, 7, 1, 1, 3);
-		gridLayout->addWidget(label9, 8, 0);
-		gridLayout->addWidget(editor9, 8, 1, 1, 3);
-		gridLayout->addWidget(label10, 9, 0);
-		gridLayout->addWidget(editor10, 9, 1, 1, 3);
-		gridLayout->addWidget(cancel, 10, 2, Qt::AlignRight);
-		gridLayout->addWidget(ok, 10, 3, Qt::AlignRight);
+		gridLayout->addWidget(label_plugin_name,         0, 0, 1, 1);
+		gridLayout->addWidget(editor_plugin_name,        0, 1, 1, 9);
+		gridLayout->addWidget(label_plugin_class,        1, 0, 1, 1);
+		gridLayout->addWidget(editor_plugin_class,       1, 1, 1, 9);
+		gridLayout->addWidget(label_win_title,           2, 0, 1, 1);
+		gridLayout->addWidget(editor_win_title,          2, 1, 1, 9);
+		gridLayout->addWidget(label_plugin_description,  3, 1, 1, 1);
+		gridLayout->addWidget(editor_plugin_description, 3, 1, 1, 9);
+		gridLayout->addWidget(label_plugin_date,         4, 0, 1, 1);
+		gridLayout->addWidget(editor_plugin_date,        4, 1, 1, 9);
+		gridLayout->addWidget(label_plugin_author,       5, 0, 1, 1);
+		gridLayout->addWidget(editor_plugin_author,      5, 1, 1, 9);
+		gridLayout->addWidget(label_vaa3d_path,       6, 0, 1, 1);
+		gridLayout->addWidget(editor_vaa3d_path,      6, 1, 1, 8);
+		gridLayout->addWidget(button_vaa3d_path,      6, 9, 1, 1);
+		gridLayout->addWidget(label_menu_list,           7, 0, 1, 1);
+		gridLayout->addWidget(editor_menu_list,          7, 1, 1, 9);
+		gridLayout->addWidget(label_func_list,           8, 0, 1, 1);
+		gridLayout->addWidget(editor_func_list,          8, 1, 1, 9);
+		gridLayout->addWidget(label_save_folder,         9, 0, 1, 1);
+		gridLayout->addWidget(editor_save_folder,        9, 1, 1, 8);
+		gridLayout->addWidget(button_save_folder,        9, 9, 1, 1);
+		gridLayout->addWidget(cancel, 10, 0, 1, 5, Qt::AlignRight);
+		gridLayout->addWidget(ok, 10, 5, 1, 5, Qt::AlignRight);
 
 		connect(ok, SIGNAL(clicked()), this, SLOT(accept()));
 		connect(cancel, SIGNAL(clicked()), this, SLOT(reject()));
+		connect(button_vaa3d_path, SIGNAL(clicked()), this, SLOT(setFolderPath()));
+		connect(button_save_folder, SIGNAL(clicked()), this, SLOT(setFolderPath()));
 
 		connect(ok, SIGNAL(clicked()), this, SLOT(update()));
 
@@ -93,18 +99,41 @@ public slots:
 		return QDialog::reject();
 	}
 
+	void setFolderPath()
+	{
+		QPushButton * button = (QPushButton*) sender();
+		QLineEdit * editor;
+		QString title;
+		if(button == button_vaa3d_path) 
+		{
+			editor = editor_vaa3d_path;
+			title = "Open V3D_MAIN Directory";
+		}
+		else if(button == button_save_folder) 
+		{
+			editor = editor_save_folder;
+			title = "Save to Directory";
+		}
+
+		QString dir = QFileDialog::getExistingDirectory(this, title,
+                                                 "~/",
+                                                 QFileDialog::ShowDirsOnly
+                                                 | QFileDialog::DontResolveSymlinks);
+		editor->setText(dir);
+	}
+
 	void update()
 	{
-		plugin_name =  editor1->text().toStdString();
-		plugin_class =  editor2->text().toStdString();
-		win_title =  editor3->text().toStdString();
-		plugin_desp =  editor4->text().toStdString();
-		plugin_date =  editor5->text().toStdString();
-		plugin_author =  editor6->text().toStdString();
-		v3dmain_path =  editor7->text().toStdString();
-		menulst =  editor8->text().toStdString();
-		funclst =  editor9->text().toStdString();
-		save_folder =  editor10->text().toStdString();
+		plugin_name =  editor_plugin_name->text().toStdString();
+		plugin_class =  editor_plugin_class->text().toStdString();
+		win_title =  editor_win_title->text().toStdString();
+		plugin_desp =  editor_plugin_description->text().toStdString();
+		plugin_date =  editor_plugin_date->text().toStdString();
+		plugin_author =  editor_plugin_author->text().toStdString();
+		vaa3d_path =  editor_vaa3d_path->text().toStdString();
+		menulst =  editor_menu_list->text().toStdString();
+		funclst =  editor_func_list->text().toStdString();
+		save_folder =  editor_save_folder->text().toStdString();
 
 	}
 
@@ -115,39 +144,42 @@ public:
 	string plugin_desp;
 	string plugin_date;
 	string plugin_author;
-	string v3dmain_path;
+	string vaa3d_path;
 	string menulst;
 	string funclst;
 	string save_folder;
-	QLabel * label1;
-	QLineEdit * editor1;
 
-	QLabel * label2;
-	QLineEdit * editor2;
+	QLabel * label_plugin_name;
+	QLineEdit * editor_plugin_name;
 
-	QLabel * label3;
-	QLineEdit * editor3;
+	QLabel * label_plugin_class;
+	QLineEdit * editor_plugin_class;
 
-	QLabel * label4;
-	QLineEdit * editor4;
+	QLabel * label_win_title;
+	QLineEdit * editor_win_title;
 
-	QLabel * label5;
-	QLineEdit * editor5;
+	QLabel * label_plugin_description;
+	QLineEdit * editor_plugin_description;
 
-	QLabel * label6;
-	QLineEdit * editor6;
+	QLabel * label_plugin_date;
+	QLineEdit * editor_plugin_date;
 
-	QLabel * label7;
-	QLineEdit * editor7;
+	QLabel * label_plugin_author;
+	QLineEdit * editor_plugin_author;
 
-	QLabel * label8;
-	QLineEdit * editor8;
+	QLabel * label_vaa3d_path;
+	QLineEdit * editor_vaa3d_path;
+	QPushButton * button_vaa3d_path;
 
-	QLabel * label9;
-	QLineEdit * editor9;
+	QLabel * label_menu_list;
+	QLineEdit * editor_menu_list;
 
-	QLabel * label10;
-	QLineEdit * editor10;
+	QLabel * label_func_list;
+	QLineEdit * editor_func_list;
+
+	QLabel * label_save_folder;
+	QLineEdit * editor_save_folder;
+	QPushButton * button_save_folder;
 
 	QPushButton * ok;
 	QPushButton * cancel;

@@ -34,7 +34,7 @@ struct PluginTemplate
 	string PRO_FILE;
 
 	string WINDOW_TITLE;
-	string V3D_MAIN_PATH;
+	string VAA3D_PATH;
 	bool DOFUNC;
 	vector<string> MENUS;
 	vector<string> FUNCS;
@@ -51,8 +51,8 @@ void create_plugin_pro(PluginTemplate & pt)
 	ofs<<"TEMPLATE\t= lib"<<endl;
 	ofs<<"CONFIG\t+= qt plugin warn_off"<<endl;
 	ofs<<"#CONFIG\t+= x86_64"<<endl;
-	ofs<<"VAA3DMAINPATH = "<<pt.V3D_MAIN_PATH<<endl;
-	ofs<<"INCLUDEPATH\t+= $$VAA3DMAINPATH/basic_c_fun"<<endl;
+	ofs<<"VAA3DPATH = "<<pt.VAA3D_PATH<<endl;
+	ofs<<"INCLUDEPATH\t+= $$VAA3DPATH/v3d_main/basic_c_fun"<<endl;
 	ofs<<""<<endl;
 	ofs<<"HEADERS\t+= "<<pt.PLUGIN_HEADER<<endl;
 	ofs<<"HEADERS\t+= "<<pt.FUNC_HEADER<<endl;
@@ -60,10 +60,10 @@ void create_plugin_pro(PluginTemplate & pt)
 	ofs<<""<<endl;
 	ofs<<"SOURCES\t= "<<pt.PLUGIN_CPP<<endl;
 	ofs<<"SOURCES\t+= "<<pt.FUNC_CPP<<endl;
-	ofs<<"SOURCES\t+= $$V3DMAINPATH/basic_c_fun/v3d_message.cpp"<<endl;
+	ofs<<"SOURCES\t+= $$VAA3DPATH/v3d_main/basic_c_fun/v3d_message.cpp"<<endl;
 	ofs<<""<<endl;
 	ofs<<"TARGET\t= $$qtLibraryTarget("<<pt.PLUGIN_NAME<<")"<<endl;
-	ofs<<"#DESTDIR\t= ~/Applications/v3d/plugins/"<<pt.PLUGIN_NAME<<"/"<<endl;
+	ofs<<"DESTDIR\t= $$VAA3DPATH/bin/plugins/"<<pt.PLUGIN_NAME<<"/"<<endl;
 	ofs.close();
 }
 
@@ -360,7 +360,7 @@ string demo_plugin_template()
 	oss<<"PLUGIN_DATE = \"2011-06-16\""<<endl;
 	oss<<"PLUGIN_AUTHOR = \"Your name\""<<endl;
 	oss<<"#PLUGIN_GUI = \"test_gui.h\""<<endl;
-	oss<<"VAA3D_MAIN_PATH = \"../../work/v3d_external/v3d_main\""<<endl;
+	oss<<"VAA3D_PATH = \"../../work/v3d_external\""<<endl;
 	oss<<endl;
 	oss<<"MENUS=(\"first item\" \"second item\")"<<endl;
 	oss<<"FUNCS=(\"first_item\" \"second_item\")"<<endl;
@@ -522,7 +522,7 @@ PluginTemplate read_plugin_template(string plugin_tmpl_file)
 		pt.PLUGIN_AUTHOR = (name == "PLUGIN_AUTHOR") ? value : pt.PLUGIN_AUTHOR;
 		pt.PLUGIN_GUI = (name == "PLUGIN_GUI") ? value : pt.PLUGIN_GUI;
 		pt.WINDOW_TITLE = (name == "WINDOW_TITLE") ? value : pt.WINDOW_TITLE;
-		pt.V3D_MAIN_PATH = (name == "VAA3D_MAIN_PATH") ? value : pt.V3D_MAIN_PATH;
+		pt.VAA3D_PATH = (name == "VAA3D_PATH") ? value : pt.VAA3D_PATH;
 		pt.MENUS = (name == "MENUS") ? values : pt.MENUS;
 		pt.FUNCS = (name == "FUNCS") ? values : pt.FUNCS;
 		pt.DOFUNC = (name == "DOFUNC") ? (value=="yes") : pt.DOFUNC;
