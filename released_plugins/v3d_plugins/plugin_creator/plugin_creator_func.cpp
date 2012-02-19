@@ -79,7 +79,9 @@ int create_plugin(V3DPluginCallback2 &callback, QWidget *parent)
 
 	QDir dir(save_folder.c_str()); 
 	if(!dir.exists()){QMessageBox::warning(0, QObject::tr("Error"), QObject::tr("Un existing foler : %1").arg(save_folder.c_str())); return 0;}
-	else {v3d_msg(QString("Files:\n \t%1\n \t%2\n \t%3\n \t%4\n \t%5\n have been saved to directory: %6").arg(pt.PLUGIN_HEADER.c_str()).arg(pt.PLUGIN_CPP.c_str()).arg(pt.FUNC_HEADER.c_str()).arg(pt.FUNC_CPP.c_str()).arg(pt.PRO_FILE.c_str()).arg(save_folder.c_str()));}
+	else 
+    {
+        v3d_msg(QString("Files:\n \t%1\n \t%2\n \t%3\n \t%4\n \t%5\n have been saved to directory: [%6]. \n\nYou can go to that folder now and run the following command to build the plugin: \n\n>qmake\n>make\n").arg(pt.PLUGIN_HEADER.c_str()).arg(pt.PLUGIN_CPP.c_str()).arg(pt.FUNC_HEADER.c_str()).arg(pt.FUNC_CPP.c_str()).arg(pt.PRO_FILE.c_str()).arg(save_folder.c_str()));}
 	QString cur_path = QDir::current().dirName();
 	cout<<"current path : "<<QDir::current().dirName().toStdString()<<endl;
 	QDir::setCurrent(save_folder.c_str());
