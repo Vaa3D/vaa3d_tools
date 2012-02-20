@@ -13,8 +13,10 @@
 #include "plugin_creator_func.h"
 #include "plugin_creator_gui.h"
 #include "create_plugin.h"
+#include "common_dialog.h"
 
 using namespace std;
+
 #define STRING2VECTSTRING(values, value) \
 { \
 	if(value.find('"') != string::npos) \
@@ -94,3 +96,20 @@ int create_plugin(V3DPluginCallback2 &callback, QWidget *parent)
 }
 
 
+int create_demo1(V3DPluginCallback2 &callback, QWidget *parent)
+{
+	vector<string> items;
+	items.push_back("VAA3D Path");
+	items.push_back("Save Path");
+	CommonDialog dialog(items);
+	dialog.setWindowTitle(QObject::tr("Create Demo1 Project"));
+	if(dialog.exec() != QDialog::Accepted) return 1;
+	string vaa3d_path = dialog.get_para("VAA3D Path");
+	string save_path = dialog.get_para("Save Path");
+	produce_demo1(save_path, vaa3d_path);
+	QMessageBox::information(0, "Finished", QObject::tr("<pre>Demo1 project have been saved to %1\n\n"
+													    "> cd %1\n"
+														"> qmake\n"
+														"> make\n</pre>")
+			                                         .arg(save_path.c_str()));
+}

@@ -9,11 +9,12 @@
 #include "plugin_creator_func.h"
  
 Q_EXPORT_PLUGIN2(plugin_creator, PluginCreatorPlugin);
- 
+
 QStringList PluginCreatorPlugin::menulist() const
 {
 	return QStringList()
 		<<tr("create plugin")
+		<<tr("demo1")
 		<<tr("about");
 }
 
@@ -22,6 +23,10 @@ void PluginCreatorPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &c
 	if (menu_name == tr("create plugin"))
 	{
 		create_plugin(callback,parent);
+	}
+	else if(menu_name == tr("demo1"))
+	{
+		create_demo1(callback,parent);
 	}
 	else
 	{
