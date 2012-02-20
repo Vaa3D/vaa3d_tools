@@ -4,9 +4,9 @@
 
 #include <QtGui>
 #include <stdio.h>
-#include "../../basic_c_fun/basic_surf_objs.h"
-#include "../../basic_c_fun/stackutil.h"
-#include "../../basic_c_fun/basic_memory.cpp"//note: should not include .h file, since they are template functions
+#include "basic_surf_objs.h"
+#include "stackutil.h"
+#include "basic_memory.cpp"//note: should not include .h file, since they are template functions
 
 #include "plugin_warp_affine_tps.h"
 #include "q_warp_affine_tps_dialogs.h"
@@ -269,7 +269,7 @@ void WarpPointsetBaseonMatchedPairs(V3DPluginCallback &callback, QWidget *parent
 		}
 
 		if(qs_filename_sub2tar_affine.endsWith(".marker"))
-			wirteMarker_file(qPrintable(qs_filename_sub2tar_affine),ql_marker_sub_affine);
+			writeMarker_file(qPrintable(qs_filename_sub2tar_affine),ql_marker_sub_affine);
 	}
 
 
@@ -358,7 +358,7 @@ void WarpPointsetBaseonMatchedPairs(V3DPluginCallback &callback, QWidget *parent
 		}
 
 		if(qs_filename_sub2tar_affine_tps.endsWith(".marker"))
-			wirteMarker_file(qPrintable(qs_filename_sub2tar_affine_tps),ql_marker_sub_affine_tps);
+			writeMarker_file(qPrintable(qs_filename_sub2tar_affine_tps),ql_marker_sub_affine_tps);
 	}
 
 	//TPS warp subject markers to target
