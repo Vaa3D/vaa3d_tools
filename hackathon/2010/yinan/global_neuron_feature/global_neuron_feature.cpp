@@ -4,13 +4,14 @@
  *
  *  Created by Wan, Yinan, on 07/07/11.
  *  Last change: Wan, Yinan, on 06/23/11.
+ *  Last change: add domenu.  Wan, Yinan, on 02/20/12
  */
 
 #include <QtGlobal>
 
 #include "global_neuron_feature.h"
 #include "v3d_message.h" 
-#include "../../../v3d_main/basic_c_fun/basic_surf_objs.h"
+#include "basic_surf_objs.h"
 #include "Nfmain.h"
 #include "Nfmain.cpp"
 #include <unistd.h>
@@ -29,32 +30,29 @@ const QString title = "global_neuron_feature";
 QStringList GNFPlugin::menulist() const
 {
     return QStringList() 
-	//<<tr("neuron_feature");
+	<<tr("compute global features")
 	<<tr("Help");
 }
 
 QStringList GNFPlugin::funclist() const
 {
 	return QStringList()
-	<<tr("global_neuron_feature")
+	<<tr("compute_feature")
 	<<tr("help");
 }
 
-void global_neuron_feature(V3DPluginCallback2 &callback, QWidget *parent, int method_code)
-{
 
-}
 
 void GNFPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
 {
-	/*if (menu_name == tr("neuron_feature"))
+	if (menu_name == tr("compute global features"))
 	{
-    		neuron_feature(callback, parent,1 );
-    }
+		nf_main(callback, parent);
+	}
 	else if (menu_name == tr("Help"))
 	{
-		v3d_msg("(version 0.01) Compute global features for a certain neuron.");
-	}*/
+		v3d_msg("(version 2.0) Compute global features for a certain neuron. Developed by Yinan Wan, 2012-02-20.");
+	}
 	return;
 }
 
@@ -63,14 +61,15 @@ bool GNFPlugin::dofunc(const QString & func_name, const V3DPluginArgList & input
 {	
 	if (func_name==tr("help"))
 	{
-		cout<<"(version 0.01) Compute global features (topological or geometrical) for sigle or group of neurons."<<endl;
-		cout<<"Usage: specify swc file names as input(s)\nDemo: ./v3d -x plugins/neuron_utilities/global_neuron_feature/libglobal_neuron_feature.so -f global_neuron_feature -i 2189201.CNG.swc \n";
+		cout<<"\n\n(version 2.0) Compute global features for sigle or group of neurons.Developed by Yinan Wan 12-02-20"<<endl;
+		cout<<"Input: a list of swc file names (e.g. 'a.swc b.swc') or a linker file name (.ano)"<<endl;
+		cout<<"Usage: v3d -x global_neuron_feature -f compute_feature -i test.swc \n"<<endl;
 		return true;
 	}
-	
-	else if (func_name==tr("global_neuron_feature"))
+
+	else if (func_name==tr("compute_feature"))
 	{
-		cout<<"\n===============Welcome to global_neuron_feature Function==============="<<endl;
+		cout<<"\n===============Welcome to compute_feature Function==============="<<endl;
 		nf_main(input,output); 
 		return true;
 	}

@@ -2,7 +2,7 @@
 #define COMPUTE_H
 
 #include <QtGlobal>
-#include "../../../v3d_main/basic_c_fun/basic_surf_objs.h" 
+#include "basic_surf_objs.h" 
 
 void computeFeature(const NeuronTree & nt, double * features);
 int getParent(int n, QList<NeuronSWC> & list, QHash<int,int> & LUT);

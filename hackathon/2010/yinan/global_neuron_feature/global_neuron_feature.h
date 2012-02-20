@@ -13,7 +13,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "v3d_interface.h"
-#include "../../../v3d_main/basic_c_fun/basic_surf_objs.h"
+#include "basic_surf_objs.h"
 
 class GNFPlugin: public QObject, public V3DPluginInterface2_1
 {

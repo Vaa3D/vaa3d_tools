@@ -11,31 +11,127 @@ using namespace std;
 void nf_main(const V3DPluginArgList & input, V3DPluginArgList & output)
 {
 	vector<char*>* inlist = (vector<char*>*)(input.at(0).p);
-	//char * out = (*(vector<char*>*)(output.at(0).p)).at(0);
-	//QString outfileName = QString(out);
-	//QFile file(outfileName);
-	//file.open(QIODevice::WriteOnly|QIODevice::Text);
-	//QTextStream myfile(&file);
+	if (inlist->size()!=1)
+	{
+		cerr<<"Error in input list. You must input .ano file or a list of .swc file name"<<endl;
+		return;
+	}
 
-	//myfile <<"id\tFile Name\tN_Node\tN_stem\tN_bifs\tN_branch\tN_tips\tWidth\tHeight\tDepth\tLength\tVolume\tSurface\tContraction\tFragmentation\tPd_ratio\tHausdorff\tFractal_Dim"<<endl;
+	QStringList nameList;
+	QString qs_name(inlist->at(0));
+	qs_name = qs_name.simplified();
+	int neuronNum;
+	vector<NeuronTree> nt_list;
 
-	int neuronNum = (int)inlist->size();
+	if (qs_name.toUpper().endsWith(".ANO"))
+	{
+		cout<<"reading a linker file..."<<endl;;
+		P_ObjectFileType linker_object;
+		if (!loadAnoFile(QString(qs_name),linker_object))
+		{
+			cerr<<"Error in reading the linker file."<<endl;
+			return;
+		}
+		nameList = linker_object.swc_file_list;
+		neuronNum = nameList.size();
+		for (V3DLONG i=0;i<neuronNum;i++)
+		{
+			NeuronTree tmp = readSWC_file(nameList.at(i));
+			nt_list.push_back(tmp);
+		}
+	}
+	else if (qs_name.toUpper().endsWith(".SWC") || qs_name.toUpper().endsWith(".ESWC"))
+	{
+		cout<<"reading a list of swc file names."<<endl;
+		nameList = qs_name.split(" ");
+		neuronNum = nameList.size();
+		for (V3DLONG i=0;i<neuronNum;i++)
+		{
+			NeuronTree tmp = readSWC_file(nameList.at(i));
+			nt_list.push_back(tmp);
+		}
+	}
+
 
 	for (int i=0;i<neuronNum;i++)
 	{
-		QString name = QString(inlist->at(i));
-		NeuronTree nt = readSWC_file(name);
-		
+		NeuronTree nt = nt_list[i];
 		cout<<"\n--------------Neuron #"<<(i+1)<<"----------------\n";
-		//myfile<<(i+1)<<"\t"<<name<<"\t";
 		double * features = new double[FNUM];
 		computeFeature(nt, features);
 		printFeature(features);
-		//for (int jj=0;jj<FNUM;jj++)
-		//	myfile<<features[jj]<<"\t";
-		//myfile<<endl;
+		if (features) {delete []features; features = NULL;}
 	}
-	//file.close();
+}
+
+void nf_main(V3DPluginCallback2 &callback, QWidget *parent)
+{
+	QString fileOpenName;
+	fileOpenName = QFileDialog::getOpenFileName(0, QObject::tr("Open File"),
+			"",
+			QObject::tr("Supported file (*.swc)"
+				";;Neuron structure	(*.swc)"
+				));
+	if(fileOpenName.isEmpty()) 
+	{
+		v3d_msg("You don't have any file open.");
+		return;
+	}
+	NeuronTree nt = readSWC_file(fileOpenName);
+	double * features = new double[FNUM];
+	computeFeature(nt,features);
+	QMessageBox infoBox;
+	infoBox.setText("Global features of the neuron:");
+	infoBox.setInformativeText(QString("<pre><font size='4'>"
+				"number of nodes                  : %1<br>"
+				"soma surface                     : %2<br>"
+				"number of stems                  : %3<br>"
+				"number of bifurcations           : %4<br>"
+				"number of branches               : %5<br>"
+				"number of tips                   : %6<br>"
+				"overall width                    : %7<br>"
+				"overall height                   : %8<br>"
+				"overall depth                    : %9<br>"
+				"average diameter                 : %10<br>"
+				"total length                     : %11<br>"
+				"total surface                    : %12<br>"
+				"total volume                     : %13<br>"
+				"max euclidean distance           : %14<br>"
+				"max path distance                : %15<br>"
+				"max branch order                 : %16<br>"
+				"average contraction              : %17<br>"
+				"average fragmentation            : %18<br>"
+				"average parent-daughter ratio    : %19<br>"
+				"average bifurcation angle local  : %20<br>"
+				"average bifurcation angle remote : %21<br>"
+				"Hausdorff dimension              : %22</font></pre>")
+				.arg(features[0])
+				.arg(features[1])
+				.arg(features[2])
+				.arg(features[3])
+				.arg(features[4])
+				.arg(features[5])
+				.arg(features[6])
+				.arg(features[7])
+				.arg(features[8])
+				.arg(features[9])
+				.arg(features[10])
+				.arg(features[11])
+				.arg(features[12])
+				.arg(features[13])
+				.arg(features[14])
+				.arg(features[15])
+				.arg(features[16])
+				.arg(features[17])
+				.arg(features[18])
+				.arg(features[19])
+				.arg(features[20])
+				.arg(features[21]));
+	infoBox.exec();
+
+
+	if (features) {delete []features; features = NULL;}
+
 }
 
 void printFeature(double * features)
