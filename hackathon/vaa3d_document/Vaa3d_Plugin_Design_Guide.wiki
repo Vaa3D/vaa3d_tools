@@ -1,0 +1,432 @@
+=Introduction=
+
+
+==What are Vaa3D plugins?==
+
+
+Vaa3D plugins are programs you can develop to take advantage of the management, visualization and analysis tools of Vaa3D. They are written in C++, with Qt supported. The default Vaa3D plugins are released under the “plugin” folder, and more released plugins developed by various parties can be checked out as [[toolbox]]es. You can also develop your own plugins, following this guideline.
+
+
+Currently the execution of Vaa3D plugins supports the following 3 styles:<br />
+* From the menu ([[domenu]]): Plugins with domenus can be executed by clicking the Plug-In menu items.
+* From the command line ([[dofunc]]): Plugins with dofuncs can be executed in the command line.
+* From another plugin: You can also let plugins call each other, please consult [[advanced applications]] to see the instructions.
+
+
+==Before you start==
+
+
+Before writing a Vaa3D plugin, please make sure that you have Qt properly installed and you have Vaa3D in your computer. If you have any questions regarding the installation and configuration of Vaa3D, please see the instructuions [[Instructions for installing|here]].
+
+
+==The structure of a Vaa3D plugin project==
+
+The structure of a Vaa3D plugin project is very simple. It contains a list of at least 3 files:<br />
+* plugin.h
+* plugin.cpp
+* plugin.pro
+
+
+plugin.pro tells Qt how to compile to plugin. The header file and cpp file organize the major functions that are used by the plugin interface. <br />
+The key concept you should remember is that Vaa3D Plugin creates a interface that gives you a framework. After a Plugin class inherited from V3DPluginInterface2_1 is created, you can define your own items and functions in [domenu] and [dofunc].
+
+
+=Writing a Vaa3D plugin=
+
+==Plugin Creator==
+
+The simplest way to create a Vaa3D plugin is to use another plugin called Plugin Creator, which provides basic template and examples for you to customize your plugin.
+
+The Plugin Creator is now available in our Vaa3D Toolbox. You can download it [[|here]]. You can run it in the same way as any other plugin, described [[#Running the plugin|here]].
+
+
+==An example plugin==
+
+Once you have built the necessary template of a plugin (either by Plugin Creator or manually), you can move on to add your own functions in it. This section describes a typical example of plugin project, which is designed to perform binary thresholding on an image. You can use it as a demo. Reading the example may also help you learn more about the function organization in Vaa3D plugins.<br />
+
+If you already know how to write a simple plugin and want to extend it, you can skip this part and go directly to [[advanced_fucntions]]. A complete list describing the input and output from the interface is available in that section. Also, you can learn [[more advanced utilities]] in plugin development.
+
+
+In order to build a clear framework, we show a typical project consisting of 5 files, in which the plugin framework (example_plugin.h, example_plugin.cpp) is separated from the functions (example_func.h, example_func.cpp). You are not required to do so--remember previously we have stated that a plugin can consist of only 3 files--but you are strongly encouraged to do so to better arrange your project structure. Also, the example shown here has an organization consistant with the project created by [[#Plugin Creator | Plugin Creator]].
+
+
+The following 2 files set up the framework of Vaa3D plugin interface:
+The key concept here is to construct a list of menu and func items, and link the function with the item you want to activate. 
+
+
+example_plugin.h
+
+<syntaxhighlight lang="cpp">/* example_plugin.h
+ * This is a header file of plugin, you can use it as a demo
+ * 2012-02-10 : by Yinan Wan
+ */
+ 
+#ifndef __EXAMPLE_PLUGIN_H__
+#define __EXAMPLE_PLUGIN_H__
+
+#include <QtGui>
+#include <v3d_interface.h>
+
+class ExamplePlugin : public QObject, public V3DPluginInterface2_1
+{
+	Q_OBJECT
+	Q_INTERFACES(V3DPluginInterface2_1);
+
+public:
+	float getPluginVersion() const {return 1.1f;}
+
+	QStringList menulist() const;
+	void domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent);
+
+	QStringList funclist() const ;
+	bool dofunc(const QString &func_name, const V3DPluginArgList &input, V3DPluginArgList &output, V3DPluginCallback2 &callback, QWidget *parent);
+};
+
+#endif</syntaxhighlight>
+
+
+example_plugin.cpp
+
+<syntaxhighlight lang="cpp">/* example_plugin.cpp
+ * This is an example plugin perform binary thresholding on an image. You can use it as a demo
+ * 2012-02-10 : by Yinan Wan
+ */
+ 
+#include "v3d_message.h"
+
+#include "example_plugin.h"
+#include "example_func.h"
+
+// 1- Export the plugin class to a target, the first item in the bracket should match the TARGET parameter in the .pro file
+Q_EXPORT_PLUGIN2(example, ExamplePlugin);
+ 
+
+// 2- Set up the items in plugin domenu
+QStringList ExamplePlugin::menulist() const
+{
+	return QStringList() 
+		<<tr("image_thresholding")
+		<<tr("about");
+}
+
+// 3 - Set up the function list in plugin dofunc
+QStringList ExamplePlugin::funclist() const
+{
+	return QStringList()
+		<<tr("image_thresholding")
+		<<tr("help");
+}
+
+// 4 - Call the functions corresponding to the domenu items. 
+//     The functions may not necessarily be in example_func.cpp, but you are strongly recommended to do so
+//     to seperate the Interface from the core functions, and it is consistant with the form in plugin_creator
+void ExamplePlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
+{
+	if (menu_name == tr("image_thresholding"))
+	{
+		image_threshold(callback,parent);
+	}
+	else if (menu_name == tr("about"))
+	{
+		v3d_msg(tr("This is a demo plugin to perform binary thresholding on the current image.\n"
+			"Developed by Yinan Wan, 2012-02-10"));
+	}
+	else
+	{
+		v3d_msg(tr("This is a demo plugin to perform binary thresholding on the current image.\n"
+			"Developed by Yinan Wan, 2012-02-10"));
+	}
+}
+
+// 5 - Call the functions corresponding to dofunc
+//     The functions may not necessarily be in example_func.cpp, but you are strongly recommended to do so
+//     to seperate the Interface from the core functions, and it is consistant with the form in plugin_creator
+bool ExamplePlugin::dofunc(const QString & func_name, const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback,  QWidget * parent)
+{
+	if (func_name == tr("image_thresholding"))
+	{
+		image_threshold(input, output);
+	}
+	else if (func_name == tr("help"))
+	{
+		printHelp();
+	}
+}</syntaxhighlight>
+
+
+The following 2 files are the virtual functions you run to perform binary thresholding. It shows you how to acquire image (both from windows and from file), to do simple manipulations, and to save or present the result. Note the functions used here are only a small proportion of all the functions provided in the interface. Please refer to the [[#advanced functions|complete list]] for your own use.
+
+
+example_func.h
+
+<syntaxhighlight lang="cpp">/* example_func.h
+ * This is an example plugin, the header file of plugin functions.
+ * 2012-02-10 : by Yinan Wan
+ */
+ 
+#ifndef __EXAMPLE_FUNC_H__
+#define __EXAMPLE_FUNC_H__
+
+#include <v3d_interface.h>
+
+int image_threshold(V3DPluginCallback2 &callback, QWidget *parent);
+int image_threshold(const V3DPluginArgList & input, V3DPluginArgList & output);
+void printHelp();
+
+#endif</syntaxhighlight>
+
+
+example_func.cpp
+
+<syntaxhighlight lang="cpp">/* example_func.cpp
+ * This file contains the functions used in plugin domenu and dufunc, you can use it as a demo.
+ * 2012-02-13 : by Yinan Wan
+ */
+
+#include <v3d_interface.h>
+#include "v3d_message.h"
+#include "stackutil.h"
+#include "example_func.h"
+#include <vector>
+#include <iostream>
+using namespace std;
+
+/* function used in DOMENU typically takes 2 inputs:
+ * "callback" - provide information from the plugin interface, and 
+ * "parent"   - the parent widget of the Vaa3D main window
+ */
+const QString title="Image Thresholding";
+int image_threshold(V3DPluginCallback2 &callback, QWidget *parent)
+{
+	// 1 - Obtain the current 4D image pointer
+	v3dhandle curwin = callback.currentImageWindow();
+	if(!curwin)
+	{
+		QMessageBox::information(0, title, QObject::tr("No image is open."));
+		return -1;
+	}
+	Image4DSimple *p4DImage = callback.getImage(curwin);
+
+	
+	// 2 - Ask for parameters
+	//     asking for the subject channel
+	bool ok;
+	int c = -1;
+	c = QInputDialog::getInteger(parent, "Channel Number", "Set the subject channel number:", 0, 0, p4DImage->getCDim()-1, 1, &ok);
+	if (!ok) return -1;
+	
+	//      asking for threshold
+	int thres = -1;
+	thres = QInputDialog::getInteger(parent, "Threshold", "Set threshold:", 0, 0, 255, 1, &ok);
+	if (!ok) return -1;
+	
+
+	// 3 - Create a new image and do binary thresholding
+	V3DLONG sz[3];
+	sz[0] = p4DImage->getXDim();
+	sz[1] = p4DImage->getYDim();
+	sz[2] = p4DImage->getZDim();
+	unsigned char * inimg1d = p4DImage->getRawDataAtChannel(c);
+	V3DLONG tb = sz[0]*sz[1]*sz[2]*p4DImage->getUnitBytes();
+	unsigned char * nm = NULL;
+	try {
+		nm = new unsigned char [tb];
+	} catch (...) {
+		throw("Fail to allocate memory in Image Thresholding plugin.");
+	}
+	for (V3DLONG i=0;i<tb;i++)
+	{
+		if (inimg1d[i]>=thres) nm[i] = 255;
+		else nm[i] = 0;
+	}
+
+	// 4 - Set and show the thresholded image in a new window
+	v3dhandle newwin = callback.newImageWindow();
+	p4DImage->setData(nm, sz[0], sz[1], sz[2], 1, p4DImage->getDatatype());//setData() will free the original memory automatically
+	callback.setImage(newwin, p4DImage);
+	callback.setImageName(newwin, QObject::tr("Image Thresholding"));
+	callback.updateImageWindow(newwin);
+	return 1;
+}
+
+
+
+
+/* functions in DOFUNC takes 2 parameters
+ * "input" arglist has 2 positions reserved for input and parmeter:
+ *            input.at(0).p returns a pointer to vector<char*> that pass the arglist following the input option '-i'
+ *                                  items are splitted by ' ', which is often used as input data 
+ *                                  [required]
+ *            input.at(1).p returns a pointer to vector<char*> that pass the arglist following the input option '-p'. 
+ *                                  items are splitted by ' ', it is reserved for you to define your own parameters 
+ *				    [not required, if '-p' is not specified, input only contains one member]
+ * "output" arglist has a size of 1:
+ *            output.at(0).p returns a pointer to vector<char*> that pass the arglist following the input option '-o' 
+ *                                  items are splitted by ' ', which is often used as output data 
+ *                                  [required]
+ */
+int image_threshold(const V3DPluginArgList & input, V3DPluginArgList & output)
+{
+	cout<<"Welcome to image_threshold function"<<endl;
+	if(input.size() != 2 || output.size() != 1) 
+	{
+		cout<<"illegal input!"<<endl;
+		printHelp();
+		return -1;
+	}
+
+
+	// 1 - Read input image
+	vector<char*>* inlist = (vector<char*>*)(input.at(0).p);
+	if (inlist->size() != 1)
+	{
+		cout<<"You must specify 1 input file!"<<endl;
+		return -1;
+	}
+	char * infile = inlist->at(0);
+	cout<<"input file: "<<infile<<endl;
+	unsigned char * inimg1d = NULL;
+	V3DLONG * sz = NULL;
+	int datatype;
+	if (!loadImage(infile, inimg1d, sz, datatype)) return -1;
+
+
+	// 2 - Read color channel and threshold parameter
+	vector<char*>* paralist = (vector<char*>*)(input.at(1).p);
+	if (paralist->size() != 2)
+	{
+		cout<<"Illegal parameter!"<<endl;
+		printHelp();
+		return -1;
+	}
+	int c = atoi(paralist->at(0));
+	int thres = atoi(paralist->at(1));
+	cout<<"color channel: "<<c<<endl;
+	cout<<"threshold : "<<thres<<endl;
+	if (c < 0 || c>=sz[3])
+	{
+		cout<<"The color channel does not exist!"<<endl;
+		return -1;
+	}
+	loadImage(infile, inimg1d, sz, datatype, c);
+
+	
+	// 3 - Read output fileName
+	vector<char*>* outlist = (vector<char*>*)(output.at(0).p);
+	if (outlist->size() != 1)
+	{
+		cout<<"You must specify 1 output file!"<<endl;
+		return -1;
+	}
+	char * outfile = outlist->at(0);
+	cout<<"output file: "<<outfile<<endl;
+
+	// 4 - Do binary segmentation
+	V3DLONG tb = sz[0]*sz[1]*sz[2]*datatype;
+	unsigned char * nm = NULL;
+	try {
+		nm = new unsigned char [tb];
+	} catch (...) {
+		throw("Fail to allocate memory in Image Thresholding plugin.");
+	}
+	for (V3DLONG i=0;i<tb;i++)
+	{
+		if (inimg1d[i]>=thres) nm[i] = 255;
+		else nm[i] = 0;
+	}
+
+	// 5 - Save file and free memory
+	sz[3] = 1;
+	saveImage(outfile, nm, sz, datatype);
+	if (nm) {delete []nm; nm=NULL;}
+
+	return 1;
+}
+
+void printHelp()
+{
+	cout<<"\nThis is a demo plugin to perform binary thresholding in an image. by Yinan Wan 2012-02"<<endl;
+	cout<<"\nUsage: v3d -x <example_plugin_name> -f image_thresholding -i <input_image_file> -o <output_image_file> -p <subject_color_channel> <threshold>"<<endl;
+	cout<<"\t -i <input_image_file>                      input 3D image (tif, raw or lsm)"<<endl;
+	cout<<"\t -o <output_image_file>                     output image of the thresholded subject channel"<<endl;
+	cout<<"\t -p <subject_color_channel> <threshold>     the channel you want to perform thresholding and the threshold"<<endl;
+	cout<<"\t                                            the 2 paras must come in this order"<<endl;
+	cout<<"\nDemo: v3d -x libexample_debug.dylib -f image_thresholding -i input.tif -o output.tif -p 0 100\n"<<endl;
+	return;
+}</syntaxhighlight>
+
+
+Addtionally, you will need a Qt project file to build the project. Please make sure to include all files and libraries used in your plugin program.
+
+
+example.pro
+
+
+<syntaxhighlight lang="cpp-qt">#an example plugin project file
+TEMPLATE	= lib
+CONFIG	+= qt plugin warn_off
+#CONFIG	+= x86_64
+
+#set the Vaa3D main path
+V3DMAINPATH     =  ../../../v3d_external/v3d_main
+
+#include necessary paths
+INCLUDEPATH	+= $$V3DMAINPATH/basic_c_fun
+INCLUDEPATH     += $$V3DMAINPATH/common_lib/include
+LIBS += -L. -lv3dtiff -L$$V3DMAINPATH/common_lib/lib
+
+#include the headers used in the project
+HEADERS	+= example_plugin.h
+HEADERS	+= example_func.h
+
+#include the source files used in the project
+SOURCES	= example_plugin.cpp
+SOURCES	+= example_func.cpp
+SOURCES	+= $$V3DMAINPATH/basic_c_fun/v3d_message.cpp
+SOURCES += $$V3DMAINPATH/basic_c_fun/stackutil.cpp
+SOURCES += $$V3DMAINPATH/basic_c_fun/mg_image_lib.cpp
+SOURCES += $$V3DMAINPATH/basic_c_fun/mg_utilities.cpp
+SOURCES += $$V3DMAINPATH/basic_c_fun/basic_memory.cpp
+
+
+#specify target name and directory
+TARGET	= $$qtLibraryTarget(example)
+#DESTDIR	= ../../v3d/plugins/example/
+</syntaxhighlight>
+
+
+==Compiling a Vaa3D Plugin==
+
+How to compile a plugin and run on the Vaa3D platform. <br />
+
+* Mac:
+# Download Qt 4.5.2 (or whatever current source code) and above. Compile the “Release” version and install it by run the following commands in a Terminal window. (i.e. first run “./configure”, followed by “make” and “sudo make install”).
+# Enter the folder that contains your Vaa3D plugin source code and the Qt project file “abc.pro”, - suppose “abc.pro” is the project file name. 
+# run “qmake abc.pro”
+# run “make”
+# copy the compiled plugin dynamic library file, which should have a name similar to “abc.dylib”, to a subfolder (say “my_abc”) under the “plugins” folder where you the Vaa3D program installed (typically “/Applications/vaa3d”).
+# Launch Vaa3D program, and you should see a new sub-menu in the plugin menu, called “my_abc”, and you can find the “abc” plugin there.
+# If you already launch Vaa3D before you build the plugin, you don’t need to re-start Vaa3D. Instead, you click the plugin menu and choose “Rescan plugins”, and you should find the sub-menu.
+# Trouble-shooting. If you follow the above instructions but cannot see the full drop-down menu-list in the sub-menu “my_abc”, you need to check your Qt version, the Release or Debug version in your compilation. You can also try one of the Vaa3D plugin examples. These examples have been tested on many machines and different environments. If they cannot work, you may need to adjust the configuration of Qt and/or the compiling setting on your machine.
+
+* Linux
+# Similar to Mac instructions above, except that the extension of the dynamic library file will be different and the typical Vaa3D folder is the one where unzip the installer.
+# Trouble-shooting. For Ubuntu, since many times the g++ and Qt libraries are not installed by default, you may need to ensure you have the correct compiling environment.
+
+* Windows
+# For MinGW 32bit compiler. 
+## Download Qt 4.4.3 from Nokia’s official Qt website. Compile the “Release” version and install it by run the following commands in a Terminal window. (i.e. first run “./configure”, followed by “make” and “sudo make install”). Then use the “make”, or “mingw32-make”, in a similar way like the above Mac and Linux environment.
+# For Visual Studio 2008. 
+## Download Qt 4.6 (or whatever latest version) from the following website http://code.google.com/p/qt-msvc-installer/ . Ensure that if you have a 32bit system, you will need the 32bit installer; if you have a 64bit Windows system, you should download the 64bit installer.
+##Add Qt’s bin directory to your system PATH environment variable, so that on a command line window you can find “qmake” command.
+## Select and run the 32bit or 64bit command line Terminal in the Visual Studio 2008 folder. This will give you a command line window.
+## Run “qmake abc.pro”, assuming abc.pro is the Qt project name for your plugin.
+## run “nmake -f Makefile.Release”. This should compile the plugin.
+# copy the compiled plugin dynamic library file, which should have a name similar to “abc.dll”, to a subfolder (say “my_abc”) under the “plugins” folder where you the V3D program installed (or unzipped).
+# Launch Vaa3D program, and you should see a new sub-menu in the plugin menu, called “my_abc”, and you can find the “abc” plugin there.
+# If you already launch Vaa3D before you build the plugin, you don’t need to re-start Vaa3D. Instead, you click the plugin menu and choose “Rescan plugins”, and you should find the sub-menu.
+# Trouble-shooting. If you follow the above instructions but cannot see the full drop-down menu-list in the sub-menu “my_abc”, you need to check your Qt version, the Release or Debug version in your compilation. You can also try one of the Vaa3D plugin examples. These examples have been tested on many machines and different environments. If they cannot work, you may need to adjust the configuration of Qt and/or the compiling setting on your machine.
+
+* CMake for Linux and Mac
+# If you are using CMake, the compilation will be more sophisticated to explain. But you can check out the open-source Vaa3D-ITK project source code and follow the instruction in the README file.
+# As of now (June 14, 2010), the open-source Vaa3D-ITK project source code can be checked out using git at the following repository:
