@@ -56,12 +56,19 @@ public:
 
 			}
 		}
-		QPushButton * ok = new QPushButton("  ok  ");
+
+		help = new QPushButton("help"); help->setVisible(false);
 		QPushButton * cancel = new QPushButton("cancel");
+		QPushButton * ok = new QPushButton("  ok  ");
 
-		gridLayout->addWidget(cancel, r, 0, 1, 5, Qt::AlignRight);
-		gridLayout->addWidget(ok, r++, 5, 1, 5, Qt::AlignRight);
+		QHBoxLayout * hbox = new QHBoxLayout;
+		hbox->addWidget(help);
+		hbox->addWidget(cancel);
+		hbox->addWidget(ok);
 
+		gridLayout->addLayout(hbox, r++, 0, 1, 10);
+
+		connect(help, SIGNAL(clicked()), this, SLOT(showHelp()));
 		connect(ok, SIGNAL(clicked()), this, SLOT(accept()));
 		connect(cancel, SIGNAL(clicked()), this, SLOT(reject()));
 
@@ -123,7 +130,20 @@ public:
 		if(editor_text != "") editor->setText(editor_text);
 	}
 
+	void showHelp()
+	{
+		QMessageBox msg;
+		msg.setText(help_str);
+		msg.exec();
+	}
+	
 public:
+
+	void setHelp(QString str)
+	{
+		help_str = str;
+		help->setVisible(true);
+	}
 	string get_para(string item)
 	{
 		if(item_vals.find(item) == item_vals.end()) return "";
@@ -144,6 +164,8 @@ private:
 	vector<QWidget*> all_editors;
 	map<QPushButton*, int> button_map;
 
+	QPushButton * help;
+	QString help_str;
 };
 
 #endif

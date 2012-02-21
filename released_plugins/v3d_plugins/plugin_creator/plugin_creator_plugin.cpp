@@ -14,7 +14,8 @@ QStringList PluginCreatorPlugin::menulist() const
 {
 	return QStringList()
 		<<tr("create plugin")
-		<<tr("demo1")
+		<<tr("domenu usage demo")
+		<<tr("load image and swc demo")
 		<<tr("about");
 }
 
@@ -24,9 +25,13 @@ void PluginCreatorPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &c
 	{
 		create_plugin(callback,parent);
 	}
-	else if(menu_name == tr("demo1"))
+	else if(menu_name == tr("domenu usage demo"))
 	{
 		create_demo1(callback,parent);
+	}
+	else if(menu_name == tr("load image and swc demo"))
+	{
+		create_demo2(callback,parent);
 	}
 	else
 	{
@@ -34,4 +39,3 @@ void PluginCreatorPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &c
 			"Developed by Hang Xiao, 2012-01-27"));
 	}
 }
-

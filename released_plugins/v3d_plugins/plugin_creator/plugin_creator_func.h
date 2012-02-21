@@ -10,8 +10,10 @@
 
 int create_plugin(V3DPluginCallback2 &callback, QWidget *parent);
 int create_demo1(V3DPluginCallback2 &callback, QWidget *parent);
+int create_demo2(V3DPluginCallback2 &callback, QWidget *parent);
 
-void produce_demo1(string, string);
+void produce_demo1(string dir, string vaa3d_path);
+void produce_demo2(string dir, string vaa3d_path, string plugin_name, string menu_name, string func_name);
 
 
 #endif

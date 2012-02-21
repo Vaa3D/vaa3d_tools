@@ -107,7 +107,34 @@ int create_demo1(V3DPluginCallback2 &callback, QWidget *parent)
 	string vaa3d_path = dialog.get_para("VAA3D Path");
 	string save_path = dialog.get_para("Save Path");
 	produce_demo1(save_path, vaa3d_path);
-	QMessageBox::information(0, "Finished", QObject::tr("<pre>Demo1 project have been saved to %1\n\n"
+	QMessageBox::information(0, "Finished", QObject::tr("<pre>The demo project have been saved to %1\n\n"
+													    "> cd %1\n"
+														"> qmake\n"
+														"> make\n</pre>")
+			                                         .arg(save_path.c_str()));
+}
+
+int create_demo2(V3DPluginCallback2 &callback, QWidget *parent)
+{
+	vector<string> items;
+	items.push_back("Plugin Name");
+	items.push_back("Menu Name");
+	items.push_back("Func Name");
+	items.push_back("VAA3D Path");
+	items.push_back("Save Path");
+	CommonDialog dialog(items);
+	dialog.setWindowTitle(QObject::tr("Create Demo2 Project"));
+	dialog.setHelp(QObject::tr("Only one menu name and one func name will be accepted. There should be no space in Plugin Name, and Func Name. Menu Name with space will be treated as one menu."));
+	if(dialog.exec() != QDialog::Accepted) return 1;
+
+	string save_path = dialog.get_para("Save Path");
+	string vaa3d_path = dialog.get_para("VAA3D Path");
+	string plugin_name = dialog.get_para("Plugin Name");
+	string menu_name = dialog.get_para("Menu Name");
+	string func_name = dialog.get_para("Func Name");
+
+	produce_demo2(save_path, vaa3d_path, plugin_name, menu_name, func_name);
+	QMessageBox::information(0, "Finished", QObject::tr("<pre>The demo project have been saved to %1\n\n"
 													    "> cd %1\n"
 														"> qmake\n"
 														"> make\n</pre>")
