@@ -124,7 +124,8 @@ int create_demo2(V3DPluginCallback2 &callback, QWidget *parent)
 	items.push_back("Save Path");
 	CommonDialog dialog(items);
 	dialog.setWindowTitle(QObject::tr("Create Demo2 Project"));
-	dialog.setHelp(QObject::tr("Only one menu name and one func name will be accepted. There should be no space in Plugin Name, and Func Name. Menu Name with space will be treated as one menu."));
+	dialog.setHelp(QObject::tr("Only one menu name and one func name will be accepted. There should be no empty space in Plugin Name, and Func Name. Menu Name with space will be treated as one menu."));
+	dialog.setHistory(true);
 	if(dialog.exec() != QDialog::Accepted) return 1;
 
 	string save_path = dialog.get_para("Save Path");

@@ -6,7 +6,9 @@
 #include <map>
 #include <vector>
 #include <string>
+#include <set>
 #include <sstream>
+#include <fstream>
 
 using namespace std;
 
@@ -17,6 +19,10 @@ class CommonDialog : public QDialog
 public:
 	CommonDialog(vector<string> _items, QWidget * parent = 0): QDialog(parent)
 	{
+		history_identity = "";
+		is_history = false;
+		cur_history_id = 0;
+
 		items = _items;
 
 		int nitem = items.size();
@@ -58,17 +64,22 @@ public:
 		}
 
 		help = new QPushButton("help"); help->setVisible(false);
+		history = new QPushButton("history"); history->setVisible(false);
 		QPushButton * cancel = new QPushButton("cancel");
 		QPushButton * ok = new QPushButton("  ok  ");
 
+		ok->setDefault(true);
+
 		QHBoxLayout * hbox = new QHBoxLayout;
 		hbox->addWidget(help);
+		hbox->addWidget(history);
 		hbox->addWidget(cancel);
 		hbox->addWidget(ok);
 
 		gridLayout->addLayout(hbox, r++, 0, 1, 10);
 
 		connect(help, SIGNAL(clicked()), this, SLOT(showHelp()));
+		connect(history, SIGNAL(clicked()), this, SLOT(showHistory()));
 		connect(ok, SIGNAL(clicked()), this, SLOT(accept()));
 		connect(cancel, SIGNAL(clicked()), this, SLOT(reject()));
 
@@ -81,6 +92,7 @@ public:
 		void accept()
 		{
 			update();
+			saveHistory();
 			return QDialog::accept();
 		}
 
@@ -137,6 +149,21 @@ public:
 		msg.exec();
 	}
 	
+	void showHistory()
+	{
+		if(!is_history) return;
+		istringstream iss(history_list[cur_history_id]);
+		string item_val;
+		getline(iss, item_val, ',');
+		int item_id = 0;
+		while(iss.good() && item_id < items.size())
+		{
+			getline(iss, item_val, ',');
+			all_editors[item_id++]->setText((char*) item_val.c_str());
+		}
+		history->setText(QObject::tr("history %1/%2").arg(cur_history_id+1).arg(history_list.size()));
+		cur_history_id = (cur_history_id + 1) % history_list.size();
+	}
 public:
 
 	void setHelp(QString str)
@@ -157,15 +184,76 @@ public:
 		iss >> val;
 	}
 
+	void setHistory(bool _is_history = true)
+	{
+		is_history = _is_history;
+		if(!is_history) return;
+
+		history_identity = this->windowTitle();
+		loadHistory();
+		if(!history_list.empty())  history->setVisible(true);
+	}
+private:
+
+	void saveHistory()
+	{
+		if(!is_history) return;
+		cout<<"============== saveHistory() ==================="<<endl;
+		string history_file = getenv("HOME") + string("/.common_dialog_history");
+		
+		cout<<"save history to "<<history_file<<endl;
+		ofstream ofs(history_file.c_str(), ios_base::app);
+		ofs<<history_identity.toStdString();
+		for(int i = 0; i < items.size(); i++)
+		{
+			string item = items[i];
+			string item_val = item_vals[item];
+			ofs<<","<<item_val;
+		}
+		ofs<<endl;
+		ofs.close();
+	}
+	void loadHistory()
+	{
+		if(!is_history) return;
+		string history_file = getenv("HOME") + string("/.common_dialog_history");
+		
+		ifstream ifs(history_file.c_str());
+		vector<string> history_matched;
+		set<string> history_set;
+		while(ifs.good())
+		{
+			string line; getline(ifs, line);
+			if(line != "" && line.find(history_identity.toStdString()) == 0) history_matched.push_back(line);
+		}
+		ifs.close();
+
+		for(vector<string>::reverse_iterator it = history_matched.rbegin(); it != history_matched.rend(); it++)
+		{
+			if(history_set.find(*it) == history_set.end())
+			{
+				history_list.push_back(*it);
+				history_set.insert(*it);
+			}
+		}
+		history_matched.clear();
+		history_set.clear();
+	}
 private:
 	vector<string> items;
 	map<string, string> item_vals;
 	vector<QLabel*> all_labels;
-	vector<QWidget*> all_editors;
+	vector<QLineEdit*> all_editors;
 	map<QPushButton*, int> button_map;
 
 	QPushButton * help;
 	QString help_str;
+
+	QPushButton * history;
+	vector<string> history_list;
+	int cur_history_id;
+	QString history_identity;
+	bool is_history;
 };
 
 #endif
