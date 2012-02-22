@@ -19,5 +19,4 @@ SOURCES += produce_demo2.cpp
 SOURCES	+= $$VAA3DPATH/basic_c_fun/v3d_message.cpp
 
 TARGET	= $$qtLibraryTarget(plugin_creator)
-#DESTDIR = ../../v3d/plugins/_Vaa3D_plugin_creator
-DESTDIR = /Users/xiaoh10/work/v3d_external/bin/plugins/_Vaa3D_plugin_creator
+DESTDIR = ../../v3d/plugins/_Vaa3D_plugin_creator
