@@ -453,7 +453,7 @@ int mtimgio(V3DPluginCallback2 &callback, QWidget *parent)
 
 int mtimgio(V3DPluginCallback2 &callback, QWidget *parent, string filename)
 {
-    v3d_msg("test1");
+    //v3d_msg("test1");
     
 	// anchor the image to handle
 	Image4DSimple p4DImage;
@@ -525,7 +525,7 @@ int mtimgio(V3DPluginCallback2 &callback, QWidget *parent, string filename)
 			triviewControl->setTriViewColorDispType(mytype);
 			
 			qDebug()<<"ImageDisplayColorType ..."<<mytype;
-            v3d_msg("test2");
+            //v3d_msg("test2");
 			
 			while (!imglv_u8bit.image_loaded && !imglv_u8bit.stopped) 
 			{
@@ -536,7 +536,7 @@ int mtimgio(V3DPluginCallback2 &callback, QWidget *parent, string filename)
 				}
 				else
 				{
-                    v3d_msg("test3");
+                    //v3d_msg("test3");
 					v3dhandleList win_list = callback.getImageWindowList();
 					
 					bool flag_win_exist = false;

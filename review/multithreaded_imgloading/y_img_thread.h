@@ -1177,6 +1177,8 @@ template <class Tidx, class Tdata> int YY_ImgRead<Tidx, Tdata> :: loadFrameRGB(T
 	{
 		
 	}
+    
+    return 0;
 	
 }
 
