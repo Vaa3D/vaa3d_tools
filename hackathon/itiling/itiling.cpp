@@ -166,7 +166,7 @@ template<class Tdata, class Tidx> bool imgtiling(Tdata *p,
         } 
     }
    
-    qDebug()<<"my god";
+    qDebug()<<"Oh my god. Finished!";
     
     //
     if (pBlock)
@@ -345,13 +345,13 @@ bool ITilingPlugin::dofunc(const QString & func_name, const V3DPluginArgList & i
         {
             if (loadImage(const_cast<char *>(infile), relative1d, sz_relative, datatype_tile)!=true)
             {
-                fprintf (stderr, "Error happens in reading the subject file [%s]. Exit. \n",infile);
+                fprintf(stderr, "Error happens in reading the subject file [%s]. Exit. \n",infile);
                 return false;
             }
         }
         else
         {
-            cout<<"The input file is not supported!"<<endl;
+            v3d_msg("The input file is not supported!",0);
             return false;
         }
         
@@ -360,7 +360,7 @@ bool ITilingPlugin::dofunc(const QString & func_name, const V3DPluginArgList & i
             case V3D_UINT8:
                 if (!imgtiling<unsigned char, V3DLONG>((unsigned char *)relative1d, sz_relative[0], sz_relative[1], sz_relative[2], sz_relative[3], QString(outfile), datatype_tile))
                 {
-                    printf("Fail to call function imgtiling (8bit)! \n");
+                    v3d_msg("Fail to call function imgtiling (8bit)! \n", 0);
                     return false;
                 }
                 break;
@@ -368,7 +368,7 @@ bool ITilingPlugin::dofunc(const QString & func_name, const V3DPluginArgList & i
             case V3D_UINT16:
                 if (!imgtiling<unsigned short, V3DLONG>((unsigned short *)relative1d, sz_relative[0], sz_relative[1], sz_relative[2], sz_relative[3], QString(outfile), datatype_tile))
                 {
-                    printf("Fail to call function imgtiling (16bit)! \n");
+                    v3d_msg("Fail to call function imgtiling (16bit)! \n", 0);
                     return false;
                 }
                 break;
@@ -376,13 +376,13 @@ bool ITilingPlugin::dofunc(const QString & func_name, const V3DPluginArgList & i
             case V3D_FLOAT32:
                 if (!imgtiling<float, V3DLONG>((float *)relative1d, sz_relative[0], sz_relative[1], sz_relative[2], sz_relative[3], QString(outfile), datatype_tile))
                 {
-                    printf("Fail to call function imgtiling (32bit)! \n");
+                    v3d_msg("Fail to call function imgtiling (32bit)! \n", 0);
                     return false;
                 }
                 break;
                 
             default:
-                printf("Currently this program only support UINT8, UINT16, and FLOAT32 datatype.\n");
+                v3d_msg("Currently this program only support UINT8, UINT16, and FLOAT32 datatype.\n",0);
                 return false;
         }
 
@@ -391,7 +391,7 @@ bool ITilingPlugin::dofunc(const QString & func_name, const V3DPluginArgList & i
     }
     else
     {
-        printf("\nWrong function specified.\n");
+        v3d_msg("\nWrong function specified.\n",0);
         return false;
     }
     
