@@ -191,15 +191,16 @@ QStringList ITilingPlugin::menulist() const
 
 void ITilingPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
 {
-    if (menu_name == tr("Image Tiling"))
+    if (menu_name == tr("Image_Tiling"))
     {
-    	//
+    	v3d_msg("Curent you can only run this plugin using command line do_func method.");
     }
     else if (menu_name == tr("About"))
     {
         QMessageBox::information(parent, "Version info", QString("Image Tiling Plugin %1 (Dec. 2, 2011) developed by Yang Yu and Hanchuan Peng. (Janelia Research Farm Campus, HHMI)").arg(getPluginVersion()).append("\n"));
-        return;
     }
+    
+    return;
 }
 
 // plugin func
