@@ -35,7 +35,147 @@ using namespace std;
 #include <string.h>
 
 
-// template func
+template<class Tdata, class Tidx> bool do_blockwise_read(char *filename,
+                                                 QString output)
+{
+    // block
+    Tidx bx=BLOCK_DIM_X;
+    Tidx by=BLOCK_DIM_Y;
+    Tidx bz=BLOCK_DIM_Z;
+    Tidx bc=sc;
+    
+    Tdata *pBlock=NULL;
+    
+    Tidx szblock = bx*by*bz*bc;
+    
+    try 
+    {
+        pBlock = new Tdata [szblock];
+    } 
+    catch (...) 
+    {
+        cout<<"Fail to allocate memory for the block!"<<endl;
+        return false;
+    }
+    
+    Tidx offsetc = sx*sy*sz;
+    Tidx offsetz = sx*sy;
+    Tidx offsety = sx;
+    
+    Tidx offsetc_block = bx*by*bz;
+    Tidx offsetz_block = bx*by;
+    Tidx offsety_block = bx;
+    
+    //
+    Tidx xn = sx/bx + 1;
+    Tidx yn = sy/by + 1;
+    Tidx zn = sz/bz + 1;
+    
+    for (Tidx k=0; k<zn; k++) 
+    {
+        for (Tidx j=0; j<yn; j++) 
+        {
+            for (Tidx i=0; i<xn; i++) 
+            {
+                // init
+                memset(pBlock, 0, sizeof(Tdata)*szblock);
+                
+                // file name
+                QString fn_image = output;
+                fn_image = fn_image.append("_L0_XB%1_YB%2_ZB%3").arg(i).arg(j).arg(k);
+                
+                fn_image.append(IMGSUFFIX);
+                qDebug()<<"output ..."<<fn_image<<i<<j<<k;
+                
+                //
+                Tidx start_x = i*bx;
+                Tidx end_x = start_x + bx;
+                
+                if(end_x>sx) end_x = sx;
+                
+                Tidx start_y = j*by;
+                Tidx end_y = start_y + by;
+                
+                if(end_y>sy) end_y = sy;
+                
+                Tidx start_z = k*bz;
+                Tidx end_z = start_z + bz;
+                
+                if(end_z>sz) end_z = sz;
+                
+                if(end_x<start_x || end_y<start_y || end_z<start_z) 
+                    continue;
+                
+                //=========
+                //add the raw file block reading call here (call Jinzhu code, or sth similar)
+                //=========
+                
+                for(Tidx kk=start_z; kk<end_z; kk++)
+                {
+                    Tidx offset_z_ori = kk*offsetz;
+                    Tidx offset_z_blk = (kk-start_z)*offsetz_block;
+                    
+                    for(Tidx jj=start_y; jj<end_y; jj++)
+                    {
+                        Tidx offset_y_ori = offset_z_ori + jj*offsety;
+                        Tidx offset_y_blk = offset_z_blk + (jj-start_y)*offsety_block;
+                        
+                        for(Tidx ii=start_x; ii<end_x; ii++)
+                        {
+                            Tidx offset_x_ori = offset_y_ori + ii;
+                            Tidx offset_x_blk = offset_y_blk + ii-start_x;
+                            
+                            for(Tidx c=0; c<sc; c++)
+                            {
+                                Tidx offset_c_ori = offset_x_ori + c*offsetc;
+                                Tidx offset_c_blk = offset_x_blk + c*offsetc_block;
+                                
+                                pBlock[offset_c_blk] = p[offset_c_ori];
+                            }
+                        }
+                    }
+                }
+                
+                // save block
+                V3DLONG savesz[4];
+                
+                savesz[0] = bx;
+                savesz[1] = by;
+                savesz[2] = bz;
+                savesz[3] = sc;
+                
+                //determine if a block need to be saved (do not need to save all-zeros block)
+                bool b_shouldsave = false;
+                for(Tidx idx=0; idx<szblock; idx++)
+                {
+                    if(pBlock[idx]>=THRESH) {b_shouldsave=true; break;}
+                }
+                
+                if(!b_shouldsave) 
+                    continue;
+                
+                if (saveImage(fn_image.toStdString().c_str(), (const unsigned char *)pBlock, savesz, datatype)!=true)
+                {
+                    fprintf(stderr, "Error happens in file writing. Exit. \n");
+                    return false;
+                }
+                
+            }
+        } 
+    }
+    
+    qDebug()<<"Oh my god. Finished!";
+    
+    //
+    if (pBlock)
+    {
+        delete[] pBlock; pBlock=NULL;
+    }
+    
+    //
+    return true;
+}
+
 template<class Tdata, class Tidx> bool imgtiling(Tdata *p, 
                                                  Tidx sx, 
                                                  Tidx sy, 
@@ -343,10 +483,18 @@ bool ITilingPlugin::dofunc(const QString & func_name, const V3DPluginArgList & i
         unsigned char* relative1d = 0;
         if(QFile(QString(infile)).exists())
         {
-            if (loadImage(const_cast<char *>(infile), relative1d, sz_relative, datatype_tile)!=true)
+            if (!loadImage(const_cast<char *>(infile), relative1d, sz_relative, datatype_tile))
             {
-                fprintf(stderr, "Error happens in reading the subject file [%s]. Exit. \n",infile);
-                return false;
+                if (!do_blockwise_read(const_cast<char *>(infile)), outfile)
+                {
+                    fprintf(stderr, "Error happens in reading the subject file [%s]. Exit. \n",infile);
+                    return false;
+                }
+                else
+                {
+                    v3d_msg("Succeed!");
+                    return true;
+                }
             }
         }
         else
