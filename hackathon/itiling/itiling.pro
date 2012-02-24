@@ -3,7 +3,7 @@ TEMPLATE      = lib
 CONFIG       += qt plugin warn_off
 #CONFIG       += release x86_64
 
-V3DMAINDIR = ../../../vaa3d/v3d_main
+V3DMAINDIR = ../../v3d_main
 
 INCLUDEPATH  += $$V3DMAINDIR/basic_c_fun
 INCLUDEPATH  += $$V3DMAINDIR/common_lib/include
@@ -25,6 +25,6 @@ LIBS         += -lpthread
 
 TARGET        = $$qtLibraryTarget(imageTiling)
 #DESTDIR       = ../../v3d/plugins/image_stitching/itiling
-DESTDIR       = $$V3DMAINDIR/../v3d/plugins/image_stitching/itiling
+#DESTDIR       = $$V3DMAINDIR/../v3d/plugins/image_stitching/itiling
 
 
