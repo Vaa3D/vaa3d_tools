@@ -316,6 +316,10 @@ bool ITilingPlugin::dofunc(const QString & func_name, const V3DPluginArgList & i
                 cout<<"illegal input parameters"<<endl;
                 return false;
             }
+            
+            //free space
+            if (argv) {delete []argv; argv=0;}
+            if (myparas) {delete []myparas; myparas=0;}
         }
 
         // get stitch configuration
