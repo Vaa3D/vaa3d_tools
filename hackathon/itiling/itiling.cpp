@@ -1,9 +1,8 @@
 /* itiling.CPP
  * 2011-12-02: create this program by Yang Yu
+ * 2012-02-24: bugs fixed by Hanchuan Peng. Note still many problems, I have no time to fix them all, :-(
  */
 
-
-// 
 
 #ifndef __ITILING_SRC_CPP__
 #define __ITILING_SRC_CPP__
@@ -16,7 +15,6 @@
 
 #include "itiling.h"
 
-//#include "y_imglib.h"
 #include "y_imgvis.h"
 
 #include "basic_surf_objs.h"
@@ -38,8 +36,13 @@ using namespace std;
 
 
 // template func
-template<class Tdata, class Tidx>
-bool imgtiling(Tdata *p, Tidx sx, Tidx sy, Tidx sz, Tidx sc, QString output, int datatype)
+template<class Tdata, class Tidx> bool imgtiling(Tdata *p, 
+                                                 Tidx sx, 
+                                                 Tidx sy, 
+                                                 Tidx sz, 
+                                                 Tidx sc, 
+                                                 QString output, 
+                                                 int datatype)
 {
     // block
     Tidx bx=BLOCK_DIM_X;
@@ -51,10 +54,13 @@ bool imgtiling(Tdata *p, Tidx sx, Tidx sy, Tidx sz, Tidx sc, QString output, int
     
     Tidx szblock = bx*by*bz*bc;
     
-    try {
+    try 
+    {
         pBlock = new Tdata [szblock];
-    } catch (...) {
-        cout<<"Fail to allocate memory for block!"<<endl;
+    } 
+    catch (...) 
+    {
+        cout<<"Fail to allocate memory for the block!"<<endl;
         return false;
     }
     
@@ -81,10 +87,11 @@ bool imgtiling(Tdata *p, Tidx sx, Tidx sy, Tidx sz, Tidx sc, QString output, int
                 memset(pBlock, 0, sizeof(Tdata)*szblock);
                 
                 // file name
-		QString fn_image = output;
-                fn_image = fn_image.append("X%1Y%2Z%3").arg(i).arg(j).arg(k);
-		fn_image.append(IMGSUFFIX);
-		qDebug()<<"output ..."<<fn_image<<i<<j<<k;
+                QString fn_image = output;
+                fn_image = fn_image.append("_L0_XB%1_YB%2_ZB%3").arg(i).arg(j).arg(k);
+
+                fn_image.append(IMGSUFFIX);
+                qDebug()<<"output ..."<<fn_image<<i<<j<<k;
                 
                 //
                 Tidx start_x = i*bx;
@@ -102,11 +109,9 @@ bool imgtiling(Tdata *p, Tidx sx, Tidx sy, Tidx sz, Tidx sc, QString output, int
                 
                 if(end_z>sz) end_z = sz;
 
-		//
-		if(end_x<start_x || end_y<start_y || end_z<start_z) continue;
+                if(end_x<start_x || end_y<start_y || end_z<start_z) 
+                    continue;
                 
-                
-                //
                 for(Tidx kk=start_z; kk<end_z; kk++)
                 {
                     Tidx offset_z_ori = kk*offsetz;
@@ -128,30 +133,28 @@ bool imgtiling(Tdata *p, Tidx sx, Tidx sy, Tidx sz, Tidx sc, QString output, int
                                 Tidx offset_c_blk = offset_x_blk + c*offsetc_block;
                                 
                                 pBlock[offset_c_blk] = p[offset_c_ori];
-                                
                             }
-                            
                         }
                     }
                 }
                 
                 // save block
-                Tidx savesz[4];
+                V3DLONG savesz[4];
                 
                 savesz[0] = bx;
                 savesz[1] = by;
                 savesz[2] = bz;
                 savesz[3] = sc;
                 
-                //
-		bool saved = false;
+                //determine if a block need to be saved (do not need to save all-zeros block)
+                bool b_shouldsave = false;
+                for(Tidx idx=0; idx<szblock; idx++)
+                {
+                    if(pBlock[idx]>=THRESH) {b_shouldsave=true; break;}
+                }
 
-		for(Tidx idx=0; idx<szblock; idx++)
-		{
-			if(pBlock[idx]>=THRESH) {saved=true; break;}
-		}
-
-		if(saved != true) continue;
+                if(!b_shouldsave) 
+                    continue;
 
                 if (saveImage(fn_image.toStdString().c_str(), (const unsigned char *)pBlock, savesz, datatype)!=true)
                 {
@@ -162,9 +165,14 @@ bool imgtiling(Tdata *p, Tidx sx, Tidx sy, Tidx sz, Tidx sc, QString output, int
             }
         } 
     }
+   
+    qDebug()<<"my god";
     
     //
-    if(pBlock){delete[] pBlock; pBlock=NULL;}
+    if (pBlock)
+    {
+        delete[] pBlock; pBlock=NULL;
+    }
     
     //
     return true;
@@ -347,37 +355,37 @@ bool ITilingPlugin::dofunc(const QString & func_name, const V3DPluginArgList & i
         }
         
         //
-        if(datatype_tile == V3D_UINT8)
-        {
-            if(imgtiling<unsigned char, V3DLONG>((unsigned char *)relative1d, sz_relative[0], sz_relative[1], sz_relative[2], sz_relative[3], QString(outfile), datatype_tile)!=true);
-            {
-                printf("Fail to call function imgtiling! \n");
+        switch (datatype_tile) {
+            case V3D_UINT8:
+                if (!imgtiling<unsigned char, V3DLONG>((unsigned char *)relative1d, sz_relative[0], sz_relative[1], sz_relative[2], sz_relative[3], QString(outfile), datatype_tile))
+                {
+                    printf("Fail to call function imgtiling (8bit)! \n");
+                    return false;
+                }
+                break;
+                
+            case V3D_UINT16:
+                if (!imgtiling<unsigned short, V3DLONG>((unsigned short *)relative1d, sz_relative[0], sz_relative[1], sz_relative[2], sz_relative[3], QString(outfile), datatype_tile))
+                {
+                    printf("Fail to call function imgtiling (16bit)! \n");
+                    return false;
+                }
+                break;
+                
+            case V3D_FLOAT32:
+                if (!imgtiling<float, V3DLONG>((float *)relative1d, sz_relative[0], sz_relative[1], sz_relative[2], sz_relative[3], QString(outfile), datatype_tile))
+                {
+                    printf("Fail to call function imgtiling (32bit)! \n");
+                    return false;
+                }
+                break;
+                
+            default:
+                printf("Currently this program only support UINT8, UINT16, and FLOAT32 datatype.\n");
                 return false;
-            }
-        }
-        else if(datatype_tile == V3D_UINT16)
-        {
-            if(imgtiling<unsigned short, V3DLONG>((unsigned short *)relative1d, sz_relative[0], sz_relative[1], sz_relative[2], sz_relative[3], QString(outfile), datatype_tile)!=true);
-            {
-                printf("Fail to call function imgtiling! \n");
-                return false;
-            }
-
-        }
-        else if(datatype_tile == V3D_FLOAT32)
-        {
-            printf("The float type is not supported yet.\n");
-            return false;
-        }
-        else
-        {
-            printf("Currently this program only support UINT8, UINT16, and FLOAT32 datatype.\n");
-            return false;
         }
 
         cout<<"time elapse ... "<<clock()-start_t<<endl;
-
-        //
         return true;
     }
     else
@@ -385,6 +393,8 @@ bool ITilingPlugin::dofunc(const QString & func_name, const V3DPluginArgList & i
         printf("\nWrong function specified.\n");
         return false;
     }
+    
+    return true;
 }
 
 #endif
