@@ -197,12 +197,17 @@ void ITilingPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callbac
 // plugin func
 QStringList ITilingPlugin::funclist() const
 {
-    return QStringList() << tr("itiling");
+    return QStringList() << tr("itiling")  << tr("help");
 }
 
 bool ITilingPlugin::dofunc(const QString & func_name, const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback,  QWidget * parent)
 {
-    if (func_name == tr("itiling"))
+    if (func_name == tr("help"))
+    {
+        printf("\nUsage: v3d -x imageTiling.dylib -f itiling -i <input_image_folder> -o <output_image_file> \n");
+        return true;
+    }
+    else if (func_name == tr("itiling"))
     {
         // subpixel translation registration based on pixel-level translation estimation
         if(input.size()<1) return false; // no inputs
@@ -214,7 +219,6 @@ bool ITilingPlugin::dofunc(const QString & func_name, const V3DPluginArgList & i
         {
             //print Help info
             printf("\nUsage: v3d -x imageTiling.dylib -f itiling -i <input_image_folder> -o <output_image_file> \n");
-
             return true;
         }
 
@@ -316,54 +320,12 @@ bool ITilingPlugin::dofunc(const QString & func_name, const V3DPluginArgList & i
 
         // get stitch configuration
         QDir myDir(infile);
-//        QStringList list = myDir.entryList(QStringList("*.tc"));
-//
-//        if(list.size()!=1)
-//        {
-//            printf("Must have only one stitching configuration file!\n");
-//            return false;
-//        }
 
         // group stitch in subspace
         int start_t = clock();
 
-//        // load .tc
-//        Y_VIM<REAL, V3DLONG, indexed_t<V3DLONG, REAL>, LUT<V3DLONG> > vim;
-//
-//        QString tcfile = QString(infile).append("/").append(list.at(0));
-//
-//        if( !vim.y_load(tcfile.toStdString()) )
-//        {
-//            printf("Wrong stitching configuration file to be load!\n");
-//            return false;
-//        }
-
         //
         int datatype_tile = 0; // assume all tiles with the same datatype
-//        for(V3DLONG ii=0; ii<vim.number_tiles; ii++)
-//        {
-//            // load tile
-//            V3DLONG *sz_relative = 0;
-//            unsigned char* relative1d = 0;
-//
-//            if(QFile(QString(vim.tilesList.at(ii).fn_image.c_str())).exists())
-//            {
-//                if (loadImage(const_cast<char *>(vim.tilesList.at(ii).fn_image.c_str()), relative1d, sz_relative, datatype_tile)!=true)
-//                {
-//                    fprintf (stderr, "Error happens in reading the subject file [%s]. Exit. \n",vim.tilesList.at(ii).fn_image.c_str());
-//                    return -1;
-//                }
-//
-//                // de-alloca
-//                if(relative1d) {delete []relative1d; relative1d=NULL;}
-//
-//                break;
-//            }
-//            else
-//            {
-//                continue;
-//            }
-//        }
         
         V3DLONG *sz_relative = 0;
         unsigned char* relative1d = 0;
@@ -372,13 +334,13 @@ bool ITilingPlugin::dofunc(const QString & func_name, const V3DPluginArgList & i
             if (loadImage(const_cast<char *>(infile), relative1d, sz_relative, datatype_tile)!=true)
             {
                 fprintf (stderr, "Error happens in reading the subject file [%s]. Exit. \n",infile);
-                return -1;
+                return false;
             }
         }
         else
         {
             cout<<"The input file is not supported!"<<endl;
-            return -1;
+            return false;
         }
         
         //
@@ -401,7 +363,8 @@ bool ITilingPlugin::dofunc(const QString & func_name, const V3DPluginArgList & i
         }
         else if(datatype_tile == V3D_FLOAT32)
         {
-            // current not supported
+            printf("The float type is not supported yet.\n");
+            return false;
         }
         else
         {
