@@ -204,7 +204,7 @@ bool ITilingPlugin::dofunc(const QString & func_name, const V3DPluginArgList & i
 {
     if (func_name == tr("help"))
     {
-        printf("\nUsage: v3d -x imageTiling.dylib -f itiling -i <input_image_folder> -o <output_image_file> \n");
+        printf("\nUsage: v3d -x imageTiling.dylib -f itiling -i <input_image_file> -o <output_image_file> \n");
         return true;
     }
     else if (func_name == tr("itiling"))
@@ -218,7 +218,7 @@ bool ITilingPlugin::dofunc(const QString & func_name, const V3DPluginArgList & i
         if(infilelist->empty())
         {
             //print Help info
-            printf("\nUsage: v3d -x imageTiling.dylib -f itiling -i <input_image_folder> -o <output_image_file> \n");
+            printf("\nUsage: v3d -x imageTiling.dylib -f itiling -i <input_image_file> -o <output_image_file> \n");
             return true;
         }
 
@@ -230,7 +230,6 @@ bool ITilingPlugin::dofunc(const QString & func_name, const V3DPluginArgList & i
         if(input.size()>1) { paralist = (vector<char*> *)(input.at(1).p); paras =  paralist->at(0);} // parameters
 
         // init
-        QString m_InputFolder(infile);
 
         int channel1 = 0;
         bool img_show = true; // save stitching file
@@ -323,7 +322,7 @@ bool ITilingPlugin::dofunc(const QString & func_name, const V3DPluginArgList & i
         }
 
         // get stitch configuration
-        QDir myDir(infile);
+        //QDir myDir(infile);
 
         // group stitch in subspace
         int start_t = clock();
