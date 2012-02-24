@@ -185,7 +185,7 @@ Q_EXPORT_PLUGIN2(imageTiling, ITilingPlugin);
 
 QStringList ITilingPlugin::menulist() const
 {
-    return QStringList() << tr("Image Tiling")
+    return QStringList() << tr("Image_Tiling")
                          << tr("About");
 }
 
@@ -212,7 +212,7 @@ bool ITilingPlugin::dofunc(const QString & func_name, const V3DPluginArgList & i
 {
     if (func_name == tr("help"))
     {
-        printf("\nUsage: v3d -x imageTiling.dylib -f itiling -i <input_image_file> -o <output_image_file> \n");
+        printf("\nUsage: v3d -x imageTiling.dylib -f itiling -i <input_image_file> -o <output_images_prefix_string> \n");
         return true;
     }
     else if (func_name == tr("itiling"))
@@ -226,7 +226,7 @@ bool ITilingPlugin::dofunc(const QString & func_name, const V3DPluginArgList & i
         if(infilelist->empty())
         {
             //print Help info
-            printf("\nUsage: v3d -x imageTiling.dylib -f itiling -i <input_image_file> -o <output_image_file> \n");
+            printf("\nUsage: v3d -x imageTiling.dylib -f itiling -i <input_image_file> -o <output_images_prefix_string> \n");
             return true;
         }
 
