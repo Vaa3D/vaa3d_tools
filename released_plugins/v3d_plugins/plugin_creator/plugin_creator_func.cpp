@@ -61,6 +61,7 @@ int create_plugin(V3DPluginCallback2 &callback, QWidget *parent)
 	pt.VAA3D_PATH = dialog.vaa3d_path;
 	STRING2VECTSTRING(pt.MENUS, dialog.menulst);
 	STRING2VECTSTRING(pt.FUNCS, dialog.funclst);
+	if(dialog.funclst.find("help") == string::npos) pt.FUNCS.push_back("help");
 	pt.DOFUNC = true;
 
 	cout<<"menus.size() = "<<pt.MENUS.size()<<endl;
@@ -83,7 +84,8 @@ int create_plugin(V3DPluginCallback2 &callback, QWidget *parent)
 	if(!dir.exists()){QMessageBox::warning(0, QObject::tr("Error"), QObject::tr("Un existing foler : %1").arg(save_folder.c_str())); return 0;}
 	else 
     {
-        v3d_msg(QString("Files:\n \t%1\n \t%2\n \t%3\n \t%4\n \t%5\n have been saved to directory: [%6]. \n\nYou can go to that folder now and run the following command to build the plugin (assuming you have Qt installed and gcc/make on your computer): \n\n>qmake\n>make\n").arg(pt.PLUGIN_HEADER.c_str()).arg(pt.PLUGIN_CPP.c_str()).arg(pt.FUNC_HEADER.c_str()).arg(pt.FUNC_CPP.c_str()).arg(pt.PRO_FILE.c_str()).arg(save_folder.c_str()));}
+        v3d_msg(QString("Files:\n \t%1\n \t%2\n \t%3\n \t%4\n \t%5\n have been saved to directory: [%6]. \n\nYou can go to that folder now and run the following command to build the plugin (assuming you have Qt installed and gcc/make on your computer): \n\n>qmake\n>make\n").arg(pt.PLUGIN_HEADER.c_str()).arg(pt.PLUGIN_CPP.c_str()).arg(pt.FUNC_HEADER.c_str()).arg(pt.FUNC_CPP.c_str()).arg(pt.PRO_FILE.c_str()).arg(save_folder.c_str()));
+	}
 	QString cur_path = QDir::current().dirName();
 	cout<<"current path : "<<QDir::current().dirName().toStdString()<<endl;
 	QDir::setCurrent(save_folder.c_str());
