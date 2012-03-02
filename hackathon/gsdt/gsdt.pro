@@ -2,7 +2,7 @@
 TEMPLATE	= lib
 CONFIG	+= qt plugin warn_off
 #CONFIG	+= x86_64
-V3DMAINPATH = /Users/xiaoh10/work/v3d_external/v3d_main
+V3DMAINPATH = ../../v3d_main
 INCLUDEPATH	+= $$V3DMAINPATH/basic_c_fun
 INCLUDEPATH += $$V3DMAINPATH/common_lib/include
 INCLUDEPATH += $$V3DMAINPATH/jba/newmat11
@@ -27,13 +27,10 @@ HEADERS += $$V3DMAINPATH/basic_c_fun/mg_utilities.h
 HEADERS += $$V3DMAINPATH/basic_c_fun/mg_image_lib.h
 HEADERS += $$V3DMAINPATH/basic_c_fun/stackutil.h
 
-VPATH = ../../v3d_convert
+INCLUDEPATH += main 
 
-INCLUDEPATH += $$VPATH/common
-INCLUDEPATH += $$VPATH/tracing
-
-HEADERS += $$VPATH/common/heap.h
-HEADERS += $$VPATH/tracing/fastmarching_dt.h
+HEADERS += main/heap.h
+HEADERS += main/fastmarching_dt.h
 
 HEADERS	= gsdt_plugin.h
 HEADERS	+= gsdt_func.h
