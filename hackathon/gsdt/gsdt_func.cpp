@@ -11,43 +11,12 @@
 
 #include "stackutil.h"
 #include "fastmarching_dt.h"
+#include "common_dialog.h"
 
 using namespace std;
 
 const QString title = QObject::tr("Grayscale Distance Transformation Plugin");
 
-int split(const char *paras, char ** &args)
-{
-    int argc = 0;
-    int len = strlen(paras);
-    int posb[200];
-    char * myparas = new char[len];
-    strcpy(myparas, paras);
-    for(int i = 0; i < len; i++)
-    {
-        if(i==0 && myparas[i] != ' ' && myparas[i] != '\t')
-        {
-            posb[argc++]=i;
-        }
-        else if((myparas[i-1] == ' ' || myparas[i-1] == '\t') &&
-                (myparas[i] != ' ' && myparas[i] != '\t'))
-        {
-            posb[argc++] = i;
-        }
-    }
-
-    args = new char*[argc];
-    for(int i = 0; i < argc; i++)
-    {
-        args[i] = myparas + posb[i];
-    }
-
-    for(int i = 0; i < len; i++)
-    {
-        if(myparas[i]==' ' || myparas[i]=='\t')myparas[i]='\0';
-    }
-    return argc;
-}
 int gsdt(V3DPluginCallback2 &callback, QWidget *parent)
 {
 	v3dhandleList win_list = callback.getImageWindowList();
@@ -57,32 +26,55 @@ int gsdt(V3DPluginCallback2 &callback, QWidget *parent)
 		QMessageBox::information(0, title, QObject::tr("No image is open."));
 		return -1;
 	}
-	//TestDialog dialog(callback, parent);
+	v3dhandle curwin = callback.currentImageWindow();
+	Image4DSimple * p4DImage = callback.getImage(curwin);
+	unsigned char * inimg1d = p4DImage->getRawDataAtChannel(0);
+	int sz0 = p4DImage->getXDim();
+	int sz1 = p4DImage->getYDim();
+	int sz2 = p4DImage->getZDim();
+	int sz3 = 1;
 
-	//if (dialog.exec()!=QDialog::Accepted) return -1;
+	vector<string> items;
+	items.push_back("Background Threshold (0 ~ 255)");
+	items.push_back("Connection Type (1 ~ 3)");
+	CommonDialog dialog(items);
+	dialog.setWindowTitle(title);
+	if(dialog.exec() != QDialog::Accepted) return 0;
 
-	//dialog.update();
-	//int i = dialog.i;
-	//int c = dialog.channel;
-	//Image4DSimple *p4DImage = callback.getImage(win_list[i]);
-	//if(p4DImage->getCDim() <= c) {v3d_msg(QObject::tr("The channel isn't existed.")); return -1;}
-	//V3DLONG sz[3];
-	//sz[0] = p4DImage->getXDim();
-	//sz[1] = p4DImage->getYDim();
-	//sz[2] = p4DImage->getZDim();
+	int bkg_thresh = 0, cnn_type = 2;
+	dialog.get_num("Background Threshold (0 ~ 255)", bkg_thresh);
+	dialog.get_num("Connection Type (1 ~ 3)", cnn_type);
 
-	//unsigned char * inimg1d = p4DImage->getRawDataAtChannel(c);
+	cout<<"bkg_thresh = "<<bkg_thresh<<endl;
+	cout<<"cnn_type = "<<cnn_type<<endl;
 
-	//v3dhandle newwin;
-	//if(QMessageBox::Yes == QMessageBox::question(0, "", QString("Do you want to use the existing windows?"), QMessageBox::Yes, QMessageBox::No))
-		//newwin = callback.currentImageWindow();
-	//else
-		//newwin = callback.newImageWindow();
+	float * phi = 0;
+	fastmarching_dt(inimg1d, phi, sz0, sz1, sz2, cnn_type, bkg_thresh);
 
-	//p4DImage->setData(inimg1d, sz[0], sz[1], sz[2], sz[3]);
-	//callback.setImage(newwin, p4DImage);
-	//callback.setImageName(newwin, QObject::tr("gsdt"));
-	//callback.updateImageWindow(newwin);
+	float min_val = phi[0], max_val = phi[0];
+	long tol_sz = sz0 * sz1 * sz2;
+	unsigned char * outimg1d = new unsigned char[tol_sz];
+	for(long i = 0; i < tol_sz; i++) {if(phi[i] == INF) continue; min_val = MIN(min_val, phi[i]); max_val = MAX(max_val, phi[i]);}
+	cout<<"min_val = "<<min_val<<" max_val = "<<max_val<<endl;
+	max_val -= min_val; if(max_val == 0.0) max_val = 0.00001;
+	for(long i = 0; i < tol_sz; i++)
+	{
+		if(phi[i] == INF) outimg1d[i] = 0;
+		else if(phi[i] ==0) outimg1d[i] = 0;
+		else
+		{
+			outimg1d[i] = (phi[i] - min_val)/max_val * 255 + 0.5;
+			outimg1d[i] = MAX(outimg1d[i], 1);
+		}
+	}
+	delete [] phi; phi = 0;
+
+	Image4DSimple * new4DImage = new Image4DSimple();
+	new4DImage->setData(outimg1d, sz0, sz1, sz2, 1, V3D_UINT8);
+	v3dhandle newwin = callback.newImageWindow();
+	callback.setImage(newwin, new4DImage);
+	callback.setImageName(newwin, title);
+	callback.updateImageWindow(newwin);
 	return 1;
 }
 
@@ -101,12 +93,12 @@ bool gsdt(const V3DPluginArgList & input, V3DPluginArgList & output)
 	cout<<"outimg_file = "<<outimg_file<<endl;
 
 	unsigned char * inimg1d = 0,  * outimg1d = 0;
-	float * phi;
-	V3DLONG * in_sz;
+	float * phi = 0;
+	V3DLONG * in_sz = 0;
 	int datatype;
 	if(!loadImage(inimg_file, inimg1d, in_sz, datatype)) {cerr<<"load image "<<inimg_file<<" error!"<<endl; return 1;}
 
-	fastmarching_dt(inimg1d, phi, in_sz[0], in_sz[1], in_sz[2], cnn_type, bkg_thresh);
+	if(!fastmarching_dt(inimg1d, phi, in_sz[0], in_sz[1], in_sz[2], cnn_type, bkg_thresh)) return false;
 
 	float min_val = phi[0], max_val = phi[0];
 	long tol_sz = in_sz[0] * in_sz[1] * in_sz[2];
