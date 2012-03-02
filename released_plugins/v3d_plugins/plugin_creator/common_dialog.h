@@ -176,7 +176,7 @@ public:
 		if(item_vals.find(item) == item_vals.end()) return "";
 		return item_vals[item];
 	}
-	template<class T> void get_num(string item, T val)
+	template<class T> void get_num(string item, T &val)
 	{
 		if(item_vals.find(item) == item_vals.end()) val = 0;
 		string str = item_vals[item];
