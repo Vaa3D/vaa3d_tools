@@ -13,45 +13,6 @@ using namespace std;
 
 const QString title = QObject::tr("Resample Neuron");
 
-/*******************************************************
- * Split a string into string array
- * 1. args should be 0
- * 2. release args if not used any more
- *******************************************************/
-int split(const char *paras, char ** &args)
-{
-    if(paras == 0) return 0;
-    int argc = 0;
-    int len = strlen(paras);
-    int posb[2048];
-    char * myparas = new char[len];
-    strcpy(myparas, paras);
-    for(int i = 0; i < len; i++)
-    {
-        if(i==0 && myparas[i] != ' ' && myparas[i] != '\t')
-        {
-            posb[argc++]=i;
-        }
-        else if((myparas[i-1] == ' ' || myparas[i-1] == '\t') &&
-                (myparas[i] != ' ' && myparas[i] != '\t'))
-        {
-            posb[argc++] = i;
-        }
-    }
-
-    args = new char*[argc];
-    for(int i = 0; i < argc; i++)
-    {
-        args[i] = myparas + posb[i];
-    }
-
-    for(int i = 0; i < len; i++)
-    {
-        if(myparas[i]==' ' || myparas[i]=='\t')myparas[i]='\0';
-    }
-    return argc;
-}
-
 bool export_list2file(QList<NeuronSWC> & lN, QString fileSaveName, QString fileOpenName)
 {
 	QFile file(fileSaveName);
@@ -138,7 +99,10 @@ bool resample_swc(const V3DPluginArgList & input, V3DPluginArgList & output)
 		fileSaveName = fileOpenName + "_resampled.swc";
 	}
 	else if (output.size()==1)
+	{
+		outlist = (vector<char*>*)(output.at(0).p);
 		fileSaveName = QString(outlist->at(0));
+	}
 	else
 	{
 		printf("You have specified more than 1 output file.\n");
