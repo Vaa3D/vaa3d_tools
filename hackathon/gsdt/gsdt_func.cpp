@@ -82,21 +82,23 @@ bool gsdt(const V3DPluginArgList & input, V3DPluginArgList & output)
 {
 	cout<<"Welcome to gsdt"<<endl;
 	if(input.size() != 2 || output.size() != 1) return false;
-	int bkg_thresh = 0, cnn_type = 2;
+	int bkg_thresh = 0, cnn_type = 2, channel = 0;
 	vector<char*> paras = (*(vector<char*> *)(input.at(1).p));
 	if(paras.size() >= 1) bkg_thresh = atoi(paras.at(0));
 	if(paras.size() >= 2) cnn_type = atoi(paras.at(1));
+	if(paras.size() >= 3) channel = atoi(paras.at(2));
 	char * inimg_file = ((vector<char*> *)(input.at(0).p))->at(0);
 	char * outimg_file = ((vector<char*> *)(output.at(0).p))->at(0);
 	cout<<"bkg_thresh = "<<bkg_thresh<<endl;
 	cout<<"inimg_file = "<<inimg_file<<endl;
 	cout<<"outimg_file = "<<outimg_file<<endl;
+	cout<<"channel = "<<channel<<endl;
 
 	unsigned char * inimg1d = 0,  * outimg1d = 0;
 	float * phi = 0;
 	V3DLONG * in_sz = 0;
 	int datatype;
-	if(!loadImage(inimg_file, inimg1d, in_sz, datatype)) {cerr<<"load image "<<inimg_file<<" error!"<<endl; return 1;}
+	if(!loadImage(inimg_file, inimg1d, in_sz, datatype, channel)) {cerr<<"load image "<<inimg_file<<" error!"<<endl; return 1;}
 
 	if(!fastmarching_dt(inimg1d, phi, in_sz[0], in_sz[1], in_sz[2], cnn_type, bkg_thresh)) return false;
 

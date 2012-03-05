@@ -3,11 +3,14 @@
  * 2012-03-02 : by Hang Xiao
  */
  
+#include <iostream>
 #include "v3d_message.h"
 
 #include "gsdt_plugin.h"
 #include "gsdt_func.h"
- 
+
+using namespace std;
+
 Q_EXPORT_PLUGIN2(gsdt, GrayScaleDistanceTransformationPlugin);
  
 QStringList GrayScaleDistanceTransformationPlugin::menulist() const
@@ -20,7 +23,8 @@ QStringList GrayScaleDistanceTransformationPlugin::menulist() const
 QStringList GrayScaleDistanceTransformationPlugin::funclist() const
 {
 	return QStringList()
-		<<tr("gsdt");
+		<<tr("gsdt")
+		<<tr("help");
 }
 
 void GrayScaleDistanceTransformationPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
@@ -41,6 +45,11 @@ bool GrayScaleDistanceTransformationPlugin::dofunc(const QString & func_name, co
 	if (func_name == tr("gsdt"))
 	{
 		return gsdt(input, output);
+	}
+	else if(func_name == tr("help"))
+	{
+		cout<<"Usage : v3d -x gsdt -f gsdt -i <inimg_file> -o <outimg_file> -p <bkg_thresh_value> <cnn_type>"<<endl;
+		return true;
 	}
 }
 
