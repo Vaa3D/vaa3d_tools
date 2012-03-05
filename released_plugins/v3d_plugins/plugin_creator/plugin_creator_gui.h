@@ -31,7 +31,7 @@ public:
 		label_plugin_author = new QLabel(tr("Plugin Author :"));
 		editor_plugin_author = new QLineEdit(tr("YourName"));
 
-		label_vaa3d_path = new QLabel(tr("Vaa3D Path :"));
+		label_vaa3d_path = new QLabel(tr("Vaa3D whole-project path :"));
 		editor_vaa3d_path = new QLineEdit(tr(""));
 		button_vaa3d_path = new QPushButton(tr("..."));
 

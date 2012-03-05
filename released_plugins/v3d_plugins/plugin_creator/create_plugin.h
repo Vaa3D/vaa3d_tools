@@ -135,6 +135,7 @@ void create_func_cpp(PluginTemplate &pt)
 		ofs<<"{"<<endl;
 		if(i == 0)
 		{
+			ofs<<"\tv3d_msg(\"Now you are invoking the example code. You can replace this part using your own code.\");"<<endl;
 			ofs<<"\tv3dhandleList win_list = callback.getImageWindowList();"<<endl;
 			ofs<<""<<endl;
 			ofs<<"\tif(win_list.size()<1)"<<endl;
