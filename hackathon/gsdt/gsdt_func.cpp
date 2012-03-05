@@ -28,26 +28,29 @@ int gsdt(V3DPluginCallback2 &callback, QWidget *parent)
 	}
 	v3dhandle curwin = callback.currentImageWindow();
 	Image4DSimple * p4DImage = callback.getImage(curwin);
-	unsigned char * inimg1d = p4DImage->getRawDataAtChannel(0);
-	int sz0 = p4DImage->getXDim();
-	int sz1 = p4DImage->getYDim();
-	int sz2 = p4DImage->getZDim();
-	int sz3 = 1;
+	V3DLONG sz0 = p4DImage->getXDim();
+	V3DLONG sz1 = p4DImage->getYDim();
+	V3DLONG sz2 = p4DImage->getZDim();
+	V3DLONG sz3 = 1;
 
 	vector<string> items;
 	items.push_back("Background Threshold (0 ~ 255)");
 	items.push_back("Connection Type (1 ~ 3)");
+	items.push_back("Channel (0 ~ )");
 	CommonDialog dialog(items);
 	dialog.setWindowTitle(title);
 	if(dialog.exec() != QDialog::Accepted) return 0;
 
-	int bkg_thresh = 0, cnn_type = 2;
+	int bkg_thresh = 0, cnn_type = 2, channel = 0;
 	dialog.get_num("Background Threshold (0 ~ 255)", bkg_thresh);
 	dialog.get_num("Connection Type (1 ~ 3)", cnn_type);
+	dialog.get_num("Channel (0 ~ )", channel);
 
 	cout<<"bkg_thresh = "<<bkg_thresh<<endl;
 	cout<<"cnn_type = "<<cnn_type<<endl;
+	cout<<"channel = "<<channel<<endl;
 
+	unsigned char * inimg1d = p4DImage->getRawDataAtChannel(channel);
 	float * phi = 0;
 	fastmarching_dt(inimg1d, phi, sz0, sz1, sz2, cnn_type, bkg_thresh);
 

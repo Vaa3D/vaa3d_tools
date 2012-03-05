@@ -54,7 +54,7 @@ bool GrayScaleDistanceTransformationPlugin::dofunc(const QString & func_name, co
 		cout<<"cnn_type                 connection type, 1 : 6 neighbors, 2 : 18 neighbors, 3 : 26 neighbors"<<endl;
 		cout<<"channel                  the input channel value. 0 for red channel, 1 for green channel, 2 for blue channel"<<endl;
 		cout<<endl;
-		cout<<"e.g. v3d -x gsdt -f gsdt -i input.raw -o output.raw -p 0 1 0"
+		cout<<"e.g. v3d -x gsdt -f gsdt -i input.raw -o output.raw -p 0 1 0"<<endl;
 		cout<<endl;
 		return true;
 	}
