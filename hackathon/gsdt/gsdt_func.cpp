@@ -45,9 +45,10 @@ int gsdt(V3DPluginCallback2 &callback, QWidget *parent)
 	dialog.get_num("Background Threshold (0 ~ 255)", bkg_thresh);
 	dialog.get_num("Connection Type (1 ~ 3)", cnn_type);
 	dialog.get_num("Channel (0 ~ )", channel);
-	if(channel < 0 || channel >= sz3)
+	if(bkg_thresh < 0) bkg_thresh = 0;
+	if(cnn_type < 1 || cnn_type > 3 || channel < 0 || channel >= sz3)
 	{
-		v3d_msg(QObject::tr("Channel value is out of range, should be 0 ~ ").arg(sz3-1));
+		v3d_msg(QObject::tr("Connection type or channel value is out of range").arg(sz3-1));
 		return 0;
 	}
 
