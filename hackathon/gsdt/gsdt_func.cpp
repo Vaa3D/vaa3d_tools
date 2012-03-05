@@ -31,7 +31,7 @@ int gsdt(V3DPluginCallback2 &callback, QWidget *parent)
 	V3DLONG sz0 = p4DImage->getXDim();
 	V3DLONG sz1 = p4DImage->getYDim();
 	V3DLONG sz2 = p4DImage->getZDim();
-	V3DLONG sz3 = 1;
+	V3DLONG sz3 = p4DImage->getCDim();
 
 	vector<string> items;
 	items.push_back("Background Threshold (0 ~ 255)");
@@ -45,6 +45,11 @@ int gsdt(V3DPluginCallback2 &callback, QWidget *parent)
 	dialog.get_num("Background Threshold (0 ~ 255)", bkg_thresh);
 	dialog.get_num("Connection Type (1 ~ 3)", cnn_type);
 	dialog.get_num("Channel (0 ~ )", channel);
+	if(channel < 0 || channel >= sz3)
+	{
+		v3d_msg(QObject::tr("Channel value is out of range, should be 0 ~ ").arg(sz3-1));
+		return 0;
+	}
 
 	cout<<"bkg_thresh = "<<bkg_thresh<<endl;
 	cout<<"cnn_type = "<<cnn_type<<endl;
