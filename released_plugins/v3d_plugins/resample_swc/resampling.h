@@ -1,5 +1,6 @@
 //resample neuronTree subject to a step length
 //2012-02-29 by Yinan Wan
+//2012-03-05 Yinan Wan: interpolate radius
 #ifndef __RESAMPLING_H__
 #define __RESAMPLING_H__
 #include "basic_surf_objs.h"
@@ -42,7 +43,7 @@ void resample_path(Segment * seg, double step)
 			pt->x = start->x + rate*(start->p->x-start->x);
 			pt->y = start->y + rate*(start->p->y-start->y);
 			pt->z = start->z + rate*(start->p->z-start->z);
-			pt->r = 1;//temporarily I set radius to 1;
+			pt->r = start->r*(1-rate) + start->p->r*rate;//intepolate the radius
 			pt->p = start->p;
 			seg_r.back()->p = pt;
 			seg_r.push_back(pt);
