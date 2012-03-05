@@ -2,15 +2,14 @@
 TEMPLATE	= lib
 CONFIG	+= qt plugin warn_off
 #CONFIG	+= x86_64
-V3DMAINPATH = ../../v3d_main
+V3DMAINPATH = ../../../v3d_main
 INCLUDEPATH	+= $$V3DMAINPATH/basic_c_fun
 INCLUDEPATH += $$V3DMAINPATH/common_lib/include
 INCLUDEPATH += $$V3DMAINPATH/jba/newmat11
 macx{
     LIBS += -L$$V3DMAINPATH/common_lib/lib_mac64 -lv3dtiff
     LIBS += -L$$V3DMAINPATH/jba/c++ -lv3dnewmat
-    CONFIG += x86_64
-
+#    CONFIG += x86_64
 }
 
 win32{
@@ -47,3 +46,5 @@ SOURCES += $$V3DMAINPATH/basic_c_fun/stackutil.cpp
 HEADERS += common_dialog.h
 
 TARGET	= $$qtLibraryTarget(gsdt)
+DESTDIR       = ../../v3d/plugins/image_filters/Grayscale_Image_Distance_Transform
+
