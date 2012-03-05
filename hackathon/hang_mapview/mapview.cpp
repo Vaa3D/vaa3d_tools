@@ -57,7 +57,7 @@ void ImageMapView::getImage(V3DLONG level, unsigned char * &outimg1d, V3DLONG x0
 {
 	V3DLONG tol_sz = sz0 * sz1 * sz2;
 	V3DLONG sz01 = sz0 * sz1;
-	if(outimg1d == 0) outimg1d = new unsigned char[sz01]; for(V3DLONG ind = 0; ind < sz01; ind++) outimg1d[ind] = 0;
+	if(outimg1d == 0) outimg1d = new unsigned char[tol_sz]; for(V3DLONG ind = 0; ind < sz01; ind++) outimg1d[ind] = 0;
 	V3DLONG ts0, ts1, ts2, bs0, bs1, bs2;                            // block size and block number
 	getImageSize(level,ts0, ts1, ts2, bs0, bs1, bs2);
 
