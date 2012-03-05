@@ -2,7 +2,7 @@
 TEMPLATE	= lib
 CONFIG	+= qt plugin warn_off
 #CONFIG	+= x86_64
-V3DMAINPATH = ../../../v3d_external/v3d_main
+V3DMAINPATH = ../../../v3d_main
 INCLUDEPATH	+= $$V3DMAINPATH/basic_c_fun
 
 HEADERS	+= resample_swc_plugin.h
@@ -14,4 +14,4 @@ SOURCES	+= $$V3DMAINPATH/basic_c_fun/v3d_message.cpp
 SOURCES	+= $$V3DMAINPATH/basic_c_fun/basic_surf_objs.cpp
 
 TARGET	= $$qtLibraryTarget(resample_swc)
-#DESTDIR	= ../../v3d/plugins/resample_swc/
+DESTDIR	= ../../v3d/plugins/resample_swc/
