@@ -25,12 +25,13 @@ void resample_path(Segment * seg, double step)
 	Segment seg_r;
 	double path_length = 0;
 	Point* start = seg->at(0);
-	V3DLONG iter_old = 1;
+	Point* seg_par = seg->back()->p;
+	V3DLONG iter_old = 0;
 	seg_r.push_back(start);
 	while (iter_old < seg->size() && start && start->p)
 	{
 		path_length += DISTP(start,start->p);
-		if (path_length<seg_r.size()*step)
+		if (path_length<=seg_r.size()*step)
 		{
 			start = start->p;
 			iter_old++;
@@ -51,7 +52,7 @@ void resample_path(Segment * seg, double step)
 			start = pt;
 		}
 	}
-	seg_r.back()->p = seg->back()->p;
+	seg_r.back()->p = seg_par;
 	for (V3DLONG i=0;i<seg->size();i++)
 		if (!seg->at(i)) {delete seg->at(i); seg->at(i) = NULL;}
 	*seg = seg_r;
@@ -121,6 +122,7 @@ NeuronTree resample(NeuronTree input, double step)
 		if (p->p==NULL) S.pn = -1;
 		else
 			S.pn = index_map[p->p]+1;
+		if (p->p==p) printf("There is loop in the tree!\n");
 		S.x = p->x;
 		S.y = p->y;
 		S.z = p->z;
