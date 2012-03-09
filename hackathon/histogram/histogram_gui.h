@@ -27,7 +27,7 @@ public:
 
 	~HistogramDialog(){}
 
-	void paintEvent(QPaintEvent *event);
+	//void paintEvent(QPaintEvent *event);
 	void paint(QPainter *p);
 
 public slots:

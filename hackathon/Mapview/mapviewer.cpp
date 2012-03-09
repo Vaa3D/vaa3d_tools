@@ -1376,6 +1376,7 @@ void MAPiewerPlugin::tifdata_rawdata(V3DPluginCallback &callback, QWidget *paren
 	thread->start();
 
 }
+
 void XMapView::setImgData(ImagePlaneDisplayType ptype,ImagePixelType dtype,ImageDisplayColorType Ctype,V3DLONG *sz_compressed,V3DLONG cz0, V3DLONG cz1, V3DLONG cz2,V3DLONG xslicesize,V3DLONG yslicesize, V3DLONG zslicesize, unsigned char *pdata,double * p_vmax, double* p_vmin)
 {
 	cur_focus_pos = 1;
@@ -1513,179 +1514,24 @@ void XMapView::paintEvent(QPaintEvent *event)
 
      painter.drawPixmap(QPointF(0, 0), pixmap);
 
-	painter.setPen(Qt::white );
-	painter.setBrush(Qt::NoBrush);
+	// draw a box at the bottom right corner
+	//painter.setPen(Qt::white );
+	//painter.setBrush(Qt::NoBrush);
 
-	QRect r1 (dragThumbnailWinS, dragThumbnailWinE);
+	//QRect r1 (dragThumbnailWinS, dragThumbnailWinE);
 
-	painter.drawRect(r1);
+	//painter.drawRect(r1);
 
-	if (b_mousmove)
-	{
-		QRect r ( dragStartPosition, curMousePos );
-		painter.drawRect(r);
-	}
-
-}
-
-void ImageSetWidget::update_v3dviews(V3DPluginCallback *callback, long start_x, long start_y, long start_z, long end_x, long end_y, long end_z)
-{
-	// visualize in v3d tri-view
-
-	size_t start_t = clock();
-
-	//virtual image
-	long vx, vy, vz, vc;
-
-	vx = end_x - start_x + 1; // suppose the size same of all tiles
-	vy = end_y - start_y + 1;
-	vz = end_z - start_z + 1;
-	vc = vim.sz[3];
-
-	//qDebug()<<"3dxyzc ..."<<start_x<<start_y<<start_z<<end_x<<end_y<<end_z;
-
-	long pagesz_vim = vx*vy*vz*vc;
-
-	unsigned char *pVImg = 0;
-
-	try
-	{
-		pVImg = new unsigned char [pagesz_vim];
-	}
-	catch (...)
-	{
-		printf("Fail to allocate memory.\n");
-		return;
-	}
-
-	// init
-	for(long i=0; i<pagesz_vim; i++)
-	{
-		pVImg[i] = 0;
-	}
-
-	long x_s = start_x + vim.min_vim[0];
-	long y_s = start_y + vim.min_vim[1];
-	long z_s = start_z + vim.min_vim[2];
-
-	long x_e = end_x + vim.min_vim[0];
-	long y_e = end_y + vim.min_vim[1];
-	long z_e = end_z + vim.min_vim[2];
-
-	//qDebug()<<"min ..."<<vim.min_vim[0]<<vim.min_vim[1]<<vim.min_vim[2];
-
-	ImagePixelType datatype;
-
-	//cout << "satisfied image: "<< vim.lut[0].fn_img << endl;
-
-	//
-	//char * curFileSuffix = getSurfix(const_cast<char *>(vim.lut[0].fn_img.c_str()));
-
-	//cout << "suffix ... " << curFileSuffix << endl; // tif lsm
-
-	QString curPath = curFilePath;
-
-	string fn = curPath.append( QString(vim.lut[0].fn_img.c_str()) ).toStdString();
-
-
-	qDebug()<<"testing..."<<curFilePath<< fn.c_str();
-	//
-	char * imgSrcFile = const_cast<char *>(fn.c_str());
-
-	size_t s1_t = clock();
-
-	// loading relative imagg files
-	V3DLONG *sz_relative = 0;
-	V3DLONG *szo = 0;
-	int datatype_relative = 0;
-	unsigned char* relative1d = 0;
-
-     //loadImage(imgSrcFile, relative1d, sz_relative, datatype_relative); //
-
-	if(loadImage(imgSrcFile,relative1d,sz_relative,szo,start_x,start_y,start_z,end_x,end_y,end_z,datatype_relative)!=true)
-	{
-		QMessageBox::information(0, "Load Image", QObject::tr("File load failure"));
-		return;
-	}
-
-	long rx=sz_relative[0], ry=sz_relative[1], rz=sz_relative[2], rc=sz_relative[3];
-
-	long sxx=szo[0], syy=szo[1], szz=szo[2], scc=szo[3];
-
-	if(datatype_relative==1)
-		datatype = V3D_UINT8;
-
-	//qDebug()<<"infomation..."<<rx<<ry<<rz;
-
-	//qDebug()<<"infomationoooori..."<<sxx<<syy<<szz<<scc;
-
-	size_t e1_t = clock();
-
-	//cout<<"time elapse for read tmpstack ... "<<e1_t-s1_t<<endl;
-	int stt =2;
-	if (stt == 1)
-	{
-		for(long c=0; c<rc; c++)
-		{
-			long o_c = c*vx*vy*vz;
-			long o_r_c = c*rx*ry*rz;
-			for(long k=z_s; k<z_e; k++)
-			{
-				long o_k = o_c + (k-z_s)*vx*vy;
-				long o_r_k = o_r_c + (k)*rx*ry;
-
-				for(long j=y_s; j<y_e; j++)
-				{
-					long o_j = o_k + (j-y_s)*vx;
-					long o_r_j = o_r_k + (j)*rx;
-					for(long i=x_s; i<x_e; i++)
-					{
-						long idx = o_j + i-x_s;
-						long idx_r = o_r_j + (i);
-						pVImg[idx] = relative1d[idx_r];
-					}
-				}
-			}
-		}
-		if(relative1d) {delete []relative1d; relative1d=0;}
-
-	}
-
-	size_t end1_t = clock();
-
-	cout<<"time elapse ... "<<end1_t-start_t<<endl;
-
-	//display
-	Image4DSimple p4DImage;
-
-	// p4DImage.setData((unsigned char*)relative1d, rx, ry, rz, rc, V3D_UINT16);
-     p4DImage.setData((unsigned char*)relative1d, szo[0], szo[1], szo[2], szo[3], V3D_UINT16);
-
-	v3dhandle curwin;
-
-	if(!callback->currentImageWindow())
-		curwin = callback->newImageWindow();
-	else
-		curwin = callback->currentImageWindow();
-
-	callback->setImage(curwin, &p4DImage);
-	callback->setImageName(curwin, "Image");
-	callback->updateImageWindow(curwin);
-
-	callback->pushImageIn3DWindow(curwin);
-
-	// time consumption
-	size_t end_t = clock();
-
-	//cout<<"time elapse after loading configuration info ... "<<end_t-start_t<<endl;
-
-	//loadImage(imgSrcFile, relative1d, sz_relative, datatype_relative); //
-     //	loadImage(imgSrcFile,relative1d,sz_relative,start_x,start_y,start_z,end_x,end_y,end_z,datatype_relative);
-
+	//if (b_mousmove)
+	//{
+	//	QRect r ( dragStartPosition, curMousePos );
+	//	painter.drawRect(r);
+	//}
 
 }
+
 XMapView::XMapView(QWidget *parent)
- :QWidget(parent)
+:QWidget(parent)
 {
 	Gtype = PixmapType;
 	m_scale = 1.0;
@@ -1732,16 +1578,176 @@ XMapView::XMapView(QWidget *parent)
 	mousenumber = 0;
 
 	in_xslicesize = in_yslicesize = in_zslicesize = 20;
-
+	
 	imagData = 0;
-
 }
+
 XMapView::~XMapView()
 {
 	m_show = 0;
 	mousenumber = 0;
-
 }
+
+
+
+void ImageSetWidget::update_v3dviews(V3DPluginCallback *callback, long start_x, long start_y, long start_z, long end_x, long end_y, long end_z)
+{
+	// visualize in v3d tri-view
+	
+	size_t start_t = clock();
+	
+	//virtual image
+	long vx, vy, vz, vc;
+	
+	vx = end_x - start_x + 1; // suppose the size same of all tiles
+	vy = end_y - start_y + 1;
+	vz = end_z - start_z + 1;
+	vc = vim.sz[3];
+	
+	//qDebug()<<"3dxyzc ..."<<start_x<<start_y<<start_z<<end_x<<end_y<<end_z;
+	
+	long pagesz_vim = vx*vy*vz*vc;
+	
+	unsigned char *pVImg = 0;
+	
+	try
+	{
+		pVImg = new unsigned char [pagesz_vim];
+	}
+	catch (...)
+	{
+		printf("Fail to allocate memory.\n");
+		return;
+	}
+	
+	// init
+	for(long i=0; i<pagesz_vim; i++)
+	{
+		pVImg[i] = 0;
+	}
+	
+	long x_s = start_x + vim.min_vim[0];
+	long y_s = start_y + vim.min_vim[1];
+	long z_s = start_z + vim.min_vim[2];
+	
+	long x_e = end_x + vim.min_vim[0];
+	long y_e = end_y + vim.min_vim[1];
+	long z_e = end_z + vim.min_vim[2];
+	
+	//qDebug()<<"min ..."<<vim.min_vim[0]<<vim.min_vim[1]<<vim.min_vim[2];
+	
+	ImagePixelType datatype;
+	
+	//cout << "satisfied image: "<< vim.lut[0].fn_img << endl;
+	
+	//
+	//char * curFileSuffix = getSurfix(const_cast<char *>(vim.lut[0].fn_img.c_str()));
+	
+	//cout << "suffix ... " << curFileSuffix << endl; // tif lsm
+	
+	QString curPath = curFilePath;
+	
+	string fn = curPath.append( QString(vim.lut[0].fn_img.c_str()) ).toStdString();
+	
+	
+	qDebug()<<"testing..."<<curFilePath<< fn.c_str();
+	//
+	char * imgSrcFile = const_cast<char *>(fn.c_str());
+	
+	size_t s1_t = clock();
+	
+	// loading relative imagg files
+	V3DLONG *sz_relative = 0;
+	V3DLONG *szo = 0;
+	int datatype_relative = 0;
+	unsigned char* relative1d = 0;
+	
+	//loadImage(imgSrcFile, relative1d, sz_relative, datatype_relative); //
+	
+	if(loadImage(imgSrcFile,relative1d,sz_relative,szo,start_x,start_y,start_z,end_x,end_y,end_z,datatype_relative)!=true)
+	{
+		QMessageBox::information(0, "Load Image", QObject::tr("File load failure"));
+		return;
+	}
+	
+	long rx=sz_relative[0], ry=sz_relative[1], rz=sz_relative[2], rc=sz_relative[3];
+	
+	long sxx=szo[0], syy=szo[1], szz=szo[2], scc=szo[3];
+	
+	if(datatype_relative==1)
+		datatype = V3D_UINT8;
+	
+	//qDebug()<<"infomation..."<<rx<<ry<<rz;
+	
+	//qDebug()<<"infomationoooori..."<<sxx<<syy<<szz<<scc;
+	
+	size_t e1_t = clock();
+	
+	//cout<<"time elapse for read tmpstack ... "<<e1_t-s1_t<<endl;
+	int stt =2;
+	if (stt == 1)
+	{
+		for(long c=0; c<rc; c++)
+		{
+			long o_c = c*vx*vy*vz;
+			long o_r_c = c*rx*ry*rz;
+			for(long k=z_s; k<z_e; k++)
+			{
+				long o_k = o_c + (k-z_s)*vx*vy;
+				long o_r_k = o_r_c + (k)*rx*ry;
+				
+				for(long j=y_s; j<y_e; j++)
+				{
+					long o_j = o_k + (j-y_s)*vx;
+					long o_r_j = o_r_k + (j)*rx;
+					for(long i=x_s; i<x_e; i++)
+					{
+						long idx = o_j + i-x_s;
+						long idx_r = o_r_j + (i);
+						pVImg[idx] = relative1d[idx_r];
+					}
+				}
+			}
+		}
+		if(relative1d) {delete []relative1d; relative1d=0;}
+		
+	}
+	
+	size_t end1_t = clock();
+	
+	cout<<"time elapse ... "<<end1_t-start_t<<endl;
+	
+	//display
+	Image4DSimple p4DImage;
+	
+	// p4DImage.setData((unsigned char*)relative1d, rx, ry, rz, rc, V3D_UINT16);
+	p4DImage.setData((unsigned char*)relative1d, szo[0], szo[1], szo[2], szo[3], V3D_UINT16);
+	
+	v3dhandle curwin;
+	
+	if(!callback->currentImageWindow())
+		curwin = callback->newImageWindow();
+	else
+		curwin = callback->currentImageWindow();
+	
+	callback->setImage(curwin, &p4DImage);
+	callback->setImageName(curwin, "Image");
+	callback->updateImageWindow(curwin);
+	
+	callback->pushImageIn3DWindow(curwin);
+	
+	// time consumption
+	size_t end_t = clock();
+	
+	//cout<<"time elapse after loading configuration info ... "<<end_t-start_t<<endl;
+	
+	//loadImage(imgSrcFile, relative1d, sz_relative, datatype_relative); //
+	//	loadImage(imgSrcFile,relative1d,sz_relative,start_x,start_y,start_z,end_x,end_y,end_z,datatype_relative);
+	
+	
+}
+
+
 void ImageSetWidget::drawdata()
 {
      Bcopy = true;
@@ -1985,10 +1991,9 @@ void ImageSetWidget::createGUI()
 	xy_view->setFocusPolicy(Qt::ClickFocus);
 	
 	xy_view->resize(xy_view->get_disp_width(),xy_view->get_disp_height());
-	
 
 	// navigation window view
-	navigation_view = new QFrame(xy_view);
+	navi_frame = new QFrame(xy_view);
 	// navigation window size
 	int nvx = cx/5;
 	if (nvx<150) {
@@ -1999,20 +2004,59 @@ void ImageSetWidget::createGUI()
 	int nvy = (int)(nvx*((float)(cy)/cx));
 	
 	QGridLayout* xyin_layout=new QGridLayout(xy_view);
-	xyin_layout->addWidget(navigation_view);
+	xyin_layout->addWidget(navi_frame);
 	xyin_layout->setAlignment(Qt::AlignBottom|Qt::AlignRight);
 	xyin_layout->setContentsMargins(0,0,0,0);
 	xy_view->setLayout(xyin_layout);
 	
 	QRect rect_nv=QRect(0, 0, nvx, nvy);
-	navigation_view->setFrameRect(rect_nv);	
-	navigation_view->setFixedSize(nvx, nvy);
-	navigation_view->setFrameStyle(QFrame::Raised|QFrame::Box);
-	navigation_view->setWindowOpacity(0.0); //between 0-1
+	navi_frame->setFrameRect(rect_nv);	
+	navi_frame->setFixedSize(nvx, nvy);
+	
+	navi_frame->setFrameStyle(QFrame::Raised|QFrame::Box);
+	navi_frame->setLineWidth(1);
+	navi_frame->setWindowOpacity(1); //between 0-1
+	
+	//////////////////
+	navi_frame->setContentsMargins(2,2,0,0);
+		
+	navi_view = new XMapView(navi_frame);
+	navi_view->setImgData(imgPlaneZ,dtype,Ctype, sz_compressed,x,y,z,xslicesize,yslicesize,zslicesize,compressed1d,p_vmax,p_vmin); //because the second parameter is 0 (NULL pointer), then just load the default maps for this view
+	navi_view->set_disp_width(nvx-4);
+	navi_view->set_disp_height(nvy-4);
+	navi_view->set_disp_scale(1);
+	navi_view->setFixedWidth(navi_view->get_disp_width());
+	navi_view->setFixedHeight(navi_view->get_disp_height());
+	navi_view->setFocusPolicy(Qt::ClickFocus);
+	navi_view->resize(navi_view->get_disp_width(),navi_view->get_disp_height());
+	
+	// draw moving navigation window
+	int mov_nv_w, mov_nv_h; //moving window width, height
+	mov_nv_w = cx/10;
+	if (mov_nv_w<20) {
+		mov_nv_w = 20;
+	}else if (mov_nv_w>30) {
+		mov_nv_w=30;
+	}
+	
+	mov_nv_h = (int)(mov_nv_w * ((float)(cy)/cx));
+	
+	QPixmap *moving_pixmap = new QPixmap(mov_nv_w, mov_nv_h);
+	moving_pixmap->fill(Qt::red);
+
+	QPainter *nv_painter = new QPainter(navi_frame); //moving_pixmap);
+    nv_painter->setOpacity(1.0);
+    nv_painter->drawPixmap(nvx/2,nvy/2, *moving_pixmap);
+	nv_painter->end();
 	
 	
-	qDebug()<<"disp_x_y ..."<<xy_view->get_disp_width()<<xy_view->get_disp_height();	
 	
+	
+	
+	
+	
+	
+	// yz view
 	yz_view = new XMapView(viewGroup);
 
 	yz_view->setImgData(imgPlaneX,dtype,Ctype,sz_compressed,x,y,z,xslicesize,yslicesize,zslicesize,compressed1d,p_vmax,p_vmin); //because the second parameter is 0 (NULL pointer), then just load the default maps for this view

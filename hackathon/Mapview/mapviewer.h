@@ -332,7 +332,9 @@ public:
     XMapView *zx_view; //change in Y
 	XMapView *mapview ;
 	
-	QFrame *navigation_view; // navigation window
+	XMapView *navi_view; // navigation view
+	QFrame *navi_frame;  // navigation window frame
+	QFrame *moving_win;  // moving navigation window
 	
 	//******************
 public:

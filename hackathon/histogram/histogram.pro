@@ -2,7 +2,7 @@
 TEMPLATE	= lib
 CONFIG	+= qt plugin warn_off
 #CONFIG	+= x86_64
-VAA3DPATH = /groups/peng/home/zhouj/work/vaa3d
+VAA3DPATH = /Users/zhouj/work/vaa3d
 INCLUDEPATH	+= $$VAA3DPATH/v3d_main/basic_c_fun
 
 HEADERS	+= histogram_plugin.h

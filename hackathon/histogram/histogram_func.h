@@ -13,7 +13,5 @@
 int compute(V3DPluginCallback2 &callback, QWidget *parent);
 bool compute(const V3DPluginArgList & input, V3DPluginArgList & output);
 
-//template <class T> void getHistogram(const T * pdata1d, V3DLONG datalen, V3DLONG &histscale, vector <V3DLONG> &hist);
-
 #endif
 
