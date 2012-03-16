@@ -7,8 +7,8 @@ using namespace std;
 
 struct ImageMapView
 {
-	V3DLONG L, M, N;                   // the image size 2^L * 2^M * 2^N
-	V3DLONG l, m, n;                   // the initial block size 2^l * 2^m * 2^n, the initial tilling size 2^(L-l) * 2^(M-m) * 2^(N-n)
+	V3DLONG L, M, N;                   // the block number in X, Y, Z dimension
+	V3DLONG l, m, n;                   // the block size 
 	string prefix;
 
 	ImageMapView();

@@ -35,9 +35,9 @@ static void getImageSize(string filename, V3DLONG &sz0, V3DLONG &sz1, V3DLONG &s
 }
 bool createMapViewFiles(string prefix, V3DLONG ts0, V3DLONG ts1, V3DLONG ts2)
 {
-	assert(ts0 == pow(2, log(ts0)/log(2.0)));
-	assert(ts1 == pow(2, log(ts1)/log(2.0)));
-	assert(ts2 == pow(2, log(ts2)/log(2.0)));
+	//assert(ts0 == pow(2, log(ts0)/log(2.0)));
+	//assert(ts1 == pow(2, log(ts1)/log(2.0)));
+	//assert(ts2 == pow(2, log(ts2)/log(2.0)));
 	// check block size
 	V3DLONG bs0 = 0, bs1 = 0, bs2 = 0;
 	for(V3DLONG tk = 0; tk < ts2; tk++)
@@ -47,7 +47,7 @@ bool createMapViewFiles(string prefix, V3DLONG ts0, V3DLONG ts1, V3DLONG ts2)
 			for(V3DLONG ti = 0; ti < ts0; ti++)
 			{
 				ostringstream oss;
-				oss<<prefix<<"_"<<0<<"_"<<ti<<"_"<<tj<<"_"<<tk<<".raw";
+				oss<<prefix<<"_L"<<0<<"_X"<<ti<<"_Y"<<tj<<"_Z"<<tk<<".raw";
 				string filename = oss.str();
 				V3DLONG sz0, sz1, sz2;
 				getImageSize(filename, sz0, sz1, sz2);
@@ -63,10 +63,10 @@ bool createMapViewFiles(string prefix, V3DLONG ts0, V3DLONG ts1, V3DLONG ts2)
 		}
 	}
 	//V3DLONG min_level = 0, max_level = 10;// log(MIN(MIN(ts0, ts1), ts2))/log(2.0);
-	V3DLONG pts0 = ts0, pts1 = ts1, pts2 = ts2;
-	V3DLONG pbs0 = bs0, pbs1 = bs1, pbs2 = bs2;
-	V3DLONG cts0 = ts0, cts1 = ts1, cts2 = ts2;
-	V3DLONG cbs0 = bs0, cbs1 = bs1, cbs2 = bs2;
+	V3DLONG pts0 = ts0, pts1 = ts1, pts2 = ts2;       // parent tiling size
+	V3DLONG pbs0 = bs0, pbs1 = bs1, pbs2 = bs2;       // parent block size
+	V3DLONG cts0 = ts0, cts1 = ts1, cts2 = ts2;       // child tiling size
+	V3DLONG cbs0 = bs0, cbs1 = bs1, cbs2 = bs2;       // child block size
 	V3DLONG level = 0;
 	while(true)
 	{
@@ -74,9 +74,9 @@ bool createMapViewFiles(string prefix, V3DLONG ts0, V3DLONG ts1, V3DLONG ts2)
 		if((pts0 == 1 && pbs0 == 1) ||
 		   (pts1 == 1 && pbs1 == 1) ||
 		   (pts2 == 1 && pbs2 == 1)) break;
-		(pts0 == 1) ? (cbs0 = MAX(pbs0/2, 1)) : (cts0 = pts0/2);
-		(pts1 == 1) ? (cbs1 = MAX(pbs1/2, 1)) : (cts1 = pts1/2);
-		(pts2 == 1) ? (cbs2 = MAX(pbs2/2, 1)) : (cts2 = pts2/2);
+		(pts0 == 1) ? (cbs0 = (pbs0 + 1)/2) : (cts0 = (pts0 + 1)/2);
+		(pts1 == 1) ? (cbs1 = (pbs1 + 1)/2) : (cts1 = (pts1 + 1)/2);
+		(pts2 == 1) ? (cbs2 = (pbs2 + 1)/2) : (cts2 = (pts2 + 1)/2);
 
 		V3DLONG pbs01 = pbs0 * pbs1;
 		V3DLONG cbs01 = cbs0 * cbs1;
@@ -87,12 +87,12 @@ bool createMapViewFiles(string prefix, V3DLONG ts0, V3DLONG ts1, V3DLONG ts2)
 			{
 				for(V3DLONG ti = 0; ti < cts0; ti++)
 				{
-					V3DLONG gimax = (pts0 > 1) ? 1 : 0;
-					V3DLONG gjmax = (pts1 > 1) ? 1 : 0;
-					V3DLONG gkmax = (pts2 > 1) ? 1 : 0;
+					V3DLONG gimax = (pts0 % 2 == 0) ? 1 : 0;
+					V3DLONG gjmax = (pts1 % 2 == 0) ? 1 : 0;
+					V3DLONG gkmax = (pts2 % 2 == 0) ? 1 : 0;
 
 					V3DLONG tol_csz = cbs0 * cbs1 * cbs2;
-					unsigned char * curimg1d = new unsigned char[tol_csz];
+					unsigned char * curimg1d = new unsigned char[tol_csz]; memset(curimg1d, 0, tol_csz);
 					// grid i, j k
 					for(V3DLONG gk = 0; gk <= gkmax; gk++)
 					{
@@ -101,7 +101,7 @@ bool createMapViewFiles(string prefix, V3DLONG ts0, V3DLONG ts1, V3DLONG ts2)
 							for(V3DLONG gi = 0; gi <= gimax; gi++)
 							{
 								ostringstream oss;
-								oss<<prefix<<"_"<<level<<"_"<<2*ti + gi<<"_"<<2*tj + gj<<"_"<<2*tk + gk<<".raw";
+								oss<<prefix<<"_L"<<level<<"_X"<<2*ti + gi<<"_Y"<<2*tj + gj<<"_Z"<<2*tk + gk<<".raw";
 								string parimg_file = oss.str();
 								unsigned char * parimg1d = 0; V3DLONG * parsz = 0; int datatype;
 								if(!loadImage((char *) parimg_file.c_str(), parimg1d, parsz, datatype)){cerr<<"load "<<parimg_file<<" error."<<endl; return false;}
@@ -120,12 +120,33 @@ bool createMapViewFiles(string prefix, V3DLONG ts0, V3DLONG ts1, V3DLONG ts2)
 									{
 										for(V3DLONG cbi = cbis; cbi < cbie; cbi++)
 										{
-											V3DLONG pbi = (cbi - cbis)*2;
-											V3DLONG pbj = (cbj - cbjs)*2;
-											V3DLONG pbk = (cbk - cbks)*2;
-											V3DLONG pind = pbk * pbs01 + pbj * pbs0 + pbi;
-											V3DLONG cind = cbk * cbs01 + cbj * cbs0 + cbi;
-											curimg1d[cind] = parimg1d[pind];
+											if(0)//is_blur)
+											{
+												V3DLONG pbi = (cbi - cbis)*2;
+												V3DLONG pbj = (cbj - cbjs)*2;
+												V3DLONG pbk = (cbk - cbks)*2;
+												V3DLONG pind = pbk * pbs01 + pbj * pbs0 + pbi;
+												V3DLONG cind = cbk * cbs01 + cbj * cbs0 + cbi;
+												curimg1d[cind] = parimg1d[pind];
+											}
+											else
+											{
+												V3DLONG pbi = (cbi - cbis)*2;
+												V3DLONG pbj = (cbj - cbjs)*2;
+												V3DLONG pbk = (cbk - cbks)*2;
+												V3DLONG pind = pbk * pbs01 + pbj * pbs0 + pbi;
+												V3DLONG cind = cbk * cbs01 + cbj * cbs0 + cbi;
+												double sum_int = 0.0; int count = 0;
+												sum_int += parimg1d[pind];
+												if(pbi + 1 < pbs0) {sum_int += parimg1d[pind + 1]; count++;}
+												if(pbj + 1 < pbs1) {sum_int += parimg1d[pind + pbs0]; count++;}
+												if(pbk + 1 < pbs2) {sum_int += parimg1d[pind + pbs01]; count++;}
+												if(pbi + 1 < pbs0 && pbj + 1 < pbs1) {sum_int += parimg1d[pind + 1 + pbs0]; count++;}
+												if(pbi + 1 < pbs0 && pbk + 1 < pbs2) {sum_int += parimg1d[pind + 1 + pbs01]; count++;}
+												if(pbj + 1 < pbs1 && pbk + 1 < pbs2) {sum_int += parimg1d[pind + pbs0 + pbs01]; count++;}
+												if(pbi + 1 < pbs0 && pbj + 1 < pbs1 && pbk + 1 < pbs2) {sum_int += parimg1d[pind + 1 + pbs0 + pbs01]; count++;}
+												curimg1d[cind] = sum_int/count + 0.5;
+											}
 										}
 									}
 								}
@@ -134,7 +155,7 @@ bool createMapViewFiles(string prefix, V3DLONG ts0, V3DLONG ts1, V3DLONG ts2)
 							}
 						}
 					}
-					ostringstream oss; oss<<prefix<<"_"<<level+1<<"_"<<ti<<"_"<<tj<<"_"<<tk<<".raw";
+					ostringstream oss; oss<<prefix<<"_L"<<level+1<<"_X"<<ti<<"_Y"<<tj<<"_Z"<<tk<<".raw";
 					string curimg_file = oss.str();
 					V3DLONG cursz[4] = {cbs0, cbs1, cbs2, 1};
 					cout<<"======== save "<<curimg_file<<" ========="<<endl;
@@ -152,5 +173,10 @@ bool createMapViewFiles(string prefix, V3DLONG ts0, V3DLONG ts1, V3DLONG ts2)
 
 int main(int argc, char ** argv)
 {
-	createMapViewFiles("test", 8, 8, 8);
+	if(argc < 5) 
+	{
+		cerr<<"Usage : "<<argv[0]<<" <prefix> <block_num0> <block_num1> <block_num2>"<<endl;
+		return 0;
+	}
+	createMapViewFiles(argv[1], atoi(argv[2]), atoi(argv[3]), atoi(argv[4]));
 }

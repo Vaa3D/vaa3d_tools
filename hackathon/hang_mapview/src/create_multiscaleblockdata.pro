@@ -4,7 +4,7 @@
 TEMPLATE = app
 CONFIG -= qt app_bundle
 CONFIG += debug warn_off
-V3DMAINPATH = ../../../../work/v3d_external/v3d_main
+V3DMAINPATH = ../../../../../work/v3d_external/v3d_main
 INCLUDEPATH += $$V3DMAINPATH/basic_c_fun
 INCLUDEPATH += $$V3DMAINPATH/common_lib/include
 INCLUDEPATH += $$V3DMAINPATH/jba/newmat11
