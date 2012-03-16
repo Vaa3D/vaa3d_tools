@@ -31,12 +31,12 @@ void ImageMapView::setPara(string _prefix, V3DLONG _L, V3DLONG _M, V3DLONG _N, V
 
 void ImageMapView::getImageSize(V3DLONG level, V3DLONG & ts0, V3DLONG & ts1, V3DLONG & ts2, V3DLONG &bs0, V3DLONG &bs1, V3DLONG &bs2)
 {
-	ts0 = MAX(L - l - level, 0);
-	ts1 = MAX(M - m - level, 0);
-	ts2 = MAX(N - n - level, 0);
-	bs0 = MAX(L - level - ts0, 0);
-	bs1 = MAX(M - level - ts1, 0);
-	bs2 = MAX(N - level - ts2, 0);
+	ts0 = MAX(L - level, 0);
+	ts1 = MAX(M - level, 0);
+	ts2 = MAX(N - level, 0);
+	bs0 = MAX(L + l - level - ts0, 0);
+	bs1 = MAX(M + m - level - ts1, 0);
+	bs2 = MAX(N + n - level - ts2, 0);
 
 	// pow of bs0, bs1, bs2, ts0, ts1, ts2
 	ts0 = 1l << ts0;
