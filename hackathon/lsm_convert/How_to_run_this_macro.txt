@@ -1,0 +1,12 @@
+This is a Fiji macro to convert split the channels in lsm file and save it to separate tif files.
+2012-03-23 by Yinan Wan
+
+To run the macro, simply do this:
+1. Prepare all your lsm files in one folder
+	**Make sure the folder contain ONLY lsm files (no other files, no subfolders!!)**
+2. start Fiji
+3. click Plugins->Macros->Run...
+4. choose this bioformat_lsm.ijm
+5. It will pomp a window "Choose a Directory", choose your lsm-containing folder
+
+The macro will automatically create a folder called "converted" under your lsm folder. You will find all your converted tif files there, with each channel stored in "<yourfilename>_c<ChannelNum>.tif"
