@@ -112,7 +112,7 @@ void ImageMapView::getImage(V3DLONG level, unsigned char * &outimg1d, V3DLONG x0
 				// Read block (ti, tj , tk)
 				{
 					ostringstream oss;
-					oss<<prefix<<"_"<<level<<"_"<<ti<<"_"<<tj<<"_"<<tk<<".raw";
+					oss<<prefix<<"_L"<<level<<"_X"<<ti<<"_Y"<<tj<<"_Z"<<tk<<".raw";
 					cout<<"read "<<oss.str()<<endl;
 
 					char * filename = (char*) oss.str().c_str();
