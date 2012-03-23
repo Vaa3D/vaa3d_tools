@@ -1,61 +1,26 @@
-#ifndef __HISTOGRAM_GUI_H__
-#define __HISTOGRAM_GUI_H__
+//histogram_gui.h
+//adapted from this file
+/*
+ * barFigureDialog.h
+ *
+ *  Created on: May 1, 2009
+ *      Author: ruanzongcai
+ */
 
-#include <string>
+#ifndef BARFIGUREDIALOG_H_
+#define BARFIGUREDIALOG_H_
+
 #include <QtGui>
-#include <vector>
-#include <v3d_interface.h>
 
-#include "color_xyz.h"
-
-using namespace std;
-
-struct DataChannelColor
+class histogramDialog : public QDialog
 {
-	int n;			  // index
-	RGBA8 color;
-	bool on;
+public:
+	histogramDialog(QVector< QVector<int> >& vvec, QStringList labelsOfLeftTop, QString labelOfRightBottom,
+			QWidget *parent=0, QSize figSize=QSize(500, 150), QColor barColor=QColor(100,100,100));
+	virtual ~histogramDialog();
+	virtual void closeEvent( QCloseEvent* e);
 };
 
+QImage drawBarFigure(QVector<int>& vec, QColor barColor=QColor(100,100,100));
 
-class HistogramDialog : public QDialog
-{
-	Q_OBJECT
-
-public:
-	HistogramDialog(QWidget * parent);
-
-	~HistogramDialog(){}
-
-	//void paintEvent(QPaintEvent *event);
-	void paint(QPainter *p);
-
-public slots:
-	void accept()
-	{
-		return QDialog::accept();
-	}
-
-	void reject()
-	{
-		return QDialog::reject();
-	}
-
-public:
-	QList <DataChannelColor> listChannels;
-     int disp_width, disp_height;
-     int histscale;
-     vector<V3DLONG> hist;
-
-	QLabel * channelLabel;
-	QFrame * channelFrame;
-	QLabel * histLabel;
-	QFrame * histFrame;
-
-	QPushButton * ok;
-	QPushButton * cancel;
-
-	QGridLayout * gridLayout;
-};
-
-#endif
+#endif /* BARFIGUREDIALOG_H_ */

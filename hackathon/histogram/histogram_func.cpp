@@ -1,6 +1,7 @@
 /* histogram_func.cpp
  * Display histogram of the image
  * 2012-03-01 : by Jianlong Zhou
+ * 2012-03-22 : change histogram comp method, by Yinan Wan 
  */
 
 #include <v3d_interface.h>
@@ -19,112 +20,104 @@ const QString title = QObject::tr("Histogram");
  * 1. args should be 0
  * 2. release args if not used any more
  *******************************************************/
-#define INF 1.0e300
-
-template <class T> void getHistogram(const T * pdata1d, V3DLONG datalen, V3DLONG &histscale, vector<V3DLONG> &hist)
-{
-	// get min max
-	T maxval=(T)0;
-	T minval = (T) INF;
-     for(V3DLONG i=0; i<datalen; i++)
-     {
-          if(pdata1d[i]>maxval) maxval=pdata1d[i];
-          if(pdata1d[i]<minval) minval=pdata1d[i];
-     }
-
-     // init hist
-     hist.clear();
-     for(V3DLONG i=0; i<histscale; i++)
-     {
-          hist.push_back(0);
-     }
-
-     // divid data into histscale # segments
-     T step = (maxval-minval+1)/histscale;
-
-     for (V3DLONG i=0;i<datalen;i++)
-     {
-          V3DLONG ind = (V3DLONG) pdata1d[i]/step;
-          hist.at(ind) = hist.at(ind)+1;
-     }
-
-}
-
 int split(const char *paras, char ** &args)
 {
-    if(paras == 0) return 0;
-    int argc = 0;
-    int len = strlen(paras);
-    int posb[2048];
-    char * myparas = new char[len];
-    strcpy(myparas, paras);
-    for(int i = 0; i < len; i++)
-    {
-        if(i==0 && myparas[i] != ' ' && myparas[i] != '\t')
-        {
-            posb[argc++]=i;
-        }
-        else if((myparas[i-1] == ' ' || myparas[i-1] == '\t') &&
-                (myparas[i] != ' ' && myparas[i] != '\t'))
-        {
-            posb[argc++] = i;
-        }
-    }
+	if(paras == 0) return 0;
+	int argc = 0;
+	int len = strlen(paras);
+	int posb[2048];
+	char * myparas = new char[len];
+	strcpy(myparas, paras);
+	for(int i = 0; i < len; i++)
+	{
+		if(i==0 && myparas[i] != ' ' && myparas[i] != '\t')
+		{
+			posb[argc++]=i;
+		}
+		else if((myparas[i-1] == ' ' || myparas[i-1] == '\t') &&
+				(myparas[i] != ' ' && myparas[i] != '\t'))
+		{
+			posb[argc++] = i;
+		}
+	}
 
-    args = new char*[argc];
-    for(int i = 0; i < argc; i++)
-    {
-        args[i] = myparas + posb[i];
-    }
+	args = new char*[argc];
+	for(int i = 0; i < argc; i++)
+	{
+		args[i] = myparas + posb[i];
+	}
 
-    for(int i = 0; i < len; i++)
-    {
-        if(myparas[i]==' ' || myparas[i]=='\t')myparas[i]='\0';
-    }
-    return argc;
+	for(int i = 0; i < len; i++)
+	{
+		if(myparas[i]==' ' || myparas[i]=='\t')myparas[i]='\0';
+	}
+	return argc;
 }
+
+#include <math.h>
+#define INF 1.0e300
+
+template <class T> bool getHistogram(const T * pdata1d, V3DLONG datalen, double max_value, V3DLONG & histscale, QVector<int> &hist)
+{
+	// init hist
+	hist = QVector<int>(histscale, 0);
+
+	for (V3DLONG i=0;i<datalen;i++)
+	{
+		V3DLONG ind = floor(pdata1d[i]/max_value * histscale);
+		//V3DLONG ind = pdata1d[i];
+		hist[ind] ++;
+	}
+
+	return true;
+
+}
+
+
 int compute(V3DPluginCallback2 &callback, QWidget *parent)
 {
-     v3dhandle curwin;
-     curwin=callback.currentImageWindow();
-     if(!curwin)
-     {
-          v3d_msg("No V3D window is available for returning data ... Do nothing.", 0);
-          return -1;
-     }
+	v3dhandle curwin;
+	curwin=callback.currentImageWindow();
+	if(!curwin)
+	{
+		v3d_msg("No V3D window is available for returning data ... Do nothing.", 0);
+		return -1;
+	}
 
-     int c = 0;
-     Image4DSimple *p4DImage = callback.getImage(curwin);
-     if(p4DImage->getCDim() <= c) {v3d_msg(QObject::tr("The channel isn't existed.")); return -1;}
-     V3DLONG sz[3];
-     sz[0] = p4DImage->getXDim();
-     sz[1] = p4DImage->getYDim();
-     sz[2] = p4DImage->getZDim();
+	Image4DSimple *p4DImage = callback.getImage(curwin);
+	if (p4DImage->getDatatype()!=V3D_UINT8)
+	{
+		v3d_msg("Now we only support 8 bit image.\n");
+		return -1;
+	}
 
-     unsigned char * inimg1d = p4DImage->getRawDataAtChannel(c);
+	//TODO add datatype judgment
+	double max_value = 256;
+	V3DLONG histscale = 256;
+	QVector<QVector<int> > hist_vec;
+	QStringList labelsLT;
 
-     V3DLONG histscale=256;
-     vector<V3DLONG> hist;
-	getHistogram(inimg1d, sz[0]*sz[1]*sz[2], histscale, hist);
+	int nChannel = p4DImage->getCDim();
+	V3DLONG sz[3];
+	sz[0] = p4DImage->getXDim();
+	sz[1] = p4DImage->getYDim();
+	sz[2] = p4DImage->getZDim();
 
-     HistogramDialog *histdialog = new HistogramDialog(parent);
-     histdialog->histscale = histscale;
-     histdialog->hist = hist;
+	for (int c=0;c<nChannel;c++)
+	{
+		unsigned char * inimg1d = p4DImage->getRawDataAtChannel(c);
+		QVector<int> tmp;
+		getHistogram(inimg1d, sz[0]*sz[1]*sz[2], max_value, histscale, tmp);
+		hist_vec.append(tmp);
+		labelsLT.append(QString("channel %1").arg(c+1));
+	}
+	QString labelRB = QString("%1").arg(max_value);
 
-     histdialog->show();
 
+	histogramDialog * dlg = new histogramDialog(hist_vec, labelsLT, labelRB, parent, QSize(500,150), QColor(50,50,50));
+	dlg->setWindowTitle(QObject::tr("Histogram"));
+	dlg->show();
 
-
-     // v3dhandle newwin;
-     // if(QMessageBox::Yes == QMessageBox::question(0, "", QString("Do you want to use the existing windows?"), QMessageBox::Yes, QMessageBox::No))
-     //      newwin = callback.currentImageWindow();
-     // else
-     //      newwin = callback.newImageWindow();
-
-     // p4DImage->setData(inimg1d, sz[0], sz[1], sz[2], sz[3]);
-     // callback.setImage(newwin, p4DImage);
-     // callback.setImageName(newwin, QObject::tr("compute"));
-     // callback.updateImageWindow(newwin);
 	return 1;
 }
 
