@@ -10,6 +10,7 @@
 #include <vector>
 #include <iostream>
 #include "histogram_gui.h"
+#include "stackutil.h"
 
 using namespace std;
 
@@ -126,20 +127,70 @@ int compute(V3DPluginCallback2 &callback, QWidget *parent)
 
 bool compute(const V3DPluginArgList & input, V3DPluginArgList & output)
 {
-	cout<<"Welcome to compute"<<endl;
-	if(input.size() != 2 || output.size() != 1) return true;
-	char * paras = 0;
-	if(((vector<char*> *)(input.at(1).p))->empty()){paras = new char[1]; paras[0]='\0';}
-	else paras = (*(vector<char*> *)(input.at(1).p)).at(0);
-	cout<<"paras : "<<paras<<endl;
-
-	for(int i = 0; i < strlen(paras); i++)
+	cout<<"Welcome to histogram"<<endl;
+	if(output.size() != 1) return true;
+	
+	vector<char*>* inlist = (vector<char*>*) (input.at(0).p);
+	if (inlist->size() != 1)
 	{
-		if(paras[i] == '#') paras[i] = '-';
+		cerr<<"You must specify 1 input file!"<<endl;
+		return false;
 	}
-	cout<<"paras : "<<paras<<endl;
+	char * infile = inlist->at(0);
+	cout<<"input file: "<<infile<<endl;
+	unsigned char * inimg1d = NULL;
+	V3DLONG * sz = NULL;
+	int datatype;
+	if (!loadImage(infile, inimg1d, sz, datatype))
+	{
+		cerr<<"faile to load image"<<endl;
+		return false;
+	}
 
+	//Read the output file
+	vector<char*>* outlist = (vector<char*>*) (output.at(0).p);
+	if (outlist->size()!=1)
+	{
+		cerr<<"You must specify 1 output file!"<<endl;
+		return false;
+	}
+	char* outfile = outlist->at(0);
+	cout<<"output file: "<<outfile<<endl;
+	
+	if (datatype!=1)
+	{
+		v3d_msg("Now we only support 8 bit image.\n");
+		return -1;
+	}
+
+	//TODO add datatype judgment
+	double max_value = 256;
+	V3DLONG histscale = 256;
+	QVector<QVector<int> > hist_vec;
+
+	int nChannel = sz[3];
+
+	for (int c=0;c<nChannel;c++)
+	{
+		QVector<int> tmp;
+		getHistogram(inimg1d+ c*sz[0]*sz[1]*sz[2], sz[0]*sz[1]*sz[2], max_value, histscale, tmp);
+		hist_vec.append(tmp);
+	}
+
+	//output histogram to csv file
+	FILE *fp;
+	fp = fopen(outfile, "w");
+	for (int i=0;i<hist_vec.size();i++)
+	{
+		for (int j=0;j<hist_vec[i].size();j++)
+			fprintf(fp, "%d,", hist_vec[i][j]);
+		fprintf(fp,"\n");
+	}
+	fclose(fp);
+
+	if (inimg1d) {delete []inimg1d; inimg1d=NULL;}
 	return true;
+
 }
 
 #undef INF
