@@ -64,7 +64,7 @@ template <class T> bool getHistogram(const T * pdata1d, V3DLONG datalen, double 
 
 	for (V3DLONG i=0;i<datalen;i++)
 	{
-		V3DLONG ind = floor(pdata1d[i]/max_value * histscale);
+		V3DLONG ind = pdata1d[i]/max_value * histscale;
 		//V3DLONG ind = pdata1d[i];
 		hist[ind] ++;
 	}
