@@ -2,7 +2,7 @@ TEMPLATE	= lib
 CONFIG	+= debug qt plugin warn_off
 #CONFIG	+= x86_64
 
-V3DMAINPATH = /Users/xiaoh10/work/v3d_external/v3d_main
+V3DMAINPATH = ../../v3d_main
 INCLUDEPATH += $$V3DMAINPATH/basic_c_fun 
 INCLUDEPATH += $$V3DMAINPATH/common_lib/include
 INCLUDEPATH += $$V3DMAINPATH/jba/newmat11
@@ -15,7 +15,6 @@ macx{
 	LIBS += -L$$V3DMAINPATH/common_lib/lib_mac64 -lv3dtiff
 	LIBS += -L$$V3DMAINPATH/jba/c++ -lv3dnewmat
 	CONFIG += x86_64
-
 }
 
 win32{
