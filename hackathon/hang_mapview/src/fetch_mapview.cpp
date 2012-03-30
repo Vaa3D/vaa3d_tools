@@ -14,7 +14,7 @@ int main(int argc, char ** argv)
 	int l = 512;//log(256)/log(2.0);
 	int m = 256;//log(128)/log(2.0);
 	int n = 64;//log(64)/log(2.0);
-	string prefix = "test";
+	string prefix = "/Volumes/PengMapView/mapview_testdata/ananya/test";
 	cout<<"prefix = "<<prefix<<endl;
 	cout<<"L = "<<L<<endl;
 	cout<<"M = "<<M<<endl;
