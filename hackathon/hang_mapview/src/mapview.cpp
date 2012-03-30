@@ -80,7 +80,7 @@ void ImageMapView::getImage(V3DLONG level, unsigned char * &outimg1d, V3DLONG x0
 
 	V3DLONG tis = x0/bs0, tie = (((x0 + sz0) % bs0) == 0) ? (x0 + sz0)/bs0 - 1 : (x0 + sz0)/bs0; tie = MIN(tie, ts0-1);
 	V3DLONG tjs = y0/bs1, tje = (((y0 + sz1) % bs1) == 0) ? (y0 + sz1)/bs1 - 1 : (y0 + sz1)/bs1; tje = MIN(tje, ts1-1);
-	V3DLONG tks = z0/bs2, tke = (((z0 + sz2) % bs2) == 0) ? (z0 + sz2)/bs2 - 1 : (z0 + sz2)/bs2; tke = MIN(tje, ts2-1);
+	V3DLONG tks = z0/bs2, tke = (((z0 + sz2) % bs2) == 0) ? (z0 + sz2)/bs2 - 1 : (z0 + sz2)/bs2; tke = MIN(tke, ts2-1);
 	V3DLONG block_size = bs0 * bs1 * bs2;
 	V3DLONG bs01 = bs0 * bs1;
 

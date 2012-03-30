@@ -91,7 +91,7 @@ static void getRawSize(string filename, V3DLONG &sz0, V3DLONG &sz1, V3DLONG &sz2
 int load_hraw_data(V3DPluginCallback2 &callback, QWidget *parent)
 {
 	QString hraw_file = QFileDialog::getOpenFileName(0, QObject::tr("Open File"),
-                                                 "/home",
+                                                 ".",
                                                  QObject::tr("Images (*.hraw)"));
 	cout<<"hraw_file = "<<hraw_file.toStdString().c_str()<<endl;
 	ifstream ifs(hraw_file.toStdString().c_str());
@@ -130,7 +130,7 @@ int load_hraw_data(V3DPluginCallback2 &callback, QWidget *parent)
 	mapview_paras.level_num = level_num;
 	mapview_paras.outsz[0] = 512;
 	mapview_paras.outsz[1] = 256;
-	mapview_paras.outsz[2] = 64;
+	mapview_paras.outsz[2] = 0;
 
 	MapViewWidget * mapview_widget = new MapViewWidget(&callback, mapview_paras, 0);
 	mapview_widget->show();

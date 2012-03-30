@@ -37,12 +37,12 @@ public:
 		callback = _callback; curwin = 0; mapview_paras = _mapview_paras;
 
 		setWindowTitle("Mapview Control");
-        setWindowFlags( Qt::Widget
+        /*setWindowFlags( Qt::Widget
                 | Qt::Tool
                 | Qt::CustomizeWindowHint | Qt::WindowTitleHint  //only title bar, disable buttons on title bar
                 );
-
-        setFixedWidth(250);
+		*/
+        setFixedWidth(350);
         setFixedHeight(150);
 
         QGridLayout *layout = new QGridLayout(this);
@@ -133,6 +133,8 @@ public:
         connect(ySlider_mapv,    SIGNAL(valueChanged(int)), this, SLOT(changeYOffset_mapv(int)));
         connect(zSlider_mapv,    SIGNAL(valueChanged(int)), this, SLOT(changeZOffset_mapv(int)));
         connect(zoomSlider_mapv, SIGNAL(valueChanged(int)), this, SLOT(changeLevel_mapv(int)));
+
+		updateTriView();
 	}
 
 	~MapViewWidget(){}
@@ -169,24 +171,12 @@ public:
 		// retrieve image from blocks
 		unsigned char * outimg1d = 0;
 
-		cout<<"mapview_paras.origin[0] = "<<mapview_paras.origin[0]<<endl;
-		cout<<"mapview_paras.origin[1] = "<<mapview_paras.origin[1]<<endl;
-		cout<<"mapview_paras.origin[2] = "<<mapview_paras.origin[2]<<endl;
-
-		cout<<"mapview_paras.outsz[0] = "<<mapview_paras.outsz[0]<<endl;
-		cout<<"mapview_paras.outsz[1] = "<<mapview_paras.outsz[1]<<endl;
-		cout<<"mapview_paras.outsz[2] = "<<mapview_paras.outsz[2]<<endl;
-
 		mapview.getImage(mapview_paras.level, outimg1d, mapview_paras.origin[0], mapview_paras.origin[1], mapview_paras.origin[2],
 				mapview_paras.outsz[0], mapview_paras.outsz[1], mapview_paras.outsz[2]);
 
-		Image4DSimple * p4dimage = callback->getImage(curwin);
-		if(p4dimage == 0) p4dimage = new Image4DSimple;
-		p4dimage->setNewRawDataPointer(outimg1d);
-		p4dimage->setXDim(mapview_paras.outsz[0]);
-		p4dimage->setYDim(mapview_paras.outsz[1]);
-		p4dimage->setZDim(mapview_paras.outsz[2]);
+		Image4DSimple * p4dimage = new Image4DSimple;
 
+		p4dimage->setData(outimg1d, mapview_paras.outsz[0], mapview_paras.outsz[1], mapview_paras.outsz[2], 1, V3D_UINT8); // todo : add more channel
 		callback->setImage(curwin, p4dimage);
 		callback->setImageName(curwin, mapview_paras.hraw_prefix);
 		callback->updateImageWindow(curwin);
@@ -201,6 +191,16 @@ private:
 	QScrollBar *xSlider_mapv, *ySlider_mapv, *zSlider_mapv;
 	QSpinBox *xValueSpinBox_mapv, *yValueSpinBox_mapv, *zValueSpinBox_mapv, *zoomSpinBox_mapv;
 	QScrollBar *zoomSlider_mapv;
+
+	void closeEvent(QCloseEvent *event)
+	{
+		int ok = QMessageBox::warning(0, "", "Are you sure to close?");
+		if (ok) {
+			event->accept();
+		} else {
+			event->ignore();
+		}
+	}
 
 public slots:
 	void changeXOffset_mapv(int x)
