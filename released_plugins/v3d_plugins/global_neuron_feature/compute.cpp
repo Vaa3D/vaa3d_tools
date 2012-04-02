@@ -88,8 +88,6 @@ void computeFeature(const NeuronTree & nt, double * features)
 	//feature # 21: Hausdorr Dimension
 	features[21] = Hausdorff;
 
-	for (int i=0;i<22;i++)
-		if (features[i] != features[i]) features[i] = 0;
 }
 
 int getParent(int n, QList<NeuronSWC> & list, QHash<int,int> & LUT)
