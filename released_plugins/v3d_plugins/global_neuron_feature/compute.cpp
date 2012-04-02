@@ -87,6 +87,9 @@ void computeFeature(const NeuronTree & nt, double * features)
 	features[20] = BifA_remote;
 	//feature # 21: Hausdorr Dimension
 	features[21] = Hausdorff;
+
+	for (int i=0;i<22;i++)
+		if (features[i] != features[i]) features[i] = 0;
 }
 
 int getParent(int n, QList<NeuronSWC> & list, QHash<int,int> & LUT)
@@ -166,8 +169,29 @@ void computeTree(QList<NeuronSWC> &list, QHash<int,int> & LUT)
 
 	QStack<int> stack = QStack<int>();
 	stack.push(rootidx);
-	int t,tmp,fragment;
 	double pathlength,eudist,max_local_ang,max_remote_ang;
+	
+	if (getChild(rootidx, list, LUT).size()>1) 
+	{
+		N_bifs++;
+
+		double local_ang,remote_ang;
+		max_local_ang = 0;
+		max_remote_ang = 0;
+		int ch_local1 = getChild(rootidx,list,LUT).at(0);
+		int ch_local2 = getChild(rootidx,list,LUT).at(1);
+		local_ang = angle(list.at(rootidx),list.at(ch_local1),list.at(ch_local2));
+
+		int ch_remote1 = getRemoteChild(rootidx,list,LUT).at(0);
+		int ch_remote2 = getRemoteChild(rootidx,list,LUT).at(1);
+		remote_ang = angle(list.at(rootidx),list.at(ch_remote1),list.at(ch_remote2));
+		max_local_ang = max(max_local_ang,local_ang);
+		max_remote_ang = max(max_remote_ang,remote_ang);
+
+		BifA_local += max_local_ang;
+		BifA_remote += max_remote_ang;
+	}
+	int t,tmp,fragment;
 	while (!stack.isEmpty())
 	{
 		t = stack.pop();
@@ -189,6 +213,7 @@ void computeTree(QList<NeuronSWC> &list, QHash<int,int> & LUT)
 			}
 			eudist = dist(list.at(tmp),list.at(t));
 			Fragmentation += fragment;
+			if (pathlength>0)
 			Contraction += eudist/pathlength;
 
 			//we are reaching a tip point or another branch point, computation for this branch is over
