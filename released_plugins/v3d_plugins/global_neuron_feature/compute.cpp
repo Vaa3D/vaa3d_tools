@@ -7,11 +7,16 @@ using namespace std;
 #define PI 3.14159265359
 #define min(a,b) (a)<(b)?(a):(b)
 #define max(a,b) (a)>(b)?(a):(b)
+#define dist(a,b) sqrt(((a).x-(b).x)*((a).x-(b).x)+((a).y-(b).y)*((a).y-(b).y)+((a).z-(b).z)*((a).z-(b).z))
+#define getParent(n,nt) ((nt).listNeuron.at(n).pn<0)?(1000000000):((nt).hashNeuron.value((nt).listNeuron.at(n).pn))
+#define angle(a,b,c) (acos((((b).x-(a).x)*((c).x-(a).x)+((b).y-(a).y)*((c).y-(a).y)+((b).z-(a).z)*((c).z-(a).z))/(dist(a,b)*dist(a,c)))*180.0/PI)
 
 double Width=0, Height=0, Depth=0, Diameter=0, Length=0, Volume=0, Surface=0, Hausdorff=0;
 int N_node=0, N_stem=0, N_bifs=0, N_branch=0, N_tips=0, Max_Order=0;
 double Pd_ratio=0, Contraction=0, Max_Eux=0, Max_Path=0, BifA_local=0, BifA_remote=0, Soma_surface=0, Fragmentation=0;
 int rootidx=0;
+
+QVector<QVector<V3DLONG> > childs;
 
 void computeFeature(const NeuronTree & nt, double * features)
 {
@@ -19,14 +24,20 @@ void computeFeature(const NeuronTree & nt, double * features)
 	N_node=0, N_stem=0, N_bifs=0, N_branch=0, N_tips=0, Max_Order=0;
 	Pd_ratio=0, Contraction=0, Max_Eux=0, Max_Path=0, BifA_local=0, BifA_remote=0, Soma_surface=0, Fragmentation=0;
 	rootidx=0;
-	
-	QList<NeuronSWC> list = nt.listNeuron;
-	QHash<int, int> LUT = QHash<int, int>();
-	for (int i=0;i<list.size();i++)
-		LUT.insert(list.at(i).n,i);
+
+	V3DLONG neuronNum = nt.listNeuron.size();
+	childs = QVector< QVector<V3DLONG> >(neuronNum, QVector<V3DLONG>() );
+	for (V3DLONG i=0;i<neuronNum;i++)
+	{
+		V3DLONG par = nt.listNeuron[i].pn;
+		if (par<0) continue;
+		childs[nt.hashNeuron.value(par)].push_back(i);
+	}
+		
 
 	//find the root
 	rootidx = VOID;
+	QList<NeuronSWC> list = nt.listNeuron;
 	for (int i=0;i<list.size();i++)
 		if (list.at(i).pn==-1) rootidx = i;
 	if (rootidx==VOID){
@@ -36,12 +47,12 @@ void computeFeature(const NeuronTree & nt, double * features)
 
 
 	N_node = list.size();
-	N_stem = getChild(rootidx,list,LUT).size();
+	N_stem = childs[rootidx].size();
 	Soma_surface = 4*PI*(list.at(rootidx).r)*(list.at(rootidx).r);
 
-	computeLinear(list, LUT);
-	computeTree(list,LUT);
-	Hausdorff = computeHausdorff(list,LUT);
+	computeLinear(nt);
+	computeTree(nt);
+	Hausdorff = computeHausdorff(nt);
 
 	//feature # 0: Number of Nodes
 	features[0] = N_node;
@@ -85,66 +96,54 @@ void computeFeature(const NeuronTree & nt, double * features)
 	features[19] = BifA_local;
 	//feature # 20: Average Bifurcation Angle Remote
 	features[20] = BifA_remote;
-	//feature # 21: Hausdorr Dimension
-	features[21] = Hausdorff;
-
+	//feature # 21: Hausdorr Dimension 
+	features[21] = Hausdorff;		//Hausdorff program crash when running on complex neuron data, we don't use it
 }
 
-int getParent(int n, QList<NeuronSWC> & list, QHash<int,int> & LUT)
-{
-	int pid = list.at(n).pn;
-	if (pid==-1) return VOID;
-	return (LUT.value(pid));
-}
 
-QList<int> getChild(int t, QList <NeuronSWC> & list, QHash<int,int> & LUT)
-{
-	QList<int> childlist = QList<int>();
-	int pan;
-	for (int i=0;i<list.size();i++)
-	{	
-		pan = list.at(i).pn;
-		if (pan==-1) continue;
-		if (LUT.value(pan)==t)
-			childlist.append(i);
-	}
-	return childlist;
-}
 
-QList<int> getRemoteChild(int t, QList <NeuronSWC> & list, QHash<int,int> & LUT)
+QVector<V3DLONG> getRemoteChild(int t)
 {
-	QList<int> rchildlist = QList<int>();
+	QVector<V3DLONG> rchildlist;
+	rchildlist.clear();
 	int tmp;
-	for (int i=0;i<getChild(t,list,LUT).size();i++)
+	for (int i=0;i<childs[t].size();i++)
 	{
-		tmp = getChild(t,list,LUT).at(i);
-		while (getChild(tmp,list,LUT).size()==1)
-			tmp = getChild(tmp,list,LUT).at(0);
+		tmp = childs[t].at(i);
+		while (childs[tmp].size()==1)
+			tmp = childs[tmp].at(0);
 		rchildlist.append(tmp);
 	}
 	return rchildlist;
 }
-//do a search along the list to compute overall width, height, depth, length, volume, surface, average diameter and max euclidean distance.
-void computeLinear(QList<NeuronSWC> & list, QHash<int,int> & LUT)
+
+//do a search along the list to compute overall N_bif, N_tip, width, height, depth, length, volume, surface, average diameter and max euclidean distance.
+void computeLinear(const NeuronTree & nt)
 {
 	double xmin,ymin,zmin;
 	xmin = ymin = zmin = VOID;
 	double xmax,ymax,zmax;
 	xmax = ymax = zmax = 0;
+	QList<NeuronSWC> list = nt.listNeuron;
+	NeuronSWC soma = list.at(rootidx);
 
 	for (int i=0;i<list.size();i++)
 	{
 		NeuronSWC curr = list.at(i);
 		xmin = min(xmin,curr.x); ymin = min(ymin,curr.y); zmin = min(zmin,curr.z);
 		xmax = max(xmax,curr.x); ymax = max(ymax,curr.y); zmax = max(zmax,curr.z);
-		int parent = getParent(i,list,LUT);
+		if (childs[i].size()==0)
+			N_tips++;
+		else if (childs[i].size()>1)
+			N_bifs++;
+		int parent = getParent(i,nt);
 		if (parent==VOID) continue;
 		double l = dist(curr,list.at(parent));
 		Diameter += 2*curr.r;
 		Length += l;
 		Surface += 2*PI*curr.r*l;
 		Volume += PI*curr.r*curr.r*l;
-		double lsoma = dist(curr,list.at(rootidx));
+		double lsoma = dist(curr,soma);
 		Max_Eux = max(Max_Eux,lsoma);
 	}
 	Width = xmax-xmin;
@@ -153,10 +152,13 @@ void computeLinear(QList<NeuronSWC> & list, QHash<int,int> & LUT)
 	Diameter /= list.size();
 }
 
-//do a search along the tree to compute N_bif, N_tips, N_branch, max path distance, max branch order,
+//do a search along the tree to compute N_branch, max path distance, max branch order,
 //average Pd_ratio, average Contraction, average Fragmentation, average bif angle local & remote
-void computeTree(QList<NeuronSWC> &list, QHash<int,int> & LUT)
+void computeTree(const NeuronTree & nt)
 {
+	QList<NeuronSWC> list = nt.listNeuron;
+	NeuronSWC soma = nt.listNeuron.at(rootidx);
+
 	double * pathTotal = new double[list.size()];
 	int * depth = new int[list.size()];
 	for (int i=0;i<list.size();i++)
@@ -168,43 +170,49 @@ void computeTree(QList<NeuronSWC> &list, QHash<int,int> & LUT)
 	QStack<int> stack = QStack<int>();
 	stack.push(rootidx);
 	double pathlength,eudist,max_local_ang,max_remote_ang;
+	V3DLONG N_ratio = 0, N_Contraction = 0;
 	
-	if (getChild(rootidx, list, LUT).size()>1) 
+	if (childs[rootidx].size()>1) 
 	{
-		N_bifs++;
-
 		double local_ang,remote_ang;
 		max_local_ang = 0;
 		max_remote_ang = 0;
-		int ch_local1 = getChild(rootidx,list,LUT).at(0);
-		int ch_local2 = getChild(rootidx,list,LUT).at(1);
+		int ch_local1 = childs[rootidx][0];
+		int ch_local2 = childs[rootidx][1];
 		local_ang = angle(list.at(rootidx),list.at(ch_local1),list.at(ch_local2));
 
-		int ch_remote1 = getRemoteChild(rootidx,list,LUT).at(0);
-		int ch_remote2 = getRemoteChild(rootidx,list,LUT).at(1);
+		int ch_remote1 = getRemoteChild(rootidx).at(0);
+		int ch_remote2 = getRemoteChild(rootidx).at(1);
 		remote_ang = angle(list.at(rootidx),list.at(ch_remote1),list.at(ch_remote2));
-		max_local_ang = max(max_local_ang,local_ang);
-		max_remote_ang = max(max_remote_ang,remote_ang);
+		if (local_ang==local_ang)
+			max_local_ang = max(max_local_ang,local_ang);
+		if (remote_ang==remote_ang)
+			max_remote_ang = max(max_remote_ang,remote_ang);
 
 		BifA_local += max_local_ang;
 		BifA_remote += max_remote_ang;
 	}
+
 	int t,tmp,fragment;
 	while (!stack.isEmpty())
 	{
 		t = stack.pop();
-		QList<int> child = getChild(t,list,LUT);
+		QVector<V3DLONG> child = childs[t];
 		for (int i=0;i<child.size();i++)
 		{
 			N_branch++;
-			tmp = child.at(i);
-			Pd_ratio += list.at(tmp).r/list.at(t).r;
+			tmp = child[i];
+			if (list[t].r > 0)
+			{
+				N_ratio ++;
+				Pd_ratio += list.at(tmp).r/list.at(t).r;
+			}
 			pathlength = dist(list.at(tmp),list.at(t));
 
 			fragment = 0;
-			while (getChild(tmp,list,LUT).size()==1)
+			while (childs[tmp].size()==1)
 			{ 
-				int ch = getChild(tmp,list,LUT).at(0);
+				int ch = childs[tmp].at(0);
 				pathlength += dist(list.at(ch),list.at(tmp));
 				fragment++;
 				tmp = ch;
@@ -212,30 +220,32 @@ void computeTree(QList<NeuronSWC> &list, QHash<int,int> & LUT)
 			eudist = dist(list.at(tmp),list.at(t));
 			Fragmentation += fragment;
 			if (pathlength>0)
-			Contraction += eudist/pathlength;
+			{
+				Contraction += eudist/pathlength;
+				N_Contraction++;
+			}
 
 			//we are reaching a tip point or another branch point, computation for this branch is over
-			if (getChild(tmp,list,LUT).size()==0)//tip
-				N_tips++;
-			else //another branch
+			int chsz = childs[tmp].size();
+			if (chsz>1)  //another branch
 			{
-				int chsz = getChild(tmp,list,LUT).size();
-				N_bifs++;
 				stack.push(tmp);
 
 				//compute local bif angle and remote bif angle
 				double local_ang,remote_ang;
 				max_local_ang = 0;
 				max_remote_ang = 0;
-				int ch_local1 = getChild(tmp,list,LUT).at(0);
-				int ch_local2 = getChild(tmp,list,LUT).at(1);
+				int ch_local1 = childs[tmp][0];
+				int ch_local2 = childs[tmp][1];
 				local_ang = angle(list.at(tmp),list.at(ch_local1),list.at(ch_local2));
 
-				int ch_remote1 = getRemoteChild(tmp,list,LUT).at(0);
-				int ch_remote2 = getRemoteChild(tmp,list,LUT).at(1);
+				int ch_remote1 = getRemoteChild(tmp).at(0);
+				int ch_remote2 = getRemoteChild(tmp).at(1);
 				remote_ang = angle(list.at(tmp),list.at(ch_remote1),list.at(ch_remote2));
-				max_local_ang = max(max_local_ang,local_ang);
-				max_remote_ang = max(max_remote_ang,remote_ang);
+				if (local_ang==local_ang)
+					max_local_ang = max(max_local_ang,local_ang);
+				if (remote_ang==remote_ang)
+					max_remote_ang = max(max_remote_ang,remote_ang);
 
 				BifA_local += max_local_ang;
 				BifA_remote += max_remote_ang;
@@ -245,9 +255,9 @@ void computeTree(QList<NeuronSWC> &list, QHash<int,int> & LUT)
 		}
 	}
 
-	Pd_ratio /= N_branch;
+	Pd_ratio /= N_ratio;
 	Fragmentation /= N_branch;
-	Contraction /= N_branch;
+	Contraction /= N_Contraction;
 
 	BifA_local /= N_bifs;
 	BifA_remote /= N_bifs;
@@ -261,9 +271,8 @@ void computeTree(QList<NeuronSWC> &list, QHash<int,int> & LUT)
 	delete depth; depth = NULL;
 }
 
-
 //compute Hausdorff dimension
-double computeHausdorff(QList <NeuronSWC> & list, QHash<int,int> & LUT)
+double computeHausdorff(const NeuronTree & nt)
 {
 #define LMINMAX 2
 #define LMAXMIN 1
@@ -273,11 +282,11 @@ double computeHausdorff(QList <NeuronSWC> & list, QHash<int,int> & LUT)
 
 	short **r1, **r2;
 
-	n = list.size();
+	n = nt.listNeuron.size();
 	r1 = matrix(3,n);
 	r2 = matrix(3,n);
 
-	n = fillArray(list, LUT, r1,  r2);
+	n = fillArray(nt, r1,  r2);
 
 	int i,  k, k1, l, m, cnt, dl, lmin , lmax;
 	short r[3], rr[3], **cell;
@@ -387,12 +396,14 @@ double computeHausdorff(QList <NeuronSWC> & list, QHash<int,int> & LUT)
 }
 
 
-int fillArray(QList<NeuronSWC> & list, QHash<int,int> & LUT, short** r1, short** r2){
+int fillArray(const NeuronTree & nt, short** r1, short** r2)
+{
+	QList<NeuronSWC> list = nt.listNeuron;
 
 	int siz = list.size();
 	for (int t=0;t<siz;t++)
 	{
-		int s = getParent(t,list,LUT);
+		int s = getParent(t, nt);
 		if(s==VOID) s = t;
 		int cst=1;
 		r2[0][t]=(short)list.at(s).x+cst;
@@ -460,13 +471,6 @@ int mark(int m, short r[3], short ** c)
 }
 
 
-double dist(const NeuronSWC & s1, const NeuronSWC & s2)
-{
-	double x1 = s1.x, y1 = s1.y, z1 = s1.z;
-	double x2 = s2.x, y2 = s2.y, z2 = s2.z;
-	return (sqrt((x1-x2)*(x1-x2)+(y1-y2)*(y1-y2)+(z1-z2)*(z1-z2)));
-}
-
 //as Frac_Dim is no longer computed, no need to do log-log regression
 /*
    double loglog(QList<double> & x, QList<double> & y, int n)
@@ -486,10 +490,3 @@ double b=(n*sumxy-sumx*sumy)/(n*sumx2-sumx*sumx);
 return fabs(b);
 }
 */
-double angle(const NeuronSWC & ori, const NeuronSWC & s1, const NeuronSWC & s2)
-{
-	double x1 = s1.x-ori.x, y1 = s1.y-ori.y, z1 = s1.z-ori.z;
-	double x2 = s2.x-ori.x, y2 = s2.y-ori.y, z2 = s2.z-ori.z;
-	double param = (x1*x2+y1*y2+z1*z2)/(sqrt(x1*x1+y1*y1+z1*z1)*sqrt(x2*x2+y2*y2+z2*z2));
-	return (acos(param)*180.0/PI);
-}
