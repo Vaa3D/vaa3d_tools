@@ -37,15 +37,18 @@ int gsdt(V3DPluginCallback2 &callback, QWidget *parent)
 	items.push_back("Background Threshold (0 ~ 255)");
 	items.push_back("Connection Type (1 ~ 3)");
 	items.push_back("Channel (0 ~ )");
+	items.push_back("Z_thickness");
 	CommonDialog dialog(items);
 	dialog.setWindowTitle(title);
 	if(dialog.exec() != QDialog::Accepted) return 0;
 
-	int bkg_thresh = 0, cnn_type = 2, channel = 0;
+	int bkg_thresh = 0, cnn_type = 2, channel = 0, z_thickness = 1.0;
 	dialog.get_num("Background Threshold (0 ~ 255)", bkg_thresh);
 	dialog.get_num("Connection Type (1 ~ 3)", cnn_type);
 	dialog.get_num("Channel (0 ~ )", channel);
+	dialog.get_num("Z_thickness", z_thickness);
 	if(bkg_thresh < 0) bkg_thresh = 0;
+	if(z_thickness == 0.0) z_thickness = 1.0;
 	if(cnn_type < 1 || cnn_type > 3 || channel < 0 || channel >= sz3)
 	{
 		v3d_msg(QObject::tr("Connection type or channel value is out of range").arg(sz3-1));
@@ -55,10 +58,11 @@ int gsdt(V3DPluginCallback2 &callback, QWidget *parent)
 	cout<<"bkg_thresh = "<<bkg_thresh<<endl;
 	cout<<"cnn_type = "<<cnn_type<<endl;
 	cout<<"channel = "<<channel<<endl;
+	cout<<"z_thickness = "<<z_thickness<<endl;
 
 	unsigned char * inimg1d = p4DImage->getRawDataAtChannel(channel);
 	float * phi = 0;
-	fastmarching_dt(inimg1d, phi, sz0, sz1, sz2, cnn_type, bkg_thresh);
+	fastmarching_dt(inimg1d, phi, sz0, sz1, sz2, cnn_type, bkg_thresh, z_thickness);
 
 	float min_val = phi[0], max_val = phi[0];
 	long tol_sz = sz0 * sz1 * sz2;
@@ -91,17 +95,19 @@ bool gsdt(const V3DPluginArgList & input, V3DPluginArgList & output)
 {
 	cout<<"Welcome to gsdt"<<endl;
 	if(input.size() != 2 || output.size() != 1) return false;
-	int bkg_thresh = 0, cnn_type = 2, channel = 0;
+	int bkg_thresh = 0, cnn_type = 2, channel = 0, z_thickness = 1.0;
 	vector<char*> paras = (*(vector<char*> *)(input.at(1).p));
 	if(paras.size() >= 1) bkg_thresh = atoi(paras.at(0));
 	if(paras.size() >= 2) cnn_type = atoi(paras.at(1));
 	if(paras.size() >= 3) channel = atoi(paras.at(2));
+	if(paras.size() >= 4) z_thickness = atof(paras.at(3));
 	char * inimg_file = ((vector<char*> *)(input.at(0).p))->at(0);
 	char * outimg_file = ((vector<char*> *)(output.at(0).p))->at(0);
 	cout<<"bkg_thresh = "<<bkg_thresh<<endl;
 	cout<<"inimg_file = "<<inimg_file<<endl;
 	cout<<"outimg_file = "<<outimg_file<<endl;
 	cout<<"channel = "<<channel<<endl;
+	cout<<"z_thickness = "<<z_thickness<<endl;
 
 	unsigned char * inimg1d = 0,  * outimg1d = 0;
 	float * phi = 0;
@@ -109,7 +115,7 @@ bool gsdt(const V3DPluginArgList & input, V3DPluginArgList & output)
 	int datatype;
 	if(!loadImage(inimg_file, inimg1d, in_sz, datatype, channel)) {cerr<<"load image "<<inimg_file<<" error!"<<endl; return 1;}
 
-	if(!fastmarching_dt(inimg1d, phi, in_sz[0], in_sz[1], in_sz[2], cnn_type, bkg_thresh)) return false;
+	if(!fastmarching_dt(inimg1d, phi, in_sz[0], in_sz[1], in_sz[2], cnn_type, bkg_thresh, z_thickness)) return false;
 
 	float min_val = phi[0], max_val = phi[0];
 	long tol_sz = in_sz[0] * in_sz[1] * in_sz[2];

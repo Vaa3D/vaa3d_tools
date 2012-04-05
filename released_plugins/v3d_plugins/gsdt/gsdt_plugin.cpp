@@ -48,13 +48,14 @@ bool GrayScaleDistanceTransformationPlugin::dofunc(const QString & func_name, co
 	}
 	else if(func_name == tr("help"))
 	{
-		cout<<"Usage : v3d -x gsdt -f gsdt -i <inimg_file> -o <outimg_file> -p <bkg_thresh_value> <cnn_type> <channel>"<<endl;
+		cout<<"Usage : v3d -x gsdt -f gsdt -i <inimg_file> -o <outimg_file> -p <bkg_thresh_value> <cnn_type> <channel> <z_thickness>"<<endl;
 		cout<<endl;
 		cout<<"bkg_thresh_value         the background threshold value, default 0 and maximum 255"<<endl;
 		cout<<"cnn_type                 connection type, 1 : 6 neighbors, 2 : 18 neighbors, 3 : 26 neighbors"<<endl;
 		cout<<"channel                  the input channel value. 0 for red channel, 1 for green channel, 2 for blue channel"<<endl;
+		cout<<"z_thickness              the thickness of z axis (double)"<<endl;
 		cout<<endl;
-		cout<<"e.g. v3d -x gsdt -f gsdt -i input.raw -o output.raw -p 0 1 0"<<endl;
+		cout<<"e.g. v3d -x gsdt -f gsdt -i input.raw -o output.raw -p 0 1 0 1.0"<<endl;
 		cout<<endl;
 		return true;
 	}

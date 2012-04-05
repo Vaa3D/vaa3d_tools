@@ -29,7 +29,7 @@ using namespace std;
  * 2. The background point is of intensity 0
  * *****************************************************************************/
 
-template<class T> bool fastmarching_dt(T * inimg1d, float * &phi, int sz0, int sz1, int sz2, int cnn_type = 3, int bkg_thresh = 0)
+template<class T> bool fastmarching_dt(T * inimg1d, float * &phi, int sz0, int sz1, int sz2, int cnn_type = 3, int bkg_thresh = 0, double z_thickness = 1.0)
 {
 	enum{ALIVE = -1, TRIAL = 0, FAR = 1};
 
@@ -164,11 +164,12 @@ template<class T> bool fastmarching_dt(T * inimg1d, float * &phi, int sz0, int s
 					if(w < 0 || w >= sz0) continue;
 					int offset = ABS(ii) + ABS(jj) + ABS(kk);
 					if(offset == 0 || offset > cnn_type) continue;
+					double factor = 0.0;
 					long index = d*sz01 + h*sz0 + w;
 
 					if(state[index] != ALIVE)
 					{
-						float new_dist = phi[min_ind] + inimg1d[index];
+						float new_dist = phi[min_ind] + inimg1d[index] * sqrt(ii*ii + jj*jj + kk * kk * z_thickness* z_thickness);
 
 						if(state[index] == FAR)
 						{
