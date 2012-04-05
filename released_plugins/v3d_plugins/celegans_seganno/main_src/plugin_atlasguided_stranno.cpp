@@ -19,7 +19,7 @@ Q_EXPORT_PLUGIN2(plugin_atlasguided_stranno, AtlasGuidedStrAnnoPartialPlugin);
 
 const QString title = "AtlasGuidedStrAnnoPlugin demo";
 
-void AtlasGuidedStrAnno(V3DPluginCallback &callback, QWidget *parent);
+void AtlasGuidedStrAnno(V3DPluginCallback2 &callback, QWidget *parent);
 bool readCelloi_file(const QString &qs_filename,QList<QString> &ql_celloi);
 
 //************************************************************************************************************************************
@@ -29,7 +29,7 @@ QStringList AtlasGuidedStrAnnoPartialPlugin::menulist() const
 	<< tr("atlasguided_stranno...");
 }
 
-void AtlasGuidedStrAnnoPartialPlugin::domenu(const QString &menu_name, V3DPluginCallback &callback, QWidget *parent)
+void AtlasGuidedStrAnnoPartialPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
 {
 	if(menu_name==tr("atlasguided_stranno..."))
 	{
@@ -38,7 +38,7 @@ void AtlasGuidedStrAnnoPartialPlugin::domenu(const QString &menu_name, V3DPlugin
 }
 
 //************************************************************************************************************************************
-void AtlasGuidedStrAnno(V3DPluginCallback &callback, QWidget *parent)
+void AtlasGuidedStrAnno(V3DPluginCallback2 &callback, QWidget *parent)
 {
 	CParaDialog_stranno DLG_stranno(callback,parent);
 	if(DLG_stranno.exec()!=QDialog::Accepted)

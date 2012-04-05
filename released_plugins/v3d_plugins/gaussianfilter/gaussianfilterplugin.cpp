@@ -3,6 +3,8 @@
  * 2009-08-14: change into plugin by Yang Yu
  */
 
+// Upgraded to V3DPluginInterface2_1 by Jianlong Zhou, 2012-04-05
+
 #include <QtGui>
 
 #include <math.h>
@@ -17,14 +19,42 @@
 Q_EXPORT_PLUGIN2(gaussianfilter, GaussianFilterPlugin)
 
 
+void processImage(V3DPluginCallback2 &callback, QWidget *parent);
+
 QStringList GaussianFilterPlugin::menulist() const
 {
     return QStringList() << tr("Gaussian Filter");
 }
 
-void GaussianFilterPlugin::processImage(const QString &arg, Image4DSimple *p4DImage, QWidget *parent)
+void GaussianFilterPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
 {
-    if (! p4DImage) return;
+	if (menu_name == tr("Gaussian Filter"))
+	{
+		processImage(callback,parent);
+	}
+
+}
+
+
+//void GaussianFilterPlugin::processImage(const QString &arg, Image4DSimple *p4DImage, QWidget *parent)
+void processImage(V3DPluginCallback2 &callback, QWidget *parent)
+{
+     v3dhandle curwin = callback.currentImageWindow();
+	if (!curwin)
+	{
+		v3d_msg("You don't have any image open in the main window.");
+		return;
+	}
+
+     Image4DSimple* p4DImage = callback.getImage(curwin);
+
+	if (!p4DImage)
+	{
+		v3d_msg("The image pointer is invalid. Ensure your data is valid and try again!");
+		return;
+	}
+
+    //if (! p4DImage) return;
 
     unsigned char* data1d = p4DImage->getRawData();
     //V3DLONG totalpxls = p4DImage->getTotalBytes();
@@ -39,50 +69,51 @@ void GaussianFilterPlugin::processImage(const QString &arg, Image4DSimple *p4DIm
 
     //define datatype here
     //
-	
-	
+
+
 	//input
 	bool ok1, ok2, ok3, ok4;
 	unsigned int Wx=1, Wy=1, Wz=1, c=1;
-	
-	Wx = QInputDialog::getInteger(parent, tr("Window X "),
-								  tr("Enter window size (# voxels) along x:"),
+
+	Wx = QInputDialog::getInteger(parent, "Window X ",
+								  "Enter window size (# voxels) along x:",
 								  7, 1, N, 1, &ok1);
-	
+
 	if(ok1)
 	{
-		Wy = QInputDialog::getInteger(parent, tr("Window Y"),
-									  tr("Enter window size  (# voxels) along y:"),
+		Wy = QInputDialog::getInteger(parent, "Window Y",
+									  "Enter window size  (# voxels) along y:",
 									  7, 1, M, 1, &ok2);
 	}
 	else
 		return;
-	
+
 	if(ok2)
 	{
-		Wz = QInputDialog::getInteger(parent, tr("Window Z"),
-									  tr("Enter window size  (# voxels) along z:"),
+		Wz = QInputDialog::getInteger(parent, "Window Z",
+									  "Enter window size  (# voxels) along z:",
 									  3, 1, P, 1, &ok3);
 	}
 	else
 		return;
-	
+
 	if(ok3)
 	{
-		c = QInputDialog::getInteger(parent, tr("Channel"),
-									 tr("Enter channel NO (starts from 1):"),
+		c = QInputDialog::getInteger(parent, "Channel",
+									 "Enter channel NO (starts from 1):",
 									 1, 1, sc, 1, &ok4);
 	}
 	else
 		return;
-	
 
 
-	//gauss filter	
-    if(arg == tr("Gaussian Filter") && ok4)
+
+	//gauss filter
+    //if(arg == tr("Gaussian Filter") && ok4)
+     if(ok4)
 	{
-	
-		//filtering   
+
+		//filtering
 		V3DLONG offset_init = (c-1)*pagesz;
 
 		if (ok4)
@@ -131,7 +162,7 @@ void GaussianFilterPlugin::processImage(const QString &arg, Image4DSimple *p4DIm
 				for (unsigned int Weight = 0; Weight < Wx; ++Weight)
 					WeightsX[Weight] /= k;
 
-				
+
 				//   Allocate 1-D extension array
 				float  *extension_bufferX = 0;
 				extension_bufferX = new float [N + (Wx<<1)];
@@ -150,7 +181,7 @@ void GaussianFilterPlugin::processImage(const QString &arg, Image4DSimple *p4DIm
 						{
 							*(extIter++) = pImage[iz*M*N + iy*N + ix];
 						}
-						
+
 						//   Extend image
 						const float  *const stop_line = extension_bufferX - 1;
 						float  *extLeft = extension_bufferX + Wx - 1;
@@ -221,7 +252,7 @@ void GaussianFilterPlugin::processImage(const QString &arg, Image4DSimple *p4DIm
 
 				for (unsigned int Weight = 0; Weight < Wy; ++Weight)
 					WeightsY[Weight] /= k;
-		
+
 				//	along y
 				float  *extension_bufferY = 0;
 				extension_bufferY = new float [M + (Wy<<1)];
@@ -309,8 +340,8 @@ void GaussianFilterPlugin::processImage(const QString &arg, Image4DSimple *p4DIm
 
 				for (unsigned int Weight = 0; Weight < Wz; ++Weight)
 					WeightsZ[Weight] /= k;
-				
-				
+
+
 				//	along z
 				float  *extension_bufferZ = 0;
 				extension_bufferZ = new float [P + (Wz<<1)];
@@ -322,7 +353,7 @@ void GaussianFilterPlugin::processImage(const QString &arg, Image4DSimple *p4DIm
 				{
 					for(V3DLONG ix = 0; ix < N; ix++)
 					{
-						
+
 						float  *extIter = extension_bufferZ + Wz;
 						for(V3DLONG iz = 0; iz < P; iz++)
 						{
@@ -363,7 +394,7 @@ void GaussianFilterPlugin::processImage(const QString &arg, Image4DSimple *p4DIm
 							if(max_val<*arrIter) max_val = *arrIter;
 							if(min_val>*arrIter) min_val = *arrIter;
 						}
-						
+
 					}
 				}
 
@@ -372,7 +403,7 @@ void GaussianFilterPlugin::processImage(const QString &arg, Image4DSimple *p4DIm
 				if (extension_bufferZ) {delete []extension_bufferZ; extension_bufferZ=0;}
 
 			}
-			
+
 			//rescaling for display
 			float dist = max_val - min_val;
 			for(V3DLONG k=0; k<P; k++)
@@ -384,7 +415,7 @@ void GaussianFilterPlugin::processImage(const QString &arg, Image4DSimple *p4DIm
 					for(V3DLONG i=0; i<N; i++)
 					{
 						V3DLONG indLoop = offsetk + offsetj + i;
-						
+
 						data1d[offset_init + indLoop] = 255*(pImage[indLoop]-min_val)/(dist);
 					}
 				}

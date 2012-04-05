@@ -24,7 +24,7 @@ using namespace std;
 Q_EXPORT_PLUGIN2(celegans_straighten,CElegansStraightenPlugin);
 
 const QString title = "CElegans Straighten demo";
-bool CElegansStraighten(V3DPluginCallback &callback, QWidget *parent);
+bool CElegansStraighten(V3DPluginCallback2 &callback, QWidget *parent);
 
 
 QStringList CElegansStraightenPlugin::menulist() const
@@ -33,7 +33,7 @@ QStringList CElegansStraightenPlugin::menulist() const
 	<< tr("celegans_straighten...");
 }
 
-void CElegansStraightenPlugin::domenu(const QString &menu_name, V3DPluginCallback &callback, QWidget *parent)
+void CElegansStraightenPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
 {
 	if(menu_name==tr("celegans_straighten..."))
 	{
@@ -41,7 +41,7 @@ void CElegansStraightenPlugin::domenu(const QString &menu_name, V3DPluginCallbac
 	}
 }
 
-bool CElegansStraighten(V3DPluginCallback &callback, QWidget *parent)
+bool CElegansStraighten(V3DPluginCallback2 &callback, QWidget *parent)
 {
 	ParaDialog paraDlg(callback,parent);
 	if(paraDlg.exec()==QDialog::Accepted)

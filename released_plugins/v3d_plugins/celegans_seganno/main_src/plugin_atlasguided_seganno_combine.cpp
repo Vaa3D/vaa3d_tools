@@ -15,7 +15,7 @@ Q_EXPORT_PLUGIN2(plugin_atlasguided_seganno_combine, AtlasGuidedSegAnnoCombinePl
 
 const QString title = "AtlasGuidedSegAnnoCombinePlugin demo";
 
-void AtlasGuidedSegAnnoCombine(V3DPluginCallback &callback, QWidget *parent);
+void AtlasGuidedSegAnnoCombine(V3DPluginCallback2 &callback, QWidget *parent);
 
 //************************************************************************************************************************************
 QStringList AtlasGuidedSegAnnoCombinePlugin::menulist() const
@@ -24,7 +24,7 @@ QStringList AtlasGuidedSegAnnoCombinePlugin::menulist() const
 	<< tr("atlasguided_seganno_combine...");
 }
 
-void AtlasGuidedSegAnnoCombinePlugin::domenu(const QString &menu_name, V3DPluginCallback &callback, QWidget *parent)
+void AtlasGuidedSegAnnoCombinePlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
 {
 	if(menu_name==tr("atlasguided_seganno_combine..."))
 	{
@@ -33,7 +33,7 @@ void AtlasGuidedSegAnnoCombinePlugin::domenu(const QString &menu_name, V3DPlugin
 }
 
 //************************************************************************************************************************************
-void AtlasGuidedSegAnnoCombine(V3DPluginCallback &callback, QWidget *parent)
+void AtlasGuidedSegAnnoCombine(V3DPluginCallback2 &callback, QWidget *parent)
 {
 	ParaDialogCombine paraDlgCombine(callback,parent);
 	if(paraDlgCombine.exec()==QDialog::Accepted)

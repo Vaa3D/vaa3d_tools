@@ -14,14 +14,14 @@
 #include "q_atlasguided_seganno.h"
 #include "q_paradialog_stranno.h"
 
-//Q_EXPORT_PLUGIN2 ( PluginName, ClassName )
+//Q_EXPORT_PLUGIN2 ( PluginName, ClassName ) 
 //The value of PluginName should correspond to the TARGET specified in the plugin's project file.
 Q_EXPORT_PLUGIN2(plugin_atlasguided_stranno_partial, AtlasGuidedStrAnnoPartialPlugin);
 
 const QString title = "AtlasGuidedStrAnnoPlugin demo";
 CControlPanel* CControlPanel::panel=0;
 
-void AtlasGuidedStrAnnoPartial(V3DPluginCallback &callback, QWidget *parent, int mode);
+void AtlasGuidedStrAnnoPartial(V3DPluginCallback2 &callback, QWidget *parent, int mode);
 bool readCelloi_file(const QString &qs_filename,QList<QString> &ql_celloi);
 
 
@@ -55,7 +55,7 @@ QStringList AtlasGuidedStrAnnoPartialPlugin::menulist() const
 	;
 }
 
-void AtlasGuidedStrAnnoPartialPlugin::domenu(const QString &menu_name, V3DPluginCallback &callback, QWidget *parent)
+void AtlasGuidedStrAnnoPartialPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
 {
 	if(menu_name==tr("atlasguided_seganno..."))
 	{
@@ -88,7 +88,7 @@ void AtlasGuidedStrAnnoPartialPlugin::domenu(const QString &menu_name, V3DPlugin
 }
 
 //************************************************************************************************************************************
-void AtlasGuidedStrAnnoPartial(V3DPluginCallback &callback, QWidget *parent, int mode)
+void AtlasGuidedStrAnnoPartial(V3DPluginCallback2 &callback, QWidget *parent, int mode)
 {
 	CParaDialog_stranno DLG_stranno(callback,parent);
 	if(DLG_stranno.exec()!=QDialog::Accepted)

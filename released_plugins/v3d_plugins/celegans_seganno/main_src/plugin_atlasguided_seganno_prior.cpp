@@ -15,7 +15,7 @@ Q_EXPORT_PLUGIN2(plugin_atlasguided_seganno_prior, AtlasGuidedSegAnnoPriorPlugin
 
 const QString title = "AtlasGuidedSegAnnoPriorPlugin demo";
 
-void AtlasGuidedSegAnnoPrior(V3DPluginCallback &callback, QWidget *parent);
+void AtlasGuidedSegAnnoPrior(V3DPluginCallback2 &callback, QWidget *parent);
 
 //************************************************************************************************************************************
 QStringList AtlasGuidedSegAnnoPriorPlugin::menulist() const
@@ -24,7 +24,7 @@ QStringList AtlasGuidedSegAnnoPriorPlugin::menulist() const
 	<< tr("atlasguided_seganno_prior...");
 }
 
-void AtlasGuidedSegAnnoPriorPlugin::domenu(const QString &menu_name, V3DPluginCallback &callback, QWidget *parent)
+void AtlasGuidedSegAnnoPriorPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
 {
 	if(menu_name==tr("atlasguided_seganno_prior..."))
 	{
@@ -33,7 +33,7 @@ void AtlasGuidedSegAnnoPriorPlugin::domenu(const QString &menu_name, V3DPluginCa
 }
 
 //************************************************************************************************************************************
-void AtlasGuidedSegAnnoPrior(V3DPluginCallback &callback, QWidget *parent)
+void AtlasGuidedSegAnnoPrior(V3DPluginCallback2 &callback, QWidget *parent)
 {
 	ParaDialog paraDlg(callback,parent);
 	if(paraDlg.exec()==QDialog::Accepted)
