@@ -8,18 +8,72 @@
 
 #include "rotateimg90.h"
 
+
+//Q_EXPORT_PLUGIN2 ( PluginName, ClassName )
+//The value of PluginName should correspond to the TARGET specified in the plugin's project file.
+Q_EXPORT_PLUGIN2(rotateimg90, RotateImg90Plugin)
+
+
+void processImage(V3DPluginCallback2 &callback, QWidget *parent, unsigned int rotateflag);
+
 QStringList RotateImg90Plugin::menulist() const
 {
-    return QStringList() << tr("Left 90 degrees in XY plane")
-                         << tr("Right 90 degrees in XY plane")
-						 << tr("180 degrees in XY plane")
-						<< tr("about this plugin")
-	;
+     return QStringList() << tr("Left 90 degrees in XY plane")
+                          << tr("Right 90 degrees in XY plane")
+                          << tr("180 degrees in XY plane")
+                          << tr("about this plugin")
+          ;
 }
 
-void RotateImg90Plugin::processImage(const QString &arg, Image4DSimple *image, QWidget *parent)
+
+void RotateImg90Plugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
 {
-	if (!image) return;
+     //choosing method
+	unsigned int rotateflag = 0;
+
+	if(menu_name == tr("Left 90 degrees in XY plane"))
+     {
+		rotateflag  = 1;
+          processImage(callback,parent, rotateflag);
+     }
+	else if(menu_name == tr("Right 90 degrees in XY plane"))
+	{
+          rotateflag  = 2;
+          processImage(callback,parent, rotateflag);
+     }
+
+	else if(menu_name == tr("180 degrees in XY plane"))
+	{
+          rotateflag  = 3;
+          processImage(callback,parent, rotateflag);
+     }
+     else if (menu_name == tr("about this plugin"))
+	{
+		QMessageBox::information(parent, "Version info",
+                QString("XY Plane Image 90-degree Rotation %1 (2009-Aug-14): this demo is developed by Hanchuan Peng to show V3D plugin capability.")
+                .arg(getPluginVersion()));
+          return;
+	}
+
+}
+
+
+void processImage(V3DPluginCallback2 &callback, QWidget *parent, unsigned int rotateflag)
+{
+    v3dhandle curwin = callback.currentImageWindow();
+	if (!curwin)
+	{
+        QMessageBox::information(0, "", "You don't have any image open in the main window.");
+		return;
+	}
+
+    Image4DSimple* image = callback.getImage(curwin);
+
+	if (!image)
+	{
+		QMessageBox::information(0, "", "The image pointer is invalid. Ensure your data is valid and try again!");
+		return;
+	}
 
 	unsigned char* data1d = image->getRawData();
 
@@ -34,7 +88,7 @@ void RotateImg90Plugin::processImage(const QString &arg, Image4DSimple *image, Q
 		return;
 	}
 
-    if (arg == tr("Left 90 degrees in XY plane"))
+    if (rotateflag == 1)
     {
 		unsigned char *nm = new unsigned char [N];
 		switch (image->getDatatype())
@@ -84,7 +138,7 @@ void RotateImg90Plugin::processImage(const QString &arg, Image4DSimple *image, Q
 		}
 		image->setData(nm, szy, szx, szz, szc, image->getDatatype()); //setData() will free the original memory automatically
     }
-    else if (arg == tr("Right 90 degrees in XY plane"))
+    else if (rotateflag == 2) // "Right 90 degrees in XY plane"
 	{
 		unsigned char *nm = new unsigned char [N];
 		switch (image->getDatatype())
@@ -134,7 +188,7 @@ void RotateImg90Plugin::processImage(const QString &arg, Image4DSimple *image, Q
 		}
 		image->setData(nm, szy, szx, szz, szc, image->getDatatype()); //setData() will free the original memory automatically
 	}
-	else if (arg == tr("180 degrees in XY plane"))
+    else if (rotateflag == 3) //"180 degrees in XY plane"
     {
 		switch (image->getDatatype())
 		{
@@ -183,17 +237,8 @@ void RotateImg90Plugin::processImage(const QString &arg, Image4DSimple *image, Q
 				return;
 		}
     }
-	else if (arg == tr("about this plugin"))
-	{
-		QMessageBox::information(parent, "Version info", 
-                QString("XY Plane Image 90-degree Rotation %1 (2009-Aug-14): this demo is developed by Hanchuan Peng to show V3D plugin capability.")
-                .arg(getPluginVersion()));
-	}
 	else
 		return;
 }
 
-//Q_EXPORT_PLUGIN2 ( PluginName, ClassName )
-//The value of PluginName should correspond to the TARGET specified in the plugin's project file.
-Q_EXPORT_PLUGIN2(rotateimg90, RotateImg90Plugin)
 

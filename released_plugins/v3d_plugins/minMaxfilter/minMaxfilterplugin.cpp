@@ -15,6 +15,7 @@
 //The value of PluginName should correspond to the TARGET specified in the plugin's project file.
 Q_EXPORT_PLUGIN2(minMaxfilter, minMaxFilterPlugin)
 
+void processImage(V3DPluginCallback2 &callback, QWidget *parent, unsigned int filterflag);
 
 QStringList minMaxFilterPlugin::menulist() const
 {
@@ -25,19 +26,57 @@ QStringList minMaxFilterPlugin::menulist() const
 						 << tr("about this plugin");
 }
 
-void minMaxFilterPlugin::processImage(const QString &arg, Image4DSimple *p4DImage, QWidget *parent)
+void minMaxFilterPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
 {
-	
-	if(arg == tr("about this plugin"))
+     	//choosing filter
+	unsigned int filterflag = 0; //Gaussian 0 Max 1 min 2 Max-min 3 min-Max 4
+
+	if(menu_name == tr("Max Filter"))
+     {
+		filterflag = 1;
+          processImage(callback,parent, filterflag);
+     }
+	else if(menu_name == tr("min Filter"))
 	{
-		QMessageBox::information(parent, "Version info", 
-                QString("min/Max Filter Plugin Demo %1 (2009-Aug-09) developed by Yang Yu. (Peng Lab, Janelia Research Farm Campus, HHMI)")
-                .arg(getPluginVersion()));
+          filterflag = 2;
+          processImage(callback,parent, filterflag);
+     }
+	else if(menu_name == tr("Max-min Filter"))
+	{
+          filterflag = 3;
+          processImage(callback,parent, filterflag);
+     }
+	else if(menu_name == tr("min-Max Filter"))
+	{
+          filterflag = 4;
+          processImage(callback,parent, filterflag);
+     }
+     else if(menu_name == tr("about this plugin"))
+	{
+		QMessageBox::information(parent, "",
+               QString("min/Max Filter Plugin Demo (2009-Aug-09) developed by Yang Yu. (Peng Lab, Janelia Research Farm Campus, HHMI)"));
 		return;
 	}
-	
-	
-    if (! p4DImage) return;
+
+}
+
+void processImage(V3DPluginCallback2 &callback, QWidget *parent, unsigned int filterflag)
+{
+    v3dhandle curwin = callback.currentImageWindow();
+	if (!curwin)
+	{
+        QMessageBox::information(0, "", "You don't have any image open in the main window.");
+		return;
+	}
+
+    Image4DSimple* p4DImage = callback.getImage(curwin);
+
+	if (!p4DImage)
+	{
+		QMessageBox::information(0, "", "The image pointer is invalid. Ensure your data is valid and try again!");
+		return;
+	}
+
 
     unsigned char* data1d = p4DImage->getRawData();
     //V3DLONG totalpxls = p4DImage->getTotalBytes();
@@ -52,34 +91,34 @@ void minMaxFilterPlugin::processImage(const QString &arg, Image4DSimple *p4DImag
 
     //define datatype here
     //
-	
-	
+
+
 	//input
 	bool ok1, ok2, ok3, ok4;
 	unsigned int Wx=1, Wy=1, Wz=1, c=1;
-	
-	Wx = QInputDialog::getInteger(parent, tr("Window X "),
-											   tr("Enter radius (window size is 2*radius+1):"),
+
+	Wx = QInputDialog::getInteger(parent, "Window X ",
+											   "Enter radius (window size is 2*radius+1):",
 											   3, 1, N, 1, &ok1);
-	
+
 	if(ok1)
 	{
-		Wy = QInputDialog::getInteger(parent, tr("Window Y"),
-											   tr("Enter radius (window size is 2*radius+1):"),
+		Wy = QInputDialog::getInteger(parent, "Window Y",
+											   "Enter radius (window size is 2*radius+1):",
 											   3, 1, M, 1, &ok2);
 	}
 	else
 		return;
-	
+
 	if(ok2)
 	{
-		Wz = QInputDialog::getInteger(parent, tr("Window Z"),
-											   tr("Enter radius (window size is 2*radius+1):"),
+		Wz = QInputDialog::getInteger(parent, "Window Z",
+											   "Enter radius (window size is 2*radius+1):",
 											   3, 1, P, 1, &ok3);
 	}
 	else
 		return;
-	
+
 	if(sc==1)
 	{
 		c=1;
@@ -89,27 +128,15 @@ void minMaxFilterPlugin::processImage(const QString &arg, Image4DSimple *p4DImag
 	{
 		if(ok3)
 		{
-			c = QInputDialog::getInteger(parent, tr("Channel"),
-												  tr("Enter channel NO:"),
+			c = QInputDialog::getInteger(parent, "Channel",
+												  "Enter channel NO:",
 												  1, 1, sc, 1, &ok4);
 		}
 		else
 			return;
 	}
 
-	//choosing filter
-	unsigned int filterflag = 0; //Gaussian 0 Max 1 min 2 Max-min 3 min-Max 4
-	
-	if(arg == tr("Max Filter"))
-		filterflag = 1;
-	else if(arg == tr("min Filter"))
-		filterflag = 2;
-	else if(arg == tr("Max-min Filter"))
-		filterflag = 3;
-	else if(arg == tr("min-Max Filter"))
-		filterflag = 4;
-	
-    //filtering   
+    //filtering
 	V3DLONG offsetc = (c-1)*pagesz;
 
 	if (ok4 && (filterflag == 1 || filterflag == 2 || filterflag == 3 ||filterflag == 4) )
@@ -124,7 +151,7 @@ void minMaxFilterPlugin::processImage(const QString &arg, Image4DSimple *p4DImag
 		 else
 		 {
 			for(V3DLONG i=0; i<pagesz; i++)
-				pImage[i] = 0;  
+				pImage[i] = 0;
 		  }
 
 		//Filtering
@@ -139,14 +166,14 @@ void minMaxFilterPlugin::processImage(const QString &arg, Image4DSimple *p4DImag
 				for(V3DLONG ix = 0; ix < N; ix++)
 				{
 					maxfl = 0; minfl = INF;
-					
+
 					V3DLONG xb = ix-Wx; if(xb<0) xb = 0;
 					V3DLONG xe = ix+Wx; if(xe>=N-1) xe = N-1;
 					V3DLONG yb = iy-Wy; if(yb<0) yb = 0;
 					V3DLONG ye = iy+Wy; if(ye>=M-1) ye = M-1;
 					V3DLONG zb = iz-Wz; if(zb<0) zb = 0;
 					V3DLONG ze = iz+Wz; if(ze>=P-1) ze = P-1;
-					
+
 					for(V3DLONG k=zb; k<=ze; k++)
 					{
 						V3DLONG offsetkl = k*M*N;
@@ -156,16 +183,16 @@ void minMaxFilterPlugin::processImage(const QString &arg, Image4DSimple *p4DImag
 							for(V3DLONG i=xb; i<=xe; i++)
 							{
 								V3DLONG dataval = data1d[ offsetc + offsetkl + offsetjl + i];
-								
+
 								if(maxfl<dataval) maxfl = dataval;
 								if(minfl>dataval) minfl = dataval;
 							}
 						}
 					}
-					
+
 					//set value
 					V3DLONG index_pim = offsetk + offsetj + ix;
-					
+
 					if(filterflag == 1 || filterflag == 3)
 					{
 						pImage[index_pim] = maxfl;
@@ -174,16 +201,16 @@ void minMaxFilterPlugin::processImage(const QString &arg, Image4DSimple *p4DImag
 					{
 						pImage[index_pim] = minfl;
 					}
-					
+
 				}
 			}
 		}
-		
+
 
 		//Max-min || min-Max
 		if(ok4 && (filterflag == 3 || filterflag ==4))
 		{
-			
+
 			//   Filtering
 			for(V3DLONG iz = 0; iz < P; iz++)
 			{
@@ -194,14 +221,14 @@ void minMaxFilterPlugin::processImage(const QString &arg, Image4DSimple *p4DImag
 					for(V3DLONG ix = 0; ix < N; ix++)
 					{
 						maxfl = 0; minfl = INF;
-						
+
 						V3DLONG xb = ix-Wx; if(xb<0) xb = 0;
 						V3DLONG xe = ix+Wx; if(xe>=N-1) xe = N-1;
 						V3DLONG yb = iy-Wy; if(yb<0) yb = 0;
 						V3DLONG ye = iy+Wy; if(ye>=M-1) ye = M-1;
 						V3DLONG zb = iz-Wz; if(zb<0) zb = 0;
 						V3DLONG ze = iz+Wz; if(ze>=P-1) ze = P-1;
-						
+
 						for(V3DLONG k=zb; k<=ze; k++)
 						{
 							V3DLONG offsetkl = k*M*N;
@@ -211,16 +238,16 @@ void minMaxFilterPlugin::processImage(const QString &arg, Image4DSimple *p4DImag
 								for(V3DLONG i=xb; i<=xe; i++)
 								{
 									V3DLONG dataval = data1d[ offsetc + offsetkl + offsetjl + i];
-									
+
 									if(maxfl<dataval) maxfl = dataval;
 									if(minfl>dataval) minfl = dataval;
 								}
 							}
 						}
-						
+
 						//set value
 						V3DLONG index_pim = offsetk + offsetj + ix;
-						
+
 						if(filterflag == 4)
 						{
 							pImage[index_pim] = maxfl;
@@ -229,7 +256,7 @@ void minMaxFilterPlugin::processImage(const QString &arg, Image4DSimple *p4DImag
 						{
 							pImage[index_pim] = minfl;
 						}
-						
+
 					}
 				}
 			}

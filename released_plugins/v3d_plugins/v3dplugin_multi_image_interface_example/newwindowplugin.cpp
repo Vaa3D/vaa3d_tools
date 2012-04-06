@@ -1,6 +1,6 @@
 /**
-*  100811 RZC: change to handle any type image using  Image4DProxy's value_at/put_at
-**/
+ *  100811 RZC: change to handle any type image using  Image4DProxy's value_at/put_at
+ **/
 
 #include <QtGui>
 
