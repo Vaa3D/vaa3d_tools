@@ -21,7 +21,26 @@ string dirname(string para)
 	int pos = para.find_last_of("/");
 	if(pos == string::npos) return ".";
 	else if(pos == 0) return "/";
-	else return para.substr(0, pos);
+	string dir = para.substr(0, pos);
+}
+
+string absolute_path(string dir)
+{
+	if(dir[0] == '.')
+	{
+		string pwd = getenv("PWD");
+		if(dir.size() == 1) return pwd;
+		else if(dir[1] == '/') return pwd + dir.substr(2, dir.size() - 2);
+		else return dir;
+	}
+	else if(dir[0] == '~')
+	{
+		string home = getenv("HOME");
+		if(dir.size() == 1) return home;
+		else if(dir[1] == '/') return home + dir.substr(2, dir.size() - 2);
+		else return dir;
+	}
+	return dir;
 }
 
 int main(int argc, char ** argv)
@@ -51,14 +70,15 @@ int main(int argc, char ** argv)
 	V3DLONG level_num = log(MIN(MIN(insz0, insz1), insz2))/log(2.0);
 
 	string hraw_file = argv[5];
+	string dir = dirname(infile);
 	
-	raw_split(infile.c_str(), bs0, bs1, bs2);
-	createMapViewFiles(ts0, ts1, ts2);
+	raw_split((char*)(infile.c_str()), (char*)dir.c_str(), bs0, bs1, bs2);
+	createMapViewFiles((char*)dir.c_str(), ts0, ts1, ts2);
 
 	ofstream ofs(hraw_file.c_str());
 	if(ofs.fail()){cerr<<"Unable to open "<<hraw_file<<endl; return false;}
 	
-	ofs<<"PATH "<<dirname(infile)<<endl;
+	ofs<<"PATH "<<absolute_path(dir)<<endl;
 	ofs<<"L0_XDIM "<<ts0<<endl;
 	ofs<<"L0_YDIM "<<ts1<<endl;
 	ofs<<"L0_ZDIM "<<ts2<<endl;

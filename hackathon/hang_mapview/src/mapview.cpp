@@ -248,14 +248,15 @@ static bool read_raw_partially(const char * filename, unsigned char * &outimg1d,
 	return true;
 }
 
-bool raw_split(const char * infile, V3DLONG outsz0, V3DLONG outsz1, V3DLONG outsz2)
+bool raw_split(char * infile, char * dir, V3DLONG outsz0, V3DLONG outsz1, V3DLONG outsz2)
 {
 	cout<<"outsz0 = "<<outsz0<<" outsz1 = "<<outsz1<<" outsz2 = "<<outsz2<<endl;
 	V3DLONG insz0 = 0, insz1 = 0, insz2 = 0, channel = 0;
 	getRawImageSize(infile, insz0, insz1, insz2, channel);
 	cout<<"insz0 = "<<insz0<<" insz1 = "<<insz1<<" insz2 = "<<insz2<<" channel = "<<channel<<endl;
 
-	system("mkdir L0");
+	system(string(string("mkdir ") + dir + "/L0").c_str());
+
 	int bs0 = (insz0 % outsz0 == 0) ? insz0/outsz0 : insz0/outsz0 + 1;
 	int bs1 = (insz1 % outsz1 == 0) ? insz1/outsz1 : insz1/outsz1 + 1;
 	int bs2 = (insz2 % outsz2 == 0) ? insz2/outsz2 : insz2/outsz2 + 1;
@@ -270,7 +271,7 @@ bool raw_split(const char * infile, V3DLONG outsz0, V3DLONG outsz1, V3DLONG outs
 				V3DLONG x0 = bx * outsz0;
 				unsigned char * outimg1d = 0;
 				ostringstream oss;
-				oss<<"L0/"<<"X"<<bx<<"_Y"<<by<<"_Z"<<bz<<".raw";
+				oss<<dir<<"/L0/L0_X"<<bx<<"_Y"<<by<<"_Z"<<bz<<".raw";
 				read_raw_partially(infile, outimg1d, x0, y0, z0, outsz0, outsz1, outsz2, channel);
 				V3DLONG outsz[4] = {outsz0, outsz1, outsz2, channel};
 				cout<<"save "<<oss.str()<<endl;
@@ -282,14 +283,14 @@ bool raw_split(const char * infile, V3DLONG outsz0, V3DLONG outsz1, V3DLONG outs
 }
 
 // make sure L0 folder is exist
-bool createMapViewFiles(V3DLONG ts0, V3DLONG ts1, V3DLONG ts2)
+bool createMapViewFiles(char * dir, V3DLONG ts0, V3DLONG ts1, V3DLONG ts2)
 {
 	//make sure all blocks have the same size
 	V3DLONG bs0 = 0, bs1 = 0, bs2 = 0, channel = 0; //block size
 	// get size of first block
 	{
 		ostringstream oss;
-		oss<<"L0/"<<"X"<<0<<"_Y"<<0<<"_Z"<<0<<".raw";
+		oss<<dir<<"/L0/L0_"<<"X"<<0<<"_Y"<<0<<"_Z"<<0<<".raw";
 		string filename = oss.str();
 		V3DLONG tmp_sz0, tmp_sz1, tmp_sz2, tmp_channel;
 		getRawImageSize(filename, tmp_sz0, tmp_sz1, tmp_sz2, tmp_channel);
@@ -305,7 +306,7 @@ bool createMapViewFiles(V3DLONG ts0, V3DLONG ts1, V3DLONG ts2)
 				for(V3DLONG ti = 0; ti < ts0; ti++)
 				{
 					ostringstream oss;
-					oss<<"L0/"<<"X"<<ti<<"_Y"<<tj<<"_Z"<<tk<<".raw";
+					oss<<dir<<"/L0/L0_"<<"X"<<ti<<"_Y"<<tj<<"_Z"<<tk<<".raw";
 					string filename = oss.str();
 					V3DLONG tmp_sz0, tmp_sz1, tmp_sz2, tmp_channel;
 					getRawImageSize(filename, tmp_sz0, tmp_sz1, tmp_sz2, tmp_channel);
@@ -330,7 +331,7 @@ bool createMapViewFiles(V3DLONG ts0, V3DLONG ts1, V3DLONG ts2)
 	{
 		cout<<"================= level "<<level<<" ======================="<<endl;
 		{
-			ostringstream oss; oss<<"mkdir L"<<level+1;
+			ostringstream oss; oss<<"mkdir "<<dir<<"/L"<<level+1;
 			system(oss.str().c_str());
 		}
 		if((pts0 == 1 && pbs0 == 1) ||
@@ -365,7 +366,7 @@ bool createMapViewFiles(V3DLONG ts0, V3DLONG ts1, V3DLONG ts2)
 							for(V3DLONG gi = 0; gi <= gimax; gi++)
 							{
 								ostringstream oss;
-								oss<<"L"<<level<<"/X"<<2*ti + gi<<"_Y"<<2*tj + gj<<"_Z"<<2*tk + gk<<".raw";
+								oss<<dir<<"/L"<<level<<"/L"<<level<<"_X"<<2*ti + gi<<"_Y"<<2*tj + gj<<"_Z"<<2*tk + gk<<".raw";
 								string parimg_file = oss.str();
 								unsigned char * parimg1d = 0; V3DLONG * parsz = 0; int datatype;
 								if(!loadImage((char *) parimg_file.c_str(), parimg1d, parsz, datatype)){cerr<<"load "<<parimg_file<<" error."<<endl; return false;}
@@ -426,7 +427,7 @@ bool createMapViewFiles(V3DLONG ts0, V3DLONG ts1, V3DLONG ts2)
 							}
 						}
 					}
-					ostringstream oss; oss<<"L"<<level+1<<"/X"<<ti<<"_Y"<<tj<<"_Z"<<tk<<".raw";
+					ostringstream oss; oss<<dir<<"/L"<<level+1<<"/L"<<level+1<<"_X"<<ti<<"_Y"<<tj<<"_Z"<<tk<<".raw";
 					string curimg_file = oss.str();
 					V3DLONG cursz[4] = {cbs0, cbs1, cbs2, 1};
 					cout<<"======== save "<<curimg_file<<" ========="<<endl;
