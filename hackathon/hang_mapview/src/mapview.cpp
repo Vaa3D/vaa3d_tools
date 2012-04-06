@@ -2,6 +2,7 @@
 #include <sstream>
 #include <cmath>
 #include <string>
+#include <cassert>
 
 #include "stackutil.h"
 #include "mapview.h"
@@ -16,7 +17,6 @@ using namespace std;
 #define MIN(x,y) ((x) < (y) ? (x) : (y))
 #endif
 
-static void getRawImageSize(string filename, V3DLONG &sz0, V3DLONG &sz1, V3DLONG &sz2, V3DLONG &sz3);
 static bool read_raw_partially(const char * filename, unsigned char * &outimg1d, V3DLONG x0, V3DLONG y0, V3DLONG z0, V3DLONG outsz0, V3DLONG outsz1, V3DLONG outsz2, V3DLONG outsz3 = 0);
 
 ImageMapView::ImageMapView()
@@ -59,12 +59,12 @@ void ImageMapView::getBlockTillingSize(V3DLONG level, V3DLONG & ts0, V3DLONG & t
 // pos0, posk, posj, posi         the seek offset of single block image file
 // ti, tj, tk, tis, tjs, tks, tie, tje, tke   the block array index
 // bi, bj, bk, bis, bjs, bks, bie, bje, bke   the index in a single block
-void ImageMapView::getImage(V3DLONG level, unsigned char * &outimg1d, V3DLONG x0, V3DLONG y0, V3DLONG z0, V3DLONG outsz0, V3DLONG outsz1, V3DLONG outsz2)
+void ImageMapView::getImage(V3DLONG level, unsigned char * & outimg1d, V3DLONG x0, V3DLONG y0, V3DLONG z0, V3DLONG outsz0, V3DLONG outsz1, V3DLONG outsz2)
 {
 	V3DLONG outsz012 = outsz0 * outsz1 * outsz2;
 	V3DLONG outsz01 = outsz0 * outsz1;
 
-	if(outimg1d == 0) outimg1d = new unsigned char[outsz012 * channel]; memset(ouimg1d, 0, outsz012 * channel);
+	if(outimg1d == 0) outimg1d = new unsigned char[outsz012 * channel]; memset(outimg1d, 0, outsz012 * channel);
 
 	V3DLONG ts0, ts1, ts2, bs0, bs1, bs2;                            // block number and block size
 	getBlockTillingSize(level,ts0, ts1, ts2, bs0, bs1, bs2);
@@ -73,9 +73,9 @@ void ImageMapView::getImage(V3DLONG level, unsigned char * &outimg1d, V3DLONG x0
 	cout<<"x0 = "<<x0<<endl;
 	cout<<"y0 = "<<y0<<endl;
 	cout<<"z0 = "<<z0<<endl;
-	cout<<"sz0 = "<<sz0<<endl;
-	cout<<"sz1 = "<<sz1<<endl;
-	cout<<"sz2 = "<<sz2<<endl;
+	cout<<"outsz0 = "<<outsz0<<endl;
+	cout<<"outsz1 = "<<outsz1<<endl;
+	cout<<"outsz2 = "<<outsz2<<endl;
 	cout<<"ts0 = "<<ts0<<endl;
 	cout<<"ts1 = "<<ts1<<endl;
 	cout<<"ts2 = "<<ts2<<endl;
@@ -83,9 +83,9 @@ void ImageMapView::getImage(V3DLONG level, unsigned char * &outimg1d, V3DLONG x0
 	cout<<"bs1 = "<<bs1<<endl;
 	cout<<"bs2 = "<<bs2<<endl;
 
-	V3DLONG tis = x0/bs0, tie = (((x0 + sz0) % bs0) == 0) ? (x0 + sz0)/bs0 - 1 : (x0 + sz0)/bs0; tie = MIN(tie, ts0-1);
-	V3DLONG tjs = y0/bs1, tje = (((y0 + sz1) % bs1) == 0) ? (y0 + sz1)/bs1 - 1 : (y0 + sz1)/bs1; tje = MIN(tje, ts1-1);
-	V3DLONG tks = z0/bs2, tke = (((z0 + sz2) % bs2) == 0) ? (z0 + sz2)/bs2 - 1 : (z0 + sz2)/bs2; tke = MIN(tke, ts2-1);
+	V3DLONG tis = x0/bs0, tie = (((x0 + outsz0) % bs0) == 0) ? (x0 + outsz0)/bs0 - 1 : (x0 + outsz0)/bs0; tie = MIN(tie, ts0-1);
+	V3DLONG tjs = y0/bs1, tje = (((y0 + outsz1) % bs1) == 0) ? (y0 + outsz1)/bs1 - 1 : (y0 + outsz1)/bs1; tje = MIN(tje, ts1-1);
+	V3DLONG tks = z0/bs2, tke = (((z0 + outsz2) % bs2) == 0) ? (z0 + outsz2)/bs2 - 1 : (z0 + outsz2)/bs2; tke = MIN(tke, ts2-1);
 	V3DLONG block_size = bs0 * bs1 * bs2;
 	V3DLONG bs01 = bs0 * bs1;
 
@@ -103,9 +103,9 @@ void ImageMapView::getImage(V3DLONG level, unsigned char * &outimg1d, V3DLONG x0
 				V3DLONG bis = (ti == tis) ? (x0 - tis * bs0) : 0;                   // the start x index in current block
 				V3DLONG bjs = (tj == tjs) ? (y0 - tjs * bs1) : 0;                   // the start y index in current block
 				V3DLONG bks = (tk == tks) ? (z0 - tks * bs2) : 0;                   // the start z index in current block
-				V3DLONG bie = (ti == tie) ? (x0 + sz0 - tie * bs0 - 1) : bs0 - 1;   // the end x index in current block
-				V3DLONG bje = (tj == tje) ? (y0 + sz1 - tje * bs1 - 1) : bs1 - 1;   // the end y index in current block
-				V3DLONG bke = (tk == tke) ? (z0 + sz2 - tke * bs2 - 1) : bs2 - 1;   // the end z index in current block
+				V3DLONG bie = (ti == tie) ? (x0 + outsz0 - tie * bs0 - 1) : bs0 - 1;   // the end x index in current block
+				V3DLONG bje = (tj == tje) ? (y0 + outsz1 - tje * bs1 - 1) : bs1 - 1;   // the end y index in current block
+				V3DLONG bke = (tk == tke) ? (z0 + outsz2 - tke * bs2 - 1) : bs2 - 1;   // the end z index in current block
 
 				cout<<"bis = "<<bis<<"\tbie = "<<bie<<endl;
 				cout<<"bjs = "<<bjs<<"\tbje = "<<bje<<endl;
@@ -127,7 +127,8 @@ void ImageMapView::getImage(V3DLONG level, unsigned char * &outimg1d, V3DLONG x0
 				cout<<"read "<<oss.str()<<endl;
 				char * filename = (char*) oss.str().c_str();
 
-				read_raw_partially(filename, tmpimg1d, bi, bj, bk, tmpsz0, tmpsz1, tmpsz2, 0);
+				read_raw_partially(filename, tmpimg1d, bis, bjs, bks, tmpsz0, tmpsz1, tmpsz2, 0);
+
 				for(V3DLONG c = 0; c < channel; c++)
 				{
 					unsigned char * tmpimg1d_channel = tmpimg1d + c * tmpsz012;
@@ -141,7 +142,7 @@ void ImageMapView::getImage(V3DLONG level, unsigned char * &outimg1d, V3DLONG x0
 							for(V3DLONG bi = bis; bi <= bie; bi++)
 							{
 								V3DLONG oi = ois + bi;
-								V3DLONG ind1 = ok * sz01 + oj * sz0 + oi;
+								V3DLONG ind1 = ok * outsz01 + oj * outsz0 + oi;
 								V3DLONG ind2 = (bk-bks) * tmpsz01 + (bj-bjs) * tmpsz0 + (bi-bis);
 								outimg1d_channel[ind1] = tmpimg1d_channel[ind2];
 							}
@@ -154,7 +155,7 @@ void ImageMapView::getImage(V3DLONG level, unsigned char * &outimg1d, V3DLONG x0
 	}
 }
 
-static void getRawImageSize(string filename, V3DLONG &sz0, V3DLONG &sz1, V3DLONG &sz2, V3DLONG &sz3)
+void getRawImageSize(string filename, V3DLONG &sz0, V3DLONG &sz1, V3DLONG &sz2, V3DLONG &sz3)
 {
 	cout<<"filename = "<<filename<<endl;
     FILE * fid = fopen((char*) filename.c_str(), "rb");

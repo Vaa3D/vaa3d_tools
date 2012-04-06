@@ -1,2 +1,60 @@
+#include <cmath>
+#include <fstream>
+#include <iostream>
+#include "mapview.h"
 
-g++  -I../../../../work/v3d_external/v3d_main/basic_c_fun -I../../../../work/v3d_external/v3d_main/common_lib/include -I../../../../work/v3d_external/v3d_main/jba/newmat11 -L../../../../work/v3d_external/v3d_main/common_lib/lib_mac64 -lv3dtiff -L ../../../../work/v3d_external/v3d_main/jba/c++ -lv3dnewmat create_mapview.cpp ../../../../work/v3d_external/v3d_main/basic_c_fun/basic_memory.cpp ../../../../work/v3d_external/v3d_main/basic_c_fun/mg_utilities.cpp ../../../../work/v3d_external/v3d_main/basic_c_fun/stackutil.cpp
+using namespace std;
+
+#ifndef MIN
+#define MIN(x,y) ((x) < (y) ? (x) : (y))
+#endif
+
+static string basename(string para)
+{
+    int pos = para.find_last_of(".");
+    if(pos == string::npos) return para;
+    else return para.substr(0, pos);
+}
+
+int main(int argc, char ** argv)
+{
+	if(argc < 6) 
+	{
+		cerr<<"Usage : "<<argv[0]<<"<raw_img_file> <L0_block_size0> <L0_block_size1> <L0_block_size2> <hraw_file>"<<endl;
+		cerr<<endl;
+		cerr<<"Step 1: split a raw image into many blocks with fixed block size"<<endl;
+		cerr<<"Step 2: create hierarchy level data"<<endl;
+		cerr<<"Step 3: create hraw_file"<<endl;
+		return 0;
+	}
+
+	string infile = argv[1];
+	V3DLONG insz0 = 0, insz1 = 0, insz2 = 0, channel = 0;
+	getRawImageSize(infile, insz0, insz1, insz2, channel);
+
+	V3DLONG bs0 = atoi(argv[2]);
+	V3DLONG bs1 = atoi(argv[3]);
+	V3DLONG bs2 = atoi(argv[4]);
+
+	V3DLONG ts0 = (insz0 % bs0 == 0) ? insz0/bs0 : insz0/bs0 + 1;
+	V3DLONG ts1 = (insz1 % bs1 == 0) ? insz1/bs1 : insz1/bs1 + 1;
+	V3DLONG ts2 = (insz2 % bs2 == 0) ? insz2/bs2 : insz2/bs2 + 1;
+
+	V3DLONG level_num = log(MIN(MIN(insz0, insz1), insz2))/log(2.0);
+
+	string hraw_file = argv[5];
+	string prefix = basename(infile);
+	
+	raw_split(infile.c_str(), prefix.c_str(), bs0, bs1, bs2);
+	createMapViewFiles(prefix, ts0, ts1, ts2);
+
+	ofstream ofs(hraw_file.c_str());
+	if(ofs.fail()){cerr<<"Unable to open "<<hraw_file<<endl; return false;}
+	
+	ofs<<"PREFIX "<<prefix<<endl;
+	ofs<<"L0_XDIM "<<ts0<<endl;
+	ofs<<"L0_YDIM "<<ts1<<endl;
+	ofs<<"L0_ZDIM "<<ts2<<endl;
+	ofs<<"LEVEL_NUM "<<level_num<<endl;
+	ofs.close();
+}
