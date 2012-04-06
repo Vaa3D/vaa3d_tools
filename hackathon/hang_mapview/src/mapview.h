@@ -22,8 +22,8 @@ struct ImageMapView
 
 void getRawImageSize(string filename, V3DLONG &sz0, V3DLONG &sz1, V3DLONG &sz2, V3DLONG &sz3);
 
-bool raw_split(const char * infile, const char * outpref, V3DLONG sz0, V3DLONG sz1, V3DLONG sz2);
+bool raw_split(const char * infile, V3DLONG outsz0, V3DLONG outsz1, V3DLONG outsz2);
 
-bool createMapViewFiles(string prefix, V3DLONG ts0, V3DLONG ts1, V3DLONG ts2);
+bool createMapViewFiles(V3DLONG ts0, V3DLONG ts1, V3DLONG ts2);
 
 #endif

@@ -16,6 +16,14 @@ static string basename(string para)
     else return para.substr(0, pos);
 }
 
+string dirname(string para)
+{
+	int pos = para.find_last_of("/");
+	if(pos == string::npos) return ".";
+	else if(pos == 0) return "/";
+	else return para.substr(0, pos);
+}
+
 int main(int argc, char ** argv)
 {
 	if(argc < 6) 
@@ -43,15 +51,14 @@ int main(int argc, char ** argv)
 	V3DLONG level_num = log(MIN(MIN(insz0, insz1), insz2))/log(2.0);
 
 	string hraw_file = argv[5];
-	string prefix = basename(infile);
 	
-	raw_split(infile.c_str(), prefix.c_str(), bs0, bs1, bs2);
-	createMapViewFiles(prefix, ts0, ts1, ts2);
+	raw_split(infile.c_str(), bs0, bs1, bs2);
+	createMapViewFiles(ts0, ts1, ts2);
 
 	ofstream ofs(hraw_file.c_str());
 	if(ofs.fail()){cerr<<"Unable to open "<<hraw_file<<endl; return false;}
 	
-	ofs<<"PREFIX "<<prefix<<endl;
+	ofs<<"PATH "<<dirname(infile)<<endl;
 	ofs<<"L0_XDIM "<<ts0<<endl;
 	ofs<<"L0_YDIM "<<ts1<<endl;
 	ofs<<"L0_ZDIM "<<ts2<<endl;
