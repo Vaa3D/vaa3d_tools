@@ -24,12 +24,12 @@ ImageMapView::ImageMapView()
 	L = M = N = 0;
 	l = m = n = 0;
 	channel = 3;
-	prefix = "";
+	dir = "";
 }
 
-void ImageMapView::setPara(string _prefix, V3DLONG _L, V3DLONG _M, V3DLONG _N, V3DLONG _l, V3DLONG _m, V3DLONG _n, V3DLONG _channel)
+void ImageMapView::setPara(string _dir, V3DLONG _L, V3DLONG _M, V3DLONG _N, V3DLONG _l, V3DLONG _m, V3DLONG _n, V3DLONG _channel)
 {
-	prefix = _prefix; L = _L; M = _M; N = _N; l = _l; m = _m; n = _n; channel = _channel;
+	dir = _dir; L = _L; M = _M; N = _N; l = _l; m = _m; n = _n; channel = _channel;
 }
 
 void ImageMapView::getBlockTillingSize(V3DLONG level, V3DLONG & ts0, V3DLONG & ts1, V3DLONG & ts2, V3DLONG &bs0, V3DLONG &bs1, V3DLONG &bs2)
@@ -123,7 +123,7 @@ void ImageMapView::getImage(V3DLONG level, unsigned char * & outimg1d, V3DLONG x
 				V3DLONG tmpsz012 = tmpsz01 * tmpsz2;
 
 				ostringstream oss;
-				oss<<"L"<<level<<"/"<<prefix<<"_L"<<level<<"_X"<<ti<<"_Y"<<tj<<"_Z"<<tk<<".raw";
+				oss<<dir<<"/L"<<level<<"/L"<<level<<"_X"<<ti<<"_Y"<<tj<<"_Z"<<tk<<".raw";
 				cout<<"read "<<oss.str()<<endl;
 				char * filename = (char*) oss.str().c_str();
 
@@ -185,10 +185,6 @@ static bool read_raw_partially(const char * filename, unsigned char * &outimg1d,
 	V3DLONG insz01 = insz0 * insz1;
 	V3DLONG insz012 = insz01 * insz2;
 	cout<<"insz0 = "<<insz0<<" insz1 = "<<insz1<<" insz2 = "<<insz2<<" insz3 = "<<insz3<<endl;
-	if(x0 < 0 || x0 >= insz0 || insz0 <= 0 ||  
-	   y0 < 0 || y0 >= insz1 || insz1 <= 0 || 
-	   z0 < 0 || z0 >= insz2 || insz2 <= 0 ||
-	   insz3 <= 0) return 0;
 
 	if(outsz3 == 0) outsz3 = insz3;
 
@@ -196,6 +192,12 @@ static bool read_raw_partially(const char * filename, unsigned char * &outimg1d,
 	V3DLONG outsz012 = outsz01 * outsz2;
 	if(outimg1d){cerr<<"outimg1d is not empty"<<endl;}
 	outimg1d = new unsigned char[outsz012 * outsz3]; memset(outimg1d, 0, outsz012 * outsz3);
+
+	if(x0 < 0 || x0 >= insz0 || insz0 <= 0 ||  
+			y0 < 0 || y0 >= insz1 || insz1 <= 0 || 
+			z0 < 0 || z0 >= insz2 || insz2 <= 0 ||
+			insz3 <= 0) return 0;
+
 
 	FILE * fid = fopen(filename, "rb");
 	if(!fid) return false;

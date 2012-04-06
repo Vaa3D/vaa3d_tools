@@ -11,14 +11,15 @@ using namespace std;
 struct Mapview_Paras {
 	int L, M, N, l, m, n;//block
 	int level_num;
+	int channel;
 	int level;           //current level
 	V3DLONG outsz[4];    //output size
 	V3DLONG origin[3];   //top-left corner pos
-	QString hraw_prefix; //prefix of files
+	QString hraw_dir; //prefix of files
 
 	Mapview_Paras()
 	{
-		hraw_prefix=QString("");
+		hraw_dir=QString("");
 		outsz[0]=outsz[1]=outsz[2]=outsz[3]=0;
 		origin[0]=origin[1]=origin[2]=0;
 		L = M = N = l = m = n = 0;
@@ -51,8 +52,8 @@ public:
         V3DLONG ts0, ts1, ts2; // block nums
         V3DLONG bs0, bs1, bs2; // block size
         V3DLONG dimx, dimy, dimz;
-		mapview.setPara(mapview_paras.hraw_prefix.toStdString(), mapview_paras.L, mapview_paras.M, mapview_paras.N, mapview_paras.l, mapview_paras.m, mapview_paras.n);
-        mapview.getImageSize(mapview_paras.level, ts0, ts1, ts2, bs0, bs1, bs2);
+		mapview.setPara(mapview_paras.hraw_dir.toStdString(), mapview_paras.L, mapview_paras.M, mapview_paras.N, mapview_paras.l, mapview_paras.m, mapview_paras.n, mapview_paras.channel);
+        mapview.getBlockTillingSize(mapview_paras.level, ts0, ts1, ts2, bs0, bs1, bs2);
         dimx = ts0*bs0; dimy = ts1*bs1; dimz = ts2*bs2;
 
         // zoom range
@@ -146,7 +147,7 @@ public:
         V3DLONG ts0, ts1, ts2; // block nums
         V3DLONG bs0, bs1, bs2; // block size
         V3DLONG dimx, dimy, dimz;
-        mapview.getImageSize(mapview_paras.level, ts0, ts1, ts2, bs0, bs1, bs2);
+        mapview.getBlockTillingSize(mapview_paras.level, ts0, ts1, ts2, bs0, bs1, bs2);
 
         dimx = ts0*bs0;   dimy = ts1*bs1;   dimz = ts2*bs2;
 
@@ -176,9 +177,9 @@ public:
 
 		Image4DSimple * p4dimage = new Image4DSimple;
 
-		p4dimage->setData(outimg1d, mapview_paras.outsz[0], mapview_paras.outsz[1], mapview_paras.outsz[2], 1, V3D_UINT8); // todo : add more channel
+		p4dimage->setData(outimg1d, mapview_paras.outsz[0], mapview_paras.outsz[1], mapview_paras.outsz[2], mapview_paras.channel, V3D_UINT8); // todo : add more channel
 		callback->setImage(curwin, p4dimage);
-		callback->setImageName(curwin, mapview_paras.hraw_prefix);
+		callback->setImageName(curwin, mapview_paras.hraw_dir);
 		callback->updateImageWindow(curwin);
 	}
 

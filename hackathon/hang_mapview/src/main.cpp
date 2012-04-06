@@ -79,9 +79,10 @@ int main(int argc, char ** argv)
 	if(ofs.fail()){cerr<<"Unable to open "<<hraw_file<<endl; return false;}
 	
 	ofs<<"PATH "<<absolute_path(dir)<<endl;
-	ofs<<"L0_XDIM "<<ts0<<endl;
-	ofs<<"L0_YDIM "<<ts1<<endl;
-	ofs<<"L0_ZDIM "<<ts2<<endl;
+	ofs<<"L0_X_BLOCKS "<<ts0<<endl;
+	ofs<<"L0_Y_BLOCKS "<<ts1<<endl;
+	ofs<<"L0_Z_BLOCKS "<<ts2<<endl;
+	ofs<<"CHANNEL "<<channel<<endl;
 	ofs<<"LEVEL_NUM "<<level_num<<endl;
 	ofs.close();
 }
