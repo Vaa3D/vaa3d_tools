@@ -10,6 +10,8 @@
 #include <math.h>
 #include <stdlib.h>
 
+#include "v3d_message.h"
+
 #include "gaussianfilterplugin.h"
 
 #define INF 1E9
@@ -42,7 +44,7 @@ void processImage(V3DPluginCallback2 &callback, QWidget *parent)
      v3dhandle curwin = callback.currentImageWindow();
 	if (!curwin)
 	{
-		v3d_msg("You don't have any image open in the main window.");
+          QMessageBox::information(0, "", "You don't have any image open in the main window.");
 		return;
 	}
 
@@ -50,7 +52,7 @@ void processImage(V3DPluginCallback2 &callback, QWidget *parent)
 
 	if (!p4DImage)
 	{
-		v3d_msg("The image pointer is invalid. Ensure your data is valid and try again!");
+		QMessageBox::information(0, "", "The image pointer is invalid. Ensure your data is valid and try again!");
 		return;
 	}
 
