@@ -9,6 +9,7 @@ struct ImageMapView
 {
 	V3DLONG L, M, N;                   // the block number in X, Y, Z dimension
 	V3DLONG l, m, n;                   // the block size 
+	V3DLONG channel;
 	string prefix;
 
 	ImageMapView();
@@ -18,5 +19,9 @@ struct ImageMapView
 	void getImageSize(V3DLONG level, V3DLONG & ts0, V3DLONG & ts1, V3DLONG & ts2, V3DLONG &bs0, V3DLONG &bs1, V3DLONG &bs2);
 
 };
+
+bool raw_split(const char * infile, const char * outpref, V3DLONG sz0, V3DLONG sz1, V3DLONG sz2);
+
+bool createMapViewFiles(string prefix, V3DLONG ts0, V3DLONG ts1, V3DLONG ts2);
 
 #endif
