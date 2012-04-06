@@ -17,7 +17,7 @@ using namespace std;
 #define MIN(x,y) ((x) < (y) ? (x) : (y))
 #endif
 
-static void getImageSize(string filename, V3DLONG &sz0, V3DLONG &sz1, V3DLONG &sz2)
+static void getImageSize(string filename, V3DLONG &sz0, V3DLONG &sz1, V3DLONG &sz2, V3DLONG &sz3)
 {
 	FILE * fid = fopen((char*) filename.c_str(), "rb");
 	if(!fid) return;
@@ -31,37 +31,48 @@ static void getImageSize(string filename, V3DLONG &sz0, V3DLONG &sz1, V3DLONG &s
 	sz0 = mysz[0];
 	sz1 = mysz[1];
 	sz2 = mysz[2];
+	sz3 = mysz[3];
 	fclose(fid);
 }
+
 bool createMapViewFiles(string prefix, V3DLONG ts0, V3DLONG ts1, V3DLONG ts2)
 {
-	//assert(ts0 == pow(2, log(ts0)/log(2.0)));
-	//assert(ts1 == pow(2, log(ts1)/log(2.0)));
-	//assert(ts2 == pow(2, log(ts2)/log(2.0)));
-	// check block size
-	V3DLONG bs0 = 0, bs1 = 0, bs2 = 0;
-	for(V3DLONG tk = 0; tk < ts2; tk++)
+	//make sure all blocks have the same size
+	V3DLONG bs0 = 0, bs1 = 0, bs2 = 0, channel = 0; //block size
+	// get size of first block
 	{
-		for(V3DLONG tj = 0; tj < ts1; tj++)
+		ostringstream oss;
+		oss<<prefix<<"_L"<<0<<"_X"<<0<<"_Y"<<0<<"_Z"<<0<<".raw";
+		string filename = oss.str();
+		V3DLONG tmp_sz0, tmp_sz1, tmp_sz2, tmp_channel;
+		getImageSize(filename, tmp_sz0, tmp_sz1, tmp_sz2, tmp_channel);
+		bs0 = tmp_sz0; bs1 = tmp_sz1; bs2 = tmp_sz2; channel = tmp_channel;
+	}
+
+	if(0)
+	{
+		for(V3DLONG tk = 0; tk < ts2; tk++)
 		{
-			for(V3DLONG ti = 0; ti < ts0; ti++)
+			for(V3DLONG tj = 0; tj < ts1; tj++)
 			{
-				ostringstream oss;
-				oss<<prefix<<"_L"<<0<<"_X"<<ti<<"_Y"<<tj<<"_Z"<<tk<<".raw";
-				string filename = oss.str();
-				V3DLONG sz0, sz1, sz2;
-				getImageSize(filename, sz0, sz1, sz2);
-				if(bs0 == 0 && bs1 ==0 && bs2 == 0)
+				for(V3DLONG ti = 0; ti < ts0; ti++)
 				{
-					bs0 = sz0; bs1 = sz1; bs2 = sz2;
-				}
-				else
-				{
-					if(bs0 != sz0 || bs1 != sz1 || bs2 != sz2) return false;
+					ostringstream oss;
+					oss<<prefix<<"_L"<<0<<"_X"<<ti<<"_Y"<<tj<<"_Z"<<tk<<".raw";
+					string filename = oss.str();
+					V3DLONG tmp_sz0, tmp_sz1, tmp_sz2, tmp_channel;
+					getImageSize(filename, tmp_sz0, tmp_sz1, tmp_sz2, tmp_channel);
+					if(bs0 != tmp_sz0 || bs1 != tmp_sz1 || bs2 != tmp_sz2 || channel != tmp_channel)
+					{
+						cerr<<"file "<<filename<<" have different size"<<endl;
+						return false;
+					}
 				}
 			}
 		}
 	}
+	assert(channel <= 3);
+
 	//V3DLONG min_level = 0, max_level = 10;// log(MIN(MIN(ts0, ts1), ts2))/log(2.0);
 	V3DLONG pts0 = ts0, pts1 = ts1, pts2 = ts2;       // parent tiling size
 	V3DLONG pbs0 = bs0, pbs1 = bs1, pbs2 = bs2;       // parent block size
@@ -79,7 +90,10 @@ bool createMapViewFiles(string prefix, V3DLONG ts0, V3DLONG ts1, V3DLONG ts2)
 		(pts2 == 1) ? (cbs2 = (pbs2 + 1)/2) : (cts2 = (pts2 + 1)/2);
 
 		V3DLONG pbs01 = pbs0 * pbs1;
+		V3DLONG pbs012 = pbs01 * pbs2;
+
 		V3DLONG cbs01 = cbs0 * cbs1;
+		V3DLONG cbs012 = cbs01 * cbs2;
 
 		for(V3DLONG tk = 0; tk < cts2; tk++)
 		{
@@ -91,8 +105,7 @@ bool createMapViewFiles(string prefix, V3DLONG ts0, V3DLONG ts1, V3DLONG ts2)
 					V3DLONG gjmax = (pts1 % 2 == 0) ? 1 : 0;
 					V3DLONG gkmax = (pts2 % 2 == 0) ? 1 : 0;
 
-					V3DLONG tol_csz = cbs0 * cbs1 * cbs2;
-					unsigned char * curimg1d = new unsigned char[tol_csz]; memset(curimg1d, 0, tol_csz);
+					unsigned char * curimg1d = new unsigned char[cbs012 * channel]; memset(curimg1d, 0, cbs012 * channel);
 					// grid i, j k
 					for(V3DLONG gk = 0; gk <= gkmax; gk++)
 					{
@@ -105,47 +118,54 @@ bool createMapViewFiles(string prefix, V3DLONG ts0, V3DLONG ts1, V3DLONG ts2)
 								string parimg_file = oss.str();
 								unsigned char * parimg1d = 0; V3DLONG * parsz = 0; int datatype;
 								if(!loadImage((char *) parimg_file.c_str(), parimg1d, parsz, datatype)){cerr<<"load "<<parimg_file<<" error."<<endl; return false;}
-								if(parsz[0] != pbs0 || parsz[1] != pbs1 || parsz[2] != pbs2)
+								if(parsz[0] != pbs0 || parsz[1] != pbs1 || parsz[2] != pbs2 || parsz[3] != channel)
 								{
 									cerr<<"Incrorect size for "<<parimg_file<<endl;
-									cerr<<"It should be "<<pbs0<<"x"<<pbs1<<"x"<<pbs2<<" , the actual size is "<<parsz[0]<<"x"<<parsz[1]<<"x"<<parsz[2]<<endl;
+									cerr<<"It should be "<<pbs0<<"x"<<pbs1<<"x"<<pbs2<<"x"<<channel<<" , the actual size is "<<parsz[0]<<"x"<<parsz[1]<<"x"<<parsz[2]<<"x"<<parsz[3]<<endl;
 									return false;
 								}
-								V3DLONG cbis = gi*pbs0/2 , cbie = (gi+1) * pbs0/2;
+
+								V3DLONG cbis = gi*pbs0/2 , cbie = (gi+1) * pbs0/2;    // child block index along x
 								V3DLONG cbjs = gj*pbs1/2 , cbje = (gj+1) * pbs1/2;
 								V3DLONG cbks = gk*pbs2/2 , cbke = (gk+1) * pbs2/2;
-								for(V3DLONG cbk = cbks; cbk < cbke; cbk++)
+								for(int chn = 0; chn < channel; chn++)
 								{
-									for(V3DLONG cbj = cbjs; cbj < cbje; cbj++)
+									unsigned char * curimg1d_channel = curimg1d + chn * cbs012;
+									unsigned char * parimg1d_channel = parimg1d + chn * pbs012;
+
+									for(V3DLONG cbk = cbks; cbk < cbke; cbk++)
 									{
-										for(V3DLONG cbi = cbis; cbi < cbie; cbi++)
+										for(V3DLONG cbj = cbjs; cbj < cbje; cbj++)
 										{
-											if(0)//is_blur)
+											for(V3DLONG cbi = cbis; cbi < cbie; cbi++)
 											{
-												V3DLONG pbi = (cbi - cbis)*2;
-												V3DLONG pbj = (cbj - cbjs)*2;
-												V3DLONG pbk = (cbk - cbks)*2;
-												V3DLONG pind = pbk * pbs01 + pbj * pbs0 + pbi;
-												V3DLONG cind = cbk * cbs01 + cbj * cbs0 + cbi;
-												curimg1d[cind] = parimg1d[pind];
-											}
-											else
-											{
-												V3DLONG pbi = (cbi - cbis)*2;
-												V3DLONG pbj = (cbj - cbjs)*2;
-												V3DLONG pbk = (cbk - cbks)*2;
-												V3DLONG pind = pbk * pbs01 + pbj * pbs0 + pbi;
-												V3DLONG cind = cbk * cbs01 + cbj * cbs0 + cbi;
-												double sum_int = 0.0; int count = 0;
-												sum_int += parimg1d[pind];
-												if(pbi + 1 < pbs0) {sum_int += parimg1d[pind + 1]; count++;}
-												if(pbj + 1 < pbs1) {sum_int += parimg1d[pind + pbs0]; count++;}
-												if(pbk + 1 < pbs2) {sum_int += parimg1d[pind + pbs01]; count++;}
-												if(pbi + 1 < pbs0 && pbj + 1 < pbs1) {sum_int += parimg1d[pind + 1 + pbs0]; count++;}
-												if(pbi + 1 < pbs0 && pbk + 1 < pbs2) {sum_int += parimg1d[pind + 1 + pbs01]; count++;}
-												if(pbj + 1 < pbs1 && pbk + 1 < pbs2) {sum_int += parimg1d[pind + pbs0 + pbs01]; count++;}
-												if(pbi + 1 < pbs0 && pbj + 1 < pbs1 && pbk + 1 < pbs2) {sum_int += parimg1d[pind + 1 + pbs0 + pbs01]; count++;}
-												curimg1d[cind] = sum_int/count + 0.5;
+												if(0) //is_blur
+												{
+													V3DLONG pbi = (cbi - cbis)*2;
+													V3DLONG pbj = (cbj - cbjs)*2;
+													V3DLONG pbk = (cbk - cbks)*2;
+													V3DLONG pind = pbk * pbs01 + pbj * pbs0 + pbi;
+													V3DLONG cind = cbk * cbs01 + cbj * cbs0 + cbi;
+													curimg1d_channel[cind] = parimg1d_channel[pind];
+												}
+												else
+												{
+													V3DLONG pbi = (cbi - cbis)*2;
+													V3DLONG pbj = (cbj - cbjs)*2;
+													V3DLONG pbk = (cbk - cbks)*2;
+													V3DLONG pind = pbk * pbs01 + pbj * pbs0 + pbi;
+													V3DLONG cind = cbk * cbs01 + cbj * cbs0 + cbi;
+													double sum_int = 0.0; int count = 0;
+													sum_int += parimg1d_channel[pind];
+													if(pbi + 1 < pbs0) {sum_int += parimg1d_channel[pind + 1]; count++;}
+													if(pbj + 1 < pbs1) {sum_int += parimg1d_channel[pind + pbs0]; count++;}
+													if(pbk + 1 < pbs2) {sum_int += parimg1d_channel[pind + pbs01]; count++;}
+													if(pbi + 1 < pbs0 && pbj + 1 < pbs1) {sum_int += parimg1d_channel[pind + 1 + pbs0]; count++;}
+													if(pbi + 1 < pbs0 && pbk + 1 < pbs2) {sum_int += parimg1d_channel[pind + 1 + pbs01]; count++;}
+													if(pbj + 1 < pbs1 && pbk + 1 < pbs2) {sum_int += parimg1d_channel[pind + pbs0 + pbs01]; count++;}
+													if(pbi + 1 < pbs0 && pbj + 1 < pbs1 && pbk + 1 < pbs2) {sum_int += parimg1d_channel[pind + 1 + pbs0 + pbs01]; count++;}
+													curimg1d_channel[cind] = sum_int/count + 0.5;
+												}
 											}
 										}
 									}
