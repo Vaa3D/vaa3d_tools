@@ -122,12 +122,14 @@ int load_hraw_data(V3DPluginCallback2 &callback, QWidget *parent)
 	mapview_paras.n = n;
 	mapview_paras.channel = channel;
 	mapview_paras.level_num = level_num;
-	mapview_paras.outsz[0] = 128;
-	mapview_paras.outsz[1] = 63;
-	mapview_paras.outsz[2] = 32;
+	double ds_factor = sqrt((L*l * M*m)/(512.0*512.0));
+	mapview_paras.outsz[0] = L * l / ds_factor;
+	mapview_paras.outsz[1] = M * m / ds_factor;
+	mapview_paras.outsz[2] = 1;
 
 	MapViewWidget * mapview_widget = new MapViewWidget(&callback, mapview_paras, 0);
 	mapview_widget->show();
+	//mapview_widget->changeLevel_mapv((int)(log(ds_factor)/log(2.0) + 0.5));
 	
 	return 1;
 }

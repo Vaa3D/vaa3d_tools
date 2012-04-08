@@ -39,6 +39,7 @@ void ImageMapView::setPara(string _dir, V3DLONG _L, V3DLONG _M, V3DLONG _N, V3DL
 	dir = _dir; L = _L; M = _M; N = _N; l = _l; m = _m; n = _n; channel = _channel;
 }
 
+// level start from 0
 void ImageMapView::getBlockTillingSize(V3DLONG level, V3DLONG & ts0, V3DLONG & ts1, V3DLONG & ts2, V3DLONG &bs0, V3DLONG &bs1, V3DLONG &bs2)
 {
 	ts0 = L;
@@ -48,7 +49,7 @@ void ImageMapView::getBlockTillingSize(V3DLONG level, V3DLONG & ts0, V3DLONG & t
 	bs1 = m;
 	bs2 = n;
 	
-	for(int i = 1; i < level; i++)
+	for(int i = 0; i < level; i++)
 	{
 		ts0 = (ts0 + 1)/2;
 		ts1 = (ts1 + 1)/2;
@@ -77,7 +78,7 @@ void ImageMapView::getImage(V3DLONG level, unsigned char * & outimg1d, V3DLONG x
 	getBlockTillingSize(level,ts0, ts1, ts2, bs0, bs1, bs2);
 
 	cout<<"level = "<<level<<endl;
-	cout<<"x0 = "<<x0<<endl;
+	/*cout<<"x0 = "<<x0<<endl;
 	cout<<"y0 = "<<y0<<endl;
 	cout<<"z0 = "<<z0<<endl;
 	cout<<"outsz0 = "<<outsz0<<endl;
@@ -89,17 +90,17 @@ void ImageMapView::getImage(V3DLONG level, unsigned char * & outimg1d, V3DLONG x
 	cout<<"bs0 = "<<bs0<<endl;
 	cout<<"bs1 = "<<bs1<<endl;
 	cout<<"bs2 = "<<bs2<<endl;
-
+*/
 	V3DLONG tis = x0/bs0, tie = (((x0 + outsz0) % bs0) == 0) ? (x0 + outsz0)/bs0 - 1 : (x0 + outsz0)/bs0; tie = MIN(tie, ts0-1);
 	V3DLONG tjs = y0/bs1, tje = (((y0 + outsz1) % bs1) == 0) ? (y0 + outsz1)/bs1 - 1 : (y0 + outsz1)/bs1; tje = MIN(tje, ts1-1);
 	V3DLONG tks = z0/bs2, tke = (((z0 + outsz2) % bs2) == 0) ? (z0 + outsz2)/bs2 - 1 : (z0 + outsz2)/bs2; tke = MIN(tke, ts2-1);
 	V3DLONG block_size = bs0 * bs1 * bs2;
 	V3DLONG bs01 = bs0 * bs1;
 
-	cout<<"tis = "<<tis<<"\ttie = "<<tie<<endl;
+	/*cout<<"tis = "<<tis<<"\ttie = "<<tie<<endl;
 	cout<<"tjs = "<<tjs<<"\ttje = "<<tje<<endl;
 	cout<<"tks = "<<tks<<"\ttke = "<<tke<<endl;
-
+*/
 	// Read related multiple blocks
 	for(V3DLONG tk = tks; tk <= tke; tk++)
 	{
