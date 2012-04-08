@@ -20,6 +20,7 @@ QStringList MapViewPlugin::menulist() const
 {
 	return QStringList() 
 		<<tr("load hraw data")
+		<<tr("create hraw data")
 		<<tr("about");
 }
 
@@ -27,6 +28,7 @@ QStringList MapViewPlugin::funclist() const
 {
 	return QStringList()
 		<<tr("load_hraw_data")
+		<<tr("create_hraw_data")
 		<<tr("help");
 }
 
@@ -35,6 +37,9 @@ void MapViewPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callbac
 	if (menu_name == tr("load hraw data"))
 	{
 		load_hraw_data(callback,parent);
+	}
+	else if(menu_name == tr("create hraw data"))
+	{
 	}
 	else
 	{
@@ -48,6 +53,9 @@ bool MapViewPlugin::dofunc(const QString & func_name, const V3DPluginArgList & i
 	if (func_name == tr("load_hraw_data"))
 	{
 		//return load_hraw_data(input, output);
+	}
+	else if(func_name == tr("create_hraw_data"))
+	{
 	}
 	else if (func_name == tr("help"))
 	{

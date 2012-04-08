@@ -1,3 +1,4 @@
+#include <fstream>
 #include <iostream>
 #include <sstream>
 #include <cmath>
@@ -18,6 +19,12 @@ using namespace std;
 #endif
 
 static bool read_raw_partially(const char * filename, unsigned char * &outimg1d, V3DLONG x0, V3DLONG y0, V3DLONG z0, V3DLONG outsz0, V3DLONG outsz1, V3DLONG outsz2, V3DLONG outsz3 = 0);
+
+static bool is_file_exists(const char * filename)
+{
+	ifstream ifs(filename);
+	return ifs;
+}
 
 ImageMapView::ImageMapView()
 {
@@ -274,10 +281,17 @@ bool raw_split(char * infile, char * dir, V3DLONG outsz0, V3DLONG outsz1, V3DLON
 				unsigned char * outimg1d = 0;
 				ostringstream oss;
 				oss<<dir<<"/L0/L0_X"<<bx<<"_Y"<<by<<"_Z"<<bz<<".raw";
-				read_raw_partially(infile, outimg1d, x0, y0, z0, outsz0, outsz1, outsz2, channel);
-				V3DLONG outsz[4] = {outsz0, outsz1, outsz2, channel};
-				cout<<"save "<<oss.str()<<endl;
-				saveImage(oss.str().c_str(), outimg1d, outsz, V3D_UINT8);
+				if(!is_file_exists(oss.str().c_str()))
+				{
+					read_raw_partially(infile, outimg1d, x0, y0, z0, outsz0, outsz1, outsz2, channel);
+					V3DLONG outsz[4] = {outsz0, outsz1, outsz2, channel};
+					cout<<"save "<<oss.str()<<endl;
+					saveImage(oss.str().c_str(), outimg1d, outsz, V3D_UINT8);
+				}
+				else
+				{
+					cout<<oss.str()<<" exists"<<endl;
+				}
 			}
 		}
 	}
@@ -336,6 +350,7 @@ bool createMapViewFiles(char * dir, V3DLONG ts0, V3DLONG ts1, V3DLONG ts2)
 			ostringstream oss; oss<<"mkdir "<<dir<<"/L"<<level+1;
 			system(oss.str().c_str());
 		}
+
 		if((pts0 == 1 && pbs0 == 1) ||
 		   (pts1 == 1 && pbs1 == 1) ||
 		   (pts2 == 1 && pbs2 == 1)) break;
@@ -355,9 +370,20 @@ bool createMapViewFiles(char * dir, V3DLONG ts0, V3DLONG ts1, V3DLONG ts2)
 			{
 				for(V3DLONG ti = 0; ti < cts0; ti++)
 				{
-					V3DLONG gimax = (pts0 % 2 == 0) ? 1 : 0;
-					V3DLONG gjmax = (pts1 % 2 == 0) ? 1 : 0;
-					V3DLONG gkmax = (pts2 % 2 == 0) ? 1 : 0;
+					string curimg_file;
+					{
+						ostringstream oss; oss<<dir<<"/L"<<level+1<<"/L"<<level+1<<"_X"<<ti<<"_Y"<<tj<<"_Z"<<tk<<".raw";
+						curimg_file = oss.str();
+						if(is_file_exists(curimg_file.c_str()))
+						{
+							cout<<curimg_file<<" exists"<<endl;
+							continue;
+						}
+					}
+
+					V3DLONG gimax = (ti == cts0 - 1 && 2*cts0 - 1 == pts0) ? 0 : 1;
+					V3DLONG gjmax = (tj == cts1 - 1 && 2*cts1 - 1 == pts1) ? 0 : 1;
+					V3DLONG gkmax = (tk == cts2 - 1 && 2*cts2 - 1 == pts2) ? 0 : 1;
 
 					unsigned char * curimg1d = new unsigned char[cbs012 * channel]; memset(curimg1d, 0, cbs012 * channel);
 					// grid i, j k
@@ -370,6 +396,8 @@ bool createMapViewFiles(char * dir, V3DLONG ts0, V3DLONG ts1, V3DLONG ts2)
 								ostringstream oss;
 								oss<<dir<<"/L"<<level<<"/L"<<level<<"_X"<<2*ti + gi<<"_Y"<<2*tj + gj<<"_Z"<<2*tk + gk<<".raw";
 								string parimg_file = oss.str();
+								if(!is_file_exists(parimg_file.c_str())) continue;
+
 								unsigned char * parimg1d = 0; V3DLONG * parsz = 0; int datatype;
 								if(!loadImage((char *) parimg_file.c_str(), parimg1d, parsz, datatype)){cerr<<"load "<<parimg_file<<" error."<<endl; return false;}
 								if(parsz[0] != pbs0 || parsz[1] != pbs1 || parsz[2] != pbs2 || parsz[3] != channel)
@@ -428,11 +456,9 @@ bool createMapViewFiles(char * dir, V3DLONG ts0, V3DLONG ts1, V3DLONG ts2)
 								if(parsz){delete [] parsz; parsz = 0;}
 							}
 						}
-					}
-					ostringstream oss; oss<<dir<<"/L"<<level+1<<"/L"<<level+1<<"_X"<<ti<<"_Y"<<tj<<"_Z"<<tk<<".raw";
-					string curimg_file = oss.str();
-					V3DLONG cursz[4] = {cbs0, cbs1, cbs2, 1};
+					}	
 					cout<<"======== save "<<curimg_file<<" ========="<<endl;
+					V3DLONG cursz[4] = {cbs0, cbs1, cbs2, channel};
 					saveImage((char*) curimg_file.c_str(), curimg1d, cursz, V3D_UINT8);
 					if(curimg1d){delete [] curimg1d; curimg1d = 0;}
 				}
