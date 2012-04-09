@@ -10,4 +10,4 @@ CXX_FLAGS =  -I${VAA3D_PATH}/v3d_main/basic_c_fun \
 			 ${VAA3D_PATH}/v3d_main/basic_c_fun/stackutil.cpp
 
 create_mapview_data:
-	g++ ${CXX_FLAGS} mapview.cpp main.cpp -o create_mapview_data
+	g++ -lpthread ${CXX_FLAGS} mapview.cpp main.cpp -o create_mapview_data

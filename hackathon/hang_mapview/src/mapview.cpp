@@ -4,7 +4,10 @@
 #include <cmath>
 #include <string>
 #include <cassert>
+#include <set>
+#include <map>
 
+#include <pthread.h>
 #include "stackutil.h"
 #include "mapview.h"
 
@@ -26,12 +29,44 @@ static bool is_file_exists(const char * filename)
 	return ifs;
 }
 
+// thread data and func
+static map<string, unsigned char*> block_buff_map;
+static void * loadBlockImage(void* para)
+{
+	string filename = (char*)(para);
+	assert(block_buff_map.find(filename) == block_buff_map.end());
+
+	unsigned char * inimg1d = 0; 
+	V3DLONG * in_sz = 0;
+	int datatype;
+	if(loadImage((char*)filename.c_str(), inimg1d, in_sz, datatype))
+	{
+		delete [] in_sz; in_sz = 0;
+		block_buff_map[filename] = inimg1d;
+	}
+	else
+	{
+		block_buff_map[filename] = 0;
+	}
+	return 0;
+}
+// thread over
+
 ImageMapView::ImageMapView()
 {
 	L = M = N = 0;
 	l = m = n = 0;
 	channel = 3;
 	dir = "";
+}
+ImageMapView::~ImageMapView()
+{
+	for(map<string, unsigned char*>::iterator it = block_buff_map.begin(); it != block_buff_map.end(); it++)
+	{
+		string filename = it->first;
+		unsigned char * block_buff = it->second;
+		if(block_buff){delete [] block_buff; block_buff = 0;}
+	}
 }
 
 void ImageMapView::setPara(string _dir, V3DLONG _L, V3DLONG _M, V3DLONG _N, V3DLONG _l, V3DLONG _m, V3DLONG _n, V3DLONG _channel)
@@ -78,86 +113,160 @@ void ImageMapView::getImage(V3DLONG level, unsigned char * & outimg1d, V3DLONG x
 	getBlockTillingSize(level,ts0, ts1, ts2, bs0, bs1, bs2);
 
 	cout<<"level = "<<level<<endl;
-	/*cout<<"x0 = "<<x0<<endl;
-	cout<<"y0 = "<<y0<<endl;
-	cout<<"z0 = "<<z0<<endl;
-	cout<<"outsz0 = "<<outsz0<<endl;
-	cout<<"outsz1 = "<<outsz1<<endl;
-	cout<<"outsz2 = "<<outsz2<<endl;
-	cout<<"ts0 = "<<ts0<<endl;
-	cout<<"ts1 = "<<ts1<<endl;
-	cout<<"ts2 = "<<ts2<<endl;
-	cout<<"bs0 = "<<bs0<<endl;
-	cout<<"bs1 = "<<bs1<<endl;
-	cout<<"bs2 = "<<bs2<<endl;
-*/
+
 	V3DLONG tis = x0/bs0, tie = (((x0 + outsz0) % bs0) == 0) ? (x0 + outsz0)/bs0 - 1 : (x0 + outsz0)/bs0; tie = MIN(tie, ts0-1);
 	V3DLONG tjs = y0/bs1, tje = (((y0 + outsz1) % bs1) == 0) ? (y0 + outsz1)/bs1 - 1 : (y0 + outsz1)/bs1; tje = MIN(tje, ts1-1);
 	V3DLONG tks = z0/bs2, tke = (((z0 + outsz2) % bs2) == 0) ? (z0 + outsz2)/bs2 - 1 : (z0 + outsz2)/bs2; tke = MIN(tke, ts2-1);
 	V3DLONG block_size = bs0 * bs1 * bs2;
 	V3DLONG bs01 = bs0 * bs1;
 
-	/*cout<<"tis = "<<tis<<"\ttie = "<<tie<<endl;
-	cout<<"tjs = "<<tjs<<"\ttje = "<<tje<<endl;
-	cout<<"tks = "<<tks<<"\ttke = "<<tke<<endl;
-*/
 	// Read related multiple blocks
-	for(V3DLONG tk = tks; tk <= tke; tk++)
+
+	bool is_use_thread = true;
+	if(is_use_thread)
 	{
-		for(V3DLONG tj = tjs; tj <= tje; tj++)
+		set<string> loaded_blocks;
+		set<string> threaded_files;
+		while(true)
 		{
-			for(V3DLONG ti = tis; ti <= tie; ti++)
+			bool is_all_blocks_loaded = true;
+			for(V3DLONG tk = tks; tk <= tke; tk++)
 			{
-				V3DLONG bis = (ti == tis) ? (x0 - tis * bs0) : 0;                   // the start x index in current block
-				V3DLONG bjs = (tj == tjs) ? (y0 - tjs * bs1) : 0;                   // the start y index in current block
-				V3DLONG bks = (tk == tks) ? (z0 - tks * bs2) : 0;                   // the start z index in current block
-				V3DLONG bie = (ti == tie) ? (x0 + outsz0 - tie * bs0 - 1) : bs0 - 1;   // the end x index in current block
-				V3DLONG bje = (tj == tje) ? (y0 + outsz1 - tje * bs1 - 1) : bs1 - 1;   // the end y index in current block
-				V3DLONG bke = (tk == tke) ? (z0 + outsz2 - tke * bs2 - 1) : bs2 - 1;   // the end z index in current block
-
-				cout<<"bis = "<<bis<<"\tbie = "<<bie<<endl;
-				cout<<"bjs = "<<bjs<<"\tbje = "<<bje<<endl;
-				cout<<"bks = "<<bks<<"\tbke = "<<bke<<endl;
-
-				V3DLONG ois = ti * bs0 - x0;
-				V3DLONG ojs = tj * bs1 - y0;
-				V3DLONG oks = tk * bs2 - z0;
-
-				unsigned char * tmpimg1d = 0; 
-				V3DLONG tmpsz0 = bie - bis + 1;
-				V3DLONG tmpsz1 = bje - bjs + 1;
-				V3DLONG tmpsz2 = bke - bks + 1;
-				V3DLONG tmpsz01 = tmpsz0 * tmpsz1;
-				V3DLONG tmpsz012 = tmpsz01 * tmpsz2;
-
-				ostringstream oss;
-				oss<<dir<<"/L"<<level<<"/L"<<level<<"_X"<<ti<<"_Y"<<tj<<"_Z"<<tk<<".raw";
-				cout<<"read "<<oss.str()<<endl;
-				char * filename = (char*) oss.str().c_str();
-
-				read_raw_partially(filename, tmpimg1d, bis, bjs, bks, tmpsz0, tmpsz1, tmpsz2, 0);
-
-				for(V3DLONG c = 0; c < channel; c++)
+				for(V3DLONG tj = tjs; tj <= tje; tj++)
 				{
-					unsigned char * tmpimg1d_channel = tmpimg1d + c * tmpsz012;
-					unsigned char * outimg1d_channel = outimg1d + c * outsz012;
-					for(V3DLONG bk = bks; bk <= bke; bk++)
+					for(V3DLONG ti = tis; ti <= tie; ti++)
 					{
-						V3DLONG ok = oks + bk;
-						for(V3DLONG bj = bjs; bj <= bje; bj++)
+						ostringstream oss;
+						oss<<dir<<"/L"<<level<<"/L"<<level<<"_X"<<ti<<"_Y"<<tj<<"_Z"<<tk<<".raw";
+						string filename = oss.str();
+						if(block_buff_map.find(filename) == block_buff_map.end()) // if not loaded before
 						{
-							V3DLONG oj = ojs + bj;
-							for(V3DLONG bi = bis; bi <= bie; bi++)
+							is_all_blocks_loaded = false;
+							if(threaded_files.find(filename) == threaded_files.end()) // if not in thread
 							{
-								V3DLONG oi = ois + bi;
-								V3DLONG ind1 = ok * outsz01 + oj * outsz0 + oi;
-								V3DLONG ind2 = (bk-bks) * tmpsz01 + (bj-bjs) * tmpsz0 + (bi-bis);
-								outimg1d_channel[ind1] = tmpimg1d_channel[ind2];
+								pthread_t thread1;
+								pthread_create(&thread1, NULL, loadBlockImage, (void*)filename.c_str());
+								pthread_join(thread1, NULL);
+								threaded_files.insert(filename);
+							}
+						}
+						else
+						{
+							loaded_blocks.insert(filename);
+							unsigned char * tmpimg1d = block_buff_map[filename];
+							if(tmpimg1d == 0) continue;
+
+							V3DLONG bis = (ti == tis) ? (x0 - tis * bs0) : 0;                   // the start x index in current block
+							V3DLONG bjs = (tj == tjs) ? (y0 - tjs * bs1) : 0;                   // the start y index in current block
+							V3DLONG bks = (tk == tks) ? (z0 - tks * bs2) : 0;                   // the start z index in current block
+							V3DLONG bie = (ti == tie) ? (x0 + outsz0 - tie * bs0 - 1) : bs0 - 1;   // the end x index in current block
+							V3DLONG bje = (tj == tje) ? (y0 + outsz1 - tje * bs1 - 1) : bs1 - 1;   // the end y index in current block
+							V3DLONG bke = (tk == tke) ? (z0 + outsz2 - tke * bs2 - 1) : bs2 - 1;   // the end z index in current block
+
+							V3DLONG ois = ti*bs0 - x0;
+							V3DLONG ojs = tj*bs1 - y0;
+							V3DLONG oks = tk*bs2 - z0;
+
+							for(V3DLONG c = 0; c < channel; c++)
+							{
+								unsigned char * tmpimg1d_channel = tmpimg1d + c * block_size;
+								unsigned char * outimg1d_channel = outimg1d + c * outsz012;
+								for(V3DLONG bk = bks; bk <= bke; bk++)
+								{
+									V3DLONG ok = oks + bk; //tk * bs2 + bk - z0;
+									for(V3DLONG bj = bjs; bj <= bje; bj++)
+									{
+										V3DLONG oj = ojs + bj;//tj * bs1 + bj - y0;
+										for(V3DLONG bi = bis; bi <= bie; bi++)
+										{
+											V3DLONG oi = ois + bi;// ti * bs0 + bi - x0;
+											V3DLONG ind1 = ok * outsz01 + oj * outsz0 + oi;
+											V3DLONG ind2 = bk * bs01 + bj * bs0 + bi;
+											outimg1d_channel[ind1] = tmpimg1d_channel[ind2];
+										}
+									}
+								}
 							}
 						}
 					}
 				}
-				if(tmpimg1d){delete [] tmpimg1d; tmpimg1d = 0;}
+			}
+			if(is_all_blocks_loaded) break;
+		}
+
+		// delete unused blocks
+		map<string, unsigned char*>::iterator it = block_buff_map.begin();
+		while(it != block_buff_map.end())
+		{
+			string filename = it->first;
+			unsigned char * block_buff = it->second;
+			if(loaded_blocks.find(filename) == loaded_blocks.end())
+			{
+				if(block_buff){delete [] block_buff; block_buff = 0;}
+				block_buff_map.erase(it);
+			}
+			it++;
+		}
+	}
+	else
+	{
+		for(V3DLONG tk = tks; tk <= tke; tk++)
+		{
+			for(V3DLONG tj = tjs; tj <= tje; tj++)
+			{
+				for(V3DLONG ti = tis; ti <= tie; ti++)
+				{
+					V3DLONG bis = (ti == tis) ? (x0 - tis * bs0) : 0;                   // the start x index in current block
+					V3DLONG bjs = (tj == tjs) ? (y0 - tjs * bs1) : 0;                   // the start y index in current block
+					V3DLONG bks = (tk == tks) ? (z0 - tks * bs2) : 0;                   // the start z index in current block
+					V3DLONG bie = (ti == tie) ? (x0 + outsz0 - tie * bs0 - 1) : bs0 - 1;   // the end x index in current block
+					V3DLONG bje = (tj == tje) ? (y0 + outsz1 - tje * bs1 - 1) : bs1 - 1;   // the end y index in current block
+					V3DLONG bke = (tk == tke) ? (z0 + outsz2 - tke * bs2 - 1) : bs2 - 1;   // the end z index in current block
+
+					cout<<"bis = "<<bis<<"\tbie = "<<bie<<endl;
+					cout<<"bjs = "<<bjs<<"\tbje = "<<bje<<endl;
+					cout<<"bks = "<<bks<<"\tbke = "<<bke<<endl;
+
+					V3DLONG ois = ti * bs0 - x0;
+					V3DLONG ojs = tj * bs1 - y0;
+					V3DLONG oks = tk * bs2 - z0;
+
+					unsigned char * tmpimg1d = 0; 
+					V3DLONG tmpsz0 = bie - bis + 1;
+					V3DLONG tmpsz1 = bje - bjs + 1;
+					V3DLONG tmpsz2 = bke - bks + 1;
+					V3DLONG tmpsz01 = tmpsz0 * tmpsz1;
+					V3DLONG tmpsz012 = tmpsz01 * tmpsz2;
+
+					ostringstream oss;
+					oss<<dir<<"/L"<<level<<"/L"<<level<<"_X"<<ti<<"_Y"<<tj<<"_Z"<<tk<<".raw";
+					cout<<"read "<<oss.str()<<endl;
+					char * filename = (char*) oss.str().c_str();
+
+					read_raw_partially(filename, tmpimg1d, bis, bjs, bks, tmpsz0, tmpsz1, tmpsz2, 0);
+
+					for(V3DLONG c = 0; c < channel; c++)
+					{
+						unsigned char * tmpimg1d_channel = tmpimg1d + c * tmpsz012;
+						unsigned char * outimg1d_channel = outimg1d + c * outsz012;
+						for(V3DLONG bk = bks; bk <= bke; bk++)
+						{
+							V3DLONG ok = oks + bk;
+							for(V3DLONG bj = bjs; bj <= bje; bj++)
+							{
+								V3DLONG oj = ojs + bj;
+								for(V3DLONG bi = bis; bi <= bie; bi++)
+								{
+									V3DLONG oi = ois + bi;
+									V3DLONG ind1 = ok * outsz01 + oj * outsz0 + oi;
+									V3DLONG ind2 = (bk-bks) * tmpsz01 + (bj-bjs) * tmpsz0 + (bi-bis);
+									outimg1d_channel[ind1] = tmpimg1d_channel[ind2];
+								}
+							}
+						}
+					}
+					if(tmpimg1d){delete [] tmpimg1d; tmpimg1d = 0;}
+				}
 			}
 		}
 	}

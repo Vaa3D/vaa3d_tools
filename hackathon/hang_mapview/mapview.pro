@@ -7,7 +7,7 @@ INCLUDEPATH	+= $$VAA3DPATH/v3d_main/basic_c_fun
 INCLUDEPATH     += $$VAA3DPATH/v3d_main/common_lib/include
 INCLUDEPATH	+= src
 
-LIBS += -L$$VAA3DPATH/v3d_main/common_lib/lib_mac64 -lv3dtiff
+LIBS += -L$$VAA3DPATH/v3d_main/common_lib/lib_mac64 -lv3dtiff -lpthread
 
 HEADERS	+= mapview_plugin.h
 HEADERS	+= mapview_gui.h
