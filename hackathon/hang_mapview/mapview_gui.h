@@ -63,6 +63,7 @@ public:
 
         xSlider_mapv = new QScrollBar(Qt::Horizontal);
         xSlider_mapv->setRange(0, dimx-mapview_paras.outsz[0]); //need redefine range
+		xSlider_mapv->setSingleStep(1);
         xSlider_mapv->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
         QLabel* xSliderLabel_mapv = new QLabel("X");
 
@@ -73,6 +74,7 @@ public:
 
         ySlider_mapv = new QScrollBar(Qt::Horizontal);
         ySlider_mapv->setRange(0, dimy-mapview_paras.outsz[1]); //need redefine range
+		ySlider_mapv->setSingleStep(1);
         ySlider_mapv->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
         QLabel* ySliderLabel_mapv = new QLabel("Y");
 
@@ -83,6 +85,8 @@ public:
 
         zSlider_mapv = new QScrollBar(Qt::Horizontal);
         zSlider_mapv->setRange(0, dimz-mapview_paras.outsz[2]); //need redefine range
+		zSlider_mapv->setSingleStep(1);
+		zSlider_mapv->setPageStep(1);
         zSlider_mapv->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
         QLabel* zSliderLabel_mapv = new QLabel("Z");
 
@@ -94,6 +98,7 @@ public:
         // zoom slider
         zoomSlider_mapv = new QScrollBar(Qt::Horizontal);
         zoomSlider_mapv->setRange(0, dim_zoom-1); //need redefine range
+		zoomSlider_mapv->setSingleStep(1);
         zoomSlider_mapv->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
         QLabel* zoomLabel_mapv = new QLabel("Zoom");
 
@@ -120,22 +125,15 @@ public:
         layout->addWidget(zoomSpinBox_mapv, 3, 14, 1, 6);
 
         // setup connections
-        connect(xValueSpinBox_mapv, SIGNAL(valueChanged(int)), xSlider_mapv, SLOT(setValue(int)));
-        connect(xSlider_mapv, SIGNAL(valueChanged(int)), xValueSpinBox_mapv, SLOT(setValue(int)));
-
-        connect(yValueSpinBox_mapv, SIGNAL(valueChanged(int)), ySlider_mapv, SLOT(setValue(int)));
-        connect(ySlider_mapv, SIGNAL(valueChanged(int)), yValueSpinBox_mapv, SLOT(setValue(int)));
-
-        connect(zValueSpinBox_mapv, SIGNAL(valueChanged(int)), zSlider_mapv, SLOT(setValue(int)));
-        connect(zSlider_mapv, SIGNAL(valueChanged(int)), zValueSpinBox_mapv, SLOT(setValue(int)));
-
-        connect(zoomSpinBox_mapv, SIGNAL(valueChanged(int)), zoomSlider_mapv, SLOT(setValue(int)));
-        connect(zoomSlider_mapv, SIGNAL(valueChanged(int)), zoomSpinBox_mapv, SLOT(setValue(int)));
-
-        connect(xSlider_mapv,    SIGNAL(valueChanged(int)), this, SLOT(changeXOffset_mapv(int)));
-        connect(ySlider_mapv,    SIGNAL(valueChanged(int)), this, SLOT(changeYOffset_mapv(int)));
-        connect(zSlider_mapv,    SIGNAL(valueChanged(int)), this, SLOT(changeZOffset_mapv(int)));
+		connect(xSlider_mapv,    SIGNAL(valueChanged(int)), this, SLOT(changeXOffset_mapv(int)));
+		connect(ySlider_mapv,    SIGNAL(valueChanged(int)), this, SLOT(changeYOffset_mapv(int)));
+		connect(zSlider_mapv,    SIGNAL(valueChanged(int)), this, SLOT(changeZOffset_mapv(int)));
         connect(zoomSlider_mapv, SIGNAL(valueChanged(int)), this, SLOT(changeLevel_mapv(int)));
+
+        //connect(xValueSpinBox_mapv,    SIGNAL(valueChanged(int)), this, SLOT(changeXOffset_mapv(int)));
+        //connect(yValueSpinBox_mapv,    SIGNAL(valueChanged(int)), this, SLOT(changeYOffset_mapv(int)));
+        //connect(zValueSpinBox_mapv,    SIGNAL(valueChanged(int)), this, SLOT(changeZOffset_mapv(int)));
+        //connect(zoomSpinBox_mapv,      SIGNAL(valueChanged(int)), this, SLOT(changeLevel_mapv(int)));
 
 		updateTriView();
 	}
@@ -221,24 +219,40 @@ private:
 public slots:
 	void changeXOffset_mapv(int x)
 	{
-		mapview_paras.origin[0] = x;
-		updateTriView();
+		if(xSlider_mapv->value() != x) xSlider_mapv->setValue(x);
+		else if(xValueSpinBox_mapv->value() != x) xValueSpinBox_mapv->setValue(x);
+		{
+			mapview_paras.origin[0] = x;
+			updateTriView();
+		}
 	}
 	void changeYOffset_mapv(int y)
 	{
-		mapview_paras.origin[1] = y;
-		updateTriView();
+		if(ySlider_mapv->value() != y) ySlider_mapv->setValue(y);
+		else if(yValueSpinBox_mapv->value() != y) yValueSpinBox_mapv->setValue(y);
+		{
+			mapview_paras.origin[1] = y;
+			updateTriView();
+		}
 	}
 	void changeZOffset_mapv(int z)
 	{
-		mapview_paras.origin[2] = z;
-		updateTriView();
+		if(zSlider_mapv->value() != z) zSlider_mapv->setValue(z);
+		else if(zValueSpinBox_mapv->value() != z) zValueSpinBox_mapv->setValue(z);
+		{
+			mapview_paras.origin[2] = z;
+			updateTriView();
+		}
 	}
 	void changeLevel_mapv(int level)
 	{
-		mapview_paras.level = level;
-		updateLevels(level);
-		updateTriView();
+		if(zoomSlider_mapv->value() != level) zoomSlider_mapv->setValue(level);
+		else if(zoomSpinBox_mapv->value() != level) zoomSpinBox_mapv->setValue(level);
+		{
+			mapview_paras.level = level;
+			updateLevels(level);
+			updateTriView();
+		}
 	}
 };
 

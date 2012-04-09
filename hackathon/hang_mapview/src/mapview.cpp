@@ -165,7 +165,7 @@ void ImageMapView::getImage(V3DLONG level, unsigned char * & outimg1d, V3DLONG x
 
 void getRawImageSize(string filename, V3DLONG &sz0, V3DLONG &sz1, V3DLONG &sz2, V3DLONG &sz3)
 {
-	cout<<"filename = "<<filename<<endl;
+	//cout<<"filename = "<<filename<<endl;
     FILE * fid = fopen((char*) filename.c_str(), "rb");
     if(!fid) return;
 
@@ -186,13 +186,13 @@ void getRawImageSize(string filename, V3DLONG &sz0, V3DLONG &sz1, V3DLONG &sz2, 
 // outsz3 == 0 for all channels
 static bool read_raw_partially(const char * filename, unsigned char * &outimg1d, V3DLONG x0, V3DLONG y0, V3DLONG z0, V3DLONG outsz0, V3DLONG outsz1, V3DLONG outsz2, V3DLONG outsz3)
 {
-	cout<<"read_raw_partially x0 = "<<x0<<" y0 = "<<y0<<" z0 = "<<z0<<" outsz0 = "<<outsz0<<" outsz1 = "<<outsz1<<" outsz2 = "<<outsz2<<" outsz3 = "<<outsz3<<endl;
+	//cout<<"read_raw_partially x0 = "<<x0<<" y0 = "<<y0<<" z0 = "<<z0<<" outsz0 = "<<outsz0<<" outsz1 = "<<outsz1<<" outsz2 = "<<outsz2<<" outsz3 = "<<outsz3<<endl;
 
 	V3DLONG insz0 = 0, insz1 = 0, insz2 = 0, insz3 = 0;
 	getRawImageSize(filename, insz0, insz1, insz2, insz3);
 	V3DLONG insz01 = insz0 * insz1;
 	V3DLONG insz012 = insz01 * insz2;
-	cout<<"insz0 = "<<insz0<<" insz1 = "<<insz1<<" insz2 = "<<insz2<<" insz3 = "<<insz3<<endl;
+	//cout<<"insz0 = "<<insz0<<" insz1 = "<<insz1<<" insz2 = "<<insz2<<" insz3 = "<<insz3<<endl;
 
 	if(outsz3 == 0) outsz3 = insz3;
 
@@ -397,7 +397,7 @@ bool createMapViewFiles(char * dir, V3DLONG ts0, V3DLONG ts1, V3DLONG ts2)
 								ostringstream oss;
 								oss<<dir<<"/L"<<level<<"/L"<<level<<"_X"<<2*ti + gi<<"_Y"<<2*tj + gj<<"_Z"<<2*tk + gk<<".raw";
 								string parimg_file = oss.str();
-								if(!is_file_exists(parimg_file.c_str())) continue;
+								assert(is_file_exists(parimg_file.c_str()));
 
 								unsigned char * parimg1d = 0; V3DLONG * parsz = 0; int datatype;
 								if(!loadImage((char *) parimg_file.c_str(), parimg1d, parsz, datatype)){cerr<<"load "<<parimg_file<<" error."<<endl; return false;}
@@ -438,16 +438,16 @@ bool createMapViewFiles(char * dir, V3DLONG ts0, V3DLONG ts1, V3DLONG ts2)
 													V3DLONG pbk = (cbk - cbks)*2;
 													V3DLONG pind = pbk * pbs01 + pbj * pbs0 + pbi;
 													V3DLONG cind = cbk * cbs01 + cbj * cbs0 + cbi;
-													double sum_int = 0.0; int count = 0;
-													sum_int += parimg1d_channel[pind];
+													double sum_int = parimg1d_channel[pind];
+													int count = 1;
+													if(pbi - 1 >= 0) {sum_int += parimg1d_channel[pind - 1]; count++;}
+													if(pbj - 1 >= 0) {sum_int += parimg1d_channel[pind - pbs0]; count++;}
+													if(pbk - 1 >= 0) {sum_int += parimg1d_channel[pind - pbs01]; count++;}
 													if(pbi + 1 < pbs0) {sum_int += parimg1d_channel[pind + 1]; count++;}
 													if(pbj + 1 < pbs1) {sum_int += parimg1d_channel[pind + pbs0]; count++;}
 													if(pbk + 1 < pbs2) {sum_int += parimg1d_channel[pind + pbs01]; count++;}
-													if(pbi + 1 < pbs0 && pbj + 1 < pbs1) {sum_int += parimg1d_channel[pind + 1 + pbs0]; count++;}
-													if(pbi + 1 < pbs0 && pbk + 1 < pbs2) {sum_int += parimg1d_channel[pind + 1 + pbs01]; count++;}
-													if(pbj + 1 < pbs1 && pbk + 1 < pbs2) {sum_int += parimg1d_channel[pind + pbs0 + pbs01]; count++;}
-													if(pbi + 1 < pbs0 && pbj + 1 < pbs1 && pbk + 1 < pbs2) {sum_int += parimg1d_channel[pind + 1 + pbs0 + pbs01]; count++;}
-													curimg1d_channel[cind] = sum_int/count + 0.5;
+													
+													curimg1d_channel[cind] = sum_int/count + 0.4999;
 												}
 											}
 										}
