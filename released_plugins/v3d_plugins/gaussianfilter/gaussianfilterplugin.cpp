@@ -3,7 +3,8 @@
  * 2009-08-14: change into plugin by Yang Yu
  */
 
-// Upgraded to V3DPluginInterface2_1 by Jianlong Zhou, 2012-04-05
+// Adapted and upgraded to V3DPluginInterface2_1 by Jianlong Zhou, 2012-04-05
+// add dofunc() by Jianlong Zhou, 2012-04-08
 
 #include <QtGui>
 
@@ -28,7 +29,7 @@ Q_EXPORT_PLUGIN2(gaussianfilter, GaussianFilterPlugin)
 void processImage(V3DPluginCallback2 &callback, QWidget *parent);
 bool processImage(const V3DPluginArgList & input, V3DPluginArgList & output);
 void gaussian_filter(unsigned char* data1d, V3DLONG *in_sz, unsigned int wx, unsigned int wy, unsigned int wz, unsigned int ch, double sigma,
-     bool ok1, bool ok2, bool ok3, bool ok4, bool ok5, unsigned char* outimg);
+     unsigned char* &outimg);
 
 const QString title = QObject::tr("Gaussia Filter Plugin");
 QStringList GaussianFilterPlugin::menulist() const
@@ -104,343 +105,20 @@ bool processImage(const V3DPluginArgList & input, V3DPluginArgList & output)
 	unsigned char * data1d = 0,  * outimg1d = 0;
 	float * phi = 0;
 	V3DLONG * in_sz = 0;
+
 	int datatype;
-	if(!loadImage(inimg_file, data1d, in_sz, datatype, c)) {cerr<<"load image "<<inimg_file<<" error!"<<endl; return 1;}
-
-
-     V3DLONG N = in_sz[0];
-     V3DLONG M = in_sz[1];
-     V3DLONG P = in_sz[2];
-     V3DLONG sc = in_sz[3];
-     V3DLONG pagesz = N*M*P;
-
-	float min_val = INF, max_val = 0;
+	if(!loadImage(inimg_file, data1d, in_sz, datatype)) {cerr<<"load image "<<inimg_file<<" error!"<<endl; return 1;}
 
 	//input
-	bool ok1, ok2, ok3, ok4;
+     unsigned char* outimg = 0;
 
-     ok1 = ok2 = ok3 = ok4 = true;
+     gaussian_filter(data1d, in_sz, Wx, Wy, Wz, c, sigma, outimg);
 
-	//gauss filter
-     if(ok4)
-	{
-		//filtering
-		V3DLONG offset_init = (c-1)*pagesz;
-
-		if (ok4)
-		{
-			//declare temporary pointer
-			float *pImage = new float [pagesz];
-			if (!pImage)
-			{
-				printf("Fail to allocate memory.\n");
-				return false;
-               }
-               else
-               {
-				for(V3DLONG i=0; i<pagesz; i++)
-					pImage[i] = data1d[i + offset_init];  //first channel data (red in V3D, green in ImageJ)
-               }
-
-			//Filtering
-			//
-			//   Filtering along x
-			if(N<2)
-			{
-				//do nothing
-			}
-			else
-			{
-				//create Gaussian kernel
-				float  *WeightsX = 0;
-				WeightsX = new float [Wx];
-				if (!WeightsX)
-					return false;
-
-				unsigned int Half = Wx >> 1;
-				WeightsX[Half] = 1.;
-
-				for (unsigned int Weight = 1; Weight < Half + 1; ++Weight)
-				{
-					const float  x = 3.* float (Weight) / float (Half);
-					WeightsX[Half - Weight] = WeightsX[Half + Weight] = exp(-x * x * sigma_s2);	// Corresponding symmetric WeightsX
-				}
-
-				double k = 0.;
-				for (unsigned int Weight = 0; Weight < Wx; ++Weight)
-					k += WeightsX[Weight];
-
-				for (unsigned int Weight = 0; Weight < Wx; ++Weight)
-					WeightsX[Weight] /= k;
-
-
-				//   Allocate 1-D extension array
-				float  *extension_bufferX = 0;
-				extension_bufferX = new float [N + (Wx<<1)];
-
-				unsigned int offset = Wx>>1;
-
-				//	along x
-				const float  *extStop = extension_bufferX + N + offset;
-
-				for(V3DLONG iz = 0; iz < P; iz++)
-				{
-					for(V3DLONG iy = 0; iy < M; iy++)
-					{
-						float  *extIter = extension_bufferX + Wx;
-						for(V3DLONG ix = 0; ix < N; ix++)
-						{
-							*(extIter++) = pImage[iz*M*N + iy*N + ix];
-						}
-
-						//   Extend image
-						const float  *const stop_line = extension_bufferX - 1;
-						float  *extLeft = extension_bufferX + Wx - 1;
-						const float  *arrLeft = extLeft + 2;
-						float  *extRight = extLeft + N + 1;
-						const float  *arrRight = extRight - 2;
-
-						while (extLeft > stop_line)
-						{
-							*(extLeft--) = *(arrLeft++);
-							*(extRight++) = *(arrRight--);
-						}
-
-						//	Filtering
-						extIter = extension_bufferX + offset;
-
-						float  *resIter = &(pImage[iz*M*N + iy*N]);
-
-						while (extIter < extStop)
-						{
-							double sum = 0.;
-							const float  *weightIter = WeightsX;
-							const float  *const End = WeightsX + Wx;
-							const float * arrIter = extIter;
-							while (weightIter < End)
-								sum += *(weightIter++) * float (*(arrIter++));
-							extIter++;
-							*(resIter++) = sum;
-
-							//for rescale
-							if(max_val<*arrIter) max_val = *arrIter;
-							if(min_val>*arrIter) min_val = *arrIter;
-						}
-					}
-				}
-
-				//de-alloc
-				if (WeightsX) {delete []WeightsX; WeightsX=0;}
-				if (extension_bufferX) {delete []extension_bufferX; extension_bufferX=0;}
-
-			}
-
-			//   Filtering along y
-			if(M<2)
-			{
-				//do nothing
-			}
-			else
-			{
-				//create Gaussian kernel
-				float  *WeightsY = 0;
-				WeightsY = new float [Wy];
-				if (!WeightsY)
-					return false;
-
-				unsigned int Half = Wy >> 1;
-				WeightsY[Half] = 1.;
-
-				for (unsigned int Weight = 1; Weight < Half + 1; ++Weight)
-				{
-					const float  y = 3.* float (Weight) / float (Half);
-					WeightsY[Half - Weight] = WeightsY[Half + Weight] = exp(-y * y * sigma_s2);	// Corresponding symmetric WeightsY
-				}
-
-				double k = 0.;
-				for (unsigned int Weight = 0; Weight < Wy; ++Weight)
-					k += WeightsY[Weight];
-
-				for (unsigned int Weight = 0; Weight < Wy; ++Weight)
-					WeightsY[Weight] /= k;
-
-				//	along y
-				float  *extension_bufferY = 0;
-				extension_bufferY = new float [M + (Wy<<1)];
-
-				unsigned int offset = Wy>>1;
-				const float *extStop = extension_bufferY + M + offset;
-
-				for(V3DLONG iz = 0; iz < P; iz++)
-				{
-					for(V3DLONG ix = 0; ix < N; ix++)
-					{
-						float  *extIter = extension_bufferY + Wy;
-						for(V3DLONG iy = 0; iy < M; iy++)
-						{
-							*(extIter++) = pImage[iz*M*N + iy*N + ix];
-						}
-
-						//   Extend image
-						const float  *const stop_line = extension_bufferY - 1;
-						float  *extLeft = extension_bufferY + Wy - 1;
-						const float  *arrLeft = extLeft + 2;
-						float  *extRight = extLeft + M + 1;
-						const float  *arrRight = extRight - 2;
-
-						while (extLeft > stop_line)
-						{
-                                   *(extLeft--) = *(arrLeft++);
-                                   *(extRight++) = *(arrRight--);
-						}
-
-						//	Filtering
-						extIter = extension_bufferY + offset;
-
-						float  *resIter = &(pImage[iz*M*N + ix]);
-
-						while (extIter < extStop)
-						{
-                                   double sum = 0.;
-                                   const float  *weightIter = WeightsY;
-                                   const float  *const End = WeightsY + Wy;
-                                   const float * arrIter = extIter;
-                                   while (weightIter < End)
-                                        sum += *(weightIter++) * float (*(arrIter++));
-                                   extIter++;
-                                   *resIter = sum;
-                                   resIter += N;
-
-							//for rescale
-							if(max_val<*arrIter) max_val = *arrIter;
-							if(min_val>*arrIter) min_val = *arrIter;
-						}
-					}
-				}
-
-				//de-alloc
-				if (WeightsY) {delete []WeightsY; WeightsY=0;}
-				if (extension_bufferY) {delete []extension_bufferY; extension_bufferY=0;}
-			}
-
-			//  Filtering  along z
-			if(P<2)
-			{
-				//do nothing
-			}
-			else
-			{
-				//create Gaussian kernel
-				float  *WeightsZ = 0;
-				WeightsZ = new float [Wz];
-				if (!WeightsZ)
-					return false;
-
-				unsigned int Half = Wz >> 1;
-				WeightsZ[Half] = 1.;
-
-				for (unsigned int Weight = 1; Weight < Half + 1; ++Weight)
-				{
-					const float  z = 3.* float (Weight) / float (Half);
-					WeightsZ[Half - Weight] = WeightsZ[Half + Weight] = exp(-z * z * sigma_s2);	// Corresponding symmetric WeightsZ
-				}
-
-				double k = 0.;
-				for (unsigned int Weight = 0; Weight < Wz; ++Weight)
-					k += WeightsZ[Weight];
-
-				for (unsigned int Weight = 0; Weight < Wz; ++Weight)
-					WeightsZ[Weight] /= k;
-
-
-				//	along z
-				float  *extension_bufferZ = 0;
-				extension_bufferZ = new float [P + (Wz<<1)];
-
-				unsigned int offset = Wz>>1;
-				const float *extStop = extension_bufferZ + P + offset;
-
-				for(V3DLONG iy = 0; iy < M; iy++)
-				{
-					for(V3DLONG ix = 0; ix < N; ix++)
-					{
-
-						float  *extIter = extension_bufferZ + Wz;
-						for(V3DLONG iz = 0; iz < P; iz++)
-						{
-							*(extIter++) = pImage[iz*M*N + iy*N + ix];
-						}
-
-						//   Extend image
-						const float  *const stop_line = extension_bufferZ - 1;
-						float  *extLeft = extension_bufferZ + Wz - 1;
-						const float  *arrLeft = extLeft + 2;
-						float  *extRight = extLeft + P + 1;
-						const float  *arrRight = extRight - 2;
-
-						while (extLeft > stop_line)
-						{
-                                   *(extLeft--) = *(arrLeft++);
-                                   *(extRight++) = *(arrRight--);
-						}
-
-						//	Filtering
-						extIter = extension_bufferZ + offset;
-
-						float  *resIter = &(pImage[iy*N + ix]);
-
-						while (extIter < extStop)
-						{
-                                   double sum = 0.;
-                                   const float  *weightIter = WeightsZ;
-                                   const float  *const End = WeightsZ + Wz;
-                                   const float * arrIter = extIter;
-                                   while (weightIter < End)
-                                        sum += *(weightIter++) * float (*(arrIter++));
-                                   extIter++;
-                                   *resIter = sum;
-                                   resIter += M*N;
-
-							//for rescale
-							if(max_val<*arrIter) max_val = *arrIter;
-							if(min_val>*arrIter) min_val = *arrIter;
-						}
-
-					}
-				}
-
-				//de-alloc
-				if (WeightsZ) {delete []WeightsZ; WeightsZ=0;}
-				if (extension_bufferZ) {delete []extension_bufferZ; extension_bufferZ=0;}
-
-			}
-
-			//rescaling for display
-			float dist = max_val - min_val;
-			for(V3DLONG k=0; k<P; k++)
-			{
-				V3DLONG offsetk = k*M*N;
-				for(V3DLONG j=0; j<M; j++)
-				{
-					V3DLONG offsetj = j*N;
-					for(V3DLONG i=0; i<N; i++)
-					{
-						V3DLONG indLoop = offsetk + offsetj + i;
-
-						data1d[offset_init + indLoop] = 255*(pImage[indLoop]-min_val)/(dist);
-					}
-				}
-			}
-
-               // save image
-               saveImage(outimg_file, data1d, in_sz, datatype);
-
-			//de-alloc
-			if (pImage) {delete []pImage; pImage=0;}
-		}
-	}
+     // save image
+     in_sz[3]=1;
+     saveImage(outimg_file, outimg, in_sz, V3D_UINT8);
+     if(outimg) {delete []outimg; outimg =0;}
      return true;
-
 }
 
 
@@ -461,18 +139,13 @@ void processImage(V3DPluginCallback2 &callback, QWidget *parent)
 		return;
 	}
 
-    //if (! p4DImage) return;
+     unsigned char* data1d = p4DImage->getRawData();
+     V3DLONG pagesz = p4DImage->getTotalUnitNumberPerChannel();
 
-    unsigned char* data1d = p4DImage->getRawData();
-    //V3DLONG totalpxls = p4DImage->getTotalBytes();
-    V3DLONG pagesz = p4DImage->getTotalUnitNumberPerChannel();
-
-    V3DLONG N = p4DImage->getXDim();
-    V3DLONG M = p4DImage->getYDim();
-    V3DLONG P = p4DImage->getZDim();
-    V3DLONG sc = p4DImage->getCDim();
-
-    //define datatype here
+     V3DLONG N = p4DImage->getXDim();
+     V3DLONG M = p4DImage->getYDim();
+     V3DLONG P = p4DImage->getZDim();
+     V3DLONG sc = p4DImage->getCDim();
 
 	//input
 	bool ok1, ok2, ok3, ok4, ok5;
@@ -514,7 +187,7 @@ void processImage(V3DPluginCallback2 &callback, QWidget *parent)
 	{
 		sigma = QInputDialog::getDouble(parent, "Sigmal",
 									 "Enter Sigma value:",
-									 1, 1, sc, 1, &ok5);
+									 1, 0.1, 100, 1, &ok5);
 	}
 	else
 		return;
@@ -524,26 +197,24 @@ void processImage(V3DPluginCallback2 &callback, QWidget *parent)
      in_sz[0] = N; in_sz[1] = M; in_sz[2] = P; in_sz[4] = sc;
 
      unsigned char* outimg = 0;
-     gaussian_filter(data1d, in_sz, Wx, Wy, Wz, c, sigma, ok1, ok2, ok3, ok4, ok5,outimg);
+     gaussian_filter(data1d, in_sz, Wx, Wy, Wz, c, sigma, outimg);
 
-
+     // display
      Image4DSimple * new4DImage = new Image4DSimple();
-     new4DImage->setData(data1d, N, M, P, 1, V3D_UINT8);
+     new4DImage->setData(outimg, N, M, P, 1, V3D_UINT8);
      v3dhandle newwin = callback.newImageWindow();
      callback.setImage(newwin, new4DImage);
      callback.setImageName(newwin, title);
      callback.updateImageWindow(newwin);
-
-
 }
 
 
 
-void gaussian_filter(unsigned char* data1d, V3DLONG *in_sz, unsigned int Wx, unsigned int Wy, unsigned int Wz, unsigned int c, double sigma,
-     bool ok1, bool ok2, bool ok3, bool ok4, bool ok5, unsigned char* outimg)
+void gaussian_filter(unsigned char* data1d, V3DLONG *in_sz, unsigned int Wx, unsigned int Wy, unsigned int Wz, unsigned int c, double sigma,unsigned char* &outimg)
 {
-
-     double sigma_s2 = 0.5/(sigma*sigma);
+     // for filter kernel
+     double sigma_s2 = 0.5/(sigma*sigma); // 1/(2*sigma*sigma)
+     double pi_sigma = 1.0/(sqrt(2*3.1415926)*sigma); // 1.0/(sqrt(2*pi)*sigma)
 
      float min_val = INF, max_val = 0;
 
@@ -551,329 +222,319 @@ void gaussian_filter(unsigned char* data1d, V3DLONG *in_sz, unsigned int Wx, uns
      V3DLONG M = in_sz[1];
      V3DLONG P = in_sz[2];
      V3DLONG sc = in_sz[3];
-
      V3DLONG pagesz = N*M*P;
-	//gauss filter
-     if(ok5)
+
+     //filtering
+     V3DLONG offset_init = (c-1)*pagesz;
+
+     //declare temporary pointer
+     float *pImage = new float [pagesz];
+     if (!pImage)
      {
-          if(ok4)
+          printf("Fail to allocate memory.\n");
+          return;
+     }
+     else
+     {
+          for(V3DLONG i=0; i<pagesz; i++)
+               pImage[i] = data1d[i + offset_init];  //first channel data (red in V3D, green in ImageJ)
+     }
+
+     //Filtering
+     //
+     //   Filtering along x
+     if(N<2)
+     {
+          //do nothing
+     }
+     else
+     {
+          //create Gaussian kernel
+          float  *WeightsX = 0;
+          WeightsX = new float [Wx];
+          if (!WeightsX)
+               return;
+
+          unsigned int Half = Wx >> 1;
+          WeightsX[Half] = 1.;
+
+          // Gaussian filter equation:
+          // http://en.wikipedia.org/wiki/Gaussian_blur
+          for (unsigned int Weight = 1; Weight < Half + 1; ++Weight)
           {
+               const float  x = 3.* float (Weight) / float (Half);
+               WeightsX[Half - Weight] = WeightsX[Half + Weight] = pi_sigma * exp(-x * x *sigma_s2); /// 2.);	// Corresponding symmetric WeightsX
+          }
 
-               //filtering
-               V3DLONG offset_init = (c-1)*pagesz;
+          double k = 0.;
+          for (unsigned int Weight = 0; Weight < Wx; ++Weight)
+               k += WeightsX[Weight];
 
-               if (ok4)
+          for (unsigned int Weight = 0; Weight < Wx; ++Weight)
+               WeightsX[Weight] /= k;
+
+
+          //   Allocate 1-D extension array
+          float  *extension_bufferX = 0;
+          extension_bufferX = new float [N + (Wx<<1)];
+
+          unsigned int offset = Wx>>1;
+
+          //	along x
+          const float  *extStop = extension_bufferX + N + offset;
+
+          for(V3DLONG iz = 0; iz < P; iz++)
+          {
+               for(V3DLONG iy = 0; iy < M; iy++)
                {
-                    //declare temporary pointer
-                    float *pImage = new float [pagesz];
-                    if (!pImage)
+                    float  *extIter = extension_bufferX + Wx;
+                    for(V3DLONG ix = 0; ix < N; ix++)
                     {
-                         printf("Fail to allocate memory.\n");
-                         return;
-                    }
-                    else
-                    {
-                         for(V3DLONG i=0; i<pagesz; i++)
-                              pImage[i] = data1d[i + offset_init];  //first channel data (red in V3D, green in ImageJ)
+                         *(extIter++) = pImage[iz*M*N + iy*N + ix];
                     }
 
-                    //Filtering
-                    //
-                    //   Filtering along x
-                    if(N<2)
+                    //   Extend image
+                    const float  *const stop_line = extension_bufferX - 1;
+                    float  *extLeft = extension_bufferX + Wx - 1;
+                    const float  *arrLeft = extLeft + 2;
+                    float  *extRight = extLeft + N + 1;
+                    const float  *arrRight = extRight - 2;
+
+                    while (extLeft > stop_line)
                     {
-                         //do nothing
-                    }
-                    else
-                    {
-                         //create Gaussian kernel
-                         float  *WeightsX = 0;
-                         WeightsX = new float [Wx];
-                         if (!WeightsX)
-                              return;
-
-                         unsigned int Half = Wx >> 1;
-                         WeightsX[Half] = 1.;
-
-                         for (unsigned int Weight = 1; Weight < Half + 1; ++Weight)
-                         {
-                              const float  x = 3.* float (Weight) / float (Half);
-                              WeightsX[Half - Weight] = WeightsX[Half + Weight] = exp(-x * x *sigma_s2); /// 2.);	// Corresponding symmetric WeightsX
-                         }
-
-                         double k = 0.;
-                         for (unsigned int Weight = 0; Weight < Wx; ++Weight)
-                              k += WeightsX[Weight];
-
-                         for (unsigned int Weight = 0; Weight < Wx; ++Weight)
-                              WeightsX[Weight] /= k;
-
-
-                         //   Allocate 1-D extension array
-                         float  *extension_bufferX = 0;
-                         extension_bufferX = new float [N + (Wx<<1)];
-
-                         unsigned int offset = Wx>>1;
-
-                         //	along x
-                         const float  *extStop = extension_bufferX + N + offset;
-
-                         for(V3DLONG iz = 0; iz < P; iz++)
-                         {
-                              for(V3DLONG iy = 0; iy < M; iy++)
-                              {
-                                   float  *extIter = extension_bufferX + Wx;
-                                   for(V3DLONG ix = 0; ix < N; ix++)
-                                   {
-                                        *(extIter++) = pImage[iz*M*N + iy*N + ix];
-                                   }
-
-                                   //   Extend image
-                                   const float  *const stop_line = extension_bufferX - 1;
-                                   float  *extLeft = extension_bufferX + Wx - 1;
-                                   const float  *arrLeft = extLeft + 2;
-                                   float  *extRight = extLeft + N + 1;
-                                   const float  *arrRight = extRight - 2;
-
-                                   while (extLeft > stop_line)
-                                   {
-                                        *(extLeft--) = *(arrLeft++);
-                                        *(extRight++) = *(arrRight--);
-                                   }
-
-                                   //	Filtering
-                                   extIter = extension_bufferX + offset;
-
-                                   float  *resIter = &(pImage[iz*M*N + iy*N]);
-
-                                   while (extIter < extStop)
-                                   {
-                                        double sum = 0.;
-                                        const float  *weightIter = WeightsX;
-                                        const float  *const End = WeightsX + Wx;
-                                        const float * arrIter = extIter;
-                                        while (weightIter < End)
-                                             sum += *(weightIter++) * float (*(arrIter++));
-                                        extIter++;
-                                        *(resIter++) = sum;
-
-                                        //for rescale
-                                        if(max_val<*arrIter) max_val = *arrIter;
-                                        if(min_val>*arrIter) min_val = *arrIter;
-                                   }
-                              }
-                         }
-
-                         //de-alloc
-                         if (WeightsX) {delete []WeightsX; WeightsX=0;}
-                         if (extension_bufferX) {delete []extension_bufferX; extension_bufferX=0;}
-
+                         *(extLeft--) = *(arrLeft++);
+                         *(extRight++) = *(arrRight--);
                     }
 
-                    //   Filtering along y
-                    if(M<2)
+                    //	Filtering
+                    extIter = extension_bufferX + offset;
+
+                    float  *resIter = &(pImage[iz*M*N + iy*N]);
+
+                    while (extIter < extStop)
                     {
-                         //do nothing
+                         double sum = 0.;
+                         const float  *weightIter = WeightsX;
+                         const float  *const End = WeightsX + Wx;
+                         const float * arrIter = extIter;
+                         while (weightIter < End)
+                              sum += *(weightIter++) * float (*(arrIter++));
+                         extIter++;
+                         *(resIter++) = sum;
+
+                         //for rescale
+                         if(max_val<*arrIter) max_val = *arrIter;
+                         if(min_val>*arrIter) min_val = *arrIter;
                     }
-                    else
+               }
+          }
+
+          //de-alloc
+          if (WeightsX) {delete []WeightsX; WeightsX=0;}
+          if (extension_bufferX) {delete []extension_bufferX; extension_bufferX=0;}
+
+     }
+
+     //   Filtering along y
+     if(M<2)
+     {
+          //do nothing
+     }
+     else
+     {
+          //create Gaussian kernel
+          float  *WeightsY = 0;
+          WeightsY = new float [Wy];
+          if (!WeightsY)
+               return;
+
+          unsigned int Half = Wy >> 1;
+          WeightsY[Half] = 1.;
+
+          for (unsigned int Weight = 1; Weight < Half + 1; ++Weight)
+          {
+               const float  y = 3.* float (Weight) / float (Half);
+               WeightsY[Half - Weight] = WeightsY[Half + Weight] = pi_sigma * exp(-y * y * sigma_s2);	// Corresponding symmetric WeightsY
+          }
+
+          double k = 0.;
+          for (unsigned int Weight = 0; Weight < Wy; ++Weight)
+               k += WeightsY[Weight];
+
+          for (unsigned int Weight = 0; Weight < Wy; ++Weight)
+               WeightsY[Weight] /= k;
+
+          //	along y
+          float  *extension_bufferY = 0;
+          extension_bufferY = new float [M + (Wy<<1)];
+
+          unsigned int offset = Wy>>1;
+          const float *extStop = extension_bufferY + M + offset;
+
+          for(V3DLONG iz = 0; iz < P; iz++)
+          {
+               for(V3DLONG ix = 0; ix < N; ix++)
+               {
+                    float  *extIter = extension_bufferY + Wy;
+                    for(V3DLONG iy = 0; iy < M; iy++)
                     {
-                         //create Gaussian kernel
-                         float  *WeightsY = 0;
-                         WeightsY = new float [Wy];
-                         if (!WeightsY)
-                              return;
-
-                         unsigned int Half = Wy >> 1;
-                         WeightsY[Half] = 1.;
-
-                         for (unsigned int Weight = 1; Weight < Half + 1; ++Weight)
-                         {
-                              const float  y = 3.* float (Weight) / float (Half);
-                              WeightsY[Half - Weight] = WeightsY[Half + Weight] = exp(-y * y * sigma_s2);	// Corresponding symmetric WeightsY
-                         }
-
-                         double k = 0.;
-                         for (unsigned int Weight = 0; Weight < Wy; ++Weight)
-                              k += WeightsY[Weight];
-
-                         for (unsigned int Weight = 0; Weight < Wy; ++Weight)
-                              WeightsY[Weight] /= k;
-
-                         //	along y
-                         float  *extension_bufferY = 0;
-                         extension_bufferY = new float [M + (Wy<<1)];
-
-                         unsigned int offset = Wy>>1;
-                         const float *extStop = extension_bufferY + M + offset;
-
-                         for(V3DLONG iz = 0; iz < P; iz++)
-                         {
-                              for(V3DLONG ix = 0; ix < N; ix++)
-                              {
-                                   float  *extIter = extension_bufferY + Wy;
-                                   for(V3DLONG iy = 0; iy < M; iy++)
-                                   {
-                                        *(extIter++) = pImage[iz*M*N + iy*N + ix];
-                                   }
-
-                                   //   Extend image
-                                   const float  *const stop_line = extension_bufferY - 1;
-                                   float  *extLeft = extension_bufferY + Wy - 1;
-                                   const float  *arrLeft = extLeft + 2;
-                                   float  *extRight = extLeft + M + 1;
-                                   const float  *arrRight = extRight - 2;
-
-                                   while (extLeft > stop_line)
-                                   {
-								*(extLeft--) = *(arrLeft++);
-								*(extRight++) = *(arrRight--);
-                                   }
-
-                                   //	Filtering
-                                   extIter = extension_bufferY + offset;
-
-                                   float  *resIter = &(pImage[iz*M*N + ix]);
-
-                                   while (extIter < extStop)
-                                   {
-								double sum = 0.;
-								const float  *weightIter = WeightsY;
-								const float  *const End = WeightsY + Wy;
-								const float * arrIter = extIter;
-								while (weightIter < End)
-                                             sum += *(weightIter++) * float (*(arrIter++));
-								extIter++;
-								*resIter = sum;
-								resIter += N;
-
-                                        //for rescale
-                                        if(max_val<*arrIter) max_val = *arrIter;
-                                        if(min_val>*arrIter) min_val = *arrIter;
-                                   }
-                              }
-                         }
-
-                         //de-alloc
-                         if (WeightsY) {delete []WeightsY; WeightsY=0;}
-                         if (extension_bufferY) {delete []extension_bufferY; extension_bufferY=0;}
+                         *(extIter++) = pImage[iz*M*N + iy*N + ix];
                     }
 
-                    //  Filtering  along z
-                    if(P<2)
+                    //   Extend image
+                    const float  *const stop_line = extension_bufferY - 1;
+                    float  *extLeft = extension_bufferY + Wy - 1;
+                    const float  *arrLeft = extLeft + 2;
+                    float  *extRight = extLeft + M + 1;
+                    const float  *arrRight = extRight - 2;
+
+                    while (extLeft > stop_line)
                     {
-                         //do nothing
-                    }
-                    else
-                    {
-                         //create Gaussian kernel
-                         float  *WeightsZ = 0;
-                         WeightsZ = new float [Wz];
-                         if (!WeightsZ)
-                              return;
-
-                         unsigned int Half = Wz >> 1;
-                         WeightsZ[Half] = 1.;
-
-                         for (unsigned int Weight = 1; Weight < Half + 1; ++Weight)
-                         {
-                              const float  z = 3.* float (Weight) / float (Half);
-                              WeightsZ[Half - Weight] = WeightsZ[Half + Weight] = exp(-z * z * sigma_s2) ; /// 2.);	// Corresponding symmetric WeightsZ
-                         }
-
-                         double k = 0.;
-                         for (unsigned int Weight = 0; Weight < Wz; ++Weight)
-                              k += WeightsZ[Weight];
-
-                         for (unsigned int Weight = 0; Weight < Wz; ++Weight)
-                              WeightsZ[Weight] /= k;
-
-
-                         //	along z
-                         float  *extension_bufferZ = 0;
-                         extension_bufferZ = new float [P + (Wz<<1)];
-
-                         unsigned int offset = Wz>>1;
-                         const float *extStop = extension_bufferZ + P + offset;
-
-                         for(V3DLONG iy = 0; iy < M; iy++)
-                         {
-                              for(V3DLONG ix = 0; ix < N; ix++)
-                              {
-
-                                   float  *extIter = extension_bufferZ + Wz;
-                                   for(V3DLONG iz = 0; iz < P; iz++)
-                                   {
-                                        *(extIter++) = pImage[iz*M*N + iy*N + ix];
-                                   }
-
-                                   //   Extend image
-                                   const float  *const stop_line = extension_bufferZ - 1;
-                                   float  *extLeft = extension_bufferZ + Wz - 1;
-                                   const float  *arrLeft = extLeft + 2;
-                                   float  *extRight = extLeft + P + 1;
-                                   const float  *arrRight = extRight - 2;
-
-                                   while (extLeft > stop_line)
-                                   {
-								*(extLeft--) = *(arrLeft++);
-								*(extRight++) = *(arrRight--);
-                                   }
-
-                                   //	Filtering
-                                   extIter = extension_bufferZ + offset;
-
-                                   float  *resIter = &(pImage[iy*N + ix]);
-
-                                   while (extIter < extStop)
-                                   {
-								double sum = 0.;
-								const float  *weightIter = WeightsZ;
-								const float  *const End = WeightsZ + Wz;
-								const float * arrIter = extIter;
-								while (weightIter < End)
-                                             sum += *(weightIter++) * float (*(arrIter++));
-								extIter++;
-								*resIter = sum;
-								resIter += M*N;
-
-                                        //for rescale
-                                        if(max_val<*arrIter) max_val = *arrIter;
-                                        if(min_val>*arrIter) min_val = *arrIter;
-                                   }
-
-                              }
-                         }
-
-                         //de-alloc
-                         if (WeightsZ) {delete []WeightsZ; WeightsZ=0;}
-                         if (extension_bufferZ) {delete []extension_bufferZ; extension_bufferZ=0;}
-
+                         *(extLeft--) = *(arrLeft++);
+                         *(extRight++) = *(arrRight--);
                     }
 
-                    //rescaling for display
-                    float dist = max_val - min_val;
-                    for(V3DLONG k=0; k<P; k++)
-                    {
-                         V3DLONG offsetk = k*M*N;
-                         for(V3DLONG j=0; j<M; j++)
-                         {
-                              V3DLONG offsetj = j*N;
-                              for(V3DLONG i=0; i<N; i++)
-                              {
-                                   V3DLONG indLoop = offsetk + offsetj + i;
+                    //	Filtering
+                    extIter = extension_bufferY + offset;
 
-                                   data1d[offset_init + indLoop] = 255*(pImage[indLoop]-min_val)/(dist);
-                              }
-                         }
+                    float  *resIter = &(pImage[iz*M*N + ix]);
+
+                    while (extIter < extStop)
+                    {
+                         double sum = 0.;
+                         const float  *weightIter = WeightsY;
+                         const float  *const End = WeightsY + Wy;
+                         const float * arrIter = extIter;
+                         while (weightIter < End)
+                              sum += *(weightIter++) * float (*(arrIter++));
+                         extIter++;
+                         *resIter = sum;
+                         resIter += N;
+
+                         //for rescale
+                         if(max_val<*arrIter) max_val = *arrIter;
+                         if(min_val>*arrIter) min_val = *arrIter;
+                    }
+               }
+          }
+
+          //de-alloc
+          if (WeightsY) {delete []WeightsY; WeightsY=0;}
+          if (extension_bufferY) {delete []extension_bufferY; extension_bufferY=0;}
+     }
+
+     //  Filtering  along z
+     if(P<2)
+     {
+          //do nothing
+     }
+     else
+     {
+          //create Gaussian kernel
+          float  *WeightsZ = 0;
+          WeightsZ = new float [Wz];
+          if (!WeightsZ)
+               return;
+
+          unsigned int Half = Wz >> 1;
+          WeightsZ[Half] = 1.;
+
+          for (unsigned int Weight = 1; Weight < Half + 1; ++Weight)
+          {
+               const float  z = 3.* float (Weight) / float (Half);
+               WeightsZ[Half - Weight] = WeightsZ[Half + Weight] = pi_sigma * exp(-z * z * sigma_s2) ; /// 2.);	// Corresponding symmetric WeightsZ
+          }
+
+          double k = 0.;
+          for (unsigned int Weight = 0; Weight < Wz; ++Weight)
+               k += WeightsZ[Weight];
+
+          for (unsigned int Weight = 0; Weight < Wz; ++Weight)
+               WeightsZ[Weight] /= k;
+
+
+          //	along z
+          float  *extension_bufferZ = 0;
+          extension_bufferZ = new float [P + (Wz<<1)];
+
+          unsigned int offset = Wz>>1;
+          const float *extStop = extension_bufferZ + P + offset;
+
+          for(V3DLONG iy = 0; iy < M; iy++)
+          {
+               for(V3DLONG ix = 0; ix < N; ix++)
+               {
+
+                    float  *extIter = extension_bufferZ + Wz;
+                    for(V3DLONG iz = 0; iz < P; iz++)
+                    {
+                         *(extIter++) = pImage[iz*M*N + iy*N + ix];
                     }
 
-                    //de-alloc
-                    if (pImage) {delete []pImage; pImage=0;}
+                    //   Extend image
+                    const float  *const stop_line = extension_bufferZ - 1;
+                    float  *extLeft = extension_bufferZ + Wz - 1;
+                    const float  *arrLeft = extLeft + 2;
+                    float  *extRight = extLeft + P + 1;
+                    const float  *arrRight = extRight - 2;
 
+                    while (extLeft > stop_line)
+                    {
+                         *(extLeft--) = *(arrLeft++);
+                         *(extRight++) = *(arrRight--);
+                    }
+
+                    //	Filtering
+                    extIter = extension_bufferZ + offset;
+
+                    float  *resIter = &(pImage[iy*N + ix]);
+
+                    while (extIter < extStop)
+                    {
+                         double sum = 0.;
+                         const float  *weightIter = WeightsZ;
+                         const float  *const End = WeightsZ + Wz;
+                         const float * arrIter = extIter;
+                         while (weightIter < End)
+                              sum += *(weightIter++) * float (*(arrIter++));
+                         extIter++;
+                         *resIter = sum;
+                         resIter += M*N;
+
+                         //for rescale
+                         if(max_val<*arrIter) max_val = *arrIter;
+                         if(min_val>*arrIter) min_val = *arrIter;
+                    }
+
+               }
+          }
+
+          //de-alloc
+          if (WeightsZ) {delete []WeightsZ; WeightsZ=0;}
+          if (extension_bufferZ) {delete []extension_bufferZ; extension_bufferZ=0;}
+
+     }
+
+     outimg = new unsigned char [N*M*P];
+     //rescaling for display
+     float dist = max_val - min_val;
+     for(V3DLONG k=0; k<P; k++)
+     {
+          V3DLONG offsetk = k*M*N;
+          for(V3DLONG j=0; j<M; j++)
+          {
+               V3DLONG offsetj = j*N;
+               for(V3DLONG i=0; i<N; i++)
+               {
+                    V3DLONG indLoop = offsetk + offsetj + i;
+                    //data1d[offset_init + indLoop] = 255*(pImage[indLoop]-min_val)/(dist);
+                    outimg[indLoop] = (unsigned char) 255*(pImage[indLoop]-min_val)/(dist);
                }
           }
      }
 
+     //de-alloc
+     if (pImage) {delete []pImage; pImage=0;}
 }
 
 
