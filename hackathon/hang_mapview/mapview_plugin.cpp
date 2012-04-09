@@ -40,6 +40,7 @@ void MapViewPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callbac
 	}
 	else if(menu_name == tr("create hraw data"))
 	{
+		v3d_msg("Not implemented yet.", 0);
 	}
 	else
 	{
@@ -52,13 +53,16 @@ bool MapViewPlugin::dofunc(const QString & func_name, const V3DPluginArgList & i
 {
 	if (func_name == tr("load_hraw_data"))
 	{
+		v3d_msg("Not implemented yet.", 0);
 		//return load_hraw_data(input, output);
 	}
 	else if(func_name == tr("create_hraw_data"))
 	{
+		v3d_msg("Not implemented yet.", 0);
 	}
 	else if (func_name == tr("help"))
 	{
+		v3d_msg("Not implemented yet.", 0);
 		//return help(input,output);
 	}
 	return false;
