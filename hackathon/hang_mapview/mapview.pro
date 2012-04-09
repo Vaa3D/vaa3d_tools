@@ -2,8 +2,9 @@
 TEMPLATE	= lib
 CONFIG	+= qt plugin warn_off
 #CONFIG	+= x86_64
-VAA3DPATH = /Users/xiaoh10/work/v3d_external
+VAA3DPATH =  ../../../v3d_external
 INCLUDEPATH	+= $$VAA3DPATH/v3d_main/basic_c_fun
+INCLUDEPATH     += $$VAA3DPATH/v3d_main/common_lib/include
 INCLUDEPATH	+= src
 
 LIBS += -L$$VAA3DPATH/v3d_main/common_lib/lib_mac64 -lv3dtiff
