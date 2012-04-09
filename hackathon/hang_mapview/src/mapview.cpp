@@ -279,10 +279,25 @@ void getRawImageSize(string filename, V3DLONG &sz0, V3DLONG &sz1, V3DLONG &sz2, 
     if(!fid) return;
 
     int lenkey = strlen("raw_image_stack_by_hpeng");
-    fseek(fid, lenkey + 1 + 2, SEEK_SET);
+    fseek(fid, lenkey, SEEK_SET);
+	
+	char endianCodeData;
+	fread(&endianCodeData, 1, 1, fid);
+	int b_swap = (endianCodeData == checkMachineEndian())?0:1;
+
+	short int dcode;
+	fread(&dcode, 2, 1, fid); if (b_swap) swap2bytes((void *)&dcode);
+
     int mysz[4]; mysz[0] = mysz[1] = mysz[2] = mysz[3] = 0;
     int n = fread(mysz, 4, 4, fid);
     if(n!= 4) return;
+	if(b_swap)
+	{
+		swap4bytes((void*)(mysz+0));
+		swap4bytes((void*)(mysz+1));
+		swap4bytes((void*)(mysz+2));
+		swap4bytes((void*)(mysz+3));
+	}
 
     sz0 = mysz[0];
     sz1 = mysz[1];
