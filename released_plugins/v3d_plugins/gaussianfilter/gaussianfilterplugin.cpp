@@ -109,6 +109,14 @@ bool processImage(const V3DPluginArgList & input, V3DPluginArgList & output)
 	int datatype;
 	if(!loadImage(inimg_file, data1d, in_sz, datatype)) {cerr<<"load image "<<inimg_file<<" error!"<<endl; return 1;}
 
+    if (datatype != V3D_UINT8)
+    {
+        v3d_msg("Right now this plugin supports only UINT8 data. Do nothing.");
+        if (data1d) {delete []data1d; data1d=0;}
+        if (in_sz) {delete []in_sz; in_sz=0;}
+        return false;
+    }
+
 	//input
      unsigned char* outimg = 0;
 
@@ -117,7 +125,11 @@ bool processImage(const V3DPluginArgList & input, V3DPluginArgList & output)
      // save image
      in_sz[3]=1;
      saveImage(outimg_file, outimg, in_sz, V3D_UINT8);
+
      if(outimg) {delete []outimg; outimg =0;}
+        if (data1d) {delete []data1d; data1d=0;}
+        if (in_sz) {delete []in_sz; in_sz=0;}
+
      return true;
 }
 
