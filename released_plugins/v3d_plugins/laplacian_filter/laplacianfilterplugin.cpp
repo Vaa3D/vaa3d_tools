@@ -30,7 +30,7 @@ void laplacian_filter(unsigned char* data1d, V3DLONG *in_sz, int ch, float * &ou
 const QString title = QObject::tr("Laplacian Filter Plugin");
 QStringList LaplacianFilterPlugin::menulist() const
 {
-    return QStringList() << tr("Laplacian Filter");
+    return QStringList() << tr("Laplacian Filter") << tr("About");
 }
 
 void LaplacianFilterPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
@@ -39,7 +39,10 @@ void LaplacianFilterPlugin::domenu(const QString &menu_name, V3DPluginCallback2 
 	{
 		processImage(callback,parent);
 	}
-
+    else if (menu_name == tr("About"))
+     {
+         v3d_msg("This plugin is developed by Hanchuan Peng as a simple example for 3D Laplacian transform of an image.");
+     }
 }
 
 QStringList LaplacianFilterPlugin::funclist() const
@@ -61,6 +64,7 @@ bool LaplacianFilterPlugin::dofunc(const QString &func_name, const V3DPluginArgL
 		cout<<"Usage : v3d -x laplacian -f laplacian -i <inimg_file> -o <outimg_file> -p <channel>"<<endl;
 		cout<<endl;
 		cout<<"channel                  the input channel value, default 1 and start from 1"<<endl;
+		cout<<"Developed by Hanchuan Peng as a simple example for 3D Laplacian transform of an image."<<endl;
 		cout<<endl;
 		return true;
 	}
@@ -82,14 +86,14 @@ bool processImage(const V3DPluginArgList & input, V3DPluginArgList & output)
 	cout<<"inimg_file = "<<inimg_file<<endl;
 	cout<<"outimg_file = "<<outimg_file<<endl;
 
-     double sigma_s2 = 0.5/(sigma*sigma);
-
-	unsigned char * data1d = 0,  * outimg1d = 0;
-	float * phi = 0;
+	unsigned char * data1d = 0;
 	V3DLONG * in_sz = 0;
 
 	int datatype;
-	if(!loadImage(inimg_file, data1d, in_sz, datatype)) {cerr<<"load image "<<inimg_file<<" error!"<<endl; return 1;}
+	if(!loadImage(inimg_file, data1d, in_sz, datatype)) 
+    {
+        cerr<<"load image "<<inimg_file<<" error!"<<endl; return false;
+    }
     
     if (datatype != V3D_UINT8)
     {
@@ -106,7 +110,7 @@ bool processImage(const V3DPluginArgList & input, V3DPluginArgList & output)
 
      // save image
      in_sz[3]=1;
-     saveImage(outimg_file, (unsigned char *)outimg, in_sz, V3D_FLOAT32);
+     saveImage(outimg_file, (unsigned char *)outimg, in_sz, 4);
      if(outimg) {delete []outimg; outimg =0;}
      if (data1d) {delete []data1d; data1d=0;}
      if (in_sz) {delete []in_sz; in_sz=0;}
