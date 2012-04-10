@@ -391,21 +391,21 @@ bool raw_split(char * infile, char * dir, V3DLONG outsz0, V3DLONG outsz1, V3DLON
 
 	system(string(string("mkdir ") + dir + "/L0").c_str());
 
-	int bs0 = (insz0 % outsz0 == 0) ? insz0/outsz0 : insz0/outsz0 + 1;
-	int bs1 = (insz1 % outsz1 == 0) ? insz1/outsz1 : insz1/outsz1 + 1;
-	int bs2 = (insz2 % outsz2 == 0) ? insz2/outsz2 : insz2/outsz2 + 1;
-	for(int bz = 0; bz < bs2; bz++)
+	int ts0 = (insz0 % outsz0 == 0) ? insz0/outsz0 : insz0/outsz0 + 1;
+	int ts1 = (insz1 % outsz1 == 0) ? insz1/outsz1 : insz1/outsz1 + 1;
+	int ts2 = (insz2 % outsz2 == 0) ? insz2/outsz2 : insz2/outsz2 + 1;
+	for(int tz = 0; tz < ts2; tz++)
 	{
-		V3DLONG z0 = bz * outsz2;
-		for(int by = 0; by < bs1; by++)
+		V3DLONG z0 = tz * outsz2;
+		for(int ty = 0; ty < ts1; ty++)
 		{
-			V3DLONG y0 = by * outsz1;
-			for(int bx = 0; bx < bs0; bx++)
+			V3DLONG y0 = ty * outsz1;
+			for(int tx = 0; tx < ts0; tx++)
 			{
-				V3DLONG x0 = bx * outsz0;
+				V3DLONG x0 = tx * outsz0;
 				unsigned char * outimg1d = 0;
 				ostringstream oss;
-				oss<<dir<<"/L0/L0_X"<<bx<<"_Y"<<by<<"_Z"<<bz<<".raw";
+				oss<<dir<<"/L0/L0_X"<<tx<<"_Y"<<ty<<"_Z"<<tz<<".raw";
 				if(!is_file_exists(oss.str().c_str()))
 				{
 					read_raw_partially(infile, outimg1d, x0, y0, z0, outsz0, outsz1, outsz2, channel);
