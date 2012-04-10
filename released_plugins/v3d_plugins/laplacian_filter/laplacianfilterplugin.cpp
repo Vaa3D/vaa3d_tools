@@ -25,7 +25,7 @@ Q_EXPORT_PLUGIN2(laplacianfilter, LaplacianFilterPlugin)
 
 void processImage(V3DPluginCallback2 &callback, QWidget *parent);
 bool processImage(const V3DPluginArgList & input, V3DPluginArgList & output);
-void laplacian_filter(unsigned char* data1d, V3DLONG *in_sz, int ch, float * &outimg);
+template <class T> bool laplacian_filter(T* data1d, V3DLONG *in_sz, V3DLONG c, float* &outimg);
 
 const QString title = QObject::tr("Laplacian Filter Plugin");
 QStringList LaplacianFilterPlugin::menulist() const
@@ -79,7 +79,12 @@ bool processImage(const V3DPluginArgList & input, V3DPluginArgList & output)
     float sigma = 1.0;
 	vector<char*> paras = (*(vector<char*> *)(input.at(1).p));
 	if(paras.size() >= 1) c = atoi(paras.at(0));
-
+    if (c<=0)
+    {
+        v3d_msg("Invalid channel parameter. \n",0);
+        return false;
+    }
+        
 	char * inimg_file = ((vector<char*> *)(input.at(0).p))->at(0);
 	char * outimg_file = ((vector<char*> *)(output.at(0).p))->at(0);
     cout<<"channel = "<<c<<endl;
@@ -88,33 +93,41 @@ bool processImage(const V3DPluginArgList & input, V3DPluginArgList & output)
 
 	unsigned char * data1d = 0;
 	V3DLONG * in_sz = 0;
-
+    float* outimg = 0;
+    bool b_res;
+    
 	int datatype;
 	if(!loadImage(inimg_file, data1d, in_sz, datatype)) 
     {
         cerr<<"load image "<<inimg_file<<" error!"<<endl; return false;
     }
     
-    if (datatype != V3D_UINT8)
+    if (c<=0 || c>in_sz[3])
+        goto Label_exit;
+
+    switch(datatype)
     {
-        v3d_msg("Right now this plugin supports only UINT8 data. Do nothing.");
-        if (data1d) {delete []data1d; data1d=0;}
-        if (in_sz) {delete []in_sz; in_sz=0;}
-        return false;
+        case 1: b_res = laplacian_filter(data1d, in_sz, c-1, outimg); break;
+        case 2: b_res = laplacian_filter((unsigned short int *)data1d, in_sz, c-1, outimg); break;
+        case 4: b_res = laplacian_filter((float *)data1d, in_sz, c-1, outimg); break;
+        default: b_res = false; v3d_msg("Right now this plugin supports only UINT8 data. Do nothing."); goto Label_exit;
     }
-
-	//input
-     float* outimg = 0;
-
-     laplacian_filter(data1d, in_sz, c, outimg);
+    
+     if (!b_res)
+     {
+         v3d_msg("Fail to invoke the filter. Do nothing.\n", 0);
+         goto Label_exit;
+     }
 
      // save image
      in_sz[3]=1;
-     saveImage(outimg_file, (unsigned char *)outimg, in_sz, 4);
-     if(outimg) {delete []outimg; outimg =0;}
+     b_res = saveImage(outimg_file, (unsigned char *)outimg, in_sz, 4); //since b_res must be true right before this, it is safe to assign a value to it
+
+Label_exit:
+    if(outimg) {delete []outimg; outimg =0;}
      if (data1d) {delete []data1d; data1d=0;}
      if (in_sz) {delete []in_sz; in_sz=0;}
-     return true;
+     return b_res;
 }
 
 
@@ -134,12 +147,6 @@ void processImage(V3DPluginCallback2 &callback, QWidget *parent)
 		return;
 	}
     
-    if (p4DImage->getDatatype() != V3D_UINT8)
-    {
-        v3d_msg("Right now this plugin supports only UINT8 data. Do nothing.");
-        return;
-    }
-
      unsigned char* data1d = p4DImage->getRawData();
      V3DLONG pagesz = p4DImage->getTotalUnitNumberPerChannel();
 
@@ -150,21 +157,38 @@ void processImage(V3DPluginCallback2 &callback, QWidget *parent)
 
 	//input
 	bool ok1;
-	int c=1;
+	V3DLONG c=1;
 
-	c = QInputDialog::getInteger(parent, "Channel",
-									 "Enter channel # (starts from 1):",
-									 1, 1, sc, 1, &ok1);
-    if (!ok1)
-        return;
+    if (sc>1) //only need to ask if more than one channel
+    {
+        c = QInputDialog::getInteger(parent, "Channel",
+                                         "Enter channel # (starts from 1):",
+                                         1, 1, sc, 1, &ok1);
+        if (!ok1)
+            return;
+    }
     
      // filtering
      V3DLONG in_sz[4];
      in_sz[0] = N; in_sz[1] = M; in_sz[2] = P; in_sz[4] = sc;
 
      float * outimg = 0;
-     laplacian_filter(data1d, in_sz, c, outimg);
-
+    bool b_res;
+    
+    switch(p4DImage->getDatatype())
+    {
+        case V3D_UINT8: b_res = laplacian_filter(data1d, in_sz, c-1, outimg); break;
+        case V3D_UINT16: b_res = laplacian_filter((unsigned short int *)data1d, in_sz, c-1, outimg); break;
+        case V3D_FLOAT32: b_res = laplacian_filter((float *)data1d, in_sz, c-1, outimg); break;
+        default: b_res = false; v3d_msg("Right now this plugin supports only UINT8 data. Do nothing."); return;
+    }
+    
+     if (!b_res)
+     {
+         v3d_msg("Fail to invoke the filter. Do nothing.");
+         return;
+     }
+    
      // display
      Image4DSimple * new4DImage = new Image4DSimple();
      new4DImage->setData((unsigned char *)outimg, N, M, P, 1, V3D_FLOAT32);
@@ -176,10 +200,10 @@ void processImage(V3DPluginCallback2 &callback, QWidget *parent)
 
 
 
-void laplacian_filter(unsigned char* data1d, V3DLONG *in_sz, int c, float* &outimg)
+template <class T> bool laplacian_filter(T* data1d, V3DLONG *in_sz, V3DLONG c, float* &outimg)
 {
-    if (!data1d || !in_sz || c<=0 || outimg)
-        return;
+    if (!data1d || !in_sz || c<0 || outimg)
+        return false;
     
      V3DLONG N = in_sz[0];
      V3DLONG M = in_sz[1];
@@ -189,9 +213,8 @@ void laplacian_filter(unsigned char* data1d, V3DLONG *in_sz, int c, float* &outi
     V3DLONG channelsz = pagesz*P;
 
      //filtering
-     V3DLONG offset_init = (c-1)*channelsz;
+     V3DLONG offset_init = c*channelsz;
 
-     //declare temporary pointer
     try
     {
         outimg = new float [channelsz];
@@ -199,7 +222,7 @@ void laplacian_filter(unsigned char* data1d, V3DLONG *in_sz, int c, float* &outi
     catch (...)
      {
           printf("Fail to allocate memory.\n");
-          return;
+          return false;
      }
 
      for(V3DLONG i=0; i<pagesz; i++)
@@ -233,7 +256,7 @@ void laplacian_filter(unsigned char* data1d, V3DLONG *in_sz, int c, float* &outi
         }
     }
     
-    return;
+    return true;
 }
 
 
