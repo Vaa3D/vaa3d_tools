@@ -77,11 +77,14 @@ bool processImage(const V3DPluginArgList & input, V3DPluginArgList & output)
 
 	int c=1;
     float sigma = 1.0;
-	vector<char*> paras = (*(vector<char*> *)(input.at(1).p));
-	if(paras.size() >= 1) c = atoi(paras.at(0));
+    if (input.size()>=2)
+    {
+        vector<char*> paras = *(vector<char*> *)(input.at(1).p);
+        if(paras.size() >= 1) c = atoi(paras.at(0));
+    }
     if (c<=0)
     {
-        v3d_msg("Invalid channel parameter. \n",0);
+        v3d_msg("Invalid channel parameter (it should starts from 1). \n",0);
         return false;
     }
         
