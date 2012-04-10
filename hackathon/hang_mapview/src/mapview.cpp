@@ -406,8 +406,11 @@ bool raw_split(char * infile, char * dir, V3DLONG outsz0, V3DLONG outsz1, V3DLON
 				unsigned char * outimg1d = 0;
 				ostringstream oss;
 				oss<<dir<<"/L0/L0_X"<<tx<<"_Y"<<ty<<"_Z"<<tz<<".raw";
-				if(!is_file_exists(oss.str().c_str()))
+				V3DLONG tmpsz0, tmpsz1, tmpsz2, tmpsz3;
+				if(is_file_exists(oss.str().c_str())) getRawImageSize(oss.str(), tmpsz0, tmpsz1, tmpsz2, tmpsz3);
+				if(!is_file_exists(oss.str().c_str()) || ! (outsz0 == tmpsz0 && outsz1 == tmpsz1 && outsz2 == tmpsz2 && channel == tmpsz3))
 				{
+					if(outsz0 == tmpsz0 && outsz1 == tmpsz1 && outsz2 == tmpsz2 && channel == tmpsz3){cout<<"overide "<<oss.str()<<endl;}
 					read_raw_partially(infile, outimg1d, x0, y0, z0, outsz0, outsz1, outsz2, channel);
 					V3DLONG outsz[4] = {outsz0, outsz1, outsz2, channel};
 					cout<<"save "<<oss.str()<<endl;
