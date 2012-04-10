@@ -139,6 +139,14 @@ void processImage(V3DPluginCallback2 &callback, QWidget *parent)
 		return;
 	}
 
+
+    if (p4DImage->getDatatype() != V3D_UINT8)
+    {
+        v3d_msg("Right now this plugin supports only UINT8 data. Do nothing.");
+        return;
+    }
+
+
      unsigned char* data1d = p4DImage->getRawData();
      V3DLONG pagesz = p4DImage->getTotalUnitNumberPerChannel();
 
