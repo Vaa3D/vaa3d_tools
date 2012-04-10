@@ -81,13 +81,15 @@ bool MovieZCswitchPlugin::dofunc(const QString &func_name, const V3DPluginArgLis
 bool changeMS(const V3DPluginArgList & input, V3DPluginArgList & output)
 {
      cout<<"Welcome to 5D Stack Converter"<<endl;
-	if(input.size() != 2 || output.size() != 1) return false;
+	if(input.size()<1 || output.size() != 1) return false;
 
 	unsigned int mode = 2, timepoints = 1;
-	vector<char*> paras = (*(vector<char*> *)(input.at(1).p));
-	if(paras.size() >= 1) mode = atoi(paras.at(0));
-	if(paras.size() >= 2) timepoints = atoi(paras.at(1));
-
+     if (input.size()>=2)
+     {
+          vector<char*> paras = (*(vector<char*> *)(input.at(1).p));
+          if(paras.size() >= 1) mode = atoi(paras.at(0));
+          if(paras.size() >= 2) timepoints = atoi(paras.at(1));
+     }
 	char * inimg_file = ((vector<char*> *)(input.at(0).p))->at(0);
 	char * outimg_file = ((vector<char*> *)(output.at(0).p))->at(0);
 	cout<<"inimg_file = "<<inimg_file<<endl;
@@ -97,7 +99,7 @@ bool changeMS(const V3DPluginArgList & input, V3DPluginArgList & output)
 	V3DLONG * in_sz = 0;
 
 	int datatype;
-	if(!loadImage(inimg_file, data1d, in_sz, datatype)) {cerr<<"load image "<<inimg_file<<" error!"<<endl; return 1;}
+	if(!loadImage(inimg_file, data1d, in_sz, datatype)) {cerr<<"load image "<<inimg_file<<" error!"<<endl; return false;}
 
      Image4DSimple p4DImage;
      if(datatype == V3D_UINT8)
@@ -142,11 +144,11 @@ bool changeMS(const V3DPluginArgList & input, V3DPluginArgList & output)
 
      // save image
      saveImage(outimg_file, (unsigned char*)pResult, in_sz, datatype);
-     //
-     // in_sz[3]=1;
-     // saveImage(outimg_file, outimg, in_sz, V3D_UINT8);
 
+     if(in_sz) {delete []in_sz; in_sz=0;}
+     //if(data1d) {delete []data1d; data1d=0;}
      if(pResult) {delete []pResult; pResult =0;}
+
      return true;
 }
 
@@ -222,6 +224,11 @@ int changeMS(V3DPluginCallback2 &callback, QWidget *parent)
 
 bool converter(unsigned char* &image1d, Image4DSimple &p4DImage, V3DLONG *in_sz, unsigned int mode, ImagePixelType imgdatatype, int timepoints, void * &pResult)
 {
+     if (!image1d || !in_sz || in_sz[0]<=0 || in_sz[1]<=0 || in_sz[2]<=0 || in_sz[3]<=0 || pResult)
+     {
+          v3d_msg("Invalid parameters to converter().", 0);
+          return false;
+     }
 
 	pResult = NULL;
 

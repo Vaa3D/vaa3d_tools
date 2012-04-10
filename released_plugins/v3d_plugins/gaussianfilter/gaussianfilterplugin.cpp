@@ -28,12 +28,12 @@ Q_EXPORT_PLUGIN2(gaussianfilter, GaussianFilterPlugin)
 
 void processImage(V3DPluginCallback2 &callback, QWidget *parent);
 bool processImage(const V3DPluginArgList & input, V3DPluginArgList & output);
-template <class T> void gaussian_filter(T* data1d, 
-                                        V3DLONG *in_sz, 
-                                        unsigned int Wx, 
-                                        unsigned int Wy, 
-                                        unsigned int Wz, 
-                                        unsigned int c, 
+template <class T> void gaussian_filter(T* data1d,
+                                        V3DLONG *in_sz,
+                                        unsigned int Wx,
+                                        unsigned int Wy,
+                                        unsigned int Wz,
+                                        unsigned int c,
                                         double sigma,
                                         float* &outimg);
 
@@ -92,16 +92,16 @@ bool processImage(const V3DPluginArgList & input, V3DPluginArgList & output)
 
 	unsigned int Wx=7, Wy=7, Wz=3, c=1;
      float sigma = 1.0;
-    if (input.size()>=2)
-    {
-        vector<char*> paras = (*(vector<char*> *)(input.at(1).p));
-        if(paras.size() >= 1) Wx = atoi(paras.at(0));
-        if(paras.size() >= 2) Wy = atoi(paras.at(1));
-        if(paras.size() >= 3) Wz = atoi(paras.at(2));
-        if(paras.size() >= 4) c = atoi(paras.at(3));
-        if(paras.size() >= 5) sigma = atof(paras.at(4));        
+     if (input.size()>=2)
+     {
+          vector<char*> paras = (*(vector<char*> *)(input.at(1).p));
+          if(paras.size() >= 1) Wx = atoi(paras.at(0));
+          if(paras.size() >= 2) Wy = atoi(paras.at(1));
+          if(paras.size() >= 3) Wz = atoi(paras.at(2));
+          if(paras.size() >= 4) c = atoi(paras.at(3));
+          if(paras.size() >= 5) sigma = atof(paras.at(4));
 	}
-    
+
 	char * inimg_file = ((vector<char*> *)(input.at(0).p))->at(0);
 	char * outimg_file = ((vector<char*> *)(output.at(0).p))->at(0);
 	cout<<"Wx = "<<Wx<<endl;
@@ -119,39 +119,39 @@ bool processImage(const V3DPluginArgList & input, V3DPluginArgList & output)
 	V3DLONG * in_sz = 0;
 
 	int datatype;
-	if(!loadImage(inimg_file, data1d, in_sz, datatype)) 
-    {
-        cerr<<"load image "<<inimg_file<<" error!"<<endl; 
-        return false;
-    }
+	if(!loadImage(inimg_file, data1d, in_sz, datatype))
+     {
+          cerr<<"load image "<<inimg_file<<" error!"<<endl;
+          return false;
+     }
 
-//    if (datatype != 1)
-//    {
-//        v3d_msg("Right now this plugin supports only UINT8 data. Do nothing.");
-//        if (data1d) {delete []data1d; data1d=0;}
-//        if (in_sz) {delete []in_sz; in_sz=0;}
-//        return false;
-//    }
+     //    if (datatype != 1)
+     //    {
+     //        v3d_msg("Right now this plugin supports only UINT8 data. Do nothing.");
+     //        if (data1d) {delete []data1d; data1d=0;}
+     //        if (in_sz) {delete []in_sz; in_sz=0;}
+     //        return false;
+     //    }
 
 	//input
      float* outimg = 0;
 
-    switch (datatype)
-    {
-        case 1: gaussian_filter(data1d, in_sz, Wx, Wy, Wz, c, sigma, outimg); break;
-        case 2: gaussian_filter((unsigned short int*)data1d, in_sz, Wx, Wy, Wz, c, sigma, outimg); break;
-        case 4: gaussian_filter((float *)data1d, in_sz, Wx, Wy, Wz, c, sigma, outimg); break;
-        default: 
-            v3d_msg("Invalid datatype."); 
-            if (data1d) {delete []data1d; data1d=0;}
-            if (in_sz) {delete []in_sz; in_sz=0;}
-            return false;
-    }
+     switch (datatype)
+     {
+          case 1: gaussian_filter(data1d, in_sz, Wx, Wy, Wz, c, sigma, outimg); break;
+          case 2: gaussian_filter((unsigned short int*)data1d, in_sz, Wx, Wy, Wz, c, sigma, outimg); break;
+          case 4: gaussian_filter((float *)data1d, in_sz, Wx, Wy, Wz, c, sigma, outimg); break;
+          default:
+               v3d_msg("Invalid datatype.");
+               if (data1d) {delete []data1d; data1d=0;}
+               if (in_sz) {delete []in_sz; in_sz=0;}
+               return false;
+     }
 
 
      // save image
      in_sz[3]=1;
-    //how about save float??
+     //how about save float??
      saveImage(outimg_file, (unsigned char *)outimg, in_sz, 4);
 
      if(outimg) {delete []outimg; outimg =0;}
@@ -252,7 +252,7 @@ void processImage(V3DPluginCallback2 &callback, QWidget *parent)
         case V3D_FLOAT32: gaussian_filter((float *)data1d, in_sz, Wx, Wy, Wz, c, sigma, outimg);break;
         default: v3d_msg("Invalid data type. Do nothing."); return;
     }
-     
+
      // display
      Image4DSimple * new4DImage = new Image4DSimple();
      new4DImage->setData((unsigned char *)outimg, N, M, P, 1, V3D_FLOAT32);
@@ -264,12 +264,12 @@ void processImage(V3DPluginCallback2 &callback, QWidget *parent)
 
 
 
-template <class T> void gaussian_filter(T* data1d, 
-                     V3DLONG *in_sz, 
-                     unsigned int Wx, 
-                     unsigned int Wy, 
-                     unsigned int Wz, 
-                     unsigned int c, 
+template <class T> void gaussian_filter(T* data1d,
+                     V3DLONG *in_sz,
+                     unsigned int Wx,
+                     unsigned int Wy,
+                     unsigned int Wz,
+                     unsigned int c,
                      double sigma,
                      float* &outimg)
 {
@@ -278,7 +278,7 @@ template <class T> void gaussian_filter(T* data1d,
         v3d_msg("Invalid parameters to gaussian_filter().", 0);
         return;
     }
-    
+
      // for filter kernel
      double sigma_s2 = 0.5/(sigma*sigma); // 1/(2*sigma*sigma)
      double pi_sigma = 1.0/(sqrt(2*3.1415926)*sigma); // 1.0/(sqrt(2*pi)*sigma)

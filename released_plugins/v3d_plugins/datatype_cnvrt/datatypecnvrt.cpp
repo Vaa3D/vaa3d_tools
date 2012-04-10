@@ -2,26 +2,37 @@
  * 2011-01-21: create this program by Yang Yu
  */
 
-// 
+// Adapted and upgraded to add dofunc() by Jianlong Zhou, 2012-04-08
+
+
+
+//
 #include <QtGui>
 
 #include <cmath>
 #include <stdlib.h>
 #include <ctime>
 
+#include <iostream>
+
+#include "stackutil.h"
 #include "datatypecnvrt.h"
 
+
+using namespace std;
 
 //Q_EXPORT_PLUGIN2 ( PluginName, ClassName )
 //The value of PluginName should correspond to the TARGET specified in the plugin's project file.
 Q_EXPORT_PLUGIN2(datatypeconvert, DTCPlugin);
 
 // func datatype converting main
-int datatype_converting(V3DPluginCallback2 &callback, QWidget *parent);
+int  datatype_converting(V3DPluginCallback2 &callback, QWidget *parent);
+bool datatype_converting(const V3DPluginArgList & input, V3DPluginArgList & output);
 
 // func convering kernel
 template <class Tpre, class Tpost>
-int convering(void *subject1d, ImagePixelType v3d_dt, ImagePixelType dt);
+void convering(void *pre1d, Tpost *pPost, V3DLONG imsz, ImagePixelType v3d_dt);
+
 
 //plugin funcs
 const QString title = "Datatype Converting";
@@ -44,30 +55,207 @@ void DTCPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, Q
 	}
 }
 
+QStringList DTCPlugin::funclist() const
+{
+	return QStringList()
+		<<tr("dtc")
+		<<tr("help");
+}
+
+
+bool DTCPlugin::dofunc(const QString &func_name, const V3DPluginArgList &input, V3DPluginArgList &output, V3DPluginCallback2 &callback, QWidget *parent)
+{
+     if (func_name == tr("dtc"))
+	{
+		return datatype_converting(input, output);
+	}
+	else if(func_name == tr("help"))
+	{
+		cout<<"Usage : v3d -x datatypeconvert -f dtc -i <inimg_file> -o <outimg_file> -p <tar_dt>"<<endl;
+		cout<<endl;
+		cout<<"tar_dt   datatype to be converted to: 1 for V3D_UINT8, 2 for V3D_UINT16, 4 for V3D_FLOAT32 "<<endl;
+		cout<<endl;
+		cout<<"e.g. v3d -x datatypeconvert -f dtc -i input.raw -o output.raw -p 1"<<endl;
+		cout<<endl;
+		return true;
+	}
+}
+
+
+bool datatype_converting(const V3DPluginArgList & input, V3DPluginArgList & output)
+{
+	cout<<"Welcome to DataType Converter"<<endl;
+	if (output.size() != 1) return false;
+
+     int tar_dt = 1;
+     if (input.size()>=2)
+     {
+          vector<char*> paras = (*(vector<char*> *)(input.at(1).p));
+          if(paras.size() >= 1) tar_dt = atoi(paras.at(0));
+	}
+
+	char * inimg_file = ((vector<char*> *)(input.at(0).p))->at(0);
+	char * outimg_file = ((vector<char*> *)(output.at(0).p))->at(0);
+	cout<<"tar_dt = "<<tar_dt<<endl;
+	cout<<"inimg_file = "<<inimg_file<<endl;
+	cout<<"outimg_file = "<<outimg_file<<endl;
+
+     if(tar_dt!=1 && tar_dt!=2 && tar_dt!=4)
+     {
+          v3d_msg("Invalide target data type. Only support V3D_UINT8, V3D_UINT16, and V3D_FLOAT32 data.");
+          return false;
+     }
+
+	unsigned char * subject1d = 0;
+	V3DLONG * in_sz = 0;
+
+	int sub_dt;
+	if(!loadImage(inimg_file, subject1d, in_sz, sub_dt))
+     {
+          cerr<<"load image "<<inimg_file<<" error!"<<endl;
+          return false;
+     }
+
+     V3DLONG	sz_sub = in_sz[0]*in_sz[1]*in_sz[2]*in_sz[3];
+
+     //Converting
+	if(tar_dt == 1) //V3D_UINT8
+	{
+		unsigned char * data1d = NULL;
+
+		try
+		{
+			data1d = new unsigned char [sz_sub];
+		}
+		catch(...)
+		{
+			printf("Error allocating memory. \n");
+			return -1;
+		}
+
+		if(sub_dt == 1)
+		{
+			convering<unsigned char, unsigned char>((unsigned char *)subject1d, data1d, sz_sub, V3D_UINT8);
+		}
+		else if(sub_dt == 2)
+		{
+			convering<unsigned short, unsigned char>((unsigned short *)subject1d, data1d, sz_sub, V3D_UINT8);
+		}
+		else if(sub_dt == 4)
+		{
+			convering<float, unsigned char>((float *)subject1d, data1d, sz_sub, V3D_UINT8);
+		}
+
+          // save image
+          saveImage(outimg_file, (unsigned char *)data1d, in_sz, 1);
+          if (data1d) {delete []data1d; data1d=0;}
+	}
+	else if(tar_dt == 2) //V3D_UINT16
+	{
+		unsigned short * data1d = NULL;
+
+		try
+		{
+			data1d = new unsigned short [sz_sub];
+		}
+		catch(...)
+		{
+			v3d_msg("Error allocating memory.", 0);
+			return false;
+		}
+
+		//
+		if(sub_dt == 1)
+		{
+			convering<unsigned char, unsigned short>((unsigned char *)subject1d, data1d, sz_sub, V3D_UINT16);
+		}
+		else if(sub_dt == 2)
+		{
+			convering<unsigned short, unsigned short>((unsigned short *)subject1d, data1d, sz_sub, V3D_UINT16);
+		}
+		else if(sub_dt == 4)
+		{
+			convering<float, unsigned short>((float *)subject1d, data1d, sz_sub, V3D_UINT16);
+		}
+
+          // save image
+          saveImage(outimg_file, (unsigned char *)data1d, in_sz, 2);
+          if (data1d) {delete []data1d; data1d=0;}
+	}
+	else if(tar_dt == 4) //V3D_FLOAT32
+	{
+		float * data1d = NULL;
+
+		try
+		{
+			data1d = new float [sz_sub];
+		}
+		catch(...)
+		{
+			v3d_msg("Error allocating memory.", 0);
+			return false;
+		}
+
+		//
+		if(sub_dt == 1)
+		{
+			convering<unsigned char, float>((unsigned char *)subject1d, data1d, sz_sub, V3D_FLOAT32);
+		}
+		else if(sub_dt == 2)
+		{
+			convering<unsigned short, float>((unsigned short *)subject1d, data1d, sz_sub, V3D_FLOAT32);
+		}
+		else if(sub_dt == 4)
+		{
+			convering<float, float>((float *)subject1d, data1d, sz_sub, V3D_FLOAT32);
+		}
+
+          // save image
+          saveImage(outimg_file, (unsigned char *)data1d, in_sz, 4);
+          if (data1d) {delete []data1d; data1d=0;}
+	}
+	else
+	{
+		v3d_msg("Currently this program only support UINT8, UINT16, and FLOAT32 data type.");
+		return false;
+	}
+
+     if(subject1d) {delete []subject1d; subject1d=0;}
+     if(in_sz) {delete []in_sz; in_sz=0;}
+
+     return true;
+}
+
+
 // func convering kernel
 template <class Tpre, class Tpost>
 void convering(void *pre1d, Tpost *pPost, V3DLONG imsz, ImagePixelType v3d_dt)
 {
+     if (!pre1d ||!pPost || imsz<=0 )
+     {
+          v3d_msg("Invalid parameters to gaussian_filter().", 0);
+          return;
+     }
 
 	Tpre *pPre = (Tpre *)pre1d;
-	
+
 	if(v3d_dt == V3D_UINT8)
 	{
 		Tpre max_v=0, min_v = 255;
-		
+
 		for(V3DLONG i=0; i<imsz; i++)
 		{
 			if(max_v<pPre[i]) max_v = pPre[i];
 			if(min_v>pPre[i]) min_v = pPre[i];
 		}
 		max_v -= min_v;
-		
+
 		if(max_v>0)
 		{
 			for(V3DLONG i=0; i<imsz; i++)
 			{
 				pPost[i] = (Tpost) 255*(double)(pPre[i] - min_v)/max_v;
-			}	
+			}
 		}
 		else
 		{
@@ -81,20 +269,20 @@ void convering(void *pre1d, Tpost *pPost, V3DLONG imsz, ImagePixelType v3d_dt)
 	else if(v3d_dt == V3D_UINT16)
 	{
 		Tpre max_v=0, min_v = 255;
-		
+
 		for(V3DLONG i=0; i<imsz; i++)
 		{
 			if(max_v<pPre[i]) max_v = pPre[i];
 			if(min_v>pPre[i]) min_v = pPre[i];
 		}
 		max_v -= min_v;
-		
+
 		if(max_v>0)
 		{
 			for(V3DLONG i=0; i<imsz; i++)
 			{
 				pPost[i] = (Tpost) 65535*(double)(pPre[i] - min_v)/max_v;
-			}	
+			}
 		}
 		else
 		{
@@ -103,7 +291,7 @@ void convering(void *pre1d, Tpost *pPost, V3DLONG imsz, ImagePixelType v3d_dt)
 				pPost[i] = (Tpost) pPre[i];
 			}
 		}
-		
+
 	}
 	else if(v3d_dt == V3D_FLOAT32)
 	{
@@ -111,9 +299,9 @@ void convering(void *pre1d, Tpost *pPost, V3DLONG imsz, ImagePixelType v3d_dt)
 		{
 			pPost[i] = (Tpost) pPre[i];
 		}
-		
+
 	}
-	
+
 }
 
 
@@ -121,25 +309,25 @@ void convering(void *pre1d, Tpost *pPost, V3DLONG imsz, ImagePixelType v3d_dt)
 int datatype_converting(V3DPluginCallback2 &callback, QWidget *parent)
 {
     v3dhandleList win_list = callback.getImageWindowList();
-	
-	if(win_list.size()<1) 
+
+	if(win_list.size()<1)
 	{
 		QMessageBox::information(0, title, QObject::tr("No image is open."));
 		return -1;
 	}
-	
+
 	//
 	DTCDialog dialog(callback,parent);
 	if (dialog.exec()!=QDialog::Accepted)	return -1;
-	
+
 	dialog.update();
-	
+
 	V3DLONG isub = dialog.isub;
 	V3DLONG dt = dialog.dt;
-	
+
 	//
 	ImagePixelType cnvrt_dt;
-	
+
 	if(dt==0)
 	{
 		cnvrt_dt = V3D_UINT8;
@@ -152,7 +340,7 @@ int datatype_converting(V3DPluginCallback2 &callback, QWidget *parent)
 	{
 		cnvrt_dt = V3D_FLOAT32;
 	}
-	
+
 	Image4DSimple* subject = callback.getImage(win_list[isub]);
 
 	if (!subject)
@@ -160,23 +348,23 @@ int datatype_converting(V3DPluginCallback2 &callback, QWidget *parent)
 		QMessageBox::information(0, title, QObject::tr("Image does not exist."));
 		return -1;
 	}
-	
+
     unsigned char* subject1d = subject->getRawData();
-	
+
 	V3DLONG sx = subject->getXDim();
     V3DLONG sy = subject->getYDim();
-    V3DLONG sz = subject->getZDim(); 
+    V3DLONG sz = subject->getZDim();
 	V3DLONG sc = subject->getCDim();
-	
+
 	V3DLONG	sz_sub = sx*sy*sz*sc;
 	ImagePixelType sub_dt = subject->getDatatype();
-	
-	
+
+
 	//Converting
 	if(cnvrt_dt == V3D_UINT8)
 	{
 		unsigned char * data1d = NULL;
-		
+
 		try
 		{
 			data1d = new unsigned char [sz_sub];
@@ -186,7 +374,7 @@ int datatype_converting(V3DPluginCallback2 &callback, QWidget *parent)
 			printf("Error allocating memory. \n");
 			return -1;
 		}
-		
+
 		//
 		if(sub_dt == V3D_UINT8)
 		{
@@ -200,11 +388,11 @@ int datatype_converting(V3DPluginCallback2 &callback, QWidget *parent)
 		{
 			convering<float, unsigned char>((float *)subject1d, data1d, sz_sub, cnvrt_dt);
 		}
-		
+
 		//display
 		Image4DSimple p4DImage;
-		p4DImage.setData((unsigned char*)data1d, sx, sy, sz, sc, V3D_UINT8); // 
-		
+		p4DImage.setData((unsigned char*)data1d, sx, sy, sz, sc, V3D_UINT8); //
+
 		v3dhandle newwin = callback.newImageWindow();
 		callback.setImage(newwin, &p4DImage);
 		callback.setImageName(newwin, "Converted Image");
@@ -213,7 +401,7 @@ int datatype_converting(V3DPluginCallback2 &callback, QWidget *parent)
 	else if(cnvrt_dt == V3D_UINT16)
 	{
 		unsigned short * data1d = NULL;
-		
+
 		try
 		{
 			data1d = new unsigned short [sz_sub];
@@ -223,7 +411,7 @@ int datatype_converting(V3DPluginCallback2 &callback, QWidget *parent)
 			printf("Error allocating memory. \n");
 			return -1;
 		}
-		
+
 		//
 		if(sub_dt == V3D_UINT8)
 		{
@@ -237,11 +425,11 @@ int datatype_converting(V3DPluginCallback2 &callback, QWidget *parent)
 		{
 			convering<float, unsigned short>((float *)subject1d, data1d, sz_sub, cnvrt_dt);
 		}
-		
+
 		//display
 		Image4DSimple p4DImage;
-		p4DImage.setData((unsigned char*)data1d, sx, sy, sz, sc, V3D_UINT16); // 
-		
+		p4DImage.setData((unsigned char*)data1d, sx, sy, sz, sc, V3D_UINT16); //
+
 		v3dhandle newwin = callback.newImageWindow();
 		callback.setImage(newwin, &p4DImage);
 		callback.setImageName(newwin, "Converted Image");
@@ -250,7 +438,7 @@ int datatype_converting(V3DPluginCallback2 &callback, QWidget *parent)
 	else if(cnvrt_dt == V3D_FLOAT32)
 	{
 		float * data1d = NULL;
-		
+
 		try
 		{
 			data1d = new float [sz_sub];
@@ -260,7 +448,7 @@ int datatype_converting(V3DPluginCallback2 &callback, QWidget *parent)
 			printf("Error allocating memory. \n");
 			return -1;
 		}
-		
+
 		//
 		if(sub_dt == V3D_UINT8)
 		{
@@ -274,11 +462,11 @@ int datatype_converting(V3DPluginCallback2 &callback, QWidget *parent)
 		{
 			convering<float, float>((float *)subject1d, data1d, sz_sub, cnvrt_dt);
 		}
-		
+
 		//display
 		Image4DSimple p4DImage;
 		p4DImage.setData((unsigned char*)data1d, sx, sy, sz, sc, V3D_FLOAT32); //
-		
+
 		v3dhandle newwin = callback.newImageWindow();
 		callback.setImage(newwin, &p4DImage);
 		callback.setImageName(newwin, "Converted Image");
@@ -292,6 +480,6 @@ int datatype_converting(V3DPluginCallback2 &callback, QWidget *parent)
 
 	//
 	return 0;
-	
+
 }
 

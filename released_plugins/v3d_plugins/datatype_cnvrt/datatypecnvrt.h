@@ -26,9 +26,9 @@ public:
 	QStringList menulist() const;
 	void domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent);
 
-	QStringList funclist() const {return QStringList();}
+	QStringList funclist() const;
 	bool dofunc(const QString & func_name, const V3DPluginArgList & input, V3DPluginArgList & output,
-				V3DPluginCallback2 & v3d, QWidget * parent) {return true;}
+          V3DPluginCallback2 & v3d, QWidget * parent);
 };
 
 class DTCDialog : public QDialog
