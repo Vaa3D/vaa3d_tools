@@ -2,8 +2,9 @@
  * 2011-12-02: create this program by Yang Yu
  */
 
+// add dofunc() by Jianlong Zhou, 2012-04-08
 
-// 
+//
 
 #ifndef __IBIOFORMATIO_CPP__
 #define __IBIOFORMATIO_CPP__
@@ -52,85 +53,85 @@ void IBioformatIOPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &ca
 {
     if (menu_name == tr("load an image using Bioformats Java library"))
     {
-        
+
         // input
         QString m_FileName = QFileDialog::getOpenFileName(parent, QObject::tr("Open An Image"),
                                                           QDir::currentPath(),
                                                           QObject::tr("Image File (*.*)"));
-        
+
         if(m_FileName.isEmpty())
         {
-            printf("\nError: Your image does not exist!\n");
-            return;
+             printf("\nError: Your image does not exist!\n");
+             return;
         }
-        
+
         // temp
         QString baseName = QFileInfo(m_FileName).baseName();
         QString tmpfile = QDir::tempPath().append("/").append(baseName).append(".tif");
-        
+
         //
-	QFile tmpqfile(tmpfile);
-	if (tmpqfile.exists()) system(qPrintable(QString("rm -f ")+tmpfile));
-	
-	//look for loci_tools.jar
-	QString lociDir = ("loci_tools.jar");
-	if (!QFile(lociDir).exists())
-	{
-		printf("loci_tools.jar is not in current directory, search v3d app path.\n");
-		lociDir = getAppPath().append("/loci_tools.jar");
-		printf(qPrintable(lociDir));
-		printf("\n");
-		if (!QFile(lociDir).exists())
-		{
-			v3d_msg("Cannot find loci_tools.jar, please download it and make sure it is put under the Vaa3D executable folder, parallel to the Vaa3D executable and the plugins folder.");
-			return;
-		}
-	}
-	
+        QFile tmpqfile(tmpfile);
+        if (tmpqfile.exists()) system(qPrintable(QString("rm -f ")+tmpfile));
+
+        //look for loci_tools.jar
+        QString lociDir = ("loci_tools.jar");
+        if (!QFile(lociDir).exists())
+        {
+             printf("loci_tools.jar is not in current directory, search v3d app path.\n");
+             lociDir = getAppPath().append("/loci_tools.jar");
+             printf(qPrintable(lociDir));
+             printf("\n");
+             if (!QFile(lociDir).exists())
+             {
+                  v3d_msg("Cannot find loci_tools.jar, please download it and make sure it is put under the Vaa3D executable folder, parallel to the Vaa3D executable and the plugins folder.");
+                  return;
+             }
+        }
+
         QString cmd_loci = QString("java -cp %1 loci.formats.tools.ImageConverter %2 %3").arg(lociDir.toStdString().c_str()).arg(m_FileName.toStdString().c_str()).arg(tmpfile.toStdString().c_str());
-        
+
         system(qPrintable(cmd_loci));
 
-	if (!tmpqfile.exists()) v3d_msg("The format is not supported, or something is wrong in your file\n");
+        if (!tmpqfile.exists()) v3d_msg("The format is not supported, or something is wrong in your file\n");
 
-        
+
         // load
         V3DLONG *sz_relative = 0;
         int datatype_relative = 0;
         unsigned char* relative1d = 0;
-        
+
         if (loadImage(const_cast<char *>(tmpfile.toStdString().c_str()), relative1d, sz_relative, datatype_relative)!=true)
         {
-            fprintf (stderr, "Error happens in reading the subject file [%s]. Exit. \n",tmpfile.toStdString().c_str());
-            return;
+             fprintf (stderr, "Error happens in reading the subject file [%s]. Exit. \n",tmpfile.toStdString().c_str());
+             return;
         }
-        
+
         // visualize
         Image4DSimple p4DImage;
-        
+
         if(datatype_relative == V3D_UINT8)
         {
-            p4DImage.setData((unsigned char*)relative1d, sz_relative[0], sz_relative[1], sz_relative[2], sz_relative[3], V3D_UINT8);
+             p4DImage.setData((unsigned char*)relative1d, sz_relative[0], sz_relative[1], sz_relative[2], sz_relative[3], V3D_UINT8);
         }
         else if(datatype_relative == V3D_UINT16)
         {
-            p4DImage.setData((unsigned char*)relative1d, sz_relative[0], sz_relative[1], sz_relative[2], sz_relative[3], V3D_UINT16);
+             p4DImage.setData((unsigned char*)relative1d, sz_relative[0], sz_relative[1], sz_relative[2], sz_relative[3], V3D_UINT16);
         }
         else if(datatype_relative == V3D_FLOAT32)
         {
-            p4DImage.setData((unsigned char*)relative1d, sz_relative[0], sz_relative[1], sz_relative[2], sz_relative[3], V3D_FLOAT32);
+             p4DImage.setData((unsigned char*)relative1d, sz_relative[0], sz_relative[1], sz_relative[2], sz_relative[3], V3D_FLOAT32);
         }
         else
         {
-            printf("\nError: The program only supports UINT8, UINT16, and FLOAT32 datatype.\n");
-            return;
+             printf("\nError: The program only supports UINT8, UINT16, and FLOAT32 datatype.\n");
+             return;
         }
-        
+
         v3dhandle newwin = callback.newImageWindow();
         callback.setImage(newwin, &p4DImage);
         callback.setImageName(newwin, tmpfile.toStdString().c_str());
         callback.updateImageWindow(newwin);
-        
+
     }
     else if (menu_name == tr("click me if you are unhappy with the loading result..."))
     {
@@ -152,13 +153,70 @@ void IBioformatIOPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &ca
 // plugin func
 QStringList IBioformatIOPlugin::funclist() const
 {
-    return QStringList() << tr("imageIOBioformat");
+    return QStringList() << tr("imgiobiof")
+                         << tr("help");
 }
 
 bool IBioformatIOPlugin::dofunc(const QString & func_name, const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback,  QWidget * parent)
 {
-    //
-	return true;
+     if (func_name == tr("imgiobiof"))
+	{
+          cout<<"Welcome to imageIOBioformat loader"<<endl;
+          if(input.size() != 1 || output.size() != 1) return false;
+
+          char * inimg_file = ((vector<char*> *)(input.at(0).p))->at(0);
+          char * outimg_file = ((vector<char*> *)(output.at(0).p))->at(0);
+          cout<<"inimg_file = "<<inimg_file<<endl;
+          cout<<"outimg_file = "<<outimg_file<<endl;
+
+          QString m_FileName(inimg_file); // use inimge_file name
+
+          if(m_FileName.isEmpty())
+          {
+               printf("\nError: Your image does not exist!\n");
+               return false;
+          }
+
+          // temp
+          QString baseName = QFileInfo(m_FileName).baseName();
+          //QString tmpfile = QDir::tempPath().append("/").append(baseName).append(".tif");
+          QString tmpfile(outimg_file); //use outimg_file name
+
+          //
+          QFile tmpqfile(tmpfile);
+          if (tmpqfile.exists()) system(qPrintable(QString("rm -f ")+tmpfile));
+
+          //look for loci_tools.jar
+          QString lociDir = ("loci_tools.jar");
+          if (!QFile(lociDir).exists())
+          {
+               printf("loci_tools.jar is not in current directory, search v3d app path.\n");
+               lociDir = getAppPath().append("/loci_tools.jar");
+               printf(qPrintable(lociDir));
+               printf("\n");
+               if (!QFile(lociDir).exists())
+               {
+                    v3d_msg("Cannot find loci_tools.jar, please download it and make sure it is put under the Vaa3D executable folder, parallel to the Vaa3D executable and the plugins folder.", 0);
+                    return false;
+               }
+          }
+
+          QString cmd_loci = QString("java -cp %1 loci.formats.tools.ImageConverter %2 %3").arg(lociDir.toStdString().c_str()).arg(m_FileName.toStdString().c_str()).arg(tmpfile.toStdString().c_str());
+
+          system(qPrintable(cmd_loci));
+
+          if (!tmpqfile.exists()) v3d_msg("The format is not supported, or something is wrong in your file\n");
+
+          return true;
+	}
+	else if(func_name == tr("help"))
+	{
+		cout<<"Usage : v3d -x imageIO_Bioformat -f imgiobiof -i <inimg_file> -o <outimg_file>"<<endl;
+		cout<<"e.g. v3d -x imageIO_Bioformat -f imgiobiof -i input.raw -o output.raw"<<endl;
+		cout<<endl;
+		return true;
+	}
+
 }
 
 QString getAppPath()
@@ -181,7 +239,7 @@ QString getAppPath()
 		if (testUpperPluginsDir.cd("plugins")) testPluginsDir = testUpperPluginsDir;
 	}
 #endif
-	
+
 	testPluginsDir.cdUp();
 	v3dAppPath = testPluginsDir.absolutePath();
 	return v3dAppPath;
