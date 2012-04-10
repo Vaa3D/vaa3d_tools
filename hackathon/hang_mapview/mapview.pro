@@ -20,6 +20,7 @@ HEADERS	+= mapview_gui.h
 HEADERS += src/mapview.h
 
 SOURCES	+= mapview_plugin.cpp
+SOURCES	+= mapview_gui.cpp
 SOURCES += src/mapview.cpp
 
 SOURCES	+= $$VAA3DPATH/v3d_main/basic_c_fun/v3d_message.cpp

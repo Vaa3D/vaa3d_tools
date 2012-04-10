@@ -102,7 +102,7 @@ void ImageMapView::getBlockTillingSize(V3DLONG level, V3DLONG & ts0, V3DLONG & t
 // pos0, posk, posj, posi         the seek offset of single block image file
 // ti, tj, tk, tis, tjs, tks, tie, tje, tke   the block array index
 // bi, bj, bk, bis, bjs, bks, bie, bje, bke   the index in a single block
-void ImageMapView::getImage(V3DLONG level, unsigned char * & outimg1d, V3DLONG x0, V3DLONG y0, V3DLONG z0, V3DLONG outsz0, V3DLONG outsz1, V3DLONG outsz2)
+void ImageMapView::getImage(V3DLONG level, unsigned char * & outimg1d, V3DLONG x0, V3DLONG y0, V3DLONG z0, V3DLONG outsz0, V3DLONG outsz1, V3DLONG outsz2, bool is_use_thread)
 {
 	V3DLONG outsz012 = outsz0 * outsz1 * outsz2;
 	V3DLONG outsz01 = outsz0 * outsz1;
@@ -122,7 +122,7 @@ void ImageMapView::getImage(V3DLONG level, unsigned char * & outimg1d, V3DLONG x
 
 	// Read related multiple blocks
 
-	bool is_use_thread = true;
+	//bool is_use_thread = mapview_paras.is_use_thread();
 	if(is_use_thread)
 	{
 		set<string> loaded_blocks;
