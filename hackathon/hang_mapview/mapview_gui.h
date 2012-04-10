@@ -65,7 +65,7 @@ public:
         xSlider_mapv->setRange(0, dimx-mapview_paras.outsz[0]); //need redefine range
 		xSlider_mapv->setSingleStep(1);
         xSlider_mapv->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
-        QLabel* xSliderLabel_mapv = new QLabel("X");
+        QLabel* xSliderLabel_mapv = new QLabel("X-Off");
 
         xValueSpinBox_mapv = new QSpinBox;
         xValueSpinBox_mapv->setRange(0, dimx-mapview_paras.outsz[0]);
@@ -76,7 +76,7 @@ public:
         ySlider_mapv->setRange(0, dimy-mapview_paras.outsz[1]); //need redefine range
 		ySlider_mapv->setSingleStep(1);
         ySlider_mapv->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
-        QLabel* ySliderLabel_mapv = new QLabel("Y");
+        QLabel* ySliderLabel_mapv = new QLabel("Y-Off");
 
         yValueSpinBox_mapv = new QSpinBox;
         yValueSpinBox_mapv->setRange(0, dimy-mapview_paras.outsz[1]);
@@ -88,7 +88,7 @@ public:
 		zSlider_mapv->setSingleStep(1);
 		zSlider_mapv->setPageStep(1);
         zSlider_mapv->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
-        QLabel* zSliderLabel_mapv = new QLabel("Z");
+        QLabel* zSliderLabel_mapv = new QLabel("Z-Off");
 
         zValueSpinBox_mapv = new QSpinBox;
         zValueSpinBox_mapv->setRange(0, dimz-mapview_paras.outsz[2]);
@@ -107,6 +107,39 @@ public:
         zoomSpinBox_mapv->setSingleStep(1);
         zoomSpinBox_mapv->setValue(mapview_paras.level);
 
+        cropXSlider_mapv = new QScrollBar(Qt::Horizontal);
+        cropXSlider_mapv->setRange(100, 1000);
+		cropXSlider_mapv->setSingleStep(20);
+        cropXSlider_mapv->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
+        QLabel* cropXSliderLabel_mapv = new QLabel("X-SZ");
+
+        cropXSpinBox_mapv = new QSpinBox;
+        cropXSpinBox_mapv->setRange(100, 1000);
+        cropXSpinBox_mapv->setSingleStep(20);
+        cropXSpinBox_mapv->setValue(mapview_paras.outsz[0]);
+
+        cropYSlider_mapv = new QScrollBar(Qt::Horizontal);
+        cropYSlider_mapv->setRange(100, 1000);
+		cropYSlider_mapv->setSingleStep(20);
+        cropYSlider_mapv->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
+        QLabel* cropYSliderLabel_mapv = new QLabel("Y-SZ");
+
+        cropYSpinBox_mapv = new QSpinBox;
+        cropYSpinBox_mapv->setRange(100, 1000);
+        cropYSpinBox_mapv->setSingleStep(20);
+        cropYSpinBox_mapv->setValue(mapview_paras.outsz[1]);
+
+        cropZSlider_mapv = new QScrollBar(Qt::Horizontal);
+        cropZSlider_mapv->setRange(100, 1000);
+		cropZSlider_mapv->setSingleStep(20);
+        cropZSlider_mapv->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
+        QLabel* cropZSliderLabel_mapv = new QLabel("Z-SZ");
+
+        cropZSpinBox_mapv = new QSpinBox;
+        cropZSpinBox_mapv->setRange(100, 1000);
+        cropZSpinBox_mapv->setSingleStep(20);
+        cropZSpinBox_mapv->setValue(mapview_paras.outsz[2]);
+
         // layout for mv control window
         layout->addWidget(zSliderLabel_mapv, 0, 0, 1, 1);
         layout->addWidget(zSlider_mapv, 0, 1, 1, 13);
@@ -123,6 +156,18 @@ public:
         layout->addWidget(zoomLabel_mapv, 3, 0, 1, 1);
         layout->addWidget(zoomSlider_mapv, 3, 1, 1, 13);
         layout->addWidget(zoomSpinBox_mapv, 3, 14, 1, 6);
+
+		layout->addWidget(cropXSliderLabel_mapv, 4, 0, 1, 1);
+		layout->addWidget(cropXSlider_mapv, 4, 1, 1, 13);
+		layout->addWidget(cropXSpinBox_mapv, 4, 14, 1, 6);
+
+		layout->addWidget(cropYSliderLabel_mapv, 5, 0, 1, 1);
+		layout->addWidget(cropYSlider_mapv, 5, 1, 1, 13);
+		layout->addWidget(cropYSpinBox_mapv, 5, 14, 1, 6);
+
+		layout->addWidget(cropZSliderLabel_mapv, 6, 0, 1, 1);
+		layout->addWidget(cropZSlider_mapv, 6, 1, 1, 13);
+		layout->addWidget(cropZSpinBox_mapv, 6, 14, 1, 6);
 
         // setup connections
 		connect(xSlider_mapv,    SIGNAL(valueChanged(int)), this, SLOT(changeXOffset_mapv(int)));
@@ -202,9 +247,23 @@ private:
 	V3DPluginCallback2 * callback;
 	v3dhandle curwin;
 
-	QScrollBar *xSlider_mapv, *ySlider_mapv, *zSlider_mapv;
-	QSpinBox *xValueSpinBox_mapv, *yValueSpinBox_mapv, *zValueSpinBox_mapv, *zoomSpinBox_mapv;
+	QScrollBar *xSlider_mapv;
+	QScrollBar *ySlider_mapv;
+	QScrollBar *zSlider_mapv;
 	QScrollBar *zoomSlider_mapv;
+
+	QSpinBox *xValueSpinBox_mapv;
+	QSpinBox *yValueSpinBox_mapv;
+	QSpinBox *zValueSpinBox_mapv;
+	QSpinBox *zoomSpinBox_mapv;
+
+	QScrollBar *cropXSlider_mapv;
+	QScrollBar *cropYSlider_mapv;
+	QScrollBar *cropZSlider_mapv;
+
+	QSpinBox *cropXSpinBox_mapv;
+	QSpinBox *cropYSpinBox_mapv;
+	QSpinBox *cropZSpinBox_mapv;
 
 	void closeEvent(QCloseEvent *event)
 	{
