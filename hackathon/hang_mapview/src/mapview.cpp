@@ -31,24 +31,112 @@ static bool is_file_exists(const char * filename)
 }
 
 // thread data and func
-static map<string, unsigned char*> block_buff_map;
-static void * loadBlockImage(void* para)
+struct ThreadData
 {
-	string filename = (char*)(para);
+	string filename;
+	unsigned char * outimg1d;
+	
+	V3DLONG bis;
+	V3DLONG bie;
+	V3DLONG bjs;
+	V3DLONG bje;
+	V3DLONG bks;
+	V3DLONG bke;
+
+	V3DLONG ois;
+	V3DLONG ojs;
+	V3DLONG oks;
+
+	V3DLONG bs0;
+	V3DLONG bs1;
+	V3DLONG bs2;
+	V3DLONG outsz0;
+	V3DLONG outsz1;
+	V3DLONG outsz2;
+	V3DLONG channel;
+};
+
+vector<pthread_t> all_threads;
+static map<string, unsigned char*> block_buff_map;
+static vector<pthread_t> existing_threads;
+static void * loadBlockImage(void* _para)
+{
+	ThreadData * para = (ThreadData *) _para;
+	string filename = para->filename;
 	assert(block_buff_map.find(filename) == block_buff_map.end());
 
 	unsigned char * inimg1d = 0; 
-	V3DLONG * in_sz = 0;
-	int datatype;
-	if(loadImage((char*)filename.c_str(), inimg1d, in_sz, datatype))
+	if(block_buff_map.find(filename) == block_buff_map.end())
 	{
-		delete [] in_sz; in_sz = 0;
-		block_buff_map[filename] = inimg1d;
+		V3DLONG * in_sz = 0;
+		int datatype;
+		if(!loadImage((char*)filename.c_str(), inimg1d, in_sz, datatype))
+		{
+			block_buff_map[filename] = 0;
+			inimg1d = 0;
+		}
+		else
+		{
+			block_buff_map[filename] = inimg1d;
+			delete [] in_sz; in_sz = 0;
+		}
 	}
 	else
 	{
-		block_buff_map[filename] = 0;
+		inimg1d = block_buff_map[filename];
 	}
+	
+	if(inimg1d)
+	{
+		unsigned char * outimg1d = para->outimg1d;
+		V3DLONG bis = para->bis;
+		V3DLONG bjs = para->bjs;
+		V3DLONG bks = para->bks;
+		V3DLONG bie = para->bie;
+		V3DLONG bje = para->bje;
+		V3DLONG bke = para->bke;
+		V3DLONG ois = para->ois;
+		V3DLONG ojs = para->ojs;
+		V3DLONG oks = para->oks;
+
+		V3DLONG bs0 = para->bs0;
+		V3DLONG bs1 = para->bs1;
+		V3DLONG bs2 = para->bs2;
+
+		V3DLONG outsz0 = para->outsz0;
+		V3DLONG outsz1 = para->outsz1;
+		V3DLONG outsz2 = para->outsz2;
+
+		V3DLONG channel = para->channel;
+
+		V3DLONG bs01 = bs0 * bs1;
+		V3DLONG bs012 = bs01 * bs2;
+		V3DLONG outsz01 = outsz0 * outsz1;
+		V3DLONG outsz012 = outsz01 * outsz2;
+
+		for(V3DLONG c = 0; c < channel; c++)
+		{
+			unsigned char * inimg1d_channel = inimg1d + c * bs012;
+			unsigned char * outimg1d_channel = outimg1d + c * outsz012;
+			for(V3DLONG bk = bks; bk <= bke; bk++)
+			{
+				V3DLONG ok = oks + bk; //tk * bs2 + bk - z0;
+				for(V3DLONG bj = bjs; bj <= bje; bj++)
+				{
+					V3DLONG oj = ojs + bj;//tj * bs1 + bj - y0;
+					for(V3DLONG bi = bis; bi <= bie; bi++)
+					{
+						V3DLONG oi = ois + bi;// ti * bs0 + bi - x0;
+						V3DLONG ind1 = ok * outsz01 + oj * outsz0 + oi;
+						V3DLONG ind2 = bk * bs01 + bj * bs0 + bi;
+						outimg1d_channel[ind1] = inimg1d_channel[ind2];
+					}
+				}
+			}
+		}
+	}
+
+	if(para){delete (ThreadData*)para; para = 0;}
 	return 0;
 }
 // thread over
@@ -126,6 +214,15 @@ void ImageMapView::getImage(V3DLONG level, unsigned char * & outimg1d, V3DLONG x
 	//bool is_use_thread = mapview_paras.is_use_thread();
 	if(is_use_thread)
 	{
+		// 1. stop all existing threads
+		for(int t = 0; t < existing_threads.size(); t++)
+		{
+			pthread_t thread = existing_threads[t];
+			pthread_cancel(thread);
+		}
+		existing_threads.clear();
+
+		// 2. the the filename of all related blocks
 		set<string> related_blocks;
 		for(V3DLONG tk = tks; tk <= tke; tk++)
 		{
@@ -141,7 +238,7 @@ void ImageMapView::getImage(V3DLONG level, unsigned char * & outimg1d, V3DLONG x
 			}
 		}
 
-		// delete unused blocks
+		// 3. delete unused blocks
 		map<string, unsigned char*>::iterator it = block_buff_map.begin();
 		while(it != block_buff_map.end())
 		{
@@ -155,8 +252,7 @@ void ImageMapView::getImage(V3DLONG level, unsigned char * & outimg1d, V3DLONG x
 			it++;
 		}
 
-		vector<pthread_t> all_threads;
-		// create thread if related block is not in memory
+		// 4. create thread to load related block and set to outimg1d
 		for(V3DLONG tk = tks; tk <= tke; tk++)
 		{
 			for(V3DLONG tj = tjs; tj <= tje; tj++)
@@ -166,66 +262,29 @@ void ImageMapView::getImage(V3DLONG level, unsigned char * & outimg1d, V3DLONG x
 					ostringstream oss;
 					oss<<dir<<"/L"<<level<<"/L"<<level<<"_X"<<ti<<"_Y"<<tj<<"_Z"<<tk<<".raw";
 					string filename = oss.str();
-					if(block_buff_map.find(filename) == block_buff_map.end()) // if not loaded before
-					{
-							pthread_t thread1;
-							pthread_create(&thread1, NULL, loadBlockImage, (void*)filename.c_str());
-							//pthread_join(thread1, NULL);
-							all_threads.push_back(thread1);
-					}
-				}
-			}
-		}
-		// wait until all blocks are loaded
-		for(int p = 0; p < all_threads.size(); p++)
-		{
-			pthread_join(all_threads[p], NULL);
-		}
 
-		// get image from loaded blocks
-		for(V3DLONG tk = tks; tk <= tke; tk++)
-		{
-			for(V3DLONG tj = tjs; tj <= tje; tj++)
-			{
-				for(V3DLONG ti = tis; ti <= tie; ti++)
-				{
-					ostringstream oss;
-					oss<<dir<<"/L"<<level<<"/L"<<level<<"_X"<<ti<<"_Y"<<tj<<"_Z"<<tk<<".raw";
-					string filename = oss.str();
-					unsigned char * tmpimg1d = block_buff_map[filename];
-					if(tmpimg1d == 0) continue;
+					pthread_t thread;
+					ThreadData * para = new ThreadData;
+					para->filename = filename;
+					para->bis = (ti == tis) ? (x0 - tis * bs0) : 0;                   // the start x index in current block
+					para->bjs = (tj == tjs) ? (y0 - tjs * bs1) : 0;                   // the start y index in current block
+					para->bks = (tk == tks) ? (z0 - tks * bs2) : 0;                   // the start z index in current block
+					para->bie = (ti == tie) ? (x0 + outsz0 - tie * bs0 - 1) : bs0 - 1;   // the end x index in current block
+					para->bje = (tj == tje) ? (y0 + outsz1 - tje * bs1 - 1) : bs1 - 1;   // the end y index in current block
+					para->bke = (tk == tke) ? (z0 + outsz2 - tke * bs2 - 1) : bs2 - 1;   // the end z index in current block
+					para->ois = ti*bs0 - x0;
+					para->ojs = tj*bs1 - y0;
+					para->oks = tk*bs2 - z0;
+					para->bs0 = bs0;
+					para->bs1 = bs1;
+					para->bs2 = bs2;
+					para->outsz0 = outsz0;
+					para->outsz1 = outsz1;
+					para->outsz2 = outsz2;
+					para->channel = channel;
 
-					V3DLONG bis = (ti == tis) ? (x0 - tis * bs0) : 0;                   // the start x index in current block
-					V3DLONG bjs = (tj == tjs) ? (y0 - tjs * bs1) : 0;                   // the start y index in current block
-					V3DLONG bks = (tk == tks) ? (z0 - tks * bs2) : 0;                   // the start z index in current block
-					V3DLONG bie = (ti == tie) ? (x0 + outsz0 - tie * bs0 - 1) : bs0 - 1;   // the end x index in current block
-					V3DLONG bje = (tj == tje) ? (y0 + outsz1 - tje * bs1 - 1) : bs1 - 1;   // the end y index in current block
-					V3DLONG bke = (tk == tke) ? (z0 + outsz2 - tke * bs2 - 1) : bs2 - 1;   // the end z index in current block
-
-					V3DLONG ois = ti*bs0 - x0;
-					V3DLONG ojs = tj*bs1 - y0;
-					V3DLONG oks = tk*bs2 - z0;
-
-					for(V3DLONG c = 0; c < channel; c++)
-					{
-						unsigned char * tmpimg1d_channel = tmpimg1d + c * block_size;
-						unsigned char * outimg1d_channel = outimg1d + c * outsz012;
-						for(V3DLONG bk = bks; bk <= bke; bk++)
-						{
-							V3DLONG ok = oks + bk; //tk * bs2 + bk - z0;
-							for(V3DLONG bj = bjs; bj <= bje; bj++)
-							{
-								V3DLONG oj = ojs + bj;//tj * bs1 + bj - y0;
-								for(V3DLONG bi = bis; bi <= bie; bi++)
-								{
-									V3DLONG oi = ois + bi;// ti * bs0 + bi - x0;
-									V3DLONG ind1 = ok * outsz01 + oj * outsz0 + oi;
-									V3DLONG ind2 = bk * bs01 + bj * bs0 + bi;
-									outimg1d_channel[ind1] = tmpimg1d_channel[ind2];
-								}
-							}
-						}
-					}
+					pthread_create(&thread, NULL, loadBlockImage, (void*)para);
+					existing_threads.push_back(thread);
 				}
 			}
 		}
