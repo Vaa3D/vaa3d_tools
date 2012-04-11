@@ -73,7 +73,11 @@ bool LaplacianFilterPlugin::dofunc(const QString &func_name, const V3DPluginArgL
 bool processImage(const V3DPluginArgList & input, V3DPluginArgList & output)
 {
 	cout<<"Welcome to Laplacian filter"<<endl;
-	if(input.size() != 2 || output.size() != 1) return false;
+	if(input.size() < 1 || output.size() != 1) 
+    {
+        v3d_msg("You have not specified enough arguments. Do nothing.\n", 0);
+        return false;
+    }
 
 	int c=1;
     float sigma = 1.0;
