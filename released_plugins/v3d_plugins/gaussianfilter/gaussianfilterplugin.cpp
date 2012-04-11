@@ -233,7 +233,7 @@ void processImage(V3DPluginCallback2 &callback, QWidget *parent)
 
      if(ok4)
 	{
-		sigma = QInputDialog::getDouble(parent, "Sigmal",
+		sigma = QInputDialog::getDouble(parent, "Sigma",
 									 "Enter Sigma value:",
 									 1, 0.1, 100, 1, &ok5);
 	}

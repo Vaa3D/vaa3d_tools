@@ -1584,18 +1584,18 @@ const QString title = "Multiscan Image Blending";
 // funcs
 QStringList ImageBlendPlugin::funclist() const
 {
-	return QStringList() << "multiscanblend"
-                          << "help";
+	return QStringList() << tr("multiscanblend")
+                          << tr("help");
 }
 
 bool ImageBlendPlugin::dofunc(const QString & func_name, const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & v3d, QWidget * parent)
 {
-    //
+     //
      if (func_name == tr("help"))
      {
           v3d_msg("\nUsage: v3d -x blend_multiscanstacks -f multiscanblend -i <input_images> -o <output_image> -p \"#s <save_blending_result zero(false)/nonzero(true)> #k <b_morecolorstack_first nonzero(true)/zero(false)>\" \n", 0);
 
-            return true;
+          return true;
      }
      else if (func_name == tr("multiscanblend"))
 	{
@@ -2579,13 +2579,13 @@ bool ImageBlendPlugin::dofunc(const QString & func_name, const V3DPluginArgList 
         if(sz_img2) {delete []sz_img2; sz_img2=NULL;}
 
 	}
-    else
-    {
-        printf("\nWrong function specified.\n");
-        return false;
-    }
+     else
+     {
+          printf("\nWrong function specified.\n");
+          return false;
+     }
 
-    return true;
+     return true;
 }
 
 // menu
