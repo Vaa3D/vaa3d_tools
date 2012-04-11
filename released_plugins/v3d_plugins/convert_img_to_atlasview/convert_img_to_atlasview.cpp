@@ -67,7 +67,7 @@ bool ConvertImg2AtlasPlugin::dofunc(const QString &func_name, const V3DPluginArg
 	{
 		cout<<"Usage : v3d -x atlasview -f toatlas -i <inimg_file> -o <outimg_file_folder>"<<endl;
 		cout<<endl;
-          cout<<"<outimg_file_folder>    output folder name in the current folder"<<endl;
+          cout<<"<outimg_file_folder>    output folder name in the current input data folder"<<endl;
 		cout<<"e.g. v3d -x atlasview -f toatlas -i input.raw -o output"<<endl;
 		cout<<endl;
 		return true;

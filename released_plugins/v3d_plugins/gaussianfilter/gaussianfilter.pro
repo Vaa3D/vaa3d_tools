@@ -21,12 +21,12 @@ unix:!macx {
     LIBS += -L$$V3DMAINPATH/jba/c++ -lv3dnewmat
 }
 
+INCLUDEPATH += main 
+
 HEADERS += $$V3DMAINPATH/basic_c_fun/basic_memory.h
 HEADERS += $$V3DMAINPATH/basic_c_fun/mg_utilities.h
 HEADERS += $$V3DMAINPATH/basic_c_fun/mg_image_lib.h
 HEADERS += $$V3DMAINPATH/basic_c_fun/stackutil.h
-
-INCLUDEPATH += main 
 
 HEADERS       += gaussianfilterplugin.h
 

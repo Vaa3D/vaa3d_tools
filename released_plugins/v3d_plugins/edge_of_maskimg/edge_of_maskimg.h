@@ -5,6 +5,10 @@
 #ifndef __EDGE_OF_MASKIMG_PLUGIN_H__
 #define __EDGE_OF_MASKIMG_PLUGIN_H__
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
 
 #include <v3d_interface.h>
 
@@ -18,9 +22,8 @@ public:
 	QStringList menulist() const;
 	void domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent);
 
-	QStringList funclist() const {return QStringList();}
-	bool dofunc(const QString &func_name, const V3DPluginArgList &input, V3DPluginArgList &output, V3DPluginCallback2 &callback, QWidget *parent)
-        {return false;}
+	QStringList funclist() const;
+	bool dofunc(const QString &func_name, const V3DPluginArgList &input, V3DPluginArgList &output, V3DPluginCallback2 &callback, QWidget *parent);
 };
 
 #endif

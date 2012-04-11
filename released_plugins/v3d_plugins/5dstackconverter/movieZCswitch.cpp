@@ -102,15 +102,15 @@ bool changeMS(const V3DPluginArgList & input, V3DPluginArgList & output)
 	if(!loadImage(inimg_file, data1d, in_sz, datatype)) {cerr<<"load image "<<inimg_file<<" error!"<<endl; return false;}
 
      Image4DSimple p4DImage;
-     if(datatype == V3D_UINT8)
+     if(datatype == 1)
      {
           p4DImage.setData((unsigned char*)data1d, in_sz[0], in_sz[1], in_sz[2], in_sz[3], V3D_UINT8);
      }
-     else if(datatype == V3D_UINT16)
+     else if(datatype == 2)
      {
           p4DImage.setData((unsigned char*)data1d, in_sz[0], in_sz[1], in_sz[2], in_sz[3], V3D_UINT16);
      }
-     else if(datatype == V3D_FLOAT32)
+     else if(datatype == 4)
      {
           p4DImage.setData((unsigned char*)data1d, in_sz[0], in_sz[1], in_sz[2], in_sz[3], V3D_FLOAT32);
      }
