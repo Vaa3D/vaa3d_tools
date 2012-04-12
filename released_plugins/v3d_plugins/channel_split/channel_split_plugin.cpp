@@ -119,9 +119,9 @@ bool processImage(const V3DPluginArgList & input, V3DPluginArgList & output)
     {
         switch(datatype)
         {
-            case 1: b_res = extract_a_channel(data1d, in_sz, c, outimg); break;
-            case 2: b_res = extract_a_channel((unsigned short int *)data1d, in_sz, c, outimg); break;
-            case 4: b_res = extract_a_channel((float *)data1d, in_sz, c, outimg); break;
+            case 1: b_res = extract_a_channel(data1d, in_sz, k, outimg); break;
+            case 2: b_res = extract_a_channel((unsigned short int *)data1d, in_sz, k, outimg); break;
+            case 4: b_res = extract_a_channel((float *)data1d, in_sz, k, outimg); break;
             default: b_res = false; v3d_msg("Right now this plugin supports only UINT8/UINT16/FLOAT32 data. Do nothing."); goto Label_exit;
         }
 
@@ -192,19 +192,26 @@ void processImage(V3DPluginCallback2 &callback, QWidget *parent, const QString &
     {
         switch(p4DImage->getDatatype())
         {
-            case V3D_UINT8: b_res = extract_a_channel(data1d, in_sz, c, outimg); break;
-            case V3D_UINT16: b_res = extract_a_channel((unsigned short int *)data1d, in_sz, c, outimg); break;
-            case V3D_FLOAT32: b_res = extract_a_channel((float *)data1d, in_sz, c, outimg); break;
+            case V3D_UINT8: 
+                b_res = extract_a_channel(data1d, in_sz, k, outimg); 
+                break;
+            case V3D_UINT16: 
+                b_res = extract_a_channel((unsigned short int *)data1d, in_sz, k, outimg); 
+                break;
+            case V3D_FLOAT32: 
+                b_res = extract_a_channel((float *)data1d, in_sz, k, outimg); 
+                break;
             default: b_res = false; v3d_msg("Right now this plugin supports only UINT8/UINT16/FLOAT32 data. Do nothing."); return;
         }
 
         //display
         Image4DSimple * new4DImage = new Image4DSimple();
-        new4DImage->setData((unsigned char *)outimg, 
-                            in_sz[0], in_sz[1], in_sz[2], 1, p4DImage->getDatatype());
+        new4DImage->createImage(in_sz[0], in_sz[1], in_sz[2], 1, p4DImage->getDatatype());        
+        memcpy(new4DImage->getRawData(), (unsigned char *)outimg, new4DImage->getTotalBytes());
+        
         v3dhandle newwin = callback.newImageWindow();
         callback.setImage(newwin, new4DImage);
-        callback.setImageName(newwin, title);
+        callback.setImageName(newwin, QString("").setNum(k).prepend("_C").prepend(p4DImage->getFileName()));
         callback.updateImageWindow(newwin);
     }
 }
