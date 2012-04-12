@@ -116,6 +116,7 @@ bool processImage(const V3DPluginArgList & input, V3DPluginArgList & output)
     
     for (k=cb; k<=ce; k++)
     {
+        printf("\n... processing [%d] channel now...\n", k);
         switch(datatype)
         {
             case 1: b_res = extract_a_channel(data1d, in_sz, k, outimg); break;
@@ -125,11 +126,16 @@ bool processImage(const V3DPluginArgList & input, V3DPluginArgList & output)
         }
 
         // save image
-        in_sz[3]=1;
+        V3DLONG oldc = in_sz[3]; in_sz[3]=1;
         if (cb==ce)
             saveImage(outimg_file, (unsigned char *)outimg, in_sz, datatype); 
         else
             saveImage(qPrintable(QString("").setNum(k).prepend("_C").prepend(outimg_file).append(".v3draw")), (unsigned char *)outimg, in_sz, datatype);
+        
+        //
+        in_sz[3] = oldc; //this sentence is important
+        
+        printf("b_res=[%s]\n", (b_res)?"true":"false");
     }
 
 Label_exit:
@@ -223,10 +229,14 @@ void processImage(V3DPluginCallback2 &callback, QWidget *parent, const QString &
 template <class T> bool extract_a_channel(T* data1d, V3DLONG *sz, V3DLONG c, void* &outimg)
 {
     if (!data1d || !sz || c<0 || c>=sz[3])
+    {
+        printf("problem: c=[%ld] sz=[%p] szc=[%ld], data1d=[%p]\n",c, sz, sz[3], data1d);
         return false;
+    }
     
     outimg = (void *) (data1d + c*sz[0]*sz[1]*sz[2]);
 
+//    printf("ok c=[%ld]\n",c);
     return true;
 }
 
