@@ -63,7 +63,6 @@ static void * loadBlockImage(void* _para)
 {
 	ThreadData * para = (ThreadData *) _para;
 	string filename = para->filename;
-	assert(block_buff_map.find(filename) == block_buff_map.end());
 
 	unsigned char * inimg1d = 0; 
 	if(block_buff_map.find(filename) == block_buff_map.end())
@@ -89,6 +88,7 @@ static void * loadBlockImage(void* _para)
 	if(inimg1d)
 	{
 		unsigned char * outimg1d = para->outimg1d;
+		assert(outimg1d);
 		V3DLONG bis = para->bis;
 		V3DLONG bjs = para->bjs;
 		V3DLONG bks = para->bks;
@@ -196,7 +196,17 @@ void ImageMapView::getImage(V3DLONG level, unsigned char * & outimg1d, V3DLONG x
 	V3DLONG outsz012 = outsz0 * outsz1 * outsz2;
 	V3DLONG outsz01 = outsz0 * outsz1;
 
-	if(outimg1d == 0) outimg1d = new unsigned char[outsz012 * channel]; memset(outimg1d, 0, outsz012 * channel);
+	try
+	{
+		if(outimg1d == 0) outimg1d = new unsigned char[outsz012 * channel];
+		//else outimg1d = (unsigned char*)realloc(outimg1d, outsz012*channel);
+	}
+	catch(...)
+	{
+		cerr<<"allocate image memory error."<<endl;
+		return;
+	}
+	memset(outimg1d, 0, outsz012 * channel);
 
 	V3DLONG ts0, ts1, ts2, bs0, bs1, bs2;                            // block number and block size
 	getBlockTillingSize(level,ts0, ts1, ts2, bs0, bs1, bs2);
@@ -266,6 +276,7 @@ void ImageMapView::getImage(V3DLONG level, unsigned char * & outimg1d, V3DLONG x
 					pthread_t thread;
 					ThreadData * para = new ThreadData;
 					para->filename = filename;
+					para->outimg1d = outimg1d;
 					para->bis = (ti == tis) ? (x0 - tis * bs0) : 0;                   // the start x index in current block
 					para->bjs = (tj == tjs) ? (y0 - tjs * bs1) : 0;                   // the start y index in current block
 					para->bks = (tk == tks) ? (z0 - tks * bs2) : 0;                   // the start z index in current block

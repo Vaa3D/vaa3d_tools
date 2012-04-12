@@ -81,39 +81,39 @@ MapViewWidget::MapViewWidget(V3DPluginCallback2 * _callback, Mapview_Paras _mapv
 	zoomSpinBox_mapv->setValue(mapview_paras.level);
 
 	cropXSlider_mapv = new QScrollBar(Qt::Horizontal);
-	cropXSlider_mapv->setRange(100, 1000);
-	cropXSlider_mapv->setSingleStep(20);
+	cropXSlider_mapv->setRange(1, 1000);
+	cropXSlider_mapv->setSingleStep(1);
 	cropXSlider_mapv->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
 	cropXSlider_mapv->setValue(mapview_paras.outsz[0]);
 	QLabel* cropXSliderLabel_mapv = new QLabel("X-SZ");
 
 	cropXSpinBox_mapv = new QSpinBox;
-	cropXSpinBox_mapv->setRange(100, 1000);
-	cropXSpinBox_mapv->setSingleStep(20);
+	cropXSpinBox_mapv->setRange(1, 1000);
+	cropXSpinBox_mapv->setSingleStep(1);
 	cropXSpinBox_mapv->setValue(mapview_paras.outsz[0]);
 
 	cropYSlider_mapv = new QScrollBar(Qt::Horizontal);
-	cropYSlider_mapv->setRange(100, 1000);
-	cropYSlider_mapv->setSingleStep(20);
+	cropYSlider_mapv->setRange(1, 1000);
+	cropYSlider_mapv->setSingleStep(1);
 	cropYSlider_mapv->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
 	cropYSlider_mapv->setValue(mapview_paras.outsz[1]);
 	QLabel* cropYSliderLabel_mapv = new QLabel("Y-SZ");
 
 	cropYSpinBox_mapv = new QSpinBox;
-	cropYSpinBox_mapv->setRange(100, 1000);
-	cropYSpinBox_mapv->setSingleStep(20);
+	cropYSpinBox_mapv->setRange(1, 1000);
+	cropYSpinBox_mapv->setSingleStep(1);
 	cropYSpinBox_mapv->setValue(mapview_paras.outsz[1]);
 
 	cropZSlider_mapv = new QScrollBar(Qt::Horizontal);
-	cropZSlider_mapv->setRange(100, 1000);
-	cropZSlider_mapv->setSingleStep(20);
+	cropZSlider_mapv->setRange(1, 1000);
+	cropZSlider_mapv->setSingleStep(1);
 	cropZSlider_mapv->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
 	cropZSlider_mapv->setValue(mapview_paras.outsz[2]);
 	QLabel* cropZSliderLabel_mapv = new QLabel("Z-SZ");
 
 	cropZSpinBox_mapv = new QSpinBox;
-	cropZSpinBox_mapv->setRange(100, 1000);
-	cropZSpinBox_mapv->setSingleStep(20);
+	cropZSpinBox_mapv->setRange(1, 1000);
+	cropZSpinBox_mapv->setSingleStep(1);
 	cropZSpinBox_mapv->setValue(mapview_paras.outsz[2]);
 
 	threadCheckBox = new QCheckBox(tr("multi threads"));
@@ -275,16 +275,34 @@ void MapViewWidget::changeLevel_mapv(int level)
 void MapViewWidget::changeWINSZ_mapv(int sz)
 {
 	void * slider= sender();
+	V3DLONG sz0 = mapview_paras.outsz[0];
+	V3DLONG sz1 = mapview_paras.outsz[1];
+	V3DLONG sz2 = mapview_paras.outsz[2];
 	if(slider == cropXSlider_mapv)
 	{
+		if(sz * sz1 * sz2 >= 1024ll * 1024ll * 1024ll)
+		{
+			cropXSlider_mapv->setValue(sz0);
+			return;
+		}
 		mapview_paras.outsz[0] = sz;
 	}
 	else if(slider == cropYSlider_mapv)
 	{
+		if(sz0 * sz * sz2 >= 1024ll * 1024ll * 1024ll) 
+		{
+			cropYSlider_mapv->setValue(sz1);
+			return;
+		}
 		mapview_paras.outsz[1] = sz;
 	}
 	else if(slider == cropZSlider_mapv)
 	{
+		if(sz0 * sz1 * sz >= 1024ll * 1024ll * 1024ll) 
+		{
+			cropZSlider_mapv->setValue(sz2);
+			return;
+		}
 		mapview_paras.outsz[2] = sz;
 	}
 	updateTriView();
