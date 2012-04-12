@@ -129,7 +129,7 @@ void sort_menu(V3DPluginCallback2 &callback, QWidget *parent)
 			return;
 		}
 	}*/
-	OpenSWCDialog * openDlg = new OpenSWCDialog(parent, &callback);
+	OpenSWCDialog * openDlg = new OpenSWCDialog(0, &callback);
 	if (!openDlg->exec())
 		return;
 	NeuronTree nt = openDlg->nt;
