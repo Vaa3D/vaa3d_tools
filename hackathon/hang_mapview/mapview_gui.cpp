@@ -278,9 +278,15 @@ void MapViewWidget::changeWINSZ_mapv(int sz)
 	V3DLONG sz0 = mapview_paras.outsz[0];
 	V3DLONG sz1 = mapview_paras.outsz[1];
 	V3DLONG sz2 = mapview_paras.outsz[2];
+	V3DLONG L = mapview_paras.L;
+	V3DLONG M = mapview_paras.M;
+	V3DLONG N = mapview_paras.N;
+	V3DLONG l = mapview_paras.l;
+	V3DLONG m = mapview_paras.m;
+	V3DLONG n = mapview_paras.n;
 	if(slider == cropXSlider_mapv)
 	{
-		if(sz * sz1 * sz2 >= 1024ll * 1024ll * 1024ll)
+		if(sz > L*l || sz * sz1 * sz2 >= 1024ll * 1024ll * 1024ll)
 		{
 			cropXSlider_mapv->setValue(sz0);
 			return;
@@ -289,7 +295,7 @@ void MapViewWidget::changeWINSZ_mapv(int sz)
 	}
 	else if(slider == cropYSlider_mapv)
 	{
-		if(sz0 * sz * sz2 >= 1024ll * 1024ll * 1024ll) 
+		if(sz > M*m || sz0 * sz * sz2 >= 1024ll * 1024ll * 1024ll) 
 		{
 			cropYSlider_mapv->setValue(sz1);
 			return;
@@ -298,7 +304,7 @@ void MapViewWidget::changeWINSZ_mapv(int sz)
 	}
 	else if(slider == cropZSlider_mapv)
 	{
-		if(sz0 * sz1 * sz >= 1024ll * 1024ll * 1024ll) 
+		if(sz > N*n || sz0 * sz1 * sz >= 1024ll * 1024ll * 1024ll) 
 		{
 			cropZSlider_mapv->setValue(sz2);
 			return;

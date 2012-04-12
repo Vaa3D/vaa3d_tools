@@ -283,6 +283,10 @@ void ImageMapView::getImage(V3DLONG level, unsigned char * & outimg1d, V3DLONG x
 					para->bie = (ti == tie) ? (x0 + outsz0 - tie * bs0 - 1) : bs0 - 1;   // the end x index in current block
 					para->bje = (tj == tje) ? (y0 + outsz1 - tje * bs1 - 1) : bs1 - 1;   // the end y index in current block
 					para->bke = (tk == tke) ? (z0 + outsz2 - tke * bs2 - 1) : bs2 - 1;   // the end z index in current block
+					para->bie = MIN(para->bie, bs0-1);
+					para->bje = MIN(para->bje, bs1-1);
+					para->bke = MIN(para->bke, bs2-1);
+
 					para->ois = ti*bs0 - x0;
 					para->ojs = tj*bs1 - y0;
 					para->oks = tk*bs2 - z0;

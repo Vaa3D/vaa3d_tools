@@ -133,7 +133,6 @@ int load_hraw_data(V3DPluginCallback2 &callback, QWidget *parent)
 
 	MapViewWidget * mapview_widget = new MapViewWidget(&callback, mapview_paras, 0);
 	mapview_widget->show();
-	//mapview_widget->changeLevel_mapv((int)(log(ds_factor)/log(2.0) + 0.5));
 	
 	return 1;
 }
