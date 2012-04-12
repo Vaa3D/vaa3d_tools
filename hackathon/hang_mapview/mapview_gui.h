@@ -35,44 +35,39 @@ class MapViewWidget : public QWidget
 	Q_OBJECT;
 
 public:
-	MapViewWidget(V3DPluginCallback2 * _callback, Mapview_Paras _mapview_paras,  QWidget *parent = 0);
+	MapViewWidget(V3DPluginCallback2 * _callback, Mapview_Paras _paras,  QWidget *parent = 0);
 	~MapViewWidget(){}
-	void updateLevels(int level);
 	void updateTriView();
 	void closeEvent(QCloseEvent *event);
 
 private:
 	ImageMapView mapview;
-	Mapview_Paras mapview_paras;
+	Mapview_Paras paras;
 	V3DPluginCallback2 * callback;
 	v3dhandle curwin;
 
-	QScrollBar *xSlider_mapv;
-	QScrollBar *ySlider_mapv;
-	QScrollBar *zSlider_mapv;
-	QScrollBar *zoomSlider_mapv;
-
-	QSpinBox *xValueSpinBox_mapv;
-	QSpinBox *yValueSpinBox_mapv;
-	QSpinBox *zValueSpinBox_mapv;
-	QSpinBox *zoomSpinBox_mapv;
-
-	QScrollBar *cropXSlider_mapv;
-	QScrollBar *cropYSlider_mapv;
-	QScrollBar *cropZSlider_mapv;
-
-	QSpinBox *cropXSpinBox_mapv;
-	QSpinBox *cropYSpinBox_mapv;
-	QSpinBox *cropZSpinBox_mapv;
-
+	QScrollBar *cutLeftXSlider;
+	QScrollBar *cutLeftYSlider;
+	QScrollBar *cutLeftZSlider;
+	QScrollBar *cutRightXSlider;
+	QScrollBar *cutRightYSlider;
+	QScrollBar *cutRightZSlider;
+	QScrollBar *zoomSlider;
 	QCheckBox * threadCheckBox;
+
+	int leftx;
+	int lefty;
+	int leftz;
+
+	int rightx;
+	int righty;
+	int rightz;
+	
+	int zoom;
+	bool is_multi_thread;
+
 public slots:
-	void changeXOffset_mapv(int x);
-	void changeYOffset_mapv(int y);
-	void changeZOffset_mapv(int z);
-	void changeLevel_mapv(int level);
-	void changeWINSZ_mapv(int sz);
-	void setMultiThreads(bool is_multi_threads);
+	void onValueChanged(int x);
 };
 
 #endif 

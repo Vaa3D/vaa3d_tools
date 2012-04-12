@@ -130,6 +130,7 @@ int load_hraw_data(V3DPluginCallback2 &callback, QWidget *parent)
 	mapview_paras.outsz[0] = L * l / ds_factor;
 	mapview_paras.outsz[1] = M * m / ds_factor;
 	mapview_paras.outsz[2] = 1;
+	mapview_paras.level = log(ds_factor)/log(2.0) + 0.5;
 
 	MapViewWidget * mapview_widget = new MapViewWidget(&callback, mapview_paras, 0);
 	mapview_widget->show();

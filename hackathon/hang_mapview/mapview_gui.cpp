@@ -2,19 +2,19 @@
 #include <QtGui>
 #include <v3d_interface.h>
 #include "mapview.h"
-#include "mapview_gui.h"
+#include "gui.h"
 
 using namespace std;
 
-MapViewWidget::MapViewWidget(V3DPluginCallback2 * _callback, Mapview_Paras _mapview_paras,  QWidget *parent) : QWidget(parent)
+MapViewWidget::MapViewWidget(V3DPluginCallback2 * _callback, Mapview_Paras _paras,  QWidget *parent) : QWidget(parent)
 {
-	callback = _callback; curwin = 0; mapview_paras = _mapview_paras;
-	V3DLONG L = mapview_paras.L;
-	V3DLONG M = mapview_paras.M;
-	V3DLONG N = mapview_paras.N;
-	V3DLONG l = mapview_paras.l;
-	V3DLONG m = mapview_paras.m;
-	V3DLONG n = mapview_paras.n;
+	callback = _callback; curwin = 0; paras = _paras;
+	V3DLONG L = paras.L;
+	V3DLONG M = paras.M;
+	V3DLONG N = paras.N;
+	V3DLONG l = paras.l;
+	V3DLONG m = paras.m;
+	V3DLONG n = paras.n;
 
 	setWindowTitle("Mapview Control");
 	/*setWindowFlags( Qt::Widget
@@ -31,190 +31,93 @@ MapViewWidget::MapViewWidget(V3DPluginCallback2 * _callback, Mapview_Paras _mapv
 	V3DLONG ts0, ts1, ts2; // block nums
 	V3DLONG bs0, bs1, bs2; // block size
 	V3DLONG dimx, dimy, dimz;
-	mapview.setPara(mapview_paras.hraw_dir.toStdString(), mapview_paras.L, mapview_paras.M, mapview_paras.N, mapview_paras.l, mapview_paras.m, mapview_paras.n, mapview_paras.channel);
-	mapview.getBlockTillingSize(mapview_paras.level, ts0, ts1, ts2, bs0, bs1, bs2);
+	mapview.setPara(paras.hraw_dir.toStdString(), paras.L, paras.M, paras.N, paras.l, paras.m, paras.n, paras.channel);
+	mapview.getBlockTillingSize(paras.level, ts0, ts1, ts2, bs0, bs1, bs2);
 	dimx = ts0*bs0; dimy = ts1*bs1; dimz = ts2*bs2;
 	cout<<"dimx = "<<dimx<<" dimy = "<<dimy<<" dimz = "<<dimz<<endl;
-	cout<<"outsz[0] = "<<mapview_paras.outsz[0]<<" outsz[1] = "<<mapview_paras.outsz[1]<<" outsz[2] = "<<mapview_paras.outsz[2]<<endl;
+	cout<<"outsz[0] = "<<paras.outsz[0]<<" outsz[1] = "<<paras.outsz[1]<<" outsz[2] = "<<paras.outsz[2]<<endl;
 
 	// zoom range
-	int dim_zoom= mapview_paras.level_num;
+	int dim_zoom= paras.level_num;
 
-	xSlider_mapv = new QScrollBar(Qt::Horizontal);
-	xSlider_mapv->setRange(0, dimx-mapview_paras.outsz[0]); //need redefine range
-	xSlider_mapv->setSingleStep(1);
-	xSlider_mapv->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
-	QLabel* xSliderLabel_mapv = new QLabel("X-Off");
+	cutLeftXSlider_mapv = new QScrollBar(Qt::Horizontal);
+	cutLeftXSlider_mapv->setRange(0, 100); 
+	cutLeftXSlider_mapv->setSingleStep(1);
+	cutLeftXSlider_mapv->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
+	QLabel* cutLeftXSliderLabel_mapv = new QLabel("X-cut");
 
-	xValueSpinBox_mapv = new QSpinBox;
-	xValueSpinBox_mapv->setRange(0, dimx-mapview_paras.outsz[0]);
-	xValueSpinBox_mapv->setSingleStep(1);
-	xValueSpinBox_mapv->setValue(mapview_paras.origin[0]);
+	cutRightXSlider_mapv = new QScrollBar(Qt::Horizontal);
+	cutRightXSlider_mapv->setRange(0, 100); 
+	cutRightXSlider_mapv->setSingleStep(1);
+	cutRightXSlider_mapv->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
+	QLabel* cutRightXSliderLabel_mapv = new QLabel("");
 
-	ySlider_mapv = new QScrollBar(Qt::Horizontal);
-	ySlider_mapv->setRange(0, dimy-mapview_paras.outsz[1]); //need redefine range
-	ySlider_mapv->setSingleStep(1);
-	ySlider_mapv->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
-	QLabel* ySliderLabel_mapv = new QLabel("Y-Off");
+	cutLeftYSlider_mapv = new QScrollBar(Qt::Horizontal);
+	cutLeftYSlider_mapv->setRange(0, 100); 
+	cutLeftYSlider_mapv->setSingleStep(1);
+	cutLeftYSlider_mapv->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
+	QLabel* cutLeftYSliderLabel_mapv = new QLabel("Y-cut");
 
-	yValueSpinBox_mapv = new QSpinBox;
-	yValueSpinBox_mapv->setRange(0, dimy-mapview_paras.outsz[1]);
-	yValueSpinBox_mapv->setSingleStep(1);
-	yValueSpinBox_mapv->setValue(mapview_paras.origin[1]);
+	cutRightYSlider_mapv = new QScrollBar(Qt::Horizontal);
+	cutRightYSlider_mapv->setRange(0, 100); 
+	cutRightYSlider_mapv->setSingleStep(1);
+	cutRightYSlider_mapv->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
+	QLabel* cutRightYSliderLabel_mapv = new QLabel("");
 
-	zSlider_mapv = new QScrollBar(Qt::Horizontal);
-	zSlider_mapv->setRange(0, dimz-mapview_paras.outsz[2]); //need redefine range
-	zSlider_mapv->setSingleStep(1);
-	zSlider_mapv->setPageStep(1);
-	zSlider_mapv->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
-	QLabel* zSliderLabel_mapv = new QLabel("Z-Off");
+	cutLeftZSlider_mapv = new QScrollBar(Qt::Horizontal);
+	cutLeftZSlider_mapv->setRange(0, 100); 
+	cutLeftZSlider_mapv->setSingleStep(1);
+	cutLeftZSlider_mapv->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
+	QLabel* cutLeftZSliderLabel_mapv = new QLabel("Z-cut");
 
-	zValueSpinBox_mapv = new QSpinBox;
-	zValueSpinBox_mapv->setRange(0, dimz-mapview_paras.outsz[2]);
-	zValueSpinBox_mapv->setSingleStep(1);
-	zValueSpinBox_mapv->setValue(mapview_paras.origin[2]);
+	cutRightZSlider_mapv = new QScrollBar(Qt::Horizontal);
+	cutRightZSlider_mapv->setRange(0, 100); 
+	cutRightZSlider_mapv->setSingleStep(1);
+	cutRightZSlider_mapv->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
+	QLabel* cutRightZSliderLabel_mapv = new QLabel("");
 
-	// zoom slider
 	zoomSlider_mapv = new QScrollBar(Qt::Horizontal);
-	zoomSlider_mapv->setRange(0, dim_zoom-1); //need redefine range
+	zoomSlider_mapv->setRange(0, 100); 
 	zoomSlider_mapv->setSingleStep(1);
 	zoomSlider_mapv->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
-	QLabel* zoomLabel_mapv = new QLabel("Zoom");
-
-	zoomSpinBox_mapv = new QSpinBox;
-	zoomSpinBox_mapv->setRange(0, dim_zoom-1);
-	zoomSpinBox_mapv->setSingleStep(1);
-	zoomSpinBox_mapv->setValue(mapview_paras.level);
-
-	cropXSlider_mapv = new QScrollBar(Qt::Horizontal);
-	cropXSlider_mapv->setRange(256, MIN(1024, L*l));
-	cropXSlider_mapv->setSingleStep(1);
-	cropXSlider_mapv->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
-	cropXSlider_mapv->setValue(mapview_paras.outsz[0]);
-	QLabel* cropXSliderLabel_mapv = new QLabel("X-SZ");
-
-	cropXSpinBox_mapv = new QSpinBox;
-	cropXSpinBox_mapv->setRange(256, MIN(1024, L*l));
-	cropXSpinBox_mapv->setSingleStep(1);
-	cropXSpinBox_mapv->setValue(mapview_paras.outsz[0]);
-
-	cropYSlider_mapv = new QScrollBar(Qt::Horizontal);
-	cropYSlider_mapv->setRange(256, MIN(768, M*m));
-	cropYSlider_mapv->setSingleStep(1);
-	cropYSlider_mapv->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
-	cropYSlider_mapv->setValue(mapview_paras.outsz[1]);
-	QLabel* cropYSliderLabel_mapv = new QLabel("Y-SZ");
-
-	cropYSpinBox_mapv = new QSpinBox;
-	cropYSpinBox_mapv->setRange(256, MIN(768, M*m));
-	cropYSpinBox_mapv->setSingleStep(1);
-	cropYSpinBox_mapv->setValue(mapview_paras.outsz[1]);
-
-	cropZSlider_mapv = new QScrollBar(Qt::Horizontal);
-	cropZSlider_mapv->setRange(1, MIN(256, N * n));
-	cropZSlider_mapv->setSingleStep(1);
-	cropZSlider_mapv->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
-	cropZSlider_mapv->setValue(mapview_paras.outsz[2]);
-	QLabel* cropZSliderLabel_mapv = new QLabel("Z-SZ");
-
-	cropZSpinBox_mapv = new QSpinBox;
-	cropZSpinBox_mapv->setRange(1, MIN(256, N * n));
-	cropZSpinBox_mapv->setSingleStep(1);
-	cropZSpinBox_mapv->setValue(mapview_paras.outsz[2]);
+	QLabel* zoomSliderLabel_mapv = new QLabel("zoom");
 
 	threadCheckBox = new QCheckBox(tr("multi threads"));
 	threadCheckBox->setChecked(Qt::Checked);
+	
 	// layout for mv control window
-	layout->addWidget(zSliderLabel_mapv, 0, 0, 1, 1);
-	layout->addWidget(zSlider_mapv, 0, 1, 1, 13);
-	layout->addWidget(zValueSpinBox_mapv, 0, 14, 1, 6);
+	layout->addWidget(cutLeftXSliderLabel_mapv, 0, 0, 1, 1);
+	layout->addWidget(cutLeftXSlider_mapv, 0, 1, 1, 13);
+	layout->addWidget(cutRightXSliderLabel_mapv, 1, 0, 1, 1);
+	layout->addWidget(cutRightXSlider_mapv, 1, 1, 1, 13);
 
-	layout->addWidget(xSliderLabel_mapv, 1, 0, 1, 1);
-	layout->addWidget(xSlider_mapv, 1, 1, 1, 13);
-	layout->addWidget(xValueSpinBox_mapv, 1, 14, 1, 6);
+	layout->addWidget(cutLeftYSliderLabel_mapv, 2, 0, 1, 1);
+	layout->addWidget(cutLeftYSlider_mapv, 2, 1, 1, 13);
+	layout->addWidget(cutRightYSliderLabel_mapv, 3, 0, 1, 1);
+	layout->addWidget(cutRightYSlider_mapv, 3, 1, 1, 13);
 
-	layout->addWidget(ySliderLabel_mapv, 2, 0, 1, 1);
-	layout->addWidget(ySlider_mapv, 2, 1, 1, 13);
-	layout->addWidget(yValueSpinBox_mapv, 2, 14, 1, 6);
+	layout->addWidget(cutLeftZSliderLabel_mapv, 4, 0, 1, 1);
+	layout->addWidget(cutLeftZSlider_mapv, 4, 1, 1, 13);
+	layout->addWidget(cutRightZSliderLabel_mapv, 5, 0, 1, 1);
+	layout->addWidget(cutRightZSlider_mapv, 5, 1, 1, 13);
 
-	layout->addWidget(zoomLabel_mapv, 3, 0, 1, 1);
-	layout->addWidget(zoomSlider_mapv, 3, 1, 1, 13);
-	layout->addWidget(zoomSpinBox_mapv, 3, 14, 1, 6);
-
-	layout->addWidget(cropXSliderLabel_mapv, 4, 0, 1, 1);
-	layout->addWidget(cropXSlider_mapv, 4, 1, 1, 13);
-	layout->addWidget(cropXSpinBox_mapv, 4, 14, 1, 6);
-
-	layout->addWidget(cropYSliderLabel_mapv, 5, 0, 1, 1);
-	layout->addWidget(cropYSlider_mapv, 5, 1, 1, 13);
-	layout->addWidget(cropYSpinBox_mapv, 5, 14, 1, 6);
-
-	layout->addWidget(cropZSliderLabel_mapv, 6, 0, 1, 1);
-	layout->addWidget(cropZSlider_mapv, 6, 1, 1, 13);
-	layout->addWidget(cropZSpinBox_mapv, 6, 14, 1, 6);
+	layout->addWidget(zoomSliderLabel_mapv, 6, 0, 1, 1);
+	layout->addWidget(zoomSlider_mapv, 6, 1, 1, 13);
 
 	layout->addWidget(threadCheckBox, 7, 0, 1, 14);
 
 	// setup connections
-	connect(xSlider_mapv,    SIGNAL(valueChanged(int)), this, SLOT(changeXOffset_mapv(int)));
-	connect(ySlider_mapv,    SIGNAL(valueChanged(int)), this, SLOT(changeYOffset_mapv(int)));
-	connect(zSlider_mapv,    SIGNAL(valueChanged(int)), this, SLOT(changeZOffset_mapv(int)));
-	connect(zoomSlider_mapv, SIGNAL(valueChanged(int)), this, SLOT(changeLevel_mapv(int)));
-
-	//connect(xValueSpinBox_mapv,    SIGNAL(valueChanged(int)), this, SLOT(changeXOffset_mapv(int)));
-	//connect(yValueSpinBox_mapv,    SIGNAL(valueChanged(int)), this, SLOT(changeYOffset_mapv(int)));
-	//connect(zValueSpinBox_mapv,    SIGNAL(valueChanged(int)), this, SLOT(changeZOffset_mapv(int)));
-	//connect(zoomSpinBox_mapv,      SIGNAL(valueChanged(int)), this, SLOT(changeLevel_mapv(int)));
-
-	connect(cropXSlider_mapv, SIGNAL(valueChanged(int)), this, SLOT(changeWINSZ_mapv(int)));
-	connect(cropYSlider_mapv, SIGNAL(valueChanged(int)), this, SLOT(changeWINSZ_mapv(int)));
-	connect(cropZSlider_mapv, SIGNAL(valueChanged(int)), this, SLOT(changeWINSZ_mapv(int)));
-
-	connect(cropXSlider_mapv, SIGNAL(valueChanged(int)), cropXSpinBox_mapv, SLOT(setValue(int)));
-	connect(cropYSlider_mapv, SIGNAL(valueChanged(int)), cropYSpinBox_mapv, SLOT(setValue(int)));
-	connect(cropZSlider_mapv, SIGNAL(valueChanged(int)), cropZSpinBox_mapv, SLOT(setValue(int)));
-
+	connect(cutLeftXSlider_mapv,    SIGNAL(valueChanged(int)), this, SLOT(onValueChanged(int)));
+	connect(cutLeftYSlider_mapv,    SIGNAL(valueChanged(int)), this, SLOT(onValueChanged(int)));
+	connect(cutLeftZSlider_mapv,    SIGNAL(valueChanged(int)), this, SLOT(onValueChanged(int)));
+	connect(cutRightXSlider_mapv,    SIGNAL(valueChanged(int)), this, SLOT(onValueChanged(int)));
+	connect(cutRightYSlider_mapv,    SIGNAL(valueChanged(int)), this, SLOT(onValueChanged(int)));
+	connect(cutRightZSlider_mapv,    SIGNAL(valueChanged(int)), this, SLOT(onValueChanged(int)));
+	connect(zoomSlider, SIGNAL(valueChanged(int)), this, SLOT(onValueChanged(int)));
 	connect(threadCheckBox, SIGNAL(toggled(bool)), this, SLOT(setMultiThreads(bool)));
 	updateTriView();
 }
 
-void MapViewWidget::updateLevels(int level)
-{
-	// get X Y Z size
-	V3DLONG ts0, ts1, ts2; // block nums
-	V3DLONG bs0, bs1, bs2; // block size
-	V3DLONG dimx, dimy, dimz;
-	mapview.getBlockTillingSize(level, ts0, ts1, ts2, bs0, bs1, bs2);
-	dimx = ts0*bs0;   dimy = ts1*bs1;   dimz = ts2*bs2;
-
-	V3DLONG orig0 = mapview_paras.origin[0] / pow(2.0, level - mapview_paras.level);
-	V3DLONG orig1 = mapview_paras.origin[1] / pow(2.0, level - mapview_paras.level);
-	V3DLONG orig2 = mapview_paras.origin[2] / pow(2.0, level - mapview_paras.level);
-	V3DLONG max_range0 = dimx - mapview_paras.outsz[0];
-	V3DLONG max_range1 = dimy - mapview_paras.outsz[1];
-	V3DLONG max_range2 = dimz - mapview_paras.outsz[2];
-	cout<<"level = "<<level<<endl;
-	cout<<"outsz[0] = "<<mapview_paras.outsz[0]<<" dimx = "<<dimx<<" max_range0 = "<<max_range0<<endl;
-	cout<<"outsz[1] = "<<mapview_paras.outsz[1]<<" dimy = "<<dimy<<" max_range1 = "<<max_range1<<endl;
-	cout<<"outsz[2] = "<<mapview_paras.outsz[2]<<" dimz = "<<dimz<<" max_range2 = "<<max_range2<<endl;
-	mapview_paras.origin[0] = MIN(orig0, max_range0);
-	mapview_paras.origin[1] = MIN(orig0, max_range1);
-	mapview_paras.origin[2] = MIN(orig0, max_range2);
-
-	mapview_paras.level = level;
-
-	xSlider_mapv->setRange(0, max_range0);
-	xValueSpinBox_mapv->setRange(0, max_range0);
-	xValueSpinBox_mapv->setValue(mapview_paras.origin[0]);
-
-	ySlider_mapv->setRange(0, max_range1);
-	yValueSpinBox_mapv->setRange(0, max_range1);
-	yValueSpinBox_mapv->setValue(mapview_paras.origin[1]);
-
-	zSlider_mapv->setRange(0, max_range2);
-	zValueSpinBox_mapv->setRange(0, max_range2);
-	zValueSpinBox_mapv->setValue(mapview_paras.origin[2]);
-}
 void MapViewWidget::updateTriView()
 {
 	// get curwin
@@ -224,14 +127,14 @@ void MapViewWidget::updateTriView()
 	// retrieve image from blocks
 	unsigned char * outimg1d = 0;
 
-	mapview.getImage(mapview_paras.level, outimg1d, mapview_paras.origin[0], mapview_paras.origin[1], mapview_paras.origin[2],
-			mapview_paras.outsz[0], mapview_paras.outsz[1], mapview_paras.outsz[2], mapview_paras.is_use_thread);
+	mapview.getImage(paras.level, outimg1d, paras.origin[0], paras.origin[1], paras.origin[2],
+			paras.outsz[0], paras.outsz[1], paras.outsz[2], paras.is_use_thread);
 
 	Image4DSimple * p4dimage = new Image4DSimple;
 
-	p4dimage->setData(outimg1d, mapview_paras.outsz[0], mapview_paras.outsz[1], mapview_paras.outsz[2], mapview_paras.channel, V3D_UINT8); // todo : add more channel
+	p4dimage->setData(outimg1d, paras.outsz[0], paras.outsz[1], paras.outsz[2], paras.channel, V3D_UINT8); // todo : add more channel
 	callback->setImage(curwin, p4dimage);
-	callback->setImageName(curwin, mapview_paras.hraw_dir);
+	callback->setImageName(curwin, paras.hraw_dir);
 	callback->updateImageWindow(curwin);
 }
 
@@ -245,85 +148,28 @@ void MapViewWidget::closeEvent(QCloseEvent *event)
 	}
 }
 
-void MapViewWidget::changeXOffset_mapv(int x)
+void MapViewWidget::onValueChanged()
 {
-	if(xSlider_mapv->value() != x) xSlider_mapv->setValue(x);
-	else if(xValueSpinBox_mapv->value() != x) xValueSpinBox_mapv->setValue(x);
-	{
-		mapview_paras.origin[0] = x;
-		updateTriView();
-	}
-}
-void MapViewWidget::changeYOffset_mapv(int y)
-{
-	if(ySlider_mapv->value() != y) ySlider_mapv->setValue(y);
-	else if(yValueSpinBox_mapv->value() != y) yValueSpinBox_mapv->setValue(y);
-	{
-		mapview_paras.origin[1] = y;
-		updateTriView();
-	}
-}
-void MapViewWidget::changeZOffset_mapv(int z)
-{
-	if(zSlider_mapv->value() != z) zSlider_mapv->setValue(z);
-	else if(zValueSpinBox_mapv->value() != z) zValueSpinBox_mapv->setValue(z);
-	{
-		mapview_paras.origin[2] = z;
-		updateTriView();
-	}
-}
-void MapViewWidget::changeLevel_mapv(int level)
-{
-	if(zoomSlider_mapv->value() != level) zoomSlider_mapv->setValue(level);
-	else if(zoomSpinBox_mapv->value() != level) zoomSpinBox_mapv->setValue(level);
-	{
-		mapview_paras.level = level;
-		updateLevels(level);
-		updateTriView();
-	}
-}
-void MapViewWidget::changeWINSZ_mapv(int sz)
-{
-	void * slider= sender();
-	V3DLONG sz0 = mapview_paras.outsz[0];
-	V3DLONG sz1 = mapview_paras.outsz[1];
-	V3DLONG sz2 = mapview_paras.outsz[2];
-	V3DLONG L = mapview_paras.L;
-	V3DLONG M = mapview_paras.M;
-	V3DLONG N = mapview_paras.N;
-	V3DLONG l = mapview_paras.l;
-	V3DLONG m = mapview_paras.m;
-	V3DLONG n = mapview_paras.n;
-	if(slider == cropXSlider_mapv)
-	{
-		if(sz > L*l || sz * sz1 * sz2 >= 1024ll * 1024ll * 1024ll)
-		{
-			cropXSlider_mapv->setValue(sz0);
-			return;
-		}
-		mapview_paras.outsz[0] = sz;
-	}
-	else if(slider == cropYSlider_mapv)
-	{
-		if(sz > M*m || sz0 * sz * sz2 >= 1024ll * 1024ll * 1024ll) 
-		{
-			cropYSlider_mapv->setValue(sz1);
-			return;
-		}
-		mapview_paras.outsz[1] = sz;
-	}
-	else if(slider == cropZSlider_mapv)
-	{
-		if(sz > N*n || sz0 * sz1 * sz >= 1024ll * 1024ll * 1024ll) 
-		{
-			cropZSlider_mapv->setValue(sz2);
-			return;
-		}
-		mapview_paras.outsz[2] = sz;
-	}
+	void * button = sender();
+	V3DLONG sz0 = paras.outsz[0];
+	V3DLONG sz1 = paras.outsz[1];
+	V3DLONG sz2 = paras.outsz[2];
+	V3DLONG L = paras.L;
+	V3DLONG M = paras.M;
+	V3DLONG N = paras.N;
+	V3DLONG l = paras.l;
+	V3DLONG m = paras.m;
+	V3DLONG n = paras.n;
+	if(button == cutLeftXSlider) leftx = cutLeftXSlider->value();
+	else if(button == cutLeftYSlider) lefty = cutLeftYSlider->value();
+	else if(button == cutLeftZSlider) leftz = cutLeftZSlider->value();
+	else if(button == cutRightXSlider) rightx = cutRightXSlider->value();
+	else if(button == cutRightYSlider) righty = cutRightYSlider->value();
+	else if(button == cutRightZSlider) rightz = cutRightZSlider->value();
+	else if(button == zoomSlider) zoom = zoomSlider->value();
+	else if(button == threadCheckBox) is_multi_thread = threadCheckBox->isChecked();
+
+	int level = paras.level_num - zoom0;
+
 	updateTriView();
-}
-void MapViewWidget::setMultiThreads(bool is_multi_threads)
-{
-	mapview_paras.is_use_thread = is_multi_threads;
 }

@@ -67,7 +67,7 @@ int main(int argc, char ** argv)
 	V3DLONG ts1 = (insz1 % bs1 == 0) ? insz1/bs1 : insz1/bs1 + 1;
 	V3DLONG ts2 = (insz2 % bs2 == 0) ? insz2/bs2 : insz2/bs2 + 1;
 
-	V3DLONG level_num = log(MIN(MIN(insz0, insz1), insz2))/log(2.0);
+	V3DLONG level_num = log(MIN(MIN(insz0, insz1), insz2))/log(2.0) - 1;
 
 	string hraw_file = argv[5];
 	string dir = dirname(infile);
