@@ -8,9 +8,11 @@ INCLUDEPATH	+= $$V3DMAINPATH/basic_c_fun
 HEADERS	= sort_plugin.h
 HEADERS	+= sort_func.h
 HEADERS += sort_swc.h
+HEADERS += openSWCDialog.h
 
 SOURCES	= sort_plugin.cpp
 SOURCES	+= sort_func.cpp
+SOURCES += openSWCDialog.cpp
 SOURCES	+= $$V3DMAINPATH/basic_c_fun/v3d_message.cpp
 SOURCES += $$V3DMAINPATH/basic_c_fun/basic_surf_objs.cpp
 

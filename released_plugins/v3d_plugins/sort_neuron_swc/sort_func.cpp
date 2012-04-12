@@ -8,6 +8,7 @@
 #include <v3d_interface.h>
 #include "v3d_message.h"
 #include "sort_func.h"
+#include "openSWCDialog.h"
 #include <vector>
 #include <iostream>
 #include "sort_swc.h"
@@ -17,8 +18,7 @@ const QString title = QObject::tr("Sort SWC Plugin");
 
 void sort_menu(V3DPluginCallback2 &callback, QWidget *parent)
 {
-	QList<NeuronSWC> neuron;
-	v3dhandle curwin = callback.currentImageWindow();
+/*	v3dhandle curwin = callback.currentImageWindow();
 	QString fileOpenName = "SWC from current window";
 	V3DLONG rootid = VOID;
 	double thres = VOID;
@@ -128,7 +128,43 @@ void sort_menu(V3DPluginCallback2 &callback, QWidget *parent)
 			v3d_msg("fail to write the output swc file.");
 			return;
 		}
+	}*/
+	OpenSWCDialog * openDlg = new OpenSWCDialog(parent, &callback);
+	if (!openDlg->exec())
+		return;
+	NeuronTree nt = openDlg->nt;
+	QList<NeuronSWC> neuron = nt.listNeuron;
+
+	V3DLONG rootid;
+	V3DLONG thres;
+	bool ok;
+	rootid = QInputDialog::getInteger(parent, "Would you like to specify new root number?","New root number:(If you select 'cancel', the first root in file is set as default)",1,1,neuron.size(),1,&ok);
+	if (!ok)
+		rootid = VOID;
+	thres = QInputDialog::getDouble(parent, "Would you like to set a threshold for the newly generated link?","threshold:(If you select 'cancel', all the points will be connected automated; If you set '0', no new link will be generated)",0,0,2147483647,1,&ok);
+	if (!ok)
+		thres = VOID;
+
+	QList<NeuronSWC> result;
+	QString fileOpenName = openDlg->file_name;
+	if (SortSWC(neuron, result ,rootid, thres))
+	{
+		QString fileDefaultName = fileOpenName+QString("_sorted.swc");
+		//write new SWC to file
+		QString fileSaveName = QFileDialog::getSaveFileName(0, QObject::tr("Save File"),
+				fileDefaultName,
+				QObject::tr("Supported file (*.swc)"
+					";;Neuron structure	(*.swc)"
+					));
+		if (fileSaveName.isEmpty())
+			return;
+		if (!export_list2file(result,fileSaveName,fileOpenName))
+		{
+			v3d_msg("fail to write the output swc file.");
+			return;
+		}
 	}
+	return;
 }
 
 
