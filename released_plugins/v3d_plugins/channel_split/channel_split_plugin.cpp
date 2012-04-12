@@ -84,7 +84,6 @@ bool processImage(const V3DPluginArgList & input, V3DPluginArgList & output)
     if (c<0)
     {
         v3d_msg("You explicitly or implicitly specified a channel number < 0, which means split-all-channels. \n",0);
-        return false;
     }
         
 	char * inimg_file = ((vector<char*> *)(input.at(0).p))->at(0);
@@ -127,7 +126,10 @@ bool processImage(const V3DPluginArgList & input, V3DPluginArgList & output)
 
         // save image
         in_sz[3]=1;
-        saveImage(outimg_file, (unsigned char *)outimg, in_sz, datatype); 
+        if (cb==ce)
+            saveImage(outimg_file, (unsigned char *)outimg, in_sz, datatype); 
+        else
+            saveImage(qPrintable(QString("").setNum(k).prepend("_C.v3draw").prepend(outimg_file)), (unsigned char *)outimg, in_sz, datatype);
     }
 
 Label_exit:
