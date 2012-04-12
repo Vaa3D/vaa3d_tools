@@ -170,6 +170,10 @@ MapViewWidget::MapViewWidget(V3DPluginCallback2 * _callback, Mapview_Paras _mapv
 	connect(cropYSlider_mapv, SIGNAL(valueChanged(int)), this, SLOT(changeWINSZ_mapv(int)));
 	connect(cropZSlider_mapv, SIGNAL(valueChanged(int)), this, SLOT(changeWINSZ_mapv(int)));
 
+	connect(cropXSlider_mapv, SIGNAL(valueChanged(int)), cropXSpinBox_mapv, SLOT(setValue(int)));
+	connect(cropYSlider_mapv, SIGNAL(valueChanged(int)), cropYSpinBox_mapv, SLOT(setValue(int)));
+	connect(cropZSlider_mapv, SIGNAL(valueChanged(int)), cropZSpinBox_mapv, SLOT(setValue(int)));
+
 	connect(threadCheckBox, SIGNAL(toggled(bool)), this, SLOT(setMultiThreads(bool)));
 	updateTriView();
 }
