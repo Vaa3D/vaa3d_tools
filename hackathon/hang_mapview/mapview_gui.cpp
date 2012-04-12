@@ -9,6 +9,12 @@ using namespace std;
 MapViewWidget::MapViewWidget(V3DPluginCallback2 * _callback, Mapview_Paras _mapview_paras,  QWidget *parent) : QWidget(parent)
 {
 	callback = _callback; curwin = 0; mapview_paras = _mapview_paras;
+	V3DLONG L = mapview_paras.L;
+	V3DLONG M = mapview_paras.M;
+	V3DLONG N = mapview_paras.N;
+	V3DLONG l = mapview_paras.l;
+	V3DLONG m = mapview_paras.m;
+	V3DLONG n = mapview_paras.n;
 
 	setWindowTitle("Mapview Control");
 	/*setWindowFlags( Qt::Widget
@@ -81,38 +87,38 @@ MapViewWidget::MapViewWidget(V3DPluginCallback2 * _callback, Mapview_Paras _mapv
 	zoomSpinBox_mapv->setValue(mapview_paras.level);
 
 	cropXSlider_mapv = new QScrollBar(Qt::Horizontal);
-	cropXSlider_mapv->setRange(1, 1000);
+	cropXSlider_mapv->setRange(256, MIN(1024, L*l));
 	cropXSlider_mapv->setSingleStep(1);
 	cropXSlider_mapv->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
 	cropXSlider_mapv->setValue(mapview_paras.outsz[0]);
 	QLabel* cropXSliderLabel_mapv = new QLabel("X-SZ");
 
 	cropXSpinBox_mapv = new QSpinBox;
-	cropXSpinBox_mapv->setRange(1, 1000);
+	cropXSpinBox_mapv->setRange(256, MIN(1024, L*l));
 	cropXSpinBox_mapv->setSingleStep(1);
 	cropXSpinBox_mapv->setValue(mapview_paras.outsz[0]);
 
 	cropYSlider_mapv = new QScrollBar(Qt::Horizontal);
-	cropYSlider_mapv->setRange(1, 1000);
+	cropYSlider_mapv->setRange(256, MIN(768, M*m));
 	cropYSlider_mapv->setSingleStep(1);
 	cropYSlider_mapv->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
 	cropYSlider_mapv->setValue(mapview_paras.outsz[1]);
 	QLabel* cropYSliderLabel_mapv = new QLabel("Y-SZ");
 
 	cropYSpinBox_mapv = new QSpinBox;
-	cropYSpinBox_mapv->setRange(1, 1000);
+	cropYSpinBox_mapv->setRange(256, MIN(768, M*m));
 	cropYSpinBox_mapv->setSingleStep(1);
 	cropYSpinBox_mapv->setValue(mapview_paras.outsz[1]);
 
 	cropZSlider_mapv = new QScrollBar(Qt::Horizontal);
-	cropZSlider_mapv->setRange(1, 1000);
+	cropZSlider_mapv->setRange(1, MIN(256, N * n));
 	cropZSlider_mapv->setSingleStep(1);
 	cropZSlider_mapv->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
 	cropZSlider_mapv->setValue(mapview_paras.outsz[2]);
 	QLabel* cropZSliderLabel_mapv = new QLabel("Z-SZ");
 
 	cropZSpinBox_mapv = new QSpinBox;
-	cropZSpinBox_mapv->setRange(1, 1000);
+	cropZSpinBox_mapv->setRange(1, MIN(256, N * n));
 	cropZSpinBox_mapv->setSingleStep(1);
 	cropZSpinBox_mapv->setValue(mapview_paras.outsz[2]);
 
