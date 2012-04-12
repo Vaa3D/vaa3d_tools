@@ -129,7 +129,7 @@ bool processImage(const V3DPluginArgList & input, V3DPluginArgList & output)
         if (cb==ce)
             saveImage(outimg_file, (unsigned char *)outimg, in_sz, datatype); 
         else
-            saveImage(qPrintable(QString("").setNum(k).prepend("_C.v3draw").prepend(outimg_file)), (unsigned char *)outimg, in_sz, datatype);
+            saveImage(qPrintable(QString("").setNum(k).prepend("_C").prepend(outimg_file).append(".v3draw")), (unsigned char *)outimg, in_sz, datatype);
     }
 
 Label_exit:
