@@ -39,5 +39,5 @@ SOURCES += $$V3DMAINPATH/basic_c_fun/mg_image_lib.cpp
 SOURCES += $$V3DMAINPATH/basic_c_fun/stackutil.cpp
 
 TARGET        = $$qtLibraryTarget(channelsplit)
-DESTDIR       = ../../v3d/plugins/Color_Channel/Split_Extract_Channels
+DESTDIR       = ../../v3d/plugins/color_channel/split_extract_channels
 
