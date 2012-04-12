@@ -180,11 +180,11 @@ void processImage(V3DPluginCallback2 &callback, QWidget *parent, const QString &
     in_sz[0] = p4DImage->getXDim(); 
     in_sz[1] = p4DImage->getYDim(); 
     in_sz[2] = p4DImage->getZDim(); 
-    in_sz[4] = sc;
+    in_sz[3] = sc;
 
     //
     V3DLONG cb, ce, k;
-    if (c<0) {cb=0; ce=in_sz[3]-1;}
+    if (c<0) {cb=0; ce=sc-1;}
     else {cb = ce = c;}
     
     void * outimg=0;
