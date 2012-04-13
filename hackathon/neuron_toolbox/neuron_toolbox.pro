@@ -16,3 +16,5 @@ SOURCES	+= $$V3DMAINPATH/basic_c_fun/v3d_message.cpp
 
 TARGET	= $$qtLibraryTarget(neuron_toolbox)
 #DESTDIR	= $$VAA3DPATH/bin/plugins/neuron_toolbox/
+DESTDIR        = /Users/pengh/work/v3d_external/bin/plugins/neuron_toolbox/
+
