@@ -97,27 +97,35 @@ MapViewWidget::MapViewWidget(V3DPluginCallback2 * _callback, Mapview_Paras _para
 	layout->addWidget(threadCheckBox, 7, 0, 1, 14);
 
 	// setup connections
-	connect(cutLeftXSlider,    SIGNAL(valueChanged(int)), this, SLOT(update()));
-	connect(cutLeftYSlider,    SIGNAL(valueChanged(int)), this, SLOT(update()));
-	connect(cutLeftZSlider,    SIGNAL(valueChanged(int)), this, SLOT(update()));
-	connect(cutRightXSlider,    SIGNAL(valueChanged(int)), this, SLOT(update()));
-	connect(cutRightYSlider,    SIGNAL(valueChanged(int)), this, SLOT(update()));
-	connect(cutRightZSlider,    SIGNAL(valueChanged(int)), this, SLOT(update()));
-	connect(zoomSlider, SIGNAL(valueChanged(int)), this, SLOT(update()));
+	connect(cutLeftXSlider,    SIGNAL(valueChanged(int)), this, SLOT(onLeftXChanged()));
+	connect(cutLeftYSlider,    SIGNAL(valueChanged(int)), this, SLOT(onLeftYChanged()));
+	connect(cutLeftZSlider,    SIGNAL(valueChanged(int)), this, SLOT(onLeftZChanged()));
+	connect(cutRightXSlider,    SIGNAL(valueChanged(int)), this, SLOT(onRightXChanged()));
+	connect(cutRightYSlider,    SIGNAL(valueChanged(int)), this, SLOT(onRightYChanged()));
+	connect(cutRightZSlider,    SIGNAL(valueChanged(int)), this, SLOT(onRightZChanged()));
+	connect(zoomSlider, SIGNAL(valueChanged(int)), this, SLOT(onZoomChanged(int)));
 	connect(threadCheckBox, SIGNAL(toggled(bool)), this, SLOT(update()));
 
+	update_locked = false;
 	update();
-	updateTriView();
 }
 
-void MapViewWidget::updateTriView()
+void MapViewWidget::update()
 {
+	if(update_locked) return;
+
+	leftx = cutLeftXSlider->value();
+	lefty = cutLeftYSlider->value(); 
+	leftz = cutLeftZSlider->value(); 
+	rightx = cutRightXSlider->value(); 
+	righty = cutRightYSlider->value(); 
+	rightz = cutRightZSlider->value(); 
+	zoom = zoomSlider->value();
+	is_multi_thread = threadCheckBox->isChecked();
+
 	paras.level = paras.level_num - zoom;
-	V3DLONG ts0, ts1, ts2, bs0, bs1, bs2;
-	mapview.getBlockTillingSize(paras.level, ts0, ts1, ts2, bs0, bs1, bs2);
-	V3DLONG in_sz0 = ts0 * bs0;
-	V3DLONG in_sz1 = ts1 * bs1;
-	V3DLONG in_sz2 = ts2 * bs2;
+	V3DLONG in_sz0 = 0, in_sz1 = 0, in_sz2 = 0;
+	mapview.getDownSamplingSize(paras.level, in_sz0, in_sz1, in_sz2);
 	cout<<"paras.level = "<<paras.level<<endl;
 	cout<<"in_sz0 = "<<in_sz0<<endl;
 	cout<<"in_sz1 = "<<in_sz1<<endl;
@@ -136,14 +144,6 @@ void MapViewWidget::updateTriView()
 	// retrieve image from blocks
 	unsigned char * outimg1d = 0;
 
-	cout<<"paras.level = "<<paras.level<<endl;
-	cout<<"paras.origin[0] = "<<paras.origin[0]<<endl;
-	cout<<"paras.origin[1] = "<<paras.origin[1]<<endl;
-	cout<<"paras.origin[2] = "<<paras.origin[2]<<endl;
-	cout<<"paras.outsz[0] = "<<paras.outsz[0]<<endl;
-	cout<<"paras.outsz[1] = "<<paras.outsz[1]<<endl;
-	cout<<"paras.outsz[2] = "<<paras.outsz[2]<<endl;
-	cout<<"is_use_thread = "<<paras.is_use_thread<<endl;
 	mapview.getImage(paras.level, outimg1d, paras.origin[0], paras.origin[1], paras.origin[2],
 			paras.outsz[0], paras.outsz[1], paras.outsz[2], paras.is_use_thread);
 
@@ -165,23 +165,82 @@ void MapViewWidget::closeEvent(QCloseEvent *event)
 	}
 }
 
-void MapViewWidget::update()
+void MapViewWidget::onLeftXChanged(int value)
 {
-	leftx = cutLeftXSlider->value();
-	lefty = cutLeftYSlider->value(); 
-	leftz = cutLeftZSlider->value(); 
-	rightx = cutRightXSlider->value(); 
-	righty = cutRightYSlider->value(); 
-	rightz = cutRightZSlider->value(); 
-	zoom = zoomSlider->value();
-	is_multi_thread = threadCheckBox->isChecked();
+	leftx = value;
+	if(leftx >= rightx) cutRightXSlider->setValue(leftx+1);
+	else update();
+}
 
-	if(leftx >= rightx){cutRightXSlider->setValue(leftx+1); return;}
-	if(lefty >= righty){cutRightYSlider->setValue(lefty+1); return;}
-	if(leftz >= rightz){cutRightZSlider->setValue(leftz+1); return;}
-	if(rightx <= leftx){cutLeftXSlider->setValue(rightx-1); return;}
-	if(righty <= lefty){cutLeftYSlider->setValue(righty-1); return;}
-	if(rightz <= leftz){cutLeftZSlider->setValue(rightz-1); return;}
+void MapViewWidget::onLeftYChanged(int value)
+{
+	lefty = value;
+	if(lefty >= righty) cutRightYSlider->setValue(lefty+1);
+	else update();
+}
 
-	updateTriView();
+void MapViewWidget::onLeftZChanged(int value)
+{
+	leftz = value;
+	if(leftz >= rightz) cutRightZSlider->setValue(leftz+1);
+	else update();
+}
+
+void MapViewWidget::onRightXChanged(int value)
+{
+	rightx = value;
+	if(rightx <= leftx) cutLeftXSlider->setValue(rightx-1);
+	else update();
+}
+
+void MapViewWidget::onRightYChanged(int value)
+{
+	righty = value;
+	if(righty <= lefty) cutLeftYSlider->setValue(righty-1);
+	else update();
+}
+
+void MapViewWidget::onRightZChanged(int value)
+{
+	rightz = value;
+	if(rightz <= leftz) cutLeftZSlider->setValue(rightz-1);
+	else update();
+}
+
+void MapViewWidget::onZoomChanged(int value)
+{
+	double midx = (leftx + rightx)/2.0;
+	double lenx = (rightx - leftx)/pow(2.0, value-zoom);
+	int leftx2 = midx - lenx/2.0 + 0.5;
+	int rightx2 = leftx2 + (lenx + 0.5);
+
+	double midy = (lefty + righty)/2.0;
+	double leny = (righty - lefty)/pow(2.0, value-zoom);
+	int lefty2 = midy - leny/2.0 + 0.5;
+	int righty2 = lefty2 + (leny + 0.5);
+
+	double midz = (leftz + rightz)/2.0;
+	double lenz = (rightz - leftz)/pow(2.0, value-zoom);
+	int leftz2 = midz - lenz/2.0 + 0.5;
+	int rightz2 = leftz2 + (lenz + 0.5);
+
+	leftx2 = MAX(leftx2, 0);
+	rightx2 = MIN(rightx2, 100);
+	lefty2 = MAX(lefty2, 0);
+	righty2 = MIN(righty2, 100);
+	leftz2 = MAX(leftz2, 0);
+	rightz2 = MIN(rightz2, 100);
+
+	zoom = value;
+
+	update_locked = true;
+	cutLeftXSlider->setValue(leftx2);
+	cutLeftYSlider->setValue(lefty2);
+	cutLeftZSlider->setValue(leftz2);
+	cutRightXSlider->setValue(rightx2);
+	cutRightYSlider->setValue(righty2);
+	cutRightZSlider->setValue(rightz2);
+	update_locked = false;
+
+	update();
 }

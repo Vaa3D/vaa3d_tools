@@ -19,6 +19,7 @@ struct ImageMapView
 	void getImage(V3DLONG level, unsigned char * & outimg1d, V3DLONG x0, V3DLONG y0, V3DLONG z0, V3DLONG sz0, V3DLONG sz1, V3DLONG sz2, bool is_use_thread = 1);
 
 	void getBlockTillingSize(V3DLONG level, V3DLONG & ts0, V3DLONG & ts1, V3DLONG & ts2, V3DLONG &bs0, V3DLONG &bs1, V3DLONG &bs2);
+	void getDownSamplingSize(V3DLONG level, V3DLONG & out_sz0, V3DLONG & out_sz1, V3DLONG & out_sz2);
 };
 
 void getRawImageSize(string filename, V3DLONG &sz0, V3DLONG &sz1, V3DLONG &sz2, V3DLONG &sz3);

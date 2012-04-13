@@ -173,6 +173,8 @@ void ImageMapView::getBlockTillingSize(V3DLONG level, V3DLONG & ts0, V3DLONG & t
 	bs1 = m;
 	bs2 = n;
 	
+	cout<<"ts0 ts1 ts2 bs0 bs1 bs2"<<endl;
+	cout<<ts0<<" "<<ts1<<" "<<ts2<<" "<<bs0<<" "<<bs1<<" "<<bs2<<endl;
 	for(int i = 0; i < level; i++)
 	{
 		ts0 = (ts0 + 1)/2;
@@ -182,6 +184,7 @@ void ImageMapView::getBlockTillingSize(V3DLONG level, V3DLONG & ts0, V3DLONG & t
 		if(ts0 == 1) bs0 = (bs0 + 1) /2;
 		if(ts1 == 1) bs1 = (bs1 + 1) /2;
 		if(ts2 == 1) bs2 = (bs2 + 1) /2;
+		cout<<ts0<<" "<<ts1<<" "<<ts2<<" "<<bs0<<" "<<bs1<<" "<<bs2<<endl;
 	}
 }
 
@@ -692,5 +695,19 @@ bool createMapViewFiles(char * dir, V3DLONG ts0, V3DLONG ts1, V3DLONG ts2)
 		pts0 = cts0; pts1 = cts1; pts2 = cts2;
 		pbs0 = cbs0; pbs1 = cbs1; pbs2 = cbs2;
 		level++;
+	}
+}
+
+void ImageMapView::getDownSamplingSize(V3DLONG level, V3DLONG & out_sz0, V3DLONG & out_sz1, V3DLONG & out_sz2)
+{
+	out_sz0 = L * l;
+	out_sz1 = M * m;
+	out_sz2 = N * n;
+	
+	for(int i = 0; i < level; i++)
+	{
+		out_sz0 = (out_sz0 + 1)/2;
+		out_sz1 = (out_sz1 + 1)/2;
+		out_sz2 = (out_sz2 + 1)/2;
 	}
 }

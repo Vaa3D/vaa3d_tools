@@ -37,7 +37,7 @@ class MapViewWidget : public QWidget
 public:
 	MapViewWidget(V3DPluginCallback2 * _callback, Mapview_Paras _paras,  QWidget *parent = 0);
 	~MapViewWidget(){}
-	void updateTriView();
+
 	void closeEvent(QCloseEvent *event);
 
 private:
@@ -66,7 +66,15 @@ private:
 	int zoom;
 	bool is_multi_thread;
 
+	bool update_locked;
 public slots:
+	void onLeftXChanged(int);
+	void onLeftYChanged(int);
+	void onLeftZChanged(int);
+	void onRightXChanged(int);
+	void onRightYChanged(int);
+	void onRightZChanged(int);
+	void onZoomChanged(int);
 	void update(); // update member values
 };
 
