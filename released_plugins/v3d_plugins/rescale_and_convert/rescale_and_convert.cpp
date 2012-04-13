@@ -98,7 +98,6 @@ void processImage(V3DPluginCallback2 &callback, QWidget *parent, const QString &
     if (c<0) {cb=0; ce=sc-1;}
     else {cb = ce = c;}
     
-    void * outimg=0;
     for (k=cb; k<=ce; k++)
     {
         switch(p4DImage->getDatatype())
@@ -116,17 +115,9 @@ void processImage(V3DPluginCallback2 &callback, QWidget *parent, const QString &
         }
     }
     
-    //display
-    //    Image4DSimple * new4DImage = new Image4DSimple();
-    //    new4DImage->createImage(in_sz[0], in_sz[1], in_sz[2], in_sz[3], p4DImage->getDatatype());        
-    //    memcpy(new4DImage->getRawData(), (unsigned char *)outimg, new4DImage->getTotalBytes());
-    //    
-    //    v3dhandle newwin = callback.newImageWindow();
-    //    callback.setImage(newwin, new4DImage);
-    //    callback.setImageName(newwin, QString("").setNum(k).prepend("_C").prepend(p4DImage->getFileName()));
-    
-    //no need to set the data, as it directly operate on the original data
-    callback.updateImageWindow(curwin); //this will not upfate min and max, a bug
+    //display. there is no need to set the data, as it directly operate on the original data
+    bool b_updateMinMax = true;
+    callback.updateImageWindow(curwin, b_updateMinMax); 
 }
 
 
