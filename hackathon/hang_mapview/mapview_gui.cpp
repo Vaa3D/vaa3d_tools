@@ -86,7 +86,7 @@ MapViewWidget::MapViewWidget(V3DPluginCallback2 * _callback, Mapview_Paras _para
 	zoomSlider->setRange(1, paras.level_num); 
 	zoomSlider->setSingleStep(1);
 	zoomSlider->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
-	zoomSlider->setValue(paras.level_num - paras.level); // set minimum zoom, the thumbnail whole image would display
+	zoomSlider->setValue(1); // set minimum zoom, the thumbnail whole image would display
 	QLabel* zoomSliderLabel = new QLabel("zoom");
 
 	threadCheckBox = new QCheckBox(tr("multi threads"));
@@ -114,15 +114,16 @@ MapViewWidget::MapViewWidget(V3DPluginCallback2 * _callback, Mapview_Paras _para
 	layout->addWidget(threadCheckBox, 7, 0, 1, 14);
 
 	// setup connections
-	connect(cutLeftXSlider,    SIGNAL(valueChanged(int)), this, SLOT(onValueChanged()));
-	connect(cutLeftYSlider,    SIGNAL(valueChanged(int)), this, SLOT(onValueChanged()));
-	connect(cutLeftZSlider,    SIGNAL(valueChanged(int)), this, SLOT(onValueChanged()));
-	connect(cutRightXSlider,    SIGNAL(valueChanged(int)), this, SLOT(onValueChanged()));
-	connect(cutRightYSlider,    SIGNAL(valueChanged(int)), this, SLOT(onValueChanged()));
-	connect(cutRightZSlider,    SIGNAL(valueChanged(int)), this, SLOT(onValueChanged()));
-	connect(zoomSlider, SIGNAL(valueChanged(int)), this, SLOT(onValueChanged()));
-	connect(threadCheckBox, SIGNAL(toggled(bool)), this, SLOT(onValueChanged()));
+	connect(cutLeftXSlider,    SIGNAL(valueChanged(int)), this, SLOT(update()));
+	connect(cutLeftYSlider,    SIGNAL(valueChanged(int)), this, SLOT(update()));
+	connect(cutLeftZSlider,    SIGNAL(valueChanged(int)), this, SLOT(update()));
+	connect(cutRightXSlider,    SIGNAL(valueChanged(int)), this, SLOT(update()));
+	connect(cutRightYSlider,    SIGNAL(valueChanged(int)), this, SLOT(update()));
+	connect(cutRightZSlider,    SIGNAL(valueChanged(int)), this, SLOT(update()));
+	connect(zoomSlider, SIGNAL(valueChanged(int)), this, SLOT(update()));
+	connect(threadCheckBox, SIGNAL(toggled(bool)), this, SLOT(update()));
 
+	update();
 	updateTriView();
 }
 
@@ -140,6 +141,7 @@ void MapViewWidget::updateTriView()
 	paras.outsz[0] = (rightx - leftx)/100.0 * in_sz0;
 	paras.outsz[1] = (righty - lefty)/100.0 * in_sz1;
 	paras.outsz[2] = (rightz - leftz)/100.0 * in_sz2;
+
 	// get curwin
 	v3dhandleList winlist = callback->getImageWindowList();
 	if(curwin == 0 || winlist.empty() || !winlist.contains(curwin)) curwin = callback->newImageWindow();
@@ -147,6 +149,14 @@ void MapViewWidget::updateTriView()
 	// retrieve image from blocks
 	unsigned char * outimg1d = 0;
 
+	cout<<"paras.level = "<<paras.level<<endl;
+	cout<<"paras.origin[0] = "<<paras.origin[0]<<endl;
+	cout<<"paras.origin[1] = "<<paras.origin[1]<<endl;
+	cout<<"paras.origin[2] = "<<paras.origin[2]<<endl;
+	cout<<"paras.outsz[0] = "<<paras.outsz[0]<<endl;
+	cout<<"paras.outsz[1] = "<<paras.outsz[1]<<endl;
+	cout<<"paras.outsz[2] = "<<paras.outsz[2]<<endl;
+	cout<<"is_use_thread = "<<paras.is_use_thread<<endl;
 	mapview.getImage(paras.level, outimg1d, paras.origin[0], paras.origin[1], paras.origin[2],
 			paras.outsz[0], paras.outsz[1], paras.outsz[2], paras.is_use_thread);
 
@@ -168,50 +178,23 @@ void MapViewWidget::closeEvent(QCloseEvent *event)
 	}
 }
 
-void MapViewWidget::onValueChanged()
+void MapViewWidget::update()
 {
-	void * button = sender();
-	V3DLONG sz0 = paras.outsz[0];
-	V3DLONG sz1 = paras.outsz[1];
-	V3DLONG sz2 = paras.outsz[2];
-	V3DLONG L = paras.L;
-	V3DLONG M = paras.M;
-	V3DLONG N = paras.N;
-	V3DLONG l = paras.l;
-	V3DLONG m = paras.m;
-	V3DLONG n = paras.n;
-	if(button == cutLeftXSlider) 
-	{
-		leftx = cutLeftXSlider->value();
-		if(leftx >= rightx){cutRightXSlider->setValue(leftx+1); return;}
-	}
-	else if(button == cutLeftYSlider) 
-	{
-		lefty = cutLeftYSlider->value();
-		if(lefty >= righty){cutRightYSlider->setValue(lefty+1); return;}
-	}
-	else if(button == cutLeftZSlider) 
-	{
-		leftz = cutLeftZSlider->value();
-		if(leftz >= rightz){cutRightZSlider->setValue(leftz+1); return;}
-	}
-	else if(button == cutRightXSlider) 
-	{
-		rightx = cutRightXSlider->value();
-		if(rightx <= leftx){cutLeftXSlider->setValue(rightx-1); return;}
-	}
-	else if(button == cutRightYSlider) 
-	{
-		righty = cutRightYSlider->value();
-		if(righty <= lefty){cutLeftYSlider->setValue(righty-1); return;}
-	}
-	else if(button == cutRightZSlider) 
-	{
-		rightz = cutRightZSlider->value();
-		if(rightz <= leftz){cutLeftZSlider->setValue(rightz-1); return;}
-	}
-	else if(button == zoomSlider) zoom = zoomSlider->value();
-	else if(button == threadCheckBox) is_multi_thread = threadCheckBox->isChecked();
+	leftx = cutLeftXSlider->value();
+	lefty = cutLeftYSlider->value(); 
+	leftz = cutLeftZSlider->value(); 
+	rightx = cutRightXSlider->value(); 
+	righty = cutRightYSlider->value(); 
+	rightz = cutRightZSlider->value(); 
+	zoom = zoomSlider->value();
+	is_multi_thread = threadCheckBox->isChecked();
+
+	if(leftx >= rightx){cutRightXSlider->setValue(leftx+1); return;}
+	if(lefty >= righty){cutRightYSlider->setValue(lefty+1); return;}
+	if(leftz >= rightz){cutRightZSlider->setValue(leftz+1); return;}
+	if(rightx <= leftx){cutLeftXSlider->setValue(rightx-1); return;}
+	if(righty <= lefty){cutLeftYSlider->setValue(righty-1); return;}
+	if(rightz <= leftz){cutLeftZSlider->setValue(rightz-1); return;}
 
 	updateTriView();
 }

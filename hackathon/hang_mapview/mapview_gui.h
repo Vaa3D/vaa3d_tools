@@ -67,7 +67,7 @@ private:
 	bool is_multi_thread;
 
 public slots:
-	void onValueChanged();
+	void update(); // update member values
 };
 
 #endif 
