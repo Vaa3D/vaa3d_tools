@@ -21,7 +21,7 @@ OpenSWCDialog::OpenSWCDialog(QWidget * parent, V3DPluginCallback2 * _callback)
 
 	QPushButton * bt = new QPushButton(tr("choose"));
 	connect(bt, SIGNAL(clicked()), this, SLOT(run()));
-	connect(bt, SIGNAL(clicked()), this, SLOT(accept()));
+	//connect(bt, SIGNAL(clicked()), this, SLOT(accept()));
 	layout->addWidget(bt);
 
 	open3DDlg->setLayout(layout);
@@ -35,7 +35,7 @@ OpenSWCDialog::OpenSWCDialog(QWidget * parent, V3DPluginCallback2 * _callback)
 					));
 	fileDlg->setOption(QFileDialog::DontUseNativeDialog, true);
 	connect(fileDlg, SIGNAL(fileSelected(const QString &)), this, SLOT(setTree(const QString &)));
-	connect(fileDlg, SIGNAL(fileSelected(const QString &)), this, SLOT(accept()));
+	//connect(fileDlg, SIGNAL(fileSelected(const QString &)), this, SLOT(accept()));
 	connect(fileDlg, SIGNAL(rejected()), this, SLOT(reject()));
 
 	tabWidget->addTab(fileDlg, tr("Open from File"));
@@ -50,6 +50,8 @@ bool OpenSWCDialog::run()
 	int row = listWidget->currentRow();
 	nt = _3DViewerTreeList[row];
 	file_name = nt.file;
+	
+	accept();
 	return true;
 }
 
@@ -57,6 +59,8 @@ bool OpenSWCDialog::setTree(const QString & file)
 {
 	nt = readSWC_file(file);
 	file_name = file;
+	
+	accept();
 	return true;
 }
 
