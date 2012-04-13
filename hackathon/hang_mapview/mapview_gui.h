@@ -15,12 +15,12 @@ struct Mapview_Paras {
 	int level;           //current level
 	V3DLONG outsz[4];    //output size
 	V3DLONG origin[3];   //top-left corner pos
-	QString hraw_dir; //prefix of files
+	string hraw_dir; //prefix of files
 	bool is_use_thread;
 
 	Mapview_Paras()
 	{
-		hraw_dir=QString("");
+		hraw_dir = "";
 		outsz[0]=outsz[1]=outsz[2]=outsz[3]=0;
 		origin[0]=origin[1]=origin[2]=0;
 		L = M = N = l = m = n = 0;

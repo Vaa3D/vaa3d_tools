@@ -10,6 +10,8 @@ MapViewWidget::MapViewWidget(V3DPluginCallback2 * _callback, Mapview_Paras _para
 {
 	callback = _callback; curwin = 0; paras = _paras;
 
+	mapview.setPara(paras.hraw_dir, paras.L, paras.M, paras.N, paras.l, paras.m, paras.n, paras.channel);
+
 	setWindowTitle("Mapview Control");
 	/*setWindowFlags( Qt::Widget
 	  | Qt::Tool
@@ -149,13 +151,13 @@ void MapViewWidget::updateTriView()
 
 	p4dimage->setData(outimg1d, paras.outsz[0], paras.outsz[1], paras.outsz[2], paras.channel, V3D_UINT8); // todo : add more channel
 	callback->setImage(curwin, p4dimage);
-	callback->setImageName(curwin, paras.hraw_dir);
+	callback->setImageName(curwin, QString(paras.hraw_dir.c_str()));
 	callback->updateImageWindow(curwin);
 }
 
 void MapViewWidget::closeEvent(QCloseEvent *event)
 {
-	int ok = QMessageBox::warning(0, "", "Are you sure to close?");
+	int ok = QMessageBox::information(0, "", "Are you sure to close?");
 	if (ok) {
 		event->accept();
 	} else {
