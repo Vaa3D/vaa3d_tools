@@ -37,6 +37,7 @@ SOURCES += $$V3DMAINPATH/basic_c_fun/basic_memory.cpp
 SOURCES += $$V3DMAINPATH/basic_c_fun/mg_utilities.cpp
 SOURCES += $$V3DMAINPATH/basic_c_fun/mg_image_lib.cpp
 SOURCES += $$V3DMAINPATH/basic_c_fun/stackutil.cpp
+SOURCES += $$V3DMAINPATH/basic_c_fun/basic_4dimage_create.cpp
 
 TARGET        = $$qtLibraryTarget(channelsplit)
 DESTDIR       = ../../v3d/plugins/color_channel/split_extract_channels
