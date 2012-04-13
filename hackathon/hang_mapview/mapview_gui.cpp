@@ -41,42 +41,42 @@ MapViewWidget::MapViewWidget(V3DPluginCallback2 * _callback, Mapview_Paras _para
 	int dim_zoom= paras.level_num;
 
 	cutLeftXSlider = new QScrollBar(Qt::Horizontal);
-	cutLeftXSlider->setRange(0, 100); 
+	cutLeftXSlider->setRange(0, 99); 
 	cutLeftXSlider->setSingleStep(1);
 	cutLeftXSlider->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
 	cutLeftXSlider->setValue(0);
 	QLabel* cutLeftXSliderLabel = new QLabel("X-cut");
 
 	cutRightXSlider = new QScrollBar(Qt::Horizontal);
-	cutRightXSlider->setRange(0, 100); 
+	cutRightXSlider->setRange(1, 100); 
 	cutRightXSlider->setSingleStep(1);
 	cutRightXSlider->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
 	cutRightXSlider->setValue(100);
 	QLabel* cutRightXSliderLabel = new QLabel("");
 
 	cutLeftYSlider = new QScrollBar(Qt::Horizontal);
-	cutLeftYSlider->setRange(0, 100); 
+	cutLeftYSlider->setRange(0, 99); 
 	cutLeftYSlider->setSingleStep(1);
 	cutLeftYSlider->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
 	cutLeftYSlider->setValue(0);
 	QLabel* cutLeftYSliderLabel = new QLabel("Y-cut");
 
 	cutRightYSlider = new QScrollBar(Qt::Horizontal);
-	cutRightYSlider->setRange(0, 100); 
+	cutRightYSlider->setRange(1, 100); 
 	cutRightYSlider->setSingleStep(1);
 	cutRightYSlider->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
 	cutRightYSlider->setValue(100);
 	QLabel* cutRightYSliderLabel = new QLabel("");
 
 	cutLeftZSlider = new QScrollBar(Qt::Horizontal);
-	cutLeftZSlider->setRange(0, 100); 
+	cutLeftZSlider->setRange(0, 99); 
 	cutLeftZSlider->setSingleStep(1);
 	cutLeftZSlider->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
 	cutLeftZSlider->setValue(0);
 	QLabel* cutLeftZSliderLabel = new QLabel("Z-cut");
 
 	cutRightZSlider = new QScrollBar(Qt::Horizontal);
-	cutRightZSlider->setRange(0, 100); 
+	cutRightZSlider->setRange(1, 100); 
 	cutRightZSlider->setSingleStep(1);
 	cutRightZSlider->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
 	cutRightZSlider->setValue(100);
@@ -134,6 +134,9 @@ void MapViewWidget::updateTriView()
 	V3DLONG in_sz0 = ts0 * bs0;
 	V3DLONG in_sz1 = ts1 * bs1;
 	V3DLONG in_sz2 = ts2 * bs2;
+	paras.origin[0] = leftx/99.0 * in_sz0;
+	paras.origin[1] = lefty/99.0 * in_sz1;
+	paras.origin[2] = leftz/99.0 * in_sz2;
 	paras.outsz[0] = (rightx - leftx)/100.0 * in_sz0;
 	paras.outsz[1] = (righty - lefty)/100.0 * in_sz1;
 	paras.outsz[2] = (rightz - leftz)/100.0 * in_sz2;
@@ -177,12 +180,36 @@ void MapViewWidget::onValueChanged()
 	V3DLONG l = paras.l;
 	V3DLONG m = paras.m;
 	V3DLONG n = paras.n;
-	if(button == cutLeftXSlider) leftx = cutLeftXSlider->value();
-	else if(button == cutLeftYSlider) lefty = cutLeftYSlider->value();
-	else if(button == cutLeftZSlider) leftz = cutLeftZSlider->value();
-	else if(button == cutRightXSlider) rightx = cutRightXSlider->value();
-	else if(button == cutRightYSlider) righty = cutRightYSlider->value();
-	else if(button == cutRightZSlider) rightz = cutRightZSlider->value();
+	if(button == cutLeftXSlider) 
+	{
+		leftx = cutLeftXSlider->value();
+		if(leftx >= rightx){cutRightXSlider->setValue(leftx+1); return;}
+	}
+	else if(button == cutLeftYSlider) 
+	{
+		lefty = cutLeftYSlider->value();
+		if(lefty >= righty){cutRightYSlider->setValue(lefty+1); return;}
+	}
+	else if(button == cutLeftZSlider) 
+	{
+		leftz = cutLeftZSlider->value();
+		if(leftz >= rightz){cutRightZSlider->setValue(leftz+1); return;}
+	}
+	else if(button == cutRightXSlider) 
+	{
+		rightx = cutRightXSlider->value();
+		if(rightx <= leftx){cutLeftXSlider->setValue(rightx-1); return;}
+	}
+	else if(button == cutRightYSlider) 
+	{
+		righty = cutRightYSlider->value();
+		if(righty <= lefty){cutLeftYSlider->setValue(righty-1); return;}
+	}
+	else if(button == cutRightZSlider) 
+	{
+		rightz = cutRightZSlider->value();
+		if(rightz <= leftz){cutLeftZSlider->setValue(rightz-1); return;}
+	}
 	else if(button == zoomSlider) zoom = zoomSlider->value();
 	else if(button == threadCheckBox) is_multi_thread = threadCheckBox->isChecked();
 
