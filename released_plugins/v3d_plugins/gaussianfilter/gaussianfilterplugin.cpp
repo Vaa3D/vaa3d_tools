@@ -151,7 +151,7 @@ bool processImage(const V3DPluginArgList & input, V3DPluginArgList & output)
 
      // save image
      in_sz[3]=1;
-     //how about save float??
+
      saveImage(outimg_file, (unsigned char *)outimg, in_sz, 4);
 
      if(outimg) {delete []outimg; outimg =0;}

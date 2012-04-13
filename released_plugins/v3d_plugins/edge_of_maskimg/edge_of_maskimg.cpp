@@ -1,6 +1,9 @@
 //by Hanchuan Peng
 //2009-05-30
 
+// Adapted and upgraded to add dofunc() by Jianlong Zhou, 2012-04-08
+
+
 #include <QtGui>
 #include <math.h>
 #include <stdlib.h>
@@ -175,12 +178,9 @@ bool findedgeimg(const V3DPluginArgList & input, V3DPluginArgList & output)
 			//note that all value had been preset as 0, thus no need to set as the background color in case not an edge point
 		}
     }
-
-
      //how about save float??
      saveImage(outimg_file, (unsigned char *)outputImage.getRawData(), in_sz, 1);
 
-     //if (outputData) {delete []outputData; outputData =0;}
      //if (data1d) {delete []data1d; data1d=0;}
      if (in_sz) {delete []in_sz; in_sz=0;}
 
