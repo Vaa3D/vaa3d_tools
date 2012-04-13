@@ -2,7 +2,7 @@
 #include <QtGui>
 #include <v3d_interface.h>
 #include "mapview.h"
-#include "gui.h"
+#include "mapview_gui.h"
 
 using namespace std;
 
@@ -40,86 +40,103 @@ MapViewWidget::MapViewWidget(V3DPluginCallback2 * _callback, Mapview_Paras _para
 	// zoom range
 	int dim_zoom= paras.level_num;
 
-	cutLeftXSlider_mapv = new QScrollBar(Qt::Horizontal);
-	cutLeftXSlider_mapv->setRange(0, 100); 
-	cutLeftXSlider_mapv->setSingleStep(1);
-	cutLeftXSlider_mapv->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
-	QLabel* cutLeftXSliderLabel_mapv = new QLabel("X-cut");
+	cutLeftXSlider = new QScrollBar(Qt::Horizontal);
+	cutLeftXSlider->setRange(0, 100); 
+	cutLeftXSlider->setSingleStep(1);
+	cutLeftXSlider->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
+	cutLeftXSlider->setValue(0);
+	QLabel* cutLeftXSliderLabel = new QLabel("X-cut");
 
-	cutRightXSlider_mapv = new QScrollBar(Qt::Horizontal);
-	cutRightXSlider_mapv->setRange(0, 100); 
-	cutRightXSlider_mapv->setSingleStep(1);
-	cutRightXSlider_mapv->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
-	QLabel* cutRightXSliderLabel_mapv = new QLabel("");
+	cutRightXSlider = new QScrollBar(Qt::Horizontal);
+	cutRightXSlider->setRange(0, 100); 
+	cutRightXSlider->setSingleStep(1);
+	cutRightXSlider->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
+	cutRightXSlider->setValue(100);
+	QLabel* cutRightXSliderLabel = new QLabel("");
 
-	cutLeftYSlider_mapv = new QScrollBar(Qt::Horizontal);
-	cutLeftYSlider_mapv->setRange(0, 100); 
-	cutLeftYSlider_mapv->setSingleStep(1);
-	cutLeftYSlider_mapv->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
-	QLabel* cutLeftYSliderLabel_mapv = new QLabel("Y-cut");
+	cutLeftYSlider = new QScrollBar(Qt::Horizontal);
+	cutLeftYSlider->setRange(0, 100); 
+	cutLeftYSlider->setSingleStep(1);
+	cutLeftYSlider->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
+	cutLeftYSlider->setValue(0);
+	QLabel* cutLeftYSliderLabel = new QLabel("Y-cut");
 
-	cutRightYSlider_mapv = new QScrollBar(Qt::Horizontal);
-	cutRightYSlider_mapv->setRange(0, 100); 
-	cutRightYSlider_mapv->setSingleStep(1);
-	cutRightYSlider_mapv->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
-	QLabel* cutRightYSliderLabel_mapv = new QLabel("");
+	cutRightYSlider = new QScrollBar(Qt::Horizontal);
+	cutRightYSlider->setRange(0, 100); 
+	cutRightYSlider->setSingleStep(1);
+	cutRightYSlider->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
+	cutRightYSlider->setValue(100);
+	QLabel* cutRightYSliderLabel = new QLabel("");
 
-	cutLeftZSlider_mapv = new QScrollBar(Qt::Horizontal);
-	cutLeftZSlider_mapv->setRange(0, 100); 
-	cutLeftZSlider_mapv->setSingleStep(1);
-	cutLeftZSlider_mapv->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
-	QLabel* cutLeftZSliderLabel_mapv = new QLabel("Z-cut");
+	cutLeftZSlider = new QScrollBar(Qt::Horizontal);
+	cutLeftZSlider->setRange(0, 100); 
+	cutLeftZSlider->setSingleStep(1);
+	cutLeftZSlider->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
+	cutLeftZSlider->setValue(0);
+	QLabel* cutLeftZSliderLabel = new QLabel("Z-cut");
 
-	cutRightZSlider_mapv = new QScrollBar(Qt::Horizontal);
-	cutRightZSlider_mapv->setRange(0, 100); 
-	cutRightZSlider_mapv->setSingleStep(1);
-	cutRightZSlider_mapv->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
-	QLabel* cutRightZSliderLabel_mapv = new QLabel("");
+	cutRightZSlider = new QScrollBar(Qt::Horizontal);
+	cutRightZSlider->setRange(0, 100); 
+	cutRightZSlider->setSingleStep(1);
+	cutRightZSlider->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
+	cutRightZSlider->setValue(100);
+	QLabel* cutRightZSliderLabel = new QLabel("");
 
-	zoomSlider_mapv = new QScrollBar(Qt::Horizontal);
-	zoomSlider_mapv->setRange(0, 100); 
-	zoomSlider_mapv->setSingleStep(1);
-	zoomSlider_mapv->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
-	QLabel* zoomSliderLabel_mapv = new QLabel("zoom");
+	zoomSlider = new QScrollBar(Qt::Horizontal);
+	zoomSlider->setRange(1, paras.level_num); 
+	zoomSlider->setSingleStep(1);
+	zoomSlider->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
+	zoomSlider->setValue(paras.level_num - paras.level); // set minimum zoom, the thumbnail whole image would display
+	QLabel* zoomSliderLabel = new QLabel("zoom");
 
 	threadCheckBox = new QCheckBox(tr("multi threads"));
 	threadCheckBox->setChecked(Qt::Checked);
 	
 	// layout for mv control window
-	layout->addWidget(cutLeftXSliderLabel_mapv, 0, 0, 1, 1);
-	layout->addWidget(cutLeftXSlider_mapv, 0, 1, 1, 13);
-	layout->addWidget(cutRightXSliderLabel_mapv, 1, 0, 1, 1);
-	layout->addWidget(cutRightXSlider_mapv, 1, 1, 1, 13);
+	layout->addWidget(cutLeftXSliderLabel, 0, 0, 1, 1);
+	layout->addWidget(cutLeftXSlider, 0, 1, 1, 13);
+	layout->addWidget(cutRightXSliderLabel, 1, 0, 1, 1);
+	layout->addWidget(cutRightXSlider, 1, 1, 1, 13);
 
-	layout->addWidget(cutLeftYSliderLabel_mapv, 2, 0, 1, 1);
-	layout->addWidget(cutLeftYSlider_mapv, 2, 1, 1, 13);
-	layout->addWidget(cutRightYSliderLabel_mapv, 3, 0, 1, 1);
-	layout->addWidget(cutRightYSlider_mapv, 3, 1, 1, 13);
+	layout->addWidget(cutLeftYSliderLabel, 2, 0, 1, 1);
+	layout->addWidget(cutLeftYSlider, 2, 1, 1, 13);
+	layout->addWidget(cutRightYSliderLabel, 3, 0, 1, 1);
+	layout->addWidget(cutRightYSlider, 3, 1, 1, 13);
 
-	layout->addWidget(cutLeftZSliderLabel_mapv, 4, 0, 1, 1);
-	layout->addWidget(cutLeftZSlider_mapv, 4, 1, 1, 13);
-	layout->addWidget(cutRightZSliderLabel_mapv, 5, 0, 1, 1);
-	layout->addWidget(cutRightZSlider_mapv, 5, 1, 1, 13);
+	layout->addWidget(cutLeftZSliderLabel, 4, 0, 1, 1);
+	layout->addWidget(cutLeftZSlider, 4, 1, 1, 13);
+	layout->addWidget(cutRightZSliderLabel, 5, 0, 1, 1);
+	layout->addWidget(cutRightZSlider, 5, 1, 1, 13);
 
-	layout->addWidget(zoomSliderLabel_mapv, 6, 0, 1, 1);
-	layout->addWidget(zoomSlider_mapv, 6, 1, 1, 13);
+	layout->addWidget(zoomSliderLabel, 6, 0, 1, 1);
+	layout->addWidget(zoomSlider, 6, 1, 1, 13);
 
 	layout->addWidget(threadCheckBox, 7, 0, 1, 14);
 
 	// setup connections
-	connect(cutLeftXSlider_mapv,    SIGNAL(valueChanged(int)), this, SLOT(onValueChanged(int)));
-	connect(cutLeftYSlider_mapv,    SIGNAL(valueChanged(int)), this, SLOT(onValueChanged(int)));
-	connect(cutLeftZSlider_mapv,    SIGNAL(valueChanged(int)), this, SLOT(onValueChanged(int)));
-	connect(cutRightXSlider_mapv,    SIGNAL(valueChanged(int)), this, SLOT(onValueChanged(int)));
-	connect(cutRightYSlider_mapv,    SIGNAL(valueChanged(int)), this, SLOT(onValueChanged(int)));
-	connect(cutRightZSlider_mapv,    SIGNAL(valueChanged(int)), this, SLOT(onValueChanged(int)));
-	connect(zoomSlider, SIGNAL(valueChanged(int)), this, SLOT(onValueChanged(int)));
-	connect(threadCheckBox, SIGNAL(toggled(bool)), this, SLOT(setMultiThreads(bool)));
+	connect(cutLeftXSlider,    SIGNAL(valueChanged(int)), this, SLOT(onValueChanged()));
+	connect(cutLeftYSlider,    SIGNAL(valueChanged(int)), this, SLOT(onValueChanged()));
+	connect(cutLeftZSlider,    SIGNAL(valueChanged(int)), this, SLOT(onValueChanged()));
+	connect(cutRightXSlider,    SIGNAL(valueChanged(int)), this, SLOT(onValueChanged()));
+	connect(cutRightYSlider,    SIGNAL(valueChanged(int)), this, SLOT(onValueChanged()));
+	connect(cutRightZSlider,    SIGNAL(valueChanged(int)), this, SLOT(onValueChanged()));
+	connect(zoomSlider, SIGNAL(valueChanged(int)), this, SLOT(onValueChanged()));
+	connect(threadCheckBox, SIGNAL(toggled(bool)), this, SLOT(onValueChanged()));
+
 	updateTriView();
 }
 
 void MapViewWidget::updateTriView()
 {
+	paras.level = paras.level_num - zoom;
+	V3DLONG ts0, ts1, ts2, bs0, bs1, bs2;
+	mapview.getBlockTillingSize(paras.level, ts0, ts1, ts2, bs0, bs1, bs2);
+	V3DLONG in_sz0 = ts0 * bs0;
+	V3DLONG in_sz1 = ts1 * bs1;
+	V3DLONG in_sz2 = ts2 * bs2;
+	paras.outsz[0] = (rightx - leftx)/100.0 * in_sz0;
+	paras.outsz[1] = (righty - lefty)/100.0 * in_sz1;
+	paras.outsz[2] = (rightz - leftz)/100.0 * in_sz2;
 	// get curwin
 	v3dhandleList winlist = callback->getImageWindowList();
 	if(curwin == 0 || winlist.empty() || !winlist.contains(curwin)) curwin = callback->newImageWindow();
@@ -168,8 +185,6 @@ void MapViewWidget::onValueChanged()
 	else if(button == cutRightZSlider) rightz = cutRightZSlider->value();
 	else if(button == zoomSlider) zoom = zoomSlider->value();
 	else if(button == threadCheckBox) is_multi_thread = threadCheckBox->isChecked();
-
-	int level = paras.level_num - zoom0;
 
 	updateTriView();
 }

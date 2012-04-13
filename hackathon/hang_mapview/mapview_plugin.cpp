@@ -125,12 +125,10 @@ int load_hraw_data(V3DPluginCallback2 &callback, QWidget *parent)
 	mapview_paras.m = m;
 	mapview_paras.n = n;
 	mapview_paras.channel = channel;
-	mapview_paras.level_num = level_num;
-	double ds_factor = sqrt((L*l * M*m)/(512.0*512.0));
-	mapview_paras.outsz[0] = L * l / ds_factor;
-	mapview_paras.outsz[1] = M * m / ds_factor;
-	mapview_paras.outsz[2] = 1;
-	mapview_paras.level = log(ds_factor)/log(2.0) + 0.5;
+	int init_level = log(pow((L*l*M*m*N*n)/(256.0*256.0*64), 1.0/3.0))/log(2.0) + 0.4999;
+	init_level = MAX(init_level, 0);
+	mapview_paras.level_num = init_level + 1;
+	mapview_paras.level = init_level; // the initial level value, the thumbnail of the whole image
 
 	MapViewWidget * mapview_widget = new MapViewWidget(&callback, mapview_paras, 0);
 	mapview_widget->show();
