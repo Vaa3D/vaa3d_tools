@@ -7,17 +7,19 @@
  */
 
 // Adapted and upgraded to V3DPluginInterface2_1 by Jianlong Zhou, 2012-04-05
-// add dofunc() by Jianlong Zhou, 2012-04-12
+// add dofunc() by Jianlong Zhou, 2012-04-13
 
-
+#include <iostream>
+#include "stackutil.h"
 #include "montage_image_sections.h"
 #include "v3d_message.h"
 
+using namespace std;
 //Q_EXPORT_PLUGIN2 ( PluginName, ClassName )
 //The value of PluginName should correspond to the TARGET specified in the plugin's project file.
 Q_EXPORT_PLUGIN2(Montage, MONTAGEPlugin);
 
-bool do_computation(const V3DPluginArgList & input, V3DPluginArgList & output);
+bool do_computation(const V3DPluginArgList & input, V3DPluginArgList & output, int method_code);
 
 template <class T>
 void montage_image_sections (T *apsInput, T * aspOutput, V3DLONG iImageWidth, V3DLONG iImageHeight, V3DLONG iImageLayer,bool b_draw)
@@ -79,7 +81,7 @@ void montage_image_sections (T *apsInput, T * aspOutput, V3DLONG iImageWidth, V3
 	//v3d_msg("2");
 }
 template <class T>
-void montage_image_stack(T *apsInput, T * aspOutput, V3DLONG iImageWidth, V3DLONG iImageHeight, V3DLONG iImageLayer,V3DLONG column,V3DLONG row, V3DLONG slice,V3DLONG n)
+     void montage_image_stack(T *apsInput, T * aspOutput, V3DLONG iImageWidth, V3DLONG iImageHeight, V3DLONG iImageLayer,V3DLONG column,V3DLONG row, V3DLONG slice,V3DLONG n, V3DLONG r)
 {
 	V3DLONG i, j,k;
 	V3DLONG mCount = iImageHeight * iImageWidth;
@@ -100,8 +102,8 @@ void montage_image_stack(T *apsInput, T * aspOutput, V3DLONG iImageWidth, V3DLON
 	{
 		for (k=0; k<iImageWidth; k++)
 		{
-			 aspOutput[((j/row)*(n)+(k/column))*mCount1 + (j%row)*column + (k%column)] = apsInput[j*iImageWidth+k];
-
+               if(j/row < r) // check boundary by Jianlong Zhou
+                    aspOutput[((j/row)*(n)+(k/column))*mCount1 + (j%row)*column + (k%column)] = apsInput[j*iImageWidth+k];
 		}
 	}
 }
@@ -123,8 +125,9 @@ void MONTAGEPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callbac
 {
 	if (menu_name == tr("montage_image_sections"))
 	{
-    	do_computation(callback, parent,1 );
-    }else if (menu_name == tr("revert a montage image to a stack"))
+          do_computation(callback, parent,1 );
+     }
+     else if (menu_name == tr("revert a montage image to a stack"))
 	{
 		do_computation(callback, parent,2);
 
@@ -152,31 +155,281 @@ bool MONTAGEPlugin::dofunc(const QString &func_name, const V3DPluginArgList &inp
 {
      if (func_name == tr("mtg"))
 	{
-		return do_computation(input, output);
+		return do_computation(input, output, 1);
 	}
      else if (func_name == tr("rmtg"))
 	{
-		return do_computation(input, output);
+		return do_computation(input, output, 2);
 	}
 	else if(func_name == tr("help"))
 	{
-		cout<<"Usage : v3d -x montage -f mtg -i <inimg_file> -o <outimg_file> -p <wx> <wy> <wz> <ch> <filterflag>"<<endl;
+		cout<<"Usage : v3d -x montage -f mtg -i <inimg_file> -o <outimg_file> -p <b_draw> "<<endl;
+          cout<<"p_draw      whether to draw lines in the montage image, 0 for not, 1 for draw, default 1"<<endl;
+          cout<<"e.g. v3d -x montage -f mtg -i input.raw -o output.raw -p 1"<<endl;
 		cout<<endl;
-		cout<<"wx          filter window radius size (pixel #) in x direction, window size is 2*wx+1, default 3"<<endl;
-		cout<<"wy          filter window radius size (pixel #) in y direction, window size is 2*wy+1, default 3"<<endl;
-		cout<<"wz          filter window radius size (pixel #) in z direction, window size is 2*wz+1, default 3"<<endl;
-		cout<<"ch           the input channel value, default 1 and start from 1, default 1"<<endl;
-		cout<<"filterflag  filter method flag, 1: Max Filter, 2: min Filter, 3: Max-min Filter, 4: min-Max Filter, default 1"<<endl;
+
+          cout<<"Usage : v3d -x montage -f rmtg -i <inimg_file> -o <outimg_file> -p <b_draw> <c> <r> "<<endl;
+          cout<<"p_draw      whether to draw lines in the montage image, 0 for not, 1 for draw, default 1"<<endl;
+          cout<<"c           numbmer of column blocks, default 7"<<endl;
+          cout<<"r           numbmer of row blocks, default 7"<<endl;
+          cout<<"e.g. v3d -x montage -f mtg -i input.raw -o output.raw -p 1 7 7"<<endl;
 		cout<<endl;
-		cout<<"e.g. v3d -x montage -f mtg -i input.raw -o output.raw -p 3 3 3 1 1"<<endl;
-		cout<<endl;
+
 		return true;
 	}
 }
 
 
-bool do_computation(const V3DPluginArgList & input, V3DPluginArgList & output)
+bool do_computation(const V3DPluginArgList & input, V3DPluginArgList & output, int method_code)
 {
+     cout<<"Welcome to Montage image sections"<<endl;
+	if (output.size() != 1) return false;
+
+     int b_draw = 1; //Do you want to draw line?
+     V3DLONG c = 7,r = 7; // for method_code=2
+
+     if (input.size()>=2)
+     {
+          vector<char*> paras = (*(vector<char*> *)(input.at(1).p));
+          if(paras.size() >= 1) b_draw = atoi(paras.at(0));
+
+          if(method_code==2)
+          {
+               if(paras.size() >= 2) c = atoi(paras.at(1));
+               if(paras.size() >= 3) r = atoi(paras.at(2));
+          }
+     }
+	char * inimg_file = ((vector<char*> *)(input.at(0).p))->at(0);
+	char * outimg_file = ((vector<char*> *)(output.at(0).p))->at(0);
+
+     cout<<"b_draw = "<<b_draw<<endl;
+     if(method_code==2)
+     {
+          cout<<"c = "<<c<<endl;
+          cout<<"r = "<<r<<endl;
+     }
+	cout<<"inimg_file = "<<inimg_file<<endl;
+	cout<<"outimg_file = "<<outimg_file<<endl;
+
+	unsigned char * data1d = 0;
+	V3DLONG * in_sz = 0;
+
+	int datatype;
+	if(!loadImage(inimg_file, data1d, in_sz, datatype))
+     {
+          cerr<<"load image "<<inimg_file<<" error!"<<endl;
+          return false;
+     }
+
+     V3DLONG sz0 = in_sz[0];
+     V3DLONG sz1 = in_sz[1];
+     V3DLONG sz2 = in_sz[2];
+	V3DLONG sz3 = in_sz[3];
+	V3DLONG pagesz_sub = sz0*sz1*sz2;
+
+
+     //----------------------------------------------------------------------------------------------------------------------------------
+     V3DLONG h;
+	V3DLONG d;
+	V3DLONG channelsz,channelsz1;
+	V3DLONG column,row;
+	channelsz =channelsz1=column = row = 0;
+
+	if(method_code == 1)
+	{
+
+		column = (V3DLONG)(sqrt((double)sz2)+ 0.5);
+		V3DLONG remainder= sz2 - column*column;
+		if (remainder == 0)
+		{
+			row = column;
+			channelsz1 = (sz0)*(sz1)*sz2;
+		}else
+		{
+			row = column+1;
+			channelsz1 = (sz0)*(sz1)*column*row;
+		}
+		channelsz = sz0*sz1*sz2;
+		//  printf("column=%d,remainder=%d,row=%d sz3=%d\n",column,remainder,row,sz3);
+		void *pData=NULL;
+		V3DLONG sz_data[4]; sz_data[0]=sz0; sz_data[1]=sz1; sz_data[2]=sz2; sz_data[3]=1;
+		switch (datatype)
+		{
+			case 1:
+
+				try
+                    {
+                         pData = (void *)(new unsigned char [sz3*channelsz1]());
+                    }
+				catch (...)
+                    {
+                         v3d_msg("Fail to allocate memory in data combination.");
+                         if (pData) {delete []pData; pData=0;}
+                         return false;
+                    }
+
+                    {
+                         unsigned char * pSubtmp_uint8 = data1d; //pSub.begin();
+
+                         for (V3DLONG ich=0; ich<sz3; ich++)
+                              montage_image_sections(pSubtmp_uint8+ich*channelsz, (unsigned char *)pData+ich*channelsz1, sz0, sz1, sz2,b_draw);
+                    }
+				break;
+
+			case 2:
+				try
+                    {
+                         pData = (void *)(new unsigned short int [sz3*channelsz1]());
+                    }
+				catch (...)
+                    {
+                         v3d_msg("Fail to allocate memory in data combination.");
+                         if (pData) {delete []pData; pData=0;}
+                         return false;
+                    }
+
+                    {
+                         unsigned short int * pSubtmp_uint16 =(unsigned short int *)data1d; // (short int *)pSub.begin();
+
+                         for (V3DLONG ich=0; ich<sz3; ich++)
+                              montage_image_sections(pSubtmp_uint16+ich*channelsz, (unsigned short int *)pData+ich*channelsz1, sz0, sz1, sz2,b_draw );
+                    }
+				break;
+			case 4:
+
+				try
+                    {
+                         pData = (void *)(new float [sz3*channelsz1]());
+                    }
+				catch (...)
+                    {
+                         v3d_msg("Fail to allocate memory in data combination.");
+                         if (pData) {delete []pData; pData=0;}
+                         return false;
+                    }
+
+                    {
+                         float * pSubtmp_float32 = (float *)data1d; //(float *)pSub.begin();
+
+                         for (V3DLONG ich=0; ich<sz3; ich++)
+                              montage_image_sections(pSubtmp_float32+ich*channelsz, (float *)pData+ich*channelsz, sz0, sz1, sz2,b_draw );
+                    }
+
+				break;
+			default:
+				break;
+		}
+		int end_t = clock();
+
+
+          V3DLONG out_sz[4];
+          out_sz[0]=column*sz0, out_sz[1]=row*sz1, out_sz[2]=1, out_sz[3]=sz3;
+          saveImage(outimg_file, (unsigned char *)pData, out_sz, datatype);
+
+          if(pData) {delete []pData; pData =0;}
+
+	}else if (method_code ==2)
+	{
+		if (sz2 >1)
+		{
+			v3d_msg("The image must be a one slice.",0);
+			return false;
+		}
+
+          //	  column = floor(sz0/n);
+		//	  row = column;
+		column = floor((double)(sz0/c));
+		row = floor((double)(sz1/r));
+
+		//  V3DLONG scount = n*(n+1);
+		V3DLONG scount = r*c;
+		channelsz = sz0*sz1*sz2;
+		channelsz1 = c*r*column*row;
+		// channelsz1 = scount*column*row;
+		//  printf("column=%d,remainder=%d,row=%d sz3=%d\n",column,remainder,row,sz3);
+		void *pData=NULL;
+		V3DLONG sz_data[4]; sz_data[0]=sz0; sz_data[1]=sz1; sz_data[2]=sz2; sz_data[3]=1;
+		switch (datatype)
+		{
+			case 1:
+				try
+                    {
+                         pData = (void *)(new unsigned char [sz3*channelsz1]());
+                    }
+				catch (...)
+                    {
+                         v3d_msg("Fail to allocate memory in data combination.",0);
+                         if (pData) {delete []pData; pData=0;}
+                         return false;
+                    }
+
+                    {
+                         unsigned char * pSubtmp_uint8 = (unsigned char*)data1d; // pSub.begin();
+
+                         for (V3DLONG ich=0; ich<sz3; ich++)
+                         {
+                              montage_image_stack(pSubtmp_uint8+ich*channelsz, (unsigned char *)pData+ich*channelsz1, sz0, sz1, sz2, column, row, scount, c, r);
+                              cout<< "channelsz =" << channelsz  <<endl;
+                              cout<< "channelsz1 ="<< channelsz1 <<endl;
+                         }
+                    }
+				break;
+
+			case 2:
+				try
+                    {
+                         pData = (void *)(new unsigned short int [sz3*channelsz1]());
+                    }
+				catch (...)
+                    {
+                         v3d_msg("Fail to allocate memory in data combination.",0);
+                         if (pData) {delete []pData; pData=0;}
+                         return false;
+                    }
+
+                    {
+                         unsigned short int * pSubtmp_uint16 = (unsigned short int *)data1d; //(short int *)pSub.begin();
+
+                         for (V3DLONG ich=0; ich<sz3; ich++)
+                              montage_image_stack(pSubtmp_uint16+ich*channelsz, (unsigned short int *)pData+ich*channelsz1,  sz0, sz1, sz2,column,row,scount,c, r);
+                    }
+				break;
+			case 4:
+
+				try
+                    {
+                         pData = (void *)(new float [sz3*channelsz1]());
+                    }
+				catch (...)
+                    {
+                         v3d_msg("Fail to allocate memory in data combination.",0);
+                         if (pData) {delete []pData; pData=0;}
+                         return false;
+                    }
+
+                    {
+                         float * pSubtmp_float32 = (float *)data1d; //(float *)pSub.begin();
+
+                         for (V3DLONG ich=0; ich<sz3; ich++)
+                              montage_image_stack(pSubtmp_float32+ich*channelsz, (float *)pData+ich*channelsz, sz0, sz1, sz2,column,row,scount,c, r);
+                    }
+
+				break;
+			default:
+				break;
+		}
+		int end_t = clock();
+
+          V3DLONG out_sz[4];
+          out_sz[0]=column, out_sz[1]=row, out_sz[2]=scount, out_sz[3]=sz3;
+          saveImage(outimg_file, (unsigned char *)pData, out_sz, datatype);
+
+          if(pData) {delete []pData; pData =0;}
+	}
+
+     if(data1d) {delete []data1d; data1d=0;}
+     if(in_sz)  {delete []in_sz; in_sz=0;}
+
      return true;
 }
 
@@ -185,12 +438,8 @@ bool do_computation(const V3DPluginArgList & input, V3DPluginArgList & output)
 void do_computation(V3DPluginCallback2 &callback, QWidget *parent, int method_code)
 {
 	v3dhandle curwin = callback.currentImageWindow();
-	V3DLONG h;
-	V3DLONG d;
-	V3DLONG channelsz,channelsz1;
-	V3DLONG column,row;
-	channelsz =channelsz1=column = row = 0;
-	if (!curwin)
+
+     if (!curwin)
 	{
 		v3d_msg("You don't have any image open in the main window.");
 		return;
@@ -208,8 +457,8 @@ void do_computation(V3DPluginCallback2 &callback, QWidget *parent, int method_co
 	Image4DProxy<Image4DSimple> pSub(subject);
 
 	V3DLONG sz0 = subject->getXDim();
-    V3DLONG sz1 = subject->getYDim();
-    V3DLONG sz2 = subject->getZDim();
+     V3DLONG sz1 = subject->getYDim();
+     V3DLONG sz2 = subject->getZDim();
 	V3DLONG sz3 = subject->getCDim();
 	V3DLONG pagesz_sub = sz0*sz1*sz2;
 	bool b_draw;
@@ -222,6 +471,13 @@ void do_computation(V3DPluginCallback2 &callback, QWidget *parent, int method_co
 
 	}
 	//----------------------------------------------------------------------------------------------------------------------------------
+
+
+     V3DLONG h;
+	V3DLONG d;
+	V3DLONG channelsz,channelsz1;
+	V3DLONG column,row;
+	channelsz =channelsz1=column = row = 0;
 
 	if(method_code == 1)
 	{
@@ -372,7 +628,7 @@ void do_computation(V3DPluginCallback2 &callback, QWidget *parent, int method_co
 				unsigned char * pSubtmp_uint8 = pSub.begin();
 
 				for (V3DLONG ich=0; ich<sz3; ich++)
-					montage_image_stack(pSubtmp_uint8+ich*channelsz, (unsigned char *)pData+ich*channelsz1, sz0, sz1, sz2,column,row,scount,c);
+					montage_image_stack(pSubtmp_uint8+ich*channelsz, (unsigned char *)pData+ich*channelsz1, sz0, sz1, sz2,column,row,scount,c, r);
 			}
 				break;
 
@@ -389,10 +645,10 @@ void do_computation(V3DPluginCallback2 &callback, QWidget *parent, int method_co
 			}
 
 			{
-				short int * pSubtmp_uint16 = (short int *)pSub.begin();
+				unsigned short int * pSubtmp_uint16 = (unsigned short int *)pSub.begin();
 
 				for (V3DLONG ich=0; ich<sz3; ich++)
-					montage_image_stack(pSubtmp_uint16+ich*channelsz, (short int *)pData+ich*channelsz1,  sz0, sz1, sz2,column,row,scount,c);
+					montage_image_stack(pSubtmp_uint16+ich*channelsz, (unsigned short int *)pData+ich*channelsz1,  sz0, sz1, sz2,column,row,scount,c, r);
 			}
 				break;
 			case V3D_FLOAT32:
@@ -412,7 +668,7 @@ void do_computation(V3DPluginCallback2 &callback, QWidget *parent, int method_co
 				float * pSubtmp_float32 = (float *)pSub.begin();
 
 				for (V3DLONG ich=0; ich<sz3; ich++)
-					montage_image_stack(pSubtmp_float32+ich*channelsz, (float *)pData+ich*channelsz, sz0, sz1, sz2,column,row,scount,c);
+					montage_image_stack(pSubtmp_float32+ich*channelsz, (float *)pData+ich*channelsz, sz0, sz1, sz2,column,row,scount,c, r);
 			}
 
 				break;

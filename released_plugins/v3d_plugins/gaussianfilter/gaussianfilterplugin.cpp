@@ -148,15 +148,13 @@ bool processImage(const V3DPluginArgList & input, V3DPluginArgList & output)
                return false;
      }
 
-
      // save image
      in_sz[3]=1;
-
      saveImage(outimg_file, (unsigned char *)outimg, in_sz, 4);
 
      if(outimg) {delete []outimg; outimg =0;}
-     if (data1d) {delete []data1d; data1d=0;}
-     if (in_sz) {delete []in_sz; in_sz=0;}
+     if(data1d) {delete []data1d; data1d=0;}
+     if(in_sz)  {delete []in_sz; in_sz=0;}
 
      return true;
 }
