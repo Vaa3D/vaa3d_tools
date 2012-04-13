@@ -18,7 +18,7 @@ using namespace std;
 
 //Q_EXPORT_PLUGIN2 ( PluginName, ClassName )
 //The value of PluginName should correspond to the TARGET specified in the plugin's project file.
-Q_EXPORT_PLUGIN2(rescale_and_convert, RescaleConvertPlugin)
+Q_EXPORT_PLUGIN2(rescale, RescaleConvertPlugin)
 
 
 void processImage(V3DPluginCallback2 &callback, QWidget *parent, const QString & menu_name);

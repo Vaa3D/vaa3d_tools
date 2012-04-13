@@ -38,6 +38,6 @@ SOURCES += $$V3DMAINPATH/basic_c_fun/mg_utilities.cpp
 SOURCES += $$V3DMAINPATH/basic_c_fun/mg_image_lib.cpp
 SOURCES += $$V3DMAINPATH/basic_c_fun/stackutil.cpp
 
-TARGET        = $$qtLibraryTarget(rescale_and_convert)
-DESTDIR       = ../../v3d/plugins/data_type/intensity_rescale_and_convert
+TARGET        = $$qtLibraryTarget(rescale)
+DESTDIR       = ../../v3d/plugins/data_type/intensity_rescale
 
