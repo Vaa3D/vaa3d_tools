@@ -97,12 +97,12 @@ MapViewWidget::MapViewWidget(V3DPluginCallback2 * _callback, Mapview_Paras _para
 	layout->addWidget(threadCheckBox, 7, 0, 1, 14);
 
 	// setup connections
-	connect(cutLeftXSlider,    SIGNAL(valueChanged(int)), this, SLOT(onLeftXChanged()));
-	connect(cutLeftYSlider,    SIGNAL(valueChanged(int)), this, SLOT(onLeftYChanged()));
-	connect(cutLeftZSlider,    SIGNAL(valueChanged(int)), this, SLOT(onLeftZChanged()));
-	connect(cutRightXSlider,    SIGNAL(valueChanged(int)), this, SLOT(onRightXChanged()));
-	connect(cutRightYSlider,    SIGNAL(valueChanged(int)), this, SLOT(onRightYChanged()));
-	connect(cutRightZSlider,    SIGNAL(valueChanged(int)), this, SLOT(onRightZChanged()));
+	connect(cutLeftXSlider,    SIGNAL(valueChanged(int)), this, SLOT(onLeftXChanged(int)));
+	connect(cutLeftYSlider,    SIGNAL(valueChanged(int)), this, SLOT(onLeftYChanged(int)));
+	connect(cutLeftZSlider,    SIGNAL(valueChanged(int)), this, SLOT(onLeftZChanged(int)));
+	connect(cutRightXSlider,    SIGNAL(valueChanged(int)), this, SLOT(onRightXChanged(int)));
+	connect(cutRightYSlider,    SIGNAL(valueChanged(int)), this, SLOT(onRightYChanged(int)));
+	connect(cutRightZSlider,    SIGNAL(valueChanged(int)), this, SLOT(onRightZChanged(int)));
 	connect(zoomSlider, SIGNAL(valueChanged(int)), this, SLOT(onZoomChanged(int)));
 	connect(threadCheckBox, SIGNAL(toggled(bool)), this, SLOT(update()));
 
