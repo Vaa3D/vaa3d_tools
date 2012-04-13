@@ -9,12 +9,6 @@ using namespace std;
 MapViewWidget::MapViewWidget(V3DPluginCallback2 * _callback, Mapview_Paras _paras,  QWidget *parent) : QWidget(parent)
 {
 	callback = _callback; curwin = 0; paras = _paras;
-	V3DLONG L = paras.L;
-	V3DLONG M = paras.M;
-	V3DLONG N = paras.N;
-	V3DLONG l = paras.l;
-	V3DLONG m = paras.m;
-	V3DLONG n = paras.n;
 
 	setWindowTitle("Mapview Control");
 	/*setWindowFlags( Qt::Widget
@@ -26,19 +20,6 @@ MapViewWidget::MapViewWidget(V3DPluginCallback2 * _callback, Mapview_Paras _para
 	setFixedHeight(300);
 
 	QGridLayout *layout = new QGridLayout(this);
-
-	// get X Y Z size
-	V3DLONG ts0, ts1, ts2; // block nums
-	V3DLONG bs0, bs1, bs2; // block size
-	V3DLONG dimx, dimy, dimz;
-	mapview.setPara(paras.hraw_dir.toStdString(), paras.L, paras.M, paras.N, paras.l, paras.m, paras.n, paras.channel);
-	mapview.getBlockTillingSize(paras.level, ts0, ts1, ts2, bs0, bs1, bs2);
-	dimx = ts0*bs0; dimy = ts1*bs1; dimz = ts2*bs2;
-	cout<<"dimx = "<<dimx<<" dimy = "<<dimy<<" dimz = "<<dimz<<endl;
-	cout<<"outsz[0] = "<<paras.outsz[0]<<" outsz[1] = "<<paras.outsz[1]<<" outsz[2] = "<<paras.outsz[2]<<endl;
-
-	// zoom range
-	int dim_zoom= paras.level_num;
 
 	cutLeftXSlider = new QScrollBar(Qt::Horizontal);
 	cutLeftXSlider->setRange(0, 99); 
@@ -135,6 +116,10 @@ void MapViewWidget::updateTriView()
 	V3DLONG in_sz0 = ts0 * bs0;
 	V3DLONG in_sz1 = ts1 * bs1;
 	V3DLONG in_sz2 = ts2 * bs2;
+	cout<<"paras.level = "<<paras.level<<endl;
+	cout<<"in_sz0 = "<<in_sz0<<endl;
+	cout<<"in_sz1 = "<<in_sz1<<endl;
+	cout<<"in_sz2 = "<<in_sz2<<endl;
 	paras.origin[0] = leftx/99.0 * in_sz0;
 	paras.origin[1] = lefty/99.0 * in_sz1;
 	paras.origin[2] = leftz/99.0 * in_sz2;

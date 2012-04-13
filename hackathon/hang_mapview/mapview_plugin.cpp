@@ -128,6 +128,7 @@ int load_hraw_data(V3DPluginCallback2 &callback, QWidget *parent)
 	int init_level = log(pow((L*l*M*m*N*n)/(256.0*256.0*64), 1.0/3.0))/log(2.0) + 0.4999;
 	init_level = MAX(init_level, 0);
 	mapview_paras.level_num = init_level + 1;
+	cout<<"init_level = "<<init_level<<endl;
 	mapview_paras.level = init_level; // the initial level value, the thumbnail of the whole image
 
 	MapViewWidget * mapview_widget = new MapViewWidget(&callback, mapview_paras, 0);
