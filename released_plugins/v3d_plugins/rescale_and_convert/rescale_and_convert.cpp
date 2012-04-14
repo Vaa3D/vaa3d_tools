@@ -215,12 +215,12 @@ bool processImage(const V3DPluginArgList & input, V3DPluginArgList & output, boo
     if (b_convert2uint8)
     {
         void *tmpimg = (void *)data1d;
-        b_res = convert_data_to_8bit(tmpimg, in_sz, datatype);
+        if (!(b_res = convert_data_to_8bit(tmpimg, in_sz, datatype)))
+            goto Label_exit;
+        b_res = saveImage(outimg_file, (unsigned char *)data1d, in_sz, 1);
     }
-    if (!b_res) goto Label_exit;
-    
-    // save image
-    b_res = saveImage(outimg_file, (unsigned char *)data1d, in_sz, datatype); 
+    else
+        b_res = saveImage(outimg_file, (unsigned char *)data1d, in_sz, datatype); 
     
     //printf("b_res=[%s]\n", (b_res)?"true":"false");
 
