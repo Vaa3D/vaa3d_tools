@@ -217,8 +217,9 @@ bool processImage(const V3DPluginArgList & input, V3DPluginArgList & output, boo
         void *tmpimg = (void *)data1d;
         if (!(b_res = convert_data_to_8bit(tmpimg, in_sz, datatype)))
             goto Label_exit;
+        data1d = (unsigned char *)tmpimg;
         b_res = saveImage(outimg_file, (unsigned char *)data1d, in_sz, 1);
-    }
+    } 
     else
         b_res = saveImage(outimg_file, (unsigned char *)data1d, in_sz, datatype); 
     
