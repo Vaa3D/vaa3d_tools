@@ -8,7 +8,7 @@ class SelectPluginDlg : public QDialog
 	Q_OBJECT
 
 public:
-	SelectPluginDlg(QWidget * parent, V3DPluginCallback2  * _callback);
+	SelectPluginDlg(QWidget * parent, const V3DPluginCallback2 & _callback);
 	~SelectPluginDlg();
 	
 	QWidget * parent;

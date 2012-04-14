@@ -30,14 +30,9 @@ void NeuronToolboxPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &c
 		neuron_toolbox_func(callback, parent);
 	}
 	else if (menu_name == tr("help"))
-	{
-		help(callback,parent);
-	}
+		help(true);
 	else
-	{
-		v3d_msg(tr("This is a super plugin that gather all sub-plugins related to neuron structure processing. "
-			"Developed by Yinan Wan, 2012-04-06"));
-	}
+        help(true);
 }
 
 bool NeuronToolboxPlugin::dofunc(const QString & func_name, const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback,  QWidget * parent)
@@ -48,7 +43,9 @@ bool NeuronToolboxPlugin::dofunc(const QString & func_name, const V3DPluginArgLi
 	}
 	else if (func_name == tr("help"))
 	{
-		return help(input, output);
+		help(false);
 	}
+
+    return true;
 }
 

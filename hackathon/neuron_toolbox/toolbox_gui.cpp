@@ -73,11 +73,11 @@ static QStringList v3d_getInterfaceMenuList(QObject *plugin)
 	return qslist;
 }
 
-SelectPluginDlg::SelectPluginDlg(QWidget * parent, V3DPluginCallback2 * _callback)
+SelectPluginDlg::SelectPluginDlg(QWidget * parent, const V3DPluginCallback2 & _callback)
 	: QDialog(parent)
 {
 	parent = parent;
-	callback = _callback;
+	callback = (V3DPluginCallback2 *) (&(_callback));
 	
 	QVBoxLayout * layout = new QVBoxLayout;
 	
