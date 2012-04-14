@@ -22,7 +22,7 @@ Q_EXPORT_PLUGIN2(rescale, RescaleConvertPlugin)
 
 
 void processImage(V3DPluginCallback2 &callback, QWidget *parent, const QString & menu_name);
-bool processImage(const V3DPluginArgList & input, V3DPluginArgList & output);
+bool processImage(const V3DPluginArgList & input, V3DPluginArgList & output, bool b_convert2uint8);
 template <class T> bool rc(T* data1d, V3DLONG *sz, V3DLONG c, double apercent); 
 template <class T> bool scaleintensity(T *img, V3DLONG sz[4], V3DLONG channo, double lower_th, double higher_th, double target_min, double target_max);
 
@@ -126,6 +126,7 @@ QStringList RescaleConvertPlugin::funclist() const
 {
 	return QStringList()
     <<tr("rescale")
+    <<tr("rescale_and_convert_to_8bit")
     <<tr("help");
 }
 
@@ -133,11 +134,18 @@ bool RescaleConvertPlugin::dofunc(const QString &func_name, const V3DPluginArgLi
 {
     if (func_name == tr("rescale")) 
 	{
-		return processImage(input, output);
+        bool b_convert2uint8 = false;
+		return processImage(input, output, b_convert2uint8);
+	}
+    else if (func_name == tr("rescale_and_convert_to_8bit")) 
+	{
+        bool b_convert2uint8 = true;
+		return processImage(input, output, b_convert2uint8);
 	}
 	else if(func_name == tr("help"))
 	{
 		cout<<"Usage 1: vaa3d -x rescale_and_convert -f rescale -i <inimg_file> -o <outimg_file> -p <channel>"<<endl;
+		cout<<"Usage 2: vaa3d -x rescale_and_convert_to_8bit -f rescale -i <inimg_file> -o <outimg_file> -p <channel>"<<endl;
 		cout<<"channel                  the input channel value, default -1 (all channels) and start from 0 (first channel)"<<endl;
 		cout<<"This plugin is developed by Hanchuan Peng as a simple example for rescaling an image (1% saturation) and convert to 8bit data."<<endl;
 		cout<<endl;
@@ -145,7 +153,7 @@ bool RescaleConvertPlugin::dofunc(const QString &func_name, const V3DPluginArgLi
 	}
 }
 
-bool processImage(const V3DPluginArgList & input, V3DPluginArgList & output)
+bool processImage(const V3DPluginArgList & input, V3DPluginArgList & output, bool b_convert2uint8 = false)
 {
 	if(input.size() < 1 || output.size() != 1) 
         return false;
@@ -172,7 +180,6 @@ bool processImage(const V3DPluginArgList & input, V3DPluginArgList & output)
 	bool b_res=false;
     unsigned char * data1d = 0;
 	V3DLONG * in_sz = 0;
-    void* outimg = 0;
     V3DLONG cb, ce, k;
     
 	int datatype;
@@ -204,6 +211,13 @@ bool processImage(const V3DPluginArgList & input, V3DPluginArgList & output)
         
         if (!b_res) goto Label_exit;
     }
+    
+    if (b_convert2uint8)
+    {
+        void *tmpimg = (void *)data1d;
+        b_res = convert_data_to_8bit(tmpimg, in_sz, datatype);
+    }
+    if (!b_res) goto Label_exit;
     
     // save image
     b_res = saveImage(outimg_file, (unsigned char *)data1d, in_sz, datatype); 
