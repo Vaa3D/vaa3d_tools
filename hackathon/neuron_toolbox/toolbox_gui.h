@@ -9,7 +9,6 @@ class SelectPluginDlg : public QDialog
 
 public:
 	SelectPluginDlg(QWidget * parent, const V3DPluginCallback2 & _callback);
-	~SelectPluginDlg();
 	
 	QWidget * parent;
 	V3DPluginCallback2 * callback;

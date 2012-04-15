@@ -4,6 +4,7 @@ CONFIG	+= qt plugin warn_off
 #CONFIG	+= x86_64
 V3DMAINPATH = ../../v3d_main
 INCLUDEPATH	+= $$V3DMAINPATH/basic_c_fun
+INCLUDEPATH	+= $$V3DMAINPATH/plugin_loader
 
 HEADERS	+= neuron_toolbox_plugin.h
 HEADERS	+= neuron_toolbox_func.h
@@ -16,5 +17,5 @@ SOURCES	+= $$V3DMAINPATH/basic_c_fun/v3d_message.cpp
 
 TARGET	= $$qtLibraryTarget(neuron_toolbox)
 #DESTDIR	= $$VAA3DPATH/bin/plugins/neuron_toolbox/
-DESTDIR        = /Users/pengh/work/v3d_external/bin/plugins/neuron_toolbox/
+DESTDIR        = /Users/wany/Work/v3d_external/bin/plugins/neuron_toolbox/
 

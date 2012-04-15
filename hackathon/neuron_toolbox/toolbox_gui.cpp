@@ -198,12 +198,3 @@ bool SelectPluginDlg::runPlugin()
 
 	return true;
 }
-
-SelectPluginDlg::~SelectPluginDlg()
-{
-	if (pluginTreeWidget)
-	{
-		delete pluginTreeWidget;
-		pluginTreeWidget = 0;
-	}
-}
