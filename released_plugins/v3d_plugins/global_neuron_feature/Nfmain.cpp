@@ -2,7 +2,7 @@
 
 #include "Nfmain.h"
 #include "compute.h"
-
+#include "customary_structs/vaa3d_neurontoolbox_para.h"
 #include <vector>
 #include <math.h>
 #include <iostream>
@@ -73,10 +73,7 @@ void nf_main(V3DPluginCallback2 &callback, QWidget *parent)
 				";;Neuron structure	(*.swc)"
 				));
 	if(fileOpenName.isEmpty()) 
-	{
-		v3d_msg("You don't have any file open.");
 		return;
-	}
 	NeuronTree nt = readSWC_file(fileOpenName);
 	double * features = new double[FNUM];
 	computeFeature(nt,features);
@@ -209,4 +206,66 @@ void printFeature(double * features)
 		}
 		cout<<"\t"<<features[i]<<endl;
 	}
+}
+
+void nf_toolbox(const V3DPluginArgList & input)
+{
+	vaa3d_neurontoolbox_paras * paras = (vaa3d_neurontoolbox_paras *)(input.at(0).p);
+	NeuronTree nt = paras->nt;
+	QString fileOpenName = nt.file;
+	
+	double * features = new double[FNUM];
+	computeFeature(nt,features);
+	QMessageBox infoBox;
+	infoBox.setText("Global features of the neuron:");
+	infoBox.setInformativeText(QString("<pre><font size='4'>"
+				"number of nodes                  : %1<br>"
+				"soma surface                     : %2<br>"
+				"number of stems                  : %3<br>"
+				"number of bifurcations           : %4<br>"
+				"number of branches               : %5<br>"
+				"number of tips                   : %6<br>"
+				"overall width                    : %7<br>"
+				"overall height                   : %8<br>"
+				"overall depth                    : %9<br>"
+				"average diameter                 : %10<br>"
+				"total length                     : %11<br>"
+				"total surface                    : %12<br>"
+				"total volume                     : %13<br>"
+				"max euclidean distance           : %14<br>"
+				"max path distance                : %15<br>"
+				"max branch order                 : %16<br>"
+				"average contraction              : %17<br>"
+				"average fragmentation            : %18<br>"
+				"average parent-daughter ratio    : %19<br>"
+				"average bifurcation angle local  : %20<br>"
+				"average bifurcation angle remote : %21<br>"
+				"Hausdorff dimension              : %22</font></pre>")
+				.arg(features[0])
+				.arg(features[1])
+				.arg(features[2])
+				.arg(features[3])
+				.arg(features[4])
+				.arg(features[5])
+				.arg(features[6])
+				.arg(features[7])
+				.arg(features[8])
+				.arg(features[9])
+				.arg(features[10])
+				.arg(features[11])
+				.arg(features[12])
+				.arg(features[13])
+				.arg(features[14])
+				.arg(features[15])
+				.arg(features[16])
+				.arg(features[17])
+				.arg(features[18])
+				.arg(features[19])
+				.arg(features[20])
+				.arg(features[21]));
+	infoBox.exec();
+
+
+	if (features) {delete []features; features = NULL;}
+
 }
