@@ -141,10 +141,10 @@ SelectPluginDlg::SelectPluginDlg(QWidget * parent, const V3DPluginCallback2 & _c
 SelectPluginDlg::SelectPluginDlg(QWidget * parent, const V3DPluginCallback2 & _callback, const V3DPluginArgList & _input)
 	: QDialog(parent)
 {
-	input = (V3DPluginArgList *)(&_input);
-	const char* test_str2 = ((vaa3d_neurontoolbox_paras *)(_input.at(0).p))->nt.file.toStdString().c_str();
-	const char* test_str3 = ((vaa3d_neurontoolbox_paras *)(input->at(0).p))->nt.file.toStdString().c_str();
-	
+	input = new V3DPluginArgList;
+	*input = _input;
+	const char* test_str4 = ((vaa3d_neurontoolbox_paras *)(input->at(0).p))->nt.file.toStdString().c_str();
+
 	parent = parent;
 	callback = (V3DPluginCallback2 *) (&(_callback));
 	
@@ -284,15 +284,11 @@ bool SelectPluginDlg::runFunc()
 		return false;
 	}
 	QString plugin_name = pluginItem->text(0);
-
-	const QString plugin_name1 = "/Users/wany/Work/v3d_external/bin/plugins/neuron_utilities/sort_neuron_swc/libsort_neuron_swc_debug.dylib";
-	const QString menu_name1 = "TOOLBOXsort_swc";
-	cout<<"input: "<<(void *)input<<endl;
-	const char* test_str4 = ((vaa3d_neurontoolbox_paras *)(input->at(0).p))->nt.file.toStdString().c_str();
+	callback->callPluginFunc(plugin_name, "TOOLBOX" + menu_name, *input, output);	
+	
 	vaa3d_neurontoolbox_paras * paras = (vaa3d_neurontoolbox_paras *)(input->at(0).p);
-	v3d_msg(paras->nt.file);
-	cout<<"paras_toolbox: "<<(void *)paras<<endl;
-	callback->callPluginFunc(plugin_name1, menu_name1, *input, output);
-	//callback->callPluginFunc(plugin_name, "TOOLBOX" + menu_name, input, output);	
+	if (paras) {delete paras; paras=NULL;}
+	
+	accept();
 	return true;
 }
