@@ -9,8 +9,9 @@
 #include <QtGlobal>
 
 #include "swc_to_maskimage.h"
+#include "customary_structs/vaa3d_neurontoolbox_para.h"
 #include "v3d_message.h"
-#include "../../../v3d_main/basic_c_fun/basic_surf_objs.h"
+#include "basic_surf_objs.h"
 
 // lroundf() is gcc-specific --CMB
 #ifdef _MSC_VER
@@ -31,6 +32,15 @@ QStringList SWC_TO_MASKIMAGElugin::menulist() const
 	<<tr("multiple SWC_to_maskimage")
 	<<tr("maskimage filter")
 	<<tr("Help");
+}
+
+bool SWC_TO_MASKIMAGElugin::dofunc(const QString & func_name, const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback,  QWidget * parent)
+{
+	if (func_name==tr("TOOLBOXswc_to_maskimage"))
+	{
+		swc_to_maskimage_toolbox(input, callback, parent);
+	}
+	return true;
 }
 
 void SWC_TO_MASKIMAGElugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
@@ -840,4 +850,113 @@ void SetsizeDialog::update()
 
 
 
+}
+
+void swc_to_maskimage_toolbox(const V3DPluginArgList & input, V3DPluginCallback2 & callback, QWidget * parent)
+{
+	vaa3d_neurontoolbox_paras * paras = (vaa3d_neurontoolbox_paras *) (input.at(0).p);
+	NeuronTree neuron = paras->nt;
+
+	NeuronSWC * p_t = 0;
+	double x_min,x_max,y_min,y_max,z_min,z_max;
+	x_min=x_max=y_min=y_max=z_min=z_max=0;
+	V3DLONG sx,sy,sz;
+	unsigned char* pImMask = 0;
+	unsigned char* ImMark = 0;
+	V3DLONG h;
+	V3DLONG d;
+	V3DLONG nx,ny,nz;
+
+	bool b_subtractMinFromAllNonnegatives = false;
+	BoundNeuronCoordinates(neuron,
+			b_subtractMinFromAllNonnegatives,
+			x_min,
+			x_max,
+			y_min,
+			y_max,
+			z_min,
+			z_max);
+
+	for (V3DLONG ii=0; ii<neuron.listNeuron.size(); ii++)
+	{
+		p_t = (NeuronSWC *)(&(neuron.listNeuron.at(ii)));
+		p_t->x=(p_t->x < 0)?(p_t->x - x_min):p_t->x;
+		p_t->y=(p_t->y < 0)?(p_t->y - y_min):p_t->y;
+		p_t->z=(p_t->z < 0)?(p_t->z - z_min):p_t->z;
+
+		//v3d_msg(QString("x %1 y %2 z %3 r %4\n").arg(p_cur->x).arg(p_cur->y).arg(p_cur->z).arg(p_cur->r),0);
+	}
+	sx = (b_subtractMinFromAllNonnegatives || x_min<0) ? V3DLONG(ceil(x_max - x_min + 1)) : V3DLONG(ceil(x_max + 1));
+	sy = (b_subtractMinFromAllNonnegatives || y_min<0) ? V3DLONG(ceil(y_max - y_min + 1)) : V3DLONG(ceil(y_max + 1));
+	sz = (b_subtractMinFromAllNonnegatives || z_min<0) ? V3DLONG(ceil(z_max - z_min + 1)) : V3DLONG(ceil(z_max + 1));
+
+	V3DLONG stacksz = sx*sy*sz;
+	try
+	{
+		pImMask = new unsigned char [stacksz];
+		ImMark = new unsigned char [stacksz];
+	}
+	catch (...)
+	{
+		v3d_msg("Fail to allocate memory.\n");
+		return;
+	}
+
+	for (V3DLONG i=0; i<stacksz; i++)
+		pImMask[i] = ImMark[i] = 0;
+
+	ComputemaskImage(neuron, pImMask, ImMark, sx, sy, sz,1);
+
+	// compute coordinate region
+	Image4DSimple tmp;
+	if(QMessageBox::Yes == QMessageBox::question (0, "", QString("Do you want set the image size?"), QMessageBox::Yes, QMessageBox::No))
+	{
+		SetsizeDialog dialog(callback, parent);
+		dialog.coord_x->setValue(sx);
+		dialog.coord_y->setValue(sy);
+		dialog.coord_z->setValue(sz);
+		if (dialog.exec()!=QDialog::Accepted)
+			return;
+		else
+		{
+			nx = dialog.coord_x->text().toLong();
+			ny = dialog.coord_y->text().toLong();
+			nz = dialog.coord_z->text().toLong();
+			//printf("nx=%d ny=%d nz=%d\n ",nx,ny,nz);
+		}
+
+		unsigned char * pData = new unsigned char[nx*ny*nz];
+
+		for (V3DLONG ii=0; ii<nx*ny*nz; ii++)
+			pData[ii] = 0;
+
+		if(nx>=sx && ny>=sy && nz>=sz)
+		{
+			for (V3DLONG k1 = 0; k1 < sz; k1++)
+			{
+				for(V3DLONG j1 = 0; j1 < sy; j1++)
+				{
+					for(V3DLONG i1 = 0; i1 < sx; i1++)
+					{
+						pData[k1 * nx*ny + j1*nx + i1] = pImMask[k1*sx*sy + j1*sx +i1];
+
+					}
+				}
+			}
+			tmp.setData(pData, nx, ny, nz, 1, V3D_UINT8);
+		}
+		else
+		{
+			tmp.setData(pImMask, sx, sy, sz, 1, V3D_UINT8);
+		}
+	}
+	else
+	{
+		tmp.setData(pImMask, sx, sy, sz, 1, V3D_UINT8);
+	}
+
+	v3dhandle newwin = callback.newImageWindow();
+	callback.setImage(newwin, &tmp);
+	callback.setImageName(newwin, QString("Neuron_Mask_%1.tif").arg(neuron.file));
+	callback.updateImageWindow(newwin);
 }
