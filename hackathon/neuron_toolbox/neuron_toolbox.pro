@@ -4,7 +4,6 @@ CONFIG	+= qt plugin warn_off
 #CONFIG	+= x86_64
 V3DMAINPATH = ../../v3d_main
 INCLUDEPATH	+= $$V3DMAINPATH/basic_c_fun
-INCLUDEPATH	+= $$V3DMAINPATH/plugin_loader
 
 HEADERS	+= neuron_toolbox_plugin.h
 HEADERS	+= neuron_toolbox_func.h

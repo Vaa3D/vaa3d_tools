@@ -43,7 +43,7 @@ bool NeuronToolboxPlugin::dofunc(const QString & func_name, const V3DPluginArgLi
 
 	if (func_name == tr("neuron_toolbox"))
 	{
-		neuron_toolbox_func(callback, 0);
+		neuron_toolbox_func(callback, 0, input, output);
 	}
 	else if (func_name == tr("help"))
 	{

@@ -7,6 +7,9 @@
 #include "v3d_message.h"
 #include "neuron_toolbox_func.h"
 #include "toolbox_gui.h"
+#include "customary_structs/vaa3d_neurontoolbox_para.h"
+#include <iostream>
+using namespace std;
 
 const QString title = QObject::tr("Neuron Toolbox");
 
@@ -19,17 +22,18 @@ bool neuron_toolbox_func(V3DPluginCallback2 & callback, QWidget * parent)
 	return true;
 
 }
-/*
-bool neuron_toolbox_func(V3DPluginCallback2 & callback, QWidget * parent)
-{ 
-	V3DPluginArglist input;
-	if (!neuron_toolbox_func(input, callback, parent))
-	{
-		v3d_msg("Error in running neuron tool box");
-		return false;
-	}
+
+bool neuron_toolbox_func(V3DPluginCallback2 & callback, QWidget * parent, const V3DPluginArgList & input, V3DPluginArgList & output)
+{
+	const char* test_str1 = ((vaa3d_neurontoolbox_paras *)(input.at(0).p))->nt.file.toStdString().c_str();
+	SelectPluginDlg * selectDlg = new SelectPluginDlg(parent, callback, input);
+	selectDlg->setWindowTitle("Select plugin to run...");
+	selectDlg->show();
+//	const QString plugin_name = "/Users/wany/Work/v3d_external/bin/plugins/neuron_utilities/sort_neuron_swc/libsort_neuron_swc_debug.dylib";
+//	const QString menu_name = "TOOLBOXsort_swc";
+//	callback.callPluginFunc(plugin_name, menu_name, input, output);
 	return true;
-}*/
+}
 
 void help(bool b_useWin)
 {

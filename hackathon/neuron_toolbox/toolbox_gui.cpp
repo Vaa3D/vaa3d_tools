@@ -1,5 +1,6 @@
 #include "toolbox_gui.h"
 #include <iostream>
+#include "customary_structs/vaa3d_neurontoolbox_para.h"
 using namespace std;
 
 static QString toolboxRootPath = QObject::tr("/Users/xiaoh10/Applications/v3d/plugins");
@@ -137,7 +138,74 @@ SelectPluginDlg::SelectPluginDlg(QWidget * parent, const V3DPluginCallback2 & _c
 	setLayout(layout);
 }
 
-bool SelectPluginDlg::runPlugin()
+SelectPluginDlg::SelectPluginDlg(QWidget * parent, const V3DPluginCallback2 & _callback, const V3DPluginArgList & _input)
+	: QDialog(parent)
+{
+	input = (V3DPluginArgList *)(&_input);
+	const char* test_str2 = ((vaa3d_neurontoolbox_paras *)(_input.at(0).p))->nt.file.toStdString().c_str();
+	const char* test_str3 = ((vaa3d_neurontoolbox_paras *)(input->at(0).p))->nt.file.toStdString().c_str();
+	
+	parent = parent;
+	callback = (V3DPluginCallback2 *) (&(_callback));
+	
+	QVBoxLayout * layout = new QVBoxLayout;
+	
+	//tree widget GUI
+	pluginTreeWidget = new QTreeWidget();
+	pluginTreeWidget->setColumnCount(1);
+	pluginTreeWidget->header()->hide();
+	pluginTreeWidget->setSortingEnabled(true);
+
+	QStringList fileList;
+	if (!setPluginRootPathAutomaticly())
+		v3d_msg("You don't have any plugins on neuron utilities");
+	getAllFiles(toolboxRootPath, fileList);
+	root_path = toolboxRootPath;
+
+	foreach(QString file, fileList)
+	{
+		QPluginLoader* loader = new QPluginLoader(file);
+		if(!loader) 
+		{
+			cerr<<"unable to load plugin: "<<qPrintable(file)<<endl;
+			continue;
+		}
+
+		//pluginLoaderList.push_back(loader);
+
+		QObject * plugin = loader->instance();
+
+		if (plugin)
+		{
+			//lib - top level item
+			QTreeWidgetItem *pluginItem = new QTreeWidgetItem(pluginTreeWidget);
+			pluginItem->setText(0, file);
+			pluginTreeWidget->addTopLevelItem(pluginItem);
+
+			QStringList menulist = v3d_getInterfaceMenuList(plugin);
+			foreach(QString menu_name, menulist)
+			{
+				if (menu_name.toUpper()=="ABOUT" || menu_name.toUpper()=="HELP") continue;
+				//menu - second level item
+				QTreeWidgetItem * menuItem = new QTreeWidgetItem(pluginItem);
+				menuItem->setText(0, menu_name);
+			}
+		}
+		loader->unload();
+		delete loader;
+	}
+	layout->addWidget(pluginTreeWidget);
+
+	//run button
+	QPushButton * button = new QPushButton("run");
+	connect(button, SIGNAL(clicked()), this, SLOT(runFunc()));
+
+	layout->addWidget(button);
+
+	setLayout(layout);
+}
+
+bool SelectPluginDlg::runMenu()
 {
 	QTreeWidgetItem * menuItem = pluginTreeWidget->currentItem();
 	if (!menuItem)
@@ -196,5 +264,35 @@ bool SelectPluginDlg::runPlugin()
 	loader->unload();
 	delete loader;
 
+	return true;
+}
+
+bool SelectPluginDlg::runFunc()
+{
+	V3DPluginArgList output;
+	QTreeWidgetItem * menuItem = pluginTreeWidget->currentItem();
+	if (!menuItem)
+	{
+		v3d_msg("Please select an item to run");
+		return false;
+	}
+	QString menu_name = menuItem->text(0);
+	QTreeWidgetItem * pluginItem = menuItem->parent();
+	if (!pluginItem)
+	{
+		v3d_msg("Please select a menu name");
+		return false;
+	}
+	QString plugin_name = pluginItem->text(0);
+
+	const QString plugin_name1 = "/Users/wany/Work/v3d_external/bin/plugins/neuron_utilities/sort_neuron_swc/libsort_neuron_swc_debug.dylib";
+	const QString menu_name1 = "TOOLBOXsort_swc";
+	cout<<"input: "<<(void *)input<<endl;
+	const char* test_str4 = ((vaa3d_neurontoolbox_paras *)(input->at(0).p))->nt.file.toStdString().c_str();
+	vaa3d_neurontoolbox_paras * paras = (vaa3d_neurontoolbox_paras *)(input->at(0).p);
+	v3d_msg(paras->nt.file);
+	cout<<"paras_toolbox: "<<(void *)paras<<endl;
+	callback->callPluginFunc(plugin_name1, menu_name1, *input, output);
+	//callback->callPluginFunc(plugin_name, "TOOLBOX" + menu_name, input, output);	
 	return true;
 }

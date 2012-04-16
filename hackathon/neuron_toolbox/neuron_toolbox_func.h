@@ -9,6 +9,7 @@
 #include <v3d_interface.h>
 
 bool neuron_toolbox_func(V3DPluginCallback2 & callback, QWidget * parent);
+bool neuron_toolbox_func(V3DPluginCallback2 & callback, QWidget * parent, const V3DPluginArgList & input, V3DPluginArgList & output);
 void help(bool b_useWin);
 
 #endif
