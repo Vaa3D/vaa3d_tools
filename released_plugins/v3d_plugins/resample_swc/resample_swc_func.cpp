@@ -7,6 +7,7 @@
 #include "v3d_message.h"
 #include "resample_swc_func.h"
 #include "resampling.h"
+#include "customary_structs/vaa3d_neurontoolbox_para.h"
 #include <vector>
 #include <iostream>
 using namespace std;
@@ -121,4 +122,33 @@ bool resample_swc(const V3DPluginArgList & input, V3DPluginArgList & output)
 	}
 
 	return true;
+}
+
+bool resample_swc_toolbox(const V3DPluginArgList & input)
+{
+	vaa3d_neurontoolbox_paras * paras = (vaa3d_neurontoolbox_paras *)(input.at(0).p);
+	NeuronTree nt = paras->nt;
+	QString fileOpenName = nt.file;
+	
+	bool ok;
+	double step = QInputDialog::getDouble(0, "Please specify the resampling step length","Step length:",1,0,2147483647,0.1,&ok);
+	if (!ok)
+		return true;
+	
+	NeuronTree result = resample(nt,step);
+	QString fileDefaultName = fileOpenName+QString("_resampled.swc");
+	//write new SWC to file
+	QString fileSaveName = QFileDialog::getSaveFileName(0, QObject::tr("Save File"),
+			fileDefaultName,
+			QObject::tr("Supported file (*.swc)"
+				";;Neuron structure	(*.swc)"
+				));
+	if (!export_list2file(result.listNeuron,fileSaveName,fileOpenName))
+	{
+		v3d_msg("fail to write the output swc file.");
+		return false;
+	}
+
+	return true;
+
 }

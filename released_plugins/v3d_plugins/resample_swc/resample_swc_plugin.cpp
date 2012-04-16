@@ -43,6 +43,10 @@ bool ResamplePlugin::dofunc(const QString & func_name, const V3DPluginArgList & 
 	{
 		return resample_swc(input, output);
 	}
+	else if (func_name == tr("TOOLBOXresample"))
+	{
+		return resample_swc_toolbox(input);
+	}
 	if (func_name == tr("help"))
 	{
 		printf("\n\n(version 1.0) Resample points in a swc file subject to a fixed step length. Developed by Yinan Wan 2012-03-02\n");
