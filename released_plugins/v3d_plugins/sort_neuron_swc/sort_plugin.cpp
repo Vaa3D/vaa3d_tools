@@ -54,5 +54,9 @@ bool SORTPlugin::dofunc(const QString & func_name, const V3DPluginArgList & inpu
 	{
 		printHelp(input,output);
 	}
+	else if (func_name == tr("TOOLBOXsort_swc"))
+	{
+		sort_toolbox(input);
+	}
 }
 

@@ -9,6 +9,7 @@
 #include "v3d_message.h"
 #include "sort_func.h"
 #include "openSWCDialog.h"
+#include "customary_structs/vaa3d_neurontoolbox_para.h"
 #include <vector>
 #include <iostream>
 #include "sort_swc.h"
@@ -18,117 +19,10 @@ const QString title = QObject::tr("Sort SWC Plugin");
 
 void sort_menu(V3DPluginCallback2 &callback, QWidget *parent)
 {
-/*	v3dhandle curwin = callback.currentImageWindow();
-	QString fileOpenName = "SWC from current window";
-	V3DLONG rootid = VOID;
-	double thres = VOID;
-	bool read_file = false;
-	if (!curwin)
-	{
-		QMessageBox::StandardButton ok;
-		ok = QMessageBox::question(0, "Sort SWC", "No image is open. Do you want to read from file?", QMessageBox::No | QMessageBox::Yes, QMessageBox::No);
-		if (ok==QMessageBox::No)
-			return;
-		else
-			read_file = true;
-	}
-	else 
-	{
-		NeuronTree nt = callback.getSWC(curwin);
-		if (nt.listNeuron.size()==0)
-		{
-			QMessageBox::StandardButton ok;
-			ok = QMessageBox::question(0, "Sort SWC", "There is no SWC in the current window. Do you want to read from file?", QMessageBox::Yes | QMessageBox::No, QMessageBox::No);
-			if (ok==QMessageBox::No)
-				return;
-			else 
-				read_file = true;
-		}
-		else
-		{
-			neuron = nt.listNeuron;
-			bool ok;
-			rootid = QInputDialog::getInteger(parent, "Would you like to specify new root number?","New root number:(If you select 'cancel', the first root in file is set as default)",1,1,neuron.size(),1,&ok);
-			if (!ok)
-				rootid = VOID;
-			thres = QInputDialog::getDouble(parent, "Would you like to set a threshold for the newly generated link?","threshold:(If you select 'cancel', all the points will be connected automated; If you set '0', no new link will be generated)",0,0,2147483647,1,&ok);
-			if (!ok)
-				thres = VOID;
-		}
-	}
-
-	if(read_file)
-	{
-		fileOpenName = QFileDialog::getOpenFileName(0, QObject::tr("Open File"),
-				"",
-				QObject::tr("Supported file (*.swc *.ano)"
-					";;Neuron structure	(*.swc)"
-					";;Linker file (*.ano)"
-					));
-		if(fileOpenName.isEmpty()) 
-		{
-			v3d_msg("You don't have any file open.");
-			return;
-		}
-
-		if (fileOpenName.endsWith(".swc") || fileOpenName.endsWith(".SWC"))
-		{
-			neuron = readSWC_file(fileOpenName).listNeuron;
-			bool ok;
-			rootid = QInputDialog::getInteger(parent, "Would you like to specify new root number?","New root number:(If you select 'cancel', the first root in file is set as default)",1,1,neuron.size(),1,&ok);
-			if (!ok)
-				rootid = VOID;
-			thres = QInputDialog::getDouble(parent, "Would you like to set a threshold for the newly generated link?","threshold:(If you select 'cancel', all the points will be connected automated; If you set '0', no new link will be generated)",0,0,2147483647,1,&ok);
-			if (!ok)
-				thres = VOID;
-		}
-		else if (fileOpenName.endsWith(".ano") || fileOpenName.endsWith(".ANO"))
-		{
-			P_ObjectFileType linker_object;
-			if (!loadAnoFile(fileOpenName,linker_object))
-			{
-				v3d_msg("Error in reading the linker file.");
-				return;
-			}
-			QStringList nameList = linker_object.swc_file_list;
-			V3DLONG neuronNum = nameList.size();
-			vector<QList<NeuronSWC> > nt_list;
-			for (V3DLONG i=0;i<neuronNum;i++)
-			{
-				QList<NeuronSWC> tmp = readSWC_file(nameList.at(i)).listNeuron;
-				nt_list.push_back(tmp);
-			}
-			if (!combine_linker(nt_list, neuron))
-			{
-				v3d_msg("Error in combining neurons.");
-				return;
-			}
-			bool ok;
-			thres = QInputDialog::getDouble(parent, "Would you like to set a threshold for the newly generated link?","threshold:(If you select 'cancel', all the points will be connected automated; If you set '0', no new link will be generated)",0,0,2147483647,1,&ok);
-			if (!ok)
-				thres = VOID;
-		}
-		else {
-			v3d_msg("The file type you specified is not supported. Please check.");
-			return;
-		}
-	}
-	QList<NeuronSWC> result;
-	if (SortSWC(neuron, result ,rootid, thres))
-	{
-		QString fileDefaultName = fileOpenName+QString("_sorted.swc");
-		//write new SWC to file
-		QString fileSaveName = QFileDialog::getSaveFileName(0, QObject::tr("Save File"),
-				fileDefaultName,
-				QObject::tr("Supported file (*.swc)"
-					";;Neuron structure	(*.swc)"
-					));
-		if (!export_list2file(result,fileSaveName,fileOpenName))
-		{
-			v3d_msg("fail to write the output swc file.");
-			return;
-		}
-	}*/
+	cout<<"callback_sort: "<<(void*)&callback<<endl;
+	callback.getImageWindowList();
+	cout<<"image window list sort"<<endl;
+	
 	OpenSWCDialog * openDlg = new OpenSWCDialog(0, &callback);
 	if (!openDlg->exec())
 		return;
@@ -138,10 +32,10 @@ void sort_menu(V3DPluginCallback2 &callback, QWidget *parent)
 	V3DLONG rootid;
 	V3DLONG thres;
 	bool ok;
-	rootid = QInputDialog::getInteger(parent, "Would you like to specify new root number?","New root number:(If you select 'cancel', the first root in file is set as default)",1,1,neuron.size(),1,&ok);
+	rootid = QInputDialog::getInteger(0, "Would you like to specify new root number?","New root number:(If you select 'cancel', the first root in file is set as default)",1,1,neuron.size(),1,&ok);
 	if (!ok)
 		rootid = VOID;
-	thres = QInputDialog::getDouble(parent, "Would you like to set a threshold for the newly generated link?","threshold:(If you select 'cancel', all the points will be connected automated; If you set '0', no new link will be generated)",0,0,2147483647,1,&ok);
+	thres = QInputDialog::getDouble(0, "Would you like to set a threshold for the newly generated link?","threshold:(If you select 'cancel', all the points will be connected automated; If you set '0', no new link will be generated)",0,0,2147483647,1,&ok);
 	if (!ok)
 		thres = VOID;
 
@@ -167,6 +61,43 @@ void sort_menu(V3DPluginCallback2 &callback, QWidget *parent)
 	return;
 }
 
+void sort_toolbox(const V3DPluginArgList & input)
+{
+	vaa3d_neurontoolbox_paras * paras = (vaa3d_neurontoolbox_paras *)(input.at(0).p);
+	NeuronTree nt(paras->nt);
+	QList<NeuronSWC> neuron = nt.listNeuron;
+
+	V3DLONG rootid;
+	V3DLONG thres;
+	bool ok;
+	rootid = QInputDialog::getInteger(0, "Would you like to specify new root number?","New root number:(If you select 'cancel', the first root in file is set as default)",1,1,neuron.size(),1,&ok);
+	if (!ok)
+		rootid = VOID;
+	thres = QInputDialog::getDouble(0, "Would you like to set a threshold for the newly generated link?","threshold:(If you select 'cancel', all the points will be connected automated; If you set '0', no new link will be generated)",0,0,2147483647,1,&ok);
+	if (!ok)
+		thres = VOID;
+
+	QList<NeuronSWC> result;
+	QString fileOpenName = nt.file;
+	if (SortSWC(neuron, result ,rootid, thres))
+	{
+		QString fileDefaultName = fileOpenName+QString("_sorted.swc");
+		//write new SWC to file
+		QString fileSaveName = QFileDialog::getSaveFileName(0, QObject::tr("Save File"),
+				fileDefaultName,
+				QObject::tr("Supported file (*.swc)"
+					";;Neuron structure	(*.swc)"
+					));
+		if (fileSaveName.isEmpty())
+			return;
+		if (!export_list2file(result,fileSaveName,fileOpenName))
+		{
+			v3d_msg("fail to write the output swc file.");
+			return;
+		}
+	}
+	return;
+}
 
 bool sort_func(const V3DPluginArgList & input, V3DPluginArgList & output)
 {
