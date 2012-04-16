@@ -62,5 +62,17 @@ bool ESWCPlugin::dofunc(const QString & func_name, const V3DPluginArgList & inpu
 	{
 		return check_eswc_io(input,output);
 	}
+	else if (func_name == tr("TOOLBOXswc_to_eswc"))
+	{
+		swc2eswc_toolbox(input);
+	}
+	else if (func_name == tr("TOOLBOXeswc_to_swc"))
+	{
+		eswc2swc_toolbox(input);
+	}
+	else if (func_name == tr("TOOLBOXcheck_eswc_format"))
+	{
+		check_eswc_toolbox(input);
+	}
 }
 

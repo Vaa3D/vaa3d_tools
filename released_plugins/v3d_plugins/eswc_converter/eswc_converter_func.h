@@ -20,6 +20,10 @@ bool eswc2swc_io(const V3DPluginArgList & input, V3DPluginArgList & output);
 int check_eswc_io(V3DPluginCallback2 &callback, QWidget *parent);
 bool check_eswc_io(const V3DPluginArgList & input, V3DPluginArgList & output);
 
+int swc2eswc_toolbox(const V3DPluginArgList & input);
+int eswc2swc_toolbox(const V3DPluginArgList & input);
+int check_eswc_toolbox(const V3DPluginArgList & input);
+
 bool export_eswc(NeuronTree & input, vector<V3DLONG> seg_id, vector<V3DLONG> seg_layer, const char* infile_name, const char* outfile_name);
 bool export_swc(NeuronTree & neuron, const char* filename);
 #endif
