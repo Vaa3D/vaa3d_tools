@@ -20,6 +20,7 @@ public:
 public slots:
 	bool runMenu();
 	bool runFunc();
+	bool freeMem();
 };
 
 #endif

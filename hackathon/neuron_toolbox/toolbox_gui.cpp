@@ -20,6 +20,7 @@ bool setPluginRootPathAutomaticly()
 		testUpperPluginsDir.cdUp();
 		testUpperPluginsDir.cdUp(); // like foo/plugins next to foo/v3d.app
 		if (testUpperPluginsDir.cd("plugins")) testPluginsDir = testUpperPluginsDir;
+
 	}
 #endif
 	if (testPluginsDir.cd("neuron_utilities")==false)
@@ -77,6 +78,7 @@ static QStringList v3d_getInterfaceMenuList(QObject *plugin)
 SelectPluginDlg::SelectPluginDlg(QWidget * parent, const V3DPluginCallback2 & _callback)
 	: QDialog(parent)
 {
+	setMinimumWidth(1000);
 	parent = parent;
 	callback = (V3DPluginCallback2 *) (&(_callback));
 	
@@ -131,7 +133,7 @@ SelectPluginDlg::SelectPluginDlg(QWidget * parent, const V3DPluginCallback2 & _c
 
 	//run button
 	QPushButton * button = new QPushButton("run");
-	connect(button, SIGNAL(clicked()), this, SLOT(runPlugin()));
+	connect(button, SIGNAL(clicked()), this, SLOT(runMenu()));
 
 	layout->addWidget(button);
 
@@ -141,6 +143,7 @@ SelectPluginDlg::SelectPluginDlg(QWidget * parent, const V3DPluginCallback2 & _c
 SelectPluginDlg::SelectPluginDlg(QWidget * parent, const V3DPluginCallback2 & _callback, const V3DPluginArgList & _input)
 	: QDialog(parent)
 {
+	setMinimumWidth(1000);
 	input = new V3DPluginArgList;
 	*input = _input;
 	const char* test_str4 = ((vaa3d_neurontoolbox_paras *)(input->at(0).p))->nt.file.toStdString().c_str();
@@ -203,6 +206,8 @@ SelectPluginDlg::SelectPluginDlg(QWidget * parent, const V3DPluginCallback2 & _c
 	layout->addWidget(button);
 
 	setLayout(layout);
+
+	connect(this, SIGNAL(rejected()), this, SLOT(freeMem()));
 }
 
 bool SelectPluginDlg::runMenu()
@@ -286,9 +291,14 @@ bool SelectPluginDlg::runFunc()
 	QString plugin_name = pluginItem->text(0);
 	callback->callPluginFunc(plugin_name, "TOOLBOX" + menu_name, *input, output);	
 	
+	return true;
+}
+
+bool SelectPluginDlg::freeMem()
+{
 	vaa3d_neurontoolbox_paras * paras = (vaa3d_neurontoolbox_paras *)(input->at(0).p);
 	if (paras) {delete paras; paras=NULL;}
 	
 	accept();
-	return true;
 }
+
