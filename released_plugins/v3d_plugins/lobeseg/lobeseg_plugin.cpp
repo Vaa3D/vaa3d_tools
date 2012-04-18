@@ -2,15 +2,16 @@
  * This plugin sperate the two optic lobes (OLs) and the center brain (CB) of fluit fly brain. Or seperate just one lobe and the center brain with suitable parameters.
  * June 20, 2011 : by Hanchuan Peng and Hang Xiao
  * June 28, 2011 : by Hanchuan Peng: add the info of the paper, etc. Put in the v3d_released plugins folder
+ * April 18, 2012: by Jianlong Zhou, update the dofunc() interface
  */
- 
+
 #include "v3d_message.h"
 
 #include "lobeseg_plugin.h"
 #include "lobeseg_func.h"
- 
+
 Q_EXPORT_PLUGIN2(lobeseg, LobesegPlugin);
- 
+
 QStringList LobesegPlugin::menulist() const
 {
 	return QStringList()
@@ -23,7 +24,8 @@ QStringList LobesegPlugin::menulist() const
 QStringList LobesegPlugin::funclist() const
 {
 	return QStringList()
-		<<tr("lobeseg");
+		<<tr("lobeseg")
+          <<tr("help");
 }
 
 void LobesegPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
@@ -66,5 +68,10 @@ bool LobesegPlugin::dofunc(const QString & func_name, const V3DPluginArgList & i
 	{
 		return lobeseg(input, output);
 	}
+     else if (func_name == tr("help"))
+	{
+          printHelp();
+          return true;
+     }
 }
 

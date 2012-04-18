@@ -2,6 +2,7 @@
  * 2009-08-21: create this program by Yang Yu
  */
 // upgrade to V3DPluginInterface2_1 2012-04-06, by Jianlong Zhou
+// add dofunc() interface 2012-04-18, by Jianlong Zhou
 
 #ifndef __UPDATEPXLVAL_H__
 #define __UPDATEPXLVAL_H__
@@ -28,8 +29,8 @@ public:
      QStringList menulist() const;
 	void domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent);
 
-	QStringList funclist() const {return QStringList();}
-     bool dofunc(const QString &func_name, const V3DPluginArgList &input, V3DPluginArgList &output, V3DPluginCallback2 &callback, QWidget *parent){return true;}
+	QStringList funclist() const;
+     bool dofunc(const QString &func_name, const V3DPluginArgList &input, V3DPluginArgList &output, V3DPluginCallback2 &callback, QWidget *parent);
 
 };
 

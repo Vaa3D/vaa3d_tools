@@ -125,14 +125,6 @@ bool processImage(const V3DPluginArgList & input, V3DPluginArgList & output)
           return false;
      }
 
-     //    if (datatype != 1)
-     //    {
-     //        v3d_msg("Right now this plugin supports only UINT8 data. Do nothing.");
-     //        if (data1d) {delete []data1d; data1d=0;}
-     //        if (in_sz) {delete []in_sz; in_sz=0;}
-     //        return false;
-     //    }
-
 	//input
      float* outimg = 0;
 
@@ -177,13 +169,6 @@ void processImage(V3DPluginCallback2 &callback, QWidget *parent)
 		return;
 	}
 
-
-//    if (p4DImage->getDatatype() != V3D_UINT8)
-//    {
-//        v3d_msg("Right now this plugin supports only UINT8 data. Do nothing.");
-//        return;
-//    }
-//
 
      unsigned char* data1d = p4DImage->getRawData();
      V3DLONG pagesz = p4DImage->getTotalUnitNumberPerChannel();

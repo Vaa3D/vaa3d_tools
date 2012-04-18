@@ -28,11 +28,10 @@ HEADERS += $$V3DMAINPATH/basic_c_fun/mg_utilities.h
 HEADERS += $$V3DMAINPATH/basic_c_fun/mg_image_lib.h
 HEADERS += $$V3DMAINPATH/basic_c_fun/stackutil.h
 
-HEADERS       += gaussianfilterplugin.h
+HEADERS += gaussianfilterplugin.h
+SOURCES  = gaussianfilterplugin.cpp
 
-SOURCES       = gaussianfilterplugin.cpp
-
-SOURCES	+= $$V3DMAINPATH/basic_c_fun/v3d_message.cpp
+SOURCES += $$V3DMAINPATH/basic_c_fun/v3d_message.cpp
 SOURCES += $$V3DMAINPATH/basic_c_fun/basic_memory.cpp
 SOURCES += $$V3DMAINPATH/basic_c_fun/mg_utilities.cpp
 SOURCES += $$V3DMAINPATH/basic_c_fun/mg_image_lib.cpp
