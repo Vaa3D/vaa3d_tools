@@ -19,6 +19,9 @@ using namespace std;
 Q_EXPORT_PLUGIN2(updatepxlval, UpdatePxlValPlugin)
 
 void processImage(V3DPluginCallback2 &callback, QWidget *parent);
+bool processImage(const V3DPluginArgList & input, V3DPluginArgList & output);
+
+const QString title = QObject::tr("Change Pixel Value Plugin");
 
 QStringList UpdatePxlValPlugin::menulist() const
 {
@@ -60,15 +63,15 @@ bool UpdatePxlValPlugin::dofunc(const QString &func_name, const V3DPluginArgList
 	}
 	else if(func_name == tr("help"))
 	{
-		cout<<"Usage : v3d -x updatepxlval -f upv -i <inimg_file> -o <outimg_file> -p <nx> <ny> <nz> <channel> <sigma>"<<endl;
+		cout<<"Usage : v3d -x updatepxlval -f upv -i <inimg_file> -o <outimg_file> -p <nx> <ny> <nz> <chval1> [<chval2> ...] "<<endl;
 		cout<<endl;
-		cout<<"wx          filter window size (pixel #) in x direction, default 7 and maximum image xsize-1"<<endl;
-		cout<<"wy          filter window size (pixel #) in y direction, default 7 and maximum image ysize-1"<<endl;
-		cout<<"wz          filter window size (pixel #) in z direction, default 3 and maximum image zsize-1"<<endl;
-		cout<<"channel                  the input channel value, default 1 and start from 1"<<endl;
-		cout<<"sigma       filter sigma, default 1.0"<<endl;
-		cout<<endl;
-		cout<<"e.g. v3d -x updatepxlval -f upv -i input.raw -o output.raw -p 3 3 3 1 1.0"<<endl;
+		cout<<"nx          pixel position to be changed in x direction, default 0"<<endl;
+		cout<<"ny          pixel position to be changed in y direction, default 0"<<endl;
+		cout<<"nz          pixel position to be changed in z direction, default 0"<<endl;
+		cout<<"chval1      the pixel value to be set on channel 1, default 0. "<<endl;
+          cout<<"            chval number should be same as the channel number. Otherwise the left channel value will be set to 0."<<endl;
+          cout<<endl;
+		cout<<"e.g. v3d -x updatepxlval -f upv -i input.raw -o output.raw -p 1 2 3 0"<<endl;
 		cout<<endl;
 		return true;
 	}
@@ -80,8 +83,7 @@ bool processImage(const V3DPluginArgList & input, V3DPluginArgList & output)
 	if (output.size() != 1) return false;
 
      V3DLONG nx = 0, ny = 0, nz = 0;
-     int ch_val = 0;
-     vector<char*> paras=0;
+     vector<char*> paras;
      if (input.size()>=2)
      {
           paras = (*(vector<char*> *)(input.at(1).p));
@@ -134,25 +136,17 @@ bool processImage(const V3DPluginArgList & input, V3DPluginArgList & output)
      else
      {
           // use set value and left be set as defult value 0
-          // for(int i=0; i<sc; i++)
-          // {
-          //      if(i<val_num-1)
-          //           nvval[i]=atoi(paras.at(i+3));
-          //      else if(val_num == 0)
-          //           ncval[i] = 0;
-          // }
+          for(int i=0; i<sc; i++)
+          {
+               if(i<val_num)
+                    ncval[i]=atoi(paras.at(i+3));
+               else
+                    ncval[i] = 0;
+          }
      }
 
 
      // ============================================
-
-     //get the data
-
-
-
-     nx = d.coord_x->text().toLong()-1;
-     ny = d.coord_y->text().toLong()-1;
-     nz = d.coord_z->text().toLong()-1;
 
      //change the pixel value
      for(V3DLONG c=0; c<sc; c++)
