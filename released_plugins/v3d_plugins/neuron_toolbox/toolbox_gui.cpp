@@ -78,7 +78,7 @@ static QStringList v3d_getInterfaceMenuList(QObject *plugin)
 SelectPluginDlg::SelectPluginDlg(QWidget * parent, const V3DPluginCallback2 & _callback)
 	: QDialog(parent)
 {
-	setMinimumWidth(1000);
+	setMinimumWidth(500);
 	parent = parent;
 	callback = (V3DPluginCallback2 *) (&(_callback));
 	
@@ -90,7 +90,6 @@ SelectPluginDlg::SelectPluginDlg(QWidget * parent, const V3DPluginCallback2 & _c
 	pluginTreeWidget->header()->hide();
 	pluginTreeWidget->setSortingEnabled(true);
 
-	QStringList fileList;
 	if (!setPluginRootPathAutomaticly())
 		v3d_msg("You don't have any plugins on neuron utilities");
 	getAllFiles(toolboxRootPath, fileList);
@@ -105,17 +104,14 @@ SelectPluginDlg::SelectPluginDlg(QWidget * parent, const V3DPluginCallback2 & _c
 			continue;
 		}
 
-		//pluginLoaderList.push_back(loader);
-
 		QObject * plugin = loader->instance();
 
 		if (plugin)
 		{
 			//lib - top level item
 			QTreeWidgetItem *pluginItem = new QTreeWidgetItem(pluginTreeWidget);
-			//QString pluginPath = file;
-			//pluginItem->setText(0, pluginPath.replace(0,toolboxRootPath.size(),tr("")));
-			pluginItem->setText(0, file);
+			QString tmp = file.remove(0, root_path.size()+1);
+			pluginItem->setText(0, tmp);
 			pluginTreeWidget->addTopLevelItem(pluginItem);
 
 			QStringList menulist = v3d_getInterfaceMenuList(plugin);
@@ -143,7 +139,7 @@ SelectPluginDlg::SelectPluginDlg(QWidget * parent, const V3DPluginCallback2 & _c
 SelectPluginDlg::SelectPluginDlg(QWidget * parent, const V3DPluginCallback2 & _callback, const V3DPluginArgList & _input)
 	: QDialog(parent)
 {
-	setMinimumWidth(1000);
+	setMinimumWidth(500);
 	input = new V3DPluginArgList;
 	*input = _input;
 	const char* test_str4 = ((vaa3d_neurontoolbox_paras *)(input->at(0).p))->nt.file.toStdString().c_str();
@@ -159,7 +155,6 @@ SelectPluginDlg::SelectPluginDlg(QWidget * parent, const V3DPluginCallback2 & _c
 	pluginTreeWidget->header()->hide();
 	pluginTreeWidget->setSortingEnabled(true);
 
-	QStringList fileList;
 	if (!setPluginRootPathAutomaticly())
 		v3d_msg("You don't have any plugins on neuron utilities");
 	getAllFiles(toolboxRootPath, fileList);
@@ -182,8 +177,10 @@ SelectPluginDlg::SelectPluginDlg(QWidget * parent, const V3DPluginCallback2 & _c
 		{
 			//lib - top level item
 			QTreeWidgetItem *pluginItem = new QTreeWidgetItem(pluginTreeWidget);
-			pluginItem->setText(0, file);
-			pluginTreeWidget->addTopLevelItem(pluginItem);
+			QString tmp = file.remove(0, root_path.size()+1);
+			pluginItem->setText(0, tmp);
+			//pluginItem->setText(0, file);
+			//pluginTreeWidget->addTopLevelItem(pluginItem);
 
 			QStringList menulist = v3d_getInterfaceMenuList(plugin);
 			foreach(QString menu_name, menulist)
@@ -225,8 +222,7 @@ bool SelectPluginDlg::runMenu()
 		v3d_msg("Please select a menu name");
 		return false;
 	}
-	QString plugin_name = pluginItem->text(0);
-//	QString plugin_path = root_path + plugin_name;
+	QString plugin_name = root_path + "/" + pluginItem->text(0);
 
 	QPluginLoader* loader = new QPluginLoader(plugin_name);
 	cout<<"plugin_file = "<<plugin_name.toStdString()<<endl;
@@ -288,7 +284,7 @@ bool SelectPluginDlg::runFunc()
 		v3d_msg("Please select a menu name");
 		return false;
 	}
-	QString plugin_name = pluginItem->text(0);
+	QString plugin_name = root_path + "/" + pluginItem->text(0);
 	callback->callPluginFunc(plugin_name, "TOOLBOX" + menu_name, *input, output);	
 	
 	return true;
