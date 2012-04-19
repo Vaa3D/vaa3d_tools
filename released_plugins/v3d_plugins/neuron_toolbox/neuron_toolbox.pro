@@ -15,5 +15,5 @@ SOURCES	+= toolbox_gui.cpp
 SOURCES	+= $$V3DMAINPATH/basic_c_fun/v3d_message.cpp
 
 TARGET	= $$qtLibraryTarget(neuron_toolbox)
-DESTDIR        = ../../v3d/neuron_toolbox/
+DESTDIR        = ../../v3d/plugins/neuron_toolbox/
 
