@@ -53,7 +53,7 @@ bool ResamplePlugin::dofunc(const QString & func_name, const V3DPluginArgList & 
 		printf("usage:\n");
 		printf("\t-f <function_name>:     resample_swc\n");
 		printf("\t-i <input_file_name>:   input .swc\n");
-		printf("\t-o <output_file_name>:  (not required) resampled swc file. DEFAUTL: 'inputName_resampled.swc'\n");
+		printf("\t-o <output_file_name>:  (not required) resampled swc file. DEFAULT: 'inputName_resampled.swc'\n");
 		printf("\t-p <step_length>:       step length for resampling.\n");
 		printf("Demo: v3d -x resample_swc -f resample_swc -i test.swc -o test_resampled.swc -p 1\n\n");
 	}
