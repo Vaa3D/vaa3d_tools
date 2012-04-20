@@ -76,7 +76,7 @@ bool GaussianFilterPlugin::dofunc(const QString &func_name, const V3DPluginArgLi
 		cout<<"wx          filter window size (pixel #) in x direction, default 7 and maximum image xsize-1"<<endl;
 		cout<<"wy          filter window size (pixel #) in y direction, default 7 and maximum image ysize-1"<<endl;
 		cout<<"wz          filter window size (pixel #) in z direction, default 3 and maximum image zsize-1"<<endl;
-		cout<<"channel                  the input channel value, default 1 and start from 1"<<endl;
+		cout<<"channel     the input channel value, default 1 and start from 1"<<endl;
 		cout<<"sigma       filter sigma, default 1.0"<<endl;
 		cout<<endl;
 		cout<<"e.g. v3d -x gaussian -f gf -i input.raw -o output.raw -p 3 3 3 1 1.0"<<endl;
