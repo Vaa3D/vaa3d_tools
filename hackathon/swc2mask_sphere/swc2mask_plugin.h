@@ -6,11 +6,22 @@
 
 #include <QtGui>
 #include <v3d_interface.h>
+#include "stackutil.h"
 #include "src/swc2mask.h"
+#include "swc_convert.h"
+#include "customary_structs/vaa3d_neurontoolbox_para.h"
+//#include "vaa3d_neurontoolbox_para.h"
 
 using namespace std;
 
-
+static string basename(string para)
+{
+	int pos1 = para.find_last_of("/");
+	int pos2 = para.find_last_of(".");
+	if(pos1 == string::npos) pos1 = -1;
+	if(pos2 == string::npos) pos2 = para.size();
+	return para.substr(pos1+1, pos2 - pos1 -1);
+}
 class SWC2MaskPlugin : public QObject, public V3DPluginInterface2_1
 {
 	Q_OBJECT
@@ -105,7 +116,80 @@ public:
 				sz2 = atoi(paras[2]);
 			}
 			cout<<"size : "<<sz0<<"x"<<sz1<<"x"<<sz2<<endl;
-			return raw_split(, prefix, bs0, bs1, bs2);
+			
+			unsigned char * outimg1d = 0;
+			if(!swc2mask(outimg1d, inswc, sz0, sz1, sz2)) return false;
+			V3DLONG out_sz[4] = {sz0, sz1, sz2, 1};
+			if(!saveImage(outimg_file.c_str(), outimg1d, out_sz, V3D_UINT8))
+			{
+				cerr<<"Unable to save image to file "<<outimg_file<<endl; 
+				return false;
+			}
+			return true;
+		}
+		else if(func_name == "TOOLBOXswc2mask")
+		{
+			vaa3d_neurontoolbox_paras * toolbox_paras = (vaa3d_neurontoolbox_paras *)input.at(0).p;
+			NeuronTree nt = toolbox_paras->nt;
+			vector<MyMarker*> inswc = swc_convert(nt);
+
+			string outimg_file = basename(nt.file.toStdString())+"_out.raw";
+			cout<<"outimg_file = "<<outimg_file<<endl;
+
+			V3DLONG sz0 = 0, sz1 = 0, sz2 = 0;
+			v3dhandle curwin = callback.currentImageWindow();
+			if(curwin == 0)
+			{
+				MyMarker * marker = inswc[0];
+				V3DLONG x = marker->x + 0.5;
+				V3DLONG y = marker->y + 0.5;
+				V3DLONG z = marker->z + 0.5;
+				V3DLONG mx = x, my = y, mz = z, Mx = x, My = y, Mz = z;
+				for(int i = 1; i < inswc.size(); i++)
+				{
+					marker = inswc[i];
+					x = marker->x + 0.5;
+					y = marker->y + 0.5;
+					z = marker->z + 0.5;
+					mx = MIN(x, mx);
+					my = MIN(y, my);
+					mz = MIN(z, mz);
+					Mx = MAX(x, Mx);
+					My = MAX(y, My);
+					Mz = MAX(z, Mz);
+				}
+				sz0 = Mx - mx + 1;
+				sz1 = My - my + 1;
+				sz2 = Mz - mz + 1;
+				for(int i = 0; i < inswc.size(); i++)
+				{
+					marker = inswc[i];
+					x = marker->x + 0.5;
+					y = marker->y + 0.5;
+					z = marker->z + 0.5;
+					marker->x = x - mx;
+					marker->y = y - my;
+					marker->z = z - mz;
+				}
+			}
+			else
+			{
+				Image4DSimple * p4dImage = callback.getImage(curwin);
+				sz0 = p4dImage->getXDim();
+				sz1 = p4dImage->getYDim();
+				sz2 = p4dImage->getZDim();
+			}
+			cout<<"size : "<<sz0<<"x"<<sz1<<"x"<<sz2<<endl;
+			
+			unsigned char * outimg1d = 0;
+			if(!swc2mask(outimg1d, inswc, sz0, sz1, sz2)) return false;
+			V3DLONG out_sz[4] = {sz0, sz1, sz2, 1};
+			if(!saveImage(outimg_file.c_str(), outimg1d, out_sz, V3D_UINT8))
+			{
+				cerr<<"Unable to save image to file "<<outimg_file<<endl; 
+				return false;
+			}
+			return true;
 		}
 		else if(func_name == "help")
 		{
