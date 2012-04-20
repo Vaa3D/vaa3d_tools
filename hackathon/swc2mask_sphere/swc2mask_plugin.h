@@ -9,6 +9,8 @@
 #include "stackutil.h"
 #include "src/swc2mask.h"
 #include "swc_convert.h"
+#include "my_surf_objs.h"
+#include "basic_surf_objs.h"
 #include "customary_structs/vaa3d_neurontoolbox_para.h"
 //#include "vaa3d_neurontoolbox_para.h"
 
@@ -82,6 +84,7 @@ public:
 				V3DLONG y = marker->y + 0.5;
 				V3DLONG z = marker->z + 0.5;
 				V3DLONG mx = x, my = y, mz = z, Mx = x, My = y, Mz = z;
+				V3DLONG margin = 0;
 				for(int i = 1; i < inswc.size(); i++)
 				{
 					marker = inswc[i];
@@ -94,7 +97,15 @@ public:
 					Mx = MAX(x, Mx);
 					My = MAX(y, My);
 					Mz = MAX(z, Mz);
+					margin = MAX(margin, (V3DLONG)(marker->radius+0.5));
 				}
+				mx -= margin;
+				my -= margin;
+				mz -= margin;
+				Mx += margin;
+				My += margin;
+				Mz += margin;
+
 				sz0 = Mx - mx + 1;
 				sz1 = My - my + 1;
 				sz2 = Mz - mz + 1;
@@ -192,20 +203,15 @@ public:
 			
 			unsigned char * outimg1d = 0;
 			if(!swc2mask(outimg1d, inswc, sz0, sz1, sz2)) return false;
-			/*V3DLONG out_sz[4] = {sz0, sz1, sz2, 1};
-			if(!saveImage(outimg_file.c_str(), outimg1d, out_sz, V3D_UINT8))
-			{
-				cerr<<"Unable to save image to file "<<outimg_file<<endl; 
-				return false;
-			}*/
+			
 			v3dhandle newwin = callback.newImageWindow();
 			Image4DSimple * new4dImage = new Image4DSimple();
 			//NeuronTree new_nt = swc_convert(inswc);
 			new4dImage->setData(outimg1d, sz0, sz1, sz2, 1, V3D_UINT8);
-			//callback.setSWC(newwin, new_nt);
 			callback.setImage(newwin, new4dImage);
 			callback.updateImageWindow(newwin);
 			callback.open3DWindow(newwin);
+			//callback.setSWC(newwin, new_nt);
 			return true;
 		}
 		else if(func_name == "help")
