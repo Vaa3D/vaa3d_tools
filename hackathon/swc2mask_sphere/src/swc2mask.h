@@ -72,7 +72,7 @@ bool getMarkersBetween(vector<MyMarker> &allmarkers, MyMarker m1, MyMarker m2)
     return true;
 } 
 
-template<class T> bool swc2mask(T * inimg1d, T * &outimg1d, vector<MyMarker * > & inswc, long sz0, long sz1, long sz2)
+template<class T> bool swc2mask(T * &outimg1d, vector<MyMarker * > & inswc, long sz0, long sz1, long sz2)
 {
 	long tol_sz = sz0 * sz1 * sz2;
 	long sz01 = sz0 * sz1;
