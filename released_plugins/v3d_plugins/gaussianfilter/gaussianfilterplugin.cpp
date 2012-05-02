@@ -125,6 +125,12 @@ bool processImage(const V3DPluginArgList & input, V3DPluginArgList & output)
           return false;
      }
 
+     if(c > in_sz[3])// check the input channel number range
+     {
+          v3d_msg("The input channel number is out of real channel range.\n", 0 );
+          return false;
+     }
+
 	//input
      float* outimg = 0;
 
