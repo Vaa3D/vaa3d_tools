@@ -566,26 +566,6 @@ template <class T> void gaussian_filter(T* data1d,
      }
 
     outimg = pImage;
-//    new float [N*M*P];
-//     //rescaling for display
-//     float dist = max_val - min_val;
-//     for(V3DLONG k=0; k<P; k++)
-//     {
-//          V3DLONG offsetk = k*M*N;
-//          for(V3DLONG j=0; j<M; j++)
-//          {
-//               V3DLONG offsetj = j*N;
-//               for(V3DLONG i=0; i<N; i++)
-//               {
-//                    V3DLONG indLoop = offsetk + offsetj + i;
-//                    //data1d[offset_init + indLoop] = 255*(pImage[indLoop]-min_val)/(dist);
-//                    outimg[indLoop] = (unsigned char) 255*(pImage[indLoop]-min_val)/(dist);
-//               }
-//          }
-//     }
-//
-//     //de-alloc
-//     if (pImage) {delete []pImage; pImage=0;}
 
     return;
 }
