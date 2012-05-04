@@ -26,4 +26,4 @@ SOURCES	+= $$VAA3D_DIR/basic_c_fun/mg_image_lib.cpp
 SOURCES	+= $$VAA3D_DIR/basic_c_fun/mg_utilities.cpp
 
 TARGET	= $$qtLibraryTarget(swc2mask)
-DESTDIR	= ../../v3d/plugins/neuron_utilities/swc_to_maskimg_cylinder_unit/
+DESTDIR	= ../../v4d/plugins/neuron_utilities/swc_to_maskimage_cylinder_unit/
