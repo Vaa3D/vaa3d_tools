@@ -26,5 +26,7 @@ int check_eswc_toolbox(const V3DPluginArgList & input);
 
 bool export_eswc(NeuronTree & input, vector<V3DLONG> seg_id, vector<V3DLONG> seg_layer, const char* infile_name, const char* outfile_name);
 bool export_swc(NeuronTree & neuron, const char* filename);
+
+void printHelp();
 #endif
 

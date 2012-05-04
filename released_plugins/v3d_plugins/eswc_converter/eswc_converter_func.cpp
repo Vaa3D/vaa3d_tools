@@ -18,7 +18,6 @@ int swc2eswc_io(V3DPluginCallback2 &callback, QWidget *parent)
 				));
 	if(fileOpenName.isEmpty()) 
 	{
-		v3d_msg("You don't have any file open.");
 		return -1;
 	}
 	
@@ -59,6 +58,58 @@ int swc2eswc_io(V3DPluginCallback2 &callback, QWidget *parent)
 bool swc2eswc_io(const V3DPluginArgList & input, V3DPluginArgList & output)
 {
 	cout<<"Welcome to swc2eswc_io"<<endl;
+	
+	vector<char*>* inlist = (vector<char*>*)(input.at(0).p);
+	vector<char*>* outlist = NULL;
+
+	if(input.size() != 1) 
+	{
+		printf("Please specify both input file name.\n");
+		return false;
+	}
+
+	QString fileOpenName = QString(inlist->at(0));
+	QString fileSaveName;
+	QString tmp = fileOpenName;
+	if (output.size()==0)
+	{
+		printf("No outputfile specified.\n");
+		tmp.chop(3);
+		fileSaveName = tmp + "eswc";
+	}
+	else if (output.size()==1)
+	{
+		outlist = (vector<char*>*)(output.at(0).p);
+		fileSaveName = QString(outlist->at(0));
+	}
+	else
+	{
+		printf("You have specified more than 1 output file.\n");
+		return false;
+	}
+
+	NeuronTree neuron;
+	vector<V3DLONG> segment_id, segment_layer;
+	if (fileOpenName.endsWith(".swc") || fileOpenName.endsWith(".SWC"))
+	{
+		neuron = readSWC_file(fileOpenName);
+		segment_id, segment_layer;
+		if (!swc2eswc(neuron,segment_id, segment_layer))
+		{
+			v3d_msg("Cannot convert swc to eswc.", 0);
+			return false;
+		}
+	}
+	else {
+		v3d_msg("The file type you specified is not supported. Please check.", 0);
+		return false;
+	}
+	
+	if (!export_eswc(neuron,segment_id,segment_layer,qPrintable(fileOpenName),qPrintable(fileSaveName)))
+	{
+		v3d_msg("fail to write the output eswc file.", 0);
+		return false;
+	}
 	return true;
 }
 
@@ -72,7 +123,6 @@ int eswc2swc_io(V3DPluginCallback2 &callback, QWidget *parent)
 				));
 	if(fileOpenName.isEmpty()) 
 	{
-		v3d_msg("You don't have any file open.");
 		return -1;
 	}
 	
@@ -125,6 +175,68 @@ int eswc2swc_io(V3DPluginCallback2 &callback, QWidget *parent)
 bool eswc2swc_io(const V3DPluginArgList & input, V3DPluginArgList & output)
 {
 	cout<<"Welcome to eswc2swc_io"<<endl;
+	
+	vector<char*>* inlist = (vector<char*>*)(input.at(0).p);
+	vector<char*>* outlist = NULL;
+
+	if(input.size() != 1) 
+	{
+		printf("Please specify both input file name.\n");
+		return false;
+	}
+
+	QString fileOpenName = QString(inlist->at(0));
+	QString fileSaveName;
+	QString tmp = fileOpenName;
+	if (output.size()==0)
+	{
+		printf("No outputfile specified.\n");
+		tmp.chop(4);
+		fileSaveName = tmp + "swc";
+	}
+	else if (output.size()==1)
+	{
+		outlist = (vector<char*>*)(output.at(0).p);
+		fileSaveName = QString(outlist->at(0));
+	}
+	else
+	{
+		printf("You have specified more than 1 output file.\n");
+		return false;
+	}
+
+	NeuronTree neuron;
+	vector<V3DLONG> segment_id, segment_layer;
+	vector<double> feature;
+	if (fileOpenName.endsWith(".eswc") || fileOpenName.endsWith(".ESWC"))
+	{
+		neuron = read_eswc(segment_id, segment_layer, feature, fileOpenName);
+		if (!swc2eswc(neuron,segment_id, segment_layer))
+		{
+			v3d_msg("Cannot convert eswc to swc.\n");
+			return false;
+		}
+	}
+	else {
+		v3d_msg("The file type you specified is not supported. Please check.");
+		return false;
+	}
+	int ret = QMessageBox::Yes;
+	if (check_eswc(neuron, segment_id, segment_layer)==-1)
+	{
+		v3d_msg("WARNING: Something is wrong with the eswc file", 0);
+		v3d_msg("But we still put convert it to swc format", 0);
+	}
+	
+	QString fileDefaultName = fileOpenName;
+	fileDefaultName.chop(4);
+	fileDefaultName += QString("swc");
+	//write new SWC to file
+	if (!export_swc(neuron,qPrintable(fileSaveName)))
+	{
+		v3d_msg("fail to write the output swc file.", 0);
+		return false;
+	}
 	return true;
 }
 
@@ -138,7 +250,6 @@ int check_eswc_io(V3DPluginCallback2 &callback, QWidget *parent)
 				));
 	if(fileOpenName.isEmpty()) 
 	{
-		v3d_msg("You don't have any file open.");
 		return -1;
 	}
 	
@@ -146,15 +257,7 @@ int check_eswc_io(V3DPluginCallback2 &callback, QWidget *parent)
 	vector<V3DLONG> segment_id, segment_layer;
 	vector<double> feature;
 	if (fileOpenName.endsWith(".eswc") || fileOpenName.endsWith(".ESWC"))
-	{
 		neuron = read_eswc(segment_id, segment_layer, feature, fileOpenName);
-		segment_id, segment_layer;
-		if (!swc2eswc(neuron,segment_id, segment_layer))
-		{
-			v3d_msg("Cannot convert eswc to swc.\n");
-			return -1;
-		}
-	}
 	else {
 		v3d_msg("The file type you specified is not supported. Please check.");
 		return -1;
@@ -185,16 +288,6 @@ int check_eswc_io(V3DPluginCallback2 &callback, QWidget *parent)
 	return 1;
 }
 
-bool check_eswc_io(const V3DPluginArgList & input, V3DPluginArgList & output)
-{
-	cout<<"Welcome to check_eswc_io"<<endl;
-	return true;
-}
-
-
-
-
-
 bool export_eswc(NeuronTree & input, vector<V3DLONG> seg_id, vector<V3DLONG> seg_layer, const char* infile_name, const char* outfile_name)
 {
 	V3DLONG pntNum = input.listNeuron.size();
@@ -219,6 +312,7 @@ bool export_eswc(NeuronTree & input, vector<V3DLONG> seg_id, vector<V3DLONG> seg
 	//	fprintf(fp,"%d %d %.2f %.2f %.2f %.3f %d\n",curr.n,seg_layer[i],curr.x,curr.y,curr.z,curr.r,curr.pn);
 	}
 	fclose(fp);
+	printf("%s has been successfully generated.\n", outfile_name);
 	return true;
 }
 
@@ -238,6 +332,7 @@ bool export_swc(NeuronTree & neuron, const char* filename)
 		fprintf(fp,"%d %d %.2f %.2f %.2f %.3f %d\n",curr.n,curr.type,curr.x,curr.y,curr.z,curr.r,curr.pn);
 	}
 	fclose(fp);
+	printf("%s has been successfully generated.\n", filename);
 	return true;
 }
 
@@ -290,7 +385,6 @@ int eswc2swc_toolbox(const V3DPluginArgList & input)
 	if (fileOpenName.endsWith(".eswc") || fileOpenName.endsWith(".ESWC"))
 	{
 		neuron = read_eswc(segment_id, segment_layer, feature, fileOpenName);
-		segment_id, segment_layer;
 		if (!swc2eswc(neuron,segment_id, segment_layer))
 		{
 			v3d_msg("Cannot convert eswc to swc.\n");
@@ -339,14 +433,7 @@ int check_eswc_toolbox(const V3DPluginArgList & input)
 	vector<V3DLONG> segment_id, segment_layer;
 	vector<double> feature;
 	if (fileOpenName.endsWith(".eswc") || fileOpenName.endsWith(".ESWC"))
-	{
-		segment_id, segment_layer;
-		if (!swc2eswc(neuron,segment_id, segment_layer))
-		{
-			v3d_msg("Cannot convert eswc to swc.\n");
-			return -1;
-		}
-	}
+		neuron = read_eswc(segment_id, segment_layer, feature, fileOpenName);
 	else {
 		v3d_msg("The file type you specified is in eswc format. Please check.");
 		return -1;
@@ -375,4 +462,17 @@ int check_eswc_toolbox(const V3DPluginArgList & input)
 		v3d_msg("Your eswc file is in correct format!");
 
 	return 1;
+}
+
+void printHelp()
+{
+	cout<<"\nEnhanced SWC Format Converter: convert file format between .swc and .eswc  12-05-04 by Yinan Wan"<<endl;
+	cout<<"Usage: v3d -x eswc_converter -f <function_name> -i <input_file> -o <output_file>"<<endl;
+	cout<<"Parameters:"<<endl;
+	cout<<"\t-f <function_name> option 1-swc_to_eswc: convert swc to eswc"<<endl;
+	cout<<"\t                   option 2-eswc_to_swc: convert eswc to swc"<<endl;
+	cout<<"\t                   option 3-help       : print this message"<<endl;
+	cout<<"\t-i <input_file>    input swc or eswc file"<<endl;
+	cout<<"\t-o <output_file>   output swc or eswc file"<<endl;
+	cout<<"Example: v3d -x eswc_converter -f swc_to_eswc -i 1.swc -o 1.eswc\n"<<endl;
 }

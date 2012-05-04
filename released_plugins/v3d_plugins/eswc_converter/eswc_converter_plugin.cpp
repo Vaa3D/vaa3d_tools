@@ -22,9 +22,9 @@ QStringList ESWCPlugin::menulist() const
 QStringList ESWCPlugin::funclist() const
 {
 	return QStringList()
-		<<tr("swc2eswc_io")
-		<<tr("eswc2swc_io")
-		<<tr("check_eswc_io");
+		<<tr("swc_to_eswc")
+		<<tr("eswc_to_swc")
+		<<tr("help");
 }
 
 void ESWCPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
@@ -58,10 +58,6 @@ bool ESWCPlugin::dofunc(const QString & func_name, const V3DPluginArgList & inpu
 	{
 		return eswc2swc_io(input,output);
 	}
-	else if (func_name == tr("check_eswc_format"))
-	{
-		return check_eswc_io(input,output);
-	}
 	else if (func_name == tr("TOOLBOXswc_to_eswc"))
 	{
 		swc2eswc_toolbox(input);
@@ -73,6 +69,10 @@ bool ESWCPlugin::dofunc(const QString & func_name, const V3DPluginArgList & inpu
 	else if (func_name == tr("TOOLBOXcheck_eswc_format"))
 	{
 		check_eswc_toolbox(input);
+	}
+	else if (func_name == tr("help"))
+	{
+		printHelp();
 	}
 }
 
