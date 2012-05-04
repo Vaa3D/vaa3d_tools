@@ -11,4 +11,4 @@ SOURCES      += swc_to_maskimage.cpp
 SOURCES      += ../../../v3d_main/basic_c_fun/v3d_message.cpp
 
 TARGET        = $$qtLibraryTarget(swc_to_maskimage)
-DESTDIR       = ../../v3d/plugins/neuron_utilities/swc_to_maskimage
+DESTDIR       = ../../v3d/plugins/neuron_utilities/swc_to_maskimage_sphere_unit

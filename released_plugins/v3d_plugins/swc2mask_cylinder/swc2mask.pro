@@ -2,7 +2,7 @@ TEMPLATE	= lib
 CONFIG	+= qt plugin warn_off
 #CONFIG	+= x86_64
 
-VAA3D_DIR = ../../v3d_main
+VAA3D_DIR = ../../../v3d_main
 INCLUDEPATH	+= . $$VAA3D_DIR/basic_c_fun
 INCLUDEPATH     += $$VAA3D_DIR/common_lib/include
 LIBS += -L. -lv3dtiff -L$$VAA3D_DIR/common_lib/lib
@@ -26,4 +26,4 @@ SOURCES	+= $$VAA3D_DIR/basic_c_fun/mg_image_lib.cpp
 SOURCES	+= $$VAA3D_DIR/basic_c_fun/mg_utilities.cpp
 
 TARGET	= $$qtLibraryTarget(swc2mask)
-#DESTDIR	= $$VAA3D_DIR/bin/plugins/swc2mask/
+DESTDIR	= ../../v3d/plugins/neuron_utilities/swc_to_maskimg_cylinder_unit/
