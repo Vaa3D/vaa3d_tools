@@ -25,9 +25,10 @@ bool neuron_toolbox_func(V3DPluginCallback2 & callback, QWidget * parent)
 
 bool neuron_toolbox_func(V3DPluginCallback2 & callback, QWidget * parent, const V3DPluginArgList & input, V3DPluginArgList & output)
 {
-	const char* test_str1 = ((vaa3d_neurontoolbox_paras *)(input.at(0).p))->nt.file.toStdString().c_str();
+	QString test_str1 = QString(((vaa3d_neurontoolbox_paras *)(input.at(0).p))->nt.file);
+	QString test_str = QFileInfo(test_str1).baseName() + "." + QFileInfo(test_str1).completeSuffix();
 	SelectPluginDlg * selectDlg = new SelectPluginDlg(parent, callback, input);
-	selectDlg->setWindowTitle("Select plugin to run...");
+	selectDlg->setWindowTitle(test_str + " - Select plugin to run...");
 	selectDlg->show();
 //	const QString plugin_name = "/Users/wany/Work/v3d_external/bin/plugins/neuron_utilities/sort_neuron_swc/libsort_neuron_swc_debug.dylib";
 //	const QString menu_name = "TOOLBOXsort_swc";

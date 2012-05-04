@@ -40,6 +40,9 @@ bool NeuronToolboxPlugin::dofunc(const QString & func_name, const V3DPluginArgLi
 {
 //	cout<<"callback_dofunc="<<(void *)&callback<<endl;
 //	callback.getImageWindowList();
+	
+	if (parent==NULL)
+		cout<<"parent is NULL"<<endl;
 
 	if (func_name == tr("neuron_toolbox"))
 	{
