@@ -15,4 +15,4 @@ SOURCES	+= $$VAA3DMAINPATH/basic_c_fun/v3d_message.cpp
 SOURCES	+= $$VAA3DMAINPATH/basic_c_fun/basic_surf_objs.cpp
 
 TARGET	= $$qtLibraryTarget(consensus_skeleton)
-DESTDIR	= ../../v3d/neuron_utilities/consensus_skeleton/
+DESTDIR	= ../../v3d/plugins/neuron_utilities/consensus_skeleton_via_clustering/
