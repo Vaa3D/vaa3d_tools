@@ -43,6 +43,70 @@ public:
 	{
 		if(menu_name == "swc2mask")
 		{
+			QString fileName = QFileDialog::getOpenFileName(0, QObject::tr("Open Neuron Tree"), QObject::tr("."), QObject::tr("SWC Files (*.swc)"));
+			if(fileName == "") {QMessageBox::information(0,"","No swc file open"); return;}
+
+			string inswc_file = fileName.toStdString();
+			vector<MyMarker*> inswc = readSWC_file(inswc_file);
+			V3DLONG sz0 = 0, sz1 = 0, sz2 = 0;
+			if(1)
+			{
+				MyMarker * marker = inswc[0];
+				V3DLONG x = marker->x + 0.5;
+				V3DLONG y = marker->y + 0.5;
+				V3DLONG z = marker->z + 0.5;
+				V3DLONG mx = x, my = y, mz = z, Mx = x, My = y, Mz = z;
+				V3DLONG margin = 0;
+				for(int i = 1; i < inswc.size(); i++)
+				{
+					marker = inswc[i];
+					x = marker->x + 0.5;
+					y = marker->y + 0.5;
+					z = marker->z + 0.5;
+					mx = MIN(x, mx);
+					my = MIN(y, my);
+					mz = MIN(z, mz);
+					Mx = MAX(x, Mx);
+					My = MAX(y, My);
+					Mz = MAX(z, Mz);
+					margin = MAX(margin, (V3DLONG)(marker->radius+0.5));
+				}
+				mx -= margin;
+				my -= margin;
+				mz -= margin;
+				Mx += margin;
+				My += margin;
+				Mz += margin;
+
+				sz0 = Mx - mx + 1;
+				sz1 = My - my + 1;
+				sz2 = Mz - mz + 1;
+				for(int i = 0; i < inswc.size(); i++)
+				{
+					marker = inswc[i];
+					x = marker->x + 0.5;
+					y = marker->y + 0.5;
+					z = marker->z + 0.5;
+					marker->x = x - mx;
+					marker->y = y - my;
+					marker->z = z - mz;
+				}
+			}
+			cout<<"size : "<<sz0<<"x"<<sz1<<"x"<<sz2<<endl;
+			
+			unsigned char * outimg1d = 0;
+			if(!swc2mask(outimg1d, inswc, sz0, sz1, sz2)) 
+			{
+				QMessageBox::information(0, "", "Failed to do swc2mask !");
+				return;
+			}
+			V3DLONG out_sz[4] = {sz0, sz1, sz2, 1};
+
+			v3dhandle newwin = callback.newImageWindow();
+			Image4DSimple * new4DImage = new Image4DSimple();
+			new4DImage->setData(outimg1d, sz0, sz1, sz2, 1, V3D_UINT8);
+			callback.setImage(newwin, new4DImage);
+			callback.updateImageWindow(newwin);
 		}
 		else if(menu_name == "about")
 		{
