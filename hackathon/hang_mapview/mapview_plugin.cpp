@@ -15,6 +15,15 @@ Q_EXPORT_PLUGIN2(mapview, MapViewPlugin);
 
 int load_hraw_data(V3DPluginCallback2 &callback, QWidget *parent);
 int help(V3DPluginCallback2 &callback, QWidget *parent);
+
+// dirname("/dir/name/test.tif") == "/dir/name"
+string dirname(string para)
+{
+	int pos = para.find_last_of("/");
+	if(pos == string::npos) return ".";
+	else if(pos == 0) return "/";
+	else return para.substr(0, pos);
+}
  
 QStringList MapViewPlugin::menulist() const
 {
@@ -100,12 +109,13 @@ int load_hraw_data(V3DPluginCallback2 &callback, QWidget *parent)
 	{
 		string name;
 		ifs >> name; name = toupper_case(name);
-		if(name == "PATH") ifs >> dir;
-		else if(name == "L0_X_BLOCKS") ifs >> L;
+		if(name == "L0_X_BLOCKS") ifs >> L;
 		else if(name == "L0_Y_BLOCKS") ifs >> M;
 		else if(name == "L0_Z_BLOCKS") ifs >> N;
 		else if(name == "LEVEL_NUM") ifs >> level_num;
 	}
+	dir = QDir(dirname(hraw_file.toStdString()).c_str()).absolutePath().toStdString();
+	cout<<"dir = "<<dir<<endl;
 	string raw0000 = dir + "/L0/L0_X0_Y0_Z0.raw";
 	cout<<"raw0000 = "<<raw0000<<endl;
 	getRawImageSize(raw0000, l, m, n, channel);

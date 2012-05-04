@@ -54,14 +54,23 @@ private:
 	QScrollBar *cutRightZSlider;
 	QScrollBar *zoomSlider;
 	QCheckBox * threadCheckBox;
+	QAbstractButton *xcLock, *ycLock, *zcLock;
 
-	int leftx;
-	int lefty;
-	int leftz;
+	int leftX;
+	int leftY;
+	int leftZ;
 
-	int rightx;
-	int righty;
-	int rightz;
+	int rightX;
+	int rightY;
+	int rightZ;
+
+	int dxCut;
+	int dyCut;
+	int dzCut;
+
+	bool lockX;
+	bool lockY;
+	bool lockZ;
 	
 	int zoom;
 	bool is_multi_thread;
@@ -76,6 +85,13 @@ public slots:
 	void onRightZChanged(int);
 	void onZoomChanged(int);
 	void update(); // update member values
+
+	void setXCutLock(bool);
+	void setYCutLock(bool);
+	void setZCutLock(bool);
+	void setXCutLockIcon(bool);
+	void setYCutLockIcon(bool);
+	void setZCutLockIcon(bool);
 };
 
 #endif 

@@ -74,21 +74,25 @@ MapViewWidget::MapViewWidget(V3DPluginCallback2 * _callback, Mapview_Paras _para
 
 	threadCheckBox = new QCheckBox(tr("multi threads"));
 	threadCheckBox->setChecked(Qt::Checked);
+
+	xcLock = new QToolButton(); xcLock->setCheckable(true);
+	ycLock = new QToolButton(); ycLock->setCheckable(true);
+	zcLock = new QToolButton(); zcLock->setCheckable(true);	
 	
 	// layout for mv control window
 	layout->addWidget(cutLeftXSliderLabel, 0, 0, 1, 1);
 	layout->addWidget(cutLeftXSlider, 0, 1, 1, 13);
-	layout->addWidget(cutRightXSliderLabel, 1, 0, 1, 1);
+	layout->addWidget(xcLock, 1, 0, 1, 1);
 	layout->addWidget(cutRightXSlider, 1, 1, 1, 13);
 
 	layout->addWidget(cutLeftYSliderLabel, 2, 0, 1, 1);
 	layout->addWidget(cutLeftYSlider, 2, 1, 1, 13);
-	layout->addWidget(cutRightYSliderLabel, 3, 0, 1, 1);
+	layout->addWidget(ycLock, 3, 0, 1, 1);
 	layout->addWidget(cutRightYSlider, 3, 1, 1, 13);
 
 	layout->addWidget(cutLeftZSliderLabel, 4, 0, 1, 1);
 	layout->addWidget(cutLeftZSlider, 4, 1, 1, 13);
-	layout->addWidget(cutRightZSliderLabel, 5, 0, 1, 1);
+	layout->addWidget(zcLock, 5, 0, 1, 1);
 	layout->addWidget(cutRightZSlider, 5, 1, 1, 13);
 
 	layout->addWidget(zoomSliderLabel, 6, 0, 1, 1);
@@ -106,6 +110,25 @@ MapViewWidget::MapViewWidget(V3DPluginCallback2 * _callback, Mapview_Paras _para
 	connect(zoomSlider, SIGNAL(valueChanged(int)), this, SLOT(onZoomChanged(int)));
 	connect(threadCheckBox, SIGNAL(toggled(bool)), this, SLOT(update()));
 
+	if (xcLock) {
+		connect(xcLock, SIGNAL(toggled(bool)), this, SLOT(setXCutLock(bool)));
+		connect(xcLock, SIGNAL(toggled(bool)), this, SLOT(setXCutLockIcon(bool))); setXCutLockIcon(false);
+	}
+	if (ycLock) {
+		connect(ycLock, SIGNAL(toggled(bool)), this, SLOT(setYCutLock(bool)));
+		connect(ycLock, SIGNAL(toggled(bool)), this, SLOT(setYCutLockIcon(bool))); setYCutLockIcon(false);
+	}
+	if (zcLock) {
+		connect(zcLock, SIGNAL(toggled(bool)), this, SLOT(setZCutLock(bool)));
+		connect(zcLock, SIGNAL(toggled(bool)), this, SLOT(setZCutLockIcon(bool))); setZCutLockIcon(false);
+	}
+
+	leftX = 0; rightX = 100;
+	leftY = 0; rightY = 100;
+	leftZ = 0; rightZ = 100;
+	dxCut = 100; dyCut = 100; dzCut = 100;
+	lockX = 0; lockY = 0; lockZ = 0;
+
 	update_locked = false;
 	update();
 }
@@ -114,12 +137,12 @@ void MapViewWidget::update()
 {
 	if(update_locked) return;
 
-	leftx = cutLeftXSlider->value();
-	lefty = cutLeftYSlider->value(); 
-	leftz = cutLeftZSlider->value(); 
-	rightx = cutRightXSlider->value(); 
-	righty = cutRightYSlider->value(); 
-	rightz = cutRightZSlider->value(); 
+	leftX = cutLeftXSlider->value();
+	leftY = cutLeftYSlider->value(); 
+	leftZ = cutLeftZSlider->value(); 
+	rightX = cutRightXSlider->value(); 
+	rightY = cutRightYSlider->value(); 
+	rightZ = cutRightZSlider->value(); 
 	zoom = zoomSlider->value();
 	is_multi_thread = threadCheckBox->isChecked();
 
@@ -130,12 +153,12 @@ void MapViewWidget::update()
 	cout<<"in_sz0 = "<<in_sz0<<endl;
 	cout<<"in_sz1 = "<<in_sz1<<endl;
 	cout<<"in_sz2 = "<<in_sz2<<endl;
-	paras.origin[0] = leftx/99.0 * in_sz0;
-	paras.origin[1] = lefty/99.0 * in_sz1;
-	paras.origin[2] = leftz/99.0 * in_sz2;
-	paras.outsz[0] = (rightx - leftx)/100.0 * in_sz0;
-	paras.outsz[1] = (righty - lefty)/100.0 * in_sz1;
-	paras.outsz[2] = (rightz - leftz)/100.0 * in_sz2;
+	paras.origin[0] = leftX/99.0 * in_sz0;
+	paras.origin[1] = leftY/99.0 * in_sz1;
+	paras.origin[2] = leftZ/99.0 * in_sz2;
+	paras.outsz[0] = (rightX - leftX)/100.0 * in_sz0;
+	paras.outsz[1] = (rightY - leftY)/100.0 * in_sz1;
+	paras.outsz[2] = (rightZ - leftZ)/100.0 * in_sz2;
 
 	// get curwin
 	v3dhandleList winlist = callback->getImageWindowList();
@@ -167,80 +190,143 @@ void MapViewWidget::closeEvent(QCloseEvent *event)
 
 void MapViewWidget::onLeftXChanged(int value)
 {
-	leftx = value;
-	if(leftx >= rightx) cutRightXSlider->setValue(leftx+1);
+	if(value < 0 || value > 99) return;
+	leftX = value;
+	if(lockX)
+		cutRightXSlider->setValue(leftX + dxCut);
+	else if(leftX >= rightX) cutRightXSlider->setValue(leftX+1);
 	else update();
 }
 
 void MapViewWidget::onLeftYChanged(int value)
 {
-	lefty = value;
-	if(lefty >= righty) cutRightYSlider->setValue(lefty+1);
+	if(value < 0 || value > 99) return;
+	leftY = value;
+	if(lockY)
+		cutRightYSlider->setValue(leftY + dyCut);
+	else if(leftY >= rightY) cutRightYSlider->setValue(leftY+1);
 	else update();
 }
 
 void MapViewWidget::onLeftZChanged(int value)
 {
-	leftz = value;
-	if(leftz >= rightz) cutRightZSlider->setValue(leftz+1);
+	if(value < 0 || value > 99) return;
+	leftZ = value;
+	if(lockZ)
+		cutRightZSlider->setValue(leftZ + dzCut);
+	else if(leftZ >= rightZ) cutRightZSlider->setValue(leftZ+1);
 	else update();
 }
 
 void MapViewWidget::onRightXChanged(int value)
 {
-	rightx = value;
-	if(rightx <= leftx) cutLeftXSlider->setValue(rightx-1);
+	if(value < 1 || value > 100) return;
+	rightX = value;
+	if(lockX)
+		cutLeftXSlider->setValue(leftX - dxCut);
+	else if(rightX <= leftX) cutLeftXSlider->setValue(rightX-1);
 	else update();
 }
 
 void MapViewWidget::onRightYChanged(int value)
 {
-	righty = value;
-	if(righty <= lefty) cutLeftYSlider->setValue(righty-1);
+	if(value < 1 || value > 100) return;
+	rightY = value;
+	if(lockY)
+		cutLeftYSlider->setValue(leftY - dyCut);
+	else if(rightY <= leftY) cutLeftYSlider->setValue(rightY-1);
 	else update();
 }
 
 void MapViewWidget::onRightZChanged(int value)
 {
-	rightz = value;
-	if(rightz <= leftz) cutLeftZSlider->setValue(rightz-1);
+	if(value < 1 || value > 100) return;
+	rightZ = value;
+	if(lockZ)
+		cutLeftZSlider->setValue(leftZ - dzCut);
+	else if(rightZ <= leftZ) cutLeftZSlider->setValue(rightZ-1);
 	else update();
 }
 
 void MapViewWidget::onZoomChanged(int value)
 {
-	double midx = (leftx + rightx)/2.0;
-	double lenx = (rightx - leftx)/pow(2.0, value-zoom);
-	int leftx2 = midx - lenx/2.0 + 0.5;
-	int rightx2 = leftx2 + (lenx + 0.5);
+	double midx = (leftX + rightX)/2.0;
+	double lenx = (rightX - leftX)/pow(2.0, value-zoom);
+	int leftX2 = midx - lenx/2.0 + 0.5;
+	int rightX2 = leftX2 + (lenx + 0.5);
 
-	double midy = (lefty + righty)/2.0;
-	double leny = (righty - lefty)/pow(2.0, value-zoom);
-	int lefty2 = midy - leny/2.0 + 0.5;
-	int righty2 = lefty2 + (leny + 0.5);
+	double midy = (leftY + rightY)/2.0;
+	double leny = (rightY - leftY)/pow(2.0, value-zoom);
+	int leftY2 = midy - leny/2.0 + 0.5;
+	int rightY2 = leftY2 + (leny + 0.5);
 
-	double midz = (leftz + rightz)/2.0;
-	double lenz = (rightz - leftz)/pow(2.0, value-zoom);
-	int leftz2 = midz - lenz/2.0 + 0.5;
-	int rightz2 = leftz2 + (lenz + 0.5);
+	double midz = (leftZ + rightZ)/2.0;
+	double lenz = (rightZ - leftZ)/pow(2.0, value-zoom);
+	int leftZ2 = midz - lenz/2.0 + 0.5;
+	int rightZ2 = leftZ2 + (lenz + 0.5);
 
-	leftx2 = MAX(leftx2, 0);
-	rightx2 = MIN(rightx2, 100);
-	lefty2 = MAX(lefty2, 0);
-	righty2 = MIN(righty2, 100);
-	leftz2 = MAX(leftz2, 0);
-	rightz2 = MIN(rightz2, 100);
+	leftX2 = MAX(leftX2, 0);
+	rightX2 = MIN(rightX2, 100);
+	leftY2 = MAX(leftY2, 0);
+	rightY2 = MIN(rightY2, 100);
+	leftZ2 = MAX(leftZ2, 0);
+	rightZ2 = MIN(rightZ2, 100);
 
 	zoom = value;
 
 	update_locked = true;
-	cutLeftXSlider->setValue(leftx2);
-	cutLeftYSlider->setValue(lefty2);
-	cutLeftZSlider->setValue(leftz2);
-	cutRightXSlider->setValue(rightx2);
-	cutRightYSlider->setValue(righty2);
-	cutRightZSlider->setValue(rightz2);
+	cutLeftXSlider->setValue(leftX2);
+	cutLeftYSlider->setValue(leftY2);
+	cutLeftZSlider->setValue(leftZ2);
+	cutRightXSlider->setValue(rightX2);
+	cutRightYSlider->setValue(rightY2);
+	cutRightZSlider->setValue(rightZ2);
 	update_locked = false;
 
 	update();
 }
+
+void MapViewWidget::setXCutLock(bool b)
+{       
+    if (b)  dxCut = rightX - leftX;
+    else    dxCut = 0;
+    lockX = b? 1:0;  //110714
+}       
+void MapViewWidget::setYCutLock(bool b)
+{   
+    if (b)  dyCut = rightY - leftY;
+    else    dyCut = 0;
+    lockY = b? 1:0;  //110714
+}   
+void MapViewWidget::setZCutLock(bool b)
+{   
+    if (b)  dzCut = rightZ - leftZ;
+    else    dzCut = 0;
+    lockZ = b? 1:0;  //110714
+}
+
+
+void MapViewWidget::setXCutLockIcon(bool b)
+{
+    if (! xcLock)  return;
+    if (b)
+        xcLock->setIcon(QIcon(":/pic/Lockon.png"));
+    else
+        xcLock->setIcon(QIcon(":/pic/Lockoff.png"));
+}
+void MapViewWidget::setYCutLockIcon(bool b)
+{
+    if (! ycLock)  return;
+    if (b)
+        ycLock->setIcon(QIcon(":/pic/Lockon.png"));
+    else
+        ycLock->setIcon(QIcon(":/pic/Lockoff.png"));
+}
+void MapViewWidget::setZCutLockIcon(bool b)
+{
+    if (! zcLock)  return;
+    if (b)
+        zcLock->setIcon(QIcon(":/pic/Lockon.png"));
+    else
+        zcLock->setIcon(QIcon(":/pic/Lockoff.png"));
+} 

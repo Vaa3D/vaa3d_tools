@@ -29,5 +29,6 @@ SOURCES += $$VAA3DPATH/v3d_main/basic_c_fun/mg_utilities.cpp
 SOURCES += $$VAA3DPATH/v3d_main/basic_c_fun/mg_image_lib.cpp
 SOURCES += $$VAA3DPATH/v3d_main/basic_c_fun/stackutil.cpp
 
+RESOURCES += mapview.qrc
 TARGET	= $$qtLibraryTarget(mapview)
 DESTDIR	= $$VAA3DPATH/bin/plugins/mapview/
