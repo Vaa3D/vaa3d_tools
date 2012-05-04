@@ -22,6 +22,7 @@ HEADERS      += q_principalskeleton_detection.h
 HEADERS      += q_neurontree_segmentation.h
 HEADERS      += q_skeletonbased_warp_sub2tar.h
 HEADERS      += plugin_principalskeleton_detection.h
+#HEADERS      += main_principalskeleton_detection_domain_dofunc.h
 
 SOURCES      += $$V3DMAINDIR/basic_c_fun/v3d_message.cpp
 SOURCES      += $$V3DMAINDIR/basic_c_fun/stackutil.cpp
@@ -34,6 +35,8 @@ SOURCES      += q_principalskeleton_detection.cpp
 SOURCES      += q_neurontree_segmentation.cpp
 SOURCES      += q_skeletonbased_warp_sub2tar.cpp
 SOURCES      += plugin_principalskeleton_detection.cpp
+#SOURCES      += main_principalskeleton_detection_domain_dofunc.cpp
+
 
 TARGET        = $$qtLibraryTarget(principalskeleton_detection)
 
