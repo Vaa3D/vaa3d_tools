@@ -43,6 +43,10 @@ bool HierLablPlugin::dofunc(const QString & func_name, const V3DPluginArgList & 
 	{
 		return hierachical_labeling_io(input, output);
 	}
+	if (func_name == tr("TOOLBOXhierachical_labeling"))
+	{
+		return hierachical_labeling_toolbox(input);
+	}
 	else if (func_name == tr("help"))
 	{
 		printHelp();

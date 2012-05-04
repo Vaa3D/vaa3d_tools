@@ -10,6 +10,7 @@
 
 int hierachical_labeling_io(V3DPluginCallback2 &callback, QWidget *parent);
 bool hierachical_labeling_io(const V3DPluginArgList & input, V3DPluginArgList & output);
+bool hierachical_labeling_toolbox(const V3DPluginArgList & input);
 
 void printHelp();
 

@@ -55,13 +55,11 @@ bool hierachical_labeling(NeuronTree & nt)
 		}
 		while (branches[cur]!=0 && pid>0);
 	}
-	cout<<"tips labeled done"<<endl;
 
 	V3DLONG colored = 1;
 	for (V3DLONG i=0;i<siz;i++)
 	{
 		if (branches[i]!=0) continue;
-		cout<<"i = "<<i<<endl;
 		V3DLONG cur = i;
 		V3DLONG pid;
 		do
@@ -71,13 +69,10 @@ bool hierachical_labeling(NeuronTree & nt)
 			nt.listNeuron[cur].fea_val = colored;
 			pid = nt.hashNeuron.value(s.pn);
 			cur = pid;
-			cout<<"s.pn = "<<s.pn<<"\tpid = "<<pid<<endl;
 		}
 		while (tip[pid]==i);
 		colored = colored + 1;
 	}
 
-	cout<<"finish hierachical labeling"<<endl;
-			
 	return true;
 }
