@@ -58,7 +58,7 @@ NeuronTree read_eswc(vector<V3DLONG> & seg_id, vector<V3DLONG> & seg_layer, vect
         	else if (i==6) S.pn = qsl[i].toInt();
 		//add 3 additional columns 12-02-16
 		else if (i==7) seg_id.push_back(qsl[i].toInt());
-		else if (i==8) seg_id.push_back(qsl[i].toInt());
+		else if (i==8) seg_layer.push_back(qsl[i].toInt());
 		else if (i==9) feature.push_back(qsl[i].toFloat());
         }
 

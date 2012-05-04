@@ -61,6 +61,7 @@ int check_eswc(NeuronTree input, vector<V3DLONG> & segment_id, vector<V3DLONG> &
 //           -1: check not passed (not correct number/format)
 //            0: contain default value
 {
+
 	vector<V3DLONG> std_seg_id, std_seg_layer;
 	if (!swc2eswc(input, std_seg_id, std_seg_layer))
 	{
@@ -68,14 +69,21 @@ int check_eswc(NeuronTree input, vector<V3DLONG> & segment_id, vector<V3DLONG> &
 		return -1;
 	}
 	V3DLONG pntNum = input.listNeuron.size();
+	printf("pntNum=%d\n", pntNum);
 	if (segment_id.size()!= pntNum || segment_layer.size()!=pntNum)
+	{
+		fprintf(stderr,"listNeuron size not match, seg_id.size()=%d, seg_layer.size()=%d\n", segment_id.size(), segment_layer.size());
 		return -1;
+	}
 	//segment layer should ba exactly the same
 	for (V3DLONG i=0;i<pntNum;i++)
 	{
 		if (segment_layer[i]<0) return 0;
 		if (segment_layer[i]!=std_seg_layer[i])
+		{
+			fprintf(stderr, "seg_layer not match:seg[%d]=%d, std[%d]=%d\n", i, segment_layer[i], i, std_seg_layer[i]);
 			return -1;
+		}
 	}
 
 	//segment id should be 1-1 mapped
@@ -86,15 +94,24 @@ int check_eswc(NeuronTree input, vector<V3DLONG> & segment_id, vector<V3DLONG> &
 	{
 		if (segment_id[i]<0) return 0;
 		if (!id_map.insert(pair<V3DLONG,V3DLONG>(segment_id[i], std_seg_id[i])).second);
-			if (id_map[segment_id[i]]!=std_seg_id[i]) return -1;
+			if (id_map[segment_id[i]]!=std_seg_id[i])
+			{
+				fprintf(stderr, "seg_id not match:seg[%d]=%d, std[%d]=%d\n", i, segment_id[i], i, std_seg_id[i]);
+				return -1;
+			}
 	}
 	id_map.clear();
 	//check from std_seg_id -> curr_seg_id
 	for (V3DLONG i=0;i<pntNum;i++)
 	{
 		if (!id_map.insert(pair<V3DLONG,V3DLONG>(segment_id[i], std_seg_id[i])).second)
-			if (id_map[std_seg_id[i]]!=segment_id[i]) return -1;
+			if (id_map[std_seg_id[i]]!=segment_id[i]) 
+			{
+				fprintf(stderr, "seg_id not match:seg[%d]=%d, std[%d]=%d\n", i, segment_id[i], i, std_seg_id[i]);
+				return -1;
+			}
 	}
+
 
 	return 1;
 }
