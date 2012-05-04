@@ -276,6 +276,7 @@ public:
 			callback.updateImageWindow(newwin);
 			callback.open3DWindow(newwin);
 			//callback.setSWC(newwin, new_nt);
+			for(int i = 0; i < inswc.size(); i++) delete inswc[i];
 			return true;
 		}
 		else if(func_name == "help")
