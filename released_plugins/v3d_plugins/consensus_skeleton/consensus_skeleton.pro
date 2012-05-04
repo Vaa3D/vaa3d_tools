@@ -2,7 +2,7 @@
 TEMPLATE	= lib
 CONFIG	+= qt plugin warn_off
 #CONFIG	+= x86_64
-VAA3DMAINPATH = ../../v3d_main
+VAA3DMAINPATH = ../../../v3d_main
 INCLUDEPATH	+= $$VAA3DMAINPATH/basic_c_fun
 
 HEADERS	+= consensus_skeleton_plugin.h
@@ -15,4 +15,4 @@ SOURCES	+= $$VAA3DMAINPATH/basic_c_fun/v3d_message.cpp
 SOURCES	+= $$VAA3DMAINPATH/basic_c_fun/basic_surf_objs.cpp
 
 TARGET	= $$qtLibraryTarget(consensus_skeleton)
-#DESTDIR	= $$VAA3DPATH/bin/plugins/consensus_skeleton/
+DESTDIR	= ../../v3d/neuron_utilities/consensus_skeleton/
