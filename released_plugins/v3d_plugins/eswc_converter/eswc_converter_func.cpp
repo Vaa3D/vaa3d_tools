@@ -392,7 +392,7 @@ int eswc2swc_toolbox(const V3DPluginArgList & input)
 		}
 	}
 	else {
-		v3d_msg("The file type you specified is in .eswc format. Please check.");
+		v3d_msg("The file type you specified is not in .eswc format. Please check.");
 		return -1;
 	}
 	int ret = QMessageBox::Yes;
@@ -435,7 +435,7 @@ int check_eswc_toolbox(const V3DPluginArgList & input)
 	if (fileOpenName.endsWith(".eswc") || fileOpenName.endsWith(".ESWC"))
 		neuron = read_eswc(segment_id, segment_layer, feature, fileOpenName);
 	else {
-		v3d_msg("The file type you specified is in eswc format. Please check.");
+		v3d_msg("The file type you specified is not in eswc format. Please check.");
 		return -1;
 	}
 
