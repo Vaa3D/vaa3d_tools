@@ -110,15 +110,15 @@ MapViewWidget::MapViewWidget(V3DPluginCallback2 * _callback, Mapview_Paras _para
 	connect(zoomSlider, SIGNAL(valueChanged(int)), this, SLOT(onZoomChanged(int)));
 	connect(threadCheckBox, SIGNAL(toggled(bool)), this, SLOT(update()));
 
-	if (xcLock) {
+	if (0 && xcLock) {
 		connect(xcLock, SIGNAL(toggled(bool)), this, SLOT(setXCutLock(bool)));
 		connect(xcLock, SIGNAL(toggled(bool)), this, SLOT(setXCutLockIcon(bool))); setXCutLockIcon(false);
 	}
-	if (ycLock) {
+	if (0 && ycLock) {
 		connect(ycLock, SIGNAL(toggled(bool)), this, SLOT(setYCutLock(bool)));
 		connect(ycLock, SIGNAL(toggled(bool)), this, SLOT(setYCutLockIcon(bool))); setYCutLockIcon(false);
 	}
-	if (zcLock) {
+	if (0 && zcLock) {
 		connect(zcLock, SIGNAL(toggled(bool)), this, SLOT(setZCutLock(bool)));
 		connect(zcLock, SIGNAL(toggled(bool)), this, SLOT(setZCutLockIcon(bool))); setZCutLockIcon(false);
 	}
