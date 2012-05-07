@@ -45,7 +45,8 @@ bool ResamplePlugin::dofunc(const QString & func_name, const V3DPluginArgList & 
 	}
 	else if (func_name == tr("TOOLBOXresample"))
 	{
-		return resample_swc_toolbox(input);
+		resample_swc_toolbox(input);
+		return true;
 	}
 	if (func_name == tr("help"))
 	{
@@ -57,5 +58,6 @@ bool ResamplePlugin::dofunc(const QString & func_name, const V3DPluginArgList & 
 		printf("\t-p <step_length>:       step length for resampling.\n");
 		printf("Demo: v3d -x resample_swc -f resample_swc -i test.swc -o test_resampled.swc -p 1\n\n");
 	}
+	return false;
 }
 
