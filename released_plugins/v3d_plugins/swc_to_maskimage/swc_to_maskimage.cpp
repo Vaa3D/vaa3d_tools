@@ -39,8 +39,9 @@ bool SWC_TO_MASKIMAGElugin::dofunc(const QString & func_name, const V3DPluginArg
 	if (func_name==tr("TOOLBOXswc_to_maskimage"))
 	{
 		swc_to_maskimage_toolbox(input, callback, parent);
+		return true;
 	}
-	return true;
+	return false;
 }
 
 void SWC_TO_MASKIMAGElugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
