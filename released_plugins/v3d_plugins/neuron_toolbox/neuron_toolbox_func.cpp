@@ -30,9 +30,6 @@ bool neuron_toolbox_func(V3DPluginCallback2 & callback, QWidget * parent, const 
 	SelectPluginDlg * selectDlg = new SelectPluginDlg(parent, callback, input);
 	selectDlg->setWindowTitle(test_str + " - Select plugin to run...");
 	selectDlg->show();
-//	const QString plugin_name = "/Users/wany/Work/v3d_external/bin/plugins/neuron_utilities/sort_neuron_swc/libsort_neuron_swc_debug.dylib";
-//	const QString menu_name = "TOOLBOXsort_swc";
-//	callback.callPluginFunc(plugin_name, menu_name, input, output);
 	return true;
 }
 

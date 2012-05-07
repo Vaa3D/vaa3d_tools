@@ -185,7 +185,6 @@ SelectPluginDlg::SelectPluginDlg(QWidget * parent, const V3DPluginCallback2 & _c
 			QStringList menulist = v3d_getInterfaceMenuList(plugin);
 			foreach(QString menu_name, menulist)
 			{
-				if (menu_name.toUpper()=="ABOUT" || menu_name.toUpper()=="HELP") continue;
 				//menu - second level item
 				QTreeWidgetItem * menuItem = new QTreeWidgetItem(pluginItem);
 				menuItem->setText(0, menu_name);
@@ -285,7 +284,8 @@ bool SelectPluginDlg::runFunc()
 		return false;
 	}
 	QString plugin_name = root_path + "/" + pluginItem->text(0);
-	callback->callPluginFunc(plugin_name, "TOOLBOX" + menu_name, *input, output);	
+	if (!callback->callPluginFunc(plugin_name, "TOOLBOX" + menu_name, *input, output))
+		runMenu();
 	
 	return true;
 }
