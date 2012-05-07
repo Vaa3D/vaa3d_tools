@@ -49,7 +49,8 @@ void WarpPointsetBaseonMatchedPairs(V3DPluginCallback &callback, QWidget *parent
 	QString qs_filename_sub2tar_affine,qs_filename_sub2tar_affine_tps;
 	bool b_scaleradius=0;
 
-	WarpAffineTpsDialog_pts warpaffinetpsDLG_pts(parent);
+	//WarpAffineTpsDialog_pts warpaffinetpsDLG_pts(parent);
+	WarpAffineTpsDialog_pts warpaffinetpsDLG_pts(0);
 	if(warpaffinetpsDLG_pts.exec()==QDialog::Accepted)
 	{
 		//input
