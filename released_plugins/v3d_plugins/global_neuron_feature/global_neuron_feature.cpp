@@ -77,6 +77,7 @@ bool GNFPlugin::dofunc(const QString & func_name, const V3DPluginArgList & input
 	else if (func_name==tr("TOOLBOXcompute global features"))
 	{
 		nf_toolbox(input);
+		return true;
 	}
 	return false;
 }
