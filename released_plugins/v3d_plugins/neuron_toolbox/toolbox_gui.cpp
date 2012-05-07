@@ -130,6 +130,7 @@ SelectPluginDlg::SelectPluginDlg(QWidget * parent, const V3DPluginCallback2 & _c
 	//run button
 	QPushButton * button = new QPushButton("run");
 	connect(button, SIGNAL(clicked()), this, SLOT(runMenu()));
+	connect(pluginTreeWidget, SIGNAL(itemDoubleClicked(QTreeWidgetItem*, int)), this, SLOT(runMenu()));
 
 	layout->addWidget(button);
 
@@ -198,6 +199,7 @@ SelectPluginDlg::SelectPluginDlg(QWidget * parent, const V3DPluginCallback2 & _c
 	//run button
 	QPushButton * button = new QPushButton("run");
 	connect(button, SIGNAL(clicked()), this, SLOT(runFunc()));
+	connect(pluginTreeWidget, SIGNAL(itemDoubleClicked(QTreeWidgetItem*, int)), this, SLOT(runFunc()));
 
 	layout->addWidget(button);
 
@@ -285,7 +287,9 @@ bool SelectPluginDlg::runFunc()
 	}
 	QString plugin_name = root_path + "/" + pluginItem->text(0);
 	if (!callback->callPluginFunc(plugin_name, "TOOLBOX" + menu_name, *input, output))
+	{
 		runMenu();
+	}
 	
 	return true;
 }
