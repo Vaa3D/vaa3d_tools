@@ -40,14 +40,11 @@ bool do_PrincipalSkeletonDetection(unsigned char *p_img_input, long *sz_img_inpu
 
 bool PrincipalSkeletonDetection(const V3DPluginArgList & input, V3DPluginArgList & output);
 
+bool SkeletonBasedImgWarp(const V3DPluginArgList & input, V3DPluginArgList & output);
 
-//save cubic spline interpolated larva skeleton to swc file
-bool q_saveSkeleton2swcFile(const QList<ImageMarker> &ql_cptpos,const vector< vector<long> > &vecvec_domain_cptind,const QString &qs_filename_swc_skeleton_output);
-//save cubic spline interpolated larva skeleton to swc file
-
-
-void printHelp();
-bool processImage_dofunc(const V3DPluginArgList & input, V3DPluginArgList & output);
+bool do_ImgWarp(QString &qs_filename_img_sub, QString &qs_filename_mak_sub, QString &qs_filename_img_tar,
+     QString &qs_filename_mak_tar, QString &qs_filename_domain,
+     unsigned char* &newdata1d, V3DLONG* &out_sz);
 
 
 const QString title = "Principal Skeleton Detection demo";
@@ -87,7 +84,7 @@ void PrincipalSkeletonDetectionPlugin::domenu(const QString &menu_name, V3DPlugi
 QStringList PrincipalSkeletonDetectionPlugin::funclist() const
 {
 	return QStringList()
-		<<tr("ppsd")
+		<<tr("detect")
           <<tr("warp")
 		<<tr("help");
 }
@@ -95,13 +92,17 @@ QStringList PrincipalSkeletonDetectionPlugin::funclist() const
 
 bool PrincipalSkeletonDetectionPlugin::dofunc(const QString &func_name, const V3DPluginArgList &input, V3DPluginArgList &output, V3DPluginCallback2 &callback, QWidget *parent)
 {
-     if (func_name == tr("ppsd"))
+     if (func_name == tr("detect"))
 	{
 		return PrincipalSkeletonDetection(input, output);
      }
+     if (func_name == tr("warp"))
+	{
+		return SkeletonBasedImgWarp(input, output);
+     }
 	else if(func_name == tr("help"))
 	{
-          cout<<"Usage : v3d -x skeleton -f ppsd -i <inimg_file> <iniskele_file> <domain_file> -o <deformskele_file> <cubicswc_file> -p <channel> <stop_thresh>"<<endl;
+          cout<<"Usage : v3d -x skeleton -f detect -i <inimg_file> <iniskele_file> <domain_file> -o <deformskele_file> <cubicswc_file> -p <channel> <stop_thresh>"<<endl;
 		cout<<endl;
 		cout<<"inimg_file     name of input image file"<<endl;
           cout<<"iniskele_file  name of input initial skeleton file (.marker)"<<endl;
@@ -113,10 +114,31 @@ bool PrincipalSkeletonDetectionPlugin::dofunc(const QString &func_name, const V3
 		cout<<"channel        the input channel value, default 2 and start from 0"<<endl;
 		cout<<"stop_thresh    stop threshold, default 0.01"<<endl;
 		cout<<endl;
-		cout<<"e.g. v3d -x skeleton -f ppsd -i input.raw iniskele_file.marker domain_file.domain -o deformskele.marker cubicswc.swc -p 2 0.01"<<endl;
+		cout<<"e.g. v3d -x skeleton -f detect -i input.raw iniskele_file.marker domain_file.domain -o deformskele.marker cubicswc.swc -p 2 0.01"<<endl;
+		cout<<endl;
+
+          cout<<"Usage : v3d -x skeleton -f warp -i <subimg_file> <submak_file> <tarimg_file> <tarmak_file> <domain_file> -o <outimg_file>"<<endl;
+		cout<<endl;
+		cout<<"subimg_file     file name of subject image"<<endl;
+          cout<<"submak_file     file name of subject skeleton (.marker)"<<endl;
+          cout<<"tarimg_file     file name of target image"<<endl;
+          cout<<"tarmak_file     file name of target skeleton (.marker)"<<endl;
+          cout<<"domain_file     file name of domain definition (.domain)"<<endl;
+		cout<<endl;
+		cout<<"e.g. v3d -x skeleton -f warp -i subimg.raw submak.marker tarimg.raw tarmak.marker domain_file.domain -o outimg.raw"<<endl;
 		cout<<endl;
 		return true;
 	}
+
+
+QString qs_filename_img_sub = NULL;
+     QString qs_filename_mak_sub = NULL;
+	QString qs_filename_img_tar = NULL;
+     QString qs_filename_mak_tar = NULL;
+	QString qs_filename_domain  = NULL;
+     QString filename_img_out = NULL;
+
+
 }
 
 
@@ -967,80 +989,62 @@ void ParaDialog_PSWarping::openFileDialog_domain()
 
 
 
-// bool SkeletonBasedImgWarp(const V3DPluginArgList & input, V3DPluginArgList & output)
-// {
-//      cout<<"Welcome to Skeleton Warp"<<endl;
+bool SkeletonBasedImgWarp(const V3DPluginArgList & input, V3DPluginArgList & output)
+{
+     cout<<"Welcome to Skeleton Warp"<<endl;
 
-//      if (output.size() != 1) return false;
-// 	//read arguments
-//      QString qs_filename_img_sub = NULL;
-//      QString qs_filename_mak_sub = NULL;
-// 	QString qs_filename_img_tar = NULL;
-//      QString qs_filename_mak_tar = NULL;
-// 	QString qs_filename_domain  = NULL;
+     if (output.size() != 1) return false;
+	//read arguments
+     QString qs_filename_img_sub = NULL;
+     QString qs_filename_mak_sub = NULL;
+	QString qs_filename_img_tar = NULL;
+     QString qs_filename_mak_tar = NULL;
+	QString qs_filename_domain  = NULL;
+     QString filename_img_out = NULL;
 
-//      if (input.size()>=2)
-//      {
-//           // input files
-//           vector<char*> paras_infile = (*(vector<char*> *)(input.at(0).p));
-//           if(paras_infile.size() <5)
-//           {
-//                v3d_msg("There are not enough input files.", 0);
-//                return false;
-//           }
-//           if(paras_infile.size() >= 1) qs_filename_img_sub = paras_infile.at(0);
-//           if(paras_infile.size() >= 2) qs_filename_mak_sub = paras_infile.at(1);
-//           if(paras_infile.size() >= 3) qs_filename_img_tar = paras_infile.at(2);
-//           if(paras_infile.size() >= 4) qs_filename_mak_tar = paras_infile.at(3);
-//           if(paras_infile.size() >= 5) qs_filename_domain = paras_infile.at(4);
+     if (input.size()>=1) // because there is no -p, so >=1
+     {
+          // input files
+          vector<char*> paras_infile = (*(vector<char*> *)(input.at(0).p));
+          if(paras_infile.size() <5)
+          {
+               v3d_msg("There are not enough input files.", 0);
+               return false;
+          }
+          if(paras_infile.size() >= 1) qs_filename_img_sub = paras_infile.at(0);
+          if(paras_infile.size() >= 2) qs_filename_mak_sub = paras_infile.at(1);
+          if(paras_infile.size() >= 3) qs_filename_img_tar = paras_infile.at(2);
+          if(paras_infile.size() >= 4) qs_filename_mak_tar = paras_infile.at(3);
+          if(paras_infile.size() >= 5) qs_filename_domain  = paras_infile.at(4);
 
-//           // output files
-//           vector<char*> paras_outfile = (*(vector<char*> *)(output.at(0).p));
-//           if(paras_outfile.size() <2)
-//           {
-//                v3d_msg("There are not enough output files.", 0);
-//                return false;
-//           }
-//           if(paras_outfile.size() >= 1) filename_marker_out = paras_outfile.at(0);
-//           if(paras_outfile.size() >= 2) filename_swc_out = paras_outfile.at(1);
-//      }
+          // output files
+          vector<char*> paras_outfile = (*(vector<char*> *)(output.at(0).p));
+          if(paras_outfile.size() >= 1) filename_img_out = paras_outfile.at(0);
+     }
+
+     cout<<"subject image:" << qPrintable(qs_filename_img_sub) <<endl;
+     cout<<"subject skeleton:" << qPrintable(qs_filename_mak_sub) <<endl;
+     cout<<"target image:" << qPrintable(qs_filename_img_tar) <<endl;
+     cout<<"target skeleton:" << qPrintable(qs_filename_mak_tar) <<endl;
+     cout<<"domain definition:" << qPrintable(qs_filename_domain) <<endl;
+     cout<<"output image:" << qPrintable(filename_img_out) <<endl;
 
 
+     // do_warp
+     unsigned char* newdata1d = 0;
+     V3DLONG* sz_img_tar = 0;
+     if(! do_ImgWarp(qs_filename_img_sub, qs_filename_mak_sub, qs_filename_img_tar, qs_filename_mak_tar, qs_filename_domain,
+               newdata1d, sz_img_tar))
+     {
+          return false;
+     }
+     // output image
+     saveImage((char*)qPrintable(filename_img_out), (unsigned char *)newdata1d, sz_img_tar, 1); // UINT8
 
-//      cout<<"qs_filename_input_img:  "<<qPrintable(qs_filename_input_img)<<endl;
-//      cout<<"qs_filename_marker_ini: "<<qPrintable(qs_filename_marker_ini)<<endl;
-
-//      unsigned char *p_img_input=0;
-// 	long *sz_img_input=0;
-// 	int datatype;
-// 	if(!loadImage((char*)qPrintable(qs_filename_input_img), p_img_input, sz_img_input, datatype))
-//      {
-//           cerr<<"load image "<< qPrintable(qs_filename_input_img) <<" error!"<<endl;
-//           return false;
-//      }
-
-//      cout<<"run here!"<<endl;
-//      // do skeleton detection
-//      QList<ImageMarker> ql_cptpos_output;
-//      vector< vector<long> > vecvec_domain_smooth_ind;
-//      if(! do_PrincipalSkeletonDetection(p_img_input, sz_img_input, qs_filename_marker_ini,
-//                qs_filename_domain, n_index_channel, d_stopthresh,  // input
-//                ql_cptpos_output, vecvec_domain_smooth_ind)) //output
-//      {
-//           v3d_msg("Error in doing skeleton detection.");
-//           return false;
-//      }
-
-//      // output
-//      writeMarker_file(filename_marker_out,ql_cptpos_output);
-//      q_saveSkeleton2swcFile_cubicspline(ql_cptpos_output,vecvec_domain_smooth_ind,filename_swc_out);
-
-//      // free memory
-//      if(p_img_input){delete []p_img_input; p_img_input=0;}
-//      if(sz_img_input){delete []sz_img_input; sz_img_input=0;}
-//      return true;
-
-// }
+     if(newdata1d){delete []newdata1d; newdata1d=0;}
+     if(sz_img_tar){delete []sz_img_tar; sz_img_tar=0;}
+     return true;
+}
 
 
 void SkeletonBasedImgWarp(V3DPluginCallback2 &callback, QWidget *parent)
@@ -1048,10 +1052,6 @@ void SkeletonBasedImgWarp(V3DPluginCallback2 &callback, QWidget *parent)
 	QString qs_filename_img_sub,qs_filename_mak_sub;
 	QString qs_filename_img_tar,qs_filename_mak_tar;
 	QString qs_filename_domain;
-
-	double d_ctlpt2node_ratio_alongbranch=2.0;
-	long l_nctrlpt_cuttingplane=5;
-	long l_cuttingplane_width=300;
 
 	ParaDialog_PSWarping d(parent);
 	if(d.exec()==QDialog::Accepted)
@@ -1065,11 +1065,37 @@ void SkeletonBasedImgWarp(V3DPluginCallback2 &callback, QWidget *parent)
 	else
 		return;
 
-	if(qs_filename_img_sub.isEmpty()) {v3d_msg("ERROR: Invalid subject image file name!\n"); return;}
-	if(qs_filename_mak_sub.isEmpty()) {v3d_msg("ERROR: Invalid subject skeleton file name!\n"); return;}
-	if(qs_filename_img_tar.isEmpty()) {v3d_msg("ERROR: Invalid target image file name!\n"); return;}
-	if(qs_filename_mak_tar.isEmpty()) {v3d_msg("ERROR: Invalid target skeleton file name!\n"); return;}
-	if(qs_filename_domain.isEmpty()) {v3d_msg("ERROR: Invalid domain file name!\n"); return;}
+     // do warp
+     unsigned char* newdata1d = 0;
+     V3DLONG* sz_img_tar = 0;
+     if(! do_ImgWarp(qs_filename_img_sub, qs_filename_mak_sub, qs_filename_img_tar, qs_filename_mak_tar, qs_filename_domain,
+               newdata1d, sz_img_tar))
+     {
+          return;
+     }
+
+     // output
+     v3dhandle newwin=callback.newImageWindow();
+	Image4DSimple tmp;
+     tmp.setData(newdata1d,sz_img_tar[0],sz_img_tar[1],sz_img_tar[2],sz_img_tar[3],V3D_UINT8);
+	callback.setImage(newwin,&tmp);
+	callback.updateImageWindow(newwin);
+}
+
+
+bool do_ImgWarp(QString &qs_filename_img_sub, QString &qs_filename_mak_sub, QString &qs_filename_img_tar,
+     QString &qs_filename_mak_tar, QString &qs_filename_domain,
+     unsigned char* &newdata1d, V3DLONG* &out_sz)
+{
+	if(qs_filename_img_sub.isEmpty()) {v3d_msg("ERROR: Invalid subject image file name!\n"); return false;}
+	if(qs_filename_mak_sub.isEmpty()) {v3d_msg("ERROR: Invalid subject skeleton file name!\n"); return false;}
+	if(qs_filename_img_tar.isEmpty()) {v3d_msg("ERROR: Invalid target image file name!\n"); return false;}
+	if(qs_filename_mak_tar.isEmpty()) {v3d_msg("ERROR: Invalid target skeleton file name!\n"); return false;}
+	if(qs_filename_domain.isEmpty()) {v3d_msg("ERROR: Invalid domain file name!\n"); return false;}
+
+     double d_ctlpt2node_ratio_alongbranch=2.0;
+	long l_nctrlpt_cuttingplane=5;
+	long l_cuttingplane_width=300;
 
 	//------------------------------------------------------------------------------------------------------------------------------------
 	//read target image and prinicpal skeleton marker file
@@ -1083,7 +1109,7 @@ void SkeletonBasedImgWarp(V3DPluginCallback2 &callback, QWidget *parent)
 		v3d_msg("ERROR: loadImage() return false in loading [%s].\n", qPrintable(qs_filename_img_tar));
 		if(p_img_tar) 		{delete []p_img_tar;		p_img_tar=0;}
 		if(sz_img_tar)		{delete []sz_img_tar;		sz_img_tar=0;}
-		return;
+		return false;
 	}
 	printf("\t>>read image [%s] complete.\n",qPrintable(qs_filename_img_tar));
 
@@ -1094,7 +1120,7 @@ void SkeletonBasedImgWarp(V3DPluginCallback2 &callback, QWidget *parent)
     if(ql_cptpos_tar.isEmpty())
     {
     	v3d_msg("ERROR: read nothing from input skeleotn control points definition file.\n");
-    	return;
+    	return false;
     }
     for(long i=0;i<ql_cptpos_tar.size();i++)
     	printf("\t\tcpt[%ld]=[%.2f,%.2f,%.2f]\n",i,ql_cptpos_tar[i].x,ql_cptpos_tar[i].y,ql_cptpos_tar[i].z);
@@ -1113,7 +1139,7 @@ void SkeletonBasedImgWarp(V3DPluginCallback2 &callback, QWidget *parent)
 		if(p_img_sub) 		{delete []p_img_sub;		p_img_sub=0;}
 		if(sz_img_sub)		{delete []sz_img_sub;		sz_img_sub=0;}
 		if(sz_img_tar)		{delete []sz_img_tar;		sz_img_tar=0;}
-		return;
+		return false;
 	}
 	printf("\t>>read image [%s] complete.\n",qPrintable(qs_filename_img_tar));
 
@@ -1124,7 +1150,7 @@ void SkeletonBasedImgWarp(V3DPluginCallback2 &callback, QWidget *parent)
     if(ql_cptpos_sub.isEmpty())
     {
     	v3d_msg("ERROR: read nothing from input skeleotn control points definition file.\n");
-    	return;
+    	return false;
     }
     for(long i=0;i<ql_cptpos_sub.size();i++)
     	printf("\t\tcpt[%ld]=[%.2f,%.2f,%.2f]\n",i,ql_cptpos_sub[i].x,ql_cptpos_sub[i].y,ql_cptpos_sub[i].z);
@@ -1138,7 +1164,7 @@ void SkeletonBasedImgWarp(V3DPluginCallback2 &callback, QWidget *parent)
     		vecvec_domain_smooth_ind,vec_domain_smooth_weight))
     {
     	v3d_msg("ERROR: readDomain_file() return false!\n");
-    	return;
+    	return false;
     }
     printf("\t>>read domain file [%s] complete.\n",qPrintable(qs_filename_domain));
     printf("\t\tdomain - length constraint:\n");
@@ -1203,7 +1229,7 @@ void SkeletonBasedImgWarp(V3DPluginCallback2 &callback, QWidget *parent)
     	if(p_img_sub2tar) 	{delete []p_img_sub2tar;	p_img_sub2tar=0;}
     	if(sz_img_sub)		{delete []sz_img_sub;		sz_img_sub=0;}
     	if(sz_img_tar)		{delete []sz_img_tar;		sz_img_tar=0;}
-    	return;
+    	return false;
 	}
 
 	//------------------------------------------------------------------------------------------------------------------------------------
@@ -1218,7 +1244,7 @@ void SkeletonBasedImgWarp(V3DPluginCallback2 &callback, QWidget *parent)
     	if(p_img_sub2tar) 	{delete []p_img_sub2tar;	p_img_sub2tar=0;}
     	if(sz_img_sub)		{delete []sz_img_sub;		sz_img_sub=0;}
     	if(sz_img_tar)		{delete []sz_img_tar;		sz_img_tar=0;}
-		return;
+		return false;
 	}
 
 	//find the masscenter of target and sub2tar warped image
@@ -1238,7 +1264,7 @@ void SkeletonBasedImgWarp(V3DPluginCallback2 &callback, QWidget *parent)
 		if(p_img_tar_4d) 		{delete4dpointer(p_img_tar_4d,sz_img_tar[0],sz_img_tar[1],sz_img_tar[2],sz_img_tar[3]);}
 		if(p_img_shift_4d) 		{delete4dpointer(p_img_shift_4d,sz_img_tar[0],sz_img_tar[1],sz_img_tar[2],sz_img_tar[3]);}
 		if(p_img_sub2tar_4d) 	{delete4dpointer(p_img_sub2tar_4d,sz_img_tar[0],sz_img_tar[1],sz_img_tar[2],sz_img_tar[3]);}
-		return;
+		return false;
 	}
 	for(long z=0;z<sz_img_tar[2];z++)
 		for(long y=0;y<sz_img_tar[1];y++)
@@ -1280,13 +1306,11 @@ void SkeletonBasedImgWarp(V3DPluginCallback2 &callback, QWidget *parent)
      //------------------------------------------------------------------------------------------------------------------------------------
 	//push warped image to v3d
 	unsigned long l_npixel_s=sz_img_tar[0]*sz_img_tar[1]*sz_img_tar[2]*sz_img_tar[3];
-	v3dhandle newwin=callback.newImageWindow();
-	unsigned char* newdata1d=new unsigned char[l_npixel_s]();
+	//unsigned char*
+     newdata1d=new unsigned char[l_npixel_s]();
 	memcpy(newdata1d,p_img_sub2tar,l_npixel_s);
-	Image4DSimple tmp;
-	tmp.setData(newdata1d,sz_img_tar[0],sz_img_tar[1],sz_img_tar[2],sz_img_tar[3],V3D_UINT8);
-	callback.setImage(newwin,&tmp);
-	callback.updateImageWindow(newwin);
+     out_sz = sz_img_tar;
+
 
 //	printf(">>save subject to target warped image ...\n");
 //	saveImage(p_filename_img_sub2tar,(unsigned char *)p_img_sub2tar,sz_img_tar,1);
@@ -1297,396 +1321,10 @@ void SkeletonBasedImgWarp(V3DPluginCallback2 &callback, QWidget *parent)
 	if(p_img_tar) 		{delete []p_img_tar;		p_img_tar=0;}
 	if(p_img_sub) 		{delete []p_img_sub;		p_img_sub=0;}
 	if(p_img_sub2tar) 	{delete []p_img_sub2tar;	p_img_sub2tar=0;}
-	if(sz_img_tar)		{delete []sz_img_tar;		sz_img_tar=0;}
+     //if(sz_img_tar)		{delete []sz_img_tar;		sz_img_tar=0;}
 	if(sz_img_sub)		{delete []sz_img_sub;		sz_img_sub=0;}
 
 	printf("Program exit successful!\n");
+     return true;
 
-}
-
-// =======================================================================
-// the following is for dofunc() Jianlong Zhou
-// =======================================================================
-bool processImage_dofunc(const V3DPluginArgList & input, V3DPluginArgList & output)
-{
-	//read arguments
-	QString qs_filename_input_img			=NULL;
-	QString qs_filename_input_marker		=NULL;
-	QString qs_filename_input_domain		=NULL;
-	QString qs_filename_output_marker		=NULL;
-	QString qs_filename_output_swc			=NULL;
-	QString qs_filename_output_swc_cspline	=NULL;
-	QString qs_flag_output;
-	int 	n_index_channel=2;
-	double 	d_inizoomfactor_skeleton=1.0;
-
-     cout<<"Welcome to Principal Skeleton Detection"<<endl;
-
-     if (input.size()>=2)
-     {
-          vector<char*> paras = (*(vector<char*> *)(input.at(1).p));
-          if(paras.size() >= 1) qs_filename_input_marker = paras.at(0); // -m
-          if(paras.size() >= 2) qs_filename_input_domain = paras.at(1); // -d
-          if(paras.size() >= 3) n_index_channel = atoi(paras.at(2));    // -c
-          if(paras.size() >= 4) d_inizoomfactor_skeleton = atof(paras.at(3)); // -s
-          if(paras.size() >= 5) qs_flag_output = paras.at(4);     // -f
-          if(paras.size() >= 6) qs_filename_output_marker = paras.at(5);     // -o
-          if(paras.size() >= 7) qs_filename_output_swc = paras.at(6);        // -w
-          if(paras.size() >= 8) qs_filename_output_swc_cspline = paras.at(7);        // -W
-	}
-
-	qs_filename_input_img = ((vector<char*> *)(input.at(0).p))->at(0); // -i
-
-
-	//define default output directory (same as the image directory)
-	if(qs_filename_input_img.length()!=0 && qs_filename_output_marker.length()==0)
-	{
-		QString qs_path=qs_filename_input_img.left(qs_filename_input_img.lastIndexOf('.'));
-		qs_filename_output_marker=qs_path+QString("_skeleton.marker");
-	}
-	if(qs_filename_input_img.length()!=0 && qs_filename_output_swc.length()==0)
-	{
-		QString qs_path=qs_filename_input_img.left(qs_filename_input_img.lastIndexOf('.'));
-		qs_filename_output_swc=qs_path+QString("_skeleton.swc");
-	}
-	if(qs_filename_input_img.length()!=0 && qs_filename_output_swc_cspline.length()==0)
-	{
-		QString qs_path=qs_filename_input_img.left(qs_filename_input_img.lastIndexOf('.'));
-		qs_filename_output_swc_cspline=qs_path+QString("_skeleton_cspline.swc");
-	}
-
-	//fill ouput flat array
-	bool b_flag_ouput[10]={0};
-	for(int ind_flagoutput=0;ind_flagoutput<qs_flag_output.length();ind_flagoutput++)
-	{
-		if(qs_flag_output[ind_flagoutput]=='1')
-			b_flag_ouput[1]=1;
-		if(qs_flag_output[ind_flagoutput]=='2')
-			b_flag_ouput[2]=1;
-		if(qs_flag_output[ind_flagoutput]=='3')
-			b_flag_ouput[3]=1;
-		if(qs_flag_output[ind_flagoutput]=='9')
-			b_flag_ouput[9]=1;
-	}
-
-
-	printf(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n");
-	printf(">>principal skeleton detection\n");
-	printf(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n");
-	printf(">>input parameters:\n");
-	printf(">>input image:             %s\n",qPrintable(qs_filename_input_img));
-	printf(">>input cpt position:      %s\n",qPrintable(qs_filename_input_marker));
-	printf(">>input domain definition: %s\n",qPrintable(qs_filename_input_domain));
-	printf(">>initial skeleton zoom:   %f\n",d_inizoomfactor_skeleton);
-	printf(">>-------------------------\n");
-	printf(">>output flag:             %s\n",qPrintable(qs_flag_output));
-	printf(">>output cpt position:     %s\n",qPrintable(qs_filename_output_marker));
-	printf(">>output swc position:     %s\n",qPrintable(qs_filename_output_swc));
-	printf(">>output swc_cspline position:%s\n",qPrintable(qs_filename_output_swc_cspline));
-
-	//------------------------------------------------------------------------------------------------------------------------------------
-	//read image
-	unsigned char *p_img_input=0;
-	long *sz_img_input=0;//[0]:width, [1]:height, [2]:z, [3]:nchannel
-	int datatype_subject=0;
-	if(!loadImage((char *)qPrintable(qs_filename_input_img),p_img_input,sz_img_input,datatype_subject))
-	{
-		printf("ERROR: loadImage() return false in loading [%s].\n", qPrintable(qs_filename_input_img));
-		return false;
-	}
-	printf("\t>>read image file [%s] complete.\n",qPrintable(qs_filename_input_img));
-	printf("\t\timage size: [w=%d, h=%d, z=%d, c=%d]\n",sz_img_input[0],sz_img_input[1],sz_img_input[2],sz_img_input[3]);
-
-	//read marker file (initial skeleton control points position definition)
-	QList<ImageMarker> ql_cptpos_input;
-	ql_cptpos_input=readMarker_file(qs_filename_input_marker);
-	printf("\t>>read marker file [%s] complete.\n",qPrintable(qs_filename_input_marker));
-    if(ql_cptpos_input.isEmpty())
-    {
-    	printf("ERROR: read nothing from input skeleotn control points definition file.\n");
-    	return false;
-    }
-    for(long i=0;i<ql_cptpos_input.size();i++)
-    	printf("\t\tcpt[%d]=[%.2f,%.2f,%.2f]\n",i,ql_cptpos_input[i].x,ql_cptpos_input[i].y,ql_cptpos_input[i].z);
-
-    //read domain file (include domain definition and corresponding weight definition)
-    vector< vector<long> > vecvec_domain_length_ind,vecvec_domain_smooth_ind;	//the index of control point of each domain is refer to the corresponding marker file
-    vector<double> vec_domain_length_weight,vec_domain_smooth_weight;
-    if(!readDomain_file(qs_filename_input_domain,
-    		vecvec_domain_length_ind,vec_domain_length_weight,
-    		vecvec_domain_smooth_ind,vec_domain_smooth_weight))
-    {
-    	printf("ERROR: readDomain_file() return false!\n");
-    	return false;
-    }
-    printf("\t>>read domain file [%s] complete.\n",qPrintable(qs_filename_input_domain));
-    printf("\t\tdomain - length constraint:\n");
-    for(long i=0;i<vecvec_domain_length_ind.size();i++)
-    {
-    	printf("\t\tweight=%.2f;\tcontol points index=[",vec_domain_length_weight[i]);
-    	for(long j=0;j<vecvec_domain_length_ind[i].size();j++)
-    		printf("%d,",vecvec_domain_length_ind[i][j]);
-    	printf("]\n");
-    }
-    printf("\t\tdomain - smooth constraint:\n");
-    for(long i=0;i<vecvec_domain_smooth_ind.size();i++)
-    {
-    	printf("\t\tweight=%.2f;\tcontol points index=[",vec_domain_smooth_weight[i]);
-    	for(long j=0;j<vecvec_domain_smooth_ind[i].size();j++)
-    		printf("%d,",vecvec_domain_smooth_ind[i][j]);
-    	printf("]\n");
-    }
-
-    //------------------------------------------------------------------------------------------------------------------------------------
-    //generate MIP 2d image
-    printf("\t>>generate MIP image ...\n");
-    unsigned char *p_img_MIP=0;
-    p_img_MIP=new unsigned char[sz_img_input[0]*sz_img_input[1]*sz_img_input[3]];
-    if(!p_img_MIP)
-    {
-		printf("ERROR:Fail to allocate memory for the MIP image. \n");
-    	if(p_img_input) 	{delete []p_img_input;		p_img_input=0;}
-    	if(sz_img_input) 	{delete []sz_img_input;		sz_img_input=0;}
-    	return false;
-    }
-
-	long pgsz1=sz_img_input[0];
-	long pgsz2=sz_img_input[0]*sz_img_input[1];
-	long pgsz3=sz_img_input[0]*sz_img_input[1]*sz_img_input[2];
-	unsigned char u_MIP_rgb[3];
-	for(long y=0;y<sz_img_input[1];y++)
-		for(long x=0;x<sz_img_input[0];x++)
-		{
-			u_MIP_rgb[0]=u_MIP_rgb[1]=u_MIP_rgb[2]=0;
-			for(long z=0;z<sz_img_input[2];z++)
-				for(long c=0;c<sz_img_input[3];c++)
-				{
-					long index=pgsz3*c+pgsz2*z+pgsz1*y+x;
-					if(p_img_input[index]>u_MIP_rgb[c])
-						u_MIP_rgb[c]=p_img_input[index];
-				}
-
-			for(long c=0;c<sz_img_input[3];c++)
-			{
-				long index_MIP=pgsz2*c+pgsz1*y+x;
-				p_img_MIP[index_MIP]=u_MIP_rgb[c];
-			}
-		}
-
-	//------------------------------------------------------------------------------------------------------------------------------------
-	//extract the reference channel
-//	int n_index_channel=2;
-    printf("\t>>extract the reference [%d]th channel from MIP image: ...\n",n_index_channel);
-
-    unsigned char *p_img_MIP_ref=0;
-    p_img_MIP_ref=new unsigned char[sz_img_input[0]*sz_img_input[1]];
-    if(!p_img_MIP_ref)
-    {
-    	printf("ERROR: fail to allocate memory for reference image!\n");
-    	if(p_img_input) 	{delete []p_img_input;		p_img_input=0;}
-    	if(sz_img_input) 	{delete []sz_img_input;		sz_img_input=0;}
-    	if(p_img_MIP) 		{delete []p_img_MIP;		p_img_MIP=0;}
-    	return false;
-    }
-
-	for(long y=0;y<sz_img_input[1];y++)
-		for(long x=0;x<sz_img_input[0];x++)
-		{
-			long index_MIP=pgsz2*n_index_channel+pgsz1*y+x;
-			long index_MIP_1c=pgsz1*y+x;
-			p_img_MIP_ref[index_MIP_1c]=p_img_MIP[index_MIP];
-		}
-
-	//------------------------------------------------------------------------------------------------------------------------------------
-	//downsample 1 channel MIP image to given size (for speed) and modify the coordinate of skeleton accordingly
-	double d_ratio_sample=2;//d_ratio_sample=sz_ori/sz_sample
-//	double d_ratio_sample=1;//d_ratio_sample=sz_ori/sz_sample
-	long sz_img_sample[2];	//[0]:width, [1]:height
-	sz_img_sample[0]=sz_img_input[0]/d_ratio_sample+0.5;
-	sz_img_sample[1]=sz_img_input[1]/d_ratio_sample+0.5;
-
-	printf("\t>>resize image(to [w=%ld,h=%ld]) and skeleton ...\n",sz_img_sample[0],sz_img_sample[1]);
-	//downsample 1 channel MIP image
-    unsigned char *p_img_sample=0;
-    p_img_sample=new unsigned char[sz_img_sample[0]*sz_img_sample[1]];
-    if(!p_img_sample)
-    {
-    	printf("ERROR: fail to allocate memory for sample image!\n");
-    	if(p_img_input) 	{delete []p_img_input;		p_img_input=0;}
-    	if(sz_img_input) 	{delete []sz_img_input;		sz_img_input=0;}
-    	if(p_img_MIP) 		{delete []p_img_MIP;		p_img_MIP=0;}
-    	if(p_img_MIP_ref) 	{delete []p_img_MIP_ref;	p_img_MIP_ref=0;}
-    	return false;
-    }
-
-	for(long y=0;y<sz_img_sample[1];y++)
-		for(long x=0;x<sz_img_sample[0];x++)
-		{
-			long x_o=x*d_ratio_sample+0.5;
-			long y_o=y*d_ratio_sample+0.5;
-			x_o=x_o<0?0:x_o;	x_o=x_o>=sz_img_input[0]?sz_img_input[0]-1:x_o;
-			y_o=y_o<0?0:y_o;	y_o=y_o>=sz_img_input[1]?sz_img_input[1]-1:y_o;
-
-			long index_o=sz_img_input[0]*y_o+x_o;
-			long index_s=sz_img_sample[0]*y+x;
-			p_img_sample[index_s]=p_img_MIP_ref[index_o];
-		}
-
-	QList<ImageMarker> ql_cptpos_resize(ql_cptpos_input);
-	for(long i=0;i<ql_cptpos_input.size();i++)
-	{
-		ql_cptpos_resize[i].x/=d_ratio_sample;
-		ql_cptpos_resize[i].y/=d_ratio_sample;
-		ql_cptpos_resize[i].z/=d_ratio_sample;
-	}
-
-	//------------------------------------------------------------------------------------------------------------------------------------
-	//principal skeleton detection
-    //data structure convert
-    vector<point3D64F> vec_cptpos_input,vec_cptpos_output;
-    for(long i=0;i<ql_cptpos_input.size();i++)
-    {
-    	point3D64F temp;
-    	temp.x=ql_cptpos_resize[i].x;
-    	temp.y=ql_cptpos_resize[i].y;
-    	temp.z=ql_cptpos_resize[i].z;
-    	vec_cptpos_input.push_back(temp);
-    }
-
-    //principal skeleton detection parameters
-    PSDParas paras_input;
-    paras_input.d_inizoomfactor_skeleton=d_inizoomfactor_skeleton;
-    paras_input.l_maxitertimes=500;
-    paras_input.d_stopiter_threshold=0.01;
-    paras_input.d_foreground_treshold=1;//larva:0.5, vnc:1
-    paras_input.l_diskradius_openning=7;
-    paras_input.l_diskradius_closing=7;
-//    paras_input.l_diskradius_openning=5;
-//    paras_input.l_diskradius_closing=5;
-
-    //do principal skeleton detection
-    if(!q_principalskeleton_detection(
-    		p_img_sample,sz_img_sample,
-    		vec_cptpos_input,
-    		vecvec_domain_length_ind,vec_domain_length_weight,
-    		vecvec_domain_smooth_ind,vec_domain_smooth_weight,
-    		paras_input,
-    		vec_cptpos_output))
-    {
-    	printf("ERROR:q_principalskeleton_detection() return false!\n");
-    	if(p_img_input) 	{delete []p_img_input;		p_img_input=0;}
-    	if(sz_img_input) 	{delete []sz_img_input;		sz_img_input=0;}
-    	if(p_img_MIP) 		{delete []p_img_MIP;		p_img_MIP=0;}
-    	if(p_img_MIP_ref) 	{delete []p_img_MIP_ref;	p_img_MIP_ref=0;}
-    	if(p_img_sample) 	{delete []p_img_sample;		p_img_sample=0;}
-    	return false;
-    }
-
-    //------------------------------------------------------------------------------------------------------------------------------------
-    //output deform principal skeleton
-	QList<ImageMarker> ql_cptpos_output(ql_cptpos_input);
-	for(long i=0;i<vec_cptpos_output.size();i++)
-	{
-		ql_cptpos_output[i].x=vec_cptpos_output[i].x*d_ratio_sample;
-		ql_cptpos_output[i].y=vec_cptpos_output[i].y*d_ratio_sample;
-	}
-
-	if(b_flag_ouput[1])
-	{
-		writeMarker_file(qs_filename_output_marker,ql_cptpos_output);
-	}
-	if(b_flag_ouput[2])
-	{
-		q_saveSkeleton2swcFile(ql_cptpos_output,vecvec_domain_smooth_ind,qs_filename_output_swc);
-	}
-	if(b_flag_ouput[3])
-	{
-		q_saveSkeleton2swcFile_cubicspline(ql_cptpos_output,vecvec_domain_smooth_ind,qs_filename_output_swc_cspline);
-	}
-
-
-	//------------------------------------------------------------------------------------------------------------------------------------
-	//free memory
-	printf(">>Free memory\n");
-	if(p_img_input) 	{delete []p_img_input;		p_img_input=0;}
-	if(sz_img_input) 	{delete []sz_img_input;		sz_img_input=0;}
-	if(p_img_MIP) 		{delete []p_img_MIP;		p_img_MIP=0;}
-	if(p_img_MIP_ref) 	{delete []p_img_MIP_ref;	p_img_MIP_ref=0;}
-	if(p_img_sample) 	{delete []p_img_sample;		p_img_sample=0;}
-
-
-	printf(">>Program exit successful!\n");
-	return true;
-}
-
-
-
-//Printing Help of Usage of this Program
-void printHelp()
-{
-	//pirnt help messageshi:m:d:f:o:w:W:";
-	printf("\nUsage: v3d -x skeleton -f ppsd -i <imageFilename> -p <markerFilename> <domainFilename> <refChannel> <iniSkeletonZoom> <flagOutput> <markerFilename_skeleton> <swcFilename_skeleton> <swcFilename_cubicspline_skeleton>\n");
-	printf("\t  <imageFilename>             input image filename.\n");
-	printf("\t  <markerFilename>            input marker filename which contain the positon of initial principal skeleton.\n");
-	printf("\t  <domainFilename>            input domain definition file of principal skeleton.\n");
-	printf("\t  <refChannel>                input the reference channel - 0:red, 1:green, 2:blue(default).\n");
-	printf("\t  <iniSkeletonZoom>           initial skeleton zoom factor, for larva suggest 0.1, VNC 1.0. (default 1)- .\n");
-	printf("\t  <flagOutput>                a combination of some number which indicate what file need to output.\n");
-	printf("\t           1: output deformed principal skeleton to .marker file.\n");
-	printf("\t           2: output deformed principal skeleton to .swc file.\n");
-	printf("\t           3: output cubic-spline interpolated deformed skeleton to .swc file.\n");
-	printf("\t           9: output all the intermidiate image to current directory(for debug).\n");
-	printf("\t  <markerFilename_skeleton>   output marker filename of principal skeleton(default in image directory).\n");
-	printf("\t  <swcFilename_skeleton>      output swc filename of skeleton(default in image directory).\n");
-	printf("\t  <swcFilename_cubicspline_skeleton>   output swc filename of cubic-spline interpolated skeleton(default in image directory).\n");
-
-	return;
-}
-
-
-//save larva skeleton to swc file
-bool q_saveSkeleton2swcFile(const QList<ImageMarker> &ql_cptpos,const vector< vector<long> > &vecvec_domain_cptind,const QString &qs_filename_swc_skeleton_output)
-{
-	//check parameters
-	if(ql_cptpos.isEmpty())
-	{
-		printf("ERROR: saveLarvaSkeleton2swcFile: input skeleton position array is empty.\n");
-		return false;
-	}
-	if(vecvec_domain_cptind.size()==0)
-	{
-		printf("ERROR: saveLarvaSkeleton2swcFile: input domain definition is empty.\n");
-		return false;
-	}
-	if(qs_filename_swc_skeleton_output.length()==0)
-	{
-		printf("ERROR: saveLarvaSkeleton2swcFile: output file name is empty.\n");
-		return false;
-	}
-
-	NeuronTree nt_skeleton;
-	NeuronSWC ns_marker;
-	long index=0;
-	for(long i=0;i<vecvec_domain_cptind.size();i++)
-	{
-		for(long j=0;j<vecvec_domain_cptind[i].size();j++)
-		{
-			index++;
-			long l_cptind=vecvec_domain_cptind[i][j];
-
-			ns_marker.n=index;					//index
-			ns_marker.r=2;						//radius
-			ns_marker.x=ql_cptpos[l_cptind].x;	//x
-			ns_marker.y=ql_cptpos[l_cptind].y;	//y
-			if(j==0)							//parent index
-				ns_marker.pn=-1;
-			else
-				ns_marker.pn=index-1;
-
-			nt_skeleton.listNeuron.push_back(ns_marker);
-		}
-	}
-	writeSWC_file(qs_filename_swc_skeleton_output,nt_skeleton);
-
-	return true;
 }
