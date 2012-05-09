@@ -66,6 +66,7 @@ bool CElegansStraightenPlugin::dofunc(const QString &func_name, const V3DPluginA
 		cout<<endl;
 		cout<<"inimg_file    file name of input image"<<endl;
           cout<<"marker_file   file name of input marker"<<endl;
+          cout<<"outimg_file   file name of output image"<<endl;
 		cout<<"refchannel    channel number, r: 0, g: 1, b: 2, all: 9, default 1"<<endl;
 		cout<<"ratio         downsampling ratio, default 4.0"<<endl;
 		cout<<"ctnum         number of control points, default 10"<<endl;
