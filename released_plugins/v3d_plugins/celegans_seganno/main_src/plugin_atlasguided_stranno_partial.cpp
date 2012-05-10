@@ -3,6 +3,9 @@
 //2010-11-09
 //2011-08-29. add download page info
 
+// add dofunc() interface by Jianlong Zhou. 2012-05-05.
+// reorder code by Jianlong Zhou for dofunc() interface
+
 #include <QtGui>
 
 #include "stackutil.h"
@@ -14,7 +17,7 @@
 #include "q_atlasguided_seganno.h"
 #include "q_paradialog_stranno.h"
 
-//Q_EXPORT_PLUGIN2 ( PluginName, ClassName ) 
+//Q_EXPORT_PLUGIN2 ( PluginName, ClassName )
 //The value of PluginName should correspond to the TARGET specified in the plugin's project file.
 Q_EXPORT_PLUGIN2(plugin_atlasguided_stranno_partial, AtlasGuidedStrAnnoPartialPlugin);
 
@@ -22,7 +25,17 @@ const QString title = "AtlasGuidedStrAnnoPlugin demo";
 CControlPanel* CControlPanel::panel=0;
 
 void AtlasGuidedStrAnnoPartial(V3DPluginCallback2 &callback, QWidget *parent, int mode);
+
+bool AtlasGuidedStrAnnoPartial(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 &callback, int mode);
+
 bool readCelloi_file(const QString &qs_filename,QList<QString> &ql_celloi);
+
+bool do_AtlasGuidedStrAnno ( V3DPluginCallback2 &callback,
+     QString &qs_filename_img, QString &qs_filename_marker_input,  // input files
+     QString &qs_filename_atals_input, QString &qs_filename_celloi_input, QString &qs_filename_celloi_2_input,
+     CSParas &paras_str, CParas &paras_anno, bool &b_use_celloi_2, // paras
+     QString &qs_filename_atals_output, QString &qs_filename_seglabel_output ); // output files
+
 
 
 void OpenDownloadPage(QWidget *parent)
@@ -35,7 +48,7 @@ void OpenDownloadPage(QWidget *parent)
 							 "Please browse to\n"
 							 "http://penglab.janelia.org/proj/celegans_seganno\n"
 							 "to download the test data for this plugin");
-	
+
 }
 
 
@@ -43,7 +56,7 @@ void OpenDownloadPage(QWidget *parent)
 QStringList AtlasGuidedStrAnnoPartialPlugin::menulist() const
 {
     return QStringList()
-	
+
 	<< tr("atlasguided_seganno...")
 	<< tr("open suppelement-material web page")
 /*	<< tr("atlasguided_stranno_parital...")
@@ -87,6 +100,177 @@ void AtlasGuidedStrAnnoPartialPlugin::domenu(const QString &menu_name, V3DPlugin
 	}
 }
 
+
+QStringList AtlasGuidedStrAnnoPartialPlugin::funclist() const
+{
+	return QStringList()
+		<<tr("seganno")
+		<<tr("help");
+}
+
+
+bool AtlasGuidedStrAnnoPartialPlugin::dofunc(const QString &func_name, const V3DPluginArgList &input, V3DPluginArgList &output, V3DPluginCallback2 &callback, QWidget *parent)
+{
+     if (func_name == tr("seganno"))
+	{
+		return AtlasGuidedStrAnnoPartial(input, output, callback, -1);
+     }
+	else if(func_name == tr("help"))
+	{
+          cout<<"Usage : v3d -x atlasguided -f seganno -i <inimg_file> <inmarker_file> <inatlas_file> <incell_file> [<incell2_file>] -o <outatlas_file> <outseglab_file> -p <refchannel> <ratio> <fgthresh> <initemp> <minitemp> <ann_rate> <iter> <useCell2>"<<endl;
+		cout<<endl;
+          cout<<"inimg_file      name of input image file"<<endl;
+		cout<<"inmarker_file   name of input marker file"<<endl;
+          cout<<"inatlas_file    name of input atlas file"<<endl;
+          cout<<"incell_file     name of input interesting cell file"<<endl;
+          cout<<"incell2_file    name of input secondary interesting cell file, if useCell2 is 0, this should be empty"<<endl;
+
+          cout<<"outatlas_file   name of output atlas file"<<endl;
+          cout<<"outseglab_file  name of output seg-label file"<<endl;
+		cout<<"refchannel      channel number, r: 1, g: 2, b: 3, default 2"<<endl;
+		cout<<"ratio           downsampling ratio, default 4"<<endl;
+          cout<<"fgthresh        fg thresh factor, default 3"<<endl;
+          cout<<"initemp         initial temperature, default 20"<<endl;
+          cout<<"minitemp        minimal temperature, default 0.2"<<endl;
+          cout<<"ann_rate        annealing rate, default 0.95"<<endl;
+          cout<<"iter            iter per temperature, default 1"<<endl;
+          cout<<"useCell2        whether to import secondary interesting cell names from file, 1: yes, 0: not. default 0"<<endl;
+		cout<<endl;
+          cout<<"e.g. v3d -x atlasguided -f seganno -i inimg_file.raw inmarker_file.marker inatlas_file.apo incell_file.txt -o myoutatlas.apo outseglab.raw -p 2 4 3 20 0.2 0.95 1 0"<<endl;
+          cout<<endl;
+		return true;
+	}
+}
+
+
+
+bool AtlasGuidedStrAnnoPartial(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 &callback, int mode)
+{
+     cout<<"Welcome to Atlas Guided StrAnno"<<endl;
+
+     if (output.size() < 1) return false;
+
+     CSParas paras_str;
+     CParas paras_anno;
+     //input image, marker, atlas
+	QString qs_filename_img="";
+	QString qs_filename_marker_input="";
+	QString qs_filename_atals_input="";
+	QString qs_filename_celloi_input="";
+	QString qs_filename_celloi_2_input="";
+
+     // output
+     QString qs_filename_atals_output="";
+	QString qs_filename_seglabel_output="";
+
+     bool b_use_celloi_2 = 0; // from settings
+
+     //initial align
+     paras_anno.l_refchannel=2;
+     paras_anno.d_downsampleratio=4;
+	paras_anno.d_fgthresh_factor=3;
+	paras_anno.d_T=20;
+	paras_anno.d_T_min=0.2;
+	paras_anno.d_annealingrate=0.95;
+	paras_anno.l_niter_pertemp=1;
+
+     if (input.size()>=1)
+     {
+          // input file
+          vector<char*> paras_infile = (*(vector<char*> *)(input.at(0).p));
+          if(paras_infile.size()<4)
+          {
+               v3d_msg("There are not enough input files.\n", 0);
+               return false;
+          }
+          if(paras_infile.size() >= 1) qs_filename_img = paras_infile.at(0);
+          if(paras_infile.size() >= 2) qs_filename_marker_input = paras_infile.at(1);
+          if(paras_infile.size() >= 3) qs_filename_atals_input = paras_infile.at(2);
+          if(paras_infile.size() >= 4) qs_filename_celloi_input = paras_infile.at(3);
+          if(paras_infile.size() >= 5) qs_filename_celloi_2_input = paras_infile.at(4);
+
+          // output file
+          vector<char*> paras_outfile = (*(vector<char*> *)(output.at(0).p));
+          if(paras_outfile.size()<2)
+          {
+               v3d_msg("There are not enough output files.\n", 0);
+               return false;
+          }
+          if(paras_outfile.size() >= 1) qs_filename_atals_output = paras_outfile.at(0);
+          if(paras_outfile.size() >= 2) qs_filename_seglabel_output = paras_outfile.at(1);
+
+          // parameters from -p
+          if(input.size()>=2)
+          {
+               vector<char*> paras = (*(vector<char*> *)(input.at(1).p));
+               if(paras.size() >= 1) paras_anno.l_refchannel = atoi(paras.at(0));
+               if(paras.size() >= 2) paras_anno.d_downsampleratio = atof(paras.at(1));
+               if(paras.size() >= 3) paras_anno.d_fgthresh_factor = atof(paras.at(2));
+               if(paras.size() >= 4) paras_anno.d_T = atof(paras.at(3));
+               if(paras.size() >= 5) paras_anno.d_T_min = atof(paras.at(4));
+               if(paras.size() >= 6) paras_anno.d_annealingrate = atof(paras.at(5));
+               if(paras.size() >= 7) paras_anno.l_niter_pertemp = atoi(paras.at(6));
+               if(paras.size() >= 8) b_use_celloi_2 = atoi(paras.at(7));
+          }
+	}
+     else
+     {
+          v3d_msg("There are not enough parameters.\n", 0);
+          return false;
+     }
+
+     // print out input paras
+     cout<<"Input image file: "<<qPrintable(qs_filename_img)<<endl;
+     cout<<"Input marker file: "<<qPrintable(qs_filename_marker_input)<<endl;
+     cout<<"Input atlas file: "<<qPrintable(qs_filename_atals_input)<<endl;
+     cout<<"Input interesting cell file: "<<qPrintable(qs_filename_celloi_input)<<endl;
+     cout<<"Input 2nd interesting cell file: "<<qPrintable(qs_filename_celloi_2_input)<<endl;
+
+     // set for dofunc() because V3D view is no use for dofunc()
+     paras_str.b_imgfromV3D=0;
+	paras_str.b_markerfromV3D=0;
+	//visualization
+	paras_anno.b_showatlas=false;
+	paras_anno.b_showsegmentation=false;
+	paras_anno.b_stepwise=1;
+
+     // set by original program. it seems that they cannot be changed
+     //refine align
+	paras_anno.b_ref_simplealign=1;
+	paras_anno.d_ref_T=0.1;
+	paras_anno.l_ref_cellradius=8;
+	paras_anno.l_ref_maxiter=100;
+	paras_anno.d_ref_minposchange=1.0;
+	//mode
+	paras_anno.l_mode=mode;
+
+     // this is used for displaying window for adjust the property before enter into the iteration loop
+     // if b_showatlas or b_showsegmentation is true. dofunc() does not show atlas or segmentation, so set parent be 0;
+	paras_anno.qw_rootparent= 0; //parent;
+
+     if(qs_filename_img.isEmpty() || qs_filename_marker_input.isEmpty() || qs_filename_atals_input.isEmpty() ||
+          qs_filename_celloi_input.isEmpty() || qs_filename_atals_output.isEmpty() || qs_filename_seglabel_output.isEmpty())
+     {
+          v3d_msg("Invalid input and output parameters.\n", 0);
+          return false;
+     }
+
+     if(! do_AtlasGuidedStrAnno(callback,
+               qs_filename_img, qs_filename_marker_input,
+               qs_filename_atals_input, qs_filename_celloi_input, qs_filename_celloi_2_input,
+               paras_str, paras_anno, b_use_celloi_2, qs_filename_atals_output, qs_filename_seglabel_output )
+        )
+
+     {
+          v3d_msg("Error in calling do_AtlasGuidedStrAnno()");
+          return false;
+     }
+
+     return true;
+
+}
+
+
 //************************************************************************************************************************************
 void AtlasGuidedStrAnnoPartial(V3DPluginCallback2 &callback, QWidget *parent, int mode)
 {
@@ -100,7 +284,6 @@ void AtlasGuidedStrAnnoPartial(V3DPluginCallback2 &callback, QWidget *parent, in
 	paras_str.b_markerfromV3D=1;
 	QString qs_filename_img="";
 	QString qs_filename_marker_input="";
-	QString qs_filename_strimg_output="";
 
 	CParas paras_anno;
 	//image and atlas
@@ -131,6 +314,43 @@ void AtlasGuidedStrAnnoPartial(V3DPluginCallback2 &callback, QWidget *parent, in
 	paras_anno.l_mode=mode;
 	paras_anno.qw_rootparent=parent;
 
+     // whether use celloi_2
+     bool b_use_celloi_2 = DLG_stranno.checkBox_celloi_2->isChecked();
+
+      // print out input paras
+     cout<<"Input atlas file: "<<qPrintable(qs_filename_atals_input)<<endl;
+     cout<<"Input interesting cell file: "<<qPrintable(qs_filename_celloi_input)<<endl;
+     cout<<"Input 2nd interesting cell file: "<<qPrintable(qs_filename_celloi_2_input)<<endl;
+
+     if( qs_filename_atals_input.isEmpty() || qs_filename_celloi_input.isEmpty() || qs_filename_atals_output.isEmpty() ||
+          qs_filename_seglabel_output.isEmpty())
+     {
+          v3d_msg("Invalid input and output parameters.\n");
+          return;
+     }
+
+     // ---------------------------------------------------
+     if(! do_AtlasGuidedStrAnno(callback,
+               qs_filename_img, qs_filename_marker_input,  // input files
+               qs_filename_atals_input, qs_filename_celloi_input, qs_filename_celloi_2_input,
+               paras_str, paras_anno, b_use_celloi_2, // paras
+               qs_filename_atals_output, qs_filename_seglabel_output ) // output files
+        )
+     {
+          v3d_msg("Error in calling do_AtlasGuidedStrAnno()");
+          return;
+     }
+     v3d_msg("Program exit successfully!\n");
+
+}
+
+
+bool do_AtlasGuidedStrAnno(V3DPluginCallback2 &callback,
+     QString &qs_filename_img, QString &qs_filename_marker_input,  // input files
+     QString &qs_filename_atals_input, QString &qs_filename_celloi_input, QString &qs_filename_celloi_2_input,
+     CSParas &paras_str, CParas &paras_anno, bool &b_use_celloi_2, // paras
+     QString &qs_filename_atals_output, QString &qs_filename_seglabel_output ) // output files
+{
 	//------------------------------------------------------------------------------------------------------------------------------------
 	printf("1. Import image. \n");
 	unsigned char *p_img_input=0;
@@ -141,12 +361,12 @@ void AtlasGuidedStrAnnoPartial(V3DPluginCallback2 &callback, QWidget *parent, in
 		if(qs_filename_img.isEmpty())
 		{
 			v3d_msg(QString("invalid image path!"));
-			return;
+			return false;
 		}
 		if(!loadImage((char *)qPrintable(qs_filename_img),p_img_input,sz_img_input,datatype_input))
 		{
 			v3d_msg(QString("open file [%1] failed!").arg(qs_filename_img));
-			return;
+			return false;
 		}
 		printf("\t>>read image file [%s] complete.\n",qPrintable(qs_filename_img));
 	}
@@ -157,7 +377,7 @@ void AtlasGuidedStrAnnoPartial(V3DPluginCallback2 &callback, QWidget *parent, in
 		if(h_wndlist.size()<1)
 		{
 			v3d_msg(QString("Make sure there are at least 1 image in V3D!"));
-			return;
+			return false;
 		}
 		Image4DSimple* image=callback.getImage(callback.currentImageWindow());
 		p_img_input=image->getRawData();
@@ -179,7 +399,7 @@ void AtlasGuidedStrAnnoPartial(V3DPluginCallback2 &callback, QWidget *parent, in
 		printf("ERROR: Fail to allocate memory. Do nothing. \n");
 		if(p_img_input && !paras_str.b_imgfromV3D) 	{delete []p_img_input;		p_img_input=0;}
 		if(sz_img_input)						 	{delete []sz_img_input;		sz_img_input=0;}
-		return;
+		return false;
 	}
 	if(datatype_input==1)
 	{
@@ -197,7 +417,7 @@ void AtlasGuidedStrAnnoPartial(V3DPluginCallback2 &callback, QWidget *parent, in
 			if(p_img_8u) 								{delete []p_img_8u;			p_img_8u=0;}
 			if(p_img_input && !paras_str.b_imgfromV3D) 	{delete []p_img_input;		p_img_input=0;}
 			if(sz_img_input)						 	{delete []sz_img_input;		sz_img_input=0;}
-			return;
+			return false;
 		}
 	}
 	else if(datatype_input==3)
@@ -210,7 +430,7 @@ void AtlasGuidedStrAnnoPartial(V3DPluginCallback2 &callback, QWidget *parent, in
 			if(p_img_8u)								{delete []p_img_8u;			p_img_8u=0;}
 			if(p_img_input && !paras_str.b_imgfromV3D) 	{delete []p_img_input;		p_img_input=0;}
 			if(sz_img_input)						 	{delete []sz_img_input;		sz_img_input=0;}
-			return;
+			return false;
 		}
 	}
 	else
@@ -219,7 +439,7 @@ void AtlasGuidedStrAnnoPartial(V3DPluginCallback2 &callback, QWidget *parent, in
 		if(p_img_8u) 								{delete []p_img_8u;			p_img_8u=0;}
 		if(p_img_input && !paras_str.b_imgfromV3D) 	{delete []p_img_input;		p_img_input=0;}
 		if(sz_img_input)						 	{delete []sz_img_input;		sz_img_input=0;}
-		return;
+		return false;
 	}
 	}
 
@@ -235,7 +455,7 @@ void AtlasGuidedStrAnnoPartial(V3DPluginCallback2 &callback, QWidget *parent, in
 			if(p_img_8u) 								{delete []p_img_8u;			p_img_8u=0;}
 			if(p_img_input && !paras_str.b_imgfromV3D) 	{delete []p_img_input;		p_img_input=0;}
 			if(sz_img_input)						 	{delete []sz_img_input;		sz_img_input=0;}
-			return;
+			return false;
 		}
 		QList<ImageMarker> ql_markers=readMarker_file(qs_filename_marker_input);
 		printf("\t>>read %d markers from file: %s.\n",ql_markers.size(),qPrintable(qs_filename_marker_input));
@@ -258,7 +478,7 @@ void AtlasGuidedStrAnnoPartial(V3DPluginCallback2 &callback, QWidget *parent, in
 			if(p_img_8u) 								{delete []p_img_8u;			p_img_8u=0;}
 			if(p_img_input && !paras_str.b_imgfromV3D) 	{delete []p_img_input;		p_img_input=0;}
 			if(sz_img_input)						 	{delete []sz_img_input;		sz_img_input=0;}
-			return;
+			return false;
 		}
 		LandmarkList ml_makers=callback.getLandmark(callback.currentImageWindow());
 		vector<double> vec_marker(3,0);
@@ -282,7 +502,7 @@ void AtlasGuidedStrAnnoPartial(V3DPluginCallback2 &callback, QWidget *parent, in
 		if(p_img_8u) 								{delete []p_img_8u;			p_img_8u=0;}
 		if(p_img_input && !paras_str.b_imgfromV3D) 	{delete []p_img_input;		p_img_input=0;}
 		if(sz_img_input) 							{delete []sz_img_input;		sz_img_input=0;}
-		return;
+		return false;
 	}
 
 	//------------------------------------------------------------------------------------------------------------------------------------
@@ -294,7 +514,7 @@ void AtlasGuidedStrAnnoPartial(V3DPluginCallback2 &callback, QWidget *parent, in
 		if(p_img_8u) 								{delete []p_img_8u;			p_img_8u=0;}
 		if(p_img_input && !paras_str.b_imgfromV3D) 	{delete []p_img_input;		p_img_input=0;}
 		if(sz_img_input)						 	{delete []sz_img_input;		sz_img_input=0;}
-		return;
+		return false;
 	}
 
 	printf("\t>>interesting cell:\n");
@@ -337,7 +557,7 @@ void AtlasGuidedStrAnnoPartial(V3DPluginCallback2 &callback, QWidget *parent, in
 			if(p_img_8u) 								{delete []p_img_8u;			p_img_8u=0;}
 			if(p_img_input && !paras_str.b_imgfromV3D) 	{delete []p_img_input;		p_img_input=0;}
 			if(sz_img_input)						 	{delete []sz_img_input;		sz_img_input=0;}
-			return;
+			return false;
 		}
 	}
 
@@ -373,7 +593,7 @@ void AtlasGuidedStrAnnoPartial(V3DPluginCallback2 &callback, QWidget *parent, in
 			if(p_img_8u) 								{delete []p_img_8u;			p_img_8u=0;}
 			if(p_img_input && !paras_str.b_imgfromV3D) 	{delete []p_img_input;		p_img_input=0;}
 			if(sz_img_input) 							{delete []sz_img_input;		sz_img_input=0;}
-			return;
+			return false;
 		}
 	}
 	else if(paras_anno.l_mode==4) //align dapi
@@ -388,7 +608,7 @@ void AtlasGuidedStrAnnoPartial(V3DPluginCallback2 &callback, QWidget *parent, in
 			if(p_img_8u) 								{delete []p_img_8u;			p_img_8u=0;}
 			if(p_img_input && !paras_str.b_imgfromV3D) 	{delete []p_img_input;		p_img_input=0;}
 			if(sz_img_input) 							{delete []sz_img_input;		sz_img_input=0;}
-			return;
+			return false;
 		}
 	}
 	else			//partial annotation
@@ -403,7 +623,7 @@ void AtlasGuidedStrAnnoPartial(V3DPluginCallback2 &callback, QWidget *parent, in
 			if(p_img_8u) 								{delete []p_img_8u;			p_img_8u=0;}
 			if(p_img_input && !paras_str.b_imgfromV3D) 	{delete []p_img_input;		p_img_input=0;}
 			if(sz_img_input) 							{delete []sz_img_input;		sz_img_input=0;}
-			return;
+			return false;
 		}
 	}
 	}
@@ -415,7 +635,7 @@ void AtlasGuidedStrAnnoPartial(V3DPluginCallback2 &callback, QWidget *parent, in
 	//------------------------------------------------------------------------------------------------------------------------------------
 	//warping the secondary interesting cells if provided based on the TPS paras obtained from the first group result
 	QList<CellAPO> ql_cellio2_tps;
-	if(DLG_stranno.checkBox_celloi_2->isChecked() || !qs_filename_celloi_2_input.isEmpty())
+	if( b_use_celloi_2 || !qs_filename_celloi_2_input.isEmpty()) // b_use_celloi_2 = DLG_stranno.checkBox_celloi_2->isChecked()
 	{
 		printf("6~7. Warping the secondary interesting cells. \n");
 
@@ -423,7 +643,7 @@ void AtlasGuidedStrAnnoPartial(V3DPluginCallback2 &callback, QWidget *parent, in
 		if(!readCelloi_file(qs_filename_celloi_2_input,ql_celloi2_name))
 		{
 			printf("ERROR: readCelloi_file() return false! \n");
-			return;
+			return false;
 		}
 
 		vector<point3D64F> vec_cellio1_ori,vec_cellio1_tps,vec_cellio2_ori;
@@ -500,14 +720,14 @@ void AtlasGuidedStrAnnoPartial(V3DPluginCallback2 &callback, QWidget *parent, in
 		if(!q_TPS_cd(vec_cellio1_ori,vec_cellio1_tps,0,x4x4_affine,xnx4_c,xnxn_K))
 		{
 			printf("ERROR: q_TPS_cd() return false!\n");
-			return;
+			return false;
 		}
 		//compute TPS kernal matrix
 		Matrix xmxn_K;
 		if(!q_TPS_k(vec_cellio2_ori,vec_cellio1_ori,xmxn_K))
 		{
 			printf("ERROR: q_TPS_k() return false!\n");
-			return;
+			return false;
 		}
 		//warp the secondary cells
 		Matrix x_ori(ql_cellio2_ori.size(),4),x_tps(ql_cellio2_ori.size(),4);
@@ -545,7 +765,7 @@ void AtlasGuidedStrAnnoPartial(V3DPluginCallback2 &callback, QWidget *parent, in
 		}
 	}
 
-	if(DLG_stranno.checkBox_celloi_2->isChecked() || !qs_filename_celloi_2_input.isEmpty())
+	if(b_use_celloi_2 || !qs_filename_celloi_2_input.isEmpty()) // b_use_celloi_2=DLG_stranno.checkBox_celloi_2->isChecked()
 		ql_musclecell_output_ori.append(ql_cellio2_tps);
 
 	//save deformed point cloud to apo file
@@ -593,8 +813,8 @@ void AtlasGuidedStrAnnoPartial(V3DPluginCallback2 &callback, QWidget *parent, in
 	if(sz_img_input) 							{delete []sz_img_input;		sz_img_input=0;}
 
 	//------------------------------------------------------------------------------------------------------------------------------------
-	v3d_msg("Program exit successfully!\n");
-	return;
+	v3d_msg("Program exit successfully!\n", 0);
+	return true;
 }
 
 bool readCelloi_file(const QString &qs_filename,QList<QString> &ql_celloi)
