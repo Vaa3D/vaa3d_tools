@@ -102,7 +102,7 @@ bool PrincipalSkeletonDetectionPlugin::dofunc(const QString &func_name, const V3
      }
 	else if(func_name == tr("help"))
 	{
-          cout<<"Usage : v3d -x skeleton -f detect -i <inimg_file> <iniskele_file> <domain_file> -o <deformskele_file> <cubicswc_file> -p <channel> <stop_thresh>"<<endl;
+          cout<<"Usage : v3d -x principal_skeleton -f detect -i <inimg_file> <iniskele_file> <domain_file> -o <deformskele_file> <cubicswc_file> -p <channel> <stop_thresh>"<<endl;
 		cout<<endl;
 		cout<<"inimg_file     name of input image file"<<endl;
           cout<<"iniskele_file  name of input initial skeleton file (.marker)"<<endl;
@@ -114,10 +114,10 @@ bool PrincipalSkeletonDetectionPlugin::dofunc(const QString &func_name, const V3
 		cout<<"channel        the input channel value, default 2 and start from 0"<<endl;
 		cout<<"stop_thresh    stop threshold, default 0.01"<<endl;
 		cout<<endl;
-		cout<<"e.g. v3d -x skeleton -f detect -i input.raw iniskele_file.marker domain_file.domain -o deformskele.marker cubicswc.swc -p 2 0.01"<<endl;
+		cout<<"e.g. v3d -x principal_skeleton -f detect -i input.raw iniskele_file.marker domain_file.domain -o deformskele.marker cubicswc.swc -p 2 0.01"<<endl;
 		cout<<endl;
 
-          cout<<"Usage : v3d -x skeleton -f warp -i <subimg_file> <submak_file> <tarimg_file> <tarmak_file> <domain_file> -o <outimg_file>"<<endl;
+          cout<<"Usage : v3d -x principal_skeleton -f warp -i <subimg_file> <submak_file> <tarimg_file> <tarmak_file> <domain_file> -o <outimg_file>"<<endl;
 		cout<<endl;
 		cout<<"subimg_file     file name of subject image"<<endl;
           cout<<"submak_file     file name of subject skeleton (.marker)"<<endl;
@@ -125,7 +125,7 @@ bool PrincipalSkeletonDetectionPlugin::dofunc(const QString &func_name, const V3
           cout<<"tarmak_file     file name of target skeleton (.marker)"<<endl;
           cout<<"domain_file     file name of domain definition (.domain)"<<endl;
 		cout<<endl;
-		cout<<"e.g. v3d -x skeleton -f warp -i subimg.raw submak.marker tarimg.raw tarmak.marker domain_file.domain -o outimg.raw"<<endl;
+		cout<<"e.g. v3d -x principal_skeleton -f warp -i subimg.raw submak.marker tarimg.raw tarmak.marker domain_file.domain -o outimg.raw"<<endl;
 		cout<<endl;
 		return true;
 	}
@@ -171,7 +171,7 @@ bool PrincipalSkeletonDetection(const V3DPluginArgList & input, V3DPluginArgList
      int n_index_channel=2;
 	double d_stopthresh=0.01;
 
-     if (input.size()>=2)
+     if (input.size()>=1)
      {
           // input files
           vector<char*> paras_infile = (*(vector<char*> *)(input.at(0).p));
@@ -194,9 +194,12 @@ bool PrincipalSkeletonDetection(const V3DPluginArgList & input, V3DPluginArgList
           if(paras_outfile.size() >= 2) filename_swc_out = paras_outfile.at(1);
 
           // input -p
-          vector<char*> paras = (*(vector<char*> *)(input.at(1).p));
-          if(paras.size() >= 1) n_index_channel = atoi(paras.at(0));
-          if(paras.size() >= 2) d_stopthresh = atof(paras.at(1));
+          if(input.size()>=2)
+          {
+               vector<char*> paras = (*(vector<char*> *)(input.at(1).p));
+               if(paras.size() >= 1) n_index_channel = atoi(paras.at(0));
+               if(paras.size() >= 2) d_stopthresh = atof(paras.at(1));
+          }
      }
 
 
