@@ -176,6 +176,7 @@ bool CElegansStraighten(V3DPluginCallback2 &callback, QWidget *parent)
           {
                return false;
           }
+          v3d_msg(QString("Celegans Strenghten is finished successfully!"));
           return true;
 	}
 
@@ -464,7 +465,7 @@ bool do_straighten(V3DPluginCallback2 &callback, ParaDialog &paraDlg, QString &q
      //------------------------------------------------------------------------------------------------------------------------------------
      printf("6. Save straightened image. \n");
      saveImage(qPrintable(qs_filename_strimg_output),(unsigned char *)p_img_output,sz_img_output,1);
-     QMessageBox::information(0,"Save info",QString("Strenghtened image is saved to:\n %1").arg(qs_filename_strimg_output));
+     v3d_msg(QString("Strenghtened image is saved to:\n %1").arg(qs_filename_strimg_output),0);
 
      //------------------------------------------------------------------------------------------------------------------------------------
      //free memory
