@@ -123,7 +123,7 @@ bool AtlasGuidedStrAnnoPartialPlugin::dofunc(const QString &func_name, const V3D
 		cout<<"inmarker_file   name of input marker file"<<endl;
           cout<<"inatlas_file    name of input atlas file"<<endl;
           cout<<"incell_file     name of input interesting cell file"<<endl;
-          cout<<"incell2_file    name of input secondary interesting cell file, if useCell2 is 0, this should be empty"<<endl;
+          cout<<"incell2_file    name of input secondary interesting cell file. If useCell2 is 0, this field is empty"<<endl;
 
           cout<<"outatlas_file   name of output atlas file"<<endl;
           cout<<"outseglab_file  name of output seg-label file"<<endl;
