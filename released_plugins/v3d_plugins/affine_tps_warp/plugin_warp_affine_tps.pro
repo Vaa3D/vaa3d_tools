@@ -5,13 +5,13 @@ CONFIG       += x86_64
 CONFIG += qt warn_off
 CONFIG -= app_bundle
 
-V3DMAINPATH  = ../../v3d_main
+V3DMAINPATH  = ../../../v3d_main
 INCLUDEPATH  += $$V3DMAINPATH/basic_c_fun
 INCLUDEPATH  += $$V3DMAINPATH/common_lib/include
 INCLUDEPATH  += $$V3DMAINPATH/jba/newmat11
 
-LIBS         += -L../../v3d_main/jba/c++ -lv3dnewmat
-LIBS         += -L../../v3d_main/common_lib/lib -lv3dtiff
+LIBS         += -L$$V3DMAINPATH/jba/c++ -lv3dnewmat
+LIBS         += -L$$V3DMAINPATH/common_lib/lib -lv3dtiff
 
 HEADERS      += $$V3DMAINPATH/basic_c_fun/v3d_message.h
 HEADERS      += $$V3DMAINPATH/basic_c_fun/basic_surf_objs.h
@@ -33,6 +33,5 @@ SOURCES      += plugin_warp_affine_tps.cpp
 
 TARGET        = $$qtLibraryTarget(plugin_warp_affin_tps)
 
-
-#DESTDIR       = ../../v3d_main/v3d/plugins/alignment_affin_TPS_warp  #win32 qmake couldn't handle space in path
+DESTDIR       = ../../v3d/plugins/neuron_utilities/alignment_affine_TPS_warp  #win32 qmake couldn't handle space in path
 
