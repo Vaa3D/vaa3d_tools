@@ -15,7 +15,7 @@ public:
 	V3DPluginCallback2 * callback;
 	QTreeWidget * pluginTreeWidget;
 	QString root_path;
-	QStringList fileList;
+	QHash<QTreeWidgetItem*, QString> name_table;
 
 
 public slots:

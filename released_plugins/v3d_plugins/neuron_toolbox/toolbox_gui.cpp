@@ -88,15 +88,17 @@ SelectPluginDlg::SelectPluginDlg(QWidget * parent, const V3DPluginCallback2 & _c
 	pluginTreeWidget = new QTreeWidget();
 	pluginTreeWidget->setColumnCount(1);
 	pluginTreeWidget->header()->hide();
-	pluginTreeWidget->setSortingEnabled(true);
+	pluginTreeWidget->setSortingEnabled(false);
 
 	if (!setPluginRootPathAutomaticly())
 		v3d_msg("You don't have any plugins on neuron utilities");
+	QStringList fileList;
 	getAllFiles(toolboxRootPath, fileList);
 	root_path = toolboxRootPath;
 
-	foreach(QString file, fileList)
+	for (int i=0;i<fileList.size();i++)
 	{
+		QString file = fileList[i];
 		QPluginLoader* loader = new QPluginLoader(file);
 		if(!loader) 
 		{
@@ -114,6 +116,7 @@ SelectPluginDlg::SelectPluginDlg(QWidget * parent, const V3DPluginCallback2 & _c
 			tmp.chop(file.section("/", -1).size()+1);
 			pluginItem->setText(0, tmp);
 			pluginTreeWidget->addTopLevelItem(pluginItem);
+			name_table.insert(pluginItem,fileList[i]);
 
 			QStringList menulist = v3d_getInterfaceMenuList(plugin);
 			foreach(QString menu_name, menulist)
@@ -122,6 +125,7 @@ SelectPluginDlg::SelectPluginDlg(QWidget * parent, const V3DPluginCallback2 & _c
 				QTreeWidgetItem * menuItem = new QTreeWidgetItem(pluginItem);
 				menuItem->setText(0, menu_name);
 			}
+			
 		}
 		loader->unload();
 		delete loader;
@@ -159,11 +163,13 @@ SelectPluginDlg::SelectPluginDlg(QWidget * parent, const V3DPluginCallback2 & _c
 
 	if (!setPluginRootPathAutomaticly())
 		v3d_msg("You don't have any plugins on neuron utilities");
+	QStringList fileList;
 	getAllFiles(toolboxRootPath, fileList);
 	root_path = toolboxRootPath;
 
-	foreach(QString file, fileList)
+	for(int i=0;i<fileList.size();i++)
 	{
+		QString file = fileList[i];
 		QPluginLoader* loader = new QPluginLoader(file);
 		if(!loader) 
 		{
@@ -182,8 +188,8 @@ SelectPluginDlg::SelectPluginDlg(QWidget * parent, const V3DPluginCallback2 & _c
 			QString tmp = file.remove(0, root_path.size()+1);
 			tmp.chop(file.section("/", -1).size()+1);
 			pluginItem->setText(0, tmp);
-			//pluginItem->setText(0, file);
-			//pluginTreeWidget->addTopLevelItem(pluginItem);
+			pluginTreeWidget->addTopLevelItem(pluginItem);
+			name_table.insert(pluginItem, fileList[i]);
 
 			QStringList menulist = v3d_getInterfaceMenuList(plugin);
 			foreach(QString menu_name, menulist)
@@ -225,7 +231,8 @@ bool SelectPluginDlg::runMenu()
 		v3d_msg("Please select a menu name");
 		return false;
 	}
-	QString plugin_name = root_path + "/" + pluginItem->text(0);
+	//QString plugin_name = root_path + "/" + pluginItem->text(0);
+	QString plugin_name = name_table[pluginItem];
 
 	QPluginLoader* loader = new QPluginLoader(plugin_name);
 	cout<<"plugin_file = "<<plugin_name.toStdString()<<endl;
@@ -287,7 +294,9 @@ bool SelectPluginDlg::runFunc()
 		v3d_msg("Please select a menu name");
 		return false;
 	}
-	QString plugin_name = root_path + "/" + pluginItem->text(0);
+	//QString plugin_name = root_path + "/" + pluginItem->text(0);
+	QString plugin_name = name_table[pluginItem];
+
 	if (!callback->callPluginFunc(plugin_name, "TOOLBOX" + menu_name, *input, output))
 	{
 		runMenu();
