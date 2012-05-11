@@ -444,7 +444,7 @@ void WarpImageBaseonMatchedPairs(V3DPluginCallback &callback, QWidget *parent)
 	QString qs_filename_marker_tar,qs_filename_marker_sub,qs_filename_sub;
 	QString qs_filename_sub2tar_affine,qs_filename_sub2tar_tps;
 
-	WarpAffineTpsDialog_img WarpAffineTpsDialog_img(parent);
+	WarpAffineTpsDialog_img WarpAffineTpsDialog_img(0);
 	if(WarpAffineTpsDialog_img.exec()==QDialog::Accepted)
 	{
 		//input
