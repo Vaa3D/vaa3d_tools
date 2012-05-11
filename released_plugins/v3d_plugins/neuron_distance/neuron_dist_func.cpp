@@ -73,18 +73,20 @@ bool neuron_dist_toolbox(const V3DPluginArgList & input, V3DPluginCallback2 & ca
 		return false;
 	}
 
-	QString message = QString("Distance between current neuron and\n");
+	QString message;
+	int cur_idx = 0;
 
 	for (V3DLONG i=0;i<nt_list->size();i++)
 	{
 		NeuronTree curr_nt = nt_list->at(i);
-		if (curr_nt.file == nt.file) continue;
+		if (curr_nt.file == nt.file) {cur_idx = i; continue;}
 		NeuronDistSimple tmp_score = neuron_score_rounding_nearest_neighbor(&nt, &curr_nt);
 		message += QString("\nneuron #%1:\n%2\n").arg(i+1).arg(curr_nt.file);
 		message += QString("entire-structure-average = %1\n").arg(tmp_score.dist_allnodes);
 		message += QString("differen-structure-average = %1\n").arg(tmp_score.dist_apartnodes);
 		message += QString("percent of different-structure = %1\n").arg(tmp_score.percent_apartnodes);
 	}
+	message = QString("Distance between current neuron #%1 and\n").arg(cur_idx+1) + message;
 
 
 	v3d_msg(message);
