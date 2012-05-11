@@ -8,7 +8,7 @@
 #include "basic_surf_objs.h"
 #include "neuron_dist_func.h"
 #include "neuron_dist_gui.h"
-#include "neuron_distance.h""
+#include "neuron_sim_scores.h"
 #include "customary_structs/vaa3d_neurontoolbox_para.h"
 #include <vector>
 #include <iostream>
@@ -21,10 +21,13 @@ int neuron_dist_io(V3DPluginCallback2 &callback, QWidget *parent)
 	SelectNeuronDlg * selectDlg = new SelectNeuronDlg(parent);
 	selectDlg->exec();
 
-	double dist = neuron_distance(selectDlg->nt1, selectDlg->nt2);
+	NeuronDistSimple tmp_score = neuron_score_rounding_nearest_neighbor(&(selectDlg->nt1), &(selectDlg->nt2));
+	QString message = QString("Distance between neuron 1:\n%1\n and neuron 2:\n%2\n").arg(selectDlg->name_nt1).arg(selectDlg->name_nt2);
+	message += QString("entire-structure-average = %1\n").arg(tmp_score.dist_allnodes);
+	message += QString("differen-structure-average = %1\n").arg(tmp_score.dist_apartnodes);
+	message += QString("percent of different-structure = %1\n").arg(tmp_score.percent_apartnodes);
 
-	v3d_msg(QString("Distance of\nneuron 1:\n%1\nneuron 2:\n%2\nis:\n\t%3").arg(selectDlg->name_nt1).arg(selectDlg->name_nt2).arg(dist));
-
+	v3d_msg(message);
 	return 1;
 }
 
@@ -48,9 +51,12 @@ bool neuron_dist_io(const V3DPluginArgList & input, V3DPluginArgList & output)
 	QString name_nt2(inlist->at(1));
 	NeuronTree nt1 = readSWC_file(name_nt1);
 	NeuronTree nt2 = readSWC_file(name_nt2);
-	double dist = neuron_distance(nt1, nt2);
+	NeuronDistSimple tmp_score = neuron_score_rounding_nearest_neighbor(&nt1, &nt2);
 
-	cout<<"\nDistance between neuron 1 "<<qPrintable(name_nt1)<<" and neuron 2 "<<qPrintable(name_nt2)<<" is: "<<dist<<endl<<endl;
+	cout<<"\nDistance between neuron 1 "<<qPrintable(name_nt1)<<" and neuron 2 "<<qPrintable(name_nt2)<<" is: "<<endl;
+	cout<<"entire-structure-average = "<<tmp_score.dist_allnodes;
+	cout<<"differen-structure-average = "<<tmp_score.dist_apartnodes<<endl;
+	cout<<"percent of different-structure = "<<tmp_score.percent_apartnodes<<endl<<endl;
 
 	return true;
 }
@@ -67,18 +73,21 @@ bool neuron_dist_toolbox(const V3DPluginArgList & input, V3DPluginCallback2 & ca
 		return false;
 	}
 
-	QString messages = QString("Distance of current neuron and\n");
+	QString message = QString("Distance between current neuron and\n");
 
 	for (V3DLONG i=0;i<nt_list->size();i++)
 	{
 		NeuronTree curr_nt = nt_list->at(i);
 		if (curr_nt.file == nt.file) continue;
-		double dist = neuron_distance(nt, curr_nt);
-		messages += QString("\nneuron %1:\n%2\nis: %3\n").arg(i).arg(curr_nt.file).arg(dist);
+		NeuronDistSimple tmp_score = neuron_score_rounding_nearest_neighbor(&nt, &curr_nt);
+		message += QString("\nneuron #%1:\n%2\n").arg(i+1).arg(curr_nt.file);
+		message += QString("entire-structure-average = %1\n").arg(tmp_score.dist_allnodes);
+		message += QString("differen-structure-average = %1\n").arg(tmp_score.dist_apartnodes);
+		message += QString("percent of different-structure = %1\n").arg(tmp_score.percent_apartnodes);
 	}
 
 
-	v3d_msg(messages);
+	v3d_msg(message);
 
 	return true;
 
