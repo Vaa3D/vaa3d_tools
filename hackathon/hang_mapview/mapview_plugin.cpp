@@ -98,6 +98,7 @@ int load_hraw_data(V3DPluginCallback2 &callback, QWidget *parent)
                                                  ".",
                                                  QObject::tr("Images (*.hraw)"));
 	cout<<"hraw_file = "<<hraw_file.toStdString().c_str()<<endl;
+	if(hraw_file == QObject::tr("")) return 0;
 	ifstream ifs(hraw_file.toStdString().c_str());
 
 	string dir;
