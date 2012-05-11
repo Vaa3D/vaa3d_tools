@@ -60,17 +60,25 @@ bool neuron_dist_toolbox(const V3DPluginArgList & input, V3DPluginCallback2 & ca
 	vaa3d_neurontoolbox_paras * paras = (vaa3d_neurontoolbox_paras *)(input.at(0).p);
 	V3dR_MainWindow * win = paras->win;
 	QList<NeuronTree> * nt_list = callback.getHandleNeuronTrees_Any3DViewer(win);
-	if (nt_list->size()!=2)
+	NeuronTree nt = paras->nt;
+	if (nt_list->size()<=1)
 	{
-		v3d_msg("You should have exactly 2 neurons in the current 3D Viewer");
+		v3d_msg("You should have at least 2 neurons in the current 3D Viewer");
 		return false;
 	}
 
-	NeuronTree nt1 = nt_list->at(0);
-	NeuronTree nt2 = nt_list->at(1);
+	QString messages = QString("Distance of current neuron and\n");
 
-	double dist = neuron_distance(nt1, nt2);
-	v3d_msg(QString("Distance of\nneuron 1:\n%1\nneuron 2:\n%2\nis:\n\t%3").arg(nt1.file).arg(nt2.file).arg(dist));
+	for (V3DLONG i=0;i<nt_list->size();i++)
+	{
+		NeuronTree curr_nt = nt_list->at(i);
+		if (curr_nt.file == nt.file) continue;
+		double dist = neuron_distance(nt, curr_nt);
+		messages += QString("\nneuron %1:\n%2\nis: %3\n").arg(i).arg(curr_nt.file).arg(dist);
+	}
+
+
+	v3d_msg(messages);
 
 	return true;
 
