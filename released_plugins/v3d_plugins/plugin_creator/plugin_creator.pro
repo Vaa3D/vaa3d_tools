@@ -11,11 +11,13 @@ HEADERS	+= plugin_creator_func.h
 HEADERS	+= plugin_creator_gui.h
 HEADERS	+= create_plugin.h
 HEADERS += common_dialog.h
+HEADERS += produce_simplest_plugin.h
 
 SOURCES	= plugin_creator_plugin.cpp
 SOURCES	+= plugin_creator_func.cpp
 SOURCES += produce_demo1.cpp
 SOURCES += produce_demo2.cpp
+SOURCES += produce_simplest_plugin.cpp
 SOURCES	+= $$VAA3DPATH/basic_c_fun/v3d_message.cpp
 
 TARGET	= $$qtLibraryTarget(plugin_creator)

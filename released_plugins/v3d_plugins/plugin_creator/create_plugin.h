@@ -67,175 +67,6 @@ void create_plugin_pro(PluginTemplate & pt)
 	ofs.close();
 }
 
-void create_func_cpp(PluginTemplate &pt)
-{
-	ofstream ofs(pt.FUNC_CPP.c_str());
-	ofs<<"/* "<<pt.FUNC_CPP<<endl;
-	ofs<<" * "<<pt.PLUGIN_DESCRIPTION<<endl;
-	ofs<<" * "<<pt.PLUGIN_DATE<<" : by "<<pt.PLUGIN_AUTHOR<<endl;
-	ofs<<" */"<<endl;
-	ofs<<""<<endl;
-	ofs<<"#include <v3d_interface.h>"<<endl;
-	ofs<<"#include \"v3d_message.h\""<<endl;
-	ofs<<"#include \""<<pt.FUNC_HEADER<<"\""<<endl;
-	if(pt.DOFUNC)
-	{
-		ofs<<"#include <vector>"<<endl;
-		ofs<<"#include <iostream>"<<endl;
-		ofs<<"using namespace std;"<<endl;
-	}
-	if(pt.PLUGIN_GUI != "") ofs<<"#include \""<<pt.PLUGIN_GUI<<"\""<<endl;
-	ofs<<""<<endl;
-	ofs<<"const QString title = QObject::tr(\""<<pt.WINDOW_TITLE<<"\");"<<endl;
-	ofs<<""<<endl;
-	if(pt.DOFUNC)
-	{
-		ofs<<"/*******************************************************"<<endl;
-		ofs<<" * Split a string into string array"<<endl;
-		ofs<<" * 1. args should be 0"<<endl;
-		ofs<<" * 2. release args if not used any more"<<endl;
-		ofs<<" *******************************************************/"<<endl;
-		ofs<<"int split(const char *paras, char ** &args)"<<endl;
-		ofs<<"{"<<endl;
-		ofs<<"    if(paras == 0) return 0;"<<endl;
-		ofs<<"    int argc = 0;"<<endl;
-		ofs<<"    int len = strlen(paras);"<<endl;
-		ofs<<"    int posb[2048];"<<endl;
-		ofs<<"    char * myparas = new char[len];"<<endl;
-		ofs<<"    strcpy(myparas, paras);"<<endl;
-		ofs<<"    for(int i = 0; i < len; i++)"<<endl;
-		ofs<<"    {"<<endl;
-		ofs<<"        if(i==0 && myparas[i] != ' ' && myparas[i] != '\\t')"<<endl;
-		ofs<<"        {"<<endl;
-		ofs<<"            posb[argc++]=i;"<<endl;
-		ofs<<"        }"<<endl;
-		ofs<<"        else if((myparas[i-1] == ' ' || myparas[i-1] == '\\t') &&"<<endl;
-		ofs<<"                (myparas[i] != ' ' && myparas[i] != '\\t'))"<<endl;
-		ofs<<"        {"<<endl;
-		ofs<<"            posb[argc++] = i;"<<endl;
-		ofs<<"        }"<<endl;
-		ofs<<"    }"<<endl;
-		ofs<<""<<endl;
-		ofs<<"    args = new char*[argc];"<<endl;
-		ofs<<"    for(int i = 0; i < argc; i++)"<<endl;
-		ofs<<"    {"<<endl;
-		ofs<<"        args[i] = myparas + posb[i];"<<endl;
-		ofs<<"    }"<<endl;
-		ofs<<""<<endl;
-		ofs<<"    for(int i = 0; i < len; i++)"<<endl;
-		ofs<<"    {"<<endl;
-		ofs<<"        if(myparas[i]==' ' || myparas[i]=='\\t')myparas[i]='\\0';"<<endl;
-		ofs<<"    }"<<endl;
-		ofs<<"    return argc;"<<endl;
-		ofs<<"}"<<endl;
-	}
-	for(int i = 0; i < pt.FUNCS.size(); i++)
-	{
-		ofs<<"int "<<pt.FUNCS[i]<<"(V3DPluginCallback2 &callback, QWidget *parent)"<<endl;
-		ofs<<"{"<<endl;
-		if(i == 0)
-		{
-			ofs<<"\tv3d_msg(\"Now you are invoking the example code. You can replace this part using your own code.\");"<<endl;
-			ofs<<"\tv3dhandleList win_list = callback.getImageWindowList();"<<endl;
-			ofs<<""<<endl;
-			ofs<<"\tif(win_list.size()<1)"<<endl;
-			ofs<<"\t{"<<endl;
-			ofs<<"\t\tQMessageBox::information(0, title, QObject::tr(\"No image is open.\"));"<<endl;
-			ofs<<"\t\treturn -1;"<<endl;
-			ofs<<"\t}"<<endl;
-			ofs<<""<<endl;
-			ofs<<"\t//int i = 0;"<<endl;
-			ofs<<"\t//int c = 0"<<endl;
-			ofs<<"\t//Image4DSimple *p4DImage = callback.getImage(win_list[i]);"<<endl;
-
-			ofs<<"\t//if(p4DImage->getCDim() <= c) {v3d_msg(QObject::tr(\"The channel isn't existed.\")); return -1;}"<<endl;
-			ofs<<"\t//V3DLONG sz[3];"<<endl;
-			ofs<<"\t//sz[0] = p4DImage->getXDim();"<<endl;
-			ofs<<"\t//sz[1] = p4DImage->getYDim();"<<endl;
-			ofs<<"\t//sz[2] = p4DImage->getZDim();"<<endl;
-			ofs<<""<<endl;
-			ofs<<"\t//unsigned char * inimg1d = p4DImage->getRawDataAtChannel(c);"<<endl;
-			ofs<<""<<endl;
-			ofs<<"\t//v3dhandle newwin;"<<endl;
-			ofs<<"\t//if(QMessageBox::Yes == QMessageBox::question(0, \"\", QString(\"Do you want to use the existing windows?\"), QMessageBox::Yes, QMessageBox::No))"<<endl;
-			ofs<<"\t\t//newwin = callback.currentImageWindow();"<<endl;
-			ofs<<"\t//else"<<endl;
-			ofs<<"\t\t//newwin = callback.newImageWindow();"<<endl;
-			ofs<<""<<endl;
-			ofs<<"\t//p4DImage->setData(inimg1d, sz[0], sz[1], sz[2], sz[3]);"<<endl;
-			ofs<<"\t//callback.setImage(newwin, p4DImage);"<<endl;
-			ofs<<"\t//callback.setImageName(newwin, QObject::tr(\""<<pt.FUNCS[i]<<"\"));"<<endl;
-			ofs<<"\t//callback.updateImageWindow(newwin);"<<endl;
-		}
-		else ofs<<"\tv3d_msg(\"Invoke function : "<<pt.FUNCS[i]<<"\");"<<endl;
-
-		ofs<<"\treturn 1;"<<endl;
-		ofs<<"}"<<endl;
-		ofs<<""<<endl;
-		if(i <  pt.FUNCS.size() && pt.DOFUNC)
-		{
-			ofs<<"bool "<<pt.FUNCS[i]<<"(const V3DPluginArgList & input, V3DPluginArgList & output)"<<endl;
-			ofs<<"{"<<endl;
-			ofs<<"\tcout<<\"Welcome to "<<pt.FUNCS[i]<<"\"<<endl;"<<endl;
-			ofs<<"\tif(input.size() != 2 || output.size() != 1) return true;"<<endl;
-			ofs<<"\tchar * paras = 0;"<<endl;
-			ofs<<"\tif(((vector<char*> *)(input.at(1).p))->empty()){paras = new char[1]; paras[0]='\\0';}"<<endl;
-			ofs<<"\telse paras = (*(vector<char*> *)(input.at(1).p)).at(0);"<<endl;
-			ofs<<"\tcout<<\"paras : \"<<paras<<endl;"<<endl;
-			ofs<<""<<endl;
-			ofs<<"\tfor(int i = 0; i < strlen(paras); i++)"<<endl;
-			ofs<<"\t{"<<endl;
-			ofs<<"\t\tif(paras[i] == '#') paras[i] = '-';"<<endl;
-			ofs<<"\t}"<<endl;
-			ofs<<"\tcout<<\"paras : \"<<paras<<endl;"<<endl;
-			ofs<<""<<endl;
-			if(i < pt.MAINFUNCS.size() && pt.MAINFUNCS[i] != "")
-			{
-				ofs<<"\tchar ** argv;"<<endl;
-				ofs<<"\tint argc = split(paras, argv);"<<endl;
-				ofs<<"\tcout<<\""<<pt.MAINFUNCS[i]<<"(argc, argv)\"<<endl;"<<endl;
-				ofs<<"\t//"<<pt.MAINFUNCS[i]<<"(argc, argv);"<<endl;
-			}
-			if(i < pt.SYSINVOKES.size() && pt.SYSINVOKES[i] != "")
-			{
-				ofs<<"\tcout<<string(\""<<pt.SYSINVOKES[i]<<"\").append(paras).c_str()<<endl;"<<endl;
-				ofs<<"\t//system(string(\""<<pt.SYSINVOKES[i]<<"\").append(paras).c_str());"<<endl;
-			}
-			ofs<<"\treturn true;"<<endl;
-			ofs<<"}"<<endl;
-			ofs<<""<<endl;
-		}
-	}
-	ofs<<""<<endl;
-	ofs.close();
-
-}
-
-void create_func_header(PluginTemplate &pt)
-{
-	cout<<"create "<<pt.FUNC_HEADER<<" ... "<<endl;
-	ofstream ofs(pt.FUNC_HEADER.c_str());
-	ofs<<"/* "<<pt.FUNC_HEADER<<endl;
-	ofs<<" * "<<pt.PLUGIN_DESCRIPTION<<endl;
-	ofs<<" * "<<pt.PLUGIN_DATE<<" : by "<<pt.PLUGIN_AUTHOR<<endl;
-	ofs<<" */"<<endl;
-	ofs<<" "<<endl;
-	ofs<<"#ifndef __"<<toupper(pt.PLUGIN_NAME)<<"_FUNC_H__"<<endl;
-	ofs<<"#define __"<<toupper(pt.PLUGIN_NAME)<<"_FUNC_H__"<<endl;
-	ofs<<""<<endl;
-	ofs<<"#include <v3d_interface.h>"<<endl;
-	ofs<<""<<endl;
-	for(int i = 0; i < pt.FUNCS.size(); i++)
-	{
-		ofs<<"int "<<pt.FUNCS[i]<<"(V3DPluginCallback2 &callback, QWidget *parent);"<<endl;
-		if(pt.DOFUNC) ofs<<"bool "<<pt.FUNCS[i]<<"(const V3DPluginArgList & input, V3DPluginArgList & output);"<<endl;
-	}
-	ofs<<""<<endl;
-	ofs<<"#endif"<<endl;
-	ofs<<""<<endl;
-	ofs.close();
-}
-
 void create_plugin_cpp(PluginTemplate & pt)
 {
 	cout<<"create "<<pt.PLUGIN_CPP<<" ... "<<endl;
@@ -259,27 +90,22 @@ void create_plugin_cpp(PluginTemplate & pt)
 	ofs<<"\t\t<<tr(\"about\");"<<endl;
 	ofs<<"}"<<endl;
 	ofs<<""<<endl;
-	if(pt.DOFUNC)
-	{
-		ofs<<"QStringList "<<pt.PLUGIN_CLASS<<"::funclist() const"<<endl;
-		ofs<<"{"<<endl;
-		ofs<<"\treturn QStringList()";
-		for(int i = 0; i < pt.FUNCS.size(); i++) ofs<<endl<<"\t\t<<tr(\""<<pt.FUNCS[i]<<"\")";
-		ofs<<";"<<endl;
-		ofs<<"}"<<endl;
-		ofs<<""<<endl;
-	}
+	ofs<<"QStringList "<<pt.PLUGIN_CLASS<<"::funclist() const"<<endl;
+	ofs<<"{"<<endl;
+	ofs<<"\treturn QStringList()";
+	for(int i = 0; i < pt.FUNCS.size(); i++) ofs<<endl<<"\t\t<<tr(\""<<pt.FUNCS[i]<<"\")";
+	ofs<<";"<<endl;
+	ofs<<"}"<<endl;
+	ofs<<""<<endl;
 	ofs<<"void "<<pt.PLUGIN_CLASS<<"::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)"<<endl;
 	ofs<<"{"<<endl;
 	ofs<<"\tif (menu_name == tr(\""<<pt.MENUS[0]<<"\"))"<<endl;
 	ofs<<"\t{"<<endl;
-	ofs<<"\t\t"<<pt.FUNCS[0]<<"(callback,parent);"<<endl;
 	ofs<<"\t}"<<endl;
 	for(int i = 1; i < pt.MENUS.size(); i++)
 	{
 		ofs<<"\telse if (menu_name == tr(\""<<pt.MENUS[i]<<"\"))"<<endl;
 		ofs<<"\t{"<<endl;
-		ofs<<"\t\t"<<pt.FUNCS[i]<<"(callback,parent);"<<endl;
 		ofs<<"\t}"<<endl;
 	}
 	ofs<<"\telse"<<endl;
@@ -288,24 +114,26 @@ void create_plugin_cpp(PluginTemplate & pt)
 	ofs<<"\t}"<<endl;
 	ofs<<"}"<<endl;
 	ofs<<""<<endl;
-	if(pt.DOFUNC)
+
+	ofs<<"bool "<<pt.PLUGIN_CLASS<<"::dofunc(const QString & func_name, const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback,  QWidget * parent)"<<endl;
+	ofs<<"{"<<endl;
+	ofs<<"\tvector<char*> infiles, inparas, outfiles;"<<endl;
+	ofs<<"\tif(input.size() >= 1) infiles = *((vector<char*> *)input.at(0).p);"<<endl;
+	ofs<<"\tif(input.size() >= 2) inparas = *((vector<char*> *)input.at(1).p);"<<endl;
+	ofs<<"\tif(output.size() >= 1) outfiles = *((vector<char*> *)output.at(0).p);"<<endl;
+	ofs<<endl;
+	ofs<<"\tif (func_name == tr(\""<<pt.FUNCS[0]<<"\"))"<<endl;
+	ofs<<"\t{"<<endl;
+	ofs<<"\t}"<<endl;
+	for(int i = 1; i < pt.FUNCS.size(); i++)
 	{
-		ofs<<"bool "<<pt.PLUGIN_CLASS<<"::dofunc(const QString & func_name, const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback,  QWidget * parent)"<<endl;
-		ofs<<"{"<<endl;
-		ofs<<"\tif (func_name == tr(\""<<pt.FUNCS[0]<<"\"))"<<endl;
+		ofs<<"\telse if (func_name == tr(\""<<pt.FUNCS[i]<<"\"))"<<endl;
 		ofs<<"\t{"<<endl;
-		ofs<<"\t\treturn "<<pt.FUNCS[0]<<"(input, output);"<<endl;
 		ofs<<"\t}"<<endl;
-		for(int i = 1; i < pt.FUNCS.size(); i++)
-		{
-			ofs<<"\telse if (func_name == tr(\""<<pt.FUNCS[i]<<"\"))"<<endl;
-			ofs<<"\t{"<<endl;
-			ofs<<"\t\treturn "<<pt.FUNCS[i]<<"(input,output);"<<endl;
-			ofs<<"\t}"<<endl;
-		}
-		ofs<<"}"<<endl;
-		ofs<<""<<endl;
 	}
+	ofs<<"\telse return false;"<<endl;
+	ofs<<"}"<<endl;
+	ofs<<""<<endl;
 	ofs.close();
 }
 
@@ -469,8 +297,8 @@ void create_plugin_all(PluginTemplate & pt)
 {
 	create_plugin_header(pt);
 	create_plugin_cpp(pt);
-	create_func_header(pt);
-	create_func_cpp(pt);
+	//create_func_header(pt);             // May 11, 2012, no longer export func_header
+	//create_func_cpp(pt);                // May 11, 2012, no longer export func_cpp
 	create_plugin_pro(pt);
 }
 

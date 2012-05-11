@@ -212,8 +212,9 @@ public:
 			cout<<"outimg_file = "<<outimg_file<<endl;
 
 			V3DLONG sz0 = 0, sz1 = 0, sz2 = 0;
-			v3dhandle curwin = callback.currentImageWindow();
-			if(curwin == 0)
+			v3dhandle curwin = callback.getImageWindowList().empty() ? 0 : callback.currentImageWindow();
+			View3DControl * view3d = callback.getView3DControl(curwin);
+			if(1)
 			{
 				MyMarker * marker = inswc[0];
 				V3DLONG x = marker->x + 0.5;
@@ -256,7 +257,7 @@ public:
 					marker->z = z - mz;
 				}
 			}
-			else
+			else	
 			{
 				Image4DSimple * p4dImage = callback.getImage(curwin);
 				sz0 = p4dImage->getXDim();
