@@ -37,6 +37,31 @@ QString plugin_name = "plugins/Vaa3D_PluginInterface_Demos/call_each_other/libex
 
 #endif
 
+QString getAppPath()
+{
+	QString v3dAppPath("~/Work/v3d_external/bin");
+	QDir testPluginsDir = QDir(qApp->applicationDirPath());
+
+#if defined(Q_OS_WIN)
+	if (testPluginsDir.dirName().toLower() == "debug" || testPluginsDir.dirName().toLower() == "release")
+		testPluginsDir.cdUp();
+#elif defined(Q_OS_MAC)
+	// In a Mac app bundle, plugins directory could be either
+	//  a - below the actual executable i.e. v3d.app/Contents/MacOS/plugins/
+	//  b - parallel to v3d.app i.e. foo/v3d.app and foo/plugins/
+	if (testPluginsDir.dirName() == "MacOS") {
+		QDir testUpperPluginsDir = testPluginsDir;
+		testUpperPluginsDir.cdUp();
+		testUpperPluginsDir.cdUp();
+		testUpperPluginsDir.cdUp(); // like foo/plugins next to foo/v3d.app
+		if (testUpperPluginsDir.cd("plugins")) testPluginsDir = testUpperPluginsDir;
+	}
+#endif
+	
+	testPluginsDir.cdUp();
+	v3dAppPath = testPluginsDir.absolutePath();
+	return v3dAppPath;
+}
 
 QStringList ExCallPlugin::menulist() const
 {
@@ -180,7 +205,7 @@ void matrixPanel::add()
 	arg.type = "double3x3"; arg.p = B;  input << arg;
 	arg.type = "double3x3"; arg.p = C;  output << arg;
 
-	QString full_plugin_name = QDir::currentPath() + "/" + plugin_name;
+	QString full_plugin_name = getAppPath() + "/" + plugin_name;
 	QString func_name = "add_3x3";
 	if (! v3d.callPluginFunc(full_plugin_name, func_name, input, output) )
 		return;
@@ -199,7 +224,7 @@ void matrixPanel::mul()
 	arg.type = "double3x3"; arg.p = B;  input << arg;
 	arg.type = "double3x3"; arg.p = C;  output << arg;
 
-	QString full_plugin_name = QDir::currentPath() + "/" + plugin_name;
+	QString full_plugin_name = getAppPath() + "/" + plugin_name;
 	QString func_name = "multiply_3x3";
 	if (! v3d.callPluginFunc(full_plugin_name, func_name, input, output) )
 		return;
@@ -217,7 +242,7 @@ void matrixPanel::at()
 	arg.type = "double3x3"; arg.p = A;  input << arg;
 	arg.type = "double3x3"; arg.p = C;  output << arg;
 
-	QString full_plugin_name = QDir::currentPath() + "/" + plugin_name;
+	QString full_plugin_name = getAppPath() + "/" + plugin_name;
 	QString func_name = "transpose_3x3";
 	if (! v3d.callPluginFunc(full_plugin_name, func_name, input, output) )
 		return;
@@ -235,7 +260,7 @@ void matrixPanel::bt()
 	arg.type = "double3x3"; arg.p = B;  input << arg;
 	arg.type = "double3x3"; arg.p = C;  output << arg;
 
-	QString full_plugin_name = QDir::currentPath() + "/" + plugin_name;
+	QString full_plugin_name = getAppPath() + "/" + plugin_name;
 	QString func_name = "transpose_3x3";
 	if (! v3d.callPluginFunc(full_plugin_name, func_name, input, output) )
 		return;
