@@ -53,13 +53,10 @@ void create_plugin_pro(PluginTemplate & pt)
 	ofs<<"#CONFIG\t+= x86_64"<<endl;
 	ofs<<"VAA3DPATH = "<<pt.VAA3D_PATH<<endl;
 	ofs<<"INCLUDEPATH\t+= $$VAA3DPATH/v3d_main/basic_c_fun"<<endl;
-	ofs<<""<<endl;
+	ofs<<endl;
 	ofs<<"HEADERS\t+= "<<pt.PLUGIN_HEADER<<endl;
-	ofs<<"HEADERS\t+= "<<pt.FUNC_HEADER<<endl;
 	if(pt.PLUGIN_GUI != "") ofs<<"HEADERS\t+= "<<pt.PLUGIN_GUI<<endl; 
-	ofs<<""<<endl;
-	ofs<<"SOURCES\t= "<<pt.PLUGIN_CPP<<endl;
-	ofs<<"SOURCES\t+= "<<pt.FUNC_CPP<<endl;
+	ofs<<"SOURCES\t+= "<<pt.PLUGIN_CPP<<endl;
 	ofs<<"SOURCES\t+= $$VAA3DPATH/v3d_main/basic_c_fun/v3d_message.cpp"<<endl;
 	ofs<<""<<endl;
 	ofs<<"TARGET\t= $$qtLibraryTarget("<<pt.PLUGIN_NAME<<")"<<endl;
@@ -77,10 +74,9 @@ void create_plugin_cpp(PluginTemplate & pt)
 	ofs<<" */"<<endl;
 	ofs<<" "<<endl;
 	ofs<<"#include \"v3d_message.h\""<<endl;
-	ofs<<""<<endl;
+	ofs<<"#include <vector>"<<endl;
 	ofs<<"#include \""<<pt.PLUGIN_HEADER<<"\""<<endl;
-	ofs<<"#include \""<<pt.FUNC_HEADER<<"\""<<endl;
-	ofs<<" "<<endl;
+	ofs<<"using namespace std;"<<endl;
 	ofs<<"Q_EXPORT_PLUGIN2("<<pt.PLUGIN_NAME<<", "<<pt.PLUGIN_CLASS<<");"<<endl;
 	ofs<<" "<<endl;
 	ofs<<"QStringList "<<pt.PLUGIN_CLASS<<"::menulist() const"<<endl;
