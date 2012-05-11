@@ -111,6 +111,7 @@ SelectPluginDlg::SelectPluginDlg(QWidget * parent, const V3DPluginCallback2 & _c
 			//lib - top level item
 			QTreeWidgetItem *pluginItem = new QTreeWidgetItem(pluginTreeWidget);
 			QString tmp = file.remove(0, root_path.size()+1);
+			tmp.chop(file.section("/", -1).size()+1);
 			pluginItem->setText(0, tmp);
 			pluginTreeWidget->addTopLevelItem(pluginItem);
 
@@ -179,6 +180,7 @@ SelectPluginDlg::SelectPluginDlg(QWidget * parent, const V3DPluginCallback2 & _c
 			//lib - top level item
 			QTreeWidgetItem *pluginItem = new QTreeWidgetItem(pluginTreeWidget);
 			QString tmp = file.remove(0, root_path.size()+1);
+			tmp.chop(file.section("/", -1).size()+1);
 			pluginItem->setText(0, tmp);
 			//pluginItem->setText(0, file);
 			//pluginTreeWidget->addTopLevelItem(pluginItem);
