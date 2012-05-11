@@ -262,7 +262,7 @@ bool AtlasGuidedStrAnnoPartial(const V3DPluginArgList & input, V3DPluginArgList 
         )
 
      {
-          v3d_msg("Error in calling do_AtlasGuidedStrAnno()");
+          v3d_msg("Error in calling do_AtlasGuidedStrAnno()", 0);
           return false;
      }
 
