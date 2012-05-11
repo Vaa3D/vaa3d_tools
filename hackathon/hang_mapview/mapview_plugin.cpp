@@ -14,6 +14,7 @@ using namespace std;
 Q_EXPORT_PLUGIN2(mapview, MapViewPlugin);
 
 int load_hraw_data(V3DPluginCallback2 &callback, QWidget *parent);
+int create_hraw_data(V3DPluginCallback2 &callback, QWidget *parent);
 int help(V3DPluginCallback2 &callback, QWidget *parent);
 
 // dirname("/dir/name/test.tif") == "/dir/name"
@@ -49,6 +50,7 @@ void MapViewPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callbac
 	}
 	else if(menu_name == tr("create hraw data"))
 	{
+		create_hraw_data(callback, parent);
 		v3d_msg("Not implemented yet.", 0);
 	}
 	else
@@ -146,6 +148,77 @@ int load_hraw_data(V3DPluginCallback2 &callback, QWidget *parent)
 	mapview_widget->show();
 	
 	return 1;
+}
+
+int create_hraw_data(V3DPluginCallback2 &callback, QWidget *parent)
+{
+	QString filename = QFileDialog::getOpenFileName(0, QObject::tr("Open Image File"),
+                                                 ".",
+                                                 QObject::tr("Image Files (*.raw *.tiff *.tif *.lsm)"));
+	if(filename == QObject::tr("")) return 0;
+	// Dialog
+	V3DLONG bs0 = 256;
+	V3DLONG bs1 = 256;
+	V3DLONG bs2 = 128;
+	QString qhraw_file = filename + ".hraw";
+	{
+		QDialog * dialog = new QDialog();
+		QLineEdit * bs0_editor = new QLineEdit(QObject::tr("256"));
+		QLineEdit * bs1_editor = new QLineEdit(QObject::tr("256"));
+		QLineEdit * bs2_editor = new QLineEdit(QObject::tr("128"));
+		QLineEdit * hraw_editor = new QLineEdit(qhraw_file);
+		QPushButton * ok = new QPushButton(QObject::tr("  ok  "));
+		QPushButton * cancel = new QPushButton(QObject::tr("cancel"));
+
+		QGridLayout * layout = new QGridLayout();
+		layout->addWidget(new QLabel("bs0"), 0, 0, 1, 1);
+		layout->addWidget(bs0_editor, 0, 1, 1, 5);
+		layout->addWidget(new QLabel("bs1"), 1, 0, 1, 1);
+		layout->addWidget(bs1_editor, 1, 1, 1, 5);
+		layout->addWidget(new QLabel("bs2"), 2, 0, 1, 1);
+		layout->addWidget(bs2_editor, 2, 1, 1, 5);
+		layout->addWidget(new QLabel("hraw file"), 3, 0, 1, 1);
+		layout->addWidget(hraw_editor, 3, 1, 1, 5);
+		layout->addWidget(ok, 4, 0, 1, 3); 
+		layout->addWidget(cancel, 4, 3, 1, 3); 
+		dialog->setLayout(layout);
+		dialog->setWindowTitle(QObject::tr("Set block size"));
+		QObject::connect(ok, SIGNAL(clicked(bool)), dialog, SLOT(accept()));
+		QObject::connect(cancel, SIGNAL(clicked(bool)), dialog, SLOT(reject()));
+		if(dialog->exec() != QDialog::Accepted) return 0;
+		bs0 = atoi(bs0_editor->text().toStdString().c_str());
+		bs1 = atoi(bs1_editor->text().toStdString().c_str());
+		bs2 = atoi(bs2_editor->text().toStdString().c_str());
+		qhraw_file = hraw_editor->text();
+		QMessageBox::information(0,QObject::tr(""), QObject::tr("bs0 = %1, bs1 = %2, bs2 = %3, hraw_file = %4").arg(bs0).arg(bs1).arg(bs2).arg(qhraw_file));
+	}
+
+	string infile = filename.toStdString();
+	V3DLONG insz0 = 0, insz1 = 0, insz2 = 0, channel = 0;
+	getRawImageSize(infile, insz0, insz1, insz2, channel);
+
+	V3DLONG ts0 = (insz0 % bs0 == 0) ? insz0/bs0 : insz0/bs0 + 1;
+	V3DLONG ts1 = (insz1 % bs1 == 0) ? insz1/bs1 : insz1/bs1 + 1;
+	V3DLONG ts2 = (insz2 % bs2 == 0) ? insz2/bs2 : insz2/bs2 + 1;
+
+	V3DLONG level_num = log(MIN(MIN(insz0, insz1), insz2))/log(2.0) - 1;
+
+	string hraw_file = qhraw_file.toStdString(); 
+	string dir = dirname(infile);
+	
+	raw_split((char*)(infile.c_str()), (char*)dir.c_str(), bs0, bs1, bs2);
+	createMapViewFiles((char*)dir.c_str(), ts0, ts1, ts2);
+
+	ofstream ofs(hraw_file.c_str());
+	if(ofs.fail()){cerr<<"Unable to open "<<hraw_file<<endl; return false;}
+	
+	ofs<<"L0_X_BLOCKS "<<ts0<<endl;
+	ofs<<"L0_Y_BLOCKS "<<ts1<<endl;
+	ofs<<"L0_Z_BLOCKS "<<ts2<<endl;
+	ofs<<"CHANNEL "<<channel<<endl;
+	ofs<<"LEVEL_NUM "<<level_num<<endl;
+	ofs.close();
+
 }
 
 int help(V3DPluginCallback2 &callback, QWidget *parent)
