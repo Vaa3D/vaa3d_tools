@@ -50,10 +50,10 @@ bool PluginSuperPlugin::dofunc(const QString & func_name, const V3DPluginArgList
 	{
           cout<<"Usage : v3d -x superplugin -f superplugin -i <inimg_file> -o <outimg_file> -p + <plugin1_name> <plugin1_func> <plugin1_p_paras> + <plugin2_name> <plugin2_func> <plugin2_p_paras> [+ ...]"<<endl;
 		cout<<endl;
-          cout<<"   +              used to separate different plugins in -p parameter"<<endl;
-          cout<<"plugin1_name      name of plugin1"<<endl;
-		cout<<"plugin1_func      func name of plugin1"<<endl;
-		cout<<"plugin1_p_paras   -p paras for plugin1"<<endl;
+          cout<<"   +               used to separate different plugins in -p parameter"<<endl;
+          cout<<"plugin1_name       name of plugin1"<<endl;
+		cout<<"plugin1_func       func name of plugin1"<<endl;
+		cout<<"plugin1_p_paras    -p paras for plugin1"<<endl;
 		cout<<endl;
           cout<<"e.g. v3d -x superplugin -f superplugin -i ex_Repo_hb9_eve.tif -o mysuperout.raw -p + gaussian gf 3 3 3 1 1.0 + gsdt gsdt 60 1 0 1.0 + gaussian gf 3 3 3 1 1.0 "<<endl;
           cout<<endl;
