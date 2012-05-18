@@ -3,6 +3,7 @@
  * 2010-11-23: supporting all kinds of datatypes, changed by Yang Yu
  * 2011-09-16: change this plugin interface from 1.0 to 2.1 by Yang Yu
  * 2011-09-22: add dofunc function for headless command line using by Yang Yu
+ * 2012-04-13: add help function by Jianlong Zhou
  */
 
 #include <QtGui>
@@ -336,20 +337,20 @@ void ReCenterImagePlugin::domenu(const QString &menu_name, V3DPluginCallback2 &c
 
         bool ok;
         V3DLONG ndimx = QInputDialog::getInteger(parent, tr("Dimension x"),
-                                                 tr("Enter dimx:"),
-                                                 N, 0, 10000, 1, &ok);
+             tr("Enter dimx:"),
+             N, 0, 10000, 1, &ok);
 
         V3DLONG ndimy = QInputDialog::getInteger(parent, tr("Dimension y"),
-                                                 tr("Enter dimy:"),
-                                                 M, 0, 10000, 1, &ok);
+             tr("Enter dimy:"),
+             M, 0, 10000, 1, &ok);
 
         V3DLONG ndimz = QInputDialog::getInteger(parent, tr("Dimension z"),
-                                                 tr("Enter dimz:"),
-                                                 P, 0, 10000, 1, &ok);
+             tr("Enter dimz:"),
+             P, 0, 10000, 1, &ok);
 
-		qDebug("dimx %ld dimy %ld dimz %ld \n", ndimx, ndimy, ndimz);
+        qDebug("dimx %ld dimy %ld dimz %ld \n", ndimx, ndimy, ndimz);
 
-		V3DLONG ntotalpxls = sc*ndimx*ndimy*ndimz;
+        V3DLONG ntotalpxls = sc*ndimx*ndimy*ndimz;
 
         void *pRecenteredImage = NULL;
         if (ok)

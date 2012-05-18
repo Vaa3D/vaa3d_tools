@@ -93,7 +93,7 @@ int gsdt(V3DPluginCallback2 &callback, QWidget *parent)
 
 bool gsdt(const V3DPluginArgList & input, V3DPluginArgList & output)
 {
-	cout<<"Welcome to gsdt"<<endl;
+	cout<<"Welcome to gsdt!"<<endl;
 	if(input.size() != 2 || output.size() != 1) return false;
 	int bkg_thresh = 0, cnn_type = 2, channel = 0, z_thickness = 1.0;
 	vector<char*> paras = (*(vector<char*> *)(input.at(1).p));
@@ -115,8 +115,18 @@ bool gsdt(const V3DPluginArgList & input, V3DPluginArgList & output)
 	int datatype;
 	if(!loadImage(inimg_file, inimg1d, in_sz, datatype, channel)) {cerr<<"load image "<<inimg_file<<" error!"<<endl; return 1;}
 
-	if(!fastmarching_dt(inimg1d, phi, in_sz[0], in_sz[1], in_sz[2], cnn_type, bkg_thresh, z_thickness)) return false;
-
+     if(datatype == 1)
+     {
+          if(!fastmarching_dt(inimg1d, phi, in_sz[0], in_sz[1], in_sz[2], cnn_type, bkg_thresh, z_thickness)) return false;
+     }
+     else if(datatype == 2)
+     {
+          if(!fastmarching_dt((short int*)inimg1d, phi, in_sz[0], in_sz[1], in_sz[2], cnn_type, bkg_thresh, z_thickness)) return false;
+     }
+     else if(datatype == 4)
+     {
+          if(!fastmarching_dt((float*)inimg1d, phi, in_sz[0], in_sz[1], in_sz[2], cnn_type, bkg_thresh, z_thickness)) return false;
+     }
 	float min_val = phi[0], max_val = phi[0];
 	long tol_sz = in_sz[0] * in_sz[1] * in_sz[2];
 	outimg1d = new unsigned char[tol_sz];
@@ -133,8 +143,9 @@ bool gsdt(const V3DPluginArgList & input, V3DPluginArgList & output)
 			outimg1d[i] = MAX(outimg1d[i], 1);
 		}
 	}
-	saveImage(outimg_file, outimg1d, in_sz, datatype);
-	
+     in_sz[3]=1;
+	saveImage(outimg_file, outimg1d, in_sz, 1);
+
 	delete [] phi; phi = 0;
 	delete [] inimg1d; inimg1d = 0;
 	delete [] outimg1d; outimg1d = 0;
