@@ -12,6 +12,9 @@
 #include "customary_structs/vaa3d_neurontoolbox_para.h"
 #include "v3d_message.h"
 #include "basic_surf_objs.h"
+#include "stackutil.h"
+#include <vector>
+using namespace std;
 
 // lroundf() is gcc-specific --CMB
 #ifdef _MSC_VER
@@ -33,10 +36,23 @@ QStringList SWC_TO_MASKIMAGElugin::menulist() const
 	<<tr("maskimage filter")
 	<<tr("Help");
 }
-
+QStringList SWC_TO_MASKIMAGElugin::funclist() const
+{
+	return QStringList()
+	<<tr("swc_to_maskimage")
+	<<tr("help");
+}
 bool SWC_TO_MASKIMAGElugin::dofunc(const QString & func_name, const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback,  QWidget * parent)
 {
-	if (func_name==tr("TOOLBOXswc_to_maskimage"))
+	if (func_name==tr("swc_to_maskimage"))
+	{
+		swc_to_maskimage(input, output);
+	}
+	else if (func_name==tr("help"))
+	{
+		printHelp();
+	}
+	else if (func_name==tr("TOOLBOXswc_to_maskimage"))
 	{
 		swc_to_maskimage_toolbox(input, callback, parent);
 		return true;
@@ -85,40 +101,6 @@ void BoundNeuronCoordinates(NeuronTree & neuron,
 	double xmin, ymin, zmin, xmax, ymax, zmax;
 	NeuronSWC *p_cur = 0;
 	V3DLONG ii;
-
-//	//tmp search
-//	for (ii=0; ii<neuron.listNeuron.size(); ii++)
-//	{
-//		p_cur = (NeuronSWC *)(&(neuron.listNeuron.at(ii)));
-//
-//		if (ii==0)
-//		{
-//			xmin = p_cur->x;
-//			ymin = p_cur->y;
-//			zmin = p_cur->z;
-//			xmax = p_cur->x;
-//			ymax = p_cur->y;
-//			zmax = p_cur->z;
-//		}
-//		else
-//		{
-//			xmin = (p_cur->x < xmin) ? (p_cur->x) : xmin;
-//			ymin = (p_cur->y < ymin) ? (p_cur->y) : ymin;
-//			zmin = (p_cur->z < zmin) ? (p_cur->z) : zmin;
-//
-//			xmax = (p_cur->x > xmax) ? (p_cur->x) : xmax;
-//			ymax = (p_cur->y > ymax) ? (p_cur->y) : ymax;
-//			zmax = (p_cur->z > zmax) ? (p_cur->z) : zmax;
-//		}
-//	}
-//	output_xmin = xmin;
-//	output_xmax = xmax;
-//	output_ymin = ymin;
-//	output_ymax = ymax;
-//	output_zmin = zmin;
-//	output_zmax = zmax;
-//
-//	return;
 
 	//initial search
 	for (ii=0; ii<neuron.listNeuron.size(); ii++)
@@ -343,9 +325,9 @@ void ComputemaskImage(NeuronTree neurons,
 
 		int steps = lroundf(l);
 
-		steps = (steps < abs(dx))? abs(dx):steps;
-		steps = (steps < abs(dy))? abs(dy):steps;
-		steps = (steps < abs(dz))? abs(dz):steps;
+		steps = (steps < fabs(dx))? fabs(dx):steps;
+		steps = (steps < fabs(dy))? fabs(dy):steps;
+		steps = (steps < fabs(dz))? fabs(dz):steps;
 		if (steps<1)
 		{
 			steps =1;
@@ -808,31 +790,6 @@ void mrskimage_originalimage(V3DPluginCallback2 &callback, QWidget *parent, int 
 		}
 	}
 
-
-//	for (V3DLONG k = 0; k < sz1; k++)
-//	{
-//		for(V3DLONG j = 0; j < sy1; j++)
-//		{
-//			for(V3DLONG i = 0; i < sx1; i++)
-//			{
-//				if (max == 5)
-//				{
-//					if (pData1[k*sx1*sy1 + j*sx1 +i] !=5)
-//					{
-//						pData2[k*sx1*sy1 + j*sx1 +i] = 0;
-//					}
-//					pData[k*sx1*sy1 + j*sx1 +i]	= pData2[k*sx1*sy1 + j*sx1 +i];
-//				}else
-//				{
-//					if (pData2[k*sx1*sy1 + j*sx1 +i] !=5)
-//					{
-//						pData1[k*sx1*sy1 + j*sx1 +i] = 0;
-//					}
-//					pData[k*sx1*sy1 + j*sx1 +i]	= pData1[k*sx1*sy1 + j*sx1 +i];
-//				}
-//			}
-//		}
-//	}
 	Image4DSimple tmp;
 	tmp.setData(pData, sx1, sy1, sz1, 1, V3D_UINT8);
 
@@ -851,6 +808,106 @@ void SetsizeDialog::update()
 
 
 
+}
+
+bool swc_to_maskimage(const V3DPluginArgList & input, V3DPluginArgList & output)
+{
+	vector<char*> * pinfiles = (input.size() >= 1) ? (vector<char*> *) input[0].p : 0;
+	vector<char*> * poutfiles = (output.size() >= 1) ? (vector<char*> *) output[0].p : 0;
+	vector<char*> * pparas = (input.size() >= 2) ? (vector<char*> *) input[1].p : 0; 
+
+	vector<char*> infiles = (pinfiles != 0) ? * pinfiles : vector<char*>();
+	vector<char*> outfiles = (poutfiles != 0) ? * poutfiles : vector<char*>();
+	vector<char*> paras = (pparas != 0) ? * pparas : vector<char*>();
+	if(infiles.size() != 1) return false;
+	if(paras.size() != 0 && paras.size() != 3) return false;
+	
+	QString qs_input(infiles[0]);
+	NeuronTree neuron = readSWC_file(qs_input);
+	QString qs_output = outfiles.empty() ? qs_input + "_out.raw" : QString(outfiles[0]);
+	
+	double x_min,x_max,y_min,y_max,z_min,z_max;
+	x_min=x_max=y_min=y_max=z_min=z_max=0;
+	V3DLONG sx,sy,sz;
+	unsigned char* pImMask = 0;
+	unsigned char* ImMark = 0;
+	V3DLONG h;
+	V3DLONG d;
+	V3DLONG nx,ny,nz;
+	
+	bool b_subtractMinFromAllNonnegatives = false;
+	BoundNeuronCoordinates(neuron,
+			b_subtractMinFromAllNonnegatives,
+			x_min,
+			x_max,
+			y_min,
+			y_max,
+			z_min,
+			z_max);
+
+	NeuronSWC * p_t = 0;
+	for (V3DLONG ii=0; ii<neuron.listNeuron.size(); ii++)
+	{
+		p_t = (NeuronSWC *)(&(neuron.listNeuron.at(ii)));
+		p_t->x=(p_t->x < 0)?(p_t->x - x_min):p_t->x;
+		p_t->y=(p_t->y < 0)?(p_t->y - y_min):p_t->y;
+		p_t->z=(p_t->z < 0)?(p_t->z - z_min):p_t->z;
+
+		//v3d_msg(QString("x %1 y %2 z %3 r %4\n").arg(p_cur->x).arg(p_cur->y).arg(p_cur->z).arg(p_cur->r),0);
+	}
+	sx = (b_subtractMinFromAllNonnegatives || x_min<0) ? V3DLONG(ceil(x_max - x_min + 1)) : V3DLONG(ceil(x_max + 1));
+	sy = (b_subtractMinFromAllNonnegatives || y_min<0) ? V3DLONG(ceil(y_max - y_min + 1)) : V3DLONG(ceil(y_max + 1));
+	sz = (b_subtractMinFromAllNonnegatives || z_min<0) ? V3DLONG(ceil(z_max - z_min + 1)) : V3DLONG(ceil(z_max + 1));
+
+	V3DLONG stacksz = sx*sy*sz;
+	try
+	{
+		pImMask = new unsigned char [stacksz];
+		ImMark = new unsigned char [stacksz];
+	}
+	catch (...)
+	{
+		v3d_msg("Fail to allocate memory.\n");
+		return false;
+	}
+
+	for (V3DLONG i=0; i<stacksz; i++)
+		pImMask[i] = ImMark[i] = 0;
+
+	ComputemaskImage(neuron, pImMask, ImMark, sx, sy, sz,1);
+	
+	// compute coordinate region
+	if (paras.empty()) {nx = sx; ny = sy; nz = sz;}
+	else {
+		nx = atoi(paras[0]); 
+		ny = atoi(paras[1]); 
+		nz = atoi(paras[2]);
+	}
+
+	unsigned char * pData = new unsigned char[nx*ny*nz];
+
+	for (V3DLONG ii=0; ii<nx*ny*nz; ii++)
+		pData[ii] = 0;
+
+	if(nx>=sx && ny>=sy && nz>=sz)
+	{
+		for (V3DLONG k1 = 0; k1 < sz; k1++)
+		{
+			for(V3DLONG j1 = 0; j1 < sy; j1++)
+			{
+				for(V3DLONG i1 = 0; i1 < sx; i1++)
+				{
+					pData[k1 * nx*ny + j1*nx + i1] = pImMask[k1*sx*sy + j1*sx +i1];
+
+				}
+			}
+		}
+	}
+	V3DLONG siz[4];
+	siz[0] = nx; siz[1] = ny; siz[2] = nz; siz[3] = 1;
+	saveImage(qPrintable(qs_output), pData, siz, V3D_UINT8);
+
+	return true;
 }
 
 void swc_to_maskimage_toolbox(const V3DPluginArgList & input, V3DPluginCallback2 & callback, QWidget * parent)
@@ -960,4 +1017,10 @@ void swc_to_maskimage_toolbox(const V3DPluginArgList & input, V3DPluginCallback2
 	callback.setImage(newwin, &tmp);
 	callback.setImageName(newwin, QString("Neuron_Mask_%1.tif").arg(neuron.file));
 	callback.updateImageWindow(newwin);
+}
+
+void printHelp()
+{
+	printf("\nswc to mask image using sphere unit\n");
+	printf("Usage v3d -x swc_to_maskimage_sphere_unit -f swc_to_maskimage -i <intput.swc> [-p <sz0> <sz1> <sz2>] [-o <output_image.raw>]\n");
 }
