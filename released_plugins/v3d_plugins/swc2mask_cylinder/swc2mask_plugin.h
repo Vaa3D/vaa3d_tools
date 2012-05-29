@@ -282,7 +282,7 @@ public:
 		}
 		else if(func_name == "help")
 		{
-			cout<<"Usage : v3d -x swc2mask -f swc2mask -i <swc_file> [-p <sz0> <sz1> <sz2>] [-o <outimg_file>]"<<endl;
+			cout<<"Usage : v3d -x swc_to_maskimage_cylinder -f swc2mask -i <swc_file> [-p <sz0> <sz1> <sz2>] [-o <outimg_file>]"<<endl;
 			cout<<endl;
 			cout<<"Produce mask image from swc structure. The outimg size will be the bounding box of swc structure or provided size."<<endl;
 		}
