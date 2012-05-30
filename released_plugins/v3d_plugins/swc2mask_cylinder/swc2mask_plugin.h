@@ -171,7 +171,9 @@ public:
 					return false;
 				}
 				if(!loadImage((char*)inimg_file.c_str(), inimg1d, in_sz, datatype)) {cerr<<"Load image "<<inimg_file<<" error!"<<endl; return false;}
+				//if(datatype != V3D_UINT8){cerr<<"Currently only support 8bit image as input"<<endl; return false;}
 				sz0 = in_sz[0]; sz1 = in_sz[1]; sz2 = in_sz[2];
+				if(in_sz[3] > 1) {cerr<<"Use red channel as input."<<endl;}
 			}
 			if(paras.size() != 0 && paras.size() != 3){cerr<<"input para error!"<<endl; return false;}
 
@@ -233,17 +235,49 @@ public:
 			if(infiles.size() == 2)
 			{
 				V3DLONG tol_sz = sz0 * sz1 * sz2;
-				for(V3DLONG i = 0; i < tol_sz; i++)
+				if(datatype == V3D_UINT8)
 				{
-					outimg1d[i] = (outimg1d[i] > 0) * inimg1d[i];
+					unsigned char * tmpimg1d = inimg1d;
+					for(V3DLONG i = 0; i < tol_sz; i++)
+					{
+						tmpimg1d[i] = (outimg1d[i] > 0) ? tmpimg1d[i] : 0;
+					}
+				}
+				else if(datatype == V3D_UINT16)
+				{
+					unsigned short int * tmpimg1d = (unsigned short int *) inimg1d;
+					for(V3DLONG i = 0; i < tol_sz; i++)
+					{
+						tmpimg1d[i] = (outimg1d[i] > 0) ? tmpimg1d[i] : 0;
+					}
+				}
+				else if(datatype == V3D_FLOAT32)
+				{
+					float * tmpimg1d = (float *) inimg1d;
+					for(V3DLONG i = 0; i < tol_sz; i++)
+					{
+						tmpimg1d[i] = (outimg1d[i] > 0) ? tmpimg1d[i] : 0;
+					}
+				}
+				V3DLONG out_sz[4] = {sz0, sz1, sz2, 1};
+				if(!saveImage(outimg_file.c_str(), inimg1d, out_sz, datatype))
+				{
+					cerr<<"Unable to save image to file "<<outimg_file<<endl; 
+					return false;
+				}
+				if(inimg1d){delete [] inimg1d; inimg1d = 0;}
+				if(in_sz){delete [] in_sz; in_sz = 0;}
+			}
+			else
+			{
+				V3DLONG out_sz[4] = {sz0, sz1, sz2, 1};
+				if(!saveImage(outimg_file.c_str(), outimg1d, out_sz, V3D_UINT8))
+				{
+					cerr<<"Unable to save image to file "<<outimg_file<<endl; 
+					return false;
 				}
 			}
-			V3DLONG out_sz[4] = {sz0, sz1, sz2, 1};
-			if(!saveImage(outimg_file.c_str(), outimg1d, out_sz, V3D_UINT8))
-			{
-				cerr<<"Unable to save image to file "<<outimg_file<<endl; 
-				return false;
-			}
+			if(outimg1d){delete [] outimg1d; outimg1d = 0;}
 			return true;
 		}
 		else if(func_name == "TOOLBOXswc2mask")
