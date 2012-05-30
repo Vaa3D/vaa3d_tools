@@ -24,6 +24,15 @@ static string basename(string para)
 	if(pos2 == string::npos) pos2 = para.size();
 	return para.substr(pos1+1, pos2 - pos1 -1);
 }
+
+// file_type("test.tif") == ".tif"
+string file_type(string para)
+{
+    int pos = para.find_last_of(".");
+    if(pos == string::npos) return string("unknown");
+    else return para.substr(pos, para.size() - pos);
+}
+
 class SWC2MaskPlugin : public QObject, public V3DPluginInterface2_1
 {
 	Q_OBJECT
@@ -134,14 +143,41 @@ public:
 			vector<char*> outfiles = (poutfiles != 0) ? * poutfiles : vector<char*>();
 			vector<char*> paras = (pparas != 0) ? * pparas : vector<char*>();
 
-			if(infiles.size() != 1) return false;
-			if(paras.size() != 0 && paras.size() != 3) return false;
+			string inimg_file;
+			string inswc_file;
+			unsigned char * inimg1d = 0; int datatype = 0;
+			V3DLONG * in_sz = 0;
 
-			string inswc_file = infiles[0];
+			V3DLONG sz0 = 0, sz1 = 0, sz2 = 0;
+
+			if(infiles.size() == 1) 
+			{
+				inswc_file = infiles[0];
+				if(file_type(inswc_file) != ".swc") 
+				{
+					cerr<<"Input is not swc file"<<endl;
+					return false;
+				}
+			}
+			else if(infiles.size() == 2)
+			{
+				if(file_type(infiles[0]) == ".swc") inswc_file = infiles[0];
+				else inimg_file = infiles[0];
+				if(file_type(infiles[1]) == ".swc") inswc_file = infiles[1];
+				else inimg_file = infiles[1];
+				if(inswc_file == "" || inimg_file == "")
+				{
+					cerr<<"Input files error!"<<endl;
+					return false;
+				}
+				if(!loadImage((char*)inimg_file.c_str(), inimg1d, in_sz, datatype)) {cerr<<"Load image "<<inimg_file<<" error!"<<endl; return false;}
+				sz0 = in_sz[0]; sz1 = in_sz[1]; sz2 = in_sz[2];
+			}
+			if(paras.size() != 0 && paras.size() != 3){cerr<<"input para error!"<<endl; return false;}
+
 			vector<MyMarker*> inswc = readSWC_file(inswc_file);
 			string outimg_file = outfiles.empty() ? basename(inswc_file) + "_out.raw" : outfiles[0];
-			V3DLONG sz0 = 0, sz1 = 0, sz2 = 0;
-			if(paras.empty())
+			if(infiles.size() == 1 && paras.empty())
 			{
 				MyMarker * marker = inswc[0];
 				V3DLONG x = marker->x + 0.5;
@@ -184,7 +220,7 @@ public:
 					marker->z = z - mz;
 				}
 			}
-			else
+			else if(infiles.size() == 1 && paras.size() == 3)
 			{
 				sz0 = atoi(paras[0]);
 				sz1 = atoi(paras[1]);
@@ -194,6 +230,14 @@ public:
 			
 			unsigned char * outimg1d = 0;
 			if(!swc2mask(outimg1d, inswc, sz0, sz1, sz2)) return false;
+			if(infiles.size() == 2)
+			{
+				V3DLONG tol_sz = sz0 * sz1 * sz2;
+				for(V3DLONG i = 0; i < tol_sz; i++)
+				{
+					outimg1d[i] = (outimg1d[i] > 0) * inimg1d[i];
+				}
+			}
 			V3DLONG out_sz[4] = {sz0, sz1, sz2, 1};
 			if(!saveImage(outimg_file.c_str(), outimg1d, out_sz, V3D_UINT8))
 			{
