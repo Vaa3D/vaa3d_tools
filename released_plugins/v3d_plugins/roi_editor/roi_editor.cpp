@@ -237,8 +237,9 @@ void do_computation(V3DPluginCallback2 &callback, QWidget *parent, int method_co
           QString filename = QFileDialog::getSaveFileName(
                parent,
                QObject::tr("Save ROI to file"),
-               QDir::currentPath(),
-               QObject::tr("text file (*.txt)") );
+               //QDir::currentPath(),
+               callback.getImageName(curwin)+".roi", //20120702. by PHC
+               QObject::tr("ROI text file (*.roi *.txt)") );
           if( !filename.isNull() )
           {
                // typedef QList<QPolygon>        ROIList;
@@ -286,8 +287,9 @@ void do_computation(V3DPluginCallback2 &callback, QWidget *parent, int method_co
           QString filename = QFileDialog::getOpenFileName(
                parent,
                QObject::tr("Load ROI File"),
-               QDir::currentPath(),
-               QObject::tr("ROI file (*.txt);;All files (*.*)") );
+               //QDir::currentPath(),
+               callback.getImageName(curwin)+".roi", //20120702. by PHC
+               QObject::tr("ROI file (*.roi *.txt);;All files (*.*)") );
           if( !filename.isEmpty() )
           {
                string file_name = filename.toStdString();
