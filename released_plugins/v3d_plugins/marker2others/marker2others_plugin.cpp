@@ -27,9 +27,9 @@ void marker2others(V3DPluginCallback2 &callback, QWidget *parent)
     for (int i=0;i<mlist.size();i++)
     {
         NeuronSWC n;
-        n.x = mlist[i].x;
-        n.y = mlist[i].y;
-        n.z = mlist[i].z;
+        n.x = mlist[i].x-1;
+        n.y = mlist[i].y-1;
+        n.z = mlist[i].z-1;
         n.n = i;
         n.type = 2;
         n.r = 1;
