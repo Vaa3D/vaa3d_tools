@@ -8,9 +8,8 @@ macx: CONFIG -= app_bundle
 CONFIG       += x86_64
 #QT          -= gui # Only the core module is used
 
-#V3DMAINDIR    = ../../v3d_main
-V3DMAINDIR    = ../../../v3d_external/v3d_main
-JBADIR        = ../../../brainaligner
+V3DMAINDIR    = ../../../v3d_main
+JBADIR        = ../../../../brainaligner
 
 INCLUDEPATH  += $$V3DMAINDIR/common_lib/include
 INCLUDEPATH  += $$V3DMAINDIR/basic_c_fun
