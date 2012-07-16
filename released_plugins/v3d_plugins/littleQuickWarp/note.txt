@@ -1,0 +1,76 @@
+1. Jab recenter image to a bigger size which computed by sz_new=ceil(sz_old/32)*32 before warping. This process cause the subsampled displace fileld has slight different grid value, thus the final warped images. In order to make the output exactly same as jab, I add a new function imgwarp_smallmemory_padding(). Although the new function function can generate same result now, but it consumes more memory than necessay(used to store padding_img). 
+
+2. After padding image, the output warped image still has slight different with jba's output. It turn out to be a jba bug. The step size in jab is computed as sz_df_sub/sz_img_padding, the correct one should be (sz_df_sub-1)/sz_img_padding, since sz_df_sub= sz_img_padding/sz_block+1
+
+3. In Jba, the image data is converted to float before warping, which is unnecessary for warping only purpose, and this will waste some memory. In order to make a fair memory usage comparison, the input image should be float. 
+
+4. In Jba, the target image is loaded and preprocessed, which is also unnecessary. In order to compare time consumption fairly, we can add some timing sentences around the warping(TPS+warping) function. But how to make a fare memory usage comparison, seems has to modify the jab code!
+	-now jab do not read and process target image, memory test is ready! 
+
+5. Still need to test vs. B-spline and performance on different machines
+	-the TPS_bspline and bspline are not implemented in jab, they are same as TPS
+
+----------------------------------------------------------------------------------------
+test result on images with different size and datatype
+----------------------------------------------------------------------------------------
+uint8 256*256*108*1:
+		time(nopadding)	time(padding)	memory(nopadding)	memory(padding)
+littlequick:	4.1-4.2		5.0-5.2		22.9M			39.5M
+JBA:		notsupport	5.1-5.2		notsupport		354.7M
+----------------------------------------------------------------------------------------
+float 256*256*108*1:
+		time(nopadding)	time(padding)	memory(nopadding)	memory(padding)
+littlequick:	4.1-4.3		5.2-5.4		63M			100.6M
+JBA:		notsupport	5.1-5.2		notsupport		410.7M
+----------------------------------------------------------------------------------------
+uint8 512*512*216*1:
+		time(nopadding)	time(padding)	memory(nopadding)	memory(padding)
+littlequick:	33.0-33.3	35.2-35.5	130.5M			189.1M
+JBA:		notsupport	38.2-38.3	notsupport		2.53G
+----------------------------------------------------------------------------------------
+float 512*512*216*1:
+		time(nopadding)	time(padding)	memory(nopadding)	memory(padding)
+littlequick:	33.2-33.5	35.9-36.1	454.5M			687.1M
+JBA:		notsupport	38.3-38.4	notsupport		2.85G
+
+
+----------------------------------------------------------------------------------------
+Linux
+----------------------------------------------------------------------------------------
+uint8 256*256*108*1:
+		time(nopadding)	time(padding)	memory(nopadding)	memory(padding)
+littlequick:	2.1-2.3		2.6-2.8		16.7M			26.4M (maybe too fast to show correctly!)
+JBA:		notsupport	4.3-4.5		notsupport		369.5M
+----------------------------------------------------------------------------------------
+float 256*256*108*1:
+		time(nopadding)	time(padding)	memory(nopadding)	memory(padding)
+littlequick:	2.1-2.3		2.6-2.7		57.0M			94.4M
+JBA:		notsupport	4.3-4.6		notsupport		351.0M
+----------------------------------------------------------------------------------------
+uint8 512*512*216*1:
+		time(nopadding)	time(padding)	memory(nopadding)	memory(padding)
+littlequick:	17.1-17.3	18.8-19.8	124.5M			183.0M
+JBA:		notsupport	30.6-30.8	notsupport		2.5G
+----------------------------------------------------------------------------------------
+float 512*512*216*1:
+		time(nopadding)	time(padding)	memory(nopadding)	memory(padding)
+littlequick:	17.3-17.9	18.9-19.2	448.5M			681.0M
+JBA:		notsupport	30.7-32.2	notsupport		2.8G
+----------------------------------------------------------------------------------------
+uint8 1024*1024*1024*1:
+		time(nopadding)	time(padding)	memory(nopadding)	memory(padding)
+littlequick:	326.2-338.6	342.2-349.8	2.3G			3.3G
+JBA:		notsupport	614.0-622.8	notsupport		45.9G (use up all physical memory)
+----------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------
+uint8 2048*2048*1024*1:
+		time(nopadding)	time(padding)	memory(nopadding)	memory(padding)
+littlequick:	326.2-338.6	342.2-349.8	2.3G			3.3G
+----------------------------------------------------------------------------------------
+uint8 2048*2048*2048*1:
+		time(nopadding)	time(padding)	memory(nopadding)	memory(padding)
+littlequick:	326.2-338.6	342.2-349.8	2.3G			3.3G
+----------------------------------------------------------------------------------------
+uint8 4096*4096*2048*1:
+		time(nopadding)	time(padding)	memory(nopadding)	memory(padding)
+littlequick:	326.2-338.6	342.2-349.8	2.3G			3.3G
