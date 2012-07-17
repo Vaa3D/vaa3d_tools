@@ -1,0 +1,7 @@
+<RCC>
+    <qresource prefix="/">
+        <file>icons/load.png</file>
+        <file>icons/wait.gif</file>
+        <file>icons/help.png</file>
+    </qresource>
+</RCC>
