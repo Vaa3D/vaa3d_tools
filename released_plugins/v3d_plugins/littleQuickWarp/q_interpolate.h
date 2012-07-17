@@ -8,6 +8,7 @@
 
 #include "../../basic_c_fun/v3d_basicdatatype.h"
 #include "../../basic_c_fun/basic_surf_objs.h"
+#include "jba_mainfunc.h"
 
 Vol3DSimple <MYFLOAT_JBA> * linearinterp_regularmesh_3d(V3DLONG sz0, V3DLONG sz1, V3DLONG sz2, Vol3DSimple <MYFLOAT_JBA> * df_regular_grid);
 

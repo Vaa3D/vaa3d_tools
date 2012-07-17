@@ -524,3 +524,57 @@ bool imgwarp_smallmemory_padding(const T *p_img_sub,const V3DLONG *sz_img_sub,
 
 	return true;
 }
+
+//inline resize image by padding and unpadding
+template <class T>
+bool imgresize_padding(T *&p_img,V3DLONG *sz_img,
+		V3DLONG sz_resize_x, V3DLONG sz_resize_y, V3DLONG sz_resize_z)
+{
+	//check parameters
+	if(p_img==0 || sz_img==0)
+	{
+		printf("ERROR: p_img or sz_img is invalid.\n");
+		return false;
+	}
+	if(sz_resize_x<=0 || sz_resize_y<=0 || sz_resize_z<=0)
+	{
+		printf("ERROR: input new image size is invalid!\n");
+		return false;
+	}
+
+	//allocate memory
+	T *p_img_resize=new T[sz_resize_x*sz_resize_y*sz_resize_z*sz_img[3]]();
+	if(!p_img_resize)
+	{
+		printf("ERROR: Fail to allocate memory for p_img_resize.\n");
+		return false;
+	}
+	T ****p_img_resize_4d=0,****p_img_4d=0;
+	if(!new4dpointer(p_img_resize_4d,sz_resize_x,sz_resize_y,sz_resize_z,sz_img[3],p_img_resize) ||
+	   !new4dpointer(p_img_4d,sz_img[0],sz_img[1],sz_img[2],sz_img[3],p_img))
+	{
+		printf("ERROR: Fail to allocate memory for the 4d pointer of image.\n");
+		if(p_img_resize_4d) 				{delete4dpointer(p_img_resize_4d,sz_resize_x,sz_resize_y,sz_resize_z,sz_img[3]);}
+		if(p_img_4d)		 				{delete4dpointer(p_img_4d,sz_img[0],sz_img[1],sz_img[2],sz_img[3]);}
+		if(p_img_resize) 					{delete []p_img_resize;p_img_resize=0;}
+		return false;
+	}
+
+	//do resize by padding and unpadding
+	for(V3DLONG z=0;z<sz_resize_z;z++)
+		for(V3DLONG y=0;y<sz_resize_y;y++)
+			for(V3DLONG x=0;x<sz_resize_x;x++)
+				for(V3DLONG c=0;c<sz_img[3];c++)
+				{
+					if(x<sz_img[0] && y<sz_img[1] && z<sz_img[2])
+						p_img_resize_4d[c][z][y][x]=p_img_4d[c][z][y][x];
+				}
+
+	if(p_img_resize_4d) 				{delete4dpointer(p_img_resize_4d,sz_resize_x,sz_resize_y,sz_resize_z,sz_img[3]);}
+	if(p_img_4d)		 				{delete4dpointer(p_img_4d,sz_img[0],sz_img[1],sz_img[2],sz_img[3]);}
+	if(p_img) 							{delete []p_img;p_img=0;}
+	p_img=p_img_resize;					p_img_resize=0;
+	sz_img[0]=sz_resize_x;	sz_img[1]=sz_resize_y;	sz_img[2]=sz_resize_z;
+
+	return true;
+}
