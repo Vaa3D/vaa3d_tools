@@ -11,28 +11,61 @@ using namespace std;
 #include "q_paradialog_littlequickwarp.h"
 #include "q_imgwarp_tps_quicksmallmemory.cpp"
 
+
 Q_EXPORT_PLUGIN2(littlequickwarp, LittleQuickWarpPlugin);
 
+void printHelp();
 bool littlequickwarp(QString qs_filename_img_sub,QString qs_filename_marker_sub,QString qs_filename_marker_tar,
 		bool b_padding,bool b_resizeimg,V3DLONG sz_resize_x,V3DLONG sz_resize_y,V3DLONG sz_resize_z,
 		QString qs_filename_img_warp);
+int split(const char *paras, char ** &args)
+{
+    int argc = 0;
+    int len = strlen(paras);
+    int posb[200];
+    char * myparas = new char[len];
+    strcpy(myparas, paras);
+    for(int i = 0; i < len; i++)
+    {
+        if(i==0 && myparas[i] != ' ' && myparas[i] != '\t')
+        {
+            posb[argc++]=i;
+        }
+        else if((myparas[i-1] == ' ' || myparas[i-1] == '\t') &&
+                (myparas[i] != ' ' && myparas[i] != '\t'))
+        {
+            posb[argc++] = i;
+        }
+    }
+
+    args = new char*[argc];
+    for(int i = 0; i < argc; i++)
+    {
+        args[i] = myparas + posb[i];
+    }
+
+    for(int i = 0; i < len; i++)
+    {
+        if(myparas[i]==' ' || myparas[i]=='\t')myparas[i]='\0';
+    }
+    return argc;
+}
 
 QStringList LittleQuickWarpPlugin::menulist() const
 {
 	return QStringList() 
-        <<tr("LittleQuickWarpPlugin")
+        <<tr("littlequickwarp")
 		<<tr("about");
 }
 QStringList LittleQuickWarpPlugin::funclist() const
 {
 	return QStringList()
-		<<tr("LittleQuickWarpPlugin")
+		<<tr("littlequickwarp")
 		<<tr("help");
 }
-
 void LittleQuickWarpPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
 {
-    if (menu_name == tr("LittleQuickWarpPlugin"))
+    if (menu_name == tr("littlequickwarp"))
 	{
     	CParaDialog_littlequickwarp DLG_littlequickwarp(callback,parent);
         if(DLG_littlequickwarp.exec()!=QDialog::Accepted)	return;
@@ -41,8 +74,8 @@ void LittleQuickWarpPlugin::domenu(const QString &menu_name, V3DPluginCallback2 
     	QString qs_filename_img_warp=DLG_littlequickwarp.lineEdit_img_warp->text();
     	QString qs_filename_marker_sub=DLG_littlequickwarp.lineEdit_marker_sub->text();
     	QString qs_filename_marker_tar=DLG_littlequickwarp.lineEdit_marker_tar->text();
-    	bool b_resizeimg=DLG_littlequickwarp.groupBox_resize->isChecked();
     	bool b_padding=DLG_littlequickwarp.checkBox_padding->isChecked();
+    	bool b_resizeimg=DLG_littlequickwarp.groupBox_resize->isChecked();
     	V3DLONG sz_resize_x=DLG_littlequickwarp.lineEdit_Xdim->text().toLong();
     	V3DLONG sz_resize_y=DLG_littlequickwarp.lineEdit_Ydim->text().toLong();
     	V3DLONG sz_resize_z=DLG_littlequickwarp.lineEdit_Zdim->text().toLong();
@@ -61,21 +94,52 @@ void LittleQuickWarpPlugin::domenu(const QString &menu_name, V3DPluginCallback2 
 			"Developed by Lei Qu, 2012-07-16"));
 	}
 }
-
 bool LittleQuickWarpPlugin::dofunc(const QString & func_name, const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback,  QWidget * parent)
 {
 	if (func_name == tr("littlequickwarp"))
 	{
+		cout<<"============== Welcome to littlequickwarp function ================="<<endl;
+		printf("%d,%d,%d\n",input.size(),output.size(),(*(vector<char*> *)(input.at(1).p)).size());
+		if(input.size()!=2 || output.size()!=1 || ((vector<char*> *)(input.at(1).p))->size()!=5)
+		{
+			v3d_msg(tr("ERROR: no enough para!"));
+			printHelp();
+			return false;
+		}
+
+		//get paras
+		QString qs_filename_img_sub=((vector<char*> *)(input.at(0).p))->at(0);
+		QString qs_filename_marker_sub=((vector<char*> *)(input.at(0).p))->at(1);
+		QString qs_filename_marker_tar=((vector<char*> *)(input.at(0).p))->at(2);
+		QString qs_filename_img_warp=((vector<char*> *)(output.at(0).p))->at(0);
+		vector<char*> paras = (*(vector<char*> *)(input.at(1).p));
+		bool b_padding=atoi(paras.at(0));
+		bool b_resizeimg=atoi(paras.at(1));
+		V3DLONG sz_resize_x=atoi(paras.at(2));
+		V3DLONG sz_resize_y=atoi(paras.at(3));
+		V3DLONG sz_resize_z=atoi(paras.at(4));
+
+	   	//do warping
+		if(!littlequickwarp(qs_filename_img_sub,qs_filename_marker_sub,qs_filename_marker_tar,
+				b_padding,b_resizeimg,sz_resize_x,sz_resize_y,sz_resize_z,
+				qs_filename_img_warp))
+		{
+			v3d_msg(tr("ERROR: littlequickwarp() return false!"));
+			return false;
+		}
 		return true;
 	}
 	else
 	{
-		cout<<"\nThis is a plugin to Warp image based on given markers (fast and with small memory consumption). 2012-07-16 by Lei Qu"<<endl;
-		cout<<"\nUsage: v3d -x histogram -f histogram -i <image_name> -o <outputfile_name>"<<endl;
-		cout<<"\t -i <image_name> :       name of the image to be computed"<<endl;
-		cout<<"\t -o <outputfile_name> :  output file name (.csv)"<<endl;
-		cout<<"\nDemo v3d -x histogram -f histogram -i test.tif -o hist.csv\n"<<endl;
+		printHelp();
 	}
+}
+
+void printHelp()
+{
+    printf("\nUsage: v3d -x <littlequickwarp> -f littlequickwarp -i <input_image_sub> <input_marker_sub> <input_marker_tar> -o <output_image_file> -p dopadding doresize newsize_x newsize_y newsize_z\n");
+    printf("Demo :\t v3d -x littlequickwarp -f littlequickwarp -i /Users/qul/Desktop/testdata/output_global.tiff /Users/qul/Desktop/testdata/output_subject.marker /Users/qul/Desktop/testdata/output_target.marker -o /Users/qul/Desktop/test.v3draw -p 1 0 1 1 1\n");
+    return;
 }
 
 bool littlequickwarp(QString qs_filename_sub,QString qs_filename_marker_sub,QString qs_filename_marker_tar,
@@ -92,6 +156,8 @@ bool littlequickwarp(QString qs_filename_sub,QString qs_filename_marker_sub,QStr
 	printf(">>  input target  marker:          %s\n",qPrintable(qs_filename_marker_tar));
 	printf(">>  input subject marker:          %s\n",qPrintable(qs_filename_marker_sub));
 	printf(">>  padding image?:                %d\n",b_padding_img);
+	printf(">>  resize image?:                 %d\n",b_resizeimg);
+	printf(">>  new image size:               [%d,%d,%d]\n",sz_resize_x,sz_resize_y,sz_resize_z);
 	printf(">>-------------------------\n");
 	printf(">>output parameters:\n");
 	printf(">>  output warped image:           %s\n",qPrintable(qs_filename_warp));
