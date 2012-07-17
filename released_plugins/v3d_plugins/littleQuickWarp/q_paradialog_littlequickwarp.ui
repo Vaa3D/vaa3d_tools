@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>473</width>
-    <height>450</height>
+    <width>476</width>
+    <height>509</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -17,7 +17,7 @@
    <property name="geometry">
     <rect>
      <x>280</x>
-     <y>400</y>
+     <y>470</y>
      <width>181</width>
      <height>32</height>
     </rect>
@@ -195,7 +195,7 @@
      <x>10</x>
      <y>250</y>
      <width>451</width>
-     <height>141</height>
+     <height>211</height>
     </rect>
    </property>
    <property name="title">
@@ -213,6 +213,48 @@
     <property name="text">
      <string>Padding image before warping (only for comparing with JBA)</string>
     </property>
+   </widget>
+   <widget class="QGroupBox" name="groupBox">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>130</y>
+      <width>431</width>
+      <height>61</height>
+     </rect>
+    </property>
+    <property name="title">
+     <string>Image value interpolation method</string>
+    </property>
+    <widget class="QRadioButton" name="radioButton_interp_nn">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>30</y>
+       <width>161</width>
+       <height>20</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Nearest Neighbor</string>
+     </property>
+    </widget>
+    <widget class="QRadioButton" name="radioButton_interp_linear">
+     <property name="geometry">
+      <rect>
+       <x>180</x>
+       <y>30</y>
+       <width>161</width>
+       <height>20</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Trilinear</string>
+     </property>
+     <property name="checked">
+      <bool>true</bool>
+     </property>
+    </widget>
    </widget>
   </widget>
   <widget class="QGroupBox" name="groupBox_resize">

@@ -170,27 +170,28 @@ int main(int argc, char *argv[])
 	V3DLONG szBlock_x,szBlock_y,szBlock_z;
 	szBlock_x=szBlock_y=szBlock_z=4;
     
+	int interp_method=1;//0-nn, 1-linear
 	bool b_status=false;
     if(datatype_sub==1)
     {
     	if(!b_padding_img)
-    		b_status=imgwarp_smallmemory(p_img_sub,sz_img_sub,ql_marker_tar,ql_marker_sub,szBlock_x,szBlock_y,szBlock_z,p_img_warp);
+    		b_status=imgwarp_smallmemory(p_img_sub,sz_img_sub,ql_marker_tar,ql_marker_sub,szBlock_x,szBlock_y,szBlock_z,interp_method,p_img_warp);
     	else
-    		b_status=imgwarp_smallmemory_padding(p_img_sub,sz_img_sub,ql_marker_tar,ql_marker_sub,szBlock_x,szBlock_y,szBlock_z,p_img_warp);
+    		b_status=imgwarp_smallmemory_padding(p_img_sub,sz_img_sub,ql_marker_tar,ql_marker_sub,szBlock_x,szBlock_y,szBlock_z,interp_method,p_img_warp);
     }
     else if(datatype_sub==2)
     {
     	if(!b_padding_img)
-    		b_status=imgwarp_smallmemory((unsigned short int *)p_img_sub,sz_img_sub,ql_marker_tar,ql_marker_sub,szBlock_x,szBlock_y,szBlock_z,(unsigned short int *&)p_img_warp);
+    		b_status=imgwarp_smallmemory((unsigned short int *)p_img_sub,sz_img_sub,ql_marker_tar,ql_marker_sub,szBlock_x,szBlock_y,szBlock_z,interp_method,(unsigned short int *&)p_img_warp);
     	else
-    		b_status=imgwarp_smallmemory_padding((unsigned short int *)p_img_sub,sz_img_sub,ql_marker_tar,ql_marker_sub,szBlock_x,szBlock_y,szBlock_z,(unsigned short int *&)p_img_warp);
+    		b_status=imgwarp_smallmemory_padding((unsigned short int *)p_img_sub,sz_img_sub,ql_marker_tar,ql_marker_sub,szBlock_x,szBlock_y,szBlock_z,interp_method,(unsigned short int *&)p_img_warp);
     }
     else if(datatype_sub==4)
     {
     	if(!b_padding_img)
-    		b_status=imgwarp_smallmemory((float *)p_img_sub,sz_img_sub,ql_marker_tar,ql_marker_sub,szBlock_x,szBlock_y,szBlock_z,(float *&)p_img_warp);
+    		b_status=imgwarp_smallmemory((float *)p_img_sub,sz_img_sub,ql_marker_tar,ql_marker_sub,szBlock_x,szBlock_y,szBlock_z,interp_method,(float *&)p_img_warp);
     	else
-    		b_status=imgwarp_smallmemory_padding((float *)p_img_sub,sz_img_sub,ql_marker_tar,ql_marker_sub,szBlock_x,szBlock_y,szBlock_z,(float *&)p_img_warp);
+    		b_status=imgwarp_smallmemory_padding((float *)p_img_sub,sz_img_sub,ql_marker_tar,ql_marker_sub,szBlock_x,szBlock_y,szBlock_z,interp_method,(float *&)p_img_warp);
     }
     if(!b_status)
 	{

@@ -6,10 +6,11 @@
 #include "q_interpolate.h"
 
 //TPS_linear_blockbyblock image warping
+//interp_method: 0-nearest neighbor, 1-linear
 template <class T>
 bool imgwarp_smallmemory(const T *p_img_sub,const V3DLONG *sz_img_sub,
 		const QList<ImageMarker> &ql_marker_tar,const QList<ImageMarker> &ql_marker_sub,
-		V3DLONG szBlock_x, V3DLONG szBlock_y, V3DLONG szBlock_z,
+		V3DLONG szBlock_x, V3DLONG szBlock_y, V3DLONG szBlock_z, int interp_method,
 		T *&p_img_warp)
 {
 	//check parameters
@@ -31,6 +32,11 @@ bool imgwarp_smallmemory(const T *p_img_sub,const V3DLONG *sz_img_sub,
 	if(szBlock_x>=sz_img_sub[0] || szBlock_y>=sz_img_sub[1] || szBlock_z>=sz_img_sub[2])
 	{
 		printf("ERROR: block size should smaller than the image size!\n");
+		return false;
+	}
+	if(interp_method!=0 && interp_method!=1)
+	{
+		printf("ERROR: interp_method should be 0(linear) or 1(nn)!\n");
 		return false;
 	}
 	if(p_img_warp)
@@ -107,6 +113,9 @@ bool imgwarp_smallmemory(const T *p_img_sub,const V3DLONG *sz_img_sub,
 	MYFLOAT_JBA			    	***pppDFBlock1C		=0;
 
 	//warp image block by block
+	printf("    subsampled displace field interpolate method: trilinear\n");
+	if(interp_method==0)		printf("    image value               interpolate method: nearest neighbor\n");
+	else if(interp_method==1)	printf("    image value               interpolate method: trilinear\n");
 	for(V3DLONG substart_z=0;substart_z<pSubDF->sz2()-1;substart_z++)
 		for(V3DLONG substart_y=0;substart_y<pSubDF->sz1()-1;substart_y++)
 			for(V3DLONG substart_x=0;substart_x<pSubDF->sz0()-1;substart_x++)
@@ -185,35 +194,50 @@ bool imgwarp_smallmemory(const T *p_img_sub,const V3DLONG *sz_img_sub,
 								continue;
 							}
 
-							//linear interpolate
-							//find 8 neighor pixels boundary
-							V3DLONG x_s,x_b,y_s,y_b,z_s,z_b;
-							x_s=floor(pos_sub[0]);		x_b=ceil(pos_sub[0]);
-							y_s=floor(pos_sub[1]);		y_b=ceil(pos_sub[1]);
-							z_s=floor(pos_sub[2]);		z_b=ceil(pos_sub[2]);
-
-							//compute weight for left and right, top and bottom -- 4 neighbor pixel's weight in a slice
-							double l_w,r_w,t_w,b_w;
-							l_w=1.0-(pos_sub[0]-x_s);	r_w=1.0-l_w;
-							t_w=1.0-(pos_sub[1]-y_s);	b_w=1.0-t_w;
-							//compute weight for higer slice and lower slice
-							double u_w,d_w;
-							u_w=1.0-(pos_sub[2]-z_s);	d_w=1.0-u_w;
-
-							//linear interpolate each channel
-							for(V3DLONG c=0;c<sz_img_sub[3];c++)
+							//nearest neighbor interpolate
+							if(interp_method==0)
 							{
-								//linear interpolate in higher slice [t_w*(l_w*lt+r_w*rt)+b_w*(l_w*lb+r_w*rb)]
-								double higher_slice;
-								higher_slice=t_w*(l_w*p_img_sub_4d[c][z_s][y_s][x_s]+r_w*p_img_sub_4d[c][z_s][y_s][x_b])+
-											 b_w*(l_w*p_img_sub_4d[c][z_s][y_b][x_s]+r_w*p_img_sub_4d[c][z_s][y_b][x_b]);
-								//linear interpolate in lower slice [t_w*(l_w*lt+r_w*rt)+b_w*(l_w*lb+r_w*rb)]
-								double lower_slice;
-								lower_slice =t_w*(l_w*p_img_sub_4d[c][z_b][y_s][x_s]+r_w*p_img_sub_4d[c][z_b][y_s][x_b])+
-											 b_w*(l_w*p_img_sub_4d[c][z_b][y_b][x_s]+r_w*p_img_sub_4d[c][z_b][y_b][x_b]);
-								//linear interpolate the current position [u_w*higher_slice+d_w*lower_slice]
-								T intval=(T)(u_w*higher_slice+d_w*lower_slice+0.5);
-								p_img_warp_4d[c][pos_warp[2]][pos_warp[1]][pos_warp[0]]=intval;
+								V3DLONG pos_sub_nn[3];
+								for(int i=0;i<3;i++)
+								{
+									pos_sub_nn[i]=pos_sub[i]+0.5;
+									pos_sub_nn[i]=pos_sub_nn[i]<sz_img_sub[i]?pos_sub_nn[i]:sz_img_sub[i]-1;
+								}
+								for(V3DLONG c=0;c<sz_img_sub[3];c++)
+									p_img_warp_4d[c][pos_warp[2]][pos_warp[1]][pos_warp[0]]=p_img_sub_4d[c][pos_sub_nn[2]][pos_sub_nn[1]][pos_sub_nn[0]];
+							}
+							//linear interpolate
+							else if(interp_method==1)
+							{
+								//find 8 neighor pixels boundary
+								V3DLONG x_s,x_b,y_s,y_b,z_s,z_b;
+								x_s=floor(pos_sub[0]);		x_b=ceil(pos_sub[0]);
+								y_s=floor(pos_sub[1]);		y_b=ceil(pos_sub[1]);
+								z_s=floor(pos_sub[2]);		z_b=ceil(pos_sub[2]);
+
+								//compute weight for left and right, top and bottom -- 4 neighbor pixel's weight in a slice
+								double l_w,r_w,t_w,b_w;
+								l_w=1.0-(pos_sub[0]-x_s);	r_w=1.0-l_w;
+								t_w=1.0-(pos_sub[1]-y_s);	b_w=1.0-t_w;
+								//compute weight for higer slice and lower slice
+								double u_w,d_w;
+								u_w=1.0-(pos_sub[2]-z_s);	d_w=1.0-u_w;
+
+								//linear interpolate each channel
+								for(V3DLONG c=0;c<sz_img_sub[3];c++)
+								{
+									//linear interpolate in higher slice [t_w*(l_w*lt+r_w*rt)+b_w*(l_w*lb+r_w*rb)]
+									double higher_slice;
+									higher_slice=t_w*(l_w*p_img_sub_4d[c][z_s][y_s][x_s]+r_w*p_img_sub_4d[c][z_s][y_s][x_b])+
+												 b_w*(l_w*p_img_sub_4d[c][z_s][y_b][x_s]+r_w*p_img_sub_4d[c][z_s][y_b][x_b]);
+									//linear interpolate in lower slice [t_w*(l_w*lt+r_w*rt)+b_w*(l_w*lb+r_w*rb)]
+									double lower_slice;
+									lower_slice =t_w*(l_w*p_img_sub_4d[c][z_b][y_s][x_s]+r_w*p_img_sub_4d[c][z_b][y_s][x_b])+
+												 b_w*(l_w*p_img_sub_4d[c][z_b][y_b][x_s]+r_w*p_img_sub_4d[c][z_b][y_b][x_b]);
+									//linear interpolate the current position [u_w*higher_slice+d_w*lower_slice]
+									T intval=(T)(u_w*higher_slice+d_w*lower_slice+0.5);
+									p_img_warp_4d[c][pos_warp[2]][pos_warp[1]][pos_warp[0]]=intval;
+								}
 							}
 						}
 			}
@@ -231,10 +255,11 @@ bool imgwarp_smallmemory(const T *p_img_sub,const V3DLONG *sz_img_sub,
 //TPS_linear_blockbyblock image warping
 //padding and recentering image before warping, in order to generate same result as JBA (just for comparision)
 //note: need to release useless memory as early as possible to save momory
+//interp_method: 0-nearest neighbor, 1-linear
 template <class T>
 bool imgwarp_smallmemory_padding(const T *p_img_sub,const V3DLONG *sz_img_sub,
 		const QList<ImageMarker> &ql_marker_tar,const QList<ImageMarker> &ql_marker_sub,
-		V3DLONG szBlock_x, V3DLONG szBlock_y, V3DLONG szBlock_z,
+		V3DLONG szBlock_x, V3DLONG szBlock_y, V3DLONG szBlock_z,int interp_method,
 		T *&p_img_warp)
 {
 	//check parameters
@@ -256,6 +281,11 @@ bool imgwarp_smallmemory_padding(const T *p_img_sub,const V3DLONG *sz_img_sub,
 	if(szBlock_x>=sz_img_sub[0] || szBlock_y>=sz_img_sub[1] || szBlock_z>=sz_img_sub[2])
 	{
 		printf("ERROR: block size should smaller than the image size!\n");
+		return false;
+	}
+	if(interp_method!=0 && interp_method!=1)
+	{
+		printf("ERROR: interp_method should be 0(linear) or 1(nn)!\n");
 		return false;
 	}
 	if(p_img_warp)
@@ -376,6 +406,9 @@ bool imgwarp_smallmemory_padding(const T *p_img_sub,const V3DLONG *sz_img_sub,
 
 	//------------------------------------------------------------------------
 	//warp image block by block
+	printf("    subsampled displace field interpolate method: trilinear\n");
+	if(interp_method==0)		printf("    image value               interpolate method: nearest neighbor\n");
+	else if(interp_method==1)	printf("    image value               interpolate method: trilinear\n");
 	for(V3DLONG substart_z=0;substart_z<pSubDF->sz2()-1;substart_z++)
 		for(V3DLONG substart_y=0;substart_y<pSubDF->sz1()-1;substart_y++)
 			for(V3DLONG substart_x=0;substart_x<pSubDF->sz0()-1;substart_x++)
@@ -454,36 +487,51 @@ bool imgwarp_smallmemory_padding(const T *p_img_sub,const V3DLONG *sz_img_sub,
 								continue;
 							}
 
-							//linear interpolate
-							//find 8 neighor pixels boundary
-							V3DLONG x_s,x_b,y_s,y_b,z_s,z_b;
-							x_s=floor(pos_sub[0]);		x_b=ceil(pos_sub[0]);
-							y_s=floor(pos_sub[1]);		y_b=ceil(pos_sub[1]);
-							z_s=floor(pos_sub[2]);		z_b=ceil(pos_sub[2]);
-
-							//compute weight for left and right, top and bottom -- 4 neighbor pixel's weight in a slice
-							double l_w,r_w,t_w,b_w;
-							l_w=1.0-(pos_sub[0]-x_s);	r_w=1.0-l_w;
-							t_w=1.0-(pos_sub[1]-y_s);	b_w=1.0-t_w;
-							//compute weight for higer slice and lower slice
-							double u_w,d_w;
-							u_w=1.0-(pos_sub[2]-z_s);	d_w=1.0-u_w;
-
-							//linear interpolate each channel
-							for(V3DLONG c=0;c<sz_img_sub_padding[3];c++)
+							//nearest neighbor interpolate
+							if(interp_method==0)
 							{
-								//linear interpolate in higher slice [t_w*(l_w*lt+r_w*rt)+b_w*(l_w*lb+r_w*rb)]
-								double higher_slice;
-								higher_slice=t_w*(l_w*p_img_sub_padding_4d[c][z_s][y_s][x_s]+r_w*p_img_sub_padding_4d[c][z_s][y_s][x_b])+
-											 b_w*(l_w*p_img_sub_padding_4d[c][z_s][y_b][x_s]+r_w*p_img_sub_padding_4d[c][z_s][y_b][x_b]);
-								//linear interpolate in lower slice [t_w*(l_w*lt+r_w*rt)+b_w*(l_w*lb+r_w*rb)]
-								double lower_slice;
-								lower_slice =t_w*(l_w*p_img_sub_padding_4d[c][z_b][y_s][x_s]+r_w*p_img_sub_padding_4d[c][z_b][y_s][x_b])+
-											 b_w*(l_w*p_img_sub_padding_4d[c][z_b][y_b][x_s]+r_w*p_img_sub_padding_4d[c][z_b][y_b][x_b]);
-								//linear interpolate the current position [u_w*higher_slice+d_w*lower_slice]
-//								T intval=(T)(u_w*higher_slice+d_w*lower_slice+0.5);
-								T intval=(T)(u_w*higher_slice+d_w*lower_slice);//in jba, we just truncate it, keep same here
-								p_img_warp_padding_4d[c][pos_warp[2]][pos_warp[1]][pos_warp[0]]=intval;
+								V3DLONG pos_sub_nn[3];
+								for(int i=0;i<3;i++)
+								{
+									pos_sub_nn[i]=pos_sub[i]+0.5;
+									pos_sub_nn[i]=pos_sub_nn[i]<sz_img_sub_padding[i]?pos_sub_nn[i]:sz_img_sub_padding[i]-1;
+								}
+								for(V3DLONG c=0;c<sz_img_sub[3];c++)
+									p_img_warp_padding_4d[c][pos_warp[2]][pos_warp[1]][pos_warp[0]]=p_img_sub_padding_4d[c][pos_sub_nn[2]][pos_sub_nn[1]][pos_sub_nn[0]];
+							}
+							//linear interpolate
+							else if(interp_method==1)
+							{
+								//find 8 neighor pixels boundary
+								V3DLONG x_s,x_b,y_s,y_b,z_s,z_b;
+								x_s=floor(pos_sub[0]);		x_b=ceil(pos_sub[0]);
+								y_s=floor(pos_sub[1]);		y_b=ceil(pos_sub[1]);
+								z_s=floor(pos_sub[2]);		z_b=ceil(pos_sub[2]);
+
+								//compute weight for left and right, top and bottom -- 4 neighbor pixel's weight in a slice
+								double l_w,r_w,t_w,b_w;
+								l_w=1.0-(pos_sub[0]-x_s);	r_w=1.0-l_w;
+								t_w=1.0-(pos_sub[1]-y_s);	b_w=1.0-t_w;
+								//compute weight for higer slice and lower slice
+								double u_w,d_w;
+								u_w=1.0-(pos_sub[2]-z_s);	d_w=1.0-u_w;
+
+								//linear interpolate each channel
+								for(V3DLONG c=0;c<sz_img_sub_padding[3];c++)
+								{
+									//linear interpolate in higher slice [t_w*(l_w*lt+r_w*rt)+b_w*(l_w*lb+r_w*rb)]
+									double higher_slice;
+									higher_slice=t_w*(l_w*p_img_sub_padding_4d[c][z_s][y_s][x_s]+r_w*p_img_sub_padding_4d[c][z_s][y_s][x_b])+
+												 b_w*(l_w*p_img_sub_padding_4d[c][z_s][y_b][x_s]+r_w*p_img_sub_padding_4d[c][z_s][y_b][x_b]);
+									//linear interpolate in lower slice [t_w*(l_w*lt+r_w*rt)+b_w*(l_w*lb+r_w*rb)]
+									double lower_slice;
+									lower_slice =t_w*(l_w*p_img_sub_padding_4d[c][z_b][y_s][x_s]+r_w*p_img_sub_padding_4d[c][z_b][y_s][x_b])+
+												 b_w*(l_w*p_img_sub_padding_4d[c][z_b][y_b][x_s]+r_w*p_img_sub_padding_4d[c][z_b][y_b][x_b]);
+									//linear interpolate the current position [u_w*higher_slice+d_w*lower_slice]
+	//								T intval=(T)(u_w*higher_slice+d_w*lower_slice+0.5);
+									T intval=(T)(u_w*higher_slice+d_w*lower_slice);//in jba, we just truncate it, keep same here
+									p_img_warp_padding_4d[c][pos_warp[2]][pos_warp[1]][pos_warp[0]]=intval;
+								}
 							}
 
 						}

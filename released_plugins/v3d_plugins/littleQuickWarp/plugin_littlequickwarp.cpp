@@ -16,40 +16,8 @@ Q_EXPORT_PLUGIN2(littlequickwarp, LittleQuickWarpPlugin);
 
 void printHelp();
 bool littlequickwarp(QString qs_filename_img_sub,QString qs_filename_marker_sub,QString qs_filename_marker_tar,
-		bool b_padding,bool b_resizeimg,V3DLONG sz_resize_x,V3DLONG sz_resize_y,V3DLONG sz_resize_z,
+		bool b_interpmethod,bool b_padding,bool b_resizeimg,V3DLONG sz_resize_x,V3DLONG sz_resize_y,V3DLONG sz_resize_z,
 		QString qs_filename_img_warp);
-int split(const char *paras, char ** &args)
-{
-    int argc = 0;
-    int len = strlen(paras);
-    int posb[200];
-    char * myparas = new char[len];
-    strcpy(myparas, paras);
-    for(int i = 0; i < len; i++)
-    {
-        if(i==0 && myparas[i] != ' ' && myparas[i] != '\t')
-        {
-            posb[argc++]=i;
-        }
-        else if((myparas[i-1] == ' ' || myparas[i-1] == '\t') &&
-                (myparas[i] != ' ' && myparas[i] != '\t'))
-        {
-            posb[argc++] = i;
-        }
-    }
-
-    args = new char*[argc];
-    for(int i = 0; i < argc; i++)
-    {
-        args[i] = myparas + posb[i];
-    }
-
-    for(int i = 0; i < len; i++)
-    {
-        if(myparas[i]==' ' || myparas[i]=='\t')myparas[i]='\0';
-    }
-    return argc;
-}
 
 QStringList LittleQuickWarpPlugin::menulist() const
 {
@@ -74,6 +42,7 @@ void LittleQuickWarpPlugin::domenu(const QString &menu_name, V3DPluginCallback2 
     	QString qs_filename_img_warp=DLG_littlequickwarp.lineEdit_img_warp->text();
     	QString qs_filename_marker_sub=DLG_littlequickwarp.lineEdit_marker_sub->text();
     	QString qs_filename_marker_tar=DLG_littlequickwarp.lineEdit_marker_tar->text();
+    	bool b_interpmethod=DLG_littlequickwarp.radioButton_interp_linear->isChecked();
     	bool b_padding=DLG_littlequickwarp.checkBox_padding->isChecked();
     	bool b_resizeimg=DLG_littlequickwarp.groupBox_resize->isChecked();
     	V3DLONG sz_resize_x=DLG_littlequickwarp.lineEdit_Xdim->text().toLong();
@@ -81,7 +50,7 @@ void LittleQuickWarpPlugin::domenu(const QString &menu_name, V3DPluginCallback2 
     	V3DLONG sz_resize_z=DLG_littlequickwarp.lineEdit_Zdim->text().toLong();
     	//do warping
     	if(!littlequickwarp(qs_filename_img_sub,qs_filename_marker_sub,qs_filename_marker_tar,
-    			b_padding,b_resizeimg,sz_resize_x,sz_resize_y,sz_resize_z,
+    			b_interpmethod,b_padding,b_resizeimg,sz_resize_x,sz_resize_y,sz_resize_z,
     			qs_filename_img_warp))
     	{
     		v3d_msg(tr("ERROR: littlequickwarp() return false!"));
@@ -99,8 +68,7 @@ bool LittleQuickWarpPlugin::dofunc(const QString & func_name, const V3DPluginArg
 	if (func_name == tr("littlequickwarp"))
 	{
 		cout<<"============== Welcome to littlequickwarp function ================="<<endl;
-		printf("%d,%d,%d\n",input.size(),output.size(),(*(vector<char*> *)(input.at(1).p)).size());
-		if(input.size()!=2 || output.size()!=1 || ((vector<char*> *)(input.at(1).p))->size()!=5)
+		if(input.size()!=2 || output.size()!=1 || ((vector<char*> *)(input.at(1).p))->size()!=6)
 		{
 			v3d_msg(tr("ERROR: no enough para!"));
 			printHelp();
@@ -113,15 +81,16 @@ bool LittleQuickWarpPlugin::dofunc(const QString & func_name, const V3DPluginArg
 		QString qs_filename_marker_tar=((vector<char*> *)(input.at(0).p))->at(2);
 		QString qs_filename_img_warp=((vector<char*> *)(output.at(0).p))->at(0);
 		vector<char*> paras = (*(vector<char*> *)(input.at(1).p));
-		bool b_padding=atoi(paras.at(0));
-		bool b_resizeimg=atoi(paras.at(1));
-		V3DLONG sz_resize_x=atoi(paras.at(2));
-		V3DLONG sz_resize_y=atoi(paras.at(3));
-		V3DLONG sz_resize_z=atoi(paras.at(4));
+		bool b_interpmethod=atoi(paras.at(0));
+		bool b_padding=atoi(paras.at(1));
+		bool b_resizeimg=atoi(paras.at(2));
+		V3DLONG sz_resize_x=atoi(paras.at(3));
+		V3DLONG sz_resize_y=atoi(paras.at(4));
+		V3DLONG sz_resize_z=atoi(paras.at(5));
 
 	   	//do warping
 		if(!littlequickwarp(qs_filename_img_sub,qs_filename_marker_sub,qs_filename_marker_tar,
-				b_padding,b_resizeimg,sz_resize_x,sz_resize_y,sz_resize_z,
+				b_interpmethod,b_padding,b_resizeimg,sz_resize_x,sz_resize_y,sz_resize_z,
 				qs_filename_img_warp))
 		{
 			v3d_msg(tr("ERROR: littlequickwarp() return false!"));
@@ -138,12 +107,12 @@ bool LittleQuickWarpPlugin::dofunc(const QString & func_name, const V3DPluginArg
 void printHelp()
 {
     printf("\nUsage: v3d -x <littlequickwarp> -f littlequickwarp -i <input_image_sub> <input_marker_sub> <input_marker_tar> -o <output_image_file> -p dopadding doresize newsize_x newsize_y newsize_z\n");
-    printf("Demo :\t v3d -x littlequickwarp -f littlequickwarp -i /Users/qul/Desktop/testdata/output_global.tiff /Users/qul/Desktop/testdata/output_subject.marker /Users/qul/Desktop/testdata/output_target.marker -o /Users/qul/Desktop/test.v3draw -p 1 0 1 1 1\n");
+    printf("Demo :\t v3d -x littlequickwarp -f littlequickwarp -i /Users/qul/Desktop/testdata/output_global.tiff /Users/qul/Desktop/testdata/output_subject.marker /Users/qul/Desktop/testdata/output_target.marker -o /Users/qul/Desktop/test.v3draw -p 1 1 0 1 1 1\n");
     return;
 }
 
 bool littlequickwarp(QString qs_filename_sub,QString qs_filename_marker_sub,QString qs_filename_marker_tar,
-		bool b_padding_img,bool b_resizeimg,V3DLONG sz_resize_x,V3DLONG sz_resize_y,V3DLONG sz_resize_z,
+		bool b_interpmethod,bool b_padding_img,bool b_resizeimg,V3DLONG sz_resize_x,V3DLONG sz_resize_y,V3DLONG sz_resize_z,
 		QString qs_filename_warp)
 {
 	printf(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n");
@@ -155,6 +124,7 @@ bool littlequickwarp(QString qs_filename_sub,QString qs_filename_marker_sub,QStr
 	printf(">>  input subject image:           %s\n",qPrintable(qs_filename_sub));
 	printf(">>  input target  marker:          %s\n",qPrintable(qs_filename_marker_tar));
 	printf(">>  input subject marker:          %s\n",qPrintable(qs_filename_marker_sub));
+	printf(">>  interpolate method:            %d\n",b_interpmethod);
 	printf(">>  padding image?:                %d\n",b_padding_img);
 	printf(">>  resize image?:                 %d\n",b_resizeimg);
 	printf(">>  new image size:               [%d,%d,%d]\n",sz_resize_x,sz_resize_y,sz_resize_z);
@@ -220,23 +190,23 @@ bool littlequickwarp(QString qs_filename_sub,QString qs_filename_marker_sub,QStr
     if(datatype_sub==1)
     {
     	if(!b_padding_img)
-    		b_status=imgwarp_smallmemory(p_img_sub,sz_img_sub,ql_marker_tar,ql_marker_sub,szBlock_x,szBlock_y,szBlock_z,p_img_warp);
+    		b_status=imgwarp_smallmemory(p_img_sub,sz_img_sub,ql_marker_tar,ql_marker_sub,szBlock_x,szBlock_y,szBlock_z,b_interpmethod,p_img_warp);
     	else
-    		b_status=imgwarp_smallmemory_padding(p_img_sub,sz_img_sub,ql_marker_tar,ql_marker_sub,szBlock_x,szBlock_y,szBlock_z,p_img_warp);
+    		b_status=imgwarp_smallmemory_padding(p_img_sub,sz_img_sub,ql_marker_tar,ql_marker_sub,szBlock_x,szBlock_y,szBlock_z,b_interpmethod,p_img_warp);
     }
     else if(datatype_sub==2)
     {
     	if(!b_padding_img)
-    		b_status=imgwarp_smallmemory((unsigned short int *)p_img_sub,sz_img_sub,ql_marker_tar,ql_marker_sub,szBlock_x,szBlock_y,szBlock_z,(unsigned short int *&)p_img_warp);
+    		b_status=imgwarp_smallmemory((unsigned short int *)p_img_sub,sz_img_sub,ql_marker_tar,ql_marker_sub,szBlock_x,szBlock_y,szBlock_z,b_interpmethod,(unsigned short int *&)p_img_warp);
     	else
-    		b_status=imgwarp_smallmemory_padding((unsigned short int *)p_img_sub,sz_img_sub,ql_marker_tar,ql_marker_sub,szBlock_x,szBlock_y,szBlock_z,(unsigned short int *&)p_img_warp);
+    		b_status=imgwarp_smallmemory_padding((unsigned short int *)p_img_sub,sz_img_sub,ql_marker_tar,ql_marker_sub,szBlock_x,szBlock_y,szBlock_z,b_interpmethod,(unsigned short int *&)p_img_warp);
     }
     else if(datatype_sub==4)
     {
     	if(!b_padding_img)
-    		b_status=imgwarp_smallmemory((float *)p_img_sub,sz_img_sub,ql_marker_tar,ql_marker_sub,szBlock_x,szBlock_y,szBlock_z,(float *&)p_img_warp);
+    		b_status=imgwarp_smallmemory((float *)p_img_sub,sz_img_sub,ql_marker_tar,ql_marker_sub,szBlock_x,szBlock_y,szBlock_z,b_interpmethod,(float *&)p_img_warp);
     	else
-    		b_status=imgwarp_smallmemory_padding((float *)p_img_sub,sz_img_sub,ql_marker_tar,ql_marker_sub,szBlock_x,szBlock_y,szBlock_z,(float *&)p_img_warp);
+    		b_status=imgwarp_smallmemory_padding((float *)p_img_sub,sz_img_sub,ql_marker_tar,ql_marker_sub,szBlock_x,szBlock_y,szBlock_z,b_interpmethod,(float *&)p_img_warp);
     }
     if(!b_status)
 	{
