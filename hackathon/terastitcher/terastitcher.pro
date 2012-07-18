@@ -5,10 +5,8 @@ CONFIG	+= qt plugin warn_off
 #-----------------------------------------------------------------------------------
 #  BEGIN SECTION TO BE MODIFIED IN ORDER TO COMPILE THE PLUGIN.
 #  What you need before compiling:
-#   1. TeraStitcher source code (ask to a.bria@unicas.it or g.iannello@unicampus.it)
-#      or visit website http://www.iconfoundation.net/
-#   2. OpenCV shared libraries installed and OpenCV headers
-#   3. Qt >= 4.7.x (5.x should work too but it has not been tested) 
+#   1. OpenCV shared libraries installed and OpenCV headers
+#   2. Qt >= 4.7.x (5.x should work too but it has not been tested) 
 #-----------------------------------------------------------------------------------
 
 #set Vaa3D main path
