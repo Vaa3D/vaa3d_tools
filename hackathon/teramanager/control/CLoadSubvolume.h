@@ -31,7 +31,7 @@
 
 #include <QThread>
 #include <string>
-#include "presentation/PMain.h"
+#include "CPlugin.h"
 
 class teramanager::CLoadSubvolume : public QThread
 {
@@ -44,20 +44,22 @@ class teramanager::CLoadSubvolume : public QThread
         * instantiated by calling static method "istance(...)"
         **********************************************************************************/
         static CLoadSubvolume* uniqueInstance;
-        CLoadSubvolume(PMain* handle) : QThread()
+        CLoadSubvolume() : QThread()
         {
             #ifdef TSP_DEBUG
             printf("teramanager plugin [thread %d] >> CLoadSubvolume created\n", this->thread()->currentThreadId());
             #endif
 
-            pMainHandle = handle;
+            voi_data = 0;
+            V0 = V1 = H0 = H1 = D0 = D1 = -1;
         }
 
         //automatically called when current thread is started
         void run();
 
         //members
-        PMain* pMainHandle;
+        int V0,V1,H0,H1,D0,D1;  //Volume Of Interest coordinates
+        uint8* voi_data;        //Volume Of Interest data
 
     public:
 
@@ -65,17 +67,34 @@ class teramanager::CLoadSubvolume : public QThread
         * Singleton design pattern: this class can have one instance only,  which must be
         * instantiated by calling static method "istance(...)"
         **********************************************************************************/
-        static CLoadSubvolume* instance(PMain* handle)
+        static CLoadSubvolume* instance()
         {
             if (uniqueInstance == NULL)
-                uniqueInstance = new CLoadSubvolume(handle);
+                uniqueInstance = new CLoadSubvolume();
             return uniqueInstance;
         }
         static void uninstance();
         ~CLoadSubvolume();
 
         //GET and SET methods
-        void setPMainHandle(PMain* handle){pMainHandle = handle;}
+        uint8* getVOI_Data(){return voi_data;}
+        int getV0(){return V0;}
+        int getV1(){return V1;}
+        int getH0(){return H0;}
+        int getH1(){return H1;}
+        int getD0(){return D0;}
+        int getD1(){return D1;}
+        void setVOI(int _V0, int _V1, int _H0, int _H1, int _D0, int _D1)
+                   {V0= _V0; V1 =_V1; H0 =_H0; H1 =_H1; D0 =_D0; D1 =_D1;}
+
+        //reset method
+        void reset()
+        {
+            if(voi_data)
+                delete[] voi_data;
+            voi_data = 0;
+            V0 = V1 = H0 = H1 = D0 = D1 = -1;
+        }
 
     signals:
 
@@ -83,7 +102,7 @@ class teramanager::CLoadSubvolume : public QThread
         * Carries the outcome of the operation associated to this thread as well as image
         * data in <Image4DSimple> object.
         **********************************************************************************/
-        void sendOperationOutcome(MyException* ex, Image4DSimple* img);
+        void sendOperationOutcome(MyException* ex);
 };
 
 #endif // CLOADSUBVOLUME_H

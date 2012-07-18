@@ -36,6 +36,7 @@
 #include <QtGui>
 #include <v3d_interface.h>
 #include "MyException.h"
+#include "IM_defs.h"
 
 //defining TeraManager plugin interface
 namespace teramanager

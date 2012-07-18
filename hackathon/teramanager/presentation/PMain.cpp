@@ -34,7 +34,7 @@
 using namespace teramanager;
 
 PMain* PMain::uniqueInstance = NULL;
-PMain* PMain::instance(V3DPluginCallback *callback, QWidget *parent)
+PMain* PMain::instance(V3DPluginCallback2 *callback, QWidget *parent)
 {
     if (uniqueInstance == NULL)
         uniqueInstance = new PMain(callback, parent);
@@ -52,15 +52,16 @@ void PMain::uninstance()
     }
 }
 
-PMain::PMain(V3DPluginCallback *callback, QWidget *parent) : QWidget(parent)
+PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
 {
-    #ifdef TSP_DEBUG
-    printf("TeraStitcher plugin [thread %d] >> PMain created\n", this->thread()->currentThreadId());
+    #ifdef TMP_DEBUG
+    printf("TeraManager plugin [thread %d] >> PMain created\n", this->thread()->currentThreadId());
     #endif
 
     //initializing members
     V3D_env = callback;
     parentWidget = parent;
+    view3DWidget = 0;
 
     //help box
     helpbox = new QLabel("<html><table><tr style=\"vertical-align: middle;\"><td><img src=\":/icons/help.png\"></td>"
@@ -77,7 +78,7 @@ PMain::PMain(V3DPluginCallback *callback, QWidget *parent) : QWidget(parent)
     path_field->setMinimumWidth(200);
     voldir_button       = new QPushButton("Browse for dir...");
     reimport_checkbox = new QCheckBox("Re-import (check it to overwrite previous imports)");
-    generate_vmap = new QCheckBox("Use 3D volume map (uncheck it if lower resolutions are not available)");
+    generate_vmap = new QCheckBox("Enable 3D mode (uncheck it if lower resolutions are not available)");
     generate_vmap->setChecked(true);
 
     //info panel widgets
@@ -289,7 +290,7 @@ PMain::PMain(V3DPluginCallback *callback, QWidget *parent) : QWidget(parent)
     connect(voldir_button, SIGNAL(clicked()), this, SLOT(voldir_button_clicked()));
     connect(loadButton, SIGNAL(clicked()), this, SLOT(loadButtonClicked()));
     connect(CImport::instance(), SIGNAL(sendOperationOutcome(MyException*, Image4DSimple*)), this, SLOT(import_done(MyException*, Image4DSimple*)), Qt::QueuedConnection);
-    connect(CLoadSubvolume::instance(this), SIGNAL(sendOperationOutcome(MyException*,Image4DSimple*)), this, SLOT(loading_done(MyException*,Image4DSimple*)), Qt::QueuedConnection);
+    connect(CLoadSubvolume::instance(), SIGNAL(sendOperationOutcome(MyException*)), this, SLOT(loading_done(MyException*)), Qt::QueuedConnection);
     resetGUI();
 
     //center on screen and set always on top
@@ -299,7 +300,7 @@ PMain::PMain(V3DPluginCallback *callback, QWidget *parent) : QWidget(parent)
 
 PMain::~PMain()
 {
-    #ifdef TSP_DEBUG
+    #ifdef TMP_DEBUG
     printf("TeraManager plugin [thread %d] >> PMain destroyed\n", this->thread()->currentThreadId());
     #endif
 }
@@ -316,7 +317,7 @@ void PMain::resetGUI()
 //called when loadButton has been clicked
 void PMain::loadButtonClicked()
 { 
-    #ifdef TSP_DEBUG
+    #ifdef TMP_DEBUG
     printf("TeraManager plugin [thread %d] >> loadButtonClicked() called\n", this->thread()->currentThreadId());
     #endif
 
@@ -336,7 +337,8 @@ void PMain::loadButtonClicked()
         statusBar->showMessage("Loading selected subvolume volume...");
 
         //starting operation
-        CLoadSubvolume::instance(this)->start();
+        CLoadSubvolume::instance()->setVOI(V0_sbox->value(), V1_sbox->value(),H0_sbox->value(), H1_sbox->value(), D0_sbox->value(), D1_sbox->value());
+        CLoadSubvolume::instance()->start();
     }
     catch(MyException &ex)
     {
@@ -353,7 +355,7 @@ void PMain::loadButtonClicked()
 ***********************************************************************************/
 void PMain::voldir_button_clicked()
 {
-    #ifdef TSP_DEBUG
+    #ifdef TMP_DEBUG
     printf("teramanager plugin [thread %d] >> PDialogImport voldir_button_clicked() launched\n", this->thread()->currentThreadId());
     #endif
 
@@ -413,7 +415,7 @@ void PMain::voldir_button_clicked()
 **********************************************************************************/
 void PMain::import_done(MyException *ex, Image4DSimple* vmap_image)
 {
-    #ifdef TSP_DEBUG
+    #ifdef TMP_DEBUG
     printf("teramanager plugin [thread %d] >> PMain import_done(%s) launched\n", this->thread()->currentThreadId(), (ex? "ex" : "NULL"));
     #endif
 
@@ -472,6 +474,11 @@ void PMain::import_done(MyException *ex, Image4DSimple* vmap_image)
             v3dhandle new_win = V3D_env->newImageWindow(vmap_image->getFileName());
             V3D_env->setImage(new_win, vmap_image);
             V3D_env->open3DWindow(new_win);
+
+            //installing event filter on 3D renderer
+            View3DControl *view3DControl =  V3D_env->getView3DControl(new_win);
+            view3DWidget = (V3dR_GLWidget*)view3DControl;
+            view3DWidget->installEventFilter(this);
         }
     }
 
@@ -483,22 +490,50 @@ void PMain::import_done(MyException *ex, Image4DSimple* vmap_image)
 /**********************************************************************************
 * Called by <CLoadSubvolume> when the associated operation has been performed.
 * If an exception has occurred in the <CLoadSubvolume> thread, it is propagated and
-* managed in the current thread (ex != 0). Otherwise, the propagated image is shown
-* into Vaa3D.
+* managed in the current thread (ex != 0).
 ***********************************************************************************/
-void PMain::loading_done(MyException *ex, Image4DSimple* img)
+void PMain::loading_done(MyException *ex)
 {
-    #ifdef TSP_DEBUG
-    printf("TeraStitcher plugin [thread %d] >> PMain loading_done(%s) launched\n", this->thread()->currentThreadId(), (ex? "ex" : "NULL"));
+    #ifdef TMP_DEBUG
+    printf("TeraManager plugin [thread %d] >> PMain loading_done(%s) launched\n", this->thread()->currentThreadId(), (ex? "ex" : "NULL"));
     #endif
+
+    CLoadSubvolume* cLoadSubvolume = CLoadSubvolume::instance();
 
     //if an exception has occurred, showing a message error
     if(ex)
         QMessageBox::critical(this,QObject::tr("Error"), QObject::tr(ex->what()),QObject::tr("Ok"));
-    else if(img)
+    else if(!generate_vmap->isChecked())
     {
+        Image4DSimple* img = new Image4DSimple();
+        img->setFileName(CImport::instance()->getVolume()->getSTACKS_DIR());
+        img->setData(cLoadSubvolume->getVOI_Data(), cLoadSubvolume->getH1()-cLoadSubvolume->getH0(),
+                     cLoadSubvolume->getV1()-cLoadSubvolume->getV0(), cLoadSubvolume->getD1()-cLoadSubvolume->getD0(), 1, V3D_UINT8);
         v3dhandle new_win = V3D_env->newImageWindow(img->getFileName());
         V3D_env->setImage(new_win, img);
+    }
+    else if(view3DWidget)
+    {
+        /* Updating renderer content with the loaded subvolume */
+
+        //---- THE SAFE WAY, BUT a confirm dialog is shown and existing data is released ------
+        /*view3DWidget->getiDrawExternalParameter()->image4d->setData(cLoadSubvolume->getVOI_Data(),
+                                                                    cLoadSubvolume->getH1()-cLoadSubvolume->getH0(),
+                                                                    cLoadSubvolume->getV1()-cLoadSubvolume->getV0(),
+                                                                    cLoadSubvolume->getD1()-cLoadSubvolume->getD0(), 1, V3D_UINT8);
+
+        view3DWidget->reloadData();*/
+
+        //----- ALTERNATIVE WAY: no confirm dialog, no memory release, BUT is it safe? ------
+        view3DWidget->getiDrawExternalParameter()->image4d->setRawDataPointerToNull();
+        view3DWidget->getiDrawExternalParameter()->image4d->setData(cLoadSubvolume->getVOI_Data(),
+                                                                    cLoadSubvolume->getH1()-cLoadSubvolume->getH0(),
+                                                                    cLoadSubvolume->getV1()-cLoadSubvolume->getV0(),
+                                                                    cLoadSubvolume->getD1()-cLoadSubvolume->getD0(), 1, V3D_UINT8);
+        view3DWidget->getRenderer()->setupData(view3DWidget->getiDrawExternalParameter());
+        view3DWidget->getRenderer()->initialize(1);
+        view3DWidget->updateTool();
+        view3DWidget->setCursor(Qt::ArrowCursor);
     }
 
     //resetting some widgets
@@ -511,7 +546,7 @@ void PMain::loading_done(MyException *ex, Image4DSimple* img)
 void PMain::closeEvent(QCloseEvent *evt)
 {
     if(progressBar->isEnabled() && QMessageBox::information(this, "Warning", "An operation is still in progress. Terminating it can be unsafe and cause Vaa3D to crash. \n"
-                                                                    "\nPlease save your data first.", "Close TeraStitcher plugin", "Cancel"))
+                                                                    "\nPlease save your data first.", "Close TeraManager plugin", "Cancel"))
     {
         evt->ignore();
     }
@@ -520,4 +555,69 @@ void PMain::closeEvent(QCloseEvent *evt)
         evt->accept();
         PMain::uninstance();
     }
+}
+
+//filters events generated by the 3D rendering window
+bool PMain::eventFilter(QObject *object, QEvent *event)
+{
+    //we're only interest to mouse wheel event, which generates a change in the zoom
+    if (event->type() == QEvent::Wheel)
+    {
+        QWheelEvent *mouseEvent = static_cast<QWheelEvent *>(event);
+
+        printf("zoom = %d\n", view3DWidget->zoom());
+        if(view3DWidget->zoom() > 20 && !CLoadSubvolume::instance()->getVOI_Data())
+        {
+            view3DWidget->setCursor(Qt::WaitCursor);
+            progressBar->setEnabled(true);
+            progressBar->setMinimum(0);
+            progressBar->setMaximum(0);
+            loadButton->setEnabled(false);
+            import_form->setEnabled(false);
+            statusBar->showMessage("Zooming in to the highest resolution...");
+            CLoadSubvolume::instance()->setVOI(500, 800, 300, 600, 100, 300);
+            CLoadSubvolume::instance()->start();
+        }
+        else if(view3DWidget->zoom() < 0 && CLoadSubvolume::instance()->getVOI_Data())
+        {
+            //----- ALTERNATIVE WAY: no confirm dialog, no memory release, BUT is it safe? ------
+            view3DWidget->setCursor(Qt::WaitCursor);
+            view3DWidget->getiDrawExternalParameter()->image4d->setRawDataPointerToNull();
+            view3DWidget->getiDrawExternalParameter()->image4d->setData(CImport::instance()->getVMapData(),
+                                                                        CImport::instance()->getVMapWidth(),
+                                                                        CImport::instance()->getVMapHeight(),
+                                                                        CImport::instance()->getVMapDepth(), 1, V3D_UINT8);
+            view3DWidget->getRenderer()->setupData(view3DWidget->getiDrawExternalParameter());
+            view3DWidget->getRenderer()->initialize(1);
+            view3DWidget->updateTool();
+            CLoadSubvolume::instance()->reset();
+            view3DWidget->setCursor(Qt::ArrowCursor);
+        }
+
+        //uint8* mydata = new uint8[100*100*100];
+        /*uint8* mydata = CImport::instance()->getVolume()->loadSubvolume_to_UINT8(400,600,400,600,200,400);
+        view3DWidget->getiDrawExternalParameter()->image4d->setData(mydata, 200, 200, 200, 1, V3D_UINT8);
+        view3DWidget->reloadData();*/
+
+        //trying to set my own data
+        //view3DWidget->getRenderer()->cleanData();
+        /*My4DImage* my4Dimg = new My4DImage();
+
+        uint8* mydata = new uint8[100*100*100];
+        my4Dimg->setData(mydata, 100, 100, 100, 1, V3D_UINT8);
+        iDrawExternalParameter* data = new iDrawExternalParameter();
+        data->image4d = my4Dimg;
+        view3DWidget->getRenderer()->setupData(data);*/
+
+        //view3DWidget->getRenderer()-
+
+        /*if (mouseWheelEvent->)
+        {
+            // Special tab handling
+            V3dR_GLWidget* view3DWidget = (V3dR_GLWidget*)view3DControl;
+            return true;
+        } else
+            return false;*/
+    }
+    return false;
 }

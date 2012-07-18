@@ -45,7 +45,7 @@ class teramanager::CImport : public QThread
         * instantiated by calling static method "istance(...)"
         **********************************************************************************/
         static CImport* uniqueInstance;
-        CImport() : QThread(), path(""), volume(0), AXS_1(axis(0)), AXS_2(axis(0)), AXS_3(axis(0)), VXL_1(0), VXL_2(0), VXL_3(0), reimport(false)
+        CImport() : QThread(), path(""), volume(0), AXS_1(axis(0)), AXS_2(axis(0)), AXS_3(axis(0)), VXL_1(0), VXL_2(0), VXL_3(0), reimport(false), vmap_data(0)
         {
             #ifdef TSP_DEBUG
             printf("teramanager plugin [thread %d] >> CImport created\n", this->thread()->currentThreadId());
@@ -61,6 +61,8 @@ class teramanager::CImport : public QThread
         float VXL_1, VXL_2, VXL_3;
         bool reimport, genmap;
         StackedVolume *volume;
+        uint8* vmap_data;
+        int vmap_height, vmap_width, vmap_depth;
 
     public:
 
@@ -79,6 +81,10 @@ class teramanager::CImport : public QThread
 
         //GET and SET methods
         StackedVolume* getVolume(){return volume;}
+        uint8* getVMapData(){return vmap_data;}
+        int getVMapHeight(){return vmap_height;}
+        int getVMapWidth(){return vmap_width;}
+        int getVMapDepth(){return vmap_depth;}
         void setPath(string new_path){path = new_path;}
         void setAxes(string axs1, string axs2, string axs3);
         void setVoxels(std::string vxl1, std::string vxl2, std::string vxl3);

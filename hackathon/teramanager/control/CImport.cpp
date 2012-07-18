@@ -110,6 +110,7 @@ void CImport::run()
             volume = new StackedVolume(path.c_str(), ref_sys(axis_invalid,axis_invalid,axis_invalid),0,0,0);
 
         //if "Generate and show 3D volume map" checkbox has been checked
+        vmap_data = 0;
         Image4DSimple* vmap_image = 0;
         if(genmap)
         {
@@ -142,7 +143,7 @@ void CImport::run()
                 {
                     StackedVolume vol_good4map(resdir.absolutePath().append("/").append(resolutions_dirs.at(res_good4map).toLocal8Bit().constData()).toStdString().c_str(),
                                                ref_sys(AXS_1,AXS_2,AXS_3),VXL_1,VXL_2,VXL_3, false, false);
-                    uint8* vmap_img = vol_good4map.loadSubvolume_to_UINT8();
+                    uint8* vmap_raw = vol_good4map.loadSubvolume_to_UINT8();
                     int vmap_height = vol_good4map.getDIM_V();
                     int vmap_width  = vol_good4map.getDIM_H();
                     int vmap_depth  = vol_good4map.getDIM_D();
@@ -150,9 +151,8 @@ void CImport::run()
                     fwrite(&vmap_height, sizeof(uint32), 1, vmap_bin);
                     fwrite(&vmap_width,  sizeof(uint32), 1, vmap_bin);
                     fwrite(&vmap_depth,  sizeof(uint32), 1, vmap_bin);
-                    fwrite(vmap_img, vmap_height*vmap_width*vmap_depth, 1, vmap_bin);
+                    fwrite(vmap_raw, vmap_height*vmap_width*vmap_depth, 1, vmap_bin);
                     fclose(vmap_bin);
-                    delete[] vmap_img;
                 }
                 else
                     throw MyException(QString("Can't generate 3D volume map: a resolution of at most ").
@@ -162,11 +162,10 @@ void CImport::run()
 
             //at this point we should have the volume map stored in the volume's directory
             FILE *vmap_bin = fopen(vmap_fpath.c_str(), "rb");
-            int vmap_height, vmap_width, vmap_depth;
             fread(&vmap_height, sizeof(uint32), 1, vmap_bin);
             fread(&vmap_width,  sizeof(uint32), 1, vmap_bin);
             fread(&vmap_depth,  sizeof(uint32), 1, vmap_bin);
-            uint8* vmap_data = new uint8[vmap_height * vmap_width * vmap_depth];
+            vmap_data = new uint8[vmap_height * vmap_width * vmap_depth];
             fread(vmap_data, vmap_height*vmap_width*vmap_depth, 1, vmap_bin);
             fclose(vmap_bin);
             vmap_image = new Image4DSimple();

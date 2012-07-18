@@ -58,47 +58,23 @@ void CLoadSubvolume::run()
 
     try
     {
-        Image4DSimple* img = 0;
         StackedVolume* volume = CImport::instance()->getVolume();
 
         //checking subvolume interval
-        if(pMainHandle->V1_sbox->value()-pMainHandle->V0_sbox->value() <=0 ||
-           pMainHandle->H1_sbox->value()-pMainHandle->H0_sbox->value() <=0 ||
-           pMainHandle->D1_sbox->value()-pMainHandle->D0_sbox->value() <=0)
+        if(V1 - V0 <=0 || H1 - H0 <=0 || D1 - D0 <=0)
             throw MyException("Invalid subvolume intervals inserted.");
 
         //checking for an imported volume
         if(volume)
-        {
-            //loading subvolume
-            uint8* img_data = CImport::instance()->getVolume()->loadSubvolume_to_UINT8(pMainHandle->V0_sbox->value(), pMainHandle->V1_sbox->value(),
-                                                                                       pMainHandle->H0_sbox->value(), pMainHandle->H1_sbox->value(),
-                                                                                       pMainHandle->D0_sbox->value(), pMainHandle->D1_sbox->value());
-
-            //allocation of image data
-            int height = pMainHandle->V1_sbox->value() - pMainHandle->V0_sbox->value();
-            int width  = pMainHandle->H1_sbox->value() - pMainHandle->H0_sbox->value();
-            int depth  = pMainHandle->D1_sbox->value() - pMainHandle->D0_sbox->value();
-            img = new Image4DSimple();
-            img->setFileName(volume->getSTACKS_DIR());
-            img->setData(img_data, width, height, depth, 1, V3D_UINT8);
-
-            //setting image attributes
-            img->setRezX(volume->getVXL_H());
-            img->setRezY(volume->getVXL_V());
-            img->setRezZ(volume->getVXL_D());
-            img->setOriginX(volume->getORG_H());
-            img->setOriginY(volume->getORG_V());
-            img->setOriginZ(volume->getORG_D());
-        }
+            voi_data = CImport::instance()->getVolume()->loadSubvolume_to_UINT8(V0, V1, H0, H1, D0, D1);
         else
             throw MyException("No volume has been imported yet.");
 
         //everything went OK
-        emit sendOperationOutcome(0,img);
+        emit sendOperationOutcome(0);
     }
-    catch( MyException& exception)  {emit sendOperationOutcome(&exception, 0);}
-    catch(const char* error)        {emit sendOperationOutcome(new MyException(error), 0);}
-    catch(...)                      {emit sendOperationOutcome(new MyException("Unknown error occurred"), 0);}
+    catch( MyException& exception)  {emit sendOperationOutcome(&exception);}
+    catch(const char* error)        {emit sendOperationOutcome(new MyException(error));}
+    catch(...)                      {emit sendOperationOutcome(new MyException("Unknown error occurred"));}
 }
 
