@@ -21,7 +21,8 @@ JBA:		notsupport	5.1-5.2		notsupport		354.7M
 float 256*256*108*1:
 		time(nopadding)	time(padding)	memory(nopadding)	memory(padding)
 littlequick:	4.1-4.3		5.2-5.4		63M			100.6M
-JBA:		notsupport	5.1-5.2		notsupport		410.7M
+JBA:(TPS_linear)notsupport	5.1-5.2		notsupport		410.7M
+JBA:(TPS)	notsupport	25.1-25.2	notsupport		408.0M
 ----------------------------------------------------------------------------------------
 uint8 512*512*216*1:
 		time(nopadding)	time(padding)	memory(nopadding)	memory(padding)
@@ -31,7 +32,8 @@ JBA:		notsupport	38.2-38.3	notsupport		2.53G
 float 512*512*216*1:
 		time(nopadding)	time(padding)	memory(nopadding)	memory(padding)
 littlequick:	33.2-33.5	35.9-36.1	454.5M			687.1M
-JBA:		notsupport	38.3-38.4	notsupport		2.85G
+JBA:(TPS_linear)notsupport	38.3-38.4	notsupport		2.85G
+JBA:(TPS)	notsupport	175.8-176.9	notsupport		2.83M
 
 
 ----------------------------------------------------------------------------------------
