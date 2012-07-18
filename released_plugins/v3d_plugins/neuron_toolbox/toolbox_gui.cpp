@@ -19,10 +19,13 @@ bool setPluginRootPathAutomaticly()
 		testUpperPluginsDir.cdUp();
 		testUpperPluginsDir.cdUp();
 		testUpperPluginsDir.cdUp(); // like foo/plugins next to foo/v3d.app
-		if (testUpperPluginsDir.cd("plugins")) testPluginsDir = testUpperPluginsDir;
+		testPluginsDir = testUpperPluginsDir;
+	//	if (testUpperPluginsDir.cd("plugins")) testPluginsDir = testUpperPluginsDir;
 
 	}
 #endif
+	if (testPluginsDir.cd("plugins")==false)
+		return false;
 	if (testPluginsDir.cd("neuron_utilities")==false)
 		return false;
 	toolboxRootPath=testPluginsDir.absolutePath();
