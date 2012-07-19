@@ -55,6 +55,7 @@ class teramanager::PMain : public QWidget
         V3DPluginCallback2* V3D_env;     //handle of V3D environment
         QWidget *parentWidget;           //handle of parent widget
         V3dR_GLWidget* view3DWidget;     //handle of 3D renderer widget
+        XFormWidget* treeviewWidget;     //handle of tree-view widget
 
         //helpbox
         QLabel* helpbox;
@@ -64,7 +65,7 @@ class teramanager::PMain : public QWidget
         QLineEdit *path_field;          //field for either volume's dir or project XML path
         QPushButton *voldir_button;     //browse for volume's directory button
         QCheckBox *reimport_checkbox;   //checkbox to be used to reimport a volume already imported
-        QCheckBox *generate_vmap;       //checkbox to be used to generate and show a 3D volume map
+        QCheckBox *enable3Dmode;       //checkbox to be used to generate and show a 3D volume map
 
         //info panel widgets, contain informations of the loaded volume
         QGroupBox* info_panel;
@@ -109,9 +110,8 @@ class teramanager::PMain : public QWidget
         QLabel* org_H_field;
         QLabel* org_D_field;
 
-        //other widgets
-        QWidget* subvol_panel;
-        QLabel* volumeportion_label;
+        //subvol panel widgets
+        QGroupBox* subvol_panel;
         QSpinBox* V0_sbox;
         QSpinBox* V1_sbox;
         QSpinBox* H0_sbox;
@@ -124,8 +124,22 @@ class teramanager::PMain : public QWidget
         QLabel* direction_V_label_5;
         QLabel* direction_H_label_5;
         QLabel* direction_D_label_5;
+        QPushButton* loadButton;
+
+        //3d mode widgets
+        QGroupBox* mode3D_panel;
+        QLabel* subvol_dims_label;
+        QSpinBox* Vdim_sbox;
+        QSpinBox* Hdim_sbox;
+        QSpinBox* Ddim_sbox;
+        QLabel* direction_V_label_6;
+        QLabel* direction_H_label_6;
+        QLabel* direction_D_label_6;
+        QLabel* by_label_6;
+        QLabel* by_label_7;
+
+        //other widgets
         QProgressBar* progressBar;      //progress bar
-        QPushButton* loadButton;        //load button
         QStatusBar* statusBar;          //status bar
 
     public:
@@ -157,6 +171,12 @@ class teramanager::PMain : public QWidget
         bool eventFilter(QObject *object, QEvent *event);
 
     public slots:
+
+        /**********************************************************************************
+        * Called when "enable3Dmode" state changed.
+        * Enables or disables the correspondent panel
+        ***********************************************************************************/
+        void mode3D_checkbox_changed(int);
 
         /**********************************************************************************
         * Called when "voldir_button" has been clicked.
