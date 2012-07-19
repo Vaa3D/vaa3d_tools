@@ -106,8 +106,18 @@ bool LittleQuickWarpPlugin::dofunc(const QString & func_name, const V3DPluginArg
 
 void printHelp()
 {
-    printf("\nUsage: v3d -x <littlequickwarp> -f littlequickwarp -i <input_image_sub> <input_marker_sub> <input_marker_tar> -o <output_image_file> -p dopadding doresize newsize_x newsize_y newsize_z\n");
-    printf("Demo :\t v3d -x littlequickwarp -f littlequickwarp -i /Users/qul/Desktop/testdata/output_global.tiff /Users/qul/Desktop/testdata/output_subject.marker /Users/qul/Desktop/testdata/output_target.marker -o /Users/qul/Desktop/test.v3draw -p 1 1 0 1 1 1\n");
+    printf("\nUsage: v3d -x <littlequickwarp> -f littlequickwarp -i <input_image_sub> <input_marker_sub> <input_marker_tar> -o <output_image_file> -p interpmethod dopadding doresize newsize_x newsize_y newsize_z\n");
+    printf("\t input_image_sub:         input image file to be warped (subject image)\n");
+    printf("\t input_marker_sub:        marker file in subject image (markers in this file define the control points in subject image)\n");
+    printf("\t input_marker_tar:        marker file in target image (markers in this file define the control points in target image)\n");
+    printf("\t output_image_file:       output warped image file(warped image)\n");
+    printf("\t interpmethod:            image interpolation method (0:nearest neighbor, 1:trilinear)\n");
+    printf("\t dopadding:               pad image before warping? (0:nopadding, 1:padding) - just for generating same results as JBA\n");
+    printf("\t doresize:                resize the warped image? (0:warped image size will be same as subject image, 1:resize warped image according to the next 3 paras)\n");
+    printf("\t newsize_x:               x dim of resized image (works only if doresize=1)\n");
+    printf("\t newsize_y:               y dim of resized image (works only if doresize=1)\n");
+    printf("\t newsize_z:               z dim of resized image (works only if doresize=1)\n");
+    printf("Demo :\t v3d -x littlequickwarp -f littlequickwarp -i /Users/qul/Desktop/testdata/output_global.tiff /Users/qul/Desktop/testdata/output_subject.marker /Users/qul/Desktop/testdata/output_target.marker -o /Users/qul/Desktop/test.v3draw -p 1 0 0 1 1 1\n");
     return;
 }
 
