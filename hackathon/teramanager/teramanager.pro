@@ -17,8 +17,6 @@ V3DMAINPATH =  ../../v3d_main
 
 QT_PATH = $$dirname(QMAKE_QMAKE)/..
 
-#QT_PATH = "/usr/local/Trolltech/Qt-4.7.3"
-
 #set up OpenCV library (please modify include and lib paths if necessary)
 INCLUDEPATH += /usr/local/include/opencv
 LIBS+= -L/usr/local/lib -lopencv_core -lopencv_imgproc -lopencv_highgui
@@ -48,8 +46,8 @@ SOURCES += $$V3DMAINPATH/basic_c_fun/basic_memory.cpp
 SOURCES += $$V3DMAINPATH/basic_c_fun/basic_4dimage.cpp
 SOURCES += $$V3DMAINPATH/basic_c_fun/imageio_mylib.cpp
 
-unix:HEADERS += $$V3DMAINPATH/common_lib/src_packages/mylib_tiff/image.h
-unix:HEADERS += $$V3DMAINPATH/basic_c_fun/imageio_mylib.h 
+HEADERS += $$V3DMAINPATH/common_lib/src_packages/mylib_tiff/image.h
+HEADERS += $$V3DMAINPATH/basic_c_fun/imageio_mylib.h 
 
 LIBS += -L. -lv3dtiff -L$$V3DMAINPATH/common_lib/lib \
             -L$$V3DMAINPATH/common_lib/src_packages/mylib_tiff -lmylib
