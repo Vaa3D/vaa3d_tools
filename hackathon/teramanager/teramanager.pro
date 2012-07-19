@@ -14,7 +14,10 @@ QT += opengl
 V3DMAINPATH =  ../../v3d_main
 
 #set Qt main path
-QT_PATH = "/usr/local/Trolltech/Qt-4.7.3"
+
+QT_PATH = $$dirname(QMAKE_QMAKE)/..
+
+#QT_PATH = "/usr/local/Trolltech/Qt-4.7.3"
 
 #set up OpenCV library (please modify include and lib paths if necessary)
 INCLUDEPATH += /usr/local/include/opencv
