@@ -185,13 +185,6 @@ class teramanager::PMain : public QWidget
         void voldir_button_clicked();
 
         /**********************************************************************************
-        * Called when "import_button" has been clicked.
-        * Opens <PDialogImport> if additional informations are needed. Then the import op-
-        * eration is performed in a separate thread by <CImport>
-        ***********************************************************************************/
-        void import_button_clicked();
-
-        /**********************************************************************************
         * Called when "loadButton" has been clicked.
         * The selected subvolume is loaded and shown into Vaa3D.
         ***********************************************************************************/
