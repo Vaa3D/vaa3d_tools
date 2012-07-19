@@ -32,6 +32,7 @@
 #include <QThread>
 #include <string>
 #include "CPlugin.h"
+#include "CImport.h"
 
 class teramanager::CLoadSubvolume : public QThread
 {
@@ -85,7 +86,16 @@ class teramanager::CLoadSubvolume : public QThread
         int getD0(){return D0;}
         int getD1(){return D1;}
         void setVOI(int _V0, int _V1, int _H0, int _H1, int _D0, int _D1)
-                   {V0= _V0; V1 =_V1; H0 =_H0; H1 =_H1; D0 =_D0; D1 =_D1;}
+        {
+            StackedVolume* volume = CImport::instance()->getVolume();
+            V0 = MAX(_V0, 0);
+            V1 = MIN(_V1, volume->getDIM_V());
+            H0 = MAX(_H0, 0);
+            H1 = MIN(_H1, volume->getDIM_H());
+            D0 = MAX(_D0, 0);
+            D1 = MIN(_D1, volume->getDIM_D());
+            printf("VOI set at [%d - %d], [%d - %d], [%d - %d]\n", V0, V1, H0, H1, D0, D1);
+        }
 
         //reset method
         void reset()

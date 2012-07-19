@@ -85,6 +85,13 @@ class teramanager::CImport : public QThread
         int getVMapHeight(){return vmap_height;}
         int getVMapWidth(){return vmap_width;}
         int getVMapDepth(){return vmap_depth;}
+        float getMapZoominRatio() throw (MyException)
+        {
+            if(volume && vmap_height > 0)
+                return volume->getDIM_V()/(float)vmap_height;
+            else
+                throw MyException("Unable to determine volume / map dimensions ratio");
+        }
         void setPath(string new_path){path = new_path;}
         void setAxes(string axs1, string axs2, string axs3);
         void setVoxels(std::string vxl1, std::string vxl2, std::string vxl3);

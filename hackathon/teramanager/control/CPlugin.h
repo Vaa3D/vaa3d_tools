@@ -31,7 +31,7 @@
 
 #define TMP_DEBUG 1                 //debug verbosity level
 #define TMP_VMAP_FNAME "vmap.bin"   //name of volume map binary file
-#define TMP_VMAP_MAXSIZE 200        //maximum size (in MVoxels) of the volume 3D map to be generated
+#define TMP_VMAP_MAXSIZE 50         //maximum size (in MVoxels) of the volume 3D map to be generated
 
 #include <QtGui>
 #include <v3d_interface.h>
