@@ -51,8 +51,8 @@ SOURCES += $$V3DMAINPATH/basic_c_fun/imageio_mylib.cpp
 unix:HEADERS += $$V3DMAINPATH/common_lib/src_packages/mylib_tiff/image.h
 unix:HEADERS += $$V3DMAINPATH/basic_c_fun/imageio_mylib.h 
 
-LIBS += -L. -lv3dtiff -L$$V3DMAINPATH/common_lib/lib
-#            -L$$V3DMAINPATH/common_lib/src_packages/mylib_tiff -lmylib
+LIBS += -L. -lv3dtiff -L$$V3DMAINPATH/common_lib/lib \
+            -L$$V3DMAINPATH/common_lib/src_packages/mylib_tiff -lmylib
 
 #set up TeraManager tool
 INCLUDEPATH += $$TERAMANAGER_PATH/ImageManager
