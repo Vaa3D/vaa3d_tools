@@ -31,10 +31,14 @@
 #include "presentation/PMain.h"
 #include <sstream>
 #include <limits>
+#include <algorithm>
 
 using namespace teramanager;
 
 CImport* CImport::uniqueInstance = NULL;
+
+bool sortVolumesDescendingSize(StackedVolume* first, StackedVolume* second)
+{ return ( first->getMVoxels() > second->getMVoxels() ); }
 
 void CImport::uninstance()
 {
@@ -51,8 +55,12 @@ CImport::~CImport()
     printf("TeraStitcher plugin [thread %d] >> CImport destroyed\n", this->thread()->currentThreadId());
     #endif
 
-    if(volume)
-        delete volume;
+    if(volumes.size())
+        for(int i=0; i<volumes.size(); i++)
+            if(volumes[i])
+                delete volumes[i];
+    //if(vmap)
+       // delete[] vmap;
 }
 
 //SET methods
@@ -83,7 +91,7 @@ void CImport::setVoxels(std::string vxl1, std::string vxl2, std::string vxl3)
 //automatically called when current thread is started
 void CImport::run()
 {
-    #ifdef TSP_DEBUG
+    #ifdef TMP_DEBUG
     printf("TeraStitcher plugin [thread %d] >> CImport::run() launched\n", this->thread()->currentThreadId());
     #endif
 
@@ -97,7 +105,7 @@ void CImport::run()
         {
             //checking current members validity
             if(AXS_1 != axis_invalid && AXS_2 != axis_invalid && AXS_3 != axis_invalid && VXL_1 != 0 && VXL_2 != 0 && VXL_3 != 0)
-                volume = new StackedVolume(path.c_str(), ref_sys(AXS_1,AXS_2,AXS_3),VXL_1,VXL_2,VXL_3, reimport);
+                volumes.push_back(new StackedVolume(path.c_str(), ref_sys(AXS_1,AXS_2,AXS_3),VXL_1,VXL_2,VXL_3, reimport));
             else
             {
                 char errMsg[IM_STATIC_STRINGS_SIZE];
@@ -107,14 +115,32 @@ void CImport::run()
             }
         }
         else
-            volume = new StackedVolume(path.c_str(), ref_sys(axis_invalid,axis_invalid,axis_invalid),0,0,0);
+            volumes.push_back(new StackedVolume(path.c_str(), ref_sys(axis_invalid,axis_invalid,axis_invalid),0,0,0));
 
-        //if "Generate and show 3D volume map" checkbox has been checked
-        vmap_data = 0;
+        //if "Multiresolution mode" checkbox has been checked
         Image4DSimple* vmap_image = 0;
-        if(genmap)
+        if(multires_mode)
         {
-            //searching for an already existing map, if not available we try to generate it from the lower resolutions
+            //importing all available volumes
+            /*QDir resdir(path.c_str());
+            resdir.cdUp();
+            QStringList volumes_dirs = resdir.entryList(QDir::AllDirs | QDir::NoDotAndDotDot);
+            for(int k=0; k<volumes_dirs.size(); k++)
+            {
+                int width=0, height=0, depth=0;
+                int scanres = sscanf(volumes_dirs.at(k).toLocal8Bit().constData(), "RES(%dx%dx%d)", &height, &width, &depth);
+                if(scanres == 3)
+                {
+                    float res_ratio = volumes[0]->getDIM_D()/depth;
+                    volumes.push_back(new StackedVolume(resdir.absolutePath().append("/").append(volumes_dirs.at(k).toLocal8Bit().constData()).toStdString().c_str(),
+                                                         ref_sys(AXS_1,AXS_2,AXS_3),VXL_1*res_ratio,VXL_2*res_ratio,VXL_3*res_ratio));
+                }
+            }
+
+            //sorting by descending size
+            std::sort(volumes.begin(), volumes.end(), sortVolumesDescendingSize);*/
+
+            //searching for an already existing map, if not available we try to generate it from a "good for map" resolution
             string vmap_fpath = path;
             vmap_fpath.append("/");
             vmap_fpath.append(TMP_VMAP_FNAME);
@@ -142,7 +168,7 @@ void CImport::run()
                 if(res_good4map != -1)
                 {
                     StackedVolume vol_good4map(resdir.absolutePath().append("/").append(resolutions_dirs.at(res_good4map).toLocal8Bit().constData()).toStdString().c_str(),
-                                               ref_sys(AXS_1,AXS_2,AXS_3),VXL_1,VXL_2,VXL_3, false, false);
+                                               ref_sys(AXS_1,AXS_2,AXS_3),VXL_1,VXL_2,VXL_3);
                     uint8* vmap_raw = vol_good4map.loadSubvolume_to_UINT8();
                     int vmap_height = vol_good4map.getDIM_V();
                     int vmap_width  = vol_good4map.getDIM_H();
@@ -165,12 +191,12 @@ void CImport::run()
             fread(&vmap_height, sizeof(uint32), 1, vmap_bin);
             fread(&vmap_width,  sizeof(uint32), 1, vmap_bin);
             fread(&vmap_depth,  sizeof(uint32), 1, vmap_bin);
-            vmap_data = new uint8[vmap_height * vmap_width * vmap_depth];
-            fread(vmap_data, vmap_height*vmap_width*vmap_depth, 1, vmap_bin);
+            vmap = new uint8[vmap_height * vmap_width * vmap_depth];
+            fread(vmap, vmap_height*vmap_width*vmap_depth, 1, vmap_bin);
             fclose(vmap_bin);
             vmap_image = new Image4DSimple();
-            vmap_image->setFileName("Volume map");
-            vmap_image->setData(vmap_data, vmap_width, vmap_height, vmap_depth, 1, V3D_UINT8);
+            vmap_image->setData(vmap, vmap_width, vmap_height, vmap_depth, 1, V3D_UINT8);
+            vmap_image->setFileName("Volume_map");
         }
 
         //everything went OK

@@ -26,6 +26,21 @@
 *       specific prior written permission.
 ********************************************************************************************************************************************************************************************/
 
+/* TODO #1: substitute zoom absolute thresholds with other ones depending on the ra-
+            tio between the volume map and the highest resolution volume.
+            [PRIORITY 6/10]
+   TODO #2: refine the registration between volume map and highest resolution volume
+            (even if it seems to work quite good) to obtain a perfect alignment.
+            [PRIORITY 2/10]
+   TODO #3: syncronize VOIs  spinboxes  intervals with the volume cut  scrollbars of
+            the Vaa3D widget containing the 3D renderer.
+            [PRIORITY 8/10]
+   TODO #4: fix the bug which causes a crash when the plugin is closed and the rend-
+            erer is not showing the volume map. For the same reason (maybe), Vaa3D
+            crashes if the volume map is released by CImport.
+            [PRIORITY 10/10]
+*/
+
 #ifndef __TERAMANAGER_C_PLUGIN_H__
 #define __TERAMANAGER_C_PLUGIN_H__
 
