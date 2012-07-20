@@ -37,7 +37,7 @@ typedef unsigned short int uint16;
 typedef unsigned int       uint32;
 typedef float			   REAL_T;
 
-#define IM_VERBOSE 0
+#define IM_VERBOSE 1
 #define IM_SAVE_SUBVOLUMES
 #define IM_METADATA_FILE_NAME "mdata.bin"
 #define IM_STATIC_STRINGS_SIZE 3000

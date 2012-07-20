@@ -747,7 +747,7 @@ uint8* StackedVolume::loadSubvolume_to_UINT8(int V0,int V1, int H0, int H1, int 
     if(V1-V0 <=0 || H1-H0 <= 0 || D1-D0 <= 0)
         throw MyException("in StackedVolume::loadSubvolume_to_UINT8: invalid subvolume intervals");
 
-    //allocation
+    //safe allocation
     int sbv_height = V1 - V0;
     int sbv_width  = H1 - H0;
     int sbv_depth  = D1 - D0;
@@ -771,8 +771,6 @@ uint8* StackedVolume::loadSubvolume_to_UINT8(int V0,int V1, int H0, int H1, int 
                 printf("\t\t\t\tin StackedVolume::loadSubvolume_to_UINT8(): using STACK[%d,%d] for area %d-%d(V) x %d-%d(H)\n", row, col, intersect_area->V0-V0, intersect_area->V1-V0, intersect_area->H0-H0, intersect_area->H1-H0);
                 #endif
 
-                //STACKS[row][col]->loadStack(D0, D1-1);
-
                 for(int k=0; k<sbv_depth; k++)
                 {
                     //loading slice
@@ -782,29 +780,18 @@ uint8* StackedVolume::loadSubvolume_to_UINT8(int V0,int V1, int H0, int H1, int 
                         throw MyException(std::string("Unable to load slice at \"").append(slice_fullpath).append("\"").c_str());
 
                     int slice_step = slice->widthStep / sizeof(uint8);
-                    int ABS_V_stk = STACKS[row][col]->getABS_V();
-                    int ABS_H_stk = STACKS[row][col]->getABS_H();
+                    int k_offset = k*sbv_height*sbv_width;
+                    int ABS_V_offset = V0 - STACKS[row][col]->getABS_V();
+                    int ABS_H_offset = H0 - STACKS[row][col]->getABS_H();
 
                     for(int i=intersect_area->V0-V0; i<intersect_area->V1-V0; i++)
                     {
-                        uint8* slice_row = ((uint8*)slice->imageData) + (i-ABS_V_stk+V0)*slice_step;
+                        uint8* slice_row = ((uint8*)slice->imageData) + (i+ABS_V_offset)*slice_step;
                         for(int j=intersect_area->H0-H0; j<intersect_area->H1-H0; j++)
-                            subvol[k*sbv_height*sbv_width + i*sbv_width + j] = slice_row[j-ABS_H_stk+H0];
+                            subvol[k_offset + i*sbv_width + j] = slice_row[j+ABS_H_offset];
                     }
                     cvReleaseImage(&slice);
-
-                    /*CvMat *slice = STACKS[row][col]->getSTACKED_IMAGE()[D0+k];
-                    int   step  = slice->step/sizeof(float);
-                    float *data = slice->data.fl;
-                    int ABS_V_stk = STACKS[row][col]->getABS_V();
-                    int ABS_H_stk = STACKS[row][col]->getABS_H();
-
-                    for(int i=intersect_area->V0-V0; i<intersect_area->V1-V0; i++)
-                        for(int j=intersect_area->H0-H0; j<intersect_area->H1-H0; j++)
-                            subvol[k*sbv_height*sbv_width + i*sbv_width + j] = (data+(i-ABS_V_stk+V0)*step)[j-ABS_H_stk+H0]*255;*/
                 }
-
-                //STACKS[row][col]->releaseStack();
             }
         }
     return subvol;

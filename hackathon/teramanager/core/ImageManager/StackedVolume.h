@@ -105,6 +105,7 @@ class StackedVolume
 		float  getORG_D(){return ORG_D;}
                 int    getStacksHeight();
                 int    getStacksWidth();
+                float  getMVoxels(){return (DIM_V/1000.0f)*(DIM_H/1000.0f)*DIM_D;}
 
 		//PRINT method
 		void print();
