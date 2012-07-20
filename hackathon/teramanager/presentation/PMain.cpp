@@ -165,7 +165,7 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     org_D_field->setStyleSheet("border: 1px solid; border-color: gray; background-color: rgb(245,245,245); padding-left:5px; padding-right:5px");
 
     //subvol panel widgets
-    subvol_panel = new QGroupBox("Subvolume to be loaded:");
+    subvol_panel = new QGroupBox("Volume Of Interest's selection:");
     subvol_panel->setFont(tinyFont);
     subvol_panel->setEnabled(false);
     V0_sbox = new QSpinBox();
@@ -208,7 +208,7 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     Ddim_sbox = new QSpinBox();
     Ddim_sbox->setAlignment(Qt::AlignCenter);
     Ddim_sbox->setMaximum(1000);
-    Ddim_sbox->setValue(200);
+    Ddim_sbox->setValue(100);
     direction_V_label_6 = new QLabel("(V)");
     direction_H_label_6 = new QLabel("(H)");
     direction_D_label_6 = new QLabel("(D)");
@@ -375,7 +375,6 @@ void PMain::loadButtonClicked()
         if(!CImport::instance()->getVolume())
             throw MyException("A volume should be imported first.");
 
-
         //disabling import form and enabling progress bar animation and tab wait animation
         progressBar->setEnabled(true);
         progressBar->setMinimum(0);
@@ -385,7 +384,7 @@ void PMain::loadButtonClicked()
         statusBar->showMessage("Loading selected subvolume volume...");
 
         //starting operation
-        CLoadSubvolume::instance()->setVOI(V0_sbox->value(), V1_sbox->value(),H0_sbox->value(), H1_sbox->value(), D0_sbox->value(), D1_sbox->value());
+        CLoadSubvolume::instance()->setVOI(V0_sbox->value()-1, V1_sbox->value()-1,H0_sbox->value()-1, H1_sbox->value()-1, D0_sbox->value()-1, D1_sbox->value()-1);
         CLoadSubvolume::instance()->start();
     }
     catch(MyException &ex)
@@ -404,7 +403,7 @@ void PMain::loadButtonClicked()
 void PMain::voldir_button_clicked()
 {
     #ifdef TMP_DEBUG
-    printf("teramanager plugin [thread %d] >> PDialogImport voldir_button_clicked() launched\n", this->thread()->currentThreadId());
+    printf("teramanager plugin [thread %d] >> PImport voldir_button_clicked() launched\n", this->thread()->currentThreadId());
     #endif
 
     try
@@ -433,7 +432,7 @@ void PMain::voldir_button_clicked()
             PDialogImport::instance()->exec();
         CImport::instance()->setPath(import_path);
         CImport::instance()->setReimport(reimport_checkbox->isChecked());
-        CImport::instance()->setGenerateMap(enable3Dmode->isChecked());
+        CImport::instance()->setMultiresMode(enable3Dmode->isChecked());
 
         //disabling import form and enabling progress bar animation
         progressBar->setEnabled(true);
@@ -494,22 +493,22 @@ void PMain::import_done(MyException *ex, Image4DSimple* vmap_image)
         org_D_field->setText(QString::number(CImport::instance()->getVolume()->getORG_D(), 'f', 2));
 
         //and settings subvol widgets limits
-        V0_sbox->setMinimum(0);
+        V0_sbox->setMinimum(1);
         V0_sbox->setMaximum(volume->getDIM_V());
         V0_sbox->setValue(volume->getDIM_V()/2 - 256);
-        V1_sbox->setMinimum(0);
+        V1_sbox->setMinimum(1);
         V1_sbox->setMaximum(volume->getDIM_V());
         V1_sbox->setValue(volume->getDIM_V()/2 + 256);
-        H0_sbox->setMinimum(0);
+        H0_sbox->setMinimum(1);
         H0_sbox->setMaximum(volume->getDIM_H());
         H0_sbox->setValue(volume->getDIM_H()/2 - 256);
-        H1_sbox->setMinimum(0);
+        H1_sbox->setMinimum(1);
         H1_sbox->setMaximum(volume->getDIM_H());
         H1_sbox->setValue(volume->getDIM_H()/2 + 256);
-        D0_sbox->setMinimum(0);
+        D0_sbox->setMinimum(1);
         D0_sbox->setMaximum(volume->getDIM_D());
         D0_sbox->setValue(volume->getDIM_D()/2 - 256);
-        D1_sbox->setMinimum(0);
+        D1_sbox->setMinimum(1);
         D1_sbox->setMaximum(volume->getDIM_D());
         D1_sbox->setValue(volume->getDIM_D()/2 + 256);
         import_form->setEnabled(false);
@@ -523,18 +522,25 @@ void PMain::import_done(MyException *ex, Image4DSimple* vmap_image)
             V3D_env->setImage(new_win, vmap_image);
             V3D_env->open3DWindow(new_win);
             treeviewWidget = (XFormWidget*)new_win;
-            treeviewWidget->setVisible(false);          //hiding the treeview window
+            //treeviewWidget->setVisible(false);          //hiding the treeview window
 
             //installing event filter on 3D renderer
             View3DControl *view3DControl =  V3D_env->getView3DControl(new_win);
             view3DWidget = (V3dR_GLWidget*)view3DControl;
             view3DWidget->installEventFilter(this);
+
+            //registering slots for 3D renderer signals
+            connect(view3DWidget, SIGNAL(changeXCut0(int)), this, SLOT(Vaa3D_changeXCut0(int)));
+            connect(view3DWidget, SIGNAL(changeXCut1(int)), this, SLOT(Vaa3D_changeXCut1(int)));
+            connect(view3DWidget, SIGNAL(changeYCut0(int)), this, SLOT(Vaa3D_changeYCut0(int)));
+            connect(view3DWidget, SIGNAL(changeYCut1(int)), this, SLOT(Vaa3D_changeYCut1(int)));
+            connect(view3DWidget, SIGNAL(changeZCut0(int)), this, SLOT(Vaa3D_changeZCut0(int)));
+            connect(view3DWidget, SIGNAL(changeZCut1(int)), this, SLOT(Vaa3D_changeZCut1(int)));
         }
     }
 
     //resetting some widgets
     resetGUI();
-    CImport::instance()->reset();
 }
 
 /**********************************************************************************
@@ -596,16 +602,18 @@ void PMain::closeEvent(QCloseEvent *evt)
     }
 }
 
-//filters events generated by the 3D rendering window
+/**********************************************************************************
+* Filters events generated by the 3D rendering window
+* We're interested to intercept these events to provide many useful ways to explore
+* the 3D volume at different resolutions without changing Vaa3D code.
+***********************************************************************************/
 bool PMain::eventFilter(QObject *object, QEvent *event)
 {
     try
     {
-        //we're only interest to mouse wheel event, which generates a change in the zoom
-        if (event->type() == QEvent::Wheel)
+        if (object == view3DWidget && event->type() == QEvent::Wheel)
         {
             LandmarkList markers =  V3D_env->getLandmark(treeviewWidget);
-            printf("zoom = %d, markers.size()=%d\n\n", view3DWidget->zoom(), markers.size());
 
             if(view3DWidget->zoom() > 30 && !CLoadSubvolume::instance()->getVOI_Data() && markers.size() == 1)
             {
@@ -630,7 +638,7 @@ bool PMain::eventFilter(QObject *object, QEvent *event)
             {
                 view3DWidget->setCursor(Qt::WaitCursor);
                 view3DWidget->getiDrawExternalParameter()->image4d->setRawDataPointerToNull();
-                view3DWidget->getiDrawExternalParameter()->image4d->setData(CImport::instance()->getVMapData(),
+                view3DWidget->getiDrawExternalParameter()->image4d->setData(CImport::instance()->getVMap(),
                                                                             CImport::instance()->getVMapWidth(),
                                                                             CImport::instance()->getVMapHeight(),
                                                                             CImport::instance()->getVMapDepth(), 1, V3D_UINT8);
@@ -640,17 +648,9 @@ bool PMain::eventFilter(QObject *object, QEvent *event)
                 view3DWidget->getView3DControl()->setZoom(CImport::instance()->getMapZoominRatio()*10);
             }
         }
-        /*else if(event->type() == QMouseEvent::MouseMove)
+        /*else if(event->type() == QMouseEvent::MouseButtonPress)
         {
-            QMouseEvent* mouseEvt = (QMouseEvent*) event;
-            if(mouseEvt->button() == Qt::RightButton)
-                printf("right move intercepted\n");
-        }
-        else if(event->type() == QMouseEvent::MouseButtonRelease)
-        {
-            QMouseEvent* mouseEvt = (QMouseEvent*) event;
-            if(mouseEvt->button() == Qt::RightButton)
-                printf("right released intercepted\n");
+            printf("Intercepted MouseButtonPress event at %d,%d\n", ((QMouseEvent*)event)->x(), ((QMouseEvent*)event)->y());
         }*/
         return false;
     }
@@ -659,4 +659,32 @@ bool PMain::eventFilter(QObject *object, QEvent *event)
         QMessageBox::critical(this,QObject::tr("Error"), QObject::tr(ex.what()),QObject::tr("Ok"));
         return false;
     }
+}
+
+/**********************************************************************************
+* Linked to volume cut scrollbars of Vaa3D widget containing the 3D renderer.
+* This implements the syncronization Vaa3D-->TeraManager of subvolume selection.
+***********************************************************************************/
+void PMain::Vaa3D_changeYCut0(int s)
+{V0_sbox->setValue(s*(CImport::instance()->getVolume()->getDIM_V()-1.0)/(CImport::instance()->getVMapHeight()-1)+1);}
+void PMain::Vaa3D_changeYCut1(int s)
+{V1_sbox->setValue(s*(CImport::instance()->getVolume()->getDIM_V()-1.0)/(CImport::instance()->getVMapHeight()-1)+1);}
+void PMain::Vaa3D_changeXCut0(int s)
+{H0_sbox->setValue(s*(CImport::instance()->getVolume()->getDIM_H()-1.0)/(CImport::instance()->getVMapWidth()-1)+1);}
+void PMain::Vaa3D_changeXCut1(int s)
+{H1_sbox->setValue(s*(CImport::instance()->getVolume()->getDIM_H()-1.0)/(CImport::instance()->getVMapWidth()-1)+1);}
+void PMain::Vaa3D_changeZCut0(int s)
+{D0_sbox->setValue(s*(CImport::instance()->getVolume()->getDIM_D()-1.0)/(CImport::instance()->getVMapDepth()-1)+1);}
+void PMain::Vaa3D_changeZCut1(int s)
+{D1_sbox->setValue(s*(CImport::instance()->getVolume()->getDIM_D()-1.0)/(CImport::instance()->getVMapDepth()-1)+1);}
+
+/**********************************************************************************
+* Linked to rightStrokeROI and rightClickROI right-menu entries of the 3D renderer.
+* This implements the selection of a ROI in the 3D renderer.
+***********************************************************************************/
+void PMain::Vaa3D_selectedROI()
+{
+    #ifdef TMP_DEBUG
+    printf("TeraManager plugin [thread %d] >> PMain Vaa3D_selectedROI() called\n", this->thread()->currentThreadId());
+    #endif
 }
