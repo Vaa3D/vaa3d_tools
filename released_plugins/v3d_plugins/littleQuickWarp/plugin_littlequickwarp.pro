@@ -47,4 +47,4 @@ SOURCES      += plugin_littlequickwarp.cpp
 
 TARGET	= $$qtLibraryTarget(littlequickwarp)
 #DESTDIR	= ../../v3d/plugins/littlequickwarp/
-DESTDIR	= ../../../bin/plugins/littlequickwarp/
+DESTDIR	= ../../../bin/plugins/image_registration/littleQuickWarp/
