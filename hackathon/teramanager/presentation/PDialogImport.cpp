@@ -109,6 +109,11 @@ PDialogImport::PDialogImport() : QDialog()
 
     // signals and slots
     connect(import_button, SIGNAL(clicked()), this, SLOT(import_button_clicked()));
+    /*connect(projfile_button, SIGNAL(clicked()), this, SLOT(projfile_button_clicked()));
+    connect(slice_slider, SIGNAL(valueChanged(int)), this, SLOT(slice_slider_value_changed(int)));
+    connect(preview_button, SIGNAL(clicked()), this, SLOT(preview_button_clicked()));
+    connect(CImport::instance(), SIGNAL(sendOperationOutcome(MyException*)), this, SLOT(import_done(MyException*)), Qt::QueuedConnection);
+    connect(CPreview::instance(), SIGNAL(sendOperationOutcome(MyException*)), this, SLOT(preview_done(MyException*)), Qt::QueuedConnection);*/
 }
 
 
@@ -124,7 +129,7 @@ PDialogImport::~PDialogImport()
 ***********************************************************************************/
 void PDialogImport::import_button_clicked()
 {
-    #ifdef TMP_DEBUG
+    #ifdef TSP_DEBUG
     printf("teramanager plugin [thread %d] >> ok_button_clicked() called", this->thread()->currentThreadId());
     #endif
 

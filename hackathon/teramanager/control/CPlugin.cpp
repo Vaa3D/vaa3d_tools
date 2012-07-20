@@ -86,16 +86,8 @@ void CPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWi
         PMain::instance()->raise();
         PMain::instance()->activateWindow();
     }
-    else if(menu_name == tr("Acquisition: ROI from High Resolution Image"))
-    {
-        v3d_msg("****** \"Acquisition: ROI from High Resolution Image\" DETECTED\n");
-        //printf("****** \"Acquisition: ROI from High Resolution Image\" DETECTED\n");
-        if(PMain::isInstantiated())
-            PMain::instance()->Vaa3D_selectedROI();
-    }
     else
     {
-        printf("MENU_NAME = %s\n", menu_name.toStdString().c_str());
         QMessageBox msgBox;
         QSpacerItem* horizontalSpacer = new QSpacerItem(800, 0, QSizePolicy::Minimum, QSizePolicy::Expanding);
         msgBox.setText( "<html><h1>TeraManager plugin v. 0.1</h1>"

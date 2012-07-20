@@ -31,7 +31,6 @@
 
 #include <QThread>
 #include <string>
-#include <vector>
 #include "StackedVolume.h"
 #include "CPlugin.h"
 
@@ -46,11 +45,9 @@ class teramanager::CImport : public QThread
         * instantiated by calling static method "istance(...)"
         **********************************************************************************/
         static CImport* uniqueInstance;
-        CImport() : QThread(), path(""), AXS_1(axis(0)), AXS_2(axis(0)), AXS_3(axis(0)),
-                    VXL_1(0), VXL_2(0), VXL_3(0), reimport(false), vmap(0), vmap_height(-1),
-                    vmap_width(-1), vmap_depth(-1), multires_mode(false)
+        CImport() : QThread(), path(""), volume(0), AXS_1(axis(0)), AXS_2(axis(0)), AXS_3(axis(0)), VXL_1(0), VXL_2(0), VXL_3(0), reimport(false), vmap_data(0)
         {
-            #ifdef TMP_DEBUG
+            #ifdef TSP_DEBUG
             printf("teramanager plugin [thread %d] >> CImport created\n", this->thread()->currentThreadId());
             #endif
         }
@@ -58,25 +55,20 @@ class teramanager::CImport : public QThread
         //automatically called when current thread is started
         void run();
 
-        //current volume members
-        std::string path;                       //absolute path of the directory where the current volume is stored
-        float VXL_1, VXL_2, VXL_3;              //voxel dimensions (in microns) of the current volume
-        axis AXS_1, AXS_2, AXS_3;               //reference system of the current volume (must be the same for the other resolutions)
-        bool reimport;                          //if true, the current volume will be re-imported
-
-        //multiresolution volumes members
-        bool multires_mode;                     //enables or disables the multiresolution mode
-        std::vector<StackedVolume*> volumes;    //contains all the available volumes at different resolutions ordered by descending size
-        uint8* vmap;                            //stores raw data of the resolution to be used as a 3D map
-        int vmap_height;                        //height of vmap
-        int vmap_width;                         //width of vmap
-        int vmap_depth;                         //depth of vmap
+        //members
+        std::string path;
+        axis AXS_1, AXS_2, AXS_3;
+        float VXL_1, VXL_2, VXL_3;
+        bool reimport, genmap;
+        StackedVolume *volume;
+        uint8* vmap_data;
+        int vmap_height, vmap_width, vmap_depth;
 
     public:
 
         /*********************************************************************************
         * Singleton design pattern: this class can have one instance only,  which must be
-        * instantiated by calling the static method "instance(...)"
+        * instantiated by calling static method "istance(...)"
         **********************************************************************************/
         static CImport* instance()
         {
@@ -88,46 +80,19 @@ class teramanager::CImport : public QThread
         ~CImport();
 
         //GET and SET methods
-        StackedVolume* getVolume()
-        {
-            if(volumes.size())
-                return volumes[0];
-            else
-                return 0;
-        }
-        uint8* getVMap(){return vmap;}
+        StackedVolume* getVolume(){return volume;}
+        uint8* getVMapData(){return vmap_data;}
         int getVMapHeight(){return vmap_height;}
         int getVMapWidth(){return vmap_width;}
         int getVMapDepth(){return vmap_depth;}
-        float getMapZoominRatio() throw (MyException)
-        {
-            if(volumes.size() && vmap_height > 0)
-                return volumes[0]->getDIM_V()/(float)vmap_height;
-            else
-                throw MyException("Unable to determine volume / map dimensions ratio");
-        }
         void setPath(string new_path){path = new_path;}
         void setAxes(string axs1, string axs2, string axs3);
         void setVoxels(std::string vxl1, std::string vxl2, std::string vxl3);
         void setReimport(bool _reimport){reimport = _reimport;}
-        void setMultiresMode(bool _multiresmode){multires_mode = _multiresmode;}
+        void setGenerateMap(bool _genmap){genmap = _genmap;}
 
         //reset method
-        void reset()
-        {
-            #ifdef TMP_DEBUG
-            printf("teramanager plugin [thread %d] >> CImport reset() called", this->thread()->currentThreadId());
-            #endif
-
-            path=""; AXS_1=AXS_2=AXS_3=axis_invalid; VXL_1=VXL_2=VXL_3=0; reimport=false;
-            multires_mode = false;
-            if(vmap)
-            {
-                delete[] vmap;
-                vmap = 0;
-            }
-            vmap_height = vmap_width = vmap_depth = 0;
-        }
+        void reset(){path=""; AXS_1=AXS_2=AXS_3=axis_invalid; VXL_1=VXL_2=VXL_3=0; reimport=false;}
 
     signals:
 
