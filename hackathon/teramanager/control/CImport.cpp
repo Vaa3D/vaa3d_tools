@@ -126,6 +126,7 @@ void CImport::run()
                 QStringList resolutions_dirs = resdir.entryList(QDir::AllDirs | QDir::NoDotAndDotDot, QDir::Size);
                 int res_good4map = -1;
                 float res_good4map_highest = -std::numeric_limits<float>::max();
+                float ratio;
                 for(int k=0; k<resolutions_dirs.size(); k++)
                 {
                     int width=0, height=0, depth=0;
@@ -135,15 +136,16 @@ void CImport::run()
                     {
                         res_good4map_highest = res_size;
                         res_good4map = k;
+                        ratio = volume->getDIM_D()/(float)depth;
                     }
                 }
 
                 //if one "good for map" resolution is available, generating and saving the corresponding map, otherwise throwing an exception
                 if(res_good4map != -1)
                 {
-                    //StackedVolume vol_good4map(resdir.absolutePath().append("/").append(resolutions_dirs.at(res_good4map).toLocal8Bit().constData()).toStdString().c_str(),
-                                               //ref_sys(AXS_1,AXS_2,AXS_3),VXL_1,VXL_2,VXL_3, false, false);
-                    StackedVolume vol_good4map(resdir.absolutePath().append("/").append(resolutions_dirs.at(res_good4map).toLocal8Bit().constData()).toStdString().c_str());
+                    StackedVolume vol_good4map(resdir.absolutePath().append("/").append(resolutions_dirs.at(res_good4map).toLocal8Bit().constData()).toStdString().c_str(),
+                                               ref_sys(AXS_1,AXS_2,AXS_3),VXL_1*ratio,VXL_2*ratio,VXL_3*ratio, false, true);
+                    //StackedVolume vol_good4map(resdir.absolutePath().append("/").append(resolutions_dirs.at(res_good4map).toLocal8Bit().constData()).toStdString().c_str());
                     uint8* vmap_raw = vol_good4map.loadSubvolume_to_UINT8();
                     int vmap_height = vol_good4map.getDIM_V();
                     int vmap_width  = vol_good4map.getDIM_H();

@@ -75,7 +75,7 @@ StackedVolume::StackedVolume(const char* _stacks_dir)  throw (MyException)
 
 StackedVolume::StackedVolume(const char* _stacks_dir, ref_sys _reference_system, float _VXL_1, float _VXL_2, float _VXL_3, bool overwrite_mdata, bool save_mdata)  throw (MyException)
 {
-	#if IM_VERBOSE > 3
+        #if IM_VERBOSE > 0
 	printf("\t\t\t\tin StackedVolume::StackedVolume(_stacks_dir=%s, ref_sys reference_system={%d,%d,%d}, VXL_1=%.4f, VXL_2=%.4f, VXL_3=%.4f)\n",
                           _stacks_dir, _reference_system.first, _reference_system.second, _reference_system.third, _VXL_1, _VXL_2, _VXL_3);
 	#endif
@@ -97,8 +97,8 @@ StackedVolume::StackedVolume(const char* _stacks_dir, ref_sys _reference_system,
 		load(mdata_filepath);
 	else
 	{
-            if(reference_system.first == axis_invalid ||  reference_system.second == axis_invalid ||
-              reference_system.third == axis_invalid || VXL_1 == 0 || VXL_2 == 0 || VXL_3 == 0)
+            if(_reference_system.first == axis_invalid ||  _reference_system.second == axis_invalid ||
+              _reference_system.third == axis_invalid || _VXL_1 == 0 || _VXL_2 == 0 || _VXL_3 == 0)
                 throw MyException("in StackedVolume::StackedVolume(...): invalid importing parameters");
 
             reference_system.first  = _reference_system.first;
