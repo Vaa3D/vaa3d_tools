@@ -112,7 +112,7 @@ void CImport::run()
         //if "Generate and show 3D volume map" checkbox has been checked
         vmap_data = 0;
         Image4DSimple* vmap_image = 0;
-        if(genmap)
+        if(multires_mode)
         {
             //searching for an already existing map, if not available we try to generate it from the lower resolutions
             string vmap_fpath = path;
@@ -141,8 +141,9 @@ void CImport::run()
                 //if one "good for map" resolution is available, generating and saving the corresponding map, otherwise throwing an exception
                 if(res_good4map != -1)
                 {
-                    StackedVolume vol_good4map(resdir.absolutePath().append("/").append(resolutions_dirs.at(res_good4map).toLocal8Bit().constData()).toStdString().c_str(),
-                                               ref_sys(AXS_1,AXS_2,AXS_3),VXL_1,VXL_2,VXL_3, false, false);
+                    //StackedVolume vol_good4map(resdir.absolutePath().append("/").append(resolutions_dirs.at(res_good4map).toLocal8Bit().constData()).toStdString().c_str(),
+                                               //ref_sys(AXS_1,AXS_2,AXS_3),VXL_1,VXL_2,VXL_3, false, false);
+                    StackedVolume vol_good4map(resdir.absolutePath().append("/").append(resolutions_dirs.at(res_good4map).toLocal8Bit().constData()).toStdString().c_str());
                     uint8* vmap_raw = vol_good4map.loadSubvolume_to_UINT8();
                     int vmap_height = vol_good4map.getDIM_V();
                     int vmap_width  = vol_good4map.getDIM_H();

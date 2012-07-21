@@ -45,7 +45,7 @@ namespace teramanager
     class PMain;                //main presentation class: it contains the main frame
     class PDialogImport;        //presentation class for the import dialog
     class CImport;              //control class for the import step, which is performed in a separate thread since it can be time-consuming
-    class CLoadSubvolume;       //control class for the loading subvolume feature, which is performed in a separate thread since it can be time-consuming
+    class CVolume;              //control class for the loading subvolume feature, which is performed in a separate thread since it can be time-consuming
 }
 
 class teramanager::CPlugin : public QObject, public V3DPluginInterface2_1

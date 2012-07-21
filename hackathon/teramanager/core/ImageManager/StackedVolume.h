@@ -66,12 +66,14 @@ class StackedVolume
 		uint32 DIM_V, DIM_H, DIM_D;		//volume dimensions (in voxels) along VHD axes
 		uint16 N_ROWS, N_COLS;			//dimensions (in stacks) of stacks matrix along VH axes
                 Stack ***STACKS;			//2-D array of <Stack*>
+                ref_sys reference_system;               //reference system of the stored volume
+                float  VXL_1, VXL_2, VXL_3;             //voxel dimensions of the stored volume
 
 		//***OBJECT PRIVATE METHODS****
 		StackedVolume(void);
 
 		//Given the reference system, initializes all object's members using stack's directories hierarchy
-		void init(ref_sys reference_system, float VXL_1, float VXL_2, float VXL_3);
+                void init();
 
 		//rotate stacks matrix around D axis (accepted values are theta=0,90,180,270)
 		void rotate(int theta);
@@ -86,7 +88,7 @@ class StackedVolume
 
 		//CONSTRUCTORS-DECONSTRUCTOR
 		StackedVolume(const char* _stacks_dir)  throw (MyException);
-                StackedVolume(const char* _stacks_dir, ref_sys reference_system, float VXL_1, float VXL_2, float VXL_3, bool overwrite_mdata = false, bool save_mdata=true)  throw (MyException);
+                StackedVolume(const char* _stacks_dir, ref_sys _reference_system, float _VXL_1, float _VXL_2, float _VXL_3, bool overwrite_mdata = false, bool save_mdata=true)  throw (MyException);
 		~StackedVolume(void);
 
 		//GET methods
@@ -105,6 +107,7 @@ class StackedVolume
 		float  getORG_D(){return ORG_D;}
                 int    getStacksHeight();
                 int    getStacksWidth();
+                float  getMVoxels(){return (DIM_V/1024.0f)*(DIM_H/1024.0f)*DIM_D;}
 
 		//PRINT method
 		void print();

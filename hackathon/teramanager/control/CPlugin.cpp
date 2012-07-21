@@ -86,6 +86,11 @@ void CPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWi
         PMain::instance()->raise();
         PMain::instance()->activateWindow();
     }
+    else if(menu_name == tr("Acquisition: ROI from High Resolution Image"))
+    {
+        if(PMain::isInstantiated())
+            PMain::instance()->Vaa3D_selectedROI();
+    }
     else
     {
         QMessageBox msgBox;

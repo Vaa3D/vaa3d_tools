@@ -57,25 +57,27 @@ StackedVolume::StackedVolume(const char* _stacks_dir)  throw (MyException)
 	DIM_V = DIM_H = DIM_D = 0;
 	N_ROWS = N_COLS = 0;
 	STACKS = NULL;
+        reference_system.first = reference_system.second = reference_system.third = axis_invalid;
+        VXL_1 = VXL_2 = VXL_3 = 0;
 
 	//without any configuration parameter, volume import must be done from the metadata file stored in the root directory, if it exists
 	char mdata_filepath[IM_STATIC_STRINGS_SIZE];
 	sprintf(mdata_filepath, "%s/%s", stacks_dir, IM_METADATA_FILE_NAME);
 	if(fileExists(mdata_filepath))
-		load(mdata_filepath);
+            load(mdata_filepath);
 	else
 	{
-		char errMsg[IM_STATIC_STRINGS_SIZE];
-		sprintf(errMsg, "in StackedVolume::StackedVolume(...): unable to find metadata file at %s", mdata_filepath);
-		throw (errMsg);
+            char errMsg[IM_STATIC_STRINGS_SIZE];
+            sprintf(errMsg, "in StackedVolume::StackedVolume(...): unable to find metadata file at %s", mdata_filepath);
+            throw (errMsg);
 	}
 }
 
-StackedVolume::StackedVolume(const char* _stacks_dir, ref_sys reference_system, float VXL_1, float VXL_2, float VXL_3, bool overwrite_mdata, bool save_mdata)  throw (MyException)
+StackedVolume::StackedVolume(const char* _stacks_dir, ref_sys _reference_system, float _VXL_1, float _VXL_2, float _VXL_3, bool overwrite_mdata, bool save_mdata)  throw (MyException)
 {
 	#if IM_VERBOSE > 3
 	printf("\t\t\t\tin StackedVolume::StackedVolume(_stacks_dir=%s, ref_sys reference_system={%d,%d,%d}, VXL_1=%.4f, VXL_2=%.4f, VXL_3=%.4f)\n",
-			  _stacks_dir, reference_system.first, reference_system.second, reference_system.third,		 VXL_1,		 VXL_2,		 VXL_3);
+                          _stacks_dir, _reference_system.first, _reference_system.second, _reference_system.third, _VXL_1, _VXL_2, _VXL_3);
 	#endif
 
 	this->stacks_dir = new char[strlen(_stacks_dir)+1];
@@ -84,7 +86,9 @@ StackedVolume::StackedVolume(const char* _stacks_dir, ref_sys reference_system, 
 	VXL_V = VXL_H = VXL_D = ORG_V = ORG_H = ORG_D = 0;
 	DIM_V = DIM_H = DIM_D = 0;
 	N_ROWS = N_COLS = 0;
-	STACKS = NULL;
+        STACKS = NULL;
+        reference_system.first = reference_system.second = reference_system.third = axis_invalid;
+        VXL_1 = VXL_2 = VXL_3 = 0;
 
 	//trying to unserialize an already existing metadata file, if it doesn't exist the full initialization procedure is performed and metadata is saved
 	char mdata_filepath[IM_STATIC_STRINGS_SIZE];
@@ -97,9 +101,15 @@ StackedVolume::StackedVolume(const char* _stacks_dir, ref_sys reference_system, 
               reference_system.third == axis_invalid || VXL_1 == 0 || VXL_2 == 0 || VXL_3 == 0)
                 throw MyException("in StackedVolume::StackedVolume(...): invalid importing parameters");
 
-		init(reference_system, VXL_1, VXL_2, VXL_3);
-                if(save_mdata)
-                    save(mdata_filepath);
+            reference_system.first  = _reference_system.first;
+            reference_system.second = _reference_system.second;
+            reference_system.third  = _reference_system.third;
+            VXL_1 = _VXL_1;
+            VXL_2 = _VXL_2;
+            VXL_3 = _VXL_3;
+            init();
+            if(save_mdata)
+                save(mdata_filepath);
 	}
 }
 
@@ -142,7 +152,13 @@ void StackedVolume::save(char* metadata_filepath) throw (MyException)
 	file = fopen(metadata_filepath, "wb");
 	str_size = (uint16)(strlen(stacks_dir) + 1);
 	fwrite(&str_size, sizeof(uint16), 1, file);
-	fwrite(stacks_dir, str_size, 1, file);
+        fwrite(stacks_dir, str_size, 1, file);
+        fwrite(&reference_system.first, sizeof(axis), 1, file);
+        fwrite(&reference_system.second, sizeof(float), 1, file);
+        fwrite(&reference_system.third, sizeof(float), 1, file);
+        fwrite(&VXL_1, sizeof(float), 1, file);
+        fwrite(&VXL_2, sizeof(float), 1, file);
+        fwrite(&VXL_3, sizeof(float), 1, file);
 	fwrite(&VXL_V, sizeof(float), 1, file);
 	fwrite(&VXL_H, sizeof(float), 1, file);
 	fwrite(&VXL_D, sizeof(float), 1, file);
@@ -185,6 +201,28 @@ void StackedVolume::load(char* metadata_filepath) throw (MyException)
 	fread_return_val = fread(stacks_dir, str_size, 1, file);
 	if(fread_return_val != 1)
 		throw MyException("in Stack::unBinarizeFrom(...): error while reading binary metadata file");
+
+        fread_return_val = fread(&reference_system.first, sizeof(axis), 1, file);
+        if(fread_return_val != 1)
+                throw MyException("in Stack::unBinarizeFrom(...): error while reading binary metadata file");
+
+        fread_return_val = fread(&reference_system.second, sizeof(axis), 1, file);
+        if(fread_return_val != 1)
+                throw MyException("in Stack::unBinarizeFrom(...): error while reading binary metadata file");
+
+        fread_return_val = fread(&reference_system.third, sizeof(axis), 1, file);
+
+        fread_return_val = fread(&VXL_1, sizeof(float), 1, file);
+        if(fread_return_val != 1)
+                throw MyException("in Stack::unBinarizeFrom(...): error while reading binary metadata file");
+
+        fread_return_val = fread(&VXL_2, sizeof(float), 1, file);
+        if(fread_return_val != 1)
+                throw MyException("in Stack::unBinarizeFrom(...): error while reading binary metadata file");
+
+        fread_return_val = fread(&VXL_3, sizeof(float), 1, file);
+        if(fread_return_val != 1)
+                throw MyException("in Stack::unBinarizeFrom(...): error while reading binary metadata file");
 
 	fread_return_val = fread(&VXL_V, sizeof(float), 1, file);
 	if(fread_return_val != 1)
@@ -242,11 +280,10 @@ void StackedVolume::load(char* metadata_filepath) throw (MyException)
 	fclose(file);
 }
 
-void StackedVolume::init(ref_sys reference_system, float VXL_1, float VXL_2, float VXL_3)
+void StackedVolume::init()
 {
 	#if IM_VERBOSE > 3
-	printf("\t\t\t\tin StackedVolume::init(ref_sys reference_system={%d,%d,%d},  VXL_1=%.4f, VXL_2=%.4f, VXL_3=%.4f)\n",
-		reference_system.first, reference_system.second, reference_system.third, VXL_1,		 VXL_2,		 VXL_3);
+        printf("\t\t\t\tin StackedVolume::init()\n");
 	#endif
 
 	/************************* 1) LOADING STRUCTURE *************************    
@@ -254,18 +291,17 @@ void StackedVolume::init(ref_sys reference_system, float VXL_1, float VXL_2, flo
 
 	//LOCAL VARIABLES
 	string tmp_path;				//string that contains temp paths during computation
-	string tmp;					    //string that contains temp data during computation
-	string tmp2;				    //string that contains temp data during computation
+        string tmp;					//string that contains temp data during computation
 	DIR *cur_dir_lev1;				//pointer to DIR, the data structure that represents a DIRECTORY (level 1 of hierarchical structure)
 	DIR *cur_dir_lev2;				//pointer to DIR, the data structure that represents a DIRECTORY (level 2 of hierarchical structure)
 	dirent *entry_lev1;				//pointer to DIRENT, the data structure that represents a DIRECTORY ENTRY inside a directory (level 1)
 	dirent *entry_lev2;				//pointer to DIRENT, the data structure that represents a DIRECTORY ENTRY inside a directory (level 2)
 	int i=0,j=0;					//for counting of N_ROWS, N_COLS
-	list<Stack*> stacks_list;		//each stack found in the hierarchy is pushed into this list
-	list<string> entries_lev1;		//list of entries of first level of hierarchy
-	list<string>::iterator entry_i;	//iterator for list 'entries_lev1'
-	list<string> entries_lev2;		//list of entries of second level of hierarchy
-	list<string>::iterator entry_j;	//iterator for list 'entries_lev2'
+        list<Stack*> stacks_list;                       //each stack found in the hierarchy is pushed into this list
+        list<string> entries_lev1;                      //list of entries of first level of hierarchy
+        list<string>::iterator entry_i;                 //iterator for list 'entries_lev1'
+        list<string> entries_lev2;                      //list of entries of second level of hierarchy
+        list<string>::iterator entry_j;                 //iterator for list 'entries_lev2'
 	char stack_i_j_path[IM_STATIC_STRINGS_SIZE];
 
 	//obtaining DIR pointer to stacks_dir (=NULL if directory doesn't exist)
@@ -747,7 +783,7 @@ uint8* StackedVolume::loadSubvolume_to_UINT8(int V0,int V1, int H0, int H1, int 
     if(V1-V0 <=0 || H1-H0 <= 0 || D1-D0 <= 0)
         throw MyException("in StackedVolume::loadSubvolume_to_UINT8: invalid subvolume intervals");
 
-    //allocation
+    //safe allocation
     int sbv_height = V1 - V0;
     int sbv_width  = H1 - H0;
     int sbv_depth  = D1 - D0;
@@ -771,8 +807,6 @@ uint8* StackedVolume::loadSubvolume_to_UINT8(int V0,int V1, int H0, int H1, int 
                 printf("\t\t\t\tin StackedVolume::loadSubvolume_to_UINT8(): using STACK[%d,%d] for area %d-%d(V) x %d-%d(H)\n", row, col, intersect_area->V0-V0, intersect_area->V1-V0, intersect_area->H0-H0, intersect_area->H1-H0);
                 #endif
 
-                //STACKS[row][col]->loadStack(D0, D1-1);
-
                 for(int k=0; k<sbv_depth; k++)
                 {
                     //loading slice
@@ -782,29 +816,18 @@ uint8* StackedVolume::loadSubvolume_to_UINT8(int V0,int V1, int H0, int H1, int 
                         throw MyException(std::string("Unable to load slice at \"").append(slice_fullpath).append("\"").c_str());
 
                     int slice_step = slice->widthStep / sizeof(uint8);
-                    int ABS_V_stk = STACKS[row][col]->getABS_V();
-                    int ABS_H_stk = STACKS[row][col]->getABS_H();
+                    int k_offset = k*sbv_height*sbv_width;
+                    int ABS_V_offset = V0 - STACKS[row][col]->getABS_V();
+                    int ABS_H_offset = H0 - STACKS[row][col]->getABS_H();
 
                     for(int i=intersect_area->V0-V0; i<intersect_area->V1-V0; i++)
                     {
-                        uint8* slice_row = ((uint8*)slice->imageData) + (i-ABS_V_stk+V0)*slice_step;
+                        uint8* slice_row = ((uint8*)slice->imageData) + (i+ABS_V_offset)*slice_step;
                         for(int j=intersect_area->H0-H0; j<intersect_area->H1-H0; j++)
-                            subvol[k*sbv_height*sbv_width + i*sbv_width + j] = slice_row[j-ABS_H_stk+H0];
+                            subvol[k_offset + i*sbv_width + j] = slice_row[j+ABS_H_offset];
                     }
                     cvReleaseImage(&slice);
-
-                    /*CvMat *slice = STACKS[row][col]->getSTACKED_IMAGE()[D0+k];
-                    int   step  = slice->step/sizeof(float);
-                    float *data = slice->data.fl;
-                    int ABS_V_stk = STACKS[row][col]->getABS_V();
-                    int ABS_H_stk = STACKS[row][col]->getABS_H();
-
-                    for(int i=intersect_area->V0-V0; i<intersect_area->V1-V0; i++)
-                        for(int j=intersect_area->H0-H0; j<intersect_area->H1-H0; j++)
-                            subvol[k*sbv_height*sbv_width + i*sbv_width + j] = (data+(i-ABS_V_stk+V0)*step)[j-ABS_H_stk+H0]*255;*/
                 }
-
-                //STACKS[row][col]->releaseStack();
             }
         }
     return subvol;

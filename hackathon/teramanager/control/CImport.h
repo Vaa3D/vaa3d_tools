@@ -59,7 +59,7 @@ class teramanager::CImport : public QThread
         std::string path;
         axis AXS_1, AXS_2, AXS_3;
         float VXL_1, VXL_2, VXL_3;
-        bool reimport, genmap;
+        bool reimport, multires_mode;
         StackedVolume *volume;
         uint8* vmap_data;
         int vmap_height, vmap_width, vmap_depth;
@@ -81,15 +81,16 @@ class teramanager::CImport : public QThread
 
         //GET and SET methods
         StackedVolume* getVolume(){return volume;}
-        uint8* getVMapData(){return vmap_data;}
+        uint8* getVMap(){return vmap_data;}
         int getVMapHeight(){return vmap_height;}
         int getVMapWidth(){return vmap_width;}
         int getVMapDepth(){return vmap_depth;}
+        float getMapZoominRatio(){return volume->getDIM_D()/(float)vmap_depth;}
         void setPath(string new_path){path = new_path;}
         void setAxes(string axs1, string axs2, string axs3);
         void setVoxels(std::string vxl1, std::string vxl2, std::string vxl3);
         void setReimport(bool _reimport){reimport = _reimport;}
-        void setGenerateMap(bool _genmap){genmap = _genmap;}
+        void setMultiresMode(bool _genmap){multires_mode = _genmap;}
 
         //reset method
         void reset(){path=""; AXS_1=AXS_2=AXS_3=axis_invalid; VXL_1=VXL_2=VXL_3=0; reimport=false;}
