@@ -212,6 +212,10 @@ WarpAffineTpsDialog_img::WarpAffineTpsDialog_img(QWidget *parent):QDialog(parent
 	QPushButton *pPushButton_ok									=new QPushButton("OK");						pPushButton_ok->setDefault(true);
 	QPushButton *pPushButton_cancel								=new QPushButton("Cancel");
 
+	m_pRadioButton_affine=new QRadioButton(QObject::tr("affine"));
+	m_pRadioButton_tps=new QRadioButton(QObject::tr("tps"));				m_pRadioButton_tps->setChecked(true);
+//	m_pRadioButton_affinetps=new QRadioButton(QObject::tr("affine + TPS"));	//m_pRadioButton_affinetps->setChecked(true);
+
 	connect(pPushButton_openFileDialog_tar_ctl,SIGNAL(clicked()),this,SLOT(_slots_openFileDlg_tar_ctl()));
 	connect(pPushButton_openFileDialog_sub_ctl,SIGNAL(clicked()),this,SLOT(_slots_openFileDlg_sub_ctl()));
 	connect(pPushButton_openFileDialog_sub_warp,SIGNAL(clicked()),this,SLOT(_slots_openFileDlg_sub_warp()));
@@ -222,8 +226,10 @@ WarpAffineTpsDialog_img::WarpAffineTpsDialog_img(QWidget *parent):QDialog(parent
 
 	QGroupBox *pGroupBox_input=new QGroupBox(parent);
 	QGroupBox *pGroupBox_output=new QGroupBox(parent);
+    QGroupBox *pGroupBox_warpmode=new QGroupBox(parent);
 	pGroupBox_input->setTitle(QObject::tr("Input filenames:"));
 	pGroupBox_output->setTitle(QObject::tr("Output filenames:"));
+	pGroupBox_warpmode->setTitle(QObject::tr("Warp mode:"));
 
 	QGridLayout *pLayout_input=new QGridLayout();
 	pLayout_input->addWidget(m_pLineEdit_filepath_tar_ctl,1,1);
@@ -233,6 +239,12 @@ WarpAffineTpsDialog_img::WarpAffineTpsDialog_img(QWidget *parent):QDialog(parent
 	pLayout_input->addWidget(m_pLineEdit_filepath_sub_warp,3,1);
 	pLayout_input->addWidget(pPushButton_openFileDialog_sub_warp,3,2);
 	pGroupBox_input->setLayout(pLayout_input);
+
+	QHBoxLayout *pLayout_warpmode=new QHBoxLayout;
+	pLayout_warpmode->addWidget(m_pRadioButton_affine);
+	pLayout_warpmode->addWidget(m_pRadioButton_tps);
+//	pLayout_warpmode->addWidget(m_pRadioButton_affinetps);
+	pGroupBox_warpmode->setLayout(pLayout_warpmode);
 
 	QGridLayout *pLayout_output=new QGridLayout();
 	pLayout_output->addWidget(m_pLineEdit_filepath_sub2tar_affine,1,1);
@@ -247,6 +259,7 @@ WarpAffineTpsDialog_img::WarpAffineTpsDialog_img(QWidget *parent):QDialog(parent
 
 	QVBoxLayout *pLayout_main=new QVBoxLayout;
 	pLayout_main->addWidget(pGroupBox_input);
+    pLayout_main->addWidget(pGroupBox_warpmode);
 	pLayout_main->addWidget(pGroupBox_output);
 	pLayout_main->addLayout(pLayout_okcancel);
 	pLayout_main->setSizeConstraint(QLayout::SetFixedSize);
@@ -281,7 +294,7 @@ void WarpAffineTpsDialog_img::_slots_openFileDlg_sub_warp()
 {
 	QFileDialog d(this);
 	d.setWindowTitle(tr("Choose to be warped subject image"));
-	d.setNameFilter("image file (*.raw *.tif)");
+	d.setNameFilter("image file (*.tiff *.tif *.raw *.lsm *.v3draw *.vaa3draw)");
 	if(d.exec())
 	{
 		QString selectedFile=(d.selectedFiles())[0];
@@ -293,7 +306,6 @@ void WarpAffineTpsDialog_img::_slots_openFileDlg_sub2tar_affine()
 	QFileDialog d(this);
 	d.setAcceptMode(QFileDialog::AcceptSave);
 	d.setWindowTitle(tr("Choose affine warped output filename"));
-//	d.setNameFilter("image stack file (*.tif *.lsm *.raw)");
 	if(d.exec())
 	{
 		QString selectedFile=(d.selectedFiles())[0];
@@ -305,7 +317,6 @@ void WarpAffineTpsDialog_img::_slots_openFileDlg_sub2tar_affine_tps()
 	QFileDialog d(this);
 	d.setAcceptMode(QFileDialog::AcceptSave);
 	d.setWindowTitle(tr("Choose affine+tps warped output filename (*.swc)"));
-//	d.setNameFilter("apo file (*.tif *.lsm *.raw)");
 	if(d.exec())
 	{
 		QString selectedFile=(d.selectedFiles())[0];

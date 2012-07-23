@@ -33,5 +33,6 @@ SOURCES      += plugin_warp_affine_tps.cpp
 
 TARGET        = $$qtLibraryTarget(plugin_warp_affin_tps)
 
-DESTDIR       = ../../v3d/plugins/neuron_utilities/alignment_affine_TPS_warp  #win32 qmake couldn't handle space in path
+#DESTDIR       = ../../v3d/plugins/neuron_utilities/alignment_affine_TPS_warp  #win32 qmake couldn't handle space in path
+DESTDIR       = ../../../bin/plugins/neuron_utilities/alignment_affine_TPS_warp  #win32 qmake couldn't handle space in path #by Lei @20120722
 

@@ -61,6 +61,9 @@ public:
 	QLineEdit *m_pLineEdit_filepath_tar_ctl;
 	QLineEdit *m_pLineEdit_filepath_sub_ctl;
 	QLineEdit *m_pLineEdit_filepath_sub_warp;
+	QRadioButton *m_pRadioButton_affine;
+	QRadioButton *m_pRadioButton_tps;
+//	QRadioButton *m_pRadioButton_affinetps;
 	//output
 	QLineEdit *m_pLineEdit_filepath_sub2tar_affine;
 	QLineEdit *m_pLineEdit_filepath_sub2tar_tps;

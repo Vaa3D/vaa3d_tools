@@ -443,6 +443,7 @@ void WarpImageBaseonMatchedPairs(V3DPluginCallback &callback, QWidget *parent)
 	//get parameters
 	QString qs_filename_marker_tar,qs_filename_marker_sub,qs_filename_sub;
 	QString qs_filename_sub2tar_affine,qs_filename_sub2tar_tps;
+	int i_warpmode=2;
 
 	WarpAffineTpsDialog_img WarpAffineTpsDialog_img(0);
 	if(WarpAffineTpsDialog_img.exec()==QDialog::Accepted)
@@ -454,6 +455,10 @@ void WarpImageBaseonMatchedPairs(V3DPluginCallback &callback, QWidget *parent)
 		//output
 		qs_filename_sub2tar_affine		=WarpAffineTpsDialog_img.m_pLineEdit_filepath_sub2tar_affine->text();
 		qs_filename_sub2tar_tps			=WarpAffineTpsDialog_img.m_pLineEdit_filepath_sub2tar_tps->text();
+		//warpmode
+		if(WarpAffineTpsDialog_img.m_pRadioButton_affine->isChecked())			i_warpmode=0;
+		else if(WarpAffineTpsDialog_img.m_pRadioButton_tps->isChecked())		i_warpmode=1;
+		else {printf("ERROR: warpmode is invalid.\n");return;}
 	}
 	else
 		return;
@@ -465,15 +470,12 @@ void WarpImageBaseonMatchedPairs(V3DPluginCallback &callback, QWidget *parent)
 	printf(">>  input target control marker file:          %s\n",qPrintable(qs_filename_marker_tar));
 	printf(">>  input subject control marker file:         %s\n",qPrintable(qs_filename_marker_sub));
 	printf(">>  input to be warped image:                  %s\n",qPrintable(qs_filename_sub));
+	printf(">>  warp mode (0:affine,1:tps):                %d\n",i_warpmode);
 	printf(">>-------------------------\n");
 	printf(">>output parameters:\n");
 	printf(">>  output affine sub2tar warped file:         %s\n",qPrintable(qs_filename_sub2tar_affine));
 	printf(">>  output affine+tps sub2tar warped file:     %s\n",qPrintable(qs_filename_sub2tar_tps));
 	printf(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n");
-
-	bool b_saveaffine=0,b_savetps=0;
-	if(qs_filename_sub2tar_affine.endsWith(".raw") || qs_filename_sub2tar_affine.endsWith(".tif")) b_saveaffine=1;
-	if(qs_filename_sub2tar_tps.endsWith(".raw") || qs_filename_sub2tar_tps.endsWith(".tif")) b_savetps=1;
 
 	//------------------------------------------------------------------------------------------------------------------------------------
 	printf("1. Read target and subject marker files. \n");
@@ -528,7 +530,7 @@ void WarpImageBaseonMatchedPairs(V3DPluginCallback &callback, QWidget *parent)
 	unsigned char *p_img_sub2tar=0;
 
 	//do affine warping
-	if(b_saveaffine)
+	if(i_warpmode==0)
 	{
 		if(!q_imagewarp_affine(vec_tar,vec_sub,
 				p_img_sub,sz_img_sub,
@@ -547,7 +549,7 @@ void WarpImageBaseonMatchedPairs(V3DPluginCallback &callback, QWidget *parent)
 	}
 
 	//do tps warping
-	if(b_savetps)
+	if(i_warpmode==1)
 	{
 		if(!q_imagewarp_tps(vec_tar,vec_sub,
 				p_img_sub,sz_img_sub,
