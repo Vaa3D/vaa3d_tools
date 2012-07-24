@@ -11,6 +11,8 @@
 	-the TPS_bspline and bspline are not implemented in jab, they are same as TPS
 
 6. the plugin version is much slower than the main version (only for bspline), what's the reason?
+	-rewrite q_dfblcokinterp_bspline(), combine x, y and z processes by using 2d matrix operation instead of processing separately
+	-speed is good now, problem solved, but still don't understand why main and plugin excite differently!
 
 ----------------------------------------------------------------------------------------
 test result on images with different size and datatype

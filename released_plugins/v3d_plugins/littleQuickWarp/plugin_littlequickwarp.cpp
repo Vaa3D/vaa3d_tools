@@ -120,7 +120,7 @@ void printHelp()
     printf("\t newsize_x:               x dim of resized image (works only if doresize=1)\n");
     printf("\t newsize_y:               y dim of resized image (works only if doresize=1)\n");
     printf("\t newsize_z:               z dim of resized image (works only if doresize=1)\n");
-    printf("Demo :\t v3d -x littlequickwarp -f littlequickwarp -i /Users/qul/Desktop/testdata/output_global.tiff /Users/qul/Desktop/testdata/output_subject.marker /Users/qul/Desktop/testdata/output_target.marker -o /Users/qul/Desktop/test.v3draw -p 1 0 0 0 1 1 1\n");
+    printf("Demo :\t v3d -x littlequickwarp -f littlequickwarp -i /Users/qul/Desktop/testdata/output_global.tiff /Users/qul/Desktop/testdata/output_subject.marker /Users/qul/Desktop/testdata/output_target.marker -o /Users/qul/Desktop/testdata/output_warp_littlequick.v3draw -p 1 0 0 0 1 1 1\n");
     return;
 }
 

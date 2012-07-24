@@ -3,7 +3,6 @@
 // by Lei Qu
 //2012-07-08
 
-#include <time.h>
 #include "q_interpolate.h"
 #include "q_bspline.h"
 
@@ -254,7 +253,7 @@ bool imgwarp_smallmemory(const T *p_img_sub,const V3DLONG *sz_img_sub,
 		matchSubjectPos.push_back(tmpc);
 	}
 	Vol3DSimple<DisplaceFieldF3D> *pSubDF=0;
-	if(i_interpmethod_img!=2)
+	if(i_interpmethod_df==0)
 		pSubDF=compute_df_tps_subsampled_volume(matchTargetPos,matchSubjectPos,sz_img_sub[0],sz_img_sub[1],sz_img_sub[2],szBlock_x,szBlock_y,szBlock_z);
 	else
 		pSubDF=compute_df_tps_subsampled_volume_4bspline(matchTargetPos,matchSubjectPos,sz_img_sub[0],sz_img_sub[1],sz_img_sub[2],szBlock_x,szBlock_y,szBlock_z);
@@ -306,8 +305,7 @@ bool imgwarp_smallmemory(const T *p_img_sub,const V3DLONG *sz_img_sub,
 	if(i_interpmethod_img==0)		printf("\t>>image value               interpolate method: trilinear\n");
 	else if(i_interpmethod_img==1)	printf("\t>>image value               interpolate method: nearest neighbor\n");
 
-	//linear interpolate the SubDfBlock to DFBlock and do warp block by block
-	if(i_interpmethod_df==0)
+	if(i_interpmethod_df==0)	//linear interpolate the SubDfBlock to DFBlock and do warp block by block
 	{
 		for(V3DLONG substart_z=0;substart_z<pSubDF->sz2()-1;substart_z++)
 			for(V3DLONG substart_y=0;substart_y<pSubDF->sz1()-1;substart_y++)
@@ -319,8 +317,7 @@ bool imgwarp_smallmemory(const T *p_img_sub,const V3DLONG *sz_img_sub,
 					q_imgblockwarp(p_img_sub_4d,sz_img_sub,pppDFBlock,szBlock_x,szBlock_y,szBlock_z,i_interpmethod_img,substart_x,substart_y,substart_z,p_img_warp_4d);
 				}
 	}
-	//bspline interpolate the SubDfBlock to DFBlock and do warp block by block
-	else
+	else						//bspline interpolate the SubDfBlock to DFBlock and do warp block by block
 	{
 		//initialize the bspline basis function
 		V3DLONG sz_gridwnd=szBlock_x;
@@ -340,16 +337,10 @@ bool imgwarp_smallmemory(const T *p_img_sub,const V3DLONG *sz_img_sub,
 			for(V3DLONG substart_y=0;substart_y<pSubDF->sz1()-1-2;substart_y++)
 				for(V3DLONG substart_x=0;substart_x<pSubDF->sz0()-1-2;substart_x++)
 				{
-					V3DLONG time_start=clock();
-					double time1=0,time2=0;;
 					//bspline interpolate the SubDfBlock to DFBlock
 					q_dfblcokinterp_bspline(pppSubDF,x_bsplinebasis,sz_gridwnd,substart_x,substart_y,substart_z,pppDFBlock);
-					time1=((float)(clock()-time_start))/CLOCKS_PER_SEC;
-					time_start=clock();
 					//warp image block using DFBlock
 					q_imgblockwarp(p_img_sub_4d,sz_img_sub,pppDFBlock,szBlock_x,szBlock_y,szBlock_z,i_interpmethod_img,substart_x,substart_y,substart_z,p_img_warp_4d);
-					time2=((float)(clock()-time_start))/CLOCKS_PER_SEC;
-					printf(">>>>block warping: %f,%F\n",time1,time2);
 				}
 	}
 
