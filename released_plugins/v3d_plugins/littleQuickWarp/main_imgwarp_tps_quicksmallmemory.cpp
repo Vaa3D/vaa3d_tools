@@ -41,12 +41,14 @@ int main(int argc, char *argv[])
 	QString qs_filename_sub					=NULL;
 	QString qs_filename_marker_tar			=NULL;
 	QString qs_filename_marker_sub			=NULL;
+	int		i_interpmethod_df				=1;		//default B-spline
+	int		i_interpmethod_img				=0;		//default trilinear
 	bool 	b_padding_img					=0;
 	//output
 	QString qs_filename_warp				=NULL;
 
 	int c;
-	static char optstring[]="hS:t:s:o:p:";
+	static char optstring[]="hS:t:s:o:I:i:p:";
 	opterr=0;
 	while((c=getopt(argc,argv,optstring))!=-1)
     {
@@ -88,6 +90,22 @@ int main(int argc, char *argv[])
 				}
 				qs_filename_warp.append(optarg);
 				break;
+			case 'I':
+				if (strcmp (optarg, "(null)") == 0 || optarg[0] == '-')
+				{
+					fprintf (stderr, "Found illegal or NULL parameter for the option -I.\n");
+					return 1;
+				}
+				i_interpmethod_df=atoi(optarg);
+				break;
+			case 'i':
+				if (strcmp (optarg, "(null)") == 0 || optarg[0] == '-')
+				{
+					fprintf (stderr, "Found illegal or NULL parameter for the option -i.\n");
+					return 1;
+				}
+				i_interpmethod_img=atoi(optarg);
+				break;
 			case 'p':
 				if (strcmp (optarg, "(null)") == 0 || optarg[0] == '-')
 				{
@@ -112,6 +130,8 @@ int main(int argc, char *argv[])
 	printf(">>  input subject image:           %s\n",qPrintable(qs_filename_sub));
 	printf(">>  input target  marker:          %s\n",qPrintable(qs_filename_marker_tar));
 	printf(">>  input subject marker:          %s\n",qPrintable(qs_filename_marker_sub));
+	printf(">>  DF  interp method:             %d\n",i_interpmethod_df);
+	printf(">>  img interp method:             %d\n",i_interpmethod_img);
 	printf(">>  padding image?:                %d\n",b_padding_img);
 	printf(">>-------------------------\n");
 	printf(">>output parameters:\n");
@@ -170,28 +190,27 @@ int main(int argc, char *argv[])
 	V3DLONG szBlock_x,szBlock_y,szBlock_z;
 	szBlock_x=szBlock_y=szBlock_z=4;
     
-	int interp_method=1;//0-nn, 1-linear
 	bool b_status=false;
     if(datatype_sub==1)
     {
     	if(!b_padding_img)
-    		b_status=imgwarp_smallmemory(p_img_sub,sz_img_sub,ql_marker_tar,ql_marker_sub,szBlock_x,szBlock_y,szBlock_z,interp_method,p_img_warp);
+    		b_status=imgwarp_smallmemory(p_img_sub,sz_img_sub,ql_marker_tar,ql_marker_sub,szBlock_x,szBlock_y,szBlock_z,i_interpmethod_df,i_interpmethod_img,p_img_warp);
     	else
-    		b_status=imgwarp_smallmemory_padding(p_img_sub,sz_img_sub,ql_marker_tar,ql_marker_sub,szBlock_x,szBlock_y,szBlock_z,interp_method,p_img_warp);
+    		b_status=imgwarp_smallmemory_padding(p_img_sub,sz_img_sub,ql_marker_tar,ql_marker_sub,szBlock_x,szBlock_y,szBlock_z,i_interpmethod_img,p_img_warp);
     }
     else if(datatype_sub==2)
     {
     	if(!b_padding_img)
-    		b_status=imgwarp_smallmemory((unsigned short int *)p_img_sub,sz_img_sub,ql_marker_tar,ql_marker_sub,szBlock_x,szBlock_y,szBlock_z,interp_method,(unsigned short int *&)p_img_warp);
+    		b_status=imgwarp_smallmemory((unsigned short int *)p_img_sub,sz_img_sub,ql_marker_tar,ql_marker_sub,szBlock_x,szBlock_y,szBlock_z,i_interpmethod_df,i_interpmethod_img,(unsigned short int *&)p_img_warp);
     	else
-    		b_status=imgwarp_smallmemory_padding((unsigned short int *)p_img_sub,sz_img_sub,ql_marker_tar,ql_marker_sub,szBlock_x,szBlock_y,szBlock_z,interp_method,(unsigned short int *&)p_img_warp);
+    		b_status=imgwarp_smallmemory_padding((unsigned short int *)p_img_sub,sz_img_sub,ql_marker_tar,ql_marker_sub,szBlock_x,szBlock_y,szBlock_z,i_interpmethod_img,(unsigned short int *&)p_img_warp);
     }
     else if(datatype_sub==4)
     {
     	if(!b_padding_img)
-    		b_status=imgwarp_smallmemory((float *)p_img_sub,sz_img_sub,ql_marker_tar,ql_marker_sub,szBlock_x,szBlock_y,szBlock_z,interp_method,(float *&)p_img_warp);
+    		b_status=imgwarp_smallmemory((float *)p_img_sub,sz_img_sub,ql_marker_tar,ql_marker_sub,szBlock_x,szBlock_y,szBlock_z,i_interpmethod_df,i_interpmethod_img,(float *&)p_img_warp);
     	else
-    		b_status=imgwarp_smallmemory_padding((float *)p_img_sub,sz_img_sub,ql_marker_tar,ql_marker_sub,szBlock_x,szBlock_y,szBlock_z,interp_method,(float *&)p_img_warp);
+    		b_status=imgwarp_smallmemory_padding((float *)p_img_sub,sz_img_sub,ql_marker_tar,ql_marker_sub,szBlock_x,szBlock_y,szBlock_z,i_interpmethod_img,(float *&)p_img_warp);
     }
     if(!b_status)
 	{
@@ -233,6 +252,12 @@ void printHelp()
 	printf("\t  -S   <filename_sub>	            input subject (image) file full name.\n");
 	printf("\t  -t   <markerFilename_target>	input target marker file full name.\n");
 	printf("\t  -s   <markerFilename_subject>	input subject marker file full name.\n");
+	printf("\t  -I   <DF_interp_method>	        subsampled displace field interpolation method (default 1).\n");
+	printf("\t                       	        0: trilinear interpolation\n");
+	printf("\t                       	        1: B-spline  interpolation\n");
+	printf("\t  -i   <img_interp_method>	    image value interpolation method (default 1).\n");
+	printf("\t                       	        0: trilinear interpolation\n");
+	printf("\t                       	        1: nearest neighbor interpolation\n");
 	printf("\t [-p]  <b_padding_img>			padding is just for generating the same result as jba (default 0).\n");
 	printf("Output paras:\n");
 	printf("\t [-o]  <filename_sub2tar>         output sub2tar tps warped (image) file full name.\n");

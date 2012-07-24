@@ -12,7 +12,7 @@ dir_data=/Users/qul/Desktop/testdata/
 
 #256*256*108*1------------------------------------------------------------------------------
 #uint8 test
-$dir_exe/main -S $dir_data/output_global.tiff -t $dir_data/output_target.marker -s $dir_data/output_subject.marker -o $dir_data/output_warp_littlequick.v3draw -p 0
+$dir_exe/main -S $dir_data/output_global.tiff -t $dir_data/output_target.marker -s $dir_data/output_subject.marker -o $dir_data/output_warp_littlequick.v3draw -I 1 -i 0 -p 0
 
 #float test
 #$dir_exe/main -S $dir_data/output_global_float32.v3draw -t $dir_data/output_target.marker -s $dir_data/output_subject.marker -o $dir_data/output_warp_littlequick.v3draw -p 1

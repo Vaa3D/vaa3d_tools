@@ -42,7 +42,7 @@ void LittleQuickWarpPlugin::domenu(const QString &menu_name, V3DPluginCallback2 
     	QString qs_filename_img_warp=DLG_littlequickwarp.lineEdit_img_warp->text();
     	QString qs_filename_marker_sub=DLG_littlequickwarp.lineEdit_marker_sub->text();
     	QString qs_filename_marker_tar=DLG_littlequickwarp.lineEdit_marker_tar->text();
-    	bool b_interpmethod=DLG_littlequickwarp.radioButton_interp_linear->isChecked();
+    	bool b_interpmethod=DLG_littlequickwarp.radioButton_img_interp_linear->isChecked();
     	bool b_padding=DLG_littlequickwarp.checkBox_padding->isChecked();
     	bool b_resizeimg=DLG_littlequickwarp.groupBox_resize->isChecked();
     	V3DLONG sz_resize_x=DLG_littlequickwarp.lineEdit_Xdim->text().toLong();
