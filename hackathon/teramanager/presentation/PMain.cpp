@@ -385,7 +385,8 @@ void PMain::loadButtonClicked()
         statusBar->showMessage("Loading selected subvolume volume...");
 
         //starting operation
-        CVolume::instance()->setVOI(V0_sbox->value()-1, V1_sbox->value()-1,H0_sbox->value()-1, H1_sbox->value()-1, D0_sbox->value()-1, D1_sbox->value()-1);
+        CVolume::instance()->setVOI(V0_sbox->value()-1, V1_sbox->value()-1,H0_sbox->value()-1, H1_sbox->value()-1, D0_sbox->value()-1, D1_sbox->value()-1);        
+        CVolume::instance()->setShowInNewWindow(true);
         CVolume::instance()->start();
     }
     catch(MyException &ex)
@@ -523,7 +524,7 @@ void PMain::import_done(MyException *ex, Image4DSimple* vmap_image)
             V3D_env->setImage(new_win, vmap_image);
             V3D_env->open3DWindow(new_win);
             treeviewWidget = (XFormWidget*)new_win;
-            //treeviewWidget->setVisible(false);          //hiding the treeview window
+            treeviewWidget->setVisible(false);          //hiding the treeview window
 
             //installing event filter on 3D renderer
             View3DControl *view3DControl =  V3D_env->getView3DControl(new_win);
@@ -651,6 +652,7 @@ bool PMain::eventFilter(QObject *object, QEvent *event)
                 markers.clear();
                 V3D_env->setLandmark(treeviewWidget, markers);
                 view3DWidget->getRenderer()->updateLandmark();
+                CVolume::instance()->setShowInNewWindow(false);
                 CVolume::instance()->start();
             }
             else if(view3DWidget->zoom() < 0 && CVolume::instance()->getVOI_Data())
