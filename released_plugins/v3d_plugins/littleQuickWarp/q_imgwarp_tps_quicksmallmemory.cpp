@@ -8,13 +8,10 @@
 
 
 //bspline interpolate the DF block
-bool q_dfblcokinterp_bspline(Vol3DSimple<DisplaceFieldF3D> *pSubDF,const Matrix &x_bsplinebasis,
+bool q_dfblcokinterp_bspline(DisplaceFieldF3D ***&pppSubDF,const Matrix &x_bsplinebasis,
 		const V3DLONG sz_gridwnd,const V3DLONG substart_x,const V3DLONG substart_y,const V3DLONG substart_z,
-		Vol3DSimple<DisplaceFieldF3D> *pDFBlock)
+		DisplaceFieldF3D ***&pppDFBlock)
 {
-	DisplaceFieldF3D ***pppSubDF	=pSubDF->getData3dHandle();
-	DisplaceFieldF3D ***pppDFBlock	=pDFBlock->getData3dHandle();
-
 	{
 	//x
 	//vectorize the gridblock's nodes position that use for interpolation
@@ -93,10 +90,95 @@ bool q_dfblcokinterp_bspline(Vol3DSimple<DisplaceFieldF3D> *pSubDF,const Matrix 
 
 //warp image block based on given DF
 template <class T>
+bool q_imgblockwarp1(T ****&p_img_sub_4d,const V3DLONG *sz_img_sub,DisplaceFieldF3D ***&pppDFBlock,
+		const V3DLONG szBlock_x,const V3DLONG szBlock_y,const V3DLONG szBlock_z,const int i_interpmethod_img,
+		const V3DLONG substart_x,const V3DLONG substart_y,const V3DLONG substart_z,
+		T ****&p_img_warp_4d)
+{
+	V3DLONG start_x,start_y,start_z;
+	start_x=substart_x*szBlock_x;
+	start_y=substart_y*szBlock_y;
+	start_z=substart_z*szBlock_z;
+	for(V3DLONG z=0;z<szBlock_z;z++)
+		for(V3DLONG y=0;y<szBlock_y;y++)
+			for(V3DLONG x=0;x<szBlock_x;x++)
+			{
+				V3DLONG pos_warp[3];
+				pos_warp[0]=start_x+x;
+				pos_warp[1]=start_y+y;
+				pos_warp[2]=start_z+z;
+				if(pos_warp[0]>=sz_img_sub[0] || pos_warp[1]>=sz_img_sub[1] || pos_warp[2]>=sz_img_sub[2])
+					continue;
+
+				double pos_sub[3];
+				pos_sub[0]=pos_warp[0]+pppDFBlock[z][y][x].sx;
+				pos_sub[1]=pos_warp[1]+pppDFBlock[z][y][x].sy;
+				pos_sub[2]=pos_warp[2]+pppDFBlock[z][y][x].sz;
+				if(pos_sub[0]<0 || pos_sub[0]>sz_img_sub[0]-1 ||
+				   pos_sub[1]<0 || pos_sub[1]>sz_img_sub[1]-1 ||
+				   pos_sub[2]<0 || pos_sub[2]>sz_img_sub[2]-1)
+				{
+					for(V3DLONG c=0;c<sz_img_sub[3];c++)
+						p_img_warp_4d[c][pos_warp[2]][pos_warp[1]][pos_warp[0]]=0;
+					continue;
+				}
+
+				//nearest neighbor interpolate
+				if(i_interpmethod_img==1)
+				{
+					V3DLONG pos_sub_nn[3];
+					for(int i=0;i<3;i++)
+					{
+						pos_sub_nn[i]=pos_sub[i]+0.5;
+						pos_sub_nn[i]=pos_sub_nn[i]<sz_img_sub[i]?pos_sub_nn[i]:sz_img_sub[i]-1;
+					}
+					for(V3DLONG c=0;c<sz_img_sub[3];c++)
+						p_img_warp_4d[c][pos_warp[2]][pos_warp[1]][pos_warp[0]]=p_img_sub_4d[c][pos_sub_nn[2]][pos_sub_nn[1]][pos_sub_nn[0]];
+				}
+				//linear interpolate
+				else if(i_interpmethod_img==0)
+				{
+					//find 8 neighor pixels boundary
+					V3DLONG x_s,x_b,y_s,y_b,z_s,z_b;
+					x_s=floor(pos_sub[0]);		x_b=ceil(pos_sub[0]);
+					y_s=floor(pos_sub[1]);		y_b=ceil(pos_sub[1]);
+					z_s=floor(pos_sub[2]);		z_b=ceil(pos_sub[2]);
+
+					//compute weight for left and right, top and bottom -- 4 neighbor pixel's weight in a slice
+					double l_w,r_w,t_w,b_w;
+					l_w=1.0-(pos_sub[0]-x_s);	r_w=1.0-l_w;
+					t_w=1.0-(pos_sub[1]-y_s);	b_w=1.0-t_w;
+					//compute weight for higer slice and lower slice
+					double u_w,d_w;
+					u_w=1.0-(pos_sub[2]-z_s);	d_w=1.0-u_w;
+
+					//linear interpolate each channel
+					for(V3DLONG c=0;c<sz_img_sub[3];c++)
+					{
+						//linear interpolate in higher slice [t_w*(l_w*lt+r_w*rt)+b_w*(l_w*lb+r_w*rb)]
+						double higher_slice;
+						higher_slice=t_w*(l_w*p_img_sub_4d[c][z_s][y_s][x_s]+r_w*p_img_sub_4d[c][z_s][y_s][x_b])+
+									 b_w*(l_w*p_img_sub_4d[c][z_s][y_b][x_s]+r_w*p_img_sub_4d[c][z_s][y_b][x_b]);
+						//linear interpolate in lower slice [t_w*(l_w*lt+r_w*rt)+b_w*(l_w*lb+r_w*rb)]
+						double lower_slice;
+						lower_slice =t_w*(l_w*p_img_sub_4d[c][z_b][y_s][x_s]+r_w*p_img_sub_4d[c][z_b][y_s][x_b])+
+									 b_w*(l_w*p_img_sub_4d[c][z_b][y_b][x_s]+r_w*p_img_sub_4d[c][z_b][y_b][x_b]);
+						//linear interpolate the current position [u_w*higher_slice+d_w*lower_slice]
+						T intval=(T)(u_w*higher_slice+d_w*lower_slice+0.5);
+						p_img_warp_4d[c][pos_warp[2]][pos_warp[1]][pos_warp[0]]=intval;
+					}
+				}
+
+			}
+
+	return true;
+}
+
+template <class T>
 bool q_imgblockwarp(const T *p_img_sub,const V3DLONG *sz_img_sub,Vol3DSimple<DisplaceFieldF3D> *pDFBlock,
 		const V3DLONG szBlock_x,const V3DLONG szBlock_y,const V3DLONG szBlock_z,const int i_interpmethod_img,
 		const V3DLONG substart_x,const V3DLONG substart_y,const V3DLONG substart_z,
-		T *p_img_warp)
+		T *&p_img_warp)
 {
 	DisplaceFieldF3D ***pppDFBlock=pDFBlock->getData3dHandle();
 
@@ -349,88 +431,164 @@ bool imgwarp_smallmemory(const T *p_img_sub,const V3DLONG *sz_img_sub,
 			for(V3DLONG substart_x=0;substart_x<pSubDF->sz0()-1-2;substart_x++)
 			{
 				//bspline interpolate the SbuDfBlock to DFBlock
-				q_dfblcokinterp_bspline(pSubDF,x_bsplinebasis,sz_gridwnd,substart_x,substart_y,substart_z,pDFBlock);
+				q_dfblcokinterp_bspline(pppSubDF,x_bsplinebasis,sz_gridwnd,substart_x,substart_y,substart_z,pppDFBlock);
+//				{
+//					//x
+//					//vectorize the gridblock's nodes position that use for interpolation
+//					Matrix x1D_gridblock(4*4*4,1);
+//					long ind=1;
+//					for(long dep=substart_z;dep<substart_z+4;dep++)
+//						for(long col=substart_x;col<substart_x+4;col++)
+//							for(long row=substart_y;row<substart_y+4;row++)
+//							{
+//								x1D_gridblock(ind,1)=pppSubDF[dep][row][col].sx;
+//								ind++;
+//							}
+//					//cubic B-spline interpolate the vectorized grid block
+//					Matrix x1D_gridblock_int=x_bsplinebasis*x1D_gridblock;
+//					//de-vectorize the interpolated grid block and save back to vec4D_grid_int
+//					ind=1;
+//					for(long zz=0;zz<sz_gridwnd;zz++)
+//						for(long xx=0;xx<sz_gridwnd;xx++)
+//							for(long yy=0;yy<sz_gridwnd;yy++)
+//							{
+//								pppDFBlock[zz][yy][xx].sx=x1D_gridblock_int(ind,1);
+//								ind++;
+//							}
+//					}
+//					{
+//					//y
+//					//vectorize the gridblock's nodes position that use for interpolation
+//					Matrix x1D_gridblock(4*4*4,1);
+//					long ind=1;
+//					for(long dep=substart_z;dep<substart_z+4;dep++)
+//						for(long col=substart_x;col<substart_x+4;col++)
+//							for(long row=substart_y;row<substart_y+4;row++)
+//							{
+//								x1D_gridblock(ind,1)=pppSubDF[dep][row][col].sy;
+//								ind++;
+//							}
+//					//cubic B-spline interpolate the vectorized grid block
+//					Matrix x1D_gridblock_int=x_bsplinebasis*x1D_gridblock;
+//					//de-vectorize the interpolated grid block and save back to vec4D_grid_int
+//					ind=1;
+//					for(long zz=0;zz<sz_gridwnd;zz++)
+//						for(long xx=0;xx<sz_gridwnd;xx++)
+//							for(long yy=0;yy<sz_gridwnd;yy++)
+//							{
+//								pppDFBlock[zz][yy][xx].sy=x1D_gridblock_int(ind,1);
+//								ind++;
+//							}
+//					}
+//					{
+//					//z
+//					//vectorize the gridblock's nodes position that use for interpolation
+//					Matrix x1D_gridblock(4*4*4,1);
+//					long ind=1;
+//					for(long dep=substart_z;dep<substart_z+4;dep++)
+//						for(long col=substart_x;col<substart_x+4;col++)
+//							for(long row=substart_y;row<substart_y+4;row++)
+//							{
+//								x1D_gridblock(ind,1)=pppSubDF[dep][row][col].sz;
+//								ind++;
+//							}
+//					//cubic B-spline interpolate the vectorized grid block
+//					Matrix x1D_gridblock_int=x_bsplinebasis*x1D_gridblock;
+//					//de-vectorize the interpolated grid block and save back to vec4D_grid_int
+//					ind=1;
+//					for(long zz=0;zz<sz_gridwnd;zz++)
+//						for(long xx=0;xx<sz_gridwnd;xx++)
+//							for(long yy=0;yy<sz_gridwnd;yy++)
+//							{
+//								pppDFBlock[zz][yy][xx].sz=x1D_gridblock_int(ind,1);
+//								ind++;
+//							}
+//					}
 
 				//warp image block using DFBlock
 //				q_imgblockwarp(p_img_sub,sz_img_sub,pDFBlock,
 //						szBlock_x,szBlock_y,szBlock_z,i_interpmethod_img,
 //						substart_x,substart_y,substart_z,
 //						p_img_warp);
-				V3DLONG start_x,start_y,start_z;
-				start_x=substart_x*szBlock_x;
-				start_y=substart_y*szBlock_y;
-				start_z=substart_z*szBlock_z;
-				for(V3DLONG z=0;z<szBlock_z;z++)
-					for(V3DLONG y=0;y<szBlock_y;y++)
-						for(V3DLONG x=0;x<szBlock_x;x++)
-						{
-							V3DLONG pos_warp[3];
-							pos_warp[0]=start_x+x;
-							pos_warp[1]=start_y+y;
-							pos_warp[2]=start_z+z;
-							if(pos_warp[0]>=sz_img_sub[0] || pos_warp[1]>=sz_img_sub[1] || pos_warp[2]>=sz_img_sub[2])
-								continue;
-
-							double pos_sub[3];
-							pos_sub[0]=pos_warp[0]+pppDFBlock[z][y][x].sx;
-							pos_sub[1]=pos_warp[1]+pppDFBlock[z][y][x].sy;
-							pos_sub[2]=pos_warp[2]+pppDFBlock[z][y][x].sz;
-							if(pos_sub[0]<0 || pos_sub[0]>sz_img_sub[0]-1 ||
-							   pos_sub[1]<0 || pos_sub[1]>sz_img_sub[1]-1 ||
-							   pos_sub[2]<0 || pos_sub[2]>sz_img_sub[2]-1)
-							{
-								for(V3DLONG c=0;c<sz_img_sub[3];c++)
-									p_img_warp_4d[c][pos_warp[2]][pos_warp[1]][pos_warp[0]]=0;
-								continue;
-							}
-
-							//nearest neighbor interpolate
-							if(i_interpmethod_img==1)
-							{
-								V3DLONG pos_sub_nn[3];
-								for(int i=0;i<3;i++)
-								{
-									pos_sub_nn[i]=pos_sub[i]+0.5;
-									pos_sub_nn[i]=pos_sub_nn[i]<sz_img_sub[i]?pos_sub_nn[i]:sz_img_sub[i]-1;
-								}
-								for(V3DLONG c=0;c<sz_img_sub[3];c++)
-									p_img_warp_4d[c][pos_warp[2]][pos_warp[1]][pos_warp[0]]=p_img_sub_4d[c][pos_sub_nn[2]][pos_sub_nn[1]][pos_sub_nn[0]];
-							}
-							//linear interpolate
-							else if(i_interpmethod_img==0)
-							{
-								//find 8 neighor pixels boundary
-								V3DLONG x_s,x_b,y_s,y_b,z_s,z_b;
-								x_s=floor(pos_sub[0]);		x_b=ceil(pos_sub[0]);
-								y_s=floor(pos_sub[1]);		y_b=ceil(pos_sub[1]);
-								z_s=floor(pos_sub[2]);		z_b=ceil(pos_sub[2]);
-
-								//compute weight for left and right, top and bottom -- 4 neighbor pixel's weight in a slice
-								double l_w,r_w,t_w,b_w;
-								l_w=1.0-(pos_sub[0]-x_s);	r_w=1.0-l_w;
-								t_w=1.0-(pos_sub[1]-y_s);	b_w=1.0-t_w;
-								//compute weight for higer slice and lower slice
-								double u_w,d_w;
-								u_w=1.0-(pos_sub[2]-z_s);	d_w=1.0-u_w;
-
-								//linear interpolate each channel
-								for(V3DLONG c=0;c<sz_img_sub[3];c++)
-								{
-									//linear interpolate in higher slice [t_w*(l_w*lt+r_w*rt)+b_w*(l_w*lb+r_w*rb)]
-									double higher_slice;
-									higher_slice=t_w*(l_w*p_img_sub_4d[c][z_s][y_s][x_s]+r_w*p_img_sub_4d[c][z_s][y_s][x_b])+
-												 b_w*(l_w*p_img_sub_4d[c][z_s][y_b][x_s]+r_w*p_img_sub_4d[c][z_s][y_b][x_b]);
-									//linear interpolate in lower slice [t_w*(l_w*lt+r_w*rt)+b_w*(l_w*lb+r_w*rb)]
-									double lower_slice;
-									lower_slice =t_w*(l_w*p_img_sub_4d[c][z_b][y_s][x_s]+r_w*p_img_sub_4d[c][z_b][y_s][x_b])+
-												 b_w*(l_w*p_img_sub_4d[c][z_b][y_b][x_s]+r_w*p_img_sub_4d[c][z_b][y_b][x_b]);
-									//linear interpolate the current position [u_w*higher_slice+d_w*lower_slice]
-									T intval=(T)(u_w*higher_slice+d_w*lower_slice+0.5);
-									p_img_warp_4d[c][pos_warp[2]][pos_warp[1]][pos_warp[0]]=intval;
-								}
-							}
-
-						}
+				q_imgblockwarp1(p_img_sub_4d,sz_img_sub,pppDFBlock,
+						szBlock_x,szBlock_y,szBlock_z,i_interpmethod_img,
+						substart_x,substart_y,substart_z,
+						p_img_warp_4d);
+//				V3DLONG start_x,start_y,start_z;
+//				start_x=substart_x*szBlock_x;
+//				start_y=substart_y*szBlock_y;
+//				start_z=substart_z*szBlock_z;
+//				for(V3DLONG z=0;z<szBlock_z;z++)
+//					for(V3DLONG y=0;y<szBlock_y;y++)
+//						for(V3DLONG x=0;x<szBlock_x;x++)
+//						{
+//							V3DLONG pos_warp[3];
+//							pos_warp[0]=start_x+x;
+//							pos_warp[1]=start_y+y;
+//							pos_warp[2]=start_z+z;
+//							if(pos_warp[0]>=sz_img_sub[0] || pos_warp[1]>=sz_img_sub[1] || pos_warp[2]>=sz_img_sub[2])
+//								continue;
+//
+//							double pos_sub[3];
+//							pos_sub[0]=pos_warp[0]+pppDFBlock[z][y][x].sx;
+//							pos_sub[1]=pos_warp[1]+pppDFBlock[z][y][x].sy;
+//							pos_sub[2]=pos_warp[2]+pppDFBlock[z][y][x].sz;
+//							if(pos_sub[0]<0 || pos_sub[0]>sz_img_sub[0]-1 ||
+//							   pos_sub[1]<0 || pos_sub[1]>sz_img_sub[1]-1 ||
+//							   pos_sub[2]<0 || pos_sub[2]>sz_img_sub[2]-1)
+//							{
+//								for(V3DLONG c=0;c<sz_img_sub[3];c++)
+//									p_img_warp_4d[c][pos_warp[2]][pos_warp[1]][pos_warp[0]]=0;
+//								continue;
+//							}
+//
+//							//nearest neighbor interpolate
+//							if(i_interpmethod_img==1)
+//							{
+//								V3DLONG pos_sub_nn[3];
+//								for(int i=0;i<3;i++)
+//								{
+//									pos_sub_nn[i]=pos_sub[i]+0.5;
+//									pos_sub_nn[i]=pos_sub_nn[i]<sz_img_sub[i]?pos_sub_nn[i]:sz_img_sub[i]-1;
+//								}
+//								for(V3DLONG c=0;c<sz_img_sub[3];c++)
+//									p_img_warp_4d[c][pos_warp[2]][pos_warp[1]][pos_warp[0]]=p_img_sub_4d[c][pos_sub_nn[2]][pos_sub_nn[1]][pos_sub_nn[0]];
+//							}
+//							//linear interpolate
+//							else if(i_interpmethod_img==0)
+//							{
+//								//find 8 neighor pixels boundary
+//								V3DLONG x_s,x_b,y_s,y_b,z_s,z_b;
+//								x_s=floor(pos_sub[0]);		x_b=ceil(pos_sub[0]);
+//								y_s=floor(pos_sub[1]);		y_b=ceil(pos_sub[1]);
+//								z_s=floor(pos_sub[2]);		z_b=ceil(pos_sub[2]);
+//
+//								//compute weight for left and right, top and bottom -- 4 neighbor pixel's weight in a slice
+//								double l_w,r_w,t_w,b_w;
+//								l_w=1.0-(pos_sub[0]-x_s);	r_w=1.0-l_w;
+//								t_w=1.0-(pos_sub[1]-y_s);	b_w=1.0-t_w;
+//								//compute weight for higer slice and lower slice
+//								double u_w,d_w;
+//								u_w=1.0-(pos_sub[2]-z_s);	d_w=1.0-u_w;
+//
+//								//linear interpolate each channel
+//								for(V3DLONG c=0;c<sz_img_sub[3];c++)
+//								{
+//									//linear interpolate in higher slice [t_w*(l_w*lt+r_w*rt)+b_w*(l_w*lb+r_w*rb)]
+//									double higher_slice;
+//									higher_slice=t_w*(l_w*p_img_sub_4d[c][z_s][y_s][x_s]+r_w*p_img_sub_4d[c][z_s][y_s][x_b])+
+//												 b_w*(l_w*p_img_sub_4d[c][z_s][y_b][x_s]+r_w*p_img_sub_4d[c][z_s][y_b][x_b]);
+//									//linear interpolate in lower slice [t_w*(l_w*lt+r_w*rt)+b_w*(l_w*lb+r_w*rb)]
+//									double lower_slice;
+//									lower_slice =t_w*(l_w*p_img_sub_4d[c][z_b][y_s][x_s]+r_w*p_img_sub_4d[c][z_b][y_s][x_b])+
+//												 b_w*(l_w*p_img_sub_4d[c][z_b][y_b][x_s]+r_w*p_img_sub_4d[c][z_b][y_b][x_b]);
+//									//linear interpolate the current position [u_w*higher_slice+d_w*lower_slice]
+//									T intval=(T)(u_w*higher_slice+d_w*lower_slice+0.5);
+//									p_img_warp_4d[c][pos_warp[2]][pos_warp[1]][pos_warp[0]]=intval;
+//								}
+//							}
+//
+//						}
 
 			}
 	}
