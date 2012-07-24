@@ -26,7 +26,8 @@ CParaDialog_littlequickwarp::~CParaDialog_littlequickwarp()
 	settings.setValue("zdim",this->lineEdit_Zdim->text());
 
 	settings.setValue("dopadding",this->checkBox_padding->isChecked());
-	settings.setValue("imginterpmethod",this->radioButton_img_interp_linear->isChecked());
+	settings.setValue("dfinterpmethod",this->radioButton_df_interp_bspline->isChecked());
+	settings.setValue("imginterpmethod",this->radioButton_img_interp_nn->isChecked());
 }
 
 void CParaDialog_littlequickwarp::IniDialog()
@@ -44,8 +45,10 @@ void CParaDialog_littlequickwarp::IniDialog()
 	this->lineEdit_Zdim->setText(settings.value("zdim",0).toString());
 
 	this->checkBox_padding->setChecked(settings.value("dopadding",0).toBool());
-	this->radioButton_img_interp_nn->setChecked(!(settings.value("imginterpmethod",0).toBool()));
-	this->radioButton_img_interp_linear->setChecked(settings.value("imginterpmethod",1).toBool());
+	this->radioButton_df_interp_linear->setChecked(!(settings.value("dfinterpmethod",1).toBool()));
+	this->radioButton_df_interp_bspline->setChecked(settings.value("dfinterpmethod",0).toBool());
+	this->radioButton_img_interp_linear->setChecked(!(settings.value("imginterpmethod",0).toBool()));
+	this->radioButton_img_interp_nn->setChecked(settings.value("imginterpmethod",1).toBool());
 
 	connect(pushButton_img_sub,SIGNAL(clicked()),this,SLOT(_slots_openDlg_img_sub()));
 	connect(pushButton_img_warp,SIGNAL(clicked()),this,SLOT(_slots_openDlg_img_warp()));

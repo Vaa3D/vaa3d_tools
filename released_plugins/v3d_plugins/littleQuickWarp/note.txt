@@ -10,6 +10,8 @@
 5. Still need to test vs. B-spline and performance on different machines
 	-the TPS_bspline and bspline are not implemented in jab, they are same as TPS
 
+6. the plugin version is much slower than the main version (only for bspline), what's the reason?
+
 ----------------------------------------------------------------------------------------
 test result on images with different size and datatype
 ----------------------------------------------------------------------------------------

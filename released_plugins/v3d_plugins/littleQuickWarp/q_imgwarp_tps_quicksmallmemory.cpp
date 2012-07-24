@@ -3,6 +3,7 @@
 // by Lei Qu
 //2012-07-08
 
+#include <time.h>
 #include "q_interpolate.h"
 #include "q_bspline.h"
 
@@ -73,15 +74,16 @@ bool q_dfblcokinterp_bspline(DisplaceFieldF3D ***&pppSubDF,const Matrix &x_bspli
 		const V3DLONG sz_gridwnd,const V3DLONG substart_x,const V3DLONG substart_y,const V3DLONG substart_z,
 		DisplaceFieldF3D ***&pppDFBlock)
 {
-	Matrix x1D_gridblock(4*4*4,1);
-	{//x
 	//vectorize the gridblock's nodes position that use for interpolation
+	Matrix x1D_gridblock(4*4*4,3);
 	long ind=1;
 	for(long dep=substart_z;dep<substart_z+4;dep++)
 		for(long col=substart_x;col<substart_x+4;col++)
 			for(long row=substart_y;row<substart_y+4;row++)
 			{
 				x1D_gridblock(ind,1)=pppSubDF[dep][row][col].sx;
+				x1D_gridblock(ind,2)=pppSubDF[dep][row][col].sy;
+				x1D_gridblock(ind,3)=pppSubDF[dep][row][col].sz;
 				ind++;
 			}
 	//cubic B-spline interpolate the vectorized grid block
@@ -93,53 +95,10 @@ bool q_dfblcokinterp_bspline(DisplaceFieldF3D ***&pppSubDF,const Matrix &x_bspli
 			for(long yy=0;yy<sz_gridwnd;yy++)
 			{
 				pppDFBlock[zz][yy][xx].sx=x1D_gridblock_int(ind,1);
+				pppDFBlock[zz][yy][xx].sy=x1D_gridblock_int(ind,2);
+				pppDFBlock[zz][yy][xx].sz=x1D_gridblock_int(ind,3);
 				ind++;
 			}
-	}
-	{//y
-	//vectorize the gridblock's nodes position that use for interpolation
-	long ind=1;
-	for(long dep=substart_z;dep<substart_z+4;dep++)
-		for(long col=substart_x;col<substart_x+4;col++)
-			for(long row=substart_y;row<substart_y+4;row++)
-			{
-				x1D_gridblock(ind,1)=pppSubDF[dep][row][col].sy;
-				ind++;
-			}
-	//cubic B-spline interpolate the vectorized grid block
-	Matrix x1D_gridblock_int=x_bsplinebasis*x1D_gridblock;
-	//de-vectorize the interpolated grid block and save back to vec4D_grid_int
-	ind=1;
-	for(long zz=0;zz<sz_gridwnd;zz++)
-		for(long xx=0;xx<sz_gridwnd;xx++)
-			for(long yy=0;yy<sz_gridwnd;yy++)
-			{
-				pppDFBlock[zz][yy][xx].sy=x1D_gridblock_int(ind,1);
-				ind++;
-			}
-	}
-	{//z
-	//vectorize the gridblock's nodes position that use for interpolation
-	long ind=1;
-	for(long dep=substart_z;dep<substart_z+4;dep++)
-		for(long col=substart_x;col<substart_x+4;col++)
-			for(long row=substart_y;row<substart_y+4;row++)
-			{
-				x1D_gridblock(ind,1)=pppSubDF[dep][row][col].sz;
-				ind++;
-			}
-	//cubic B-spline interpolate the vectorized grid block
-	Matrix x1D_gridblock_int=x_bsplinebasis*x1D_gridblock;
-	//de-vectorize the interpolated grid block and save back to vec4D_grid_int
-	ind=1;
-	for(long zz=0;zz<sz_gridwnd;zz++)
-		for(long xx=0;xx<sz_gridwnd;xx++)
-			for(long yy=0;yy<sz_gridwnd;yy++)
-			{
-				pppDFBlock[zz][yy][xx].sz=x1D_gridblock_int(ind,1);
-				ind++;
-			}
-	}
 
 	return true;
 }
@@ -381,10 +340,16 @@ bool imgwarp_smallmemory(const T *p_img_sub,const V3DLONG *sz_img_sub,
 			for(V3DLONG substart_y=0;substart_y<pSubDF->sz1()-1-2;substart_y++)
 				for(V3DLONG substart_x=0;substart_x<pSubDF->sz0()-1-2;substart_x++)
 				{
+					V3DLONG time_start=clock();
+					double time1=0,time2=0;;
 					//bspline interpolate the SubDfBlock to DFBlock
 					q_dfblcokinterp_bspline(pppSubDF,x_bsplinebasis,sz_gridwnd,substart_x,substart_y,substart_z,pppDFBlock);
+					time1=((float)(clock()-time_start))/CLOCKS_PER_SEC;
+					time_start=clock();
 					//warp image block using DFBlock
 					q_imgblockwarp(p_img_sub_4d,sz_img_sub,pppDFBlock,szBlock_x,szBlock_y,szBlock_z,i_interpmethod_img,substart_x,substart_y,substart_z,p_img_warp_4d);
+					time2=((float)(clock()-time_start))/CLOCKS_PER_SEC;
+					printf(">>>>block warping: %f,%F\n",time1,time2);
 				}
 	}
 
