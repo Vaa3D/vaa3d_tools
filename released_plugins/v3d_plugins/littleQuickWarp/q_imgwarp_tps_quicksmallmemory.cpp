@@ -7,6 +7,7 @@
 #include "q_bspline.h"
 
 //linear interpolate the SubDFBlock to DFBlock
+//use 3d or 4d pointer instead of 1d, since generating 3d or 4d pointer from 1d is time consuming
 bool q_dfblcokinterp_linear(DisplaceFieldF3D ***&pppSubDF,
 		const V3DLONG szBlock_x,const V3DLONG szBlock_y,const V3DLONG szBlock_z,
 		const V3DLONG substart_x,const V3DLONG substart_y,const V3DLONG substart_z,
@@ -67,15 +68,14 @@ bool q_dfblcokinterp_linear(DisplaceFieldF3D ***&pppSubDF,
 }
 
 //bspline interpolate the DF block
-//if use 1d pointer instead of 3d or 4d pointer, the programe will be much slower, since the 4d pointer will be allocate and release in each loop
+//use 3d or 4d pointer instead of 1d, since generating 3d or 4d pointer from 1d is time consuming
 bool q_dfblcokinterp_bspline(DisplaceFieldF3D ***&pppSubDF,const Matrix &x_bsplinebasis,
 		const V3DLONG sz_gridwnd,const V3DLONG substart_x,const V3DLONG substart_y,const V3DLONG substart_z,
 		DisplaceFieldF3D ***&pppDFBlock)
 {
-	{
-	//x
-	//vectorize the gridblock's nodes position that use for interpolation
 	Matrix x1D_gridblock(4*4*4,1);
+	{//x
+	//vectorize the gridblock's nodes position that use for interpolation
 	long ind=1;
 	for(long dep=substart_z;dep<substart_z+4;dep++)
 		for(long col=substart_x;col<substart_x+4;col++)
@@ -96,10 +96,8 @@ bool q_dfblcokinterp_bspline(DisplaceFieldF3D ***&pppSubDF,const Matrix &x_bspli
 				ind++;
 			}
 	}
-	{
-	//y
+	{//y
 	//vectorize the gridblock's nodes position that use for interpolation
-	Matrix x1D_gridblock(4*4*4,1);
 	long ind=1;
 	for(long dep=substart_z;dep<substart_z+4;dep++)
 		for(long col=substart_x;col<substart_x+4;col++)
@@ -120,10 +118,8 @@ bool q_dfblcokinterp_bspline(DisplaceFieldF3D ***&pppSubDF,const Matrix &x_bspli
 				ind++;
 			}
 	}
-	{
-	//z
+	{//z
 	//vectorize the gridblock's nodes position that use for interpolation
-	Matrix x1D_gridblock(4*4*4,1);
 	long ind=1;
 	for(long dep=substart_z;dep<substart_z+4;dep++)
 		for(long col=substart_x;col<substart_x+4;col++)
@@ -149,7 +145,7 @@ bool q_dfblcokinterp_bspline(DisplaceFieldF3D ***&pppSubDF,const Matrix &x_bspli
 }
 
 //warp image block based on given DF
-//if use 1d pointer instead of 3d or 4d pointer, the programe will be much slower, since the 4d pointer will be allocate and release in each loop
+//use 3d or 4d pointer instead of 1d, since generating 3d or 4d pointer from 1d is time consuming
 template <class T>
 bool q_imgblockwarp(T ****&p_img_sub_4d,const V3DLONG *sz_img_sub,DisplaceFieldF3D ***&pppDFBlock,
 		const V3DLONG szBlock_x,const V3DLONG szBlock_y,const V3DLONG szBlock_z,const int i_interpmethod_img,
@@ -300,15 +296,15 @@ bool imgwarp_smallmemory(const T *p_img_sub,const V3DLONG *sz_img_sub,
 	}
 	Vol3DSimple<DisplaceFieldF3D> *pSubDF=0;
 	if(i_interpmethod_img!=2)
-		pSubDF	=compute_df_tps_subsampled_volume(matchTargetPos,matchSubjectPos,sz_img_sub[0],sz_img_sub[1],sz_img_sub[2],szBlock_x,szBlock_y,szBlock_z);
+		pSubDF=compute_df_tps_subsampled_volume(matchTargetPos,matchSubjectPos,sz_img_sub[0],sz_img_sub[1],sz_img_sub[2],szBlock_x,szBlock_y,szBlock_z);
 	else
-		pSubDF	=compute_df_tps_subsampled_volume_4bspline(matchTargetPos,matchSubjectPos,sz_img_sub[0],sz_img_sub[1],sz_img_sub[2],szBlock_x,szBlock_y,szBlock_z);
+		pSubDF=compute_df_tps_subsampled_volume_4bspline(matchTargetPos,matchSubjectPos,sz_img_sub[0],sz_img_sub[1],sz_img_sub[2],szBlock_x,szBlock_y,szBlock_z);
 	if(!pSubDF)
 	{
 		printf("Fail to produce the subsampled DF.\n");
 		return false;
 	}
-	DisplaceFieldF3D 	        ***pppSubDF	=pSubDF->getData3dHandle();
+	DisplaceFieldF3D ***pppSubDF=pSubDF->getData3dHandle();
 	printf("subsampled DF size: [%ld,%ld,%ld]\n",pSubDF->sz0(),pSubDF->sz1(),pSubDF->sz2());
 
 	//------------------------------------------------------------------------
@@ -332,7 +328,7 @@ bool imgwarp_smallmemory(const T *p_img_sub,const V3DLONG *sz_img_sub,
 		if(pSubDF)				{delete pSubDF;					pSubDF=0;}
 		return false;
 	}
-	Vol3DSimple<DisplaceFieldF3D> 	*pDFBlock		=new Vol3DSimple<DisplaceFieldF3D> (szBlock_x,szBlock_y,szBlock_z);
+	Vol3DSimple<DisplaceFieldF3D> *pDFBlock=new Vol3DSimple<DisplaceFieldF3D> (szBlock_x,szBlock_y,szBlock_z);
 	if(!pDFBlock)
 	{
 		printf("ERROR: Fail to allocate memory for pDFBlock.\n");
@@ -342,25 +338,7 @@ bool imgwarp_smallmemory(const T *p_img_sub,const V3DLONG *sz_img_sub,
 		if(pSubDF)				{delete pSubDF;					pSubDF=0;}
 		return false;
 	}
-	DisplaceFieldF3D 	        ***pppDFBlock		=pDFBlock->getData3dHandle();
-
-	//------------------------------------------------------------------------
-	//initialize the bspline basis function if necessary
-	V3DLONG sz_gridwnd=szBlock_x;
-	Matrix x_bsplinebasis(pow(sz_gridwnd,3),pow(4,3));
-	if(i_interpmethod_df==1)
-	{
-		if(!q_nonrigid_ini_bsplinebasis_3D(sz_gridwnd,x_bsplinebasis))
-		{
-			printf("ERROR: q_ini_bsplinebasis_3D() return false!\n");
-			if(p_img_warp_4d) 		{delete4dpointer(p_img_warp_4d,sz_img_sub[0],sz_img_sub[1],sz_img_sub[2],sz_img_sub[3]);}
-			if(p_img_sub_4d) 		{delete4dpointer(p_img_sub_4d,sz_img_sub[0],sz_img_sub[1],sz_img_sub[2],sz_img_sub[3]);}
-			if(p_img_warp) 			{delete []p_img_warp;			p_img_warp=0;}
-			if(pSubDF)				{delete pSubDF;					pSubDF=0;}
-			return false;
-		}
-		printf("\t>>x_bsplinebasis:[%d,%d]\n",x_bsplinebasis.nrows(),x_bsplinebasis.ncols());
-	}
+	DisplaceFieldF3D ***pppDFBlock=pDFBlock->getData3dHandle();
 
 	//------------------------------------------------------------------------
 	//interpolate the SubDfBlock to DFBlock and do warp block by block
@@ -385,6 +363,20 @@ bool imgwarp_smallmemory(const T *p_img_sub,const V3DLONG *sz_img_sub,
 	//bspline interpolate the SubDfBlock to DFBlock and do warp block by block
 	else
 	{
+		//initialize the bspline basis function
+		V3DLONG sz_gridwnd=szBlock_x;
+		Matrix x_bsplinebasis(pow(sz_gridwnd,3),pow(4,3));
+		if(!q_nonrigid_ini_bsplinebasis_3D(sz_gridwnd,x_bsplinebasis))
+		{
+			printf("ERROR: q_ini_bsplinebasis_3D() return false!\n");
+			if(p_img_warp_4d) 		{delete4dpointer(p_img_warp_4d,sz_img_sub[0],sz_img_sub[1],sz_img_sub[2],sz_img_sub[3]);}
+			if(p_img_sub_4d) 		{delete4dpointer(p_img_sub_4d,sz_img_sub[0],sz_img_sub[1],sz_img_sub[2],sz_img_sub[3]);}
+			if(p_img_warp) 			{delete []p_img_warp;			p_img_warp=0;}
+			if(pSubDF)				{delete pSubDF;					pSubDF=0;}
+			return false;
+		}
+		printf("\t>>x_bsplinebasis:[%d,%d]\n",x_bsplinebasis.nrows(),x_bsplinebasis.ncols());
+
 		for(V3DLONG substart_z=0;substart_z<pSubDF->sz2()-1-2;substart_z++)
 			for(V3DLONG substart_y=0;substart_y<pSubDF->sz1()-1-2;substart_y++)
 				for(V3DLONG substart_x=0;substart_x<pSubDF->sz0()-1-2;substart_x++)
