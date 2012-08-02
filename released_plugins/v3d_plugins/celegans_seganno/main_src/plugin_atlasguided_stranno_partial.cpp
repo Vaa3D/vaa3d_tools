@@ -59,12 +59,12 @@ QStringList AtlasGuidedStrAnnoPartialPlugin::menulist() const
 
 	<< tr("atlasguided_seganno...")
 	<< tr("open suppelement-material web page")
-/*	<< tr("atlasguided_stranno_parital...")
+	<< tr("atlasguided_stranno_parital...")
 	<< tr("grid2image...")
 	<< tr("atlas2image_affine_beforecrop...")
 	<< tr("atlas2image_affine_aftercrop...")
 	<< tr("test...")
-*/
+
 	;
 }
 
