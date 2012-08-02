@@ -420,7 +420,7 @@ bool do_AtlasGuidedStrAnno(V3DPluginCallback2 &callback,
 			return false;
 		}
 	}
-	else if(datatype_input==3)
+	else if(datatype_input==4)
 	{
 		printf("\t>>convert image data from float to uint8. \n");
 		double min,max;
@@ -773,9 +773,10 @@ bool do_AtlasGuidedStrAnno(V3DPluginCallback2 &callback,
 		writeAPO_file(qPrintable(qs_filename_atals_output),ql_musclecell_output_ori);
 
 	//show deformed atlas pts in V3D
-	if(!(paras_anno.b_showatlas || paras_anno.b_showsegmentation))
+//	if(!(paras_anno.b_showatlas || paras_anno.b_showsegmentation))
 	{
-		v3dhandle curwin=callback.currentImageWindow();
+//		v3dhandle curwin=callback.currentImageWindow();
+		v3dhandle curwin=callback.getImageWindowList()[0];
 		callback.open3DWindow(curwin);
 		LandmarkList curlist;
 		for(int i=0;i<ql_musclecell_output_ori.size();i++)
