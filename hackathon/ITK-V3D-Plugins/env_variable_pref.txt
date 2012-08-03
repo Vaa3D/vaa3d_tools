@@ -1,0 +1,2 @@
+ITK_DIR:PATH=/Users/yuping/yp/ITK/ITK_build
+V3D_DIR:PATH=/Users/yuping/yp/vaa3d

@@ -1,0 +1,5 @@
+SET(PLUGIN_GROUP_NAME "Superplugin")
+
+CONFIGURE_V3D_PLUGIN(Superplugin)
+ADD_SUBDIRECTORY(Plugin2Call)
+   

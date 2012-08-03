@@ -1,0 +1,38 @@
+This project containes a collection of plugins that enable users of the v3d
+application to use functionalities from the Insight Segmentation and
+Registration Toolkit.
+
+This is an Open Source project, distributed under the Apache 2.0 License.
+
+For details, please see the LICENSE file.
+
+<following by by Hanchuan Peng, 2010-06-01>
+When run ccmake, should use this folder as the source root. That is, make
+a folder outside this folder, say "build", enter it, and run the command
+
+	ccmake ../ITK-V3D-Plugins
+
+Also we added a preference file for storing the ccmake variables such as 
+ITK_DIR and V3D_BINARY_PATH, etc to the file 
+
+	env_variable_pref.txt
+
+Then you need to copy the env_variable_pref.txt file to a *different* location
+(so that you won't change this file incidentally). Now you can run cmake by
+running the command
+
+	cmake -c /path_to/env_variable_pref.txt /path_to_plugin_src
+
+Note that "path_to_plugin_src" in this case should be "../ITK-V3D-Plugins".
+
+
+
+If we do this, then we don't need to run manual ccmake again and again!
+new way to build the V3D_ITK_PLUGINS
+	set all the path in the Toolchain.cmake
+	mkdir new_folder outside the source
+	cmake -DCMAKE_TOOLCHAIN_FILE=../path_to_plugin_src/Toolchain.cmake ../path_to_plugin_src
+Note that plath_to_plugin_src this case should be "../ITK-V3D-Plugins".
+you gcc version should be higher than 4.3.0
+ITK version 4.1.0
+
