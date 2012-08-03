@@ -1,0 +1,35 @@
+Version history of TeraManager
+================================
+
+Below you find a list with the added features, changes and fixes for each version.
+
+Version 0.2.2
+July 24th, 2012
+--------------------------------------------------------------------------------------------
+- Fix: "Select VOI with Vaa3D volume cut scrollbars" feature added (but still experimental).
+       The user can select a VOI with Vaa3D volume cut scrollbars and then the selection is
+       transferred to TeraManager GUI spinboxes, so the user can click on the "Load" button
+       to load the selected subvolume. At this moment, the loaded subvolume is shown in the
+       volume map view, but it should be shown in a new view (this bug will be soon fixed).
+--------------------------------------------------------------------------------------------
+
+Version 0.2.1
+July 21st, 2012
+--------------------------------------------------------------------------------------------
+- New: "Select VOI with Vaa3D volume cut scrollbars" feature added (but still experimental).
+       The user can select a VOI with Vaa3D volume cut scrollbars and then the selection is
+       transferred to TeraManager GUI spinboxes, so the user can click on the "Load" button
+       to load the selected subvolume. At this moment, the loaded subvolume is shown in the
+       volume map view, but it should be shown in a new view (this bug will be soon fixed).
+- New: "Select ROI with Vaa3D" feature added. If the user defines a ROI with right-stroke or
+       right-click from the 3D renderer right-menu, then the correspondent VOI is loaded and
+       shown in a new global view.
+- New: "Zoom-in" feature added. If the user defines a marker with the Vaa3D built-in feature
+       (one, two or three right-click) and then zooms-in, the VOI  surrounding  the selected 
+       point is loaded and displayed in the same renderer. When the user zooms-out, the ori-
+       ginal map view is restored. VOI dimensions can be set from the GUI.
+- New: "3D mode" added. When a volume is imported, the  plugin searches for a "good for map"
+       low resolution volume  to be shown and used as a 3D map.  At this  moment, there is a
+       threshold, defined by the macro TMP_VMAP_MAXSIZE, to limit the size of the volume map
+       to be loaded.
+--------------------------------------------------------------------------------------------
