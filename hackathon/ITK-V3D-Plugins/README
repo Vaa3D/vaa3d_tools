@@ -28,11 +28,19 @@ Note that "path_to_plugin_src" in this case should be "../ITK-V3D-Plugins".
 
 
 If we do this, then we don't need to run manual ccmake again and again!
-new way to build the V3D_ITK_PLUGINS
-	set all the path in the Toolchain.cmake
-	mkdir new_folder outside the source
-	cmake -DCMAKE_TOOLCHAIN_FILE=../path_to_plugin_src/Toolchain.cmake ../path_to_plugin_src
-Note that plath_to_plugin_src this case should be "../ITK-V3D-Plugins".
-you gcc version should be higher than 4.3.0
+**********************************************************
+way to build the V3D_ITK_PLUGIN
+	1.build ITK library
+note that you should make ITK_USE_REVIEW on. You can just run the command
+	mkdir build && cd build && cmake -DBUILD_TESTING=OFF -DBUILD_EXAMPLES=OFF -DITK_USE_REVIEVE=ON ../path_to_ITK_src
+if your os is mac, and you also want to build plugins in 64-bit, make sure your compiler is gnu gcc and the version should be higher than 4.2.0. 
+	2.set the value of all the paths in the plugin_src/Toolchain.cmake, paths are as follows:
+	ITK_DIR, path where you build you ITK libraries
+	V3D_BINARY_DIR, path where the plugins should be placed
+	V3D_BASIC_C_FUN_SOURCE_DIR, path to the v3d_main/basic_c_fun/.
+	some other vars could be set in the Toolchain.cmake, like CMAKE_BUILD_TYPE and so on.
+	3.mkdir new_folder outside the source and cd new_folder
+	4.cmake -DCMAKE_TOOLCHAIN_FILE=../path_to_plugin_src/Toolchain.cmake ../path_to_plugin_src
+Note that plath_to_plugin_src this case should be "ITK-V3D-Plugins".
+you gcc version should be higher than 4.2.0
 ITK version 4.1.0
-
