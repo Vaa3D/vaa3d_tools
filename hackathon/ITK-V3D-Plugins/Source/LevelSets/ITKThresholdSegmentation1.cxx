@@ -1,11 +1,9 @@
 /* ITKThresholdSegmentation.cxx
- * 2010-06-03: create this program by Yang Yu
  */
 
 #include <QtGui>
 
-#include <math.h>
-#include <stdlib.h>
+#include <cmath>
 
 #include "ITKThresholdSegmentation.h"
 #include "V3DITKFilterSingleImage.h"
@@ -20,6 +18,7 @@
 #include "itkFastMarchingImageFilter.h"
 #include "itkThresholdSegmentationLevelSetImageFilter.h"
 
+#include <iostream>
 // Q_EXPORT_PLUGIN2 ( PluginName, ClassName )
 // The value of PluginName should correspond to the TARGET specified in the
 // plugin's project file.
@@ -69,11 +68,12 @@ ITKThresholdSegmentationSpecializaed( V3DPluginCallback * callback ): Superclass
 	this->RegisterInternalFilter(this->castImageFilter,0.1);
 	this->RegisterInternalFilter(this->fastMarching,0.2);
 }
-	virtual ~ITKThresholdSegmentationSpecializaed() {};
+	~ITKThresholdSegmentationSpecializaed() {};
 	
 	//
 	void Execute(V3DPluginCallback &callback, QWidget *parent)
 	{
+    std::cerr << "Eecute" <<std::endl;
 		v3dhandle curwin = callback.currentImageWindow();
 		if (!curwin)
 		{
@@ -88,6 +88,7 @@ ITKThresholdSegmentationSpecializaed( V3DPluginCallback * callback ): Superclass
 			return;
 		}	
 			
+    std::cerr << "execute1" << std::endl;
 		typedef typename FastMarchingFilterType::NodeContainer	NodeContainer;
 		typedef typename FastMarchingFilterType::NodeType		NodeType;
 		typename NodeContainer::Pointer seeds = NodeContainer::New();
@@ -125,6 +126,7 @@ ITKThresholdSegmentationSpecializaed( V3DPluginCallback * callback ): Superclass
 			}
 		}
 		
+    std::cerr << "in the func" << std::flush << std::endl;
 		//const double stoppingTime = sqrt(nx*nx + ny*ny + nz*nz);
 		
 		const double curvatureScaling   = 1.0; // Level Set 
@@ -148,6 +150,7 @@ ITKThresholdSegmentationSpecializaed( V3DPluginCallback * callback ): Superclass
 
 virtual void ComputeOneRegion()
 {
+  std::cerr << "in the compute region" << std::endl;
 	fastMarching->SetOutputSize(this->GetInput3DImage()->GetBufferedRegion().GetSize() );
 	this->castImageFilter->SetInput(this->GetInput3DImage());									
 	thresholdSegmentation->SetInput( fastMarching->GetOutput() );
