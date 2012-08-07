@@ -29,10 +29,11 @@ Note that "path_to_plugin_src" in this case should be "../ITK-V3D-Plugins".
 
 If we do this, then we don't need to run manual ccmake again and again!
 **********************************************************
-way to build the V3D_ITK_PLUGIN
+way to build the V3D_ITK_PLUGIN:
+you can just use command "sh build.sh" to build the plugins or just make it as follows:
 	1.build ITK library
 note that you should make ITK_USE_REVIEW on. You can just run the command
-	mkdir build && cd build && cmake -DBUILD_TESTING=OFF -DBUILD_EXAMPLES=OFF -DITK_USE_REVIEVE=ON ../path_to_ITK_src
+	mkdir build && cd build && cmake -DBUILD_TESTING=OFF -DBUILD_EXAMPLES=OFF -DITK_USE_REVIEW=ON ../path_to_ITK_src
 then build the ITK libraries
 	make
 if your os is mac, and you also want to build plugins in 64-bit, make sure your compiler is gnu gcc and the version should be higher than 4.2.0. 
