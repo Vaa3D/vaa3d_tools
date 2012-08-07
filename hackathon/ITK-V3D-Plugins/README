@@ -40,7 +40,8 @@ if your os is mac, and you also want to build plugins in 64-bit, make sure your 
 	ITK_DIR, path where you build you ITK libraries
 	V3D_BINARY_DIR, path where the plugins should be placed
 	V3D_BASIC_C_FUN_SOURCE_DIR, path to the v3d_main/basic_c_fun/.
-	some other vars could be set in the Toolchain.cmake, like CMAKE_BUILD_TYPE and so on.
+if you want to specify the build type, you can add one line:
+	set (CMAKE_BUILD_TYPE Release or Debug)
 	3.mkdir new_folder outside the source and cd new_folder
 	4.cmake -DCMAKE_TOOLCHAIN_FILE=../path_to_plugin_src/Toolchain.cmake ../path_to_plugin_src
 then build it
