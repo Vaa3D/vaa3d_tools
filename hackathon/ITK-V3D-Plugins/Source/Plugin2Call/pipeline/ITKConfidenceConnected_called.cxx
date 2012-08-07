@@ -133,7 +133,7 @@ public:
         this->SetOutputImage(this->confidenceConnected->GetOutput());
     }
 
-    void ComputeOneRegion(const V3DPluginArgList & input, V3DPluginArgList & output)
+    bool ComputeOneRegion(const V3DPluginArgList & input, V3DPluginArgList & output)
     {
 
         v3dhandleList win_list = this->m_V3DPluginCallback->getImageWindowList();
@@ -143,7 +143,7 @@ public:
         if(list_landmark_sub.size()<1)
         {
             v3d_msg(QObject::tr("You should select one seed from your image."));
-            return;
+            return false;
         }
         else
         {
@@ -187,6 +187,7 @@ public:
 
             arg.type="UINT8Image";
             output.replace(0,arg);
+            return true;
         }
     }
 
@@ -229,8 +230,8 @@ bool ITKConfidenceConnectedPlugin::dofunc(const QString & func_name, const V3DPl
         return false ;
     }
     ITKConfidenceConnectedSpecializaed<unsigned char,float> runner(&v3d);
-    runner.ComputeOneRegion(input, output);
-    return true;
+    bool result = runner.ComputeOneRegion(input, output);
+    return result;
 }
 
 void itkConfidenceConnectedPlugin(V3DPluginCallback &callback, QWidget *parent)

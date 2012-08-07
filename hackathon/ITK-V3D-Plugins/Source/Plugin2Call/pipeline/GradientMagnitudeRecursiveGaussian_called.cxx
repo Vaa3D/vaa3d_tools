@@ -76,7 +76,7 @@ public:
 
         this->SetOutputImage( this->m_Filter->GetOutput() );
     }
-    void ComputeOneRegion(const V3DPluginArgList & input, V3DPluginArgList & output)
+   bool ComputeOneRegion(const V3DPluginArgList & input, V3DPluginArgList & output)
     {
 
         V3DITKGenericDialog dialog("GradientMagnitudeRecursiveGaussian");
@@ -117,7 +117,9 @@ public:
                 arg.type="floatImage";
             }
             output.replace(0,arg);
+            return true;
         }
+        else return false;
     }
 
 
@@ -149,15 +151,15 @@ bool GradientMagnitudeRecursiveGaussianPlugin::dofunc(const QString & func_name,
     if(input.at(0).type=="UINT8Image")
     {
         PluginSpecialized<unsigned char> runner(&v3d);
-        runner.ComputeOneRegion(input, output);
-        return true;
+        bool result = runner.ComputeOneRegion(input, output);
+        return result;
     }
     else
     {
         printf("use float\n");
         PluginSpecialized<float> runner(&v3d);
-        runner.ComputeOneRegion(input, output);
-        return true;
+        bool result = runner.ComputeOneRegion(input, output);
+        return result;
     }
 }
 

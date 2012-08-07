@@ -80,13 +80,19 @@ public:
             return;
         }
 
+        bool result;
         for( unsigned int channel = 0; channel < numberOfChannelsToProcess; channel++ )
         {
             const V3D_Image3DBasic inputImage = inputImageList.at(channel);
 
             this->TransferInput( inputImage, x1, x2, y1, y2, z1, z2 );
-            if(usePipeline)this->ComputePipeline();
-            else this->ComputeOneRegion();
+            if(usePipeline) result = this->ComputePipeline();
+            else result = this->ComputeOneRegionNew();
+
+            if (!result) {
+             qDebug() << "error call the pipline";
+             return;
+            } 
 
             this->AddOutputImageChannel( channel );
         }
@@ -95,7 +101,7 @@ public:
     }
 
 
-    virtual void ComputeOneRegion()
+  bool ComputeOneRegionNew()
     {
         V3DPluginArgItem arg;
         V3DPluginArgList input;
@@ -104,7 +110,11 @@ public:
         arg.type="UINT8Image";
         input<<arg;
         output<<arg;
-        this->m_V3DPluginCallback->callPluginFunc(plugin_name,function_name,input,output);
+        bool result = this->m_V3DPluginCallback->callPluginFunc(plugin_name,function_name,input,output);
+        if (!result) {
+          qDebug() << "error call the other plugin function ";
+          return false;
+        }
         printf("Get out\n");
         fprintf(stdout,"size %d\n",output.size());
         //input.replace(0,output.at(0));
@@ -128,8 +138,10 @@ public:
             if(!out)std::cerr<<"NULL Image"<<std::endl;
             this->SetOutputImage(out);
         }
+        return true;
     }
-    void ComputePipeline()
+    void ComputeOneRegion() {}
+    bool ComputePipeline()
     {
         V3DPluginArgItem arg;
         V3DPluginArgList input;
@@ -138,10 +150,15 @@ public:
         arg.type="UINT8Image";
         input<<arg;
         output<<arg;
+        bool result;
         for(int i=0; i<plugin_name_list.size(); i++)
         {
 
-            this->m_V3DPluginCallback->callPluginFunc(plugin_name_list.at(i),function_name,input,output);
+            result = this->m_V3DPluginCallback->callPluginFunc(plugin_name_list.at(i),function_name,input,output);
+            if (!result) {
+              qDebug() << "error call the other plugin function";
+              return false;
+            }
             input.replace(0,output.at(0));
         }
         if(output.at(0).type=="floatImage")
@@ -162,6 +179,7 @@ public:
             if(!out)std::cerr<<"NULL Image"<<std::endl;
             this->SetOutputImage(out);
         }
+        return true;
     }
 
 private:
@@ -248,8 +266,11 @@ public:
 
             this->TransferInputImages( inputImage1,inputImage2,x1,x2,y1,y2,z1,z2);
 
-            this->ComputeOneRegion();
-
+            bool result = this->ComputeOneRegionNew();
+            if (!result) {
+              qDebug() << "error call the plugins function";
+              return;
+            }
             this->AddOutputImageChannel( channel );
         }
 
@@ -257,7 +278,7 @@ public:
     }
 
 
-    virtual void ComputeOneRegion()
+    bool ComputeOneRegionNew()
     {
         V3DPluginArgItem arg1,arg2;
         V3DPluginArgList input;
@@ -266,7 +287,12 @@ public:
         arg2.p=(void*)this->GetInput3DImage2();
         input<<arg1<<arg2;
         output<<arg1;
-        this->m_V3DPluginCallback->callPluginFunc(plugin_name,function_name,input,output);
+        
+        bool result = this->m_V3DPluginCallback->callPluginFunc(plugin_name,function_name,input,output);
+        if (!result) {
+          qDebug() << "error call other plugin func";
+          return false;
+        }
         fprintf(stdout,"size %d\n",output.size());
         //if the output image type is Float change them to unsigned char
         if(output.at(0).type=="floatImage")
@@ -286,7 +312,9 @@ public:
             if(!out)std::cerr<<"NULL Image"<<std::endl;
             this->SetOutputImage(out);
         }
+        return true;
     }
+    void ComputeOneRegion() {}
 
 private:
     QString plugin_name;

@@ -80,7 +80,7 @@ public:
 
         this->SetOutputImage( this->m_Filter->GetOutput() );
     }
-    void ComputeOneRegion(const V3DPluginArgList & input, V3DPluginArgList & output)
+    bool ComputeOneRegion(const V3DPluginArgList & input, V3DPluginArgList & output)
     {
         V3DITKGenericDialog dialog("Sigmoid");
 
@@ -112,7 +112,9 @@ public:
             arg.p = (void*)outputImage;
             arg.type="UIN8Image";
             output.replace(0,arg);
+            return true;
         }
+        return false;
     }
 
 private:
@@ -140,9 +142,9 @@ bool RescaleIntensityPlugin::dofunc(const QString & func_name, const V3DPluginAr
         return false ;
     }
     PluginSpecialized <unsigned char,unsigned char> runner(&v3d);
-    runner.ComputeOneRegion(input, output);
+    bool result = runner.ComputeOneRegion(input, output);
 
-    return true;
+    return result;
 }
 
 

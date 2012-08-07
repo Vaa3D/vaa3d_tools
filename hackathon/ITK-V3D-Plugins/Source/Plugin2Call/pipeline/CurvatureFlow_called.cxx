@@ -91,7 +91,7 @@ public:
         this->SetOutputImage( this->m_OutputCast->GetOutput() );
     }
 
-    void ComputeOneRegion(const V3DPluginArgList & input, V3DPluginArgList & output)
+    bool ComputeOneRegion(const V3DPluginArgList & input, V3DPluginArgList & output)
     {
 
         V3DITKGenericDialog dialog("CurvatureFlow");
@@ -126,7 +126,9 @@ public:
             arg.p = (void*) outputImage;
             arg.type="UINT8Image";
             output.replace(0,arg);
+            return true;
         }
+        else return false;
     }
 
 
@@ -157,8 +159,8 @@ bool CurvatureFlowPlugin::dofunc(const QString & func_name, const V3DPluginArgLi
         return false ;
     }
     PluginSpecialized<unsigned char> runner(&v3d);
-    runner.ComputeOneRegion(input, output);
-    return true;
+    bool result = runner.ComputeOneRegion(input, output);
+    return result;
 }
 
 

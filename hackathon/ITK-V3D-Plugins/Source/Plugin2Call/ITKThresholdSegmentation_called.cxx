@@ -160,7 +160,7 @@ public:
         this->castOutFilter->Update();
         this->SetOutputImage(this->castOutFilter->GetOutput());
     }
-    void ComputeOneRegion(const V3DPluginArgList & input, V3DPluginArgList & output)
+    bool ComputeOneRegion(const V3DPluginArgList & input, V3DPluginArgList & output)
     {
         V3DITKProgressDialog progressDialog( this->GetPluginName().toStdString().c_str() );
 
@@ -189,7 +189,7 @@ public:
         if(list_landmark_sub.size()<1)
         {
             v3d_msg(QObject::tr("You should select one seed from your image."));
-            return;
+            return false;
         }
         else
         {
@@ -249,6 +249,7 @@ public:
         arg.p = (void*)outputImage;
         arg.type="UINT8Image";
         output.replace(0,arg);
+        return true;
     }
 
 private:
@@ -287,9 +288,9 @@ bool ITKThresholdSegmentationPlugin::dofunc(const QString & func_name, const V3D
         return false ;
     }
     ITKThresholdSegmentationSpecializaed <unsigned char> runner(&v3d);
-    runner.ComputeOneRegion(input, output);
+    bool result = runner.ComputeOneRegion(input, output);
 
-    return true;
+    return result;
 
 }
 

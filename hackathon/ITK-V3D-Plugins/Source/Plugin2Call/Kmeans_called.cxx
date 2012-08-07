@@ -83,7 +83,7 @@ public:
         this->SetOutputImage( filter->GetOutput() );
     }
 
-    void ComputeOneRegion(const V3DPluginArgList & input, V3DPluginArgList & output)
+    bool ComputeOneRegion(const V3DPluginArgList & input, V3DPluginArgList & output)
     {
 
         V3DITKGenericDialog dialog("Kmeans");
@@ -117,7 +117,9 @@ public:
             arg.p = (void*)outputImage;
             arg.type="outputImage";
             output.replace(0,arg);
+            return true;
         }
+        else return false;
     }
 
 
@@ -160,9 +162,9 @@ bool KmeansPlugin::dofunc(const QString & func_name, const V3DPluginArgList & in
         return false ;
     }
     KmeansSpecialized<unsigned char> runner(&v3d);
-    runner.ComputeOneRegion(input, output);
+    bool result = runner.ComputeOneRegion(input, output);
 
-    return true;
+    return result;
 }
 
 void KmeansPlugin::domenu(const QString & menu_name, V3DPluginCallback2 & callback, QWidget * parent)

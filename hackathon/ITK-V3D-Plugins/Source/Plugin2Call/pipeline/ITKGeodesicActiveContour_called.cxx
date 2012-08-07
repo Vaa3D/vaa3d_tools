@@ -232,7 +232,7 @@ public:
         std::cout << "RMS change: " << geodesicActiveContour->GetRMSChange() << std::endl;
     }
 
-    void ComputeOneRegion(const V3DPluginArgList & input, V3DPluginArgList & output)
+   bool ComputeOneRegion(const V3DPluginArgList & input, V3DPluginArgList & output)
     {
 
         typedef typename FastMarchingFilterType::NodeContainer  NodeContainer;
@@ -250,7 +250,7 @@ public:
 
         if( dialog.exec() != QDialog::Accepted )
         {
-            return;
+            return false;
         }
 
         const double initialDistance = dialog.GetValue("initialDistance"); //
@@ -268,7 +268,7 @@ public:
         if ( ! numberOfSeedPoints )
         {
             v3d_msg(QObject::tr("You should select one seed from your image."));
-            return;
+            return false;
         }
 
         for(unsigned int i = 0;  i < numberOfSeedPoints; i++ )
@@ -324,7 +324,7 @@ public:
         arg.p = (void*)outputImage;
         arg.type="UINT8Image";
         output.replace(0,arg);
-
+        return true;
     }
 
 
@@ -370,8 +370,8 @@ bool ITKGeodesicActiveContourPlugin::dofunc(const QString & func_name, const V3D
         return false ;
     }
     ITKGeodesicActiveContourSpecializaed<unsigned char,float> runner(&v3d);
-    runner.ComputeOneRegion(input, output);
-    return true;
+    bool result = runner.ComputeOneRegion(input, output);
+    return result;
 
 }
 void itkGeodesicActiveContourPlugin(V3DPluginCallback &callback, QWidget *parent)

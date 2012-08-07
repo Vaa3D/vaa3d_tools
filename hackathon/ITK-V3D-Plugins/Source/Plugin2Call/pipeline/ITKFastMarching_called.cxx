@@ -135,7 +135,7 @@ public:
         this->SetOutputImage( this->m_ThresholdFilter->GetOutput() );
     }
 
-    void ComputeOneRegion(const V3DPluginArgList & input, V3DPluginArgList & output)
+   bool ComputeOneRegion(const V3DPluginArgList & input, V3DPluginArgList & output)
     {
 
         V3DITKGenericDialog dialog("FastMarching");
@@ -149,7 +149,7 @@ public:
 
         if( dialog.exec() != QDialog::Accepted )
         {
-            return;
+            return false;
         }
         this->m_Filter1->SetStoppingValue( stoppingTime );
         this->m_Filter1->SetNormalizationFactor( dialog.GetValue("SpeedScale") );
@@ -172,7 +172,7 @@ public:
         if ( ! numberOfSeedPoints )
         {
             v3d_msg(QObject::tr("You should select one seed from your image."));
-            return;
+            return false;
         }
 
         typename OutputImageType::IndexType  seedPosition;
@@ -215,6 +215,7 @@ public:
         arg.p = (void*)outputImage;
         arg.type="UINT8Image";
         output.replace(0,arg);
+        return true;
     }
 
 
@@ -246,8 +247,8 @@ bool FastMarchingPlugin::dofunc(const QString & func_name, const V3DPluginArgLis
         return false ;
     }
     PluginSpecialized<unsigned char> runner(&v3d);
-    runner.ComputeOneRegion(input, output);
-    return true;
+    bool result = runner.ComputeOneRegion(input, output);
+    return result;
 
 }
 

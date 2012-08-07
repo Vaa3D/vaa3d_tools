@@ -142,7 +142,7 @@ public:
         }
         this->SetOutputImage(this->connectedThreshold->GetOutput());
     }
-    void ComputeOneRegion(const V3DPluginArgList & input, V3DPluginArgList & output)
+    bool ComputeOneRegion(const V3DPluginArgList & input, V3DPluginArgList & output)
     {
 
         v3dhandleList win_list = this->m_V3DPluginCallback->getImageWindowList();
@@ -152,7 +152,7 @@ public:
         if(list_landmark_sub.size()<1)
         {
             v3d_msg(QObject::tr("You should select one seed from your image."));
-            return;
+            return false;
         }
         else
         {
@@ -203,7 +203,9 @@ public:
                 arg.p = (void*)outputImage;
                 arg.type="UINT8Image";
                 output.replace(0,arg);
+                return true;
             }
+            else return false;
         }
     }
 
@@ -245,8 +247,8 @@ bool ITKConnectedThresholdPlugin::dofunc(const QString & func_name, const V3DPlu
         return false ;
     }
     ITKConnectedThresholdSpecializaed<unsigned char,float> *runner=new ITKConnectedThresholdSpecializaed<unsigned char,float>(&v3d);
-    runner->ComputeOneRegion(input, output);
-    return true;
+    bool result = runner->ComputeOneRegion(input, output);
+    return result;
 }
 
 
