@@ -121,7 +121,8 @@ void Dialog::getItkPluginFiles( QDir & dir)
     for (int i = 0; i < fileList.size(); i++)
     {
         QString file = fileList.at(i);
-        QPluginLoader* itkPluginLoader = new QPluginLoader(QDir::fromNativeSeparators(dir.absolutePath ()+ "/" + fileList.at(i)));
+        QString pluginPath = QDir::fromNativeSeparators(dir.absolutePath ()+ "/" + fileList.at(i));
+        QPluginLoader* itkPluginLoader = new QPluginLoader(pluginPath);
         QObject* itkPlugin = itkPluginLoader -> instance();
         if ( !itkPlugin )
         {
@@ -132,9 +133,8 @@ void Dialog::getItkPluginFiles( QDir & dir)
         {
             if (rxFile.indexIn(fileList.at(i)) >= 0) {
               QString pluginName = rxFile.cap(2);
-              QString pluginFileName = rxFile.cap(0);
               this->m_pluginNames << pluginName;
-              m_pluginsHash.insert(pluginName, pluginFileName);
+              m_pluginsHash.insert(pluginName, pluginPath);
             //free the memory or useing delete itkPlugin
               itkPluginLoader -> unload ();
             }
@@ -150,6 +150,9 @@ void Dialog::getItkPluginFiles( QDir & dir)
 void Dialog::initial()
 {
   this->searchAllItkPlugins();
+  if (m_pluginNames.size() == 0) {
+    v3d_msg(tr("Empty plugins under Superplugin, you should move all plugins that can be called by SuperPlugin to plugins/ITK/SuperPlugin/Plugin2Call/"));
+  }
   this->userPipepage->setPluginNames(m_pluginNames);
   this->userPipepage->setPluginsHash(m_pluginsHash);
   
@@ -157,6 +160,7 @@ void Dialog::initial()
   this->userFilterpage->setPluginsHash(m_pluginsHash);
   
   this->autoPipepage->setPluginsHash(m_pluginsHash);
+  this->autoPipepage->initialTest();
 }
 QStringList Dialog::getPluginNames()
 {

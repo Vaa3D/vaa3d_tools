@@ -40,14 +40,14 @@ public:
     }
 
 //plugin_name the realName, plugin_file_nam: the folder name
-    void SetPluginName(const QString &plugin_name,  const QString& plugin_folder_name)
+    void SetPluginName(const QString &plugin_path,  const QString& plugin_name_showed)
     {
       
-        this->plugin_name = QDir::fromNativeSeparators(QString("%1/plugins/ITK/Superplugin/Plugin2Call/%2/%3").arg(QDir::currentPath())).arg(plugin_folder_name).arg(plugin_name);
+        this->plugin_name = plugin_path;
     }
     void AddPluginName(const QString &plugin_name, const QString& plugin_folder_name)
     {
-        QString m_name = QDir::fromNativeSeparators(QString("%1/plugins/ITK/Superplugin/Plugin2Call/%2/%3").arg(QDir::currentPath())).arg(plugin_folder_name).arg(plugin_name);
+        QString m_name = plugin_name;
         this->plugin_name_list << m_name;
     }
     void SetUsePipeline(bool b)
@@ -115,10 +115,8 @@ public:
           qDebug() << "error call the other plugin function ";
           return false;
         }
-        printf("Get out\n");
-        fprintf(stdout,"size %d\n",output.size());
-        //input.replace(0,output.at(0));
-        //this->m_V3DPluginCallback->callPluginFunc(QString("ITK/Superplugin/NOT/NOT.so"),function_name,input,output);
+        qDebug() << "successful called";
+        qDebug() << QString("size %1").arg(output.size());
 
         if(output.at(0).type=="floatImage")
         {
@@ -203,10 +201,9 @@ public:
         function_name="doFunction";
     }
 //plugin_name the realName, plugin_file_nam: the folder name
-    void SetPluginName(const QString &plugin_name,  const QString& plugin_folder_name)
+    void SetPluginName(const QString &plugin_path,  const QString& plugin_name_showed)
     {
-      
-        this->plugin_name = QDir::fromNativeSeparators(QString("%1/plugins/ITK/Superplugin/Plugin2Call/%2/%3").arg(QDir::currentPath())).arg(plugin_folder_name).arg(plugin_name);
+        this->plugin_name = plugin_path;
     }
     void Execute(const QString &menu_name,QWidget *parent)
     {

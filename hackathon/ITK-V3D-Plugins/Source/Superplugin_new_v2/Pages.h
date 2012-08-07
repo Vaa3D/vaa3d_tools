@@ -16,16 +16,19 @@ class AutoPipePage:public QWidget
 public:
     explicit AutoPipePage(QWidget *parent=0);
     void setItkPluginManager( ItkPluginManager* itkPluginManager);
+    void initialTest();
 public slots:
     void CallPipeline();
     void CreateIcon();
+private:
+    bool validatePluginExits(const QStringList& pluginList);
 private:
     QLabel *pipelineName;
     QComboBox *pipelineExp;
     QPushButton *StartPipe;
     QListWidget *PaintFilter;
     ItkPluginManager* itkPluginManager;
-
+    QList<QStringList> m_pipeLineList;
 };
 
 class UserPipePage : public QWidget

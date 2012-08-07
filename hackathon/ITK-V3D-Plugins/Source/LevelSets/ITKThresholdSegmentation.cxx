@@ -1,19 +1,14 @@
 /* ITKThresholdSegmentation.cxx
- * 2010-06-03: create this program by Yang Yu
  */
 
 #include <QtGui>
 
-#include <math.h>
-#include <stdlib.h>
+#include <cmath>
 
 #include "ITKThresholdSegmentation.h"
 #include "V3DITKFilterSingleImage.h"
 
-// ITK Header Files
-#include "itkImage.h"
 
-#include "itkImportImageFilter.h"
 #include "itkCastImageFilter.h"
 #include "itkRescaleIntensityImageFilter.h"
 
@@ -23,6 +18,7 @@
 #include "itkFastMarchingImageFilter.h"
 #include "itkThresholdSegmentationLevelSetImageFilter.h"
 
+#include <iostream>
 // Q_EXPORT_PLUGIN2 ( PluginName, ClassName )
 // The value of PluginName should correspond to the TARGET specified in the
 // plugin's project file.
@@ -49,17 +45,35 @@ void ITKThresholdSegmentationPlugin::dofunc(const QString & func_name,
 
 
 template <typename TInputPixelType, typename TOutputPixelType>
-class ITKThresholdSegmentationSpecializaed // : public V3DITKFilterSingleImage< TInputPixelType, TOutputPixelType >
+class ITKThresholdSegmentationSpecializaed  : public V3DITKFilterSingleImage< TInputPixelType, TOutputPixelType >
 {
 public:
-	//typedef V3DITKFilterSingleImage< TInputPixelType, TOutputPixelType >    Superclass;
+	typedef V3DITKFilterSingleImage< TInputPixelType, TOutputPixelType >    Superclass;
+	typedef typename Superclass::Input3DImageType 	InputImageType;
+	typedef typename Superclass::Output3DImageType 	OutputImageType;
+
+	typedef itk::CastImageFilter< InputImageType, OutputImageType> CastImageFilterType;
+	typedef itk::BinaryThresholdImageFilter< OutputImageType, InputImageType    >    ThresholdingFilterType;
+	typedef itk::ThresholdSegmentationLevelSetImageFilter< OutputImageType, OutputImageType >  ThresholdSegmentationLevelSetImageFilterType;
+	typedef itk::FastMarchingImageFilter< OutputImageType, OutputImageType > FastMarchingFilterType;
 	
-	//ITKThresholdSegmentationSpecializaed( V3DPluginCallback * callback ): Superclass(callback) {}
-	virtual ~ITKThresholdSegmentationSpecializaed() {};
+
+ITKThresholdSegmentationSpecializaed( V3DPluginCallback * callback ): Superclass(callback) 
+{
+	castImageFilter = CastImageFilterType::New();
+	thresholder = ThresholdingFilterType::New();
+	thresholdSegmentation = ThresholdSegmentationLevelSetImageFilterType::New();
+	fastMarching = FastMarchingFilterType::New();	
+	this->RegisterInternalFilter(this->thresholdSegmentation,0.7);
+	this->RegisterInternalFilter(this->castImageFilter,0.1);
+	this->RegisterInternalFilter(this->fastMarching,0.2);
+}
+	~ITKThresholdSegmentationSpecializaed() {};
 	
 	//
 	void Execute(V3DPluginCallback &callback, QWidget *parent)
 	{
+    std::cerr << "Eecute" <<std::endl;
 		v3dhandle curwin = callback.currentImageWindow();
 		if (!curwin)
 		{
@@ -74,82 +88,7 @@ public:
 			return;
 		}	
 			
-		V3D_GlobalSetting globalSetting = callback.getGlobalSetting();
-		
-		
-		//init
-		typedef TInputPixelType  PixelType;
-		
-		PixelType * data1d = reinterpret_cast< PixelType * >( p4DImage->getRawData() );
-		unsigned long int numberOfPixels = p4DImage->getTotalBytes();
-		
-		long pagesz = p4DImage->getTotalUnitNumberPerChannel();
-		
-		long nx = p4DImage->getXDim();
-		long ny = p4DImage->getYDim();
-		long nz = p4DImage->getZDim();
-		long nc = p4DImage->getCDim();  // Number of channels
-		
-		int channelToFilter = globalSetting.iChannel_for_plugin;
-		
-		if( channelToFilter >= nc )
-		{
-			v3d_msg(QObject::tr("You are selecting a channel that doesn't exist in this image."));
-			return;
-		}
-		
-		long offsets=0; 
-		if(channelToFilter>=0) offsets = channelToFilter*pagesz; 
-		
-		const unsigned int Dimension = 3; // \par
-		
-		typedef itk::Image< TInputPixelType, Dimension > InputImageType;
-		typedef itk::Image< TOutputPixelType, Dimension > OutputImageType;
-		typedef itk::ImportImageFilter< TInputPixelType, Dimension > ImportFilterType;
-		
-		typename ImportFilterType::Pointer importFilter = ImportFilterType::New();
-		
-		typename ImportFilterType::SizeType size;
-		size[0] = nx;
-		size[1] = ny;
-		size[2] = nz;
-		
-		typename ImportFilterType::IndexType start;
-		start.Fill( 0 );
-		
-		typename ImportFilterType::RegionType region;
-		region.SetIndex( start );
-		region.SetSize(  size  );
-		
-		importFilter->SetRegion( region );
-		
-		region.SetSize( size );
-		
-		typename InputImageType::PointType origin;
-		origin.Fill( 0.0 );
-		
-		importFilter->SetOrigin( origin );
-		
-		typename ImportFilterType::SpacingType spacing;
-		spacing.Fill( 1.0 );
-		
-		importFilter->SetSpacing( spacing );
-		
-		const bool importImageFilterWillOwnTheBuffer = false;
-		
-		typedef itk::CastImageFilter< InputImageType, OutputImageType> CastImageFilterType;
-		typename CastImageFilterType::Pointer castImageFilter = CastImageFilterType::New();
-		
-		//Declaration of fileters
-		typedef itk::BinaryThresholdImageFilter< OutputImageType, InputImageType    >    ThresholdingFilterType;
-		typename ThresholdingFilterType::Pointer thresholder = ThresholdingFilterType::New();
-		
-		typedef itk::ThresholdSegmentationLevelSetImageFilter< OutputImageType, OutputImageType >  ThresholdSegmentationLevelSetImageFilterType;
-		typename ThresholdSegmentationLevelSetImageFilterType::Pointer thresholdSegmentation = ThresholdSegmentationLevelSetImageFilterType::New();
-		
-		typedef itk::FastMarchingImageFilter< OutputImageType, OutputImageType > FastMarchingFilterType;
-		typename FastMarchingFilterType::Pointer fastMarching = FastMarchingFilterType::New();
-		
+    std::cerr << "execute1" << std::endl;
 		typedef typename FastMarchingFilterType::NodeContainer	NodeContainer;
 		typedef typename FastMarchingFilterType::NodeType		NodeType;
 		typename NodeContainer::Pointer seeds = NodeContainer::New();
@@ -187,178 +126,49 @@ public:
 			}
 		}
 		
+    std::cerr << "in the func" << std::flush << std::endl;
 		//const double stoppingTime = sqrt(nx*nx + ny*ny + nz*nz);
 		
 		const double curvatureScaling   = 1.0; // Level Set 
-		const double propagationScaling = 1.0; 
+		const double propagationScaling = 1.0;
+		fastMarching->SetTrialPoints(  seeds  );
+			
+		fastMarching->SetSpeedConstant( 1.0 );
+				
+		thresholdSegmentation->SetPropagationScaling( propagationScaling );
+		thresholdSegmentation->SetCurvatureScaling( curvatureScaling );
+				
+		thresholdSegmentation->SetMaximumRMSError( 0.02 );
+		thresholdSegmentation->SetNumberOfIterations( 50 ); //stoppingTime
+				
+		thresholdSegmentation->SetUpperThreshold( 255 );
+		thresholdSegmentation->SetLowerThreshold( 200 );
+		thresholdSegmentation->SetIsoSurfaceValue(0.0); 
+        	this->Compute();
 		
-		//consider multiple channels
-		if(channelToFilter==-1)
-		{
-			TOutputPixelType *output1d;
-			try
-			{
-				output1d = new TOutputPixelType [numberOfPixels];
-			}
-			catch(...)
-			{
-				std::cerr << "Error memroy allocating." << std::endl;
-				return;
-			}
-			
-			const bool filterWillDeleteTheInputBuffer = false;
-			
-			for(long ch=0; ch<nc; ch++)
-			{
-				offsets = ch*pagesz;
-				
-				TOutputPixelType *p = output1d+offsets;
-				
-				importFilter->SetImportPointer( data1d+offsets, pagesz, importImageFilterWillOwnTheBuffer );
-				
-				castImageFilter->SetInput( importFilter->GetOutput() );
-				
-				try
-				{
-					castImageFilter->Update();
-				}
-				catch( itk::ExceptionObject & excp)
-				{
-					std::cerr << "Error run this filter." << std::endl;
-					std::cerr << excp << std::endl;
-					return;
-				}
-				
-				// threshold segmentation algorithm
-				thresholdSegmentation->SetInput( fastMarching->GetOutput() );
-				thresholdSegmentation->SetFeatureImage( castImageFilter->GetOutput() );
-				
-				
-				fastMarching->SetTrialPoints(  seeds  );
-				fastMarching->SetOutputSize( importFilter->GetOutput()->GetBufferedRegion().GetSize() );
-				//fastMarching->SetStoppingValue(  stoppingTime  );
-				fastMarching->SetSpeedConstant( 1.0 );
-				
-				thresholdSegmentation->SetPropagationScaling( propagationScaling );
-				thresholdSegmentation->SetCurvatureScaling( curvatureScaling );
-				
-				thresholdSegmentation->SetMaximumRMSError( 0.02 );
-				thresholdSegmentation->SetNumberOfIterations( 50 ); //stoppingTime
-				
-				thresholdSegmentation->SetUpperThreshold( 255 );
-				thresholdSegmentation->SetLowerThreshold( 200 );
-				thresholdSegmentation->SetIsoSurfaceValue(0.0);
-				
-				//thresholdSegmentation
-				thresholdSegmentation->GetOutput()->GetPixelContainer()->SetImportPointer( p, pagesz, filterWillDeleteTheInputBuffer);
-				
-				try
-				{
-					thresholdSegmentation->Update();
-				}
-				catch( itk::ExceptionObject & excp)
-				{
-					std::cerr << "Error run this filter." << std::endl;
-					std::cerr << excp << std::endl;
-					return;
-				}
-				
-			}
-			
-			setPluginOutputAndDisplayUsingGlobalSetting(output1d, nx, ny, nz, nc, callback);
-		}
-		else if(channelToFilter<nc)
-		{
-			importFilter->SetImportPointer( data1d+offsets, pagesz, importImageFilterWillOwnTheBuffer );
-			
-			castImageFilter->SetInput( importFilter->GetOutput() );
-			
-			try
-			{
-				castImageFilter->Update();
-			}
-			catch( itk::ExceptionObject & excp)
-			{
-				std::cerr << "Error run this filter." << std::endl;
-				std::cerr << excp << std::endl;
-				return;
-			}
-			
-			// threshold segmentation algorithm
-			thresholdSegmentation->SetInput( fastMarching->GetOutput() );
-			thresholdSegmentation->SetFeatureImage( castImageFilter->GetOutput() );
-			
-			
-			fastMarching->SetTrialPoints(  seeds  );
-			fastMarching->SetOutputSize( importFilter->GetOutput()->GetBufferedRegion().GetSize() );
-			//fastMarching->SetStoppingValue(  stoppingTime  );
-			fastMarching->SetSpeedConstant( 1.0 );
-			
-//			fastMarching->SetOutputRegion( output1d->GetBufferedRegion() );
-//			fastMarching->SetOutputSpacing( output1d->GetSpacing() );
-//			fastMarching->SetOutputOrigin( output1d->GetOrigin() );
-//			fastMarching->SetOutputDirection( output1d->GetDirection() );
-			
-			thresholdSegmentation->SetPropagationScaling( propagationScaling );
-			thresholdSegmentation->SetCurvatureScaling( curvatureScaling );
-			
-			thresholdSegmentation->SetMaximumRMSError( 0.02 );
-			thresholdSegmentation->SetNumberOfIterations( 100 ); //stoppingTime
-			
-			thresholdSegmentation->SetUpperThreshold( 255 );
-			thresholdSegmentation->SetLowerThreshold( 100 );
-			thresholdSegmentation->SetIsoSurfaceValue(0.0);
-			
-			thresholder->SetInput( thresholdSegmentation->GetOutput() );
-			
-			thresholder->SetLowerThreshold( -1000.0 );
-			thresholder->SetUpperThreshold(     0.0 );
-			
-			thresholder->SetOutsideValue(  0  );
-			thresholder->SetInsideValue(  255 );
-			
-			//thresholdSegmentation
-			try
-			{
-				thresholder->Update();
-			}
-			catch( itk::ExceptionObject & excp)
-			{
-				std::cerr << "Error run this filter." << std::endl;
-				std::cerr << excp << std::endl;
-				return;
-			}
-			
-			// output
-			typename InputImageType::PixelContainer * container;
-			
-			container =thresholder->GetOutput()->GetPixelContainer();
-			container->SetContainerManageMemory( false );
-			
-			typedef TInputPixelType InputPixelType;
-			InputPixelType * output1d = container->GetImportPointer();
-			
-			setPluginOutputAndDisplayUsingGlobalSetting(output1d, nx, ny, nz, 1, callback);
-			
-		}
-		
-		std::cout << std::endl;
-		std::cout << "Max. no. iterations: " << thresholdSegmentation->GetNumberOfIterations() << std::endl;
-		std::cout << "Max. RMS error: " << thresholdSegmentation->GetMaximumRMSError() << std::endl;
-		std::cout << std::endl;
-		std::cout << "No. elpased iterations: " << thresholdSegmentation->GetElapsedIterations() << std::endl;
-		std::cout << "RMS change: " << thresholdSegmentation->GetRMSChange() << std::endl;
-		
-		
-	}	
-		
-	
+	}
+
+virtual void ComputeOneRegion()
+{
+  std::cerr << "in the compute region" << std::endl;
+	fastMarching->SetOutputSize(this->GetInput3DImage()->GetBufferedRegion().GetSize() );
+	this->castImageFilter->SetInput(this->GetInput3DImage());									
+	thresholdSegmentation->SetInput( fastMarching->GetOutput() );
+	thresholdSegmentation->SetFeatureImage( castImageFilter->GetOutput() );
+	this->thresholdSegmentation->Update();
+	this->SetOutputImage(this->thresholdSegmentation->GetOutput());
+}
+private:
+	typename CastImageFilterType::Pointer castImageFilter;
+	typename ThresholdingFilterType::Pointer thresholder;
+	typename ThresholdSegmentationLevelSetImageFilterType::Pointer thresholdSegmentation ;
+	typename FastMarchingFilterType::Pointer fastMarching;
 };
 
 #define EXECUTE( v3d_pixel_type, input_pixel_type, output_pixel_type ) \
 	case v3d_pixel_type: \
 	{ \
-		ITKThresholdSegmentationSpecializaed< input_pixel_type, output_pixel_type > runner; \
+		ITKThresholdSegmentationSpecializaed< input_pixel_type, output_pixel_type > runner(&callback); \
 		runner.Execute( callback, parent ); \
 		break; \
 	} 

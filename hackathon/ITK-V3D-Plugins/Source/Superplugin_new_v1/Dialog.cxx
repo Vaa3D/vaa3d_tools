@@ -115,6 +115,7 @@ void Dialog::intialPluginManager () {
                   return;
     }
     std::cout << "get the ITK-Plugins!!" << std::endl;
+    this->autoPipepage->initialTest();
     this->userPipepage->getItkPluginList();
     this->userFilterpage->getItkPluginList();
 }

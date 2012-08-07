@@ -14,12 +14,12 @@ AutoPipePage::AutoPipePage(QWidget *parent):QWidget(parent)
 
     pipelineName=new QLabel(tr("Segmentation Pipeline:"));
     pipelineExp=new QComboBox;
-    pipelineExp->addItem(tr("Example Pipeline1"));
-    pipelineExp->addItem(tr("Example Pipeline2"));
-    pipelineExp->addItem(tr("Example Pipeline3"));
-    pipelineExp->addItem(tr("Example Pipeline4"));
-    pipelineExp->addItem(tr("Example Pipeline5"));
-    pipelineExp->addItem(tr("Example Pipeline6"));
+    //pipelineExp->addItem(tr("Example Pipeline1"));
+    //pipelineExp->addItem(tr("Example Pipeline2"));
+    //pipelineExp->addItem(tr("Example Pipeline3"));
+    //pipelineExp->addItem(tr("Example Pipeline4"));
+    //pipelineExp->addItem(tr("Example Pipeline5"));
+    //pipelineExp->addItem(tr("Example Pipeline6"));
 
     QHBoxLayout *serverLayout = new QHBoxLayout;
     serverLayout->addWidget(pipelineName);
@@ -46,9 +46,9 @@ AutoPipePage::AutoPipePage(QWidget *parent):QWidget(parent)
     mainLayout->addWidget(pipelineGroup);
     mainLayout->addStretch(1);
     setLayout(mainLayout);
-    this->CreateIcon();
+    //this->CreateIcon();
     connect(StartPipe,SIGNAL(clicked()),this,SLOT(CallPipeline()));
-    connect(pipelineExp,SIGNAL(currentIndexChanged(int)),this,SLOT(CreateIcon()));
+    //connect(pipelineExp,SIGNAL(currentIndexChanged(int)),this,SLOT(CreateIcon()));
 }
 void AutoPipePage::CallPipeline()
 {
@@ -56,9 +56,9 @@ void AutoPipePage::CallPipeline()
     for(int i=0;i<PaintFilter->count();i++)
     {
       QString pluginName=PaintFilter->item(i)->text();
-      QString pluginFileName = m_pluginsHash.value(pluginName);
+      QString pluginPath = m_pluginsHash.value(pluginName);
 	    PluginSpecialized<unsigned char> runner(callback);
-	    runner.SetPluginName(pluginFileName, pluginName);
+	    runner.SetPluginName(pluginPath, pluginName);
 	    runner.Execute(menu_name,0);
     }	
 	
@@ -71,124 +71,83 @@ void AutoPipePage::CreateIcon()
 {
     PaintFilter->clear();
     int i=pipelineExp->currentIndex();
-    if(i==0){QListWidgetItem * item=new QListWidgetItem;
-        item->setIcon(QIcon(picName));
-        item->setText(tr("CurvatureFlow_called"));
-        item->setTextAlignment(Qt::AlignLeft);
-        PaintFilter->addItem(item);
-        QListWidgetItem * item1=new QListWidgetItem;
-        item1->setIcon(QIcon(picName));
-        item1->setText(tr("ITKConfidenceConnected_called"));
-        item1->setTextAlignment(Qt::AlignLeft);
-        PaintFilter->addItem(item1);
-
-        }
-    else if(i==1){
+    if (i < 0) return;
+    QStringList pluginList = m_pipeLineList.at(i);
+    for (int i = 0; i < pluginList.size(); i++ )
+    {
         QListWidgetItem * item=new QListWidgetItem;
         item->setIcon(QIcon(picName));
-        item->setText(tr("CurvatureFlow_called"));
+        item->setText(pluginList.at(i));
         item->setTextAlignment(Qt::AlignLeft);
         PaintFilter->addItem(item);
-        QListWidgetItem * item1=new QListWidgetItem;
-        item1->setIcon(QIcon(picName));
-        item1->setText(tr("ITKConnectedThreshold_called"));
-        item1->setTextAlignment(Qt::AlignLeft);
-        PaintFilter->addItem(item1);
     }
-    else if(i==2){
-        QListWidgetItem * item=new QListWidgetItem;
-        item->setIcon(QIcon(picName));
-        item->setText(tr("CurvatureFlow_called"));
-        item->setTextAlignment(Qt::AlignLeft);
-        PaintFilter->addItem(item);
-        QListWidgetItem * item1=new QListWidgetItem;
-        item1->setIcon(QIcon(picName));
-        item1->setText(tr("ITKIsolatedConnected_called"));
-        item1->setTextAlignment(Qt::AlignLeft);
-        PaintFilter->addItem(item1);
+}
+void AutoPipePage::initialTest()
+{
+  QStringList example1List;
+  QStringList example2List; 
+  QStringList example3List;
+  QStringList example4List;
+  QStringList example5List;
+  QStringList example6List;
 
-    }
-    else if(i==3){
-        QListWidgetItem * item1=new QListWidgetItem;
-        item1->setIcon(QIcon(picName));
-        item1->setText(tr("CurvatureAnisotropicDiffusion_called"));
-        item1->setTextAlignment(Qt::AlignLeft);
-        PaintFilter->addItem(item1);
-        QListWidgetItem * item2=new QListWidgetItem;
-        item2->setIcon(QIcon(picName));
-        item2->setText(tr("GradientMagnitudeRecursiveGaussian_called"));
-        item2->setTextAlignment(Qt::AlignLeft);
-        PaintFilter->addItem(item2);
-        QListWidgetItem * item3=new QListWidgetItem;
-        item3->setIcon(QIcon(picName));
-        item3->setText(tr("Sigmoid_called"));
-        item3->setTextAlignment(Qt::AlignLeft);
-        PaintFilter->addItem(item3);
-        QListWidgetItem * item4=new QListWidgetItem;
-        item4->setIcon(QIcon(picName));
-        item4->setText(tr("ITKFastMarching_called"));
-        item4->setTextAlignment(Qt::AlignLeft);
-        PaintFilter->addItem(item4);
-        QListWidgetItem * item5=new QListWidgetItem;
-        item5->setIcon(QIcon(picName));
-        item5->setText(tr("BinaryThreshold_called"));
-        item5->setTextAlignment(Qt::AlignLeft);
-        PaintFilter->addItem(item5);
-    }
-    else if(i==4){
-        QListWidgetItem * item1=new QListWidgetItem;
-        item1->setIcon(QIcon(picName));
-        item1->setText(tr("CurvatureAnisotropicDiffusion_called"));
-        item1->setTextAlignment(Qt::AlignLeft);
-        PaintFilter->addItem(item1);
-        QListWidgetItem * item2=new QListWidgetItem;
-        item2->setIcon(QIcon(picName));
-        item2->setText(tr("GradientMagnitudeRecursiveGaussian_called"));
-        item2->setTextAlignment(Qt::AlignLeft);
-        PaintFilter->addItem(item2);
-        QListWidgetItem * item3=new QListWidgetItem;
-        item3->setIcon(QIcon(picName));
-        item3->setText(tr("Sigmoid_called"));
-        item3->setTextAlignment(Qt::AlignLeft);
-        PaintFilter->addItem(item3);
-        QListWidgetItem * item4=new QListWidgetItem;
-        item4->setIcon(QIcon(picName));
-        item4->setText(tr("ITKShapeDectection_called"));
-        item4->setTextAlignment(Qt::AlignLeft);
-        PaintFilter->addItem(item4);
-        QListWidgetItem * item5=new QListWidgetItem;
-        item5->setIcon(QIcon(picName));
-        item5->setText(tr("BinaryThreshold_called"));
-        item5->setTextAlignment(Qt::AlignLeft);
-        PaintFilter->addItem(item5);
-    }
-    else if(i==5){
-        QListWidgetItem * item1=new QListWidgetItem;
-        item1->setIcon(QIcon(picName));
-        item1->setText(tr("CurvatureAnisotropicDiffusion_called"));
-        item1->setTextAlignment(Qt::AlignLeft);
-        PaintFilter->addItem(item1);
-        QListWidgetItem * item2=new QListWidgetItem;
-        item2->setIcon(QIcon(picName));
-        item2->setText(tr("GradientMagnitudeRecursiveGaussian_called"));
-        item2->setTextAlignment(Qt::AlignLeft);
-        PaintFilter->addItem(item2);
-        QListWidgetItem * item3=new QListWidgetItem;
-        item3->setIcon(QIcon(picName));
-        item3->setText(tr("Sigmoid_called"));
-        item3->setTextAlignment(Qt::AlignLeft);
-        PaintFilter->addItem(item3);
-        QListWidgetItem * item4=new QListWidgetItem;
-        item4->setIcon(QIcon(picName));
-        item4->setText(tr("ITKGeodesicActiveContour_called"));
-        item4->setTextAlignment(Qt::AlignLeft);
-        PaintFilter->addItem(item4);
-        QListWidgetItem * item5=new QListWidgetItem;
-        item5->setIcon(QIcon(picName));
-        item5->setText(tr("BinaryThreshold_called"));
-        item5->setTextAlignment(Qt::AlignLeft);
-        PaintFilter->addItem(item5);
-    }
+  example1List << QString("CurvatureFlow_called")
+               << QString("ITKConfidenceConnected_called");
+  if (this->validatePluginExits(example1List))
+    m_pipeLineList << example1List;
+
+  example2List << QString("CurvatureFlow_called")
+               << QString("ITKConnectedThreshold_called");
+  if (this->validatePluginExits(example2List))
+    m_pipeLineList << example2List;
+
+  example3List << QString("CurvatureFlow_called")
+               << QString("ITKIsolatedConnected_called");
+  if (this->validatePluginExits(example3List))
+    m_pipeLineList << example3List;
+  
+  example4List << QString("CurvatureAnisotropicDiffusion_called")
+               << QString("GradientMagnitudeRecursiveGaussian_called")
+               << QString("Sigmoid_called")
+               << QString("ITKFastMarching_called")
+               << QString("BinaryThreshold_called");
+  if (this->validatePluginExits(example4List))
+    m_pipeLineList << example4List;
+  
+  example5List << QString("CurvatureAnisotropicDiffusion_called")
+               << QString("GradientMagnitudeRecursiveGaussian_called")
+               << QString("Sigmoid_called")
+               << QString("ITKShapeDetection_called")
+               << QString("BinaryThreshold_called");
+  if (this->validatePluginExits(example5List))
+    m_pipeLineList << example5List;
+  
+  example6List << QString("CurvatureAnisotropicDiffusion_called")
+               << QString("GradientMagnitudeRecursiveGaussian_called")
+               << QString("Sigmoid_called")
+               << QString("ITKGeodesicActiveContour_called")
+               << QString("BinaryThreshold_called");
+  if (this->validatePluginExits(example6List))
+    m_pipeLineList << example6List;
+
+  for (int i = 0; i < m_pipeLineList.size(); i++)
+  {
+    pipelineExp->addItem(QString("Example Pipeline%1").arg(i+1));
+  }
+
+  this->CreateIcon();
+  connect(pipelineExp,SIGNAL(currentIndexChanged(int)),this,SLOT(CreateIcon()));
+}
+bool AutoPipePage::validatePluginExits(const QStringList& pluginList)
+{
+  QStringList::const_iterator it = pluginList.constBegin();
+  bool result = true;
+  while (it != pluginList.constEnd())
+  {
+    if (result && m_pluginsHash.value(*it) != "") it++;
+    else { result = false; break;}
+  }
+  return result;
 }
 void AutoPipePage::SetCallback( V3DPluginCallback &callback)
 {
@@ -251,9 +210,9 @@ void UserPipePage::CallPipeline()
     for(int i=0;i<PaintFilter->count();i++)
     {
       QString pluginName=UsedFilter->item(i)->text();
-      QString pluginFileName = m_pluginsHash.value(pluginName);
+      QString pluginPath = m_pluginsHash.value(pluginName);
 	    PluginSpecialized<unsigned char> runner(callback);
-	    runner.SetPluginName(pluginFileName, pluginName);
+	    runner.SetPluginName(pluginPath, pluginName);
 	    runner.Execute(menu_name,0);
     }	
 }
@@ -327,15 +286,15 @@ void UserFilterPage::CallFilter()
 	if(plugin_name=="ITKCannySegmentation"||plugin_name=="And")
 	{
     PluginSpecializedForDual<unsigned char> runner(callback);
-    QString name = m_pluginsHash.value(plugin_name);
-	  runner.SetPluginName(name, plugin_name);
+    QString pluginPath = m_pluginsHash.value(plugin_name);
+	  runner.SetPluginName(pluginPath, plugin_name);
 	  runner.Execute(menu_name,0);
 	}
 	else
 	{ 
 	  PluginSpecialized<unsigned char> runner(callback);	
-    QString name = m_pluginsHash.value(plugin_name);
-	  runner.SetPluginName(name, plugin_name);
+    QString pluginPath = m_pluginsHash.value(plugin_name);
+	  runner.SetPluginName(pluginPath, plugin_name);
 	  runner.Execute(menu_name,0);
 	}
 }

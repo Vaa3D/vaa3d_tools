@@ -3,6 +3,7 @@
 #include <QDir>
 #include <QString>
 #include <QStringList>
+#include <QHash>
 #include <QList>
 #include <v3d_interface.h>
 
@@ -30,6 +31,7 @@ public:
     void setCallback ( V3DPluginCallback2* callback );
     void setIntialDir (const QString& intialDir);
     QStringList getAllItkPluginNames();
+    QHash<QString, int> getItkPluginsHash() const;
 
 private:
     void getItkPluginFiles( QDir& dir );
@@ -37,6 +39,7 @@ private:
     void clear();
 private:
     QStringList 			    itkPluginFiles;
+    QHash<QString, int>   itkPluginsHash;
     QList < QPluginLoader* > 	itkPlugins;
     QString				        intialDir;
     V3DPluginCallback2*		    v3dHook;

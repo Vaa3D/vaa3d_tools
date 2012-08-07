@@ -18,9 +18,12 @@ public:
     AutoPipePage(QWidget *parent=0);
     void SetCallback( V3DPluginCallback &callback);
     void setPluginsHash(const QHash<QString, QString>& pluginsHash);
+    void initialTest();
 public slots:
     void CallPipeline();
     void CreateIcon();
+private:
+    bool validatePluginExits(const QStringList& pluginList);
 private:
     QLabel *pipelineName;
     QComboBox *pipelineExp;
@@ -29,7 +32,7 @@ private:
     V3DPluginCallback *callback;
     QString menu_name;
     QHash<QString, QString> m_pluginsHash;
-
+    QList <QStringList> m_pipeLineList;
 };
 
 class UserPipePage : public QWidget

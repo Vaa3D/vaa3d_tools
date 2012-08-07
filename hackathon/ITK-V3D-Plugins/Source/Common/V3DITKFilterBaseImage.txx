@@ -70,6 +70,13 @@ V3DITKFilterBaseImage< TInputPixelType, TOutputPixelType >
     {
     v3d_msg(QObject::tr("Error while transfering output image."));
     }
+//free the menory
+	qDebug() << "Now free the memory";
+	for (int i = 0; i < m_OutputImageList.size(); i++) 
+	{
+		unsigned char* p = m_OutputImageList.at(i).data1d;
+		delete[] p;
+	}
 }
 
 

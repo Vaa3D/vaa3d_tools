@@ -63,6 +63,7 @@ void ItkPluginManager :: getItkPluginFiles( QDir& dir )
               QString fileName = rxFile.cap(2);
               this->itkPlugins.append( itkPluginLoader );
               this->itkPluginFiles << fileName;
+              this->itkPluginsHash.insert(fileName, this->itkPluginFiles.size());
             //free the memory or useing delete itkPlugin
               itkPluginLoader -> unload ();
             }
@@ -74,11 +75,14 @@ void ItkPluginManager :: getItkPluginFiles( QDir& dir )
 
     }
 }
-
+QHash<QString, int > ItkPluginManager::getItkPluginsHash() const
+{
+  return this->itkPluginsHash;
+} 
 bool ItkPluginManager :: runItkPluginMenuFunc ( const QString& itkPluginName )
 {
 
-    int indexOfItkPlugin = this->itkPluginFiles.indexOf(itkPluginName);
+    int indexOfItkPlugin = this->itkPluginsHash.value(itkPluginName) - 1;
     //std::cout << "index is : " << indexOfItkPlugin<<std::endl;
     QObject* itkPlugin = this->itkPlugins.at(indexOfItkPlugin) -> instance();
     if ( !itkPlugin ) return false;

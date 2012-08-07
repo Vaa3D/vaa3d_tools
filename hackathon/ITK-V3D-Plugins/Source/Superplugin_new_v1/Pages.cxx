@@ -15,12 +15,12 @@ AutoPipePage::AutoPipePage(QWidget *parent):QWidget(parent)
 
     pipelineName=new QLabel(tr("Segmentation Pipeline:"));
     pipelineExp=new QComboBox;
-    pipelineExp->addItem(tr("Example Pipeline1"));
-    pipelineExp->addItem(tr("Example Pipeline2"));
-    pipelineExp->addItem(tr("Example Pipeline3"));
-    pipelineExp->addItem(tr("Example Pipeline4"));
-    pipelineExp->addItem(tr("Example Pipeline5"));
-    pipelineExp->addItem(tr("Example Pipeline6"));
+    //pipelineExp->addItem(tr("Example Pipeline1"));
+    //pipelineExp->addItem(tr("Example Pipeline2"));
+    //pipelineExp->addItem(tr("Example Pipeline3"));
+    //pipelineExp->addItem(tr("Example Pipeline4"));
+    //pipelineExp->addItem(tr("Example Pipeline5"));
+    //pipelineExp->addItem(tr("Example Pipeline6"));
 
     QHBoxLayout *serverLayout = new QHBoxLayout;
     serverLayout->addWidget(pipelineName);
@@ -51,48 +51,12 @@ AutoPipePage::AutoPipePage(QWidget *parent):QWidget(parent)
     mainLayout->addWidget(pipelineGroup);
     mainLayout->addStretch(1);
     setLayout(mainLayout);
-    this->CreateIcon();
+    //this->CreateIcon();
     connect(StartPipe,SIGNAL(clicked()),this,SLOT(CallPipeline()));
-    connect(pipelineExp,SIGNAL(currentIndexChanged(int)),this,SLOT(CreateIcon()));
+    //connect(pipelineExp,SIGNAL(currentIndexChanged(int)),this,SLOT(CreateIcon()));
 }
 void AutoPipePage::CallPipeline()
 {
-    /*	QString end=".so";
-    	QString mid="/";
-    	PluginSpecialized<unsigned char> runner(callback);
-        for(int i=0;i<PaintFilter->count();i++)
-        {
-    	QString name="ITK/Superplugin/Plugin2Call/";
-            QString plugin_name=PaintFilter->item(i)->text();
-    	//PluginSpecialized<unsigned char> runner(callback);
-            name+=plugin_name;
-    	name+=mid;
-    	name+=plugin_name;
-    	name+=end;
-    	runner.AddPluginName(name);
-    	//runner.SetPluginName(name);
-    	//runner.Execute(menu_name,0);
-        }
-    	runner.SetUsePipeline(true);
-    	runner.Execute(menu_name,0);
-    */
-    /*
-    	QString end=".so";
-    	QString mid="/";
-        for(int i=0;i<PaintFilter->count();i++)
-        {
-    	QString name="ITK/Superplugin/Plugin2Call/";
-            QString plugin_name=PaintFilter->item(i)->text();
-    	PluginSpecialized<unsigned char> runner(callback);
-            name+=plugin_name;
-    	name+=mid;
-    	name+=plugin_name;
-    	name+=end;
-    	runner.SetPluginName(name);
-    	runner.Execute(menu_name,0);
-
-        }
-    */
     for (int i = 0; i < PaintFilter->count(); i++) {
         QString itkPluginName = PaintFilter->item(i)->text();
         this->itkPluginManager->runItkPluginMenuFunc(itkPluginName);
@@ -102,132 +66,86 @@ void AutoPipePage::CreateIcon()
 {
     PaintFilter->clear();
     int i=pipelineExp->currentIndex();
-    if(i==0)
+    if (i < 0) return;
+    QStringList pluginList = m_pipeLineList.at(i);
+    for (int i = 0; i < pluginList.size(); i++ )
     {
         QListWidgetItem * item=new QListWidgetItem;
         item->setIcon(QIcon(picName));
-        item->setText(tr("CurvatureFlow"));
+        item->setText(pluginList.at(i));
         item->setTextAlignment(Qt::AlignLeft);
         PaintFilter->addItem(item);
-        QListWidgetItem * item1=new QListWidgetItem;
-        item1->setIcon(QIcon(picName));
-        item1->setText(tr("ITKConfidenceConnected"));
-        item1->setTextAlignment(Qt::AlignLeft);
-        PaintFilter->addItem(item1);
-
-    }
-    else if(i==1)
-    {
-        QListWidgetItem * item=new QListWidgetItem;
-        item->setIcon(QIcon(picName));
-        item->setText(tr("CurvatureFlow"));
-        item->setTextAlignment(Qt::AlignLeft);
-        PaintFilter->addItem(item);
-        QListWidgetItem * item1=new QListWidgetItem;
-        item1->setIcon(QIcon(picName));
-        item1->setText(tr("ITKConnectedThreshold"));
-        item1->setTextAlignment(Qt::AlignLeft);
-        PaintFilter->addItem(item1);
-    }
-    else if(i==2)
-    {
-        QListWidgetItem * item=new QListWidgetItem;
-        item->setIcon(QIcon(picName));
-        item->setText(tr("CurvatureFlow"));
-        item->setTextAlignment(Qt::AlignLeft);
-        PaintFilter->addItem(item);
-        QListWidgetItem * item1=new QListWidgetItem;
-        item1->setIcon(QIcon(picName));
-        item1->setText(tr("ITKIsolatedConnected"));
-        item1->setTextAlignment(Qt::AlignLeft);
-        PaintFilter->addItem(item1);
-
-    }
-    else if(i==3)
-    {
-        QListWidgetItem * item1=new QListWidgetItem;
-        item1->setIcon(QIcon(picName));
-        item1->setText(tr("CurvatureAnisotropicDiffusion"));
-        item1->setTextAlignment(Qt::AlignLeft);
-        PaintFilter->addItem(item1);
-        QListWidgetItem * item2=new QListWidgetItem;
-        item2->setIcon(QIcon(picName));
-        item2->setText(tr("GradientMagnitudeRecursiveGaussian"));
-        item2->setTextAlignment(Qt::AlignLeft);
-        PaintFilter->addItem(item2);
-        QListWidgetItem * item3=new QListWidgetItem;
-        item3->setIcon(QIcon(picName));
-        item3->setText(tr("Sigmoid"));
-        item3->setTextAlignment(Qt::AlignLeft);
-        PaintFilter->addItem(item3);
-        QListWidgetItem * item4=new QListWidgetItem;
-        item4->setIcon(QIcon(picName));
-        item4->setText(tr("ITKFastMarching"));
-        item4->setTextAlignment(Qt::AlignLeft);
-        PaintFilter->addItem(item4);
-        QListWidgetItem * item5=new QListWidgetItem;
-        item5->setIcon(QIcon(picName));
-        item5->setText(tr("BinaryThreshold"));
-        item5->setTextAlignment(Qt::AlignLeft);
-        PaintFilter->addItem(item5);
-    }
-    else if(i==4)
-    {
-        QListWidgetItem * item1=new QListWidgetItem;
-        item1->setIcon(QIcon(picName));
-        item1->setText(tr("CurvatureAnisotropicDiffusion"));
-        item1->setTextAlignment(Qt::AlignLeft);
-        PaintFilter->addItem(item1);
-        QListWidgetItem * item2=new QListWidgetItem;
-        item2->setIcon(QIcon(picName));
-        item2->setText(tr("GradientMagnitudeRecursiveGaussian"));
-        item2->setTextAlignment(Qt::AlignLeft);
-        PaintFilter->addItem(item2);
-        QListWidgetItem * item3=new QListWidgetItem;
-        item3->setIcon(QIcon(picName));
-        item3->setText(tr("Sigmoid"));
-        item3->setTextAlignment(Qt::AlignLeft);
-        PaintFilter->addItem(item3);
-        QListWidgetItem * item4=new QListWidgetItem;
-        item4->setIcon(QIcon(picName));
-        item4->setText(tr("ITKShapeDectection"));
-        item4->setTextAlignment(Qt::AlignLeft);
-        PaintFilter->addItem(item4);
-        QListWidgetItem * item5=new QListWidgetItem;
-        item5->setIcon(QIcon(picName));
-        item5->setText(tr("BinaryThreshold"));
-        item5->setTextAlignment(Qt::AlignLeft);
-        PaintFilter->addItem(item5);
-    }
-    else if(i==5)
-    {
-        QListWidgetItem * item1=new QListWidgetItem;
-        item1->setIcon(QIcon(picName));
-        item1->setText(tr("CurvatureAnisotropicDiffusion"));
-        item1->setTextAlignment(Qt::AlignLeft);
-        PaintFilter->addItem(item1);
-        QListWidgetItem * item2=new QListWidgetItem;
-        item2->setIcon(QIcon(picName));
-        item2->setText(tr("GradientMagnitudeRecursiveGaussian"));
-        item2->setTextAlignment(Qt::AlignLeft);
-        PaintFilter->addItem(item2);
-        QListWidgetItem * item3=new QListWidgetItem;
-        item3->setIcon(QIcon(picName));
-        item3->setText(tr("Sigmoid"));
-        item3->setTextAlignment(Qt::AlignLeft);
-        PaintFilter->addItem(item3);
-        QListWidgetItem * item4=new QListWidgetItem;
-        item4->setIcon(QIcon(picName));
-        item4->setText(tr("ITKGeodesicActiveContour"));
-        item4->setTextAlignment(Qt::AlignLeft);
-        PaintFilter->addItem(item4);
-        QListWidgetItem * item5=new QListWidgetItem;
-        item5->setIcon(QIcon(picName));
-        item5->setText(tr("BinaryThreshold"));
-        item5->setTextAlignment(Qt::AlignLeft);
-        PaintFilter->addItem(item5);
     }
 }
+void AutoPipePage::initialTest()
+{
+  QStringList example1List;
+  QStringList example2List; 
+  QStringList example3List;
+  QStringList example4List;
+  QStringList example5List;
+  QStringList example6List;
+
+  example1List << QString("CurvatureFlow")
+               << QString("ITKConfidenceConnected");
+  if (this->validatePluginExits(example1List))
+    m_pipeLineList << example1List;
+
+  example2List << QString("CurvatureFlow")
+               << QString("ITKConnectedThreshold");
+  if (this->validatePluginExits(example2List))
+    m_pipeLineList << example2List;
+
+  example3List << QString("CurvatureFlow")
+               << QString("ITKIsolatedConnected");
+  if (this->validatePluginExits(example3List))
+    m_pipeLineList << example3List;
+  
+  example4List << QString("CurvatureAnisotropicDiffusion")
+               << QString("GradientMagnitudeRecursiveGaussian")
+               << QString("Sigmoid")
+               << QString("ITKFastMarching")
+               << QString("BinaryThreshold");
+  if (this->validatePluginExits(example4List))
+    m_pipeLineList << example4List;
+  
+  example5List << QString("CurvatureAnisotropicDiffusion")
+               << QString("GradientMagnitudeRecursiveGaussian")
+               << QString("Sigmoid")
+               << QString("ITKShapeDetection")
+               << QString("BinaryThreshold");
+  if (this->validatePluginExits(example5List))
+    m_pipeLineList << example5List;
+  
+  example6List << QString("CurvatureAnisotropicDiffusion")
+               << QString("GradientMagnitudeRecursiveGaussian")
+               << QString("Sigmoid")
+               << QString("ITKGeodesicActiveContour")
+               << QString("BinaryThreshold");
+  if (this->validatePluginExits(example6List))
+    m_pipeLineList << example6List;
+
+  for (int i = 0; i < m_pipeLineList.size(); i++)
+  {
+    pipelineExp->addItem(QString("Example Pipeline%1").arg(i+1));
+  }
+
+  this->CreateIcon();
+  connect(pipelineExp,SIGNAL(currentIndexChanged(int)),this,SLOT(CreateIcon()));
+}
+bool AutoPipePage::validatePluginExits(const QStringList& pluginList)
+{
+  QStringList::const_iterator it = pluginList.constBegin();
+  bool result = true;
+  QHash<QString, int> m_pluginsHash = this->itkPluginManager->getItkPluginsHash();
+  while (it != pluginList.constEnd())
+  {
+    if (result && m_pluginsHash.value(*it) != 0) it++;
+    else { result = false; break;}
+  }
+  return result;
+}
+
 void AutoPipePage::setItkPluginManager (ItkPluginManager* itkPluginManager) {
     this->itkPluginManager = itkPluginManager;
 }
