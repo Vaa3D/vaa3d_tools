@@ -775,8 +775,8 @@ bool do_AtlasGuidedStrAnno(V3DPluginCallback2 &callback,
 	//show deformed atlas pts in V3D
 //	if(!(paras_anno.b_showatlas || paras_anno.b_showsegmentation))
 	{
-//		v3dhandle curwin=callback.currentImageWindow();
-		v3dhandle curwin=callback.getImageWindowList()[0];
+		v3dhandle curwin=callback.currentImageWindow();
+//		v3dhandle curwin=callback.getImageWindowList()[0];
 		callback.open3DWindow(curwin);
 		LandmarkList curlist;
 		for(int i=0;i<ql_musclecell_output_ori.size();i++)
