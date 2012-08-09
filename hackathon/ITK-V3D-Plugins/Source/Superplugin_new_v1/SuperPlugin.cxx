@@ -49,7 +49,7 @@ void Superplugin::domenu(const QString & menu_name,V3DPluginCallback2 & callback
     }
     Q_INIT_RESOURCE(superPluginIcons);
 
-    QString initialDir = QDir::fromNativeSeparators(QString("%1/plugins/ITK").arg(QDir::currentPath()));
+    QString initialDir = QDir::fromNativeSeparators(QString("%1/plugins/ITK").arg(qApp->applicationDirPath()));
     Dialog* mydialog = new Dialog((QWidget*)0);
     mydialog->setCallback(callback);
     mydialog->setInitialDir(initialDir);

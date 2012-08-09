@@ -121,6 +121,11 @@ transferOutputImage()
   {
     v3d_msg(QObject::tr("Error while transfering output image."));
   }
+  //reduce the refernce
+  for (int i = 0; i < m_OutputItkImageList.size(); i++) {
+    m_OutputItkImageList[i]->UnRegister();
+  }
+
 } 
 
 template <typename TInputPixelType>
@@ -237,5 +242,13 @@ template <typename TInputPixelType>
 ImageDataTransmit < TInputPixelType > ::
 ~ImageDataTransmit()
 {
+  qDebug() << "Now free the memory";
+  for (int i = 0; i < m_InputItkImageList.size(); i++)
+  {
+    //m_InputItkImageList[i]->Delete();
+    //m_OutputItkImageList[i]->Delete();
+    qDebug() << "Input Reference Account: " << m_InputItkImageList.at(i)->GetReferenceCount();
+    qDebug() << "Output Reference Account: " << m_OutputItkImageList.at(i)->GetReferenceCount();
+  }
 }
 #endif

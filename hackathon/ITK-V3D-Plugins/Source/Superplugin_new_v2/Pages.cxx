@@ -49,45 +49,9 @@ AutoPipePage::AutoPipePage(QWidget *parent):QWidget(parent)
 }
 void AutoPipePage::CallPipeline()
 {
-    /*	QString end=".so";
-    	QString mid="/";
-    	PluginSpecialized<unsigned char> runner(callback);
-        for(int i=0;i<PaintFilter->count();i++)
-        {
-    	QString name="ITK/Superplugin/Plugin2Call/";
-            QString plugin_name=PaintFilter->item(i)->text();
-    	//PluginSpecialized<unsigned char> runner(callback);
-            name+=plugin_name;
-    	name+=mid;
-    	name+=plugin_name;
-    	name+=end;
-    	runner.AddPluginName(name);
-    	//runner.SetPluginName(name);
-    	//runner.Execute(menu_name,0);
-        }
-    	runner.SetUsePipeline(true);
-    	runner.Execute(menu_name,0);
-    */
-    /*
-    	QString end=".so";
-    	QString mid="/";
-        for(int i=0;i<PaintFilter->count();i++)
-        {
-    	QString name="ITK/Superplugin/Plugin2Call/";
-            QString plugin_name=PaintFilter->item(i)->text();
-    	PluginSpecialized<unsigned char> runner(callback);
-            name+=plugin_name;
-    	name+=mid;
-    	name+=plugin_name;
-    	name+=end;
-    	runner.SetPluginName(name);
-    	runner.Execute(menu_name,0);
-
-        }
-    */
     for (int i = 0; i < PaintFilter->count(); i++) {
         QString itkPluginName = PaintFilter->item(i)->text();
-        this->itkPluginManager->runItkPluginMenuFunc(itkPluginName);
+        this->itkPluginManager->runItkPluginFunc(itkPluginName);
     }
 }
 
@@ -274,47 +238,10 @@ UserPipePage::UserPipePage(QWidget *parent):QWidget(parent)
 }
 void UserPipePage::CallPipeline()
 {
-    /*
-    	QString end=".so";
-    	QString mid="/";
-        for(int i=0;i<UsedFilter->count();i++)
-        {
-    	QString name="ITK/Superplugin/Plugin2Call/";
-            QString plugin_name=UsedFilter->item(i)->text();
-    	PluginSpecialized<unsigned char> runner(callback);
-            name+=plugin_name;
-    	name+=mid;
-    	name+=plugin_name;
-    	name+=end;
-    	runner.SetPluginName(name);
-    	runner.Execute(menu_name,0);
-
-        }
-    	*/
-    /*
-    	QString end=".so";
-    	QString mid="/";
-    	PluginSpecialized<unsigned char> *runner=new PluginSpecialized<unsigned char >(callback);
-        for(int i=0;i<UsedFilter->count();i++)
-        {
-    	QString name="ITK/Superplugin/Plugin2Call/";
-            QString plugin_name=PaintFilter->item(i)->text();
-    	//PluginSpecialized<unsigned char> runner(callback);
-            name+=plugin_name;
-    	name+=mid;
-    	name+=plugin_name;
-    	name+=end;
-    	runner->AddPluginName(name);
-    	//runner.SetPluginName(name);
-    	//runner.Execute(menu_name,0);
-        }
-    	runner->SetUsePipeline(true);
-    	runner->Execute(menu_name,0);
-    	delete runner;	*/
-    	for (int i =0; i < this->UsedFilter->count(); i++) {
-            QString itkPluginName = this->UsedFilter->item(i)->text();
-            this->itkPluginManager->runItkPluginMenuFunc(itkPluginName);
-    	}
+    for (int i =0; i < this->UsedFilter->count(); i++) {
+          QString itkPluginName = this->UsedFilter->item(i)->text();
+          this->itkPluginManager->runItkPluginFunc(itkPluginName);
+    }
 }
 void UserPipePage::ADDItem()
 {
@@ -416,34 +343,8 @@ UserFilterPage::UserFilterPage(QWidget *parent):QWidget(parent)
 }
 void UserFilterPage::CallFilter()
 {
-    /*
-    	QString name="ITK/Superplugin/Plugin2Call/";
-    	QString end=".so";
-    	QString mid="/";
-    	QString plugin_name=FilterItem->currentText();
-    	if(plugin_name=="ITKCannySegmentation"||plugin_name=="And")
-    	{
-    	PluginSpecializedForDual<unsigned char> runner(callback);
-            name+=plugin_name;
-    	name+=mid;
-    	name+=plugin_name;
-    	name+=end;
-    	runner.SetPluginName(name);
-    	runner.Execute(menu_name,0);
-    	}
-    	else
-    	{
-    	PluginSpecialized<unsigned char> runner(callback);
-            name+=plugin_name;
-    	name+=mid;
-    	name+=plugin_name;
-    	name+=end;
-    	runner.SetPluginName(name);
-    	runner.Execute(menu_name,0);
-    	}
-    	*/
     	QString itkPluginName = this->FilterItem->currentText();
-    	this->itkPluginManager->runItkPluginMenuFunc(itkPluginName);
+    	this->itkPluginManager->runItkPluginFunc(itkPluginName);
 }
 void UserFilterPage::setItkPluginManager( ItkPluginManager* itkPluginManager ){
     this->itkPluginManager = itkPluginManager;

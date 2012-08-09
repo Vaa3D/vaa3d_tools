@@ -27,7 +27,8 @@ public:
     ItkPluginManager();
     ~ItkPluginManager();
     bool searchAllItkPlugins();
-    bool runItkPluginMenuFunc ( const QString& itkPluginName );
+    //bool runItkPluginMenuFunc ( const QString& itkPluginName );
+    bool runItkPluginFunc(const QString& itkPluginName);
     void setCallback ( V3DPluginCallback2* callback );
     void setIntialDir (const QString& intialDir);
     QStringList getAllItkPluginNames();

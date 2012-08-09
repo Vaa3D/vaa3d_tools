@@ -15,13 +15,6 @@ QStringList Superplugin::funclist()const
     return QStringList();
 }
 
-#define EXECUTE_PLUGIN_FOR_ONE_IMAGE_TYPE(v3d_pixel_type,c_pixel_type) \
-	case v3d_pixel_type:\
-	{ \
-		PluginSpecialized<c_pixel_type> runner(&callback);\
-		runner.Execute(menu_name,parent);\
-		break; \
-	}
 
 
 bool Superplugin::dofunc(const QString &func_name, const V3DPluginArgList &input, V3DPluginArgList &output, V3DPluginCallback2 &callback, QWidget *parent)
@@ -49,7 +42,7 @@ void Superplugin::domenu(const QString & menu_name,V3DPluginCallback2 & callback
     }
     Q_INIT_RESOURCE(superPluginIcons);
 
-    QString initialDir = QDir::fromNativeSeparators(QString("%1/plugins/ITK").arg(QDir::currentPath()));
+    QString initialDir = QDir::fromNativeSeparators(QString("%1/plugins/ITK/PureITKPlugin/").arg(qApp->applicationDirPath()));
     Dialog* mydialog = new Dialog((QWidget*)0);
     mydialog->setCallback(callback);
     mydialog->setInitialDir(initialDir);

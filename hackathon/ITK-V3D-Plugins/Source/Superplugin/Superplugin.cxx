@@ -52,7 +52,8 @@ void Superplugin::domenu(const QString & menu_name,V3DPluginCallback2 & callback
         return;
     }
     Q_INIT_RESOURCE(Icons);
-    QString initialDir = QDir::fromNativeSeparators(QString("%1/plugins/ITK/Superplugin/Plugin2Call").arg(QDir::currentPath()));
+    QString initialDir = QDir::fromNativeSeparators(QString("%1/plugins/ITK/Superplugin/Plugin2Call").arg(qApp->applicationDirPath()));
+    qDebug() << "initialDir to search: " << initialDir; 
     Dialog* mydialog = new Dialog(parent);
     mydialog->SetCallback(callback);
     mydialog->setInitialDir(initialDir);
