@@ -9,6 +9,7 @@ echo '========================================'
 ITK_DIR=
 ITK_BUILD_DIR=ITK_build
 V3D_SOURCE_DIR=
+V3D_SOURCE_DIR_FILE=V3D_Source_dir.tmp
 V3D_BINARY_DIR=
 V3D_BASIC_C_FUN_SOURCE_DIR=
 PLUGINS_BUILD_DIR=plugins_build
@@ -63,10 +64,15 @@ echo " Set the Vaa3D path yourself?(y/n)"
 read IS_SET_PATH
 if [ $IS_SET_PATH = "Y" -o $IS_SET_PATH = "y" ]; then
 	validate_vaa3d_source_dir
-elif [ ! -d $V3D_SOUCRCE_DIR/v3d_main ]; then 
+else
+	read V3D_SOUCRCE_DIR < $V3D_SOURCE_DIR_FILE
+	echo 'Your origin Vaa3d source dir is: ' $V3D_SOURCE_DIR
+fi	
+if [ ! -d $V3D_SOUCRCE_DIR/v3d_main ]; then 
 	echo 'Your path do not have the source, please set it again'
 	validate_vaa3d_source_dir
 fi
+echo $V3D_SOURCE_DIR > $V3D_SOURCE_DIR_FILE
 
 V3D_BASIC_C_FUN_SOURCE_DIR=$V3D_SOURCE_DIR/v3d_main/basic_c_fun
 V3D_BINARY_DIR=$V3D_SOURCE_DIR/bin
