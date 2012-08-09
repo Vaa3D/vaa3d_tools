@@ -65,10 +65,10 @@ read IS_SET_PATH
 if [ $IS_SET_PATH = "Y" -o $IS_SET_PATH = "y" ]; then
 	validate_vaa3d_source_dir
 else
-	read V3D_SOUCRCE_DIR < $V3D_SOURCE_DIR_FILE
+	read V3D_SOURCE_DIR < $V3D_SOURCE_DIR_FILE
 	echo 'Your origin Vaa3d source dir is: ' $V3D_SOURCE_DIR
 fi	
-if [ ! -d $V3D_SOUCRCE_DIR/v3d_main ]; then 
+if [ ! -d $V3D_SOURCE_DIR/v3d_main ]; then 
 	echo 'Your path do not have the source, please set it again'
 	validate_vaa3d_source_dir
 fi
