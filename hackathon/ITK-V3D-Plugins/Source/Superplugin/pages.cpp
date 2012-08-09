@@ -6,7 +6,7 @@
 #include "Superplugin.h"
 
 
-QString picName=":/images/app.png";
+static const QString picName=":/images/app.png";
 
 AutoPipePage::AutoPipePage(QWidget *parent):QWidget(parent)
 {
@@ -84,6 +84,8 @@ void AutoPipePage::CreateIcon()
 }
 void AutoPipePage::initialTest()
 {
+  m_pipeLineList.clear();
+  pipelineExp->clear();
   QStringList example1List;
   QStringList example2List; 
   QStringList example3List;
@@ -248,6 +250,7 @@ void UserPipePage::SetCallback( V3DPluginCallback &callback)
 	this->callback=&callback;
 }
 void UserPipePage::setSourceFilterList() {
+    this->SourceFilter->clear();
     for (int i =0; i < this->m_pluginNames.size(); i++) {
         QListWidgetItem* Filter = new QListWidgetItem(this->SourceFilter);
         Filter->setText(m_pluginNames.at(i));
@@ -313,6 +316,7 @@ void UserFilterPage::setPluginNames(const QStringList& pluginNames)
   this->setItemList();
 }
 void UserFilterPage::setItemList() {
+    this->FilterItem->clear();
     for ( int i = 0; i < this->m_pluginNames.count(); i++) {
         this->FilterItem->addItem(m_pluginNames.at(i));
     }

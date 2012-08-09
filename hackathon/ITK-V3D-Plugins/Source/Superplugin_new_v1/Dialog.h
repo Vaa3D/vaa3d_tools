@@ -12,6 +12,7 @@ class ItkPluginManager;
 class QListWidget;
 class QListWidgetItem;
 class QStackedWidget;
+class QPushButton;
 
 
 class Dialog: public QDialog
@@ -23,8 +24,10 @@ public:
     void setCallback(V3DPluginCallback2 &callback);
     void setInitialDir (const QString& intialDir);
     void intialPluginManager ();
-public slots:
+    void setVaa3DWorkingPluginsDir(const QString& workingDir);
+private slots:
     void changePage(QListWidgetItem *currunt,QListWidgetItem *previous);
+    void onDirChangeButtonClicked();
 private:
     void createIcons();
  //   void getAllThePluginsToCall();
@@ -39,5 +42,8 @@ private:
     QListWidget *contentsWidget;
     QStackedWidget *pagesWidget;
     ItkPluginManager* itkPluginManager;
+    QString m_initialDir;
+    QString m_vaa3DworkingPluginsDir;
+    QPushButton* m_dirChangeButton;
 };
 #endif

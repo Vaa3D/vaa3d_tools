@@ -15,6 +15,8 @@ void ItkPluginManager :: setIntialDir ( const QString& initialDir) {
 
 bool ItkPluginManager :: searchAllItkPlugins ()
 {
+    this->itkPluginFiles.clear();
+    this->itkPluginsHash.clear(); 
     QDir intiDir(this->intialDir);
     try{
         this->getItkPluginFiles (intiDir);

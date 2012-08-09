@@ -33,6 +33,7 @@ Dialog::Dialog( QWidget *parent ) : QDialog(parent)
     pagesWidget->addWidget(userFilterpage);
 
     QPushButton *closeButton = new QPushButton(tr("Close"));
+    m_dirChangeButton = new QPushButton(tr("change searching dir"), this);
 
     createIcons();
     contentsWidget->setCurrentRow(0);
@@ -48,12 +49,14 @@ Dialog::Dialog( QWidget *parent ) : QDialog(parent)
     //this->userFilterpage->setPluginPath ( this->pluginPath );
 
     connect(closeButton, SIGNAL(clicked()), this, SLOT(close()));
+    connect(m_dirChangeButton, SIGNAL(clicked()), this, SLOT(onDirChangeButtonClicked()));
 
     QHBoxLayout *horizontalLayout = new QHBoxLayout;
     horizontalLayout->addWidget(contentsWidget);
     horizontalLayout->addWidget(pagesWidget, 1);
 
     QHBoxLayout *buttonsLayout = new QHBoxLayout;
+    buttonsLayout->addWidget(m_dirChangeButton);
     buttonsLayout->addStretch(1);
     buttonsLayout->addWidget(closeButton);
 
@@ -105,11 +108,12 @@ void Dialog::setCallback(V3DPluginCallback2 &callback)
 
 }
 void Dialog::setInitialDir(const QString& intialDir) {
-    this->itkPluginManager->setIntialDir(intialDir);
+  this->m_initialDir = intialDir;
 }
 
 void Dialog::intialPluginManager () {
     bool done = false;
+    this->itkPluginManager->setIntialDir(m_initialDir);
     done = this->itkPluginManager->searchAllItkPlugins();
     if ( !done ) {std::cerr << "erro search the plugins! "<< std::endl;
                   return;
@@ -166,3 +170,25 @@ void Dialog::showAllTheFile()
     }
 }
 */
+void Dialog::setVaa3DWorkingPluginsDir(const QString& workingDir)
+{
+  this->m_vaa3DworkingPluginsDir = workingDir;
+}
+void Dialog::onDirChangeButtonClicked()
+{
+  QString folderName = QFileDialog::getExistingDirectory(this,
+                        tr("Get the folder of itk-plugins that can be called"), 
+                        m_vaa3DworkingPluginsDir, 
+                        QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks
+                      );
+  if (folderName == "") return;
+    
+  if (! folderName.startsWith(m_vaa3DworkingPluginsDir) )
+  {
+    v3d_msg(tr("Error path! The plugins path should under folder plugins"));
+    return ;
+  }
+  qDebug() << "new folder: " << folderName;
+  this->m_initialDir = folderName;
+  this->intialPluginManager();
+}

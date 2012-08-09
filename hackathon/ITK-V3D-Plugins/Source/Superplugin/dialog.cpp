@@ -28,17 +28,20 @@ Dialog::Dialog(QWidget* parent) : QDialog(parent)
     pagesWidget->addWidget(userFilterpage);
 
     QPushButton *closeButton = new QPushButton(tr("Close"));
+    m_dirChangeButton = new QPushButton(tr("change the origin search dir"), this);
 
     createIcons();
     contentsWidget->setCurrentRow(0);
 
     connect(closeButton, SIGNAL(clicked()), this, SLOT(close()));
+    connect(m_dirChangeButton, SIGNAL(clicked()), this, SLOT(onDirChangeButtonClicked()));
 
     QHBoxLayout *horizontalLayout = new QHBoxLayout;
     horizontalLayout->addWidget(contentsWidget);
     horizontalLayout->addWidget(pagesWidget, 1);
 
     QHBoxLayout *buttonsLayout = new QHBoxLayout;
+    buttonsLayout->addWidget(m_dirChangeButton);
     buttonsLayout->addStretch(1);
     buttonsLayout->addWidget(closeButton);
 
@@ -95,6 +98,8 @@ void Dialog::setInitialDir(const QString& initialDir) {
 }
 bool Dialog::searchAllItkPlugins()
 {
+  this->m_pluginNames.clear();
+  this->m_pluginsHash.clear();
   QDir initDir(this->m_initialDir);
   try {
     this->getItkPluginFiles(initDir);
@@ -169,5 +174,27 @@ QStringList Dialog::getPluginNames()
 QHash<QString, QString> Dialog::getPluginsHash() 
 {
   return m_pluginsHash;
+}
+void Dialog::setVaa3DWorkingPluginsDir(const QString& workingDir)
+{
+  this->m_vaa3DworkingPluginsDir = workingDir;
+}
+void Dialog::onDirChangeButtonClicked()
+{
+  QString folderName = QFileDialog::getExistingDirectory(this,
+                        tr("Get the folder of itk-plugins that can be called"), 
+                        m_vaa3DworkingPluginsDir, 
+                        QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks
+                      );
+  if (folderName == "") return;
+    
+  if (! folderName.startsWith(m_vaa3DworkingPluginsDir) )
+  {
+    v3d_msg(tr("Error path! The plugins path should under folder plugins"));
+    return ;
+  }
+  qDebug() << "new folder: " << folderName;
+  this->m_initialDir = folderName;
+  this->initial();
 }
 

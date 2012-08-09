@@ -10,6 +10,7 @@ class UserFilterPage;
 class QListWidget;
 class QListWidgetItem;
 class QStackedWidget;
+class QPushButton;
 
 class Dialog: public QDialog
 {
@@ -18,11 +19,13 @@ public:
     explicit Dialog(QWidget *parent = 0);
     void SetCallback(V3DPluginCallback &callback);
     void setInitialDir( const QString& initialDir);
+    void setVaa3DWorkingPluginsDir(const QString& workingDir);
     void initial();
     QStringList getPluginNames();
     QHash<QString, QString> getPluginsHash();
-public slots:
+private slots:
     void changePage(QListWidgetItem *currunt,QListWidgetItem *previous);
+    void onDirChangeButtonClicked();
 private:
     void createIcons();
     bool searchAllItkPlugins(); 
@@ -34,8 +37,10 @@ private:
     QListWidget *contentsWidget;
     QStackedWidget *pagesWidget;
     QString m_initialDir;
+    QString m_vaa3DworkingPluginsDir;
     QStringList m_pluginNames;
     QHash<QString, QString> m_pluginsHash;//use for call other plugins
+    QPushButton* m_dirChangeButton;
 };
 
 #endif // DIALOG_H

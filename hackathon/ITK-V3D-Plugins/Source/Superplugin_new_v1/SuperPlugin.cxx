@@ -49,10 +49,23 @@ void Superplugin::domenu(const QString & menu_name,V3DPluginCallback2 & callback
     }
     Q_INIT_RESOURCE(superPluginIcons);
 
-    QString initialDir = QDir::fromNativeSeparators(QString("%1/plugins/ITK").arg(qApp->applicationDirPath()));
-    Dialog* mydialog = new Dialog((QWidget*)0);
+    QDir testPluginsDir = QDir(qApp->applicationDirPath());
+#if defined(Q_OS_WIN)
+    if (testPluginsDir.dirName().toLower() == "debug" || testPluginsDir.dirName().toLower() == "release")
+        testPluginsDir.cdUp();
+#elif defined(Q_OS_MAC)
+    if (testPluginsDir.dirName() == "MacOS") {
+        testPluginsDir.cdUp();
+        testPluginsDir.cdUp();
+        testPluginsDir.cdUp();
+    }
+#endif
+    QString initialDir = QDir::fromNativeSeparators(QString("%1/plugins/ITK").arg(testPluginsDir.absolutePath()));
+    QString vaa3dPluginsDir = QDir::fromNativeSeparators(QString("%1/plugins").arg(testPluginsDir.absolutePath()));
+    Dialog* mydialog = new Dialog((QWidget*)parent);
     mydialog->setCallback(callback);
     mydialog->setInitialDir(initialDir);
+    mydialog->setVaa3DWorkingPluginsDir(vaa3dPluginsDir);
     mydialog->intialPluginManager();
     mydialog->show();
 }

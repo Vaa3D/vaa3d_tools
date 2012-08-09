@@ -52,11 +52,24 @@ void Superplugin::domenu(const QString & menu_name,V3DPluginCallback2 & callback
         return;
     }
     Q_INIT_RESOURCE(Icons);
-    QString initialDir = QDir::fromNativeSeparators(QString("%1/plugins/ITK/Superplugin/Plugin2Call").arg(qApp->applicationDirPath()));
+    QDir testPluginsDir = QDir(qApp->applicationDirPath());
+#if defined(Q_OS_WIN)
+    if (testPluginsDir.dirName().toLower() == "debug" || testPluginsDir.dirName().toLower() == "release")
+        testPluginsDir.cdUp();
+#elif defined(Q_OS_MAC)
+    if (testPluginsDir.dirName() == "MacOS") {
+        testPluginsDir.cdUp();
+        testPluginsDir.cdUp();
+        testPluginsDir.cdUp();
+    }
+#endif
+    QString initialDir = QDir::fromNativeSeparators(QString("%1/plugins/ITK/Superplugin/Plugin2Call").arg(testPluginsDir.absolutePath()));
+    QString vaa3dPluginsDir = QDir::fromNativeSeparators(QString("%1/plugins").arg(testPluginsDir.absolutePath()));
     qDebug() << "initialDir to search: " << initialDir; 
     Dialog* mydialog = new Dialog(parent);
     mydialog->SetCallback(callback);
     mydialog->setInitialDir(initialDir);
+    mydialog->setVaa3DWorkingPluginsDir(vaa3dPluginsDir);
     mydialog->initial();
     mydialog->show();
 //EXECUTE_PLUGIN_FOR_INTEGER_PIXEL_TYPES;

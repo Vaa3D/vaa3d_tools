@@ -79,6 +79,8 @@ void AutoPipePage::CreateIcon()
 }
 void AutoPipePage::initialTest()
 {
+  pipelineExp->clear();
+  m_pipeLineList.clear();
   QStringList example1List;
   QStringList example2List; 
   QStringList example3List;
@@ -313,6 +315,7 @@ void UserPipePage::getItkPluginList() {
     this->setSourceFilterList();
 }
 void UserPipePage::setSourceFilterList() {
+    this->SourceFilter->clear();
     for (int i =0; i < this->itkPluginNames.size(); i++) {
         QListWidgetItem* Filter = new QListWidgetItem(this->SourceFilter);
         Filter->setText(itkPluginNames.at(i));
@@ -426,6 +429,7 @@ void UserFilterPage::getItkPluginList() {
     this->setItemList();
 }
 void UserFilterPage::setItemList() {
+    this->FilterItem->clear();
     for ( int i = 0; i < this->itkPluginNames.count(); i++) {
         this->FilterItem->addItem(itkPluginNames.at(i));
     }
