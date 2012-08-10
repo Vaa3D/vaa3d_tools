@@ -16,7 +16,11 @@ PLUGINS_BUILD_DIR=plugins_build
 ITK_SOURCE_DIR=InsightToolkit-4.1.0
 ITK_SOURCE_GZ=InsightToolkit-4.1.0.tar.gz
 
+SYSTEM_NAME=`uname`
+SYSTEM_TYPE=`uname -m`
 
+echo "System is $SYSTEM_NAME, System type is $SYSTEM_TYPE";
+echo ' ------------------------------'
 echo  'build or rebuild ITK?(y/n): '
 read build_ITK
 
@@ -31,7 +35,13 @@ build_itk_library()
 	mkdir $ITK_BUILD_DIR && cd $ITK_BUILD_DIR
 	ITK_DIR=`pwd`
 	echo $ITK_DIR
-	cmake -DBUILD_TESTING=OFF -DBUILD_EXAMPLES=OFF -DITK_USE_REVIEW=ON -DBUILD_SHARED_LIBS=ON -DCMAKE_BUILD_TYPE=Debug ../$ITK_SOURCE_DIR
+	if [ $SYSTEM_NAME = 'Darwin' ]; then
+		cmake -DBUILD_TESTING=OFF -DBUILD_EXAMPLES=OFF -DITK_USE_REVIEW=ON -DBUILD_SHARED_LIBS=ON -DCMAKE_BUILD_TYPE=Debug ../$ITK_SOURCE_DIR
+	elif [ $SYSTEM_NAME = 'Linux' -a $SYSTEM_TYPE = 'x86_64' ]; then
+		cmake -DBUILD_TESTING=OFF -DBUILD_EXAMPLES=OFF -DITK_USE_REVIEW=ON -    DBUILD_SHARED_LIBS=ON -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_FLAGS_RELEASE=-fPIC CMAKE_C_FLAGS_RELEASE=-fPIC -Wno-dev ../$ITK_SOURCE_DIR
+	else
+		cmake -DBUILD_TESTING=OFF -DBUILD_EXAMPLES=OFF -DITK_USE_REVIEW=ON -    DBUILD_SHARED_LIBS=ON -DCMAKE_BUILD_TYPE=Release ../$ITK_SOURCE_DIR
+	fi
 	make -j4
 	cd ../
 }
