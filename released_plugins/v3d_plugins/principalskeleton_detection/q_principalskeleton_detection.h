@@ -25,6 +25,7 @@ public:
 struct PSDParas
 {
 	//input
+	int 		n_index_channel;
 	double 		d_inizoomfactor_skeleton;
 	long		l_maxitertimes;
 	double 		d_stopiter_threshold;

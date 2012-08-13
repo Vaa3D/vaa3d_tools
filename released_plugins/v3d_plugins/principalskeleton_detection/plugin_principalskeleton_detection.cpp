@@ -34,9 +34,9 @@ bool q_cubicSplineMarker(const QList<ImageMarker> &ql_marker,QList<ImageMarker> 
 bool q_saveSkeleton2swcFile_cubicspline(const QList<ImageMarker> &ql_cptpos,const vector< vector<long> > &vecvec_domain_cptind,
 										const QString &qs_filename_swc_cubicspline_skeleton_output);
 
-bool do_PrincipalSkeletonDetection(unsigned char *p_img_input, long *sz_img_input, QString &qs_filename_marker_ini, //input
-     QString &qs_filename_domain, int &n_index_channel, double &d_stopthresh,  //input
-     QList<ImageMarker> &ql_cptpos_output, vector< vector<long> > &vecvec_domain_smooth_ind); //output
+bool do_PrincipalSkeletonDetection(unsigned char *p_img_input, long *sz_img_input, QString &qs_filename_marker_ini, QString &qs_filename_domain,
+		                           const PSDParas &paras,  //input
+                                   QList<ImageMarker> &ql_cptpos_output, vector< vector<long> > &vecvec_domain_smooth_ind); //output
 
 bool PrincipalSkeletonDetection(const V3DPluginArgList & input, V3DPluginArgList & output);
 
@@ -57,7 +57,6 @@ QStringList PrincipalSkeletonDetectionPlugin::menulist() const
 	<< tr("about this plugin")
 	;
 }
-
 void PrincipalSkeletonDetectionPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
 {
 	if(menu_name==tr("detect prinipcal skeleton..."))
@@ -80,68 +79,54 @@ void PrincipalSkeletonDetectionPlugin::domenu(const QString &menu_name, V3DPlugi
 	}
 }
 
-
 QStringList PrincipalSkeletonDetectionPlugin::funclist() const
 {
 	return QStringList()
 		<<tr("detect")
-          <<tr("warp")
+		<<tr("warp")
 		<<tr("help");
 }
-
-
 bool PrincipalSkeletonDetectionPlugin::dofunc(const QString &func_name, const V3DPluginArgList &input, V3DPluginArgList &output, V3DPluginCallback2 &callback, QWidget *parent)
 {
-     if (func_name == tr("detect"))
+	if (func_name == tr("detect"))
 	{
 		return PrincipalSkeletonDetection(input, output);
-     }
-     if (func_name == tr("warp"))
+	}
+	if (func_name == tr("warp"))
 	{
 		return SkeletonBasedImgWarp(input, output);
-     }
-	else if(func_name == tr("help"))
+	}
+	else if (func_name == tr("help"))
 	{
-          cout<<"Usage : v3d -x principal_skeleton -f detect -i <inimg_file> <iniskele_file> <domain_file> -o <deformskele_file> <cubicswc_file> -p <channel> <stop_thresh>"<<endl;
-		cout<<endl;
-		cout<<"inimg_file     name of input image file"<<endl;
-          cout<<"iniskele_file  name of input initial skeleton file (.marker)"<<endl;
-          cout<<"domain_file    name of input domain definition file (.domain)"<<endl;
-
-          cout<<"deformskele_file    name of output deformed skeleton control points in a marker file (.marker)"<<endl;
-          cout<<"cubicswc_file       name of output cubic-spline smoothed skeleton swc file (.swc)"<<endl;
-
-		cout<<"channel        the input channel value, default 2 and start from 0"<<endl;
-		cout<<"stop_thresh    stop threshold, default 0.01"<<endl;
-		cout<<endl;
-		cout<<"e.g. v3d -x principal_skeleton -f detect -i input.raw iniskele_file.marker domain_file.domain -o deformskele.marker cubicswc.swc -p 2 0.01"<<endl;
-		cout<<endl;
-
-          cout<<"Usage : v3d -x principal_skeleton -f warp -i <subimg_file> <submak_file> <tarimg_file> <tarmak_file> <domain_file> -o <outimg_file>"<<endl;
-		cout<<endl;
-		cout<<"subimg_file     file name of subject image"<<endl;
-          cout<<"submak_file     file name of subject skeleton (.marker)"<<endl;
-          cout<<"tarimg_file     file name of target image"<<endl;
-          cout<<"tarmak_file     file name of target skeleton (.marker)"<<endl;
-          cout<<"domain_file     file name of domain definition (.domain)"<<endl;
-		cout<<endl;
-		cout<<"e.g. v3d -x principal_skeleton -f warp -i subimg.raw submak.marker tarimg.raw tarmak.marker domain_file.domain -o outimg.raw"<<endl;
-		cout<<endl;
+		cout<< "Usage : v3d -x principal_skeleton -f detect -i <inimg_file> <iniskele_file> <domain_file> -o <deformskele_file> <cubicswc_file> -p <channel> <stop_thresh>"	<< endl;
+		cout<< endl;
+		cout<< "inimg_file              name of input image file" << endl;
+		cout<< "iniskele_file           name of input initial skeleton file (.marker)"<< endl;
+		cout<< "domain_file             name of input domain definition file (.domain)"<< endl;
+		cout<< "deformskele_file        name of output deformed skeleton control points in a marker file (.marker)"<< endl;
+		cout<< "cubicswc_file           name of output cubic-spline smoothed skeleton swc file (.swc)"<< endl;
+		cout<< "channel                 the input channel value, default 2 and start from 0"<< endl;
+		cout<< "iniscalefactor_skeleton intial scale factor of skeleton, default 1" << endl;
+		cout<< "maxiter                 maximum iteration number, default 500" << endl;
+		cout<< "stop_thresh             iteration stop threshold, default 0.01" << endl;
+		cout<< "foreground_thresh       foreground image segmentation factor(times of image mean value), default 0.5" << endl;
+		cout<< "diskradius_morphology   disk radius of openning and closing performed on foreground image, default 7" << endl;
+		cout<< endl;
+		cout<< "e.g. v3d -x principal_skeleton -f detect -i input.raw iniskele_file.marker domain_file.domain -o deformskele.marker cubicswc.swc -p 2 1 500 0.01 0.5 7"	<< endl;
+		cout<< endl;
+		cout<< "Usage : v3d -x principal_skeleton -f warp -i <subimg_file> <submak_file> <tarimg_file> <tarmak_file> <domain_file> -o <outimg_file>"<< endl;
+		cout<< endl;
+		cout<< "subimg_file         file name of subject image" << endl;
+		cout<< "submak_file         file name of subject skeleton (.marker)"<< endl;
+		cout<< "tarimg_file         file name of target image" << endl;
+		cout<< "tarmak_file         file name of target skeleton (.marker)"<< endl;
+		cout<< "domain_file         file name of domain definition (.domain)"<< endl;
+		cout<< endl;
+		cout<< "e.g. v3d -x principal_skeleton -f warp -i subimg.raw submak.marker tarimg.raw tarmak.marker domain_file.domain -o outimg.raw"<< endl;
+		cout<< endl;
 		return true;
 	}
-
-
-QString qs_filename_img_sub = NULL;
-     QString qs_filename_mak_sub = NULL;
-	QString qs_filename_img_tar = NULL;
-     QString qs_filename_mak_tar = NULL;
-	QString qs_filename_domain  = NULL;
-     QString filename_img_out = NULL;
-
-
 }
-
-
 
 void OpenDownloadPage(QWidget *parent)
 {
@@ -153,99 +138,228 @@ void OpenDownloadPage(QWidget *parent)
 							 "Please browse to\n"
 							 "http://penglab.janelia.org/proj/principal_skeleton/supp/supp_index.htm\n"
 							 "to download the test data for this plugin");
+}
 
+void PrincipalSkeletonDetection(V3DPluginCallback2 &callback, QWidget *parent)
+{
+	//------------------------------------------------------------------------------------------------------------------------------------
+	//get image and parameters
+	Image4DSimple *p_img4dsimple=0;
+	unsigned char *p_img_input=0;
+	long sz_img_input[4];
+
+	v3dhandleList h_wndlist=callback.getImageWindowList();
+	if(h_wndlist.size()<1)
+	{
+		QMessageBox::information(0,title,QObject::tr("Need at least 1 image."));
+		return;
+	}
+	else
+	{
+		p_img4dsimple=callback.getImage(callback.currentImageWindow());
+		p_img_input=p_img4dsimple->getRawData();
+		sz_img_input[0]=p_img4dsimple->getXDim();
+		sz_img_input[1]=p_img4dsimple->getYDim();
+		sz_img_input[2]=p_img4dsimple->getZDim();
+		sz_img_input[3]=p_img4dsimple->getCDim();
+	}
+
+	//get initial marker and domain definition filename
+    PSDParas paras;
+    paras.n_index_channel=2;
+    paras.d_inizoomfactor_skeleton=1.0;
+    paras.l_maxitertimes=500;
+    paras.d_stopiter_threshold=0.01;
+    paras.d_foreground_treshold=0.5;
+    paras.l_diskradius_openning=7;
+    paras.l_diskradius_closing=7;
+
+	QString qs_filename_marker_ini,qs_filename_domain;
+	ParaDialog_PSDetection d(parent);
+	if(d.exec()==QDialog::Accepted)
+	{
+		qs_filename_marker_ini=d.getFilename_mak_ini();
+		qs_filename_domain=d.getFilename_domain();
+		paras.n_index_channel=d.refChannelLineEdit->text().toInt();
+		paras.d_stopiter_threshold=d.stopThreshLineEdit->text().toDouble();
+	}
+	else
+		return;
+
+	//------------------------------------------------------------------------------------------------------------------------------------
+	// do skeleton detection
+	QList<ImageMarker> ql_cptpos_output;
+	vector< vector<long> > vecvec_domain_smooth_ind;
+	if(! do_PrincipalSkeletonDetection(p_img_input, sz_img_input, qs_filename_marker_ini, qs_filename_domain,
+			paras,  // input
+			ql_cptpos_output, vecvec_domain_smooth_ind)) //output
+	{
+		v3d_msg("ERROR: Error in doing skeleton detection.");
+		return;
+	}
+
+	//------------------------------------------------------------------------------------------------------------------------------------
+	//output deformation results to files
+	QGroupBox *saveOptionGroup=new QGroupBox(parent);
+	saveOptionGroup->setTitle(QObject::tr("Save option"));
+	QCheckBox *saveskeleotn2markerfileCheckBox=new QCheckBox(saveOptionGroup);
+	QCheckBox *saveskeleton2swcfileCheckBox=new QCheckBox(saveOptionGroup);
+	saveskeleotn2markerfileCheckBox->setText(QObject::tr("save deformed skeleton control points to marker file"));
+	saveskeleton2swcfileCheckBox->setText(QObject::tr("save cubic-spline smoothed skeleton to swc file"));
+
+	QVBoxLayout *saveOptionLayout=new QVBoxLayout(saveOptionGroup);
+	saveOptionLayout->addWidget(saveskeleotn2markerfileCheckBox);
+	saveOptionLayout->addWidget(saveskeleton2swcfileCheckBox);
+
+	QHBoxLayout *savecancelLayout=new QHBoxLayout;
+	QPushButton* save=new QPushButton("Save");
+	QPushButton* cancel=new QPushButton("Cancel");
+	savecancelLayout->addWidget(save);
+	savecancelLayout->addWidget(cancel);
+
+	QVBoxLayout *mainLayout=new QVBoxLayout;
+	mainLayout->addWidget(saveOptionGroup);
+	mainLayout->addWidget(new QLabel(QObject::tr("Note: suffix will be added automatically\n(*.marker, *.swc)")));
+	mainLayout->addLayout(savecancelLayout);
+
+	QDialog dialog_showsave(parent);
+	dialog_showsave.setWindowTitle(QObject::tr("Output Option"));
+	dialog_showsave.setLayout(mainLayout);
+	dialog_showsave.connect(save,  SIGNAL(clicked()),&dialog_showsave,SLOT(accept()));
+	dialog_showsave.connect(cancel,SIGNAL(clicked()),&dialog_showsave,SLOT(reject()));
+
+	if(dialog_showsave.exec()==QDialog::Accepted)
+	{
+		QString filename_nosuffix,filename_marker_out,filename_swc_out;
+		filename_nosuffix=QFileDialog::getSaveFileName(parent,QString(QObject::tr("Only input filename (without suffix)")));
+		filename_marker_out=filename_nosuffix+QString(".marker");
+		filename_swc_out=filename_nosuffix+QString(".swc");
+
+		if(saveskeleotn2markerfileCheckBox->isChecked())
+		{
+			writeMarker_file(filename_marker_out,ql_cptpos_output);
+		}
+		if(saveskeleton2swcfileCheckBox->isChecked())
+		{
+			q_saveSkeleton2swcFile_cubicspline(ql_cptpos_output,vecvec_domain_smooth_ind,filename_swc_out);
+		}
+
+		if(saveskeleotn2markerfileCheckBox->isChecked() && !saveskeleton2swcfileCheckBox->isChecked())
+			QMessageBox::information(0,title,QObject::tr("save to:\n\n>>%1\n\ncomplete!").arg(filename_marker_out));
+		else if(!saveskeleotn2markerfileCheckBox->isChecked() && saveskeleton2swcfileCheckBox->isChecked())
+			QMessageBox::information(0,title,QObject::tr("save to:\n\n>>%1\n\ncomplete!").arg(filename_swc_out));
+		else if(saveskeleotn2markerfileCheckBox->isChecked() && saveskeleton2swcfileCheckBox->isChecked())
+			QMessageBox::information(0,title,QObject::tr("save to:\n\n>>%1\n>>%2\n\ncomplete!").arg(filename_marker_out).arg(filename_swc_out));
+	}
+	else
+		return;
+
+	//------------------------------------------------------------------------------------------------------------------------------------
+	printf(">>Program exit successful!\n");
+	return;
 }
 
 bool PrincipalSkeletonDetection(const V3DPluginArgList & input, V3DPluginArgList & output)
 {
-     cout<<"Welcome to Principal Skeleton Detection"<<endl;
+	cout << "Welcome to Principal Skeleton Detection" << endl;
 
-     if (output.size() != 1) return false;
 	//read arguments
-	QString qs_filename_input_img		     =NULL;
-	QString qs_filename_marker_ini		=NULL;
-	QString qs_filename_domain    		=NULL;
-	QString filename_marker_out   		=NULL;
-     QString filename_swc_out           	=NULL;
+	QString qs_filename_input_img = NULL;
+	QString qs_filename_marker_ini = NULL;
+	QString qs_filename_domain = NULL;
+	QString filename_marker_out = NULL;
+	QString filename_swc_out = NULL;
 
-     int n_index_channel=2;
-	double d_stopthresh=0.01;
+    PSDParas paras;
+    paras.n_index_channel=2;
+    paras.d_inizoomfactor_skeleton=1.0;
+    paras.l_maxitertimes=500;
+    paras.d_stopiter_threshold=0.01;
+    paras.d_foreground_treshold=0.5;
+    paras.l_diskradius_openning=7;
+    paras.l_diskradius_closing=7;
 
-     if (input.size()>=1)
-     {
-          // input files
-          vector<char*> paras_infile = (*(vector<char*> *)(input.at(0).p));
-          if(paras_infile.size() <3)
-          {
-               v3d_msg("There are not enough input files.", 0);
-               return false;
-          }
-          if(paras_infile.size() >= 1) qs_filename_input_img = paras_infile.at(0);
-          if(paras_infile.size() >= 2) qs_filename_marker_ini = paras_infile.at(1);
-          if(paras_infile.size() >= 3) qs_filename_domain = paras_infile.at(2);
-          // output files
-          vector<char*> paras_outfile = (*(vector<char*> *)(output.at(0).p));
-          if(paras_outfile.size() <2)
-          {
-               v3d_msg("There are not enough output files.", 0);
-               return false;
-          }
-          if(paras_outfile.size() >= 1) filename_marker_out = paras_outfile.at(0);
-          if(paras_outfile.size() >= 2) filename_swc_out = paras_outfile.at(1);
+	if (input.size() == 2 && output.size() ==1)
+	{
+		// input files
+		vector<char*> paras_infile = (*(vector<char*> *) (input.at(0).p));
+		if (paras_infile.size()!=3)
+		{
+			v3d_msg("ERROR: Incorrect input files.", 0);
+			return false;
+		}
+		qs_filename_input_img = paras_infile.at(0);
+		qs_filename_marker_ini = paras_infile.at(1);
+		qs_filename_domain = paras_infile.at(2);
 
-          // input -p
-          if(input.size()>=2)
-          {
-               vector<char*> paras = (*(vector<char*> *)(input.at(1).p));
-               if(paras.size() >= 1) n_index_channel = atoi(paras.at(0));
-               if(paras.size() >= 2) d_stopthresh = atof(paras.at(1));
-          }
-     }
+		// output files
+		vector<char*> paras_outfile = (*(vector<char*> *) (output.at(0).p));
+		if (paras_outfile.size()!=2)
+		{
+			v3d_msg("ERROR: Incorrect output paras.", 0);
+			return false;
+		}
+		filename_marker_out = paras_outfile.at(0);
+		filename_swc_out = paras_outfile.at(1);
 
+		// paras
+		vector<char*> paras_cmdline = (*(vector<char*> *) (input.at(1).p));
+		if (paras_cmdline.size()!=6)
+		{
+			v3d_msg("ERROR: Incorrect input paras.", 0);
+			return false;
+		}
+		paras.n_index_channel = atoi(paras_cmdline.at(0));
+		paras.d_inizoomfactor_skeleton = atof(paras_cmdline.at(1));
+		paras.l_maxitertimes = atof(paras_cmdline.at(2));
+		paras.d_stopiter_threshold = atof(paras_cmdline.at(3));
+		paras.d_foreground_treshold = atof(paras_cmdline.at(4));
+		paras.l_diskradius_openning = atof(paras_cmdline.at(5));
+		paras.l_diskradius_closing = paras.l_diskradius_openning;
+	}
+	else
+	{
+		v3d_msg("ERROR: Incorrect input or output paras.", 0);
+		return false;
+	}
 
-
-     cout<<"qs_filename_input_img:  "<<qPrintable(qs_filename_input_img)<<endl;
-     cout<<"qs_filename_marker_ini: "<<qPrintable(qs_filename_marker_ini)<<endl;
-
-     unsigned char *p_img_input=0;
-	long *sz_img_input=0;
+	unsigned char *p_img_input = 0;
+	long *sz_img_input = 0;
 	int datatype;
-	if(!loadImage((char*)qPrintable(qs_filename_input_img), p_img_input, sz_img_input, datatype))
-     {
-          cerr<<"load image "<< qPrintable(qs_filename_input_img) <<" error!"<<endl;
-          return false;
-     }
+	if (!loadImage((char*) qPrintable(qs_filename_input_img), p_img_input,
+			sz_img_input, datatype))
+	{
+		cerr << "load image " << qPrintable(qs_filename_input_img) << " error!" << endl;
+		return false;
+	}
 
-     cout<<"run here!"<<endl;
-     // do skeleton detection
-     QList<ImageMarker> ql_cptpos_output;
-     vector< vector<long> > vecvec_domain_smooth_ind;
-     if(! do_PrincipalSkeletonDetection(p_img_input, sz_img_input, qs_filename_marker_ini,
-               qs_filename_domain, n_index_channel, d_stopthresh,  // input
-               ql_cptpos_output, vecvec_domain_smooth_ind)) //output
-     {
-          v3d_msg("Error in doing skeleton detection.");
-          return false;
-     }
+	// do skeleton detection
+	QList<ImageMarker> ql_cptpos_output;
+	vector<vector<long> > vecvec_domain_smooth_ind;
+	if(! do_PrincipalSkeletonDetection(p_img_input, sz_img_input, qs_filename_marker_ini, qs_filename_domain,
+			paras,  // input
+			ql_cptpos_output, vecvec_domain_smooth_ind)) //output
+	{
+		v3d_msg("ERROR: Error in doing skeleton detection.");
+		return false;
+	}
 
-     // output
-     writeMarker_file(filename_marker_out,ql_cptpos_output);
-     q_saveSkeleton2swcFile_cubicspline(ql_cptpos_output,vecvec_domain_smooth_ind,filename_swc_out);
+	// output
+	writeMarker_file(filename_marker_out, ql_cptpos_output);
+	q_saveSkeleton2swcFile_cubicspline(ql_cptpos_output,
+			vecvec_domain_smooth_ind, filename_swc_out);
 
-     // free memory
-     if(p_img_input){delete []p_img_input; p_img_input=0;}
-     if(sz_img_input){delete []sz_img_input; sz_img_input=0;}
-     return true;
-
+	// free memory
+	if (p_img_input)	{delete[] p_img_input;		p_img_input = 0;}
+	if (sz_img_input)	{delete[] sz_img_input;		sz_img_input = 0;}
+	return true;
 }
 
-bool do_PrincipalSkeletonDetection(unsigned char *p_img_input, long *sz_img_input, QString &qs_filename_marker_ini,
-     QString &qs_filename_domain, int &n_index_channel, double &d_stopthresh,  // input
-     QList<ImageMarker> &ql_cptpos_output, vector< vector<long> > &vecvec_domain_smooth_ind) //output
+bool do_PrincipalSkeletonDetection(unsigned char *p_img_input, long *sz_img_input, QString &qs_filename_marker_ini, QString &qs_filename_domain,
+		const PSDParas &paras,  //input
+		QList<ImageMarker> &ql_cptpos_output, vector< vector<long> > &vecvec_domain_smooth_ind) //output
 {
-
 	//------------------------------------------------------------------------------------------------------------------------------------
-
 	//read initial marker file (initial skeleton control points position definition)
 	QList<ImageMarker> ql_cptpos_input;
 	ql_cptpos_input=readMarker_file(qs_filename_marker_ini);
@@ -325,8 +439,7 @@ bool do_PrincipalSkeletonDetection(unsigned char *p_img_input, long *sz_img_inpu
 
 	//------------------------------------------------------------------------------------------------------------------------------------
 	//extract the reference channel
-	//	int n_index_channel=2;
-    printf("\t>>extract the reference [%d]th channel from MIP image: ...\n",n_index_channel);
+    printf("\t>>extract the reference [%d]th channel from MIP image: ...\n",paras.n_index_channel);
 
     unsigned char *p_img_MIP_ref=0;
     p_img_MIP_ref=new unsigned char[sz_img_input[0]*sz_img_input[1]];
@@ -341,7 +454,7 @@ bool do_PrincipalSkeletonDetection(unsigned char *p_img_input, long *sz_img_inpu
 	for(long y=0;y<sz_img_input[1];y++)
 		for(long x=0;x<sz_img_input[0];x++)
 		{
-			long index_MIP=pgsz2*n_index_channel+pgsz1*y+x;
+			long index_MIP=pgsz2*paras.n_index_channel+pgsz1*y+x;
 			long index_MIP_1c=pgsz1*y+x;
 			p_img_MIP_ref[index_MIP_1c]=p_img_MIP[index_MIP];
 		}
@@ -401,20 +514,11 @@ bool do_PrincipalSkeletonDetection(unsigned char *p_img_input, long *sz_img_inpu
     }
 
     //principal skeleton detection parameters
-    PSDParas paras_input;
-    paras_input.l_maxitertimes=500;
-    paras_input.d_stopiter_threshold=0.01;
-    paras_input.d_foreground_treshold=0.5;
-    paras_input.l_diskradius_openning=7;
-    paras_input.l_diskradius_closing=7;
-
-    //do principal skeleton detection
-    if(!q_principalskeleton_detection(
-									  p_img_sample,sz_img_sample,
+    if(!q_principalskeleton_detection(p_img_sample,sz_img_sample,
 									  vec_cptpos_input,
 									  vecvec_domain_length_ind,vec_domain_length_weight,
 									  vecvec_domain_smooth_ind,vec_domain_smooth_weight,
-									  paras_input,
+									  paras,
 									  vec_cptpos_output))
     {
          v3d_msg("q_principalskeleton_detection() return false!");
@@ -444,123 +548,8 @@ bool do_PrincipalSkeletonDetection(unsigned char *p_img_input, long *sz_img_inpu
 
 	printf(">>Program exit successful!\n");
 	return true;
-
 }
 
-void PrincipalSkeletonDetection(V3DPluginCallback2 &callback, QWidget *parent)
-{
-	//------------------------------------------------------------------------------------------------------------------------------------
-	//get image
-	Image4DSimple *p_img4dsimple=0;
-	unsigned char *p_img_input=0;
-	long sz_img_input[4];
-
-	v3dhandleList h_wndlist=callback.getImageWindowList();
-	if(h_wndlist.size()<1)
-	{
-		QMessageBox::information(0,title,QObject::tr("Need at least 1 image."));
-		return;
-	}
-	else
-	{
-		p_img4dsimple=callback.getImage(callback.currentImageWindow());
-		p_img_input=p_img4dsimple->getRawData();
-		sz_img_input[0]=p_img4dsimple->getXDim();
-		sz_img_input[1]=p_img4dsimple->getYDim();
-		sz_img_input[2]=p_img4dsimple->getZDim();
-		sz_img_input[3]=p_img4dsimple->getCDim();
-	}
-
-	//------------------------------------------------------------------------------------------------------------------------------------
-	//get initial marker and domain definition filename
-	QString qs_filename_marker_ini,qs_filename_domain;
-	int n_index_channel=2;
-	double d_stopthresh=0.01;
-	ParaDialog_PSDetection d(parent);
-	if(d.exec()==QDialog::Accepted)
-	{
-		qs_filename_marker_ini=d.getFilename_mak_ini();
-		qs_filename_domain=d.getFilename_domain();
-		n_index_channel=d.refChannelLineEdit->text().toInt();
-		d_stopthresh=d.refChannelLineEdit->text().toDouble();
-	}
-	else
-		return;
-
-
-     // do skeleton detection
-     QList<ImageMarker> ql_cptpos_output;
-     vector< vector<long> > vecvec_domain_smooth_ind;
-     if(! do_PrincipalSkeletonDetection(p_img_input, sz_img_input, qs_filename_marker_ini,
-               qs_filename_domain, n_index_channel, d_stopthresh,  // input
-               ql_cptpos_output, vecvec_domain_smooth_ind)) //output
-     {
-          v3d_msg("Error in doing skeleton detection.");
-          return;
-     }
-
-
-	//output deformation results to files
-	QGroupBox *saveOptionGroup=new QGroupBox(parent);
-	saveOptionGroup->setTitle(QObject::tr("Save option"));
-	QCheckBox *saveskeleotn2markerfileCheckBox=new QCheckBox(saveOptionGroup);
-	QCheckBox *saveskeleton2swcfileCheckBox=new QCheckBox(saveOptionGroup);
-	saveskeleotn2markerfileCheckBox->setText(QObject::tr("save deformed skeleton control points to marker file"));
-	saveskeleton2swcfileCheckBox->setText(QObject::tr("save cubic-spline smoothed skeleton to swc file"));
-
-	QVBoxLayout *saveOptionLayout=new QVBoxLayout(saveOptionGroup);
-	saveOptionLayout->addWidget(saveskeleotn2markerfileCheckBox);
-	saveOptionLayout->addWidget(saveskeleton2swcfileCheckBox);
-
-	QHBoxLayout *savecancelLayout=new QHBoxLayout;
-	QPushButton* save=new QPushButton("Save");
-	QPushButton* cancel=new QPushButton("Cancel");
-	savecancelLayout->addWidget(save);
-	savecancelLayout->addWidget(cancel);
-
-	QVBoxLayout *mainLayout=new QVBoxLayout;
-	mainLayout->addWidget(saveOptionGroup);
-	mainLayout->addWidget(new QLabel(QObject::tr("Note: suffix will be added automatically\n(*.marker, *.swc)")));
-	mainLayout->addLayout(savecancelLayout);
-
-	QDialog dialog_showsave(parent);
-	dialog_showsave.setWindowTitle(QObject::tr("Output Option"));
-	dialog_showsave.setLayout(mainLayout);
-	dialog_showsave.connect(save,  SIGNAL(clicked()),&dialog_showsave,SLOT(accept()));
-	dialog_showsave.connect(cancel,SIGNAL(clicked()),&dialog_showsave,SLOT(reject()));
-
-	if(dialog_showsave.exec()==QDialog::Accepted)
-	{
-		QString filename_nosuffix,filename_marker_out,filename_swc_out;
-		filename_nosuffix=QFileDialog::getSaveFileName(parent,QString(QObject::tr("Only input filename (without suffix)")));
-		filename_marker_out=filename_nosuffix+QString(".marker");
-		filename_swc_out=filename_nosuffix+QString(".swc");
-
-		if(saveskeleotn2markerfileCheckBox->isChecked())
-		{
-			writeMarker_file(filename_marker_out,ql_cptpos_output);
-		}
-		if(saveskeleton2swcfileCheckBox->isChecked())
-		{
-			q_saveSkeleton2swcFile_cubicspline(ql_cptpos_output,vecvec_domain_smooth_ind,filename_swc_out);
-		}
-
-		if(saveskeleotn2markerfileCheckBox->isChecked() && !saveskeleton2swcfileCheckBox->isChecked())
-			QMessageBox::information(0,title,QObject::tr("save to:\n\n>>%1\n\ncomplete!").arg(filename_marker_out));
-		else if(!saveskeleotn2markerfileCheckBox->isChecked() && saveskeleton2swcfileCheckBox->isChecked())
-			QMessageBox::information(0,title,QObject::tr("save to:\n\n>>%1\n\ncomplete!").arg(filename_swc_out));
-		else if(saveskeleotn2markerfileCheckBox->isChecked() && saveskeleton2swcfileCheckBox->isChecked())
-			QMessageBox::information(0,title,QObject::tr("save to:\n\n>>%1\n>>%2\n\ncomplete!").arg(filename_marker_out).arg(filename_swc_out));
-	}
-	else
-		return;
-
-
-	//------------------------------------------------------------------------------------------------------------------------------------
-
-	printf(">>Program exit successful!\n");
-	return;
-}
 
 //************************************************************************************************************************************
 //paradialog for principal skeleton detection
