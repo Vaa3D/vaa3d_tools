@@ -871,115 +871,40 @@ bool q_cubicSplineMarker(const QList<ImageMarker> &ql_marker,QList<ImageMarker> 
 
 
 //************************************************************************************************************************************
-//paradialog for principal skeleton detection
-ParaDialog_PSWarping::ParaDialog_PSWarping(QWidget *parent):QDialog(parent)
+void SkeletonBasedImgWarp(V3DPluginCallback2 &callback, QWidget *parent)
 {
-	filePathLineEdit_img_sub=new QLineEdit(QObject::tr("choose subject image file here (*.lsm,*.raw,*.tif)"));
-	filePathLineEdit_mak_sub=new QLineEdit(QObject::tr("choose subject skeleton file here (*.marker)"));
-	filePathLineEdit_img_tar=new QLineEdit(QObject::tr("choose target image file here (*.lsm,*.raw,*.tif)"));
-	filePathLineEdit_mak_tar=new QLineEdit(QObject::tr("choose target skeleton file here (*.marker)"));
-	filePathLineEdit_domain=new QLineEdit(QObject::tr("choose domain definition file here (*.domain)"));
-	filePathLineEdit_domain->setFixedWidth(400);
+	QString qs_filename_img_sub,qs_filename_mak_sub;
+	QString qs_filename_img_tar,qs_filename_mak_tar;
+	QString qs_filename_domain;
 
-	QPushButton *button1=new QPushButton(QObject::tr("..."));
-	QPushButton *button2=new QPushButton(QObject::tr("..."));
-	QPushButton *button3=new QPushButton(QObject::tr("..."));
-	QPushButton *button4=new QPushButton(QObject::tr("..."));
-	QPushButton *button5=new QPushButton(QObject::tr("..."));
-	QPushButton *ok=new QPushButton("OK");	ok->setDefault(true);
-	QPushButton *cancel=new QPushButton("Cancel");
-
-	connect(button1,SIGNAL(clicked()),this,SLOT(openFileDialog_img_sub()));
-	connect(button2,SIGNAL(clicked()),this,SLOT(openFileDialog_mak_sub()));
-	connect(button3,SIGNAL(clicked()),this,SLOT(openFileDialog_img_tar()));
-	connect(button4,SIGNAL(clicked()),this,SLOT(openFileDialog_mak_tar()));
-	connect(button5,SIGNAL(clicked()),this,SLOT(openFileDialog_domain()));
-	connect(ok,	    SIGNAL(clicked()),this,SLOT(accept()));
-	connect(cancel, SIGNAL(clicked()),this,SLOT(reject()));
-
-	QGroupBox *fileChooseGroup=new QGroupBox(parent);
-
-	QGridLayout *fileChooseLayout=new QGridLayout(fileChooseGroup);
-	fileChooseLayout->addWidget(filePathLineEdit_img_sub,0,0);
-	fileChooseLayout->addWidget(button1,0,1);
-	fileChooseLayout->addWidget(filePathLineEdit_mak_sub,1,0);
-	fileChooseLayout->addWidget(button2,1,1);
-	fileChooseLayout->addWidget(filePathLineEdit_img_tar,2,0);
-	fileChooseLayout->addWidget(button3,2,1);
-	fileChooseLayout->addWidget(filePathLineEdit_mak_tar,3,0);
-	fileChooseLayout->addWidget(button4,3,1);
-	fileChooseLayout->addWidget(filePathLineEdit_domain,4,0);
-	fileChooseLayout->addWidget(button5,4,1);
-
-	QHBoxLayout *okcancelLayout=new QHBoxLayout;
-	okcancelLayout->addWidget(ok);
-	okcancelLayout->addWidget(cancel);
-
-	QVBoxLayout *mainLayout=new QVBoxLayout;
-	mainLayout->addWidget(fileChooseGroup);
-	mainLayout->addLayout(okcancelLayout);
-	mainLayout->setSizeConstraint(QLayout::SetFixedSize);
-
-	setWindowTitle(QObject::tr("Choose files for principal skeleton based warping"));
-	setLayout(mainLayout);
-}
-void ParaDialog_PSWarping::openFileDialog_img_sub()
-{
-	QFileDialog d(this);
-	d.setWindowTitle(tr("Select subject image file (*.lsm,*.raw,*.tif)"));
-	d.setNameFilter("image file (*.lsm *.raw *.tif)");
-	if(d.exec())
+	ParaDialog_PSWarping d(parent);
+	if(d.exec()==QDialog::Accepted)
 	{
-		QString selectedFile=(d.selectedFiles())[0];
-		filePathLineEdit_img_sub->setText(selectedFile);
+		qs_filename_img_sub=d.filePathLineEdit_img_sub->text();
+		qs_filename_mak_sub=d.filePathLineEdit_mak_sub->text();
+		qs_filename_img_tar=d.filePathLineEdit_img_tar->text();
+		qs_filename_mak_tar=d.filePathLineEdit_mak_tar->text();
+		qs_filename_domain=d.filePathLineEdit_domain->text();
 	}
-}
-void ParaDialog_PSWarping::openFileDialog_mak_sub()
-{
-	QFileDialog d(this);
-	d.setWindowTitle(tr("Select subject skeleton file (*.marker)"));
-	d.setNameFilter("Marker file (*.marker)");
-	if(d.exec())
-	{
-		QString selectedFile=(d.selectedFiles())[0];
-		filePathLineEdit_mak_sub->setText(selectedFile);
-	}
-}
-void ParaDialog_PSWarping::openFileDialog_img_tar()
-{
-	QFileDialog d(this);
-	d.setWindowTitle(tr("Select target image file (*.lsm,*.raw,*.tif)"));
-	d.setNameFilter("image file (*.lsm *.raw *.tif)");
-	if(d.exec())
-	{
-		QString selectedFile=(d.selectedFiles())[0];
-		filePathLineEdit_img_tar->setText(selectedFile);
-	}
-}
-void ParaDialog_PSWarping::openFileDialog_mak_tar()
-{
-	QFileDialog d(this);
-	d.setWindowTitle(tr("Select target skeleton file (*.marker)"));
-	d.setNameFilter("Marker file (*.marker)");
-	if(d.exec())
-	{
-		QString selectedFile=(d.selectedFiles())[0];
-		filePathLineEdit_mak_tar->setText(selectedFile);
-	}
-}
-void ParaDialog_PSWarping::openFileDialog_domain()
-{
-	QFileDialog d(this);
-	d.setWindowTitle(tr("Open domain definition file (*.domain)"));
-	d.setNameFilter("Domain file (*.domain)");
-	if(d.exec())
-	{
-		QString selectedFile=(d.selectedFiles())[0];
-		filePathLineEdit_domain->setText(selectedFile);
-	}
-}
+	else
+		return;
 
+     // do warp
+     unsigned char* newdata1d = 0;
+     V3DLONG* sz_img_tar = 0;
+     if(! do_ImgWarp(qs_filename_img_sub, qs_filename_mak_sub, qs_filename_img_tar, qs_filename_mak_tar, qs_filename_domain,
+               newdata1d, sz_img_tar))
+     {
+          return;
+     }
 
+     // output
+     v3dhandle newwin=callback.newImageWindow();
+	Image4DSimple tmp;
+     tmp.setData(newdata1d,sz_img_tar[0],sz_img_tar[1],sz_img_tar[2],sz_img_tar[3],V3D_UINT8);
+	callback.setImage(newwin,&tmp);
+	callback.updateImageWindow(newwin);
+}
 
 bool SkeletonBasedImgWarp(const V3DPluginArgList & input, V3DPluginArgList & output)
 {
@@ -1037,43 +962,6 @@ bool SkeletonBasedImgWarp(const V3DPluginArgList & input, V3DPluginArgList & out
      if(sz_img_tar){delete []sz_img_tar; sz_img_tar=0;}
      return true;
 }
-
-
-void SkeletonBasedImgWarp(V3DPluginCallback2 &callback, QWidget *parent)
-{
-	QString qs_filename_img_sub,qs_filename_mak_sub;
-	QString qs_filename_img_tar,qs_filename_mak_tar;
-	QString qs_filename_domain;
-
-	ParaDialog_PSWarping d(parent);
-	if(d.exec()==QDialog::Accepted)
-	{
-		qs_filename_img_sub=d.filePathLineEdit_img_sub->text();
-		qs_filename_mak_sub=d.filePathLineEdit_mak_sub->text();
-		qs_filename_img_tar=d.filePathLineEdit_img_tar->text();
-		qs_filename_mak_tar=d.filePathLineEdit_mak_tar->text();
-		qs_filename_domain=d.filePathLineEdit_domain->text();
-	}
-	else
-		return;
-
-     // do warp
-     unsigned char* newdata1d = 0;
-     V3DLONG* sz_img_tar = 0;
-     if(! do_ImgWarp(qs_filename_img_sub, qs_filename_mak_sub, qs_filename_img_tar, qs_filename_mak_tar, qs_filename_domain,
-               newdata1d, sz_img_tar))
-     {
-          return;
-     }
-
-     // output
-     v3dhandle newwin=callback.newImageWindow();
-	Image4DSimple tmp;
-     tmp.setData(newdata1d,sz_img_tar[0],sz_img_tar[1],sz_img_tar[2],sz_img_tar[3],V3D_UINT8);
-	callback.setImage(newwin,&tmp);
-	callback.updateImageWindow(newwin);
-}
-
 
 bool do_ImgWarp(QString &qs_filename_img_sub, QString &qs_filename_mak_sub, QString &qs_filename_img_tar,
      QString &qs_filename_mak_tar, QString &qs_filename_domain,
@@ -1319,4 +1207,114 @@ bool do_ImgWarp(QString &qs_filename_img_sub, QString &qs_filename_mak_sub, QStr
 	printf("Program exit successful!\n");
      return true;
 
+}
+
+
+//************************************************************************************************************************************
+//paradialog for principal skeleton detection
+ParaDialog_PSWarping::ParaDialog_PSWarping(QWidget *parent):QDialog(parent)
+{
+	filePathLineEdit_img_sub=new QLineEdit(QObject::tr("choose subject image file here (*.lsm,*.raw,*.tif)"));
+	filePathLineEdit_mak_sub=new QLineEdit(QObject::tr("choose subject skeleton file here (*.marker)"));
+	filePathLineEdit_img_tar=new QLineEdit(QObject::tr("choose target image file here (*.lsm,*.raw,*.tif)"));
+	filePathLineEdit_mak_tar=new QLineEdit(QObject::tr("choose target skeleton file here (*.marker)"));
+	filePathLineEdit_domain=new QLineEdit(QObject::tr("choose domain definition file here (*.domain)"));
+	filePathLineEdit_domain->setFixedWidth(400);
+
+	QPushButton *button1=new QPushButton(QObject::tr("..."));
+	QPushButton *button2=new QPushButton(QObject::tr("..."));
+	QPushButton *button3=new QPushButton(QObject::tr("..."));
+	QPushButton *button4=new QPushButton(QObject::tr("..."));
+	QPushButton *button5=new QPushButton(QObject::tr("..."));
+	QPushButton *ok=new QPushButton("OK");	ok->setDefault(true);
+	QPushButton *cancel=new QPushButton("Cancel");
+
+	connect(button1,SIGNAL(clicked()),this,SLOT(openFileDialog_img_sub()));
+	connect(button2,SIGNAL(clicked()),this,SLOT(openFileDialog_mak_sub()));
+	connect(button3,SIGNAL(clicked()),this,SLOT(openFileDialog_img_tar()));
+	connect(button4,SIGNAL(clicked()),this,SLOT(openFileDialog_mak_tar()));
+	connect(button5,SIGNAL(clicked()),this,SLOT(openFileDialog_domain()));
+	connect(ok,	    SIGNAL(clicked()),this,SLOT(accept()));
+	connect(cancel, SIGNAL(clicked()),this,SLOT(reject()));
+
+	QGroupBox *fileChooseGroup=new QGroupBox(parent);
+
+	QGridLayout *fileChooseLayout=new QGridLayout(fileChooseGroup);
+	fileChooseLayout->addWidget(filePathLineEdit_img_sub,0,0);
+	fileChooseLayout->addWidget(button1,0,1);
+	fileChooseLayout->addWidget(filePathLineEdit_mak_sub,1,0);
+	fileChooseLayout->addWidget(button2,1,1);
+	fileChooseLayout->addWidget(filePathLineEdit_img_tar,2,0);
+	fileChooseLayout->addWidget(button3,2,1);
+	fileChooseLayout->addWidget(filePathLineEdit_mak_tar,3,0);
+	fileChooseLayout->addWidget(button4,3,1);
+	fileChooseLayout->addWidget(filePathLineEdit_domain,4,0);
+	fileChooseLayout->addWidget(button5,4,1);
+
+	QHBoxLayout *okcancelLayout=new QHBoxLayout;
+	okcancelLayout->addWidget(ok);
+	okcancelLayout->addWidget(cancel);
+
+	QVBoxLayout *mainLayout=new QVBoxLayout;
+	mainLayout->addWidget(fileChooseGroup);
+	mainLayout->addLayout(okcancelLayout);
+	mainLayout->setSizeConstraint(QLayout::SetFixedSize);
+
+	setWindowTitle(QObject::tr("Choose files for principal skeleton based warping"));
+	setLayout(mainLayout);
+}
+void ParaDialog_PSWarping::openFileDialog_img_sub()
+{
+	QFileDialog d(this);
+	d.setWindowTitle(tr("Select subject image file (*.lsm,*.raw,*.tif)"));
+	d.setNameFilter("image file (*.lsm *.raw *.tif)");
+	if(d.exec())
+	{
+		QString selectedFile=(d.selectedFiles())[0];
+		filePathLineEdit_img_sub->setText(selectedFile);
+	}
+}
+void ParaDialog_PSWarping::openFileDialog_mak_sub()
+{
+	QFileDialog d(this);
+	d.setWindowTitle(tr("Select subject skeleton file (*.marker)"));
+	d.setNameFilter("Marker file (*.marker)");
+	if(d.exec())
+	{
+		QString selectedFile=(d.selectedFiles())[0];
+		filePathLineEdit_mak_sub->setText(selectedFile);
+	}
+}
+void ParaDialog_PSWarping::openFileDialog_img_tar()
+{
+	QFileDialog d(this);
+	d.setWindowTitle(tr("Select target image file (*.lsm,*.raw,*.tif)"));
+	d.setNameFilter("image file (*.lsm *.raw *.tif)");
+	if(d.exec())
+	{
+		QString selectedFile=(d.selectedFiles())[0];
+		filePathLineEdit_img_tar->setText(selectedFile);
+	}
+}
+void ParaDialog_PSWarping::openFileDialog_mak_tar()
+{
+	QFileDialog d(this);
+	d.setWindowTitle(tr("Select target skeleton file (*.marker)"));
+	d.setNameFilter("Marker file (*.marker)");
+	if(d.exec())
+	{
+		QString selectedFile=(d.selectedFiles())[0];
+		filePathLineEdit_mak_tar->setText(selectedFile);
+	}
+}
+void ParaDialog_PSWarping::openFileDialog_domain()
+{
+	QFileDialog d(this);
+	d.setWindowTitle(tr("Open domain definition file (*.domain)"));
+	d.setNameFilter("Domain file (*.domain)");
+	if(d.exec())
+	{
+		QString selectedFile=(d.selectedFiles())[0];
+		filePathLineEdit_domain->setText(selectedFile);
+	}
 }

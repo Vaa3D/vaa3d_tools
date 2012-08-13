@@ -194,7 +194,7 @@ bool q_principalskeleton_detection(
 	f_thresh_mask=d_img_mean*paras_input.d_foreground_treshold;
 
     unsigned char *p_img_foreground=0;
-    p_img_foreground=new unsigned char[sz_img_input[0]*sz_img_input[1]];
+    p_img_foreground=new unsigned char[sz_img_input[0]*sz_img_input[1]]();
 	if(!p_img_foreground)
 	{
 		printf("ERROR:Fail to allocate memory for foreground image. \n");
@@ -291,7 +291,7 @@ bool q_principalskeleton_detection(
 	printf("\t>>record the foreground pixel position and generate base image ... \n");
 	vector<long> vec_foregroundpixel_x,vec_foregroundpixel_y;
     unsigned char *p_img_base=0;
-    p_img_base=new unsigned char[sz_img_input[0]*sz_img_input[1]];
+    p_img_base=new unsigned char[sz_img_input[0]*sz_img_input[1]]();
 	if(!p_img_base)
 	{
 		printf("ERROR:Fail to allocate memory for base image. \n");
