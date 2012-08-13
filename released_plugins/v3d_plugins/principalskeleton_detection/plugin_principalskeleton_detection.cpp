@@ -25,26 +25,22 @@ using namespace std;
 Q_EXPORT_PLUGIN2(principalskeleton_detection, PrincipalSkeletonDetectionPlugin)
 
 void PrincipalSkeletonDetection(V3DPluginCallback2 &callback, QWidget *parent);
-void SkeletonBasedImgWarp(V3DPluginCallback2 &callback, QWidget *parent);
-void OpenDownloadPage(QWidget *parent);
-bool readDomain_file(const QString &qs_filename,
-					 vector< vector<long> > &vecvec_domain_length_ind,vector<double> &vec_domain_length_weight,
-					 vector< vector<long> > &vecvec_domain_smooth_ind,vector<double> &vec_domain_smooth_weight);
-bool q_cubicSplineMarker(const QList<ImageMarker> &ql_marker,QList<ImageMarker> &ql_marker_cubicspline);
-bool q_saveSkeleton2swcFile_cubicspline(const QList<ImageMarker> &ql_cptpos,const vector< vector<long> > &vecvec_domain_cptind,
-										const QString &qs_filename_swc_cubicspline_skeleton_output);
-
+bool PrincipalSkeletonDetection(const V3DPluginArgList & input, V3DPluginArgList & output);
 bool do_PrincipalSkeletonDetection(unsigned char *p_img_input, long *sz_img_input, QString &qs_filename_marker_ini, QString &qs_filename_domain,
 		                           const PSDParas &paras,  //input
                                    QList<ImageMarker> &ql_cptpos_output, vector< vector<long> > &vecvec_domain_smooth_ind); //output
-
-bool PrincipalSkeletonDetection(const V3DPluginArgList & input, V3DPluginArgList & output);
-
+void SkeletonBasedImgWarp(V3DPluginCallback2 &callback, QWidget *parent);
 bool SkeletonBasedImgWarp(const V3DPluginArgList & input, V3DPluginArgList & output);
-
 bool do_ImgWarp(QString &qs_filename_img_sub, QString &qs_filename_mak_sub, QString &qs_filename_img_tar,
      QString &qs_filename_mak_tar, QString &qs_filename_domain,
      unsigned char* &newdata1d, V3DLONG* &out_sz);
+bool q_cubicSplineMarker(const QList<ImageMarker> &ql_marker,QList<ImageMarker> &ql_marker_cubicspline);
+bool readDomain_file(const QString &qs_filename,
+					 vector< vector<long> > &vecvec_domain_length_ind,vector<double> &vec_domain_length_weight,
+					 vector< vector<long> > &vecvec_domain_smooth_ind,vector<double> &vec_domain_smooth_weight);
+bool q_saveSkeleton2swcFile_cubicspline(const QList<ImageMarker> &ql_cptpos,const vector< vector<long> > &vecvec_domain_cptind,
+										const QString &qs_filename_swc_cubicspline_skeleton_output);
+void OpenDownloadPage(QWidget *parent);
 
 
 const QString title = "Principal Skeleton Detection demo";
@@ -54,8 +50,7 @@ QStringList PrincipalSkeletonDetectionPlugin::menulist() const
 	<< tr("detect prinipcal skeleton...")
 	<< tr("warp subject image to target by aligning their skeletons...")
 	<< tr("open test data and demo web page")
-	<< tr("about this plugin")
-	;
+	<< tr("about this plugin");
 }
 void PrincipalSkeletonDetectionPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
 {
@@ -112,7 +107,7 @@ bool PrincipalSkeletonDetectionPlugin::dofunc(const QString &func_name, const V3
 		cout<< "foreground_thresh       foreground image segmentation factor(times of image mean value), default 0.5" << endl;
 		cout<< "diskradius_morphology   disk radius of openning and closing performed on foreground image, default 7" << endl;
 		cout<< endl;
-		cout<< "e.g. v3d -x principal_skeleton -f detect -i input.raw iniskele_file.marker domain_file.domain -o deformskele.marker cubicswc.swc -p 2 1 500 0.01 0.5 7"	<< endl;
+		cout<< "e.g. v3d -x principal_skeleton -f detect -i input.raw iniskele_file.marker domain_file.domain -o deformskele.marker cubicswc.swc -p 2 1 500 0.01 0.5 7 0 0"	<< endl;
 		cout<< endl;
 		cout<< "Usage : v3d -x principal_skeleton -f warp -i <subimg_file> <submak_file> <tarimg_file> <tarmak_file> <domain_file> -o <outimg_file>"<< endl;
 		cout<< endl;
@@ -304,7 +299,7 @@ bool PrincipalSkeletonDetection(const V3DPluginArgList & input, V3DPluginArgList
 
 		// paras
 		vector<char*> paras_cmdline = (*(vector<char*> *) (input.at(1).p));
-		if (paras_cmdline.size()!=6)
+		if (paras_cmdline.size()!=8)
 		{
 			v3d_msg("ERROR: Incorrect input paras.", 0);
 			return false;
@@ -316,6 +311,8 @@ bool PrincipalSkeletonDetection(const V3DPluginArgList & input, V3DPluginArgList
 		paras.d_foreground_treshold = atof(paras_cmdline.at(4));
 		paras.l_diskradius_openning = atof(paras_cmdline.at(5));
 		paras.l_diskradius_closing = paras.l_diskradius_openning;
+		paras.b_removeboundaryartifact=atoi(paras_cmdline.at(6));
+		paras.i_baseimage_methhod=atoi(paras_cmdline.at(7));
 	}
 	else
 	{
@@ -323,13 +320,14 @@ bool PrincipalSkeletonDetection(const V3DPluginArgList & input, V3DPluginArgList
 		return false;
 	}
 
+	//load image
 	unsigned char *p_img_input = 0;
 	long *sz_img_input = 0;
 	int datatype;
 	if (!loadImage((char*) qPrintable(qs_filename_input_img), p_img_input,
 			sz_img_input, datatype))
 	{
-		cerr << "load image " << qPrintable(qs_filename_input_img) << " error!" << endl;
+		v3d_msg("ERROR: Load image error!", 0);
 		return false;
 	}
 
@@ -341,6 +339,8 @@ bool PrincipalSkeletonDetection(const V3DPluginArgList & input, V3DPluginArgList
 			ql_cptpos_output, vecvec_domain_smooth_ind)) //output
 	{
 		v3d_msg("ERROR: Error in doing skeleton detection.");
+		if (p_img_input)	{delete[] p_img_input;		p_img_input = 0;}
+		if (sz_img_input)	{delete[] sz_img_input;		sz_img_input = 0;}
 		return false;
 	}
 

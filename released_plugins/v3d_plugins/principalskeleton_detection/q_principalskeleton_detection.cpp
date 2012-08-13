@@ -237,6 +237,55 @@ bool q_principalskeleton_detection(
 	if(p_img_temp) 				{delete []p_img_temp;			p_img_temp=0;}
 
 	//------------------------------------------------------------------------------------------------------------------------------------
+	//remove noise tissue by keeping the connected region in the central area (by qul@20120730)
+	if(paras_input.b_removeboundaryartifact)
+	{
+		unsigned char *p_img_connected=0,*p_img_connected_tmp=0;
+		p_img_connected=new unsigned char[sz_img_input[0]*sz_img_input[1]]();
+		//find seed
+		long pos_seed[2];
+		{
+		pos_seed[0]=sz_img_input[0]/2.0+0.5;//x
+		pos_seed[1]=sz_img_input[1]/2.0+0.5;//y
+		for(long i=0;i<sz_img_input[0];i++)
+		{
+			long index=sz_img_input[0]*pos_seed[1]+pos_seed[0];
+			if(p_img_foreground_co[index]>10)
+				break;
+			else
+				pos_seed[0]++;
+		}
+		}
+		//find connected region according to given seed
+		p_img_connected[sz_img_input[0]*pos_seed[1]+pos_seed[0]]=100;
+		CKernelMP kernel_8connect;
+		q_create_kernel(3,3,1,1,0,kernel_8connect);
+		while(1)
+		{
+			q_dilation(p_img_connected,sz_img_input[0],sz_img_input[1],kernel_mask,p_img_connected_tmp);
+
+			long error=0;
+			for(long y=0;y<sz_img_input[1];y++)
+				for(long x=0;x<sz_img_input[0];x++)
+				{
+					long index=sz_img_input[0]*y+x;
+					if(p_img_foreground_co[index]>10 && p_img_connected_tmp[index]>10 && p_img_connected[index]<=10)
+					{
+						p_img_connected[index]=100;
+						error++;
+					}
+				}
+			if(p_img_connected_tmp) 				{delete []p_img_connected_tmp;			p_img_connected_tmp=0;}
+
+			if(error==0) break;
+		}
+
+		if(p_img_foreground_co) {delete []p_img_foreground_co;	p_img_foreground_co=0;}
+		p_img_foreground_co=p_img_connected;
+		p_img_connected=0;
+	}
+
+	//------------------------------------------------------------------------------------------------------------------------------------
 	//record the foreground pixel position (for voronoi decompositon) and generate base image
 	//generate base image (on which we deform the principal skeleton)
 	printf("\t>>record the foreground pixel position and generate base image ... \n");
@@ -262,7 +311,10 @@ bool q_principalskeleton_detection(
 				vec_foregroundpixel_y.push_back(y);
 
 				//generate base image
-				p_img_base[index]=p_img_input[index];
+				if(paras_input.i_baseimage_methhod==0)
+					p_img_base[index]=p_img_input[index];
+				else
+					p_img_base[index]=100;
 			}
 		}
 

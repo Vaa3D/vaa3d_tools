@@ -32,6 +32,8 @@ struct PSDParas
 	double 		d_foreground_treshold;//times of image mean value
 	long 		l_diskradius_openning;
 	long 		l_diskradius_closing;
+	bool		b_removeboundaryartifact;//remove noise tissue in the boundary of image
+	int			i_baseimage_methhod;//deform skeleton on (0: original image, 1: mask image)
 	//output
 };
 
