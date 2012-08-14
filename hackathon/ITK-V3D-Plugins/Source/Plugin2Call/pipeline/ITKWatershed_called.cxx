@@ -2,6 +2,8 @@
 
 #include <math.h>
 #include <stdlib.h>
+#include <exception>
+using namespace std;
 
 #include "ITKWatershed_called.h"
 #include "V3DITKFilterSingleImage.h"
@@ -13,6 +15,7 @@
 #include "itkShapeLabelObject.h"
 #include "itkLabelMap.h"
 #include "itkLabelImageToShapeLabelMapFilter.h"
+#include "itkCastImageFilter.h"
 
 // Q_EXPORT_PLUGIN2 ( PluginName, ClassName )
 // The value of PluginName should correspond to the TARGET specified in the
@@ -48,6 +51,7 @@ class PluginSpecialized : public V3DITKFilterSingleImage< TPixelType, unsigned c
 
   typedef itk::LabelImageToShapeLabelMapFilter< LabeledImageType, LabelMapType > LabelMapFilterType;
   typedef itk::RelabelComponentImageFilter< LabeledImageType, OutputImageType > RelabelComponentImageFilterType;
+  typedef itk::CastImageFilter<ImageType, ImageType>  CastImageFilterType;
 
 public:
 
@@ -56,6 +60,7 @@ public:
     this->m_Filter = WatershedFilterType::New();
     this->m_RelabelFilter = RelabelComponentImageFilterType::New();
     this->m_LabelMapFilter = LabelMapFilterType::New();
+    this->m_castImageFilter = CastImageFilterType::New();
     this->m_RelabelFilter->SetInput( this->m_Filter->GetOutput() );
     this->RegisterInternalFilter(this->m_Filter,0.8);
     this->RegisterInternalFilter(this->m_RelabelFilter,0.2);
@@ -144,14 +149,20 @@ public:
     //now start use the filter
 
     void* p = input.at(0).p;
-    this->m_Filter->SetInput( (ImageType*) p );
+    this->m_castImageFilter->SetInput((ImageType*)p);
+    this->m_Filter->SetInput(m_castImageFilter->GetOutput());
     this->m_RelabelFilter->SetInput(this->m_Filter->GetOutput());
 
     this->m_LabelMapFilter->SetInput(this->m_Filter->GetOutput());
 
 
+    try {
     this->m_RelabelFilter->Update();
     this->m_LabelMapFilter->Update();
+    }catch (exception &e)
+    {
+      qDebug() << "exception is : " << e.what();
+    }
 
     {
     typedef itk::ImageFileWriter< LabeledImageType > WriterType;
@@ -172,7 +183,7 @@ public:
     LabelMapType* outputLabelMap = this->m_LabelMapFilter->GetOutput();
     unsigned long numberOfLabelMapObjects = outputLabelMap->GetNumberOfLabelObjects();
     QString fileName = QString("WatershedLabelCount_%1").arg((QTime::currentTime()).toString());
-    QFile file("out.txt");
+    QFile file(fileName);
     if (!file.open(QIODevice::WriteOnly | QIODevice::Text))
          return false;
      QTextStream out(&file);
@@ -196,6 +207,7 @@ private:
     typename WatershedFilterType::Pointer   m_Filter;
     typename RelabelComponentImageFilterType::Pointer   m_RelabelFilter;
     typename LabelMapFilterType::Pointer  m_LabelMapFilter; 
+    typename CastImageFilterType::Pointer m_castImageFilter;
 
 };
 

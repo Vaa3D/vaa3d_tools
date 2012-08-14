@@ -2,13 +2,15 @@
 
 #include <math.h>
 #include <stdlib.h>
+#include <exception>
 
 #include "GradientMagnitudeRecursiveGaussian_called.h"
+#include "itkCastImageFilter.h"
 #include "V3DITKFilterSingleImage.h"
 
 // ITK Header Files
 #include "itkGradientMagnitudeRecursiveGaussianImageFilter.h"
-
+using namespace std;
 
 // Q_EXPORT_PLUGIN2 ( PluginName, ClassName )
 // The value of PluginName should correspond to the TARGET specified in the
@@ -36,12 +38,14 @@ class PluginSpecialized : public V3DITKFilterSingleImage< TPixelType, TPixelType
     typedef typename Superclass::Input3DImageType               ImageType;
 
     typedef itk::GradientMagnitudeRecursiveGaussianImageFilter< ImageType, ImageType > FilterType;
+    typedef itk::CastImageFilter <ImageType, ImageType> CastFilterType;
 
 public:
 
     PluginSpecialized( V3DPluginCallback * callback ): Superclass(callback)
     {
         this->m_Filter = FilterType::New();
+        this->m_castFilter = CastFilterType::New();
         this->RegisterInternalFilter( this->m_Filter, 1.0 );
     }
 
@@ -78,6 +82,7 @@ public:
     }
    bool ComputeOneRegion(const V3DPluginArgList & input, V3DPluginArgList & output)
     {
+      qDebug() << input.at(0).type;
 
         V3DITKGenericDialog dialog("GradientMagnitudeRecursiveGaussian");
 
@@ -99,10 +104,19 @@ public:
             p=(void*)input.at(0).p;
             if(!p)perror("errro");
 
-            this->m_Filter->SetInput((ImageType*) p );
-
-            this->m_Filter->Update();
+            //this->m_Filter->SetInput((ImageType*) p );
+            this->m_castFilter->SetInput((ImageType*) p );
+            this->m_Filter->SetInput(m_castFilter->GetOutput());
+            try{
+            //this->m_Filter->Update();
+              this->m_Filter->Update();
+            }
+            catch(exception& e)
+            {
+              qDebug() << "exception : " << e.what();
+            }
             V3DPluginArgItem arg;
+            //typename ImageType::Pointer outputImage = this->m_Filter->GetOutput();
             typename ImageType::Pointer outputImage = this->m_Filter->GetOutput();
             outputImage->Register();
             arg.p=(void*) outputImage;
@@ -118,6 +132,7 @@ public:
 private:
 
     typename FilterType::Pointer   m_Filter;
+    typename CastFilterType::Pointer m_castFilter;
 
 };
 
