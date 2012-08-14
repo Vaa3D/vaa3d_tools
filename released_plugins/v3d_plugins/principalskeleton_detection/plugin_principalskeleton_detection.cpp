@@ -33,6 +33,7 @@ void SkeletonBasedImgWarp(V3DPluginCallback2 &callback, QWidget *parent);
 bool SkeletonBasedImgWarp(const V3DPluginArgList & input, V3DPluginArgList & output);
 bool do_ImgWarp(QString &qs_filename_img_sub, QString &qs_filename_mak_sub, QString &qs_filename_img_tar,
      QString &qs_filename_mak_tar, QString &qs_filename_domain,
+     const PSWParas $paras,
      unsigned char* &newdata1d, V3DLONG* &out_sz);
 bool q_cubicSplineMarker(const QList<ImageMarker> &ql_marker,QList<ImageMarker> &ql_marker_cubicspline);
 bool readDomain_file(const QString &qs_filename,
@@ -109,19 +110,28 @@ bool PrincipalSkeletonDetectionPlugin::dofunc(const QString &func_name, const V3
 		cout<< endl;
 		cout<< "e.g. v3d -x principal_skeleton -f detect -i input.raw iniskele_file.marker domain_file.domain -o deformskele.marker cubicswc.swc -p 2 1 500 0.01 0.5 7 0 0"	<< endl;
 		cout<< endl;
-		cout<< "Usage : v3d -x principal_skeleton -f warp -i <subimg_file> <submak_file> <tarimg_file> <tarmak_file> <domain_file> -o <outimg_file>"<< endl;
+		cout<< "Usage : v3d -x principal_skeleton -f warp -i <subimg_file> <submak_file> <tarimg_file> <tarmak_file> <domain_file> -o <outimg_file> -p <anchor2cpt_ratio_alongbranch> <l_nanchor_perslice> <l_slice_width> <i_extendbranchend>"<< endl;
 		cout<< endl;
-		cout<< "subimg_file         file name of subject image" << endl;
-		cout<< "submak_file         file name of subject skeleton (.marker)"<< endl;
-		cout<< "tarimg_file         file name of target image" << endl;
-		cout<< "tarmak_file         file name of target skeleton (.marker)"<< endl;
-		cout<< "domain_file         file name of domain definition (.domain)"<< endl;
+		cout<< "subimg_file         			file name of subject image" << endl;
+		cout<< "submak_file         			file name of subject skeleton (.marker)"<< endl;
+		cout<< "tarimg_file         			file name of target image" << endl;
+		cout<< "tarmak_file         			file name of target skeleton (.marker)"<< endl;
+		cout<< "domain_file         			file name of domain definition (.domain)"<< endl;
+		cout<< "anchor2cpt_ratio_alongbranch    interpolation ratio of anchor to control point (2)"<< endl;
+		cout<< "l_nanchor_perslice         		number of anchor points along each slice/cuttingplane (5)"<< endl;
+		cout<< "l_slice_width         			width of each slice/cuttingplane (300)"<< endl;
+		cout<< "i_extendbranchend         		whether add extra control point to each branch (1)"<< endl;
 		cout<< endl;
-		cout<< "e.g. v3d -x principal_skeleton -f warp -i subimg.raw submak.marker tarimg.raw tarmak.marker domain_file.domain -o outimg.raw"<< endl;
+		cout<< "e.g. v3d -x principal_skeleton -f warp -i subimg.raw submak.marker tarimg.raw tarmak.marker domain_file.domain -o outimg.raw -p 2.0 5 300 1"<< endl;
 		cout<< endl;
 		return true;
 	}
 }
+
+double l_anchor2cpt_ratio_alongbranch;
+long l_nanchor_perslice;
+long l_slice_width;
+int i_extendbranchend;
 
 void OpenDownloadPage(QWidget *parent)
 {
@@ -889,82 +899,115 @@ void SkeletonBasedImgWarp(V3DPluginCallback2 &callback, QWidget *parent)
 	else
 		return;
 
-     // do warp
-     unsigned char* newdata1d = 0;
-     V3DLONG* sz_img_tar = 0;
-     if(! do_ImgWarp(qs_filename_img_sub, qs_filename_mak_sub, qs_filename_img_tar, qs_filename_mak_tar, qs_filename_domain,
-               newdata1d, sz_img_tar))
-     {
-          return;
-     }
+	PSWParas paras;
+	paras.l_anchor2cpt_ratio_alongbranch=2.0;
+	paras.l_nanchor_perslice=5;
+	paras.l_slice_width=300;
+	paras.i_extendbranchend=1;
 
-     // output
-     v3dhandle newwin=callback.newImageWindow();
+	// do warp
+	unsigned char* newdata1d = 0;
+	V3DLONG* sz_img_tar = 0;
+	if(! do_ImgWarp(qs_filename_img_sub, qs_filename_mak_sub, qs_filename_img_tar, qs_filename_mak_tar, qs_filename_domain,
+			paras,
+			newdata1d, sz_img_tar))
+	{
+		v3d_msg("ERROR: do_ImgWarp() return false.\n");
+		return;
+	}
+
+	// output
+	v3dhandle newwin=callback.newImageWindow();
 	Image4DSimple tmp;
-     tmp.setData(newdata1d,sz_img_tar[0],sz_img_tar[1],sz_img_tar[2],sz_img_tar[3],V3D_UINT8);
+	tmp.setData(newdata1d,sz_img_tar[0],sz_img_tar[1],sz_img_tar[2],sz_img_tar[3],V3D_UINT8);
 	callback.setImage(newwin,&tmp);
 	callback.updateImageWindow(newwin);
 }
 
 bool SkeletonBasedImgWarp(const V3DPluginArgList & input, V3DPluginArgList & output)
 {
-     cout<<"Welcome to Skeleton Warp"<<endl;
+	cout<<"Welcome to Skeleton Warp"<<endl;
 
-     if (output.size() != 1) return false;
+	if (output.size() != 1) return false;
 	//read arguments
-     QString qs_filename_img_sub = NULL;
-     QString qs_filename_mak_sub = NULL;
+	QString qs_filename_img_sub = NULL;
+	QString qs_filename_mak_sub = NULL;
 	QString qs_filename_img_tar = NULL;
-     QString qs_filename_mak_tar = NULL;
+	QString qs_filename_mak_tar = NULL;
 	QString qs_filename_domain  = NULL;
-     QString filename_img_out = NULL;
+	QString filename_img_out = NULL;
 
-     if (input.size()>=1) // because there is no -p, so >=1
-     {
-          // input files
-          vector<char*> paras_infile = (*(vector<char*> *)(input.at(0).p));
-          if(paras_infile.size() <5)
-          {
-               v3d_msg("There are not enough input files.", 0);
-               return false;
-          }
-          if(paras_infile.size() >= 1) qs_filename_img_sub = paras_infile.at(0);
-          if(paras_infile.size() >= 2) qs_filename_mak_sub = paras_infile.at(1);
-          if(paras_infile.size() >= 3) qs_filename_img_tar = paras_infile.at(2);
-          if(paras_infile.size() >= 4) qs_filename_mak_tar = paras_infile.at(3);
-          if(paras_infile.size() >= 5) qs_filename_domain  = paras_infile.at(4);
+	PSWParas paras;
+	paras.l_anchor2cpt_ratio_alongbranch=2.0;
+	paras.l_nanchor_perslice=5;
+	paras.l_slice_width=300;
+	paras.i_extendbranchend=1;
 
-          // output files
-          vector<char*> paras_outfile = (*(vector<char*> *)(output.at(0).p));
-          if(paras_outfile.size() >= 1) filename_img_out = paras_outfile.at(0);
-     }
+	if (input.size() == 2 && output.size() == 1)
+	{
+		// input files
+		vector<char*> paras_infile = (*(vector<char*> *) (input.at(0).p));
+		if (paras_infile.size() != 4)
+		{
+			v3d_msg("ERROR: Incorrect input files.", 0);
+			return false;
+		}
+		qs_filename_img_sub = paras_infile.at(0);
+		qs_filename_mak_sub = paras_infile.at(1);
+		qs_filename_img_tar = paras_infile.at(2);
+		qs_filename_mak_tar = paras_infile.at(3);
+		qs_filename_domain = paras_infile.at(4);
 
-     cout<<"subject image:" << qPrintable(qs_filename_img_sub) <<endl;
-     cout<<"subject skeleton:" << qPrintable(qs_filename_mak_sub) <<endl;
-     cout<<"target image:" << qPrintable(qs_filename_img_tar) <<endl;
-     cout<<"target skeleton:" << qPrintable(qs_filename_mak_tar) <<endl;
-     cout<<"domain definition:" << qPrintable(qs_filename_domain) <<endl;
-     cout<<"output image:" << qPrintable(filename_img_out) <<endl;
+		// output files
+		vector<char*> paras_outfile = (*(vector<char*> *) (output.at(0).p));
+		if (paras_outfile.size() != 1)
+		{
+			v3d_msg("ERROR: Incorrect output files.", 0);
+			return false;
+		}
+		filename_img_out = paras_outfile.at(0);
 
+		// paras
+		vector<char*> paras_cmdline = (*(vector<char*> *) (input.at(1).p));
+		if (paras_cmdline.size()!=4)
+		{
+			v3d_msg("ERROR: Incorrect input paras.", 0);
+			return false;
+		}
+		paras.l_anchor2cpt_ratio_alongbranch = atof(paras_cmdline.at(0));
+		paras.l_nanchor_perslice = atoi(paras_cmdline.at(1));
+		paras.l_slice_width = atoi(paras_cmdline.at(2));
+		paras.i_extendbranchend = atoi(paras_cmdline.at(3));
+	}
+	else
+	{
+		v3d_msg("ERROR: Incorrect input or output files.", 0);
+		return false;
+	}
 
-     // do_warp
-     unsigned char* newdata1d = 0;
-     V3DLONG* sz_img_tar = 0;
-     if(! do_ImgWarp(qs_filename_img_sub, qs_filename_mak_sub, qs_filename_img_tar, qs_filename_mak_tar, qs_filename_domain,
-               newdata1d, sz_img_tar))
-     {
-          return false;
-     }
-     // output image
-     saveImage((char*)qPrintable(filename_img_out), (unsigned char *)newdata1d, sz_img_tar, 1); // UINT8
+	// do_warp
+	unsigned char* newdata1d = 0;
+	V3DLONG* sz_img_tar = 0;
+	if (!do_ImgWarp(qs_filename_img_sub, qs_filename_mak_sub,
+			qs_filename_img_tar, qs_filename_mak_tar, qs_filename_domain,
+			paras,
+			newdata1d, sz_img_tar))
+	{
+		v3d_msg("ERROR: do_ImgWarp() return false.\n");
+		return false;
+	}
+	// output image
+	saveImage((char*) qPrintable(filename_img_out), (unsigned char *) newdata1d, sz_img_tar, 1); // UINT8
 
-     if(newdata1d){delete []newdata1d; newdata1d=0;}
-     if(sz_img_tar){delete []sz_img_tar; sz_img_tar=0;}
-     return true;
+	if(newdata1d) {delete[] newdata1d;	newdata1d = 0;}
+	if(sz_img_tar){delete[] sz_img_tar;	sz_img_tar = 0;}
+
+	return true;
 }
 
 bool do_ImgWarp(QString &qs_filename_img_sub, QString &qs_filename_mak_sub, QString &qs_filename_img_tar,
      QString &qs_filename_mak_tar, QString &qs_filename_domain,
+     const PSWParas &paras,
      unsigned char* &newdata1d, V3DLONG* &out_sz)
 {
 	if(qs_filename_img_sub.isEmpty()) {v3d_msg("ERROR: Invalid subject image file name!\n"); return false;}
@@ -972,10 +1015,6 @@ bool do_ImgWarp(QString &qs_filename_img_sub, QString &qs_filename_mak_sub, QStr
 	if(qs_filename_img_tar.isEmpty()) {v3d_msg("ERROR: Invalid target image file name!\n"); return false;}
 	if(qs_filename_mak_tar.isEmpty()) {v3d_msg("ERROR: Invalid target skeleton file name!\n"); return false;}
 	if(qs_filename_domain.isEmpty()) {v3d_msg("ERROR: Invalid domain file name!\n"); return false;}
-
-     double d_ctlpt2node_ratio_alongbranch=2.0;
-	long l_nctrlpt_cuttingplane=5;
-	long l_cuttingplane_width=300;
 
 	//------------------------------------------------------------------------------------------------------------------------------------
 	//read target image and prinicpal skeleton marker file
@@ -1000,6 +1039,8 @@ bool do_ImgWarp(QString &qs_filename_img_sub, QString &qs_filename_mak_sub, QStr
     if(ql_cptpos_tar.isEmpty())
     {
     	v3d_msg("ERROR: read nothing from input skeleotn control points definition file.\n");
+		if(p_img_tar) 		{delete []p_img_tar;		p_img_tar=0;}
+		if(sz_img_tar)		{delete []sz_img_tar;		sz_img_tar=0;}
     	return false;
     }
     for(long i=0;i<ql_cptpos_tar.size();i++)
@@ -1030,7 +1071,11 @@ bool do_ImgWarp(QString &qs_filename_img_sub, QString &qs_filename_mak_sub, QStr
     if(ql_cptpos_sub.isEmpty())
     {
     	v3d_msg("ERROR: read nothing from input skeleotn control points definition file.\n");
-    	return false;
+		if(p_img_tar) 		{delete []p_img_tar;		p_img_tar=0;}
+		if(p_img_sub) 		{delete []p_img_sub;		p_img_sub=0;}
+		if(sz_img_sub)		{delete []sz_img_sub;		sz_img_sub=0;}
+		if(sz_img_tar)		{delete []sz_img_tar;		sz_img_tar=0;}
+		return false;
     }
     for(long i=0;i<ql_cptpos_sub.size();i++)
     	printf("\t\tcpt[%ld]=[%.2f,%.2f,%.2f]\n",i,ql_cptpos_sub[i].x,ql_cptpos_sub[i].y,ql_cptpos_sub[i].z);
@@ -1044,6 +1089,10 @@ bool do_ImgWarp(QString &qs_filename_img_sub, QString &qs_filename_mak_sub, QStr
     		vecvec_domain_smooth_ind,vec_domain_smooth_weight))
     {
     	v3d_msg("ERROR: readDomain_file() return false!\n");
+		if(p_img_tar) 		{delete []p_img_tar;		p_img_tar=0;}
+		if(p_img_sub) 		{delete []p_img_sub;		p_img_sub=0;}
+		if(sz_img_sub)		{delete []sz_img_sub;		sz_img_sub=0;}
+		if(sz_img_tar)		{delete []sz_img_tar;		sz_img_tar=0;}
     	return false;
     }
     printf("\t>>read domain file [%s] complete.\n",qPrintable(qs_filename_domain));
@@ -1099,7 +1148,7 @@ bool do_ImgWarp(QString &qs_filename_img_sub, QString &qs_filename_mak_sub, QStr
 			p_img_tar,sz_img_tar,
 			p_img_sub,sz_img_sub,
 			vec_ql_branchcpt_tar,vec_ql_branchcpt_sub,
-			d_ctlpt2node_ratio_alongbranch,l_nctrlpt_cuttingplane,l_cuttingplane_width,
+			paras,
 			p_img_sub2tar,
 			vec_controlpoint_tar,vec_controlpoint_sub))
     {
@@ -1181,19 +1230,9 @@ bool do_ImgWarp(QString &qs_filename_img_sub, QString &qs_filename_mak_sub, QStr
 	if(p_img_shift_4d) 		{delete4dpointer(p_img_shift_4d,sz_img_tar[0],sz_img_tar[1],sz_img_tar[2],sz_img_tar[3]);}
 	if(p_img_sub2tar_4d) 	{delete4dpointer(p_img_sub2tar_4d,sz_img_tar[0],sz_img_tar[1],sz_img_tar[2],sz_img_tar[3]);}
 
-
-
-     //------------------------------------------------------------------------------------------------------------------------------------
-	//push warped image to v3d
-	unsigned long l_npixel_s=sz_img_tar[0]*sz_img_tar[1]*sz_img_tar[2]*sz_img_tar[3];
-	//unsigned char*
-     newdata1d=new unsigned char[l_npixel_s]();
-	memcpy(newdata1d,p_img_sub2tar,l_npixel_s);
-     out_sz = sz_img_tar;
-
-
-//	printf(">>save subject to target warped image ...\n");
-//	saveImage(p_filename_img_sub2tar,(unsigned char *)p_img_sub2tar,sz_img_tar,1);
+    //------------------------------------------------------------------------------------------------------------------------------------
+    newdata1d=p_img_sub2tar;	p_img_sub2tar=0;
+    out_sz = sz_img_tar;		sz_img_tar=0;
 
 	//------------------------------------------------------------------------------------------------------------------------------------
 	//free memory
@@ -1201,12 +1240,11 @@ bool do_ImgWarp(QString &qs_filename_img_sub, QString &qs_filename_mak_sub, QStr
 	if(p_img_tar) 		{delete []p_img_tar;		p_img_tar=0;}
 	if(p_img_sub) 		{delete []p_img_sub;		p_img_sub=0;}
 	if(p_img_sub2tar) 	{delete []p_img_sub2tar;	p_img_sub2tar=0;}
-     //if(sz_img_tar)		{delete []sz_img_tar;		sz_img_tar=0;}
+    if(sz_img_tar)		{delete []sz_img_tar;		sz_img_tar=0;}
 	if(sz_img_sub)		{delete []sz_img_sub;		sz_img_sub=0;}
 
 	printf("Program exit successful!\n");
-     return true;
-
+    return true;
 }
 
 

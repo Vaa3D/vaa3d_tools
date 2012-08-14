@@ -45,7 +45,7 @@ bool q_skeletonbased_sub2tar(
 		const unsigned char *p_img_tar,const V3DLONG *sz_img_tar,
 		const unsigned char *p_img_sub,const V3DLONG *sz_img_sub,
 		const vector< QList<ImageMarker> > &vec_ql_branchcpt_tar,const vector< QList<ImageMarker> > &vec_ql_branchcpt_sub,
-		const long l_anchor2cpt_ratio_alongbranch,const long l_anchor_perslice,const long l_slice_width,
+		const PSWParas &paras,
 		unsigned char *&p_img_sub2tar,
 		vector<Coord2D64F_SL> &vec_anchor_tar,vector<Coord2D64F_SL> &vec_anchor_sub)
 {
@@ -60,7 +60,7 @@ bool q_skeletonbased_sub2tar(
 		printf("ERROR: q_skeletonbased_sub2tar: At least one input branchmarker vector is empty.\n");
 		return false;
 	}
-	if(l_anchor2cpt_ratio_alongbranch<=0 || l_anchor_perslice<1 || l_slice_width<=0)
+	if(paras.l_anchor2cpt_ratio_alongbranch<=0 || paras.l_nanchor_perslice<1 || paras.l_slice_width<=0)
 	{
 		printf("ERROR: q_skeletonbased_sub2tar: input d_ctlpt2node_ratio_alongbranch or l_ctrlpt_perslice not reasonable.\n");
 		return false;
@@ -101,32 +101,52 @@ bool q_skeletonbased_sub2tar(
 		}
 
 	//------------------------------------------------------------------------------------------------------------------------------------
+	//add additional control point in the end of each branch so that last control point is outside of tissue
+	//if inside, the branch end will be stretched during warping
+	vector< QList<ImageMarker> > vec_ql_branchcpt_tar_ext(vec_ql_branchcpt_tar),vec_ql_branchcpt_sub_ext(vec_ql_branchmarker_sub_resize);
+	if(paras.i_extendbranchend)
+	{
+		for(unsigned long i=0;i<vec_ql_branchcpt_tar.size();i++)
+		{
+			ImageMarker cpt_add;
+			cpt_add.x=2*vec_ql_branchcpt_tar[i][0].x-vec_ql_branchcpt_tar[i][1].x;
+			cpt_add.y=2*vec_ql_branchcpt_tar[i][0].y-vec_ql_branchcpt_tar[i][1].y;
+			cpt_add.z=2*vec_ql_branchcpt_tar[i][0].z-vec_ql_branchcpt_tar[i][1].z;
+			vec_ql_branchcpt_tar_ext[i].push_front(cpt_add);
+			cpt_add.x=2*vec_ql_branchmarker_sub_resize[i][0].x-vec_ql_branchmarker_sub_resize[i][1].x;
+			cpt_add.y=2*vec_ql_branchmarker_sub_resize[i][0].y-vec_ql_branchmarker_sub_resize[i][1].y;
+			cpt_add.z=2*vec_ql_branchmarker_sub_resize[i][0].z-vec_ql_branchmarker_sub_resize[i][1].z;
+			vec_ql_branchcpt_sub_ext[i].push_front(cpt_add);
+		}
+	}
+	
+	//------------------------------------------------------------------------------------------------------------------------------------
 	//compute the mask region and mapping index for each branch (prepare for control points definition)
 	//actually we do this by staighten the head and tail respectively
 
 	vector< vector< vector<Coord2D64F_SL> > > vecvec_index_str2ori_branches_tar,vecvec_index_str2ori_branches_sub;
 	vector< vector< vector<Coord2D64F_SL> > > vecvec_index_ori2str_branches_tar,vecvec_index_ori2str_branches_sub;
 
-	for(unsigned long i=0;i<vec_ql_branchcpt_tar.size();i++)
+	for(unsigned long i=0;i<vec_ql_branchcpt_tar_ext.size();i++)
 	{
 		//if branch node num ==2, a new middel node is inserted to meet the requirement of cubic-spline
-		QList<ImageMarker> ql_branchmarker_tar(vec_ql_branchcpt_tar[i]),ql_branchmarker_sub(vec_ql_branchmarker_sub_resize[i]);
+		QList<ImageMarker> ql_branchmarker_tar(vec_ql_branchcpt_tar_ext[i]),ql_branchmarker_sub(vec_ql_branchcpt_sub_ext[i]);
 		if(ql_branchmarker_tar.size()==2)
 		{
 			ImageMarker im_middle;
-			im_middle.x=(vec_ql_branchcpt_tar[i][0].x+vec_ql_branchcpt_tar[i][1].x)/2.0;
-			im_middle.y=(vec_ql_branchcpt_tar[i][0].y+vec_ql_branchcpt_tar[i][1].y)/2.0;
-			im_middle.z=(vec_ql_branchcpt_tar[i][0].z+vec_ql_branchcpt_tar[i][1].z)/2.0;
-			ql_branchmarker_tar.push_back(vec_ql_branchcpt_tar[i][1]);
+			im_middle.x=(vec_ql_branchcpt_tar_ext[i][0].x+vec_ql_branchcpt_tar_ext[i][1].x)/2.0;
+			im_middle.y=(vec_ql_branchcpt_tar_ext[i][0].y+vec_ql_branchcpt_tar_ext[i][1].y)/2.0;
+			im_middle.z=(vec_ql_branchcpt_tar_ext[i][0].z+vec_ql_branchcpt_tar_ext[i][1].z)/2.0;
+			ql_branchmarker_tar.push_back(vec_ql_branchcpt_tar_ext[i][1]);
 			ql_branchmarker_tar.replace(1,im_middle);
 		}
 		if(ql_branchmarker_sub.size()==2)
 		{
 			ImageMarker im_middle;
-			im_middle.x=(vec_ql_branchmarker_sub_resize[i][0].x+vec_ql_branchmarker_sub_resize[i][1].x)/2.0;
-			im_middle.y=(vec_ql_branchmarker_sub_resize[i][0].y+vec_ql_branchmarker_sub_resize[i][1].y)/2.0;
-			im_middle.z=(vec_ql_branchmarker_sub_resize[i][0].z+vec_ql_branchmarker_sub_resize[i][1].z)/2.0;
-			ql_branchmarker_sub.push_back(vec_ql_branchmarker_sub_resize[i][1]);
+			im_middle.x=(vec_ql_branchcpt_sub_ext[i][0].x+vec_ql_branchcpt_sub_ext[i][1].x)/2.0;
+			im_middle.y=(vec_ql_branchcpt_sub_ext[i][0].y+vec_ql_branchcpt_sub_ext[i][1].y)/2.0;
+			im_middle.z=(vec_ql_branchcpt_sub_ext[i][0].z+vec_ql_branchcpt_sub_ext[i][1].z)/2.0;
+			ql_branchmarker_sub.push_back(vec_ql_branchcpt_sub_ext[i][1]);
 			ql_branchmarker_sub.replace(1,im_middle);
 		}
 
@@ -139,7 +159,7 @@ bool q_skeletonbased_sub2tar(
 		printf("\t>>straighten branch[%ld] of target image ...\n",i);
 		if(!q_curve_smoothstraighten(
 				p_img_tar,sz_img_tar,
-				ql_branchmarker_tar,l_slice_width,
+				ql_branchmarker_tar,paras.l_slice_width,
 				p_img_strbranch,sz_img_strbranch,
 				vec_centralline_branch,
 				vec_index_str2ori_branch,vec_index_ori2str_branch))
@@ -155,7 +175,7 @@ bool q_skeletonbased_sub2tar(
 		printf("\t>>straighten branch[%ld] of subject image ...\n",i);
 		if(!q_curve_smoothstraighten(
 				p_img_sub_resize,sz_img_tar,
-				ql_branchmarker_sub,l_slice_width,
+				ql_branchmarker_sub,paras.l_slice_width,
 				p_img_strbranch,sz_img_strbranch,
 				vec_centralline_branch,
 				vec_index_str2ori_branch,vec_index_ori2str_branch))
@@ -192,7 +212,7 @@ bool q_skeletonbased_sub2tar(
 
 	if(!q_anchorpoint_definition_unevendis(
 			vec_ql_branchcpt_tar,vec_ql_branchmarker_sub_resize,
-			2,l_anchor_perslice,
+			paras.l_anchor2cpt_ratio_alongbranch,paras.l_nanchor_perslice,
 			vecvec_index_str2ori_branches_tar,vecvec_index_ori2str_branches_tar,
 			vecvec_index_str2ori_branches_sub,vecvec_index_ori2str_branches_sub,
 			vec_anchor_tar,vec_anchor_sub))

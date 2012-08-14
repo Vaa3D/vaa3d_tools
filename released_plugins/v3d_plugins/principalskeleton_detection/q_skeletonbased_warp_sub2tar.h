@@ -18,6 +18,16 @@ using namespace std;
 #include "../worm_straighten_c/spline_cubic.h"
 #include "../worm_straighten_c/bdb_minus.h"
 
+struct PSWParas
+{
+	//input
+    double l_anchor2cpt_ratio_alongbranch;
+	long l_nanchor_perslice;
+	long l_slice_width;
+	int i_extendbranchend;
+	//output
+};
+
 class Coord2D64F_SL
 {
 public:
@@ -80,7 +90,7 @@ bool q_skeletonbased_sub2tar(
 		const unsigned char *p_img_tar,const V3DLONG *sz_img_tar,
 		const unsigned char *p_img_sub,const V3DLONG *sz_img_sub,
 		const vector< QList<ImageMarker> > &vec_ql_branchcpt_tar,const vector< QList<ImageMarker> > &vec_ql_branchcpt_sub,
-		const long l_anchor2cpt_ratio_alongbranch,const long l_anchor_perslice,const long l_slice_width,
+		const PSWParas &paras,
 		unsigned char *&p_img_sub2tar,
 		vector<Coord2D64F_SL> &vec_anchor_tar,vector<Coord2D64F_SL> &vec_anchor_sub);
 
