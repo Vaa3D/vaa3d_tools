@@ -33,7 +33,7 @@ void SkeletonBasedImgWarp(V3DPluginCallback2 &callback, QWidget *parent);
 bool SkeletonBasedImgWarp(const V3DPluginArgList & input, V3DPluginArgList & output);
 bool do_ImgWarp(QString &qs_filename_img_sub, QString &qs_filename_mak_sub, QString &qs_filename_img_tar,
      QString &qs_filename_mak_tar, QString &qs_filename_domain,
-     const PSWParas $paras,
+     const PSWParas &paras,
      unsigned char* &newdata1d, V3DLONG* &out_sz);
 bool q_cubicSplineMarker(const QList<ImageMarker> &ql_marker,QList<ImageMarker> &ql_marker_cubicspline);
 bool readDomain_file(const QString &qs_filename,
@@ -127,11 +127,6 @@ bool PrincipalSkeletonDetectionPlugin::dofunc(const QString &func_name, const V3
 		return true;
 	}
 }
-
-double l_anchor2cpt_ratio_alongbranch;
-long l_nanchor_perslice;
-long l_slice_width;
-int i_extendbranchend;
 
 void OpenDownloadPage(QWidget *parent)
 {
@@ -947,7 +942,7 @@ bool SkeletonBasedImgWarp(const V3DPluginArgList & input, V3DPluginArgList & out
 	{
 		// input files
 		vector<char*> paras_infile = (*(vector<char*> *) (input.at(0).p));
-		if (paras_infile.size() != 4)
+		if (paras_infile.size() != 5)
 		{
 			v3d_msg("ERROR: Incorrect input files.", 0);
 			return false;
