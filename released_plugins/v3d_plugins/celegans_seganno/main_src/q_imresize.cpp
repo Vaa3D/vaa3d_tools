@@ -11,8 +11,8 @@
 
 //resize 3D image stack
 template<class T>
-bool q_imresize_3D(const T *p_img_input,const long sz_img_input[4],const int mode,
-		const long sz_img_output[4],T *&p_img_output)
+bool q_imresize_3D(const T *p_img_input,const V3DLONG sz_img_input[4],const int mode,
+		const V3DLONG sz_img_output[4],T *&p_img_output)
 {
 	//check paras
 	if(p_img_input==0)
@@ -54,8 +54,8 @@ bool q_imresize_3D(const T *p_img_input,const long sz_img_input[4],const int mod
 
 	if(sz_img_input[0]==sz_img_output[0] && sz_img_input[1]==sz_img_output[1] && sz_img_input[2]==sz_img_output[2])
 	{
-		long l_npixels=sz_img_output[0]*sz_img_output[1]*sz_img_output[2]*sz_img_output[3];
-		for(long i=0;i<l_npixels;i++)	p_img_output[i]=p_img_input[i];
+		V3DLONG l_npixels=sz_img_output[0]*sz_img_output[1]*sz_img_output[2]*sz_img_output[3];
+		for(V3DLONG i=0;i<l_npixels;i++)	p_img_output[i]=p_img_input[i];
 		return true;
 	}
 
@@ -77,16 +77,16 @@ bool q_imresize_3D(const T *p_img_input,const long sz_img_input[4],const int mod
 
 	if(mode==2)
 	{
-		for(long x=0;x<sz_img_output[0];x++)
-			for(long y=0;y<sz_img_output[1];y++)
-				for(long z=0;z<sz_img_output[2];z++)
+		for(V3DLONG x=0;x<sz_img_output[0];x++)
+			for(V3DLONG y=0;y<sz_img_output[1];y++)
+				for(V3DLONG z=0;z<sz_img_output[2];z++)
 				{
 					double cur_pos[3];
 					cur_pos[0]=(x+1)/arr_resize_ratio[0]-1;
 					cur_pos[1]=(y+1)/arr_resize_ratio[1]-1;
 					cur_pos[2]=(z+1)/arr_resize_ratio[2]-1;
 
-					long nn_pos[3];
+					V3DLONG nn_pos[3];
 					nn_pos[0]=cur_pos[0]+0.5;
 					nn_pos[1]=cur_pos[1]+0.5;
 					nn_pos[2]=cur_pos[2]+0.5;
@@ -97,35 +97,35 @@ bool q_imresize_3D(const T *p_img_input,const long sz_img_input[4],const int mod
 					nn_pos[1]=nn_pos[1]>=sz_img_input[1]?sz_img_input[1]-1:nn_pos[1];
 					nn_pos[2]=nn_pos[2]>=sz_img_input[2]?sz_img_input[2]-1:nn_pos[2];
 
-					for(long c=0;c<sz_img_output[3];c++)
+					for(V3DLONG c=0;c<sz_img_output[3];c++)
 						p_img_output_4d[c][z][y][x]=p_img_input_4d[c][nn_pos[2]][nn_pos[1]][nn_pos[0]];
 				}
 
 	}
 	else if(mode==1 && (sz_img_output[0]<sz_img_input[0] || sz_img_output[1]<sz_img_input[1] || sz_img_output[2]<sz_img_input[2]))
 	{
-		for(long x=0;x<sz_img_output[0];x++)
-			for(long y=0;y<sz_img_output[1];y++)
-				for(long z=0;z<sz_img_output[2];z++)
+		for(V3DLONG x=0;x<sz_img_output[0];x++)
+			for(V3DLONG y=0;y<sz_img_output[1];y++)
+				for(V3DLONG z=0;z<sz_img_output[2];z++)
 				{
 					double x_l_s,x_r_s,y_l_s,y_r_s,z_l_s,z_r_s;
 					x_l_s=x-0.5;	x_r_s=x+0.5;
 					y_l_s=y-0.5;	y_r_s=y+0.5;
 					z_l_s=z-0.5;	z_r_s=z+0.5;
-					long x_l_b,x_r_b,y_l_b,y_r_b,z_l_b,z_r_b;
+					V3DLONG x_l_b,x_r_b,y_l_b,y_r_b,z_l_b,z_r_b;
 					x_l_b=(x_l_s+1)/arr_resize_ratio[0]-1+0.5;	x_r_b=(x_r_s+1)/arr_resize_ratio[0]-1+0.5;
 					y_l_b=(y_l_s+1)/arr_resize_ratio[1]-1+0.5;	y_r_b=(y_r_s+1)/arr_resize_ratio[1]-1+0.5;
 					z_l_b=(z_l_s+1)/arr_resize_ratio[2]-1+0.5;	z_r_b=(z_r_s+1)/arr_resize_ratio[2]-1+0.5;
 					x_l_b=x_l_b<0 ? 0:x_l_b;	x_r_b=x_r_b>=sz_img_input[0] ? sz_img_input[0]-1:x_r_b;
 					y_l_b=y_l_b<0 ? 0:y_l_b;	y_r_b=y_r_b>=sz_img_input[1] ? sz_img_input[1]-1:y_r_b;
 					z_l_b=z_l_b<0 ? 0:z_l_b;	z_r_b=z_r_b>=sz_img_input[2] ? sz_img_input[2]-1:z_r_b;
-					for(long c=0;c<sz_img_output[3];c++)
+					for(V3DLONG c=0;c<sz_img_output[3];c++)
 					{
 						double avg=0;
-						long npixles=0;
-						for(long xx=x_l_b;xx<=x_r_b;xx++)
-							for(long yy=y_l_b;yy<=y_r_b;yy++)
-								for(long zz=z_l_b;zz<=z_r_b;zz++)
+						V3DLONG npixles=0;
+						for(V3DLONG xx=x_l_b;xx<=x_r_b;xx++)
+							for(V3DLONG yy=y_l_b;yy<=y_r_b;yy++)
+								for(V3DLONG zz=z_l_b;zz<=z_r_b;zz++)
 								{
 									avg+=p_img_input_4d[c][zz][yy][xx];
 									npixles++;
@@ -139,16 +139,16 @@ bool q_imresize_3D(const T *p_img_input,const long sz_img_input[4],const int mod
 	}
 	else
 	{
-		for(long x=0;x<sz_img_output[0];x++)
-			for(long y=0;y<sz_img_output[1];y++)
-				for(long z=0;z<sz_img_output[2];z++)
+		for(V3DLONG x=0;x<sz_img_output[0];x++)
+			for(V3DLONG y=0;y<sz_img_output[1];y++)
+				for(V3DLONG z=0;z<sz_img_output[2];z++)
 				{
 					double cur_pos[3];//x,y,z
 					cur_pos[0]=(x+1)/arr_resize_ratio[0]-1;
 					cur_pos[1]=(y+1)/arr_resize_ratio[1]-1;
 					cur_pos[2]=(z+1)/arr_resize_ratio[2]-1;
 
-					long x_s,x_b,y_s,y_b,z_s,z_b;
+					V3DLONG x_s,x_b,y_s,y_b,z_s,z_b;
 					x_s=floor(cur_pos[0]);		x_b=ceil(cur_pos[0]);
 					y_s=floor(cur_pos[1]);		y_b=ceil(cur_pos[1]);
 					z_s=floor(cur_pos[2]);		z_b=ceil(cur_pos[2]);
@@ -165,7 +165,7 @@ bool q_imresize_3D(const T *p_img_input,const long sz_img_input[4],const int mod
 					double u_w,d_w;
 					u_w=1.0-(cur_pos[2]-z_s);	d_w=1.0-u_w;
 
-					for(long c=0;c<sz_img_output[3];c++)
+					for(V3DLONG c=0;c<sz_img_output[3];c++)
 					{
 						double higher_slice;
 						higher_slice=t_w*(l_w*p_img_input_4d[c][z_s][y_s][x_s]+r_w*p_img_input_4d[c][z_s][y_s][x_b])+

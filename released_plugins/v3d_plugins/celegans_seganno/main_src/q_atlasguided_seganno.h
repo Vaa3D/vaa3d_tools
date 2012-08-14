@@ -31,23 +31,23 @@ public:
 	bool 	b_imgfromV3D;
 	//initial align
 	bool 	b_atlasupsidedown;
-	long 	l_refchannel;
+	V3DLONG 	l_refchannel;
 	double 	d_downsampleratio;
 	double  d_fgthresh_factor;
 	double 	d_T,d_T_min,d_annealingrate;
-	long 	l_niter_pertemp;
+	V3DLONG 	l_niter_pertemp;
 	//refine align
 	bool 	b_ref_simplealign;
 	double 	d_ref_T;								//fixed temperature for refined align
-	long 	l_ref_cellradius;						//cell radius (after downsample) used to compute the energy
-	long 	l_ref_maxiter;
+	V3DLONG 	l_ref_cellradius;						//cell radius (after downsample) used to compute the energy
+	V3DLONG 	l_ref_maxiter;
 	double 	d_ref_minposchange;
 	//visualize
 	bool 	b_showatlas;
 	bool 	b_showsegmentation;
 	bool	b_stepwise;
 	//work mode
-	long 	l_mode;
+	V3DLONG 	l_mode;
 	QWidget *qw_rootparent;
 
 	CParas()
@@ -66,6 +66,7 @@ public:
 		b_showsegmentation=0;
 		l_mode=0;
 		qw_rootparent=0;
+
 	}
 };
 
@@ -108,70 +109,70 @@ private slots:
 //warp the atlas onto the image
 //(currently only aling the muscle cells)
 bool q_atlas2image(const CParas &paras,V3DPluginCallback &callback,
-		const unsigned char *p_img8u,const long sz_img[4],const QList<CellAPO> &ql_atlasapo,const QList<QString> &ql_celloi,
+		const unsigned char *p_img8u,const V3DLONG sz_img[4],const QList<CellAPO> &ql_atlasapo,const QList<QString> &ql_celloi,
 		QList<CellAPO> &ql_musclecell_output,unsigned char *&p_img8u_seglabel,COutputInfo &outputinfo);
 
 bool q_atlas2image_partial(const CParas &paras,V3DPluginCallback &callback,
-		const unsigned char *p_img8u,const long sz_img[4],const QList<CellAPO> &ql_atlasapo,const QList<QString> &ql_celloi,
+		const unsigned char *p_img8u,const V3DLONG sz_img[4],const QList<CellAPO> &ql_atlasapo,const QList<QString> &ql_celloi,
 		QList<CellAPO> &ql_musclecell_output,COutputInfo &outputinfo);
 
 bool q_atlas2image_prior(const CParas &paras,V3DPluginCallback &callback,
-		const unsigned char *p_img8u,const long sz_img[4],const QList<CellAPO> &ql_atlasapo,const LandmarkList &ml_makers,
+		const unsigned char *p_img8u,const V3DLONG sz_img[4],const QList<CellAPO> &ql_atlasapo,const LandmarkList &ml_makers,
 		QList<CellAPO> &ql_musclecell_output);
 
 
 //affine warp the atlas onto image by deterministic annealing
 bool q_atlas2image_musclecell_ini_affine(const CParas &paras,V3DPluginCallback &callback,
-		const unsigned char *p_img8u,const long sz_img[4],const vector<point3D64F> &vec_musclecell,
-		const vector<long> &vec_fg_ind,const vector<point3D64F> &vec_fg_xyz,
+		const unsigned char *p_img8u,const V3DLONG sz_img[4],const vector<point3D64F> &vec_musclecell,
+		const vector<V3DLONG> &vec_fg_ind,const vector<point3D64F> &vec_fg_xyz,
 		vector<point3D64F> &vec_musclecell_output,vector< vector<double> > &vec2d_labelprob,COutputInfo &outputinfo);
 
 //refine the warped atlas (deterministic annealing without constraint)
 bool q_atlas2image_musclecell_ref_DAWC(const CParas &paras,V3DPluginCallback &callback,
-		const unsigned char *p_img8u,const long sz_img[4],const vector<point3D64F> &vec_musclecell,
-		const vector<long> &vec_fg_ind,const vector<point3D64F> &vec_fg_xyz,
+		const unsigned char *p_img8u,const V3DLONG sz_img[4],const vector<point3D64F> &vec_musclecell,
+		const vector<V3DLONG> &vec_fg_ind,const vector<point3D64F> &vec_fg_xyz,
 		vector<point3D64F> &vec_musclecell_output);
 bool q_atlas2image_musclecell_ref_DAWC_prior(const CParas &paras,V3DPluginCallback &callback,
-		const unsigned char *p_img8u,const long sz_img[4],const vector<point3D64F> &vec_musclecell,const vector<long> vec_ind_anchor,
-		const vector<long> &vec_fg_ind,const vector<point3D64F> &vec_fg_xyz,
+		const unsigned char *p_img8u,const V3DLONG sz_img[4],const vector<point3D64F> &vec_musclecell,const vector<V3DLONG> vec_ind_anchor,
+		const vector<V3DLONG> &vec_fg_ind,const vector<point3D64F> &vec_fg_xyz,
 		vector<point3D64F> &vec_musclecell_output);
 
 //refine the warped atlas (deterministic annealing without TPS constraint)
 bool q_atlas2image_musclecell_ref_DATPS(const CParas &paras,V3DPluginCallback &callback,
-		const unsigned char *p_img8u,const long sz_img[4],const vector<point3D64F> &vec_musclecell,
-		const vector<long> &vec_fg_ind,const vector<point3D64F> &vec_fg_xyz,
+		const unsigned char *p_img8u,const V3DLONG sz_img[4],const vector<point3D64F> &vec_musclecell,
+		const vector<V3DLONG> &vec_fg_ind,const vector<point3D64F> &vec_fg_xyz,
 		vector<point3D64F> &vec_musclecell_output);
 
 //refine the warped atlas (LHHV: locally horizental halfway vibration)
 bool q_atlas2image_musclecell_ref_LHHV(const CParas &paras,V3DPluginCallback &callback,
-		const unsigned char *p_img8u,const long sz_img[4],const vector<point3D64F> &vec_musclecell,
-		const vector<long> &vec_fg_ind,const vector<point3D64F> &vec_fg_xyz,
+		const unsigned char *p_img8u,const V3DLONG sz_img[4],const vector<point3D64F> &vec_musclecell,
+		const vector<V3DLONG> &vec_fg_ind,const vector<point3D64F> &vec_fg_xyz,
 		vector<point3D64F> &vec_musclecell_output);
 
 //refine the position of atlas points by mean-shift
 bool q_atlas2image_musclecell_ref_mshift(const CParas &paras,V3DPluginCallback &callback,
-		const unsigned char *p_img8u,const long sz_img[4],const vector<point3D64F> &vec_musclecell,
+		const unsigned char *p_img8u,const V3DLONG sz_img[4],const vector<point3D64F> &vec_musclecell,
 		vector<point3D64F> &vec_musclecell_output);
 bool q_atlas2image_musclecell_ref_mshift_adaptive(const CParas &paras,V3DPluginCallback &callback,
-		const unsigned char *p_img8u,const long sz_img[4],const vector<point3D64F> &vec_musclecell,const double d_thresh_fg,
+		const unsigned char *p_img8u,const V3DLONG sz_img[4],const vector<point3D64F> &vec_musclecell,const double d_thresh_fg,
 		vector<point3D64F> &vec_musclecell_output);
 
 //group the cells according to the given distance (used to estimate cell num and post-process the clustered cells)
 bool q_groupcells(const vector<point3D64F> &vec_cell,const double d_mingroupdis,
-		vector< vector<long> > &vec2d_groupind);
+		vector< vector<V3DLONG> > &vec2d_groupind);
 
 //post process the anno result (backward push the overlapped anno)
 bool q_postprocess_backwardpushanno(const QList<CellAPO> &ql_musclecell_input,
 		QList<CellAPO> &ql_musclecell_output);
 
 //compute the energy for given deformed atlas (energy=ocupied pixel intensity sum)
-bool q_compute_energy(const unsigned char *p_img8u,const long sz_img[4],const vector<point3D64F> &vec_musclecell,
-		const vector<long> &vec_fg_ind,const vector<point3D64F> &vec_fg_xyz,
-		const long &l_radius,
+bool q_compute_energy(const unsigned char *p_img8u,const V3DLONG sz_img[4],const vector<point3D64F> &vec_musclecell,
+		const vector<V3DLONG> &vec_fg_ind,const vector<point3D64F> &vec_fg_xyz,
+		const V3DLONG &l_radius,
 		double &d_energy);
 
 //show the point set in current 3D viewer window
-bool q_push2V3D_pts(V3DPluginCallback &callback,vector<point3D64F> &vec_pts,long l_makradius);
+bool q_push2V3D_pts(V3DPluginCallback &callback,vector<point3D64F> &vec_pts,V3DLONG l_makradius);
 
 
 //------------------------------------------------------------------------------------------------------------------------------------
@@ -203,7 +204,7 @@ bool q_compute_tps_paras_3D(
 
 //------------------------------------------------------------------------------------------------------------------------------------
 bool q_align_dapicells(const CParas &paras,V3DPluginCallback &callback,
-		const unsigned char *p_img8u,const long sz_img[4],const QList<CellAPO> &ql_atlasapo,const QList<QString> &ql_celloi,
+		const unsigned char *p_img8u,const V3DLONG sz_img[4],const QList<CellAPO> &ql_atlasapo,const QList<QString> &ql_celloi,
 		QList<CellAPO> &ql_musclecell_output,COutputInfo &outputinfo);
 
 #endif

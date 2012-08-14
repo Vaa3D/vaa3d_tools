@@ -15,16 +15,16 @@ using namespace std;
 #include "q_celegans_straighten.h"
 
 
-long floor(V3DLONG x)
+V3DLONG floor(V3DLONG x)
 {
 	return (V3DLONG)floorl((double)x);
 }
 
 //simply straighten along the given markers which defined along the central line of the worm
 bool q_celegans_straighten_manual(V3DPluginCallback &callback,const CSParas &paras,
-		const unsigned char *p_img_input,const long sz_img_input[4],
+		const unsigned char *p_img_input,const V3DLONG sz_img_input[4],
 		const vector< vector<double> > vec2d_markers,
-		unsigned char *&p_img_output,long *&sz_img_output)
+		unsigned char *&p_img_output,V3DLONG *&sz_img_output)
 {
 	//check paras
 	if(p_img_input==0)
@@ -46,9 +46,9 @@ bool q_celegans_straighten_manual(V3DPluginCallback &callback,const CSParas &par
 
 	//------------------------------------------------------------------
 	printf("\t>>do straighten in xy plane. \n");
-	long l_cuttingplane_width=paras.l_radius_cuttingplane*2+1;
+	V3DLONG l_cuttingplane_width=paras.l_radius_cuttingplane*2+1;
 	QList<ImageMarker> ql_cptpos_xy;
-	for(long i=0;i<vec2d_markers.size();i++)
+	for(V3DLONG i=0;i<vec2d_markers.size();i++)
 	{
 		ImageMarker tmp;
 		tmp.x=vec2d_markers[i][0];	tmp.y=vec2d_markers[i][1];	tmp.z=vec2d_markers[i][2];
@@ -69,9 +69,9 @@ bool q_celegans_straighten_manual(V3DPluginCallback &callback,const CSParas &par
 
 
 bool q_celegans_straighten(V3DPluginCallback &callback,const CSParas &paras,
-		const unsigned char *p_img_input,const long sz_img_input[4],
+		const unsigned char *p_img_input,const V3DLONG sz_img_input[4],
 		const vector< vector<double> > vec2d_markers,
-		unsigned char *&p_img_output,long *&sz_img_output)
+		unsigned char *&p_img_output,V3DLONG *&sz_img_output)
 {
 	//check paras
 	if(p_img_input==0)
@@ -95,7 +95,7 @@ bool q_celegans_straighten(V3DPluginCallback &callback,const CSParas &paras,
 	//------------------------------------------------------------------------------------------------------------------------------------
 	printf("(1). Extract the interesting channel: [%d]. \n",paras.l_refchannel);
 	unsigned char *p_img_1c=0;
-	long sz_img_1c[4]={sz_img_input[0],sz_img_input[1],sz_img_input[2],1};
+	V3DLONG sz_img_1c[4]={sz_img_input[0],sz_img_input[1],sz_img_input[2],1};
 
 	p_img_1c=new unsigned char[sz_img_1c[0]*sz_img_1c[1]*sz_img_input[2]]();
 	if(!p_img_1c)
@@ -106,32 +106,32 @@ bool q_celegans_straighten(V3DPluginCallback &callback,const CSParas &paras,
 
 	if(paras.l_refchannel>=0 && paras.l_refchannel<3)
 	{
-		long pgsz_x=sz_img_1c[0];
-		long pgsz_xy=sz_img_1c[0]*sz_img_1c[1];
-		long pgsz_xyz=sz_img_1c[0]*sz_img_1c[1]*sz_img_1c[2];
-		for(long z=0;z<sz_img_1c[2];z++)
-			for(long y=0;y<sz_img_1c[1];y++)
-				for(long x=0;x<sz_img_1c[0];x++)
+		V3DLONG pgsz_x=sz_img_1c[0];
+		V3DLONG pgsz_xy=sz_img_1c[0]*sz_img_1c[1];
+		V3DLONG pgsz_xyz=sz_img_1c[0]*sz_img_1c[1]*sz_img_1c[2];
+		for(V3DLONG z=0;z<sz_img_1c[2];z++)
+			for(V3DLONG y=0;y<sz_img_1c[1];y++)
+				for(V3DLONG x=0;x<sz_img_1c[0];x++)
 				{
-					long index=pgsz_xyz*paras.l_refchannel+pgsz_xy*z+pgsz_x*y+x;
-					long index_1c=pgsz_xy*z+pgsz_x*y+x;
+					V3DLONG index=pgsz_xyz*paras.l_refchannel+pgsz_xy*z+pgsz_x*y+x;
+					V3DLONG index_1c=pgsz_xy*z+pgsz_x*y+x;
 					p_img_1c[index_1c]=p_img_input[index];
 				}
 	}
 	else if(paras.l_refchannel==9)	//combine all channels
 	{
-		long pgsz_x=sz_img_1c[0];
-		long pgsz_xy=sz_img_1c[0]*sz_img_1c[1];
-		long pgsz_xyz=sz_img_1c[0]*sz_img_1c[1]*sz_img_1c[2];
-		for(long z=0;z<sz_img_1c[2];z++)
-			for(long y=0;y<sz_img_1c[1];y++)
-				for(long x=0;x<sz_img_1c[0];x++)
+		V3DLONG pgsz_x=sz_img_1c[0];
+		V3DLONG pgsz_xy=sz_img_1c[0]*sz_img_1c[1];
+		V3DLONG pgsz_xyz=sz_img_1c[0]*sz_img_1c[1]*sz_img_1c[2];
+		for(V3DLONG z=0;z<sz_img_1c[2];z++)
+			for(V3DLONG y=0;y<sz_img_1c[1];y++)
+				for(V3DLONG x=0;x<sz_img_1c[0];x++)
 				{
 					double d_maxintensity=0;
-					long index_1c=pgsz_xy*z+pgsz_x*y+x;
-					for (long c=0;c<sz_img_input[3];c++)
+					V3DLONG index_1c=pgsz_xy*z+pgsz_x*y+x;
+					for (V3DLONG c=0;c<sz_img_input[3];c++)
 					{
-						long index=pgsz_xyz*c+pgsz_xy*z+pgsz_x*y+x;
+						V3DLONG index=pgsz_xyz*c+pgsz_xy*z+pgsz_x*y+x;
 						if(p_img_input[index]>d_maxintensity)
 							d_maxintensity=p_img_input[index];
 					}
@@ -151,10 +151,10 @@ bool q_celegans_straighten(V3DPluginCallback &callback,const CSParas &paras,
 	//------------------------------------------------------------------------------------------------------------------------------------
 	printf("(2). Resize image. \n");
 	unsigned char *p_img_s=0;
-	long sz_img_s[4]={1,1,1,1};
+	V3DLONG sz_img_s[4]={1,1,1,1};
 
 	{
-	for(long i=0;i<3;i++)
+	for(V3DLONG i=0;i<3;i++)
 		sz_img_s[i]=sz_img_1c[i]/paras.d_downsampleratio+0.5;
 
 	if(!q_imresize_3D(p_img_1c,sz_img_1c,1,sz_img_s,p_img_s))
@@ -172,12 +172,12 @@ bool q_celegans_straighten(V3DPluginCallback &callback,const CSParas &paras,
 	//------------------------------------------------------------------------------------------------------------------------------------
 	printf("(3). Straighten in XY plane. \n");
 	unsigned char *p_img_sub2tar_xy=0;
-	long *sz_img_sub2tar_xy=0;
+	V3DLONG *sz_img_sub2tar_xy=0;
 
 	//------------------------------------------------------------------
 	printf("\t>>generate mip_xy image. \n");
 	unsigned char *p_img_mip_xy=0;
-	long sz_img_mip_xy[4]={sz_img_s[0],sz_img_s[1],1,sz_img_s[3]};
+	V3DLONG sz_img_mip_xy[4]={sz_img_s[0],sz_img_s[1],1,sz_img_s[3]};
 
 	{
 	p_img_mip_xy=new unsigned char[sz_img_s[0]*sz_img_s[1]*sz_img_s[3]]();
@@ -189,25 +189,25 @@ bool q_celegans_straighten(V3DPluginCallback &callback,const CSParas &paras,
 		return false;
 	}
 
-	long pgsz_x=sz_img_s[0];
-	long pgsz_xy=sz_img_s[0]*sz_img_s[1];
-	long pgsz_xyz=sz_img_s[0]*sz_img_s[1]*sz_img_s[2];
+	V3DLONG pgsz_x=sz_img_s[0];
+	V3DLONG pgsz_xy=sz_img_s[0]*sz_img_s[1];
+	V3DLONG pgsz_xyz=sz_img_s[0]*sz_img_s[1]*sz_img_s[2];
 	unsigned char u_MIP_rgb[3];
-	for(long y=0;y<sz_img_s[1];y++)
-		for(long x=0;x<sz_img_s[0];x++)
+	for(V3DLONG y=0;y<sz_img_s[1];y++)
+		for(V3DLONG x=0;x<sz_img_s[0];x++)
 		{
 			u_MIP_rgb[0]=u_MIP_rgb[1]=u_MIP_rgb[2]=0;
-			for(long z=0;z<sz_img_s[2];z++)
-				for(long c=0;c<sz_img_s[3];c++)
+			for(V3DLONG z=0;z<sz_img_s[2];z++)
+				for(V3DLONG c=0;c<sz_img_s[3];c++)
 				{
-					long index=pgsz_xyz*c+pgsz_xy*z+pgsz_x*y+x;
+					V3DLONG index=pgsz_xyz*c+pgsz_xy*z+pgsz_x*y+x;
 					if(p_img_s[index]>u_MIP_rgb[c])
 						u_MIP_rgb[c]=p_img_s[index];
 				}
 
-			for(long c=0;c<sz_img_s[3];c++)
+			for(V3DLONG c=0;c<sz_img_s[3];c++)
 			{
-				long index_MIP=pgsz_xy*c+pgsz_x*y+x;
+				V3DLONG index_MIP=pgsz_xy*c+pgsz_x*y+x;
 				p_img_mip_xy[index_MIP]=u_MIP_rgb[c];
 			}
 		}
@@ -217,7 +217,7 @@ bool q_celegans_straighten(V3DPluginCallback &callback,const CSParas &paras,
 	//------------------------------------------------------------------
 	printf("\t>>detect principal skeleton. \n");
 	QList<ImageMarker> ql_cptpos_output_xy;
-	vector< vector<long> > vecvec_domain_length_ind,vecvec_domain_smooth_ind;	//the index of control point of each domain is refer to the corresponding marker file
+	vector< vector<V3DLONG> > vecvec_domain_length_ind,vecvec_domain_smooth_ind;	//the index of control point of each domain is refer to the corresponding marker file
 	vector<double> vec_domain_length_weight,vec_domain_smooth_weight;
 
 	{
@@ -227,7 +227,7 @@ bool q_celegans_straighten(V3DPluginCallback &callback,const CSParas &paras,
 	{
 	vector<double> vec_skeletonsegdis;
 	double d_length=0;
-	for(long i=0;i<vec2d_markers.size()-1;i++)
+	for(V3DLONG i=0;i<vec2d_markers.size()-1;i++)
 	{
 		double dis,difx,dify,difz;
 		difx=vec2d_markers[i][0]-vec2d_markers[i+1][0];
@@ -241,7 +241,7 @@ bool q_celegans_straighten(V3DPluginCallback &callback,const CSParas &paras,
 
 	//build initial skeleton
 	point3D64F tmp;
-	for(long i=0;i<vec2d_markers.size();i++)
+	for(V3DLONG i=0;i<vec2d_markers.size();i++)
 	{
 		tmp.x=vec2d_markers[i][0];
 		tmp.y=vec2d_markers[i][1];
@@ -252,8 +252,8 @@ bool q_celegans_straighten(V3DPluginCallback &callback,const CSParas &paras,
 		if(i==(vec2d_markers.size()-1))
 			break;
 
-		long n_seg=vec_skeletonsegdis[i]/d_step;
-		for(long j=0;j<n_seg;j++)
+		V3DLONG n_seg=vec_skeletonsegdis[i]/d_step;
+		for(V3DLONG j=0;j<n_seg;j++)
 		{
 			tmp.x=(vec2d_markers[i+1][0]-vec2d_markers[i][0])*(d_step*(j+1)/vec_skeletonsegdis[i])+vec2d_markers[i][0];
 			tmp.y=(vec2d_markers[i+1][1]-vec2d_markers[i][1])*(d_step*(j+1)/vec_skeletonsegdis[i])+vec2d_markers[i][1];
@@ -268,8 +268,8 @@ bool q_celegans_straighten(V3DPluginCallback &callback,const CSParas &paras,
 
 	//generate domain info
 	{
-	vector<long> tmp;
-	for(long i=0;i<vec_cptpos_input.size();i++)
+	vector<V3DLONG> tmp;
+	for(V3DLONG i=0;i<vec_cptpos_input.size();i++)
 		tmp.push_back(i);
 	vecvec_domain_length_ind.push_back(tmp);
 	vecvec_domain_smooth_ind.push_back(tmp);
@@ -302,7 +302,7 @@ bool q_celegans_straighten(V3DPluginCallback &callback,const CSParas &paras,
 	}
 	if(p_img_mip_xy) 				{delete []p_img_mip_xy;			p_img_mip_xy=0;}
 
-	for(long i=0;i<vec_cptpos_output.size();i++)
+	for(V3DLONG i=0;i<vec_cptpos_output.size();i++)
 	{
 		ImageMarker tmp;
 		tmp.x=vec_cptpos_output[i].x;
@@ -314,7 +314,7 @@ bool q_celegans_straighten(V3DPluginCallback &callback,const CSParas &paras,
 	//------------------------------------------------------------------
 	printf("\t>>do straighten in xy plane. \n");
 	{
-	long l_cuttingplane_width=(paras.l_radius_cuttingplane/paras.d_downsampleratio)*2+1;;
+	V3DLONG l_cuttingplane_width=(paras.l_radius_cuttingplane/paras.d_downsampleratio)*2+1;;
 	if(!q_celegans_restacking_xy(
 			p_img_s,sz_img_s,
 			ql_cptpos_output_xy,l_cuttingplane_width,
@@ -334,12 +334,12 @@ bool q_celegans_straighten(V3DPluginCallback &callback,const CSParas &paras,
 	//------------------------------------------------------------------------------------------------------------------------------------
 	printf("(4). Straighten in XZ plane. \n");
 	unsigned char *p_img_sub2tar_xz=0;
-	long *sz_img_sub2tar_xz=0;
+	V3DLONG *sz_img_sub2tar_xz=0;
 
 	//------------------------------------------------------------------
 	printf("\t>>generate mip_xz image. \n");
 	unsigned char *p_img_mip_xz=0;
-	long sz_img_mip_xz[4]={sz_img_sub2tar_xy[0],sz_img_sub2tar_xy[2],1,sz_img_sub2tar_xy[3]};
+	V3DLONG sz_img_mip_xz[4]={sz_img_sub2tar_xy[0],sz_img_sub2tar_xy[2],1,sz_img_sub2tar_xy[3]};
 
 	{
 	p_img_mip_xz=new unsigned char[sz_img_sub2tar_xy[0]*sz_img_sub2tar_xy[2]*sz_img_sub2tar_xy[3]]();
@@ -354,26 +354,26 @@ bool q_celegans_straighten(V3DPluginCallback &callback,const CSParas &paras,
 		return false;
 	}
 
-	long pgsz_x=sz_img_sub2tar_xy[0];
-	long pgsz_xy=sz_img_sub2tar_xy[0]*sz_img_sub2tar_xy[1];
-	long pgsz_xz=sz_img_sub2tar_xy[0]*sz_img_sub2tar_xy[2];
-	long pgsz_xyz=sz_img_sub2tar_xy[0]*sz_img_sub2tar_xy[1]*sz_img_sub2tar_xy[2];
+	V3DLONG pgsz_x=sz_img_sub2tar_xy[0];
+	V3DLONG pgsz_xy=sz_img_sub2tar_xy[0]*sz_img_sub2tar_xy[1];
+	V3DLONG pgsz_xz=sz_img_sub2tar_xy[0]*sz_img_sub2tar_xy[2];
+	V3DLONG pgsz_xyz=sz_img_sub2tar_xy[0]*sz_img_sub2tar_xy[1]*sz_img_sub2tar_xy[2];
 	unsigned char u_MIP_rgb[3];
-	for(long z=0;z<sz_img_sub2tar_xy[2];z++)
-		for(long x=0;x<sz_img_sub2tar_xy[0];x++)
+	for(V3DLONG z=0;z<sz_img_sub2tar_xy[2];z++)
+		for(V3DLONG x=0;x<sz_img_sub2tar_xy[0];x++)
 		{
 			u_MIP_rgb[0]=u_MIP_rgb[1]=u_MIP_rgb[2]=0;
-			for(long y=0;y<sz_img_sub2tar_xy[1];y++)
-				for(long c=0;c<sz_img_sub2tar_xy[3];c++)
+			for(V3DLONG y=0;y<sz_img_sub2tar_xy[1];y++)
+				for(V3DLONG c=0;c<sz_img_sub2tar_xy[3];c++)
 				{
-					long index=pgsz_xyz*c+pgsz_xy*z+pgsz_x*y+x;
+					V3DLONG index=pgsz_xyz*c+pgsz_xy*z+pgsz_x*y+x;
 					if(p_img_sub2tar_xy[index]>u_MIP_rgb[c])
 						u_MIP_rgb[c]=p_img_sub2tar_xy[index];
 				}
 
-			for(long c=0;c<sz_img_sub2tar_xy[3];c++)
+			for(V3DLONG c=0;c<sz_img_sub2tar_xy[3];c++)
 			{
-				long index_MIP=pgsz_xz*c+pgsz_x*z+x;
+				V3DLONG index_MIP=pgsz_xz*c+pgsz_x*z+x;
 				p_img_mip_xz[index_MIP]=u_MIP_rgb[c];
 			}
 		}
@@ -396,7 +396,7 @@ bool q_celegans_straighten(V3DPluginCallback &callback,const CSParas &paras,
 	double b=marker_head.z-a*marker_head.x;
 	double d_step=(marker_tail.x-marker_head.x)/(paras.l_ctlpts_num-1);
 
-	for(long i=0;i<paras.l_ctlpts_num;i++)
+	for(V3DLONG i=0;i<paras.l_ctlpts_num;i++)
 	{
 		point3D64F tmp;
 		tmp.x=i*d_step;
@@ -432,7 +432,7 @@ bool q_celegans_straighten(V3DPluginCallback &callback,const CSParas &paras,
 	if(p_img_sub2tar_xy) 			{delete []p_img_sub2tar_xy;		p_img_sub2tar_xy=0;}
 	if(p_img_s) 					{delete []p_img_s;				p_img_s=0;}
 
-	for(long i=0;i<vec_cptpos_output.size();i++)
+	for(V3DLONG i=0;i<vec_cptpos_output.size();i++)
 	{
 		ImageMarker tmp;
 		tmp.x=vec_cptpos_output[i].x;
@@ -444,12 +444,12 @@ bool q_celegans_straighten(V3DPluginCallback &callback,const CSParas &paras,
 
 	//------------------------------------------------------------------------------------------------------------------------------------
 	printf("(5). Prepare the full-resolution output. \n");
-	for(long i=0;i<ql_cptpos_output_xy.size();i++)
+	for(V3DLONG i=0;i<ql_cptpos_output_xy.size();i++)
 	{
 		ql_cptpos_output_xy[i].x*=paras.d_downsampleratio;
 		ql_cptpos_output_xy[i].y*=paras.d_downsampleratio;
 	}
-	for(long i=0;i<ql_cptpos_output_xz.size();i++)
+	for(V3DLONG i=0;i<ql_cptpos_output_xz.size();i++)
 	{
 		ql_cptpos_output_xz[i].x*=paras.d_downsampleratio;
 		ql_cptpos_output_xz[i].z*=paras.d_downsampleratio;
@@ -460,7 +460,7 @@ bool q_celegans_straighten(V3DPluginCallback &callback,const CSParas &paras,
 	if(p_img_sub2tar_xy) 	{delete []p_img_sub2tar_xy;		p_img_sub2tar_xy=0;}
 	if(sz_img_sub2tar_xy) 	{delete []sz_img_sub2tar_xy;	sz_img_sub2tar_xy=0;}
 
-	long l_cuttingplane_width=paras.l_radius_cuttingplane*2+1;
+	V3DLONG l_cuttingplane_width=paras.l_radius_cuttingplane*2+1;
 	if(!q_celegans_restacking_xy(
 			p_img_input,sz_img_input,
 			ql_cptpos_output_xy,l_cuttingplane_width,
@@ -484,7 +484,7 @@ bool q_celegans_straighten(V3DPluginCallback &callback,const CSParas &paras,
 	if(sz_img_sub2tar_xz) 	{delete []sz_img_sub2tar_xz;	sz_img_sub2tar_xz=0;}
 
 	{
-	long l_cuttingplane_width=paras.l_radius_cuttingplane*2+1;
+	V3DLONG l_cuttingplane_width=paras.l_radius_cuttingplane*2+1;
 	if(!q_celegans_restacking_xz(
 			p_img_sub2tar_xy,sz_img_sub2tar_xy,
 			ql_cptpos_output_xz,l_cuttingplane_width,
@@ -523,11 +523,11 @@ bool q_celegans_straighten(V3DPluginCallback &callback,const CSParas &paras,
 
 
 bool q_celegans_restacking_xy(
-		const unsigned char *p_inputimg,const long *sz_inputimg,
-		const QList<ImageMarker> &ql_marker,const long l_width,
-		unsigned char *&p_strimg,long *&sz_strimg)
+		const unsigned char *p_inputimg,const V3DLONG *sz_inputimg,
+		const QList<ImageMarker> &ql_marker,const V3DLONG l_width,
+		unsigned char *&p_strimg,V3DLONG *&sz_strimg)
 {
-	vector< vector< vector< vector<long> > > > vec4d_mappingfield_str2ori;
+	vector< vector< vector< vector<V3DLONG> > > > vec4d_mappingfield_str2ori;
 	if(!q_celegans_restacking_xy(
 			p_inputimg,sz_inputimg,
 			ql_marker,l_width,
@@ -542,10 +542,10 @@ bool q_celegans_restacking_xy(
 	return true;
 }
 bool q_celegans_restacking_xy(
-		const unsigned char *p_inputimg,const long *sz_inputimg,
-		const QList<ImageMarker> &ql_marker,const long l_width,
-		unsigned char *&p_strimg,long *&sz_strimg,
-		vector< vector< vector< vector<long> > > > &vec4d_mappingfield_str2ori)
+		const unsigned char *p_inputimg,const V3DLONG *sz_inputimg,
+		const QList<ImageMarker> &ql_marker,const V3DLONG l_width,
+		unsigned char *&p_strimg,V3DLONG *&sz_strimg,
+		vector< vector< vector< vector<V3DLONG> > > > &vec4d_mappingfield_str2ori)
 {
 	//check parameters
 	if(!p_inputimg)
@@ -588,7 +588,7 @@ bool q_celegans_restacking_xy(
 	//estimate the cubic spline parameters
 	parameterCubicSpline **cpara=0;
 	double *xpos=0, *ypos=0, *zpos=0;
-	long NPoints=ql_marker.size();
+	V3DLONG NPoints=ql_marker.size();
 	xpos=new double[NPoints];
 	ypos=new double[NPoints];
 	zpos=new double[NPoints];
@@ -610,7 +610,7 @@ bool q_celegans_restacking_xy(
 
 	//cubic spline interpolate the input markers
 	double *cp_x=0,*cp_y=0,*cp_z=0,*cp_alpha=0;
-	long cutPlaneNum=0;
+	V3DLONG cutPlaneNum=0;
 	if(!interpolate_cubic_spline(cpara,2,cp_x,cp_y,cp_z,cp_alpha,cutPlaneNum))
 	{
 		printf("ERROR: q_smoothstraighten_curve: interpolate_cubic_spline() return false! \n");
@@ -670,11 +670,11 @@ bool q_celegans_restacking_xy(
 }
 
 bool q_celegans_restacking_xz(
-		const unsigned char *p_inputimg,const long *sz_inputimg,
-		const QList<ImageMarker> &ql_marker,const long l_width,
-		unsigned char *&p_strimg,long *&sz_strimg)
+		const unsigned char *p_inputimg,const V3DLONG *sz_inputimg,
+		const QList<ImageMarker> &ql_marker,const V3DLONG l_width,
+		unsigned char *&p_strimg,V3DLONG *&sz_strimg)
 {
-	vector< vector< vector< vector<long> > > > vec4d_mappingfield_str2ori;
+	vector< vector< vector< vector<V3DLONG> > > > vec4d_mappingfield_str2ori;
 	if(!q_celegans_restacking_xz(
 			p_inputimg,sz_inputimg,
 			ql_marker,l_width,
@@ -689,10 +689,10 @@ bool q_celegans_restacking_xz(
 	return true;
 }
 bool q_celegans_restacking_xz(
-		const unsigned char *p_inputimg,const long *sz_inputimg,
-		const QList<ImageMarker> &ql_marker,const long l_width,
-		unsigned char *&p_strimg,long *&sz_strimg,
-		vector< vector< vector< vector<long> > > > &vec4d_mappingfield_str2ori)
+		const unsigned char *p_inputimg,const V3DLONG *sz_inputimg,
+		const QList<ImageMarker> &ql_marker,const V3DLONG l_width,
+		unsigned char *&p_strimg,V3DLONG *&sz_strimg,
+		vector< vector< vector< vector<V3DLONG> > > > &vec4d_mappingfield_str2ori)
 {
 	//check parameters
 	if(!p_inputimg)
@@ -735,7 +735,7 @@ bool q_celegans_restacking_xz(
 	//estimate the cubic spline parameters
 	parameterCubicSpline **cpara=0;
 	double *xpos=0, *ypos=0, *zpos=0;
-	long NPoints=ql_marker.size();
+	V3DLONG NPoints=ql_marker.size();
 	xpos=new double[NPoints];
 	ypos=new double[NPoints];
 	zpos=new double[NPoints];
@@ -757,7 +757,7 @@ bool q_celegans_restacking_xz(
 
 	//cubic spline interpolate the input markers
 	double *cp_x=0,*cp_y=0,*cp_z=0,*cp_alpha=0;
-	long cutPlaneNum=0;
+	V3DLONG cutPlaneNum=0;
 	if(!interpolate_cubic_spline(cpara,2,cp_x,cp_y,cp_z,cp_alpha,cutPlaneNum))
 	{
 		printf("ERROR: q_smoothstraighten_curve: interpolate_cubic_spline() return false! \n");
@@ -819,11 +819,11 @@ bool q_celegans_restacking_xz(
 
 
 bool q_restacking_alongbcurve_xy(
-		const unsigned char *p_inputimg,const long *sz_inputimg,
-        const double *pos_curve_x,const double *pos_curve_y,const double *alpha_curve,const long length_curve,
-		const long l_width,
-		unsigned char *&p_strimg, long *&sz_strimg,
-		vector< vector< vector< vector<long> > > > &vec4d_mappingfield_str2ori)
+		const unsigned char *p_inputimg,const V3DLONG *sz_inputimg,
+        const double *pos_curve_x,const double *pos_curve_y,const double *alpha_curve,const V3DLONG length_curve,
+		const V3DLONG l_width,
+		unsigned char *&p_strimg, V3DLONG *&sz_strimg,
+		vector< vector< vector< vector<V3DLONG> > > > &vec4d_mappingfield_str2ori)
 {
 	//check parameters
 	if(!p_inputimg || !sz_inputimg)
@@ -831,10 +831,10 @@ bool q_restacking_alongbcurve_xy(
 		printf("ERROR: pointer p_inputimg or sz_inputimg is invalid. \n");
 		return false;
 	}
-	long nx=sz_inputimg[0];
-	long ny=sz_inputimg[1];
-	long nz=sz_inputimg[2];
-	long nc=sz_inputimg[3];
+	V3DLONG nx=sz_inputimg[0];
+	V3DLONG ny=sz_inputimg[1];
+	V3DLONG nz=sz_inputimg[2];
+	V3DLONG nc=sz_inputimg[3];
 	if(nx<=1 || ny<=1 || nz<=0 || nc<=0)
 	{
 		printf("ERROR: The SIZE information of input image is not correct. \n");
@@ -864,7 +864,7 @@ bool q_restacking_alongbcurve_xy(
 
 	//------------------------------------------------------------------------------------------------------------------------------------
 	//allocate memory for input, output image, size array and transformation field
-	sz_strimg=new long[4];
+	sz_strimg=new V3DLONG[4];
 	if(!sz_strimg)
 	{
 		printf("ERROR: Fail to allocate memory for the SIZE array of the straightened image. \n");
@@ -895,13 +895,13 @@ bool q_restacking_alongbcurve_xy(
 		return false;
 	}
 
-	vec4d_mappingfield_str2ori.assign(sz_strimg[1],vector< vector< vector<long> > >(sz_strimg[0],vector< vector<long> >(sz_strimg[2],vector<long>(3,0))));
+	vec4d_mappingfield_str2ori.assign(sz_strimg[1],vector< vector< vector<V3DLONG> > >(sz_strimg[0],vector< vector<V3DLONG> >(sz_strimg[2],vector<V3DLONG>(3,0))));
 
 	//------------------------------------------------------------------------------------------------------------------------------------
 	//straighten image along curve
 	int ptspace=1; // default value
 	double base0=0;
-	long Krad=0;
+	V3DLONG Krad=0;
 	if(l_width/2*2==l_width)
 	{
 		Krad=(l_width-1)/2;
@@ -915,13 +915,13 @@ bool q_restacking_alongbcurve_xy(
 
 	//fill the straightened image: first along col(up -> down), then alone row(left -> right)
 	//*************NOTE: the first point of pos_curve is wrong!***************
-	for(long col=1;col<length_curve;col++)
+	for(V3DLONG col=1;col<length_curve;col++)
 	{
 		double curalpha=alpha_curve[col];
 		double ptminx=pos_curve_x[col]-cos(curalpha)*(base0+Krad*ptspace);
 		double ptminy=pos_curve_y[col]-sin(curalpha)*(base0+Krad*ptspace);
 
-		for(long row=0;row<l_width;row++)
+		for(V3DLONG row=0;row<l_width;row++)
 		{
 			double curpx=ptminx+cos(curalpha)*(row*ptspace);
 			double curpy=ptminy+sin(curalpha)*(row*ptspace);
@@ -929,18 +929,21 @@ bool q_restacking_alongbcurve_xy(
 				continue;
 
 			//linear interpolate using 4 neighbors
-			long cpx0=long(floor(curpx)), cpx1=long(ceil(curpx));
-			long cpy0=long(floor(curpy)), cpy1=long(ceil(curpy));
+			V3DLONG cpx0=V3DLONG(floor(curpx));
+			V3DLONG cpx1=V3DLONG(ceil(curpx));
+			V3DLONG cpy0=V3DLONG(floor(curpy));
+			V3DLONG cpy1=V3DLONG(ceil(curpy));
+
 			double w0x0y=(cpx1-curpx)*(cpy1-curpy);
 			double w0x1y=(cpx1-curpx)*(curpy-cpy0);
 			double w1x0y=(curpx-cpx0)*(cpy1-curpy);
 			double w1x1y=(curpx-cpx0)*(curpy-cpy0);
-			for(long z=0;z<nz; z++)
+			for(V3DLONG z=0;z<nz; z++)
 			{
 				vec4d_mappingfield_str2ori[row][col][z][0]=curpx+0.5;
 				vec4d_mappingfield_str2ori[row][col][z][1]=curpy+0.5;
 				vec4d_mappingfield_str2ori[row][col][z][2]=z+0.5;
-				for(long c=0;c<nc;c++)
+				for(V3DLONG c=0;c<nc;c++)
 					p_strimg_4d[c][z][row][col]=(unsigned char)(w0x0y*double(p_inputimg_4d[c][z][cpy0][cpx0])+w0x1y*double(p_inputimg_4d[c][z][cpy1][cpx0])+
 														     w1x0y*double(p_inputimg_4d[c][z][cpy0][cpx1])+w1x1y*double(p_inputimg_4d[c][z][cpy1][cpx1]));
 			}
@@ -955,11 +958,11 @@ bool q_restacking_alongbcurve_xy(
 }
 
 bool q_restacking_alongbcurve_xz(
-		const unsigned char *p_inputimg,const long *sz_inputimg,
-        const double *pos_curve_x,const double *pos_curve_z,const double *alpha_curve,const long length_curve,
-		const long l_width,
-		unsigned char *&p_strimg, long *&sz_strimg,
-		vector< vector< vector< vector<long> > > > &vec4d_mappingfield_str2ori)
+		const unsigned char *p_inputimg,const V3DLONG *sz_inputimg,
+        const double *pos_curve_x,const double *pos_curve_z,const double *alpha_curve,const V3DLONG length_curve,
+		const V3DLONG l_width,
+		unsigned char *&p_strimg, V3DLONG *&sz_strimg,
+		vector< vector< vector< vector<V3DLONG> > > > &vec4d_mappingfield_str2ori)
 {
 	//check parameters
 	if(!p_inputimg || !sz_inputimg)
@@ -967,10 +970,10 @@ bool q_restacking_alongbcurve_xz(
 		printf("ERROR: pointer p_inputimg or sz_inputimg is invalid. \n");
 		return false;
 	}
-	long nx=sz_inputimg[0];
-	long ny=sz_inputimg[1];
-	long nz=sz_inputimg[2];
-	long nc=sz_inputimg[3];
+	V3DLONG nx=sz_inputimg[0];
+	V3DLONG ny=sz_inputimg[1];
+	V3DLONG nz=sz_inputimg[2];
+	V3DLONG nc=sz_inputimg[3];
 	if(nx<=1 || ny<=1 || nz<=0 || nc<=0)
 	{
 		printf("ERROR: The SIZE information of input image is not correct. \n");
@@ -999,7 +1002,7 @@ bool q_restacking_alongbcurve_xz(
 
 	//------------------------------------------------------------------------------------------------------------------------------------
 	//allocate memory for input and output image, and size array
-	sz_strimg=new long[4];
+	sz_strimg=new V3DLONG[4];
 	if(!sz_strimg)
 	{
 		printf("ERROR: Fail to allocate memory for the SIZE array of the straightened image. \n");
@@ -1030,14 +1033,14 @@ bool q_restacking_alongbcurve_xz(
 		return false;
 	}
 
-	vec4d_mappingfield_str2ori.assign(sz_strimg[1],vector< vector< vector<long> > >(sz_strimg[0],vector< vector<long> >(sz_strimg[2],vector<long>(3,0))));
+	vec4d_mappingfield_str2ori.assign(sz_strimg[1],vector< vector< vector<V3DLONG> > >(sz_strimg[0],vector< vector<V3DLONG> >(sz_strimg[2],vector<V3DLONG>(3,0))));
 
 	//------------------------------------------------------------------------------------------------------------------------------------
 	//straighten image along curve
 	int ptspace=1; // default value
 	double base0=0;
-	long Krad=0;
-	if(floor(l_width/2)*2==l_width)
+	V3DLONG Krad=0;
+	if(floor(double(l_width/2))*2==l_width)
 	{
 		Krad=(l_width-1)/2;
 		base0=0;
@@ -1050,13 +1053,13 @@ bool q_restacking_alongbcurve_xz(
 
 	//fill the straightened image: first along col(up -> down), then alone row(left -> right)
 	//*************NOTE: the first point of pos_curve is wrong!***************
-	for(long col=1;col<length_curve;col++)
+	for(V3DLONG col=1;col<length_curve;col++)
 	{
 		double curalpha=alpha_curve[col];
 		double ptminx=pos_curve_x[col]-cos(curalpha)*(base0+Krad*ptspace);
 		double ptminz=pos_curve_z[col]-sin(curalpha)*(base0+Krad*ptspace);
 
-		for(long row=0;row<l_width;row++)
+		for(V3DLONG row=0;row<l_width;row++)
 		{
 			double curpx=ptminx+cos(curalpha)*(row*ptspace);
 			double curpz=ptminz+sin(curalpha)*(row*ptspace);
@@ -1064,18 +1067,20 @@ bool q_restacking_alongbcurve_xz(
 				continue;
 
 			//linear interpolate using 4 neighbors
-			long cpx0=long(floor(curpx)), cpx1=long(ceil(curpx));
-			long cpz0=long(floor(curpz)), cpz1=long(ceil(curpz));
+			V3DLONG cpx0=V3DLONG(floor(curpx));
+			V3DLONG cpx1=V3DLONG(ceil(curpx));
+			V3DLONG cpz0=V3DLONG(floor(curpz));
+			V3DLONG cpz1=V3DLONG(ceil(curpz));
 			double w0x0z=(cpx1-curpx)*(cpz1-curpz);
 			double w0x1z=(cpx1-curpx)*(curpz-cpz0);
 			double w1x0z=(curpx-cpx0)*(cpz1-curpz);
 			double w1x1z=(curpx-cpx0)*(curpz-cpz0);
-			for(long y=0;y<ny;y++)
+			for(V3DLONG y=0;y<ny;y++)
 			{
 				vec4d_mappingfield_str2ori[y][col][row][0]=curpx+0.5;
 				vec4d_mappingfield_str2ori[y][col][row][1]=y;
 				vec4d_mappingfield_str2ori[y][col][row][2]=curpz+0.5;
-				for(long c=0;c<nc;c++)
+				for(V3DLONG c=0;c<nc;c++)
 					p_strimg_4d[c][row][y][col]=(unsigned char)(w0x0z*double(p_inputimg_4d[c][cpz0][y][cpx0])+w0x1z*double(p_inputimg_4d[c][cpz1][y][cpx0])+
 														     w1x0z*double(p_inputimg_4d[c][cpz0][y][cpx1])+w1x1z*double(p_inputimg_4d[c][cpz1][y][cpx1]));
 			}

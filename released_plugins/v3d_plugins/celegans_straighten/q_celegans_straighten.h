@@ -17,14 +17,14 @@ public:
 	bool 	b_imgfromV3D;
 	bool 	b_markerfromV3D;
 	//skeleton detection
-	long 	l_refchannel;
+	V3DLONG 	l_refchannel;
 	double 	d_downsampleratio;
-	long 	l_ctlpts_num;
-	long	l_radius_openclose;
+	V3DLONG 	l_ctlpts_num;
+	V3DLONG	l_radius_openclose;
 	double	d_fgthresh_xy;
 	double	d_fgthresh_xz;
 	//straighten
-	long 	l_radius_cuttingplane;
+	V3DLONG 	l_radius_cuttingplane;
 	//visualize
 	bool 	b_showinV3D_pts;
 
@@ -47,47 +47,47 @@ public:
 
 //simply straighten along the given markers which defined along the central line of the worm
 bool q_celegans_straighten_manual(V3DPluginCallback &callback,const CSParas &paras,
-		const unsigned char *p_img_input,const long sz_img_input[4],
+		const unsigned char *p_img_input,const V3DLONG sz_img_input[4],
 		const vector< vector<double> > vec2d_markers,
-		unsigned char *&p_img_output,long *&sz_img_output);
+		unsigned char *&p_img_output,V3DLONG *&sz_img_output);
 
 
 bool q_celegans_straighten(V3DPluginCallback &callback,const CSParas &paras,
-		const unsigned char *p_img_input,const long sz_img_input[4],
+		const unsigned char *p_img_input,const V3DLONG sz_img_input[4],
 		const vector< vector<double> > vec2d_markers,
-		unsigned char *&p_img_output,long *&sz_img_output);
+		unsigned char *&p_img_output,V3DLONG *&sz_img_output);
 
 
 bool q_celegans_restacking_xy(
-		const unsigned char *p_inputimg,const long *sz_inputimg,
-		const QList<ImageMarker> &ql_marker,const long l_width,
-		unsigned char *&p_strimg,long *&sz_strimg);
+		const unsigned char *p_inputimg,const V3DLONG *sz_inputimg,
+		const QList<ImageMarker> &ql_marker,const V3DLONG l_width,
+		unsigned char *&p_strimg,V3DLONG *&sz_strimg);
 bool q_celegans_restacking_xy(
-		const unsigned char *p_inputimg,const long *sz_inputimg,
-		const QList<ImageMarker> &ql_marker,const long l_width,
-		unsigned char *&p_strimg,long *&sz_strimg,
-		vector< vector< vector< vector<long> > > > &vec4d_mappingfield_str2ori);
+		const unsigned char *p_inputimg,const V3DLONG *sz_inputimg,
+		const QList<ImageMarker> &ql_marker,const V3DLONG l_width,
+		unsigned char *&p_strimg,V3DLONG *&sz_strimg,
+		vector< vector< vector< vector<V3DLONG> > > > &vec4d_mappingfield_str2ori);
 bool q_celegans_restacking_xz(
-		const unsigned char *p_inputimg,const long *sz_inputimg,
-		const QList<ImageMarker> &ql_marker,const long l_width,
-		unsigned char *&p_strimg,long *&sz_strimg);
+		const unsigned char *p_inputimg,const V3DLONG *sz_inputimg,
+		const QList<ImageMarker> &ql_marker,const V3DLONG l_width,
+		unsigned char *&p_strimg,V3DLONG *&sz_strimg);
 bool q_celegans_restacking_xz(
-		const unsigned char *p_inputimg,const long *sz_inputimg,
-		const QList<ImageMarker> &ql_marker,const long l_width,
-		unsigned char *&p_strimg,long *&sz_strimg,
-		vector< vector< vector< vector<long> > > > &vec4d_mappingfield_str2ori);
+		const unsigned char *p_inputimg,const V3DLONG *sz_inputimg,
+		const QList<ImageMarker> &ql_marker,const V3DLONG l_width,
+		unsigned char *&p_strimg,V3DLONG *&sz_strimg,
+		vector< vector< vector< vector<V3DLONG> > > > &vec4d_mappingfield_str2ori);
 
 bool q_restacking_alongbcurve_xy(
-		const unsigned char *p_inputimg,const long *sz_inputimg,
-        const double *pos_curve_x,const double *pos_curve_y,const double *alpha_curve,const long length_curve,
-		const long l_width,
-		unsigned char *&p_strimg, long *&sz_strimg,
-		vector< vector< vector< vector<long> > > > &vec4d_mappingfield_str2ori);
+		const unsigned char *p_inputimg,const V3DLONG *sz_inputimg,
+        const double *pos_curve_x,const double *pos_curve_y,const double *alpha_curve,const V3DLONG length_curve,
+		const V3DLONG l_width,
+		unsigned char *&p_strimg, V3DLONG *&sz_strimg,
+		vector< vector< vector< vector<V3DLONG> > > > &vec4d_mappingfield_str2ori);
 bool q_restacking_alongbcurve_xz(
-		const unsigned char *p_inputimg,const long *sz_inputimg,
-        const double *pos_curve_x,const double *pos_curve_y,const double *alpha_curve,const long length_curve,
-		const long l_width,
-		unsigned char *&p_strimg, long *&sz_strimg,
-		vector< vector< vector< vector<long> > > > &vec4d_mappingfield_str2ori);
+		const unsigned char *p_inputimg,const V3DLONG *sz_inputimg,
+        const double *pos_curve_x,const double *pos_curve_y,const double *alpha_curve,const V3DLONG length_curve,
+		const V3DLONG l_width,
+		unsigned char *&p_strimg, V3DLONG *&sz_strimg,
+		vector< vector< vector< vector<V3DLONG> > > > &vec4d_mappingfield_str2ori);
 
 #endif

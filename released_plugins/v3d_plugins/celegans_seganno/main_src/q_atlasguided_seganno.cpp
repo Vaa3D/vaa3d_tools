@@ -51,7 +51,7 @@ void CControlPanel::setstop()
 //warp the atlas onto the image
 //(currently only aling the muscle cells)
 bool q_atlas2image(const CParas &paras,V3DPluginCallback &callback,
-		const unsigned char *p_img8u,const long sz_img[4],const QList<CellAPO> &ql_atlasapo,const QList<QString> &ql_celloi,
+		const unsigned char *p_img8u,const V3DLONG sz_img[4],const QList<CellAPO> &ql_atlasapo,const QList<QString> &ql_celloi,
 		QList<CellAPO> &ql_musclecell_output,unsigned char *&p_img8u_seglabel,COutputInfo &outputinfo)
 {
 	//check paras
@@ -94,8 +94,8 @@ bool q_atlas2image(const CParas &paras,V3DPluginCallback &callback,
 	//------------------------------------------------------------------------------------------------------------------------------------
 	printf("(1). Extract the interesting image channel. \n");
 	unsigned char *p_img_1c=0;
-	long sz_img_1c[4]={sz_img[0],sz_img[1],sz_img[2],1};
-	long l_npixels_1c=sz_img_1c[0]*sz_img_1c[1]*sz_img_1c[2];
+	V3DLONG sz_img_1c[4]={sz_img[0],sz_img[1],sz_img[2],1};
+	V3DLONG l_npixels_1c=sz_img_1c[0]*sz_img_1c[1]*sz_img_1c[2];
 
 	{
 	//allocate memeory
@@ -114,18 +114,18 @@ bool q_atlas2image(const CParas &paras,V3DPluginCallback &callback,
 	if(qs_refchannel.contains("2") && sz_img[3]>=2)	{arr_validchannel[1]=1; n_validchannel++;}
 	if(qs_refchannel.contains("3") && sz_img[3]>=3)	{arr_validchannel[2]=1; n_validchannel++;}
 
-	long pgsz_y=sz_img[0];
-	long pgsz_xy=sz_img[0]*sz_img[1];
-	long pgsz_xyz=sz_img[0]*sz_img[1]*sz_img[2];
-	for(long x=0;x<sz_img[0];x++)
-		for(long y=0;y<sz_img[1];y++)
-			for(long z=0;z<sz_img[2];z++)
+	V3DLONG pgsz_y=sz_img[0];
+	V3DLONG pgsz_xy=sz_img[0]*sz_img[1];
+	V3DLONG pgsz_xyz=sz_img[0]*sz_img[1]*sz_img[2];
+	for(V3DLONG x=0;x<sz_img[0];x++)
+		for(V3DLONG y=0;y<sz_img[1];y++)
+			for(V3DLONG z=0;z<sz_img[2];z++)
 			{
-				long ind_1c=pgsz_xy*z+pgsz_y*y+x;
-				for(long c=0;c<3;c++)
+				V3DLONG ind_1c=pgsz_xy*z+pgsz_y*y+x;
+				for(V3DLONG c=0;c<3;c++)
 					if(arr_validchannel[c])
 					{
-						long ind_ref=pgsz_xyz*c+ind_1c;
+						V3DLONG ind_ref=pgsz_xyz*c+ind_1c;
 						p_img_1c[ind_1c]+=p_img8u[ind_ref]/n_validchannel+0.5;
 					}
 			}
@@ -135,9 +135,9 @@ bool q_atlas2image(const CParas &paras,V3DPluginCallback &callback,
 	//------------------------------------------------------------------------------------------------------------------------------------
 	printf("(2). Resize image and atlas point. \n");
 	//resize image and compute actual resize ratio
-	long sz_img_s[4]={1,1,1,1};//w,h,z,c
+	V3DLONG sz_img_s[4]={1,1,1,1};//w,h,z,c
 	double arr_downratio_actual[3];
-	for(long i=0;i<3;i++)
+	for(V3DLONG i=0;i<3;i++)
 	{
 		sz_img_s[i]=sz_img_1c[i]/paras.d_downsampleratio+0.5;
 		arr_downratio_actual[i]=(double)sz_img_1c[i]/(double)sz_img_s[i];
@@ -155,7 +155,7 @@ bool q_atlas2image(const CParas &paras,V3DPluginCallback &callback,
 
 	//resize atlas
 	QList<CellAPO> ql_atlasapo_s(ql_atlasapo);
-	for(long i=0;i<ql_atlasapo_s.size();i++)
+	for(V3DLONG i=0;i<ql_atlasapo_s.size();i++)
 	{
 //		ql_atlasapo_s[i].x/=arr_downratio_actual[0];
 //		ql_atlasapo_s[i].y/=arr_downratio_actual[1];
@@ -172,14 +172,14 @@ bool q_atlas2image(const CParas &paras,V3DPluginCallback &callback,
 	//------------------------------------------------------------------------------------------------------------------------------------
 	printf("(3). Extract interesting atlas points. \n");
 	QList<CellAPO> ql_musclecell;
-	for(long i=0;i<ql_atlasapo_s.size();i++)
+	for(V3DLONG i=0;i<ql_atlasapo_s.size();i++)
 	{
 		QString qs_cellname=ql_atlasapo_s[i].name;
 		qs_cellname=qs_cellname.simplified();
 		qs_cellname=qs_cellname.toUpper();
 		ql_atlasapo_s[i].name=qs_cellname;
 
-		for(long j=0;j<ql_celloi.size();j++)
+		for(V3DLONG j=0;j<ql_celloi.size();j++)
 		{
 			if(ql_celloi[j].contains("*"))
 			{
@@ -211,7 +211,7 @@ bool q_atlas2image(const CParas &paras,V3DPluginCallback &callback,
 		double d_offset_z=sz_img_s[2]/2.0;
 		//rotate
 		QList<CellAPO> ql_tmp(ql_musclecell);
-		for(long i=0;i<ql_musclecell.size();i++)
+		for(V3DLONG i=0;i<ql_musclecell.size();i++)
 		{
 			ql_tmp[i].y= cos(d_degree)*(ql_musclecell[i].y-d_offset_y)-sin(d_degree)*(ql_musclecell[i].z-d_offset_z)+d_offset_y;
 			ql_tmp[i].z=-sin(d_degree)*(ql_musclecell[i].y-d_offset_y)+cos(d_degree)*(ql_musclecell[i].z-d_offset_z)+d_offset_z;
@@ -224,17 +224,17 @@ bool q_atlas2image(const CParas &paras,V3DPluginCallback &callback,
 
 	//------------------------------------------------------------------------------------------------------------------------------------
 	printf("(5). Extract forground image region. \n");
-	vector<long> 		vec_fg_ind;
+	vector<V3DLONG> 		vec_fg_ind;
 	vector<point3D64F> 	vec_fg_xyz;
-	long l_npixel_s=sz_img_s[0]*sz_img_s[1]*sz_img_s[2]*sz_img_s[3];
+	V3DLONG l_npixel_s=sz_img_s[0]*sz_img_s[1]*sz_img_s[2]*sz_img_s[3];
 
 	{
 	//compute the mean and std of image
 	double d_img_mean=0.0,d_img_std=0.0;
-	for(long i=0;i<l_npixel_s;i++)
+	for(V3DLONG i=0;i<l_npixel_s;i++)
 		d_img_mean+=p_img_s[i];
 	d_img_mean/=l_npixel_s;
-	for(long i=0;i<l_npixel_s;i++)
+	for(V3DLONG i=0;i<l_npixel_s;i++)
 	{
 		double temp=p_img_s[i]-d_img_mean;
 		d_img_std+=temp*temp;
@@ -245,24 +245,24 @@ bool q_atlas2image(const CParas &paras,V3DPluginCallback &callback,
 	double d_thresh_fg=d_img_mean+paras.d_fgthresh_factor*d_img_std;
 //	double d_thresh_fg=d_img_mean;
 	//extract foreground region
-	long pgsz_y=sz_img_s[0];
-	long pgsz_xy=sz_img_s[0]*sz_img_s[1];
-	for(long x=0;x<sz_img_s[0];x++)
-		for(long y=0;y<sz_img_s[1];y++)
-			for(long z=0;z<sz_img_s[2];z++)
+	V3DLONG pgsz_y=sz_img_s[0];
+	V3DLONG pgsz_xy=sz_img_s[0]*sz_img_s[1];
+	for(V3DLONG x=0;x<sz_img_s[0];x++)
+		for(V3DLONG y=0;y<sz_img_s[1];y++)
+			for(V3DLONG z=0;z<sz_img_s[2];z++)
 			{
-				long ind=pgsz_xy*z+pgsz_y*y+x;
+				V3DLONG ind=pgsz_xy*z+pgsz_y*y+x;
 				if(p_img_s[ind]>d_thresh_fg)
 				{
 					vec_fg_ind.push_back(ind);
 					vec_fg_xyz.push_back(point3D64F(x,y,z));
 				}
 			}
-	printf("\t>>foregroud voxel number: %ld\n",long(vec_fg_ind.size()));
+	printf("\t>>foregroud voxel number: %ld\n",V3DLONG(vec_fg_ind.size()));
 
 //	{
 //	unsigned char *p_img_tmp=new unsigned char[l_npixel_s]();
-//	for(long i=0;i<vec_fg_ind.size();i++)
+//	for(V3DLONG i=0;i<vec_fg_ind.size();i++)
 //		p_img_tmp[vec_fg_ind[i]]=255;
 //	saveImage("/Users/qul/work/v3d_2.0/sub_projects/atlasguided_seganno/img_fg.raw",p_img_tmp,sz_img_s,1);
 //	delete []p_img_tmp;
@@ -302,7 +302,7 @@ bool q_atlas2image(const CParas &paras,V3DPluginCallback &callback,
 	printf("(6). Initial align atlas with image (deterministic annealing). \n");
 	//format convert
 	vector<point3D64F> vec_musclecell,vec_musclecell_affine;
-	for(long i=0;i<ql_musclecell.size();i++)
+	for(V3DLONG i=0;i<ql_musclecell.size();i++)
 		vec_musclecell.push_back(point3D64F(ql_musclecell[i].x,ql_musclecell[i].y,ql_musclecell[i].z));
 
 	//affine align the atlas onto image
@@ -330,14 +330,14 @@ bool q_atlas2image(const CParas &paras,V3DPluginCallback &callback,
 	}
 
 	//fill seglabel image (use the same algorithm as the segmentation visualization)
-	vector< vector<unsigned long> > vec2d_cellpixelgroups(vec_musclecell.size(),vector<unsigned long>());
+	vector< vector<unsigned V3DLONG> > vec2d_cellpixelgroups(vec_musclecell.size(),vector<unsigned V3DLONG>());
 	double d_celldiameter_max=paras.l_ref_cellradius/paras.d_downsampleratio*2;
-	for(unsigned long i=0;i<vec_fg_ind.size();i++)
+	for(unsigned V3DLONG i=0;i<vec_fg_ind.size();i++)
 	{
 		//for a given pixel, find the cell index with highest prob
 		double d_maxprob=0;
-		unsigned long l_maxprob_ind=0;
-		for(unsigned long j=0;j<vec_musclecell.size();j++)
+		unsigned V3DLONG l_maxprob_ind=0;
+		for(unsigned V3DLONG j=0;j<vec_musclecell.size();j++)
 		{
 			if(vec2d_labelprob[i][j]>d_maxprob)
 			{
@@ -373,7 +373,7 @@ bool q_atlas2image(const CParas &paras,V3DPluginCallback &callback,
 //	{
 //	QList<CellAPO> ql_tmp(ql_musclecell);
 //	RGBA8 color;	color.r=255; 	color.g=0;	color.b=0;
-//	for(long i=0;i<vec_musclecell_affine.size();i++)
+//	for(V3DLONG i=0;i<vec_musclecell_affine.size();i++)
 //	{
 //		ql_tmp[i].x=vec_musclecell_affine[i].x;
 //		ql_tmp[i].y=vec_musclecell_affine[i].y;
@@ -421,7 +421,7 @@ bool q_atlas2image(const CParas &paras,V3DPluginCallback &callback,
 ////	{
 ////	QList<CellAPO> ql_tmp(ql_musclecell);
 ////	RGBA8 color;	color.r=255; 	color.g=0;	color.b=0;
-////	for(long i=0;i<vec_musclecell_affine.size();i++)
+////	for(V3DLONG i=0;i<vec_musclecell_affine.size();i++)
 ////	{
 ////		ql_tmp[i].x=vec_musclecell_ref[i].x;
 ////		ql_tmp[i].y=vec_musclecell_ref[i].y;
@@ -436,7 +436,7 @@ bool q_atlas2image(const CParas &paras,V3DPluginCallback &callback,
 //	printf("(8). Refine the position of atlas points by mean-shift (on original size image). \n");
 //	vector<point3D64F> vec_musclecell_mshift;
 //
-//	for(long i=0;i<vec_musclecell_ref.size();i++)
+//	for(V3DLONG i=0;i<vec_musclecell_ref.size();i++)
 //	{
 //		vec_musclecell_ref[i].x*=arr_downratio_actual[0];
 //		vec_musclecell_ref[i].y*=arr_downratio_actual[1];
@@ -461,7 +461,7 @@ bool q_atlas2image(const CParas &paras,V3DPluginCallback &callback,
 	//rescale the deformed atlas
 	//+(arr_downratio_actual[0]+0.5) is for compensate the downsample error (image origin offset error)
 	RGBA8 color;	color.r=255; 	color.g=0;	color.b=0;
-	for(long i=0;i<ql_musclecell_output.size();i++)
+	for(V3DLONG i=0;i<ql_musclecell_output.size();i++)
 	{
 		ql_musclecell_output[i].x=vec_musclecell_affine[i].x*arr_downratio_actual[0]+(arr_downratio_actual[0]+0.5);
 		ql_musclecell_output[i].y=vec_musclecell_affine[i].y*arr_downratio_actual[1]+(arr_downratio_actual[1]+0.5);
@@ -480,8 +480,8 @@ bool q_atlas2image(const CParas &paras,V3DPluginCallback &callback,
 	//------------------------------------------------------------------------------------------------------------------------------------
 	printf("(10). Post-precess (force the VP constraint). \n");
 	//get muscle cell 4 bundle index
-	vector< vector<long> > vec2d_ind_bundlecell(4,vector<long>());	//0:VR, 1:VL, 2:DR, 3:DL
-	for(long i=0;i<ql_musclecell_output.size();i++)
+	vector< vector<V3DLONG> > vec2d_ind_bundlecell(4,vector<V3DLONG>());	//0:VR, 1:VL, 2:DR, 3:DL
+	for(V3DLONG i=0;i<ql_musclecell_output.size();i++)
 	{
 		QString qs_cellname=ql_musclecell_output[i].name;
 		if(qs_cellname.contains("BWMVR",Qt::CaseInsensitive))
@@ -500,8 +500,8 @@ bool q_atlas2image(const CParas &paras,V3DPluginCallback &callback,
 	do
 	{
 		b_swap=0;
-		for(long i=0;i<4;i++)
-			for(unsigned long j=0;j<vec2d_ind_bundlecell[i].size()-1;j++)
+		for(V3DLONG i=0;i<4;i++)
+			for(unsigned V3DLONG j=0;j<vec2d_ind_bundlecell[i].size()-1;j++)
 			{
 				if(ql_musclecell_output[vec2d_ind_bundlecell[i][j]].x > ql_musclecell_output[vec2d_ind_bundlecell[i][j+1]].x)
 				{
@@ -540,7 +540,7 @@ bool q_atlas2image(const CParas &paras,V3DPluginCallback &callback,
 }
 
 bool q_atlas2image_partial(const CParas &paras,V3DPluginCallback &callback,
-		const unsigned char *p_img8u,const long sz_img[4],const QList<CellAPO> &ql_atlasapo,const QList<QString> &ql_celloi,
+		const unsigned char *p_img8u,const V3DLONG sz_img[4],const QList<CellAPO> &ql_atlasapo,const QList<QString> &ql_celloi,
 		QList<CellAPO> &ql_musclecell_output,COutputInfo &outputinfo)
 {
 	//check paras
@@ -577,8 +577,8 @@ bool q_atlas2image_partial(const CParas &paras,V3DPluginCallback &callback,
 
 	//------------------------------------------------------------------------------------------------------------------------------------
 	printf("(1). Extract the interesting image channel. \n");
-	long sz_img_1c[4]={sz_img[0],sz_img[1],sz_img[2],1};
-	long l_npixels_1c=sz_img_1c[0]*sz_img_1c[1]*sz_img_1c[2];
+	V3DLONG sz_img_1c[4]={sz_img[0],sz_img[1],sz_img[2],1};
+	V3DLONG l_npixels_1c=sz_img_1c[0]*sz_img_1c[1]*sz_img_1c[2];
 	//allocate memeory
 	unsigned char *p_img_1c=0;
 	p_img_1c=new unsigned char[l_npixels_1c]();
@@ -588,16 +588,16 @@ bool q_atlas2image_partial(const CParas &paras,V3DPluginCallback &callback,
 		return false;
 	}
 	//extract referece channel
-	long pgsz_y=sz_img[0];
-	long pgsz_xy=sz_img[0]*sz_img[1];
-	long pgsz_xyz=sz_img[0]*sz_img[1]*sz_img[2];
+	V3DLONG pgsz_y=sz_img[0];
+	V3DLONG pgsz_xy=sz_img[0]*sz_img[1];
+	V3DLONG pgsz_xyz=sz_img[0]*sz_img[1]*sz_img[2];
 	printf("\t>>extract channel:[%ld]\n",paras.l_refchannel);
-	for(long x=0;x<sz_img[0];x++)
-		for(long y=0;y<sz_img[1];y++)
-			for(long z=0;z<sz_img[2];z++)
+	for(V3DLONG x=0;x<sz_img[0];x++)
+		for(V3DLONG y=0;y<sz_img[1];y++)
+			for(V3DLONG z=0;z<sz_img[2];z++)
 			{
-				long ind_1c=pgsz_xy*z+pgsz_y*y+x;
-				long ind_ref=pgsz_xyz*(paras.l_refchannel-1)+ind_1c;
+				V3DLONG ind_1c=pgsz_xy*z+pgsz_y*y+x;
+				V3DLONG ind_ref=pgsz_xyz*(paras.l_refchannel-1)+ind_1c;
 				p_img_1c[ind_1c]=p_img8u[ind_ref];
 			}
 //	saveImage("img_1c.raw",p_img_1c,sz_img_1c,1);
@@ -605,8 +605,8 @@ bool q_atlas2image_partial(const CParas &paras,V3DPluginCallback &callback,
 	//------------------------------------------------------------------------------------------------------------------------------------
 	printf("(2). Resize image and atlas point. \n");
 	//resize image
-	long sz_img_s[4]={1,1,1,1};//w,h,z,c
-	for(long i=0;i<3;i++)
+	V3DLONG sz_img_s[4]={1,1,1,1};//w,h,z,c
+	for(V3DLONG i=0;i<3;i++)
 		sz_img_s[i]=sz_img_1c[i]/paras.d_downsampleratio+0.5;
 
 	unsigned char *p_img_s=0;
@@ -621,7 +621,7 @@ bool q_atlas2image_partial(const CParas &paras,V3DPluginCallback &callback,
 
 	//resize atlas
 	QList<CellAPO> ql_atlasapo_s(ql_atlasapo);
-	for(long i=0;i<ql_atlasapo_s.size();i++)
+	for(V3DLONG i=0;i<ql_atlasapo_s.size();i++)
 	{
 		ql_atlasapo_s[i].x/=paras.d_downsampleratio;
 		ql_atlasapo_s[i].y/=paras.d_downsampleratio;
@@ -635,13 +635,13 @@ bool q_atlas2image_partial(const CParas &paras,V3DPluginCallback &callback,
 	//------------------------------------------------------------------------------------------------------------------------------------
 	printf("(3). Extract interesting atlas points. \n");
 	QList<CellAPO> ql_musclecell;
-	for(long i=0;i<ql_atlasapo_s.size();i++)
+	for(V3DLONG i=0;i<ql_atlasapo_s.size();i++)
 	{
 		QString qs_cellname=ql_atlasapo_s[i].name;
 		qs_cellname=qs_cellname.simplified();
 		qs_cellname=qs_cellname.toUpper();
 
-		for(long j=0;j<ql_celloi.size();j++)
+		for(V3DLONG j=0;j<ql_celloi.size();j++)
 		{
 			if(ql_celloi[j].contains("*"))
 			{
@@ -667,7 +667,7 @@ bool q_atlas2image_partial(const CParas &paras,V3DPluginCallback &callback,
 		double d_offset_z=sz_img_s[2]/2.0;
 		//rotate
 		QList<CellAPO> ql_tmp(ql_musclecell);
-		for(long i=0;i<ql_musclecell.size();i++)
+		for(V3DLONG i=0;i<ql_musclecell.size();i++)
 		{
 			ql_tmp[i].y= cos(d_degree)*(ql_musclecell[i].y-d_offset_y)-sin(d_degree)*(ql_musclecell[i].z-d_offset_z)+d_offset_y;
 			ql_tmp[i].z=-sin(d_degree)*(ql_musclecell[i].y-d_offset_y)+cos(d_degree)*(ql_musclecell[i].z-d_offset_z)+d_offset_z;
@@ -680,13 +680,13 @@ bool q_atlas2image_partial(const CParas &paras,V3DPluginCallback &callback,
 
 	//------------------------------------------------------------------------------------------------------------------------------------
 	printf("(5). Extract forground image region. \n");
-	long l_npixel_s=sz_img_s[0]*sz_img_s[1]*sz_img_s[2]*sz_img_s[3];
+	V3DLONG l_npixel_s=sz_img_s[0]*sz_img_s[1]*sz_img_s[2]*sz_img_s[3];
 	//compute the mean and std of image
 	double d_img_mean=0.0,d_img_std=0.0;
-	for(long i=0;i<l_npixel_s;i++)
+	for(V3DLONG i=0;i<l_npixel_s;i++)
 		d_img_mean+=p_img_s[i];
 	d_img_mean/=l_npixel_s;
-	for(long i=0;i<l_npixel_s;i++)
+	for(V3DLONG i=0;i<l_npixel_s;i++)
 	{
 		double temp=p_img_s[i]-d_img_mean;
 		d_img_std+=temp*temp;
@@ -696,15 +696,15 @@ bool q_atlas2image_partial(const CParas &paras,V3DPluginCallback &callback,
 	//compute threshold
 	double d_thresh_fg=d_img_mean+paras.d_fgthresh_factor*d_img_std;
 	//extract foreground region
-	vector<long> 		vec_fg_ind;
+	vector<V3DLONG> 		vec_fg_ind;
 	vector<point3D64F> 	vec_fg_xyz;
 	pgsz_y=sz_img_s[0];
 	pgsz_xy=sz_img_s[0]*sz_img_s[1];
-	for(long x=0;x<sz_img_s[0];x++)
-		for(long y=0;y<sz_img_s[1];y++)
-			for(long z=0;z<sz_img_s[2];z++)
+	for(V3DLONG x=0;x<sz_img_s[0];x++)
+		for(V3DLONG y=0;y<sz_img_s[1];y++)
+			for(V3DLONG z=0;z<sz_img_s[2];z++)
 			{
-				long ind=pgsz_xy*z+pgsz_y*y+x;
+				V3DLONG ind=pgsz_xy*z+pgsz_y*y+x;
 				if(p_img_s[ind]>d_thresh_fg)
 				{
 					vec_fg_ind.push_back(ind);
@@ -714,7 +714,7 @@ bool q_atlas2image_partial(const CParas &paras,V3DPluginCallback &callback,
 
 //	{
 //	unsigned char *p_img_tmp=new unsigned char[l_npixel_s]();
-//	for(long i=0;i<vec_fg_ind.size();i++)
+//	for(V3DLONG i=0;i<vec_fg_ind.size();i++)
 //		p_img_tmp[vec_fg_ind[i]]=255;
 //	saveImage("/Users/qul/work/v3d_2.0/sub_projects/atlasguided_seganno/img_fg.raw",p_img_tmp,sz_img_s,1);
 //	delete []p_img_tmp;
@@ -738,7 +738,7 @@ bool q_atlas2image_partial(const CParas &paras,V3DPluginCallback &callback,
 	printf("(6). Initial align atlas with image. \n");
 	//format convert
 	vector<point3D64F> vec_musclecell,vec_musclecell_affine;
-	for(long i=0;i<ql_musclecell.size();i++)
+	for(V3DLONG i=0;i<ql_musclecell.size();i++)
 		vec_musclecell.push_back(point3D64F(ql_musclecell[i].x,ql_musclecell[i].y,ql_musclecell[i].z));
 
 	//affine align the atlas onto image
@@ -759,7 +759,7 @@ bool q_atlas2image_partial(const CParas &paras,V3DPluginCallback &callback,
 		//prepare output
 		ql_musclecell_output=ql_musclecell;
 		RGBA8 color;	color.r=255; 	color.g=0;	color.b=0;
-		for(long i=0;i<ql_musclecell_output.size();i++)
+		for(V3DLONG i=0;i<ql_musclecell_output.size();i++)
 		{
 			ql_musclecell_output[i].x=vec_musclecell_affine[i].x*paras.d_downsampleratio;
 			ql_musclecell_output[i].y=vec_musclecell_affine[i].y*paras.d_downsampleratio;
@@ -782,9 +782,9 @@ bool q_atlas2image_partial(const CParas &paras,V3DPluginCallback &callback,
 		float nx=50,ny=2,nz=2;
 		float step_x,step_y,step_z;
 		step_x=sz_img_s[0]/(nx-1);	step_y=sz_img_s[1]/(ny-1);	step_z=sz_img_s[2]/(nz-1);
-		for(long x=0;x<nx;x++)
-			for(long y=0;y<ny;y++)
-				for(long z=0;z<nz;z++)
+		for(V3DLONG x=0;x<nx;x++)
+			for(V3DLONG y=0;y<ny;y++)
+				for(V3DLONG z=0;z<nz;z++)
 				{
 					point3D64F tmp;
 					tmp.x=x*step_x;	tmp.y=y*step_y;	tmp.z=z*step_z;
@@ -804,7 +804,7 @@ bool q_atlas2image_partial(const CParas &paras,V3DPluginCallback &callback,
 		}
 		if(paras.b_stepwise) QMessageBox::information(0,"","Initial align without constraint complete!\n");
 
-		for(unsigned long i=0;i<vec_musclecell_ref.size();i++)
+		for(unsigned V3DLONG i=0;i<vec_musclecell_ref.size();i++)
 		{
 			vec_musclecell_ref[i].x*=paras.d_downsampleratio;
 			vec_musclecell_ref[i].y*=paras.d_downsampleratio;
@@ -824,13 +824,13 @@ bool q_atlas2image_partial(const CParas &paras,V3DPluginCallback &callback,
 
 	//------------------------------------------------------------------------------------------------------------------------------------
 	printf("(7). Group cells and estimate cell number. \n");
-	unsigned long l_estcellnum=0;
+	unsigned V3DLONG l_estcellnum=0;
 	if(paras.l_mode==0 || paras.l_mode==1 || paras.l_mode==3)
 	{
 		//group cells and estimate cell number
-		long l_cellradius=8;
+		V3DLONG l_cellradius=8;
 		double d_mingroupdis=l_cellradius;
-		vector< vector<long> > vec2d_groupind;
+		vector< vector<V3DLONG> > vec2d_groupind;
 		if(!q_groupcells(vec_musclecell_mshift,d_mingroupdis,vec2d_groupind))
 		{
 			printf("ERROR: q_groupcells() return false!\n");
@@ -838,10 +838,10 @@ bool q_atlas2image_partial(const CParas &paras,V3DPluginCallback &callback,
 			if(p_img_s) 		{delete []p_img_s;			p_img_s=0;}
 			return false;
 		}
-		for(unsigned long i=0;i<vec2d_groupind.size();i++)
+		for(unsigned V3DLONG i=0;i<vec2d_groupind.size();i++)
 		{
 			printf("\tgroup[%ld]: ",i);
-			for(unsigned long j=0;j<vec2d_groupind[i].size();j++)
+			for(unsigned V3DLONG j=0;j<vec2d_groupind[i].size();j++)
 				printf("%ld,",vec2d_groupind[i][j]+1);
 			printf("\n");
 		}
@@ -850,12 +850,12 @@ bool q_atlas2image_partial(const CParas &paras,V3DPluginCallback &callback,
 
 		//compute the average position of grouped cells (optional)
 		vector<point3D64F> vec_musclecell_groupavg;
-		for(unsigned long i=0;i<vec2d_groupind.size();i++)
+		for(unsigned V3DLONG i=0;i<vec2d_groupind.size();i++)
 		{
 			point3D64F avg;
-			for(unsigned long j=0;j<vec2d_groupind[i].size();j++)
+			for(unsigned V3DLONG j=0;j<vec2d_groupind[i].size();j++)
 			{
-				long ind=vec2d_groupind[i][j];
+				V3DLONG ind=vec2d_groupind[i][j];
 				avg.x+=vec_musclecell_mshift[ind].x/vec2d_groupind[i].size();
 				avg.y+=vec_musclecell_mshift[ind].y/vec2d_groupind[i].size();
 				avg.z+=vec_musclecell_mshift[ind].z/vec2d_groupind[i].size();
@@ -865,7 +865,7 @@ bool q_atlas2image_partial(const CParas &paras,V3DPluginCallback &callback,
 		if(paras.b_showatlas)
 		{
 			vector<point3D64F> vec_musclecell_tmp(vec_musclecell_groupavg);
-			for(unsigned long i=0;i<vec_musclecell_tmp.size();i++)
+			for(unsigned V3DLONG i=0;i<vec_musclecell_tmp.size();i++)
 			{
 				vec_musclecell_tmp[i].x/=paras.d_downsampleratio;
 				vec_musclecell_tmp[i].y/=paras.d_downsampleratio;
@@ -894,12 +894,12 @@ bool q_atlas2image_partial(const CParas &paras,V3DPluginCallback &callback,
 			return false;
 		}
 		vec_musclecell_groupavg.clear();
-		for(unsigned long i=0;i<vec2d_groupind.size();i++)
+		for(unsigned V3DLONG i=0;i<vec2d_groupind.size();i++)
 		{
 			point3D64F avg;
-			for(unsigned long j=0;j<vec2d_groupind[i].size();j++)
+			for(unsigned V3DLONG j=0;j<vec2d_groupind[i].size();j++)
 			{
-				long ind=vec2d_groupind[i][j];
+				V3DLONG ind=vec2d_groupind[i][j];
 				avg.x+=vec_musclecell_mshift[ind].x/vec2d_groupind[i].size();
 				avg.y+=vec_musclecell_mshift[ind].y/vec2d_groupind[i].size();
 				avg.z+=vec_musclecell_mshift[ind].z/vec2d_groupind[i].size();
@@ -909,7 +909,7 @@ bool q_atlas2image_partial(const CParas &paras,V3DPluginCallback &callback,
 		if(paras.b_showatlas)
 		{
 			vector<point3D64F> vec_musclecell_tmp(vec_musclecell_groupavg);
-			for(unsigned long i=0;i<vec_musclecell_tmp.size();i++)
+			for(unsigned V3DLONG i=0;i<vec_musclecell_tmp.size();i++)
 			{
 				vec_musclecell_tmp[i].x/=paras.d_downsampleratio;
 				vec_musclecell_tmp[i].y/=paras.d_downsampleratio;
@@ -927,7 +927,7 @@ bool q_atlas2image_partial(const CParas &paras,V3DPluginCallback &callback,
 			RGBA8 color;	color.r=255; 	color.g=0;	color.b=0;
 			tmp.color=color;
 			tmp.volsize=50;
-			for(unsigned long i=0;i<vec_musclecell_groupavg.size();i++)
+			for(unsigned V3DLONG i=0;i<vec_musclecell_groupavg.size();i++)
 			{
 				tmp.x=vec_musclecell_groupavg[i].x;
 				tmp.y=vec_musclecell_groupavg[i].y;
@@ -944,19 +944,19 @@ bool q_atlas2image_partial(const CParas &paras,V3DPluginCallback &callback,
 	//------------------------------------------------------------------------------------------------------------------------------------
 	printf("(8). Crop the atlas according to the estimated cell number. \n");
 	vector<point3D64F> vec_musclecell_crop;
-	vector<long> vec_muscleind_crop2ori;
+	vector<V3DLONG> vec_muscleind_crop2ori;
 	if(l_estcellnum>vec_musclecell.size())
 		l_estcellnum=vec_musclecell.size();
 
 	while(vec_muscleind_crop2ori.size()<l_estcellnum)
 	{
 		double d_minx=1e+5;
-		long l_minind;
+		V3DLONG l_minind;
 
-		for(unsigned long i=0;i<vec_musclecell.size();i++)
+		for(unsigned V3DLONG i=0;i<vec_musclecell.size();i++)
 		{
 			bool b_existed=0;
-			for(unsigned long j=0;j<vec_muscleind_crop2ori.size();j++)
+			for(unsigned V3DLONG j=0;j<vec_muscleind_crop2ori.size();j++)
 				if(i==vec_muscleind_crop2ori[j])
 				{
 					b_existed=1;
@@ -998,7 +998,7 @@ bool q_atlas2image_partial(const CParas &paras,V3DPluginCallback &callback,
 		//prepare output
 		ql_musclecell_output=ql_musclecell;
 		RGBA8 color;	color.r=255; 	color.g=0;	color.b=0;
-		for(long i=0;i<ql_musclecell_output.size();i++)
+		for(V3DLONG i=0;i<ql_musclecell_output.size();i++)
 		{
 			ql_musclecell_output[i].x=vec_musclecell_affine[i].x*paras.d_downsampleratio;
 			ql_musclecell_output[i].y=vec_musclecell_affine[i].y*paras.d_downsampleratio;
@@ -1026,7 +1026,7 @@ bool q_atlas2image_partial(const CParas &paras,V3DPluginCallback &callback,
 	if(paras.b_stepwise) QMessageBox::information(0,"","Second no constraint align complete!\n");
 
 	vec_musclecell_mshift.clear();
-	for(unsigned long i=0;i<vec_musclecell_ref.size();i++)
+	for(unsigned V3DLONG i=0;i<vec_musclecell_ref.size();i++)
 	{
 		vec_musclecell_ref[i].x*=paras.d_downsampleratio;
 		vec_musclecell_ref[i].y*=paras.d_downsampleratio;
@@ -1047,7 +1047,7 @@ bool q_atlas2image_partial(const CParas &paras,V3DPluginCallback &callback,
 	printf("(10). Prepare the final output. \n");
 	RGBA8 color;	color.r=255; 	color.g=0;	color.b=0;
 	ql_musclecell_output.clear();
-	for(unsigned long i=0;i<vec_muscleind_crop2ori.size();i++)
+	for(unsigned V3DLONG i=0;i<vec_muscleind_crop2ori.size();i++)
 	{
 		ql_musclecell_output.push_back(ql_musclecell[vec_muscleind_crop2ori[i]]);
 		ql_musclecell_output[i].x=vec_musclecell_mshift[i].x;
@@ -1061,8 +1061,8 @@ bool q_atlas2image_partial(const CParas &paras,V3DPluginCallback &callback,
 	//------------------------------------------------------------------------------------------------------------------------------------
 	printf("(11). (Post-Process)Backward push the overlapped anno. \n");
 	//group the overlapped annos
-	vector< vector<long> > vec2d_groupind;
-	long l_cellradius=5;
+	vector< vector<V3DLONG> > vec2d_groupind;
+	V3DLONG l_cellradius=5;
 	double d_mingroupdis=l_cellradius/2.0;
 	if(!q_groupcells(vec_musclecell_mshift,d_mingroupdis,vec2d_groupind))
 	{
@@ -1071,18 +1071,18 @@ bool q_atlas2image_partial(const CParas &paras,V3DPluginCallback &callback,
 		if(p_img_s) 		{delete []p_img_s;			p_img_s=0;}
 		return false;
 	}
-	for(unsigned long i=0;i<vec2d_groupind.size();i++)
+	for(unsigned V3DLONG i=0;i<vec2d_groupind.size();i++)
 	{
 		printf("\tgroup[%ld]: ",i);
-		for(unsigned long j=0;j<vec2d_groupind[i].size();j++)
+		for(unsigned V3DLONG j=0;j<vec2d_groupind[i].size();j++)
 			printf("%ld,",vec2d_groupind[i][j]+1);
 		printf("\n");
 	}
 
 	//build the index vector of each bundle (order: VR,VL,DR,DL)
-	vector< vector<long> > vec2d_ind_bundle2cell(4,vector<long>(0,0));
-	vector< vector<long> > vec2d_ind_cell2bundle(ql_musclecell_output.size(),vector<long>(2,-1));//0:bundle ind, 1: ind in current bundle
-	for(long i=0;i<ql_musclecell_output.size();i++)
+	vector< vector<V3DLONG> > vec2d_ind_bundle2cell(4,vector<V3DLONG>(0,0));
+	vector< vector<V3DLONG> > vec2d_ind_cell2bundle(ql_musclecell_output.size(),vector<V3DLONG>(2,-1));//0:bundle ind, 1: ind in current bundle
+	for(V3DLONG i=0;i<ql_musclecell_output.size();i++)
 	{
 		QString qs_cellname=ql_musclecell_output[i].name;
 		qs_cellname=qs_cellname.simplified();
@@ -1113,13 +1113,13 @@ bool q_atlas2image_partial(const CParas &paras,V3DPluginCallback &callback,
 			vec2d_ind_cell2bundle[i][1]=vec2d_ind_bundle2cell[3].size()-1;
 		}
 	}
-	for(unsigned long i=0;i<vec2d_ind_bundle2cell.size();i++)
+	for(unsigned V3DLONG i=0;i<vec2d_ind_bundle2cell.size();i++)
 	{
 		if(i==0)	printf("\tbundle[BWMVR]: ");
 		if(i==1)	printf("\tbundle[BWMVL]: ");
 		if(i==2)	printf("\tbundle[BWMDR]: ");
 		if(i==3)	printf("\tbundle[BWMDL]: ");
-		for(unsigned long j=0;j<vec2d_ind_bundle2cell[i].size();j++)
+		for(unsigned V3DLONG j=0;j<vec2d_ind_bundle2cell[i].size();j++)
 			printf("%ld, ",vec2d_ind_bundle2cell[i][j]+1);
 		printf("\n");
 	}
@@ -1127,16 +1127,16 @@ bool q_atlas2image_partial(const CParas &paras,V3DPluginCallback &callback,
 	//sort the group and bundle index vector (do not need for current atlas - already sorted)
 
 	//build the anno change vector (backward push the anno)
-	vector< vector<long> > vec2d_annochange;
-	for(unsigned long i=0;i<vec2d_groupind.size();i++)
+	vector< vector<V3DLONG> > vec2d_annochange;
+	for(unsigned V3DLONG i=0;i<vec2d_groupind.size();i++)
 	{
-		for(unsigned long j=1;j<vec2d_groupind[i].size();j++)
+		for(unsigned V3DLONG j=1;j<vec2d_groupind[i].size();j++)
 		{
-			long l_indbundle=vec2d_ind_cell2bundle[vec2d_groupind[i][j]][0];			//ind of bundle need to change anno
-			long l_indcellinbundle=vec2d_ind_cell2bundle[vec2d_groupind[i][j]][1];		//cell ind in current bundle
+			V3DLONG l_indbundle=vec2d_ind_cell2bundle[vec2d_groupind[i][j]][0];			//ind of bundle need to change anno
+			V3DLONG l_indcellinbundle=vec2d_ind_cell2bundle[vec2d_groupind[i][j]][1];		//cell ind in current bundle
 			//backward push the anno behind the current cell in current bundle
-			vector<long> vec_ind_cur2new(2,-1);	//0: cur ind, 1: new ind
-			for(unsigned long k=l_indcellinbundle;k<vec2d_ind_bundle2cell[l_indbundle].size();k++)
+			vector<V3DLONG> vec_ind_cur2new(2,-1);	//0: cur ind, 1: new ind
+			for(unsigned V3DLONG k=l_indcellinbundle;k<vec2d_ind_bundle2cell[l_indbundle].size();k++)
 			{
 				vec_ind_cur2new[0]=vec2d_ind_bundle2cell[l_indbundle][k];
 				if(k+1==vec2d_ind_bundle2cell[l_indbundle].size())
@@ -1147,19 +1147,19 @@ bool q_atlas2image_partial(const CParas &paras,V3DPluginCallback &callback,
 			}
 		}
 	}
-	for(unsigned long i=0;i<vec2d_annochange.size();i++)
+	for(unsigned V3DLONG i=0;i<vec2d_annochange.size();i++)
 		printf("\t[%ld] --> [%ld]\n",vec2d_annochange[i][0]+1,vec2d_annochange[i][1]+1);
 
 	//assemble the refined output
 	QList<CellAPO> ql_musclecell_refine(ql_musclecell_output);
-	for(unsigned long i=0;i<vec2d_annochange.size();i++)
+	for(unsigned V3DLONG i=0;i<vec2d_annochange.size();i++)
 	{
 		if(vec2d_annochange[i][1]>=0)
 			ql_musclecell_refine.replace(vec2d_annochange[i][0],ql_musclecell_refine[vec2d_annochange[i][1]]);
 		else
 			ql_musclecell_refine[vec2d_annochange[i][0]].comment="out";
 	}
-	for(long i=0;i<ql_musclecell_refine.size();i++)
+	for(V3DLONG i=0;i<ql_musclecell_refine.size();i++)
 	{
 		if(i>=ql_musclecell_refine.size()) break;
 		if(ql_musclecell_refine[i].comment=="out")
@@ -1178,7 +1178,7 @@ bool q_atlas2image_partial(const CParas &paras,V3DPluginCallback &callback,
 
 //group the cells according to the given distance threshold (used to estimate cell num and post-process the clustered cells)
 bool q_groupcells(const vector<point3D64F> &vec_cell,const double d_mingroupdis,
-		vector< vector<long> > &vec2d_groupind)
+		vector< vector<V3DLONG> > &vec2d_groupind)
 {
 	//check paras
 	if(vec_cell.size()==0)
@@ -1197,15 +1197,15 @@ bool q_groupcells(const vector<point3D64F> &vec_cell,const double d_mingroupdis,
 		vec2d_groupind.clear();
 	}
 
-	for(unsigned long i=0;i<vec_cell.size();i++)
+	for(unsigned V3DLONG i=0;i<vec_cell.size();i++)
 	{
 		double d_mindis=1e+5;
-		long l_groupind_mindis=0;
+		V3DLONG l_groupind_mindis=0;
 
-		for(unsigned long g=0;g<vec2d_groupind.size();g++)
-			for(unsigned long k=0;k<vec2d_groupind[g].size();k++)
+		for(unsigned V3DLONG g=0;g<vec2d_groupind.size();g++)
+			for(unsigned V3DLONG k=0;k<vec2d_groupind[g].size();k++)
 			{
-				long ind=vec2d_groupind[g][k];
+				V3DLONG ind=vec2d_groupind[g][k];
 				double dx=vec_cell[i].x-vec_cell[ind].x;
 				double dy=vec_cell[i].y-vec_cell[ind].y;
 				double dz=vec_cell[i].z-vec_cell[ind].z;
@@ -1219,7 +1219,7 @@ bool q_groupcells(const vector<point3D64F> &vec_cell,const double d_mingroupdis,
 			}
 
 		if(d_mindis>d_mingroupdis)		//current cell do not belong to any group
-			vec2d_groupind.push_back(vector<long>(1,i));
+			vec2d_groupind.push_back(vector<V3DLONG>(1,i));
 		else							//current cell belong to group g
 			vec2d_groupind[l_groupind_mindis].push_back(i);
 	}
@@ -1228,7 +1228,7 @@ bool q_groupcells(const vector<point3D64F> &vec_cell,const double d_mingroupdis,
 }
 
 bool q_atlas2image_prior(const CParas &paras,V3DPluginCallback &callback,
-		const unsigned char *p_img8u,const long sz_img[4],const QList<CellAPO> &ql_atlasapo,const LandmarkList &ml_makers,
+		const unsigned char *p_img8u,const V3DLONG sz_img[4],const QList<CellAPO> &ql_atlasapo,const LandmarkList &ml_makers,
 		QList<CellAPO> &ql_musclecell_output)
 {
 	//check paras
@@ -1266,8 +1266,8 @@ bool q_atlas2image_prior(const CParas &paras,V3DPluginCallback &callback,
 	//------------------------------------------------------------------------------------------------------------------------------------
 	printf("(1). Extract the interesting image channel. \n");
 	unsigned char *p_img_1c=0;
-	long sz_img_1c[4]={sz_img[0],sz_img[1],sz_img[2],1};
-	long l_npixels_1c=sz_img_1c[0]*sz_img_1c[1]*sz_img_1c[2];
+	V3DLONG sz_img_1c[4]={sz_img[0],sz_img[1],sz_img[2],1};
+	V3DLONG l_npixels_1c=sz_img_1c[0]*sz_img_1c[1]*sz_img_1c[2];
 
 	{
 	//allocate memeory
@@ -1278,13 +1278,13 @@ bool q_atlas2image_prior(const CParas &paras,V3DPluginCallback &callback,
 		return false;
 	}
 	//extract referece channel
-	long pgsz_xyz=sz_img[0]*sz_img[1]*sz_img[2];
+	V3DLONG pgsz_xyz=sz_img[0]*sz_img[1]*sz_img[2];
 	printf("\t>>extract channel:[%ld]\n",paras.l_refchannel);
-	long ind_start=pgsz_xyz*(paras.l_refchannel-1);
-	for(long i=0;i<l_npixels_1c;i++)
+	V3DLONG ind_start=pgsz_xyz*(paras.l_refchannel-1);
+	for(V3DLONG i=0;i<l_npixels_1c;i++)
 	{
-		long ind_1c=i;
-		long ind_ref=ind_start+ind_1c;
+		V3DLONG ind_1c=i;
+		V3DLONG ind_ref=ind_start+ind_1c;
 		p_img_1c[ind_1c]=p_img8u[ind_ref];
 	}
 //	saveImage("img_1c.raw",p_img_1c,sz_img_1c,1);
@@ -1293,13 +1293,13 @@ bool q_atlas2image_prior(const CParas &paras,V3DPluginCallback &callback,
 	//------------------------------------------------------------------------------------------------------------------------------------
 	printf("(2). Resize image, atlas and anchor points. \n");
 	unsigned char *p_img_s=0;
-	long sz_img_s[4]={1,1,1,1};//w,h,z,c
+	V3DLONG sz_img_s[4]={1,1,1,1};//w,h,z,c
 	QList<CellAPO> ql_atlasapo_s(ql_atlasapo);
 	LandmarkList ml_makers_s(ml_makers);
 
 	{
 	//resize image
-	for(long i=0;i<3;i++)
+	for(V3DLONG i=0;i<3;i++)
 		sz_img_s[i]=sz_img_1c[i]/paras.d_downsampleratio+0.5;
 
 	if(!q_imresize_3D(p_img_1c,sz_img_1c,1,sz_img_s,p_img_s))
@@ -1312,7 +1312,7 @@ bool q_atlas2image_prior(const CParas &paras,V3DPluginCallback &callback,
 //	saveImage("/Users/qul/work/v3d_2.0/sub_projects/atlasguided_seganno/img_s.raw",p_img_s,sz_img_s,1);
 
 	//resize atlas
-	for(long i=0;i<ql_atlasapo_s.size();i++)
+	for(V3DLONG i=0;i<ql_atlasapo_s.size();i++)
 	{
 		ql_atlasapo_s[i].x/=paras.d_downsampleratio;
 		ql_atlasapo_s[i].y/=paras.d_downsampleratio;
@@ -1324,7 +1324,7 @@ bool q_atlas2image_prior(const CParas &paras,V3DPluginCallback &callback,
 //	writeAPO_file("atlas_s.apo",ql_atlasapo);
 
 	//resize anchor markers
-	for(long i=0;i<ml_makers.size();i++)
+	for(V3DLONG i=0;i<ml_makers.size();i++)
 	{
 		ml_makers_s[i].x/=paras.d_downsampleratio;
 		ml_makers_s[i].y/=paras.d_downsampleratio;
@@ -1336,7 +1336,7 @@ bool q_atlas2image_prior(const CParas &paras,V3DPluginCallback &callback,
 	printf("(3). Extract atlas points which correspoinding to the interesting image channel. \n");
 	QList<CellAPO> ql_musclecell;
 
-	for(long i=0;i<ql_atlasapo_s.size();i++)
+	for(V3DLONG i=0;i<ql_atlasapo_s.size();i++)
 	{
 		QString qs_cellname=ql_atlasapo_s[i].name;
 		qs_cellname=qs_cellname.simplified();
@@ -1362,7 +1362,7 @@ bool q_atlas2image_prior(const CParas &paras,V3DPluginCallback &callback,
 		double d_offset_z=sz_img_s[2]/2.0;
 		//rotate
 		QList<CellAPO> ql_tmp(ql_musclecell);
-		for(long i=0;i<ql_musclecell.size();i++)
+		for(V3DLONG i=0;i<ql_musclecell.size();i++)
 		{
 			ql_tmp[i].y= cos(d_degree)*(ql_musclecell[i].y-d_offset_y)-sin(d_degree)*(ql_musclecell[i].z-d_offset_z)+d_offset_y;
 			ql_tmp[i].z=-sin(d_degree)*(ql_musclecell[i].y-d_offset_y)+cos(d_degree)*(ql_musclecell[i].z-d_offset_z)+d_offset_z;
@@ -1376,17 +1376,17 @@ bool q_atlas2image_prior(const CParas &paras,V3DPluginCallback &callback,
 	//------------------------------------------------------------------------------------------------------------------------------------
 	printf("(5). Extract forground image region. \n");
 	double d_thresh_fg;
-	vector<long> 		vec_fg_ind;
+	vector<V3DLONG> 		vec_fg_ind;
 	vector<point3D64F> 	vec_fg_xyz;
 
 	{
 	//compute the mean and std of image
 	double d_img_mean=0.0,d_img_std=0.0;
-	long l_npixel_s=sz_img_s[0]*sz_img_s[1]*sz_img_s[2]*sz_img_s[3];
-	for(long i=0;i<l_npixel_s;i++)
+	V3DLONG l_npixel_s=sz_img_s[0]*sz_img_s[1]*sz_img_s[2]*sz_img_s[3];
+	for(V3DLONG i=0;i<l_npixel_s;i++)
 		d_img_mean+=p_img_s[i];
 	d_img_mean/=l_npixel_s;
-	for(long i=0;i<l_npixel_s;i++)
+	for(V3DLONG i=0;i<l_npixel_s;i++)
 	{
 		double temp=p_img_s[i]-d_img_mean;
 		d_img_std+=temp*temp;
@@ -1396,13 +1396,13 @@ bool q_atlas2image_prior(const CParas &paras,V3DPluginCallback &callback,
 	//compute threshold
 	d_thresh_fg=d_img_mean+paras.d_fgthresh_factor*d_img_std;
 	//extract foreground region
-	long pgsz_y=sz_img_s[0];
-	long pgsz_xy=sz_img_s[0]*sz_img_s[1];
-	for(long x=0;x<sz_img_s[0];x++)
-		for(long y=0;y<sz_img_s[1];y++)
-			for(long z=0;z<sz_img_s[2];z++)
+	V3DLONG pgsz_y=sz_img_s[0];
+	V3DLONG pgsz_xy=sz_img_s[0]*sz_img_s[1];
+	for(V3DLONG x=0;x<sz_img_s[0];x++)
+		for(V3DLONG y=0;y<sz_img_s[1];y++)
+			for(V3DLONG z=0;z<sz_img_s[2];z++)
 			{
-				long ind=pgsz_xy*z+pgsz_y*y+x;
+				V3DLONG ind=pgsz_xy*z+pgsz_y*y+x;
 				if(p_img_s[ind]>d_thresh_fg)
 				{
 					vec_fg_ind.push_back(ind);
@@ -1411,7 +1411,7 @@ bool q_atlas2image_prior(const CParas &paras,V3DPluginCallback &callback,
 			}
 //	{
 //	unsigned char *p_img_tmp=new unsigned char[l_npixel_s]();
-//	for(long i=0;i<vec_fg_ind.size();i++)
+//	for(V3DLONG i=0;i<vec_fg_ind.size();i++)
 //		p_img_tmp[vec_fg_ind[i]]=255;
 //	saveImage("/groups/peng/home/qul/work/straightened/img_fg.raw",p_img_tmp,sz_img_s,1);
 //	delete []p_img_tmp;
@@ -1421,16 +1421,16 @@ bool q_atlas2image_prior(const CParas &paras,V3DPluginCallback &callback,
 	//------------------------------------------------------------------------------------------------------------------------------------
 	printf("(6). Align the anchor points (rigid). \n");
 	QList<CellAPO> ql_musclecell_rigid(ql_musclecell);
-	vector<long> vec_ind_anchor2atlas(ml_makers_s.size(),-1);
+	vector<V3DLONG> vec_ind_anchor2atlas(ml_makers_s.size(),-1);
 
 	{
 	//find the atals points position that corresponding to the anchor points
-	for(long i=0;i<ml_makers_s.size();i++)
+	for(V3DLONG i=0;i<ml_makers_s.size();i++)
 	{
 		QString qs_name_anchor(ml_makers_s[i].name.c_str());
 		qs_name_anchor=qs_name_anchor.trimmed();
 		qs_name_anchor=qs_name_anchor.toUpper();
-		for(long j=0;j<ql_musclecell.size();j++)
+		for(V3DLONG j=0;j<ql_musclecell.size();j++)
 		{
 			QString qs_name_atlas=ql_musclecell[j].name;
 			qs_name_atlas=qs_name_atlas.trimmed();
@@ -1442,7 +1442,7 @@ bool q_atlas2image_prior(const CParas &paras,V3DPluginCallback &callback,
 			}
 		}
 	}
-	for(long i=0;i<ml_makers_s.size();i++)
+	for(V3DLONG i=0;i<ml_makers_s.size();i++)
 		if(vec_ind_anchor2atlas[i]==-1)
 		{
 			printf("ERROR: can not find corresponding atlas point for marker[%ld]!\n",i);
@@ -1453,7 +1453,7 @@ bool q_atlas2image_prior(const CParas &paras,V3DPluginCallback &callback,
 
 	//compute the best fitting rigid transform paras for anchor points
 	Matrix x3x4_rigidmatrix(3,4);
-	long n_anchor=ml_makers_s.size();
+	V3DLONG n_anchor=ml_makers_s.size();
 	//fill matrix A
 	//
 	//	  | sx, 0 , 0 , cx |    |x1|
@@ -1465,8 +1465,8 @@ bool q_atlas2image_prior(const CParas &paras,V3DPluginCallback &callback,
 	//	  | 0,  0, y1, 1,  0,  0, -y2 | * |sx,cx,sy,cy,sz,cz,1|'=0
 	//	  | 0,  0, 0,  0, z1,  1, -z2 |
 	Matrix A(3*n_anchor,7);
-	long row=1;
-	for(long i=0;i<n_anchor;i++)
+	V3DLONG row=1;
+	for(V3DLONG i=0;i<n_anchor;i++)
 	{
 		CellAPO atlaspt=ql_musclecell[vec_ind_anchor2atlas[i]];
 		A(row,1)=atlaspt.x;			A(row,2)=1;				A(row,3)=0;					A(row,4)=0;
@@ -1510,7 +1510,7 @@ bool q_atlas2image_prior(const CParas &paras,V3DPluginCallback &callback,
 	cout << setw(10) << setprecision(5) << x3x4_rigidmatrix << endl;
 
 	//rigid transform atlas
-	for(long i=0;i<ql_musclecell.size();i++)
+	for(V3DLONG i=0;i<ql_musclecell.size();i++)
 	{
 		ql_musclecell_rigid[i].x=ql_musclecell[i].x*x3x4_rigidmatrix(1,1)+x3x4_rigidmatrix(1,4);
 		ql_musclecell_rigid[i].y=ql_musclecell[i].y*x3x4_rigidmatrix(2,2)+x3x4_rigidmatrix(2,4);
@@ -1525,13 +1525,13 @@ bool q_atlas2image_prior(const CParas &paras,V3DPluginCallback &callback,
 
 	{
 	//reformat the data
-	for(long i=0;i<ml_makers_s.size();i++)
+	for(V3DLONG i=0;i<ml_makers_s.size();i++)
 	{
 		point3D64F tmp;
 		tmp.x=ml_makers_s[i].x;	tmp.y=ml_makers_s[i].y;	tmp.z=ml_makers_s[i].z;
 		vec_pts_anchor.push_back(tmp);
 	}
-	for(long i=0;i<ql_musclecell_rigid.size();i++)
+	for(V3DLONG i=0;i<ql_musclecell_rigid.size();i++)
 	{
 		point3D64F tmp;
 		tmp.x=ql_musclecell_rigid[i].x;	tmp.y=ql_musclecell_rigid[i].y;	tmp.z=ql_musclecell_rigid[i].z;
@@ -1539,13 +1539,13 @@ bool q_atlas2image_prior(const CParas &paras,V3DPluginCallback &callback,
 	}
 
 	vec_pts_atlas_nonrigid=vec_pts_atlas_rigid;
-	for(long iter=0;iter<5000;iter++)
+	for(V3DLONG iter=0;iter<5000;iter++)
 	{
 		//compute the distance matrix of atlas points to anchor points
 		vector< vector<double> > vec2d_dismatrix(vec_pts_atlas_rigid.size(),vector<double>(vec_pts_anchor.size(),0.0));
 		double d_maxdis=0;
-		for(unsigned long i=0;i<vec_pts_atlas_rigid.size();i++)
-			for(unsigned long j=0;j<vec_pts_anchor.size();j++)
+		for(unsigned V3DLONG i=0;i<vec_pts_atlas_rigid.size();i++)
+			for(unsigned V3DLONG j=0;j<vec_pts_anchor.size();j++)
 			{
 				double dif_x=vec_pts_atlas_nonrigid[i].x-vec_pts_anchor[j].x;
 				double dif_y=vec_pts_atlas_nonrigid[i].y-vec_pts_anchor[j].y;
@@ -1558,8 +1558,8 @@ bool q_atlas2image_prior(const CParas &paras,V3DPluginCallback &callback,
 
 		//normalize the distance matrix
 		vector<double> vec_dissum_row(vec_pts_atlas_rigid.size(),0.0);
-		for(unsigned long i=0;i<vec_pts_atlas_rigid.size();i++)
-			for(unsigned long j=0;j<vec_pts_anchor.size();j++)
+		for(unsigned V3DLONG i=0;i<vec_pts_atlas_rigid.size();i++)
+			for(unsigned V3DLONG j=0;j<vec_pts_anchor.size();j++)
 			{
 				vec2d_dismatrix[i][j]=d_maxdis-vec2d_dismatrix[i][j];
 				vec_dissum_row[i]+=vec2d_dismatrix[i][j];
@@ -1567,12 +1567,12 @@ bool q_atlas2image_prior(const CParas &paras,V3DPluginCallback &callback,
 
 		//distance weighted shift average
 		vector<point3D64F> vec_pts_atlas_dif(vec_pts_atlas_nonrigid.size(),point3D64F());
-		for(unsigned long i=0;i<vec_pts_anchor.size();i++)
+		for(unsigned V3DLONG i=0;i<vec_pts_anchor.size();i++)
 		{
 			double dif_x=vec_pts_atlas_nonrigid[vec_ind_anchor2atlas[i]].x-vec_pts_anchor[i].x;
 			double dif_y=vec_pts_atlas_nonrigid[vec_ind_anchor2atlas[i]].y-vec_pts_anchor[i].y;
 			double dif_z=vec_pts_atlas_nonrigid[vec_ind_anchor2atlas[i]].z-vec_pts_anchor[i].z;
-			for(unsigned long j=0;j<vec_pts_atlas_rigid.size();j++)
+			for(unsigned V3DLONG j=0;j<vec_pts_atlas_rigid.size();j++)
 			{
 				vec_pts_atlas_dif[j].x+=vec2d_dismatrix[j][i]*dif_x;
 				vec_pts_atlas_dif[j].y+=vec2d_dismatrix[j][i]*dif_y;
@@ -1581,7 +1581,7 @@ bool q_atlas2image_prior(const CParas &paras,V3DPluginCallback &callback,
 		}
 
 		//update atlas
-		for(unsigned long i=0;i<vec_pts_atlas_rigid.size();i++)
+		for(unsigned V3DLONG i=0;i<vec_pts_atlas_rigid.size();i++)
 		{
 			vec_pts_atlas_dif[i].x/=vec_dissum_row[i];
 			vec_pts_atlas_dif[i].y/=vec_dissum_row[i];
@@ -1593,7 +1593,7 @@ bool q_atlas2image_prior(const CParas &paras,V3DPluginCallback &callback,
 		}
 
 		double d_simcost=0;
-		for(unsigned long i=0;i<vec_pts_anchor.size();i++)
+		for(unsigned V3DLONG i=0;i<vec_pts_anchor.size();i++)
 		{
 			double dif_x=vec_pts_atlas_nonrigid[vec_ind_anchor2atlas[i]].x-vec_pts_anchor[i].x;
 			double dif_y=vec_pts_atlas_nonrigid[vec_ind_anchor2atlas[i]].y-vec_pts_anchor[i].y;
@@ -1607,7 +1607,7 @@ bool q_atlas2image_prior(const CParas &paras,V3DPluginCallback &callback,
 	}
 
 	QList<CellAPO> ql_musclecell_nonrigid(ql_musclecell_rigid);
-	for(long i=0;i<ql_musclecell_rigid.size();i++)
+	for(V3DLONG i=0;i<ql_musclecell_rigid.size();i++)
 	{
 		ql_musclecell_nonrigid[i].x=vec_pts_atlas_nonrigid[i].x;
 		ql_musclecell_nonrigid[i].y=vec_pts_atlas_nonrigid[i].y;
@@ -1620,12 +1620,12 @@ bool q_atlas2image_prior(const CParas &paras,V3DPluginCallback &callback,
 	printf("(8). Refine align the atlas by deterministic annealing no constraint. \n");
 	QList<CellAPO> ql_musclecell_ref(ql_musclecell_rigid);
 	vector<point3D64F> vec_musclecell_valid,vec_musclecell_valid_ref;
-	vector<long> vec_ind_valid2atlas;
+	vector<V3DLONG> vec_ind_valid2atlas;
 
 	{
 	//find the valid atlas points (within image area)
-	vector<long> vec_ind_anchor2valid(ml_makers_s.size(),-1);
-	for(unsigned long i=0;i<vec_pts_atlas_nonrigid.size();i++)
+	vector<V3DLONG> vec_ind_anchor2valid(ml_makers_s.size(),-1);
+	for(unsigned V3DLONG i=0;i<vec_pts_atlas_nonrigid.size();i++)
 	{
 		if(vec_pts_atlas_nonrigid[i].x>=0 && vec_pts_atlas_nonrigid[i].x<sz_img_s[0] &&
 		   vec_pts_atlas_nonrigid[i].y>=0 && vec_pts_atlas_nonrigid[i].y<sz_img_s[1] &&
@@ -1634,7 +1634,7 @@ bool q_atlas2image_prior(const CParas &paras,V3DPluginCallback &callback,
 			vec_musclecell_valid.push_back(vec_pts_atlas_nonrigid[i]);
 			vec_ind_valid2atlas.push_back(i);
 
-			for(long j=0;j<ml_makers_s.size();j++)
+			for(V3DLONG j=0;j<ml_makers_s.size();j++)
 				if(i==vec_ind_anchor2atlas[j])
 					vec_ind_anchor2valid[j]=i;
 		}
@@ -1652,7 +1652,7 @@ bool q_atlas2image_prior(const CParas &paras,V3DPluginCallback &callback,
 		return false;
 	}
 
-	for(unsigned long i=0;i<vec_musclecell_valid_ref.size();i++)
+	for(unsigned V3DLONG i=0;i<vec_musclecell_valid_ref.size();i++)
 	{
 		ql_musclecell_ref[vec_ind_valid2atlas[i]].x=vec_musclecell_valid_ref[i].x;
 		ql_musclecell_ref[vec_ind_valid2atlas[i]].y=vec_musclecell_valid_ref[i].y;
@@ -1665,13 +1665,13 @@ bool q_atlas2image_prior(const CParas &paras,V3DPluginCallback &callback,
 	QList<CellAPO> ql_musclecell_ref_mshift(ql_musclecell_ref);
 	vector<point3D64F> vec_musclecell_valid_mshift;
 
-	for(unsigned long i=0;i<vec_musclecell_valid_ref.size();i++)
+	for(unsigned V3DLONG i=0;i<vec_musclecell_valid_ref.size();i++)
 	{
 		vec_musclecell_valid_ref[i].x*=paras.d_downsampleratio;
 		vec_musclecell_valid_ref[i].y*=paras.d_downsampleratio;
 		vec_musclecell_valid_ref[i].z*=paras.d_downsampleratio;
 	}
-	for(long i=0;i<ql_musclecell_ref_mshift.size();i++)
+	for(V3DLONG i=0;i<ql_musclecell_ref_mshift.size();i++)
 	{
 		ql_musclecell_ref_mshift[i].x*=paras.d_downsampleratio;
 		ql_musclecell_ref_mshift[i].y*=paras.d_downsampleratio;
@@ -1694,7 +1694,7 @@ bool q_atlas2image_prior(const CParas &paras,V3DPluginCallback &callback,
 		return false;
 	}
 
-	for(unsigned long i=0;i<vec_musclecell_valid_mshift.size();i++)
+	for(unsigned V3DLONG i=0;i<vec_musclecell_valid_mshift.size();i++)
 	{
 		ql_musclecell_ref_mshift[vec_ind_valid2atlas[i]].x=vec_musclecell_valid_mshift[i].x;
 		ql_musclecell_ref_mshift[vec_ind_valid2atlas[i]].y=vec_musclecell_valid_mshift[i].y;
@@ -1710,7 +1710,7 @@ bool q_atlas2image_prior(const CParas &paras,V3DPluginCallback &callback,
 	//rescale the deformed atlas
 	RGBA8 color;	color.r=0; 	color.g=255;	color.b=0;
 //	if(fabs(paras.d_downsampleratio-1.0)>1e-5)
-		for(long i=0;i<ql_musclecell_output.size();i++)
+		for(V3DLONG i=0;i<ql_musclecell_output.size();i++)
 		{
 //			ql_musclecell_output[i].x*=paras.d_downsampleratio;
 //			ql_musclecell_output[i].y*=paras.d_downsampleratio;
@@ -1731,8 +1731,8 @@ bool q_atlas2image_prior(const CParas &paras,V3DPluginCallback &callback,
 
 //affine warp the atlas onto image by deterministic annealing
 bool q_atlas2image_musclecell_ini_affine(const CParas &paras,V3DPluginCallback &callback,
-		const unsigned char *p_img8u,const long sz_img[4],const vector<point3D64F> &vec_musclecell,
-		const vector<long> &vec_fg_ind,const vector<point3D64F> &vec_fg_xyz,
+		const unsigned char *p_img8u,const V3DLONG sz_img[4],const vector<point3D64F> &vec_musclecell,
+		const vector<V3DLONG> &vec_fg_ind,const vector<point3D64F> &vec_fg_xyz,
 		vector<point3D64F> &vec_musclecell_output,vector< vector<double> > &vec2d_labelprob,COutputInfo &outputinfo)
 {
 	//check paras
@@ -1771,7 +1771,7 @@ bool q_atlas2image_musclecell_ini_affine(const CParas &paras,V3DPluginCallback &
 	double d_T=paras.d_T;
 	double d_T_min=paras.d_T_min;
 	double d_annealingrate=paras.d_annealingrate;
-	long n_maxiter_inner=paras.l_niter_pertemp;
+	V3DLONG n_maxiter_inner=paras.l_niter_pertemp;
 	double d_lamda=5000;
 
 	vec2d_labelprob.assign(vec_fg_ind.size(),vector<double>(vec_musclecell.size(),0));
@@ -1782,17 +1782,17 @@ bool q_atlas2image_musclecell_ini_affine(const CParas &paras,V3DPluginCallback &
 
 	Matrix x4x4_affine,xnx4_c,xnxn_K;
 	bool b_stopiter=0;
-	for(long iter=0;iter<1000;iter++)
+	for(V3DLONG iter=0;iter<1000;iter++)
 	{
-		for(long iter_inner=0;iter_inner<n_maxiter_inner;iter_inner++)
+		for(V3DLONG iter_inner=0;iter_inner<n_maxiter_inner;iter_inner++)
 		{
 //			vector< vector<double> > vec2d_fitcost(vec_fg_ind.size(),vector<double>(vec_musclecell.size(),0));//for fit and entropy energy
 			//------------------------------------------------------------------
 			//1). given cellpos update labeling possibility
 			double d_dis,d_dif_x,d_dif_y,d_dif_z;
 			vector<double> vec_probnorm(vec_fg_ind.size(),0);
-			for(unsigned long i=0;i<vec_musclecell.size();i++)
-				for(unsigned long j=0;j<vec_fg_ind.size();j++)
+			for(unsigned V3DLONG i=0;i<vec_musclecell.size();i++)
+				for(unsigned V3DLONG j=0;j<vec_fg_ind.size();j++)
 				{
 					//compute the distance from foreground pixel to a certain atlas cell
 					d_dif_x=vec_fg_xyz[j].x-vec_musclecell_affine[i].x;
@@ -1826,8 +1826,8 @@ bool q_atlas2image_musclecell_ini_affine(const CParas &paras,V3DPluginCallback &
 				}
 			//normalize the labeling prob (critical!)
 			//(increase the prob of unassigned pixel, decrease the prob of multiassigned pixel -> relocate the prob)
-			for(unsigned long j=0;j<vec_fg_ind.size();j++)
-				for(unsigned long i=0;i<vec_musclecell.size();i++)
+			for(unsigned V3DLONG j=0;j<vec_fg_ind.size();j++)
+				for(unsigned V3DLONG i=0;i<vec_musclecell.size();i++)
 				{
 					vec2d_labelprob[j][i]/=vec_probnorm[j];
 
@@ -1837,8 +1837,8 @@ bool q_atlas2image_musclecell_ini_affine(const CParas &paras,V3DPluginCallback &
 
 //			//compute the fit and entropy energy (for convincing Hanchuan!)
 //			double E_fit=0,E_entropy=0;
-//			for(unsigned long j=0;j<vec_fg_ind.size();j++)
-//				for(unsigned long i=0;i<vec_musclecell.size();i++)
+//			for(unsigned V3DLONG j=0;j<vec_fg_ind.size();j++)
+//				for(unsigned V3DLONG i=0;i<vec_musclecell.size();i++)
 //				{
 //					E_fit+=vec2d_labelprob[j][i]*vec2d_fitcost[j][i];
 //					double tmp=vec2d_labelprob[j][i]*log(vec2d_labelprob[j][i]);
@@ -1851,10 +1851,10 @@ bool q_atlas2image_musclecell_ini_affine(const CParas &paras,V3DPluginCallback &
 
 			//------------------------------------------------------------------
 			//2). update cellpos (probability weighted mass center)
-			for(unsigned long i=0;i<vec_musclecell.size();i++)
+			for(unsigned V3DLONG i=0;i<vec_musclecell.size();i++)
 			{
 				double d_probsum=0,d_sum_x=0,d_sum_y=0,d_sum_z=0;
-				for(unsigned long j=0;j<vec_fg_ind.size();j++)
+				for(unsigned V3DLONG j=0;j<vec_fg_ind.size();j++)
 				{
 					d_probsum+=vec2d_labelprob[j][i];
 					d_sum_x+=vec2d_labelprob[j][i]*vec_fg_xyz[j].x;
@@ -1889,7 +1889,7 @@ bool q_atlas2image_musclecell_ini_affine(const CParas &paras,V3DPluginCallback &
 			//4). generate transform constrainted cellpos
 //			//method 1:
 //			Matrix x_ori(4,1),x_aff(4,1);
-//			for(long i=0;i<vec_musclecell_affine.size();i++)
+//			for(V3DLONG i=0;i<vec_musclecell_affine.size();i++)
 //			{
 //				x_ori(1,1)=vec_musclecell[i].x;
 //				x_ori(2,1)=vec_musclecell[i].y;
@@ -1904,7 +1904,7 @@ bool q_atlas2image_musclecell_ini_affine(const CParas &paras,V3DPluginCallback &
 //			}
 			//method 2:
 			Matrix x_ori(vec_musclecell_affine.size(),4),x_tps(vec_musclecell_affine.size(),4);
-			for(unsigned long i=0;i<vec_musclecell_affine.size();i++)
+			for(unsigned V3DLONG i=0;i<vec_musclecell_affine.size();i++)
 			{
 				x_ori(i+1,1)=1.0;
 				x_ori(i+1,2)=vec_musclecell[i].x;
@@ -1913,7 +1913,7 @@ bool q_atlas2image_musclecell_ini_affine(const CParas &paras,V3DPluginCallback &
 			}
 //			x_tps=x_ori*x4x4_affine;				//affine transform
 			x_tps=x_ori*x4x4_affine+xnxn_K*xnx4_c;	//tps transform
-			for(unsigned long i=0;i<vec_musclecell_affine.size();i++)
+			for(unsigned V3DLONG i=0;i<vec_musclecell_affine.size();i++)
 			{
 				vec_musclecell_affine[i].x=x_tps(i+1,2)/x_tps(1,1);
 				vec_musclecell_affine[i].y=x_tps(i+1,3)/x_tps(1,1);
@@ -1925,7 +1925,7 @@ bool q_atlas2image_musclecell_ini_affine(const CParas &paras,V3DPluginCallback &
 		//------------------------------------------------------------------
 		//5). compute the total pos change (affine)
 		double d_totalposchange=0,d_dis,d_dif_x,d_dif_y,d_dif_z;
-		for(unsigned long i=0;i<vec_musclecell.size();i++)
+		for(unsigned V3DLONG i=0;i<vec_musclecell.size();i++)
 		{
 			d_dif_x=vec_musclecell_last[i].x-vec_musclecell_affine[i].x;
 			d_dif_y=vec_musclecell_last[i].y-vec_musclecell_affine[i].y;
@@ -1938,7 +1938,7 @@ bool q_atlas2image_musclecell_ini_affine(const CParas &paras,V3DPluginCallback &
 
 		//compute current energy (energy=ocupied pixel intensity sum)
 //		double d_energy;
-//		long l_radius=2;
+//		V3DLONG l_radius=2;
 //		q_compute_energy(p_img8u,sz_img,vec_musclecell_noaffine,
 //				vec_fg_ind,vec_fg_xyz,
 //				l_radius,
@@ -1955,20 +1955,20 @@ bool q_atlas2image_musclecell_ini_affine(const CParas &paras,V3DPluginCallback &
 		if(paras.b_showatlas && !paras.b_showsegmentation)
 		{
 			//visualize the deformation of atlas
-			long l_makradius=10;
+			V3DLONG l_makradius=10;
 			q_push2V3D_pts(callback,vec_musclecell_affine,l_makradius);
 		}
 		else if(paras.b_showsegmentation)
 		{
 			//build the valid pixel to cell correspondence matrix
-			vector< vector<unsigned long> > vec2d_cellpixelgroups(vec_musclecell.size(),vector<unsigned long>());
+			vector< vector<unsigned V3DLONG> > vec2d_cellpixelgroups(vec_musclecell.size(),vector<unsigned V3DLONG>());
 			double d_celldiameter_max=paras.l_ref_cellradius/paras.d_downsampleratio*2;
-			for(unsigned long i=0;i<vec_fg_ind.size();i++)
+			for(unsigned V3DLONG i=0;i<vec_fg_ind.size();i++)
 			{
 				//for a given pixel, find the cell index with highest prob
 				double d_maxprob=0;
-				unsigned long l_maxprob_ind=0;
-				for(unsigned long j=0;j<vec_musclecell.size();j++)
+				unsigned V3DLONG l_maxprob_ind=0;
+				for(unsigned V3DLONG j=0;j<vec_musclecell.size();j++)
 				{
 					if(vec2d_labelprob[i][j]>d_maxprob)
 					{
@@ -1998,7 +1998,7 @@ bool q_atlas2image_musclecell_ini_affine(const CParas &paras,V3DPluginCallback &
 			NeuronTree nt_cell2validpix;
 			NeuronSWC ns;
 			ns.r=1;
-			for(unsigned long i=0;i<vec2d_cellpixelgroups.size();i++)
+			for(unsigned V3DLONG i=0;i<vec2d_cellpixelgroups.size();i++)
 			{
 				ns.n=nt_cell2validpix.listNeuron.size();
 				ns.type=1;
@@ -2008,8 +2008,8 @@ bool q_atlas2image_musclecell_ini_affine(const CParas &paras,V3DPluginCallback &
 				ns.pn=-1;
 				nt_cell2validpix.listNeuron.push_back(ns);
 
-				long parentind=nt_cell2validpix.listNeuron.size()-1;
-				for(unsigned long j=0;j<vec2d_cellpixelgroups[i].size();j++)
+				V3DLONG parentind=nt_cell2validpix.listNeuron.size()-1;
+				for(unsigned V3DLONG j=0;j<vec2d_cellpixelgroups[i].size();j++)
 				{
 					ns.n=nt_cell2validpix.listNeuron.size();
 					ns.type=2;
@@ -2033,7 +2033,7 @@ bool q_atlas2image_musclecell_ini_affine(const CParas &paras,V3DPluginCallback &
 			//push the marker to 3d viewer
 			if(paras.b_showatlas)
 			{
-				long l_makradius=3;
+				V3DLONG l_makradius=3;
 				q_push2V3D_pts(callback,vec_musclecell_affine,l_makradius);
 //				//save markers to file (for paper, for setting consistent color for different figs)
 //				QList <ImageMarker> ql_marker;
@@ -2053,7 +2053,7 @@ bool q_atlas2image_musclecell_ini_affine(const CParas &paras,V3DPluginCallback &
 
 		//force process events during the iteration
 		if(paras.b_showatlas || paras.b_showsegmentation)
-			for(long o=0;o<5;o++)
+			for(V3DLONG o=0;o<5;o++)
 				QCoreApplication::processEvents();
 
 //		//take screen shot
@@ -2106,8 +2106,8 @@ bool q_atlas2image_musclecell_ini_affine(const CParas &paras,V3DPluginCallback &
 
 //refine the warped atlas (DAWC: deterministic annealing without constraint)
 bool q_atlas2image_musclecell_ref_DAWC(const CParas &paras,V3DPluginCallback &callback,
-		const unsigned char *p_img8u,const long sz_img[4],const vector<point3D64F> &vec_musclecell,
-		const vector<long> &vec_fg_ind,const vector<point3D64F> &vec_fg_xyz,
+		const unsigned char *p_img8u,const V3DLONG sz_img[4],const vector<point3D64F> &vec_musclecell,
+		const vector<V3DLONG> &vec_fg_ind,const vector<point3D64F> &vec_fg_xyz,
 		vector<point3D64F> &vec_musclecell_output)
 {
 	//check paras
@@ -2138,8 +2138,8 @@ bool q_atlas2image_musclecell_ref_DAWC(const CParas &paras,V3DPluginCallback &ca
 	}
 
 	double d_T=paras.d_ref_T;
-	long l_cellradius=paras.l_ref_cellradius/paras.d_downsampleratio+0.5;
-	long l_maxiter=paras.l_ref_maxiter;
+	V3DLONG l_cellradius=paras.l_ref_cellradius/paras.d_downsampleratio+0.5;
+	V3DLONG l_maxiter=paras.l_ref_maxiter;
 	double d_mintotalposchannge=paras.d_ref_minposchange;
 
 	vector< vector<double> > vec2d_labelprob(vec_fg_ind.size(),vector<double>(vec_musclecell.size(),0));
@@ -2147,7 +2147,7 @@ bool q_atlas2image_musclecell_ref_DAWC(const CParas &paras,V3DPluginCallback &ca
 	vector<point3D64F> vec_musclecell_last(vec_musclecell);
 	double d_disnorm=max(sz_img[0],max(sz_img[1],sz_img[2]));
 
-	for(long iter=0;iter<l_maxiter;iter++)
+	for(V3DLONG iter=0;iter<l_maxiter;iter++)
 	{
 		if(paras.b_showatlas) q_push2V3D_pts(callback,vec_musclecell_tmp,10);
 
@@ -2155,8 +2155,8 @@ bool q_atlas2image_musclecell_ref_DAWC(const CParas &paras,V3DPluginCallback &ca
 		//1). given cellpos update labeling possibility
 		double d_dis,d_dif_x,d_dif_y,d_dif_z;
 		vector<double> vec_probnorm(vec_fg_ind.size(),0);
-		for(unsigned long i=0;i<vec_musclecell.size();i++)
-			for(unsigned long j=0;j<vec_fg_ind.size();j++)
+		for(unsigned V3DLONG i=0;i<vec_musclecell.size();i++)
+			for(unsigned V3DLONG j=0;j<vec_fg_ind.size();j++)
 			{
 				//compute the distance from foreground pixel to a certain atlas cell
 				d_dif_x=vec_fg_xyz[j].x-vec_musclecell_tmp[i].x;
@@ -2181,8 +2181,8 @@ bool q_atlas2image_musclecell_ref_DAWC(const CParas &paras,V3DPluginCallback &ca
 				vec_probnorm[j]+=vec2d_labelprob[j][i];
 			}
 		//normalize the labeling prob
-		for(unsigned long j=0;j<vec_fg_ind.size();j++)
-			for(unsigned long i=0;i<vec_musclecell.size();i++)
+		for(unsigned V3DLONG j=0;j<vec_fg_ind.size();j++)
+			for(unsigned V3DLONG i=0;i<vec_musclecell.size();i++)
 			{
 				vec2d_labelprob[j][i]/=vec_probnorm[j];
 
@@ -2192,10 +2192,10 @@ bool q_atlas2image_musclecell_ref_DAWC(const CParas &paras,V3DPluginCallback &ca
 
 		//------------------------------------------------------------------
 		//2). update cellpos (probability weighted mass center)
-		for(unsigned long i=0;i<vec_musclecell.size();i++)
+		for(unsigned V3DLONG i=0;i<vec_musclecell.size();i++)
 		{
 			double d_probsum=0,d_sum_x=0,d_sum_y=0,d_sum_z=0;
-			for(unsigned long j=0;j<vec_fg_ind.size();j++)
+			for(unsigned V3DLONG j=0;j<vec_fg_ind.size();j++)
 			{
 //				d_probsum+=vec2d_labelprob[j][i];
 //				d_sum_x+=vec2d_labelprob[j][i]*vec_fg_xyz[j].x;
@@ -2214,7 +2214,7 @@ bool q_atlas2image_musclecell_ref_DAWC(const CParas &paras,V3DPluginCallback &ca
 		//------------------------------------------------------------------
 		//3). compute the total pos change (affine)
 		double d_totalposchange=0;
-		for(unsigned long i=0;i<vec_musclecell.size();i++)
+		for(unsigned V3DLONG i=0;i<vec_musclecell.size();i++)
 		{
 			d_dif_x=vec_musclecell_last[i].x-vec_musclecell_tmp[i].x;
 			d_dif_y=vec_musclecell_last[i].y-vec_musclecell_tmp[i].y;
@@ -2238,7 +2238,7 @@ bool q_atlas2image_musclecell_ref_DAWC(const CParas &paras,V3DPluginCallback &ca
 			break;
 
 //		if(paras.b_showinV3D_pts)
-//			for(long o=0;o<10;o++)
+//			for(V3DLONG o=0;o<10;o++)
 //				QCoreApplication::processEvents();
 
 //		v3dhandle curwin = callback.currentImageWindow();
@@ -2254,8 +2254,8 @@ bool q_atlas2image_musclecell_ref_DAWC(const CParas &paras,V3DPluginCallback &ca
 }
 
 bool q_atlas2image_musclecell_ref_DAWC_prior(const CParas &paras,V3DPluginCallback &callback,
-		const unsigned char *p_img8u,const long sz_img[4],const vector<point3D64F> &vec_musclecell,const vector<long> vec_ind_anchor,
-		const vector<long> &vec_fg_ind,const vector<point3D64F> &vec_fg_xyz,
+		const unsigned char *p_img8u,const V3DLONG sz_img[4],const vector<point3D64F> &vec_musclecell,const vector<V3DLONG> vec_ind_anchor,
+		const vector<V3DLONG> &vec_fg_ind,const vector<point3D64F> &vec_fg_xyz,
 		vector<point3D64F> &vec_musclecell_output)
 {
 	//check paras
@@ -2286,7 +2286,7 @@ bool q_atlas2image_musclecell_ref_DAWC_prior(const CParas &paras,V3DPluginCallba
 	}
 
 	double d_T=paras.d_ref_T;
-	long l_maxiter=paras.l_ref_maxiter;
+	V3DLONG l_maxiter=paras.l_ref_maxiter;
 	double d_mintotalposchannge=paras.d_ref_minposchange;
 
 	vector< vector<double> > vec2d_labelprob(vec_fg_ind.size(),vector<double>(vec_musclecell.size(),0));
@@ -2294,14 +2294,14 @@ bool q_atlas2image_musclecell_ref_DAWC_prior(const CParas &paras,V3DPluginCallba
 	vector<point3D64F> vec_musclecell_last(vec_musclecell);
 	double d_disnorm=max(sz_img[0],max(sz_img[1],sz_img[2]));
 
-	for(long iter=0;iter<l_maxiter;iter++)
+	for(V3DLONG iter=0;iter<l_maxiter;iter++)
 	{
 		//------------------------------------------------------------------
 		//1). given cellpos update labeling possibility
 		double d_dis,d_dif_x,d_dif_y,d_dif_z;
 		vector<double> vec_probnorm(vec_fg_ind.size(),0);
-		for(unsigned long i=0;i<vec_musclecell.size();i++)
-			for(unsigned long j=0;j<vec_fg_ind.size();j++)
+		for(unsigned V3DLONG i=0;i<vec_musclecell.size();i++)
+			for(unsigned V3DLONG j=0;j<vec_fg_ind.size();j++)
 			{
 				//compute the distance from foreground pixel to a certain atlas cell
 				d_dif_x=vec_fg_xyz[j].x-vec_musclecell_tmp[i].x;
@@ -2317,16 +2317,16 @@ bool q_atlas2image_musclecell_ref_DAWC_prior(const CParas &paras,V3DPluginCallba
 				vec_probnorm[j]+=vec2d_labelprob[j][i];
 			}
 		//normalize the labeling prob
-		for(unsigned long j=0;j<vec_fg_ind.size();j++)
-			for(unsigned long i=0;i<vec_musclecell.size();i++)
+		for(unsigned V3DLONG j=0;j<vec_fg_ind.size();j++)
+			for(unsigned V3DLONG i=0;i<vec_musclecell.size();i++)
 				vec2d_labelprob[j][i]/=vec_probnorm[j];
 
 		//------------------------------------------------------------------
 		//2). update cellpos (probability weighted mass center)
-		for(unsigned long i=0;i<vec_musclecell.size();i++)
+		for(unsigned V3DLONG i=0;i<vec_musclecell.size();i++)
 		{
 			double d_probsum=0,d_sum_x=0,d_sum_y=0,d_sum_z=0;
-			for(unsigned long j=0;j<vec_fg_ind.size();j++)
+			for(unsigned V3DLONG j=0;j<vec_fg_ind.size();j++)
 			{
 //				d_probsum+=vec2d_labelprob[j][i];
 //				d_sum_x+=vec2d_labelprob[j][i]*vec_fg_xyz[j].x;
@@ -2342,7 +2342,7 @@ bool q_atlas2image_musclecell_ref_DAWC_prior(const CParas &paras,V3DPluginCallba
 			vec_musclecell_tmp[i].z=d_sum_z/d_probsum;
 		}
 		//do not update the anchor points
-		for(unsigned long i=0;i<vec_ind_anchor.size();i++)
+		for(unsigned V3DLONG i=0;i<vec_ind_anchor.size();i++)
 		{
 			vec_musclecell_tmp[vec_ind_anchor[i]].x=vec_musclecell[vec_ind_anchor[i]].x;
 			vec_musclecell_tmp[vec_ind_anchor[i]].y=vec_musclecell[vec_ind_anchor[i]].y;
@@ -2352,7 +2352,7 @@ bool q_atlas2image_musclecell_ref_DAWC_prior(const CParas &paras,V3DPluginCallba
 		//------------------------------------------------------------------
 		//3). compute the total pos change (affine)
 		double d_totalposchange=0;
-		for(unsigned long i=0;i<vec_musclecell.size();i++)
+		for(unsigned V3DLONG i=0;i<vec_musclecell.size();i++)
 		{
 			d_dif_x=vec_musclecell_last[i].x-vec_musclecell_tmp[i].x;
 			d_dif_y=vec_musclecell_last[i].y-vec_musclecell_tmp[i].y;
@@ -2377,13 +2377,13 @@ bool q_atlas2image_musclecell_ref_DAWC_prior(const CParas &paras,V3DPluginCallba
 
 //refine the warped atlas (deterministic annealing without TPS constraint)
 bool q_atlas2image_musclecell_ref_DATPS(const CParas &paras,V3DPluginCallback &callback,
-		const unsigned char *p_img8u,const long sz_img[4],const vector<point3D64F> &vec_musclecell,
-		const vector<long> &vec_fg_ind,const vector<point3D64F> &vec_fg_xyz,
+		const unsigned char *p_img8u,const V3DLONG sz_img[4],const vector<point3D64F> &vec_musclecell,
+		const vector<V3DLONG> &vec_fg_ind,const vector<point3D64F> &vec_fg_xyz,
 		vector<point3D64F> &vec_musclecell_output)
 {
 	double d_T=paras.d_ref_T;
 	double d_annealingrate=paras.d_annealingrate;
-	long n_maxiter_inner=paras.l_niter_pertemp;
+	V3DLONG n_maxiter_inner=paras.l_niter_pertemp;
 	double d_lamda=1000;
 
 	vector< vector<double> > vec2d_labelprob(vec_fg_ind.size(),vector<double>(vec_musclecell.size(),0));
@@ -2393,16 +2393,16 @@ bool q_atlas2image_musclecell_ref_DATPS(const CParas &paras,V3DPluginCallback &c
 	double d_disnorm=max(sz_img[0],max(sz_img[1],sz_img[2]));
 
 //	n_maxiter_inner=5;
-	for(long iter=0;iter<100;iter++)
+	for(V3DLONG iter=0;iter<100;iter++)
 	{
-		for(long iter_inner=0;iter_inner<n_maxiter_inner;iter_inner++)
+		for(V3DLONG iter_inner=0;iter_inner<n_maxiter_inner;iter_inner++)
 		{
 			//------------------------------------------------------------------
 			//1). given cellpos update labeling possibility
 			double d_dis,d_dif_x,d_dif_y,d_dif_z,d_angle2x;
 			vector<double> vec_probnorm(vec_fg_ind.size(),0);
-			for(unsigned long i=0;i<vec_musclecell.size();i++)
-				for(unsigned long j=0;j<vec_fg_ind.size();j++)
+			for(unsigned V3DLONG i=0;i<vec_musclecell.size();i++)
+				for(unsigned V3DLONG j=0;j<vec_fg_ind.size();j++)
 				{
 					//compute the distance from foreground pixel to a certain atlas cell
 					d_dif_x=vec_fg_xyz[j].x-vec_musclecell_affine[i].x;
@@ -2418,16 +2418,16 @@ bool q_atlas2image_musclecell_ref_DATPS(const CParas &paras,V3DPluginCallback &c
 					vec_probnorm[j]+=vec2d_labelprob[j][i];
 				}
 			//normalize the labeling prob
-			for(unsigned long j=0;j<vec_fg_ind.size();j++)
-				for(unsigned long i=0;i<vec_musclecell.size();i++)
+			for(unsigned V3DLONG j=0;j<vec_fg_ind.size();j++)
+				for(unsigned V3DLONG i=0;i<vec_musclecell.size();i++)
 					vec2d_labelprob[j][i]/=vec_probnorm[j];
 
 			//------------------------------------------------------------------
 			//2). update cellpos (probability weighted mass center)
-			for(unsigned long i=0;i<vec_musclecell.size();i++)
+			for(unsigned V3DLONG i=0;i<vec_musclecell.size();i++)
 			{
 				double d_probsum=0,d_sum_x=0,d_sum_y=0,d_sum_z=0;
-				for(unsigned long j=0;j<vec_fg_ind.size();j++)
+				for(unsigned V3DLONG j=0;j<vec_fg_ind.size();j++)
 				{
 //					d_probsum+=vec2d_labelprob[j][i];
 //					d_sum_x+=vec2d_labelprob[j][i]*vec_fg_xyz[j].x;
@@ -2455,7 +2455,7 @@ bool q_atlas2image_musclecell_ref_DATPS(const CParas &paras,V3DPluginCallback &c
 			//------------------------------------------------------------------
 			//4). generate transform constrainted cellpos
 			Matrix x_ori(vec_musclecell_affine.size(),4),x_tps(vec_musclecell_affine.size(),4);
-			for(unsigned long i=0;i<vec_musclecell_affine.size();i++)
+			for(unsigned V3DLONG i=0;i<vec_musclecell_affine.size();i++)
 			{
 				x_ori(i+1,1)=1.0;
 				x_ori(i+1,2)=vec_musclecell[i].x;
@@ -2463,7 +2463,7 @@ bool q_atlas2image_musclecell_ref_DATPS(const CParas &paras,V3DPluginCallback &c
 				x_ori(i+1,4)=vec_musclecell[i].z;
 			}
 			x_tps=x_ori*x4x4_affine+xnxn_K*xnx4_c;
-			for(unsigned long i=0;i<vec_musclecell_affine.size();i++)
+			for(unsigned V3DLONG i=0;i<vec_musclecell_affine.size();i++)
 			{
 				vec_musclecell_affine[i].x=x_tps(i+1,2);
 				vec_musclecell_affine[i].y=x_tps(i+1,3);
@@ -2473,7 +2473,7 @@ bool q_atlas2image_musclecell_ref_DATPS(const CParas &paras,V3DPluginCallback &c
 			//------------------------------------------------------------------
 			//5). compute the total pos change (affine)
 			double d_totalposchange=0;
-			for(unsigned long i=0;i<vec_musclecell.size();i++)
+			for(unsigned V3DLONG i=0;i<vec_musclecell.size();i++)
 			{
 				d_dif_x=vec_musclecell_last[i].x-vec_musclecell_affine[i].x;
 				d_dif_y=vec_musclecell_last[i].y-vec_musclecell_affine[i].y;
@@ -2498,7 +2498,7 @@ bool q_atlas2image_musclecell_ref_DATPS(const CParas &paras,V3DPluginCallback &c
 		if(paras.b_showatlas) q_push2V3D_pts(callback,vec_musclecell_affine,10);
 
 		if(paras.b_showatlas || paras.b_showsegmentation)
-			for(long o=0;o<10;o++)
+			for(V3DLONG o=0;o<10;o++)
 				QCoreApplication::processEvents();
 
 	}
@@ -2514,8 +2514,8 @@ bool q_atlas2image_musclecell_ref_DATPS(const CParas &paras,V3DPluginCallback &c
 //3. take the one with highest energy as the output
 //refine the warped atlas (LP: locally horizental 3/4 dulside perturbation)
 bool q_atlas2image_musclecell_ref_LHHV(const CParas &paras,V3DPluginCallback &callback,
-		const unsigned char *p_img8u,const long sz_img[4],const vector<point3D64F> &vec_musclecell,
-		const vector<long> &vec_fg_ind,const vector<point3D64F> &vec_fg_xyz,
+		const unsigned char *p_img8u,const V3DLONG sz_img[4],const vector<point3D64F> &vec_musclecell,
+		const vector<V3DLONG> &vec_fg_ind,const vector<point3D64F> &vec_fg_xyz,
 		vector<point3D64F> &vec_musclecell_output)
 {
 	//check paras
@@ -2545,39 +2545,39 @@ bool q_atlas2image_musclecell_ref_LHHV(const CParas &paras,V3DPluginCallback &ca
 		vec_musclecell_output.clear();
 	}
 
-	long l_cellradius=paras.l_ref_cellradius/paras.d_downsampleratio+0.5;
+	V3DLONG l_cellradius=paras.l_ref_cellradius/paras.d_downsampleratio+0.5;
 
 	//------------------------------------------------------------------------------------------------------------------------------------
 	//find the index of cells in each stripe (in increase order)
-	vector< vector<long> > vec2d_musclecellind_4strip;
+	vector< vector<V3DLONG> > vec2d_musclecellind_4strip;
 	//VL
-	long tmp_VL[]={3,4,10,14,17,23,27,29,33,37,42,46,50,55,57,58,69,72,75};
-	vector<long> vec_musclecellind_VL(tmp_VL,tmp_VL+sizeof(tmp_VL)/sizeof(long));
+	V3DLONG tmp_VL[]={3,4,10,14,17,23,27,29,33,37,42,46,50,55,57,58,69,72,75};
+	vector<V3DLONG> vec_musclecellind_VL(tmp_VL,tmp_VL+sizeof(tmp_VL)/sizeof(V3DLONG));
 	vec2d_musclecellind_4strip.push_back(vec_musclecellind_VL);
 	//VR
-	long tmp_VR[]={0,7,11,12,19,20,24,28,32,39,41,45,51,52,56,59,66,70,74,78};
-	vector<long> vec_musclecellind_VR(tmp_VR,tmp_VR+sizeof(tmp_VR)/sizeof(long));
+	V3DLONG tmp_VR[]={0,7,11,12,19,20,24,28,32,39,41,45,51,52,56,59,66,70,74,78};
+	vector<V3DLONG> vec_musclecellind_VR(tmp_VR,tmp_VR+sizeof(tmp_VR)/sizeof(V3DLONG));
 	vec2d_musclecellind_4strip.push_back(vec_musclecellind_VR);
 	//DL
-	long tmp_DL[]={1,6,9,13,18,21,26,30,34,38,40,47,48,54,61,62,65,68,73,77,80};
-	vector<long> vec_musclecellind_DL(tmp_DL,tmp_DL+sizeof(tmp_DL)/sizeof(long));
+	V3DLONG tmp_DL[]={1,6,9,13,18,21,26,30,34,38,40,47,48,54,61,62,65,68,73,77,80};
+	vector<V3DLONG> vec_musclecellind_DL(tmp_DL,tmp_DL+sizeof(tmp_DL)/sizeof(V3DLONG));
 	vec2d_musclecellind_4strip.push_back(vec_musclecellind_DL);
 	//DR
-	long tmp_DR[]={2,5,8,15,16,22,25,31,35,36,43,44,49,53,60,63,64,67,71,76,79};
-	vector<long> vec_musclecellind_DR(tmp_DR,tmp_DR+sizeof(tmp_DR)/sizeof(long));
+	V3DLONG tmp_DR[]={2,5,8,15,16,22,25,31,35,36,43,44,49,53,60,63,64,67,71,76,79};
+	vector<V3DLONG> vec_musclecellind_DR(tmp_DR,tmp_DR+sizeof(tmp_DR)/sizeof(V3DLONG));
 	vec2d_musclecellind_4strip.push_back(vec_musclecellind_DR);
 
 	//compute the distance and avg between adjacent cell which in the same stripe
 	vector< vector<double> > vec2d_dis;
 	vector<double> vec_dis;
-	double d_avgdis=0;	long n_dis=0;
-	for(unsigned long i=0;i<vec2d_musclecellind_4strip.size();i++)
+	double d_avgdis=0;	V3DLONG n_dis=0;
+	for(unsigned V3DLONG i=0;i<vec2d_musclecellind_4strip.size();i++)
 	{
 		vec_dis.clear();
-		for(unsigned long j=0;j<vec2d_musclecellind_4strip[0].size()-1;j++)
+		for(unsigned V3DLONG j=0;j<vec2d_musclecellind_4strip[0].size()-1;j++)
 		{
-			long ind1=vec2d_musclecellind_4strip[i][j];
-			long ind2=vec2d_musclecellind_4strip[i][j+1];
+			V3DLONG ind1=vec2d_musclecellind_4strip[i][j];
+			V3DLONG ind2=vec2d_musclecellind_4strip[i][j+1];
 			double dis=fabs(vec_musclecell[ind1].x-vec_musclecell[ind2].x);
 			vec_dis.push_back(dis);
 			d_avgdis+=dis;
@@ -2617,7 +2617,7 @@ bool q_atlas2image_musclecell_ref_LHHV(const CParas &paras,V3DPluginCallback &ca
 //	cellapo.color=color;
 //	cellapo.volsize=5;
 //	QList<CellAPO> ql_tmp;
-//	for(long i=0;i<vec_musclecell_best.size();i++)
+//	for(V3DLONG i=0;i<vec_musclecell_best.size();i++)
 //	{
 //		cellapo.x=vec_musclecell_best[i].x;
 //		cellapo.y=vec_musclecell_best[i].y;
@@ -2629,12 +2629,12 @@ bool q_atlas2image_musclecell_ref_LHHV(const CParas &paras,V3DPluginCallback &ca
 	//------------------------------------------------------------------------------------------------------------------------------------
 	//shift every cell to its 3/4 left and right side
 	//the shift of the neighbor cells satisfy Gaussian distribution
-	for(unsigned long strip=0;strip<vec2d_musclecellind_4strip.size();strip++)
+	for(unsigned V3DLONG strip=0;strip<vec2d_musclecellind_4strip.size();strip++)
 	{
-		for(unsigned long i=1;i<vec2d_musclecellind_4strip[strip].size()-1;i++)
+		for(unsigned V3DLONG i=1;i<vec2d_musclecellind_4strip[strip].size()-1;i++)
 		{
-			long ind=vec2d_musclecellind_4strip[strip][i];
-			for(long lr=0;lr<2;lr++)//0:left, 1:right
+			V3DLONG ind=vec2d_musclecellind_4strip[strip][i];
+			for(V3DLONG lr=0;lr<2;lr++)//0:left, 1:right
 			{
 				vec_musclecell_tmp=vec_musclecell;
 
@@ -2650,9 +2650,9 @@ bool q_atlas2image_musclecell_ref_LHHV(const CParas &paras,V3DPluginCallback &ca
 				double sigma=d_avgdis;
 				double miu=vec_musclecell[ind].x;
 //				double pi=3.1415926;
-				for(unsigned long j=0;j<vec2d_musclecellind_4strip[strip].size();j++)
+				for(unsigned V3DLONG j=0;j<vec2d_musclecellind_4strip[strip].size();j++)
 				{
-					long ind2=vec2d_musclecellind_4strip[strip][j];
+					V3DLONG ind2=vec2d_musclecellind_4strip[strip][j];
 					double x=vec_musclecell[ind2].x;
 	//				double y=exp(-(x-miu)*(x-miu)/(2*sigma*sigma))/sqrt(2*pi*sigma*sigma);
 					double y=exp(-(x-miu)*(x-miu)/(2*sigma*sigma));
@@ -2672,7 +2672,7 @@ bool q_atlas2image_musclecell_ref_LHHV(const CParas &paras,V3DPluginCallback &ca
 					printf("ERROR: q_atlas2image_musclecell_ref_DAWC() return false!\n");
 					return false;
 				}
-				long l_radius=paras.l_ref_cellradius/paras.d_downsampleratio+0.5;
+				V3DLONG l_radius=paras.l_ref_cellradius/paras.d_downsampleratio+0.5;
 				if(!q_compute_energy(p_img8u,sz_img,vec_musclecell_ref,
 						vec_fg_ind,vec_fg_xyz,
 						l_radius,
@@ -2694,7 +2694,7 @@ bool q_atlas2image_musclecell_ref_LHHV(const CParas &paras,V3DPluginCallback &ca
 //					cellapo.color=color;
 //					cellapo.volsize=5;
 //					QList<CellAPO> ql_tmp;
-//					for(long i=0;i<vec_musclecell_best.size();i++)
+//					for(V3DLONG i=0;i<vec_musclecell_best.size();i++)
 //					{
 //						cellapo.x=vec_musclecell_best[i].x;
 //						cellapo.y=vec_musclecell_best[i].y;
@@ -2718,7 +2718,7 @@ bool q_atlas2image_musclecell_ref_LHHV(const CParas &paras,V3DPluginCallback &ca
 
 //refine the position of atlas points by mean-shift
 bool q_atlas2image_musclecell_ref_mshift(const CParas &paras,V3DPluginCallback &callback,
-		const unsigned char *p_img8u,const long sz_img[4],const vector<point3D64F> &vec_musclecell,
+		const unsigned char *p_img8u,const V3DLONG sz_img[4],const vector<point3D64F> &vec_musclecell,
 		vector<point3D64F> &vec_musclecell_output)
 {
 	//check paras
@@ -2743,15 +2743,15 @@ bool q_atlas2image_musclecell_ref_mshift(const CParas &paras,V3DPluginCallback &
 		vec_musclecell_output.clear();
 	}
 
-	long l_wndradius=paras.l_ref_cellradius/2.0+0.5;
-	long l_maxiter=100;
+	V3DLONG l_wndradius=paras.l_ref_cellradius/2.0+0.5;
+	V3DLONG l_maxiter=100;
 	double d_mintotalposchannge=0.001;
 
 	//build sphere xyz range array
 	vector<point3D64F> vec_sphereoffset;
-	for(long x=-l_wndradius;x<=l_wndradius;x++)
-		for(long y=-l_wndradius;y<=l_wndradius;y++)
-			for(long z=-l_wndradius;z<=l_wndradius;z++)
+	for(V3DLONG x=-l_wndradius;x<=l_wndradius;x++)
+		for(V3DLONG y=-l_wndradius;y<=l_wndradius;y++)
+			for(V3DLONG z=-l_wndradius;z<=l_wndradius;z++)
 			{
 				double dis=sqrt(double(x*x+y*y+z*z));
 				if(dis<=l_wndradius)
@@ -2768,13 +2768,13 @@ bool q_atlas2image_musclecell_ref_mshift(const CParas &paras,V3DPluginCallback &
 
 	//reposition the cells to the mass center of the corresponding sphere
 	vector<point3D64F> vec_musclecell_new(vec_musclecell),vec_musclecell_last(vec_musclecell);
-	for(long iter=0;iter<l_maxiter;iter++)
+	for(V3DLONG iter=0;iter<l_maxiter;iter++)
 	{
-		for(unsigned long i=0;i<vec_musclecell.size();i++)
+		for(unsigned V3DLONG i=0;i<vec_musclecell.size();i++)
 		{
 			double d_intensitysum=0;
 			point3D64F pt_new;
-			for(unsigned long j=0;j<vec_sphereoffset.size();j++)
+			for(unsigned V3DLONG j=0;j<vec_sphereoffset.size();j++)
 			{
 				double x=vec_musclecell_new[i].x+vec_sphereoffset[j].x;
 				double y=vec_musclecell_new[i].y+vec_sphereoffset[j].y;
@@ -2787,7 +2787,7 @@ bool q_atlas2image_musclecell_ref_mshift(const CParas &paras,V3DPluginCallback &
 				//linear interpolate the intensity at (x,y,z)
 				double d_intensity=0;
 				//find 8 neighor pixels boundary
-				long x_s,x_b,y_s,y_b,z_s,z_b;
+				V3DLONG x_s,x_b,y_s,y_b,z_s,z_b;
 				x_s=floor(x);		x_b=ceil(x);
 				y_s=floor(y);		y_b=ceil(y);
 				z_s=floor(z);		z_b=ceil(z);
@@ -2826,7 +2826,7 @@ bool q_atlas2image_musclecell_ref_mshift(const CParas &paras,V3DPluginCallback &
 
 		//judge whether stop iteration
 		double d_change=0;
-		for(unsigned long i=0;i<vec_musclecell.size();i++)
+		for(unsigned V3DLONG i=0;i<vec_musclecell.size();i++)
 		{
 			double x_dif=vec_musclecell_new[i].x-vec_musclecell_last[i].x;
 			double y_dif=vec_musclecell_new[i].y-vec_musclecell_last[i].y;
@@ -2845,7 +2845,7 @@ bool q_atlas2image_musclecell_ref_mshift(const CParas &paras,V3DPluginCallback &
 	if(paras.b_showatlas)
 	{
 		vector<point3D64F> vec_musclecell_tmp(vec_musclecell_output);
-		for(unsigned long i=0;i<vec_musclecell_output.size();i++)
+		for(unsigned V3DLONG i=0;i<vec_musclecell_output.size();i++)
 		{
 			vec_musclecell_tmp[i].x/=paras.d_downsampleratio;
 			vec_musclecell_tmp[i].y/=paras.d_downsampleratio;
@@ -2860,7 +2860,7 @@ bool q_atlas2image_musclecell_ref_mshift(const CParas &paras,V3DPluginCallback &
 }
 //refine the position of atlas points by mean-shift (window radius change adaptively)
 bool q_atlas2image_musclecell_ref_mshift_adaptive(const CParas &paras,V3DPluginCallback &callback,
-		const unsigned char *p_img8u,const long sz_img[4],const vector<point3D64F> &vec_musclecell,const double d_thresh_fg,
+		const unsigned char *p_img8u,const V3DLONG sz_img[4],const vector<point3D64F> &vec_musclecell,const double d_thresh_fg,
 		vector<point3D64F> &vec_musclecell_output)
 {
 	//check paras
@@ -2892,30 +2892,30 @@ bool q_atlas2image_musclecell_ref_mshift_adaptive(const CParas &paras,V3DPluginC
 		return false;
 	}
 
-	long l_maxiter=100;
+	V3DLONG l_maxiter=100;
 	double d_mintotalposchannge=0.001;
 
-	long l_wndradius=paras.l_ref_cellradius/2+0.5;
-	long l_wndradius_bk=l_wndradius;
-	long l_wnddiameter=l_wndradius_bk*2+1;
-	long l_wndvolume=l_wnddiameter*l_wnddiameter*l_wnddiameter;
+	V3DLONG l_wndradius=paras.l_ref_cellradius/2+0.5;
+	V3DLONG l_wndradius_bk=l_wndradius;
+	V3DLONG l_wnddiameter=l_wndradius_bk*2+1;
+	V3DLONG l_wndvolume=l_wnddiameter*l_wnddiameter*l_wnddiameter;
 
 	//reposition the cells to the mass center of the corresponding sphere
 	vector<point3D64F> vec_musclecell_new(vec_musclecell),vec_musclecell_last(vec_musclecell);
-	long pgsz_y=sz_img[0];
-	long pgsz_xy=sz_img[0]*sz_img[1];
-	for(long i=0;i<vec_musclecell.size();i++)
+	V3DLONG pgsz_y=sz_img[0];
+	V3DLONG pgsz_xy=sz_img[0]*sz_img[1];
+	for(V3DLONG i=0;i<vec_musclecell.size();i++)
 	{
-		long l_iter=0;
+		V3DLONG l_iter=0;
 		while(l_iter<l_maxiter)
 		{
 			double d_intensitysum=0;
 			double d_intensitymax=0;
-			long l_nfgpts=0;
+			V3DLONG l_nfgpts=0;
 			point3D64F pt_new;
-			for(long xx=-l_wndradius;xx<=l_wndradius;xx++)
-				for(long yy=-l_wndradius;yy<=l_wndradius;yy++)
-					for(long zz=-l_wndradius;zz<=l_wndradius;zz++)
+			for(V3DLONG xx=-l_wndradius;xx<=l_wndradius;xx++)
+				for(V3DLONG yy=-l_wndradius;yy<=l_wndradius;yy++)
+					for(V3DLONG zz=-l_wndradius;zz<=l_wndradius;zz++)
 					{
 						double x=vec_musclecell_new[i].x+xx;
 						double y=vec_musclecell_new[i].y+yy;
@@ -2928,7 +2928,7 @@ bool q_atlas2image_musclecell_ref_mshift_adaptive(const CParas &paras,V3DPluginC
 						//linear interpolate the intensity at (x,y,z)
 						double d_intensity=0;
 						//find 8 neighor pixels boundary
-						long x_s,x_b,y_s,y_b,z_s,z_b;
+						V3DLONG x_s,x_b,y_s,y_b,z_s,z_b;
 						x_s=floor(x);		x_b=ceil(x);
 						y_s=floor(y);		y_b=ceil(y);
 						z_s=floor(z);		z_b=ceil(z);
@@ -3001,9 +3001,9 @@ bool q_atlas2image_musclecell_ref_mshift_adaptive(const CParas &paras,V3DPluginC
 
 
 //compute the energy for given deformed atlas (energy=ocupied pixel intensity sum)
-bool q_compute_energy(const unsigned char *p_img8u,const long sz_img[4],const vector<point3D64F> &vec_musclecell,
-		const vector<long> &vec_fg_ind,const vector<point3D64F> &vec_fg_xyz,
-		const long &l_radius,
+bool q_compute_energy(const unsigned char *p_img8u,const V3DLONG sz_img[4],const vector<point3D64F> &vec_musclecell,
+		const vector<V3DLONG> &vec_fg_ind,const vector<point3D64F> &vec_fg_xyz,
+		const V3DLONG &l_radius,
 		double &d_energy)
 {
 	//check paras
@@ -3030,8 +3030,8 @@ bool q_compute_energy(const unsigned char *p_img8u,const long sz_img[4],const ve
 	d_energy=0;
 
 	double d_dis,d_dif_x,d_dif_y,d_dif_z;
-	for(unsigned long i=0;i<vec_fg_ind.size();i++)
-		for(unsigned long j=-0;j<vec_musclecell.size();j++)
+	for(unsigned V3DLONG i=0;i<vec_fg_ind.size();i++)
+		for(unsigned V3DLONG j=-0;j<vec_musclecell.size();j++)
 		{
 			d_dif_x=vec_fg_xyz[i].x-vec_musclecell[j].x;
 			d_dif_y=vec_fg_xyz[i].y-vec_musclecell[j].y;
@@ -3152,7 +3152,7 @@ bool q_compute_rigidmatrix_3D(const vector<point3D64F> &vec_A,const vector<point
 
 	//format
 	Matrix x3xn_A(3,n_point),x3xn_B(3,n_point);
-	for(long i=0;i<n_point;i++)
+	for(V3DLONG i=0;i<n_point;i++)
 	{
 		x3xn_A(1,i+1)=vec_A_norm[i].x;	x3xn_A(2,i+1)=vec_A_norm[i].y;	x3xn_A(3,i+1)=vec_A_norm[i].z;
 		x3xn_B(1,i+1)=vec_B_norm[i].x;	x3xn_B(2,i+1)=vec_B_norm[i].y;	x3xn_B(3,i+1)=vec_B_norm[i].z;
@@ -3289,7 +3289,7 @@ bool q_TPS_cd(const vector<point3D64F> &vec_sub,const vector<point3D64F> &vec_ta
 		printf("ERROR: Invalid input parameters! \n");
 		return false;
 	}
-	long n_pts=vec_sub.size();
+	V3DLONG n_pts=vec_sub.size();
 	if(xnx4_c.nrows()!=n_pts || xnx4_c.ncols()!=4)
 		xnx4_c.ReSize(n_pts,4);
 	if(x4x4_d.nrows()!=4 || xnx4_c.ncols()!=4)
@@ -3308,7 +3308,7 @@ bool q_TPS_cd(const vector<point3D64F> &vec_sub,const vector<point3D64F> &vec_ta
 	//compute the QR decomposition of x
 	Matrix X(n_pts,4),Y(n_pts,4);
 	Matrix Q(n_pts,n_pts); Q=0.0;
-	for(long i=0;i<n_pts;i++)
+	for(V3DLONG i=0;i<n_pts;i++)
 	{
 		Q(i+1,1)=X(i+1,1)=1;
 		Q(i+1,2)=X(i+1,2)=vec_sub[i].x;
@@ -3440,8 +3440,8 @@ bool q_TPS_k(const vector<point3D64F> &vec_sub,const vector<point3D64F> &vec_bas
 
 	//compute K=-r=-|xi-xj|
 	double d_x,d_y,d_z;
-	for(unsigned long i=0;i<vec_sub.size();i++)
-		for(unsigned long j=0;j<vec_basis.size();j++)
+	for(unsigned V3DLONG i=0;i<vec_sub.size();i++)
+		for(unsigned V3DLONG j=0;j<vec_basis.size();j++)
 		{
 			d_x=vec_sub[i].x-vec_basis[j].x;
 			d_y=vec_sub[i].y-vec_basis[j].y;
@@ -3453,7 +3453,7 @@ bool q_TPS_k(const vector<point3D64F> &vec_sub,const vector<point3D64F> &vec_bas
 }
 
 //show the point set in current 3D viewer window
-bool q_push2V3D_pts(V3DPluginCallback &callback,vector<point3D64F> &vec_pts,long l_makradius)
+bool q_push2V3D_pts(V3DPluginCallback &callback,vector<point3D64F> &vec_pts,V3DLONG l_makradius)
 {
 	//show deformed atlas pts in V3D
 	v3dhandle curwin = callback.currentImageWindow();
@@ -3515,8 +3515,8 @@ bool q_compute_tps_paras_3D(
 	double tmp,s;
 
 	Matrix wR(n_marker,n_marker);
-	for(long j=0;j<n_marker;j++)
-	  for(long i=0;i<n_marker;i++)
+	for(V3DLONG j=0;j<n_marker;j++)
+	  for(V3DLONG i=0;i<n_marker;i++)
 	  {
 		s=0.0;
 		tmp=vec_ctlpts_sub.at(i).x-vec_ctlpts_sub.at(j).x;	s+=tmp*tmp;
@@ -3527,7 +3527,7 @@ bool q_compute_tps_paras_3D(
 	  }
 
 	Matrix wP(n_marker,4);
-	for(long i=0;i<n_marker;i++)
+	for(V3DLONG i=0;i<n_marker;i++)
 	{
 	   wP(i+1,1)=1;
 	   wP(i+1,2)=vec_ctlpts_sub.at(i).x;
@@ -3542,7 +3542,7 @@ bool q_compute_tps_paras_3D(
 	wL.submatrix(n_marker+1,n_marker+4,n_marker+1,n_marker+4)=0;
 
 	Matrix wY(n_marker+4,3);
-	for(long i=0;i<n_marker;i++)
+	for(V3DLONG i=0;i<n_marker;i++)
 	{
 	   wY(i+1,1)=vec_ctlpts_tar.at(i).x;
 	   wY(i+1,2)=vec_ctlpts_tar.at(i).y;
@@ -3592,7 +3592,7 @@ bool q_compute_ptwarped_from_tpspara_3D(
 	double tmp,s;
 
 	//calculate distance vector
-	for(long n=0;n<n_marker;n++)
+	for(V3DLONG n=0;n<n_marker;n++)
 	{
 		s=0;
 		tmp=pt_sub.x-vec_ctlpts_sub.at(n).x;	s+=tmp*tmp;
@@ -3607,15 +3607,15 @@ bool q_compute_ptwarped_from_tpspara_3D(
 	Ua[n_marker+3]=pt_sub.z;
 
 	s=0;
-	for(long p=0;p<n_marker+4;p++)	s+=Ua[p]*wa_sub2tar(p+1,1);
+	for(V3DLONG p=0;p<n_marker+4;p++)	s+=Ua[p]*wa_sub2tar(p+1,1);
 	pt_sub2tar.x=s;
 
 	s=0;
-	for(long p=0;p<n_marker+4;p++)	s+=Ua[p]*wa_sub2tar(p+1,2);
+	for(V3DLONG p=0;p<n_marker+4;p++)	s+=Ua[p]*wa_sub2tar(p+1,2);
 	pt_sub2tar.y=s;
 
 	s=0;
-	for(long p=0;p<n_marker+4;p++)	s+=Ua[p]*wa_sub2tar(p+1,3);
+	for(V3DLONG p=0;p<n_marker+4;p++)	s+=Ua[p]*wa_sub2tar(p+1,3);
 	pt_sub2tar.z=s;
 
 	//free memory
@@ -3626,14 +3626,14 @@ bool q_compute_ptwarped_from_tpspara_3D(
 
 
 bool q_align_dapicells(const CParas &paras,V3DPluginCallback &callback,
-		const unsigned char *p_img8u,const long sz_img[4],const QList<CellAPO> &ql_atlasapo,const QList<QString> &ql_celloi,
+		const unsigned char *p_img8u,const V3DLONG sz_img[4],const QList<CellAPO> &ql_atlasapo,const QList<QString> &ql_celloi,
 		QList<CellAPO> &ql_musclecell_output,COutputInfo &outputinfo)
 {
 	//------------------------------------------------------------------------------------------------------------------------------------
 	printf("(1). Extract the interesting image channel. \n");
 	unsigned char *p_img_1c=0;
-	long sz_img_1c[4]={sz_img[0],sz_img[1],sz_img[2],1};
-	long l_npixels_1c=sz_img_1c[0]*sz_img_1c[1]*sz_img_1c[2];
+	V3DLONG sz_img_1c[4]={sz_img[0],sz_img[1],sz_img[2],1};
+	V3DLONG l_npixels_1c=sz_img_1c[0]*sz_img_1c[1]*sz_img_1c[2];
 
 	{
 	//allocate memeory
@@ -3652,18 +3652,18 @@ bool q_align_dapicells(const CParas &paras,V3DPluginCallback &callback,
 	if(qs_refchannel.contains("2") && sz_img[3]>=2)	{arr_validchannel[1]=1; n_validchannel++;}
 	if(qs_refchannel.contains("3") && sz_img[3]>=3)	{arr_validchannel[2]=1; n_validchannel++;}
 
-	long pgsz_y=sz_img[0];
-	long pgsz_xy=sz_img[0]*sz_img[1];
-	long pgsz_xyz=sz_img[0]*sz_img[1]*sz_img[2];
-	for(long x=0;x<sz_img[0];x++)
-		for(long y=0;y<sz_img[1];y++)
-			for(long z=0;z<sz_img[2];z++)
+	V3DLONG pgsz_y=sz_img[0];
+	V3DLONG pgsz_xy=sz_img[0]*sz_img[1];
+	V3DLONG pgsz_xyz=sz_img[0]*sz_img[1]*sz_img[2];
+	for(V3DLONG x=0;x<sz_img[0];x++)
+		for(V3DLONG y=0;y<sz_img[1];y++)
+			for(V3DLONG z=0;z<sz_img[2];z++)
 			{
-				long ind_1c=pgsz_xy*z+pgsz_y*y+x;
-				for(long c=0;c<3;c++)
+				V3DLONG ind_1c=pgsz_xy*z+pgsz_y*y+x;
+				for(V3DLONG c=0;c<3;c++)
 					if(arr_validchannel[c])
 					{
-						long ind_ref=pgsz_xyz*c+ind_1c;
+						V3DLONG ind_ref=pgsz_xyz*c+ind_1c;
 						p_img_1c[ind_1c]+=p_img8u[ind_ref]/n_validchannel+0.5;
 					}
 			}
@@ -3673,9 +3673,9 @@ bool q_align_dapicells(const CParas &paras,V3DPluginCallback &callback,
 	//------------------------------------------------------------------------------------------------------------------------------------
 	printf("(2). Resize image and atlas point. \n");
 	//resize image and compute actual resize ratio
-	long sz_img_s[4]={1,1,1,1};//w,h,z,c
+	V3DLONG sz_img_s[4]={1,1,1,1};//w,h,z,c
 	double arr_downratio_actual[3];
-	for(long i=0;i<3;i++)
+	for(V3DLONG i=0;i<3;i++)
 	{
 		sz_img_s[i]=sz_img_1c[i]/paras.d_downsampleratio+0.5;
 		arr_downratio_actual[i]=(double)sz_img_1c[i]/(double)sz_img_s[i];
@@ -3693,7 +3693,7 @@ bool q_align_dapicells(const CParas &paras,V3DPluginCallback &callback,
 
 	//resize atlas
 	QList<CellAPO> ql_atlasapo_s(ql_atlasapo);
-	for(long i=0;i<ql_atlasapo_s.size();i++)
+	for(V3DLONG i=0;i<ql_atlasapo_s.size();i++)
 	{
 		ql_atlasapo_s[i].x/=arr_downratio_actual[0];
 		ql_atlasapo_s[i].y/=arr_downratio_actual[1];
@@ -3707,8 +3707,8 @@ bool q_align_dapicells(const CParas &paras,V3DPluginCallback &callback,
 	//------------------------------------------------------------------------------------------------------------------------------------
 	printf("(3). Extract interesting atlas points. \n");
 	QList<CellAPO> ql_insterestcell,ql_interestcell_output;
-	vector< vector <long> > vec2d_muslcecell_ind;
-	for(long i=0;i<ql_atlasapo_s.size();i++)
+	vector< vector <V3DLONG> > vec2d_muslcecell_ind;
+	for(V3DLONG i=0;i<ql_atlasapo_s.size();i++)
 	{
 		QString qs_cellname=ql_atlasapo_s[i].name;
 
@@ -3717,7 +3717,7 @@ bool q_align_dapicells(const CParas &paras,V3DPluginCallback &callback,
 
 		if(qs_cellname.contains("BWM",Qt::CaseInsensitive) || qs_cellname.contains("DEP",Qt::CaseInsensitive))
 		{
-			vector<long> vec_muslcecell_ind(2,0);
+			vector<V3DLONG> vec_muslcecell_ind(2,0);
 			vec_muslcecell_ind[1]=ql_insterestcell.size()-1;
 			vec_muslcecell_ind[1]=i;
 			vec2d_muslcecell_ind.push_back(vec_muslcecell_ind);
@@ -3727,17 +3727,17 @@ bool q_align_dapicells(const CParas &paras,V3DPluginCallback &callback,
 
 	//------------------------------------------------------------------------------------------------------------------------------------
 	printf("(5). Extract forground image region. \n");
-	vector<long> 		vec_fg_ind;
+	vector<V3DLONG> 		vec_fg_ind;
 	vector<point3D64F> 	vec_fg_xyz;
-	long l_npixel_s=sz_img_s[0]*sz_img_s[1]*sz_img_s[2]*sz_img_s[3];
+	V3DLONG l_npixel_s=sz_img_s[0]*sz_img_s[1]*sz_img_s[2]*sz_img_s[3];
 
 	{
 	//compute the mean and std of image
 	double d_img_mean=0.0,d_img_std=0.0;
-	for(long i=0;i<l_npixel_s;i++)
+	for(V3DLONG i=0;i<l_npixel_s;i++)
 		d_img_mean+=p_img_s[i];
 	d_img_mean/=l_npixel_s;
-	for(long i=0;i<l_npixel_s;i++)
+	for(V3DLONG i=0;i<l_npixel_s;i++)
 	{
 		double temp=p_img_s[i]-d_img_mean;
 		d_img_std+=temp*temp;
@@ -3748,13 +3748,13 @@ bool q_align_dapicells(const CParas &paras,V3DPluginCallback &callback,
 //	double d_thresh_fg=d_img_mean+paras.d_fgthresh_factor*d_img_std;
 	double d_thresh_fg=30;
 	//extract foreground region
-	long pgsz_y=sz_img_s[0];
-	long pgsz_xy=sz_img_s[0]*sz_img_s[1];
-	for(long x=0;x<sz_img_s[0];x++)
-		for(long y=0;y<sz_img_s[1];y++)
-			for(long z=0;z<sz_img_s[2];z++)
+	V3DLONG pgsz_y=sz_img_s[0];
+	V3DLONG pgsz_xy=sz_img_s[0]*sz_img_s[1];
+	for(V3DLONG x=0;x<sz_img_s[0];x++)
+		for(V3DLONG y=0;y<sz_img_s[1];y++)
+			for(V3DLONG z=0;z<sz_img_s[2];z++)
 			{
-				long ind=pgsz_xy*z+pgsz_y*y+x;
+				V3DLONG ind=pgsz_xy*z+pgsz_y*y+x;
 				if(p_img_s[ind]>d_thresh_fg)
 				{
 					vec_fg_ind.push_back(ind);
@@ -3764,7 +3764,7 @@ bool q_align_dapicells(const CParas &paras,V3DPluginCallback &callback,
 
 //	{
 //	unsigned char *p_img_tmp=new unsigned char[l_npixel_s]();
-//	for(long i=0;i<vec_fg_ind.size();i++)
+//	for(V3DLONG i=0;i<vec_fg_ind.size();i++)
 //		p_img_tmp[vec_fg_ind[i]]=255;
 //	saveImage("/Users/qul/work/v3d_2.0/sub_projects/atlasguided_seganno/img_fg.raw",p_img_tmp,sz_img_s,1);
 //	delete []p_img_tmp;
@@ -3804,7 +3804,7 @@ bool q_align_dapicells(const CParas &paras,V3DPluginCallback &callback,
 	printf("(6). Initial align atlas with image (deterministic annealing). \n");
 	//format convert
 	vector<point3D64F> vec_interestcell,vec_interestcell_output;
-	for(long i=0;i<ql_insterestcell.size();i++)
+	for(V3DLONG i=0;i<ql_insterestcell.size();i++)
 		vec_interestcell.push_back(point3D64F(ql_insterestcell[i].x,ql_insterestcell[i].y,ql_insterestcell[i].z));
 
 	//------------------------------------------------------------------------------------------------------------------------------------
@@ -3814,7 +3814,7 @@ bool q_align_dapicells(const CParas &paras,V3DPluginCallback &callback,
 	double d_T=0.2;
 	double d_T_min=0.2;
 	double d_annealingrate=0.95;
-	long n_maxiter_inner=1;
+	V3DLONG n_maxiter_inner=1;
 	double d_lamda=0;
 
 	vector< vector<double> > vec2d_labelprob(vec_fg_ind.size(),vector<double>(vec_musclecell.size(),0));
@@ -3824,16 +3824,16 @@ bool q_align_dapicells(const CParas &paras,V3DPluginCallback &callback,
 	double d_disnorm=max(sz_img[0],max(sz_img[1],sz_img[2]));
 
 	Matrix x4x4_affine,xnx4_c,xnxn_K;
-	for(long iter=0;iter<1000;iter++)
+	for(V3DLONG iter=0;iter<1000;iter++)
 	{
-		for(long iter_inner=0;iter_inner<n_maxiter_inner;iter_inner++)
+		for(V3DLONG iter_inner=0;iter_inner<n_maxiter_inner;iter_inner++)
 		{
 			//------------------------------------------------------------------
 			//1). given cellpos update labeling possibility
 			double d_dis,d_dif_x,d_dif_y,d_dif_z;
 			vector<double> vec_probnorm(vec_fg_ind.size(),0);
-			for(unsigned long i=0;i<vec_musclecell.size();i++)
-				for(unsigned long j=0;j<vec_fg_ind.size();j++)
+			for(unsigned V3DLONG i=0;i<vec_musclecell.size();i++)
+				for(unsigned V3DLONG j=0;j<vec_fg_ind.size();j++)
 				{
 					//compute the distance from foreground pixel to a certain atlas cell
 					d_dif_x=vec_fg_xyz[j].x-vec_musclecell_affine[i].x;
@@ -3853,8 +3853,8 @@ bool q_align_dapicells(const CParas &paras,V3DPluginCallback &callback,
 				}
 			//normalize the labeling prob (critical!)
 			//(increase the prob of unassigned pixel, decrease the prob of multiassigned pixel -> relocate the prob)
-			for(unsigned long j=0;j<vec_fg_ind.size();j++)
-				for(unsigned long i=0;i<vec_musclecell.size();i++)
+			for(unsigned V3DLONG j=0;j<vec_fg_ind.size();j++)
+				for(unsigned V3DLONG i=0;i<vec_musclecell.size();i++)
 				{
 					vec2d_labelprob[j][i]/=vec_probnorm[j];
 
@@ -3866,10 +3866,10 @@ bool q_align_dapicells(const CParas &paras,V3DPluginCallback &callback,
 
 			//------------------------------------------------------------------
 			//2). update cellpos (probability weighted mass center)
-			for(unsigned long i=0;i<vec_musclecell.size();i++)
+			for(unsigned V3DLONG i=0;i<vec_musclecell.size();i++)
 			{
 				double d_probsum=0,d_sum_x=0,d_sum_y=0,d_sum_z=0;
-				for(unsigned long j=0;j<vec_fg_ind.size();j++)
+				for(unsigned V3DLONG j=0;j<vec_fg_ind.size();j++)
 				{
 					d_probsum+=vec2d_labelprob[j][i];
 					d_sum_x+=vec2d_labelprob[j][i]*vec_fg_xyz[j].x;
@@ -3883,7 +3883,7 @@ bool q_align_dapicells(const CParas &paras,V3DPluginCallback &callback,
 
 			//------------------------------------------------------------------
 			//3). fix the muscle cells
-			for(long i=0;i<vec2d_muslcecell_ind.size();i++)
+			for(V3DLONG i=0;i<vec2d_muslcecell_ind.size();i++)
 			{
 				vec_musclecell_affine[vec2d_muslcecell_ind[i][1]].x=vec_interestcell[vec2d_muslcecell_ind[i][2]].x;
 				vec_musclecell_affine[vec2d_muslcecell_ind[i][1]].y=vec_interestcell[vec2d_muslcecell_ind[i][2]].y;
@@ -3895,7 +3895,7 @@ bool q_align_dapicells(const CParas &paras,V3DPluginCallback &callback,
 		//------------------------------------------------------------------
 		//5). compute the total pos change (affine)
 		double d_totalposchange=0,d_dis,d_dif_x,d_dif_y,d_dif_z;
-		for(unsigned long i=0;i<vec_musclecell.size();i++)
+		for(unsigned V3DLONG i=0;i<vec_musclecell.size();i++)
 		{
 			d_dif_x=vec_musclecell_last[i].x-vec_musclecell_affine[i].x;
 			d_dif_y=vec_musclecell_last[i].y-vec_musclecell_affine[i].y;
@@ -3911,13 +3911,13 @@ bool q_align_dapicells(const CParas &paras,V3DPluginCallback &callback,
 		if(paras.b_showatlas && !paras.b_showsegmentation)
 		{
 			//visualize the deformation of atlas
-			long l_makradius=10;
+			V3DLONG l_makradius=10;
 			q_push2V3D_pts(callback,vec_musclecell_affine,l_makradius);
 		}
 
 		//force process events during the iteration
 		if(paras.b_showatlas || paras.b_showsegmentation)
-			for(long o=0;o<5;o++)
+			for(V3DLONG o=0;o<5;o++)
 				QCoreApplication::processEvents();
 
 		//take screen shot
@@ -3948,7 +3948,7 @@ bool q_align_dapicells(const CParas &paras,V3DPluginCallback &callback,
 	//rescale the deformed atlas
 	//+(arr_downratio_actual[0]+0.5) is for compensate the downsample error (image origin offset error)
 	RGBA8 color;	color.r=255; 	color.g=0;	color.b=0;
-	for(long i=0;i<ql_interestcell_output.size();i++)
+	for(V3DLONG i=0;i<ql_interestcell_output.size();i++)
 	{
 		ql_interestcell_output[i].x=vec_interestcell_output[i].x*arr_downratio_actual[0]+(arr_downratio_actual[0]+0.5);
 		ql_interestcell_output[i].y=vec_interestcell_output[i].y*arr_downratio_actual[1]+(arr_downratio_actual[1]+0.5);

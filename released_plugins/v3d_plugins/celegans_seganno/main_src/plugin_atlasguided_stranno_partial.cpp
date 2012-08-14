@@ -354,7 +354,7 @@ bool do_AtlasGuidedStrAnno(V3DPluginCallback2 &callback,
 	//------------------------------------------------------------------------------------------------------------------------------------
 	printf("1. Import image. \n");
 	unsigned char *p_img_input=0;
-	long *sz_img_input=0;
+	V3DLONG *sz_img_input=0;
 	int datatype_input=0;
 	if(!paras_str.b_imgfromV3D)
 	{
@@ -381,7 +381,7 @@ bool do_AtlasGuidedStrAnno(V3DPluginCallback2 &callback,
 		}
 		Image4DSimple* image=callback.getImage(callback.currentImageWindow());
 		p_img_input=image->getRawData();
-		sz_img_input=new long[4]();
+		sz_img_input=new V3DLONG[4]();
 		sz_img_input[0]=image->getXDim();	sz_img_input[1]=image->getYDim();	sz_img_input[2]=image->getZDim();	sz_img_input[3]=image->getCDim();
 		datatype_input=image->getDatatype();
 	}
@@ -392,7 +392,7 @@ bool do_AtlasGuidedStrAnno(V3DPluginCallback2 &callback,
 	printf("2. Convert image datatype to uint8. \n");
 	unsigned char * p_img_8u=0;
 	{
-	long l_npixels=sz_img_input[0]*sz_img_input[1]*sz_img_input[2]*sz_img_input[3];
+	V3DLONG l_npixels=sz_img_input[0]*sz_img_input[1]*sz_img_input[2]*sz_img_input[3];
 	p_img_8u=new unsigned char[l_npixels];
 	if(!p_img_8u)
 	{
@@ -404,7 +404,7 @@ bool do_AtlasGuidedStrAnno(V3DPluginCallback2 &callback,
 	if(datatype_input==1)
 	{
 		printf("\t>>convert image data from uint8 to uint8. \n");
-		for(long i=0;i<l_npixels;i++)
+		for(V3DLONG i=0;i<l_npixels;i++)
 			p_img_8u[i]=p_img_input[i];
 	}
 	else if(datatype_input==2)
@@ -460,7 +460,7 @@ bool do_AtlasGuidedStrAnno(V3DPluginCallback2 &callback,
 		QList<ImageMarker> ql_markers=readMarker_file(qs_filename_marker_input);
 		printf("\t>>read %d markers from file: %s.\n",ql_markers.size(),qPrintable(qs_filename_marker_input));
 		vector<double> vec_marker(3,0);
-		for(long i=0;i<ql_markers.size();i++)
+		for(V3DLONG i=0;i<ql_markers.size();i++)
 		{
 			vec_marker[0]=ql_markers[i].x;
 			vec_marker[1]=ql_markers[i].y;
@@ -482,7 +482,7 @@ bool do_AtlasGuidedStrAnno(V3DPluginCallback2 &callback,
 		}
 		LandmarkList ml_makers=callback.getLandmark(callback.currentImageWindow());
 		vector<double> vec_marker(3,0);
-		for(long i=0;i<ml_makers.size();i++)
+		for(V3DLONG i=0;i<ml_makers.size();i++)
 		{
 			vec_marker[0]=ml_makers[i].x;
 			vec_marker[1]=ml_makers[i].y;
@@ -518,15 +518,15 @@ bool do_AtlasGuidedStrAnno(V3DPluginCallback2 &callback,
 	}
 
 	printf("\t>>interesting cell:\n");
-	for(long i=0;i<ql_celloi_name.size();i++)
+	for(V3DLONG i=0;i<ql_celloi_name.size();i++)
 		printf("\t\t%s\n",qPrintable(ql_celloi_name[i]));
 
 
 	//------------------------------------------------------------------------------------------------------------------------------------
 	printf("5. Do Straightening. \n");
 	unsigned char *p_strimg=0;
-	long *sz_strimg=0;
-	vector< vector< vector< vector<long> > > > vec4d_mappingfield_str2ori;
+	V3DLONG *sz_strimg=0;
+	vector< vector< vector< vector<V3DLONG> > > > vec4d_mappingfield_str2ori;
 
 	if(vec2d_markers.size()<2)
 	{
@@ -536,9 +536,9 @@ bool do_AtlasGuidedStrAnno(V3DPluginCallback2 &callback,
 	{
 		printf("\t>>marker num >= 2, do straightening.\n");
 
-		long l_width=paras_str.l_radius_cuttingplane*2+1;
+		V3DLONG l_width=paras_str.l_radius_cuttingplane*2+1;
 		QList<ImageMarker> ql_marker;
-		for(unsigned long i=0;i<vec2d_markers.size();i++)
+		for(unsigned V3DLONG i=0;i<vec2d_markers.size();i++)
 		{
 			ImageMarker tmp;
 			tmp.x=vec2d_markers[i][0];
@@ -569,7 +569,7 @@ bool do_AtlasGuidedStrAnno(V3DPluginCallback2 &callback,
 
 	{
 	unsigned char *p_img_anno=0;
-	long *sz_img_anno=0;
+	V3DLONG *sz_img_anno=0;
 	if(vec2d_markers.size()<2)	//on non-straightened image
 	{
 		p_img_anno=p_img_input;
@@ -650,14 +650,14 @@ bool do_AtlasGuidedStrAnno(V3DPluginCallback2 &callback,
 		QList<CellAPO> ql_cellio2_ori;
 		point3D64F tmp;
 		//extract first interesting cells
-		for(long i=0;i<ql_atlasapo.size();i++)
+		for(V3DLONG i=0;i<ql_atlasapo.size();i++)
 		{
 			QString qs_cellname=ql_atlasapo[i].name;
 			qs_cellname=qs_cellname.simplified();
 			qs_cellname=qs_cellname.toUpper();
 			ql_atlasapo[i].name=qs_cellname;
 
-			for(long j=0;j<ql_celloi_name.size();j++)
+			for(V3DLONG j=0;j<ql_celloi_name.size();j++)
 			{
 				if(ql_celloi_name[j].contains("*"))
 				{
@@ -676,7 +676,7 @@ bool do_AtlasGuidedStrAnno(V3DPluginCallback2 &callback,
 				}
 			}
 		}
-		for(long i=0;i<ql_musclecell_output.size();i++)
+		for(V3DLONG i=0;i<ql_musclecell_output.size();i++)
 		{
 			tmp.x=ql_musclecell_output[i].x;
 			tmp.y=ql_musclecell_output[i].y;
@@ -684,14 +684,14 @@ bool do_AtlasGuidedStrAnno(V3DPluginCallback2 &callback,
 			vec_cellio1_tps.push_back(tmp);
 		}
 		//extract secondary interesting cells
-		for(long i=0;i<ql_atlasapo.size();i++)
+		for(V3DLONG i=0;i<ql_atlasapo.size();i++)
 		{
 			QString qs_cellname=ql_atlasapo[i].name;
 			qs_cellname=qs_cellname.simplified();
 			qs_cellname=qs_cellname.toUpper();
 			ql_atlasapo[i].name=qs_cellname;
 
-			for(long j=0;j<ql_celloi2_name.size();j++)
+			for(V3DLONG j=0;j<ql_celloi2_name.size();j++)
 			{
 				if(ql_celloi2_name[j].contains("*"))
 				{
@@ -731,7 +731,7 @@ bool do_AtlasGuidedStrAnno(V3DPluginCallback2 &callback,
 		}
 		//warp the secondary cells
 		Matrix x_ori(ql_cellio2_ori.size(),4),x_tps(ql_cellio2_ori.size(),4);
-		for(long i=0;i<ql_cellio2_ori.size();i++)
+		for(V3DLONG i=0;i<ql_cellio2_ori.size();i++)
 		{
 			x_ori(i+1,1)=1.0;
 			x_ori(i+1,2)=ql_cellio2_ori[i].x;
@@ -739,7 +739,7 @@ bool do_AtlasGuidedStrAnno(V3DPluginCallback2 &callback,
 			x_ori(i+1,4)=ql_cellio2_ori[i].z;
 		}
 		x_tps=x_ori*x4x4_affine+xmxn_K*xnx4_c;
-		for(long i=0;i<ql_cellio2_tps.size();i++)
+		for(V3DLONG i=0;i<ql_cellio2_tps.size();i++)
 		{
 			ql_cellio2_tps[i].x=x_tps(i+1,2)/x_tps(1,1);
 			ql_cellio2_tps[i].y=x_tps(i+1,3)/x_tps(1,1);
@@ -754,11 +754,11 @@ bool do_AtlasGuidedStrAnno(V3DPluginCallback2 &callback,
 	//map back to non-straightened image
 	if(vec2d_markers.size()>=2)
 	{
-		for(long i=0;i<ql_musclecell_output.size();i++)
+		for(V3DLONG i=0;i<ql_musclecell_output.size();i++)
 		{
-			long x=ql_musclecell_output[i].x;
-			long y=ql_musclecell_output[i].y;
-			long z=ql_musclecell_output[i].z;
+			V3DLONG x=ql_musclecell_output[i].x;
+			V3DLONG y=ql_musclecell_output[i].y;
+			V3DLONG z=ql_musclecell_output[i].z;
 			ql_musclecell_output_ori[i].x=vec4d_mappingfield_str2ori[y][x][z][0];
 			ql_musclecell_output_ori[i].y=vec4d_mappingfield_str2ori[y][x][z][1];
 			ql_musclecell_output_ori[i].z=vec4d_mappingfield_str2ori[y][x][z][2];
@@ -799,7 +799,7 @@ bool do_AtlasGuidedStrAnno(V3DPluginCallback2 &callback,
 	printf("8. Save segmentation label image to file. \n");
 	if(!qs_filename_seglabel_output.isEmpty() && p_img8u_seglabel)
 	{
-		long sz_seglabelimg[4]={sz_img_input[0],sz_img_input[1],sz_img_input[2],1};
+		V3DLONG sz_seglabelimg[4]={sz_img_input[0],sz_img_input[1],sz_img_input[2],1};
 		saveImage(qPrintable(qs_filename_seglabel_output),p_img8u_seglabel,sz_seglabelimg,1);
 	}
 
