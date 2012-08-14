@@ -52,6 +52,22 @@ AutoPipePage::AutoPipePage(QWidget *parent):QWidget(parent)
 }
 void AutoPipePage::CallPipeline()
 {
+  int i = this->pipelineExp->currentIndex();
+  if ( i == 0 ) {
+    v3d_msg(tr("example to count the number of the cells"));
+    qDebug() << "use pipeline function to do this";
+    PluginSpecialized< unsigned char > runner(callback);
+    for (int i = 0; i < PaintFilter->count(); i ++)
+    {
+     QString pluginName = PaintFilter->item(i)->text();
+     QString pluginPath = m_pluginsHash.value(pluginName);
+     runner.AddPluginName(pluginPath, pluginName);
+    }
+    runner.SetUsePipeline(true);
+    runner.SetPluginsHash(m_pluginsHash);
+    runner.Execute(menu_name, 0);
+  }
+  else {
 
     for(int i=0;i<PaintFilter->count();i++)
     {
@@ -59,9 +75,10 @@ void AutoPipePage::CallPipeline()
       QString pluginPath = m_pluginsHash.value(pluginName);
 	    PluginSpecialized<unsigned char> runner(callback);
 	    runner.SetPluginName(pluginPath, pluginName);
+      runner.SetPluginsHash(m_pluginsHash);
 	    runner.Execute(menu_name,0);
     }	
-	
+  }
 }
 void AutoPipePage::setPluginsHash(const QHash<QString, QString>& pluginsHash)
 {
@@ -86,6 +103,7 @@ void AutoPipePage::initialTest()
 {
   m_pipeLineList.clear();
   pipelineExp->clear();
+  QStringList example0List;
   QStringList example1List;
   QStringList example2List; 
   QStringList example3List;
@@ -93,6 +111,11 @@ void AutoPipePage::initialTest()
   QStringList example5List;
   QStringList example6List;
 
+  example0List << QString ("CurvatureFlow_called")
+               << QString ("GradientMagnitudeRecursiveGaussian_called")
+               << QString ("ITKWatershed_called");
+  if (this->validatePluginExits(example0List))
+    m_pipeLineList << example0List;
   example1List << QString("CurvatureFlow_called")
                << QString("ITKConfidenceConnected_called");
   if (this->validatePluginExits(example1List))
@@ -215,6 +238,7 @@ void UserPipePage::CallPipeline()
       QString pluginPath = m_pluginsHash.value(pluginName);
 	    PluginSpecialized<unsigned char> runner(callback);
 	    runner.SetPluginName(pluginPath, pluginName);
+      runner.SetPluginsHash(m_pluginsHash);
 	    runner.Execute(menu_name,0);
     }	
 }
@@ -291,6 +315,7 @@ void UserFilterPage::CallFilter()
     PluginSpecializedForDual<unsigned char> runner(callback);
     QString pluginPath = m_pluginsHash.value(plugin_name);
 	  runner.SetPluginName(pluginPath, plugin_name);
+    runner.SetPluginsHash(m_pluginsHash);
 	  runner.Execute(menu_name,0);
 	}
 	else
@@ -298,6 +323,7 @@ void UserFilterPage::CallFilter()
 	  PluginSpecialized<unsigned char> runner(callback);	
     QString pluginPath = m_pluginsHash.value(plugin_name);
 	  runner.SetPluginName(pluginPath, plugin_name);
+    runner.SetPluginsHash(m_pluginsHash);
 	  runner.Execute(menu_name,0);
 	}
 }

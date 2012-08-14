@@ -247,6 +247,8 @@ ImageDataTransmit < TInputPixelType > ::
   {
     //m_InputItkImageList[i]->Delete();
     //m_OutputItkImageList[i]->Delete();
+    m_InputItkImageList[i]->UnRegister();
+    m_OutputItkImageList[i]->UnRegister();
     qDebug() << "Input Reference Account: " << m_InputItkImageList.at(i)->GetReferenceCount();
     qDebug() << "Output Reference Account: " << m_OutputItkImageList.at(i)->GetReferenceCount();
   }

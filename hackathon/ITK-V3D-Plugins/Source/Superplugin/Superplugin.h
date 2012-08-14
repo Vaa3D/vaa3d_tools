@@ -45,9 +45,13 @@ public:
       
         this->plugin_name = plugin_path;
     }
-    void AddPluginName(const QString &plugin_name, const QString& plugin_folder_name)
+    void SetPluginsHash(QHash< QString, QString> pluginsHash)
     {
-        QString m_name = plugin_name;
+      this->m_pluginsHash = pluginsHash;
+    }
+    void AddPluginName(const QString &plugin_path, const QString& plugin_name_showed)
+    {
+        QString m_name = plugin_path;
         this->plugin_name_list << m_name;
     }
     void SetUsePipeline(bool b)
@@ -118,10 +122,11 @@ public:
         qDebug() << "successful called";
         qDebug() << QString("size %1").arg(output.size());
 
-        if(output.at(0).type=="floatImage")
+        if(output.at(0).type=="FLOATImage")
         {
             printf("Get float ImageType !\n");
-            QString pluginname="ITK/Superplugin/Plugin2Call/Cast2UINT8/Cast2UINT8.dylib";
+            QString castPluginName = "Cast2UINT8_called";
+            QString pluginname = m_pluginsHash.value(castPluginName);
             input.replace(0,output.at(0));
             this->m_V3DPluginCallback->callPluginFunc(pluginname,function_name,input,output);
             ImageType* out=(ImageType*)(output.at(0).p);
@@ -152,6 +157,7 @@ public:
         for(int i=0; i<plugin_name_list.size(); i++)
         {
 
+            qDebug() << "call plugin name: " << plugin_name_list.at(i);
             result = this->m_V3DPluginCallback->callPluginFunc(plugin_name_list.at(i),function_name,input,output);
             if (!result) {
               qDebug() << "error call the other plugin function";
@@ -159,10 +165,11 @@ public:
             }
             input.replace(0,output.at(0));
         }
-        if(output.at(0).type=="floatImage")
+        if(output.at(0).type=="FLOATImage")
         {
             printf("Get float ImageType !\n");
-            QString pluginname="ITK/Superplugin/Plugin2Call/Cast2UINT8/Cast2UINT8.dylib";
+            QString castPluginName = "Cast2UINT8_called";
+            QString pluginname = m_pluginsHash.value(castPluginName);
             input.replace(0,output.at(0));
             this->m_V3DPluginCallback->callPluginFunc(pluginname,function_name,input,output);
             ImageType* out=(ImageType*)(output.at(0).p);
@@ -185,6 +192,7 @@ private:
     QString function_name;
     QList< QString> plugin_name_list;
     bool usePipeline;
+    QHash<QString, QString> m_pluginsHash;//pluginName => pluginPath;
 };
 
 template <typename TPixelType>
@@ -204,6 +212,10 @@ public:
     void SetPluginName(const QString &plugin_path,  const QString& plugin_name_showed)
     {
         this->plugin_name = plugin_path;
+    }
+    void SetPluginsHash(const QHash<QString, QString>& pluginsHash)
+    {
+      this->m_pluginsHash = pluginsHash;
     }
     void Execute(const QString &menu_name,QWidget *parent)
     {
@@ -292,10 +304,11 @@ public:
         }
         fprintf(stdout,"size %d\n",output.size());
         //if the output image type is Float change them to unsigned char
-        if(output.at(0).type=="floatImage")
+        if(output.at(0).type=="FLOATImage")
         {
             printf("Get float ImageType !\n");
-            QString pluginname="ITK/Superplugin/Plugin2Call/Cast2UINT8/Cast2UINT8.dylib";
+            QString castPluginName = "Cast2UINT8_called";
+            QString pluginname = m_pluginsHash.value(castPluginName);
             input.replace(0,output.at(0));
             this->m_V3DPluginCallback->callPluginFunc(pluginname,function_name,input,output);
             ImageType* out=(ImageType*)(output.at(0).p);
@@ -316,7 +329,7 @@ public:
 private:
     QString plugin_name;
     QString function_name;
-
+    QHash<QString, QString> m_pluginsHash;
 };
 #endif
 

@@ -68,7 +68,7 @@ public:
 
         this->SetOutputImage( this->m_Filter->GetOutput() );
     }
-    void ComputeOneRegion(const V3DPluginArgList & input, V3DPluginArgList & output)
+    bool ComputeOneRegion(const V3DPluginArgList & input, V3DPluginArgList & output)
     {
         V3DITKProgressDialog progressDialog( this->GetPluginName().toStdString().c_str() );
 
@@ -91,8 +91,8 @@ public:
         {
             std::cerr<<"erro"<<std::endl;
             std::cerr<<excp<<std::endl;
+            return false;
         }
-        std::cout<<"No erro\n"<<std::endl;
         V3DPluginArgItem arg;
         typename OutputImageType::Pointer outputImage = m_Filter->GetOutput();
         outputImage->Register();
@@ -100,6 +100,7 @@ public:
         arg.type="UINT8Image";
         output.replace(0,arg);
 
+        return true;
     }
 
 
@@ -139,11 +140,27 @@ bool CastPlugin::dofunc(const QString & func_name, const V3DPluginArgList & inpu
         QMessageBox::information(parent, "Version info", "New Pugin for Other(developed by Yu Ping");
         return false ;
     }
-    PluginSpecialized<float,unsigned char> runner(&v3d);
-    std::cout<<"get the input1\n"<<std::endl;
-    runner.ComputeOneRegion(input, output);
-    std::cout<<"get the input\n"<<std::endl;
-    return true;
+    if (input.at(0).type == "FLOATImage") {
+      PluginSpecialized<float,unsigned char> runner(&v3d);
+    
+      return runner.ComputeOneRegion(input, output);
+    }
+    else if (input.at(0).type == "UINT16Image") {
+      PluginSpecialized<unsigned short int, unsigned char> runner(&v3d);
+    
+      return runner.ComputeOneRegion(input, output);
+    }
+    else if (input.at(0).type == "UINT8Image") {
+    
+      qDebug() << "Nothing to do ";
+      output[0] = input.at(0);
+      return true;
+    }
+    else 
+    {
+      qDebug() << "error to run the plugin";
+      return false;
+    }
 }
 
 

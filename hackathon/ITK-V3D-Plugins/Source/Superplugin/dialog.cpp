@@ -156,7 +156,7 @@ void Dialog::initial()
 {
   this->searchAllItkPlugins();
   if (m_pluginNames.size() == 0) {
-    v3d_msg(tr("Empty plugins under Superplugin, you should move all plugins that can be called by SuperPlugin to plugins/ITK/SuperPlugin/Plugin2Call/"));
+    v3d_msg(tr("Empty plugins under Superplugin, you should move all plugins that can be called by SuperPlugin to plugins/Vaa3D_ITK/SuperPlugin/Plugin2Call/"));
   }
   this->userPipepage->setPluginNames(m_pluginNames);
   this->userPipepage->setPluginsHash(m_pluginsHash);

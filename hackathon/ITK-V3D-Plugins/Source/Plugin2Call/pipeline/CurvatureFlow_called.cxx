@@ -117,14 +117,13 @@ public:
             if(!p)perror("errro");
             this->m_InputCast->SetInput((ImageType*) p);
             this->m_Filter->SetInput(m_InputCast->GetOutput());
-            this->m_OutputCast->SetInput(this->m_Filter->GetOutput());
 
-            this->m_OutputCast->Update();
+            this->m_Filter->Update();
             V3DPluginArgItem arg;
-            typename ImageType::Pointer outputImage = this->m_OutputCast->GetOutput();
+            typename FloatImageType::Pointer outputImage = this->m_Filter->GetOutput();
             outputImage->Register();
             arg.p = (void*) outputImage;
-            arg.type="UINT8Image";
+            arg.type = QString("FLOATImage");
             output.replace(0,arg);
             return true;
         }
@@ -158,9 +157,23 @@ bool CurvatureFlowPlugin::dofunc(const QString & func_name, const V3DPluginArgLi
         QMessageBox::information(parent, "Version info", "New Pugin for Other(developed by Yu Ping");
         return false ;
     }
+  //do the func
+  if ( input.at(0).type == QString("UINT8Image")) {
     PluginSpecialized<unsigned char> runner(&v3d);
-    bool result = runner.ComputeOneRegion(input, output);
-    return result;
+    return runner.ComputeOneRegion(input, output);
+    }
+  else if (input.at(0).type == QString("UINT16Image")) {
+    PluginSpecialized<unsigned short int> runner(&v3d);
+    return runner.ComputeOneRegion(input, output);
+    }
+  else if (input.at(0).type == QString("FLOATImage")) {
+    PluginSpecialized<float> runner(&v3d);
+    return runner.ComputeOneRegion(input, output);
+    }
+  else {
+    qDebug() << "No data type support, run error";
+    return false;
+    }
 }
 
 

@@ -37,7 +37,7 @@ build_itk_library()
 	ITK_DIR=`pwd`
 	echo $ITK_DIR
 	if [ $SYSTEM_NAME = 'Darwin' ]; then
-		cmake -DBUILD_TESTING=OFF -DBUILD_EXAMPLES=OFF -DITK_USE_REVIEW=ON -DBUILD_SHARED_LIBS=ON -DCMAKE_BUILD_TYPE=Debug ../$ITK_SOURCE_DIR
+		cmake -DBUILD_TESTING=OFF -DBUILD_EXAMPLES=OFF -DITK_USE_REVIEW=ON  -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_FLAGS_RELEASE="-fPIC -O3" -DCMAKE_C_FLAGS_RELEASE="-fPIC -O3" ../$ITK_SOURCE_DIR
 	elif [ $SYSTEM_NAME = 'Linux' -a $SYSTEM_TYPE = 'x86_64' ]; then
 		cmake -DBUILD_TESTING=OFF -DBUILD_EXAMPLES=OFF -DITK_USE_REVIEW=ON  -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_FLAGS_RELEASE="-fPIC -O3" -DCMAKE_C_FLAGS_RELEASE="-fPIC -O3" ../$ITK_SOURCE_DIR
 	else
@@ -76,8 +76,14 @@ read IS_SET_PATH
 if [ $IS_SET_PATH = "Y" -o $IS_SET_PATH = "y" ]; then
 	validate_vaa3d_source_dir
 else
-	read V3D_SOURCE_DIR < $V3D_SOURCE_DIR_FILE
-	echo 'Your origin Vaa3d source dir is: ' $V3D_SOURCE_DIR
+	if [ ! -f $V3D_SOURCE_DIR_FILE ]; then
+		echo "No origin path set. Path should be set first time"
+		echo '------------------------------------------------'
+		validate_vaa3d_source_dir
+	else
+		read V3D_SOURCE_DIR < $V3D_SOURCE_DIR_FILE
+		echo 'Your origin Vaa3d source dir is: ' $V3D_SOURCE_DIR
+	fi
 fi	
 if [ ! -d $V3D_SOURCE_DIR/v3d_main ]; then 
 	echo 'Your path do not have the source, please set it again'
@@ -94,7 +100,7 @@ if [ -d $PLUGINS_BUILD_DIR ]; then
 else
 	mkdir $PLUGINS_BUILD_DIR && cd $PLUGINS_BUILD_DIR
 fi
-cmake -DV3D_BASIC_C_FUN_SOURCE_DIR=$V3D_BASIC_C_FUN_SOURCE_DIR -DV3D_BINARY_DIR=$V3D_BINARY_DIR -DITK_DIR=$ITK_DIR -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_FLAGS_RELEASE="-w -O3" ../
+cmake -DV3D_BASIC_C_FUN_SOURCE_DIR=$V3D_BASIC_C_FUN_SOURCE_DIR -DV3D_BINARY_DIR=$V3D_BINARY_DIR -DITK_DIR=$ITK_DIR -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_FLAGS_RELEASE="-w -g" ../
 make -j4
 echo '============================'
 echo 'Now start to install plugins'

@@ -107,15 +107,7 @@ public:
             outputImage->Register();
             arg.p=(void*) outputImage;
 
-            if( input.at(0).type=="UINT8Image" )
-            {
-                arg.type="UINT8Image";
-            }
-            else
-            {
-                printf("return float\n");
-                arg.type="floatImage";
-            }
+            arg.type = input.at(0).type;
             output.replace(0,arg);
             return true;
         }
@@ -148,18 +140,21 @@ bool GradientMagnitudeRecursiveGaussianPlugin::dofunc(const QString & func_name,
         return false ;
     }
 
-    if(input.at(0).type=="UINT8Image")
-    {
-        PluginSpecialized<unsigned char> runner(&v3d);
-        bool result = runner.ComputeOneRegion(input, output);
-        return result;
+  if ( input.at(0).type == QString("UINT8Image")) {
+    PluginSpecialized<unsigned char> runner(&v3d);
+    return runner.ComputeOneRegion(input, output);
     }
-    else
-    {
-        printf("use float\n");
-        PluginSpecialized<float> runner(&v3d);
-        bool result = runner.ComputeOneRegion(input, output);
-        return result;
+  else if (input.at(0).type == QString("UINT16Image")) {
+    PluginSpecialized<unsigned short int> runner(&v3d);
+    return runner.ComputeOneRegion(input, output);
+    }
+  else if (input.at(0).type == QString("FLOATImage")) {
+    PluginSpecialized<float> runner(&v3d);
+    return runner.ComputeOneRegion(input, output);
+    }
+  else {
+    qDebug() << "No data type support, run error";
+    return false;
     }
 }
 

@@ -22,7 +22,7 @@ QStringList InvertIntensityPlugin::funclist() const
 void InvertIntensityPlugin::domenu(const QString& menu_name, V3DPluginCallback2& callback, QWidget* parent)
 {
   if (menu_name == QObject::tr("Method to Use ITK InvertIntensity")) {
-      QMessageBox::information(parent, "Intronduction to Use", "This plugin is pure ITK plugin, can be called by Superplugin in Vaa3d only, please place it under the folder : plugins/ITK/");
+      QMessageBox::information(parent, "Intronduction to Use", "This plugin is pure ITK plugin, can be called by Superplugin in Vaa3d only, please place it under the folder : plugins/Vaa3D_ITK/");
       return;
   }
   

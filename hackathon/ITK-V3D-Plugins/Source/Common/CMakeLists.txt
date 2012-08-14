@@ -16,12 +16,6 @@ QT4_WRAP_CPP(QT_MOC_SRCS
   )
 
 ADD_LIBRARY(V3DITKCommon ${QtITK_SRCS} ${QT_MOC_SRCS})
-#add -fPIC if the system is unix
-if (UNIX AND NOT APPLE)
-        if ("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "x86_64")
-                set_target_properties(V3DITKCommon PROPERTIES COMPILE_FLAGS -fPIC)
-        endif()
-endif()
 
 ADD_EXECUTABLE(V3DITKCommonTest CommonTests.cxx)
 #TARGET_LINK_LIBRARIES(V3DITKCommonTest V3DITKCommon
