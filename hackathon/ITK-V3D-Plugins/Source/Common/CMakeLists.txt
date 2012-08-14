@@ -16,6 +16,12 @@ QT4_WRAP_CPP(QT_MOC_SRCS
   )
 
 ADD_LIBRARY(V3DITKCommon ${QtITK_SRCS} ${QT_MOC_SRCS})
+# 64 bit AMD Linux requires -fPIC flag for linking static libraries --CMB
+if(UNIX AND NOT APPLE)
+	  if("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "x86_64")
+		  set_target_properties(V3DITKCommon PROPERTIES COMPILE_FLAGS -fPIC)
+	  endif()
+endif()
 
 ADD_EXECUTABLE(V3DITKCommonTest CommonTests.cxx)
 #TARGET_LINK_LIBRARIES(V3DITKCommonTest V3DITKCommon
@@ -25,3 +31,4 @@ ADD_EXECUTABLE(V3DITKCommonTest CommonTests.cxx)
 #	ITKCommon-4.1 ITKIOImageBase-4.1 itkvnl-4.1 ITKStatistics-4.1 V3DInterface V3DITKCommon ${QT_LIBARIES})
 TARGET_LINK_LIBRARIES(V3DITKCommonTest V3DITKCommon
 	${ITK_LIBRARIES} V3DInterface V3DITKCommon ${QT_LIBRARIES})
+
