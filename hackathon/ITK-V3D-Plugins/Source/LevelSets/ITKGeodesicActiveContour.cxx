@@ -167,7 +167,7 @@ public:
 				}
 			}
 			
-			const double stoppingTime = sqrt(nx*nx + ny*ny + nz*nz);
+			const double stoppingTime = sqrt(double(nx*nx + ny*ny + nz*nz));
 			
 			const double sigma = 0.5; // GradientMagnitudeRecursiveGaussianImageFilter
 			

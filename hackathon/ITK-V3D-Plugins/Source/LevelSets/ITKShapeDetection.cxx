@@ -1,7 +1,8 @@
 #include <QtGui>
 
-#include <math.h>
+#include <cmath>
 #include <stdlib.h>
+using namespace std;
 
 
 #include "V3DITKFilterSingleImage.h"
@@ -129,7 +130,7 @@ public:
       }
 
       int nx=this->m_NumberOfPixelsAlongX,ny=this->m_NumberOfPixelsAlongY,nz=this->m_NumberOfPixelsAlongZ;
-      const double stoppingTime = sqrt(nx*nx + ny*ny + nz*nz);
+      const double stoppingTime = sqrt(double(nx*nx + ny*ny + nz*nz));
 
 
     

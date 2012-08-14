@@ -31,6 +31,7 @@ QStringList Superplugin::funclist()const
 
 bool Superplugin::dofunc(const QString & fuc_name,const V3DPluginArgList & input,V3DPluginArgList & output,V3DPluginCallback2& callback, QWidget* parent)
 {
+	return false;
 }
 void Superplugin::domenu(const QString & menu_name,V3DPluginCallback2 & callback,QWidget *parent)
 {
