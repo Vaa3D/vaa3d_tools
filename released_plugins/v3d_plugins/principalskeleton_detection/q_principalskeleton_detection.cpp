@@ -32,10 +32,10 @@ using namespace std;
 //vec_cptpos_output:	output deformed control points position array
 //
 bool q_principalskeleton_detection(
-		const unsigned char *p_img_input,const long sz_img_input[2],
+		const unsigned char *p_img_input,const V3DLONG sz_img_input[2],
 		const vector<point3D64F> &vec_cptpos_input,
-		const vector< vector<long> > &vecvec_domaincptind_length,const vector<double> &vec_domainweight_length,
-		const vector< vector<long> > &vecvec_domaincptind_smooth,const vector<double> &vec_domainweight_smooth,
+		const vector< vector<V3DLONG> > &vecvec_domaincptind_length,const vector<double> &vec_domainweight_length,
+		const vector< vector<V3DLONG> > &vecvec_domaincptind_smooth,const vector<double> &vec_domainweight_smooth,
 		const PSDParas &paras_input,
 		vector<point3D64F> &vec_cptpos_output)
 {
@@ -79,22 +79,22 @@ bool q_principalskeleton_detection(
 	//------------------------------------------------------------------------------------------------------------------------------------
 	//parse the topology of initial prinicipal skeleton (including neighbor index, weight and skeleton ends)
 	printf("\t>>parse the topology of initial prinicipal skeleton:\n");
-	vector< vector<long> > vecvec_neighborcptind_length,vecvec_neighborcptind_smooth;
+	vector< vector<V3DLONG> > vecvec_neighborcptind_length,vecvec_neighborcptind_smooth;
 	vector< vector<double> > vecvec_neighborweight_length,vecvec_neighborweight_smooth;
 	//initialize neighbor array
-	vecvec_neighborcptind_length.assign(vec_cptpos_input.size(),vector<long>(0,0));
+	vecvec_neighborcptind_length.assign(vec_cptpos_input.size(),vector<V3DLONG>(0,0));
 	vecvec_neighborweight_length.assign(vec_cptpos_input.size(),vector<double>(0,0));
-	vecvec_neighborcptind_smooth.assign(vec_cptpos_input.size(),vector<long>(0,0));
+	vecvec_neighborcptind_smooth.assign(vec_cptpos_input.size(),vector<V3DLONG>(0,0));
 	vecvec_neighborweight_smooth.assign(vec_cptpos_input.size(),vector<double>(0,0));
 	//fill neighbor control point array
-	for(unsigned long k=0;k<vec_cptpos_input.size();k++)
+	for(unsigned V3DLONG k=0;k<vec_cptpos_input.size();k++)
 	{
 		//lenght constraint domain
-		for(unsigned long i=0;i<vecvec_domaincptind_length.size();i++)
-			for(unsigned long j=0;j<vecvec_domaincptind_length[i].size();j++)
+		for(unsigned V3DLONG i=0;i<vecvec_domaincptind_length.size();i++)
+			for(unsigned V3DLONG j=0;j<vecvec_domaincptind_length[i].size();j++)
 			{
-				long index=vecvec_domaincptind_length[i][j];
-				if(index==(long)k)
+				V3DLONG index=vecvec_domaincptind_length[i][j];
+				if(index==(V3DLONG)k)
 				{
 					if(j>0)										//left neighbor exist
 					{
@@ -109,11 +109,11 @@ bool q_principalskeleton_detection(
 				}
 			}
 		//smooth constraint domain
-		for(unsigned long i=0;i<vecvec_domaincptind_smooth.size();i++)
-			for(unsigned long j=0;j<vecvec_domaincptind_smooth[i].size();j++)
+		for(unsigned V3DLONG i=0;i<vecvec_domaincptind_smooth.size();i++)
+			for(unsigned V3DLONG j=0;j<vecvec_domaincptind_smooth[i].size();j++)
 			{
-				long index=vecvec_domaincptind_smooth[i][j];
-				if(index==(long)k)
+				V3DLONG index=vecvec_domaincptind_smooth[i][j];
+				if(index==(V3DLONG)k)
 				{
 					if(j>0)										//left neighbor exist
 					{
@@ -130,22 +130,22 @@ bool q_principalskeleton_detection(
 	}
 	//find skeleton ends (which need special treatment) and their two nearest connected neighbors
 	//if a control point only has one neighbor according to the lenght constraint domain definition, we take it as skeleton end
-	vector<long> vec_skeletonend_ind;
-	vector< vector<long> > vecvec_skeletonend_2neighbor_ind;
-	for(unsigned long i=0;i<vecvec_neighborcptind_length.size();i++)
+	vector<V3DLONG> vec_skeletonend_ind;
+	vector< vector<V3DLONG> > vecvec_skeletonend_2neighbor_ind;
+	for(unsigned V3DLONG i=0;i<vecvec_neighborcptind_length.size();i++)
 	{
 		if(vecvec_neighborcptind_length[i].size()==1)
 		{
 			vec_skeletonend_ind.push_back(i);
 
-			vector<long> vec_skeletonend_2neighbor_ind;
-			long neighbor1_ind=vecvec_neighborcptind_length[i][0];
+			vector<V3DLONG> vec_skeletonend_2neighbor_ind;
+			V3DLONG neighbor1_ind=vecvec_neighborcptind_length[i][0];
 			vec_skeletonend_2neighbor_ind.push_back(neighbor1_ind);
 			if(vecvec_neighborcptind_length[neighbor1_ind].size()==2)
 			{
-				if(vecvec_neighborcptind_length[neighbor1_ind][0]!=(long)i)
+				if(vecvec_neighborcptind_length[neighbor1_ind][0]!=(V3DLONG)i)
 					vec_skeletonend_2neighbor_ind.push_back(vecvec_neighborcptind_length[neighbor1_ind][0]);
-				else if(vecvec_neighborcptind_length[neighbor1_ind][1]!=(long)i)
+				else if(vecvec_neighborcptind_length[neighbor1_ind][1]!=(V3DLONG)i)
 					vec_skeletonend_2neighbor_ind.push_back(vecvec_neighborcptind_length[neighbor1_ind][1]);
 			}
 			vecvec_skeletonend_2neighbor_ind.push_back(vec_skeletonend_2neighbor_ind);
@@ -153,20 +153,20 @@ bool q_principalskeleton_detection(
 	}
 
 	printf("\t\tcpt[n]'s neighbor: [index,weight,type]\n");
-	for(unsigned long i=0;i<vecvec_neighborcptind_length.size();i++)
+	for(unsigned V3DLONG i=0;i<vecvec_neighborcptind_length.size();i++)
 	{
 		printf("\t\tcpt[%ld]'s neighbor: ",i);
-		for(unsigned long j=0;j<vecvec_neighborcptind_length[i].size();j++)
+		for(unsigned V3DLONG j=0;j<vecvec_neighborcptind_length[i].size();j++)
 			printf("[%ld,%.2f,L];",vecvec_neighborcptind_length[i][j],vecvec_neighborweight_length[i][j]);
-		for(unsigned long j=0;j<vecvec_neighborcptind_smooth[i].size();j++)
+		for(unsigned V3DLONG j=0;j<vecvec_neighborcptind_smooth[i].size();j++)
 			printf("[%ld,%.2f,S];",vecvec_neighborcptind_smooth[i][j],vecvec_neighborweight_smooth[i][j]);
 		printf("\n");
 	}
 	printf("\t\tend points and their 2 connected neighbors:\n");
-	for(unsigned long i=0;i<vec_skeletonend_ind.size();i++)
+	for(unsigned V3DLONG i=0;i<vec_skeletonend_ind.size();i++)
 	{
 		printf("\t\tend pt index: [%ld], neighbor index: ",vec_skeletonend_ind[i]);
-		for(unsigned long j=0;j<vecvec_skeletonend_2neighbor_ind[i].size();j++)
+		for(unsigned V3DLONG j=0;j<vecvec_skeletonend_2neighbor_ind[i].size();j++)
 			printf("[%ld] ",vecvec_skeletonend_2neighbor_ind[i][j]);
 		printf("\n");
 	}
@@ -174,14 +174,14 @@ bool q_principalskeleton_detection(
 	//------------------------------------------------------------------------------------------------------------------------------------
 	//extract foreground region (on which we find the voronoi region for every control points)
 	printf("\t>>extract foreground region ... \n");
-	long n_imgpixel=sz_img_input[0]*sz_img_input[1];
+	V3DLONG n_imgpixel=sz_img_input[0]*sz_img_input[1];
 
 	//compute the mean and std of image
 	double d_img_mean=0.0,d_img_std=0.0;
-	for(long i=0;i<n_imgpixel;i++)
+	for(V3DLONG i=0;i<n_imgpixel;i++)
 		d_img_mean+=p_img_input[i];
 	d_img_mean/=n_imgpixel;
-	for(long i=0;i<n_imgpixel;i++)
+	for(V3DLONG i=0;i<n_imgpixel;i++)
 	{
 		double temp=p_img_input[i]-d_img_mean;
 		d_img_std+=temp*temp;
@@ -202,10 +202,10 @@ bool q_principalskeleton_detection(
 		return false;
 	}
 
-	for(long y=0;y<sz_img_input[1];y++)
-		for(long x=0;x<sz_img_input[0];x++)
+	for(V3DLONG y=0;y<sz_img_input[1];y++)
+		for(V3DLONG x=0;x<sz_img_input[0];x++)
 		{
-			long index=sz_img_input[0]*y+x;
+			V3DLONG index=sz_img_input[0]*y+x;
 			if(p_img_input[index]>f_thresh_mask)
 			{
 				p_img_foreground[index]=100;
@@ -243,13 +243,13 @@ bool q_principalskeleton_detection(
 		unsigned char *p_img_connected=0,*p_img_connected_tmp=0;
 		p_img_connected=new unsigned char[sz_img_input[0]*sz_img_input[1]]();
 		//find seed
-		long pos_seed[2];
+		V3DLONG pos_seed[2];
 		{
 		pos_seed[0]=sz_img_input[0]/2.0+0.5;//x
 		pos_seed[1]=sz_img_input[1]/2.0+0.5;//y
-		for(long i=0;i<sz_img_input[0];i++)
+		for(V3DLONG i=0;i<sz_img_input[0];i++)
 		{
-			long index=sz_img_input[0]*pos_seed[1]+pos_seed[0];
+			V3DLONG index=sz_img_input[0]*pos_seed[1]+pos_seed[0];
 			if(p_img_foreground_co[index]>10)
 				break;
 			else
@@ -264,11 +264,11 @@ bool q_principalskeleton_detection(
 		{
 			q_dilation(p_img_connected,sz_img_input[0],sz_img_input[1],kernel_mask,p_img_connected_tmp);
 
-			long error=0;
-			for(long y=0;y<sz_img_input[1];y++)
-				for(long x=0;x<sz_img_input[0];x++)
+			V3DLONG error=0;
+			for(V3DLONG y=0;y<sz_img_input[1];y++)
+				for(V3DLONG x=0;x<sz_img_input[0];x++)
 				{
-					long index=sz_img_input[0]*y+x;
+					V3DLONG index=sz_img_input[0]*y+x;
 					if(p_img_foreground_co[index]>10 && p_img_connected_tmp[index]>10 && p_img_connected[index]<=10)
 					{
 						p_img_connected[index]=100;
@@ -289,7 +289,7 @@ bool q_principalskeleton_detection(
 	//record the foreground pixel position (for voronoi decompositon) and generate base image
 	//generate base image (on which we deform the principal skeleton)
 	printf("\t>>record the foreground pixel position and generate base image ... \n");
-	vector<long> vec_foregroundpixel_x,vec_foregroundpixel_y;
+	vector<V3DLONG> vec_foregroundpixel_x,vec_foregroundpixel_y;
     unsigned char *p_img_base=0;
     p_img_base=new unsigned char[sz_img_input[0]*sz_img_input[1]]();
 	if(!p_img_base)
@@ -300,10 +300,10 @@ bool q_principalskeleton_detection(
 		return false;
 	}
 
-	for(long y=0;y<sz_img_input[1];y++)
-		for(long x=0;x<sz_img_input[0];x++)
+	for(V3DLONG y=0;y<sz_img_input[1];y++)
+		for(V3DLONG x=0;x<sz_img_input[0];x++)
 		{
-			long index=sz_img_input[0]*y+x;
+			V3DLONG index=sz_img_input[0]*y+x;
 			if(p_img_foreground_co[index]>10)
 			{
 				//record the mask pixel position
@@ -318,7 +318,7 @@ bool q_principalskeleton_detection(
 			}
 		}
 
-//	long sz_img_test[4];
+//	V3DLONG sz_img_test[4];
 //	sz_img_test[0]=sz_img_input[0];	//x dim
 //	sz_img_test[1]=sz_img_input[1];	//y	dim
 //	sz_img_test[2]=1;	//z	dim
@@ -336,10 +336,10 @@ bool q_principalskeleton_detection(
 		double foregroundcentroid_x=0,foregroundcentroid_y=0;
 
 		//compute the centroid of skeleton
-		long skeleton_left,skeleton_right,skeleton_top,skeleton_bottom;
+		V3DLONG skeleton_left,skeleton_right,skeleton_top,skeleton_bottom;
 		skeleton_left=sz_img_input[0];	skeleton_right=0;
 		skeleton_top=sz_img_input[1];	skeleton_bottom=0;
-		for(unsigned long i=0;i<vec_cptpos_input.size();i++)
+		for(unsigned V3DLONG i=0;i<vec_cptpos_input.size();i++)
 		{
 			if(vec_cptpos_input[i].x<skeleton_left)			skeleton_left	=vec_cptpos_input[i].x;
 			else if(vec_cptpos_input[i].x>skeleton_right)	skeleton_right	=vec_cptpos_input[i].x;
@@ -350,7 +350,7 @@ bool q_principalskeleton_detection(
 		skeletoncentroid_y=(skeleton_top+skeleton_bottom)/2.0;
 
 		//compute the centroid of foreground region
-		for(unsigned long i=0;i<vec_foregroundpixel_x.size();i++)
+		for(unsigned V3DLONG i=0;i<vec_foregroundpixel_x.size();i++)
 		{
 			foregroundcentroid_x+=vec_foregroundpixel_x[i];
 			foregroundcentroid_y+=vec_foregroundpixel_y[i];
@@ -359,10 +359,10 @@ bool q_principalskeleton_detection(
 		foregroundcentroid_y/=vec_foregroundpixel_y.size();
 
 		//align the centroid of skeleton and foreground
-		long offset_skeleton_x,offset_skeleton_y;
+		V3DLONG offset_skeleton_x,offset_skeleton_y;
 		offset_skeleton_x=foregroundcentroid_x-skeletoncentroid_x;
 		offset_skeleton_y=foregroundcentroid_y-skeletoncentroid_y;
-		for(unsigned long i=0;i<vec_cptpos_ini.size();i++)
+		for(unsigned V3DLONG i=0;i<vec_cptpos_ini.size();i++)
 		{
 			vec_cptpos_ini[i].x+=offset_skeleton_x;
 			vec_cptpos_ini[i].y+=offset_skeleton_y;
@@ -371,7 +371,7 @@ bool q_principalskeleton_detection(
 		//zoom out the skeleton (if the skeleton is too big, some marker will not find valid voronoi region)
 		float f_zoomfactor_skeleton=1;//larva:0.1, vnc:1
 //		f_zoomfactor_skeleton=paras_input.d_inizoomfactor_skeleton;
-		for(unsigned long i=0;i<vec_cptpos_ini.size();i++)
+		for(unsigned V3DLONG i=0;i<vec_cptpos_ini.size();i++)
 		{
 			vec_cptpos_ini[i].x=(vec_cptpos_ini[i].x-foregroundcentroid_x)*f_zoomfactor_skeleton+foregroundcentroid_x;
 			vec_cptpos_ini[i].y=(vec_cptpos_ini[i].y-foregroundcentroid_y)*f_zoomfactor_skeleton+foregroundcentroid_y;
@@ -385,30 +385,30 @@ bool q_principalskeleton_detection(
 	printf("\t>>enter iteration loop ... \n");
 	vector<point3D64F> vec_cptpos_last(vec_cptpos_ini),vec_cptpos_new(vec_cptpos_ini);
 
-	long n_maxiter=paras_input.l_maxitertimes;
-	for(long iter=0;iter<n_maxiter;iter++)
+	V3DLONG n_maxiter=paras_input.l_maxitertimes;
+	for(V3DLONG iter=0;iter<n_maxiter;iter++)
 	{
 		//------------------------------------------------------------------------------------------------------------------------------------
 		//compute the voronoi region for each control point in the skeleton
-		vector< vector<long> > vecvec_voronoi_x(vec_cptpos_ini.size(),vector<long>(0,0));
-		vector< vector<long> > vecvec_voronoi_y(vec_cptpos_ini.size(),vector<long>(0,0));
+		vector< vector<V3DLONG> > vecvec_voronoi_x(vec_cptpos_ini.size(),vector<V3DLONG>(0,0));
+		vector< vector<V3DLONG> > vecvec_voronoi_y(vec_cptpos_ini.size(),vector<V3DLONG>(0,0));
 
 		//compute the distance matrix of every foreground pixel to every control point
-		vector< vector<long> > vecvec_dismatrix_pixel2ctlpt(vec_foregroundpixel_x.size(),vector<long>(vec_cptpos_ini.size(),0));
-		for(unsigned long p=0;p<vec_foregroundpixel_x.size();p++)
-			for(unsigned long m=0;m<vec_cptpos_ini.size();m++)
+		vector< vector<V3DLONG> > vecvec_dismatrix_pixel2ctlpt(vec_foregroundpixel_x.size(),vector<V3DLONG>(vec_cptpos_ini.size(),0));
+		for(unsigned V3DLONG p=0;p<vec_foregroundpixel_x.size();p++)
+			for(unsigned V3DLONG m=0;m<vec_cptpos_ini.size();m++)
 			{
-				long dif_x=vec_foregroundpixel_x[p]-vec_cptpos_last[m].x;
-				long dif_y=vec_foregroundpixel_y[p]-vec_cptpos_last[m].y;
+				V3DLONG dif_x=vec_foregroundpixel_x[p]-vec_cptpos_last[m].x;
+				V3DLONG dif_y=vec_foregroundpixel_y[p]-vec_cptpos_last[m].y;
 				vecvec_dismatrix_pixel2ctlpt[p][m]=dif_x*dif_x+dif_y*dif_y;
 			}
 
 		//find the voronoi region (coordinate of foreground pixels) for each control point
-		for(unsigned long p=0;p<vec_foregroundpixel_x.size();p++)
+		for(unsigned V3DLONG p=0;p<vec_foregroundpixel_x.size();p++)
 		{
 			//find the index of nearest control point for each foreground pixel
-			long l_nearestctlpt_ind=0;
-			for(unsigned long m=0;m<vec_cptpos_ini.size();m++)
+			V3DLONG l_nearestctlpt_ind=0;
+			for(unsigned V3DLONG m=0;m<vec_cptpos_ini.size();m++)
 				if(vecvec_dismatrix_pixel2ctlpt[p][m]<vecvec_dismatrix_pixel2ctlpt[p][l_nearestctlpt_ind])
 					l_nearestctlpt_ind=m;
 
@@ -419,18 +419,18 @@ bool q_principalskeleton_detection(
 
 		//------------------------------------------------------------------------------------------------------------------------------------
 		//update the postion of control points
-		for(unsigned long ind_cpt=0;ind_cpt<vec_cptpos_ini.size();ind_cpt++)
+		for(unsigned V3DLONG ind_cpt=0;ind_cpt<vec_cptpos_ini.size();ind_cpt++)
 		{
 			double E_image[2]={0.0,0.0},E_length[2]={0.0,0.0};
 
 			//compute the image term (mass center of current control point's voronoi region)
-			long n_voronoipixel=vecvec_voronoi_x[ind_cpt].size();
+			V3DLONG n_voronoipixel=vecvec_voronoi_x[ind_cpt].size();
 			double sum_intensity=0;
 			if(n_voronoipixel!=0)
 			{
-				for(long p=0;p<n_voronoipixel;p++)
+				for(V3DLONG p=0;p<n_voronoipixel;p++)
 				{
-					long index=sz_img_input[0]*vecvec_voronoi_y[ind_cpt][p]+vecvec_voronoi_x[ind_cpt][p];
+					V3DLONG index=sz_img_input[0]*vecvec_voronoi_y[ind_cpt][p]+vecvec_voronoi_x[ind_cpt][p];
 					unsigned char intensity=p_img_base[index];
 					E_image[0]+=intensity*vecvec_voronoi_x[ind_cpt][p];
 					E_image[1]+=intensity*vecvec_voronoi_y[ind_cpt][p];
@@ -449,17 +449,17 @@ bool q_principalskeleton_detection(
 
 			//compute the length term
 			double d_weightsum=0.0;
-			for(unsigned long i=0;i<vecvec_neighborcptind_length[ind_cpt].size();i++)
+			for(unsigned V3DLONG i=0;i<vecvec_neighborcptind_length[ind_cpt].size();i++)
 			{
-				long l_neighbor_ind=vecvec_neighborcptind_length[ind_cpt][i];
+				V3DLONG l_neighbor_ind=vecvec_neighborcptind_length[ind_cpt][i];
 				double d_neighbor_weight=vecvec_neighborweight_length[ind_cpt][i];
 				E_length[0]+=vec_cptpos_last[l_neighbor_ind].x*d_neighbor_weight;
 				E_length[1]+=vec_cptpos_last[l_neighbor_ind].y*d_neighbor_weight;
 				d_weightsum+=d_neighbor_weight;
 			}
-			for(unsigned long i=0;i<vecvec_neighborcptind_smooth[ind_cpt].size();i++)
+			for(unsigned V3DLONG i=0;i<vecvec_neighborcptind_smooth[ind_cpt].size();i++)
 			{
-				long l_neighbor_ind=vecvec_neighborcptind_smooth[ind_cpt][i];
+				V3DLONG l_neighbor_ind=vecvec_neighborcptind_smooth[ind_cpt][i];
 				double d_neighbor_weight=vecvec_neighborweight_smooth[ind_cpt][i];
 				E_length[0]+=vec_cptpos_last[l_neighbor_ind].x*d_neighbor_weight;
 				E_length[1]+=vec_cptpos_last[l_neighbor_ind].y*d_neighbor_weight;
@@ -468,16 +468,16 @@ bool q_principalskeleton_detection(
 			E_length[0]/=d_weightsum;
 			E_length[1]/=d_weightsum;
 			//if the current control point is the skeleton end point, we compute its lenght term use other formular
-			for(unsigned long i=0;i<vec_skeletonend_ind.size();i++)
+			for(unsigned V3DLONG i=0;i<vec_skeletonend_ind.size();i++)
 			{
-				if((long)ind_cpt==vec_skeletonend_ind[i] && vecvec_skeletonend_2neighbor_ind[i].size()==2)
+				if((V3DLONG)ind_cpt==vec_skeletonend_ind[i] && vecvec_skeletonend_2neighbor_ind[i].size()==2)
 				{
-					long neighbor1_ind=vecvec_skeletonend_2neighbor_ind[i][0];
-					long neighbor2_ind=vecvec_skeletonend_2neighbor_ind[i][1];
+					V3DLONG neighbor1_ind=vecvec_skeletonend_2neighbor_ind[i][0];
+					V3DLONG neighbor2_ind=vecvec_skeletonend_2neighbor_ind[i][1];
 					E_length[0]=vec_cptpos_last[neighbor1_ind].x*2-vec_cptpos_last[neighbor2_ind].x;
 					E_length[1]=vec_cptpos_last[neighbor1_ind].y*2-vec_cptpos_last[neighbor2_ind].y;
 				}
-				if((long)ind_cpt==vec_skeletonend_ind[i] && vecvec_skeletonend_2neighbor_ind[i].size()==1)
+				if((V3DLONG)ind_cpt==vec_skeletonend_ind[i] && vecvec_skeletonend_2neighbor_ind[i].size()==1)
 				{
 					E_length[0]=vec_cptpos_last[ind_cpt].x;
 					E_length[1]=vec_cptpos_last[ind_cpt].y;
@@ -508,7 +508,7 @@ bool q_principalskeleton_detection(
 		//judge whether the skeleton is stable enought to stop iteration
 		double d_stopiter_thresh=0.01;
 		double d_totalshift=0.0;
-		for(unsigned long i=0;i<vec_cptpos_ini.size();i++)
+		for(unsigned V3DLONG i=0;i<vec_cptpos_ini.size();i++)
 		{
 			double dif_x=vec_cptpos_new[i].x-vec_cptpos_last[i].x;
 			double dif_y=vec_cptpos_new[i].y-vec_cptpos_last[i].y;
@@ -526,7 +526,7 @@ bool q_principalskeleton_detection(
 
 //		//output deformed control points to marker file (for debug)
 //		QList<ImageMarker> ql_cptpos_output;
-//		for(long i=0;i<vec_cptpos_ini.size();i++)
+//		for(V3DLONG i=0;i<vec_cptpos_ini.size();i++)
 //		{
 //			ql_cptpos_output.push_back(ImageMarker());
 //			ql_cptpos_output[i].x=vec_cptpos_last[i].x*2;
@@ -550,7 +550,7 @@ bool q_principalskeleton_detection(
 
 
 ////save test image (for debug)
-//long sz_img_test[4];
+//V3DLONG sz_img_test[4];
 //sz_img_test[0]=sz_img_input[0];	//x dim
 //sz_img_test[1]=sz_img_input[1];	//y	dim
 //sz_img_test[2]=1;	//z	dim

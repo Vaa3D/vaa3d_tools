@@ -27,11 +27,11 @@ struct PSDParas
 	//input
 	int 		n_index_channel;
 	double 		d_inizoomfactor_skeleton;
-	long		l_maxitertimes;
+	V3DLONG		l_maxitertimes;
 	double 		d_stopiter_threshold;
 	double 		d_foreground_treshold;//times of image mean value
-	long 		l_diskradius_openning;
-	long 		l_diskradius_closing;
+	V3DLONG 		l_diskradius_openning;
+	V3DLONG 		l_diskradius_closing;
 	bool		b_removeboundaryartifact;//remove noise tissue in the boundary of image
 	int			i_baseimage_methhod;//deform skeleton on (0: original image, 1: mask image)
 	//output
@@ -56,10 +56,10 @@ struct PSDParas
 //vec_cptpos_output:	output deformed control points position array
 //
 bool q_principalskeleton_detection(
-		const unsigned char *p_img_input,const long sz_img_input[2],
+		const unsigned char *p_img_input,const V3DLONG sz_img_input[2],
 		const vector<point3D64F> &vec_cptpos_input,
-		const vector< vector<long> > &vecvec_domain_length_ind,const vector<double> &vec_domain_length_weight,
-		const vector< vector<long> > &vecvec_domain_smooth_ind,const vector<double> &vec_domain_smooth_weight,
+		const vector< vector<V3DLONG> > &vecvec_domain_length_ind,const vector<double> &vec_domain_length_weight,
+		const vector< vector<V3DLONG> > &vecvec_domain_smooth_ind,const vector<double> &vec_domain_smooth_weight,
 		const PSDParas &paras_input,
 		vector<point3D64F> &vec_cptpos_output);
 
