@@ -94,7 +94,7 @@ bool q_principalskeleton_detection(
 			for(unsigned long j=0;j<vecvec_domaincptind_length[i].size();j++)
 			{
 				long index=vecvec_domaincptind_length[i][j];
-				if(index==k)
+				if(index==(long)k)
 				{
 					if(j>0)										//left neighbor exist
 					{
@@ -113,7 +113,7 @@ bool q_principalskeleton_detection(
 			for(unsigned long j=0;j<vecvec_domaincptind_smooth[i].size();j++)
 			{
 				long index=vecvec_domaincptind_smooth[i][j];
-				if(index==k)
+				if(index==(long)k)
 				{
 					if(j>0)										//left neighbor exist
 					{
@@ -143,9 +143,9 @@ bool q_principalskeleton_detection(
 			vec_skeletonend_2neighbor_ind.push_back(neighbor1_ind);
 			if(vecvec_neighborcptind_length[neighbor1_ind].size()==2)
 			{
-				if(vecvec_neighborcptind_length[neighbor1_ind][0]!=i)
+				if(vecvec_neighborcptind_length[neighbor1_ind][0]!=(long)i)
 					vec_skeletonend_2neighbor_ind.push_back(vecvec_neighborcptind_length[neighbor1_ind][0]);
-				else if(vecvec_neighborcptind_length[neighbor1_ind][1]!=i)
+				else if(vecvec_neighborcptind_length[neighbor1_ind][1]!=(long)i)
 					vec_skeletonend_2neighbor_ind.push_back(vecvec_neighborcptind_length[neighbor1_ind][1]);
 			}
 			vecvec_skeletonend_2neighbor_ind.push_back(vec_skeletonend_2neighbor_ind);
@@ -470,14 +470,14 @@ bool q_principalskeleton_detection(
 			//if the current control point is the skeleton end point, we compute its lenght term use other formular
 			for(unsigned long i=0;i<vec_skeletonend_ind.size();i++)
 			{
-				if(ind_cpt==vec_skeletonend_ind[i] && vecvec_skeletonend_2neighbor_ind[i].size()==2)
+				if((long)ind_cpt==vec_skeletonend_ind[i] && vecvec_skeletonend_2neighbor_ind[i].size()==2)
 				{
 					long neighbor1_ind=vecvec_skeletonend_2neighbor_ind[i][0];
 					long neighbor2_ind=vecvec_skeletonend_2neighbor_ind[i][1];
 					E_length[0]=vec_cptpos_last[neighbor1_ind].x*2-vec_cptpos_last[neighbor2_ind].x;
 					E_length[1]=vec_cptpos_last[neighbor1_ind].y*2-vec_cptpos_last[neighbor2_ind].y;
 				}
-				if(ind_cpt==vec_skeletonend_ind[i] && vecvec_skeletonend_2neighbor_ind[i].size()==1)
+				if((long)ind_cpt==vec_skeletonend_ind[i] && vecvec_skeletonend_2neighbor_ind[i].size()==1)
 				{
 					E_length[0]=vec_cptpos_last[ind_cpt].x;
 					E_length[1]=vec_cptpos_last[ind_cpt].y;

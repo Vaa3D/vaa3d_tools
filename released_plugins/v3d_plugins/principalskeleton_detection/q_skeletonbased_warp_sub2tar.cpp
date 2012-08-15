@@ -1090,7 +1090,7 @@ bool q_anchorpoint_definition_unevendis(
 			//if current anchor point lies on the skeleton, we take it as valid
 			bool b_isonskeleton=false;
 			for(unsigned long j=0;j<vec_ind_anhcoronskeleton.size();j++)
-				if(vec_ind_anhcoronskeleton[j]!=-1 && i==vec_ind_anhcoronskeleton[j])
+				if(vec_ind_anhcoronskeleton[j]!=-1 && (long)i==vec_ind_anhcoronskeleton[j])
 				{
 					b_isonskeleton=true;
 					break;
