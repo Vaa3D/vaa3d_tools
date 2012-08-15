@@ -47,12 +47,13 @@ public:
 	QLineEdit *filePathLineEdit_mak_ini;
 	QLineEdit *filePathLineEdit_domain;
 
-	QLabel *refChannelLabel;
-	QLabel *stopThreshLabel;
-	QLabel *foregroundRatioLabel;
 	QLineEdit *refChannelLineEdit;
 	QLineEdit *stopThreshLineEdit;
+	QLineEdit *maxIterLineEdit;
 	QLineEdit *foregroundRatioLineEdit;
+	QLineEdit *mophologyRadiusLineEdit;
+	QLineEdit *iniskezoomfactorLineEdit;
+	QLineEdit *baseimageMethodLineEdit;
 };
 
 //------------------------------------------------------------------------------------------------------------------------------------

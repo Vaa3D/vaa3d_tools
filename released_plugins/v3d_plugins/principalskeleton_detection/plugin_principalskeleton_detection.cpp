@@ -567,6 +567,16 @@ bool do_PrincipalSkeletonDetection(unsigned char *p_img_input, V3DLONG *sz_img_i
 	return true;
 }
 
+//PSDParas paras;
+// paras.n_index_channel=2;
+// paras.d_inizoomfactor_skeleton=1.0;
+// paras.l_maxitertimes=500;
+// paras.d_stopiter_threshold=0.01;
+// paras.d_foreground_treshold=0.5;
+// paras.l_diskradius_openning=7;
+// paras.l_diskradius_closing=7;
+//	paras.b_removeboundaryartifact=1;
+//	paras.i_baseimage_methhod=0;
 
 //************************************************************************************************************************************
 //paradialog for principal skeleton detection
@@ -577,12 +587,20 @@ ParaDialog_PSDetection::ParaDialog_PSDetection(QWidget *parent):QDialog(parent)
 	filePathLineEdit_mak_ini->setFixedWidth(300);
 	filePathLineEdit_domain->setFixedWidth(300);
 
-	refChannelLabel=new QLabel(QObject::tr("reference channel (0:R,1:G,2:B):"));
-	stopThreshLabel=new QLabel(QObject::tr("stop threshold:"));
-	foregroundRatioLabel=new QLabel(QObject::tr("foreground ratio:"));
+	QLabel *refChannelLabel=new QLabel(QObject::tr("reference channel\n(0:R,1:G,2:B):"));
+	QLabel *stopThreshLabel=new QLabel(QObject::tr("stop threshold:"));
+	QLabel *foregroundRatioLabel=new QLabel(QObject::tr("foreground threshold ratio:\n(threhold=mean*thresh_factor)"));
+	QLabel *maxIterLabel=new QLabel(QObject::tr("maximum iteration times:"));
+	QLabel *mophologyRadiusLabel=new QLabel(QObject::tr("radius of mophology kernel:"));
+	QLabel *iniskezoomfactorLabel=new QLabel(QObject::tr("skeleton initial scale factor:"));
+	QLabel *baseimageMethodLabel=new QLabel(QObject::tr("base image generation method:\n(0:for image with even intensity distribution)\n(1:for image with uneven intensity distribution)"));
 	refChannelLineEdit=new QLineEdit(QObject::tr("2"));
 	stopThreshLineEdit=new QLineEdit(QObject::tr("0.01"));
 	foregroundRatioLineEdit=new QLineEdit(QObject::tr("0.5"));
+	maxIterLineEdit=new QLineEdit(QObject::tr("500"));
+	mophologyRadiusLineEdit=new QLineEdit(QObject::tr("7"));
+	iniskezoomfactorLineEdit=new QLineEdit(QObject::tr("1.0"));
+	baseimageMethodLineEdit=new QLineEdit(QObject::tr("0"));
 
 	QPushButton *button1=new QPushButton(QObject::tr("..."));
 	QPushButton *button2=new QPushButton(QObject::tr("..."));
@@ -610,6 +628,16 @@ ParaDialog_PSDetection::ParaDialog_PSDetection(QWidget *parent):QDialog(parent)
 	paraLayout->addWidget(refChannelLineEdit,0,1);
 	paraLayout->addWidget(stopThreshLabel,1,0);
 	paraLayout->addWidget(stopThreshLineEdit,1,1);
+	paraLayout->addWidget(foregroundRatioLabel,2,0);
+	paraLayout->addWidget(foregroundRatioLineEdit,2,1);
+	paraLayout->addWidget(maxIterLabel,3,0);
+	paraLayout->addWidget(maxIterLineEdit,3,1);
+	paraLayout->addWidget(mophologyRadiusLabel,4,0);
+	paraLayout->addWidget(mophologyRadiusLineEdit,4,1);
+	paraLayout->addWidget(iniskezoomfactorLabel,5,0);
+	paraLayout->addWidget(iniskezoomfactorLineEdit,5,1);
+	paraLayout->addWidget(baseimageMethodLabel,6,0);
+	paraLayout->addWidget(baseimageMethodLineEdit,6,1);
 
 	QHBoxLayout *okcancelLayout=new QHBoxLayout;
 	okcancelLayout->addWidget(ok);
