@@ -94,7 +94,7 @@ bool PrincipalSkeletonDetectionPlugin::dofunc(const QString &func_name, const V3
 	}
 	else if (func_name == tr("help"))
 	{
-		cout<< "Usage : v3d -x principal_skeleton -f detect -i <inimg_file> <iniskele_file> <domain_file> -o <deformskele_file> <cubicswc_file> -p <channel> <stop_thresh>"	<< endl;
+		cout<< "Usage : v3d -x principal_skeleton -f detect -i <inimg_file> <iniskele_file> <domain_file> -o <deformskele_file> <cubicswc_file> -p <channel> <inizoomfactor_skeleton> <maxitertimes> <stop_thresh> <foreground_thresh> <diskradius_morphology> <removeboundaryartifact> <baseimage_methhod>"	<< endl;
 		cout<< endl;
 		cout<< "inimg_file              name of input image file" << endl;
 		cout<< "iniskele_file           name of input initial skeleton file (.marker)"<< endl;
@@ -107,6 +107,8 @@ bool PrincipalSkeletonDetectionPlugin::dofunc(const QString &func_name, const V3
 		cout<< "stop_thresh             iteration stop threshold, default 0.01" << endl;
 		cout<< "foreground_thresh       foreground image segmentation factor(times of image mean value), default 0.5" << endl;
 		cout<< "diskradius_morphology   disk radius of openning and closing performed on foreground image, default 7" << endl;
+		cout<< "removeboundaryartifact  remove noises which do not connect to the interesting tissue, default 0" << endl;
+		cout<< "baseimage_methhod       0: deform skeleton on masked original image, 1: deform skeleton on mask image" << endl;
 		cout<< endl;
 		cout<< "e.g. v3d -x principal_skeleton -f detect -i input.raw iniskele_file.marker domain_file.domain -o deformskele.marker cubicswc.swc -p 2 1 500 0.01 0.5 7 0 0"	<< endl;
 		cout<< endl;
@@ -173,6 +175,8 @@ void PrincipalSkeletonDetection(V3DPluginCallback2 &callback, QWidget *parent)
     paras.d_foreground_treshold=0.5;
     paras.l_diskradius_openning=7;
     paras.l_diskradius_closing=7;
+	paras.b_removeboundaryartifact=0;
+	paras.i_baseimage_methhod=0;
 
 	QString qs_filename_marker_ini,qs_filename_domain;
 	ParaDialog_PSDetection d(parent);
@@ -278,6 +282,8 @@ bool PrincipalSkeletonDetection(const V3DPluginArgList & input, V3DPluginArgList
     paras.d_foreground_treshold=0.5;
     paras.l_diskradius_openning=7;
     paras.l_diskradius_closing=7;
+	paras.b_removeboundaryartifact=0;
+	paras.i_baseimage_methhod=0;
 
 	if (input.size() == 2 && output.size() ==1)
 	{
@@ -447,7 +453,7 @@ bool do_PrincipalSkeletonDetection(unsigned char *p_img_input, long *sz_img_inpu
     printf("\t>>extract the reference [%d]th channel from MIP image: ...\n",paras.n_index_channel);
     if(paras.n_index_channel>=sz_img_input[3])
     {
-        v3d_msg("ERROR: incorrect input channel index!");
+        v3d_msg("ERROR: incorrect reference channel index! \nIt should be < image channel number.");
         if(p_img_MIP) 		{delete []p_img_MIP;		p_img_MIP=0;}
         return false;
     }
