@@ -175,7 +175,7 @@ void PrincipalSkeletonDetection(V3DPluginCallback2 &callback, QWidget *parent)
     paras.d_foreground_treshold=0.5;
     paras.l_diskradius_openning=7;
     paras.l_diskradius_closing=7;
-	paras.b_removeboundaryartifact=0;
+	paras.b_removeboundaryartifact=1;
 	paras.i_baseimage_methhod=0;
 
 	QString qs_filename_marker_ini,qs_filename_domain;
@@ -282,7 +282,7 @@ bool PrincipalSkeletonDetection(const V3DPluginArgList & input, V3DPluginArgList
     paras.d_foreground_treshold=0.5;
     paras.l_diskradius_openning=7;
     paras.l_diskradius_closing=7;
-	paras.b_removeboundaryartifact=0;
+	paras.b_removeboundaryartifact=1;
 	paras.i_baseimage_methhod=0;
 
 	if (input.size() == 2 && output.size() ==1)
