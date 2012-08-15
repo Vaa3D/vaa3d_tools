@@ -113,6 +113,10 @@ bool AndPlugin::dofunc(const QString & func_name, const V3DPluginArgList & input
         QMessageBox::information(parent, "Version info", "New Pugin for Other(developed by Yu Ping");
         return false ;
     }
+    if (input.size() < 2) {
+      qDebug() << "need two image!";
+      return false;
+    }
     PluginSpecialized<unsigned char> *runner=new PluginSpecialized<unsigned char>(&v3d);
     runner->ComputeOneRegion(input, output);
 
