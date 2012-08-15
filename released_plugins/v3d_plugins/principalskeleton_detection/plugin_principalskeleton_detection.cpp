@@ -445,6 +445,12 @@ bool do_PrincipalSkeletonDetection(unsigned char *p_img_input, long *sz_img_inpu
 	//------------------------------------------------------------------------------------------------------------------------------------
 	//extract the reference channel
     printf("\t>>extract the reference [%d]th channel from MIP image: ...\n",paras.n_index_channel);
+    if(paras.n_index_channel>=sz_img_input[3])
+    {
+        v3d_msg("ERROR: incorrect input channel index!");
+        if(p_img_MIP) 		{delete []p_img_MIP;		p_img_MIP=0;}
+        return false;
+    }
 
     unsigned char *p_img_MIP_ref=0;
     p_img_MIP_ref=new unsigned char[sz_img_input[0]*sz_img_input[1]];
