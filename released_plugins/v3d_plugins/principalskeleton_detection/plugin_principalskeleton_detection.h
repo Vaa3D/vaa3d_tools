@@ -78,6 +78,9 @@ public:
 	QLineEdit *filePathLineEdit_mak_sub;
 	QLineEdit *filePathLineEdit_mak_tar;
 	QLineEdit *filePathLineEdit_domain;
+
+	QLineEdit *sliceWidthLineEdit;
+	QLineEdit *nanchorPersliceLineEdit;
 };
 
 #endif

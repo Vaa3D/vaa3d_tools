@@ -917,6 +917,12 @@ void SkeletonBasedImgWarp(V3DPluginCallback2 &callback, QWidget *parent)
 	QString qs_filename_img_tar,qs_filename_mak_tar;
 	QString qs_filename_domain;
 
+	PSWParas paras;
+	paras.l_anchor2cpt_ratio_alongbranch=2.0;
+	paras.l_nanchor_perslice=5;
+	paras.l_slice_width=300;
+	paras.i_extendbranchend=1;
+
 	ParaDialog_PSWarping d(parent);
 	if(d.exec()==QDialog::Accepted)
 	{
@@ -925,15 +931,11 @@ void SkeletonBasedImgWarp(V3DPluginCallback2 &callback, QWidget *parent)
 		qs_filename_img_tar=d.filePathLineEdit_img_tar->text();
 		qs_filename_mak_tar=d.filePathLineEdit_mak_tar->text();
 		qs_filename_domain=d.filePathLineEdit_domain->text();
+		paras.l_slice_width=d.sliceWidthLineEdit->text().toInt();
+		paras.l_nanchor_perslice=d.nanchorPersliceLineEdit->text().toInt();
 	}
 	else
 		return;
-
-	PSWParas paras;
-	paras.l_anchor2cpt_ratio_alongbranch=2.0;
-	paras.l_nanchor_perslice=5;
-	paras.l_slice_width=300;
-	paras.i_extendbranchend=1;
 
 	// do warp
 	unsigned char* newdata1d = 0;
@@ -1277,7 +1279,6 @@ bool do_ImgWarp(QString &qs_filename_img_sub, QString &qs_filename_mak_sub, QStr
     return true;
 }
 
-
 //************************************************************************************************************************************
 //paradialog for principal skeleton detection
 ParaDialog_PSWarping::ParaDialog_PSWarping(QWidget *parent):QDialog(parent)
@@ -1288,6 +1289,11 @@ ParaDialog_PSWarping::ParaDialog_PSWarping(QWidget *parent):QDialog(parent)
 	filePathLineEdit_mak_tar=new QLineEdit(QObject::tr("choose target skeleton file here (*.marker)"));
 	filePathLineEdit_domain=new QLineEdit(QObject::tr("choose domain definition file here (*.domain)"));
 	filePathLineEdit_domain->setFixedWidth(400);
+
+	QLabel *sliceWidthLabel=new QLabel(QObject::tr("slice/cuttingplane width:"));
+	QLabel *nanchorPersliceLabel=new QLabel(QObject::tr("number of anchor points per slice/cuttingplane:"));
+	sliceWidthLineEdit=new QLineEdit(QObject::tr("300"));
+	nanchorPersliceLineEdit=new QLineEdit(QObject::tr("5"));
 
 	QPushButton *button1=new QPushButton(QObject::tr("..."));
 	QPushButton *button2=new QPushButton(QObject::tr("..."));
@@ -1306,6 +1312,9 @@ ParaDialog_PSWarping::ParaDialog_PSWarping(QWidget *parent):QDialog(parent)
 	connect(cancel, SIGNAL(clicked()),this,SLOT(reject()));
 
 	QGroupBox *fileChooseGroup=new QGroupBox(parent);
+	fileChooseGroup->setTitle(QObject::tr("Files I/O:"));
+	QGroupBox *paraGroup=new QGroupBox(parent);
+	paraGroup->setTitle(QObject::tr("Parameters:"));
 
 	QGridLayout *fileChooseLayout=new QGridLayout(fileChooseGroup);
 	fileChooseLayout->addWidget(filePathLineEdit_img_sub,0,0);
@@ -1319,12 +1328,19 @@ ParaDialog_PSWarping::ParaDialog_PSWarping(QWidget *parent):QDialog(parent)
 	fileChooseLayout->addWidget(filePathLineEdit_domain,4,0);
 	fileChooseLayout->addWidget(button5,4,1);
 
+	QGridLayout *paraLayout=new QGridLayout(paraGroup);
+	paraLayout->addWidget(sliceWidthLabel,0,0);
+	paraLayout->addWidget(sliceWidthLineEdit,0,1);
+	paraLayout->addWidget(nanchorPersliceLabel,1,0);
+	paraLayout->addWidget(nanchorPersliceLineEdit,1,1);
+
 	QHBoxLayout *okcancelLayout=new QHBoxLayout;
 	okcancelLayout->addWidget(ok);
 	okcancelLayout->addWidget(cancel);
 
 	QVBoxLayout *mainLayout=new QVBoxLayout;
 	mainLayout->addWidget(fileChooseGroup);
+	mainLayout->addWidget(paraGroup);
 	mainLayout->addLayout(okcancelLayout);
 	mainLayout->setSizeConstraint(QLayout::SetFixedSize);
 
