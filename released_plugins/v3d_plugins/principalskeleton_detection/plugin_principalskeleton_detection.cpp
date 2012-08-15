@@ -169,12 +169,12 @@ void PrincipalSkeletonDetection(V3DPluginCallback2 &callback, QWidget *parent)
 	//get initial marker and domain definition filename
     PSDParas paras;
     paras.n_index_channel=2;
-    paras.d_inizoomfactor_skeleton=1.0;
-    paras.l_maxitertimes=500;
     paras.d_stopiter_threshold=0.01;
+    paras.l_maxitertimes=500;
     paras.d_foreground_treshold=0.5;
     paras.l_diskradius_openning=7;
     paras.l_diskradius_closing=7;
+    paras.d_inizoomfactor_skeleton=1.0;
 	paras.b_removeboundaryartifact=1;
 	paras.i_baseimage_methhod=0;
 
@@ -186,6 +186,11 @@ void PrincipalSkeletonDetection(V3DPluginCallback2 &callback, QWidget *parent)
 		qs_filename_domain=d.getFilename_domain();
 		paras.n_index_channel=d.refChannelLineEdit->text().toInt();
 		paras.d_stopiter_threshold=d.stopThreshLineEdit->text().toDouble();
+		paras.l_maxitertimes=d.maxIterLineEdit->text().toInt();
+		paras.d_foreground_treshold=d.foregroundRatioLineEdit->text().toDouble();
+		paras.l_diskradius_openning=paras.l_diskradius_closing=d.mophologyRadiusLineEdit->text().toInt();
+		paras.d_inizoomfactor_skeleton=d.iniskezoomfactorLineEdit->text().toDouble();
+		paras.i_baseimage_methhod=d.baseimageMethodLineEdit->text().toInt();
 	}
 	else
 		return;
@@ -567,16 +572,6 @@ bool do_PrincipalSkeletonDetection(unsigned char *p_img_input, V3DLONG *sz_img_i
 	return true;
 }
 
-//PSDParas paras;
-// paras.n_index_channel=2;
-// paras.d_inizoomfactor_skeleton=1.0;
-// paras.l_maxitertimes=500;
-// paras.d_stopiter_threshold=0.01;
-// paras.d_foreground_treshold=0.5;
-// paras.l_diskradius_openning=7;
-// paras.l_diskradius_closing=7;
-//	paras.b_removeboundaryartifact=1;
-//	paras.i_baseimage_methhod=0;
 
 //************************************************************************************************************************************
 //paradialog for principal skeleton detection
