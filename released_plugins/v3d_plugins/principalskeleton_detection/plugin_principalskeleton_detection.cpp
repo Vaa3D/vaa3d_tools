@@ -571,7 +571,7 @@ ParaDialog_PSDetection::ParaDialog_PSDetection(QWidget *parent):QDialog(parent)
 	filePathLineEdit_mak_ini->setFixedWidth(300);
 	filePathLineEdit_domain->setFixedWidth(300);
 
-	refChannelLabel=new QLabel(QObject::tr("reference channel:"));
+	refChannelLabel=new QLabel(QObject::tr("reference channel (0:R,1:G,2:B):"));
 	stopThreshLabel=new QLabel(QObject::tr("stop threshold:"));
 	foregroundRatioLabel=new QLabel(QObject::tr("foreground ratio:"));
 	refChannelLineEdit=new QLineEdit(QObject::tr("2"));
