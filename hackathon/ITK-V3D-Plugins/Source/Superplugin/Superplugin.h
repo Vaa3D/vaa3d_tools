@@ -115,7 +115,7 @@ public:
         input<<arg;
         output<<arg;
         bool result = this->m_V3DPluginCallback->callPluginFunc(plugin_name,function_name,input,output);
-        if (!result) {
+        if (!result || output.at(0).p == NULL) {
           qDebug() << "error call the other plugin function ";
           return false;
         }
@@ -159,7 +159,7 @@ public:
 
             qDebug() << "call plugin name: " << plugin_name_list.at(i);
             result = this->m_V3DPluginCallback->callPluginFunc(plugin_name_list.at(i),function_name,input,output);
-            if (!result) {
+            if (!result || output.at(0).p == NULL) {
               qDebug() << "error call the other plugin function";
               return false;
             }

@@ -183,6 +183,7 @@ protected:
   QList< V3D_Image3DBasic >                 m_OutputImageList;
 
   V3DITKImageSelectionDialog                m_ImageSelectionDialog;
+  GenericFilterType *     m_used_filer;
 };
 
 

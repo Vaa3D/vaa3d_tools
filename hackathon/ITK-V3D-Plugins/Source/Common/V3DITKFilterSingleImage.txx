@@ -111,6 +111,12 @@ V3DITKFilterSingleImage< TInputPixelType, TOutputPixelType >
   this->AddObserver( progressDialog.GetCommand() );
   progressDialog.ObserveFilter( this->m_ProcessObjectSurrogate );
 
+//Now add connect to cancel button
+//  if ( this->m_used_filer ) {
+//	qDebug() << "add Cancle button";
+//	progressDialog.setFilter(this->m_used_filer); 
+//	QObject::connect(&progressDialog, SIGNAL(cancelButtonClicked()), &progressDialog, SLOT(stopFilter()));
+ // }
   // FIXME: We are still missing to connect the logic for "cancel" button that
   // will trigger Abort in the ITK filters.
   progressDialog.show();
@@ -128,7 +134,10 @@ V3DITKFilterSingleImage< TInputPixelType, TOutputPixelType >
     this->TransferInput( inputImage, x1, x2, y1, y2, z1, z2 );
 
     this->ComputeOneRegion();
-
+	if (this->m_Output3DImage.IsNull()) {
+		qDebug() << "Stop do it";
+		return;
+	}
     this->AddOutputImageChannel( channel );
     }
 

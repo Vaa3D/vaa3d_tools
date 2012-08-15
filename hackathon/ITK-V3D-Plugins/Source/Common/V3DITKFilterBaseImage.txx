@@ -116,6 +116,8 @@ V3DITKFilterBaseImage< TInputPixelType, TOutputPixelType >
 ::RegisterInternalFilter( GenericFilterType *filter, float weight )
 {
   this->m_ProgressAccumulator->RegisterInternalFilter( filter, weight );
+
+  this->m_used_filer = filter;
 }
 
 

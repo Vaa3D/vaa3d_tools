@@ -70,10 +70,25 @@ V3DITKProgressDialog::ObserveFilter( itk::ProcessObject * filter )
   this->progressTranslator->SetObservedFilter( filter );
 }
 
+void V3DITKProgressDialog::setFilter(itk::ProcessObject* filter)
+{
+  this->m_filter = filter;
+}
+void V3DITKProgressDialog::stopFilter()
+{
+  qDebug() << " stop filter ";
+  //this->progressTranslator->GetObservedFilter()->SetAbortGenerateData(true); 
+  this->m_filter->SetAbortGenerateData(true);
+  this->close();
+}
 
 void V3DITKProgressDialog::SetProgressValue( int progressValue )
 {
   this->progressBar->setValue( progressValue );
+  if (this->CancelButtonHasBeenPressed) {
+    this->progressTranslator->GetObservedFilter()->SetAbortGenerateData(true); 
+    this->close();
+  }
   // Give a chance to process other events (including the potential click on the cancel button)
   QApplication::processEvents( QEventLoop::AllEvents );
 }
@@ -81,6 +96,8 @@ void V3DITKProgressDialog::SetProgressValue( int progressValue )
 void V3DITKProgressDialog::reject()
 {
   this->CancelButtonHasBeenPressed = true;
+  qDebug() << "cancel button clicked";
+  //emit cancelButtonClicked();
 }
 
 bool V3DITKProgressDialog::HasCancelBeenPressed() const

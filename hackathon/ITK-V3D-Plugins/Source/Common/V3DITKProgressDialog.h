@@ -9,7 +9,6 @@
 
 #include "itkEventToQtSignalTranslator.h"
 
-
 class V3DITKProgressDialog : public QDialog
 {
   Q_OBJECT
@@ -32,6 +31,7 @@ public:
   void ObserveFilter( itk::ProcessObject * filter );
 
   int exec();
+  void setFilter(itk::ProcessObject* filter);
 
 public slots:
 
@@ -39,6 +39,9 @@ public slots:
   void SetProgressValue( int progress );
 
   void reject();
+  void stopFilter();
+signals:
+  void cancelButtonClicked();
 
 private:
 
@@ -53,6 +56,7 @@ private:
   Q_DISABLE_COPY(V3DITKProgressDialog);
 
   itk::ProgressValuedEventToQtSignalTranslator  * progressTranslator;
+  itk::ProcessObject* m_filter; 
 };
 
 #endif

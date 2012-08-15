@@ -73,7 +73,7 @@ public:
     {
     V3DITKGenericDialog dialog("Watershed");
 
-    dialog.AddDialogElement("Threshold",0.01, 0.0, 1.0);
+    dialog.AddDialogElement("Threshold",0.10, 0.0, 1.0);
     dialog.AddDialogElement("WaterLevel",0.2, 0.0, 1.0);
 
     if( dialog.exec() == QDialog::Accepted )
@@ -117,7 +117,7 @@ public:
 
     V3DITKGenericDialog dialog("Watershed");
 
-    dialog.AddDialogElement("Threshold",0.01, 0.0, 1.0);
+    dialog.AddDialogElement("Threshold",0.10, 0.0, 1.0);
     dialog.AddDialogElement("WaterLevel",0.2, 0.0, 1.0);
 
     if( dialog.exec() != QDialog::Accepted )
@@ -163,6 +163,14 @@ public:
     {
       qDebug() << "exception is : " << e.what();
     }
+    
+    //if canceled return false
+    if ((this->m_RelabelFilter->GetOutput()) == NULL)
+    {
+      qDebug() << "canceled";
+      return false;
+    }
+ 
 
     {
     typedef itk::ImageFileWriter< LabeledImageType > WriterType;
