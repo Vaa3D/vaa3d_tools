@@ -190,10 +190,13 @@ public:
     //get the label inf
     LabelMapType* outputLabelMap = this->m_LabelMapFilter->GetOutput();
     unsigned long numberOfLabelMapObjects = outputLabelMap->GetNumberOfLabelObjects();
-    QString fileName = QString("WatershedLabelCount_%1").arg((QTime::currentTime()).toString());
+    QString fileName = QString("WatershedLabelCount_%1").arg((QTime::currentTime()).msec());
     QFile file(fileName);
     if (!file.open(QIODevice::WriteOnly | QIODevice::Text))
+	{
+		qDebug() << "open file error";
          return false;
+	}
      QTextStream out(&file);
      out << "number of the labeled count is :  " << numberOfLabelMapObjects << "\n"; 
     file.close();
