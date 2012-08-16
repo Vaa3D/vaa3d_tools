@@ -29,8 +29,8 @@ Note that "path_to_plugin_src" in this case should be "../ITK-V3D-Plugins".
 
 If we do this, then we don't need to run manual ccmake again and again!
 **********************************************************
-way to build the V3D_ITK_PLUGIN:
-you can just use command "bash build.sh" to build the plugins(just to set the path to basic_c_fun and the path to binary folder) or just make it as follows:
+way to build the V3D_ITK_PLUGIN(Mac and Linux):
+you can just use command "bash build.sh" to build the plugins(just to set the path to vaa3d source folder) or just make it as follows:
 	1.build ITK library
 note that you should make ITK_USE_REVIEW on. You can just run the command
 	mkdir build && cd build && cmake -DBUILD_TESTING=OFF -DBUILD_EXAMPLES=OFF -DITK_USE_REVIEW=ON ../path_to_ITK_src
@@ -50,3 +50,32 @@ then build it
 Note that plath_to_plugin_src this case should be "ITK-V3D-Plugins".
 you gcc version should be higher than 4.2.0
 ITK version 4.1.0
+***********************************************************
+way to build Vaa3D-ITK-Plugins on windows(under msvc 2008 x64):
+We expect you have installed msvc 2008 x64 and cmake (version higher than 2.8.0);
+	1. build ITK library.
+		*Extract InsightToolkit-4.1.0.tar.gz in the ITK-V3D_Plugins' folder.
+		*Make a new build folder outside the ITK source folder (such as "ITK_build")
+		*Run cmake-gui programe
+		*Click "Browse Source" button and set the value of source folder as the path where you extracted the ITK source (such as “C:/ITK/InsightToolkit-4.1.0")
+ 		*Click "Browse Build" button and set the value of build folder as the path where you just made, which is the new build folder （such as "C:/ITK/ITK_build")
+		*Click "Configure" button to configure
+		*Click "Generate" button to generate the msvc 2008 x64 project file
+		*Use Microsoft Visual Studio 2008 x64 to open the project file in the build folder( such as "C:/ITK/ITK_build")
+		*Compile it use compiler in msvc 2008(Just press the F7 button)
+	2. build Vaa3d-ITK-Plugins
+		*Make a new build folder outside the Vaa3D-ITK-Plugins' source folder (such as "plugins_build")
+		*Run cmake-gui programe(delete the cache before)
+		*Click "Browse Source" button and set the value of source folder as the path where your Vaa3D-ITK-plugin source place(such as "C:/ITK-V3D-Plugins/")
+		*Click "Browse Build" button and set the value of build folder as the path where you just made,  which is the new build folder （such as "C:/ITK/plugins_build")
+		*Click "Configure" button to configure the sourch file;
+		*After configure you may meet with some problems. you should set the right paths as follows:
+			ITK_DIR, path where you build you ITK libraries (such as "C:/ITK/ITK_build")
+			V3D_BINARY_DIR, path where the plugins should be placed (such as "C:/vaa3d/bin")
+			V3D_BASIC_C_FUN_SOURCE_DIR, path to the v3d_main/basic_c_fun (such as "C:/vaa3d/v3d_main/basic_c_fun")
+		*Click "Generate" button to create the msvc 2008 x64 project file
+		*Use Microsoft Visual Studio 2008 x64 to open the project file in the build folder( such as "C:/ITK/plugins_build")
+		*Compile it use compiler in msvc 2008 (Just press the F7 button);
+After you compile it correctly, the plugins will be moved to the folder of your vaa3d binary folder automaicly. So just run vaa3d and test it. 
+
+
