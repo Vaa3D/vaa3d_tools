@@ -6,6 +6,7 @@
 #include <set>
 #include <map>
 #include <cmath>
+#include <string>
 
 #include "my_surf_objs.h"
 
