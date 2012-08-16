@@ -1,0 +1,28 @@
+#To build this plugin:
+
+#Basic instructions
+Get R: http://cran.r-project.org/
+Download packages:
+http://cran.r-project.org/web/packages/Rcpp/index.html
+http://cran.r-project.org/web/packages/RInside/index.html
+
+#Ubuntu shortcuts/advice:
+apt-get install r-base-dev
+apt-get install r-cran-rcpp
+#build RInside from source
+sudo R CMD INSTALL RInside_0.2.7.tar.gz #(or whichever the version is)
+
+
+#Set R_HOME
+export R_HOME=/usr/lib/R
+
+#make the RInside example plugins (search for 'rinside_sample0.cpp' for location)
+make /usr/local/lib/R/site-library/RInside/examples/standard/
+
+#copy the g++ calls from the above
+
+#browse to r_plugin (assuming vaa3d is set up correctly)
+#open r_plugin.pro
+#edit R-specific includes and lib commands to match the RInside g++ call, if necessary
+qmake
+make
