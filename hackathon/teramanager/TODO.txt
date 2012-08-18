@@ -19,11 +19,6 @@ P9 Bug: "Select VOI with Vaa3D volume cut scrollbars": the syncronization betwee
         derer volume cut scrollbars and Teramanager spinboxes does not always work well. So-
         metimes Vaa3D does not use the actual size of the map, and it seems it is working on
         a downsampled version.
-P9 Dev: reestabilish the  multiresolution volume  import lost  in July 20th 2012 for the SVN 
-        conflict. When a volume is imported, all the other resolutions available in the par-
-        ent folder should be imported too in order to enable a "Google-Earth" feature.
-P8 New: add a spinbox to the GUI to control the size limit for the volume map and a checkbox
-        to regenerate the volume map with the selected size limit.
 P8 New: add some fields to the GUI to show the size (in MVoxels) of the selected VOIs.
 P7 New: enable the "Google-Earth" feature by extending the "Zoom-in" feature and exploiting
         the multiresolution import.

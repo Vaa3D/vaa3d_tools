@@ -75,7 +75,7 @@ StackedVolume::StackedVolume(const char* _stacks_dir)  throw (MyException)
 
 StackedVolume::StackedVolume(const char* _stacks_dir, ref_sys _reference_system, float _VXL_1, float _VXL_2, float _VXL_3, bool overwrite_mdata, bool save_mdata)  throw (MyException)
 {
-        #if IM_VERBOSE > 0
+        #if IM_VERBOSE > 3
 	printf("\t\t\t\tin StackedVolume::StackedVolume(_stacks_dir=%s, ref_sys reference_system={%d,%d,%d}, VXL_1=%.4f, VXL_2=%.4f, VXL_3=%.4f)\n",
                           _stacks_dir, _reference_system.first, _reference_system.second, _reference_system.third, _VXL_1, _VXL_2, _VXL_3);
 	#endif

@@ -44,7 +44,7 @@ Q_EXPORT_PLUGIN2(teramanagerplugin, teramanager::CPlugin)
 QStringList CPlugin::menulist() const
 {
         return QStringList()
-                <<tr("Teravoxel-sized Image Manager")
+                <<tr("Teravoxel-sized Image Visualization")
                 <<tr("About and help");
 }
 
@@ -62,7 +62,7 @@ void CPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWi
     printf("TeraStitcher plugin [thread %d] >> CPlugin::domenu launched\n", this->thread()->currentThreadId());
     #endif
 
-    if (menu_name == tr("Teravoxel-sized Image Manager"))
+    if (menu_name == tr("Teravoxel-sized Image Visualization"))
     {
         //checking shared libraries
         if(!CPlugin::isSharedLibraryLoadable("opencv_core"))
@@ -130,7 +130,7 @@ bool CPlugin::isSharedLibraryLoadable(const char* name)
 {
     #ifdef __unix__
     //UNIX
-    QString tmp("");
+    /*QString tmp("");
     tmp.append("lib");
     tmp.append(name);
     tmp.append(".so");
@@ -141,7 +141,8 @@ bool CPlugin::isSharedLibraryLoadable(const char* name)
     {
         dlclose(my_lib_handle);
         return true;
-    }
+    }*/
+    return true;    //to be fixed: _unix_ is defined also on MAC OS
     #endif
     #ifdef _WIN32
     return true;    //not yet supported: anyway Windows O.S. should display an error message about the missing DLL.

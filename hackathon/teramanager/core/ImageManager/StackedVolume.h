@@ -108,6 +108,13 @@ class StackedVolume
                 int    getStacksHeight();
                 int    getStacksWidth();
                 float  getMVoxels(){return (DIM_V/1024.0f)*(DIM_H/1024.0f)*DIM_D;}
+                float getVXL_1(){return VXL_1;}
+                float getVXL_2(){return VXL_2;}
+                float getVXL_3(){return VXL_3;}
+                axis getAXS_1(){return reference_system.first;}
+                axis getAXS_2(){return reference_system.second;}
+                axis getAXS_3(){return reference_system.third;}
+
 
 		//PRINT method
 		void print();

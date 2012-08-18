@@ -1,7 +1,27 @@
 Version history of TeraManager
-================================
+============================================================================================
 
-Below you find a list with the added features, changes and fixes for each version.
+Below you find a list with the added  features, changes and fixes  for each version. Activi-
+ties names are:
+- New: a new feature to be implemented
+- Bug: bug to be fixed
+- Dev: for developers only
+
+============================================================================================
+
+
+Version 0.2.3
+August 18th, 2012
+--------------------------------------------------------------------------------------------
+- New: added a spinbox to control the size limit for the volume map and a checkbox to regen-
+       erate the volume map with the selected size limit.
+- Dev: the multiresolution volume import lost in July 20th 2012 for the SVN problem has been
+       reestabilished. When a volume is imported, all the other resolutions available in the
+       parent folder are imported too in order to enable a "Google-Earth" feature.
+- Fix: runtime detection of OpenCV library has been disabled. It didn't work  on MAC OS sys-
+       tems. In order to be fixed, this should be tested on a MAC OS.
+--------------------------------------------------------------------------------------------
+
 
 Version 0.2.2
 July 24th, 2012
@@ -12,6 +32,7 @@ July 24th, 2012
        to load the selected subvolume. At this moment, the loaded subvolume is shown in the
        volume map view, but it should be shown in a new view (this bug will be soon fixed).
 --------------------------------------------------------------------------------------------
+
 
 Version 0.2.1
 July 21st, 2012

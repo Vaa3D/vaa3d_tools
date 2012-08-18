@@ -31,10 +31,12 @@
 #include "presentation/PMain.h"
 #include <sstream>
 #include <limits>
+#include <algorithm>
 
 using namespace teramanager;
 
 CImport* CImport::uniqueInstance = NULL;
+bool sortVolumes (StackedVolume* i,StackedVolume* j) { return (i->getMVoxels()<j->getMVoxels()); }
 
 void CImport::uninstance()
 {
@@ -51,8 +53,9 @@ CImport::~CImport()
     printf("TeraStitcher plugin [thread %d] >> CImport destroyed\n", this->thread()->currentThreadId());
     #endif
 
-    if(volume)
-        delete volume;
+    for(int k=0; k<volumes.size(); k++)
+        if(volumes[k])
+            delete volumes[k];
 }
 
 //SET methods
@@ -89,7 +92,10 @@ void CImport::run()
 
     try
     {
-        //if metadata binary file doesn't exist or the volume has to be re-imported, further informations must be provided to the constructor
+        /********************* 1) IMPORTING CURRENT VOLUME ***********************
+        If metadata binary file doesn't exist or the volume has to be re-imported,
+        further informations must be provided to the constructor.
+        *************************************************************************/
         string mdata_fpath = path;
         mdata_fpath.append("/");
         mdata_fpath.append(IM_METADATA_FILE_NAME);
@@ -97,7 +103,7 @@ void CImport::run()
         {
             //checking current members validity
             if(AXS_1 != axis_invalid && AXS_2 != axis_invalid && AXS_3 != axis_invalid && VXL_1 != 0 && VXL_2 != 0 && VXL_3 != 0)
-                volume = new StackedVolume(path.c_str(), ref_sys(AXS_1,AXS_2,AXS_3),VXL_1,VXL_2,VXL_3, reimport);
+                volumes.push_back(new StackedVolume(path.c_str(), ref_sys(AXS_1,AXS_2,AXS_3),VXL_1,VXL_2,VXL_3, reimport));
             else
             {
                 char errMsg[IM_STATIC_STRINGS_SIZE];
@@ -107,77 +113,105 @@ void CImport::run()
             }
         }
         else
-            volume = new StackedVolume(path.c_str(), ref_sys(axis_invalid,axis_invalid,axis_invalid),0,0,0);
+            volumes.push_back(new StackedVolume(path.c_str(), ref_sys(axis_invalid,axis_invalid,axis_invalid),0,0,0));
 
-        //if "Generate and show 3D volume map" checkbox has been checked
-        vmap_data = 0;
-        Image4DSimple* vmap_image = 0;
-        if(multires_mode)
+        /********************* 2) IMPORTING OTHER VOLUMES ***********************
+        If multiresolution mode is enabled, importing all the available resolutions
+        within the current volume's parent directory.
+        *************************************************************************/
+        if(multiresMode)
+        {
+            //detecting candidate volumes
+            vector<StackedVolume*> candidateVols;
+            QDir curParentDir(path.c_str());
+            curParentDir.cdUp();
+            QStringList otherDirs = curParentDir.entryList(QDir::AllDirs | QDir::NoDotAndDotDot);
+            for(int k=0; k<otherDirs.size(); k++)
+            {
+                try
+                {
+                    StackedVolume* candidate_vol = new StackedVolume(curParentDir.absolutePath().append("/").append(otherDirs.at(k).toLocal8Bit().constData()).toStdString().c_str(),
+                                                                     ref_sys(volumes[0]->getAXS_1(),volumes[0]->getAXS_2(),volumes[0]->getAXS_3()),
+                                                                     volumes[0]->getVXL_1(),volumes[0]->getVXL_2(),volumes[0]->getVXL_3(), false, false);
+                    candidateVols.push_back(candidate_vol);
+                }
+                catch(...){}
+            }
+
+            //importing candidate volumes
+            for(int k=0; k<candidateVols.size(); k++)
+            {
+                //current volume (now stored in volumes[0]) should be discarded
+                if(candidateVols[k]->getMVoxels() != volumes[0]->getMVoxels())
+                {
+                    int ratio = pow((volumes[0]->getMVoxels() / candidateVols[k]->getMVoxels()),(1/3.0f)) + 0.5;
+                    volumes.push_back(new StackedVolume(candidateVols[k]->getSTACKS_DIR(),
+                                                        ref_sys(volumes[0]->getAXS_1(),volumes[0]->getAXS_2(),volumes[0]->getAXS_3()),
+                                                        volumes[0]->getVXL_1()*ratio,volumes[0]->getVXL_2()*ratio,volumes[0]->getVXL_3()*ratio, reimport));
+                    delete candidateVols[k];
+                }
+            }
+
+            //sorting volumes by descending size
+            std::sort(volumes.begin(), volumes.end(), sortVolumes);
+        }
+
+        /********************** 3) GENERATING VOLUME 3D MAP ***********************
+        If multiresolution mode is enabled, it could be convenient to generate once
+        for all a volume map from a low-resolution volume.
+        *************************************************************************/
+        Image4DSimple* volMapImage = 0;
+        if(multiresMode)
         {
             //searching for an already existing map, if not available we try to generate it from the lower resolutions
-            string vmap_fpath = path;
-            vmap_fpath.append("/");
-            vmap_fpath.append(TMP_VMAP_FNAME);
-            if(!StackedVolume::fileExists(vmap_fpath.c_str()))
+            string volMapPath = path;
+            volMapPath.append("/");
+            volMapPath.append(TMP_VMAP_FNAME);
+            if(!StackedVolume::fileExists(volMapPath.c_str()) || reimport || regenerateVolMap)
             {
-                //searching for the highest resolution available which size is less then the maximum allowed ("good for map")
-                QDir resdir(path.c_str());
-                resdir.cdUp();
-                QStringList resolutions_dirs = resdir.entryList(QDir::AllDirs | QDir::NoDotAndDotDot, QDir::Size);
-                int res_good4map = -1;
-                float res_good4map_highest = -std::numeric_limits<float>::max();
-                float ratio;
-                for(int k=0; k<resolutions_dirs.size(); k++)
+                //searching for the highest resolution available which size is less then the maximum allowed
+                int volMapIndex = -1;
+                for(int k=0; k<volumes.size(); k++)
                 {
-                    int width=0, height=0, depth=0;
-                    int scanres = sscanf(resolutions_dirs.at(k).toLocal8Bit().constData(), "RES(%dx%dx%d)", &height, &width, &depth);
-                    float res_size = (width/1024.0f)*(height/1024.0f)*depth;
-                    if(scanres == 3 && res_size < TMP_VMAP_MAXSIZE && res_size > res_good4map_highest)
-                    {
-                        res_good4map_highest = res_size;
-                        res_good4map = k;
-                        ratio = volume->getDIM_D()/(float)depth;
-                    }
+                    if(volumes[k]->getMVoxels() < volMapMaxSize)
+                        volMapIndex = k;
                 }
 
-                //if one "good for map" resolution is available, generating and saving the corresponding map, otherwise throwing an exception
-                if(res_good4map != -1)
+                //if found, generating and saving the corresponding map, otherwise throwing an exception
+                if(volMapIndex != -1)
                 {
-                    StackedVolume vol_good4map(resdir.absolutePath().append("/").append(resolutions_dirs.at(res_good4map).toLocal8Bit().constData()).toStdString().c_str(),
-                                               ref_sys(AXS_1,AXS_2,AXS_3),VXL_1*ratio,VXL_2*ratio,VXL_3*ratio, false, true);
-                    //StackedVolume vol_good4map(resdir.absolutePath().append("/").append(resolutions_dirs.at(res_good4map).toLocal8Bit().constData()).toStdString().c_str());
-                    uint8* vmap_raw = vol_good4map.loadSubvolume_to_UINT8();
-                    int vmap_height = vol_good4map.getDIM_V();
-                    int vmap_width  = vol_good4map.getDIM_H();
-                    int vmap_depth  = vol_good4map.getDIM_D();
-                    FILE *vmap_bin = fopen(vmap_fpath.c_str(), "wb");
-                    fwrite(&vmap_height, sizeof(uint32), 1, vmap_bin);
-                    fwrite(&vmap_width,  sizeof(uint32), 1, vmap_bin);
-                    fwrite(&vmap_depth,  sizeof(uint32), 1, vmap_bin);
-                    fwrite(vmap_raw, vmap_height*vmap_width*vmap_depth, 1, vmap_bin);
-                    fclose(vmap_bin);
+                    uint8* vmap_raw = volumes[volMapIndex]->loadSubvolume_to_UINT8();
+                    volMapHeight = volumes[volMapIndex]->getDIM_V();
+                    volMapWidth  = volumes[volMapIndex]->getDIM_H();
+                    volMapDepth  = volumes[volMapIndex]->getDIM_D();
+                    FILE *volMapBin = fopen(volMapPath.c_str(), "wb");
+                    fwrite(&volMapHeight, sizeof(uint32), 1, volMapBin);
+                    fwrite(&volMapWidth,  sizeof(uint32), 1, volMapBin);
+                    fwrite(&volMapDepth,  sizeof(uint32), 1, volMapBin);
+                    fwrite(vmap_raw, volMapHeight*volMapWidth*volMapDepth, 1, volMapBin);
+                    fclose(volMapBin);
                 }
                 else
                     throw MyException(QString("Can't generate 3D volume map: a resolution of at most ").
-                                      append(QString::number(TMP_VMAP_MAXSIZE)).
+                                      append(QString::number(volMapMaxSize)).
                                       append(" MVoxels must be available in the volume's parent directory\n").toStdString().c_str());
             }
 
             //at this point we should have the volume map stored in the volume's directory
-            FILE *vmap_bin = fopen(vmap_fpath.c_str(), "rb");
-            fread(&vmap_height, sizeof(uint32), 1, vmap_bin);
-            fread(&vmap_width,  sizeof(uint32), 1, vmap_bin);
-            fread(&vmap_depth,  sizeof(uint32), 1, vmap_bin);
-            vmap_data = new uint8[vmap_height * vmap_width * vmap_depth];
-            fread(vmap_data, vmap_height*vmap_width*vmap_depth, 1, vmap_bin);
-            fclose(vmap_bin);
-            vmap_image = new Image4DSimple();
-            vmap_image->setFileName("Volume map");
-            vmap_image->setData(vmap_data, vmap_width, vmap_height, vmap_depth, 1, V3D_UINT8);
+            FILE *volMapBin = fopen(volMapPath.c_str(), "rb");
+            fread(&volMapHeight, sizeof(uint32), 1, volMapBin);
+            fread(&volMapWidth,  sizeof(uint32), 1, volMapBin);
+            fread(&volMapDepth,  sizeof(uint32), 1, volMapBin);
+            volMapData = new uint8[volMapHeight*volMapWidth*volMapDepth];
+            fread(volMapData, volMapHeight*volMapWidth*volMapDepth, 1, volMapBin);
+            fclose(volMapBin);
+            volMapImage = new Image4DSimple();
+            volMapImage->setFileName("VolumeMap");
+            volMapImage->setData(volMapData, volMapWidth, volMapHeight, volMapDepth, 1, V3D_UINT8);
         }
 
         //everything went OK
-        emit sendOperationOutcome(0, vmap_image);
+        emit sendOperationOutcome(0, volMapImage);
     }
     catch( MyException& exception)  {emit sendOperationOutcome(&exception, 0);}
     catch(const char* error)        {emit sendOperationOutcome(new MyException(error), 0);}

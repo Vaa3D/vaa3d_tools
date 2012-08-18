@@ -65,7 +65,9 @@ class teramanager::PMain : public QWidget
         QLineEdit *path_field;          //field for either volume's dir or project XML path
         QPushButton *voldir_button;     //browse for volume's directory button
         QCheckBox *reimport_checkbox;   //checkbox to be used to reimport a volume already imported
-        QCheckBox *enable3Dmode;       //checkbox to be used to generate and show a 3D volume map
+        QCheckBox *enableMultiresMode;  //checkbox to be used to generate and show a 3D volume map
+        QCheckBox *regenerateVolMap;    //if activated, the volume map will be regenerated
+        QSpinBox  *volMapMaxSizeSBox;   //to set the maximum allowed size (in MVoxels) of the volume map
 
         //info panel widgets, contain informations of the loaded volume
         QGroupBox* info_panel;
@@ -127,7 +129,7 @@ class teramanager::PMain : public QWidget
         QPushButton* loadButton;
 
         //3d mode widgets
-        QGroupBox* mode3D_panel;
+        QGroupBox* multires_panel;
         QLabel* subvol_dims_label;
         QSpinBox* Vdim_sbox;
         QSpinBox* Hdim_sbox;

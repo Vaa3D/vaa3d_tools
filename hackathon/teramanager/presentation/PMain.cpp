@@ -84,17 +84,44 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
 
     //import form widgets
     import_form = new QGroupBox("Import form");
-    import_form->setFont(tinyFont);
     path_field    = new QLineEdit("Enter the volume's directory");
     path_field->setMinimumWidth(200);
     voldir_button       = new QPushButton("Browse for dir...");
-    reimport_checkbox = new QCheckBox("Re-import (check it to overwrite previous imports)");
-    enable3Dmode = new QCheckBox("Enable 3D mode (uncheck it if lower resolutions are not available)");
-    enable3Dmode->setChecked(true);
+    reimport_checkbox = new QCheckBox("Overwrite previous imports");
+    enableMultiresMode = new QCheckBox("Enable multiresolution mode");
+    enableMultiresMode->setChecked(true);
+    regenerateVolMap = new QCheckBox("Regenerate volume map");
+    regenerateVolMap->setChecked(false);
+    volMapMaxSizeSBox = new QSpinBox();
+    volMapMaxSizeSBox->setMaximum(10);
+    volMapMaxSizeSBox->setMaximum(1000);
+    volMapMaxSizeSBox->setValue(200);
+    volMapMaxSizeSBox->setAlignment(Qt::AlignCenter);
+
+    //multiresolution mode widgets
+    multires_panel = new QGroupBox("Multiresolution mode");
+    subvol_dims_label = new QLabel("VOI dimensions:");
+    Vdim_sbox = new QSpinBox();
+    Vdim_sbox->setAlignment(Qt::AlignCenter);
+    Vdim_sbox->setMaximum(1000);
+    Vdim_sbox->setValue(200);
+    Hdim_sbox = new QSpinBox();
+    Hdim_sbox->setAlignment(Qt::AlignCenter);
+    Hdim_sbox->setMaximum(1000);
+    Hdim_sbox->setValue(200);
+    Ddim_sbox = new QSpinBox();
+    Ddim_sbox->setAlignment(Qt::AlignCenter);
+    Ddim_sbox->setMaximum(1000);
+    Ddim_sbox->setValue(100);
+    direction_V_label_6 = new QLabel("(V)");
+    direction_H_label_6 = new QLabel("(H)");
+    direction_D_label_6 = new QLabel("(D)");
+    by_label_6 = new QLabel("x");
+    by_label_7 = new QLabel("x");
+
 
     //info panel widgets
     info_panel = new QGroupBox("Volume's informations");
-    info_panel->setFont(tinyFont);
     info_panel->setEnabled(false);
     volume_dims_label = new QLabel("Dimensions (voxels)");
     direction_V_label_0 = new QLabel("(V)");
@@ -105,12 +132,15 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     vol_height_field = new QLabel();
     vol_height_field->setAlignment(Qt::AlignCenter);
     vol_height_field->setStyleSheet("border: 1px solid; border-color: gray; background-color: rgb(245,245,245); padding-left:5px; padding-right:5px");
+    vol_height_field->setFont(tinyFont);
     vol_width_field = new QLabel();
     vol_width_field->setAlignment(Qt::AlignCenter);
     vol_width_field->setStyleSheet("border: 1px solid; border-color: gray; background-color: rgb(245,245,245); padding-left:5px; padding-right:5px");
+    vol_width_field->setFont(tinyFont);
     vol_depth_field = new QLabel();
     vol_depth_field->setAlignment(Qt::AlignCenter);
     vol_depth_field->setStyleSheet("border: 1px solid; border-color: gray; background-color: rgb(245,245,245); padding-left:5px; padding-right:5px");
+    vol_depth_field->setFont(tinyFont);
     volume_stacks_label = new QLabel("Number of stacks:");
     direction_V_label_1 = new QLabel("(V)");
     direction_H_label_1 = new QLabel("(H)");
@@ -118,9 +148,11 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     nrows_field = new QLabel();
     nrows_field->setAlignment(Qt::AlignCenter);
     nrows_field->setStyleSheet("border: 1px solid; border-color: gray; background-color: rgb(245,245,245); padding-left:5px; padding-right:5px");
+    nrows_field->setFont(tinyFont);
     ncols_field = new QLabel();
     ncols_field->setAlignment(Qt::AlignCenter);
     ncols_field->setStyleSheet("border: 1px solid; border-color: gray; background-color: rgb(245,245,245); padding-left:5px; padding-right:5px");
+    ncols_field->setFont(tinyFont);
     stacks_dims_label = new QLabel("Stacks dimensions (voxels):");
     direction_V_label_2 = new QLabel("(V)");
     direction_H_label_2 = new QLabel("(H)");
@@ -130,12 +162,15 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     stack_height_field = new QLabel();
     stack_height_field->setAlignment(Qt::AlignCenter);
     stack_height_field->setStyleSheet("border: 1px solid; border-color: gray; background-color: rgb(245,245,245); padding-left:5px; padding-right:5px");
+    stack_height_field->setFont(tinyFont);
     stack_width_field = new QLabel();
     stack_width_field->setAlignment(Qt::AlignCenter);
     stack_width_field->setStyleSheet("border: 1px solid; border-color: gray; background-color: rgb(245,245,245); padding-left:5px; padding-right:5px");
+    stack_width_field->setFont(tinyFont);
     stack_depth_field = new QLabel();
     stack_depth_field->setAlignment(Qt::AlignCenter);
     stack_depth_field->setStyleSheet("border: 1px solid; border-color: gray; background-color: rgb(245,245,245); padding-left:5px; padding-right:5px");
+    stack_depth_field->setFont(tinyFont);
     voxel_dims_label = new QLabel("Voxel's dimensions (microns):");
     direction_V_label_3 = new QLabel("(V)");
     direction_H_label_3 = new QLabel("(H)");
@@ -145,12 +180,15 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     vxl_V_field = new QLabel();
     vxl_V_field->setAlignment(Qt::AlignCenter);
     vxl_V_field->setStyleSheet("border: 1px solid; border-color: gray; background-color: rgb(245,245,245); padding-left:5px; padding-right:5px");
+    vxl_V_field->setFont(tinyFont);
     vxl_H_field = new QLabel();
     vxl_H_field->setAlignment(Qt::AlignCenter);
     vxl_H_field->setStyleSheet("border: 1px solid; border-color: gray; background-color: rgb(245,245,245); padding-left:5px; padding-right:5px");
+    vxl_H_field->setFont(tinyFont);
     vxl_D_field = new QLabel();
     vxl_D_field->setAlignment(Qt::AlignCenter);
     vxl_D_field->setStyleSheet("border: 1px solid; border-color: gray; background-color: rgb(245,245,245); padding-left:5px; padding-right:5px");
+    vxl_D_field->setFont(tinyFont);
     origin_label = new QLabel("Origin (millimeters):");
     direction_V_label_4 = new QLabel("(V)");
     direction_H_label_4 = new QLabel("(H)");
@@ -158,16 +196,18 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     org_V_field = new QLabel();
     org_V_field->setAlignment(Qt::AlignCenter);
     org_V_field->setStyleSheet("border: 1px solid; border-color: gray; background-color: rgb(245,245,245); padding-left:5px; padding-right:5px");
+    org_V_field->setFont(tinyFont);
     org_H_field = new QLabel();
     org_H_field->setAlignment(Qt::AlignCenter);
     org_H_field->setStyleSheet("border: 1px solid; border-color: gray; background-color: rgb(245,245,245); padding-left:5px; padding-right:5px");
+    org_H_field->setFont(tinyFont);
     org_D_field = new QLabel();
     org_D_field->setAlignment(Qt::AlignCenter);
     org_D_field->setStyleSheet("border: 1px solid; border-color: gray; background-color: rgb(245,245,245); padding-left:5px; padding-right:5px");
+    org_D_field->setFont(tinyFont);
 
     //subvol panel widgets
     subvol_panel = new QGroupBox("Volume Of Interest's selection:");
-    subvol_panel->setFont(tinyFont);
     subvol_panel->setEnabled(false);
     V0_sbox = new QSpinBox();
     V0_sbox->setAlignment(Qt::AlignCenter);
@@ -195,27 +235,6 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     loadButton->setText("Load");
     loadButton->setIconSize(QSize(30,30));
 
-    //3d mode widgets
-    mode3D_panel = new QGroupBox("3D mode");
-    subvol_dims_label = new QLabel("VOI dimensions:");
-    Vdim_sbox = new QSpinBox();
-    Vdim_sbox->setAlignment(Qt::AlignCenter);
-    Vdim_sbox->setMaximum(1000);
-    Vdim_sbox->setValue(200);
-    Hdim_sbox = new QSpinBox();
-    Hdim_sbox->setAlignment(Qt::AlignCenter);
-    Hdim_sbox->setMaximum(1000);
-    Hdim_sbox->setValue(200);
-    Ddim_sbox = new QSpinBox();
-    Ddim_sbox->setAlignment(Qt::AlignCenter);
-    Ddim_sbox->setMaximum(1000);
-    Ddim_sbox->setValue(100);
-    direction_V_label_6 = new QLabel("(V)");
-    direction_H_label_6 = new QLabel("(H)");
-    direction_D_label_6 = new QLabel("(D)");
-    by_label_6 = new QLabel("x");
-    by_label_7 = new QLabel("x");
-
     //other widgets
     progressBar = new QProgressBar(this);
     statusBar = new QStatusBar();
@@ -223,15 +242,12 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
 
     //****LAYOUT SECTIONS****
     //import form
-    QWidget* container_tmp = new QWidget();
-    QHBoxLayout* container_tmp_layout = new QHBoxLayout();
-    container_tmp_layout->addWidget(path_field);
-    container_tmp_layout->addWidget(voldir_button);
-    container_tmp->setLayout(container_tmp_layout);
-    QVBoxLayout* import_form_layout = new QVBoxLayout();
-    import_form_layout->addWidget(container_tmp);
-    import_form_layout->addWidget(reimport_checkbox);
-    import_form_layout->addWidget(enable3Dmode);
+    QGridLayout* import_form_layout = new QGridLayout();
+    import_form_layout->addWidget(path_field,           0,0,1,4);
+    import_form_layout->addWidget(voldir_button,        0,4,1,2);
+    import_form_layout->addWidget(reimport_checkbox,    1,0,1,3);
+    import_form_layout->addWidget(regenerateVolMap,     1,3,1,3);
+    import_form_layout->addWidget(enableMultiresMode,   3,0,1,6);
     import_form->setLayout(import_form_layout);
     import_form->setStyle(new QWindowsStyle());
 
@@ -298,31 +314,35 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     subvol_panel->setLayout(subvol_panel_layout);
     subvol_panel->setStyle(new QWindowsStyle());
 
-    //3d mode widgets
-    QGridLayout* mode3D_panel_layout= new QGridLayout();
-    mode3D_panel_layout->addWidget(subvol_dims_label,       0, 0, 1, 4);
-    mode3D_panel_layout->addWidget(Vdim_sbox,               0, 5, 1, 2);
-    mode3D_panel_layout->addWidget(direction_V_label_6,     0, 7, 1, 1);
-    mode3D_panel_layout->addWidget(by_label_6,              0, 8, 1, 1);
-    mode3D_panel_layout->addWidget(Hdim_sbox,               0, 9, 1, 2);
-    mode3D_panel_layout->addWidget(direction_H_label_6,     0, 11, 1, 1);
-    mode3D_panel_layout->addWidget(by_label_7,              0, 12, 1, 1);
-    mode3D_panel_layout->addWidget(Ddim_sbox,               0, 13, 1, 2);
-    mode3D_panel_layout->addWidget(direction_D_label_6,     0, 15, 1, 1);
-    mode3D_panel->setLayout(mode3D_panel_layout);
-    mode3D_panel->setStyle(new QWindowsStyle());
+    //multiresolution mode widgets
+    QGridLayout* multiresModePanelLayout= new QGridLayout();
+    multiresModePanelLayout->addWidget(new QLabel("Volume map size limit:"),    1,0,1,4);
+    multiresModePanelLayout->addWidget(volMapMaxSizeSBox,                       1,5,1,2);
+    multiresModePanelLayout->addWidget(new QLabel("MVoxels"),                   1,7,1,3);
+    multiresModePanelLayout->addWidget(subvol_dims_label,                       2, 0, 1, 4);
+    multiresModePanelLayout->addWidget(Vdim_sbox,                               2, 5, 1, 2);
+    multiresModePanelLayout->addWidget(direction_V_label_6,                     2, 7, 1, 1);
+    multiresModePanelLayout->addWidget(by_label_6,                              2, 8, 1, 1);
+    multiresModePanelLayout->addWidget(Hdim_sbox,                               2, 9, 1, 2);
+    multiresModePanelLayout->addWidget(direction_H_label_6,                     2, 11, 1, 1);
+    multiresModePanelLayout->addWidget(by_label_7,                              2, 12, 1, 1);
+    multiresModePanelLayout->addWidget(Ddim_sbox,                               2, 13, 1, 2);
+    multiresModePanelLayout->addWidget(direction_D_label_6,                     2, 15, 1, 1);
+    multires_panel->setLayout(multiresModePanelLayout);
+    multires_panel->setStyle(new QWindowsStyle());
 
     //overall
     QVBoxLayout* layout = new QVBoxLayout();
     layout->addWidget(helpbox);
-    layout->addWidget(import_form);
+    layout->addWidget(import_form);    
+    layout->addWidget(multires_panel);
     layout->addWidget(info_panel);
     layout->addWidget(subvol_panel);
-    layout->addWidget(mode3D_panel);
     layout->addWidget(statusBar);
     layout->addWidget(progressBar);
     setLayout(layout);
-    setWindowTitle(tr("TeraManager plugin"));
+    setWindowTitle(tr("TeraManager plugin"));    
+    this->setFont(tinyFont);
     subvol_panel->setEnabled(false);
 
     // signals and slots
@@ -330,7 +350,7 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     connect(loadButton, SIGNAL(clicked()), this, SLOT(loadButtonClicked()));
     connect(CImport::instance(), SIGNAL(sendOperationOutcome(MyException*, Image4DSimple*)), this, SLOT(import_done(MyException*, Image4DSimple*)), Qt::QueuedConnection);
     connect(CVolume::instance(), SIGNAL(sendOperationOutcome(MyException*)), this, SLOT(loading_done(MyException*)), Qt::QueuedConnection);
-    connect(enable3Dmode, SIGNAL(stateChanged(int)), this, SLOT(mode3D_checkbox_changed(int)), Qt::QueuedConnection);
+    connect(enableMultiresMode, SIGNAL(stateChanged(int)), this, SLOT(mode3D_checkbox_changed(int)), Qt::QueuedConnection);
     resetGUI();
 
     //center on screen and set always on top
@@ -360,14 +380,14 @@ void PMain::resetGUI()
 //Called when "enable3Dmode" state changed.
 void PMain::mode3D_checkbox_changed(int)
 {
-    this->mode3D_panel->setEnabled(enable3Dmode->isChecked());
+    this->multires_panel->setEnabled(enableMultiresMode->isChecked());
 }
 
 //called when loadButton has been clicked
 void PMain::loadButtonClicked()
 { 
     #ifdef TMP_DEBUG
-    printf("TeraManager plugin [thread %d] >> loadButtonClicked() called\n", this->thread()->currentThreadId());
+    printf("TeraManager plugin [thread %d] >> PMain loadButtonClicked() called\n", this->thread()->currentThreadId());
     #endif
 
     try
@@ -405,7 +425,7 @@ void PMain::loadButtonClicked()
 void PMain::voldir_button_clicked()
 {
     #ifdef TMP_DEBUG
-    printf("teramanager plugin [thread %d] >> PImport voldir_button_clicked() launched\n", this->thread()->currentThreadId());
+    printf("teramanager plugin [thread %d] >> PMain voldir_button_clicked() launched\n", this->thread()->currentThreadId());
     #endif
 
     try
@@ -430,11 +450,13 @@ void PMain::voldir_button_clicked()
         vmap_fpath.append("/");
         vmap_fpath.append(TMP_VMAP_FNAME);
         if(!StackedVolume::fileExists(mdata_fpath.c_str()) || reimport_checkbox->isChecked() ||
-          (!StackedVolume::fileExists(vmap_fpath.c_str()) && enable3Dmode->isChecked()))
+          (!StackedVolume::fileExists(vmap_fpath.c_str()) && enableMultiresMode->isChecked()))
             PDialogImport::instance()->exec();
         CImport::instance()->setPath(import_path);
         CImport::instance()->setReimport(reimport_checkbox->isChecked());
-        CImport::instance()->setMultiresMode(enable3Dmode->isChecked());
+        CImport::instance()->setMultiresMode(enableMultiresMode->isChecked());
+        CImport::instance()->setRegenerateVolumeMap(regenerateVolMap->isChecked());
+        CImport::instance()->setVolMapMaxSize(volMapMaxSizeSBox->value());
 
         //disabling import form and enabling progress bar animation
         progressBar->setEnabled(true);
@@ -561,7 +583,7 @@ void PMain::loading_done(MyException *ex)
     //if an exception has occurred, showing a message error
     if(ex)
         QMessageBox::critical(this,QObject::tr("Error"), QObject::tr(ex->what()),QObject::tr("Ok"));
-    else if(!enable3Dmode->isChecked())
+    else if(!enableMultiresMode->isChecked())
     {
         Image4DSimple* img = new Image4DSimple();
         img->setFileName(CImport::instance()->getVolume()->getSTACKS_DIR());
