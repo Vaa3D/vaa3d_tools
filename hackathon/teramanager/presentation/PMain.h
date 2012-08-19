@@ -54,6 +54,7 @@ class teramanager::PMain : public QWidget
         //members
         V3DPluginCallback2* V3D_env;     //handle of V3D environment
         QWidget *parentWidget;           //handle of parent widget
+        v3dhandle v3dWindow;             //handle of the Vaa3D window
         V3dR_GLWidget* view3DWidget;     //handle of 3D renderer widget
         XFormWidget* treeviewWidget;     //handle of tree-view widget
 
@@ -62,7 +63,6 @@ class teramanager::PMain : public QWidget
 
         //import form widgets
         QGroupBox* import_form;         //import form containing input fields
-        QLineEdit *path_field;          //field for either volume's dir or project XML path
         QPushButton *voldir_button;     //browse for volume's directory button
         QCheckBox *reimport_checkbox;   //checkbox to be used to reimport a volume already imported
         QCheckBox *enableMultiresMode;  //checkbox to be used to generate and show a 3D volume map
@@ -128,7 +128,7 @@ class teramanager::PMain : public QWidget
         QLabel* direction_D_label_5;
         QPushButton* loadButton;
 
-        //3d mode widgets
+        //multiresolution mode widgets
         QGroupBox* multires_panel;
         QLabel* subvol_dims_label;
         QSpinBox* Vdim_sbox;
@@ -207,6 +207,12 @@ class teramanager::PMain : public QWidget
         * managed in the current thread (ex != 0).
         ***********************************************************************************/
         void loading_done(MyException *ex);
+
+        /**********************************************************************************
+        * Called when the GUI widgets that control application settings change.
+        * This is used to manage persistent platform-independent application settings.
+        ***********************************************************************************/
+        void settingsChanged(int);
 
         /**********************************************************************************
         * Linked to volume cut scrollbars of Vaa3D widget containing the 3D renderer.

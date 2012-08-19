@@ -22,7 +22,6 @@ P9 Bug: "Select VOI with Vaa3D volume cut scrollbars": the syncronization betwee
 P8 New: add some fields to the GUI to show the size (in MVoxels) of the selected VOIs.
 P7 New: enable the "Google-Earth" feature by extending the "Zoom-in" feature and exploiting
         the multiresolution import.
-P7 New: the plugin should remember the last opened directory.
 P6 New: provide some help to the user when the volume is imported for the first time.
 P5 Dev: refine the registration between volume map and zoomed-in subvolume.
 P4 Dev: substitute the absolute thresholds used to detect the zoom-in and zoom-out actions

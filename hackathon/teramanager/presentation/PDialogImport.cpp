@@ -125,7 +125,7 @@ PDialogImport::~PDialogImport()
 void PDialogImport::import_button_clicked()
 {
     #ifdef TMP_DEBUG
-    printf("teramanager plugin [thread %d] >> ok_button_clicked() called", this->thread()->currentThreadId());
+    printf("teramanager plugin [thread %d] >> ok_button_clicked() called\n", this->thread()->currentThreadId());
     #endif
 
     try

@@ -36,7 +36,7 @@
 using namespace teramanager;
 
 CImport* CImport::uniqueInstance = NULL;
-bool sortVolumes (StackedVolume* i,StackedVolume* j) { return (i->getMVoxels()<j->getMVoxels()); }
+bool sortVolumesDescendingSize (StackedVolume* i,StackedVolume* j) { return (i->getMVoxels() >= j->getMVoxels()); }
 
 void CImport::uninstance()
 {
@@ -153,7 +153,7 @@ void CImport::run()
             }
 
             //sorting volumes by descending size
-            std::sort(volumes.begin(), volumes.end(), sortVolumes);
+            std::sort(volumes.begin(), volumes.end(), sortVolumesDescendingSize);
         }
 
         /********************** 3) GENERATING VOLUME 3D MAP ***********************

@@ -89,6 +89,7 @@ class teramanager::CImport : public QThread
 
         //GET and SET methods
         StackedVolume* getVolume(){if(volumes.size()) return volumes[0]; else return 0;}
+        string getPath(){return path;}
         uint8* getVMap(){return volMapData;}
         int getVMapHeight(){return volMapHeight;}
         int getVMapWidth(){return volMapWidth;}

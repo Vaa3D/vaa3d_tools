@@ -26,55 +26,69 @@
 *       specific prior written permission.
 ********************************************************************************************************************************************************************************************/
 
-#include "CVolume.h"
-#include "CImport.h"
+#ifndef CSETTINGS_H
+#define CSETTINGS_H
 
-using namespace teramanager;
+#include "CPlugin.h"
 
-CVolume* CVolume::uniqueInstance = NULL;
-
-void CVolume::uninstance()
+class teramanager::CSettings
 {
-    if(uniqueInstance)
-    {
-        delete uniqueInstance;
-        uniqueInstance = NULL;
-    }
-}
+    private:
 
-CVolume::~CVolume()
-{
-    #ifdef TMP_DEBUG
-    printf("teramanager plugin [thread %d] >> CLoadSubvolume destroyed\n", this->thread()->currentThreadId());
-    #endif
-}
+        /*********************************************************************************
+        * Singleton design pattern: this class can have one instance only,  which must be
+        * instantiated by calling static method "istance(...)"
+        **********************************************************************************/
+        static CSettings* uniqueInstance;
+        CSettings()
+        {
+            #ifdef TMP_DEBUG
+            printf("teramanager plugin [thread unknown] >> CSettings created\n");
+            #endif
+            loadDefaultSettings();
+            readSettings();
+        }
 
-//automatically called when current thread is started
-void CVolume::run()
-{
-    #ifdef TMP_DEBUG
-    printf("teramanager plugin [thread %d] >> CLoadSubvolume::run() launched\n", this->thread()->currentThreadId());
-    #endif
+        //members
+        string volumePathLRU;
+        int volMapSizeLimit;
+        int VOIdimV;
+        int VOIdimH;
+        int VOIdimD;
 
-    try
-    {
-        StackedVolume* volume = CImport::instance()->getVolume();
+    public:
 
-        //checking subvolume interval
-        if(V1 - V0 <=0 || H1 - H0 <=0 || D1 - D0 <=0)
-            throw MyException("Invalid subvolume intervals inserted.");
+        /*********************************************************************************
+        * Singleton design pattern: this class can have one instance only,  which must be
+        * instantiated by calling static method "istance(...)"
+        **********************************************************************************/
+        static CSettings* instance()
+        {
+            if (uniqueInstance == NULL)
+                uniqueInstance = new CSettings();
+            return uniqueInstance;
+        }
+        static void uninstance();
+        ~CSettings();
 
-        //checking for an imported volume
-        if(volume)
-            voi_data = CImport::instance()->getVolume()->loadSubvolume_to_UINT8(V0, V1, H0, H1, D0, D1);
-        else
-            throw MyException("No volume has been imported yet.");
+        //GET and SET methods
+        string getVolumePathLRU(){return volumePathLRU;}
+        int getVolMapSizeLimit(){return volMapSizeLimit;}
+        int getVOIdimV(){return VOIdimV;}
+        int getVOIdimH(){return VOIdimH;}
+        int getVOIdimD(){return VOIdimD;}
+        void setVolumePathLRU(string _volumePathLRU){volumePathLRU = _volumePathLRU;}
+        void setVolMapSizeLimit(int _volMapSizeLimit){volMapSizeLimit = _volMapSizeLimit;}
+        void setVOIdimV(int _VOIdimV){VOIdimV = _VOIdimV;}
+        void setVOIdimH(int _VOIdimH){VOIdimH = _VOIdimH;}
+        void setVOIdimD(int _VOIdimD){VOIdimD = _VOIdimD;}
 
-        //everything went OK
-        emit sendOperationOutcome(0);
-    }
-    catch( MyException& exception)  {emit sendOperationOutcome(&exception);}
-    catch(const char* error)        {emit sendOperationOutcome(new MyException(error));}
-    catch(...)                      {emit sendOperationOutcome(new MyException("Unknown error occurred"));}
-}
+        //save and restore application settings
+        void writeSettings();
+        void readSettings();
 
+        //load default settings
+        void loadDefaultSettings();
+};
+
+#endif // CSETTINGS_H

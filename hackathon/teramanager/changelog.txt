@@ -8,6 +8,15 @@ ties names are:
 - Dev: for developers only
 
 ============================================================================================
+Version 0.2.4
+August 19th, 2012
+--------------------------------------------------------------------------------------------
+- Dev: some preliminary work to enable the Google Earth feature
+- New: all  application  settings are now  persistent between different runs. In particular, 
+       the plugin is now able to remember the last opened volume. 
+- Fix: redesigning of the import form panel of the gui (the  useless  field  displaying  the
+       selected directory has been removed).
+--------------------------------------------------------------------------------------------
 
 
 Version 0.2.3

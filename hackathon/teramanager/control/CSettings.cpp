@@ -26,14 +26,14 @@
 *       specific prior written permission.
 ********************************************************************************************************************************************************************************************/
 
-#include "CVolume.h"
-#include "CImport.h"
+#include <QSettings>
+#include "CSettings.h"
 
 using namespace teramanager;
 
-CVolume* CVolume::uniqueInstance = NULL;
+CSettings* CSettings::uniqueInstance = NULL;
 
-void CVolume::uninstance()
+void CSettings::uninstance()
 {
     if(uniqueInstance)
     {
@@ -42,39 +42,53 @@ void CVolume::uninstance()
     }
 }
 
-CVolume::~CVolume()
+CSettings::~CSettings()
 {
     #ifdef TMP_DEBUG
-    printf("teramanager plugin [thread %d] >> CLoadSubvolume destroyed\n", this->thread()->currentThreadId());
+    printf("teramanager plugin [thread unknown] >> CSettings destroyed\n");
     #endif
+    writeSettings();
 }
 
-//automatically called when current thread is started
-void CVolume::run()
+void CSettings::loadDefaultSettings()
+{
+    volumePathLRU = "";
+    volMapSizeLimit = 200;
+    VOIdimV = VOIdimH = 200;
+    VOIdimD = 100;
+}
+
+void CSettings::writeSettings()
 {
     #ifdef TMP_DEBUG
-    printf("teramanager plugin [thread %d] >> CLoadSubvolume::run() launched\n", this->thread()->currentThreadId());
+    printf("teramanager plugin [thread unknown] >> CSettings::writeSettings() called\n");
     #endif
 
-    try
-    {
-        StackedVolume* volume = CImport::instance()->getVolume();
-
-        //checking subvolume interval
-        if(V1 - V0 <=0 || H1 - H0 <=0 || D1 - D0 <=0)
-            throw MyException("Invalid subvolume intervals inserted.");
-
-        //checking for an imported volume
-        if(volume)
-            voi_data = CImport::instance()->getVolume()->loadSubvolume_to_UINT8(V0, V1, H0, H1, D0, D1);
-        else
-            throw MyException("No volume has been imported yet.");
-
-        //everything went OK
-        emit sendOperationOutcome(0);
-    }
-    catch( MyException& exception)  {emit sendOperationOutcome(&exception);}
-    catch(const char* error)        {emit sendOperationOutcome(new MyException(error));}
-    catch(...)                      {emit sendOperationOutcome(new MyException("Unknown error occurred"));}
+    QSettings settings("ICON", "TeraManager");
+    QString volumePathLRU_qstring(volumePathLRU.c_str());
+    printf("writing volumePathLRU_qstring = \"%s\"\n", volumePathLRU_qstring.toStdString().c_str());
+    settings.setValue("volumePathLRU", volumePathLRU_qstring);
+    settings.setValue("volMapSizeLimit", volMapSizeLimit);
+    settings.setValue("VOIdimV", VOIdimV);
+    settings.setValue("VOIdimH", VOIdimH);
+    settings.setValue("VOIdimD", VOIdimD);
 }
 
+void CSettings::readSettings()
+{
+    #ifdef TMP_DEBUG
+    printf("teramanager plugin [thread unknown] >> CSettings::readSettings() called\n");
+    #endif
+
+    QSettings settings("ICON", "TeraManager");
+    if(settings.contains("volumePathLRU"))
+        volumePathLRU = settings.value("volumePathLRU").toString().toStdString();
+    if(settings.contains("volMapSizeLimit"))
+        volMapSizeLimit = settings.value("volMapSizeLimit").toInt();
+    if(settings.contains("VOIdimV"))
+        VOIdimV = settings.value("VOIdimV").toInt();
+    if(settings.contains("VOIdimH"))
+        VOIdimH = settings.value("VOIdimH").toInt();
+    if(settings.contains("VOIdimD"))
+        VOIdimD = settings.value("VOIdimD").toInt();
+}

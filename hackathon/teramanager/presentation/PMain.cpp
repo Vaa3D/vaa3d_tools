@@ -29,8 +29,10 @@
 #include "PMain.h"
 #include "control/CImport.h"
 #include "control/CVolume.h"
+#include "control/CSettings.h"
 #include "PDialogImport.h"
 #include "renderer_gl1.h"
+#include "v3dr_mainwindow.h"
 #include "v3d_imaging_para.h"
 
 using namespace teramanager;
@@ -47,6 +49,7 @@ void PMain::uninstance()
     CImport::uninstance();
     PDialogImport::uninstance();
     CVolume::uninstance();
+    CSettings::uninstance();
     if(uniqueInstance)
     {
         delete uniqueInstance;
@@ -57,7 +60,7 @@ void PMain::uninstance()
 PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
 {
     #ifdef TMP_DEBUG
-    printf("TeraManager plugin [thread %d] >> PMain created\n", this->thread()->currentThreadId());
+    printf("teramanager plugin [thread %d] >> PMain created\n", this->thread()->currentThreadId());
     #endif
 
     //initializing members
@@ -84,8 +87,6 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
 
     //import form widgets
     import_form = new QGroupBox("Import form");
-    path_field    = new QLineEdit("Enter the volume's directory");
-    path_field->setMinimumWidth(200);
     voldir_button       = new QPushButton("Browse for dir...");
     reimport_checkbox = new QCheckBox("Overwrite previous imports");
     enableMultiresMode = new QCheckBox("Enable multiresolution mode");
@@ -95,7 +96,7 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     volMapMaxSizeSBox = new QSpinBox();
     volMapMaxSizeSBox->setMaximum(10);
     volMapMaxSizeSBox->setMaximum(1000);
-    volMapMaxSizeSBox->setValue(200);
+    volMapMaxSizeSBox->setValue(CSettings::instance()->getVolMapSizeLimit());
     volMapMaxSizeSBox->setAlignment(Qt::AlignCenter);
 
     //multiresolution mode widgets
@@ -104,15 +105,15 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     Vdim_sbox = new QSpinBox();
     Vdim_sbox->setAlignment(Qt::AlignCenter);
     Vdim_sbox->setMaximum(1000);
-    Vdim_sbox->setValue(200);
+    Vdim_sbox->setValue(CSettings::instance()->getVOIdimV());
     Hdim_sbox = new QSpinBox();
     Hdim_sbox->setAlignment(Qt::AlignCenter);
     Hdim_sbox->setMaximum(1000);
-    Hdim_sbox->setValue(200);
+    Hdim_sbox->setValue(CSettings::instance()->getVOIdimH());
     Ddim_sbox = new QSpinBox();
     Ddim_sbox->setAlignment(Qt::AlignCenter);
     Ddim_sbox->setMaximum(1000);
-    Ddim_sbox->setValue(100);
+    Ddim_sbox->setValue(CSettings::instance()->getVOIdimD());
     direction_V_label_6 = new QLabel("(V)");
     direction_H_label_6 = new QLabel("(H)");
     direction_D_label_6 = new QLabel("(D)");
@@ -243,11 +244,10 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     //****LAYOUT SECTIONS****
     //import form
     QGridLayout* import_form_layout = new QGridLayout();
-    import_form_layout->addWidget(path_field,           0,0,1,4);
-    import_form_layout->addWidget(voldir_button,        0,4,1,2);
-    import_form_layout->addWidget(reimport_checkbox,    1,0,1,3);
-    import_form_layout->addWidget(regenerateVolMap,     1,3,1,3);
-    import_form_layout->addWidget(enableMultiresMode,   3,0,1,6);
+    import_form_layout->addWidget(reimport_checkbox,    0,0,1,3);
+    import_form_layout->addWidget(regenerateVolMap,     1,0,1,3);
+    import_form_layout->addWidget(enableMultiresMode,   2,0,1,3);
+    import_form_layout->addWidget(voldir_button,        3,0,1,3);
     import_form->setLayout(import_form_layout);
     import_form->setStyle(new QWindowsStyle());
 
@@ -351,6 +351,10 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     connect(CImport::instance(), SIGNAL(sendOperationOutcome(MyException*, Image4DSimple*)), this, SLOT(import_done(MyException*, Image4DSimple*)), Qt::QueuedConnection);
     connect(CVolume::instance(), SIGNAL(sendOperationOutcome(MyException*)), this, SLOT(loading_done(MyException*)), Qt::QueuedConnection);
     connect(enableMultiresMode, SIGNAL(stateChanged(int)), this, SLOT(mode3D_checkbox_changed(int)), Qt::QueuedConnection);
+    connect(volMapMaxSizeSBox, SIGNAL(valueChanged(int)), this, SLOT(settingsChanged(int)), Qt::QueuedConnection);
+    connect(Vdim_sbox, SIGNAL(valueChanged(int)), this, SLOT(settingsChanged(int)), Qt::QueuedConnection);
+    connect(Hdim_sbox, SIGNAL(valueChanged(int)), this, SLOT(settingsChanged(int)), Qt::QueuedConnection);
+    connect(Ddim_sbox, SIGNAL(valueChanged(int)), this, SLOT(settingsChanged(int)), Qt::QueuedConnection);
     resetGUI();
 
     //center on screen and set always on top
@@ -362,7 +366,7 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
 PMain::~PMain()
 {
     #ifdef TMP_DEBUG
-    printf("TeraManager plugin [thread %d] >> PMain destroyed\n", this->thread()->currentThreadId());
+    printf("teramanager plugin [thread %d] >> PMain destroyed\n", this->thread()->currentThreadId());
     #endif
     if(treeviewWidget)
         treeviewWidget->close();
@@ -387,10 +391,10 @@ void PMain::mode3D_checkbox_changed(int)
 void PMain::loadButtonClicked()
 { 
     #ifdef TMP_DEBUG
-    printf("TeraManager plugin [thread %d] >> PMain loadButtonClicked() called\n", this->thread()->currentThreadId());
+    printf("teramanager plugin [thread %d] >> PMain loadButtonClicked() called\n", this->thread()->currentThreadId());
     #endif
 
-    try
+    /*try
     {
         //first checking that a volume has been properly imported
         if(!CImport::instance()->getVolume())
@@ -415,7 +419,7 @@ void PMain::loadButtonClicked()
         resetGUI();
         subvol_panel->setEnabled(true);
         loadButton->setEnabled(true);
-    }
+    }*/
 }
 
 /**********************************************************************************
@@ -431,14 +435,13 @@ void PMain::voldir_button_clicked()
     try
     {
         //obtaining volume's directory
-        path_field->setText(QFileDialog::getExistingDirectory(0, QObject::tr("Select volume's directory"), QDir::currentPath()));
+        string import_path= QFileDialog::getExistingDirectory(0, QObject::tr("Select volume's directory"), CSettings::instance()->getVolumePathLRU().c_str()).toStdString();
 
         //first checking that no volume has imported yet
         if(CImport::instance()->getVolume())
             throw MyException("A volume has been already imported! Please restart the plugin to import another volume.");
 
         //checking that the inserted path exists
-        string import_path = path_field->text().toStdString();
         if(!StackedVolume::fileExists(import_path.c_str()))
             throw MyException("The inserted path does not exist!");
 
@@ -516,7 +519,7 @@ void PMain::import_done(MyException *ex, Image4DSimple* vmap_image)
         org_H_field->setText(QString::number(CImport::instance()->getVolume()->getORG_H(), 'f', 2));
         org_D_field->setText(QString::number(CImport::instance()->getVolume()->getORG_D(), 'f', 2));
 
-        //and settings subvol widgets limits
+        //and setting subvol widgets limits
         V0_sbox->setMinimum(1);
         V0_sbox->setMaximum(volume->getDIM_V());
         V0_sbox->setValue(volume->getDIM_V()/2 - 256);
@@ -542,14 +545,16 @@ void PMain::import_done(MyException *ex, Image4DSimple* vmap_image)
         //if vmap_image is available, showing it in a 3D renderer
         if(vmap_image)
         {
-            v3dhandle new_win = V3D_env->newImageWindow(vmap_image->getFileName());
-            V3D_env->setImage(new_win, vmap_image);
-            V3D_env->open3DWindow(new_win);
-            treeviewWidget = (XFormWidget*)new_win;
-            treeviewWidget->setVisible(false);          //hiding the treeview window
+            v3dWindow = V3D_env->newImageWindow(vmap_image->getFileName());
+            V3D_env->setImage(v3dWindow, vmap_image);
+            V3D_env->open3DWindow(v3dWindow);
+            treeviewWidget = (XFormWidget*)v3dWindow;
+            //treeviewWidget->setVisible(false);          //hiding the treeview window
+            treeviewWidget->setWindowState(Qt::WindowMinimized);
+
 
             //installing event filter on 3D renderer
-            View3DControl *view3DControl =  V3D_env->getView3DControl(new_win);
+            View3DControl *view3DControl =  V3D_env->getView3DControl(v3dWindow);
             view3DWidget = (V3dR_GLWidget*)view3DControl;
             view3DWidget->installEventFilter(this);
 
@@ -561,6 +566,9 @@ void PMain::import_done(MyException *ex, Image4DSimple* vmap_image)
             connect(view3DWidget, SIGNAL(changeZCut0(int)), this, SLOT(Vaa3D_changeZCut0(int)));
             connect(view3DWidget, SIGNAL(changeZCut1(int)), this, SLOT(Vaa3D_changeZCut1(int)));
         }
+
+        //finally storing in application settings the path of the opened volume
+        CSettings::instance()->setVolumePathLRU(CImport::instance()->getPath());
     }
 
     //resetting some widgets
@@ -575,7 +583,7 @@ void PMain::import_done(MyException *ex, Image4DSimple* vmap_image)
 void PMain::loading_done(MyException *ex)
 {
     #ifdef TMP_DEBUG
-    printf("TeraManager plugin [thread %d] >> PMain loading_done(%s) launched\n", this->thread()->currentThreadId(), (ex? "ex" : "NULL"));
+    printf("teramanager plugin [thread %d] >> PMain loading_done(%s) launched\n", this->thread()->currentThreadId(), (ex? "ex" : "NULL"));
     #endif
 
     CVolume* cVolume = CVolume::instance();
@@ -605,21 +613,48 @@ void PMain::loading_done(MyException *ex)
                          cVolume->getV1()-cVolume->getV0(), cVolume->getD1()-cVolume->getD0(), 1, V3D_UINT8);
             v3dhandle new_win = V3D_env->newImageWindow(window_name);
             V3D_env->setImage(new_win, img);
-            V3D_env->open3DWindow(new_win);
+            //V3D_env->open3DWindow(new_win);
+            V3D_env->openROI3DWindow(new_win);
             cVolume->resetVOI_Data();
             view3DWidget->setCursor(Qt::ArrowCursor);
         }
         else
         {
+            v3dhandle test = V3D_env->newImageWindow("test");
+            Image4DSimple* image = new Image4DSimple();
+            image->setFileName("Test");
+            image->setData(cVolume->getVOI_Data(),
+                           cVolume->getH1()-cVolume->getH0(),
+                           cVolume->getV1()-cVolume->getV0(),
+                           cVolume->getD1()-cVolume->getD0(), 1, V3D_UINT8);
+            V3D_env->setImage(test, image);
+            V3D_env->open3DWindow(test);
+            XFormWidget* test_treeviewWidget = (XFormWidget*)test;
+            test_treeviewWidget->setWindowState(Qt::WindowMinimized);
+
+            V3dR_GLWidget* widget3d = (V3dR_GLWidget*)(V3D_env->getView3DControl(test));
+
+            V3dR_MainWindow *main3Dwin = view3DWidget->getiDrawExternalParameter()->window3D;
+            V3dR_MainWindow *local3Dwin = widget3d->getiDrawExternalParameter()->window3D;
+            QPoint location = main3Dwin->pos();
+            //main3Dwin->move(0,0);
+            //main3Dwin->setWindowState(Qt::WindowMinimized);
+            main3Dwin->setVisible(false);
+            local3Dwin->move(location);
+
+            widget3d->setZoom(view3DWidget->zoom()/CImport::instance()->getMapZoominRatio());
+            view3DWidget->setCursor(Qt::ArrowCursor);
+            //widget3d->setGeometry(view3DWidget->geometry());
+
             /* Updating renderer content with the loaded subvolume */
-            view3DWidget->getiDrawExternalParameter()->image4d->setRawDataPointerToNull();
+            /*view3DWidget->getiDrawExternalParameter()->image4d->setRawDataPointerToNull();
             view3DWidget->getiDrawExternalParameter()->image4d->setData(cVolume->getVOI_Data(),
                                                                         cVolume->getH1()-cVolume->getH0(),
                                                                         cVolume->getV1()-cVolume->getV0(),
                                                                         cVolume->getD1()-cVolume->getD0(), 1, V3D_UINT8);
             view3DWidget->updateImageData();
             view3DWidget->setCursor(Qt::ArrowCursor);
-            view3DWidget->setZoom(view3DWidget->zoom()/CImport::instance()->getMapZoominRatio());
+            view3DWidget->setZoom(view3DWidget->zoom()/CImport::instance()->getMapZoominRatio());*/
         }
     }
 
@@ -656,6 +691,7 @@ bool PMain::eventFilter(QObject *object, QEvent *event)
         if (object == view3DWidget && event->type() == QEvent::Wheel)
         {
             LandmarkList markers =  V3D_env->getLandmark(treeviewWidget);
+
 
             if(view3DWidget->zoom() > 30 && !CVolume::instance()->getVOI_Data() && markers.size() == 1)
             {
@@ -705,6 +741,18 @@ bool PMain::eventFilter(QObject *object, QEvent *event)
 }
 
 /**********************************************************************************
+* Called when the GUI widgets that control application settings change.
+* This is used to manage persistent platform-independent application settings.
+***********************************************************************************/
+void PMain::settingsChanged(int)
+{
+    CSettings::instance()->setVolMapSizeLimit(volMapMaxSizeSBox->value());
+    CSettings::instance()->setVOIdimV(Vdim_sbox->value());
+    CSettings::instance()->setVOIdimH(Hdim_sbox->value());
+    CSettings::instance()->setVOIdimD(Ddim_sbox->value());
+}
+
+/**********************************************************************************
 * Linked to volume cut scrollbars of Vaa3D widget containing the 3D renderer.
 * This implements the syncronization Vaa3D-->TeraManager of subvolume selection.
 ***********************************************************************************/
@@ -728,7 +776,7 @@ void PMain::Vaa3D_changeZCut1(int s)
 void PMain::Vaa3D_selectedROI()
 {
     #ifdef TMP_DEBUG
-    printf("TeraManager plugin [thread %d] >> PMain Vaa3D_selectedROI() called\n", this->thread()->currentThreadId());
+    printf("teramanager plugin [thread %d] >> PMain Vaa3D_selectedROI() called\n", this->thread()->currentThreadId());
     #endif
 
     if(view3DWidget)

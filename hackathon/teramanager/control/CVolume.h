@@ -47,7 +47,7 @@ class teramanager::CVolume : public QThread
         static CVolume* uniqueInstance;
         CVolume() : QThread()
         {
-            #ifdef TSP_DEBUG
+            #ifdef TMP_DEBUG
             printf("teramanager plugin [thread %d] >> CLoadSubvolume created\n", this->thread()->currentThreadId());
             #endif
 
