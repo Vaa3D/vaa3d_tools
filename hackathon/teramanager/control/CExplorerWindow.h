@@ -1,5 +1,5 @@
 //------------------------------------------------------------------------------------------------
-// Copyright (c) 2012  Alessandro Bria and Giulio Iannello (University Campus Bio-Medico of Rome).  
+// Copyright (c) 2012  Alessandro Bria and Giulio Iannello (University Campus Bio-Medico of Rome).
 // All rights reserved.
 //------------------------------------------------------------------------------------------------
 
@@ -9,7 +9,7 @@
 *    By downloading/using/running/editing/changing any portion of codes in this package you agree to this license. If you do not agree to this license, do not download/use/run/edit/change
 *    this code.
 ********************************************************************************************************************************************************************************************
-*    1. This material is free for non-profit research, but needs a special license for any commercial purpose. Please contact Alessandro Bria at a.bria@unicas.it or Giulio Iannello at 
+*    1. This material is free for non-profit research, but needs a special license for any commercial purpose. Please contact Alessandro Bria at a.bria@unicas.it or Giulio Iannello at
 *       g.iannello@unicampus.it for further details.
 *    2. You agree to appropriately cite this work in your related studies and publications.
 *
@@ -18,7 +18,7 @@
 *
 *    3. This material is provided by  the copyright holders (Alessandro Bria  and  Giulio Iannello),  University Campus Bio-Medico and contributors "as is" and any express or implied war-
 *       ranties, including, but  not limited to,  any implied warranties  of merchantability,  non-infringement, or fitness for a particular purpose are  disclaimed. In no event shall the
-*       copyright owners, University Campus Bio-Medico, or contributors be liable for any direct, indirect, incidental, special, exemplary, or  consequential  damages  (including, but not 
+*       copyright owners, University Campus Bio-Medico, or contributors be liable for any direct, indirect, incidental, special, exemplary, or  consequential  damages  (including, but not
 *       limited to, procurement of substitute goods or services; loss of use, data, or profits;reasonable royalties; or business interruption) however caused  and on any theory of liabil-
 *       ity, whether in contract, strict liability, or tort  (including negligence or otherwise) arising in any way out of the use of this software,  even if advised of the possibility of
 *       such damage.
@@ -26,48 +26,56 @@
 *       specific prior written permission.
 ********************************************************************************************************************************************************************************************/
 
-#ifndef __TERAMANAGER_C_PLUGIN_H__
-#define __TERAMANAGER_C_PLUGIN_H__
+#ifndef CEXPLORERWINDOW_H
+#define CEXPLORERWINDOW_H
 
-#define TMP_DEBUG 1                 //debug verbosity level
-#define TMP_VMAP_FNAME "vmap.bin"   //name of volume map binary file
-#define TMP_VMAP_MAXSIZE 200        //maximum size (in MVoxels) of the volume 3D map to be generated
+#include "CPlugin.h"
+#include "v3dr_glwidget.h"
 
-#include <QtGui>
-#include <v3d_interface.h>
-#include "MyException.h"
-#include "IM_defs.h"
-
-//defining TeraManager plugin interface
-namespace teramanager
-{
-    class CPlugin;              //the class defined in this header and derived from V3DPluginInterface2_1
-    class PMain;                //main presentation class: it contains the main frame
-    class PDialogImport;        //presentation class for the import dialog
-    class CImport;              //control class for the import step, which is performed in a separate thread since it can be time-consuming
-    class CVolume;              //control class for the loading subvolume feature, which is performed in a separate thread since it can be time-consuming
-    class CSettings;            //control class to manage persistent platform-independent application settings
-    //class CExplorer;            //control class to manage the 3D exploration of the volume
-    class CExplorerWindow;      //control class used to encapsulate all the informations needed to manage 3D navigation windows
-}
-
-class teramanager::CPlugin : public QObject, public V3DPluginInterface2_1
+class teramanager::CExplorerWindow : public QWidget
 {
     Q_OBJECT
-    Q_INTERFACES(V3DPluginInterface2_1)
+
+    private:
+
+        //object members
+        V3DPluginCallback2* V3D_env;    //handle of V3D environment
+        v3dhandle window;               //generic (void *) handle of the tri-view image window
+        XFormWidget* triViewWidget;     //the tri-view image window
+        V3dR_GLWidget* view3DWidget;    //3D renderer widget associated to the image window
+        V3dR_MainWindow* window3D;      //the window enclosing <view3DWidget>
+        CExplorerWindow *next, *prev;   //the next (higher resolution) and previous (lower resolution) <CExplorerWindow> objects
+        int resIndex;                   //resolution index of current window (see member <volumes> of CImport)
+
+        //inhibiting defeault constructor
+        CExplorerWindow();
+
 
     public:
 
-	//V3D plugin attributes and methods
-	float getPluginVersion() const {return 1.0f;}
-	QStringList menulist() const;
-	void domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent);
-	QStringList funclist() const ;
-	bool dofunc(const QString &func_name, const V3DPluginArgList &input, V3DPluginArgList &output, V3DPluginCallback2 &callback, QWidget *parent);
+        //CONSTRUCTOR, DECONSTRUCTOR
+        CExplorerWindow(V3DPluginCallback2* _V3D_env, int _resIndex, const char* title, uint8* imgData, int imgDimV, int imgDimH, int imgDimD, CExplorerWindow* _prev);
+        ~CExplorerWindow();
 
-	//returns true if the given shared library can be loaded
-	static bool isSharedLibraryLoadable(const char* name);
+        //first window of the multiresolution explorer windows chain
+        static CExplorerWindow *first;
+
+        /**********************************************************************************
+        * Filters events generated by the 3D rendering window <view3DWidget>
+        * We're interested to intercept these events to provide many useful ways to explore
+        * the 3D volume at different resolutions without changing Vaa3D code.
+        ***********************************************************************************/
+        bool eventFilter(QObject *object, QEvent *event);
+
+
+    public slots:
+
+        /**********************************************************************************
+        * Called by the signal emitted by <CVolume> when the associated  operation has been
+        * performed. If an exception has occurred in the <CVolume> thread, it is propagated
+        * and managed in the current thread (ex != 0).
+        ***********************************************************************************/
+        void loadingDone(MyException *ex, void* sourceObject);
 };
 
-#endif
-
+#endif // CEXPLORERWINDOW_H

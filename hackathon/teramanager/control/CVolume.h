@@ -48,21 +48,23 @@ class teramanager::CVolume : public QThread
         CVolume() : QThread()
         {
             #ifdef TMP_DEBUG
-            printf("teramanager plugin [thread %d] >> CLoadSubvolume created\n", this->thread()->currentThreadId());
+            printf("teramanager plugin [thread %d] >> CVolume created\n", this->thread()->currentThreadId());
             #endif
 
-            voi_data = 0;
-            V0 = V1 = H0 = H1 = D0 = D1 = -1;
-            show_in_a_new_window = true;
+            voiResIndex = -1;
+            voiData = 0;
+            voiV0 = voiV1 = voiH0 = voiH1 = voiD0 = voiD1 = -1;
+            sourceObject = 0;
         }
 
         //automatically called when current thread is started
         void run();
 
         //members
-        int V0,V1,H0,H1,D0,D1;      //Volume Of Interest coordinates
-        uint8* voi_data;            //Volume Of Interest data
-        bool show_in_a_new_window;  //tells PMain where the loaded data should be shown
+        int voiResIndex;                            //volume of interest resolution index
+        int voiV0,voiV1,voiH0,voiH1,voiD0,voiD1;    //volume of interest coordinates
+        uint8* voiData;                             //volume of interest data
+        void* sourceObject;                         //the object that requested the VOI
 
     public:
 
@@ -80,44 +82,35 @@ class teramanager::CVolume : public QThread
         ~CVolume();
 
         //GET and SET methods
-        uint8* getVOI_Data(){return voi_data;}
-        void resetVOI_Data(){voi_data = 0;}
-        int getV0(){return V0;}
-        int getV1(){return V1;}
-        int getH0(){return H0;}
-        int getH1(){return H1;}
-        int getD0(){return D0;}
-        int getD1(){return D1;}
-        bool getShowInNewWindow(){return show_in_a_new_window;}
-        void setVOI(int _V0, int _V1, int _H0, int _H1, int _D0, int _D1)
+        uint8* getVoiData(){return voiData;}
+        void resetVoiData(){voiData = 0;}
+        int getVoiV0(){return voiV0;}
+        int getVoiV1(){return voiV1;}
+        int getVoiH0(){return voiH0;}
+        int getVoiH1(){return voiH1;}
+        int getVoiD0(){return voiD0;}
+        int getVoiD1(){return voiD1;}
+        int getVoiResIndex(){return voiResIndex;}
+        void setVoi(void* _sourceObject, int _voiResIndex, int _V0, int _V1, int _H0, int _H1, int _D0, int _D1)
         {
-            StackedVolume* volume = CImport::instance()->getVolume();
-            V0 = MAX(_V0, 0);
-            V1 = MIN(_V1, volume->getDIM_V());
-            H0 = MAX(_H0, 0);
-            H1 = MIN(_H1, volume->getDIM_H());
-            D0 = MAX(_D0, 0);
-            D1 = MIN(_D1, volume->getDIM_D());
-            printf("VOI set at [%d - %d], [%d - %d], [%d - %d]\n", V0, V1, H0, H1, D0, D1);
-        }
-        void setShowInNewWindow(bool show){show_in_a_new_window = show;}
-
-        //reset method
-        void reset()
-        {
-            if(voi_data)
-                delete[] voi_data;
-            voi_data = 0;
-            V0 = V1 = H0 = H1 = D0 = D1 = -1;
+            sourceObject = _sourceObject;
+            voiResIndex = _voiResIndex;
+            StackedVolume* volume = CImport::instance()->getVolume(voiResIndex);
+            voiV0 = MAX(_V0, 0);
+            voiV1 = MIN(_V1, volume->getDIM_V());
+            voiH0 = MAX(_H0, 0);
+            voiH1 = MIN(_H1, volume->getDIM_H());
+            voiD0 = MAX(_D0, 0);
+            voiD1 = MIN(_D1, volume->getDIM_D());
         }
 
     signals:
 
         /*********************************************************************************
-        * Carries the outcome of the operation associated to this thread as well as image
-        * data in <Image4DSimple> object.
+        * Carries the outcome of the operation associated  to this thread  as well as the
+        * the object that requested the operation
         **********************************************************************************/
-        void sendOperationOutcome(MyException* ex);
+        void sendOperationOutcome(MyException* ex, void* sourceObj);
 };
 
 #endif // CLOADSUBVOLUME_H

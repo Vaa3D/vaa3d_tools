@@ -51,7 +51,7 @@ class teramanager::CImport : public QThread
                                volMapData(0), volMapHeight(-1), volMapWidth(-1), volMapDepth(-1),
                                volMapMaxSize(50)
         {
-            #ifdef TSP_DEBUG
+            #ifdef TMP_DEBUG
             printf("teramanager plugin [thread %d] >> CImport created\n", this->thread()->currentThreadId());
             #endif
         }
@@ -88,13 +88,21 @@ class teramanager::CImport : public QThread
         ~CImport();
 
         //GET and SET methods
-        StackedVolume* getVolume(){if(volumes.size()) return volumes[0]; else return 0;}
         string getPath(){return path;}
         uint8* getVMap(){return volMapData;}
         int getVMapHeight(){return volMapHeight;}
         int getVMapWidth(){return volMapWidth;}
         int getVMapDepth(){return volMapDepth;}
-        float getMapZoominRatio(){return volumes[0]->getDIM_D()/(float)volMapDepth;}
+        int getVMapResIndex()
+        {
+            for(int k=0; k<volumes.size(); k++)
+                if(volumes[k]->getDIM_D() == volMapDepth)
+                    return k;
+            return -1;
+        }
+        bool isEmpty(){return volumes.size() == 0;}
+        StackedVolume* getHighestResVolume(){return volumes.back();}
+        StackedVolume* getVolume(int resolutionIdx){return volumes[resolutionIdx];}
         void setPath(string new_path){path = new_path;}
         void setAxes(string axs1, string axs2, string axs3);
         void setVoxels(std::string vxl1, std::string vxl2, std::string vxl3);

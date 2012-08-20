@@ -45,7 +45,7 @@ void CVolume::uninstance()
 CVolume::~CVolume()
 {
     #ifdef TMP_DEBUG
-    printf("teramanager plugin [thread %d] >> CLoadSubvolume destroyed\n", this->thread()->currentThreadId());
+    printf("teramanager plugin [thread %d] >> CVolume destroyed\n", this->thread()->currentThreadId());
     #endif
 }
 
@@ -53,28 +53,28 @@ CVolume::~CVolume()
 void CVolume::run()
 {
     #ifdef TMP_DEBUG
-    printf("teramanager plugin [thread %d] >> CLoadSubvolume::run() launched\n", this->thread()->currentThreadId());
+    printf("teramanager plugin [thread %d] >> CVolume::run() launched\n", this->thread()->currentThreadId());
     #endif
 
     try
     {
-        StackedVolume* volume = CImport::instance()->getVolume();
+        StackedVolume* volume = CImport::instance()->getVolume(voiResIndex);
 
         //checking subvolume interval
-        if(V1 - V0 <=0 || H1 - H0 <=0 || D1 - D0 <=0)
+        if(voiV1 - voiV0 <=0 || voiH1 - voiH0 <=0 || voiD1 - voiD0 <=0)
             throw MyException("Invalid subvolume intervals inserted.");
 
         //checking for an imported volume
         if(volume)
-            voi_data = CImport::instance()->getVolume()->loadSubvolume_to_UINT8(V0, V1, H0, H1, D0, D1);
+            voiData = volume->loadSubvolume_to_UINT8(voiV0, voiV1, voiH0, voiH1, voiD0, voiD1);
         else
             throw MyException("No volume has been imported yet.");
 
         //everything went OK
-        emit sendOperationOutcome(0);
+        emit sendOperationOutcome(0, sourceObject);
     }
-    catch( MyException& exception)  {emit sendOperationOutcome(&exception);}
-    catch(const char* error)        {emit sendOperationOutcome(new MyException(error));}
-    catch(...)                      {emit sendOperationOutcome(new MyException("Unknown error occurred"));}
+    catch( MyException& exception)  {emit sendOperationOutcome(&exception, sourceObject);}
+    catch(const char* error)        {emit sendOperationOutcome(new MyException(error), sourceObject);}
+    catch(...)                      {emit sendOperationOutcome(new MyException("Unknown error occurred"), sourceObject);}
 }
 

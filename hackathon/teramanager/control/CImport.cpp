@@ -36,7 +36,7 @@
 using namespace teramanager;
 
 CImport* CImport::uniqueInstance = NULL;
-bool sortVolumesDescendingSize (StackedVolume* i,StackedVolume* j) { return (i->getMVoxels() >= j->getMVoxels()); }
+bool sortVolumesAscendingSize (StackedVolume* i,StackedVolume* j) { return (i->getMVoxels() < j->getMVoxels()); }
 
 void CImport::uninstance()
 {
@@ -49,7 +49,7 @@ void CImport::uninstance()
 
 CImport::~CImport()
 {
-    #ifdef TSP_DEBUG
+    #ifdef TMP_DEBUG
     printf("TeraStitcher plugin [thread %d] >> CImport destroyed\n", this->thread()->currentThreadId());
     #endif
 
@@ -61,7 +61,7 @@ CImport::~CImport()
 //SET methods
 void CImport::setAxes(string axs1, string axs2, string axs3)
 {
-    #ifdef TSP_DEBUG
+    #ifdef TMP_DEBUG
     printf("TeraStitcher plugin [thread %d] >> CImport setAxes(%s, %s, %s) launched\n", this->thread()->currentThreadId(), axs1.c_str(), axs2.c_str(), axs3.c_str());
     #endif
     AXS_1 = axis(atoi(axs1.c_str()));
@@ -70,7 +70,7 @@ void CImport::setAxes(string axs1, string axs2, string axs3)
 }
 void CImport::setVoxels(std::string vxl1, std::string vxl2, std::string vxl3)
 {
-    #ifdef TSP_DEBUG
+    #ifdef TMP_DEBUG
     printf("TeraStitcher plugin [thread %d] >> CImport setVoxels(%s, %s, %s) launched\n", this->thread()->currentThreadId(), vxl1.c_str(), vxl2.c_str(), vxl3.c_str());
     #endif
 
@@ -86,7 +86,7 @@ void CImport::setVoxels(std::string vxl1, std::string vxl2, std::string vxl3)
 //automatically called when current thread is started
 void CImport::run()
 {
-    #ifdef TSP_DEBUG
+    #ifdef TMP_DEBUG
     printf("TeraStitcher plugin [thread %d] >> CImport::run() launched\n", this->thread()->currentThreadId());
     #endif
 
@@ -152,8 +152,8 @@ void CImport::run()
                 }
             }
 
-            //sorting volumes by descending size
-            std::sort(volumes.begin(), volumes.end(), sortVolumesDescendingSize);
+            //sorting volumes by ascending size
+            std::sort(volumes.begin(), volumes.end(), sortVolumesAscendingSize);
         }
 
         /********************** 3) GENERATING VOLUME 3D MAP ***********************
