@@ -1,6 +1,7 @@
 #!/bin/bash
 #This script is generated automatically by genscript_1.m
 
+
 #PS_detection---------------------------------------------------------
 #larva
 #/groups/peng/home/qul/myhome/work/v3d_external/bin/vaa3d -x principal_skeleton -f detect -i /media/OYEN_BLACK/vnc/tmp/fly_L3_larva/GL_10F10_051109A_MIP.tif /media/OYEN_BLACK/vnc/tmp/fly_L3_larva/larva_principalskeleton_ini.marker /media/OYEN_BLACK/vnc/tmp/fly_L3_larva/larva_principalskeleton.domain -o /media/OYEN_BLACK/vnc/tmp/output.marker /media/OYEN_BLACK/vnc/tmp/output.swc -p 2 1 500 0.01 0.5 7 0 0
