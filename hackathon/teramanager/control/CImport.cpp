@@ -50,7 +50,7 @@ void CImport::uninstance()
 CImport::~CImport()
 {
     #ifdef TMP_DEBUG
-    printf("TeraStitcher plugin [thread %d] >> CImport destroyed\n", this->thread()->currentThreadId());
+    printf("--------------------- teramanager plugin [thread %d] >> CImport destroyed\n", this->thread()->currentThreadId());
     #endif
 
     for(int k=0; k<volumes.size(); k++)
@@ -62,7 +62,7 @@ CImport::~CImport()
 void CImport::setAxes(string axs1, string axs2, string axs3)
 {
     #ifdef TMP_DEBUG
-    printf("TeraStitcher plugin [thread %d] >> CImport setAxes(%s, %s, %s) launched\n", this->thread()->currentThreadId(), axs1.c_str(), axs2.c_str(), axs3.c_str());
+    printf("--------------------- teramanager plugin [thread %d] >> CImport setAxes(%s, %s, %s) launched\n", this->thread()->currentThreadId(), axs1.c_str(), axs2.c_str(), axs3.c_str());
     #endif
     AXS_1 = axis(atoi(axs1.c_str()));
     AXS_2 = axis(atoi(axs2.c_str()));
@@ -71,7 +71,7 @@ void CImport::setAxes(string axs1, string axs2, string axs3)
 void CImport::setVoxels(std::string vxl1, std::string vxl2, std::string vxl3)
 {
     #ifdef TMP_DEBUG
-    printf("TeraStitcher plugin [thread %d] >> CImport setVoxels(%s, %s, %s) launched\n", this->thread()->currentThreadId(), vxl1.c_str(), vxl2.c_str(), vxl3.c_str());
+    printf("--------------------- teramanager plugin [thread %d] >> CImport setVoxels(%s, %s, %s) launched\n", this->thread()->currentThreadId(), vxl1.c_str(), vxl2.c_str(), vxl3.c_str());
     #endif
 
     std::istringstream tmp1(vxl1), tmp2(vxl2), tmp3(vxl3);
@@ -87,7 +87,7 @@ void CImport::setVoxels(std::string vxl1, std::string vxl2, std::string vxl3)
 void CImport::run()
 {
     #ifdef TMP_DEBUG
-    printf("TeraStitcher plugin [thread %d] >> CImport::run() launched\n", this->thread()->currentThreadId());
+    printf("--------------------- teramanager plugin [thread %d] >> CImport::run() launched\n", this->thread()->currentThreadId());
     #endif
 
     try

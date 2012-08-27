@@ -58,8 +58,8 @@ QStringList CPlugin::funclist() const
 // 4 - Call the functions corresponding to the domenu items. 
 void CPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
 {
-    #ifdef TSP_DEBUG
-    printf("TeraStitcher plugin [thread %d] >> CPlugin::domenu launched\n", this->thread()->currentThreadId());
+    #ifdef TMP_DEBUG
+    printf("--------------------- teramanager plugin [thread %d] >> CPlugin::domenu launched\n", this->thread()->currentThreadId());
     #endif
 
     if (menu_name == tr("Teravoxel-sized Image Visualization"))

@@ -45,7 +45,7 @@ void CSettings::uninstance()
 CSettings::~CSettings()
 {
     #ifdef TMP_DEBUG
-    printf("teramanager plugin [thread unknown] >> CSettings destroyed\n");
+    printf("--------------------- teramanager plugin [thread unknown] >> CSettings destroyed\n");
     #endif
     writeSettings();
 }
@@ -53,15 +53,15 @@ CSettings::~CSettings()
 void CSettings::loadDefaultSettings()
 {
     volumePathLRU = "";
-    volMapSizeLimit = 200;
+    volMapSizeLimit = 50;
     VOIdimV = VOIdimH = 200;
-    VOIdimD = 100;
+    VOIdimD = 50;
 }
 
 void CSettings::writeSettings()
 {
     #ifdef TMP_DEBUG
-    printf("teramanager plugin [thread unknown] >> CSettings::writeSettings() called\n");
+    printf("--------------------- teramanager plugin [thread unknown] >> CSettings::writeSettings() called\n");
     #endif
 
     QSettings settings("ICON", "TeraManager");
@@ -77,7 +77,7 @@ void CSettings::writeSettings()
 void CSettings::readSettings()
 {
     #ifdef TMP_DEBUG
-    printf("teramanager plugin [thread unknown] >> CSettings::readSettings() called\n");
+    printf("--------------------- teramanager plugin [thread unknown] >> CSettings::readSettings() called\n");
     #endif
 
     QSettings settings("ICON", "TeraManager");

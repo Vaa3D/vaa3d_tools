@@ -43,7 +43,7 @@ class teramanager::CSettings
         CSettings()
         {
             #ifdef TMP_DEBUG
-            printf("teramanager plugin [thread unknown] >> CSettings created\n");
+            printf("--------------------- teramanager plugin [thread unknown] >> CSettings created\n");
             #endif
             loadDefaultSettings();
             readSettings();

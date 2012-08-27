@@ -52,7 +52,7 @@ class teramanager::CImport : public QThread
                                volMapMaxSize(50)
         {
             #ifdef TMP_DEBUG
-            printf("teramanager plugin [thread %d] >> CImport created\n", this->thread()->currentThreadId());
+            printf("--------------------- teramanager plugin [thread %d] >> CImport created\n", this->thread()->currentThreadId());
             #endif
         }
 
@@ -102,7 +102,11 @@ class teramanager::CImport : public QThread
         }
         bool isEmpty(){return volumes.size() == 0;}
         StackedVolume* getHighestResVolume(){return volumes.back();}
-        StackedVolume* getVolume(int resolutionIdx){return volumes[resolutionIdx];}
+        StackedVolume* getVolume(int resolutionIdx)
+        {
+            if(resolutionIdx < volumes.size()) return volumes[resolutionIdx];
+            else return 0;
+        }
         void setPath(string new_path){path = new_path;}
         void setAxes(string axs1, string axs2, string axs3);
         void setVoxels(std::string vxl1, std::string vxl2, std::string vxl3);

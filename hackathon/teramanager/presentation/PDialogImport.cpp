@@ -51,7 +51,7 @@ void PDialogImport::uninstance()
 PDialogImport::PDialogImport() : QDialog()
 {
     #ifdef TSP_DEBUG
-    printf("teramanager plugin [thread %d] >> PDialogImport created\n", this->thread()->currentThreadId());
+    printf("--------------------- teramanager plugin [thread %d] >> PDialogImport created\n", this->thread()->currentThreadId());
     #endif
 
     //import form widgets
@@ -115,7 +115,7 @@ PDialogImport::PDialogImport() : QDialog()
 PDialogImport::~PDialogImport()
 {
     #ifdef TSP_DEBUG
-    printf("teramanager plugin [thread %d] >> PDialogImport destroyed\n", this->thread()->currentThreadId());
+    printf("--------------------- teramanager plugin [thread %d] >> PDialogImport destroyed\n", this->thread()->currentThreadId());
     #endif
 }
 
@@ -125,7 +125,7 @@ PDialogImport::~PDialogImport()
 void PDialogImport::import_button_clicked()
 {
     #ifdef TMP_DEBUG
-    printf("teramanager plugin [thread %d] >> ok_button_clicked() called\n", this->thread()->currentThreadId());
+    printf("--------------------- teramanager plugin [thread %d] >> ok_button_clicked() called\n", this->thread()->currentThreadId());
     #endif
 
     try

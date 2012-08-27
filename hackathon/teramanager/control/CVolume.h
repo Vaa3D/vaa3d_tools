@@ -48,7 +48,7 @@ class teramanager::CVolume : public QThread
         CVolume() : QThread()
         {
             #ifdef TMP_DEBUG
-            printf("teramanager plugin [thread %d] >> CVolume created\n", this->thread()->currentThreadId());
+            printf("--------------------- teramanager plugin [thread %d] >> CVolume created\n", this->thread()->currentThreadId());
             #endif
 
             voiResIndex = -1;
@@ -93,6 +93,11 @@ class teramanager::CVolume : public QThread
         int getVoiResIndex(){return voiResIndex;}
         void setVoi(void* _sourceObject, int _voiResIndex, int _V0, int _V1, int _H0, int _H1, int _D0, int _D1)
         {
+            #ifdef TMP_DEBUG
+            printf("--------------------- teramanager plugin [thread %d] >> CVolume::setVoi(..., _voiResIndex = %d, _V0 = %d, _V1=%d, _H0 = %d, _H1=%d, _D0 = %d, _D1=%d)\n",
+                   this->thread()->currentThreadId(), _voiResIndex, _V0, _V1, _H0, _H1, _D0, _D1);
+            #endif
+
             sourceObject = _sourceObject;
             voiResIndex = _voiResIndex;
             StackedVolume* volume = CImport::instance()->getVolume(voiResIndex);

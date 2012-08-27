@@ -45,7 +45,7 @@ void CVolume::uninstance()
 CVolume::~CVolume()
 {
     #ifdef TMP_DEBUG
-    printf("teramanager plugin [thread %d] >> CVolume destroyed\n", this->thread()->currentThreadId());
+    printf("--------------------- teramanager plugin [thread %d] >> CVolume destroyed\n", this->thread()->currentThreadId());
     #endif
 }
 
@@ -53,7 +53,7 @@ CVolume::~CVolume()
 void CVolume::run()
 {
     #ifdef TMP_DEBUG
-    printf("teramanager plugin [thread %d] >> CVolume::run() launched\n", this->thread()->currentThreadId());
+    printf("--------------------- teramanager plugin [thread %d] >> CVolume::run() launched\n", this->thread()->currentThreadId());
     #endif
 
     try

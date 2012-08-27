@@ -20,10 +20,7 @@ P9 Bug: "Select VOI with Vaa3D volume cut scrollbars": the syncronization betwee
         metimes Vaa3D does not use the actual size of the map, and it seems it is working on
         a downsampled version.
 P8 New: add some fields to the GUI to show the size (in MVoxels) of the selected VOIs.
-P7 New: enable the "Google-Earth" feature by extending the "Zoom-in" feature and exploiting
-        the multiresolution import.
 P6 New: provide some help to the user when the volume is imported for the first time.
-P5 Dev: refine the registration between volume map and zoomed-in subvolume.
 P4 Dev: substitute the absolute thresholds used to detect the zoom-in and zoom-out actions
         with ones relative to the ratio between the map and the higher resolution volume. It
         seems that absolute thresholds work well with many volumes, so it maybe that no fur-
