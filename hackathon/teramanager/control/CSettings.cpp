@@ -53,7 +53,7 @@ CSettings::~CSettings()
 void CSettings::loadDefaultSettings()
 {
     volumePathLRU = "";
-    volMapSizeLimit = 50;
+    volMapSizeLimit = 30;
     VOIdimV = VOIdimH = 200;
     VOIdimD = 50;
 }
@@ -66,7 +66,6 @@ void CSettings::writeSettings()
 
     QSettings settings("ICON", "TeraManager");
     QString volumePathLRU_qstring(volumePathLRU.c_str());
-    printf("writing volumePathLRU_qstring = \"%s\"\n", volumePathLRU_qstring.toStdString().c_str());
     settings.setValue("volumePathLRU", volumePathLRU_qstring);
     settings.setValue("volMapSizeLimit", volMapSizeLimit);
     settings.setValue("VOIdimV", VOIdimV);

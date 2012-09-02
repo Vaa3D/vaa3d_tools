@@ -8,18 +8,6 @@ with the associated priorities(P) which have values in the range [1-9]. Activiti
 - Dev: for developers only
 
 --------------------------------------------------------------------------------------------
-P9 New: extend the "Select ROI with Vaa3D" feature  by replicating  the same user experience
-        of the selection of a ROI in a non-Teramanager 3D renderer. The generated VOI should
-        be shown into a local viewer instead  of a global viewer and the user should be able
-        to explore the volume by moving from  the selected VOI  to another one surrounding a
-        new ROI selectable within the actual VOI view.
-P9 Bug: "Select VOI with Vaa3D volume cut scrollbars"  feature  should generate a new global 
-        view instead of using the same renderer.
-P9 Bug: "Select VOI with Vaa3D volume cut scrollbars": the syncronization between Vaa3D ren-
-        derer volume cut scrollbars and Teramanager spinboxes does not always work well. So-
-        metimes Vaa3D does not use the actual size of the map, and it seems it is working on
-        a downsampled version.
-P8 New: add some fields to the GUI to show the size (in MVoxels) of the selected VOIs.
 P6 New: provide some help to the user when the volume is imported for the first time.
 P4 Dev: substitute the absolute thresholds used to detect the zoom-in and zoom-out actions
         with ones relative to the ratio between the map and the higher resolution volume. It

@@ -192,9 +192,13 @@ void CImport::run()
                     fclose(volMapBin);
                 }
                 else
-                    throw MyException(QString("Can't generate 3D volume map: a resolution of at most ").
-                                      append(QString::number(volMapMaxSize)).
-                                      append(" MVoxels must be available in the volume's parent directory\n").toStdString().c_str());
+                {
+                    QString msg = "Can't generate 3D volume map: the volume map size limit is "+
+                                  QString::number(volMapMaxSize) + " MVoxels while the lower resolution found has size " +
+                                  QString::number(volumes[0]->getMVoxels(), 'f', 0) + " MVoxels";
+
+                    throw MyException(msg.toStdString().c_str());
+                }
             }
 
             //at this point we should have the volume map stored in the volume's directory
@@ -213,7 +217,7 @@ void CImport::run()
         //everything went OK
         emit sendOperationOutcome(0, volMapImage);
     }
-    catch( MyException& exception)  {emit sendOperationOutcome(&exception, 0);}
-    catch(const char* error)        {emit sendOperationOutcome(new MyException(error), 0);}
-    catch(...)                      {emit sendOperationOutcome(new MyException("Unknown error occurred"), 0);}
+    catch( MyException& exception)  {reset(); emit sendOperationOutcome(&exception, 0);}
+    catch(const char* error)        {reset(); emit sendOperationOutcome(new MyException(error), 0);}
+    catch(...)                      {reset(); emit sendOperationOutcome(new MyException("Unknown error occurred"), 0);}
 }

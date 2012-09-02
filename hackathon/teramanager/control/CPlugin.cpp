@@ -32,6 +32,7 @@
 #include <QErrorMessage>
 #include "v3d_message.h"
 #include "CPlugin.h"
+#include "CExplorerWindow.h"
 #include "presentation/PMain.h"
 
 using namespace teramanager;
@@ -88,14 +89,13 @@ void CPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWi
     }
     else if(menu_name == tr("Acquisition: ROI from High Resolution Image"))
     {
-        if(PMain::isInstantiated())
-            PMain::instance()->Vaa3D_selectedROI();
+        CExplorerWindow::Vaa3D_selectedROI();
     }
     else
     {
         QMessageBox msgBox;
         QSpacerItem* horizontalSpacer = new QSpacerItem(800, 0, QSizePolicy::Minimum, QSizePolicy::Expanding);
-        msgBox.setText( "<html><h1>TeraManager plugin v. 0.1</h1>"
+        msgBox.setText( "<html><h1>TeraManager plugin v. 0.4</h1>"
                         "<big>An experimental tool designed for Teravoxel-sized datasets visualization into Vaa3D.</big><br><br>"
                         "<u>Developed by:</u><ul>"
                         "<li><b>Alessandro Bria</b> (email: a.bria@unicas.it)<br>"

@@ -31,25 +31,22 @@
 #include "control/CVolume.h"
 #include "presentation/PMain.h"
 #include "renderer_gl1.h"
+#include "v3d_imaging_para.h"
 //#include "newmat.h"
 
 using namespace teramanager;
 
 CExplorerWindow* CExplorerWindow::first = NULL;
+CExplorerWindow* CExplorerWindow::last = NULL;
 
 CExplorerWindow::CExplorerWindow(V3DPluginCallback2 *_V3D_env, int _resIndex, uint8 *imgData, int _volV0, int _volV1,
                                  int _volH0, int _volH1, int _volD0, int _volD1, CExplorerWindow *_prev) : QWidget()
 {
-    #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread %d] >> CExplorerWindow[\"multires_%d\"] created\n", this->thread()->currentThreadId(), _resIndex);
-    #endif
-
     //initializations
     this->V3D_env = _V3D_env;
     this->prev = _prev;
     this->next = NULL;
     this->volResIndex = _resIndex;
-    this->title = QString("multires_").append(QString::number(volResIndex)).toStdString();
     this->volV0 = _volV0;
     this->volV1 = _volV1;
     this->volH0 = _volH0;
@@ -57,6 +54,16 @@ CExplorerWindow::CExplorerWindow(V3DPluginCallback2 *_V3D_env, int _resIndex, ui
     this->volD0 = _volD0;
     this->volD1 = _volD1;
     this->toBeClosed = false;
+    char ctitle[1024];
+    sprintf(ctitle, "Res(%d x %d x %d),Volume(%d-%d,%d-%d,%d-%d)", CImport::instance()->getVolume(volResIndex)->getDIM_H(),
+            CImport::instance()->getVolume(volResIndex)->getDIM_V(), CImport::instance()->getVolume(volResIndex)->getDIM_D(),
+            volH0+1, volH1, volV0+1, volV1, volD0+1, volD1);
+    this->title = ctitle;
+    PMain* pMain = PMain::instance();
+
+    #ifdef TMP_DEBUG
+    printf("--------------------- teramanager plugin [thread %d] >> CExplorerWindow[\"%s\"] created\n", this->thread()->currentThreadId(), title.c_str());
+    #endif
 
     //opening tri-view window
     this->window = V3D_env->newImageWindow(QString(title.c_str()));
@@ -90,16 +97,19 @@ CExplorerWindow::CExplorerWindow(V3DPluginCallback2 *_V3D_env, int _resIndex, ui
         prev->view3DWidget->setCursor(Qt::ArrowCursor);
 
         //registrating views
-        float ratio = CImport::instance()->getVolume(volResIndex)->getDIM_D()/CImport::instance()->getVolume(volResIndex-1)->getDIM_D();
+        float ratio = CImport::instance()->getVolume(volResIndex)->getDIM_D()/CImport::instance()->getVolume(prev->volResIndex)->getDIM_D();
         view3DWidget->setZoom(prev->view3DWidget->zoom()/ratio);
         view3DWidget->setXRotation(prev->view3DWidget->xRot());
         view3DWidget->setYRotation(prev->view3DWidget->yRot());
         view3DWidget->setZRotation(prev->view3DWidget->zRot());
     }
-    //otherwise centering the current 3D window and the plugin's window
+    //otherwise this is the highest resolution window
     else
     {
-        PMain* pMain = PMain::instance();
+        //registrating the current window as the first window of the multiresolution explorer windows chain
+        CExplorerWindow::first = this;
+
+        //centering the current 3D window and the plugin's window        
         int screen_height = qApp->desktop()->availableGeometry().height();
         int screen_width = qApp->desktop()->availableGeometry().width();
         int window_x = (screen_width - (window3D->width() + PMain::instance()->width()))/2;
@@ -110,8 +120,40 @@ CExplorerWindow::CExplorerWindow(V3DPluginCallback2 *_V3D_env, int _resIndex, ui
         pMain->resize(pMain->width(), window3D->height());
     }
 
+    //registrating the current window as the last window of the multiresolution explorer windows chain
+    CExplorerWindow::last = this;
 
+    //selecting the current resolution in the PMain GUI
+    pMain->resolution_cbox->setCurrentIndex(volResIndex);
+
+    //setting min, max and value of PMain GUI VOI's widgets
+    pMain->V0_sbox->setMinimum(getHighestResGlobalVCoord(view3DWidget->yCut0())+1);
+    pMain->V0_sbox->setValue(pMain->V0_sbox->minimum());
+    pMain->V1_sbox->setMaximum(getHighestResGlobalVCoord(view3DWidget->yCut1())+1);
+    pMain->V1_sbox->setValue(pMain->V1_sbox->maximum());
+    pMain->H0_sbox->setMinimum(getHighestResGlobalHCoord(view3DWidget->xCut0())+1);
+    pMain->H0_sbox->setValue(pMain->H0_sbox->minimum());
+    pMain->H1_sbox->setMaximum(getHighestResGlobalHCoord(view3DWidget->xCut1())+1);
+    pMain->H1_sbox->setValue(pMain->H1_sbox->maximum());
+    pMain->D0_sbox->setMinimum(getHighestResGlobalDCoord(view3DWidget->zCut0())+1);
+    pMain->D0_sbox->setValue(pMain->D0_sbox->minimum());
+    pMain->D1_sbox->setMaximum(getHighestResGlobalDCoord(view3DWidget->zCut1())+1);
+    pMain->D1_sbox->setValue(pMain->D1_sbox->maximum());
+
+    //signal connections
     connect(CVolume::instance(), SIGNAL(sendOperationOutcome(MyException*,void*)), this, SLOT(loadingDone(MyException*,void*)), Qt::QueuedConnection);
+    connect(view3DWidget, SIGNAL(changeXCut0(int)), this, SLOT(Vaa3D_changeXCut0(int)));
+    connect(view3DWidget, SIGNAL(changeXCut1(int)), this, SLOT(Vaa3D_changeXCut1(int)));
+    connect(view3DWidget, SIGNAL(changeYCut0(int)), this, SLOT(Vaa3D_changeYCut0(int)));
+    connect(view3DWidget, SIGNAL(changeYCut1(int)), this, SLOT(Vaa3D_changeYCut1(int)));
+    connect(view3DWidget, SIGNAL(changeZCut0(int)), this, SLOT(Vaa3D_changeZCut0(int)));
+    connect(view3DWidget, SIGNAL(changeZCut1(int)), this, SLOT(Vaa3D_changeZCut1(int)));
+    connect(PMain::instance()->V0_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeV0sbox(int)));
+    connect(PMain::instance()->V1_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeV1sbox(int)));
+    connect(PMain::instance()->H0_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeH0sbox(int)));
+    connect(PMain::instance()->H1_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeH1sbox(int)));
+    connect(PMain::instance()->D0_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeD0sbox(int)));
+    connect(PMain::instance()->D1_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeD1sbox(int)));
 }
 
 CExplorerWindow::~CExplorerWindow()
@@ -120,6 +162,7 @@ CExplorerWindow::~CExplorerWindow()
     printf("--------------------- teramanager plugin [thread %d] >> CExplorerWindow[\"%s\"] destroyed\n", this->thread()->currentThreadId(), title.c_str() );
     #endif
 
+    //just closing windows
     window3D->close();
     triViewWidget->close();
 }
@@ -142,8 +185,7 @@ bool CExplorerWindow::eventFilter(QObject *object, QEvent *event)
         {
             LandmarkList markers = V3D_env->getLandmark(triViewWidget);
             if(view3DWidget->zoom() > 30        &&              //zoom-in threshold reached
-               markers.size() == 1              &&              //only one marker exists
-               CImport::instance()->getVolume(volResIndex+1))   //the next resolution exists
+               markers.size() == 1)                             //only one marker exists
             {
                 switchToHigherRes(markers.first().x, markers.first().y, markers.first().z);
                 markers.clear();
@@ -152,9 +194,9 @@ bool CExplorerWindow::eventFilter(QObject *object, QEvent *event)
             }
             else if(view3DWidget->zoom() < 0    &&              //zoom-out threshold reached
                     prev                        &&              //the previous resolution exists
-                    !prev->toBeClosed)                          //the previous resolution does not have to be closed
+                    !toBeClosed)                                //the current resolution does not have to be closed
             {
-                prev->toBeClosed = true;
+                toBeClosed = true;
                 prev->restore();
             }
         }
@@ -171,13 +213,13 @@ bool CExplorerWindow::eventFilter(QObject *object, QEvent *event)
         Close events are intercepted to switch to  the lower resolution,  if avail-
         able. Otherwise, the plugin is closed.
         ***************************************************************************/
-        else if(event->type()==QEvent::Close)
+        else if(object == view3DWidget && event->type()==QEvent::Close)
         {
             if(prev                        &&                   //the previous resolution exists
-               !prev->toBeClosed)                               //the previous resolution does not have to be closed)
+               !toBeClosed)                                     //the current resolution does not have to be closed)
             {
                 event->ignore();
-                prev->toBeClosed = true;
+                toBeClosed = true;
                 prev->restore();
                 return true;
             }
@@ -212,10 +254,38 @@ void CExplorerWindow::loadingDone(MyException *ex, void* sourceObject)
         QMessageBox::critical(this,QObject::tr("Error"), QObject::tr(ex->what()),QObject::tr("Ok"));
     else if(sourceObject == this)
     {
+        //signal disconnections
+        disconnect(CVolume::instance(), SIGNAL(sendOperationOutcome(MyException*,void*)), this, SLOT(loadingDone(MyException*,void*)));
+        disconnect(view3DWidget, SIGNAL(changeXCut0(int)), this, SLOT(Vaa3D_changeXCut0(int)));
+        disconnect(view3DWidget, SIGNAL(changeXCut1(int)), this, SLOT(Vaa3D_changeXCut1(int)));
+        disconnect(view3DWidget, SIGNAL(changeYCut0(int)), this, SLOT(Vaa3D_changeYCut0(int)));
+        disconnect(view3DWidget, SIGNAL(changeYCut1(int)), this, SLOT(Vaa3D_changeYCut1(int)));
+        disconnect(view3DWidget, SIGNAL(changeZCut0(int)), this, SLOT(Vaa3D_changeZCut0(int)));
+        disconnect(view3DWidget, SIGNAL(changeZCut1(int)), this, SLOT(Vaa3D_changeZCut1(int)));
+        disconnect(PMain::instance()->V0_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeV0sbox(int)));
+        disconnect(PMain::instance()->V1_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeV1sbox(int)));
+        disconnect(PMain::instance()->H0_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeH0sbox(int)));
+        disconnect(PMain::instance()->H1_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeH1sbox(int)));
+        disconnect(PMain::instance()->D0_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeD0sbox(int)));
+        disconnect(PMain::instance()->D1_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeD1sbox(int)));
 
-        this->next = new CExplorerWindow(this->V3D_env, volResIndex+1,
-                                         cVolume->getVoiData(), cVolume->getVoiV0(), cVolume->getVoiV1(),cVolume->getVoiH0(),cVolume->getVoiH1(),
-                                         cVolume->getVoiD0(),cVolume->getVoiD1(), this);
+        //if the resolution of the loaded voi is higher than the current one, opening the "next" explorer
+        if(cVolume->getVoiResIndex() > volResIndex)
+            this->next = new CExplorerWindow(V3D_env, cVolume->getVoiResIndex(), cVolume->getVoiData(), cVolume->getVoiV0(), cVolume->getVoiV1(),
+                                             cVolume->getVoiH0(),cVolume->getVoiH1(), cVolume->getVoiD0(),cVolume->getVoiD1(), this);
+        //if the resolution of the loaded voi is the same of the current one
+        else if(cVolume->getVoiResIndex() == volResIndex)
+        {
+            //opening a new explorer in the current resolution and closing the current one
+            this->next = new CExplorerWindow(this->V3D_env, volResIndex, cVolume->getVoiData(), cVolume->getVoiV0(), cVolume->getVoiV1(),
+                                             cVolume->getVoiH0(),cVolume->getVoiH1(), cVolume->getVoiD0(),cVolume->getVoiD1(), this);
+            prev->next = next;
+            next->prev = prev;
+            this->toBeClosed = true;
+            delete this;
+        }
+        else
+            QMessageBox::critical(this,QObject::tr("Error"), "Incorrect resolution generation",QObject::tr("Ok"));
 
         view3DWidget->setCursor(Qt::ArrowCursor);
     }
@@ -227,15 +297,17 @@ void CExplorerWindow::loadingDone(MyException *ex, void* sourceObject)
 }
 
 /**********************************************************************************
-* Switches to the higher resolution at the given 3D point.
+* Switches to the higher resolution centered at the given 3D point and with the gi-
+* ven dimensions (optional). VOI's dimensions from the GUI will be used if dx,dy,dz
+* are not provided.
 * Called by the current <CExplorerWindow> when the user zooms in and the higher res-
 * lution has to be loaded.
 ***********************************************************************************/
-void CExplorerWindow::switchToHigherRes(int x, int y, int z)
+void CExplorerWindow::switchToHigherRes(int x, int y, int z, int dx, int dy, int dz)
 {
     #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread %d] >> CExplorerWindow[\"%s\"] switchToHigherRes(x = %d, y = %d, z = %d) launched\n",
-           this->thread()->currentThreadId(),title.c_str(), x, y, z );
+    printf("--------------------- teramanager plugin [thread %d] >> CExplorerWindow[\"%s\"] switchToHigherRes(x = %d, y = %d, z = %d, dx=%d, dy=%d, dz=%d) launched\n",
+           this->thread()->currentThreadId(),title.c_str(), x, y, z, dx, dy, dz );
     #endif
 
     //preparing GUI
@@ -246,16 +318,34 @@ void CExplorerWindow::switchToHigherRes(int x, int y, int z)
     pMain.progressBar->setMaximum(0);
     pMain.loadButton->setEnabled(false);
     pMain.import_form->setEnabled(false);
-    pMain.statusBar->showMessage("Zooming in to the higher resolution...");
+    if(CImport::instance()->getVolume(volResIndex+1))
+        pMain.statusBar->showMessage("Zooming in to the higher resolution...");
+    else
+        pMain.statusBar->showMessage("Loading selected VOI...");
 
-    //obtaining VOI at the current resolution
-    float ratio = CImport::instance()->getVolume(volResIndex+1)->getDIM_D()/CImport::instance()->getVolume(volResIndex)->getDIM_D();
-    int VoiCenterX = (x + volH0)*ratio;
-    int VoiCenterY = (y + volV0)*ratio;
-    int VoiCenterZ = (z + volD0)*ratio;
-    CVolume::instance()->setVoi(this, volResIndex+1, VoiCenterY-pMain.Vdim_sbox->value()/2, VoiCenterY+pMain.Vdim_sbox->value()/2,
-                                                     VoiCenterX-pMain.Hdim_sbox->value()/2, VoiCenterX+pMain.Hdim_sbox->value()/2,
-                                                     VoiCenterZ-pMain.Ddim_sbox->value()/2, VoiCenterZ+pMain.Ddim_sbox->value()/2);
+    //if the higher resolution exists, obtaining VOI at the higher resolution
+    if(CImport::instance()->getVolume(volResIndex+1))
+    {
+        float ratio = CImport::instance()->getVolume(volResIndex+1)->getDIM_D()/CImport::instance()->getVolume(volResIndex)->getDIM_D();
+        int VoiCenterX = (x + volH0)*ratio+0.5f;
+        int VoiCenterY = (y + volV0)*ratio+0.5f;
+        int VoiCenterZ = (z + volD0)*ratio+0.5f;
+        dx = dx == -1 ? pMain.Hdim_sbox->value()/2 : (dx*ratio+0.5f);
+        dy = dy == -1 ? pMain.Vdim_sbox->value()/2 : (dy*ratio+0.5f);
+        dz = dz == -1 ? pMain.Ddim_sbox->value()/2 : (dz*ratio+0.5f);
+        CVolume::instance()->setVoi(this, volResIndex+1, VoiCenterY-dy, VoiCenterY+dy, VoiCenterX-dx, VoiCenterX+dx, VoiCenterZ-dz, VoiCenterZ+dz);
+    }
+    //otherwise obtaining VOI at the current resolution
+    else
+    {
+        int VoiCenterX = x + volH0;
+        int VoiCenterY = y + volV0;
+        int VoiCenterZ = z + volD0;
+        dx = dx == -1 ? pMain.Hdim_sbox->value()/2 : dx;
+        dy = dy == -1 ? pMain.Vdim_sbox->value()/2 : dy;
+        dz = dz == -1 ? pMain.Ddim_sbox->value()/2 : dz;
+        CVolume::instance()->setVoi(this, volResIndex, VoiCenterY-dy, VoiCenterY+dy, VoiCenterX-dx, VoiCenterX+dx, VoiCenterZ-dz, VoiCenterZ+dz);
+    }
 
     //launching thread where the VOI has to be loaded
     CVolume::instance()->start();
@@ -284,8 +374,6 @@ void CExplorerWindow::restore()
         window3D->move(location);
 
         //registrating views
-        //float ratio = CImport::instance()->getVolume(volResIndex)->getDIM_D()/CImport::instance()->getVolume(volResIndex+1)->getDIM_D();
-        //view3DWidget->setZoom(next->view3DWidget->zoom()*ratio);
         view3DWidget->setXRotation(next->view3DWidget->xRot());
         view3DWidget->setYRotation(next->view3DWidget->yRot());
         view3DWidget->setZRotation(next->view3DWidget->zRot());
@@ -293,6 +381,42 @@ void CExplorerWindow::restore()
         //closing next
         delete next;
         next = 0;
+
+        //registrating the current window as the last window of the multiresolution explorer windows chain
+        CExplorerWindow::last = this;
+
+        //selecting the current resolution in the PMain GUI
+        PMain* pMain = PMain::instance();
+        pMain->resolution_cbox->setCurrentIndex(volResIndex);
+
+        //setting min, max and value of PMain GUI VOI's widgets
+        pMain->V0_sbox->setMinimum(getHighestResGlobalVCoord(view3DWidget->yCut0())+1);
+        pMain->V0_sbox->setValue(pMain->V0_sbox->minimum());
+        pMain->V1_sbox->setMaximum(getHighestResGlobalVCoord(view3DWidget->yCut1())+1);
+        pMain->V1_sbox->setValue(pMain->V1_sbox->maximum());
+        pMain->H0_sbox->setMinimum(getHighestResGlobalHCoord(view3DWidget->xCut0())+1);
+        pMain->H0_sbox->setValue(pMain->H0_sbox->minimum());
+        pMain->H1_sbox->setMaximum(getHighestResGlobalHCoord(view3DWidget->xCut1())+1);
+        pMain->H1_sbox->setValue(pMain->H1_sbox->maximum());
+        pMain->D0_sbox->setMinimum(getHighestResGlobalDCoord(view3DWidget->zCut0())+1);
+        pMain->D0_sbox->setValue(pMain->D0_sbox->minimum());
+        pMain->D1_sbox->setMaximum(getHighestResGlobalDCoord(view3DWidget->zCut1())+1);
+        pMain->D1_sbox->setValue(pMain->D1_sbox->maximum());
+
+        //signal connections
+        connect(CVolume::instance(), SIGNAL(sendOperationOutcome(MyException*,void*)), this, SLOT(loadingDone(MyException*,void*)));
+        connect(view3DWidget, SIGNAL(changeXCut0(int)), this, SLOT(Vaa3D_changeXCut0(int)));
+        connect(view3DWidget, SIGNAL(changeXCut1(int)), this, SLOT(Vaa3D_changeXCut1(int)));
+        connect(view3DWidget, SIGNAL(changeYCut0(int)), this, SLOT(Vaa3D_changeYCut0(int)));
+        connect(view3DWidget, SIGNAL(changeYCut1(int)), this, SLOT(Vaa3D_changeYCut1(int)));
+        connect(view3DWidget, SIGNAL(changeZCut0(int)), this, SLOT(Vaa3D_changeZCut0(int)));
+        connect(view3DWidget, SIGNAL(changeZCut1(int)), this, SLOT(Vaa3D_changeZCut1(int)));
+        connect(PMain::instance()->V0_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeV0sbox(int)));
+        connect(PMain::instance()->V1_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeV1sbox(int)));
+        connect(PMain::instance()->H0_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeH0sbox(int)));
+        connect(PMain::instance()->H1_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeH1sbox(int)));
+        connect(PMain::instance()->D0_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeD0sbox(int)));
+        connect(PMain::instance()->D1_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeD1sbox(int)));
     }
 }
 
@@ -333,6 +457,152 @@ XYZ CExplorerWindow::getRenderer3DPoint(int x, int y)  throw (MyException)
     /*myRenderer* myRend = (myRenderer*)(view3DWidget->getRenderer());
     return myRend->get3DPoint(x,y);*/
     throw MyException("Double-click zoom-in feature has been disabled because the necessary Vaa3D sources can't be included correctly.");
+}
+
+/**********************************************************************************
+* Linked to rightStrokeROI and rightClickROI right-menu entries of the 3D renderer.
+* This implements the selection of a ROI in the 3D renderer.
+***********************************************************************************/
+void CExplorerWindow::Vaa3D_selectedROI()
+{
+    #ifdef TMP_DEBUG
+    printf("--------------------- teramanager plugin [thread unknown] >> CExplorerWindow::Vaa3D_selectedROI() launched\n");
+    #endif
+
+    //the ROI selection is catched only if a <CExplorerWindow> is opened
+    if(last)
+    {
+        v3d_imaging_paras* roi = (v3d_imaging_paras*) last->view3DWidget->getiDrawExternalParameter()->image4d->getCustomStructPointer();
+        int roiCenterX = roi->xe-(roi->xe-roi->xs)/2;
+        int roiCenterY = roi->ye-(roi->ye-roi->ys)/2;
+        int roiCenterZ = roi->ze-(roi->ze-roi->zs)/2;
+        //last->switchToHigherRes(roiCenterX, roiCenterY, roiCenterZ, (roi->xe-roi->xs)/2, (roi->ye-roi->ys)/2, (roi->ze-roi->zs)/2);
+        last->switchToHigherRes(roiCenterX, roiCenterY, roiCenterZ);
+    }
+}
+
+/**********************************************************************************
+* Returns  the  global coordinate  (which starts from 0) in  the highest resolution
+* volume image space given the local coordinate (which starts from 0) in the current
+* resolution volume image space.
+***********************************************************************************/
+int CExplorerWindow::getHighestResGlobalVCoord(int localVCoord)
+{
+    float ratio = (CImport::instance()->getHighestResVolume()->getDIM_V()-1.0f)/(CImport::instance()->getVolume(volResIndex)->getDIM_V()-1.0f);
+    return (volV0+localVCoord)*ratio + 0.5f;
+}
+int CExplorerWindow::getHighestResGlobalHCoord(int localHCoord)
+{
+    float ratio = (CImport::instance()->getHighestResVolume()->getDIM_H()-1.0f)/(CImport::instance()->getVolume(volResIndex)->getDIM_H()-1.0f);
+    return (volH0+localHCoord)*ratio + 0.5f;
+}
+int CExplorerWindow::getHighestResGlobalDCoord(int localDCoord)
+{
+    float ratio = (CImport::instance()->getHighestResVolume()->getDIM_D()-1.0f)/(CImport::instance()->getVolume(volResIndex)->getDIM_D()-1.0f);
+    return (volD0+localDCoord)*ratio + 0.5f;
+}
+
+/**********************************************************************************
+* Returns the local coordinate (which starts from 0) in the current resolution vol-
+* ume image space given the global coordinate  (which starts from 0) in the highest
+* resolution volume image space.
+***********************************************************************************/
+int CExplorerWindow::getLocalVCoord(int highestResGlobalVCoord)
+{
+    float ratio = (CImport::instance()->getHighestResVolume()->getDIM_V()-1.0f)/(CImport::instance()->getVolume(volResIndex)->getDIM_V()-1.0f);
+    return highestResGlobalVCoord/ratio - volV0 + 0.5f;
+}
+int CExplorerWindow::getLocalHCoord(int highestResGlobalHCoord)
+{
+    float ratio = (CImport::instance()->getHighestResVolume()->getDIM_H()-1.0f)/(CImport::instance()->getVolume(volResIndex)->getDIM_H()-1.0f);
+    return highestResGlobalHCoord/ratio - volH0 + 0.5f;
+}
+int CExplorerWindow::getLocalDCoord(int highestResGlobalDCoord)
+{
+    float ratio = (CImport::instance()->getHighestResVolume()->getDIM_D()-1.0f)/(CImport::instance()->getVolume(volResIndex)->getDIM_D()-1.0f);
+    return highestResGlobalDCoord/ratio - volD0 + 0.5f;
+}
+
+/**********************************************************************************
+* Linked to volume cut scrollbars of Vaa3D widget containing the 3D renderer.
+* This implements the syncronization Vaa3D-->TeraManager of subvolume selection.
+***********************************************************************************/
+void CExplorerWindow::Vaa3D_changeYCut0(int s)
+{
+    disconnect(PMain::instance()->V0_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeV0sbox(int)));
+    PMain::instance()->V0_sbox->setValue(getHighestResGlobalVCoord(s)+1);
+    connect(PMain::instance()->V0_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeV0sbox(int)));
+}
+void CExplorerWindow::Vaa3D_changeYCut1(int s)
+{
+    disconnect(PMain::instance()->V1_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeV1sbox(int)));
+    PMain::instance()->V1_sbox->setValue(getHighestResGlobalVCoord(s)+1);
+    connect(PMain::instance()->V1_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeV1sbox(int)));
+}
+void CExplorerWindow::Vaa3D_changeXCut0(int s)
+{
+    disconnect(PMain::instance()->H0_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeH0sbox(int)));
+    PMain::instance()->H0_sbox->setValue(getHighestResGlobalHCoord(s)+1);
+    connect(PMain::instance()->H0_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeH0sbox(int)));
+}
+void CExplorerWindow::Vaa3D_changeXCut1(int s)
+{
+    disconnect(PMain::instance()->H1_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeH1sbox(int)));
+    PMain::instance()->H1_sbox->setValue(getHighestResGlobalHCoord(s)+1);
+    connect(PMain::instance()->H1_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeH1sbox(int)));
+}
+void CExplorerWindow::Vaa3D_changeZCut0(int s)
+{
+    disconnect(PMain::instance()->D0_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeD0sbox(int)));
+    PMain::instance()->D0_sbox->setValue(getHighestResGlobalDCoord(s)+1);
+    connect(PMain::instance()->D0_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeD0sbox(int)));
+}
+void CExplorerWindow::Vaa3D_changeZCut1(int s)
+{
+    disconnect(PMain::instance()->D1_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeD1sbox(int)));
+    PMain::instance()->D1_sbox->setValue(getHighestResGlobalDCoord(s)+1);
+    connect(PMain::instance()->D1_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeD1sbox(int)));
+}
+
+/**********************************************************************************
+* Linked to PMain GUI VOI's widgets.
+* This implements the syncronization TeraManager-->Vaa3D of subvolume selection.
+***********************************************************************************/
+void CExplorerWindow::PMain_changeV0sbox(int s)
+{
+    disconnect(view3DWidget, SIGNAL(changeYCut0(int)), this, SLOT(Vaa3D_changeYCut0(int)));
+    view3DWidget->setYCut0(getLocalVCoord(s-1)+1);
+    connect(view3DWidget, SIGNAL(changeYCut0(int)), this, SLOT(Vaa3D_changeYCut0(int)));
+}
+void CExplorerWindow::PMain_changeV1sbox(int s)
+{
+    disconnect(view3DWidget, SIGNAL(changeYCut1(int)), this, SLOT(Vaa3D_changeYCut1(int)));
+    view3DWidget->setYCut1(getLocalVCoord(s-1)+1);
+    connect(view3DWidget, SIGNAL(changeYCut1(int)), this, SLOT(Vaa3D_changeYCut1(int)));
+}
+void CExplorerWindow::PMain_changeH0sbox(int s)
+{
+    disconnect(view3DWidget, SIGNAL(changeXCut0(int)), this, SLOT(Vaa3D_changeXCut0(int)));
+    view3DWidget->setXCut0(getLocalHCoord(s-1)+1);
+    connect(view3DWidget, SIGNAL(changeXCut0(int)), this, SLOT(Vaa3D_changeXCut0(int)));
+}
+void CExplorerWindow::PMain_changeH1sbox(int s)
+{
+    disconnect(view3DWidget, SIGNAL(changeXCut1(int)), this, SLOT(Vaa3D_changeXCut1(int)));
+    view3DWidget->setXCut1(getLocalHCoord(s-1)+1);
+    connect(view3DWidget, SIGNAL(changeXCut1(int)), this, SLOT(Vaa3D_changeXCut1(int)));
+}
+void CExplorerWindow::PMain_changeD0sbox(int s)
+{
+    disconnect(view3DWidget, SIGNAL(changeZCut0(int)), this, SLOT(Vaa3D_changeZCut0(int)));
+    view3DWidget->setZCut0(getLocalDCoord(s-1)+1);
+    connect(view3DWidget, SIGNAL(changeZCut0(int)), this, SLOT(Vaa3D_changeZCut0(int)));
+}
+void CExplorerWindow::PMain_changeD1sbox(int s)
+{
+    disconnect(view3DWidget, SIGNAL(changeZCut1(int)), this, SLOT(Vaa3D_changeZCut1(int)));
+    view3DWidget->setZCut1(getLocalDCoord(s-1)+1);
+    connect(view3DWidget, SIGNAL(changeZCut1(int)), this, SLOT(Vaa3D_changeZCut1(int)));
 }
 
 

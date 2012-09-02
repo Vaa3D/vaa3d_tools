@@ -8,6 +8,46 @@ ties names are:
 - Dev: for developers only
 
 ============================================================================================
+
+Version 0.4
+September 2nd, 2012
+--------------------------------------------------------------------------------------------
+- New: "Google Earth" feature released! The 3D exploration of the volume uses all the avail-
+       able resolutions to enable a  "Google-Earth" like experience.  Transitions  to higher
+       resolutions are available by:
+         1) creating a Vaa3D marker in the image space and zooming-in
+         2) 1-right-stroke ROI Vaa3D right-menu function
+         3) 1-right-click ROI Vaa3D right-menu function
+         4) VOI's precise selection (see "Precise VOI selection" feature)
+       When the highest  resolution is  reached, these functions can be used to move  to an-
+       other volume of interest within the same (highest) resolution.
+       Volumes of interest (except for 4) have size 200x200x50 but it  can be  modified from  
+       the GUI. This setting is automatically saved when the plugin is closed.
+       Transitions to the higher resolution are fast (< 2 seconds on a midrange PC), whereas
+       transitions  to the lower resolution are instantaneous and they  occurs when the user
+       zooms out. Both transitions generate views registered each other in terms of orienta-
+       tion, zoom and position of the window containing the 3D renderer.
+- New: "Precise VOI selection" feature released. The user can select  a volume  of  interest 
+       with 1-voxel precision using the plugin VOI spinboxes or the Vaa3D volume cut scroll-
+       bars, if the "Google Earth" feature is enabled. If Vaa3D volume cut scrollbars change
+       also TeraManager VOI spinboxes change and viceversa.  TeraManager  VOI spinboxes have
+       values in the highest resolution volume space, while Vaa3D volume cut scrollbars have
+       values in the local image space of the resolution shown in that moment. A syncroniza-
+       tion mechanism takes this into account. 
+       The selected VOI is always loaded from the highest resolution volume.
+- New: "Resolution" GUI field which shows infos about the current active resolution.
+- New: "Zoom-in VOI size" field which shows  the size (in MVoxels) of  the VOI  to be loaded
+       from the higher resolution.
+- New: the "Load" button of the "Precise VOI selection" feature  shows the size (in MVoxels)
+       of the VOI to be loaded from the highest resolution.
+- New: the plugin GUI is automatically positioned as an "extension" of the 3D renderer, when
+       the "Google Earth" feature is enabled.   
+- New: the VHD (Vertical, Horizontal, Depth) reference system has been changed into the same
+       used by Vaa3D: XYZ (Horizontal, Vertical, Depth).  
+  
+--------------------------------------------------------------------------------------------
+
+
 Version 0.3
 August 27th, 2012
 --------------------------------------------------------------------------------------------

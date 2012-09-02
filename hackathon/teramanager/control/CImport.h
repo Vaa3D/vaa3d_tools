@@ -101,12 +101,13 @@ class teramanager::CImport : public QThread
             return -1;
         }
         bool isEmpty(){return volumes.size() == 0;}
-        StackedVolume* getHighestResVolume(){return volumes.back();}
+        StackedVolume* getHighestResVolume(){if(!volumes.empty()) return volumes.back(); else return 0;}
         StackedVolume* getVolume(int resolutionIdx)
         {
             if(resolutionIdx < volumes.size()) return volumes[resolutionIdx];
             else return 0;
         }
+        int getResolutions(){return volumes.size();}
         void setPath(string new_path){path = new_path;}
         void setAxes(string axs1, string axs2, string axs3);
         void setVoxels(std::string vxl1, std::string vxl2, std::string vxl3);
@@ -116,7 +117,13 @@ class teramanager::CImport : public QThread
         void setVolMapMaxSize(int _volMapMaxSize){volMapMaxSize = _volMapMaxSize;}
 
         //reset method
-        void reset(){path=""; AXS_1=AXS_2=AXS_3=axis_invalid; VXL_1=VXL_2=VXL_3=0; reimport=false;}
+        void reset()
+        {
+            path=""; AXS_1=AXS_2=AXS_3=axis_invalid; VXL_1=VXL_2=VXL_3=0; reimport=false;
+            for(int i=0; i<volumes.size(); i++)
+                delete volumes[i];
+            volumes.clear();
+        }
 
     signals:
 

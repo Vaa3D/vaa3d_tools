@@ -64,6 +64,7 @@ class teramanager::PMain : public QWidget
         QPushButton *voldir_button;     //browse for volume's directory button
         QCheckBox *reimport_checkbox;   //checkbox to be used to reimport a volume already imported
         QCheckBox *enableMultiresMode;  //checkbox to be used to generate and show a 3D volume map
+        QWidget* volMapWidget;          //widget containing volume map options
         QCheckBox *regenerateVolMap;    //if activated, the volume map will be regenerated
         QSpinBox  *volMapMaxSizeSBox;   //to set the maximum allowed size (in MVoxels) of the volume map
 
@@ -137,6 +138,8 @@ class teramanager::PMain : public QWidget
         QLabel* direction_D_label_6;
         QLabel* by_label_6;
         QLabel* by_label_7;
+        QComboBox* resolution_cbox;
+        QLabel* zoominVoiSize;
 
         //other widgets
         QProgressBar* progressBar;      //progress bar
@@ -206,21 +209,22 @@ class teramanager::PMain : public QWidget
         void settingsChanged(int);
 
         /**********************************************************************************
-        * Linked to volume cut scrollbars of Vaa3D widget containing the 3D renderer.
-        * This implements the syncronization Vaa3D-->TeraManager of subvolume selection.
+        * Linked to resolution combobox
+        * This switches to the given resolution index.
         ***********************************************************************************/
-        void Vaa3D_changeXCut0(int s);
-        void Vaa3D_changeXCut1(int s);
-        void Vaa3D_changeYCut0(int s);
-        void Vaa3D_changeYCut1(int s);
-        void Vaa3D_changeZCut0(int s);
-        void Vaa3D_changeZCut1(int s);
+        void resolutionIndexChanged(int i);
 
         /**********************************************************************************
-        * Linked to rightStrokeROI and rightClickROI right-menu entries of the 3D renderer.
-        * This implements the selection of a ROI in the 3D renderer.
+        * Linked to zoom-in VOI spinboxes.
+        * This updates the zoom-in VOI size widget.
         ***********************************************************************************/
-        void Vaa3D_selectedROI();
+        void zoomInVoiSizeChanged(int i);
+
+        /**********************************************************************************
+        * Linked to highest res VOI's selection spinboxes.
+        * This updates the load button text.
+        ***********************************************************************************/
+        void highestVOISizeChanged(int i);
 
         //<CExplorerWindow> instances need to access to all members of the current class
         friend class CExplorerWindow;
