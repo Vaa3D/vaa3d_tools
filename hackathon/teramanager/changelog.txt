@@ -9,6 +9,17 @@ ties names are:
 
 ============================================================================================
 
+Version 0.4.1
+September 21st, 2012
+--------------------------------------------------------------------------------------------
+- Fix: The registration between consecutive resolutions did not work well when the window is
+       resized. This bug has been fixed.
+- New: The TeraManager window is now juxtaposed to  the navigation window and  each resizing
+       or moving event on the navigation window affects also the TeraManager window.
+- New: texture compression has been disabled to enhance the rendering quality.
+--------------------------------------------------------------------------------------------
+
+
 Version 0.4
 September 2nd, 2012
 --------------------------------------------------------------------------------------------

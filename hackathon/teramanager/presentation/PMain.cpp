@@ -386,9 +386,13 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     resetGUI();
 
     //center on screen and set always on top
-    setGeometry(QStyle::alignedRect(Qt::LeftToRight,Qt::AlignCenter,this->size(),qApp->desktop()->availableGeometry()));
     this->setWindowFlags(Qt::WindowStaysOnTopHint);
     this->setMaximumSize(this->minimumWidth(), this->minimumHeight());
+    int screen_height = qApp->desktop()->availableGeometry().height();
+    int screen_width = qApp->desktop()->availableGeometry().width();
+    int window_x = (screen_width  - width() ) / 2;
+    int window_y = (screen_height - height()) / 2;
+    this->move(window_x, window_y);
 }
 
 PMain::~PMain()

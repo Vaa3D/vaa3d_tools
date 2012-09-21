@@ -76,6 +76,7 @@ CExplorerWindow::CExplorerWindow(V3DPluginCallback2 *_V3D_env, int _resIndex, ui
     //opening 3D view window and hiding the tri-view window
     V3D_env->open3DWindow(window);
     view3DWidget = (V3dR_GLWidget*)(V3D_env->getView3DControl(window));
+    view3DWidget->setVolCompress(false);
     window3D = view3DWidget->getiDrawExternalParameter()->window3D;
     triViewWidget->setWindowState(Qt::WindowMinimized);
 
@@ -89,6 +90,7 @@ CExplorerWindow::CExplorerWindow(V3DPluginCallback2 *_V3D_env, int _resIndex, ui
         //positioning the current 3D window exactly at the previous window position
         QPoint location = prev->window3D->pos();
         prev->window3D->setVisible(false);
+        window3D->resize(prev->window3D->size());
         window3D->move(location);
 
         //hiding both tri-view and 3D view
@@ -225,6 +227,25 @@ bool CExplorerWindow::eventFilter(QObject *object, QEvent *event)
             }
             else if(!prev)
                 PMain::instance()->close();
+        }
+        /**************** INTERCEPTING MOVING/RESIZING EVENTS *********************
+        Window moving and resizing events  are intercepted  to let PMain's position
+        be syncronized with the explorer.
+        ***************************************************************************/
+        else if(object == window3D && (event->type() == QEvent::Move || event->type() == QEvent::Resize))
+        {
+            PMain* pMain = PMain::instance();
+            pMain->move(window3D->x() + window3D->width() + 3, window3D->y());
+            pMain->setMaximumHeight(std::max(window3D->height(),pMain->height()));
+            pMain->resize(pMain->width(), window3D->height());
+        }
+        /***************** INTERCEPTING STATE CHANGES EVENTS **********************
+        Window state changes events are intercepted to let PMain's position be syn-
+        cronized with the explorer.
+        ***************************************************************************/
+        else if(object == window3D && event->type() == QEvent::WindowStateChange)
+        {
+            PMain::instance()->setWindowState(window3D->windowState());
         }
         return false;
     }
@@ -370,7 +391,8 @@ void CExplorerWindow::restore()
         next->window3D->setVisible(false);
         triViewWidget->setVisible(true);
         window3D->setVisible(true);
-        triViewWidget->setWindowState(Qt::WindowMinimized);
+        triViewWidget->setWindowState(Qt::WindowMinimized);        
+        window3D->resize(next->window3D->size());
         window3D->move(location);
 
         //registrating views
