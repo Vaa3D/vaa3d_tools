@@ -71,14 +71,14 @@ void IBioformatIOPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &ca
 
         //
         QFile tmpqfile(tmpfile);
-        if (tmpqfile.exists()) system(qPrintable(QString("rm -f ")+tmpfile));
+        if (tmpqfile.exists()) system(qPrintable(QString("rm -f \"%1\"").arg(tmpfile)));
 
         //look for loci_tools.jar
         QString lociDir = ("loci_tools.jar");
         if (!QFile(lociDir).exists())
         {
              printf("loci_tools.jar is not in current directory, search v3d app path.\n");
-             lociDir = getAppPath().append("/loci_tools.jar");
+             lociDir = getAppPath().append("/bin/loci_tools.jar");
              printf(qPrintable(lociDir));
              printf("\n");
              if (!QFile(lociDir).exists())
@@ -88,7 +88,7 @@ void IBioformatIOPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &ca
              }
         }
 
-        QString cmd_loci = QString("java -cp %1 loci.formats.tools.ImageConverter %2 %3").arg(lociDir.toStdString().c_str()).arg(m_FileName.toStdString().c_str()).arg(tmpfile.toStdString().c_str());
+        QString cmd_loci = QString("java -cp %1 loci.formats.tools.ImageConverter \"%2\" \"%3\"").arg(lociDir.toStdString().c_str()).arg(m_FileName.toStdString().c_str()).arg(tmpfile.toStdString().c_str());
 
         system(qPrintable(cmd_loci));
 
@@ -184,7 +184,7 @@ bool IBioformatIOPlugin::dofunc(const QString & func_name, const V3DPluginArgLis
 
           //
           QFile tmpqfile(tmpfile);
-          if (tmpqfile.exists()) system(qPrintable(QString("rm -f ")+tmpfile));
+          if (tmpqfile.exists()) system(qPrintable(QString("rm -f \"%1\"").arg(tmpfile)));
 
           //look for loci_tools.jar
           QString lociDir = ("loci_tools.jar");
@@ -201,7 +201,7 @@ bool IBioformatIOPlugin::dofunc(const QString & func_name, const V3DPluginArgLis
                }
           }
 
-          QString cmd_loci = QString("java -cp %1 loci.formats.tools.ImageConverter %2 %3").arg(lociDir.toStdString().c_str()).arg(m_FileName.toStdString().c_str()).arg(tmpfile.toStdString().c_str());
+          QString cmd_loci = QString("java -cp %1 loci.formats.tools.ImageConverter \"%2\" \"%3\"").arg(lociDir.toStdString().c_str()).arg(m_FileName.toStdString().c_str()).arg(tmpfile.toStdString().c_str());
 
           system(qPrintable(cmd_loci));
 
