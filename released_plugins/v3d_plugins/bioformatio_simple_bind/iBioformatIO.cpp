@@ -237,6 +237,7 @@ QString getAppPath()
 		testUpperPluginsDir.cdUp();
 		testUpperPluginsDir.cdUp(); // like foo/plugins next to foo/v3d.app
 		if (testUpperPluginsDir.cd("plugins")) testPluginsDir = testUpperPluginsDir;
+		testPluginsDir.cdUp();
 	}
 #endif
 
