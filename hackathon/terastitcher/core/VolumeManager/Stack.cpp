@@ -14,7 +14,7 @@
 *    2. You agree to appropriately cite this work in your related studies and publications.
 *
 *       Bria, A., et al., (2012) "Stitching Terabyte-sized 3D Images Acquired in Confocal Ultramicroscopy", Proceedings of the 9th IEEE International Symposium on Biomedical Imaging.
-*       Bria, A., Iannello, G., "A Tool for Fast 3D Automatic Stitching of Teravoxel-sized Datasets", submitted on July 2012 to IEEE Transactions on Information Technology in Biomedicine.
+*       Bria, A., Iannello, G., "TeraStitcher - A Tool for Fast 3D Automatic Stitching of Teravoxel-sized Microscopy Images", submitted for publication, 2012.
 *
 *    3. This material is provided by  the copyright holders (Alessandro Bria  and  Giulio Iannello),  University Campus Bio-Medico and contributors "as is" and any express or implied war-
 *       ranties, including, but  not limited to,  any implied warranties  of merchantability,  non-infringement, or fitness for a particular purpose are  disclaimed. In no event shall the
@@ -288,7 +288,7 @@ Displacement* Stack::getDisplacement(Stack* neighbour) throw (MyException)
 		if(EAST.size() == 1) return EAST[0];
 		else throw MyException("...in Stack::getDisplacement(Stack* neighbour): stack MUST contain one displacement only at EAST");
 	else
-		throw("...in Stack::getDisplacement(Stack* neighbour): neighbour is not a neighbour!!!");
+		throw MyException("...in Stack::getDisplacement(Stack* neighbour): neighbour is not a neighbour!!!");
 }
 int Stack::getABS(int direction) throw (MyException)
 {

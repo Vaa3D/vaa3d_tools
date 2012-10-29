@@ -14,7 +14,7 @@
 *    2. You agree to appropriately cite this work in your related studies and publications.
 *
 *       Bria, A., et al., (2012) "Stitching Terabyte-sized 3D Images Acquired in Confocal Ultramicroscopy", Proceedings of the 9th IEEE International Symposium on Biomedical Imaging.
-*       Bria, A., Iannello, G., "A Tool for Fast 3D Automatic Stitching of Teravoxel-sized Datasets", submitted on July 2012 to IEEE Transactions on Information Technology in Biomedicine.
+*       Bria, A., Iannello, G., "TeraStitcher - A Tool for Fast 3D Automatic Stitching of Teravoxel-sized Microscopy Images", submitted for publication, 2012.
 *
 *    3. This material is provided by  the copyright holders (Alessandro Bria  and  Giulio Iannello),  University Campus Bio-Medico and contributors "as is" and any express or implied war-
 *       ranties, including, but  not limited to,  any implied warranties  of merchantability,  non-infringement, or fitness for a particular purpose are  disclaimed. In no event shall the
@@ -50,8 +50,8 @@ class StackRestorer
 			~vol_descr_t();
 
 			void init(Stack *new_stk_p, bool is_subvol_desc, int new_V_dim, int new_H_dim, int new_D_dim);
-			void computeSubvolDescriptors(real_t *subvol);
-			void computeStackDescriptors(vol_descr_t *subvol_desc, int D_subvols);
+			void computeSubvolDescriptors(real_t *subvol)  throw (MyException);
+			void computeStackDescriptors(vol_descr_t *subvol_desc, int D_subvols)  throw (MyException);
 			bool isFinalized() {return is_finalized;}
 			bool isSubvolDescriptor() {return is_subvol_descriptor;}
 			void print();
@@ -74,17 +74,17 @@ class StackRestorer
 		StackRestorer(StackedVolume* stk_org, char* file_path);
 		~StackRestorer(void);
 
-		void computeSubvolDescriptors(real_t* data, Stack* stk_p, int subvol_idx, int subvol_D_dim);
-		void computeStackDescriptors(Stack* stk_p);
+		void computeSubvolDescriptors(real_t* data, Stack* stk_p, int subvol_idx, int subvol_D_dim)  throw (MyException);
+		void computeStackDescriptors(Stack* stk_p)  throw (MyException);
 		void finalizeAllDescriptors();
 
-		void repairSlice(real_t* data, int slice_idx, Stack* stk_p, int direction);
-		void repairStack(real_t* data, Stack* stk_p, int direction);
+		void repairSlice(real_t* data, int slice_idx, Stack* stk_p, int direction)  throw (MyException);
+		void repairStack(real_t* data, Stack* stk_p, int direction)  throw (MyException);
 
 		void printSubvolDescriptors(Stack* stk_p, int subvol_idx);
 		void printVolDescriptors(Stack* stk_p);
-		void save(char* file_path);
-		void load(char* file_path);
+		void save(char* file_path) throw (MyException);
+		void load(char* file_path)  throw (MyException);
 };
 
 #endif
