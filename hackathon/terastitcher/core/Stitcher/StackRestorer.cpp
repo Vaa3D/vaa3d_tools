@@ -103,7 +103,7 @@ StackRestorer::~StackRestorer(void)
 	}
 }
 
-void StackRestorer::computeSubvolDescriptors(real_t* data, Stack* stk_p, int subvol_idx, int subvol_D_dim)
+void StackRestorer::computeSubvolDescriptors(real_t* data, Stack* stk_p, int subvol_idx, int subvol_D_dim) throw (MyException)
 {
 	int i = stk_p->getROW_INDEX();
 	int j = stk_p->getCOL_INDEX();
