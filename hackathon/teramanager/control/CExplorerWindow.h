@@ -50,6 +50,7 @@ class teramanager::CExplorerWindow : public QWidget
         int volV0, volV1;               //first and last vertical coordinates of the volume displayed in the current window
         int volH0, volH1;               //first and last horizontal coordinates of the volume displayed in the current window
         int volD0, volD1;               //first and last depth coordinates of the volume displayed in the current window
+        int nchannels;                  //number of image channels
         string title;                   //title of current window
         bool toBeClosed;                //true is the current window is marked is going to be closed
 
@@ -125,7 +126,7 @@ class teramanager::CExplorerWindow : public QWidget
 
         //CONSTRUCTOR, DECONSTRUCTOR
         CExplorerWindow(V3DPluginCallback2* _V3D_env, int _resIndex, uint8* imgData, int _volV0, int _volV1,
-                       int _volH0, int _volH1, int _volD0, int _volD1, CExplorerWindow* _prev);
+                       int _volH0, int _volH1, int _volD0, int _volD1, int _nchannels, CExplorerWindow* _prev);
         ~CExplorerWindow();
         static void uninstance(){if(first){delete first; first=last=0;}}
 

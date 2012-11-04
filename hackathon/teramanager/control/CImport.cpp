@@ -27,6 +27,7 @@
 ********************************************************************************************************************************************************************************************/
 
 #include "CImport.h"
+#include "CPlugin.h"
 #include "presentation/PDialogImport.h"
 #include "presentation/PMain.h"
 #include <sstream>
@@ -180,15 +181,19 @@ void CImport::run()
                 //if found, generating and saving the corresponding map, otherwise throwing an exception
                 if(volMapIndex != -1)
                 {
-                    uint8* vmap_raw = volumes[volMapIndex]->loadSubvolume_to_UINT8();
+                    uint8* vmap_raw = volumes[volMapIndex]->loadSubvolume_to_UINT8(-1, -1, -1, -1, -1, -1, &nchannels);
                     volMapHeight = volumes[volMapIndex]->getDIM_V();
                     volMapWidth  = volumes[volMapIndex]->getDIM_H();
                     volMapDepth  = volumes[volMapIndex]->getDIM_D();
                     FILE *volMapBin = fopen(volMapPath.c_str(), "wb");
+                    uint16 verstr_size = static_cast<uint16>(strlen(CPlugin::getVersion().c_str()) + 1);
+                    fwrite(&verstr_size, sizeof(uint16), 1, volMapBin);
+                    fwrite(CPlugin::getVersion().c_str(), verstr_size, 1, volMapBin);
+                    fwrite(&nchannels, sizeof(int), 1, volMapBin);
                     fwrite(&volMapHeight, sizeof(uint32), 1, volMapBin);
                     fwrite(&volMapWidth,  sizeof(uint32), 1, volMapBin);
                     fwrite(&volMapDepth,  sizeof(uint32), 1, volMapBin);
-                    fwrite(vmap_raw, volMapHeight*volMapWidth*volMapDepth, 1, volMapBin);
+                    fwrite(vmap_raw, volMapHeight*volMapWidth*volMapDepth*nchannels, 1, volMapBin);
                     fclose(volMapBin);
                 }
                 else
@@ -202,16 +207,45 @@ void CImport::run()
             }
 
             //at this point we should have the volume map stored in the volume's directory
+            size_t fread_return_val;
             FILE *volMapBin = fopen(volMapPath.c_str(), "rb");
-            fread(&volMapHeight, sizeof(uint32), 1, volMapBin);
-            fread(&volMapWidth,  sizeof(uint32), 1, volMapBin);
-            fread(&volMapDepth,  sizeof(uint32), 1, volMapBin);
-            volMapData = new uint8[volMapHeight*volMapWidth*volMapDepth];
-            fread(volMapData, volMapHeight*volMapWidth*volMapDepth, 1, volMapBin);
+
+            //checking plugin version
+            uint16 verstr_size;
+            fread_return_val = fread(&verstr_size, sizeof(uint16), 1, volMapBin);
+            if(fread_return_val != 1)
+                throw MyException("Unable to read volume map file (<version_size> field). It must be regenerated.");
+            char *version = new char[verstr_size];
+            fread_return_val = fread(version, verstr_size, 1, volMapBin);
+            if(fread_return_val != 1)
+                throw MyException("Unable to read volume map file (<version> field). It must be regenerated.");
+            if(strcmp(version, CPlugin::getVersion().c_str()))
+                throw MyException(QString("Volume map file was generated with a plugin version"
+                                  " (").append(version).append(") older than the current one "
+                                  "(").append(CPlugin::getVersion().c_str()).append("). It must be regenerated").toStdString().c_str());
+            delete[] version;
+
+            //loading metadata and data
+            fread_return_val = fread(&nchannels, sizeof(int), 1, volMapBin);
+            if(fread_return_val != 1)
+                throw MyException("Unable to read volume map file (<nchannels> field). It must be regenerated.");
+            fread_return_val = fread(&volMapHeight, sizeof(uint32), 1, volMapBin);
+            if(fread_return_val != 1)
+                throw MyException("Unable to read volume map file (<volMapHeight> field). It must be regenerated.");
+            fread_return_val = fread(&volMapWidth,  sizeof(uint32), 1, volMapBin);
+            if(fread_return_val != 1)
+                throw MyException("Unable to read volume map file (<volMapWidth> field). It must be regenerated.");
+            fread_return_val = fread(&volMapDepth,  sizeof(uint32), 1, volMapBin);
+            if(fread_return_val != 1)
+                throw MyException("Unable to read volume map file (<volMapDepth> field). It must be regenerated.");
+            volMapData = new uint8[volMapHeight*volMapWidth*volMapDepth*nchannels];
+            fread_return_val = fread(volMapData, volMapHeight*volMapWidth*volMapDepth*nchannels, 1, volMapBin);
+            if(fread_return_val != 1)
+                throw MyException("Unable to read volume map file (<volMapData> field). It must be regenerated.");
             fclose(volMapBin);
             volMapImage = new Image4DSimple();
             volMapImage->setFileName("VolumeMap");
-            volMapImage->setData(volMapData, volMapWidth, volMapHeight, volMapDepth, 1, V3D_UINT8);
+            volMapImage->setData(volMapData, volMapWidth, volMapHeight, volMapDepth, nchannels, V3D_UINT8);
         }
 
         //everything went OK

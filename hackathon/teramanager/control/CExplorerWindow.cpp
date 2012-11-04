@@ -40,7 +40,7 @@ CExplorerWindow* CExplorerWindow::first = NULL;
 CExplorerWindow* CExplorerWindow::last = NULL;
 
 CExplorerWindow::CExplorerWindow(V3DPluginCallback2 *_V3D_env, int _resIndex, uint8 *imgData, int _volV0, int _volV1,
-                                 int _volH0, int _volH1, int _volD0, int _volD1, CExplorerWindow *_prev) : QWidget()
+                                 int _volH0, int _volH1, int _volD0, int _volD1, int _nchannels, CExplorerWindow *_prev) : QWidget()
 {
     //initializations
     this->V3D_env = _V3D_env;
@@ -53,11 +53,12 @@ CExplorerWindow::CExplorerWindow(V3DPluginCallback2 *_V3D_env, int _resIndex, ui
     this->volH1 = _volH1;
     this->volD0 = _volD0;
     this->volD1 = _volD1;
+    this->nchannels = _nchannels;
     this->toBeClosed = false;
     char ctitle[1024];
-    sprintf(ctitle, "Res(%d x %d x %d),Volume(%d-%d,%d-%d,%d-%d)", CImport::instance()->getVolume(volResIndex)->getDIM_H(),
+    sprintf(ctitle, "Res(%d x %d x %d),Volume(%d-%d,%d-%d,%d-%d), %d channels", CImport::instance()->getVolume(volResIndex)->getDIM_H(),
             CImport::instance()->getVolume(volResIndex)->getDIM_V(), CImport::instance()->getVolume(volResIndex)->getDIM_D(),
-            volH0+1, volH1, volV0+1, volV1, volD0+1, volD1);
+            volH0+1, volH1, volV0+1, volV1, volD0+1, volD1, nchannels);
     this->title = ctitle;
     PMain* pMain = PMain::instance();
 
@@ -69,7 +70,25 @@ CExplorerWindow::CExplorerWindow(V3DPluginCallback2 *_V3D_env, int _resIndex, ui
     this->window = V3D_env->newImageWindow(QString(title.c_str()));
     Image4DSimple* image = new Image4DSimple();
     image->setFileName(title.c_str());
-    image->setData(imgData, volH1-volH0, volV1-volV0, volD1-volD0, 1, V3D_UINT8);
+    image->setData(imgData, volH1-volH0, volV1-volV0, volD1-volD0, nchannels, V3D_UINT8);
+
+    /*unsigned char* pdata = new unsigned char[300*300*100*3];
+    for(int c=0; c<3; c++)
+        for(int z=0; z<100; z++)
+            for(int y=0; y<300; y++)
+                for(int x=0; x<300*3; x++)
+                {
+                    if(y<100)
+                    {
+                        pdata[c*300*300*100 + z*300*300 +y*300 +x] = (c==0 ? 255 : 0);
+                    }
+                    else
+                    {
+                        pdata[c*300*300*100 + z*300*300 +y*300 +x] = 0;
+                    }
+                }
+    image->setData(pdata, 300, 300, 100, 3, V3D_UINT8);*/
+
     V3D_env->setImage(window, image);
     this->triViewWidget = (XFormWidget*)window;
 
@@ -293,13 +312,13 @@ void CExplorerWindow::loadingDone(MyException *ex, void* sourceObject)
         //if the resolution of the loaded voi is higher than the current one, opening the "next" explorer
         if(cVolume->getVoiResIndex() > volResIndex)
             this->next = new CExplorerWindow(V3D_env, cVolume->getVoiResIndex(), cVolume->getVoiData(), cVolume->getVoiV0(), cVolume->getVoiV1(),
-                                             cVolume->getVoiH0(),cVolume->getVoiH1(), cVolume->getVoiD0(),cVolume->getVoiD1(), this);
+                                             cVolume->getVoiH0(),cVolume->getVoiH1(), cVolume->getVoiD0(),cVolume->getVoiD1(), cVolume->getNChannels(), this);
         //if the resolution of the loaded voi is the same of the current one
         else if(cVolume->getVoiResIndex() == volResIndex)
         {
             //opening a new explorer in the current resolution and closing the current one
             this->next = new CExplorerWindow(this->V3D_env, volResIndex, cVolume->getVoiData(), cVolume->getVoiV0(), cVolume->getVoiV1(),
-                                             cVolume->getVoiH0(),cVolume->getVoiH1(), cVolume->getVoiD0(),cVolume->getVoiD1(), this);
+                                             cVolume->getVoiH0(),cVolume->getVoiH1(), cVolume->getVoiD0(),cVolume->getVoiD1(), cVolume->getNChannels(), this);
             prev->next = next;
             next->prev = prev;
             this->toBeClosed = true;
@@ -347,7 +366,7 @@ void CExplorerWindow::switchToHigherRes(int x, int y, int z, int dx, int dy, int
     //if the higher resolution exists, obtaining VOI at the higher resolution
     if(CImport::instance()->getVolume(volResIndex+1))
     {
-        float ratio = CImport::instance()->getVolume(volResIndex+1)->getDIM_D()/CImport::instance()->getVolume(volResIndex)->getDIM_D();
+        float ratio = static_cast<float>(CImport::instance()->getVolume(volResIndex+1)->getDIM_D())/CImport::instance()->getVolume(volResIndex)->getDIM_D();
         int VoiCenterX = (x + volH0)*ratio+0.5f;
         int VoiCenterY = (y + volV0)*ratio+0.5f;
         int VoiCenterZ = (z + volD0)*ratio+0.5f;

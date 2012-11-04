@@ -764,7 +764,8 @@ REAL_T* StackedVolume::loadSubvolume(int V0,int V1, int H0, int H1, int D0, int 
 }
 
 //loads given subvolume in a 1-D array of uint8 while releasing stacks slices memory when they are no longer needed
-uint8* StackedVolume::loadSubvolume_to_UINT8(int V0,int V1, int H0, int H1, int D0, int D1) throw (MyException)
+//---03 nov 2011: added color support
+uint8* StackedVolume::loadSubvolume_to_UINT8(int V0,int V1, int H0, int H1, int D0, int D1, int *channels) throw (MyException)
 {
     #if IM_VERBOSE > 3
     printf("\t\t\t\tin StackedVolume::loadSubvolume_to_UINT8(V0=%d, V1=%d, H0=%d, H1=%d, D0=%d, D1=%d)\n", V0, V1, H0, H1, D0, D1);
@@ -783,12 +784,13 @@ uint8* StackedVolume::loadSubvolume_to_UINT8(int V0,int V1, int H0, int H1, int 
     if(V1-V0 <=0 || H1-H0 <= 0 || D1-D0 <= 0)
         throw MyException("in StackedVolume::loadSubvolume_to_UINT8: invalid subvolume intervals");
 
-    //safe allocation
+    //computing dimensions
     int sbv_height = V1 - V0;
     int sbv_width  = H1 - H0;
     int sbv_depth  = D1 - D0;
-    try{subvol = new uint8[sbv_height * sbv_width * sbv_depth];}
-    catch(...){throw MyException("in StackedVolume::loadSubvolume_to_UINT8: unable to allocate memory");}
+
+    //initializing the number of channels with an undefined value (it will be detected from the first slice read)
+    int sbv_channels = -1;
 
     //scanning of stacks matrix for data loading and storing into subvol
     Rect_t subvol_area;
@@ -797,6 +799,7 @@ uint8* StackedVolume::loadSubvolume_to_UINT8(int V0,int V1, int H0, int H1, int 
     subvol_area.H1 = H1;
     subvol_area.V1 = V1;
     char slice_fullpath[IM_STATIC_STRINGS_SIZE];
+    bool first_time = true;
     for(int row=0; row<N_ROWS; row++)
         for(int col=0; col<N_COLS; col++)
         {
@@ -811,25 +814,78 @@ uint8* StackedVolume::loadSubvolume_to_UINT8(int V0,int V1, int H0, int H1, int 
                 {
                     //loading slice
                     sprintf(slice_fullpath, "%s/%s/%s", stacks_dir, STACKS[row][col]->getDIR_NAME(), STACKS[row][col]->getFILENAMES()[D0+k]);
-                    IplImage* slice = cvLoadImage(slice_fullpath, CV_LOAD_IMAGE_GRAYSCALE); //forces images to be loaded in 8-bit depth
+                    IplImage* slice = cvLoadImage(slice_fullpath, CV_LOAD_IMAGE_ANYCOLOR);  //without CV_LOAD_IMAGE_ANYDEPTH, image is converted to 8-bits if needed
                     if(!slice)
                         throw MyException(std::string("Unable to load slice at \"").append(slice_fullpath).append("\"").c_str());
 
-                    int slice_step = slice->widthStep / sizeof(uint8);
-                    int k_offset = k*sbv_height*sbv_width;
-                    int ABS_V_offset = V0 - STACKS[row][col]->getABS_V();
-                    int ABS_H_offset = H0 - STACKS[row][col]->getABS_H();
-
-                    for(int i=intersect_area->V0-V0; i<intersect_area->V1-V0; i++)
+                    //if this is the first time a slice is loaded, detecting the number of channels and safely allocating memory for data
+                    if(first_time)
                     {
-                        uint8* slice_row = ((uint8*)slice->imageData) + (i+ABS_V_offset)*slice_step;
-                        for(int j=intersect_area->H0-H0; j<intersect_area->H1-H0; j++)
-                            subvol[k_offset + i*sbv_width + j] = slice_row[j+ABS_H_offset];
+                        first_time = false;
+                        sbv_channels = slice->nChannels;
+                        if(sbv_channels != 1 && sbv_channels != 3)
+                            throw MyException(std::string("Unsupported number of channels at \"").append(slice_fullpath).append("\". Only 1 and 3-channels images are supported").c_str());
+
+                        try
+                        {
+                            subvol = new uint8[sbv_height * sbv_width * sbv_depth * sbv_channels];
+                        }
+                        catch(...){throw MyException("in StackedVolume::loadSubvolume_to_UINT8: unable to allocate memory");}
                     }
+                    //otherwise checking that all the other slices have the same bitdepth of the first one
+                    else if(slice->nChannels != sbv_channels)
+                        throw MyException(std::string("Image depth mismatch at slice at \"").append(slice_fullpath).append("\": all slices must have the same bitdepth").c_str());
+
+
+                    //computing offsets
+                    int slice_step = slice->widthStep / sizeof(uint8);
+                    int ABS_V_offset = V0 - STACKS[row][col]->getABS_V();
+                    int ABS_H_offset = (H0 - STACKS[row][col]->getABS_H())*sbv_channels;
+
+                    //different procedures for 1 and 3 channels images
+                    int istart, iend, jstart, jend;
+                    istart  = intersect_area->V0-V0;
+                    iend    = intersect_area->V1-V0;
+                    jstart  = intersect_area->H0-H0;
+                    jend    = intersect_area->H1-H0;
+                    if(sbv_channels == 1)
+                    {
+                        int k_offset = k*sbv_height*sbv_width;
+                        for(int i = istart; i < iend; i++)
+                        {
+                            uint8* slice_row = ((uint8*)slice->imageData) + (i+ABS_V_offset)*slice_step;
+                            for(int j = jstart; j < jend; j++)
+                                subvol[k_offset + i*sbv_width + j] = slice_row[j+ABS_H_offset];
+                        }
+                    }
+                    else if(sbv_channels == 3)
+                    {
+
+                        int offset1 =                                     k*sbv_height*sbv_width;
+                        int offset2 =   sbv_height*sbv_width*sbv_depth  + offset1;
+                        int offset3 = 2*sbv_height*sbv_width*sbv_depth  + k*sbv_height*sbv_width;
+                        for(int i = istart; i < iend; i++)
+                        {
+                            uint8* slice_row = ((uint8*)slice->imageData) + (i+ABS_V_offset)*slice_step;
+                            for(int j1 = jstart, j2 = jstart*3; j1 < jend; j1++, j2+=3)
+                            {
+                                subvol[offset1 + i*sbv_width + j1] = slice_row[j2 + ABS_H_offset + 2];
+                                subvol[offset2 + i*sbv_width + j1] = slice_row[j2 + ABS_H_offset + 1];
+                                subvol[offset3 + i*sbv_width + j1] = slice_row[j2 + ABS_H_offset];
+                            }
+                        }
+                    }
+                    else
+                        throw MyException(std::string("Unsupported number of channels at \"").append(slice_fullpath).append("\". Only 1 and 3-channels images are supported").c_str());
+
                     cvReleaseImage(&slice);
                 }
             }
         }
+
+    //returning outputs
+    if(channels)
+        *channels = sbv_channels;
     return subvol;
 }
 

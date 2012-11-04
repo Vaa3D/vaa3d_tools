@@ -603,7 +603,7 @@ void PMain::import_done(MyException *ex, Image4DSimple* vmap_image)
             //starting 3D exploration
             new CExplorerWindow(V3D_env, CImport::instance()->getVMapResIndex(), CImport::instance()->getVMap(),
                                 0, CImport::instance()->getVMapHeight(), 0, CImport::instance()->getVMapWidth(),
-                                0, CImport::instance()->getVMapDepth(), 0);
+                                0, CImport::instance()->getVMapDepth(), CImport::instance()->getNChannels(), 0);
         }
 
         //finally storing in application settings the path of the opened volume
@@ -635,7 +635,7 @@ void PMain::loadingDone(MyException *ex, void* sourceObject)
         Image4DSimple* img = new Image4DSimple();
         img->setFileName(CImport::instance()->getHighestResVolume()->getSTACKS_DIR());
         img->setData(cVolume->getVoiData(), cVolume->getVoiH1()-cVolume->getVoiH0(),
-                     cVolume->getVoiV1()-cVolume->getVoiV0(), cVolume->getVoiD1()-cVolume->getVoiD0(), 1, V3D_UINT8);
+                     cVolume->getVoiV1()-cVolume->getVoiV0(), cVolume->getVoiD1()-cVolume->getVoiD0(), cVolume->getNChannels(), V3D_UINT8);
         v3dhandle new_win = V3D_env->newImageWindow(img->getFileName());
         V3D_env->setImage(new_win, img);
     }

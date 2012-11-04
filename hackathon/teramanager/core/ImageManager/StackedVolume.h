@@ -127,7 +127,7 @@ class StackedVolume
                 REAL_T *loadSubvolume(int V0=-1,int V1=-1, int H0=-1, int H1=-1, int D0=-1, int D1=-1, std::list<Stack*> *involved_stacks = 0, bool release_stacks = false)  throw (MyException);
 
                 //loads given subvolume in a 1-D array of uint8 while releasing stacks slices memory when they are no longer needed
-                uint8 *loadSubvolume_to_UINT8(int V0=-1,int V1=-1, int H0=-1, int H1=-1, int D0=-1, int D1=-1) throw (MyException);
+                uint8 *loadSubvolume_to_UINT8(int V0=-1,int V1=-1, int H0=-1, int H1=-1, int D0=-1, int D1=-1, int *channels=0) throw (MyException);
 
 		//saves given subvolume as a stack of 8-bit grayscale images in a directory created in the default path
 		static void saveSubVolume(REAL_T* subvol, int V0, int V1, int H0, int H1, int D0, int D1, int V_idx, int H_idx, int D_idx);

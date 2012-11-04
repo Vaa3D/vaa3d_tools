@@ -64,6 +64,7 @@ class teramanager::CVolume : public QThread
         int voiResIndex;                            //volume of interest resolution index
         int voiV0,voiV1,voiH0,voiH1,voiD0,voiD1;    //volume of interest coordinates
         uint8* voiData;                             //volume of interest data
+        int nchannels;                              //volume of interest channel's number
         void* sourceObject;                         //the object that requested the VOI
 
     public:
@@ -90,6 +91,7 @@ class teramanager::CVolume : public QThread
         int getVoiH1(){return voiH1;}
         int getVoiD0(){return voiD0;}
         int getVoiD1(){return voiD1;}
+        int getNChannels(){return nchannels;}
         int getVoiResIndex(){return voiResIndex;}
         void setVoi(void* _sourceObject, int _voiResIndex, int _V0, int _V1, int _H0, int _H1, int _D0, int _D1)
         {
@@ -107,6 +109,7 @@ class teramanager::CVolume : public QThread
             voiH1 = MIN(_H1, volume->getDIM_H());
             voiD0 = MAX(_D0, 0);
             voiD1 = MIN(_D1, volume->getDIM_D());
+            nchannels = -1;
         }
 
     signals:

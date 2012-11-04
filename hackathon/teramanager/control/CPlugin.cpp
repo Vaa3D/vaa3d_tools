@@ -95,7 +95,7 @@ void CPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWi
     {
         QMessageBox msgBox;
         QSpacerItem* horizontalSpacer = new QSpacerItem(800, 0, QSizePolicy::Minimum, QSizePolicy::Expanding);
-        msgBox.setText( "<html><h1>TeraManager plugin v. 0.4</h1>"
+        msgBox.setText( "<html><h1>TeraManager plugin v. 0.5</h1>"
                         "<big>An experimental tool designed for Teravoxel-sized datasets visualization into Vaa3D.</big><br><br>"
                         "<u>Developed by:</u><ul>"
                         "<li><b>Alessandro Bria</b> (email: a.bria@unicas.it)<br>"

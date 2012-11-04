@@ -66,7 +66,7 @@ void CVolume::run()
 
         //checking for an imported volume
         if(volume)
-            voiData = volume->loadSubvolume_to_UINT8(voiV0, voiV1, voiH0, voiH1, voiD0, voiD1);
+            voiData = volume->loadSubvolume_to_UINT8(voiV0, voiV1, voiH0, voiH1, voiD0, voiD1, &nchannels);
         else
             throw MyException("No volume has been imported yet.");
 

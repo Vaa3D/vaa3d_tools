@@ -47,7 +47,6 @@ namespace teramanager
     class CImport;              //control class for the import step, which is performed in a separate thread since it can be time-consuming
     class CVolume;              //control class for the loading subvolume feature, which is performed in a separate thread since it can be time-consuming
     class CSettings;            //control class to manage persistent platform-independent application settings
-    //class CExplorer;            //control class to manage the 3D exploration of the volume
     class CExplorerWindow;      //control class used to encapsulate all the informations needed to manage 3D navigation windows
 }
 
@@ -59,7 +58,7 @@ class teramanager::CPlugin : public QObject, public V3DPluginInterface2_1
     public:
 
 	//V3D plugin attributes and methods
-	float getPluginVersion() const {return 1.0f;}
+        float getPluginVersion() const {return 1.0f;}
 	QStringList menulist() const;
 	void domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent);
 	QStringList funclist() const ;
@@ -67,6 +66,7 @@ class teramanager::CPlugin : public QObject, public V3DPluginInterface2_1
 
 	//returns true if the given shared library can be loaded
 	static bool isSharedLibraryLoadable(const char* name);
+        static string getVersion(){return "0.5";}
 };
 
 #endif

@@ -49,7 +49,7 @@ class teramanager::CImport : public QThread
         CImport() : QThread(), path(""), AXS_1(axis(0)), AXS_2(axis(0)), AXS_3(axis(0)),
                                VXL_1(0), VXL_2(0), VXL_3(0), reimport(false), multiresMode(false),
                                volMapData(0), volMapHeight(-1), volMapWidth(-1), volMapDepth(-1),
-                               volMapMaxSize(50)
+                               nchannels(-1), volMapMaxSize(50)
         {
             #ifdef TMP_DEBUG
             printf("--------------------- teramanager plugin [thread %d] >> CImport created\n", this->thread()->currentThreadId());
@@ -69,6 +69,7 @@ class teramanager::CImport : public QThread
         int volMapMaxSize;                          //maximum size (in MVoxels) of volume map
         uint8* volMapData;                          //volume map data
         int volMapHeight, volMapWidth, volMapDepth; //volume map dimensions
+        int nchannels;                              //volume map channels
         std::vector<StackedVolume*> volumes;        //array of the imported volumes
 
 
@@ -93,6 +94,7 @@ class teramanager::CImport : public QThread
         int getVMapHeight(){return volMapHeight;}
         int getVMapWidth(){return volMapWidth;}
         int getVMapDepth(){return volMapDepth;}
+        int getNChannels(){return nchannels;}
         int getVMapResIndex()
         {
             for(int k=0; k<volumes.size(); k++)
