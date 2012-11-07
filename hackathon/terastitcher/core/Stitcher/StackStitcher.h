@@ -14,7 +14,7 @@
 *    2. You agree to appropriately cite this work in your related studies and publications.
 *
 *       Bria, A., et al., (2012) "Stitching Terabyte-sized 3D Images Acquired in Confocal Ultramicroscopy", Proceedings of the 9th IEEE International Symposium on Biomedical Imaging.
-*       Bria, A., Iannello, G., "A Tool for Fast 3D Automatic Stitching of Teravoxel-sized Datasets", submitted on July 2012 to IEEE Transactions on Information Technology in Biomedicine.
+*       Bria, A., Iannello, G., "TeraStitcher - A Tool for Fast 3D Automatic Stitching of Teravoxel-sized Microscopy Images", submitted for publication, 2012.
 *
 *    3. This material is provided by  the copyright holders (Alessandro Bria  and  Giulio Iannello),  University Campus Bio-Medico and contributors "as is" and any express or implied war-
 *       ranties, including, but  not limited to,  any implied warranties  of merchantability,  non-infringement, or fitness for a particular purpose are  disclaimed. In no event shall the
@@ -226,8 +226,7 @@ class StackStitcher
 						bool exclude_nonstitchable_stacks =true, int _ROW_START=-1, int _ROW_END=-1, int _COL_START=-1,
 						int _COL_END=-1, int _D0=-1, int _D1=-1,	bool restoreSPIM=false,	  int restore_direction=-1,
 						int blending_algo=S_SINUSOIDAL_BLENDING,	bool test_mode=false, bool show_progress_bar= true,
-						const char* saved_img_format=IO_DEF_IMG_FORMAT,			  int saved_img_depth=IO_DEF_IMG_DEPTH) 			   
-																									throw (MyException);
+						const char* saved_img_format=IO_DEF_IMG_FORMAT, int saved_img_depth=IO_DEF_IMG_DEPTH) throw (MyException);
 		
 
 		/*************************************************************************************************************

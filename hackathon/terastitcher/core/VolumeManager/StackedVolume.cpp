@@ -14,7 +14,7 @@
 *    2. You agree to appropriately cite this work in your related studies and publications.
 *
 *       Bria, A., et al., (2012) "Stitching Terabyte-sized 3D Images Acquired in Confocal Ultramicroscopy", Proceedings of the 9th IEEE International Symposium on Biomedical Imaging.
-*       Bria, A., Iannello, G., "A Tool for Fast 3D Automatic Stitching of Teravoxel-sized Datasets", submitted on July 2012 to IEEE Transactions on Information Technology in Biomedicine.
+*       Bria, A., Iannello, G., "TeraStitcher - A Tool for Fast 3D Automatic Stitching of Teravoxel-sized Microscopy Images", submitted for publication, 2012.
 *
 *    3. This material is provided by  the copyright holders (Alessandro Bria  and  Giulio Iannello),  University Campus Bio-Medico and contributors "as is" and any express or implied war-
 *       ranties, including, but  not limited to,  any implied warranties  of merchantability,  non-infringement, or fitness for a particular purpose are  disclaimed. In no event shall the
@@ -40,9 +40,6 @@
 #endif
 #include <limits>
 #include <list>
-#include <cxcore.h>
-#include <cv.h>
-#include <highgui.h>
 #include "Stack.h"
 #include "Displacement.h"
 
@@ -980,10 +977,10 @@ void StackedVolume::countDisplacements(int& total, float& per_stack_pair)
     for(int i=0; i<N_ROWS; i++)
         for(int j=0; j<N_COLS; j++)
         {
-            total+= STACKS[i][j]->getEAST().size();
-            total+= STACKS[i][j]->getSOUTH().size();
-            per_stack_pair += STACKS[i][j]->getEAST().size();
-            per_stack_pair += STACKS[i][j]->getSOUTH().size();
+            total+= static_cast<int>(STACKS[i][j]->getEAST().size());
+            total+= static_cast<int>(STACKS[i][j]->getSOUTH().size());
+            per_stack_pair += static_cast<int>(STACKS[i][j]->getEAST().size());
+            per_stack_pair += static_cast<int>(STACKS[i][j]->getSOUTH().size());
         }
     per_stack_pair /= 2*(N_ROWS*N_COLS) - N_ROWS - N_COLS;
 }

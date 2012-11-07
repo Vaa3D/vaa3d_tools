@@ -13,7 +13,7 @@ CONFIG	+= qt plugin warn_off
 V3DMAINPATH =  ../../v3d_main
 
 #set TeraStitcher main path
-TERASTITCHER_PATH = "./core"
+TERASTITCHER_PATH = ./core
 
 #set up OpenCV library (please modify include and lib paths if necessary)
 INCLUDEPATH += /usr/local/include/opencv

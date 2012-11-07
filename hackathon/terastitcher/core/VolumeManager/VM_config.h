@@ -14,7 +14,7 @@
 *    2. You agree to appropriately cite this work in your related studies and publications.
 *
 *       Bria, A., et al., (2012) "Stitching Terabyte-sized 3D Images Acquired in Confocal Ultramicroscopy", Proceedings of the 9th IEEE International Symposium on Biomedical Imaging.
-*       Bria, A., Iannello, G., "A Tool for Fast 3D Automatic Stitching of Teravoxel-sized Datasets", submitted on July 2012 to IEEE Transactions on Information Technology in Biomedicine.
+*       Bria, A., Iannello, G., "TeraStitcher - A Tool for Fast 3D Automatic Stitching of Teravoxel-sized Microscopy Images", submitted for publication, 2012.
 *
 *    3. This material is provided by  the copyright holders (Alessandro Bria  and  Giulio Iannello),  University Campus Bio-Medico and contributors "as is" and any express or implied war-
 *       ranties, including, but  not limited to,  any implied warranties  of merchantability,  non-infringement, or fitness for a particular purpose are  disclaimed. In no event shall the
@@ -53,12 +53,28 @@
 //directory creation
 #ifdef _WIN32
 #include <direct.h>
-#define make_dir(V) _mkdir(V)
+static bool make_dir(const char* arg)
+{
+	printf("Creating directory \"%s\" ...", arg);
+	bool done = _mkdir(arg) == 0;
+	bool result = done || errno != ENOENT;
+	printf("%s\n", result? "DONE!" : "ERROR!");
+	return result;
+}
 #else
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <stdlib.h>
-#define make_dir(V) mkdir(V,S_IRWXU | S_IRWXG | S_IROTH | S_IWOTH | S_IXOTH)
+#include <errno.h>
+#include <stdio.h>
+static bool make_dir(const char* arg)
+{
+	printf("Creating directory \"%s\" ...", arg);
+	bool done = mkdir(arg,S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) == 0;
+	bool result = done || errno == EEXIST;
+	printf("%s\n", result? "DONE!" : "ERROR!");
+	return result;
+}
 #endif
 
 //file deleting

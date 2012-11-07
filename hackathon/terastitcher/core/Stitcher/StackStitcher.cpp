@@ -754,9 +754,9 @@ void StackStitcher::mergeTiles(std::string output_path, int slice_height, int sl
                 //creating directory that will contain image data at current resolution
                 std::stringstream file_path;
                 file_path<<output_path<<"/RES("<<height/POW_INT(2,res_i)<<"x"<<width/POW_INT(2,res_i)<<"x"<<depth/POW_INT(2,res_i)<<")";
-                if(make_dir(file_path.str().c_str())!=0)
+                if(!make_dir(file_path.str().c_str()))
                 {
-                    char err_msg[S_MAX_MULTIRES];
+                    char err_msg[S_STATIC_STRINGS_SIZE];
                     sprintf(err_msg, "in mergeTiles(...): unable to create DIR = \"%s\"\n", file_path.str().c_str());
                     throw MyException(err_msg);
                 }
@@ -999,7 +999,7 @@ void StackStitcher::mergeTiles(std::string output_path, int slice_height, int sl
 					//computing V_DIR_path and creating the directory the first time it is needed
 					std::stringstream V_DIR_path;
 					V_DIR_path << base_path.str() << this->getMultiresABS_V_string(i,start_height);
-					if(!test_mode && z==D0 && make_dir(V_DIR_path.str().c_str())!=0)
+					if(!test_mode && z==D0 && !make_dir(V_DIR_path.str().c_str()))
 					{
 						char err_msg[S_STATIC_STRINGS_SIZE];
 						sprintf(err_msg, "in mergeTiles(...): unable to create V_DIR = \"%s\"\n", V_DIR_path.str().c_str());
@@ -1013,7 +1013,7 @@ void StackStitcher::mergeTiles(std::string output_path, int slice_height, int sl
 						//computing H_DIR_path and creating the directory the first time it is needed
 						std::stringstream H_DIR_path;
 						H_DIR_path << V_DIR_path.str() << "/" << this->getMultiresABS_V_string(i,start_height) << "_" << this->getMultiresABS_H_string(i,start_width);
-						if(!test_mode && z==D0 && make_dir(H_DIR_path.str().c_str())!=0)
+						if(!test_mode && z==D0 && !make_dir(H_DIR_path.str().c_str()))
 						{
 							char err_msg[S_STATIC_STRINGS_SIZE];
 							sprintf(err_msg, "in mergeTiles(...): unable to create H_DIR = \"%s\"\n", H_DIR_path.str().c_str());

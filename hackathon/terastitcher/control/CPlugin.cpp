@@ -135,7 +135,7 @@ bool CPlugin::isSharedLibraryLoadable(const char* name)
 {
     #ifdef __unix__
     //UNIX
-    QString tmp("");
+    /*QString tmp("");
     tmp.append("lib");
     tmp.append(name);
     tmp.append(".so");
@@ -146,7 +146,8 @@ bool CPlugin::isSharedLibraryLoadable(const char* name)
     {
         dlclose(my_lib_handle);
         return true;
-    }
+    }*/
+    return true;    //does not work on MAC and did not work on Ubuntu 12.
     #endif
     #ifdef _WIN32
     return true;    //not yet supported: anyway Windows O.S. should display an error message about the missing DLL.
