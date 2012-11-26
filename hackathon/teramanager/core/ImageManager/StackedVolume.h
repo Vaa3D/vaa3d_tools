@@ -29,10 +29,13 @@
 #ifndef _STACKED_VOLUME_H
 #define _STACKED_VOLUME_H
 
-#include "IM_defs.h"
+//#include "IM_defs.h"
+//#include "MyException.h"
+#include "VirtualVolume.h" // ADDED
 #include <list>
-#include "MyException.h"
 #include <string>
+
+#define STACKED_FORMAT "Stacked" // ADDED
 
 //FORWARD-DECLARATIONS
 class  Stack;
@@ -55,19 +58,24 @@ struct ref_sys
 };
 
 //every object of this class has the default (1,2,3) reference system
-class StackedVolume
+class StackedVolume : public VirtualVolume
 {
 	private:
 		
-		//******OBJECT ATTRIBUTES******
-                char* stacks_dir;			//C-string that contains the directory path of stacks matrix
+/* 
+        iannello ATTRBUTES OF BASE ABSTRACT CLASS
+
+        char* stacks_dir;			        //C-string that contains the directory path of stacks matrix
 		float  VXL_V, VXL_H, VXL_D;		//voxel dimensions (in microns) along V(Vertical), H(horizontal) and D(Depth) axes
 		float  ORG_V, ORG_H, ORG_D;		//origin spatial coordinates (in millimeters) along VHD axes
 		uint32 DIM_V, DIM_H, DIM_D;		//volume dimensions (in voxels) along VHD axes
+*/
+
+		//******OBJECT ATTRIBUTES******
 		uint16 N_ROWS, N_COLS;			//dimensions (in stacks) of stacks matrix along VH axes
-                Stack ***STACKS;			//2-D array of <Stack*>
-                ref_sys reference_system;               //reference system of the stored volume
-                float  VXL_1, VXL_2, VXL_3;             //voxel dimensions of the stored volume
+        Stack ***STACKS;			//2-D array of <Stack*>
+        ref_sys reference_system;               //reference system of the stored volume
+        float  VXL_1, VXL_2, VXL_3;             //voxel dimensions of the stored volume
 
 		//***OBJECT PRIVATE METHODS****
 		StackedVolume(void);
@@ -87,33 +95,35 @@ class StackedVolume
 	public:
 
 		//CONSTRUCTORS-DECONSTRUCTOR
-		StackedVolume(const char* _stacks_dir)  throw (MyException);
-                StackedVolume(const char* _stacks_dir, ref_sys _reference_system, float _VXL_1, float _VXL_2, float _VXL_3, bool overwrite_mdata = false, bool save_mdata=true)  throw (MyException);
+		StackedVolume(const char* _root_dir)  throw (MyException);
+        StackedVolume(const char* _root_dir, ref_sys _reference_system, 
+					  float _VXL_1, float _VXL_2, float _VXL_3, 
+					  bool overwrite_mdata = false, bool save_mdata=true)  throw (MyException);
 		~StackedVolume(void);
 
 		//GET methods
-		char* getSTACKS_DIR(){return stacks_dir;}
+		// iannello char* getSTACKS_DIR(){return stacks_dir;}
 		Stack*** getSTACKS(){return STACKS;}
-		uint32 getDIM_V(){return DIM_V;}
-		uint32 getDIM_H(){return DIM_H;}
-		uint32 getDIM_D(){return DIM_D;}
-                uint16 getN_ROWS(){return N_ROWS;}
-                uint16 getN_COLS(){return N_COLS;}
-		float  getVXL_V(){return VXL_V;}
-		float  getVXL_H(){return VXL_H;}
-		float  getVXL_D(){return VXL_D;}
-		float  getORG_V(){return ORG_V;}
-		float  getORG_H(){return ORG_H;}
-		float  getORG_D(){return ORG_D;}
-                int    getStacksHeight();
-                int    getStacksWidth();
-                float  getMVoxels(){return (DIM_V/1024.0f)*(DIM_H/1024.0f)*DIM_D;}
-                float getVXL_1(){return VXL_1;}
-                float getVXL_2(){return VXL_2;}
-                float getVXL_3(){return VXL_3;}
-                axis getAXS_1(){return reference_system.first;}
-                axis getAXS_2(){return reference_system.second;}
-                axis getAXS_3(){return reference_system.third;}
+		// iannello uint32 getDIM_V(){return DIM_V;}
+		// iannello uint32 getDIM_H(){return DIM_H;}
+		// iannello uint32 getDIM_D(){return DIM_D;}
+        uint16 getN_ROWS(){return N_ROWS;}
+        uint16 getN_COLS(){return N_COLS;}
+		// iannello float  getVXL_V(){return VXL_V;}
+		// iannello float  getVXL_H(){return VXL_H;}
+		// iannello float  getVXL_D(){return VXL_D;}
+		// iannello float  getORG_V(){return ORG_V;}
+		// iannello float  getORG_H(){return ORG_H;}
+		// iannello float  getORG_D(){return ORG_D;}
+        int    getStacksHeight();
+        int    getStacksWidth();
+        float  getMVoxels(){return (DIM_V/1024.0f)*(DIM_H/1024.0f)*DIM_D;}
+        float getVXL_1(){return VXL_1;}
+        float getVXL_2(){return VXL_2;}
+        float getVXL_3(){return VXL_3;}
+        axis getAXS_1(){return reference_system.first;}
+        axis getAXS_2(){return reference_system.second;}
+        axis getAXS_3(){return reference_system.third;}
 
 
 		//PRINT method
@@ -123,11 +133,18 @@ class StackedVolume
 		void save(char* metadata_filepath) throw (MyException);
 		void load(char* metadata_filepath) throw (MyException);
 
-		//loads given subvolume in a 1-D array and puts used Stacks into 'involved_stacks' iff not null
-                REAL_T *loadSubvolume(int V0=-1,int V1=-1, int H0=-1, int H1=-1, int D0=-1, int D1=-1, std::list<Stack*> *involved_stacks = 0, bool release_stacks = false)  throw (MyException);
+		//loads given subvolume in a 1-D array of REAL_T while releasing stacks slices memory when they are no longer needed
+		inline REAL_T *loadSubvolume_to_REAL_T(int V0=-1,int V1=-1, int H0=-1, int H1=-1, int D0=-1, int D1=-1)  throw (MyException) {
+			return loadSubvolume(V0,V1,H0,H1,D0,D1,0,true);
+		}
 
-                //loads given subvolume in a 1-D array of uint8 while releasing stacks slices memory when they are no longer needed
-                uint8 *loadSubvolume_to_UINT8(int V0=-1,int V1=-1, int H0=-1, int H1=-1, int D0=-1, int D1=-1, int *channels=0) throw (MyException);
+		//loads given subvolume in a 1-D array and puts used Stacks into 'involved_stacks' iff not null
+        REAL_T *loadSubvolume(int V0=-1,int V1=-1, int H0=-1, int H1=-1, int D0=-1, int D1=-1, 
+							  std::list<Stack*> *involved_stacks = 0, bool release_stacks = false)  throw (MyException);
+
+        //loads given subvolume in a 1-D array of uint8 while releasing stacks slices memory when they are no longer needed
+        uint8 *loadSubvolume_to_UINT8(int V0=-1,int V1=-1, int H0=-1, int H1=-1, int D0=-1, int D1=-1, int *channels=0) 
+																										throw (MyException);
 
 		//saves given subvolume as a stack of 8-bit grayscale images in a directory created in the default path
 		static void saveSubVolume(REAL_T* subvol, int V0, int V1, int H0, int H1, int D0, int D1, int V_idx, int H_idx, int D_idx);
@@ -159,18 +176,6 @@ class StackedVolume
 		//returns true if file exists at the given filepath
                 static bool fileExists(const char *filepath);
 
-		/*************************************************************************************************************
-		* Save image method.		  <> parameters are mandatory, while [] are optional.
-		* <img_path>				: absolute path of image to be saved. It DOES NOT include its extension, which ac-
-		*							  tually is a preprocessor variable (see IOManager_defs.h).
-		* <raw_img>					: image to be saved. Raw data is in [0,1] and it is stored row-wise in a 1D array.
-		* <raw_img_height/width>	: dimensions of raw_img.
-		* [start/end_height/width]	: optional ROI (region of interest) to be set on the given image.
-		**************************************************************************************************************/
-		static void saveImage(std::string img_path,   REAL_T* raw_img,       int raw_img_height,   int   raw_img_width, 
-							  int start_height = 0,   int end_height = - 1,  int start_width = 0,  int end_width = - 1,
-							  const char* img_format = IM_DEF_IMG_FORMAT,	 int img_depth = IM_DEF_IMG_DEPTH		 )  
-																								   throw (MyException);
 };
 
 #endif //_STACKED_VOLUME_H

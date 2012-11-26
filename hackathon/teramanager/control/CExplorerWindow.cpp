@@ -32,6 +32,7 @@
 #include "presentation/PMain.h"
 #include "renderer_gl1.h"
 #include "v3d_imaging_para.h"
+#include "v3dr_colormapDialog.h"
 //#include "newmat.h"
 
 using namespace teramanager;
@@ -71,24 +72,6 @@ CExplorerWindow::CExplorerWindow(V3DPluginCallback2 *_V3D_env, int _resIndex, ui
     Image4DSimple* image = new Image4DSimple();
     image->setFileName(title.c_str());
     image->setData(imgData, volH1-volH0, volV1-volV0, volD1-volD0, nchannels, V3D_UINT8);
-
-    /*unsigned char* pdata = new unsigned char[300*300*100*3];
-    for(int c=0; c<3; c++)
-        for(int z=0; z<100; z++)
-            for(int y=0; y<300; y++)
-                for(int x=0; x<300*3; x++)
-                {
-                    if(y<100)
-                    {
-                        pdata[c*300*300*100 + z*300*300 +y*300 +x] = (c==0 ? 255 : 0);
-                    }
-                    else
-                    {
-                        pdata[c*300*300*100 + z*300*300 +y*300 +x] = 0;
-                    }
-                }
-    image->setData(pdata, 300, 300, 100, 3, V3D_UINT8);*/
-
     V3D_env->setImage(window, image);
     this->triViewWidget = (XFormWidget*)window;
 
@@ -106,6 +89,24 @@ CExplorerWindow::CExplorerWindow(V3DPluginCallback2 *_V3D_env, int _resIndex, ui
     //if the previous explorer window exists
     if(prev)
     {
+        //applying the same color map only if it differs from the previous one
+        Renderer_gl2* prev_renderer = (Renderer_gl2*)(prev->view3DWidget->getRenderer());
+        Renderer_gl2* curr_renderer = (Renderer_gl2*)(view3DWidget->getRenderer());
+        bool changed_cmap = false;
+        for(int k=0; k<3; k++)
+        {
+            RGBA8* prev_cmap = prev_renderer->colormap[k];
+            RGBA8* curr_cmap = curr_renderer->colormap[k];
+            for(int i=0; i<256; i++)
+            {
+                if(curr_cmap[i].i != prev_cmap[i].i)
+                    changed_cmap = true;
+                curr_cmap[i] = prev_cmap[i];
+            }
+        }
+        if(changed_cmap)
+            curr_renderer->applyColormapToImage();
+
         //positioning the current 3D window exactly at the previous window position
         QPoint location = prev->window3D->pos();
         prev->window3D->setVisible(false);
@@ -418,6 +419,24 @@ void CExplorerWindow::restore()
         view3DWidget->setXRotation(next->view3DWidget->xRot());
         view3DWidget->setYRotation(next->view3DWidget->yRot());
         view3DWidget->setZRotation(next->view3DWidget->zRot());
+
+        //applying the same color map only if it differs from the next one
+        Renderer_gl2* next_renderer = (Renderer_gl2*)(next->view3DWidget->getRenderer());
+        Renderer_gl2* curr_renderer = (Renderer_gl2*)(view3DWidget->getRenderer());
+        bool changed_cmap = false;
+        for(int k=0; k<3; k++)
+        {
+            RGBA8* next_cmap = next_renderer->colormap[k];
+            RGBA8* curr_cmap = curr_renderer->colormap[k];
+            for(int i=0; i<256; i++)
+            {
+                if(curr_cmap[i].i != next_cmap[i].i)
+                    changed_cmap = true;
+                curr_cmap[i] = next_cmap[i];
+            }
+        }
+        if(changed_cmap)
+            curr_renderer->applyColormapToImage();
 
         //closing next
         delete next;

@@ -8,6 +8,13 @@ ties names are:
 - Dev: for developers only
 
 ============================================================================================
+Version 0.5.1
+November 26th, 2012
+--------------------------------------------------------------------------------------------
+- New: color map changes are propagated when switching between different resolutions in the
+       multiresolution mode.
+--------------------------------------------------------------------------------------------
+
 
 Version 0.5.0
 November 4th, 2012

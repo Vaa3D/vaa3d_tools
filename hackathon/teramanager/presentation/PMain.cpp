@@ -633,7 +633,7 @@ void PMain::loadingDone(MyException *ex, void* sourceObject)
     else if(sourceObject == this)
     {
         Image4DSimple* img = new Image4DSimple();
-        img->setFileName(CImport::instance()->getHighestResVolume()->getSTACKS_DIR());
+        img->setFileName(CImport::instance()->getHighestResVolume()->getROOT_DIR());
         img->setData(cVolume->getVoiData(), cVolume->getVoiH1()-cVolume->getVoiH0(),
                      cVolume->getVoiV1()-cVolume->getVoiV0(), cVolume->getVoiD1()-cVolume->getVoiD0(), cVolume->getNChannels(), V3D_UINT8);
         v3dhandle new_win = V3D_env->newImageWindow(img->getFileName());

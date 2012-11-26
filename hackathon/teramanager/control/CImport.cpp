@@ -146,7 +146,7 @@ void CImport::run()
                 if(candidateVols[k]->getMVoxels() != volumes[0]->getMVoxels())
                 {
                     int ratio = pow((volumes[0]->getMVoxels() / candidateVols[k]->getMVoxels()),(1/3.0f)) + 0.5;
-                    volumes.push_back(new StackedVolume(candidateVols[k]->getSTACKS_DIR(),
+                    volumes.push_back(new StackedVolume(candidateVols[k]->getROOT_DIR(),
                                                         ref_sys(volumes[0]->getAXS_1(),volumes[0]->getAXS_2(),volumes[0]->getAXS_3()),
                                                         volumes[0]->getVXL_1()*ratio,volumes[0]->getVXL_2()*ratio,volumes[0]->getVXL_3()*ratio, reimport));
                     delete candidateVols[k];

@@ -44,16 +44,17 @@
 
 using namespace std;
 
-StackedVolume::StackedVolume(const char* _stacks_dir)  throw (MyException)
+StackedVolume::StackedVolume(const char* _root_dir)  throw (MyException)
+: VirtualVolume(_root_dir) // iannello ADDED
 {
 	#if IM_VERBOSE > 3
-	printf("\t\t\t\tin StackedVolume::StackedVolume(_stacks_dir=%s)\n",	_stacks_dir);
+	printf("\t\t\t\tin StackedVolume::StackedVolume(_root_dir=%s)\n",	_root_dir);
 	#endif
 
-	this->stacks_dir = new char[strlen(_stacks_dir)+1];
-	strcpy(this->stacks_dir,_stacks_dir);
+	// iannello this->root_dir = new char[strlen(_root_dir)+1];
+	// iannello strcpy(this->root_dir,_root_dir);
 
-	VXL_V = VXL_H = VXL_D = ORG_V = ORG_H = ORG_D = 0;
+	// iannello VXL_V = VXL_H = VXL_D = ORG_V = ORG_H = ORG_D = 0;
 	DIM_V = DIM_H = DIM_D = 0;
 	N_ROWS = N_COLS = 0;
 	STACKS = NULL;
@@ -62,7 +63,7 @@ StackedVolume::StackedVolume(const char* _stacks_dir)  throw (MyException)
 
 	//without any configuration parameter, volume import must be done from the metadata file stored in the root directory, if it exists
 	char mdata_filepath[IM_STATIC_STRINGS_SIZE];
-	sprintf(mdata_filepath, "%s/%s", stacks_dir, IM_METADATA_FILE_NAME);
+	sprintf(mdata_filepath, "%s/%s", root_dir, IM_METADATA_FILE_NAME);
 	if(fileExists(mdata_filepath))
             load(mdata_filepath);
 	else
@@ -73,17 +74,18 @@ StackedVolume::StackedVolume(const char* _stacks_dir)  throw (MyException)
 	}
 }
 
-StackedVolume::StackedVolume(const char* _stacks_dir, ref_sys _reference_system, float _VXL_1, float _VXL_2, float _VXL_3, bool overwrite_mdata, bool save_mdata)  throw (MyException)
+StackedVolume::StackedVolume(const char* _root_dir, ref_sys _reference_system, float _VXL_1, float _VXL_2, float _VXL_3, bool overwrite_mdata, bool save_mdata)  throw (MyException)
+: VirtualVolume(_root_dir) // iannello ADDED
 {
         #if IM_VERBOSE > 3
-	printf("\t\t\t\tin StackedVolume::StackedVolume(_stacks_dir=%s, ref_sys reference_system={%d,%d,%d}, VXL_1=%.4f, VXL_2=%.4f, VXL_3=%.4f)\n",
-                          _stacks_dir, _reference_system.first, _reference_system.second, _reference_system.third, _VXL_1, _VXL_2, _VXL_3);
+	printf("\t\t\t\tin StackedVolume::StackedVolume(_root_dir=%s, ref_sys reference_system={%d,%d,%d}, VXL_1=%.4f, VXL_2=%.4f, VXL_3=%.4f)\n",
+                          _root_dir, _reference_system.first, _reference_system.second, _reference_system.third, _VXL_1, _VXL_2, _VXL_3);
 	#endif
 
-	this->stacks_dir = new char[strlen(_stacks_dir)+1];
-	strcpy(this->stacks_dir,_stacks_dir);
+	// iannello this->root_dir = new char[strlen(_root_dir)+1];
+	// iannello strcpy(this->root_dir,_root_dir);
 
-	VXL_V = VXL_H = VXL_D = ORG_V = ORG_H = ORG_D = 0;
+	// iannello VXL_V = VXL_H = VXL_D = ORG_V = ORG_H = ORG_D = 0;
 	DIM_V = DIM_H = DIM_D = 0;
 	N_ROWS = N_COLS = 0;
         STACKS = NULL;
@@ -92,8 +94,8 @@ StackedVolume::StackedVolume(const char* _stacks_dir, ref_sys _reference_system,
 
 	//trying to unserialize an already existing metadata file, if it doesn't exist the full initialization procedure is performed and metadata is saved
 	char mdata_filepath[IM_STATIC_STRINGS_SIZE];
-	sprintf(mdata_filepath, "%s/%s", stacks_dir, IM_METADATA_FILE_NAME);
-        if(fileExists(mdata_filepath) && !overwrite_mdata)
+	sprintf(mdata_filepath, "%s/%s", root_dir, IM_METADATA_FILE_NAME);
+    if(fileExists(mdata_filepath) && !overwrite_mdata)
 		load(mdata_filepath);
 	else
 	{
@@ -119,8 +121,8 @@ StackedVolume::~StackedVolume(void)
 	printf("\t\t\t\tin StackedVolume::~StackedVolume(void)\n");
 	#endif
 
-	if(stacks_dir)
-		delete[] stacks_dir;
+	// iannello if(root_dir)
+	// iannello 	delete[] root_dir;
 
 	if(STACKS)
 	{
@@ -150,15 +152,15 @@ void StackedVolume::save(char* metadata_filepath) throw (MyException)
 	int i,j;
 
 	file = fopen(metadata_filepath, "wb");
-	str_size = (uint16)(strlen(stacks_dir) + 1);
+	str_size = (uint16)(strlen(root_dir) + 1);
 	fwrite(&str_size, sizeof(uint16), 1, file);
-        fwrite(stacks_dir, str_size, 1, file);
-        fwrite(&reference_system.first, sizeof(axis), 1, file);
-        fwrite(&reference_system.second, sizeof(float), 1, file);
-        fwrite(&reference_system.third, sizeof(float), 1, file);
-        fwrite(&VXL_1, sizeof(float), 1, file);
-        fwrite(&VXL_2, sizeof(float), 1, file);
-        fwrite(&VXL_3, sizeof(float), 1, file);
+    fwrite(root_dir, str_size, 1, file);
+    fwrite(&reference_system.first, sizeof(axis), 1, file);
+    fwrite(&reference_system.second, sizeof(axis), 1, file); // iannello CORRECTED
+    fwrite(&reference_system.third, sizeof(axis), 1, file);  // iannello CORRECTED
+    fwrite(&VXL_1, sizeof(float), 1, file);
+    fwrite(&VXL_2, sizeof(float), 1, file);
+    fwrite(&VXL_3, sizeof(float), 1, file);
 	fwrite(&VXL_V, sizeof(float), 1, file);
 	fwrite(&VXL_H, sizeof(float), 1, file);
 	fwrite(&VXL_D, sizeof(float), 1, file);
@@ -195,34 +197,40 @@ void StackedVolume::load(char* metadata_filepath) throw (MyException)
 	if(fread_return_val != 1)
 		throw MyException("in Stack::unBinarizeFrom(...): error while reading binary metadata file");
 
-	if(stacks_dir)
-		delete[] stacks_dir;
-	stacks_dir = new char[str_size];
-	fread_return_val = fread(stacks_dir, str_size, 1, file);
+	// iannello DELETED
+	// root_dir is defined and it has been used to initialize metadata_filepath
+	// hence it does not make sense to redefine it with the information contained in the mdata.bin file
+	//
+	//if(root_dir)
+	//	delete[] root_dir;
+	char *stored_root_dir = new char[str_size];
+	fread_return_val = fread(stored_root_dir, str_size, 1, file);
 	if(fread_return_val != 1)
 		throw MyException("in Stack::unBinarizeFrom(...): error while reading binary metadata file");
+	if ( strcmp(root_dir,stored_root_dir) ) 
+		fprintf(stderr,"*** warnng *** current root directory is different from the stored one\n");
 
-        fread_return_val = fread(&reference_system.first, sizeof(axis), 1, file);
-        if(fread_return_val != 1)
-                throw MyException("in Stack::unBinarizeFrom(...): error while reading binary metadata file");
+    fread_return_val = fread(&reference_system.first, sizeof(axis), 1, file);
+    if(fread_return_val != 1)
+            throw MyException("in Stack::unBinarizeFrom(...): error while reading binary metadata file");
 
-        fread_return_val = fread(&reference_system.second, sizeof(axis), 1, file);
-        if(fread_return_val != 1)
-                throw MyException("in Stack::unBinarizeFrom(...): error while reading binary metadata file");
+    fread_return_val = fread(&reference_system.second, sizeof(axis), 1, file);
+    if(fread_return_val != 1)
+            throw MyException("in Stack::unBinarizeFrom(...): error while reading binary metadata file");
 
-        fread_return_val = fread(&reference_system.third, sizeof(axis), 1, file);
+    fread_return_val = fread(&reference_system.third, sizeof(axis), 1, file);
 
-        fread_return_val = fread(&VXL_1, sizeof(float), 1, file);
-        if(fread_return_val != 1)
-                throw MyException("in Stack::unBinarizeFrom(...): error while reading binary metadata file");
+    fread_return_val = fread(&VXL_1, sizeof(float), 1, file);
+    if(fread_return_val != 1)
+            throw MyException("in Stack::unBinarizeFrom(...): error while reading binary metadata file");
 
-        fread_return_val = fread(&VXL_2, sizeof(float), 1, file);
-        if(fread_return_val != 1)
-                throw MyException("in Stack::unBinarizeFrom(...): error while reading binary metadata file");
+    fread_return_val = fread(&VXL_2, sizeof(float), 1, file);
+    if(fread_return_val != 1)
+            throw MyException("in Stack::unBinarizeFrom(...): error while reading binary metadata file");
 
-        fread_return_val = fread(&VXL_3, sizeof(float), 1, file);
-        if(fread_return_val != 1)
-                throw MyException("in Stack::unBinarizeFrom(...): error while reading binary metadata file");
+    fread_return_val = fread(&VXL_3, sizeof(float), 1, file);
+    if(fread_return_val != 1)
+            throw MyException("in Stack::unBinarizeFrom(...): error while reading binary metadata file");
 
 	fread_return_val = fread(&VXL_V, sizeof(float), 1, file);
 	if(fread_return_val != 1)
@@ -291,24 +299,24 @@ void StackedVolume::init()
 
 	//LOCAL VARIABLES
 	string tmp_path;				//string that contains temp paths during computation
-        string tmp;					//string that contains temp data during computation
+    string tmp;						//string that contains temp data during computation
 	DIR *cur_dir_lev1;				//pointer to DIR, the data structure that represents a DIRECTORY (level 1 of hierarchical structure)
 	DIR *cur_dir_lev2;				//pointer to DIR, the data structure that represents a DIRECTORY (level 2 of hierarchical structure)
 	dirent *entry_lev1;				//pointer to DIRENT, the data structure that represents a DIRECTORY ENTRY inside a directory (level 1)
 	dirent *entry_lev2;				//pointer to DIRENT, the data structure that represents a DIRECTORY ENTRY inside a directory (level 2)
 	int i=0,j=0;					//for counting of N_ROWS, N_COLS
-        list<Stack*> stacks_list;                       //each stack found in the hierarchy is pushed into this list
-        list<string> entries_lev1;                      //list of entries of first level of hierarchy
-        list<string>::iterator entry_i;                 //iterator for list 'entries_lev1'
-        list<string> entries_lev2;                      //list of entries of second level of hierarchy
-        list<string>::iterator entry_j;                 //iterator for list 'entries_lev2'
+    list<Stack*> stacks_list;                       //each stack found in the hierarchy is pushed into this list
+    list<string> entries_lev1;                      //list of entries of first level of hierarchy
+    list<string>::iterator entry_i;                 //iterator for list 'entries_lev1'
+    list<string> entries_lev2;                      //list of entries of second level of hierarchy
+    list<string>::iterator entry_j;                 //iterator for list 'entries_lev2'
 	char stack_i_j_path[IM_STATIC_STRINGS_SIZE];
 
-	//obtaining DIR pointer to stacks_dir (=NULL if directory doesn't exist)
-	if (!(cur_dir_lev1=opendir(stacks_dir)))
+	//obtaining DIR pointer to root_dir (=NULL if directory doesn't exist)
+	if (!(cur_dir_lev1=opendir(root_dir)))
 	{
 		char msg[IM_STATIC_STRINGS_SIZE];
-		sprintf(msg,"in StackedVolume::init(...): Unable to open directory \"%s\"", stacks_dir);
+		sprintf(msg,"in StackedVolume::init(...): Unable to open directory \"%s\"", root_dir);
 		throw MyException(msg);
 	}
 
@@ -328,7 +336,7 @@ void StackedVolume::init()
 	for(entry_i = entries_lev1.begin(), i=0; entry_i!= entries_lev1.end(); entry_i++, i++)
 	{
 		//building absolute path of first level entry to be used for "opendir(...)"
-		tmp_path=stacks_dir;
+		tmp_path=root_dir;
 		tmp_path.append("/");
 		tmp_path.append(*entry_i);
 		cur_dir_lev2 = opendir(tmp_path.c_str());
@@ -472,7 +480,7 @@ void StackedVolume::init()
 void StackedVolume::print()
 {
 	printf("*** Begin printing StakedVolume object...\n\n");
-	printf("\tDirectory:\t%s\n", stacks_dir);
+	printf("\tDirectory:\t%s\n", root_dir);
 	printf("\tDimensions:\t%d(V) x %d(H) x %d(D)\n", DIM_V, DIM_H, DIM_D);
 	printf("\tVoxels:\t\t%.4f(V) x %.4f(H) x %.4f(D)\n", VXL_V, VXL_H, VXL_D);
 	printf("\tOrigin:\t\t%.4f(V) x %.4f(H) x %.4f(D)\n", ORG_V, ORG_H, ORG_D);
@@ -775,9 +783,9 @@ uint8* StackedVolume::loadSubvolume_to_UINT8(int V0,int V1, int H0, int H1, int 
     V0 = V0 < 0 ? 0 : V0;
     H0 = H0 < 0 ? 0 : H0;
     D0 = D0 < 0 ? 0 : D0;
-    V1 = (V1 < 0 || V1 > DIM_V) ? DIM_V : V1;
-    H1 = (H1 < 0 || H1 > DIM_H) ? DIM_H : H1;
-    D1 = (D1 < 0 || D1 > DIM_D) ? DIM_D : D1;
+    V1 = (V1 < 0 || V1 > (int)DIM_V) ? DIM_V : V1; // iannello MODIFIED
+    H1 = (H1 < 0 || H1 > (int)DIM_H) ? DIM_H : H1; // iannello MODIFIED
+    D1 = (D1 < 0 || D1 > (int)DIM_D) ? DIM_D : D1; // iannello MODIFIED
     uint8 *subvol = 0;
 
     //checking that the interval is valid
@@ -813,7 +821,7 @@ uint8* StackedVolume::loadSubvolume_to_UINT8(int V0,int V1, int H0, int H1, int 
                 for(int k=0; k<sbv_depth; k++)
                 {
                     //loading slice
-                    sprintf(slice_fullpath, "%s/%s/%s", stacks_dir, STACKS[row][col]->getDIR_NAME(), STACKS[row][col]->getFILENAMES()[D0+k]);
+                    sprintf(slice_fullpath, "%s/%s/%s", root_dir, STACKS[row][col]->getDIR_NAME(), STACKS[row][col]->getFILENAMES()[D0+k]);
                     IplImage* slice = cvLoadImage(slice_fullpath, CV_LOAD_IMAGE_ANYCOLOR);  //without CV_LOAD_IMAGE_ANYDEPTH, image is converted to 8-bits if needed
                     if(!slice)
                         throw MyException(std::string("Unable to load slice at \"").append(slice_fullpath).append("\"").c_str());
@@ -1310,18 +1318,18 @@ void StackedVolume::saveMIPs(bool direction_V, bool direction_H, bool direction_
 	}
 	if(MIP_V_path == NULL && direction_V)
 	{
-		MIP_V_path = new char[strlen(stacks_dir)+11];
-		sprintf(MIP_V_path, "%s/MIP_V.png", stacks_dir);
+		MIP_V_path = new char[strlen(root_dir)+11];
+		sprintf(MIP_V_path, "%s/MIP_V.png", root_dir);
 	}	
 	if(MIP_H_path == NULL && direction_H)
 	{
-		MIP_H_path = new char[strlen(stacks_dir)+11];
-		sprintf(MIP_H_path, "%s/MIP_H.png", stacks_dir);
+		MIP_H_path = new char[strlen(root_dir)+11];
+		sprintf(MIP_H_path, "%s/MIP_H.png", root_dir);
 	}	
 	if(MIP_D_path == NULL && direction_D)
 	{
-		MIP_D_path = new char[strlen(stacks_dir)+11];
-		sprintf(MIP_D_path, "%s/MIP_D.png", stacks_dir);
+		MIP_D_path = new char[strlen(root_dir)+11];
+		sprintf(MIP_D_path, "%s/MIP_D.png", root_dir);
 	}
 
 	//initializations and memory allocations
@@ -1446,92 +1454,4 @@ const char* axis_to_str(axis ax)
 	else if(ax == -3)
 		return "Inverse Depth";
 	else return "<unknown>";
-}
-
-/*************************************************************************************************************
-* Save image method. <> parameters are mandatory, while [] are optional.
-* <img_path>				: absolute path of image to be saved. It DOES NOT include its extension, which ac-
-*							  tually is a preprocessor variable (see IOManager_defs.h).
-* <raw_img>					: image to be saved. Raw data is in [0,1] and it is stored row-wise in a 1D array.
-* <raw_img_height/width>	: dimensions of raw_img.
-* [start/end_height/width]	: optional ROI (region of interest) to be set on the given image.
-**************************************************************************************************************/
-void StackedVolume::saveImage(std::string img_path, REAL_T* raw_img, int raw_img_height, int  raw_img_width, 
-							 int start_height, int end_height, int start_width, int end_width, 
-							 const char* img_format, int img_depth) throw (MyException)
-{
-	#if IO_M_VERBOSE > 4
-	printf("\t\t\t\tin StackedVolume::saveImage(img_path=%s, raw_img_height=%d, raw_img_width=%d, start_height=%d, end_height=%d, start_width=%d, end_width=%d)\n",
-		img_path.c_str(), raw_img_height, raw_img_width, start_height, end_height, start_width, end_width);
-	#endif
-
-	IplImage *img;
-	uint8  *row_data_8bit;
-	uint16 *row_data_16bit;
-	uint32 img_data_step;
-	float scale_factor_16b, scale_factor_8b;
-	int img_height, img_width;
-	int i,j;
-	char img_filepath[5000];
-
-	//setting some default parameters and image dimensions
-	end_height = (end_height == -1 ? raw_img_height - 1 : end_height);
-	end_width  = (end_width  == -1 ? raw_img_width  - 1 : end_width );
-	img_height = end_height - start_height + 1;
-	img_width  = end_width  - start_width  + 1;
-
-	//checking parameters correctness
-	if(!(start_height>=0 && end_height>start_height && end_height<raw_img_height && start_width>=0 && end_width>start_width && end_width<raw_img_width))
-	{
-		char err_msg[IM_STATIC_STRINGS_SIZE];
-		sprintf(err_msg,"in saveImage(..., raw_img_height=%d, raw_img_width=%d, start_height=%d, end_height%d, start_width=%d, end_width=%d): invalid image portion\n",
-			raw_img_height, raw_img_width, start_height, end_height, start_width, end_width);
-		throw MyException(err_msg);
-	}
-	if(img_depth != 8 && img_depth != 16)
-	{
-		char err_msg[IM_STATIC_STRINGS_SIZE];		
-		sprintf(err_msg,"in saveImage(..., img_depth=%d, ...): unsupported bit depth\n",img_depth);
-		throw MyException(err_msg);
-	}
-
-	//generating complete path for image to be saved
-	sprintf(img_filepath, "%s.%s", img_path.c_str(), img_format);
-
-	//converting raw data in image data
-	img = cvCreateImage(cvSize(img_width, img_height), (img_depth == 8 ? IPL_DEPTH_8U : IPL_DEPTH_16U), 1);
-	scale_factor_16b = 65535.0F;
-	scale_factor_8b  = 255.0F;
-	if(img->depth == IPL_DEPTH_8U)
-	{
-		img_data_step = img->widthStep / sizeof(uint8);
-		for(i = 0; i <img_height; i++)
-		{
-			row_data_8bit = ((uint8*)(img->imageData)) + i*img_data_step;
-			for(j = 0; j < img_width; j++)
-				row_data_8bit[j] = raw_img[(i+start_height)*raw_img_width+j+start_width] * scale_factor_8b;
-		}
-	}
-	else
-	{
-		img_data_step = img->widthStep / sizeof(uint16);
-		for(i = 0; i <img_height; i++)
-		{
-			row_data_16bit = ((uint16*)(img->imageData)) + i*img_data_step;
-			for(j = 0; j < img_width; j++)
-				row_data_16bit[j] = raw_img[(i+start_height)*raw_img_width+j+start_width] * scale_factor_16b;
-		}
-	}
-
-	//saving image
-	try{cvSaveImage(img_filepath, img);}
-	catch(std::exception ex)
-	{
-		char err_msg[IM_STATIC_STRINGS_SIZE];		
-		sprintf(err_msg,"in saveImage(...): unable to save image at \"%s\". Unsupported format or wrong path.\n",img_filepath);
-		throw MyException(err_msg);
-	}
-
-	//releasing memory of img
-	cvReleaseImage(&img);
 }

@@ -32,10 +32,13 @@
 /******************************
  ***    TYPES definitions   ***
  ******************************/
-typedef unsigned char      uint8;
-typedef unsigned short int uint16;
-typedef unsigned int       uint32;
-typedef float			   REAL_T;
+typedef unsigned char  uint8;			//8-bit  unsigned integer data type
+typedef unsigned short uint16;			//16-bit unsigned integer data type
+typedef unsigned int   uint32;			//32-bit unsigned integer data type
+typedef int			   sint32;			//32-bit signed integer data type
+typedef long long	   sint64;			//64-bit signed integer data type
+typedef float		   REAL_T;
+
 
 #define IM_VERBOSE 0
 #define IM_SAVE_SUBVOLUMES
@@ -53,7 +56,9 @@ typedef float			   REAL_T;
 #endif
 
 #define MAX(a,b)       (((a)>(b)) ? (a) : (b))
+#ifndef SIGN // iannello ADDED
 #define SIGN( arg ) (arg < 0 ? -1 : 1)
+#endif // iannello ADDED
 #define ROUND( arg ) ( SIGN(arg) == 1 ? arg + 0.5 : arg - 0.5)
 
 //"PAUSE" function
@@ -70,6 +75,7 @@ typedef float			   REAL_T;
 #endif
 
 //file deleting
+#ifndef RM_FILE // iannello ADDED
 #ifdef _WIN32
 #define RM_FILE( arg ) 					\
 	char sys_cmd[500]; 					\
@@ -83,6 +89,7 @@ typedef float			   REAL_T;
 	if(system(sys_cmd)!=0)				\
 		fprintf(stderr,"Can't delete file %s\n", arg);
 #endif
+#endif // iannello ADDED
 
 //directory creation
 #ifdef _WIN32

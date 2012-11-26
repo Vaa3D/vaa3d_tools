@@ -34,7 +34,12 @@
 
 //FORWARD-DECLARATIONS
 struct CvMat;
-class  StackedVolume;
+class  VirtualVolume;
+/* modified (iannello)
+ * abstract class VirtualVolume has been substituted to derived class StackedVolume
+ * since class Stack can be used to manage also volumes stored simply as a sequence of images 
+ * in one directory
+ */
 
 //TYPE DEFINITIONS
 typedef struct {int V0, V1, H0, H1;} Rect_t;
@@ -44,7 +49,7 @@ class Stack
 	private:
 
 		//*********** OBJECT ATTRIBUTES ***********
-		StackedVolume*	CONTAINER;					//pointer to <StackedVolume> object that contains the current object
+		VirtualVolume*	CONTAINER;					//pointer to <VirtualVolume> object that contains the current object
 		CvMat**			STACKED_IMAGE;				//1-D dinamic array of <CvMat> pointers. Every <CvMat> stores a single 2-D image
 		char**			FILENAMES;					//1-D dinamic array of <char>  pointers to images filanames
 		uint32			HEIGHT, WIDTH, DEPTH;		//VHD (Vertical, Horizontal, Depth) dimensions of current stack
@@ -60,8 +65,8 @@ class Stack
 
 	public:
 
-		Stack(StackedVolume* _CONTAINER, int _ROW_INDEX, int _COL_INDEX, FILE* bin_file);
-		Stack(StackedVolume* _CONTAINER, int _ROW_INDEX, int _COL_INDEX, char* _DIR_NAME);
+		Stack(VirtualVolume* _CONTAINER, int _ROW_INDEX, int _COL_INDEX, FILE* bin_file);
+		Stack(VirtualVolume* _CONTAINER, int _ROW_INDEX, int _COL_INDEX, char* _DIR_NAME);
 		~Stack(void);
 
 		//GET methods

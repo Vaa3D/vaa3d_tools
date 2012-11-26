@@ -31,6 +31,7 @@
 
 #include "CPlugin.h"
 #include "v3dr_glwidget.h"
+#include "v3dr_mainwindow.h"
 #include "renderer_gl2.h"
 
 class teramanager::CExplorerWindow : public QWidget
@@ -120,6 +121,17 @@ class teramanager::CExplorerWindow : public QWidget
                 return this->getCenterOfMarkerPos(pos);
             }
         };*/
+
+        /**********************************************************************************
+        * Vaa3D V3dR_MainWindow subclass needed to access some protected members
+        ***********************************************************************************/
+        class myV3dR_MainWindow : V3dR_MainWindow
+        {
+            public:
+
+            friend class CExplorerWindow;
+        };
+
 
 
     public:

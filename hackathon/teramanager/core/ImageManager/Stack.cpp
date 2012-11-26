@@ -27,7 +27,7 @@
 ********************************************************************************************************************************************************************************************/
 
 #include "Stack.h"
-#include "StackedVolume.h"
+#include "VirtualVolume.h"
 #include "MyException.h"
 #include <cxcore.h>
 #include <highgui.h>
@@ -42,10 +42,10 @@
 
 using namespace std;
 
-Stack::Stack(StackedVolume* _CONTAINER, int _ROW_INDEX, int _COL_INDEX, char* _DIR_NAME)
+Stack::Stack(VirtualVolume* _CONTAINER, int _ROW_INDEX, int _COL_INDEX, char* _DIR_NAME)
 {
 	#if IM_VERBOSE > 3
-	printf("\t\t\t\tin Stack::Stack(StackedVolume* _CONTAINER, int _ROW_INDEX=%d, int _COL_INDEX=%d, char* _DIR_NAME=%s)\n",
+	printf("\t\t\t\tin Stack::Stack(VirtualVolume* _CONTAINER, int _ROW_INDEX=%d, int _COL_INDEX=%d, char* _DIR_NAME=%s)\n",
 		    _ROW_INDEX, _COL_INDEX, _DIR_NAME);
 	#endif
 
@@ -65,10 +65,10 @@ Stack::Stack(StackedVolume* _CONTAINER, int _ROW_INDEX, int _COL_INDEX, char* _D
 	init();
 }
 
-Stack::Stack(StackedVolume* _CONTAINER, int _ROW_INDEX, int _COL_INDEX, FILE* bin_file)
+Stack::Stack(VirtualVolume* _CONTAINER, int _ROW_INDEX, int _COL_INDEX, FILE* bin_file)
 {
 	#if IM_VERBOSE > 3
-	printf("\t\t\t\tin Stack::Stack(StackedVolume* _CONTAINER, int _ROW_INDEX=%d, int _COL_INDEX=%d, FILE* bin_file)\n",
+	printf("\t\t\t\tin Stack::Stack(VirtualVolume* _CONTAINER, int _ROW_INDEX=%d, int _COL_INDEX=%d, FILE* bin_file)\n",
 		_ROW_INDEX, _COL_INDEX);
 	#endif
 
@@ -204,7 +204,7 @@ void Stack::init()
 
 	//building filenames_list
 	char abs_path[IM_STATIC_STRINGS_SIZE];
-	sprintf(abs_path,"%s/%s", CONTAINER->getSTACKS_DIR(), DIR_NAME);
+	sprintf(abs_path,"%s/%s", CONTAINER->getROOT_DIR(), DIR_NAME);
 	cur_dir_lev3 = opendir(abs_path);
 	if (!cur_dir_lev3)
 	{
@@ -249,7 +249,7 @@ void Stack::init()
 
 	//extracting HEIGHT and WIDTH attributes from first slice
 	char slice_fullpath[IM_STATIC_STRINGS_SIZE];
-	sprintf(slice_fullpath, "%s/%s/%s", CONTAINER->getSTACKS_DIR(), DIR_NAME, FILENAMES[0]);
+	sprintf(slice_fullpath, "%s/%s/%s", CONTAINER->getROOT_DIR(), DIR_NAME, FILENAMES[0]);
         IplImage *img_tmp = cvLoadImage(slice_fullpath, CV_LOAD_IMAGE_GRAYSCALE);
 	if(!img_tmp)
 	{
@@ -302,7 +302,7 @@ void Stack::loadStack(int first_file, int last_file)
 		if(!STACKED_IMAGE[file_i])
 		{
 			//building image path
-			sprintf(slice_fullpath, "%s/%s/%s", CONTAINER->getSTACKS_DIR(), DIR_NAME, FILENAMES[file_i]);
+			sprintf(slice_fullpath, "%s/%s/%s", CONTAINER->getROOT_DIR(), DIR_NAME, FILENAMES[file_i]);
 			
 			//loading image
 			slice_img_i = cvLoadImage(slice_fullpath, CV_LOAD_IMAGE_GRAYSCALE | CV_LOAD_IMAGE_ANYDEPTH);
@@ -436,7 +436,7 @@ void Stack::deleteSlices(int first_file, int last_file)
 
 		if(pch!=NULL)
 			corrected_STACK_DIR[pch-corrected_STACK_DIR]='\\';
-		sprintf(slice_fullpath, "%s\\%s\\%s", CONTAINER->getSTACKS_DIR(), corrected_STACK_DIR, FILENAMES[file_i]);
+		sprintf(slice_fullpath, "%s\\%s\\%s", CONTAINER->getROOT_DIR(), corrected_STACK_DIR, FILENAMES[file_i]);
 
 		//deleting file
 		RM_FILE(slice_fullpath);

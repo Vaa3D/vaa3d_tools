@@ -26,8 +26,8 @@
 *       specific prior written permission.
 ********************************************************************************************************************************************************************************************/
 
-#ifndef _PROGRESS_BAR_H
-#define _PROGRESS_BAR_H
+#ifndef _PROGRESS_BAR2_H
+#define _PROGRESS_BAR2_H
 
 
 #include <iostream>
