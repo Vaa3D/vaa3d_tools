@@ -64,7 +64,7 @@ void CPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWi
     #endif
 
     if (menu_name == tr("Teravoxel-sized Image Visualization"))
-    {/*
+    {
         //checking shared libraries
         if(!CPlugin::isSharedLibraryLoadable("opencv_core"))
         {
@@ -80,7 +80,7 @@ void CPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWi
                                          QObject::tr("Ok"));
             return;
         }
-*/
+
         //launching plugin's GUI
         PMain::instance(&callback, parent);
         PMain::instance()->show();
