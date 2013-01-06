@@ -48,6 +48,7 @@ class teramanager::PDialogImport : public QDialog
 
         //widgets
         QLabel* import_form_desc_1;     //contains text describing import form usage
+        QLabel* import_form_desc_2;
         QLabel* first_direction_label;  //label "First direction"
         QLabel* second_direction_label; //label "Second direction"
         QLabel* third_direction_label;  //label "Third direction"

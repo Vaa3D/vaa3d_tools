@@ -56,9 +56,6 @@ class teramanager::PMain : public QWidget
         V3DPluginCallback2* V3D_env;     //handle of V3D environment
         QWidget *parentWidget;           //handle of parent widget
 
-        //helpbox
-        QLabel* helpbox;
-
         //import form widgets
         QGroupBox* import_form;         //import form containing input fields
         QPushButton *voldir_button;     //browse for volume's directory button

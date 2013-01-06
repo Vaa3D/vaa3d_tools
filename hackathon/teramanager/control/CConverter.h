@@ -26,42 +26,49 @@
 *       specific prior written permission.
 ********************************************************************************************************************************************************************************************/
 
-#ifndef CSETTINGS_H
-#define CSETTINGS_H
+#ifndef CCONVERTER_H
+#define CCONVERTER_H
 
+#include <QThread>
+#include <string>
 #include "CPlugin.h"
+#include "presentation/PConverter.h"
+#include "VolumeConverter.h"
 
-class teramanager::CSettings
+class teramanager::CConverter : public QThread
 {
+    Q_OBJECT
+
     private:
 
         /*********************************************************************************
         * Singleton design pattern: this class can have one instance only,  which must be
-        * instantiated by calling static method "istance(...)"
+        * instantiated by calling the static method "istance(...)"
         **********************************************************************************/
-        static CSettings* uniqueInstance;
-        CSettings()
+        static CConverter* uniqueInstance;
+        CConverter() : QThread(), volPath(undefined_str), volFormat(undefined_str), vc(0), conversionMode(false), resolutions(0),
+            resolutionsSize(0), stacksWidth(undefined_val), stacksHeight(undefined_val), volOutPath(undefined_str), fileMode(false)
         {
             #ifdef TMP_DEBUG
-            printf("--------------------- teramanager plugin [thread unknown] >> CSettings created\n");
+            printf("--------------------- teramanager plugin [thread %d] >> CConverter created\n", this->thread()->currentThreadId());
             #endif
-            loadDefaultSettings();
-            readSettings();
         }
 
-        //TeraFly members
-        string volumePathLRU;
-        int volMapSizeLimit;
-        int VOIdimV;
-        int VOIdimH;
-        int VOIdimD;
+        //automatically called when current thread is started
+        void run();
 
-        //TeraConverter members
-        string volumeConverterInputPathLRU;
-        string volumeConverterOutputPathLRU;
-        string volumeConverterFormatLRU;
-        int volumeConverterStacksWidthLRU;
-        int volumeConverterStacksHeightLRU;
+        //members
+        string volPath;             //absolute path of the folder or file containing the volume to be converted
+        string volFormat;           //the unique ID of the volume format
+        bool fileMode;              //whether the volume to be importes is stored into a file (fileMode=true) or a folder (fileMode=false)
+        bool conversionMode;        //whether the conversion mode is active or not(as it is initially, when the import mode is activated)
+        bool *resolutions;          //array of resolutions activation flags
+        int resolutionsSize;        //size of <resolutions>
+        int stacksWidth;            //width of each stack after conversion
+        int stacksHeight;           //height of each stack after conversion
+        string volOutPath;          //absolute path of the folder where to store the converted volume
+        VolumeConverter *vc;        //handle of the <VolumeConverter> object which is responsible of volume conversion from the given format
+
 
     public:
 
@@ -69,45 +76,47 @@ class teramanager::CSettings
         * Singleton design pattern: this class can have one instance only,  which must be
         * instantiated by calling static method "istance(...)"
         **********************************************************************************/
-        static CSettings* instance()
+        static CConverter* instance()
         {
             if (uniqueInstance == NULL)
-                uniqueInstance = new CSettings();
+                uniqueInstance = new CConverter();
             return uniqueInstance;
         }
         static void uninstance();
-        ~CSettings();
+        ~CConverter();
 
-        //GET and SET methods for TeraFly
-        string getVolumePathLRU(){return volumePathLRU;}
-        int getVolMapSizeLimit(){return volMapSizeLimit;}
-        int getVOIdimV(){return VOIdimV;}
-        int getVOIdimH(){return VOIdimH;}
-        int getVOIdimD(){return VOIdimD;}
-        void setVolumePathLRU(string _volumePathLRU){volumePathLRU = _volumePathLRU;}
-        void setVolMapSizeLimit(int _volMapSizeLimit){volMapSizeLimit = _volMapSizeLimit;}
-        void setVOIdimV(int _VOIdimV){VOIdimV = _VOIdimV;}
-        void setVOIdimH(int _VOIdimH){VOIdimH = _VOIdimH;}
-        void setVOIdimD(int _VOIdimD){VOIdimD = _VOIdimD;}
+        //GET and SET methods
+        void setMembers(PConverter* pConverter) throw (MyException);
+        bool getConversionMode(){return conversionMode;}
+        VolumeConverter* getVolumeConverter() throw (MyException)
+        {
+            if(vc == 0)
+                throw MyException("in CConverter::getVolumeConverter(): volume converter object does not exist");
+            return vc;
+        }
 
-        //GET and SET methods for TeraConverter
-        string getVCInputPath(){return volumeConverterInputPathLRU;}
-        string getVCOutputPath(){return volumeConverterOutputPathLRU;}
-        string getVCFormat(){return volumeConverterFormatLRU;}
-        int getVCStacksWidth(){return volumeConverterStacksWidthLRU;}
-        int getVCStacksHeight(){return volumeConverterStacksHeightLRU;}
-        void setVCInputPath(string newval){volumeConverterInputPathLRU = newval;}
-        void setVCOutputPath(string newval){volumeConverterOutputPathLRU = newval;}
-        void setVCFormat(string newval){volumeConverterFormatLRU = newval;}
-        void setVCStacksWidth(int newval){volumeConverterStacksWidthLRU = newval;}
-        void setVCStacksHeight(int newval){volumeConverterStacksHeightLRU = newval;}
 
-        //save and restore application settings
-        void writeSettings();
-        void readSettings();
+        //reset method
+        void reset()
+        {
+            volPath = undefined_str;
+            volFormat = undefined_str;
+            vc = 0;
+            conversionMode = false;
+            resolutions = 0;
+            resolutionsSize = 0;
+            stacksWidth  = undefined_val;
+            stacksHeight = undefined_val;
+            volOutPath = undefined_str;
+            fileMode = false;
+        }
 
-        //load default settings
-        void loadDefaultSettings();
+    signals:
+
+        /*********************************************************************************
+        * Carries the outcome of the operation associated to this thread.
+        **********************************************************************************/
+        void sendOperationOutcome(MyException* ex);
 };
 
-#endif // CSETTINGS_H
+#endif // CCONVERTER_H

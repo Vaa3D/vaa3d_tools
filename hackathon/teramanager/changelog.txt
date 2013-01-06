@@ -6,12 +6,61 @@ ties names are:
 - New: a new feature to be implemented
 - Bug: bug to be fixed
 - Dev: for developers only
+- Opt: optimization
 
 ============================================================================================
+Version 0.6
+January 6th, 2013
+--------------------------------------------------------------------------------------------
+- Fix: fixed a bug in "TeraConverter" which caused non-selected  resolutions to be  imported
+       anyway at the end of the conversion process and then the plugin crashed.
+- Fix: permanent settings in both  "TeraConverter"  and "TeraFly" tools  are saved each time 
+       a single setting is changed. Previously, they were saved after the plugin was closed.
+       In the case of a crash or  incorrect termination of the plugin, they  were not saved.
+- New: "TeraConverter" tool added. Main features:
+       - tool for the conversion of any supported format to the TeraFly format   
+       - 3 different data formats supported (TeraStitcher, Image series, V3D raw) and others
+         will be added in the future.
+       - dynamic help text appears for every format selected.
+       - progress bar with remaining time estimation
+       - permanent settings (at every run it reloads the settings used the last time)
+       - memory usage estimation
+       - the number of resolutions is automatically detected to best fit TeraFly needs
+       - the user can enable/disable individual resolutions
+- Fix: bug fixed which caused old "mdata.bin" files to be not compatible.
+- Fix: added check on the number of available resolutions in the multiresolution mode of the
+       tool "TeraFly". The multiresolution mode seems not to properly work with one  resolu-
+       tion only. At least 2 available resolutions are now needed to import a volume.
+--------------------------------------------------------------------------------------------
+
+
+Version 0.5.3
+January 2nd, 2013
+--------------------------------------------------------------------------------------------
+- Dev: ProgressBar substituted with the newest one provided by the TeraStitcher plugin.
+- Dev: plugin's name renaming: Teramanager -> TeraFly. Now "Teramanager" is the  name of the
+       tools  suite  containing both the 3D visualizer  (TeraFly)  and the  volume converter
+       (TeraConverter).
+- Dev: added sources for volume format conversion (not used yet)
+--------------------------------------------------------------------------------------------
+
+
+Version 0.5.2
+December 31st, 2012
+--------------------------------------------------------------------------------------------
+- Fix: when "Re-import" checkbox is enabled, not all the available resolutions were  re-imp-
+       orted with the given settings. This bug has been fixed.
+- Dev: metadata version check in the metadata binary file "mdata.bin".
+- Dev: plugin version check in the volume map binary file "vmap.bin".
+- Dev: metadata "mdata.bin"format modified. Absolute  filepaths have been  eliminated, hence
+       metadata files are now usable from any machine without re-importing the volume.
+--------------------------------------------------------------------------------------------
+
+
 Version 0.5.1
 November 26th, 2012
 --------------------------------------------------------------------------------------------
-- New: color map changes are propagated when switching between different resolutions in the
+- New: color map changes are propagated when switching between different  resolutions in the
        multiresolution mode.
 --------------------------------------------------------------------------------------------
 

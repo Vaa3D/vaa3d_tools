@@ -73,9 +73,9 @@ class StackedVolume : public VirtualVolume
 
 		//******OBJECT ATTRIBUTES******
 		uint16 N_ROWS, N_COLS;			//dimensions (in stacks) of stacks matrix along VH axes
-        Stack ***STACKS;			//2-D array of <Stack*>
-        ref_sys reference_system;               //reference system of the stored volume
-        float  VXL_1, VXL_2, VXL_3;             //voxel dimensions of the stored volume
+                Stack ***STACKS;			//2-D array of <Stack*>
+                ref_sys reference_system;               //reference system of the stored volume
+                float  VXL_1, VXL_2, VXL_3;             //voxel dimensions of the stored volume
 
 		//***OBJECT PRIVATE METHODS****
 		StackedVolume(void);
@@ -92,11 +92,13 @@ class StackedVolume : public VirtualVolume
 		//extract spatial coordinates (in millimeters) of given Stack object reading directory and filenames as spatial coordinates
 		void extractCoordinates(Stack* stk, int z, int* crd_1, int* crd_2, int* crd_3);
 
+		// iannello returns the number of channels of images composing the volume
+		void initChannels ( ) throw (MyException);
 	public:
 
 		//CONSTRUCTORS-DECONSTRUCTOR
 		StackedVolume(const char* _root_dir)  throw (MyException);
-        StackedVolume(const char* _root_dir, ref_sys _reference_system, 
+                StackedVolume(const char* _root_dir, ref_sys _reference_system,
 					  float _VXL_1, float _VXL_2, float _VXL_3, 
 					  bool overwrite_mdata = false, bool save_mdata=true)  throw (MyException);
 		~StackedVolume(void);
@@ -107,23 +109,23 @@ class StackedVolume : public VirtualVolume
 		// iannello uint32 getDIM_V(){return DIM_V;}
 		// iannello uint32 getDIM_H(){return DIM_H;}
 		// iannello uint32 getDIM_D(){return DIM_D;}
-        uint16 getN_ROWS(){return N_ROWS;}
-        uint16 getN_COLS(){return N_COLS;}
+                uint16 getN_ROWS(){return N_ROWS;}
+                uint16 getN_COLS(){return N_COLS;}
 		// iannello float  getVXL_V(){return VXL_V;}
 		// iannello float  getVXL_H(){return VXL_H;}
 		// iannello float  getVXL_D(){return VXL_D;}
 		// iannello float  getORG_V(){return ORG_V;}
 		// iannello float  getORG_H(){return ORG_H;}
 		// iannello float  getORG_D(){return ORG_D;}
-        int    getStacksHeight();
-        int    getStacksWidth();
-        float  getMVoxels(){return (DIM_V/1024.0f)*(DIM_H/1024.0f)*DIM_D;}
-        float getVXL_1(){return VXL_1;}
-        float getVXL_2(){return VXL_2;}
-        float getVXL_3(){return VXL_3;}
-        axis getAXS_1(){return reference_system.first;}
-        axis getAXS_2(){return reference_system.second;}
-        axis getAXS_3(){return reference_system.third;}
+                int    getStacksHeight();
+                int    getStacksWidth();
+                float  getMVoxels(){return (DIM_V/1024.0f)*(DIM_H/1024.0f)*DIM_D;}
+                float getVXL_1(){return VXL_1;}
+                float getVXL_2(){return VXL_2;}
+                float getVXL_3(){return VXL_3;}
+                axis getAXS_1(){return reference_system.first;}
+                axis getAXS_2(){return reference_system.second;}
+                axis getAXS_3(){return reference_system.third;}
 
 
 		//PRINT method
@@ -138,12 +140,12 @@ class StackedVolume : public VirtualVolume
 			return loadSubvolume(V0,V1,H0,H1,D0,D1,0,true);
 		}
 
-		//loads given subvolume in a 1-D array and puts used Stacks into 'involved_stacks' iff not null
-        REAL_T *loadSubvolume(int V0=-1,int V1=-1, int H0=-1, int H1=-1, int D0=-1, int D1=-1, 
-							  std::list<Stack*> *involved_stacks = 0, bool release_stacks = false)  throw (MyException);
+                //loads given subvolume in a 1-D array and puts used Stacks into 'involved_stacks' iff not null
+                REAL_T *loadSubvolume(int V0=-1,int V1=-1, int H0=-1, int H1=-1, int D0=-1, int D1=-1,
+                                                                  std::list<Stack*> *involved_stacks = 0, bool release_stacks = false)  throw (MyException);
 
-        //loads given subvolume in a 1-D array of uint8 while releasing stacks slices memory when they are no longer needed
-        uint8 *loadSubvolume_to_UINT8(int V0=-1,int V1=-1, int H0=-1, int H1=-1, int D0=-1, int D1=-1, int *channels=0) 
+                //loads given subvolume in a 1-D array of uint8 while releasing stacks slices memory when they are no longer needed
+                uint8 *loadSubvolume_to_UINT8(int V0=-1,int V1=-1, int H0=-1, int H1=-1, int D0=-1, int D1=-1, int *channels=0)
 																										throw (MyException);
 
 		//saves given subvolume as a stack of 8-bit grayscale images in a directory created in the default path
@@ -174,7 +176,7 @@ class StackedVolume : public VirtualVolume
 		void releaseStacks(int first_file=-1, int last_file=-1);
 
 		//returns true if file exists at the given filepath
-                static bool fileExists(const char *filepath);
+		static bool fileExists(const char *filepath);
 
 };
 

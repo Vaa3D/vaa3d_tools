@@ -34,38 +34,85 @@
 
 using namespace std;
 
+#ifdef _VAA3D_PLUGIN_MODE
+#include "presentation/PConverter.h"
+#endif
+
+
+/**********************************************************************************
+* Singleton design pattern: this class can have one instance only,  which must be
+* instantiated by calling static method "istance(...)"
+***********************************************************************************/
+ProgressBar* ProgressBar::uniqueInstance = NULL;
+ProgressBar* ProgressBar::instance()
+{
+    if (uniqueInstance == NULL)
+        uniqueInstance = new ProgressBar();
+    uniqueInstance = new ProgressBar();
+    return uniqueInstance;
+}
+
+ProgressBar::ProgressBar()
+{
+    strcpy(this->operation_desc, "none");
+    progress_value=0;
+    strcpy(this->progress_info, "");
+    proctime = 0;
+    minutes_remaining = 0;
+    seconds_remaining = 0;
+}
+
+
+void ProgressBar::start(const char *new_operation_desc)
+{
+    strcpy(this->operation_desc, new_operation_desc);
+    this->progress_value=0;
+    strcpy(this->progress_info, "");
+    proctime = -TIME(0);
+    minutes_remaining = 0;
+    seconds_remaining = 0;
+
+    #ifdef _VAA3D_PLUGIN_MODE
+    int progress_value_int = (int) progress_value;
+    teramanager::PConverter::instance()->emitProgressBarChanged(progress_value_int, 0, 0, new_operation_desc);
+    #endif
+}
+
 void ProgressBar::update(float new_progress_value, const char* new_progress_info)
 {
-	this->progress_value=new_progress_value;
-	strcpy(progress_info,new_progress_info);
+    progress_value=new_progress_value;
+    strcpy(progress_info,new_progress_info);
 
-	if(new_progress_value!=0)
-	{
-		minutes_remaining = (int) ((proctime + TIME(0))*(100.0-progress_value)/(progress_value*60.0));
-		seconds_remaining = (int) ((proctime + TIME(0))*(100.0-progress_value)/(progress_value));
-	}
+    if(new_progress_value!=0)
+    {
+        minutes_remaining = (proctime + TIME(0))*(100.0-progress_value)/(progress_value*60.0);
+        seconds_remaining = (proctime + TIME(0))*(100.0-progress_value)/(progress_value);
+    }
 }
 
 
 void ProgressBar::updateInfo(const char* new_progress_info)
 {
-	strcpy(progress_info,new_progress_info);
+    strcpy(progress_info,new_progress_info);
 }
 
 void ProgressBar::show()
 {
-	int clear_result = system_CLEAR();
-	if(clear_result!=0)
-		printf("\n\n\n\n\n\n\n");
-		
-	printf("OPERATION:\t%s\n",this->operation_desc);
-	printf("PHASE:\t\t%s\n",this->progress_info);
-	printf("TIME REMAINING:\t%d minutes and %d seconds\n", minutes_remaining, seconds_remaining%60);
-	printf("PROGRESS:\t");
-	printf("%d%%\t",(int)(progress_value));
-	for(int i=1; i<=progress_value; i++)
-		printf("Û");
-	for(int i=(int)progress_value; i<100; i++)
-		printf(":");
-	printf("\n\n");
+
+    #ifdef _VAA3D_PLUGIN_MODE
+    int progress_value_int = (int) (progress_value+0.5f);
+    teramanager::PConverter::instance()->emitProgressBarChanged(progress_value_int, minutes_remaining, seconds_remaining%60);
+    #else
+    system_CLEAR();
+    printf("OPERATION:\t%s\n",this->operation_desc);
+    printf("PHASE:\t\t%s\n",this->progress_info);
+    printf("TIME REMAINING:\t%d minutes and %d seconds\n", minutes_remaining, seconds_remaining%60);
+    printf("PROGRESS:\t");
+    printf("%d%%\t",(int)(progress_value));
+    for(int i=1; i<=progress_value; i++)
+            printf("Û");
+    for(int i=progress_value; i<100; i++)
+            printf(":");
+    printf("\n\n");
+    #endif
 }

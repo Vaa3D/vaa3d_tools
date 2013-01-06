@@ -3,5 +3,6 @@
         <file>icons/load.png</file>
         <file>icons/wait.gif</file>
         <file>icons/help.png</file>
+        <file>icons/import.png</file>
     </qresource>
 </RCC>

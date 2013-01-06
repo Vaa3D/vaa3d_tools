@@ -26,52 +26,46 @@
 *       specific prior written permission.
 ********************************************************************************************************************************************************************************************/
 
-#ifndef _PROGRESS_BAR_H
-#define _PROGRESS_BAR_H
+# ifndef _RAW_VOLUME_H
+# define _RAW_VOLUME_H
 
-#include <iostream>
-#include <string.h>
-#include "VM_config.h"
+# include "VirtualVolume.h" 
 
-class ProgressBar
-{
-	private:
+# define RAW_FORMAT "Raw" 
 
-                /*********************************************************************************
-                * Singleton design pattern: this class can have one instance only,  which must be
-                * instantiated by calling static method "istance(...)"
-                **********************************************************************************/
-                static ProgressBar* uniqueInstance;
-                ProgressBar();
+# include "v3d_basicdatatype.h"
+# include "RawFmtMngr.h"
 
-                char operation_desc[1000];
-		float progress_value;
-                char progress_info[1000];
-		double proctime;
-		int minutes_remaining;
-                int seconds_remaining;
-
-	public:
-
-                /**********************************************************************************
-                * Singleton design pattern: this class can have one instance only,  which must be
-                * instantiated by calling static method "instance(...)"
-                ***********************************************************************************/
-                static ProgressBar* instance();
-                static ProgressBar* getInstance()
-                {
-                    if(uniqueInstance)
-                        return uniqueInstance;
-                    else
-                        return instance();
-                }
-                ~ProgressBar(){}
+typedef char BIT8_UNIT;
+typedef short int BIT16_UNIT;
+typedef int BIT32_UNIT;
+typedef V3DLONG BIT64_UNIT;
 
 
-                void start(const char* new_operation_desc);
-		void update(float new_progress_value, const char* new_progress_info);
-		void updateInfo(const char* new_progress_info);
-		void show();
-};
+class RawVolume : public VirtualVolume {
+private:
+	char *file_name;
+	unsigned char *img;
+	V3DLONG *sz;
+	int datatype;
+	int b_swap;
+	int header_len;
 
-#endif
+	void *fhandle;
+
+	void init ( ) throw (MyException);
+
+	// iannello returns the number of channels of images composing the volume
+	void initChannels ( ) throw (MyException);
+
+public:
+	RawVolume(const char* _file_name)  throw (MyException);
+
+	~RawVolume(void);
+
+	REAL_T *loadSubvolume_to_REAL_T(int V0=-1,int V1=-1, int H0=-1, int H1=-1, int D0=-1, int D1=-1)  throw (MyException);
+
+    uint8 *loadSubvolume_to_UINT8(int V0=-1,int V1=-1, int H0=-1, int H1=-1, int D0=-1, int D1=-1, int *channels=0) 																										throw (MyException);
+};		
+
+# endif

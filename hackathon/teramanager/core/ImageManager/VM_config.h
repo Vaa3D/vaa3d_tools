@@ -14,7 +14,7 @@
 *    2. You agree to appropriately cite this work in your related studies and publications.
 *
 *       Bria, A., et al., (2012) "Stitching Terabyte-sized 3D Images Acquired in Confocal Ultramicroscopy", Proceedings of the 9th IEEE International Symposium on Biomedical Imaging.
-*       Bria, A., Iannello, G., "A Tool for Fast 3D Automatic Stitching of Teravoxel-sized Datasets", submitted on July 2012 to IEEE Transactions on Information Technology in Biomedicine.
+*       Bria, A., Iannello, G., "TeraStitcher - A Tool for Fast 3D Automatic Stitching of Teravoxel-sized Microscopy Images", submitted for publication, 2012.
 *
 *    3. This material is provided by  the copyright holders (Alessandro Bria  and  Giulio Iannello),  University Campus Bio-Medico and contributors "as is" and any express or implied war-
 *       ranties, including, but  not limited to,  any implied warranties  of merchantability,  non-infringement, or fitness for a particular purpose are  disclaimed. In no event shall the
@@ -26,52 +26,87 @@
 *       specific prior written permission.
 ********************************************************************************************************************************************************************************************/
 
-#ifndef _PROGRESS_BAR_H
-#define _PROGRESS_BAR_H
+#ifndef VM_CONFIG_H
+#define VM_CONFIG_H
+#include <math.h>
 
-#include <iostream>
-#include <string.h>
-#include "VM_config.h"
+//*** GLOBAL DEFINITIONS ****
+#define PI 3.14159265					//pi
+#define VM_VERBOSE 0					//verbosity level of current module
+#define VM_BIN_METADATA_FILE_NAME "mdata.bin"
+#define VM_STATIC_STRINGS_SIZE 5000
+#define S_TIME_CALC						//if enabled, single-phase processing time will be computed
 
-class ProgressBar
-{
-	private:
+//enables Vaa3D-specific code in the ProgressBar.cpp file
+#define _VAA3D_PLUGIN_MODE
 
-                /*********************************************************************************
-                * Singleton design pattern: this class can have one instance only,  which must be
-                * instantiated by calling static method "istance(...)"
-                **********************************************************************************/
-                static ProgressBar* uniqueInstance;
-                ProgressBar();
+//*** FUNCTIONS DEFINITIONS ****
 
-                char operation_desc[1000];
-		float progress_value;
-                char progress_info[1000];
-		double proctime;
-		int minutes_remaining;
-                int seconds_remaining;
+//time computation
+#include <ctime>
+#ifdef _WIN32
+#define TIME( arg ) (((double) clock()) / CLOCKS_PER_SEC)
+#define system_PAUSE() 		\
+        system("PAUSE"); 		\
+        cout<<endl;
+#define system_CLEAR() system("cls");
+#else
+#define TIME( arg ) (time( arg ))
+#define system_CLEAR() system("clear");
+#define system_PAUSE()									\
+        cout<<"\n\nPress RETURN key to continue..."<<endl<<endl;	\
+        cin.clear();										\
+        cin.ignore();										\
+        cin.get();
+#endif
 
-	public:
+//directory creation
+#ifdef _WIN32
+#include <direct.h>
+#define make_dir(V) _mkdir(V)
+#else
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <stdlib.h>
+#define make_dir(V) mkdir(V,S_IRWXU | S_IRWXG | S_IROTH | S_IWOTH | S_IXOTH)
+#endif
 
-                /**********************************************************************************
-                * Singleton design pattern: this class can have one instance only,  which must be
-                * instantiated by calling static method "instance(...)"
-                ***********************************************************************************/
-                static ProgressBar* instance();
-                static ProgressBar* getInstance()
-                {
-                    if(uniqueInstance)
-                        return uniqueInstance;
-                    else
-                        return instance();
-                }
-                ~ProgressBar(){}
+//file deleting
+#ifndef RM_FILE
+#ifdef _WIN32
+#define RM_FILE( arg ) \
+	char sys_cmd[500]; \
+	sprintf(sys_cmd, "del /F /Q %s", arg); \
+	system(sys_cmd);
+#else
+#define RM_FILE( arg ) \
+	char sys_cmd[500]; \
+	sprintf(sys_cmd, "rm -f %s", arg); \
+	system(sys_cmd);
+#endif
+#endif
 
+//MAX
+#define ISR_MAX(a,b)       ( (a>b) ? (a) : (b) )
 
-                void start(const char* new_operation_desc);
-		void update(float new_progress_value, const char* new_progress_info);
-		void updateInfo(const char* new_progress_info);
-		void show();
-};
+//MAX
+#define ISR_MIN(a,b)       ( (a<b) ? (a) : (b) )
+
+//SIGN
+#ifndef SIGN
+#define SIGN( arg )	   ( arg < 0 ? -1 : 1 )
+#endif
+
+//ROUND
+#define ROUND( arg )   ( SIGN(arg) == 1 ? arg + 0.5 : arg - 0.5)
+
+//ALMOST EQUAL
+#define ALMOST_EQUAL(a,b) ( ( abs((a)-(b)) < 0.001 ) ? true : false )
+
+//INTEGER POW
+#define POW_INT(base,exp) ( (   (int) pow( (float)(base), exp)   ) )
+
+//SAFE DIVISION: when dividing by zero, <infinite> instead of +inf is returned
+#define SAFE_DIVIDE(dividend, divisor, infinite) ( (divisor)==0 ? (infinite) : ((dividend)/(divisor)) );
 
 #endif

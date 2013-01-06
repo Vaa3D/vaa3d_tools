@@ -37,15 +37,19 @@
 class VirtualVolume {
 
 protected:
-		//******OBJECT ATTRIBUTES******
-		char*  root_dir;					//C-string that contains the directory path of stacks matrix
-		float  VXL_V, VXL_H, VXL_D;			//[microns]: voxel dimensions (in microns) along V(Vertical), H(horizontal) and D(Depth) axes
-		float  ORG_V, ORG_H, ORG_D;			//[millimeters]: origin spatial coordinates (in millimeters) along VHD axes
-		uint32 DIM_V, DIM_H, DIM_D;		//volume dimensions (in voxels) along VHD axes
+	//******OBJECT ATTRIBUTES******
+	char*  root_dir;				//C-string that contains the directory path of stacks matrix
+	float  VXL_V, VXL_H, VXL_D;		//[microns]: voxel dimensions (in microns) along V(Vertical), H(horizontal) and D(Depth) axes
+	float  ORG_V, ORG_H, ORG_D;		//[millimeters]: origin spatial coordinates (in millimeters) along VHD axes
+	uint32 DIM_V, DIM_H, DIM_D;		//volume dimensions (in voxels) along VHD axes
+	int    CHANS;					//numbero of channels
+
+	virtual void initChannels ( ) throw (MyException) = 0;
 
 public:
 	//CONSTRUCTORS-DECONSTRUCTOR
-    VirtualVolume(const char* _root_dir, float VXL_1=0, float VXL_2=0, float VXL_3=0) throw (MyException) {
+    VirtualVolume(const char* _root_dir, float VXL_1=0, float VXL_2=0, float VXL_3=0) throw (MyException)
+    {
 
 		this->root_dir = new char[strlen(_root_dir)+1];
 		strcpy(this->root_dir, _root_dir);
@@ -56,9 +60,11 @@ public:
 
 		ORG_V = ORG_H = ORG_D = (float) 0.0;
 		DIM_V = DIM_H = DIM_D = 0;
-	} 
 
-	~VirtualVolume() { 
+		CHANS = 0;
+    }
+
+	virtual ~VirtualVolume() { 
 		if(root_dir)
 			delete[] root_dir;
 	}
@@ -69,37 +75,60 @@ public:
     //loads given subvolume in a 1-D array of uint8 while releasing stacks slices memory when they are no longer needed
     virtual uint8 *loadSubvolume_to_UINT8(int V0,int V1, int H0, int H1, int D0, int D1, int *channels) throw (MyException) = 0;
 
-	// ******GET METHODS******
-	float	 getORG_V() {return ORG_V;}
-	float	 getORG_H() {return ORG_H;}
-	float	 getORG_D() {return ORG_D;}
-	int	     getDIM_V() {return DIM_V;}
-	int	     getDIM_H() {return DIM_H;}
-	int	     getDIM_D() {return DIM_D;}
-	int		 getABS_V(int ABS_PIXEL_V) {return (int)ROUND( ORG_V * 1000 + ABS_PIXEL_V*this->getVXL_V());}
-	int		 getABS_H(int ABS_PIXEL_H) {return (int)ROUND( ORG_H * 1000 + ABS_PIXEL_H*this->getVXL_H());}
-	int		 getABS_D(int ABS_PIXEL_D) {return (int)ROUND( ORG_D * 1000 + ABS_PIXEL_D*this->getVXL_D());}
-	float	 getVXL_V() {return VXL_V;}
-	float	 getVXL_H() {return VXL_H;}
-	float	 getVXL_D() {return VXL_D;}
-	char*    getROOT_DIR() {return this->root_dir;}
+    // ******GET METHODS******
+    float   getORG_V() {return ORG_V;}
+    float   getORG_H() {return ORG_H;}
+    float   getORG_D() {return ORG_D;}
+    int     getDIM_V() {return DIM_V;}
+    int     getDIM_H() {return DIM_H;}
+    int     getDIM_D() {return DIM_D;}
+    int     getABS_V(int ABS_PIXEL_V) {return (int)ROUND( ORG_V * 1000 + ABS_PIXEL_V*this->getVXL_V());}
+    int     getABS_H(int ABS_PIXEL_H) {return (int)ROUND( ORG_H * 1000 + ABS_PIXEL_H*this->getVXL_H());}
+    int     getABS_D(int ABS_PIXEL_D) {return (int)ROUND( ORG_D * 1000 + ABS_PIXEL_D*this->getVXL_D());}
+    float   getVXL_V() {return VXL_V;}
+    float   getVXL_H() {return VXL_H;}
+    float   getVXL_D() {return VXL_D;}
+    int     getCHANS() {return CHANS;}
+    char*   getROOT_DIR() {return this->root_dir;}
 
 	/*************************************************************************************************************
-	* Save image method.		  <> parameters are mandatory, while [] are optional.
-	* <img_path>				: absolute path of image to be saved. It DOES NOT include its extension, which ac-
-	*							  tually is a preprocessor variable (see IOManager_defs.h).
-	* <raw_img>					: image to be saved. Raw data is in [0,1] and it is stored row-wise in a 1D array.
-	* <raw_img_height/width>	: dimensions of raw_img.
-	* [start/end_height/width]	: optional ROI (region of interest) to be set on the given image.
+    * Save image method. <> parameters are mandatory, while [] are optional.
+    * <img_path>                : absolute path of image to be saved. It DOES NOT include its extension, which is
+    *                             provided by the [img_format] parameter.
+    * <raw_img>                 : image to be saved. Raw data is in [0,1] and it is stored row-wise in a 1D array.
+    * <raw_img_height/width>    : dimensions of raw_img.
+    * [start/end_height/width]  : optional ROI (region of interest) to be set on the given image.
+    * [img_format]              : image format extension to be used (e.g. "tif", "png", etc.)
+    * [img_depth]               : image bitdepth to be used (8 or 16)
 	**************************************************************************************************************/
 	static void saveImage(std::string img_path,   REAL_T* raw_img,       int raw_img_height,   int   raw_img_width, 
-						  int start_height = 0,   int end_height = - 1,  int start_width = 0,  int end_width = - 1,
-						  const char* img_format = IM_DEF_IMG_FORMAT,	 int img_depth = IM_DEF_IMG_DEPTH		 )  
+                              int start_height = 0,   int end_height = - 1,  int start_width = 0,  int end_width = - 1,
+                              const char* img_format = IM_DEF_IMG_FORMAT,    int img_depth = IM_DEF_IMG_DEPTH		 )
 																								   throw (MyException);
 
-	static void saveImage_from_UINT8 ( std::string img_path, REAL_T* raw_img, int raw_img_height, int raw_img_width, 
-						  int start_height = 0, int end_height = - 1, int start_width = 0, int end_width = - 1,
-						  const char* img_format = IM_DEF_IMG_FORMAT, int img_depth = IM_DEF_IMG_DEPTH ) throw (MyException);
+    /*************************************************************************************************************
+    * Save image method from uint8 raw data. <> parameters are mandatory, while [] are optional.
+    * <img_path>                : absolute path of image to be saved. It DOES NOT include its extension, which is
+    *                             provided by the [img_format] parameter.
+    * <raw_ch1>                 : raw data of the first channel with values in [0,255].
+    *                             For grayscale images this is the pointer to the raw image data.
+    *                             For colour images this is the pointer to the raw image data of the RED channel.
+    * <raw_ch2>                 : raw data of the second channel with values in [0,255].
+    *                             For grayscale images this should be a null pointer.
+    *                             For colour images this is the pointer to the raw image data of the GREEN channel.
+    * <raw_ch3>                 : raw data of the second channel with values in [0,255].
+    *                             For grayscale images this should be a null pointer.
+    *                             For colour images this is the pointer to the raw image data of the BLUE channel.
+    * <raw_img_height/width>    : dimensions of raw_img.        
+    * [start/end_height/width]  : optional ROI (region of interest) to be set on the given image.
+    * [img_format]              : image format extension to be used (e.g. "tif", "png", etc.)
+    * [img_depth]               : image bitdepth to be used (8 or 16)
+    **************************************************************************************************************/
+    static void saveImage_from_UINT8 (std::string img_path, 
+                                      uint8* raw_ch1, uint8* raw_ch2, uint8* raw_ch3,
+									  int raw_img_height, int raw_img_width,
+                                      int start_height=0, int end_height =-1, int start_width=0, int end_width=-1,
+                                      const char* img_format = IM_DEF_IMG_FORMAT, int img_depth = IM_DEF_IMG_DEPTH ) throw (MyException);
 
 	/*************************************************************************************************************
 	* Performs downsampling at a halved frequency on the given 3D image.  The given image is overwritten in order
@@ -107,7 +136,7 @@ public:
 	**************************************************************************************************************/
 	static void halveSample(REAL_T* img, int height, int width, int depth);
 
-	static void halveSample_UINT8 ( REAL_T* img, int height, int width, int depth );
+	static void halveSample_UINT8 ( uint8** img, int height, int width, int depth, int channels );
 };
 
 #endif

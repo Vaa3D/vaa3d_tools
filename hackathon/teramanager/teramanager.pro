@@ -44,10 +44,11 @@ SOURCES += $$V3DMAINPATH/basic_c_fun/mg_utilities.cpp
 SOURCES += $$V3DMAINPATH/basic_c_fun/basic_memory.cpp
 SOURCES += $$V3DMAINPATH/basic_c_fun/basic_4dimage.cpp
 SOURCES += $$V3DMAINPATH/basic_c_fun/imageio_mylib.cpp
-HEADERS += $$V3DMAINPATH/common_lib/src_packages/mylib_tiff/image.h
+HEADERS += $$V3DMAINPATH/common_lib/src_packages/mylib_tiff/image.h \
+    control/CConverter.h
 HEADERS += $$V3DMAINPATH/basic_c_fun/imageio_mylib.h
 
-#needed to enable the "double-click zoom-in" feature
+#needed to enable the "double-click zoom-in" feature --> removed, simple inclusion impedes the plugin to be loaded
 #SOURCES += $$V3DMAINPATH/3drenderer/renderer_hit.cpp
 
 LIBS += -L. -lv3dtiff -L$$V3DMAINPATH/common_lib/lib \
@@ -55,7 +56,9 @@ LIBS += -L. -lv3dtiff -L$$V3DMAINPATH/common_lib/lib \
 
 #set up TeraManager tool
 INCLUDEPATH += $$TERAMANAGER_PATH/ImageManager
+INCLUDEPATH += $$TERAMANAGER_PATH/VolumeConverter
 SOURCES += $$TERAMANAGER_PATH/ImageManager/*.cpp
+SOURCES += $$TERAMANAGER_PATH/VolumeConverter/*.cpp
 
 #set up TeraManager plugin
 HEADERS += control/*.h

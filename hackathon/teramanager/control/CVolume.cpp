@@ -73,7 +73,7 @@ void CVolume::run()
         //everything went OK
         emit sendOperationOutcome(0, sourceObject);
     }
-    catch( MyException& exception)  {emit sendOperationOutcome(&exception, sourceObject);}
+    catch( MyException& exception)  {emit sendOperationOutcome(new MyException(exception.what()), sourceObject);}
     catch(const char* error)        {emit sendOperationOutcome(new MyException(error), sourceObject);}
     catch(...)                      {emit sendOperationOutcome(new MyException("Unknown error occurred"), sourceObject);}
 }

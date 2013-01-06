@@ -133,9 +133,9 @@ void Stack::binarizeInto(FILE* file)
 	fwrite(DIR_NAME, str_size, 1, file);
 	for(i = 0; i < DEPTH; i++)
 	{
-		str_size = (uint16)(strlen(FILENAMES[i]) + 1);
-		fwrite(&str_size, sizeof(uint16), 1, file);
-		fwrite(FILENAMES[i], str_size, 1, file);
+            str_size = (uint16)(strlen(FILENAMES[i]) + 1);
+            fwrite(&str_size, sizeof(uint16), 1, file);
+            fwrite(FILENAMES[i], str_size, 1, file);
 	}
 }
 

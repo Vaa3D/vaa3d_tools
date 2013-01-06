@@ -34,6 +34,7 @@
 #include "CPlugin.h"
 #include "CExplorerWindow.h"
 #include "presentation/PMain.h"
+#include "presentation/PConverter.h"
 
 using namespace teramanager;
 
@@ -45,7 +46,8 @@ Q_EXPORT_PLUGIN2(teramanagerplugin, teramanager::CPlugin)
 QStringList CPlugin::menulist() const
 {
         return QStringList()
-                <<tr("Teravoxel-sized Image Visualization")
+                <<tr("TeraFly")
+                <<tr("TeraConverter")
                 <<tr("About and help");
 }
 
@@ -63,7 +65,7 @@ void CPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWi
     printf("--------------------- teramanager plugin [thread %d] >> CPlugin::domenu launched\n", this->thread()->currentThreadId());
     #endif
 
-    if (menu_name == tr("Teravoxel-sized Image Visualization"))
+    if (menu_name == tr("TeraFly"))
     {
         //checking shared libraries
         if(!CPlugin::isSharedLibraryLoadable("opencv_core"))
@@ -84,8 +86,34 @@ void CPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWi
         //launching plugin's GUI
         PMain::instance(&callback, parent);
         PMain::instance()->show();
+        PMain::instance()->move(QApplication::desktop()->screen()->rect().center() - PMain::instance()->rect().center());
         PMain::instance()->raise();
         PMain::instance()->activateWindow();
+    }    
+    else if(menu_name == tr("TeraConverter"))
+    {
+        //checking shared libraries
+        if(!CPlugin::isSharedLibraryLoadable("opencv_core"))
+        {
+            QMessageBox::critical(parent,QObject::tr("Error"),
+                                         QObject::tr("Unable to load shared library opencv_core.\n\nPlease check if OpenCV library is installed. You can download it at http://opencv.willowgarage.com/"),
+                                         QObject::tr("Ok"));
+            return;
+        }
+        if(!CPlugin::isSharedLibraryLoadable("opencv_highgui"))
+        {
+            QMessageBox::critical(parent,QObject::tr("Error"),
+                                         QObject::tr("Unable to load shared library opencv_highgui.\n\nPlease check if OpenCV library is installed. You can download it at http://opencv.willowgarage.com/"),
+                                         QObject::tr("Ok"));
+            return;
+        }
+
+        //launching PConverter's GUI
+        PConverter::instance(&callback, parent);
+        PConverter::instance()->show();
+        PConverter::instance()->move(QApplication::desktop()->screen()->rect().center() - PConverter::instance()->rect().center());
+        PConverter::instance()->raise();
+        PConverter::instance()->activateWindow();
     }
     else if(menu_name == tr("Acquisition: ROI from High Resolution Image"))
     {

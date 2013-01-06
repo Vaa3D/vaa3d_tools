@@ -38,16 +38,33 @@
 #include "MyException.h"
 #include "IM_defs.h"
 
-//defining TeraManager plugin interface
+/*******************************************************************************************************************************
+ *   Interfaces, types, parameters and constants   													       *
+ *******************************************************************************************************************************/
 namespace teramanager
 {
+    /*******************
+    *    INTERFACES    *
+    ********************
+    ---------------------------------------------------------------------------------------------------------------------------*/
     class CPlugin;              //the class defined in this header and derived from V3DPluginInterface2_1
     class PMain;                //main presentation class: it contains the main frame
     class PDialogImport;        //presentation class for the import dialog
-    class CImport;              //control class for the import step, which is performed in a separate thread since it can be time-consuming
-    class CVolume;              //control class for the loading subvolume feature, which is performed in a separate thread since it can be time-consuming
+    class PConverter;           //presentation class for the volume converter dialog
+    class CImport;              //control class to perform the import step in a separate non-GUI-blocking thread
+    class CVolume;              //control class to perform data loading in a separate non-GUI-blocking thread
     class CSettings;            //control class to manage persistent platform-independent application settings
     class CExplorerWindow;      //control class used to encapsulate all the informations needed to manage 3D navigation windows
+    class CConverter;           //control class used to perform volume conversion operations in a separate non-GUI-blocking thread
+    /*-------------------------------------------------------------------------------------------------------------------------*/
+
+    /*******************
+    *    CONSTANTS     *
+    ********************
+    ---------------------------------------------------------------------------------------------------------------------------*/
+    const char undefined_str[] = "undefined";
+    const int  undefined_val = -1;
+    /*-------------------------------------------------------------------------------------------------------------------------*/
 }
 
 class teramanager::CPlugin : public QObject, public V3DPluginInterface2_1
@@ -58,7 +75,7 @@ class teramanager::CPlugin : public QObject, public V3DPluginInterface2_1
     public:
 
 	//V3D plugin attributes and methods
-        float getPluginVersion() const {return 1.0f;}
+        float getPluginVersion() const {return getNumericVersion();}
 	QStringList menulist() const;
 	void domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent);
 	QStringList funclist() const ;
@@ -66,7 +83,8 @@ class teramanager::CPlugin : public QObject, public V3DPluginInterface2_1
 
 	//returns true if the given shared library can be loaded
 	static bool isSharedLibraryLoadable(const char* name);
-        static string getVersion(){return "0.5";}
+        static float getNumericVersion(){return 0.6f;}
+        static string getVersion(){return QString::number(getNumericVersion(), 'g', 1).toStdString();}
 };
 
 #endif

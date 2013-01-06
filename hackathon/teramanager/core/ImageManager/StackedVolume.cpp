@@ -58,19 +58,22 @@ StackedVolume::StackedVolume(const char* _root_dir)  throw (MyException)
 	DIM_V = DIM_H = DIM_D = 0;
 	N_ROWS = N_COLS = 0;
 	STACKS = NULL;
-        reference_system.first = reference_system.second = reference_system.third = axis_invalid;
-        VXL_1 = VXL_2 = VXL_3 = 0;
+	reference_system.first = reference_system.second = reference_system.third = axis_invalid;
+	VXL_1 = VXL_2 = VXL_3 = 0;
 
 	//without any configuration parameter, volume import must be done from the metadata file stored in the root directory, if it exists
 	char mdata_filepath[IM_STATIC_STRINGS_SIZE];
 	sprintf(mdata_filepath, "%s/%s", root_dir, IM_METADATA_FILE_NAME);
-	if(fileExists(mdata_filepath))
-            load(mdata_filepath);
+	if(fileExists(mdata_filepath)) 
+	{
+		load(mdata_filepath);
+		initChannels();
+	}
 	else
 	{
-            char errMsg[IM_STATIC_STRINGS_SIZE];
-            sprintf(errMsg, "in StackedVolume::StackedVolume(...): unable to find metadata file at %s", mdata_filepath);
-            throw (errMsg);
+		char errMsg[IM_STATIC_STRINGS_SIZE];
+		sprintf(errMsg, "in StackedVolume::StackedVolume(...): unable to find metadata file at %s", mdata_filepath);
+		throw (errMsg);
 	}
 }
 
@@ -88,9 +91,9 @@ StackedVolume::StackedVolume(const char* _root_dir, ref_sys _reference_system, f
 	// iannello VXL_V = VXL_H = VXL_D = ORG_V = ORG_H = ORG_D = 0;
 	DIM_V = DIM_H = DIM_D = 0;
 	N_ROWS = N_COLS = 0;
-        STACKS = NULL;
-        reference_system.first = reference_system.second = reference_system.third = axis_invalid;
-        VXL_1 = VXL_2 = VXL_3 = 0;
+	STACKS = NULL;
+	reference_system.first = reference_system.second = reference_system.third = axis_invalid;
+	VXL_1 = VXL_2 = VXL_3 = 0;
 
 	//trying to unserialize an already existing metadata file, if it doesn't exist the full initialization procedure is performed and metadata is saved
 	char mdata_filepath[IM_STATIC_STRINGS_SIZE];
@@ -113,6 +116,7 @@ StackedVolume::StackedVolume(const char* _root_dir, ref_sys _reference_system, f
             if(save_mdata)
                 save(mdata_filepath);
 	}
+	initChannels();
 }
 
 StackedVolume::~StackedVolume(void)
@@ -147,20 +151,21 @@ void StackedVolume::save(char* metadata_filepath) throw (MyException)
 	#endif
 
 	//LOCAL VARIABLES
-	uint16 str_size;
 	FILE *file;
 	int i,j;
 
 	file = fopen(metadata_filepath, "wb");
-	str_size = (uint16)(strlen(root_dir) + 1);
-	fwrite(&str_size, sizeof(uint16), 1, file);
-    fwrite(root_dir, str_size, 1, file);
-    fwrite(&reference_system.first, sizeof(axis), 1, file);
-    fwrite(&reference_system.second, sizeof(axis), 1, file); // iannello CORRECTED
-    fwrite(&reference_system.third, sizeof(axis), 1, file);  // iannello CORRECTED
-    fwrite(&VXL_1, sizeof(float), 1, file);
-    fwrite(&VXL_2, sizeof(float), 1, file);
-    fwrite(&VXL_3, sizeof(float), 1, file);
+        float mdata_version = static_cast<float>(IM_METADATA_FILE_VERSION);
+        fwrite(&mdata_version, sizeof(float), 1, file); // --- Alessandro 2012-12-31: added field for metadata file version
+        //str_size = (uint16)(strlen(root_dir) + 1);    // --- Alessandro 2012-12-31: absolute filepaths in mdata.bin eliminated
+        //fwrite(&str_size, sizeof(uint16), 1, file);   // --- Alessandro 2012-12-31: absolute filepaths in mdata.bin eliminated
+        //fwrite(root_dir, str_size, 1, file);          // --- Alessandro 2012-12-31: absolute filepaths in mdata.bin eliminated
+        fwrite(&reference_system.first, sizeof(axis), 1, file);
+        fwrite(&reference_system.second, sizeof(axis), 1, file); // iannello CORRECTED
+        fwrite(&reference_system.third, sizeof(axis), 1, file);  // iannello CORRECTED
+        fwrite(&VXL_1, sizeof(float), 1, file);
+        fwrite(&VXL_2, sizeof(float), 1, file);
+        fwrite(&VXL_3, sizeof(float), 1, file);
 	fwrite(&VXL_V, sizeof(float), 1, file);
 	fwrite(&VXL_H, sizeof(float), 1, file);
 	fwrite(&VXL_D, sizeof(float), 1, file);
@@ -187,50 +192,59 @@ void StackedVolume::load(char* metadata_filepath) throw (MyException)
 	#endif
 
 	//LOCAL VARIABLES
-	uint16 str_size;
 	FILE *file;
 	int i,j;
 	size_t fread_return_val;
 
 	file = fopen(metadata_filepath, "rb");
-	fread_return_val = fread(&str_size, sizeof(uint16), 1, file);
-	if(fread_return_val != 1)
-		throw MyException("in Stack::unBinarizeFrom(...): error while reading binary metadata file");
 
-	// iannello DELETED
-	// root_dir is defined and it has been used to initialize metadata_filepath
-	// hence it does not make sense to redefine it with the information contained in the mdata.bin file
-	//
-	//if(root_dir)
-	//	delete[] root_dir;
-	char *stored_root_dir = new char[str_size];
-	fread_return_val = fread(stored_root_dir, str_size, 1, file);
-	if(fread_return_val != 1)
-		throw MyException("in Stack::unBinarizeFrom(...): error while reading binary metadata file");
-	if ( strcmp(root_dir,stored_root_dir) ) 
-		fprintf(stderr,"*** warnng *** current root directory is different from the stored one\n");
+        // --- Alessandro 2012-12-31: added field for metadata file version
+        float mdata_version_read = 0;
+        float mdata_version = static_cast<float>(IM_METADATA_FILE_VERSION);
+        fread_return_val = fread(&mdata_version_read, sizeof(float), 1, file);
+        if(fread_return_val != 1 || mdata_version_read != mdata_version)
+        {
+            // --- Alessandro 2013-01-06: instead of throwing an exception, it is better to mantain compatibility
+//            char errMsg[IM_STATIC_STRINGS_SIZE];
+//            sprintf(errMsg, "in Stack::unBinarizeFrom(...): metadata file version (%.2f) is different from the supported one (%.2f). "
+//                    "Please re-import the current volume.", mdata_version_read, mdata_version);
+//            throw MyException(errMsg);
 
-    fread_return_val = fread(&reference_system.first, sizeof(axis), 1, file);
-    if(fread_return_val != 1)
-            throw MyException("in Stack::unBinarizeFrom(...): error while reading binary metadata file");
+            fclose(file);
+            file = fopen(metadata_filepath, "rb");
+            uint16 str_size;
+            fread_return_val = fread(&str_size, sizeof(uint16), 1, file);
+            if(fread_return_val != 1)
+                    throw MyException("in Stack::unBinarizeFrom(...): error while reading binary metadata file");
+            char stored_root_dir[IM_STATIC_STRINGS_SIZE];
+            fread_return_val = fread(stored_root_dir, str_size, 1, file);
+            if(fread_return_val != 1)
+                    throw MyException("in Stack::unBinarizeFrom(...): error while reading binary metadata file");
+        }
 
-    fread_return_val = fread(&reference_system.second, sizeof(axis), 1, file);
-    if(fread_return_val != 1)
-            throw MyException("in Stack::unBinarizeFrom(...): error while reading binary metadata file");
 
-    fread_return_val = fread(&reference_system.third, sizeof(axis), 1, file);
 
-    fread_return_val = fread(&VXL_1, sizeof(float), 1, file);
-    if(fread_return_val != 1)
-            throw MyException("in Stack::unBinarizeFrom(...): error while reading binary metadata file");
+        fread_return_val = fread(&reference_system.first, sizeof(axis), 1, file);
+        if(fread_return_val != 1)
+                throw MyException("in Stack::unBinarizeFrom(...): error while reading binary metadata file");
 
-    fread_return_val = fread(&VXL_2, sizeof(float), 1, file);
-    if(fread_return_val != 1)
-            throw MyException("in Stack::unBinarizeFrom(...): error while reading binary metadata file");
+        fread_return_val = fread(&reference_system.second, sizeof(axis), 1, file);
+        if(fread_return_val != 1)
+                throw MyException("in Stack::unBinarizeFrom(...): error while reading binary metadata file");
 
-    fread_return_val = fread(&VXL_3, sizeof(float), 1, file);
-    if(fread_return_val != 1)
-            throw MyException("in Stack::unBinarizeFrom(...): error while reading binary metadata file");
+        fread_return_val = fread(&reference_system.third, sizeof(axis), 1, file);
+
+        fread_return_val = fread(&VXL_1, sizeof(float), 1, file);
+        if(fread_return_val != 1)
+                throw MyException("in Stack::unBinarizeFrom(...): error while reading binary metadata file");
+
+        fread_return_val = fread(&VXL_2, sizeof(float), 1, file);
+        if(fread_return_val != 1)
+                throw MyException("in Stack::unBinarizeFrom(...): error while reading binary metadata file");
+
+        fread_return_val = fread(&VXL_3, sizeof(float), 1, file);
+        if(fread_return_val != 1)
+                throw MyException("in Stack::unBinarizeFrom(...): error while reading binary metadata file");
 
 	fread_return_val = fread(&VXL_V, sizeof(float), 1, file);
 	if(fread_return_val != 1)
@@ -474,6 +488,18 @@ void StackedVolume::init()
 			else
 				STACKS[row][col]->setABS_H(0);
 		}
+}
+
+void StackedVolume::initChannels ( ) throw (MyException) {
+	char slice_fullpath[IM_STATIC_STRINGS_SIZE];
+
+	sprintf(slice_fullpath, "%s/%s/%s", root_dir, STACKS[0][0]->getDIR_NAME(), STACKS[0][0]->getFILENAMES()[0]);
+	IplImage* slice = cvLoadImage(slice_fullpath, CV_LOAD_IMAGE_ANYCOLOR);  //without CV_LOAD_IMAGE_ANYDEPTH, image is converted to 8-bits if needed
+	if(!slice)
+		throw MyException(std::string("Unable to load slice at \"").append(slice_fullpath).append("\"").c_str());
+    CHANS = slice->nChannels;
+
+	cvReleaseImage(&slice);
 }
 
 //PRINT method
@@ -1021,12 +1047,12 @@ void StackedVolume::saveVolume(const char* dir_path, uint32 max_slice_height, ui
 
 	//progress bar initialization
 	char progressBarBuff[2000];
-	sprintf(progressBarBuff, "Conversion from %s-stack(height=%d, width=%d) to %s-stack(height=%d, width=%d)",
+        sprintf(progressBarBuff, "Volume conversion from %s-stack(height=%d, width=%d) to %s-stack(height=%d, width=%d)",
 		    ((N_ROWS == 1 && N_COLS == 1)				  ? "MONO" :"MULTI"), STACKS[0][0]->getHEIGHT(), STACKS[0][0]->getWIDTH(),
 			((subvols_V_size == 1 && subvols_H_size == 1) ? "MONO" :"MULTI"), subvols_V[0].end - subvols_V[0].start, subvols_H[0].end - subvols_H[0].start);
-	ProgressBar progressBar(progressBarBuff);
-	progressBar.update(0,"Initializing...");
-	progressBar.show();
+        ProgressBar::getInstance()->start(progressBarBuff);
+        ProgressBar::getInstance()->update(0,"Initializing...");
+        ProgressBar::getInstance()->show();
 
 	
 	//creating root directory	
@@ -1037,8 +1063,8 @@ void StackedVolume::saveVolume(const char* dir_path, uint32 max_slice_height, ui
 	for(uint32 k=D0; k<D1; k++, D_crd += VXL_D/1000)
 	{
 		sprintf(progressBarBuff, "Converting slice %d of %d", (k-D0+1), dim_d);
-		progressBar.update((((REAL_T)100/dim_d)*(k-D0+1)), progressBarBuff);
-		progressBar.show();
+                ProgressBar::getInstance()->update((((REAL_T)100/dim_d)*(k-D0+1)), progressBarBuff);
+                ProgressBar::getInstance()->show();
 
 		for(uint32 i=0; i<subvols_V_size; i++)
 		{
@@ -1138,12 +1164,12 @@ void StackedVolume::saveOverlappingStacks(char* dir_path, uint32 slice_height, u
 
 	//progress bar initialization
 	char progressBarBuff[IM_STATIC_STRINGS_SIZE];
-	sprintf(progressBarBuff, "Conversion from %s-stack(height=%d, width=%d) to %s-stack(height=%d, width=%d)",
+        sprintf(progressBarBuff, "Volume conversion from %s-stack(height=%d, width=%d) to %s-stack(height=%d, width=%d)",
 		    ((N_ROWS == 1 && N_COLS == 1)				  ? "MONO" :"MULTI"), STACKS[0][0]->getHEIGHT(), STACKS[0][0]->getWIDTH(),
-			((subvols_V_size == 1 && subvols_H_size == 1) ? "MONO" :"MULTI"), subvols_V[0].end - subvols_V[0].start, subvols_H[0].end - subvols_H[0].start);
-	ProgressBar progressBar(progressBarBuff);
-	progressBar.update(0,"Initializing...");
-	progressBar.show();
+                        ((subvols_V_size == 1 && subvols_H_size == 1) ? "MONO" :"MULTI"), subvols_V[0].end - subvols_V[0].start, subvols_H[0].end - subvols_H[0].start);
+        ProgressBar::getInstance()->start(progressBarBuff);
+        ProgressBar::getInstance()->update(0,"Initializing...");
+        ProgressBar::getInstance()->show();
 
 	
 	//creating root directory	
@@ -1154,8 +1180,8 @@ void StackedVolume::saveOverlappingStacks(char* dir_path, uint32 slice_height, u
 	for(uint32 k=D0; k<D1; k++, D_crd += VXL_D/1000.0f)
 	{
 		sprintf(progressBarBuff, "Converting slice %d of %d", (k-D0+1), dim_d);
-		progressBar.update((((REAL_T)100/dim_d)*(k-D0+1)), progressBarBuff);
-		progressBar.show();
+                ProgressBar::getInstance()->update((((REAL_T)100/dim_d)*(k-D0+1)), progressBarBuff);
+                ProgressBar::getInstance()->show();
 
 		for(int i=0; i<subvols_V_size; i++)
 		{
@@ -1363,16 +1389,16 @@ void StackedVolume::saveMIPs(bool direction_V, bool direction_H, bool direction_
 	//progress bar initialization
 	char progressBarBuff[2000];
 	sprintf(progressBarBuff, "Extraction of MIPs from V[%d - %d], H[%d - %d], D[%d - %d]", V0, V1, H0, H1, D0, D1);
-	ProgressBar progressBar(progressBarBuff);
-	progressBar.update(0,"Initializing...");
-	progressBar.show();
+        ProgressBar::getInstance()->start(progressBarBuff);
+        ProgressBar::getInstance()->update(0,"Initializing...");
+        ProgressBar::getInstance()->show();
 
 	//MIPs computation
 	for(k = 0; k < dim_d; k++)
 	{
 		sprintf(progressBarBuff, "Processing slice %d of %d", (k+1), dim_d);
-		progressBar.update((((REAL_T)100/dim_d)*(k+1)), progressBarBuff);
-		progressBar.show();
+                ProgressBar::getInstance()->update((((REAL_T)100/dim_d)*(k+1)), progressBarBuff);
+                ProgressBar::getInstance()->show();
 
 		slice = loadSubvolume(V0, V1, H0, H1, k+D0, k+D0+1, NULL, true);
 		for(i = 0; i < dim_v; i++)

@@ -133,7 +133,7 @@ void CImport::run()
                 {
                     StackedVolume* candidate_vol = new StackedVolume(curParentDir.absolutePath().append("/").append(otherDirs.at(k).toLocal8Bit().constData()).toStdString().c_str(),
                                                                      ref_sys(volumes[0]->getAXS_1(),volumes[0]->getAXS_2(),volumes[0]->getAXS_3()),
-                                                                     volumes[0]->getVXL_1(),volumes[0]->getVXL_2(),volumes[0]->getVXL_3(), false, false);
+                                                                     volumes[0]->getVXL_1(),volumes[0]->getVXL_2(),volumes[0]->getVXL_3(), reimport, false);
                     candidateVols.push_back(candidate_vol);
                 }
                 catch(...){}
@@ -152,6 +152,10 @@ void CImport::run()
                     delete candidateVols[k];
                 }
             }
+
+            //check the number of volumes (at least 2)
+            if(volumes.size() < 2)
+                throw MyException("One resolution found only: at least two resolutions are needed for the multiresolution mode.");
 
             //sorting volumes by ascending size
             std::sort(volumes.begin(), volumes.end(), sortVolumesAscendingSize);
@@ -251,7 +255,7 @@ void CImport::run()
         //everything went OK
         emit sendOperationOutcome(0, volMapImage);
     }
-    catch( MyException& exception)  {reset(); emit sendOperationOutcome(&exception, 0);}
+    catch( MyException& exception)  {reset(); emit sendOperationOutcome(new MyException(exception.what()), 0);}
     catch(const char* error)        {reset(); emit sendOperationOutcome(new MyException(error), 0);}
     catch(...)                      {reset(); emit sendOperationOutcome(new MyException("Unknown error occurred"), 0);}
 }

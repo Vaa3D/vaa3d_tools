@@ -35,14 +35,15 @@
 typedef unsigned char  uint8;			//8-bit  unsigned integer data type
 typedef unsigned short uint16;			//16-bit unsigned integer data type
 typedef unsigned int   uint32;			//32-bit unsigned integer data type
-typedef int			   sint32;			//32-bit signed integer data type
-typedef long long	   sint64;			//64-bit signed integer data type
-typedef float		   REAL_T;
+typedef int            sint32;                  //32-bit signed integer data type
+typedef long long      sint64;			//64-bit signed integer data type
+typedef float          REAL_T;
 
 
 #define IM_VERBOSE 0
 #define IM_SAVE_SUBVOLUMES
 #define IM_METADATA_FILE_NAME "mdata.bin"
+#define IM_METADATA_FILE_VERSION 2
 #define IM_STATIC_STRINGS_SIZE 3000
 #define IM_DEF_IMG_FORMAT "tif"
 #define IM_DEF_IMG_DEPTH 8

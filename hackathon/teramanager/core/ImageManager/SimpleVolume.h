@@ -29,9 +29,9 @@
 # ifndef _SIMPLE_VOLUME_H
 # define _SIMPLE_VOLUME_H
 
-#include "VirtualVolume.h" 
+# include "VirtualVolume.h" 
 
-#define SIMPLE_FORMAT "Simple" 
+# define SIMPLE_FORMAT "Simple" 
 
 //FORWARD-DECLARATIONS
 class  Stack;
@@ -42,6 +42,9 @@ private:
     Stack ***STACKS;			//2-D array of <Stack*>
 
 	void init ( );
+
+	// iannello returns the number of channels of images composing the volume
+	void initChannels ( ) throw (MyException);
 
 public:
 	SimpleVolume(const char* _root_dir)  throw (MyException);

@@ -55,8 +55,21 @@ PDialogImport::PDialogImport() : QDialog()
     #endif
 
     //import form widgets
-    import_form_desc_1 = new QLabel("Additional informations are required when the volume is imported for the first time or reimported.\n\nPlease fill all the fields and pay attention that the minus \"-\" sign before an axis is interpreted as a rotation by 180 degrees.");
+    QFont tinyFont = QApplication::font();
+    tinyFont.setPointSize(10);
+    QFont bigFont = QApplication::font();
+    bigFont.setPointSize(14);
+    import_form_desc_1 = new QLabel("<html><table><tr style=\"vertical-align: middle;\"><td><img src=\":/icons/help.png\"></td>"
+                          "<td><p style=\"text-align:justify; margin-left:10px;\"> The metadata binary file contains <b>volume descriptors</b> needed "
+                          "to manage properly and efficiently all the images contained in the two-leveled hierarchical directory structure. It "
+                          "does NOT contain absolute filepath, hence the entire volume can be easily moved or renamed. </p> <p style=\"text-align:justify; margin-left:10px;\">"
+                          "The metadata binary file is <b> automatically saved </b> when a volume is imported for the first time or re-imported. "
+                          "However, in these cases additional informations are required. </p> </td></tr></table> </html>");
+    import_form_desc_1->setStyleSheet("border: 1px solid; border-color: gray; background-color: rgb(245,245,245); margin-top:10px; margin-bottom:10px; padding-top:10px; padding-bottom:10px;");
     import_form_desc_1->setWordWrap(true);
+    import_form_desc_1->setFont(tinyFont);
+    import_form_desc_2 = new QLabel("<html><i>Please fill all the fields and pay attention that the minus \"-\" sign before an axis is interpreted as a rotation by 180 degrees.</i></html>");
+    import_form_desc_2->setWordWrap(true);
     first_direction_label = new QLabel("First direction");
     second_direction_label = new QLabel("Second direction");
     third_direction_label = new QLabel("Third direction");
@@ -82,30 +95,44 @@ PDialogImport::PDialogImport() : QDialog()
     vxl3_field = new QLineEdit();
     vxl3_field->setAlignment(Qt::AlignCenter);
     vxl3_field->setValidator(new QRegExpValidator(vxl_regexp, vxl3_field));
-    import_button = new QPushButton("Import volume");
+    import_button = new QPushButton(" Import volume");
+    import_button->setIcon(QIcon(":/icons/import.png"));
+    import_button->setIconSize(QSize(30,30));
+    import_button->setFixedHeight(50);
+    import_button->setFont(bigFont);
 
 
     /*** LAYOUT SECTION ***/
-    QGridLayout* layout = new QGridLayout();
-    layout->addWidget(import_form_desc_1, 0, 0, 1, 5);
-    layout->addWidget(first_direction_label, 1, 2, 1, 1, Qt::AlignHCenter);
-    layout->addWidget(second_direction_label, 1, 3, 1, 1, Qt::AlignHCenter);
-    layout->addWidget(third_direction_label, 1, 4, 1, 1, Qt::AlignHCenter);
-    layout->addWidget(axes_label, 2, 0, 1, 2);
-    layout->addWidget(axs1_field, 2, 2, 1, 1, Qt::AlignHCenter);
-    layout->addWidget(axs2_field, 2, 3, 1, 1, Qt::AlignHCenter);
-    layout->addWidget(axs3_field, 2, 4, 1, 1, Qt::AlignHCenter);
-    layout->addWidget(voxels_dims_label, 3, 0, 1, 2);
-    layout->addWidget(vxl1_field, 3, 2, 1, 1, Qt::AlignHCenter);
-    layout->addWidget(vxl2_field, 3, 3, 1, 1, Qt::AlignHCenter);
-    layout->addWidget(vxl3_field, 3, 4, 1, 1, Qt::AlignHCenter);
-    layout->addWidget(import_button, 4, 0, 1, 5, Qt::AlignJustify);
+    QVBoxLayout *layout = new QVBoxLayout();
+
+    QWidget* container = new QWidget();
+    QGridLayout* grid_layout = new QGridLayout();
+    grid_layout->addWidget(first_direction_label, 0, 2, 1, 1, Qt::AlignHCenter);
+    grid_layout->addWidget(second_direction_label, 0, 3, 1, 1, Qt::AlignHCenter);
+    grid_layout->addWidget(third_direction_label, 0, 4, 1, 1, Qt::AlignHCenter);
+    grid_layout->addWidget(axes_label, 1, 0, 1, 2);
+    grid_layout->addWidget(axs1_field, 1, 2, 1, 1, Qt::AlignHCenter);
+    grid_layout->addWidget(axs2_field, 1, 3, 1, 1, Qt::AlignHCenter);
+    grid_layout->addWidget(axs3_field, 1, 4, 1, 1, Qt::AlignHCenter);
+    grid_layout->addWidget(voxels_dims_label, 2, 0, 1, 2);
+    grid_layout->addWidget(vxl1_field, 2, 2, 1, 1, Qt::AlignHCenter);
+    grid_layout->addWidget(vxl2_field, 2, 3, 1, 1, Qt::AlignHCenter);
+    grid_layout->addWidget(vxl3_field, 2, 4, 1, 1, Qt::AlignHCenter);
+    container->setLayout(grid_layout);
+
+    layout->addWidget(import_form_desc_1);
+    layout->addWidget(import_form_desc_2);
+    layout->addWidget(container);
+    layout->addWidget(import_button);
+
     layout->setSizeConstraint( QLayout::SetFixedSize );
     setLayout(layout);
 
     //windows flags and title
+    char title[IM_STATIC_STRINGS_SIZE];
+    sprintf(title, "\"%s\" metadata file not found", IM_METADATA_FILE_NAME);
+    this->setWindowTitle(title);
     this->setWindowFlags(Qt::Dialog | Qt::WindowTitleHint | Qt::WindowStaysOnTopHint);
-    this->setWindowTitle("Additional informations are required");
 
     // signals and slots
     connect(import_button, SIGNAL(clicked()), this, SLOT(import_button_clicked()));

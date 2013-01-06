@@ -74,20 +74,10 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     QFont smallFont = QApplication::font();
     smallFont.setPointSize(11);
 
-    //help box
-    helpbox = new QLabel("<html><table><tr style=\"vertical-align: middle;\"><td><img src=\":/icons/help.png\"></td>"
-                          "<td><p style=\"text-align:justify; margin-left:10px;\"> This tool enables the visualization and exploration "
-                          "of <b>teravoxel-sized datasets</b> with limited memory usage by exploiting their multi-stack "
-                          "format.</p> </td></tr></table> </html>");
-    helpbox->setStyleSheet("border: 1px solid; border-color: gray; background-color: rgb(245,245,245); margin-top:10px; margin-bottom:10px; padding-top:10px; padding-bottom:10px;");
-    helpbox->setWordWrap(true);
-    helpbox->setFixedHeight(100);
-    helpbox->setFont(tinyFont);
-
     //import form widgets
     import_form = new QGroupBox("Import volume");
     voldir_button       = new QPushButton("Browse for dir...");
-    reimport_checkbox = new QCheckBox("Overwrite previous imports");
+    reimport_checkbox = new QCheckBox("Re-import");
     enableMultiresMode = new QCheckBox("Enable multiresolution mode");
     enableMultiresMode->setChecked(true);
     volMapWidget = new QWidget();
@@ -351,7 +341,6 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
 
     //overall
     QVBoxLayout* layout = new QVBoxLayout();
-    layout->addWidget(helpbox);
     layout->addWidget(import_form);
     layout->addWidget(info_panel);
     layout->addWidget(multires_panel);
@@ -359,7 +348,7 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     layout->addWidget(statusBar);
     layout->addWidget(progressBar);
     setLayout(layout);
-    setWindowTitle(tr("TeraManager plugin"));    
+    setWindowTitle(tr("TeraFly plugin"));
     this->setFont(tinyFont);
     subvol_panel->setEnabled(false);
 
@@ -385,14 +374,9 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     connect(resolution_cbox, SIGNAL(currentIndexChanged(int)), this, SLOT(resolutionIndexChanged(int)), Qt::QueuedConnection);
     resetGUI();
 
-    //center on screen and set always on top
+    //set always on top
     this->setWindowFlags(Qt::WindowStaysOnTopHint);
     this->setMaximumSize(this->minimumWidth(), this->minimumHeight());
-    int screen_height = qApp->desktop()->availableGeometry().height();
-    int screen_width = qApp->desktop()->availableGeometry().width();
-    int window_x = (screen_width  - width() ) / 2;
-    int window_y = (screen_height - height()) / 2;
-    this->move(window_x, window_y);
 }
 
 PMain::~PMain()
@@ -485,8 +469,8 @@ void PMain::voldir_button_clicked()
         string vmap_fpath = import_path;
         vmap_fpath.append("/");
         vmap_fpath.append(TMP_VMAP_FNAME);
-        if(!StackedVolume::fileExists(mdata_fpath.c_str()) || reimport_checkbox->isChecked() ||
-          (!StackedVolume::fileExists(vmap_fpath.c_str()) && enableMultiresMode->isChecked()))
+        if(!StackedVolume::fileExists(mdata_fpath.c_str()) || reimport_checkbox->isChecked()) // ||
+          //(!StackedVolume::fileExists(vmap_fpath.c_str()) && enableMultiresMode->isChecked()))    ---- Alessandro 2013-01-06: we do not want converted volumes to be imported again. I don't understand the function of this line of code
             PDialogImport::instance()->exec();
         CImport::instance()->setPath(import_path);
         CImport::instance()->setReimport(reimport_checkbox->isChecked());
@@ -671,6 +655,7 @@ void PMain::settingsChanged(int)
     CSettings::instance()->setVOIdimV(Vdim_sbox->value());
     CSettings::instance()->setVOIdimH(Hdim_sbox->value());
     CSettings::instance()->setVOIdimD(Ddim_sbox->value());
+    CSettings::instance()->writeSettings();
 }
 
 /**********************************************************************************
