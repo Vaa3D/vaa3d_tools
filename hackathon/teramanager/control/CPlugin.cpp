@@ -156,9 +156,10 @@ bool CPlugin::dofunc(const QString & func_name, const V3DPluginArgList & input, 
 //returns true if the given shared library can be loaded
 bool CPlugin::isSharedLibraryLoadable(const char* name)
 {
-    #ifdef __unix__
+	// ------ TO DO ------
+    /*#ifdef __unix__
     //UNIX
-    /*QString tmp("");
+    QString tmp("");
     tmp.append("lib");
     tmp.append(name);
     tmp.append(".so");
@@ -169,11 +170,13 @@ bool CPlugin::isSharedLibraryLoadable(const char* name)
     {
         dlclose(my_lib_handle);
         return true;
-    }*/
+    }
     return true;    //to be fixed: _unix_ is defined also on MAC OS
     #endif
     #ifdef _WIN32
     return true;    //not yet supported: anyway Windows O.S. should display an error message about the missing DLL.
-    #endif
+    #endif*/
+	
+	return true;
 }
 

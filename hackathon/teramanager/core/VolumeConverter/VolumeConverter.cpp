@@ -229,6 +229,7 @@ void VolumeConverter::generateTiles(std::string output_path, bool* resolutions,
 
 	//allocated even if not used
 	ubuffer = new uint8 *[channels];
+	memset(ubuffer,0,channels*sizeof(uint8));
 	org_channels = channels; // save for checks
 
 	for(sint64 z = this->D0, z_parts = 1; z < this->D1; z += z_max_res, z_parts++)
