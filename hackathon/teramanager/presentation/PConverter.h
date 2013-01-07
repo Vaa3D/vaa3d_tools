@@ -122,7 +122,6 @@ class teramanager::PConverter : public QWidget
     public slots:
 
         void startButtonClicked();
-        void startAllButtonClicked();
         void stopButtonClicked();
         void voldirButtonClicked();
         void volfileButtonClicked();
