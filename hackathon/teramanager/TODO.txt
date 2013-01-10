@@ -8,7 +8,6 @@ with the associated priorities(P) which have values in the range [1-9]. Activiti
 - Dev: for developers only
 
 --------------------------------------------------------------------------------------------
-P6 New: provide some help to the user when the volume is imported for the first time.
 P4 Dev: substitute the absolute thresholds used to detect the zoom-in and zoom-out actions
         with ones relative to the ratio between the map and the higher resolution volume. It
         seems that absolute thresholds work well with many volumes, so it maybe that no fur-

@@ -230,6 +230,7 @@ PConverter::PConverter(V3DPluginCallback *callback, QWidget *parent) : QWidget(p
     connect(volfileButton, SIGNAL(clicked()), this, SLOT(volfileButtonClicked()));
     connect(voloutdirButton, SIGNAL(clicked()), this, SLOT(voldiroutButtonClicked()));
     connect(volpathField, SIGNAL(textChanged(QString)), this, SLOT(settingsChanged()));
+    connect(volpathField, SIGNAL(editingFinished()), this, SLOT(startButtonClicked()));
     connect(voloutpathField, SIGNAL(textChanged(QString)), this, SLOT(settingsChanged()));
     connect(volformatCombobox, SIGNAL(currentIndexChanged(int)), this, SLOT(settingsChanged()));
     connect(stacksWidthField, SIGNAL(valueChanged(int)), this, SLOT(settingsChanged()));
@@ -237,9 +238,9 @@ PConverter::PConverter(V3DPluginCallback *callback, QWidget *parent) : QWidget(p
     resetGUI();
 
     //timer members
-    timerFlushingMessage = "";
+    /*timerFlushingMessage = "";
     timer = 0;
-    timerTransitions = 0;
+    timerTransitions = 0;*/
 
     //set always on top
     this->setWindowFlags(Qt::WindowStaysOnTopHint);
@@ -333,19 +334,25 @@ void PConverter::stopButtonClicked()
 void PConverter::voldirButtonClicked()
 {
     //obtaining volume's directory
-    volpathField->setText(QFileDialog::getExistingDirectory(0, QObject::tr("Select volume's directory"), CSettings::instance()->getVCInputPath().c_str()));
+    volpathField->setText(QFileDialog::getExistingDirectory(this, QObject::tr("Select volume's directory"), CSettings::instance()->getVCInputPath().c_str()));
+
+    //launching import
+    startButtonClicked();
 }
 
 void PConverter::volfileButtonClicked()
 {
     //obtaining volume's filepath
-    volpathField->setText(QFileDialog::getOpenFileName(0, QObject::tr("Select Vaa3D raw file"), CSettings::instance()->getVCInputPath().c_str(), tr("V3D raw files (*.raw *.RAW, *.v3draw *.V3DRAW)")));
+    volpathField->setText(QFileDialog::getOpenFileName(this, QObject::tr("Select Vaa3D raw file"), CSettings::instance()->getVCInputPath().c_str(), tr("V3D raw files (*.raw *.RAW, *.v3draw *.V3DRAW)")));
+
+    //launching import
+    startButtonClicked();
 }
 
 void PConverter::voldiroutButtonClicked()
 {
     //obtaining volume's directory
-    voloutpathField->setText(QFileDialog::getExistingDirectory(0, QObject::tr("Select volume's directory"), CSettings::instance()->getVCOutputPath().c_str()));
+    voloutpathField->setText(QFileDialog::getExistingDirectory(this, QObject::tr("Select volume's directory"), CSettings::instance()->getVCOutputPath().c_str()));
 }
 
 /**********************************************************************************
@@ -513,11 +520,11 @@ void PConverter::operationDone(MyException *ex)
         catch(MyException &ex) {QMessageBox::critical(this,QObject::tr("Error"), QObject::tr(ex.what()),QObject::tr("Ok"));}
 
         //flushing
-        timerFlushingMessage = statusBar->currentMessage().toStdString();
+        /*timerFlushingMessage = statusBar->currentMessage().toStdString();
         timer = new QTimer(this);
         connect(timer, SIGNAL(timeout()), this, SLOT(timerFired()));
         timerTransitions = 5;
-        timer->start(200);
+        timer->start(200);*/
     }
 }
 
@@ -563,7 +570,7 @@ void PConverter::updateContent()
 /**********************************************************************************
 * Used to flush <statusBar> text
 ***********************************************************************************/
-void PConverter::timerFired()
+/*void PConverter::timerFired()
 {
     if(timerTransitions > 0)
     {
@@ -579,4 +586,4 @@ void PConverter::timerFired()
         delete timer;
         timer = 0;
     }
-}
+}*/

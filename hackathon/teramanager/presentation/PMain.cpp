@@ -452,7 +452,7 @@ void PMain::voldir_button_clicked()
     try
     {
         //obtaining volume's directory
-        string import_path= QFileDialog::getExistingDirectory(0, QObject::tr("Select volume's directory"), CSettings::instance()->getVolumePathLRU().c_str()).toStdString();
+        string import_path= QFileDialog::getExistingDirectory(this, QObject::tr("Select volume's directory"), CSettings::instance()->getVolumePathLRU().c_str()).toStdString();
 
         //first checking that no volume has imported yet
         if(!CImport::instance()->isEmpty())
@@ -471,7 +471,7 @@ void PMain::voldir_button_clicked()
         vmap_fpath.append(TMP_VMAP_FNAME);
         if(!StackedVolume::fileExists(mdata_fpath.c_str()) || reimport_checkbox->isChecked()) // ||
           //(!StackedVolume::fileExists(vmap_fpath.c_str()) && enableMultiresMode->isChecked()))    ---- Alessandro 2013-01-06: we do not want converted volumes to be imported again. I don't understand the function of this line of code
-            PDialogImport::instance()->exec();
+            PDialogImport::instance(this)->exec();
         CImport::instance()->setPath(import_path);
         CImport::instance()->setReimport(reimport_checkbox->isChecked());
         CImport::instance()->setMultiresMode(enableMultiresMode->isChecked());

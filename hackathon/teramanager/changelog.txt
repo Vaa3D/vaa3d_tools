@@ -9,6 +9,16 @@ ties names are:
 - Opt: optimization
 
 ============================================================================================
+Version 0.6.3
+January 10th, 2013
+--------------------------------------------------------------------------------------------
+- New: in the "TeraConverter" tool, the volume is imported  after a  directory or a file has
+       been choosen or a path has been inserted, instead of pushing each time on the "Start"
+       button.
+- Fix: fixed a bug which caused file dialogs not to be on top on MAC OS X.
+--------------------------------------------------------------------------------------------
+
+
 Version 0.6.2
 January 7th, 2013
 --------------------------------------------------------------------------------------------

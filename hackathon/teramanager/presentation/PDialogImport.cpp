@@ -48,7 +48,7 @@ void PDialogImport::uninstance()
     }
 }
 
-PDialogImport::PDialogImport() : QDialog()
+PDialogImport::PDialogImport(QWidget* parent) : QDialog(parent)
 {
     #ifdef TSP_DEBUG
     printf("--------------------- teramanager plugin [thread %d] >> PDialogImport created\n", this->thread()->currentThreadId());

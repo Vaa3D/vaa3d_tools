@@ -44,7 +44,7 @@ class teramanager::PDialogImport : public QDialog
         * instantiated by calling static method "istance(...)"
         **********************************************************************************/
         static PDialogImport* uniqueInstance;
-        PDialogImport();
+        PDialogImport(QWidget* parent);
 
         //widgets
         QLabel* import_form_desc_1;     //contains text describing import form usage
@@ -68,10 +68,10 @@ class teramanager::PDialogImport : public QDialog
         * Singleton design pattern: this class can have one instance only,  which must be
         * instantiated by calling static method "istance(...)"
         ***********************************************************************************/
-        static PDialogImport* instance()
+        static PDialogImport* instance(QWidget* parent)
         {
             if (uniqueInstance == NULL)
-                uniqueInstance = new PDialogImport();
+                uniqueInstance = new PDialogImport(parent);
             return uniqueInstance;
         }
         static PDialogImport* getInstance(){return uniqueInstance;}
