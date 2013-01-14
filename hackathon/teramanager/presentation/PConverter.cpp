@@ -343,7 +343,7 @@ void PConverter::voldirButtonClicked()
 void PConverter::volfileButtonClicked()
 {
     //obtaining volume's filepath
-    volpathField->setText(QFileDialog::getOpenFileName(this, QObject::tr("Select Vaa3D raw file"), CSettings::instance()->getVCInputPath().c_str(), tr("V3D raw files (*.raw *.RAW, *.v3draw *.V3DRAW)")));
+    volpathField->setText(QFileDialog::getOpenFileName(this, QObject::tr("Select Vaa3D raw file"), CSettings::instance()->getVCInputPath().c_str(), "V3D raw files (*.raw *.RAW *.v3draw *.V3DRAW)"));
 
     //launching import
     startButtonClicked();
