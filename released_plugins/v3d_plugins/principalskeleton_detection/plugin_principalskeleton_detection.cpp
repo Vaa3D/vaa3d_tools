@@ -48,14 +48,14 @@ const QString title = "Principal Skeleton Detection demo";
 QStringList PrincipalSkeletonDetectionPlugin::menulist() const
 {
     return QStringList()
-	<< tr("detect prinipcal skeleton...")
+	<< tr("detect principal skeleton...")
 	<< tr("warp subject image to target by aligning their skeletons...")
 	<< tr("open test data and demo web page")
 	<< tr("about this plugin");
 }
 void PrincipalSkeletonDetectionPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
 {
-	if(menu_name==tr("detect prinipcal skeleton..."))
+	if(menu_name==tr("detect principal skeleton..."))
 	{
 		PrincipalSkeletonDetection(callback, parent);
 	}
