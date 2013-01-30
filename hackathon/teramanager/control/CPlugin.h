@@ -56,6 +56,7 @@ namespace teramanager
     class CSettings;            //control class to manage persistent platform-independent application settings
     class CExplorerWindow;      //control class used to encapsulate all the informations needed to manage 3D navigation windows
     class CConverter;           //control class used to perform volume conversion operations in a separate non-GUI-blocking thread
+    class CAnnotations;         //control class used to manage annotations (markers, curves, etc.) among all the resolutions
     /*-------------------------------------------------------------------------------------------------------------------------*/
 
     /*******************
@@ -63,7 +64,21 @@ namespace teramanager
     ********************
     ---------------------------------------------------------------------------------------------------------------------------*/
     const char undefined_str[] = "undefined";
-    const int  undefined_val = -1;
+    const int  undefined_int32 = -1;
+    const float undefined_real32 = -1.0f;
+    /*-------------------------------------------------------------------------------------------------------------------------*/
+
+    /*******************
+    *    TYPES         *
+    ********************
+    ---------------------------------------------------------------------------------------------------------------------------*/
+    //interval type
+    struct interval_t
+    {
+        int start, end;
+        interval_t(void) : start(-1), end(-1)  {}
+        interval_t(int _start, int _end) : start(_start), end(_end){}
+    };
     /*-------------------------------------------------------------------------------------------------------------------------*/
 }
 
@@ -75,7 +90,7 @@ class teramanager::CPlugin : public QObject, public V3DPluginInterface2_1
     public:
 
 	//V3D plugin attributes and methods
-        float getPluginVersion() const {return getNumericVersion();}
+     float getPluginVersion() const {return getNumericVersion();}
 	QStringList menulist() const;
 	void domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent);
 	QStringList funclist() const ;
@@ -83,8 +98,8 @@ class teramanager::CPlugin : public QObject, public V3DPluginInterface2_1
 
 	//returns true if the given shared library can be loaded
 	static bool isSharedLibraryLoadable(const char* name);
-        static float getNumericVersion(){return 0.6f;}
-        static string getVersion(){return QString::number(getNumericVersion(), 'g', 1).toStdString();}
+     static float getNumericVersion(){return 0.7f;}
+     static string getVersion(){return QString::number(getNumericVersion(), 'g', 1).toStdString();}
 };
 
 #endif

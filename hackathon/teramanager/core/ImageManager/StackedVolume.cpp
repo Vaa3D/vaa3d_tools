@@ -752,9 +752,9 @@ REAL_T* StackedVolume::loadSubvolume(int V0,int V1, int H0, int H1, int D0, int 
 	D1 = (D1 == -1 ? DIM_D	 : D1);
 
 	//allocation
-	int sbv_height = V1 - V0;
-	int sbv_width  = H1 - H0;
-	int sbv_depth  = D1 - D0;
+	sint64 sbv_height = V1 - V0;
+	sint64 sbv_width  = H1 - H0;
+	sint64 sbv_depth  = D1 - D0;
 	REAL_T *subvol = new REAL_T[sbv_height * sbv_width * sbv_depth];
 
 	//scanning of stacks matrix for data loading and storing into subvol
@@ -819,12 +819,12 @@ uint8* StackedVolume::loadSubvolume_to_UINT8(int V0,int V1, int H0, int H1, int 
         throw MyException("in StackedVolume::loadSubvolume_to_UINT8: invalid subvolume intervals");
 
     //computing dimensions
-    int sbv_height = V1 - V0;
-    int sbv_width  = H1 - H0;
-    int sbv_depth  = D1 - D0;
+    sint64 sbv_height = V1 - V0;
+    sint64 sbv_width  = H1 - H0;
+    sint64 sbv_depth  = D1 - D0;
 
     //initializing the number of channels with an undefined value (it will be detected from the first slice read)
-    int sbv_channels = -1;
+    sint64 sbv_channels = -1;
 
     //scanning of stacks matrix for data loading and storing into subvol
     Rect_t subvol_area;
@@ -874,7 +874,7 @@ uint8* StackedVolume::loadSubvolume_to_UINT8(int V0,int V1, int H0, int H1, int 
                     //computing offsets
                     int slice_step = slice->widthStep / sizeof(uint8);
                     int ABS_V_offset = V0 - STACKS[row][col]->getABS_V();
-                    int ABS_H_offset = (H0 - STACKS[row][col]->getABS_H())*sbv_channels;
+                    int ABS_H_offset = (H0 - STACKS[row][col]->getABS_H())*((int)sbv_channels);
 
                     //different procedures for 1 and 3 channels images
                     int istart, iend, jstart, jend;
@@ -884,7 +884,7 @@ uint8* StackedVolume::loadSubvolume_to_UINT8(int V0,int V1, int H0, int H1, int 
                     jend    = intersect_area->H1-H0;
                     if(sbv_channels == 1)
                     {
-                        int k_offset = k*sbv_height*sbv_width;
+                        sint64 k_offset = k*sbv_height*sbv_width;
                         for(int i = istart; i < iend; i++)
                         {
                             uint8* slice_row = ((uint8*)slice->imageData) + (i+ABS_V_offset)*slice_step;
@@ -895,9 +895,9 @@ uint8* StackedVolume::loadSubvolume_to_UINT8(int V0,int V1, int H0, int H1, int 
                     else if(sbv_channels == 3)
                     {
 
-                        int offset1 =                                     k*sbv_height*sbv_width;
-                        int offset2 =   sbv_height*sbv_width*sbv_depth  + offset1;
-                        int offset3 = 2*sbv_height*sbv_width*sbv_depth  + k*sbv_height*sbv_width;
+                        sint64 offset1 =                                     k*sbv_height*sbv_width;
+                        sint64 offset2 =   sbv_height*sbv_width*sbv_depth  + offset1;
+                        sint64 offset3 = 2*sbv_height*sbv_width*sbv_depth  + k*sbv_height*sbv_width;
                         for(int i = istart; i < iend; i++)
                         {
                             uint8* slice_row = ((uint8*)slice->imageData) + (i+ABS_V_offset)*slice_step;
@@ -919,7 +919,7 @@ uint8* StackedVolume::loadSubvolume_to_UINT8(int V0,int V1, int H0, int H1, int 
 
     //returning outputs
     if(channels)
-        *channels = sbv_channels;
+        *channels = (int)sbv_channels;
     return subvol;
 }
 

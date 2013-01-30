@@ -138,14 +138,14 @@ void VolumeConverter::generateTiles(std::string output_path, bool* resolutions,
 				int saved_img_depth)	throw (MyException)
 {
 	//LOCAL VARIABLES
-    int height, width, depth;	//height, width and depth of the whole volume that covers all stacks
+    sint64 height, width, depth;	//height, width and depth of the whole volume that covers all stacks
 	REAL_T* rbuffer;			//buffer where temporary image data are stored (REAL_INTERNAL_REP)
 	uint8** ubuffer;			//array of buffers where temporary image data of channels are stored (UINT8_INTERNAL_REP)
 	//uint8*  ubuffer_ch2;	    //buffer temporary image data of channel 1 are stored (UINT8_INTERNAL_REP)
 	//uint8*  ubuffer_ch3;	    //buffer temporary image data of channel 1 are stored (UINT8_INTERNAL_REP)
 	int org_channels = 0;       //store the number of channels read the first time (for checking purposes)
     REAL_T* stripe_up=NULL;		//will contain up-stripe and down-stripe computed by calling 'getStripe' method
-	int z_ratio, z_max_res;
+	sint64 z_ratio, z_max_res;
     int n_stacks_V[S_MAX_MULTIRES], n_stacks_H[S_MAX_MULTIRES];             //array of number of tiles along V and H directions respectively at i-th resolution
     int **stacks_height[S_MAX_MULTIRES], **stacks_width[S_MAX_MULTIRES];	//array of matrices of tiles dimensions at i-th resolution
     std::stringstream file_path[S_MAX_MULTIRES];                            //array of root directory name at i-th resolution
@@ -173,8 +173,8 @@ void VolumeConverter::generateTiles(std::string output_path, bool* resolutions,
 	depth = this->D1-this->D0;
 
 	//activating resolutions
-        slice_height = (slice_height == -1 ? height : slice_height);
-        slice_width  = (slice_width  == -1 ? width  : slice_width);
+        slice_height = (slice_height == -1 ? (int)height : slice_height);
+        slice_width  = (slice_width  == -1 ? (int)width  : slice_width);
         if(slice_height < S_MIN_SLICE_DIM || slice_width < S_MIN_SLICE_DIM)
         {
             char err_msg[IM_STATIC_STRINGS_SIZE];
@@ -205,8 +205,8 @@ void VolumeConverter::generateTiles(std::string output_path, bool* resolutions,
                 stacks_width [res_i][stack_row] = new int[n_stacks_H[res_i]];
                 for(int stack_col = 0; stack_col < n_stacks_H[res_i]; stack_col++)
                 {
-                    stacks_height[res_i][stack_row][stack_col] = (height/POW_INT(2,res_i)) / n_stacks_V[res_i] + (stack_row < ((int)(height/POW_INT(2,res_i))) % n_stacks_V[res_i] ? 1:0);
-                    stacks_width [res_i][stack_row][stack_col] = (width/POW_INT(2,res_i))  / n_stacks_H[res_i] + (stack_col < ((int)(width/POW_INT(2,res_i)))  % n_stacks_H[res_i] ? 1:0);
+                    stacks_height[res_i][stack_row][stack_col] = ((int)(height/POW_INT(2,res_i))) / n_stacks_V[res_i] + (stack_row < ((int)(height/POW_INT(2,res_i))) % n_stacks_V[res_i] ? 1:0);
+                    stacks_width [res_i][stack_row][stack_col] = ((int)(width/POW_INT(2,res_i)))  / n_stacks_H[res_i] + (stack_col < ((int)(width/POW_INT(2,res_i)))  % n_stacks_H[res_i] ? 1:0);
                 }
             }
             //creating volume directory iff current resolution is selected and test mode is disabled
@@ -276,14 +276,14 @@ void VolumeConverter::generateTiles(std::string output_path, bool* resolutions,
 			}
 
 			//buffer size along D is different when the remainder of the subdivision by z_max_res is considered
-			int z_size = (z_parts<=z_ratio) ? z_max_res : (depth%z_max_res);
+			sint64 z_size = (z_parts<=z_ratio) ? z_max_res : (depth%z_max_res);
 
 			//halvesampling resolution if current resolution is not the deepest one
 			if(i!=0)	
 				if ( internal_rep == REAL_INTERNAL_REP )
-					VirtualVolume::halveSample(rbuffer,height/(POW_INT(2,i-1)),width/(POW_INT(2,i-1)),z_size/(POW_INT(2,i-1)));
+					VirtualVolume::halveSample(rbuffer,(int)height/(POW_INT(2,i-1)),(int)width/(POW_INT(2,i-1)),(int)z_size/(POW_INT(2,i-1)));
 				else // internal_rep == UINT8_INTERNAL_REP
-					VirtualVolume::halveSample_UINT8(ubuffer,height/(POW_INT(2,i-1)),width/(POW_INT(2,i-1)),z_size/(POW_INT(2,i-1)),channels);
+					VirtualVolume::halveSample_UINT8(ubuffer,(int)height/(POW_INT(2,i-1)),(int)width/(POW_INT(2,i-1)),(int)z_size/(POW_INT(2,i-1)),channels);
 
 			//saving at current resolution if it has been selected and iff buffer is at least 1 voxel (Z) deep
 			if(resolutions[i] && (z_size/(POW_INT(2,i))) > 0)
@@ -344,7 +344,7 @@ void VolumeConverter::generateTiles(std::string output_path, bool* resolutions,
 							if ( internal_rep == REAL_INTERNAL_REP )
 								VirtualVolume::saveImage(img_path.str(), 
 									rbuffer + buffer_z*(height/POW_INT(2,i))*(width/POW_INT(2,i)),
-									height/(POW_INT(2,i)),width/(POW_INT(2,i)),
+									(int)height/(POW_INT(2,i)),(int)width/(POW_INT(2,i)),
 									start_height,end_height,start_width,end_width, 
 									saved_img_format, saved_img_depth);
 							else // internal_rep == UINT8_INTERNAL_REP
@@ -353,7 +353,7 @@ void VolumeConverter::generateTiles(std::string output_path, bool* resolutions,
 										ubuffer[0] + buffer_z*(height/POW_INT(2,i))*(width/POW_INT(2,i)),
 										(uint8 *) 0,
 										(uint8 *) 0,
-										height/(POW_INT(2,i)),width/(POW_INT(2,i)),
+										(int)height/(POW_INT(2,i)),(int)width/(POW_INT(2,i)),
 										start_height,end_height,start_width,end_width, 
 										saved_img_format, saved_img_depth);
 								else // channels = 3
@@ -361,7 +361,7 @@ void VolumeConverter::generateTiles(std::string output_path, bool* resolutions,
 										ubuffer[0] + buffer_z*(height/POW_INT(2,i))*(width/POW_INT(2,i)),
 										ubuffer[1] + buffer_z*(height/POW_INT(2,i))*(width/POW_INT(2,i)),
 										ubuffer[2] + buffer_z*(height/POW_INT(2,i))*(width/POW_INT(2,i)),
-										height/(POW_INT(2,i)),width/(POW_INT(2,i)),
+										(int)height/(POW_INT(2,i)),(int)width/(POW_INT(2,i)),
 										start_height,end_height,start_width,end_width, 
 										saved_img_format, saved_img_depth);
 						}

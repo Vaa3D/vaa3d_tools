@@ -45,7 +45,8 @@ SOURCES += $$V3DMAINPATH/basic_c_fun/basic_memory.cpp
 SOURCES += $$V3DMAINPATH/basic_c_fun/basic_4dimage.cpp
 SOURCES += $$V3DMAINPATH/basic_c_fun/imageio_mylib.cpp
 HEADERS += $$V3DMAINPATH/common_lib/src_packages/mylib_tiff/image.h \
-    control/CConverter.h
+    control/CConverter.h \
+    control/CAnnotations.h
 HEADERS += $$V3DMAINPATH/basic_c_fun/imageio_mylib.h
 
 #needed to enable the "double-click zoom-in" feature --> removed, simple inclusion impedes the plugin to be loaded

@@ -112,9 +112,9 @@ REAL_T *RawVolume::loadSubvolume_to_REAL_T(int V0,int V1, int H0, int H1, int D0
 	D1 = (D1 == -1 ? DIM_D	 : D1);
 
 	//allocation
-	int sbv_height = V1 - V0;
-	int sbv_width  = H1 - H0;
-	int sbv_depth  = D1 - D0;
+	sint64 sbv_height = V1 - V0;
+	sint64 sbv_width  = H1 - H0;
+	sint64 sbv_depth  = D1 - D0;
 	REAL_T *subvol = new REAL_T[sbv_height * sbv_width * sbv_depth];
 
 	return subvol;
@@ -143,10 +143,10 @@ uint8 *RawVolume::loadSubvolume_to_UINT8(int V0,int V1, int H0, int H1, int D0, 
 	D1 = (D1 == -1 ? DIM_D	 : D1);
 
 	// allocate buffer
-	int sbv_height = V1 - V0;
-	int sbv_width  = H1 - H0;
-	int sbv_depth  = D1 - D0;
-	int total_buf_size = sbv_height * sbv_width * sbv_depth * (*channels) * datatype;
+	sint64 sbv_height = V1 - V0;
+	sint64 sbv_width  = H1 - H0;
+	sint64 sbv_depth  = D1 - D0;
+	sint64 total_buf_size = sbv_height * sbv_width * sbv_depth * (*channels) * datatype;
 	uint8 *subvol = new uint8[total_buf_size];
 	memset(subvol,0,sizeof(uint8)*total_buf_size);
 

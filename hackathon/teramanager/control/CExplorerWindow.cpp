@@ -29,6 +29,7 @@
 #include "CExplorerWindow.h"
 #include "v3dr_mainwindow.h"
 #include "control/CVolume.h"
+#include "control/CAnnotations.h"
 #include "presentation/PMain.h"
 #include "renderer_gl1.h"
 #include "v3d_imaging_para.h"
@@ -67,115 +68,134 @@ CExplorerWindow::CExplorerWindow(V3DPluginCallback2 *_V3D_env, int _resIndex, ui
     printf("--------------------- teramanager plugin [thread %d] >> CExplorerWindow[\"%s\"] created\n", this->thread()->currentThreadId(), title.c_str());
     #endif
 
-    //opening tri-view window
-    this->window = V3D_env->newImageWindow(QString(title.c_str()));
-    Image4DSimple* image = new Image4DSimple();
-    image->setFileName(title.c_str());
-    image->setData(imgData, volH1-volH0, volV1-volV0, volD1-volD0, nchannels, V3D_UINT8);
-    V3D_env->setImage(window, image);
-    this->triViewWidget = (XFormWidget*)window;
-
-    //opening 3D view window and hiding the tri-view window
-    V3D_env->open3DWindow(window);
-    view3DWidget = (V3dR_GLWidget*)(V3D_env->getView3DControl(window));
-    view3DWidget->setVolCompress(false);
-    window3D = view3DWidget->getiDrawExternalParameter()->window3D;
-    triViewWidget->setWindowState(Qt::WindowMinimized);
-
-    //installing the event filter on the 3D renderer and on the 3D window
-    view3DWidget->installEventFilter(this);
-    window3D->installEventFilter(this);
-
-    //if the previous explorer window exists
-    if(prev)
+    try
     {
-        //applying the same color map only if it differs from the previous one
-        Renderer_gl2* prev_renderer = (Renderer_gl2*)(prev->view3DWidget->getRenderer());
-        Renderer_gl2* curr_renderer = (Renderer_gl2*)(view3DWidget->getRenderer());
-        bool changed_cmap = false;
-        for(int k=0; k<3; k++)
+        //opening tri-view window
+        this->window = V3D_env->newImageWindow(QString(title.c_str()));
+        Image4DSimple* image = new Image4DSimple();
+        image->setFileName(title.c_str());
+        image->setData(imgData, volH1-volH0, volV1-volV0, volD1-volD0, nchannels, V3D_UINT8);
+        V3D_env->setImage(window, image);
+        this->triViewWidget = (XFormWidget*)window;
+
+        //opening 3D view window and hiding the tri-view window
+        V3D_env->open3DWindow(window);
+        view3DWidget = (V3dR_GLWidget*)(V3D_env->getView3DControl(window));
+        view3DWidget->setVolCompress(false);
+        window3D = view3DWidget->getiDrawExternalParameter()->window3D;
+        triViewWidget->setWindowState(Qt::WindowMinimized);
+
+        //installing the event filter on the 3D renderer and on the 3D window
+        view3DWidget->installEventFilter(this);
+        window3D->installEventFilter(this);
+
+        //if the previous explorer window exists
+        if(prev)
         {
-            RGBA8* prev_cmap = prev_renderer->colormap[k];
-            RGBA8* curr_cmap = curr_renderer->colormap[k];
-            for(int i=0; i<256; i++)
+            //applying the same color map only if it differs from the previous one
+            Renderer_gl2* prev_renderer = (Renderer_gl2*)(prev->view3DWidget->getRenderer());
+            Renderer_gl2* curr_renderer = (Renderer_gl2*)(view3DWidget->getRenderer());
+            bool changed_cmap = false;
+            for(int k=0; k<3; k++)
             {
-                if(curr_cmap[i].i != prev_cmap[i].i)
-                    changed_cmap = true;
-                curr_cmap[i] = prev_cmap[i];
+                RGBA8* prev_cmap = prev_renderer->colormap[k];
+                RGBA8* curr_cmap = curr_renderer->colormap[k];
+                for(int i=0; i<256; i++)
+                {
+                    if(curr_cmap[i].i != prev_cmap[i].i)
+                        changed_cmap = true;
+                    curr_cmap[i] = prev_cmap[i];
+                }
             }
+            if(changed_cmap)
+                curr_renderer->applyColormapToImage();
+
+            //positioning the current 3D window exactly at the previous window position
+            QPoint location = prev->window3D->pos();
+            prev->window3D->setVisible(false);
+            window3D->resize(prev->window3D->size());
+            window3D->move(location);
+
+            //hiding both tri-view and 3D view
+            prev->triViewWidget->setVisible(false);
+            prev->window3D->setVisible(false);
+            prev->view3DWidget->setCursor(Qt::ArrowCursor);
+
+            //registrating views
+            float ratio = CImport::instance()->getVolume(volResIndex)->getDIM_D()/CImport::instance()->getVolume(prev->volResIndex)->getDIM_D();
+            view3DWidget->setZoom(prev->view3DWidget->zoom()/ratio);
+            view3DWidget->setXRotation(prev->view3DWidget->xRot());
+            view3DWidget->setYRotation(prev->view3DWidget->yRot());
+            view3DWidget->setZRotation(prev->view3DWidget->zRot());
+
+            //storing annotations done in the previous view and loading annotations of the current view
+            prev->storeAnnotations();
+            this->loadAnnotations();
         }
-        if(changed_cmap)
-            curr_renderer->applyColormapToImage();
+        //otherwise this is the lowest resolution window
+        else
+        {
+            //registrating the current window as the first window of the multiresolution explorer windows chain
+            CExplorerWindow::first = this;
 
-        //positioning the current 3D window exactly at the previous window position
-        QPoint location = prev->window3D->pos();
-        prev->window3D->setVisible(false);
-        window3D->resize(prev->window3D->size());
-        window3D->move(location);
+            //centering the current 3D window and the plugin's window
+            int screen_height = qApp->desktop()->availableGeometry().height();
+            int screen_width = qApp->desktop()->availableGeometry().width();
+            int window_x = (screen_width - (window3D->width() + PMain::instance()->width()))/2;
+            int window_y = (screen_height - window3D->height()) / 2;
+            window3D->move(window_x, window_y);
+            pMain->move(window_x + window3D->width() + 3, window_y);
+            pMain->setMaximumHeight(std::max(window3D->height(),pMain->height()));
+            pMain->resize(pMain->width(), window3D->height());
+        }
 
-        //hiding both tri-view and 3D view
-        prev->triViewWidget->setVisible(false);
-        prev->window3D->setVisible(false);
-        prev->view3DWidget->setCursor(Qt::ArrowCursor);
+        //registrating the current window as the last window of the multiresolution explorer windows chain
+        CExplorerWindow::last = this;
 
-        //registrating views
-        float ratio = CImport::instance()->getVolume(volResIndex)->getDIM_D()/CImport::instance()->getVolume(prev->volResIndex)->getDIM_D();
-        view3DWidget->setZoom(prev->view3DWidget->zoom()/ratio);
-        view3DWidget->setXRotation(prev->view3DWidget->xRot());
-        view3DWidget->setYRotation(prev->view3DWidget->yRot());
-        view3DWidget->setZRotation(prev->view3DWidget->zRot());
+        //selecting the current resolution in the PMain GUI
+        pMain->resolution_cbox->setCurrentIndex(volResIndex);
+
+        //setting min, max and value of PMain GUI VOI's widgets
+        pMain->V0_sbox->setMinimum(getHighestResGlobalVCoord(view3DWidget->yCut0())+1);
+        pMain->V0_sbox->setValue(pMain->V0_sbox->minimum());
+        pMain->V1_sbox->setMaximum(getHighestResGlobalVCoord(view3DWidget->yCut1())+1);
+        pMain->V1_sbox->setValue(pMain->V1_sbox->maximum());
+        pMain->H0_sbox->setMinimum(getHighestResGlobalHCoord(view3DWidget->xCut0())+1);
+        pMain->H0_sbox->setValue(pMain->H0_sbox->minimum());
+        pMain->H1_sbox->setMaximum(getHighestResGlobalHCoord(view3DWidget->xCut1())+1);
+        pMain->H1_sbox->setValue(pMain->H1_sbox->maximum());
+        pMain->D0_sbox->setMinimum(getHighestResGlobalDCoord(view3DWidget->zCut0())+1);
+        pMain->D0_sbox->setValue(pMain->D0_sbox->minimum());
+        pMain->D1_sbox->setMaximum(getHighestResGlobalDCoord(view3DWidget->zCut1())+1);
+        pMain->D1_sbox->setValue(pMain->D1_sbox->maximum());
+
+        //signal connections
+        connect(CVolume::instance(), SIGNAL(sendOperationOutcome(MyException*,void*)), this, SLOT(loadingDone(MyException*,void*)), Qt::QueuedConnection);
+        connect(view3DWidget, SIGNAL(changeXCut0(int)), this, SLOT(Vaa3D_changeXCut0(int)));
+        connect(view3DWidget, SIGNAL(changeXCut1(int)), this, SLOT(Vaa3D_changeXCut1(int)));
+        connect(view3DWidget, SIGNAL(changeYCut0(int)), this, SLOT(Vaa3D_changeYCut0(int)));
+        connect(view3DWidget, SIGNAL(changeYCut1(int)), this, SLOT(Vaa3D_changeYCut1(int)));
+        connect(view3DWidget, SIGNAL(changeZCut0(int)), this, SLOT(Vaa3D_changeZCut0(int)));
+        connect(view3DWidget, SIGNAL(changeZCut1(int)), this, SLOT(Vaa3D_changeZCut1(int)));
+        connect(PMain::instance()->V0_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeV0sbox(int)));
+        connect(PMain::instance()->V1_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeV1sbox(int)));
+        connect(PMain::instance()->H0_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeH0sbox(int)));
+        connect(PMain::instance()->H1_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeH1sbox(int)));
+        connect(PMain::instance()->D0_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeD0sbox(int)));
+        connect(PMain::instance()->D1_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeD1sbox(int)));
     }
-    //otherwise this is the highest resolution window
-    else
+    catch(MyException &ex)
     {
-        //registrating the current window as the first window of the multiresolution explorer windows chain
-        CExplorerWindow::first = this;
-
-        //centering the current 3D window and the plugin's window        
-        int screen_height = qApp->desktop()->availableGeometry().height();
-        int screen_width = qApp->desktop()->availableGeometry().width();
-        int window_x = (screen_width - (window3D->width() + PMain::instance()->width()))/2;
-        int window_y = (screen_height - window3D->height()) / 2;
-        window3D->move(window_x, window_y);
-        pMain->move(window_x + window3D->width() + 3, window_y);
-        pMain->setMaximumHeight(std::max(window3D->height(),pMain->height()));
-        pMain->resize(pMain->width(), window3D->height());
+        QMessageBox::critical(this,QObject::tr("Error"), QObject::tr(ex.what()),QObject::tr("Ok"));
     }
-
-    //registrating the current window as the last window of the multiresolution explorer windows chain
-    CExplorerWindow::last = this;
-
-    //selecting the current resolution in the PMain GUI
-    pMain->resolution_cbox->setCurrentIndex(volResIndex);
-
-    //setting min, max and value of PMain GUI VOI's widgets
-    pMain->V0_sbox->setMinimum(getHighestResGlobalVCoord(view3DWidget->yCut0())+1);
-    pMain->V0_sbox->setValue(pMain->V0_sbox->minimum());
-    pMain->V1_sbox->setMaximum(getHighestResGlobalVCoord(view3DWidget->yCut1())+1);
-    pMain->V1_sbox->setValue(pMain->V1_sbox->maximum());
-    pMain->H0_sbox->setMinimum(getHighestResGlobalHCoord(view3DWidget->xCut0())+1);
-    pMain->H0_sbox->setValue(pMain->H0_sbox->minimum());
-    pMain->H1_sbox->setMaximum(getHighestResGlobalHCoord(view3DWidget->xCut1())+1);
-    pMain->H1_sbox->setValue(pMain->H1_sbox->maximum());
-    pMain->D0_sbox->setMinimum(getHighestResGlobalDCoord(view3DWidget->zCut0())+1);
-    pMain->D0_sbox->setValue(pMain->D0_sbox->minimum());
-    pMain->D1_sbox->setMaximum(getHighestResGlobalDCoord(view3DWidget->zCut1())+1);
-    pMain->D1_sbox->setValue(pMain->D1_sbox->maximum());
-
-    //signal connections
-    connect(CVolume::instance(), SIGNAL(sendOperationOutcome(MyException*,void*)), this, SLOT(loadingDone(MyException*,void*)), Qt::QueuedConnection);
-    connect(view3DWidget, SIGNAL(changeXCut0(int)), this, SLOT(Vaa3D_changeXCut0(int)));
-    connect(view3DWidget, SIGNAL(changeXCut1(int)), this, SLOT(Vaa3D_changeXCut1(int)));
-    connect(view3DWidget, SIGNAL(changeYCut0(int)), this, SLOT(Vaa3D_changeYCut0(int)));
-    connect(view3DWidget, SIGNAL(changeYCut1(int)), this, SLOT(Vaa3D_changeYCut1(int)));
-    connect(view3DWidget, SIGNAL(changeZCut0(int)), this, SLOT(Vaa3D_changeZCut0(int)));
-    connect(view3DWidget, SIGNAL(changeZCut1(int)), this, SLOT(Vaa3D_changeZCut1(int)));
-    connect(PMain::instance()->V0_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeV0sbox(int)));
-    connect(PMain::instance()->V1_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeV1sbox(int)));
-    connect(PMain::instance()->H0_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeH0sbox(int)));
-    connect(PMain::instance()->H1_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeH1sbox(int)));
-    connect(PMain::instance()->D0_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeD0sbox(int)));
-    connect(PMain::instance()->D1_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeD1sbox(int)));
+    catch(const char* error)
+    {
+        QMessageBox::critical(this,QObject::tr("Error"), QObject::tr(error),QObject::tr("Ok"));
+    }
+    catch(...)
+    {
+        QMessageBox::critical(this,QObject::tr("Error"), QObject::tr("Unknown error occurred"),QObject::tr("Ok"));
+    }
 }
 
 CExplorerWindow::~CExplorerWindow()
@@ -205,7 +225,7 @@ bool CExplorerWindow::eventFilter(QObject *object, QEvent *event)
         ***************************************************************************/
         if (object == view3DWidget && event->type() == QEvent::Wheel)
         {
-            LandmarkList markers = V3D_env->getLandmark(triViewWidget);
+/*            LandmarkList markers = V3D_env->getLandmark(triViewWidget);
             if(view3DWidget->zoom() > 30        &&              //zoom-in threshold reached
                markers.size() == 1)                             //only one marker exists
             {
@@ -214,7 +234,7 @@ bool CExplorerWindow::eventFilter(QObject *object, QEvent *event)
                 V3D_env->setLandmark(triViewWidget, markers);
                 view3DWidget->getRenderer()->updateLandmark();
             }
-            else if(view3DWidget->zoom() < 0    &&              //zoom-out threshold reached
+            else */ if(view3DWidget->zoom() < 0    &&              //zoom-out threshold reached
                     prev                        &&              //the previous resolution exists
                     !toBeClosed)                                //the current resolution does not have to be closed
             {
@@ -393,15 +413,94 @@ void CExplorerWindow::switchToHigherRes(int x, int y, int z, int dx, int dy, int
 }
 
 /**********************************************************************************
+* Annotations are stored/loaded) to/from the <CAnnotations> object
+***********************************************************************************/
+void CExplorerWindow::storeAnnotations() throw (MyException)
+{
+    #ifdef TMP_DEBUG
+    printf("--------------------- teramanager plugin [thread %d] >> CExplorerWindow[\"%s\"] storeAnnotations() launched\n", this->thread()->currentThreadId(), title.c_str() );
+    #endif
+
+    //retrieving new and deleted markers
+    LandmarkList new_markers, deleted_markers;
+    for(int i=0; i<loaded_markers.size(); i++)
+        if(triViewWidget->getImageData()->listLandmarks.contains(loaded_markers[i]) == false)
+            deleted_markers.push_back(loaded_markers[i]);
+    for(int i=0; i<triViewWidget->getImageData()->listLandmarks.size(); i++)
+        if(loaded_markers.contains(triViewWidget->getImageData()->listLandmarks[i]) == false)
+            new_markers.push_back(triViewWidget->getImageData()->listLandmarks[i]);
+
+    //storing new markers
+    if(!new_markers.empty())
+    {
+        //converting local coordinates into global coordinates
+        for(int i=0; i<new_markers.size(); i++)
+        {
+            new_markers[i].x = getHighestResGlobalHCoord(new_markers[i].x);
+            new_markers[i].y = getHighestResGlobalVCoord(new_markers[i].y);
+            new_markers[i].z = getHighestResGlobalDCoord(new_markers[i].z);
+        }
+
+        //storing markers
+        CAnnotations::getInstance()->addLandmarks(&new_markers);
+    }
+
+    //removing deleted markers
+    if(!deleted_markers.empty())
+    {
+        //converting local coordinates into global coordinates
+        for(int i=0; i<deleted_markers.size(); i++)
+        {
+            deleted_markers[i].x = getHighestResGlobalHCoord(deleted_markers[i].x);
+            deleted_markers[i].y = getHighestResGlobalVCoord(deleted_markers[i].y);
+            deleted_markers[i].z = getHighestResGlobalDCoord(deleted_markers[i].z);
+        }
+
+        //removing markers
+        CAnnotations::getInstance()->removeLandmarks(&deleted_markers);
+    }
+}
+
+void CExplorerWindow::loadAnnotations() throw (MyException)
+{
+    #ifdef TMP_DEBUG
+    printf("--------------------- teramanager plugin [thread %d] >> CExplorerWindow[\"%s\"] loadAnnotations() launched\n", this->thread()->currentThreadId(), title.c_str() );
+    #endif
+
+    //clearing previous annotations (useful when this view has been already visited)
+    loaded_markers.clear();
+
+    //computing the current volume range in the highest resolution image space
+    interval_t x_range(getHighestResGlobalHCoord(0), getHighestResGlobalHCoord(static_cast<int>(triViewWidget->getImageData()->getXDim())));
+    interval_t y_range(getHighestResGlobalVCoord(0), getHighestResGlobalVCoord(static_cast<int>(triViewWidget->getImageData()->getYDim())));
+    interval_t z_range(getHighestResGlobalDCoord(0), getHighestResGlobalDCoord(static_cast<int>(triViewWidget->getImageData()->getZDim())));
+
+    //obtaining the markers within the current window
+    CAnnotations::getInstance()->findLandmarks(x_range, y_range, z_range, loaded_markers);
+
+    //converting global coordinates into local coordinates
+    for(int i=0; i<loaded_markers.size(); i++)
+    {
+        loaded_markers[i].x = getLocalHCoord(loaded_markers[i].x);
+        loaded_markers[i].y = getLocalVCoord(loaded_markers[i].y);
+        loaded_markers[i].z = getLocalDCoord(loaded_markers[i].z);
+        printf("Marker[%d] = {%.0f %.0f %.0f}\n", i, loaded_markers[i].x, loaded_markers[i].y, loaded_markers[i].z);
+    }
+
+    //assigning markers
+    V3D_env->setLandmark(window, loaded_markers);
+    V3D_env->pushObjectIn3DWindow(window);
+}
+
+/**********************************************************************************
 * Restores the current window and destroys the next <CExplorerWindow>.
 * Called by the next <CExplorerWindow> when the user zooms out and  the lower reso-
 * lution has to be reestabilished.
 ***********************************************************************************/
-void CExplorerWindow::restore()
+void CExplorerWindow::restore() throw (MyException)
 {
     #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread %d] >> CExplorerWindow[\"%s\"] restore() launched\n",
-           this->thread()->currentThreadId(), title.c_str() );
+    printf("--------------------- teramanager plugin [thread %d] >> CExplorerWindow[\"%s\"] restore() launched\n", this->thread()->currentThreadId(), title.c_str() );
     #endif
 
     if(next)
@@ -437,6 +536,9 @@ void CExplorerWindow::restore()
         }
         if(changed_cmap)
             curr_renderer->applyColormapToImage();
+
+        //storing annotations done in the next view
+        next->storeAnnotations();
 
         //closing next
         delete next;
@@ -477,6 +579,9 @@ void CExplorerWindow::restore()
         connect(PMain::instance()->H1_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeH1sbox(int)));
         connect(PMain::instance()->D0_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeD0sbox(int)));
         connect(PMain::instance()->D1_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeD1sbox(int)));
+
+        //loading annotations of the current view
+        this->loadAnnotations();
     }
 }
 
@@ -561,6 +666,21 @@ int CExplorerWindow::getHighestResGlobalDCoord(int localDCoord)
     float ratio = (CImport::instance()->getHighestResVolume()->getDIM_D()-1.0f)/(CImport::instance()->getVolume(volResIndex)->getDIM_D()-1.0f);
     return (volD0+localDCoord)*ratio + 0.5f;
 }
+float CExplorerWindow::getHighestResGlobalVCoord(float localVCoord)
+{
+    float ratio = (CImport::instance()->getHighestResVolume()->getDIM_V()-1.0f)/(CImport::instance()->getVolume(volResIndex)->getDIM_V()-1.0f);
+    return (volV0+localVCoord)*ratio;
+}
+float CExplorerWindow::getHighestResGlobalHCoord(float localHCoord)
+{
+    float ratio = (CImport::instance()->getHighestResVolume()->getDIM_H()-1.0f)/(CImport::instance()->getVolume(volResIndex)->getDIM_H()-1.0f);
+    return (volH0+localHCoord)*ratio;
+}
+float CExplorerWindow::getHighestResGlobalDCoord(float localDCoord)
+{
+    float ratio = (CImport::instance()->getHighestResVolume()->getDIM_D()-1.0f)/(CImport::instance()->getVolume(volResIndex)->getDIM_D()-1.0f);
+    return (volD0+localDCoord)*ratio;
+}
 
 /**********************************************************************************
 * Returns the local coordinate (which starts from 0) in the current resolution vol-
@@ -581,6 +701,21 @@ int CExplorerWindow::getLocalDCoord(int highestResGlobalDCoord)
 {
     float ratio = (CImport::instance()->getHighestResVolume()->getDIM_D()-1.0f)/(CImport::instance()->getVolume(volResIndex)->getDIM_D()-1.0f);
     return highestResGlobalDCoord/ratio - volD0 + 0.5f;
+}
+float CExplorerWindow::getLocalVCoord(float highestResGlobalVCoord)
+{
+    float ratio = (CImport::instance()->getHighestResVolume()->getDIM_V()-1.0f)/(CImport::instance()->getVolume(volResIndex)->getDIM_V()-1.0f);
+    return highestResGlobalVCoord/ratio - volV0;
+}
+float CExplorerWindow::getLocalHCoord(float highestResGlobalHCoord)
+{
+    float ratio = (CImport::instance()->getHighestResVolume()->getDIM_H()-1.0f)/(CImport::instance()->getVolume(volResIndex)->getDIM_H()-1.0f);
+    return highestResGlobalHCoord/ratio - volH0;
+}
+float CExplorerWindow::getLocalDCoord(float highestResGlobalDCoord)
+{
+    float ratio = (CImport::instance()->getHighestResVolume()->getDIM_D()-1.0f)/(CImport::instance()->getVolume(volResIndex)->getDIM_D()-1.0f);
+    return highestResGlobalDCoord/ratio - volD0;
 }
 
 /**********************************************************************************

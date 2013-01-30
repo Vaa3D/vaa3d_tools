@@ -7,13 +7,37 @@ ties names are:
 - Bug: bug to be fixed
 - Dev: for developers only
 - Opt: optimization
+- Rem: a feature no longer available
 
 ============================================================================================
+Version 0.7
+January 30th, 2013
+--------------------------------------------------------------------------------------------
+- Rem: TeraFly feature "creating a Vaa3D marker in the image space and zooming-in"  has been 
+       disabled because it conflicts with  the new "multiresolution markers annotation" fea-
+       ture.
+- Bug: TeraFly feature "multiresolution markers annotation" known bugs to be asap fixed:
+       - markers positions precision is not  perfect in  those resolutions whose distance is
+         greater than 2 factors respect to the resolution where the marker has been created;
+       - markers sizes need to be manually adjusted in each view;
+       - markers labels need to be manually disabled in each view.
+- New: TeraFly feature "multiresolution markers annotation" (beta) added:
+       - user may define markers in any view (corresponding to a certain resolution) and see
+	    them also in all the other views, thus enabling markers annotation in the multires-
+         olution mode;
+       - user may delete markers in any view (corresponding to a certain resolution) and see
+         the effect of this action in all the other views.
+- Dev: added class "CAnnotations" which manages permanent multiresolution annotations.
+- Dev: substitution of 'int' type with 'long long' type in some portions of code of the tool
+       "TeraConverter".
+--------------------------------------------------------------------------------------------
+
+
 Version 0.6.4
 January 14th, 2013
 --------------------------------------------------------------------------------------------
 - Fix: fixed a bug which caused V3D raw file format filters in  the file dialog  not to work 
-  properly.
+       properly.
 --------------------------------------------------------------------------------------------
 
 

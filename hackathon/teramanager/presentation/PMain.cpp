@@ -32,6 +32,7 @@
 #include "control/CVolume.h"
 #include "control/CSettings.h"
 #include "control/CExplorerWindow.h"
+#include "control/CAnnotations.h"
 #include "renderer_gl1.h"
 #include "v3dr_mainwindow.h"
 
@@ -51,6 +52,7 @@ void PMain::uninstance()
     CVolume::uninstance();
     CExplorerWindow::uninstance();
     CSettings::uninstance();
+    CAnnotations::uninstance();
     if(uniqueInstance)
     {
         delete uniqueInstance;
@@ -377,6 +379,7 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     //set always on top
     this->setWindowFlags(Qt::WindowStaysOnTopHint);
     this->setMaximumSize(this->minimumWidth(), this->minimumHeight());
+    this->setFocusPolicy(Qt::StrongFocus);
 }
 
 PMain::~PMain()
@@ -584,6 +587,9 @@ void PMain::import_done(MyException *ex, Image4DSimple* vmap_image)
                 resolution_cbox->insertItem(i, option);
             }
 
+            //instantiating CAnnotations
+            CAnnotations::instance(volume->getDIM_V(), volume->getDIM_H(), volume->getDIM_D());
+
             //starting 3D exploration
             new CExplorerWindow(V3D_env, CImport::instance()->getVMapResIndex(), CImport::instance()->getVMap(),
                                 0, CImport::instance()->getVMapHeight(), 0, CImport::instance()->getVMapWidth(),
@@ -643,6 +649,24 @@ void PMain::closeEvent(QCloseEvent *evt)
         evt->accept();
         PMain::uninstance();
     }
+}
+
+//overrides focusInEvent method of QWidget
+void PMain::focusInEvent ( QFocusEvent * event )
+{
+
+/* Added on January 29th by Alessandro: in my original intentions this lets the user quickly recover the renderer window
+   after it is automatically hidden by Vaa3D when interacting with its menus. It does work, but the "Qt:Tool" flag also
+   causes an unwanted change in the renderer title bar (minimize and full screen buttor are removed). The "standard" so-
+   lution to recover a minimized / or hidden window is to use setWindowState method, but it doesn't work here.*/
+//    if(CExplorerWindow::getLast())
+//    {
+//        event->accept();
+//        CExplorerWindow::getLast()->getWindow3D()->setWindowFlags(Qt::Tool);
+//        CExplorerWindow::getLast()->getWindow3D()->show();
+//    }
+//    else
+        event->ignore();
 }
 
 /**********************************************************************************

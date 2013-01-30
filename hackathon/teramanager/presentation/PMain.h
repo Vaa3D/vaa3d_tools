@@ -164,6 +164,9 @@ class teramanager::PMain : public QWidget
         //overrides closeEvent method of QWidget
         void closeEvent(QCloseEvent *evt);
 
+        //overrides focusInEvent method of QWidget
+        void focusInEvent ( QFocusEvent * event );
+
     public slots:
 
         /**********************************************************************************

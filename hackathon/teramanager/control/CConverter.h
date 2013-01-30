@@ -47,7 +47,7 @@ class teramanager::CConverter : public QThread
         **********************************************************************************/
         static CConverter* uniqueInstance;
         CConverter() : QThread(), volPath(undefined_str), volFormat(undefined_str), vc(0), conversionMode(false), resolutions(0),
-            resolutionsSize(0), stacksWidth(undefined_val), stacksHeight(undefined_val), volOutPath(undefined_str), fileMode(false)
+            resolutionsSize(0), stacksWidth(undefined_int32), stacksHeight(undefined_int32), volOutPath(undefined_str), fileMode(false)
         {
             #ifdef TMP_DEBUG
             printf("--------------------- teramanager plugin [thread %d] >> CConverter created\n", this->thread()->currentThreadId());
@@ -105,8 +105,8 @@ class teramanager::CConverter : public QThread
             conversionMode = false;
             resolutions = 0;
             resolutionsSize = 0;
-            stacksWidth  = undefined_val;
-            stacksHeight = undefined_val;
+            stacksWidth  = undefined_int32;
+            stacksHeight = undefined_int32;
             volOutPath = undefined_str;
             fileMode = false;
         }
