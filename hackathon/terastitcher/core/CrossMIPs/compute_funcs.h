@@ -14,7 +14,7 @@
 *    2. You agree to appropriately cite this work in your related studies and publications.
 *
 *       Bria, A., et al., (2012) "Stitching Terabyte-sized 3D Images Acquired in Confocal Ultramicroscopy", Proceedings of the 9th IEEE International Symposium on Biomedical Imaging.
-*       Bria, A., Iannello, G., "A Tool for Fast 3D Automatic Stitching of Teravoxel-sized Datasets", submitted on July 2012 to IEEE Transactions on Information Technology in Biomedicine.
+*       Bria, A., Iannello, G., "TeraStitcher - A Tool for Fast 3D Automatic Stitching of Teravoxel-sized Microscopy Images", submitted for publication, 2012.
 *
 *    3. This material is provided by  the copyright holders (Alessandro Bria  and  Giulio Iannello),  University Campus Bio-Medico and contributors "as is" and any express or implied war-
 *       ranties, including, but  not limited to,  any implied warranties  of merchantability,  non-infringement, or fitness for a particular purpose are  disclaimed. In no event shall the
@@ -61,7 +61,7 @@ real_t compute_NCC ( real_t *im1, real_t *im2, int dimi, int dimj, int stride );
 int compute_MAX_ind ( real_t *vect, int len );
 
 void compute_Neighborhood ( NCC_parms_t *NCC_params, real_t *NCC, int delayu, int delayv, int ind, 
-						    real_t *MIP_1, real_t *MIP_2, int dimu, int dimv, real_t *NCCnew, int &du, int &dv, bool &failed);
+						    real_t *MIP_1, real_t *MIP_2, int dimu, int dimv, real_t *NCCnew, int &du, int &dv, bool &failed)  throw (MyException);
 /* given an NCC map with dimensions delayu x delayv around the initial alignment, the index ind of its maximum
  * and an empty NCC map NCCnew with dimensions NCC_params->wRangeThr x NCC_params->wRangeThr,
  * returns in NCCnew the NCC map with center in the NCC maximum of MIPs MIP_1 and MIP_2, with dimensions dimu x dimv;

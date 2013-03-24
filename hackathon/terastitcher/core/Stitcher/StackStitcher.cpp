@@ -760,6 +760,11 @@ void StackStitcher::mergeTiles(std::string output_path, int slice_height, int sl
                     sprintf(err_msg, "in mergeTiles(...): unable to create DIR = \"%s\"\n", file_path.str().c_str());
                     throw MyException(err_msg);
                 }
+
+				//Alessandro - 23/03/2013: saving original volume XML descriptor into each folder
+				char xmlPath[S_STATIC_STRINGS_SIZE];
+				sprintf(xmlPath, "%s/original_volume_desc.xml", file_path.str().c_str());
+				volume->saveXML(0, xmlPath);
             }
 	}
 
@@ -1024,14 +1029,21 @@ void StackStitcher::mergeTiles(std::string output_path, int slice_height, int sl
 						for(int buffer_z=0; buffer_z<z_size/(POW_INT(2,i)); buffer_z++)
 						{
 							std::stringstream img_path;
-							std::stringstream abs_pos_z;
+							int rel_pos_z = POW_INT(2,i)*buffer_z+z-D0;		// Alessandro, 23/03/2013 - see below. This is the relative Z pixel coordinate in the 
+																			// highest resolution image space. '-D0' is necessary to make it relative, since
+																			// getMultiresABS_D_string(...) accepts relative coordinates only.
+
+							/*std::stringstream abs_pos_z;
 							abs_pos_z.width(6);
 							abs_pos_z.fill('0');
-							abs_pos_z << (int)(POW_INT(2,i)*buffer_z+z);
+							abs_pos_z << (int)(POW_INT(2,i)*buffer_z+z);*/	// Alessandro, 23/03/2013 - bug found: we are saving the image space coordinate (in pixels) 
+																			// instead of the volume space coordinate (in tenths of microns)
 							img_path << H_DIR_path.str() << "/" 
 										<< this->getMultiresABS_V_string(i,start_height) << "_" 
-										<< this->getMultiresABS_H_string(i,start_width) << "_"
-										<< abs_pos_z.str(); 
+										<< this->getMultiresABS_H_string(i,start_width)  << "_"
+										// << abs_pos_z.str();							// Alessandro, 23/03/2013 - bug found: see above
+										<< this->getMultiresABS_D_string(0, rel_pos_z);	// Alessandro, 23/03/2013 - we pass '0' because rel_pos_z is the relative Z
+																						// pixel coordinate in the HIGHEST (i=0) resolution image space (see above).
 							if(test_mode)
 							{
 								img_path.str("");

@@ -14,7 +14,7 @@
 *    2. You agree to appropriately cite this work in your related studies and publications.
 *
 *       Bria, A., et al., (2012) "Stitching Terabyte-sized 3D Images Acquired in Confocal Ultramicroscopy", Proceedings of the 9th IEEE International Symposium on Biomedical Imaging.
-*       Bria, A., Iannello, G., "A Tool for Fast 3D Automatic Stitching of Teravoxel-sized Datasets", submitted on July 2012 to IEEE Transactions on Information Technology in Biomedicine.
+*       Bria, A., Iannello, G., "TeraStitcher - A Tool for Fast 3D Automatic Stitching of Teravoxel-sized Microscopy Images", submitted for publication, 2012.
 *
 *    3. This material is provided by  the copyright holders (Alessandro Bria  and  Giulio Iannello),  University Campus Bio-Medico and contributors "as is" and any express or implied war-
 *       ranties, including, but  not limited to,  any implied warranties  of merchantability,  non-infringement, or fitness for a particular purpose are  disclaimed. In no event shall the
@@ -46,10 +46,11 @@
 # define WEST_EAST     1
 
 # include "my_defs.h"
+# include "MyException.h"	//Alessandro - 23/03/2013 - needed to throw exceptions
 
 /***************************************** RESULT STRUCTURE ********************************************/
 typedef struct {
-	int coord[3];       // alignement as offset of the second stack with respect to the first one
+	int coord[3];       // alignment as offset of the second stack with respect to the first one
 	real_t NCC_maxs[3]; // reliability of alignment (-1=unreliable, 1=highly reliable)
 	int NCC_widths[3];  // estimate of potential error in pixels
 } NCC_descr_t;
@@ -75,12 +76,12 @@ typedef struct {
 /***************************************** MAIN FUNCTION ***********************************************/
 NCC_descr_t *norm_cross_corr_mips ( real_t *A, real_t *B, 
 						    int dimk, int dimi, int dimj, int nk, int ni, int nj, 
-							int delayk, int delayi, int delayj, int side, NCC_parms_t *NCC_params = 0 );
+							int delayk, int delayi, int delayj, int side, NCC_parms_t *NCC_params = 0 ) throw (MyException); //Alessandro - 23/03/2013 - exceptions are thrown if preconditions do not hold
 /*
  * returns an alignment between volume A and B; the two volumes are assumed to have the same dimensions
  * INPUT PARAMETERS:
  *   A: first 3D stack to be aligned
- *   B: second 3D stack to bealigned
+ *   B: second 3D stack to be aligned
  *   dimk: number of slices of the two stacks
  *   dimi: number of rows of each slice
  *   dimj: number of columns of each slice

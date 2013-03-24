@@ -140,9 +140,9 @@ StackedVolume::~StackedVolume()
 float	StackedVolume::getORG_V()					{return ORG_V;}
 float	StackedVolume::getORG_H()					{return ORG_H;}
 float	StackedVolume::getORG_D()					{return ORG_D;}
-int		StackedVolume::getABS_V(int ABS_PIXEL_V)	{return (int)ROUND( ORG_V * 1000 + ABS_PIXEL_V*this->getVXL_V());}
-int		StackedVolume::getABS_H(int ABS_PIXEL_H)	{return (int)ROUND( ORG_H * 1000 + ABS_PIXEL_H*this->getVXL_H());}
-int		StackedVolume::getABS_D(int ABS_PIXEL_D)	{return (int)ROUND( ORG_D * 1000 + ABS_PIXEL_D*this->getVXL_D());}
+float	StackedVolume::getABS_V(int ABS_PIXEL_V)	{return ORG_V * 1000 + ABS_PIXEL_V*this->getVXL_V();}	//Alessandro - 23/03/2013: removed conversion from int to float
+float	StackedVolume::getABS_H(int ABS_PIXEL_H)	{return ORG_H * 1000 + ABS_PIXEL_H*this->getVXL_H();}	//Alessandro - 23/03/2013: removed conversion from int to float
+float	StackedVolume::getABS_D(int ABS_PIXEL_D)	{return ORG_D * 1000 + ABS_PIXEL_D*this->getVXL_D();}	//Alessandro - 23/03/2013: removed conversion from int to float
 float	StackedVolume::getVXL_V()					{return VXL_V;}
 float	StackedVolume::getVXL_H()					{return VXL_H;}
 float	StackedVolume::getVXL_D()					{return VXL_D;}
@@ -973,7 +973,8 @@ bool StackedVolume::fileExists(const char *filepath)  throw (MyException)
 void StackedVolume::countDisplacements(int& total, float& per_stack_pair)
 {
     /* PRECONDITIONS: none */
-    total = per_stack_pair = 0;
+    total = 0;
+	per_stack_pair = 0.0f;
     for(int i=0; i<N_ROWS; i++)
         for(int j=0; j<N_COLS; j++)
         {

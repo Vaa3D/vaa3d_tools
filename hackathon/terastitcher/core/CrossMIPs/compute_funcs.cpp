@@ -14,7 +14,7 @@
 *    2. You agree to appropriately cite this work in your related studies and publications.
 *
 *       Bria, A., et al., (2012) "Stitching Terabyte-sized 3D Images Acquired in Confocal Ultramicroscopy", Proceedings of the 9th IEEE International Symposium on Biomedical Imaging.
-*       Bria, A., Iannello, G., "A Tool for Fast 3D Automatic Stitching of Teravoxel-sized Datasets", submitted on July 2012 to IEEE Transactions on Information Technology in Biomedicine.
+*       Bria, A., Iannello, G., "TeraStitcher - A Tool for Fast 3D Automatic Stitching of Teravoxel-sized Microscopy Images", submitted for publication, 2012.
 *
 *    3. This material is provided by  the copyright holders (Alessandro Bria  and  Giulio Iannello),  University Campus Bio-Medico and contributors "as is" and any express or implied war-
 *       ranties, including, but  not limited to,  any implied warranties  of merchantability,  non-infringement, or fitness for a particular purpose are  disclaimed. In no event shall the
@@ -555,7 +555,7 @@ int compute_MAX_ind ( real_t *vect, int len ) {
 
 
 void compute_Neighborhood ( NCC_parms_t *NCC_params, real_t *NCC, int delayu, int delayv, int ind_max, 
-						   real_t *MIP_1, real_t *MIP_2, int dimu, int dimv, real_t *NCCnew, int &du, int &dv, bool &failed) {
+						   real_t *MIP_1, real_t *MIP_2, int dimu, int dimv, real_t *NCCnew, int &du, int &dv, bool &failed) throw (MyException){
 
 	// suffixes u and v denote the vertical and the horizontal dimensions, respectively
 	// suffix i denotes linear indices
@@ -597,6 +597,8 @@ void compute_Neighborhood ( NCC_parms_t *NCC_params, real_t *NCC, int delayu, in
 	initu = MIN(MAX(0,ind_max/(2*delayv+1) - newu),2*(delayu - newu));
 	initv = MIN(MAX(0,ind_max%(2*delayv+1) - newv),2*(delayv - newv));
 	initi = initu * (2*delayv+1) + initv;
+	if(initi < 0)
+		throw MyException("CrossMIPs: negative index detected (initi)"); // Alessandro - 23/03/2013 - throw exception if initi is negative
 	for ( u=0, i=0, d=0; u<(2*newu+1); u++, d+=2*(delayv-newv) ) // when row changes 2*(delayv-newv) values have to be skipped
 		for ( v=0; v<(2*newv+1); v++ , i++)
 			NCCnew[i] = NCC[i + initi + d];
@@ -668,7 +670,7 @@ void compute_Neighborhood ( NCC_parms_t *NCC_params, real_t *NCC, int delayu, in
 		}
 		// CHECK, MUST BE: n_miss == ((2*newu+1)*(2*newv+1) - ((2*newu+1)-abs(deltau))*((2*newv+1)-abs(deltav)))
 		if ( n_miss != ((2*newu+1)*(2*newv+1) - ((2*newu+1)-abs(deltau))*((2*newv+1)-abs(deltav))) )
-			DISPLAY_ERROR("incomplete NCC map in compute_Neighborhood");
+			throw MyException("CrossMIPs: incomplete NCC map in compute_Neighborhood");
 
 		// compute missing NCCs
 		for ( i=0; i<n_miss; i++ ) {

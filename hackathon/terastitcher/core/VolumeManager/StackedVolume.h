@@ -88,9 +88,9 @@ class StackedVolume
 		float	 getORG_V();
 		float	 getORG_H();
 		float	 getORG_D();
-		int		 getABS_V(int ABS_PIXEL_V);
-		int		 getABS_H(int ABS_PIXEL_H);
-		int		 getABS_D(int ABS_PIXEL_D);
+		float	 getABS_V(int ABS_PIXEL_V);
+		float	 getABS_H(int ABS_PIXEL_H);
+		float	 getABS_D(int ABS_PIXEL_D);
 		float	 getVXL_V();
 		float	 getVXL_H();
 		float	 getVXL_D();

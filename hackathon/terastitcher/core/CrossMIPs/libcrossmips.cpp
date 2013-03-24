@@ -14,7 +14,7 @@
 *    2. You agree to appropriately cite this work in your related studies and publications.
 *
 *       Bria, A., et al., (2012) "Stitching Terabyte-sized 3D Images Acquired in Confocal Ultramicroscopy", Proceedings of the 9th IEEE International Symposium on Biomedical Imaging.
-*       Bria, A., Iannello, G., "A Tool for Fast 3D Automatic Stitching of Teravoxel-sized Datasets", submitted on July 2012 to IEEE Transactions on Information Technology in Biomedicine.
+*       Bria, A., Iannello, G., "TeraStitcher - A Tool for Fast 3D Automatic Stitching of Teravoxel-sized Microscopy Images", submitted for publication, 2012.
 *
 *    3. This material is provided by  the copyright holders (Alessandro Bria  and  Giulio Iannello),  University Campus Bio-Medico and contributors "as is" and any express or implied war-
 *       ranties, including, but  not limited to,  any implied warranties  of merchantability,  non-infringement, or fitness for a particular purpose are  disclaimed. In no event shall the
@@ -64,7 +64,7 @@ bool write_3D_stack ( char *fname, real_t *stck, int dimi, int dimj, int dimk );
 
 NCC_descr_t *norm_cross_corr_mips ( real_t *A, real_t *B,
 						    int dimk, int dimi, int dimj, int nk, int ni, int nj,
-							int delayk, int delayi, int delayj, int side, NCC_parms_t *NCC_params ) {
+							int delayk, int delayi, int delayj, int side, NCC_parms_t *NCC_params ) throw (MyException){
 #if CM_VERBOSE > 1
 	printf("\nin libcrossmips::norm_cross_corr_mips(A[%.6f-%.6f], B[%.6f-%.6f], dimk[%d], dimi[%d], dimj[%d], nk[%d], ni[%d], nj[%d], delayk[%d], delayi[%d], delayj[%d], side[%d]\n",
 		A[0], A[(dimk-1)*dimj*dimi + (dimi-1)*dimj + dimj -1], B[0], B[(dimk-1)*dimj*dimi + (dimi-1)*dimj + dimj -1], dimk, dimi, dimj, nk, ni, nj, delayk, delayi, delayj, side );
@@ -107,7 +107,7 @@ NCC_descr_t *norm_cross_corr_mips ( real_t *A, real_t *B,
 		 * means that:
 		 * - 10% of pixels with lower values are set to 0 (first transformation maps pixels from c[0]=0.0 to c[1]=0.0
 		 * - 10% of pixels with higher values are set to 1 (third transformation maps pixels from c[2]=1.0 to c[3]=1.0
-		 * - 80% of pixels with intemetiate values are mapped to the interval [0,1] (second transformation maps pixels
+		 * - 80% of pixels with intermetiate values are mapped to the interval [0,1] (second transformation maps pixels
 		 *   from c[1]=0.0 to c[2]01.0
 		 */
 
@@ -140,12 +140,36 @@ NCC_descr_t *norm_cross_corr_mips ( real_t *A, real_t *B,
 		}
 	}
 
-	if ( NCC_params->wRangeThr > 2*MAX(delayi,MAX(delayj,delayk))+1 )
+	// Alessandro - 23/03/2013 - this is the old check, but is seems wrong and it does not throw any exception. The WARNING written into
+	// CrossMIPs.h says: "moreover controlling parameter wRangeThr is supposed to be not greater than MAX(delayi,delayj,delayk)"
+	//if ( NCC_params->wRangeThr > 2*MAX(delayi,MAX(delayj,delayk))+1 )
+	//{
+	//	char err_msg[500];
+	//	sprintf(err_msg, "parameter wRangeThr[=%d] is too large with respect to 2*delayi/j/k +1 [=%d]", NCC_params->wRangeThr, 2*MAX(delayi,MAX(delayj,delayk))+1);
+	//	DISPLAY_ERROR(err_msg);
+	//}
+	
+	// Alessandro - 23/03/2013 - the right check
+	if ( NCC_params->wRangeThr > MAX(delayi,MAX(delayj,delayk)))
 	{
-		char err_msg[500];
-		sprintf(err_msg, "parameter wRangeThr[=%d] is too large with respect to 2*delayi/j/k +1 [=%d]", NCC_params->wRangeThr, 2*MAX(delayi,MAX(delayj,delayk))+1);
-		DISPLAY_ERROR(err_msg);
+		// Alessandro - 23/03/2013 - at the moment it is better not to throw any exception
+		//char err_msg[1000];
+		//sprintf(err_msg, "CrossMIPs: parameter wRangeThr[=%d] is too large with respect to MAX(delayi/j/k) [=%d]", NCC_params->wRangeThr, MAX(delayi,MAX(delayj,delayk)));
+		//throw MyException(err_msg);
+		
+		// Alessandro - 23/03/2013 - parameters are automatically corrected
+		delayi = MAX(delayi, NCC_params->wRangeThr);
+		delayj = MAX(delayj, NCC_params->wRangeThr);
+		delayk = MAX(delayk, NCC_params->wRangeThr);
 	}
+
+	// Alessandro - 23/03/2013 - added check to verify precondition written into CrossMIPs.h that says:
+	// "in practice the dimensions of the MIPS (depending on dimi, dimj, dimk, ni, nj, nk) have to be large enough with respect to delayi, delayj, delayk"
+	if(side == NORTH_SOUTH && (dimi - ni < 2*delayi+1) || (dimj - nj < 2*delayj+1) || (dimk - nk < 2*delayk+1))
+		throw MyException("CrossMIPs: the search region is bigger than the overlapping region");
+	if(side == WEST_EAST && (dimj - nj < 2*delayi+1) || (dimi - ni < 2*delayj+1) || (dimk - nk < 2*delayk+1))
+		throw MyException("CrossMIPs: the search region is bigger than the overlapping region");
+
 
 	/*
 	 *  il seguente codice assume che:
@@ -181,7 +205,7 @@ NCC_descr_t *norm_cross_corr_mips ( real_t *A, real_t *B,
 		A1 = A + stridei; // a partial row of pixels of volume A have to be skipped
 	}
 	else
-		DISPLAY_ERROR("unexpected alignmnt configuration");
+		throw MyException("CrossMIPs: unexpected alignment configuration");
 
 	// alloca le 6 immagini per i MIP
 	MIP_xy1 = new real_t[dimi_v*dimj_v];
@@ -314,7 +338,7 @@ NCC_descr_t *norm_cross_corr_mips ( real_t *A, real_t *B,
 	else if ( side == WEST_EAST ) 
 		result->coord[1] += nj;
 	else
-		DISPLAY_ERROR("unexpected alignmnt configuration");
+		throw MyException("CrossMIPs: unexpected alignment configuration");
 
 	if ( allocated ) {
 		delete NCC_params->percents;
