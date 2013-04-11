@@ -53,12 +53,24 @@ class teramanager::PMain : public QWidget
         PMain(V3DPluginCallback2 *callback, QWidget *parent);
 
         //members
-        V3DPluginCallback2* V3D_env;     //handle of V3D environment
-        QWidget *parentWidget;           //handle of parent widget
+        V3DPluginCallback2* V3D_env;    //handle of V3D environment
+        QWidget *parentWidget;          //handle of parent widget
+
+        //menu widgets
+        QMenuBar* menuBar;              //Menu bar
+        QMenu* fileMenu;                //"File" menu
+        QAction* openVolumeAction;      //"Open volume" menu action
+        QAction* closeVolumeAction;     //"Close volume" menu action
+        QAction* exitAction;            //"Exit" menu action
+
+        QMenu* optionsMenu;             //"Options" menu
+        QMenu* importOptionsMenu;       //"Import" menu
+        QWidgetAction* importOptionsWidget;
+        QMenu* helpMenu;                //"Help" menu
+        QAction* aboutAction;           //"About" menu action
 
         //import form widgets
-        QGroupBox* import_form;         //import form containing input fields
-        QPushButton *voldir_button;     //browse for volume's directory button
+        QWidget* import_form;         //import form containing input fields
         QCheckBox *reimport_checkbox;   //checkbox to be used to reimport a volume already imported
         QCheckBox *enableMultiresMode;  //checkbox to be used to generate and show a 3D volume map
         QWidget* volMapWidget;          //widget containing volume map options
@@ -161,6 +173,9 @@ class teramanager::PMain : public QWidget
         //resets progress bar, start/stop buttons and tab bar
         void resetGUI();
 
+        //reset everything
+        void reset();
+
         //overrides closeEvent method of QWidget
         void closeEvent(QCloseEvent *evt);
 
@@ -176,10 +191,26 @@ class teramanager::PMain : public QWidget
         void mode3D_checkbox_changed(int);
 
         /**********************************************************************************
-        * Called when "voldir_button" has been clicked.
+        * Called when "Open volume" menu action is triggered.
         * Opens QFileDialog to select volume's path, which is copied into "path_field".
         ***********************************************************************************/
-        void voldir_button_clicked();
+        void openVolume();
+
+        /**********************************************************************************
+        * Called when "Close volume" menu action is triggered.
+        * All the memory allocated is released and GUI is reset".
+        ***********************************************************************************/
+        void closeVolume();
+
+        /**********************************************************************************
+        * Called when "Exit" menu action is triggered or TeraFly window is closed.
+        ***********************************************************************************/
+        void exit();
+
+        /**********************************************************************************
+        * Called when "Help->About" menu action is triggered
+        ***********************************************************************************/
+        void about();
 
         /**********************************************************************************
         * Called when "loadButton" has been clicked.
@@ -193,7 +224,7 @@ class teramanager::PMain : public QWidget
         * aged in the current thread (ex != 0). Otherwise, volume information are imported
         * in the GUI by the <StackedVolume> handle of <CImport>.
         ***********************************************************************************/
-        void import_done(MyException *ex, Image4DSimple* vmap_image=0);
+        void importDone(MyException *ex, Image4DSimple* vmap_image=0);
 
         /**********************************************************************************
         * Called by <CLoadSubvolume> when the associated operation has been performed.

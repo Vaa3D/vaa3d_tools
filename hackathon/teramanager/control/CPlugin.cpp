@@ -47,8 +47,7 @@ QStringList CPlugin::menulist() const
 {
         return QStringList()
                 <<tr("TeraFly")
-                <<tr("TeraConverter")
-                <<tr("About and help");
+                <<tr("TeraConverter");
 }
 
 // 3 - Set up the function list in plugin dofunc
@@ -84,7 +83,7 @@ void CPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWi
         }
 
         //launching plugin's GUI
-        PMain::instance(&callback, parent);
+        PMain::instance(&callback, 0);
         PMain::instance()->show();
         PMain::instance()->move(QApplication::desktop()->screen()->rect().center() - PMain::instance()->rect().center());
         PMain::instance()->raise();
@@ -121,28 +120,6 @@ void CPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWi
     }
     else
     {
-        QMessageBox msgBox;
-        QSpacerItem* horizontalSpacer = new QSpacerItem(800, 0, QSizePolicy::Minimum, QSizePolicy::Expanding);
-        msgBox.setText( "<html><h1>TeraManager plugin v. 0.5</h1>"
-                        "<big>An experimental tool designed for Teravoxel-sized datasets visualization into Vaa3D.</big><br><br>"
-                        "<u>Developed by:</u><ul>"
-                        "<li><b>Alessandro Bria</b> (email: a.bria@unicas.it)<br>"
-                               "Ph.D. Student at University of Cassino</li>"
-                        "<li><b>Giulio Iannello</b> (email: g.iannello@unicampus.it)<br>"
-                               "Full Professor at University Campus Bio-Medico of Rome</li></ul><br>"
-                        "<u>Features:</u><ul>"
-                        "<li>user can select a subvolume to be shown into Vaa3D</li>"
-                        "<li>low memory requirements (< 1 GB) for multi-stacked datasets</li></ul><br>"
-                        "<u>Supported input formats:</u><ul>"
-                        "<li>two-level directory structure with each tile containing a series of image slices (see documentation for further information)</li>"
-                        "<li>supported formats for image slices are BMP, DIB, JPEG, JPG, JPE, PNG, PBM, PGM, PPM, SR, RAS, TIFF, TIF</li>"
-                        "<li>no restriction on the bit depth</li>"
-                        "<li>no restriction on the number of channels</li></ul></html>" );
-
-        QGridLayout* layout = (QGridLayout*)msgBox.layout();
-        layout->addItem(horizontalSpacer, layout->rowCount(), 0, 1, layout->columnCount());
-        msgBox.exec();
-
         return;
     }
 }

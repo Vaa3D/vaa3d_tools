@@ -47,6 +47,10 @@ PMain* PMain::instance(V3DPluginCallback2 *callback, QWidget *parent)
 }
 void PMain::uninstance()
 {
+    #ifdef TMP_DEBUG
+    printf("--------------------- teramanager plugin [thread unknown] >> PMain uninstance\n");
+    #endif
+
     CImport::uninstance();
     PDialogImport::uninstance();
     CVolume::uninstance();
@@ -54,10 +58,15 @@ void PMain::uninstance()
     CSettings::uninstance();
     CAnnotations::uninstance();
     if(uniqueInstance)
-    {
         delete uniqueInstance;
-        uniqueInstance = NULL;
-    }
+    uniqueInstance = 0;
+}
+
+PMain::~PMain()
+{
+    #ifdef TMP_DEBUG
+    printf("--------------------- teramanager plugin [thread %d] >> PMain destroyed\n", this->thread()->currentThreadId());
+    #endif
 }
 
 PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
@@ -77,8 +86,7 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     smallFont.setPointSize(11);
 
     //import form widgets
-    import_form = new QGroupBox("Import volume");
-    voldir_button       = new QPushButton("Browse for dir...");
+    import_form = new QWidget();
     reimport_checkbox = new QCheckBox("Re-import");
     enableMultiresMode = new QCheckBox("Enable multiresolution mode");
     enableMultiresMode->setChecked(true);
@@ -91,9 +99,35 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     volMapMaxSizeSBox->setValue(CSettings::instance()->getVolMapSizeLimit());
     volMapMaxSizeSBox->setAlignment(Qt::AlignCenter);
 
+    //initializing menu
+    menuBar = new QMenuBar(this);
+    fileMenu = menuBar->addMenu("File");
+    openVolumeAction = new QAction("Open volume", this);
+    closeVolumeAction = new QAction("Close volume", this);
+    exitAction = new QAction("Exit", this);
+    openVolumeAction->setShortcuts(QKeySequence::Open);
+    closeVolumeAction->setShortcuts(QKeySequence::Close);
+    exitAction->setShortcuts(QKeySequence::Quit);
+    connect(openVolumeAction, SIGNAL(triggered()), this, SLOT(openVolume()));
+    connect(closeVolumeAction, SIGNAL(triggered()), this, SLOT(closeVolume()));
+    connect(exitAction, SIGNAL(triggered()), this, SLOT(exit()));
+    fileMenu->addAction(openVolumeAction);
+    fileMenu->addAction(closeVolumeAction);
+    fileMenu->addAction(exitAction);
+
+    optionsMenu = menuBar->addMenu("Options");
+    importOptionsMenu = optionsMenu->addMenu("Import");
+    importOptionsWidget = new QWidgetAction(this);
+    importOptionsWidget->setDefaultWidget(import_form);
+    importOptionsMenu->addAction(importOptionsWidget);
+
+    helpMenu = menuBar->addMenu("Help");
+    aboutAction = new QAction("About", this);
+    connect(aboutAction, SIGNAL(triggered()), this, SLOT(about()));
+    helpMenu->addAction(aboutAction);
+
     //multiresolution mode widgets
     multires_panel = new QGroupBox("Multiresolution mode");
-    multires_panel->setEnabled(false);
     subvol_dims_label = new QLabel("Zoom-in VOI dimensions:");
     Vdim_sbox = new QSpinBox();
     Vdim_sbox->setAlignment(Qt::AlignCenter);
@@ -121,7 +155,6 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
 
     //info panel widgets
     info_panel = new QGroupBox("Volume's informations");
-    info_panel->setEnabled(false);
     volume_dims_label = new QLabel("Dimensions (voxels)");
     direction_V_label_0 = new QLabel("(Y)");
     direction_H_label_0 = new QLabel("(X)");
@@ -207,7 +240,6 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
 
     //subvol panel widgets
     subvol_panel = new QGroupBox("VOI's selection from the highest resolution volume:");
-    subvol_panel->setEnabled(false);
     V0_sbox = new QSpinBox();
     V0_sbox->setAlignment(Qt::AlignCenter);
     V1_sbox = new QSpinBox();
@@ -237,7 +269,6 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     //other widgets
     progressBar = new QProgressBar(this);
     statusBar = new QStatusBar();
-    statusBar->showMessage("Ready.");
 
     //****LAYOUT SECTIONS****
     //import form
@@ -250,14 +281,14 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     volMapSizeRow->addWidget(new QLabel("MVoxels volume map size limit"));
     QVBoxLayout* volMapWidgetLayout = new QVBoxLayout();
     volMapWidgetLayout->addLayout(volMapSizeRow);
-    volMapWidgetLayout->addWidget(regenerateVolMap);
+    //volMapWidgetLayout->addWidget(regenerateVolMap);
     volMapWidgetLayout->setMargin(0);
     volMapWidget->setLayout(volMapWidgetLayout);
     volMapWidget->setContentsMargins(20,0,0,0);
     import_form_layout->addWidget(volMapWidget);
-    import_form_layout->addWidget(voldir_button);
+    import_form_layout->addWidget(regenerateVolMap);
     import_form->setLayout(import_form_layout);
-    import_form->setStyle(new QWindowsStyle());
+
 
     //info panel
     QGridLayout* info_panel_layout = new QGridLayout();
@@ -343,7 +374,7 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
 
     //overall
     QVBoxLayout* layout = new QVBoxLayout();
-    layout->addWidget(import_form);
+    layout->addWidget(menuBar);
     layout->addWidget(info_panel);
     layout->addWidget(multires_panel);
     layout->addWidget(subvol_panel);
@@ -355,9 +386,8 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     subvol_panel->setEnabled(false);
 
     // signals and slots
-    connect(voldir_button, SIGNAL(clicked()), this, SLOT(voldir_button_clicked()));
     connect(loadButton, SIGNAL(clicked()), this, SLOT(loadButtonClicked()));
-    connect(CImport::instance(), SIGNAL(sendOperationOutcome(MyException*, Image4DSimple*)), this, SLOT(import_done(MyException*, Image4DSimple*)), Qt::QueuedConnection);
+    connect(CImport::instance(), SIGNAL(sendOperationOutcome(MyException*, Image4DSimple*)), this, SLOT(importDone(MyException*, Image4DSimple*)), Qt::QueuedConnection);
     connect(CVolume::instance(), SIGNAL(sendOperationOutcome(MyException*,void*)), SLOT(loadingDone(MyException*,void*)), Qt::QueuedConnection);
     connect(enableMultiresMode, SIGNAL(stateChanged(int)), this, SLOT(mode3D_checkbox_changed(int)), Qt::QueuedConnection);
     connect(volMapMaxSizeSBox, SIGNAL(valueChanged(int)), this, SLOT(settingsChanged(int)), Qt::QueuedConnection);
@@ -380,14 +410,63 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     this->setWindowFlags(Qt::WindowStaysOnTopHint);
     this->setMaximumSize(this->minimumWidth(), this->minimumHeight());
     this->setFocusPolicy(Qt::StrongFocus);
+
+    //reset widgets
+    reset();
 }
 
-PMain::~PMain()
+//reset everything
+void PMain::reset()
 {
-    #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread %d] >> PMain destroyed\n", this->thread()->currentThreadId());
-    #endif
+    //resetting menu options and widgets
+    openVolumeAction->setEnabled(true);
+    closeVolumeAction->setEnabled(false);
+    importOptionsMenu->setEnabled(true);
+    importOptionsWidget->setEnabled(true);
+    aboutAction->setEnabled(true);
+
+    //reseting info panel widgets
+    info_panel->setEnabled(false);
+    vol_height_field->setText("n.a.");
+    vol_width_field->setText("n.a.");
+    vol_depth_field->setText("n.a.");
+    nrows_field->setText("n.a.");
+    ncols_field->setText("n.a.");
+    stack_height_field->setText("n.a.");
+    stack_width_field->setText("n.a.");
+    stack_depth_field->setText("n.a.");
+    vxl_V_field->setText("n.a.");
+    vxl_H_field->setText("n.a.");
+    vxl_D_field->setText("n.a.");
+    org_V_field->setText("n.a.");
+    org_H_field->setText("n.a.");
+    org_D_field->setText("n.a.");
+
+    //resetting multiresolution mode widgets
+    multires_panel->setEnabled(false);
+    Vdim_sbox->setValue(CSettings::instance()->getVOIdimV());
+    Hdim_sbox->setValue(CSettings::instance()->getVOIdimH());
+    Ddim_sbox->setValue(CSettings::instance()->getVOIdimD());
+    zoominVoiSize->setText("n.a.");
+    for(int i=0; i<resolution_cbox->count(); i++)
+        resolution_cbox->removeItem(i);
+
+    //resetting subvol panel widgets
+    subvol_panel->setEnabled(false);
+    V0_sbox->setValue(0);
+    V1_sbox->setValue(0);
+    H0_sbox->setValue(0);
+    H1_sbox->setValue(0);
+    D0_sbox->setValue(0);
+    D1_sbox->setValue(0);
+
+    //resetting progress bar and text
+    progressBar->setEnabled(false);
+    progressBar->setMaximum(1);         //needed to stop animation on some operating systems
+    statusBar->clearMessage();
+    statusBar->showMessage("Ready.");
 }
+
 
 //reset GUI method
 void PMain::resetGUI()
@@ -397,6 +476,7 @@ void PMain::resetGUI()
     statusBar->clearMessage();
     statusBar->showMessage("Ready.");
 }
+
 
 //Called when "enable3Dmode" state changed.
 void PMain::mode3D_checkbox_changed(int)
@@ -443,13 +523,13 @@ void PMain::loadButtonClicked()
 }
 
 /**********************************************************************************
-* Called when "voldir_button" has been clicked.
+* Called when "Open volume" menu action is triggered.
 * Opens QFileDialog to select volume's path, which is copied into "path_field".
 ***********************************************************************************/
-void PMain::voldir_button_clicked()
+void PMain::openVolume()
 {
     #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread %d] >> PMain voldir_button_clicked() launched\n", this->thread()->currentThreadId());
+    printf("--------------------- teramanager plugin [thread %d] >> PMain openVolume() launched\n", this->thread()->currentThreadId());
     #endif
 
     try
@@ -500,6 +580,71 @@ void PMain::voldir_button_clicked()
     }
 }
 
+/**********************************************************************************
+* Called when "Close volume" menu action is triggered.
+* All the memory allocated is released and GUI is reset".
+***********************************************************************************/
+void PMain::closeVolume()
+{
+    #ifdef TMP_DEBUG
+    printf("--------------------- teramanager plugin [thread %d] >> PMain closeVolume() launched\n", this->thread()->currentThreadId());
+    #endif
+
+    CImport::instance()->reset();
+    CVolume::instance()->reset();
+
+    PDialogImport::uninstance();
+    CExplorerWindow::uninstance();
+    CAnnotations::uninstance();
+    reset();
+}
+
+/**********************************************************************************
+* Called when "Exit" menu action is triggered or TeraFly window is closed.
+***********************************************************************************/
+void PMain::exit()
+{
+    #ifdef TMP_DEBUG
+    printf("--------------------- teramanager plugin [thread %d] >> PMain exit() launched\n", this->thread()->currentThreadId());
+    #endif
+
+    this->close();
+}
+
+/**********************************************************************************
+* Called when "Help->About" menu action is triggered
+***********************************************************************************/
+void PMain::about()
+{
+    #ifdef TMP_DEBUG
+    printf("--------------------- teramanager plugin [thread %d] >> PMain about() launched\n", this->thread()->currentThreadId());
+    #endif
+
+    QMessageBox* msgBox = new QMessageBox(this);
+    QSpacerItem* horizontalSpacer = new QSpacerItem(800, 0, QSizePolicy::Minimum, QSizePolicy::Expanding);
+    msgBox->setText( QString("<html><h1>TeraFly plugin v. ").append(CPlugin::getMajorVersion().c_str()).append("</h1>"
+                    "<big>An experimental tool designed for Teravoxel-sized datasets 3D navigation into Vaa3D.</big><br><br>"
+                    "<u>Developed by:</u><ul>"
+                    "<li><b>Alessandro Bria</b> (email: a.bria@unicas.it)<br>"
+                           "Ph.D. Student at University of Cassino</li>"
+                    "<li><b>Giulio Iannello</b> (email: g.iannello@unicampus.it)<br>"
+                           "Full Professor at University Campus Bio-Medico of Rome</li></ul><br>"
+                    "<u>Features:</u><ul>"
+                    "<li>user can select a subvolume to be shown into Vaa3D</li>"
+                    "<li>low memory requirements (2 GB) for multi-stacked datasets</li></ul><br>"
+                    "<u>Supported input formats:</u><ul>"
+                    "<li>two-level directory structure with each tile containing a series of image slices (see documentation for further information)</li>"
+                    "<li>supported formats for image slices are BMP, DIB, JPEG, JPG, JPE, PNG, PBM, PGM, PPM, SR, RAS, TIFF, TIF</li>"
+                    "<li>no restriction on the bit depth</li>"
+                    "<li>no restriction on the number of channels</li></ul></html>" ));
+
+    QGridLayout* layout = (QGridLayout*)msgBox->layout();
+    layout->addItem(horizontalSpacer, layout->rowCount(), 0, 1, layout->columnCount());
+//    msgBox->setWindowFlags(Qt::WindowStaysOnTopHint);
+//    msgBox->setFocusPolicy(Qt::StrongFocus);
+    msgBox->exec();
+}
+
 
 /*********************************************************************************
 * Called by <CImport> when the associated operation has been performed.
@@ -507,7 +652,7 @@ void PMain::voldir_button_clicked()
 * aged in the current thread (ex != 0). Otherwise, volume information are imported
 * in the GUI by the <StackedVolume> handle of <CImport>.
 **********************************************************************************/
-void PMain::import_done(MyException *ex, Image4DSimple* vmap_image)
+void PMain::importDone(MyException *ex, Image4DSimple* vmap_image)
 {
     #ifdef TMP_DEBUG
     printf("--------------------- teramanager plugin [thread %d] >> PMain import_done(%s) launched\n", this->thread()->currentThreadId(), (ex? "ex" : "NULL"));
@@ -562,6 +707,11 @@ void PMain::import_done(MyException *ex, Image4DSimple* vmap_image)
         subvol_panel->setEnabled(true);
         loadButton->setEnabled(true);
         highestVOISizeChanged(0);
+
+        //updating menu items
+        openVolumeAction->setEnabled(false);
+        importOptionsMenu->setEnabled(false);
+        closeVolumeAction->setEnabled(true);
 
         //if multiresulution mode is enabled
         if(enableMultiresMode->isChecked())
@@ -639,15 +789,22 @@ void PMain::loadingDone(MyException *ex, void* sourceObject)
 //overrides closeEvent method of QWidget
 void PMain::closeEvent(QCloseEvent *evt)
 {
-    if(progressBar->isEnabled() && QMessageBox::information(this, "Warning", "An operation is still in progress. Terminating it can be unsafe and cause Vaa3D to crash. \n"
-                                                                    "\nPlease save your data first.", "Close TeraManager plugin", "Cancel"))
+    #ifdef TMP_DEBUG
+    printf("--------------------- teramanager plugin [thread %d] >> PMain closeEvent() launched\n", this->thread()->currentThreadId());
+    #endif
+
+    if(evt)
     {
-        evt->ignore();
-    }
-    else
-    {
-        evt->accept();
-        PMain::uninstance();
+        if(progressBar->isEnabled() && QMessageBox::information(this, "Warning", "An operation is still in progress. Terminating it can be unsafe and cause Vaa3D to crash. \n"
+                                                                        "\nPlease save your data first.", "Close TeraFly plugin", "Cancel"))
+        {
+            evt->ignore();
+        }
+        else
+        {
+            evt->accept();
+            PMain::uninstance();
+        }
     }
 }
 

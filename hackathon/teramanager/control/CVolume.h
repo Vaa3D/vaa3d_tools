@@ -51,10 +51,7 @@ class teramanager::CVolume : public QThread
             printf("--------------------- teramanager plugin [thread %d] >> CVolume created\n", this->thread()->currentThreadId());
             #endif
 
-            voiResIndex = -1;
-            voiData = 0;
-            voiV0 = voiV1 = voiH0 = voiH1 = voiD0 = voiD1 = -1;
-            sourceObject = 0;
+            reset();
         }
 
         //automatically called when current thread is started
@@ -85,6 +82,13 @@ class teramanager::CVolume : public QThread
         //GET and SET methods
         uint8* getVoiData(){return voiData;}
         void resetVoiData(){voiData = 0;}
+        void reset()
+        {
+            voiResIndex = -1;
+            voiData = 0;
+            voiV0 = voiV1 = voiH0 = voiH1 = voiD0 = voiD1 = nchannels = -1;
+            sourceObject = 0;
+        }
         int getVoiV0(){return voiV0;}
         int getVoiV1(){return voiV1;}
         int getVoiH0(){return voiH0;}

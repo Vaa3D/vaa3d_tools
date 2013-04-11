@@ -190,9 +190,9 @@ void CImport::run()
                     volMapWidth  = volumes[volMapIndex]->getDIM_H();
                     volMapDepth  = volumes[volMapIndex]->getDIM_D();
                     FILE *volMapBin = fopen(volMapPath.c_str(), "wb");
-                    uint16 verstr_size = static_cast<uint16>(strlen(CPlugin::getVersion().c_str()) + 1);
+                    uint16 verstr_size = static_cast<uint16>(strlen(CPlugin::getMajorVersion().c_str()) + 1);
                     fwrite(&verstr_size, sizeof(uint16), 1, volMapBin);
-                    fwrite(CPlugin::getVersion().c_str(), verstr_size, 1, volMapBin);
+                    fwrite(CPlugin::getMajorVersion().c_str(), verstr_size, 1, volMapBin);
                     fwrite(&nchannels, sizeof(int), 1, volMapBin);
                     fwrite(&volMapHeight, sizeof(uint32), 1, volMapBin);
                     fwrite(&volMapWidth,  sizeof(uint32), 1, volMapBin);
@@ -223,10 +223,10 @@ void CImport::run()
             fread_return_val = fread(version, verstr_size, 1, volMapBin);
             if(fread_return_val != 1)
                 throw MyException("Unable to read volume map file (<version> field). It must be regenerated.");
-            if(strcmp(version, CPlugin::getVersion().c_str()))
+            if(strcmp(version, CPlugin::getMajorVersion().c_str()))
                 throw MyException(QString("Volume map file was generated with a plugin version"
                                   " (").append(version).append(") older than the current one "
-                                  "(").append(CPlugin::getVersion().c_str()).append("). It must be regenerated").toStdString().c_str());
+                                  "(").append(CPlugin::getMajorVersion().c_str()).append("). It must be regenerated").toStdString().c_str());
             delete[] version;
 
             //loading metadata and data

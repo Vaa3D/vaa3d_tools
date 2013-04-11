@@ -4,12 +4,28 @@ Version history of TeraManager
 Below you find a list with the added  features, changes and fixes  for each version. Activi-
 ties names are:
 - New: a new feature to be implemented
+- Fix: bug fixed
 - Bug: bug to be fixed
 - Dev: for developers only
 - Opt: optimization
 - Rem: a feature no longer available
 
 ============================================================================================
+Version 0.7.1
+April 10th, 2013
+--------------------------------------------------------------------------------------------
+- New: "Help->About" section added.
+- Fix: close button of 3D window triggers the "File->Close volume" operation. Previusly,  it
+       caused the tool to close or crash.
+- Opt: volume import options have been moved to "Options->Import" menu.
+- New: "File->Close volume" entry added. Now the user can  close the current  volume without
+       closing the application.
+- New: "File->Open volume" entry added and "Browse for dir..." button removed.
+- New: top menu bar added with entries "File",  "Options" and "Help". Added  a  "File->Exit"
+       entry to let the user close the application.
+--------------------------------------------------------------------------------------------
+
+
 Version 0.7
 January 30th, 2013
 --------------------------------------------------------------------------------------------

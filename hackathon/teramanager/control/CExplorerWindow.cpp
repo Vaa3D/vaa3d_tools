@@ -255,18 +255,10 @@ bool CExplorerWindow::eventFilter(QObject *object, QEvent *event)
         Close events are intercepted to switch to  the lower resolution,  if avail-
         able. Otherwise, the plugin is closed.
         ***************************************************************************/
-        else if(object == view3DWidget && event->type()==QEvent::Close)
+        else if(object == window3D && event->type()==QEvent::Close)
         {
-            if(prev                        &&                   //the previous resolution exists
-               !toBeClosed)                                     //the current resolution does not have to be closed)
-            {
-                event->ignore();
-                toBeClosed = true;
-                prev->restore();
-                return true;
-            }
-            else if(!prev)
-                PMain::instance()->close();
+            if(!toBeClosed)
+                PMain::instance()->closeVolume();
         }
         /**************** INTERCEPTING MOVING/RESIZING EVENTS *********************
         Window moving and resizing events  are intercepted  to let PMain's position
@@ -378,7 +370,7 @@ void CExplorerWindow::switchToHigherRes(int x, int y, int z, int dx, int dy, int
     pMain.progressBar->setMinimum(0);
     pMain.progressBar->setMaximum(0);
     pMain.loadButton->setEnabled(false);
-    pMain.import_form->setEnabled(false);
+    //pMain.import_form->setEnabled(false);
     if(CImport::instance()->getVolume(volResIndex+1))
         pMain.statusBar->showMessage("Zooming in to the higher resolution...");
     else
@@ -421,6 +413,9 @@ void CExplorerWindow::storeAnnotations() throw (MyException)
     printf("--------------------- teramanager plugin [thread %d] >> CExplorerWindow[\"%s\"] storeAnnotations() launched\n", this->thread()->currentThreadId(), title.c_str() );
     #endif
 
+    /**********************************************************************************
+    * MARKERS
+    ***********************************************************************************/
     //retrieving new and deleted markers
     LandmarkList new_markers, deleted_markers;
     for(int i=0; i<loaded_markers.size(); i++)
@@ -459,6 +454,26 @@ void CExplorerWindow::storeAnnotations() throw (MyException)
         //removing markers
         CAnnotations::getInstance()->removeLandmarks(&deleted_markers);
     }
+
+    /**********************************************************************************
+    * CURVES
+    ***********************************************************************************/
+    NeuronTree editedCurves = this->V3D_env->getSWC(this->window);
+
+    //storing new curves
+    if(!editedCurves.listNeuron.empty())
+    {
+        //converting local coordinates into global coordinates
+        for(int i=0; i<editedCurves.listNeuron.size(); i++)
+        {
+            editedCurves.listNeuron[i].x = getHighestResGlobalHCoord(editedCurves.listNeuron[i].x);
+            editedCurves.listNeuron[i].y = getHighestResGlobalVCoord(editedCurves.listNeuron[i].y);
+            editedCurves.listNeuron[i].z = getHighestResGlobalDCoord(editedCurves.listNeuron[i].z);
+        }
+
+        //storing markers
+        CAnnotations::getInstance()->addCurves(&editedCurves);
+    }
 }
 
 void CExplorerWindow::loadAnnotations() throw (MyException)
@@ -469,14 +484,17 @@ void CExplorerWindow::loadAnnotations() throw (MyException)
 
     //clearing previous annotations (useful when this view has been already visited)
     loaded_markers.clear();
+    loaded_curves.listNeuron.clear();
+    loaded_curves.hashNeuron.clear();
 
     //computing the current volume range in the highest resolution image space
     interval_t x_range(getHighestResGlobalHCoord(0), getHighestResGlobalHCoord(static_cast<int>(triViewWidget->getImageData()->getXDim())));
     interval_t y_range(getHighestResGlobalVCoord(0), getHighestResGlobalVCoord(static_cast<int>(triViewWidget->getImageData()->getYDim())));
     interval_t z_range(getHighestResGlobalDCoord(0), getHighestResGlobalDCoord(static_cast<int>(triViewWidget->getImageData()->getZDim())));
 
-    //obtaining the markers within the current window
+    //obtaining the annotations within the current window
     CAnnotations::getInstance()->findLandmarks(x_range, y_range, z_range, loaded_markers);
+    CAnnotations::getInstance()->findCurves(x_range, y_range, z_range, loaded_curves);
 
     //converting global coordinates into local coordinates
     for(int i=0; i<loaded_markers.size(); i++)
@@ -484,11 +502,19 @@ void CExplorerWindow::loadAnnotations() throw (MyException)
         loaded_markers[i].x = getLocalHCoord(loaded_markers[i].x);
         loaded_markers[i].y = getLocalVCoord(loaded_markers[i].y);
         loaded_markers[i].z = getLocalDCoord(loaded_markers[i].z);
-        printf("Marker[%d] = {%.0f %.0f %.0f}\n", i, loaded_markers[i].x, loaded_markers[i].y, loaded_markers[i].z);
+        //printf("Marker[%d] = {%.0f %.0f %.0f}\n", i, loaded_markers[i].x, loaded_markers[i].y, loaded_markers[i].z);
+    }
+    for(int i=0; i<loaded_curves.listNeuron.size(); i++)
+    {
+        loaded_curves.listNeuron[i].x = getLocalHCoord(loaded_curves.listNeuron[i].x);
+        loaded_curves.listNeuron[i].y = getLocalVCoord(loaded_curves.listNeuron[i].y);
+        loaded_curves.listNeuron[i].z = getLocalDCoord(loaded_curves.listNeuron[i].z);
+        //printf("CurveNode[%d] = {%.0f %.0f %.0f}\n", i, loaded_curves.listNeuron[i].x, loaded_curves.listNeuron[i].y, loaded_curves.listNeuron[i].z);
     }
 
-    //assigning markers
+    //assigning annotations
     V3D_env->setLandmark(window, loaded_markers);
+    V3D_env->setSWC(window, loaded_curves);
     V3D_env->pushObjectIn3DWindow(window);
 }
 

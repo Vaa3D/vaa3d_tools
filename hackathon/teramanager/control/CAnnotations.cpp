@@ -6,6 +6,10 @@ CAnnotations* CAnnotations::uniqueInstance = NULL;
 
 void CAnnotations::uninstance()
 {
+    #ifdef TMP_DEBUG
+    printf("--------------------- teramanager plugin [thread unknown] >> CAnnotations uninstance() called\n");
+    #endif
+
     if(uniqueInstance)
     {
         delete uniqueInstance;
@@ -518,7 +522,49 @@ void CAnnotations::removeLandmarks(LandmarkList* markers) throw (MyException)
 
 void CAnnotations::addCurves(NeuronTree* curves) throw (MyException)
 {
-    throw MyException("in CAnnotations::findCurves(): not yet implemented");
+    #ifdef TMP_DEBUG
+    printf("--------------------- teramanager plugin [thread unknown] >> CAnnotations::addCurves(curves->listNeuron.size() = %d))\n",
+           curves->listNeuron.size());
+    #endif
+
+    //checking that contour points are stored contiguously
+    for(int i=0; i<curves->listNeuron.size(); i++)
+    {
+        //printf("%d\t{%.1f %.1f %.1f}, pn = %d, hash = %d\n", i, curves->listNeuron[i].x, curves->listNeuron[i].y, curves->listNeuron[i].z,
+               //curves->listNeuron[i].pn, curves->hashNeuron[i]);
+        if(curves->listNeuron[i].pn != -1 && curves->listNeuron[i].pn != i)
+            throw MyException("in CAnnotations::addCurves(...): non consecutive contour points found");
+    }
+
+    //creating and storing annotations in the octree
+    annotation* prev = 0;
+    for(int i=0; i<curves->listNeuron.size(); i++)
+    {
+        annotation* node = new annotation();
+        node->type = 1;
+        node->subtype = curves->listNeuron[i].type;
+
+        if(curves->listNeuron[i].pn == -1)
+        {
+            if(prev)
+                prev->next = 0;
+            node->prev = 0;
+        }
+        else
+        {
+            prev->next = node;
+            node->prev = prev;
+        }
+
+        node->r = curves->listNeuron[i].r;
+        node->x = curves->listNeuron[i].x;
+        node->y = curves->listNeuron[i].y;
+        node->z = curves->listNeuron[i].z;
+        octree->insert(*node);
+        prev = node;
+    }
+    if(prev)
+        prev->next = 0;
 }
 
 /*********************************************************************************
@@ -551,5 +597,26 @@ void CAnnotations::findLandmarks(interval_t X_range, interval_t Y_range, interva
 
 void CAnnotations::findCurves(interval_t X_range, interval_t Y_range, interval_t Z_range, NeuronTree& curves) throw (MyException)
 {
-    throw MyException("in CAnnotations::findCurves(): not yet implemented");
+    #ifdef TMP_DEBUG
+    printf("--------------------- teramanager plugin [thread unknown] >> CAnnotations::findCurves(X[%d,%d), Y[%d,%d), Z[%d,%d))\n",
+           X_range.start, X_range.end, Y_range.start, Y_range.end, Z_range.start, Z_range.end);
+    #endif
+
+//    std::list<annotation*> nodes;
+//    std::list<annotation*> curves;
+//    octree->find(Y_range, X_range, Z_range, nodes);
+//    for(std::list<annotation*>::iterator i = nodes.begin(); i != nodes.end(); i++)
+//    {
+//        if((*i)->type == 1 && (*i)->prev == 0 && (*i)->next != 0) //selecting curve points
+//        {
+//            LocationSimple marker;
+//            marker.x = (*i)->x;
+//            marker.y = (*i)->y;
+//            marker.z = (*i)->z;
+//            marker.radius = (*i)->r;
+//            marker.category = (*i)->subtype;
+//            markers.push_back(marker);
+//        }
+//    }
+    //printf("...%d curve points loaded\n", markers.size());
 }

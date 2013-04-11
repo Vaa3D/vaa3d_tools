@@ -66,6 +66,7 @@ namespace teramanager
     const char undefined_str[] = "undefined";
     const int  undefined_int32 = -1;
     const float undefined_real32 = -1.0f;
+    const std::string version = "0.7.1";
     /*-------------------------------------------------------------------------------------------------------------------------*/
 
     /*******************
@@ -89,17 +90,23 @@ class teramanager::CPlugin : public QObject, public V3DPluginInterface2_1
 
     public:
 
-	//V3D plugin attributes and methods
-     float getPluginVersion() const {return getNumericVersion();}
-	QStringList menulist() const;
-	void domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent);
-	QStringList funclist() const ;
-	bool dofunc(const QString &func_name, const V3DPluginArgList &input, V3DPluginArgList &output, V3DPluginCallback2 &callback, QWidget *parent);
+        //V3D plugin attributes and methods
+        float getPluginVersion() const {return getMajorVersionFloat();}
+        QStringList menulist() const;
+        void domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent);
+        QStringList funclist() const ;
+        bool dofunc(const QString &func_name, const V3DPluginArgList &input, V3DPluginArgList &output, V3DPluginCallback2 &callback, QWidget *parent);
 
-	//returns true if the given shared library can be loaded
-	static bool isSharedLibraryLoadable(const char* name);
-     static float getNumericVersion(){return 0.7f;}
-     static string getVersion(){return QString::number(getNumericVersion(), 'g', 1).toStdString();}
+        //returns true if the given shared library can be loaded
+        static bool isSharedLibraryLoadable(const char* name);
+        static float getMajorVersionFloat()
+        {
+            size_t pos = version.rfind(".");
+            string major_version = version.substr(0, pos);
+            QString tmp(major_version.c_str());
+            return tmp.toFloat();
+        }
+        static string getMajorVersion(){return QString::number(getMajorVersionFloat(), 'g', 1).toStdString();}
 };
 
 #endif

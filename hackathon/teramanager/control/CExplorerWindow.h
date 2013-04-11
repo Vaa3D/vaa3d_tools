@@ -55,6 +55,7 @@ class teramanager::CExplorerWindow : public QWidget
         string title;                   //title of current window
         bool toBeClosed;                //true when the current window is marked as going to be closed
         LandmarkList loaded_markers;    //list of markers loaded from <CAnnotations> when the current view is created
+        NeuronTree loaded_curves;       //curves loaded from <CAnnotations> when the current view is created
 
         //CLASS members
         static CExplorerWindow *first;  //pointer to the first window of the multiresolution explorer windows chain
@@ -147,7 +148,20 @@ class teramanager::CExplorerWindow : public QWidget
         CExplorerWindow(V3DPluginCallback2* _V3D_env, int _resIndex, uint8* imgData, int _volV0, int _volV1,
                        int _volH0, int _volH1, int _volD0, int _volD1, int _nchannels, CExplorerWindow* _prev);
         ~CExplorerWindow();
-        static void uninstance(){if(first){delete first; first=last=0;}}
+        static void uninstance()
+        {
+            #ifdef TMP_DEBUG
+            printf("--------------------- teramanager plugin [thread unknown] >> CExplorerWindow uninstance() launched\n");
+            #endif
+            while(first)
+            {
+                CExplorerWindow* p = first->next;
+                first->toBeClosed = true;
+                delete first;
+                first = p;
+            }
+            first=last=0;
+        }
 
         //GET methods
         static CExplorerWindow* getLast(){return last;}
