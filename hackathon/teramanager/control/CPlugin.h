@@ -66,7 +66,7 @@ namespace teramanager
     const char undefined_str[] = "undefined";
     const int  undefined_int32 = -1;
     const float undefined_real32 = -1.0f;
-    const std::string version = "0.7.1";
+    const std::string version = "0.7.2";
     /*-------------------------------------------------------------------------------------------------------------------------*/
 
     /*******************
@@ -106,7 +106,7 @@ class teramanager::CPlugin : public QObject, public V3DPluginInterface2_1
             QString tmp(major_version.c_str());
             return tmp.toFloat();
         }
-        static string getMajorVersion(){return QString::number(getMajorVersionFloat(), 'g', 1).toStdString();}
+        static string getMajorVersion(){return QString::number(getMajorVersionFloat(), 'f', 1).toStdString();}
 };
 
 #endif

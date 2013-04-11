@@ -11,6 +11,25 @@ ties names are:
 - Rem: a feature no longer available
 
 ============================================================================================
+Version 0.7.2
+April 11th, 2013
+--------------------------------------------------------------------------------------------
+- New: added "Jump to resolution" feature.  User can jump to any higher resolution using the
+       already existing combobox of the  "Multiresolution" form. The  volume  (or subvolume) 
+	  currently displayed will be loaded at the selected resolution. A confirm dialog show-
+       ing the size (in MVoxels) of the volume to load prevents from loading too big data.
+- Opt: changed form title "VOI's selection from  the highest resolution volume:" to "Highest
+       resolution volume's coordinates".
+- Bug: all the plugin functionalities which  used pixel  coordinates in  the 3D window image
+       space did not take into account  that Vaa3D downsamples the image when its  dimension
+       along an axis exceeds predefined limit for that axis (LIMIT_VOLX/Y/Z = 512,512,256).
+- Bug: fixed the bug which causes an error message when the "Open volume" dialog was closed.
+- Opt: added a vertically stretchable space after the last component in the main GUI.
+- New: added "Cancel" button and window close button in the volume import dialog.
+- Bug: when a volume is closed, not all the resolutions in the combobox were removed.
+--------------------------------------------------------------------------------------------
+
+
 Version 0.7.1
 April 10th, 2013
 --------------------------------------------------------------------------------------------

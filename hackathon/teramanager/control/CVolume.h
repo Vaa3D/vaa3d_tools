@@ -97,6 +97,9 @@ class teramanager::CVolume : public QThread
         int getVoiD1(){return voiD1;}
         int getNChannels(){return nchannels;}
         int getVoiResIndex(){return voiResIndex;}
+        static int scaleVCoord(int coord, int srcRes, int dstRes) throw (MyException);
+        static int scaleHCoord(int coord, int srcRes, int dstRes) throw (MyException);
+        static int scaleDCoord(int coord, int srcRes, int dstRes) throw (MyException);
         void setVoi(void* _sourceObject, int _voiResIndex, int _V0, int _V1, int _H0, int _H1, int _D0, int _D1)
         {
             #ifdef TMP_DEBUG
@@ -107,12 +110,20 @@ class teramanager::CVolume : public QThread
             sourceObject = _sourceObject;
             voiResIndex = _voiResIndex;
             StackedVolume* volume = CImport::instance()->getVolume(voiResIndex);
-            voiV0 = MAX(_V0, 0);
-            voiV1 = MIN(_V1, volume->getDIM_V());
-            voiH0 = MAX(_H0, 0);
-            voiH1 = MIN(_H1, volume->getDIM_H());
-            voiD0 = MAX(_D0, 0);
-            voiD1 = MIN(_D1, volume->getDIM_D());
+            //---- Alessandro 2013-04-11: this piece of code is dangerous. Anyway, the run() method does checks on the interval extremes too,
+            //     then this is not needed.
+//            voiV0 = MAX(_V0, 0);
+//            voiV1 = MIN(_V1, volume->getDIM_V());
+//            voiH0 = MAX(_H0, 0);
+//            voiH1 = MIN(_H1, volume->getDIM_H());
+//            voiD0 = MAX(_D0, 0);
+//            voiD1 = MIN(_D1, volume->getDIM_D());
+            voiV0 = _V0;
+            voiV1 = _V1;
+            voiH0 = _H0;
+            voiH1 = _H1;
+            voiD0 = _D0;
+            voiD1 = _D1;
             nchannels = -1;
         }
 

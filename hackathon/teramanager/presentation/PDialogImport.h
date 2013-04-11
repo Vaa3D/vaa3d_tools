@@ -60,7 +60,8 @@ class teramanager::PDialogImport : public QDialog
         QLineEdit *vxl1_field;          //field for voxel dimension along first direction
         QLineEdit *vxl2_field;          //field for voxel dimension along second direction
         QLineEdit *vxl3_field;          //field for voxel dimension along third direction
-        QPushButton* import_button;         //ok button
+        QPushButton* import_button;     //ok button
+        QPushButton* cancel_button;     //cancel button
 
     public:
 
@@ -78,12 +79,8 @@ class teramanager::PDialogImport : public QDialog
         static void uninstance();
         ~PDialogImport();
 
-        /**********************************************************************************
-        * Start/Stop methods associated to the current step.
-        * They are called by the startButtonClicked/stopButtonClicked methods of <PMain>
-        ***********************************************************************************/
-        void start();
-        void stop();
+        //reset method
+        void reset();
 
     public slots:
 

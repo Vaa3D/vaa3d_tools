@@ -65,16 +65,17 @@ class teramanager::CExplorerWindow : public QWidget
         CExplorerWindow();
 
         /**********************************************************************************
-        * Returns  the  global coordinate  (which starts from 0) in  the highest resolution
+        * Returns  the  global coordinate  (which starts from 0) in  the given  resolution
         * volume image space given the local coordinate (which starts from 0) in the current
-        * resolution volume image space.
+        * resolution volume image space. If resIndex is not set, the returned global coord-
+        * inate will be in the highest resolution image space.
         ***********************************************************************************/
-        int getHighestResGlobalVCoord(int localVCoord);
-        int getHighestResGlobalHCoord(int localHCoord);
-        int getHighestResGlobalDCoord(int localDCoord);
-        float getHighestResGlobalVCoord(float localVCoord);
-        float getHighestResGlobalHCoord(float localHCoord);
-        float getHighestResGlobalDCoord(float localDCoord);
+        int getGlobalVCoord(int localVCoord, int resIndex = -1);
+        int getGlobalHCoord(int localHCoord, int resIndex = -1);
+        int getGlobalDCoord(int localDCoord, int resIndex = -1);
+        float getGlobalVCoord(float localVCoord, int resIndex = -1);
+        float getGlobalHCoord(float localHCoord, int resIndex = -1);
+        float getGlobalDCoord(float localDCoord, int resIndex = -1);
 
         /**********************************************************************************
         * Returns the local coordinate (which starts from 0) in the current resolution vol-
@@ -202,6 +203,9 @@ class teramanager::CExplorerWindow : public QWidget
         * This implements the selection of a ROI in the 3D renderer.
         ***********************************************************************************/
         static void Vaa3D_selectedROI();
+
+        //PMain instance is allowed to access class private members
+        friend class PMain;
 
 
     public slots:

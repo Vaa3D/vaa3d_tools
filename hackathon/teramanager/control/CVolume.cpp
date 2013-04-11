@@ -49,6 +49,62 @@ CVolume::~CVolume()
     #endif
 }
 
+int CVolume::scaleVCoord(int coord, int srcRes, int dstRes) throw (MyException)
+{
+    //checks
+    if(srcRes < 0 || srcRes >= CImport::instance()->getResolutions())
+        throw MyException("Invalid source resolution of coordinate mapping operation");
+    if(dstRes < 0 || dstRes >= CImport::instance()->getResolutions())
+        throw MyException("Invalid destination resolution of coordinate mapping operation");
+
+    //computation
+    if(srcRes == dstRes)
+        return coord;
+    else
+    {
+        float ratio = (CImport::instance()->getVolume(dstRes)->getDIM_V()-1.0f)/(CImport::instance()->getVolume(srcRes)->getDIM_V()-1.0f);
+        int tmp = static_cast<int>(coord*ratio + 0.5f);
+        printf("------- scaleVCoord(int coord(%d), int srcRes(%d), int dstRes(%d)) = %d\n", coord, srcRes, dstRes, tmp);
+        return static_cast<int>(coord*ratio + 0.5f);
+    }
+}
+
+int CVolume::scaleHCoord(int coord, int srcRes, int dstRes) throw (MyException)
+{
+    //checks
+    if(srcRes < 0 || srcRes >= CImport::instance()->getResolutions())
+        throw MyException("Invalid source resolution of coordinate mapping operation");
+    if(dstRes < 0 || dstRes >= CImport::instance()->getResolutions())
+        throw MyException("Invalid destination resolution of coordinate mapping operation");
+
+    //computation
+    if(srcRes == dstRes)
+        return coord;
+    else
+    {
+        float ratio = (CImport::instance()->getVolume(dstRes)->getDIM_H()-1.0f)/(CImport::instance()->getVolume(srcRes)->getDIM_H()-1.0f);
+        return static_cast<int>(coord*ratio + 0.5f);
+    }
+}
+
+int CVolume::scaleDCoord(int coord, int srcRes, int dstRes) throw (MyException)
+{
+    //checks
+    if(srcRes < 0 || srcRes >= CImport::instance()->getResolutions())
+        throw MyException("Invalid source resolution of coordinate mapping operation");
+    if(dstRes < 0 || dstRes >= CImport::instance()->getResolutions())
+        throw MyException("Invalid destination resolution of coordinate mapping operation");
+
+    //computation
+    if(srcRes == dstRes)
+        return coord;
+    else
+    {
+        float ratio = (CImport::instance()->getVolume(dstRes)->getDIM_D()-1.0f)/(CImport::instance()->getVolume(srcRes)->getDIM_D()-1.0f);
+        return static_cast<int>(coord*ratio + 0.5f);
+    }
+}
+
 //automatically called when current thread is started
 void CVolume::run()
 {
@@ -61,8 +117,13 @@ void CVolume::run()
         StackedVolume* volume = CImport::instance()->getVolume(voiResIndex);
 
         //checking subvolume interval
-        if(voiV1 - voiV0 <=0 || voiH1 - voiH0 <=0 || voiD1 - voiD0 <=0)
-            throw MyException("Invalid subvolume intervals inserted.");
+        if(voiV1 - voiV0 <=0 || voiH1 - voiH0 <=0 || voiD1 - voiD0 <=0 ||
+           voiV0 < 0 || voiV1 > volume->getDIM_V() || voiH0 < 0 || voiH1 > volume->getDIM_H() || voiD0 < 0 || voiD1 > volume->getDIM_D())
+        {
+            char errMsg[1024];
+            sprintf(errMsg, "Invalid subvolume intervals inserted: X=[%d, %d), Y=[%d, %d), Z=[%d, %d)", voiH0, voiH1, voiV0, voiV1, voiD0, voiD1);
+            throw MyException(errMsg);
+        }
 
         //checking for an imported volume
         if(volume)

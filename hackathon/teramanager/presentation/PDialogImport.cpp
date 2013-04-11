@@ -100,6 +100,11 @@ PDialogImport::PDialogImport(QWidget* parent) : QDialog(parent)
     import_button->setIconSize(QSize(30,30));
     import_button->setFixedHeight(50);
     import_button->setFont(bigFont);
+    cancel_button = new QPushButton(" Cancel");
+    cancel_button->setIcon(QIcon(":/icons/stop.png"));
+    cancel_button->setIconSize(QSize(30,30));
+    cancel_button->setFixedHeight(50);
+    cancel_button->setFont(bigFont);
 
 
     /*** LAYOUT SECTION ***/
@@ -119,11 +124,14 @@ PDialogImport::PDialogImport(QWidget* parent) : QDialog(parent)
     grid_layout->addWidget(vxl2_field, 2, 3, 1, 1, Qt::AlignHCenter);
     grid_layout->addWidget(vxl3_field, 2, 4, 1, 1, Qt::AlignHCenter);
     container->setLayout(grid_layout);
+    QHBoxLayout* buttons_layout = new QHBoxLayout();
+    buttons_layout->addWidget(import_button);
+    buttons_layout->addWidget(cancel_button);
 
     layout->addWidget(import_form_desc_1);
     layout->addWidget(import_form_desc_2);
     layout->addWidget(container);
-    layout->addWidget(import_button);
+    layout->addLayout(buttons_layout);
 
     layout->setSizeConstraint( QLayout::SetFixedSize );
     setLayout(layout);
@@ -132,10 +140,11 @@ PDialogImport::PDialogImport(QWidget* parent) : QDialog(parent)
     char title[IM_STATIC_STRINGS_SIZE];
     sprintf(title, "\"%s\" metadata file not found", IM_METADATA_FILE_NAME);
     this->setWindowTitle(title);
-    this->setWindowFlags(Qt::Dialog | Qt::WindowTitleHint | Qt::WindowStaysOnTopHint);
+    this->setWindowFlags(Qt::Dialog | Qt::WindowTitleHint | Qt::WindowStaysOnTopHint | Qt::WindowCloseButtonHint);
 
     // signals and slots
     connect(import_button, SIGNAL(clicked()), this, SLOT(import_button_clicked()));
+    connect(cancel_button, SIGNAL(clicked()), this, SLOT(close()));
 }
 
 
@@ -144,6 +153,17 @@ PDialogImport::~PDialogImport()
     #ifdef TSP_DEBUG
     printf("--------------------- teramanager plugin [thread %d] >> PDialogImport destroyed\n", this->thread()->currentThreadId());
     #endif
+}
+
+//reset method
+void PDialogImport::reset()
+{
+    axs1_field->setText("");
+    axs2_field->setText("");
+    axs3_field->setText("");
+    vxl1_field->setText("");
+    vxl2_field->setText("");
+    vxl3_field->setText("");
 }
 
 /**********************************************************************************
@@ -200,7 +220,9 @@ void PDialogImport::import_button_clicked()
         CImport::instance()->setVoxels(vxl1_field->text().toStdString().c_str(),
                                        vxl2_field->text().toStdString().c_str(),
                                        vxl3_field->text().toStdString().c_str());
-        this->close();
+        accept();
+        hide();
+        reset();
     }
     catch(MyException &ex)
     {

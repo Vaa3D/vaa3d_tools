@@ -239,7 +239,7 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     org_D_field->setFont(tinyFont);
 
     //subvol panel widgets
-    subvol_panel = new QGroupBox("VOI's selection from the highest resolution volume:");
+    subvol_panel = new QGroupBox("Highest resolution volume's coordinates");
     V0_sbox = new QSpinBox();
     V0_sbox->setAlignment(Qt::AlignCenter);
     V1_sbox = new QSpinBox();
@@ -355,7 +355,7 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
 
     //multiresolution mode widgets
     QGridLayout* multiresModePanelLayout= new QGridLayout();
-    multiresModePanelLayout->addWidget(new QLabel("Resolution:"),               0,0,1,4);
+    multiresModePanelLayout->addWidget(new QLabel("Jump to resolution:"),       0,0,1,4);
     multiresModePanelLayout->addWidget(resolution_cbox,                         0,5,1,11);
     multiresModePanelLayout->addWidget(subvol_dims_label,                       1, 0, 1, 4);
     multiresModePanelLayout->addWidget(Hdim_sbox,                               1, 5, 1, 2);
@@ -374,12 +374,13 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
 
     //overall
     QVBoxLayout* layout = new QVBoxLayout();
-    layout->addWidget(menuBar);
-    layout->addWidget(info_panel);
-    layout->addWidget(multires_panel);
-    layout->addWidget(subvol_panel);
-    layout->addWidget(statusBar);
-    layout->addWidget(progressBar);
+    layout->addWidget(menuBar, 0);
+    layout->addWidget(info_panel, 0);
+    layout->addWidget(multires_panel, 0);
+    layout->addWidget(subvol_panel, 0);
+    layout->addStretch(1);
+    layout->addWidget(statusBar, 0);
+    layout->addWidget(progressBar, 0);
     setLayout(layout);
     setWindowTitle(tr("TeraFly plugin"));
     this->setFont(tinyFont);
@@ -423,6 +424,7 @@ void PMain::reset()
     closeVolumeAction->setEnabled(false);
     importOptionsMenu->setEnabled(true);
     importOptionsWidget->setEnabled(true);
+    import_form->setEnabled(true);
     aboutAction->setEnabled(true);
 
     //reseting info panel widgets
@@ -448,8 +450,8 @@ void PMain::reset()
     Hdim_sbox->setValue(CSettings::instance()->getVOIdimH());
     Ddim_sbox->setValue(CSettings::instance()->getVOIdimD());
     zoominVoiSize->setText("n.a.");
-    for(int i=0; i<resolution_cbox->count(); i++)
-        resolution_cbox->removeItem(i);
+    while(resolution_cbox->count())
+        resolution_cbox->removeItem(0);
 
     //resetting subvol panel widgets
     subvol_panel->setEnabled(false);
@@ -536,6 +538,8 @@ void PMain::openVolume()
     {
         //obtaining volume's directory
         string import_path= QFileDialog::getExistingDirectory(this, QObject::tr("Select volume's directory"), CSettings::instance()->getVolumePathLRU().c_str()).toStdString();
+        if(strcmp(import_path.c_str(), "") == 0)
+            return;
 
         //first checking that no volume has imported yet
         if(!CImport::instance()->isEmpty())
@@ -554,7 +558,8 @@ void PMain::openVolume()
         vmap_fpath.append(TMP_VMAP_FNAME);
         if(!StackedVolume::fileExists(mdata_fpath.c_str()) || reimport_checkbox->isChecked()) // ||
           //(!StackedVolume::fileExists(vmap_fpath.c_str()) && enableMultiresMode->isChecked()))    ---- Alessandro 2013-01-06: we do not want converted volumes to be imported again. I don't understand the function of this line of code
-            PDialogImport::instance(this)->exec();
+            if(PDialogImport::instance(this)->exec() == QDialog::Rejected)
+                return;
         CImport::instance()->setPath(import_path);
         CImport::instance()->setReimport(reimport_checkbox->isChecked());
         CImport::instance()->setMultiresMode(enableMultiresMode->isChecked());
@@ -640,8 +645,6 @@ void PMain::about()
 
     QGridLayout* layout = (QGridLayout*)msgBox->layout();
     layout->addItem(horizontalSpacer, layout->rowCount(), 0, 1, layout->columnCount());
-//    msgBox->setWindowFlags(Qt::WindowStaysOnTopHint);
-//    msgBox->setFocusPolicy(Qt::StrongFocus);
     msgBox->exec();
 }
 
@@ -845,9 +848,40 @@ void PMain::settingsChanged(int)
 ***********************************************************************************/
 void PMain::resolutionIndexChanged(int i)
 {
-    if(CExplorerWindow::getLast() && i != CExplorerWindow::getLast()->getResIndex())
+    try
     {
-        QMessageBox::information(this, "Warning", "Operation not yet implemented!");
+        if(CExplorerWindow::getLast() && i != CExplorerWindow::getLast()->getResIndex())
+        {
+            int voiV0 = CVolume::scaleVCoord(V0_sbox->value()-1, CImport::instance()->getResolutions()-1, i);
+            int voiV1 = CVolume::scaleVCoord(V1_sbox->value()-1, CImport::instance()->getResolutions()-1, i);
+            int voiH0 = CVolume::scaleHCoord(H0_sbox->value()-1, CImport::instance()->getResolutions()-1, i);
+            int voiH1 = CVolume::scaleHCoord(H1_sbox->value()-1, CImport::instance()->getResolutions()-1, i);
+            int voiD0 = CVolume::scaleDCoord(D0_sbox->value()-1, CImport::instance()->getResolutions()-1, i);
+            int voiD1 = CVolume::scaleDCoord(D1_sbox->value()-1, CImport::instance()->getResolutions()-1, i);
+            float MVoxels = ((voiV1-voiV0)/1024.0f)*((voiH1-voiH0)/1024.0f)*(voiD1-voiD0);
+            if(QMessageBox::Yes == QMessageBox::question(this, "Confirm", QString("The volume to be loaded is ").append(QString::number(MVoxels, 'f', 1)).append(" MVoxels big.\n\nDo you confirm?"), QMessageBox::No | QMessageBox::Yes, QMessageBox::Yes))
+            {
+                CVolume::instance()->setVoi(CExplorerWindow::getLast(), i, voiV0, voiV1, voiH0, voiH1, voiD0, voiD1);
+
+                //disabling import form and enabling progress bar animation and tab wait animation
+                progressBar->setEnabled(true);
+                progressBar->setMinimum(0);
+                progressBar->setMaximum(0);
+                loadButton->setEnabled(false);
+                subvol_panel->setEnabled(false);
+                statusBar->showMessage("Loading selected subvolume...");
+                CVolume::instance()->start();
+            }
+            else
+                resolution_cbox->setCurrentIndex(CExplorerWindow::getLast()->getResIndex());
+        }
+    }
+    catch(MyException &ex)
+    {
+        QMessageBox::critical(this,QObject::tr("Error"), QObject::tr(ex.what()),QObject::tr("Ok"));
+        resetGUI();
+        subvol_panel->setEnabled(true);
+        loadButton->setEnabled(true);
         resolution_cbox->setCurrentIndex(CExplorerWindow::getLast()->getResIndex());
     }
 }
