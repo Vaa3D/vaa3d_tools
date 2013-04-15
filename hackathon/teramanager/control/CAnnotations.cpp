@@ -3,6 +3,7 @@
 using namespace teramanager;
 
 CAnnotations* CAnnotations::uniqueInstance = NULL;
+int CAnnotations::annotation::total = 0;
 
 void CAnnotations::uninstance()
 {
@@ -420,7 +421,7 @@ CAnnotations::Octree::~Octree(void)
 void CAnnotations::Octree::clear() throw(MyException)
 {
     _rec_clear(root);
-    root = NULL;
+    root = new octant(0,DIM_V,0,DIM_H,0,DIM_D);
 }
 
 //insert given neuron in the octree
@@ -619,4 +620,132 @@ void CAnnotations::findCurves(interval_t X_range, interval_t Y_range, interval_t
 //        }
 //    }
     //printf("...%d curve points loaded\n", markers.size());
+}
+
+/*********************************************************************************
+* Save/load methods
+**********************************************************************************/
+void CAnnotations::save(const char* filepath) throw (MyException)
+{
+    #ifdef TMP_DEBUG
+    printf("--------------------- teramanager plugin [thread unknown] >> CAnnotations::save()\n");
+    #endif
+
+    //opening file in write mode
+    FILE* f = fopen(filepath, "w");
+    if(!f)
+    {
+        char errMsg[STATIC_STRING_SIZE];
+        sprintf(errMsg, "in CAnnotations::save(): cannot save to path \"%s\"", filepath);
+        throw MyException(errMsg);
+    }
+
+    //storing file header
+    fprintf(f, "#name terafly_annotations\n");
+    fprintf(f, "#voldims %d %d %d\n", octree->DIM_H, octree->DIM_V, octree->DIM_D);
+    fprintf(f, "#n type subtype x y z radius parent\n");
+
+    //storing individual annotations
+    if(octree)
+    {        
+        std::list<annotation*> annotations;
+        octree->find(interval_t(0, octree->DIM_V), interval_t(0, octree->DIM_H), interval_t(0, octree->DIM_D), annotations);
+
+        //ordering by ascending ID
+        annotations.sort(annotation::compareAnnotations);
+
+        for(std::list<annotation*>::iterator i = annotations.begin(); i != annotations.end(); i++)
+            fprintf(f, "%d %d %d %.3f %.3f %.3f %.3f %d\n", (*i)->ID, (*i)->type, (*i)->subtype, (*i)->x, (*i)->y, (*i)->z, (*i)->r, (*i)->prev ? (*i)->prev->ID : -1);
+    }
+
+    //file closing
+    fclose(f);
+}
+void CAnnotations::load(const char* filepath) throw (MyException)
+{
+    #ifdef TMP_DEBUG
+    printf("--------------------- teramanager plugin [thread unknown] >> CAnnotations::load()\n");
+    #endif
+
+    //precondition checks
+    if(!octree)
+        throw MyException("CAnnotations::load(): octree not yet initialized");
+
+    //clearing annotations data structure
+    octree->clear();
+
+    //opening file in read mode
+    char errMsg[STATIC_STRING_SIZE];
+    FILE* f = fopen(filepath, "r");
+    if(!f)
+    {
+        sprintf(errMsg, "in CAnnotations::save(): cannot save to path \"%s\"", filepath);
+        throw MyException(errMsg);
+    }
+
+    //reading file header and checking its correctness
+    char lineBuf[FILE_LINE_BUFFER_SIZE];
+    fgets(lineBuf, FILE_LINE_BUFFER_SIZE, f);
+    if(strncmp(lineBuf, "#name terafly_annotations", strlen("#name terafly_annotations")) != 0 )
+    {
+        sprintf(errMsg, "in CAnnotations::load(const char* filepath = \"%s\"): expected line \"%s\", found \"%s\"",
+                filepath, "#name terafly_annotations", lineBuf);
+        throw MyException(errMsg);
+    }
+    fgets(lineBuf, FILE_LINE_BUFFER_SIZE, f);
+    int DIM_V=-1, DIM_H=-1, DIM_D=-1;
+    if(sscanf(lineBuf, "%*s %d %d %d", &DIM_V, &DIM_H, &DIM_D) != 3)
+    {
+        sprintf(errMsg, "in CAnnotations::load(const char* filepath = \"%s\"): expected line \"%s\", found \"%s\"",
+                filepath, "#voldims <number> <number> <number>", lineBuf);
+        throw MyException(errMsg);
+    }
+    if(DIM_V != octree->DIM_V || DIM_H != octree->DIM_H || DIM_D != octree->DIM_D)
+    {
+        sprintf(errMsg, "in CAnnotations::load(const char* filepath = \"%s\"): volume dimensions mismatch. Expected \"%d %d %d\", found \"%d %d %d\"",
+                filepath, octree->DIM_V, octree->DIM_H, octree->DIM_D, DIM_V, DIM_H, DIM_D);
+        throw MyException(errMsg);
+    }    
+    fgets(lineBuf, FILE_LINE_BUFFER_SIZE, f);
+
+    //reading individual annotations
+    std::map<int, annotation*> annotations;
+    while(fgets(lineBuf, FILE_LINE_BUFFER_SIZE, f))
+    {
+        //reading i-th annotation fields
+        int ID=-1, type=-1, subtype=-1, parent=-1;
+        float x=-1.0f, y=-1.0f, z=-1.0f, radius=-1.0f;
+        if(sscanf(lineBuf, "%d %d %d %f %f %f %f %d", &ID, &type, &subtype, &x, &y, &z, &radius, &parent) != 8)
+        {
+            sprintf(errMsg, "in CAnnotations::load(const char* filepath = \"%s\"): expected line \"%s\", found \"%s\"",
+                    filepath, "<number> <number> <number> <number> <number> <number> <number> <number>", lineBuf);
+            throw MyException(errMsg);
+        }
+
+        //checking if there are duplicates
+        if(annotations.find(ID) != annotations.end())
+        {
+            sprintf(errMsg, "in CAnnotations::load(const char* filepath = \"%s\"): duplicate annotation elements found", lineBuf);
+            throw MyException(errMsg);
+        }
+
+        //inserting annotation
+        annotation* ann = new annotation(ID, type, subtype, x, y, z, radius, 0, 0);
+        octree->insert(*ann);
+
+        //linking annotation to its predecessor (this is possible IFF annotations are stored in ascending order on the ID column)
+        if(parent != -1)
+        {
+            if(annotations.find(parent) == annotations.end())
+            {
+                sprintf(errMsg, "in CAnnotations::load(const char* filepath = \"%s\"): annotations are not in ascending order on the ID column", lineBuf);
+                throw MyException(errMsg);
+            }
+            ann->prev = annotations[parent];
+            ann->prev->next = ann;
+        }
+    }
+
+    //file closing
+    fclose(f);
 }

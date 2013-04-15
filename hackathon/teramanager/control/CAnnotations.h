@@ -11,6 +11,7 @@ class teramanager::CAnnotations
         //annotation structure
         struct annotation
         {
+            int ID;                     //unique identifier
             int type;			//-1 = undefined, 0 = LocationSimple, 1 = NeuronSWC
             int subtype;                //see Vaa3D LocationSimple and NeuronSWC types
             float x, y, z;		//point coordinates
@@ -22,7 +23,27 @@ class teramanager::CAnnotations
                 type = subtype  = teramanager::undefined_int32;
                 r = x = y = z = teramanager::undefined_real32;
                 prev = next = 0;
+                ID = ++total;
             }
+
+            //used when annotation is loaded from a file (then the ID is read from it)
+            annotation(int _ID, int _type, int _subtype, float _x, float _y, float _z, float _r, annotation* _prev, annotation* _next){
+                ID = _ID;
+                type = _type;
+                subtype = _subtype;
+                x = _x;
+                y = _y;
+                z = _z;
+                r = _r;
+                prev = _prev;
+                next = _next;
+                total = std::max(total, ID);    //the total number of elements is <= the maximum ID read from the file
+            }
+
+            //ordering method
+            static bool compareAnnotations(annotation* first, annotation* second){return second->ID >= first->ID;}
+
+            static int total;
         };
 
         //octree structure
@@ -121,6 +142,8 @@ class teramanager::CAnnotations
 
                 //print the octree content
                 void print();
+
+                friend class CAnnotations;
         };
 
 
@@ -175,6 +198,17 @@ class teramanager::CAnnotations
         **********************************************************************************/
         void findLandmarks(interval_t X_range, interval_t Y_range, interval_t Z_range, LandmarkList& markers) throw (MyException);
         void findCurves(interval_t X_range, interval_t Y_range, interval_t Z_range, NeuronTree& curves) throw (MyException);
+
+        /*********************************************************************************
+        * Save/load method
+        **********************************************************************************/
+        void save(const char* filepath) throw (MyException);
+        void load(const char* filepath) throw (MyException);
+
+        /*********************************************************************************
+        * Removes all the annotations from the octree
+        **********************************************************************************/
+        void clear()  throw (MyException) {this->octree->clear();}
 
 
 };

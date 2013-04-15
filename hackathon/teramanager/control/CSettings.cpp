@@ -54,6 +54,7 @@ void CSettings::loadDefaultSettings()
 {
     //TeraFly settings
     volumePathLRU = "";
+    annotationPathLRU = "";
     volMapSizeLimit = 30;
     VOIdimV = VOIdimH = 200;
     VOIdimD = 50;
@@ -74,6 +75,8 @@ void CSettings::writeSettings()
 
     QSettings settings("ICON", "TeraManager");
     QString volumePathLRU_qstring(volumePathLRU.c_str());
+    QString annotationPathLRU_qstring(annotationPathLRU.c_str());
+    settings.setValue("annotationPathLRU", annotationPathLRU_qstring);
     settings.setValue("volumePathLRU", volumePathLRU_qstring);
     settings.setValue("volMapSizeLimit", volMapSizeLimit);
     settings.setValue("VOIdimV", VOIdimV);
@@ -98,6 +101,8 @@ void CSettings::readSettings()
     QSettings settings("ICON", "TeraManager");
 
     //TeraFly settings
+    if(settings.contains("annotationPathLRU"))
+        annotationPathLRU = settings.value("annotationPathLRU").toString().toStdString();
     if(settings.contains("volumePathLRU"))
         volumePathLRU = settings.value("volumePathLRU").toString().toStdString();
     if(settings.contains("volMapSizeLimit"))

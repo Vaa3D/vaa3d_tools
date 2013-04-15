@@ -51,6 +51,7 @@ class teramanager::CSettings
 
         //TeraFly members
         string volumePathLRU;
+        string annotationPathLRU;
         int volMapSizeLimit;
         int VOIdimV;
         int VOIdimH;
@@ -80,11 +81,13 @@ class teramanager::CSettings
 
         //GET and SET methods for TeraFly
         string getVolumePathLRU(){return volumePathLRU;}
+        string getAnnotationPathLRU(){return annotationPathLRU;}
         int getVolMapSizeLimit(){return volMapSizeLimit;}
         int getVOIdimV(){return VOIdimV;}
         int getVOIdimH(){return VOIdimH;}
         int getVOIdimD(){return VOIdimD;}
         void setVolumePathLRU(string _volumePathLRU){volumePathLRU = _volumePathLRU;}
+        void setAnnotationPathLRU(string _annotationPathLRU){annotationPathLRU = _annotationPathLRU;}
         void setVolMapSizeLimit(int _volMapSizeLimit){volMapSizeLimit = _volMapSizeLimit;}
         void setVOIdimV(int _VOIdimV){VOIdimV = _VOIdimV;}
         void setVOIdimH(int _VOIdimH){VOIdimH = _VOIdimH;}

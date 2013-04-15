@@ -11,6 +11,18 @@ ties names are:
 - Rem: a feature no longer available
 
 ============================================================================================
+Version 0.7.3
+April 15th, 2013
+--------------------------------------------------------------------------------------------
+- Dev: added QArrowButton class to be used for traslation actions.
+- New: added functionalities "Load annotations", "Save Annotations",  "Save annotations As",
+       "Clear annotations". Both markers and  curves annotated  at any resolution  are saved
+       (annotation of curves is not enabled at the moment) in a SWC-like format.
+- New: added zoom-in/out sensitivity slider
+- Bug: incorrect subolume indexes update in the "Jump to resolution" feature
+--------------------------------------------------------------------------------------------
+
+
 Version 0.7.2
 April 11th, 2013
 --------------------------------------------------------------------------------------------

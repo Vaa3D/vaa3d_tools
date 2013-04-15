@@ -58,10 +58,11 @@ CExplorerWindow::CExplorerWindow(V3DPluginCallback2 *_V3D_env, int _resIndex, ui
     this->nchannels = _nchannels;
     this->toBeClosed = false;
     char ctitle[1024];
-    sprintf(ctitle, "Res(%d x %d x %d),Volume(%d-%d,%d-%d,%d-%d), %d channels", CImport::instance()->getVolume(volResIndex)->getDIM_H(),
+    sprintf(ctitle, "Res(%d x %d x %d),Volume X=[%d,%d], Y=[%d,%d], Z=[%d,%d], %d channels", CImport::instance()->getVolume(volResIndex)->getDIM_H(),
             CImport::instance()->getVolume(volResIndex)->getDIM_V(), CImport::instance()->getVolume(volResIndex)->getDIM_D(),
             volH0+1, volH1, volV0+1, volV1, volD0+1, volD1, nchannels);
     this->title = ctitle;
+    V0_sbox_min = V1_sbox_max = H0_sbox_min = H1_sbox_max = D0_sbox_min = D1_sbox_max = V0_sbox_val = V1_sbox_val = H0_sbox_val = H1_sbox_val = D0_sbox_val = D1_sbox_val = -1;
     PMain* pMain = PMain::instance();
 
     #ifdef TMP_DEBUG
@@ -249,10 +250,11 @@ bool CExplorerWindow::eventFilter(QObject *object, QEvent *event)
                 V3D_env->setLandmark(triViewWidget, markers);
                 view3DWidget->getRenderer()->updateLandmark();
             }
-            else */ if(view3DWidget->zoom() < 0    &&              //zoom-out threshold reached
-                    prev                        &&              //the previous resolution exists
-                    !toBeClosed)                                //the current resolution does not have to be closed
+            else */ if(view3DWidget->zoom() < -100+PMain::instance()->zoomSensitivity->value() &&   //zoom-out threshold reached
+                    prev                        &&                                                  //the previous resolution exists
+                    !toBeClosed)                                                                    //the current resolution does not have to be closed
             {
+                //printf("\n\nzoom[%d] < 100-sens[%d]\n\n", view3DWidget->zoom(), PMain::instance()->zoomSensitivity->value());
                 toBeClosed = true;
                 prev->restore();
             }
@@ -418,8 +420,47 @@ void CExplorerWindow::switchToHigherRes(int x, int y, int z, int dx, int dy, int
         CVolume::instance()->setVoi(this, volResIndex, VoiCenterY-dy, VoiCenterY+dy, VoiCenterX-dx, VoiCenterX+dx, VoiCenterZ-dz, VoiCenterZ+dz);
     }
 
+    //saving min, max and values of PMain GUI VOI's widgets
+    saveSubvolSpinboxState();
+
     //launching thread where the VOI has to be loaded
     CVolume::instance()->start();
+}
+
+/**********************************************************************************
+* Saves/restore the state of PMain spinboxes for subvolume selection
+***********************************************************************************/
+void CExplorerWindow::saveSubvolSpinboxState()
+{
+    PMain& pMain = *(PMain::instance());
+    V0_sbox_min = pMain.V0_sbox->minimum();
+    V1_sbox_max = pMain.V1_sbox->maximum();
+    H0_sbox_min = pMain.H0_sbox->minimum();
+    H1_sbox_max = pMain.H1_sbox->maximum();
+    D0_sbox_min = pMain.D0_sbox->minimum();
+    D1_sbox_max = pMain.D1_sbox->maximum();
+    V0_sbox_val = pMain.V0_sbox->value();
+    V1_sbox_val = pMain.V1_sbox->value();
+    H0_sbox_val = pMain.H0_sbox->value();
+    H1_sbox_val = pMain.H1_sbox->value();
+    D0_sbox_val = pMain.D0_sbox->value();
+    D1_sbox_val = pMain.D1_sbox->value();
+}
+void CExplorerWindow::restoreSubvolSpinboxState()
+{
+    PMain& pMain = *(PMain::instance());
+    pMain.V0_sbox->setMinimum(V0_sbox_min);
+    pMain.V1_sbox->setMaximum(V1_sbox_max);
+    pMain.H0_sbox->setMinimum(H0_sbox_min);
+    pMain.H1_sbox->setMaximum(H1_sbox_max);
+    pMain.D0_sbox->setMinimum(D0_sbox_min);
+    pMain.D1_sbox->setMaximum(D1_sbox_max);
+    pMain.V0_sbox->setValue(V0_sbox_val);
+    pMain.V1_sbox->setValue(V1_sbox_val);
+    pMain.H0_sbox->setValue(H0_sbox_val);
+    pMain.H1_sbox->setValue(H1_sbox_val);
+    pMain.D0_sbox->setValue(D0_sbox_val);
+    pMain.D1_sbox->setValue(D1_sbox_val);
 }
 
 /**********************************************************************************
@@ -506,9 +547,16 @@ void CExplorerWindow::loadAnnotations() throw (MyException)
     loaded_curves.hashNeuron.clear();
 
     //computing the current volume range in the highest resolution image space
-    interval_t x_range(getGlobalHCoord(0), getGlobalHCoord(static_cast<int>(triViewWidget->getImageData()->getXDim())));
-    interval_t y_range(getGlobalVCoord(0), getGlobalVCoord(static_cast<int>(triViewWidget->getImageData()->getYDim())));
-    interval_t z_range(getGlobalDCoord(0), getGlobalDCoord(static_cast<int>(triViewWidget->getImageData()->getZDim())));
+    int highestResIndex = CImport::instance()->getResolutions()-1;
+    int voiV0 = CVolume::scaleVCoord(volV0, volResIndex, highestResIndex);
+    int voiV1 = CVolume::scaleVCoord(volV1, volResIndex, highestResIndex);
+    int voiH0 = CVolume::scaleHCoord(volH0, volResIndex, highestResIndex);
+    int voiH1 = CVolume::scaleHCoord(volH1, volResIndex, highestResIndex);
+    int voiD0 = CVolume::scaleDCoord(volD0, volResIndex, highestResIndex);
+    int voiD1 = CVolume::scaleDCoord(volD1, volResIndex, highestResIndex);
+    interval_t x_range(voiH0, voiH1);
+    interval_t y_range(voiV0, voiV1);
+    interval_t z_range(voiD0, voiD1);
 
     //obtaining the annotations within the current window
     CAnnotations::getInstance()->findLandmarks(x_range, y_range, z_range, loaded_markers);
@@ -610,20 +658,8 @@ void CExplorerWindow::restore() throw (MyException)
                 pMain->resolution_cbox->model()->setData( index, v2, Qt::UserRole -1);
         }
 
-        //setting min, max and value of PMain GUI VOI's widgets
-        pMain->V0_sbox->setMinimum(getGlobalVCoord(volV0)+1);
-        pMain->V1_sbox->setMaximum(getGlobalVCoord(volV1)+1);
-        pMain->H0_sbox->setMinimum(getGlobalHCoord(volH0)+1);
-        pMain->H1_sbox->setMaximum(getGlobalHCoord(volH1)+1);
-        pMain->D0_sbox->setMinimum(getGlobalDCoord(volD0)+1);
-        pMain->D1_sbox->setMaximum(getGlobalDCoord(volD1)+1);
-
-        pMain->V0_sbox->setValue(getGlobalDCoord(view3DWidget->yCut0())+1);
-        pMain->V1_sbox->setValue(getGlobalDCoord(view3DWidget->yCut1())+1);
-        pMain->H0_sbox->setValue(getGlobalDCoord(view3DWidget->xCut0())+1);
-        pMain->H1_sbox->setValue(getGlobalDCoord(view3DWidget->xCut1())+1);
-        pMain->D0_sbox->setValue(getGlobalDCoord(view3DWidget->zCut0())+1);
-        pMain->D1_sbox->setValue(getGlobalDCoord(view3DWidget->zCut1())+1);
+        //restoring min, max and value of PMain GUI VOI's widgets
+        restoreSubvolSpinboxState();
 
         //signal connections
         connect(CVolume::instance(), SIGNAL(sendOperationOutcome(MyException*,void*)), this, SLOT(loadingDone(MyException*,void*)));
@@ -723,6 +759,7 @@ int CExplorerWindow::getGlobalVCoord(int localVCoord, int resIndex /* = -1 */)
         localVCoord = static_cast<int>(localVCoord* ( static_cast<float>(volV1-volV0-1)/(LIMIT_VOLY-1) ) +0.5f);
 
     float ratio = (CImport::instance()->getVolume(resIndex)->getDIM_V()-1.0f)/(CImport::instance()->getVolume(volResIndex)->getDIM_V()-1.0f);
+    //printf("\n\n------- getGlobalVCoord(%d) = (volV0[%d]+localVCoord)*ratio[=%.4f] = %d \n\n", localVCoord, volV0, ratio, static_cast<int>((volV0+localVCoord)*ratio + 0.5f));
     return (volV0+localVCoord)*ratio + 0.5f;
 }
 int CExplorerWindow::getGlobalHCoord(int localHCoord, int resIndex /* = -1 */)

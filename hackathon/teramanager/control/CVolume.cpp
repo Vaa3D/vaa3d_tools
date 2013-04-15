@@ -64,7 +64,7 @@ int CVolume::scaleVCoord(int coord, int srcRes, int dstRes) throw (MyException)
     {
         float ratio = (CImport::instance()->getVolume(dstRes)->getDIM_V()-1.0f)/(CImport::instance()->getVolume(srcRes)->getDIM_V()-1.0f);
         int tmp = static_cast<int>(coord*ratio + 0.5f);
-        printf("------- scaleVCoord(int coord(%d), int srcRes(%d), int dstRes(%d)) = %d\n", coord, srcRes, dstRes, tmp);
+        //printf("\n\n------- scaleVCoord(int coord(%d), int srcRes(%d), int dstRes(%d)) = %d\n\n", coord, srcRes, dstRes, tmp);
         return static_cast<int>(coord*ratio + 0.5f);
     }
 }

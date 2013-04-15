@@ -56,6 +56,12 @@ class teramanager::CExplorerWindow : public QWidget
         bool toBeClosed;                //true when the current window is marked as going to be closed
         LandmarkList loaded_markers;    //list of markers loaded from <CAnnotations> when the current view is created
         NeuronTree loaded_curves;       //curves loaded from <CAnnotations> when the current view is created
+        int V0_sbox_min, V0_sbox_val;   //to save the state of subvolume spinboxes when the current window is hidden
+        int V1_sbox_max, V1_sbox_val;   //to save the state of subvolume spinboxes when the current window is hidden
+        int H0_sbox_min, H0_sbox_val;   //to save the state of subvolume spinboxes when the current window is hidden
+        int H1_sbox_max, H1_sbox_val;   //to save the state of subvolume spinboxes when the current window is hidden
+        int D0_sbox_min, D0_sbox_val;   //to save the state of subvolume spinboxes when the current window is hidden
+        int D1_sbox_max, D1_sbox_val;   //to save the state of subvolume spinboxes when the current window is hidden
 
         //CLASS members
         static CExplorerWindow *first;  //pointer to the first window of the multiresolution explorer windows chain
@@ -88,6 +94,7 @@ class teramanager::CExplorerWindow : public QWidget
         float getLocalVCoord(float highestResGlobalVCoord);
         float getLocalHCoord(float highestResGlobalHCoord);
         float getLocalDCoord(float highestResGlobalDCoord);
+
 
         /**********************************************************************************
         * Estimates actual image voxel size (in pixels) of the 3D renderer.
@@ -166,6 +173,7 @@ class teramanager::CExplorerWindow : public QWidget
 
         //GET methods
         static CExplorerWindow* getLast(){return last;}
+        static CExplorerWindow* getCurrent(){return last;}
         int getResIndex(){return volResIndex;}
         V3dR_MainWindow* getWindow3D(){return window3D;}
 
@@ -197,6 +205,12 @@ class teramanager::CExplorerWindow : public QWidget
         ***********************************************************************************/
         void storeAnnotations() throw (MyException);
         void loadAnnotations() throw (MyException);
+
+        /**********************************************************************************
+        * Saves/restores the state of PMain spinboxes for subvolume selection
+        ***********************************************************************************/
+        void saveSubvolSpinboxState();
+        void restoreSubvolSpinboxState();
 
         /**********************************************************************************
         * Linked to rightStrokeROI and rightClickROI right-menu entries of the 3D renderer.

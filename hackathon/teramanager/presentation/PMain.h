@@ -37,6 +37,7 @@
 #include "control/CVolume.h"
 #include "control/CExplorerWindow.h"
 #include "v3dr_glwidget.h"
+#include "QArrowButton.h"
 
 class teramanager::PMain : public QWidget
 {
@@ -55,12 +56,17 @@ class teramanager::PMain : public QWidget
         //members
         V3DPluginCallback2* V3D_env;    //handle of V3D environment
         QWidget *parentWidget;          //handle of parent widget
+        string annotationsPathLRU;      //last recently used (LRU) annotations filepath
 
         //menu widgets
         QMenuBar* menuBar;              //Menu bar
         QMenu* fileMenu;                //"File" menu
         QAction* openVolumeAction;      //"Open volume" menu action
         QAction* closeVolumeAction;     //"Close volume" menu action
+        QAction* loadAnnotationsAction; //"Load annotations" menu action
+        QAction* saveAnnotationsAction; //"Save annotations" menu action
+        QAction* saveAnnotationsAsAction; //"Save annotations as" menu action
+        QAction* clearAnnotationsAction;//"Clear annotations" menu action
         QAction* exitAction;            //"Exit" menu action
 
         QMenu* optionsMenu;             //"Options" menu
@@ -149,6 +155,8 @@ class teramanager::PMain : public QWidget
         QLabel* by_label_7;
         QComboBox* resolution_cbox;
         QLabel* zoominVoiSize;
+        QSlider* zoomSensitivity;
+        QArrowButton* X_trasl_pos_arrowbutton;
 
         //other widgets
         QProgressBar* progressBar;      //progress bar
@@ -201,6 +209,24 @@ class teramanager::PMain : public QWidget
         * All the memory allocated is released and GUI is reset".
         ***********************************************************************************/
         void closeVolume();
+
+        /**********************************************************************************
+        * Called when "Open annotations" menu action is triggered.
+        * Opens QFileDialog to select annotation file path.
+        ***********************************************************************************/
+        void loadAnnotations();
+
+        /**********************************************************************************
+        * Called when "Save annotations" or "Save annotations as" menu actions are triggered.
+        * If required, opens QFileDialog to select annotation file path.
+        ***********************************************************************************/
+        void saveAnnotations();
+        void saveAnnotationsAs();
+
+        /**********************************************************************************
+        * Called when "Clear annotations" menu action is triggered.
+        ***********************************************************************************/
+        void clearAnnotations();
 
         /**********************************************************************************
         * Called when "Exit" menu action is triggered or TeraFly window is closed.

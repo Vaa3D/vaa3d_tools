@@ -78,6 +78,7 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     //initializing members
     V3D_env = callback;
     parentWidget = parent;
+    annotationsPathLRU = "";
 
     //creating fonts
     QFont tinyFont = QApplication::font();
@@ -104,15 +105,33 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     fileMenu = menuBar->addMenu("File");
     openVolumeAction = new QAction("Open volume", this);
     closeVolumeAction = new QAction("Close volume", this);
+    loadAnnotationsAction = new QAction("Load annotations", this);
+    saveAnnotationsAction = new QAction("Save annotations", this);
+    saveAnnotationsAsAction = new QAction("Save annotations as", this);
+    clearAnnotationsAction = new QAction("Clear annotations", this);
     exitAction = new QAction("Exit", this);
-    openVolumeAction->setShortcuts(QKeySequence::Open);
-    closeVolumeAction->setShortcuts(QKeySequence::Close);
-    exitAction->setShortcuts(QKeySequence::Quit);
+    openVolumeAction->setShortcut(QKeySequence("Ctrl+O"));
+    closeVolumeAction->setShortcut(QKeySequence("Ctrl+C"));
+    loadAnnotationsAction->setShortcut(QKeySequence("Ctrl+L"));
+    saveAnnotationsAction->setShortcut(QKeySequence("Ctrl+S"));
+    saveAnnotationsAsAction->setShortcut(QKeySequence("Ctrl+Shift+S"));
+    clearAnnotationsAction->setShortcut(QKeySequence("Ctrl+Shift+C"));
+    exitAction->setShortcut(QKeySequence("Ctrl+Q"));
     connect(openVolumeAction, SIGNAL(triggered()), this, SLOT(openVolume()));
     connect(closeVolumeAction, SIGNAL(triggered()), this, SLOT(closeVolume()));
     connect(exitAction, SIGNAL(triggered()), this, SLOT(exit()));
+    connect(loadAnnotationsAction, SIGNAL(triggered()), this, SLOT(loadAnnotations()));
+    connect(saveAnnotationsAction, SIGNAL(triggered()), this, SLOT(saveAnnotations()));
+    connect(saveAnnotationsAsAction, SIGNAL(triggered()), this, SLOT(saveAnnotationsAs()));
+    connect(clearAnnotationsAction, SIGNAL(triggered()), this, SLOT(clearAnnotations()));
     fileMenu->addAction(openVolumeAction);
     fileMenu->addAction(closeVolumeAction);
+    fileMenu->addSeparator();
+    fileMenu->addAction(loadAnnotationsAction);
+    fileMenu->addAction(saveAnnotationsAction);
+    fileMenu->addAction(saveAnnotationsAsAction);
+    fileMenu->addAction(clearAnnotationsAction);
+    fileMenu->addSeparator();
     fileMenu->addAction(exitAction);
 
     optionsMenu = menuBar->addMenu("Options");
@@ -151,6 +170,14 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     zoominVoiSize->setStyleSheet("border: 1px solid; border-color: gray; background-color: rgb(245,245,245); padding-left:5px; padding-right:5px");
     zoominVoiSize->setFont(tinyFont);
     resolution_cbox = new QComboBox();
+    zoomSensitivity = new QSlider(Qt::Horizontal, this);
+    zoomSensitivity->setTickPosition(QSlider::TicksBelow);
+    zoomSensitivity->setMinimum(0);
+    zoomSensitivity->setMaximum(100);
+    zoomSensitivity->setSingleStep(1);
+    zoomSensitivity->setPageStep(10);
+    zoomSensitivity->setValue(100);
+//    X_trasl_pos_arrowbutton = new QArrowButton(this, Qt::blue, 15, 4, 10);
 
 
     //info panel widgets
@@ -366,9 +393,13 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     multiresModePanelLayout->addWidget(by_label_7,                              1, 12, 1, 1);
     multiresModePanelLayout->addWidget(Ddim_sbox,                               1, 13, 1, 2);
     multiresModePanelLayout->addWidget(direction_D_label_6,                     1, 15, 1, 1);
-    multiresModePanelLayout->addWidget(new QLabel("Zoom-in VOI size"),          2, 0, 1, 4);
+    multiresModePanelLayout->addWidget(new QLabel("Zoom-in VOI size:"),         2, 0, 1, 4);
     multiresModePanelLayout->addWidget(zoominVoiSize,                           2, 5, 1, 2);
     multiresModePanelLayout->addWidget(new QLabel("MVoxels"),                   2, 7, 1, 9);
+    multiresModePanelLayout->addWidget(new QLabel("Zoom-in/out sensitivity"),   3, 0, 1, 4);
+    multiresModePanelLayout->addWidget(zoomSensitivity,                         3, 5, 1, 11);
+//    multiresModePanelLayout->addWidget(new QLabel("X traslation:"),             4, 0, 1, 4);
+//    multiresModePanelLayout->addWidget(X_trasl_pos_arrowbutton,                 4, 5, 1, 11);
     multires_panel->setLayout(multiresModePanelLayout);
     multires_panel->setStyle(new QWindowsStyle());
 
@@ -426,6 +457,10 @@ void PMain::reset()
     importOptionsWidget->setEnabled(true);
     import_form->setEnabled(true);
     aboutAction->setEnabled(true);
+    loadAnnotationsAction->setEnabled(false);
+    saveAnnotationsAction->setEnabled(false);
+    saveAnnotationsAsAction->setEnabled(false);
+    clearAnnotationsAction->setEnabled(false);
 
     //reseting info panel widgets
     info_panel->setEnabled(false);
@@ -510,7 +545,10 @@ void PMain::loadButtonClicked()
         //starting operation
         //the object that will catch the SIGNAL emitted from CVolume is the last CExplorerWindow if multiresolution mode is enabled
         if(enableMultiresMode->isChecked() && CExplorerWindow::getLast())
+        {
             CVolume::instance()->setVoi(CExplorerWindow::getLast(), CImport::instance()->getResolutions()-1, V0_sbox->value()-1, V1_sbox->value()-1,H0_sbox->value()-1, H1_sbox->value()-1, D0_sbox->value()-1, D1_sbox->value()-1);
+            CExplorerWindow::getLast()->saveSubvolSpinboxState();
+        }
         else
             CVolume::instance()->setVoi(this, CImport::instance()->getResolutions()-1, V0_sbox->value()-1, V1_sbox->value()-1,H0_sbox->value()-1, H1_sbox->value()-1, D0_sbox->value()-1, D1_sbox->value()-1);
         CVolume::instance()->start();
@@ -602,6 +640,118 @@ void PMain::closeVolume()
     CExplorerWindow::uninstance();
     CAnnotations::uninstance();
     reset();
+}
+
+/**********************************************************************************
+* Called when "Open annotations" menu action is triggered.
+* Opens QFileDialog to select annotation file path.
+***********************************************************************************/
+void PMain::loadAnnotations()
+{
+    #ifdef TMP_DEBUG
+    printf("--------------------- teramanager plugin [thread %d] >> PMain loadAnnotations() launched\n", this->thread()->currentThreadId());
+    #endif
+
+    try
+    {
+        if(CExplorerWindow::getCurrent())
+        {
+            //obtaining path
+            QDir dir(CImport::instance()->getPath().c_str());
+            dir.cdUp();
+            string path= QFileDialog::getOpenFileName(this, QObject::tr("Select annotation file"),  dir.absolutePath().toStdString().c_str(), "SWC files (*.swc *.SWC)").toStdString();
+            if(strcmp(path.c_str(), "") == 0)
+                return;
+            annotationsPathLRU = path;
+
+            CAnnotations::getInstance()->load(annotationsPathLRU.c_str());
+            CExplorerWindow::getCurrent()->loadAnnotations();
+
+        }
+    }
+    catch(MyException &ex)
+    {
+        QMessageBox::critical(this,QObject::tr("Error"), QObject::tr(ex.what()),QObject::tr("Ok"));
+    }
+}
+
+/**********************************************************************************
+* Called when "Save annotations" or "Save annotations as" menu actions are triggered.
+* If required, opens QFileDialog to select annotation file path.
+***********************************************************************************/
+void PMain::saveAnnotations()
+{
+    #ifdef TMP_DEBUG
+    printf("--------------------- teramanager plugin [thread %d] >> PMain saveAnnotations() launched\n", this->thread()->currentThreadId());
+    #endif
+
+    try
+    {
+        if(CExplorerWindow::getCurrent())
+        {
+            if(annotationsPathLRU.compare("")==0)
+            {
+                saveAnnotationsAs();
+                return;
+            }
+            CExplorerWindow::getCurrent()->storeAnnotations();
+            CAnnotations::getInstance()->save(annotationsPathLRU.c_str());
+        }
+    }
+    catch(MyException &ex)
+    {
+        QMessageBox::critical(this,QObject::tr("Error"), QObject::tr(ex.what()),QObject::tr("Ok"));
+    }
+}
+void PMain::saveAnnotationsAs()
+{
+    #ifdef TMP_DEBUG
+    printf("--------------------- teramanager plugin [thread %d] >> PMain saveAnnotationsAs() launched\n", this->thread()->currentThreadId());
+    #endif
+
+    try
+    {
+        if(CExplorerWindow::getCurrent())
+        {
+            QDir dir(CImport::instance()->getPath().c_str());
+            dir.cdUp();
+            string path= QFileDialog::getSaveFileName(this, QObject::tr("Save annotation as"), dir.absolutePath().toStdString().c_str(), "SWC files (*.swc *.SWC)").toStdString();
+            if(strcmp(path.c_str(), "") == 0)
+                return;
+            if(path.find(".swc") == string::npos ||  path.find(".SWC") == string::npos)
+                annotationsPathLRU = path.append(".swc");
+            CExplorerWindow::getCurrent()->storeAnnotations();
+            CAnnotations::getInstance()->save(annotationsPathLRU.c_str());
+            saveAnnotationsAction->setEnabled(true);
+        }
+    }
+    catch(MyException &ex)
+    {
+        QMessageBox::critical(this,QObject::tr("Error"), QObject::tr(ex.what()),QObject::tr("Ok"));
+    }
+}
+
+/**********************************************************************************
+* Called when "Clear annotations" menu action is triggered.
+***********************************************************************************/
+void PMain::clearAnnotations()
+{
+    #ifdef TMP_DEBUG
+    printf("--------------------- teramanager plugin [thread %d] >> PMain clearAnnotations() launched\n", this->thread()->currentThreadId());
+    #endif
+
+    try
+    {
+        if(CExplorerWindow::getCurrent())
+        {
+            CAnnotations::getInstance()->clear();
+            CExplorerWindow::getCurrent()->loadAnnotations();
+        }
+    }
+    catch(MyException &ex)
+    {
+        QMessageBox::critical(this,QObject::tr("Error"), QObject::tr(ex.what()),QObject::tr("Ok"));
+    }
 }
 
 /**********************************************************************************
@@ -715,6 +865,7 @@ void PMain::importDone(MyException *ex, Image4DSimple* vmap_image)
         openVolumeAction->setEnabled(false);
         importOptionsMenu->setEnabled(false);
         closeVolumeAction->setEnabled(true);
+        clearAnnotationsAction->setEnabled(true);
 
         //if multiresulution mode is enabled
         if(enableMultiresMode->isChecked())
@@ -722,6 +873,10 @@ void PMain::importDone(MyException *ex, Image4DSimple* vmap_image)
             //enabling multiresolution panel and hiding volume map options
             this->multires_panel->setEnabled(true);
             this->volMapWidget->setVisible(false);
+
+            //enabling menu actions
+            loadAnnotationsAction->setEnabled(true);
+            saveAnnotationsAsAction->setEnabled(true);
 
             //updating zoom-in VOI size
             zoomInVoiSizeChanged(0);
@@ -848,6 +1003,10 @@ void PMain::settingsChanged(int)
 ***********************************************************************************/
 void PMain::resolutionIndexChanged(int i)
 {
+    #ifdef TMP_DEBUG
+    printf("--------------------- teramanager plugin [thread %d] >> PMain resolutionIndexChanged() launched\n", this->thread()->currentThreadId());
+    #endif
+
     try
     {
         if(CExplorerWindow::getLast() && i != CExplorerWindow::getLast()->getResIndex())
@@ -858,10 +1017,10 @@ void PMain::resolutionIndexChanged(int i)
             int voiH1 = CVolume::scaleHCoord(H1_sbox->value()-1, CImport::instance()->getResolutions()-1, i);
             int voiD0 = CVolume::scaleDCoord(D0_sbox->value()-1, CImport::instance()->getResolutions()-1, i);
             int voiD1 = CVolume::scaleDCoord(D1_sbox->value()-1, CImport::instance()->getResolutions()-1, i);
-            float MVoxels = ((voiV1-voiV0)/1024.0f)*((voiH1-voiH0)/1024.0f)*(voiD1-voiD0);
+            float MVoxels = ((voiV1-voiV0+1)/1024.0f)*((voiH1-voiH0+1)/1024.0f)*(voiD1-voiD0+1);
             if(QMessageBox::Yes == QMessageBox::question(this, "Confirm", QString("The volume to be loaded is ").append(QString::number(MVoxels, 'f', 1)).append(" MVoxels big.\n\nDo you confirm?"), QMessageBox::No | QMessageBox::Yes, QMessageBox::Yes))
             {
-                CVolume::instance()->setVoi(CExplorerWindow::getLast(), i, voiV0, voiV1, voiH0, voiH1, voiD0, voiD1);
+                CVolume::instance()->setVoi(CExplorerWindow::getLast(), i, voiV0, voiV1+1, voiH0, voiH1+1, voiD0, voiD1+1);
 
                 //disabling import form and enabling progress bar animation and tab wait animation
                 progressBar->setEnabled(true);
@@ -870,6 +1029,7 @@ void PMain::resolutionIndexChanged(int i)
                 loadButton->setEnabled(false);
                 subvol_panel->setEnabled(false);
                 statusBar->showMessage("Loading selected subvolume...");
+                CExplorerWindow::getLast()->saveSubvolSpinboxState();
                 CVolume::instance()->start();
             }
             else

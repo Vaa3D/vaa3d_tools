@@ -57,6 +57,7 @@ namespace teramanager
     class CExplorerWindow;      //control class used to encapsulate all the informations needed to manage 3D navigation windows
     class CConverter;           //control class used to perform volume conversion operations in a separate non-GUI-blocking thread
     class CAnnotations;         //control class used to manage annotations (markers, curves, etc.) among all the resolutions
+    class QArrowButton;         //Qt-customized class to model arrow buttons
     /*-------------------------------------------------------------------------------------------------------------------------*/
 
     /*******************
@@ -66,7 +67,10 @@ namespace teramanager
     const char undefined_str[] = "undefined";
     const int  undefined_int32 = -1;
     const float undefined_real32 = -1.0f;
-    const std::string version = "0.7.2";
+    const std::string version = "0.7.3";
+    const int STATIC_STRING_SIZE = 2000;
+    const int FILE_LINE_BUFFER_SIZE = 10000;
+    const double pi = 3.14159265359;
     /*-------------------------------------------------------------------------------------------------------------------------*/
 
     /*******************
