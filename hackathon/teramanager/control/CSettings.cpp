@@ -58,13 +58,14 @@ void CSettings::loadDefaultSettings()
     volMapSizeLimit = 30;
     VOIdimV = VOIdimH = 200;
     VOIdimD = 50;
+    traslX = traslY = traslZ = 50;  //percentage value
 
     //TeraConverter settings
     volumeConverterInputPathLRU = "";
     volumeConverterOutputPathLRU = "";
-    volumeConverterFormatLRU = "TeraStitcher";
-    volumeConverterStacksWidthLRU = 300;
-    volumeConverterStacksHeightLRU = 300;
+    volumeConverterFormatLRU = "Vaa3D raw";
+    volumeConverterStacksWidthLRU = 256;
+    volumeConverterStacksHeightLRU = 256;
 }
 
 void CSettings::writeSettings()
@@ -82,6 +83,9 @@ void CSettings::writeSettings()
     settings.setValue("VOIdimV", VOIdimV);
     settings.setValue("VOIdimH", VOIdimH);
     settings.setValue("VOIdimD", VOIdimD);
+    settings.setValue("traslX", traslX);
+    settings.setValue("traslY", traslY);
+    settings.setValue("traslZ", traslZ);
 
     settings.setValue("volumeConverterInputPathLRU", QString(volumeConverterInputPathLRU.c_str()));
     settings.setValue("volumeConverterOutputPathLRU", QString(volumeConverterOutputPathLRU.c_str()));
@@ -112,7 +116,13 @@ void CSettings::readSettings()
     if(settings.contains("VOIdimH"))
         VOIdimH = settings.value("VOIdimH").toInt();
     if(settings.contains("VOIdimD"))
-        VOIdimD = settings.value("VOIdimD").toInt();
+        VOIdimD = settings.value("VOIdimD").toInt();    
+    if(settings.contains("traslX"))
+        traslX = settings.value("traslX").toInt();
+    if(settings.contains("traslY"))
+        traslY = settings.value("traslY").toInt();
+    if(settings.contains("traslZ"))
+        traslZ = settings.value("traslZ").toInt();
 
     //TeraManager settings
     if(settings.contains("volumeConverterInputPathLRU"))

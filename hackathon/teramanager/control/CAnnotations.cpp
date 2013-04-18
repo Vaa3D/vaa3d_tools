@@ -599,7 +599,7 @@ void CAnnotations::findLandmarks(interval_t X_range, interval_t Y_range, interva
 void CAnnotations::findCurves(interval_t X_range, interval_t Y_range, interval_t Z_range, NeuronTree& curves) throw (MyException)
 {
     #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread unknown] >> CAnnotations::findCurves(X[%d,%d), Y[%d,%d), Z[%d,%d))\n",
+    printf("--------------------- teramanager plugin [thread unknown] >> CAnnotations::findCurves(X[%d,%d), Y[%d,%d), Z[%d,%d))",
            X_range.start, X_range.end, Y_range.start, Y_range.end, Z_range.start, Z_range.end);
     #endif
 
@@ -619,7 +619,7 @@ void CAnnotations::findCurves(interval_t X_range, interval_t Y_range, interval_t
 //            markers.push_back(marker);
 //        }
 //    }
-    //printf("...%d curve points loaded\n", markers.size());
+    printf("...%d curve points loaded\n", curves.listNeuron.size());
 }
 
 /*********************************************************************************
@@ -694,7 +694,7 @@ void CAnnotations::load(const char* filepath) throw (MyException)
     }
     fgets(lineBuf, FILE_LINE_BUFFER_SIZE, f);
     int DIM_V=-1, DIM_H=-1, DIM_D=-1;
-    if(sscanf(lineBuf, "%*s %d %d %d", &DIM_V, &DIM_H, &DIM_D) != 3)
+    if(sscanf(lineBuf, "%*s %d %d %d", &DIM_H, &DIM_V, &DIM_D) != 3)
     {
         sprintf(errMsg, "in CAnnotations::load(const char* filepath = \"%s\"): expected line \"%s\", found \"%s\"",
                 filepath, "#voldims <number> <number> <number>", lineBuf);

@@ -83,11 +83,6 @@ class teramanager::PConverter : public QWidget
         //friend class declarations
         friend class CConverter;
 
-        //timer used to flush <statusBar> message
-        /*QTimer* timer;
-        string timerFlushingMessage;
-        int timerTransitions;*/
-
 
     public:
 
@@ -151,10 +146,6 @@ class teramanager::PConverter : public QWidget
         ***********************************************************************************/
         void updateContent();
 
-        /**********************************************************************************
-        * Used to flush <statusBar> text
-        ***********************************************************************************/
-        void timerFired();
 
     signals:
 

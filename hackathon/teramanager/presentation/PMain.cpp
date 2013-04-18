@@ -85,6 +85,9 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     tinyFont.setPointSize(10);
     QFont smallFont = QApplication::font();
     smallFont.setPointSize(11);
+    QFont xlabelFont = QApplication::font();
+    xlabelFont.setBold(true);
+    xlabelFont.setPointSize(11);
 
     //import form widgets
     import_form = new QWidget();
@@ -101,7 +104,7 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     volMapMaxSizeSBox->setAlignment(Qt::AlignCenter);
 
     //initializing menu
-    menuBar = new QMenuBar(this);
+    menuBar = new QMenuBar(0);
     fileMenu = menuBar->addMenu("File");
     openVolumeAction = new QAction("Open volume", this);
     closeVolumeAction = new QAction("Close volume", this);
@@ -109,7 +112,7 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     saveAnnotationsAction = new QAction("Save annotations", this);
     saveAnnotationsAsAction = new QAction("Save annotations as", this);
     clearAnnotationsAction = new QAction("Clear annotations", this);
-    exitAction = new QAction("Exit", this);
+    exitAction = new QAction("Quit", this);
     openVolumeAction->setShortcut(QKeySequence("Ctrl+O"));
     closeVolumeAction->setShortcut(QKeySequence("Ctrl+C"));
     loadAnnotationsAction->setShortcut(QKeySequence("Ctrl+L"));
@@ -174,10 +177,18 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     zoomSensitivity->setTickPosition(QSlider::TicksBelow);
     zoomSensitivity->setMinimum(0);
     zoomSensitivity->setMaximum(100);
-    zoomSensitivity->setSingleStep(1);
-    zoomSensitivity->setPageStep(10);
+    zoomSensitivity->setSingleStep(10);
+    zoomSensitivity->setPageStep(20);
     zoomSensitivity->setValue(100);
-//    X_trasl_pos_arrowbutton = new QArrowButton(this, Qt::blue, 15, 4, 10);
+    traslXpos = new QArrowButton(this, QColor(255,0,0), 15, 6, 10, Qt::LeftToRight);
+    traslXneg = new QArrowButton(this, QColor(255,0,0), 15, 6, 10, Qt::RightToLeft);
+    traslXlabel = new QLabel("X");
+    traslYpos = new QArrowButton(this, QColor(0,255,0), 15, 6, 10, Qt::LeftToRight);
+    traslYneg = new QArrowButton(this, QColor(0,255,0), 15, 6, 10, Qt::RightToLeft);
+    traslYlabel = new QLabel("Y");
+    traslZpos = new QArrowButton(this, QColor(0,0,255), 15, 6, 10, Qt::LeftToRight);
+    traslZneg = new QArrowButton(this, QColor(0,0,255), 15, 6, 10, Qt::RightToLeft);
+    traslZlabel = new QLabel("Z");
 
 
     //info panel widgets
@@ -398,8 +409,22 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     multiresModePanelLayout->addWidget(new QLabel("MVoxels"),                   2, 7, 1, 9);
     multiresModePanelLayout->addWidget(new QLabel("Zoom-in/out sensitivity"),   3, 0, 1, 4);
     multiresModePanelLayout->addWidget(zoomSensitivity,                         3, 5, 1, 11);
-//    multiresModePanelLayout->addWidget(new QLabel("X traslation:"),             4, 0, 1, 4);
-//    multiresModePanelLayout->addWidget(X_trasl_pos_arrowbutton,                 4, 5, 1, 11);
+    multiresModePanelLayout->addWidget(new QLabel("Traslations:"),              4, 0, 1, 4);
+    QHBoxLayout* traslXlayout = new QHBoxLayout();
+    traslXlayout->addWidget(traslXneg, 1);
+    traslXlayout->addWidget(traslXlabel, 0);
+    traslXlayout->addWidget(traslXpos, 1);
+    multiresModePanelLayout->addLayout(traslXlayout,                            4, 5, 1, 11);
+    QHBoxLayout* traslYlayout = new QHBoxLayout();
+    traslYlayout->addWidget(traslYneg, 1);
+    traslYlayout->addWidget(traslYlabel, 0);
+    traslYlayout->addWidget(traslYpos, 1);
+    multiresModePanelLayout->addLayout(traslYlayout,                            5, 5, 1, 11);
+    QHBoxLayout* traslZlayout = new QHBoxLayout();
+    traslZlayout->addWidget(traslZneg, 1);
+    traslZlayout->addWidget(traslZlabel, 0);
+    traslZlayout->addWidget(traslZpos, 1);
+    multiresModePanelLayout->addLayout(traslZlayout,                            6, 5, 1, 11);
     multires_panel->setLayout(multiresModePanelLayout);
     multires_panel->setStyle(new QWindowsStyle());
 
@@ -436,6 +461,12 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     connect(D0_sbox, SIGNAL(valueChanged(int)), this, SLOT(highestVOISizeChanged(int)));
     connect(D1_sbox, SIGNAL(valueChanged(int)), this, SLOT(highestVOISizeChanged(int)));
     connect(resolution_cbox, SIGNAL(currentIndexChanged(int)), this, SLOT(resolutionIndexChanged(int)), Qt::QueuedConnection);
+    connect(traslXpos, SIGNAL(clicked()), this, SLOT(traslXposClicked()));
+    connect(traslXneg, SIGNAL(clicked()), this, SLOT(traslXnegClicked()));
+    connect(traslYpos, SIGNAL(clicked()), this, SLOT(traslYposClicked()));
+    connect(traslYneg, SIGNAL(clicked()), this, SLOT(traslYnegClicked()));
+    connect(traslZpos, SIGNAL(clicked()), this, SLOT(traslZposClicked()));
+    connect(traslZneg, SIGNAL(clicked()), this, SLOT(traslZnegClicked()));
     resetGUI();
 
     //set always on top
@@ -487,6 +518,9 @@ void PMain::reset()
     zoominVoiSize->setText("n.a.");
     while(resolution_cbox->count())
         resolution_cbox->removeItem(0);
+    traslXlabel->setStyleSheet("");
+    traslYlabel->setStyleSheet("");
+    traslZlabel->setStyleSheet("");
 
     //resetting subvol panel widgets
     subvol_panel->setEnabled(false);
@@ -895,6 +929,11 @@ void PMain::importDone(MyException *ex, Image4DSimple* vmap_image)
                 resolution_cbox->insertItem(i, option);
             }
 
+            //updating traslation widgets
+            traslXlabel->setStyleSheet("color: rgb(255,0,0); font-weight:bold;");
+            traslYlabel->setStyleSheet("color: rgb(0,255,0); font-weight:bold;");
+            traslZlabel->setStyleSheet("color: rgb(0,0,255); font-weight:bold;");
+
             //instantiating CAnnotations
             CAnnotations::instance(volume->getDIM_V(), volume->getDIM_H(), volume->getDIM_D());
 
@@ -1064,4 +1103,56 @@ void PMain::highestVOISizeChanged(int i)
 {
     float MVoxels = ((V1_sbox->value()-V0_sbox->value())/1024.0f)*((H1_sbox->value()-H0_sbox->value())/1024.0f)*(D1_sbox->value()-D0_sbox->value());
     loadButton->setText(QString("Load (").append(QString::number(MVoxels, 'f', 0)).append(" MVoxels)"));
+}
+
+/**********************************************************************************
+* Called when the correspont buttons are clicked
+***********************************************************************************/
+void PMain::traslXposClicked()
+{
+    CExplorerWindow* expl = CExplorerWindow::getLast();
+    if(expl)
+        expl->newView((expl->volH1-expl->volH0)/2 + (expl->volH1-expl->volH0)*CSettings::instance()->getTraslX()/100.0f,
+                      (expl->volV1-expl->volV0)/2,
+                      (expl->volD1-expl->volD0)/2, expl->volResIndex, false);
+}
+void PMain::traslXnegClicked()
+{
+    CExplorerWindow* expl = CExplorerWindow::getLast();
+    if(expl)
+        expl->newView((expl->volH1-expl->volH0)/2 - (expl->volH1-expl->volH0)*CSettings::instance()->getTraslX()/100.0f,
+                      (expl->volV1-expl->volV0)/2,
+                      (expl->volD1-expl->volD0)/2, expl->volResIndex, false);
+}
+void PMain::traslYposClicked()
+{
+    CExplorerWindow* expl = CExplorerWindow::getLast();
+    if(expl)
+        expl->newView((expl->volH1-expl->volH0)/2,
+                      (expl->volV1-expl->volV0)/2 + (expl->volV1-expl->volV0)*CSettings::instance()->getTraslY()/100.0f,
+                      (expl->volD1-expl->volD0)/2, expl->volResIndex, false);
+}
+void PMain::traslYnegClicked()
+{
+    CExplorerWindow* expl = CExplorerWindow::getLast();
+    if(expl)
+        expl->newView((expl->volH1-expl->volH0)/2,
+                      (expl->volV1-expl->volV0)/2 - (expl->volV1-expl->volV0)*CSettings::instance()->getTraslY()/100.0f,
+                      (expl->volD1-expl->volD0)/2, expl->volResIndex, false);
+}
+void PMain::traslZposClicked()
+{
+    CExplorerWindow* expl = CExplorerWindow::getLast();
+    if(expl)
+        expl->newView((expl->volH1-expl->volH0)/2,
+                      (expl->volV1-expl->volV0)/2,
+                      (expl->volD1-expl->volD0)/2 + (expl->volD1-expl->volD0)*CSettings::instance()->getTraslZ()/100.0f, expl->volResIndex, false);
+}
+void PMain::traslZnegClicked()
+{
+    CExplorerWindow* expl = CExplorerWindow::getLast();
+    if(expl)
+        expl->newView((expl->volH1-expl->volH0)/2,
+                      (expl->volV1-expl->volV0)/2,
+                      (expl->volD1-expl->volD0)/2 - (expl->volD1-expl->volD0)*CSettings::instance()->getTraslZ()/100.0f, expl->volResIndex, false);
 }

@@ -68,7 +68,6 @@ class teramanager::PMain : public QWidget
         QAction* saveAnnotationsAsAction; //"Save annotations as" menu action
         QAction* clearAnnotationsAction;//"Clear annotations" menu action
         QAction* exitAction;            //"Exit" menu action
-
         QMenu* optionsMenu;             //"Options" menu
         QMenu* importOptionsMenu;       //"Import" menu
         QWidgetAction* importOptionsWidget;
@@ -156,7 +155,15 @@ class teramanager::PMain : public QWidget
         QComboBox* resolution_cbox;
         QLabel* zoominVoiSize;
         QSlider* zoomSensitivity;
-        QArrowButton* X_trasl_pos_arrowbutton;
+        QArrowButton* traslXpos;
+        QLabel* traslXlabel;
+        QArrowButton* traslXneg;
+        QArrowButton* traslYpos;
+        QLabel* traslYlabel;
+        QArrowButton* traslYneg;
+        QArrowButton* traslZpos;
+        QLabel* traslZlabel;
+        QArrowButton* traslZneg;
 
         //other widgets
         QProgressBar* progressBar;      //progress bar
@@ -282,6 +289,16 @@ class teramanager::PMain : public QWidget
         * This updates the load button text.
         ***********************************************************************************/
         void highestVOISizeChanged(int i);
+
+        /**********************************************************************************
+        * Called when the correspont buttons are clicked
+        ***********************************************************************************/
+        void traslXposClicked();
+        void traslXnegClicked();
+        void traslYposClicked();
+        void traslYnegClicked();
+        void traslZposClicked();
+        void traslZnegClicked();
 
         //<CExplorerWindow> instances need to access to all members of the current class
         friend class CExplorerWindow;

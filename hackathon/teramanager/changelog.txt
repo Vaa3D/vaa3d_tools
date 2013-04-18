@@ -3,7 +3,7 @@ Version history of TeraManager
 
 Below you find a list with the added  features, changes and fixes  for each version. Activi-
 ties names are:
-- New: a new feature to be implemented
+- New: a new feature implemented
 - Fix: bug fixed
 - Bug: bug to be fixed
 - Dev: for developers only
@@ -11,6 +11,24 @@ ties names are:
 - Rem: a feature no longer available
 
 ============================================================================================
+Version 0.7.4
+April 17th, 2013
+--------------------------------------------------------------------------------------------
+- Fix: corrected a bug which caused "Invalid subvolume intervals" error  when  zooming-in to
+       around peripheral regions.
+- Fix: when conversion in TeraConverter is finished, a  "Success" message  is  shown and the
+       plugin is automatically closed.
+- Fix: removed the error message that was displayed when no  file/directory  was selected in
+       the TeraConverter plugin.
+- Fix: tried to correct a bug which cause  the menu bar  to be automatically embedded in the
+       system bar on MAC OS X. 
+- Fix: corrected a bug which may cause a compilation error on some compilers.
+- New: added "Traslation along an axis" feature. For each axis, 2  buttons  are displayed to
+       let the user traslate the current view along that axis in the 2 possible directions.
+       Currently, traslation amount is the 50% of the displayed VOI size. 
+--------------------------------------------------------------------------------------------
+
+
 Version 0.7.3
 April 15th, 2013
 --------------------------------------------------------------------------------------------
@@ -19,7 +37,7 @@ April 15th, 2013
        "Clear annotations". Both markers and  curves annotated  at any resolution  are saved
        (annotation of curves is not enabled at the moment) in a SWC-like format.
 - New: added zoom-in/out sensitivity slider
-- Bug: incorrect subolume indexes update in the "Jump to resolution" feature
+- Fix: incorrect subolume indexes update in the "Jump to resolution" feature
 --------------------------------------------------------------------------------------------
 
 
@@ -35,10 +53,10 @@ April 11th, 2013
 - Bug: all the plugin functionalities which  used pixel  coordinates in  the 3D window image
        space did not take into account  that Vaa3D downsamples the image when its  dimension
        along an axis exceeds predefined limit for that axis (LIMIT_VOLX/Y/Z = 512,512,256).
-- Bug: fixed the bug which causes an error message when the "Open volume" dialog was closed.
+- Fix: fixed the bug which causes an error message when the "Open volume" dialog was closed.
 - Opt: added a vertically stretchable space after the last component in the main GUI.
 - New: added "Cancel" button and window close button in the volume import dialog.
-- Bug: when a volume is closed, not all the resolutions in the combobox were removed.
+- Fix: when a volume is closed, not all the resolutions in the combobox were removed.
 --------------------------------------------------------------------------------------------
 
 

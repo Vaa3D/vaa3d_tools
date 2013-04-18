@@ -67,7 +67,7 @@ namespace teramanager
     const char undefined_str[] = "undefined";
     const int  undefined_int32 = -1;
     const float undefined_real32 = -1.0f;
-    const std::string version = "0.7.3";
+    const std::string version = "0.7.4";
     const int STATIC_STRING_SIZE = 2000;
     const int FILE_LINE_BUFFER_SIZE = 10000;
     const double pi = 3.14159265359;

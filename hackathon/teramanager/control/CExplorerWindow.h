@@ -76,12 +76,12 @@ class teramanager::CExplorerWindow : public QWidget
         * resolution volume image space. If resIndex is not set, the returned global coord-
         * inate will be in the highest resolution image space.
         ***********************************************************************************/
-        int getGlobalVCoord(int localVCoord, int resIndex = -1);
-        int getGlobalHCoord(int localHCoord, int resIndex = -1);
-        int getGlobalDCoord(int localDCoord, int resIndex = -1);
-        float getGlobalVCoord(float localVCoord, int resIndex = -1);
-        float getGlobalHCoord(float localHCoord, int resIndex = -1);
-        float getGlobalDCoord(float localDCoord, int resIndex = -1);
+        int getGlobalVCoord(int localVCoord, int resIndex = -1, bool fromVaa3Dcoordinates = true);
+        int getGlobalHCoord(int localHCoord, int resIndex = -1, bool fromVaa3Dcoordinates = true);
+        int getGlobalDCoord(int localDCoord, int resIndex = -1, bool fromVaa3Dcoordinates = true);
+        float getGlobalVCoord(float localVCoord, int resIndex = -1, bool fromVaa3Dcoordinates = true);
+        float getGlobalHCoord(float localHCoord, int resIndex = -1, bool fromVaa3Dcoordinates = true);
+        float getGlobalDCoord(float localDCoord, int resIndex = -1, bool fromVaa3Dcoordinates = true);
 
         /**********************************************************************************
         * Returns the local coordinate (which starts from 0) in the current resolution vol-
@@ -192,13 +192,14 @@ class teramanager::CExplorerWindow : public QWidget
         void restore() throw (MyException);
 
         /**********************************************************************************
-        * Switches to the higher resolution centered at the given 3D point and with the gi-
-        * ven dimensions (optional). VOI's dimensions from the GUI will be used if dx,dy,dz
-        * are not provided.
+        * Generates new view centered at the given 3D point on the given resolution and ha-
+        * ving the given dimensions (optional).  VOI's dimensions from the GUI will be used
+        * if dx,dy,dz are not provided.
         * Called by the current <CExplorerWindow> when the user zooms in and the higher res-
         * lution has to be loaded.
         ***********************************************************************************/
-        void switchToHigherRes(int x, int y, int z, int dx=-1, int dy=-1, int dz=-1);
+        void newView(int x, int y, int z, int resolution, bool fromVaa3Dcoordinates = true,
+                     int dx=-1, int dy=-1, int dz=-1);
 
         /**********************************************************************************
         * Annotations are stored/loaded) to/from the <CAnnotations> object
@@ -216,7 +217,7 @@ class teramanager::CExplorerWindow : public QWidget
         * Linked to rightStrokeROI and rightClickROI right-menu entries of the 3D renderer.
         * This implements the selection of a ROI in the 3D renderer.
         ***********************************************************************************/
-        static void Vaa3D_selectedROI();
+        void Vaa3D_selectedROI();
 
         //PMain instance is allowed to access class private members
         friend class PMain;

@@ -185,6 +185,7 @@ CExplorerWindow::CExplorerWindow(V3DPluginCallback2 *_V3D_env, int _resIndex, ui
         pMain->D1_sbox->setMaximum(getGlobalDCoord(view3DWidget->zCut1())+1);
         pMain->D1_sbox->setValue(pMain->D1_sbox->maximum());
 
+
         //signal connections
         connect(CVolume::instance(), SIGNAL(sendOperationOutcome(MyException*,void*)), this, SLOT(loadingDone(MyException*,void*)), Qt::QueuedConnection);
         connect(view3DWidget, SIGNAL(changeXCut0(int)), this, SLOT(Vaa3D_changeXCut0(int)));
@@ -266,7 +267,7 @@ bool CExplorerWindow::eventFilter(QObject *object, QEvent *event)
         {
             QMouseEvent* mouseEvt = (QMouseEvent*)event;
             XYZ point = getRenderer3DPoint(mouseEvt->x(), mouseEvt->y());
-            switchToHigherRes(point.x, point.y, point.z);
+            newView(point.x, point.y, point.z, volResIndex+1);
         }
         /********************* INTERCEPTING CLOSE EVENTS **************************
         Close events are intercepted to switch to  the lower resolution,  if avail-
@@ -355,30 +356,34 @@ void CExplorerWindow::loadingDone(MyException *ex, void* sourceObject)
             delete this;
         }
         else
-            QMessageBox::critical(this,QObject::tr("Error"), "",QObject::tr("Ok"));
-
-        view3DWidget->setCursor(Qt::ArrowCursor);
+            QMessageBox::critical(this,QObject::tr("Error"), "The new view refers to a lower resolution. This feature is not supported yet.",QObject::tr("Ok"));
     }
 
     //resetting some widgets
+    printf("----- Resetting some widgets....\n");
     PMain::instance()->resetGUI();
     PMain::instance()->subvol_panel->setEnabled(true);
     PMain::instance()->loadButton->setEnabled(true);
 }
 
 /**********************************************************************************
-* Switches to the higher resolution centered at the given 3D point and with the gi-
-* ven dimensions (optional). VOI's dimensions from the GUI will be used if dx,dy,dz
-* are not provided.
+* Generates new view centered at the given 3D point on the given resolution and ha-
+* ving the given dimensions (optional).  VOI's dimensions from the GUI will be used
+* if dx,dy,dz are not provided.
 * Called by the current <CExplorerWindow> when the user zooms in and the higher res-
 * lution has to be loaded.
 ***********************************************************************************/
-void CExplorerWindow::switchToHigherRes(int x, int y, int z, int dx, int dy, int dz)
+void CExplorerWindow::newView(int x, int y, int z, int resolution, bool fromVaa3Dcoordinates /* = true */,
+                              int dx /* = -1 */, int dy /* = -1 */, int dz /* = -1 */)
 {
     #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread %d] >> CExplorerWindow[\"%s\"] switchToHigherRes(x = %d, y = %d, z = %d, dx=%d, dy=%d, dz=%d) launched\n",
-           this->thread()->currentThreadId(),title.c_str(), x, y, z, dx, dy, dz );
+    printf("--------------------- teramanager plugin [thread %d] >> CExplorerWindow[\"%s\"] newView(x = %d, y = %d, z = %d, res = %d, dx=%d, dy=%d, dz=%d) launched\n",
+           this->thread()->currentThreadId(),title.c_str(), x, y, z, resolution, dx, dy, dz );
     #endif
+
+    //checks
+    if(resolution >= CImport::instance()->getResolutions())
+        resolution = volResIndex;
 
     //preparing GUI
     view3DWidget->setCursor(Qt::WaitCursor);
@@ -387,38 +392,17 @@ void CExplorerWindow::switchToHigherRes(int x, int y, int z, int dx, int dy, int
     pMain.progressBar->setMinimum(0);
     pMain.progressBar->setMaximum(0);
     pMain.loadButton->setEnabled(false);
-    //pMain.import_form->setEnabled(false);
-    if(CImport::instance()->getVolume(volResIndex+1))
-        pMain.statusBar->showMessage("Zooming in to the higher resolution...");
-    else
-        pMain.statusBar->showMessage("Loading selected VOI...");
+    pMain.statusBar->showMessage("Loading...");
 
-    //if the higher resolution exists, obtaining VOI at the higher resolution
-    if(CImport::instance()->getVolume(volResIndex+1))
-    {
-        float ratio = static_cast<float>(CImport::instance()->getVolume(volResIndex+1)->getDIM_D())/CImport::instance()->getVolume(volResIndex)->getDIM_D();
-        /*int VoiCenterX = (x + volH0)*ratio+0.5f;
-        int VoiCenterY = (y + volV0)*ratio+0.5f;
-        int VoiCenterZ = (z + volD0)*ratio+0.5f;*/
-        int VoiCenterX = getGlobalHCoord(x, volResIndex+1);
-        int VoiCenterY = getGlobalVCoord(y, volResIndex+1);
-        int VoiCenterZ = getGlobalDCoord(z, volResIndex+1);
-        dx = dx == -1 ? pMain.Hdim_sbox->value()/2 : (dx*ratio+0.5f);
-        dy = dy == -1 ? pMain.Vdim_sbox->value()/2 : (dy*ratio+0.5f);
-        dz = dz == -1 ? pMain.Ddim_sbox->value()/2 : (dz*ratio+0.5f);
-        CVolume::instance()->setVoi(this, volResIndex+1, VoiCenterY-dy, VoiCenterY+dy, VoiCenterX-dx, VoiCenterX+dx, VoiCenterZ-dz, VoiCenterZ+dz);
-    }
-    //otherwise obtaining VOI at the current resolution
-    else
-    {
-        int VoiCenterX = getGlobalHCoord(x, volResIndex);
-        int VoiCenterY = getGlobalVCoord(y, volResIndex);
-        int VoiCenterZ = getGlobalDCoord(z, volResIndex);
-        dx = dx == -1 ? pMain.Hdim_sbox->value()/2 : dx;
-        dy = dy == -1 ? pMain.Vdim_sbox->value()/2 : dy;
-        dz = dz == -1 ? pMain.Ddim_sbox->value()/2 : dz;
-        CVolume::instance()->setVoi(this, volResIndex, VoiCenterY-dy, VoiCenterY+dy, VoiCenterX-dx, VoiCenterX+dx, VoiCenterZ-dz, VoiCenterZ+dz);
-    }
+    //computing VOI
+    float ratio = static_cast<float>(CImport::instance()->getVolume(resolution)->getDIM_D())/CImport::instance()->getVolume(volResIndex)->getDIM_D();
+    int VoiCenterX = getGlobalHCoord(x, resolution, fromVaa3Dcoordinates);
+    int VoiCenterY = getGlobalVCoord(y, resolution, fromVaa3Dcoordinates);
+    int VoiCenterZ = getGlobalDCoord(z, resolution, fromVaa3Dcoordinates);
+    dx = dx == -1 ? pMain.Hdim_sbox->value()/2 : (dx*ratio+0.5f);
+    dy = dy == -1 ? pMain.Vdim_sbox->value()/2 : (dy*ratio+0.5f);
+    dz = dz == -1 ? pMain.Ddim_sbox->value()/2 : (dz*ratio+0.5f);
+    CVolume::instance()->setVoi(this, resolution, VoiCenterY-dy, VoiCenterY+dy, VoiCenterX-dx, VoiCenterX+dx, VoiCenterZ-dz, VoiCenterZ+dz);
 
     //saving min, max and values of PMain GUI VOI's widgets
     saveSubvolSpinboxState();
@@ -575,7 +559,7 @@ void CExplorerWindow::loadAnnotations() throw (MyException)
         loaded_curves.listNeuron[i].x = getLocalHCoord(loaded_curves.listNeuron[i].x);
         loaded_curves.listNeuron[i].y = getLocalVCoord(loaded_curves.listNeuron[i].y);
         loaded_curves.listNeuron[i].z = getLocalDCoord(loaded_curves.listNeuron[i].z);
-        //printf("CurveNode[%d] = {%.0f %.0f %.0f}\n", i, loaded_curves.listNeuron[i].x, loaded_curves.listNeuron[i].y, loaded_curves.listNeuron[i].z);
+        printf("CurveNode[%d] = {%.0f %.0f %.0f}\n", i, loaded_curves.listNeuron[i].x, loaded_curves.listNeuron[i].y, loaded_curves.listNeuron[i].z);
     }
 
     //assigning annotations
@@ -738,7 +722,7 @@ void CExplorerWindow::Vaa3D_selectedROI()
         int roiCenterY = roi->ye-(roi->ye-roi->ys)/2;
         int roiCenterZ = roi->ze-(roi->ze-roi->zs)/2;
         //last->switchToHigherRes(roiCenterX, roiCenterY, roiCenterZ, (roi->xe-roi->xs)/2, (roi->ye-roi->ys)/2, (roi->ze-roi->zs)/2);
-        last->switchToHigherRes(roiCenterX, roiCenterY, roiCenterZ);
+        last->newView(roiCenterX, roiCenterY, roiCenterZ, volResIndex+1);
     }
 }
 
@@ -748,80 +732,80 @@ void CExplorerWindow::Vaa3D_selectedROI()
 * resolution volume image space. If resIndex is not set, the returned global coord-
 * inate will be in the highest resolution image space.
 ***********************************************************************************/
-int CExplorerWindow::getGlobalVCoord(int localVCoord, int resIndex /* = -1 */)
+int CExplorerWindow::getGlobalVCoord(int localVCoord, int resIndex /* = -1 */, bool fromVaa3Dcoordinates /* = true */)
 {
     //setting resIndex if it has not been set
     if(resIndex == -1)
         resIndex = CImport::instance()->getResolutions()-1;
 
-    //if the Vaa3D image size limit has been reached along this direction, mapping coordinate to the non-downsampled image space coordinate system
-    if(volV1-volV0 > LIMIT_VOLY)
+    //if the Vaa3D image size limit has been reached along this direction, mapping Vaa3D coordinates to the non-downsampled image space coordinate system
+    if(fromVaa3Dcoordinates && (volV1-volV0 > LIMIT_VOLY))
         localVCoord = static_cast<int>(localVCoord* ( static_cast<float>(volV1-volV0-1)/(LIMIT_VOLY-1) ) +0.5f);
 
     float ratio = (CImport::instance()->getVolume(resIndex)->getDIM_V()-1.0f)/(CImport::instance()->getVolume(volResIndex)->getDIM_V()-1.0f);
     //printf("\n\n------- getGlobalVCoord(%d) = (volV0[%d]+localVCoord)*ratio[=%.4f] = %d \n\n", localVCoord, volV0, ratio, static_cast<int>((volV0+localVCoord)*ratio + 0.5f));
     return (volV0+localVCoord)*ratio + 0.5f;
 }
-int CExplorerWindow::getGlobalHCoord(int localHCoord, int resIndex /* = -1 */)
+int CExplorerWindow::getGlobalHCoord(int localHCoord, int resIndex /* = -1 */, bool fromVaa3Dcoordinates /* = true */)
 {
     //setting resIndex if it has not been set
     if(resIndex == -1)
         resIndex = CImport::instance()->getResolutions()-1;
 
-    //if the Vaa3D image size limit has been reached along this direction, mapping coordinate to the non-downsampled image space coordinate system
-    if(volH1-volH0 > LIMIT_VOLX)
+    //if the Vaa3D image size limit has been reached along this direction, mapping Vaa3D coordinates to the non-downsampled image space coordinate system
+    if(fromVaa3Dcoordinates && (volH1-volH0 > LIMIT_VOLX))
         localHCoord = static_cast<int>(localHCoord* ( static_cast<float>(volH1-volH0-1)/(LIMIT_VOLX-1) ) +0.5f);
 
     float ratio = (CImport::instance()->getVolume(resIndex)->getDIM_H()-1.0f)/(CImport::instance()->getVolume(volResIndex)->getDIM_H()-1.0f);
     return (volH0+localHCoord)*ratio + 0.5f;
 }
-int CExplorerWindow::getGlobalDCoord(int localDCoord, int resIndex /* = -1 */)
+int CExplorerWindow::getGlobalDCoord(int localDCoord, int resIndex /* = -1 */, bool fromVaa3Dcoordinates /* = true */)
 {
     //setting resIndex if it has not been set
     if(resIndex == -1)
         resIndex = CImport::instance()->getResolutions()-1;
 
-    //if the Vaa3D image size limit has been reached along this direction, mapping coordinate to the non-downsampled image space coordinate system
-    if(volD1-volD0 > LIMIT_VOLZ)
+    //if the Vaa3D image size limit has been reached along this direction, mapping Vaa3D coordinates to the non-downsampled image space coordinate system
+    if(fromVaa3Dcoordinates && (volD1-volD0 > LIMIT_VOLZ))
         localDCoord = static_cast<int>(localDCoord* ( static_cast<float>(volD1-volD0-1)/(LIMIT_VOLZ-1) ) +0.5f);
 
     float ratio = (CImport::instance()->getVolume(resIndex)->getDIM_D()-1.0f)/(CImport::instance()->getVolume(volResIndex)->getDIM_D()-1.0f);
     return (volD0+localDCoord)*ratio + 0.5f;
 }
-float CExplorerWindow::getGlobalVCoord(float localVCoord, int resIndex /* = -1 */)
+float CExplorerWindow::getGlobalVCoord(float localVCoord, int resIndex /* = -1 */, bool fromVaa3Dcoordinates /* = true */)
 {
     //setting resIndex if it has not been set
     if(resIndex == -1)
         resIndex = CImport::instance()->getResolutions()-1;
 
-    //if the Vaa3D image size limit has been reached along this direction, mapping coordinate to the non-downsampled image space coordinate system
-    if(volV1-volV0 > LIMIT_VOLY)
+    //if the Vaa3D image size limit has been reached along this direction, mapping Vaa3D coordinates to the non-downsampled image space coordinate system
+    if(fromVaa3Dcoordinates && (volV1-volV0 > LIMIT_VOLY))
         localVCoord *= static_cast<float>(volV1-volV0-1)/(LIMIT_VOLY-1);
 
     float ratio = (CImport::instance()->getVolume(resIndex)->getDIM_V()-1.0f)/(CImport::instance()->getVolume(volResIndex)->getDIM_V()-1.0f);
     return (volV0+localVCoord)*ratio;
 }
-float CExplorerWindow::getGlobalHCoord(float localHCoord, int resIndex /* = -1 */)
+float CExplorerWindow::getGlobalHCoord(float localHCoord, int resIndex /* = -1 */, bool fromVaa3Dcoordinates /* = true */)
 {
     //setting resIndex if it has not been set
     if(resIndex == -1)
         resIndex = CImport::instance()->getResolutions()-1;
 
-    //if the Vaa3D image size limit has been reached along this direction, mapping coordinate to the non-downsampled image space coordinate system
-    if(volH1-volH0 > LIMIT_VOLX)
+    //if the Vaa3D image size limit has been reached along this direction, mapping Vaa3D coordinates to the non-downsampled image space coordinate system
+    if(fromVaa3Dcoordinates && (volH1-volH0 > LIMIT_VOLX))
         localHCoord *= static_cast<float>(volH1-volH0-1)/(LIMIT_VOLX-1);
 
     float ratio = (CImport::instance()->getVolume(resIndex)->getDIM_H()-1.0f)/(CImport::instance()->getVolume(volResIndex)->getDIM_H()-1.0f);
     return (volH0+localHCoord)*ratio;
 }
-float CExplorerWindow::getGlobalDCoord(float localDCoord, int resIndex /* = -1 */)
+float CExplorerWindow::getGlobalDCoord(float localDCoord, int resIndex /* = -1 */, bool fromVaa3Dcoordinates /* = true */)
 {
     //setting resIndex if it has not been set
     if(resIndex == -1)
         resIndex = CImport::instance()->getResolutions()-1;
 
-    //if the Vaa3D image size limit has been reached along this direction, mapping coordinate to the non-downsampled image space coordinate system
-    if(volD1-volD0 > LIMIT_VOLZ)
+    //if the Vaa3D image size limit has been reached along this direction, mapping Vaa3D coordinates to the non-downsampled image space coordinate system
+    if(fromVaa3Dcoordinates && (volD1-volD0 > LIMIT_VOLZ))
         localDCoord *= static_cast<float>(volD1-volD0-1)/(LIMIT_VOLZ-1);
 
     float ratio = (CImport::instance()->getVolume(resIndex)->getDIM_D()-1.0f)/(CImport::instance()->getVolume(volResIndex)->getDIM_D()-1.0f);

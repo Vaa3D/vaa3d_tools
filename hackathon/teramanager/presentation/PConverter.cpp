@@ -237,13 +237,9 @@ PConverter::PConverter(V3DPluginCallback *callback, QWidget *parent) : QWidget(p
     connect(stacksHeightField, SIGNAL(valueChanged(int)), this, SLOT(settingsChanged()));
     resetGUI();
 
-    //timer members
-    /*timerFlushingMessage = "";
-    timer = 0;
-    timerTransitions = 0;*/
-
     //set always on top
     this->setWindowFlags(Qt::WindowStaysOnTopHint);
+    this->setFocusPolicy(Qt::StrongFocus);
 }
 
 PConverter::~PConverter()
@@ -337,7 +333,8 @@ void PConverter::voldirButtonClicked()
     volpathField->setText(QFileDialog::getExistingDirectory(this, QObject::tr("Select volume's directory"), CSettings::instance()->getVCInputPath().c_str()));
 
     //launching import
-    startButtonClicked();
+    if(volpathField->text().toStdString().compare("") != 0)
+        startButtonClicked();
 }
 
 void PConverter::volfileButtonClicked()
@@ -346,7 +343,8 @@ void PConverter::volfileButtonClicked()
     volpathField->setText(QFileDialog::getOpenFileName(this, QObject::tr("Select Vaa3D raw file"), CSettings::instance()->getVCInputPath().c_str(), "V3D raw files (*.raw *.RAW *.v3draw *.V3DRAW)"));
 
     //launching import
-    startButtonClicked();
+    if(volpathField->text().toStdString().compare("") != 0)
+        startButtonClicked();
 }
 
 void PConverter::voldiroutButtonClicked()
@@ -462,6 +460,8 @@ void PConverter::operationDone(MyException *ex)
         progressBar->setMaximum(1);         //needed to stop animation on some operating systems
         startButton->setEnabled(false);
         stopButton->setEnabled(false);
+        QMessageBox::information(this, "Success!", "Conversion successful!");
+        close();
     }
     else
     {
@@ -518,13 +518,6 @@ void PConverter::operationDone(MyException *ex)
             updateContent();
         }
         catch(MyException &ex) {QMessageBox::critical(this,QObject::tr("Error"), QObject::tr(ex.what()),QObject::tr("Ok"));}
-
-        //flushing
-        /*timerFlushingMessage = statusBar->currentMessage().toStdString();
-        timer = new QTimer(this);
-        connect(timer, SIGNAL(timeout()), this, SLOT(timerFired()));
-        timerTransitions = 5;
-        timer->start(200);*/
     }
 }
 
@@ -566,24 +559,3 @@ void PConverter::updateContent()
         QMessageBox::critical(this,QObject::tr("Error"), QObject::tr(ex.what()),QObject::tr("Ok"));
     }
 }
-
-/**********************************************************************************
-* Used to flush <statusBar> text
-***********************************************************************************/
-/*void PConverter::timerFired()
-{
-    if(timerTransitions > 0)
-    {
-        if(timerTransitions %2 == 0)
-            statusBar->showMessage("");
-        else
-            statusBar->showMessage(timerFlushingMessage.c_str());
-        timerTransitions--;
-    }
-    else
-    {
-        disconnect(timer, SIGNAL(timeout()), this, SLOT(timerFired()));
-        delete timer;
-        timer = 0;
-    }
-}*/

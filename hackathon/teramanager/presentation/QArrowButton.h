@@ -10,10 +10,11 @@ class teramanager::QArrowButton : public QPushButton
 
     private:
 
-        Qt::GlobalColor arrColor;  //arrow color
+        QColor arrColor;  //arrow color
         int arrSize;               //arrow size
         int arrwidth;              //arrow width;
         int margin;                //margin between arrow and button border
+        int orientation;           //orientation (left-to-right or right-to-left)
 
         //prevents from using the default constructor
         QArrowButton() : QPushButton(0){}
@@ -22,7 +23,7 @@ class teramanager::QArrowButton : public QPushButton
     public:
 
         //the only available public constructor
-        QArrowButton(QWidget *parent, Qt::GlobalColor arrowColor, int arrowSize, int arrowWidth, int arrowMargin);
+        QArrowButton(QWidget *parent, QColor arrowColor, int arrowSize, int arrowWidth, int arrowMargin, int arrowOrientation);
 
     protected:
 

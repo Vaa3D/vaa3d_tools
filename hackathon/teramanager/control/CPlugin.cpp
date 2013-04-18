@@ -116,7 +116,8 @@ void CPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWi
     }
     else if(menu_name == tr("Acquisition: ROI from High Resolution Image"))
     {
-        CExplorerWindow::Vaa3D_selectedROI();
+        if(CExplorerWindow::getLast())
+            CExplorerWindow::getLast()->Vaa3D_selectedROI();
     }
     else
     {

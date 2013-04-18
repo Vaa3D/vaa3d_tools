@@ -56,6 +56,9 @@ class teramanager::CSettings
         int VOIdimV;
         int VOIdimH;
         int VOIdimD;
+        int traslX;             //traslation percentage with respect to the actual VOI along X axis
+        int traslY;             //traslation percentage with respect to the actual VOI along Y axis
+        int traslZ;             //traslation percentage with respect to the actual VOI along Z axis
 
         //TeraConverter members
         string volumeConverterInputPathLRU;
@@ -86,12 +89,18 @@ class teramanager::CSettings
         int getVOIdimV(){return VOIdimV;}
         int getVOIdimH(){return VOIdimH;}
         int getVOIdimD(){return VOIdimD;}
+        int getTraslX(){return traslX;}
+        int getTraslY(){return traslY;}
+        int getTraslZ(){return traslZ;}
         void setVolumePathLRU(string _volumePathLRU){volumePathLRU = _volumePathLRU;}
         void setAnnotationPathLRU(string _annotationPathLRU){annotationPathLRU = _annotationPathLRU;}
         void setVolMapSizeLimit(int _volMapSizeLimit){volMapSizeLimit = _volMapSizeLimit;}
         void setVOIdimV(int _VOIdimV){VOIdimV = _VOIdimV;}
         void setVOIdimH(int _VOIdimH){VOIdimH = _VOIdimH;}
         void setVOIdimD(int _VOIdimD){VOIdimD = _VOIdimD;}
+        void setTraslX(int _traslX){traslX = _traslX;}
+        void setTraslY(int _traslY){traslY = _traslY;}
+        void setTraslZ(int _traslZ){traslZ = _traslZ;}
 
         //GET and SET methods for TeraConverter
         string getVCInputPath(){return volumeConverterInputPathLRU;}

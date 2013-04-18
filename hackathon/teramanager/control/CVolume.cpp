@@ -116,9 +116,18 @@ void CVolume::run()
     {
         StackedVolume* volume = CImport::instance()->getVolume(voiResIndex);
 
+
+        //---- Alessandro 2013-04-17: if VOI exceeds limits it is automatically adjusted. This is very useful in the cases the user is zooming-in
+        //around peripheral regions
+        voiV0 = voiV0 >=0                   ? voiV0 : 0;
+        voiV1 = voiV1 <= volume->getDIM_V() ? voiV1 : volume->getDIM_V();
+        voiH0 = voiH0 >=0                   ? voiH0 : 0;
+        voiH1 = voiH1 <= volume->getDIM_H() ? voiH1 : volume->getDIM_H();
+        voiD0 = voiD0 >=0                   ? voiD0 : 0;
+        voiD1 = voiD1 <= volume->getDIM_D() ? voiD1 : volume->getDIM_D();
+
         //checking subvolume interval
-        if(voiV1 - voiV0 <=0 || voiH1 - voiH0 <=0 || voiD1 - voiD0 <=0 ||
-           voiV0 < 0 || voiV1 > volume->getDIM_V() || voiH0 < 0 || voiH1 > volume->getDIM_H() || voiD0 < 0 || voiD1 > volume->getDIM_D())
+        if(voiV1 - voiV0 <=0 || voiH1 - voiH0 <=0 || voiD1 - voiD0 <=0)
         {
             char errMsg[1024];
             sprintf(errMsg, "Invalid subvolume intervals inserted: X=[%d, %d), Y=[%d, %d), Z=[%d, %d)", voiH0, voiH1, voiV0, voiV1, voiD0, voiD1);
