@@ -17,7 +17,7 @@
 
 Q_EXPORT_PLUGIN2(vn2, NTApp2Plugin);
 
-QString versionStr = "v2.608";
+QString versionStr = "v2.610";
 
 QStringList NTApp2Plugin::menulist() const
 {
