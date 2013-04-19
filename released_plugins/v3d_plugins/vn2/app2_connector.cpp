@@ -1,0 +1,531 @@
+//last change: by Hanchuan Peng. 2012-12-30
+
+#include "vn_app2.h"
+
+#include "fastmarching_tree.h"
+#include "fastmarching_dt.h"
+#include "hierarchy_prune.h"
+#include "marker_radius.h"
+#include "basic_surf_objs.h"
+#include "swc_convert.h"
+
+#include "vn_imgpreprocess.h"
+
+#include "volimg_proc.h"
+
+
+bool proc_app2(PARA_APP2 &p, const QString & versionStr)
+{
+    bool b_menu = true;
+    
+    if (!p.p4dImage || !p.p4dImage->valid())
+    {
+        if (p.inimg_file.isEmpty())
+            return false;
+        
+        b_menu = false;
+        
+        //in this case try to read the image files
+        p.p4dImage = new Image4DSimple;
+        QString infile = p.inimg_file;
+        p.p4dImage->loadImage( (char *)(qPrintable(infile) ));
+        if (!p.p4dImage->valid())
+            return false;
+        else
+        {
+            p.xc0 = p.yc0 = p.zc0 = 0;
+            p.xc1 = p.p4dImage->getXDim()-1;
+            p.yc1 = p.p4dImage->getYDim()-1;
+            p.zc1 = p.p4dImage->getZDim()-1;
+        }
+        
+        vector<MyMarker> file_inmarkers; 
+        if(!p.inmarker_file.isEmpty()) 
+            file_inmarkers = readMarker_file(string(qPrintable(p.inmarker_file)));
+        
+        LocationSimple t;
+        for(int i = 0; i < file_inmarkers.size(); i++)
+        {
+            t.x = file_inmarkers[i].x;
+            t.y = file_inmarkers[i].y;
+            t.z = file_inmarkers[i].z;
+            p.landmarks.push_back(t);
+        }
+    }
+    
+    int i;
+    list<string>::iterator it;
+    
+    //these info should also be output to the swc file. need to add later. Noted by PHC, 121124
+    list<string> infostring;
+    string tmpstr; QString qtstr;
+    tmpstr =  qPrintable( qtstr.prepend("##Vaa3D-Neuron-APP2 ").append(versionStr) ); infostring.push_back(tmpstr);
+    tmpstr =  qPrintable( qtstr.setNum(p.channel).prepend("#channel = ") ); infostring.push_back(tmpstr);
+    tmpstr =  qPrintable( qtstr.setNum(p.bkg_thresh).prepend("#bkg_thresh = ") ); infostring.push_back(tmpstr);
+
+    tmpstr =  qPrintable( qtstr.setNum(p.length_thresh).prepend("#length_thresh = ") ); infostring.push_back(tmpstr);
+    tmpstr =  qPrintable( qtstr.setNum(p.SR_ratio).prepend("#SR_ratio = ") ); infostring.push_back(tmpstr);
+    tmpstr =  qPrintable( qtstr.setNum(p.is_gsdt).prepend("#is_gsdt = ") ); infostring.push_back(tmpstr);
+    tmpstr =  qPrintable( qtstr.setNum(p.cnn_type).prepend("#cnn_type = ") ); infostring.push_back(tmpstr);
+    tmpstr =  qPrintable( qtstr.setNum(p.b_256cube).prepend("#b_256cube = ") ); infostring.push_back(tmpstr);
+    tmpstr =  qPrintable( qtstr.setNum(p.xc0).prepend("#xc0 = ") ); infostring.push_back(tmpstr);
+    tmpstr =  qPrintable( qtstr.setNum(p.xc1).prepend("#xc1 = ") ); infostring.push_back(tmpstr);
+    tmpstr =  qPrintable( qtstr.setNum(p.yc0).prepend("#yc0 = ") ); infostring.push_back(tmpstr);
+    tmpstr =  qPrintable( qtstr.setNum(p.yc1).prepend("#yc1 = ") ); infostring.push_back(tmpstr);
+    tmpstr =  qPrintable( qtstr.setNum(p.zc0).prepend("#zc0 = ") ); infostring.push_back(tmpstr);
+    tmpstr =  qPrintable( qtstr.setNum(p.zc1).prepend("#zc1 = ") ); infostring.push_back(tmpstr);
+    
+    v3d_msg("start to preprocessing.\n", 0);
+    
+    QElapsedTimer timer1;
+    timer1.start();
+    
+    //copy data to a temp buffer, so that won't influence the original input data
+    Image4DSimple * p4dImageNew = 0;
+    
+    if (p.xc1>=p.xc0 && p.yc1>=p.yc0 && p.zc1>=p.zc0 &&
+        p.xc0>=0 && p.xc1<p.p4dImage->getXDim() &&
+        p.yc0>=0 && p.yc1<p.p4dImage->getYDim() &&
+        p.zc0>=0 && p.zc1<p.p4dImage->getZDim())
+    {
+        p4dImageNew = new Image4DSimple;
+        if(!p4dImageNew->createImage(p.xc1-p.xc0+1, p.yc1-p.yc0+1, p.zc1-p.zc0+1, 1, p.p4dImage->getDatatype()))
+            return false;
+        
+        if (!subvolumecopy(p4dImageNew,
+                           p.p4dImage,
+                           p.xc0, p.xc1-p.xc0+1,
+                           p.yc0, p.yc1-p.yc0+1,
+                           p.zc0, p.zc1-p.zc0+1,
+                           p.channel, 1))
+            return false;
+    }
+    else
+    {
+        v3d_msg("Somehow invalid volume box info is detected. Ignore it. But check your Vaa3D program.");
+        return false;
+        
+        //                if(!p4dImageNew->createImage(p4dImage->getXDim(), p4dImage->getYDim(), p4dImage->getZDim(), 1, p4dImage->getDatatype()))
+        //                    return;
+        //                memcpy(p4dImageNew->getRawDataAtChannel(0),
+        //                       p4dImage->getRawDataAtChannel(channel),
+        //                       p4dImage->getTotalUnitNumberPerChannel()*p4dImage->getUnitBytes());
+    }
+    
+    //always just use the buffer data
+    unsigned char * indata1d = p4dImageNew->getRawDataAtChannel(0);
+    V3DLONG in_sz[4] = {p4dImageNew->getXDim(), p4dImageNew->getYDim(), p4dImageNew->getZDim(), 1};
+    int datatype = p.p4dImage->getDatatype();
+    
+    double dfactor_xy = 1, dfactor_z = 1;
+    if(datatype != V3D_UINT8 || in_sz[0]>256 || in_sz[1]>256 || in_sz[2]>256)// && datatype != V3D_UINT16)
+    {
+        if (datatype!=V3D_UINT8)
+        {
+            if (!scale_img_and_convert28bit(p4dImageNew, 0, 255))
+                return false;
+            
+            indata1d = p4dImageNew->getRawDataAtChannel(0);
+            in_sz[0] = p4dImageNew->getXDim();
+            in_sz[1] = p4dImageNew->getYDim();
+            in_sz[2] = p4dImageNew->getZDim();
+            in_sz[3] = p4dImageNew->getCDim();
+            
+            datatype = V3D_UINT8;
+        }
+        
+        printf("x = %ld\n", in_sz[0]);
+        printf("y = %ld\n", in_sz[1]);
+        printf("z = %ld\n", in_sz[2]);
+        printf("c = %ld\n", in_sz[3]);
+        
+        if (p.b_256cube)
+        {
+            if (in_sz[0]<=256 && in_sz[2]<=256 && in_sz[2]<=256)
+            {
+                dfactor_z = dfactor_xy = 1;
+            }
+            else if (in_sz[0] >= 2*in_sz[2] || in_sz[1] >= 2*in_sz[2])
+            {
+                if (in_sz[2]<=256)
+                {
+                    double MM = in_sz[0];
+                    if (MM<in_sz[1]) MM=in_sz[1];
+                    dfactor_xy = MM / 256.0;
+                    dfactor_z = 1;
+                }
+                else
+                {
+                    double MM = in_sz[0];
+                    if (MM<in_sz[1]) MM=in_sz[1];
+                    if (MM<in_sz[2]) MM=in_sz[2];
+                    dfactor_xy = dfactor_z = MM / 256.0;
+                }
+            }
+            else
+            {
+                double MM = in_sz[0];
+                if (MM<in_sz[1]) MM=in_sz[1];
+                if (MM<in_sz[2]) MM=in_sz[2];
+                dfactor_xy = dfactor_z = MM / 256.0;
+            }
+            
+            printf("dfactor_xy=%5.3f\n", dfactor_xy);
+            printf("dfactor_z=%5.3f\n", dfactor_z);
+            
+            if (dfactor_z>1 || dfactor_xy>1)
+            {
+                v3d_msg("enter ds code", 0);
+                
+                V3DLONG out_sz[4];
+                unsigned char * outimg=0;
+                if (!downsampling_img_xyz( indata1d, in_sz, dfactor_xy, dfactor_z, outimg, out_sz))
+                    return false; //need to clean memory before return. a bug here
+                
+                p4dImageNew->setData(outimg, out_sz[0], out_sz[1], out_sz[2], out_sz[3], V3D_UINT8);
+                
+                indata1d = p4dImageNew->getRawDataAtChannel(0);
+                in_sz[0] = p4dImageNew->getXDim();
+                in_sz[1] = p4dImageNew->getYDim();
+                in_sz[2] = p4dImageNew->getZDim();
+                in_sz[3] = p4dImageNew->getCDim();
+            }
+            
+        }
+    }
+    
+    QString outtmpfile = QString(p.p4dImage->getFileName()) + "_extract_tmp000.raw";
+    p4dImageNew->saveImage(qPrintable(outtmpfile));
+    v3d_msg(QString("save immediate input image to ") + outtmpfile, 0);
+    
+    if (p.bkg_thresh < 0)
+    {
+        if (p.channel >=0 && p.channel <= p.p4dImage->getCDim()-1)
+        {
+            double imgAve, imgStd;
+            mean_and_std(p4dImageNew->getRawDataAtChannel(0), p4dImageNew->getTotalUnitNumberPerChannel(), imgAve, imgStd);
+            p.bkg_thresh = imgAve; //+0.5*imgStd ; //(imgAve < imgStd)? imgAve : (imgAve+imgStd)*.5;
+        }
+        else
+            p.bkg_thresh = 0;
+        
+        tmpstr =  qPrintable( qtstr.setNum(p.bkg_thresh).prepend("autoset #bkg_thresh = ") ); infostring.push_back(tmpstr);
+    }
+
+    
+    float * phi = 0;
+    vector<MyMarker> inmarkers;
+    for(i = 0; i < p.landmarks.size(); i++)
+    {
+        double x = p.landmarks[i].x - p.xc0;
+        double y = p.landmarks[i].y - p.yc0;
+        double z = p.landmarks[i].z - p.zc0;
+        
+        //add scaling by PHC 121127
+        x /= dfactor_xy;
+        y /= dfactor_xy;
+        z /= dfactor_z;
+        
+        inmarkers.push_back(MyMarker(x,y,z));
+    }
+    qint64 etime1 = timer1.elapsed();
+    qDebug() << " **** neuron preprocessing takes [" << etime1 << " milliseconds]";
+    
+    
+    for (it=infostring.begin();it!=infostring.end();it++)
+        cout << *it <<endl;
+    
+    v3d_msg("start neuron tracing for the preprocessed image.\n", 0);
+    
+    vector<MyMarker *> outtree;
+    
+    //add a timer by PHC 121005
+    QElapsedTimer timer2;
+    timer2.start();
+    
+    if(inmarkers.empty())
+    {
+        cout<<"Start detecting cellbody"<<endl;
+        switch(datatype)
+        {
+            case V3D_UINT8:
+                fastmarching_dt_XY(indata1d, phi, in_sz[0], in_sz[1], in_sz[2],p.cnn_type, p.bkg_thresh);
+                break;
+            case V3D_UINT16:
+                fastmarching_dt_XY((short int*)indata1d, phi, in_sz[0], in_sz[1], in_sz[2],p.cnn_type, p.bkg_thresh);
+                break;
+        }
+        
+        V3DLONG sz0 = in_sz[0];
+        V3DLONG sz1 = in_sz[1];
+        V3DLONG sz2 = in_sz[2];
+        V3DLONG sz01 = sz0 * sz1;
+        V3DLONG tol_sz = sz01 * sz2;
+        
+        V3DLONG max_loc = 0;
+        double max_val = phi[0];
+        for(V3DLONG i = 0; i < tol_sz; i++)
+        {
+            if(phi[i] > max_val)
+            {
+                max_val = phi[i];
+                max_loc = i;
+            }
+        }
+        MyMarker max_marker(max_loc % sz0, max_loc % sz01 / sz0, max_loc / sz01);
+        inmarkers.push_back(max_marker);
+    }
+    
+    cout<<"======================================="<<endl;
+    cout<<"Construct the neuron tree"<<endl;
+    if(inmarkers.empty())
+    {
+        cerr<<"need at least one markers"<<endl;
+    }
+    else if(inmarkers.size() == 1)
+    {
+        cout<<"only one input marker"<<endl;
+        if(p.is_gsdt)
+        {
+            if(phi == 0)
+            {
+                cout<<"processing fastmarching distance transformation ..."<<endl;
+                switch(datatype)
+                {
+                    case V3D_UINT8:
+                        fastmarching_dt(indata1d, phi, in_sz[0], in_sz[1], in_sz[2], p.cnn_type, p.bkg_thresh);
+                        break;
+                    case V3D_UINT16:
+                        fastmarching_dt((short int *)indata1d, phi, in_sz[0], in_sz[1], in_sz[2], p.cnn_type, p.bkg_thresh);
+                        break;
+                    default:
+                        v3d_msg("Unsupported data type");
+                        break;
+                }
+            }
+            
+            cout<<endl<<"constructing fastmarching tree ..."<<endl;
+            fastmarching_tree(inmarkers[0], phi, outtree, in_sz[0], in_sz[1], in_sz[2], p.cnn_type, p.bkg_thresh, p.is_break_accept);
+        }
+        else
+        {
+            switch(datatype)
+            {
+                case V3D_UINT8:
+                    v3d_msg("8bit", 0);
+                    fastmarching_tree(inmarkers[0], indata1d, outtree, in_sz[0], in_sz[1], in_sz[2], p.cnn_type, p.bkg_thresh, p.is_break_accept);
+                    break;
+                case V3D_UINT16:
+                    v3d_msg("16bit", 0);
+                    fastmarching_tree(inmarkers[0], (short int*)indata1d, outtree, in_sz[0], in_sz[1], in_sz[2], p.cnn_type, p.bkg_thresh, p.is_break_accept);
+                    break;
+                default:
+                    v3d_msg("Unsupported data type");
+                    break;
+            }
+        }
+    }
+    else
+    {
+        vector<MyMarker> target; target.insert(target.end(), inmarkers.begin()+1, inmarkers.end());
+        if(p.is_gsdt)
+        {
+            if(phi == 0)
+            {
+                cout<<"processing fastmarching distance transformation ..."<<endl;
+                switch(datatype)
+                {
+                    case V3D_UINT8:
+                        fastmarching_dt(indata1d, phi, in_sz[0], in_sz[1], in_sz[2], p.cnn_type, p.bkg_thresh);
+                        break;
+                    case V3D_UINT16:
+                        fastmarching_dt((short int *)indata1d, phi, in_sz[0], in_sz[1], in_sz[2], p.cnn_type, p.bkg_thresh);
+                        break;
+                }
+            }
+            cout<<endl<<"constructing fastmarching tree ..."<<endl;
+            fastmarching_tree(inmarkers[0], target, phi, outtree, in_sz[0], in_sz[1], in_sz[2], p.cnn_type);
+        }
+        else
+        {
+            switch(datatype)
+            {
+                case V3D_UINT8:
+                    fastmarching_tree(inmarkers[0], target, indata1d, outtree, in_sz[0], in_sz[1], in_sz[2], p.cnn_type);
+                    break;
+                case V3D_UINT16:
+                    fastmarching_tree(inmarkers[0], target, (short int*) indata1d, outtree, in_sz[0], in_sz[1], in_sz[2], p.cnn_type);
+                    break;
+            }
+        }
+    }
+    cout<<"======================================="<<endl;
+    cout<<"Pruning neuron tree"<<endl;
+    vector<MyMarker*> & inswc = outtree;
+    saveSWC_file(QString(p.p4dImage->getFileName()).append("_ini.swc").toStdString(), inswc, infostring);
+
+    vector<MyMarker*> outswc;
+    if(p.is_coverage_prune)
+    {
+        v3d_msg("start to use happ.\n", 0);
+        happ(inswc, outswc, indata1d, in_sz[0], in_sz[1], in_sz[2], p.bkg_thresh, p.length_thresh, p.SR_ratio);
+    }
+    else
+    {
+        hierarchy_prune(inswc, outswc, indata1d, in_sz[0], in_sz[1], in_sz[2], p.length_thresh);
+        if(1) //get radius
+        {
+            double real_thres = 40; //PHC 20121011
+            if (real_thres<p.bkg_thresh) real_thres = p.bkg_thresh;
+            for(i = 0; i < outswc.size(); i++)
+            {
+                outswc[i]->radius = markerRadius(indata1d, in_sz, *(outswc[i]), real_thres);
+            }
+        }
+    }
+    
+    qint64 etime2 = timer2.elapsed();
+    qDebug() << " **** neuron tracing procedure takes [" << etime2 << " milliseconds]";
+    
+    if (p4dImageNew) {delete p4dImageNew; p4dImageNew=0;} //free buffer
+    
+    if(1)
+    {
+        QString rootposstr="", tmps;
+        tmps.setNum(round(inmarkers[0].x)).prepend("_x"); rootposstr += tmps;
+        tmps.setNum(round(inmarkers[0].y)).prepend("_y"); rootposstr += tmps;
+        tmps.setNum(round(inmarkers[0].z)).prepend("_z"); rootposstr += tmps;
+        //QString outswc_file = callback.getImageName(curwin) + rootposstr + "_app2.swc";
+        QString outswc_file = QString(p.p4dImage->getFileName()) + rootposstr + "_app2.swc";
+              
+        
+        for(i = 0; i < outswc.size(); i++) //add scaling 121127, PHC //add cutbox offset 121202, PHC
+        {
+            outswc[i]->x *= dfactor_xy; outswc[i]->x += (p.xc0-1); if (dfactor_xy>1) outswc[i]->x += dfactor_xy/2; //note that the offset corretion might not be accurate. PHC 121127
+            outswc[i]->y *= dfactor_xy; outswc[i]->y += (p.yc0-1); if (dfactor_xy>1) outswc[i]->y += dfactor_xy/2;
+            outswc[i]->z *= dfactor_z;  outswc[i]->z += (p.zc0-1); if (dfactor_z>1)  outswc[i]->z += dfactor_z/2;
+            outswc[i]->radius *= dfactor_xy; //use xy for now
+        }
+        
+        //re-estimate the radius using the original image
+        double real_thres = 40; //PHC 20121011
+        if (real_thres<p.bkg_thresh) real_thres = p.bkg_thresh;
+        
+        V3DLONG szOriginalData[4] = {p.p4dImage->getXDim(), p.p4dImage->getYDim(), p.p4dImage->getZDim(), 1};
+        unsigned char * pOriginalData = (unsigned char *)(p.p4dImage->getRawDataAtChannel(p.channel));
+        int method_radius_est=2;
+        
+        switch (p.p4dImage->getDatatype())
+        {
+            case V3D_UINT8:
+            {
+                for(i = 0; i < outswc.size(); i++)
+                {
+                    //printf(" node %ld of %ld.\n", i, outswc.size());
+                    outswc[i]->radius = markerRadius(pOriginalData, szOriginalData, *(outswc[i]), real_thres);
+                }
+            }
+                break;
+            case V3D_UINT16:
+            {
+                unsigned short int *pOriginalData_uint16 = (unsigned short int *)pOriginalData;
+                for(i = 0; i < outswc.size(); i++)
+                {
+                    //printf(" node %ld of %ld.\n", i, outswc.size());
+                    outswc[i]->radius = markerRadius(pOriginalData_uint16, szOriginalData, *(outswc[i]), real_thres * 16); //*16 as it is often 12 bit data
+                }
+            }
+                break;
+            case V3D_FLOAT32:
+            {
+                float *pOriginalData_float = (float *)pOriginalData;
+                for(i = 0; i < outswc.size(); i++)
+                {
+                    //printf(" node %ld of %ld.\n", i, outswc.size());
+                    outswc[i]->radius = markerRadius(pOriginalData_float, szOriginalData, *(outswc[i]), real_thres);
+                }
+            }
+                break;
+            default:
+                break;
+        }
+        
+        //prepare the output comments for neuron info in the swc file
+        
+        tmpstr =  qPrintable( qtstr.setNum(etime1).prepend("#neuron preprocessing time (milliseconds) = ") ); infostring.push_back(tmpstr);
+        tmpstr =  qPrintable( qtstr.setNum(etime2).prepend("#neuron tracing time (milliseconds) = ") ); infostring.push_back(tmpstr);
+        saveSWC_file(outswc_file.toStdString(), outswc, infostring);
+        
+        v3d_msg(QString("The tracing uses %1 ms (%2 ms for preprocessing and %3 for tracing). Now you can drag and drop the generated swc fle [%4] into Vaa3D."
+                        ).arg(etime1+etime2).arg(etime1).arg(etime2).arg(outswc_file), b_menu);
+        
+        if (0) //by PHC 120909
+        {
+//            try
+//            {
+//                NeuronTree nt = readSWC_file(outswc_file);
+//                callback.setSWC(curwin, nt);
+//                callback.open3DWindow(curwin);
+//                callback.getView3DControl(curwin)->updateWithTriView();
+//            }
+//            catch(...)
+//            {
+//                return false;
+//            }
+        }
+    }
+    else
+    {
+//        NeuronTree nt = swc_convert(outswc);
+//        callback.setSWC(curwin, nt);
+//        callback.open3DWindow(curwin);
+//        callback.getView3DControl(curwin)->updateWithTriView();
+    }
+    //release memory
+    if(phi){delete [] phi; phi = 0;}
+    for(int i = 0; i < outtree.size(); i++) delete outtree[i];
+    outtree.clear();
+    
+    if (!b_menu)
+    {
+        if (p.p4dImage) {delete p.p4dImage; p.p4dImage=NULL;}
+    }
+    
+    return true;
+}
+
+
+bool PARA_APP2::fetch_para_commandline(const V3DPluginArgList &input, V3DPluginArgList &output, V3DPluginCallback2 &callback, QWidget *parent)
+{
+    vector<char*> * pinfiles = (input.size() >= 1) ? (vector<char*> *) input[0].p : 0;
+    vector<char*> * poutfiles = (output.size() >= 1) ? (vector<char*> *) output[0].p : 0;
+    vector<char*> * pparas = (input.size() >= 2) ? (vector<char*> *) input[1].p : 0;
+    vector<char*> infiles = (pinfiles != 0) ? * pinfiles : vector<char*>();
+    vector<char*> outfiles = (poutfiles != 0) ? * poutfiles : vector<char*>();
+    vector<char*> paras = (pparas != 0) ? * pparas : vector<char*>();
+    
+    if(infiles.empty())
+    {
+        cerr<<"Need input image"<<endl;
+        return false;
+    }
+    
+    inimg_file = infiles[0];
+    int k=0;
+    inmarker_file = paras.empty() ? "" : paras[k]; if(inmarker_file == "NULL") inmarker_file = ""; k++;
+    //outswc_file = outfiles.empty() ? inimg_file + "_app2.swc" : outfiles[0];
+    
+    //try to use as much as the default value in the PARA_APP2 constructor as possible
+    channel = paras.size() >= k+1 ? atoi(paras[k]) : channel;  k++;//0;
+    bkg_thresh = paras.size() >= k+1 ? atoi(paras[k]) : bkg_thresh; k++;// 30;
+    b_256cube = paras.size() >= k+1 ? atoi(paras[k]) : b_256cube; k++;// true
+    is_gsdt = paras.size() >= k+1 ? atoi(paras[k]) : is_gsdt; k++;// true
+    length_thresh = paras.size() >= k+1 ? atof(paras[k]) : length_thresh; k++;// 1.0;
+    //cnn_type = 2; // default connection type 2
+    //SR_ratio = 3.0/9.0;
+    //is_coverage_prune = true;
+    //is_break_accept = false;
+    
+    return true;
+}
+
