@@ -37,7 +37,8 @@ void marker2others(V3DPluginCallback2 &callback, QWidget *parent)
         listNeuron << n;
     }
     
-    writeSWC_file(callback.getImageName(curwin)+".swc", nt);
+    QStringList infostr;
+    writeSWC_file(callback.getImageName(curwin)+".swc", nt, &infostr);
 	
 	return;
 }

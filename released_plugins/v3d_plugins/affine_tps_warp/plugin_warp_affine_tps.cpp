@@ -244,8 +244,9 @@ void WarpPointsetBaseonMatchedPairs(V3DPluginCallback &callback, QWidget *parent
 			if(b_scaleradius)	nt_sub2tar_affine.listNeuron[i].r*=d_scalefactor;
 		}
 
+        QStringList infostr;
 		if(qs_filename_sub2tar_affine.endsWith(".swc"))
-			writeSWC_file(qPrintable(qs_filename_sub2tar_affine),nt_sub2tar_affine);
+			writeSWC_file(qPrintable(qs_filename_sub2tar_affine),nt_sub2tar_affine, &infostr);
 	}
 	else if(qs_filename_sub.endsWith(".marker"))
 	{
@@ -335,8 +336,9 @@ void WarpPointsetBaseonMatchedPairs(V3DPluginCallback &callback, QWidget *parent
 			nt_sub2tar_affine_tps.listNeuron[i].z=pt_sub_tps.z;
 		}
 
+        QStringList infostr;
 		if(qs_filename_sub2tar_affine_tps.endsWith(".swc"))
-			writeSWC_file(qPrintable(qs_filename_sub2tar_affine_tps),nt_sub2tar_affine_tps);
+			writeSWC_file(qPrintable(qs_filename_sub2tar_affine_tps),nt_sub2tar_affine_tps, &infostr);
 	}
 	else if(qs_filename_sub.endsWith(".marker"))
 	{

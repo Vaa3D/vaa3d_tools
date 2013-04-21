@@ -1880,7 +1880,8 @@ bool q_save_warpedskeleton2swcfile_1(
 		nt_skeleton.listNeuron.push_back(ns_marker);
 	}
 
-	writeSWC_file(filename_outputswc,nt_skeleton);
+    QStringList infostr;
+	writeSWC_file(filename_outputswc,nt_skeleton, &infostr);
 
 	//free memory
 	if(df_sub2tar) 		{delete df_sub2tar;				df_sub2tar=0;}
@@ -1975,7 +1976,8 @@ bool q_save_warpedskeleton2swcfile_2(
 		nt_skeleton.listNeuron.push_back(ns_marker);
 	}
 
-	writeSWC_file(filename_outputswc,nt_skeleton);
+    QStringList infostr;
+	writeSWC_file(filename_outputswc,nt_skeleton, &infostr);
 
 	return true;
 }

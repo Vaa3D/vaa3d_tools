@@ -574,7 +574,9 @@ bool q_saveSkeleton2swcFile(const QList<ImageMarker> &ql_cptpos,const vector< ve
 			nt_skeleton.listNeuron.push_back(ns_marker);
 		}
 	}
-	writeSWC_file(qs_filename_swc_skeleton_output,nt_skeleton);
+    
+    QStringList infostr;
+	writeSWC_file(qs_filename_swc_skeleton_output,nt_skeleton, &infostr);
 
 	return true;
 }
@@ -660,7 +662,8 @@ bool q_saveSkeleton2swcFile_cubicspline(const QList<ImageMarker> &ql_cptpos,cons
 			nt_skeleton.listNeuron.push_back(ns_marker);
 		}
 	}
-	writeSWC_file(qs_filename_swc_cubicspline_skeleton_output,nt_skeleton);
+    QStringList infostr;
+	writeSWC_file(qs_filename_swc_cubicspline_skeleton_output,nt_skeleton, &infostr);
 
 	return true;
 }
