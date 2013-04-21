@@ -122,12 +122,11 @@ CExplorerWindow::CExplorerWindow(V3DPluginCallback2 *_V3D_env, int _resIndex, ui
             prev->window3D->setVisible(false);
             prev->view3DWidget->setCursor(Qt::ArrowCursor);
 
-            //registrating views
+            //registrating views: ---- Alessandro 2013-04-18 fixed: determining unique triple of rotation angles and assigning absolute rotation
             float ratio = CImport::instance()->getVolume(volResIndex)->getDIM_D()/CImport::instance()->getVolume(prev->volResIndex)->getDIM_D();
             view3DWidget->setZoom(prev->view3DWidget->zoom()/ratio);
-            view3DWidget->setXRotation(prev->view3DWidget->xRot());
-            view3DWidget->setYRotation(prev->view3DWidget->yRot());
-            view3DWidget->setZRotation(prev->view3DWidget->zRot());
+            prev->view3DWidget->absoluteRotPose();
+            view3DWidget->doAbsoluteRot(prev->view3DWidget->xRot(), prev->view3DWidget->yRot(), prev->view3DWidget->zRot());
 
             //storing annotations done in the previous view and loading annotations of the current view
             prev->storeAnnotations();
@@ -459,51 +458,35 @@ void CExplorerWindow::storeAnnotations() throw (MyException)
     /**********************************************************************************
     * MARKERS
     ***********************************************************************************/
-    //retrieving new and deleted markers
-    LandmarkList new_markers, deleted_markers;
-    for(int i=0; i<loaded_markers.size(); i++)
-        if(triViewWidget->getImageData()->listLandmarks.contains(loaded_markers[i]) == false)
-            deleted_markers.push_back(loaded_markers[i]);
-    for(int i=0; i<triViewWidget->getImageData()->listLandmarks.size(); i++)
-        if(loaded_markers.contains(triViewWidget->getImageData()->listLandmarks[i]) == false)
-            new_markers.push_back(triViewWidget->getImageData()->listLandmarks[i]);
+    //removing original markers
+    if(!loaded_markers.empty())
+        CAnnotations::getInstance()->removeLandmarks(loaded_markers);
 
-    //storing new markers
-    if(!new_markers.empty())
+    //storing edited markers
+    QList<LocationSimple> editedMarkers = triViewWidget->getImageData()->listLandmarks;
+    if(!editedMarkers.empty())
     {
         //converting local coordinates into global coordinates
-        for(int i=0; i<new_markers.size(); i++)
+        for(int i=0; i<editedMarkers.size(); i++)
         {
-            new_markers[i].x = getGlobalHCoord(new_markers[i].x);
-            new_markers[i].y = getGlobalVCoord(new_markers[i].y);
-            new_markers[i].z = getGlobalDCoord(new_markers[i].z);
+            editedMarkers[i].x = getGlobalHCoord(editedMarkers[i].x);
+            editedMarkers[i].y = getGlobalVCoord(editedMarkers[i].y);
+            editedMarkers[i].z = getGlobalDCoord(editedMarkers[i].z);
         }
 
         //storing markers
-        CAnnotations::getInstance()->addLandmarks(&new_markers);
-    }
-
-    //removing deleted markers
-    if(!deleted_markers.empty())
-    {
-        //converting local coordinates into global coordinates
-        for(int i=0; i<deleted_markers.size(); i++)
-        {
-            deleted_markers[i].x = getGlobalHCoord(deleted_markers[i].x);
-            deleted_markers[i].y = getGlobalVCoord(deleted_markers[i].y);
-            deleted_markers[i].z = getGlobalDCoord(deleted_markers[i].z);
-        }
-
-        //removing markers
-        CAnnotations::getInstance()->removeLandmarks(&deleted_markers);
+        CAnnotations::getInstance()->addLandmarks(&editedMarkers);
     }
 
     /**********************************************************************************
     * CURVES
     ***********************************************************************************/
-    NeuronTree editedCurves = this->V3D_env->getSWC(this->window);
+    //removing original curves
+    if(!loaded_curves.empty())
+        CAnnotations::getInstance()->removeCurves(loaded_curves);
 
-    //storing new curves
+    //storing edited curves
+    NeuronTree editedCurves = this->V3D_env->getSWC(this->window);
     if(!editedCurves.listNeuron.empty())
     {
         //converting local coordinates into global coordinates
@@ -527,8 +510,8 @@ void CExplorerWindow::loadAnnotations() throw (MyException)
 
     //clearing previous annotations (useful when this view has been already visited)
     loaded_markers.clear();
-    loaded_curves.listNeuron.clear();
-    loaded_curves.hashNeuron.clear();
+    loaded_curves.clear();
+    V3D_env->getHandleNeuronTrees_Any3DViewer(window3D)->clear();
 
     //computing the current volume range in the highest resolution image space
     int highestResIndex = CImport::instance()->getResolutions()-1;
@@ -546,26 +529,30 @@ void CExplorerWindow::loadAnnotations() throw (MyException)
     CAnnotations::getInstance()->findLandmarks(x_range, y_range, z_range, loaded_markers);
     CAnnotations::getInstance()->findCurves(x_range, y_range, z_range, loaded_curves);
 
-    //converting global coordinates into local coordinates
-    for(int i=0; i<loaded_markers.size(); i++)
+    //converting global coordinates to local coordinates
+    QList<LocationSimple> vaa3dMarkers;
+    for(std::list<LocationSimple>::iterator i = loaded_markers.begin(); i != loaded_markers.end(); i++)
     {
-        loaded_markers[i].x = getLocalHCoord(loaded_markers[i].x);
-        loaded_markers[i].y = getLocalVCoord(loaded_markers[i].y);
-        loaded_markers[i].z = getLocalDCoord(loaded_markers[i].z);
-        //printf("Marker[%d] = {%.0f %.0f %.0f}\n", i, loaded_markers[i].x, loaded_markers[i].y, loaded_markers[i].z);
+        vaa3dMarkers.push_back(*i);
+        vaa3dMarkers.back().x = getLocalHCoord(vaa3dMarkers.back().x);
+        vaa3dMarkers.back().y = getLocalVCoord(vaa3dMarkers.back().y);
+        vaa3dMarkers.back().z = getLocalDCoord(vaa3dMarkers.back().z);
     }
-    for(int i=0; i<loaded_curves.listNeuron.size(); i++)
+    NeuronTree vaa3dCurves;
+    for(std::list<NeuronSWC>::iterator i = loaded_curves.begin(); i != loaded_curves.end(); i++)
     {
-        loaded_curves.listNeuron[i].x = getLocalHCoord(loaded_curves.listNeuron[i].x);
-        loaded_curves.listNeuron[i].y = getLocalVCoord(loaded_curves.listNeuron[i].y);
-        loaded_curves.listNeuron[i].z = getLocalDCoord(loaded_curves.listNeuron[i].z);
-        printf("CurveNode[%d] = {%.0f %.0f %.0f}\n", i, loaded_curves.listNeuron[i].x, loaded_curves.listNeuron[i].y, loaded_curves.listNeuron[i].z);
+        vaa3dCurves.listNeuron.push_back(*i);
+        vaa3dCurves.listNeuron.back().x = getLocalHCoord(vaa3dCurves.listNeuron.back().x);
+        vaa3dCurves.listNeuron.back().y = getLocalVCoord(vaa3dCurves.listNeuron.back().y);
+        vaa3dCurves.listNeuron.back().z = getLocalDCoord(vaa3dCurves.listNeuron.back().z);
     }
+    vaa3dCurves.editable=false;
 
     //assigning annotations
-    V3D_env->setLandmark(window, loaded_markers);
-    V3D_env->setSWC(window, loaded_curves);
+    V3D_env->setLandmark(window, vaa3dMarkers);
+    V3D_env->setSWC(window, vaa3dCurves);
     V3D_env->pushObjectIn3DWindow(window);
+    view3DWidget->enableMarkerLabel(false);
 }
 
 /**********************************************************************************
@@ -581,6 +568,11 @@ void CExplorerWindow::restore() throw (MyException)
 
     if(next)
     {
+        //registrating views: ---- Alessandro 2013-04-18 fixed: determining unique triple of rotation angles and assigning absolute rotation
+        next->view3DWidget->absoluteRotPose();
+        view3DWidget->doAbsoluteRot(next->view3DWidget->xRot(), next->view3DWidget->yRot(), next->view3DWidget->zRot());
+
+
         //positioning the current 3D window exactly at the next window position
         QPoint location = next->window3D->pos();
         next->window3D->setVisible(false);
@@ -589,11 +581,6 @@ void CExplorerWindow::restore() throw (MyException)
         triViewWidget->setWindowState(Qt::WindowMinimized);        
         window3D->resize(next->window3D->size());
         window3D->move(location);
-
-        //registrating views
-        view3DWidget->setXRotation(next->view3DWidget->xRot());
-        view3DWidget->setYRotation(next->view3DWidget->yRot());
-        view3DWidget->setZRotation(next->view3DWidget->zRot());
 
         //applying the same color map only if it differs from the next one
         Renderer_gl2* next_renderer = (Renderer_gl2*)(next->view3DWidget->getRenderer());

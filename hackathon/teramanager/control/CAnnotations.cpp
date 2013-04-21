@@ -1,9 +1,14 @@
+#include <algorithm>
+#include <vector>
 #include "CAnnotations.h"
+#include "locale.h"
 
 using namespace teramanager;
 
 CAnnotations* CAnnotations::uniqueInstance = NULL;
-int CAnnotations::annotation::total = 0;
+int annotation::total = 0;
+
+bool isMarker (annotation* ano) { return ano->type == 0;}
 
 void CAnnotations::uninstance()
 {
@@ -41,24 +46,27 @@ void CAnnotations::Octree::_rec_clear(const Poctant& p_octant) throw(MyException
         _rec_clear(p_octant->child7);
         _rec_clear(p_octant->child8);
 
-        if(p_octant->neuron)
-            delete p_octant->neuron;
-        delete p_octant;
+        while(!p_octant->annotations.empty())
+        {
+            annotation *ano = p_octant->annotations.back();
+            p_octant->annotations.pop_back();
+            delete ano;
+        }
     }
 }
 
 //recursive support method of 'insert' method
-void CAnnotations::Octree::_rec_insert(const Poctant& p_octant, CAnnotations::annotation& neuron) throw(MyException)
+void CAnnotations::Octree::_rec_insert(const Poctant& p_octant, annotation& neuron) throw(MyException)
 {
     //if the octant is greater than a point, the insert is recursively postponed until a 1x1x1 leaf octant is reached
     if(p_octant->V_dim > 1 || p_octant->H_dim > 1 || p_octant->D_dim > 1)
     {
-        /*printf("\nIn octant V[%d-%d],H[%d-%d],D[%d-%d], neuron V[%d],H[%d],D[%d]\n",
-                p_octant->V_start, p_octant->V_start+p_octant->V_dim,
-                p_octant->H_start, p_octant->H_start+p_octant->H_dim,
-                p_octant->D_start, p_octant->D_start+p_octant->D_dim,
-                neuron.y, neuron.x, neuron.z);*/
-        p_octant->n_neurons++;
+//        printf("\nIn octant V[%d-%d),H[%d-%d),D[%d-%d), neuron V[%.1f],H[%.1f],D[%.1f]\n",
+//                p_octant->V_start, p_octant->V_start+p_octant->V_dim,
+//                p_octant->H_start, p_octant->H_start+p_octant->H_dim,
+//                p_octant->D_start, p_octant->D_start+p_octant->D_dim,
+//                neuron.y, neuron.x, neuron.z);
+        p_octant->n_annotations++;
         uint32 V_dim_halved = ROUND((float)p_octant->V_dim/2);
         uint32 H_dim_halved = ROUND((float)p_octant->H_dim/2);
         uint32 D_dim_halved = ROUND((float)p_octant->D_dim/2);
@@ -179,13 +187,23 @@ void CAnnotations::Octree::_rec_insert(const Poctant& p_octant, CAnnotations::an
     }
     else
     {
-        if(p_octant->neuron != NULL)
-        {
-            char msg[1000];
-            sprintf(msg,"in CAnnotations::Octree::insert(...): duplicate neuron inserted at [%.0f,%.0f,%.0f]", neuron.y, neuron.x, neuron.z);
-            throw MyException(msg);
-        }
-        p_octant->neuron = &neuron;
+//        printf("\nIn octant V[%d-%d),H[%d-%d),D[%d-%d), neuron V[%.1f],H[%.1f],D[%.1f] INSERTED\n",
+//                p_octant->V_start, p_octant->V_start+p_octant->V_dim,
+//                p_octant->H_start, p_octant->H_start+p_octant->H_dim,
+//                p_octant->D_start, p_octant->D_start+p_octant->D_dim,
+//                neuron.y, neuron.x, neuron.z);
+//        if(p_octant->neuron != NULL)
+//        {
+//            char msg[STATIC_STRING_SIZE];
+//            sprintf(msg,"in CAnnotations::Octree::insert(...): duplicate annotation in octant X[%d-%d),Y[%d-%d),Z[%d-%d), ann1={%.2f, %.2f, %.2f}[ID = %d, type=%d], ann2={%.2f, %.2f, %.2f}[ID = %d, type=%d]",
+//                        p_octant->H_start, p_octant->H_start+p_octant->H_dim,
+//                        p_octant->V_start, p_octant->V_start+p_octant->V_dim,
+//                        p_octant->D_start, p_octant->D_start+p_octant->D_dim, neuron.x, neuron.y, neuron.z, neuron.ID, neuron.type,  p_octant->neuron->x, p_octant->neuron->y, p_octant->neuron->z, p_octant->neuron->ID, p_octant->neuron->type);
+//            throw MyException(msg);
+//        }
+        p_octant->n_annotations++;
+        neuron.container = static_cast<void*>(p_octant);
+        p_octant->annotations.push_back(&neuron);
     }
 }
 
@@ -225,11 +243,11 @@ void CAnnotations::Octree::_rec_print(const Poctant& p_octant)
 {
     if(p_octant)
     {
-        printf("V[%d-%d],H[%d-%d],D[%d-%d]\n",p_octant->V_start, p_octant->V_start+p_octant->V_dim,
+        printf("V[%d-%d),H[%d-%d),D[%d-%d)\n",p_octant->V_start, p_octant->V_start+p_octant->V_dim,
                                                                                   p_octant->H_start, p_octant->H_start+p_octant->H_dim,
                                                                                   p_octant->D_start, p_octant->D_start+p_octant->D_dim);
-        if(p_octant->neuron)
-            printf("|===> %.2f %.2f %.2f\n", p_octant->neuron->y, p_octant->neuron->x, p_octant->neuron->z);
+        for(std::list<teramanager::annotation*>::iterator i = p_octant->annotations.begin(); i!= p_octant->annotations.end(); i++)
+            printf("|===> %.2f %.2f %.2f\n", (*i)->y, (*i)->x, (*i)->z);
         _rec_print(p_octant->child1);
         _rec_print(p_octant->child2);
         _rec_print(p_octant->child3);
@@ -242,12 +260,15 @@ void CAnnotations::Octree::_rec_print(const Poctant& p_octant)
 }
 
 //recursive support method of 'find' method
-void CAnnotations::Octree::_rec_find(const Poctant& p_octant, const interval_t& V_int, const interval_t& H_int, const interval_t& D_int, std::list<CAnnotations::annotation*>& neurons)  throw(MyException)
+void CAnnotations::Octree::_rec_search(const Poctant& p_octant, const interval_t& V_int, const interval_t& H_int, const interval_t& D_int, std::list<annotation*>& neurons)  throw(MyException)
 {
     if(p_octant)
     {
-        if(p_octant->V_dim == 1 && p_octant->H_dim == 1 && p_octant->D_dim == 1 && p_octant->neuron)
-                neurons.push_back(p_octant->neuron);
+        if(p_octant->V_dim == 1 && p_octant->H_dim == 1 && p_octant->D_dim == 1)
+        {
+             for(std::list<teramanager::annotation*>::iterator i = p_octant->annotations.begin(); i!= p_octant->annotations.end(); i++)
+                 neurons.push_back((*i));
+        }
         else
         {
             uint32 V_dim_halved = ROUND((float)p_octant->V_dim/2);
@@ -258,79 +279,100 @@ void CAnnotations::Octree::_rec_find(const Poctant& p_octant, const interval_t& 
             uint32 D_halved		= p_octant->D_start+D_dim_halved;
 
             if(intersects(V_int, H_int, D_int, p_octant->V_start, V_dim_halved, p_octant->H_start, H_dim_halved, p_octant->D_start,	D_dim_halved))
-                _rec_find(p_octant->child1, V_int, H_int, D_int, neurons);
+                _rec_search(p_octant->child1, V_int, H_int, D_int, neurons);
 
             if(intersects(V_int, H_int, D_int, p_octant->V_start, V_dim_halved, p_octant->H_start, H_dim_halved, D_halved,			D_dim_halved))
-                _rec_find(p_octant->child2, V_int, H_int, D_int, neurons);
+                _rec_search(p_octant->child2, V_int, H_int, D_int, neurons);
 
             if(intersects(V_int, H_int, D_int, p_octant->V_start, V_dim_halved, H_halved,		   H_dim_halved, p_octant->D_start,	D_dim_halved))
-                _rec_find(p_octant->child3, V_int, H_int, D_int, neurons);
+                _rec_search(p_octant->child3, V_int, H_int, D_int, neurons);
 
             if(intersects(V_int, H_int, D_int, p_octant->V_start, V_dim_halved, H_halved,		   H_dim_halved, D_halved,			D_dim_halved))
-                _rec_find(p_octant->child4, V_int, H_int, D_int, neurons);
+                _rec_search(p_octant->child4, V_int, H_int, D_int, neurons);
 
             if(intersects(V_int, H_int, D_int, V_halved,		  V_dim_halved,	p_octant->H_start, H_dim_halved, p_octant->D_start,	D_dim_halved))
-                _rec_find(p_octant->child5, V_int, H_int, D_int, neurons);
+                _rec_search(p_octant->child5, V_int, H_int, D_int, neurons);
 
             if(intersects(V_int, H_int, D_int, V_halved,		  V_dim_halved,	p_octant->H_start, H_dim_halved, D_halved,			D_dim_halved))
-                 _rec_find(p_octant->child6, V_int, H_int, D_int, neurons);
+                _rec_search(p_octant->child6, V_int, H_int, D_int, neurons);
 
             if(intersects(V_int, H_int, D_int, V_halved,		  V_dim_halved,	H_halved,		   H_dim_halved, p_octant->D_start,	D_dim_halved))
-                 _rec_find(p_octant->child7, V_int, H_int, D_int, neurons);
+                _rec_search(p_octant->child7, V_int, H_int, D_int, neurons);
 
             if(intersects(V_int, H_int, D_int, V_halved,		  V_dim_halved,	H_halved,		   H_dim_halved, D_halved,			D_dim_halved))
-                 _rec_find(p_octant->child8, V_int, H_int, D_int, neurons);
+                _rec_search(p_octant->child8, V_int, H_int, D_int, neurons);
         }
     }
 }
 
-//recursive support method of 'remove' method
-bool CAnnotations::Octree::_rec_remove(const Poctant& p_octant, const interval_t& V_int, const interval_t& H_int, const interval_t& D_int)  throw(MyException)
+//recursive support method of 'rec_find' method
+CAnnotations::Octree::Poctant CAnnotations::Octree::_rec_find(const Poctant& p_octant, const interval_t& V_int, const interval_t& H_int, const interval_t& D_int) throw(MyException)
 {
+    //printf("\n_rec_find(p_octant=%d, V_int=[%d-%d), H_int=[%d-%d), D_int=[%d-%d))\n", p_octant, V_int.start, V_int.end, H_int.start, H_int.end, D_int.start, D_int.end);
+
     if(p_octant)
     {
-        if(p_octant->V_dim == 1 && p_octant->H_dim == 1 && p_octant->D_dim == 1 && p_octant->neuron)
-        {
-            delete p_octant->neuron;
-            p_octant->neuron = 0;
-            return true;
-        }
+//        printf("_rec_find(): in octant V[%d-%d),H[%d-%d),D[%d-%d)\n",
+//                p_octant->V_start, p_octant->V_start+p_octant->V_dim,
+//                p_octant->H_start, p_octant->H_start+p_octant->H_dim,
+//                p_octant->D_start, p_octant->D_start+p_octant->D_dim);
+        if(p_octant->V_dim == 1 && p_octant->H_dim == 1 && p_octant->D_dim == 1)
+            return p_octant;
         else
         {
+            //printf("_rec_find(): smisting...\n");
             uint32 V_dim_halved = ROUND((float)p_octant->V_dim/2);
-            uint32 V_halved		= p_octant->V_start+V_dim_halved;
+            uint32 V_halved	= p_octant->V_start+V_dim_halved;
             uint32 H_dim_halved = ROUND((float)p_octant->H_dim/2);
-            uint32 H_halved		= p_octant->H_start+H_dim_halved;
+            uint32 H_halved	= p_octant->H_start+H_dim_halved;
             uint32 D_dim_halved = ROUND((float)p_octant->D_dim/2);
-            uint32 D_halved		= p_octant->D_start+D_dim_halved;
+            uint32 D_halved	= p_octant->D_start+D_dim_halved;
 
-            if(intersects(V_int, H_int, D_int, p_octant->V_start, V_dim_halved, p_octant->H_start, H_dim_halved, p_octant->D_start,	D_dim_halved))
-                _rec_remove(p_octant->child1, V_int, H_int, D_int);
+            //printf("V[%d-%d),H[%d-%d),D[%d-%d) intersects V[%d-%d),H[%d-%d),D[%d-%d)?...", V_int.start, V_int.end, H_int.start, H_int.end, D_int.start, D_int.end, p_octant->V_start, p_octant->V_start+V_dim_halved,   p_octant->H_start,  p_octant->H_start+H_dim_halved, p_octant->D_start,	p_octant->D_start+D_dim_halved);
+            if(intersects(V_int, H_int, D_int, p_octant->V_start, V_dim_halved, p_octant->H_start,  H_dim_halved, p_octant->D_start,	D_dim_halved))
+                return _rec_find(p_octant->child1, V_int, H_int, D_int);
+            //printf("no.\n");
 
-            if(intersects(V_int, H_int, D_int, p_octant->V_start, V_dim_halved, p_octant->H_start, H_dim_halved, D_halved,			D_dim_halved))
-                _rec_remove(p_octant->child2, V_int, H_int, D_int);
+            //printf("V[%d-%d),H[%d-%d),D[%d-%d) intersects V[%d-%d),H[%d-%d),D[%d-%d)?...", V_int.start, V_int.end, H_int.start, H_int.end, D_int.start, D_int.end, p_octant->V_start, p_octant->V_start+V_dim_halved,   p_octant->H_start,  p_octant->H_start+H_dim_halved, D_halved,		D_halved+D_dim_halved);
+            if(intersects(V_int, H_int, D_int, p_octant->V_start, V_dim_halved, p_octant->H_start,  H_dim_halved, D_halved,		D_dim_halved))
+                return _rec_find(p_octant->child2, V_int, H_int, D_int);
+            //printf("no.\n");
 
-            if(intersects(V_int, H_int, D_int, p_octant->V_start, V_dim_halved, H_halved,		   H_dim_halved, p_octant->D_start,	D_dim_halved))
-                _rec_remove(p_octant->child3, V_int, H_int, D_int);
+            //printf("V[%d-%d),H[%d-%d),D[%d-%d) intersects V[%d-%d),H[%d-%d),D[%d-%d)?...", V_int.start, V_int.end, H_int.start, H_int.end, D_int.start, D_int.end, p_octant->V_start, p_octant->V_start+V_dim_halved,   H_halved,           H_halved+H_dim_halved,          p_octant->D_start,	p_octant->D_start+D_dim_halved);
+            if(intersects(V_int, H_int, D_int, p_octant->V_start, V_dim_halved, H_halved,           H_dim_halved, p_octant->D_start,	D_dim_halved))
+                return _rec_find(p_octant->child3, V_int, H_int, D_int);
+            //printf("no.\n");
 
-            if(intersects(V_int, H_int, D_int, p_octant->V_start, V_dim_halved, H_halved,		   H_dim_halved, D_halved,			D_dim_halved))
-                _rec_remove(p_octant->child4, V_int, H_int, D_int);
+            //printf("V[%d-%d),H[%d-%d),D[%d-%d) intersects V[%d-%d),H[%d-%d),D[%d-%d)?...", V_int.start, V_int.end, H_int.start, H_int.end, D_int.start, D_int.end, p_octant->V_start, p_octant->V_start+V_dim_halved,   H_halved,           H_halved+H_dim_halved,          D_halved,		D_halved+D_dim_halved);
+            if(intersects(V_int, H_int, D_int, p_octant->V_start, V_dim_halved, H_halved,           H_dim_halved, D_halved,		D_dim_halved))
+                return _rec_find(p_octant->child4, V_int, H_int, D_int);
+            //printf("no.\n");
 
-            if(intersects(V_int, H_int, D_int, V_halved,		  V_dim_halved,	p_octant->H_start, H_dim_halved, p_octant->D_start,	D_dim_halved))
-                _rec_remove(p_octant->child5, V_int, H_int, D_int);
+            //printf("V[%d-%d),H[%d-%d),D[%d-%d) intersects V[%d-%d),H[%d-%d),D[%d-%d)?...", V_int.start, V_int.end, H_int.start, H_int.end, D_int.start, D_int.end, V_halved,          V_halved+V_dim_halved,            p_octant->H_start,  p_octant->H_start+H_dim_halved, p_octant->D_start,	p_octant->D_start+D_dim_halved);
+            if(intersects(V_int, H_int, D_int, V_halved,	  V_dim_halved,	p_octant->H_start,  H_dim_halved, p_octant->D_start,	D_dim_halved))
+                return _rec_find(p_octant->child5, V_int, H_int, D_int);
+            //printf("no.\n");
 
-            if(intersects(V_int, H_int, D_int, V_halved,		  V_dim_halved,	p_octant->H_start, H_dim_halved, D_halved,			D_dim_halved))
-                 _rec_remove(p_octant->child6, V_int, H_int, D_int);
+            //printf("V[%d-%d),H[%d-%d),D[%d-%d) intersects V[%d-%d),H[%d-%d),D[%d-%d)?...", V_int.start, V_int.end, H_int.start, H_int.end, D_int.start, D_int.end, V_halved,          V_halved+V_dim_halved,            p_octant->H_start,  p_octant->H_start+H_dim_halved, D_halved,		D_halved+D_dim_halved);
+            if(intersects(V_int, H_int, D_int, V_halved,          V_dim_halved,	p_octant->H_start,  H_dim_halved, D_halved,		D_dim_halved))
+                return _rec_find(p_octant->child6, V_int, H_int, D_int);
+            //printf("no.\n");
 
-            if(intersects(V_int, H_int, D_int, V_halved,		  V_dim_halved,	H_halved,		   H_dim_halved, p_octant->D_start,	D_dim_halved))
-                 _rec_remove(p_octant->child7, V_int, H_int, D_int);
+            //printf("V[%d-%d),H[%d-%d),D[%d-%d) intersects V[%d-%d),H[%d-%d),D[%d-%d)?...", V_int.start, V_int.end, H_int.start, H_int.end, D_int.start, D_int.end, V_halved,          V_halved+V_dim_halved,            H_halved,           H_halved+H_dim_halved,          p_octant->D_start,	p_octant->D_start+D_dim_halved);
+            if(intersects(V_int, H_int, D_int, V_halved,	  V_dim_halved,	H_halved,           H_dim_halved, p_octant->D_start,	D_dim_halved))
+                return _rec_find(p_octant->child7, V_int, H_int, D_int);
+            //printf("no.\n");
 
-            if(intersects(V_int, H_int, D_int, V_halved,		  V_dim_halved,	H_halved,		   H_dim_halved, D_halved,			D_dim_halved))
-                 _rec_remove(p_octant->child8, V_int, H_int, D_int);
+            //printf("V[%d-%d),H[%d-%d),D[%d-%d) intersects V[%d-%d),H[%d-%d),D[%d-%d)?...", V_int.start, V_int.end, H_int.start, H_int.end, D_int.start, D_int.end, V_halved,          V_halved+V_dim_halved,            H_halved,           H_halved+H_dim_halved,          D_halved,		D_halved+D_dim_halved);
+            if(intersects(V_int, H_int, D_int, V_halved,	  V_dim_halved,	H_halved,           H_dim_halved, D_halved,		D_dim_halved))
+                return _rec_find(p_octant->child8, V_int, H_int, D_int);
+            //printf("no.\n");
+
+            return 0;
         }
     }
     else
-        return false;
+        return 0;
 }
 
 //recursive support method of 'count' method
@@ -339,7 +381,7 @@ uint32 CAnnotations::Octree::_rec_count(const Poctant& p_octant, const interval_
     if(p_octant)
     {
         if(contains(V_int, H_int, D_int, p_octant->V_start, p_octant->V_dim, p_octant->H_start, p_octant->H_dim, p_octant->D_start, p_octant->D_dim))
-           return p_octant->n_neurons;
+           return p_octant->n_annotations;
         else
         {
             uint32 neuron_count = 0;
@@ -394,7 +436,7 @@ bool inline CAnnotations::Octree::intersects(const interval_t& V1_int,		 const i
 
 //returns true if first volume contains second volume
 bool inline CAnnotations::Octree::contains  (const interval_t& V1_int,		 const interval_t& H1_int,		   const interval_t& D1_int,
-                                                           uint32& V2_start, uint32& V2_dim, uint32& H2_start, uint32& H2_dim, uint32& D2_start, uint32& D2_dim) throw(MyException)
+                                             uint32& V2_start, uint32& V2_dim, uint32& H2_start, uint32& H2_dim, uint32& D2_start, uint32& D2_dim) throw(MyException)
 {
     return (  V1_int.start  <=  V2_start                &&
               V1_int.end    >=  (V2_start+V2_dim)	&&
@@ -425,18 +467,28 @@ void CAnnotations::Octree::clear() throw(MyException)
 }
 
 //insert given neuron in the octree
-void CAnnotations::Octree::insert(CAnnotations::annotation& neuron)  throw(MyException)
+void CAnnotations::Octree::insert(annotation& neuron)  throw(MyException)
 {
     _rec_insert(root,neuron);
 }
 
-//removes the given neuron in the octree
-bool CAnnotations::Octree::remove(annotation& neuron) throw(MyException)
+//search for the annotations at the given coordinate. If found, returns the address of the annotations list
+std::list<annotation*>* CAnnotations::Octree::find(float x, float y, float z) throw(MyException)
 {
-    interval_t V_range(static_cast<int>(floor(neuron.y)), static_cast<int>(ceil(neuron.y)));
-    interval_t H_range(static_cast<int>(floor(neuron.x)), static_cast<int>(ceil(neuron.x)));
-    interval_t D_range(static_cast<int>(floor(neuron.z)), static_cast<int>(ceil(neuron.z)));
-    return _rec_remove(root, V_range, H_range, D_range);
+    interval_t V_range(static_cast<int>(floor(y)), static_cast<int>(ceil(y)));
+    interval_t H_range(static_cast<int>(floor(x)), static_cast<int>(ceil(x)));
+    interval_t D_range(static_cast<int>(floor(z)), static_cast<int>(ceil(z)));
+    if(V_range.end == V_range.start)
+        V_range.end++;
+    if(H_range.end == H_range.start)
+        H_range.end++;
+    if(D_range.end == D_range.start)
+        D_range.end++;
+    Poctant oct = _rec_find(root, V_range, H_range, D_range);
+    if(oct)
+        return &(oct->annotations);
+    else
+        return 0;
 }
 
 //returns the number of neurons (=leafs) in the octree by exploring the entire data structure
@@ -460,9 +512,9 @@ void CAnnotations::Octree::print()
 }
 
 //search for neurons in the given 3D volume and puts found neurons into 'neurons'
-void CAnnotations::Octree::find(interval_t V_int, interval_t H_int, interval_t D_int, std::list<CAnnotations::annotation*>& neurons) throw(MyException)
+void CAnnotations::Octree::find(interval_t V_int, interval_t H_int, interval_t D_int, std::list<annotation*>& neurons) throw(MyException)
 {
-    _rec_find(root, V_int, H_int, D_int, neurons);
+    _rec_search(root, V_int, H_int, D_int, neurons);
 }
 
 //returns the number of neurons (=leafs) in the given volume without exploring the entire data structure
@@ -500,24 +552,118 @@ void CAnnotations::addLandmarks(LandmarkList* markers) throw (MyException)
        node->x = (*markers)[i].x;
        node->y = (*markers)[i].y;
        node->z = (*markers)[i].z;
+       node->name = (*markers)[i].name;
+       node->comment = (*markers)[i].comments;
+       node->color = (*markers)[i].color;
+       printf("--------------------- teramanager plugin >> inserting marker %d=(%.1f,%.1f,%.1f)\n", node->ID, node->x, node->y, node->z);
        octree->insert(*node);
     }
 }
 
-void CAnnotations::removeLandmarks(LandmarkList* markers) throw (MyException)
+void CAnnotations::removeLandmarks(std::list<LocationSimple> &markers) throw (MyException)
 {
     #ifdef TMP_DEBUG
     printf("--------------------- teramanager plugin [thread unknown] >> CAnnotations::removeLandmarks(markers(size = %d))\n",
-           markers->size());
+           markers.size());
     #endif
 
-    for(int i=0; i<markers->size(); i++)
+    //if the octree is instantiated
+    if(octree)
     {
-        annotation node;
-        node.x = (*markers)[i].x;
-        node.y = (*markers)[i].y;
-        node.z = (*markers)[i].z;
-        octree->remove(node);
+        //retrieving the list of the annotations to be deleted
+        std::list<annotation*> tbdList;
+        for(std::list<LocationSimple>::iterator i = markers.begin(); i != markers.end(); i++)
+        {
+            std::list<annotation*>* anoListP = octree->find(i->x, i->y, i->z);
+            if(anoListP)
+            {
+                for(std::list<annotation*>::iterator it = anoListP->begin(); it != anoListP->end(); it++)
+                {
+                    //printf("--------------------- teramanager plugin >> checking annotation %d=(%.1f,%.1f,%.1f)\n", (*it)->ID, (*it)->x, (*it)->y, (*it)->z);
+                    if((*it)->type == 0)
+                        tbdList.push_back(*it);
+                }
+            }
+            else
+                printf("--------------------- teramanager plugin >> marker (%.1f, %.1f, %.1f) not found in the Octree!!!\n", i->x, i->y, i->z);
+
+        }
+        tbdList.sort();
+        tbdList.unique();
+
+        //removing annotations from the Octree
+        for(std::list<annotation*>::iterator it = tbdList.begin(); it != tbdList.end(); it++)
+            static_cast<Octree::octant*>((*it)->container)->annotations.remove((*it));
+
+        //deallocating annotations
+        while(!tbdList.empty())
+        {
+            annotation* tbd = tbdList.back();
+            tbdList.pop_back();
+            printf("--------------------- teramanager plugin >> removing marker %d=(%.1f,%.1f,%.1f)\n",
+                   tbd->ID, tbd->x, tbd->y, tbd->z);
+            delete tbd;
+        }
+    }
+}
+
+
+void CAnnotations::removeCurves(std::list<NeuronSWC> &curves) throw (MyException)
+{
+    #ifdef TMP_DEBUG
+    printf("--------------------- teramanager plugin [thread unknown] >> CAnnotations::removeCurves(curves->listNeuron(size = %d))\n",
+           curves.size());
+    #endif
+
+    if(octree)
+    {
+        //retrieving source points of curves to be removed
+        std::list<annotation*> sources;
+        for(std::list<NeuronSWC>::iterator i = curves.begin(); i != curves.end(); i++)
+        {
+            if(i->pn == -1)
+            {
+                std::list<annotation*>* anoListP = octree->find(i->x, i->y, i->z);
+                if(anoListP)
+                {
+                    //int sizeStored = sources.size();
+                    for(std::list<annotation*>::iterator it = anoListP->begin(); it != anoListP->end(); it++)
+                    {
+                        if((*it)->type == 1 && (*it)->prev == 0)
+                            sources.push_back(*it);
+                    }
+                    //if(sources.size()-sizeStored > 1)
+                        //throw MyException("in CAnnotations::removeCurves(): found 2 coincident curves starting points. Curves sharing the same source point are not supported yet.");
+                }
+                else
+                    printf("--------------------- teramanager plugin >> source curve point (%.1f, %.1f, %.1f) not found in the Octree!!!\n", i->x, i->y, i->z);
+            }
+        }
+        sources.sort();
+        sources.unique();
+
+        //removing curve points
+        std::list<annotation*> tbdList;
+        for(std::list<annotation*>::iterator i = sources.begin(); i != sources.end(); i++)
+        {
+            annotation* anoP = *i;
+            printf("--------------------- teramanager plugin >> preparing to remove curve whose SOURCE is %d=(%.1f,%.1f,%.1f), address=%d\n",
+                   anoP->ID, anoP->x, anoP->y, anoP->z, anoP);
+            while(anoP)
+            {
+                static_cast<Octree::octant*>(anoP->container)->annotations.remove(anoP);
+                tbdList.push_back(anoP);
+                anoP = anoP->next;
+            }
+        }
+        while(!tbdList.empty())
+        {
+            annotation* tbd = tbdList.back();
+            tbdList.pop_back();
+            printf("--------------------- teramanager plugin >> removing curve point %d=(%.1f,%.1f,%.1f)\n",
+                   tbd->ID, tbd->x, tbd->y, tbd->z);
+            delete tbd;
+        }
     }
 }
 
@@ -528,50 +674,38 @@ void CAnnotations::addCurves(NeuronTree* curves) throw (MyException)
            curves->listNeuron.size());
     #endif
 
-    //checking that contour points are stored contiguously
-    for(int i=0; i<curves->listNeuron.size(); i++)
+    std::map<int, annotation*> annotationsMap;
+    std::map<int, NeuronSWC*> swcMap;
+    for(QList <NeuronSWC>::iterator i = curves->listNeuron.begin(); i!= curves->listNeuron.end(); i++)
     {
-        //printf("%d\t{%.1f %.1f %.1f}, pn = %d, hash = %d\n", i, curves->listNeuron[i].x, curves->listNeuron[i].y, curves->listNeuron[i].z,
-               //curves->listNeuron[i].pn, curves->hashNeuron[i]);
-        if(curves->listNeuron[i].pn != -1 && curves->listNeuron[i].pn != i)
-            throw MyException("in CAnnotations::addCurves(...): non consecutive contour points found");
+        annotation* ann = new annotation();
+        ann->type = 1;
+        ann->name = curves->name.toStdString();
+        ann->comment = curves->comment.toStdString();
+        ann->color = curves->color;
+        ann->subtype = i->type;
+        ann->r = i->r;
+        ann->x = i->x;
+        ann->y = i->y;
+        ann->z = i->z;
+        printf("--------------------- teramanager plugin >> inserting curve point %d(%d)=(%.1f,%.1f,%.1f)\n", ann->ID, i->n, ann->x, ann->y, ann->z);
+        octree->insert(*ann);
+        annotationsMap[i->n] = ann;
+        swcMap[i->n] = &(*i);
     }
-
-    //creating and storing annotations in the octree
-    annotation* prev = 0;
-    for(int i=0; i<curves->listNeuron.size(); i++)
+    for(std::map<int, annotation*>::iterator i = annotationsMap.begin(); i!= annotationsMap.end(); i++)
     {
-        annotation* node = new annotation();
-        node->type = 1;
-        node->subtype = curves->listNeuron[i].type;
-
-        if(curves->listNeuron[i].pn == -1)
-        {
-            if(prev)
-                prev->next = 0;
-            node->prev = 0;
-        }
-        else
-        {
-            prev->next = node;
-            node->prev = prev;
-        }
-
-        node->r = curves->listNeuron[i].r;
-        node->x = curves->listNeuron[i].x;
-        node->y = curves->listNeuron[i].y;
-        node->z = curves->listNeuron[i].z;
-        octree->insert(*node);
-        prev = node;
+        i->second->prev = swcMap[i->first]->pn == -1 ? 0 : annotationsMap[swcMap[i->first]->pn];
+        if(i->second->prev)
+            i->second->prev->next = i->second;
     }
-    if(prev)
-        prev->next = 0;
+    printf("--------------------- teramanager plugin >> inserted %d curve points\n", annotationsMap.size());
 }
 
 /*********************************************************************************
 * Retrieves the annotation(s) in the given volume space
 **********************************************************************************/
-void CAnnotations::findLandmarks(interval_t X_range, interval_t Y_range, interval_t Z_range, LandmarkList& markers) throw (MyException)
+void CAnnotations::findLandmarks(interval_t X_range, interval_t Y_range, interval_t Z_range, std::list<LocationSimple> &markers) throw (MyException)
 {
     #ifdef TMP_DEBUG
     printf("--------------------- teramanager plugin [thread unknown] >> CAnnotations::findLandmarks(X[%d,%d), Y[%d,%d), Z[%d,%d))",
@@ -590,36 +724,57 @@ void CAnnotations::findLandmarks(interval_t X_range, interval_t Y_range, interva
             marker.z = (*i)->z;
             marker.radius = (*i)->r;
             marker.category = (*i)->subtype;
+            marker.color = (*i)->color;
+            marker.name = (*i)->name;
+            marker.comments = (*i)->comment;
             markers.push_back(marker);
         }
     }
     printf("...%d markers loaded\n", markers.size());
 }
 
-void CAnnotations::findCurves(interval_t X_range, interval_t Y_range, interval_t Z_range, NeuronTree& curves) throw (MyException)
+void CAnnotations::findCurves(interval_t X_range, interval_t Y_range, interval_t Z_range, std::list<NeuronSWC> &curves) throw (MyException)
 {
     #ifdef TMP_DEBUG
     printf("--------------------- teramanager plugin [thread unknown] >> CAnnotations::findCurves(X[%d,%d), Y[%d,%d), Z[%d,%d))",
            X_range.start, X_range.end, Y_range.start, Y_range.end, Z_range.start, Z_range.end);
     #endif
 
-//    std::list<annotation*> nodes;
-//    std::list<annotation*> curves;
-//    octree->find(Y_range, X_range, Z_range, nodes);
-//    for(std::list<annotation*>::iterator i = nodes.begin(); i != nodes.end(); i++)
-//    {
-//        if((*i)->type == 1 && (*i)->prev == 0 && (*i)->next != 0) //selecting curve points
-//        {
-//            LocationSimple marker;
-//            marker.x = (*i)->x;
-//            marker.y = (*i)->y;
-//            marker.z = (*i)->z;
-//            marker.radius = (*i)->r;
-//            marker.category = (*i)->subtype;
-//            markers.push_back(marker);
-//        }
-//    }
-    printf("...%d curve points loaded\n", curves.listNeuron.size());
+    std::list<annotation*> nodes;
+    octree->find(Y_range, X_range, Z_range, nodes);
+
+    //finding curve sources (i.e. starting points)
+    std::vector<annotation*> sources;
+    for(std::list<annotation*>::iterator i = nodes.begin(); i != nodes.end(); i++)
+    {
+        if((*i)->type == 1) //selecting curve points
+        {
+            annotation* source = (*i);
+
+            while(source->prev != 0)
+                source = source->prev;
+            if(find(sources.begin(),sources.end(), source) == sources.end())
+                sources.push_back(source);
+        }
+    }
+    for(int i=0; i<sources.size(); i++)
+    {
+        annotation* annP = sources[i];
+        while(annP)
+        {
+            NeuronSWC p;
+            p.type = annP->subtype;
+            p.n = annP->ID;
+            p.x = annP->x;
+            p.y = annP->y;
+            p.z = annP->z;
+            p.r = annP->r;
+            p.pn = annP->prev ? annP->prev->ID : -1;
+            curves.push_back(p);
+            annP = annP->next;
+        }
+    }
+    printf("...%d curve points loaded (nodes = %d, sources = %d)\n", curves.size(), nodes.size(), sources.size());
 }
 
 /*********************************************************************************
@@ -631,7 +786,13 @@ void CAnnotations::save(const char* filepath) throw (MyException)
     printf("--------------------- teramanager plugin [thread unknown] >> CAnnotations::save()\n");
     #endif
 
-    //opening file in write mode
+    //retrieving annotations
+    std::list<annotation*> annotations;
+    if(octree)
+        octree->find(interval_t(0, octree->DIM_V), interval_t(0, octree->DIM_H), interval_t(0, octree->DIM_D), annotations);
+
+    //saving ano file
+    QDir anoFile(filepath);
     FILE* f = fopen(filepath, "w");
     if(!f)
     {
@@ -639,24 +800,36 @@ void CAnnotations::save(const char* filepath) throw (MyException)
         sprintf(errMsg, "in CAnnotations::save(): cannot save to path \"%s\"", filepath);
         throw MyException(errMsg);
     }
+    fprintf(f, "APOFILE=%s\n",anoFile.dirName().toStdString().append(".apo").c_str());
+    fprintf(f, "SWCFILE=%s\n",anoFile.dirName().toStdString().append(".swc").c_str());
+    fclose(f);
 
-    //storing file header
-    fprintf(f, "#name terafly_annotations\n");
-    fprintf(f, "#voldims %d %d %d\n", octree->DIM_H, octree->DIM_V, octree->DIM_D);
-    fprintf(f, "#n type subtype x y z radius parent\n");
+    //saving apo (point cloud) file
+    QList<CellAPO> points;
+    for(std::list<annotation*>::iterator i = annotations.begin(); i!= annotations.end(); i++)
+        if((*i)->type == 0)     //selecting markers
+        {
+            CellAPO cell;
+            cell.n = (*i)->ID;
+            cell.name = (*i)->name.c_str();
+            cell.comment = (*i)->comment.c_str();
+            cell.x = (*i)->x;
+            cell.y = (*i)->y;
+            cell.z = (*i)->z;
+            cell.volsize = (*i)->r*(*i)->r*4*teramanager::pi;
+            cell.color = (*i)->color;
+            points.push_back(cell);
+        }
+    writeAPO_file(QString(filepath).append(".apo"), points);
 
-    //storing individual annotations
-    if(octree)
-    {        
-        std::list<annotation*> annotations;
-        octree->find(interval_t(0, octree->DIM_V), interval_t(0, octree->DIM_H), interval_t(0, octree->DIM_D), annotations);
-
-        //ordering by ascending ID
-        annotations.sort(annotation::compareAnnotations);
-
+    //saving SWC file
+    f = fopen(QString(filepath).append(".swc").toStdString().c_str(), "w");
+    fprintf(f, "#name undefined\n");
+    fprintf(f, "#comment terafly_annotations\n");
+    fprintf(f, "#n type x y z radius parent\n");
         for(std::list<annotation*>::iterator i = annotations.begin(); i != annotations.end(); i++)
-            fprintf(f, "%d %d %d %.3f %.3f %.3f %.3f %d\n", (*i)->ID, (*i)->type, (*i)->subtype, (*i)->x, (*i)->y, (*i)->z, (*i)->r, (*i)->prev ? (*i)->prev->ID : -1);
-    }
+            if((*i)->type == 1) //selecting NeuronSWC
+                fprintf(f, "%d %d %.3f %.3f %.3f %.3f %d\n", (*i)->ID, (*i)->subtype, (*i)->x, (*i)->y, (*i)->z, (*i)->r, (*i)->prev ? (*i)->prev->ID : -1);
 
     //file closing
     fclose(f);
@@ -671,81 +844,141 @@ void CAnnotations::load(const char* filepath) throw (MyException)
     if(!octree)
         throw MyException("CAnnotations::load(): octree not yet initialized");
 
-    //clearing annotations data structure
-    octree->clear();
+    //clearing annotations
+    this->clear();
 
-    //opening file in read mode
+    //opening ANO file in read mode
     char errMsg[STATIC_STRING_SIZE];
     FILE* f = fopen(filepath, "r");
     if(!f)
     {
-        sprintf(errMsg, "in CAnnotations::save(): cannot save to path \"%s\"", filepath);
+        sprintf(errMsg, "in CAnnotations::save(): cannot load file \"%s\"", filepath);
         throw MyException(errMsg);
     }
 
-    //reading file header and checking its correctness
+    //reading ANO file line by line
     char lineBuf[FILE_LINE_BUFFER_SIZE];
-    fgets(lineBuf, FILE_LINE_BUFFER_SIZE, f);
-    if(strncmp(lineBuf, "#name terafly_annotations", strlen("#name terafly_annotations")) != 0 )
-    {
-        sprintf(errMsg, "in CAnnotations::load(const char* filepath = \"%s\"): expected line \"%s\", found \"%s\"",
-                filepath, "#name terafly_annotations", lineBuf);
-        throw MyException(errMsg);
-    }
-    fgets(lineBuf, FILE_LINE_BUFFER_SIZE, f);
-    int DIM_V=-1, DIM_H=-1, DIM_D=-1;
-    if(sscanf(lineBuf, "%*s %d %d %d", &DIM_H, &DIM_V, &DIM_D) != 3)
-    {
-        sprintf(errMsg, "in CAnnotations::load(const char* filepath = \"%s\"): expected line \"%s\", found \"%s\"",
-                filepath, "#voldims <number> <number> <number>", lineBuf);
-        throw MyException(errMsg);
-    }
-    if(DIM_V != octree->DIM_V || DIM_H != octree->DIM_H || DIM_D != octree->DIM_D)
-    {
-        sprintf(errMsg, "in CAnnotations::load(const char* filepath = \"%s\"): volume dimensions mismatch. Expected \"%d %d %d\", found \"%d %d %d\"",
-                filepath, octree->DIM_V, octree->DIM_H, octree->DIM_D, DIM_V, DIM_H, DIM_D);
-        throw MyException(errMsg);
-    }    
-    fgets(lineBuf, FILE_LINE_BUFFER_SIZE, f);
-
-    //reading individual annotations
-    std::map<int, annotation*> annotations;
     while(fgets(lineBuf, FILE_LINE_BUFFER_SIZE, f))
     {
-        //reading i-th annotation fields
-        int ID=-1, type=-1, subtype=-1, parent=-1;
-        float x=-1.0f, y=-1.0f, z=-1.0f, radius=-1.0f;
-        if(sscanf(lineBuf, "%d %d %d %f %f %f %f %d", &ID, &type, &subtype, &x, &y, &z, &radius, &parent) != 8)
+        char tokenizer[STATIC_STRING_SIZE];
+        char filetype[STATIC_STRING_SIZE];
+        char filename[STATIC_STRING_SIZE];
+        if(sscanf(lineBuf, "%s", tokenizer) != 1)
         {
             sprintf(errMsg, "in CAnnotations::load(const char* filepath = \"%s\"): expected line \"%s\", found \"%s\"",
-                    filepath, "<number> <number> <number> <number> <number> <number> <number> <number>", lineBuf);
+                    filepath, "<filetype>=<filename>", lineBuf);
             throw MyException(errMsg);
         }
+        char * pch;
+        pch = strtok (tokenizer,"=");
+        strcpy(filetype, pch);
+        pch = strtok (0,"=");
+        strcpy(filename, pch);
 
-        //checking if there are duplicates
-        if(annotations.find(ID) != annotations.end())
+        QDir dir(filepath);
+        dir.cdUp();
+        if(strcmp(filetype, "APOFILE") == 0)
         {
-            sprintf(errMsg, "in CAnnotations::load(const char* filepath = \"%s\"): duplicate annotation elements found", lineBuf);
-            throw MyException(errMsg);
-        }
-
-        //inserting annotation
-        annotation* ann = new annotation(ID, type, subtype, x, y, z, radius, 0, 0);
-        octree->insert(*ann);
-
-        //linking annotation to its predecessor (this is possible IFF annotations are stored in ascending order on the ID column)
-        if(parent != -1)
-        {
-            if(annotations.find(parent) == annotations.end())
+            QList <CellAPO> cells = readAPO_file(dir.absolutePath().append("/").append(filename));
+            for(QList <CellAPO>::iterator i = cells.begin(); i!= cells.end(); i++)
             {
-                sprintf(errMsg, "in CAnnotations::load(const char* filepath = \"%s\"): annotations are not in ascending order on the ID column", lineBuf);
-                throw MyException(errMsg);
+                annotation* ann = new annotation();
+                ann->type = 0;
+                ann->name = i->name.toStdString();
+                ann->comment = i->comment.toStdString();
+                ann->color = i->color;
+                ann->r = sqrt(i->volsize / (4*teramanager::pi));
+                ann->x = i->x;
+                ann->y = i->y;
+                ann->z = i->z;
+                printf("--------------------- teramanager plugin >> inserting marker %d=(%.1f,%.1f,%.1f)\n", ann->ID, ann->x, ann->y, ann->z);
+                octree->insert(*ann);
             }
-            ann->prev = annotations[parent];
-            ann->prev->next = ann;
+            printf("--------------------- teramanager plugin >> inserted %d markers\n", cells.size());
         }
-    }
+        else if(strcmp(filetype, "SWCFILE") == 0)
+        {
+            NeuronTree nt = readSWC_file(dir.absolutePath().append("/").append(filename));
+            std::map<int, annotation*> annotationsMap;
+            std::map<int, NeuronSWC*> swcMap;
+            for(QList <NeuronSWC>::iterator i = nt.listNeuron.begin(); i!= nt.listNeuron.end(); i++)
+            {
+                annotation* ann = new annotation();
+                ann->type = 1;
+                ann->name = nt.name.toStdString();
+                ann->comment = nt.comment.toStdString();
+                ann->color = nt.color;
+                ann->subtype = i->type;
+                ann->r = i->r;
+                ann->x = i->x;
+                ann->y = i->y;
+                ann->z = i->z;
+                printf("--------------------- teramanager plugin >> inserting curve point %d(%d)=(%.1f,%.1f,%.1f)\n", ann->ID, i->n, ann->x, ann->y, ann->z);
+                octree->insert(*ann);
+                annotationsMap[i->n] = ann;
+                swcMap[i->n] = &(*i);
+            }
+            for(std::map<int, annotation*>::iterator i = annotationsMap.begin(); i!= annotationsMap.end(); i++)
+            {
+                i->second->prev = swcMap[i->first]->pn == -1 ? 0 : annotationsMap[swcMap[i->first]->pn];
+                if(i->second->prev)
+                    i->second->prev->next = i->second;
+            }
+            printf("--------------------- teramanager plugin >> inserted %d curve points\n", annotationsMap.size());
+        }
+        else
+        {
+            sprintf(errMsg, "in CAnnotations::load(const char* filepath = \"%s\"): unable to recognize file type \"%s\"", filepath, filetype);
+            throw MyException(errMsg);
+        }
 
-    //file closing
+    }
     fclose(f);
+
+
+    //            string swcFilePath = dir.absoluteFilePath().append(filename);
+    //            FILE* swcFile = fopen(swcFilePath.c_str(), "r");
+    //            if(!swcFile)
+    //            {
+    //                sprintf(errMsg, "in CAnnotations::save(): cannot load file \"%s\"", swcFilePath.c_str());
+    //                throw MyException(errMsg);
+    //            }
+    //            fgets(lineBuf, FILE_LINE_BUFFER_SIZE, f);
+    //            fgets(lineBuf, FILE_LINE_BUFFER_SIZE, f);
+    //            fgets(lineBuf, FILE_LINE_BUFFER_SIZE, f);
+    //            while(fgets(lineBuf, FILE_LINE_BUFFER_SIZE, f))
+    //            {
+    //                //reading i-th annotation fields
+    //                int ID=-1, type=-1, parent=-1;
+    //                float x=-1.0f, y=-1.0f, z=-1.0f, radius=-1.0f;
+    //                if(sscanf(lineBuf, "%d %d %d %f %f %f %f %d", &ID, &type, &x, &y, &z, &radius, &parent) != 7)
+    //                {
+    //                    sprintf(errMsg, "in CAnnotations::load(const char* filepath = \"%s\"): expected line \"%s\", found \"%s\"",
+    //                            filepath, "<number> <number> <number> <number> <number> <number> <number>", lineBuf);
+    //                    throw MyException(errMsg);
+    //                }
+
+    //                //checking if there are duplicates
+    //                if(annotations.find(ID) != annotations.end())
+    //                {
+    //                    sprintf(errMsg, "in CAnnotations::load(const char* filepath = \"%s\"): duplicate annotation elements found", lineBuf);
+    //                    throw MyException(errMsg);
+    //                }
+
+    //                //inserting annotation
+    //                annotation* ann = new annotation(ID, 1, subtype, x, y, z, radius, 0, 0);
+    //                octree->insert(*ann);
+
+    //                //linking annotation to its predecessor (this is possible IFF annotations are stored in ascending order on the ID column)
+    //                if(parent != -1)
+    //                {
+    //                    if(annotations.find(parent) == annotations.end())
+    //                    {
+    //                        sprintf(errMsg, "in CAnnotations::load(const char* filepath = \"%s\"): annotations are not in ascending order on the ID column", lineBuf);
+    //                        throw MyException(errMsg);
+    //                    }
+    //                    ann->prev = annotations[parent];
+    //                    ann->prev->next = ann;
+    //                }
+    //            }
 }

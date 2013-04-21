@@ -11,10 +11,36 @@ ties names are:
 - Rem: a feature no longer available
 
 ============================================================================================
+Version 0.7.5
+April 19th, 2013
+--------------------------------------------------------------------------------------------
+- Fix: fixed a bug which caused application crash when performing the  following sequence of
+       actions: drawing curve  -->  zoom-in --> saving ano (x2,3...).
+- Fix: fixed a bug which caused application crash when performing the  following sequence of
+       actions: drawing curve  -->  saving ano  -->  zoom-in  -->  zoom-out.  The reason be-
+       hind the bug was an incorrect removal of duplicate annotation pointers.
+- Fix: fixed a bug which caused an error message when overwriting an already  existing anno-
+       tation file.
+- Fix: fixed a bug  which  caused application  crash when dealing  with annotation points at 
+       integer locations (e.g. 103.0000000) along any axis.
+- Fix: fixed a bug which  caused  duplicate marker  annotations after modifying a marker and
+       then switching to a different resolution.
+- New: "Multiresolution curve annotation" added! The user can now annotate curves at any re-
+       solution  and they  will be  automatically  propagated to all  the other resolutions. 
+       Saving/loading annotations features too will now take into account curves.
+- Fix: "File->Clear annotations" did not clear curve annotations.
+- Opt: markers numeric labels are now disabled by default.
+- New: annotations are stored in different files  (*.apo for cells, *.swc for  traced struc-
+       tures) linked together  by  the *.ano  linker  file. In this way,  annotations can be
+       loaded without loading the image by simple drag-and-drop of the .ano file in Vaa3D.
+- Fix: fixed a bug which caused sporadic incorrect orientation registration between views.
+--------------------------------------------------------------------------------------------
+
+
 Version 0.7.4
 April 17th, 2013
 --------------------------------------------------------------------------------------------
-- Fix: corrected a bug which caused "Invalid subvolume intervals" error  when  zooming-in to
+- Fix: corrected a bug  which  caused  "Invalid subvolume intervals" error  when  zooming-in
        around peripheral regions.
 - Fix: when conversion in TeraConverter is finished, a  "Success" message  is  shown and the
        plugin is automatically closed.

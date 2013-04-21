@@ -54,8 +54,8 @@ class teramanager::CExplorerWindow : public QWidget
         int nchannels;                  //number of image channels
         string title;                   //title of current window
         bool toBeClosed;                //true when the current window is marked as going to be closed
-        LandmarkList loaded_markers;    //list of markers loaded from <CAnnotations> when the current view is created
-        NeuronTree loaded_curves;       //curves loaded from <CAnnotations> when the current view is created
+        std::list<LocationSimple> loaded_markers; //list of markers loaded from <CAnnotations> when the current view is created
+        std::list<NeuronSWC> loaded_curves;       //list of curve points loaded from <CAnnotations> when the current view is created
         int V0_sbox_min, V0_sbox_val;   //to save the state of subvolume spinboxes when the current window is hidden
         int V1_sbox_max, V1_sbox_val;   //to save the state of subvolume spinboxes when the current window is hidden
         int H0_sbox_min, H0_sbox_val;   //to save the state of subvolume spinboxes when the current window is hidden

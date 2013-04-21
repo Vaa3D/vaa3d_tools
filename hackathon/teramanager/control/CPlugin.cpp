@@ -64,6 +64,9 @@ void CPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWi
     printf("--------------------- teramanager plugin [thread %d] >> CPlugin::domenu launched\n", this->thread()->currentThreadId());
     #endif
 
+    //overriding the current locale with the standard POSIX locale
+    setlocale(LC_ALL, "POSIX");
+
     if (menu_name == tr("TeraFly"))
     {
         //checking shared libraries

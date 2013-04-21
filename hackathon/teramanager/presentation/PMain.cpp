@@ -693,13 +693,14 @@ void PMain::loadAnnotations()
             //obtaining path
             QDir dir(CImport::instance()->getPath().c_str());
             dir.cdUp();
-            string path= QFileDialog::getOpenFileName(this, QObject::tr("Select annotation file"),  dir.absolutePath().toStdString().c_str(), "SWC files (*.swc *.SWC)").toStdString();
+            string path= QFileDialog::getOpenFileName(this, QObject::tr("Select annotation file"),  dir.absolutePath().toStdString().c_str(), "annotation files (*.ano)").toStdString();
             if(strcmp(path.c_str(), "") == 0)
                 return;
             annotationsPathLRU = path;
 
             CAnnotations::getInstance()->load(annotationsPathLRU.c_str());
             CExplorerWindow::getCurrent()->loadAnnotations();
+            saveAnnotationsAction->setEnabled(true);
 
         }
     }
@@ -749,11 +750,14 @@ void PMain::saveAnnotationsAs()
         {
             QDir dir(CImport::instance()->getPath().c_str());
             dir.cdUp();
-            string path= QFileDialog::getSaveFileName(this, QObject::tr("Save annotation as"), dir.absolutePath().toStdString().c_str(), "SWC files (*.swc *.SWC)").toStdString();
+            string path= QFileDialog::getSaveFileName(this, QObject::tr("Save annotation as"), dir.absolutePath().toStdString().c_str(), "annotation files (*.ano)").toStdString();
             if(strcmp(path.c_str(), "") == 0)
                 return;
-            if(path.find(".swc") == string::npos ||  path.find(".SWC") == string::npos)
-                annotationsPathLRU = path.append(".swc");
+            annotationsPathLRU = path;
+            printf("annotationsPathLRU = %s\n", annotationsPathLRU.c_str());
+            if(annotationsPathLRU.find(".ano") == string::npos)
+                annotationsPathLRU.append(".ano");
+            printf("annotationsPathLRU = %s\n", annotationsPathLRU.c_str());
             CExplorerWindow::getCurrent()->storeAnnotations();
             CAnnotations::getInstance()->save(annotationsPathLRU.c_str());
             saveAnnotationsAction->setEnabled(true);

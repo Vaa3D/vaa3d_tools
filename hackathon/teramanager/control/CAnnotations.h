@@ -3,48 +3,41 @@
 
 #include "CPlugin.h"
 
+//annotation structure
+struct teramanager::annotation
+{
+    int ID;                     //unique identifier
+    int type;			//-1 = undefined, 0 = LocationSimple, 1 = NeuronSWC
+    int subtype;                //see Vaa3D LocationSimple and NeuronSWC types
+    float x, y, z;		//point coordinates
+    float r;			//radius
+    std::string name;           //name
+    std::string comment;        //comment
+    RGBA8 color;                //color
+    annotation* prev;           //previous annotation handle (used in case of linked structures)
+    annotation* next;           //next annotation handle (used in case of linked structures)
+    void* container;            //address of the container object
+
+    annotation(){
+        type = subtype  = teramanager::undefined_int32;
+        r = x = y = z = teramanager::undefined_real32;
+        prev = next = 0;
+        ID = ++total;
+        name = comment = "";
+        color.r = color.g = color.b = color.a = 0;
+        container = 0;
+    }
+    ~annotation(){
+
+    }
+
+    static int total;
+};
+
 class teramanager::CAnnotations
 {
 
     private:
-
-        //annotation structure
-        struct annotation
-        {
-            int ID;                     //unique identifier
-            int type;			//-1 = undefined, 0 = LocationSimple, 1 = NeuronSWC
-            int subtype;                //see Vaa3D LocationSimple and NeuronSWC types
-            float x, y, z;		//point coordinates
-            float r;			//radius
-            annotation* prev;           //previous annotation handle (used in case of linked structures)
-            annotation* next;           //next annotation handle (used in case of linked structures)
-
-            annotation(){
-                type = subtype  = teramanager::undefined_int32;
-                r = x = y = z = teramanager::undefined_real32;
-                prev = next = 0;
-                ID = ++total;
-            }
-
-            //used when annotation is loaded from a file (then the ID is read from it)
-            annotation(int _ID, int _type, int _subtype, float _x, float _y, float _z, float _r, annotation* _prev, annotation* _next){
-                ID = _ID;
-                type = _type;
-                subtype = _subtype;
-                x = _x;
-                y = _y;
-                z = _z;
-                r = _r;
-                prev = _prev;
-                next = _next;
-                total = std::max(total, ID);    //the total number of elements is <= the maximum ID read from the file
-            }
-
-            //ordering method
-            static bool compareAnnotations(annotation* first, annotation* second){return second->ID >= first->ID;}
-
-            static int total;
-        };
 
         //octree structure
         class Octree
@@ -59,10 +52,10 @@ class teramanager::CAnnotations
                     uint32 D_start, D_dim;
 
                     //number of neurons in the octant
-                    uint32 n_neurons;
+                    uint32 n_annotations;
 
-                    //neuron
-                    annotation* neuron;
+                    //annotations
+                    std::list<teramanager::annotation*> annotations;
 
                     //pointers to children octants
                     octant *child1;	//[V_start,         V_start+V_dim/2),[H_start,		H_start+H_dim/2),[D_start,		D_start+D_dim/2)
@@ -83,8 +76,7 @@ class teramanager::CAnnotations
                             H_dim   = _H_dim;
                             D_start = _D_start;
                             D_dim   = _D_dim;
-                            n_neurons = 0;
-                            neuron = NULL;
+                            n_annotations = 0;
                     }
                 };
                 typedef octant* Poctant;
@@ -96,14 +88,14 @@ class teramanager::CAnnotations
                 /*** SUPPORT methods ***/
 
                 //recursive support methods
-                void   _rec_clear(const Poctant& p_octant) throw(MyException);
-                void   _rec_insert(const Poctant& p_octant, annotation& neuron) throw(MyException);
-                uint32 _rec_deep_count(const Poctant& p_octant) throw(MyException);
-                uint32 _rec_height(const Poctant& p_octant) throw(MyException);
-                void   _rec_print(const Poctant& p_octant);
-                void   _rec_find(const Poctant& p_octant, const interval_t& V_int, const interval_t& H_int, const interval_t& D_int, std::list<annotation*>& neurons) throw(MyException);
-                uint32 _rec_count(const Poctant& p_octant, const interval_t& V_int, const interval_t& H_int, const interval_t& D_int) throw(MyException);
-                bool   _rec_remove(const Poctant& p_octant, const interval_t& V_int, const interval_t& H_int, const interval_t& D_int) throw(MyException);
+                void     _rec_clear(const Poctant& p_octant) throw(MyException);
+                void     _rec_insert(const Poctant& p_octant, annotation& neuron) throw(MyException);
+                uint32   _rec_deep_count(const Poctant& p_octant) throw(MyException);
+                uint32   _rec_height(const Poctant& p_octant) throw(MyException);
+                void     _rec_print(const Poctant& p_octant);
+                void     _rec_search(const Poctant& p_octant, const interval_t& V_int, const interval_t& H_int, const interval_t& D_int, std::list<annotation*>& neurons) throw(MyException);
+                Poctant  _rec_find(const Poctant& p_octant, const interval_t& V_int, const interval_t& H_int, const interval_t& D_int) throw(MyException);
+                uint32   _rec_count(const Poctant& p_octant, const interval_t& V_int, const interval_t& H_int, const interval_t& D_int) throw(MyException);
 
                 //returns true if two given volumes intersect each other
                 bool inline intersects(const interval_t& V1_int,const interval_t& H1_int,const interval_t& D1_int,
@@ -125,11 +117,11 @@ class teramanager::CAnnotations
                 //insert given neuron in the octree
                 void insert(annotation& neuron) throw(MyException);
 
-                //removes the given neuron in the octree
-                bool remove(annotation& neuron) throw(MyException);
-
                 //search for neurons in the given 3D volume and puts found neurons into 'neurons'
                 void find(interval_t V_int, interval_t H_int, interval_t D_int, std::list<annotation*>& neurons) throw(MyException);
+
+                //search for the annotations at the given coordinate. If found, returns the address of the annotations list
+                std::list<annotation*>* find(float x, float y, float z) throw(MyException);
 
                 //returns the number of neurons (=leafs) in the given volume without exploring the entire data structure
                 uint32 count(interval_t V_int = interval_t(-1,-1), interval_t H_int = interval_t(-1,-1), interval_t D_int = interval_t(-1,-1))  throw(MyException);
@@ -190,14 +182,15 @@ class teramanager::CAnnotations
         * Adds/removes the given annotation(s)
         **********************************************************************************/
         void addLandmarks(LandmarkList* markers) throw (MyException);
-        void removeLandmarks(LandmarkList* markers) throw (MyException);
+        void removeLandmarks(std::list<LocationSimple> &markers) throw (MyException);
         void addCurves(NeuronTree* curves) throw (MyException);
+        void removeCurves(std::list<NeuronSWC> &curves) throw (MyException);
 
         /*********************************************************************************
         * Retrieves the annotation(s) in the given volume space
         **********************************************************************************/
-        void findLandmarks(interval_t X_range, interval_t Y_range, interval_t Z_range, LandmarkList& markers) throw (MyException);
-        void findCurves(interval_t X_range, interval_t Y_range, interval_t Z_range, NeuronTree& curves) throw (MyException);
+        void findLandmarks(interval_t X_range, interval_t Y_range, interval_t Z_range, std::list<LocationSimple> &markers) throw (MyException);
+        void findCurves(interval_t X_range, interval_t Y_range, interval_t Z_range, std::list<NeuronSWC> &curves) throw (MyException);
 
         /*********************************************************************************
         * Save/load method
@@ -208,7 +201,7 @@ class teramanager::CAnnotations
         /*********************************************************************************
         * Removes all the annotations from the octree
         **********************************************************************************/
-        void clear()  throw (MyException) {this->octree->clear();}
+        void clear()  throw (MyException) {this->octree->clear(); annotation::total = 0;}
 
 
 };

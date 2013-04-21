@@ -44,6 +44,7 @@ SOURCES += $$V3DMAINPATH/basic_c_fun/mg_utilities.cpp
 SOURCES += $$V3DMAINPATH/basic_c_fun/basic_memory.cpp
 SOURCES += $$V3DMAINPATH/basic_c_fun/basic_4dimage.cpp
 SOURCES += $$V3DMAINPATH/basic_c_fun/imageio_mylib.cpp
+SOURCES += $$V3DMAINPATH/basic_c_fun/basic_surf_objs.cpp
 HEADERS += $$V3DMAINPATH/common_lib/src_packages/mylib_tiff/image.h \
     control/CConverter.h \
     control/CAnnotations.h \
