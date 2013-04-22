@@ -11,6 +11,20 @@ ties names are:
 - Rem: a feature no longer available
 
 ============================================================================================
+Version 0.7.7
+April 22th, 2013
+--------------------------------------------------------------------------------------------
+- Fix: fixed a bug in  the TeraConverter  which  caused incorrect voxel  computation for the
+       lowest resolutions in the stored mdata.bin files, which  then caused incorrect behav-
+       iour of TeraFly.
+- New: added "Size" row in the info panel.
+- New: added "Dims (mm)" row in the info panel.
+- Fix: translate buttons were not disabled when zooming-out up to the lowest resolution.
+- Fix: revert to 3D renderer with maximize/minimize  window buttons due  to misalignment be-
+       tween 3D renderer and TeraFly plugin when using Qt::Tool flag.
+--------------------------------------------------------------------------------------------
+
+
 Version 0.7.6
 April 21th, 2013
 --------------------------------------------------------------------------------------------

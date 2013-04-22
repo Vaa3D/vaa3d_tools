@@ -28,6 +28,7 @@
 
 #include "VolumeConverter.h"
 #include "ProgressBar.h"
+#include <math.h>
 
 /*******************************************************************************************************
 * Volume formats supported:
@@ -382,8 +383,17 @@ void VolumeConverter::generateTiles(std::string output_path, bool* resolutions,
 	// reloads created volumes to generate .bin file descriptors at all resolutions
         for(int res_i=0; res_i< resolutions_size; res_i++)
             if(resolutions[res_i])
-                StackedVolume temp_vol(file_path[res_i].str().c_str(),ref_sys(axis(1),axis(2),axis(3)), volume->getVXL_V()*(res_i+1),
-                                       volume->getVXL_H()*(res_i+1),volume->getVXL_D()*(res_i+1));
+            {
+                //---- Alessandro 2013-04-22 partial fix: wrong voxel size computation. In addition, the predefined reference system {1,2,3} may not be the right
+                //one when dealing with CLSM data. The right reference system is stored in the <StackedVolume> object. A possible solution to implement
+                //is to check whether <volume> is a pointer to a <StackedVolume> object, then specialize it to <StackedVolume*> and get its reference
+                //system.
+                StackedVolume temp_vol(file_path[res_i].str().c_str(),ref_sys(axis(1),axis(2),axis(3)),
+                                       volume->getVXL_V()*pow(2.0f,res_i), volume->getVXL_H()*pow(2.0f,res_i),volume->getVXL_D()*pow(2.0f,res_i));
+
+//                StackedVolume temp_vol(file_path[res_i].str().c_str(),ref_sys(axis(1),axis(2),axis(3)), volume->getVXL_V()*(res_i+1),
+//                                       volume->getVXL_H()*(res_i+1),volume->getVXL_D()*(res_i+1));
+            }
 
 
 	// ubuffer allocated anyway

@@ -207,9 +207,11 @@ CExplorerWindow::CExplorerWindow(V3DPluginCallback2 *_V3D_env, int _resIndex, ui
         connect(PMain::instance()->D1_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeD1sbox(int)));
 
         //changing window flags (disabling minimize/maximize buttons)
-        window3D->setWindowFlags(Qt::Tool
-                                 | Qt::WindowTitleHint
-                                 | Qt::CustomizeWindowHint | Qt::WindowStaysOnTopHint | Qt::WindowCloseButtonHint);
+        window3D->setWindowFlags(Qt::WindowStaysOnTopHint);
+        // ---- Alessandro 2013-04-22 fixed: this causes (somehow) window3D not to respond correctly to the move() method
+//        window3D->setWindowFlags(Qt::Tool
+//                                 | Qt::WindowTitleHint
+//                                 | Qt::CustomizeWindowHint | Qt::WindowStaysOnTopHint | Qt::WindowCloseButtonHint);
         window3D->show();
     }
     catch(MyException &ex)
@@ -645,6 +647,14 @@ void CExplorerWindow::restore() throw (MyException)
 
         //restoring min, max and value of PMain GUI VOI's widgets
         restoreSubvolSpinboxState();
+
+        //disabling translate buttons if needed
+        pMain->traslYneg->setEnabled(volV0 > 0);
+        pMain->traslYpos->setEnabled(volV1 < CImport::instance()->getVolume(volResIndex)->getDIM_V());
+        pMain->traslXneg->setEnabled(volH0 > 0);
+        pMain->traslXpos->setEnabled(volH1 < CImport::instance()->getVolume(volResIndex)->getDIM_H());
+        pMain->traslZneg->setEnabled(volD0 > 0);
+        pMain->traslZpos->setEnabled(volD1 < CImport::instance()->getVolume(volResIndex)->getDIM_D());
 
         //signal connections
         connect(CVolume::instance(), SIGNAL(sendOperationOutcome(MyException*,void*)), this, SLOT(loadingDone(MyException*,void*)));

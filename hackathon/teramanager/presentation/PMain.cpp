@@ -230,6 +230,11 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
 
     //info panel widgets
     info_panel = new QGroupBox("Volume's informations");
+    vol_size_label = new QLabel();
+    vol_size_field = new QLabel();
+    vol_size_field->setAlignment(Qt::AlignCenter);
+    vol_size_field->setStyleSheet("border: 1px solid; border-color: gray; background-color: rgb(245,245,245); padding-left:5px; padding-right:5px");
+    vol_size_field->setFont(tinyFont);
     volume_dims_label = new QLabel("Dims (vxl):");
     direction_V_label_0 = new QLabel("(Y)");
     direction_H_label_0 = new QLabel("(X)");
@@ -247,7 +252,19 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     vol_depth_field = new QLabel();
     vol_depth_field->setAlignment(Qt::AlignCenter);
     vol_depth_field->setStyleSheet("border: 1px solid; border-color: gray; background-color: rgb(245,245,245); padding-left:5px; padding-right:5px");
-    vol_depth_field->setFont(tinyFont);
+    vol_depth_field->setFont(tinyFont);    
+    vol_height_mm_field = new QLabel();
+    vol_height_mm_field->setAlignment(Qt::AlignCenter);
+    vol_height_mm_field->setStyleSheet("border: 1px solid; border-color: gray; background-color: rgb(245,245,245); padding-left:5px; padding-right:5px");
+    vol_height_mm_field->setFont(tinyFont);
+    vol_width_mm_field = new QLabel();
+    vol_width_mm_field->setAlignment(Qt::AlignCenter);
+    vol_width_mm_field->setStyleSheet("border: 1px solid; border-color: gray; background-color: rgb(245,245,245); padding-left:5px; padding-right:5px");
+    vol_width_mm_field->setFont(tinyFont);
+    vol_depth_mm_field = new QLabel();
+    vol_depth_mm_field->setAlignment(Qt::AlignCenter);
+    vol_depth_mm_field->setStyleSheet("border: 1px solid; border-color: gray; background-color: rgb(245,245,245); padding-left:5px; padding-right:5px");
+    vol_depth_mm_field->setFont(tinyFont);
     volume_stacks_label = new QLabel("Number of stacks:");
     direction_V_label_1 = new QLabel("(Y)");
     direction_H_label_1 = new QLabel("(X)");
@@ -371,51 +388,66 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
 
     //info panel
     QGridLayout* info_panel_layout = new QGridLayout();
+
+    info_panel_layout->addWidget(new QLabel("Size:"),      0,0,1,1);
+    info_panel_layout->addWidget(vol_size_field,           0,2,1,2);
+    info_panel_layout->addWidget(vol_size_label,           0,4,1,4);
+
+    info_panel_layout->addWidget(new QLabel("Dims (mm):"),      1,0,1,1);
+    info_panel_layout->addWidget(vol_width_mm_field,            1,2,1,2);
+    info_panel_layout->addWidget(new QLabel("(X)"),             1,4,1,1);
+    info_panel_layout->addWidget(new QLabel(QChar(0x00D7)),     1,5,1,1);
+    info_panel_layout->addWidget(vol_height_mm_field,           1,6,1,2);
+    info_panel_layout->addWidget(new QLabel("(Y)"),             1,8,1,1);
+    info_panel_layout->addWidget(new QLabel(QChar(0x00D7)),     1,9,1,1);
+    info_panel_layout->addWidget(vol_depth_mm_field,            1,10,1,2);
+    info_panel_layout->addWidget(new QLabel("(Z)"),             1,12,1,1);
+
     volume_dims_label->setFixedWidth(marginLeft);
-    info_panel_layout->addWidget(volume_dims_label,     0,0,1,1);
-    info_panel_layout->addWidget(vol_width_field,       0,2,1,2);
-    info_panel_layout->addWidget(direction_H_label_0,   0,4,1,1);
-    info_panel_layout->addWidget(by_label_01,           0,5,1,1);
-    info_panel_layout->addWidget(vol_height_field,      0,6,1,2);
-    info_panel_layout->addWidget(direction_V_label_0,   0,8,1,1);
-    info_panel_layout->addWidget(by_label_02,           0,9,1,1);
-    info_panel_layout->addWidget(vol_depth_field,       0,10,1,2);
-    info_panel_layout->addWidget(direction_D_label_0,   0,12,1,1);
+    info_panel_layout->addWidget(volume_dims_label,     2,0,1,1);
+    info_panel_layout->addWidget(vol_width_field,       2,2,1,2);
+    info_panel_layout->addWidget(direction_H_label_0,   2,4,1,1);
+    info_panel_layout->addWidget(by_label_01,           2,5,1,1);
+    info_panel_layout->addWidget(vol_height_field,      2,6,1,2);
+    info_panel_layout->addWidget(direction_V_label_0,   2,8,1,1);
+    info_panel_layout->addWidget(by_label_02,           2,9,1,1);
+    info_panel_layout->addWidget(vol_depth_field,       2,10,1,2);
+    info_panel_layout->addWidget(direction_D_label_0,   2,12,1,1);
 
-    info_panel_layout->addWidget(volume_stacks_label,   1,0,1,1);
-    info_panel_layout->addWidget(ncols_field,           1,2,1,2);
-    info_panel_layout->addWidget(direction_H_label_1,   1,4,1,1);
-    info_panel_layout->addWidget(by_label_1,            1,5,1,1);
-    info_panel_layout->addWidget(nrows_field,           1,6,1,2);
-    info_panel_layout->addWidget(direction_V_label_1,   1,8,1,1);
+    info_panel_layout->addWidget(volume_stacks_label,   3,0,1,1);
+    info_panel_layout->addWidget(ncols_field,           3,2,1,2);
+    info_panel_layout->addWidget(direction_H_label_1,   3,4,1,1);
+    info_panel_layout->addWidget(by_label_1,            3,5,1,1);
+    info_panel_layout->addWidget(nrows_field,           3,6,1,2);
+    info_panel_layout->addWidget(direction_V_label_1,   3,8,1,1);
 
-    info_panel_layout->addWidget(stacks_dims_label,     2,0,1,1);
-    info_panel_layout->addWidget(stack_width_field,     2,2,1,2);
-    info_panel_layout->addWidget(direction_H_label_2,   2,4,1,1);
-    info_panel_layout->addWidget(by_label_2,            2,5,1,1);
-    info_panel_layout->addWidget(stack_height_field,    2,6,1,2);
-    info_panel_layout->addWidget(direction_V_label_2,   2,8,1,1);
-    info_panel_layout->addWidget(by_label_3,            2,9,1,1);
-    info_panel_layout->addWidget(stack_depth_field,     2,10,1,2);
-    info_panel_layout->addWidget(direction_D_label_2,   2,12,1,1);
+    info_panel_layout->addWidget(stacks_dims_label,     4,0,1,1);
+    info_panel_layout->addWidget(stack_width_field,     4,2,1,2);
+    info_panel_layout->addWidget(direction_H_label_2,   4,4,1,1);
+    info_panel_layout->addWidget(by_label_2,            4,5,1,1);
+    info_panel_layout->addWidget(stack_height_field,    4,6,1,2);
+    info_panel_layout->addWidget(direction_V_label_2,   4,8,1,1);
+    info_panel_layout->addWidget(by_label_3,            4,9,1,1);
+    info_panel_layout->addWidget(stack_depth_field,     4,10,1,2);
+    info_panel_layout->addWidget(direction_D_label_2,   4,12,1,1);
 
-    info_panel_layout->addWidget(voxel_dims_label,      3,0,1,1);
-    info_panel_layout->addWidget(vxl_H_field,           3,2,1,2);
-    info_panel_layout->addWidget(direction_H_label_3,   3,4,1,1);
-    info_panel_layout->addWidget(by_label_4,            3,5,1,1);
-    info_panel_layout->addWidget(vxl_V_field,           3,6,1,2);
-    info_panel_layout->addWidget(direction_V_label_3,   3,8,1,1);
-    info_panel_layout->addWidget(by_label_5,            3,9,1,1);
-    info_panel_layout->addWidget(vxl_D_field,           3,10,1,2);
-    info_panel_layout->addWidget(direction_D_label_3,   3,12,1,1);
+    info_panel_layout->addWidget(voxel_dims_label,      5,0,1,1);
+    info_panel_layout->addWidget(vxl_H_field,           5,2,1,2);
+    info_panel_layout->addWidget(direction_H_label_3,   5,4,1,1);
+    info_panel_layout->addWidget(by_label_4,            5,5,1,1);
+    info_panel_layout->addWidget(vxl_V_field,           5,6,1,2);
+    info_panel_layout->addWidget(direction_V_label_3,   5,8,1,1);
+    info_panel_layout->addWidget(by_label_5,            5,9,1,1);
+    info_panel_layout->addWidget(vxl_D_field,           5,10,1,2);
+    info_panel_layout->addWidget(direction_D_label_3,   5,12,1,1);
 
-    info_panel_layout->addWidget(origin_label,          4,0,1,1);
-    info_panel_layout->addWidget(org_H_field,           4,2,1,2);
-    info_panel_layout->addWidget(direction_H_label_4,   4,4,1,1);
-    info_panel_layout->addWidget(org_V_field,           4,6,1,2);
-    info_panel_layout->addWidget(direction_V_label_4,   4,8,1,1);
-    info_panel_layout->addWidget(org_D_field,           4,10,1,2);
-    info_panel_layout->addWidget(direction_D_label_4,   4,12,1,1);
+    info_panel_layout->addWidget(origin_label,          6,0,1,1);
+    info_panel_layout->addWidget(org_H_field,           6,2,1,2);
+    info_panel_layout->addWidget(direction_H_label_4,   6,4,1,1);
+    info_panel_layout->addWidget(org_V_field,           6,6,1,2);
+    info_panel_layout->addWidget(direction_V_label_4,   6,8,1,1);
+    info_panel_layout->addWidget(org_D_field,           6,10,1,2);
+    info_panel_layout->addWidget(direction_D_label_4,   6,12,1,1);
     info_panel->setLayout(info_panel_layout);
     info_panel->setStyle(new QWindowsStyle());
 
@@ -552,6 +584,11 @@ void PMain::reset()
 
     //reseting info panel widgets
     info_panel->setEnabled(false);
+    vol_size_label->setText("");
+    vol_size_field->setText("n.a.");
+    vol_height_mm_field->setText("n.a.");
+    vol_width_mm_field->setText("n.a.");
+    vol_depth_mm_field->setText("n.a.");
     vol_height_field->setText("n.a.");
     vol_width_field->setText("n.a.");
     vol_depth_field->setText("n.a.");
@@ -925,6 +962,23 @@ void PMain::importDone(MyException *ex, Image4DSimple* vmap_image)
         //otherwise inserting volume's informations
         StackedVolume* volume = CImport::instance()->getHighestResVolume();
         info_panel->setEnabled(true);
+
+        double GVoxels = (volume->getDIM_V()/1000.0f)*(volume->getDIM_H()/1000.0f)*(volume->getDIM_D()/1000.0f);
+        double TVoxels = GVoxels/1000.0;
+        if(TVoxels < 0.1)
+        {
+            vol_size_field->setText(QString("<b>").append(QString::number(GVoxels, 'f', 1).append("</b>")));
+            vol_size_label->setText("GVoxels");
+        }
+        else
+        {
+            vol_size_field->setText(QString("<b>").append(QString::number(TVoxels, 'f', 1).append("</b>")));
+            vol_size_label->setText("TVoxels");
+        }
+
+        vol_height_mm_field->setText(QString::number(fabs(volume->getDIM_V()*volume->getVXL_V()/1000.0f), 'f', 2));
+        vol_width_mm_field->setText(QString::number(fabs(volume->getDIM_H()*volume->getVXL_H()/1000.0f), 'f', 2));
+        vol_depth_mm_field->setText(QString::number(fabs(volume->getDIM_D()*volume->getVXL_D()/1000.0f), 'f', 2));
         vol_height_field->setText(QString::number(volume->getDIM_V()));
         vol_width_field->setText(QString::number(volume->getDIM_H()));
         vol_depth_field->setText(QString::number(volume->getDIM_D()));
