@@ -9,21 +9,32 @@ QArrowButton::QArrowButton(QWidget *parent, QColor arrowColor, int arrowSize, in
     arrwidth = arrowWidth;
     margin = arrowMargin;
     orientation = arrowOrientation;
+    transparency = 130;
+    scalePressed = 0.7;
+    mouseOver = false;
+    mousePressed = false;
 }
 
 void QArrowButton::paintEvent(QPaintEvent * evt)
 {
     //calling parent "paintEvent" method so that standard QPushButton is drawn
-    QPushButton::paintEvent(evt);
+    //QPushButton::paintEvent(evt);
 
     //creatin QPainter object, enabling antialising and setting brush color differently if button is enabled or not
     QPainter painter(this);
     painter.setRenderHint(QPainter::Antialiasing);
     if(isEnabled())
     {
-        painter.setBrush(arrColor);
-        painter.setPen(arrColor);
-        painter.setOpacity(0.8);
+        if(mouseOver)
+        {
+            painter.setBrush(QColor(arrColor.red(), arrColor.green(), arrColor.blue(), transparency));
+            painter.setPen(QColor(arrColor.red(), arrColor.green(), arrColor.blue(), transparency));
+        }
+        else
+        {
+            painter.setBrush(QColor(arrColor.red(), arrColor.green(), arrColor.blue()));
+            painter.setPen(QColor(arrColor.red(), arrColor.green(), arrColor.blue()));
+        }
     }
     else
     {
@@ -33,7 +44,7 @@ void QArrowButton::paintEvent(QPaintEvent * evt)
     }
 
     //creating arrow head and body for the two orientations considered (left-to-right and right-to-left)
-    QPolygonF arrowHead;
+    QPolygonF arrow, arrowHead;
     QPointF p1(margin, height()/2);
     QPointF p2(width()-margin, height()/2);
     if(orientation == Qt::LeftToRight)
@@ -50,9 +61,18 @@ void QArrowButton::paintEvent(QPaintEvent * evt)
         //arrow body
         QRectF arrowBody(QPointF(margin, height()/2-arrwidth/2), QSizeF(arrowHead.boundingRect().x()-margin, arrwidth));
 
-        //drawing arrow
-        painter.drawRect(arrowBody);
-        painter.drawPolygon(arrowHead);
+        //arrow
+        arrow << p2 << arrowP2 << arrowBody.bottomRight() << arrowBody.bottomLeft() << arrowBody.topLeft() << arrowBody.topRight() << arrowP1;
+        if(!mousePressed)
+            painter.drawPolygon(arrow);
+        else
+        {
+            QTransform trans;
+            trans=trans.scale(scalePressed,scalePressed);
+            QPolygonF qpf2=trans.map(arrow);
+            qpf2.translate(arrow.boundingRect().center()-qpf2.boundingRect().center());
+            painter.drawPolygon(qpf2);
+        }
     }
     else
     {
@@ -68,9 +88,18 @@ void QArrowButton::paintEvent(QPaintEvent * evt)
         //arrow body
         QRectF arrowBody(QPointF(arrowHead.boundingRect().bottomRight().x(), height()/2-arrwidth/2), QSizeF(width() - 2*margin - arrowHead.boundingRect().width(), arrwidth));
 
-        //drawing arrow
-        painter.drawRect(arrowBody);
-        painter.drawPolygon(arrowHead);
+        //arrow
+        arrow << p1 << arrowP2 << arrowBody.topLeft() << arrowBody.topRight() << arrowBody.bottomRight() << arrowBody.bottomLeft() << arrowP1;
+        if(!mousePressed)
+            painter.drawPolygon(arrow);
+        else
+        {
+            QTransform trans;
+            trans=trans.scale(scalePressed,scalePressed);
+            QPolygonF qpf2=trans.map(arrow);
+            qpf2.translate(arrow.boundingRect().center()-qpf2.boundingRect().center());
+            painter.drawPolygon(qpf2);
+        }
     }
 
 }

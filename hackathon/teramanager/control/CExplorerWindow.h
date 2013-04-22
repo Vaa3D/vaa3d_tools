@@ -219,6 +219,11 @@ class teramanager::CExplorerWindow : public QWidget
         ***********************************************************************************/
         void Vaa3D_selectedROI();
 
+        /**********************************************************************************
+        * Alignes the current window to the left of the given widget
+        ***********************************************************************************/
+        void alignToLeft(QWidget* widget);
+
         //PMain instance is allowed to access class private members
         friend class PMain;
 

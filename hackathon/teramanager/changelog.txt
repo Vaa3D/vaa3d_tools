@@ -11,8 +11,29 @@ ties names are:
 - Rem: a feature no longer available
 
 ============================================================================================
+Version 0.7.6
+April 21th, 2013
+--------------------------------------------------------------------------------------------
+- Fix: fixed a bug which caused incorrect vertical alignment between 3D renderer and TeraFly
+       plugin when the first 3D view is created (this was due to a bug of Qt  when using the
+       Qt::Tool flag alone to remove minimize/maximize buttons)
+- New: help box added! A "what's this" message is shown for each GUI's widget when the mouse
+       is over it. General instructions are provided when the mouse is outside any widget.
+- Fix: 3D renderer is not hidden when hitting a point outside its window.
+- New: added icons to menu entries.
+- Fix: translations buttons are now disabled when the limit on the corresponding axis direc-
+       tion is reached.
+- Opt: the GUI has been re-designed to maximize usability. 
+- Dev: QArrowButton class upgraded: 
+       - arrow is now modeled by a single polygon;
+       - arrow becomes brighter when mouse is over it;
+       - arrow is downscaled when mouse is pressed on it.
+--------------------------------------------------------------------------------------------
+
+
+
 Version 0.7.5
-April 19th, 2013
+April 20th, 2013
 --------------------------------------------------------------------------------------------
 - Fix: fixed a bug which caused application crash when performing the  following sequence of
        actions: drawing curve  -->  zoom-in --> saving ano (x2,3...).

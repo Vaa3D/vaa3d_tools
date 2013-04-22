@@ -68,7 +68,7 @@ void CPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWi
     setlocale(LC_ALL, "POSIX");
 
     if (menu_name == tr("TeraFly"))
-    {/*
+    {
         //checking shared libraries
         if(!CPlugin::isSharedLibraryLoadable("opencv_core"))
         {
@@ -84,13 +84,9 @@ void CPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWi
                                          QObject::tr("Ok"));
             return;
         }
-*/
+
         //launching plugin's GUI
         PMain::instance(&callback, 0);
-        PMain::instance()->show();
-        PMain::instance()->move(QApplication::desktop()->screen()->rect().center() - PMain::instance()->rect().center());
-        PMain::instance()->raise();
-        PMain::instance()->activateWindow();
     }    
     else if(menu_name == tr("TeraConverter"))
     {

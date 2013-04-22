@@ -38,6 +38,24 @@
 
 using namespace teramanager;
 
+string PMain::HTwelcome = "Go to <i>File->Open volume</i> and select the directory of any resolution. The volume will be opened in <b>multiresolution mode</b>. "
+                          "To disable multiresolution mode or to change volume import options, go to <i>Options->Import</i>.";
+string PMain::HTbase =    "<u>Navigate through different resolutions by</u>:<br><br>"
+                          "<b>zoom-in</b>: right-click-><i>Zoom-in HighRezImage</i> on image/marker;<br>"
+                          "<b>zoom-out</b>: mouse scroll down;<br>"
+                          "<b>jump to res</b>: select VOI with volume cut scrollbars/spinboxes and choose resolution from pull-down menu.<br><br>";
+string PMain::HTvoiDim =  "Set the <b>dimensions</b> (in voxels) of the volume of interest (<b>VOI</b>) to be loaded when zoomin-in. "
+                          "Please be careful not to set a too big region or you will soon use up your <b>graphic card's memory</b>. ";
+string PMain::HTjumpToRes = "Choose from pull-down menu the <b>resolution</b> you want to jump to and the displayed image will be loaded at the resolution selected. "
+                            "To load only a volume of interest (<b>VOI</b>) at the selected resolution, you may use the Vaa3D <i>Volume Cut</i> scrollbars "
+                            "or the <i>Highest resolution volume's coordinates</i> spinboxes embedded in this plugin.";
+string PMain::HTzoomSens = "Tune the sensitivity of the <b>zoom-in/out</b> navigation through resolutions with <b>mouse scroll</b> up/down. The default is set to maximum (<i>all-to-the-right</i>). "
+                           "Set it to <i>all-to-the-left</i> to disable this feature.";
+string PMain::HTtraslatePos = "Translate the view along this axis in its <i>natural</i> direction.";
+string PMain::HTtraslateNeg = "Translate the view along this axis in its <i>opposite</i> direction.";
+string PMain::HTvolcuts = "Define a volume of interest (<b>VOI</b>) using <b>absolute spatial coordinates</b> (i.e. referred to the highest resolution). "
+                          "You may then choose the resolution you want to display it from the <i>Jump to res</i> pull-down menu.";
+
 PMain* PMain::uniqueInstance = NULL;
 PMain* PMain::instance(V3DPluginCallback2 *callback, QWidget *parent)
 {
@@ -79,6 +97,7 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     V3D_env = callback;
     parentWidget = parent;
     annotationsPathLRU = "";
+    marginLeft = 90;
 
     //creating fonts
     QFont tinyFont = QApplication::font();
@@ -107,11 +126,17 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     menuBar = new QMenuBar(0);
     fileMenu = menuBar->addMenu("File");
     openVolumeAction = new QAction("Open volume", this);
+    openVolumeAction->setIcon(QIcon(":/icons/open_volume.png"));
     closeVolumeAction = new QAction("Close volume", this);
+    closeVolumeAction->setIcon(QIcon(":/icons/close.png"));
     loadAnnotationsAction = new QAction("Load annotations", this);
+    loadAnnotationsAction->setIcon(QIcon(":/icons/open_ano.png"));
     saveAnnotationsAction = new QAction("Save annotations", this);
+    saveAnnotationsAction->setIcon(QIcon(":/icons/save.png"));
     saveAnnotationsAsAction = new QAction("Save annotations as", this);
+    saveAnnotationsAsAction->setIcon(QIcon(":/icons/saveas.png"));
     clearAnnotationsAction = new QAction("Clear annotations", this);
+    clearAnnotationsAction->setIcon(QIcon(":/icons/clear.png"));
     exitAction = new QAction("Quit", this);
     openVolumeAction->setShortcut(QKeySequence("Ctrl+O"));
     closeVolumeAction->setShortcut(QKeySequence("Ctrl+C"));
@@ -120,6 +145,7 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     saveAnnotationsAsAction->setShortcut(QKeySequence("Ctrl+Shift+S"));
     clearAnnotationsAction->setShortcut(QKeySequence("Ctrl+Shift+C"));
     exitAction->setShortcut(QKeySequence("Ctrl+Q"));
+    exitAction->setIcon(QIcon(":/icons/quit.png"));
     connect(openVolumeAction, SIGNAL(triggered()), this, SLOT(openVolume()));
     connect(closeVolumeAction, SIGNAL(triggered()), this, SLOT(closeVolume()));
     connect(exitAction, SIGNAL(triggered()), this, SLOT(exit()));
@@ -145,27 +171,30 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
 
     helpMenu = menuBar->addMenu("Help");
     aboutAction = new QAction("About", this);
+    aboutAction->setIcon(QIcon(":/icons/about.png"));
     connect(aboutAction, SIGNAL(triggered()), this, SLOT(about()));
     helpMenu->addAction(aboutAction);
 
     //multiresolution mode widgets
     multires_panel = new QGroupBox("Multiresolution mode");
-    subvol_dims_label = new QLabel("Zoom-in VOI dimensions:");
     Vdim_sbox = new QSpinBox();
     Vdim_sbox->setAlignment(Qt::AlignCenter);
     Vdim_sbox->setMaximum(1000);
     Vdim_sbox->setValue(CSettings::instance()->getVOIdimV());
+    Vdim_sbox->setSuffix(" (Y)");
+    Vdim_sbox->installEventFilter(this);
     Hdim_sbox = new QSpinBox();
     Hdim_sbox->setAlignment(Qt::AlignCenter);
     Hdim_sbox->setMaximum(1000);
     Hdim_sbox->setValue(CSettings::instance()->getVOIdimH());
+    Hdim_sbox->setSuffix(" (X)");
+    Hdim_sbox->installEventFilter(this);
     Ddim_sbox = new QSpinBox();
     Ddim_sbox->setAlignment(Qt::AlignCenter);
     Ddim_sbox->setMaximum(1000);
     Ddim_sbox->setValue(CSettings::instance()->getVOIdimD());
-    direction_V_label_6 = new QLabel("(Y)");
-    direction_H_label_6 = new QLabel("(X)");
-    direction_D_label_6 = new QLabel("(Z)");
+    Ddim_sbox->setSuffix(" (Z)");
+    Ddim_sbox->installEventFilter(this);
     by_label_6 = new QLabel(QChar(0x00D7));
     by_label_7 = new QLabel(QChar(0x00D7));
     zoominVoiSize = new QLabel();
@@ -173,6 +202,7 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     zoominVoiSize->setStyleSheet("border: 1px solid; border-color: gray; background-color: rgb(245,245,245); padding-left:5px; padding-right:5px");
     zoominVoiSize->setFont(tinyFont);
     resolution_cbox = new QComboBox();
+    resolution_cbox->installEventFilter(this);
     zoomSensitivity = new QSlider(Qt::Horizontal, this);
     zoomSensitivity->setTickPosition(QSlider::TicksBelow);
     zoomSensitivity->setMinimum(0);
@@ -180,20 +210,27 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     zoomSensitivity->setSingleStep(10);
     zoomSensitivity->setPageStep(20);
     zoomSensitivity->setValue(100);
-    traslXpos = new QArrowButton(this, QColor(255,0,0), 15, 6, 10, Qt::LeftToRight);
-    traslXneg = new QArrowButton(this, QColor(255,0,0), 15, 6, 10, Qt::RightToLeft);
+    zoomSensitivity->installEventFilter(this);
+    traslXpos = new QArrowButton(this, QColor(255,0,0), 15, 6, 0, Qt::LeftToRight);
+    traslXneg = new QArrowButton(this, QColor(255,0,0), 15, 6, 0, Qt::RightToLeft);
     traslXlabel = new QLabel("X");
-    traslYpos = new QArrowButton(this, QColor(0,255,0), 15, 6, 10, Qt::LeftToRight);
-    traslYneg = new QArrowButton(this, QColor(0,255,0), 15, 6, 10, Qt::RightToLeft);
+    traslYpos = new QArrowButton(this, QColor(0,200,0), 15, 6, 0, Qt::LeftToRight);
+    traslYneg = new QArrowButton(this, QColor(0,200,0), 15, 6, 0, Qt::RightToLeft);
     traslYlabel = new QLabel("Y");
-    traslZpos = new QArrowButton(this, QColor(0,0,255), 15, 6, 10, Qt::LeftToRight);
-    traslZneg = new QArrowButton(this, QColor(0,0,255), 15, 6, 10, Qt::RightToLeft);
+    traslZpos = new QArrowButton(this, QColor(0,0,255), 15, 6, 0, Qt::LeftToRight);
+    traslZneg = new QArrowButton(this, QColor(0,0,255), 15, 6, 0, Qt::RightToLeft);
     traslZlabel = new QLabel("Z");
+    traslXpos->installEventFilter(this);
+    traslXneg->installEventFilter(this);
+    traslYpos->installEventFilter(this);
+    traslYneg->installEventFilter(this);
+    traslZpos->installEventFilter(this);
+    traslZneg->installEventFilter(this);
 
 
     //info panel widgets
     info_panel = new QGroupBox("Volume's informations");
-    volume_dims_label = new QLabel("Dimensions (voxels)");
+    volume_dims_label = new QLabel("Dims (vxl):");
     direction_V_label_0 = new QLabel("(Y)");
     direction_H_label_0 = new QLabel("(X)");
     direction_D_label_0 = new QLabel("(Z)");
@@ -223,7 +260,7 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     ncols_field->setAlignment(Qt::AlignCenter);
     ncols_field->setStyleSheet("border: 1px solid; border-color: gray; background-color: rgb(245,245,245); padding-left:5px; padding-right:5px");
     ncols_field->setFont(tinyFont);
-    stacks_dims_label = new QLabel("Stacks dimensions (voxels):");
+    stacks_dims_label = new QLabel("Stacks' dims (vxl):");
     direction_V_label_2 = new QLabel("(Y)");
     direction_H_label_2 = new QLabel("(X)");
     direction_D_label_2 = new QLabel("(Z)");
@@ -241,7 +278,7 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     stack_depth_field->setAlignment(Qt::AlignCenter);
     stack_depth_field->setStyleSheet("border: 1px solid; border-color: gray; background-color: rgb(245,245,245); padding-left:5px; padding-right:5px");
     stack_depth_field->setFont(tinyFont);
-    voxel_dims_label = new QLabel(QString("Voxel's dimensions (").append(QChar(0x03BC)).append("m)"));
+    voxel_dims_label = new QLabel(QString("Voxel's dims (").append(QChar(0x03BC)).append("m):"));
     direction_V_label_3 = new QLabel("(Y)");
     direction_H_label_3 = new QLabel("(X)");
     direction_D_label_3 = new QLabel("(Z)");
@@ -290,21 +327,25 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     D0_sbox->setAlignment(Qt::AlignCenter);
     D1_sbox = new QSpinBox();
     D1_sbox->setAlignment(Qt::AlignCenter);
+    V0_sbox->installEventFilter(this);
+    V1_sbox->installEventFilter(this);
+    H0_sbox->installEventFilter(this);
+    H1_sbox->installEventFilter(this);
+    D0_sbox->installEventFilter(this);
+    D1_sbox->installEventFilter(this);
     to_label_1 = new QLabel("to");
     to_label_1->setAlignment(Qt::AlignCenter);
     to_label_2 = new QLabel("to");
     to_label_2->setAlignment(Qt::AlignCenter);
     to_label_3 = new QLabel("to");
     to_label_3->setAlignment(Qt::AlignCenter);
-    direction_V_label_5 = new QLabel("Y:");
-    direction_H_label_5 = new QLabel("X:");
-    direction_D_label_5 = new QLabel("Z:");
     loadButton = new QPushButton(this);
     loadButton->setIcon(QIcon(":/icons/load.png"));
     loadButton->setText("Load");
     loadButton->setIconSize(QSize(30,30));
 
     //other widgets
+    helpBox = new QHelpBox(this);
     progressBar = new QProgressBar(this);
     statusBar = new QStatusBar();
 
@@ -330,101 +371,110 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
 
     //info panel
     QGridLayout* info_panel_layout = new QGridLayout();
-    info_panel_layout->addWidget(volume_dims_label,     0,0,1,9);
-    info_panel_layout->addWidget(vol_width_field,       0,9,1,2);
-    info_panel_layout->addWidget(direction_H_label_0,   0,11,1,1);
-    info_panel_layout->addWidget(by_label_01,           0,12,1,1);
-    info_panel_layout->addWidget(vol_height_field,      0,13,1,2);
-    info_panel_layout->addWidget(direction_V_label_0,   0,15,1,1);
-    info_panel_layout->addWidget(by_label_02,           0,16,1,1);
-    info_panel_layout->addWidget(vol_depth_field,       0,17,1,2);
-    info_panel_layout->addWidget(direction_D_label_0,   0,19,1,1);
-    info_panel_layout->addWidget(volume_stacks_label,   1,0,1,9);
-    info_panel_layout->addWidget(ncols_field,           1,9,1,2);
-    info_panel_layout->addWidget(direction_H_label_1,   1,11,1,1);
-    info_panel_layout->addWidget(by_label_1,            1,12,1,1);
-    info_panel_layout->addWidget(nrows_field,           1,13,1,2);
-    info_panel_layout->addWidget(direction_V_label_1,   1,15,1,1);
-    info_panel_layout->addWidget(stacks_dims_label,     2,0,1,9);
-    info_panel_layout->addWidget(stack_width_field,     2,9,1,2);
-    info_panel_layout->addWidget(direction_H_label_2,   2,11,1,1);
-    info_panel_layout->addWidget(by_label_2,            2,12,1,1);
-    info_panel_layout->addWidget(stack_height_field,    2,13,1,2);
-    info_panel_layout->addWidget(direction_V_label_2,   2,15,1,1);
-    info_panel_layout->addWidget(by_label_3,            2,16,1,1);
-    info_panel_layout->addWidget(stack_depth_field,     2,17,1,2);
-    info_panel_layout->addWidget(direction_D_label_2,   2,19,1,1);
-    info_panel_layout->addWidget(voxel_dims_label,      3,0,1,9);
-    info_panel_layout->addWidget(vxl_H_field,           3,9,1,2);
-    info_panel_layout->addWidget(direction_H_label_3,   3,11,1,1);
-    info_panel_layout->addWidget(by_label_4,            3,12,1,1);
-    info_panel_layout->addWidget(vxl_V_field,           3,13,1,2);
-    info_panel_layout->addWidget(direction_V_label_3,   3,15,1,1);
-    info_panel_layout->addWidget(by_label_5,            3,16,1,1);
-    info_panel_layout->addWidget(vxl_D_field,           3,17,1,2);
-    info_panel_layout->addWidget(direction_D_label_3,   3,19,1,1);
-    info_panel_layout->addWidget(origin_label,          4,0,1,9);
-    info_panel_layout->addWidget(org_H_field,           4,9,1,2);
-    info_panel_layout->addWidget(direction_H_label_4,   4,11,1,1);
-    info_panel_layout->addWidget(org_V_field,           4,13,1,2);
-    info_panel_layout->addWidget(direction_V_label_4,   4,15,1,1);
-    info_panel_layout->addWidget(org_D_field,           4,17,1,2);
-    info_panel_layout->addWidget(direction_D_label_4,   4,19,1,1);
+    volume_dims_label->setFixedWidth(marginLeft);
+    info_panel_layout->addWidget(volume_dims_label,     0,0,1,1);
+    info_panel_layout->addWidget(vol_width_field,       0,2,1,2);
+    info_panel_layout->addWidget(direction_H_label_0,   0,4,1,1);
+    info_panel_layout->addWidget(by_label_01,           0,5,1,1);
+    info_panel_layout->addWidget(vol_height_field,      0,6,1,2);
+    info_panel_layout->addWidget(direction_V_label_0,   0,8,1,1);
+    info_panel_layout->addWidget(by_label_02,           0,9,1,1);
+    info_panel_layout->addWidget(vol_depth_field,       0,10,1,2);
+    info_panel_layout->addWidget(direction_D_label_0,   0,12,1,1);
+
+    info_panel_layout->addWidget(volume_stacks_label,   1,0,1,1);
+    info_panel_layout->addWidget(ncols_field,           1,2,1,2);
+    info_panel_layout->addWidget(direction_H_label_1,   1,4,1,1);
+    info_panel_layout->addWidget(by_label_1,            1,5,1,1);
+    info_panel_layout->addWidget(nrows_field,           1,6,1,2);
+    info_panel_layout->addWidget(direction_V_label_1,   1,8,1,1);
+
+    info_panel_layout->addWidget(stacks_dims_label,     2,0,1,1);
+    info_panel_layout->addWidget(stack_width_field,     2,2,1,2);
+    info_panel_layout->addWidget(direction_H_label_2,   2,4,1,1);
+    info_panel_layout->addWidget(by_label_2,            2,5,1,1);
+    info_panel_layout->addWidget(stack_height_field,    2,6,1,2);
+    info_panel_layout->addWidget(direction_V_label_2,   2,8,1,1);
+    info_panel_layout->addWidget(by_label_3,            2,9,1,1);
+    info_panel_layout->addWidget(stack_depth_field,     2,10,1,2);
+    info_panel_layout->addWidget(direction_D_label_2,   2,12,1,1);
+
+    info_panel_layout->addWidget(voxel_dims_label,      3,0,1,1);
+    info_panel_layout->addWidget(vxl_H_field,           3,2,1,2);
+    info_panel_layout->addWidget(direction_H_label_3,   3,4,1,1);
+    info_panel_layout->addWidget(by_label_4,            3,5,1,1);
+    info_panel_layout->addWidget(vxl_V_field,           3,6,1,2);
+    info_panel_layout->addWidget(direction_V_label_3,   3,8,1,1);
+    info_panel_layout->addWidget(by_label_5,            3,9,1,1);
+    info_panel_layout->addWidget(vxl_D_field,           3,10,1,2);
+    info_panel_layout->addWidget(direction_D_label_3,   3,12,1,1);
+
+    info_panel_layout->addWidget(origin_label,          4,0,1,1);
+    info_panel_layout->addWidget(org_H_field,           4,2,1,2);
+    info_panel_layout->addWidget(direction_H_label_4,   4,4,1,1);
+    info_panel_layout->addWidget(org_V_field,           4,6,1,2);
+    info_panel_layout->addWidget(direction_V_label_4,   4,8,1,1);
+    info_panel_layout->addWidget(org_D_field,           4,10,1,2);
+    info_panel_layout->addWidget(direction_D_label_4,   4,12,1,1);
     info_panel->setLayout(info_panel_layout);
     info_panel->setStyle(new QWindowsStyle());
 
     //subvolume selection widgets
     QGridLayout* subvol_panel_layout = new QGridLayout();
-    subvol_panel_layout->addWidget(direction_H_label_5, 0, 0, 1, 1);
-    subvol_panel_layout->addWidget(H0_sbox,             0, 1, 1, 2);
-    subvol_panel_layout->addWidget(to_label_1,          0, 3, 1, 1);
-    subvol_panel_layout->addWidget(H1_sbox,             0, 4, 1, 2);
-    subvol_panel_layout->addWidget(direction_V_label_5, 0, 6, 1, 1);
-    subvol_panel_layout->addWidget(V0_sbox,             0, 7, 1, 2);
-    subvol_panel_layout->addWidget(to_label_2,          0, 9, 1, 1);
-    subvol_panel_layout->addWidget(V1_sbox,             0, 10, 1, 2);
-    subvol_panel_layout->addWidget(direction_D_label_5, 0, 12, 1, 1);
-    subvol_panel_layout->addWidget(D0_sbox,             0, 13, 1, 2);
-    subvol_panel_layout->addWidget(to_label_3,          0, 15, 1, 1);
-    subvol_panel_layout->addWidget(D1_sbox,             0, 16, 1, 2);
-    subvol_panel_layout->addWidget(loadButton,          2, 0, 1, 18);
+    QLabel* xCutLabel = new QLabel("X-cut interval:");
+    xCutLabel->setFixedWidth(marginLeft);
+    subvol_panel_layout->addWidget(xCutLabel,           0, 0, 1, 1);
+    subvol_panel_layout->addWidget(H0_sbox,             0, 2, 1, 3);
+    subvol_panel_layout->addWidget(to_label_1,          0, 5, 1, 1);
+    subvol_panel_layout->addWidget(H1_sbox,             0, 6, 1, 3);
+
+    subvol_panel_layout->addWidget(new QLabel("Y-cut interval:"), 1, 0, 1, 1);
+    subvol_panel_layout->addWidget(V0_sbox,             1, 2, 1, 3);
+    subvol_panel_layout->addWidget(to_label_2,          1, 5, 1, 1);
+    subvol_panel_layout->addWidget(V1_sbox,             1, 6, 1,3);
+
+    subvol_panel_layout->addWidget(new QLabel("Z-cut interval:"), 2, 0, 1, 1);
+    subvol_panel_layout->addWidget(D0_sbox,             2, 2, 1, 3);
+    subvol_panel_layout->addWidget(to_label_3,          2, 5, 1, 1);
+    subvol_panel_layout->addWidget(D1_sbox,             2, 6, 1, 3);
+
+    subvol_panel_layout->addWidget(loadButton,          3, 0, 1, 13);
     subvol_panel->setLayout(subvol_panel_layout);
     subvol_panel->setStyle(new QWindowsStyle());
 
     //multiresolution mode widgets
     QGridLayout* multiresModePanelLayout= new QGridLayout();
-    multiresModePanelLayout->addWidget(new QLabel("Jump to resolution:"),       0,0,1,4);
-    multiresModePanelLayout->addWidget(resolution_cbox,                         0,5,1,11);
-    multiresModePanelLayout->addWidget(subvol_dims_label,                       1, 0, 1, 4);
-    multiresModePanelLayout->addWidget(Hdim_sbox,                               1, 5, 1, 2);
-    multiresModePanelLayout->addWidget(direction_H_label_6,                     1, 7, 1, 1);
-    multiresModePanelLayout->addWidget(by_label_6,                              1, 8, 1, 1);
-    multiresModePanelLayout->addWidget(Vdim_sbox,                               1, 9, 1, 2);
-    multiresModePanelLayout->addWidget(direction_V_label_6,                     1, 11, 1, 1);
-    multiresModePanelLayout->addWidget(by_label_7,                              1, 12, 1, 1);
-    multiresModePanelLayout->addWidget(Ddim_sbox,                               1, 13, 1, 2);
-    multiresModePanelLayout->addWidget(direction_D_label_6,                     1, 15, 1, 1);
-    multiresModePanelLayout->addWidget(new QLabel("Zoom-in VOI size:"),         2, 0, 1, 4);
-    multiresModePanelLayout->addWidget(zoominVoiSize,                           2, 5, 1, 2);
-    multiresModePanelLayout->addWidget(new QLabel("MVoxels"),                   2, 7, 1, 9);
-    multiresModePanelLayout->addWidget(new QLabel("Zoom-in/out sensitivity"),   3, 0, 1, 4);
-    multiresModePanelLayout->addWidget(zoomSensitivity,                         3, 5, 1, 11);
-    multiresModePanelLayout->addWidget(new QLabel("Traslations:"),              4, 0, 1, 4);
-    QHBoxLayout* traslXlayout = new QHBoxLayout();
-    traslXlayout->addWidget(traslXneg, 1);
-    traslXlayout->addWidget(traslXlabel, 0);
-    traslXlayout->addWidget(traslXpos, 1);
-    multiresModePanelLayout->addLayout(traslXlayout,                            4, 5, 1, 11);
-    QHBoxLayout* traslYlayout = new QHBoxLayout();
-    traslYlayout->addWidget(traslYneg, 1);
-    traslYlayout->addWidget(traslYlabel, 0);
-    traslYlayout->addWidget(traslYpos, 1);
-    multiresModePanelLayout->addLayout(traslYlayout,                            5, 5, 1, 11);
-    QHBoxLayout* traslZlayout = new QHBoxLayout();
-    traslZlayout->addWidget(traslZneg, 1);
-    traslZlayout->addWidget(traslZlabel, 0);
-    traslZlayout->addWidget(traslZpos, 1);
-    multiresModePanelLayout->addLayout(traslZlayout,                            6, 5, 1, 11);
+    QLabel* jumpToResLabel = new QLabel("Jump to res:");
+    jumpToResLabel->setFixedWidth(marginLeft);
+    multiresModePanelLayout->addWidget(jumpToResLabel,                          0, 0, 1, 1);
+    multiresModePanelLayout->addWidget(resolution_cbox,                         0, 2, 1, 11);
+    multiresModePanelLayout->addWidget(new QLabel("Zoom-in VOI dims:"),         1, 0, 1, 1);
+    multiresModePanelLayout->addWidget(Hdim_sbox,                               1, 2, 1, 3);
+    multiresModePanelLayout->addWidget(by_label_6,                              1, 5, 1, 1);
+    multiresModePanelLayout->addWidget(Vdim_sbox,                               1, 6, 1, 3);
+    multiresModePanelLayout->addWidget(by_label_7,                              1, 9, 1, 1);
+    multiresModePanelLayout->addWidget(Ddim_sbox,                               1, 10, 1, 3);
+//    multiresModePanelLayout->addWidget(new QLabel("Zoom-in VOI size:"),         2, 0, 1, 1);
+//    multiresModePanelLayout->addWidget(zoominVoiSize,                           2, 2, 1, 3);
+//    multiresModePanelLayout->addWidget(new QLabel("MVoxels"),                   2, 5, 1, 9);
+    multiresModePanelLayout->addWidget(new QLabel("Zoom-in/out sens:"),         4, 0, 1, 1);
+    multiresModePanelLayout->addWidget(zoomSensitivity,                         4, 2, 1, 11);
+    traslXneg->setMaximumWidth(30);
+    traslXpos->setMaximumWidth(30);
+    traslYneg->setMaximumWidth(30);
+    traslYpos->setMaximumWidth(30);
+    traslZneg->setMaximumWidth(30);
+    traslZpos->setMaximumWidth(30);
+    multiresModePanelLayout->addWidget(new QLabel("Translate:"),                5, 0, 1, 1);
+    multiresModePanelLayout->addWidget(traslXneg,                               5, 2, 1, 1);
+    multiresModePanelLayout->addWidget(traslXlabel,                             5, 3, 1, 1);
+    multiresModePanelLayout->addWidget(traslXpos,                               5, 4, 1, 1);
+    multiresModePanelLayout->addWidget(traslYneg,                               5, 6, 1, 1);
+    multiresModePanelLayout->addWidget(traslYlabel,                             5, 7, 1, 1);
+    multiresModePanelLayout->addWidget(traslYpos,                               5, 8, 1, 1);
+    multiresModePanelLayout->addWidget(traslZneg,                               5, 10, 1, 1);
+    multiresModePanelLayout->addWidget(traslZlabel,                             5, 11, 1, 1);
+    multiresModePanelLayout->addWidget(traslZpos,                               5, 12, 1, 1);
     multires_panel->setLayout(multiresModePanelLayout);
     multires_panel->setStyle(new QWindowsStyle());
 
@@ -435,6 +485,7 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     layout->addWidget(multires_panel, 0);
     layout->addWidget(subvol_panel, 0);
     layout->addStretch(1);
+    layout->addWidget(helpBox, 0, Qt::AlignBottom);
     layout->addWidget(statusBar, 0);
     layout->addWidget(progressBar, 0);
     setLayout(layout);
@@ -467,15 +518,21 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     connect(traslYneg, SIGNAL(clicked()), this, SLOT(traslYnegClicked()));
     connect(traslZpos, SIGNAL(clicked()), this, SLOT(traslZposClicked()));
     connect(traslZneg, SIGNAL(clicked()), this, SLOT(traslZnegClicked()));
-    resetGUI();
-
-    //set always on top
-    this->setWindowFlags(Qt::WindowStaysOnTopHint);
-    this->setMaximumSize(this->minimumWidth(), this->minimumHeight());
-    this->setFocusPolicy(Qt::StrongFocus);
 
     //reset widgets
     reset();
+
+    //set always on top
+    setWindowFlags(Qt::Tool | Qt::WindowStaysOnTopHint);
+    setMaximumSize(this->minimumWidth(), this->minimumHeight());
+    setFocusPolicy(Qt::StrongFocus);
+    update();
+    raise();
+    show();
+    activateWindow();
+    move(QApplication::desktop()->screen()->rect().center() - rect().center());
+
+
 }
 
 //reset everything
@@ -521,8 +578,15 @@ void PMain::reset()
     traslXlabel->setStyleSheet("");
     traslYlabel->setStyleSheet("");
     traslZlabel->setStyleSheet("");
+    traslXpos->setEnabled(false);
+    traslXneg->setEnabled(false);
+    traslYpos->setEnabled(false);
+    traslYneg->setEnabled(false);
+    traslZpos->setEnabled(false);
+    traslZneg->setEnabled(false);
 
-    //resetting subvol panel widgets
+    //resetting subvol panel widgets    
+    loadButton->setVisible(false);
     subvol_panel->setEnabled(false);
     V0_sbox->setValue(0);
     V1_sbox->setValue(0);
@@ -535,7 +599,8 @@ void PMain::reset()
     progressBar->setEnabled(false);
     progressBar->setMaximum(1);         //needed to stop animation on some operating systems
     statusBar->clearMessage();
-    statusBar->showMessage("Ready.");
+    statusBar->showMessage("Ready.");    
+    helpBox->setText(HTwelcome);
 }
 
 
@@ -878,22 +943,22 @@ void PMain::importDone(MyException *ex, Image4DSimple* vmap_image)
         //and setting subvol widgets limits
         V0_sbox->setMinimum(1);
         V0_sbox->setMaximum(volume->getDIM_V());
-        V0_sbox->setValue(volume->getDIM_V()/2 - 256);
+        V0_sbox->setValue(1);
         V1_sbox->setMinimum(1);
         V1_sbox->setMaximum(volume->getDIM_V());
-        V1_sbox->setValue(volume->getDIM_V()/2 + 256);
+        V1_sbox->setValue(volume->getDIM_V());
         H0_sbox->setMinimum(1);
         H0_sbox->setMaximum(volume->getDIM_H());
-        H0_sbox->setValue(volume->getDIM_H()/2 - 256);
+        H0_sbox->setValue(1);
         H1_sbox->setMinimum(1);
         H1_sbox->setMaximum(volume->getDIM_H());
-        H1_sbox->setValue(volume->getDIM_H()/2 + 256);
+        H1_sbox->setValue(volume->getDIM_H());
         D0_sbox->setMinimum(1);
         D0_sbox->setMaximum(volume->getDIM_D());
-        D0_sbox->setValue(volume->getDIM_D()/2 - 256);
+        D0_sbox->setValue(1);
         D1_sbox->setMinimum(1);
         D1_sbox->setMaximum(volume->getDIM_D());
-        D1_sbox->setValue(volume->getDIM_D()/2 + 256);
+        D1_sbox->setValue(volume->getDIM_D());
         import_form->setEnabled(false);
         subvol_panel->setEnabled(true);
         loadButton->setEnabled(true);
@@ -935,7 +1000,7 @@ void PMain::importDone(MyException *ex, Image4DSimple* vmap_image)
 
             //updating traslation widgets
             traslXlabel->setStyleSheet("color: rgb(255,0,0); font-weight:bold;");
-            traslYlabel->setStyleSheet("color: rgb(0,255,0); font-weight:bold;");
+            traslYlabel->setStyleSheet("color: rgb(0,200,0); font-weight:bold;");
             traslZlabel->setStyleSheet("color: rgb(0,0,255); font-weight:bold;");
 
             //instantiating CAnnotations
@@ -945,6 +1010,12 @@ void PMain::importDone(MyException *ex, Image4DSimple* vmap_image)
             new CExplorerWindow(V3D_env, CImport::instance()->getVMapResIndex(), CImport::instance()->getVMap(),
                                 0, CImport::instance()->getVMapHeight(), 0, CImport::instance()->getVMapWidth(),
                                 0, CImport::instance()->getVMapDepth(), CImport::instance()->getNChannels(), 0);
+
+            helpBox->setText(HTbase);
+        }
+        else
+        {
+            loadButton->setVisible(true);
         }
 
         //finally storing in application settings the path of the opened volume
@@ -1009,23 +1080,6 @@ void PMain::closeEvent(QCloseEvent *evt)
     }
 }
 
-//overrides focusInEvent method of QWidget
-void PMain::focusInEvent ( QFocusEvent * event )
-{
-
-/* Added on January 29th by Alessandro: in my original intentions this lets the user quickly recover the renderer window
-   after it is automatically hidden by Vaa3D when interacting with its menus. It does work, but the "Qt:Tool" flag also
-   causes an unwanted change in the renderer title bar (minimize and full screen buttor are removed). The "standard" so-
-   lution to recover a minimized / or hidden window is to use setWindowState method, but it doesn't work here.*/
-//    if(CExplorerWindow::getLast())
-//    {
-//        event->accept();
-//        CExplorerWindow::getLast()->getWindow3D()->setWindowFlags(Qt::Tool);
-//        CExplorerWindow::getLast()->getWindow3D()->show();
-//    }
-//    else
-        event->ignore();
-}
 
 /**********************************************************************************
 * Called when the GUI widgets that control application settings change.
@@ -1159,4 +1213,54 @@ void PMain::traslZnegClicked()
         expl->newView((expl->volH1-expl->volH0)/2,
                       (expl->volV1-expl->volV0)/2,
                       (expl->volD1-expl->volD0)/2 - (expl->volD1-expl->volD0)*CSettings::instance()->getTraslZ()/100.0f, expl->volResIndex, false);
+}
+
+/**********************************************************************************
+* Filters events generated by the widgets to which a help message must be associated
+***********************************************************************************/
+bool PMain::eventFilter(QObject *object, QEvent *event)
+{
+    if ((object == Vdim_sbox || object == Hdim_sbox || object == Ddim_sbox) && multires_panel->isEnabled())
+    {
+        if(event->type() == QEvent::Enter)
+            helpBox->setText(HTvoiDim);
+        else if(event->type() == QEvent::Leave)
+            helpBox->setText(HTbase);
+    }
+    else if((object == resolution_cbox) && multires_panel->isEnabled())
+    {
+        if(event->type() == QEvent::Enter)
+            helpBox->setText(HTjumpToRes);
+        else if(event->type() == QEvent::Leave)
+            helpBox->setText(HTbase);
+    }
+    else if((object == zoomSensitivity) && multires_panel->isEnabled())
+    {
+        if(event->type() == QEvent::Enter)
+            helpBox->setText(HTzoomSens);
+        else if(event->type() == QEvent::Leave)
+            helpBox->setText(HTbase);
+    }
+    else if ((object == traslXpos || object == traslYpos || object == traslZpos) && multires_panel->isEnabled())
+    {
+        if(event->type() == QEvent::Enter)
+            helpBox->setText(HTtraslatePos);
+        else if(event->type() == QEvent::Leave)
+            helpBox->setText(HTbase);
+    }
+    else if ((object == traslXneg || object == traslYneg || object == traslZneg) && multires_panel->isEnabled())
+    {
+        if(event->type() == QEvent::Enter)
+            helpBox->setText(HTtraslateNeg);
+        else if(event->type() == QEvent::Leave)
+            helpBox->setText(HTbase);
+    }
+    else if ((object == V0_sbox || object == V1_sbox || object == H0_sbox || object == H1_sbox || object == D0_sbox || object == D1_sbox) && subvol_panel->isEnabled())
+    {
+        if(event->type() == QEvent::Enter)
+            helpBox->setText(HTvolcuts);
+        else if(event->type() == QEvent::Leave)
+            helpBox->setText(HTbase);
+    }
+    return false;
 }

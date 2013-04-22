@@ -115,6 +115,7 @@ CExplorerWindow::CExplorerWindow(V3DPluginCallback2 *_V3D_env, int _resIndex, ui
             QPoint location = prev->window3D->pos();
             prev->window3D->setVisible(false);
             window3D->resize(prev->window3D->size());
+            printf("Calling window3D->move() in the IF of constructor\n");
             window3D->move(location);
 
             //hiding both tri-view and 3D view
@@ -144,9 +145,6 @@ CExplorerWindow::CExplorerWindow(V3DPluginCallback2 *_V3D_env, int _resIndex, ui
             int window_x = (screen_width - (window3D->width() + PMain::instance()->width()))/2;
             int window_y = (screen_height - window3D->height()) / 2;
             window3D->move(window_x, window_y);
-            pMain->move(window_x + window3D->width() + 3, window_y);
-            pMain->setMaximumHeight(std::max(window3D->height(),pMain->height()));
-            pMain->resize(pMain->width(), window3D->height());
         }
 
         //registrating the current window as the last window of the multiresolution explorer windows chain
@@ -169,6 +167,14 @@ CExplorerWindow::CExplorerWindow(V3DPluginCallback2 *_V3D_env, int _resIndex, ui
             else
                 pMain->resolution_cbox->model()->setData( index, v2, Qt::UserRole -1);
         }
+
+        //disabling translate buttons if needed
+        pMain->traslYneg->setEnabled(volV0 > 0);
+        pMain->traslYpos->setEnabled(volV1 < CImport::instance()->getVolume(volResIndex)->getDIM_V());
+        pMain->traslXneg->setEnabled(volH0 > 0);
+        pMain->traslXpos->setEnabled(volH1 < CImport::instance()->getVolume(volResIndex)->getDIM_H());
+        pMain->traslZneg->setEnabled(volD0 > 0);
+        pMain->traslZpos->setEnabled(volD1 < CImport::instance()->getVolume(volResIndex)->getDIM_D());
 
         //setting min, max and value of PMain GUI VOI's widgets
         pMain->V0_sbox->setMinimum(getGlobalVCoord(view3DWidget->yCut0())+1);
@@ -199,6 +205,12 @@ CExplorerWindow::CExplorerWindow(V3DPluginCallback2 *_V3D_env, int _resIndex, ui
         connect(PMain::instance()->H1_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeH1sbox(int)));
         connect(PMain::instance()->D0_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeD0sbox(int)));
         connect(PMain::instance()->D1_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeD1sbox(int)));
+
+        //changing window flags (disabling minimize/maximize buttons)
+        window3D->setWindowFlags(Qt::Tool
+                                 | Qt::WindowTitleHint
+                                 | Qt::CustomizeWindowHint | Qt::WindowStaysOnTopHint | Qt::WindowCloseButtonHint);
+        window3D->show();
     }
     catch(MyException &ex)
     {
@@ -283,10 +295,7 @@ bool CExplorerWindow::eventFilter(QObject *object, QEvent *event)
         ***************************************************************************/
         else if(object == window3D && (event->type() == QEvent::Move || event->type() == QEvent::Resize))
         {
-            PMain* pMain = PMain::instance();
-            pMain->move(window3D->x() + window3D->width() + 3, window3D->y());
-            pMain->setMaximumHeight(std::max(window3D->height(),pMain->height()));
-            pMain->resize(pMain->width(), window3D->height());
+            alignToLeft(PMain::instance());
         }
         /***************** INTERCEPTING STATE CHANGES EVENTS **********************
         Window state changes events are intercepted to let PMain's position be syn-
@@ -294,7 +303,12 @@ bool CExplorerWindow::eventFilter(QObject *object, QEvent *event)
         ***************************************************************************/
         else if(object == window3D && event->type() == QEvent::WindowStateChange)
         {
-            PMain::instance()->setWindowState(window3D->windowState());
+            //PMain::instance()->setWindowState(window3D->windowState());
+//            QWindowStateChangeEvent* stateChangeEvt = (QWindowStateChangeEvent*)event;
+//            printf("old state = %d\n", int(stateChangeEvt->oldState()));
+//            //event->ignore();
+//            window3D->setWindowState(Qt::WindowActive);
+            //return true;
         }
         return false;
     }
@@ -946,5 +960,13 @@ void CExplorerWindow::PMain_changeD1sbox(int s)
     view3DWidget->setZCut1(getLocalDCoord(s-1)+1);
     connect(view3DWidget, SIGNAL(changeZCut1(int)), this, SLOT(Vaa3D_changeZCut1(int)));
 }
+
+void CExplorerWindow::alignToLeft(QWidget* widget)
+{
+    widget->move(window3D->x() + window3D->width() + 3, window3D->y());
+    widget->setMaximumHeight(std::max(window3D->height(),widget->height()));
+    widget->resize(widget->width(), window3D->height());
+}
+
 
 
