@@ -75,6 +75,9 @@ class teramanager::PMain : public QWidget
         QMenu* helpMenu;                //"Help" menu
         QAction* aboutAction;           //"About" menu action
 
+        //toolbar widgets
+        QToolBar* toolBar;              //tool bar with buttons
+
         //import form widgets
         QWidget* import_form;         //import form containing input fields
         QCheckBox *reimport_checkbox;   //checkbox to be used to reimport a volume already imported

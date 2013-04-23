@@ -116,27 +116,26 @@ class teramanager::CExplorerWindow : public QWidget
         * select a 3D point in the image space given the coordinates of the mouse cursor.
         ***********************************************************************************/
         //---------- feature disabled because the necessary Vaa3D sources can't be included
-        /*class myRenderer : Renderer_gl1
-        {
-            public:
+//        class myRenderer : Renderer_gl1
+//        {
+//            public:
 
-            friend class CExplorerWindow;
-
-            XYZ get3DPoint(int x, int y)
-            {
-                MarkerPos pos;
-                pos.x = x;
-                pos.y = y;
-                for (int i=0; i<4; i++)
-                        pos.view[i] = viewport[i];
-                for (int i=0; i<16; i++)
-                {
-                    pos.P[i]  = projectionMatrix[i];
-                    pos.MV[i] = markerViewMatrix[i];
-                }
-                return this->getCenterOfMarkerPos(pos);
-            }
-        };*/
+//                friend class CExplorerWindow;
+//                XYZ get3DPoint(int x, int y)
+//                {
+//                    MarkerPos pos;
+//                    pos.x = x;
+//                    pos.y = y;
+//                    for (int i=0; i<4; i++)
+//                            pos.view[i] = viewport[i];
+//                    for (int i=0; i<16; i++)
+//                    {
+//                        pos.P[i]  = projectionMatrix[i];
+//                        pos.MV[i] = markerViewMatrix[i];
+//                    }
+//                    return this->getCenterOfMarkerPos(pos);
+//                }
+//        };
 
         /**********************************************************************************
         * Vaa3D V3dR_MainWindow subclass needed to access some protected members
@@ -220,9 +219,10 @@ class teramanager::CExplorerWindow : public QWidget
         void Vaa3D_selectedROI();
 
         /**********************************************************************************
-        * Alignes the current window to the left of the given widget
+        * Alignes the given widget to the left(right) of the current window
         ***********************************************************************************/
         void alignToLeft(QWidget* widget);
+        void alignToRight(QWidget* widget);
 
         //PMain instance is allowed to access class private members
         friend class PMain;

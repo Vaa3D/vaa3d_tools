@@ -53,6 +53,7 @@ HEADERS += $$V3DMAINPATH/common_lib/src_packages/mylib_tiff/image.h \
 HEADERS += $$V3DMAINPATH/basic_c_fun/imageio_mylib.h
 
 #needed to enable the "double-click zoom-in" feature --> removed, simple inclusion impedes the plugin to be loaded
+#INCLUDEPATH += $$V3DMAINPATH/v3d
 #SOURCES += $$V3DMAINPATH/3drenderer/renderer_hit.cpp
 
 LIBS += -L. -lv3dtiff -L$$V3DMAINPATH/common_lib/lib \

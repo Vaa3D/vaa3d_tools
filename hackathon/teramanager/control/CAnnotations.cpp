@@ -1,12 +1,15 @@
 #include <algorithm>
 #include <vector>
+#include <list>
 #include "CAnnotations.h"
 #include "locale.h"
 
 using namespace teramanager;
+using namespace std;
 
 CAnnotations* CAnnotations::uniqueInstance = NULL;
-int annotation::total = 0;
+list<int> annotation::availableIDs = list<int>();
+list<int> annotation::recyclableIDs = list<int>();
 
 bool isMarker (annotation* ano) { return ano->type == 0;}
 
@@ -20,6 +23,8 @@ void CAnnotations::uninstance()
     {
         delete uniqueInstance;
         uniqueInstance = NULL;
+        annotation::availableIDs.clear();
+        annotation::recyclableIDs.clear();
     }
 }
 
@@ -688,7 +693,7 @@ void CAnnotations::addCurves(NeuronTree* curves) throw (MyException)
         ann->x = i->x;
         ann->y = i->y;
         ann->z = i->z;
-        printf("--------------------- teramanager plugin >> inserting curve point %d(%d)=(%.1f,%.1f,%.1f)\n", ann->ID, i->n, ann->x, ann->y, ann->z);
+        printf("--------------------- teramanager plugin >> inserting curve point %d(n=%d)=(%.1f,%.1f,%.1f)\n", ann->ID, i->n, ann->x, ann->y, ann->z);
         octree->insert(*ann);
         annotationsMap[i->n] = ann;
         swcMap[i->n] = &(*i);

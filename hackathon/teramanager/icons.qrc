@@ -9,8 +9,8 @@
         <file>icons/save.png</file>
         <file>icons/saveas.png</file>
         <file>icons/clear.png</file>
-        <file>icons/quit.png</file>
         <file>icons/help.png</file>
+        <file>icons/help2.png</file>
         <file>icons/about.png</file>
     </qresource>
 </RCC>

@@ -10,11 +10,15 @@ QHelpBox::QHelpBox(QWidget *_parent) : QWidget(_parent)
     helpBox = new QLabel();
     helpBox->setFont(tinyFont);
     helpBox->setStyleSheet("border: 1px solid; border-color: rgb(71,127,249); background-color: rgb(245,245,245); margin-top:0px; "
-                                               "margin-bottom:0px; margin-left: 27px; padding-right: 4px; padding-top:4px; padding-bottom:4px; padding-left:23px; text-align:justify;"
+                                               "margin-bottom:0px; margin-left: 0px; padding-right: 4px; padding-top:4px; padding-bottom:4px; padding-left:60px; text-align:justify;"
                            "");
     helpBox->setWordWrap(true);
-    helpIcon = new QLabel("<html><table><tr style=\"vertical-align: middle;\"><td><img src=\":/icons/help.png\"></td></tr></html>");
-    helpIcon->setStyleSheet("border: none; background-color: none;");
+    QPixmap pixmap(":/icons/help2.png");
+    helpIcon = new QLabel();
+    helpIcon->setPixmap(pixmap.scaled(50,50, Qt::KeepAspectRatio, Qt::SmoothTransformation));
+    helpIcon->setStyleSheet("margin-left: 5px");
+//    helpIcon = new QLabel("<html><table><tr style=\"vertical-align: middle;\"><td><img src=\":/icons/help.png\"></td></tr></html>");
+//    helpIcon->setStyleSheet("border: none; background-color: none;");
 
     QStackedLayout *helpLayout = new QStackedLayout();
     helpLayout->addWidget(helpBox);

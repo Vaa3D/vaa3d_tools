@@ -145,7 +145,6 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     saveAnnotationsAsAction->setShortcut(QKeySequence("Ctrl+Shift+S"));
     clearAnnotationsAction->setShortcut(QKeySequence("Ctrl+Shift+C"));
     exitAction->setShortcut(QKeySequence("Ctrl+Q"));
-    exitAction->setIcon(QIcon(":/icons/quit.png"));
     connect(openVolumeAction, SIGNAL(triggered()), this, SLOT(openVolume()));
     connect(closeVolumeAction, SIGNAL(triggered()), this, SLOT(closeVolume()));
     connect(exitAction, SIGNAL(triggered()), this, SLOT(exit()));
@@ -162,18 +161,30 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     fileMenu->addAction(clearAnnotationsAction);
     fileMenu->addSeparator();
     fileMenu->addAction(exitAction);
-
     optionsMenu = menuBar->addMenu("Options");
     importOptionsMenu = optionsMenu->addMenu("Import");
     importOptionsWidget = new QWidgetAction(this);
     importOptionsWidget->setDefaultWidget(import_form);
     importOptionsMenu->addAction(importOptionsWidget);
-
     helpMenu = menuBar->addMenu("Help");
     aboutAction = new QAction("About", this);
     aboutAction->setIcon(QIcon(":/icons/about.png"));
     connect(aboutAction, SIGNAL(triggered()), this, SLOT(about()));
     helpMenu->addAction(aboutAction);
+
+    //toolbar
+    toolBar = new QToolBar("ToolBar", this);
+    toolBar->setOrientation(Qt::Vertical);
+    toolBar->insertAction(0, openVolumeAction);
+    toolBar->insertAction(0, closeVolumeAction);
+    toolBar->addAction(loadAnnotationsAction);
+    toolBar->addAction(saveAnnotationsAction);
+    toolBar->addAction(saveAnnotationsAsAction);
+    toolBar->addAction(clearAnnotationsAction);
+    toolBar->addAction(aboutAction);
+    toolBar->setIconSize(QSize(30,30));
+    toolBar->setStyleSheet("QToolBar{background:qlineargradient(x1: 0, y1: 0, x2: 1, y2: 0,"
+                           "stop: 0 rgb(150,150,150), stop: 1 rgb(190,190,190));}");
 
     //multiresolution mode widgets
     multires_panel = new QGroupBox("Multiresolution mode");
@@ -512,18 +523,28 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
 
     //overall
     QVBoxLayout* layout = new QVBoxLayout();
+    QHBoxLayout* centralLayout = new QHBoxLayout();
+    QVBoxLayout* innerLayout = new QVBoxLayout();
+    QVBoxLayout* bottomLayout = new QVBoxLayout();
+    innerLayout->addWidget(info_panel, 0);
+    innerLayout->addWidget(multires_panel, 0);
+    innerLayout->addWidget(subvol_panel, 0);
+    innerLayout->addStretch(1);
+    innerLayout->addWidget(helpBox, 0, Qt::AlignBottom);
+    innerLayout->setContentsMargins(10, 5, 10, 10);
+    centralLayout->addWidget(toolBar, 0);
+    centralLayout->addLayout(innerLayout, 1);
+    bottomLayout->addWidget(statusBar);
+    bottomLayout->addWidget(progressBar);
+    bottomLayout->setContentsMargins(10,0,10,10);
     layout->addWidget(menuBar, 0);
-    layout->addWidget(info_panel, 0);
-    layout->addWidget(multires_panel, 0);
-    layout->addWidget(subvol_panel, 0);
-    layout->addStretch(1);
-    layout->addWidget(helpBox, 0, Qt::AlignBottom);
-    layout->addWidget(statusBar, 0);
-    layout->addWidget(progressBar, 0);
+    layout->addLayout(centralLayout, 1);
+    layout->addLayout(bottomLayout, 0);
+    layout->setContentsMargins(0, 0, 0, 0);
+    layout->setSpacing(0);
     setLayout(layout);
     setWindowTitle(tr("TeraFly plugin"));
     this->setFont(tinyFont);
-    subvol_panel->setEnabled(false);
 
     // signals and slots
     connect(loadButton, SIGNAL(clicked()), this, SLOT(loadButtonClicked()));

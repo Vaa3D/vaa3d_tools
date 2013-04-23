@@ -143,6 +143,7 @@ CExplorerWindow::CExplorerWindow(V3DPluginCallback2 *_V3D_env, int _resIndex, ui
             int screen_height = qApp->desktop()->availableGeometry().height();
             int screen_width = qApp->desktop()->availableGeometry().width();
             int window_x = (screen_width - (window3D->width() + PMain::instance()->width()))/2;
+//            int window_x = (screen_width - (window3D->width() + PMain::instance()->width()))/2 + PMain::instance()->width();
             int window_y = (screen_height - window3D->height()) / 2;
             window3D->move(window_x, window_y);
         }
@@ -189,7 +190,6 @@ CExplorerWindow::CExplorerWindow(V3DPluginCallback2 *_V3D_env, int _resIndex, ui
         pMain->D0_sbox->setValue(pMain->D0_sbox->minimum());
         pMain->D1_sbox->setMaximum(getGlobalDCoord(view3DWidget->zCut1())+1);
         pMain->D1_sbox->setValue(pMain->D1_sbox->maximum());
-
 
         //signal connections
         connect(CVolume::instance(), SIGNAL(sendOperationOutcome(MyException*,void*)), this, SLOT(loadingDone(MyException*,void*)), Qt::QueuedConnection);
@@ -297,7 +297,8 @@ bool CExplorerWindow::eventFilter(QObject *object, QEvent *event)
         ***************************************************************************/
         else if(object == window3D && (event->type() == QEvent::Move || event->type() == QEvent::Resize))
         {
-            alignToLeft(PMain::instance());
+           alignToLeft(PMain::instance());
+//            alignToRight(PMain::instance());
         }
         /***************** INTERCEPTING STATE CHANGES EVENTS **********************
         Window state changes events are intercepted to let PMain's position be syn-
@@ -710,8 +711,8 @@ float CExplorerWindow::estimateRendererVoxelSize()
 ***********************************************************************************/
 XYZ CExplorerWindow::getRenderer3DPoint(int x, int y)  throw (MyException)
 {
-    /*myRenderer* myRend = (myRenderer*)(view3DWidget->getRenderer());
-    return myRend->get3DPoint(x,y);*/
+//    myRenderer* myRend = (myRenderer*)(view3DWidget->getRenderer());
+//    return myRend->get3DPoint(x,y);
     throw MyException("Double-click zoom-in feature has been disabled because the necessary Vaa3D sources can't be included correctly.");
 }
 
@@ -971,9 +972,18 @@ void CExplorerWindow::PMain_changeD1sbox(int s)
     connect(view3DWidget, SIGNAL(changeZCut1(int)), this, SLOT(Vaa3D_changeZCut1(int)));
 }
 
+/**********************************************************************************
+* Alignes the given widget to the left(right) of the current window
+***********************************************************************************/
 void CExplorerWindow::alignToLeft(QWidget* widget)
 {
     widget->move(window3D->x() + window3D->width() + 3, window3D->y());
+    widget->setMaximumHeight(std::max(window3D->height(),widget->height()));
+    widget->resize(widget->width(), window3D->height());
+}
+void CExplorerWindow::alignToRight(QWidget* widget)
+{
+    widget->move(window3D->x() - widget->width() - 3, window3D->y());
     widget->setMaximumHeight(std::max(window3D->height(),widget->height()));
     widget->resize(widget->width(), window3D->height());
 }

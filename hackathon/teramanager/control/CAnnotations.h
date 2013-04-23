@@ -18,20 +18,37 @@ struct teramanager::annotation
     annotation* next;           //next annotation handle (used in case of linked structures)
     void* container;            //address of the container object
 
-    annotation(){
+    annotation() throw (MyException){
         type = subtype  = teramanager::undefined_int32;
         r = x = y = z = teramanager::undefined_real32;
         prev = next = 0;
-        ID = ++total;
         name = comment = "";
         color.r = color.g = color.b = color.a = 0;
         container = 0;
+        if(!recyclableIDs.empty())
+        {
+            ID = recyclableIDs.front();
+            recyclableIDs.pop_front();
+        }
+        else if(!availableIDs.empty())
+        {
+            ID = availableIDs.front();
+            availableIDs.pop_front();
+        }
+        else
+        {
+            char errMsg[STATIC_STRING_SIZE];
+            sprintf(errMsg, "in annotation(): no more IDs available. Possible reasons are too many annotations inseted (maximum is %d) or a memory leak."
+                    "\n\nPlease signal this bug to the developers.", MAX_ANNOTATIONS_NUMBER);
+            throw MyException(errMsg);
+        }
     }
     ~annotation(){
-
+        recyclableIDs.push_back(ID);
     }
 
-    static int total;
+    static std::list<int> availableIDs;     //list of available IDs, i.e. IDs that can be assigned and that were never assigned before
+    static std::list<int> recyclableIDs;    //list of recyclable IDs, i.e. IDs that can be assigned after their owner has been destroyed
 };
 
 class teramanager::CAnnotations
@@ -165,7 +182,11 @@ class teramanager::CAnnotations
         static CAnnotations* instance(uint32 volHeight, uint32 volWidth, uint32 volDepth)
         {
             if (uniqueInstance == 0)
+            {
+                for(int i=0; i<teramanager::MAX_ANNOTATIONS_NUMBER; i++)
+                    annotation::availableIDs.push_back(i);
                 uniqueInstance = new CAnnotations(volHeight, volWidth, volDepth);
+            }
             return uniqueInstance;
         }
         static CAnnotations* getInstance() throw (MyException)
@@ -201,7 +222,7 @@ class teramanager::CAnnotations
         /*********************************************************************************
         * Removes all the annotations from the octree
         **********************************************************************************/
-        void clear()  throw (MyException) {this->octree->clear(); annotation::total = 0;}
+        void clear()  throw (MyException) {this->octree->clear();}
 
 
 };

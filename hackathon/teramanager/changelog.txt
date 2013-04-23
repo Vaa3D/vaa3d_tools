@@ -11,6 +11,15 @@ ties names are:
 - Rem: a feature no longer available
 
 ============================================================================================
+Version 0.7.8
+April 22th, 2013
+--------------------------------------------------------------------------------------------
+- Dev: added methods to align plugin GUI both to the left or to right of the 3D renderer.
+- Opt: minor changes to the layout of the GUI.
+- New: added left toolbar with the same buttons/actions of the menuBar.
+--------------------------------------------------------------------------------------------
+
+
 Version 0.7.7
 April 22th, 2013
 --------------------------------------------------------------------------------------------
