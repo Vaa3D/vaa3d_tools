@@ -11,6 +11,18 @@ ties names are:
 - Rem: a feature no longer available
 
 ============================================================================================
+Version 0.7.10
+April 24th, 2013
+--------------------------------------------------------------------------------------------
+- Fix: fixed a bug which caused incorrect transformation of Vaa3D coordinates.
+- Fix: fixed the appereance of "X","Y","Z" labels in the "Translation:"  row of the GUI. Now
+       it looks the same on MacOS X too.
+- Fix: fixed a bug in the "zoom-in/out" feature  which  caused 3D  image to be  cropped when
+       resizing 3D window and then switching to a different resolution.
+--------------------------------------------------------------------------------------------
+
+
+
 Version 0.7.9
 April 23th, 2013
 --------------------------------------------------------------------------------------------
@@ -25,6 +37,7 @@ April 23th, 2013
        binary file "mdata.bin" or volume map file "vmap.bin".
 - Fix: added text-align CSS property for "X","Y","Z" in the "Translate:" row.
 --------------------------------------------------------------------------------------------
+
 
 
 Version 0.7.8

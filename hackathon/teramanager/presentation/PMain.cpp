@@ -224,13 +224,13 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     zoomSensitivity->installEventFilter(this);
     traslXpos = new QArrowButton(this, QColor(255,0,0), 15, 6, 0, Qt::LeftToRight);
     traslXneg = new QArrowButton(this, QColor(255,0,0), 15, 6, 0, Qt::RightToLeft);
-    traslXlabel = new QLabel("X");
+    traslXlabel = new QLabel("");
     traslYpos = new QArrowButton(this, QColor(0,200,0), 15, 6, 0, Qt::LeftToRight);
     traslYneg = new QArrowButton(this, QColor(0,200,0), 15, 6, 0, Qt::RightToLeft);
-    traslYlabel = new QLabel("Y");
+    traslYlabel = new QLabel("");
     traslZpos = new QArrowButton(this, QColor(0,0,255), 15, 6, 0, Qt::LeftToRight);
     traslZneg = new QArrowButton(this, QColor(0,0,255), 15, 6, 0, Qt::RightToLeft);
-    traslZlabel = new QLabel("Z");
+    traslZlabel = new QLabel("");
     traslXpos->installEventFilter(this);
     traslXneg->installEventFilter(this);
     traslYpos->installEventFilter(this);
@@ -502,12 +502,12 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
 //    multiresModePanelLayout->addWidget(new QLabel("MVoxels"),                   2, 5, 1, 9);
     multiresModePanelLayout->addWidget(new QLabel("Zoom-in/out sens:"),         4, 0, 1, 1);
     multiresModePanelLayout->addWidget(zoomSensitivity,                         4, 2, 1, 11);
-    traslXneg->setMaximumWidth(30);
-    traslXpos->setMaximumWidth(30);
-    traslYneg->setMaximumWidth(30);
-    traslYpos->setMaximumWidth(30);
-    traslZneg->setMaximumWidth(30);
-    traslZpos->setMaximumWidth(30);
+    traslXneg->setMaximumWidth(25);
+    traslXpos->setMaximumWidth(25);
+    traslYneg->setMaximumWidth(25);
+    traslYpos->setMaximumWidth(25);
+    traslZneg->setMaximumWidth(25);
+    traslZpos->setMaximumWidth(25);
     multiresModePanelLayout->addWidget(new QLabel("Translate:"),                5, 0, 1, 1);
     multiresModePanelLayout->addWidget(traslXneg,                               5, 2, 1, 1);
     multiresModePanelLayout->addWidget(traslXlabel,                             5, 3, 1, 1);
@@ -634,9 +634,15 @@ void PMain::reset()
     zoominVoiSize->setText("n.a.");
     while(resolution_cbox->count())
         resolution_cbox->removeItem(0);
-    traslXlabel->setStyleSheet("text-align:center;");
-    traslYlabel->setStyleSheet("text-align:center;");
-    traslZlabel->setStyleSheet("text-align:center;");
+    traslXlabel->setAlignment(Qt::AlignCenter);
+    traslXlabel->setTextFormat(Qt::RichText);
+    traslXlabel->setText("<font size=\"4\">X</font>");
+    traslYlabel->setAlignment(Qt::AlignCenter);
+    traslYlabel->setTextFormat(Qt::RichText);
+    traslYlabel->setText("<font size=\"4\">Y</font>");
+    traslZlabel->setAlignment(Qt::AlignCenter);
+    traslZlabel->setTextFormat(Qt::RichText);
+    traslZlabel->setText("<font size=\"4\">Z</font>");
     traslXpos->setEnabled(false);
     traslXneg->setEnabled(false);
     traslYpos->setEnabled(false);
@@ -1071,9 +1077,9 @@ void PMain::importDone(MyException *ex, Image4DSimple* vmap_image)
             }
 
             //updating traslation widgets
-            traslXlabel->setStyleSheet("color: rgb(255,0,0); font-weight:bold; text-align:center");
-            traslYlabel->setStyleSheet("color: rgb(0,200,0); font-weight:bold; text-align:center");
-            traslZlabel->setStyleSheet("color: rgb(0,0,255); font-weight:bold; text-align:center");
+            traslXlabel->setText("<font size=\"4\" color=\"red\"><b>X</b></font>");
+            traslYlabel->setText("<font size=\"4\" color=\"green\"><b>Y</b></font>");
+            traslZlabel->setText("<font size=\"4\" color=\"blue\"><b>Z</b></font>");
 
             //instantiating CAnnotations
             CAnnotations::instance(volume->getDIM_V(), volume->getDIM_H(), volume->getDIM_D());

@@ -55,7 +55,7 @@ class teramanager::CExplorerWindow : public QWidget
         string title;                   //title of current window
         bool toBeClosed;                //true when the current window is marked as going to be closed
         bool isActive;                  //false when the current window is set as not active (e.g. when after zooming-in/out)
-        int zoomT0, zoomT1;             //last 2 zoom values
+        int zoomHistory[ZOOM_HISTORY_SIZE];//last 4 zoom values
         std::list<LocationSimple> loaded_markers; //list of markers loaded from <CAnnotations> when the current view is created
         std::list<NeuronSWC> loaded_curves;       //list of curve points loaded from <CAnnotations> when the current view is created
         int V0_sbox_min, V0_sbox_val;   //to save the state of subvolume spinboxes when the current window is hidden
@@ -80,12 +80,12 @@ class teramanager::CExplorerWindow : public QWidget
         * resolution volume image space. If resIndex is not set, the returned global coord-
         * inate will be in the highest resolution image space.
         ***********************************************************************************/
-        int getGlobalVCoord(int localVCoord, int resIndex = -1, bool fromVaa3Dcoordinates = true);
-        int getGlobalHCoord(int localHCoord, int resIndex = -1, bool fromVaa3Dcoordinates = true);
-        int getGlobalDCoord(int localDCoord, int resIndex = -1, bool fromVaa3Dcoordinates = true);
-        float getGlobalVCoord(float localVCoord, int resIndex = -1, bool fromVaa3Dcoordinates = true);
-        float getGlobalHCoord(float localHCoord, int resIndex = -1, bool fromVaa3Dcoordinates = true);
-        float getGlobalDCoord(float localDCoord, int resIndex = -1, bool fromVaa3Dcoordinates = true);
+        int getGlobalVCoord(int localVCoord, int resIndex = -1, bool fromVaa3Dcoordinates = false);
+        int getGlobalHCoord(int localHCoord, int resIndex = -1, bool fromVaa3Dcoordinates = false);
+        int getGlobalDCoord(int localDCoord, int resIndex = -1, bool fromVaa3Dcoordinates = false);
+        float getGlobalVCoord(float localVCoord, int resIndex = -1, bool fromVaa3Dcoordinates = false);
+        float getGlobalHCoord(float localHCoord, int resIndex = -1, bool fromVaa3Dcoordinates = false);
+        float getGlobalDCoord(float localDCoord, int resIndex = -1, bool fromVaa3Dcoordinates = false);
 
         /**********************************************************************************
         * Returns the local coordinate (which starts from 0) in the current resolution vol-
@@ -201,7 +201,7 @@ class teramanager::CExplorerWindow : public QWidget
         * Called by the current <CExplorerWindow> when the user zooms in and the higher res-
         * lution has to be loaded.
         ***********************************************************************************/
-        void newView(int x, int y, int z, int resolution, bool fromVaa3Dcoordinates = true,
+        void newView(int x, int y, int z, int resolution, bool fromVaa3Dcoordinates = false,
                      int dx=-1, int dy=-1, int dz=-1);
 
         /**********************************************************************************
@@ -233,6 +233,45 @@ class teramanager::CExplorerWindow : public QWidget
         ***********************************************************************************/
         void alignToLeft(QWidget* widget);
         void alignToRight(QWidget* widget);
+
+        /**********************************************************************************
+        * Activates / deactives the current window (in terms of responding to events)
+        ***********************************************************************************/
+        void setActive(bool active)
+        {
+            #ifdef TMP_DEBUG
+            printf("--------------------- teramanager plugin [thread %d] >> CExplorerWindow[\"%s\"] setActive(%s)\n",
+                   this->thread()->currentThreadId(), title.c_str() , active ? "true" : "false");
+            #endif
+
+            isActive = active;
+        }
+
+        /**********************************************************************************
+        * Zoom history methods (inline because the are called frequently)
+        ***********************************************************************************/
+        inline void resetZoomHistory(){
+            for(int i=0; i<ZOOM_HISTORY_SIZE; i++)
+                zoomHistory[i] = int_inf;
+        }
+        inline bool isZoomDerivativePos(){
+            for(int i=1; i<ZOOM_HISTORY_SIZE; i++)
+                if(zoomHistory[i-1] == int_inf || zoomHistory[i] <= zoomHistory[i-1])
+                    return false;
+            return true;
+        }
+        inline bool isZoomDerivativeNeg(){
+            for(int i=1; i<ZOOM_HISTORY_SIZE; i++)
+                if(zoomHistory[i-1] == int_inf || zoomHistory[i] >= zoomHistory[i-1])
+                    return false;
+            return true;
+        }
+        inline bool zoomHistoryPushBack(int zoom){
+            if(zoomHistory[ZOOM_HISTORY_SIZE-1] != zoom)
+                for(int i=0; i<ZOOM_HISTORY_SIZE-1; i++)
+                    zoomHistory[i] = zoomHistory[i+1];
+            zoomHistory[ZOOM_HISTORY_SIZE-1] = zoom;
+        }
 
         //PMain instance is allowed to access class private members
         friend class PMain;
