@@ -532,6 +532,7 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     innerLayout->addStretch(1);
     innerLayout->addWidget(helpBox, 0, Qt::AlignBottom);
     innerLayout->setContentsMargins(10, 5, 10, 10);
+    innerLayout->setSpacing(5);
     centralLayout->addWidget(toolBar, 0);
     centralLayout->addLayout(innerLayout, 1);
     bottomLayout->addWidget(statusBar);
@@ -633,9 +634,9 @@ void PMain::reset()
     zoominVoiSize->setText("n.a.");
     while(resolution_cbox->count())
         resolution_cbox->removeItem(0);
-    traslXlabel->setStyleSheet("");
-    traslYlabel->setStyleSheet("");
-    traslZlabel->setStyleSheet("");
+    traslXlabel->setStyleSheet("text-align:center;");
+    traslYlabel->setStyleSheet("text-align:center;");
+    traslZlabel->setStyleSheet("text-align:center;");
     traslXpos->setEnabled(false);
     traslXneg->setEnabled(false);
     traslYpos->setEnabled(false);
@@ -700,14 +701,7 @@ void PMain::loadButtonClicked()
         statusBar->showMessage("Loading selected subvolume...");
 
         //starting operation
-        //the object that will catch the SIGNAL emitted from CVolume is the last CExplorerWindow if multiresolution mode is enabled
-        if(enableMultiresMode->isChecked() && CExplorerWindow::getLast())
-        {
-            CVolume::instance()->setVoi(CExplorerWindow::getLast(), CImport::instance()->getResolutions()-1, V0_sbox->value()-1, V1_sbox->value()-1,H0_sbox->value()-1, H1_sbox->value()-1, D0_sbox->value()-1, D1_sbox->value()-1);
-            CExplorerWindow::getLast()->saveSubvolSpinboxState();
-        }
-        else
-            CVolume::instance()->setVoi(this, CImport::instance()->getResolutions()-1, V0_sbox->value()-1, V1_sbox->value()-1,H0_sbox->value()-1, H1_sbox->value()-1, D0_sbox->value()-1, D1_sbox->value()-1);
+        CVolume::instance()->setVoi(this, CImport::instance()->getResolutions()-1, V0_sbox->value()-1, V1_sbox->value()-1,H0_sbox->value()-1, H1_sbox->value()-1, D0_sbox->value()-1, D1_sbox->value()-1);
         CVolume::instance()->start();
     }
     catch(MyException &ex)
@@ -743,6 +737,9 @@ void PMain::openVolume()
         //checking that the inserted path exists
         if(!StackedVolume::fileExists(import_path.c_str()))
             throw MyException("The inserted path does not exist!");
+
+        //storing the path into CSettings
+        CSettings::instance()->setVolumePathLRU(import_path);
 
         //check if additional informations are required
         string mdata_fpath = import_path;
@@ -1074,9 +1071,9 @@ void PMain::importDone(MyException *ex, Image4DSimple* vmap_image)
             }
 
             //updating traslation widgets
-            traslXlabel->setStyleSheet("color: rgb(255,0,0); font-weight:bold;");
-            traslYlabel->setStyleSheet("color: rgb(0,200,0); font-weight:bold;");
-            traslZlabel->setStyleSheet("color: rgb(0,0,255); font-weight:bold;");
+            traslXlabel->setStyleSheet("color: rgb(255,0,0); font-weight:bold; text-align:center");
+            traslYlabel->setStyleSheet("color: rgb(0,200,0); font-weight:bold; text-align:center");
+            traslZlabel->setStyleSheet("color: rgb(0,0,255); font-weight:bold; text-align:center");
 
             //instantiating CAnnotations
             CAnnotations::instance(volume->getDIM_V(), volume->getDIM_H(), volume->getDIM_D());
@@ -1181,7 +1178,7 @@ void PMain::resolutionIndexChanged(int i)
 
     try
     {
-        if(CExplorerWindow::getLast() && i != CExplorerWindow::getLast()->getResIndex())
+        if(CExplorerWindow::getCurrent() && i > CExplorerWindow::getCurrent()->getResIndex())
         {
             int voiV0 = CVolume::scaleVCoord(V0_sbox->value()-1, CImport::instance()->getResolutions()-1, i);
             int voiV1 = CVolume::scaleVCoord(V1_sbox->value()-1, CImport::instance()->getResolutions()-1, i);
@@ -1192,7 +1189,11 @@ void PMain::resolutionIndexChanged(int i)
             float MVoxels = ((voiV1-voiV0+1)/1024.0f)*((voiH1-voiH0+1)/1024.0f)*(voiD1-voiD0+1);
             if(QMessageBox::Yes == QMessageBox::question(this, "Confirm", QString("The volume to be loaded is ").append(QString::number(MVoxels, 'f', 1)).append(" MVoxels big.\n\nDo you confirm?"), QMessageBox::No | QMessageBox::Yes, QMessageBox::Yes))
             {
-                CVolume::instance()->setVoi(CExplorerWindow::getLast(), i, voiV0, voiV1+1, voiH0, voiH1+1, voiD0, voiD1+1);
+//                //making the current view the last one, hence breaking the higher res history chain
+//                CExplorerWindow::getCurrent()->makeLastView();
+
+                //voi set
+                CVolume::instance()->setVoi(CExplorerWindow::getCurrent(), i, voiV0, voiV1+1, voiH0, voiH1+1, voiD0, voiD1+1);
 
                 //disabling import form and enabling progress bar animation and tab wait animation
                 progressBar->setEnabled(true);
@@ -1201,11 +1202,15 @@ void PMain::resolutionIndexChanged(int i)
                 loadButton->setEnabled(false);
                 subvol_panel->setEnabled(false);
                 statusBar->showMessage("Loading selected subvolume...");
-                CExplorerWindow::getLast()->saveSubvolSpinboxState();
+
+                //saving state of subvol spinboxes
+                CExplorerWindow::getCurrent()->saveSubvolSpinboxState();
+
+                //launch operation
                 CVolume::instance()->start();
             }
             else
-                resolution_cbox->setCurrentIndex(CExplorerWindow::getLast()->getResIndex());
+                resolution_cbox->setCurrentIndex(CExplorerWindow::getCurrent()->getResIndex());
         }
     }
     catch(MyException &ex)
@@ -1214,7 +1219,7 @@ void PMain::resolutionIndexChanged(int i)
         resetGUI();
         subvol_panel->setEnabled(true);
         loadButton->setEnabled(true);
-        resolution_cbox->setCurrentIndex(CExplorerWindow::getLast()->getResIndex());
+        resolution_cbox->setCurrentIndex(CExplorerWindow::getCurrent()->getResIndex());
     }
 }
 
@@ -1243,7 +1248,7 @@ void PMain::highestVOISizeChanged(int i)
 ***********************************************************************************/
 void PMain::traslXposClicked()
 {
-    CExplorerWindow* expl = CExplorerWindow::getLast();
+    CExplorerWindow* expl = CExplorerWindow::getCurrent();
     if(expl)
         expl->newView((expl->volH1-expl->volH0)/2 + (expl->volH1-expl->volH0)*CSettings::instance()->getTraslX()/100.0f,
                       (expl->volV1-expl->volV0)/2,
@@ -1251,7 +1256,7 @@ void PMain::traslXposClicked()
 }
 void PMain::traslXnegClicked()
 {
-    CExplorerWindow* expl = CExplorerWindow::getLast();
+    CExplorerWindow* expl = CExplorerWindow::getCurrent();
     if(expl)
         expl->newView((expl->volH1-expl->volH0)/2 - (expl->volH1-expl->volH0)*CSettings::instance()->getTraslX()/100.0f,
                       (expl->volV1-expl->volV0)/2,
@@ -1259,7 +1264,7 @@ void PMain::traslXnegClicked()
 }
 void PMain::traslYposClicked()
 {
-    CExplorerWindow* expl = CExplorerWindow::getLast();
+    CExplorerWindow* expl = CExplorerWindow::getCurrent();
     if(expl)
         expl->newView((expl->volH1-expl->volH0)/2,
                       (expl->volV1-expl->volV0)/2 + (expl->volV1-expl->volV0)*CSettings::instance()->getTraslY()/100.0f,
@@ -1267,7 +1272,7 @@ void PMain::traslYposClicked()
 }
 void PMain::traslYnegClicked()
 {
-    CExplorerWindow* expl = CExplorerWindow::getLast();
+    CExplorerWindow* expl = CExplorerWindow::getCurrent();
     if(expl)
         expl->newView((expl->volH1-expl->volH0)/2,
                       (expl->volV1-expl->volV0)/2 - (expl->volV1-expl->volV0)*CSettings::instance()->getTraslY()/100.0f,
@@ -1275,7 +1280,7 @@ void PMain::traslYnegClicked()
 }
 void PMain::traslZposClicked()
 {
-    CExplorerWindow* expl = CExplorerWindow::getLast();
+    CExplorerWindow* expl = CExplorerWindow::getCurrent();
     if(expl)
         expl->newView((expl->volH1-expl->volH0)/2,
                       (expl->volV1-expl->volV0)/2,
@@ -1283,7 +1288,7 @@ void PMain::traslZposClicked()
 }
 void PMain::traslZnegClicked()
 {
-    CExplorerWindow* expl = CExplorerWindow::getLast();
+    CExplorerWindow* expl = CExplorerWindow::getCurrent();
     if(expl)
         expl->newView((expl->volH1-expl->volH0)/2,
                       (expl->volV1-expl->volV0)/2,

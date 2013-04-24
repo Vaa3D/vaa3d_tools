@@ -190,6 +190,11 @@ void CImport::run()
                     volMapWidth  = volumes[volMapIndex]->getDIM_H();
                     volMapDepth  = volumes[volMapIndex]->getDIM_D();
                     FILE *volMapBin = fopen(volMapPath.c_str(), "wb");
+
+                    // --- Alessandro 2013-04-23: added exception when file can't be opened in write mode
+                    if(!volMapBin)
+                        throw MyException(QString("Cannot write volume map at \"").append(volMapPath.c_str()).append("\"\n\nPlease check write permissions on this storage.").toStdString().c_str());
+
                     uint16 verstr_size = static_cast<uint16>(strlen(CPlugin::getMajorVersion().c_str()) + 1);
                     fwrite(&verstr_size, sizeof(uint16), 1, volMapBin);
                     fwrite(CPlugin::getMajorVersion().c_str(), verstr_size, 1, volMapBin);
@@ -213,6 +218,11 @@ void CImport::run()
             //at this point we should have the volume map stored in the volume's directory
             size_t fread_return_val;
             FILE *volMapBin = fopen(volMapPath.c_str(), "rb");
+
+            // --- Alessandro 2013-04-23: added exception when file can't be opened in read mode
+            if(!volMapBin)
+                throw MyException(QString("Cannot read volume map at \"").append(volMapPath.c_str()).append("\"\n\nPlease check read permissions on this storage or whether the path is correct.").toStdString().c_str());
+
 
             //checking plugin version
             uint16 verstr_size;

@@ -560,7 +560,7 @@ void CAnnotations::addLandmarks(LandmarkList* markers) throw (MyException)
        node->name = (*markers)[i].name;
        node->comment = (*markers)[i].comments;
        node->color = (*markers)[i].color;
-       printf("--------------------- teramanager plugin >> inserting marker %d=(%.1f,%.1f,%.1f)\n", node->ID, node->x, node->y, node->z);
+//       printf("--------------------- teramanager plugin >> inserting marker %d=(%.1f,%.1f,%.1f)\n", node->ID, node->x, node->y, node->z);
        octree->insert(*node);
     }
 }
@@ -605,8 +605,8 @@ void CAnnotations::removeLandmarks(std::list<LocationSimple> &markers) throw (My
         {
             annotation* tbd = tbdList.back();
             tbdList.pop_back();
-            printf("--------------------- teramanager plugin >> removing marker %d=(%.1f,%.1f,%.1f)\n",
-                   tbd->ID, tbd->x, tbd->y, tbd->z);
+//            printf("--------------------- teramanager plugin >> removing marker %d=(%.1f,%.1f,%.1f)\n",
+//                   tbd->ID, tbd->x, tbd->y, tbd->z);
             delete tbd;
         }
     }
@@ -652,8 +652,8 @@ void CAnnotations::removeCurves(std::list<NeuronSWC> &curves) throw (MyException
         for(std::list<annotation*>::iterator i = sources.begin(); i != sources.end(); i++)
         {
             annotation* anoP = *i;
-            printf("--------------------- teramanager plugin >> preparing to remove curve whose SOURCE is %d=(%.1f,%.1f,%.1f), address=%d\n",
-                   anoP->ID, anoP->x, anoP->y, anoP->z, anoP);
+//            printf("--------------------- teramanager plugin >> preparing to remove curve whose SOURCE is %d=(%.1f,%.1f,%.1f), address=%d\n",
+//                   anoP->ID, anoP->x, anoP->y, anoP->z, anoP);
             while(anoP)
             {
                 static_cast<Octree::octant*>(anoP->container)->annotations.remove(anoP);
@@ -665,8 +665,8 @@ void CAnnotations::removeCurves(std::list<NeuronSWC> &curves) throw (MyException
         {
             annotation* tbd = tbdList.back();
             tbdList.pop_back();
-            printf("--------------------- teramanager plugin >> removing curve point %d=(%.1f,%.1f,%.1f)\n",
-                   tbd->ID, tbd->x, tbd->y, tbd->z);
+//            printf("--------------------- teramanager plugin >> removing curve point %d=(%.1f,%.1f,%.1f)\n",
+//                   tbd->ID, tbd->x, tbd->y, tbd->z);
             delete tbd;
         }
     }
@@ -693,7 +693,7 @@ void CAnnotations::addCurves(NeuronTree* curves) throw (MyException)
         ann->x = i->x;
         ann->y = i->y;
         ann->z = i->z;
-        printf("--------------------- teramanager plugin >> inserting curve point %d(n=%d)=(%.1f,%.1f,%.1f)\n", ann->ID, i->n, ann->x, ann->y, ann->z);
+//        printf("--------------------- teramanager plugin >> inserting curve point %d(n=%d)=(%.1f,%.1f,%.1f)\n", ann->ID, i->n, ann->x, ann->y, ann->z);
         octree->insert(*ann);
         annotationsMap[i->n] = ann;
         swcMap[i->n] = &(*i);
@@ -704,7 +704,7 @@ void CAnnotations::addCurves(NeuronTree* curves) throw (MyException)
         if(i->second->prev)
             i->second->prev->next = i->second;
     }
-    printf("--------------------- teramanager plugin >> inserted %d curve points\n", annotationsMap.size());
+//    printf("--------------------- teramanager plugin >> inserted %d curve points\n", annotationsMap.size());
 }
 
 /*********************************************************************************
@@ -939,51 +939,4 @@ void CAnnotations::load(const char* filepath) throw (MyException)
 
     }
     fclose(f);
-
-
-    //            string swcFilePath = dir.absoluteFilePath().append(filename);
-    //            FILE* swcFile = fopen(swcFilePath.c_str(), "r");
-    //            if(!swcFile)
-    //            {
-    //                sprintf(errMsg, "in CAnnotations::save(): cannot load file \"%s\"", swcFilePath.c_str());
-    //                throw MyException(errMsg);
-    //            }
-    //            fgets(lineBuf, FILE_LINE_BUFFER_SIZE, f);
-    //            fgets(lineBuf, FILE_LINE_BUFFER_SIZE, f);
-    //            fgets(lineBuf, FILE_LINE_BUFFER_SIZE, f);
-    //            while(fgets(lineBuf, FILE_LINE_BUFFER_SIZE, f))
-    //            {
-    //                //reading i-th annotation fields
-    //                int ID=-1, type=-1, parent=-1;
-    //                float x=-1.0f, y=-1.0f, z=-1.0f, radius=-1.0f;
-    //                if(sscanf(lineBuf, "%d %d %d %f %f %f %f %d", &ID, &type, &x, &y, &z, &radius, &parent) != 7)
-    //                {
-    //                    sprintf(errMsg, "in CAnnotations::load(const char* filepath = \"%s\"): expected line \"%s\", found \"%s\"",
-    //                            filepath, "<number> <number> <number> <number> <number> <number> <number>", lineBuf);
-    //                    throw MyException(errMsg);
-    //                }
-
-    //                //checking if there are duplicates
-    //                if(annotations.find(ID) != annotations.end())
-    //                {
-    //                    sprintf(errMsg, "in CAnnotations::load(const char* filepath = \"%s\"): duplicate annotation elements found", lineBuf);
-    //                    throw MyException(errMsg);
-    //                }
-
-    //                //inserting annotation
-    //                annotation* ann = new annotation(ID, 1, subtype, x, y, z, radius, 0, 0);
-    //                octree->insert(*ann);
-
-    //                //linking annotation to its predecessor (this is possible IFF annotations are stored in ascending order on the ID column)
-    //                if(parent != -1)
-    //                {
-    //                    if(annotations.find(parent) == annotations.end())
-    //                    {
-    //                        sprintf(errMsg, "in CAnnotations::load(const char* filepath = \"%s\"): annotations are not in ascending order on the ID column", lineBuf);
-    //                        throw MyException(errMsg);
-    //                    }
-    //                    ann->prev = annotations[parent];
-    //                    ann->prev->next = ann;
-    //                }
-    //            }
 }

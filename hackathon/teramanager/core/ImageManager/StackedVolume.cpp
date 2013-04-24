@@ -154,7 +154,16 @@ void StackedVolume::save(char* metadata_filepath) throw (MyException)
 	FILE *file;
 	int i,j;
 
-	file = fopen(metadata_filepath, "wb");
+        file = fopen(metadata_filepath, "wb");
+
+        // --- Alessandro 2013-04-23: added exception when file can't be opened in write mode
+        if(!file)
+        {
+            char errMsg[IM_STATIC_STRINGS_SIZE];
+            sprintf(errMsg, "in StackedVolume::save(): cannot write metadata binary file at \"%s\".\n\nPlease check write permissions on this storage.", metadata_filepath);
+            throw MyException(errMsg);
+        }
+
         float mdata_version = static_cast<float>(IM_METADATA_FILE_VERSION);
         fwrite(&mdata_version, sizeof(float), 1, file); // --- Alessandro 2012-12-31: added field for metadata file version
         //str_size = (uint16)(strlen(root_dir) + 1);    // --- Alessandro 2012-12-31: absolute filepaths in mdata.bin eliminated
@@ -197,6 +206,14 @@ void StackedVolume::load(char* metadata_filepath) throw (MyException)
 	size_t fread_return_val;
 
 	file = fopen(metadata_filepath, "rb");
+
+        // --- Alessandro 2013-04-23: added exception when file can't be opened in read mode
+        if(!file)
+        {
+            char errMsg[IM_STATIC_STRINGS_SIZE];
+            sprintf(errMsg, "in StackedVolume::load(): cannot read metadata binary file at \"%s\".\n\nPlease check read permissions on this storage.", metadata_filepath);
+            throw MyException(errMsg);
+        }
 
         // --- Alessandro 2012-12-31: added field for metadata file version
         float mdata_version_read = 0;

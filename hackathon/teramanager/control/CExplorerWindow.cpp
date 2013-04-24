@@ -38,16 +38,19 @@
 
 using namespace teramanager;
 
-CExplorerWindow* CExplorerWindow::first = NULL;
-CExplorerWindow* CExplorerWindow::last = NULL;
+CExplorerWindow* CExplorerWindow::first = 0;
+CExplorerWindow* CExplorerWindow::last = 0;
+CExplorerWindow* CExplorerWindow::current = 0;
+int CExplorerWindow::nInstances = 0;
 
 CExplorerWindow::CExplorerWindow(V3DPluginCallback2 *_V3D_env, int _resIndex, uint8 *imgData, int _volV0, int _volV1,
-                                 int _volH0, int _volH1, int _volD0, int _volD1, int _nchannels, CExplorerWindow *_prev) : QWidget()
+                                 int _volH0, int _volH1, int _volD0, int _volD1, int _nchannels, CExplorerWindow *_prev): QWidget()
 {
     //initializations
+    this->isActive = false;
     this->V3D_env = _V3D_env;
     this->prev = _prev;
-    this->next = NULL;
+    this->next = 0;
     this->volResIndex = _resIndex;
     this->volV0 = _volV0;
     this->volV1 = _volV1;
@@ -57,6 +60,7 @@ CExplorerWindow::CExplorerWindow(V3DPluginCallback2 *_V3D_env, int _resIndex, ui
     this->volD1 = _volD1;
     this->nchannels = _nchannels;
     this->toBeClosed = false;
+    this->zoomT0 = this->zoomT1 = int_inf;
     char ctitle[1024];
     sprintf(ctitle, "Res(%d x %d x %d),Volume X=[%d,%d], Y=[%d,%d], Z=[%d,%d], %d channels", CImport::instance()->getVolume(volResIndex)->getDIM_H(),
             CImport::instance()->getVolume(volResIndex)->getDIM_V(), CImport::instance()->getVolume(volResIndex)->getDIM_D(),
@@ -71,6 +75,20 @@ CExplorerWindow::CExplorerWindow(V3DPluginCallback2 *_V3D_env, int _resIndex, ui
 
     try
     {
+        //making prev (if exist) the last view and checking that it belongs to a lower resolution
+        if(prev)
+        {
+            prev->makeLastView();
+            if(prev->volResIndex > volResIndex)
+                throw MyException("in CExplorerWindow(): attempting to break the ascending order of resolution history. This feature is not supported yet.");
+        }
+
+        //check that the number of instantiated objects does not exceed the number of available resolutions
+        nInstances++;
+        if(nInstances > CImport::instance()->getResolutions())
+            throw MyException(QString("in CExplorerWindow(): exceeded the maximum number of views opened at the same time.\n\nPlease signal this issue to developers.").toStdString().c_str());
+
+
         //opening tri-view window
         this->window = V3D_env->newImageWindow(QString(title.c_str()));
         Image4DSimple* image = new Image4DSimple();
@@ -113,14 +131,12 @@ CExplorerWindow::CExplorerWindow(V3DPluginCallback2 *_V3D_env, int _resIndex, ui
 
             //positioning the current 3D window exactly at the previous window position
             QPoint location = prev->window3D->pos();
-            prev->window3D->setVisible(false);
             window3D->resize(prev->window3D->size());
-            printf("Calling window3D->move() in the IF of constructor\n");
             window3D->move(location);
 
             //hiding both tri-view and 3D view
-            prev->triViewWidget->setVisible(false);
             prev->window3D->setVisible(false);
+            prev->triViewWidget->setVisible(false);
             prev->view3DWidget->setCursor(Qt::ArrowCursor);
 
             //registrating views: ---- Alessandro 2013-04-18 fixed: determining unique triple of rotation angles and assigning absolute rotation
@@ -148,8 +164,9 @@ CExplorerWindow::CExplorerWindow(V3DPluginCallback2 *_V3D_env, int _resIndex, ui
             window3D->move(window_x, window_y);
         }
 
-        //registrating the current window as the last window of the multiresolution explorer windows chain
+        //registrating the current window as the last and current window of the multiresolution explorer windows chain
         CExplorerWindow::last = this;
+        CExplorerWindow::current = this;
 
         //selecting the current resolution in the PMain GUI and disabling previous resolutions
         pMain->resolution_cbox->setCurrentIndex(volResIndex);
@@ -213,18 +230,25 @@ CExplorerWindow::CExplorerWindow(V3DPluginCallback2 *_V3D_env, int _resIndex, ui
 //                                 | Qt::WindowTitleHint
 //                                 | Qt::CustomizeWindowHint | Qt::WindowStaysOnTopHint | Qt::WindowCloseButtonHint);
         window3D->show();
+        isActive = true;
+
+        //saving subvol spinboxes state ---- Alessandro 2013-04-23: not sure if this is really needed
+        saveSubvolSpinboxState();
     }
     catch(MyException &ex)
     {
-        QMessageBox::critical(this,QObject::tr("Error"), QObject::tr(ex.what()),QObject::tr("Ok"));
+        QMessageBox::critical(PMain::instance(),QObject::tr("Error"), QObject::tr(ex.what()),QObject::tr("Ok"));
+        PMain::instance()->closeVolume();
     }
     catch(const char* error)
     {
-        QMessageBox::critical(this,QObject::tr("Error"), QObject::tr(error),QObject::tr("Ok"));
+        QMessageBox::critical(PMain::instance(),QObject::tr("Error"), QObject::tr(error),QObject::tr("Ok"));
+        PMain::instance()->closeVolume();
     }
     catch(...)
     {
-        QMessageBox::critical(this,QObject::tr("Error"), QObject::tr("Unknown error occurred"),QObject::tr("Ok"));
+        QMessageBox::critical(PMain::instance(),QObject::tr("Error"), QObject::tr("Unknown error occurred"),QObject::tr("Ok"));
+        PMain::instance()->closeVolume();
     }
 }
 
@@ -237,6 +261,9 @@ CExplorerWindow::~CExplorerWindow()
     //just closing windows
     window3D->close();
     triViewWidget->close();
+
+    //decreasing the number of instantiated objects
+    nInstances--;
 }
 
 
@@ -249,34 +276,55 @@ bool CExplorerWindow::eventFilter(QObject *object, QEvent *event)
 {
     try
     {
+        //ignoring all events when windows is not active
+        if(!isActive)
+        {
+            event->ignore();
+            return true;
+        }
+
+        //storing last two different zoom values
+        if(view3DWidget->zoom() != zoomT1)
+        {
+            zoomT0 = zoomT1;
+            zoomT1 = view3DWidget->zoom();
+        }
+
         /******************** INTERCEPTING ZOOMING EVENTS *************************
         Zoom-in and zoom-out events generated by the current 3D renderer are inter-
         cepted to switch to the higher/lower resolution.
         ***************************************************************************/
-        if (object == view3DWidget && event->type() == QEvent::Wheel)
+        if(zoomT0 != int_inf && zoomT1 != int_inf)
+        //if (object == view3DWidget && event->type() == QEvent::Wheel)
         {
-/*            LandmarkList markers = V3D_env->getLandmark(triViewWidget);
-            if(view3DWidget->zoom() > 30        &&              //zoom-in threshold reached
-               markers.size() == 1)                             //only one marker exists
+            if(next                                                                         &&  //the next resolution exists
+               zoomT1 > zoomT0                                                              &&  //zoom derivative is positive
+               view3DWidget->zoom() > 130 -PMain::instance()->zoomSensitivity->value())         //zoom-in threshold reached
             {
-                switchToHigherRes(markers.first().x, markers.first().y, markers.first().z);
-                markers.clear();
-                V3D_env->setLandmark(triViewWidget, markers);
-                view3DWidget->getRenderer()->updateLandmark();
+                isActive = false;
+                printf("Switching to the next view [z0 = %d, z1 = %d]\n", zoomT0, zoomT1);
+                zoomT0 = zoomT1 = int_inf;
+                next->restoreViewFrom(this);
+                event->ignore();
+                return true;
             }
-            else */ if(view3DWidget->zoom() < -100+PMain::instance()->zoomSensitivity->value() &&   //zoom-out threshold reached
-                    prev                        &&                                                  //the previous resolution exists
-                    !toBeClosed)                                                                    //the current resolution does not have to be closed
+            else if(prev                                                                    &&  //the previous resolution exists
+                    !toBeClosed                                                             &&  //the current resolution does not have to be closed
+                    zoomT1 < zoomT0                                                         &&  //zoom derivative is negative
+                    view3DWidget->zoom() < -100+PMain::instance()->zoomSensitivity->value())    //zoom-out threshold reached
             {
-                //printf("\n\nzoom[%d] < 100-sens[%d]\n\n", view3DWidget->zoom(), PMain::instance()->zoomSensitivity->value());
-                toBeClosed = true;
-                prev->restore();
+                isActive = false;
+                printf("Switching to the prev view [z0 = %d, z1 = %d]\n", zoomT0, zoomT1);
+                zoomT0 = zoomT1 = int_inf;
+                prev->restoreViewFrom(this);
+                event->ignore();
+                return true;
             }
         }
         /****************** INTERCEPTING DOUBLE CLICK EVENTS ***********************
         Double click events are intercepted to switch to the higher resolution.
         ***************************************************************************/
-        else if (object == view3DWidget && event->type() == QEvent::MouseButtonDblClick)
+        if (object == view3DWidget && event->type() == QEvent::MouseButtonDblClick)
         {
             QMouseEvent* mouseEvt = (QMouseEvent*)event;
             XYZ point = getRenderer3DPoint(mouseEvt->x(), mouseEvt->y());
@@ -317,7 +365,7 @@ bool CExplorerWindow::eventFilter(QObject *object, QEvent *event)
     }
     catch(MyException &ex)
     {
-        QMessageBox::critical(this,QObject::tr("Error"), QObject::tr(ex.what()),QObject::tr("Ok"));
+        QMessageBox::critical(PMain::instance(),QObject::tr("Error"), QObject::tr(ex.what()),QObject::tr("Ok"));
         return false;
     }
 }
@@ -401,6 +449,9 @@ void CExplorerWindow::newView(int x, int y, int z, int resolution, bool fromVaa3
     if(resolution >= CImport::instance()->getResolutions())
         resolution = volResIndex;
 
+    //deactivating current window
+    this->isActive = false;
+
     //preparing GUI
     view3DWidget->setCursor(Qt::WaitCursor);
     PMain& pMain = *(PMain::instance());
@@ -425,6 +476,29 @@ void CExplorerWindow::newView(int x, int y, int z, int resolution, bool fromVaa3
 
     //launching thread where the VOI has to be loaded
     CVolume::instance()->start();
+}
+
+/**********************************************************************************
+* Makes the current view the last one by  deleting (and deallocting) its subsequent
+* views.
+***********************************************************************************/
+void CExplorerWindow::makeLastView() throw (MyException)
+{
+    #ifdef TMP_DEBUG
+    printf("--------------------- teramanager plugin [thread %d] >> CExplorerWindow[\"%s\"] makeLastView() launched\n",
+           this->thread()->currentThreadId(), title.c_str());
+    #endif
+
+    if(CExplorerWindow::current != this)
+        throw MyException(QString("in CExplorerWindow::makeLastView(): this view is not the current one, thus can't be make the last view").toStdString().c_str());
+
+    while(CExplorerWindow::last != this)
+    {
+        CExplorerWindow::last = CExplorerWindow::last->prev;
+        CExplorerWindow::last->next->toBeClosed = true;
+        delete CExplorerWindow::last->next;
+        CExplorerWindow::last->next = 0;
+    }
 }
 
 /**********************************************************************************
@@ -573,59 +647,83 @@ void CExplorerWindow::loadAnnotations() throw (MyException)
 }
 
 /**********************************************************************************
-* Restores the current window and destroys the next <CExplorerWindow>.
-* Called by the next <CExplorerWindow> when the user zooms out and  the lower reso-
-* lution has to be reestabilished.
+* Restores the current view from the given (neighboring) view.
+* Called by the next(prev) <CExplorerWindow>  when the user  zooms out(in) and  the
+* lower(higher) resoolution has to be reestabilished.
 ***********************************************************************************/
-void CExplorerWindow::restore() throw (MyException)
+void CExplorerWindow::restoreViewFrom(CExplorerWindow* source) throw (MyException)
 {
     #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread %d] >> CExplorerWindow[\"%s\"] restore() launched\n", this->thread()->currentThreadId(), title.c_str() );
+    printf("--------------------- teramanager plugin [thread %d] >> CExplorerWindow[\"%s\"] restoreViewFrom(view \"%s\") launched\n",
+           this->thread()->currentThreadId(), title.c_str(), source->title.c_str() );
     #endif
 
-    if(next)
+    if(source)
     {
+        //signal disconnections
+        source->disconnect(CVolume::instance(), SIGNAL(sendOperationOutcome(MyException*,void*)), source, SLOT(loadingDone(MyException*,void*)));
+        source->disconnect(source->view3DWidget, SIGNAL(changeXCut0(int)), source, SLOT(Vaa3D_changeXCut0(int)));
+        source->disconnect(source->view3DWidget, SIGNAL(changeXCut1(int)), source, SLOT(Vaa3D_changeXCut1(int)));
+        source->disconnect(source->view3DWidget, SIGNAL(changeYCut0(int)), source, SLOT(Vaa3D_changeYCut0(int)));
+        source->disconnect(source->view3DWidget, SIGNAL(changeYCut1(int)), source, SLOT(Vaa3D_changeYCut1(int)));
+        source->disconnect(source->view3DWidget, SIGNAL(changeZCut0(int)), source, SLOT(Vaa3D_changeZCut0(int)));
+        source->disconnect(source->view3DWidget, SIGNAL(changeZCut1(int)), source, SLOT(Vaa3D_changeZCut1(int)));
+        source->disconnect(PMain::instance()->V0_sbox, SIGNAL(valueChanged(int)), source, SLOT(PMain_changeV0sbox(int)));
+        source->disconnect(PMain::instance()->V1_sbox, SIGNAL(valueChanged(int)), source, SLOT(PMain_changeV1sbox(int)));
+        source->disconnect(PMain::instance()->H0_sbox, SIGNAL(valueChanged(int)), source, SLOT(PMain_changeH0sbox(int)));
+        source->disconnect(PMain::instance()->H1_sbox, SIGNAL(valueChanged(int)), source, SLOT(PMain_changeH1sbox(int)));
+        source->disconnect(PMain::instance()->D0_sbox, SIGNAL(valueChanged(int)), source, SLOT(PMain_changeD0sbox(int)));
+        source->disconnect(PMain::instance()->D1_sbox, SIGNAL(valueChanged(int)), source, SLOT(PMain_changeD1sbox(int)));
+
+        //saving source spinbox state
+        source->saveSubvolSpinboxState();
+
         //registrating views: ---- Alessandro 2013-04-18 fixed: determining unique triple of rotation angles and assigning absolute rotation
-        next->view3DWidget->absoluteRotPose();
-        view3DWidget->doAbsoluteRot(next->view3DWidget->xRot(), next->view3DWidget->yRot(), next->view3DWidget->zRot());
+        source->view3DWidget->absoluteRotPose();
+        view3DWidget->doAbsoluteRot(source->view3DWidget->xRot(), source->view3DWidget->yRot(), source->view3DWidget->zRot());
 
+        //setting zoom only if user has zoomed in
+        if(source->volResIndex < volResIndex)
+        {
+            float ratio = CImport::instance()->getVolume(volResIndex)->getDIM_D()/CImport::instance()->getVolume(source->volResIndex)->getDIM_D();
+            view3DWidget->setZoom(source->view3DWidget->zoom()/ratio);
+        }
 
-        //positioning the current 3D window exactly at the next window position
-        QPoint location = next->window3D->pos();
-        next->window3D->setVisible(false);
+        //positioning the current 3D window exactly at the <source> window position
+        QPoint location = source->window3D->pos();
         triViewWidget->setVisible(true);
         window3D->setVisible(true);
         triViewWidget->setWindowState(Qt::WindowMinimized);        
-        window3D->resize(next->window3D->size());
+        window3D->resize(source->window3D->size());
         window3D->move(location);
 
-        //applying the same color map only if it differs from the next one
-        Renderer_gl2* next_renderer = (Renderer_gl2*)(next->view3DWidget->getRenderer());
+        source->window3D->setVisible(false);
+        source->triViewWidget->setVisible(false);
+        source->view3DWidget->setCursor(Qt::ArrowCursor);
+
+        //applying the same color map only if it differs from the source one
+        Renderer_gl2* source_renderer = (Renderer_gl2*)(source->view3DWidget->getRenderer());
         Renderer_gl2* curr_renderer = (Renderer_gl2*)(view3DWidget->getRenderer());
         bool changed_cmap = false;
         for(int k=0; k<3; k++)
         {
-            RGBA8* next_cmap = next_renderer->colormap[k];
+            RGBA8* source_cmap = source_renderer->colormap[k];
             RGBA8* curr_cmap = curr_renderer->colormap[k];
             for(int i=0; i<256; i++)
             {
-                if(curr_cmap[i].i != next_cmap[i].i)
+                if(curr_cmap[i].i != source_cmap[i].i)
                     changed_cmap = true;
-                curr_cmap[i] = next_cmap[i];
+                curr_cmap[i] = source_cmap[i];
             }
         }
         if(changed_cmap)
             curr_renderer->applyColormapToImage();
 
-        //storing annotations done in the next view
-        next->storeAnnotations();
+        //storing annotations done in the source view
+        source->storeAnnotations();
 
-        //closing next
-        delete next;
-        next = 0;
-
-        //registrating the current window as the last window of the multiresolution explorer windows chain
-        CExplorerWindow::last = this;
+        //registrating the current window as the current window of the multiresolution explorer windows chain
+        CExplorerWindow::current = this;
 
         //selecting the current resolution in the PMain GUI and disabling previous resolutions
         PMain* pMain = PMain::instance();
@@ -674,6 +772,9 @@ void CExplorerWindow::restore() throw (MyException)
 
         //loading annotations of the current view
         this->loadAnnotations();
+
+        //activating current view
+        isActive = true;
     }
 }
 
@@ -727,14 +828,14 @@ void CExplorerWindow::Vaa3D_selectedROI()
     #endif
 
     //the ROI selection is catched only if a <CExplorerWindow> is opened
-    if(last)
+    if(current)
     {
-        v3d_imaging_paras* roi = (v3d_imaging_paras*) last->view3DWidget->getiDrawExternalParameter()->image4d->getCustomStructPointer();
+        v3d_imaging_paras* roi = (v3d_imaging_paras*) current->view3DWidget->getiDrawExternalParameter()->image4d->getCustomStructPointer();
         int roiCenterX = roi->xe-(roi->xe-roi->xs)/2;
         int roiCenterY = roi->ye-(roi->ye-roi->ys)/2;
         int roiCenterZ = roi->ze-(roi->ze-roi->zs)/2;
-        //last->switchToHigherRes(roiCenterX, roiCenterY, roiCenterZ, (roi->xe-roi->xs)/2, (roi->ye-roi->ys)/2, (roi->ze-roi->zs)/2);
-        last->newView(roiCenterX, roiCenterY, roiCenterZ, volResIndex+1);
+        //current->switchToHigherRes(roiCenterX, roiCenterY, roiCenterZ, (roi->xe-roi->xs)/2, (roi->ye-roi->ys)/2, (roi->ze-roi->zs)/2);
+        current->newView(roiCenterX, roiCenterY, roiCenterZ, volResIndex+1);
     }
 }
 

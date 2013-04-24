@@ -54,6 +54,8 @@ class teramanager::CExplorerWindow : public QWidget
         int nchannels;                  //number of image channels
         string title;                   //title of current window
         bool toBeClosed;                //true when the current window is marked as going to be closed
+        bool isActive;                  //false when the current window is set as not active (e.g. when after zooming-in/out)
+        int zoomT0, zoomT1;             //last 2 zoom values
         std::list<LocationSimple> loaded_markers; //list of markers loaded from <CAnnotations> when the current view is created
         std::list<NeuronSWC> loaded_curves;       //list of curve points loaded from <CAnnotations> when the current view is created
         int V0_sbox_min, V0_sbox_val;   //to save the state of subvolume spinboxes when the current window is hidden
@@ -66,6 +68,8 @@ class teramanager::CExplorerWindow : public QWidget
         //CLASS members
         static CExplorerWindow *first;  //pointer to the first window of the multiresolution explorer windows chain
         static CExplorerWindow *last;   //pointer to the last window of the multiresolution explorer windows chain
+        static CExplorerWindow *current;//pointer to the current window of the multiresolution explorer windows chain
+        static int nInstances;          //number of instantiated objects
 
         //inhibiting default constructor
         CExplorerWindow();
@@ -153,7 +157,7 @@ class teramanager::CExplorerWindow : public QWidget
 
         //CONSTRUCTOR, DECONSTRUCTOR
         CExplorerWindow(V3DPluginCallback2* _V3D_env, int _resIndex, uint8* imgData, int _volV0, int _volV1,
-                       int _volH0, int _volH1, int _volD0, int _volD1, int _nchannels, CExplorerWindow* _prev);
+                        int _volH0, int _volH1, int _volD0, int _volD1, int _nchannels, CExplorerWindow* _prev);
         ~CExplorerWindow();
         static void uninstance()
         {
@@ -171,8 +175,8 @@ class teramanager::CExplorerWindow : public QWidget
         }
 
         //GET methods
-        static CExplorerWindow* getLast(){return last;}
-        static CExplorerWindow* getCurrent(){return last;}
+        //static CExplorerWindow* getLast(){return last;}
+        static CExplorerWindow* getCurrent(){return current;}
         int getResIndex(){return volResIndex;}
         V3dR_MainWindow* getWindow3D(){return window3D;}
 
@@ -184,11 +188,11 @@ class teramanager::CExplorerWindow : public QWidget
         bool eventFilter(QObject *object, QEvent *event);
 
         /**********************************************************************************
-        * Restores the current window and destroys the next <CExplorerWindow>.
-        * Called by the next <CExplorerWindow> when the user zooms out and  the lower reso-
-        * olution has to be reestabilished.
+        * Restores the current view from the given (neighboring) source view.
+        * Called by the next(prev) <CExplorerWindow>  when the user  zooms out(in) and  the
+        * lower(higher) resoolution has to be reestabilished.
         ***********************************************************************************/
-        void restore() throw (MyException);
+        void restoreViewFrom(CExplorerWindow* source) throw (MyException);
 
         /**********************************************************************************
         * Generates new view centered at the given 3D point on the given resolution and ha-
@@ -199,6 +203,12 @@ class teramanager::CExplorerWindow : public QWidget
         ***********************************************************************************/
         void newView(int x, int y, int z, int resolution, bool fromVaa3Dcoordinates = true,
                      int dx=-1, int dy=-1, int dz=-1);
+
+        /**********************************************************************************
+        * Makes the current view the last one by  deleting (and deallocting) its subsequent
+        * views.
+        ***********************************************************************************/
+        void makeLastView() throw (MyException);
 
         /**********************************************************************************
         * Annotations are stored/loaded) to/from the <CAnnotations> object

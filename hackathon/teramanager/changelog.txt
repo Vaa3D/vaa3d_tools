@@ -11,6 +11,22 @@ ties names are:
 - Rem: a feature no longer available
 
 ============================================================================================
+Version 0.7.9
+April 23th, 2013
+--------------------------------------------------------------------------------------------
+- New: zoom-in history added! As it already happens with zoom-out, already  visited resolut-
+       tions are maintained in memory so that when  user zooms in and the  higher resolution
+       has already been visited, the corresponding view is quickly recovered and shown. This
+       allows real-time zoom-in/out through  all the  resolutions,  thus  make it possible a 
+       "flight" experience within the brain. 
+- Fix: exceptions incorrectly catched  (message errors not shown)  in the  constructor of 3D
+       navigation window.
+- Fix: throwing exception (and showing an error message) when cannot write/read metadata bi-
+       binary file "mdata.bin" or volume map file "vmap.bin".
+- Fix: added text-align CSS property for "X","Y","Z" in the "Translate:" row.
+--------------------------------------------------------------------------------------------
+
+
 Version 0.7.8
 April 22th, 2013
 --------------------------------------------------------------------------------------------
