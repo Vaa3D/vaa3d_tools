@@ -66,11 +66,13 @@ CExplorerWindow::CExplorerWindow(V3DPluginCallback2 *_V3D_env, int _resIndex, ui
             CImport::instance()->getVolume(volResIndex)->getDIM_V(), CImport::instance()->getVolume(volResIndex)->getDIM_D(),
             volH0+1, volH1, volV0+1, volV1, volD0+1, volD1, nchannels);
     this->title = ctitle;
+    sprintf(ctitle, "Res{%d}), Vol{[%d,%d) [%d,%d) [%d,%d)}", volResIndex, volH0, volH1, volV0, volV1, volD0, volD1);
+    this->titleShort = ctitle;
     V0_sbox_min = V1_sbox_max = H0_sbox_min = H1_sbox_max = D0_sbox_min = D1_sbox_max = V0_sbox_val = V1_sbox_val = H0_sbox_val = H1_sbox_val = D0_sbox_val = D1_sbox_val = -1;
     PMain* pMain = PMain::instance();
 
     #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread %d] >> CExplorerWindow[\"%s\"] created\n", this->thread()->currentThreadId(), title.c_str());
+    printf("--------------------- teramanager plugin [thread %d] >> CExplorerWindow[%s]::CExplorerWindow()\n", this->thread()->currentThreadId()%10, titleShort.c_str());
     #endif
 
     try
@@ -85,32 +87,36 @@ CExplorerWindow::CExplorerWindow(V3DPluginCallback2 *_V3D_env, int _resIndex, ui
 
         //check that the number of instantiated objects does not exceed the number of available resolutions
         nInstances++;
-        if(nInstances > CImport::instance()->getResolutions())
+        #ifdef TMP_DEBUG
+        printf("--------------------- teramanager plugin [thread %d] >> CExplorerWindow::nInstances++, nInstances = %d\n", this->thread()->currentThreadId()%10, nInstances);
+        #endif
+        if(nInstances > CImport::instance()->getResolutions() +1)
             throw MyException(QString("in CExplorerWindow(): exceeded the maximum number of views opened at the same time.\n\nPlease signal this issue to developers.").toStdString().c_str());
 
 
         //deactivating previous window and activating the current one
         if(prev)
         {
+            prev->view3DWidget->removeEventFilter(prev);
+            prev->window3D->removeEventFilter(prev);
             prev->resetZoomHistory();
             prev->setActive(false);
         }
         setActive(true);
 
-        //opening tri-view window
+        //opening tri-view window (and hiding it asap)
         this->window = V3D_env->newImageWindow(QString(title.c_str()));
+        this->triViewWidget = (XFormWidget*)window;
+        triViewWidget->setWindowState(Qt::WindowMinimized);
         Image4DSimple* image = new Image4DSimple();
         image->setFileName(title.c_str());
         image->setData(imgData, volH1-volH0, volV1-volV0, volD1-volD0, nchannels, V3D_UINT8);
         V3D_env->setImage(window, image);
-        this->triViewWidget = (XFormWidget*)window;
 
-        //opening 3D view window and hiding the tri-view window
+        //opening 3D view window
         V3D_env->open3DWindow(window);
         view3DWidget = (V3dR_GLWidget*)(V3D_env->getView3DControl(window));
-        view3DWidget->setVolCompress(false);
         window3D = view3DWidget->getiDrawExternalParameter()->window3D;
-        triViewWidget->setWindowState(Qt::WindowMinimized);
 
         //installing the event filter on the 3D renderer and on the 3D window
         view3DWidget->installEventFilter(this);
@@ -193,6 +199,8 @@ CExplorerWindow::CExplorerWindow(V3DPluginCallback2 *_V3D_env, int _resIndex, ui
             else
                 pMain->resolution_cbox->model()->setData( index, v2, Qt::UserRole -1);
         }
+        pMain->gradientBar->setStep(volResIndex);
+        pMain->gradientBar->update();
 
         //disabling translate buttons if needed
         pMain->traslYneg->setEnabled(volV0 > 0);
@@ -231,13 +239,15 @@ CExplorerWindow::CExplorerWindow(V3DPluginCallback2 *_V3D_env, int _resIndex, ui
         connect(PMain::instance()->D0_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeD0sbox(int)));
         connect(PMain::instance()->D1_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeD1sbox(int)));
 
+        //disabling volume compression
+        view3DWidget->setVolCompress(false);
+
         //changing window flags (disabling minimize/maximize buttons)
-        window3D->setWindowFlags(Qt::WindowStaysOnTopHint);
         // ---- Alessandro 2013-04-22 fixed: this causes (somehow) window3D not to respond correctly to the move() method
 //        window3D->setWindowFlags(Qt::Tool
 //                                 | Qt::WindowTitleHint
 //                                 | Qt::CustomizeWindowHint | Qt::WindowStaysOnTopHint | Qt::WindowCloseButtonHint);
-        window3D->show();
+        //window3D->show();
 
         //saving subvol spinboxes state ---- Alessandro 2013-04-23: not sure if this is really needed
         saveSubvolSpinboxState();
@@ -257,20 +267,36 @@ CExplorerWindow::CExplorerWindow(V3DPluginCallback2 *_V3D_env, int _resIndex, ui
         QMessageBox::critical(PMain::instance(),QObject::tr("Error"), QObject::tr("Unknown error occurred"),QObject::tr("Ok"));
         PMain::instance()->closeVolume();
     }
+
+    #ifdef TMP_DEBUG
+    printf("--------------------- teramanager plugin [thread %d] >> CExplorerWindow[%s] created\n", this->thread()->currentThreadId()%10, titleShort.c_str());
+    #endif
 }
 
 CExplorerWindow::~CExplorerWindow()
 {
     #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread %d] >> CExplorerWindow[\"%s\"] destroyed\n", this->thread()->currentThreadId(), title.c_str() );
+    printf("--------------------- teramanager plugin [thread %d] >> CExplorerWindow[%s]::~CExplorerWindow()\n", this->thread()->currentThreadId()%10, titleShort.c_str() );
     #endif
 
+    //removing the event filter from the 3D renderer and from the 3D window
+    view3DWidget->removeEventFilter(this);
+    window3D->removeEventFilter(this);
+
     //just closing windows
-    window3D->close();
+    V3D_env->close3DWindow(window);
     triViewWidget->close();
 
     //decreasing the number of instantiated objects
     nInstances--;
+
+    #ifdef TMP_DEBUG
+    printf("--------------------- teramanager plugin [thread %d] >> CExplorerWindow::nInstances--, nInstances = %d\n", this->thread()->currentThreadId()%10, nInstances);
+    #endif
+
+    #ifdef TMP_DEBUG
+    printf("--------------------- teramanager plugin [thread %d] >> CExplorerWindow[%s] destroyed\n", this->thread()->currentThreadId()%10, titleShort.c_str() );
+    #endif
 }
 
 
@@ -286,7 +312,7 @@ bool CExplorerWindow::eventFilter(QObject *object, QEvent *event)
         //ignoring all events when windows is not active
         if(!isActive)
         {
-            //printf("Ignoring event from CExplorerWindow[\"%s\"] cause it's not active\n", title.c_str());
+            //printf("Ignoring event from CExplorerWindow[%s] cause it's not active\n", title.c_str());
             event->ignore();
             return true;
         }
@@ -340,7 +366,11 @@ bool CExplorerWindow::eventFilter(QObject *object, QEvent *event)
         else if(object == window3D && event->type()==QEvent::Close)
         {
             if(!toBeClosed)
+            {
                 PMain::instance()->closeVolume();
+                event->ignore();
+                return true;
+            }
         }
         /**************** INTERCEPTING MOVING/RESIZING EVENTS *********************
         Window moving and resizing events  are intercepted  to let PMain's position
@@ -381,8 +411,8 @@ bool CExplorerWindow::eventFilter(QObject *object, QEvent *event)
 void CExplorerWindow::loadingDone(MyException *ex, void* sourceObject)
 {
     #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread %d] >> CExplorerWindow[\"%s\"] loadingDone(%s) launched\n",
-           this->thread()->currentThreadId(), title.c_str(),  (ex? "ex" : "NULL"));
+    printf("--------------------- teramanager plugin [thread %d] >> CExplorerWindow[%s]::loadingDone(%s)\n",
+           this->thread()->currentThreadId()%10, titleShort.c_str(),  (ex? "error" : ""));
     #endif
 
     CVolume* cVolume = CVolume::instance();
@@ -414,6 +444,10 @@ void CExplorerWindow::loadingDone(MyException *ex, void* sourceObject)
         //if the resolution of the loaded voi is the same of the current one
         else if(cVolume->getVoiResIndex() == volResIndex)
         {
+            //uninstalling event filter
+            view3DWidget->removeEventFilter(this);
+            window3D->removeEventFilter(this);
+
             //opening a new explorer in the current resolution and closing the current one
             this->next = new CExplorerWindow(this->V3D_env, volResIndex, cVolume->getVoiData(), cVolume->getVoiV0(), cVolume->getVoiV1(),
                                              cVolume->getVoiH0(),cVolume->getVoiH1(), cVolume->getVoiD0(),cVolume->getVoiD1(), cVolume->getNChannels(), this);
@@ -427,7 +461,6 @@ void CExplorerWindow::loadingDone(MyException *ex, void* sourceObject)
     }
 
     //resetting some widgets
-    printf("----- Resetting some widgets....\n");
     PMain::instance()->resetGUI();
     PMain::instance()->subvol_panel->setEnabled(true);
     PMain::instance()->loadButton->setEnabled(true);
@@ -444,8 +477,8 @@ void CExplorerWindow::newView(int x, int y, int z, int resolution, bool fromVaa3
                               int dx /* = -1 */, int dy /* = -1 */, int dz /* = -1 */)
 {
     #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread %d] >> CExplorerWindow[\"%s\"] newView(x = %d, y = %d, z = %d, res = %d, dx=%d, dy=%d, dz=%d) launched\n",
-           this->thread()->currentThreadId(),title.c_str(), x, y, z, resolution, dx, dy, dz );
+    printf("--------------------- teramanager plugin [thread %d] >> CExplorerWindow[%s]::newView(x = %d, y = %d, z = %d, res = %d, dx = %d, dy = %d, dz = %d)\n",
+           this->thread()->currentThreadId()%10,title.c_str(), x, y, z, resolution, dx, dy, dz );
     #endif
 
     //checks
@@ -488,8 +521,8 @@ void CExplorerWindow::newView(int x, int y, int z, int resolution, bool fromVaa3
 void CExplorerWindow::makeLastView() throw (MyException)
 {
     #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread %d] >> CExplorerWindow[\"%s\"] makeLastView() launched\n",
-           this->thread()->currentThreadId(), title.c_str());
+    printf("--------------------- teramanager plugin [thread %d] >> CExplorerWindow[%s]::makeLastView()\n",
+           this->thread()->currentThreadId()%10, titleShort.c_str());
     #endif
 
     if(CExplorerWindow::current != this)
@@ -509,6 +542,11 @@ void CExplorerWindow::makeLastView() throw (MyException)
 ***********************************************************************************/
 void CExplorerWindow::saveSubvolSpinboxState()
 {
+    #ifdef TMP_DEBUG
+    printf("--------------------- teramanager plugin [thread %d] >> CExplorerWindow[%s]::saveSubvolSpinboxState()\n",
+           this->thread()->currentThreadId()%10, titleShort.c_str());
+    #endif
+
     PMain& pMain = *(PMain::instance());
     V0_sbox_min = pMain.V0_sbox->minimum();
     V1_sbox_max = pMain.V1_sbox->maximum();
@@ -524,7 +562,12 @@ void CExplorerWindow::saveSubvolSpinboxState()
     D1_sbox_val = pMain.D1_sbox->value();
 }
 void CExplorerWindow::restoreSubvolSpinboxState()
-{
+{  
+    #ifdef TMP_DEBUG
+    printf("--------------------- teramanager plugin [thread %d] >> CExplorerWindow[%s]::restoreSubvolSpinboxState()\n",
+           this->thread()->currentThreadId()%10, titleShort.c_str());
+    #endif
+
     PMain& pMain = *(PMain::instance());
     pMain.V0_sbox->setMinimum(V0_sbox_min);
     pMain.V1_sbox->setMaximum(V1_sbox_max);
@@ -546,7 +589,7 @@ void CExplorerWindow::restoreSubvolSpinboxState()
 void CExplorerWindow::storeAnnotations() throw (MyException)
 {
     #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread %d] >> CExplorerWindow[\"%s\"] storeAnnotations() launched\n", this->thread()->currentThreadId(), title.c_str() );
+    printf("--------------------- teramanager plugin [thread %d] >> CExplorerWindow[%s]::storeAnnotations()\n", this->thread()->currentThreadId()%10, titleShort.c_str() );
     #endif
 
     /**********************************************************************************
@@ -599,7 +642,7 @@ void CExplorerWindow::storeAnnotations() throw (MyException)
 void CExplorerWindow::loadAnnotations() throw (MyException)
 {
     #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread %d] >> CExplorerWindow[\"%s\"] loadAnnotations() launched\n", this->thread()->currentThreadId(), title.c_str() );
+    printf("--------------------- teramanager plugin [thread %d] >> CExplorerWindow[%s]::loadAnnotations()\n", this->thread()->currentThreadId()%10, titleShort.c_str() );
     #endif
 
     //clearing previous annotations (useful when this view has been already visited)
@@ -657,8 +700,8 @@ void CExplorerWindow::loadAnnotations() throw (MyException)
 void CExplorerWindow::restoreViewFrom(CExplorerWindow* source) throw (MyException)
 {
     #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread %d] >> CExplorerWindow[\"%s\"] restoreViewFrom(view \"%s\") launched\n",
-           this->thread()->currentThreadId(), title.c_str(), source->title.c_str() );
+    printf("--------------------- teramanager plugin [thread %d] >> CExplorerWindow[%s]::restoreViewFrom([%s])\n",
+           this->thread()->currentThreadId()%10, titleShort.c_str(), source->titleShort.c_str() );
     #endif
 
     if(source)
@@ -678,6 +721,8 @@ void CExplorerWindow::restoreViewFrom(CExplorerWindow* source) throw (MyExceptio
         source->disconnect(PMain::instance()->D0_sbox, SIGNAL(valueChanged(int)), source, SLOT(PMain_changeD0sbox(int)));
         source->disconnect(PMain::instance()->D1_sbox, SIGNAL(valueChanged(int)), source, SLOT(PMain_changeD1sbox(int)));
 
+        source->view3DWidget->removeEventFilter(source);
+        source->window3D->removeEventFilter(source);
 
         //saving source spinbox state
         source->saveSubvolSpinboxState();
@@ -696,12 +741,11 @@ void CExplorerWindow::restoreViewFrom(CExplorerWindow* source) throw (MyExceptio
             view3DWidget->setZoom(source->view3DWidget->zoom()/ratio);
         }
 
-
         //positioning the current 3D window exactly at the <source> window position
         QPoint location = source->window3D->pos();
         triViewWidget->setVisible(true);
         window3D->setVisible(true);
-        triViewWidget->setWindowState(Qt::WindowMinimized);        
+        triViewWidget->setWindowState(Qt::WindowMinimized);
         window3D->resize(source->window3D->size());
         window3D->move(location);
 
@@ -750,7 +794,9 @@ void CExplorerWindow::restoreViewFrom(CExplorerWindow* source) throw (MyExceptio
                 pMain->resolution_cbox->model()->setData( index, v1, Qt::UserRole -1);
             else
                 pMain->resolution_cbox->model()->setData( index, v2, Qt::UserRole -1);
-        }
+        }        
+        pMain->gradientBar->setStep(volResIndex);
+        pMain->gradientBar->update();
 
         //restoring min, max and value of PMain GUI VOI's widgets
         restoreSubvolSpinboxState();
@@ -777,6 +823,9 @@ void CExplorerWindow::restoreViewFrom(CExplorerWindow* source) throw (MyExceptio
         connect(PMain::instance()->H1_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeH1sbox(int)));
         connect(PMain::instance()->D0_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeD0sbox(int)));
         connect(PMain::instance()->D1_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeD1sbox(int)));
+
+        view3DWidget->installEventFilter(this);
+        window3D->installEventFilter(this);
 
         //loading annotations of the current view
         this->loadAnnotations();
@@ -831,7 +880,10 @@ XYZ CExplorerWindow::getRenderer3DPoint(int x, int y)  throw (MyException)
 void CExplorerWindow::Vaa3D_selectedROI()
 {
     #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread unknown] >> CExplorerWindow::Vaa3D_selectedROI() launched\n");
+    if(!current)
+        printf("--------------------- teramanager plugin [thread ?] >> CExplorerWindow::Vaa3D_selectedROI()\n");
+    else
+        printf("--------------------- teramanager plugin [thread ?] >> CExplorerWindow[%s]::Vaa3D_selectedROI()\n", current->titleShort.c_str());
     #endif
 
     //the ROI selection is catched only if a <CExplorerWindow> is opened
@@ -1085,12 +1137,20 @@ void CExplorerWindow::PMain_changeD1sbox(int s)
 ***********************************************************************************/
 void CExplorerWindow::alignToLeft(QWidget* widget)
 {
+    #ifdef TMP_DEBUG
+    printf("--------------------- teramanager plugin [thread %d] >> CExplorerWindow[%s]::alignToLeft()\n", this->thread()->currentThreadId()%10, titleShort.c_str() );
+    #endif
+
     widget->move(window3D->x() + window3D->width() + 3, window3D->y());
     widget->setMaximumHeight(std::max(window3D->height(),widget->height()));
     widget->resize(widget->width(), window3D->height());
 }
 void CExplorerWindow::alignToRight(QWidget* widget)
 {
+    #ifdef TMP_DEBUG
+    printf("--------------------- teramanager plugin [thread %d] >> CExplorerWindow[%s]::alignToRight()\n", this->thread()->currentThreadId()%10, titleShort.c_str() );
+    #endif
+
     widget->move(window3D->x() - widget->width() - 3, window3D->y());
     widget->setMaximumHeight(std::max(window3D->height(),widget->height()));
     widget->resize(widget->width(), window3D->height());

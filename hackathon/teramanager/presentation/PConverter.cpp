@@ -42,6 +42,10 @@ PConverter* PConverter::instance(V3DPluginCallback *callback, QWidget *parent)
 }
 void PConverter::uninstance()
 {
+    #ifdef TMP_DEBUG
+    printf("--------------------- teramanager plugin [thread ?] >> PConverter::uninstance()\n");
+    #endif
+
     CConverter::uninstance();
     CSettings::uninstance();
     if(uniqueInstance)
@@ -54,7 +58,7 @@ void PConverter::uninstance()
 PConverter::PConverter(V3DPluginCallback *callback, QWidget *parent) : QWidget(parent)
 {
     #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread %d] >> PConverter created\n", this->thread()->currentThreadId());
+    printf("--------------------- teramanager plugin [thread %d] >> PConverter::PConverter()\n", this->thread()->currentThreadId()%10);
     #endif
 
     //initializing members
@@ -240,12 +244,17 @@ PConverter::PConverter(V3DPluginCallback *callback, QWidget *parent) : QWidget(p
     //set always on top
     this->setWindowFlags(Qt::WindowStaysOnTopHint);
     this->setFocusPolicy(Qt::StrongFocus);
+
+    #ifdef TMP_DEBUG
+    printf("--------------------- teramanager plugin [thread %d] >> PConverter created\n", this->thread()->currentThreadId()%10);
+    #endif
 }
 
 PConverter::~PConverter()
 {
     #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread %d] >> PConverter destroyed\n", this->thread()->currentThreadId());
+    printf("--------------------- teramanager plugin [thread %d] >> PConverter::~PConverter()\n", this->thread()->currentThreadId()%10);
+    printf("--------------------- teramanager plugin [thread %d] >> PConverter destroyed\n", this->thread()->currentThreadId()%10);
     #endif
 }
 
@@ -265,6 +274,10 @@ void PConverter::resetGUI()
 //called when startButton has been clicked
 void PConverter::startButtonClicked()
 {
+    #ifdef TMP_DEBUG
+    printf("--------------------- teramanager plugin [thread %d] >> PConverter::startButtonClicked()\n", this->thread()->currentThreadId()%10);
+    #endif
+
     CConverter::instance()->setMembers(this);
     import_panel->setEnabled(false);
     conversion_panel->setEnabled(false);
@@ -305,6 +318,10 @@ void PConverter::startButtonClicked()
 //called when stopButton has been clicked
 void PConverter::stopButtonClicked()
 {
+    #ifdef TMP_DEBUG
+    printf("--------------------- teramanager plugin [thread %d] >> PConverter::stopButtonClicked()\n", this->thread()->currentThreadId()%10);
+    #endif
+
     if(QMessageBox::information(this, "Warning", "Terminating this step can be unsafe and cause Vaa3D to crash. \n"
                                               "\nPlease save your data first or click on \"Cancel\" and close the "
                                               "plugin to terminate safely this process.", "Continue", "Cancel"))
@@ -329,6 +346,10 @@ void PConverter::stopButtonClicked()
 
 void PConverter::voldirButtonClicked()
 {
+    #ifdef TMP_DEBUG
+    printf("--------------------- teramanager plugin [thread %d] >> PConverter::voldirButtonClicked()\n", this->thread()->currentThreadId()%10);
+    #endif
+
     //obtaining volume's directory
     volpathField->setText(QFileDialog::getExistingDirectory(this, QObject::tr("Select volume's directory"), CSettings::instance()->getVCInputPath().c_str()));
 
@@ -339,6 +360,10 @@ void PConverter::voldirButtonClicked()
 
 void PConverter::volfileButtonClicked()
 {
+    #ifdef TMP_DEBUG
+    printf("--------------------- teramanager plugin [thread %d] >> PConverter::volfileButtonClicked()\n", this->thread()->currentThreadId()%10);
+    #endif
+
     //obtaining volume's filepath
     volpathField->setText(QFileDialog::getOpenFileName(this, QObject::tr("Select Vaa3D raw file"), CSettings::instance()->getVCInputPath().c_str(), "V3D raw files (*.raw *.RAW *.v3draw *.V3DRAW)"));
 
@@ -349,6 +374,10 @@ void PConverter::volfileButtonClicked()
 
 void PConverter::voldiroutButtonClicked()
 {
+    #ifdef TMP_DEBUG
+    printf("--------------------- teramanager plugin [thread %d] >> PConverter::voldiroutButtonClicked()\n", this->thread()->currentThreadId()%10);
+    #endif
+
     //obtaining volume's directory
     voloutpathField->setText(QFileDialog::getExistingDirectory(this, QObject::tr("Select volume's directory"), CSettings::instance()->getVCOutputPath().c_str()));
 }
@@ -394,6 +423,10 @@ void PConverter::volformatChanged ( const QString & text )
 //overrides closeEvent method of QWidget
 void PConverter::closeEvent(QCloseEvent *evt)
 {
+    #ifdef TMP_DEBUG
+    printf("--------------------- teramanager plugin [thread %d] >> PConverter::closeEvent()\n", this->thread()->currentThreadId()%10);
+    #endif
+
     if(progressBar->isEnabled() && QMessageBox::information(this, "Warning", "An operation is still in progress. Terminating it can be unsafe and cause Vaa3D to crash. \n"
                                                                     "\nPlease save your data first.", "Close TeraStitcher plugin", "Cancel"))
     {
@@ -430,7 +463,7 @@ void PConverter::progressBarChanged(int val, int minutes, int seconds, const cha
 void PConverter::operationDone(MyException *ex)
 {
     #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread %d] >> PConverter::operationDone(%s) launched\n", this->thread()->currentThreadId(), (ex? "ex" : "NULL"));
+    printf("--------------------- teramanager plugin [thread %d] >> PConverter::operationDone(%s) launched\n", this->thread()->currentThreadId()%10, (ex? "error" : ""));
     #endif
 
 
@@ -526,6 +559,10 @@ void PConverter::operationDone(MyException *ex)
 ***********************************************************************************/
 void PConverter::updateContent()
 {
+    #ifdef TMP_DEBUG
+    printf("--------------------- teramanager plugin [thread %d] >> PConverter::updateContent()\n", this->thread()->currentThreadId()%10);
+    #endif
+
     try
     {
         //checking that at least one resolution has been selected

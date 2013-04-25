@@ -11,6 +11,30 @@ ties names are:
 - Rem: a feature no longer available
 
 ============================================================================================
+Version 0.7.11
+April 24th, 2013
+--------------------------------------------------------------------------------------------
+- Fix: fixed a bug which caused "exceeded the maximum  number  of  views opened at  the same
+       time" error when navigating through all the resolutions and then translating.
+- Fix: fixed a bug which caused 3D windows to slowly translate  downwards  as new views were
+       generated.
+- Fix: fixed a bug which caused "Volume map" dialog and other dialogs to be shown behind the
+       3D renderer.
+- New: updated "About" section.
+- Opt: eventFilter is removed from a 3D renderer when it is hidden/closed.
+- Fix: fixed a bug which caused "Invalid source resolution  of coordinate mapping operation"
+       error when closing volume after several zooms in/out.
+- New: added gradient bar to show the current solution.
+- Opt: volume compression is disabled only after 3D window is moved to minimize  the "trans-
+       ient" effect.
+- Opt: tri-view window is hidden as soon as possible to minimize the "transients" effect.
+- Dev: added debugging message at the entry point of every function.
+- Fix: fixed a bug which caused window handles to appear  in the "Window" menu of Vaa3D even
+       after they were closed.
+- Fix: fixed a bug which caused incorrent filtering of window close event and crash.
+--------------------------------------------------------------------------------------------
+
+
 Version 0.7.10
 April 24th, 2013
 --------------------------------------------------------------------------------------------

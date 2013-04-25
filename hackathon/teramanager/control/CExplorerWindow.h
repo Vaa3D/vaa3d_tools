@@ -53,6 +53,7 @@ class teramanager::CExplorerWindow : public QWidget
         int volD0, volD1;               //first and last depth coordinates of the volume displayed in the current window
         int nchannels;                  //number of image channels
         string title;                   //title of current window
+        string titleShort;              //short title of current window
         bool toBeClosed;                //true when the current window is marked as going to be closed
         bool isActive;                  //false when the current window is set as not active (e.g. when after zooming-in/out)
         int zoomHistory[ZOOM_HISTORY_SIZE];//last 4 zoom values
@@ -162,8 +163,9 @@ class teramanager::CExplorerWindow : public QWidget
         static void uninstance()
         {
             #ifdef TMP_DEBUG
-            printf("--------------------- teramanager plugin [thread unknown] >> CExplorerWindow uninstance() launched\n");
+            printf("--------------------- teramanager plugin [thread ?] >> CExplorerWindow::uninstance()\n");
             #endif
+
             while(first)
             {
                 CExplorerWindow* p = first->next;
@@ -240,8 +242,8 @@ class teramanager::CExplorerWindow : public QWidget
         void setActive(bool active)
         {
             #ifdef TMP_DEBUG
-            printf("--------------------- teramanager plugin [thread %d] >> CExplorerWindow[\"%s\"] setActive(%s)\n",
-                   this->thread()->currentThreadId(), title.c_str() , active ? "true" : "false");
+            printf("--------------------- teramanager plugin [thread %d] >> CExplorerWindow[%s]::setActive(%s)\n",
+                   this->thread()->currentThreadId()%10, titleShort.c_str() , active ? "true" : "false");
             #endif
 
             isActive = active;

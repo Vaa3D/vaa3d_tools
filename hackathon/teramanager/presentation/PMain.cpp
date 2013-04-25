@@ -66,7 +66,7 @@ PMain* PMain::instance(V3DPluginCallback2 *callback, QWidget *parent)
 void PMain::uninstance()
 {
     #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread unknown] >> PMain uninstance\n");
+    printf("--------------------- teramanager plugin [thread ?] >> PMain::uninstance()\n");
     #endif
 
     CImport::uninstance();
@@ -83,14 +83,15 @@ void PMain::uninstance()
 PMain::~PMain()
 {
     #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread %d] >> PMain destroyed\n", this->thread()->currentThreadId());
+    printf("--------------------- teramanager plugin [thread %d] >> PMain::~PMain()\n", this->thread()->currentThreadId()%10);
+    printf("--------------------- teramanager plugin [thread %d] >> PMain destroyed\n", this->thread()->currentThreadId()%10);
     #endif
 }
 
 PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
 {
     #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread %d] >> PMain created\n", this->thread()->currentThreadId());
+    printf("--------------------- teramanager plugin [thread %d] >> PMain::PMain()\n", this->thread()->currentThreadId()%10);
     #endif
 
     //initializing members
@@ -188,6 +189,7 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
 
     //multiresolution mode widgets
     multires_panel = new QGroupBox("Multiresolution mode");
+    gradientBar = new QGradientBar(this);
     Vdim_sbox = new QSpinBox();
     Vdim_sbox->setAlignment(Qt::AlignCenter);
     Vdim_sbox->setMaximum(1000);
@@ -489,35 +491,39 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     QGridLayout* multiresModePanelLayout= new QGridLayout();
     QLabel* jumpToResLabel = new QLabel("Jump to res:");
     jumpToResLabel->setFixedWidth(marginLeft);
-    multiresModePanelLayout->addWidget(jumpToResLabel,                          0, 0, 1, 1);
-    multiresModePanelLayout->addWidget(resolution_cbox,                         0, 2, 1, 11);
-    multiresModePanelLayout->addWidget(new QLabel("Zoom-in VOI dims:"),         1, 0, 1, 1);
-    multiresModePanelLayout->addWidget(Hdim_sbox,                               1, 2, 1, 3);
-    multiresModePanelLayout->addWidget(by_label_6,                              1, 5, 1, 1);
-    multiresModePanelLayout->addWidget(Vdim_sbox,                               1, 6, 1, 3);
-    multiresModePanelLayout->addWidget(by_label_7,                              1, 9, 1, 1);
-    multiresModePanelLayout->addWidget(Ddim_sbox,                               1, 10, 1, 3);
+
+
+    multiresModePanelLayout->addWidget(new QLabel("Resolution:"),               0, 0, 1, 1);
+    multiresModePanelLayout->addWidget(gradientBar,                             0, 2, 1, 11);
+    multiresModePanelLayout->addWidget(jumpToResLabel,                          1, 0, 1, 1);
+    multiresModePanelLayout->addWidget(resolution_cbox,                         1, 2, 1, 11);
+    multiresModePanelLayout->addWidget(new QLabel("Zoom-in VOI dims:"),         2, 0, 1, 1);
+    multiresModePanelLayout->addWidget(Hdim_sbox,                               2, 2, 1, 3);
+    multiresModePanelLayout->addWidget(by_label_6,                              2, 5, 1, 1);
+    multiresModePanelLayout->addWidget(Vdim_sbox,                               2, 6, 1, 3);
+    multiresModePanelLayout->addWidget(by_label_7,                              2, 9, 1, 1);
+    multiresModePanelLayout->addWidget(Ddim_sbox,                               2, 10, 1, 3);
 //    multiresModePanelLayout->addWidget(new QLabel("Zoom-in VOI size:"),         2, 0, 1, 1);
 //    multiresModePanelLayout->addWidget(zoominVoiSize,                           2, 2, 1, 3);
 //    multiresModePanelLayout->addWidget(new QLabel("MVoxels"),                   2, 5, 1, 9);
-    multiresModePanelLayout->addWidget(new QLabel("Zoom-in/out sens:"),         4, 0, 1, 1);
-    multiresModePanelLayout->addWidget(zoomSensitivity,                         4, 2, 1, 11);
+    multiresModePanelLayout->addWidget(new QLabel("Zoom-in/out sens:"),         3, 0, 1, 1);
+    multiresModePanelLayout->addWidget(zoomSensitivity,                         3, 2, 1, 11);
     traslXneg->setMaximumWidth(25);
     traslXpos->setMaximumWidth(25);
     traslYneg->setMaximumWidth(25);
     traslYpos->setMaximumWidth(25);
     traslZneg->setMaximumWidth(25);
     traslZpos->setMaximumWidth(25);
-    multiresModePanelLayout->addWidget(new QLabel("Translate:"),                5, 0, 1, 1);
-    multiresModePanelLayout->addWidget(traslXneg,                               5, 2, 1, 1);
-    multiresModePanelLayout->addWidget(traslXlabel,                             5, 3, 1, 1);
-    multiresModePanelLayout->addWidget(traslXpos,                               5, 4, 1, 1);
-    multiresModePanelLayout->addWidget(traslYneg,                               5, 6, 1, 1);
-    multiresModePanelLayout->addWidget(traslYlabel,                             5, 7, 1, 1);
-    multiresModePanelLayout->addWidget(traslYpos,                               5, 8, 1, 1);
-    multiresModePanelLayout->addWidget(traslZneg,                               5, 10, 1, 1);
-    multiresModePanelLayout->addWidget(traslZlabel,                             5, 11, 1, 1);
-    multiresModePanelLayout->addWidget(traslZpos,                               5, 12, 1, 1);
+    multiresModePanelLayout->addWidget(new QLabel("Translate:"),                4, 0, 1, 1);
+    multiresModePanelLayout->addWidget(traslXneg,                               4, 2, 1, 1);
+    multiresModePanelLayout->addWidget(traslXlabel,                             4, 3, 1, 1);
+    multiresModePanelLayout->addWidget(traslXpos,                               4, 4, 1, 1);
+    multiresModePanelLayout->addWidget(traslYneg,                               4, 6, 1, 1);
+    multiresModePanelLayout->addWidget(traslYlabel,                             4, 7, 1, 1);
+    multiresModePanelLayout->addWidget(traslYpos,                               4, 8, 1, 1);
+    multiresModePanelLayout->addWidget(traslZneg,                               4, 10, 1, 1);
+    multiresModePanelLayout->addWidget(traslZlabel,                             4, 11, 1, 1);
+    multiresModePanelLayout->addWidget(traslZpos,                               4, 12, 1, 1);
     multires_panel->setLayout(multiresModePanelLayout);
     multires_panel->setStyle(new QWindowsStyle());
 
@@ -544,7 +550,7 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     layout->setContentsMargins(0, 0, 0, 0);
     layout->setSpacing(0);
     setLayout(layout);
-    setWindowTitle(tr("TeraFly plugin"));
+    setWindowTitle("TeraFly");
     this->setFont(tinyFont);
 
     // signals and slots
@@ -580,18 +586,21 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     setWindowFlags(Qt::Tool | Qt::WindowStaysOnTopHint);
     setMaximumSize(this->minimumWidth(), this->minimumHeight());
     setFocusPolicy(Qt::StrongFocus);
-    update();
-    raise();
     show();
-    activateWindow();
     move(QApplication::desktop()->screen()->rect().center() - rect().center());
 
-
+    #ifdef TMP_DEBUG
+    printf("--------------------- teramanager plugin [thread %d] >> PMain created\n", this->thread()->currentThreadId()%10);
+    #endif
 }
 
 //reset everything
 void PMain::reset()
 {
+    #ifdef TMP_DEBUG
+    printf("--------------------- teramanager plugin [thread %d] >> PMain::reset()\n", this->thread()->currentThreadId()%10);
+    #endif
+
     //resetting menu options and widgets
     openVolumeAction->setEnabled(true);
     closeVolumeAction->setEnabled(false);
@@ -632,6 +641,7 @@ void PMain::reset()
     Hdim_sbox->setValue(CSettings::instance()->getVOIdimH());
     Ddim_sbox->setValue(CSettings::instance()->getVOIdimD());
     zoominVoiSize->setText("n.a.");
+    resolution_cbox->setEnabled(false);
     while(resolution_cbox->count())
         resolution_cbox->removeItem(0);
     traslXlabel->setAlignment(Qt::AlignCenter);
@@ -649,6 +659,9 @@ void PMain::reset()
     traslYneg->setEnabled(false);
     traslZpos->setEnabled(false);
     traslZneg->setEnabled(false);
+    gradientBar->setEnabled(false);
+    gradientBar->setNSteps(-1);
+    gradientBar->setStep(0);
 
     //resetting subvol panel widgets    
     loadButton->setVisible(false);
@@ -689,7 +702,7 @@ void PMain::mode3D_checkbox_changed(int)
 void PMain::loadButtonClicked()
 { 
     #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread %d] >> PMain loadButtonClicked() called\n", this->thread()->currentThreadId());
+    printf("--------------------- teramanager plugin [thread %d] >> PMain loadButtonClicked() called\n", this->thread()->currentThreadId()%10);
     #endif
 
     try
@@ -726,7 +739,7 @@ void PMain::loadButtonClicked()
 void PMain::openVolume()
 {
     #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread %d] >> PMain openVolume() launched\n", this->thread()->currentThreadId());
+    printf("--------------------- teramanager plugin [thread %d] >> PMain openVolume() launched\n", this->thread()->currentThreadId()%10);
     #endif
 
     try
@@ -790,7 +803,7 @@ void PMain::openVolume()
 void PMain::closeVolume()
 {
     #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread %d] >> PMain closeVolume() launched\n", this->thread()->currentThreadId());
+    printf("--------------------- teramanager plugin [thread %d] >> PMain::closeVolume()\n", this->thread()->currentThreadId()%10);
     #endif
 
     CImport::instance()->reset();
@@ -809,7 +822,7 @@ void PMain::closeVolume()
 void PMain::loadAnnotations()
 {
     #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread %d] >> PMain loadAnnotations() launched\n", this->thread()->currentThreadId());
+    printf("--------------------- teramanager plugin [thread %d] >> PMain::loadAnnotations()\n", this->thread()->currentThreadId()%10);
     #endif
 
     try
@@ -843,7 +856,7 @@ void PMain::loadAnnotations()
 void PMain::saveAnnotations()
 {
     #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread %d] >> PMain saveAnnotations() launched\n", this->thread()->currentThreadId());
+    printf("--------------------- teramanager plugin [thread %d] >> PMain::saveAnnotations()\n", this->thread()->currentThreadId()%10);
     #endif
 
     try
@@ -867,7 +880,7 @@ void PMain::saveAnnotations()
 void PMain::saveAnnotationsAs()
 {
     #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread %d] >> PMain saveAnnotationsAs() launched\n", this->thread()->currentThreadId());
+    printf("--------------------- teramanager plugin [thread %d] >> PMain::saveAnnotationsAs()\n", this->thread()->currentThreadId()%10);
     #endif
 
     try
@@ -901,7 +914,7 @@ void PMain::saveAnnotationsAs()
 void PMain::clearAnnotations()
 {
     #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread %d] >> PMain clearAnnotations() launched\n", this->thread()->currentThreadId());
+    printf("--------------------- teramanager plugin [thread %d] >> PMain::clearAnnotations()\n", this->thread()->currentThreadId()%10);
     #endif
 
     try
@@ -924,7 +937,7 @@ void PMain::clearAnnotations()
 void PMain::exit()
 {
     #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread %d] >> PMain exit() launched\n", this->thread()->currentThreadId());
+    printf("--------------------- teramanager plugin [thread %d] >> PMain::exit()\n", this->thread()->currentThreadId()%10);
     #endif
 
     this->close();
@@ -936,7 +949,7 @@ void PMain::exit()
 void PMain::about()
 {
     #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread %d] >> PMain about() launched\n", this->thread()->currentThreadId());
+    printf("--------------------- teramanager plugin [thread %d] >> PMain::about()\n", this->thread()->currentThreadId()%10);
     #endif
 
     QMessageBox* msgBox = new QMessageBox(this);
@@ -947,10 +960,13 @@ void PMain::about()
                     "<li><b>Alessandro Bria</b> (email: a.bria@unicas.it)<br>"
                            "Ph.D. Student at University of Cassino</li>"
                     "<li><b>Giulio Iannello</b> (email: g.iannello@unicampus.it)<br>"
-                           "Full Professor at University Campus Bio-Medico of Rome</li></ul><br>"
+                           "Full Professor at University Campus Bio-Medico of Rome</li>"
+                    "<li><b>Hanchuan Peng</b> (email: g.iannello@unicampus.it)<br>"
+                            "Associate Investigator at Allen Institute for Brain Science</li></ul><br>"
                     "<u>Features:</u><ul>"
-                    "<li>user can select a subvolume to be shown into Vaa3D</li>"
-                    "<li>low memory requirements (2 GB) for multi-stacked datasets</li></ul><br>"
+                    "<li>Google Earth-like 3D navigation through multiresolution teravoxel-sized datasets</li>"
+                    "<li>computer-aided annotation of markers and curves</li>"
+                    "<li>low memory requirements (4 GB)</li></ul><br>"
                     "<u>Supported input formats:</u><ul>"
                     "<li>two-level directory structure with each tile containing a series of image slices (see documentation for further information)</li>"
                     "<li>supported formats for image slices are BMP, DIB, JPEG, JPG, JPE, PNG, PBM, PGM, PPM, SR, RAS, TIFF, TIF</li>"
@@ -972,7 +988,7 @@ void PMain::about()
 void PMain::importDone(MyException *ex, Image4DSimple* vmap_image)
 {
     #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread %d] >> PMain import_done(%s) launched\n", this->thread()->currentThreadId(), (ex? "ex" : "NULL"));
+    printf("--------------------- teramanager plugin [thread %d] >> PMain::import_done(%s)\n", this->thread()->currentThreadId()%10, (ex? "error" : ""));
     #endif
 
     //if an exception has occurred, showing a message error and re-enabling import form
@@ -1062,6 +1078,10 @@ void PMain::importDone(MyException *ex, Image4DSimple* vmap_image)
             //updating zoom-in VOI size
             zoomInVoiSizeChanged(0);
 
+            //updating gradient bar widget
+            gradientBar->setEnabled(true);
+            gradientBar->setNSteps(CImport::instance()->getResolutions());
+
             //inserting available resolutions
             for(int i=0; i<CImport::instance()->getResolutions(); i++)
             {
@@ -1075,11 +1095,13 @@ void PMain::importDone(MyException *ex, Image4DSimple* vmap_image)
                         QString::number(vxl_d, 'f', 1) + " " + QChar(0x03BC)+"m)";
                 resolution_cbox->insertItem(i, option);
             }
+            resolution_cbox->setEnabled(true);
 
             //updating traslation widgets
             traslXlabel->setText("<font size=\"4\" color=\"red\"><b>X</b></font>");
             traslYlabel->setText("<font size=\"4\" color=\"green\"><b>Y</b></font>");
             traslZlabel->setText("<font size=\"4\" color=\"blue\"><b>Z</b></font>");
+
 
             //instantiating CAnnotations
             CAnnotations::instance(volume->getDIM_V(), volume->getDIM_H(), volume->getDIM_D());
@@ -1112,7 +1134,7 @@ void PMain::importDone(MyException *ex, Image4DSimple* vmap_image)
 void PMain::loadingDone(MyException *ex, void* sourceObject)
 {
     #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread %d] >> PMain loading_done(%s) launched\n", this->thread()->currentThreadId(), (ex? "ex" : "NULL"));
+    printf("--------------------- teramanager plugin [thread %d] >> PMain::loading_done(%s)\n", this->thread()->currentThreadId()%10, (ex? "error" : ""));
     #endif
 
     CVolume* cVolume = CVolume::instance();
@@ -1140,7 +1162,7 @@ void PMain::loadingDone(MyException *ex, void* sourceObject)
 void PMain::closeEvent(QCloseEvent *evt)
 {
     #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread %d] >> PMain closeEvent() launched\n", this->thread()->currentThreadId());
+    printf("--------------------- teramanager plugin [thread %d] >> PMain::closeEvent()\n", this->thread()->currentThreadId()%10);
     #endif
 
     if(evt)
@@ -1179,12 +1201,12 @@ void PMain::settingsChanged(int)
 void PMain::resolutionIndexChanged(int i)
 {
     #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread %d] >> PMain resolutionIndexChanged() launched\n", this->thread()->currentThreadId());
+    printf("--------------------- teramanager plugin [thread %d] >> PMain::resolutionIndexChanged()\n", this->thread()->currentThreadId()%10);
     #endif
 
     try
     {
-        if(CExplorerWindow::getCurrent() && i > CExplorerWindow::getCurrent()->getResIndex())
+        if(resolution_cbox->isEnabled() && CExplorerWindow::getCurrent() && i > CExplorerWindow::getCurrent()->getResIndex())
         {
             int voiV0 = CVolume::scaleVCoord(V0_sbox->value()-1, CImport::instance()->getResolutions()-1, i);
             int voiV1 = CVolume::scaleVCoord(V1_sbox->value()-1, CImport::instance()->getResolutions()-1, i);
@@ -1195,9 +1217,6 @@ void PMain::resolutionIndexChanged(int i)
             float MVoxels = ((voiV1-voiV0+1)/1024.0f)*((voiH1-voiH0+1)/1024.0f)*(voiD1-voiD0+1);
             if(QMessageBox::Yes == QMessageBox::question(this, "Confirm", QString("The volume to be loaded is ").append(QString::number(MVoxels, 'f', 1)).append(" MVoxels big.\n\nDo you confirm?"), QMessageBox::No | QMessageBox::Yes, QMessageBox::Yes))
             {
-//                //making the current view the last one, hence breaking the higher res history chain
-//                CExplorerWindow::getCurrent()->makeLastView();
-
                 //voi set
                 CVolume::instance()->setVoi(CExplorerWindow::getCurrent(), i, voiV0, voiV1+1, voiH0, voiH1+1, voiD0, voiD1+1);
 
@@ -1254,6 +1273,10 @@ void PMain::highestVOISizeChanged(int i)
 ***********************************************************************************/
 void PMain::traslXposClicked()
 {
+    #ifdef TMP_DEBUG
+    printf("--------------------- teramanager plugin [thread %d] >> PMain::traslXposClicked()\n", this->thread()->currentThreadId()%10);
+    #endif
+
     CExplorerWindow* expl = CExplorerWindow::getCurrent();
     if(expl)
         expl->newView((expl->volH1-expl->volH0)/2 + (expl->volH1-expl->volH0)*CSettings::instance()->getTraslX()/100.0f,
@@ -1262,6 +1285,10 @@ void PMain::traslXposClicked()
 }
 void PMain::traslXnegClicked()
 {
+    #ifdef TMP_DEBUG
+    printf("--------------------- teramanager plugin [thread %d] >> PMain::traslXnegClicked()\n", this->thread()->currentThreadId()%10);
+    #endif
+
     CExplorerWindow* expl = CExplorerWindow::getCurrent();
     if(expl)
         expl->newView((expl->volH1-expl->volH0)/2 - (expl->volH1-expl->volH0)*CSettings::instance()->getTraslX()/100.0f,
@@ -1270,6 +1297,10 @@ void PMain::traslXnegClicked()
 }
 void PMain::traslYposClicked()
 {
+    #ifdef TMP_DEBUG
+    printf("--------------------- teramanager plugin [thread %d] >> PMain::traslYposClicked()\n", this->thread()->currentThreadId()%10);
+    #endif
+
     CExplorerWindow* expl = CExplorerWindow::getCurrent();
     if(expl)
         expl->newView((expl->volH1-expl->volH0)/2,
@@ -1278,6 +1309,10 @@ void PMain::traslYposClicked()
 }
 void PMain::traslYnegClicked()
 {
+    #ifdef TMP_DEBUG
+    printf("--------------------- teramanager plugin [thread %d] >> PMain::traslYnegClicked()\n", this->thread()->currentThreadId()%10);
+    #endif
+
     CExplorerWindow* expl = CExplorerWindow::getCurrent();
     if(expl)
         expl->newView((expl->volH1-expl->volH0)/2,
@@ -1286,6 +1321,10 @@ void PMain::traslYnegClicked()
 }
 void PMain::traslZposClicked()
 {
+    #ifdef TMP_DEBUG
+    printf("--------------------- teramanager plugin [thread %d] >> PMain::traslZposClicked()\n", this->thread()->currentThreadId()%10);
+    #endif
+
     CExplorerWindow* expl = CExplorerWindow::getCurrent();
     if(expl)
         expl->newView((expl->volH1-expl->volH0)/2,
@@ -1294,6 +1333,10 @@ void PMain::traslZposClicked()
 }
 void PMain::traslZnegClicked()
 {
+    #ifdef TMP_DEBUG
+    printf("--------------------- teramanager plugin [thread %d] >> PMain::traslZnegClicked()\n", this->thread()->currentThreadId()%10);
+    #endif
+
     CExplorerWindow* expl = CExplorerWindow::getCurrent();
     if(expl)
         expl->newView((expl->volH1-expl->volH0)/2,

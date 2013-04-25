@@ -35,6 +35,10 @@ CSettings* CSettings::uniqueInstance = NULL;
 
 void CSettings::uninstance()
 {
+    #ifdef TMP_DEBUG
+    printf("--------------------- teramanager plugin [thread ?] >> CSettings::uninstance()\n");
+    #endif
+
     if(uniqueInstance)
     {
         delete uniqueInstance;
@@ -45,13 +49,19 @@ void CSettings::uninstance()
 CSettings::~CSettings()
 {
     #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread unknown] >> CSettings destroyed\n");
+    printf("--------------------- teramanager plugin [thread ?] >> CSettings::~CSettings()\n");
+    printf("--------------------- teramanager plugin [thread ?] >> CSettings destroyed\n");
     #endif
+
     writeSettings();
 }
 
 void CSettings::loadDefaultSettings()
 {
+    #ifdef TMP_DEBUG
+    printf("--------------------- teramanager plugin [thread ?] >> CSettings::loadDefaultSettings()\n");
+    #endif
+
     //TeraFly settings
     volumePathLRU = "";
     annotationPathLRU = "";
@@ -71,7 +81,7 @@ void CSettings::loadDefaultSettings()
 void CSettings::writeSettings()
 {
     #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread unknown] >> CSettings::writeSettings() called\n");
+    printf("--------------------- teramanager plugin [thread ?] >> CSettings::writeSettings() called\n");
     #endif
 
     QSettings settings("ICON", "TeraManager");
@@ -99,7 +109,7 @@ void CSettings::writeSettings()
 void CSettings::readSettings()
 {
     #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread unknown] >> CSettings::readSettings() called\n");
+    printf("--------------------- teramanager plugin [thread ?] >> CSettings::readSettings()\n");
     #endif
 
     QSettings settings("ICON", "TeraManager");

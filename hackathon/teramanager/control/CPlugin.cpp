@@ -61,7 +61,7 @@ QStringList CPlugin::funclist() const
 void CPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
 {
     #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread %d] >> CPlugin::domenu launched\n", this->thread()->currentThreadId());
+    printf("--------------------- teramanager plugin [thread %d] >> CPlugin::domenu(\"%s\")\n", this->thread()->currentThreadId()%10, menu_name.toStdString().c_str());
     #endif
 
     //overriding the current locale with the standard POSIX locale
@@ -127,12 +127,20 @@ void CPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWi
 // 5 - Call the functions corresponding to dofunc
 bool CPlugin::dofunc(const QString & func_name, const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback,  QWidget * parent)
 {
+    #ifdef TMP_DEBUG
+    printf("--------------------- teramanager plugin [thread %d] >> CPlugin::dofunc(\"%s\")\n", this->thread()->currentThreadId()%10, func_name.toStdString().c_str());
+    #endif
+
     printf("TeraManager plugin needs Vaa3D GUI to be executed.\n");
 }
 
 //returns true if the given shared library can be loaded
 bool CPlugin::isSharedLibraryLoadable(const char* name)
 {
+    #ifdef TMP_DEBUG
+    printf("--------------------- teramanager plugin [thread ?] >> CPlugin::isSharedLibraryLoadable(\"%s\")\n", name);
+    #endif
+
 	// ------ TO DO ------
     /*#ifdef __unix__
     //UNIX

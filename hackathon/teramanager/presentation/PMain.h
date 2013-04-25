@@ -39,6 +39,7 @@
 #include "v3dr_glwidget.h"
 #include "QArrowButton.h"
 #include "QHelpBox.h"
+#include "QGradientBar.h"
 
 class teramanager::PMain : public QWidget
 {
@@ -149,6 +150,7 @@ class teramanager::PMain : public QWidget
 
         //multiresolution mode widgets
         QGroupBox* multires_panel;
+        QGradientBar* gradientBar;
         QSpinBox* Vdim_sbox;
         QSpinBox* Hdim_sbox;
         QSpinBox* Ddim_sbox;

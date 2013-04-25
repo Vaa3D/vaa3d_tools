@@ -48,7 +48,8 @@ class teramanager::CVolume : public QThread
         CVolume() : QThread()
         {
             #ifdef TMP_DEBUG
-            printf("--------------------- teramanager plugin [thread %d] >> CVolume created\n", this->thread()->currentThreadId());
+            printf("--------------------- teramanager plugin [thread %d] >> CVolume::CVolume()\n", this->thread()->currentThreadId()%10);
+            printf("--------------------- teramanager plugin [thread %d] >> CVolume created\n", this->thread()->currentThreadId()%10);
             #endif
 
             reset();
@@ -84,6 +85,10 @@ class teramanager::CVolume : public QThread
         void resetVoiData(){voiData = 0;}
         void reset()
         {
+            #ifdef TMP_DEBUG
+            printf("--------------------- teramanager plugin [thread %d] >> CVolume::reset()\n", this->thread()->currentThreadId()%10);
+            #endif
+
             voiResIndex = -1;
             voiData = 0;
             voiV0 = voiV1 = voiH0 = voiH1 = voiD0 = voiD1 = nchannels = -1;
@@ -104,7 +109,7 @@ class teramanager::CVolume : public QThread
         {
             #ifdef TMP_DEBUG
             printf("--------------------- teramanager plugin [thread %d] >> CVolume::setVoi(..., _voiResIndex = %d, _V0 = %d, _V1=%d, _H0 = %d, _H1=%d, _D0 = %d, _D1=%d)\n",
-                   this->thread()->currentThreadId(), _voiResIndex, _V0, _V1, _H0, _H1, _D0, _D1);
+                   this->thread()->currentThreadId()%10, _voiResIndex, _V0, _V1, _H0, _H1, _D0, _D1);
             #endif
 
             sourceObject = _sourceObject;

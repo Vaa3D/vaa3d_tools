@@ -35,6 +35,10 @@ CVolume* CVolume::uniqueInstance = NULL;
 
 void CVolume::uninstance()
 {
+    #ifdef TMP_DEBUG
+    printf("--------------------- teramanager plugin [thread ?] >> CVolume::uninstance()\n");
+    #endif
+
     if(uniqueInstance)
     {
         delete uniqueInstance;
@@ -45,12 +49,18 @@ void CVolume::uninstance()
 CVolume::~CVolume()
 {
     #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread %d] >> CVolume destroyed\n", this->thread()->currentThreadId());
+    printf("--------------------- teramanager plugin [thread %d] >> CVolume::~CVolume()\n", this->thread()->currentThreadId()%10);
+    printf("--------------------- teramanager plugin [thread %d] >> CVolume destroyed\n", this->thread()->currentThreadId()%10);
     #endif
 }
 
 int CVolume::scaleVCoord(int coord, int srcRes, int dstRes) throw (MyException)
 {
+    #ifdef TMP_DEBUG
+    printf("--------------------- teramanager plugin [thread ?] >> CVolume::scaleVCoord(coord = %d, srcRes = %d, dstRes = %d)\n",
+           coord, srcRes, dstRes);
+    #endif
+
     //checks
     if(srcRes < 0 || srcRes >= CImport::instance()->getResolutions())
         throw MyException("Invalid source resolution of coordinate mapping operation");
@@ -71,6 +81,11 @@ int CVolume::scaleVCoord(int coord, int srcRes, int dstRes) throw (MyException)
 
 int CVolume::scaleHCoord(int coord, int srcRes, int dstRes) throw (MyException)
 {
+    #ifdef TMP_DEBUG
+    printf("--------------------- teramanager plugin [thread ?] >> CVolume::scaleHCoord(coord = %d, srcRes = %d, dstRes = %d)\n",
+           coord, srcRes, dstRes);
+    #endif
+
     //checks
     if(srcRes < 0 || srcRes >= CImport::instance()->getResolutions())
         throw MyException("Invalid source resolution of coordinate mapping operation");
@@ -89,6 +104,11 @@ int CVolume::scaleHCoord(int coord, int srcRes, int dstRes) throw (MyException)
 
 int CVolume::scaleDCoord(int coord, int srcRes, int dstRes) throw (MyException)
 {
+    #ifdef TMP_DEBUG
+    printf("--------------------- teramanager plugin [thread ?] >> CVolume::scaleDCoord(coord = %d, srcRes = %d, dstRes = %d)\n",
+           coord, srcRes, dstRes);
+    #endif
+
     //checks
     if(srcRes < 0 || srcRes >= CImport::instance()->getResolutions())
         throw MyException("Invalid source resolution of coordinate mapping operation");
@@ -109,7 +129,7 @@ int CVolume::scaleDCoord(int coord, int srcRes, int dstRes) throw (MyException)
 void CVolume::run()
 {
     #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread %d] >> CVolume::run() launched\n", this->thread()->currentThreadId());
+    printf("--------------------- teramanager plugin [thread %d] >> CVolume::run()\n", this->thread()->currentThreadId()%10);
     #endif
 
     try

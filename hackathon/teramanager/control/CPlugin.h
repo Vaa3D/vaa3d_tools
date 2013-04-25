@@ -60,6 +60,7 @@ namespace teramanager
     class CAnnotations;         //control class used to manage annotations (markers, curves, etc.) among all the resolutions
     class QArrowButton;         //Qt-customized class to model arrow buttons
     class QHelpBox;             //Qt-customized class to model help box
+    class QGradientBar;
     struct annotation;
     /*-------------------------------------------------------------------------------------------------------------------------*/
 
@@ -71,7 +72,7 @@ namespace teramanager
     const int  undefined_int32 = -1;
     const int  int_inf = std::numeric_limits<int>::infinity();
     const float undefined_real32 = -1.0f;
-    const std::string version = "0.7.10";
+    const std::string version = "0.7.11";
     const int STATIC_STRING_SIZE = 2000;
     const int FILE_LINE_BUFFER_SIZE = 10000;
     const double pi = 3.14159265359;

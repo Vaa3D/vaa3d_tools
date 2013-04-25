@@ -16,7 +16,7 @@ bool isMarker (annotation* ano) { return ano->type == 0;}
 void CAnnotations::uninstance()
 {
     #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread unknown] >> CAnnotations uninstance() called\n");
+    printf("--------------------- teramanager plugin [thread ?] >> CAnnotations::uninstance()\n");
     #endif
 
     if(uniqueInstance)
@@ -31,10 +31,15 @@ void CAnnotations::uninstance()
 CAnnotations::~CAnnotations()
 {
     #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread unknown] >> CAnnotations destroyed\n");
+    printf("--------------------- teramanager plugin [thread ?] >> CAnnotations::~CAnnotations()\n");
     #endif
+
     if(octree)
         delete octree;
+
+    #ifdef TMP_DEBUG
+    printf("--------------------- teramanager plugin [thread ?] >> CAnnotations destroyed\n");
+    #endif
 }
 
 //recursive support method of 'clear' method
@@ -461,14 +466,22 @@ CAnnotations::Octree::Octree(uint32 _DIM_V, uint32 _DIM_H, uint32 _DIM_D)
 
 CAnnotations::Octree::~Octree(void)
 {
-     clear();
+    #ifdef TMP_DEBUG
+    printf("--------------------- teramanager plugin [thread ?] >> CAnnotations::~Octree()\n");
+    #endif
+
+    clear();
 }
 
 //clears octree content and deallocates used memory
 void CAnnotations::Octree::clear() throw(MyException)
 {
+    #ifdef TMP_DEBUG
+    printf("--------------------- teramanager plugin [thread ?] >> CAnnotations::clear()\n");
+    #endif
+
     _rec_clear(root);
-    root = new octant(0,DIM_V,0,DIM_H,0,DIM_D);
+    root = 0;
 }
 
 //insert given neuron in the octree
@@ -543,7 +556,7 @@ uint32 CAnnotations::Octree::count(interval_t V_int, interval_t H_int, interval_
 void CAnnotations::addLandmarks(LandmarkList* markers) throw (MyException)
 {
     #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread unknown] >> CAnnotations::addLandmarks(markers(size = %d))\n",
+    printf("--------------------- teramanager plugin [thread ?] >> CAnnotations::addLandmarks(markers[size = %d])\n",
            markers->size());
     #endif
 
@@ -568,7 +581,7 @@ void CAnnotations::addLandmarks(LandmarkList* markers) throw (MyException)
 void CAnnotations::removeLandmarks(std::list<LocationSimple> &markers) throw (MyException)
 {
     #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread unknown] >> CAnnotations::removeLandmarks(markers(size = %d))\n",
+    printf("--------------------- teramanager plugin [thread ?] >> CAnnotations::removeLandmarks(markers[size = %d])\n",
            markers.size());
     #endif
 
@@ -616,7 +629,7 @@ void CAnnotations::removeLandmarks(std::list<LocationSimple> &markers) throw (My
 void CAnnotations::removeCurves(std::list<NeuronSWC> &curves) throw (MyException)
 {
     #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread unknown] >> CAnnotations::removeCurves(curves->listNeuron(size = %d))\n",
+    printf("--------------------- teramanager plugin [thread ?] >> CAnnotations::removeCurves(curves->listNeuron[size = %d])\n",
            curves.size());
     #endif
 
@@ -675,7 +688,7 @@ void CAnnotations::removeCurves(std::list<NeuronSWC> &curves) throw (MyException
 void CAnnotations::addCurves(NeuronTree* curves) throw (MyException)
 {
     #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread unknown] >> CAnnotations::addCurves(curves->listNeuron.size() = %d))\n",
+    printf("--------------------- teramanager plugin [thread ?] >> CAnnotations::addCurves(curves->listNeuron[size() = %d])\n",
            curves->listNeuron.size());
     #endif
 
@@ -713,7 +726,7 @@ void CAnnotations::addCurves(NeuronTree* curves) throw (MyException)
 void CAnnotations::findLandmarks(interval_t X_range, interval_t Y_range, interval_t Z_range, std::list<LocationSimple> &markers) throw (MyException)
 {
     #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread unknown] >> CAnnotations::findLandmarks(X[%d,%d), Y[%d,%d), Z[%d,%d))",
+    printf("--------------------- teramanager plugin [thread ?] >> CAnnotations::findLandmarks(X[%d,%d), Y[%d,%d), Z[%d,%d))",
            X_range.start, X_range.end, Y_range.start, Y_range.end, Z_range.start, Z_range.end);
     #endif
 
@@ -741,7 +754,7 @@ void CAnnotations::findLandmarks(interval_t X_range, interval_t Y_range, interva
 void CAnnotations::findCurves(interval_t X_range, interval_t Y_range, interval_t Z_range, std::list<NeuronSWC> &curves) throw (MyException)
 {
     #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread unknown] >> CAnnotations::findCurves(X[%d,%d), Y[%d,%d), Z[%d,%d))",
+    printf("--------------------- teramanager plugin [thread ?] >> CAnnotations::findCurves(X[%d,%d), Y[%d,%d), Z[%d,%d))",
            X_range.start, X_range.end, Y_range.start, Y_range.end, Z_range.start, Z_range.end);
     #endif
 
@@ -788,7 +801,7 @@ void CAnnotations::findCurves(interval_t X_range, interval_t Y_range, interval_t
 void CAnnotations::save(const char* filepath) throw (MyException)
 {
     #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread unknown] >> CAnnotations::save()\n");
+    printf("--------------------- teramanager plugin [thread ?] >> CAnnotations::save()\n");
     #endif
 
     //retrieving annotations
@@ -842,7 +855,7 @@ void CAnnotations::save(const char* filepath) throw (MyException)
 void CAnnotations::load(const char* filepath) throw (MyException)
 {
     #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread unknown] >> CAnnotations::load()\n");
+    printf("--------------------- teramanager plugin [thread ?] >> CAnnotations::load()\n");
     #endif
 
     //precondition checks

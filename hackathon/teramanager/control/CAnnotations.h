@@ -158,19 +158,28 @@ class teramanager::CAnnotations
 
         //members
         Octree* octree;         //octree associated to the 3D image space where annotations are stored
+        int octreeDimX;
+        int octreeDimY;
+        int octreeDimZ;
 
         /*********************************************************************************
         * Singleton design pattern: this class can have one instance only,  which must be
         * instantiated by calling static method "istance(...)"
         **********************************************************************************/
-        CAnnotations() : octree(0){}
+        CAnnotations() : octree(0), octreeDimX(undefined_int32), octreeDimY(undefined_int32), octreeDimZ(undefined_int32){}
         static CAnnotations* uniqueInstance;
-        CAnnotations(uint32 volHeight, uint32 volWidth, uint32 volDepth)
+        CAnnotations(uint32 volHeight, uint32 volWidth, uint32 volDepth) : octreeDimX(volWidth), octreeDimY(volHeight), octreeDimZ(volDepth)
         {
             #ifdef TMP_DEBUG
-            printf("--------------------- teramanager plugin [thread unknown] >> CAnnotations created\n");
+            printf("--------------------- teramanager plugin [thread ?] >> CAnnotations::CAnnotations(volHeight = %d, volWidth = %d, volDepth = %d)\n",
+                   volHeight, volWidth, volDepth);
             #endif
-            octree = new Octree(volHeight, volWidth, volDepth);
+
+            octree = new Octree(octreeDimY, octreeDimX, octreeDimZ);
+
+            #ifdef TMP_DEBUG
+            printf("--------------------- teramanager plugin [thread ?] >> CAnnotations created\n");
+            #endif
         }
 
     public:
@@ -222,7 +231,15 @@ class teramanager::CAnnotations
         /*********************************************************************************
         * Removes all the annotations from the octree
         **********************************************************************************/
-        void clear()  throw (MyException) {this->octree->clear();}
+        void clear()  throw (MyException)
+        {
+            #ifdef TMP_DEBUG
+            printf("--------------------- teramanager plugin [thread ?] >> CAnnotations::clear()\n");
+            #endif
+
+            delete octree;
+            octree = new Octree(octreeDimY, octreeDimX, octreeDimZ);
+        }
 
 
 };
