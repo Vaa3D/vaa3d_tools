@@ -911,60 +911,66 @@ void CExplorerWindow::Vaa3D_selectedROI()
         if(roi->ops_type == 1)
             current->newView(roiCenterX, roiCenterY, roiCenterZ, volResIndex+1, false, (roi->xe-roi->xs)/2, (roi->ye-roi->ys)/2, (roi->ze-roi->zs)/2);
         //zoom-in on VOI (after mouse scroll up)
-        else if(roi->ops_type == 2 && current->volResIndex != CImport::instance()->getResolutions()-1)
+        else if(roi->ops_type == 2)
         {
-            //trying caching if next view exists
-            if(current->next)
+            //if highest resolution has been reached, doing nothing
+            if(current->volResIndex != CImport::instance()->getResolutions()-1)
             {
-                int gXS = current->getGlobalHCoord(static_cast<int>(roi->xs));
-                int gXE = current->getGlobalHCoord(static_cast<int>(roi->xe));
-                int gYS = current->getGlobalVCoord(static_cast<int>(roi->ys));
-                int gYE = current->getGlobalVCoord(static_cast<int>(roi->ye));
-                int gZS = current->getGlobalDCoord(static_cast<int>(roi->zs));
-                int gZE = current->getGlobalDCoord(static_cast<int>(roi->ze));
-                QRectF gXRect(QPoint(gXS, 0), QPoint(gXE, 1));
-                QRectF gYRect(QPoint(gYS, 0), QPoint(gYE, 1));
-                QRectF gZRect(QPoint(gZS, 0), QPoint(gZE, 1));
-
-                int highestResIndex = CImport::instance()->getResolutions()-1;
-                int gXScached = CVolume::instance()->scaleHCoord(current->next->volH0, current->next->volResIndex, highestResIndex);
-                int gXEcached = CVolume::instance()->scaleHCoord(current->next->volH1, current->next->volResIndex, highestResIndex);
-                int gYScached = CVolume::instance()->scaleVCoord(current->next->volV0, current->next->volResIndex, highestResIndex);
-                int gYEcached = CVolume::instance()->scaleVCoord(current->next->volV1, current->next->volResIndex, highestResIndex);
-                int gZScached = CVolume::instance()->scaleDCoord(current->next->volD0, current->next->volResIndex, highestResIndex);
-                int gZEcached = CVolume::instance()->scaleDCoord(current->next->volD1, current->next->volResIndex, highestResIndex);
-                QRectF gXRectCached(QPoint(gXScached, 0), QPoint(gXEcached, 1));
-                QRectF gYRectCached(QPoint(gYScached, 0), QPoint(gYEcached, 1));
-                QRectF gZRectCached(QPoint(gZScached, 0), QPoint(gZEcached, 1));
-
-                float intersectionX = gXRect.intersected(gXRectCached).width();
-                float intersectionY = gYRect.intersected(gYRectCached).width();
-                float intersectionZ = gZRect.intersected(gZRectCached).width();
-                float intersectionVol =  intersectionX*intersectionY*intersectionZ;
-                float voiVol = (gXE-gXS)*(gYE-gYS)*(gZE-gZS);
-                float coverageFactor = voiVol != 0 ? intersectionVol/voiVol : 0;
-
-                printf("--------------------- teramanager plugin [thread ?] >> CExplorerWindow::Vaa3D_selectedROI(): intersecting voi[%d-%d][%d-%d][%d-%d] and cached[%d-%d][%d-%d][%d-%d]...\n",
-                       gXS, gXE, gYS, gYE, gZS, gZE, gXScached, gXEcached, gYScached, gYEcached, gZScached, gZEcached);
-
-                printf("--------------------- teramanager plugin [thread ?] >> CExplorerWindow::Vaa3D_selectedROI(): intersection is %.0f x %.0f x %.0f with coverage factor = %.2f\n",
-                       intersectionX, intersectionY, intersectionZ, coverageFactor);
-
-                if(coverageFactor < (100-PMain::instance()->zoomInSens->value())/100.0f)
-                    current->newView(roiCenterX, roiCenterY, roiCenterZ, volResIndex+1, false, (roi->xe-roi->xs)/2, (roi->ye-roi->ys)/2, (roi->ze-roi->zs)/2);
-                else
+                //trying caching if next view exists
+                if(current->next)
                 {
-                    current->setActive(false);
-                    current->resetZoomHistory();
-                    current->next->restoreViewFrom(current);
+                    int gXS = current->getGlobalHCoord(static_cast<int>(roi->xs));
+                    int gXE = current->getGlobalHCoord(static_cast<int>(roi->xe));
+                    int gYS = current->getGlobalVCoord(static_cast<int>(roi->ys));
+                    int gYE = current->getGlobalVCoord(static_cast<int>(roi->ye));
+                    int gZS = current->getGlobalDCoord(static_cast<int>(roi->zs));
+                    int gZE = current->getGlobalDCoord(static_cast<int>(roi->ze));
+                    QRectF gXRect(QPoint(gXS, 0), QPoint(gXE, 1));
+                    QRectF gYRect(QPoint(gYS, 0), QPoint(gYE, 1));
+                    QRectF gZRect(QPoint(gZS, 0), QPoint(gZE, 1));
+
+                    int highestResIndex = CImport::instance()->getResolutions()-1;
+                    int gXScached = CVolume::instance()->scaleHCoord(current->next->volH0, current->next->volResIndex, highestResIndex);
+                    int gXEcached = CVolume::instance()->scaleHCoord(current->next->volH1, current->next->volResIndex, highestResIndex);
+                    int gYScached = CVolume::instance()->scaleVCoord(current->next->volV0, current->next->volResIndex, highestResIndex);
+                    int gYEcached = CVolume::instance()->scaleVCoord(current->next->volV1, current->next->volResIndex, highestResIndex);
+                    int gZScached = CVolume::instance()->scaleDCoord(current->next->volD0, current->next->volResIndex, highestResIndex);
+                    int gZEcached = CVolume::instance()->scaleDCoord(current->next->volD1, current->next->volResIndex, highestResIndex);
+                    QRectF gXRectCached(QPoint(gXScached, 0), QPoint(gXEcached, 1));
+                    QRectF gYRectCached(QPoint(gYScached, 0), QPoint(gYEcached, 1));
+                    QRectF gZRectCached(QPoint(gZScached, 0), QPoint(gZEcached, 1));
+
+                    float intersectionX = gXRect.intersected(gXRectCached).width();
+                    float intersectionY = gYRect.intersected(gYRectCached).width();
+                    float intersectionZ = gZRect.intersected(gZRectCached).width();
+                    float intersectionVol =  intersectionX*intersectionY*intersectionZ;
+                    float voiVol = (gXE-gXS)*(gYE-gYS)*(gZE-gZS);
+                    float coverageFactor = voiVol != 0 ? intersectionVol/voiVol : 0;
+
+                    printf("--------------------- teramanager plugin [thread ?] >> CExplorerWindow::Vaa3D_selectedROI(): intersecting voi[%d-%d][%d-%d][%d-%d] and cached[%d-%d][%d-%d][%d-%d]...\n",
+                           gXS, gXE, gYS, gYE, gZS, gZE, gXScached, gXEcached, gYScached, gYEcached, gZScached, gZEcached);
+
+                    printf("--------------------- teramanager plugin [thread ?] >> CExplorerWindow::Vaa3D_selectedROI(): intersection is %.0f x %.0f x %.0f with coverage factor = %.2f\n",
+                           intersectionX, intersectionY, intersectionZ, coverageFactor);
+
+                    if(coverageFactor < (100-PMain::instance()->zoomInSens->value())/100.0f)
+                        current->newView(roiCenterX, roiCenterY, roiCenterZ, volResIndex+1, false, (roi->xe-roi->xs)/2, (roi->ye-roi->ys)/2, (roi->ze-roi->zs)/2);
+                    else
+                    {
+                        current->setActive(false);
+                        current->resetZoomHistory();
+                        current->next->restoreViewFrom(current);
+                    }
                 }
+                else
+                    current->newView(roiCenterX, roiCenterY, roiCenterZ, volResIndex+1, false, (roi->xe-roi->xs)/2, (roi->ye-roi->ys)/2, (roi->ze-roi->zs)/2);
             }
             else
-                current->newView(roiCenterX, roiCenterY, roiCenterZ, volResIndex+1, false, (roi->xe-roi->xs)/2, (roi->ye-roi->ys)/2, (roi->ze-roi->zs)/2);
+                printf("--------------------- teramanager plugin [thread ?] >> CExplorerWindow[%s]::Vaa3D_selectedROI(): highest resolution reached, doing nothing\n", current->titleShort.c_str());
 
         }
         else
-            throw MyException(QString("in CExplorerWindow::Vaa3D_selectedROI(): unsupported (or unset) operation type").toStdString().c_str());
+            QMessageBox::critical(PMain::instance(),QObject::tr("Error"), QObject::tr("in CExplorerWindow::Vaa3D_selectedROI(): unsupported (or unset) operation type"),QObject::tr("Ok"));
     }
 }
 
