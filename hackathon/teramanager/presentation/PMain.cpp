@@ -40,17 +40,20 @@ using namespace teramanager;
 
 string PMain::HTwelcome = "Go to <i>File->Open volume</i> and select the directory of any resolution. The volume will be opened in <b>multiresolution mode</b>. "
                           "To disable multiresolution mode or to change volume import options, go to <i>Options->Import</i>.";
-string PMain::HTbase =    "<u>Navigate through different resolutions by</u>:<br><br>"
-                          "<b>zoom-in</b>: right-click-><i>Zoom-in HighRezImage</i> on image/marker;<br>"
-                          "<b>zoom-out</b>: mouse scroll down;<br>"
-                          "<b>jump to res</b>: select VOI with volume cut scrollbars/spinboxes and choose resolution from pull-down menu.<br><br>";
+//string PMain::HTbase =    "<u>Navigate through different resolutions by</u>:<br><br>"
+//                          "<b>zoom-in</b>: right-click-><i>Zoom-in HighRezImage</i> on image/marker;<br>"
+//                          "<b>zoom-out</b>: mouse scroll down;<br>"
+//                          "<b>jump to res</b>: select VOI with volume cut scrollbars/spinboxes and choose resolution from pull-down menu.<br><br>";
+string PMain::HTbase =    "<b>What's this?</b><br><i>Move the mouse over an object and its description will be displayed here.</i>";
 string PMain::HTvoiDim =  "Set the <b>dimensions</b> (in voxels) of the volume of interest (<b>VOI</b>) to be loaded when zoomin-in. "
                           "Please be careful not to set a too big region or you will soon use up your <b>graphic card's memory</b>. ";
 string PMain::HTjumpToRes = "Choose from pull-down menu the <b>resolution</b> you want to jump to and the displayed image will be loaded at the resolution selected. "
                             "To load only a volume of interest (<b>VOI</b>) at the selected resolution, you may use the Vaa3D <i>Volume Cut</i> scrollbars "
                             "or the <i>Highest resolution volume's coordinates</i> spinboxes embedded in this plugin.";
-string PMain::HTzoomSens = "Tune the sensitivity of the <b>zoom-in/out</b> navigation through resolutions with <b>mouse scroll</b> up/down. The default is set to maximum (<i>all-to-the-right</i>). "
+string PMain::HTzoomOutSens = "Tune the sensitivity of the <b>zoom-out</b> navigation through resolutions with <i>mouse scroll down</i>. The default is set to maximum (<i>all-to-the-right</i>). "
                            "Set it to <i>all-to-the-left</i> to disable this feature.";
+string PMain::HTzoomInSens = "Tune the sensitivity of the <b>zoom-in</b> navigation through resolutions with <i>mouse scroll up</i>. Set it to <i>all-to-the-left</i>"
+                            " if you always want to re-load the zoomed-in portion, or to <i>all-to-the-right</i> if you want to always restore the last zoomed-in region.";
 string PMain::HTtraslatePos = "Translate the view along this axis in its <i>natural</i> direction.";
 string PMain::HTtraslateNeg = "Translate the view along this axis in its <i>opposite</i> direction.";
 string PMain::HTvolcuts = "Define a volume of interest (<b>VOI</b>) using <b>absolute spatial coordinates</b> (i.e. referred to the highest resolution). "
@@ -216,14 +219,22 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     zoominVoiSize->setFont(tinyFont);
     resolution_cbox = new QComboBox();
     resolution_cbox->installEventFilter(this);
-    zoomSensitivity = new QSlider(Qt::Horizontal, this);
-    zoomSensitivity->setTickPosition(QSlider::TicksBelow);
-    zoomSensitivity->setMinimum(0);
-    zoomSensitivity->setMaximum(100);
-    zoomSensitivity->setSingleStep(10);
-    zoomSensitivity->setPageStep(20);
-    zoomSensitivity->setValue(100);
-    zoomSensitivity->installEventFilter(this);
+    zoomOutSens = new QSlider(Qt::Horizontal, this);
+    zoomOutSens->setTickPosition(QSlider::TicksBelow);
+    zoomOutSens->setMinimum(0);
+    zoomOutSens->setMaximum(100);
+    zoomOutSens->setSingleStep(10);
+    zoomOutSens->setPageStep(20);
+    zoomOutSens->setValue(100);
+    zoomOutSens->installEventFilter(this);
+    zoomInSens = new QSlider(Qt::Horizontal, this);
+    zoomInSens->setTickPosition(QSlider::TicksBelow);
+    zoomInSens->setMinimum(0);
+    zoomInSens->setMaximum(100);
+    zoomInSens->setSingleStep(10);
+    zoomInSens->setPageStep(10);
+    zoomInSens->setValue(10);
+    zoomInSens->installEventFilter(this);
     traslXpos = new QArrowButton(this, QColor(255,0,0), 15, 6, 0, Qt::LeftToRight);
     traslXneg = new QArrowButton(this, QColor(255,0,0), 15, 6, 0, Qt::RightToLeft);
     traslXlabel = new QLabel("");
@@ -497,7 +508,7 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     multiresModePanelLayout->addWidget(gradientBar,                             0, 2, 1, 11);
     multiresModePanelLayout->addWidget(jumpToResLabel,                          1, 0, 1, 1);
     multiresModePanelLayout->addWidget(resolution_cbox,                         1, 2, 1, 11);
-    multiresModePanelLayout->addWidget(new QLabel("Zoom-in VOI dims:"),         2, 0, 1, 1);
+    multiresModePanelLayout->addWidget(new QLabel("Zoom-in max dims:"),         2, 0, 1, 1);
     multiresModePanelLayout->addWidget(Hdim_sbox,                               2, 2, 1, 3);
     multiresModePanelLayout->addWidget(by_label_6,                              2, 5, 1, 1);
     multiresModePanelLayout->addWidget(Vdim_sbox,                               2, 6, 1, 3);
@@ -505,25 +516,27 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     multiresModePanelLayout->addWidget(Ddim_sbox,                               2, 10, 1, 3);
 //    multiresModePanelLayout->addWidget(new QLabel("Zoom-in VOI size:"),         2, 0, 1, 1);
 //    multiresModePanelLayout->addWidget(zoominVoiSize,                           2, 2, 1, 3);
-//    multiresModePanelLayout->addWidget(new QLabel("MVoxels"),                   2, 5, 1, 9);
-    multiresModePanelLayout->addWidget(new QLabel("Zoom-in/out sens:"),         3, 0, 1, 1);
-    multiresModePanelLayout->addWidget(zoomSensitivity,                         3, 2, 1, 11);
+//    multiresModePanelLayout->addWidget(new QLabel("MVoxels"),                   2, 5, 1, 9);    
+    multiresModePanelLayout->addWidget(new QLabel("Zoom-in sens:"),             3 , 0, 1, 1);
+    multiresModePanelLayout->addWidget(zoomInSens,                              3, 2, 1, 11);
+    multiresModePanelLayout->addWidget(new QLabel("Zoom-out sens:"),            4 , 0, 1, 1);
+    multiresModePanelLayout->addWidget(zoomOutSens,                             4, 2, 1, 11);
     traslXneg->setMaximumWidth(25);
     traslXpos->setMaximumWidth(25);
     traslYneg->setMaximumWidth(25);
     traslYpos->setMaximumWidth(25);
     traslZneg->setMaximumWidth(25);
     traslZpos->setMaximumWidth(25);
-    multiresModePanelLayout->addWidget(new QLabel("Translate:"),                4, 0, 1, 1);
-    multiresModePanelLayout->addWidget(traslXneg,                               4, 2, 1, 1);
-    multiresModePanelLayout->addWidget(traslXlabel,                             4, 3, 1, 1);
-    multiresModePanelLayout->addWidget(traslXpos,                               4, 4, 1, 1);
-    multiresModePanelLayout->addWidget(traslYneg,                               4, 6, 1, 1);
-    multiresModePanelLayout->addWidget(traslYlabel,                             4, 7, 1, 1);
-    multiresModePanelLayout->addWidget(traslYpos,                               4, 8, 1, 1);
-    multiresModePanelLayout->addWidget(traslZneg,                               4, 10, 1, 1);
-    multiresModePanelLayout->addWidget(traslZlabel,                             4, 11, 1, 1);
-    multiresModePanelLayout->addWidget(traslZpos,                               4, 12, 1, 1);
+    multiresModePanelLayout->addWidget(new QLabel("Translate:"),                5, 0, 1, 1);
+    multiresModePanelLayout->addWidget(traslXneg,                               5, 2, 1, 1);
+    multiresModePanelLayout->addWidget(traslXlabel,                             5, 3, 1, 1);
+    multiresModePanelLayout->addWidget(traslXpos,                               5, 4, 1, 1);
+    multiresModePanelLayout->addWidget(traslYneg,                               5, 6, 1, 1);
+    multiresModePanelLayout->addWidget(traslYlabel,                             5, 7, 1, 1);
+    multiresModePanelLayout->addWidget(traslYpos,                               5, 8, 1, 1);
+    multiresModePanelLayout->addWidget(traslZneg,                               5, 10, 1, 1);
+    multiresModePanelLayout->addWidget(traslZlabel,                             5, 11, 1, 1);
+    multiresModePanelLayout->addWidget(traslZpos,                               5, 12, 1, 1);
     multires_panel->setLayout(multiresModePanelLayout);
     multires_panel->setStyle(new QWindowsStyle());
 
@@ -1363,10 +1376,17 @@ bool PMain::eventFilter(QObject *object, QEvent *event)
         else if(event->type() == QEvent::Leave)
             helpBox->setText(HTbase);
     }
-    else if((object == zoomSensitivity) && multires_panel->isEnabled())
+    else if((object == zoomOutSens) && multires_panel->isEnabled())
     {
         if(event->type() == QEvent::Enter)
-            helpBox->setText(HTzoomSens);
+            helpBox->setText(HTzoomOutSens);
+        else if(event->type() == QEvent::Leave)
+            helpBox->setText(HTbase);
+    }
+    else if((object == zoomInSens) && multires_panel->isEnabled())
+    {
+        if(event->type() == QEvent::Enter)
+            helpBox->setText(HTzoomInSens);
         else if(event->type() == QEvent::Leave)
             helpBox->setText(HTbase);
     }

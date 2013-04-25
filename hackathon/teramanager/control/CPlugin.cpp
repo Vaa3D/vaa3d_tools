@@ -113,7 +113,7 @@ void CPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWi
         PConverter::instance()->raise();
         PConverter::instance()->activateWindow();
     }
-    else if(menu_name == tr("Acquisition: ROI from High Resolution Image"))
+    else if(menu_name == tr("Fetch Highrez Image Data from File"))
     {
         if(CExplorerWindow::getCurrent())
             CExplorerWindow::getCurrent()->Vaa3D_selectedROI();

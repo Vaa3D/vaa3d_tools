@@ -158,7 +158,8 @@ class teramanager::PMain : public QWidget
         QLabel* by_label_7;
         QComboBox* resolution_cbox;
         QLabel* zoominVoiSize;
-        QSlider* zoomSensitivity;
+        QSlider* zoomInSens;
+        QSlider* zoomOutSens;
         QArrowButton* traslXpos;
         QLabel* traslXlabel;
         QArrowButton* traslXneg;
@@ -215,7 +216,8 @@ class teramanager::PMain : public QWidget
         static string HTbase;
         static string HTvoiDim;
         static string HTjumpToRes;
-        static string HTzoomSens;
+        static string HTzoomInSens;
+        static string HTzoomOutSens;
         static string HTtraslatePos;
         static string HTtraslateNeg;
         static string HTvolcuts;
