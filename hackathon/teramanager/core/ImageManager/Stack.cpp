@@ -227,7 +227,7 @@ void Stack::init()
 	if(DEPTH == 0)
 	{
 		char msg[1000];
-		sprintf(msg,"in Stack[%d,%d]::init(): stack is empty", ROW_INDEX, COL_INDEX);
+                sprintf(msg,"in Stack[%d,%d]::init(): stack in \"%s\" is empty", ROW_INDEX, COL_INDEX, abs_path);
 		throw MyException(msg);
 	}
 

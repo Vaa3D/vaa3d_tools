@@ -83,15 +83,15 @@ void PMain::uninstance()
 PMain::~PMain()
 {
     #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread %d] >> PMain::~PMain()\n", this->thread()->currentThreadId()%10);
-    printf("--------------------- teramanager plugin [thread %d] >> PMain destroyed\n", this->thread()->currentThreadId()%10);
+    printf("--------------------- teramanager plugin [thread *] >> PMain::~PMain()\n");
+    printf("--------------------- teramanager plugin [thread *] >> PMain destroyed\n");
     #endif
 }
 
 PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
 {
     #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread %d] >> PMain::PMain()\n", this->thread()->currentThreadId()%10);
+    printf("--------------------- teramanager plugin [thread *] >> PMain::PMain()\n");
     #endif
 
     //initializing members
@@ -590,7 +590,7 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     move(QApplication::desktop()->screen()->rect().center() - rect().center());
 
     #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread %d] >> PMain created\n", this->thread()->currentThreadId()%10);
+    printf("--------------------- teramanager plugin [thread *] >> PMain created\n");
     #endif
 }
 
@@ -598,7 +598,7 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
 void PMain::reset()
 {
     #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread %d] >> PMain::reset()\n", this->thread()->currentThreadId()%10);
+    printf("--------------------- teramanager plugin [thread *] >> PMain::reset()\n");
     #endif
 
     //resetting menu options and widgets
@@ -702,7 +702,7 @@ void PMain::mode3D_checkbox_changed(int)
 void PMain::loadButtonClicked()
 { 
     #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread %d] >> PMain loadButtonClicked() called\n", this->thread()->currentThreadId()%10);
+    printf("--------------------- teramanager plugin [thread *] >> PMain loadButtonClicked() called\n");
     #endif
 
     try
@@ -739,7 +739,7 @@ void PMain::loadButtonClicked()
 void PMain::openVolume()
 {
     #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread %d] >> PMain openVolume() launched\n", this->thread()->currentThreadId()%10);
+    printf("--------------------- teramanager plugin [thread *] >> PMain openVolume() launched\n");
     #endif
 
     try
@@ -803,7 +803,7 @@ void PMain::openVolume()
 void PMain::closeVolume()
 {
     #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread %d] >> PMain::closeVolume()\n", this->thread()->currentThreadId()%10);
+    printf("--------------------- teramanager plugin [thread *] >> PMain::closeVolume()\n");
     #endif
 
     CImport::instance()->reset();
@@ -822,7 +822,7 @@ void PMain::closeVolume()
 void PMain::loadAnnotations()
 {
     #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread %d] >> PMain::loadAnnotations()\n", this->thread()->currentThreadId()%10);
+    printf("--------------------- teramanager plugin [thread *] >> PMain::loadAnnotations()\n");
     #endif
 
     try
@@ -856,7 +856,7 @@ void PMain::loadAnnotations()
 void PMain::saveAnnotations()
 {
     #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread %d] >> PMain::saveAnnotations()\n", this->thread()->currentThreadId()%10);
+    printf("--------------------- teramanager plugin [thread *] >> PMain::saveAnnotations()\n");
     #endif
 
     try
@@ -880,7 +880,7 @@ void PMain::saveAnnotations()
 void PMain::saveAnnotationsAs()
 {
     #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread %d] >> PMain::saveAnnotationsAs()\n", this->thread()->currentThreadId()%10);
+    printf("--------------------- teramanager plugin [thread *] >> PMain::saveAnnotationsAs()\n");
     #endif
 
     try
@@ -914,7 +914,7 @@ void PMain::saveAnnotationsAs()
 void PMain::clearAnnotations()
 {
     #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread %d] >> PMain::clearAnnotations()\n", this->thread()->currentThreadId()%10);
+    printf("--------------------- teramanager plugin [thread *] >> PMain::clearAnnotations()\n");
     #endif
 
     try
@@ -937,7 +937,7 @@ void PMain::clearAnnotations()
 void PMain::exit()
 {
     #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread %d] >> PMain::exit()\n", this->thread()->currentThreadId()%10);
+    printf("--------------------- teramanager plugin [thread *] >> PMain::exit()\n");
     #endif
 
     this->close();
@@ -949,7 +949,7 @@ void PMain::exit()
 void PMain::about()
 {
     #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread %d] >> PMain::about()\n", this->thread()->currentThreadId()%10);
+    printf("--------------------- teramanager plugin [thread *] >> PMain::about()\n");
     #endif
 
     QMessageBox* msgBox = new QMessageBox(this);
@@ -988,7 +988,7 @@ void PMain::about()
 void PMain::importDone(MyException *ex, Image4DSimple* vmap_image)
 {
     #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread %d] >> PMain::import_done(%s)\n", this->thread()->currentThreadId()%10, (ex? "error" : ""));
+    printf("--------------------- teramanager plugin [thread *] >> PMain::import_done(%s)\n",  (ex? "error" : ""));
     #endif
 
     //if an exception has occurred, showing a message error and re-enabling import form
@@ -1134,7 +1134,7 @@ void PMain::importDone(MyException *ex, Image4DSimple* vmap_image)
 void PMain::loadingDone(MyException *ex, void* sourceObject)
 {
     #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread %d] >> PMain::loading_done(%s)\n", this->thread()->currentThreadId()%10, (ex? "error" : ""));
+    printf("--------------------- teramanager plugin [thread *] >> PMain::loading_done(%s)\n",  (ex? "error" : ""));
     #endif
 
     CVolume* cVolume = CVolume::instance();
@@ -1162,7 +1162,7 @@ void PMain::loadingDone(MyException *ex, void* sourceObject)
 void PMain::closeEvent(QCloseEvent *evt)
 {
     #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread %d] >> PMain::closeEvent()\n", this->thread()->currentThreadId()%10);
+    printf("--------------------- teramanager plugin [thread *] >> PMain::closeEvent()\n");
     #endif
 
     if(evt)
@@ -1201,7 +1201,7 @@ void PMain::settingsChanged(int)
 void PMain::resolutionIndexChanged(int i)
 {
     #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread %d] >> PMain::resolutionIndexChanged()\n", this->thread()->currentThreadId()%10);
+    printf("--------------------- teramanager plugin [thread *] >> PMain::resolutionIndexChanged()\n");
     #endif
 
     try
@@ -1274,7 +1274,7 @@ void PMain::highestVOISizeChanged(int i)
 void PMain::traslXposClicked()
 {
     #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread %d] >> PMain::traslXposClicked()\n", this->thread()->currentThreadId()%10);
+    printf("--------------------- teramanager plugin [thread *] >> PMain::traslXposClicked()\n");
     #endif
 
     CExplorerWindow* expl = CExplorerWindow::getCurrent();
@@ -1286,7 +1286,7 @@ void PMain::traslXposClicked()
 void PMain::traslXnegClicked()
 {
     #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread %d] >> PMain::traslXnegClicked()\n", this->thread()->currentThreadId()%10);
+    printf("--------------------- teramanager plugin [thread *] >> PMain::traslXnegClicked()\n");
     #endif
 
     CExplorerWindow* expl = CExplorerWindow::getCurrent();
@@ -1298,7 +1298,7 @@ void PMain::traslXnegClicked()
 void PMain::traslYposClicked()
 {
     #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread %d] >> PMain::traslYposClicked()\n", this->thread()->currentThreadId()%10);
+    printf("--------------------- teramanager plugin [thread *] >> PMain::traslYposClicked()\n");
     #endif
 
     CExplorerWindow* expl = CExplorerWindow::getCurrent();
@@ -1310,7 +1310,7 @@ void PMain::traslYposClicked()
 void PMain::traslYnegClicked()
 {
     #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread %d] >> PMain::traslYnegClicked()\n", this->thread()->currentThreadId()%10);
+    printf("--------------------- teramanager plugin [thread *] >> PMain::traslYnegClicked()\n");
     #endif
 
     CExplorerWindow* expl = CExplorerWindow::getCurrent();
@@ -1322,7 +1322,7 @@ void PMain::traslYnegClicked()
 void PMain::traslZposClicked()
 {
     #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread %d] >> PMain::traslZposClicked()\n", this->thread()->currentThreadId()%10);
+    printf("--------------------- teramanager plugin [thread *] >> PMain::traslZposClicked()\n");
     #endif
 
     CExplorerWindow* expl = CExplorerWindow::getCurrent();
@@ -1334,7 +1334,7 @@ void PMain::traslZposClicked()
 void PMain::traslZnegClicked()
 {
     #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread %d] >> PMain::traslZnegClicked()\n", this->thread()->currentThreadId()%10);
+    printf("--------------------- teramanager plugin [thread *] >> PMain::traslZnegClicked()\n");
     #endif
 
     CExplorerWindow* expl = CExplorerWindow::getCurrent();

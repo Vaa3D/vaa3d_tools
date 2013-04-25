@@ -55,7 +55,7 @@ void CImport::uninstance()
 CImport::~CImport()
 {
     #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread %d] >> CImport::~CImport()\n", this->thread()->currentThreadId()%10);
+    printf("--------------------- teramanager plugin [thread *] >> CImport::~CImport()\n");
     #endif
 
     for(int k=0; k<volumes.size(); k++)
@@ -63,7 +63,7 @@ CImport::~CImport()
             delete volumes[k];
 
     #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread %d] >> CImport destroyed\n", this->thread()->currentThreadId()%10);
+    printf("--------------------- teramanager plugin [thread *] >> CImport destroyed\n");
     #endif
 }
 
@@ -71,7 +71,7 @@ CImport::~CImport()
 void CImport::setAxes(string axs1, string axs2, string axs3)
 {
     #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread %d] >> CImport::setAxes(%s, %s, %s)\n", this->thread()->currentThreadId()%10, axs1.c_str(), axs2.c_str(), axs3.c_str());
+    printf("--------------------- teramanager plugin [thread *] >> CImport::setAxes(%s, %s, %s)\n",  axs1.c_str(), axs2.c_str(), axs3.c_str());
     #endif
 
     AXS_1 = axis(atoi(axs1.c_str()));
@@ -81,7 +81,7 @@ void CImport::setAxes(string axs1, string axs2, string axs3)
 void CImport::setVoxels(std::string vxl1, std::string vxl2, std::string vxl3)
 {
     #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread %d] >> CImport::setVoxels(%s, %s, %s)\n", this->thread()->currentThreadId()%10, vxl1.c_str(), vxl2.c_str(), vxl3.c_str());
+    printf("--------------------- teramanager plugin [thread *] >> CImport::setVoxels(%s, %s, %s)\n",  vxl1.c_str(), vxl2.c_str(), vxl3.c_str());
     #endif
 
     std::istringstream tmp1(vxl1), tmp2(vxl2), tmp3(vxl3);
@@ -97,7 +97,7 @@ void CImport::setVoxels(std::string vxl1, std::string vxl2, std::string vxl3)
 void CImport::run()
 {
     #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread %d] >> CImport::run()\n", this->thread()->currentThreadId()%10);
+    printf("--------------------- teramanager plugin [thread *] >> CImport::run()\n");
     #endif
 
     try

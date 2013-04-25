@@ -52,8 +52,8 @@ void CConverter::uninstance()
 CConverter::~CConverter()
 {
     #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread %d] >> CConverter::~CConverter()\n", this->thread()->currentThreadId()%10);
-    printf("--------------------- teramanager plugin [thread %d] >> CConverter destroyed\n", this->thread()->currentThreadId()%10);
+    printf("--------------------- teramanager plugin [thread *] >> CConverter::~CConverter()\n");
+    printf("--------------------- teramanager plugin [thread *] >> CConverter destroyed\n");
     #endif
     if(resolutions)
         delete[] resolutions;
@@ -62,7 +62,7 @@ CConverter::~CConverter()
 void CConverter::setMembers(PConverter* pConverter) throw (MyException)
 {
     #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread %d] >> CConverter::setMembers()\n", this->thread()->currentThreadId()%10);
+    printf("--------------------- teramanager plugin [thread *] >> CConverter::setMembers()\n");
     #endif
 
     conversionMode = pConverter->conversion_panel->isEnabled();
@@ -118,7 +118,7 @@ void CConverter::setMembers(PConverter* pConverter) throw (MyException)
 void CConverter::run()
 {
     #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread %d] >> CConverter::run()\n", this->thread()->currentThreadId()%10);
+    printf("--------------------- teramanager plugin [thread *] >> CConverter::run()\n");
     #endif
 
     try

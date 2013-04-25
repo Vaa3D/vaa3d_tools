@@ -11,6 +11,16 @@ ties names are:
 - Rem: a feature no longer available
 
 ============================================================================================
+Version 0.7.12
+April 25th, 2013
+--------------------------------------------------------------------------------------------
+- Fix: fixed a bug which caused incorrect transformation of Vaa3D coordinates.
+- Fix: fixed a bug which caused new windows to be automatically minimized after creation.
+- Fix: fixed a bug which caused compilation error on MacOS X, embedded Linux and Win32 plat-
+       forms.
+--------------------------------------------------------------------------------------------
+
+
 Version 0.7.11
 April 24th, 2013
 --------------------------------------------------------------------------------------------

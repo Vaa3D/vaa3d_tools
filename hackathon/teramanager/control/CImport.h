@@ -52,8 +52,8 @@ class teramanager::CImport : public QThread
                                nchannels(-1), volMapMaxSize(50)
         {
             #ifdef TMP_DEBUG
-            printf("--------------------- teramanager plugin [thread %d] >> CImport::CImport()\n", this->thread()->currentThreadId()%10);
-            printf("--------------------- teramanager plugin [thread %d] >> CImport created\n", this->thread()->currentThreadId()%10);
+            printf("--------------------- teramanager plugin [thread *] >> CImport::CImport()\n");
+            printf("--------------------- teramanager plugin [thread *] >> CImport created\n");
             #endif
         }
 
@@ -123,7 +123,7 @@ class teramanager::CImport : public QThread
         void reset()
         {
             #ifdef TMP_DEBUG
-            printf("--------------------- teramanager plugin [thread %d] >> CImport::reset()\n", this->thread()->currentThreadId()%10);
+            printf("--------------------- teramanager plugin [thread *] >> CImport::reset()\n");
             #endif
 
             path=""; AXS_1=AXS_2=AXS_3=axis_invalid; VXL_1=VXL_2=VXL_3=0; reimport=false;

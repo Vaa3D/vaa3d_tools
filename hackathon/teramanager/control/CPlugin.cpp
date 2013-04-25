@@ -61,14 +61,14 @@ QStringList CPlugin::funclist() const
 void CPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
 {
     #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread %d] >> CPlugin::domenu(\"%s\")\n", this->thread()->currentThreadId()%10, menu_name.toStdString().c_str());
+    printf("--------------------- teramanager plugin [thread *] >> CPlugin::domenu(\"%s\")\n",  menu_name.toStdString().c_str());
     #endif
 
     //overriding the current locale with the standard POSIX locale
     setlocale(LC_ALL, "POSIX");
 
     if (menu_name == tr("TeraFly"))
-    {/*
+    {
         //checking shared libraries
         if(!CPlugin::isSharedLibraryLoadable("opencv_core"))
         {
@@ -84,7 +84,7 @@ void CPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWi
                                          QObject::tr("Ok"));
             return;
         }
-*/
+
         //launching plugin's GUI
         PMain::instance(&callback, 0);
     }    
@@ -128,7 +128,7 @@ void CPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWi
 bool CPlugin::dofunc(const QString & func_name, const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback,  QWidget * parent)
 {
     #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread %d] >> CPlugin::dofunc(\"%s\")\n", this->thread()->currentThreadId()%10, func_name.toStdString().c_str());
+    printf("--------------------- teramanager plugin [thread *] >> CPlugin::dofunc(\"%s\")\n",  func_name.toStdString().c_str());
     #endif
 
     printf("TeraManager plugin needs Vaa3D GUI to be executed.\n");
@@ -141,27 +141,27 @@ bool CPlugin::isSharedLibraryLoadable(const char* name)
     printf("--------------------- teramanager plugin [thread ?] >> CPlugin::isSharedLibraryLoadable(\"%s\")\n", name);
     #endif
 
-	// ------ TO DO ------
-    /*#ifdef __unix__
-    //UNIX
-    QString tmp("");
-    tmp.append("lib");
-    tmp.append(name);
-    tmp.append(".so");
-    void* my_lib_handle = dlopen(tmp.toStdString().c_str(),RTLD_NOW);
-    if(!my_lib_handle)
-        return false;
-    else
-    {
-        dlclose(my_lib_handle);
-        return true;
-    }
-    return true;    //to be fixed: _unix_ is defined also on MAC OS
-    #endif
-    #ifdef _WIN32
-    return true;    //not yet supported: anyway Windows O.S. should display an error message about the missing DLL.
-    #endif*/
+//    // ------ TO DO ------
+//    #ifdef __unix__
+//    //UNIX
+//    QString tmp("");
+//    tmp.append("lib");
+//    tmp.append(name);
+//    tmp.append(".so");
+//    void* my_lib_handle = dlopen(tmp.toStdString().c_str(),RTLD_NOW);
+//    if(!my_lib_handle)
+//        return false;
+//    else
+//    {
+//        dlclose(my_lib_handle);
+//        return true;
+//    }
+//    return true;    //to be fixed: _unix_ is defined also on MAC OS
+//    #endif
+//    #ifdef _WIN32
+//    return true;    //not yet supported: anyway Windows O.S. should display an error message about the missing DLL.
+//    #endif
 	
-	return true;
+    return true;
 }
 

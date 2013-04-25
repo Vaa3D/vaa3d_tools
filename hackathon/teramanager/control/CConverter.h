@@ -50,8 +50,8 @@ class teramanager::CConverter : public QThread
             resolutionsSize(0), stacksWidth(undefined_int32), stacksHeight(undefined_int32), volOutPath(undefined_str), fileMode(false)
         {
             #ifdef TMP_DEBUG
-            printf("--------------------- teramanager plugin [thread %d] >> CConverter::CConverter()\n", this->thread()->currentThreadId()%10);
-            printf("--------------------- teramanager plugin [thread %d] >> CConverter created\n", this->thread()->currentThreadId()%10);
+            printf("--------------------- teramanager plugin [thread *] >> CConverter::CConverter()\n");
+            printf("--------------------- teramanager plugin [thread *] >> CConverter created\n");
             #endif
         }
 

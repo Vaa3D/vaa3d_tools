@@ -93,12 +93,12 @@ class teramanager::CExplorerWindow : public QWidget
         * ume image space given the global coordinate  (which starts from 0) in the highest
         * resolution volume image space.
         ***********************************************************************************/
-        int getLocalVCoord(int highestResGlobalVCoord);
-        int getLocalHCoord(int highestResGlobalHCoord);
-        int getLocalDCoord(int highestResGlobalDCoord);
-        float getLocalVCoord(float highestResGlobalVCoord);
-        float getLocalHCoord(float highestResGlobalHCoord);
-        float getLocalDCoord(float highestResGlobalDCoord);
+        int getLocalVCoord(int highestResGlobalVCoord, bool toVaa3Dcoordinates = false);
+        int getLocalHCoord(int highestResGlobalHCoord, bool toVaa3Dcoordinates = false);
+        int getLocalDCoord(int highestResGlobalDCoord, bool toVaa3Dcoordinates = false);
+        float getLocalVCoord(float highestResGlobalVCoord, bool toVaa3Dcoordinates = false);
+        float getLocalHCoord(float highestResGlobalHCoord, bool toVaa3Dcoordinates = false);
+        float getLocalDCoord(float highestResGlobalDCoord, bool toVaa3Dcoordinates = false);
 
 
         /**********************************************************************************
@@ -242,8 +242,8 @@ class teramanager::CExplorerWindow : public QWidget
         void setActive(bool active)
         {
             #ifdef TMP_DEBUG
-            printf("--------------------- teramanager plugin [thread %d] >> CExplorerWindow[%s]::setActive(%s)\n",
-                   this->thread()->currentThreadId()%10, titleShort.c_str() , active ? "true" : "false");
+            printf("--------------------- teramanager plugin [thread *] >> CExplorerWindow[%s]::setActive(%s)\n",
+                    titleShort.c_str() , active ? "true" : "false");
             #endif
 
             isActive = active;

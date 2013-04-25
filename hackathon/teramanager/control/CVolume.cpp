@@ -49,8 +49,8 @@ void CVolume::uninstance()
 CVolume::~CVolume()
 {
     #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread %d] >> CVolume::~CVolume()\n", this->thread()->currentThreadId()%10);
-    printf("--------------------- teramanager plugin [thread %d] >> CVolume destroyed\n", this->thread()->currentThreadId()%10);
+    printf("--------------------- teramanager plugin [thread *] >> CVolume::~CVolume()\n");
+    printf("--------------------- teramanager plugin [thread *] >> CVolume destroyed\n");
     #endif
 }
 
@@ -129,7 +129,7 @@ int CVolume::scaleDCoord(int coord, int srcRes, int dstRes) throw (MyException)
 void CVolume::run()
 {
     #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread %d] >> CVolume::run()\n", this->thread()->currentThreadId()%10);
+    printf("--------------------- teramanager plugin [thread *] >> CVolume::run()\n");
     #endif
 
     try

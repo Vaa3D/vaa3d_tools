@@ -72,7 +72,7 @@ CExplorerWindow::CExplorerWindow(V3DPluginCallback2 *_V3D_env, int _resIndex, ui
     PMain* pMain = PMain::instance();
 
     #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread %d] >> CExplorerWindow[%s]::CExplorerWindow()\n", this->thread()->currentThreadId()%10, titleShort.c_str());
+    printf("--------------------- teramanager plugin [thread *] >> CExplorerWindow[%s]::CExplorerWindow()\n",  titleShort.c_str());
     #endif
 
     try
@@ -88,7 +88,7 @@ CExplorerWindow::CExplorerWindow(V3DPluginCallback2 *_V3D_env, int _resIndex, ui
         //check that the number of instantiated objects does not exceed the number of available resolutions
         nInstances++;
         #ifdef TMP_DEBUG
-        printf("--------------------- teramanager plugin [thread %d] >> CExplorerWindow::nInstances++, nInstances = %d\n", this->thread()->currentThreadId()%10, nInstances);
+        printf("--------------------- teramanager plugin [thread *] >> CExplorerWindow::nInstances++, nInstances = %d\n",  nInstances);
         #endif
         if(nInstances > CImport::instance()->getResolutions() +1)
             throw MyException(QString("in CExplorerWindow(): exceeded the maximum number of views opened at the same time.\n\nPlease signal this issue to developers.").toStdString().c_str());
@@ -247,7 +247,8 @@ CExplorerWindow::CExplorerWindow(V3DPluginCallback2 *_V3D_env, int _resIndex, ui
 //        window3D->setWindowFlags(Qt::Tool
 //                                 | Qt::WindowTitleHint
 //                                 | Qt::CustomizeWindowHint | Qt::WindowStaysOnTopHint | Qt::WindowCloseButtonHint);
-        //window3D->show();
+        this->window3D->raise();
+        this->window3D->show();
 
         //saving subvol spinboxes state ---- Alessandro 2013-04-23: not sure if this is really needed
         saveSubvolSpinboxState();
@@ -269,14 +270,14 @@ CExplorerWindow::CExplorerWindow(V3DPluginCallback2 *_V3D_env, int _resIndex, ui
     }
 
     #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread %d] >> CExplorerWindow[%s] created\n", this->thread()->currentThreadId()%10, titleShort.c_str());
+    printf("--------------------- teramanager plugin [thread *] >> CExplorerWindow[%s] created\n",  titleShort.c_str());
     #endif
 }
 
 CExplorerWindow::~CExplorerWindow()
 {
     #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread %d] >> CExplorerWindow[%s]::~CExplorerWindow()\n", this->thread()->currentThreadId()%10, titleShort.c_str() );
+    printf("--------------------- teramanager plugin [thread *] >> CExplorerWindow[%s]::~CExplorerWindow()\n",  titleShort.c_str() );
     #endif
 
     //removing the event filter from the 3D renderer and from the 3D window
@@ -291,11 +292,11 @@ CExplorerWindow::~CExplorerWindow()
     nInstances--;
 
     #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread %d] >> CExplorerWindow::nInstances--, nInstances = %d\n", this->thread()->currentThreadId()%10, nInstances);
+    printf("--------------------- teramanager plugin [thread *] >> CExplorerWindow::nInstances--, nInstances = %d\n",  nInstances);
     #endif
 
     #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread %d] >> CExplorerWindow[%s] destroyed\n", this->thread()->currentThreadId()%10, titleShort.c_str() );
+    printf("--------------------- teramanager plugin [thread *] >> CExplorerWindow[%s] destroyed\n",  titleShort.c_str() );
     #endif
 }
 
@@ -411,8 +412,8 @@ bool CExplorerWindow::eventFilter(QObject *object, QEvent *event)
 void CExplorerWindow::loadingDone(MyException *ex, void* sourceObject)
 {
     #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread %d] >> CExplorerWindow[%s]::loadingDone(%s)\n",
-           this->thread()->currentThreadId()%10, titleShort.c_str(),  (ex? "error" : ""));
+    printf("--------------------- teramanager plugin [thread *] >> CExplorerWindow[%s]::loadingDone(%s)\n",
+            titleShort.c_str(),  (ex? "error" : ""));
     #endif
 
     CVolume* cVolume = CVolume::instance();
@@ -477,8 +478,8 @@ void CExplorerWindow::newView(int x, int y, int z, int resolution, bool fromVaa3
                               int dx /* = -1 */, int dy /* = -1 */, int dz /* = -1 */)
 {
     #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread %d] >> CExplorerWindow[%s]::newView(x = %d, y = %d, z = %d, res = %d, dx = %d, dy = %d, dz = %d)\n",
-           this->thread()->currentThreadId()%10,title.c_str(), x, y, z, resolution, dx, dy, dz );
+    printf("--------------------- teramanager plugin [thread *] >> CExplorerWindow[%s]::newView(x = %d, y = %d, z = %d, res = %d, dx = %d, dy = %d, dz = %d)\n",
+           title.c_str(), x, y, z, resolution, dx, dy, dz );
     #endif
 
     //checks
@@ -521,8 +522,8 @@ void CExplorerWindow::newView(int x, int y, int z, int resolution, bool fromVaa3
 void CExplorerWindow::makeLastView() throw (MyException)
 {
     #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread %d] >> CExplorerWindow[%s]::makeLastView()\n",
-           this->thread()->currentThreadId()%10, titleShort.c_str());
+    printf("--------------------- teramanager plugin [thread *] >> CExplorerWindow[%s]::makeLastView()\n",
+            titleShort.c_str());
     #endif
 
     if(CExplorerWindow::current != this)
@@ -543,8 +544,8 @@ void CExplorerWindow::makeLastView() throw (MyException)
 void CExplorerWindow::saveSubvolSpinboxState()
 {
     #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread %d] >> CExplorerWindow[%s]::saveSubvolSpinboxState()\n",
-           this->thread()->currentThreadId()%10, titleShort.c_str());
+    printf("--------------------- teramanager plugin [thread *] >> CExplorerWindow[%s]::saveSubvolSpinboxState()\n",
+            titleShort.c_str());
     #endif
 
     PMain& pMain = *(PMain::instance());
@@ -564,8 +565,8 @@ void CExplorerWindow::saveSubvolSpinboxState()
 void CExplorerWindow::restoreSubvolSpinboxState()
 {  
     #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread %d] >> CExplorerWindow[%s]::restoreSubvolSpinboxState()\n",
-           this->thread()->currentThreadId()%10, titleShort.c_str());
+    printf("--------------------- teramanager plugin [thread *] >> CExplorerWindow[%s]::restoreSubvolSpinboxState()\n",
+            titleShort.c_str());
     #endif
 
     PMain& pMain = *(PMain::instance());
@@ -589,7 +590,7 @@ void CExplorerWindow::restoreSubvolSpinboxState()
 void CExplorerWindow::storeAnnotations() throw (MyException)
 {
     #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread %d] >> CExplorerWindow[%s]::storeAnnotations()\n", this->thread()->currentThreadId()%10, titleShort.c_str() );
+    printf("--------------------- teramanager plugin [thread *] >> CExplorerWindow[%s]::storeAnnotations()\n",  titleShort.c_str() );
     #endif
 
     /**********************************************************************************
@@ -642,7 +643,7 @@ void CExplorerWindow::storeAnnotations() throw (MyException)
 void CExplorerWindow::loadAnnotations() throw (MyException)
 {
     #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread %d] >> CExplorerWindow[%s]::loadAnnotations()\n", this->thread()->currentThreadId()%10, titleShort.c_str() );
+    printf("--------------------- teramanager plugin [thread *] >> CExplorerWindow[%s]::loadAnnotations()\n",  titleShort.c_str() );
     #endif
 
     //clearing previous annotations (useful when this view has been already visited)
@@ -700,8 +701,8 @@ void CExplorerWindow::loadAnnotations() throw (MyException)
 void CExplorerWindow::restoreViewFrom(CExplorerWindow* source) throw (MyException)
 {
     #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread %d] >> CExplorerWindow[%s]::restoreViewFrom([%s])\n",
-           this->thread()->currentThreadId()%10, titleShort.c_str(), source->titleShort.c_str() );
+    printf("--------------------- teramanager plugin [thread *] >> CExplorerWindow[%s]::restoreViewFrom([%s])\n",
+            titleShort.c_str(), source->titleShort.c_str() );
     #endif
 
     if(source)
@@ -744,8 +745,8 @@ void CExplorerWindow::restoreViewFrom(CExplorerWindow* source) throw (MyExceptio
         //positioning the current 3D window exactly at the <source> window position
         QPoint location = source->window3D->pos();
         triViewWidget->setVisible(true);
-        window3D->setVisible(true);
         triViewWidget->setWindowState(Qt::WindowMinimized);
+        window3D->setVisible(true);
         window3D->resize(source->window3D->size());
         window3D->move(location);
 
@@ -830,6 +831,7 @@ void CExplorerWindow::restoreViewFrom(CExplorerWindow* source) throw (MyExceptio
         //loading annotations of the current view
         this->loadAnnotations();
 
+        this->window3D->raise();
         this->window3D->show();
     }
 }
@@ -989,63 +991,63 @@ float CExplorerWindow::getGlobalDCoord(float localDCoord, int resIndex /* = -1 *
 * ume image space given the global coordinate  (which starts from 0) in the highest
 * resolution volume image space.
 ***********************************************************************************/
-int CExplorerWindow::getLocalVCoord(int highestResGlobalVCoord)
+int CExplorerWindow::getLocalVCoord(int highestResGlobalVCoord, bool toVaa3Dcoordinates /* = false */)
 {
     float ratio = (CImport::instance()->getHighestResVolume()->getDIM_V()-1.0f)/(CImport::instance()->getVolume(volResIndex)->getDIM_V()-1.0f);
     int localCoord =  static_cast<int>(highestResGlobalVCoord/ratio - volV0 + 0.5f);
 
     //if the Vaa3D image size limit has been reached along this direction, mapping coordinate to the downsampled image space coordinate system
-    if(volV1-volV0 > LIMIT_VOLY)
+    if(toVaa3Dcoordinates && (volV1-volV0 > LIMIT_VOLY))
         localCoord = static_cast<int>(localCoord* ( static_cast<float>(LIMIT_VOLY-1)/(volV1-volV0-1) ) +0.5f);
     return localCoord;
 }
-int CExplorerWindow::getLocalHCoord(int highestResGlobalHCoord)
+int CExplorerWindow::getLocalHCoord(int highestResGlobalHCoord, bool toVaa3Dcoordinates /* = false */)
 {
     float ratio = (CImport::instance()->getHighestResVolume()->getDIM_H()-1.0f)/(CImport::instance()->getVolume(volResIndex)->getDIM_H()-1.0f);
     int localCoord =  static_cast<int>(highestResGlobalHCoord/ratio - volH0 + 0.5f);
 
     //if the Vaa3D image size limit has been reached along this direction, mapping coordinate to the downsampled image space coordinate system
-    if(volH1-volH0 > LIMIT_VOLX)
+    if(toVaa3Dcoordinates && (volH1-volH0 > LIMIT_VOLX))
         localCoord = static_cast<int>(localCoord* ( static_cast<float>(LIMIT_VOLX-1)/(volH1-volH0-1) ) +0.5f);
     return localCoord;
 }
-int CExplorerWindow::getLocalDCoord(int highestResGlobalDCoord)
+int CExplorerWindow::getLocalDCoord(int highestResGlobalDCoord, bool toVaa3Dcoordinates /* = false */)
 {
     float ratio = (CImport::instance()->getHighestResVolume()->getDIM_D()-1.0f)/(CImport::instance()->getVolume(volResIndex)->getDIM_D()-1.0f);
     int localCoord =  static_cast<int>(highestResGlobalDCoord/ratio - volD0 + 0.5f);
 
     //if the Vaa3D image size limit has been reached along this direction, mapping coordinate to the downsampled image space coordinate system
-    if(volD1-volD0 > LIMIT_VOLZ)
+    if(toVaa3Dcoordinates && (volD1-volD0 > LIMIT_VOLZ))
         localCoord = static_cast<int>(localCoord* ( static_cast<float>(LIMIT_VOLZ-1)/(volD1-volD0-1) ) +0.5f);
     return localCoord;
 }
-float CExplorerWindow::getLocalVCoord(float highestResGlobalVCoord)
+float CExplorerWindow::getLocalVCoord(float highestResGlobalVCoord, bool toVaa3Dcoordinates /* = false */)
 {
     float ratio = (CImport::instance()->getHighestResVolume()->getDIM_V()-1.0f)/(CImport::instance()->getVolume(volResIndex)->getDIM_V()-1.0f);
     float localCoord = highestResGlobalVCoord/ratio - volV0;
 
     //if the Vaa3D image size limit has been reached along this direction, mapping coordinate to the downsampled image space coordinate system
-    if(volV1-volV0 > LIMIT_VOLY)
+    if(toVaa3Dcoordinates && (volV1-volV0 > LIMIT_VOLY))
         localCoord = localCoord* ( static_cast<float>(LIMIT_VOLY-1)/(volV1-volV0-1) );
     return localCoord;
 }
-float CExplorerWindow::getLocalHCoord(float highestResGlobalHCoord)
+float CExplorerWindow::getLocalHCoord(float highestResGlobalHCoord, bool toVaa3Dcoordinates /* = false */)
 {
     float ratio = (CImport::instance()->getHighestResVolume()->getDIM_H()-1.0f)/(CImport::instance()->getVolume(volResIndex)->getDIM_H()-1.0f);
     float localCoord = highestResGlobalHCoord/ratio - volH0;
 
     //if the Vaa3D image size limit has been reached along this direction, mapping coordinate to the downsampled image space coordinate system
-    if(volH1-volH0 > LIMIT_VOLX)
+    if(toVaa3Dcoordinates && (volH1-volH0 > LIMIT_VOLX))
         localCoord = localCoord* ( static_cast<float>(LIMIT_VOLX-1)/(volH1-volH0-1) );
     return localCoord;
 }
-float CExplorerWindow::getLocalDCoord(float highestResGlobalDCoord)
+float CExplorerWindow::getLocalDCoord(float highestResGlobalDCoord, bool toVaa3Dcoordinates /* = false */)
 {
     float ratio = (CImport::instance()->getHighestResVolume()->getDIM_D()-1.0f)/(CImport::instance()->getVolume(volResIndex)->getDIM_D()-1.0f);
     float localCoord = highestResGlobalDCoord/ratio - volD0;
 
     //if the Vaa3D image size limit has been reached along this direction, mapping coordinate to the downsampled image space coordinate system
-    if(volD1-volD0 > LIMIT_VOLZ)
+    if(toVaa3Dcoordinates && (volD1-volD0 > LIMIT_VOLZ))
         localCoord = localCoord* ( static_cast<float>(LIMIT_VOLZ-1)/(volD1-volD0-1) );
     return localCoord;
 }
@@ -1098,37 +1100,37 @@ void CExplorerWindow::Vaa3D_changeZCut1(int s)
 void CExplorerWindow::PMain_changeV0sbox(int s)
 {
     disconnect(view3DWidget, SIGNAL(changeYCut0(int)), this, SLOT(Vaa3D_changeYCut0(int)));
-    view3DWidget->setYCut0(getLocalVCoord(s-1)+1);
+    view3DWidget->setYCut0(getLocalVCoord(s-1, true)+1);
     connect(view3DWidget, SIGNAL(changeYCut0(int)), this, SLOT(Vaa3D_changeYCut0(int)));
 }
 void CExplorerWindow::PMain_changeV1sbox(int s)
 {
     disconnect(view3DWidget, SIGNAL(changeYCut1(int)), this, SLOT(Vaa3D_changeYCut1(int)));
-    view3DWidget->setYCut1(getLocalVCoord(s-1)+1);
+    view3DWidget->setYCut1(getLocalVCoord(s-1, true)+1);
     connect(view3DWidget, SIGNAL(changeYCut1(int)), this, SLOT(Vaa3D_changeYCut1(int)));
 }
 void CExplorerWindow::PMain_changeH0sbox(int s)
 {
     disconnect(view3DWidget, SIGNAL(changeXCut0(int)), this, SLOT(Vaa3D_changeXCut0(int)));
-    view3DWidget->setXCut0(getLocalHCoord(s-1)+1);
+    view3DWidget->setXCut0(getLocalHCoord(s-1, true)+1);
     connect(view3DWidget, SIGNAL(changeXCut0(int)), this, SLOT(Vaa3D_changeXCut0(int)));
 }
 void CExplorerWindow::PMain_changeH1sbox(int s)
 {
     disconnect(view3DWidget, SIGNAL(changeXCut1(int)), this, SLOT(Vaa3D_changeXCut1(int)));
-    view3DWidget->setXCut1(getLocalHCoord(s-1)+1);
+    view3DWidget->setXCut1(getLocalHCoord(s-1, true)+1);
     connect(view3DWidget, SIGNAL(changeXCut1(int)), this, SLOT(Vaa3D_changeXCut1(int)));
 }
 void CExplorerWindow::PMain_changeD0sbox(int s)
 {
     disconnect(view3DWidget, SIGNAL(changeZCut0(int)), this, SLOT(Vaa3D_changeZCut0(int)));
-    view3DWidget->setZCut0(getLocalDCoord(s-1)+1);
+    view3DWidget->setZCut0(getLocalDCoord(s-1, true)+1);
     connect(view3DWidget, SIGNAL(changeZCut0(int)), this, SLOT(Vaa3D_changeZCut0(int)));
 }
 void CExplorerWindow::PMain_changeD1sbox(int s)
 {
     disconnect(view3DWidget, SIGNAL(changeZCut1(int)), this, SLOT(Vaa3D_changeZCut1(int)));
-    view3DWidget->setZCut1(getLocalDCoord(s-1)+1);
+    view3DWidget->setZCut1(getLocalDCoord(s-1, true)+1);
     connect(view3DWidget, SIGNAL(changeZCut1(int)), this, SLOT(Vaa3D_changeZCut1(int)));
 }
 
@@ -1138,7 +1140,7 @@ void CExplorerWindow::PMain_changeD1sbox(int s)
 void CExplorerWindow::alignToLeft(QWidget* widget)
 {
     #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread %d] >> CExplorerWindow[%s]::alignToLeft()\n", this->thread()->currentThreadId()%10, titleShort.c_str() );
+    printf("--------------------- teramanager plugin [thread *] >> CExplorerWindow[%s]::alignToLeft()\n",  titleShort.c_str() );
     #endif
 
     widget->move(window3D->x() + window3D->width() + 3, window3D->y());
@@ -1148,7 +1150,7 @@ void CExplorerWindow::alignToLeft(QWidget* widget)
 void CExplorerWindow::alignToRight(QWidget* widget)
 {
     #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread %d] >> CExplorerWindow[%s]::alignToRight()\n", this->thread()->currentThreadId()%10, titleShort.c_str() );
+    printf("--------------------- teramanager plugin [thread *] >> CExplorerWindow[%s]::alignToRight()\n",  titleShort.c_str() );
     #endif
 
     widget->move(window3D->x() - widget->width() - 3, window3D->y());
