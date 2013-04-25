@@ -11,12 +11,18 @@ ties names are:
 - Rem: a feature no longer available
 
 ============================================================================================
+Version 0.7.14
+April 25th, 2013
+--------------------------------------------------------------------------------------------
+- New: Linked the mouse scroll-up zoom-in feature with data caching (still buggy).
+--------------------------------------------------------------------------------------------
+
+
 Version 0.7.13
 April 25th, 2013
 --------------------------------------------------------------------------------------------
 - Opt: modified label "Zoom-in VOI dims" to "Zoom-in max dims".
 - Opt: modified "home" help message that is shown when a volume has been imported.
-- Bug: enabled volume compression (todo)
 --------------------------------------------------------------------------------------------
 
 

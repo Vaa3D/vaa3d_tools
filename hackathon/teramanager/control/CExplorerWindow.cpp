@@ -501,7 +501,7 @@ void CExplorerWindow::newView(int x, int y, int z, int resolution, bool fromVaa3
     pMain.statusBar->showMessage("Loading...");
 
     //computing VOI
-//    float ratio = static_cast<float>(CImport::instance()->getVolume(resolution)->getDIM_D())/CImport::instance()->getVolume(volResIndex)->getDIM_D();
+    float ratio = static_cast<float>(CImport::instance()->getVolume(resolution)->getDIM_D())/CImport::instance()->getVolume(volResIndex)->getDIM_D();
     int VoiCenterX = getGlobalHCoord(x, resolution, fromVaa3Dcoordinates);
     int VoiCenterY = getGlobalVCoord(y, resolution, fromVaa3Dcoordinates);
     int VoiCenterZ = getGlobalDCoord(z, resolution, fromVaa3Dcoordinates);
@@ -509,9 +509,9 @@ void CExplorerWindow::newView(int x, int y, int z, int resolution, bool fromVaa3
     //---- Alessandro 2013-04-25: cropping bounding box if its larger than the maximum allowed
     printf("--------------------- teramanager plugin [thread *] >> CExplorerWindow[%s]: cropping bbox dims from (%d,%d,%d) to ",
            title.c_str(), dx, dy, dz );
-    dx = dx == -1 ? pMain.Hdim_sbox->value()/2 : std::min(dx, pMain.Hdim_sbox->value()/2);
-    dy = dy == -1 ? pMain.Vdim_sbox->value()/2 : std::min(dy, pMain.Vdim_sbox->value()/2);
-    dz = dz == -1 ? pMain.Ddim_sbox->value()/2 : std::min(dz, pMain.Ddim_sbox->value()/2);
+    dx = dx == -1 ? pMain.Hdim_sbox->value()/2 : std::min(static_cast<int>(dx*ratio+0.5f), pMain.Hdim_sbox->value()/2);
+    dy = dy == -1 ? pMain.Vdim_sbox->value()/2 : std::min(static_cast<int>(dy*ratio+0.5f), pMain.Vdim_sbox->value()/2);
+    dz = dz == -1 ? pMain.Ddim_sbox->value()/2 : std::min(static_cast<int>(dz*ratio+0.5f), pMain.Ddim_sbox->value()/2);
 //    dx = dx == -1 ? pMain.Hdim_sbox->value()/2 : (dx*ratio+0.5f);
 //    dy = dy == -1 ? pMain.Vdim_sbox->value()/2 : (dy*ratio+0.5f);
 //    dz = dz == -1 ? pMain.Ddim_sbox->value()/2 : (dz*ratio+0.5f);
@@ -907,10 +907,60 @@ void CExplorerWindow::Vaa3D_selectedROI()
         int roiCenterY = roi->ye-(roi->ye-roi->ys)/2;
         int roiCenterZ = roi->ze-(roi->ze-roi->zs)/2;
 
+        //zoom-in around marker or ROI
         if(roi->ops_type == 1)
             current->newView(roiCenterX, roiCenterY, roiCenterZ, volResIndex+1, false, (roi->xe-roi->xs)/2, (roi->ye-roi->ys)/2, (roi->ze-roi->zs)/2);
-        else if(roi->ops_type == 2)
+        //zoom-in on VOI (after mouse scroll up)
+        else if(roi->ops_type == 2 && current->volResIndex != CImport::instance()->getResolutions()-1)
         {
+            //trying caching if next view exists
+            if(current->next)
+            {
+                int gXS = current->getGlobalHCoord(static_cast<int>(roi->xs));
+                int gXE = current->getGlobalHCoord(static_cast<int>(roi->xe));
+                int gYS = current->getGlobalVCoord(static_cast<int>(roi->ys));
+                int gYE = current->getGlobalVCoord(static_cast<int>(roi->ye));
+                int gZS = current->getGlobalDCoord(static_cast<int>(roi->zs));
+                int gZE = current->getGlobalDCoord(static_cast<int>(roi->ze));
+                QRectF gXRect(QPoint(gXS, 0), QPoint(gXE, 1));
+                QRectF gYRect(QPoint(gYS, 0), QPoint(gYE, 1));
+                QRectF gZRect(QPoint(gZS, 0), QPoint(gZE, 1));
+
+                int highestResIndex = CImport::instance()->getResolutions()-1;
+                int gXScached = CVolume::instance()->scaleHCoord(current->next->volH0, current->next->volResIndex, highestResIndex);
+                int gXEcached = CVolume::instance()->scaleHCoord(current->next->volH1, current->next->volResIndex, highestResIndex);
+                int gYScached = CVolume::instance()->scaleVCoord(current->next->volV0, current->next->volResIndex, highestResIndex);
+                int gYEcached = CVolume::instance()->scaleVCoord(current->next->volV1, current->next->volResIndex, highestResIndex);
+                int gZScached = CVolume::instance()->scaleDCoord(current->next->volD0, current->next->volResIndex, highestResIndex);
+                int gZEcached = CVolume::instance()->scaleDCoord(current->next->volD1, current->next->volResIndex, highestResIndex);
+                QRectF gXRectCached(QPoint(gXScached, 0), QPoint(gXEcached, 1));
+                QRectF gYRectCached(QPoint(gYScached, 0), QPoint(gYEcached, 1));
+                QRectF gZRectCached(QPoint(gZScached, 0), QPoint(gZEcached, 1));
+
+                float intersectionX = gXRect.intersected(gXRectCached).width();
+                float intersectionY = gYRect.intersected(gYRectCached).width();
+                float intersectionZ = gZRect.intersected(gZRectCached).width();
+                float intersectionVol =  intersectionX*intersectionY*intersectionZ;
+                float voiVol = (gXE-gXS)*(gYE-gYS)*(gZE-gZS);
+                float coverageFactor = voiVol != 0 ? intersectionVol/voiVol : 0;
+
+                printf("--------------------- teramanager plugin [thread ?] >> CExplorerWindow::Vaa3D_selectedROI(): intersecting voi[%d-%d][%d-%d][%d-%d] and cached[%d-%d][%d-%d][%d-%d]...\n",
+                       gXS, gXE, gYS, gYE, gZS, gZE, gXScached, gXEcached, gYScached, gYEcached, gZScached, gZEcached);
+
+                printf("--------------------- teramanager plugin [thread ?] >> CExplorerWindow::Vaa3D_selectedROI(): intersection is %.0f x %.0f x %.0f with coverage factor = %.2f\n",
+                       intersectionX, intersectionY, intersectionZ, coverageFactor);
+
+                if(coverageFactor < (100-PMain::instance()->zoomInSens->value())/100.0f)
+                    current->newView(roiCenterX, roiCenterY, roiCenterZ, volResIndex+1, false, (roi->xe-roi->xs)/2, (roi->ye-roi->ys)/2, (roi->ze-roi->zs)/2);
+                else
+                {
+                    current->setActive(false);
+                    current->resetZoomHistory();
+                    current->next->restoreViewFrom(current);
+                }
+            }
+            else
+                current->newView(roiCenterX, roiCenterY, roiCenterZ, volResIndex+1, false, (roi->xe-roi->xs)/2, (roi->ye-roi->ys)/2, (roi->ze-roi->zs)/2);
 
         }
         else
