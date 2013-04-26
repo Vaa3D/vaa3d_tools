@@ -950,15 +950,15 @@ void CExplorerWindow::Vaa3D_selectedROI()
                 if(current->next)
                 {
                     //converting Vaa3D VOI local coordinates to global coordinates
-                    float gXS = current->getGlobalHCoord(static_cast<int>(roi->xs));
-                    float gXE = current->getGlobalHCoord(static_cast<int>(roi->xe));
-                    float gYS = current->getGlobalVCoord(static_cast<int>(roi->ys));
-                    float gYE = current->getGlobalVCoord(static_cast<int>(roi->ye));
-                    float gZS = current->getGlobalDCoord(static_cast<int>(roi->zs));
-                    float gZE = current->getGlobalDCoord(static_cast<int>(roi->ze));
-                    QRectF gXRect(QPoint(gXS, 0), QPoint(gXE, 1));
-                    QRectF gYRect(QPoint(gYS, 0), QPoint(gYE, 1));
-                    QRectF gZRect(QPoint(gZS, 0), QPoint(gZE, 1));
+                    float gXS = current->getGlobalHCoord(static_cast<float>(roi->xs));
+                    float gXE = current->getGlobalHCoord(static_cast<float>(roi->xe));
+                    float gYS = current->getGlobalVCoord(static_cast<float>(roi->ys));
+                    float gYE = current->getGlobalVCoord(static_cast<float>(roi->ye));
+                    float gZS = current->getGlobalDCoord(static_cast<float>(roi->zs));
+                    float gZE = current->getGlobalDCoord(static_cast<float>(roi->ze));
+                    QRectF gXRect(QPointF(gXS, 0), QPointF(gXE, 1));
+                    QRectF gYRect(QPointF(gYS, 0), QPointF(gYE, 1));
+                    QRectF gZRect(QPointF(gZS, 0), QPointF(gZE, 1));
 
                     //converting TeraFly next view VOI coordinates to global coordinates
                     int highestResIndex = CImport::instance()->getResolutions()-1;
@@ -979,7 +979,7 @@ void CExplorerWindow::Vaa3D_selectedROI()
                     float intersectionVol =  intersectionX*intersectionY*intersectionZ;
                     float voiVol = (gXE-gXS)*(gYE-gYS)*(gZE-gZS);
                     float coverageFactor = voiVol != 0 ? intersectionVol/voiVol : 0;
-                    printf("--------------------- teramanager plugin [thread ?] >> CExplorerWindow::Vaa3D_selectedROI(): intersecting voi[%d-%d][%d-%d][%d-%d] and cached[%d-%d][%d-%d][%d-%d]...\n",
+                    printf("--------------------- teramanager plugin [thread ?] >> CExplorerWindow::Vaa3D_selectedROI(): intersecting voi[%.0f-%.0f][%.0f-%.0f][%.0f-%.0f] and cached[%d-%d][%d-%d][%d-%d]...\n",
                            gXS, gXE, gYS, gYE, gZS, gZE, gXScached, gXEcached, gYScached, gYEcached, gZScached, gZEcached);
                     printf("--------------------- teramanager plugin [thread ?] >> CExplorerWindow::Vaa3D_selectedROI(): intersection is %.0f x %.0f x %.0f with coverage factor = %.2f\n",
                            intersectionX, intersectionY, intersectionZ, coverageFactor);

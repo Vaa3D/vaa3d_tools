@@ -531,7 +531,7 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     multiresModePanelLayout->addWidget(gradientBar,                             0, 2, 1, 11);
     multiresModePanelLayout->addWidget(jumpToResLabel,                          1, 0, 1, 1);
     multiresModePanelLayout->addWidget(resolution_cbox,                         1, 2, 1, 11);
-    multiresModePanelLayout->addWidget(new QLabel("Zoom-in max dims:"),         2, 0, 1, 1);
+    multiresModePanelLayout->addWidget(new QLabel("View max dims:"),         2, 0, 1, 1);
     multiresModePanelLayout->addWidget(Hdim_sbox,                               2, 2, 1, 3);
     multiresModePanelLayout->addWidget(by_label_6,                              2, 5, 1, 1);
     multiresModePanelLayout->addWidget(Vdim_sbox,                               2, 6, 1, 3);
