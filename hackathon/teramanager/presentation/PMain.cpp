@@ -52,8 +52,8 @@ string PMain::HTjumpToRes = "Choose from pull-down menu the <b>resolution</b> yo
                             "or the <i>Highest resolution volume's coordinates</i> spinboxes embedded in this plugin.";
 string PMain::HTzoomOutSens = "Tune the sensitivity of the <b>zoom-out</b> navigation through resolutions with <i>mouse scroll down</i>. The default is set to maximum (<i>all-to-the-right</i>). "
                            "Set it to <i>all-to-the-left</i> to disable this feature.";
-string PMain::HTzoomInSens = "Tune the sensitivity of the <b>zoom-in</b> navigation through resolutions with <i>mouse scroll up</i>. Set it to <i>all-to-the-left</i>"
-                            " if you always want to re-load the zoomed-in portion, or to <i>all-to-the-right</i> if you want to always restore the last zoomed-in region.";
+string PMain::HTzoomInSens = "Tune the sensitivity of the <b>zoom-in</b> when navigating through resolutions with <i>mouse scroll up</i>. This controls the minimum amount of overlap between the requested VOI "
+                            " and the <b>cached VOI</b> required to restore the cached VOI instead of loading a new VOI. If you always want to zoom-in to the cached VOI, please set this to 0\%.";
 string PMain::HTtraslatePos = "Translate the view along this axis in its <i>natural</i> direction.";
 string PMain::HTtraslateNeg = "Translate the view along this axis in its <i>opposite</i> direction.";
 string PMain::HTvolcuts = "Define a volume of interest (<b>VOI</b>) using <b>absolute spatial coordinates</b> (i.e. referred to the highest resolution). "
@@ -254,9 +254,9 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     zoomInSens->setTickPosition(QSlider::TicksBelow);
     zoomInSens->setMinimum(0);
     zoomInSens->setMaximum(100);
-    zoomInSens->setSingleStep(10);
-    zoomInSens->setPageStep(10);
-    zoomInSens->setValue(10);
+    zoomInSens->setSingleStep(5);
+    zoomInSens->setPageStep(5);
+    zoomInSens->setValue(90);
     zoomInSens->installEventFilter(this);
     traslXpos = new QArrowButton(this, QColor(255,0,0), 15, 6, 0, Qt::LeftToRight);
     traslXneg = new QArrowButton(this, QColor(255,0,0), 15, 6, 0, Qt::RightToLeft);
@@ -794,6 +794,7 @@ void PMain::openVolume()
 
         //storing the path into CSettings
         CSettings::instance()->setVolumePathLRU(import_path);
+        CSettings::instance()->writeSettings();
 
         //check if additional informations are required
         string mdata_fpath = import_path;
@@ -1411,6 +1412,38 @@ bool PMain::eventFilter(QObject *object, QEvent *event)
             helpBox->setText(HTzoomInSens);
         else if(event->type() == QEvent::Leave)
             helpBox->setText(HTbase);
+
+        //displaying tooltip
+        {
+            zoomInSens->setAttribute(Qt::WA_Hover); // this control the QEvent::ToolTip and QEvent::HoverMove
+            zoomInSens->setFocusPolicy(Qt::WheelFocus); // accept KeyPressEvent when mouse wheel move
+
+            bool event_tip = false;
+            QPoint pos(0,0);
+            switch (event->type())
+            {
+                case QEvent::ToolTip: // must turned on by setAttribute(Qt::WA_Hover) under Mac 64bit
+                        pos = ((QHelpEvent*)event)->pos();
+                        event_tip = true;
+                        break;
+                case QEvent::MouseMove: // for mouse dragging
+                        pos = ((QMouseEvent*)event)->pos();
+                        event_tip = true;
+                        break;
+                case 6: //QEvent::KeyPress: // for arrow key dragging
+                        pos = zoomInSens->mapFromGlobal(zoomInSens->cursor().pos());
+                        event_tip = true;
+                        break;
+            }
+            if (event_tip)
+            {
+                QPoint gpos = zoomInSens->mapToGlobal(pos);
+                QString tip = QString::number(zoomInSens->value()).append("%");
+                QToolTip::showText(gpos, (tip), zoomInSens);
+            }
+
+            return QObject::eventFilter(zoomInSens, event);
+        }
     }
     else if ((object == traslXpos || object == traslYpos || object == traslZpos) && multires_panel->isEnabled())
     {

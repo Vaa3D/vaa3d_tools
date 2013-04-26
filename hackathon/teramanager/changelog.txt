@@ -11,6 +11,16 @@ ties names are:
 - Rem: a feature no longer available
 
 ============================================================================================
+Version 0.7.18
+April 27th, 2013
+--------------------------------------------------------------------------------------------
+- Fix: changed help text of some widgets.
+- New: added tooltip to "Zoom-in sens" slidebar.
+- Fix: fixed bug which  sporadically  caused  non-persistent LRU (last recently used) volume 
+       path throughout different runs.
+--------------------------------------------------------------------------------------------
+
+
 Version 0.7.17
 April 27th, 2013
 --------------------------------------------------------------------------------------------

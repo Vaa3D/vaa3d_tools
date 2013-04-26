@@ -985,7 +985,7 @@ void CExplorerWindow::Vaa3D_selectedROI()
                            intersectionX, intersectionY, intersectionZ, coverageFactor);
 
                     //if Vaa3D VOI is covered for the selected percentage by the existing cached volume, just restoring its view
-                    if(coverageFactor >= (100-PMain::getInstance()->zoomInSens->value())/100.0f)
+                    if(coverageFactor >= PMain::getInstance()->zoomInSens->value()/100.0f)
                     {
                         current->setActive(false);
                         current->resetZoomHistory();
