@@ -573,7 +573,7 @@ void CAnnotations::addLandmarks(LandmarkList* markers) throw (MyException)
        node->name = (*markers)[i].name;
        node->comment = (*markers)[i].comments;
        node->color = (*markers)[i].color;
-       printf("--------------------- teramanager plugin [thread ?] >> inserting marker %d=(%.1f,%.1f,%.1f)\n", node->ID, node->x, node->y, node->z);
+//       printf("--------------------- teramanager plugin [thread ?] >> inserting marker %d=(%.1f,%.1f,%.1f)\n", node->ID, node->x, node->y, node->z);
        octree->insert(*node);
     }
 }
@@ -618,8 +618,8 @@ void CAnnotations::removeLandmarks(std::list<LocationSimple> &markers) throw (My
         {
             annotation* tbd = tbdList.back();
             tbdList.pop_back();
-            printf("--------------------- teramanager plugin [thread ?] >> removing marker %d=(%.1f,%.1f,%.1f)\n",
-                   tbd->ID, tbd->x, tbd->y, tbd->z);
+//            printf("--------------------- teramanager plugin [thread ?] >> removing marker %d=(%.1f,%.1f,%.1f)\n",
+//                   tbd->ID, tbd->x, tbd->y, tbd->z);
             delete tbd;
         }
     }
@@ -677,8 +677,8 @@ void CAnnotations::removeCurves(std::list<NeuronSWC> &curves) throw (MyException
         {
             annotation* tbd = tbdList.back();
             tbdList.pop_back();
-            printf("--------------------- teramanager plugin [thread ?] >> removing curve point %d=(%.1f,%.1f,%.1f)\n",
-                   tbd->ID, tbd->x, tbd->y, tbd->z);
+//            printf("--------------------- teramanager plugin [thread ?] >> removing curve point %d=(%.1f,%.1f,%.1f)\n",
+//                   tbd->ID, tbd->x, tbd->y, tbd->z);
             delete tbd;
         }
     }
@@ -705,7 +705,7 @@ void CAnnotations::addCurves(NeuronTree* curves) throw (MyException)
         ann->x = i->x;
         ann->y = i->y;
         ann->z = i->z;
-        printf("--------------------- teramanager plugin [thread ?] >> inserting curve point %d(n=%d)=(%.1f,%.1f,%.1f)\n", ann->ID, i->n, ann->x, ann->y, ann->z);
+//        printf("--------------------- teramanager plugin [thread ?] >> inserting curve point %d(n=%d)=(%.1f,%.1f,%.1f)\n", ann->ID, i->n, ann->x, ann->y, ann->z);
         octree->insert(*ann);
         annotationsMap[i->n] = ann;
         swcMap[i->n] = &(*i);

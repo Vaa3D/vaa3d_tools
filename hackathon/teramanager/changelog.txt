@@ -11,6 +11,22 @@ ties names are:
 - Rem: a feature no longer available
 
 ============================================================================================
+Version 0.7.16
+April 26th, 2013
+--------------------------------------------------------------------------------------------
+- Opt: improved zoom-out consistency with the previous view.
+- Fix: channel checkboxes are maintained throughout the resolutions.
+- Opt: changed "Open annotation" icon.
+- Fix: fixed a bug (integer overflow) which caused negative coverage factor when caching.
+- New: added version number in TeraFly's GUI.
+- Fix: both 3D window and plugin window are restored if user invokes the plugin from the GUI
+       of Vaa3D.
+- Fix: 3D window's height was not properly syncronized with the plugin's window.
+- Fix: added positive derivative test to zoom  factor  when mouse scroll up zoom-in is trig-
+       gered by Vaa3D.
+--------------------------------------------------------------------------------------------
+
+
 Version 0.7.15
 April 26th, 2013
 --------------------------------------------------------------------------------------------

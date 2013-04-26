@@ -184,7 +184,8 @@ class teramanager::PMain : public QWidget
         * Singleton design pattern: this class can have one instance only,  which must be
         * instantiated by calling static method "istance(...)"
         **********************************************************************************/
-        static PMain* instance(V3DPluginCallback2 *callback=0, QWidget *parent=0);
+        static PMain* instance(V3DPluginCallback2 *callback, QWidget *parent);
+        static PMain* getInstance();
         static void uninstance();
         static bool isInstantiated(){return uniqueInstance != 0;}
         ~PMain();

@@ -64,8 +64,31 @@ PMain* PMain::instance(V3DPluginCallback2 *callback, QWidget *parent)
 {
     if (uniqueInstance == NULL)
         uniqueInstance = new PMain(callback, parent);
-    return uniqueInstance;
+    else
+    {
+        uniqueInstance->setWindowState(Qt::WindowNoState);
+        uniqueInstance->raise();
+        uniqueInstance->activateWindow();
+        uniqueInstance->show();
+        if(CExplorerWindow::current)
+        {
+            CExplorerWindow::current->window3D->setWindowState(Qt::WindowNoState);
+            CExplorerWindow::current->window3D->raise();
+            CExplorerWindow::current->window3D->activateWindow();
+            CExplorerWindow::current->window3D->show();
+            CExplorerWindow::current->alignToLeft(uniqueInstance);
+        }
+        return uniqueInstance;
+    }
 }
+PMain* PMain::getInstance()
+{
+    if(uniqueInstance)
+        return uniqueInstance;
+    else
+        QMessageBox::critical(0,QObject::tr("Error"), QObject::tr("TeraFly not yet instantiated"),QObject::tr("Ok"));
+}
+
 void PMain::uninstance()
 {
     #ifdef TMP_DEBUG
@@ -563,7 +586,7 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     layout->setContentsMargins(0, 0, 0, 0);
     layout->setSpacing(0);
     setLayout(layout);
-    setWindowTitle("TeraFly");
+    setWindowTitle(QString("TeraFly v").append(teramanager::version.c_str()));
     this->setFont(tinyFont);
 
     // signals and slots
@@ -596,9 +619,8 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     reset();
 
     //set always on top
-    setWindowFlags(Qt::Tool | Qt::WindowStaysOnTopHint);
+    setWindowFlags(Qt::WindowStaysOnTopHint);
     setMaximumSize(this->minimumWidth(), this->minimumHeight());
-    setFocusPolicy(Qt::StrongFocus);
     show();
     move(QApplication::desktop()->screen()->rect().center() - rect().center());
 
@@ -804,7 +826,7 @@ void PMain::openVolume()
     catch(MyException &ex)
     {
         QMessageBox::critical(this,QObject::tr("Error"), QObject::tr(ex.what()),QObject::tr("Ok"));
-        PMain::instance()->resetGUI();
+        PMain::getInstance()->resetGUI();
         CImport::instance()->reset();
     }
 }

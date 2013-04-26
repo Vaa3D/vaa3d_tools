@@ -69,7 +69,7 @@ CExplorerWindow::CExplorerWindow(V3DPluginCallback2 *_V3D_env, int _resIndex, ui
     sprintf(ctitle, "Res{%d}), Vol{[%d,%d) [%d,%d) [%d,%d)}", volResIndex, volH0, volH1, volV0, volV1, volD0, volD1);
     this->titleShort = ctitle;
     V0_sbox_min = V1_sbox_max = H0_sbox_min = H1_sbox_max = D0_sbox_min = D1_sbox_max = V0_sbox_val = V1_sbox_val = H0_sbox_val = H1_sbox_val = D0_sbox_val = D1_sbox_val = -1;
-    PMain* pMain = PMain::instance();
+    PMain* pMain = PMain::getInstance();
 
     #ifdef TMP_DEBUG
     printf("--------------------- teramanager plugin [thread *] >> CExplorerWindow[%s]::CExplorerWindow()\n",  titleShort.c_str());
@@ -159,6 +159,11 @@ CExplorerWindow::CExplorerWindow(V3DPluginCallback2 *_V3D_env, int _resIndex, ui
             prev->view3DWidget->absoluteRotPose();
             view3DWidget->doAbsoluteRot(prev->view3DWidget->xRot(), prev->view3DWidget->yRot(), prev->view3DWidget->zRot());
 
+            //registrating channel flags
+            view3DWidget->setChannelR(prev->view3DWidget->channelR());
+            view3DWidget->setChannelG(prev->view3DWidget->channelG());
+            view3DWidget->setChannelB(prev->view3DWidget->channelB());
+
             //storing annotations done in the previous view and loading annotations of the current view
             prev->storeAnnotations();
             this->loadAnnotations();
@@ -169,11 +174,15 @@ CExplorerWindow::CExplorerWindow(V3DPluginCallback2 *_V3D_env, int _resIndex, ui
             //registrating the current window as the first window of the multiresolution explorer windows chain
             CExplorerWindow::first = this;
 
+            //increasing height if lower than the plugin one's
+            if(window3D->height() < PMain::getInstance()->height())
+                window3D->setMinimumHeight(PMain::getInstance()->height());
+
             //centering the current 3D window and the plugin's window
             int screen_height = qApp->desktop()->availableGeometry().height();
             int screen_width = qApp->desktop()->availableGeometry().width();
-            int window_x = (screen_width - (window3D->width() + PMain::instance()->width()))/2;
-//            int window_x = (screen_width - (window3D->width() + PMain::instance()->width()))/2 + PMain::instance()->width();
+            int window_x = (screen_width - (window3D->width() + PMain::getInstance()->width()))/2;
+//            int window_x = (screen_width - (window3D->width() + PMain::getInstance()->width()))/2 + PMain::instance()->width();
             int window_y = (screen_height - window3D->height()) / 2;
             window3D->move(window_x, window_y);
         }
@@ -232,12 +241,12 @@ CExplorerWindow::CExplorerWindow(V3DPluginCallback2 *_V3D_env, int _resIndex, ui
         connect(view3DWidget, SIGNAL(changeYCut1(int)), this, SLOT(Vaa3D_changeYCut1(int)));
         connect(view3DWidget, SIGNAL(changeZCut0(int)), this, SLOT(Vaa3D_changeZCut0(int)));
         connect(view3DWidget, SIGNAL(changeZCut1(int)), this, SLOT(Vaa3D_changeZCut1(int)));
-        connect(PMain::instance()->V0_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeV0sbox(int)));
-        connect(PMain::instance()->V1_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeV1sbox(int)));
-        connect(PMain::instance()->H0_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeH0sbox(int)));
-        connect(PMain::instance()->H1_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeH1sbox(int)));
-        connect(PMain::instance()->D0_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeD0sbox(int)));
-        connect(PMain::instance()->D1_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeD1sbox(int)));
+        connect(PMain::getInstance()->V0_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeV0sbox(int)));
+        connect(PMain::getInstance()->V1_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeV1sbox(int)));
+        connect(PMain::getInstance()->H0_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeH0sbox(int)));
+        connect(PMain::getInstance()->H1_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeH1sbox(int)));
+        connect(PMain::getInstance()->D0_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeD0sbox(int)));
+        connect(PMain::getInstance()->D1_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeD1sbox(int)));
 
         //disabling volume compression
         view3DWidget->setVolCompress(false);
@@ -248,6 +257,7 @@ CExplorerWindow::CExplorerWindow(V3DPluginCallback2 *_V3D_env, int _resIndex, ui
 //                                 | Qt::WindowTitleHint
 //                                 | Qt::CustomizeWindowHint | Qt::WindowStaysOnTopHint | Qt::WindowCloseButtonHint);
         this->window3D->raise();
+        this->window3D->activateWindow();
         this->window3D->show();
 
         //saving subvol spinboxes state ---- Alessandro 2013-04-23: not sure if this is really needed
@@ -255,18 +265,18 @@ CExplorerWindow::CExplorerWindow(V3DPluginCallback2 *_V3D_env, int _resIndex, ui
     }
     catch(MyException &ex)
     {
-        QMessageBox::critical(PMain::instance(),QObject::tr("Error"), QObject::tr(ex.what()),QObject::tr("Ok"));
-        PMain::instance()->closeVolume();
+        QMessageBox::critical(PMain::getInstance(),QObject::tr("Error"), QObject::tr(ex.what()),QObject::tr("Ok"));
+        PMain::getInstance()->closeVolume();
     }
     catch(const char* error)
     {
-        QMessageBox::critical(PMain::instance(),QObject::tr("Error"), QObject::tr(error),QObject::tr("Ok"));
-        PMain::instance()->closeVolume();
+        QMessageBox::critical(PMain::getInstance(),QObject::tr("Error"), QObject::tr(error),QObject::tr("Ok"));
+        PMain::getInstance()->closeVolume();
     }
     catch(...)
     {
-        QMessageBox::critical(PMain::instance(),QObject::tr("Error"), QObject::tr("Unknown error occurred"),QObject::tr("Ok"));
-        PMain::instance()->closeVolume();
+        QMessageBox::critical(PMain::getInstance(),QObject::tr("Error"), QObject::tr("Unknown error occurred"),QObject::tr("Ok"));
+        PMain::getInstance()->closeVolume();
     }
 
     #ifdef TMP_DEBUG
@@ -340,10 +350,10 @@ bool CExplorerWindow::eventFilter(QObject *object, QEvent *event)
 //                return true;
 //            }
 //            else
-            if(prev                                                                    &&  //the previous resolution exists
+            if(prev                                                                         &&  //the previous resolution exists
                     !toBeClosed                                                             &&  //the current resolution does not have to be closed
                     isZoomDerivativeNeg()                                                   &&  //zoom derivative is negative
-                    view3DWidget->zoom() < -100+PMain::instance()->zoomOutSens->value())    //zoom-out threshold reached
+                    view3DWidget->zoom() < -100+PMain::getInstance()->zoomOutSens->value())    //zoom-out threshold reached
             {
                 //printf("Switching to the prev view zoom={%d, %d, %d, %d}\n", zoomHistory[0], zoomHistory[1], zoomHistory[2], zoomHistory[3]);
                 setActive(false);
@@ -370,7 +380,7 @@ bool CExplorerWindow::eventFilter(QObject *object, QEvent *event)
         {
             if(!toBeClosed)
             {
-                PMain::instance()->closeVolume();
+                PMain::getInstance()->closeVolume();
                 event->ignore();
                 return true;
             }
@@ -381,7 +391,7 @@ bool CExplorerWindow::eventFilter(QObject *object, QEvent *event)
         ***************************************************************************/
         else if(object == window3D && (event->type() == QEvent::Move || event->type() == QEvent::Resize))
         {
-           alignToLeft(PMain::instance());
+           alignToLeft(PMain::getInstance());
 //            alignToRight(PMain::instance());
         }
         /***************** INTERCEPTING STATE CHANGES EVENTS **********************
@@ -390,6 +400,7 @@ bool CExplorerWindow::eventFilter(QObject *object, QEvent *event)
         ***************************************************************************/
         else if(object == window3D && event->type() == QEvent::WindowStateChange)
         {
+            alignToLeft(PMain::getInstance());
             //PMain::instance()->setWindowState(window3D->windowState());
 //            QWindowStateChangeEvent* stateChangeEvt = (QWindowStateChangeEvent*)event;
 //            printf("old state = %d\n", int(stateChangeEvt->oldState()));
@@ -401,7 +412,7 @@ bool CExplorerWindow::eventFilter(QObject *object, QEvent *event)
     }
     catch(MyException &ex)
     {
-        QMessageBox::critical(PMain::instance(),QObject::tr("Error"), QObject::tr(ex.what()),QObject::tr("Ok"));
+        QMessageBox::critical(PMain::getInstance(),QObject::tr("Error"), QObject::tr(ex.what()),QObject::tr("Ok"));
         return false;
     }
 }
@@ -433,12 +444,12 @@ void CExplorerWindow::loadingDone(MyException *ex, void* sourceObject)
         disconnect(view3DWidget, SIGNAL(changeYCut1(int)), this, SLOT(Vaa3D_changeYCut1(int)));
         disconnect(view3DWidget, SIGNAL(changeZCut0(int)), this, SLOT(Vaa3D_changeZCut0(int)));
         disconnect(view3DWidget, SIGNAL(changeZCut1(int)), this, SLOT(Vaa3D_changeZCut1(int)));
-        disconnect(PMain::instance()->V0_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeV0sbox(int)));
-        disconnect(PMain::instance()->V1_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeV1sbox(int)));
-        disconnect(PMain::instance()->H0_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeH0sbox(int)));
-        disconnect(PMain::instance()->H1_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeH1sbox(int)));
-        disconnect(PMain::instance()->D0_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeD0sbox(int)));
-        disconnect(PMain::instance()->D1_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeD1sbox(int)));
+        disconnect(PMain::getInstance()->V0_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeV0sbox(int)));
+        disconnect(PMain::getInstance()->V1_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeV1sbox(int)));
+        disconnect(PMain::getInstance()->H0_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeH0sbox(int)));
+        disconnect(PMain::getInstance()->H1_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeH1sbox(int)));
+        disconnect(PMain::getInstance()->D0_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeD0sbox(int)));
+        disconnect(PMain::getInstance()->D1_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeD1sbox(int)));
 
         //if the resolution of the loaded voi is higher than the current one, opening the "next" explorer
         if(cVolume->getVoiResIndex() > volResIndex)
@@ -464,9 +475,9 @@ void CExplorerWindow::loadingDone(MyException *ex, void* sourceObject)
     }
 
     //resetting some widgets
-    PMain::instance()->resetGUI();
-    PMain::instance()->subvol_panel->setEnabled(true);
-    PMain::instance()->loadButton->setEnabled(true);
+    PMain::getInstance()->resetGUI();
+    PMain::getInstance()->subvol_panel->setEnabled(true);
+    PMain::getInstance()->loadButton->setEnabled(true);
 }
 
 /**********************************************************************************
@@ -493,7 +504,7 @@ void CExplorerWindow::newView(int x, int y, int z, int resolution, bool fromVaa3
 
     //preparing GUI
     view3DWidget->setCursor(Qt::WaitCursor);
-    PMain& pMain = *(PMain::instance());
+    PMain& pMain = *(PMain::getInstance());
     pMain.progressBar->setEnabled(true);
     pMain.progressBar->setMinimum(0);
     pMain.progressBar->setMaximum(0);
@@ -559,7 +570,7 @@ void CExplorerWindow::saveSubvolSpinboxState()
             titleShort.c_str());
     #endif
 
-    PMain& pMain = *(PMain::instance());
+    PMain& pMain = *(PMain::getInstance());
     V0_sbox_min = pMain.V0_sbox->minimum();
     V1_sbox_max = pMain.V1_sbox->maximum();
     H0_sbox_min = pMain.H0_sbox->minimum();
@@ -580,7 +591,7 @@ void CExplorerWindow::restoreSubvolSpinboxState()
             titleShort.c_str());
     #endif
 
-    PMain& pMain = *(PMain::instance());
+    PMain& pMain = *(PMain::getInstance());
     pMain.V0_sbox->setMinimum(V0_sbox_min);
     pMain.V1_sbox->setMaximum(V1_sbox_max);
     pMain.H0_sbox->setMinimum(H0_sbox_min);
@@ -726,12 +737,12 @@ void CExplorerWindow::restoreViewFrom(CExplorerWindow* source) throw (MyExceptio
         source->disconnect(source->view3DWidget, SIGNAL(changeYCut1(int)), source, SLOT(Vaa3D_changeYCut1(int)));
         source->disconnect(source->view3DWidget, SIGNAL(changeZCut0(int)), source, SLOT(Vaa3D_changeZCut0(int)));
         source->disconnect(source->view3DWidget, SIGNAL(changeZCut1(int)), source, SLOT(Vaa3D_changeZCut1(int)));
-        source->disconnect(PMain::instance()->V0_sbox, SIGNAL(valueChanged(int)), source, SLOT(PMain_changeV0sbox(int)));
-        source->disconnect(PMain::instance()->V1_sbox, SIGNAL(valueChanged(int)), source, SLOT(PMain_changeV1sbox(int)));
-        source->disconnect(PMain::instance()->H0_sbox, SIGNAL(valueChanged(int)), source, SLOT(PMain_changeH0sbox(int)));
-        source->disconnect(PMain::instance()->H1_sbox, SIGNAL(valueChanged(int)), source, SLOT(PMain_changeH1sbox(int)));
-        source->disconnect(PMain::instance()->D0_sbox, SIGNAL(valueChanged(int)), source, SLOT(PMain_changeD0sbox(int)));
-        source->disconnect(PMain::instance()->D1_sbox, SIGNAL(valueChanged(int)), source, SLOT(PMain_changeD1sbox(int)));
+        source->disconnect(PMain::getInstance()->V0_sbox, SIGNAL(valueChanged(int)), source, SLOT(PMain_changeV0sbox(int)));
+        source->disconnect(PMain::getInstance()->V1_sbox, SIGNAL(valueChanged(int)), source, SLOT(PMain_changeV1sbox(int)));
+        source->disconnect(PMain::getInstance()->H0_sbox, SIGNAL(valueChanged(int)), source, SLOT(PMain_changeH0sbox(int)));
+        source->disconnect(PMain::getInstance()->H1_sbox, SIGNAL(valueChanged(int)), source, SLOT(PMain_changeH1sbox(int)));
+        source->disconnect(PMain::getInstance()->D0_sbox, SIGNAL(valueChanged(int)), source, SLOT(PMain_changeD0sbox(int)));
+        source->disconnect(PMain::getInstance()->D1_sbox, SIGNAL(valueChanged(int)), source, SLOT(PMain_changeD1sbox(int)));
 
         source->view3DWidget->removeEventFilter(source);
         source->window3D->removeEventFilter(source);
@@ -752,6 +763,15 @@ void CExplorerWindow::restoreViewFrom(CExplorerWindow* source) throw (MyExceptio
             float ratio = CImport::instance()->getVolume(volResIndex)->getDIM_D()/CImport::instance()->getVolume(source->volResIndex)->getDIM_D();
             view3DWidget->setZoom(source->view3DWidget->zoom()/ratio);
         }
+        if(source->volResIndex > volResIndex)
+        {
+            float ratio = CImport::instance()->getVolume(volResIndex)->getDIM_D()/CImport::instance()->getVolume(source->volResIndex)->getDIM_D();
+            if(this != first)
+                view3DWidget->setZoom(16);
+//            else
+//                view3DWidget->setZoom(28);
+        }
+
 
         //positioning the current 3D window exactly at the <source> window position
         QPoint location = source->window3D->pos();
@@ -790,7 +810,7 @@ void CExplorerWindow::restoreViewFrom(CExplorerWindow* source) throw (MyExceptio
         CExplorerWindow::current = this;
 
         //selecting the current resolution in the PMain GUI and disabling previous resolutions
-        PMain* pMain = PMain::instance();
+        PMain* pMain = PMain::getInstance();
         pMain->resolution_cbox->setCurrentIndex(volResIndex);
         for(int i=0; i<pMain->resolution_cbox->count(); i++)
         {
@@ -829,12 +849,12 @@ void CExplorerWindow::restoreViewFrom(CExplorerWindow* source) throw (MyExceptio
         connect(view3DWidget, SIGNAL(changeYCut1(int)), this, SLOT(Vaa3D_changeYCut1(int)));
         connect(view3DWidget, SIGNAL(changeZCut0(int)), this, SLOT(Vaa3D_changeZCut0(int)));
         connect(view3DWidget, SIGNAL(changeZCut1(int)), this, SLOT(Vaa3D_changeZCut1(int)));
-        connect(PMain::instance()->V0_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeV0sbox(int)));
-        connect(PMain::instance()->V1_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeV1sbox(int)));
-        connect(PMain::instance()->H0_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeH0sbox(int)));
-        connect(PMain::instance()->H1_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeH1sbox(int)));
-        connect(PMain::instance()->D0_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeD0sbox(int)));
-        connect(PMain::instance()->D1_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeD1sbox(int)));
+        connect(PMain::getInstance()->V0_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeV0sbox(int)));
+        connect(PMain::getInstance()->V1_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeV1sbox(int)));
+        connect(PMain::getInstance()->H0_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeH0sbox(int)));
+        connect(PMain::getInstance()->H1_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeH1sbox(int)));
+        connect(PMain::getInstance()->D0_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeD0sbox(int)));
+        connect(PMain::getInstance()->D1_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeD1sbox(int)));
 
         view3DWidget->installEventFilter(this);
         window3D->installEventFilter(this);
@@ -842,7 +862,15 @@ void CExplorerWindow::restoreViewFrom(CExplorerWindow* source) throw (MyExceptio
         //loading annotations of the current view
         this->loadAnnotations();
 
+        //registrating channel flags
+        view3DWidget->setChannelR(source->view3DWidget->channelR());
+        view3DWidget->setChannelG(source->view3DWidget->channelG());
+        view3DWidget->setChannelB(source->view3DWidget->channelB());
+        view3DWidget->updateControl();
+
+        //showing window
         this->window3D->raise();
+        this->window3D->activateWindow();
         this->window3D->show();
     }
 }
@@ -902,33 +930,37 @@ void CExplorerWindow::Vaa3D_selectedROI()
     //the ROI selection is catched only if a <CExplorerWindow> is opened
     if(current)
     {
+        //retrieving ROI infos propagated by Vaa3D
         v3d_imaging_paras* roi = (v3d_imaging_paras*) current->view3DWidget->getiDrawExternalParameter()->image4d->getCustomStructPointer();
         int roiCenterX = roi->xe-(roi->xe-roi->xs)/2;
         int roiCenterY = roi->ye-(roi->ye-roi->ys)/2;
         int roiCenterZ = roi->ze-(roi->ze-roi->zs)/2;
 
-        //zoom-in around marker or ROI
+        //zoom-in around marker or ROI triggers a new window
         if(roi->ops_type == 1)
             current->newView(roiCenterX, roiCenterY, roiCenterZ, volResIndex+1, false, (roi->xe-roi->xs)/2, (roi->ye-roi->ys)/2, (roi->ze-roi->zs)/2);
-        //zoom-in on VOI (after mouse scroll up)
+
+        //zoom-in with mouse scroll up may trigger a new window if caching is not possible
         else if(roi->ops_type == 2)
         {
-            //if highest resolution has been reached, doing nothing
-            if(current->volResIndex != CImport::instance()->getResolutions()-1)
+            if(current->volResIndex != CImport::instance()->getResolutions()-1 &&   //do nothing if highest resolution has been reached
+               isZoomDerivativePos())                                               //accepting zoom-in only when zoom factor derivative is positive
             {
                 //trying caching if next view exists
                 if(current->next)
                 {
-                    int gXS = current->getGlobalHCoord(static_cast<int>(roi->xs));
-                    int gXE = current->getGlobalHCoord(static_cast<int>(roi->xe));
-                    int gYS = current->getGlobalVCoord(static_cast<int>(roi->ys));
-                    int gYE = current->getGlobalVCoord(static_cast<int>(roi->ye));
-                    int gZS = current->getGlobalDCoord(static_cast<int>(roi->zs));
-                    int gZE = current->getGlobalDCoord(static_cast<int>(roi->ze));
+                    //converting Vaa3D VOI local coordinates to global coordinates
+                    float gXS = current->getGlobalHCoord(static_cast<int>(roi->xs));
+                    float gXE = current->getGlobalHCoord(static_cast<int>(roi->xe));
+                    float gYS = current->getGlobalVCoord(static_cast<int>(roi->ys));
+                    float gYE = current->getGlobalVCoord(static_cast<int>(roi->ye));
+                    float gZS = current->getGlobalDCoord(static_cast<int>(roi->zs));
+                    float gZE = current->getGlobalDCoord(static_cast<int>(roi->ze));
                     QRectF gXRect(QPoint(gXS, 0), QPoint(gXE, 1));
                     QRectF gYRect(QPoint(gYS, 0), QPoint(gYE, 1));
                     QRectF gZRect(QPoint(gZS, 0), QPoint(gZE, 1));
 
+                    //converting TeraFly next view VOI coordinates to global coordinates
                     int highestResIndex = CImport::instance()->getResolutions()-1;
                     int gXScached = CVolume::instance()->scaleHCoord(current->next->volH0, current->next->volResIndex, highestResIndex);
                     int gXEcached = CVolume::instance()->scaleHCoord(current->next->volH1, current->next->volResIndex, highestResIndex);
@@ -940,37 +972,39 @@ void CExplorerWindow::Vaa3D_selectedROI()
                     QRectF gYRectCached(QPoint(gYScached, 0), QPoint(gYEcached, 1));
                     QRectF gZRectCached(QPoint(gZScached, 0), QPoint(gZEcached, 1));
 
+                    //computing intersection volume and Vaa3D VOI coverage factor
                     float intersectionX = gXRect.intersected(gXRectCached).width();
                     float intersectionY = gYRect.intersected(gYRectCached).width();
                     float intersectionZ = gZRect.intersected(gZRectCached).width();
                     float intersectionVol =  intersectionX*intersectionY*intersectionZ;
                     float voiVol = (gXE-gXS)*(gYE-gYS)*(gZE-gZS);
                     float coverageFactor = voiVol != 0 ? intersectionVol/voiVol : 0;
-
                     printf("--------------------- teramanager plugin [thread ?] >> CExplorerWindow::Vaa3D_selectedROI(): intersecting voi[%d-%d][%d-%d][%d-%d] and cached[%d-%d][%d-%d][%d-%d]...\n",
                            gXS, gXE, gYS, gYE, gZS, gZE, gXScached, gXEcached, gYScached, gYEcached, gZScached, gZEcached);
-
                     printf("--------------------- teramanager plugin [thread ?] >> CExplorerWindow::Vaa3D_selectedROI(): intersection is %.0f x %.0f x %.0f with coverage factor = %.2f\n",
                            intersectionX, intersectionY, intersectionZ, coverageFactor);
 
-                    if(coverageFactor < (100-PMain::instance()->zoomInSens->value())/100.0f)
-                        current->newView(roiCenterX, roiCenterY, roiCenterZ, volResIndex+1, false, (roi->xe-roi->xs)/2, (roi->ye-roi->ys)/2, (roi->ze-roi->zs)/2);
-                    else
+                    //if Vaa3D VOI is covered for the selected percentage by the existing cached volume, just restoring its view
+                    if(coverageFactor >= (100-PMain::getInstance()->zoomInSens->value())/100.0f)
                     {
                         current->setActive(false);
                         current->resetZoomHistory();
                         current->next->restoreViewFrom(current);
                     }
+
+                    //otherwise invoking a new view
+                    else
+                        current->newView(roiCenterX, roiCenterY, roiCenterZ, volResIndex+1, false, (roi->xe-roi->xs)/2, (roi->ye-roi->ys)/2, (roi->ze-roi->zs)/2);
                 }
                 else
                     current->newView(roiCenterX, roiCenterY, roiCenterZ, volResIndex+1, false, (roi->xe-roi->xs)/2, (roi->ye-roi->ys)/2, (roi->ze-roi->zs)/2);
             }
             else
-                printf("--------------------- teramanager plugin [thread ?] >> CExplorerWindow[%s]::Vaa3D_selectedROI(): highest resolution reached, doing nothing\n", current->titleShort.c_str());
+                printf("--------------------- teramanager plugin [thread ?] >> CExplorerWindow::Vaa3D_selectedROI(): ignoring Vaa3D mouse scroll up zoom-in\n");
 
         }
         else
-            QMessageBox::critical(PMain::instance(),QObject::tr("Error"), QObject::tr("in CExplorerWindow::Vaa3D_selectedROI(): unsupported (or unset) operation type"),QObject::tr("Ok"));
+            QMessageBox::critical(PMain::getInstance(),QObject::tr("Error"), QObject::tr("in CExplorerWindow::Vaa3D_selectedROI(): unsupported (or unset) operation type"),QObject::tr("Ok"));
     }
 }
 
@@ -1132,39 +1166,39 @@ float CExplorerWindow::getLocalDCoord(float highestResGlobalDCoord, bool toVaa3D
 ***********************************************************************************/
 void CExplorerWindow::Vaa3D_changeYCut0(int s)
 {
-    disconnect(PMain::instance()->V0_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeV0sbox(int)));
-    PMain::instance()->V0_sbox->setValue(getGlobalVCoord(s, -1, true)+1);
-    connect(PMain::instance()->V0_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeV0sbox(int)));
+    disconnect(PMain::getInstance()->V0_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeV0sbox(int)));
+    PMain::getInstance()->V0_sbox->setValue(getGlobalVCoord(s, -1, true)+1);
+    connect(PMain::getInstance()->V0_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeV0sbox(int)));
 }
 void CExplorerWindow::Vaa3D_changeYCut1(int s)
 {
-    disconnect(PMain::instance()->V1_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeV1sbox(int)));
-    PMain::instance()->V1_sbox->setValue(getGlobalVCoord(s, -1, true)+1);
-    connect(PMain::instance()->V1_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeV1sbox(int)));
+    disconnect(PMain::getInstance()->V1_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeV1sbox(int)));
+    PMain::getInstance()->V1_sbox->setValue(getGlobalVCoord(s, -1, true)+1);
+    connect(PMain::getInstance()->V1_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeV1sbox(int)));
 }
 void CExplorerWindow::Vaa3D_changeXCut0(int s)
 {
-    disconnect(PMain::instance()->H0_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeH0sbox(int)));
-    PMain::instance()->H0_sbox->setValue(getGlobalHCoord(s, -1, true)+1);
-    connect(PMain::instance()->H0_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeH0sbox(int)));
+    disconnect(PMain::getInstance()->H0_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeH0sbox(int)));
+    PMain::getInstance()->H0_sbox->setValue(getGlobalHCoord(s, -1, true)+1);
+    connect(PMain::getInstance()->H0_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeH0sbox(int)));
 }
 void CExplorerWindow::Vaa3D_changeXCut1(int s)
 {
-    disconnect(PMain::instance()->H1_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeH1sbox(int)));
-    PMain::instance()->H1_sbox->setValue(getGlobalHCoord(s, -1, true)+1);
-    connect(PMain::instance()->H1_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeH1sbox(int)));
+    disconnect(PMain::getInstance()->H1_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeH1sbox(int)));
+    PMain::getInstance()->H1_sbox->setValue(getGlobalHCoord(s, -1, true)+1);
+    connect(PMain::getInstance()->H1_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeH1sbox(int)));
 }
 void CExplorerWindow::Vaa3D_changeZCut0(int s)
 {
-    disconnect(PMain::instance()->D0_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeD0sbox(int)));
-    PMain::instance()->D0_sbox->setValue(getGlobalDCoord(s, -1, true)+1);
-    connect(PMain::instance()->D0_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeD0sbox(int)));
+    disconnect(PMain::getInstance()->D0_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeD0sbox(int)));
+    PMain::getInstance()->D0_sbox->setValue(getGlobalDCoord(s, -1, true)+1);
+    connect(PMain::getInstance()->D0_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeD0sbox(int)));
 }
 void CExplorerWindow::Vaa3D_changeZCut1(int s)
 {
-    disconnect(PMain::instance()->D1_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeD1sbox(int)));
-    PMain::instance()->D1_sbox->setValue(getGlobalDCoord(s, -1, true)+1);
-    connect(PMain::instance()->D1_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeD1sbox(int)));
+    disconnect(PMain::getInstance()->D1_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeD1sbox(int)));
+    PMain::getInstance()->D1_sbox->setValue(getGlobalDCoord(s, -1, true)+1);
+    connect(PMain::getInstance()->D1_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeD1sbox(int)));
 }
 
 /**********************************************************************************

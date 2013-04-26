@@ -72,12 +72,18 @@ namespace teramanager
     const int  undefined_int32 = -1;
     const int  int_inf = std::numeric_limits<int>::infinity();
     const float undefined_real32 = -1.0f;
-    const std::string version = "0.7.15";
     const int STATIC_STRING_SIZE = 2000;
     const int FILE_LINE_BUFFER_SIZE = 10000;
     const double pi = 3.14159265359;
     const int MAX_ANNOTATIONS_NUMBER = 1000000; //the maximum number of annotations objects (markers, curve points, etc.)
     const int ZOOM_HISTORY_SIZE = 3;
+    /*-------------------------------------------------------------------------------------------------------------------------*/
+
+    /*******************
+    *    PARAMETERS    *
+    ********************
+    ---------------------------------------------------------------------------------------------------------------------------*/
+    extern std::string version;
     /*-------------------------------------------------------------------------------------------------------------------------*/
 
     /*******************
