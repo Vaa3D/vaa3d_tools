@@ -11,6 +11,14 @@ ties names are:
 - Rem: a feature no longer available
 
 ============================================================================================
+Version 0.7.19
+April 27th, 2013
+--------------------------------------------------------------------------------------------
+- Opt: improved zoom-out consistency between 2nd and 1st resolutions when zooming-out.
+--------------------------------------------------------------------------------------------
+
+
+
 Version 0.7.18
 April 27th, 2013
 --------------------------------------------------------------------------------------------
@@ -19,6 +27,7 @@ April 27th, 2013
 - Fix: fixed bug which  sporadically  caused  non-persistent LRU (last recently used) volume 
        path throughout different runs.
 --------------------------------------------------------------------------------------------
+
 
 
 Version 0.7.17

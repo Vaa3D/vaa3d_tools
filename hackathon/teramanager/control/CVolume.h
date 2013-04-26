@@ -105,6 +105,9 @@ class teramanager::CVolume : public QThread
         static int scaleVCoord(int coord, int srcRes, int dstRes) throw (MyException);
         static int scaleHCoord(int coord, int srcRes, int dstRes) throw (MyException);
         static int scaleDCoord(int coord, int srcRes, int dstRes) throw (MyException);
+        static float scaleVCoord(float coord, int srcRes, int dstRes) throw (MyException);
+        static float scaleHCoord(float coord, int srcRes, int dstRes) throw (MyException);
+        static float scaleDCoord(float coord, int srcRes, int dstRes) throw (MyException);
         void setVoi(void* _sourceObject, int _voiResIndex, int _V0, int _V1, int _H0, int _H1, int _D0, int _D1)
         {
             #ifdef TMP_DEBUG

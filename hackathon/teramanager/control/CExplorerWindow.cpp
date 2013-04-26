@@ -768,8 +768,8 @@ void CExplorerWindow::restoreViewFrom(CExplorerWindow* source) throw (MyExceptio
             float ratio = CImport::instance()->getVolume(volResIndex)->getDIM_D()/CImport::instance()->getVolume(source->volResIndex)->getDIM_D();
             if(this != first)
                 view3DWidget->setZoom(16);
-//            else
-//                view3DWidget->setZoom(28);
+            else
+                view3DWidget->setZoom(32);
         }
 
 
@@ -962,12 +962,12 @@ void CExplorerWindow::Vaa3D_selectedROI()
 
                     //converting TeraFly next view VOI coordinates to global coordinates
                     int highestResIndex = CImport::instance()->getResolutions()-1;
-                    int gXScached = CVolume::instance()->scaleHCoord(current->next->volH0, current->next->volResIndex, highestResIndex);
-                    int gXEcached = CVolume::instance()->scaleHCoord(current->next->volH1, current->next->volResIndex, highestResIndex);
-                    int gYScached = CVolume::instance()->scaleVCoord(current->next->volV0, current->next->volResIndex, highestResIndex);
-                    int gYEcached = CVolume::instance()->scaleVCoord(current->next->volV1, current->next->volResIndex, highestResIndex);
-                    int gZScached = CVolume::instance()->scaleDCoord(current->next->volD0, current->next->volResIndex, highestResIndex);
-                    int gZEcached = CVolume::instance()->scaleDCoord(current->next->volD1, current->next->volResIndex, highestResIndex);
+                    float gXScached = CVolume::instance()->scaleHCoord(static_cast<float>(current->next->volH0), current->next->volResIndex, highestResIndex);
+                    float gXEcached = CVolume::instance()->scaleHCoord(static_cast<float>(current->next->volH1), current->next->volResIndex, highestResIndex);
+                    float gYScached = CVolume::instance()->scaleVCoord(static_cast<float>(current->next->volV0), current->next->volResIndex, highestResIndex);
+                    float gYEcached = CVolume::instance()->scaleVCoord(static_cast<float>(current->next->volV1), current->next->volResIndex, highestResIndex);
+                    float gZScached = CVolume::instance()->scaleDCoord(static_cast<float>(current->next->volD0), current->next->volResIndex, highestResIndex);
+                    float gZEcached = CVolume::instance()->scaleDCoord(static_cast<float>(current->next->volD1), current->next->volResIndex, highestResIndex);
                     QRectF gXRectCached(QPoint(gXScached, 0), QPoint(gXEcached, 1));
                     QRectF gYRectCached(QPoint(gYScached, 0), QPoint(gYEcached, 1));
                     QRectF gZRectCached(QPoint(gZScached, 0), QPoint(gZEcached, 1));
@@ -978,8 +978,9 @@ void CExplorerWindow::Vaa3D_selectedROI()
                     float intersectionZ = gZRect.intersected(gZRectCached).width();
                     float intersectionVol =  intersectionX*intersectionY*intersectionZ;
                     float voiVol = (gXE-gXS)*(gYE-gYS)*(gZE-gZS);
+                    float cachedVol = (gXEcached-gXScached)*(gYEcached-gYScached)*(gZEcached-gZScached);
                     float coverageFactor = voiVol != 0 ? intersectionVol/voiVol : 0;
-                    printf("--------------------- teramanager plugin [thread ?] >> CExplorerWindow::Vaa3D_selectedROI(): intersecting voi[%.0f-%.0f][%.0f-%.0f][%.0f-%.0f] and cached[%d-%d][%d-%d][%d-%d]...\n",
+                    printf("--------------------- teramanager plugin [thread ?] >> CExplorerWindow::Vaa3D_selectedROI(): requested voi[%.0f-%.0f][%.0f-%.0f][%.0f-%.0f] and cached[%.0f-%.0f][%.0f-%.0f][%.0f-%.0f]...\n",
                            gXS, gXE, gYS, gYE, gZS, gZE, gXScached, gXEcached, gYScached, gYEcached, gZScached, gZEcached);
                     printf("--------------------- teramanager plugin [thread ?] >> CExplorerWindow::Vaa3D_selectedROI(): intersection is %.0f x %.0f x %.0f with coverage factor = %.2f\n",
                            intersectionX, intersectionY, intersectionZ, coverageFactor);

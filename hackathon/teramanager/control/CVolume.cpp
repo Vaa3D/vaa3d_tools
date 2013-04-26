@@ -125,6 +125,75 @@ int CVolume::scaleDCoord(int coord, int srcRes, int dstRes) throw (MyException)
     }
 }
 
+float CVolume::scaleVCoord(float coord, int srcRes, int dstRes) throw (MyException)
+{
+    #ifdef TMP_DEBUG
+    printf("--------------------- teramanager plugin [thread ?] >> CVolume::scaleVCoord(coord = %.1f, srcRes = %.1f, dstRes = %.1f)\n",
+           coord, srcRes, dstRes);
+    #endif
+
+    //checks
+    if(srcRes < 0 || srcRes >= CImport::instance()->getResolutions())
+        throw MyException("Invalid source resolution of coordinate mapping operation");
+    if(dstRes < 0 || dstRes >= CImport::instance()->getResolutions())
+        throw MyException("Invalid destination resolution of coordinate mapping operation");
+
+    //computation
+    if(srcRes == dstRes)
+        return coord;
+    else
+    {
+        float ratio = (CImport::instance()->getVolume(dstRes)->getDIM_V()-1.0f)/(CImport::instance()->getVolume(srcRes)->getDIM_V()-1.0f);
+        return coord*ratio;
+    }
+}
+
+float CVolume::scaleHCoord(float coord, int srcRes, int dstRes) throw (MyException)
+{
+    #ifdef TMP_DEBUG
+    printf("--------------------- teramanager plugin [thread ?] >> CVolume::scaleHCoord(coord = %.1f, srcRes = %.1f, dstRes = %.1f)\n",
+           coord, srcRes, dstRes);
+    #endif
+
+    //checks
+    if(srcRes < 0 || srcRes >= CImport::instance()->getResolutions())
+        throw MyException("Invalid source resolution of coordinate mapping operation");
+    if(dstRes < 0 || dstRes >= CImport::instance()->getResolutions())
+        throw MyException("Invalid destination resolution of coordinate mapping operation");
+
+    //computation
+    if(srcRes == dstRes)
+        return coord;
+    else
+    {
+        float ratio = (CImport::instance()->getVolume(dstRes)->getDIM_H()-1.0f)/(CImport::instance()->getVolume(srcRes)->getDIM_H()-1.0f);
+        return coord*ratio;
+    }
+}
+
+float CVolume::scaleDCoord(float coord, int srcRes, int dstRes) throw (MyException)
+{
+    #ifdef TMP_DEBUG
+    printf("--------------------- teramanager plugin [thread ?] >> CVolume::scaleDCoord(coord = %.1f, srcRes = %.1f, dstRes = %.1f)\n",
+           coord, srcRes, dstRes);
+    #endif
+
+    //checks
+    if(srcRes < 0 || srcRes >= CImport::instance()->getResolutions())
+        throw MyException("Invalid source resolution of coordinate mapping operation");
+    if(dstRes < 0 || dstRes >= CImport::instance()->getResolutions())
+        throw MyException("Invalid destination resolution of coordinate mapping operation");
+
+    //computation
+    if(srcRes == dstRes)
+        return coord;
+    else
+    {
+        float ratio = (CImport::instance()->getVolume(dstRes)->getDIM_D()-1.0f)/(CImport::instance()->getVolume(srcRes)->getDIM_D()-1.0f);
+        return coord*ratio;
+    }
+}
+
 //automatically called when current thread is started
 void CVolume::run()
 {
