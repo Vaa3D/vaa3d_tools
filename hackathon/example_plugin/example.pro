@@ -1,10 +1,18 @@
 #an example plugin project file
 TEMPLATE	= lib
 CONFIG	+= qt plugin warn_off
+QT += opengl
+
 #CONFIG	+= x86_64
 
 #set the Vaa3D main path
-V3DMAINPATH     =  ../../../v3d_external/v3d_main
+V3DMAINPATH     =  ../../v3d_main
+
+#set Qt main path
+#QT_PATH = $$dirname(QMAKE_QMAKE)/..
+
+#set up Qt
+#INCLUDEPATH+= $$QT_PATH/demos/shared
 
 #include necessary paths
 INCLUDEPATH	+= $$V3DMAINPATH/basic_c_fun
@@ -24,7 +32,9 @@ SOURCES += $$V3DMAINPATH/basic_c_fun/mg_image_lib.cpp
 SOURCES += $$V3DMAINPATH/basic_c_fun/mg_utilities.cpp
 SOURCES += $$V3DMAINPATH/basic_c_fun/basic_memory.cpp
 
+INCLUDEPATH += $$V3DMAINPATH/v3d
+SOURCES += $$V3DMAINPATH/3drenderer/renderer_hit.cpp
 
 #specify target name and directory
 TARGET	= $$qtLibraryTarget(example)
-#DESTDIR	= ../../v3d/plugins/example/
+DESTDIR	= ../../bin/plugins/example/
