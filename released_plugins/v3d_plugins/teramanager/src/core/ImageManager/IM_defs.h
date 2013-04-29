@@ -40,7 +40,7 @@ typedef long long      sint64;			//64-bit signed integer data type
 typedef float          REAL_T;
 
 
-#define IM_VERBOSE 0
+#define IM_VERBOSE 4
 #define IM_SAVE_SUBVOLUMES
 #define IM_METADATA_FILE_NAME "mdata.bin"
 #define IM_METADATA_FILE_VERSION 2

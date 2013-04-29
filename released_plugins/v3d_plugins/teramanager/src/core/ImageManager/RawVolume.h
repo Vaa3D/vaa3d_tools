@@ -33,7 +33,6 @@
 
 # define RAW_FORMAT "Raw" 
 
-# include "v3d_basicdatatype.h"
 # include "RawFmtMngr.h"
 
 typedef char BIT8_UNIT;

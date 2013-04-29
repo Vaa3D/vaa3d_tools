@@ -54,6 +54,7 @@ struct ref_sys
 {
 	axis first, second, third; 
 	ref_sys(axis _first, axis _second, axis _third) : first(_first), second(_second), third(_third){}
+	ref_sys(const ref_sys &_rvalue) : first(_rvalue.first), second(_rvalue.second), third(_rvalue.third){}
 	ref_sys(): first(axis_invalid), second(axis_invalid), third(axis_invalid){}
 };
 

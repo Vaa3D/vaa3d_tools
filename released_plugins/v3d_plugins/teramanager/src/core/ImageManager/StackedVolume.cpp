@@ -98,8 +98,8 @@ StackedVolume::StackedVolume(const char* _root_dir, ref_sys _reference_system, f
 	//trying to unserialize an already existing metadata file, if it doesn't exist the full initialization procedure is performed and metadata is saved
 	char mdata_filepath[IM_STATIC_STRINGS_SIZE];
 	sprintf(mdata_filepath, "%s/%s", root_dir, IM_METADATA_FILE_NAME);
-    if(fileExists(mdata_filepath) && !overwrite_mdata)
-		load(mdata_filepath);
+        if(fileExists(mdata_filepath) && !overwrite_mdata)
+            load(mdata_filepath);
 	else
 	{
             if(_reference_system.first == axis_invalid ||  _reference_system.second == axis_invalid ||
@@ -330,33 +330,33 @@ void StackedVolume::init()
 
 	//LOCAL VARIABLES
 	string tmp_path;				//string that contains temp paths during computation
-    string tmp;						//string that contains temp data during computation
+        string tmp;						//string that contains temp data during computation
 	DIR *cur_dir_lev1;				//pointer to DIR, the data structure that represents a DIRECTORY (level 1 of hierarchical structure)
 	DIR *cur_dir_lev2;				//pointer to DIR, the data structure that represents a DIRECTORY (level 2 of hierarchical structure)
 	dirent *entry_lev1;				//pointer to DIRENT, the data structure that represents a DIRECTORY ENTRY inside a directory (level 1)
 	dirent *entry_lev2;				//pointer to DIRENT, the data structure that represents a DIRECTORY ENTRY inside a directory (level 2)
 	int i=0,j=0;					//for counting of N_ROWS, N_COLS
-    list<Stack*> stacks_list;                       //each stack found in the hierarchy is pushed into this list
-    list<string> entries_lev1;                      //list of entries of first level of hierarchy
-    list<string>::iterator entry_i;                 //iterator for list 'entries_lev1'
-    list<string> entries_lev2;                      //list of entries of second level of hierarchy
-    list<string>::iterator entry_j;                 //iterator for list 'entries_lev2'
+        list<Stack*> stacks_list;                       //each stack found in the hierarchy is pushed into this list
+        list<string> entries_lev1;                      //list of entries of first level of hierarchy
+        list<string>::iterator entry_i;                 //iterator for list 'entries_lev1'
+        list<string> entries_lev2;                      //list of entries of second level of hierarchy
+        list<string>::iterator entry_j;                 //iterator for list 'entries_lev2'
 	char stack_i_j_path[IM_STATIC_STRINGS_SIZE];
 
 	//obtaining DIR pointer to root_dir (=NULL if directory doesn't exist)
 	if (!(cur_dir_lev1=opendir(root_dir)))
 	{
-		char msg[IM_STATIC_STRINGS_SIZE];
-		sprintf(msg,"in StackedVolume::init(...): Unable to open directory \"%s\"", root_dir);
-		throw MyException(msg);
+            char msg[IM_STATIC_STRINGS_SIZE];
+            sprintf(msg,"in StackedVolume::init(...): Unable to open directory \"%s\"", root_dir);
+            throw MyException(msg);
 	}
 
 	//scanning first level of hierarchy which entries need to be ordered alphabetically. This is done using STL.
 	while ((entry_lev1=readdir(cur_dir_lev1)))
 	{
-		tmp=entry_lev1->d_name;
-		if(tmp.find(".") == string::npos && tmp.find(" ") == string::npos)
-			entries_lev1.push_front(entry_lev1->d_name);
+            tmp=entry_lev1->d_name;
+            if(tmp.find(".") == string::npos && tmp.find(" ") == string::npos)
+                    entries_lev1.push_front(entry_lev1->d_name);
 	}
 	closedir(cur_dir_lev1);
 	entries_lev1.sort();
@@ -372,14 +372,14 @@ void StackedVolume::init()
 		tmp_path.append(*entry_i);
 		cur_dir_lev2 = opendir(tmp_path.c_str());
 		if (!cur_dir_lev2)
-			throw MyException("in StackedVolume::init(...): A problem occurred during scanning of subdirectories");
+                    throw MyException("in StackedVolume::init(...): A problem occurred during scanning of subdirectories");
 
 		//scanning second level of hierarchy which entries need to be ordered alphabetically. This is done using STL.
 		while ((entry_lev2=readdir(cur_dir_lev2)))
 		{
-			tmp=entry_lev2->d_name;
-			if(tmp.find(".") == string::npos && tmp.find(" ") == string::npos)
-				entries_lev2.push_back(entry_lev2->d_name);
+                    tmp=entry_lev2->d_name;
+                    if(tmp.find(".") == string::npos && tmp.find(" ") == string::npos)
+                        entries_lev2.push_back(entry_lev2->d_name);
 		}
 		closedir(cur_dir_lev2);
 		entries_lev2.sort();
@@ -387,29 +387,29 @@ void StackedVolume::init()
 		//for each entry of the second level, allocating a new Stack
 		for(entry_j = entries_lev2.begin(), j=0; entry_j!= entries_lev2.end(); entry_j++, j++)
 		{
-			//allocating new stack
-			sprintf(stack_i_j_path,"%s/%s",(*entry_i).c_str(), (*entry_j).c_str());
-			Stack *new_stk = new Stack(this,i,j,stack_i_j_path);
-			stacks_list.push_back(new_stk);
+                    //allocating new stack
+                    sprintf(stack_i_j_path,"%s/%s",(*entry_i).c_str(), (*entry_j).c_str());
+                    Stack *new_stk = new Stack(this,i,j,stack_i_j_path);
+                    stacks_list.push_back(new_stk);
 		}
 		entries_lev2.clear();
 		if(N_COLS == 0)
-			N_COLS = j;
+                    N_COLS = j;
 		else if(j != N_COLS)
-			throw MyException("in StackedVolume::init(...): Number of second-level directories is not the same for all first-level directories!");
+                    throw MyException("in StackedVolume::init(...): Number of second-level directories is not the same for all first-level directories!");
 	}
 	entries_lev1.clear();
 
 	//intermediate check
 	if(N_ROWS == 0 || N_COLS == 0)
-		throw MyException("in StackedVolume::init(...): Unable to find stacks in the given directory");
+            throw MyException("in StackedVolume::init(...): Unable to find stacks in the given directory");
 
 	//converting stacks_list (STL list of Stack*) into STACKS (2-D array of Stack*)
 	STACKS = new Stack**[N_ROWS];
 	for(int row=0; row < N_ROWS; row++)
-		STACKS[row] = new Stack*[N_COLS];
+            STACKS[row] = new Stack*[N_COLS];
 	for(list<Stack*>::iterator i = stacks_list.begin(); i != stacks_list.end(); i++)
-		STACKS[(*i)->getROW_INDEX()][(*i)->getCOL_INDEX()] = (*i);
+            STACKS[(*i)->getROW_INDEX()][(*i)->getCOL_INDEX()] = (*i);
 
 	/******************* 2) SETTING THE REFERENCE SYSTEM ********************
 	The entire application uses a vertical-horizontal reference system, so
@@ -419,92 +419,92 @@ void StackedVolume::init()
 	//adjusting possible sign mismatch betwwen reference system and VXL
 	//in these cases VXL is adjusted to match with reference system
 	if(SIGN(reference_system.first) != SIGN(VXL_1))
-		VXL_1*=-1.0f;
+            VXL_1*=-1.0f;
 	if(SIGN(reference_system.second) != SIGN(VXL_2))
-		VXL_2*=-1.0f;
+            VXL_2*=-1.0f;
 	if(SIGN(reference_system.third) != SIGN(VXL_3))
-		VXL_3*=-1.0f;	
+            VXL_3*=-1.0f;
 
 	//HVD --> VHD
-	if      (abs(reference_system.first)==2 && abs(reference_system.second)==1  && reference_system.third==3)
+        if  (abs(reference_system.first)==2 && abs(reference_system.second)==1  && reference_system.third==3)
 	{
-		this->rotate(90);
-		this->mirror(axis(2));	
+            this->rotate(90);
+            this->mirror(axis(2));
 
-		if(reference_system.first == -2)
-			this->mirror(axis(2));
-		if(reference_system.second == -1)
-			this->mirror(axis(1));
+            if(reference_system.first == -2)
+                    this->mirror(axis(2));
+            if(reference_system.second == -1)
+                    this->mirror(axis(1));
 
-		int computed_ORG_1, computed_ORG_2, computed_ORG_3;
-		extractCoordinates(STACKS[0][0], 0, &computed_ORG_1, &computed_ORG_2, &computed_ORG_3);
-		ORG_V = computed_ORG_2/10000.0F;
-		ORG_H = computed_ORG_1/10000.0F;
-		ORG_D = computed_ORG_3/10000.0F;
-		VXL_V = VXL_2 ;
-		VXL_H = VXL_1 ; 
-		VXL_D = VXL_3 ;
+            int computed_ORG_1, computed_ORG_2, computed_ORG_3;
+            extractCoordinates(STACKS[0][0], 0, &computed_ORG_1, &computed_ORG_2, &computed_ORG_3);
+            ORG_V = computed_ORG_2/10000.0F;
+            ORG_H = computed_ORG_1/10000.0F;
+            ORG_D = computed_ORG_3/10000.0F;
+            VXL_V = VXL_2 ;
+            VXL_H = VXL_1 ;
+            VXL_D = VXL_3 ;
 	}
 	//VHD --> VHD
 	else if (abs(reference_system.first)==1 && abs(reference_system.second)==2 && reference_system.third==3)
 	{		
-		if(reference_system.first == -1)
-			this->mirror(axis(1));
-		if(reference_system.second == -2)
-			this->mirror(axis(2));
+            if(reference_system.first == -1)
+                    this->mirror(axis(1));
+            if(reference_system.second == -2)
+                    this->mirror(axis(2));
 
-		int computed_ORG_1, computed_ORG_2, computed_ORG_3;
-		extractCoordinates(STACKS[0][0], 0, &computed_ORG_1, &computed_ORG_2, &computed_ORG_3);
-		ORG_V = computed_ORG_1/10000.0F;
-		ORG_H = computed_ORG_2/10000.0F;
-		ORG_D = computed_ORG_3/10000.0F;	
-		VXL_V = VXL_1;
-		VXL_H = VXL_2;
-		VXL_D = VXL_3;
+            int computed_ORG_1, computed_ORG_2, computed_ORG_3;
+            extractCoordinates(STACKS[0][0], 0, &computed_ORG_1, &computed_ORG_2, &computed_ORG_3);
+            ORG_V = computed_ORG_1/10000.0F;
+            ORG_H = computed_ORG_2/10000.0F;
+            ORG_D = computed_ORG_3/10000.0F;
+            VXL_V = VXL_1;
+            VXL_H = VXL_2;
+            VXL_D = VXL_3;
 	}
 	//unsupported reference system
 	else
 	{
-		char msg[500];
-		sprintf(msg, "in StackedVolume::init(...): the reference system {%d,%d,%d} is not supported.", 
-			reference_system.first, reference_system.second, reference_system.third);
-		throw MyException(msg);
+            char msg[500];
+            sprintf(msg, "in StackedVolume::init(...): the reference system {%d,%d,%d} is not supported.",
+                    reference_system.first, reference_system.second, reference_system.third);
+            throw MyException(msg);
 	}
 
 	//some little adjustments of the origin
 	if(VXL_V < 0)
-		ORG_V -= (STACKS[0][0]->getHEIGHT()-1)* VXL_V/1000.0f;
+            ORG_V -= (STACKS[0][0]->getHEIGHT()-1)* VXL_V/1000.0f;
 
 	if(VXL_H < 0)
-		ORG_H -= (STACKS[0][0]->getWIDTH() -1)* VXL_H/1000.0f;
+            ORG_H -= (STACKS[0][0]->getWIDTH() -1)* VXL_H/1000.0f;
 
 	/******************** 3) COMPUTING VOLUME DIMENSIONS ********************  
 	*************************************************************************/
 	for(int row=0; row < N_ROWS; row++)
-		for(int col=0; col < N_COLS; col++)
-		{
-			if(row==0)
-				DIM_H+=STACKS[row][col]->getWIDTH();
-			if(col==0)
-				DIM_V+=STACKS[row][col]->getHEIGHT();
-			DIM_D = STACKS[row][col]->getDEPTH() > DIM_D ? STACKS[row][col]->getDEPTH() : DIM_D;
-		}
+            for(int col=0; col < N_COLS; col++)
+            {
+                if(row==0)
+                        DIM_H+=STACKS[row][col]->getWIDTH();
+                if(col==0)
+                        DIM_V+=STACKS[row][col]->getHEIGHT();
+                DIM_D = STACKS[row][col]->getDEPTH() > DIM_D ? STACKS[row][col]->getDEPTH() : DIM_D;
+            }
 
 	/**************** 4) COMPUTING STACKS ABSOLUTE POSITIONS ****************  
 	*************************************************************************/
 	for(int row=0; row < N_ROWS; row++)
-		for(int col=0; col < N_COLS; col++)
-		{
-			if(row)
-				STACKS[row][col]->setABS_V(STACKS[row-1][col]->getABS_V()+STACKS[row-1][col]->getHEIGHT());
-			else
-				STACKS[row][col]->setABS_V(0);
+            for(int col=0; col < N_COLS; col++)
+            {
+                if(row)
+                        STACKS[row][col]->setABS_V(STACKS[row-1][col]->getABS_V()+STACKS[row-1][col]->getHEIGHT());
+                else
+                        STACKS[row][col]->setABS_V(0);
 
-			if(col)
-				STACKS[row][col]->setABS_H(STACKS[row][col-1]->getABS_H()+STACKS[row][col-1]->getWIDTH());
-			else
-				STACKS[row][col]->setABS_H(0);
-		}
+                if(col)
+                        STACKS[row][col]->setABS_H(STACKS[row][col-1]->getABS_H()+STACKS[row][col-1]->getWIDTH());
+                else
+                        STACKS[row][col]->setABS_H(0);
+            }
 }
 
 void StackedVolume::initChannels ( ) throw (MyException) {

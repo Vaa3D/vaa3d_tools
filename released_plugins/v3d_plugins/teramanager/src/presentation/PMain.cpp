@@ -50,10 +50,12 @@ string PMain::HTvoiDim =  "Set the <b>dimensions</b> (in voxels) of the volume o
 string PMain::HTjumpToRes = "Choose from pull-down menu the <b>resolution</b> you want to jump to and the displayed image will be loaded at the resolution selected. "
                             "To load only a volume of interest (<b>VOI</b>) at the selected resolution, you may use the Vaa3D <i>Volume Cut</i> scrollbars "
                             "or the <i>Highest resolution volume's coordinates</i> spinboxes embedded in this plugin.";
-string PMain::HTzoomOutSens = "Tune the sensitivity of the <b>zoom-out</b> navigation through resolutions with <i>mouse scroll down</i>. The default is set to maximum (<i>all-to-the-right</i>). "
-                           "Set it to <i>all-to-the-left</i> to disable this feature.";
-string PMain::HTzoomInSens = "Tune the sensitivity of the <b>zoom-in</b> when navigating through resolutions with <i>mouse scroll up</i>. This controls the minimum amount of overlap between the requested VOI "
-                            " and the <b>cached VOI</b> required to restore the cached VOI instead of loading a new VOI. If you always want to zoom-in to the cached VOI, please set this to 0\%.";
+string PMain::HTzoomOutThres = "Select the <b>zoom</b> factor threshold to restore the lower resolution when zooming-out with <i>mouse scroll down</i>. The default is set to 0. "
+                           "Set it to -100 to disable this feature.";
+string PMain::HTzoomInThres = "Select the <b>zoom</b> factor threshold to trigger the higher resolution when zooming-in with <i>mouse scroll up</i>. The default is set to 50. "
+                             "Set it to 100 to disable this feature.";
+string PMain::HTcacheSens = "Adjust data caching sensitivity when zooming-in with <i>mouse scroll up</i>. This controls the minimum amount of overlap between the requested VOI "
+                            " and the <b>cached VOI</b> that is required to restore the cached VOI instead of loading a new VOI. If you always want to zoom-in to the cached VOI, please set this to 0\%.";
 string PMain::HTtraslatePos = "Translate the view along this axis in its <i>natural</i> direction.";
 string PMain::HTtraslateNeg = "Translate the view along this axis in its <i>opposite</i> direction.";
 string PMain::HTvolcuts = "Define a volume of interest (<b>VOI</b>) using <b>absolute spatial coordinates</b> (i.e. referred to the highest resolution). "
@@ -244,20 +246,25 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     resolution_cbox->installEventFilter(this);
     zoomOutSens = new QSlider(Qt::Horizontal, this);
     zoomOutSens->setTickPosition(QSlider::TicksBelow);
-    zoomOutSens->setMinimum(0);
-    zoomOutSens->setMaximum(100);
+    zoomOutSens->setMinimum(-100);
+    zoomOutSens->setMaximum(0);
     zoomOutSens->setSingleStep(10);
     zoomOutSens->setPageStep(20);
-    zoomOutSens->setValue(100);
     zoomOutSens->installEventFilter(this);
     zoomInSens = new QSlider(Qt::Horizontal, this);
     zoomInSens->setTickPosition(QSlider::TicksBelow);
     zoomInSens->setMinimum(0);
     zoomInSens->setMaximum(100);
-    zoomInSens->setSingleStep(5);
-    zoomInSens->setPageStep(5);
-    zoomInSens->setValue(90);
+    zoomInSens->setSingleStep(10);
+    zoomInSens->setPageStep(20);
     zoomInSens->installEventFilter(this);
+    cacheSens = new QSlider(Qt::Horizontal, this);
+    cacheSens->setTickPosition(QSlider::TicksBelow);
+    cacheSens->setMinimum(0);
+    cacheSens->setMaximum(100);
+    cacheSens->setSingleStep(5);
+    cacheSens->setPageStep(5);
+    cacheSens->installEventFilter(this);
     traslXpos = new QArrowButton(this, QColor(255,0,0), 15, 6, 0, Qt::LeftToRight);
     traslXneg = new QArrowButton(this, QColor(255,0,0), 15, 6, 0, Qt::RightToLeft);
     traslXlabel = new QLabel("");
@@ -273,6 +280,9 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     traslYneg->installEventFilter(this);
     traslZpos->installEventFilter(this);
     traslZneg->installEventFilter(this);
+    controlsResetButton = new QPushButton(this);
+    controlsResetButton->setIcon(QIcon(":/icons/reset.png"));
+    controlsLineTree = new QLineTree(this, Qt::gray, 0.5, 3, 11);
 
 
     //info panel widgets
@@ -540,26 +550,31 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
 //    multiresModePanelLayout->addWidget(new QLabel("Zoom-in VOI size:"),         2, 0, 1, 1);
 //    multiresModePanelLayout->addWidget(zoominVoiSize,                           2, 2, 1, 3);
 //    multiresModePanelLayout->addWidget(new QLabel("MVoxels"),                   2, 5, 1, 9);    
-    multiresModePanelLayout->addWidget(new QLabel("Zoom-in sens:"),             3 , 0, 1, 1);
-    multiresModePanelLayout->addWidget(zoomInSens,                              3, 2, 1, 11);
-    multiresModePanelLayout->addWidget(new QLabel("Zoom-out sens:"),            4 , 0, 1, 1);
-    multiresModePanelLayout->addWidget(zoomOutSens,                             4, 2, 1, 11);
+    multiresModePanelLayout->addWidget(new QLabel("Caching  thres:"),           3 , 0, 1, 1);
+    multiresModePanelLayout->addWidget(cacheSens,                               3, 2, 1, 9);
+    controlsLineTree->setSizePolicy(QSizePolicy::Expanding,QSizePolicy::Expanding);
+    multiresModePanelLayout->addWidget(controlsLineTree,                        3, 11, 3, 1);
+    multiresModePanelLayout->addWidget(controlsResetButton,                    4, 12, 1, 1);
+    multiresModePanelLayout->addWidget(new QLabel("Zoom-in  thres:"),           4 , 0, 1, 1);
+    multiresModePanelLayout->addWidget(zoomInSens,                              4, 2, 1, 9);
+    multiresModePanelLayout->addWidget(new QLabel("Zoom-out thres:"),           5 , 0, 1, 1);
+    multiresModePanelLayout->addWidget(zoomOutSens,                             5, 2, 1, 9);
     traslXneg->setMaximumWidth(25);
     traslXpos->setMaximumWidth(25);
     traslYneg->setMaximumWidth(25);
     traslYpos->setMaximumWidth(25);
     traslZneg->setMaximumWidth(25);
     traslZpos->setMaximumWidth(25);
-    multiresModePanelLayout->addWidget(new QLabel("Translate:"),                5, 0, 1, 1);
-    multiresModePanelLayout->addWidget(traslXneg,                               5, 2, 1, 1);
-    multiresModePanelLayout->addWidget(traslXlabel,                             5, 3, 1, 1);
-    multiresModePanelLayout->addWidget(traslXpos,                               5, 4, 1, 1);
-    multiresModePanelLayout->addWidget(traslYneg,                               5, 6, 1, 1);
-    multiresModePanelLayout->addWidget(traslYlabel,                             5, 7, 1, 1);
-    multiresModePanelLayout->addWidget(traslYpos,                               5, 8, 1, 1);
-    multiresModePanelLayout->addWidget(traslZneg,                               5, 10, 1, 1);
-    multiresModePanelLayout->addWidget(traslZlabel,                             5, 11, 1, 1);
-    multiresModePanelLayout->addWidget(traslZpos,                               5, 12, 1, 1);
+    multiresModePanelLayout->addWidget(new QLabel("Translate:"),                6, 0, 1, 1);
+    multiresModePanelLayout->addWidget(traslXneg,                               6, 2, 1, 1);
+    multiresModePanelLayout->addWidget(traslXlabel,                             6, 3, 1, 1);
+    multiresModePanelLayout->addWidget(traslXpos,                               6, 4, 1, 1);
+    multiresModePanelLayout->addWidget(traslYneg,                               6, 6, 1, 1);
+    multiresModePanelLayout->addWidget(traslYlabel,                             6, 7, 1, 1);
+    multiresModePanelLayout->addWidget(traslYpos,                               6, 8, 1, 1);
+    multiresModePanelLayout->addWidget(traslZneg,                               6, 10, 1, 1);
+    multiresModePanelLayout->addWidget(traslZlabel,                             6, 11, 1, 1);
+    multiresModePanelLayout->addWidget(traslZpos,                               6, 12, 1, 1);
     multires_panel->setLayout(multiresModePanelLayout);
     multires_panel->setStyle(new QWindowsStyle());
 
@@ -614,9 +629,11 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     connect(traslYneg, SIGNAL(clicked()), this, SLOT(traslYnegClicked()));
     connect(traslZpos, SIGNAL(clicked()), this, SLOT(traslZposClicked()));
     connect(traslZneg, SIGNAL(clicked()), this, SLOT(traslZnegClicked()));
+    connect(controlsResetButton, SIGNAL(clicked()), this, SLOT(resetMultiresControls()));
 
     //reset widgets
     reset();
+    resetMultiresControls();
 
     //set always on top
     setWindowFlags(Qt::WindowStaysOnTopHint);
@@ -1402,48 +1419,30 @@ bool PMain::eventFilter(QObject *object, QEvent *event)
     else if((object == zoomOutSens) && multires_panel->isEnabled())
     {
         if(event->type() == QEvent::Enter)
-            helpBox->setText(HTzoomOutSens);
+            helpBox->setText(HTzoomOutThres);
         else if(event->type() == QEvent::Leave)
             helpBox->setText(HTbase);
+
+        displayToolTip(zoomOutSens, event, QString::number(zoomOutSens->value()).toStdString());
     }
     else if((object == zoomInSens) && multires_panel->isEnabled())
     {
         if(event->type() == QEvent::Enter)
-            helpBox->setText(HTzoomInSens);
+            helpBox->setText(HTzoomInThres);
         else if(event->type() == QEvent::Leave)
             helpBox->setText(HTbase);
 
-        //displaying tooltip
-        {
-            zoomInSens->setAttribute(Qt::WA_Hover); // this control the QEvent::ToolTip and QEvent::HoverMove
-            zoomInSens->setFocusPolicy(Qt::WheelFocus); // accept KeyPressEvent when mouse wheel move
+        displayToolTip(zoomInSens, event, QString::number(zoomInSens->value()).toStdString());
+    }
+    else if((object == cacheSens) && multires_panel->isEnabled())
+    {
+        if(event->type() == QEvent::Enter)
+            helpBox->setText(HTcacheSens);
+        else if(event->type() == QEvent::Leave)
+            helpBox->setText(HTbase);
 
-            bool event_tip = false;
-            QPoint pos(0,0);
-            switch (event->type())
-            {
-                case QEvent::ToolTip: // must turned on by setAttribute(Qt::WA_Hover) under Mac 64bit
-                        pos = ((QHelpEvent*)event)->pos();
-                        event_tip = true;
-                        break;
-                case QEvent::MouseMove: // for mouse dragging
-                        pos = ((QMouseEvent*)event)->pos();
-                        event_tip = true;
-                        break;
-                case 6: //QEvent::KeyPress: // for arrow key dragging
-                        pos = zoomInSens->mapFromGlobal(zoomInSens->cursor().pos());
-                        event_tip = true;
-                        break;
-            }
-            if (event_tip)
-            {
-                QPoint gpos = zoomInSens->mapToGlobal(pos);
-                QString tip = QString::number(zoomInSens->value()).append("%");
-                QToolTip::showText(gpos, (tip), zoomInSens);
-            }
+        displayToolTip(cacheSens, event, QString::number(cacheSens->value()).append("%").toStdString());
 
-            return QObject::eventFilter(zoomInSens, event);
-        }
     }
     else if ((object == traslXpos || object == traslYpos || object == traslZpos) && multires_panel->isEnabled())
     {
@@ -1467,4 +1466,46 @@ bool PMain::eventFilter(QObject *object, QEvent *event)
             helpBox->setText(HTbase);
     }
     return false;
+}
+
+/**********************************************************************************
+* Displays tooltip when ToolTip, MouseMove or KeyPress events occur on the widget.
+***********************************************************************************/
+void PMain::displayToolTip(QWidget* widget, QEvent* event, string msg)
+{
+    widget->setAttribute(Qt::WA_Hover); // this control the QEvent::ToolTip and QEvent::HoverMove
+    widget->setFocusPolicy(Qt::WheelFocus); // accept KeyPressEvent when mouse wheel move
+
+    bool event_tip = false;
+    QPoint pos(0,0);
+    switch (event->type())
+    {
+        case QEvent::ToolTip: // must turned on by setAttribute(Qt::WA_Hover) under Mac 64bit
+                pos = ((QHelpEvent*)event)->pos();
+                event_tip = true;
+                break;
+        case QEvent::MouseMove: // for mouse dragging
+                pos = ((QMouseEvent*)event)->pos();
+                event_tip = true;
+                break;
+        case 6: //QEvent::KeyPress: // for arrow key dragging
+                pos = widget->mapFromGlobal(widget->cursor().pos());
+                event_tip = true;
+                break;
+    }
+    if (event_tip)
+    {
+        QPoint gpos = widget->mapToGlobal(pos);
+        QToolTip::showText(gpos, msg.c_str(), widget);
+    }
+}
+
+/**********************************************************************************
+* Called when controlsResetButton is clicked
+***********************************************************************************/
+void PMain::resetMultiresControls()
+{
+    cacheSens->setValue(70);
+    zoomInSens->setValue(40);
+    zoomOutSens->setValue(0);
 }

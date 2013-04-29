@@ -61,7 +61,12 @@ namespace teramanager
     class QArrowButton;         //Qt-customized class to model arrow buttons
     class QHelpBox;             //Qt-customized class to model help box
     class QGradientBar;
+    class QLineTree;
     struct annotation;
+
+    class myRenderer_gl1;
+    class myV3dR_GLWidget;
+    class myV3dR_MainWindow;
     /*-------------------------------------------------------------------------------------------------------------------------*/
 
     /*******************

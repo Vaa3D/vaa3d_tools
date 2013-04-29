@@ -11,6 +11,25 @@ ties names are:
 - Rem: a feature no longer available
 
 ============================================================================================
+Version 0.8.1
+April 28th, 2013
+--------------------------------------------------------------------------------------------
+- New: syncronization of "Volume" and "Others" controls during navigation.
+- New: added reset button for multiresolution controls.
+- New: redesigned zoom-in/out and caching controls.
+- New: added "Zoom-in threshold" slider.
+- Dev: overrided "setZoom" and "wheelEvent" Vaa3D methods to take full control of zoom-in.
+- Dev: created "V3Dsubclasses.h/cpp" where Vaa3D subclasses are defined.
+- New: "double-click zoom-in"  feature added! Double-click  with  mouse within  the renderer
+       automatically  triggers  the  "right-click->Zoom-in HighRezImage: 1-right-click ROI".
+       Thus, this represents a (hopefully) more usable shortcut for that feature.
+- Fix: TeraConverter updated to  the last version  developed by Giulio. Still need to verify
+       the bug when converting  large  V3Draw files (application crashes  when conversion is
+       finished and the second resolution is imported to generate mdata.bin.
+--------------------------------------------------------------------------------------------
+
+
+
 Version 0.8
 April 27th, 2013
 --------------------------------------------------------------------------------------------

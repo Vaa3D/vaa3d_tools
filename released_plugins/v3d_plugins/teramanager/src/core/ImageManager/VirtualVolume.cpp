@@ -253,49 +253,116 @@ void VirtualVolume::saveImage_from_UINT8 (std::string img_path, uint8* raw_ch1, 
 * Performs downsampling at a halved frequency on the given 3D image.  The given image is overwritten in order
 * to store its halvesampled version without allocating any additional resources.
 **************************************************************************************************************/
-void VirtualVolume::halveSample(REAL_T* img, int height, int width, int depth)
+void VirtualVolume::halveSample ( REAL_T* img, int height, int width, int depth, int method )
 {
 	#ifdef S_TIME_CALC
 	double proc_time = -TIME(0);
 	#endif
 
 	float A,B,C,D,E,F,G,H;
-	for(int z=0; z<depth/2; z++)
-	{
-		for(int i=0; i<height/2; i++)
-		{
-			for(int j=0; j<width/2; j++)
-			{
-				//computing 8-neighbours
-				A = img[2*z*width*height +2*i*width + 2*j];
-				B = img[2*z*width*height +2*i*width + (2*j+1)];
-				C = img[2*z*width*height +(2*i+1)*width + 2*j];
-				D = img[2*z*width*height +(2*i+1)*width + (2*j+1)];
-				E = img[(2*z+1)*width*height +2*i*width + 2*j];
-				F = img[(2*z+1)*width*height +2*i*width + (2*j+1)];
-				G = img[(2*z+1)*width*height +(2*i+1)*width + 2*j];
-				H = img[(2*z+1)*width*height +(2*i+1)*width + (2*j+1)];
 
-				//computing mean
-				img[z*(width/2)*(height/2)+i*(width/2)+j] = (A+B+C+D+E+F+G+H)/(float)8;
+	if ( method == HALVE_BY_MEAN ) {
+
+		for(int z=0; z<depth/2; z++)
+		{
+			for(int i=0; i<height/2; i++)
+			{
+				for(int j=0; j<width/2; j++)
+				{
+					//computing 8-neighbours
+					A = img[2*z*width*height +2*i*width + 2*j];
+					B = img[2*z*width*height +2*i*width + (2*j+1)];
+					C = img[2*z*width*height +(2*i+1)*width + 2*j];
+					D = img[2*z*width*height +(2*i+1)*width + (2*j+1)];
+					E = img[(2*z+1)*width*height +2*i*width + 2*j];
+					F = img[(2*z+1)*width*height +2*i*width + (2*j+1)];
+					G = img[(2*z+1)*width*height +(2*i+1)*width + 2*j];
+					H = img[(2*z+1)*width*height +(2*i+1)*width + (2*j+1)];
+
+					//computing mean
+					img[z*(width/2)*(height/2)+i*(width/2)+j] = (A+B+C+D+E+F+G+H)/(float)8;
+				}
 			}
 		}
-	}
 
-	#ifdef S_TIME_CALC
-	proc_time += TIME(0);
-	VolumeConverter::time_multiresolution+=proc_time;
-	#endif
+	}
+	else if ( method == HALVE_BY_MAX ) {
+
+		for(int z=0; z<depth/2; z++)
+		{
+			for(int i=0; i<height/2; i++)
+			{
+				for(int j=0; j<width/2; j++)
+				{
+					//computing max of 8-neighbours
+					A = img[2*z*width*height + 2*i*width + 2*j];
+					B = img[2*z*width*height + 2*i*width + (2*j+1)];
+					if ( B > A ) A = B;
+					B = img[2*z*width*height + (2*i+1)*width + 2*j];
+					if ( B > A ) A = B;
+					B = img[2*z*width*height + (2*i+1)*width + (2*j+1)];
+					if ( B > A ) A = B;
+					B = img[(2*z+1)*width*height + 2*i*width + 2*j];
+					if ( B > A ) A = B;
+					B = img[(2*z+1)*width*height + 2*i*width + (2*j+1)];
+					if ( B > A ) A = B;
+					B = img[(2*z+1)*width*height + (2*i+1)*width + 2*j];
+					if ( B > A ) A = B;
+					B = img[(2*z+1)*width*height + (2*i+1)*width + (2*j+1)];
+					if ( B > A ) A = B;
+
+					//computing mean
+					img[z*(width/2)*(height/2) + i*(width/2) + j] = A;
+				}
+			}
+		}
+
+	}
+	else {
+		char buffer[IM_STATIC_STRINGS_SIZE];
+		sprintf(buffer,"in halveSample(...): invalid halving method\n");
+        throw MyException(buffer);
+	}
 	
 }
 
 
-void VirtualVolume::halveSample_UINT8 ( uint8** img, int height, int width, int depth, int channels ) {
+void VirtualVolume::halveSample_UINT8 ( uint8** img, int height, int width, int depth, int channels, int method ) {
 	#ifdef S_TIME_CALC
 	double proc_time = -TIME(0);
 	#endif
 
 	float A,B,C,D,E,F,G,H;
+
+	if ( method == HALVE_BY_MEAN ) {
+
+		for(int c=0; c<channels; c++)
+		{
+			for(int z=0; z<depth/2; z++)
+			{
+				for(int i=0; i<height/2; i++)
+				{
+					for(int j=0; j<width/2; j++)
+					{
+						//computing 8-neighbours
+						A = img[c][2*z*width*height + 2*i*width + 2*j];
+						B = img[c][2*z*width*height + 2*i*width + (2*j+1)];
+						C = img[c][2*z*width*height + (2*i+1)*width + 2*j];
+						D = img[c][2*z*width*height + (2*i+1)*width + (2*j+1)];
+						E = img[c][(2*z+1)*width*height + 2*i*width + 2*j];
+						F = img[c][(2*z+1)*width*height + 2*i*width + (2*j+1)];
+						G = img[c][(2*z+1)*width*height + (2*i+1)*width + 2*j];
+						H = img[c][(2*z+1)*width*height + (2*i+1)*width + (2*j+1)];
+
+						//computing mean
+						img[c][z*(width/2)*(height/2) + i*(width/2) + j] = (uint8) ROUND((A+B+C+D+E+F+G+H)/(float)8);
+					}
+				}
+			}
+		}
+
+	}
+	else if ( method == HALVE_BY_MAX ) {
 
 	for(int c=0; c<channels; c++)
 	{
@@ -305,21 +372,35 @@ void VirtualVolume::halveSample_UINT8 ( uint8** img, int height, int width, int 
 			{
 				for(int j=0; j<width/2; j++)
 				{
-					//computing 8-neighbours
+					//computing max of 8-neighbours
 					A = img[c][2*z*width*height + 2*i*width + 2*j];
 					B = img[c][2*z*width*height + 2*i*width + (2*j+1)];
-					C = img[c][2*z*width*height + (2*i+1)*width + 2*j];
-					D = img[c][2*z*width*height + (2*i+1)*width + (2*j+1)];
-					E = img[c][(2*z+1)*width*height + 2*i*width + 2*j];
-					F = img[c][(2*z+1)*width*height + 2*i*width + (2*j+1)];
-					G = img[c][(2*z+1)*width*height + (2*i+1)*width + 2*j];
-					H = img[c][(2*z+1)*width*height + (2*i+1)*width + (2*j+1)];
+					if ( B > A ) A = B;
+					B = img[c][2*z*width*height + (2*i+1)*width + 2*j];
+					if ( B > A ) A = B;
+					B = img[c][2*z*width*height + (2*i+1)*width + (2*j+1)];
+					if ( B > A ) A = B;
+					B = img[c][(2*z+1)*width*height + 2*i*width + 2*j];
+					if ( B > A ) A = B;
+					B = img[c][(2*z+1)*width*height + 2*i*width + (2*j+1)];
+					if ( B > A ) A = B;
+					B = img[c][(2*z+1)*width*height + (2*i+1)*width + 2*j];
+					if ( B > A ) A = B;
+					B = img[c][(2*z+1)*width*height + (2*i+1)*width + (2*j+1)];
+					if ( B > A ) A = B;
 
 					//computing mean
-					img[c][z*(width/2)*(height/2) + i*(width/2) + j] = (uint8) ROUND((A+B+C+D+E+F+G+H)/(float)8);
+					img[c][z*(width/2)*(height/2) + i*(width/2) + j] = (uint8) ROUND(A);
 				}
 			}
 		}
+	}
+
+	}
+	else {
+		char buffer[IM_STATIC_STRINGS_SIZE];
+		sprintf(buffer,"in halveSample_UINT8(...): invalid halving method\n");
+        throw MyException(buffer);
 	}
 
 	#ifdef S_TIME_CALC

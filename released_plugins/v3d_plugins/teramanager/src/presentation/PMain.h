@@ -40,6 +40,7 @@
 #include "QArrowButton.h"
 #include "QHelpBox.h"
 #include "QGradientBar.h"
+#include "QLineTree.h"
 
 class teramanager::PMain : public QWidget
 {
@@ -158,6 +159,7 @@ class teramanager::PMain : public QWidget
         QLabel* by_label_7;
         QComboBox* resolution_cbox;
         QLabel* zoominVoiSize;
+        QSlider* cacheSens;
         QSlider* zoomInSens;
         QSlider* zoomOutSens;
         QArrowButton* traslXpos;
@@ -169,6 +171,8 @@ class teramanager::PMain : public QWidget
         QArrowButton* traslZpos;
         QLabel* traslZlabel;
         QArrowButton* traslZneg;
+        QLineTree* controlsLineTree;
+        QPushButton* controlsResetButton;
 
         //other widgets
         QHelpBox* helpBox;              //help box
@@ -209,16 +213,24 @@ class teramanager::PMain : public QWidget
         ***********************************************************************************/
         bool eventFilter(QObject *object, QEvent *event);
 
+        /**********************************************************************************
+        * Displays tooltip when ToolTip, MouseMove or KeyPress events occur on the widget.
+        ***********************************************************************************/
+        static void displayToolTip(QWidget* widget, QEvent* event, string msg);
+
         //<CExplorerWindow> instances need to access to all members of the current class
         friend class CExplorerWindow;
+
+        friend class myV3dR_GLWidget;
 
         //help texts
         static string HTwelcome;
         static string HTbase;
         static string HTvoiDim;
         static string HTjumpToRes;
-        static string HTzoomInSens;
-        static string HTzoomOutSens;
+        static string HTcacheSens;
+        static string HTzoomInThres;
+        static string HTzoomOutThres;
         static string HTtraslatePos;
         static string HTtraslateNeg;
         static string HTvolcuts;
@@ -271,6 +283,11 @@ class teramanager::PMain : public QWidget
         * Called when "Help->About" menu action is triggered
         ***********************************************************************************/
         void about();
+
+        /**********************************************************************************
+        * Called when controlsResetButton is clicked
+        ***********************************************************************************/
+        void resetMultiresControls();
 
         /**********************************************************************************
         * Called when "loadButton" has been clicked.

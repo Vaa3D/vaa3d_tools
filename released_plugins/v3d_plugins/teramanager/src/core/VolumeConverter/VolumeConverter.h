@@ -162,13 +162,14 @@ public:
 		*						  mensions can differ by 1 pixel only along both directions. If not given, the maximum
 		*						  allowed dimensions will be set, which will result in a volume composed by  one large 
 		*						  tile only.
+		* [method]              : method used to compute pixel whel halving image size (default: by mean)
 		* [seed]                : used to initiate random positions of objects
 		* [show_progress_bar]	: enables/disables progress bar with estimated time remaining.
 		* [saved_img_format]	: determines saved images format ("png","tif","jpeg", etc.).
 		* [saved_img_depth]		: determines saved images bitdepth (16 or 8).
 		**************************************************************************************************************/
 		void generateTiles(std::string output_path, bool* resolutions = NULL, 
-			int slice_height = -1, int slice_width = -1, int seed = 10, bool show_progress_bar = true, 
+			int slice_height = -1, int slice_width = -1, int method = HALVE_BY_MEAN, int seed = 10, bool show_progress_bar = true, 
 			const char* saved_img_format = IM_DEF_IMG_FORMAT, int saved_img_depth = IM_DEF_IMG_DEPTH)	throw (MyException);
 		
 
@@ -193,6 +194,7 @@ public:
         std::string getMultiresABS_V_string(int res, int REL_V);
         int getMultiresABS_H(int res, int REL_H);
         std::string getMultiresABS_H_string(int res, int REL_H);
+	   int getMultiresABS_D(int res);
 };
 
 #endif

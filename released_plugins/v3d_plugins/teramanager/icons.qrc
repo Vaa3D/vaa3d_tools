@@ -12,5 +12,7 @@
         <file>icons/help.png</file>
         <file>icons/help2.png</file>
         <file>icons/about.png</file>
+        <file>icons/undo.png</file>
+        <file>icons/reset.png</file>
     </qresource>
 </RCC>

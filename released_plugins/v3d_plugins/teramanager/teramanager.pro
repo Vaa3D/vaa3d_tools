@@ -42,14 +42,37 @@ SOURCES += $$V3DMAINPATH/basic_c_fun/basic_memory.cpp
 SOURCES += $$V3DMAINPATH/basic_c_fun/basic_4dimage.cpp
 SOURCES += $$V3DMAINPATH/basic_c_fun/imageio_mylib.cpp
 SOURCES += $$V3DMAINPATH/basic_c_fun/basic_surf_objs.cpp
-HEADERS += $$V3DMAINPATH/common_lib/src_packages/mylib_tiff/image.h
+HEADERS += $$V3DMAINPATH/common_lib/src_packages/mylib_tiff/image.h \
+    src/control/V3Dsubclasses.h \
+    src/presentation/QLineTree.h
 HEADERS += $$V3DMAINPATH/basic_c_fun/imageio_mylib.h
 LIBS += -L. -lv3dtiff -L$$V3DMAINPATH/common_lib/lib \
             -L$$V3DMAINPATH/common_lib/src_packages/mylib_tiff -lmylib
 
-#needed to enable the "double-click zoom-in" feature --> removed, simple inclusion impedes the plugin to be loaded
-#INCLUDEPATH += $$V3DMAINPATH/v3d
-#SOURCES += $$V3DMAINPATH/3drenderer/renderer_hit.cpp
+#needed to enable the "double-click zoom-in" feature
+INCLUDEPATH += $$V3DMAINPATH/v3d
+SOURCES += $$V3DMAINPATH/3drenderer/renderer.cpp
+SOURCES += $$V3DMAINPATH/3drenderer/GLee_r.c
+SOURCES += $$V3DMAINPATH/3drenderer/renderer_hit.cpp
+SOURCES += $$V3DMAINPATH/v3d/landmark_property_dialog.cpp
+SOURCES += $$V3DMAINPATH/v3d/moc_landmark_property_dialog.cpp
+SOURCES += $$V3DMAINPATH/v3d/surfaceobj_geometry_dialog.cpp
+SOURCES += $$V3DMAINPATH/v3d/moc_surfaceobj_geometry_dialog.cpp
+SOURCES += $$V3DMAINPATH/v3d/moc_surfaceobj_annotation_dialog.cpp
+SOURCES += $$V3DMAINPATH/jba/newmat11/newmat1.cpp
+SOURCES += $$V3DMAINPATH/jba/newmat11/newmat2.cpp
+SOURCES += $$V3DMAINPATH/jba/newmat11/newmat3.cpp
+SOURCES += $$V3DMAINPATH/jba/newmat11/newmat4.cpp
+SOURCES += $$V3DMAINPATH/jba/newmat11/newmat5.cpp
+SOURCES += $$V3DMAINPATH/jba/newmat11/newmat6.cpp
+SOURCES += $$V3DMAINPATH/jba/newmat11/newmat7.cpp
+SOURCES += $$V3DMAINPATH/jba/newmat11/newmat8.cpp
+SOURCES += $$V3DMAINPATH/jba/newmat11/newmat9.cpp
+SOURCES += $$V3DMAINPATH/jba/newmat11/newmatex.cpp
+
+SOURCES += $$V3DMAINPATH/3drenderer/v3dr_glwidget.cpp
+SOURCES += $$V3DMAINPATH/v3d/moc_v3dr_glwidget.cpp
+#SOURCES += $$V3DMAINPATH/v3d/moc_Na3DWidget.cpp
 
 
 #set up TeraManager plugin

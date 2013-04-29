@@ -218,6 +218,11 @@ char *loadRaw2Metadata ( char * filename, V3DLONG * &sz, int &datatype, int &b_s
 	char formatkey[] = "raw_image_stack_by_hpeng";
 	V3DLONG lenkey = strlen(formatkey);
 
+	// for 4 byte integers: datatype has 2 bytes, and sz has 4*4 bytes and endian flag has 1 byte
+	// WARNINIG: this should still be valid even for 2 byte integres assuming that there are at least 8 data bytes
+	if (fileSize<lenkey+2+4*4+1)  
+		return ("The size of your input file is too small and is not correct, -- it is too small to contain the legal header");
+
 	char * keyread = new char [lenkey+1];
 	if (!keyread)
 		return ("Fail to allocate memory");
@@ -278,20 +283,65 @@ char *loadRaw2Metadata ( char * filename, V3DLONG * &sz, int &datatype, int &b_s
 
 	V3DLONG unitSize = datatype; // temporarily I use the same number, which indicates the number of bytes for each data point (pixel). This can be extended in the future. 
 
-	BIT32_UNIT mysz[4];
+	bool is_4_byte_file = true; // assumes 4 byte file
+	V3DLONG totalUnit;
+	BIT32_UNIT mysz[4]; // actual buffer 
 	mysz[0]=mysz[1]=mysz[2]=mysz[3]=0;
-	int tmpn=(int)fread(mysz, 4, 4, fid); // because I have already checked the file size to be bigger than the header, no need to check the number of actual bytes read. 
+
+	// temporary buffer: allocate space for four 4 byte integers
+	BIT16_UNIT *sz_2bytes = new BIT16_UNIT[8];
+
+	// try 2 byte integers first
+	int tmpn=(int)fread(sz_2bytes, 2, 4, fid); // because I have already checked the file size to be bigger than the header, no need to check the number of actual bytes read.
 	if (tmpn!=4)
 		return ("This program only reads [4] units");
-
-	if (b_swap)
-	{
-		for (i=0;i<4;i++)
-		{
-			//swap2bytes((void *)(mysz+i));
-			swap4bytes((void *)(mysz+i));
+	memcpy(mysz,sz_2bytes,2*4); // save bytes in case it is a 4 byte file
+	if (b_swap) {
+		for (i=0;i<4;i++) 
+			swap2bytes((void *)(sz_2bytes+i));
+	}
+	totalUnit = 1;
+	for (i=0;i<4;i++) {
+		totalUnit *= sz_2bytes[i];
+	}
+	if ((totalUnit*unitSize+4*2+2+1+lenkey) == fileSize) { // 2 byte file
+		is_4_byte_file = false;
+		// assign sizes to actual buffer
+		for (i=0;i<4;i++) {
+			mysz[i] = (BIT32_UNIT)sz_2bytes[i];
 		}
 	}
+	delete sz_2bytes;
+
+	if ( is_4_byte_file ) {
+		// reads four more 2 byte elements 
+		tmpn=(int)fread(mysz+2, 2, 4, fid); // because I have already checked the file size to be bigger than the header, no need to check the number of actual bytes read. 
+		if (tmpn!=4)
+			return ("This program only reads [4] units");
+		if (b_swap) {
+			for (i=0;i<4;i++) 
+				swap4bytes((void *)(mysz+i));
+		}
+		totalUnit = 1;
+		for (i=0;i<4;i++) {
+			totalUnit *= mysz[i];
+		}
+		if ((totalUnit*unitSize+4*2+2+1+lenkey) == fileSize) 
+			return ("The input file has a size different from what specified in the header");
+	}
+
+	//int tmpn=(int)fread(mysz, 4, 4, fid); // because I have already checked the file size to be bigger than the header, no need to check the number of actual bytes read. 
+	//if (tmpn!=4)
+	//	return ("This program only reads [4] units");
+
+	//if (b_swap)
+	//{
+	//	for (i=0;i<4;i++)
+	//	{
+	//		//swap2bytes((void *)(mysz+i));
+	//		swap4bytes((void *)(mysz+i));
+	//	}
+	//}
 
 	if (sz) {delete []sz; sz=0;}
 	sz = new V3DLONG [4]; // reallocate the memory if the input parameter is non-null. Note that this requests the input is also an NULL point, the same to img. 

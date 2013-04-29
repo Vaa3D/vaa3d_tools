@@ -29,6 +29,9 @@
 #ifndef _VIRTUAL_VOLUME_H
 #define _VIRTUAL_VOLUME_H
 
+# define HALVE_BY_MEAN 1
+# define HALVE_BY_MAX  2
+
 #include <string>
 
 #include "IM_defs.h"
@@ -134,9 +137,9 @@ public:
 	* Performs downsampling at a halved frequency on the given 3D image.  The given image is overwritten in order
 	* to store its halvesampled version without allocating any additional resources.
 	**************************************************************************************************************/
-	static void halveSample(REAL_T* img, int height, int width, int depth);
+	static void halveSample( REAL_T* img, int height, int width, int depth, int method = HALVE_BY_MEAN );
 
-	static void halveSample_UINT8 ( uint8** img, int height, int width, int depth, int channels );
+	static void halveSample_UINT8 ( uint8** img, int height, int width, int depth, int channels, int method = HALVE_BY_MEAN );
 };
 
 #endif

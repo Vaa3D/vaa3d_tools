@@ -135,7 +135,7 @@ void VolumeConverter::setSrcVolume(const char* _root_dir, const char* _fmt, cons
 * [saved_img_depth]		: determines saved images bitdepth (16 or 8).
 **************************************************************************************************************/
 void VolumeConverter::generateTiles(std::string output_path, bool* resolutions, 
-				int slice_height, int slice_width, int seed, bool show_progress_bar, const char* saved_img_format, 
+				int slice_height, int slice_width, int method, int seed, bool show_progress_bar, const char* saved_img_format, 
 				int saved_img_depth)	throw (MyException)
 {
 	//LOCAL VARIABLES
@@ -282,9 +282,9 @@ void VolumeConverter::generateTiles(std::string output_path, bool* resolutions,
 			//halvesampling resolution if current resolution is not the deepest one
 			if(i!=0)	
 				if ( internal_rep == REAL_INTERNAL_REP )
-					VirtualVolume::halveSample(rbuffer,(int)height/(POW_INT(2,i-1)),(int)width/(POW_INT(2,i-1)),(int)z_size/(POW_INT(2,i-1)));
+					VirtualVolume::halveSample(rbuffer,(int)height/(POW_INT(2,i-1)),(int)width/(POW_INT(2,i-1)),(int)z_size/(POW_INT(2,i-1)),method);
 				else // internal_rep == UINT8_INTERNAL_REP
-					VirtualVolume::halveSample_UINT8(ubuffer,(int)height/(POW_INT(2,i-1)),(int)width/(POW_INT(2,i-1)),(int)z_size/(POW_INT(2,i-1)),channels);
+					VirtualVolume::halveSample_UINT8(ubuffer,(int)height/(POW_INT(2,i-1)),(int)width/(POW_INT(2,i-1)),(int)z_size/(POW_INT(2,i-1)),channels,method);
 
 			//saving at current resolution if it has been selected and iff buffer is at least 1 voxel (Z) deep
 			if(resolutions[i] && (z_size/(POW_INT(2,i))) > 0)
@@ -337,7 +337,8 @@ void VolumeConverter::generateTiles(std::string output_path, bool* resolutions,
 							std::stringstream abs_pos_z;
 							abs_pos_z.width(6);
 							abs_pos_z.fill('0');
-							abs_pos_z << (int)(POW_INT(2,i)*buffer_z+z);
+							abs_pos_z << (int)(this->getMultiresABS_D(i) + // all stacks start at the same D position
+												(POW_INT(2,i)*buffer_z+z) * volume->getVXL_D());
 							img_path << H_DIR_path.str() << "/" 
 										<< this->getMultiresABS_V_string(i,start_height) << "_" 
 										<< this->getMultiresABS_H_string(i,start_width) << "_"
@@ -433,4 +434,11 @@ std::string VolumeConverter::getMultiresABS_H_string(int res, int REL_H)
 	multires_merging_y_pos.fill('0');
 	multires_merging_y_pos << this->getMultiresABS_H(res, REL_H);
 	return multires_merging_y_pos.str();
+}
+int VolumeConverter::getMultiresABS_D(int res)
+{
+	if(volume->getVXL_D() > 0)
+		return (int) ROUND(volume->getABS_D(D0)*10);
+	else
+		return (int) ROUND(volume->getABS_D(D0 - 1 + volume->getVXL_D()*POW_INT(2,res)*10));
 }
