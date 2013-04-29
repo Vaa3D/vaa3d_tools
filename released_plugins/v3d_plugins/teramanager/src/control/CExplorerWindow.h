@@ -34,6 +34,7 @@
 #include "v3dr_mainwindow.h"
 #include "renderer_gl2.h"
 #include "CImport.h"
+#include "v3d_imaging_para.h"
 
 class teramanager::CExplorerWindow : public QWidget
 {
@@ -195,10 +196,9 @@ class teramanager::CExplorerWindow : public QWidget
         void restoreSubvolSpinboxState();
 
         /**********************************************************************************
-        * Linked to rightStrokeROI and rightClickROI right-menu entries of the 3D renderer.
-        * This implements the selection of a ROI in the 3D renderer.
+        * method (indirectly) invoked by Vaa3D to propagate VOI's coordinates
         ***********************************************************************************/
-        void Vaa3D_selectedROI();
+        void invokedFromVaa3D(v3d_imaging_paras* params = 0);
 
         /**********************************************************************************
         * Alignes the given widget to the left(right) of the current window

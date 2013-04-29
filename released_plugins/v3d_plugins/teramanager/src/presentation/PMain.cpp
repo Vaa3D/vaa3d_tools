@@ -54,6 +54,7 @@ string PMain::HTzoomOutThres = "Select the <b>zoom</b> factor threshold to resto
                            "Set it to -100 to disable this feature.";
 string PMain::HTzoomInThres = "Select the <b>zoom</b> factor threshold to trigger the higher resolution when zooming-in with <i>mouse scroll up</i>. The default is set to 50. "
                              "Set it to 100 to disable this feature.";
+string PMain::HTzoomInMethod = "Choose from pull-down menu the method to be used for the computation of the zoom-in volume of interest (<b>VOI</b>)";
 string PMain::HTcacheSens = "Adjust data caching sensitivity when zooming-in with <i>mouse scroll up</i>. This controls the minimum amount of overlap between the requested VOI "
                             " and the <b>cached VOI</b> that is required to restore the cached VOI instead of loading a new VOI. If you always want to zoom-in to the cached VOI, please set this to 0\%.";
 string PMain::HTtraslatePos = "Translate the view along this axis in its <i>natural</i> direction.";
@@ -283,6 +284,12 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     controlsResetButton = new QPushButton(this);
     controlsResetButton->setIcon(QIcon(":/icons/reset.png"));
     controlsLineTree = new QLineTree(this, Qt::gray, 0.5, 3, 11);
+    zoomInMethod = new QComboBox(this);
+    zoomInMethod->addItem("WYSIWYG (10 markers)");
+    zoomInMethod->addItem("Foreground (1 marker)");
+    zoomInMethod->addItem("Foreground (spread markers)");
+    setEnabledComboBoxItem(zoomInMethod, 2, false);
+    zoomInMethod->installEventFilter(this);
 
 
     //info panel widgets
@@ -549,32 +556,34 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     multiresModePanelLayout->addWidget(Ddim_sbox,                               2, 10, 1, 3);
 //    multiresModePanelLayout->addWidget(new QLabel("Zoom-in VOI size:"),         2, 0, 1, 1);
 //    multiresModePanelLayout->addWidget(zoominVoiSize,                           2, 2, 1, 3);
-//    multiresModePanelLayout->addWidget(new QLabel("MVoxels"),                   2, 5, 1, 9);    
-    multiresModePanelLayout->addWidget(new QLabel("Caching  thres:"),           3 , 0, 1, 1);
-    multiresModePanelLayout->addWidget(cacheSens,                               3, 2, 1, 9);
-    controlsLineTree->setSizePolicy(QSizePolicy::Expanding,QSizePolicy::Expanding);
-    multiresModePanelLayout->addWidget(controlsLineTree,                        3, 11, 3, 1);
-    multiresModePanelLayout->addWidget(controlsResetButton,                    4, 12, 1, 1);
+//    multiresModePanelLayout->addWidget(new QLabel("MVoxels"),                   2, 5, 1, 9);
+    multiresModePanelLayout->addWidget(new QLabel("Zoom-in method:"),           3 , 0, 1, 1);
+    multiresModePanelLayout->addWidget(zoomInMethod,                            3, 2, 1, 11);
     multiresModePanelLayout->addWidget(new QLabel("Zoom-in  thres:"),           4 , 0, 1, 1);
     multiresModePanelLayout->addWidget(zoomInSens,                              4, 2, 1, 9);
-    multiresModePanelLayout->addWidget(new QLabel("Zoom-out thres:"),           5 , 0, 1, 1);
-    multiresModePanelLayout->addWidget(zoomOutSens,                             5, 2, 1, 9);
+    multiresModePanelLayout->addWidget(new QLabel("Caching  sens:"),           5 , 0, 1, 1);
+    multiresModePanelLayout->addWidget(cacheSens,                               5, 2, 1, 9);
+    controlsLineTree->setSizePolicy(QSizePolicy::Expanding,QSizePolicy::Expanding);
+    multiresModePanelLayout->addWidget(controlsLineTree,                        4, 11, 3, 1);
+    multiresModePanelLayout->addWidget(controlsResetButton,                     5, 12, 1, 1);
+    multiresModePanelLayout->addWidget(new QLabel("Zoom-out thres:"),           6 , 0, 1, 1);
+    multiresModePanelLayout->addWidget(zoomOutSens,                             6, 2, 1, 9);
     traslXneg->setMaximumWidth(25);
     traslXpos->setMaximumWidth(25);
     traslYneg->setMaximumWidth(25);
     traslYpos->setMaximumWidth(25);
     traslZneg->setMaximumWidth(25);
     traslZpos->setMaximumWidth(25);
-    multiresModePanelLayout->addWidget(new QLabel("Translate:"),                6, 0, 1, 1);
-    multiresModePanelLayout->addWidget(traslXneg,                               6, 2, 1, 1);
-    multiresModePanelLayout->addWidget(traslXlabel,                             6, 3, 1, 1);
-    multiresModePanelLayout->addWidget(traslXpos,                               6, 4, 1, 1);
-    multiresModePanelLayout->addWidget(traslYneg,                               6, 6, 1, 1);
-    multiresModePanelLayout->addWidget(traslYlabel,                             6, 7, 1, 1);
-    multiresModePanelLayout->addWidget(traslYpos,                               6, 8, 1, 1);
-    multiresModePanelLayout->addWidget(traslZneg,                               6, 10, 1, 1);
-    multiresModePanelLayout->addWidget(traslZlabel,                             6, 11, 1, 1);
-    multiresModePanelLayout->addWidget(traslZpos,                               6, 12, 1, 1);
+    multiresModePanelLayout->addWidget(new QLabel("Translate:"),                7, 0, 1, 1);
+    multiresModePanelLayout->addWidget(traslXneg,                               7, 2, 1, 1);
+    multiresModePanelLayout->addWidget(traslXlabel,                             7, 3, 1, 1);
+    multiresModePanelLayout->addWidget(traslXpos,                               7, 4, 1, 1);
+    multiresModePanelLayout->addWidget(traslYneg,                               7, 6, 1, 1);
+    multiresModePanelLayout->addWidget(traslYlabel,                             7, 7, 1, 1);
+    multiresModePanelLayout->addWidget(traslYpos,                               7, 8, 1, 1);
+    multiresModePanelLayout->addWidget(traslZneg,                               7, 10, 1, 1);
+    multiresModePanelLayout->addWidget(traslZlabel,                             7, 11, 1, 1);
+    multiresModePanelLayout->addWidget(traslZpos,                               7, 12, 1, 1);
     multires_panel->setLayout(multiresModePanelLayout);
     multires_panel->setStyle(new QWindowsStyle());
 
@@ -1322,7 +1331,7 @@ void PMain::highestVOISizeChanged(int i)
 }
 
 /**********************************************************************************
-* Called when the correspont buttons are clicked
+* Called when the correspondent buttons are clicked
 ***********************************************************************************/
 void PMain::traslXposClicked()
 {
@@ -1434,6 +1443,13 @@ bool PMain::eventFilter(QObject *object, QEvent *event)
 
         displayToolTip(zoomInSens, event, QString::number(zoomInSens->value()).toStdString());
     }
+    else if((object == zoomInMethod) && multires_panel->isEnabled())
+    {
+        if(event->type() == QEvent::Enter)
+            helpBox->setText(HTzoomInMethod);
+        else if(event->type() == QEvent::Leave)
+            helpBox->setText(HTbase);
+    }
     else if((object == cacheSens) && multires_panel->isEnabled())
     {
         if(event->type() == QEvent::Enter)
@@ -1508,4 +1524,18 @@ void PMain::resetMultiresControls()
     cacheSens->setValue(70);
     zoomInSens->setValue(40);
     zoomOutSens->setValue(0);
+}
+
+//very useful (not included in Qt): disables the given item of the given combobox
+void PMain::setEnabledComboBoxItem(QComboBox* cbox, int _index, bool enabled)
+{
+    // Get the index of the value to disable
+    QModelIndex index = cbox->model()->index(_index,0);
+
+    // These are the effective 'disable/enable' flags
+    QVariant v1(Qt::NoItemFlags);
+    QVariant v2(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
+
+    //the magic
+    cbox->model()->setData( index, enabled ? v2 : v1, Qt::UserRole -1);
 }

@@ -67,6 +67,7 @@ namespace teramanager
     class myRenderer_gl1;
     class myV3dR_GLWidget;
     class myV3dR_MainWindow;
+    class myImage4DSimple;
     /*-------------------------------------------------------------------------------------------------------------------------*/
 
     /*******************
@@ -75,7 +76,7 @@ namespace teramanager
     ---------------------------------------------------------------------------------------------------------------------------*/
     const char undefined_str[] = "undefined";
     const int  undefined_int32 = -1;
-    const int  int_inf = std::numeric_limits<int>::infinity();
+    const int  int_inf = std::numeric_limits<int>::max();
     const float undefined_real32 = -1.0f;
     const int STATIC_STRING_SIZE = 2000;
     const int FILE_LINE_BUFFER_SIZE = 10000;

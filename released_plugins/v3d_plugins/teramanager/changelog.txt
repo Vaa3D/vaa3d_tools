@@ -11,6 +11,18 @@ ties names are:
 - Rem: a feature no longer available
 
 ============================================================================================
+Version 0.8.2
+April 29th, 2013
+--------------------------------------------------------------------------------------------
+- New: new zoom-in method added! The user can now select the zoom-in method from a pull-down
+       menu. Available methods are "WYSIWYG (10 markers)" and "Foreground (1 marker)".
+- Opt: improved caching when  zooming-in. In particular,  the constraint on the maximum view
+       dimensions is now  taken  into account when  evaluating  the intersection between the
+       cached VOI and the VOI requested by Vaa3D.
+--------------------------------------------------------------------------------------------
+
+
+
 Version 0.8.1
 April 28th, 2013
 --------------------------------------------------------------------------------------------

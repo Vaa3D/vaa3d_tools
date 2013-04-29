@@ -44,7 +44,7 @@ namespace teramanager
     *    PARAMETERS    *
     ********************
     ---------------------------------------------------------------------------------------------------------------------------*/
-    std::string version = "0.8.1";
+    std::string version = "0.8.2";
     /*-------------------------------------------------------------------------------------------------------------------------*/
 }
 
@@ -94,7 +94,7 @@ void CPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWi
     else if(menu_name == tr("Fetch Highrez Image Data from File"))
     {
         if(CExplorerWindow::getCurrent())
-            CExplorerWindow::getCurrent()->Vaa3D_selectedROI();
+            CExplorerWindow::getCurrent()->invokedFromVaa3D();
     }
     else
     {

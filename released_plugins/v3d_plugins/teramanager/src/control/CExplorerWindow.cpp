@@ -32,7 +32,6 @@
 #include "CAnnotations.h"
 #include "../presentation/PMain.h"
 #include "renderer_gl1.h"
-#include "v3d_imaging_para.h"
 #include "v3dr_colormapDialog.h"
 #include "V3Dsubclasses.h"
 
@@ -512,21 +511,21 @@ void CExplorerWindow::newView(int x, int y, int z, int resolution, bool fromVaa3
     pMain.loadButton->setEnabled(false);
     pMain.statusBar->showMessage("Loading...");
 
-    //computing VOI
+    //computing VOI in the coordinates of the given resolution
     float ratio = static_cast<float>(CImport::instance()->getVolume(resolution)->getDIM_D())/CImport::instance()->getVolume(volResIndex)->getDIM_D();
     int VoiCenterX = getGlobalHCoord(x, resolution, fromVaa3Dcoordinates);
     int VoiCenterY = getGlobalVCoord(y, resolution, fromVaa3Dcoordinates);
     int VoiCenterZ = getGlobalDCoord(z, resolution, fromVaa3Dcoordinates);
+    dx = dx == -1 ? int_inf : static_cast<int>(dx*ratio+0.5f);
+    dy = dy == -1 ? int_inf : static_cast<int>(dy*ratio+0.5f);
+    dz = dz == -1 ? int_inf : static_cast<int>(dz*ratio+0.5f);
 
     //---- Alessandro 2013-04-25: cropping bounding box if its larger than the maximum allowed
     printf("--------------------- teramanager plugin [thread *] >> CExplorerWindow[%s]: cropping bbox dims from (%d,%d,%d) to ",
            title.c_str(), dx, dy, dz );
-    dx = dx == -1 ? pMain.Hdim_sbox->value()/2 : std::min(static_cast<int>(dx*ratio+0.5f), pMain.Hdim_sbox->value()/2);
-    dy = dy == -1 ? pMain.Vdim_sbox->value()/2 : std::min(static_cast<int>(dy*ratio+0.5f), pMain.Vdim_sbox->value()/2);
-    dz = dz == -1 ? pMain.Ddim_sbox->value()/2 : std::min(static_cast<int>(dz*ratio+0.5f), pMain.Ddim_sbox->value()/2);
-//    dx = dx == -1 ? pMain.Hdim_sbox->value()/2 : (dx*ratio+0.5f);
-//    dy = dy == -1 ? pMain.Vdim_sbox->value()/2 : (dy*ratio+0.5f);
-//    dz = dz == -1 ? pMain.Ddim_sbox->value()/2 : (dz*ratio+0.5f);
+    dx = std::min(dx, static_cast<int>(pMain.Hdim_sbox->value()/2.0f+0.5f));
+    dy = std::min(dy, static_cast<int>(pMain.Vdim_sbox->value()/2.0f+0.5f));
+    dz = std::min(dz, static_cast<int>(pMain.Ddim_sbox->value()/2.0f+0.5f));
     printf("(%d,%d,%d)\n", dx, dy, dz );
 
     CVolume::instance()->setVoi(this, resolution, VoiCenterY-dy, VoiCenterY+dy, VoiCenterX-dx, VoiCenterX+dx, VoiCenterZ-dz, VoiCenterZ+dz);
@@ -907,18 +906,19 @@ float CExplorerWindow::estimateRendererVoxelSize()
 ***********************************************************************************/
 XYZ CExplorerWindow::getRenderer3DPoint(int x, int y)  throw (MyException)
 {
-//    myRenderer_gl1* myRend = (myRenderer_gl1*)(view3DWidget->getRenderer());
-//    return myRend->get3DPoint(x,y);
+    #ifdef TMP_DEBUG
+    printf("--------------------- teramanager plugin [thread *] >> CExplorerWindow[%s]::getRenderer3DPoint(x = %d, y = %d)\n",
+            titleShort.c_str(), x, y );
+    #endif
     return myRenderer_gl1::cast(view3DWidget->getRenderer())->get3DPoint(x, y);
 }
 
 /**********************************************************************************
-* Linked to rightStrokeROI and rightClickROI right-menu entries of the 3D renderer.
-* This implements the selection of a ROI in the 3D renderer.
+* method (indirectly) invoked by Vaa3D to propagate VOI's coordinates
 ***********************************************************************************/
-void CExplorerWindow::Vaa3D_selectedROI()
+void CExplorerWindow::invokedFromVaa3D(v3d_imaging_paras* params /* = 0 */)
 {
-    v3d_imaging_paras* roi = (v3d_imaging_paras*) current->view3DWidget->getiDrawExternalParameter()->image4d->getCustomStructPointer();
+    v3d_imaging_paras* roi = params? params : (v3d_imaging_paras*) current->view3DWidget->getiDrawExternalParameter()->image4d->getCustomStructPointer();
     #ifdef TMP_DEBUG
     if(!current)
         printf("--------------------- teramanager plugin [thread ?] >> CExplorerWindow::Vaa3D_selectedROI([%d-%d], [%d-%d], [%d-%d])\n",
@@ -938,7 +938,7 @@ void CExplorerWindow::Vaa3D_selectedROI()
 
         //zoom-in around marker or ROI triggers a new window
         if(roi->ops_type == 1)
-            current->newView(roiCenterX, roiCenterY, roiCenterZ, volResIndex+1, false, (roi->xe-roi->xs)/2, (roi->ye-roi->ys)/2, (roi->ze-roi->zs)/2);
+            current->newView(roiCenterX, roiCenterY, roiCenterZ, volResIndex+1, false, static_cast<int>((roi->xe-roi->xs)/2.0f+0.5f), static_cast<int>((roi->ye-roi->ys)/2.0f+0.5f), static_cast<int>((roi->ze-roi->zs)/2.0f+0.5f));
 
         //zoom-in with mouse scroll up may trigger a new window if caching is not possible
         else if(roi->ops_type == 2)
@@ -949,25 +949,47 @@ void CExplorerWindow::Vaa3D_selectedROI()
                 //trying caching if next view exists
                 if(current->next)
                 {
-                    //converting Vaa3D VOI local coordinates to global coordinates
-                    float gXS = current->getGlobalHCoord(static_cast<float>(roi->xs));
-                    float gXE = current->getGlobalHCoord(static_cast<float>(roi->xe));
-                    float gYS = current->getGlobalVCoord(static_cast<float>(roi->ys));
-                    float gYE = current->getGlobalVCoord(static_cast<float>(roi->ye));
-                    float gZS = current->getGlobalDCoord(static_cast<float>(roi->zs));
-                    float gZE = current->getGlobalDCoord(static_cast<float>(roi->ze));
+                    //converting Vaa3D VOI local coordinates to TeraFly coordinates of the next resolution
+                    float gXS = current->getGlobalHCoord(static_cast<float>(roi->xs), current->next->volResIndex);
+                    float gXE = current->getGlobalHCoord(static_cast<float>(roi->xe), current->next->volResIndex);
+                    float gYS = current->getGlobalVCoord(static_cast<float>(roi->ys), current->next->volResIndex);
+                    float gYE = current->getGlobalVCoord(static_cast<float>(roi->ye), current->next->volResIndex);
+                    float gZS = current->getGlobalDCoord(static_cast<float>(roi->zs), current->next->volResIndex);
+                    float gZE = current->getGlobalDCoord(static_cast<float>(roi->ze), current->next->volResIndex);
                     QRectF gXRect(QPointF(gXS, 0), QPointF(gXE, 1));
                     QRectF gYRect(QPointF(gYS, 0), QPointF(gYE, 1));
                     QRectF gZRect(QPointF(gZS, 0), QPointF(gZE, 1));
 
-                    //converting TeraFly next view VOI coordinates to global coordinates
-                    int highestResIndex = CImport::instance()->getResolutions()-1;
-                    float gXScached = CVolume::instance()->scaleHCoord(static_cast<float>(current->next->volH0), current->next->volResIndex, highestResIndex);
-                    float gXEcached = CVolume::instance()->scaleHCoord(static_cast<float>(current->next->volH1), current->next->volResIndex, highestResIndex);
-                    float gYScached = CVolume::instance()->scaleVCoord(static_cast<float>(current->next->volV0), current->next->volResIndex, highestResIndex);
-                    float gYEcached = CVolume::instance()->scaleVCoord(static_cast<float>(current->next->volV1), current->next->volResIndex, highestResIndex);
-                    float gZScached = CVolume::instance()->scaleDCoord(static_cast<float>(current->next->volD0), current->next->volResIndex, highestResIndex);
-                    float gZEcached = CVolume::instance()->scaleDCoord(static_cast<float>(current->next->volD1), current->next->volResIndex, highestResIndex);
+                    //obtaining the actual requested VOI under the existing constraints (i.e., maximum view dimensions)
+                    printf("--------------------- teramanager plugin [thread ?] >> CExplorerWindow::Vaa3D_selectedROI(): requested voi [%.0f-%.0f][%.0f-%.0f][%.0f-%.0f]...",
+                           gXS, gXE, gYS, gYE, gZS, gZE);
+                    if(gXE-gXS > PMain::getInstance()->Hdim_sbox->value())
+                    {
+                        float center = gXS+(gXE-gXS)/2;
+                        gXS = center - PMain::getInstance()->Hdim_sbox->value()/2;
+                        gXE = center + PMain::getInstance()->Hdim_sbox->value()/2;
+                    }
+                    if(gYE-gYS > PMain::getInstance()->Vdim_sbox->value())
+                    {
+                        float center = gYS+(gYE-gYS)/2;
+                        gYS = center - PMain::getInstance()->Vdim_sbox->value()/2;
+                        gYE = center + PMain::getInstance()->Vdim_sbox->value()/2;
+                    }
+                    if(gZE-gZS > PMain::getInstance()->Ddim_sbox->value())
+                    {
+                        float center = gZS+(gZE-gZS)/2;
+                        gZS = center - PMain::getInstance()->Ddim_sbox->value()/2;
+                        gZE = center + PMain::getInstance()->Ddim_sbox->value()/2;
+                    }
+                    printf("but actual requested VOI is [%.0f-%.0f][%.0f-%.0f][%.0f-%.0f]\n", gXS, gXE, gYS, gYE, gZS, gZE);
+
+                    //obtaining coordinates of the cached resolution
+                    float gXScached = static_cast<float>(current->next->volH0);
+                    float gXEcached = static_cast<float>(current->next->volH1);
+                    float gYScached = static_cast<float>(current->next->volV0);
+                    float gYEcached = static_cast<float>(current->next->volV1);
+                    float gZScached = static_cast<float>(current->next->volD0);
+                    float gZEcached = static_cast<float>(current->next->volD1);
                     QRectF gXRectCached(QPoint(gXScached, 0), QPoint(gXEcached, 1));
                     QRectF gYRectCached(QPoint(gYScached, 0), QPoint(gYEcached, 1));
                     QRectF gZRectCached(QPoint(gZScached, 0), QPoint(gZEcached, 1));
@@ -980,7 +1002,7 @@ void CExplorerWindow::Vaa3D_selectedROI()
                     float voiVol = (gXE-gXS)*(gYE-gYS)*(gZE-gZS);
                     float cachedVol = (gXEcached-gXScached)*(gYEcached-gYScached)*(gZEcached-gZScached);
                     float coverageFactor = voiVol != 0 ? intersectionVol/voiVol : 0;
-                    printf("--------------------- teramanager plugin [thread ?] >> CExplorerWindow::Vaa3D_selectedROI(): requested voi[%.0f-%.0f][%.0f-%.0f][%.0f-%.0f] and cached[%.0f-%.0f][%.0f-%.0f][%.0f-%.0f]...\n",
+                    printf("--------------------- teramanager plugin [thread ?] >> CExplorerWindow::Vaa3D_selectedROI(): actual requested voi[%.0f-%.0f][%.0f-%.0f][%.0f-%.0f] and cached[%.0f-%.0f][%.0f-%.0f][%.0f-%.0f]...\n",
                            gXS, gXE, gYS, gYE, gZS, gZE, gXScached, gXEcached, gYScached, gYEcached, gZScached, gZEcached);
                     printf("--------------------- teramanager plugin [thread ?] >> CExplorerWindow::Vaa3D_selectedROI(): intersection is %.0f x %.0f x %.0f with coverage factor = %.2f\n",
                            intersectionX, intersectionY, intersectionZ, coverageFactor);
@@ -995,10 +1017,10 @@ void CExplorerWindow::Vaa3D_selectedROI()
 
                     //otherwise invoking a new view
                     else
-                        current->newView(roiCenterX, roiCenterY, roiCenterZ, volResIndex+1, false, (roi->xe-roi->xs)/2, (roi->ye-roi->ys)/2, (roi->ze-roi->zs)/2);
+                        current->newView(roiCenterX, roiCenterY, roiCenterZ, volResIndex+1, false, static_cast<int>((roi->xe-roi->xs)/2.0f+0.5f), static_cast<int>((roi->ye-roi->ys)/2.0f+0.5f), static_cast<int>((roi->ze-roi->zs)/2.0f+0.5f));
                 }
                 else
-                    current->newView(roiCenterX, roiCenterY, roiCenterZ, volResIndex+1, false, (roi->xe-roi->xs)/2, (roi->ye-roi->ys)/2, (roi->ze-roi->zs)/2);
+                    current->newView(roiCenterX, roiCenterY, roiCenterZ, volResIndex+1, false, static_cast<int>((roi->xe-roi->xs)/2.0f+0.5f), static_cast<int>((roi->ye-roi->ys)/2.0f+0.5f), static_cast<int>((roi->ze-roi->zs)/2.0f+0.5f));
             }
             else
                 printf("--------------------- teramanager plugin [thread ?] >> CExplorerWindow::Vaa3D_selectedROI(): ignoring Vaa3D mouse scroll up zoom-in\n");
@@ -1017,6 +1039,11 @@ void CExplorerWindow::Vaa3D_selectedROI()
 ***********************************************************************************/
 int CExplorerWindow::getGlobalVCoord(int localVCoord, int resIndex /* = -1 */, bool fromVaa3Dcoordinates /* = false */)
 {
+    #ifdef TMP_DEBUG
+    printf("--------------------- teramanager plugin [thread *] >> CExplorerWindow[%s]::getGlobalVCoord(coord = %d, res = %d, fromVaa3D = %s)...",
+           titleShort.c_str(), localVCoord, resIndex,  fromVaa3Dcoordinates ? "true" : "false");
+    #endif
+
     //setting resIndex if it has not been set
     if(resIndex == -1)
         resIndex = CImport::instance()->getResolutions()-1;
@@ -1026,11 +1053,20 @@ int CExplorerWindow::getGlobalVCoord(int localVCoord, int resIndex /* = -1 */, b
         localVCoord = static_cast<int>(localVCoord* ( static_cast<float>(volV1-volV0-1)/(LIMIT_VOLY-1) ) +0.5f);
 
     float ratio = (CImport::instance()->getVolume(resIndex)->getDIM_V()-1.0f)/(CImport::instance()->getVolume(volResIndex)->getDIM_V()-1.0f);
-    //printf("\n\n------- getGlobalVCoord(%d) = (volV0[%d]+localVCoord)*ratio[=%.4f] = %d \n\n", localVCoord, volV0, ratio, static_cast<int>((volV0+localVCoord)*ratio + 0.5f));
+
+    #ifdef TMP_DEBUG
+    printf("%d\n", static_cast<int>((volV0+localVCoord)*ratio + 0.5f));
+    #endif
+
     return (volV0+localVCoord)*ratio + 0.5f;
 }
 int CExplorerWindow::getGlobalHCoord(int localHCoord, int resIndex /* = -1 */, bool fromVaa3Dcoordinates /* = false */)
 {
+    #ifdef TMP_DEBUG
+    printf("--------------------- teramanager plugin [thread *] >> CExplorerWindow[%s]::getGlobalHCoord(coord = %d, res = %d, fromVaa3D = %s)...",
+           titleShort.c_str(), localHCoord, resIndex,  fromVaa3Dcoordinates ? "true" : "false");
+    #endif
+
     //setting resIndex if it has not been set
     if(resIndex == -1)
         resIndex = CImport::instance()->getResolutions()-1;
@@ -1040,10 +1076,20 @@ int CExplorerWindow::getGlobalHCoord(int localHCoord, int resIndex /* = -1 */, b
         localHCoord = static_cast<int>(localHCoord* ( static_cast<float>(volH1-volH0-1)/(LIMIT_VOLX-1) ) +0.5f);
 
     float ratio = (CImport::instance()->getVolume(resIndex)->getDIM_H()-1.0f)/(CImport::instance()->getVolume(volResIndex)->getDIM_H()-1.0f);
+
+    #ifdef TMP_DEBUG
+    printf("%d\n", static_cast<int>((volH0+localHCoord)*ratio + 0.5f));
+    #endif
+
     return (volH0+localHCoord)*ratio + 0.5f;
 }
 int CExplorerWindow::getGlobalDCoord(int localDCoord, int resIndex /* = -1 */, bool fromVaa3Dcoordinates /* = false */)
 {
+    #ifdef TMP_DEBUG
+    printf("--------------------- teramanager plugin [thread *] >> CExplorerWindow[%s]::getGlobalDCoord(coord = %d, res = %d, fromVaa3D = %s)...",
+           titleShort.c_str(), localDCoord, resIndex,  fromVaa3Dcoordinates ? "true" : "false");
+    #endif
+
     //setting resIndex if it has not been set
     if(resIndex == -1)
         resIndex = CImport::instance()->getResolutions()-1;
@@ -1053,10 +1099,20 @@ int CExplorerWindow::getGlobalDCoord(int localDCoord, int resIndex /* = -1 */, b
         localDCoord = static_cast<int>(localDCoord* ( static_cast<float>(volD1-volD0-1)/(LIMIT_VOLZ-1) ) +0.5f);
 
     float ratio = (CImport::instance()->getVolume(resIndex)->getDIM_D()-1.0f)/(CImport::instance()->getVolume(volResIndex)->getDIM_D()-1.0f);
+
+    #ifdef TMP_DEBUG
+    printf("%d\n", static_cast<int>((volD0+localDCoord)*ratio + 0.5f));
+    #endif
+
     return (volD0+localDCoord)*ratio + 0.5f;
 }
 float CExplorerWindow::getGlobalVCoord(float localVCoord, int resIndex /* = -1 */, bool fromVaa3Dcoordinates /* = false */)
 {
+    #ifdef TMP_DEBUG
+    printf("--------------------- teramanager plugin [thread *] >> CExplorerWindow[%s]::getGlobalVCoord(coord = %.1f, res = %d, fromVaa3D = %s)...",
+           titleShort.c_str(), localVCoord, resIndex,  fromVaa3Dcoordinates ? "true" : "false");
+    #endif
+
     //setting resIndex if it has not been set
     if(resIndex == -1)
         resIndex = CImport::instance()->getResolutions()-1;
@@ -1066,10 +1122,21 @@ float CExplorerWindow::getGlobalVCoord(float localVCoord, int resIndex /* = -1 *
         localVCoord *= static_cast<float>(volV1-volV0-1)/(LIMIT_VOLY-1);
 
     float ratio = (CImport::instance()->getVolume(resIndex)->getDIM_V()-1.0f)/(CImport::instance()->getVolume(volResIndex)->getDIM_V()-1.0f);
+
+#ifdef TMP_DEBUG
+printf("%.1f\n", (volV0+localVCoord)*ratio);
+#endif
+
     return (volV0+localVCoord)*ratio;
 }
 float CExplorerWindow::getGlobalHCoord(float localHCoord, int resIndex /* = -1 */, bool fromVaa3Dcoordinates /* = false */)
 {
+
+    #ifdef TMP_DEBUG
+    printf("--------------------- teramanager plugin [thread *] >> CExplorerWindow[%s]::getGlobalHCoord(coord = %.1f, res = %d, fromVaa3D = %s)...",
+           titleShort.c_str(), localHCoord, resIndex,  fromVaa3Dcoordinates ? "true" : "false");
+    #endif
+
     //setting resIndex if it has not been set
     if(resIndex == -1)
         resIndex = CImport::instance()->getResolutions()-1;
@@ -1079,10 +1146,20 @@ float CExplorerWindow::getGlobalHCoord(float localHCoord, int resIndex /* = -1 *
         localHCoord *= static_cast<float>(volH1-volH0-1)/(LIMIT_VOLX-1);
 
     float ratio = (CImport::instance()->getVolume(resIndex)->getDIM_H()-1.0f)/(CImport::instance()->getVolume(volResIndex)->getDIM_H()-1.0f);
+
+    #ifdef TMP_DEBUG
+    printf("%.1f\n", (volH0+localHCoord)*ratio);
+    #endif
+
     return (volH0+localHCoord)*ratio;
 }
 float CExplorerWindow::getGlobalDCoord(float localDCoord, int resIndex /* = -1 */, bool fromVaa3Dcoordinates /* = false */)
 {
+    #ifdef TMP_DEBUG
+    printf("--------------------- teramanager plugin [thread *] >> CExplorerWindow[%s]::getGlobalDCoord(coord = %.1f, res = %d, fromVaa3D = %s)...",
+           titleShort.c_str(), localDCoord, resIndex,  fromVaa3Dcoordinates ? "true" : "false");
+    #endif
+
     //setting resIndex if it has not been set
     if(resIndex == -1)
         resIndex = CImport::instance()->getResolutions()-1;
@@ -1092,6 +1169,11 @@ float CExplorerWindow::getGlobalDCoord(float localDCoord, int resIndex /* = -1 *
         localDCoord *= static_cast<float>(volD1-volD0-1)/(LIMIT_VOLZ-1);
 
     float ratio = (CImport::instance()->getVolume(resIndex)->getDIM_D()-1.0f)/(CImport::instance()->getVolume(volResIndex)->getDIM_D()-1.0f);
+
+    #ifdef TMP_DEBUG
+    printf("%.1f\n", (volD0+localDCoord)*ratio);
+    #endif
+
     return (volD0+localDCoord)*ratio;
 }
 
