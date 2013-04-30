@@ -51,8 +51,8 @@ LIBS += -L. -lv3dtiff -L$$V3DMAINPATH/common_lib/lib \
             -L$$V3DMAINPATH/common_lib/src_packages/mylib_tiff -lmylib
 
 #Vaa3D sources needed to specialize Vaa3D into subclasses
-INCLUDEPATH += $$V3DMAINPATH
-INCLUDEPATH += $$V3DMAINPATH/v3d
+#INCLUDEPATH += $$V3DMAINPATH
+#INCLUDEPATH += $$V3DMAINPATH/v3d
 #SOURCES += $$V3DMAINPATH/3drenderer/renderer.cpp
 #SOURCES += $$V3DMAINPATH/3drenderer/GLee_r.c
 #SOURCES += $$V3DMAINPATH/3drenderer/renderer_hit.cpp

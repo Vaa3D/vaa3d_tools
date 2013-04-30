@@ -363,12 +363,12 @@ bool CExplorerWindow::eventFilter(QObject *object, QEvent *event)
         /******************** REDIRECTING MOUSE-WHEEL EVENTS *************************
         Mouse-wheel events are redirected to the customized wheelEvent handler
         ***************************************************************************/
-        if ((object == view3DWidget || object == window3D) && event->type() == QEvent::Wheel)
-        {
-//            QWheelEvent* wheelEvt = (QWheelEvent*)event;
-//            myV3dR_GLWidget::wheelEventO(view3DWidget, wheelEvt);
-//            return true;
-        }
+//        if ((object == view3DWidget || object == window3D) && event->type() == QEvent::Wheel)
+//        {
+////            QWheelEvent* wheelEvt = (QWheelEvent*)event;
+////            myV3dR_GLWidget::wheelEventO(view3DWidget, wheelEvt);
+////            return true;
+//        }
         /****************** INTERCEPTING DOUBLE CLICK EVENTS ***********************
         Double click events are intercepted to switch to the higher resolution.
         ***************************************************************************/
@@ -911,21 +911,21 @@ XYZ CExplorerWindow::getRenderer3DPoint(int x, int y)  throw (MyException)
             titleShort.c_str(), x, y );
     #endif
 
-    if(QMessageBox::Yes == QMessageBox::question(this, "Confirm", QString("Double-click zoom-in feature may cause Vaa3D to crash. Do you confirm?"), QMessageBox::No | QMessageBox::Yes, QMessageBox::Yes))
-    {
-        Renderer_gl1::MarkerPos pos;
-        pos.x = x;
-        pos.y = y;
-        for (int i=0; i<4; i++)
-                pos.view[i] = ((Renderer_gl1*)view3DWidget->getRenderer())->viewport[i];
-        for (int i=0; i<16; i++)
-        {
-            pos.P[i]  = ((Renderer_gl1*)view3DWidget->getRenderer())->projectionMatrix[i];
-            pos.MV[i] = ((Renderer_gl1*)view3DWidget->getRenderer())->markerViewMatrix[i];
-        }
-        return ((Renderer_gl1*)view3DWidget->getRenderer())->getCenterOfMarkerPos(pos);
-    }
-    else
+//    if(QMessageBox::Yes == QMessageBox::question(this, "Confirm", QString("Double-click zoom-in feature may cause Vaa3D to crash. Do you confirm?"), QMessageBox::No | QMessageBox::Yes, QMessageBox::Yes))
+//    {
+//        Renderer_gl1::MarkerPos pos;
+//        pos.x = x;
+//        pos.y = y;
+//        for (int i=0; i<4; i++)
+//                pos.view[i] = ((Renderer_gl1*)view3DWidget->getRenderer())->viewport[i];
+//        for (int i=0; i<16; i++)
+//        {
+//            pos.P[i]  = ((Renderer_gl1*)view3DWidget->getRenderer())->projectionMatrix[i];
+//            pos.MV[i] = ((Renderer_gl1*)view3DWidget->getRenderer())->markerViewMatrix[i];
+//        }
+//        return ((Renderer_gl1*)view3DWidget->getRenderer())->getCenterOfMarkerPos(pos);
+//    }
+//    else
         throw MyException("Action cancelled by the user");
 
 //    throw MyException("Double click zoom-in has been temporarily disabled.");
