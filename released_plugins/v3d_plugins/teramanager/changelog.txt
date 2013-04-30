@@ -11,6 +11,16 @@ ties names are:
 - Rem: a feature no longer available
 
 ============================================================================================
+Version 0.8.3
+April 30th, 2013
+--------------------------------------------------------------------------------------------
+- Rem: temporarily removed "Select zoom-in method" feature.
+- Rem: temporarily removed "Double click zoom-in" feature.
+- Rem: temporarily removed "Zoom-in threshold" feature.
+--------------------------------------------------------------------------------------------
+
+
+
 Version 0.8.2
 April 29th, 2013
 --------------------------------------------------------------------------------------------

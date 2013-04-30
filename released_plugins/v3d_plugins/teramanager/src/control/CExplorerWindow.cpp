@@ -245,8 +245,8 @@ CExplorerWindow::CExplorerWindow(V3DPluginCallback2 *_V3D_env, int _resIndex, ui
         connect(PMain::getInstance()->D0_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeD0sbox(int)));
         connect(PMain::getInstance()->D1_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeD1sbox(int)));
 
-        disconnect(myV3dR_MainWindow::cast(window3D)->zoomSlider, SIGNAL(valueChanged(int)), view3DWidget, SLOT(setZoom(int)));
-        connect(myV3dR_MainWindow::cast(window3D)->zoomSlider, SIGNAL(valueChanged(int)), this, SLOT(setZoom(int)));
+//        disconnect(window3D->zoomSlider, SIGNAL(valueChanged(int)), view3DWidget, SLOT(setZoom(int)));
+//        connect(window3D->zoomSlider, SIGNAL(valueChanged(int)), this, SLOT(setZoom(int)));
 
         //changing window flags (disabling minimize/maximize buttons)
         // ---- Alessandro 2013-04-22 fixed: this causes (somehow) window3D not to respond correctly to the move() method
@@ -365,9 +365,9 @@ bool CExplorerWindow::eventFilter(QObject *object, QEvent *event)
         ***************************************************************************/
         if ((object == view3DWidget || object == window3D) && event->type() == QEvent::Wheel)
         {
-            QWheelEvent* wheelEvt = (QWheelEvent*)event;
-            myV3dR_GLWidget::cast(view3DWidget)->wheelEventO(wheelEvt);
-            return true;
+//            QWheelEvent* wheelEvt = (QWheelEvent*)event;
+//            myV3dR_GLWidget::wheelEventO(view3DWidget, wheelEvt);
+//            return true;
         }
         /****************** INTERCEPTING DOUBLE CLICK EVENTS ***********************
         Double click events are intercepted to switch to the higher resolution.
@@ -910,7 +910,8 @@ XYZ CExplorerWindow::getRenderer3DPoint(int x, int y)  throw (MyException)
     printf("--------------------- teramanager plugin [thread *] >> CExplorerWindow[%s]::getRenderer3DPoint(x = %d, y = %d)\n",
             titleShort.c_str(), x, y );
     #endif
-    return myRenderer_gl1::cast(view3DWidget->getRenderer())->get3DPoint(x, y);
+    throw MyException("Double click zoom-in has been temporarily disabled.");
+//    return myRenderer_gl1::get3DPoint(static_cast<Renderer_gl1*>(view3DWidget->getRenderer()), x, y);
 }
 
 /**********************************************************************************
@@ -1352,20 +1353,16 @@ void CExplorerWindow::alignToRight(QWidget* widget)
 /**********************************************************************************
 * Linked to Vaa3D renderer slider
 ***********************************************************************************/
-void CExplorerWindow::setZoom(int z)
-{
-    myV3dR_GLWidget::cast(view3DWidget)->setZoomO(z);
-}
+//void CExplorerWindow::setZoom(int z)
+//{
+//    myV3dR_GLWidget::setZoomO(view3DWidget, z);
+//}
 
 /**********************************************************************************
 * Syncronizes widgets from <src> to <dst>
 ***********************************************************************************/
-void CExplorerWindow::syncWindows(V3dR_MainWindow* _src, V3dR_MainWindow* _dst)
+void CExplorerWindow::syncWindows(V3dR_MainWindow* src, V3dR_MainWindow* dst)
 {
-    //obtaining full access to protected/private members
-    myV3dR_MainWindow* src = myV3dR_MainWindow::cast(_src);
-    myV3dR_MainWindow* dst = myV3dR_MainWindow::cast(_dst);
-
     //syncronizing volume display controls
     dst->checkBox_channelR->setChecked(src->checkBox_channelR->isChecked());
     dst->checkBox_channelG->setChecked(src->checkBox_channelG->isChecked());

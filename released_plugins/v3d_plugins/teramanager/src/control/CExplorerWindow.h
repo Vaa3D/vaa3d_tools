@@ -121,7 +121,7 @@ class teramanager::CExplorerWindow : public QWidget
         /**********************************************************************************
         * Syncronizes widgets from <src> to <dst>
         ***********************************************************************************/
-        void syncWindows(V3dR_MainWindow* _src, V3dR_MainWindow* _dst);
+        void syncWindows(V3dR_MainWindow* src, V3dR_MainWindow* dst);
 
 
     public:
@@ -283,7 +283,7 @@ class teramanager::CExplorerWindow : public QWidget
         /**********************************************************************************
         * Linked to Vaa3D renderer slider
         ***********************************************************************************/
-        void setZoom(int z);
+//        void setZoom(int z);
 };
 
 #endif // CEXPLORERWINDOW_H

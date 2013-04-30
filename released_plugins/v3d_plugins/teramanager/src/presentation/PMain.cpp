@@ -259,6 +259,7 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     zoomInSens->setSingleStep(10);
     zoomInSens->setPageStep(20);
     zoomInSens->installEventFilter(this);
+    zoomInSens->setEnabled(false);
     cacheSens = new QSlider(Qt::Horizontal, this);
     cacheSens->setTickPosition(QSlider::TicksBelow);
     cacheSens->setMinimum(0);
@@ -290,6 +291,7 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     zoomInMethod->addItem("Foreground (spread markers)");
     setEnabledComboBoxItem(zoomInMethod, 2, false);
     zoomInMethod->installEventFilter(this);
+    zoomInMethod->setEnabled(false);
 
 
     //info panel widgets

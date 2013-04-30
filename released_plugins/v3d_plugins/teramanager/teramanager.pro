@@ -66,13 +66,14 @@ INCLUDEPATH += $$V3DMAINPATH/v3d
 #SOURCES += $$V3DMAINPATH/jba/newmat11/newmat3.cpp
 #SOURCES += $$V3DMAINPATH/jba/newmat11/newmat4.cpp
 #SOURCES += $$V3DMAINPATH/jba/newmat11/newmat5.cpp
-SOURCES += $$V3DMAINPATH/jba/newmat11/newmat6.cpp
+#SOURCES += $$V3DMAINPATH/jba/newmat11/newmat6.cpp
 #SOURCES += $$V3DMAINPATH/jba/newmat11/newmat7.cpp
 #SOURCES += $$V3DMAINPATH/jba/newmat11/newmat8.cpp
 #SOURCES += $$V3DMAINPATH/jba/newmat11/newmat9.cpp
 #SOURCES += $$V3DMAINPATH/jba/newmat11/newmatex.cpp
 #SOURCES += $$V3DMAINPATH/3drenderer/v3dr_glwidget.cpp
 #SOURCES += $$V3DMAINPATH/v3d/moc_v3dr_glwidget.cpp
+
 ##additional sources required on MacOS X
 #SOURCES += $$V3DMAINPATH/v3d/my4dimage.cpp
 #SOURCES += $$V3DMAINPATH/neuron_tracing/dij_bgl.cpp
