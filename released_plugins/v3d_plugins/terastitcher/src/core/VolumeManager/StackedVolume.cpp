@@ -157,8 +157,8 @@ Stack***StackedVolume::getSTACKS()					{return this->STACKS;}
 char*   StackedVolume::getSTACKS_DIR()				{return this->stacks_dir;}
 int		StackedVolume::getOVERLAP_V()				{return (int)(getStacksHeight() - MEC_V/VXL_V);}
 int		StackedVolume::getOVERLAP_H()				{return (int)(getStacksWidth() -  MEC_H/VXL_H);}
-int		StackedVolume::getDEFAULT_DISPLACEMENT_V()	{return (int)(abs(MEC_V/VXL_V));}
-int		StackedVolume::getDEFAULT_DISPLACEMENT_H()	{return (int)(abs(MEC_H/VXL_H));}
+int		StackedVolume::getDEFAULT_DISPLACEMENT_V()	{return static_cast<int>(fabs(MEC_V/VXL_V)+0.5f);}
+int		StackedVolume::getDEFAULT_DISPLACEMENT_H()	{return static_cast<int>(fabs(MEC_H/VXL_H)+0.5f);}
 int		StackedVolume::getDEFAULT_DISPLACEMENT_D()	{return 0;}
 
 void StackedVolume::init() throw (MyException)
