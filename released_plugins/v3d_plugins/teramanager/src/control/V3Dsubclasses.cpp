@@ -3,6 +3,27 @@
 #include "CExplorerWindow.h"
 #include "v3d_imaging_para.h"
 
+#include "3drenderer/renderer.cpp"
+#include "3drenderer/GLee_r.c"
+#include "3drenderer/renderer_hit.cpp"
+#include "v3d/landmark_property_dialog.cpp"
+#include "v3d/moc_landmark_property_dialog.cpp"
+#include "v3d/surfaceobj_geometry_dialog.cpp"
+#include "v3d/moc_surfaceobj_geometry_dialog.cpp"
+#include "v3d/moc_surfaceobj_annotation_dialog.cpp"
+#include "jba/newmat11/newmat1.cpp"
+#include "jba/newmat11/newmat2.cpp"
+#include "jba/newmat11/newmat3.cpp"
+#include "jba/newmat11/newmat4.cpp"
+#include "jba/newmat11/newmat5.cpp"
+#include "jba/newmat11/newmat6.cpp"
+#include "jba/newmat11/newmat7.cpp"
+#include "jba/newmat11/newmat8.cpp"
+#include "jba/newmat11/newmat9.cpp"
+#include "jba/newmat11/newmatex.cpp"
+#include "3drenderer/v3dr_glwidget.cpp"
+#include "v3d/moc_v3dr_glwidget.cpp"
+
 using namespace teramanager;
 using namespace std;
 

@@ -2,6 +2,7 @@
 TEMPLATE    = lib
 CONFIG  += qt plugin warn_off
 QT += opengl
+QT += network
 CONFIG += release
 CONFIG += x86_64
 
@@ -49,30 +50,59 @@ HEADERS += $$V3DMAINPATH/basic_c_fun/imageio_mylib.h
 LIBS += -L. -lv3dtiff -L$$V3DMAINPATH/common_lib/lib \
             -L$$V3DMAINPATH/common_lib/src_packages/mylib_tiff -lmylib
 
-#needed to enable the "double-click zoom-in" feature
+#Vaa3D sources needed to specialize Vaa3D into subclasses
+INCLUDEPATH += $$V3DMAINPATH
 INCLUDEPATH += $$V3DMAINPATH/v3d
-SOURCES += $$V3DMAINPATH/3drenderer/renderer.cpp
-SOURCES += $$V3DMAINPATH/3drenderer/GLee_r.c
-SOURCES += $$V3DMAINPATH/3drenderer/renderer_hit.cpp
-SOURCES += $$V3DMAINPATH/v3d/landmark_property_dialog.cpp
-SOURCES += $$V3DMAINPATH/v3d/moc_landmark_property_dialog.cpp
-SOURCES += $$V3DMAINPATH/v3d/surfaceobj_geometry_dialog.cpp
-SOURCES += $$V3DMAINPATH/v3d/moc_surfaceobj_geometry_dialog.cpp
-SOURCES += $$V3DMAINPATH/v3d/moc_surfaceobj_annotation_dialog.cpp
-SOURCES += $$V3DMAINPATH/jba/newmat11/newmat1.cpp
-SOURCES += $$V3DMAINPATH/jba/newmat11/newmat2.cpp
-SOURCES += $$V3DMAINPATH/jba/newmat11/newmat3.cpp
-SOURCES += $$V3DMAINPATH/jba/newmat11/newmat4.cpp
-SOURCES += $$V3DMAINPATH/jba/newmat11/newmat5.cpp
-SOURCES += $$V3DMAINPATH/jba/newmat11/newmat6.cpp
-SOURCES += $$V3DMAINPATH/jba/newmat11/newmat7.cpp
-SOURCES += $$V3DMAINPATH/jba/newmat11/newmat8.cpp
-SOURCES += $$V3DMAINPATH/jba/newmat11/newmat9.cpp
-SOURCES += $$V3DMAINPATH/jba/newmat11/newmatex.cpp
+#SOURCES += $$V3DMAINPATH/3drenderer/renderer.cpp
+#SOURCES += $$V3DMAINPATH/3drenderer/GLee_r.c
+#SOURCES += $$V3DMAINPATH/3drenderer/renderer_hit.cpp
+#SOURCES += $$V3DMAINPATH/v3d/landmark_property_dialog.cpp
+#SOURCES += $$V3DMAINPATH/v3d/moc_landmark_property_dialog.cpp
+#SOURCES += $$V3DMAINPATH/v3d/surfaceobj_geometry_dialog.cpp
+#SOURCES += $$V3DMAINPATH/v3d/moc_surfaceobj_geometry_dialog.cpp
+#SOURCES += $$V3DMAINPATH/v3d/moc_surfaceobj_annotation_dialog.cpp
+#SOURCES += $$V3DMAINPATH/jba/newmat11/newmat1.cpp
+#SOURCES += $$V3DMAINPATH/jba/newmat11/newmat2.cpp
+#SOURCES += $$V3DMAINPATH/jba/newmat11/newmat3.cpp
+#SOURCES += $$V3DMAINPATH/jba/newmat11/newmat4.cpp
+#SOURCES += $$V3DMAINPATH/jba/newmat11/newmat5.cpp
+#SOURCES += $$V3DMAINPATH/jba/newmat11/newmat6.cpp
+#SOURCES += $$V3DMAINPATH/jba/newmat11/newmat7.cpp
+#SOURCES += $$V3DMAINPATH/jba/newmat11/newmat8.cpp
+#SOURCES += $$V3DMAINPATH/jba/newmat11/newmat9.cpp
+#SOURCES += $$V3DMAINPATH/jba/newmat11/newmatex.cpp
+#SOURCES += $$V3DMAINPATH/3drenderer/v3dr_glwidget.cpp
+#SOURCES += $$V3DMAINPATH/v3d/moc_v3dr_glwidget.cpp
+##additional sources required on MacOS X
+#SOURCES += $$V3DMAINPATH/v3d/my4dimage.cpp
+#SOURCES += $$V3DMAINPATH/neuron_tracing/dij_bgl.cpp
+#SOURCES += $$V3DMAINPATH/v3d/v3d_core.cpp
+#SOURCES += $$V3DMAINPATH/jba/newmat11/submat.cpp
+#SOURCES += $$V3DMAINPATH/jba/newmat11/svd.cpp
+#SOURCES += $$V3DMAINPATH/3drenderer/barFigureDialog.cpp
+#SOURCES += $$V3DMAINPATH/3drenderer/renderer_obj.cpp
+#SOURCES += $$V3DMAINPATH/v3d/mainwindow.cpp
+#SOURCES += $$V3DMAINPATH/imaging/v3d_imaging.cpp
+#SOURCES += $$V3DMAINPATH/3drenderer/nstroke_tracing.cpp
+#SOURCES += $$V3DMAINPATH/3drenderer/nstroke.cpp
+#SOURCES += $$V3DMAINPATH/neuron_editing/neuron_sim_scores.cpp
+#SOURCES += $$V3DMAINPATH/v3d/v3dimg_proc_neuron.cpp
+#SOURCES += $$V3DMAINPATH/neuron_toolbox/vaa3d_neurontoolbox.cpp
+#SOURCES += $$V3DMAINPATH/neuron_editing/neuron_xforms.cpp
+#SOURCES += $$V3DMAINPATH/neuron_editing/apo_xforms.cpp
+#SOURCES += $$V3DMAINPATH/jba/newmat11/myexcept.cpp
+#SOURCES += $$V3DMAINPATH/jba/newmat11/bandmat.cpp
+#SOURCES += $$V3DMAINPATH/3drenderer/v3dr_surfaceDialog.cpp
+#SOURCES += $$V3DMAINPATH/3drenderer/v3dr_colormapDialog.cpp
+#SOURCES += $$V3DMAINPATH/v3d/moc_v3dr_surfaceDialog.cpp
+#SOURCES += $$V3DMAINPATH/v3d/moc_v3dr_colormapDialog.cpp
+#SOURCES += $$V3DMAINPATH/3drenderer/renderer_tex.cpp
+#SOURCES += $$V3DMAINPATH/3drenderer/renderer_gl2.cpp
 
-SOURCES += $$V3DMAINPATH/3drenderer/v3dr_glwidget.cpp
-SOURCES += $$V3DMAINPATH/v3d/moc_v3dr_glwidget.cpp
-#SOURCES += $$V3DMAINPATH/v3d/moc_Na3DWidget.cpp
+#SOURCES += $$V3DMAINPATH/3drenderer/renderer_labelfield.cpp
+#SOURCES += $$V3DMAINPATH/v3d/moc_ChannelTable.cpp
+#SOURCES += $$V3DMAINPATH/v3d/moc_v3d_core.cpp
+#SOURCES += $$V3DMAINPATH/3drenderer/hoverpoints.cpp
 
 
 #set up TeraManager plugin
