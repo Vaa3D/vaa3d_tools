@@ -16,7 +16,8 @@
 #include "jba/newmat11/newmat3.cpp"
 #include "jba/newmat11/newmat4.cpp"
 #include "jba/newmat11/newmat5.cpp"
-#include "jba/newmat11/newmat6.cpp"
+#undef I
+//#include "jba/newmat11/newmat6.cpp"
 #include "jba/newmat11/newmat7.cpp"
 #include "jba/newmat11/newmat8.cpp"
 #include "jba/newmat11/newmat9.cpp"
