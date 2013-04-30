@@ -910,7 +910,25 @@ XYZ CExplorerWindow::getRenderer3DPoint(int x, int y)  throw (MyException)
     printf("--------------------- teramanager plugin [thread *] >> CExplorerWindow[%s]::getRenderer3DPoint(x = %d, y = %d)\n",
             titleShort.c_str(), x, y );
     #endif
-    throw MyException("Double click zoom-in has been temporarily disabled.");
+
+    if(QMessageBox::Yes == QMessageBox::question(this, "Confirm", QString("Double-click zoom-in feature may cause Vaa3D to crash. Do you confirm?"), QMessageBox::No | QMessageBox::Yes, QMessageBox::Yes))
+    {
+        Renderer_gl1::MarkerPos pos;
+        pos.x = x;
+        pos.y = y;
+        for (int i=0; i<4; i++)
+                pos.view[i] = ((Renderer_gl1*)view3DWidget->getRenderer())->viewport[i];
+        for (int i=0; i<16; i++)
+        {
+            pos.P[i]  = ((Renderer_gl1*)view3DWidget->getRenderer())->projectionMatrix[i];
+            pos.MV[i] = ((Renderer_gl1*)view3DWidget->getRenderer())->markerViewMatrix[i];
+        }
+        return ((Renderer_gl1*)view3DWidget->getRenderer())->getCenterOfMarkerPos(pos);
+    }
+    else
+        throw MyException("Action cancelled by the user");
+
+//    throw MyException("Double click zoom-in has been temporarily disabled.");
 //    return myRenderer_gl1::get3DPoint(static_cast<Renderer_gl1*>(view3DWidget->getRenderer()), x, y);
 }
 
