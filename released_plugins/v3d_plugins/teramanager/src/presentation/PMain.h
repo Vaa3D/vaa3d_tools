@@ -348,6 +348,11 @@ class teramanager::PMain : public QWidget
         void traslYnegClicked();
         void traslZposClicked();
         void traslZnegClicked();
+
+        /**********************************************************************************
+        * Called when the correspondent slider is changed
+        ***********************************************************************************/
+        void zoomInSensChanged(int i);
 };
 
 #endif // PMAIN_GUI_H

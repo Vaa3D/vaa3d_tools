@@ -641,6 +641,7 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     connect(traslZpos, SIGNAL(clicked()), this, SLOT(traslZposClicked()));
     connect(traslZneg, SIGNAL(clicked()), this, SLOT(traslZnegClicked()));
     connect(controlsResetButton, SIGNAL(clicked()), this, SLOT(resetMultiresControls()));
+    connect(zoomInSens, SIGNAL(valueChanged(int)), this, SLOT(zoomInSensChanged(int)));
 
     //reset widgets
     reset();
@@ -1540,4 +1541,12 @@ void PMain::setEnabledComboBoxItem(QComboBox* cbox, int _index, bool enabled)
 
     //the magic
     cbox->model()->setData( index, enabled ? v2 : v1, Qt::UserRole -1);
+}
+
+/**********************************************************************************
+* Called when the correspondent slider is changed
+***********************************************************************************/
+void PMain::zoomInSensChanged(int i)
+{
+//    zoomInThreshold = i;
 }
