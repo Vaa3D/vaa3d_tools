@@ -18,13 +18,13 @@ V3DMAINPATH =  ../../../v3d_main
 INCLUDEPATH += ./include/opencv
 INCLUDEPATH += ./include
 mac{
-LIBS += -L./lib/opencv/mac_x86_64
+LIBS += -L./../teramanager/lib/opencv/mac_x86_64
 }
 unix:!mac{
-LIBS += -L./lib/opencv/unix_x86_64
+LIBS += -L./../teramanager/lib/opencv/unix_x86_64
 }
 win32{
-LIBS += -L./lib/opencv/win32
+LIBS += -L./../teramanager/lib/opencv/win32
 }
 LIBS+= -lopencv_core -lopencv_imgproc -lopencv_highgui
 
