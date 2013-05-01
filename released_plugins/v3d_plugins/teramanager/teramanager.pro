@@ -3,7 +3,7 @@ TEMPLATE    = lib
 CONFIG  += qt plugin warn_off
 QT += opengl
 QT += network
-CONFIG += release
+CONFIG += debug
 CONFIG += x86_64
 
 #set Vaa3D main path
