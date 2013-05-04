@@ -250,7 +250,7 @@ void Stack::init()
 	//extracting HEIGHT and WIDTH attributes from first slice
 	char slice_fullpath[IM_STATIC_STRINGS_SIZE];
 	sprintf(slice_fullpath, "%s/%s/%s", CONTAINER->getROOT_DIR(), DIR_NAME, FILENAMES[0]);
-        IplImage *img_tmp = cvLoadImage(slice_fullpath, CV_LOAD_IMAGE_GRAYSCALE);
+    IplImage *img_tmp = cvLoadImage(slice_fullpath, CV_LOAD_IMAGE_GRAYSCALE);
 	if(!img_tmp)
 	{
 		char msg[IM_STATIC_STRINGS_SIZE];

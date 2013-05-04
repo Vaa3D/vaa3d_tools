@@ -1,35 +1,35 @@
-#TeraManager plugin project file
+#generic set up
 TEMPLATE    = lib
 CONFIG  += qt plugin warn_off
 QT += opengl
-QT += network
-#CONFIG += debug
 CONFIG += x86_64
+#CONFIG += use_static_libs
 
-#set Vaa3D main path
-V3DMAINPATH =  ../../../v3d_main
-
-#set Qt main path
-QT_PATH = $$dirname(QMAKE_QMAKE)/..
-
-#set up OpenCV (platform-dependent)
-INCLUDEPATH += ./include/opencv
-INCLUDEPATH += ./include
-mac{
-LIBS += -L./lib/opencv/mac_x86_64
-}
-unix:!mac{
-LIBS += -L./lib/opencv/unix_x86_64
-}
-win32{
-LIBS += -L./lib/opencv/win32
+#set up third party libraries
+use_static_libs{
+    INCLUDEPATH += ./include/opencv
+    INCLUDEPATH += ./include
+    mac{
+    LIBS += -L./lib/opencv/mac_x86_64
+    }
+    unix:!mac{
+    LIBS += -L./lib/opencv/unix_x86_64
+    }
+    win32{
+    LIBS += -L./lib/opencv/win32
+    }
+} else{
+    #OpenCV headers and library folders
+    INCLUDEPATH += /usr/local/include/opencv
+    LIBS+= -L/usr/local/lib
 }
 LIBS+= -lopencv_core -lopencv_imgproc -lopencv_highgui
 
-#set up Qt
-INCLUDEPATH+= $$QT_PATH/demos/shared
 
 #set up Vaa3D stuff needed by the plugin
+V3DMAINPATH =  ../../../v3d_main
+QT_PATH = $$dirname(QMAKE_QMAKE)/..
+INCLUDEPATH+= $$QT_PATH/demos/shared
 INCLUDEPATH += $$V3DMAINPATH/basic_c_fun
 INCLUDEPATH += $$V3DMAINPATH/3drenderer
 INCLUDEPATH += $$V3DMAINPATH/common_lib/include
@@ -74,39 +74,9 @@ LIBS += -L. -lv3dtiff -L$$V3DMAINPATH/common_lib/lib \
 #SOURCES += $$V3DMAINPATH/3drenderer/v3dr_glwidget.cpp
 #SOURCES += $$V3DMAINPATH/v3d/moc_v3dr_glwidget.cpp
 
-##additional sources required on MacOS X
-#SOURCES += $$V3DMAINPATH/v3d/my4dimage.cpp
-#SOURCES += $$V3DMAINPATH/neuron_tracing/dij_bgl.cpp
-#SOURCES += $$V3DMAINPATH/v3d/v3d_core.cpp
-#SOURCES += $$V3DMAINPATH/jba/newmat11/submat.cpp
-#SOURCES += $$V3DMAINPATH/jba/newmat11/svd.cpp
-#SOURCES += $$V3DMAINPATH/3drenderer/barFigureDialog.cpp
-#SOURCES += $$V3DMAINPATH/3drenderer/renderer_obj.cpp
-#SOURCES += $$V3DMAINPATH/v3d/mainwindow.cpp
-#SOURCES += $$V3DMAINPATH/imaging/v3d_imaging.cpp
-#SOURCES += $$V3DMAINPATH/3drenderer/nstroke_tracing.cpp
-#SOURCES += $$V3DMAINPATH/3drenderer/nstroke.cpp
-#SOURCES += $$V3DMAINPATH/neuron_editing/neuron_sim_scores.cpp
-#SOURCES += $$V3DMAINPATH/v3d/v3dimg_proc_neuron.cpp
-#SOURCES += $$V3DMAINPATH/neuron_toolbox/vaa3d_neurontoolbox.cpp
-#SOURCES += $$V3DMAINPATH/neuron_editing/neuron_xforms.cpp
-#SOURCES += $$V3DMAINPATH/neuron_editing/apo_xforms.cpp
-#SOURCES += $$V3DMAINPATH/jba/newmat11/myexcept.cpp
-#SOURCES += $$V3DMAINPATH/jba/newmat11/bandmat.cpp
-#SOURCES += $$V3DMAINPATH/3drenderer/v3dr_surfaceDialog.cpp
-#SOURCES += $$V3DMAINPATH/3drenderer/v3dr_colormapDialog.cpp
-#SOURCES += $$V3DMAINPATH/v3d/moc_v3dr_surfaceDialog.cpp
-#SOURCES += $$V3DMAINPATH/v3d/moc_v3dr_colormapDialog.cpp
-#SOURCES += $$V3DMAINPATH/3drenderer/renderer_tex.cpp
-#SOURCES += $$V3DMAINPATH/3drenderer/renderer_gl2.cpp
 
-#SOURCES += $$V3DMAINPATH/3drenderer/renderer_labelfield.cpp
-#SOURCES += $$V3DMAINPATH/v3d/moc_ChannelTable.cpp
-#SOURCES += $$V3DMAINPATH/v3d/moc_v3d_core.cpp
-#SOURCES += $$V3DMAINPATH/3drenderer/hoverpoints.cpp
-
-
-#set up TeraManager plugin
+#set up plugin
+RESOURCES += icons.qrc
 HEADERS += ./src/control/*.h
 HEADERS += ./src/presentation/*.h
 HEADERS += ./src/core/ImageManager/*.h
@@ -117,6 +87,6 @@ SOURCES += ./src/core/ImageManager/*.cpp
 SOURCES += ./src/core/VolumeConverter/*.cpp
 
 
+#set up target
 TARGET	= $$qtLibraryTarget(teramanagerplugin)
 DESTDIR	= ../../../bin/plugins/teramanager
-RESOURCES += icons.qrc
