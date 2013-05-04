@@ -8,12 +8,12 @@ install the latest version of OpenCV by your own.
 -------------------------------------------------------------
 Building the plugin using precompiled static libraries
 -------------------------------------------------------------
-1) open the "teramanager.pro" Qt project file with a text ed-
+1) open the "terastitcher.pro" Qt project file with a text ed-
    itor
 2) in the "generic set up" section, add the following line:
    CONFIG += use_static_libs
 3) use qmake to generate your platform-specific makefile from
-   the "teramanager.pro" Qt  project file  (you can  also use
+   the "terastitcher.pro" Qt  project file  (you can  also use
    QtCreator to open the .pro file), then build the plugin
 
 If build fails, it means that the  precompiled static librar-
@@ -32,12 +32,12 @@ Building the plugin after installing OpenCV by your own
    low the quick installation guide at the end of this file.
 3) locate the "include" and "lib" directories where OpenCV
    has been installed
-4) open the "teramanager.pro" Qt project file with a text ed-
+4) open the "terastitcher.pro" Qt project file with a text ed-
    itor and search for "#OpenCV headers and library folders"
 5) substitute "/usr/local/include" and "/usr/local/lib" with
    the absolute paths of step 3
 6) use qmake to generate your platform-specific makefile from
-   the "teramanager.pro" Qt  project file  (you can  also use
+   the "terastitcher.pro" Qt  project file  (you can  also use
    QtCreator to open the .pro file), then build the plugin
 
 

@@ -6,16 +6,16 @@ CONFIG += x86_64
 
 #set up third party libraries
 use_static_libs{
-    INCLUDEPATH += ./include/opencv
-    INCLUDEPATH += ./include
+    INCLUDEPATH += ../teramanager/include/opencv
+    INCLUDEPATH += ../teramanager/include
     mac{
-    LIBS += -L./lib/opencv/mac_x86_64
+    LIBS += -L../teramanager/lib/opencv/mac_x86_64
     }
     unix:!mac{
-    LIBS += -L./lib/opencv/unix_x86_64
+    LIBS += -L../teramanager/lib/opencv/unix_x86_64
     }
     win32{
-    LIBS += -L./lib/opencv/win32
+    LIBS += -L../teramanager/lib/opencv/win32
     }
 } else{
     #OpenCV headers and library folders
