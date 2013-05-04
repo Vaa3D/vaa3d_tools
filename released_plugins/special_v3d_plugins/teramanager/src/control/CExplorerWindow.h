@@ -280,10 +280,12 @@ class teramanager::CExplorerWindow : public QWidget
         void PMain_changeD0sbox(int s);
         void PMain_changeD1sbox(int s);
 
+        #ifdef USE_EXPERIMENTAL_FEATURES
         /**********************************************************************************
         * Linked to Vaa3D renderer slider
         ***********************************************************************************/
-//        void setZoom(int z);
+        void setZoom(int z);
+        #endif
 };
 
 #endif // CEXPLORERWINDOW_H

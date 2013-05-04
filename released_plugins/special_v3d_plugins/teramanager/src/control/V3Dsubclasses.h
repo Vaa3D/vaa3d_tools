@@ -1,81 +1,85 @@
-//#ifndef V3DSUBCLASSES_H
-//#define V3DSUBCLASSES_H
+#ifdef USE_EXPERIMENTAL_FEATURES
 
-//#include "CPlugin.h"
-//#include "renderer_gl2.h"
-//#include "v3dr_glwidget.h"
-//#include "v3dr_mainwindow.h"
+#ifndef V3DSUBCLASSES_H
+#define V3DSUBCLASSES_H
 
-///**********************************************************************************
-//* Vaa3D subclasses needed to access/override protected members/methods
-//***********************************************************************************/
+#include "CPlugin.h"
+#include "renderer_gl2.h"
+#include "v3dr_glwidget.h"
+#include "v3dr_mainwindow.h"
 
-//class teramanager::myRenderer_gl1
-//{
-//    public:
+/**********************************************************************************
+* Vaa3D subclasses needed to access/override protected members/methods
+***********************************************************************************/
 
-//        //gives public access to members
-//        friend class CExplorerWindow;
-//        friend class myV3dR_GLWidget;
+class teramanager::myRenderer_gl1 : public Renderer_gl1
+{
+    public:
 
-//        //converts mouse 2D position into image 3D point
-//        static XYZ get3DPoint(Renderer_gl1* handle, int x, int y);
+        //gives public access to members
+        friend class CExplorerWindow;
+        friend class myV3dR_GLWidget;
 
-//        //casting
-//        //--- note ---: dynamic_cast would be better, but needs too many Vaa3D sources to be included
-////        static myRenderer_gl1* cast(Renderer_gl1* instance){return static_cast<myRenderer_gl1*>(instance);}
-////        static myRenderer_gl1* cast(Renderer* instance){return static_cast<myRenderer_gl1*>(instance);}
-//};
+        //converts mouse 2D position into image 3D point
+        XYZ get3DPoint(int x, int y);
 
-//class teramanager::myV3dR_GLWidget
-//{
-////    Q_OBJECT
+        //casting
+        //--- note ---: dynamic_cast would be better, but needs too many Vaa3D sources to be included
+        static myRenderer_gl1* cast(Renderer_gl1* instance){return static_cast<myRenderer_gl1*>(instance);}
+        static myRenderer_gl1* cast(Renderer* instance){return static_cast<myRenderer_gl1*>(instance);}
+};
 
-//    public:
+class teramanager::myV3dR_GLWidget : public V3dR_GLWidget
+{
+    Q_OBJECT
 
-//        //gives public access to members
-//        friend class CExplorerWindow;
+    public:
 
-//        //casting
-//        //--- note ---: dynamic_cast would be better, but needs too many Vaa3D sources to be included
-////        static myV3dR_GLWidget* cast(V3dR_GLWidget* instance){return static_cast<myV3dR_GLWidget*>(instance);}
+        //gives public access to members
+        friend class CExplorerWindow;
 
-//        //@Override
-//        static void wheelEventO(V3dR_GLWidget* handle, QWheelEvent *event);
+        //casting
+        //--- note ---: dynamic_cast would be better, but needs too many Vaa3D sources to be included
+        static myV3dR_GLWidget* cast(V3dR_GLWidget* instance){return static_cast<myV3dR_GLWidget*>(instance);}
 
-//        //zoomIn method(s)
-//        static void zoomIn(V3dR_GLWidget* handle, const char* method);
+        //@Override
+        void wheelEventO(QWheelEvent *event);
 
-//    public:
+        //zoomIn method(s)
+        void zoomIn(const char* method);
 
-//        //@Override
-//        static void setZoomO(V3dR_GLWidget* handle, int zr);
-//        static void setZoomO(V3dR_GLWidget* handle, float zr);
-//};
+    public:
 
-////class teramanager::myV3dR_MainWindow
-////{
-////    public:
+        //@Override
+        void setZoomO(int zr);
+        void setZoomO(float zr);
+};
 
-////        //gives public access to members
-////        friend class CExplorerWindow;
+class teramanager::myV3dR_MainWindow : public V3dR_MainWindow
+{
+    public:
 
-////        //casting
-////        //--- note ---: dynamic_cast would be better, but needs too many Vaa3D sources to be included
-////        static myV3dR_MainWindow* cast(V3dR_MainWindow* instance){return static_cast<myV3dR_MainWindow*>(instance);}
-////};
+        //gives public access to members
+        friend class CExplorerWindow;
 
-////class teramanager::myImage4DSimple : Image4DSimple
-////{
-////public:
+        //casting
+        //--- note ---: dynamic_cast would be better, but needs too many Vaa3D sources to be included
+        static myV3dR_MainWindow* cast(V3dR_MainWindow* instance){return static_cast<myV3dR_MainWindow*>(instance);}
+};
 
-////    //gives public access to members
-////    friend class CExplorerWindow;
-////    friend class myV3dR_GLWidget;
+class teramanager::myImage4DSimple : Image4DSimple
+{
+    public:
 
-////    //casting
-////    //--- note ---: dynamic_cast would be better, but needs too many Vaa3D sources to be included
-////    static myImage4DSimple* cast(Image4DSimple* instance){return static_cast<myImage4DSimple*>(instance);}
-////};
+        //gives public access to members
+        friend class CExplorerWindow;
+        friend class myV3dR_GLWidget;
 
-//#endif // V3DSUBCLASSES_H
+        //casting
+        //--- note ---: dynamic_cast would be better, but needs too many Vaa3D sources to be included
+        static myImage4DSimple* cast(Image4DSimple* instance){return static_cast<myImage4DSimple*>(instance);}
+};
+
+#endif // V3DSUBCLASSES_H
+
+#endif // USE_EXPERIMENTAL_FEATURES

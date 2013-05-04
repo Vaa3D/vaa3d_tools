@@ -1,138 +1,142 @@
-//#include "V3Dsubclasses.h"
-//#include "../presentation/PMain.h"
-//#include "CExplorerWindow.h"
-//#include "v3d_imaging_para.h"
-//#include "renderer_gl1.h"
+#ifdef USE_EXPERIMENTAL_FEATURES
 
-//using namespace teramanager;
-//using namespace std;
+#include "V3Dsubclasses.h"
+#include "../presentation/PMain.h"
+#include "CExplorerWindow.h"
+#include "v3d_imaging_para.h"
+#include "renderer_gl1.h"
 
-////converts mouse 2D position into image 3D point
-//XYZ myRenderer_gl1::get3DPoint(Renderer_gl1* handle, int x, int y)
-//{
-//    Renderer_gl1::MarkerPos pos;
-//    pos.x = x;
-//    pos.y = y;
-//    for (int i=0; i<4; i++)
-//            pos.view[i] = handle->viewport[i];
-//    for (int i=0; i<16; i++)
-//    {
-//        pos.P[i]  = handle->projectionMatrix[i];
-//        pos.MV[i] = handle->markerViewMatrix[i];
-//    }
-//    return handle->getCenterOfMarkerPos(pos);
-//}
+using namespace teramanager;
+using namespace std;
 
-//void myV3dR_GLWidget::setZoomO(V3dR_GLWidget *handle, int zr)
-//{
-//    #ifdef TMP_DEBUG
-//    printf("--------------------- teramanager plugin [thread *] >> myV3dR_GLWidget::setZoomO(%d)\n", zr);
-//    #endif
+//converts mouse 2D position into image 3D point
+XYZ myRenderer_gl1::get3DPoint(int x, int y)
+{
+    Renderer_gl1::MarkerPos pos;
+    pos.x = x;
+    pos.y = y;
+    for (int i=0; i<4; i++)
+            pos.view[i] = this->viewport[i];
+    for (int i=0; i<16; i++)
+    {
+        pos.P[i]  = this->projectionMatrix[i];
+        pos.MV[i] = this->markerViewMatrix[i];
+    }
+    return this->getCenterOfMarkerPos(pos);
+}
 
-//    //qDebug("V3dR_GLWidget::setZoom = %i",zr);
-//    zr = CLAMP(-ZOOM_RANGE, ZOOM_RANGE, zr);
-//    if (int(handle->_zoom) != zr) {
-//        handle->_zoom = zr;
-//        if (handle->renderer)
-//        {
-//            if (zr>PMain::getInstance()->zoomInSens->value() && !CExplorerWindow::getCurrent()->isHighestRes())
-//                zoomIn(handle, PMain::getInstance()->zoomInMethod->currentText().toStdString().c_str());
-//            else
-//                handle->renderer->setZoom( +float(zr)/100.f * ZOOM_RANGE_RATE); //sign can switch zoom orientation
-//        }
-//        handle->emitZoomChanged(zr);
-//        handle->update();
-//    }
-//}
+void myV3dR_GLWidget::setZoomO(int zr)
+{
+    #ifdef TMP_DEBUG
+    printf("--------------------- teramanager plugin [thread *] >> myV3dR_GLWidget::setZoomO(%d)\n", zr);
+    #endif
 
-//void myV3dR_GLWidget::setZoomO(V3dR_GLWidget *handle, float zr)
-//{
-//    #ifdef TMP_DEBUG
-//    printf("--------------------- teramanager plugin [thread *] >> myV3dR_GLWidget::setZoomO(%.0f)\n", zr);
-//    #endif
+    //qDebug("V3dR_GLWidget::setZoom = %i",zr);
+    zr = CLAMP(-ZOOM_RANGE, ZOOM_RANGE, zr);
+    if (int(this->_zoom) != zr) {
+        this->_zoom = zr;
+        if (this->renderer)
+        {
+            if (zr>PMain::getInstance()->zoomInSens->value() && !CExplorerWindow::getCurrent()->isHighestRes())
+                zoomIn(PMain::getInstance()->zoomInMethod->currentText().toStdString().c_str());
+            else
+                this->renderer->setZoom( +float(zr)/100.f * ZOOM_RANGE_RATE); //sign can switch zoom orientation
+        }
+        emit zoomChanged(zr);
+        this->update();
+    }
+}
 
-//    //qDebug("V3dR_GLWidget::setZoom = %i",zr);
-//    zr = CLAMP(-ZOOM_RANGE, ZOOM_RANGE, zr);
-//    if (handle->_zoom != zr) {
-//        handle->_zoom = zr;
-//        if (handle->renderer)
-//        {
-//            if (zr>PMain::getInstance()->zoomInSens->value() && !CExplorerWindow::getCurrent()->isHighestRes())
-//                zoomIn(handle, PMain::getInstance()->zoomInMethod->currentText().toStdString().c_str());
-//            else
-//                handle->renderer->setZoom( +float(zr)/100.f * ZOOM_RANGE_RATE); //sign can switch zoom orientation
-//        }
-//        handle->emitZoomChanged(int(zr));
-//        handle->update();
-//    }
-//}
+void myV3dR_GLWidget::setZoomO(float zr)
+{
+    #ifdef TMP_DEBUG
+    printf("--------------------- teramanager plugin [thread *] >> myV3dR_GLWidget::setZoomO(%.0f)\n", zr);
+    #endif
 
-//void myV3dR_GLWidget::wheelEventO(V3dR_GLWidget *handle, QWheelEvent *event)
-//{
-//    #ifdef TMP_DEBUG
-//    printf("--------------------- teramanager plugin [thread *] >> myV3dR_GLWidget::wheelEventO(%d, %d)\n", event->pos().x(), event->pos().y());
-//    #endif
+    //qDebug("V3dR_GLWidget::setZoom = %i",zr);
+    zr = CLAMP(-ZOOM_RANGE, ZOOM_RANGE, zr);
+    if (this->_zoom != zr) {
+        this->_zoom = zr;
+        if (this->renderer)
+        {
+            if (zr>PMain::getInstance()->zoomInSens->value() && !CExplorerWindow::getCurrent()->isHighestRes())
+                zoomIn(PMain::getInstance()->zoomInMethod->currentText().toStdString().c_str());
+            else
+                this->renderer->setZoom( +float(zr)/100.f * ZOOM_RANGE_RATE); //sign can switch zoom orientation
+        }
+        emit zoomChanged(zr);
+        this->update();
+    }
+}
 
-//    handle->setFocus(); // accept KeyPressEvent, by RZC 081028
+void myV3dR_GLWidget::wheelEventO(QWheelEvent *event)
+{
+    #ifdef TMP_DEBUG
+    printf("--------------------- teramanager plugin [thread *] >> myV3dR_GLWidget::wheelEventO(%d, %d)\n", event->pos().x(), event->pos().y());
+    #endif
 
-//    float d = (event->delta())/100;  // ~480
-//    #define MOUSE_ZOOM(dz)    (int(dz*4* MOUSE_SENSITIVE));
-//    #define MOUSE_ZROT(dz)    (int(dz*8* MOUSE_SENSITIVE));
+    this->setFocus(); // accept KeyPressEvent, by RZC 081028
 
-//    int zoomStep = MOUSE_ZOOM(d);
-//    int zRotStep = MOUSE_ZROT(d);
+    float d = (event->delta())/100;  // ~480
+    #define MOUSE_ZOOM(dz)    (int(dz*4* MOUSE_SENSITIVE));
+    #define MOUSE_ZROT(dz)    (int(dz*8* MOUSE_SENSITIVE));
 
-//    if (QApplication::keyboardModifiers() == Qt::ShiftModifier) // shift+mouse control view space translation, 081104
-//    {
-//        handle->viewRotation(0, 0, zRotStep);
-//    }
-//    else if (QApplication::keyboardModifiers()==Qt::AltModifier || QApplication::keyboardModifiers()==ALT2_MODIFIER) // alt+mouse control model space rotation, 081104
-//    {
-//        handle->modelRotation(0, 0, zRotStep);
-//    }
-//    else // default
-//    {
-//        (handle->renderer->hitWheel(event->x(), event->y())); //by PHC, 130424. record the wheel location when zoom-in or out
-//        setZoomO(handle, (-zoomStep) + handle->_zoom); // scroll down to zoom in
+    int zoomStep = MOUSE_ZOOM(d);
+    int zRotStep = MOUSE_ZROT(d);
 
-//        //---- Alessandro 2013-04-29: first attempt to combine zoom and translation using mouse position (like Google Earth does). Does not work properly.
-////        int dx = (myRenderer_gl1::cast(renderer)->wheelPos.view[0]+myRenderer_gl1::cast(renderer)->wheelPos.view[2])/2.0 - event->x();
-////        int dy = (myRenderer_gl1::cast(renderer)->wheelPos.view[1]+myRenderer_gl1::cast(renderer)->wheelPos.view[3])/2.0 - event->y();
-////        printf("DX = %d, event->x() = %d, centerX = %.0f\n", dx, event->x(), (myRenderer_gl1::cast(renderer)->wheelPos.view[0]+myRenderer_gl1::cast(renderer)->wheelPos.view[2])/2.0);
-////        printf("DY = %d, event->y() = %d, centerY = %.0f\n", dy, event->y(), (myRenderer_gl1::cast(renderer)->wheelPos.view[1]+myRenderer_gl1::cast(renderer)->wheelPos.view[3])/2.0);
-////        int xShiftStep = (int(SHIFT_RANGE*2* float(dx)/viewW));
-////        int yShiftStep = (int(SHIFT_RANGE*2* float(dy)/viewH));
-////        setXShift(_xShift + xShiftStep);// move +view -model
-////        setYShift(_yShift - yShiftStep);// move -view +model
-//    }
+    if (QApplication::keyboardModifiers() == Qt::ShiftModifier) // shift+mouse control view space translation, 081104
+    {
+        this->viewRotation(0, 0, zRotStep);
+    }
+    else if (QApplication::keyboardModifiers()==Qt::AltModifier || QApplication::keyboardModifiers()==ALT2_MODIFIER) // alt+mouse control model space rotation, 081104
+    {
+        this->modelRotation(0, 0, zRotStep);
+    }
+    else // default
+    {
+        (this->renderer->hitWheel(event->x(), event->y())); //by PHC, 130424. record the wheel location when zoom-in or out
+        setZoomO((-zoomStep) + this->_zoom); // scroll down to zoom in
 
-//    event->accept();
-//}
+        //---- Alessandro 2013-04-29: first attempt to combine zoom and translation using mouse position (like Google Earth does). Does not work properly.
+//        int dx = (myRenderer_gl1::cast(renderer)->wheelPos.view[0]+myRenderer_gl1::cast(renderer)->wheelPos.view[2])/2.0 - event->x();
+//        int dy = (myRenderer_gl1::cast(renderer)->wheelPos.view[1]+myRenderer_gl1::cast(renderer)->wheelPos.view[3])/2.0 - event->y();
+//        printf("DX = %d, event->x() = %d, centerX = %.0f\n", dx, event->x(), (myRenderer_gl1::cast(renderer)->wheelPos.view[0]+myRenderer_gl1::cast(renderer)->wheelPos.view[2])/2.0);
+//        printf("DY = %d, event->y() = %d, centerY = %.0f\n", dy, event->y(), (myRenderer_gl1::cast(renderer)->wheelPos.view[1]+myRenderer_gl1::cast(renderer)->wheelPos.view[3])/2.0);
+//        int xShiftStep = (int(SHIFT_RANGE*2* float(dx)/viewW));
+//        int yShiftStep = (int(SHIFT_RANGE*2* float(dy)/viewH));
+//        setXShift(_xShift + xShiftStep);// move +view -model
+//        setYShift(_yShift - yShiftStep);// move -view +model
+    }
 
-////zoomIn method(s)
-//void myV3dR_GLWidget::zoomIn(V3dR_GLWidget *handle, const char* method)
-//{
-//    #ifdef TMP_DEBUG
-//    printf("--------------------- teramanager plugin [thread *] >> myV3dR_GLWidget::zoomInmethod=\"%s\")\n", method);
-//    #endif
+    event->accept();
+}
 
-//    if(strcmp(method, "WYSIWYG (10 markers)") == 0)
-//        handle->renderer->zoomview_wheel_event();
-//    else if(strcmp(method, "Foreground (1 marker)") == 0)
-//    {
-//        XYZ centralPoint = myRenderer_gl1::get3DPoint(static_cast<Renderer_gl1*>(handle->getRenderer()), handle->viewW/2, handle->viewH/2);
-//        v3d_imaging_paras* roi = new v3d_imaging_paras;
-//        roi->ops_type = 2;
-//        roi->xs = centralPoint.x - PMain::getInstance()->Hdim_sbox->value()/2;
-//        roi->xe = centralPoint.x + PMain::getInstance()->Hdim_sbox->value()/2;
-//        roi->ys = centralPoint.y - PMain::getInstance()->Vdim_sbox->value()/2;
-//        roi->ye = centralPoint.y + PMain::getInstance()->Vdim_sbox->value()/2;
-//        roi->zs = centralPoint.z - PMain::getInstance()->Ddim_sbox->value()/2;
-//        roi->ze = centralPoint.z + PMain::getInstance()->Ddim_sbox->value()/2;
-//        if(CExplorerWindow::getCurrent())
-//            CExplorerWindow::getCurrent()->invokedFromVaa3D(roi);
+//zoomIn method(s)
+void myV3dR_GLWidget::zoomIn(const char* method)
+{
+    #ifdef TMP_DEBUG
+    printf("--------------------- teramanager plugin [thread *] >> myV3dR_GLWidget::zoomInmethod=\"%s\")\n", method);
+    #endif
 
-//    }
-//    else
-//        QMessageBox::critical(PMain::getInstance(),QObject::tr("Error"), QString("Unsupported zoom-in method \"").append(method).append("\""),QObject::tr("Ok"));
-//}
+    if(strcmp(method, "WYSIWYG (10 markers)") == 0)
+        this->renderer->zoomview_wheel_event();
+    else if(strcmp(method, "Foreground (1 marker)") == 0)
+    {
+        XYZ centralPoint = myRenderer_gl1::cast(static_cast<Renderer_gl1*>(this->getRenderer()))->get3DPoint(this->viewW/2, this->viewH/2);
+        v3d_imaging_paras* roi = new v3d_imaging_paras;
+        roi->ops_type = 2;
+        roi->xs = centralPoint.x - PMain::getInstance()->Hdim_sbox->value()/2;
+        roi->xe = centralPoint.x + PMain::getInstance()->Hdim_sbox->value()/2;
+        roi->ys = centralPoint.y - PMain::getInstance()->Vdim_sbox->value()/2;
+        roi->ye = centralPoint.y + PMain::getInstance()->Vdim_sbox->value()/2;
+        roi->zs = centralPoint.z - PMain::getInstance()->Ddim_sbox->value()/2;
+        roi->ze = centralPoint.z + PMain::getInstance()->Ddim_sbox->value()/2;
+        if(CExplorerWindow::getCurrent())
+            CExplorerWindow::getCurrent()->invokedFromVaa3D(roi);
+
+    }
+    else
+        QMessageBox::critical(PMain::getInstance(),QObject::tr("Error"), QString("Unsupported zoom-in method \"").append(method).append("\""),QObject::tr("Ok"));
+}
+
+#endif // USE_EXPERIMENTAL_FEATURES

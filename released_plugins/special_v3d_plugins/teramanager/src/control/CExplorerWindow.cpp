@@ -245,8 +245,10 @@ CExplorerWindow::CExplorerWindow(V3DPluginCallback2 *_V3D_env, int _resIndex, ui
         connect(PMain::getInstance()->D0_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeD0sbox(int)));
         connect(PMain::getInstance()->D1_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeD1sbox(int)));
 
-//        disconnect(window3D->zoomSlider, SIGNAL(valueChanged(int)), view3DWidget, SLOT(setZoom(int)));
-//        connect(window3D->zoomSlider, SIGNAL(valueChanged(int)), this, SLOT(setZoom(int)));
+        #ifdef USE_EXPERIMENTAL_FEATURES
+        disconnect(window3D->zoomSlider, SIGNAL(valueChanged(int)), view3DWidget, SLOT(setZoom(int)));
+        connect(window3D->zoomSlider, SIGNAL(valueChanged(int)), this, SLOT(setZoom(int)));
+        #endif USE_EXPERIMENTAL_FEATURES
 
         //changing window flags (disabling minimize/maximize buttons)
         // ---- Alessandro 2013-04-22 fixed: this causes (somehow) window3D not to respond correctly to the move() method
@@ -360,15 +362,19 @@ bool CExplorerWindow::eventFilter(QObject *object, QEvent *event)
                 return true;
             }
         }
+
+        #ifdef USE_EXPERIMENTAL_FEATURES
         /******************** REDIRECTING MOUSE-WHEEL EVENTS *************************
         Mouse-wheel events are redirected to the customized wheelEvent handler
         ***************************************************************************/
-//        if ((object == view3DWidget || object == window3D) && event->type() == QEvent::Wheel)
-//        {
-////            QWheelEvent* wheelEvt = (QWheelEvent*)event;
-////            myV3dR_GLWidget::wheelEventO(view3DWidget, wheelEvt);
-////            return true;
-//        }
+        if ((object == view3DWidget || object == window3D) && event->type() == QEvent::Wheel)
+        {
+            QWheelEvent* wheelEvt = (QWheelEvent*)event;
+            myV3dR_GLWidget::cast(view3DWidget)->wheelEventO(wheelEvt);
+            return true;
+        }
+        #endif
+
         /****************** INTERCEPTING DOUBLE CLICK EVENTS ***********************
         Double click events are intercepted to switch to the higher resolution.
         ***************************************************************************/
@@ -378,6 +384,7 @@ bool CExplorerWindow::eventFilter(QObject *object, QEvent *event)
             XYZ point = getRenderer3DPoint(mouseEvt->x(), mouseEvt->y());
             newView(point.x, point.y, point.z, volResIndex+1);
         }
+
         /********************* INTERCEPTING CLOSE EVENTS **************************
         Close events are intercepted to switch to  the lower resolution,  if avail-
         able. Otherwise, the plugin is closed.
@@ -391,6 +398,7 @@ bool CExplorerWindow::eventFilter(QObject *object, QEvent *event)
                 return true;
             }
         }
+
         /**************** INTERCEPTING MOVING/RESIZING EVENTS *********************
         Window moving and resizing events  are intercepted  to let PMain's position
         be syncronized with the explorer.
@@ -400,6 +408,7 @@ bool CExplorerWindow::eventFilter(QObject *object, QEvent *event)
            alignToLeft(PMain::getInstance());
 //            alignToRight(PMain::instance());
         }
+
         /***************** INTERCEPTING STATE CHANGES EVENTS **********************
         Window state changes events are intercepted to let PMain's position be syn-
         cronized with the explorer.
@@ -911,25 +920,11 @@ XYZ CExplorerWindow::getRenderer3DPoint(int x, int y)  throw (MyException)
             titleShort.c_str(), x, y );
     #endif
 
-//    if(QMessageBox::Yes == QMessageBox::question(this, "Confirm", QString("Double-click zoom-in feature may cause Vaa3D to crash. Do you confirm?"), QMessageBox::No | QMessageBox::Yes, QMessageBox::Yes))
-//    {
-//        Renderer_gl1::MarkerPos pos;
-//        pos.x = x;
-//        pos.y = y;
-//        for (int i=0; i<4; i++)
-//                pos.view[i] = ((Renderer_gl1*)view3DWidget->getRenderer())->viewport[i];
-//        for (int i=0; i<16; i++)
-//        {
-//            pos.P[i]  = ((Renderer_gl1*)view3DWidget->getRenderer())->projectionMatrix[i];
-//            pos.MV[i] = ((Renderer_gl1*)view3DWidget->getRenderer())->markerViewMatrix[i];
-//        }
-//        return ((Renderer_gl1*)view3DWidget->getRenderer())->getCenterOfMarkerPos(pos);
-//    }
-//    else
-//        throw MyException("Action cancelled by the user");
-
-    throw MyException("Double click zoom-in has been temporarily disabled.");
-//    return myRenderer_gl1::get3DPoint(static_cast<Renderer_gl1*>(view3DWidget->getRenderer()), x, y);
+    #ifdef USE_EXPERIMENTAL_FEATURES
+    return myRenderer_gl1::cast(static_cast<Renderer_gl1*>(view3DWidget->getRenderer()))->get3DPoint(x, y);
+    #else
+    throw MyException("Double click zoom-in feature is disabled in the current version");
+    #endif
 }
 
 /**********************************************************************************
@@ -1368,13 +1363,15 @@ void CExplorerWindow::alignToRight(QWidget* widget)
     widget->resize(widget->width(), window3D->height());
 }
 
+#ifdef USE_EXPERIMENTAL_FEATURES
 /**********************************************************************************
 * Linked to Vaa3D renderer slider
 ***********************************************************************************/
-//void CExplorerWindow::setZoom(int z)
-//{
-//    myV3dR_GLWidget::setZoomO(view3DWidget, z);
-//}
+void CExplorerWindow::setZoom(int z)
+{
+    myV3dR_GLWidget::cast(view3DWidget)->setZoomO(z);
+}
+#endif
 
 /**********************************************************************************
 * Syncronizes widgets from <src> to <dst>

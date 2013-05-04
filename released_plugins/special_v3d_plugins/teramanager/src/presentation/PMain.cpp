@@ -259,7 +259,6 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     zoomInSens->setSingleStep(10);
     zoomInSens->setPageStep(20);
     zoomInSens->installEventFilter(this);
-    zoomInSens->setEnabled(false);
     cacheSens = new QSlider(Qt::Horizontal, this);
     cacheSens->setTickPosition(QSlider::TicksBelow);
     cacheSens->setMinimum(0);
@@ -291,7 +290,13 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     zoomInMethod->addItem("Foreground (spread markers)");
     setEnabledComboBoxItem(zoomInMethod, 2, false);
     zoomInMethod->installEventFilter(this);
-    zoomInMethod->setEnabled(false);
+
+    #ifndef USE_EXPERIMENTAL_FEATURES
+    zoomInMethod->setEnabled(false);    
+    zoomInSens->setEnabled(false);
+    #else
+    zoomInMethod->setCurrentIndex(1);
+    #endif
 
 
     //info panel widgets
@@ -612,7 +617,11 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     layout->setContentsMargins(0, 0, 0, 0);
     layout->setSpacing(0);
     setLayout(layout);
+    #ifdef USE_EXPERIMENTAL_FEATURES
+    setWindowTitle(QString("TeraFly v").append(teramanager::version.c_str()).append("e"));
+    #else
     setWindowTitle(QString("TeraFly v").append(teramanager::version.c_str()));
+    #endif
     this->setFont(tinyFont);
 
     // signals and slots

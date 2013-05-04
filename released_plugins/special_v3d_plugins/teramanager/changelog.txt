@@ -11,6 +11,19 @@ ties names are:
 - Rem: a feature no longer available
 
 ============================================================================================
+Version 0.8.4
+May 4th, 2013
+--------------------------------------------------------------------------------------------
+- New: the following features have been restored under conditional  compilation (i.e. adding
+       "CONFIG += use_experimental_features" to the .pro file):
+       - "Select zoom-in method" pull-down menu;
+       - "Tune zoom-in threshold" slider;
+       - "Double click zoom-in" feature;
+       - "Foreground (1 marker)" feature;
+--------------------------------------------------------------------------------------------
+
+
+
 Version 0.8.3
 April 30th, 2013
 --------------------------------------------------------------------------------------------
