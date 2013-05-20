@@ -457,9 +457,11 @@ void PTabMergeTiles::browse_button_clicked()
     printf("TeraStitcher plugin [thread %d] >> PTabMergeTiles browse_button_clicked() launched\n", this->thread()->currentThreadId());
     #endif
 
-    QFileDialog dialog(this);
+    //obtaining volume's directory
+    QFileDialog dialog(0);
     dialog.setFileMode(QFileDialog::DirectoryOnly);
     dialog.setAcceptMode(QFileDialog::AcceptSave);
+    dialog.setWindowFlags(Qt::WindowStaysOnTopHint);
     dialog.setDirectory(CImport::instance()->getVolume()->getSTACKS_DIR());
     dialog.setWindowTitle("Please select an EMPTY directory");
     if (dialog.exec())

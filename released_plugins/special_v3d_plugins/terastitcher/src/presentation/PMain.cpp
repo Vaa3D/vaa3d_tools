@@ -117,7 +117,6 @@ PMain::PMain(V3DPluginCallback *callback, QWidget *parent) : QWidget(parent)
     gridLayout->addWidget(stopButton, 10,19,1,1);
     setLayout(gridLayout);
     setWindowTitle(tr("TeraStitcher plugin"));
-    layout()->setSizeConstraint( QLayout::SetFixedSize );
 
     // signals and slots
     connect(startButton, SIGNAL(clicked()), this, SLOT(startButtonClicked()));
@@ -128,8 +127,12 @@ PMain::PMain(V3DPluginCallback *callback, QWidget *parent) : QWidget(parent)
     resetGUI();
 
     //center on screen and set always on top
-    setGeometry(QStyle::alignedRect(Qt::LeftToRight,Qt::AlignCenter,this->size(),qApp->desktop()->availableGeometry()));
-    this->setWindowFlags(Qt::WindowStaysOnTopHint);
+    //set always on top
+    setWindowFlags(Qt::WindowStaysOnTopHint);
+    gridLayout->setSizeConstraint(QLayout::SetFixedSize);
+//    setMaximumSize(this->minimumWidth(), this->minimumHeight());
+    show();
+    move(QApplication::desktop()->screen()->rect().center() - rect().center());
 }
 
 PMain::~PMain()

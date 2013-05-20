@@ -64,27 +64,8 @@ void CPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWi
 
     if (menu_name == tr("TeraStitcher"))
     {
-        //checking shared libraries
-        if(!CPlugin::isSharedLibraryLoadable("opencv_core"))
-        {
-            QMessageBox::critical(parent,QObject::tr("Error"),
-                                         QObject::tr("Unable to load shared library opencv_core.\n\nPlease check if OpenCV library is installed. You can download it at http://opencv.willowgarage.com/"),
-                                         QObject::tr("Ok"));
-            return;
-        }
-        if(!CPlugin::isSharedLibraryLoadable("opencv_highgui"))
-        {
-            QMessageBox::critical(parent,QObject::tr("Error"),
-                                         QObject::tr("Unable to load shared library opencv_highgui.\n\nPlease check if OpenCV library is installed. You can download it at http://opencv.willowgarage.com/"),
-                                         QObject::tr("Ok"));
-            return;
-        }
-
-        //launching plugin's GUI
-        PMain::instance(&callback, parent);
-        PMain::instance()->show();
-        PMain::instance()->raise();
-        PMain::instance()->activateWindow();
+        //launching PMain's GUI
+        PMain::instance(&callback, 0);
     }
     else
     {
@@ -128,29 +109,5 @@ bool CPlugin::dofunc(const QString & func_name, const V3DPluginArgList & input, 
 {
     printf("TeraStitcher plugin needs Vaa3D GUI to be executed.\n"
            "If you want to run TeraStitcher from command line, please download and use the command-line TeraStitcher available at http://www.iconfoundation.net/?q=products\n");
-}
-
-//returns true if the given shared library can be loaded
-bool CPlugin::isSharedLibraryLoadable(const char* name)
-{
-    #ifdef __unix__
-    //UNIX
-    /*QString tmp("");
-    tmp.append("lib");
-    tmp.append(name);
-    tmp.append(".so");
-    void* my_lib_handle = dlopen(tmp.toStdString().c_str(),RTLD_NOW);
-    if(!my_lib_handle)
-        return false;
-    else
-    {
-        dlclose(my_lib_handle);
-        return true;
-    }*/
-    return true;    //does not work on MAC and did not work on Ubuntu 12.
-    #endif
-    #ifdef _WIN32
-    return true;    //not yet supported: anyway Windows O.S. should display an error message about the missing DLL.
-    #endif
 }
 

@@ -313,7 +313,16 @@ void PTabImport::voldir_button_clicked()
     #endif
 
     //obtaining volume's directory
-    path_field->setText(QFileDialog::getExistingDirectory(0, QObject::tr("Select volume's directory"), QDir::currentPath()));
+    //---- Alessandro 2013-05-20: obtaining volume's directory with QFileDialog instead of platform native file dialogs
+    //                            since a strange behaviour has been shown by native file dialogs on MacOS X.
+    QFileDialog dialog(0);
+    dialog.setFileMode(QFileDialog::DirectoryOnly);
+    dialog.setViewMode(QFileDialog::Detail);
+    dialog.setWindowFlags(Qt::WindowStaysOnTopHint);
+    dialog.setWindowTitle("Select volume's directory");
+    dialog.setDirectory(QDir::currentPath());
+    if(dialog.exec())
+        path_field->setText(dialog.directory().absolutePath());
 }
 
 /**********************************************************************************
@@ -327,7 +336,18 @@ void PTabImport::projfile_button_clicked()
     #endif
 
     //obtaining TeraStitcher XML project file
-    path_field->setText(QFileDialog::getOpenFileName(0, QObject::tr("Select TeraStitcher XML project file"), QDir::currentPath(), tr("XML files (*.xml *.XML)")));
+    //---- Alessandro 2013-05-20: obtaining volume's directory with QFileDialog instead of platform native file dialogs
+    //                            since a strange behaviour has been shown by native file dialogs on MacOS X.
+    QFileDialog dialog(0);
+    dialog.setFileMode(QFileDialog::ExistingFile);
+    dialog.setViewMode(QFileDialog::Detail);
+    dialog.setWindowFlags(Qt::WindowStaysOnTopHint);
+    dialog.setWindowTitle("Select TeraStitcher XML project file");
+    dialog.setDirectory(QDir::currentPath());
+    dialog.setFilter(tr("XML files (*.xml *.XML)"));
+    if(dialog.exec())
+        if(!dialog.selectedFiles().empty())
+            path_field->setText(dialog.selectedFiles().front());
 }
 /**********************************************************************************
 * Called when "preview_button" has been clicked.
