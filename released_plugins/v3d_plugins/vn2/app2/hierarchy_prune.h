@@ -480,7 +480,7 @@ template<class T> bool happ(vector<MyMarker*> &inswc, vector<MyMarker*> & outswc
 			vector<MyMarker*> seg_markers;
 			MyMarker * p = leaf_marker;
 			while(true){seg_markers.push_back(p); if(p == root_marker) break; p = p->parent;}
-			reverse(seg_markers.begin(), seg_markers.end()); // need to reverse if resampling
+			//reverse(seg_markers.begin(), seg_markers.end()); // need to reverse if resampling //commened by PHC, 130520 to build on Ubuntu. This should make no difference as the outside code is if (0)
 			vector<MyMarker*> sampling_markers; // store resampling markers
 			p = root_marker; sampling_markers.push_back(p);
 			for(int m = 0; m < seg_markers.size(); m++)
