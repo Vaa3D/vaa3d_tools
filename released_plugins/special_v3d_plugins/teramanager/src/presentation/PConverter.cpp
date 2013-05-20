@@ -351,7 +351,16 @@ void PConverter::voldirButtonClicked()
     #endif
 
     //obtaining volume's directory
-    volpathField->setText(QFileDialog::getExistingDirectory(this, QObject::tr("Select volume's directory"), CSettings::instance()->getVCInputPath().c_str()));
+    //---- Alessandro 2013-05-20: obtaining volume's directory with QFileDialog instead of platform native file dialogs
+    //                            since a strange behaviour has been shown by native file dialogs on MacOS X.
+    QFileDialog dialog(0);
+    dialog.setFileMode(QFileDialog::DirectoryOnly);
+    dialog.setViewMode(QFileDialog::Detail);
+    dialog.setWindowFlags(Qt::WindowStaysOnTopHint);
+    dialog.setWindowTitle("Select volume's directory");
+    dialog.setDirectory(CSettings::instance()->getVCInputPath().c_str());
+    if(dialog.exec())
+        volpathField->setText(dialog.directory().absolutePath());
 
     //launching import
     if(volpathField->text().toStdString().compare("") != 0)
@@ -365,7 +374,18 @@ void PConverter::volfileButtonClicked()
     #endif
 
     //obtaining volume's filepath
-    volpathField->setText(QFileDialog::getOpenFileName(this, QObject::tr("Select Vaa3D raw file"), CSettings::instance()->getVCInputPath().c_str(), "V3D raw files (*.raw *.RAW *.v3draw *.V3DRAW)"));
+    //---- Alessandro 2013-05-20: obtaining volume's directory with QFileDialog instead of platform native file dialogs
+    //                            since a strange behaviour has been shown by native file dialogs on MacOS X.
+    QFileDialog dialog(0);
+    dialog.setFileMode(QFileDialog::ExistingFile);
+    dialog.setViewMode(QFileDialog::Detail);
+    dialog.setWindowFlags(Qt::WindowStaysOnTopHint);
+    dialog.setWindowTitle("Select volume's file");
+    dialog.setNameFilter(tr("V3D raw files (*.raw *.RAW *.v3draw *.V3DRAW)"));
+    dialog.setDirectory(CSettings::instance()->getVCInputPath().c_str());
+    if(dialog.exec())
+        if(!dialog.selectedFiles().empty())
+            volpathField->setText(dialog.selectedFiles().front());
 
     //launching import
     if(volpathField->text().toStdString().compare("") != 0)

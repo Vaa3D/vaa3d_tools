@@ -4,7 +4,7 @@ CONFIG  += qt plugin warn_off
 QT += opengl
 CONFIG += x86_64
 #CONFIG += use_static_libs
-#CONFIG += use_experimental_features
+CONFIG += use_experimental_features
 
 #set up third party libraries
 use_static_libs{
@@ -76,19 +76,62 @@ use_experimental_features{
     SOURCES += $$V3DMAINPATH/jba/newmat11/newmatex.cpp
     SOURCES += $$V3DMAINPATH/3drenderer/v3dr_glwidget.cpp
     SOURCES += $$V3DMAINPATH/v3d/moc_v3dr_glwidget.cpp
+
+    #undefined symbols referenced from Vaa3D objects are ignored and checked dynamically at execution time
+    mac{
+        LIBS += -undefined dynamic_lookup
+    }
 }
 
 
 #set up plugin
 RESOURCES += icons.qrc
-HEADERS += ./src/control/*.h
-HEADERS += ./src/presentation/*.h
-HEADERS += ./src/core/ImageManager/*.h
-HEADERS += ./src/core/VolumeConverter/*.h
-SOURCES += ./src/control/*.cpp
-SOURCES += ./src/presentation/*.cpp
-SOURCES += ./src/core/ImageManager/*.cpp
-SOURCES += ./src/core/VolumeConverter/*.cpp
+HEADERS += ./src/control/CAnnotations.h
+HEADERS += ./src/control/CConverter.h
+HEADERS += ./src/control/CExplorerWindow.h
+HEADERS += ./src/control/CImport.h
+HEADERS += ./src/control/CPlugin.h
+HEADERS += ./src/control/CSettings.h
+HEADERS += ./src/control/CVolume.h
+HEADERS += ./src/control/V3Dsubclasses.h
+HEADERS += ./src/presentation/PConverter.h
+HEADERS += ./src/presentation/PDialogImport.h
+HEADERS += ./src/presentation/PMain.h
+HEADERS += ./src/presentation/QArrowButton.h
+HEADERS += ./src/presentation/QGradientBar.h
+HEADERS += ./src/presentation/QHelpBox.h
+HEADERS += ./src/presentation/QLineTree.h
+HEADERS += ./src/core/ImageManager/ProgressBar.h
+HEADERS += ./src/core/ImageManager/RawFmtMngr.h
+HEADERS += ./src/core/ImageManager/RawVolume.h
+HEADERS += ./src/core/ImageManager/SimpleVolume.h
+HEADERS += ./src/core/ImageManager/Stack.h
+HEADERS += ./src/core/ImageManager/StackedVolume.h
+HEADERS += ./src/core/ImageManager/VirtualVolume.h
+HEADERS += ./src/core/VolumeConverter/VolumeConverter.h
+SOURCES += ./src/control/CAnnotations.cpp
+SOURCES += ./src/control/CConverter.cpp
+SOURCES += ./src/control/CExplorerWindow.cpp
+SOURCES += ./src/control/CImport.cpp
+SOURCES += ./src/control/CPlugin.cpp
+SOURCES += ./src/control/CSettings.cpp
+SOURCES += ./src/control/CVolume.cpp
+SOURCES += ./src/control/V3Dsubclasses.cpp
+SOURCES += ./src/presentation/PConverter.cpp
+SOURCES += ./src/presentation/PDialogImport.cpp
+SOURCES += ./src/presentation/PMain.cpp
+SOURCES += ./src/presentation/QArrowButton.cpp
+SOURCES += ./src/presentation/QGradientBar.cpp
+SOURCES += ./src/presentation/QHelpBox.cpp
+SOURCES += ./src/presentation/QLineTree.cpp
+SOURCES += ./src/core/ImageManager/ProgressBar.cpp
+SOURCES += ./src/core/ImageManager/RawFmtMngr.cpp
+SOURCES += ./src/core/ImageManager/RawVolume.cpp
+SOURCES += ./src/core/ImageManager/SimpleVolume.cpp
+SOURCES += ./src/core/ImageManager/Stack.cpp
+SOURCES += ./src/core/ImageManager/StackedVolume.cpp
+SOURCES += ./src/core/ImageManager/VirtualVolume.cpp
+SOURCES += ./src/core/VolumeConverter/VolumeConverter.cpp
 
 
 #set up target

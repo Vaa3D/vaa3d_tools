@@ -11,6 +11,23 @@ ties names are:
 - Rem: a feature no longer available
 
 ============================================================================================
+Version 0.8.5
+May 20th, 2013
+--------------------------------------------------------------------------------------------
+- Fix: fixed Qt project file sources/headers inclusions to work on Windows too.
+- Fix: fixed bug which caused file dialogs not to be on top of other windows on MacOS X.
+- Fix: all the platform native file dialogs have been substituted with Qt dialogs because of
+       a strange behaviour shown by native file dialogs on MacOS X when passing the "parent"
+       argument to the static method.
+- New: the following features have been re-enabled by default:
+       - "Select zoom-in method" pull-down menu;
+       - "Tune zoom-in threshold" slider;
+       - "Double click zoom-in" feature;
+       - "Foreground (1 marker)" feature;
+- Fix: fixed bug which caused compilation errors on MacOS X when including Vaa3D sources.
+--------------------------------------------------------------------------------------------
+
+
 Version 0.8.4
 May 4th, 2013
 --------------------------------------------------------------------------------------------
