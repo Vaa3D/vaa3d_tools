@@ -57,130 +57,139 @@ PTabDisplComp::PTabDisplComp(QMyTabWidget* _container, int _tab_index) : QWidget
     printf("TeraStitcher plugin [thread %d] >> PTabDisplComp created\n", this->thread()->currentThreadId());
     #endif
 
-    //help box
-    helpbox = new QLabel("<html><table><tr style=\"vertical-align: middle;\"><td><img src=\":/icons/help.png\"></td>"
-                              "<td><p style=\"text-align:justify; margin-left:10px;\"> This step computes all <b>pairwise stacks displacements</b> which are automatically saved in a XML project file at the selected path.<br><br>"
-                              "The volume will be processed a layer at the time, each composed by <i>Number of slices per layer</b> slices at most</i>. "
-                              "This allows <b>direct control over memory occupancy</b>. "
-                              "You can also select which algorithm to be used for each pairwise stacks displacements computation.</p> </td></tr></table> </html>");
-    helpbox->setStyleSheet("border: 1px solid; border-color: gray; background-color: rgb(245,245,245); margin-top:10px; margin-bottom:10px; padding-top:10px; padding-bottom:10px;");
-    helpbox->setWordWrap(true);
-    helpbox->setFixedHeight(180);
-
     //creating Basic panel widgets
-    basic_panel = new QGroupBox("Basic settings");
+    basic_panel = new QWidget();
     saveproj_label = new QLabel("Save project XML to:");
     saveproj_field = new QLineEdit();
-    browse_button = new QPushButton("Save to XML...");
+    saveproj_field->setFont(QFont("",8));
+    browse_button = new QPushButton("...");
     algorithm_label = new QLabel("Algorithm:");
     algorithm_cbox = new QComboBox();
-    algorithm_cbox->insertItem(0, "Maximum Intensity Projection - Normalized Cross Correlation (MIP-NCC)");
+    algorithm_cbox->insertItem(0, "MIP-NCC");
+    algorithm_cbox->setEditable(true);
+    algorithm_cbox->lineEdit()->setReadOnly(true);
+    algorithm_cbox->lineEdit()->setAlignment(Qt::AlignCenter);
+    for(int i = 0; i < algorithm_cbox->count(); i++)
+        algorithm_cbox->setItemData(i, Qt::AlignCenter, Qt::TextAlignmentRole);
     subvoldims_label = new QLabel("Number of slices per layer:");
     subvoldims_sbox = new QSpinBox();
     subvoldims_sbox->setAlignment(Qt::AlignCenter);
     subvoldims_sbox->setMaximum(600);
     subvoldims_sbox->setMinimum(50);
-    subvoldims_sbox->setValue(100);
     memocc_label = new QLabel("Estimated memory usage:");
-    memocc_label->setFixedWidth(310);
-    memocc_field = new QLabel();
-    memocc_field->setMaximumHeight(30);
+    memocc_field = new QLineEdit();
+    memocc_field->setReadOnly(true);
+    memocc_field->setAlignment(Qt::AlignCenter);
 
     //creating Advanced panel widgets
-    advanced_panel = new QGroupBox("Advanced settings");
+    advanced_panel = new QWidget();
     stackrowstbp_label = new QLabel("Stacks rows to process:");
     startrow_sbox = new QSpinBox();
     startrow_sbox->setAlignment(Qt::AlignCenter);
     to_label_1 = new QLabel("to");
+    to_label_1->setAlignment(Qt::AlignCenter);
     endrow_sbox = new QSpinBox();
     endrow_sbox->setAlignment(Qt::AlignCenter);
     stackcolstbp_label = new QLabel("Stacks columns to process:");
     startcol_sbox = new QSpinBox();
     startcol_sbox->setAlignment(Qt::AlignCenter);
     to_label_2 = new QLabel("to");
+    to_label_2->setAlignment(Qt::AlignCenter);
     endcol_sbox = new QSpinBox();
     endcol_sbox->setAlignment(Qt::AlignCenter);
     searchregion_label = new QLabel("Search Region (voxels):");
-    Vsearch_sbox = new QSpinBox();
-    Vsearch_sbox->setAlignment(Qt::AlignCenter);
-    Vsearch_sbox->setMinimum(5);
-    Vsearch_sbox->setValue(20);
-    Hsearch_sbox = new QSpinBox();
-    Hsearch_sbox->setAlignment(Qt::AlignCenter);
-    Hsearch_sbox->setMinimum(5);
-    Hsearch_sbox->setValue(20);
-    Dsearch_sbox = new QSpinBox();
-    Dsearch_sbox->setAlignment(Qt::AlignCenter);
-    Dsearch_sbox->setMinimum(5);
-    Dsearch_sbox->setValue(20);
-    directionV_label_2 = new QLabel("(V)");
-    directionH_label_2 = new QLabel("(H)");
-    directionD_label_2 = new QLabel("(D)");
-    for_label_1 = new QLabel("x");
-    for_label_2 = new QLabel("x");
+    Ysearch_sbox = new QSpinBox();
+    Ysearch_sbox->setAlignment(Qt::AlignCenter);
+    Ysearch_sbox->setMinimum(5);
+    Ysearch_sbox->setValue(20);
+    Ysearch_sbox->setSuffix(" (Y)");
+    Xsearch_sbox = new QSpinBox();
+    Xsearch_sbox->setAlignment(Qt::AlignCenter);
+    Xsearch_sbox->setMinimum(5);
+    Xsearch_sbox->setValue(20);
+    Xsearch_sbox->setSuffix(" (X)");
+    Zsearch_sbox = new QSpinBox();
+    Zsearch_sbox->setAlignment(Qt::AlignCenter);
+    Zsearch_sbox->setMinimum(5);
+    Zsearch_sbox->setValue(20);
+    Zsearch_sbox->setSuffix(" (Z)");
+    for_label_1 = new QLabel(QChar(0x00D7));
+    for_label_1->setAlignment(Qt::AlignCenter);
+    for_label_2 = new QLabel(QChar(0x00D7));
+    for_label_2->setAlignment(Qt::AlignCenter);
     overlap_label = new QLabel("Overlap (voxels):");
-    Voverlap_sbox = new QSpinBox();
-    Voverlap_sbox->setAlignment(Qt::AlignCenter);
-    Hoverlap_sbox = new QSpinBox();
-    Hoverlap_sbox->setAlignment(Qt::AlignCenter);
-    directionV_label_3 = new QLabel("(V)");
-    directionH_label_3 = new QLabel("(H)");
-    for_label_3 = new QLabel("x");
+    Yoverlap_sbox = new QSpinBox();
+    Yoverlap_sbox->setAlignment(Qt::AlignCenter);
+    Yoverlap_sbox->setSuffix(" (Y)");
+    Xoverlap_sbox = new QSpinBox();
+    Xoverlap_sbox->setAlignment(Qt::AlignCenter);
+    Xoverlap_sbox->setSuffix(" (X)");
+    for_label_3 = new QLabel(QChar(0x00D7));
+    for_label_3->setAlignment(Qt::AlignCenter);
     restoreSPIM_label = new QLabel("SPIM artifacts removal:");
     restoreSPIM_cbox = new QCheckBox("Compute stacks profiles to be used in the Merging tiles step");
 
     /*** LAYOUT SECTIONS ***/
     //basic panel
     QGridLayout* basicpanel_layout = new QGridLayout();
-    basicpanel_layout->addWidget(saveproj_label,     0,0,1,9);
-    basicpanel_layout->addWidget(saveproj_field,     0,9,1,9);
-    basicpanel_layout->addWidget(browse_button,      0,18,1,2);
-    basicpanel_layout->addWidget(algorithm_label,    1,0,1,9);
-    basicpanel_layout->addWidget(algorithm_cbox,     1,9,1,5);
-    basicpanel_layout->addWidget(subvoldims_label,   2,0,1,9);
-    basicpanel_layout->addWidget(subvoldims_sbox,    2,9,1,2);
-    basicpanel_layout->addWidget(memocc_label,       3,0,1,9);
-    basicpanel_layout->addWidget(memocc_field,       3,9,1,2);
+    QHBoxLayout *tmp = new QHBoxLayout();
+    basicpanel_layout->addWidget(saveproj_label,     0,0,1,1);
+    saveproj_label->setFixedWidth(200);
+    browse_button->setFixedWidth(80);
+    tmp->addWidget(saveproj_field,1);
+    tmp->addWidget(browse_button);
+    tmp->setSpacing(6);
+    basicpanel_layout->addLayout(tmp,                0,1,1,11);
+    basicpanel_layout->addWidget(algorithm_label,    1,0,1,1);
+    algorithm_cbox->setFixedWidth(150);
+    basicpanel_layout->addWidget(algorithm_cbox,     1,1,1,2);
+    basicpanel_layout->addWidget(subvoldims_label,   2,0,1,1);
+    basicpanel_layout->addWidget(subvoldims_sbox,    2,1,1,2);
+    basicpanel_layout->addWidget(memocc_label,       3,0,1,1);
+    basicpanel_layout->addWidget(memocc_field,       3,1,1,2);
+    basicpanel_layout->setVerticalSpacing(2);
     basic_panel->setLayout(basicpanel_layout);
-    basic_panel->setStyle(new QWindowsStyle());
+    basic_panel->setContentsMargins(0,0,0,0);
 
 
     //advanced panel
     QGridLayout* advancedpanel_layout = new QGridLayout();
-    advancedpanel_layout->addWidget(stackrowstbp_label,     0,0,1,5);
-    advancedpanel_layout->addWidget(startrow_sbox,          0,5,1,2);
-    advancedpanel_layout->addWidget(to_label_1,             0,8,1,1);
-    advancedpanel_layout->addWidget(endrow_sbox,            0,9,1,2);
-    advancedpanel_layout->addWidget(stackcolstbp_label,     1,0,1,5);
-    advancedpanel_layout->addWidget(startcol_sbox,          1,5,1,2);
-    advancedpanel_layout->addWidget(to_label_2,             1,8,1,1);
-    advancedpanel_layout->addWidget(endcol_sbox,            1,9,1,2);
-    advancedpanel_layout->addWidget(searchregion_label,     2,0,1,5);
-    advancedpanel_layout->addWidget(Vsearch_sbox,           2,5,1,2);
-    advancedpanel_layout->addWidget(directionV_label_2,     2,7,1,1);
-    advancedpanel_layout->addWidget(for_label_1,            2,8,1,1);
-    advancedpanel_layout->addWidget(Hsearch_sbox,           2,9,1,2);
-    advancedpanel_layout->addWidget(directionH_label_2,     2,11,1,1);
-    advancedpanel_layout->addWidget(for_label_2,            2,12,1,1);
-    advancedpanel_layout->addWidget(Dsearch_sbox,           2,13,1,2);
-    advancedpanel_layout->addWidget(directionD_label_2,     2,15,1,1);
-    advancedpanel_layout->addWidget(overlap_label,          3,0,1,5);
-    advancedpanel_layout->addWidget(Voverlap_sbox,          3,5,1,2);
-    advancedpanel_layout->addWidget(directionV_label_3,     3,7,1,1);
-    advancedpanel_layout->addWidget(Hoverlap_sbox,          3,9,1,2);
-    advancedpanel_layout->addWidget(directionH_label_3,     3,11,1,1);
-    advancedpanel_layout->addWidget(restoreSPIM_label,      4,0,1,5);
-    advancedpanel_layout->addWidget(restoreSPIM_cbox,       4,5,1,11);
+    advancedpanel_layout->addWidget(stackrowstbp_label,     0,0,1,1);
+    stackrowstbp_label->setFixedWidth(200);
+    startrow_sbox->setFixedWidth(150);
+    advancedpanel_layout->addWidget(startrow_sbox,          0,1,1,3);
+    advancedpanel_layout->addWidget(to_label_1,             0,4,1,1);
+    advancedpanel_layout->addWidget(endrow_sbox,            0,5,1,3);
+    advancedpanel_layout->addWidget(stackcolstbp_label,     1,0,1,1);
+    advancedpanel_layout->addWidget(startcol_sbox,          1,1,1,3);
+    advancedpanel_layout->addWidget(to_label_2,             1,4,1,1);
+    advancedpanel_layout->addWidget(endcol_sbox,            1,5,1,3);
+    advancedpanel_layout->addWidget(searchregion_label,     2,0,1,1);
+    advancedpanel_layout->addWidget(Xsearch_sbox,           2,1,1,3);
+    advancedpanel_layout->addWidget(for_label_1,            2,4,1,1);
+    advancedpanel_layout->addWidget(Ysearch_sbox,           2,5,1,3);
+    advancedpanel_layout->addWidget(for_label_2,            2,8,1,1);
+    advancedpanel_layout->addWidget(Zsearch_sbox,           2,9,1,3);
+    advancedpanel_layout->addWidget(overlap_label,          3,0,1,1);
+    advancedpanel_layout->addWidget(Xoverlap_sbox,          3,1,1,3);
+    QLabel* for_label_4 = new QLabel(QChar(0x00D7));
+    for_label_4->setAlignment(Qt::AlignCenter);
+    advancedpanel_layout->addWidget(for_label_4,            3,4,1,1);
+    advancedpanel_layout->addWidget(Yoverlap_sbox,          3,5,1,3);
+    advancedpanel_layout->addWidget(restoreSPIM_label,      4,0,1,1);
+    advancedpanel_layout->addWidget(restoreSPIM_cbox,       4,1,1,11);
+    advancedpanel_layout->setVerticalSpacing(2);
     advanced_panel->setLayout(advancedpanel_layout);
-    advanced_panel->setStyle(new QWindowsStyle());
+    advanced_panel->setContentsMargins(0,0,0,0);
 
 
 
     //overall
     QVBoxLayout* layout = new QVBoxLayout();
-    layout->addWidget(helpbox);
     layout->addWidget(basic_panel);
     layout->addWidget(advanced_panel);
+    layout->addStretch(1);
+    layout->setSpacing(0);
     setLayout(layout);
 
     //wait animated GIF tab icon
@@ -196,6 +205,8 @@ PTabDisplComp::PTabDisplComp(QMyTabWidget* _container, int _tab_index) : QWidget
     connect(endcol_sbox, SIGNAL(valueChanged(int)), this, SLOT(updateMemoryOccupancy(int)));
     connect(browse_button, SIGNAL(clicked()), this, SLOT(browse_button_clicked()));
     connect(CDisplComp::instance(), SIGNAL(sendOperationOutcome(MyException*)), this, SLOT(displcomp_done(MyException*)), Qt::QueuedConnection);
+
+    reset();
 }
 
 
@@ -204,6 +215,39 @@ PTabDisplComp::~PTabDisplComp()
     #ifdef TSP_DEBUG
     printf("TeraStitcher plugin [thread %d] >> PTabDisplComp destroyed\n", this->thread()->currentThreadId());
     #endif
+}
+
+//reset method
+void PTabDisplComp::reset()
+{
+    #ifdef TSP_DEBUG
+    printf("TeraStitcher plugin [thread %d] >> PTabDisplComp::reset()\n", this->thread()->currentThreadId());
+    #endif
+
+    Yoverlap_sbox->setMinimum(0);
+    Yoverlap_sbox->setMaximum(0);
+    Yoverlap_sbox->setValue(0);
+    Xoverlap_sbox->setMinimum(0);
+    Xoverlap_sbox->setMaximum(0);
+    Xoverlap_sbox->setValue(0);
+    startrow_sbox->setMinimum(0);
+    startrow_sbox->setMaximum(0);
+    startrow_sbox->setValue(0);
+    endrow_sbox->setMinimum(0);
+    endrow_sbox->setMaximum(0);
+    endrow_sbox->setValue(0);
+    startcol_sbox->setMinimum(0);
+    startcol_sbox->setMaximum(0);
+    startcol_sbox->setValue(0);
+    endcol_sbox->setMinimum(0);
+    endcol_sbox->setMaximum(0);
+    endcol_sbox->setValue(0);
+    saveproj_field->setText("");
+    restoreSPIM_cbox->setChecked(false);
+    subvoldims_sbox->setValue(100);
+    memocc_field->setText("");
+
+    setEnabled(false);
 }
 
 /*********************************************************************************
@@ -226,7 +270,7 @@ void PTabDisplComp::start()
         if( StackedVolume::fileExists(saveproj_field->text().toStdString().c_str()) &&
               QMessageBox::information(this, "Warning", "An XML file with the same name was found and it will be overwritten.", "Continue", "Cancel"))
         {
-            PMain::instance()->resetGUI();
+            PMain::instance()->setToReady();
             CDisplComp::instance()->reset();
             return;
         }
@@ -243,15 +287,15 @@ void PTabDisplComp::start()
         CDisplComp::instance()->setAlgorithm(algorithm_cbox->currentIndex());
         CDisplComp::instance()->setSubvolDim(subvoldims_sbox->value());
         CDisplComp::instance()->setStacksIntervals(startrow_sbox->value(), endrow_sbox->value(), startcol_sbox->value(), endcol_sbox->value());
-        CDisplComp::instance()->setSearchRadius(Vsearch_sbox->value(), Hsearch_sbox->value(), Dsearch_sbox->value());
-        CDisplComp::instance()->setOverlap(Voverlap_sbox->value(), Hoverlap_sbox->value());
+        CDisplComp::instance()->setSearchRadius(Ysearch_sbox->value(), Xsearch_sbox->value(), Zsearch_sbox->value());
+        CDisplComp::instance()->setOverlap(Yoverlap_sbox->value(), Xoverlap_sbox->value());
         CDisplComp::instance()->setRestoreSPIM(restoreSPIM_cbox->isChecked());
         CDisplComp::instance()->start();
     }
     catch(MyException &ex)
     {
         QMessageBox::critical(this,QObject::tr("Error"), QObject::tr(ex.what()),QObject::tr("Ok"));
-        PMain::instance()->resetGUI();
+        PMain::instance()->setToReady();
         CDisplComp::instance()->reset();
     }
 }
@@ -272,7 +316,7 @@ void PTabDisplComp::stop()
     catch(...) {QMessageBox::critical(this,QObject::tr("Error"), QObject::tr("Unable to determine error's type"),QObject::tr("Ok"));}
 
     //disabling progress bar and wait animations
-    PMain::instance()->resetGUI();
+    PMain::instance()->setToReady();
     wait_movie->stop();
     container->getTabBar()->setTabButton(tab_index, QTabBar::LeftSide, 0);
 }
@@ -290,12 +334,12 @@ void PTabDisplComp::setEnabled(bool enabled)
     //then filling widget fields
     if(enabled && CImport::instance()->getVolume())
     {
-        Voverlap_sbox->setMinimum(50);
-        Voverlap_sbox->setMaximum(CImport::instance()->getVolume()->getStacksWidth()*0.5);
-        Voverlap_sbox->setValue(CImport::instance()->getVolume()->getOVERLAP_V());
-        Hoverlap_sbox->setMinimum(50);
-        Hoverlap_sbox->setMaximum(CImport::instance()->getVolume()->getStacksWidth()*0.5);
-        Hoverlap_sbox->setValue(CImport::instance()->getVolume()->getOVERLAP_H());
+        Yoverlap_sbox->setMinimum(50);
+        Yoverlap_sbox->setMaximum(CImport::instance()->getVolume()->getStacksWidth()*0.5);
+        Yoverlap_sbox->setValue(CImport::instance()->getVolume()->getOVERLAP_V());
+        Xoverlap_sbox->setMinimum(50);
+        Xoverlap_sbox->setMaximum(CImport::instance()->getVolume()->getStacksWidth()*0.5);
+        Xoverlap_sbox->setValue(CImport::instance()->getVolume()->getOVERLAP_H());
         startrow_sbox->setMinimum(0);
         startrow_sbox->setMaximum(CImport::instance()->getVolume()->getN_ROWS()-1);
         startrow_sbox->setValue(0);
@@ -379,7 +423,7 @@ void PTabDisplComp::displcomp_done(MyException *ex)
     }
 
     //resetting some widgets
-    PMain::instance()->resetGUI();
+    PMain::instance()->setToReady();
     wait_movie->stop();
     container->getTabBar()->setTabButton(tab_index, QTabBar::LeftSide, 0);
     CDisplComp::instance()->reset();

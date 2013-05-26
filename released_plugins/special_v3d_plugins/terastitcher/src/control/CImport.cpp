@@ -59,23 +59,55 @@ void CImport::setAxes(string axs1, string axs2, string axs3)
     #ifdef TSP_DEBUG
     printf("TeraStitcher plugin [thread %d] >> CImport setAxes(%s, %s, %s) launched\n", this->thread()->currentThreadId(), axs1.c_str(), axs2.c_str(), axs3.c_str());
     #endif
-    AXS_1 = axis(atoi(axs1.c_str()));
-    AXS_2 = axis(atoi(axs2.c_str()));
-    AXS_3 = axis(atoi(axs3.c_str()));
+
+    if(     axs1.compare("Y")==0)
+        AXS_1 = axis(1);
+    else if(axs1.compare("-Y")==0)
+        AXS_1 = axis(-1);
+    else if(axs1.compare("X")==0)
+        AXS_1 = axis(2);
+    else if(axs1.compare("-X")==0)
+        AXS_1 = axis(-2);
+    else if(axs1.compare("Z")==0)
+        AXS_1 = axis(3);
+    else if(axs1.compare("-Z")==0)
+        AXS_1 = axis(-3);
+
+    if(     axs2.compare("Y")==0)
+        AXS_2 = axis(1);
+    else if(axs2.compare("-Y")==0)
+        AXS_2 = axis(-1);
+    else if(axs2.compare("X")==0)
+        AXS_2 = axis(2);
+    else if(axs2.compare("-X")==0)
+        AXS_2 = axis(-2);
+    else if(axs2.compare("Z")==0)
+        AXS_2 = axis(3);
+    else if(axs2.compare("-Z")==0)
+        AXS_2 = axis(-3);
+
+    if(     axs3.compare("Y")==0)
+        AXS_3 = axis(1);
+    else if(axs3.compare("-Y")==0)
+        AXS_3 = axis(-1);
+    else if(axs3.compare("X")==0)
+        AXS_3 = axis(2);
+    else if(axs3.compare("-X")==0)
+        AXS_3 = axis(-2);
+    else if(axs3.compare("Z")==0)
+        AXS_3 = axis(3);
+    else if(axs3.compare("-Z")==0)
+        AXS_3 = axis(-3);
 }
-void CImport::setVoxels(string vxl1, string vxl2, string vxl3)
+void CImport::setVoxels(float vxl1, float vxl2, float vxl3)
 {
     #ifdef TSP_DEBUG
-    printf("TeraStitcher plugin [thread %d] >> CImport setVoxels(%s, %s, %s) launched\n", this->thread()->currentThreadId(), vxl1.c_str(), vxl2.c_str(), vxl3.c_str());
+    printf("TeraStitcher plugin [thread %d] >> CImport setVoxels(%.1f, %.1f, %.1f) launched\n", this->thread()->currentThreadId(), vxl1, vxl2, vxl3);
     #endif
 
-    std::istringstream tmp1(vxl1), tmp2(vxl2), tmp3(vxl3);
-    tmp1.imbue(std::locale("C"));
-    tmp2.imbue(std::locale("C"));
-    tmp3.imbue(std::locale("C"));
-    tmp1 >> VXL_1;
-    tmp2 >> VXL_2;
-    tmp3 >> VXL_3;
+    VXL_1 = vxl1;
+    VXL_2 = vxl2;
+    VXL_3 = vxl3;
 }
 
 //automatically called when current thread is started

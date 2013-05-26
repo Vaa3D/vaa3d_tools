@@ -51,11 +51,8 @@ class terastitcher::PTabDisplComp : public QWidget
         QMyTabWidget* container;        //tabs container
         int tab_index;                  //tab index
 
-        //helpbox
-        QLabel* helpbox;
-
         //basic panel widgets
-        QGroupBox* basic_panel;         //widget containing fields to be used for basing settings
+        QWidget* basic_panel;         //widget containing fields to be used for basing settings
         QLabel* saveproj_label;
         QLineEdit* saveproj_field;
         QPushButton* browse_button;
@@ -64,10 +61,10 @@ class terastitcher::PTabDisplComp : public QWidget
         QLabel* subvoldims_label;
         QSpinBox* subvoldims_sbox;
         QLabel* memocc_label;
-        QLabel* memocc_field;
+        QLineEdit* memocc_field;
 
         //advanced panel widgets
-        QGroupBox* advanced_panel;
+        QWidget* advanced_panel;
         QLabel* stackrowstbp_label;
         QSpinBox* startrow_sbox;
         QLabel* to_label_1;
@@ -77,19 +74,14 @@ class terastitcher::PTabDisplComp : public QWidget
         QLabel* to_label_2;
         QSpinBox* endcol_sbox;
         QLabel* searchregion_label;
-        QSpinBox* Vsearch_sbox;
-        QSpinBox* Hsearch_sbox;
-        QSpinBox* Dsearch_sbox;
-        QLabel* directionV_label_2;
-        QLabel* directionH_label_2;
-        QLabel* directionD_label_2;
+        QSpinBox* Ysearch_sbox;
+        QSpinBox* Xsearch_sbox;
+        QSpinBox* Zsearch_sbox;
         QLabel* for_label_1;
         QLabel* for_label_2;
         QLabel* overlap_label;
-        QSpinBox* Voverlap_sbox;
-        QSpinBox* Hoverlap_sbox;
-        QLabel* directionV_label_3;
-        QLabel* directionH_label_3;
+        QSpinBox* Yoverlap_sbox;
+        QSpinBox* Xoverlap_sbox;
         QLabel* for_label_3;
         QLabel* restoreSPIM_label;
         QCheckBox* restoreSPIM_cbox;
@@ -128,6 +120,12 @@ class terastitcher::PTabDisplComp : public QWidget
         * the <StackedVolume> object of <CImport> instance.
         ***********************************************************************************/
         void setEnabled(bool enabled);
+
+        //reset method
+        void reset();
+
+        //gives PMain instances public access to this class members
+        friend class PMain;
 
     public slots:
 

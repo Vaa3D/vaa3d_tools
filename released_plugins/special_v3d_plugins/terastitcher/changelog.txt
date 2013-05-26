@@ -1,0 +1,28 @@
+Version history of TeraStitcher
+============================================================================================
+
+Below you find a list with the added  features, changes and fixes  for each version. Activi-
+ties names are:
+- New: a new feature implemented
+- Fix: bug fixed
+- Bug: bug to be fixed
+- Dev: for developers only
+- Opt: optimization
+- Rem: a feature no longer available
+
+============================================================================================
+Version 1.0.0
+May 26th, 2013
+--------------------------------------------------------------------------------------------
+- New: input of reference system and voxel  dimensions when a volume has  to be  imported is
+       now constrained by a limited set of choices available  through a  pull-down  menu for
+       the axes and a spinbox for volume dimension.
+- New: added "Options->Mode->Basic", "Options->Mode->Advanced". In "Basic" mode only 3 steps
+       have to be performed ("Importing", "Aligning", "Merging")  and most of  the  advanced
+       settings are hidden. In this way, stitching  under "Basic"  mode is much simpler than
+       before. 
+- New: added menubar.
+- New: VHD convention changed to XYZ.
+- New: interface has been re-designed to fit into 800x600 window.
+- New: added "What's this?" helpbox.
+--------------------------------------------------------------------------------------------

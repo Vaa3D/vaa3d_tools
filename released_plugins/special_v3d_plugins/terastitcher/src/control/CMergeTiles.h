@@ -47,14 +47,13 @@ class terastitcher::CMergeTiles : public QThread
         * instantiated by calling static method "istance(...)"
         **********************************************************************************/
         static CMergeTiles* uniqueInstance;
-        CMergeTiles() : QThread(), pMergeTiles(NULL)
+        CMergeTiles() : QThread()
         {
             #ifdef TSP_DEBUG
             printf("TeraStitcher plugin [thread %d] >> CMergeTiles created\n", this->thread()->currentThreadId());
-            #endif
-            for(int i=0; i<S_MAX_MULTIRES; i++)
-                resolutions[i] = i==0;
-            resolution_index_vaa3D = -1;
+            #endif            
+            reset();
+
         }
 
         //automatically called when current thread is started
@@ -83,6 +82,9 @@ class terastitcher::CMergeTiles : public QThread
         void setPMergeTiles(PTabMergeTiles* handle){pMergeTiles = handle;}
         void setResolution(int index, bool enabled){resolutions[index] = enabled;}
         void setResolutionToShow(int index){resolution_index_vaa3D = index;}
+
+        //reset method
+        void reset();
 
     signals:
 

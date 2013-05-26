@@ -29,7 +29,7 @@
 #ifndef __TERASTITCHER_C_PLUGIN_H__
 #define __TERASTITCHER_C_PLUGIN_H__
 
-//#define TSP_DEBUG  //debug mode
+#define TSP_DEBUG  //debug mode
 
 #include <QtGui>
 #include <v3d_interface.h>
@@ -51,6 +51,17 @@ namespace terastitcher
     class PTabMergeTiles;       //presentation class for the "Merging tiles" step
     class CMergeTiles;          //control class for the "Merging tiles" step, which is performed in a separate thread since it can be time-consuming
     class QMyTabWidget;         //Qt-class which slightly modifies the QTabWidget class
+    class QHelpBox;             //customized Qt label
+    class QPrefixSuffixValidator;
+    class QPrefixSuffixLineEdit;
+
+    /*******************
+    *    PARAMETERS    *
+    ********************
+    ---------------------------------------------------------------------------------------------------------------------------*/
+    extern std::string version;
+    /*-------------------------------------------------------------------------------------------------------------------------*/
+
 }
 
 class terastitcher::CPlugin : public QObject, public V3DPluginInterface2_1
@@ -61,11 +72,21 @@ class terastitcher::CPlugin : public QObject, public V3DPluginInterface2_1
     public:
 
 	//V3D plugin attributes and methods
-	float getPluginVersion() const {return 1.0f;}
+    float getPluginVersion() const {return getMajorVersionFloat(version);}
 	QStringList menulist() const;
 	void domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent);
 	QStringList funclist() const ;
 	bool dofunc(const QString &func_name, const V3DPluginArgList &input, V3DPluginArgList &output, V3DPluginCallback2 &callback, QWidget *parent);
+
+    static float getMajorVersionFloat(string _version)
+    {
+        size_t pos = _version.rfind(".");
+        string major_version = _version.substr(0, pos);
+        QString tmp(major_version.c_str());
+        return tmp.toFloat();
+    }
+    static string getMajorVersion(){return QString::number(getMajorVersionFloat(version), 'f', 1).toStdString();}
+
 };
 
 #endif

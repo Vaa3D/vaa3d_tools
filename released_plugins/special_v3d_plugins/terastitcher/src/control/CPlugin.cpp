@@ -36,6 +36,19 @@
 
 using namespace terastitcher;
 
+/*******************************************************************************************************************************
+ *   Interfaces, types, parameters and constants   													       *
+ *******************************************************************************************************************************/
+namespace terastitcher
+{
+    /*******************
+    *    PARAMETERS    *
+    ********************
+    ---------------------------------------------------------------------------------------------------------------------------*/
+    std::string version = "1.0.0";
+    /*-------------------------------------------------------------------------------------------------------------------------*/
+}
+
 // 1- Export the plugin class to a target, the first item in the bracket should match the TARGET parameter in the .pro file
 Q_EXPORT_PLUGIN2(terastitcherplugin, terastitcher::CPlugin)
  
@@ -44,15 +57,13 @@ Q_EXPORT_PLUGIN2(terastitcherplugin, terastitcher::CPlugin)
 QStringList CPlugin::menulist() const
 {
         return QStringList()
-                <<tr("TeraStitcher")
-                <<tr("About and help");
+                <<tr("TeraStitcher");
 }
 
 // 3 - Set up the function list in plugin dofunc
 QStringList CPlugin::funclist() const
 {
-        return QStringList()
-                <<tr("Help");
+        return QStringList();
 }
 
 // 4 - Call the functions corresponding to the domenu items. 
@@ -66,41 +77,6 @@ void CPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWi
     {
         //launching PMain's GUI
         PMain::instance(&callback, 0);
-    }
-    else
-    {
-        QMessageBox msgBox;
-        QSpacerItem* horizontalSpacer = new QSpacerItem(800, 0, QSizePolicy::Minimum, QSizePolicy::Expanding);
-        msgBox.setText( "<html><h1>TeraStitcher plugin v. 1.0</h1>"
-                        "<big>A fully automated 3D Stitching tool designed for Teravoxel-sized datasets.</big><br><br>"
-                        "<u>Developed by:</u><ul>"
-                        "<li><b>Alessandro Bria</b> (email: a.bria@unicas.it)<br>"
-                               "Ph.D. Student at University of Cassino</li>"
-                        "<li><b>Giulio Iannello</b> (email: g.iannello@unicampus.it)<br>"
-                               "Full Professor at University Campus Bio-Medico of Rome</li></ul><br>"
-                        "<u>Features:</u><ul>"
-                        "<li>fast and reliable stitching based on a multi-MIP approach</li>"
-                        "<li>typical memory requirement of ~2 Gigabytes for 1 Teravoxel-sized dataset</li>"
-                        "<li>full control over memory requirements and stitching parameters</li>"
-                        "<li>user can select just a subvolume to be stitched only</li>"
-                        "<li>SPIM artifacts removal option (experimental)</li></ul><br>"
-                        "<u>Supported input formats:</u><ul>"
-                        "<li>two-level directory structure with each tile containing a series of image slices (see documentation for further information)</li>"
-                        "<li>supported formats for image slices are BMP, DIB, JPEG, JPG, JPE, PNG, PBM, PGM, PPM, SR, RAS, TIFF, TIF</li>"
-                        "<li>no restriction on the bit depth</li>"
-                        "<li>no restriction on the number of channels</li></ul><br>"
-                        "<u>Supported output formats:</u><ul>"
-                        "<li>both grid of non-overlapped image stacks or single image stack (which can be directly <b>shown into Vaa3D</b>)</li>"
-                        "<li>stacks can be saved at different resolutions</li>"
-                        "<li>supported formats for image slices are BMP, DIB, JPEG, JPG, JPE, PNG, PBM, PGM, PPM, SR, RAS, TIFF, TIF</li>"
-                        "<li>no restriction on the bit depth</li>"
-                        "<li>only single-channel</li></ul></html>" );
-
-        QGridLayout* layout = (QGridLayout*)msgBox.layout();
-        layout->addItem(horizontalSpacer, layout->rowCount(), 0, 1, layout->columnCount());
-        msgBox.exec();
-
-        return;
     }
 }
 

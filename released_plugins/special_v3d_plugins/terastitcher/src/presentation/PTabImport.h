@@ -33,6 +33,7 @@
 #include <QtGui>
 #include "src/control/CPlugin.h"
 #include "QMyTabWidget.h"
+#include "QPrefixSuffixLineEdit.h"
 
 class terastitcher::PTabImport : public QWidget
 {
@@ -51,9 +52,6 @@ class terastitcher::PTabImport : public QWidget
         QMyTabWidget* container;        //tabs container
         int tab_index;                  //tab index
 
-        //helpbox
-        QLabel* helpbox;
-
         //import form widgets
         QGroupBox* import_form;         //import form containing input fields
         QLabel* import_form_desc_1;     //contains text describing import form usage
@@ -66,60 +64,42 @@ class terastitcher::PTabImport : public QWidget
         QLabel* second_direction_label; //label "Second direction"
         QLabel* third_direction_label;  //label "Third direction"
         QLabel* axes_label;             //label "Axes"
-        QLineEdit *axs1_field;          //field for first direction axis
-        QLineEdit *axs2_field;          //field for second direction axis
-        QLineEdit *axs3_field;          //field for third direction axis
+        QComboBox *axs1_field;          //field for first direction axis
+        QComboBox *axs2_field;          //field for second direction axis
+        QComboBox *axs3_field;          //field for third direction axis
         QLabel* voxels_dims_label;      //label "Voxel dimensions"
-        QLineEdit *vxl1_field;          //field for voxel dimension along first direction
-        QLineEdit *vxl2_field;          //field for voxel dimension along second direction
-        QLineEdit *vxl3_field;          //field for voxel dimension along third direction
+        QDoubleSpinBox *vxl1_field;     //field for voxel dimension along first direction
+        QDoubleSpinBox *vxl2_field;     //field for voxel dimension along second direction
+        QDoubleSpinBox *vxl3_field;     //field for voxel dimension along third direction
 
         //info panel widgets, contain informations of the loaded volume
         QGroupBox* info_panel;
         QLabel* volumedir_label;
-        QLabel* volumedir_field;
+        QLineEdit* volumedir_field;
         QLabel* volume_dims_label;
-        QLabel* direction_V_label_1;
-        QLabel* direction_H_label_1;
         QLabel* by_label_1;
-        QLabel* nrows_field;
-        QLabel* ncols_field;
+        QLineEdit* nrows_field;
+        QLineEdit* ncols_field;
         QLabel* stacks_dims_label;
-        QLabel* direction_V_label_2;
-        QLabel* direction_H_label_2;
-        QLabel* direction_D_label_2;
         QLabel* by_label_2;
         QLabel* by_label_3;
-        QLabel* stack_height_field;
-        QLabel* stack_width_field;
-        QLabel* stack_depth_field;
+        QLineEdit* stack_height_field;
+        QLineEdit* stack_width_field;
+        QLineEdit* stack_depth_field;
         QLabel* voxel_dims_label;
-        QLabel* direction_V_label_3;
-        QLabel* direction_H_label_3;
-        QLabel* direction_D_label_3;
         QLabel* by_label_4;
         QLabel* by_label_5;
-        QLabel* vxl_V_field;
-        QLabel* vxl_H_field;
-        QLabel* vxl_D_field;
+        QLineEdit* vxl_Y_field;
+        QLineEdit* vxl_X_field;
+        QLineEdit* vxl_Z_field;
         QLabel* origin_label;
-        QLabel* direction_V_label_4;
-        QLabel* direction_H_label_4;
-        QLabel* direction_D_label_4;
-        QLabel* org_V_field;
-        QLabel* org_H_field;
-        QLabel* org_D_field;
+        QLineEdit* org_Y_field;
+        QLineEdit* org_X_field;
+        QLineEdit* org_Z_field;
         QLabel* stacks_overlap_label;
-        QLabel* direction_V_label_5;
-        QLabel* direction_H_label_5;
-        QLabel* ovp_V_field;
-        QLabel* ovp_H_field;
-
-        //preview panel widgets
-        QGroupBox* preview_panel;
-        QLabel* preview_desc;
-        QSlider* slice_slider;
-        QLabel* slice_index_field;
+        QLineEdit* ovp_Y_field;
+        QLineEdit* ovp_X_field;
+        QSpinBox* slice_spinbox;
         QPushButton* preview_button;
 
         //other widgets
@@ -149,6 +129,12 @@ class terastitcher::PTabImport : public QWidget
         void start();
         void stop();
 
+        //reset method
+        void reset();
+
+        //gives PMain instances public access to this class members
+        friend class PMain;
+
     public slots:
 
         /**********************************************************************************
@@ -169,11 +155,6 @@ class terastitcher::PTabImport : public QWidget
         ***********************************************************************************/
         void preview_button_clicked();
 
-        /**********************************************************************************
-        * Called when "slice_slider" value has changed.
-        * Updates value of "slice_index_field".
-        ***********************************************************************************/
-        void slice_slider_value_changed(int new_val);
 
         /**********************************************************************************
         * Called by <CImport> when the associated operation has been performed.
@@ -190,6 +171,16 @@ class terastitcher::PTabImport : public QWidget
         * onto the disk is loaded and shown in Vaa3D.
         ***********************************************************************************/
         void preview_done(MyException *ex, Image4DSimple* img);
+
+        /**********************************************************************************
+        * Called when "path_field" value has changed.
+        ***********************************************************************************/
+        void volumePathChanged(QString path);
+
+        /**********************************************************************************
+        * Called when "reimport_chheckbox" state has changed.
+        ***********************************************************************************/
+        void reimportCheckboxChanged(int);
 
 };
 

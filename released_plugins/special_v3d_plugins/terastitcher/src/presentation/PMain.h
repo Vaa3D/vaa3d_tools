@@ -40,6 +40,7 @@
 #include "PTabPlaceTiles.h"
 #include "PTabMergeTiles.h"
 #include "StackedVolume.h"
+#include "QHelpBox.h"
 
 class terastitcher::PMain : public QWidget
 {
@@ -59,6 +60,18 @@ class terastitcher::PMain : public QWidget
         V3DPluginCallback* V3D_env;     //handle of V3D environment
         QWidget *parentWidget;          //handle of parent widget
 
+        //menu widgets
+        QMenuBar* menuBar;              //Menu bar
+        QMenu* fileMenu;                //"File" menu
+        QAction* closeVolumeAction;     //"Close volume" menu action
+        QAction* exitAction;            //"Exit" menu action
+        QMenu* optionsMenu;             //"Options" menu
+        QMenu* modeOptionsMenu;         //"Import" menu
+        QAction* modeBasicAction;        //"Basic mode" menu action
+        QAction* modeAdvancedAction;     //"Advanced mode" menu action
+        QMenu* helpMenu;                //"Help" menu
+        QAction* aboutAction;           //"About" menu action
+
         //widgets
         QMyTabWidget *tabs;             //modified tab widget
         PTabImport* tabImport;          //tab for "Import" step of the stitching process
@@ -67,6 +80,7 @@ class terastitcher::PMain : public QWidget
         PTabDisplThresh* tabDisplThres; //tab for "Displacements Thresholding" step of the stitching process
         PTabPlaceTiles* tabPlaceTiles;  //tab for "Optimal tiles placement" step of the stitching process
         PTabMergeTiles* tabMergeTiles;  //tab for "Merging tiles" step of the stitching process
+        QHelpBox* helpBox;              //helpbox
         QProgressBar* progressBar;      //progress bar
         QPushButton* startButton;       //start button
         QPushButton* startAllButton;    //start all button
@@ -92,10 +106,16 @@ class terastitcher::PMain : public QWidget
         void setStopButtonEnabled(bool enabled){stopButton->setEnabled(enabled);}
 
         //resets progress bar, start/stop buttons and tab bar
-        void resetGUI();
+        void setToReady();
+
+        //resets all GUI elements
+        void reset();
 
         //overrides closeEvent method of QWidget
         void closeEvent(QCloseEvent *evt);
+
+        //overrides eventFilter method of QWidget
+        bool eventFilter(QObject *object, QEvent *event);
 
         /**********************************************************************************
         * Called by algorithms running from different threads.
@@ -103,6 +123,14 @@ class terastitcher::PMain : public QWidget
         ***********************************************************************************/
         void emitProgressBarChanged(int val, int minutes, int seconds, const char* message = 0)
         {emit sendProgressBarChanged(val, minutes, seconds, message);}
+
+        //friend declarations: allowing tabs to access PMain members
+        friend class PTabImport;
+        friend class PTabDisplComp;
+        friend class PTabDisplThresh;
+        friend class PTabDisplProj;
+        friend class PTabPlaceTiles;
+        friend class PTabMergeTiles;
 
     public slots:
 
@@ -115,12 +143,34 @@ class terastitcher::PMain : public QWidget
         ***********************************************************************************/
         void progressBarChanged(int val, int minutes, int seconds, const char* message);
 
+        /**********************************************************************************
+        * Called when "Close volume" menu action is triggered.
+        * All the memory allocated is released and GUI is reset".
+        ***********************************************************************************/
+        void closeVolumeTriggered();
+
+        /**********************************************************************************
+        * Called when "Exit" menu action is triggered or TeraFly window is closed.
+        ***********************************************************************************/
+        void exit();
+
+        /**********************************************************************************
+        * Called when "Help->About" menu action is triggered
+        ***********************************************************************************/
+        void about();
+
+        /**********************************************************************************
+        * Called when "Options->Mode" menu action has changed
+        ***********************************************************************************/
+        void modeChanged();
+
     signals:
 
         /*********************************************************************************
         * Carries progress bar informations (progress percentage and remaining minutes).
         **********************************************************************************/
         void sendProgressBarChanged(int val, int minutes, int seconds, const char* message);
+
 };
 
 #endif // PMAIN_GUI_H

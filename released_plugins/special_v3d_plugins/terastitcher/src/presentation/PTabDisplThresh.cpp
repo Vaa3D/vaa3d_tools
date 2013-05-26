@@ -55,70 +55,55 @@ PTabDisplThresh::PTabDisplThresh(QMyTabWidget* _container, int _tab_index) : QWi
     printf("TeraStitcher plugin [thread %d] >> PTabDisplThresh created\n", this->thread()->currentThreadId());
     #endif
 
-    //help box
-    helpbox = new QLabel("<html><table><tr style=\"vertical-align: middle;\"><td><img src=\":/icons/help.png\"></td>"
-                         "<td><p style=\"text-align:justify; margin-left:10px;\"> This step uses <b>displacements reliability "
-                         "measures</b>to perform thresholding. When a displacement has a reliability measure below the selected "
-                         "threshold, its nominal stage coordinates are reestabilished. Furthermore, the subset of reliable "
-                         "displacements is used to mark stacks as stitchables or nonstitchables. Nonstitchables stacks can be "
-                         "excluded from the merging step.<br><br><b>This step needs each pair of adjacent stacks have one and "
-                         "only one displacement. If this is not the case, please run the <i>Displacement Projections</i> step first."
-                         "</p> </td></tr></table> </html>");
-    helpbox->setStyleSheet("border: 1px solid; border-color: gray; background-color: rgb(245,245,245); margin-top:10px; margin-bottom:10px; padding-top:10px; padding-bottom:10px;");
-    helpbox->setWordWrap(true);
-    helpbox->setFixedHeight(180);
-
     //other widgets
     saveproj_label = new QLabel("Save project XML to:");
     saveproj_field = new QLineEdit();
-    browse_button = new QPushButton("Save to XML...");
-    reliable_displ_number_label = new QLabel("# of reliable single-direction displacements:");
-    reliable_displ_number_field = new QLabel("");
+    saveproj_field->setFont(QFont("",8));
+    browse_button = new QPushButton("...");
+    reliable_displ_number_label = new QLabel("Reliable displacements:");
+    reliable_displ_number_field = new QLineEdit();
+    reliable_displ_number_field->setReadOnly(true);
     reliable_displ_number_field->setAlignment(Qt::AlignCenter);
-    reliable_displ_number_field->setStyleSheet("border: 1px solid; border-color: gray; background-color: rgb(245,245,245)");
-    stitchable_stacks_label = new QLabel("# of stitchable stacks:");
-    stitchable_stacks_field = new QLabel("");
+    stitchable_stacks_label = new QLabel("Stitchable stacks:");
+    stitchable_stacks_field = new QLineEdit();
+    stitchable_stacks_field->setReadOnly(true);
     stitchable_stacks_field->setAlignment(Qt::AlignCenter);
-    stitchable_stacks_field->setStyleSheet("border: 1px solid; border-color: gray; background-color: rgb(245,245,245)");
     threshold_label = new QLabel("Reliability threshold:");
     threshold_slider = new QSlider();
-    threshold_slider->setMinimum(0);
-    threshold_slider->setMaximum(100);
-    threshold_slider->setValue(75);
     threshold_slider->setOrientation(Qt::Horizontal);
     threshold_field = new QDoubleSpinBox();
-    threshold_field->setMinimum(0);
-    threshold_field->setMaximum(1);
-    threshold_field->setValue(0.75);
-    threshold_field->setSingleStep(0.01);
-    per_stack_displ_number_label = new QLabel("# of displacements per stacks pair:");
-    per_stack_displ_number_field = new QLabel("");
+    threshold_field->setAlignment(Qt::AlignCenter);
+    threshold_field->setSuffix("/1,00");
+    per_stack_displ_number_label = new QLabel("Per-pair displacements:");
+    per_stack_displ_number_field = new QLineEdit();
+    per_stack_displ_number_field->setReadOnly(true);
     per_stack_displ_number_field->setAlignment(Qt::AlignCenter);
-    per_stack_displ_number_field->setStyleSheet("border: 1px solid; border-color: gray; background-color: rgb(245,245,245)");
 
 
     /*** LAYOUT SECTIONS ***/    
     //widgets
     QGridLayout* gridlayout = new QGridLayout();
-    gridlayout->addWidget(saveproj_label, 0, 0, 1, 2);
-    gridlayout->addWidget(saveproj_field, 0, 2, 1, 10);
-    gridlayout->addWidget(browse_button, 0, 12, 1, 1);
-    gridlayout->addWidget(threshold_label, 1, 0, 1, 2);
-    gridlayout->addWidget(threshold_slider, 1, 2, 1, 4);
-    gridlayout->addWidget(threshold_field, 1, 6, 1, 1);
-    gridlayout->addWidget(reliable_displ_number_label, 2, 0, 1, 2);
-    gridlayout->addWidget(reliable_displ_number_field, 2, 2, 1, 2);
-    gridlayout->addWidget(stitchable_stacks_label, 3, 0, 1, 2);
-    gridlayout->addWidget(stitchable_stacks_field, 3, 2, 1, 2);
-    gridlayout->addWidget(per_stack_displ_number_label, 4, 0, 1, 2);
-    gridlayout->addWidget(per_stack_displ_number_field, 4, 2, 1, 2);
+    saveproj_label->setFixedWidth(200);
+    browse_button->setFixedWidth(80);
+    gridlayout->addWidget(saveproj_label, 0, 0, 1, 1);
+    gridlayout->addWidget(saveproj_field, 0, 1, 1, 10);
+    gridlayout->addWidget(browse_button, 0, 11, 1, 1);
+    gridlayout->addWidget(threshold_label, 1, 0, 1, 1);
+    gridlayout->addWidget(threshold_slider, 1, 1, 1, 8);
+    gridlayout->addWidget(threshold_field, 1, 9, 1, 2);
+    gridlayout->addWidget(reliable_displ_number_label, 2, 0, 1, 1);
+    gridlayout->addWidget(reliable_displ_number_field, 2, 1, 1, 3);
+    gridlayout->addWidget(stitchable_stacks_label, 3, 0, 1, 1);
+    gridlayout->addWidget(stitchable_stacks_field, 3, 1, 1, 3);
+    gridlayout->addWidget(per_stack_displ_number_label, 4, 0, 1, 1);
+    gridlayout->addWidget(per_stack_displ_number_field, 4, 1, 1, 3);
+    gridlayout->setVerticalSpacing(2);
     QWidget *container = new QWidget();
     container->setLayout(gridlayout);
 
     //overall
     QVBoxLayout* layout = new QVBoxLayout();
     layout->setAlignment(Qt::AlignTop);
-    layout->addWidget(helpbox);
     layout->addWidget(container);
     setLayout(layout);
 
@@ -131,7 +116,8 @@ PTabDisplThresh::PTabDisplThresh(QMyTabWidget* _container, int _tab_index) : QWi
     connect(browse_button, SIGNAL(clicked()), this, SLOT(browse_button_clicked()));
     connect(threshold_slider, SIGNAL(valueChanged(int)), this, SLOT(threshold_slider_changed(int)));
     connect(threshold_field, SIGNAL(valueChanged(double)), this, SLOT(threshold_spinner_changed(double)));
-    //connect(CPreview::instance(), SIGNAL(sendOperationOutcome(MyException*)), this, SLOT(preview_done(MyException*)), Qt::QueuedConnection);
+
+    reset();
 }
 
 
@@ -140,6 +126,30 @@ PTabDisplThresh::~PTabDisplThresh()
     #ifdef TSP_DEBUG
     printf("TeraStitcher plugin [thread %d] >> PTabDisplThresh destroyed\n", this->thread()->currentThreadId());
     #endif
+}
+
+//reset method
+void PTabDisplThresh::reset()
+{
+    #ifdef TSP_DEBUG
+    printf("TeraStitcher plugin [thread %d] >> PTabDisplThresh::reset()\n", this->thread()->currentThreadId());
+    #endif
+
+    saveproj_field->setText("");
+    per_stack_displ_number_field->setText("");
+    threshold_slider->setMinimum(0);
+    threshold_slider->setMaximum(100);
+    threshold_slider->setValue(75);
+    threshold_field->setMinimum(0);
+    threshold_field->setMaximum(1);
+    threshold_field->setValue(0.75);
+    threshold_field->setSingleStep(0.01);
+    reliable_displ_number_field->setText("");
+    stitchable_stacks_field->setText("");
+    per_stack_displ_number_field->setStyleSheet("");
+    stitchable_stacks_field->setStyleSheet("");
+    reliable_displ_number_field->setStyleSheet("");
+    setEnabled(false);
 }
 
 /*********************************************************************************
@@ -162,7 +172,7 @@ void PTabDisplThresh::start()
         if( StackedVolume::fileExists(saveproj_field->text().toStdString().c_str()) &&
               QMessageBox::information(this, "Warning", "An XML file with the same name was found and it will be overwritten.", "Continue", "Cancel"))
         {
-            PMain::instance()->resetGUI();
+            PMain::instance()->setToReady();
             return;
         }
 
@@ -194,7 +204,7 @@ void PTabDisplThresh::start()
     catch(MyException &ex)
     {
         QMessageBox::critical(this,QObject::tr("Error"), QObject::tr(ex.what()),QObject::tr("Ok"));
-        PMain::instance()->resetGUI();
+        PMain::instance()->setToReady();
     }
 }
 
@@ -205,7 +215,7 @@ void PTabDisplThresh::stop()
     #endif
 
     //re-enabling import form and disabling progress bar and wait animations
-    PMain::instance()->resetGUI();
+    PMain::instance()->setToReady();
     wait_movie->stop();
     container->getTabBar()->setTabButton(tab_index, QTabBar::LeftSide, 0);
 }
@@ -239,9 +249,9 @@ void PTabDisplThresh::setEnabled(bool enabled)
         CImport::instance()->getVolume()->countDisplacements(total, per_stack);
         per_stack_displ_number_field->setText(QString::number(per_stack));
         if(per_stack==1.0f)
-            per_stack_displ_number_field->setStyleSheet("border: 1px solid; border-color: gray; background-color: #7fdb73");
+            per_stack_displ_number_field->setStyleSheet("background-color: #7fdb73");
         else
-            per_stack_displ_number_field->setStyleSheet("border: 1px solid; border-color: gray; background-color: #ff4c4c");
+            per_stack_displ_number_field->setStyleSheet("background-color: #ff4c4c");
         threshold_slider->setEnabled(per_stack==1.0f);
         threshold_field->setEnabled(per_stack==1.0f);
         threshold_label->setEnabled(per_stack==1.0f);
@@ -309,5 +319,15 @@ void PTabDisplThresh::updateContent()
 
         reliable_displ_number_field->setText(QString::number(reliable).append("/").append(QString::number(total)));
         stitchable_stacks_field->setText(QString::number(stitchables).append("/").append(QString::number(nstacks)));
+
+        if(stitchables == 0)
+            stitchable_stacks_field->setStyleSheet("background-color: #ff4c4c");
+        else
+            stitchable_stacks_field->setStyleSheet("background-color: #7fdb73");
+
+        if(reliable == 0)
+            reliable_displ_number_field->setStyleSheet("background-color: #ff4c4c");
+        else
+            reliable_displ_number_field->setStyleSheet("background-color: #7fdb73");
     }
 }

@@ -11,6 +11,8 @@
         <file>icons/number4.png</file>
         <file>icons/number5.png</file>
         <file>icons/number6.png</file>
+        <file>icons/about.png</file>
         <file>icons/help.png</file>
+        <file>icons/close.png</file>
     </qresource>
 </RCC>

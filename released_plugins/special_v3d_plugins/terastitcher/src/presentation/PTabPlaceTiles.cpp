@@ -55,45 +55,40 @@ PTabPlaceTiles::PTabPlaceTiles(QMyTabWidget* _container, int _tab_index) : QWidg
     printf("TeraStitcher plugin [thread %d] >> PTabPlaceTiles created\n", this->thread()->currentThreadId());
     #endif
 
-    //help box
-    helpbox = new QLabel("<html><table><tr style=\"vertical-align: middle;\"><td><img src=\":/icons/help.png\"></td>"
-                              "<td><p style=\"text-align:justify; margin-left:10px;\"> This step uses the computed displacements to <b>obtain the optimal tiles placement</b>.<br><br>"
-                              "<u>If this step is skipped, tiles will be merged using only nominal stage coordinates.</u><br><br>"
-                              "Furthermore, <b>this step needs each pair of adjacent stacks have one and only one displacement. If this is not the case, please run the Displacement Projections step first.</p> </td></tr></table> </html>");
-    helpbox->setStyleSheet("border: 1px solid; border-color: gray; background-color: rgb(245,245,245); margin-top:10px; margin-bottom:10px; padding-top:10px; padding-bottom:10px;");
-    helpbox->setWordWrap(true);
-    helpbox->setFixedHeight(180);
-
     //other widgets
     saveproj_label = new QLabel("Save project XML to:");
     saveproj_field = new QLineEdit();
-    browse_button = new QPushButton("Save to XML...");
-    algo_label = new QLabel("Algorithm");
+    saveproj_field->setFont(QFont("",8));
+    saveproj_field->setReadOnly(true);
+    browse_button = new QPushButton("...");
+    algo_label = new QLabel("Algorithm:");
     algo_cbox = new QComboBox();
     algo_cbox->insertItem(0, "Minimum Spanning Tree");
-    per_stack_displ_number_label = new QLabel("# of displacements per stacks pair:");
-    per_stack_displ_number_field = new QLabel("");
+    per_stack_displ_number_label = new QLabel("Per-pair displacements:");
+    per_stack_displ_number_field = new QLineEdit();
+    per_stack_displ_number_field->setReadOnly(true);
     per_stack_displ_number_field->setAlignment(Qt::AlignCenter);
-    per_stack_displ_number_field->setStyleSheet("border: 1px solid; border-color: gray; background-color: rgb(245,245,245)");
 
 
     /*** LAYOUT SECTIONS ***/
     //widgets
     QGridLayout* gridlayout = new QGridLayout();
-    gridlayout->addWidget(saveproj_label, 0, 0, 1, 2);
-    gridlayout->addWidget(saveproj_field, 0, 2, 1, 10);
-    gridlayout->addWidget(browse_button, 0, 12, 1, 1);
-    gridlayout->addWidget(algo_label, 1, 0, 1, 2);
-    gridlayout->addWidget(algo_cbox, 1, 2, 1, 6);
-    gridlayout->addWidget(per_stack_displ_number_label, 4, 0, 1, 2);
-    gridlayout->addWidget(per_stack_displ_number_field, 4, 2, 1, 2);
+    saveproj_label->setFixedWidth(200);
+    browse_button->setFixedWidth(80);
+    gridlayout->addWidget(saveproj_label, 0, 0, 1, 1);
+    gridlayout->addWidget(saveproj_field, 0, 1, 1, 10);
+    gridlayout->addWidget(browse_button, 0, 11, 1, 1);
+    gridlayout->addWidget(algo_label, 1, 0, 1, 1);
+    gridlayout->addWidget(algo_cbox, 1, 1, 1, 6);
+    gridlayout->addWidget(per_stack_displ_number_label, 4, 0, 1, 1);
+    gridlayout->addWidget(per_stack_displ_number_field, 4, 1, 1, 3);
+    gridlayout->setVerticalSpacing(2);
     QWidget *container = new QWidget();
     container->setLayout(gridlayout);
 
     //overall
     QVBoxLayout* layout = new QVBoxLayout();
     layout->setAlignment(Qt::AlignTop);
-    layout->addWidget(helpbox);
     layout->addWidget(container);
     setLayout(layout);
 
@@ -104,6 +99,8 @@ PTabPlaceTiles::PTabPlaceTiles(QMyTabWidget* _container, int _tab_index) : QWidg
 
     // signals and slots
     connect(browse_button, SIGNAL(clicked()), this, SLOT(browse_button_clicked()));
+
+    reset();
 }
 
 
@@ -112,6 +109,19 @@ PTabPlaceTiles::~PTabPlaceTiles()
     #ifdef TSP_DEBUG
     printf("TeraStitcher plugin [thread %d] >> PTabPlaceTiles destroyed\n", this->thread()->currentThreadId());
     #endif
+}
+
+//reset method
+void PTabPlaceTiles::reset()
+{
+    #ifdef TSP_DEBUG
+    printf("TeraStitcher plugin [thread %d] >> PTabPlaceTiles::reset()\n", this->thread()->currentThreadId());
+    #endif
+
+    per_stack_displ_number_field->setText("");
+    per_stack_displ_number_field->setStyleSheet("");
+    saveproj_field->setText("");
+    setEnabled(false);
 }
 
 /*********************************************************************************
@@ -134,7 +144,7 @@ void PTabPlaceTiles::start()
         if( StackedVolume::fileExists(saveproj_field->text().toStdString().c_str()) &&
               QMessageBox::information(this, "Warning", "An XML file with the same name was found and it will be overwritten.", "Continue", "Cancel"))
         {
-            PMain::instance()->resetGUI();
+            PMain::instance()->setToReady();
             return;
         }
 
@@ -164,7 +174,7 @@ void PTabPlaceTiles::start()
     catch(MyException &ex)
     {
         QMessageBox::critical(this,QObject::tr("Error"), QObject::tr(ex.what()),QObject::tr("Ok"));
-        PMain::instance()->resetGUI();
+        PMain::instance()->setToReady();
     }
 }
 
@@ -175,7 +185,7 @@ void PTabPlaceTiles::stop()
     #endif
 
     //re-enabling import form and disabling progress bar and wait animations
-    PMain::instance()->resetGUI();
+    PMain::instance()->setToReady();
     wait_movie->stop();
     container->getTabBar()->setTabButton(tab_index, QTabBar::LeftSide, 0);
 }
@@ -208,9 +218,9 @@ void PTabPlaceTiles::setEnabled(bool enabled)
         CImport::instance()->getVolume()->countDisplacements(total, per_stack);
         per_stack_displ_number_field->setText(QString::number(per_stack));
         if(per_stack==1.0f)
-            per_stack_displ_number_field->setStyleSheet("border: 1px solid; border-color: gray; background-color: #7fdb73");
+            per_stack_displ_number_field->setStyleSheet("background-color: #7fdb73");
         else
-            per_stack_displ_number_field->setStyleSheet("border: 1px solid; border-color: gray; background-color: #ff4c4c");
+            per_stack_displ_number_field->setStyleSheet("background-color: #ff4c4c");
     }
 }
 

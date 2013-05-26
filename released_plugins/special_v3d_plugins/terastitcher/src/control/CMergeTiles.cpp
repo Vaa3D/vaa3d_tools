@@ -165,3 +165,12 @@ void CMergeTiles::run()
     catch(std::bad_alloc& ba)       {emit sendOperationOutcome(new MyException(ba.what()));}
     //catch(...)                    {emit sendOperationOutcome(new MyException("Unkwnown error has occurred"));}
 }
+
+//reset method
+void CMergeTiles::reset()
+{
+    for(int i=0; i<S_MAX_MULTIRES; i++)
+        resolutions[i] = i==0;
+    resolution_index_vaa3D = -1;
+    pMergeTiles = 0;
+}

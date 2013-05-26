@@ -33,6 +33,7 @@
 #include <QtGui>
 #include "src/control/CPlugin.h"
 #include "QMyTabWidget.h"
+#include "PTabMergeTiles.h"
 
 class terastitcher::PTabDisplThresh : public QWidget
 {
@@ -51,9 +52,6 @@ class terastitcher::PTabDisplThresh : public QWidget
         QMyTabWidget* container;        //tabs container
         int tab_index;                  //tab index
 
-        //helpbox
-        QLabel* helpbox;
-
         //main widgets
         QLabel* saveproj_label;
         QLineEdit* saveproj_field;
@@ -62,11 +60,11 @@ class terastitcher::PTabDisplThresh : public QWidget
         QSlider* threshold_slider;
         QDoubleSpinBox* threshold_field;
         QLabel* reliable_displ_number_label;
-        QLabel* reliable_displ_number_field;
+        QLineEdit* reliable_displ_number_field;
         QLabel* stitchable_stacks_label;
-        QLabel* stitchable_stacks_field;
+        QLineEdit* stitchable_stacks_field;
         QLabel* per_stack_displ_number_label;
-        QLabel* per_stack_displ_number_field;
+        QLineEdit* per_stack_displ_number_field;
 
         //other widgets
         QMovie *wait_movie;             //animated wait GIF icon
@@ -102,10 +100,17 @@ class terastitcher::PTabDisplThresh : public QWidget
         ***********************************************************************************/
         void setEnabled(bool enabled);
 
+        //reset method
+        void reset();
+
         /**********************************************************************************
         * Updates the <reliable_displ_number_field> and <stitchable_stacks_field>
         ***********************************************************************************/
         void updateContent();
+
+        //gives PMain instances public access to this class members
+        friend class PMain;
+        friend class PTabMergeTiles;
 
     public slots:
 

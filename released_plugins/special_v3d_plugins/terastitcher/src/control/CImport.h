@@ -81,11 +81,20 @@ class terastitcher::CImport : public QThread
         StackedVolume* getVolume(){return volume;}
         void setPath(string new_path){path = new_path;}
         void setAxes(string axs1, string axs2, string axs3);
-        void setVoxels(string vxl1, string vxl2, string vxl3);
+        void setVoxels(float vxl1, float vxl2, float vxl3);
         void setReimport(bool _reimport){reimport = _reimport;}
 
         //reset method
-        void reset(){path=""; AXS_1=AXS_2=AXS_3=axis_invalid; VXL_1=VXL_2=VXL_3=0; reimport=false;}
+        void reset()
+        {
+            path="";
+            AXS_1=AXS_2=AXS_3=axis_invalid;
+            VXL_1=VXL_2=VXL_3=0;
+            reimport=false;
+            if(volume)
+                delete volume;
+            volume=0;
+        }
 
     signals:
 

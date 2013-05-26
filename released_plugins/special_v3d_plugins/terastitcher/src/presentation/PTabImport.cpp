@@ -60,224 +60,242 @@ PTabImport::PTabImport(QMyTabWidget* _container, int _tab_index) : QWidget(), co
     printf("TeraStitcher plugin [thread %d] >> PTabImport created\n", this->thread()->currentThreadId());
     #endif
 
-    //help box
-    helpbox = new QLabel("<html><table><tr style=\"vertical-align: middle;\"><td><img src=\":/icons/help.png\"></td>"
-                                 "<td><p style=\"text-align:justify; margin-left:10px;\"> This step performs <b>volume's import into an organized metadata structure</b> suited for further processing. "
-                                 "No data will be loaded in this step. However, importing big volumes could take up to a few minutes to read all slices filenames. <br><br>"
-                         "If this is the first time the volume the volume is going to be imported, you have to fill all the fields. Please pay attention that the minus \"-\" sign before an axis is interpreted as a rotation by 180 degrees.</p> </td></tr></table> </html>");
-    helpbox->setStyleSheet("border: 1px solid; border-color: gray; background-color: rgb(245,245,245); margin-top:10px; margin-bottom:10px; padding-top:10px; padding-bottom:10px;");
-    helpbox->setWordWrap(true);
-    helpbox->setFixedHeight(180);
-
     //import form widgets
     import_form = new QGroupBox("Import form");
-    path_field    = new QLineEdit("Enter the volume's directory or a valid TeraStitcher XML project file path");
-    path_field->setMinimumWidth(500);
+    path_field    = new QLineEdit();
     voldir_button       = new QPushButton("Browse for dir...");
     projfile_button     = new QPushButton("Browse for XML...");
-    reimport_checkbox = new QCheckBox("Re-import (check this to overwrite previous imports)");
+    reimport_checkbox = new QCheckBox("Re-import (check this to re-scan all acquisition files)");
+    reimport_checkbox->setFont(QFont("", 8));
     first_direction_label = new QLabel("First direction");
+    first_direction_label->setFont(QFont("", 8));
     second_direction_label = new QLabel("Second direction");
+    second_direction_label->setFont(QFont("", 8));
     third_direction_label = new QLabel("Third direction");
-    axes_label = new QLabel("Axes (1 = Vertical, 2 = Horizontal, 3 = Depth)");
-    voxels_dims_label = new QLabel("Voxel's dimensions (micrometers)");
-    QRegExp axs_regexp("^-?[123]$");
+    third_direction_label->setFont(QFont("", 8));
+    axes_label = new QLabel("Axes");
+    axes_label->setFont(QFont("", 8));
+    voxels_dims_label = new QLabel(QString("Voxel's dims (").append(QChar(0x03BC)).append("m):"));
+    voxels_dims_label->setFont(QFont("", 8));
     QRegExp vxl_regexp("^[0-9]+\\.?[0-9]*$");
-    axs1_field = new QLineEdit();
-    axs1_field->setAlignment(Qt::AlignCenter);
-    axs1_field->setValidator(new QRegExpValidator(axs_regexp, axs1_field));
-    axs2_field = new QLineEdit();
-    axs2_field->setAlignment(Qt::AlignCenter);
-    axs2_field->setValidator(new QRegExpValidator(axs_regexp, axs2_field));
-    axs3_field = new QLineEdit();
-    axs3_field->setAlignment(Qt::AlignCenter);
-    axs3_field->setValidator(new QRegExpValidator(axs_regexp, axs3_field));
-    vxl1_field = new QLineEdit();
+    axs1_field = new QComboBox();
+    axs1_field->addItem("X");
+    axs1_field->addItem("-X");
+    axs1_field->addItem("Y");
+    axs1_field->addItem("-Y");
+    axs1_field->addItem("Z");
+    axs1_field->addItem("-Z");
+    axs1_field->setEditable(true);
+    axs1_field->lineEdit()->setReadOnly(true);
+    axs1_field->lineEdit()->setAlignment(Qt::AlignCenter);
+    for(int i = 0; i < axs1_field->count(); i++)
+        axs1_field->setItemData(i, Qt::AlignCenter, Qt::TextAlignmentRole);
+    axs1_field->setFont(QFont("", 8));
+    axs2_field = new QComboBox();
+    axs2_field->addItem("X");
+    axs2_field->addItem("-X");
+    axs2_field->addItem("Y");
+    axs2_field->addItem("-Y");
+    axs2_field->addItem("Z");
+    axs2_field->addItem("-Z");
+    axs2_field->setEditable(true);
+    axs2_field->lineEdit()->setReadOnly(true);
+    axs2_field->lineEdit()->setAlignment(Qt::AlignCenter);
+    for(int i = 0; i < axs2_field->count(); i++)
+        axs2_field->setItemData(i, Qt::AlignCenter, Qt::TextAlignmentRole);
+    axs2_field->setFont(QFont("", 8));
+    axs3_field = new QComboBox();
+    axs3_field->setFont(QFont("", 8));
+    axs3_field->addItem("X");
+    axs3_field->addItem("-X");
+    axs3_field->addItem("Y");
+    axs3_field->addItem("-Y");
+    axs3_field->addItem("Z");
+    axs3_field->addItem("-Z");
+    axs3_field->setEditable(true);
+    axs3_field->lineEdit()->setReadOnly(true);
+    axs3_field->lineEdit()->setAlignment(Qt::AlignCenter);
+    for(int i = 0; i < axs3_field->count(); i++)
+        axs3_field->setItemData(i, Qt::AlignCenter, Qt::TextAlignmentRole);
+    vxl1_field = new QDoubleSpinBox();
     vxl1_field->setAlignment(Qt::AlignCenter);
-    vxl1_field->setValidator(new QRegExpValidator(vxl_regexp, vxl1_field));
-    vxl2_field = new QLineEdit();
+    vxl1_field->setFont(QFont("", 8));
+    vxl2_field = new QDoubleSpinBox();
     vxl2_field->setAlignment(Qt::AlignCenter);
-    vxl2_field->setValidator(new QRegExpValidator(vxl_regexp, vxl2_field));
-    vxl3_field = new QLineEdit();
+    vxl2_field->setFont(QFont("", 8));
+    vxl3_field = new QDoubleSpinBox();
     vxl3_field->setAlignment(Qt::AlignCenter);
-    vxl3_field->setValidator(new QRegExpValidator(vxl_regexp, vxl3_field));
+    vxl3_field->setFont(QFont("", 8));
+
+    first_direction_label->setVisible(false);
+    second_direction_label->setVisible(false);
+    third_direction_label->setVisible(false);
+    axes_label->setVisible(false);
+    axs1_field->setVisible(false);
+    axs2_field->setVisible(false);
+    axs3_field->setVisible(false);
+    voxels_dims_label->setVisible(false);
+    vxl1_field->setVisible(false);
+    vxl2_field->setVisible(false);
+    vxl3_field->setVisible(false);
 
     //info panel widgets
     info_panel = new QGroupBox("Volume's informations");
     info_panel->setEnabled(false);
-    volumedir_label = new QLabel("Volume's directory");
-    volumedir_field = new QLabel();
-    volumedir_field->setAlignment(Qt::AlignCenter);
-    volumedir_field->setStyleSheet("border: 1px solid; border-color: gray; background-color: rgb(245,245,245)");
-    volume_dims_label = new QLabel("Volume's dimensions (number of stacks):");
-    direction_V_label_1 = new QLabel("(V)");
-    direction_H_label_1 = new QLabel("(H)");
-    by_label_1 = new QLabel("x");
-    nrows_field = new QLabel();
+    volumedir_label = new QLabel("Absolute path:");
+    volumedir_field = new QLineEdit();
+    volumedir_field->setReadOnly(true);
+    volumedir_field->setAlignment(Qt::AlignVCenter | Qt::AlignLeft);
+    volume_dims_label = new QLabel("Number of stacks:");
+    by_label_1 = new QLabel(QChar(0x00D7));
+    by_label_1->setAlignment(Qt::AlignCenter);
+    nrows_field = new QLineEdit();
+    nrows_field->setReadOnly(true);
     nrows_field->setAlignment(Qt::AlignCenter);
-    nrows_field->setStyleSheet("border: 1px solid; border-color: gray; background-color: rgb(245,245,245)");
-    ncols_field = new QLabel();
+    ncols_field = new QLineEdit();
+    ncols_field->setReadOnly(true);
     ncols_field->setAlignment(Qt::AlignCenter);
-    ncols_field->setStyleSheet("border: 1px solid; border-color: gray; background-color: rgb(245,245,245)");
     stacks_dims_label = new QLabel("Stacks dimensions (voxels):");
-    direction_V_label_2 = new QLabel("(V)");
-    direction_H_label_2 = new QLabel("(H)");
-    direction_D_label_2 = new QLabel("(D)");
-    by_label_2 = new QLabel("x");
-    by_label_3 = new QLabel("x");
-    stack_height_field = new QLabel();
+    by_label_2 = new QLabel(QChar(0x00D7));
+    by_label_3 = new QLabel(QChar(0x00D7));
+    by_label_2->setAlignment(Qt::AlignCenter);
+    by_label_3->setAlignment(Qt::AlignCenter);
+    stack_height_field = new QLineEdit();
+    stack_height_field->setReadOnly(true);
     stack_height_field->setAlignment(Qt::AlignCenter);
-    stack_height_field->setStyleSheet("border: 1px solid; border-color: gray; background-color: rgb(245,245,245)");
-    stack_width_field = new QLabel();
+    stack_width_field = new QLineEdit();
+    stack_width_field->setReadOnly(true);
     stack_width_field->setAlignment(Qt::AlignCenter);
-    stack_width_field->setStyleSheet("border: 1px solid; border-color: gray; background-color: rgb(245,245,245)");
-    stack_depth_field = new QLabel();
+    stack_depth_field = new QLineEdit();
+    stack_depth_field->setReadOnly(true);
     stack_depth_field->setAlignment(Qt::AlignCenter);
-    stack_depth_field->setStyleSheet("border: 1px solid; border-color: gray; background-color: rgb(245,245,245)");
-    voxel_dims_label = new QLabel("Voxel's dimensions (microns):");
-    direction_V_label_3 = new QLabel("(V)");
-    direction_H_label_3 = new QLabel("(H)");
-    direction_D_label_3 = new QLabel("(D)");
-    by_label_4 = new QLabel("x");
-    by_label_5 = new QLabel("x");
-    vxl_V_field = new QLabel();
-    vxl_V_field->setAlignment(Qt::AlignCenter);
-    vxl_V_field->setStyleSheet("border: 1px solid; border-color: gray; background-color: rgb(245,245,245)");
-    vxl_H_field = new QLabel();
-    vxl_H_field->setAlignment(Qt::AlignCenter);
-    vxl_H_field->setStyleSheet("border: 1px solid; border-color: gray; background-color: rgb(245,245,245)");
-    vxl_D_field = new QLabel();
-    vxl_D_field->setAlignment(Qt::AlignCenter);
-    vxl_D_field->setStyleSheet("border: 1px solid; border-color: gray; background-color: rgb(245,245,245)");
-    origin_label = new QLabel("Origin (millimeters):");
-    direction_V_label_4 = new QLabel("(V)");
-    direction_H_label_4 = new QLabel("(H)");
-    direction_D_label_4 = new QLabel("(D)");
-    org_V_field = new QLabel();
-    org_V_field->setAlignment(Qt::AlignCenter);
-    org_V_field->setStyleSheet("border: 1px solid; border-color: gray; background-color: rgb(245,245,245)");
-    org_H_field = new QLabel();
-    org_H_field->setAlignment(Qt::AlignCenter);
-    org_H_field->setStyleSheet("border: 1px solid; border-color: gray; background-color: rgb(245,245,245)");
-    org_D_field = new QLabel();
-    org_D_field->setAlignment(Qt::AlignCenter);
-    org_D_field->setStyleSheet("border: 1px solid; border-color: gray; background-color: rgb(245,245,245)");
+    voxel_dims_label = new QLabel(QString("Voxel's dims (").append(QChar(0x03BC)).append("m):"));
+    by_label_4 = new QLabel(QChar(0x00D7));
+    by_label_5 = new QLabel(QChar(0x00D7));
+    by_label_4->setAlignment(Qt::AlignCenter);
+    by_label_5->setAlignment(Qt::AlignCenter);
+    vxl_Y_field = new QLineEdit();
+    vxl_Y_field->setReadOnly(true);
+    vxl_Y_field->setAlignment(Qt::AlignCenter);
+    vxl_X_field = new QLineEdit();
+    vxl_X_field->setReadOnly(true);
+    vxl_X_field->setAlignment(Qt::AlignCenter);
+    vxl_Z_field = new QLineEdit();
+    vxl_Z_field->setReadOnly(true);
+    vxl_Z_field->setAlignment(Qt::AlignCenter);
+    origin_label = new QLabel("Origin (mm):");
+    org_Y_field = new QLineEdit();
+    org_Y_field->setReadOnly(true);
+    org_Y_field->setAlignment(Qt::AlignCenter);
+    org_X_field = new QLineEdit();
+    org_X_field->setReadOnly(true);
+    org_X_field->setAlignment(Qt::AlignCenter);
+    org_Z_field = new QLineEdit();
+    org_Z_field->setReadOnly(true);
+    org_Z_field->setAlignment(Qt::AlignCenter);
     stacks_overlap_label = new QLabel("Stacks overlap (voxels):");
-    direction_V_label_5 = new QLabel("(V)");
-    direction_H_label_5 = new QLabel("(H)");
-    ovp_V_field = new QLabel();
-    ovp_V_field->setAlignment(Qt::AlignCenter);
-    ovp_V_field->setStyleSheet("border: 1px solid; border-color: gray; background-color: rgb(245,245,245)");
-    ovp_H_field = new QLabel();
-    ovp_H_field->setAlignment(Qt::AlignCenter);
-    ovp_H_field->setStyleSheet("border: 1px solid; border-color: gray; background-color: rgb(245,245,245)");
+    ovp_Y_field = new QLineEdit();
+    ovp_Y_field->setReadOnly(true);
+    ovp_Y_field->setAlignment(Qt::AlignCenter);
+    ovp_X_field = new QLineEdit();
+    ovp_X_field->setReadOnly(true);
+    ovp_X_field->setAlignment(Qt::AlignCenter);
 
 
     //preview panel
-    preview_panel = new QGroupBox("Test motorized stages precision");
-    preview_panel->setEnabled(false);
-    preview_desc = new QLabel("In order to test if the volume has been properly imported and the precision of motorized stages, "
-                              "you can select a slice to be stitched using nominal coordinates. The result will be shown into Vaa3D.");
-    preview_desc->setWordWrap(true);
-    slice_slider = new QSlider(Qt::Horizontal);
-    slice_index_field = new QLabel();
-    slice_index_field->setAlignment(Qt::AlignCenter);
-    slice_index_field->setStyleSheet("border: 1px solid; border-color: gray; background-color: rgb(245,245,245)");
+    slice_spinbox = new QSpinBox();
+    slice_spinbox->setPrefix("Slice ");
+    slice_spinbox->setAlignment(Qt::AlignCenter);
     preview_button = new QPushButton(this);
     preview_button->setIcon(QIcon(":/icons/preview.png"));
-    preview_button->setText("Get slice");
+    preview_button->setIconSize(QSize(20,20));
+    preview_button->setText("Preview");
 
     /*** LAYOUT SECTIONS ***/
     //import form
     QWidget* container_tmp = new QWidget();
     QHBoxLayout* container_tmp_layout = new QHBoxLayout();
+    path_field->setFixedWidth(450);
     container_tmp_layout->addWidget(path_field);
-    container_tmp_layout->addWidget(voldir_button);
-    container_tmp_layout->addWidget(projfile_button);
+    container_tmp_layout->addWidget(voldir_button, 1);
+    container_tmp_layout->addWidget(projfile_button, 1);
+    container_tmp_layout->setContentsMargins(0,0,0,0);
     container_tmp->setLayout(container_tmp_layout);
     QWidget* container_tmp2 = new QWidget();
     QGridLayout* container_tmp2_layout = new QGridLayout();
-    container_tmp2_layout->addWidget(first_direction_label, 0, 2, 1, 1, Qt::AlignHCenter);
-    container_tmp2_layout->addWidget(second_direction_label, 0, 3, 1, 1, Qt::AlignHCenter);
-    container_tmp2_layout->addWidget(third_direction_label, 0, 4, 1, 1, Qt::AlignHCenter);
-    container_tmp2_layout->addWidget(axes_label, 1, 0, 1, 2);
-    container_tmp2_layout->addWidget(axs1_field, 1, 2, 1, 1, Qt::AlignHCenter);
-    container_tmp2_layout->addWidget(axs2_field, 1, 3, 1, 1, Qt::AlignHCenter);
-    container_tmp2_layout->addWidget(axs3_field, 1, 4, 1, 1, Qt::AlignHCenter);
-    container_tmp2_layout->addWidget(voxels_dims_label, 2, 0, 1, 2);
-    container_tmp2_layout->addWidget(vxl1_field, 2, 2, 1, 1, Qt::AlignHCenter);
-    container_tmp2_layout->addWidget(vxl2_field, 2, 3, 1, 1, Qt::AlignHCenter);
-    container_tmp2_layout->addWidget(vxl3_field, 2, 4, 1, 1, Qt::AlignHCenter);
+    container_tmp2_layout->addWidget(first_direction_label, 0, 1, 1, 3, Qt::AlignHCenter);
+    container_tmp2_layout->addWidget(second_direction_label, 0, 5, 1, 3, Qt::AlignHCenter);
+    container_tmp2_layout->addWidget(third_direction_label, 0, 9, 1, 3, Qt::AlignHCenter);
+    container_tmp2_layout->addWidget(axes_label, 1, 0, 1, 1);
+    axes_label->setFixedWidth(200);
+    axs1_field->setFixedWidth(100);
+    axs2_field->setFixedWidth(100);
+    axs3_field->setFixedWidth(100);
+    vxl1_field->setFixedWidth(100);
+    vxl2_field->setFixedWidth(100);
+    vxl3_field->setFixedWidth(100);
+    container_tmp2_layout->addWidget(axs1_field, 1, 1, 1, 3, Qt::AlignHCenter);
+    container_tmp2_layout->addWidget(axs2_field, 1, 5, 1, 3, Qt::AlignHCenter);
+    container_tmp2_layout->addWidget(axs3_field, 1, 9, 1, 3, Qt::AlignHCenter);
+    container_tmp2_layout->addWidget(voxels_dims_label, 2, 0, 1, 1);
+    container_tmp2_layout->addWidget(vxl1_field, 2, 1, 1, 3, Qt::AlignHCenter);
+    container_tmp2_layout->addWidget(vxl2_field, 2, 5, 1, 3, Qt::AlignHCenter);
+    container_tmp2_layout->addWidget(vxl3_field, 2, 9, 1, 3, Qt::AlignHCenter);
+    container_tmp2_layout->setContentsMargins(0,0,0,0);
+    container_tmp2_layout->setSpacing(0);
     container_tmp2->setLayout(container_tmp2_layout);
     QVBoxLayout* import_form_layout = new QVBoxLayout();
-    import_form_layout->addWidget(container_tmp);    
+    import_form_layout->addWidget(container_tmp);
     import_form_layout->addWidget(reimport_checkbox);
-    import_form_layout->addWidget(container_tmp2);
+    import_form_layout->addWidget(container_tmp2,1);
     import_form->setLayout(import_form_layout);
     import_form->setStyle(new QWindowsStyle());
 
     //info panel
     QGridLayout* info_panel_layout = new QGridLayout();
-    info_panel_layout->addWidget(volumedir_label,       0,0,1,9);
-    info_panel_layout->addWidget(volumedir_field,       0,9,1,10);
-    info_panel_layout->addWidget(volume_dims_label,     1,0,1,9);
-    info_panel_layout->addWidget(nrows_field,           1,9,1,2);
-    info_panel_layout->addWidget(direction_V_label_1,   1,11,1,1);
-    info_panel_layout->addWidget(by_label_1,            1,12,1,1);
-    info_panel_layout->addWidget(ncols_field,           1,13,1,2);
-    info_panel_layout->addWidget(direction_H_label_1,   1,15,1,1);
-    info_panel_layout->addWidget(stacks_dims_label,     2,0,1,9);
-    info_panel_layout->addWidget(stack_height_field,    2,9,1,2);
-    info_panel_layout->addWidget(direction_V_label_2,   2,11,1,1);
-    info_panel_layout->addWidget(by_label_2,            2,12,1,1);
-    info_panel_layout->addWidget(stack_width_field,     2,13,1,2);
-    info_panel_layout->addWidget(direction_H_label_2,   2,15,1,1);
-    info_panel_layout->addWidget(by_label_3,            2,16,1,1);
-    info_panel_layout->addWidget(stack_depth_field,     2,17,1,2);
-    info_panel_layout->addWidget(direction_D_label_2,   2,19,1,1);
-    info_panel_layout->addWidget(voxel_dims_label,      3,0,1,9);
-    info_panel_layout->addWidget(vxl_V_field,           3,9,1,2);
-    info_panel_layout->addWidget(direction_V_label_3,   3,11,1,1);
-    info_panel_layout->addWidget(by_label_4,            3,12,1,1);
-    info_panel_layout->addWidget(vxl_H_field,           3,13,1,2);
-    info_panel_layout->addWidget(direction_H_label_3,   3,15,1,1);
-    info_panel_layout->addWidget(by_label_5,            3,16,1,1);
-    info_panel_layout->addWidget(vxl_D_field,           3,17,1,2);
-    info_panel_layout->addWidget(direction_D_label_3,   3,19,1,1);
-    info_panel_layout->addWidget(origin_label,          4,0,1,9);
-    info_panel_layout->addWidget(org_V_field,           4,9,1,2);
-    info_panel_layout->addWidget(direction_V_label_4,   4,11,1,1);
-    info_panel_layout->addWidget(org_H_field,           4,13,1,2);
-    info_panel_layout->addWidget(direction_H_label_4,   4,15,1,1);
-    info_panel_layout->addWidget(org_D_field,           4,17,1,2);
-    info_panel_layout->addWidget(direction_D_label_4,   4,19,1,1);
-    info_panel_layout->addWidget(stacks_overlap_label,  5,0,1,9);
-    info_panel_layout->addWidget(ovp_V_field,           5,9,1,2);
-    info_panel_layout->addWidget(direction_V_label_5,   5,11,1,1);
-    info_panel_layout->addWidget(ovp_H_field,           5,13,1,2);
-    info_panel_layout->addWidget(direction_H_label_5,   5,15,1,1);
+    info_panel_layout->addWidget(volumedir_label,       0,0,1,1);
+    volumedir_label->setFixedWidth(200);
+    info_panel_layout->addWidget(volumedir_field,       0,1,1,11);
+    info_panel_layout->addWidget(volume_dims_label,     1,0,1,1);
+    info_panel_layout->addWidget(nrows_field,           1,1,1,3);
+    info_panel_layout->addWidget(by_label_1,            1,4,1,1);
+    info_panel_layout->addWidget(ncols_field,           1,5,1,3);
+    info_panel_layout->addWidget(stacks_dims_label,     2,0,1,1);
+    info_panel_layout->addWidget(stack_width_field,    2,1,1,3);
+    info_panel_layout->addWidget(by_label_2,            2,4,1,1);
+    info_panel_layout->addWidget(stack_height_field,     2,5,1,3);
+    info_panel_layout->addWidget(by_label_3,            2,8,1,1);
+    info_panel_layout->addWidget(stack_depth_field,     2,9,1,3);
+    info_panel_layout->addWidget(voxel_dims_label,      3,0,1,1);
+    info_panel_layout->addWidget(vxl_X_field,           3,1,1,3);
+    info_panel_layout->addWidget(by_label_4,            3,4,1,1);
+    info_panel_layout->addWidget(vxl_Y_field,           3,5,1,3);
+    info_panel_layout->addWidget(by_label_5,            3,8,1,1);
+    info_panel_layout->addWidget(vxl_Z_field,           3,9,1,3);
+    info_panel_layout->addWidget(origin_label,          4,0,1,1);
+    info_panel_layout->addWidget(org_X_field,           4,1,1,3);
+    info_panel_layout->addWidget(org_Y_field,           4,5,1,3);
+    info_panel_layout->addWidget(org_Z_field,           4,9,1,3);
+    info_panel_layout->addWidget(stacks_overlap_label,  5,0,1,1);
+    info_panel_layout->addWidget(ovp_X_field,           5,1,1,3);
+    QLabel* by_label_6 = new QLabel(QChar(0x00D7));
+    by_label_6->setAlignment(Qt::AlignCenter);
+    info_panel_layout->addWidget(by_label_6,            5,4,1,1);
+    info_panel_layout->addWidget(ovp_Y_field,           5,5,1,3);
+    info_panel_layout->addWidget(new QLabel("Stitch test:"),6,0,1,1);
+    info_panel_layout->addWidget(slice_spinbox,          6,1,1,3);
+    info_panel_layout->addWidget(preview_button,        6,5,1,3);
+    info_panel_layout->setVerticalSpacing(2);
     info_panel->setLayout(info_panel_layout);
     info_panel->setStyle(new QWindowsStyle());
 
-    //preview panel
-    QWidget* container_tmp3 = new QWidget();
-    QGridLayout* container_tmp3_layout = new QGridLayout();
-    container_tmp3_layout->addWidget(slice_slider, 0, 0, 1, 9);
-    container_tmp3_layout->addWidget(slice_index_field, 0, 10, 1, 2);
-    container_tmp3_layout->addWidget(preview_button, 0, 13, 1, 2);
-    container_tmp3->setLayout(container_tmp3_layout);
-    QVBoxLayout* preview_panel_layout = new QVBoxLayout();
-    preview_panel_layout->addWidget(preview_desc);
-    preview_panel_layout->addWidget(container_tmp3);
-    preview_panel->setLayout(preview_panel_layout);
-    preview_panel->setStyle(new QWindowsStyle());
 
     //overall
     QVBoxLayout* layout = new QVBoxLayout();
-    layout->addWidget(helpbox);
     layout->addWidget(import_form);
     layout->addWidget(info_panel);
-    layout->addWidget(preview_panel);
+    layout->addStretch(1);
+    layout->setContentsMargins(10,0,10,5);
     setLayout(layout);
 
     //wait animated GIF tab icon
@@ -288,10 +306,13 @@ PTabImport::PTabImport(QMyTabWidget* _container, int _tab_index) : QWidget(), co
     // signals and slots
     connect(voldir_button, SIGNAL(clicked()), this, SLOT(voldir_button_clicked()));
     connect(projfile_button, SIGNAL(clicked()), this, SLOT(projfile_button_clicked()));
-    connect(slice_slider, SIGNAL(valueChanged(int)), this, SLOT(slice_slider_value_changed(int)));
     connect(preview_button, SIGNAL(clicked()), this, SLOT(preview_button_clicked()));
     connect(CImport::instance(), SIGNAL(sendOperationOutcome(MyException*)), this, SLOT(import_done(MyException*)), Qt::QueuedConnection);
     connect(CPreview::instance(), SIGNAL(sendOperationOutcome(MyException*,Image4DSimple*)), this, SLOT(preview_done(MyException*,Image4DSimple*)), Qt::QueuedConnection);
+    connect(path_field, SIGNAL(textChanged(QString)), this, SLOT(volumePathChanged(QString)));
+    connect(reimport_checkbox, SIGNAL(stateChanged(int)), this, SLOT(reimportCheckboxChanged(int)));
+
+    reset();
 }
 
 
@@ -300,6 +321,56 @@ PTabImport::~PTabImport()
     #ifdef TSP_DEBUG
     printf("TeraStitcher plugin [thread %d] >> PTabImport destroyed\n", this->thread()->currentThreadId());
     #endif
+}
+
+//reset method
+void PTabImport::reset()
+{
+    #ifdef TSP_DEBUG
+    printf("TeraStitcher plugin [thread %d] >> PTabImport::reset()\n", this->thread()->currentThreadId());
+    #endif
+
+    //import form panel
+    import_form->setEnabled(true);
+    path_field->setText("Enter the volume's directory or a valid XML project file");
+    reimport_checkbox->setChecked(false);
+    axs1_field->setCurrentIndex(0);
+    axs2_field->setCurrentIndex(2);
+    axs3_field->setCurrentIndex(4);
+    vxl1_field->setMinimum(0.1);
+    vxl1_field->setMaximum(1000.0);
+    vxl1_field->setSingleStep(0.1);
+    vxl1_field->setValue(1.0);
+    vxl2_field->setMinimum(0.1);
+    vxl2_field->setMaximum(1000.0);
+    vxl2_field->setSingleStep(0.1);
+    vxl2_field->setValue(1.0);
+    vxl3_field->setMinimum(0.1);
+    vxl3_field->setMaximum(1000.0);
+    vxl3_field->setSingleStep(0.1);
+    vxl3_field->setValue(1.0);
+
+    //info panel
+    info_panel->setEnabled(false);
+    volumedir_field->setText("");
+    nrows_field->setText("");
+    ncols_field->setText("");
+    stack_height_field->setText("");
+    stack_width_field->setText("");
+    stack_depth_field->setText("");
+    vxl_Y_field->setText("");
+    vxl_X_field->setText("");
+    vxl_Z_field->setText("");
+    org_Y_field->setText("");
+    org_X_field->setText("");
+    org_Z_field->setText("");
+    ovp_Y_field->setText("");
+    ovp_X_field->setText("");
+
+    slice_spinbox->setMinimum(0);
+    slice_spinbox->setMaximum(0);
+    slice_spinbox->setValue(0);
+    slice_spinbox->setSuffix("/0");
 }
 
 /**********************************************************************************
@@ -360,7 +431,6 @@ void PTabImport::preview_button_clicked()
     #endif
 
     //disabling preview panel and enabling progress bar animation and tab wait animation
-    preview_panel->setEnabled(false);
     PMain::instance()->getProgressBar()->setEnabled(true);
     PMain::instance()->getProgressBar()->setMinimum(0);
     PMain::instance()->getProgressBar()->setMaximum(0);
@@ -370,21 +440,9 @@ void PTabImport::preview_button_clicked()
     container->getTabBar()->setTabButton(tab_index, QTabBar::LeftSide, wait_label);
 
     //launching preview thread
-    CPreview::instance()->setMembers(CImport::instance()->getVolume(), slice_slider->value());
+    CPreview::instance()->setMembers(CImport::instance()->getVolume(), slice_spinbox->value()-1);
     CPreview::instance()->start();
 
-}
-
-/**********************************************************************************
-* Called when "slice_slider" value has changed.
-* Updates value of "slice_index_field".
-***********************************************************************************/
-void PTabImport::slice_slider_value_changed(int new_val)
-{
-    #if TSP_DEBUG > 2
-    printf("TeraStitcher plugin [thread %d] >> PTabImport slice_slider_value_changed() launched\n", this->thread()->currentThreadId());
-    #endif
-    slice_index_field->setText(QString::number(new_val));
 }
 
 /*********************************************************************************
@@ -419,49 +477,12 @@ void PTabImport::start()
             //or "Re-import" checkbox is selected, further informations are required
             if(!StackedVolume::fileExists(mdata_fpath.c_str()) || reimport_checkbox->isChecked())
             {
-                int pos=0;
-                QString tbv = axs1_field->text();
-                if(axs1_field->validator()->validate(tbv,pos) != QValidator::Acceptable)
-                {
-                    axs1_field->setFocus();
-                    throw MyException("One or more fields not properly filled");
-                }
-                tbv = axs2_field->text();
-                if(axs2_field->validator()->validate(tbv,pos) != QValidator::Acceptable)
-                {
-                    axs2_field->setFocus();
-                    throw MyException("One or more fields not properly filled");
-                }
-                tbv = axs3_field->text();
-                if(axs3_field->validator()->validate(tbv,pos) != QValidator::Acceptable)
-                {
-                    axs3_field->setFocus();
-                    throw MyException("One or more fields not properly filled");
-                }
-                tbv = vxl1_field->text();
-                if(vxl1_field->validator()->validate(tbv,pos) != QValidator::Acceptable)
-                {
-                    vxl1_field->setFocus();
-                    throw MyException("One or more fields not properly filled");
-                }
-                tbv = vxl2_field->text();
-                if(vxl2_field->validator()->validate(tbv,pos) != QValidator::Acceptable)
-                {
-                    vxl2_field->setFocus();
-                    throw MyException("One or more fields not properly filled");
-                }
-                tbv = vxl3_field->text();
-                if(vxl3_field->validator()->validate(tbv,pos) != QValidator::Acceptable)
-                {
-                    vxl3_field->setFocus();
-                    throw MyException("One or more fields not properly filled");
-                }
-                CImport::instance()->setAxes(axs1_field->text().toStdString().c_str(),
-                                             axs2_field->text().toStdString().c_str(),
-                                             axs3_field->text().toStdString().c_str());
-                CImport::instance()->setVoxels(vxl1_field->text().toStdString().c_str(),
-                                               vxl2_field->text().toStdString().c_str(),
-                                               vxl3_field->text().toStdString().c_str());
+                CImport::instance()->setAxes(axs1_field->currentText().toStdString(),
+                                             axs2_field->currentText().toStdString(),
+                                             axs3_field->currentText().toStdString());
+                CImport::instance()->setVoxels(static_cast<float>(vxl1_field->value()),
+                                               static_cast<float>(vxl2_field->value()),
+                                               static_cast<float>(vxl3_field->value()));
                 CImport::instance()->setReimport(reimport_checkbox->isChecked());
             }
         }
@@ -482,7 +503,7 @@ void PTabImport::start()
     catch(MyException &ex)
     {
         QMessageBox::critical(this,QObject::tr("Error"), QObject::tr(ex.what()),QObject::tr("Ok"));
-        PMain::instance()->resetGUI();
+        PMain::instance()->setToReady();
         CImport::instance()->reset();
     }
 }
@@ -504,7 +525,7 @@ void PTabImport::stop()
 
     //re-enabling import form and disabling progress bar and wait animations
     import_form->setEnabled(true);
-    PMain::instance()->resetGUI();
+    PMain::instance()->setToReady();
     wait_movie->stop();
     container->getTabBar()->setTabButton(tab_index, QTabBar::LeftSide, 0);
 }
@@ -531,25 +552,24 @@ void PTabImport::import_done(MyException *ex)
     {
         //otherwise inserting volume's informations...
         info_panel->setEnabled(true);
-        preview_panel->setEnabled(true);
         volumedir_field->setText(CImport::instance()->getVolume()->getSTACKS_DIR());
-        nrows_field->setText(QString::number(CImport::instance()->getVolume()->getN_ROWS()));
-        ncols_field->setText(QString::number(CImport::instance()->getVolume()->getN_COLS()));
-        stack_height_field->setText(QString::number(CImport::instance()->getVolume()->getStacksHeight()));
-        stack_width_field->setText(QString::number(CImport::instance()->getVolume()->getStacksWidth()));
-        stack_depth_field->setText(QString::number(CImport::instance()->getVolume()->getN_SLICES()));
-        vxl_V_field->setText(QString::number(CImport::instance()->getVolume()->getVXL_V()));
-        vxl_H_field->setText(QString::number(CImport::instance()->getVolume()->getVXL_H()));
-        vxl_D_field->setText(QString::number(CImport::instance()->getVolume()->getVXL_D()));
-        org_V_field->setText(QString::number(CImport::instance()->getVolume()->getORG_V()));
-        org_H_field->setText(QString::number(CImport::instance()->getVolume()->getORG_H()));
-        org_D_field->setText(QString::number(CImport::instance()->getVolume()->getORG_D()));
-        ovp_V_field->setText(QString::number(CImport::instance()->getVolume()->getOVERLAP_V()));
-        ovp_H_field->setText(QString::number(CImport::instance()->getVolume()->getOVERLAP_H()));
-        slice_slider->setMinimum(0);
-        slice_slider->setMaximum(CImport::instance()->getVolume()->getN_SLICES()-1);
-        slice_slider->setValue(slice_slider->maximum()/2);
-        slice_index_field->setText(QString::number(slice_slider->value()));
+        nrows_field->setText(QString::number(CImport::instance()->getVolume()->getN_ROWS()).append(" (rows)"));
+        ncols_field->setText(QString::number(CImport::instance()->getVolume()->getN_COLS()).append(" (columns)"));
+        stack_height_field->setText(QString::number(CImport::instance()->getVolume()->getStacksHeight()).append(" (Y)"));
+        stack_width_field->setText(QString::number(CImport::instance()->getVolume()->getStacksWidth()).append(" (X)"));
+        stack_depth_field->setText(QString::number(CImport::instance()->getVolume()->getN_SLICES()).append(" (Z)"));
+        vxl_Y_field->setText(QString::number(CImport::instance()->getVolume()->getVXL_V()).append(" (Y)"));
+        vxl_X_field->setText(QString::number(CImport::instance()->getVolume()->getVXL_H()).append(" (X)"));
+        vxl_Z_field->setText(QString::number(CImport::instance()->getVolume()->getVXL_D()).append(" (Z)"));
+        org_Y_field->setText(QString::number(CImport::instance()->getVolume()->getORG_V()).append(" (Y)"));
+        org_X_field->setText(QString::number(CImport::instance()->getVolume()->getORG_H()).append(" (X)"));
+        org_Z_field->setText(QString::number(CImport::instance()->getVolume()->getORG_D()).append(" (Z)"));
+        ovp_Y_field->setText(QString::number(CImport::instance()->getVolume()->getOVERLAP_V()).append(" (Y)"));
+        ovp_X_field->setText(QString::number(CImport::instance()->getVolume()->getOVERLAP_H()).append(" (X)"));
+        slice_spinbox->setMinimum(1);
+        slice_spinbox->setMaximum(CImport::instance()->getVolume()->getN_SLICES());
+        slice_spinbox->setValue(slice_spinbox->maximum()/2);
+        slice_spinbox->setSuffix(QString("/").append(QString::number(CImport::instance()->getVolume()->getN_SLICES())));
 
         //...and enabling (ed updating) all other tabs
         PTabDisplComp::getInstance()->setEnabled(true);
@@ -557,13 +577,14 @@ void PTabImport::import_done(MyException *ex)
         PTabDisplThresh::getInstance()->setEnabled(true);
         PTabPlaceTiles::getInstance()->setEnabled(true);
         PTabMergeTiles::getInstance()->setEnabled(true);
+
+        PMain::instance()->closeVolumeAction->setEnabled(true);
     }
 
     //resetting some widgets
-    PMain::instance()->resetGUI();
+    PMain::instance()->setToReady();
     wait_movie->stop();
     container->getTabBar()->setTabButton(tab_index, QTabBar::LeftSide, 0);
-    CImport::instance()->reset();
 }
 
 /**********************************************************************************
@@ -579,23 +600,54 @@ void PTabImport::preview_done(MyException *ex, Image4DSimple* img)
     #endif
 
     //resetting some widgets
-    preview_panel->setEnabled(true);
-    PMain::instance()->resetGUI();
+    PMain::instance()->setToReady();
     PMain::instance()->setStartButtonEnabled(true);
     wait_movie->stop();
     container->getTabBar()->setTabButton(tab_index, QTabBar::LeftSide, 0);
-    CImport::instance()->reset();
 
     //if an exception has occurred, showing a message error. Otherwise showing the computed preview
     if(ex)
         QMessageBox::critical(this,QObject::tr("Error"), QObject::tr(ex->what()),QObject::tr("Ok"));    
     else
     {
-        v3dhandle new_win = PMain::instance()->getV3D_env()->newImageWindow(QString("Slice ").append(slice_index_field->text()));
+        v3dhandle new_win = PMain::instance()->getV3D_env()->newImageWindow(QString("Slice ").append(slice_spinbox->text()));
         //Image4DSimple* img = new Image4DSimple();
         //char path[VM_STATIC_STRINGS_SIZE];
         //sprintf(path, "%s/test_middle_slice.tif", CImport::instance()->getVolume()->getSTACKS_DIR());
         //img->loadImage(path);
         PMain::instance()->getV3D_env()->setImage(new_win, img);
     }
+}
+
+/**********************************************************************************
+* Called when "path_field" value has changed.
+***********************************************************************************/
+void PTabImport::volumePathChanged(QString path)
+{
+    #ifdef TSP_DEBUG
+    printf("TeraStitcher plugin [thread %d] >> PTabImport volumePathChanged(path)\n", this->thread()->currentThreadId());
+    #endif
+
+    //checking if further informations are required
+    bool furtherInfoRequired = reimport_checkbox->isChecked() || (QDir(path_field->text()).exists() &&
+                               !QFile::exists(path_field->text().toStdString().append("/").append(VM_BIN_METADATA_FILE_NAME).c_str())                                );
+    first_direction_label->setVisible(furtherInfoRequired);
+    second_direction_label->setVisible(furtherInfoRequired);
+    third_direction_label->setVisible(furtherInfoRequired);
+    axes_label->setVisible(furtherInfoRequired);
+    axs1_field->setVisible(furtherInfoRequired);
+    axs2_field->setVisible(furtherInfoRequired);
+    axs3_field->setVisible(furtherInfoRequired);
+    voxels_dims_label->setVisible(furtherInfoRequired);
+    vxl1_field->setVisible(furtherInfoRequired);
+    vxl2_field->setVisible(furtherInfoRequired);
+    vxl3_field->setVisible(furtherInfoRequired);
+}
+
+/**********************************************************************************
+* Called when "reimport_chheckbox" state has changed.
+***********************************************************************************/
+void PTabImport::reimportCheckboxChanged(int)
+{
+    volumePathChanged(path_field->text());
 }

@@ -33,6 +33,7 @@
 #include <QtGui>
 #include "src/control/CPlugin.h"
 #include "QMyTabWidget.h"
+#include "PTabMergeTiles.h"
 
 class terastitcher::PTabPlaceTiles : public QWidget
 {
@@ -51,9 +52,6 @@ class terastitcher::PTabPlaceTiles : public QWidget
         QMyTabWidget* container;        //tabs container
         int tab_index;                  //tab index
 
-        //helpbox
-        QLabel* helpbox;
-
         //main widgets
         QLabel* saveproj_label;
         QLineEdit* saveproj_field;
@@ -61,7 +59,7 @@ class terastitcher::PTabPlaceTiles : public QWidget
         QLabel* algo_label;
         QComboBox* algo_cbox;
         QLabel* per_stack_displ_number_label;
-        QLabel* per_stack_displ_number_field;
+        QLineEdit* per_stack_displ_number_field;
 
         //other widgets
         QMovie *wait_movie;             //animated wait GIF icon
@@ -96,6 +94,14 @@ class terastitcher::PTabPlaceTiles : public QWidget
         * the <StackedVolume> object of <CImport> instance.
         ***********************************************************************************/
         void setEnabled(bool enabled);
+
+
+        //reset method
+        void reset();
+
+        //gives PMain instances public access to this class members
+        friend class PMain;
+        friend class PTabMergeTiles;
 
     public slots:
 

@@ -50,11 +50,8 @@ class terastitcher::PTabMergeTiles : public QWidget
     QMyTabWidget* container;        //tabs container
     int tab_index;                  //tab index
 
-    //helpbox
-    QLabel* helpbox;
-
     //basic settings panel widgets
-    QGroupBox* basic_panel;
+    QWidget* basic_panel;
     QLabel* savedir_label;
     QLineEdit* savedir_field;
     QPushButton* browse_button;
@@ -72,17 +69,14 @@ class terastitcher::PTabMergeTiles : public QWidget
     QLabel* volumeformat_label;
     QCheckBox* multistack_cbox;
     QCheckBox* singlestack_cbox;
-    QLabel* stackdims_label;
-    QLabel* by_label;
-    QLabel* stackheight_label;
-    QLabel* stackwidth_label;
     QSpinBox* stackheight_field;
     QSpinBox* stackwidth_field;
+    QLabel* byLabel;
     QLabel* memocc_label;
-    QLabel* memocc_field;
+    QLineEdit* memocc_field;
 
     //basic settings panel widgets
-    QGroupBox* advanced_panel;
+    QWidget* advanced_panel;
     QLabel* volumeportion_label;
     QSpinBox *row0_field, *row1_field, *col0_field, *col1_field;
     QSpinBox *slice0_field, *slice1_field;
@@ -131,6 +125,11 @@ public:
     ***********************************************************************************/
     void setEnabled(bool enabled);
 
+    //reset method
+    void reset();
+
+    //gives PMain and CMergeTiles instances public access to this class members
+    friend class PMain;
     friend class terastitcher::CMergeTiles;
 
 public slots:
