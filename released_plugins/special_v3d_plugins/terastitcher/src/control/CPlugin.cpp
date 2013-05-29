@@ -45,7 +45,7 @@ namespace terastitcher
     *    PARAMETERS    *
     ********************
     ---------------------------------------------------------------------------------------------------------------------------*/
-    std::string version = "1.0.0";
+    std::string version = "1.0.1";
     /*-------------------------------------------------------------------------------------------------------------------------*/
 }
 
@@ -72,6 +72,9 @@ void CPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWi
     #ifdef TSP_DEBUG
     printf("TeraStitcher plugin [thread %d] >> CPlugin::domenu launched\n", this->thread()->currentThreadId());
     #endif
+
+    //overriding the current locale with the standard POSIX locale
+    setlocale(LC_ALL, "POSIX");
 
     if (menu_name == tr("TeraStitcher"))
     {

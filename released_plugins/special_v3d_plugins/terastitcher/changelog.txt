@@ -11,6 +11,16 @@ ties names are:
 - Rem: a feature no longer available
 
 ============================================================================================
+Version 1.0.1
+May 29th, 2013
+--------------------------------------------------------------------------------------------
+- Fix: fixed a bug which  caused incompatible XML files  (not signaled by any error message)
+       when saving/loading  to/from different  platform/O.S. combinations (i.e. the "locale"
+       problem). This caused real numbers (such as displacements or reliability measures) to
+       be incorretcly read/written.
+--------------------------------------------------------------------------------------------
+
+
 Version 1.0.0
 May 26th, 2013
 --------------------------------------------------------------------------------------------
