@@ -120,6 +120,8 @@ PTabMergeTiles::PTabMergeTiles(QMyTabWidget* _container, int _tab_index) : QWidg
     memocc_field->setReadOnly(true);
     memocc_field->setAlignment(Qt::AlignCenter);
     memocc_field->setFont(QFont("", 9));
+    showAdvancedButton = new QPushButton(QString("Advanced options ").append(QChar(0x00BB)), this);
+    showAdvancedButton->setCheckable(true);
 
     //advanced panel widgets
     advanced_panel = new QWidget();
@@ -221,7 +223,7 @@ PTabMergeTiles::PTabMergeTiles(QMyTabWidget* _container, int _tab_index) : QWidg
         basicpanel_layout->addWidget(resolutions_view_cboxs[i], 3+i, 11, 1, 1);
     }
     QWidget* emptyspace2 = new QWidget();
-    emptyspace2->setFixedHeight(30);
+    emptyspace2->setFixedHeight(15);
     basicpanel_layout->addWidget(emptyspace2, 3+S_MAX_MULTIRES, 0, 1, 11);
     basicpanel_layout->addWidget(volumeformat_label, 4+S_MAX_MULTIRES, 0, 1, 1);
     basicpanel_layout->addWidget(singlestack_cbox, 4+S_MAX_MULTIRES, 1, 1, 3);
@@ -237,7 +239,15 @@ PTabMergeTiles::PTabMergeTiles(QMyTabWidget* _container, int _tab_index) : QWidg
     basicpanel_layout->addLayout(stacksDimsLayout, 4+S_MAX_MULTIRES, 7, 1, 5);
     basicpanel_layout->addWidget(memocc_label, 5+S_MAX_MULTIRES, 0, 1, 1);
     basicpanel_layout->addWidget(memocc_field, 5+S_MAX_MULTIRES, 1, 1, 2);
-    basicpanel_layout->setVerticalSpacing(0);
+    QWidget* emptyspace3 = new QWidget();
+    emptyspace3->setFixedHeight(5);
+    QWidget* emptyspace4 = new QWidget();
+    emptyspace4->setFixedHeight(5);
+    basicpanel_layout->addWidget(emptyspace3, 6+S_MAX_MULTIRES, 0, 1, 12);
+    basicpanel_layout->addWidget(showAdvancedButton, 7+S_MAX_MULTIRES, 0, 1, 12);
+    basicpanel_layout->addWidget(emptyspace4, 8+S_MAX_MULTIRES, 0, 1, 12);
+    basicpanel_layout->setVerticalSpacing(0);    
+    basicpanel_layout->setContentsMargins(10,0,10,0);
     basic_panel->setLayout(basicpanel_layout);
 
     //advanced settings panel
@@ -283,6 +293,7 @@ PTabMergeTiles::PTabMergeTiles(QMyTabWidget* _container, int _tab_index) : QWidg
     advancedpanel_layout->addWidget(imgdepth_label, 4, 2, 1, 1);
     advancedpanel_layout->addWidget(imgdepth_cbox, 4, 3, 1, 1);
     advancedpanel_layout->setVerticalSpacing(2);
+    advancedpanel_layout->setContentsMargins(10,0,10,0);
     advanced_panel->setLayout(advancedpanel_layout);
 
     //overall
@@ -322,6 +333,7 @@ PTabMergeTiles::PTabMergeTiles(QMyTabWidget* _container, int _tab_index) : QWidg
         connect(resolutions_view_cboxs[i], SIGNAL(stateChanged(int)), this, SLOT(viewinVaa3D_changed(int)));
     }
     connect(CMergeTiles::instance(), SIGNAL(sendOperationOutcome(MyException*, Image4DSimple*)), this, SLOT(merging_done(MyException*, Image4DSimple*)), Qt::QueuedConnection);
+    connect(showAdvancedButton, SIGNAL(toggled(bool)), this, SLOT(showAdvancedChanged(bool)));
 
     reset();
 }
@@ -385,6 +397,9 @@ void PTabMergeTiles::reset()
     col1_field->setValue(0);
     multistack_cbox->setChecked(true);
 
+    showAdvancedButton->setChecked(false);
+    advanced_panel->setVisible(false);
+
     setEnabled(false);
 }
 
@@ -418,7 +433,7 @@ void PTabMergeTiles::start()
             return;
         }
 
-        //if basic mode is active, automatically performing the hidden steps (Projecting, Thresholding, Placing)
+        //if basic mode is active, automatically performing the hidden steps (Projecting, Thresholding, Placing) if necessary
         if(PMain::instance()->modeBasicAction->isChecked())
         {
             //asking confirmation to continue if no displacements were found
@@ -534,7 +549,6 @@ void PTabMergeTiles::setEnabled(bool enabled)
         col1_field->setMinimum(0);
         col1_field->setMaximum(volume->getN_COLS()-1);
         col1_field->setValue(volume->getN_COLS()-1);
-        multistack_cbox->setChecked(true);
         volumeformat_changed();
 
         //updating content
@@ -768,11 +782,18 @@ void PTabMergeTiles::merging_done(MyException *ex, Image4DSimple* img)
     //if an exception has occurred, showing a message error
     if(ex)
         QMessageBox::critical(this,QObject::tr("Error"), QObject::tr(ex->what()),QObject::tr("Ok"));
-    else if(img)
+    else
     {
-        v3dhandle new_win = PMain::instance()->getV3D_env()->newImageWindow(img->getFileName());
-        PMain::instance()->getV3D_env()->setImage(new_win, img);
+        if(img)
+        {
+            v3dhandle new_win = PMain::instance()->getV3D_env()->newImageWindow(img->getFileName());
+            PMain::instance()->getV3D_env()->setImage(new_win, img);
+
+            //showing operation successful message
+            QMessageBox::information(this, "Operation successful", "Step successfully performed!", QMessageBox::Ok);
+        }
     }
+
 
     //resetting some widgets
     PMain::instance()->setToReady();
@@ -781,4 +802,16 @@ void PTabMergeTiles::merging_done(MyException *ex, Image4DSimple* img)
         container->getTabBar()->setTabButton(2, QTabBar::LeftSide, 0);
     else
         container->getTabBar()->setTabButton(tab_index, QTabBar::LeftSide, 0);
+}
+
+/**********************************************************************************
+* Called when <showAdvancedButton> status changed
+***********************************************************************************/
+void PTabMergeTiles::showAdvancedChanged(bool status)
+{
+    #ifdef TSP_DEBUG
+    printf("TeraStitcher plugin [thread %d] >> PTabMergeTiles::showAdvancedChanged(%s)\n", this->thread()->currentThreadId(), (status? "true" : "false"));
+    #endif
+
+    advanced_panel->setVisible(status);
 }

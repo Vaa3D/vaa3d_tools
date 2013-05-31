@@ -11,6 +11,19 @@ ties names are:
 - Rem: a feature no longer available
 
 ============================================================================================
+Version 1.0.3
+May 31th, 2013
+--------------------------------------------------------------------------------------------
+- New: added "Step successfully performed!" message when a step is successfully performed.
+- Fix: fixed bug which caused stitched volume not to be opened in Vaa3D in "Basic mode" when
+       a resolution was selected to be opened in Vaa3D with "Open" checkbox.
+- New: added "Advanced options" button in "Aligning" and "Merging" tabs.
+- Fix: fixed bug in the "Projecting" tab which caused XML output path to be  incorrectly up-
+       dated after the step was performed.
+- Fix: "Basic mode" is enabled by default (previously it was "Advanced mode").
+--------------------------------------------------------------------------------------------
+
+
 Version 1.0.2
 May 30th, 2013
 --------------------------------------------------------------------------------------------

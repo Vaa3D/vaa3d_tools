@@ -59,7 +59,6 @@ PTabPlaceTiles::PTabPlaceTiles(QMyTabWidget* _container, int _tab_index) : QWidg
     saveproj_label = new QLabel("Save project XML to:");
     saveproj_field = new QLineEdit();
     saveproj_field->setFont(QFont("",8));
-    saveproj_field->setReadOnly(true);
     browse_button = new QPushButton("...");
     algo_label = new QLabel("Algorithm:");
     algo_cbox = new QComboBox();
@@ -82,7 +81,8 @@ PTabPlaceTiles::PTabPlaceTiles(QMyTabWidget* _container, int _tab_index) : QWidg
     gridlayout->addWidget(algo_cbox, 1, 1, 1, 6);
     gridlayout->addWidget(per_stack_displ_number_label, 4, 0, 1, 1);
     gridlayout->addWidget(per_stack_displ_number_field, 4, 1, 1, 3);
-    gridlayout->setVerticalSpacing(2);
+    gridlayout->setVerticalSpacing(2);    
+    gridlayout->setContentsMargins(10,0,10,0);
     QWidget *container = new QWidget();
     container->setLayout(gridlayout);
 
@@ -165,6 +165,9 @@ void PTabPlaceTiles::start()
         StackStitcher stitcher(volume);
         stitcher.computeTilesPlacement(algo_cbox->currentIndex());
         volume->saveXML(0, saveproj_field->text().toStdString().c_str());
+
+        //showing operation successful message
+        QMessageBox::information(this, "Operation successful", "Step successfully performed!", QMessageBox::Ok);
 
         //enabling (and updating) other tabs
         PTabMergeTiles::getInstance()->setEnabled(true);

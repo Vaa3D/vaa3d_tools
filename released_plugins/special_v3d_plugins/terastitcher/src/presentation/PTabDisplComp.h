@@ -62,6 +62,7 @@ class terastitcher::PTabDisplComp : public QWidget
         QSpinBox* subvoldims_sbox;
         QLabel* memocc_label;
         QLineEdit* memocc_field;
+        QPushButton* showAdvancedButton;
 
         //advanced panel widgets
         QWidget* advanced_panel;
@@ -147,6 +148,11 @@ class terastitcher::PTabDisplComp : public QWidget
         * aged in the current thread (ex != 0). Otherwise, the other tabs are updated.
         ***********************************************************************************/
         void displcomp_done(MyException *ex);
+
+        /**********************************************************************************
+        * Called when <showAdvancedButton> status changed
+        ***********************************************************************************/
+        void showAdvancedChanged(bool status);
 
 };
 

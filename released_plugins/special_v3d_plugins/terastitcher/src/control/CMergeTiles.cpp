@@ -169,8 +169,21 @@ void CMergeTiles::run()
 //reset method
 void CMergeTiles::reset()
 {
+    #ifdef TSP_DEBUG
+    printf("TeraStitcher plugin [thread %d] >> CMergeTiles::reset()\n", this->thread()->currentThreadId());
+    #endif
+
     for(int i=0; i<S_MAX_MULTIRES; i++)
         resolutions[i] = i==0;
     resolution_index_vaa3D = -1;
     pMergeTiles = 0;
+}
+
+void CMergeTiles::setResolutionToShow(int index)
+{
+    #ifdef TSP_DEBUG
+    printf("TeraStitcher plugin [thread %d] >> CMergeTiles::setResolutionToShow(%d)\n", this->thread()->currentThreadId(), index);
+    #endif
+
+    resolution_index_vaa3D = index;
 }

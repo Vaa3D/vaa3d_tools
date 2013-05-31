@@ -80,6 +80,8 @@ PTabDisplComp::PTabDisplComp(QMyTabWidget* _container, int _tab_index) : QWidget
     memocc_field = new QLineEdit();
     memocc_field->setReadOnly(true);
     memocc_field->setAlignment(Qt::AlignCenter);
+    showAdvancedButton = new QPushButton(QString("Advanced options ").append(QChar(0x00BB)), this);
+    showAdvancedButton->setCheckable(true);
 
     //creating Advanced panel widgets
     advanced_panel = new QWidget();
@@ -147,6 +149,13 @@ PTabDisplComp::PTabDisplComp(QMyTabWidget* _container, int _tab_index) : QWidget
     basicpanel_layout->addWidget(subvoldims_sbox,    2,1,1,2);
     basicpanel_layout->addWidget(memocc_label,       3,0,1,1);
     basicpanel_layout->addWidget(memocc_field,       3,1,1,2);
+    QWidget* emptyspace3 = new QWidget();
+    emptyspace3->setFixedHeight(5);
+    QWidget* emptyspace4 = new QWidget();
+    emptyspace4->setFixedHeight(1);
+    basicpanel_layout->addWidget(emptyspace3, 4+S_MAX_MULTIRES, 0, 1, 12);
+    basicpanel_layout->addWidget(showAdvancedButton, 5+S_MAX_MULTIRES, 0, 1, 12);
+    basicpanel_layout->addWidget(emptyspace4, 6+S_MAX_MULTIRES, 0, 1, 12);
     basicpanel_layout->setVerticalSpacing(2);
     basic_panel->setLayout(basicpanel_layout);
     basic_panel->setContentsMargins(0,0,0,0);
@@ -190,6 +199,7 @@ PTabDisplComp::PTabDisplComp(QMyTabWidget* _container, int _tab_index) : QWidget
     layout->addWidget(advanced_panel);
     layout->addStretch(1);
     layout->setSpacing(0);
+    layout->setContentsMargins(10,0,10,0);
     setLayout(layout);
 
     //wait animated GIF tab icon
@@ -205,6 +215,7 @@ PTabDisplComp::PTabDisplComp(QMyTabWidget* _container, int _tab_index) : QWidget
     connect(endcol_sbox, SIGNAL(valueChanged(int)), this, SLOT(updateMemoryOccupancy(int)));
     connect(browse_button, SIGNAL(clicked()), this, SLOT(browse_button_clicked()));
     connect(CDisplComp::instance(), SIGNAL(sendOperationOutcome(MyException*)), this, SLOT(displcomp_done(MyException*)), Qt::QueuedConnection);
+    connect(showAdvancedButton, SIGNAL(toggled(bool)), this, SLOT(showAdvancedChanged(bool)));
 
     reset();
 }
@@ -246,6 +257,9 @@ void PTabDisplComp::reset()
     restoreSPIM_cbox->setChecked(false);
     subvoldims_sbox->setValue(100);
     memocc_field->setText("");
+
+    showAdvancedButton->setChecked(false);
+    advanced_panel->setVisible(false);
 
     setEnabled(false);
 }
@@ -417,6 +431,9 @@ void PTabDisplComp::displcomp_done(MyException *ex)
     }
     else
     {
+        //showing operation successful message
+        QMessageBox::information(this, "Operation successful", "Step successfully performed!", QMessageBox::Ok);
+
         //otherwise updating other tabs
         PTabDisplProj::getInstance()->setEnabled(true);
         PTabDisplThresh::getInstance()->setEnabled(true);
@@ -427,4 +444,16 @@ void PTabDisplComp::displcomp_done(MyException *ex)
     wait_movie->stop();
     container->getTabBar()->setTabButton(tab_index, QTabBar::LeftSide, 0);
     CDisplComp::instance()->reset();
+}
+
+/**********************************************************************************
+* Called when <showAdvancedButton> status changed
+***********************************************************************************/
+void PTabDisplComp::showAdvancedChanged(bool status)
+{
+    #ifdef TSP_DEBUG
+    printf("TeraStitcher plugin [thread %d] >> PTabDisplComp::showAdvancedChanged(%s)\n", this->thread()->currentThreadId(), (status? "true" : "false"));
+    #endif
+
+    advanced_panel->setVisible(status);
 }

@@ -96,7 +96,8 @@ PTabDisplThresh::PTabDisplThresh(QMyTabWidget* _container, int _tab_index) : QWi
     gridlayout->addWidget(stitchable_stacks_label, 3, 0, 1, 1);
     gridlayout->addWidget(stitchable_stacks_field, 3, 1, 1, 3);
     gridlayout->addWidget(per_stack_displ_number_label, 4, 0, 1, 1);
-    gridlayout->addWidget(per_stack_displ_number_field, 4, 1, 1, 3);
+    gridlayout->addWidget(per_stack_displ_number_field, 4, 1, 1, 3);    
+    gridlayout->setContentsMargins(10,0,10,0);
     gridlayout->setVerticalSpacing(2);
     QWidget *container = new QWidget();
     container->setLayout(gridlayout);
@@ -193,6 +194,9 @@ void PTabDisplThresh::start()
         StackStitcher stitcher(volume);
         stitcher.thresholdDisplacements(threshold_field->value());
         volume->saveXML(0, saveproj_field->text().toStdString().c_str());
+
+        //showing operation successful message
+        QMessageBox::information(this, "Operation successful", "Step successfully performed!", QMessageBox::Ok);
 
         //enabling (and updating) other tabs
         this->updateContent();

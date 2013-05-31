@@ -81,7 +81,7 @@ class terastitcher::CMergeTiles : public QThread
 
         void setPMergeTiles(PTabMergeTiles* handle){pMergeTiles = handle;}
         void setResolution(int index, bool enabled){resolutions[index] = enabled;}
-        void setResolutionToShow(int index){resolution_index_vaa3D = index;}
+        void setResolutionToShow(int index);
 
         //reset method
         void reset();

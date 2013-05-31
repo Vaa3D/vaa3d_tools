@@ -74,8 +74,9 @@ class terastitcher::PTabMergeTiles : public QWidget
     QLabel* byLabel;
     QLabel* memocc_label;
     QLineEdit* memocc_field;
+    QPushButton* showAdvancedButton;
 
-    //basic settings panel widgets
+    //advanced settings panel widgets
     QWidget* advanced_panel;
     QLabel* volumeportion_label;
     QSpinBox *row0_field, *row1_field, *col0_field, *col1_field;
@@ -171,6 +172,11 @@ public slots:
     * Updates widgets contents
     ***********************************************************************************/
     void updateContent();
+
+    /**********************************************************************************
+    * Called when <showAdvancedButton> status changed
+    ***********************************************************************************/
+    void showAdvancedChanged(bool status);
 
     /**********************************************************************************
     * Called when the corresponding spinboxes changed.

@@ -86,6 +86,7 @@ PTabDisplProj::PTabDisplProj(QMyTabWidget* _container, int _tab_index) : QWidget
     gridlayout->addWidget(per_stack_displ_number_label, 2, 0, 1, 1);
     gridlayout->addWidget(per_stack_displ_number_field, 2, 1, 1, 3);
     gridlayout->setVerticalSpacing(2);
+    gridlayout->setContentsMargins(10,0,10,0);
     QWidget *container = new QWidget();
     container->setLayout(gridlayout);
 
@@ -174,6 +175,9 @@ void PTabDisplProj::start()
         stitcher.projectDisplacements();
         volume->saveXML(0, saveproj_field->text().toStdString().c_str());
 
+        //showing operation successful message
+        QMessageBox::information(this, "Operation successful", "Step successfully performed!", QMessageBox::Ok);
+
         //enabling (and updating) other tabs
         this->setEnabled(true);
         PTabDisplThresh::getInstance()->setEnabled(true);
@@ -237,9 +241,6 @@ void PTabDisplProj::setEnabled(bool enabled)
     printf("TeraStitcher plugin [thread %d] >> PTabDisplProj setEnabled(%d) called\n", this->thread()->currentThreadId(), enabled);
     #endif
 
-    //first calling super-class implementation
-    QWidget::setEnabled(enabled);
-
     //then filling widget fields
     if(enabled && CImport::instance()->getVolume())
     {
@@ -249,8 +250,14 @@ void PTabDisplProj::setEnabled(bool enabled)
         total_displ_number_field->setText(QString::number(total));
         per_stack_displ_number_field->setText(QString::number(per_stack));
 
-        QString saveproj_path = CImport::instance()->getVolume()->getSTACKS_DIR();
-        saveproj_path.append("/xml_displproj.xml");
-        saveproj_field->setText(saveproj_path);
+        if(!this->isEnabled())
+        {
+            QString saveproj_path = CImport::instance()->getVolume()->getSTACKS_DIR();
+            saveproj_path.append("/xml_displproj.xml");
+            saveproj_field->setText(saveproj_path);
+        }
     }
+
+    //finally calling super-class implementation
+    QWidget::setEnabled(enabled);
 }

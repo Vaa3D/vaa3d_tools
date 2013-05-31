@@ -211,6 +211,7 @@ void PMain::reset()
 
     //resetting menu widgets
     closeVolumeAction->setEnabled(false);
+    modeBasicAction->setChecked(true);
 
     //set GUI to ready state
     setToReady();
@@ -231,8 +232,8 @@ void PMain::modeChanged()
         tabs->removeTab(3);
         tabs->removeTab(4);
         tabs->setTabIcon(2, QIcon(":/icons/number3.png"));
-        tabDisplComp->advanced_panel->setVisible(false);
-        tabMergeTiles->advanced_panel->setVisible(false);
+        tabDisplComp->showAdvancedButton->setChecked(false);
+        tabMergeTiles->showAdvancedButton->setChecked(false);
     }
     else
     {
@@ -247,8 +248,8 @@ void PMain::modeChanged()
         tabs->setTabIcon(5, QIcon(":/icons/number6.png"));
         if(tabs->currentIndex() == 2)
             tabs->setCurrentIndex(5);
-        tabDisplComp->advanced_panel->setVisible(true);
-        tabMergeTiles->advanced_panel->setVisible(true);
+        tabDisplComp->showAdvancedButton->setChecked(true);
+        tabMergeTiles->showAdvancedButton->setChecked(true);
     }
 }
 
