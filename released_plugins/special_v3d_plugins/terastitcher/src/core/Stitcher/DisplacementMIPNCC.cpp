@@ -41,8 +41,8 @@ DisplacementMIPNCC::DisplacementMIPNCC(void) : Displacement()
 	NCC_widths[0] = NCC_widths[1] = NCC_widths[2] = -1;
 	rel_factors[0] = rel_factors[1] = rel_factors[2] = -1.0F;
 	delays[0] = delays[1] = delays[2]= -1;
-	wRangeThr = -1;
-	invWidth = -1;
+    wRangeThrs[0] = wRangeThrs[1] = wRangeThrs[2] = -1;
+    invWidths[0] = invWidths[1] = invWidths[2] = -1;
 	TYPE = S_MIP_NCC_DISPL_TYPE;
 }
 
@@ -60,8 +60,11 @@ DisplacementMIPNCC::DisplacementMIPNCC(NCC_descr_t &mip_ncc_descr) : Displacemen
 	NCC_maxs[2] = mip_ncc_descr.NCC_maxs[2];
 	NCC_widths[0] = mip_ncc_descr.NCC_widths[0];
 	NCC_widths[1] = mip_ncc_descr.NCC_widths[1];
-	NCC_widths[2] = mip_ncc_descr.NCC_widths[2];
+    NCC_widths[2] = mip_ncc_descr.NCC_widths[2];
 	rel_factors[0] = rel_factors[1] = rel_factors[2] = -1.0F;
+    delays[0] = delays[1] = delays[2]= -1;
+    wRangeThrs[0] = wRangeThrs[1] = wRangeThrs[2] = -1;
+    invWidths[0] = invWidths[1] = invWidths[2] = -1;
 	TYPE = S_MIP_NCC_DISPL_TYPE;
 }
 
@@ -75,8 +78,8 @@ DisplacementMIPNCC::DisplacementMIPNCC(int Vnominal, int Hnominal, int Dnominal)
     NCC_maxs[0] = NCC_maxs[1] = NCC_maxs[2] = 0.0F;
     NCC_widths[0] = NCC_widths[1] = NCC_widths[2] = S_NCC_WIDTH_MAX;
 	delays[0] = delays[1] = delays[2]= -1;
-	wRangeThr = S_NCC_WIDTH_MAX - 1;
-	invWidth = S_NCC_WIDTH_MAX;
+    wRangeThrs[0] = wRangeThrs[1] = wRangeThrs[2] = S_NCC_WIDTH_MAX - 1;
+    invWidths[0] = invWidths[1] = invWidths[2] = S_NCC_WIDTH_MAX;
     rel_factors[0] = rel_factors[1] = rel_factors[2] = 0.0F;
     VHD_def_coords[0] = VHD_coords[0] = Vnominal;
     VHD_def_coords[1] = VHD_coords[1] = Hnominal;
@@ -99,8 +102,8 @@ DisplacementMIPNCC::DisplacementMIPNCC(const DisplacementMIPNCC &ex_instance)
         NCC_widths[i] = ex_instance.NCC_widths[i];
         rel_factors[i] = ex_instance.rel_factors[i];
 		delays[i] = ex_instance.delays[i];
-		wRangeThr = ex_instance.wRangeThr;
-		invWidth = ex_instance.invWidth;
+        wRangeThrs[i] = ex_instance.wRangeThrs[i];
+        invWidths[i] = ex_instance.invWidths[i];
     }
 }
 
@@ -124,7 +127,7 @@ float DisplacementMIPNCC::evalReliability(direction _direction) throw (MyExcepti
 
 	if(_direction == 0 || _direction == 1 || _direction == 2)
 	{
-		float NCC_width_normalized = (100.0F - (NCC_widths[_direction] * 100.0F / invWidth))/100.0F;
+        float NCC_width_normalized = (100.0F - (NCC_widths[_direction] * 100.0F / invWidths[_direction]))/100.0F;
 		rel_factors[_direction] = sqrt( S_NCC_WIDTH_WEIGHT*NCC_width_normalized*NCC_width_normalized + S_NCC_PEAK_WEIGHT*NCC_maxs[_direction]*NCC_maxs[_direction]);
 	}
 	else if(_direction == -1)
@@ -188,7 +191,7 @@ void DisplacementMIPNCC::threshold(float rel_threshold) throw (MyException)
 		{
 			VHD_coords[i] = VHD_def_coords[i];
 			NCC_maxs[i]	  = 0;
-			NCC_widths[i] = invWidth;
+            NCC_widths[i] = invWidths[i];
 			evalReliability(direction(i));
 		}
 }
@@ -242,8 +245,12 @@ Displacement* DisplacementMIPNCC::getMirrored(direction _direction) throw (MyExc
 	mirrored->rel_factors[0] = rel_factors[0];
 	mirrored->rel_factors[1] = rel_factors[1];
 	mirrored->rel_factors[2] = rel_factors[2];
-	mirrored->wRangeThr = wRangeThr;
-	mirrored->invWidth = invWidth;
+    mirrored->wRangeThrs[0] = wRangeThrs[0];
+    mirrored->wRangeThrs[1] = wRangeThrs[1];
+    mirrored->wRangeThrs[2] = wRangeThrs[2];
+    mirrored->invWidths[0] = invWidths[0];
+    mirrored->invWidths[1] = invWidths[1];
+    mirrored->invWidths[2] = invWidths[2];
 	mirrored->delays[0] = delays[0];
 	mirrored->delays[1] = delays[1];
 	mirrored->delays[2] = delays[2];
@@ -272,8 +279,8 @@ void DisplacementMIPNCC::combine(Displacement& displ) throw (MyException)
 			VHD_coords    [k]	= displ_MIPNCC->VHD_coords    [k];
 			VHD_def_coords[k]	= displ_MIPNCC->VHD_def_coords[k];
 			delays[k]			= displ_MIPNCC->delays[k];
-			wRangeThr			= displ_MIPNCC->wRangeThr;
-			invWidth			= displ_MIPNCC->invWidth;
+            wRangeThrs[k]		= displ_MIPNCC->wRangeThrs[k];
+            invWidths[k]		= displ_MIPNCC->invWidths[k];
 		}
 		else
 		{
@@ -283,8 +290,8 @@ void DisplacementMIPNCC::combine(Displacement& displ) throw (MyException)
 			displ_MIPNCC->VHD_coords    [k] = VHD_coords    [k];
 			displ_MIPNCC->VHD_def_coords[k] = VHD_def_coords[k];
 			displ_MIPNCC->delays[k]			= delays[k];
-			displ_MIPNCC->wRangeThr			= wRangeThr;
-			displ_MIPNCC->invWidth			= invWidth;
+            displ_MIPNCC->wRangeThrs[k]		= wRangeThrs[k];
+            displ_MIPNCC->invWidths[k]		= invWidths[k];
 		}
 	}
 }
@@ -315,8 +322,8 @@ TiXmlElement* DisplacementMIPNCC::getXML() throw (MyException)
 		displacement->SetAttribute("nccWidth",NCC_widths[i]);
 
 		// Alessandro - 31/05/2013 - storing additional MIP-NCC parameters
-		displacement->SetAttribute("nccWRangeThr", wRangeThr);
-		displacement->SetAttribute("nccInvWidth", invWidth);
+        displacement->SetAttribute("nccWRangeThr", wRangeThrs[i]);
+        displacement->SetAttribute("nccInvWidth", invWidths[i]);
 		displacement->SetAttribute("delay", delays[i]);
 
 		xml_representation->LinkEndChild(displacement);
@@ -342,15 +349,17 @@ void DisplacementMIPNCC::loadXML(TiXmlElement *displ_node) throw (MyException)
 
 		// Alessandro - 31/05/2013 - loading additional MIP-NCC parameters
 		if(displElem->Attribute("nccWRangeThr") != 0)
-			displElem->QueryIntAttribute("nccWRangeThr", &wRangeThr);
+            displElem->QueryIntAttribute("nccWRangeThr", &wRangeThrs[displ_index]);
 		else
-			wRangeThr = S_NCC_WIDTH_MAX - 1;
+            wRangeThrs[displ_index] = S_NCC_WIDTH_MAX - 1;
 		if(displElem->Attribute("nccInvWidth") != 0)
-			displElem->QueryIntAttribute("nccInvWidth", &invWidth);
+            displElem->QueryIntAttribute("nccInvWidth", &invWidths[displ_index]);
 		else
-			invWidth = S_NCC_WIDTH_MAX;
+            invWidths[displ_index] = S_NCC_WIDTH_MAX;
 		if(displElem->Attribute("delay") != 0)
 			displElem->QueryIntAttribute("delay", &delays[displ_index]);
+        else
+            delays[displ_index]=-1;
 
 		displElem = displElem->NextSiblingElement();
 		displ_index++;

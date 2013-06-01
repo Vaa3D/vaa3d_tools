@@ -92,7 +92,7 @@ NCC_descr_t *norm_cross_corr_mips ( real_t *A, real_t *B,
 	if ( !NCC_params ) {
 
 		// Alessandro - 31/05/2013 - parameter MUST be passed (and controlled) by the caller
-		throw MyException("CrossMIPs: the search region is bigger than the overlapping region");
+        throw MyException("CrossMIPs: missing configuration parameters");
 
 		//// ************************** SET DEFAULT PARAMETERS ****************
 		//NCC_params = new NCC_parms_t;
@@ -175,9 +175,13 @@ NCC_descr_t *norm_cross_corr_mips ( real_t *A, real_t *B,
 	// Alessandro - 23/03/2013 - added check to verify precondition written into CrossMIPs.h that says:
 	// "in practice the dimensions of the MIPS (depending on dimi, dimj, dimk, ni, nj, nk) have to be large enough with respect to delayi, delayj, delayk"
 	if(side == NORTH_SOUTH && (dimi - ni < 2*delayi+1) || (dimj - nj < 2*delayj+1) || (dimk - nk < 2*delayk+1))
-		throw MyException("CrossMIPs: the search region is bigger than the overlapping region");
+        throw MyException("CrossMIPs: the search region is too big with respect to the overlapping region. "
+                          "Overlapping extent should be > 2*delay+1 for each direction where delay is the "
+                          "search region extent along that direction.");
 	if(side == WEST_EAST && (dimj - nj < 2*delayi+1) || (dimi - ni < 2*delayj+1) || (dimk - nk < 2*delayk+1))
-		throw MyException("CrossMIPs: the search region is bigger than the overlapping region");
+        throw MyException("CrossMIPs: the search region is too big with respect to the overlapping region. "
+                          "Overlapping extent should be > 2*delay+1 for each direction where delay is the "
+                          "search region extent along that direction.");
 
 
 	/*

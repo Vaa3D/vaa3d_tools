@@ -11,6 +11,16 @@ ties names are:
 - Rem: a feature no longer available
 
 ============================================================================================
+Version 1.0.5
+June 1st, 2013
+--------------------------------------------------------------------------------------------
+- Fix: changed error message when overlapping extent is not big enough.
+- Fix: "Close volume" and "Exit" menu actions were not disabled while performing long steps.
+- Fix: fixed bug which caused incorrect reliability measures when  mixing displacements com-
+       puted with different search region sizes.
+--------------------------------------------------------------------------------------------
+
+
 Version 1.0.4
 June 1st, 2013
 --------------------------------------------------------------------------------------------

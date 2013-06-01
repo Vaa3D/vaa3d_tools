@@ -464,6 +464,8 @@ void PTabMergeTiles::start()
         PMain::instance()->getProgressBar()->setEnabled(true);
         PMain::instance()->getProgressBar()->setMinimum(0);
         PMain::instance()->getProgressBar()->setMaximum(100);
+        PMain::instance()->closeVolumeAction->setEnabled(false);
+        PMain::instance()->exitAction->setEnabled(false);
         wait_movie->start();
         if(PMain::instance()->modeBasicAction->isChecked())
             container->getTabBar()->setTabButton(2, QTabBar::LeftSide, wait_label);
@@ -515,6 +517,9 @@ void PTabMergeTiles::stop()
         container->getTabBar()->setTabButton(2, QTabBar::LeftSide, 0);
     else
         container->getTabBar()->setTabButton(tab_index, QTabBar::LeftSide, 0);
+
+    PMain::instance()->closeVolumeAction->setEnabled(true);
+    PMain::instance()->exitAction->setEnabled(true);
 }
 
 /**********************************************************************************
@@ -796,6 +801,8 @@ void PTabMergeTiles::merging_done(MyException *ex, Image4DSimple* img)
 
 
     //resetting some widgets
+    PMain::instance()->closeVolumeAction->setEnabled(true);
+    PMain::instance()->exitAction->setEnabled(true);
     PMain::instance()->setToReady();
     wait_movie->stop();
     if(PMain::instance()->modeBasicAction->isChecked())

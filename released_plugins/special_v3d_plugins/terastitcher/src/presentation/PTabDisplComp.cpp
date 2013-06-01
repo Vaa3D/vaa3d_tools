@@ -293,6 +293,8 @@ void PTabDisplComp::start()
         PMain::instance()->getProgressBar()->setEnabled(true);
         PMain::instance()->getProgressBar()->setMinimum(0);
         PMain::instance()->getProgressBar()->setMaximum(100);
+        PMain::instance()->closeVolumeAction->setEnabled(false);
+        PMain::instance()->exitAction->setEnabled(false);
         wait_movie->start();
         container->getTabBar()->setTabButton(tab_index, QTabBar::LeftSide, wait_label);
 
@@ -333,6 +335,9 @@ void PTabDisplComp::stop()
     PMain::instance()->setToReady();
     wait_movie->stop();
     container->getTabBar()->setTabButton(tab_index, QTabBar::LeftSide, 0);
+
+    PMain::instance()->closeVolumeAction->setEnabled(true);
+    PMain::instance()->exitAction->setEnabled(true);
 }
 
 /**********************************************************************************
@@ -440,6 +445,8 @@ void PTabDisplComp::displcomp_done(MyException *ex)
     }
 
     //resetting some widgets
+    PMain::instance()->closeVolumeAction->setEnabled(true);
+    PMain::instance()->exitAction->setEnabled(true);
     PMain::instance()->setToReady();
     wait_movie->stop();
     container->getTabBar()->setTabButton(tab_index, QTabBar::LeftSide, 0);

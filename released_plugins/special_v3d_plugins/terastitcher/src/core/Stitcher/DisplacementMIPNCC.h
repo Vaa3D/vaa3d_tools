@@ -47,9 +47,9 @@ class DisplacementMIPNCC : Displacement
 
 		// Alessandro - 31/05/2013 - storing also MIPNCC parameters
 		int delays[3];				//half range of NCC search around initial offset along VHD dimensions
-		int wRangeThr;				//range used to evaluate maximum NCC width (when maximum width is greater or equal to 
+        int wRangeThrs[3];			//ranges used to evaluate maximum NCC widths (when maximum width is greater or equal to
 									//this value, width is set to invWidth
-		int invWidth;				//see <wRangeThr>
+        int invWidths[3];			//see <wRangeThrs>
 
 	public:
 
@@ -59,7 +59,7 @@ class DisplacementMIPNCC : Displacement
 		DisplacementMIPNCC(NCC_descr_t &mip_ncc_descr);
                 DisplacementMIPNCC(int Vnominal, int Hnominal, int Dnominal);
 		DisplacementMIPNCC(TiXmlElement *displ_node);
-		~DisplacementMIPNCC(void){};
+        ~DisplacementMIPNCC(void){}
 
 		//evaluates displacement reliability possibly along the given direction. The result(s) should be stored
 		//in one or more object members, so that they have to be computed once and then accessed by GET methods
