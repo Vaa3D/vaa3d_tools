@@ -90,54 +90,58 @@ NCC_descr_t *norm_cross_corr_mips ( real_t *A, real_t *B,
 
 	bool allocated = !NCC_params;
 	if ( !NCC_params ) {
-		// ************************** SET DEFAULT PARAMETERS ****************
-		NCC_params = new NCC_parms_t;
-		// to change default behavior change the following parameters
-		NCC_params->enhance      = false;
-		NCC_params->maxIter		 = 2;
-		NCC_params->maxThr       = CM_DEF_MAX_THR;
-		NCC_params->widthThr     = CM_DEF_WIDTH_THR;
-		NCC_params->wRangeThr    = CM_DEF_W_RANGE_THR;
-		NCC_params->UNR_NCC      = CM_DEF_UNR_NCC;
-		NCC_params->INF_W        = CM_DEF_INF_W;
-		NCC_params->INV_COORD    = 0;
 
-		/* Example of settings for fields 'percents' and 'c'
-		 * percents = < 0.1, 0.9, 1.0 > and c = < 0.0, 0,0, 1.0, 1.0 >
-		 * means that:
-		 * - 10% of pixels with lower values are set to 0 (first transformation maps pixels from c[0]=0.0 to c[1]=0.0
-		 * - 10% of pixels with higher values are set to 1 (third transformation maps pixels from c[2]=1.0 to c[3]=1.0
-		 * - 80% of pixels with intermetiate values are mapped to the interval [0,1] (second transformation maps pixels
-		 *   from c[1]=0.0 to c[2]01.0
-		 */
+		// Alessandro - 31/05/2013 - parameter MUST be passed (and controlled) by the caller
+		throw MyException("CrossMIPs: the search region is bigger than the overlapping region");
 
-		if ( enhance ) {
-			//// two transformations defined by pairs (percentiles,value): {(0.0,0.0),(0.8,0.2),(1.0,1.0)}
-			//NCC_params->n_transforms = 2;
-			//NCC_params->percents     = new REAL_T[NCC_params->n_transforms];
-			//NCC_params->c            = new REAL_T[NCC_params->n_transforms+1];
-			//// percents must have n_transforms elements and percents[n_transforms-1] must be 1.00
-			//NCC_params->percents[0]  = (REAL_T) 0.80;
-			//NCC_params->percents[1]  = (REAL_T) 1.00;
-			//// c must have (n_transforms+1) elements, c[0] must be 0.00 and c[n_transforms] must be 1.00
-			//NCC_params->c[0]         = (REAL_T) 0.00;
-			//NCC_params->c[1]         = (REAL_T) 0.20;
-			//NCC_params->c[2]         = (REAL_T) 1.00;
+		//// ************************** SET DEFAULT PARAMETERS ****************
+		//NCC_params = new NCC_parms_t;
+		//// to change default behavior change the following parameters
+		//NCC_params->enhance      = false;
+		//NCC_params->maxIter		 = 2;
+		//NCC_params->maxThr       = CM_DEF_MAX_THR;
+		//NCC_params->widthThr     = CM_DEF_WIDTH_THR;
+		//NCC_params->wRangeThr    = CM_DEF_W_RANGE_THR;
+		//NCC_params->UNR_NCC      = CM_DEF_UNR_NCC;
+		//NCC_params->INF_W        = CM_DEF_INF_W;
+		//NCC_params->INV_COORD    = 0;
 
-			// three transformations defined by pairs (percentiles,value): {(0.0,0.0),(0.1,0.0),(0.95,1.0),(1.0,1.0)}
-			NCC_params->n_transforms = 3;
-			NCC_params->percents     = new real_t[NCC_params->n_transforms];
-			NCC_params->c            = new real_t[NCC_params->n_transforms+1];
-			// percents must have n_transforms elements and percents[n_transforms-1] must be 1.00
-			NCC_params->percents[0]  = (real_t) 0.10;
-			NCC_params->percents[1]  = (real_t) 0.99;
-			NCC_params->percents[2]  = (real_t) 1.00;
-			// c must have (n_transforms+1) elements, c[0] must be 0.00 and c[n_transforms] must be 1.00
-			NCC_params->c[0]         = (real_t) 0.00;
-			NCC_params->c[1]         = (real_t) 0.00;
-			NCC_params->c[2]         = (real_t) 1.00;
-			NCC_params->c[3]         = (real_t) 1.00;
-		}
+		///* Example of settings for fields 'percents' and 'c'
+		// * percents = < 0.1, 0.9, 1.0 > and c = < 0.0, 0,0, 1.0, 1.0 >
+		// * means that:
+		// * - 10% of pixels with lower values are set to 0 (first transformation maps pixels from c[0]=0.0 to c[1]=0.0
+		// * - 10% of pixels with higher values are set to 1 (third transformation maps pixels from c[2]=1.0 to c[3]=1.0
+		// * - 80% of pixels with intermediate values are mapped to the interval [0,1] (second transformation maps pixels
+		// *   from c[1]=0.0 to c[2]01.0
+		// */
+
+		//if ( enhance ) {
+		//	//// two transformations defined by pairs (percentiles,value): {(0.0,0.0),(0.8,0.2),(1.0,1.0)}
+		//	//NCC_params->n_transforms = 2;
+		//	//NCC_params->percents     = new REAL_T[NCC_params->n_transforms];
+		//	//NCC_params->c            = new REAL_T[NCC_params->n_transforms+1];
+		//	//// percents must have n_transforms elements and percents[n_transforms-1] must be 1.00
+		//	//NCC_params->percents[0]  = (REAL_T) 0.80;
+		//	//NCC_params->percents[1]  = (REAL_T) 1.00;
+		//	//// c must have (n_transforms+1) elements, c[0] must be 0.00 and c[n_transforms] must be 1.00
+		//	//NCC_params->c[0]         = (REAL_T) 0.00;
+		//	//NCC_params->c[1]         = (REAL_T) 0.20;
+		//	//NCC_params->c[2]         = (REAL_T) 1.00;
+
+		//	// three transformations defined by pairs (percentiles,value): {(0.0,0.0),(0.1,0.0),(0.95,1.0),(1.0,1.0)}
+		//	NCC_params->n_transforms = 3;
+		//	NCC_params->percents     = new real_t[NCC_params->n_transforms];
+		//	NCC_params->c            = new real_t[NCC_params->n_transforms+1];
+		//	// percents must have n_transforms elements and percents[n_transforms-1] must be 1.00
+		//	NCC_params->percents[0]  = (real_t) 0.10;
+		//	NCC_params->percents[1]  = (real_t) 0.99;
+		//	NCC_params->percents[2]  = (real_t) 1.00;
+		//	// c must have (n_transforms+1) elements, c[0] must be 0.00 and c[n_transforms] must be 1.00
+		//	NCC_params->c[0]         = (real_t) 0.00;
+		//	NCC_params->c[1]         = (real_t) 0.00;
+		//	NCC_params->c[2]         = (real_t) 1.00;
+		//	NCC_params->c[3]         = (real_t) 1.00;
+		//}
 	}
 
 	// Alessandro - 23/03/2013 - this is the old check, but is seems wrong and it does not throw any exception. The WARNING written into
@@ -149,18 +153,23 @@ NCC_descr_t *norm_cross_corr_mips ( real_t *A, real_t *B,
 	//	DISPLAY_ERROR(err_msg);
 	//}
 	
-	// Alessandro - 23/03/2013 - the right check
-	if ( NCC_params->wRangeThr > MAX(delayi,MAX(delayj,delayk)))
+	// Alessandro - 31/05/2013 - the right check is on MIN(delayi, delayj, delayk), not or MAX(delayi, delayj, delayk),
+	// as confirmed by the lines (in compute_funcs.cpp):
+	// 	  initu = MIN(MAX(0,ind_max/(2*delayv+1) - newu),2*(delayu - newu));
+	//    initv = MIN(MAX(0,ind_max%(2*delayv+1) - newv),2*(delayv - newv));
+	// where newu = newv = NCC_params->wRangeThr and initu, initv must be positive integers
+	if ( NCC_params->wRangeThr > MIN(delayi,MIN(delayj,delayk)))
 	{
-		// Alessandro - 23/03/2013 - at the moment it is better not to throw any exception
-		//char err_msg[1000];
-		//sprintf(err_msg, "CrossMIPs: parameter wRangeThr[=%d] is too large with respect to MAX(delayi/j/k) [=%d]", NCC_params->wRangeThr, MAX(delayi,MAX(delayj,delayk)));
-		//throw MyException(err_msg);
+		// Alessandro - 31/05/2013 - throwing an exception instead of automatically correcting parameters
+		char err_msg[1000];
+		sprintf(err_msg, "CrossMIPs: parameter wRangeThr[=%d] is too large with respect to MIN(delayi, delayj, delayik)[=%d]", NCC_params->wRangeThr, MIN(delayi,MIN(delayj,delayk)));
+		throw MyException(err_msg);
 		
 		// Alessandro - 23/03/2013 - parameters are automatically corrected
-		delayi = MAX(delayi, NCC_params->wRangeThr);
-		delayj = MAX(delayj, NCC_params->wRangeThr);
-		delayk = MAX(delayk, NCC_params->wRangeThr);
+		// Alessandro - 31/05/2013 - throwing an exception instead of automatically correcting parameters
+		//delayi = MAX(delayi, NCC_params->wRangeThr);
+		//delayj = MAX(delayj, NCC_params->wRangeThr);
+		//delayk = MAX(delayk, NCC_params->wRangeThr);
 	}
 
 	// Alessandro - 23/03/2013 - added check to verify precondition written into CrossMIPs.h that says:

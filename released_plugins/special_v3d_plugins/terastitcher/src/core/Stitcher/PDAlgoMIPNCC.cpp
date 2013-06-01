@@ -59,10 +59,29 @@ Displacement* PDAlgoMIPNCC::execute(real_t *stk_A, uint32 A_dim_V, uint32 A_dim_
 	if(overlap_direction != dir_horizontal && overlap_direction != dir_vertical)
 		throw MyException("in PDAlgoMIPNCC::execute(...): unsupported overlapping direction");
 
-	NCC_descr_t* descr = norm_cross_corr_mips(stk_A, stk_B, A_dim_D, A_dim_V, A_dim_H, 0, overlap_direction == dir_vertical ? A_dim_V - overlap : 0, 
-											  overlap_direction == dir_horizontal ? A_dim_H - overlap: 0, displ_max_D, displ_max_V, displ_max_H, overlap_direction);
+	// Alessandro - 31/05/2013 - parameters MUST be passed (and controlled) by the caller
+	NCC_parms_t params;
+	params.enhance      = false;
+	params.maxIter		= 2;
+	params.maxThr       = 0.10f;
+	params.UNR_NCC      = S_NCC_PEAK_MIN;
+	params.wRangeThr    = MIN(std::min(std::min(displ_max_V, displ_max_H), displ_max_D), S_NCC_WIDTH_MAX);
+	params.INF_W        = params.wRangeThr + 1;
+	params.widthThr     = 0.75f;
+	params.INV_COORD    = 0;
 
-	Displacement *displ = (Displacement*)(new DisplacementMIPNCC(*descr));
+	NCC_descr_t* descr = norm_cross_corr_mips(stk_A, stk_B, A_dim_D, A_dim_V, A_dim_H, 0, overlap_direction == dir_vertical ? A_dim_V - overlap : 0, 
+											  overlap_direction == dir_horizontal ? A_dim_H - overlap: 0, displ_max_D, displ_max_V, displ_max_H, overlap_direction, &params);
+
+	// Alessandro - 31/05/2013 - storing parameters
+	DisplacementMIPNCC *displ = new DisplacementMIPNCC(*descr);
+	displ->delays[0]  = displ_max_V;
+	displ->delays[1]  = displ_max_H;
+	displ->delays[2]  = displ_max_D;
+	displ->wRangeThr = params.wRangeThr;
+	displ->invWidth  = params.INF_W;
+
 	delete descr;
-	return displ;	
+
+	return (Displacement*)displ;	
 }

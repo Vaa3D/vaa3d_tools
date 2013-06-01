@@ -45,6 +45,12 @@ class DisplacementMIPNCC : Displacement
 									//the peak, range in [0=reliable, S_NCC_WIDTH_MAX=unreliable]
 		float rel_factors[3];		//reliability factors of VHD displacements, range in [0=unreliable,1=reliable] 
 
+		// Alessandro - 31/05/2013 - storing also MIPNCC parameters
+		int delays[3];				//half range of NCC search around initial offset along VHD dimensions
+		int wRangeThr;				//range used to evaluate maximum NCC width (when maximum width is greater or equal to 
+									//this value, width is set to invWidth
+		int invWidth;				//see <wRangeThr>
+
 	public:
 
 		//COSTRUCTORS - DECONSTRUCTOR
@@ -79,6 +85,8 @@ class DisplacementMIPNCC : Displacement
 		//combines the parameters of the current and the given displacement so that after this operation
 		//the two displacements are more reliable (and are EQUAL).
 		void			 combine(Displacement& displ)					throw (MyException);
+
+		friend class PDAlgoMIPNCC;
 };
 
 #endif /* DISPLACEMENT_MIP_NCC_H */

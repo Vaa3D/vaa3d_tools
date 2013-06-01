@@ -11,8 +11,18 @@ ties names are:
 - Rem: a feature no longer available
 
 ============================================================================================
+Version 1.0.4
+June 1st, 2013
+--------------------------------------------------------------------------------------------
+- New: new parameters are now stored into XML files while  guaranteeing at the same time the
+       retrocompatibility with the old XML files.
+- Fix: fixed bug which caused  reliability measures  not 100% correct when the search region
+       was bigger than 30 x 30 x 30.
+--------------------------------------------------------------------------------------------
+
+
 Version 1.0.3
-May 31th, 2013
+May 31st, 2013
 --------------------------------------------------------------------------------------------
 - New: added "Step successfully performed!" message when a step is successfully performed.
 - Fix: fixed bug which caused stitched volume not to be opened in Vaa3D in "Basic mode" when
