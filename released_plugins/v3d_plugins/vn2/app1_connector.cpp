@@ -476,9 +476,9 @@ bool proc_app1(PARA_APP1 &p, const QString & versionStr)
             V3DLONG i;
             for(i = 0; i < nn.size(); i++) //add scaling 121127, PHC //add cutbox offset 121202, PHC
             {
-                nn[i].x *= dfactor_xy; nn[i].x += (p.xc0-1); if (dfactor_xy>1) nn[i].x += dfactor_xy/2; //note that the offset corretion might not be accurate. PHC 121127
-                nn[i].y *= dfactor_xy; nn[i].y += (p.yc0-1); if (dfactor_xy>1) nn[i].y += dfactor_xy/2;
-                nn[i].z *= dfactor_z;  nn[i].z += (p.zc0-1); if (dfactor_z>1)  nn[i].z += dfactor_z/2;
+                if (dfactor_xy>1) nn[i].x *= dfactor_xy; nn[i].x += (p.xc0); if (dfactor_xy>1) nn[i].x += dfactor_xy/2; //note that the offset corretion might not be accurate. PHC 121127
+                if (dfactor_xy>1) nn[i].y *= dfactor_xy; nn[i].y += (p.yc0); if (dfactor_xy>1) nn[i].y += dfactor_xy/2;
+                if (dfactor_z>1) nn[i].z *= dfactor_z;  nn[i].z += (p.zc0); if (dfactor_z>1)  nn[i].z += dfactor_z/2;
                 nn[i].radius *= dfactor_xy; //use xy for now
             }
         }

@@ -395,9 +395,18 @@ bool proc_app2(PARA_APP2 &p, const QString & versionStr)
         
         for(i = 0; i < outswc.size(); i++) //add scaling 121127, PHC //add cutbox offset 121202, PHC
         {
-            outswc[i]->x *= dfactor_xy; outswc[i]->x += (p.xc0-1); if (dfactor_xy>1) outswc[i]->x += dfactor_xy/2; //note that the offset corretion might not be accurate. PHC 121127
-            outswc[i]->y *= dfactor_xy; outswc[i]->y += (p.yc0-1); if (dfactor_xy>1) outswc[i]->y += dfactor_xy/2;
-            outswc[i]->z *= dfactor_z;  outswc[i]->z += (p.zc0-1); if (dfactor_z>1)  outswc[i]->z += dfactor_z/2;
+            if (dfactor_xy>1) outswc[i]->x *= dfactor_xy;
+            outswc[i]->x += (p.xc0);
+            if (dfactor_xy>1) outswc[i]->x += dfactor_xy/2; //note that the offset corretion might not be accurate. PHC 121127
+
+            if (dfactor_xy>1) outswc[i]->y *= dfactor_xy;
+            outswc[i]->y += (p.yc0);
+            if (dfactor_xy>1) outswc[i]->y += dfactor_xy/2;
+
+            if (dfactor_z>1) outswc[i]->z *= dfactor_z;
+            outswc[i]->z += (p.zc0);
+            if (dfactor_z>1)  outswc[i]->z += dfactor_z/2;
+
             outswc[i]->radius *= dfactor_xy; //use xy for now
         }
         
