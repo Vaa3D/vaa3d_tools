@@ -104,12 +104,6 @@ bool proc_app2(PARA_APP2 &p, const QString & versionStr)
     {
         v3d_msg("Somehow invalid volume box info is detected. Ignore it. But check your Vaa3D program.");
         return false;
-        
-        //                if(!p4dImageNew->createImage(p4dImage->getXDim(), p4dImage->getYDim(), p4dImage->getZDim(), 1, p4dImage->getDatatype()))
-        //                    return;
-        //                memcpy(p4dImageNew->getRawDataAtChannel(0),
-        //                       p4dImage->getRawDataAtChannel(channel),
-        //                       p4dImage->getTotalUnitNumberPerChannel()*p4dImage->getUnitBytes());
     }
     
     //always just use the buffer data

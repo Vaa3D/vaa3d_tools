@@ -22,7 +22,9 @@ template<class T, class TMarker> double markerRadius(T* &inimg1d, V3DLONG * sz, 
 	if(sz[2] == 1) return markerRadiusXY(inimg1d, sz, marker, thresh);
 	if(method == 0) return markerRadius_accurate(inimg1d, sz, marker, thresh);
 	else if(method == 1) return markerRadius_fast(inimg1d, sz, marker, thresh);
-	else if(method == 2) return markerRadius_hanchuan(inimg1d, sz, marker, thresh);
+    else if(method == 2)
+        //return markerRadius_hanchuan(inimg1d, sz, marker, thresh);
+        return markerRadius_hanchuan_XY(inimg1d, sz, marker, thresh);
     else return markerRadius_hanchuan(inimg1d, sz, marker, thresh);
 }
 
