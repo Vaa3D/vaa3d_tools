@@ -17,7 +17,7 @@
 
 Q_EXPORT_PLUGIN2(vn2, NTApp2Plugin);
 
-QString versionStr = "v2.612";
+QString versionStr = "v2.613";
 
 QStringList NTApp2Plugin::menulist() const
 {
@@ -115,6 +115,7 @@ bool NTApp2Plugin::dofunc(const QString &func_name, const V3DPluginArgList &inpu
         printf("bkg_thresh       Default 10\n");
 
         printf("b_256cube        If trace in a auto-downsampled volume (1 for yes, and 0 for no. Default 1.)\n");
+        printf("b_RadiusFrom2D   If estimate the radius of each reconstruction node from 2D plane only (1 for yes as many times the data is anisotropic, and 0 for no. Default 1 which which uses 3D estimation.)\n");
         printf("is_gsdt          If use gray-scale distance transform (1 for yes and 0 for no. Default 0.)\n");
         
         printf("length_thresh    Default 5\n");

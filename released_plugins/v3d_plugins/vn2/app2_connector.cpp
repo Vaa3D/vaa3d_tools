@@ -1,4 +1,4 @@
-//last change: by Hanchuan Peng. 2012-12-30
+//last change: by Hanchuan Peng. 2012-12-30, 2013-06-05
 
 #include "vn_app2.h"
 
@@ -68,6 +68,7 @@ bool proc_app2(PARA_APP2 &p, const QString & versionStr)
     tmpstr =  qPrintable( qtstr.setNum(p.is_gsdt).prepend("#is_gsdt = ") ); infostring.push_back(tmpstr);
     tmpstr =  qPrintable( qtstr.setNum(p.cnn_type).prepend("#cnn_type = ") ); infostring.push_back(tmpstr);
     tmpstr =  qPrintable( qtstr.setNum(p.b_256cube).prepend("#b_256cube = ") ); infostring.push_back(tmpstr);
+    tmpstr =  qPrintable( qtstr.setNum(p.b_RadiusFrom2D).prepend("#b_radiusFrom2D = ") ); infostring.push_back(tmpstr);
     tmpstr =  qPrintable( qtstr.setNum(p.xc0).prepend("#xc0 = ") ); infostring.push_back(tmpstr);
     tmpstr =  qPrintable( qtstr.setNum(p.xc1).prepend("#xc1 = ") ); infostring.push_back(tmpstr);
     tmpstr =  qPrintable( qtstr.setNum(p.yc0).prepend("#yc0 = ") ); infostring.push_back(tmpstr);
@@ -128,9 +129,9 @@ bool proc_app2(PARA_APP2 &p, const QString & versionStr)
             datatype = V3D_UINT8;
         }
         
-        printf("x = %ld\n", in_sz[0]);
-        printf("y = %ld\n", in_sz[1]);
-        printf("z = %ld\n", in_sz[2]);
+        printf("x = %ld  ", in_sz[0]);
+        printf("y = %ld  ", in_sz[1]);
+        printf("z = %ld  ", in_sz[2]);
         printf("c = %ld\n", in_sz[3]);
         
         if (p.b_256cube)
@@ -416,7 +417,7 @@ bool proc_app2(PARA_APP2 &p, const QString & versionStr)
         
         V3DLONG szOriginalData[4] = {p.p4dImage->getXDim(), p.p4dImage->getYDim(), p.p4dImage->getZDim(), 1};
         unsigned char * pOriginalData = (unsigned char *)(p.p4dImage->getRawDataAtChannel(p.channel));
-        int method_radius_est=2;
+        int method_radius_est = ( p.b_RadiusFrom2D ) ? 1 : 2;
         
         switch (p.p4dImage->getDatatype())
         {
@@ -425,7 +426,7 @@ bool proc_app2(PARA_APP2 &p, const QString & versionStr)
                 for(i = 0; i < outswc.size(); i++)
                 {
                     //printf(" node %ld of %ld.\n", i, outswc.size());
-                    outswc[i]->radius = markerRadius(pOriginalData, szOriginalData, *(outswc[i]), real_thres);
+                    outswc[i]->radius = markerRadius(pOriginalData, szOriginalData, *(outswc[i]), real_thres, method_radius_est);
                 }
             }
                 break;
@@ -435,7 +436,7 @@ bool proc_app2(PARA_APP2 &p, const QString & versionStr)
                 for(i = 0; i < outswc.size(); i++)
                 {
                     //printf(" node %ld of %ld.\n", i, outswc.size());
-                    outswc[i]->radius = markerRadius(pOriginalData_uint16, szOriginalData, *(outswc[i]), real_thres * 16); //*16 as it is often 12 bit data
+                    outswc[i]->radius = markerRadius(pOriginalData_uint16, szOriginalData, *(outswc[i]), real_thres * 16, method_radius_est); //*16 as it is often 12 bit data
                 }
             }
                 break;
@@ -445,7 +446,7 @@ bool proc_app2(PARA_APP2 &p, const QString & versionStr)
                 for(i = 0; i < outswc.size(); i++)
                 {
                     //printf(" node %ld of %ld.\n", i, outswc.size());
-                    outswc[i]->radius = markerRadius(pOriginalData_float, szOriginalData, *(outswc[i]), real_thres);
+                    outswc[i]->radius = markerRadius(pOriginalData_float, szOriginalData, *(outswc[i]), real_thres, method_radius_est);
                 }
             }
                 break;
@@ -522,6 +523,7 @@ bool PARA_APP2::fetch_para_commandline(const V3DPluginArgList &input, V3DPluginA
     channel = paras.size() >= k+1 ? atoi(paras[k]) : channel;  k++;//0;
     bkg_thresh = paras.size() >= k+1 ? atoi(paras[k]) : bkg_thresh; k++;// 30;
     b_256cube = paras.size() >= k+1 ? atoi(paras[k]) : b_256cube; k++;// true
+    b_RadiusFrom2D = paras.size() >= k+1 ? atoi(paras[k]) : b_RadiusFrom2D; k++;// true
     is_gsdt = paras.size() >= k+1 ? atoi(paras[k]) : is_gsdt; k++;// true
     length_thresh = paras.size() >= k+1 ? atof(paras[k]) : length_thresh; k++;// 1.0;
     //cnn_type = 2; // default connection type 2

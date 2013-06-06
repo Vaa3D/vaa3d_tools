@@ -12,20 +12,30 @@
 #define MAX(x,y) (x > y ? (x) : (y))
 #endif
 
-#define DEFAULT_MARKER_RADIUS_METHOD 2  // 0: for accurate , 1: for fast. accurate is not the best, 2: for hanchuan's code
+#define DEFAULT_MARKER_RADIUS_METHOD 1  // 1 -- 2D-Hanchuan,
+                                        // 2 -- 3D-Hanchuan
+                                        // 0 -- for accurate
+                                        // 3 -- for fast.
+                                        // Note that accurate is not the best, 2
 
 using namespace std;
 
 //========================== 3D ==========================
 template<class T, class TMarker> double markerRadius(T* &inimg1d, V3DLONG * sz, TMarker & marker, double thresh, int method = DEFAULT_MARKER_RADIUS_METHOD)
 {
-	if(sz[2] == 1) return markerRadiusXY(inimg1d, sz, marker, thresh);
-	if(method == 0) return markerRadius_accurate(inimg1d, sz, marker, thresh);
-	else if(method == 1) return markerRadius_fast(inimg1d, sz, marker, thresh);
-    else if(method == 2)
-        //return markerRadius_hanchuan(inimg1d, sz, marker, thresh);
+    if (sz[2] == 1)
+        return markerRadiusXY(inimg1d, sz, marker, thresh);
+
+    if (method == 1)
         return markerRadius_hanchuan_XY(inimg1d, sz, marker, thresh);
-    else return markerRadius_hanchuan(inimg1d, sz, marker, thresh);
+    else if (method == 2)
+        return markerRadius_hanchuan(inimg1d, sz, marker, thresh);
+    else if (method == 0)
+        return markerRadius_accurate(inimg1d, sz, marker, thresh);
+    else if(method == 3)
+        return markerRadius_fast(inimg1d, sz, marker, thresh);
+    else
+        return markerRadius_hanchuan(inimg1d, sz, marker, thresh);
 }
 
 template<class T, class TMarker> double markerRadius_accurate(T* &inimg1d, V3DLONG * sz, TMarker & marker, double thresh)

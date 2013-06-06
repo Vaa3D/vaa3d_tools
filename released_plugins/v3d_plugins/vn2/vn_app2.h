@@ -16,6 +16,7 @@ struct PARA_APP2: public PARA_VN
     int  channel;
     double SR_ratio;
     int  b_256cube;
+    bool b_RadiusFrom2D; //how to estimate radius of each reconstruction node, from 2D plane (for anisotropic case) or 3D (for isotropic case)
     
     QString inimg_file, inmarker_file, outswc_file;
     
@@ -30,7 +31,8 @@ struct PARA_APP2: public PARA_VN
         channel = 0;
         SR_ratio = 3.0/9.0;
         b_256cube = 1; //whether or not preprocessing to downsample to a 256xYxZ cube UINT8 for tracing
-        
+        b_RadiusFrom2D = true;
+
         inimg_file = "";
         inmarker_file = "";
         outswc_file = "";
@@ -66,6 +68,9 @@ struct PARA_APP2: public PARA_VN
             iswb_checker->setChecked(is_break_accept);
             QCheckBox * b256_checker = new QCheckBox();
             b256_checker->setChecked(b_256cube);
+            QCheckBox * b_radius2Dchecker = new QCheckBox();
+            b_radius2Dchecker->setChecked(b_RadiusFrom2D);
+
             layout->addWidget(new QLabel("color channel"),0,0);
             layout->addWidget(channel_spinbox, 0,1,1,5);
             layout->addWidget(new QLabel("background_threshold \n(if set as -1, \nthen auto-thresholding)"),1,0);
@@ -78,7 +83,9 @@ struct PARA_APP2: public PARA_VN
             hbox1->addWidget(isgsdt_checker);
             hbox1->addWidget(new QLabel("allow gap"));
             hbox1->addWidget(iswb_checker);
-            
+            hbox1->addWidget(new QLabel("radius from 2D?"));
+            hbox1->addWidget(b_radius2Dchecker);
+
             layout->addLayout(hbox1,2,0,1,6);
             
             layout->addWidget(new QLabel("cnn_type"),3,0);
@@ -114,6 +121,7 @@ struct PARA_APP2: public PARA_VN
             is_gsdt = isgsdt_checker->isChecked();
             is_break_accept = iswb_checker->isChecked();
             b_256cube = b256_checker->isChecked();
+            b_RadiusFrom2D = b_radius2Dchecker->isChecked();
             
             if (dialog) {delete dialog; dialog=0;}
         }
