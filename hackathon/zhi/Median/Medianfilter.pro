@@ -38,5 +38,5 @@ SOURCES += $$V3DMAINPATH/basic_c_fun/mg_utilities.cpp
 SOURCES += $$V3DMAINPATH/basic_c_fun/mg_image_lib.cpp
 SOURCES += $$V3DMAINPATH/basic_c_fun/stackutil.cpp
 
-TARGET	= $$qtLibraryTarget(medianfilter)
+TARGET	= $$qtLibraryTarget(Medianfilter)
 DESTDIR	= ../../../../v3d_external/bin/plugins/median_filter/
