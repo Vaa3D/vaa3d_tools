@@ -33,10 +33,8 @@ template <class T> void Median_filter(T* data1d,
 QStringList MedianFilterPlugin::menulist() const
 {
 	return QStringList() 
-		<<tr("Median")
-		<<tr("Help")
-		<<tr("about")
-                <<tr("New menu")
+		<<tr("Fixed Window")
+                <<tr("Adaptive Window")
 ;
 }
 
@@ -44,20 +42,14 @@ QStringList MedianFilterPlugin::menulist() const
 void MedianFilterPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
 
 {
-	if (menu_name == tr("Median"))
+	if (menu_name == tr("Fixed Window"))
 	{
           processImage(callback,parent);
 	}
-	else if (menu_name == tr("Help"))
+	else if (menu_name == tr("Adaptive Window"))
 	{
-			v3d_msg(tr("Check with Zhi Zhou for more information!"));
-
-	}
-	else
-	{
-		v3d_msg(tr("This is a test plugin, you can use it as a demo.. "
-			"Developed by Zhi Zhou, 2013-06-10"));
-	}
+       	processImage(callback,parent);		
+	}	
 }
 
 
