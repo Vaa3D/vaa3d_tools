@@ -35,7 +35,9 @@ QStringList MedianFilterPlugin::menulist() const
 	return QStringList() 
 		<<tr("Median")
 		<<tr("Help")
-		<<tr("about");
+		<<tr("about")
+                <<tr("New menu")
+;
 }
 
 
