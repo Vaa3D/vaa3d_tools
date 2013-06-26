@@ -134,7 +134,7 @@ void processImage(V3DPluginCallback2 &callback, QWidget *parent)
      // display
      V3DLONG DS = 1;
      Image4DSimple * new4DImage = new Image4DSimple();
-     new4DImage->setData((unsigned char *)outimg1, V3DLONG(N/DS), V3DLONG(M/DS), V3DLONG(P/DS), 1, pixeltype);
+     new4DImage->setData((unsigned char *)outimg1, V3DLONG(N/DS), V3DLONG(M/DS), V3DLONG(P/P), 1, pixeltype);
      v3dhandle newwin = callback.newImageWindow();
      callback.setImage(newwin, new4DImage);
      callback.setImageName(newwin, "Downsampled result");
@@ -157,14 +157,14 @@ template <class T> void AdpThresholding(T* data1d,
                      unsigned int c,
                      T* &outimg1, T* &outimg2)
 
-    
+{ 
   
      V3DLONG N = in_sz[0];
      V3DLONG M = in_sz[1];
      V3DLONG P = in_sz[2];
      V3DLONG sc = in_sz[3];
      V3DLONG DS = 1;
-     V3DLONG WS = 4;
+     V3DLONG WS = 1;
     // V3DLONG pagesz = N*M*P;
      V3DLONG pagesz = (N/DS)*(M/DS)*(P/DS);
      
@@ -380,17 +380,61 @@ template <class T> void AdpThresholding(T* data1d,
 							
 						}
 					}
-					if (pImage[dsoffsetk+dsoffsetj+dsix]-MEAN>0)
-					pImage3[dsoffsetk+dsoffsetj+dsix] = pImage[dsoffsetk+dsoffsetj+dsix]-MEAN;
+						
 
+					
+					if (pImage[dsoffsetk+dsoffsetj+dsix]-MEAN>13)
+					{
 
+						pImage3[dsoffsetk+dsoffsetj+dsix] = 255;//pImage[dsoffsetk+dsoffsetj+dsix]-MEAN;
+
+					}
 
 
 				}
 			}
 					
 		}
-		outimg1 = pImage3;
+
+		 V3DLONG single_pagesz = (N/DS)*(M/DS);
+	     //filtering
+		
+		
+			//declare temporary pointer
+			T *pImage4 = new T [single_pagesz];
+			if (!pImage4)
+			{
+				printf("Fail to allocate memory.\n");
+				return;
+			 }
+			 else
+			 {
+				for(V3DLONG i=0; i<single_pagesz; i++)
+					pImage4[i] = 0;
+			  }
+			V3DLONG index = 0;
+			for(V3DLONG iy = 0; iy < M; iy = iy+DS)
+			{
+				
+				for(V3DLONG ix = 0; ix < N; ix = ix+DS)
+				{
+					T max = 0;
+					for(V3DLONG iz = 0; iz < P; iz = iz+DS)
+						{
+							V3DLONG offsetj = iy*N;
+							V3DLONG offsetk = iz*M*N;
+							T dataval = data1d[offsetk + offsetj + ix];
+							if (dataval>max) max = dataval;
+					
+					}
+					printf("max is %d\n",max);	
+					pImage4[index] = max;
+					index = index+1;
+			
+				}
+
+			}
+		outimg1 = pImage4;
 		outimg2 = pImage2;
 
 }
