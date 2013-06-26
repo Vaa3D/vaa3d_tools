@@ -16,8 +16,8 @@
 //include <Eigen/Dense>
 
 #define WANT_STREAM       // include iostream and iomanipulators
-#include "/home/zhiz/work_v2/v3d_external/v3d_main/jba/newmat11/newmatap.h"
-#include "/home/zhiz/work_v2/v3d_external/v3d_main/jba/newmat11/newmatio.h"
+#include "../../../../v3d_external/v3d_main/jba/newmat11/newmatap.h"
+#include "../../../../v3d_external/v3d_main/jba/newmat11/newmatio.h"
 #ifdef use_namespace
 using namespace RBD_LIBRARIES;
 #endif
