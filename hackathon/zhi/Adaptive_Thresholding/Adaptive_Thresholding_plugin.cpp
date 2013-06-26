@@ -156,7 +156,7 @@ template <class T> void AdpThresholding(T* data1d,
                      V3DLONG *in_sz,
                      unsigned int c,
                      T* &outimg1, T* &outimg2)
-{
+
     
   
      V3DLONG N = in_sz[0];
@@ -164,7 +164,7 @@ template <class T> void AdpThresholding(T* data1d,
      V3DLONG P = in_sz[2];
      V3DLONG sc = in_sz[3];
      V3DLONG DS = 1;
-     V3DLONG WS = 2;
+     V3DLONG WS = 4;
     // V3DLONG pagesz = N*M*P;
      V3DLONG pagesz = (N/DS)*(M/DS)*(P/DS);
      
@@ -390,20 +390,6 @@ template <class T> void AdpThresholding(T* data1d,
 			}
 					
 		}
-
-		/*for(V3DLONG dsiz = WS; dsiz < DSP-WS; dsiz++)
-		{
-			V3DLONG dsoffsetk = dsiz*DSM*DSN;
-			for(V3DLONG dsiy = WS; dsiy < DSM-WS; dsiy++)
-			{
-				V3DLONG dsoffsetj = dsiy*DSN;
-			 	for(V3DLONG dsix = WS; dsix < DSN-WS; dsix++)
-				{
-					
-					pImage3[dsoffsetk+dsoffsetj+dsix] = 255*(pImage3[dsoffsetk+dsoffsetj+dsix]/maxNum);
-				}
-			}
-		}*/
 		outimg1 = pImage3;
 		outimg2 = pImage2;
 
