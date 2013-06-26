@@ -389,14 +389,7 @@ void processImage2(V3DPluginCallback2 &callback, QWidget *parent)
     V3DLONG P = p4DImage->getZDim();
     V3DLONG sc = p4DImage->getCDim();
 
-    //invoke gsdt menu
-    QString full_plugin_name = "../../../../v3d_external/bin/plugins/image_filters/Grayscale_Image_Distance_Transform/libgsdt.so";  //for Linux
-    QString func_name = "Grayscale Distance Transformation";
-  //  callback.callPluginMenu(full_plugin_name,func_name); 
-    //v3dhandle curwin2 = callback.currentImageWindow();
-   // Image4DSimple* p4DImage2 = callback.getImage(curwin2);
-	 Image4DSimple* p4DImage2;
-    unsigned char * gsdtdata1d = p4DImage2->getRawData();
+
 
     //define datatype here
     //
@@ -417,6 +410,32 @@ void processImage2(V3DPluginCallback2 &callback, QWidget *parent)
 
     ImagePixelType pixeltype = p4DImage->getDatatype();
     
+    //invoke gsdt function
+    V3DPluginArgItem arg;
+    V3DPluginArgList input;
+    V3DPluginArgList output;
+
+    
+    
+    arg.type = "random";std::vector<char*> args1; args1.push_back("../../../../../Desktop/vaa3d/Images/ex_Repo_hb9_eve.tif"); arg.p = (void *) & args1; input<< arg;
+    arg.type = "random";std::vector<char*> args;   args.push_back("0");args.push_back("1");args.push_back("0");args.push_back("1"); arg.p = (void *) & args; input << arg;
+    arg.type = "random";std::vector<char*> args2; args2.push_back("../../../../../Desktop/vaa3d/Images/gsdt_ex_Repo_hb9_eve2.tif"); arg.p = (void *) & args2; output<< arg;
+
+
+    QString full_plugin_name = "gsdt";  //for Linux
+    QString func_name = "gsdt";
+
+    callback.callPluginFunc(full_plugin_name,func_name, input,output); 
+	
+    //system("v3d -x gsdt -f gsdt -i /home/zhiz/Desktop/vaa3d/Images/ex_Repo_hb9_eve.tif -o /home/zhiz/Desktop/vaa3d/Images/gsdt_ex_Repo_hb9_eve.tif -p 0 1 0 1.0");
+
+    unsigned char * gsdtdata1d = 0;
+    int datatype; 
+    V3DLONG * in_zz = 0;
+	
+    char * outimg_file = ((vector<char*> *)(output.at(0).p))->at(0);
+    loadImage(outimg_file, gsdtdata1d, in_zz, datatype,1);
+	
 	
     void* outimg = 0;
     switch (pixeltype)
@@ -483,8 +502,7 @@ template <class T> void adp_median_filter(T* data1d,
 					T PixelValue = data1d[offsetk + offsetj + ix];
 					T GsdtValue = gsdtdatald[offsetk + offsetj + ix];
 					Wx = (int)round((log(PixelValue)/log(2))/GsdtValue);
-					//if(PixelValue>200)
-						//printf("%d %d %d\n",PixelValue,GsdtValue,Wx);
+					//printf("%d %d\n",PixelValue,Wx);
 					 
 					if ((Wx<=0)||(PixelValue==0))
 					{
@@ -494,7 +512,6 @@ template <class T> void adp_median_filter(T* data1d,
 					else					
 					{
 						
-						//printf("%d %d %d\n",PixelValue,GsdtValue,Wx);
 						//Wx = Wx;						
 						Wy = Wx;
 						Wz = Wx;
@@ -562,4 +579,3 @@ template <class T> void adp_median_filter(T* data1d,
 	
 
 }
-
