@@ -168,7 +168,7 @@ template<class T> bool fastmarching_dt(T * inimg1d, float * &phi, int sz0, int s
 
 					if(state[index] != ALIVE)
 					{
-						float new_dist = phi[min_ind] + inimg1d[index] * sqrt(offset);
+						float new_dist = phi[min_ind] + inimg1d[index] * sqrt(double(offset));
 
 						if(state[index] == FAR)
 						{
@@ -337,7 +337,7 @@ template<class T> bool fastmarching_dt_XY(T * inimg1d, float * &phi, int sz0, in
 					
 					if(state[index] != ALIVE)
 					{
-						float new_dist = phi[min_ind] + inimg1d[index] * sqrt(offset);
+						float new_dist = phi[min_ind] + inimg1d[index] * sqrt(double(offset));
 						
 						if(state[index] == FAR)
 						{
@@ -522,7 +522,7 @@ template<class T> bool fastmarching_dt_tree(T * inimg1d, vector<MyMarker*> &outt
 
 					if(state[index] != ALIVE)
 					{
-						float new_dist = phi[min_ind] + inimg1d[index] * sqrt(offset);
+						float new_dist = phi[min_ind] + inimg1d[index] * sqrt(double(offset));
 
 						if(state[index] == FAR)
 						{
@@ -715,7 +715,7 @@ template<class T> bool fastmarching_dt_tree_XY(T * inimg1d, vector<MyMarker*> & 
 					
 					if(state[index] != ALIVE)
 					{
-						float new_dist = phi[min_ind] + inimg1d[index] * sqrt(offset);
+						float new_dist = phi[min_ind] + inimg1d[index] * sqrt(double(offset));
 						
 						if(state[index] == FAR)
 						{
