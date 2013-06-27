@@ -58,6 +58,9 @@ typedef int       Node;
 #endif
 typedef std::pair<Node, Node> Edge;
 
+#include <boost/config.hpp>
+#include <boost/math/special_functions/fpclassify.hpp>
+using namespace boost;
 
 struct ParaShortestPath
 {
@@ -677,7 +680,7 @@ bool point_bdb_minus_3d_localwinmass_prior(unsigned char*** img3d, V3DLONG dim0,
 
 		//////////////////////////////////////////////////////
 		// Can the iteration be terminated ?
-		if (score<TH || isnan(score))
+		if (score<TH || boost::math::isnan(score))
 			break;
 		if (nloop > 0)
 		{
@@ -1013,7 +1016,7 @@ bool point_bdb_minus_3d_localwinmass_prior_withGraphOrder(unsigned char*** img3d
 		
 		//////////////////////////////////////////////////////
 		// Can the iteration be terminated ?
-		if (score<TH || isnan(score))
+		if (score<TH || boost::math::isnan(score))
 			break;
 		if (nloop > 0)
 		{
