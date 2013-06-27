@@ -1269,7 +1269,7 @@ bool dt_v3dneuron(unsigned char *p1d, V3DLONG sz[3], float imgTH, bool b_to_back
 	indatap = p1d;
 	for (tmpdatap=p1dt; tmpdatap<endp; ++tmpdatap)
 	{
-		*tmpdatap = sqrt(*indatap++);
+		*tmpdatap = sqrt(double(*indatap++));
 	}
 
 	bool b_save_tmpres = false;
