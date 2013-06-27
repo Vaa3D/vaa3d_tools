@@ -52,17 +52,17 @@ struct PARA_VN //VN - V3DNeuron
             view3d_datasz1 = view3d->dataDim2();
             view3d_datasz2 = view3d->dataDim3();
             
-            xc0 = round(double(view3d->xCut0()) * in_sz0[0] / view3d_datasz0);
-            xc1 = round(double(view3d->xCut1()) * in_sz0[0] / view3d_datasz0);
+            xc0 = int(double(view3d->xCut0()) * in_sz0[0] / view3d_datasz0 + 0.5);
+            xc1 = int(double(view3d->xCut1()) * in_sz0[0] / view3d_datasz0 + 0.5);
             if (xc1>in_sz0[0]-1) xc1 = in_sz0[0]-1;
             //xc1 = in_sz0[0]-1;//for debug purpose. 130102
             
-            yc0 = round(double(view3d->yCut0()) * in_sz0[1] / view3d_datasz1);
-            yc1 = round(double(view3d->yCut1()) * in_sz0[1] / view3d_datasz1);
+            yc0 = int(double(view3d->yCut0()) * in_sz0[1] / view3d_datasz1 + 0.5);
+            yc1 = int(double(view3d->yCut1()) * in_sz0[1] / view3d_datasz1 + 0.5);
             if (yc1>in_sz0[1]-1) yc1 = in_sz0[1]-1;
             
-            zc0 = round(double(view3d->zCut0()) * in_sz0[2] / view3d_datasz2);
-            zc1 = round(double(view3d->zCut1()) * in_sz0[2] / view3d_datasz2);
+            zc0 = int(double(view3d->zCut0()) * in_sz0[2] / view3d_datasz2 + 0.5);
+            zc1 = int(double(view3d->zCut1()) * in_sz0[2] / view3d_datasz2 + 0.5);
             if (zc1>in_sz0[2]-1) zc1 = in_sz0[2]-1;
             
             //printf("%5.3f, %5.3f, %5.3f\n", float(view3d->xCut1()), float(in_sz0[0]), float(view3d_datasz0));
