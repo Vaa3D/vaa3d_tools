@@ -42,4 +42,4 @@ SOURCES += $$V3DMAINPATH/basic_c_fun/mg_image_lib.cpp
 SOURCES += $$V3DMAINPATH/basic_c_fun/stackutil.cpp
 
 TARGET	= $$qtLibraryTarget(Selective_Enhancement)
-DESTDIR	= ../../../../v3d_external/bin/plugins/Adaptive_Thresholding/Selective_Enhancement
+DESTDIR	= ../../../../v3d_external/bin/plugins/Adaptive_Thresholding/3D_Enhancement

@@ -33,7 +33,8 @@ bool processImage(const V3DPluginArgList & input, V3DPluginArgList & output);
 template <class T> void AdpThresholding(T* data1d,
                      V3DLONG *in_sz,
                      unsigned int c,
-                     T* &outimg1,T* &outimg2);
+		     unsigned int p,	
+                     T* &outimg);
 int swapthree(float& dummya, float& dummyb, float& dummyc);
  
 QStringList adpThresholding::menulist() const
@@ -106,47 +107,38 @@ void processImage(V3DPluginCallback2 &callback, QWidget *parent)
     V3DLONG sc = p4DImage->getCDim();
 
 	//input
-	bool ok4;
-	unsigned int c=1;
+	bool ok1,ok2;
+	unsigned int c = 1,p = 0;
 
 	c = QInputDialog::getInteger(parent, "Channel",
 												  "Enter channel NO:",
-												  1, 1, sc, 1, &ok4);
+												  1, 1, sc, 1, &ok1);
 
+	if(QMessageBox::Yes == QMessageBox::question (0, "", QString("Include plane feature?"), QMessageBox::Yes, QMessageBox::No))    p = 1;
 
      // filter
      V3DLONG in_sz[4];
      in_sz[0] = N; in_sz[1] = M; in_sz[2] = P; in_sz[4] = sc;
 
     ImagePixelType pixeltype = p4DImage->getDatatype();
-    void* outimg1 = 0; 
-    void* outimg2 = 0;	
+    void* outimg = 0; 
     switch (pixeltype)
     {
-        case V3D_UINT8: AdpThresholding(data1d, in_sz, c,(unsigned char* &)outimg1,(unsigned char* &)outimg2); break;
-        case V3D_UINT16: AdpThresholding((unsigned short int *)data1d, in_sz, c, (unsigned short int* &)outimg1,(unsigned short int* &)outimg2); break;
-        case V3D_FLOAT32: AdpThresholding((float *)data1d, in_sz, c, (float* &)outimg1,(float* &)outimg2);break;
+        case V3D_UINT8: AdpThresholding(data1d, in_sz, c,p,(unsigned char* &)outimg); break;
+        case V3D_UINT16: AdpThresholding((unsigned short int *)data1d, in_sz, c, p,(unsigned short int* &)outimg); break;
+        case V3D_FLOAT32: AdpThresholding((float *)data1d, in_sz, c, p,(float* &)outimg);break;
         default: v3d_msg("Invalid data type. Do nothing."); return;
     }
 	
   
     
      // display
-     V3DLONG DS = 1;
      Image4DSimple * new4DImage = new Image4DSimple();
-     new4DImage->setData((unsigned char *)outimg1, V3DLONG(N/DS), V3DLONG(M/DS), V3DLONG(P/DS), 1, pixeltype);
+     new4DImage->setData((unsigned char *)outimg, V3DLONG(N), V3DLONG(M), V3DLONG(P), 1, pixeltype);
      v3dhandle newwin = callback.newImageWindow();
      callback.setImage(newwin, new4DImage);
-     callback.setImageName(newwin, "Downsampled result");
+     callback.setImageName(newwin, "3D enhancement result");
      callback.updateImageWindow(newwin);
-
-
-     Image4DSimple * new4DImage2 = new Image4DSimple();	
-     new4DImage2->setData((unsigned char *)outimg2, V3DLONG(N/DS), V3DLONG(M/DS), V3DLONG(P/DS), 1, pixeltype);
-     v3dhandle newwin2 = callback.newImageWindow();
-     callback.setImage(newwin2, new4DImage2);
-     callback.setImageName(newwin2, "Adaptive Thresholding result");
-     callback.updateImageWindow(newwin2);
 
 }
 
@@ -155,29 +147,18 @@ void processImage(V3DPluginCallback2 &callback, QWidget *parent)
 template <class T> void AdpThresholding(T* data1d,
                      V3DLONG *in_sz,
                      unsigned int c,
-                     T* &outimg1, T* &outimg2)
+		     unsigned int p,	
+                     T* &outimg)
 {
     
   
-     V3DLONG N = in_sz[0];
-     V3DLONG M = in_sz[1];
-     V3DLONG P = in_sz[2];
-     V3DLONG sc = in_sz[3];
-     V3DLONG DS = 1;
-     V3DLONG WS = 1;
-    // V3DLONG pagesz = N*M*P;
-     V3DLONG pagesz = (N/DS)*(M/DS)*(P/DS);
-     
-     V3DLONG DSN = in_sz[0]/DS;
-     V3DLONG DSM = in_sz[1]/DS;
-     V3DLONG DSP = in_sz[2]/DS;	
-     int SUM = 0;
-             
-     //filtering
-	V3DLONG offsetc = (c-1)*pagesz;
-
-		//declare temporary pointer
-		T *pImage = new T [pagesz];
+	     V3DLONG N = in_sz[0];
+	     V3DLONG M = in_sz[1];
+	     V3DLONG P = in_sz[2];
+	     V3DLONG sc = in_sz[3];
+	     V3DLONG WS = 1;
+	     V3DLONG pagesz = N*M*P;
+	     T *pImage = new T [pagesz];
 		if (!pImage)
 		{
 			printf("Fail to allocate memory.\n");
@@ -189,90 +170,28 @@ template <class T> void AdpThresholding(T* data1d,
 				pImage[i] = 0;
 		  }
 
-		//Thresholding
-		V3DLONG dsiz=0;
-	 	for(V3DLONG iz = 0; iz < P; iz = iz+DS)
-		{
-			V3DLONG offsetk = iz*M*N;
-			V3DLONG dsoffsetk = dsiz*DSM*DSN;
-			V3DLONG dsiy=0;
-			for(V3DLONG iy = 0; iy < M; iy = iy+DS)
-			{
-				V3DLONG offsetj = iy*N;
-				V3DLONG dsoffsetj = dsiy*DSN;
-				V3DLONG dsix=0;
-				for(V3DLONG ix = 0; ix < N; ix = ix+DS)
-				{
-					V3DLONG index_pim = offsetk + offsetj + ix;
-					V3DLONG DSindex_pim = dsoffsetk+dsoffsetj+dsix;
- 					SUM = 0;
-				        if (DSindex_pim <= pagesz)
-					{
-						for(V3DLONG k=iz; k< iz+DS; k++)
-						{
-							V3DLONG offsetkl = k*M*N;
-							for(V3DLONG j=iy; j< iy+DS; j++)
-							{
-								V3DLONG offsetjl = j*N;
-								for(V3DLONG i=ix; i< ix+DS; i++)
-								{
-									T dataval = data1d[ offsetc + offsetkl + offsetjl + i];
-									SUM += dataval;
-									//if(SUM<dataval) SUM = dataval;
-									//SUM++;
-
-								}
-							}
-						}
-						//printf("sum is %d\n",SUM);	
-						pImage[DSindex_pim] = SUM/(DS*DS*DS);
-						dsix++;
-						
-					}
-				      //  else
-					//printf("%d %d %d\n", iz,iy,ix);	
-					
-				}
-				dsiy++;
-			}
-			dsiz++;
-			
-		}
-	   	
-		T *pImage2 = new T [pagesz];
-		if (!pImage2)
-		{
-			printf("Fail to allocate memory.\n");
-			return;
-		 }
-		 else
-		 {
-			for(V3DLONG i=0; i<pagesz; i++)
-				pImage2[i] = 0;
-		  }
-
 		 
 		 //outimg = pImage;
 
-		for(V3DLONG dsiz = WS; dsiz < DSP-WS; dsiz++)
+		for(V3DLONG iz = WS; iz < P-WS; iz++)
 		{
-			V3DLONG dsoffsetk = dsiz*DSM*DSN;
-			for(V3DLONG dsiy = WS; dsiy < DSM-WS; dsiy++)
+			V3DLONG offsetk = iz*M*N;
+			for(V3DLONG iy = WS; iy < M-WS; iy++)
 			{
-				V3DLONG dsoffsetj = dsiy*DSN;
-			 	for(V3DLONG dsix = WS; dsix < DSN-WS; dsix++)
+				V3DLONG offsetj = iy*N;
+			 	for(V3DLONG ix = WS; ix < N-WS; ix++)
 				{
-					//double fx = 0.5*(pImage[dsoffsetk+dsoffsetj+dsix+WS]-pImage[dsoffsetk+dsoffsetj+dsix-WS]);
-					//double fy = 0.5*(pImage[dsoffsetk+(dsiy+WS)*DSN+dsix]-pImage[dsoffsetk+(dsiy-WS)*DSN+dsix]);
-					//double fz = 0.5*(pImage[(dsiz+WS)*DSM*DSN+dsoffsetj+dsix]-pImage[(dsiz-WS)*DSM*DSN+dsoffsetj+dsix]);
+					//double fx = 0.5*(data1d[offsetk+offsetj+ix+WS]-data1d[offsetk+offsetj+ix-WS]);
+					//double fy = 0.5*(data1d[offsetk+(iy+WS)*N+ix]-data1d[offsetk+(iy-WS)*N+ix]);
+					//double fz = 0.5*(data1d[(iz+WS)*M*N+offsetj+ix]-data1d[(iz-WS)*M*N+offsetj+ix]);
 					//Seletive approach
-					float  fxx = pImage[dsoffsetk+dsoffsetj+dsix+WS]+ pImage[dsoffsetk+dsoffsetj+dsix-WS]- 2*pImage[dsoffsetk+dsoffsetj+dsix];
-					float fyy = pImage[dsoffsetk+(dsiy+WS)*DSN+dsix]+pImage[dsoffsetk+(dsiy-WS)*DSN+dsix]-2*pImage[dsoffsetk+dsoffsetj+dsix];
-					float fzz = pImage[(dsiz+WS)*DSM*DSN+dsoffsetj+dsix]+pImage[(dsiz-WS)*DSM*DSN+dsoffsetj+dsix]- 2*pImage[dsoffsetk+dsoffsetj+dsix];
+					float  fxx = data1d[offsetk+offsetj+ix+WS]+ data1d[offsetk+offsetj+ix-WS]- 2*data1d[offsetk+offsetj+ix];
+					float fyy = data1d[offsetk+(iy+WS)*N+ix]+data1d[offsetk+(iy-WS)*N+ix]-2*data1d[offsetk+offsetj+ix];
+					float fzz = data1d[(iz+WS)*M*N+offsetj+ix]+data1d[(iz-WS)*M*N+offsetj+ix]- 2*data1d[offsetk+offsetj+ix];
 
-					float fxy = 0.25*(pImage[dsoffsetk+(dsiy+WS)*DSN+dsix+WS]+pImage[dsoffsetk+(dsiy-WS)*DSN+dsix-WS]-pImage[dsoffsetk+(dsiy+WS)*DSN+dsix-WS]-pImage[dsoffsetk+(dsiy-WS)*DSN+dsix+WS]);
-					float fxz = 0.25*(pImage[(dsiz+WS)*DSM*DSN+dsoffsetj+dsix+WS]+pImage[(dsiz-WS)*DSM*DSN+dsoffsetj+dsix-WS]-pImage[(dsiz+WS)*DSM*DSN+dsoffsetj+dsix-WS]-pImage[(dsiz-WS)*DSM*DSN+dsoffsetj+dsix+WS]);
-					float fyz = 0.25*(pImage[(dsiz+WS)*DSM*DSN+(dsiy+WS)*DSN+dsix]+pImage[(dsiz-WS)*DSM*DSN+(dsiy-WS)*DSN+dsix]-pImage[(dsiz+WS)*DSM*DSN+(dsiy-WS)*DSN+dsix]-pImage[(dsiz-WS)*DSM*DSN+(dsiy+WS)*DSN+dsix]);
+					float fxy = 0.25*(data1d[offsetk+(iy+WS)*N+ix+WS]+data1d[offsetk+(iy-WS)*N+ix-WS]-data1d[offsetk+(iy+WS)*N+ix-WS]-data1d[offsetk+(iy-WS)*N+ix+WS]);
+					float fxz = 0.25*(data1d[(iz+WS)*M*N+offsetj+ix+WS]+data1d[(iz-WS)*M*N+offsetj+ix-WS]-data1d[(iz+WS)*M*N+offsetj+ix-WS]-data1d[(iz-WS)*M*N+offsetj+ix+WS]);
+					float fyz = 0.25*(data1d[(iz+WS)*M*N+(iy+WS)*N+ix]+data1d[(iz-WS)*M*N+(iy-WS)*N+ix]-data1d[(iz+WS)*M*N+(iy-WS)*N+ix]-data1d[(iz-WS)*M*N+(iy+WS)*N+ix]);
 					 
  				 	Matrix3f A;
 					A << fxx,fxy,fxz,fxy,fyy,fyz,fxz,fyz,fzz;	
@@ -291,37 +210,41 @@ template <class T> void AdpThresholding(T* data1d,
 					//cout << "EigenValues" << endl;
 					//cout <<  DD << endl <<endl;*/
 
-
+    					float a1 = eigensolver.eigenvalues()(0);
+	   				float a2 = eigensolver.eigenvalues()(1);
+					float a3 = eigensolver.eigenvalues()(2);
+					swapthree(a1, a2, a3);
+				//mak	printf("%f,%f,%f,%f,%f,%f,%f,%f,%f\n\n\n\n",fxx,fyy,fzz,fxy,fxz,fyz,a1,a2,a3);
+					float output1 = 0;
+					float output2 = 0;
+					float output3 = 0;	
+					if(a1<0)
 					{
-						float a1 = eigensolver.eigenvalues()(0);
-	   					float a2 = eigensolver.eigenvalues()(1);
-						float a3 = eigensolver.eigenvalues()(2);
-	   					swapthree(a1, a2, a3);
-						//printf("%f,%f,%f,%f,%f,%f,%f,%f,%f\n\n\n\n",fxx,fyy,fzz,fxy,fxz,fyz,a1,a2,a3);
-						float output1 = 0;
-						float output2 = 0;	
-						if(a1<0 && a2 < 0)
+							
+						if (p ==1) output3 = abs(a1) - abs(a2);	
+						if(a2 < 0)
 						{	
-							//pImage2[dsoffsetk+dsoffsetj+dsix] = abs(a2)*(abs(a2)-abs(a3))/abs(a1);
+							//pImage[offsetk+offsetj+ix] = abs(a2)*(abs(a2)-abs(a3))/abs(a1);
 							output1 =  abs(a2)*(abs(a2)-abs(a3))/abs(a1);
 							//T output = abs(a1)/abs(a2);	
-							
-						//printf("%f %f %f %d\n", a1,a2,a3,output);
-							//if(dsix ==96 && dsiy == 37 && dsiz == 6)
-							if(a3 < 0) output2 = pow(abs(a3),2)/abs(a1);
-							
+						
+						        //printf("%f %f %f %d\n", a1,a2,a3,output1);
+							//if(ix ==96 && iy == 37 && iz == 6)
+							if(a3 < 0) output2 = (abs(a3),2)/abs(a1);
+						
 						}
-
-						pImage2[dsoffsetk+dsoffsetj+dsix]=sqrt(pow(output1,2)+pow(output2,2));
-
 					}
-					
+
+					pImage[offsetk+offsetj+ix]=sqrt(pow(output1,2)+pow(output2,2)+pow(output3,2));
+
 				}
+					
+				
 			}
 					
 		}
-		outimg1 = pImage;
-		outimg2 = pImage2;
+		outimg = pImage;
+		
 }
 
 int swapthree(float& dummya, float& dummyb, float& dummyc)
