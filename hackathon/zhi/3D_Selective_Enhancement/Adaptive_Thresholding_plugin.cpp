@@ -33,7 +33,8 @@ bool processImage(const V3DPluginArgList & input, V3DPluginArgList & output);
 template <class T> void AdpThresholding(T* data1d,
                      V3DLONG *in_sz,
                      unsigned int c,
-		     unsigned int p,	
+		     unsigned int p,
+		     unsigned int d,	
                      T* &outimg);
 int swapthree(float& dummya, float& dummyb, float& dummyc);
  
@@ -108,13 +109,14 @@ void processImage(V3DPluginCallback2 &callback, QWidget *parent)
 
 	//input
 	bool ok1,ok2;
-	unsigned int c = 1,p = 0;
+	unsigned int c = 1,p = 0, d = 0;
 
 	c = QInputDialog::getInteger(parent, "Channel",
 												  "Enter channel NO:",
 												  1, 1, sc, 1, &ok1);
 
 	if(QMessageBox::Yes == QMessageBox::question (0, "", QString("Include plane feature?"), QMessageBox::Yes, QMessageBox::No))    p = 1;
+	if(QMessageBox::Yes == QMessageBox::question (0, "", QString("Include dot feature?"), QMessageBox::Yes, QMessageBox::No))    d = 1;
 
      // filter
      V3DLONG in_sz[4];
@@ -124,9 +126,9 @@ void processImage(V3DPluginCallback2 &callback, QWidget *parent)
     void* outimg = 0; 
     switch (pixeltype)
     {
-        case V3D_UINT8: AdpThresholding(data1d, in_sz, c,p,(unsigned char* &)outimg); break;
-        case V3D_UINT16: AdpThresholding((unsigned short int *)data1d, in_sz, c, p,(unsigned short int* &)outimg); break;
-        case V3D_FLOAT32: AdpThresholding((float *)data1d, in_sz, c, p,(float* &)outimg);break;
+        case V3D_UINT8: AdpThresholding(data1d, in_sz, c,p,d,(unsigned char* &)outimg); break;
+        case V3D_UINT16: AdpThresholding((unsigned short int *)data1d, in_sz, c, p,d,(unsigned short int* &)outimg); break;
+        case V3D_FLOAT32: AdpThresholding((float *)data1d, in_sz, c, p,d,(float* &)outimg);break;
         default: v3d_msg("Invalid data type. Do nothing."); return;
     }
 	
@@ -147,7 +149,8 @@ void processImage(V3DPluginCallback2 &callback, QWidget *parent)
 template <class T> void AdpThresholding(T* data1d,
                      V3DLONG *in_sz,
                      unsigned int c,
-		     unsigned int p,	
+		     unsigned int p,
+		     unsigned int d,	
                      T* &outimg)
 {
     
@@ -230,7 +233,7 @@ template <class T> void AdpThresholding(T* data1d,
 						
 						        //printf("%f %f %f %d\n", a1,a2,a3,output1);
 							//if(ix ==96 && iy == 37 && iz == 6)
-							if(a3 < 0) output2 = (abs(a3),2)/abs(a1);
+							if(a3 < 0 && d ==1) output2 = (abs(a3),2)/abs(a1);
 						
 						}
 					}
