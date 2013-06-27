@@ -268,21 +268,21 @@ template <class T> void AdpThresholding(T* data1d,
 
 		double maxNum = 0;
 		DiagonalMatrix DDMax;
-		for(V3DLONG dsiz = WS; dsiz < DSP-WS; dsiz++)
+		for(V3DLONG dsiz = 0; dsiz < DSP; dsiz++)
 		{
 			V3DLONG dsoffsetk = dsiz*DSM*DSN;
-			for(V3DLONG dsiy = WS; dsiy < DSM-WS; dsiy++)
+			for(V3DLONG dsiy = 0; dsiy < DSM; dsiy++)
 			{
 				V3DLONG dsoffsetj = dsiy*DSN;
-			 	for(V3DLONG dsix = WS; dsix < DSN-WS; dsix++)
+			 	for(V3DLONG dsix = 0; dsix < DSN; dsix++)
 				{
 					
-					V3DLONG xb=dsix-WS;
-					V3DLONG xe=dsix+WS; 
-					V3DLONG yb=dsiy-WS; 
-					V3DLONG ye=dsiy+WS; 
-					V3DLONG zb=dsiz-WS; 
-					V3DLONG ze=dsiz+WS; 
+					V3DLONG xb=dsix-WS;if(xb<0) xb = 0;
+					V3DLONG xe=dsix+WS;if(xe>=DSN-1) xe = DSN-1; 
+					V3DLONG yb=dsiy-WS;if(yb<0) yb = 0; 
+					V3DLONG ye=dsiy+WS;if(ye>=DSM-1) ye = DSM-1; 
+					V3DLONG zb=dsiz-WS;if(zb<0) zb = 0; 
+					V3DLONG ze=dsiz+WS;if(ze>=DSP-1) ze = DSP-1; 
 
 					V3DLONG i,j,k;
 					double MEAN = 0, NonZero = 0;	

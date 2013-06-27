@@ -315,7 +315,6 @@ template <class T> void median_filter(T* data1d,
 					V3DLONG ye = iy+Wy; if(ye>=M-1) ye = M-1;
 					V3DLONG zb = iz-Wz; if(zb<0) zb = 0;
 					V3DLONG ze = iz+Wz; if(ze>=P-1) ze = P-1;
-
 					ii = 0;
 
 					for(V3DLONG k=zb; k<=ze; k++)
@@ -352,8 +351,8 @@ template <class T> void median_filter(T* data1d,
 
 					//set value
 					V3DLONG index_pim = offsetk + offsetj + ix;
-					pImage[index_pim] = arr[int(0.5*size)+1];
-
+					pImage[index_pim] = arr[int(0.5*ii)+1];
+					
 				}
 			}
 		}
