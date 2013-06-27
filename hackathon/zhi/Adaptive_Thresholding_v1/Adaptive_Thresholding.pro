@@ -2,7 +2,7 @@
 TEMPLATE	= lib
 CONFIG	+= qt plugin warn_off
 #CONFIG	+= x86_64
-V3DMAINPATH = /home/zhiz/work/v3d_external/v3d_main
+V3DMAINPATH = ../../../../v3d_external/v3d_main
 INCLUDEPATH	+= $$V3DMAINPATH/basic_c_fun
 INCLUDEPATH += $$V3DMAINPATH/common_lib/include
 INCLUDEPATH += $$V3DMAINPATH/jba/newmat11
@@ -42,4 +42,4 @@ SOURCES += $$V3DMAINPATH/basic_c_fun/mg_image_lib.cpp
 SOURCES += $$V3DMAINPATH/basic_c_fun/stackutil.cpp
 
 TARGET	= $$qtLibraryTarget(Selective_Enhancement)
-DESTDIR	= /home/zhiz/work/v3d_external/bin/plugins/Adaptive_Thresholding/Selective_Enhancement
+DESTDIR	= ../../../../v3d_external/bin/plugins/Adaptive_Thresholding/Selective_Enhancement

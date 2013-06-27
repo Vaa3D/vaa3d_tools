@@ -267,10 +267,10 @@ template <class T> void AdpThresholding(T* data1d,
 					//double fz = 0.5*(pImage[(dsiz+WS)*DSM*DSN+dsoffsetj+dsix]-pImage[(dsiz-WS)*DSM*DSN+dsoffsetj+dsix]);
 					//Seletive approach
 					float  fxx = pImage[dsoffsetk+dsoffsetj+dsix+WS]+ pImage[dsoffsetk+dsoffsetj+dsix-WS]- 2*pImage[dsoffsetk+dsoffsetj+dsix];
-					float fyy = pImage[dsoffsetk+(dsiy+WS)*DSN+dsix]-pImage[dsoffsetk+(dsiy-WS)*DSN+dsix]-2*pImage[dsoffsetk+dsoffsetj+dsix];
-					float fzz = pImage[(dsiz+WS)*DSM*DSN+dsoffsetj+dsix]-pImage[(dsiz-WS)*DSM*DSN+dsoffsetj+dsix]- 2*pImage[dsoffsetk+dsoffsetj+dsix];
+					float fyy = pImage[dsoffsetk+(dsiy+WS)*DSN+dsix]+pImage[dsoffsetk+(dsiy-WS)*DSN+dsix]-2*pImage[dsoffsetk+dsoffsetj+dsix];
+					float fzz = pImage[(dsiz+WS)*DSM*DSN+dsoffsetj+dsix]+pImage[(dsiz-WS)*DSM*DSN+dsoffsetj+dsix]- 2*pImage[dsoffsetk+dsoffsetj+dsix];
 
-					float fxy = 0.25*(pImage[dsoffsetk+(dsiy+WS)*DSN+dsix+WS]+pImage[dsoffsetk+(dsiy-WS)*DSN+dsix-WS]-pImage[dsoffsetk+(dsiy+WS)*DSN+dsix-WS]-	pImage[dsoffsetk+(dsiy-WS)*DSN+dsix+WS]);
+					float fxy = 0.25*(pImage[dsoffsetk+(dsiy+WS)*DSN+dsix+WS]+pImage[dsoffsetk+(dsiy-WS)*DSN+dsix-WS]-pImage[dsoffsetk+(dsiy+WS)*DSN+dsix-WS]-pImage[dsoffsetk+(dsiy-WS)*DSN+dsix+WS]);
 					float fxz = 0.25*(pImage[(dsiz+WS)*DSM*DSN+dsoffsetj+dsix+WS]+pImage[(dsiz-WS)*DSM*DSN+dsoffsetj+dsix-WS]-pImage[(dsiz+WS)*DSM*DSN+dsoffsetj+dsix-WS]-pImage[(dsiz-WS)*DSM*DSN+dsoffsetj+dsix+WS]);
 					float fyz = 0.25*(pImage[(dsiz+WS)*DSM*DSN+(dsiy+WS)*DSN+dsix]+pImage[(dsiz-WS)*DSM*DSN+(dsiy-WS)*DSN+dsix]-pImage[(dsiz+WS)*DSM*DSN+(dsiy-WS)*DSN+dsix]-pImage[(dsiz-WS)*DSM*DSN+(dsiy+WS)*DSN+dsix]);
 					 
@@ -291,20 +291,24 @@ template <class T> void AdpThresholding(T* data1d,
 					//cout << "EigenValues" << endl;
 					//cout <<  DD << endl <<endl;*/
 
-					 T output = 0;
+
 					{
 						float a1 = eigensolver.eigenvalues()(0);
 	   					float a2 = eigensolver.eigenvalues()(1);
 						float a3 = eigensolver.eigenvalues()(2);
 	   					swapthree(a1, a2, a3);
+						//printf("%f,%f,%f,%f,%f,%f,%f,%f,%f\n\n\n\n",fxx,fyy,fzz,fxy,fxz,fyz,a1,a2,a3);	
 						if(a1<0 && a2<0)
 						{	
 							//pImage2[dsoffsetk+dsoffsetj+dsix] = abs(a2)*(abs(a2)-abs(a3))/abs(a1);
-							 output =  abs(a2)*(abs(a2)-abs(a3))/abs(a1);
+							float output =  abs(a2)*(abs(a2)-abs(a3))/abs(a1);
 							//T output = abs(a1)/abs(a2);	
-							//if (output >120)
-						//printf("%f %f %f %d\n", a1,a2,a3,output);	
+							
+						//printf("%f %f %f %d\n", a1,a2,a3,output);
+							//if(dsix ==96 && dsiy == 37 && dsiz == 6)
+								
 							pImage2[dsoffsetk+dsoffsetj+dsix]=output;
+							
 						}
 
 
@@ -322,13 +326,13 @@ template <class T> void AdpThresholding(T* data1d,
 int swapthree(float& dummya, float& dummyb, float& dummyc)
 {
  
-    if ( (abs(dummya) > abs(dummyb)) && (abs(dummyb) > abs(dummyc)) )
+    if ( (abs(dummya) >= abs(dummyb)) && (abs(dummyb) >= abs(dummyc)) )
     {
         return 1;
     }
  
  
-    else if ( (abs(dummya) > abs(dummyc)) && (abs(dummyc) > abs(dummyb)) )
+    else if ( (abs(dummya) >= abs(dummyc)) && (abs(dummyc) >= abs(dummyb)) )
  
     {
         float temp = dummyb;
@@ -338,7 +342,7 @@ int swapthree(float& dummya, float& dummyb, float& dummyc)
         return 1;
     }
  
-    else if ( (abs(dummyb) > abs(dummya)) && (abs(dummya) > abs(dummyc)) )
+    else if ( (abs(dummyb) >= abs(dummya)) && (abs(dummya) >= abs(dummyc)) )
     {
         float temp = dummya;
         dummya = dummyb;
@@ -348,7 +352,7 @@ int swapthree(float& dummya, float& dummyb, float& dummyc)
     }
  
  
-    else if ( (abs(dummyb) > abs(dummyc)) && (abs(dummyc) > abs(dummya)) )
+    else if ( (abs(dummyb) >= abs(dummyc)) && (abs(dummyc) >= abs(dummya)) )
     {
         float temp = dummya;
         dummya = dummyb;
@@ -359,7 +363,7 @@ int swapthree(float& dummya, float& dummyb, float& dummyc)
     }
  
  
-    else if ( (abs(dummyc) > abs(dummya)) && (abs(dummya) > abs(dummyb)) )
+    else if ( (abs(dummyc) >= abs(dummya)) && (abs(dummya) >= abs(dummyb)) )
     {
         float temp = dummya;
         dummya = dummyc;
@@ -370,7 +374,7 @@ int swapthree(float& dummya, float& dummyb, float& dummyc)
     }
  
  
-    else if ( (abs(dummyc) > abs(dummyb)) && (abs(dummyb) > abs(dummya)) )
+    else if ( (abs(dummyc) >= abs(dummyb)) && (abs(dummyb) >= abs(dummya)) )
     {
         float temp = dummyc;
         dummyc = dummya;
