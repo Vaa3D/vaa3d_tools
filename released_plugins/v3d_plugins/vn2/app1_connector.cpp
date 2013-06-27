@@ -464,9 +464,9 @@ bool proc_app1(PARA_APP1 &p, const QString & versionStr)
     {
         
         QString rootposstr="", tmps;
-        tmps.setNum(round(inmarkers[0].x)).prepend("_x"); rootposstr += tmps;
-        tmps.setNum(round(inmarkers[0].y)).prepend("_y"); rootposstr += tmps;
-        tmps.setNum(round(inmarkers[0].z)).prepend("_z"); rootposstr += tmps;
+        tmps.setNum(int(inmarkers[0].x+0.5)).prepend("_x"); rootposstr += tmps;
+        tmps.setNum(int(inmarkers[0].y+0.5)).prepend("_y"); rootposstr += tmps;
+        tmps.setNum(int(inmarkers[0].z+0.5)).prepend("_z"); rootposstr += tmps;
 
         QString outswc_file = QString(p.p4dImage->getFileName()) + rootposstr + "_app1.swc";
 
@@ -503,9 +503,9 @@ bool proc_app1(PARA_APP1 &p, const QString & versionStr)
         vector<NeuronSWC*> outswc;
         
         QString rootposstr="", tmps;
-        tmps.setNum(round(inmarkers[0].x)).prepend("_x"); rootposstr += tmps;
-        tmps.setNum(round(inmarkers[0].y)).prepend("_y"); rootposstr += tmps;
-        tmps.setNum(round(inmarkers[0].z)).prepend("_z"); rootposstr += tmps;
+        tmps.setNum(int(inmarkers[0].x+0.5)).prepend("_x"); rootposstr += tmps;
+        tmps.setNum(int(inmarkers[0].y+0.5)).prepend("_y"); rootposstr += tmps;
+        tmps.setNum(int(inmarkers[0].z+0.5)).prepend("_z"); rootposstr += tmps;
         //QString outswc_file = callback.getImageName(curwin) + rootposstr + "_app2.swc";
         QString outswc_file = QString(p.p4dImage->getFileName()) + rootposstr + "_app2.swc";
               
