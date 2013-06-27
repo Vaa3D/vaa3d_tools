@@ -21,8 +21,7 @@ LIBS += -L$$V3DMAINPATH/common_lib/src_packages/mylib_tiff -lmylib
 }
 
 win32 {
-LIBS += -L$$V3DMAINPATH/common_lib/lib -lv3dtiff
-LIBS += -L$$V3DMAINPATH/common_lib/src_packages/mylib_tiff -lmylib
+LIBS += -L$$V3DMAINPATH/common_lib/winlib -ltiff
 }
 
 LIBS += -L$$V3DMAINPATH/jba/c++ 
