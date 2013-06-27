@@ -297,21 +297,22 @@ template <class T> void AdpThresholding(T* data1d,
 	   					float a2 = eigensolver.eigenvalues()(1);
 						float a3 = eigensolver.eigenvalues()(2);
 	   					swapthree(a1, a2, a3);
-						//printf("%f,%f,%f,%f,%f,%f,%f,%f,%f\n\n\n\n",fxx,fyy,fzz,fxy,fxz,fyz,a1,a2,a3);	
-						if(a1<0 && a2<0)
+						//printf("%f,%f,%f,%f,%f,%f,%f,%f,%f\n\n\n\n",fxx,fyy,fzz,fxy,fxz,fyz,a1,a2,a3);
+						float output1 = 0;
+						float output2 = 0;	
+						if(a1<0 && a2 < 0)
 						{	
 							//pImage2[dsoffsetk+dsoffsetj+dsix] = abs(a2)*(abs(a2)-abs(a3))/abs(a1);
-							float output =  abs(a2)*(abs(a2)-abs(a3))/abs(a1);
+							output1 =  abs(a2)*(abs(a2)-abs(a3))/abs(a1);
 							//T output = abs(a1)/abs(a2);	
 							
 						//printf("%f %f %f %d\n", a1,a2,a3,output);
 							//if(dsix ==96 && dsiy == 37 && dsiz == 6)
-								
-							pImage2[dsoffsetk+dsoffsetj+dsix]=output;
+							if(a3 < 0) output2 = pow(abs(a3),2)/abs(a1);
 							
 						}
 
-
+						pImage2[dsoffsetk+dsoffsetj+dsix]=sqrt(pow(output1,2)+pow(output2,2));
 
 					}
 					

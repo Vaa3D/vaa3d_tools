@@ -185,17 +185,22 @@ template <class T> void selectiveEnhance(T* data1d,
 					        a2 = a1;
 						a1 = temp;
 				}
-							
+				float output1 = 0;
+				float output2 = 0;			
 				if(a1<0)
 				{	
-				 	float output =  abs(a1)-abs(a2);
-		 			pImage[offsetj+ix]=output;
-					if(ix == 71 && iy == 46)
-				   	 printf("fxx = %f, fyy= %f,fxy = %f, a1 = %f,a2 = %f, value = %f\n",fxx,fyy,fxy,a1,a2,output);	
+				 	output1 =  abs(a1)-abs(a2);
+		 			//pImage[offsetj+ix]=output;
+				//	if(ix == 71 && iy == 46)
+				//   	 printf("fxx = %f, fyy= %f,fxy = %f, a1 = %f,a2 = %f, value = %f\n",fxx,fyy,fxy,a1,a2,output);	
 				}
+				if(a1<0 && a2<0) 
+				{	
+				 	output2 =  abs(a2)*abs(a2)/abs(a1);
+		 			
 
-
-			
+				}
+					pImage[offsetj+ix]=sqrt(pow(output1,2)+pow(output2,2));
 			}
 		}
 					
