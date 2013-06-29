@@ -49,7 +49,6 @@ Peng, H, Ruan, Z., Atasoy, D., and Sternson, S. (2010) “Automatic reconstructi
 
 #ifdef _WIN32
 #define fabs(x) ((x<0)?-x:x)
-#define round(x) (int(x))
 #endif
 
 
@@ -1984,7 +1983,7 @@ double fitRadiusPercent(unsigned char ****img4d, V3DLONG sz[4], double imgTH, do
 	VPoint v0(sz[3],0), v1(sz[3],0);
 	V3DLONG c;
 	for (c=0;c<sz[3];c++)
-		v0.v[c] = img4d[c][(V3DLONG)round(z)][(V3DLONG)round(y)][(V3DLONG)round(x)];
+		v0.v[c] = img4d[c][(V3DLONG)(z+0.5)][(V3DLONG)(y+0.5)][(V3DLONG)(x+0.5)];
 	
 	double total_num, background_num;
 	double ir;
