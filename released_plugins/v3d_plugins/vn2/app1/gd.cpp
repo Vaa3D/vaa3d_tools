@@ -47,6 +47,11 @@ Peng, H, Ruan, Z., Atasoy, D., and Sternson, S. (2010) “Automatic reconstructi
 #else
 #endif
 
+#ifdef _WIN32
+#define fabs(x) ((x<0)?-x:x)
+#define round(x) (int(x))
+#endif
+
 
 #include "gd.h"
 
