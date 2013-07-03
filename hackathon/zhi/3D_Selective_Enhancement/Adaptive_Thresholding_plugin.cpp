@@ -33,6 +33,9 @@ bool processImage(const V3DPluginArgList & input, V3DPluginArgList & output);
 template <class T> void AdpThresholding(T* data1d,
                      V3DLONG *in_sz,
                      unsigned int c,
+		     unsigned int Wx,
+                     unsigned int Wy,
+                     unsigned int Wz,
 		     unsigned int p,
 		     unsigned int d,	
                      T* &outimg);
@@ -108,12 +111,40 @@ void processImage(V3DPluginCallback2 &callback, QWidget *parent)
     V3DLONG sc = p4DImage->getCDim();
 
 	//input
-	bool ok1,ok2;
-	unsigned int c = 1,p = 0, d = 0;
+	bool ok1, ok2, ok3, ok4, ok5;
+	unsigned int Wx=1, Wy=1, Wz=1, c=1,p=0,d=0;
 
-	c = QInputDialog::getInteger(parent, "Channel",
-												  "Enter channel NO:",
-												  1, 1, sc, 1, &ok1);
+	Wx = QInputDialog::getInteger(parent, "Window X ",
+								  "Enter window size (# voxels) along x:",
+								  1, 1, N, 1, &ok1);
+
+	if(ok1)
+	{
+		Wy = QInputDialog::getInteger(parent, "Window Y",
+									  "Enter window size  (# voxels) along y:",
+									  1, 1, M, 1, &ok2);
+	}
+	else
+		return;
+
+	if(ok2)
+	{
+		Wz = QInputDialog::getInteger(parent, "Window Z",
+									  "Enter window size  (# voxels) along z:",
+									  1, 1, P, 1, &ok3);
+	}
+	else
+		return;
+
+	if(ok3)
+	{
+		c = QInputDialog::getInteger(parent, "Channel",
+									 "Enter channel NO (starts from 1):",
+									 1, 1, sc, 1, &ok4);
+	}
+	else
+		return;
+
 
 	if(QMessageBox::Yes == QMessageBox::question (0, "", QString("Include plane feature?"), QMessageBox::Yes, QMessageBox::No))    p = 1;
 	if(QMessageBox::Yes == QMessageBox::question (0, "", QString("Include dot feature?"), QMessageBox::Yes, QMessageBox::No))    d = 1;
@@ -126,9 +157,9 @@ void processImage(V3DPluginCallback2 &callback, QWidget *parent)
     void* outimg = 0; 
     switch (pixeltype)
     {
-        case V3D_UINT8: AdpThresholding(data1d, in_sz, c,p,d,(unsigned char* &)outimg); break;
-        case V3D_UINT16: AdpThresholding((unsigned short int *)data1d, in_sz, c, p,d,(unsigned short int* &)outimg); break;
-        case V3D_FLOAT32: AdpThresholding((float *)data1d, in_sz, c, p,d,(float* &)outimg);break;
+        case V3D_UINT8: AdpThresholding(data1d, in_sz, Wx, Wy, Wz,c,p,d,(unsigned char* &)outimg); break;
+        case V3D_UINT16: AdpThresholding((unsigned short int *)data1d, in_sz, Wx, Wy, Wz,c, p,d,(unsigned short int* &)outimg); break;
+        case V3D_FLOAT32: AdpThresholding((float *)data1d, in_sz, Wx, Wy, Wz,c, p,d,(float* &)outimg);break;
         default: v3d_msg("Invalid data type. Do nothing."); return;
     }
 	
@@ -148,6 +179,9 @@ void processImage(V3DPluginCallback2 &callback, QWidget *parent)
 
 template <class T> void AdpThresholding(T* data1d,
                      V3DLONG *in_sz,
+                     unsigned int Wx,
+                     unsigned int Wy,
+                     unsigned int Wz,
                      unsigned int c,
 		     unsigned int p,
 		     unsigned int d,	
@@ -159,7 +193,6 @@ template <class T> void AdpThresholding(T* data1d,
 	     V3DLONG M = in_sz[1];
 	     V3DLONG P = in_sz[2];
 	     V3DLONG sc = in_sz[3];
-	     V3DLONG WS = 1;
 	     V3DLONG pagesz = N*M*P;
 	     T *pImage = new T [pagesz];
 		if (!pImage)
@@ -176,25 +209,25 @@ template <class T> void AdpThresholding(T* data1d,
 		 
 		 //outimg = pImage;
 
-		for(V3DLONG iz = WS; iz < P-WS; iz++)
+		for(V3DLONG iz = Wz; iz < P-Wz; iz++)
 		{
 			V3DLONG offsetk = iz*M*N;
-			for(V3DLONG iy = WS; iy < M-WS; iy++)
+			for(V3DLONG iy = Wy; iy < M-Wy; iy++)
 			{
 				V3DLONG offsetj = iy*N;
-			 	for(V3DLONG ix = WS; ix < N-WS; ix++)
+			 	for(V3DLONG ix = Wx; ix < N-Wx; ix++)
 				{
-					//double fx = 0.5*(data1d[offsetk+offsetj+ix+WS]-data1d[offsetk+offsetj+ix-WS]);
-					//double fy = 0.5*(data1d[offsetk+(iy+WS)*N+ix]-data1d[offsetk+(iy-WS)*N+ix]);
-					//double fz = 0.5*(data1d[(iz+WS)*M*N+offsetj+ix]-data1d[(iz-WS)*M*N+offsetj+ix]);
+					//double fx = 0.5*(data1d[offsetk+offsetj+ix+Wx]-data1d[offsetk+offsetj+ix-Wx]);
+					//double fy = 0.5*(data1d[offsetk+(iy+Wy)*N+ix]-data1d[offsetk+(iy-Wy)*N+ix]);
+					//double fz = 0.5*(data1d[(iz+Wz)*M*N+offsetj+ix]-data1d[(iz-Wz)*M*N+offsetj+ix]);
 					//Seletive approach
-					float  fxx = data1d[offsetk+offsetj+ix+WS]+ data1d[offsetk+offsetj+ix-WS]- 2*data1d[offsetk+offsetj+ix];
-					float fyy = data1d[offsetk+(iy+WS)*N+ix]+data1d[offsetk+(iy-WS)*N+ix]-2*data1d[offsetk+offsetj+ix];
-					float fzz = data1d[(iz+WS)*M*N+offsetj+ix]+data1d[(iz-WS)*M*N+offsetj+ix]- 2*data1d[offsetk+offsetj+ix];
+					float  fxx = data1d[offsetk+offsetj+ix+Wx]+ data1d[offsetk+offsetj+ix-Wx]- 2*data1d[offsetk+offsetj+ix];
+					float fyy = data1d[offsetk+(iy+Wy)*N+ix]+data1d[offsetk+(iy-Wy)*N+ix]-2*data1d[offsetk+offsetj+ix];
+					float fzz = data1d[(iz+Wz)*M*N+offsetj+ix]+data1d[(iz-Wz)*M*N+offsetj+ix]- 2*data1d[offsetk+offsetj+ix];
 
-					float fxy = 0.25*(data1d[offsetk+(iy+WS)*N+ix+WS]+data1d[offsetk+(iy-WS)*N+ix-WS]-data1d[offsetk+(iy+WS)*N+ix-WS]-data1d[offsetk+(iy-WS)*N+ix+WS]);
-					float fxz = 0.25*(data1d[(iz+WS)*M*N+offsetj+ix+WS]+data1d[(iz-WS)*M*N+offsetj+ix-WS]-data1d[(iz+WS)*M*N+offsetj+ix-WS]-data1d[(iz-WS)*M*N+offsetj+ix+WS]);
-					float fyz = 0.25*(data1d[(iz+WS)*M*N+(iy+WS)*N+ix]+data1d[(iz-WS)*M*N+(iy-WS)*N+ix]-data1d[(iz+WS)*M*N+(iy-WS)*N+ix]-data1d[(iz-WS)*M*N+(iy+WS)*N+ix]);
+					float fxy = 0.25*(data1d[offsetk+(iy+Wy)*N+ix+Wx]+data1d[offsetk+(iy-Wy)*N+ix-Wx]-data1d[offsetk+(iy+Wy)*N+ix-Wx]-data1d[offsetk+(iy-Wy)*N+ix+Wx]);
+					float fxz = 0.25*(data1d[(iz+Wz)*M*N+offsetj+ix+Wx]+data1d[(iz-Wz)*M*N+offsetj+ix-Wx]-data1d[(iz+Wz)*M*N+offsetj+ix-Wx]-data1d[(iz-Wz)*M*N+offsetj+ix+Wx]);
+					float fyz = 0.25*(data1d[(iz+Wz)*M*N+(iy+Wy)*N+ix]+data1d[(iz-Wz)*M*N+(iy-Wy)*N+ix]-data1d[(iz+Wz)*M*N+(iy-Wy)*N+ix]-data1d[(iz-Wz)*M*N+(iy+Wy)*N+ix]);
 					 
  				 	Matrix3f A;
 					A << fxx,fxy,fxz,fxy,fyy,fyz,fxz,fyz,fzz;	

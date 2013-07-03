@@ -144,7 +144,7 @@ template <class T> void selectiveEnhance(T* data1d,
      V3DLONG P = in_sz[2];
      V3DLONG sc = in_sz[3];
      V3DLONG pagesz = N*M*P;
-     V3DLONG WS = 1;
+     V3DLONG WS = 5;
 
 
 		//declare temporary pointer
@@ -189,14 +189,14 @@ template <class T> void selectiveEnhance(T* data1d,
 				float output2 = 0;			
 				if(a1<0)
 				{	
-				 	output1 =  abs(a1)-abs(a2);
+				 	output1 = abs(a1)-abs(a2);
 		 			//pImage[offsetj+ix]=output;
 				//	if(ix == 71 && iy == 46)
 				//   	 printf("fxx = %f, fyy= %f,fxy = %f, a1 = %f,a2 = %f, value = %f\n",fxx,fyy,fxy,a1,a2,output);	
 				}
 				if(a1<0 && a2<0) 
 				{	
-				 	output2 =  abs(a2)*abs(a2)/abs(a1);
+				 	output2 = 0;// abs(a2)*abs(a2)/abs(a1);
 		 			
 
 				}
