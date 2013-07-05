@@ -79,7 +79,8 @@ bool MedianFilterPlugin::dofunc(const QString & func_name, const V3DPluginArgLis
     }
     else if(func_name == tr("adaptive_window"))
 	{
-       return processImage2(input, output);
+        v3d_msg("To be implemented");
+       //return processImage2(input, output);
     }
     else if (func_name == tr("help"))
     {
