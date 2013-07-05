@@ -92,8 +92,7 @@ void watershed_vs(V3DPluginCallback2 &callback, QWidget *parent, int method_code
 		mean_and_std(subject->getRawDataAtChannel(ch), subject->getTotalUnitNumberPerChannel(), mm, vv);
 		tt = (th_idx == 0) ? mm : mm+vv;
 		v3d_msg(QString("in fast image object labeling: ch=%1 mean=%2 std=%2").arg(ch).arg(mm).arg(vv), 0);
-	}
-	
+	}	
 	
 	Image4DProxy<Image4DSimple> pSub(subject);
 	
@@ -121,8 +120,9 @@ void watershed_vs(V3DPluginCallback2 &callback, QWidget *parent, int method_code
 		return;
 	}
 	
+    V3DLONG i;
 	unsigned char * pSubtmp = pSub.begin();
-	for(V3DLONG i = 0; i < channelsz;  i++) 
+    for(i = 0; i < channelsz;  i++)
 	{
 		pData[i] = (pSubtmp[i]<=tt) ? 0 : 1;
 	}
@@ -147,8 +147,18 @@ void watershed_vs(V3DPluginCallback2 &callback, QWidget *parent, int method_code
 	}
 	
 	if (pData) {delete []pData; pData=0;}
+    if (!pLabel)
+    {
+        v3d_msg("The label field of the image objects is not valid. Quit.");
+        return;
+    }
 		
-	if (volsz_thres>0) //filter out small objects
+    //seems nobjs has not been set, thus the filtering code should has a problem
+    for (i=1, nobjs = pLabel[0]; i<channelsz; i++)
+        if (V3DLONG(pLabel[i])>nobjs) {nobjs = pLabel[i];}
+    v3d_msg(QString("Watershed labeling finds at most %1 objects").arg(nobjs));
+
+    if (0 && volsz_thres>0) //filter out small objects
 	{
 		try {
 			float * hh = new float [nobjs];
