@@ -128,7 +128,7 @@ void quickSort(T a[], int l, int r)
 }
 
 //memory management
-template <class T> int newIntImage3dPairMatlabProtocal(T *** & img3d,T * & img1d, V3DLONG imgdep, V3DLONG imghei,V3DLONG imgwid)
+template <class T> int newIntImage3dPairMatlabProtocol(T *** & img3d,T * & img1d, V3DLONG imgdep, V3DLONG imghei,V3DLONG imgwid)
 {
 	V3DLONG totalpxlnum = imghei*imgwid*imgdep;
 
@@ -160,7 +160,7 @@ template <class T> int newIntImage3dPairMatlabProtocal(T *** & img3d,T * & img1d
 	return 1; //succeed
 }
 
-template <class T> void deleteIntImage3dPairMatlabProtocal(T *** & img3d,T * & img1d)
+template <class T> void deleteIntImage3dPairMatlabProtocol(T *** & img3d,T * & img1d)
 {
 	if (img1d) {delete img1d;img1d=0;}
 	if (img3d) {delete img3d;img3d=0;}
@@ -187,9 +187,9 @@ public:
 
 	~RgnGrow3dClass()
 	{
-		deleteIntImage3dPairMatlabProtocal(quantImg3d,quantImg1d);
-		deleteIntImage3dPairMatlabProtocal(PHCLABELSTACK3d,PHCLABELSTACK1d);
-		deleteIntImage3dPairMatlabProtocal(PHCDONEIMG3d,PHCDONEIMG1d);
+		deleteIntImage3dPairMatlabProtocol(quantImg3d,quantImg1d);
+		deleteIntImage3dPairMatlabProtocol(PHCLABELSTACK3d,PHCLABELSTACK1d);
+		deleteIntImage3dPairMatlabProtocol(PHCDONEIMG3d,PHCDONEIMG1d);
 
 		ImgWid = 0, ImgHei = 0, ImgDep = 0;
 
@@ -801,7 +801,7 @@ bool regiongrowing(const V3DPluginArgList & input, V3DPluginArgList & output)
 	pRgnGrow->ImgHei = sy;
 	pRgnGrow->ImgWid = sx;
 
-	newIntImage3dPairMatlabProtocal(pRgnGrow->quantImg3d,pRgnGrow->quantImg1d,pRgnGrow->ImgDep,pRgnGrow->ImgHei,pRgnGrow->ImgWid);
+	newIntImage3dPairMatlabProtocol(pRgnGrow->quantImg3d,pRgnGrow->quantImg1d,pRgnGrow->ImgDep,pRgnGrow->ImgHei,pRgnGrow->ImgWid);
 
 	int nstate;
 	UBYTE minlevel,maxlevel;
@@ -817,7 +817,7 @@ bool regiongrowing(const V3DPluginArgList & input, V3DPluginArgList & output)
 	phcDebugPosNum = 0;
 	phcDebugRgnNum = 0;
 
-	newIntImage3dPairMatlabProtocal(pRgnGrow->PHCLABELSTACK3d,pRgnGrow->PHCLABELSTACK1d,1,3,totalpxlnum);
+	newIntImage3dPairMatlabProtocol(pRgnGrow->PHCLABELSTACK3d,pRgnGrow->PHCLABELSTACK1d,1,3,totalpxlnum);
 	pRgnGrow->PHCLABELSTACKPOS = 0;
 
 	pRgnGrow->PHCURGN = new RGN;
@@ -828,8 +828,8 @@ bool regiongrowing(const V3DPluginArgList & input, V3DPluginArgList & output)
 	pRgnGrow->PHCURGN_head = pRgnGrow->PHCURGN;
 	pRgnGrow->TOTALRGNnum = 1;
 
-	deleteIntImage3dPairMatlabProtocal(pRgnGrow->PHCDONEIMG3d,pRgnGrow->PHCDONEIMG1d);
-	newIntImage3dPairMatlabProtocal(pRgnGrow->PHCDONEIMG3d,pRgnGrow->PHCDONEIMG1d,pRgnGrow->ImgDep,pRgnGrow->ImgHei,pRgnGrow->ImgWid);
+	deleteIntImage3dPairMatlabProtocol(pRgnGrow->PHCDONEIMG3d,pRgnGrow->PHCDONEIMG1d);
+	newIntImage3dPairMatlabProtocol(pRgnGrow->PHCDONEIMG3d,pRgnGrow->PHCDONEIMG1d,pRgnGrow->ImgDep,pRgnGrow->ImgHei,pRgnGrow->ImgWid);
 
 	for(int j=minlevel;j<=maxlevel;j++)
 	{
@@ -1516,7 +1516,7 @@ void regiongrowing(V3DPluginCallback2 &callback, QWidget *parent)
 	pRgnGrow->ImgHei = sy;
 	pRgnGrow->ImgWid = sx;
 
-	newIntImage3dPairMatlabProtocal(pRgnGrow->quantImg3d,pRgnGrow->quantImg1d,pRgnGrow->ImgDep,pRgnGrow->ImgHei,pRgnGrow->ImgWid);
+	newIntImage3dPairMatlabProtocol(pRgnGrow->quantImg3d,pRgnGrow->quantImg1d,pRgnGrow->ImgDep,pRgnGrow->ImgHei,pRgnGrow->ImgWid);
 
 	int nstate;
 	UBYTE minlevel,maxlevel;
@@ -1532,7 +1532,7 @@ void regiongrowing(V3DPluginCallback2 &callback, QWidget *parent)
 	phcDebugPosNum = 0;
 	phcDebugRgnNum = 0;
 
-	newIntImage3dPairMatlabProtocal(pRgnGrow->PHCLABELSTACK3d,pRgnGrow->PHCLABELSTACK1d,1,3,totalpxlnum);
+	newIntImage3dPairMatlabProtocol(pRgnGrow->PHCLABELSTACK3d,pRgnGrow->PHCLABELSTACK1d,1,3,totalpxlnum);
 	pRgnGrow->PHCLABELSTACKPOS = 0;
 
 	pRgnGrow->PHCURGN = new RGN;
@@ -1543,8 +1543,8 @@ void regiongrowing(V3DPluginCallback2 &callback, QWidget *parent)
 	pRgnGrow->PHCURGN_head = pRgnGrow->PHCURGN;
 	pRgnGrow->TOTALRGNnum = 1;
 
-	deleteIntImage3dPairMatlabProtocal(pRgnGrow->PHCDONEIMG3d,pRgnGrow->PHCDONEIMG1d);
-	newIntImage3dPairMatlabProtocal(pRgnGrow->PHCDONEIMG3d,pRgnGrow->PHCDONEIMG1d,pRgnGrow->ImgDep,pRgnGrow->ImgHei,pRgnGrow->ImgWid);
+	deleteIntImage3dPairMatlabProtocol(pRgnGrow->PHCDONEIMG3d,pRgnGrow->PHCDONEIMG1d);
+	newIntImage3dPairMatlabProtocol(pRgnGrow->PHCDONEIMG3d,pRgnGrow->PHCDONEIMG1d,pRgnGrow->ImgDep,pRgnGrow->ImgHei,pRgnGrow->ImgWid);
 
 	for(int j=minlevel;j<=maxlevel;j++)
 	{
@@ -1759,7 +1759,7 @@ void regiongrowing(V3DPluginCallback2 &callback, QWidget *parent)
 
 		v3dhandle newwin = callback.newImageWindow();
 		callback.setImage(newwin, &p4DImage);
-		callback.setImageName(newwin, "region_growing");
+		callback.setImageName(newwin, "labeled_objects");
 		//callback.setLandmark(newwin, cmList); // center of mass
 		callback.updateImageWindow(newwin);
 
@@ -1831,7 +1831,7 @@ void regiongrowing(V3DPluginCallback2 &callback, QWidget *parent)
 
 		v3dhandle newwin = callback.newImageWindow();
 		callback.setImage(newwin, &p4DImage);
-		callback.setImageName(newwin, "region_growing");
+		callback.setImageName(newwin, "labeled_objects");
 		//callback.setLandmark(newwin, cmList); // center of mass
 		callback.updateImageWindow(newwin);
 	}
@@ -1902,7 +1902,7 @@ void regiongrowing(V3DPluginCallback2 &callback, QWidget *parent)
 
 		v3dhandle newwin = callback.newImageWindow();
 		callback.setImage(newwin, &p4DImage);
-		callback.setImageName(newwin, "region_growing");
+		callback.setImageName(newwin, "labeled_objects");
 		//callback.setLandmark(newwin, cmList); // center of mass
 		callback.updateImageWindow(newwin);
 	}
