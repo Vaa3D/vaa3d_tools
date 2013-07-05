@@ -32,10 +32,10 @@ bool processImage(const V3DPluginArgList & input, V3DPluginArgList & output);
 
 template <class T> void AdpThresholding(T* data1d,
                      V3DLONG *in_sz,
-                     unsigned int c,
-		     unsigned int Wx,
+                     unsigned int Wx,
                      unsigned int Wy,
                      unsigned int Wz,
+		     unsigned int c,
 		     unsigned int p,
 		     unsigned int d,	
                      T* &outimg);
