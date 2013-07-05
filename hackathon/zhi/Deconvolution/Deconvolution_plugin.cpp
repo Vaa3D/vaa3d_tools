@@ -13,7 +13,7 @@
 #include <stdlib.h>
 #include <vector>
 #include "stackutil.h"
-
+#include <fftw3.h>
 
 using namespace std;
 Q_EXPORT_PLUGIN2(Deconvolution, TestPlugin);
@@ -21,6 +21,10 @@ Q_EXPORT_PLUGIN2(Deconvolution, TestPlugin);
 void processImage(V3DPluginCallback2 &callback, QWidget *parent);
 bool processImage(const V3DPluginArgList & input, V3DPluginArgList & output);
 
+template <class T> void AdpThresholding(T* data1d,
+                     V3DLONG *in_sz,
+                     unsigned int c,
+                     T* &outimg);
  
 QStringList TestPlugin::menulist() const
 {
@@ -99,7 +103,7 @@ void processImage(V3DPluginCallback2 &callback, QWidget *parent)
 	{
 		c = QInputDialog::getInteger(parent, "Channel",
 									 "Enter channel NO (starts from 1):",
-									 1, 1, sc, 1, &ok4);
+									 1, 1, sc, 1, &ok1);
 	}
 	else
 		return;

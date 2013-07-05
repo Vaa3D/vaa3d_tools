@@ -12,6 +12,7 @@
 #include <math.h>
 #include <stdlib.h>
 
+
 #include "stackutil.h"
 #define INF 1E9
 
@@ -177,8 +178,7 @@ void processImage1(V3DPluginCallback2 &callback, QWidget *parent)
 		QMessageBox::information(0, "", "The image pointer is invalid. Ensure your data is valid and try again!");
 		return;
 	}
-
-
+	
     unsigned char* data1d = p4DImage->getRawData();
     //V3DLONG totalpxls = p4DImage->getTotalBytes();
     V3DLONG pagesz = p4DImage->getTotalUnitNumberPerChannel();
@@ -406,13 +406,17 @@ void processImage2(V3DPluginCallback2 &callback, QWidget *parent)
 
     //need to change here!!!! The following is wrong
     arg.type = "random";std::vector<char*> args1;
-    args1.push_back("../../../../../Desktop/vaa3d/Images/ex_Repo_hb9_eve.tif"); arg.p = (void *) & args1; input<< arg;
+    std:: string inputName(callback.getImageName(curwin).toStdString());
+    char* inputName2 =  new char[inputName.length() + 1]; 	
+    strcpy(inputName2, inputName.c_str());		
+    args1.push_back(inputName2); arg.p = (void *) & args1; input<< arg;
     arg.type = "random";std::vector<char*> args;
     args.push_back("0");args.push_back("1");args.push_back("0");args.push_back("1"); arg.p = (void *) & args; input << arg;
     arg.type = "random";std::vector<char*> args2;
-    args2.push_back("../../../../../Desktop/vaa3d/Images/gsdt_ex_Repo_hb9_eve2.tif"); arg.p = (void *) & args2; output<< arg;
+    args2.push_back("gsdt.tif"); arg.p = (void *) & args2; output<< arg;
 
-    QString full_plugin_name = "gsdt";  //for Linux
+    //QString full_plugin_name = "/local1/work/v3d_external/bin/plugins/image_filters/Grayscale_Image_Distance_Transform/libgsdt.so";  //for Linux
+    QString full_plugin_name = "gsdt"; 
     QString func_name = "gsdt";
 
     callback.callPluginFunc(full_plugin_name,func_name, input,output); 
