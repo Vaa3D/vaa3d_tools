@@ -38,7 +38,8 @@ template <class T> void AdpThresholding(T* data1d,
 		     unsigned int c,
 		     unsigned int p,
 		     unsigned int d,	
-                     T* &outimg);
+                     T* &outimg,
+		     T* gsdtdata1d);
 int swapthree(float& dummya, float& dummyb, float& dummyc);
  
 QStringList adpThresholding::menulist() const
@@ -154,16 +155,44 @@ void processImage(V3DPluginCallback2 &callback, QWidget *parent)
      in_sz[0] = N; in_sz[1] = M; in_sz[2] = P; in_sz[4] = sc;
 
     ImagePixelType pixeltype = p4DImage->getDatatype();
+
+    //invoke gsdt function
+    V3DPluginArgItem arg;
+    V3DPluginArgList input;
+    V3DPluginArgList output;    
+    
+
+    //need to change here!!!! The following is wrong
+    arg.type = "random";std::vector<char*> args1; std:: string inputName(callback.getImageName(curwin).toStdString()); char* inputName2 =  new char[inputName.length() + 1];strcpy(inputName2, inputName.c_str());args1.push_back(inputName2); arg.p = (void *) & args1; input<< arg;
+    arg.type = "random";std::vector<char*> args;args.push_back("80");args.push_back("1");args.push_back("0");args.push_back("1"); arg.p = (void *) & args; input << arg;
+    arg.type = "random";std::vector<char*> args2; args2.push_back("../gsdt.tif"); arg.p = (void *) & args2; output<< arg;
+
+     QString full_plugin_name = "/local1/work/v3d_external/bin/plugins/image_filters/Grayscale_Image_Distance_Transform/libgsdt.so";  //for Linux
+     //QString full_plugin_name = "gsdt"; 
+     QString func_name = "gsdt";
+
+    callback.callPluginFunc(full_plugin_name,func_name, input,output); 
+      		
+	
+    //system("v3d -x gsdt -f gsdt -i /home/zhiz/Desktop/vaa3d/Images/ex_Repo_hb9_eve.tif -o /home/zhiz/Desktop/vaa3d/Images/gsdt_ex_Repo_hb9_eve.tif -p 0 1 0 1.0");
+
+    unsigned char * gsdtdata1d = 0;
+    int datatype; 
+    V3DLONG * in_zz = 0;
+	
+    char * outimg_file = ((vector<char*> *)(output.at(0).p))->at(0);
+    loadImage(outimg_file, gsdtdata1d, in_zz, datatype,1);	
+    remove( "../gsdt.tif"); 	
     void* outimg = 0; 
     switch (pixeltype)
     {
-        case V3D_UINT8: AdpThresholding(data1d, in_sz, Wx, Wy, Wz,c,p,d,(unsigned char* &)outimg); break;
-        case V3D_UINT16: AdpThresholding((unsigned short int *)data1d, in_sz, Wx, Wy, Wz,c, p,d,(unsigned short int* &)outimg); break;
-        case V3D_FLOAT32: AdpThresholding((float *)data1d, in_sz, Wx, Wy, Wz,c, p,d,(float* &)outimg);break;
+        case V3D_UINT8: AdpThresholding(data1d, in_sz, Wx, Wy, Wz,c,p,d,(unsigned char* &)outimg,gsdtdata1d); break;
+        case V3D_UINT16: AdpThresholding((unsigned short int *)data1d, in_sz, Wx, Wy, Wz,c, p,d,(unsigned short int* &)outimg,(unsigned short int *)gsdtdata1d); break;
+        case V3D_FLOAT32: AdpThresholding((float *)data1d, in_sz, Wx, Wy, Wz,c, p,d,(float* &)outimg,(float *)gsdtdata1d);break;
         default: v3d_msg("Invalid data type. Do nothing."); return;
     }
 	
-  
+   
     
      // display
      Image4DSimple * new4DImage = new Image4DSimple();
@@ -185,7 +214,8 @@ template <class T> void AdpThresholding(T* data1d,
                      unsigned int c,
 		     unsigned int p,
 		     unsigned int d,	
-                     T* &outimg)
+                     T* &outimg,
+		     T* gsdtdatald)
 {
     
   
@@ -217,62 +247,66 @@ template <class T> void AdpThresholding(T* data1d,
 				V3DLONG offsetj = iy*N;
 			 	for(V3DLONG ix = Wx; ix < N-Wx; ix++)
 				{
-					//double fx = 0.5*(data1d[offsetk+offsetj+ix+Wx]-data1d[offsetk+offsetj+ix-Wx]);
-					//double fy = 0.5*(data1d[offsetk+(iy+Wy)*N+ix]-data1d[offsetk+(iy-Wy)*N+ix]);
-					//double fz = 0.5*(data1d[(iz+Wz)*M*N+offsetj+ix]-data1d[(iz-Wz)*M*N+offsetj+ix]);
-					//Seletive approach
-					float  fxx = data1d[offsetk+offsetj+ix+Wx]+ data1d[offsetk+offsetj+ix-Wx]- 2*data1d[offsetk+offsetj+ix];
-					float fyy = data1d[offsetk+(iy+Wy)*N+ix]+data1d[offsetk+(iy-Wy)*N+ix]-2*data1d[offsetk+offsetj+ix];
-					float fzz = data1d[(iz+Wz)*M*N+offsetj+ix]+data1d[(iz-Wz)*M*N+offsetj+ix]- 2*data1d[offsetk+offsetj+ix];
-
-					float fxy = 0.25*(data1d[offsetk+(iy+Wy)*N+ix+Wx]+data1d[offsetk+(iy-Wy)*N+ix-Wx]-data1d[offsetk+(iy+Wy)*N+ix-Wx]-data1d[offsetk+(iy-Wy)*N+ix+Wx]);
-					float fxz = 0.25*(data1d[(iz+Wz)*M*N+offsetj+ix+Wx]+data1d[(iz-Wz)*M*N+offsetj+ix-Wx]-data1d[(iz+Wz)*M*N+offsetj+ix-Wx]-data1d[(iz-Wz)*M*N+offsetj+ix+Wx]);
-					float fyz = 0.25*(data1d[(iz+Wz)*M*N+(iy+Wy)*N+ix]+data1d[(iz-Wz)*M*N+(iy-Wy)*N+ix]-data1d[(iz+Wz)*M*N+(iy-Wy)*N+ix]-data1d[(iz-Wz)*M*N+(iy+Wy)*N+ix]);
-					 
- 				 	Matrix3f A;
-					A << fxx,fxy,fxz,fxy,fyy,fyz,fxz,fyz,fzz;	
-  					SelfAdjointEigenSolver<Matrix3f> eigensolver(A, false);
-       				//	if (eigensolver.info() != Success) abort();
-					/*SymmetricMatrix Cov_Matrix(3);
-					Cov_Matrix.Row(1) << fxx;
-					Cov_Matrix.Row(2) << fxy << fyy; 
-					Cov_Matrix.Row(3) << fxz << fyz <<fzz; 
-
-					DiagonalMatrix DD;
-					//cout << "Matrix" << endl;
-					//cout << Cov_Matrix << endl <<endl;
-
-					EigenValues(Cov_Matrix,DD);
-					//cout << "EigenValues" << endl;
-					//cout <<  DD << endl <<endl;*/
-
-    					float a1 = eigensolver.eigenvalues()(0);
-	   				float a2 = eigensolver.eigenvalues()(1);
-					float a3 = eigensolver.eigenvalues()(2);
-					swapthree(a1, a2, a3);
-				//mak	printf("%f,%f,%f,%f,%f,%f,%f,%f,%f\n\n\n\n",fxx,fyy,fzz,fxy,fxz,fyz,a1,a2,a3);
-					float output1 = 0;
-					float output2 = 0;
-					float output3 = 0;	
-					if(a1<0)
+					if(gsdtdatald[offsetk+offsetj+ix]< 50)
 					{
+						//double fx = 0.5*(data1d[offsetk+offsetj+ix+Wx]-data1d[offsetk+offsetj+ix-Wx]);
+						//double fy = 0.5*(data1d[offsetk+(iy+Wy)*N+ix]-data1d[offsetk+(iy-Wy)*N+ix]);
+						//double fz = 0.5*(data1d[(iz+Wz)*M*N+offsetj+ix]-data1d[(iz-Wz)*M*N+offsetj+ix]);
+						//Seletive approach
+						float  fxx = data1d[offsetk+offsetj+ix+Wx]+ data1d[offsetk+offsetj+ix-Wx]- 2*data1d[offsetk+offsetj+ix];
+						float fyy = data1d[offsetk+(iy+Wy)*N+ix]+data1d[offsetk+(iy-Wy)*N+ix]-2*data1d[offsetk+offsetj+ix];
+						float fzz = data1d[(iz+Wz)*M*N+offsetj+ix]+data1d[(iz-Wz)*M*N+offsetj+ix]- 2*data1d[offsetk+offsetj+ix];
+
+						float fxy = 0.25*(data1d[offsetk+(iy+Wy)*N+ix+Wx]+data1d[offsetk+(iy-Wy)*N+ix-Wx]-data1d[offsetk+(iy+Wy)*N+ix-Wx]-data1d[offsetk+(iy-Wy)*N+ix+Wx]);
+						float fxz = 0.25*(data1d[(iz+Wz)*M*N+offsetj+ix+Wx]+data1d[(iz-Wz)*M*N+offsetj+ix-Wx]-data1d[(iz+Wz)*M*N+offsetj+ix-Wx]-data1d[(iz-Wz)*M*N+offsetj+ix+Wx]);
+						float fyz = 0.25*(data1d[(iz+Wz)*M*N+(iy+Wy)*N+ix]+data1d[(iz-Wz)*M*N+(iy-Wy)*N+ix]-data1d[(iz+Wz)*M*N+(iy-Wy)*N+ix]-data1d[(iz-Wz)*M*N+(iy+Wy)*N+ix]);
+						 
+	 				 	Matrix3f A;
+						A << fxx,fxy,fxz,fxy,fyy,fyz,fxz,fyz,fzz;	
+	  					SelfAdjointEigenSolver<Matrix3f> eigensolver(A, false);
+	       				//	if (eigensolver.info() != Success) abort();
+						/*SymmetricMatrix Cov_Matrix(3);
+						Cov_Matrix.Row(1) << fxx;
+						Cov_Matrix.Row(2) << fxy << fyy; 
+						Cov_Matrix.Row(3) << fxz << fyz <<fzz; 
+
+						DiagonalMatrix DD;
+						//cout << "Matrix" << endl;
+						//cout << Cov_Matrix << endl <<endl;
+
+						EigenValues(Cov_Matrix,DD);
+						//cout << "EigenValues" << endl;
+						//cout <<  DD << endl <<endl;*/
+
+	    					float a1 = eigensolver.eigenvalues()(0);
+		   				float a2 = eigensolver.eigenvalues()(1);
+						float a3 = eigensolver.eigenvalues()(2);
+						swapthree(a1, a2, a3);
+					//mak	printf("%f,%f,%f,%f,%f,%f,%f,%f,%f\n\n\n\n",fxx,fyy,fzz,fxy,fxz,fyz,a1,a2,a3);
+						float output1 = 0;
+						float output2 = 0;
+						float output3 = 0;	
+						if(a1<0)
+						{
 							
-						if (p ==1) output3 = abs(a1) - abs(a2);	
-						if(a2 < 0)
-						{	
-							//pImage[offsetk+offsetj+ix] = abs(a2)*(abs(a2)-abs(a3))/abs(a1);
-							output1 =  abs(a2)*(abs(a2)-abs(a3))/abs(a1);
-							//T output = abs(a1)/abs(a2);	
+							if (p ==1) output3 = abs(a1) - abs(a2);	
+							if(a2 < 0)
+							{	
+								//pImage[offsetk+offsetj+ix] = abs(a2)*(abs(a2)-abs(a3))/abs(a1);
+								output1 =  abs(a2)*(abs(a2)-abs(a3))/abs(a1);
+								//T output = abs(a1)/abs(a2);	
 						
-						        //printf("%f %f %f %d\n", a1,a2,a3,output1);
-							//if(ix ==96 && iy == 37 && iz == 6)
-							if(a3 < 0 && d ==1) output2 = (abs(a3),2)/abs(a1);
+								//printf("%f %f %f %d\n", a1,a2,a3,output1);
+								//if(ix ==96 && iy == 37 && iz == 6)
+								if(a3 < 0 && d ==1) output2 = (abs(a3),2)/abs(a1);
 						
+							}
 						}
+
+						pImage[offsetk+offsetj+ix]=sqrt(pow(output1,2)+pow(output2,2)+pow(output3,2));
 					}
-
-					pImage[offsetk+offsetj+ix]=sqrt(pow(output1,2)+pow(output2,2)+pow(output3,2));
-
+					else 
+						pImage[offsetk+offsetj+ix]=data1d[offsetk+offsetj+ix];
 				}
 					
 				
