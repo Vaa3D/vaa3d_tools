@@ -156,9 +156,19 @@ void watershed_vs(V3DPluginCallback2 &callback, QWidget *parent, int method_code
     //seems nobjs has not been set, thus the filtering code should has a problem
     for (i=1, nobjs = pLabel[0]; i<channelsz; i++)
         if (V3DLONG(pLabel[i])>nobjs) {nobjs = pLabel[i];}
-    v3d_msg(QString("Watershed labeling finds at most %1 objects").arg(nobjs));
 
-    if (volsz_thres>0) //filter out small objects
+    if (nobjs<=0)
+    {
+        v3d_msg("No valid image object was detected using the p[arameters you specified. Quit.");
+        if (pLabel) {delete []pLabel; pLabel=0;}
+        return;
+    }
+    else
+    {
+        v3d_msg(QString("Watershed labeling finds at most %1 objects").arg(nobjs));
+    }
+
+    if (volsz_thres>0  && nobjs>0) //filter out small objects
 	{
 		try {
 			float * hh = new float [nobjs];
@@ -172,7 +182,7 @@ void watershed_vs(V3DPluginCallback2 &callback, QWidget *parent, int method_code
 				hh[V3DLONG(pLabel[j])]++;
 			}
 			V3DLONG k=0;
-			for (j=1;j<nobjs;j++) //start from 1 as it is the background!
+            for (j=1;j<nobjs;j++) //start from 1 as the value is the background!
 			{
 				if (hh[j]<volsz_thres)
 				{
