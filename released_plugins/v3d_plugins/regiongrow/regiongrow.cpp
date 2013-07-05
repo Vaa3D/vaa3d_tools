@@ -1497,7 +1497,7 @@ void regiongrowing(V3DPluginCallback2 &callback, QWidget *parent)
 
 	v3dhandle newwinbw = callback.newImageWindow();
 	callback.setImage(newwinbw, &p4Dbw);
-	callback.setImageName(newwinbw, "bw");
+	callback.setImageName(newwinbw, "black-white image after thresholding");
 	callback.updateImageWindow(newwinbw);
 
 	// 3D region growing
