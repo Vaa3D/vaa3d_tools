@@ -416,11 +416,11 @@ void processImage2(V3DPluginCallback2 &callback, QWidget *parent)
     args2.push_back("../gsdt.tif"); arg.p = (void *) & args2; output<< arg;
 
     //QString full_plugin_name = "/local1/work/v3d_external/bin/plugins/image_filters/Grayscale_Image_Distance_Transform/libgsdt.so";  //for Linux
-   // QString full_plugin_name = "gsdt"; 
-    //QString func_name = "gsdt";
+    QString full_plugin_name = "gsdt"; 
+    QString func_name = "gsdt";
 
-    //callback.callPluginFunc(full_plugin_name,func_name, input,output); 
-     callback.callPluginFunc("gsdt","gsdt", input,output); 		
+    callback.callPluginFunc(full_plugin_name,func_name, input,output); 
+    	
 	
     //system("v3d -x gsdt -f gsdt -i /home/zhiz/Desktop/vaa3d/Images/ex_Repo_hb9_eve.tif -o /home/zhiz/Desktop/vaa3d/Images/gsdt_ex_Repo_hb9_eve.tif -p 0 1 0 1.0");
 
@@ -430,7 +430,7 @@ void processImage2(V3DPluginCallback2 &callback, QWidget *parent)
 	
     char * outimg_file = ((vector<char*> *)(output.at(0).p))->at(0);
     loadImage(outimg_file, gsdtdata1d, in_zz, datatype,1);	
-    remove("../gsdt.tif"):    
+    remove("../gsdt.tif");
 	
     void* outimg = 0;
     switch (pixeltype)
