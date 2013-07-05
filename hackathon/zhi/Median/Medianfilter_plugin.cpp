@@ -384,12 +384,13 @@ void processImage2(V3DPluginCallback2 &callback, QWidget *parent)
 
     //input
 	bool ok4;
-	unsigned int c=1;
+    unsigned int c=-1;
 
 	c = QInputDialog::getInteger(parent, "Channel",
 												  "Enter channel NO:",
 												  1, 1, sc, 1, &ok4);
-
+    if (c<0) //this case must correspond to an invalid selection, so no need to continue
+        return;
 
      // filter
      V3DLONG in_sz[4];
