@@ -158,7 +158,7 @@ void watershed_vs(V3DPluginCallback2 &callback, QWidget *parent, int method_code
         if (V3DLONG(pLabel[i])>nobjs) {nobjs = pLabel[i];}
     v3d_msg(QString("Watershed labeling finds at most %1 objects").arg(nobjs));
 
-    if (0 && volsz_thres>0) //filter out small objects
+    if (volsz_thres>0) //filter out small objects
 	{
 		try {
 			float * hh = new float [nobjs];
@@ -183,7 +183,7 @@ void watershed_vs(V3DPluginCallback2 &callback, QWidget *parent, int method_code
 					printf("Obj [%ld] = [%ld]\n", V3DLONG(j), V3DLONG(hh[j]));
 					k++;
 					mapval[j] = k; //otherwise map to a continous label-value
-				}
+                }
 			}
 			for (j=0;j<channelsz;j++)
 				pLabel[j] = mapval[V3DLONG(pLabel[j])];
