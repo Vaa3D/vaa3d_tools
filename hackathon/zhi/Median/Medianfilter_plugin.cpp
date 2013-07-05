@@ -1,5 +1,6 @@
 /* Medianfilter_plugin.cpp
  * This is a test plugin, you can use it as a demo.
+ * Revised from a previous minmaxfiltering plugin
  * 2013-06-10 : by Zhi Zhou
  */
  
@@ -40,10 +41,10 @@ template <class T> void adp_median_filter(T* data1d,
  
 QStringList MedianFilterPlugin::menulist() const
 {
-	return QStringList() 
-		<<tr("Fixed Window")
-                <<tr("Adaptive Window")
-;
+    return QStringList()
+      <<tr("Fixed Window")
+      <<tr("Adaptive Window")
+      ;
 }
 
 
@@ -52,11 +53,11 @@ void MedianFilterPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &ca
 {
 	if (menu_name == tr("Fixed Window"))
 	{
-          processImage1(callback,parent);
+      processImage1(callback,parent);
 	}
 	else if (menu_name == tr("Adaptive Window"))
 	{
-       	processImage2(callback,parent);		
+      processImage2(callback,parent);
 	}	
 }
 
@@ -64,34 +65,33 @@ void MedianFilterPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &ca
 QStringList MedianFilterPlugin::funclist() const
 {
 	return QStringList()
-		<<tr("processImage1")
-		<<tr("processImage2");
+      <<tr("fixed_window")
+      <<tr("adaptive_window");
 }
 
 
 bool MedianFilterPlugin::dofunc(const QString & func_name, const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback,  QWidget * parent)
 {
 
-	if (func_name == tr("processImage1"))
+    if (func_name == tr("fixed_window"))
 	{
- 		 return processImage1(input, output);
-
- 	}else if(func_name == tr("processImage2"))
+       return processImage1(input, output);
+    }
+    else if(func_name == tr("adaptive_window"))
 	{
- 		 return processImage2(input, output);
-
-	}else if (func_name == tr("help"))
-	{	        cout<<"Usage : v3d -x minMaxfilter -f mmf -i <inimg_file> -o <outimg_file> -p <wx> <wy> <wz> <ch>"<<endl;
-                cout<<endl;
-                cout<<"wx          filter window radius size (pixel #) in x direction, window size is 2*wx+1, default 3"<<endl;
-                cout<<"wy          filter window radius size (pixel #) in y direction, window size is 2*wy+1, default 3"<<endl;
-                cout<<"wz          filter window radius size (pixel #) in z direction, window size is 2*wz+1, default 3"<<endl;
-                cout<<"ch           the input channel value, default 1 and start from 1, default 1"<<endl;
-                cout<<endl;
-                cout<<"e.g. v3d -x minMaxfilter -f mmf -i input.raw -o output.raw -p 3 3 3 1 1"<<endl;
-                cout<<endl;
-                return true;
-
+       return processImage2(input, output);
+    }
+    else if (func_name == tr("help"))
+    {
+        cout<<"Usage : v3d -x plugin_dll_name -f function_name -i <inimg_file> -o <outimg_file> -p <wx> <wy> <wz> <ch>"<<endl;
+        cout<<endl;
+        cout<<"wx          filter window radius size (pixel #) in x direction, window size is 2*wx+1, default 3"<<endl;
+        cout<<"wy          filter window radius size (pixel #) in y direction, window size is 2*wy+1, default 3"<<endl;
+        cout<<"wz          filter window radius size (pixel #) in z direction, window size is 2*wz+1, default 3"<<endl;
+        cout<<"ch           the input channel value, default 1 and start from 1, default 1"<<endl;
+        cout<<endl;
+        cout<<endl;
+        return true;
 	}
 }
 
@@ -187,11 +187,7 @@ void processImage1(V3DPluginCallback2 &callback, QWidget *parent)
     V3DLONG P = p4DImage->getZDim();
     V3DLONG sc = p4DImage->getCDim();
 
-
-
     //define datatype here
-    //
-
 
 	//input
 	bool ok1, ok2, ok3, ok4;
@@ -259,6 +255,7 @@ void processImage1(V3DPluginCallback2 &callback, QWidget *parent)
      callback.setImageName(newwin, "Median filter result");
      callback.updateImageWindow(newwin);
 
+     return;
 }
 
 
@@ -336,14 +333,9 @@ template <class T> void median_filter(T* data1d,
 										arr[jj] = arr[jj-1];
 										arr[jj-1] = tmp;
 										jj--;
-
 									}	
-
 								}
 								ii++;
-								
-
-
 							}
 						}
 					}
@@ -352,7 +344,6 @@ template <class T> void median_filter(T* data1d,
 					//set value
 					V3DLONG index_pim = offsetk + offsetj + ix;
 					pImage[index_pim] = arr[int(0.5*ii)+1];
-					
 				}
 			}
 		}
@@ -388,13 +379,9 @@ void processImage2(V3DPluginCallback2 &callback, QWidget *parent)
     V3DLONG P = p4DImage->getZDim();
     V3DLONG sc = p4DImage->getCDim();
 
-
-
     //define datatype here
-    //
 
-
-	//input
+    //input
 	bool ok4;
 	unsigned int c=1;
 
@@ -412,14 +399,16 @@ void processImage2(V3DPluginCallback2 &callback, QWidget *parent)
     //invoke gsdt function
     V3DPluginArgItem arg;
     V3DPluginArgList input;
-    V3DPluginArgList output;
-
+    V3DPluginArgList output;    
     
-    
-    arg.type = "random";std::vector<char*> args1; args1.push_back("../../../../../Desktop/vaa3d/Images/ex_Repo_hb9_eve.tif"); arg.p = (void *) & args1; input<< arg;
-    arg.type = "random";std::vector<char*> args;   args.push_back("0");args.push_back("1");args.push_back("0");args.push_back("1"); arg.p = (void *) & args; input << arg;
-    arg.type = "random";std::vector<char*> args2; args2.push_back("../../../../../Desktop/vaa3d/Images/gsdt_ex_Repo_hb9_eve2.tif"); arg.p = (void *) & args2; output<< arg;
 
+    //need to change here!!!! The following is wrong
+    arg.type = "random";std::vector<char*> args1;
+    args1.push_back("../../../../../Desktop/vaa3d/Images/ex_Repo_hb9_eve.tif"); arg.p = (void *) & args1; input<< arg;
+    arg.type = "random";std::vector<char*> args;
+    args.push_back("0");args.push_back("1");args.push_back("0");args.push_back("1"); arg.p = (void *) & args; input << arg;
+    arg.type = "random";std::vector<char*> args2;
+    args2.push_back("../../../../../Desktop/vaa3d/Images/gsdt_ex_Repo_hb9_eve2.tif"); arg.p = (void *) & args2; output<< arg;
 
     QString full_plugin_name = "gsdt";  //for Linux
     QString func_name = "gsdt";
@@ -433,8 +422,7 @@ void processImage2(V3DPluginCallback2 &callback, QWidget *parent)
     V3DLONG * in_zz = 0;
 	
     char * outimg_file = ((vector<char*> *)(output.at(0).p))->at(0);
-    loadImage(outimg_file, gsdtdata1d, in_zz, datatype,1);
-	
+    loadImage(outimg_file, gsdtdata1d, in_zz, datatype,1);	
 	
     void* outimg = 0;
     switch (pixeltype)
@@ -453,6 +441,7 @@ void processImage2(V3DPluginCallback2 &callback, QWidget *parent)
      callback.setImageName(newwin, "Adaptive Median filter result");
      callback.updateImageWindow(newwin);
 
+     return;
 }
 
 
@@ -510,11 +499,8 @@ template <class T> void adp_median_filter(T* data1d,
 					}
 					else					
 					{
-						
-						//Wx = Wx;						
 						Wy = Wx;
 						Wz = Wx;
-					
 					
 						V3DLONG xb = ix-Wx; if(xb<0) xb = 0;
 						V3DLONG xe = ix+Wx; if(xe>=N-1) xe = N-1;
@@ -550,14 +536,9 @@ template <class T> void adp_median_filter(T* data1d,
 											arr[jj] = arr[jj-1];
 											arr[jj-1] = tmp;
 											jj--;
-
 										}	
-
 									}
 									ii++;
-								
-
-
 								}
 							}
 						}
@@ -574,7 +555,7 @@ template <class T> void adp_median_filter(T* data1d,
 			}
 		}
 	 			
-          outimg = pImage;
-	
-
+         outimg = pImage;
+         return;
 }
+
