@@ -7,7 +7,7 @@ TEMPLATE      = lib
 CONFIG       += qt plugin warn_off
 #CONFIG       += x86_64
 
-V3DMAINDIR = ../../../v3d_external/v3d_main
+V3DMAINDIR = ../../../v3d_main
 SRCDIR = src
 
 INCLUDEPATH  += $$V3DMAINDIR/basic_c_fun
@@ -62,6 +62,6 @@ FORMS += $$SRCDIR/FL_watershedSegPara.ui
 
 LIBS         += -lm -L$$V3DMAINDIR/common_lib/lib -lv3dtiff
 
-TARGET        = $$qtLibraryTarget(plugin_FL_cellseg)
-DESTDIR       = $$V3DMAINDIR/../bin/plugins/image_segmentation/cell_segmentation
+TARGET        = $$qtLibraryTarget(plugin_cellseg)
+DESTDIR       = ../../v3d/plugins/image_segmentation/Cell_Segmentation
 
