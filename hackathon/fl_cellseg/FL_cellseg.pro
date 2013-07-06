@@ -63,5 +63,5 @@ FORMS += $$SRCDIR/FL_watershedSegPara.ui
 LIBS         += -lm -L$$V3DMAINDIR/common_lib/lib -lv3dtiff
 
 TARGET        = $$qtLibraryTarget(plugin_FL_cellseg)
-DESTDIR       = $$V3DMAINDIR/../v3d/plugins/image_segmentation/cell_segmentation
+DESTDIR       = $$V3DMAINDIR/../bin/plugins/image_segmentation/cell_segmentation
 
