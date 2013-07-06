@@ -167,8 +167,8 @@ void processImage(V3DPluginCallback2 &callback, QWidget *parent)
     arg.type = "random";std::vector<char*> args;args.push_back("80");args.push_back("1");args.push_back("0");args.push_back("1"); arg.p = (void *) & args; input << arg;
     arg.type = "random";std::vector<char*> args2; args2.push_back("gsdtImage.tiff"); arg.p = (void *) & args2; output<< arg;
 
-     QString full_plugin_name = "/local1/work/v3d_external/bin/plugins/image_filters/Grayscale_Image_Distance_Transform/libgsdt.so";  //for Linux
-     //QString full_plugin_name = "gsdt"; 
+     //QString full_plugin_name = "/local1/work/v3d_external/bin/plugins/image_filters/Grayscale_Image_Distance_Transform/libgsdt.so";  //for Linux
+     QString full_plugin_name = "gsdt"; 
      QString func_name = "gsdt";
 
     callback.callPluginFunc(full_plugin_name,func_name, input,output); 
