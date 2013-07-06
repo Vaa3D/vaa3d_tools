@@ -26,14 +26,14 @@ const QString title = "Segment image objects";
 QStringList FLCellSegPlugin::menulist() const
 {
     return QStringList() 
-		<< tr("Segment all image objects")
+        << tr("Segment all image objects (adaptive thresholding followed by watershed)")
 		<< tr("about")
 	;
 }
 
 void FLCellSegPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
 {
-    if (menu_name == tr("Segment all image objects"))
+    if (menu_name == tr("Segment all image objects (adaptive thresholding followed by watershed)"))
     {
     	FL_cellseg(callback, parent); 
     }

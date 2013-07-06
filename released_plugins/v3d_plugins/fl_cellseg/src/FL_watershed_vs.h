@@ -56,7 +56,8 @@ void remove_watershed_lines(float *&label_data, const V3DLONG *sz, const V3DLONG
 		{
 //			printf("[%d %d]  ", int(pix_index[i]), int(label_data[pix_index[i]]));
 			tmp_data[i] = 255; //label_data[pix_index[i]] - 1; // assign watershed lines to one of the regions
-		}
+            tmp_data[i] = 0; // assign watershed lines to background so to segregate objects. reactive by PHC 20130706
+        }
 		else //background and other labels are 1-based, thus -1 
 		{
 //			printf("<%d %d>  ", int(label_data[pix_index[i]]), int(pix_index[i]));

@@ -64,4 +64,5 @@ LIBS         += -lm -L$$V3DMAINDIR/common_lib/lib -lv3dtiff
 
 TARGET        = $$qtLibraryTarget(plugin_cellseg)
 DESTDIR       = ../../v3d/plugins/image_segmentation/Cell_Segmentation
+DESTDIR       = $$V3DMAINDIR/../bin/plugins/image_segmentation/Cell_Segmentation
 
