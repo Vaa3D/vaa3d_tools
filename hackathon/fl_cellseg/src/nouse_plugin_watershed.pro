@@ -2,8 +2,8 @@
 TEMPLATE      = lib
 CONFIG       += qt plugin warn_off
 
-V3DMAINDIR    = ../../../v3d_external/v3d_main/
-SRCDIR1 = src/
+V3DMAINDIR    = ../../../../v3d_external/v3d_main/
+SRCDIR1 = ./
 SRCDIR = $$V3DMAINDIR/cellseg/
 
 

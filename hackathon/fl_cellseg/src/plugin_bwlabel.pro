@@ -2,7 +2,7 @@
 TEMPLATE      = lib
 CONFIG       += qt plugin warn_off
 
-V3DMAINDIR    = ../../../v3d_external/v3d_main/
+V3DMAINDIR    = ../../../../v3d_external/v3d_main/
 
 INCLUDEPATH  += $$V3DMAINDIR/basic_c_fun
 
@@ -21,6 +21,7 @@ HEADERS      += label_object_dialog.h
 
 SOURCES       = $$V3DMAINDIR/basic_c_fun/v3d_message.cpp
 SOURCES      += bwlabel.cpp
+SOURCES      += FL_bwlabel2D3D.cpp
 
 TARGET        = $$qtLibraryTarget(fast_bwlabel)
 DESTDIR       = $$V3DMAINDIR/../v3d/plugins/unfinished/Fast_Label_Image_Objects
