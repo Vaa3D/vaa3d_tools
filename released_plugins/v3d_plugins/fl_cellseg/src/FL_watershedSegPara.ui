@@ -1,7 +1,8 @@
-<ui version="4.0" >
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
  <class>Dialog_WatershedPara</class>
- <widget class="QDialog" name="Dialog_WatershedPara" >
-  <property name="geometry" >
+ <widget class="QDialog" name="Dialog_WatershedPara">
+  <property name="geometry">
    <rect>
     <x>0</x>
     <y>0</y>
@@ -9,11 +10,11 @@
     <height>300</height>
    </rect>
   </property>
-  <property name="windowTitle" >
+  <property name="windowTitle">
    <string>Define watershed parameters</string>
   </property>
-  <widget class="QDialogButtonBox" name="buttonBox" >
-   <property name="geometry" >
+  <widget class="QDialogButtonBox" name="buttonBox">
+   <property name="geometry">
     <rect>
      <x>30</x>
      <y>240</y>
@@ -21,117 +22,117 @@
      <height>32</height>
     </rect>
    </property>
-   <property name="orientation" >
+   <property name="orientation">
     <enum>Qt::Horizontal</enum>
    </property>
-   <property name="standardButtons" >
-    <set>QDialogButtonBox::Cancel|QDialogButtonBox::NoButton|QDialogButtonBox::Ok</set>
+   <property name="standardButtons">
+    <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
    </property>
   </widget>
-  <widget class="QWidget" name="layoutWidget" >
-   <property name="geometry" >
+  <widget class="QWidget" name="layoutWidget">
+   <property name="geometry">
     <rect>
      <x>61</x>
      <y>20</y>
-     <width>308</width>
+     <width>359</width>
      <height>205</height>
     </rect>
    </property>
-   <layout class="QGridLayout" >
-    <item row="0" column="0" colspan="2" >
-     <widget class="QLabel" name="label" >
-      <property name="text" >
+   <layout class="QGridLayout">
+    <item row="0" column="0" colspan="2">
+     <widget class="QLabel" name="label">
+      <property name="text">
        <string>Channel</string>
       </property>
      </widget>
     </item>
-    <item row="0" column="2" >
-     <widget class="QSpinBox" name="spinBox_Channel" />
+    <item row="0" column="2">
+     <widget class="QSpinBox" name="spinBox_Channel"/>
     </item>
-    <item row="1" column="0" colspan="2" >
-     <widget class="QLabel" name="label_5" >
-      <property name="text" >
+    <item row="1" column="0" colspan="2">
+     <widget class="QLabel" name="label_5">
+      <property name="text">
        <string>Smoothing</string>
       </property>
      </widget>
     </item>
-    <item row="1" column="2" >
-     <layout class="QGridLayout" >
-      <item row="0" column="0" >
-       <widget class="QLabel" name="label_2" >
-        <property name="text" >
+    <item row="1" column="2">
+     <layout class="QGridLayout">
+      <item row="0" column="0">
+       <widget class="QLabel" name="label_2">
+        <property name="text">
          <string>Median filter size</string>
         </property>
        </widget>
       </item>
-      <item row="0" column="1" >
-       <widget class="QSpinBox" name="spinBox_MedianSz" />
+      <item row="0" column="1">
+       <widget class="QSpinBox" name="spinBox_MedianSz"/>
       </item>
-      <item row="1" column="0" >
-       <widget class="QLabel" name="label_4" >
-        <property name="text" >
+      <item row="1" column="0">
+       <widget class="QLabel" name="label_4">
+        <property name="text">
          <string>Gaussian filter size</string>
         </property>
        </widget>
       </item>
-      <item row="1" column="1" >
-       <widget class="QSpinBox" name="spinBox_GaussianSz" />
+      <item row="1" column="1">
+       <widget class="QSpinBox" name="spinBox_GaussianSz"/>
       </item>
-      <item row="2" column="0" >
-       <widget class="QLabel" name="label_7" >
-        <property name="text" >
+      <item row="2" column="0">
+       <widget class="QLabel" name="label_7">
+        <property name="text">
          <string>Gaussian filter sigma</string>
         </property>
        </widget>
       </item>
-      <item row="2" column="1" >
-       <widget class="QDoubleSpinBox" name="doubleSpinBox_GaussianSigma" />
+      <item row="2" column="1">
+       <widget class="QDoubleSpinBox" name="doubleSpinBox_GaussianSigma"/>
       </item>
      </layout>
     </item>
-    <item row="2" column="0" colspan="2" >
-     <widget class="QLabel" name="label_3" >
-      <property name="text" >
+    <item row="2" column="0" colspan="2">
+     <widget class="QLabel" name="label_3">
+      <property name="text">
        <string>Thresholding</string>
       </property>
      </widget>
     </item>
-    <item row="2" column="2" >
-     <widget class="QComboBox" name="comboBox_Threshold" >
+    <item row="2" column="2">
+     <widget class="QComboBox" name="comboBox_Threshold">
       <item>
-       <property name="text" >
+       <property name="text">
         <string>Adaptive</string>
        </property>
       </item>
       <item>
-       <property name="text" >
+       <property name="text">
         <string>Global (3D)</string>
        </property>
       </item>
       <item>
-       <property name="text" >
+       <property name="text">
         <string>Global (2D)</string>
        </property>
       </item>
      </widget>
     </item>
-    <item row="3" column="0" >
-     <widget class="QLabel" name="label_6" >
-      <property name="text" >
-       <string>Method</string>
+    <item row="3" column="0">
+     <widget class="QLabel" name="label_6">
+      <property name="text">
+       <string>Segmentation Method</string>
       </property>
      </widget>
     </item>
-    <item row="3" column="1" colspan="2" >
-     <widget class="QComboBox" name="comboBox_Method" >
+    <item row="3" column="1" colspan="2">
+     <widget class="QComboBox" name="comboBox_Method">
       <item>
-       <property name="text" >
-        <string>Intensity based</string>
+       <property name="text">
+        <string>Intensity based watershed</string>
        </property>
       </item>
       <item>
-       <property name="text" >
-        <string>Shape based</string>
+       <property name="text">
+        <string>Shape based watershed</string>
        </property>
       </item>
      </widget>
@@ -147,11 +148,11 @@
    <receiver>Dialog_WatershedPara</receiver>
    <slot>accept()</slot>
    <hints>
-    <hint type="sourcelabel" >
+    <hint type="sourcelabel">
      <x>248</x>
      <y>254</y>
     </hint>
-    <hint type="destinationlabel" >
+    <hint type="destinationlabel">
      <x>157</x>
      <y>274</y>
     </hint>
@@ -163,11 +164,11 @@
    <receiver>Dialog_WatershedPara</receiver>
    <slot>reject()</slot>
    <hints>
-    <hint type="sourcelabel" >
+    <hint type="sourcelabel">
      <x>316</x>
      <y>260</y>
     </hint>
-    <hint type="destinationlabel" >
+    <hint type="destinationlabel">
      <x>286</x>
      <y>274</y>
     </hint>
