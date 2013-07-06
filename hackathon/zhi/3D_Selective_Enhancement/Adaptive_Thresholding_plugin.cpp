@@ -165,7 +165,7 @@ void processImage(V3DPluginCallback2 &callback, QWidget *parent)
     //need to change here!!!! The following is wrong
     arg.type = "random";std::vector<char*> args1; std:: string inputName(callback.getImageName(curwin).toStdString()); char* inputName2 =  new char[inputName.length() + 1];strcpy(inputName2, inputName.c_str());args1.push_back(inputName2); arg.p = (void *) & args1; input<< arg;
     arg.type = "random";std::vector<char*> args;args.push_back("80");args.push_back("1");args.push_back("0");args.push_back("1"); arg.p = (void *) & args; input << arg;
-    arg.type = "random";std::vector<char*> args2; args2.push_back("../gsdt.tif"); arg.p = (void *) & args2; output<< arg;
+    arg.type = "random";std::vector<char*> args2; args2.push_back("gsdtImage.tiff"); arg.p = (void *) & args2; output<< arg;
 
      QString full_plugin_name = "/local1/work/v3d_external/bin/plugins/image_filters/Grayscale_Image_Distance_Transform/libgsdt.so";  //for Linux
      //QString full_plugin_name = "gsdt"; 
@@ -182,7 +182,7 @@ void processImage(V3DPluginCallback2 &callback, QWidget *parent)
 	
     char * outimg_file = ((vector<char*> *)(output.at(0).p))->at(0);
     loadImage(outimg_file, gsdtdata1d, in_zz, datatype,1);	
-    remove( "../gsdt.tif"); 	
+    remove( "gsdtImage.tiff"); 	
     void* outimg = 0; 
     switch (pixeltype)
     {
