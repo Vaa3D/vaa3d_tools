@@ -417,7 +417,7 @@ void processImage2(V3DPluginCallback2 &callback, QWidget *parent)
     args2.push_back("gsdtImage.tiff"); arg.p = (void *) & args2; output<< arg;
 
     //QString full_plugin_name = "libgsdt_debug.dylib";  //for Linux
-    QString full_plugin_name = "/gsdt"; 
+    QString full_plugin_name = "gsdt"; 
     QString func_name = "gsdt";
 
     callback.callPluginFunc(full_plugin_name,func_name, input,output); 
