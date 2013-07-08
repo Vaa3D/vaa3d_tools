@@ -18,7 +18,7 @@
 #define INF 1E9
 
 using namespace std;
-Q_EXPORT_PLUGIN2(Medianfilter, MedianFilterPlugin);
+Q_EXPORT_PLUGIN2(medianfilter, MedianFilterPlugin);
 
 void processImage1(V3DPluginCallback2 &callback, QWidget *parent);
 bool processImage1(const V3DPluginArgList & input, V3DPluginArgList & output);
