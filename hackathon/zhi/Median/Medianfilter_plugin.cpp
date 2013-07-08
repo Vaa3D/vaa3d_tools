@@ -24,7 +24,7 @@ void processImage1(V3DPluginCallback2 &callback, QWidget *parent);
 bool processImage1(const V3DPluginArgList & input, V3DPluginArgList & output);
 
 void processImage2(V3DPluginCallback2 &callback, QWidget *parent);
-bool processImage2(const V3DPluginArgList & input, V3DPluginArgList & output);
+bool processImage2(const V3DPluginArgList & input, V3DPluginArgList & output,V3DPluginCallback2 &callback);
 
 template <class T> void median_filter(T* data1d,
                      V3DLONG *in_sz,
@@ -81,28 +81,33 @@ bool MedianFilterPlugin::dofunc(const QString & func_name, const V3DPluginArgLis
     }
     else if(func_name == tr("adaptive_window"))
 	{
-        v3d_msg("To be implemented");
-       //return processImage2(input, output);
+       return processImage2(input, output,callback);
     }
     else if (func_name == tr("help"))
     {
-        cout<<"Usage : v3d -x plugin_dll_name -f function_name -i <inimg_file> -o <outimg_file> -p <wx> <wy> <wz> <ch>"<<endl;
+        cout<<"Usage : v3d -x Medianfilter -f fixed_window -i <inimg_file> -o <outimg_file> -p <wx> <wy> <wz> <ch>"<<endl;
         cout<<endl;
-        cout<<"wx          filter window radius size (pixel #) in x direction, window size is 2*wx+1, default 3"<<endl;
-        cout<<"wy          filter window radius size (pixel #) in y direction, window size is 2*wy+1, default 3"<<endl;
-        cout<<"wz          filter window radius size (pixel #) in z direction, window size is 2*wz+1, default 3"<<endl;
-        cout<<"ch           the input channel value, default 1 and start from 1, default 1"<<endl;
+        cout<<"wx          filter window radius size (pixel #) in x direction, window size is 2*wx+1, default 1"<<endl;
+        cout<<"wy          filter window radius size (pixel #) in y direction, window size is 2*wy+1, default 1"<<endl;
+        cout<<"wz          filter window radius size (pixel #) in z direction, window size is 2*wz+1, default 1"<<endl;
+        cout<<"ch          the input channel value, default 1 and start from 1, default 1"<<endl;
         cout<<endl;
         cout<<endl;
+	cout<<"Usage : v3d -x Medianfilter -f adaptive_window -i <inimg_file> -o <outimg_file> -p <ch>"<<endl;
+        cout<<endl;
+        cout<<"ch          the input channel value, default 1 and start from 1, default 1"<<endl;
+        cout<<endl;
+        cout<<endl;
+	
         return true;
 	}
 }
 
 bool processImage1(const V3DPluginArgList & input, V3DPluginArgList & output)
 {
-	cout<<"Welcome to Median filter"<<endl;
+	cout<<"Welcome to Median filter with fixed window"<<endl;
 	if (output.size() != 1) return false;
-	unsigned int Wx=7, Wy=7, Wz=3, ch=1;
+	unsigned int Wx=3, Wy=3, Wz=3, ch=1;
      if (input.size()>=2)
      {
 
@@ -405,14 +410,14 @@ void processImage2(V3DPluginCallback2 &callback, QWidget *parent)
     V3DPluginArgList output;    
     
 
-    //need to change here!!!! The following is wrong
     arg.type = "random";std::vector<char*> args1;
     std:: string inputName(callback.getImageName(curwin).toStdString());
     char* inputName2 =  new char[inputName.length() + 1]; 	
     strcpy(inputName2, inputName.c_str());		
     args1.push_back(inputName2); arg.p = (void *) & args1; input<< arg;
     arg.type = "random";std::vector<char*> args;
-    args.push_back("0");args.push_back("1");args.push_back("0");args.push_back("1"); arg.p = (void *) & args; input << arg;
+    char channel = '0' + (c-1);	
+    args.push_back("0");args.push_back("1");args.push_back(&channel);args.push_back("1"); arg.p = (void *) & args; input << arg;
     arg.type = "random";std::vector<char*> args2;
     args2.push_back("gsdtImage.tiff"); arg.p = (void *) & args2; output<< arg;
 
@@ -451,6 +456,91 @@ void processImage2(V3DPluginCallback2 &callback, QWidget *parent)
      callback.updateImageWindow(newwin);
 
      return;
+}
+
+bool processImage2(const V3DPluginArgList & input, V3DPluginArgList & output,V3DPluginCallback2 &callback)
+{
+	cout<<"Welcome to Median filter with adaptive window"<<endl;
+	if (output.size() != 1) return false;
+	unsigned int ch=1;
+	if (input.size()>=2)
+        {
+
+	  vector<char*> paras = (*(vector<char*> *)(input.at(1).p));
+	  cout<<paras.size()<<endl;
+          if(paras.size() >= 1) ch = atoi(paras.at(0));
+        }
+
+	char * inimg_file = ((vector<char*> *)(input.at(0).p))->at(0);
+	char * outimg_file = ((vector<char*> *)(output.at(0).p))->at(0);
+
+        cout<<"ch = "<<ch<<endl;
+	cout<<"inimg_file = "<<inimg_file<<endl;
+	cout<<"outimg_file = "<<outimg_file<<endl;
+
+	unsigned char * data1d = 0,  * outimg1d = 0;
+	V3DLONG * in_sz = 0;
+
+     	unsigned int c = ch;//-1;
+
+	int datatype;
+	if(!loadImage(inimg_file, data1d, in_sz, datatype))
+     	{
+          cerr<<"load image "<<inimg_file<<" error!"<<endl;
+          return false;
+    	 }
+
+   	 //invoke gsdt function
+   	 V3DPluginArgItem arg;
+   	 V3DPluginArgList input2;
+   	 V3DPluginArgList output2;    
+    
+
+   	 arg.type = "random";std::vector<char*> args1;
+   	 args1.push_back(inimg_file); arg.p = (void *) & args1; input2<< arg;
+   	 arg.type = "random";std::vector<char*> args;
+   	 char channel = '0' + (c-1);	
+   	 args.push_back("0");args.push_back("1");args.push_back(&channel);args.push_back("1"); arg.p = (void *) & args; input2 << arg;
+   	 arg.type = "random";std::vector<char*> args2;
+   	 args2.push_back("gsdtImage.tiff"); arg.p = (void *) & args2; output2<< arg;
+
+   	 //QString full_plugin_name = "libgsdt_debug.dylib";  //for Linux
+   	 QString full_plugin_name = "gsdt"; 
+   	 QString func_name = "gsdt";
+	
+   	 callback.callPluginFunc(full_plugin_name,func_name, input,output); 
+   	
+   	 unsigned char * gsdtdata1d = 0;
+   	 int datatype2; 
+   	 V3DLONG * in_zz = 0;
+		
+   	 char * outimg_file2 = ((vector<char*> *)(output.at(0).p))->at(0);
+   	 loadImage(outimg_file2, gsdtdata1d, in_zz, datatype2,1);	
+   	 remove("gsdtImage.tiff");
+	//input
+    	void* outimg = 0;
+
+     	switch (datatype)
+     	{
+          case 1: adp_median_filter(data1d, in_sz, c,(unsigned char* &)outimg, gsdtdata1d); break;
+          case 2: adp_median_filter((unsigned short int *)data1d, in_sz, c, (unsigned short int* &)outimg,(unsigned short int *)gsdtdata1d); break;
+          case 4: adp_median_filter((float *)data1d, in_sz, c, (float* &)outimg,(float *)gsdtdata1d);break;
+          default:
+               v3d_msg("Invalid datatype.");
+               if (data1d) {delete []data1d; data1d=0;}
+               if (in_sz) {delete []in_sz; in_sz=0;}
+               return false;
+     }
+
+     // save image
+     in_sz[3]=1;
+     saveImage(outimg_file, (unsigned char *)outimg, in_sz, datatype);
+
+     if(outimg) {delete []outimg; outimg =0;}
+     if (data1d) {delete []data1d; data1d=0;}
+     if (in_sz) {delete []in_sz; in_sz=0;}
+
+     return true;
 }
 
 
