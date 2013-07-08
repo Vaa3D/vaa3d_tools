@@ -448,10 +448,11 @@ void PTabMergeTiles::start()
             StackedVolume* volume = CImport::instance()->getVolume();
             if(!volume)
                 throw MyException("Unable to start this step. A volume must be properly imported first.");
-            StackStitcher stitcher(volume);
-            stitcher.projectDisplacements();
-            stitcher.thresholdDisplacements(PMain::instance()->tabDisplThres->threshold_field->value());
-            stitcher.computeTilesPlacement(PMain::instance()->tabPlaceTiles->algo_cbox->currentIndex());
+            //Alessandro 2013-07-08: this causes crash and it is not needed (nominal stage coordinates are already ready for merging)
+//            StackStitcher stitcher(volume);
+//            stitcher.projectDisplacements();
+//            stitcher.thresholdDisplacements(PMain::instance()->tabDisplThres->threshold_field->value());
+//            stitcher.computeTilesPlacement(PMain::instance()->tabPlaceTiles->algo_cbox->currentIndex());
 
             //enabling (and updating) other tabs
             PTabDisplProj::getInstance()->setEnabled(true);
