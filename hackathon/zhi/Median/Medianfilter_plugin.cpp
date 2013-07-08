@@ -419,7 +419,7 @@ void processImage2(V3DPluginCallback2 &callback, QWidget *parent)
     char channel = '0' + (c-1);	
     args.push_back("0");args.push_back("1");args.push_back(&channel);args.push_back("1"); arg.p = (void *) & args; input << arg;
     arg.type = "random";std::vector<char*> args2;
-    args2.push_back("gsdtImage.tiff"); arg.p = (void *) & args2; output<< arg;
+    args2.push_back("gsdtImage.tif"); arg.p = (void *) & args2; output<< arg;
 
     //QString full_plugin_name = "libgsdt_debug.dylib";  //for Linux
     QString full_plugin_name = "gsdt"; 
@@ -436,7 +436,7 @@ void processImage2(V3DPluginCallback2 &callback, QWidget *parent)
 	
     char * outimg_file = ((vector<char*> *)(output.at(0).p))->at(0);
     loadImage(outimg_file, gsdtdata1d, in_zz, datatype,1);	
-    remove("gsdtImage.tiff");
+    //remove("gsdtImage.tif");
 	
     void* outimg = 0;
     switch (pixeltype)
@@ -469,6 +469,7 @@ bool processImage2(const V3DPluginArgList & input, V3DPluginArgList & output,V3D
 	  vector<char*> paras = (*(vector<char*> *)(input.at(1).p));
 	  cout<<paras.size()<<endl;
           if(paras.size() >= 1) ch = atoi(paras.at(0));
+		
         }
 
 	char * inimg_file = ((vector<char*> *)(input.at(0).p))->at(0);
@@ -492,31 +493,31 @@ bool processImage2(const V3DPluginArgList & input, V3DPluginArgList & output,V3D
 
    	 //invoke gsdt function
    	 V3DPluginArgItem arg;
-   	 V3DPluginArgList input2;
-   	 V3DPluginArgList output2;    
+   	 V3DPluginArgList gsdtinput;
+   	 V3DPluginArgList gsdtoutput;    
     
 
    	 arg.type = "random";std::vector<char*> args1;
-   	 args1.push_back(inimg_file); arg.p = (void *) & args1; input2<< arg;
+   	 args1.push_back(inimg_file); arg.p = (void *) & args1; gsdtinput<< arg;
    	 arg.type = "random";std::vector<char*> args;
-   	 char channel = '0' + (c-1);	
-   	 args.push_back("0");args.push_back("1");args.push_back(&channel);args.push_back("1"); arg.p = (void *) & args; input2 << arg;
+   	 char channel = '0' + (ch-1);	
+   	 args.push_back("0");args.push_back("1");args.push_back(&channel);args.push_back("1"); arg.p = (void *) & args; gsdtinput << arg;
    	 arg.type = "random";std::vector<char*> args2;
-   	 args2.push_back("gsdtImage.tiff"); arg.p = (void *) & args2; output2<< arg;
+   	 args2.push_back("gsdtImage.tif"); arg.p = (void *) & args2; gsdtoutput<< arg;
 
    	 //QString full_plugin_name = "libgsdt_debug.dylib";  //for Linux
    	 QString full_plugin_name = "gsdt"; 
    	 QString func_name = "gsdt";
 	
-   	 callback.callPluginFunc(full_plugin_name,func_name, input,output); 
+   	 callback.callPluginFunc(full_plugin_name,func_name, gsdtinput,gsdtoutput); 
    	
    	 unsigned char * gsdtdata1d = 0;
    	 int datatype2; 
    	 V3DLONG * in_zz = 0;
 		
-   	 char * outimg_file2 = ((vector<char*> *)(output.at(0).p))->at(0);
-   	 loadImage(outimg_file2, gsdtdata1d, in_zz, datatype2,1);	
-   	 remove("gsdtImage.tiff");
+   	 char * outimg_file_gsdt = ((vector<char*> *)(gsdtoutput.at(0).p))->at(0);
+   	 loadImage(outimg_file_gsdt, gsdtdata1d, in_zz, datatype2,1);	
+   	 remove("gsdtImage.tif");
 	//input
     	void* outimg = 0;
 
@@ -528,7 +529,10 @@ bool processImage2(const V3DPluginArgList & input, V3DPluginArgList & output,V3D
           default:
                v3d_msg("Invalid datatype.");
                if (data1d) {delete []data1d; data1d=0;}
+ 	       if (gsdtdata1d) {delete []gsdtdata1d; gsdtdata1d=0;}
                if (in_sz) {delete []in_sz; in_sz=0;}
+	       if (in_zz) {delete []in_zz; in_zz=0;}
+	       	
                return false;
      }
 
@@ -539,7 +543,6 @@ bool processImage2(const V3DPluginArgList & input, V3DPluginArgList & output,V3D
      if(outimg) {delete []outimg; outimg =0;}
      if (data1d) {delete []data1d; data1d=0;}
      if (in_sz) {delete []in_sz; in_sz=0;}
-
      return true;
 }
 
@@ -586,10 +589,9 @@ template <class T> void adp_median_filter(T* data1d,
 				for(V3DLONG ix = 0; ix < N; ix++)
 				{
 					
-					T PixelValue = data1d[offsetk + offsetj + ix];
+					T PixelValue = data1d[offsetc+offsetk + offsetj + ix];
 					T GsdtValue = gsdtdatald[offsetk + offsetj + ix];
 					Wx = (int)round((log(PixelValue)/log(2))/GsdtValue);
-					//printf("%d %d\n",PixelValue,Wx);
 					 
 					if ((Wx<=0)||(PixelValue==0))
 					{
@@ -624,7 +626,7 @@ template <class T> void adp_median_filter(T* data1d,
 								V3DLONG offsetjl = j*N;
 								for(V3DLONG i=xb; i<=xe; i++)
 								{
-									T dataval = data1d[ offsetc + offsetkl + offsetjl + i];
+									T dataval = data1d[offsetc + offsetkl + offsetjl + i];
 									arr[ii] = dataval;
 									if (ii>0) 
 									{
@@ -649,7 +651,9 @@ template <class T> void adp_median_filter(T* data1d,
 						V3DLONG index_pim = offsetk + offsetj + ix;
 						pImage[index_pim] = arr[int(0.5*size)+1];
 	 					delete [] arr;
+
 					}
+					
 				}
 			}
 		}
