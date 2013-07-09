@@ -15,6 +15,7 @@
 #include <math.h>
 #include <stdlib.h>
 #include "../plugin_loader/v3d_plugin_loader.h"
+#include "adaptive_median.h"
 
 
 #include "stackutil.h"
@@ -111,7 +112,7 @@ bool processImage1(const V3DPluginArgList & input, V3DPluginArgList & output)
 {
     cout<<"Welcome to Median filter with fixed window"<<endl;
     if (output.size() != 1) return false;
-    unsigned int Wx=3, Wy=3, Wz=3, ch=1;
+    unsigned int Wx=1, Wy=1, Wz=1, ch=1;
     if (input.size()>=2)
     {
 
@@ -404,7 +405,8 @@ void processImage2(V3DPluginCallback2 &callback, QWidget *parent)
                                      1, 1, sc, 1, &ok4);
     if (c<=0) //this case must correspond to an invalid selection, so no need to continue
         return;
-
+    
+           	
     // filter
     V3DLONG in_sz[4];
     in_sz[0] = N; in_sz[1] = M; in_sz[2] = P; in_sz[4] = sc;
