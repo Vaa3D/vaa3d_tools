@@ -15,7 +15,7 @@
 #include <math.h>
 #include <stdlib.h>
 #include "../plugin_loader/v3d_plugin_loader.h"
-#include "adaptive_median.h"
+#include <sstream>
 
 
 #include "stackutil.h"
@@ -247,7 +247,7 @@ void processImage1(V3DPluginCallback2 &callback, QWidget *parent)
 
     // filter
     V3DLONG in_sz[4];
-    in_sz[0] = N; in_sz[1] = M; in_sz[2] = P; in_sz[4] = sc;
+    in_sz[0] = N; in_sz[1] = M; in_sz[2] = P; in_sz[3] = sc;
 
     ImagePixelType pixeltype = p4DImage->getDatatype();
     void* outimg = 0;
@@ -393,7 +393,7 @@ void processImage2(V3DPluginCallback2 &callback, QWidget *parent)
 
     //define datatype here
 
-    //input
+    /*
     bool ok4;
     unsigned int c=-1;
 
@@ -404,12 +404,40 @@ void processImage2(V3DPluginCallback2 &callback, QWidget *parent)
                                      "Enter channel NO:",
                                      1, 1, sc, 1, &ok4);
     if (c<=0) //this case must correspond to an invalid selection, so no need to continue
-        return;
-    
+        return;*/
+
+     //add input dialog
+	
+	AdaptiveMedianDialog dialog(callback, parent);
+	if (!dialog.image)
+		return;
+	
+	if (dialog.exec()!=QDialog::Accepted)
+		return;
+	
+	dialog.update();
+	
+	Image4DSimple* subject = dialog.image;
+	if (!subject)
+		return;
+	ROIList pRoiList = dialog.pRoiList;
+	
+	int c = dialog.ch+1;
+	int th_idx = dialog.th_idx;
+	int th = dialog.thresh;
+	
+	if(th_idx ==0)
+	{
+	
+	
+	
+	
+	
+	}
            	
     // filter
     V3DLONG in_sz[4];
-    in_sz[0] = N; in_sz[1] = M; in_sz[2] = P; in_sz[4] = sc;
+    in_sz[0] = N; in_sz[1] = M; in_sz[2] = P; in_sz[3] = sc;
 
     ImagePixelType pixeltype = p4DImage->getDatatype();
     
@@ -426,9 +454,9 @@ void processImage2(V3DPluginCallback2 &callback, QWidget *parent)
     args1.push_back(inputName2); arg.p = (void *) & args1; input<< arg;
     arg.type = "random";std::vector<char*> args;
     char channel = '0' + (c-1);
-    args.push_back("0");args.push_back("1");args.push_back(&channel);args.push_back("1"); arg.p = (void *) & args; input << arg;
-    arg.type = "random";std::vector<char*> args2;
-    args2.push_back("gsdtImage.tiff"); arg.p = (void *) & args2; output<< arg;
+    stringstream ss; ss << th;
+    string threshold = ss.str(); args.push_back("0");args.push_back("1");args.push_back(&channel);args.push_back("1"); arg.p = (void *) & args; input << arg;
+    arg.type = "random";std::vector<char*> args2;args2.push_back("gsdtImage.tiff"); arg.p = (void *) & args2; output<< arg;
 
     //QString full_plugin_name = "libgsdt_debug.dylib";  //for Linux
     QString full_plugin_name = "gsdt";
