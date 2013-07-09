@@ -101,6 +101,7 @@ bool gsdt(const V3DPluginArgList & input, V3DPluginArgList & output)
 	if(paras.size() >= 2) cnn_type = atoi(paras.at(1));
 	if(paras.size() >= 3) channel = atoi(paras.at(2));
 	if(paras.size() >= 4) z_thickness = atof(paras.at(3));
+	
 	char * inimg_file = ((vector<char*> *)(input.at(0).p))->at(0);
 	char * outimg_file = ((vector<char*> *)(output.at(0).p))->at(0);
 	cout<<"bkg_thresh = "<<bkg_thresh<<endl;
@@ -149,7 +150,6 @@ bool gsdt(const V3DPluginArgList & input, V3DPluginArgList & output)
 	delete [] phi; phi = 0;
 	delete [] inimg1d; inimg1d = 0;
 	delete [] outimg1d; outimg1d = 0;
-
 	return true;
 }
 

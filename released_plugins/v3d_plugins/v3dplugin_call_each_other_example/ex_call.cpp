@@ -33,7 +33,7 @@ QString plugin_name = "plugins/Vaa3D_PluginInterface_Demos/call_each_other/libex
 
 #else
 
-QString plugin_name = "plugins/Vaa3D_PluginInterface_Demos/call_each_other/libex_matrix_debug.so";  //for Linux
+QString plugin_name = "plugins/Vaa3D_PluginInterface_Demos/call_each_other/libex_matrix.so";  //for Linux
 
 #endif
 

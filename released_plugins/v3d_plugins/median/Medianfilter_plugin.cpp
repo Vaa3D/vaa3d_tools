@@ -15,7 +15,7 @@
 #include <math.h>
 #include <stdlib.h>
 #include "../plugin_loader/v3d_plugin_loader.h"
-#include <sstream>
+#include <boost/lexical_cast.hpp>
 
 
 #include "stackutil.h"
@@ -98,12 +98,13 @@ bool MedianFilterPlugin::dofunc(const QString & func_name, const V3DPluginArgLis
         cout<<"ch          the input channel value, default 1 and start from 1, default 1"<<endl;
         cout<<endl;
         cout<<endl;
-        cout<<"Usage : v3d -x Medianfilter -f adaptive_window -i <inimg_file> -o <outimg_file> -p <ch>"<<endl;
+        cout<<"Usage : v3d -x Medianfilter -f adaptive_window -i <inimg_file> -o <outimg_file> -p <ch> <th_idx> <th>"<<endl;
         cout<<endl;
-        cout<<"ch          the input channel value, default 1 and start from 1, default 1"<<endl;
+        cout<<"ch	   the input channel value, default 1 and start from 1, default 1"<<endl;
+	cout<<"th_idx 	   threshold method index, 0: mean, 1: usr defined, default 0"<<endl;
+	cout<<"th	   user defined threshold value (when th_idx is 1), default 0"<<endl;
         cout<<endl;
         cout<<endl;
-
         return true;
     }
 }
@@ -428,13 +429,28 @@ void processImage2(V3DPluginCallback2 &callback, QWidget *parent)
 	
 	if(th_idx ==0)
 	{
+		V3DLONG PixelSum = 0;
+		V3DLONG offsetc = (c-1)*pagesz;
+		for(V3DLONG iz = 0; iz < P; iz++)
+	   	{
+			V3DLONG offsetk = iz*M*N;
+			for(V3DLONG iy = 0; iy < M; iy++)
+			{
+			    V3DLONG offsetj = iy*N;
+			    for(V3DLONG ix = 0; ix < N; ix++)
+			    {
+
+				V3DLONG PixelVaule = data1d[offsetc + offsetk + offsetj + ix];
+			    	PixelSum = PixelSum + PixelVaule;
+				
+			    }
+			}
+               }
 	
-	
-	
-	
-	
+	      th = (int)PixelSum/(P*M*N);	
+		
 	}
-           	
+
     // filter
     V3DLONG in_sz[4];
     in_sz[0] = N; in_sz[1] = M; in_sz[2] = P; in_sz[3] = sc;
@@ -448,17 +464,14 @@ void processImage2(V3DPluginCallback2 &callback, QWidget *parent)
     
 
     arg.type = "random";std::vector<char*> args1;
-    std:: string inputName(callback.getImageName(curwin).toStdString());
-    char* inputName2 =  new char[inputName.length() + 1];
-    strcpy(inputName2, inputName.c_str());
+    std:: string inputName(callback.getImageName(curwin).toStdString());char* inputName2 =  new char[inputName.length() + 1]; strcpy(inputName2, inputName.c_str());
     args1.push_back(inputName2); arg.p = (void *) & args1; input<< arg;
     arg.type = "random";std::vector<char*> args;
-    char channel = '0' + (c-1);
-    stringstream ss; ss << th;
-    string threshold = ss.str(); args.push_back("0");args.push_back("1");args.push_back(&channel);args.push_back("1"); arg.p = (void *) & args; input << arg;
+    char channel = '0' + (c-1); 
+    string threshold = boost::lexical_cast<string>(th); char* threshold2 =  new char[threshold.length() + 1]; strcpy(threshold2, threshold.c_str());
+    args.push_back(threshold2);args.push_back("1");args.push_back(&channel);args.push_back("1"); arg.p = (void *) & args; input << arg;
     arg.type = "random";std::vector<char*> args2;args2.push_back("gsdtImage.tiff"); arg.p = (void *) & args2; output<< arg;
-
-    //QString full_plugin_name = "libgsdt_debug.dylib";  //for Linux
+    	
     QString full_plugin_name = "gsdt";
     QString func_name = "gsdt";
 
@@ -499,19 +512,23 @@ bool processImage2(const V3DPluginArgList & input, V3DPluginArgList & output,V3D
 {
     cout<<"Welcome to Median filter with adaptive window"<<endl;
     if (output.size() != 1) return false;
-    unsigned int ch=1;
+    unsigned int ch = 1,th_idx = 0, th = 0;
     if (input.size()>=2)
     {
 
         vector<char*> paras = (*(vector<char*> *)(input.at(1).p));
         cout<<paras.size()<<endl;
         if(paras.size() >= 1) ch = atoi(paras.at(0));
+        if(paras.size() >= 2) th_idx = atoi(paras.at(1));
+	if(paras.size() >= 3) th = atoi(paras.at(2));
     }
 
     char * inimg_file = ((vector<char*> *)(input.at(0).p))->at(0);
     char * outimg_file = ((vector<char*> *)(output.at(0).p))->at(0);
 
     cout<<"ch = "<<ch<<endl;
+    cout<<"th_idx = "<<th_idx<<endl;
+    cout<<"th = "<<th<<endl;	
     cout<<"inimg_file = "<<inimg_file<<endl;
     cout<<"outimg_file = "<<outimg_file<<endl;
 
@@ -527,6 +544,35 @@ bool processImage2(const V3DPluginArgList & input, V3DPluginArgList & output,V3D
         return false;
     }
 
+    
+    if(th_idx ==0)
+    {
+	V3DLONG N = in_sz[0];
+    	V3DLONG M = in_sz[1];
+   	V3DLONG P = in_sz[2];
+        V3DLONG pagesz = N*M*P;
+	V3DLONG PixelSum = 0;
+	V3DLONG offsetc = (c-1)*pagesz;
+	for(V3DLONG iz = 0; iz < P; iz++)
+   	{
+		V3DLONG offsetk = iz*M*N;
+		for(V3DLONG iy = 0; iy < M; iy++)
+		{
+		    V3DLONG offsetj = iy*N;
+		    for(V3DLONG ix = 0; ix < N; ix++)
+		    {
+
+			V3DLONG PixelVaule = data1d[offsetc + offsetk + offsetj + ix];
+		    	PixelSum = PixelSum + PixelVaule;
+				
+		    }
+		}
+        }
+	
+       th = (int)PixelSum/(P*M*N);	
+		
+    }    
+	
     //invoke gsdt function
     V3DPluginArgItem arg;
     V3DPluginArgList input2;
@@ -536,20 +582,21 @@ bool processImage2(const V3DPluginArgList & input, V3DPluginArgList & output,V3D
     args1.push_back(inimg_file); arg.p = (void *) & args1; input2<< arg;
     arg.type = "random";std::vector<char*> args;
     char channel = '0' + (c-1);
-    args.push_back("0");args.push_back("1");args.push_back(&channel);args.push_back("1"); arg.p = (void *) & args; input2 << arg;
+    string threshold = boost::lexical_cast<string>(th); char* threshold2 =  new char[threshold.length() + 1]; strcpy(threshold2, threshold.c_str());	
+    args.push_back(threshold2);args.push_back("1");args.push_back(&channel);args.push_back("1"); arg.p = (void *) & args; input2 << arg;
     arg.type = "random";std::vector<char*> args2;
     args2.push_back("gsdtImage.tiff"); arg.p = (void *) & args2; output2<< arg;
 
     QString full_plugin_name = "gsdt"; //partial name will work
     QString func_name = "gsdt";
 
-    callback.callPluginFunc(full_plugin_name,func_name, input,output);
+    callback.callPluginFunc(full_plugin_name,func_name, input2,output2);
 
     unsigned char * gsdtdata1d = 0;
     int datatype2;
     V3DLONG * in_zz = 0;
 
-    char * outimg_file2 = ((vector<char*> *)(output.at(0).p))->at(0);
+    char * outimg_file2 = ((vector<char*> *)(output2.at(0).p))->at(0);
     loadImage(outimg_file2, gsdtdata1d, in_zz, datatype2,1);
     remove("gsdtImage.tiff");
     //input
@@ -621,7 +668,7 @@ template <class T> void adp_median_filter(T* data1d,
             for(V3DLONG ix = 0; ix < N; ix++)
             {
 
-                T PixelValue = data1d[offsetk + offsetj + ix];
+                T PixelValue = data1d[offsetc+offsetk + offsetj + ix];
                 T GsdtValue = gsdtdatald[offsetk + offsetj + ix];
                 Wx = (int)round((log(PixelValue)/log(2))/GsdtValue);
                 //printf("%d %d\n",PixelValue,Wx);
