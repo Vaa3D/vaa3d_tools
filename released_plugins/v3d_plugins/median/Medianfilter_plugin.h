@@ -64,12 +64,18 @@ class AdaptiveMedianDialog : public QDialog
 
 			pRoiList=cb.getROI(cb.currentImageWindow());
 			QString imageName = cb.getImageName(cb.currentImageWindow());
-			label_imagename = new QLabel(imageName.prepend("You have selected the image [").append("]"));
-			gridLayout->addWidget(label_imagename, 1,0,1,3);
+			label_imagename1 = new QLabel(imageName.prepend("You have selected the image [").append("]"));
+			gridLayout->addWidget(label_imagename1, 1,0,1,3);
+
+			label_imagename2 = new QLabel(QObject::tr("This feature will use the Grayscale Distance Tranform (GSDT) plugin to determine the local window size adaptively."));
+			gridLayout->addWidget(label_imagename2, 2,0,1,3);
 			
+			label_imagename3 = new QLabel(QObject::tr("Thus please specify the following information to run GSDT."));
+			gridLayout->addWidget(label_imagename3, 3,0,1,3);
+
 			int c = image->getCDim();
-            label_channel = new QLabel(QObject::tr("This feature will use the Grayscale Distance Tranform (GSDT) plugin to determine the local window size adaptively. Thus please specify the following information to run GSDT. Choose a channel: "));
-			gridLayout->addWidget(label_channel, 2,0);
+           		 label_channel = new QLabel(QObject::tr("Choose a channel: "));
+			gridLayout->addWidget(label_channel, 4,0);
 			
 			// channel info
 			QStringList chList;
@@ -82,29 +88,29 @@ class AdaptiveMedianDialog : public QDialog
 			for (int i=3;i<c;i++)
 				chList << QString("ch ").setNum(i+1);
 			combo_channel = new QComboBox(); combo_channel->addItems(chList);
-			gridLayout->addWidget(combo_channel, 2,1);
+			gridLayout->addWidget(combo_channel, 4,1);
 			
 			//
 			label_th = new QLabel(QObject::tr("Choose a background threshold (0~255): "));
-			gridLayout->addWidget(label_th, 4,0);
+			gridLayout->addWidget(label_th, 6,0);
 			
 			QStringList thList;
 			thList << "mean" << "usr defined";
 			
 			combo_th = new QComboBox(); combo_th->addItems(thList);
-			gridLayout->addWidget(combo_th, 4,1);
+			gridLayout->addWidget(combo_th, 6,1);
 			
 			//
 			spin_th = new QDoubleSpinBox();
-			gridLayout->addWidget(spin_th, 4,2);
+			gridLayout->addWidget(spin_th, 6,2);
 			
 			spin_th->setEnabled(false);
 			spin_th->setMaximum(255); spin_th->setMinimum(0);
 			//
 			ok     = new QPushButton("OK");
 			cancel = new QPushButton("Cancel");
-			gridLayout->addWidget(cancel, 5,1);
-			gridLayout->addWidget(ok,     5,2);
+			gridLayout->addWidget(cancel, 7,1);
+			gridLayout->addWidget(ok,     7,2);
 			
 			setLayout(gridLayout);
 			setWindowTitle(QString("Adaptive Median"));
@@ -152,7 +158,9 @@ class AdaptiveMedianDialog : public QDialog
 		
 		QGridLayout *gridLayout;
 		
-		QLabel* label_imagename;
+		QLabel* label_imagename1;
+		QLabel* label_imagename2;
+         	QLabel* label_imagename3;
 		QLabel* label_channel;
 		QComboBox* combo_channel;
 		
