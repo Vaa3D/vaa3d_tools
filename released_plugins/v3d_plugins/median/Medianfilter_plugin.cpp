@@ -478,7 +478,6 @@ void processImage2(V3DPluginCallback2 &callback, QWidget *parent)
 
     callback.callPluginFunc(full_plugin_name,func_name, input,output);
 
-
     //system("v3d -x gsdt -f gsdt -i /home/zhiz/Desktop/vaa3d/Images/ex_Repo_hb9_eve.tif -o /home/zhiz/Desktop/vaa3d/Images/gsdt_ex_Repo_hb9_eve.tif -p 0 1 0 1.0");
 
     unsigned char * gsdtdata1d = 0;
@@ -486,9 +485,10 @@ void processImage2(V3DPluginCallback2 &callback, QWidget *parent)
     V3DLONG * in_zz = 0;
 
     char * outimg_file = ((vector<char*> *)(output.at(0).p))->at(0);
-    loadImage(outimg_file, gsdtdata1d, in_zz, datatype,1);
+    loadImage(outimg_file, gsdtdata1d, in_zz, datatype,0);
     remove("gsdtImage.tif");
     remove("temp.tif");
+
     void* outimg = 0;
     switch (pixeltype)
     {
