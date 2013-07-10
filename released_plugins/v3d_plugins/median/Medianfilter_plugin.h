@@ -55,13 +55,20 @@ class AdaptiveMedianDialog : public QDialog
 			gridLayout = new QGridLayout();
 			
 			image = cb.getImage(cb.currentImageWindow());
+
+            if (!image || !image->valid())
+            {
+                v3d_msg("The image is not valid yet. Check your data.");
+                return;
+            }
+
 			pRoiList=cb.getROI(cb.currentImageWindow());
 			QString imageName = cb.getImageName(cb.currentImageWindow());
 			label_imagename = new QLabel(imageName.prepend("You have selected the image [").append("]"));
 			gridLayout->addWidget(label_imagename, 1,0,1,3);
 			
 			int c = image->getCDim();
-			label_channel = new QLabel(QObject::tr("Choose a channel: "));
+            label_channel = new QLabel(QObject::tr("This feature will use the Grayscale Distance Tranform (GSDT) plugin to determine the local window size adaptively. Thus please specify the following information to run GSDT. Choose a channel: "));
 			gridLayout->addWidget(label_channel, 2,0);
 			
 			// channel info

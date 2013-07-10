@@ -392,22 +392,6 @@ void processImage2(V3DPluginCallback2 &callback, QWidget *parent)
     V3DLONG P = p4DImage->getZDim();
     V3DLONG sc = p4DImage->getCDim();
     
-    	
-    //define datatype here
-
-    /*
-    bool ok4;
-    unsigned int c=-1;
-
-    if (sc==1)
-        c = 1;
-    else
-        c = QInputDialog::getInteger(parent, "Channel",
-                                     "Enter channel NO:",
-                                     1, 1, sc, 1, &ok4);
-    if (c<=0) //this case must correspond to an invalid selection, so no need to continue
-        return;*/
-
      //add input dialog
 	
 	AdaptiveMedianDialog dialog(callback, parent);
