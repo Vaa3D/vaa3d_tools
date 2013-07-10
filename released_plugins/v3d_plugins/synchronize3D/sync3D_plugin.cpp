@@ -20,6 +20,10 @@ class lookPanel : public QDialog
 	public:
 		QComboBox* combo1;
 		QComboBox* combo2;
+		QCheckBox* check_rotation;
+		QCheckBox* check_shift;
+		QCheckBox* check_zoom;
+		bool r,s,z;
 		v3dhandleList win_list;		
 		V3DPluginCallback2 &v3d;
 		static lookPanel* panel;
@@ -40,17 +44,26 @@ class lookPanel : public QDialog
 			//QDialog d(parent);
 			combo1 = new QComboBox(); combo1->addItems(items);
 			combo2 = new QComboBox(); combo2->addItems(items);
+			check_rotation = new QCheckBox(); check_rotation->setText(QObject::tr("Rotation "));check_rotation->setChecked(true);
+			check_shift = new QCheckBox(); check_shift->setText(QObject::tr("Shift"));check_shift->setChecked(true);
+			check_zoom = new QCheckBox(); check_zoom->setText(QObject::tr("Zoom"));check_zoom->setChecked(true);
 			QPushButton* ok     = new QPushButton("Sync");
 			QPushButton* cancel = new QPushButton("Cancel");
 			QFormLayout *formLayout = new QFormLayout;
 			formLayout->addRow(QObject::tr("Source: "), combo1);
 			formLayout->addRow(QObject::tr("Target: "), combo2);
+			formLayout->addRow(check_rotation);
+			formLayout->addRow(check_shift);
+			formLayout->addRow(check_zoom);	
 			formLayout->addRow(ok, cancel);
 			setLayout(formLayout);
 			setWindowTitle(QString("Synchronize"));
 
 			connect(ok,     SIGNAL(clicked()), this, SLOT(accept()));
 			connect(cancel, SIGNAL(clicked()), this, SLOT(reject()));
+			connect(check_rotation, SIGNAL(stateChanged(int)), this, SLOT(update()));
+			connect(check_shift, SIGNAL(stateChanged(int)), this, SLOT(update()));
+			connect(check_zoom, SIGNAL(stateChanged(int)), this, SLOT(update()));
 		}
 		virtual void accept()
 		{
@@ -68,15 +81,35 @@ class lookPanel : public QDialog
 				View3DControl *view2 = v3d.getView3DControl(win_list[i2]);
 				if (view1 && view2)
 				{  
+					r = (check_rotation->isChecked()) ? true : false;
+					s = (check_shift->isChecked()) ? true : false;
+					z = (check_zoom->isChecked()) ? true : false;
 
 					view1->absoluteRotPose();
-
 					int xRot = view1->xRot();
 					int yRot = view1->yRot();
 					int zRot = view1->zRot();
 
-					view2->resetRotation();
-					view2->doAbsoluteRot(xRot,yRot,zRot);
+					int xShift = view1->xShift();
+					int yShift = view1->yShift();
+					int zShift = view1->zShift();
+
+					int zoom = view1->zoom();
+					
+					if (r == true)
+					{
+						view2->resetRotation();
+						view2->doAbsoluteRot(xRot,yRot,zRot);
+					}
+					if (s == true)
+					{
+						view2->setXShift(xShift);
+						view2->setYShift(yShift);
+						view2->setZShift(zShift);
+					}
+					if (z == true) view2->setZoom(zoom);
+					
+					//view2->resetZoomShift();
 					v3d.updateImageWindow(win_list[i1]);
 					v3d.updateImageWindow(win_list[i2]);
 				}
