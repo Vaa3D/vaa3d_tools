@@ -95,7 +95,7 @@ void SynTwoImage(V3DPluginCallback2 &v3d, QWidget *parent)
 	{
 	 	v3d.open3DWindow(win_list[i1]);
 		View3DControl *view1 = v3d.getView3DControl(win_list[i1]);
-		
+		//	printf("zhouzhi %d\n",view1->xRot());
 		v3d.open3DWindow(win_list[i2]);
 		View3DControl *view2 = v3d.getView3DControl(win_list[i2]);
 		if (view1 && view2)
