@@ -20,9 +20,12 @@ class lookPanel : public QDialog
 	public:
 		QComboBox* combo1;
 		QComboBox* combo2;
+		QLabel* label1;
+		QLabel* label2;
 		QCheckBox* check_rotation;
 		QCheckBox* check_shift;
 		QCheckBox* check_zoom;
+		QGridLayout *gridLayout;
 		bool r,s,z;
 		v3dhandleList win_list;		
 		V3DPluginCallback2 &v3d;
@@ -44,12 +47,28 @@ class lookPanel : public QDialog
 			//QDialog d(parent);
 			combo1 = new QComboBox(); combo1->addItems(items);
 			combo2 = new QComboBox(); combo2->addItems(items);
+			label1 = new QLabel(QObject::tr("Source: "));
+			label2 = new QLabel(QObject::tr("Target: "));
 			check_rotation = new QCheckBox(); check_rotation->setText(QObject::tr("Rotation "));check_rotation->setChecked(true);
 			check_shift = new QCheckBox(); check_shift->setText(QObject::tr("Shift"));check_shift->setChecked(true);
 			check_zoom = new QCheckBox(); check_zoom->setText(QObject::tr("Zoom"));check_zoom->setChecked(true);
 			QPushButton* ok     = new QPushButton("Sync");
-			QPushButton* cancel = new QPushButton("Cancel");
-			QFormLayout *formLayout = new QFormLayout;
+			QPushButton* cancel = new QPushButton("Close");
+
+			gridLayout = new QGridLayout();
+			gridLayout->addWidget(label1, 1,0,1,6);
+			gridLayout->addWidget(combo1,1,1,1,6);
+			gridLayout->addWidget(label2, 2,0,1,6);
+			gridLayout->addWidget(combo2,2,1,1,6);
+			gridLayout->addWidget(check_rotation, 4,0,1,1);
+			gridLayout->addWidget(check_shift,4,1,1,1);
+			gridLayout->addWidget(check_zoom, 4,2,1,1);
+			gridLayout->addWidget(ok, 5,0);
+			gridLayout->addWidget(cancel,5,1);
+			setLayout(gridLayout);
+			setWindowTitle(QString("Synchronize"));
+
+			/*QFormLayout *formLayout = new QFormLayout;
 			formLayout->addRow(QObject::tr("Source: "), combo1);
 			formLayout->addRow(QObject::tr("Target: "), combo2);
 			formLayout->addRow(check_rotation);
@@ -57,7 +76,7 @@ class lookPanel : public QDialog
 			formLayout->addRow(check_zoom);	
 			formLayout->addRow(ok, cancel);
 			setLayout(formLayout);
-			setWindowTitle(QString("Synchronize"));
+			setWindowTitle(QString("Synchronize"));*/
 
 			connect(ok,     SIGNAL(clicked()), this, SLOT(accept()));
 			connect(cancel, SIGNAL(clicked()), this, SLOT(reject()));
