@@ -8,7 +8,7 @@
 #include "sync3D_plugin.h"
 #include <QtGui>
 #include <stdlib.h>
-
+#include <time.h>
 
 using namespace std;
 Q_EXPORT_PLUGIN2(sync3D, sync3D);
@@ -30,6 +30,7 @@ class lookPanel : public QDialog
 		v3dhandleList win_list;		
 		V3DPluginCallback2 &v3d;
 		static lookPanel* panel;
+
 
 		virtual ~lookPanel()
 		{
@@ -98,39 +99,52 @@ class lookPanel : public QDialog
 				View3DControl *view1 = v3d.getView3DControl(win_list[i1]);
 				v3d.open3DWindow(win_list[i2]);
 				View3DControl *view2 = v3d.getView3DControl(win_list[i2]);
-				if (view1 && view2)
+				clock_t this_time = clock();
+    				clock_t last_time = this_time;
+			 	if (view1 && view2)
 				{  
-					r = (check_rotation->isChecked()) ? true : false;
-					s = (check_shift->isChecked()) ? true : false;
-					z = (check_zoom->isChecked()) ? true : false;
-
-					view1->absoluteRotPose();
-					int xRot = view1->xRot();
-					int yRot = view1->yRot();
-					int zRot = view1->zRot();
-
-					int xShift = view1->xShift();
-					int yShift = view1->yShift();
-					int zShift = view1->zShift();
-
-					int zoom = view1->zoom();
+					while(true)
+					{					
+						double time_counter = 0;						
+						this_time = clock(); 
+						time_counter += (double)(this_time - last_time);
+						last_time = this_time;
+						if(time_counter > (double)(0.2 * CLOCKS_PER_SEC))	
+						{
+							time_counter -= (double)(0.2 * CLOCKS_PER_SEC);
+							r = (check_rotation->isChecked()) ? true : false;
+							s = (check_shift->isChecked()) ? true : false;
+							z = (check_zoom->isChecked()) ? true : false;
 					
-					if (r == true)
-					{
-						view2->resetRotation();
-						view2->doAbsoluteRot(xRot,yRot,zRot);
-					}
-					if (s == true)
-					{
-						view2->setXShift(xShift);
-						view2->setYShift(yShift);
-						view2->setZShift(zShift);
-					}
-					if (z == true) view2->setZoom(zoom);
+							view1->absoluteRotPose();
+							int xRot = view1->xRot();
+							int yRot = view1->yRot();
+							int zRot = view1->zRot();
+
+							int xShift = view1->xShift();
+							int yShift = view1->yShift();
+							int zShift = view1->zShift();
+
+							int zoom = view1->zoom();
+							printf("time is %f\n\n\n",time_counter);	
+							if (r == true)
+							{
+								view2->resetRotation();
+								view2->doAbsoluteRot(xRot,yRot,zRot);
+							}
+							if (s == true)
+							{
+								view2->setXShift(xShift);
+								view2->setYShift(yShift);
+								view2->setZShift(zShift);
+							}
+							if (z == true) view2->setZoom(zoom);
 					
-					//view2->resetZoomShift();
-					v3d.updateImageWindow(win_list[i1]);
-					v3d.updateImageWindow(win_list[i2]);
+							//view2->resetZoomShift();
+							//v3d.updateImageWindow(win_list[i1]);
+							v3d.updateImageWindow(win_list[i2]);
+						}
+					}	
 				}
 			}
 		}
