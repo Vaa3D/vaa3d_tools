@@ -17,6 +17,7 @@ void SynTwoImage(V3DPluginCallback2 &v3d, QWidget *parent);
 
 class lookPanel : public QDialog
 	{
+		Q_OBJECT
 	public:
 		QComboBox* combo1;
 		QComboBox* combo2;
@@ -30,12 +31,15 @@ class lookPanel : public QDialog
 		v3dhandleList win_list;		
 		V3DPluginCallback2 &v3d;
 		static lookPanel* panel;
-
+	private slots:
+		void _slot_syncAuto();
+	public:
 
 		virtual ~lookPanel()
 		{
 			panel = 0;
 		}
+
 		lookPanel(V3DPluginCallback2 &_v3d, QWidget *parent) : QDialog(parent),
 		v3d(_v3d)
 		{
@@ -55,6 +59,8 @@ class lookPanel : public QDialog
 			check_zoom = new QCheckBox(); check_zoom->setText(QObject::tr("Zoom"));check_zoom->setChecked(true);
 			QPushButton* ok     = new QPushButton("Sync");
 			QPushButton* cancel = new QPushButton("Close");
+			QPushButton* syncAuto     = new QPushButton("Sync Auto");
+			
 
 			gridLayout = new QGridLayout();
 			gridLayout->addWidget(label1, 1,0,1,6);
@@ -66,21 +72,13 @@ class lookPanel : public QDialog
 			gridLayout->addWidget(check_zoom, 4,2,1,1);
 			gridLayout->addWidget(ok, 5,0);
 			gridLayout->addWidget(cancel,5,1);
+			gridLayout->addWidget(syncAuto,5,2);
 			setLayout(gridLayout);
 			setWindowTitle(QString("Synchronize"));
 
-			/*QFormLayout *formLayout = new QFormLayout;
-			formLayout->addRow(QObject::tr("Source: "), combo1);
-			formLayout->addRow(QObject::tr("Target: "), combo2);
-			formLayout->addRow(check_rotation);
-			formLayout->addRow(check_shift);
-			formLayout->addRow(check_zoom);	
-			formLayout->addRow(ok, cancel);
-			setLayout(formLayout);
-			setWindowTitle(QString("Synchronize"));*/
-
 			connect(ok,     SIGNAL(clicked()), this, SLOT(accept()));
 			connect(cancel, SIGNAL(clicked()), this, SLOT(reject()));
+			connect(syncAuto, SIGNAL(clicked()), this, SLOT(_slot_syncAuto()));
 			connect(check_rotation, SIGNAL(stateChanged(int)), this, SLOT(update()));
 			connect(check_shift, SIGNAL(stateChanged(int)), this, SLOT(update()));
 			connect(check_zoom, SIGNAL(stateChanged(int)), this, SLOT(update()));
@@ -92,7 +90,7 @@ class lookPanel : public QDialog
 
 			Image4DSimple* image1 = v3d.getImage(win_list[i1]);
 			Image4DSimple* image2 = v3d.getImage(win_list[i2]);
-			v3dhandle curwin = v3d.currentImageWindow();
+			
 			if (win_list[i1]&& win_list[i2])//ensure the 3d viewer window is open; if not, then open it
 			{
 			 	v3d.open3DWindow(win_list[i1]);
@@ -103,15 +101,7 @@ class lookPanel : public QDialog
     				clock_t last_time = this_time;
 			 	if (view1 && view2)
 				{  
-					while(true)
-					{					
-						double time_counter = 0;						
-						this_time = clock(); 
-						time_counter += (double)(this_time - last_time);
-						last_time = this_time;
-						if(time_counter > (double)(0.2 * CLOCKS_PER_SEC))	
-						{
-							time_counter -= (double)(0.2 * CLOCKS_PER_SEC);
+				
 							r = (check_rotation->isChecked()) ? true : false;
 							s = (check_shift->isChecked()) ? true : false;
 							z = (check_zoom->isChecked()) ? true : false;
@@ -126,7 +116,7 @@ class lookPanel : public QDialog
 							int zShift = view1->zShift();
 
 							int zoom = view1->zoom();
-							printf("time is %f\n\n\n",time_counter);	
+								
 							if (r == true)
 							{
 								view2->resetRotation();
@@ -143,11 +133,41 @@ class lookPanel : public QDialog
 							//view2->resetZoomShift();
 							//v3d.updateImageWindow(win_list[i1]);
 							v3d.updateImageWindow(win_list[i2]);
-						}
-					}	
-				}
+			 	}
+						
+				
 			}
 		}
+		/*virtual void reject()
+		{
+				int i1 = combo1->currentIndex();
+				int i2 = combo2->currentIndex();
+
+				Image4DSimple* image1 = v3d.getImage(win_list[i1]);
+				Image4DSimple* image2 = v3d.getImage(win_list[i2]);
+				v3dhandle curwin = v3d.currentImageWindow();
+				if (win_list[i1]&& win_list[i2])//ensure the 3d viewer window is open; if not, then open it
+				{
+				 	
+					clock_t this_time = clock();
+	    				clock_t last_time = this_time;
+					while(true)
+					{					
+							double time_counter = 0;						
+							this_time = clock(); 
+							time_counter += (double)(this_time - last_time);
+							last_time = this_time;
+							if(time_counter > (double)(0.2 * CLOCKS_PER_SEC))	
+							{
+								time_counter -= (double)(0.2 * CLOCKS_PER_SEC);
+								
+								printf("time is %f\n\n\n",time_counter);	
+								
+							}
+					}	
+					
+				}
+		}*/	
 	};
 
 lookPanel* lookPanel::panel = 0;
@@ -157,7 +177,7 @@ V3DLONG panel(V3DPluginCallback2 &v3d, QWidget *parent)
 	if (lookPanel::panel)
 	{
 		lookPanel::panel->show();
-		return -1;
+		return 1;
 	}
 
 	lookPanel* p = new lookPanel(v3d, parent);
@@ -227,63 +247,8 @@ void SynTwoImage(V3DPluginCallback2 &v3d, QWidget *parent)
 	panel(v3d, parent);
 }
 
-/*void SynTwoImage(V3DPluginCallback2 &v3d, QWidget *parent)
+void lookPanel::_slot_syncAuto()
 {
-	v3dhandleList win_list = v3d.getImageWindowList();
-	if (win_list.size()<1)
-	{
-		QMessageBox::information(0, "Sync3D",QObject::tr("Need at least 1 images."));
-		return;
-	}
-
-	QStringList items;
-	for (int i=0; i<win_list.size(); i++) items << v3d.getImageName(win_list[i]);
-
-	QDialog d(parent);
-	QComboBox* combo1 = new QComboBox(); combo1->addItems(items);
-	QComboBox* combo2 = new QComboBox(); combo2->addItems(items);
-	QPushButton* ok     = new QPushButton("OK");
-	QPushButton* cancel = new QPushButton("Cancel");
-	QFormLayout *formLayout = new QFormLayout;
-	formLayout->addRow(QObject::tr("Source: "), combo1);
-	formLayout->addRow(QObject::tr("Target: "), combo2);
-	formLayout->addRow(ok, cancel);
-	d.setLayout(formLayout);
-	d.setWindowTitle(QString("Synchronize"));
-
-	d.connect(ok,     SIGNAL(clicked()), &d, SLOT(accept()));
-	d.connect(cancel, SIGNAL(clicked()), &d, SLOT(reject()));
-	//if (d.exec()!=QDialog::Accepted)
-	//	return;
-	virtual void accept()
-	{
-		int i1 = combo1->currentIndex();
-		int i2 = combo2->currentIndex();
-
-		Image4DSimple* image1 = v3d.getImage(win_list[i1]);
-		Image4DSimple* image2 = v3d.getImage(win_list[i2]);
-		v3dhandle curwin = v3d.currentImageWindow();
-		if (win_list[i1]&& win_list[i2])//ensure the 3d viewer window is open; if not, then open it
-		{
-		 	v3d.open3DWindow(win_list[i1]);
-			View3DControl *view1 = v3d.getView3DControl(win_list[i1]);
-			v3d.open3DWindow(win_list[i2]);
-			View3DControl *view2 = v3d.getView3DControl(win_list[i2]);
-			if (view1 && view2)
-			{  
-
-				view1->absoluteRotPose();
-
-				int xRot = view1->xRot();
-				int yRot = view1->yRot();
-				int zRot = view1->zRot();
-
-				view2->resetRotation();
-				view2->doAbsoluteRot(xRot,yRot,zRot);
-				v3d.updateImageWindow(win_list[i1]);
-				v3d.updateImageWindow(win_list[i2]);
-			}
-		}
-	}
+	printf("this is zhi zhou\n\n\n\n\n");
 }
-*/
+
