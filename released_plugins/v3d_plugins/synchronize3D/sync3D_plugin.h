@@ -24,5 +24,32 @@ public:
 	bool dofunc(const QString &func_name, const V3DPluginArgList &input, V3DPluginArgList &output, V3DPluginCallback2 &callback, QWidget *parent);
 };
 
-#endif
 
+
+class lookPanel: public QDialog
+{	
+	Q_OBJECT
+public:
+
+	lookPanel(V3DPluginCallback2 &v3d, QWidget *parent);
+	~lookPanel();
+public:
+	QComboBox* combo1;
+	QComboBox* combo2;
+	QLabel* label1;
+	QLabel* label2;
+	QCheckBox* check_rotation;
+	QCheckBox* check_shift;
+	QCheckBox* check_zoom;
+	QGridLayout *gridLayout;
+	bool r,s,z;
+	v3dhandleList win_list;		
+	V3DPluginCallback2 &m_v3d;
+	static lookPanel*panel;
+
+private slots:
+	void _slot_syncAuto();
+	void _slot_sync();
+};
+
+#endif
