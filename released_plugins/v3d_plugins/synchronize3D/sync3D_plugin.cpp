@@ -7,12 +7,16 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#include <iostream>  
 
 Q_EXPORT_PLUGIN2(sync3D, sync3D)
 
 void SynTwoImage(V3DPluginCallback2 &v3d, QWidget *parent);
 lookPanel* lookPanel::panel = 0;
 
+int getTime() {  
+  return clock()/CLOCKS_PER_SEC;  
+} 
 
 //void SynTwoImage(V3DPluginCallback2 &v3d, QWidget *parent);
  
@@ -75,9 +79,9 @@ lookPanel::lookPanel(V3DPluginCallback2 &_v3d, QWidget *parent) :
 			check_rotation = new QCheckBox(); check_rotation->setText(QObject::tr("Rotation "));check_rotation->setChecked(true);
 			check_shift = new QCheckBox(); check_shift->setText(QObject::tr("Shift"));check_shift->setChecked(true);
 			check_zoom = new QCheckBox(); check_zoom->setText(QObject::tr("Zoom"));check_zoom->setChecked(true);
-			QPushButton* ok     = new QPushButton("Sync");
+			QPushButton* ok     = new QPushButton("Sync(one shot)");
 			QPushButton* cancel = new QPushButton("Close");
-			QPushButton* syncAuto     = new QPushButton("Sync Auto");
+			QPushButton* syncAuto     = new QPushButton("Start Sync (real time)");
 			
 
 			gridLayout = new QGridLayout();
@@ -89,8 +93,8 @@ lookPanel::lookPanel(V3DPluginCallback2 &_v3d, QWidget *parent) :
 			gridLayout->addWidget(check_shift,4,1,1,1);
 			gridLayout->addWidget(check_zoom, 4,2,1,1);
 			gridLayout->addWidget(ok, 5,0);
-			gridLayout->addWidget(cancel,5,1);
-			gridLayout->addWidget(syncAuto,5,2);
+			gridLayout->addWidget(cancel,5,6);
+			gridLayout->addWidget(syncAuto,5,1);
 			setLayout(gridLayout);
 			setWindowTitle(QString("Synchronize"));
 
@@ -122,7 +126,7 @@ void lookPanel::_slot_sync()
 				View3DControl *view1 = m_v3d.getView3DControl(win_list[i1]);
 				m_v3d.open3DWindow(win_list[i2]);
 				View3DControl *view2 = m_v3d.getView3DControl(win_list[i2]);
-                if (view1 && view2)
+                		if (view1 && view2)
 				{  
 				
 							r = (check_rotation->isChecked()) ? true : false;
@@ -166,36 +170,36 @@ void lookPanel::_slot_sync()
 }
 void lookPanel::_slot_syncAuto()
 {
-	printf("this is zhi zhou\n\n\n\n\n");
-			/*virtual void reject()
-		{
-				int i1 = combo1->currentIndex();
-				int i2 = combo2->currentIndex();
+	
 
-				Image4DSimple* image1 = m_v3d.getImage(win_list[i1]);
-				Image4DSimple* image2 = m_v3d.getImage(win_list[i2]);
-				m_v3dhandle curwin = m_v3d.currentImageWindow();
-				if (win_list[i1]&& win_list[i2])//ensure the 3d viewer window is open; if not, then open it
-				{
-				 	
-					clock_t this_time = clock();
+					
+					/*clock_t this_time = clock();
 	    				clock_t last_time = this_time;
+					double time_counter = 0;
 					while(true)
 					{					
-							double time_counter = 0;						
-							this_time = clock(); 
-							time_counter += (double)(this_time - last_time);
-							last_time = this_time;
-							if(time_counter > (double)(0.2 * CLOCKS_PER_SEC))	
-							{
-								time_counter -= (double)(0.2 * CLOCKS_PER_SEC);
+						this_time = clock(); 
+						time_counter += (double)(this_time - last_time);
+						last_time = this_time;
+						if(time_counter >= (double)(10 * CLOCKS_PER_SEC))	
+						{
+							double time_counter = 0;
+							printf("time is %f\n\n\n",last_time* CLOCKS_PER_SEC);	
 								
-								printf("time is %f\n\n\n",time_counter);	
-								
-							}
-					}	
-					
-				}
-		}*/
+						}
+					}*/
+					int i = 0;
+					int lastTime = 0;  	
+					while (1) 
+					{  
+    						int now = getTime();  
+  						if (now - lastTime > 0) 
+						{  		
+     							 printf("time is %d\n\n",i++); 
+     							 lastTime = now;  
+   						 }  
+					}				
+		
+		
 }
 
