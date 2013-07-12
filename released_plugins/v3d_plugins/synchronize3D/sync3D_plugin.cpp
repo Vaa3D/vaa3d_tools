@@ -112,6 +112,8 @@ lookPanel::~lookPanel()
 
 void lookPanel::_slot_sync()
 {
+			v3dhandleList win_list = m_v3d.getImageWindowList();
+
 			int i1 = combo1->currentIndex();
 			int i2 = combo2->currentIndex();
 			
@@ -125,7 +127,7 @@ void lookPanel::_slot_sync()
 				{  
 				
 					
-							//view1->absoluteRotPose();
+							view1->absoluteRotPose();
 							int xRot = view1->xRot();
 							int yRot = view1->yRot();
 							int zRot = view1->zRot();
@@ -136,6 +138,82 @@ void lookPanel::_slot_sync()
 								
 							int zoom = view1->zoom();
 					
+							if (check_rotation->isChecked())
+							{
+								view2->resetRotation();
+								view2->doAbsoluteRot(xRot,yRot,zRot);
+							}
+							if (check_shift->isChecked())
+							{
+								view2->setXShift(xShift);
+								view2->setYShift(yShift);
+								view2->setZShift(zShift);
+							}
+							if (check_zoom->isChecked()) view2->setZoom(zoom);
+	
+				}
+						
+				
+			}else
+			{
+						
+				QMessageBox::information(0, "Sync3D",QObject::tr("Cannot fine the image, please try it again."));
+				
+							
+			}
+
+
+}
+void lookPanel::_slot_syncAuto()
+{
+	syncAuto->setText(syncAuto->isChecked() ? "Stop Sync (real time)" : "Start Sync (real time)");
+	if(syncAuto->isChecked())
+	{
+		xRot_past = -1; 
+		yRot_past = -1; 
+		zRot_past = -1;	
+		xShift_past = -1;
+		yShift_past = -1;
+		zShift_past = -1;
+		zoom_past = -1;
+		long interval = 0.2 * 1000;
+		m_pTimer->start(interval);
+		int i1 = combo1->currentIndex();
+		int i2 = combo2->currentIndex();
+		m_v3d.open3DWindow(win_list[i1]);
+		m_v3d.open3DWindow(win_list[i2]);
+		view1 = m_v3d.getView3DControl(win_list[i1]);
+		view2 = m_v3d.getView3DControl(win_list[i2]);
+		combo1->setEnabled( false );
+		combo2->setEnabled( false );		
+
+			
+	}else{
+		m_pTimer->stop();
+		v3d_msg("Done");
+		combo1->setEnabled(true);
+		combo2->setEnabled(true);		
+		
+	}
+}
+
+void lookPanel::_slot_timerupdate()
+{
+		
+                		if (view1 && view2)
+				{  
+					
+							view1->absoluteRotPose();
+							int xRot = view1->xRot();
+							int yRot = view1->yRot();
+							int zRot = view1->zRot();
+
+							int xShift = view1->xShift();
+							int yShift = view1->yShift();
+							int zShift = view1->zShift();
+
+							int zoom = view1->zoom();
+								
 							if (check_rotation->isChecked() && (xRot!=xRot_past || yRot!=yRot_past || zRot!=zRot_past))
 							{
 								view2->resetRotation();
@@ -158,76 +236,6 @@ void lookPanel::_slot_sync()
 								view2->setZoom(zoom);
 								zoom_past = zoom;
 							}
-					
-							//view2->resetZoomShift();
-							//m_v3d.updateImageWindow(win_list[i1]);
-							//	m_v3d.updateImageWindow(win_list[i2]);
-							}
-						
-				
-			}
-
-
-
-}
-void lookPanel::_slot_syncAuto()
-{
-	syncAuto->setText(syncAuto->isChecked() ? "Stop Sync (real time)" : "Start Sync (real time)");
-	if(syncAuto->isChecked())
-	{
-		xRot_past = -1; 
-		yRot_past = -1; 
-		zRot_past = -1;	
-		xShift_past = -1;
-		yShift_past = -1;
-		zShift_past = -1;
-		zoom_past = -1;
-		long interval = 0.2 * 1000;
-		m_pTimer->start(interval);
-		int i1 = combo1->currentIndex();
-		int i2 = combo2->currentIndex();
-
-		m_v3d.open3DWindow(win_list[i1]);
-		m_v3d.open3DWindow(win_list[i2]);
-		view1 = m_v3d.getView3DControl(win_list[i1]);
-		view2 = m_v3d.getView3DControl(win_list[i2]);	
-	}else{
-		m_pTimer->stop();
-		v3d_msg("Done");
-		
-	}
-}
-
-void lookPanel::_slot_timerupdate()
-{
-		
-                		if (view1 && view2)
-				{  
-					
-							view1->absoluteRotPose();
-							int xRot = view1->xRot();
-							int yRot = view1->yRot();
-							int zRot = view1->zRot();
-
-							int xShift = view1->xShift();
-							int yShift = view1->yShift();
-							int zShift = view1->zShift();
-
-							int zoom = view1->zoom();
-								
-							if (check_rotation->isChecked())
-							{
-								view2->resetRotation();
-								view2->doAbsoluteRot(xRot,yRot,zRot);
-							}
-							if (check_shift->isChecked())
-							{
-								view2->setXShift(xShift);
-								view2->setYShift(yShift);
-								view2->setZShift(zShift);
-							}
-							if (check_zoom->isChecked()) view2->setZoom(zoom);
-					
 							//view2->resetZoomShift();
 							//m_v3d.updateImageWindow(win_list[i1]);
 							//m_v3d.updateImageWindow(win_list[i2]);
