@@ -60,6 +60,7 @@ void SynTwoImage(V3DPluginCallback2 &v3d, QWidget *parent)
 
 	lookPanel* p = new lookPanel(v3d, parent);
 	if (p)	p->show();
+
 }
 
 lookPanel::lookPanel(V3DPluginCallback2 &_v3d, QWidget *parent) : 
@@ -104,6 +105,9 @@ lookPanel::lookPanel(V3DPluginCallback2 &_v3d, QWidget *parent) :
 			connect(check_rotation, SIGNAL(stateChanged(int)), this, SLOT(update()));
 			connect(check_shift, SIGNAL(stateChanged(int)), this, SLOT(update()));
 			connect(check_zoom, SIGNAL(stateChanged(int)), this, SLOT(update()));
+			
+			m_pTimer = new QTimer(this);
+			connect(m_pTimer, SIGNAL(timeout()), this, SLOT(_slot_timerupdate()));
 }
 
 lookPanel::~lookPanel()
@@ -116,9 +120,6 @@ void lookPanel::_slot_sync()
 {
 			int i1 = combo1->currentIndex();
 			int i2 = combo2->currentIndex();
-
-			Image4DSimple* image1 = m_v3d.getImage(win_list[i1]);
-			Image4DSimple* image2 = m_v3d.getImage(win_list[i2]);
 			
 			if (win_list[i1]&& win_list[i2])//ensure the 3d viewer window is open; if not, then open it
 			{
@@ -170,36 +171,59 @@ void lookPanel::_slot_sync()
 }
 void lookPanel::_slot_syncAuto()
 {
-	
+	long interval = 0.2 * 1000;
+	m_pTimer->start(interval);
+	int i1 = combo1->currentIndex();
+	int i2 = combo2->currentIndex();
 
+	m_v3d.open3DWindow(win_list[i1]);
+	m_v3d.open3DWindow(win_list[i2]);	
+}
+
+void lookPanel::_slot_timerupdate()
+{
+				int i1 = combo1->currentIndex();
+				int i2 = combo2->currentIndex();
+				View3DControl *view1 = m_v3d.getView3DControl(win_list[i1]);
+				View3DControl *view2 = m_v3d.getView3DControl(win_list[i2]);
+                		if (view1 && view2)
+				{  
+				
+							r = (check_rotation->isChecked()) ? true : false;
+							s = (check_shift->isChecked()) ? true : false;
+							z = (check_zoom->isChecked()) ? true : false;
 					
-					/*clock_t this_time = clock();
-	    				clock_t last_time = this_time;
-					double time_counter = 0;
-					while(true)
-					{					
-						this_time = clock(); 
-						time_counter += (double)(this_time - last_time);
-						last_time = this_time;
-						if(time_counter >= (double)(10 * CLOCKS_PER_SEC))	
-						{
-							double time_counter = 0;
-							printf("time is %f\n\n\n",last_time* CLOCKS_PER_SEC);	
+							view1->absoluteRotPose();
+							int xRot = view1->xRot();
+							int yRot = view1->yRot();
+							int zRot = view1->zRot();
+
+							int xShift = view1->xShift();
+							int yShift = view1->yShift();
+							int zShift = view1->zShift();
+
+							int zoom = view1->zoom();
 								
-						}
-					}*/
-					int i = 0;
-					int lastTime = 0;  	
-					while (1) 
-					{  
-    						int now = getTime();  
-  						if (now - lastTime > 0) 
-						{  		
-     							 printf("time is %d\n\n",i++); 
-     							 lastTime = now;  
-   						 }  
-					}				
+							if (r == true)
+							{
+								view2->resetRotation();
+								view2->doAbsoluteRot(xRot,yRot,zRot);
+							}
+							if (s == true)
+							{
+								view2->setXShift(xShift);
+								view2->setYShift(yShift);
+								view2->setZShift(zShift);
+							}
+							if (z == true) view2->setZoom(zoom);
+					
+							//view2->resetZoomShift();
+							//m_v3d.updateImageWindow(win_list[i1]);
+							m_v3d.updateImageWindow(win_list[i2]);
+			 	}
+						
+				
 		
-		
+
 }
 

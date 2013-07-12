@@ -46,10 +46,12 @@ public:
 	v3dhandleList win_list;		
 	V3DPluginCallback2 &m_v3d;
 	static lookPanel*panel;
+	QTimer *m_pTimer;
 
 private slots:
 	void _slot_syncAuto();
 	void _slot_sync();
+	void _slot_timerupdate();
 };
 
 #endif
