@@ -42,7 +42,8 @@ public:
 	QCheckBox* check_shift;
 	QCheckBox* check_zoom;
 	QGridLayout *gridLayout;
-	v3dhandleList win_list;		
+	v3dhandleList win_list;
+	v3dhandleList win_list_past;			
 	V3DPluginCallback2 &m_v3d;
 	static lookPanel*panel;
 	QTimer *m_pTimer;
@@ -52,6 +53,7 @@ public:
 	int xRot_past, yRot_past,zRot_past;	
 	int xShift_past,yShift_past,zShift_past;
 	int zoom_past;
+	int index;	
 
 private slots:
 	void _slot_syncAuto();
