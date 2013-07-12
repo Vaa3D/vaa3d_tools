@@ -125,7 +125,7 @@ void lookPanel::_slot_sync()
 				{  
 				
 					
-							view1->absoluteRotPose();
+							//view1->absoluteRotPose();
 							int xRot = view1->xRot();
 							int yRot = view1->yRot();
 							int zRot = view1->zRot();
@@ -188,7 +188,9 @@ void lookPanel::_slot_syncAuto()
 		int i2 = combo2->currentIndex();
 
 		m_v3d.open3DWindow(win_list[i1]);
-		m_v3d.open3DWindow(win_list[i2]);	
+		m_v3d.open3DWindow(win_list[i2]);
+		view1 = m_v3d.getView3DControl(win_list[i1]);
+		view2 = m_v3d.getView3DControl(win_list[i2]);	
 	}else{
 		m_pTimer->stop();
 		v3d_msg("Done");
@@ -198,10 +200,7 @@ void lookPanel::_slot_syncAuto()
 
 void lookPanel::_slot_timerupdate()
 {
-				int i1 = combo1->currentIndex();
-				int i2 = combo2->currentIndex();
-				View3DControl *view1 = m_v3d.getView3DControl(win_list[i1]);
-				View3DControl *view2 = m_v3d.getView3DControl(win_list[i2]);
+		
                 		if (view1 && view2)
 				{  
 					
@@ -231,7 +230,7 @@ void lookPanel::_slot_timerupdate()
 					
 							//view2->resetZoomShift();
 							//m_v3d.updateImageWindow(win_list[i1]);
-							m_v3d.updateImageWindow(win_list[i2]);
+							//m_v3d.updateImageWindow(win_list[i2]);
 			 	}
 						
 				

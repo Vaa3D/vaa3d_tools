@@ -47,6 +47,8 @@ public:
 	static lookPanel*panel;
 	QTimer *m_pTimer;
 	QPushButton* syncAuto;
+	View3DControl *view1;
+	View3DControl *view2;
 	int xRot_past, yRot_past,zRot_past;	
 	int xShift_past,yShift_past,zShift_past;
 	int zoom_past;
