@@ -6,17 +6,11 @@
 #include "sync3D_plugin.h"
 #include <stdio.h>
 #include <stdlib.h>
-#include <time.h>
-#include <iostream>  
 
 Q_EXPORT_PLUGIN2(sync3D, sync3D)
 
 void SynTwoImage(V3DPluginCallback2 &v3d, QWidget *parent);
 lookPanel* lookPanel::panel = 0;
-
-int getTime() {  
-  return clock()/CLOCKS_PER_SEC;  
-} 
 
 //void SynTwoImage(V3DPluginCallback2 &v3d, QWidget *parent);
  
@@ -82,8 +76,8 @@ lookPanel::lookPanel(V3DPluginCallback2 &_v3d, QWidget *parent) :
 			check_zoom = new QCheckBox(); check_zoom->setText(QObject::tr("Zoom"));check_zoom->setChecked(true);
 			QPushButton* ok     = new QPushButton("Sync(one shot)");
 			QPushButton* cancel = new QPushButton("Close");
-			QPushButton* syncAuto     = new QPushButton("Start Sync (real time)");
-			
+			syncAuto     = new QPushButton("Start Sync (real time)");
+			syncAuto->setCheckable( true );
 
 			gridLayout = new QGridLayout();
 			gridLayout->addWidget(label1, 1,0,1,6);
@@ -101,7 +95,7 @@ lookPanel::lookPanel(V3DPluginCallback2 &_v3d, QWidget *parent) :
 
 			connect(ok,     SIGNAL(clicked()), this, SLOT(_slot_sync()));
 			connect(cancel, SIGNAL(clicked()), this, SLOT(reject()));
-			connect(syncAuto, SIGNAL(clicked()), this, SLOT(_slot_syncAuto()));
+			connect(syncAuto, SIGNAL(toggled(bool)), this, SLOT(_slot_syncAuto()));
 			connect(check_rotation, SIGNAL(stateChanged(int)), this, SLOT(update()));
 			connect(check_shift, SIGNAL(stateChanged(int)), this, SLOT(update()));
 			connect(check_zoom, SIGNAL(stateChanged(int)), this, SLOT(update()));
@@ -127,12 +121,9 @@ void lookPanel::_slot_sync()
 				View3DControl *view1 = m_v3d.getView3DControl(win_list[i1]);
 				m_v3d.open3DWindow(win_list[i2]);
 				View3DControl *view2 = m_v3d.getView3DControl(win_list[i2]);
-                		if (view1 && view2)
+				if (view1 && view2)
 				{  
 				
-							r = (check_rotation->isChecked()) ? true : false;
-							s = (check_shift->isChecked()) ? true : false;
-							z = (check_zoom->isChecked()) ? true : false;
 					
 							view1->absoluteRotPose();
 							int xRot = view1->xRot();
@@ -142,26 +133,36 @@ void lookPanel::_slot_sync()
 							int xShift = view1->xShift();
 							int yShift = view1->yShift();
 							int zShift = view1->zShift();
-
-							int zoom = view1->zoom();
 								
-							if (r == true)
+							int zoom = view1->zoom();
+					
+							if (check_rotation->isChecked() && (xRot!=xRot_past || yRot!=yRot_past || zRot!=zRot_past))
 							{
 								view2->resetRotation();
 								view2->doAbsoluteRot(xRot,yRot,zRot);
+								xRot_past = xRot;
+								yRot_past = yRot; 
+								zRot_past = zRot;
 							}
-							if (s == true)
+							if (check_shift->isChecked() && (xShift!=xShift_past ||yShift!=yShift_past ||zShift!=zShift_past))
 							{
 								view2->setXShift(xShift);
 								view2->setYShift(yShift);
 								view2->setZShift(zShift);
+								xShift_past = xShift;
+								yShift_past = yShift; 
+								zShift_past = zShift;											
 							}
-							if (z == true) view2->setZoom(zoom);
+							if (check_zoom->isChecked() && zoom !=zoom_past) 
+							{	
+								view2->setZoom(zoom);
+								zoom_past = zoom;
+							}
 					
 							//view2->resetZoomShift();
 							//m_v3d.updateImageWindow(win_list[i1]);
-							m_v3d.updateImageWindow(win_list[i2]);
-			 	}
+							//	m_v3d.updateImageWindow(win_list[i2]);
+							}
 						
 				
 			}
@@ -171,13 +172,28 @@ void lookPanel::_slot_sync()
 }
 void lookPanel::_slot_syncAuto()
 {
-	long interval = 0.2 * 1000;
-	m_pTimer->start(interval);
-	int i1 = combo1->currentIndex();
-	int i2 = combo2->currentIndex();
+	syncAuto->setText(syncAuto->isChecked() ? "Stop Sync (real time)" : "Start Sync (real time)");
+	if(syncAuto->isChecked())
+	{
+		xRot_past = -1; 
+		yRot_past = -1; 
+		zRot_past = -1;	
+		xShift_past = -1;
+		yShift_past = -1;
+		zShift_past = -1;
+		zoom_past = -1;
+		long interval = 0.2 * 1000;
+		m_pTimer->start(interval);
+		int i1 = combo1->currentIndex();
+		int i2 = combo2->currentIndex();
 
-	m_v3d.open3DWindow(win_list[i1]);
-	m_v3d.open3DWindow(win_list[i2]);	
+		m_v3d.open3DWindow(win_list[i1]);
+		m_v3d.open3DWindow(win_list[i2]);	
+	}else{
+		m_pTimer->stop();
+		v3d_msg("Done");
+		
+	}
 }
 
 void lookPanel::_slot_timerupdate()
@@ -188,10 +204,6 @@ void lookPanel::_slot_timerupdate()
 				View3DControl *view2 = m_v3d.getView3DControl(win_list[i2]);
                 		if (view1 && view2)
 				{  
-				
-							r = (check_rotation->isChecked()) ? true : false;
-							s = (check_shift->isChecked()) ? true : false;
-							z = (check_zoom->isChecked()) ? true : false;
 					
 							view1->absoluteRotPose();
 							int xRot = view1->xRot();
@@ -204,18 +216,18 @@ void lookPanel::_slot_timerupdate()
 
 							int zoom = view1->zoom();
 								
-							if (r == true)
+							if (check_rotation->isChecked())
 							{
 								view2->resetRotation();
 								view2->doAbsoluteRot(xRot,yRot,zRot);
 							}
-							if (s == true)
+							if (check_shift->isChecked())
 							{
 								view2->setXShift(xShift);
 								view2->setYShift(yShift);
 								view2->setZShift(zShift);
 							}
-							if (z == true) view2->setZoom(zoom);
+							if (check_zoom->isChecked()) view2->setZoom(zoom);
 					
 							//view2->resetZoomShift();
 							//m_v3d.updateImageWindow(win_list[i1]);
