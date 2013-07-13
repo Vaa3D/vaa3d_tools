@@ -3,7 +3,7 @@
  * 2013-07-09 : by Zhi Zhou
  */
 
-//last edit: by PHC, 2013-07-12 have some edits of the variables' names and also try to fix why crash on Mac
+//last edit: by PHC, 2013-07-12 have rewritten most parts of the plugin and seemingly the bug on Mac has been fixed
 
 
 #include "sync3D_plugin.h"
@@ -27,7 +27,7 @@ void finishSyncPanel()
 QStringList sync3D::menulist() const
 {
     return QStringList()
-            <<tr("synchronize")
+            <<tr("synchronize 3D viewers")
            <<tr("about");
 }
 
@@ -35,7 +35,7 @@ QString warning_msg = "Oops... The image you selected no longer exists... The fi
 
 void sync3D::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
 {
-    if (menu_name == tr("synchronize"))
+    if (menu_name == tr("synchronize 3D viewers"))
     {
         SynTwoImage(callback, parent);
     }
@@ -64,7 +64,13 @@ void SynTwoImage(V3DPluginCallback2 &v3d, QWidget *parent)
     else
     {
         panel = new lookPanel(v3d, parent);
-        if (panel)	panel->show();
+        if (panel)
+        {
+            panel->show();
+            panel->raise();
+            panel->move(100,100);
+            panel->activateWindow();
+        }
     }
 }
 
@@ -92,8 +98,8 @@ lookPanel::lookPanel(V3DPluginCallback2 &_v3d, QWidget *parent) :
     QPushButton* ok     = new QPushButton("Sync (one shot)");
     QPushButton* cancel = new QPushButton("Close");
     syncAuto     = new QPushButton("Start Sync (real time)");
-    index = 0;
-    //syncAuto->setCheckable( true );
+
+    b_autoON = false;
 
     gridLayout = new QGridLayout();
     gridLayout->addWidget(label_master, 1,0,1,6);
@@ -109,7 +115,7 @@ lookPanel::lookPanel(V3DPluginCallback2 &_v3d, QWidget *parent) :
     setLayout(gridLayout);
     setWindowTitle(QString("Synchronize two 3D views"));
 
-    connect(ok,     SIGNAL(clicked()), this, SLOT(_slot_sync()));
+    connect(ok,     SIGNAL(clicked()), this, SLOT(_slot_sync_onetime()));
     connect(cancel, SIGNAL(clicked()), this, SLOT(reject()));
     connect(syncAuto, SIGNAL(clicked()), this, SLOT(_slot_syncAuto()));
     connect(check_rotation, SIGNAL(stateChanged(int)), this, SLOT(update()));
@@ -121,21 +127,28 @@ lookPanel::lookPanel(V3DPluginCallback2 &_v3d, QWidget *parent) :
     m_pTimer = new QTimer(this);
     connect(m_pTimer, SIGNAL(timeout()), this, SLOT(_slot_timerupdate()));
     win_list_past = win_list;
+
 }
 
 lookPanel::~lookPanel()
 {
     if (m_pTimer) {delete m_pTimer; m_pTimer=0;}
-    //if (panel) {delete panel; panel = 0;}
 }
 
 
-void lookPanel::_slot_sync()
+void lookPanel::_slot_sync_onetime()
 {
     v3dhandleList win_list = m_v3d.getImageWindowList();
     int i1 = combo_master->currentIndex();
     int i2 = combo_slave->currentIndex();
-    if(i1 <  win_list.size() &&
+
+    if (i1==i2)
+    {
+        v3d_msg("You have selected the same image. You need to specify and sync two different images. Try again!");
+        return;
+    }
+
+    if (i1 <  win_list.size() &&
             i2 < win_list.size() &&
             i1 < win_list_past.size() &&
             i2  < win_list_past.size())
@@ -185,13 +198,10 @@ void lookPanel::_slot_sync()
         {
             v3d_msg(warning_msg);
             QStringList items;
-            for (int i=0; i<win_list.size(); i++) items << m_v3d.getImageName(win_list[i]);
-            {
-                combo_master = new QComboBox(); combo_master->addItems(items);
-                combo_slave = new QComboBox(); combo_slave->addItems(items);
-            }
-            gridLayout->addWidget(combo_master,1,1,1,6);
-            gridLayout->addWidget(combo_slave,2,1,1,6);
+            for (int i=0; i<win_list.size(); i++)
+                items << m_v3d.getImageName(win_list[i]);
+            combo_master->clear(); combo_master->addItems(items);
+            combo_slave->clear(); combo_slave->addItems(items);
             win_list_past = win_list;
             return;
 
@@ -201,35 +211,63 @@ void lookPanel::_slot_sync()
     {
         v3d_msg(warning_msg);
         QStringList items;
-        for (int i=0; i<win_list.size(); i++) items << m_v3d.getImageName(win_list[i]);
-        {
-            combo_master = new QComboBox(); combo_master->addItems(items);
-            combo_slave = new QComboBox(); combo_slave->addItems(items);
-        }
-        gridLayout->addWidget(combo_master,1,1,1,6);
-        gridLayout->addWidget(combo_slave,2,1,1,6);
+        for (int i=0; i<win_list.size(); i++)
+            items << m_v3d.getImageName(win_list[i]);
+        combo_master->clear(); combo_master->addItems(items);
+        combo_slave->clear(); combo_slave->addItems(items);
         win_list_past = win_list;
         return;
     }
     return;
 }
 
+void lookPanel::resetSyncAutoState()
+{
+    if (m_pTimer)
+        m_pTimer->stop();
+    b_autoON = false;
+    if (syncAuto)
+        syncAuto->setText("Start Sync (real time)");
+    if (combo_master) combo_master->setEnabled(true);
+    if (combo_slave) combo_slave->setEnabled(true);
+}
+
 void lookPanel::_slot_syncAuto()
 {
     v3dhandleList win_list = m_v3d.getImageWindowList();
-    int i1 = combo_master->currentIndex();
-    int i2 = combo_slave->currentIndex();
-    if(i1 <  win_list.size() && i2 < win_list.size() && i1 < win_list_past.size() && i2  < win_list_past.size())
+    int i_master = combo_master->currentIndex();
+    int i_slave = combo_slave->currentIndex();
+    if (i_master==i_slave)
     {
-        QString current1 = m_v3d.getImageName(win_list[i1]);
-        QString current2 = m_v3d.getImageName(win_list[i2]);
-        QString past1 = m_v3d.getImageName(win_list_past[i1]);
-        QString past2 = m_v3d.getImageName(win_list_past[i2]);
-        if(QString::compare(current1,past1) ==0  && QString::compare(current2,past2) ==0)
+        v3d_msg("You have selected the same image. You need to specify and sync two different images. Try again!");
+        resetSyncAutoState();
+
+        QStringList items;
+        for (int i=0; i<win_list.size(); i++)
+            items << m_v3d.getImageName(win_list[i]);
+        if (combo_master)
         {
-            //syncAuto->setText(syncAuto->isChecked() ? "Stop Sync (real time)" : "Start Sync (real time)");
-            index++;
-            if (index%2 == 1 )
+            combo_master->clear(); combo_master->addItems(items);
+            combo_master->setEnabled(true);
+        }
+
+        if (combo_slave)
+        {
+            combo_slave->clear(); combo_slave->addItems(items);
+            combo_slave->setEnabled(true);
+        }
+
+        return;
+    }
+
+    if(i_master <  win_list.size() &&
+       i_slave  <  win_list.size() &&
+       i_master < win_list_past.size() &&
+       i_slave  < win_list_past.size())
+    {
+        b_autoON = !b_autoON; // a simple bi-state switch
+        {
+            if (b_autoON)
             {
                 syncAuto->setText("Stop Sync (real time)");
                 xRot_past = -1;
@@ -239,51 +277,40 @@ void lookPanel::_slot_syncAuto()
                 yShift_past = -1;
                 zShift_past = -1;
                 zoom_past = -1;
-                long interval = 0.2 * 1000;
-                m_pTimer->start(interval);
-                m_v3d.open3DWindow(win_list[i1]);
-                m_v3d.open3DWindow(win_list[i2]);
-                view_master = m_v3d.getView3DControl(win_list[i1]);
-                view_slave = m_v3d.getView3DControl(win_list[i2]);
+
+                if (!(view_master = m_v3d.getView3DControl(win_list[i_master])))
+                {
+                    m_v3d.open3DWindow(win_list[i_master]);
+                    view_master = m_v3d.getView3DControl(win_list[i_master]);
+                }
+
+                if (!(view_slave = m_v3d.getView3DControl(win_list[i_slave])))
+                {
+                    m_v3d.open3DWindow(win_list[i_slave]);
+                    view_slave = m_v3d.getView3DControl(win_list[i_slave]);
+                }
+
                 combo_master->setEnabled( false );
                 combo_slave->setEnabled( false );
+
+                long interval = 0.2 * 1000;
+                m_pTimer->start(interval);
             }
             else
             {
-                syncAuto->setText("Start Sync (real time)");
-                m_pTimer->stop();
-                combo_master->setEnabled(true);
-                combo_slave->setEnabled(true);
+                resetSyncAutoState();
                 return;
             }
-        }
-        else
-        {
-            v3d_msg(warning_msg);
-            QStringList items;
-            for (int i=0; i<win_list.size(); i++) items << m_v3d.getImageName(win_list[i]);
-            {
-                combo_master = new QComboBox(); combo_master->addItems(items);
-                combo_slave = new QComboBox(); combo_slave->addItems(items);
-            }
-            gridLayout->addWidget(combo_master,1,1,1,6);
-            gridLayout->addWidget(combo_slave,2,1,1,6);
-            win_list_past = win_list;
-
-            return;
         }
     }
     else
     {
         v3d_msg(warning_msg);
         QStringList items;
-        for (int i=0; i<win_list.size(); i++) items << m_v3d.getImageName(win_list[i]);
-        {
-            combo_master = new QComboBox(); combo_master->addItems(items);
-            combo_slave = new QComboBox(); combo_slave->addItems(items);
-        }
-        gridLayout->addWidget(combo_master,1,1,1,6);
-        gridLayout->addWidget(combo_slave,2,1,1,6);
+        for (int i=0; i<win_list.size(); i++)
+            items << m_v3d.getImageName(win_list[i]);
+        combo_master->clear(); combo_master->addItems(items);
+        combo_slave->clear(); combo_slave->addItems(items);
         win_list_past = win_list;
         return;
     }
@@ -292,6 +319,27 @@ void lookPanel::_slot_syncAuto()
 
 void lookPanel::_slot_timerupdate()
 {
+    int i_master = combo_master->currentIndex();
+    int i_slave = combo_slave->currentIndex();
+    if (i_master==i_slave)
+    {
+        v3d_msg("Somehow you have specified the same image for both master and slave views. Do nothing!", 0);
+        resetSyncAutoState();
+        return;
+    }
+
+    if (!(view_master = m_v3d.getView3DControl(win_list[i_master])))
+    {
+        m_v3d.open3DWindow(win_list[i_master]);
+        view_master = m_v3d.getView3DControl(win_list[i_master]);
+    }
+
+    if (!(view_slave = m_v3d.getView3DControl(win_list[i_slave])))
+    {
+        m_v3d.open3DWindow(win_list[i_slave]);
+        view_slave = m_v3d.getView3DControl(win_list[i_slave]);
+    }
+
     if (view_master && view_slave)
     {
         if (check_rotation->isChecked())

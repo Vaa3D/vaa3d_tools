@@ -1,8 +1,9 @@
 /* sync3D_plugin.h
- * This is a test plugin, you can use it as a demo.
  * 2013-07-09 : by Zhi Zhou
  */
  
+//last edit: by PHC, remove the redundant data variables, 2013-07-12
+
 #ifndef __SYNC3D_PLUGIN_H__
 #define __SYNC3D_PLUGIN_H__
 
@@ -29,10 +30,11 @@ public:
 class lookPanel: public QDialog
 {	
 	Q_OBJECT
-public:
 
+public:
 	lookPanel(V3DPluginCallback2 &v3d, QWidget *parent);
 	~lookPanel();
+
 public:
     QComboBox* combo_master;
     QComboBox* combo_slave;
@@ -45,7 +47,6 @@ public:
 	v3dhandleList win_list;
 	v3dhandleList win_list_past;			
     V3DPluginCallback2 & m_v3d;
-    //static lookPanel*panel;
 	QTimer *m_pTimer;
 	QPushButton* syncAuto;
     View3DControl *view_master;
@@ -53,11 +54,14 @@ public:
 	int xRot_past, yRot_past,zRot_past;	
 	int xShift_past,yShift_past,zShift_past;
 	int zoom_past;
-	int index;	
+    bool b_autoON;
+
+private:
+    void resetSyncAutoState();
 
 private slots:
 	void _slot_syncAuto();
-	void _slot_sync();
+    void _slot_sync_onetime();
 	void _slot_timerupdate();
     void reject();
 };
