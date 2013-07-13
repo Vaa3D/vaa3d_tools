@@ -82,7 +82,6 @@ void lookPanel::reject()
 lookPanel::lookPanel(V3DPluginCallback2 &_v3d, QWidget *parent) : 
     QDialog(parent), m_v3d(_v3d)
 {
-    //panel = this;
     win_list = m_v3d.getImageWindowList();
     QStringList items;
     for (int i=0; i<win_list.size(); i++)
@@ -90,6 +89,7 @@ lookPanel::lookPanel(V3DPluginCallback2 &_v3d, QWidget *parent) :
 
     combo_master = new QComboBox(); combo_master->addItems(items);
     combo_slave = new QComboBox(); combo_slave->addItems(items);
+
     label_master = new QLabel(QObject::tr("Master-window: "));
     label_slave = new QLabel(QObject::tr("Slave-window: "));
     check_rotation = new QCheckBox(); check_rotation->setText(QObject::tr("Rotation "));check_rotation->setChecked(true);
