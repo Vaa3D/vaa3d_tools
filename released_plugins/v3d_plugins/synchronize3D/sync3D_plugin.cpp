@@ -13,7 +13,16 @@
 Q_EXPORT_PLUGIN2(sync3D, sync3D)
 
 void SynTwoImage(V3DPluginCallback2 &v3d, QWidget *parent);
-lookPanel* lookPanel::panel = 0;
+
+static lookPanel *panel = 0;
+void finishSyncPanel()
+{
+    if (panel)
+    {
+        delete panel;
+        panel=0;
+    }
+}
 
 QStringList sync3D::menulist() const
 {
@@ -47,22 +56,27 @@ void SynTwoImage(V3DPluginCallback2 &v3d, QWidget *parent)
         return;
     }
 
-    if (lookPanel::panel)
+    if (panel)
     {
-        lookPanel::panel->show();
+        panel->show();
         return;
     }
     else
     {
-        lookPanel* p = new lookPanel(v3d, parent);
-        if (p)	p->show();
+        panel = new lookPanel(v3d, parent);
+        if (panel)	panel->show();
     }
+}
+
+void lookPanel::reject()
+{
+    finishSyncPanel();
 }
 
 lookPanel::lookPanel(V3DPluginCallback2 &_v3d, QWidget *parent) : 
     QDialog(parent), m_v3d(_v3d)
 {
-    panel = this;
+    //panel = this;
     win_list = m_v3d.getImageWindowList();
     QStringList items;
     for (int i=0; i<win_list.size(); i++)
@@ -111,7 +125,8 @@ lookPanel::lookPanel(V3DPluginCallback2 &_v3d, QWidget *parent) :
 
 lookPanel::~lookPanel()
 {
-    if (panel) {delete panel; panel = 0;}
+    if (m_pTimer) {delete m_pTimer; m_pTimer=0;}
+    //if (panel) {delete panel; panel = 0;}
 }
 
 
@@ -279,38 +294,48 @@ void lookPanel::_slot_timerupdate()
 {
     if (view_master && view_slave)
     {
-        view_master->absoluteRotPose();
-        int xRot = view_master->xRot();
-        int yRot = view_master->yRot();
-        int zRot = view_master->zRot();
-
-        int xShift = view_master->xShift();
-        int yShift = view_master->yShift();
-        int zShift = view_master->zShift();
-
-        int zoom = view_master->zoom();
-
-        if (check_rotation->isChecked() && (xRot!=xRot_past || yRot!=yRot_past || zRot!=zRot_past))
+        if (check_rotation->isChecked())
         {
-            view_slave->resetRotation();
-            view_slave->doAbsoluteRot(xRot,yRot,zRot);
-            xRot_past = xRot;
-            yRot_past = yRot;
-            zRot_past = zRot;
+            view_master->absoluteRotPose();
+            int xRot = view_master->xRot();
+            int yRot = view_master->yRot();
+            int zRot = view_master->zRot();
+
+            if (xRot!=xRot_past || yRot!=yRot_past || zRot!=zRot_past)
+            {
+                view_slave->resetRotation();
+                view_slave->doAbsoluteRot(xRot,yRot,zRot);
+                xRot_past = xRot;
+                yRot_past = yRot;
+                zRot_past = zRot;
+            }
         }
-        if (check_shift->isChecked() && (xShift!=xShift_past ||yShift!=yShift_past ||zShift!=zShift_past))
+
+        if (check_shift->isChecked())
         {
-            view_slave->setXShift(xShift);
-            view_slave->setYShift(yShift);
-            view_slave->setZShift(zShift);
-            xShift_past = xShift;
-            yShift_past = yShift;
-            zShift_past = zShift;
+            int xShift = view_master->xShift();
+            int yShift = view_master->yShift();
+            int zShift = view_master->zShift();
+
+            if (xShift!=xShift_past || yShift!=yShift_past || zShift!=zShift_past)
+            {
+                view_slave->setXShift(xShift);
+                view_slave->setYShift(yShift);
+                view_slave->setZShift(zShift);
+                xShift_past = xShift;
+                yShift_past = yShift;
+                zShift_past = zShift;
+            }
         }
-        if (check_zoom->isChecked() && zoom !=zoom_past)
+
+        if (check_zoom->isChecked())
         {
-            view_slave->setZoom(zoom);
-            zoom_past = zoom;
+            int zoom = view_master->zoom();
+            if (zoom!=zoom_past)
+            {
+                view_slave->setZoom(zoom);
+                zoom_past = zoom;
+            }
         }
     }
 }

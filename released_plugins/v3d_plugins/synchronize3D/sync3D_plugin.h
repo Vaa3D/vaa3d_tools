@@ -45,7 +45,7 @@ public:
 	v3dhandleList win_list;
 	v3dhandleList win_list_past;			
     V3DPluginCallback2 & m_v3d;
-	static lookPanel*panel;
+    //static lookPanel*panel;
 	QTimer *m_pTimer;
 	QPushButton* syncAuto;
     View3DControl *view_master;
@@ -59,7 +59,7 @@ private slots:
 	void _slot_syncAuto();
 	void _slot_sync();
 	void _slot_timerupdate();
-	void reject() {if (panel) {delete panel; panel=0;}}
+    void reject();
 };
 
 #endif
