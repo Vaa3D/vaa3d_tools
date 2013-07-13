@@ -42,21 +42,22 @@ void sync3D::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWid
 void SynTwoImage(V3DPluginCallback2 &v3d, QWidget *parent)
 {
 	v3dhandleList win_list = v3d.getImageWindowList();
-	if (win_list.size()<1)
+	if (win_list.size()<2)
 	{
-		QMessageBox::information(0, "Sync3D",QObject::tr("Need at least 1 images."));
+		v3d_msg("You need at least two opened images to synchronize their 3D views!");
 		return;
 	}
 
-	/*if (lookPanel::panel)
+	if (lookPanel::panel)
 	{
 		lookPanel::panel->show();
 		return;
-	}*/
-
-	lookPanel* p = new lookPanel(v3d, parent);
-	if (p)	p->show();
-
+	}
+	else
+	{
+		lookPanel* p = new lookPanel(v3d, parent);
+		if (p)	p->show();
+	}
 }
 
 lookPanel::lookPanel(V3DPluginCallback2 &_v3d, QWidget *parent) : 
@@ -71,8 +72,8 @@ lookPanel::lookPanel(V3DPluginCallback2 &_v3d, QWidget *parent) :
 			//QDialog d(parent);
 			combo1 = new QComboBox(); combo1->addItems(items);
 			combo2 = new QComboBox(); combo2->addItems(items);
-			label1 = new QLabel(QObject::tr("Source: "));
-			label2 = new QLabel(QObject::tr("Target: "));
+			label1 = new QLabel(QObject::tr("Master-window: "));
+			label2 = new QLabel(QObject::tr("Slave-window: "));
 			check_rotation = new QCheckBox(); check_rotation->setText(QObject::tr("Rotation "));check_rotation->setChecked(true);
 			check_shift = new QCheckBox(); check_shift->setText(QObject::tr("Shift"));check_shift->setChecked(true);
 			check_zoom = new QCheckBox(); check_zoom->setText(QObject::tr("Zoom"));check_zoom->setChecked(true);

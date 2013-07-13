@@ -59,6 +59,7 @@ private slots:
 	void _slot_syncAuto();
 	void _slot_sync();
 	void _slot_timerupdate();
+	void reject() {if (panel) {delete panel; panel=0;}}
 };
 
 #endif
