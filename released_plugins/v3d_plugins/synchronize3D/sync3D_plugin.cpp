@@ -235,6 +235,34 @@ void lookPanel::resetSyncAutoState()
 void lookPanel::_slot_syncAuto()
 {
     v3dhandleList win_list = m_v3d.getImageWindowList();
+
+    bool b_filelistchanged = (win_list.size()==win_list_past.size()) ? false : true;
+    if (!b_filelistchanged)
+    {
+        for (int i=0; i<win_list.size(); i++)
+        {
+            if (win_list.at(i) != win_list_past.at(i))
+            {
+                b_filelistchanged = true;
+                break;
+            }
+        }
+    }
+    if (b_filelistchanged)
+    {
+        v3d_msg(warning_msg);
+        QStringList items;
+        for (int i=0; i<win_list.size(); i++)
+            items << m_v3d.getImageName(win_list[i]);
+        combo_master->clear(); combo_master->addItems(items);
+        combo_slave->clear(); combo_slave->addItems(items);
+        win_list_past = win_list;
+
+        return;
+    }
+
+    //only execute the sync if the file list has not changed
+
     int i_master = combo_master->currentIndex();
     int i_slave = combo_slave->currentIndex();
     if (i_master==i_slave)
@@ -260,58 +288,40 @@ void lookPanel::_slot_syncAuto()
         return;
     }
 
-    if(i_master <  win_list.size() &&
-       i_slave  <  win_list.size() &&
-       i_master < win_list_past.size() &&
-       i_slave  < win_list_past.size())
+    b_autoON = !b_autoON; // a simple bi-state switch
+
+    if (b_autoON)
     {
-        b_autoON = !b_autoON; // a simple bi-state switch
+        syncAuto->setText("Stop Sync (real time)");
+        xRot_past = -1;
+        yRot_past = -1;
+        zRot_past = -1;
+        xShift_past = -1;
+        yShift_past = -1;
+        zShift_past = -1;
+        zoom_past = -1;
+
+        if (!(view_master = m_v3d.getView3DControl(win_list[i_master])))
         {
-            if (b_autoON)
-            {
-                syncAuto->setText("Stop Sync (real time)");
-                xRot_past = -1;
-                yRot_past = -1;
-                zRot_past = -1;
-                xShift_past = -1;
-                yShift_past = -1;
-                zShift_past = -1;
-                zoom_past = -1;
-
-                if (!(view_master = m_v3d.getView3DControl(win_list[i_master])))
-                {
-                    m_v3d.open3DWindow(win_list[i_master]);
-                    view_master = m_v3d.getView3DControl(win_list[i_master]);
-                }
-
-                if (!(view_slave = m_v3d.getView3DControl(win_list[i_slave])))
-                {
-                    m_v3d.open3DWindow(win_list[i_slave]);
-                    view_slave = m_v3d.getView3DControl(win_list[i_slave]);
-                }
-
-                combo_master->setEnabled( false );
-                combo_slave->setEnabled( false );
-
-                long interval = 0.2 * 1000;
-                m_pTimer->start(interval);
-            }
-            else
-            {
-                resetSyncAutoState();
-                return;
-            }
+            m_v3d.open3DWindow(win_list[i_master]);
+            view_master = m_v3d.getView3DControl(win_list[i_master]);
         }
+
+        if (!(view_slave = m_v3d.getView3DControl(win_list[i_slave])))
+        {
+            m_v3d.open3DWindow(win_list[i_slave]);
+            view_slave = m_v3d.getView3DControl(win_list[i_slave]);
+        }
+
+        combo_master->setEnabled( false );
+        combo_slave->setEnabled( false );
+
+        long interval = 0.2 * 1000;
+        m_pTimer->start(interval);
     }
     else
     {
-        v3d_msg(warning_msg);
-        QStringList items;
-        for (int i=0; i<win_list.size(); i++)
-            items << m_v3d.getImageName(win_list[i]);
-        combo_master->clear(); combo_master->addItems(items);
-        combo_slave->clear(); combo_slave->addItems(items);
-        win_list_past = win_list;
+        resetSyncAutoState();
         return;
     }
     return;
