@@ -64,8 +64,9 @@ void adpThresholding::domenu(const QString &menu_name, V3DPluginCallback2 &callb
 	}
 	else
 	{
-		v3d_msg(tr("Detect fiber. "
-			"Developed by Zhi Zhou, 2013-06-17"));
+        (menu_name == tr("help"));
+        v3d_msg(tr("Detect fiber. "
+                   "Developed by Zhi Zhou, 2013-06-17"));
 	}
 }
 
@@ -152,30 +153,26 @@ void processImage(V3DPluginCallback2 &callback, QWidget *parent)
 
      // filter
      V3DLONG in_sz[4];
-     in_sz[0] = N; in_sz[1] = M; in_sz[2] = P; in_sz[4] = sc;
+     in_sz[0] = N; in_sz[1] = M; in_sz[2] = P; in_sz[3] = sc;
 
     ImagePixelType pixeltype = p4DImage->getDatatype();
+    saveImage("temp.tif", (unsigned char *)data1d, in_sz, pixeltype);
 
     //invoke gsdt function
     V3DPluginArgItem arg;
     V3DPluginArgList input;
     V3DPluginArgList output;    
     
-
-    //need to change here!!!! The following is wrong
-    arg.type = "random";std::vector<char*> args1; std:: string inputName(callback.getImageName(curwin).toStdString()); char* inputName2 =  new char[inputName.length() + 1];strcpy(inputName2, inputName.c_str());args1.push_back(inputName2); arg.p = (void *) & args1; input<< arg;
-    arg.type = "random";std::vector<char*> args;args.push_back("80");args.push_back("1");args.push_back("0");args.push_back("1"); arg.p = (void *) & args; input << arg;
+    arg.type = "random";std::vector<char*> args1; args1.push_back("temp.tif"); arg.p = (void *) & args1; input<< arg;
+    arg.type = "random";std::vector<char*> args;args.push_back("150");args.push_back("1");args.push_back("0");args.push_back("1"); arg.p = (void *) & args; input << arg;
     arg.type = "random";std::vector<char*> args2; args2.push_back("gsdtImage.tiff"); arg.p = (void *) & args2; output<< arg;
 
-     //QString full_plugin_name = "/local1/work/v3d_external/bin/plugins/image_filters/Grayscale_Image_Distance_Transform/libgsdt.so";  //for Linux
-     QString full_plugin_name = "gsdt"; 
-     QString func_name = "gsdt";
+    QString full_plugin_name = "gsdt";
+    QString func_name = "gsdt";
 
-    callback.callPluginFunc(full_plugin_name,func_name, input,output); 
-      		
-	
-    //system("v3d -x gsdt -f gsdt -i /home/zhiz/Desktop/vaa3d/Images/ex_Repo_hb9_eve.tif -o /home/zhiz/Desktop/vaa3d/Images/gsdt_ex_Repo_hb9_eve.tif -p 0 1 0 1.0");
+    callback.callPluginFunc(full_plugin_name,func_name, input,output);
 
+	  
     unsigned char * gsdtdata1d = 0;
     int datatype; 
     V3DLONG * in_zz = 0;
@@ -183,6 +180,7 @@ void processImage(V3DPluginCallback2 &callback, QWidget *parent)
     char * outimg_file = ((vector<char*> *)(output.at(0).p))->at(0);
     loadImage(outimg_file, gsdtdata1d, in_zz, datatype,1);	
     remove( "gsdtImage.tiff"); 	
+    remove("temp.tif");
     void* outimg = 0; 
     switch (pixeltype)
     {
@@ -247,7 +245,7 @@ template <class T> void AdpThresholding(T* data1d,
 				V3DLONG offsetj = iy*N;
 			 	for(V3DLONG ix = Wx; ix < N-Wx; ix++)
 				{
-					if(gsdtdatald[offsetk+offsetj+ix]< 50)
+                    if(gsdtdatald[offsetk+offsetj+ix]< 100)
 					{
 						//double fx = 0.5*(data1d[offsetk+offsetj+ix+Wx]-data1d[offsetk+offsetj+ix-Wx]);
 						//double fy = 0.5*(data1d[offsetk+(iy+Wy)*N+ix]-data1d[offsetk+(iy-Wy)*N+ix]);
