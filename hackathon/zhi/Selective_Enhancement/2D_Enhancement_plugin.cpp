@@ -144,7 +144,7 @@ template <class T> void selectiveEnhance(T* data1d,
      V3DLONG P = in_sz[2];
      V3DLONG sc = in_sz[3];
      V3DLONG pagesz = N*M*P;
-     V3DLONG WS = 5;
+     V3DLONG WS = 7;
 
 
 		//declare temporary pointer
