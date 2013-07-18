@@ -178,7 +178,7 @@ void processImage(V3DPluginCallback2 &callback, QWidget *parent)
     V3DLONG * in_zz = 0;
 	
     char * outimg_file = ((vector<char*> *)(output.at(0).p))->at(0);
-    loadImage(outimg_file, gsdtdata1d, in_zz, datatype,1);	
+    loadImage(outimg_file, gsdtdata1d, in_zz, datatype,0);
     remove( "gsdtImage.tiff"); 	
     remove("temp.tif");
     void* outimg = 0; 
@@ -222,7 +222,7 @@ template <class T> void AdpThresholding(T* data1d,
 	     V3DLONG P = in_sz[2];
 	     V3DLONG sc = in_sz[3];
 	     V3DLONG pagesz = N*M*P;
-	     T *pImage = new T [pagesz];
+         T *pImage = new T [pagesz];
 		if (!pImage)
 		{
 			printf("Fail to allocate memory.\n");
@@ -230,11 +230,11 @@ template <class T> void AdpThresholding(T* data1d,
 		 }
 		 else
 		 {
-			for(V3DLONG i=0; i<pagesz; i++)
+            for(V3DLONG i=0; i<pagesz; i++)
 				pImage[i] = 0;
 		  }
 
-		 
+          T maxfl = 0;
 		 //outimg = pImage;
 
 		for(V3DLONG iz = Wz; iz < P-Wz; iz++)
@@ -245,7 +245,7 @@ template <class T> void AdpThresholding(T* data1d,
 				V3DLONG offsetj = iy*N;
 			 	for(V3DLONG ix = Wx; ix < N-Wx; ix++)
 				{
-                    if(gsdtdatald[offsetk+offsetj+ix]< 100)
+                    if(gsdtdatald[offsetk+offsetj+ix]< 80)
 					{
 						//double fx = 0.5*(data1d[offsetk+offsetj+ix+Wx]-data1d[offsetk+offsetj+ix-Wx]);
 						//double fy = 0.5*(data1d[offsetk+(iy+Wy)*N+ix]-data1d[offsetk+(iy-Wy)*N+ix]);
@@ -276,7 +276,7 @@ template <class T> void AdpThresholding(T* data1d,
 						//cout << "EigenValues" << endl;
 						//cout <<  DD << endl <<endl;*/
 
-	    					float a1 = eigensolver.eigenvalues()(0);
+                        float a1 = eigensolver.eigenvalues()(0);
 		   				float a2 = eigensolver.eigenvalues()(1);
 						float a3 = eigensolver.eigenvalues()(2);
 						swapthree(a1, a2, a3);
@@ -291,7 +291,7 @@ template <class T> void AdpThresholding(T* data1d,
 							if(a2 < 0)
 							{	
 								//pImage[offsetk+offsetj+ix] = abs(a2)*(abs(a2)-abs(a3))/abs(a1);
-								output1 =  abs(a2)*(abs(a2)-abs(a3))/abs(a1);
+                                output1 =  abs(a2)*(abs(a2)-abs(a3))/abs(a1);
 								//T output = abs(a1)/abs(a2);	
 						
 								//printf("%f %f %f %d\n", a1,a2,a3,output1);
@@ -301,17 +301,53 @@ template <class T> void AdpThresholding(T* data1d,
 							}
 						}
 
-						pImage[offsetk+offsetj+ix]=sqrt(pow(output1,2)+pow(output2,2)+pow(output3,2));
-					}
-					else 
-						pImage[offsetk+offsetj+ix]=data1d[offsetk+offsetj+ix];
+                        T dataval = sqrt(pow(output1,2)+pow(output2,2)+pow(output3,2));
+                        pImage[offsetk+offsetj+ix] = dataval;
+                        if(maxfl<dataval) maxfl = dataval;
+
+                    }
+;
 				}
 					
 				
 			}
 					
 		}
-		outimg = pImage;
+
+        T *pImage2 = new T [pagesz];
+       if (!pImage2)
+       {
+           printf("Fail to allocate memory.\n");
+           return;
+        }
+        else
+        {
+           for(V3DLONG i=0; i<pagesz; i++)
+               pImage2[i] = 0;
+         }
+       for(V3DLONG iz = 0; iz < P; iz++)
+        {
+            V3DLONG offsetk = iz*M*N;
+            for(V3DLONG iy = 0; iy < M; iy++)
+            {
+                V3DLONG offsetj = iy*N;
+                for(V3DLONG ix = 0; ix < N; ix++)
+                {
+                    if(gsdtdatald[offsetk+offsetj+ix]< 80)
+                    {
+
+                        T dataval2 = 255*pImage[offsetk+offsetj+ix]/maxfl;
+                        pImage2[offsetk+offsetj+ix] = dataval2;
+                    }
+                   else
+                    pImage2[offsetk+offsetj+ix] = data1d[offsetk+offsetj+ix];
+                }
+
+
+            }
+
+        }
+        outimg = pImage2;
 		
 }
 
