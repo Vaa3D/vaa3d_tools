@@ -24,6 +24,7 @@ bool processImage(const V3DPluginArgList & input, V3DPluginArgList & output);
 template <class T> void selectiveEnhance(T* data1d,
                      V3DLONG *in_sz,
                      unsigned int c,
+                     unsigned int WS,
                      T* &outimg);
  
 QStringList Enhancement::menulist() const
@@ -96,13 +97,22 @@ void processImage(V3DPluginCallback2 &callback, QWidget *parent)
     V3DLONG sc = p4DImage->getCDim();
 
 	//input
-	bool ok4;
-	unsigned int c=1;
+    bool ok4,ok1;
+    unsigned int c = 1, w = 1;
+
 
 	c = QInputDialog::getInteger(parent, "Channel",
 												  "Enter channel NO:",
 												  1, 1, sc, 1, &ok4);
+    if(ok4)
+    {
 
+        w = QInputDialog::getInteger(parent, "Window size",
+                                          "Enter window size  (# voxels):",
+                                            1, 1, M, 1, &ok1);
+    }
+    else
+        return;
 
      // filter
      V3DLONG in_sz[4];
@@ -112,9 +122,9 @@ void processImage(V3DPluginCallback2 &callback, QWidget *parent)
     void* outimg = 0; 
     switch (pixeltype)
     {
-        case V3D_UINT8: selectiveEnhance(data1d, in_sz, c,(unsigned char* &)outimg); break;
-        case V3D_UINT16: selectiveEnhance((unsigned short int *)data1d, in_sz, c, (unsigned short int* &)outimg); break;
-        case V3D_FLOAT32: selectiveEnhance((float *)data1d, in_sz, c, (float* &)outimg);break;
+        case V3D_UINT8: selectiveEnhance(data1d, in_sz, c,w,(unsigned char* &)outimg); break;
+        case V3D_UINT16: selectiveEnhance((unsigned short int *)data1d, in_sz, c,w, (unsigned short int* &)outimg); break;
+        case V3D_FLOAT32: selectiveEnhance((float *)data1d, in_sz, c,w, (float* &)outimg);break;
         default: v3d_msg("Invalid data type. Do nothing."); return;
     }
 	
@@ -135,6 +145,7 @@ void processImage(V3DPluginCallback2 &callback, QWidget *parent)
 template <class T> void selectiveEnhance(T* data1d,
                      V3DLONG *in_sz,
                      unsigned int c,
+                     unsigned int WS,
                      T* &outimg)
 {
     
@@ -144,7 +155,7 @@ template <class T> void selectiveEnhance(T* data1d,
      V3DLONG P = in_sz[2];
      V3DLONG sc = in_sz[3];
      V3DLONG pagesz = N*M*P;
-     V3DLONG WS = 7;
+    // V3DLONG WS = 1;
 
 
 		//declare temporary pointer
