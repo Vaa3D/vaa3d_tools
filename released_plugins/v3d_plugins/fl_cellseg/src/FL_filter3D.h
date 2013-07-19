@@ -159,7 +159,6 @@ template <class T> bool medfilt3d(Vol3DSimple <T> * img, int kernelsz)
 
 template <class T1, class T2> bool medfilt3d(T1 ***indata3d, T2 ***outdata3d, V3DLONG *sz, int kernelsz)
 {
-
 	V3DLONG i,j,k;
 	V3DLONG m,n,p;
 
@@ -167,19 +166,24 @@ template <class T1, class T2> bool medfilt3d(T1 ***indata3d, T2 ***outdata3d, V3
 	V3DLONG len, cnt;
 	V3DLONG rr=(2*kernelsz+1);
 	len = rr*rr*rr+1;
-	V3DLONG midlen = (len-1)/2;
+    V3DLONG midlen = (len-1)/2; //this is not exactly the midpoint, but should be fine for now. Noted by PHC 20130719
 	
-	float *vec1d = new float [len];
-	float *vec1dind = new float [len];
-	if(!vec1d || !vec1dind) 
-	{
-		printf("Fail to allocate memory in medfilt3d().\n");
+    float *vec1d=0, *vec1dind=0;
+    try
+    {
+     vec1d = new float [len];
+     vec1dind = new float [len];
+    }
+    catch (...)
+    {
+        printf("Fail to allocate memory in medfilt3d().\n");
+        if (vec1d) {delete []vec1d; vec1d=0;}
+        if (vec1dind) {delete []vec1dind; vec1dind=0;}
 		return false;
-	}
+    }
 	
 	vec1d[0] = 0;
 	vec1dind[0] = 0;
-	
 
 	for (k = 0; k<sz[2]; k++)
 	{
@@ -217,9 +221,7 @@ template <class T1, class T2> bool medfilt3d(T1 ***indata3d, T2 ***outdata3d, V3
 		}
 	}
 	
-//	if (sz) {delete []sz; sz=0;}
 	if (vec1d) {delete []vec1d; vec1d=0;}
-	//if (vec1d) {delete vec1d; 	vec1d=0;}
 	if (vec1dind) {delete []vec1dind; vec1dind=0;}
 	
 	return true;
