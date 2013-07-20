@@ -2,7 +2,7 @@
 TEMPLATE	= lib
 CONFIG	+= qt plugin warn_off
 CONFIG += x86_64
-#CONFIG += use_static_libs
+CONFIG += use_static_libs
 
 #set up third party libraries
 use_static_libs{
@@ -23,6 +23,11 @@ use_static_libs{
     LIBS+= -L/usr/local/lib
 }
 LIBS+= -lopencv_core -lopencv_imgproc -lopencv_highgui
+
+#undefined symbols referenced from OpenCV are ignored and checked dynamically at execution time
+mac{
+    LIBS += -undefined dynamic_lookup
+}
 
 
 #set up Vaa3D stuff needed by the plugin
