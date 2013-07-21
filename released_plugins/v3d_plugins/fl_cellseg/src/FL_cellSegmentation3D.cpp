@@ -73,8 +73,6 @@ bool FL_cellseg(Vol3DSimple <unsigned char> *img3d, Vol3DSimple <unsigned short 
 	/* ---------------- */	
 
 	printf("Median filtering ...\n");
-//		medfilt3d(img3d, segpara.medianFiltWid); //median filtering
-
 	medfilt3d(tmpdata3d, outdata3d, data_sz, segpara.medianFiltWid);
 	switchtag = 1; // input and output data are different, thus need to switch
 	
@@ -89,10 +87,6 @@ bool FL_cellseg(Vol3DSimple <unsigned char> *img3d, Vol3DSimple <unsigned short 
 		switchpointer(tmpdata3d, outdata3d, tmpdata1d, outdata1d, stpcounter);
 		printf("%d\n", stpcounter);
 	}
-
-//		gaussfilt3d(img3d, segpara.gaussinFiltWid, 2); //gaussian filtering
-
-//	gaussfilt3d(tmpdata3d, outdata3d, data_sz, segpara.gaussinFiltWid, 2);
 	gaussfilt3d(tmpdata3d, outdata3d, data_sz, segpara.gaussinFiltWid, segpara.gaussinFiltSigma);
 
 	switchtag = 1;

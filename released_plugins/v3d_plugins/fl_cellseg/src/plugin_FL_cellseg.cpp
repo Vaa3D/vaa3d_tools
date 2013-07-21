@@ -39,7 +39,7 @@ void FLCellSegPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callb
     }
 	else if (menu_name == tr("about"))
 	{
-    	v3d_msg(QString("This plugin uses Fuhui Long's cell segmentation program to detect and label 3D image obejcts. Developed by Hanchuan Peng, by wrapping Fuhui Long's original code. (version %1)").arg(getPluginVersion())); 
+        v3d_msg(QString("This plugin uses Fuhui Long's cell segmentation program to detect and label 3D image objects. (version %1)").arg(getPluginVersion()));
 	}
 }
 
