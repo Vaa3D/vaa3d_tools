@@ -2,14 +2,14 @@
 TEMPLATE	= lib
 CONFIG	+= qt plugin warn_off
 CONFIG += x86_64
-#CONFIG += use_static_libs
+CONFIG += use_static_libs
 
 #set up third party libraries
 use_static_libs{
     INCLUDEPATH += ../teramanager/include/opencv
     INCLUDEPATH += ../teramanager/include
     mac{
-    LIBS += -L../teramanager/lib/opencv/mac_x86_64
+    LIBS += -L../teramanager/lib/opencv/mac_x86_64 -lopencv_core -lopencv_imgproc -lopencv_highgui
     }
     unix:!mac{
     LIBS += -L../teramanager/lib/opencv/unix_x86_64
@@ -26,7 +26,7 @@ LIBS+= -lopencv_core -lopencv_imgproc -lopencv_highgui
 
 #undefined symbols referenced from OpenCV are ignored and checked dynamically at execution time
 mac{
-    LIBS += -undefined dynamic_lookup
+#    LIBS += -undefined dynamic_lookup
 }
 
 
