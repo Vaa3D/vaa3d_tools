@@ -1,0 +1,596 @@
+Version history of TeraManager
+============================================================================================
+
+Below you find a list with the added  features, changes and fixes  for each version. Activi-
+ties names are:
+- New: a new feature implemented
+- Fix: bug fixed
+- Bug: bug to be fixed
+- Dev: for developers only
+- Opt: optimization
+- Rem: a feature no longer available
+
+============================================================================================
+Version 0.8.5
+May 20th, 2013
+--------------------------------------------------------------------------------------------
+- Fix: fixed Qt project file sources/headers inclusions to work on Windows too.
+- Fix: fixed bug which caused file dialogs not to be on top of other windows on MacOS X.
+- Fix: all the platform native file dialogs have been substituted with Qt dialogs because of
+       a strange behaviour shown by native file dialogs on MacOS X when passing the "parent"
+       argument to the static method.
+- New: the following features have been re-enabled by default:
+       - "Select zoom-in method" pull-down menu;
+       - "Tune zoom-in threshold" slider;
+       - "Double click zoom-in" feature;
+       - "Foreground (1 marker)" feature;
+- Fix: fixed bug which caused compilation errors on MacOS X when including Vaa3D sources.
+--------------------------------------------------------------------------------------------
+
+
+Version 0.8.4
+May 4th, 2013
+--------------------------------------------------------------------------------------------
+- New: the following features have been restored under conditional  compilation (i.e. adding
+       "CONFIG += use_experimental_features" to the .pro file):
+       - "Select zoom-in method" pull-down menu;
+       - "Tune zoom-in threshold" slider;
+       - "Double click zoom-in" feature;
+       - "Foreground (1 marker)" feature;
+--------------------------------------------------------------------------------------------
+
+
+
+Version 0.8.3
+April 30th, 2013
+--------------------------------------------------------------------------------------------
+- Rem: temporarily removed "Select zoom-in method" feature.
+- Rem: temporarily removed "Double click zoom-in" feature.
+- Rem: temporarily removed "Zoom-in threshold" feature.
+--------------------------------------------------------------------------------------------
+
+
+
+Version 0.8.2
+April 29th, 2013
+--------------------------------------------------------------------------------------------
+- New: new zoom-in method added! The user can now select the zoom-in method from a pull-down
+       menu. Available methods are "WYSIWYG (10 markers)" and "Foreground (1 marker)".
+- Opt: improved caching when  zooming-in. In particular,  the constraint on the maximum view
+       dimensions is now  taken  into account when  evaluating  the intersection between the
+       cached VOI and the VOI requested by Vaa3D.
+--------------------------------------------------------------------------------------------
+
+
+
+Version 0.8.1
+April 28th, 2013
+--------------------------------------------------------------------------------------------
+- New: syncronization of "Volume" and "Others" controls during navigation.
+- New: added reset button for multiresolution controls.
+- New: redesigned zoom-in/out and caching controls.
+- New: added "Zoom-in threshold" slider.
+- Dev: overrided "setZoom" and "wheelEvent" Vaa3D methods to take full control of zoom-in.
+- Dev: created "V3Dsubclasses.h/cpp" where Vaa3D subclasses are defined.
+- New: "double-click zoom-in"  feature added! Double-click  with  mouse within  the renderer
+       automatically  triggers  the  "right-click->Zoom-in HighRezImage: 1-right-click ROI".
+       Thus, this represents a (hopefully) more usable shortcut for that feature.
+- Fix: TeraConverter updated to  the last version  developed by Giulio. Still need to verify
+       the bug when converting  large  V3Draw files (application crashes  when conversion is
+       finished and the second resolution is imported to generate mdata.bin.
+--------------------------------------------------------------------------------------------
+
+
+
+Version 0.8
+April 27th, 2013
+--------------------------------------------------------------------------------------------
+- New: moved from "hackaton" to  "released_plugin" folder.  In this way,  the plugin will be
+       automatically compiled with Vaa3D.
+- Fix: fixed a bug when checking plugin version from the vmap.bin volume map binary file.
+- Rem: removed realtime check of the presence of OpenCV shared library, since it not neeeded
+       anymore.
+- Fix: re-organization of source files and .pro file. Plugin should now be directly compati-
+       ble with Windows.
+- New: plugin compilation is now self-consistent, i.e. it does not depend on the compilation
+       of OpenCV library anymore. This has been achievied by linking platform-dependent pre-
+       compiled static OpenCV libraries.
+--------------------------------------------------------------------------------------------
+
+
+
+Version 0.7.19
+April 27th, 2013
+--------------------------------------------------------------------------------------------
+- Opt: improved zoom-out consistency between 2nd and 1st resolutions when zooming-out.
+--------------------------------------------------------------------------------------------
+
+
+
+Version 0.7.18
+April 27th, 2013
+--------------------------------------------------------------------------------------------
+- Fix: changed help text of some widgets.
+- New: added tooltip to "Zoom-in sens" slidebar.
+- Fix: fixed bug which  sporadically  caused  non-persistent LRU (last recently used) volume 
+       path throughout different runs.
+--------------------------------------------------------------------------------------------
+
+
+
+Version 0.7.17
+April 27th, 2013
+--------------------------------------------------------------------------------------------
+- Fix: minor changes to GUI.
+- Fix: improved caching when zooming-in.
+--------------------------------------------------------------------------------------------
+
+
+
+Version 0.7.16
+April 26th, 2013
+--------------------------------------------------------------------------------------------
+- Opt: improved zoom-out consistency with the previous view.
+- Fix: channel checkboxes are maintained throughout the resolutions.
+- Opt: changed "Open annotation" icon.
+- Fix: fixed a bug (integer overflow) which caused negative coverage factor when caching.
+- New: added version number in TeraFly's GUI.
+- Fix: both 3D window and plugin window are restored if user invokes the plugin from the GUI
+       of Vaa3D.
+- Fix: 3D window's height was not properly syncronized with the plugin's window.
+- Fix: added positive derivative test to zoom  factor  when mouse scroll up zoom-in is trig-
+       gered by Vaa3D.
+--------------------------------------------------------------------------------------------
+
+
+Version 0.7.15
+April 26th, 2013
+--------------------------------------------------------------------------------------------
+- Fix: fixed a bug which caused "[...]. Check your plugin code" error when trying to zooming
+       in within the highest resolution.
+--------------------------------------------------------------------------------------------
+
+
+Version 0.7.14
+April 25th, 2013
+--------------------------------------------------------------------------------------------
+- New: Linked the mouse scroll-up zoom-in feature with data caching (still buggy).
+--------------------------------------------------------------------------------------------
+
+
+Version 0.7.13
+April 25th, 2013
+--------------------------------------------------------------------------------------------
+- Opt: modified label "Zoom-in VOI dims" to "Zoom-in max dims".
+- Opt: modified "home" help message that is shown when a volume has been imported.
+--------------------------------------------------------------------------------------------
+
+
+Version 0.7.12
+April 25th, 2013
+--------------------------------------------------------------------------------------------
+- Fix: fixed a bug which caused incorrect transformation of Vaa3D coordinates.
+- Fix: fixed a bug which caused new windows to be automatically minimized after creation.
+- Fix: fixed a bug which caused compilation error on MacOS X, embedded Linux and Win32 plat-
+       forms.
+--------------------------------------------------------------------------------------------
+
+
+Version 0.7.11
+April 24th, 2013
+--------------------------------------------------------------------------------------------
+- Fix: fixed a bug which caused "exceeded the maximum  number  of  views opened at  the same
+       time" error when navigating through all the resolutions and then translating.
+- Fix: fixed a bug which caused 3D windows to slowly translate  downwards  as new views were
+       generated.
+- Fix: fixed a bug which caused "Volume map" dialog and other dialogs to be shown behind the
+       3D renderer.
+- New: updated "About" section.
+- Opt: eventFilter is removed from a 3D renderer when it is hidden/closed.
+- Fix: fixed a bug which caused "Invalid source resolution  of coordinate mapping operation"
+       error when closing volume after several zooms in/out.
+- New: added gradient bar to show the current solution.
+- Opt: volume compression is disabled only after 3D window is moved to minimize  the "trans-
+       ient" effect.
+- Opt: tri-view window is hidden as soon as possible to minimize the "transients" effect.
+- Dev: added debugging message at the entry point of every function.
+- Fix: fixed a bug which caused window handles to appear  in the "Window" menu of Vaa3D even
+       after they were closed.
+- Fix: fixed a bug which caused incorrent filtering of window close event and crash.
+--------------------------------------------------------------------------------------------
+
+
+Version 0.7.10
+April 24th, 2013
+--------------------------------------------------------------------------------------------
+- Fix: fixed a bug which caused incorrect transformation of Vaa3D coordinates.
+- Fix: fixed the appereance of "X","Y","Z" labels in the "Translation:"  row of the GUI. Now
+       it looks the same on MacOS X too.
+- Fix: fixed a bug in the "zoom-in/out" feature  which  caused 3D  image to be  cropped when
+       resizing 3D window and then switching to a different resolution.
+--------------------------------------------------------------------------------------------
+
+
+
+Version 0.7.9
+April 23th, 2013
+--------------------------------------------------------------------------------------------
+- New: zoom-in history added! As it already happens with zoom-out, already  visited resolut-
+       tions are maintained in memory so that when  user zooms in and the  higher resolution
+       has already been visited, the corresponding view is quickly recovered and shown. This
+       allows real-time zoom-in/out through  all the  resolutions,  thus  make it possible a 
+       "flight" experience within the brain. 
+- Fix: exceptions incorrectly catched  (message errors not shown)  in the  constructor of 3D
+       navigation window.
+- Fix: throwing exception (and showing an error message) when cannot write/read metadata bi-
+       binary file "mdata.bin" or volume map file "vmap.bin".
+- Fix: added text-align CSS property for "X","Y","Z" in the "Translate:" row.
+--------------------------------------------------------------------------------------------
+
+
+
+Version 0.7.8
+April 22th, 2013
+--------------------------------------------------------------------------------------------
+- Dev: added methods to align plugin GUI both to the left or to right of the 3D renderer.
+- Opt: minor changes to the layout of the GUI.
+- New: added left toolbar with the same buttons/actions of the menuBar.
+--------------------------------------------------------------------------------------------
+
+
+Version 0.7.7
+April 22th, 2013
+--------------------------------------------------------------------------------------------
+- Fix: fixed a bug in  the TeraConverter  which  caused incorrect voxel  computation for the
+       lowest resolutions in the stored mdata.bin files, which  then caused incorrect behav-
+       iour of TeraFly.
+- New: added "Size" row in the info panel.
+- New: added "Dims (mm)" row in the info panel.
+- Fix: translate buttons were not disabled when zooming-out up to the lowest resolution.
+- Fix: revert to 3D renderer with maximize/minimize  window buttons due  to misalignment be-
+       tween 3D renderer and TeraFly plugin when using Qt::Tool flag.
+--------------------------------------------------------------------------------------------
+
+
+Version 0.7.6
+April 21th, 2013
+--------------------------------------------------------------------------------------------
+- Fix: fixed a bug which caused incorrect vertical alignment between 3D renderer and TeraFly
+       plugin when the first 3D view is created (this was due to a bug of Qt  when using the
+       Qt::Tool flag alone to remove minimize/maximize buttons)
+- New: help box added! A "what's this" message is shown for each GUI's widget when the mouse
+       is over it. General instructions are provided when the mouse is outside any widget.
+- Fix: 3D renderer is not hidden when hitting a point outside its window.
+- New: added icons to menu entries.
+- Fix: translations buttons are now disabled when the limit on the corresponding axis direc-
+       tion is reached.
+- Opt: the GUI has been re-designed to maximize usability. 
+- Dev: QArrowButton class upgraded: 
+       - arrow is now modeled by a single polygon;
+       - arrow becomes brighter when mouse is over it;
+       - arrow is downscaled when mouse is pressed on it.
+--------------------------------------------------------------------------------------------
+
+
+
+Version 0.7.5
+April 20th, 2013
+--------------------------------------------------------------------------------------------
+- Fix: fixed a bug which caused application crash when performing the  following sequence of
+       actions: drawing curve  -->  zoom-in --> saving ano (x2,3...).
+- Fix: fixed a bug which caused application crash when performing the  following sequence of
+       actions: drawing curve  -->  saving ano  -->  zoom-in  -->  zoom-out.  The reason be-
+       hind the bug was an incorrect removal of duplicate annotation pointers.
+- Fix: fixed a bug which caused an error message when overwriting an already  existing anno-
+       tation file.
+- Fix: fixed a bug  which  caused application  crash when dealing  with annotation points at 
+       integer locations (e.g. 103.0000000) along any axis.
+- Fix: fixed a bug which  caused  duplicate marker  annotations after modifying a marker and
+       then switching to a different resolution.
+- New: "Multiresolution curve annotation" added! The user can now annotate curves at any re-
+       solution  and they  will be  automatically  propagated to all  the other resolutions. 
+       Saving/loading annotations features too will now take into account curves.
+- Fix: "File->Clear annotations" did not clear curve annotations.
+- Opt: markers numeric labels are now disabled by default.
+- New: annotations are stored in different files  (*.apo for cells, *.swc for  traced struc-
+       tures) linked together  by  the *.ano  linker  file. In this way,  annotations can be
+       loaded without loading the image by simple drag-and-drop of the .ano file in Vaa3D.
+- Fix: fixed a bug which caused sporadic incorrect orientation registration between views.
+--------------------------------------------------------------------------------------------
+
+
+Version 0.7.4
+April 17th, 2013
+--------------------------------------------------------------------------------------------
+- Fix: corrected a bug  which  caused  "Invalid subvolume intervals" error  when  zooming-in
+       around peripheral regions.
+- Fix: when conversion in TeraConverter is finished, a  "Success" message  is  shown and the
+       plugin is automatically closed.
+- Fix: removed the error message that was displayed when no  file/directory  was selected in
+       the TeraConverter plugin.
+- Fix: tried to correct a bug which cause  the menu bar  to be automatically embedded in the
+       system bar on MAC OS X. 
+- Fix: corrected a bug which may cause a compilation error on some compilers.
+- New: added "Traslation along an axis" feature. For each axis, 2  buttons  are displayed to
+       let the user traslate the current view along that axis in the 2 possible directions.
+       Currently, traslation amount is the 50% of the displayed VOI size. 
+--------------------------------------------------------------------------------------------
+
+
+Version 0.7.3
+April 15th, 2013
+--------------------------------------------------------------------------------------------
+- Dev: added QArrowButton class to be used for traslation actions.
+- New: added functionalities "Load annotations", "Save Annotations",  "Save annotations As",
+       "Clear annotations". Both markers and  curves annotated  at any resolution  are saved
+       (annotation of curves is not enabled at the moment) in a SWC-like format.
+- New: added zoom-in/out sensitivity slider
+- Fix: incorrect subolume indexes update in the "Jump to resolution" feature
+--------------------------------------------------------------------------------------------
+
+
+Version 0.7.2
+April 11th, 2013
+--------------------------------------------------------------------------------------------
+- New: added "Jump to resolution" feature.  User can jump to any higher resolution using the
+       already existing combobox of the  "Multiresolution" form. The  volume  (or subvolume) 
+	  currently displayed will be loaded at the selected resolution. A confirm dialog show-
+       ing the size (in MVoxels) of the volume to load prevents from loading too big data.
+- Opt: changed form title "VOI's selection from  the highest resolution volume:" to "Highest
+       resolution volume's coordinates".
+- Bug: all the plugin functionalities which  used pixel  coordinates in  the 3D window image
+       space did not take into account  that Vaa3D downsamples the image when its  dimension
+       along an axis exceeds predefined limit for that axis (LIMIT_VOLX/Y/Z = 512,512,256).
+- Fix: fixed the bug which causes an error message when the "Open volume" dialog was closed.
+- Opt: added a vertically stretchable space after the last component in the main GUI.
+- New: added "Cancel" button and window close button in the volume import dialog.
+- Fix: when a volume is closed, not all the resolutions in the combobox were removed.
+--------------------------------------------------------------------------------------------
+
+
+Version 0.7.1
+April 10th, 2013
+--------------------------------------------------------------------------------------------
+- New: "Help->About" section added.
+- Fix: close button of 3D window triggers the "File->Close volume" operation. Previusly,  it
+       caused the tool to close or crash.
+- Opt: volume import options have been moved to "Options->Import" menu.
+- New: "File->Close volume" entry added. Now the user can  close the current  volume without
+       closing the application.
+- New: "File->Open volume" entry added and "Browse for dir..." button removed.
+- New: top menu bar added with entries "File",  "Options" and "Help". Added  a  "File->Exit"
+       entry to let the user close the application.
+--------------------------------------------------------------------------------------------
+
+
+Version 0.7
+January 30th, 2013
+--------------------------------------------------------------------------------------------
+- Rem: TeraFly feature "creating a Vaa3D marker in the image space and zooming-in"  has been 
+       disabled because it conflicts with  the new "multiresolution markers annotation" fea-
+       ture.
+- Bug: TeraFly feature "multiresolution markers annotation" known bugs to be asap fixed:
+       - markers positions precision is not  perfect in  those resolutions whose distance is
+         greater than 2 factors respect to the resolution where the marker has been created;
+       - markers sizes need to be manually adjusted in each view;
+       - markers labels need to be manually disabled in each view.
+- New: TeraFly feature "multiresolution markers annotation" (beta) added:
+       - user may define markers in any view (corresponding to a certain resolution) and see
+	    them also in all the other views, thus enabling markers annotation in the multires-
+         olution mode;
+       - user may delete markers in any view (corresponding to a certain resolution) and see
+         the effect of this action in all the other views.
+- Dev: added class "CAnnotations" which manages permanent multiresolution annotations.
+- Dev: substitution of 'int' type with 'long long' type in some portions of code of the tool
+       "TeraConverter".
+--------------------------------------------------------------------------------------------
+
+
+Version 0.6.4
+January 14th, 2013
+--------------------------------------------------------------------------------------------
+- Fix: fixed a bug which caused V3D raw file format filters in  the file dialog  not to work 
+       properly.
+--------------------------------------------------------------------------------------------
+
+
+Version 0.6.3
+January 10th, 2013
+--------------------------------------------------------------------------------------------
+- New: in the "TeraConverter" tool, the volume is imported  after a  directory or a file has
+       been choosen or a path has been inserted, instead of pushing each time on the "Start"
+       button.
+- Fix: fixed a bug which caused file dialogs not to be on top on MAC OS X.
+--------------------------------------------------------------------------------------------
+
+
+Version 0.6.2
+January 7th, 2013
+--------------------------------------------------------------------------------------------
+- Fix: fixed a bug which caused "OpenCV shared library not found" error message on MAC OS.
+- Dev: small change in VolumeConverter.cpp
+--------------------------------------------------------------------------------------------
+
+
+Version 0.6.1
+January 7th, 2013
+--------------------------------------------------------------------------------------------
+- Fix: fixed a bug which caused an error on some compilers.
+--------------------------------------------------------------------------------------------
+
+
+Version 0.6
+January 6th, 2013
+--------------------------------------------------------------------------------------------
+- Fix: fixed a bug in "TeraConverter" which caused non-selected  resolutions to be  imported
+       anyway at the end of the conversion process and then the plugin crashed.
+- Fix: permanent settings in both  "TeraConverter"  and "TeraFly" tools  are saved each time 
+       a single setting is changed. Previously, they were saved after the plugin was closed.
+       In the case of a crash or  incorrect termination of the plugin, they  were not saved.
+- New: "TeraConverter" tool added. Main features:
+       - tool for the conversion of any supported format to the TeraFly format   
+       - 3 different data formats supported (TeraStitcher, Image series, V3D raw) and others
+         will be added in the future.
+       - dynamic help text appears for every format selected.
+       - progress bar with remaining time estimation
+       - permanent settings (at every run it reloads the settings used the last time)
+       - memory usage estimation
+       - the number of resolutions is automatically detected to best fit TeraFly needs
+       - the user can enable/disable individual resolutions
+- Fix: bug fixed which caused old "mdata.bin" files to be not compatible.
+- Fix: added check on the number of available resolutions in the multiresolution mode of the
+       tool "TeraFly". The multiresolution mode seems not to properly work with one  resolu-
+       tion only. At least 2 available resolutions are now needed to import a volume.
+--------------------------------------------------------------------------------------------
+
+
+Version 0.5.3
+January 2nd, 2013
+--------------------------------------------------------------------------------------------
+- Dev: ProgressBar substituted with the newest one provided by the TeraStitcher plugin.
+- Dev: plugin's name renaming: Teramanager -> TeraFly. Now "Teramanager" is the  name of the
+       tools  suite  containing both the 3D visualizer  (TeraFly)  and the  volume converter
+       (TeraConverter).
+- Dev: added sources for volume format conversion (not used yet)
+--------------------------------------------------------------------------------------------
+
+
+Version 0.5.2
+December 31st, 2012
+--------------------------------------------------------------------------------------------
+- Fix: when "Re-import" checkbox is enabled, not all the available resolutions were  re-imp-
+       orted with the given settings. This bug has been fixed.
+- Dev: metadata version check in the metadata binary file "mdata.bin".
+- Dev: plugin version check in the volume map binary file "vmap.bin".
+- Dev: metadata "mdata.bin"format modified. Absolute  filepaths have been  eliminated, hence
+       metadata files are now usable from any machine without re-importing the volume.
+--------------------------------------------------------------------------------------------
+
+
+Version 0.5.1
+November 26th, 2012
+--------------------------------------------------------------------------------------------
+- New: color map changes are propagated when switching between different  resolutions in the
+       multiresolution mode.
+--------------------------------------------------------------------------------------------
+
+
+Version 0.5.0
+November 4th, 2012
+--------------------------------------------------------------------------------------------
+- New: colored images are now supported.
+- Fix: image loading has been slightly optimized.
+--------------------------------------------------------------------------------------------
+
+
+Version 0.4.1
+September 21st, 2012
+--------------------------------------------------------------------------------------------
+- Fix: The registration between consecutive resolutions did not work well when the window is
+       resized. This bug has been fixed.
+- New: The TeraManager window is now juxtaposed to  the navigation window and  each resizing
+       or moving event on the navigation window affects also the TeraManager window.
+- New: texture compression has been disabled to enhance the rendering quality.
+--------------------------------------------------------------------------------------------
+
+
+Version 0.4
+September 2nd, 2012
+--------------------------------------------------------------------------------------------
+- New: "Google Earth" feature released! The 3D exploration of the volume uses all the avail-
+       able resolutions to enable a  "Google-Earth" like experience.  Transitions  to higher
+       resolutions are available by:
+         1) creating a Vaa3D marker in the image space and zooming-in
+         2) 1-right-stroke ROI Vaa3D right-menu function
+         3) 1-right-click ROI Vaa3D right-menu function
+         4) VOI's precise selection (see "Precise VOI selection" feature)
+       When the highest  resolution is  reached, these functions can be used to move  to an-
+       other volume of interest within the same (highest) resolution.
+       Volumes of interest (except for 4) have size 200x200x50 but it  can be  modified from  
+       the GUI. This setting is automatically saved when the plugin is closed.
+       Transitions to the higher resolution are fast (< 2 seconds on a midrange PC), whereas
+       transitions  to the lower resolution are instantaneous and they  occurs when the user
+       zooms out. Both transitions generate views registered each other in terms of orienta-
+       tion, zoom and position of the window containing the 3D renderer.
+- New: "Precise VOI selection" feature released. The user can select  a volume  of  interest 
+       with 1-voxel precision using the plugin VOI spinboxes or the Vaa3D volume cut scroll-
+       bars, if the "Google Earth" feature is enabled. If Vaa3D volume cut scrollbars change
+       also TeraManager VOI spinboxes change and viceversa.  TeraManager  VOI spinboxes have
+       values in the highest resolution volume space, while Vaa3D volume cut scrollbars have
+       values in the local image space of the resolution shown in that moment. A syncroniza-
+       tion mechanism takes this into account. 
+       The selected VOI is always loaded from the highest resolution volume.
+- New: "Resolution" GUI field which shows infos about the current active resolution.
+- New: "Zoom-in VOI size" field which shows  the size (in MVoxels) of  the VOI  to be loaded
+       from the higher resolution.
+- New: the "Load" button of the "Precise VOI selection" feature  shows the size (in MVoxels)
+       of the VOI to be loaded from the highest resolution.
+- New: the plugin GUI is automatically positioned as an "extension" of the 3D renderer, when
+       the "Google Earth" feature is enabled.   
+- New: the VHD (Vertical, Horizontal, Depth) reference system has been changed into the same
+       used by Vaa3D: XYZ (Horizontal, Vertical, Depth).  
+  
+--------------------------------------------------------------------------------------------
+
+
+Version 0.3
+August 27th, 2012
+--------------------------------------------------------------------------------------------
+- New: "Google Earth" feature (preliminary version) released.
+--------------------------------------------------------------------------------------------
+
+Version 0.2.4
+August 19th, 2012
+--------------------------------------------------------------------------------------------
+- Dev: some preliminary work to enable the Google Earth feature
+- New: all  application  settings are now  persistent between different runs. In particular, 
+       the plugin is now able to remember the last opened volume. 
+- Fix: redesigning of the import form panel of the gui (the  useless  field  displaying  the
+       selected directory has been removed).
+--------------------------------------------------------------------------------------------
+
+
+Version 0.2.3
+August 18th, 2012
+--------------------------------------------------------------------------------------------
+- New: added a spinbox to control the size limit for the volume map and a checkbox to regen-
+       erate the volume map with the selected size limit.
+- Dev: the multiresolution volume import lost in July 20th 2012 for the SVN problem has been
+       reestabilished. When a volume is imported, all the other resolutions available in the
+       parent folder are imported too in order to enable a "Google-Earth" feature.
+- Fix: runtime detection of OpenCV library has been disabled. It didn't work  on MAC OS sys-
+       tems. In order to be fixed, this should be tested on a MAC OS.
+--------------------------------------------------------------------------------------------
+
+
+Version 0.2.2
+July 24th, 2012
+--------------------------------------------------------------------------------------------
+- Fix: "Select VOI with Vaa3D volume cut scrollbars" feature added (but still experimental).
+       The user can select a VOI with Vaa3D volume cut scrollbars and then the selection is
+       transferred to TeraManager GUI spinboxes, so the user can click on the "Load" button
+       to load the selected subvolume. At this moment, the loaded subvolume is shown in the
+       volume map view, but it should be shown in a new view (this bug will be soon fixed).
+--------------------------------------------------------------------------------------------
+
+
+Version 0.2.1
+July 21st, 2012
+--------------------------------------------------------------------------------------------
+- New: "Select VOI with Vaa3D volume cut scrollbars" feature added (but still experimental).
+       The user can select a VOI with Vaa3D volume cut scrollbars and then the selection is
+       transferred to TeraManager GUI spinboxes, so the user can click on the "Load" button
+       to load the selected subvolume. At this moment, the loaded subvolume is shown in the
+       volume map view, but it should be shown in a new view (this bug will be soon fixed).
+- New: "Select ROI with Vaa3D" feature added. If the user defines a ROI with right-stroke or
+       right-click from the 3D renderer right-menu, then the correspondent VOI is loaded and
+       shown in a new global view.
+- New: "Zoom-in" feature added. If the user defines a marker with the Vaa3D built-in feature
+       (one, two or three right-click) and then zooms-in, the VOI  surrounding  the selected 
+       point is loaded and displayed in the same renderer. When the user zooms-out, the ori-
+       ginal map view is restored. VOI dimensions can be set from the GUI.
+- New: "3D mode" added. When a volume is imported, the  plugin searches for a "good for map"
+       low resolution volume  to be shown and used as a 3D map.  At this  moment, there is a
+       threshold, defined by the macro TMP_VMAP_MAXSIZE, to limit the size of the volume map
+       to be loaded.
+--------------------------------------------------------------------------------------------

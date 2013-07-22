@@ -1,0 +1,93 @@
+Version history of TeraStitcher
+============================================================================================
+
+Below you find a list with the added  features, changes and fixes  for each version. Activi-
+ties names are:
+- New: a new feature implemented
+- Fix: bug fixed
+- Bug: bug to be fixed
+- Dev: for developers only
+- Opt: optimization
+- Rem: a feature no longer available
+
+============================================================================================
+Version 1.0.6b
+July 20th, 2013
+--------------------------------------------------------------------------------------------
+- Fix: static linkage of OpenCV library is now enabled by default.
+--------------------------------------------------------------------------------------------
+
+
+Version 1.0.6
+July 8th, 2013
+--------------------------------------------------------------------------------------------
+- Fix: fixed a bug which may cause the plugin to crash when an acquisition is merged without
+       computing displacements.
+--------------------------------------------------------------------------------------------
+
+
+Version 1.0.5
+June 1st, 2013
+--------------------------------------------------------------------------------------------
+- Fix: changed error message when overlapping extent is not big enough.
+- Fix: "Close volume" and "Exit" menu actions were not disabled while performing long steps.
+- Fix: fixed bug which caused incorrect reliability measures when  mixing displacements com-
+       puted with different search region sizes.
+--------------------------------------------------------------------------------------------
+
+
+Version 1.0.4
+June 1st, 2013
+--------------------------------------------------------------------------------------------
+- New: new parameters are now stored into XML files while  guaranteeing at the same time the
+       retrocompatibility with the old XML files.
+- Fix: fixed bug which caused  reliability measures  not 100% correct when the search region
+       was bigger than 30 x 30 x 30.
+--------------------------------------------------------------------------------------------
+
+
+Version 1.0.3
+May 31st, 2013
+--------------------------------------------------------------------------------------------
+- New: added "Step successfully performed!" message when a step is successfully performed.
+- Fix: fixed bug which caused stitched volume not to be opened in Vaa3D in "Basic mode" when
+       a resolution was selected to be opened in Vaa3D with "Open" checkbox.
+- New: added "Advanced options" button in "Aligning" and "Merging" tabs.
+- Fix: fixed bug in the "Projecting" tab which caused XML output path to be  incorrectly up-
+       dated after the step was performed.
+- Fix: "Basic mode" is enabled by default (previously it was "Advanced mode").
+--------------------------------------------------------------------------------------------
+
+
+Version 1.0.2
+May 30th, 2013
+--------------------------------------------------------------------------------------------
+- Fix: fixed compilation issue on MacOS X.
+--------------------------------------------------------------------------------------------
+
+
+Version 1.0.1
+May 29th, 2013
+--------------------------------------------------------------------------------------------
+- Fix: fixed a bug which  caused incompatible XML files  (not signaled by any error message)
+       when saving/loading  to/from different  platform/O.S. combinations (i.e. the "locale"
+       problem). This caused real numbers (such as displacements or reliability measures) to
+       be incorretcly read/written.
+--------------------------------------------------------------------------------------------
+
+
+Version 1.0.0
+May 26th, 2013
+--------------------------------------------------------------------------------------------
+- New: input of reference system and voxel  dimensions when a volume has  to be  imported is
+       now constrained by a limited set of choices available  through a  pull-down  menu for
+       the axes and a spinbox for volume dimension.
+- New: added "Options->Mode->Basic", "Options->Mode->Advanced". In "Basic" mode only 3 steps
+       have to be performed ("Importing", "Aligning", "Merging")  and most of  the  advanced
+       settings are hidden. In this way, stitching  under "Basic"  mode is much simpler than
+       before. 
+- New: added menubar.
+- New: VHD convention changed to XYZ.
+- New: interface has been re-designed to fit into 800x600 window.
+- New: added "What's this?" helpbox.
+--------------------------------------------------------------------------------------------

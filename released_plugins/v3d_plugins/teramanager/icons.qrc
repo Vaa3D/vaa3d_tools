@@ -1,0 +1,18 @@
+<RCC>
+    <qresource prefix="/">
+        <file>icons/load.png</file>
+        <file>icons/wait.gif</file>
+        <file>icons/import.png</file>
+        <file>icons/open_volume.png</file>
+        <file>icons/open_ano.png</file>
+        <file>icons/close.png</file>
+        <file>icons/save.png</file>
+        <file>icons/saveas.png</file>
+        <file>icons/clear.png</file>
+        <file>icons/help.png</file>
+        <file>icons/help2.png</file>
+        <file>icons/about.png</file>
+        <file>icons/undo.png</file>
+        <file>icons/reset.png</file>
+    </qresource>
+</RCC>
