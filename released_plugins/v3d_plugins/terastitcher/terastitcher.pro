@@ -2,7 +2,7 @@
 TEMPLATE	= lib
 CONFIG	+= qt plugin warn_off
 CONFIG += x86_64
-CONFIG += use_static_libs
+#CONFIG += use_static_libs
 
 #set up third party libraries
 use_static_libs{
