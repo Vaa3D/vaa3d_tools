@@ -19,6 +19,7 @@ use_static_libs{
     }
     unix:!mac{
     LIBS += -L./lib/opencv/unix_x86_64
+    LIBS += -L./lib/opencv/unix_x86_64/3rdparty
     }
     win32{
     LIBS += -L./lib/opencv/win64

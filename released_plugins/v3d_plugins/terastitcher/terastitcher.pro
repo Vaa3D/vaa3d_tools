@@ -13,11 +13,10 @@ use_static_libs{
     mac{
     LIBS += -L../teramanager/lib/opencv/mac_x86_64
     LIBS += -L../teramanager/lib/opencv/mac_x86_64/3rdparty
-#    LIBS += -L/Users/pengh/Downloads/opencv_build/lib
-#    LIBS += -L/Users/pengh/Downloads/opencv_build/3rdparty/lib
     }
     unix:!mac{
     LIBS += -L../teramanager/lib/opencv/unix_x86_64
+    LIBS += -L../teramanager/lib/opencv/unix_x86_64/3rdparty
     }
     win32{
     LIBS += -L../teramanager/lib/opencv/win64
