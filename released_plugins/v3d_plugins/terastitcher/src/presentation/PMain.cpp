@@ -400,7 +400,7 @@ void PMain::about()
 
     QMessageBox msgBox(this);
     QSpacerItem* horizontalSpacer = new QSpacerItem(800, 0, QSizePolicy::Minimum, QSizePolicy::Expanding);
-    msgBox.setText( QString("<html><h1>TeraStitcher plugin v. ").append(CPlugin::getMajorVersion().c_str()).append("</h1>"
+    msgBox.setText( QString("<html><h1>TeraStitcher plugin v. ").append(terastitcher::version.c_str()).append("</h1>"
                     "<big>A fully automated 3D Stitching tool designed for Teravoxel-sized datasets.</big><br><br>"
                     "<u>Developed by:</u><ul>"
                     "<li><b>Alessandro Bria</b> (email: a.bria@unicas.it)<br>"
