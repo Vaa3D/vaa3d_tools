@@ -1,4 +1,7 @@
+#last edit: by PHC, 20130722. make sure the static link of opencv works
+
 #generic set up
+
 TEMPLATE    = lib
 CONFIG  += qt plugin warn_off
 QT += opengl
@@ -12,6 +15,7 @@ use_static_libs{
     INCLUDEPATH += ./include
     mac{
     LIBS += -L./lib/opencv/mac_x86_64
+    LIBS += -L./lib/opencv/mac_x86_64/3rdparty
     }
     unix:!mac{
     LIBS += -L./lib/opencv/unix_x86_64
@@ -24,8 +28,12 @@ use_static_libs{
     INCLUDEPATH += /usr/local/include/opencv
     LIBS+= -L/usr/local/lib
 }
-LIBS+= -lopencv_core -lopencv_imgproc -lopencv_highgui
-
+LIBS+= -lopencv_core -lopencv_imgproc -lopencv_highgui \
+ -lzlib \
+ -llibtiff \
+ -llibjpeg \
+ -lIlmImf \
+ -llibjasper 
 
 #set up Vaa3D stuff needed by the plugin
 V3DMAINPATH =  ../../../v3d_main
