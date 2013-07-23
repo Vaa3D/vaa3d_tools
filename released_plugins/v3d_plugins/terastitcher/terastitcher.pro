@@ -1,3 +1,5 @@
+#last change by PHC, 20130722 to make it successful for static link
+
 #terastitcher plugin project file
 TEMPLATE	= lib
 CONFIG	+= qt plugin warn_off
@@ -10,6 +12,9 @@ use_static_libs{
     INCLUDEPATH += ../teramanager/include
     mac{
     LIBS += -L../teramanager/lib/opencv/mac_x86_64
+    LIBS += -L../teramanager/lib/opencv/mac_x86_64/3rdparty
+#    LIBS += -L/Users/pengh/Downloads/opencv_build/lib
+#    LIBS += -L/Users/pengh/Downloads/opencv_build/3rdparty/lib
     }
     unix:!mac{
     LIBS += -L../teramanager/lib/opencv/unix_x86_64
@@ -22,12 +27,17 @@ use_static_libs{
     INCLUDEPATH += /usr/local/include/opencv
     LIBS+= -L/usr/local/lib
 }
-LIBS+= -lopencv_core -lopencv_imgproc -lopencv_highgui
+LIBS+= -lopencv_core -lopencv_imgproc -lopencv_highgui \
+ -lzlib \
+ -llibtiff \
+ -llibjpeg \
+ -lIlmImf \
+ -llibjasper 
 
 #undefined symbols referenced from OpenCV are ignored and checked dynamically at execution time
-#mac{
+mac{
 LIBS += -undefined dynamic_lookup
-#}
+}
 
 
 #set up Vaa3D stuff needed by the plugin
