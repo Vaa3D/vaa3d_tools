@@ -1,7 +1,7 @@
 #terastitcher plugin project file
 TEMPLATE	= lib
 CONFIG	+= qt plugin warn_off
-CONFIG += x86_64
+#CONFIG += x86_64
 CONFIG += use_static_libs
 
 #set up third party libraries
@@ -9,13 +9,13 @@ use_static_libs{
     INCLUDEPATH += ../teramanager/include/opencv
     INCLUDEPATH += ../teramanager/include
     mac{
-    LIBS += -L../teramanager/lib/opencv/mac_x86_64 -lopencv_core -lopencv_imgproc -lopencv_highgui
+    LIBS += -L../teramanager/lib/opencv/mac_x86_64
     }
     unix:!mac{
     LIBS += -L../teramanager/lib/opencv/unix_x86_64
     }
     win32{
-    LIBS += -L../teramanager/lib/opencv/win32
+    LIBS += -L../teramanager/lib/opencv/win64
     }
 } else{
     #OpenCV headers and library folders
@@ -25,9 +25,9 @@ use_static_libs{
 LIBS+= -lopencv_core -lopencv_imgproc -lopencv_highgui
 
 #undefined symbols referenced from OpenCV are ignored and checked dynamically at execution time
-mac{
-#    LIBS += -undefined dynamic_lookup
-}
+#mac{
+LIBS += -undefined dynamic_lookup
+#}
 
 
 #set up Vaa3D stuff needed by the plugin

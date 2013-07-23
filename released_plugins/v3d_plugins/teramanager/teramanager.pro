@@ -2,8 +2,8 @@
 TEMPLATE    = lib
 CONFIG  += qt plugin warn_off
 QT += opengl
-CONFIG += x86_64
-#CONFIG += use_static_libs
+#CONFIG += x86_64
+CONFIG += use_static_libs
 CONFIG += use_experimental_features
 
 #set up third party libraries
@@ -17,7 +17,7 @@ use_static_libs{
     LIBS += -L./lib/opencv/unix_x86_64
     }
     win32{
-    LIBS += -L./lib/opencv/win32
+    LIBS += -L./lib/opencv/win64
     }
 } else{
     #OpenCV headers and library folders
