@@ -149,7 +149,6 @@ template <class T> bool medfilt3d(Vol3DSimple <T> * img, int kernelsz)
 	sz[1] = inimg->sz1();
 	sz[2] = inimg->sz2(); 
 	
-
 	medfilt3d(indata3d, outdata3d, sz, kernelsz);
 		
 	if (sz) {delete []sz; sz=0;}
@@ -171,6 +170,7 @@ template <class T1, class T2> bool medfilt3d(T1 ***indata3d, T2 ***outdata3d, V3
     float *vec1d=0, *vec1dind=0;
     try
     {
+     printf("len=%ld\n", len); 
      vec1d = new float [len];
      vec1dind = new float [len];
     }
@@ -221,9 +221,13 @@ template <class T1, class T2> bool medfilt3d(T1 ***indata3d, T2 ***outdata3d, V3
 		}
 	}
 	
+	printf("Med done\n");
+	
 	if (vec1d) {delete []vec1d; vec1d=0;}
 	if (vec1dind) {delete []vec1dind; vec1dind=0;}
 	
+	printf("Med free\n");
+
 	return true;
 }
 

@@ -5,6 +5,7 @@
 TEMPLATE      = lib
 
 CONFIG       += qt plugin warn_off
+CONFIG += debug
 #CONFIG       += x86_64
 
 V3DMAINDIR = ../../../v3d_main

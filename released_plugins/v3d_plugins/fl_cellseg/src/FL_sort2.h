@@ -14,7 +14,7 @@
 
 #include "../../v3d_main/basic_c_fun/v3d_basicdatatype.h"
 
-#define SWAP(a,b) temp=(a);(a)=(b);(b)=temp;
+#define SWAP(a,b) {temp=(a);(a)=(b);(b)=temp;}
 #define M 7
 #define NSTACK 50
 #define NR_END 1
@@ -30,17 +30,23 @@ void nrerror2(char error_text[])
 unsigned V3DLONG *lvector_phc(V3DLONG nl, V3DLONG nh)
 /* allocate an unsigned V3DLONG vector with subscript range v[nl..nh] */
 {
-	unsigned V3DLONG *v;
-
-	v=new unsigned V3DLONG [nh-nl+1+NR_END];
-	if (!v) nrerror2("allocation failure in lvector_phc()");
+	unsigned V3DLONG *v=0;
+    try
+    { 
+	  v=new unsigned V3DLONG [nh-nl+1+NR_END];
+	}
+	catch(...)
+	{
+	  if (!v) nrerror2("allocation failure in lvector_phc()");
+	  return 0;
+	]
 	return v-nl+NR_END;
 }
 
 void free_lvector_phc(unsigned V3DLONG *v, V3DLONG nl, V3DLONG nh)
 /* free a float vector allocated with vector_phc() */
 {
-	if (v) {unsigned V3DLONG * p = v+nl-NR_END; if (p) delete p; }
+	if (v) {unsigned V3DLONG * p = v+nl-NR_END; if (p) delete []p; }
 }
 
 template <class T> void sort2(V3DLONG n, T arr[], float brr[])
@@ -50,8 +56,13 @@ template <class T> void sort2(V3DLONG n, T arr[], float brr[])
 	T a;
 	double b,temp;
 
-	//istack=ivector(1,NSTACK);
 	istack=lvector_phc(1,NSTACK);
+	if (!istack)
+	{
+	  printf("No sort performed.\n");
+	  return;
+	}
+	
 	for (;;) {
 		if (ir-l < M) {
 			for (j=l+1;j<=ir;j++) {
@@ -66,7 +77,6 @@ template <class T> void sort2(V3DLONG n, T arr[], float brr[])
 				brr[i+1]=b;
 			}
 			if (!jstack) {
-				//free_ivector(istack,1,NSTACK);
 				free_lvector_phc(istack,1,NSTACK);
 				return;
 			}
@@ -117,6 +127,8 @@ template <class T> void sort2(V3DLONG n, T arr[], float brr[])
 			}
 		}
 	}
+	
+	free_lvector_phc(istack,1,NSTACK);//should I add one here // by PHC 130723
 }
 #undef M
 #undef NSTACK
