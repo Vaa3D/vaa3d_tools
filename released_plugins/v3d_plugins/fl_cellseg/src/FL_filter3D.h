@@ -1,4 +1,4 @@
-// 3D gaussian filtering
+// 3D filtering
 // F. Long
 // 20080507
 // 20080826
@@ -164,7 +164,7 @@ template <class T1, class T2> bool medfilt3d(T1 ***indata3d, T2 ***outdata3d, V3
 	//unsigned 
 	V3DLONG len, cnt;
 	V3DLONG rr=(2*kernelsz+1);
-	len = rr*rr*rr+1;
+	len = rr*rr*rr;
     V3DLONG midlen = (len-1)/2; //this is not exactly the midpoint, but should be fine for now. Noted by PHC 20130719
 	
     float *vec1d=0;
@@ -180,16 +180,14 @@ template <class T1, class T2> bool medfilt3d(T1 ***indata3d, T2 ***outdata3d, V3
 	return false;
     }
 	
-	vec1d[0] = 0;
-
 	for (k = 0; k<sz[2]; k++)
 	{
-		printf("z=%d ", k);   
+		printf("z=%d \n", k);   
 		for (j = 0; j<sz[1]; j++)
 		{
 			for (i = 0; i<sz[0]; i++)
 			{
-				cnt = 1; // function sort2 does not sort the first element
+				cnt = 0; 
 				for (m = k-kernelsz; m <= k+kernelsz; m++)
 				{
 					for (n = j-kernelsz; n <= j+kernelsz; n++)
@@ -226,5 +224,5 @@ template <class T1, class T2> bool medfilt3d(T1 ***indata3d, T2 ***outdata3d, V3
 	return true;
 }
 
-
 #endif
+
