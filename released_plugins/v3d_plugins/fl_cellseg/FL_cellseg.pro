@@ -5,7 +5,7 @@
 TEMPLATE      = lib
 
 CONFIG       += qt plugin warn_off
-CONFIG += debug
+#CONFIG += debug #this can be turned on for debug even vaa3d is release version for linux
 #CONFIG       += x86_64
 
 V3DMAINDIR = ../../../v3d_main
