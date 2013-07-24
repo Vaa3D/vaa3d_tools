@@ -328,12 +328,14 @@ template <class T> void watershed_vs(T *indata, float * &label_data, const V3DLO
 	indata2[0] = -999; // the 0th element is not sorted in sort2
 	sortidx[0] = -999;
 	
+
 	for (i=0; i<num_elements; i++)
 	{	indata2[i+1] = float(indata[i]);
 		sortidx[i+1] = i;
 	}
 		
-	sort2(num_elements, indata2, sortidx); // the first element is not sorted
+	sort2_withindex(num_elements, indata2, sortidx); //20130724. PHC. // the first element is not sorted
+	//sort2(num_elements, indata2, sortidx); // the first element is not sorted
 
 	delete [] indata2; indata2 = 0;
 

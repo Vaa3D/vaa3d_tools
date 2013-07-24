@@ -167,27 +167,24 @@ template <class T1, class T2> bool medfilt3d(T1 ***indata3d, T2 ***outdata3d, V3
 	len = rr*rr*rr+1;
     V3DLONG midlen = (len-1)/2; //this is not exactly the midpoint, but should be fine for now. Noted by PHC 20130719
 	
-    float *vec1d=0, *vec1dind=0;
+    float *vec1d=0;
     try
     {
      printf("len=%ld\n", len); 
      vec1d = new float [len];
-     vec1dind = new float [len];
     }
     catch (...)
     {
         printf("Fail to allocate memory in medfilt3d().\n");
         if (vec1d) {delete []vec1d; vec1d=0;}
-        if (vec1dind) {delete []vec1dind; vec1dind=0;}
-		return false;
+	return false;
     }
 	
 	vec1d[0] = 0;
-	vec1dind[0] = 0;
 
 	for (k = 0; k<sz[2]; k++)
 	{
-//		printf("%d\n", k);   
+		printf("z=%d ", k);   
 		for (j = 0; j<sz[1]; j++)
 		{
 			for (i = 0; i<sz[0]; i++)
@@ -207,26 +204,24 @@ template <class T1, class T2> bool medfilt3d(T1 ***indata3d, T2 ***outdata3d, V3
 							{
 								vec1d[cnt] = (float)indata3d[m][n][p];
 							}
-							vec1dind[cnt] = cnt;
 							cnt++;
 						}
 					}
 				}
 				
 				//sort
-				sort2(len, vec1d, vec1dind); // call sort2 of numerical recipe  //here is the problem!!
+				sort2(len, vec1d); // call sort2 of numerical recipe  //here is the problem!!
 				
 				outdata3d[k][j][i] = vec1d[midlen];
 			}
 		}
 	}
 	
-	printf("Med done\n");
+	printf("\nMedian filtering done\n");
 	
 	if (vec1d) {delete []vec1d; vec1d=0;}
-	if (vec1dind) {delete []vec1dind; vec1dind=0;}
 	
-	printf("Med free\n");
+	printf("Median free\n");
 
 	return true;
 }
