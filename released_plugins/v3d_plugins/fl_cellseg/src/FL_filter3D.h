@@ -214,7 +214,7 @@ template <class T1, class T2> bool medfilt3d(T1 ***indata3d, T2 ***outdata3d, V3
 				}
 				
 				//sort
-				sort2(len, vec1d, vec1dind); // call sort2 of numerical recipe  
+				sort2(len, vec1d, vec1dind); // call sort2 of numerical recipe  //here is the problem!!
 				
 				outdata3d[k][j][i] = vec1d[midlen];
 			}
