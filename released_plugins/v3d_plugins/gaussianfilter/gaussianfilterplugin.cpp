@@ -231,7 +231,7 @@ void processImage(V3DPluginCallback2 &callback, QWidget *parent)
 
      // gaussian_filter
      V3DLONG in_sz[4];
-     in_sz[0] = N; in_sz[1] = M; in_sz[2] = P; in_sz[4] = sc;
+     in_sz[0] = N; in_sz[1] = M; in_sz[2] = P; in_sz[3] = sc;
 
     float* outimg = 0;
     switch (p4DImage->getDatatype())
@@ -295,8 +295,7 @@ template <class T> void gaussian_filter(T* data1d,
           for(V3DLONG i=0; i<pagesz; i++)
                pImage[i] = data1d[i + offset_init];  //first channel data (red in V3D, green in ImageJ)
      }
-
-     //Filtering
+       //Filtering
      //
      //   Filtering along x
      if(N<2)
@@ -381,13 +380,24 @@ template <class T> void gaussian_filter(T* data1d,
                          //for rescale
                          if(max_val<*arrIter) max_val = *arrIter;
                          if(min_val>*arrIter) min_val = *arrIter;
+                         if (weightIter) {delete weightIter; weightIter=0;}
+                         if (End) {delete End;}
+                         if (arrIter) {delete arrIter; arrIter=0;}
+
                     }
+                    if (extIter) {delete extIter; extIter=0;}
+                    if (stop_line) {delete stop_line;}
+                    if (extLeft) {delete extLeft; extLeft=0;}
+                    if (arrLeft) {delete arrLeft; arrLeft=0;}
+                    if (extRight) {delete extRight; extRight=0;}
+                    if (arrRight) {delete arrRight; arrRight=0;}
                }
           }
-
           //de-alloc
           if (WeightsX) {delete []WeightsX; WeightsX=0;}
           if (extension_bufferX) {delete []extension_bufferX; extension_bufferX=0;}
+          if (extStop) {delete extStop; extStop=0;}
+
 
      }
 
@@ -470,13 +480,26 @@ template <class T> void gaussian_filter(T* data1d,
                          //for rescale
                          if(max_val<*arrIter) max_val = *arrIter;
                          if(min_val>*arrIter) min_val = *arrIter;
+
+                         if (weightIter) {delete weightIter; weightIter=0;}
+                         if (End) {delete End;}
+                         if (arrIter) {delete arrIter; arrIter=0;}
                     }
+                    if (extIter) {delete extIter; extIter=0;}
+                    if (stop_line) {delete stop_line;}
+                    if (extLeft) {delete extLeft; extLeft=0;}
+                    if (arrLeft) {delete arrLeft; arrLeft=0;}
+                    if (extRight) {delete extRight; extRight=0;}
+                    if (arrRight) {delete arrRight; arrRight=0;}
                }
           }
 
           //de-alloc
           if (WeightsY) {delete []WeightsY; WeightsY=0;}
           if (extension_bufferY) {delete []extension_bufferY; extension_bufferY=0;}
+          if (extStop) {delete extStop; extStop=0;}
+
+
      }
 
      //  Filtering  along z
@@ -560,7 +583,17 @@ template <class T> void gaussian_filter(T* data1d,
                          //for rescale
                          if(max_val<*arrIter) max_val = *arrIter;
                          if(min_val>*arrIter) min_val = *arrIter;
+                         if (weightIter) {delete weightIter; weightIter=0;}
+                         if (End) {delete End;}
+                         if (arrIter) {delete arrIter; arrIter=0;}
                     }
+                    if (extIter) {delete extIter; extIter=0;}
+                    if (stop_line) {delete stop_line;}
+                    if (extLeft) {delete extLeft; extLeft=0;}
+                    if (arrLeft) {delete arrLeft; arrLeft=0;}
+                    if (extRight) {delete extRight; extRight=0;}
+                    if (arrRight) {delete arrRight; arrRight=0;}
+
 
                }
           }
@@ -568,6 +601,8 @@ template <class T> void gaussian_filter(T* data1d,
           //de-alloc
           if (WeightsZ) {delete []WeightsZ; WeightsZ=0;}
           if (extension_bufferZ) {delete []extension_bufferZ; extension_bufferZ=0;}
+          if (extStop) {delete extStop; extStop=0;}
+
 
      }
 
