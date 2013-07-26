@@ -312,6 +312,7 @@ template <class T> void median_filter(T* data1d,
     //Median Filtering
     for(V3DLONG iz = 0; iz < P; iz++)
     {
+         printf("median filter : %d %% completed \n", ((iz + 1)*100) / P);
         V3DLONG offsetk = iz*M*N;
         for(V3DLONG iy = 0; iy < M; iy++)
         {
@@ -410,15 +411,15 @@ void processImage2(V3DPluginCallback2 &callback, QWidget *parent)
 	
 	int c = dialog.ch+1;
 	int th_idx = dialog.th_idx;
-	int th = dialog.thresh;
+    double th = dialog.thresh;
 	
 	if(th_idx ==0)
 	{
-		V3DLONG PixelSum = 0;
-		V3DLONG offsetc = (c-1)*pagesz;
+        V3DLONG offsetc = (c-1)*pagesz;
 		for(V3DLONG iz = 0; iz < P; iz++)
 	   	{
-			V3DLONG offsetk = iz*M*N;
+            double PixelSum = 0;
+            V3DLONG offsetk = iz*M*N;
 			for(V3DLONG iy = 0; iy < M; iy++)
 			{
 			    V3DLONG offsetj = iy*N;
@@ -426,14 +427,15 @@ void processImage2(V3DPluginCallback2 &callback, QWidget *parent)
 			    {
 
 				V3DLONG PixelVaule = data1d[offsetc + offsetk + offsetj + ix];
-			    	PixelSum = PixelSum + PixelVaule;
+                PixelSum = PixelSum + PixelVaule;
 				
 			    }
 			}
-               }
+                th = th + PixelSum/(M*N*P);
+        }
 	
-	      th = (int)PixelSum/(P*M*N);	
-		
+
+
 	}
 
     // filter
@@ -497,7 +499,8 @@ bool processImage2(const V3DPluginArgList & input, V3DPluginArgList & output,V3D
 {
     cout<<"Welcome to Median filter with adaptive window"<<endl;
     if (output.size() != 1) return false;
-    unsigned int ch = 1,th_idx = 0, th = 0;
+    unsigned int ch = 1,th_idx = 0;
+    double th = 0;
     if (input.size()>=2)
     {
 
@@ -532,29 +535,30 @@ bool processImage2(const V3DPluginArgList & input, V3DPluginArgList & output,V3D
     
     if(th_idx ==0)
     {
-	V3DLONG N = in_sz[0];
-    	V3DLONG M = in_sz[1];
-   	V3DLONG P = in_sz[2];
+        V3DLONG N = in_sz[0];
+        V3DLONG M = in_sz[1];
+        V3DLONG P = in_sz[2];
         V3DLONG pagesz = N*M*P;
-	V3DLONG PixelSum = 0;
-	V3DLONG offsetc = (c-1)*pagesz;
-	for(V3DLONG iz = 0; iz < P; iz++)
-   	{
-		V3DLONG offsetk = iz*M*N;
-		for(V3DLONG iy = 0; iy < M; iy++)
-		{
-		    V3DLONG offsetj = iy*N;
-		    for(V3DLONG ix = 0; ix < N; ix++)
-		    {
+        V3DLONG offsetc = (c-1)*pagesz;
+        for(V3DLONG iz = 0; iz < P; iz++)
+        {
+            double PixelSum = 0;
+            V3DLONG offsetk = iz*M*N;
+            for(V3DLONG iy = 0; iy < M; iy++)
+            {
+                V3DLONG offsetj = iy*N;
+                for(V3DLONG ix = 0; ix < N; ix++)
+                {
 
-			V3DLONG PixelVaule = data1d[offsetc + offsetk + offsetj + ix];
-		    	PixelSum = PixelSum + PixelVaule;
-				
-		    }
-		}
+                V3DLONG PixelVaule = data1d[offsetc + offsetk + offsetj + ix];
+                PixelSum = PixelSum + PixelVaule;
+
+                }
+            }
+             th = th + PixelSum/(M*N*P);
         }
-	
-       th = (int)PixelSum/(P*M*N);	
+
+
 		
     }    
 	
@@ -646,6 +650,7 @@ template <class T> void adp_median_filter(T* data1d,
     //Median Filtering
     for(V3DLONG iz = 0; iz < P; iz++)
     {
+        printf("median filter : %d %% completed \n", ((iz + 1)*100) / P);
         V3DLONG offsetk = iz*M*N;
         for(V3DLONG iy = 0; iy < M; iy++)
         {

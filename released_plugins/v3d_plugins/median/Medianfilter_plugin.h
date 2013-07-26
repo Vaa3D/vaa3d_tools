@@ -12,7 +12,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
-
+#include <fstream>
+#include <iostream>
 
 class MedianFilterPlugin : public QObject, public V3DPluginInterface2_1
 {
