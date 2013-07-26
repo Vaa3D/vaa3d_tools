@@ -311,6 +311,7 @@ template <class T> void gaussian_filter(T* data1d,
                return;
 
           unsigned int Half = Wx >> 1;
+
           WeightsX[Half] = 1.;
 
           // Gaussian filter equation:
@@ -318,7 +319,7 @@ template <class T> void gaussian_filter(T* data1d,
           for (unsigned int Weight = 1; Weight < Half + 1; ++Weight)
           {
                const float  x = 3.* float (Weight) / float (Half);
-               WeightsX[Half - Weight] = WeightsX[Half + Weight] = pi_sigma * exp(-x * x *sigma_s2); /// 2.);	// Corresponding symmetric WeightsX
+               WeightsX[Half - Weight] = WeightsX[Half + Weight-1] = pi_sigma * exp(-x * x *sigma_s2); /// 2.);	// Corresponding symmetric WeightsX; revised by Zhi Zhou(add -1)
           }
 
           double k = 0.;
@@ -337,7 +338,7 @@ template <class T> void gaussian_filter(T* data1d,
 
           //	along x
           const float  *extStop = extension_bufferX + N + offset;
-
+         
           for(V3DLONG iz = 0; iz < P; iz++)
           {
                for(V3DLONG iy = 0; iy < M; iy++)
@@ -359,6 +360,7 @@ template <class T> void gaussian_filter(T* data1d,
                     {
                          *(extLeft--) = *(arrLeft++);
                          *(extRight++) = *(arrRight--);
+      
                     }
 
                     //	Filtering
@@ -380,24 +382,15 @@ template <class T> void gaussian_filter(T* data1d,
                          //for rescale
                          if(max_val<*arrIter) max_val = *arrIter;
                          if(min_val>*arrIter) min_val = *arrIter;
-                         if (weightIter) {delete weightIter; weightIter=0;}
-                         if (End) {delete End;}
-                         if (arrIter) {delete arrIter; arrIter=0;}
+                  
 
                     }
-                    if (extIter) {delete extIter; extIter=0;}
-                    if (stop_line) {delete stop_line;}
-                    if (extLeft) {delete extLeft; extLeft=0;}
-                    if (arrLeft) {delete arrLeft; arrLeft=0;}
-                    if (extRight) {delete extRight; extRight=0;}
-                    if (arrRight) {delete arrRight; arrRight=0;}
+       
                }
           }
           //de-alloc
-          if (WeightsX) {delete []WeightsX; WeightsX=0;}
-          if (extension_bufferX) {delete []extension_bufferX; extension_bufferX=0;}
-          if (extStop) {delete extStop; extStop=0;}
-
+           if (WeightsX) {delete []WeightsX; WeightsX=0;}
+           if (extension_bufferX) {delete []extension_bufferX; extension_bufferX=0;}
 
      }
 
@@ -420,7 +413,7 @@ template <class T> void gaussian_filter(T* data1d,
           for (unsigned int Weight = 1; Weight < Half + 1; ++Weight)
           {
                const float  y = 3.* float (Weight) / float (Half);
-               WeightsY[Half - Weight] = WeightsY[Half + Weight] = pi_sigma * exp(-y * y * sigma_s2);	// Corresponding symmetric WeightsY
+               WeightsY[Half - Weight] = WeightsY[Half + Weight-1] = pi_sigma * exp(-y * y * sigma_s2);	// Corresponding symmetric WeightsY; revised by Zhi Zhou(add -1)
           }
 
           double k = 0.;
@@ -481,23 +474,15 @@ template <class T> void gaussian_filter(T* data1d,
                          if(max_val<*arrIter) max_val = *arrIter;
                          if(min_val>*arrIter) min_val = *arrIter;
 
-                         if (weightIter) {delete weightIter; weightIter=0;}
-                         if (End) {delete End;}
-                         if (arrIter) {delete arrIter; arrIter=0;}
+          
                     }
-                    if (extIter) {delete extIter; extIter=0;}
-                    if (stop_line) {delete stop_line;}
-                    if (extLeft) {delete extLeft; extLeft=0;}
-                    if (arrLeft) {delete arrLeft; arrLeft=0;}
-                    if (extRight) {delete extRight; extRight=0;}
-                    if (arrRight) {delete arrRight; arrRight=0;}
+               
                }
           }
 
           //de-alloc
           if (WeightsY) {delete []WeightsY; WeightsY=0;}
           if (extension_bufferY) {delete []extension_bufferY; extension_bufferY=0;}
-          if (extStop) {delete extStop; extStop=0;}
 
 
      }
@@ -521,7 +506,7 @@ template <class T> void gaussian_filter(T* data1d,
           for (unsigned int Weight = 1; Weight < Half + 1; ++Weight)
           {
                const float  z = 3.* float (Weight) / float (Half);
-               WeightsZ[Half - Weight] = WeightsZ[Half + Weight] = pi_sigma * exp(-z * z * sigma_s2) ; /// 2.);	// Corresponding symmetric WeightsZ
+               WeightsZ[Half - Weight] = WeightsZ[Half + Weight-1] = pi_sigma * exp(-z * z * sigma_s2) ; /// 2.);	// Corresponding symmetric WeightsZ; revised by Zhi Zhou(add -1)
           }
 
           double k = 0.;
@@ -583,30 +568,21 @@ template <class T> void gaussian_filter(T* data1d,
                          //for rescale
                          if(max_val<*arrIter) max_val = *arrIter;
                          if(min_val>*arrIter) min_val = *arrIter;
-                         if (weightIter) {delete weightIter; weightIter=0;}
-                         if (End) {delete End;}
-                         if (arrIter) {delete arrIter; arrIter=0;}
+
                     }
-                    if (extIter) {delete extIter; extIter=0;}
-                    if (stop_line) {delete stop_line;}
-                    if (extLeft) {delete extLeft; extLeft=0;}
-                    if (arrLeft) {delete arrLeft; arrLeft=0;}
-                    if (extRight) {delete extRight; extRight=0;}
-                    if (arrRight) {delete arrRight; arrRight=0;}
-
-
+               
                }
           }
 
           //de-alloc
           if (WeightsZ) {delete []WeightsZ; WeightsZ=0;}
           if (extension_bufferZ) {delete []extension_bufferZ; extension_bufferZ=0;}
-          if (extStop) {delete extStop; extStop=0;}
 
 
      }
 
     outimg = pImage;
+
 
     return;
 }
