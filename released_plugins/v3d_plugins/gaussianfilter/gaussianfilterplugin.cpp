@@ -311,16 +311,14 @@ template <class T> void gaussian_filter(T* data1d,
           if (!WeightsX)
                return;
 
-          unsigned int Half = Wx >> 1;
-
-          WeightsX[Half] = 1.;
+          float Half = (float)Wx/2.0;
 
           // Gaussian filter equation:
           // http://en.wikipedia.org/wiki/Gaussian_blur
-          for (unsigned int Weight = 1; Weight < Half + 1; ++Weight)
+          for (unsigned int Weight = 0; Weight < Half; ++Weight)
           {
                const float  x = 3.* float (Weight) / float (Half);
-               WeightsX[Half - Weight] = WeightsX[Half + Weight] = pi_sigma * exp(-x * x *sigma_s2); /// 2.);	// Corresponding symmetric WeightsX
+               WeightsX[Half - Weight] = WeightsX[Half + Weight] = pi_sigma * exp(-x * x *sigma_s2); /// 2.);	// Corresponding symmetric WeightsX //need a fix as well.
           }
 
           double k = 0.;
