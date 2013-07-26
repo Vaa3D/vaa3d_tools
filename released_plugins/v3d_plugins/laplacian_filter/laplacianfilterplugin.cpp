@@ -177,7 +177,7 @@ void processImage(V3DPluginCallback2 &callback, QWidget *parent)
     
      // filtering
      V3DLONG in_sz[4];
-     in_sz[0] = N; in_sz[1] = M; in_sz[2] = P; in_sz[4] = sc;
+     in_sz[0] = N; in_sz[1] = M; in_sz[2] = P; in_sz[3] = sc;
 
      float * outimg = 0;
     bool b_res;

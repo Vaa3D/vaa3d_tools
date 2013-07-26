@@ -256,7 +256,7 @@ void processImage(V3DPluginCallback2 &callback, QWidget *parent, unsigned int fi
 
      // filter
      V3DLONG in_sz[4];
-     in_sz[0] = N; in_sz[1] = M; in_sz[2] = P; in_sz[4] = sc;
+     in_sz[0] = N; in_sz[1] = M; in_sz[2] = P; in_sz[3] = sc;
 
     ImagePixelType pixeltype = p4DImage->getDatatype();
     void* outimg = 0;
