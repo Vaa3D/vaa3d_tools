@@ -306,20 +306,26 @@ template <class T> void gaussian_filter(T* data1d,
      {
           //create Gaussian kernel
           float  *WeightsX = 0;
-		  if(Wx % 2 == 0) Wx = Wx + 1; // Revised by Zhi Zhou 
           WeightsX = new float [Wx];
           if (!WeightsX)
                return;
 
-          float Half = (float)Wx/2.0;
+          float Half = (float)(Wx-1)/2.0;
 
           // Gaussian filter equation:
           // http://en.wikipedia.org/wiki/Gaussian_blur
-          for (unsigned int Weight = 0; Weight < Half; ++Weight)
+       //   for (unsigned int Weight = 0; Weight < Half; ++Weight)
+       //   {
+       //        const float  x = Half* float (Weight) / float (Half);
+      //         WeightsX[(int)Half - Weight] = WeightsX[(int)Half + Weight] = pi_sigma * exp(-x * x *sigma_s2); // Corresponding symmetric WeightsX
+      //    }
+
+          for (unsigned int Weight = 0; Weight <= Half; ++Weight)
           {
-               const float  x = 3.* float (Weight) / float (Half);
-               WeightsX[Half - Weight] = WeightsX[Half + Weight] = pi_sigma * exp(-x * x *sigma_s2); /// 2.);	// Corresponding symmetric WeightsX //need a fix as well.
+              const float  x = float(Weight)-Half;
+              WeightsX[Weight] = WeightsX[Wx-Weight-1] = pi_sigma * exp(-(x * x *sigma_s2)); // Corresponding symmetric WeightsX
           }
+
 
           double k = 0.;
           for (unsigned int Weight = 0; Weight < Wx; ++Weight)
@@ -327,6 +333,7 @@ template <class T> void gaussian_filter(T* data1d,
 
           for (unsigned int Weight = 0; Weight < Wx; ++Weight)
                WeightsX[Weight] /= k;
+
 
 
           //   Allocate 1-D extension array
@@ -402,20 +409,26 @@ template <class T> void gaussian_filter(T* data1d,
      {
           //create Gaussian kernel
           float  *WeightsY = 0;		  
-		  if(Wy % 2 == 0) Wy = Wy + 1; // Revised by Zhi Zhou 
           WeightsY = new float [Wy];
           if (!WeightsY)
                return;
 
-          unsigned int Half = Wy >> 1;
+          float Half = (float)(Wy-1)/2.0;
 
-          WeightsY[Half] = 1.;
-
-          for (unsigned int Weight = 1; Weight < Half + 1; ++Weight)
+          // Gaussian filter equation:
+          // http://en.wikipedia.org/wiki/Gaussian_blur
+         /* for (unsigned int Weight = 0; Weight < Half; ++Weight)
           {
-               const float  y = 3.* float (Weight) / float (Half);
-               WeightsY[Half - Weight] = WeightsY[Half + Weight] = pi_sigma * exp(-y * y * sigma_s2);	// Corresponding symmetric WeightsY
+               const float  y = Half* float (Weight) / float (Half);
+               WeightsY[(int)Half - Weight] = WeightsY[(int)Half + Weight] = pi_sigma * exp(-y * y *sigma_s2); // Corresponding symmetric WeightsY
+          }*/
+
+          for (unsigned int Weight = 0; Weight <= Half; ++Weight)
+          {
+              const float  y = float(Weight)-Half;
+              WeightsY[Weight] = WeightsY[Wy-Weight-1] = pi_sigma * exp(-(y * y *sigma_s2)); // Corresponding symmetric WeightsY
           }
+
 
           double k = 0.;
           for (unsigned int Weight = 0; Weight < Wy; ++Weight)
@@ -497,20 +510,24 @@ template <class T> void gaussian_filter(T* data1d,
      {
           //create Gaussian kernel
           float  *WeightsZ = 0;
-		 if(Wz % 2 == 0) Wz = Wz + 1; // Revised by Zhi Zhou 
-
           WeightsZ = new float [Wz];
           if (!WeightsZ)
                return;
 
-          unsigned int Half = Wz >> 1;
-          WeightsZ[Half] = 1.;
+          float Half = (float)(Wz-1)/2.0;
 
-          for (unsigned int Weight = 1; Weight < Half + 1; ++Weight)
+         /* for (unsigned int Weight = 1; Weight < Half; ++Weight)
           {
-               const float  z = 3.* float (Weight) / float (Half);
-               WeightsZ[Half - Weight] = WeightsZ[Half + Weight] = pi_sigma * exp(-z * z * sigma_s2) ; /// 2.);	// Corresponding symmetric WeightsZ
+               const float  z = Half * float (Weight) / Half;
+               WeightsZ[(int)Half - Weight] = WeightsZ[(int)Half + Weight] = pi_sigma * exp(-z * z * sigma_s2) ; // Corresponding symmetric WeightsZ
+          }*/
+
+          for (unsigned int Weight = 0; Weight <= Half; ++Weight)
+          {
+              const float  z = float(Weight)-Half;
+              WeightsZ[Weight] = WeightsZ[Wz-Weight-1] = pi_sigma * exp(-(z * z *sigma_s2)); // Corresponding symmetric WeightsZ
           }
+
 
           double k = 0.;
           for (unsigned int Weight = 0; Weight < Wz; ++Weight)
@@ -518,7 +535,6 @@ template <class T> void gaussian_filter(T* data1d,
 
           for (unsigned int Weight = 0; Weight < Wz; ++Weight)
                WeightsZ[Weight] /= k;
-
 
           //	along z
           float  *extension_bufferZ = 0;
