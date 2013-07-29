@@ -47,7 +47,7 @@ template <class T> void AdpThresholding(T* data1d,
 template <class T> void AdpThresholding_adpwindow(T* data1d,
                     V3DLONG *in_sz,
                     unsigned int c,
-                    T* &outimg,T* gsdtdata1d,T* gsdtdata1d2 );
+                    T* &outimg,T* gsdtdata1d);
 
 int swapthree(float& dummya, float& dummyb, float& dummyc);
  
@@ -393,21 +393,21 @@ void processImage2(V3DPluginCallback2 &callback, QWidget *parent)
     in_sz[0] = N; in_sz[1] = M; in_sz[2] = P; in_sz[3] = sc;
 
     ImagePixelType pixeltype = p4DImage->getDatatype();
-    int c = 1;
+  /*  int c = 1;
     unsigned char * gsdtdata1d = 0;
     int datatype;
     V3DLONG * in_zz = 0;
-    printf("\nload first gsdt image\n");
+     printf("\nload first gsdt image\n");
     loadImage("/data/mat/zhi/gsdtImage.tif", gsdtdata1d, in_zz, datatype,0);
 
     unsigned char * gsdtdata1d2 = 0;
     int datatype2;
     printf("\nload second gsdt image\n");
-    loadImage("/local1/data/Staci/gsdt_Diff_GassuainFilteredImage.tif", gsdtdata1d2, in_zz, datatype2,0);
+    loadImage("/local1/data/Staci/gsdt_Diff_GassuainFilteredImage.tif", gsdtdata1d2, in_zz, datatype2,0);*/
 
      //add input dialog
 
-    /*AdaptiveWindowDialog dialog(callback, parent);
+    AdaptiveWindowDialog dialog(callback, parent);
     if (!dialog.image)
         return;
 
@@ -465,7 +465,7 @@ void processImage2(V3DPluginCallback2 &callback, QWidget *parent)
     char channel = '0' + (c-1);
     string threshold = boost::lexical_cast<string>(th); char* threshold2 =  new char[threshold.length() + 1]; strcpy(threshold2, threshold.c_str());
     args.push_back(threshold2);args.push_back("1");args.push_back(&channel);args.push_back("1"); arg.p = (void *) & args; input << arg;
-    arg.type = "random";std::vector<char*> args2;args2.push_back("gsdtImage.tif"); arg.p = (void *) & args2; output<< arg;
+    arg.type = "random";std::vector<char*> args2;args2.push_back("/data/mat/zhi/gsdtImage_v2.tif"); arg.p = (void *) & args2; output<< arg;
 
     QString full_plugin_name = "gsdt";
     QString func_name = "gsdt";
@@ -479,7 +479,7 @@ void processImage2(V3DPluginCallback2 &callback, QWidget *parent)
     char * outimg_file = ((vector<char*> *)(output.at(0).p))->at(0);
     loadImage(outimg_file, gsdtdata1d, in_zz, datatype,0);
     //remove("gsdtImage.tif");
-    remove("temp.tif");*/
+    remove("temp.tif");
 
 
 
@@ -487,9 +487,9 @@ void processImage2(V3DPluginCallback2 &callback, QWidget *parent)
     void* outimg = 0;
     switch (pixeltype)
     {
-    case V3D_UINT8: AdpThresholding_adpwindow(data1d, in_sz, c,(unsigned char* &)outimg, gsdtdata1d,gsdtdata1d2); break;
-    case V3D_UINT16: AdpThresholding_adpwindow((unsigned short int *)data1d, in_sz, c, (unsigned short int* &)outimg,(unsigned short int *)gsdtdata1d,(unsigned short int *)gsdtdata1d2); break;
-    case V3D_FLOAT32: AdpThresholding_adpwindow((float *)data1d, in_sz, c, (float* &)outimg,(float *)gsdtdata1d,(float *)gsdtdata1d2);break;
+    case V3D_UINT8: AdpThresholding_adpwindow(data1d, in_sz, c,(unsigned char* &)outimg, gsdtdata1d); break;
+    case V3D_UINT16: AdpThresholding_adpwindow((unsigned short int *)data1d, in_sz, c, (unsigned short int* &)outimg,(unsigned short int *)gsdtdata1d); break;
+    case V3D_FLOAT32: AdpThresholding_adpwindow((float *)data1d, in_sz, c, (float* &)outimg,(float *)gsdtdata1d);break;
     default: v3d_msg("Invalid data type. Do nothing."); return;
     }
 
@@ -508,7 +508,7 @@ template <class T> void AdpThresholding_adpwindow(T* data1d,
                                                   V3DLONG *in_sz,
                                                   unsigned int c,
                                                   T* &outimg,
-                                                  T* gsdtdatald, T* gsdtdatald2)
+                                                  T* gsdtdatald)
 {
 
 
@@ -519,7 +519,7 @@ template <class T> void AdpThresholding_adpwindow(T* data1d,
          V3DLONG pagesz = N*M*P;
          int Wx,Wy,Wz;
          V3DLONG offsetc = (c-1)*pagesz;
-         int Th_gsdt = 10;
+         int Th_gsdt = 200;
          T *pImage = new T [pagesz];
         if (!pImage)
         {
@@ -548,7 +548,7 @@ template <class T> void AdpThresholding_adpwindow(T* data1d,
                     Wx = (int)round((log(GsdtValue)/log(2)));
                     //printf("%d %d\n",PixelValue,Wx);
 
-                    if (Wx > 0 && PixelValue > 0 && gsdtdatald2[offsetk + offsetj + ix] < Th_gsdt)
+                    if (Wx > 0 && PixelValue > 0 && PixelValue < Th_gsdt)
                     {
                         Wy = Wx;
                         Wz = Wx*2;
@@ -614,8 +614,8 @@ template <class T> void AdpThresholding_adpwindow(T* data1d,
                 V3DLONG offsetj = iy*N;
                 for(V3DLONG ix = 0; ix < N; ix++)
                 {
-                        // T PixelValue = data1d[offsetc+offsetk + offsetj + ix];
-                        if(gsdtdatald2[offsetk + offsetj + ix] < Th_gsdt)
+                         T PixelValue = data1d[offsetc+offsetk + offsetj + ix];
+                        if(PixelValue < Th_gsdt)
                         {
                             T dataval2 = 255*pImage[offsetk+offsetj+ix]/maxfl;
                             pImage2[offsetk+offsetj+ix] = dataval2;
