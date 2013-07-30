@@ -2,7 +2,7 @@
 TEMPLATE	= lib
 CONFIG	+= qt plugin warn_off
 #CONFIG	+= x86_64
-VAA3DPATH = /local1/work/v3d_external
+VAA3DPATH = ../../../../v3d_external
 INCLUDEPATH	+= $$VAA3DPATH/v3d_main/basic_c_fun
 
 HEADERS	+= FFT_plugin.h
@@ -11,7 +11,7 @@ SOURCES	+= $$VAA3DPATH/v3d_main/basic_c_fun/v3d_message.cpp
 
 LIBS         += -lm -L$$VAA3DPATH/v3d_main/common_lib/lib -lv3dtiff
 LIBS         += -lpthread
-LIBS	     += -lv3dfftw3f -lv3dfftw3f_threads
+LIBS	     += -lfftw3 -lv3dfftw3f_threads
 
 
 TARGET	= $$qtLibraryTarget(FFT)
