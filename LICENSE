@@ -1,13 +1,13 @@
 /************
                                             ********* LICENSE NOTICE ************
 
-This folder contains all source codes for the "standard" plugins of the Vaa3D project (vaa3d.org), which is subject to the following conditions if you want to use it. 
+This folder contains all source codes for the "standard" plugins of the Vaa3D project (vaa3d.org). These plugins are subject to the following conditions if you want to use them. 
 
-You will ***have to agree*** the following terms, *before* downloading/using/running/editing/changing any portion of codes in this package.
+You will ***have to agree*** the following terms, *before* downloading/using/running/editing/changing any portion of codes in this package (including all plugins).
 
 1. This package is free for non-profit research, but needs a special license for any commercial purpose. Please contact Hanchuan Peng for details.
 
-2. You agree to appropriately cite this work and many related papers of separate plugins in your related studies and publications.
+2. You agree to appropriately cite the Vaa3D paper and the related papers of separate plugins in your related studies and publications.
 
 Peng, H., Ruan, Z., Long, F., Simpson, J.H., and Myers, E.W. (2010) “V3D enables real-time 3D visualization and quantitative analysis of large-scale biological image data sets,” Nature Biotechnology, Vol. 28, No. 4, pp. 348-353, DOI: 10.1038/nbt.1612. ( http://penglab.janelia.org/papersall/docpdf/2010_NBT_V3D.pdf )
 
