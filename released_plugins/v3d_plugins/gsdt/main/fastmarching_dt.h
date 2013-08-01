@@ -37,10 +37,8 @@ template<class T> bool fastmarching_dt(T * inimg1d, float * &phi, V3DLONG sz0, V
     V3DLONG sz01 = sz0 * sz1;
 	//int cnn_type = 3;  // ?
 
-    if(phi == 0) //phi = new float[tol_sz];
-    phi	= (float*) malloc(sizeof(float) * tol_sz);
-    //char * state = new char[tol_sz];
-    char * state = (char*) malloc(sizeof(char) * tol_sz);
+    if(phi == 0) phi = new float[tol_sz];
+    char * state = new char[tol_sz];
     V3DLONG bkg_count = 0;                          // for process counting
     V3DLONG bdr_count = 0;                          // for process counting
     for(V3DLONG i = 0; i < tol_sz; i++)
