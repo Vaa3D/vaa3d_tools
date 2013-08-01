@@ -61,16 +61,16 @@ int gsdt(V3DPluginCallback2 &callback, QWidget *parent)
 	cout<<"z_thickness = "<<z_thickness<<endl;
 
 	unsigned char * inimg1d = p4DImage->getRawDataAtChannel(channel);
-	float * phi = 0;
+    float * phi = 0;
 	fastmarching_dt(inimg1d, phi, sz0, sz1, sz2, cnn_type, bkg_thresh, z_thickness);
 
 	float min_val = phi[0], max_val = phi[0];
-	long tol_sz = sz0 * sz1 * sz2;
+    V3DLONG tol_sz = sz0 * sz1 * sz2;
 	unsigned char * outimg1d = new unsigned char[tol_sz];
-	for(long i = 0; i < tol_sz; i++) {if(phi[i] == INF) continue; min_val = MIN(min_val, phi[i]); max_val = MAX(max_val, phi[i]);}
+    for(V3DLONG i = 0; i < tol_sz; i++) {if(phi[i] == INF) continue; min_val = MIN(min_val, phi[i]); max_val = MAX(max_val, phi[i]);}
 	cout<<"min_val = "<<min_val<<" max_val = "<<max_val<<endl;
 	max_val -= min_val; if(max_val == 0.0) max_val = 0.00001;
-	for(long i = 0; i < tol_sz; i++)
+    for(V3DLONG i = 0; i < tol_sz; i++)
 	{
 		if(phi[i] == INF) outimg1d[i] = 0;
 		else if(phi[i] ==0) outimg1d[i] = 0;
@@ -99,9 +99,9 @@ bool gsdt(const V3DPluginArgList & input, V3DPluginArgList & output)
 	vector<char*> paras = (*(vector<char*> *)(input.at(1).p));
 	if(paras.size() >= 1) bkg_thresh = atoi(paras.at(0));
 	if(paras.size() >= 2) cnn_type = atoi(paras.at(1));
-	if(paras.size() >= 3) channel = atoi(paras.at(2));
+    if(paras.size() >= 3) channel = atoi(paras.at(2));
 	if(paras.size() >= 4) z_thickness = atof(paras.at(3));
-	
+
 	char * inimg_file = ((vector<char*> *)(input.at(0).p))->at(0);
 	char * outimg_file = ((vector<char*> *)(output.at(0).p))->at(0);
 	cout<<"bkg_thresh = "<<bkg_thresh<<endl;
@@ -111,7 +111,7 @@ bool gsdt(const V3DPluginArgList & input, V3DPluginArgList & output)
 	cout<<"z_thickness = "<<z_thickness<<endl;
 
 	unsigned char * inimg1d = 0,  * outimg1d = 0;
-	float * phi = 0;
+    float * phi = 0;
 	V3DLONG * in_sz = 0;
 	int datatype;
 	if(!loadImage(inimg_file, inimg1d, in_sz, datatype, channel)) {cerr<<"load image "<<inimg_file<<" error!"<<endl; return 1;}
@@ -129,12 +129,12 @@ bool gsdt(const V3DPluginArgList & input, V3DPluginArgList & output)
           if(!fastmarching_dt((float*)inimg1d, phi, in_sz[0], in_sz[1], in_sz[2], cnn_type, bkg_thresh, z_thickness)) return false;
      }
 	float min_val = phi[0], max_val = phi[0];
-	long tol_sz = in_sz[0] * in_sz[1] * in_sz[2];
+    V3DLONG tol_sz = in_sz[0] * in_sz[1] * in_sz[2];
 	outimg1d = new unsigned char[tol_sz];
-	for(long i = 0; i < tol_sz; i++) {if(phi[i] == INF) continue; min_val = MIN(min_val, phi[i]); max_val = MAX(max_val, phi[i]);}
+    for(V3DLONG i = 0; i < tol_sz; i++) {if(phi[i] == INF) continue; min_val = MIN(min_val, phi[i]); max_val = MAX(max_val, phi[i]);}
 	cout<<"min_val = "<<min_val<<" max_val = "<<max_val<<endl;
 	max_val -= min_val; if(max_val == 0.0) max_val = 0.00001;
-	for(long i = 0; i < tol_sz; i++)
+    for(V3DLONG i = 0; i < tol_sz; i++)
 	{
 		if(phi[i] == INF) outimg1d[i] = 0;
 		else if(phi[i] ==0) outimg1d[i] = 0;

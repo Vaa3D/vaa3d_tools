@@ -9,9 +9,9 @@ using namespace std;
 struct HeapElem
 {
 	int    heap_id;
-	long   img_ind;
+    V3DLONG   img_ind;
 	double value;
-	HeapElem(long _ind, double _value)
+    HeapElem(V3DLONG _ind, double _value)
 	{
 		heap_id = -1;
 		img_ind = _ind;
@@ -21,8 +21,8 @@ struct HeapElem
 
 struct HeapElemX : public HeapElem
 {
-	long prev_ind;  // previous img ind
-	HeapElemX(long _ind, double _value) : HeapElem(_ind, _value){prev_ind = -1;}
+    V3DLONG prev_ind;  // previous img ind
+    HeapElemX(V3DLONG _ind, double _value) : HeapElem(_ind, _value){prev_ind = -1;}
 };
 
 template <class T>
