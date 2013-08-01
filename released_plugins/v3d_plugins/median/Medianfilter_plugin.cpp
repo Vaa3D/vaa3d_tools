@@ -90,7 +90,7 @@ bool MedianFilterPlugin::dofunc(const QString & func_name, const V3DPluginArgLis
     }
     else if (func_name == tr("help"))
     {
-        cout<<"Usage : v3d -x Medianfilter -f fixed_window -i <inimg_file> -o <outimg_file> -p <wx> <wy> <wz> <ch>"<<endl;
+        cout<<"Usage : v3d -x medianfilter -f fixed_window -i <inimg_file> -o <outimg_file> -p <wx> <wy> <wz> <ch>"<<endl;
         cout<<endl;
         cout<<"wx          filter window radius size (pixel #) in x direction, window size is 2*wx+1, default 1"<<endl;
         cout<<"wy          filter window radius size (pixel #) in y direction, window size is 2*wy+1, default 1"<<endl;
@@ -452,12 +452,12 @@ void processImage2(V3DPluginCallback2 &callback, QWidget *parent)
 
     arg.type = "random";std::vector<char*> args1;
    // std:: string inputName(callback.getImageName(curwin).toStdString());char* inputName2 =  new char[inputName.length() + 1]; strcpy(inputName2, inputName.c_str());
-    args1.push_back("temp.tif"); arg.p = (void *) & args1; input<< arg;
+    args1.push_back("temp.v3draw"); arg.p = (void *) & args1; input<< arg;
     arg.type = "random";std::vector<char*> args;
     char channel = '0' + (c-1); 
     string threshold = boost::lexical_cast<string>(th); char* threshold2 =  new char[threshold.length() + 1]; strcpy(threshold2, threshold.c_str());
     args.push_back(threshold2);args.push_back("1");args.push_back(&channel);args.push_back("1"); arg.p = (void *) & args; input << arg;
-    arg.type = "random";std::vector<char*> args2;args2.push_back("gsdtImage.tif"); arg.p = (void *) & args2; output<< arg;
+    arg.type = "random";std::vector<char*> args2;args2.push_back("gsdtImage.v3draw"); arg.p = (void *) & args2; output<< arg;
     	
     QString full_plugin_name = "gsdt";
     QString func_name = "gsdt";
@@ -472,8 +472,8 @@ void processImage2(V3DPluginCallback2 &callback, QWidget *parent)
 
     char * outimg_file = ((vector<char*> *)(output.at(0).p))->at(0);
     loadImage(outimg_file, gsdtdata1d, in_zz, datatype,0);
-    remove("gsdtImage.tif");
-    remove("temp.tif");
+    remove("gsdtImage.v3draw");
+    remove("temp.v3draw");
 
     void* outimg = 0;
     switch (pixeltype)
