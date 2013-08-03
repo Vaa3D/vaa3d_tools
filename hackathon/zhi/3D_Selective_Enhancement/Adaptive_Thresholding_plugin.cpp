@@ -38,18 +38,28 @@ template <class T> void AdpThresholding(T* data1d,
                      unsigned int Wx,
                      unsigned int Wy,
                      unsigned int Wz,
-		     unsigned int c,
-		     unsigned int p,
-		     unsigned int d,	
+             unsigned int c,
+             unsigned int p,
+             unsigned int d,
                      T* &outimg,
 		     T* gsdtdata1d);
 
 template <class T> void AdpThresholding_adpwindow(T* data1d,
                     V3DLONG *in_sz,
                     unsigned int c,
-                    T* &outimg,T* gsdtdata1d);
+                    T* &outimg,T* gsdtdata1d,T* gsdtsoma,
+                                                  int x,
+                                                  int y);
 
 int swapthree(float& dummya, float& dummyb, float& dummyc);
+
+template <class T> void soma_detection(T* data1d,
+                    V3DLONG *in_sz,
+                    unsigned int c,
+                    int x,
+                    int y,
+                    V3DLONG somasize,
+                    T* &outimg);
  
 QStringList adpThresholding::menulist() const
 {
@@ -393,21 +403,21 @@ void processImage2(V3DPluginCallback2 &callback, QWidget *parent)
     in_sz[0] = N; in_sz[1] = M; in_sz[2] = P; in_sz[3] = sc;
 
     ImagePixelType pixeltype = p4DImage->getDatatype();
-  /*  int c = 1;
+    int c = 1;
     unsigned char * gsdtdata1d = 0;
     int datatype;
     V3DLONG * in_zz = 0;
-     printf("\nload first gsdt image\n");
-    loadImage("/data/mat/zhi/gsdtImage.tif", gsdtdata1d, in_zz, datatype,0);
+    loadImage("/local1/data/Staci/L2-3_PyramidalNeuron_2/gsdtImage.v3draw", gsdtdata1d, in_zz, datatype,0);
+    //loadImage("/local1/data/Staci/L2-3_PyramidalNeuron_1/gsdtImage_mean.tif", gsdtdata1d, in_zz, datatype,0);
 
-    unsigned char * gsdtdata1d2 = 0;
+    /*unsigned char * gsdtdata1d2 = 0;
     int datatype2;
     printf("\nload second gsdt image\n");
     loadImage("/local1/data/Staci/gsdt_Diff_GassuainFilteredImage.tif", gsdtdata1d2, in_zz, datatype2,0);*/
 
      //add input dialog
 
-    AdaptiveWindowDialog dialog(callback, parent);
+   /* AdaptiveWindowDialog dialog(callback, parent);
     if (!dialog.image)
         return;
 
@@ -423,9 +433,10 @@ void processImage2(V3DPluginCallback2 &callback, QWidget *parent)
 
     int c = dialog.ch+1;
     int th_idx = dialog.th_idx;
-    double th = dialog.thresh;
+    double th = dialog.thresh;*/
 
-    if(th_idx ==0)
+
+ /*   if(th_idx ==0)
     {
         V3DLONG offsetc = (c-1)*pagesz;
         for(V3DLONG iz = 0; iz < P; iz++)
@@ -451,7 +462,7 @@ void processImage2(V3DPluginCallback2 &callback, QWidget *parent)
 
     // filter
 
-    saveImage("temp.tif", (unsigned char *)data1d, in_sz, pixeltype);
+    saveImage("temp.v3draw", (unsigned char *)data1d, in_sz, pixeltype);
     //invoke gsdt function
     V3DPluginArgItem arg;
     V3DPluginArgList input;
@@ -460,12 +471,12 @@ void processImage2(V3DPluginCallback2 &callback, QWidget *parent)
 
     arg.type = "random";std::vector<char*> args1;
    // std:: string inputName(callback.getImageName(curwin).toStdString());char* inputName2 =  new char[inputName.length() + 1]; strcpy(inputName2, inputName.c_str());
-    args1.push_back("temp.tif"); arg.p = (void *) & args1; input<< arg;
+    args1.push_back("temp.v3draw"); arg.p = (void *) & args1; input<< arg;
     arg.type = "random";std::vector<char*> args;
     char channel = '0' + (c-1);
     string threshold = boost::lexical_cast<string>(th); char* threshold2 =  new char[threshold.length() + 1]; strcpy(threshold2, threshold.c_str());
     args.push_back(threshold2);args.push_back("1");args.push_back(&channel);args.push_back("1"); arg.p = (void *) & args; input << arg;
-    arg.type = "random";std::vector<char*> args2;args2.push_back("/data/mat/zhi/gsdtImage_v2.tif"); arg.p = (void *) & args2; output<< arg;
+    arg.type = "random";std::vector<char*> args2;args2.push_back("/local1/data/Staci/L2-3_PyramidalNeuron_2/gsdtImage.v3draw"); arg.p = (void *) & args2; output<< arg;
 
     QString full_plugin_name = "gsdt";
     QString func_name = "gsdt";
@@ -478,24 +489,98 @@ void processImage2(V3DPluginCallback2 &callback, QWidget *parent)
 
     char * outimg_file = ((vector<char*> *)(output.at(0).p))->at(0);
     loadImage(outimg_file, gsdtdata1d, in_zz, datatype,0);
-    //remove("gsdtImage.tif");
-    remove("temp.tif");
+    remove("temp.v3draw");
+    //remove("/local1/data/Staci/L2-3_PyramidalNeuron_2/gsdtImage.v3draw");*/
 
+    //find local gsdt for soma area
+
+
+    V3DLONG offsetc = (c-1)*pagesz;
+    int soma_x,soma_y;//2901;//2173;
+    int soma_z = 0;//2178;//1926;
+    LandmarkList soma_center = callback.getLandmark(curwin);
+    LocationSimple tmpLocation(0,0,0);
+    tmpLocation = soma_center.at(0);
+    tmpLocation.getCoord(soma_x,soma_y,soma_z);
+
+    printf("Soma is at (%d %d %d)\n\n",soma_x,soma_y,soma_z);
+
+    V3DLONG i = 0;
+    double th_soma = 0;
+
+    for(V3DLONG iz = 0; iz < P; iz++)
+    {
+        double PixelSum = 0;
+        V3DLONG offsetk = iz*M*N;
+        for(V3DLONG iy = soma_y-200; iy <  soma_y+200; iy++)
+        {
+            V3DLONG offsetj = iy*N;
+            for(V3DLONG ix = soma_x-200; ix < soma_x+200; ix++)
+            {
+
+             double PixelVaule = data1d[offsetc + offsetk + offsetj + ix];
+             PixelSum = PixelSum + PixelVaule;
+             i++;
+            }
+        }
+        th_soma = th_soma + PixelSum/(400*400*P);
+    }
+
+  //  printf("threshold is %d %d %d\n\n",th_soma,PixelSum,i);
+
+    void* somaarea = 0;
+     switch (pixeltype)
+     {
+     case V3D_UINT8: soma_detection(data1d, in_sz, c,soma_x,soma_y,i,(unsigned char* &)somaarea); break;
+     case V3D_UINT16: soma_detection((unsigned short int *)data1d, in_sz, c, soma_x,soma_y,i,(unsigned short int* &)somaarea); break;
+     case V3D_FLOAT32: soma_detection((float *)data1d, in_sz, c, soma_x,soma_y,i,(float* &)somaarea);break;
+     default: v3d_msg("Invalid data type. Do nothing."); return;
+     }
+     V3DLONG soma_sz[4];
+     soma_sz[0] = 400; soma_sz[1] = 400; soma_sz[2] = P; soma_sz[3] = sc;
+     saveImage("temp.v3draw", (unsigned char *)somaarea, soma_sz, pixeltype);
+     V3DPluginArgItem arg;
+     V3DPluginArgList input;
+     V3DPluginArgList output;
+
+
+     arg.type = "random";std::vector<char*> args1;
+     args1.push_back("temp.v3draw"); arg.p = (void *) & args1; input<< arg;
+     arg.type = "random";std::vector<char*> args;
+     char channel = '0' + (c-1);
+     string threshold = boost::lexical_cast<string>(th_soma); char* threshold2 =  new char[threshold.length() + 1]; strcpy(threshold2, threshold.c_str());
+     args.push_back(threshold2);args.push_back("1");args.push_back(&channel);args.push_back("1"); arg.p = (void *) & args; input << arg;
+     arg.type = "random";std::vector<char*> args2;args2.push_back("gsdtImage.v3draw"); arg.p = (void *) & args2; output<< arg;
+
+     QString full_plugin_name = "gsdt";
+     QString func_name = "gsdt";
+
+     callback.callPluginFunc(full_plugin_name,func_name, input,output);
+
+     unsigned char * gsdtsoma = 0;
+    // int datatype;
+    // V3DLONG * in_zz = 0;
+
+     char * outimg_file = ((vector<char*> *)(output.at(0).p))->at(0);
+     loadImage(outimg_file, gsdtsoma, in_zz, datatype,0);
+     remove("temp.v3draw");
+     remove("gsdtImage.v3draw");
 
 
 
     void* outimg = 0;
     switch (pixeltype)
     {
-    case V3D_UINT8: AdpThresholding_adpwindow(data1d, in_sz, c,(unsigned char* &)outimg, gsdtdata1d); break;
-    case V3D_UINT16: AdpThresholding_adpwindow((unsigned short int *)data1d, in_sz, c, (unsigned short int* &)outimg,(unsigned short int *)gsdtdata1d); break;
-    case V3D_FLOAT32: AdpThresholding_adpwindow((float *)data1d, in_sz, c, (float* &)outimg,(float *)gsdtdata1d);break;
+    case V3D_UINT8: AdpThresholding_adpwindow(data1d, in_sz, c,(unsigned char* &)outimg, gsdtdata1d,gsdtsoma,soma_x,soma_y); break;
+    case V3D_UINT16: AdpThresholding_adpwindow((unsigned short int *)data1d, in_sz, c, (unsigned short int* &)outimg,(unsigned short int *)gsdtdata1d,(unsigned short int *)gsdtsoma,soma_x,soma_y); break;
+    case V3D_FLOAT32: AdpThresholding_adpwindow((float *)data1d, in_sz, c, (float* &)outimg,(float *)gsdtdata1d,(float *)gsdtsoma,soma_x,soma_y);break;
     default: v3d_msg("Invalid data type. Do nothing."); return;
     }
 
     // display
     Image4DSimple * new4DImage = new Image4DSimple();
     new4DImage->setData((unsigned char *)outimg, N, M, P, 1, pixeltype);
+    //new4DImage->setData((unsigned char *)gsdtdata1d, 400, 400, P, 1, pixeltype);
     v3dhandle newwin = callback.newImageWindow();
     callback.setImage(newwin, new4DImage);
     callback.setImageName(newwin, "3D adaptive enhancement result");
@@ -508,7 +593,9 @@ template <class T> void AdpThresholding_adpwindow(T* data1d,
                                                   V3DLONG *in_sz,
                                                   unsigned int c,
                                                   T* &outimg,
-                                                  T* gsdtdatald)
+                                                  T* gsdtdatald,T* gsdtsoma,
+                                                  int x,
+                                                  int y)
 {
 
 
@@ -519,7 +606,7 @@ template <class T> void AdpThresholding_adpwindow(T* data1d,
          V3DLONG pagesz = N*M*P;
          int Wx,Wy,Wz;
          V3DLONG offsetc = (c-1)*pagesz;
-         int Th_gsdt = 200;
+         int Th_gsdt = 150;
          T *pImage = new T [pagesz];
         if (!pImage)
         {
@@ -531,11 +618,39 @@ template <class T> void AdpThresholding_adpwindow(T* data1d,
             for(V3DLONG i=0; i<pagesz; i++)
                 pImage[i] = 0;
           }
+
+        T *pSoma = new T [pagesz];
+        if (!pSoma)
+       {
+           printf("Fail to allocate memory.\n");
+           return;
+        }
+        else
+        {
+           for(V3DLONG i=0; i<pagesz; i++)
+               pSoma[i] = 0;
+         }
+       int i = 0;
+        for(V3DLONG iz = 0; iz < P; iz++)
+        {
+            V3DLONG offsetk = iz*M*N;
+            for(V3DLONG iy = y-200; iy <  y+200; iy++)
+            {
+                V3DLONG offsetj = iy*N;
+                for(V3DLONG ix = x-200; ix < x+200; ix++)
+                {
+                    pSoma[offsetk + offsetj + ix] = gsdtsoma[i];
+                    i++;
+                }
+            }
+        }
+
            T maxfl = 0;
          //outimg = pImage;
 
         for(V3DLONG iz = 0; iz < P; iz++)
         {
+            printf("Enhancement : %d %% completed \n", iz);
             V3DLONG offsetk = iz*M*N;
             for(V3DLONG iy = 0; iy < M; iy++)
             {
@@ -545,10 +660,11 @@ template <class T> void AdpThresholding_adpwindow(T* data1d,
 
                     T GsdtValue = gsdtdatald[offsetk + offsetj + ix];
                     T PixelValue = data1d[offsetc+offsetk + offsetj + ix];
+                    T SomaValue = pSoma[offsetc+offsetk + offsetj + ix];
                     Wx = (int)round((log(GsdtValue)/log(2)));
                     //printf("%d %d\n",PixelValue,Wx);
 
-                    if (Wx > 0 && PixelValue > 0 && PixelValue < Th_gsdt)
+                    if (Wx > 0 && PixelValue > 0 && SomaValue <Th_gsdt)
                     {
                         Wy = Wx;
                         Wz = Wx*2;
@@ -614,8 +730,9 @@ template <class T> void AdpThresholding_adpwindow(T* data1d,
                 V3DLONG offsetj = iy*N;
                 for(V3DLONG ix = 0; ix < N; ix++)
                 {
-                         T PixelValue = data1d[offsetc+offsetk + offsetj + ix];
-                        if(PixelValue < Th_gsdt)
+                        T SomaValue = pSoma[offsetc+offsetk + offsetj + ix];
+
+                        if(SomaValue < Th_gsdt)
                         {
                             T dataval2 = 255*pImage[offsetk+offsetj+ix]/maxfl;
                             pImage2[offsetk+offsetj+ix] = dataval2;
@@ -628,6 +745,7 @@ template <class T> void AdpThresholding_adpwindow(T* data1d,
 
         }
         outimg = pImage2;
+        return;
 
 }
 int swapthree(float& dummya, float& dummyb, float& dummyc)
@@ -696,4 +814,51 @@ int swapthree(float& dummya, float& dummyb, float& dummyc)
            return 0;
        }
  
+}
+
+template <class T> void soma_detection(T* data1d,
+                                       V3DLONG *in_sz,
+                                       unsigned int c,
+                                       int x,
+                                       int y,
+                                       V3DLONG somasize,
+                                       T* &outimg)
+
+{
+
+
+         V3DLONG N = in_sz[0];
+         V3DLONG M = in_sz[1];
+         V3DLONG P = in_sz[2];
+         V3DLONG pagesz = N*M*P;
+         V3DLONG offsetc = (c-1)*pagesz;
+
+         T *pImage = new T [somasize];
+        if (!pImage)
+        {
+            printf("Fail to allocate memory.\n");
+            return;
+         }
+         else
+         {
+            int i = 0;
+            for(V3DLONG iz = 0; iz < P; iz++)
+            {
+                V3DLONG offsetk = iz*M*N;
+                for(V3DLONG iy = y-200; iy < y+200; iy++)
+                {
+                    V3DLONG offsetj = iy*N;
+                    for(V3DLONG ix = x-200; ix < x+200; ix++)
+                    {
+
+                        T PixelValue = data1d[offsetc+offsetk + offsetj + ix];
+                        pImage[i] = PixelValue;
+                        i++;
+                    }
+                }
+            }
+        }
+
+        outimg = pImage;
+       //if(pImage) {delete [] pImage; pImage = 0;}
 }

@@ -42,7 +42,7 @@ class AdaptiveWindowDialog : public QDialog
 
             if(win_list.size()<1)
             {
-                QMessageBox::information(0, "Adaptive Median", QObject::tr("No image is open."));
+                QMessageBox::information(0, "Adaptive Enhancement", QObject::tr("No image is open."));
                 return;
             }
 
