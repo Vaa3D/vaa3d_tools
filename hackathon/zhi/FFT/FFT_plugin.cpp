@@ -129,11 +129,9 @@ template <class T> void FFT_HP(T* data1d,
          V3DLONG pagesz = N*M*P;
          V3DLONG offsetc = (c-1)*pagesz;
 
-       //  fftw_complex* buf1	= (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * pagesz);
-        // fftw_complex* buf2	= (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * pagesz);
          T *pImage = new T [pagesz];
-        fftw_complex* buf1= new fftw_complex[pagesz];
-        fftw_complex* buf2= new fftw_complex[pagesz];
+        fftwf_complex* buf1= new fftwf_complex[pagesz];
+        fftwf_complex* buf2= new fftwf_complex[pagesz];
         if (!pImage)
         {
             printf("Fail to allocate memory.\n");
@@ -155,7 +153,7 @@ template <class T> void FFT_HP(T* data1d,
                 V3DLONG offsetj = iy*N;
                 for(V3DLONG ix = 0; ix < N; ix++)
                 {
-                       buf1[i][0]	= (double)data1d[offsetc+offsetk + offsetj + ix];;
+                       buf1[i][0]	= (float)data1d[offsetc+offsetk + offsetj + ix];;
                        buf1[i][1]	= 0;
                        i++;
                 }
@@ -165,18 +163,18 @@ template <class T> void FFT_HP(T* data1d,
         }
 
         // Transform to frequency space.
-        fftw_plan pFwd = fftw_plan_dft_3d(N, M, P, buf1, buf2, FFTW_FORWARD, FFTW_ESTIMATE);
-        fftw_execute(pFwd);
-        fftw_destroy_plan(pFwd);
+        fftwf_plan pFwd = fftwf_plan_dft_3d(N, M, P, buf1, buf2, FFTW_FORWARD, FFTW_ESTIMATE);
+        fftwf_execute(pFwd);
+        fftwf_destroy_plan(pFwd);
 
         // Zap the DC value
         buf2[0][0]	= 0;
         buf2[0][1]	= 0;
 
         // Transform back to image space.
-        fftw_plan pBack	= fftw_plan_dft_3d(N, M, P, buf2, buf1, FFTW_BACKWARD, FFTW_ESTIMATE);
-        fftw_execute(pBack);
-        fftw_destroy_plan(pBack);
+        fftwf_plan pBack	= fftwf_plan_dft_3d(N, M, P, buf2, buf1, FFTW_BACKWARD, FFTW_ESTIMATE);
+        fftwf_execute(pBack);
+        fftwf_destroy_plan(pBack);
 
         // Have to scale the output values to get back to the original.
         for(int i = 0; i < pagesz; i++) {
@@ -207,8 +205,8 @@ template <class T> void FFT_HP(T* data1d,
        }
         outimg = pImage;
         // Cleanup.
-        fftw_free(buf1);
-        fftw_free(buf2);
+        fftwf_free(buf1);
+        fftwf_free(buf2);
         return;
 
 }
