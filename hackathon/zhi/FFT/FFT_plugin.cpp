@@ -2,6 +2,8 @@
  * This is a test plugin, you can use it as a demo.
  * 2013-07-29 : by Zhi Zhou 
  */
+
+//last change: by Hanchuan Peng, 2013-08-02 change to single precision fftw also make the menu item more meaningful
  
 #include "v3d_message.h"
 #include <vector>
@@ -24,7 +26,7 @@ template <class T> void FFT_HP(T* data1d,
 QStringList highpass3d_fftw::menulist() const
 {
 	return QStringList() 
-		<<tr("highpass3d_fftw")
+		<<tr("High Pass Filter using FFTW")
 		<<tr("about");
 }
 
@@ -37,14 +39,14 @@ QStringList highpass3d_fftw::funclist() const
 
 void highpass3d_fftw::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
 {
-	if (menu_name == tr("highpass3d_fftw"))
+	if (menu_name == tr("High Pass Filter using FFTW"))
     {
         processImage(callback,parent);
 	}
 	else
 	{
-        v3d_msg(tr("This is a test plugin, you can use it as a demo.."
-			"Developed by Zhi Zhou , 2013-07-29"));
+        v3d_msg(tr("This is a test plugin, you can use it as a demo."
+			"Developed by Zhi Zhou, 2013-07-29"));
 	}
 }
 
@@ -57,9 +59,11 @@ bool highpass3d_fftw::dofunc(const QString & func_name, const V3DPluginArgList &
 
 	if (func_name == tr("highpass3d_fftw"))
 	{
+        v3d_msg("Not implemented.");
 	}
 	else if (func_name == tr("help"))
 	{
+        v3d_msg("Not implemented.");
     }
 	else return false;
 }
@@ -93,6 +97,9 @@ void processImage(V3DPluginCallback2 &callback, QWidget *parent)
      // filter
      V3DLONG in_sz[4];
      in_sz[0] = N; in_sz[1] = M; in_sz[2] = P; in_sz[3] = sc;
+    
+    v3d_msg("Need to add an imput box here for color channel...");
+    
     unsigned int c = 1;
 
     ImagePixelType pixeltype = p4DImage->getDatatype();
