@@ -407,8 +407,8 @@ void processImage2(V3DPluginCallback2 &callback, QWidget *parent)
     unsigned char * gsdtdata1d = 0;
     int datatype;
     V3DLONG * in_zz = 0;
-    loadImage("/local1/data/Staci/L2-3_PyramidalNeuron_2/gsdtImage.v3draw", gsdtdata1d, in_zz, datatype,0);
-    //loadImage("/local1/data/Staci/L2-3_PyramidalNeuron_1/gsdtImage_mean.tif", gsdtdata1d, in_zz, datatype,0);
+    //loadImage("/local1/data/Staci/L2-3_PyramidalNeuron_2/gsdtImage.v3draw", gsdtdata1d, in_zz, datatype,0);
+    loadImage("/local1/data/Staci/L2-3_PyramidalNeuron_1/gsdtImage_mean.tif", gsdtdata1d, in_zz, datatype,0);
 
     /*unsigned char * gsdtdata1d2 = 0;
     int datatype2;

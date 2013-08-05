@@ -1,15 +1,15 @@
-/* FFT_plugin.h
+/* marker_minspanningtree_plugin.h
  * This is a test plugin, you can use it as a demo.
- * 2013-07-29 : by Zhi Zhou 
+ * 2013-08-03 : by Zhi Zhou
  */
  
-#ifndef __FFT_PLUGIN_H__
-#define __FFT_PLUGIN_H__
+#ifndef __MARKER_MINSPANNINGTREE_PLUGIN_H__
+#define __MARKER_MINSPANNINGTREE_PLUGIN_H__
 
 #include <QtGui>
 #include <v3d_interface.h>
 
-class highpass3d_fftw : public QObject, public V3DPluginInterface2_1
+class markertree : public QObject, public V3DPluginInterface2_1
 {
 	Q_OBJECT
 	Q_INTERFACES(V3DPluginInterface2_1);
