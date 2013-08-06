@@ -22,7 +22,7 @@ void processImage(V3DPluginCallback2 &callback, QWidget *parent);
 QStringList markertree::menulist() const
 {
 	return QStringList() 
-        <<tr("MST")
+        <<tr("generate a MST for all the markers")
 		<<tr("about");
 }
 
@@ -36,14 +36,13 @@ QStringList markertree::funclist() const
 
 void markertree::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
 {
-    if (menu_name == tr("MST"))
+    if (menu_name == tr("generate a MST for all the markers"))
 	{
 		processImage(callback,parent);
-	
 	}
 	else
 	{
-		v3d_msg(tr("This is a test plugin, you can use it as a demo.. "
+        v3d_msg(tr("This information display makes no nose, improve it now! "
 			"Developed by Zhi Zhou, 2013-08-03"));
 	}
 }
@@ -165,7 +164,7 @@ void processImage(V3DPluginCallback2 &callback, QWidget *parent)
 	}
 
     fclose(fp);
-		  
+    v3d_msg(QString("You have totally [%1] markers and the computed MST has been saved to the file [marker_MST.swc]").arg(marknum));
     return;
 }
 
