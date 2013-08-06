@@ -52,15 +52,16 @@ void processImage(V3DPluginCallback2 &callback, QWidget *parent)
     v3dhandle curwin = callback.currentImageWindow();
     if (!curwin)
     {
-        QMessageBox::information(0, "", "You don't have any image open in the main window.");
+        v3d_msg("You don't have any image open in the main window.");
         return;
     }
 	
     Image4DSimple* p4DImage = callback.getImage(curwin);
+    QString imgname = callback.getImageName(curwin);
 	
     if (!p4DImage)
     {
-        QMessageBox::information(0, "", "The image pointer is invalid. Ensure your data is valid and try again!");
+        v3d_msg("The image pointer is invalid. Ensure your data is valid and try again!");
         return;
     }
 
@@ -129,8 +130,21 @@ void processImage(V3DPluginCallback2 &callback, QWidget *parent)
 		marktree[indexi][indexj] = 1;
 		pi[indexj] = 1;		
 	}
-	
-    FILE * fp = fopen("marker_MST.swc", "wt");
+	    
+    QString outfilename = imgname + "_marker.swc";
+    if (outfilename.startsWith("http", Qt::CaseInsensitive))
+    {
+        QFileInfo ii(outfilename);
+        outfilename = QDir::home().absolutePath() + "/" + ii.fileName();
+    }
+    
+    v3d_msg(QString("The anticipated output file is [%1]").arg(outfilename));
+    
+    
+    //write the data structure to file. Need further improvement in the futuyre to ensure the integrity and also the convention of the SWC format
+    //writeSWC_file(const QString& filename, const NeuronTree& nt, const QStringList *infostring=0);
+    
+    FILE * fp = fopen(qPrintable(outfilename), "wt");
     if (!fp)
     {
         v3d_msg("Could not open the file to save the neuron.");
@@ -157,14 +171,12 @@ void processImage(V3DPluginCallback2 &callback, QWidget *parent)
                 fprintf(fp, "%ld %d %5.3f %5.3f %5.3f %5.3f %ld\n",
                         2*(i+1), 3, (double)tmpx-1.0, (double)tmpy-1.0, (double)tmpz-1.0,1.0,2*i+1);
                 i++;
-
             }
-
 		}
 	}
 
     fclose(fp);
-    v3d_msg(QString("You have totally [%1] markers and the computed MST has been saved to the file [marker_MST.swc]").arg(marknum));
+    v3d_msg(QString("You have totally [%1] markers for the file [%2] and the computed MST has been saved to the file [%3]").arg(marknum).arg(imgname).arg(outfilename));
     return;
 }
 
@@ -179,13 +191,18 @@ bool markertree::dofunc(const QString & func_name, const V3DPluginArgList & inpu
 
 	if (func_name == tr("func1"))
 	{
+        v3d_msg("To be implemented");
 	}
 	else if (func_name == tr("func2"))
 	{
+        v3d_msg("To be implemented");
 	}
 	else if (func_name == tr("help"))
 	{
+        v3d_msg("To be implemented");
 	}
 	else return false;
+    
+    return true;
 }
 
