@@ -15,9 +15,10 @@ void marker2others(V3DPluginCallback2 &callback, QWidget *parent)
 {
 	v3dhandle curwin = callback.currentImageWindow();
     LandmarkList mlist = callback.getLandmark(curwin);
+    QString imgname = callback.getImageName(curwin);
     if (mlist.isEmpty())
     {
-        v3d_msg("The marker list is empty. Do nothing.");
+        v3d_msg(QString("The marker list of the current image [%1] is empty. Do nothing.").arg(imgname));
         return;
     }
     
@@ -37,26 +38,35 @@ void marker2others(V3DPluginCallback2 &callback, QWidget *parent)
         listNeuron << n;
     }
     
+    QString outfilename = imgname + "_marker.swc";
+    if (outfilename.startsWith("http", Qt::CaseInsensitive))
+    {
+        QFileInfo ii(outfilename);
+        outfilename = QDir::home().absolutePath() + "/" + ii.fileName();
+    }
+    
     QStringList infostr;
-    writeSWC_file(callback.getImageName(curwin)+".swc", nt, &infostr);
-	
+    
+    writeSWC_file(outfilename, nt, &infostr);
+    v3d_msg(QString("The SWC file [%1] has been saved.").arg(outfilename));
+
 	return;
 }
 
 bool marker2others(const V3DPluginArgList & input, V3DPluginArgList & output)
 {
-    v3d_msg("Un-implemented yet.");
+    v3d_msg("Not implemented yet.");
     return true;
 }
 
 void printHelp(V3DPluginCallback2 &callback, QWidget *parent)
 {
-	v3d_msg("This plugin save an image's marker to the SWC format. ");
+	v3d_msg("This plugin converts and saves an image's marker to the SWC format. ");
 }
 
 void printHelp(const V3DPluginArgList & input, V3DPluginArgList & output)
 {
-    v3d_msg("Un-implemented yet.", 0);
+    v3d_msg("Not implemented yet", 0);
     return;
 }
 
@@ -66,7 +76,7 @@ void printHelp(const V3DPluginArgList & input, V3DPluginArgList & output)
 QStringList Marker2OthersPlugin::menulist() const
 {
 	return QStringList()
-		<<tr("marker2others")
+		<<tr("Save markers to SWC format")
 		<<tr("about");
 }
 
@@ -79,7 +89,7 @@ QStringList Marker2OthersPlugin::funclist() const
 
 void Marker2OthersPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
 {
-	if (menu_name == tr("marker2others"))
+	if (menu_name == tr("Save markers to SWC format"))
 	{
 		marker2others(callback,parent);
 	}
