@@ -157,7 +157,7 @@ void processImage(V3DPluginCallback2 &callback, QWidget *parent)
         V3DLONG ye = iy+Ws-1; if(ye>=M-1) ye = M-1;
 
         int count = 0;
-        for(V3DLONG ix = 0; ix <N; ix = ix+Ws-Ws/10)
+        for(V3DLONG ix = 0; ix < N; ix = ix+Ws-Ws/10)
         {
                 V3DLONG xb = ix;
                 V3DLONG xe = ix+Ws-1; if(xe>=N-1) xe = N-1;
@@ -300,10 +300,16 @@ void processImage(V3DPluginCallback2 &callback, QWidget *parent)
                for(int i = 0; i<targetsize_y;i++)
                    target1d_y[i] = data1d_blended_y[i];
                szTar_y[0] = new_sz0; szTar_y[1] = new_sz1; szTar_y[2] = new_sz2; szTar_y[3] = sc;
+              /* Image4DSimple * new4DImage = new Image4DSimple();
+               new4DImage->setData((unsigned char *)target1d_y, new_sz0, new_sz1,new_sz2, 1, pixeltype);
+               v3dhandle newwin = callback.newImageWindow();
+               callback.setImage(newwin, new4DImage);
+               callback.setImageName(newwin, "3D adaptive enhancement result");
+               callback.updateImageWindow(newwin);*/
             }
 
- 	      /* Image4DSimple * new4DImage = new Image4DSimple();
-               new4DImage->setData((unsigned char *)target1d_y, new_sz0, new_sz1,new_sz2, 1, pixeltype);
+               /* Image4DSimple * new4DImage = new Image4DSimple();
+               new4DImage->setData((unsigned char *)target1d, new_sz0, new_sz1,new_sz2, 1, pixeltype);
                v3dhandle newwin = callback.newImageWindow();
                callback.setImage(newwin, new4DImage);
                callback.setImageName(newwin, "3D adaptive enhancement result");
@@ -442,8 +448,8 @@ template <class T> void AdpThresholding_adpwindow(T* data1d,
                 V3DLONG offsetj = iy*N;
                 for(V3DLONG ix = 0; ix < N; ix++)
                 {
-                             T dataval2 = 255*pImage[offsetk+offsetj+ix]/maxfl;
-                            pImage2[offsetk+offsetj+ix] = dataval2;
+                             T dataval2 = 1+254*pImage[offsetk+offsetj+ix]/maxfl;
+                             pImage2[offsetk+offsetj+ix] = dataval2;
 
                 }
 
@@ -697,10 +703,27 @@ int pwi_fusing(SDATATYPE *data1d, SDATATYPE *subject1d, V3DLONG *sz_subject, SDA
                 V3DLONG offsets_j = offsets_k + (j-ty_start)*tx;
                 for(V3DLONG i=tx_start; i<tx_end; i++)
                 {
-                    V3DLONG idx = offset_j + i;
-                    if(data1d[idx]) //p_mask[idx-offset_c]
+                     V3DLONG idx = offset_j + i;
+                    if(data1d[idx])
                     {
-                        data1d[idx] = (SDATATYPE) ( (data1d[idx] + target1d[offsets_j + i - tx_start])/2.0 ); // Avg. Intensity
+                        if(offset[0] > 0)
+                        {
+                            V3DLONG overlap_range = tx - offset[0];
+                            V3DLONG tar_range= i - offset[0]+1;
+                            double tar_ratio = (double)tar_range/overlap_range;
+                            //qDebug("overlap_range %ld tar_range %ld tar_ratio %.4f sub_ratio %.4f", overlap_range, tar_range, tar_ratio, 1-tar_ratio);
+                            data1d[idx] = (SDATATYPE) ( tar_ratio*data1d[idx] + (1-tar_ratio)*target1d[offsets_j + i - tx_start] );
+
+                            //data1d[idx] = (SDATATYPE) ( (data1d[idx] + target1d[offsets_j + i - tx_start])/2.0 );
+                        }else
+                        {
+                            V3DLONG overlap_range = ty - offset[1];
+                            V3DLONG tar_range= j - offset[1]+1;
+                            double tar_ratio = (double)tar_range/overlap_range;
+                            data1d[idx] = (SDATATYPE) ( tar_ratio*data1d[idx] + (1-tar_ratio)*target1d[offsets_j + i - tx_start] );
+
+
+                        }
                     }
                     else
                     {

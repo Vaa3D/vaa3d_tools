@@ -31,6 +31,7 @@ Q_EXPORT_PLUGIN2(Adaptive_Thresholding, adpThresholding);
 void processImage(V3DPluginCallback2 &callback, QWidget *parent);
 void processImage2(V3DPluginCallback2 &callback, QWidget *parent);
 bool processImage(const V3DPluginArgList & input, V3DPluginArgList & output);
+void processImage3(V3DPluginCallback2 &callback, QWidget *parent);
 
 
 template <class T> void AdpThresholding(T* data1d,
@@ -53,6 +54,15 @@ template <class T> void AdpThresholding_adpwindow(T* data1d,
 
 int swapthree(float& dummya, float& dummyb, float& dummyc);
 
+template <class T> void AdpThresholding_adpwindow_v2(T* data1d,
+                    V3DLONG *in_sz,
+                    unsigned int c,
+                    T* &outimg,T* gsdtdata1d,T* gsdtsoma,
+                                                  int x,
+                                                  int y);
+
+int swapthree(float& dummya, float& dummyb, float& dummyc);
+
 template <class T> void soma_detection(T* data1d,
                     V3DLONG *in_sz,
                     unsigned int c,
@@ -66,6 +76,7 @@ QStringList adpThresholding::menulist() const
 	return QStringList() 
         <<tr("Enhancement_fixedWindow")
         <<tr("Enhancement_adpWindow")
+        <<tr("HighlightSoma")
 		<<tr("about");
 }
 
@@ -86,7 +97,13 @@ void adpThresholding::domenu(const QString &menu_name, V3DPluginCallback2 &callb
     {
        processImage2(callback,parent);
 
-    }else
+    }
+    else if(menu_name == tr("HighlightSoma"))
+    {
+       processImage3(callback,parent);
+
+    }
+    else
 	{
         (menu_name == tr("help"));
         v3d_msg(tr("Detect fiber. "
@@ -861,4 +878,222 @@ template <class T> void soma_detection(T* data1d,
 
         outimg = pImage;
        //if(pImage) {delete [] pImage; pImage = 0;}
+}
+
+void processImage3(V3DPluginCallback2 &callback, QWidget *parent)
+{
+    v3dhandle curwin = callback.currentImageWindow();
+    if (!curwin)
+    {
+        QMessageBox::information(0, "", "You don't have any image open in the main window.");
+        return;
+    }
+
+    Image4DSimple* p4DImage = callback.getImage(curwin);
+
+    if (!p4DImage)
+    {
+        QMessageBox::information(0, "", "The image pointer is invalid. Ensure your data is valid and try again!");
+        return;
+    }
+
+    unsigned char* data1d = p4DImage->getRawData();
+    //V3DLONG totalpxls = p4DImage->getTotalBytes();
+    V3DLONG pagesz = p4DImage->getTotalUnitNumberPerChannel();
+
+    V3DLONG N = p4DImage->getXDim();
+    V3DLONG M = p4DImage->getYDim();
+    V3DLONG P = p4DImage->getZDim();
+    V3DLONG sc = p4DImage->getCDim();
+
+    V3DLONG in_sz[4];
+    in_sz[0] = N; in_sz[1] = M; in_sz[2] = P; in_sz[3] = sc;
+
+    ImagePixelType pixeltype = p4DImage->getDatatype();
+    int c = 1;
+    unsigned char * gsdtdata1d = 0;
+    int datatype;
+    V3DLONG * in_zz = 0;
+    loadImage("/local1/data/Staci/L2-3_PyramidalNeuron_1/3D adaptive enhancement result_local.v3draw", gsdtdata1d, in_zz, datatype,0);
+
+    //find local gsdt for soma area
+
+
+    V3DLONG offsetc = (c-1)*pagesz;
+    int soma_x,soma_y;//2901;//2173;
+    int soma_z = 0;//2178;//1926;
+    LandmarkList soma_center = callback.getLandmark(curwin);
+    LocationSimple tmpLocation(0,0,0);
+    tmpLocation = soma_center.at(0);
+    tmpLocation.getCoord(soma_x,soma_y,soma_z);
+
+    printf("Soma is at (%d %d %d)\n\n",soma_x,soma_y,soma_z);
+
+    V3DLONG i = 0;
+    double th_soma = 0;
+
+    for(V3DLONG iz = 0; iz < P; iz++)
+    {
+        double PixelSum = 0;
+        V3DLONG offsetk = iz*M*N;
+        for(V3DLONG iy = soma_y-200; iy <  soma_y+200; iy++)
+        {
+            V3DLONG offsetj = iy*N;
+            for(V3DLONG ix = soma_x-200; ix < soma_x+200; ix++)
+            {
+
+             double PixelVaule = data1d[offsetc + offsetk + offsetj + ix];
+             PixelSum = PixelSum + PixelVaule;
+             i++;
+            }
+        }
+        th_soma = th_soma + PixelSum/(400*400*P);
+    }
+
+  //  printf("threshold is %d %d %d\n\n",th_soma,PixelSum,i);
+
+    void* somaarea = 0;
+     switch (pixeltype)
+     {
+     case V3D_UINT8: soma_detection(data1d, in_sz, c,soma_x,soma_y,i,(unsigned char* &)somaarea); break;
+     case V3D_UINT16: soma_detection((unsigned short int *)data1d, in_sz, c, soma_x,soma_y,i,(unsigned short int* &)somaarea); break;
+     case V3D_FLOAT32: soma_detection((float *)data1d, in_sz, c, soma_x,soma_y,i,(float* &)somaarea);break;
+     default: v3d_msg("Invalid data type. Do nothing."); return;
+     }
+     V3DLONG soma_sz[4];
+     soma_sz[0] = 400; soma_sz[1] = 400; soma_sz[2] = P; soma_sz[3] = sc;
+     saveImage("temp.v3draw", (unsigned char *)somaarea, soma_sz, pixeltype);
+     V3DPluginArgItem arg;
+     V3DPluginArgList input;
+     V3DPluginArgList output;
+
+
+     arg.type = "random";std::vector<char*> args1;
+     args1.push_back("temp.v3draw"); arg.p = (void *) & args1; input<< arg;
+     arg.type = "random";std::vector<char*> args;
+     char channel = '0' + (c-1);
+     string threshold = boost::lexical_cast<string>(th_soma); char* threshold2 =  new char[threshold.length() + 1]; strcpy(threshold2, threshold.c_str());
+     args.push_back(threshold2);args.push_back("1");args.push_back(&channel);args.push_back("1"); arg.p = (void *) & args; input << arg;
+     arg.type = "random";std::vector<char*> args2;args2.push_back("gsdtImage.v3draw"); arg.p = (void *) & args2; output<< arg;
+
+     QString full_plugin_name = "gsdt";
+     QString func_name = "gsdt";
+
+     callback.callPluginFunc(full_plugin_name,func_name, input,output);
+
+     unsigned char * gsdtsoma = 0;
+    // int datatype;
+    // V3DLONG * in_zz = 0;
+
+     char * outimg_file = ((vector<char*> *)(output.at(0).p))->at(0);
+     loadImage(outimg_file, gsdtsoma, in_zz, datatype,0);
+     remove("temp.v3draw");
+     remove("gsdtImage.v3draw");
+
+
+
+    void* outimg = 0;
+    switch (pixeltype)
+    {
+    case V3D_UINT8: AdpThresholding_adpwindow_v2(data1d, in_sz, c,(unsigned char* &)outimg, gsdtdata1d,gsdtsoma,soma_x,soma_y); break;
+    case V3D_UINT16: AdpThresholding_adpwindow_v2((unsigned short int *)data1d, in_sz, c, (unsigned short int* &)outimg,(unsigned short int *)gsdtdata1d,(unsigned short int *)gsdtsoma,soma_x,soma_y); break;
+    case V3D_FLOAT32: AdpThresholding_adpwindow_v2((float *)data1d, in_sz, c, (float* &)outimg,(float *)gsdtdata1d,(float *)gsdtsoma,soma_x,soma_y);break;
+    default: v3d_msg("Invalid data type. Do nothing."); return;
+    }
+
+    // display
+    Image4DSimple * new4DImage = new Image4DSimple();
+    new4DImage->setData((unsigned char *)outimg, N, M, P, 1, pixeltype);
+    //new4DImage->setData((unsigned char *)gsdtdata1d, 400, 400, P, 1, pixeltype);
+    v3dhandle newwin = callback.newImageWindow();
+    callback.setImage(newwin, new4DImage);
+    callback.setImageName(newwin, "3D adaptive enhancement result");
+    callback.updateImageWindow(newwin);
+
+    return;
+}
+
+template <class T> void AdpThresholding_adpwindow_v2(T* data1d,
+                                                  V3DLONG *in_sz,
+                                                  unsigned int c,
+                                                  T* &outimg,
+                                                  T* gsdtdatald,T* gsdtsoma,
+                                                  int x,
+                                                  int y)
+{
+
+         V3DLONG N = in_sz[0];
+         V3DLONG M = in_sz[1];
+         V3DLONG P = in_sz[2];
+         V3DLONG sc = in_sz[3];
+         V3DLONG pagesz = N*M*P;
+         V3DLONG offsetc = (c-1)*pagesz;
+
+         int Th_gsdt = 150;
+
+        T *pSoma = new T [pagesz];
+        if (!pSoma)
+       {
+           printf("Fail to allocate memory.\n");
+           return;
+        }
+        else
+        {
+           for(V3DLONG i=0; i<pagesz; i++)
+               pSoma[i] = 0;
+         }
+       int i = 0;
+        for(V3DLONG iz = 0; iz < P; iz++)
+        {
+            V3DLONG offsetk = iz*M*N;
+            for(V3DLONG iy = y-200; iy <  y+200; iy++)
+            {
+                V3DLONG offsetj = iy*N;
+                for(V3DLONG ix = x-200; ix < x+200; ix++)
+                {
+                    pSoma[offsetk + offsetj + ix] = gsdtsoma[i];
+                    i++;
+                }
+            }
+        }
+
+
+       T *pImage2 = new T [pagesz];
+       if (!pImage2)
+       {
+           printf("Fail to allocate memory.\n");
+           return;
+        }
+        else
+        {
+           for(V3DLONG i=0; i<pagesz; i++)
+               pImage2[i] = 0;
+         }
+           for(V3DLONG iz = 0; iz < P; iz++)
+            {
+                printf("zhi zhou is %d\n",iz);
+                V3DLONG offsetk = iz*M*N;
+                for(V3DLONG iy = 0; iy < M; iy++)
+                {
+                    V3DLONG offsetj = iy*N;
+                    for(V3DLONG ix = 0; ix < N; ix++)
+                    {
+                            T SomaValue = pSoma[offsetc+offsetk + offsetj + ix];
+
+                            if(SomaValue < Th_gsdt)
+                            {
+                                T dataval2 = gsdtdatald[offsetk+offsetj+ix];
+                                pImage2[offsetk+offsetj+ix] = dataval2;
+                            }else
+                                pImage2[offsetk+offsetj+ix] =  data1d[offsetk+offsetj+ix];
+                    }
+
+
+                }
+
+            }
+
+        outimg = pImage2;
+        return;
+
 }
