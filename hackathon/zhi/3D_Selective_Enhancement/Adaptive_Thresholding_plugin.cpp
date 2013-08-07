@@ -914,7 +914,7 @@ void processImage3(V3DPluginCallback2 &callback, QWidget *parent)
     unsigned char * gsdtdata1d = 0;
     int datatype;
     V3DLONG * in_zz = 0;
-    loadImage("/local1/data/Staci/L2-3_PyramidalNeuron_1/3D adaptive enhancement result_local.v3draw", gsdtdata1d, in_zz, datatype,0);
+    loadImage("/local1/data/Staci/L2-3_PyramidalNeuron_2/blended.v3draw", gsdtdata1d, in_zz, datatype,0);
 
     //find local gsdt for soma area
 
