@@ -135,10 +135,12 @@ void processImage(V3DPluginCallback2 &callback, QWidget *parent)
 
 
     int c = 1;
-    V3DLONG Ws = 60;
+    V3DLONG Ws = 100;
     int county = 0;
     unsigned char* subject1d_y = NULL;
     unsigned char* target1d_y = NULL;
+    V3DLONG szSub_y[4];
+    V3DLONG szTar_y[4];
 
     for(V3DLONG iy = 0; iy < M; iy = iy+Ws-Ws/10)
     {
@@ -266,7 +268,7 @@ void processImage(V3DPluginCallback2 &callback, QWidget *parent)
                 target1d_y = new unsigned char [targetsize_y];
                 for(int i = 0; i<targetsize_y;i++)
                     target1d_y[i] = target1d[i];
-                szTar[0] = new_sz0; szTar[1] = new_sz1; szTar[2] = P; szTar[3] = sc;
+                szTar_y[0] = new_sz0; szTar_y[1] = new_sz1; szTar_y[2] = P; szTar_y[3] = sc;
 
             }else
             {
@@ -274,41 +276,37 @@ void processImage(V3DPluginCallback2 &callback, QWidget *parent)
                subject1d_y = new unsigned char [subjectsize_y];
                for(int i = 0; i<subjectsize_y;i++)
                    subject1d_y[i] = target1d[i];
-               szSub[0] = new_sz0; szSub[1] = new_sz1; szSub[2] = P; szSub[3] = sc;
-
-               Image4DSimple * new4DImage = new Image4DSimple();
-               new4DImage->setData((unsigned char *)subject1d_y, new_sz0, new_sz1,new_sz2, 1, pixeltype);
-               v3dhandle newwin = callback.newImageWindow();
-               callback.setImage(newwin, new4DImage);
-               callback.setImageName(newwin, "3D adaptive enhancement result");
-               callback.updateImageWindow(newwin);
-
-
+               szSub_y[0] = new_sz0; szSub_y[1] = new_sz1; szSub_y[2] = P; szSub_y[3] = sc;
 
                V3DLONG *offset = new V3DLONG [3];
                offset[0] = 0;
                offset[1] = yb;
                offset[2] = 0;
-               new_sz0 = szSub[0];
+               new_sz0 = szSub_y[0];
                new_sz1 = ye+1;
-               new_sz2 = szSub[2];
+               new_sz2 = szSub_y[2];
 
                V3DLONG totalplxs = sc*new_sz0*new_sz1*new_sz2;
                unsigned char* data1d_blended_y = NULL;
                data1d_blended_y = new unsigned char [totalplxs];
                memset(data1d_blended_y, 0, sizeof(unsigned char)*totalplxs);
                int success;
-               success = pwi_fusing<unsigned char>((unsigned char *)data1d_blended_y, (unsigned char *)subject1d_y, szSub, (unsigned char *)target1d_y, szTar, offset, new_sz0, new_sz1, new_sz2);
+               success = pwi_fusing<unsigned char>((unsigned char *)data1d_blended_y, (unsigned char *)subject1d_y, szSub_y, (unsigned char *)target1d_y, szTar_y, offset, new_sz0, new_sz1, new_sz2);
 
 
                V3DLONG targetsize_y = new_sz0*new_sz1*new_sz2;
                target1d_y = new unsigned char [targetsize_y];
                for(int i = 0; i<targetsize_y;i++)
                    target1d_y[i] = data1d_blended_y[i];
-               szTar[0] = new_sz0; szTar[1] = new_sz1; szTar[2] = new_sz2; szTar[3] = sc;
+               szTar_y[0] = new_sz0; szTar_y[1] = new_sz1; szTar_y[2] = new_sz2; szTar_y[3] = sc;
             }
 
-
+ 	      /* Image4DSimple * new4DImage = new Image4DSimple();
+               new4DImage->setData((unsigned char *)target1d_y, new_sz0, new_sz1,new_sz2, 1, pixeltype);
+               v3dhandle newwin = callback.newImageWindow();
+               callback.setImage(newwin, new4DImage);
+               callback.setImageName(newwin, "3D adaptive enhancement result");
+               callback.updateImageWindow(newwin);*/
 
 
 
@@ -321,13 +319,13 @@ void processImage(V3DPluginCallback2 &callback, QWidget *parent)
     //display
 
     // display
-   /* Image4DSimple * new4DImage = new Image4DSimple();
-    new4DImage->setData((unsigned char *)localEnahancedArea, block_sz[0], block_sz[1], block_sz[2], 1, pixeltype);
+    Image4DSimple * new4DImage = new Image4DSimple();
+    new4DImage->setData((unsigned char *)target1d_y,szTar_y[0], szTar_y[1], szTar_y[2], 1, pixeltype);
     v3dhandle newwin = callback.newImageWindow();
     callback.setImage(newwin, new4DImage);
-    callback.setImageName(newwin, "3D adaptive enhancement result");
+    callback.setImageName(newwin, "Local adaptive enhancement result");
     callback.updateImageWindow(newwin);
-    return;*/
+    return;
 
         return;
 }
