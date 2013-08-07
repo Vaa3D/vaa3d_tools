@@ -1,3 +1,5 @@
+//last changed by Hanchuan Peng, 2013-08-06. fix a return value bug and also add some v3d_msg calls to indicate where the code should be added
+
 #ifndef __CREATE_PLUGIN_H__
 #define __CREATE_PLUGIN_H__
 #include <fstream>
@@ -97,11 +99,13 @@ void create_plugin_cpp(PluginTemplate & pt)
 	ofs<<"{"<<endl;
 	ofs<<"\tif (menu_name == tr(\""<<pt.MENUS[0]<<"\"))"<<endl;
 	ofs<<"\t{"<<endl;
+    ofs<<"\t\tv3d_msg(\"To be implemented.\");"<<endl;
 	ofs<<"\t}"<<endl;
 	for(int i = 1; i < pt.MENUS.size(); i++)
 	{
 		ofs<<"\telse if (menu_name == tr(\""<<pt.MENUS[i]<<"\"))"<<endl;
 		ofs<<"\t{"<<endl;
+  	    ofs<<"\t\tv3d_msg(\"To be implemented.\");"<<endl;
 		ofs<<"\t}"<<endl;
 	}
 	ofs<<"\telse"<<endl;
@@ -120,14 +124,17 @@ void create_plugin_cpp(PluginTemplate & pt)
 	ofs<<endl;
 	ofs<<"\tif (func_name == tr(\""<<pt.FUNCS[0]<<"\"))"<<endl;
 	ofs<<"\t{"<<endl;
+	ofs<<"\t\tv3d_msg(\"To be implemented.\");"<<endl;
 	ofs<<"\t}"<<endl;
 	for(int i = 1; i < pt.FUNCS.size(); i++)
 	{
 		ofs<<"\telse if (func_name == tr(\""<<pt.FUNCS[i]<<"\"))"<<endl;
 		ofs<<"\t{"<<endl;
+  	    ofs<<"\t\tv3d_msg(\"To be implemented.\");"<<endl;
 		ofs<<"\t}"<<endl;
 	}
 	ofs<<"\telse return false;"<<endl;
+	ofs<<endl<<"\treturn true;"<<endl;
 	ofs<<"}"<<endl;
 	ofs<<""<<endl;
 	ofs.close();
