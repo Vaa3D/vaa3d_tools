@@ -11,6 +11,8 @@ Q_EXPORT_PLUGIN2(extractZSlices, extractZSlices);
  
 
 bool parseFormatString(QString t, V3DLONG & startnum, V3DLONG & increment, V3DLONG & endnum, V3DLONG sz2);
+bool extract_z_slices(Image4DSimple * subject, Image4DSimple & outImage,
+             V3DLONG startnum, V3DLONG increment, V3DLONG endnum);
 
 QStringList extractZSlices::menulist() const
 {
@@ -67,48 +69,10 @@ void extractZSlices::domenu(const QString &menu_name, V3DPluginCallback2 &callba
 
         //copy data
         V3DLONG sz2_new = ceil(double(endnum-startnum+1)/increment);
-        //qDebug() << "sz2_new=" << sz2_new << "end=" << endnum << "start=" << startnum << "incre=" << increment;
 
         Image4DSimple p4DImage;
-        p4DImage.createBlankImage(sz0, sz1, sz2_new, sz3, subject->getDatatype());
-
-		V3DLONG k=0, c, pagesz;
-        for (V3DLONG i=startnum, k=0; i<=endnum, k<sz2_new; i+=increment, k++)
-        {
-            switch (subject->getDatatype())
-            {
-            case V3D_UINT8:
-				pagesz = sz0*sz1*subject->getUnitBytes();
-                for (c=0;c<sz3;c++)
-                {
-                    //printf("c=%d i=%d k=%d\n", c, i, k);
-            		unsigned char *dst = p4DImage.getRawDataAtChannel(c) + k*pagesz;
-            		unsigned char *src = subject->getRawDataAtChannel(c) + i*pagesz;
-	            	memcpy(dst, src, pagesz);
-                }
-                break;
-            case V3D_UINT16:
-				pagesz = sz0*sz1*subject->getUnitBytes();
-                for (c=0;c<sz3;c++)
-                {
-            		unsigned char *dst = p4DImage.getRawDataAtChannel(c) + k*pagesz;
-            		unsigned char *src = subject->getRawDataAtChannel(c) + i*pagesz;
-            		memcpy(dst, src, pagesz);
-                }
-            	break;
-            case V3D_FLOAT32:
-				pagesz = sz0*sz1*subject->getUnitBytes();
-                for (c=0;c<sz3;c++)
-                {
-            		unsigned char *dst = p4DImage.getRawDataAtChannel(c) + k*pagesz;
-            		unsigned char *src = subject->getRawDataAtChannel(c) + i*pagesz;
-            		memcpy(dst, src, pagesz);
-                }
-                break;
-            default: v3d_msg("You should never see this. The data is not returned meaningfully. Check your data and code.");
-                break;
-            }
-        }
+        if (!extract_z_slices(subject, p4DImage, startnum, increment, endnum))
+            return;
 
         //==
 
@@ -192,5 +156,67 @@ bool parseFormatString(QString t, V3DLONG & startnum, V3DLONG & increment, V3DLO
     }
 
     qDebug() << " start=" << startnum << " increment=" << increment << " end=" << endnum;
+    return true;
+}
+
+
+bool extract_z_slices(Image4DSimple * subject, Image4DSimple & outImage,
+             V3DLONG startnum, V3DLONG increment, V3DLONG endnum)
+{
+    if (!subject || !subject->valid())
+        return false;
+
+    V3DLONG sz0 = subject->getXDim();
+    V3DLONG sz1 = subject->getYDim();
+    V3DLONG sz2 = subject->getZDim();
+    V3DLONG sz3 = subject->getCDim();
+
+    //copy data
+    V3DLONG sz2_new = ceil(double(endnum-startnum+1)/increment);
+    //qDebug() << "sz2_new=" << sz2_new << "end=" << endnum << "start=" << startnum << "incre=" << increment;
+
+    outImage.createBlankImage(sz0, sz1, sz2_new, sz3, subject->getDatatype());
+    if (!outImage.valid())
+        return false;
+
+    V3DLONG k=0, c, pagesz;
+    for (V3DLONG i=startnum, k=0; i<=endnum, k<sz2_new; i+=increment, k++)
+    {
+        switch (subject->getDatatype())
+        {
+        case V3D_UINT8:
+            pagesz = sz0*sz1*subject->getUnitBytes();
+            for (c=0;c<sz3;c++)
+            {
+                //printf("c=%d i=%d k=%d\n", c, i, k);
+                unsigned char *dst = outImage.getRawDataAtChannel(c) + k*pagesz;
+                unsigned char *src = subject->getRawDataAtChannel(c) + i*pagesz;
+                memcpy(dst, src, pagesz);
+            }
+            break;
+        case V3D_UINT16:
+            pagesz = sz0*sz1*subject->getUnitBytes();
+            for (c=0;c<sz3;c++)
+            {
+                unsigned char *dst = outImage.getRawDataAtChannel(c) + k*pagesz;
+                unsigned char *src = subject->getRawDataAtChannel(c) + i*pagesz;
+                memcpy(dst, src, pagesz);
+            }
+            break;
+        case V3D_FLOAT32:
+            pagesz = sz0*sz1*subject->getUnitBytes();
+            for (c=0;c<sz3;c++)
+            {
+                unsigned char *dst = outImage.getRawDataAtChannel(c) + k*pagesz;
+                unsigned char *src = subject->getRawDataAtChannel(c) + i*pagesz;
+                memcpy(dst, src, pagesz);
+            }
+            break;
+        default: v3d_msg("You should never see this. The data is not returned meaningfully. Check your data and code.");
+            return false;
+            break;
+        }
+    }
+
     return true;
 }
