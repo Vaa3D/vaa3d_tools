@@ -66,7 +66,9 @@ void extractZSlices::domenu(const QString &menu_name, V3DPluginCallback2 &callba
         QString m_InputFileName = callback.getImageName(curwin);
 
         //copy data
-        V3DLONG sz2_new = ceil(double(endnum-startnum+1))/increment;
+        V3DLONG sz2_new = ceil(double(endnum-startnum+1)/increment);
+        //qDebug() << "sz2_new=" << sz2_new << "end=" << endnum << "start=" << startnum << "incre=" << increment;
+
         Image4DSimple p4DImage;
         p4DImage.createBlankImage(sz0, sz1, sz2_new, sz3, subject->getDatatype());
 
@@ -79,7 +81,7 @@ void extractZSlices::domenu(const QString &menu_name, V3DPluginCallback2 &callba
 				pagesz = sz0*sz1*subject->getUnitBytes();
                 for (c=0;c<sz3;c++)
                 {
-                printf("c=%d i=%d k=%d\n", c, i, k);
+                    //printf("c=%d i=%d k=%d\n", c, i, k);
             		unsigned char *dst = p4DImage.getRawDataAtChannel(c) + k*pagesz;
             		unsigned char *src = subject->getRawDataAtChannel(c) + i*pagesz;
 	            	memcpy(dst, src, pagesz);
@@ -123,7 +125,7 @@ void extractZSlices::domenu(const QString &menu_name, V3DPluginCallback2 &callba
 	}
 	else
 	{
-		v3d_msg(tr("A program to extract selected Z slices. "
+        v3d_msg(tr("A program to extract selected Z slices and export to an image stack. "
 			"Developed by Hanchuan Peng, 2013-08-05"));
 	}
 }
