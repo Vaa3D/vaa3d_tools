@@ -71,7 +71,7 @@ void extractZSlices::domenu(const QString &menu_name, V3DPluginCallback2 &callba
         p4DImage.createBlankImage(sz0, sz1, sz2_new, sz3, subject->getDatatype());
 
 		V3DLONG k=0, c, pagesz;
-        for (V3DLONG i=startnum, k=0; i<endnum; i+=increment, k++)
+        for (V3DLONG i=startnum, k=0; i<=endnum, k<sz2_new; i+=increment, k++)
         {
             switch (subject->getDatatype())
             {
