@@ -110,6 +110,7 @@ void processImage(V3DPluginCallback2 &callback, QWidget *parent)
     ImagePixelType pixeltype = p4DImage->getDatatype();
 
     V3DLONG in_sz[4];
+    sc = 1;
     in_sz[0] = N; in_sz[1] = M; in_sz[2] = P; in_sz[3] = sc;
 
     V3DLONG i = 0;
@@ -135,7 +136,7 @@ void processImage(V3DPluginCallback2 &callback, QWidget *parent)
 
 
     int c = 1;
-    V3DLONG Ws = 100;
+    V3DLONG Ws = 1000;
     int county = 0;
     unsigned char* subject1d_y = NULL;
     unsigned char* target1d_y = NULL;

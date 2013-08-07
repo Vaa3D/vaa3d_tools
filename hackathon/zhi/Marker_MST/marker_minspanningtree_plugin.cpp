@@ -6,6 +6,8 @@
 #include "v3d_message.h"
 #include <vector>
 #include "marker_minspanningtree_plugin.h"
+#include "basic_surf_objs.h"
+
 #include <iostream>
 
 
@@ -42,8 +44,7 @@ void markertree::domenu(const QString &menu_name, V3DPluginCallback2 &callback, 
 	}
 	else
 	{
-        v3d_msg(tr("This information display makes no nose, improve it now! "
-			"Developed by Zhi Zhou, 2013-08-03"));
+        v3d_msg(tr("Developed by Zhi Zhou, 2013-08-03"));
 	}
 }
 
@@ -69,13 +70,16 @@ void processImage(V3DPluginCallback2 &callback, QWidget *parent)
 	LandmarkList listLandmarks = callback.getLandmark(curwin);
 	LocationSimple tmpLocation(0,0,0);
 	int marknum = listLandmarks.count();
+    if(marknum ==0)
+    {
+        v3d_msg("No markers in the current image, please double check.");
+        return;
+    }
 	double** markEdge = new double*[marknum];
-	int** marktree = new int*[marknum];
 	for(int i = 0; i < marknum; i++)
 	{
 		markEdge[i] = new double[marknum];
-		marktree[i] = new int[marknum];
-		
+
 	}
 
 	
@@ -91,91 +95,92 @@ void processImage(V3DPluginCallback2 &callback, QWidget *parent)
 			tmpLocation = listLandmarks.at(j);
 			tmpLocation.getCoord(tmpx,tmpy,tmpz);
 			markEdge[i][j] = sqrt(pow(x1-tmpx,2)+pow(y1-tmpy,2)+pow(z1-tmpz,2));
-			marktree[i][j] = 0;
 		}
 	}
-    /*for(int rowCnt = 0; rowCnt < marknum; rowCnt++)
-	{
-		for(int colCnt = 0; colCnt < marknum; colCnt++)
-		{
-			printf("%.2f  ",markEdge[rowCnt][colCnt]);
-		}
-		cout << endl;
-    }*/
 	
-	int* pi = new int[marknum];
-	for(int i = 0; i< marknum;i++)
-		pi[i] = 0;
-	pi[0] = 1;
-	int indexi,indexj;
-	for(int loop = 0; loop<marknum;loop++)
-	{
-		double min = INF;
-		  for(int i = 0; i<marknum; i++)
-		  {
-			if (pi[i] == 1)
-			{
-				for(int j = 0;j<marknum; j++)
-				{
-					if(pi[j] == 0 && min > markEdge[i][j])
-					{
-						min = markEdge[i][j];
-						indexi = i;
-						indexj = j;
-					}
-				}
-			}
-				
-		  }
-		marktree[indexi][indexj] = 1;
-		pi[indexj] = 1;		
-	}
-	    
+    //NeutronTree structure
+    NeuronTree marker_MST;
+    QList <NeuronSWC> listNeuron;
+    QHash <int, int>  hashNeuron;
+    listNeuron.clear();
+    hashNeuron.clear();
+
+    //set node
+
+    NeuronSWC S;
+    tmpLocation = listLandmarks.at(0);
+    tmpLocation.getCoord(tmpx,tmpy,tmpz);
+
+    S.n 	= 1;
+    S.type 	= 7;
+    S.x 	= tmpx;
+    S.y 	= tmpy;
+    S.z 	= tmpz;
+    S.r 	= 1;
+    S.pn 	= -1;
+    listNeuron.append(S);
+    hashNeuron.insert(S.n, listNeuron.size()-1);
+
+        int* pi = new int[marknum];
+        for(int i = 0; i< marknum;i++)
+            pi[i] = 0;
+        pi[0] = 1;
+        int indexi,indexj;
+        for(int loop = 0; loop<marknum;loop++)
+        {
+            double min = INF;
+              for(int i = 0; i<marknum; i++)
+              {
+                if (pi[i] == 1)
+                {
+                    for(int j = 0;j<marknum; j++)
+                    {
+                        if(pi[j] == 0 && min > markEdge[i][j])
+                        {
+                            min = markEdge[i][j];
+                            indexi = i;
+                            indexj = j;
+                        }
+                    }
+                }
+
+              }
+              if(indexi>=0)
+              {
+                tmpLocation = listLandmarks.at(indexj);
+                tmpLocation.getCoord(tmpx,tmpy,tmpz);
+                S.n 	= indexj+1;
+                S.type 	= 7;
+                S.x 	= tmpx;
+                S.y 	= tmpy;
+                S.z 	= tmpz;
+                S.r 	= 1;
+                S.pn 	= indexi+1;
+                listNeuron.append(S);
+                hashNeuron.insert(S.n, listNeuron.size()-1);
+
+              }else
+              {
+                  break;
+              }
+            pi[indexj] = 1;
+            indexi = -1;
+            indexj = -1;
+        }
+    marker_MST.n = -1;
+    marker_MST.on = true;
+    marker_MST.listNeuron = listNeuron;
+    marker_MST.hashNeuron = hashNeuron;
+
+
     QString outfilename = imgname + "_marker.swc";
     if (outfilename.startsWith("http", Qt::CaseInsensitive))
     {
         QFileInfo ii(outfilename);
         outfilename = QDir::home().absolutePath() + "/" + ii.fileName();
     }
-    
-    v3d_msg(QString("The anticipated output file is [%1]").arg(outfilename));
-    
-    
-    //write the data structure to file. Need further improvement in the futuyre to ensure the integrity and also the convention of the SWC format
-    //writeSWC_file(const QString& filename, const NeuronTree& nt, const QStringList *infostring=0);
-    
-    FILE * fp = fopen(qPrintable(outfilename), "wt");
-    if (!fp)
-    {
-        v3d_msg("Could not open the file to save the neuron.");
-        return;
-    }
-
-    fprintf(fp, "##n,type,x,y,z,radius,parent\n");
-
-    long i = 0;
-    long cons = -1;
-	for(int rowCnt = 0; rowCnt < marknum; rowCnt++)
-	{
-		for(int colCnt = 0; colCnt < marknum; colCnt++)
-		{
-            if(marktree[rowCnt][colCnt]==1)
-            {
-                tmpLocation = listLandmarks.at(rowCnt);
-                tmpLocation.getCoord(tmpx,tmpy,tmpz);
-                fprintf(fp, "%ld %d %5.3f %5.3f %5.3f %5.3f %ld\n",
-                        2*i+1, 3, (double)tmpx-1.0, (double)tmpy-1.0, (double)tmpz-1.0,1.0,cons);
-
-                tmpLocation = listLandmarks.at(colCnt);
-                tmpLocation.getCoord(tmpx,tmpy,tmpz);
-                fprintf(fp, "%ld %d %5.3f %5.3f %5.3f %5.3f %ld\n",
-                        2*(i+1), 3, (double)tmpx-1.0, (double)tmpy-1.0, (double)tmpz-1.0,1.0,2*i+1);
-                i++;
-            }
-		}
-	}
-
-    fclose(fp);
+    //v3d_msg(QString("The anticipated output file is [%1]").arg(outfilename));
+    writeSWC_file(outfilename,marker_MST);
     v3d_msg(QString("You have totally [%1] markers for the file [%2] and the computed MST has been saved to the file [%3]").arg(marknum).arg(imgname).arg(outfilename));
     return;
 }
