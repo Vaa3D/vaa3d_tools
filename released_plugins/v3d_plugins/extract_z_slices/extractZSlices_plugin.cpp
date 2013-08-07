@@ -103,12 +103,46 @@ bool extractZSlices::dofunc(const QString & func_name, const V3DPluginArgList & 
 
 	if (func_name == tr("subzslices2stack"))
 	{
-		v3d_msg("to implement");
+        if (infiles.size()<1 || inparas.size()<1 || output.size()<1 )
+        {
+            v3d_msg("No input image or no parameters or no output image is specified.");
+            return false;
+        }
+
+        Image4DSimple inimg, outimg;
+
+        inimg.loadImage(infiles.at(0));
+        if (!inimg.valid())
+        {
+            v3d_msg("Fail to load the specified input image.");
+            return false;
+        }
+
+        V3DLONG startnum, increment, endnum;
+        QString paratext = inparas.at(0);
+        if (!paratext.isEmpty())
+        {
+            if (!parseFormatString(paratext, startnum, increment, endnum, inimg.getZDim()))
+            {
+                v3d_msg("The format of the string is not valid. Do nothing.");
+                return false;
+            }
+        }
+        else
+            return false;
+
+        if (!extract_z_slices(&inimg, outimg, startnum, increment, endnum))
+            return false;
+
+        if (!outimg.saveImage(outfiles.at(0)))
+            return false;
 	}
 	else if (func_name == tr("help"))
 	{
-		v3d_msg("to implement");
-	}
+        v3d_msg("This plugin extracts a subset of slices and export to a stack (and save to a file)", 0);
+        v3d_msg("Usage: v3d -x dll_name -f subzslices2stack -i input_image_file -p parameters_string -o output_image_file", 0);
+        v3d_msg("parameters_string: Range (startslice:increment:endslicenum)    (startslice is 1-based, endslicenum can be 'e', increment can be 1,2,...)    (example: 1:2:e)", 0);
+    }
 	else return false;
 	
 	return true;
