@@ -114,7 +114,7 @@ bool extractZSlices::dofunc(const QString & func_name, const V3DPluginArgList & 
         inimg.loadImage(infiles.at(0));
         if (!inimg.valid())
         {
-            v3d_msg("Fail to load the specified input image.");
+            v3d_msg("Fail to load the specified input image.", 0);
             return false;
         }
 
