@@ -26,7 +26,7 @@ void ConvertFileFormatPlugin::domenu(const QString &menu_name, V3DPluginCallback
 {
     if (menu_name == tr("about"))
 	{
-        v3d_msg(tr("Convert a few file formats, e.g. v3draw to tif and vice versa. This plugin is most useful for command line use."
+        v3d_msg(tr("Convert a few file formats, e.g. v3draw to tif and vice versa. This plugin is most useful for command line use. "
 			"Developed by Hanchuan Peng, 2012-2013"));
 	}
 }
@@ -40,13 +40,16 @@ bool ConvertFileFormatPlugin::dofunc(const QString & func_name, const V3DPluginA
 
 	if (func_name == tr("convert_format"))
 	{
-        if (infiles.size()<1 || output.size()<1 )
+        if (infiles.size()<1 || outfiles.size()<1 )
         {
             v3d_msg("No input image or output image has been specified.");
             return false;
         }
 
-        Image4DSimple inimg, outimg;
+        qDebug() << "infile=[" << infiles.at(0) << "]";
+        qDebug() << "outfile=[" << outfiles.at(0) << "]";
+
+        Image4DSimple inimg;
 
         inimg.loadImage(infiles.at(0));
         if (!inimg.valid())
@@ -55,7 +58,7 @@ bool ConvertFileFormatPlugin::dofunc(const QString & func_name, const V3DPluginA
             return false;
         }
 
-        if (!outimg.saveImage(outfiles.at(0)))
+        if (!inimg.saveImage(outfiles.at(0)))
             return false;
     }
 	else if (func_name == tr("help"))
