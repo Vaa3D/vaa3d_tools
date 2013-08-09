@@ -3,10 +3,8 @@
  */
 
 // Adapted and upgraded to add dofunc() by Jianlong Zhou, 2012-04-08
+// last edit. by Hanchuan Peng, 2013-08-09 to add the pbd file saving
 
-
-
-//
 #include <QtGui>
 
 #include <cmath>
@@ -17,6 +15,8 @@
 
 #include "stackutil.h"
 #include "datatypecnvrt.h"
+
+#define _ALLOW_WORKMODE_MENU_
 
 
 using namespace std;
@@ -29,9 +29,9 @@ Q_EXPORT_PLUGIN2(datatypeconvert, DTCPlugin);
 int  datatype_converting(V3DPluginCallback2 &callback, QWidget *parent);
 bool datatype_converting(const V3DPluginArgList & input, V3DPluginArgList & output);
 
-// func convering kernel
+// func converting
 template <class Tpre, class Tpost>
-void convering(void *pre1d, Tpost *pPost, V3DLONG imsz, ImagePixelType v3d_dt);
+void converting(void *pre1d, Tpost *pPost, V3DLONG imsz, ImagePixelType v3d_dt);
 
 
 //plugin funcs
@@ -71,9 +71,10 @@ bool DTCPlugin::dofunc(const QString &func_name, const V3DPluginArgList &input, 
 	}
 	else if(func_name == tr("help"))
 	{
-		cout<<"Usage : v3d -x datatypeconvert -f dtc -i <inimg_file> -o <outimg_file> -p <tar_dt>"<<endl;
+        cout<<"Convert the data type of an image file and save to another."<<endl;
+        cout<<"Usage : v3d -x datatypeconvert -f dtc -i <inimg_file> -o <outimg_file> -p <tar_dt>"<<endl;
 		cout<<endl;
-		cout<<"tar_dt   datatype to be converted to: 1 for V3D_UINT8, 2 for V3D_UINT16, 4 for V3D_FLOAT32 "<<endl;
+        cout<<"tar_dt   target datatype to be converted to: 1 for V3D_UINT8, 2 for V3D_UINT16, 4 for V3D_FLOAT32 "<<endl;
 		cout<<endl;
 		cout<<"e.g. v3d -x datatypeconvert -f dtc -i input.raw -o output.raw -p 1"<<endl;
 		cout<<endl;
@@ -135,15 +136,15 @@ bool datatype_converting(const V3DPluginArgList & input, V3DPluginArgList & outp
 
 		if(sub_dt == 1)
 		{
-			convering<unsigned char, unsigned char>((unsigned char *)subject1d, data1d, sz_sub, V3D_UINT8);
+            converting<unsigned char, unsigned char>((unsigned char *)subject1d, data1d, sz_sub, V3D_UINT8);
 		}
 		else if(sub_dt == 2)
 		{
-			convering<unsigned short, unsigned char>((unsigned short *)subject1d, data1d, sz_sub, V3D_UINT8);
+            converting<unsigned short, unsigned char>((unsigned short *)subject1d, data1d, sz_sub, V3D_UINT8);
 		}
 		else if(sub_dt == 4)
 		{
-			convering<float, unsigned char>((float *)subject1d, data1d, sz_sub, V3D_UINT8);
+            converting<float, unsigned char>((float *)subject1d, data1d, sz_sub, V3D_UINT8);
 		}
 
           // save image
@@ -167,15 +168,15 @@ bool datatype_converting(const V3DPluginArgList & input, V3DPluginArgList & outp
 		//
 		if(sub_dt == 1)
 		{
-			convering<unsigned char, unsigned short>((unsigned char *)subject1d, data1d, sz_sub, V3D_UINT16);
+            converting<unsigned char, unsigned short>((unsigned char *)subject1d, data1d, sz_sub, V3D_UINT16);
 		}
 		else if(sub_dt == 2)
 		{
-			convering<unsigned short, unsigned short>((unsigned short *)subject1d, data1d, sz_sub, V3D_UINT16);
+            converting<unsigned short, unsigned short>((unsigned short *)subject1d, data1d, sz_sub, V3D_UINT16);
 		}
 		else if(sub_dt == 4)
 		{
-			convering<float, unsigned short>((float *)subject1d, data1d, sz_sub, V3D_UINT16);
+            converting<float, unsigned short>((float *)subject1d, data1d, sz_sub, V3D_UINT16);
 		}
 
           // save image
@@ -199,15 +200,15 @@ bool datatype_converting(const V3DPluginArgList & input, V3DPluginArgList & outp
 		//
 		if(sub_dt == 1)
 		{
-			convering<unsigned char, float>((unsigned char *)subject1d, data1d, sz_sub, V3D_FLOAT32);
+            converting<unsigned char, float>((unsigned char *)subject1d, data1d, sz_sub, V3D_FLOAT32);
 		}
 		else if(sub_dt == 2)
 		{
-			convering<unsigned short, float>((unsigned short *)subject1d, data1d, sz_sub, V3D_FLOAT32);
+            converting<unsigned short, float>((unsigned short *)subject1d, data1d, sz_sub, V3D_FLOAT32);
 		}
 		else if(sub_dt == 4)
 		{
-			convering<float, float>((float *)subject1d, data1d, sz_sub, V3D_FLOAT32);
+            converting<float, float>((float *)subject1d, data1d, sz_sub, V3D_FLOAT32);
 		}
 
           // save image
@@ -227,9 +228,9 @@ bool datatype_converting(const V3DPluginArgList & input, V3DPluginArgList & outp
 }
 
 
-// func convering kernel
+// func converting
 template <class Tpre, class Tpost>
-void convering(void *pre1d, Tpost *pPost, V3DLONG imsz, ImagePixelType v3d_dt)
+void converting(void *pre1d, Tpost *pPost, V3DLONG imsz, ImagePixelType v3d_dt)
 {
      if (!pre1d ||!pPost || imsz<=0 )
      {
@@ -378,15 +379,15 @@ int datatype_converting(V3DPluginCallback2 &callback, QWidget *parent)
 		//
 		if(sub_dt == V3D_UINT8)
 		{
-			convering<unsigned char, unsigned char>((unsigned char *)subject1d, data1d, sz_sub, cnvrt_dt);
+            converting<unsigned char, unsigned char>((unsigned char *)subject1d, data1d, sz_sub, cnvrt_dt);
 		}
 		else if(sub_dt == V3D_UINT16)
 		{
-			convering<unsigned short, unsigned char>((unsigned short *)subject1d, data1d, sz_sub, cnvrt_dt);
+            converting<unsigned short, unsigned char>((unsigned short *)subject1d, data1d, sz_sub, cnvrt_dt);
 		}
 		else if(sub_dt == V3D_FLOAT32)
 		{
-			convering<float, unsigned char>((float *)subject1d, data1d, sz_sub, cnvrt_dt);
+            converting<float, unsigned char>((float *)subject1d, data1d, sz_sub, cnvrt_dt);
 		}
 
 		//display
@@ -415,15 +416,15 @@ int datatype_converting(V3DPluginCallback2 &callback, QWidget *parent)
 		//
 		if(sub_dt == V3D_UINT8)
 		{
-			convering<unsigned char, unsigned short>((unsigned char *)subject1d, data1d, sz_sub, cnvrt_dt);
+            converting<unsigned char, unsigned short>((unsigned char *)subject1d, data1d, sz_sub, cnvrt_dt);
 		}
 		else if(sub_dt == V3D_UINT16)
 		{
-			convering<unsigned short, unsigned short>((unsigned short *)subject1d, data1d, sz_sub, cnvrt_dt);
+            converting<unsigned short, unsigned short>((unsigned short *)subject1d, data1d, sz_sub, cnvrt_dt);
 		}
 		else if(sub_dt == V3D_FLOAT32)
 		{
-			convering<float, unsigned short>((float *)subject1d, data1d, sz_sub, cnvrt_dt);
+            converting<float, unsigned short>((float *)subject1d, data1d, sz_sub, cnvrt_dt);
 		}
 
 		//display
@@ -452,15 +453,15 @@ int datatype_converting(V3DPluginCallback2 &callback, QWidget *parent)
 		//
 		if(sub_dt == V3D_UINT8)
 		{
-			convering<unsigned char, float>((unsigned char *)subject1d, data1d, sz_sub, cnvrt_dt);
+            converting<unsigned char, float>((unsigned char *)subject1d, data1d, sz_sub, cnvrt_dt);
 		}
 		else if(sub_dt == V3D_UINT16)
 		{
-			convering<unsigned short, float>((unsigned short *)subject1d, data1d, sz_sub, cnvrt_dt);
+            converting<unsigned short, float>((unsigned short *)subject1d, data1d, sz_sub, cnvrt_dt);
 		}
 		else if(sub_dt == V3D_FLOAT32)
 		{
-			convering<float, float>((float *)subject1d, data1d, sz_sub, cnvrt_dt);
+            converting<float, float>((float *)subject1d, data1d, sz_sub, cnvrt_dt);
 		}
 
 		//display
