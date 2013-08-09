@@ -139,4 +139,17 @@ void myV3dR_GLWidget::zoomIn(const char* method)
         QMessageBox::critical(PMain::getInstance(),QObject::tr("Error"), QString("Unsupported zoom-in method \"").append(method).append("\""),QObject::tr("Ok"));
 }
 
+//fast version (without displaying progress bar) of updateImageData method
+void myV3dR_GLWidget::updateImageDataFast()
+{
+    #ifdef TMP_DEBUG
+    printf("--------------------- teramanager plugin [thread *] >> myV3dR_GLWidget::updateImageDataFast()\n");
+    #endif
+
+    renderer->setupData(_idep);
+    static_cast<Renderer_gl1*>(renderer)->loadVol();
+    //renderer->reinitializeVol(renderer->class_version());
+    update();
+}
+
 #endif // USE_EXPERIMENTAL_FEATURES

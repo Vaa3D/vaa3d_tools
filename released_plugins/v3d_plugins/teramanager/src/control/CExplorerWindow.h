@@ -130,14 +130,12 @@ class teramanager::CExplorerWindow : public QWidget
         CExplorerWindow(V3DPluginCallback2* _V3D_env, int _resIndex, uint8* imgData, int _volV0, int _volV1,
                         int _volH0, int _volH1, int _volD0, int _volD1, int _nchannels, CExplorerWindow* _prev);
         ~CExplorerWindow();
-        static void uninstance()
-        {
+        static void uninstance(){
             #ifdef TMP_DEBUG
             printf("--------------------- teramanager plugin [thread ?] >> CExplorerWindow::uninstance()\n");
             #endif
 
-            while(first)
-            {
+            while(first){
                 CExplorerWindow* p = first->next;
                 first->toBeClosed = true;
                 delete first;
@@ -147,10 +145,10 @@ class teramanager::CExplorerWindow : public QWidget
         }
 
         //GET methods
-        //static CExplorerWindow* getLast(){return last;}
         static CExplorerWindow* getCurrent(){return current;}
         int getResIndex(){return volResIndex;}
         V3dR_MainWindow* getWindow3D(){return window3D;}
+        V3dR_GLWidget* getGLWidget(){return view3DWidget;}
         bool isHighestRes(){return volResIndex == CImport::instance()->getResolutions() -1;}
 
         /**********************************************************************************
@@ -176,6 +174,28 @@ class teramanager::CExplorerWindow : public QWidget
         ***********************************************************************************/
         void newView(int x, int y, int z, int resolution, bool fromVaa3Dcoordinates = false,
                      int dx=-1, int dy=-1, int dz=-1);
+
+        /**********************************************************************************
+        * Resizes  the  given image subvolume in a  newly allocated array using the fastest
+        * achievable interpolation method. The image currently shown is used as data source.
+        ***********************************************************************************/
+        uint8* getVOI(int x0, int x1, int y0, int y1, int z0, int z1,
+                      int xDimInterp, int yDimInterp, int zDimInterp) throw (MyException);
+
+        /**********************************************************************************
+        * Copies the given VOI from "src" to "dst". Offsets and scaling are supported.
+        ***********************************************************************************/
+        static void
+            copyVOI(
+                uint8 const * src,      //pointer to const data source
+                uint32 src_dims[4],     //dimensions of "src" along X, Y, Z and channels
+                uint32 src_offset[3],   //VOI's offset along X, Y, Z
+                uint32 src_count[3],    //VOI's dimensions along X, Y, Z
+                uint8* dst,             //pointer to data destination
+                uint32 dst_dims[4],     //dimensions of "dst" along X, Y, Z
+                uint32 dst_offset[3],   //offset of "dst" along X, Y, Z
+                uint scaling = 1)       //scaling factor (integer only)
+        throw (MyException);
 
         /**********************************************************************************
         * Makes the current view the last one by  deleting (and deallocting) its subsequent
@@ -205,6 +225,22 @@ class teramanager::CExplorerWindow : public QWidget
         ***********************************************************************************/
         void alignToLeft(QWidget* widget);
         void alignToRight(QWidget* widget);
+
+        /**********************************************************************************
+        * Overriding position, size and resize QWidget methods
+        ***********************************************************************************/
+        inline QPoint pos() const{ return window3D->pos(); }
+        inline QSize size() const{ return window3D->size();}
+        inline void resize(QSize new_size){
+            if(window3D->size() != new_size)
+                window3D->resize(new_size);
+        }
+        inline void move(QPoint p){
+            if(pos().x() != p.x() || pos().y() != p.y())
+                window3D->move(p);
+        }
+        inline void resize(int w, int h)  { resize(QSize(w, h)); }
+        inline void move(int ax, int ay)  { move(QPoint(ax, ay)); }
 
         /**********************************************************************************
         * Activates / deactives the current window (in terms of responding to events)

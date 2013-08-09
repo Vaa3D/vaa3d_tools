@@ -4,6 +4,7 @@
         <file>icons/wait.gif</file>
         <file>icons/import.png</file>
         <file>icons/open_volume.png</file>
+        <file>icons/open_volume_recent.png</file>
         <file>icons/open_ano.png</file>
         <file>icons/close.png</file>
         <file>icons/save.png</file>
@@ -14,5 +15,7 @@
         <file>icons/about.png</file>
         <file>icons/undo.png</file>
         <file>icons/reset.png</file>
+        <file>icons/terafly.png</file>
+        <file>changelog.txt</file>
     </qresource>
 </RCC>

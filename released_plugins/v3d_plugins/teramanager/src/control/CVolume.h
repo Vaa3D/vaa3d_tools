@@ -81,7 +81,7 @@ class teramanager::CVolume : public QThread
         ~CVolume();
 
         //GET and SET methods
-        uint8* getVoiData(){return voiData;}
+        uint8* getVoiData() throw (MyException) {if(voiData) return voiData; else throw MyException("CVolume::getVoiData(): No data available");}
         void resetVoiData(){voiData = 0;}
         void reset()
         {
@@ -118,22 +118,23 @@ class teramanager::CVolume : public QThread
             sourceObject = _sourceObject;
             voiResIndex = _voiResIndex;
             StackedVolume* volume = CImport::instance()->getVolume(voiResIndex);
-            //---- Alessandro 2013-04-11: this piece of code is dangerous. Anyway, the run() method does checks on the interval extremes too,
-            //     then this is not needed.
-//            voiV0 = MAX(_V0, 0);
-//            voiV1 = MIN(_V1, volume->getDIM_V());
-//            voiH0 = MAX(_H0, 0);
-//            voiH1 = MIN(_H1, volume->getDIM_H());
-//            voiD0 = MAX(_D0, 0);
-//            voiD1 = MIN(_D1, volume->getDIM_D());
-            voiV0 = _V0;
-            voiV1 = _V1;
-            voiH0 = _H0;
-            voiH1 = _H1;
-            voiD0 = _D0;
-            voiD1 = _D1;
+
+            //---- Alessandro 2013-08-06: reestabilished automatic VOI adjustement. This way, get methods return the actual VOI instead of the virtual one.
+            voiV0 = _V0 >=0                   ? _V0 : 0;
+            voiV1 = _V1 <= volume->getDIM_V() ? _V1 : volume->getDIM_V();
+            voiH0 = _H0 >=0                   ? _H0 : 0;
+            voiH1 = _H1 <= volume->getDIM_H() ? _H1 : volume->getDIM_H();
+            voiD0 = _D0 >=0                   ? _D0 : 0;
+            voiD1 = _D1 <= volume->getDIM_D() ? _D1 : volume->getDIM_D();
+//            voiV0 = _V0;
+//            voiV1 = _V1;
+//            voiH0 = _H0;
+//            voiH1 = _H1;
+//            voiD0 = _D0;
+//            voiD1 = _D1;
             nchannels = -1;
         }
+        void setSource(void* _sourceObject){sourceObject =_sourceObject;}
 
     signals:
 

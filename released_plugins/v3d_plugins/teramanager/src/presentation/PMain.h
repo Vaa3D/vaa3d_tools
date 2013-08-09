@@ -76,9 +76,14 @@ class teramanager::PMain : public QWidget
         QWidgetAction* importOptionsWidget;
         QMenu* helpMenu;                //"Help" menu
         QAction* aboutAction;           //"About" menu action
+        QMenu* debugMenu;               //"Debug" menu for debugging purposes
+        QAction* debugAction1;          //debug menu action #1
+        QMenu *recentVolumesMenu;
+        QAction* clearRecentVolumesAction;
 
         //toolbar widgets
         QToolBar* toolBar;              //tool bar with buttons
+        QToolButton *openVolumeToolButton; //tool button for volume opening
 
         //import form widgets
         QWidget* import_form;         //import form containing input fields
@@ -251,9 +256,19 @@ class teramanager::PMain : public QWidget
 
         /**********************************************************************************
         * Called when "Open volume" menu action is triggered.
-        * Opens QFileDialog to select volume's path, which is copied into "path_field".
+        * If path is not provided, opens a QFileDialog to select volume's path.
         ***********************************************************************************/
-        void openVolume();
+        void openVolume(string path = "");
+
+        /**********************************************************************************
+        * Called when a path in the "Recent volumes" menu is selected.
+        ***********************************************************************************/
+        void openVolumeActionTriggered();
+
+        /**********************************************************************************
+        * Called when "Clear menu" action in "Recent volumes" menu is triggered.
+        ***********************************************************************************/
+        void clearRecentVolumesTriggered();
 
         /**********************************************************************************
         * Called when "Close volume" menu action is triggered.
@@ -309,8 +324,8 @@ class teramanager::PMain : public QWidget
         void importDone(MyException *ex, Image4DSimple* vmap_image=0);
 
         /**********************************************************************************
-        * Called by <CLoadSubvolume> when the associated operation has been performed.
-        * If an exception has occurred in the <CLoadSubvolume> thread, it is propagated and
+        * Called by <CVolume> when the associated operation has been performed.
+        * If an exception has occurred in the <CVolume> thread, it is propagated and
         * managed in the current thread (ex != 0).
         ***********************************************************************************/
         void loadingDone(MyException *ex, void* sourceObject);
@@ -353,6 +368,11 @@ class teramanager::PMain : public QWidget
         * Called when the correspondent slider is changed
         ***********************************************************************************/
         void zoomInSensChanged(int i);
+
+        /**********************************************************************************
+        * Called when the correspondent debug actions are triggered
+        ***********************************************************************************/
+        void debugAction1Triggered();
 };
 
 #endif // PMAIN_GUI_H

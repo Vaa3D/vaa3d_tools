@@ -143,9 +143,9 @@ CExplorerWindow::CExplorerWindow(V3DPluginCallback2 *_V3D_env, int _resIndex, ui
                 curr_renderer->applyColormapToImage();
 
             //positioning the current 3D window exactly at the previous window position
-            QPoint location = prev->window3D->pos();
-            window3D->resize(prev->window3D->size());
-            window3D->move(location);
+            QPoint location = prev->pos();
+            resize(prev->window3D->size());
+            move(location);
 
             //hiding both tri-view and 3D view
             prev->window3D->setVisible(false);
@@ -179,7 +179,6 @@ CExplorerWindow::CExplorerWindow(V3DPluginCallback2 *_V3D_env, int _resIndex, ui
             int screen_height = qApp->desktop()->availableGeometry().height();
             int screen_width = qApp->desktop()->availableGeometry().width();
             int window_x = (screen_width - (window3D->width() + PMain::getInstance()->width()))/2;
-//            int window_x = (screen_width - (window3D->width() + PMain::getInstance()->width()))/2 + PMain::instance()->width();
             int window_y = (screen_height - window3D->height()) / 2;
             window3D->move(window_x, window_y);
         }
@@ -327,6 +326,10 @@ bool CExplorerWindow::eventFilter(QObject *object, QEvent *event)
             return true;
         }
 
+//        #ifdef TMP_DEBUG
+//        printf("--------------------- teramanager plugin [thread *] >> CExplorerWindow[%s]::eventFilter\n",  titleShort.c_str() );
+//        #endif
+
         //updating zoom factor history
         zoomHistoryPushBack(view3DWidget->zoom());
 
@@ -383,6 +386,7 @@ bool CExplorerWindow::eventFilter(QObject *object, QEvent *event)
             QMouseEvent* mouseEvt = (QMouseEvent*)event;
             XYZ point = getRenderer3DPoint(mouseEvt->x(), mouseEvt->y());
             newView(point.x, point.y, point.z, volResIndex+1);
+            return true;
         }
 
         /********************* INTERCEPTING CLOSE EVENTS **************************
@@ -406,7 +410,7 @@ bool CExplorerWindow::eventFilter(QObject *object, QEvent *event)
         else if(object == window3D && (event->type() == QEvent::Move || event->type() == QEvent::Resize))
         {
            alignToLeft(PMain::getInstance());
-//            alignToRight(PMain::instance());
+           return true;
         }
 
         /***************** INTERCEPTING STATE CHANGES EVENTS **********************
@@ -416,6 +420,7 @@ bool CExplorerWindow::eventFilter(QObject *object, QEvent *event)
         else if(object == window3D && event->type() == QEvent::WindowStateChange)
         {
             alignToLeft(PMain::getInstance());
+            return true;
         }
         return false;
     }
@@ -445,42 +450,25 @@ void CExplorerWindow::loadingDone(MyException *ex, void* sourceObject)
         QMessageBox::critical(this,QObject::tr("Error"), QObject::tr(ex->what()),QObject::tr("Ok"));
     else if(sourceObject == this)
     {
-        //signal disconnections
-        disconnect(CVolume::instance(), SIGNAL(sendOperationOutcome(MyException*,void*)), this, SLOT(loadingDone(MyException*,void*)));
-        disconnect(view3DWidget, SIGNAL(changeXCut0(int)), this, SLOT(Vaa3D_changeXCut0(int)));
-        disconnect(view3DWidget, SIGNAL(changeXCut1(int)), this, SLOT(Vaa3D_changeXCut1(int)));
-        disconnect(view3DWidget, SIGNAL(changeYCut0(int)), this, SLOT(Vaa3D_changeYCut0(int)));
-        disconnect(view3DWidget, SIGNAL(changeYCut1(int)), this, SLOT(Vaa3D_changeYCut1(int)));
-        disconnect(view3DWidget, SIGNAL(changeZCut0(int)), this, SLOT(Vaa3D_changeZCut0(int)));
-        disconnect(view3DWidget, SIGNAL(changeZCut1(int)), this, SLOT(Vaa3D_changeZCut1(int)));
-        disconnect(PMain::getInstance()->V0_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeV0sbox(int)));
-        disconnect(PMain::getInstance()->V1_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeV1sbox(int)));
-        disconnect(PMain::getInstance()->H0_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeH0sbox(int)));
-        disconnect(PMain::getInstance()->H1_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeH1sbox(int)));
-        disconnect(PMain::getInstance()->D0_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeD0sbox(int)));
-        disconnect(PMain::getInstance()->D1_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeD1sbox(int)));
+        //copying loaded data
+        uint32 img_dims[4]       = {volH1-volH0, volV1-volV0, volD1-volD0, nchannels};
+        uint32 img_offset[3]     = {cVolume->getVoiH0()-volH0, cVolume->getVoiV0()-volV0, cVolume->getVoiD0()-volD0};
+        uint32 new_img_dims[4]   = {cVolume->getVoiH1()-cVolume->getVoiH0(),  cVolume->getVoiV1()-cVolume->getVoiV0(), cVolume->getVoiD1()-cVolume->getVoiD0(),  nchannels};
+        uint32 new_img_offset[3] = {0, 0, 0};
+        uint32 new_img_count[3]  = {new_img_dims[0], new_img_dims[1], new_img_dims[2]};
+        copyVOI(cVolume->getVoiData(), new_img_dims, new_img_offset, new_img_count,
+                view3DWidget->getiDrawExternalParameter()->image4d->getRawData(), img_dims, img_offset);
 
-        //if the resolution of the loaded voi is higher than the current one, opening the "next" explorer
-        if(cVolume->getVoiResIndex() > volResIndex)
-            this->next = new CExplorerWindow(V3D_env, cVolume->getVoiResIndex(), cVolume->getVoiData(), cVolume->getVoiV0(), cVolume->getVoiV1(),
-                                             cVolume->getVoiH0(),cVolume->getVoiH1(), cVolume->getVoiD0(),cVolume->getVoiD1(), cVolume->getNChannels(), this);
-        //if the resolution of the loaded voi is the same of the current one
-        else if(cVolume->getVoiResIndex() == volResIndex)
-        {
-            //uninstalling event filter
-            view3DWidget->removeEventFilter(this);
-            window3D->removeEventFilter(this);
+        //releasing memory used for storing loaded data
+        delete[] cVolume->getVoiData();
+        cVolume->resetVoiData();
 
-            //opening a new explorer in the current resolution and closing the current one
-            this->next = new CExplorerWindow(this->V3D_env, volResIndex, cVolume->getVoiData(), cVolume->getVoiV0(), cVolume->getVoiV1(),
-                                             cVolume->getVoiH0(),cVolume->getVoiH1(), cVolume->getVoiD0(),cVolume->getVoiD1(), cVolume->getNChannels(), this);
-            prev->next = next;
-            next->prev = prev;
-            this->toBeClosed = true;
-            delete this;
-        }
-        else
-            QMessageBox::critical(this,QObject::tr("Error"), "The new view refers to a lower resolution. This feature is not supported yet.",QObject::tr("Ok"));
+        //updating image data
+        #ifdef USE_EXPERIMENTAL_FEATURES
+        myV3dR_GLWidget::cast(view3DWidget)->updateImageDataFast();
+        #else
+        view3DWidget->updateImageData();
+        #endif
     }
 
     //resetting some widgets
@@ -504,21 +492,21 @@ void CExplorerWindow::newView(int x, int y, int z, int resolution, bool fromVaa3
            title.c_str(), x, y, z, resolution, dx, dy, dz );
     #endif
 
-    //checks
+    //checking preconditions with automatic correction, where possible
     if(resolution >= CImport::instance()->getResolutions())
         resolution = volResIndex;
 
     //deactivating current window
     setActive(false);
 
-    //preparing GUI
+    //putting GUI in waiting state
     view3DWidget->setCursor(Qt::WaitCursor);
     PMain& pMain = *(PMain::getInstance());
     pMain.progressBar->setEnabled(true);
     pMain.progressBar->setMinimum(0);
     pMain.progressBar->setMaximum(0);
     pMain.loadButton->setEnabled(false);
-    pMain.statusBar->showMessage("Loading...");
+    pMain.statusBar->showMessage("Changing resolution...");
 
     //computing VOI in the coordinates of the given resolution
     float ratio = static_cast<float>(CImport::instance()->getVolume(resolution)->getDIM_D())/CImport::instance()->getVolume(volResIndex)->getDIM_D();
@@ -529,7 +517,7 @@ void CExplorerWindow::newView(int x, int y, int z, int resolution, bool fromVaa3
     dy = dy == -1 ? int_inf : static_cast<int>(dy*ratio+0.5f);
     dz = dz == -1 ? int_inf : static_cast<int>(dz*ratio+0.5f);
 
-    //---- Alessandro 2013-04-25: cropping bounding box if its larger than the maximum allowed
+    //cropping bounding box if its larger than the maximum allowed
     printf("--------------------- teramanager plugin [thread *] >> CExplorerWindow[%s]: cropping bbox dims from (%d,%d,%d) to ",
            title.c_str(), dx, dy, dz );
     dx = std::min(dx, static_cast<int>(pMain.Hdim_sbox->value()/2.0f+0.5f));
@@ -537,13 +525,195 @@ void CExplorerWindow::newView(int x, int y, int z, int resolution, bool fromVaa3
     dz = std::min(dz, static_cast<int>(pMain.Ddim_sbox->value()/2.0f+0.5f));
     printf("(%d,%d,%d)\n", dx, dy, dz );
 
-    CVolume::instance()->setVoi(this, resolution, VoiCenterY-dy, VoiCenterY+dy, VoiCenterX-dx, VoiCenterX+dx, VoiCenterZ-dz, VoiCenterZ+dz);
+    //preparing VOI for loading (the actual VOI that can be loaded may differ from the one selected, e.g. along volume's borders)
+    CVolume* cVolume = CVolume::instance();
+    cVolume->setVoi(0, resolution, VoiCenterY-dy, VoiCenterY+dy, VoiCenterX-dx, VoiCenterX+dx, VoiCenterZ-dz, VoiCenterZ+dz);
 
     //saving min, max and values of PMain GUI VOI's widgets
     saveSubvolSpinboxState();
 
-    //launching thread where the VOI has to be loaded
-    CVolume::instance()->start();
+    //disconnecting current window from GUI's listeners and event filters
+    disconnect(CVolume::instance(), SIGNAL(sendOperationOutcome(MyException*,void*)), this, SLOT(loadingDone(MyException*,void*)));
+    disconnect(view3DWidget, SIGNAL(changeXCut0(int)), this, SLOT(Vaa3D_changeXCut0(int)));
+    disconnect(view3DWidget, SIGNAL(changeXCut1(int)), this, SLOT(Vaa3D_changeXCut1(int)));
+    disconnect(view3DWidget, SIGNAL(changeYCut0(int)), this, SLOT(Vaa3D_changeYCut0(int)));
+    disconnect(view3DWidget, SIGNAL(changeYCut1(int)), this, SLOT(Vaa3D_changeYCut1(int)));
+    disconnect(view3DWidget, SIGNAL(changeZCut0(int)), this, SLOT(Vaa3D_changeZCut0(int)));
+    disconnect(view3DWidget, SIGNAL(changeZCut1(int)), this, SLOT(Vaa3D_changeZCut1(int)));
+    disconnect(PMain::getInstance()->V0_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeV0sbox(int)));
+    disconnect(PMain::getInstance()->V1_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeV1sbox(int)));
+    disconnect(PMain::getInstance()->H0_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeH0sbox(int)));
+    disconnect(PMain::getInstance()->H1_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeH1sbox(int)));
+    disconnect(PMain::getInstance()->D0_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeD0sbox(int)));
+    disconnect(PMain::getInstance()->D1_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeD1sbox(int)));
+    view3DWidget->removeEventFilter(this);
+    window3D->removeEventFilter(this);
+
+
+    //obtaining low res data from current window to be displayed in a new window while the user waits for the new high res data
+    uint8* lowresData = getVOI(CVolume::scaleHCoord(cVolume->getVoiH0(), resolution, volResIndex),
+                               CVolume::scaleHCoord(cVolume->getVoiH1(), resolution, volResIndex),
+                               CVolume::scaleVCoord(cVolume->getVoiV0(), resolution, volResIndex),
+                               CVolume::scaleVCoord(cVolume->getVoiV1(), resolution, volResIndex),
+                               CVolume::scaleDCoord(cVolume->getVoiD0(), resolution, volResIndex),
+                               CVolume::scaleDCoord(cVolume->getVoiD1(), resolution, volResIndex),
+                               cVolume->getVoiH1()-cVolume->getVoiH0(),
+                               cVolume->getVoiV1()-cVolume->getVoiV0(),
+                               cVolume->getVoiD1()-cVolume->getVoiD0());
+
+    //opening a new window
+    this->next = new CExplorerWindow(V3D_env, resolution, lowresData,
+                                     cVolume->getVoiV0(), cVolume->getVoiV1(), cVolume->getVoiH0(), cVolume->getVoiH1(), cVolume->getVoiD0(), cVolume->getVoiD1(),
+                                     nchannels, this);
+
+    //loading new data in a separate thread. When done, the "loadingDone" method of the new window will be called
+    pMain.statusBar->showMessage("Loading image data...");
+    cVolume->setSource(this->next);
+    cVolume->start();
+
+    //if the resolution of the loaded voi is the same of the current one, this window will be closed
+    if(resolution == volResIndex)
+    {
+        prev->next = next;
+        next->prev = prev;
+        this->toBeClosed = true;
+        delete this;
+    }
+}
+
+/**********************************************************************************
+* Resizes  the  given image subvolume in a  newly allocated array using the fastest
+* achievable scaling method. The image currently shown is used as data source.
+***********************************************************************************/
+uint8* CExplorerWindow::getVOI(int x0, int x1, int y0, int y1, int z0, int z1,
+                               int xDimInterp, int yDimInterp, int zDimInterp) throw (MyException)
+{
+    #ifdef TMP_DEBUG
+    printf("--------------------- teramanager plugin [thread *] >> CExplorerWindow[%s]::getVOI("
+           "x0 = %d, x1 = %d, y0 = %d, y1 = %d, z0 = %d, z1 = %d, xDim = %d, yDim = %d, zDim = %d)\n",
+            titleShort.c_str(), x0, x1, y0, y1, z0, z1, xDimInterp, yDimInterp, zDimInterp);
+    #endif
+
+    //alloating image data and initializing to zero (black)
+    size_t img_dim = xDimInterp * yDimInterp * zDimInterp * nchannels;
+    uint8* img = new uint8[img_dim];
+    for(uint8* img_p = img; img_p-img < img_dim; img_p++)
+        *img_p=0;
+
+    //computing actual VOI that can be copied, i.e. that intersects with the image currently displayed
+    QRect XRectDisplayed(QPoint(volH0, 0), QPoint(volH1, 1));
+    QRect YRectDisplayed(QPoint(volV0, 0), QPoint(volV1, 1));
+    QRect ZRectDisplayed(QPoint(volD0, 0), QPoint(volD1, 1));
+    QRect XRectVOI(QPoint(x0, 0), QPoint(x1, 1));
+    QRect YRectVOI(QPoint(y0, 0), QPoint(y1, 1));
+    QRect ZRectVOI(QPoint(z0, 0), QPoint(z1, 1));
+    int x0a = XRectDisplayed.intersected(XRectVOI).left();
+    int x1a = XRectDisplayed.intersected(XRectVOI).right();
+    int y0a = YRectDisplayed.intersected(YRectVOI).left();
+    int y1a = YRectDisplayed.intersected(YRectVOI).right();
+    int z0a = ZRectDisplayed.intersected(ZRectVOI).left();
+    int z1a = ZRectDisplayed.intersected(ZRectVOI).right();
+
+    printf("--------------------- teramanager plugin [thread *] >> CExplorerWindow[%s]::getVOI: "
+           "available voi is x0a = %d, x1a = %d, y0a = %d, y1a = %d, z0a = %d, z1a = %d)\n",
+            titleShort.c_str(), x0a, x1a, y0a, y1a, z0a, z1a);
+
+    //if copyable VOI is empty, returning the black-initialized image
+    if(x1a - x0a <= 0 || y1a - y0a <= 0 || z1a - z0a <= 0)
+        return img;
+
+    //otherwise COPYING + SCALING
+    //fast scaling by pixel replication
+    if(xDimInterp % (x1-x0) <= 1 && yDimInterp % (y1-y0) <= 1 && zDimInterp % (z1-z0) <= 1)
+    {
+        //checking for uniform scaling along the three axes
+        uint scal = xDimInterp / (x1-x0);
+        if(scal != yDimInterp / (y1-y0) || scal != zDimInterp / (z1-z0))
+            QMessageBox::critical(this, "Error", "Fast nonuniform scaling not supported",QObject::tr("Ok"));
+
+        uint32 buf_data_dims[4]   = {volH1-volH0, volV1-volV0, volD1-volD0, nchannels};
+        uint32 img_dims[4]        = {xDimInterp,  yDimInterp,  zDimInterp,  nchannels};
+        uint32 buf_data_offset[3] = {x0a-volH0,   y0a-volV0,   z0a-volD0};
+        uint32 img_offset[3]      = {x0a-x0,      y0a-y0,      z0a-z0};
+        uint32 buf_data_count[3]  = {x1a-x0a,     y1a-y0a,     z1a-z0a};
+
+        copyVOI(view3DWidget->getiDrawExternalParameter()->image4d->getRawData(), buf_data_dims, buf_data_offset, buf_data_count, img, img_dims, img_offset, scal);
+    }
+
+    //interpolation
+    else
+        QMessageBox::critical(this, "Error", "Interpolation of the pre-buffered image not yet implemented",QObject::tr("Ok"));
+
+
+    return img;
+}
+
+
+/**********************************************************************************
+* Copies the given VOI from "src" to "dst". Offsets and scaling are supported.
+***********************************************************************************/
+void
+    CExplorerWindow::copyVOI(
+        uint8 const * src,      //pointer to const data source
+        uint32 src_dims[4],     //dimensions of "src" along X, Y, Z and channels
+        uint32 src_offset[3],   //VOI's offset along X, Y, Z
+        uint32 src_count[3],    //VOI's dimensions along X, Y, Z
+        uint8* dst,             //pointer to data destination
+        uint32 dst_dims[4],     //dimensions of "dst" along X, Y, Z and channels
+        uint32 dst_offset[3],   //offset of "dst" along X, Y, Z
+        uint scaling /*= 1 */)  //scaling factor (integer only)
+throw (MyException)
+{
+    //cheking preconditions
+    if(src_dims[3] != dst_dims[3])
+        QMessageBox::critical(0, "Error", "Can't copy VOI to destination image: different number of channels",QObject::tr("Ok"));
+    //other preconditions...TODO
+
+    //quick version (with precomputed offsets, strides and counts: "1" for "dst", "2" for "src")
+    uint32 stride_c1       =  dst_dims [2] * dst_dims[1]   * dst_dims[0];
+    uint32 stride_c2       =  src_dims [2] * src_dims[1]   * src_dims[0];
+    const uint32 stride_k1 =                 dst_dims[1]   * dst_dims[0] * scaling;
+    const uint32 count_k1  = src_count [2] * dst_dims[1]   * dst_dims[0] * scaling;
+    const uint32 offset_k2 = src_offset[2] * src_dims[1]   * src_dims[0];
+    const uint32 stride_k2 =                 src_dims[1]   * src_dims[0];
+    //const uint32 count_k2= src_count [2] * src_dims[1]   * src_dims[0];            //not used in the OR so as to speed up the inner loops
+    const uint32 stride_i1 =                                 dst_dims[0] * scaling;
+    const uint32 count_i1  =                 src_count[1]  * dst_dims[0] * scaling;
+    const uint32 offset_i2 =                 src_offset[1] * src_dims[0];
+    const uint32 stride_i2 =                                 src_dims[0];
+    //const uint32 count_i2  =               src_count[1]  * src_dims[0];            //not used in the OR so as to speed up the inner loops
+    const uint32 stride_j1 =                                               scaling;
+    const uint32 count_j1  =                                 src_count[0]* scaling;
+    const uint32 offset_j2 =                                 src_offset[0];
+    //const uint32 count_j2  =                               src_count[0];           //not used in the OR so as to speed up the inner loops
+    const uint32 dst_dim = dst_dims [3] * dst_dims [2] * dst_dims [1] * dst_dims [0];
+
+    for(int sk = 0; sk < scaling; sk++)
+        for(int si = 0; si < scaling; si++)
+            for(int sj = 0; sj < scaling; sj++)
+            {
+                const uint32 offset_k1 = dst_offset[2] * dst_dims[1]    * dst_dims[0]   * scaling + sk * dst_dims[1] * dst_dims[0] ;
+                const uint32 offset_i1 =                 dst_offset[1]  * dst_dims[0]   * scaling + si * dst_dims[0];
+                const uint32 offset_j1 =                                  dst_offset[0] * scaling + sj;
+
+                for(uint8 *img_c1 = dst, *img_c2 = const_cast<uint8*>(src); img_c1 - dst < dst_dim; img_c1 += stride_c1, img_c2 += stride_c2)
+                {
+                    uint8* const start_k1 = img_c1 + offset_k1;
+                    uint8* const start_k2 = img_c2 + offset_k2;
+                    for(uint8 *img_k1 = start_k1, *img_k2 = start_k2; img_k1 - start_k1  < count_k1; img_k1 += stride_k1, img_k2 += stride_k2)
+                    {
+                        uint8* const start_i1 = img_k1 + offset_i1;
+                        uint8* const start_i2 = img_k2 + offset_i2;
+                        for(uint8 *img_i1 = start_i1, *img_i2 = start_i2; img_i1 - start_i1  < count_i1; img_i1 += stride_i1, img_i2 += stride_i2)
+                        {
+                            uint8* const start_j1 = img_i1 + offset_j1;
+                            uint8* const start_j2 = img_i2 + offset_j2;
+                            for(uint8 *img_j1 = start_j1, *img_j2 = start_j2; img_j1 - start_j1  < count_j1; img_j1 += stride_j1, img_j2++)
+                                *img_j1 = *img_j2;
+                        }
+                    }
+                }
+             }
 }
 
 /**********************************************************************************
@@ -787,8 +957,8 @@ void CExplorerWindow::restoreViewFrom(CExplorerWindow* source) throw (MyExceptio
         triViewWidget->setVisible(true);
         triViewWidget->setWindowState(Qt::WindowMinimized);
         window3D->setVisible(true);
-        window3D->resize(source->window3D->size());
-        window3D->move(location);
+        resize(source->window3D->size());
+        move(location);
 
         source->window3D->setVisible(false);
         source->triViewWidget->setVisible(false);
@@ -1340,7 +1510,7 @@ void CExplorerWindow::PMain_changeD1sbox(int s)
 }
 
 /**********************************************************************************
-* Alignes the given widget to the left(right) of the current window
+* Alignes the given widget to the left (or to the right) of the current window
 ***********************************************************************************/
 void CExplorerWindow::alignToLeft(QWidget* widget)
 {
@@ -1348,9 +1518,17 @@ void CExplorerWindow::alignToLeft(QWidget* widget)
     printf("--------------------- teramanager plugin [thread *] >> CExplorerWindow[%s]::alignToLeft()\n",  titleShort.c_str() );
     #endif
 
-    widget->move(window3D->x() + window3D->width() + 3, window3D->y());
-    widget->setMaximumHeight(std::max(window3D->height(),widget->height()));
-    widget->resize(widget->width(), window3D->height());
+    int widget_new_x = window3D->x() + window3D->width() + 3;
+    int widget_new_y = window3D->y();
+    int widget_new_height = window3D->height();
+
+    if(widget->x() != widget_new_x || widget->y() != widget_new_y)
+        widget->move(widget_new_x, widget_new_y);
+    if(widget->height() != widget_new_height)
+    {
+        widget->setMaximumHeight(std::max(widget_new_height,widget->height()));
+        widget->resize(widget->width(), widget_new_height);
+    }
 }
 void CExplorerWindow::alignToRight(QWidget* widget)
 {
@@ -1358,9 +1536,17 @@ void CExplorerWindow::alignToRight(QWidget* widget)
     printf("--------------------- teramanager plugin [thread *] >> CExplorerWindow[%s]::alignToRight()\n",  titleShort.c_str() );
     #endif
 
-    widget->move(window3D->x() - widget->width() - 3, window3D->y());
-    widget->setMaximumHeight(std::max(window3D->height(),widget->height()));
-    widget->resize(widget->width(), window3D->height());
+    int widget_new_x = window3D->x() - widget->width() - 3;
+    int widget_new_y = window3D->y();
+    int widget_new_height = window3D->height();
+
+    if(widget->x() != widget_new_x || widget->y() != widget_new_y)
+        widget->move(widget_new_x, widget_new_y);
+    if(widget->height() != widget_new_height)
+    {
+        widget->setMaximumHeight(std::max(widget_new_height,widget->height()));
+        widget->resize(widget->width(), widget_new_height);
+    }
 }
 
 #ifdef USE_EXPERIMENTAL_FEATURES

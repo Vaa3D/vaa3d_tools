@@ -28,11 +28,13 @@
 
 #include "PMain.h"
 #include "PDialogImport.h"
+#include "PAbout.h"
 #include "../control/CImport.h"
 #include "../control/CVolume.h"
 #include "../control/CSettings.h"
 #include "../control/CExplorerWindow.h"
 #include "../control/CAnnotations.h"
+#include "../control/V3Dsubclasses.h"
 #include "renderer_gl1.h"
 #include "v3dr_mainwindow.h"
 
@@ -100,6 +102,7 @@ void PMain::uninstance()
 
     CImport::uninstance();
     PDialogImport::uninstance();
+    PAbout::uninstance();
     CVolume::uninstance();
     CExplorerWindow::uninstance();
     CSettings::uninstance();
@@ -183,6 +186,9 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     connect(saveAnnotationsAsAction, SIGNAL(triggered()), this, SLOT(saveAnnotationsAs()));
     connect(clearAnnotationsAction, SIGNAL(triggered()), this, SLOT(clearAnnotations()));
     fileMenu->addAction(openVolumeAction);
+    recentVolumesMenu = new QMenu("Recent volumes");
+    recentVolumesMenu->setIcon(QIcon(":/icons/open_volume_recent.png"));
+    fileMenu->addMenu(recentVolumesMenu);
     fileMenu->addAction(closeVolumeAction);
     fileMenu->addSeparator();
     fileMenu->addAction(loadAnnotationsAction);
@@ -195,7 +201,11 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     importOptionsMenu = optionsMenu->addMenu("Import");
     importOptionsWidget = new QWidgetAction(this);
     importOptionsWidget->setDefaultWidget(import_form);
-    importOptionsMenu->addAction(importOptionsWidget);
+    importOptionsMenu->addAction(importOptionsWidget);    
+    debugMenu = menuBar->addMenu("Debug");
+    debugAction1 = new QAction("Action 1", this);
+    connect(debugAction1, SIGNAL(triggered()), this, SLOT(debugAction1Triggered()));
+    debugMenu->addAction(debugAction1);
     helpMenu = menuBar->addMenu("Help");
     aboutAction = new QAction("About", this);
     aboutAction->setIcon(QIcon(":/icons/about.png"));
@@ -205,7 +215,28 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     //toolbar
     toolBar = new QToolBar("ToolBar", this);
     toolBar->setOrientation(Qt::Vertical);
-    toolBar->insertAction(0, openVolumeAction);
+
+    QMenu *openMenu = new QMenu();
+    std::list<string> recentVolumes = CSettings::instance()->getVolumePathHistory();
+    for(std::list<string>::reverse_iterator it = recentVolumes.rbegin(); it != recentVolumes.rend(); it++)
+    {
+        QAction *action = new QAction(it->c_str(), this);
+        connect(action, SIGNAL(triggered()), this, SLOT(openVolumeActionTriggered()));
+        recentVolumesMenu->addAction(action);
+    }
+    clearRecentVolumesAction = new QAction("Clear menu",recentVolumesMenu);
+    connect(clearRecentVolumesAction, SIGNAL(triggered()), this, SLOT(clearRecentVolumesTriggered()));
+    recentVolumesMenu->addSeparator();
+    recentVolumesMenu->addAction(clearRecentVolumesAction);
+
+    openMenu->addAction(openVolumeAction);
+    openMenu->addMenu(recentVolumesMenu);
+    openVolumeToolButton = new QToolButton();
+    openVolumeToolButton->setMenu(openMenu);
+    openVolumeToolButton->setPopupMode(QToolButton::InstantPopup);
+    openVolumeToolButton->setIcon(QIcon(":/icons/open_volume.png"));
+    toolBar->insertWidget(0, openVolumeToolButton);
+
     toolBar->insertAction(0, closeVolumeAction);
     toolBar->addAction(loadAnnotationsAction);
     toolBar->addAction(saveAnnotationsAction);
@@ -676,6 +707,8 @@ void PMain::reset()
 
     //resetting menu options and widgets
     openVolumeAction->setEnabled(true);
+    openVolumeToolButton->setEnabled(true);
+    recentVolumesMenu->setEnabled(true);
     closeVolumeAction->setEnabled(false);
     importOptionsMenu->setEnabled(true);
     importOptionsWidget->setEnabled(true);
@@ -806,36 +839,76 @@ void PMain::loadButtonClicked()
 }
 
 /**********************************************************************************
-* Called when "Open volume" menu action is triggered.
-* Opens QFileDialog to select volume's path, which is copied into "path_field".
+* Called when a path in the "Recent volumes" menu is selected.
 ***********************************************************************************/
-void PMain::openVolume()
+void PMain::openVolumeActionTriggered()
 {
     #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread *] >> PMain openVolume() launched\n");
+    printf("--------------------- teramanager plugin [thread *] >> PMain::openVolumeActionTriggered() launched\n");
+    #endif
+
+    this->openVolume(qobject_cast<QAction*>(sender())->text().toStdString());
+}
+
+/**********************************************************************************
+* Called when "Clear menu" action in "Recent volumes" menu is triggered.
+***********************************************************************************/
+void PMain::clearRecentVolumesTriggered()
+{
+    #ifdef TMP_DEBUG
+    printf("--------------------- teramanager plugin [thread *] >> PMain::clearRecentVolumesTriggered() launched\n");
+    #endif
+
+    CSettings::instance()->clearVolumePathHistory();
+    QList<QAction*> actions = recentVolumesMenu->actions();
+    qDeleteAll(actions.begin(), actions.end());
+    clearRecentVolumesAction = new QAction("Clear menu",recentVolumesMenu);
+    connect(clearRecentVolumesAction, SIGNAL(triggered()), this, SLOT(clearRecentVolumesTriggered()));
+    recentVolumesMenu->addSeparator();
+    recentVolumesMenu->addAction(clearRecentVolumesAction);
+}
+
+/**********************************************************************************
+* Called when "Open volume" menu action is triggered.
+* If path is not provided, opens a QFileDialog to select volume's path.
+***********************************************************************************/
+void PMain::openVolume(string path /* = "" */)
+{
+    #ifdef TMP_DEBUG
+    printf("--------------------- teramanager plugin [thread *] >> PMain::openVolume(path = \"%s\")\n", path.c_str());
     #endif
 
     try
     {
-        //---- Alessandro 2013-05-20: obtaining volume's directory with QFileDialog instead of platform native file dialogs
-        //                            since a strange behaviour has been shown by native file dialogs on MacOS X.
-        QFileDialog dialog(0);
-        dialog.setFileMode(QFileDialog::DirectoryOnly);
-        dialog.setViewMode(QFileDialog::Detail);
-        dialog.setWindowFlags(Qt::WindowStaysOnTopHint);
-        dialog.setWindowTitle("Select volume's directory");
-        dialog.setDirectory(CSettings::instance()->getVolumePathLRU().c_str());
-        string import_path = "";
-        if(dialog.exec())
-            import_path = dialog.directory().absolutePath().toStdString();
+        string import_path = path;
 
-        //if no directory has been selected, terminating this method
-        if(strcmp(import_path.c_str(), "") == 0)
-            return;
+        if(import_path.empty())
+        {
+            //---- Alessandro 2013-05-20: obtaining volume's directory with QFileDialog instead of platform native file dialogs
+            //                            since a strange behaviour has been shown by native file dialogs on MacOS X.
+            QFileDialog dialog(0);
+            dialog.setFileMode(QFileDialog::DirectoryOnly);
+            dialog.setViewMode(QFileDialog::Detail);
+            dialog.setWindowFlags(Qt::WindowStaysOnTopHint);
+            dialog.setWindowTitle("Select volume's directory");
+            dialog.setDirectory(CSettings::instance()->getVolumePathLRU().c_str());
+            if(dialog.exec())
+            {
+                printf("dialog.directory().absolutePath() = \"%s\"\n", dialog.directory().absolutePath().toStdString().c_str());
+                printf("dialog.directory().dirName() = \"%s\"\n", dialog.directory().dirName().toStdString().c_str());
+                printf("dialog.directory().currentPath() = \"%s\"\n", dialog.directory().currentPath().toStdString().c_str());
+                printf("dialog.directory().tempPath() = \"%s\"\n", dialog.directory().tempPath().toStdString().c_str());
+                import_path = dialog.directory().absolutePath().toStdString();
+            }
+
+            //if no directory has been selected, terminating this method
+            if(import_path.empty())
+                return;
+        }
 
         //first checking that no volume has imported yet
         if(!CImport::instance()->isEmpty())
-            throw MyException("A volume has been already imported! Please restart the plugin to import another volume.");
+            throw MyException("A volume has been already imported! Please close the current volume first.");
 
         //checking that the inserted path exists
         if(!StackedVolume::fileExists(import_path.c_str()))
@@ -843,7 +916,23 @@ void PMain::openVolume()
 
         //storing the path into CSettings
         CSettings::instance()->setVolumePathLRU(import_path);
+        CSettings::instance()->addVolumePathToHistory(import_path);
         CSettings::instance()->writeSettings();
+
+        //updating recent volumes menu
+        QList<QAction*> actions = recentVolumesMenu->actions();
+        qDeleteAll(actions.begin(), actions.end());
+        std::list<string> recentVolumes = CSettings::instance()->getVolumePathHistory();
+        for(std::list<string>::reverse_iterator it = recentVolumes.rbegin(); it != recentVolumes.rend(); it++)
+        {
+            QAction *action = new QAction(it->c_str(), this);
+            connect(action, SIGNAL(triggered()), this, SLOT(openVolumeActionTriggered()));
+            recentVolumesMenu->addAction(action);
+        }
+        clearRecentVolumesAction = new QAction("Clear menu",recentVolumesMenu);
+        connect(clearRecentVolumesAction, SIGNAL(triggered()), this, SLOT(clearRecentVolumesTriggered()));
+        recentVolumesMenu->addSeparator();
+        recentVolumesMenu->addAction(clearRecentVolumesAction);
 
         //check if additional informations are required
         string mdata_fpath = import_path;
@@ -1065,32 +1154,9 @@ void PMain::about()
 {
     #ifdef TMP_DEBUG
     printf("--------------------- teramanager plugin [thread *] >> PMain::about()\n");
-    #endif
+    #endif 
 
-    QMessageBox* msgBox = new QMessageBox(this);
-    QSpacerItem* horizontalSpacer = new QSpacerItem(800, 0, QSizePolicy::Minimum, QSizePolicy::Expanding);
-    msgBox->setText( QString("<html><h1>TeraFly plugin v. ").append(CPlugin::getMajorVersion().c_str()).append("</h1>"
-                    "<big>An experimental tool designed for Teravoxel-sized datasets 3D navigation into Vaa3D.</big><br><br>"
-                    "<u>Developed by:</u><ul>"
-                    "<li><b>Alessandro Bria</b> (email: a.bria@unicas.it)<br>"
-                           "University of Cassino</li>"
-                    "<li><b>Giulio Iannello</b> (email: g.iannello@unicampus.it)<br>"
-                           "University Campus Bio-Medico of Rome</li>"
-                    "<li><b>Hanchuan Peng</b> (email: hanchuan.peng@gmail.com)<br>"
-                            "Allen Institute for Brain Science and Janelia @ HHMI</li></ul><br>"
-                    "<u>Features:</u><ul>"
-                    "<li>Google Earth-like 3D navigation through multiresolution teravoxel-sized datasets</li>"
-                    "<li>computer-aided annotation of markers and curves</li>"
-                    "<li>low memory requirements (4 GB)</li></ul><br>"
-                    "<u>Supported input formats:</u><ul>"
-                    "<li>two-level directory structure with each tile containing a series of image slices (see documentation for further information)</li>"
-                    "<li>supported formats for image slices are BMP, DIB, JPEG, JPG, JPE, PNG, PBM, PGM, PPM, SR, RAS, TIFF, TIF</li>"
-                    "<li>no restriction on the bit depth</li>"
-                    "<li>no restriction on the number of channels</li></ul></html>" ));
-
-    QGridLayout* layout = (QGridLayout*)msgBox->layout();
-    layout->addItem(horizontalSpacer, layout->rowCount(), 0, 1, layout->columnCount());
-    msgBox->exec();
+    PAbout::instance(this)->exec();
 }
 
 
@@ -1175,6 +1241,8 @@ void PMain::importDone(MyException *ex, Image4DSimple* vmap_image)
 
         //updating menu items
         openVolumeAction->setEnabled(false);
+        recentVolumesMenu->setEnabled(false);
+        openVolumeToolButton->setEnabled(false);
         importOptionsMenu->setEnabled(false);
         closeVolumeAction->setEnabled(true);
         clearAnnotationsAction->setEnabled(true);
@@ -1599,4 +1667,62 @@ void PMain::setEnabledComboBoxItem(QComboBox* cbox, int _index, bool enabled)
 void PMain::zoomInSensChanged(int i)
 {
 //    zoomInThreshold = i;
+}
+
+/**********************************************************************************
+* Called when the correspondent debug actions are triggered
+***********************************************************************************/
+void PMain::debugAction1Triggered()
+{
+    #ifdef TMP_DEBUG
+    printf("--------------------- teramanager plugin [thread *] >> PMain::debugAction1Triggered()\n");
+    #endif
+
+    #ifdef USE_EXPERIMENTAL_FEATURES
+    CExplorerWindow* cur_win = CExplorerWindow::getCurrent();
+    if(cur_win)
+    {
+        int dimx = cur_win->volH1 - cur_win->volH0;
+        int dimy = cur_win->volV1 - cur_win->volV0;
+        int dimz = cur_win->volD1 - cur_win->volD0;
+        int cx = (dimx)/2;
+        int cy = (dimy)/2;
+        int cz = (dimz)/2;
+        int r = 50;
+        int side = 2*r;
+        float vol = pow(2.0f*r, 3);
+        int count = 0;
+
+        static bool first_time = true;
+        static bool restore_data = false;
+        static uint8* data_saved = new uint8[static_cast<int>(vol)];
+        uint8* data = cur_win->view3DWidget->getiDrawExternalParameter()->image4d->getRawData();
+        if(first_time)
+        {
+            first_time = false;
+            for(int k = cz - r; k < cz + r; k++)
+                for(int i = cy - r; i < cy + r; i++)
+                    for(int j = cx - r; j < cx + r; j++, count++)
+                        data_saved[(k-cz+r)*side*side +(i-cy+r)*side + (j-cx+r)] = data[k*dimy*dimx + i*dimx + j];
+        }
+
+        if(restore_data)
+        {
+            for(int k = cz - r; k < cz + r; k++)
+                for(int i = cy - r; i < cy + r; i++)
+                    for(int j = cx - r; j < cx + r; j++, count++)
+                        data[k*dimy*dimx + i*dimx + j] = data_saved[(k-cz+r)*side*side +(i-cy+r)*side + (j-cx+r)];
+        }
+        else
+        {
+            for(int k = cz - r; k < cz + r; k++)
+                for(int i = cy - r; i < cy + r; i++)
+                    for(int j = cx - r; j < cx + r; j++, count++)
+                        data[k*dimy*dimx + i*dimx + j] = (count / vol) *255;
+        }
+        restore_data = !restore_data;
+
+        myV3dR_GLWidget::cast(cur_win->view3DWidget)->updateImageDataFast();
+    }
+    #endif
 }

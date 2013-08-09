@@ -30,6 +30,8 @@
 #define CSETTINGS_H
 
 #include "CPlugin.h"
+#include <vector>
+#include <algorithm>
 
 class teramanager::CSettings
 {
@@ -52,6 +54,7 @@ class teramanager::CSettings
 
         //TeraFly members
         string volumePathLRU;
+        std::list<string> volumePathHistory;
         string annotationPathLRU;
         int volMapSizeLimit;
         int VOIdimV;
@@ -85,6 +88,7 @@ class teramanager::CSettings
 
         //GET and SET methods for TeraFly
         string getVolumePathLRU(){return volumePathLRU;}
+        std::list<string>& getVolumePathHistory(){return volumePathHistory;}
         string getAnnotationPathLRU(){return annotationPathLRU;}
         int getVolMapSizeLimit(){return volMapSizeLimit;}
         int getVOIdimV(){return VOIdimV;}
@@ -94,6 +98,17 @@ class teramanager::CSettings
         int getTraslY(){return traslY;}
         int getTraslZ(){return traslZ;}
         void setVolumePathLRU(string _volumePathLRU){volumePathLRU = _volumePathLRU;}
+        void addVolumePathToHistory(string _volumePath){
+            if(volumePathHistory.size() > 10)
+                volumePathHistory.pop_front();
+            volumePathHistory.push_back(_volumePath);
+            volumePathHistory.erase(unique(volumePathHistory.begin(), volumePathHistory.end()), volumePathHistory.end());
+        }
+        void clearVolumePathHistory(){
+            volumePathHistory.clear();
+            writeSettings();
+        }
+
         void setAnnotationPathLRU(string _annotationPathLRU){annotationPathLRU = _annotationPathLRU;}
         void setVolMapSizeLimit(int _volMapSizeLimit){volMapSizeLimit = _volMapSizeLimit;}
         void setVOIdimV(int _VOIdimV){VOIdimV = _VOIdimV;}

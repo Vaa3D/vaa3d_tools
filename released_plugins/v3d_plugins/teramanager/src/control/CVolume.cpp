@@ -70,11 +70,12 @@ int CVolume::scaleVCoord(int coord, int srcRes, int dstRes) throw (MyException)
     //computation
     if(srcRes == dstRes)
         return coord;
+    // --- Alessandro added on August 8th, 2013: useful for exact boundary conversion ---
+    else if(coord == CImport::instance()->getVolume(srcRes)->getDIM_V())
+        return CImport::instance()->getVolume(dstRes)->getDIM_V();
     else
     {
         float ratio = (CImport::instance()->getVolume(dstRes)->getDIM_V()-1.0f)/(CImport::instance()->getVolume(srcRes)->getDIM_V()-1.0f);
-        int tmp = static_cast<int>(coord*ratio + 0.5f);
-        //printf("\n\n------- scaleVCoord(int coord(%d), int srcRes(%d), int dstRes(%d)) = %d\n\n", coord, srcRes, dstRes, tmp);
         return static_cast<int>(coord*ratio + 0.5f);
     }
 }
@@ -95,6 +96,8 @@ int CVolume::scaleHCoord(int coord, int srcRes, int dstRes) throw (MyException)
     //computation
     if(srcRes == dstRes)
         return coord;
+    else if(coord == CImport::instance()->getVolume(srcRes)->getDIM_H())
+        return CImport::instance()->getVolume(dstRes)->getDIM_H();
     else
     {
         float ratio = (CImport::instance()->getVolume(dstRes)->getDIM_H()-1.0f)/(CImport::instance()->getVolume(srcRes)->getDIM_H()-1.0f);
@@ -118,6 +121,8 @@ int CVolume::scaleDCoord(int coord, int srcRes, int dstRes) throw (MyException)
     //computation
     if(srcRes == dstRes)
         return coord;
+    else if(coord == CImport::instance()->getVolume(srcRes)->getDIM_D())
+        return CImport::instance()->getVolume(dstRes)->getDIM_D();
     else
     {
         float ratio = (CImport::instance()->getVolume(dstRes)->getDIM_D()-1.0f)/(CImport::instance()->getVolume(srcRes)->getDIM_D()-1.0f);
@@ -141,6 +146,8 @@ float CVolume::scaleVCoord(float coord, int srcRes, int dstRes) throw (MyExcepti
     //computation
     if(srcRes == dstRes)
         return coord;
+    else if(coord == static_cast<float>(CImport::instance()->getVolume(srcRes)->getDIM_V()))
+        return static_cast<float>(CImport::instance()->getVolume(dstRes)->getDIM_V());
     else
     {
         float ratio = (CImport::instance()->getVolume(dstRes)->getDIM_V()-1.0f)/(CImport::instance()->getVolume(srcRes)->getDIM_V()-1.0f);
@@ -164,6 +171,8 @@ float CVolume::scaleHCoord(float coord, int srcRes, int dstRes) throw (MyExcepti
     //computation
     if(srcRes == dstRes)
         return coord;
+    else if(coord == static_cast<float>(CImport::instance()->getVolume(srcRes)->getDIM_H()))
+        return static_cast<float>(CImport::instance()->getVolume(dstRes)->getDIM_H());
     else
     {
         float ratio = (CImport::instance()->getVolume(dstRes)->getDIM_H()-1.0f)/(CImport::instance()->getVolume(srcRes)->getDIM_H()-1.0f);
@@ -187,6 +196,8 @@ float CVolume::scaleDCoord(float coord, int srcRes, int dstRes) throw (MyExcepti
     //computation
     if(srcRes == dstRes)
         return coord;
+    else if(coord == static_cast<float>(CImport::instance()->getVolume(srcRes)->getDIM_D()))
+        return static_cast<float>(CImport::instance()->getVolume(dstRes)->getDIM_D());
     else
     {
         float ratio = (CImport::instance()->getVolume(dstRes)->getDIM_D()-1.0f)/(CImport::instance()->getVolume(srcRes)->getDIM_D()-1.0f);

@@ -1,4 +1,4 @@
-Version history of TeraManager
+Version history of TeraFly
 ============================================================================================
 
 Below you find a list with the added  features, changes and fixes  for each version. Activi-
@@ -11,6 +11,20 @@ ties names are:
 - Rem: a feature no longer available
 
 ============================================================================================
+Version 0.9.0
+August 9th, 2013
+--------------------------------------------------------------------------------------------
+- New: Added  pre-buffering when zooming-in using  low res data. Image  is then updated with
+       high res data once it is loaded  from the disk. Support  for asynchronous  tile-based 
+       loading/updating (like Google Earth) has been implemented for future developments.
+- Opt: Resizing and aligning methods  don't do anything if the 3D window is  already aligned
+       and correctly sized. This prevents multiple calls of these routines from slowing down
+       the navigation.
+- New: redesigned "About" section, with TeraFly's logo and changelog.
+- New: added "Recent volumes" menu with the latest 10 volumes opened.
+--------------------------------------------------------------------------------------------
+
+
 Version 0.8.5
 May 20th, 2013
 --------------------------------------------------------------------------------------------

@@ -38,7 +38,7 @@ using namespace teramanager;
 * Singleton design pattern: this class can have one instance only,  which must be
 * instantiated by calling static method "istance(...)"
 **********************************************************************************/
-PDialogImport* PDialogImport::uniqueInstance = NULL;
+PDialogImport* PDialogImport::uniqueInstance = 0;
 void PDialogImport::uninstance()
 {
     if(uniqueInstance)
@@ -50,7 +50,7 @@ void PDialogImport::uninstance()
 
 PDialogImport::PDialogImport(QWidget* parent) : QDialog(parent)
 {
-    #ifdef TSP_DEBUG
+    #ifdef TMP_DEBUG
     printf("--------------------- teramanager plugin [thread *] >> PDialogImport::PDialogImport()\n");
     #endif
 

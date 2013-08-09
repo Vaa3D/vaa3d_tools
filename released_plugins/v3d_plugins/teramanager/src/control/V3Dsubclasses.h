@@ -48,6 +48,9 @@ class teramanager::myV3dR_GLWidget : public V3dR_GLWidget
         //zoomIn method(s)
         void zoomIn(const char* method);
 
+        //fast version (without displaying progress bar) of updateImageData method
+        void updateImageDataFast();
+
     public:
 
         //@Override
