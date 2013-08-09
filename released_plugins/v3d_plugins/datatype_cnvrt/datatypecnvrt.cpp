@@ -85,10 +85,10 @@ bool DTCPlugin::dofunc(const QString &func_name, const V3DPluginArgList &input, 
 
 bool datatype_converting(const V3DPluginArgList & input, V3DPluginArgList & output)
 {
-	cout<<"Welcome to DataType Converter"<<endl;
+    cout<<"DataType/file_format Converter"<<endl;
 	if (output.size() != 1) return false;
 
-     int tar_dt = 1;
+     int tar_dt = 0;
      if (input.size()>=2)
      {
           vector<char*> paras = (*(vector<char*> *)(input.at(1).p));
@@ -97,11 +97,12 @@ bool datatype_converting(const V3DPluginArgList & input, V3DPluginArgList & outp
 
 	char * inimg_file = ((vector<char*> *)(input.at(0).p))->at(0);
 	char * outimg_file = ((vector<char*> *)(output.at(0).p))->at(0);
-	cout<<"tar_dt = "<<tar_dt<<endl;
+    cout<<"target data type = "<<tar_dt<<endl;
 	cout<<"inimg_file = "<<inimg_file<<endl;
 	cout<<"outimg_file = "<<outimg_file<<endl;
 
-     if(tar_dt!=1 && tar_dt!=2 && tar_dt!=4)
+     if(tar_dt!=1 && tar_dt!=2 && tar_dt!=4
+             && tar_dt!=0)
      {
           v3d_msg("Invalide target data type. Only support V3D_UINT8, V3D_UINT16, and V3D_FLOAT32 data.");
           return false;
@@ -116,6 +117,9 @@ bool datatype_converting(const V3DPluginArgList & input, V3DPluginArgList & outp
           cerr<<"load image "<<inimg_file<<" error!"<<endl;
           return false;
      }
+
+    if (tar_dt==0) //in this case, set the target data type to be the same as the input image file. In this case, the file format can be converted without changing of the data. by PHC, 20130809
+        tar_dt = sub_dt;
 
      V3DLONG	sz_sub = in_sz[0]*in_sz[1]*in_sz[2]*in_sz[3];
 
