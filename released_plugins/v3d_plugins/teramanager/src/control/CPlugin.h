@@ -53,6 +53,7 @@ namespace teramanager
     class PDialogImport;        //presentation class for the import dialog
     class PConverter;           //presentation class for the volume converter dialog
     class PAbout;               //about window
+    class PLog;                 //log window
     class CImport;              //control class to perform the import step in a separate non-GUI-blocking thread
     class CVolume;              //control class to perform data loading in a separate non-GUI-blocking thread
     class CSettings;            //control class to manage persistent platform-independent application settings

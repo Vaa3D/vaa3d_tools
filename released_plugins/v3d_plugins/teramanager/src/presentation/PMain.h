@@ -78,6 +78,7 @@ class teramanager::PMain : public QWidget
         QAction* aboutAction;           //"About" menu action
         QMenu* debugMenu;               //"Debug" menu for debugging purposes
         QAction* debugAction1;          //debug menu action #1
+        QAction* debugAction2;          //debug menu action #2
         QMenu *recentVolumesMenu;
         QAction* clearRecentVolumesAction;
 
@@ -373,6 +374,7 @@ class teramanager::PMain : public QWidget
         * Called when the correspondent debug actions are triggered
         ***********************************************************************************/
         void debugAction1Triggered();
+        void showLogTriggered();
 };
 
 #endif // PMAIN_GUI_H

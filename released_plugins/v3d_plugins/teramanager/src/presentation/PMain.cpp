@@ -29,6 +29,7 @@
 #include "PMain.h"
 #include "PDialogImport.h"
 #include "PAbout.h"
+#include "PLog.h"
 #include "../control/CImport.h"
 #include "../control/CVolume.h"
 #include "../control/CSettings.h"
@@ -203,9 +204,12 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     importOptionsWidget->setDefaultWidget(import_form);
     importOptionsMenu->addAction(importOptionsWidget);    
     debugMenu = menuBar->addMenu("Debug");
-    debugAction1 = new QAction("Action 1", this);
+    debugAction1 = new QAction("Action 1", debugMenu);
     connect(debugAction1, SIGNAL(triggered()), this, SLOT(debugAction1Triggered()));
     debugMenu->addAction(debugAction1);
+    debugAction2 = new QAction("Show log", debugMenu);
+    connect(debugAction2, SIGNAL(triggered()), this, SLOT(showLogTriggered()));
+    debugMenu->addAction(debugAction2);
     helpMenu = menuBar->addMenu("Help");
     aboutAction = new QAction("About", this);
     aboutAction->setIcon(QIcon(":/icons/about.png"));
@@ -1725,4 +1729,13 @@ void PMain::debugAction1Triggered()
         myV3dR_GLWidget::cast(cur_win->view3DWidget)->updateImageDataFast();
     }
     #endif
+}
+
+void PMain::showLogTriggered()
+{
+    #ifdef TMP_DEBUG
+    printf("--------------------- teramanager plugin [thread *] >> PMain::showLogTriggered()\n");
+    #endif
+
+    PLog::instance(this)->show();
 }

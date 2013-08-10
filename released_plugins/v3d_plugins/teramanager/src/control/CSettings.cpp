@@ -98,7 +98,6 @@ void CSettings::writeSettings()
         settings.setArrayIndex(i);
         QString path(it->c_str());
         settings.setValue("path", path);
-        printf("\n\nWrited: \"%s\"\n\n", path.toStdString().c_str());
     }
     settings.endArray();
 
@@ -115,12 +114,6 @@ void CSettings::writeSettings()
     settings.setValue("volumeConverterFormatLRU", QString(volumeConverterFormatLRU.c_str()));
     settings.setValue("volumeConverterStacksWidthLRU", volumeConverterStacksWidthLRU);
     settings.setValue("volumeConverterStacksHeightLRU", volumeConverterStacksHeightLRU);
-
-    QStringList list = settings.allKeys();
-    cout << endl << endl;
-    for (int i = 0; i < list.size(); ++i)
-         cout << list.at(i).toLocal8Bit().constData() << endl;
-    cout << endl << endl;
 }
 
 
@@ -153,13 +146,10 @@ void CSettings::readSettings()
     if(settings.contains("traslZ"))
         traslZ = settings.value("traslZ").toInt();
     int size = settings.beginReadArray("volumePathHistory");
-    printf("\n\n%d elements to be read...\n\n", size);
     for (int i = 0; i < size; ++i)
     {
         settings.setArrayIndex(i);
         volumePathHistory.push_back(settings.value("path").toString().toStdString());
-
-        printf("\n\nRead: \"%s\"\n\n", settings.value("path").toString().toStdString().c_str());
     }
     settings.endArray();
 
@@ -174,10 +164,4 @@ void CSettings::readSettings()
         volumeConverterStacksWidthLRU = settings.value("volumeConverterStacksWidthLRU").toInt();
     if(settings.contains("volumeConverterStacksHeightLRU"))
         volumeConverterStacksHeightLRU = settings.value("volumeConverterStacksHeightLRU").toInt();
-
-    QStringList list = settings.allKeys();
-    cout << endl << endl;
-    for (int i = 0; i < list.size(); ++i)
-         cout << list.at(i).toLocal8Bit().constData() << endl;
-    cout << endl << endl;
 }

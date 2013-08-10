@@ -31,6 +31,7 @@
 #include "CVolume.h"
 #include "CAnnotations.h"
 #include "../presentation/PMain.h"
+#include "../presentation/PLog.h"
 #include "renderer_gl1.h"
 #include "v3dr_colormapDialog.h"
 #include "V3Dsubclasses.h"
@@ -104,6 +105,8 @@ CExplorerWindow::CExplorerWindow(V3DPluginCallback2 *_V3D_env, int _resIndex, ui
         setActive(true);
 
         //opening tri-view window (and hiding it asap)
+        QElapsedTimer timer;
+        timer.start();
         this->window = V3D_env->newImageWindow(QString(title.c_str()));
         this->triViewWidget = (XFormWidget*)window;
         triViewWidget->setWindowState(Qt::WindowMinimized);
@@ -116,6 +119,7 @@ CExplorerWindow::CExplorerWindow(V3DPluginCallback2 *_V3D_env, int _resIndex, ui
         V3D_env->open3DWindow(window);
         view3DWidget = (V3dR_GLWidget*)(V3D_env->getView3DControl(window));
         window3D = view3DWidget->getiDrawExternalParameter()->window3D;
+        PLog::getInstance()->appendGPU(timer.elapsed(), QString("Opened view ").append(title.c_str()).toStdString());
 
         //installing the event filter on the 3D renderer and on the 3D window
         view3DWidget->installEventFilter(this);
@@ -139,6 +143,8 @@ CExplorerWindow::CExplorerWindow(V3DPluginCallback2 *_V3D_env, int _resIndex, ui
                     curr_cmap[i] = prev_cmap[i];
                 }
             }
+
+            timer.restart();
             if(changed_cmap)
                 curr_renderer->applyColormapToImage();
 
@@ -159,7 +165,8 @@ CExplorerWindow::CExplorerWindow(V3DPluginCallback2 *_V3D_env, int _resIndex, ui
             view3DWidget->doAbsoluteRot(prev->view3DWidget->xRot(), prev->view3DWidget->yRot(), prev->view3DWidget->zRot());
 
             //sync widgets
-            syncWindows(prev->window3D, window3D);
+            syncWindows(prev->window3D, window3D);            
+            PLog::getInstance()->appendGPU(timer.elapsed(), QString("Syncronized views \"").append(title.c_str()).append("\" and \"").append(prev->title.c_str()).append("\"").toStdString());
 
             //storing annotations done in the previous view and loading annotations of the current view
             prev->storeAnnotations();
@@ -451,6 +458,8 @@ void CExplorerWindow::loadingDone(MyException *ex, void* sourceObject)
     else if(sourceObject == this)
     {
         //copying loaded data
+        QElapsedTimer timer;
+        timer.start();
         uint32 img_dims[4]       = {volH1-volH0, volV1-volV0, volD1-volD0, nchannels};
         uint32 img_offset[3]     = {cVolume->getVoiH0()-volH0, cVolume->getVoiV0()-volV0, cVolume->getVoiD0()-volD0};
         uint32 new_img_dims[4]   = {cVolume->getVoiH1()-cVolume->getVoiH0(),  cVolume->getVoiV1()-cVolume->getVoiV0(), cVolume->getVoiD1()-cVolume->getVoiD0(),  nchannels};
@@ -462,13 +471,25 @@ void CExplorerWindow::loadingDone(MyException *ex, void* sourceObject)
         //releasing memory used for storing loaded data
         delete[] cVolume->getVoiData();
         cVolume->resetVoiData();
+        char message[1000];
+        sprintf(message, "Block X=[%d, %d) Y=[%d, %d) Z=[%d, %d) copied into view %s",
+                cVolume->getVoiH0(), cVolume->getVoiH1(),
+                cVolume->getVoiV0(), cVolume->getVoiV1(),
+                cVolume->getVoiD0(), cVolume->getVoiD1(), title.c_str());
+        PLog::getInstance()->appendCPU(timer.elapsed(), message);
 
         //updating image data
+        timer.restart();
         #ifdef USE_EXPERIMENTAL_FEATURES
         myV3dR_GLWidget::cast(view3DWidget)->updateImageDataFast();
         #else
         view3DWidget->updateImageData();
         #endif
+        sprintf(message, "Block X=[%d, %d) Y=[%d, %d) Z=[%d, %d) rendered into view %s",
+                cVolume->getVoiH0(), cVolume->getVoiH1(),
+                cVolume->getVoiV0(), cVolume->getVoiV1(),
+                cVolume->getVoiD0(), cVolume->getVoiD1(), title.c_str());
+        PLog::getInstance()->appendGPU(timer.elapsed(), message);
     }
 
     //resetting some widgets
@@ -551,15 +572,22 @@ void CExplorerWindow::newView(int x, int y, int z, int resolution, bool fromVaa3
 
 
     //obtaining low res data from current window to be displayed in a new window while the user waits for the new high res data
-    uint8* lowresData = getVOI(CVolume::scaleHCoord(cVolume->getVoiH0(), resolution, volResIndex),
-                               CVolume::scaleHCoord(cVolume->getVoiH1(), resolution, volResIndex),
-                               CVolume::scaleVCoord(cVolume->getVoiV0(), resolution, volResIndex),
-                               CVolume::scaleVCoord(cVolume->getVoiV1(), resolution, volResIndex),
-                               CVolume::scaleDCoord(cVolume->getVoiD0(), resolution, volResIndex),
-                               CVolume::scaleDCoord(cVolume->getVoiD1(), resolution, volResIndex),
+    QElapsedTimer timer;
+    timer.start();
+    int rVoiH0 = CVolume::scaleHCoord(cVolume->getVoiH0(), resolution, volResIndex);
+    int rVoiH1 = CVolume::scaleHCoord(cVolume->getVoiH1(), resolution, volResIndex);
+    int rVoiV0 = CVolume::scaleVCoord(cVolume->getVoiV0(), resolution, volResIndex);
+    int rVoiV1 = CVolume::scaleVCoord(cVolume->getVoiV1(), resolution, volResIndex);
+    int rVoiD0 = CVolume::scaleDCoord(cVolume->getVoiD0(), resolution, volResIndex);
+    int rVoiD1 = CVolume::scaleDCoord(cVolume->getVoiD1(), resolution, volResIndex);
+    uint8* lowresData = getVOI(rVoiH0, rVoiH1, rVoiV0, rVoiV1, rVoiD0, rVoiD1,
                                cVolume->getVoiH1()-cVolume->getVoiH0(),
                                cVolume->getVoiV1()-cVolume->getVoiV0(),
                                cVolume->getVoiD1()-cVolume->getVoiD0());
+    char message[1000];
+    sprintf(message, "Block X=[%d, %d) Y=[%d, %d) Z=[%d, %d) loaded from view %s",
+            rVoiH0, rVoiH1, rVoiV0, rVoiV1, rVoiD0, rVoiD1, title.c_str());
+    PLog::getInstance()->appendCPU(timer.elapsed(), message);
 
     //opening a new window
     this->next = new CExplorerWindow(V3D_env, resolution, lowresData,
@@ -794,6 +822,9 @@ void CExplorerWindow::storeAnnotations() throw (MyException)
     printf("--------------------- teramanager plugin [thread *] >> CExplorerWindow[%s]::storeAnnotations()\n",  titleShort.c_str() );
     #endif
 
+    QElapsedTimer timer;
+    timer.start();
+
     /**********************************************************************************
     * MARKERS
     ***********************************************************************************/
@@ -839,6 +870,8 @@ void CExplorerWindow::storeAnnotations() throw (MyException)
         //storing markers
         CAnnotations::getInstance()->addCurves(&editedCurves);
     }
+
+    PLog::getInstance()->appendCPU(timer.elapsed(), QString("Stored 3D annotations from view ").append(title.c_str()).toStdString());
 }
 
 void CExplorerWindow::loadAnnotations() throw (MyException)
@@ -846,6 +879,9 @@ void CExplorerWindow::loadAnnotations() throw (MyException)
     #ifdef TMP_DEBUG
     printf("--------------------- teramanager plugin [thread *] >> CExplorerWindow[%s]::loadAnnotations()\n",  titleShort.c_str() );
     #endif
+
+    QElapsedTimer timer;
+    timer.start();
 
     //clearing previous annotations (useful when this view has been already visited)
     loaded_markers.clear();
@@ -887,11 +923,15 @@ void CExplorerWindow::loadAnnotations() throw (MyException)
     }
     vaa3dCurves.editable=false;
 
+    PLog::getInstance()->appendCPU(timer.elapsed(), QString("Loaded 3D annotations into view ").append(title.c_str()).toStdString());
+
     //assigning annotations
+    timer.restart();
     V3D_env->setLandmark(window, vaa3dMarkers);
     V3D_env->setSWC(window, vaa3dCurves);
     V3D_env->pushObjectIn3DWindow(window);
     view3DWidget->enableMarkerLabel(false);
+    PLog::getInstance()->appendGPU(timer.elapsed(), QString("Loaded 3D annotations into view ").append(title.c_str()).toStdString());
 }
 
 /**********************************************************************************

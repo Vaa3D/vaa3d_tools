@@ -9,6 +9,11 @@ QT += opengl
 CONFIG += use_static_libs
 CONFIG += use_experimental_features
 
+
+#QMAKE_CXXFLAGS += -Wall
+#QMAKE_CXXFLAGS += -pedantic
+#QMAKE_CXXFLAGS += -Werror
+
 #set up third party libraries
 use_static_libs{
     INCLUDEPATH += ./include/opencv
@@ -46,7 +51,8 @@ INCLUDEPATH += $$V3DMAINPATH/common_lib/include
 INCLUDEPATH += $$V3DMAINPATH/common_lib/src_packages/mylib_tiff
 INCLUDEPATH += $$V3DMAINPATH/basic_c_fun/customary_structs
 SOURCES += $$V3DMAINPATH/basic_c_fun/v3d_message.cpp \
-    src/presentation/PAbout.cpp
+    src/presentation/PAbout.cpp \
+    src/presentation/PLog.cpp
 SOURCES += $$V3DMAINPATH/basic_c_fun/stackutil.cpp
 SOURCES += $$V3DMAINPATH/basic_c_fun/mg_image_lib.cpp
 SOURCES += $$V3DMAINPATH/basic_c_fun/mg_utilities.cpp
@@ -57,7 +63,8 @@ SOURCES += $$V3DMAINPATH/basic_c_fun/basic_surf_objs.cpp
 HEADERS += $$V3DMAINPATH/common_lib/src_packages/mylib_tiff/image.h \
     src/control/V3Dsubclasses.h \
     src/presentation/QLineTree.h \
-    src/presentation/PAbout.h
+    src/presentation/PAbout.h \
+    src/presentation/PLog.h
 HEADERS += $$V3DMAINPATH/basic_c_fun/imageio_mylib.h
 LIBS += -L. -lv3dtiff -L$$V3DMAINPATH/common_lib/lib \
             -L$$V3DMAINPATH/common_lib/src_packages/mylib_tiff -lmylib
