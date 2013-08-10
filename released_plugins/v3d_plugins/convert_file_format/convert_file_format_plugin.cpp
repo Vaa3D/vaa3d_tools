@@ -2,12 +2,15 @@
  * Convert a few file formats, e.g. v3draw to tif and vice versa.
  * 2012-2013 : by Hanchuan Peng
  */
- 
+
+#define _ALLOW_WORKMODE_MENU_
+
 #include "v3d_message.h"
 #include <vector>
 #include "convert_file_format_plugin.h"
 using namespace std;
 Q_EXPORT_PLUGIN2(convert_file_format, ConvertFileFormatPlugin);
+
  
 QStringList ConvertFileFormatPlugin::menulist() const
 {
@@ -49,17 +52,22 @@ bool ConvertFileFormatPlugin::dofunc(const QString & func_name, const V3DPluginA
         qDebug() << "infile=[" << infiles.at(0) << "]";
         qDebug() << "outfile=[" << outfiles.at(0) << "]";
 
-        Image4DSimple inimg;
-
-        inimg.loadImage(infiles.at(0));
-        if (!inimg.valid())
-        {
-            v3d_msg("Fail to load the specified input image.", 0);
+        Image4DSimple *inimg = callback.loadImage(infiles.at(0));
+        if (!inimg || !inimg->valid())
             return false;
-        }
 
-        if (!inimg.saveImage(outfiles.at(0)))
-            return false;
+        return callback.saveImage(inimg, outfiles.at(0));
+
+
+//        inimg.loadImage(infiles.at(0));
+//        if (!inimg.valid())
+//        {
+//            v3d_msg("Fail to load the specified input image.", 0);
+//            return false;
+//        }
+//
+//        if (!inimg.saveImage(outfiles.at(0)))
+//            return false;
     }
 	else if (func_name == tr("help"))
 	{
