@@ -38,7 +38,7 @@
 #define S_TIME_CALC						//if enabled, single-phase processing time will be computed
 
 //enables Vaa3D-specific code in the ProgressBar.cpp file
-#define _VAA3D_PLUGIN_MODE
+//#define _VAA3D_PLUGIN_MODE
 
 //*** FUNCTIONS DEFINITIONS ****
 

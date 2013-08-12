@@ -465,7 +465,7 @@ void StackedVolume::init()
 	//unsupported reference system
 	else
 	{
-            char msg[500];
+            char msg[IM_STATIC_STRINGS_SIZE];
             sprintf(msg, "in StackedVolume::init(...): the reference system {%d,%d,%d} is not supported.",
                     reference_system.first, reference_system.second, reference_system.third);
             throw MyException(msg);

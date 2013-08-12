@@ -30,6 +30,7 @@
 #include "CPlugin.h"
 #include "../core/ImageManager/RawVolume.h"
 #include "../core/ImageManager/SimpleVolume.h"
+#include "../core/ImageManager/TiledVolume.h"
 #include "../core/VolumeConverter/VolumeConverter.h"
 
 using namespace teramanager;
@@ -65,40 +66,65 @@ void CConverter::setMembers(PConverter* pConverter) throw (MyException)
     printf("--------------------- teramanager plugin [thread *] >> CConverter::setMembers()\n");
     #endif
 
+    char errMsg[1024];
+
     conversionMode = pConverter->conversion_panel->isEnabled();
 
     if(!conversionMode)
     {
-        volPath = pConverter->volpathField->text().toStdString();
-        volFormat = pConverter->volformatCombobox->currentText().toStdString();
-        if(volFormat.compare("TeraStitcher") == 0)
+        inVolPath = pConverter->inPathField->text().toStdString();
+        inVolFormat = pConverter->inFormatCBox->currentText().toStdString();
+        if(inVolFormat.compare("Image series (tiled)") == 0)
         {
-            volFormat = STACKED_FORMAT;
+            inVolFormat = STACKED_FORMAT;
             fileMode = false;
         }
-        else if(volFormat.compare("Image series") == 0)
+        else if(inVolFormat.compare("Image series (nontiled)") == 0)
         {
-            volFormat = SIMPLE_FORMAT;
+            inVolFormat = SIMPLE_FORMAT;
             fileMode = false;
         }
-        else if(volFormat.compare("Vaa3D raw") == 0)
+        else if(inVolFormat.compare("Vaa3D raw (tiled)") == 0)
         {
-            volFormat = RAW_FORMAT;
+            inVolFormat = TILED_FORMAT;
+            fileMode = true;
+        }
+        else if(inVolFormat.compare("Vaa3D raw (nontiled)") == 0)
+        {
+            inVolFormat = RAW_FORMAT;
             fileMode = true;
         }
         else
-            throw MyException("in CConverter::setMembers(): unable to recognize the selected volume format");
+        {
+            sprintf(errMsg, "Input format \"%s\" not yet supported", inVolFormat.c_str());
+            throw MyException(errMsg);
+        }
     }
     else
     {
-        volOutPath = pConverter->voloutpathField->text().toStdString();
+        outVolPath = pConverter->outPathField->text().toStdString();
+        outVolFormat = pConverter->outFormatCBox->currentText().toStdString();
+        if(outVolFormat.compare("Image series (tiled)") == 0)
+        {
+            outVolFormat = STACKED_FORMAT;
+            fileMode = false;
+        }
+        else if(outVolFormat.compare("Vaa3D raw (tiled)") == 0)
+        {
+            outVolFormat = TILED_FORMAT;
+            fileMode = true;
+        }
+        else
+        {
+            sprintf(errMsg, "Output format \"%s\" not yet supported", outVolFormat.c_str());
+            throw MyException(errMsg);
+        }
         resolutionsSize = pConverter->resolutionsNumber;
         if(resolutionsSize <= 0)
-            throw MyException("in CConverter::setMembers(): no selected resolutions found");
+            throw MyException("No resolutions selected");
         if(resolutionsSize > S_MAX_MULTIRES)
         {
-            char errMsg[IM_STATIC_STRINGS_SIZE];
-            sprintf(errMsg, "in CConverter::setMembers(): exceeded the maximum number (%d) of resolutions that can be produced", S_MAX_MULTIRES);
+            sprintf(errMsg, "Exceeded the maximum number (%d) of resolutions that can be produced", S_MAX_MULTIRES);
             throw MyException(errMsg);
         }
         resolutions = new bool[S_MAX_MULTIRES];
@@ -111,6 +137,7 @@ void CConverter::setMembers(PConverter* pConverter) throw (MyException)
         }
         stacksWidth = pConverter->stacksWidthField->value();
         stacksHeight = pConverter->stacksHeightField->value();
+        stacksDepth = pConverter->stacksDepthField->value();
     }
 }
 
@@ -126,21 +153,30 @@ void CConverter::run()
         if(!conversionMode)
         {
             //first checking that the given filepath or folder exists
-            if(!fileMode && !QDir(volPath.c_str()).exists())
-                throw MyException(QString("Unable to find the directory \"").append(volPath.c_str()).append("\"").toStdString().c_str());
-            if(fileMode && !QFile(volPath.c_str()).exists())
-                throw MyException(QString("Unable to find the file \"").append(volPath.c_str()).append("\"").toStdString().c_str());
+            if(!fileMode && !QDir(inVolPath.c_str()).exists())
+                throw MyException(QString("Unable to find the directory \"").append(inVolPath.c_str()).append("\"").toStdString().c_str());
+            if(fileMode && !QFile(inVolPath.c_str()).exists())
+                throw MyException(QString("Unable to find the file \"").append(inVolPath.c_str()).append("\"").toStdString().c_str());
 
             vc = new VolumeConverter();
-            vc->setSrcVolume(volPath.c_str(), volFormat.c_str(), "RGB");
+            vc->setSrcVolume(inVolPath.c_str(), inVolFormat.c_str(), "RGB");
         }
         else
         {
             //first checking that the given folder exists
-            if(!fileMode && !QDir(volOutPath.c_str()).exists())
-                throw MyException(QString("Unable to find the directory \"").append(volOutPath.c_str()).append("\"").toStdString().c_str());
+            if(!fileMode && !QDir(outVolPath.c_str()).exists())
+                throw MyException(QString("Unable to find the directory \"").append(outVolPath.c_str()).append("\"").toStdString().c_str());
 
-            vc->generateTiles(volOutPath, resolutions, stacksHeight, stacksWidth);
+            if(outVolFormat.compare(STACKED_FORMAT) == 0)
+                vc->generateTiles(outVolPath, resolutions, stacksHeight, stacksWidth);
+            else if(outVolFormat.compare(TILED_FORMAT) == 0)
+                vc->generateTilesVaa3DRaw(outVolPath, resolutions, stacksHeight, stacksWidth, stacksDepth);
+            else
+            {
+                char errMsg[1024];
+                sprintf(errMsg, "Output format \"%s\" not yet supported", outVolFormat.c_str());
+                throw MyException(errMsg);
+            }
         }
 
         //everything went OK

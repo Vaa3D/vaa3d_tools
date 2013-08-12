@@ -27,6 +27,7 @@
 ********************************************************************************************************************************************************************************************/
 
 #include "PConverter.h"
+#include "PMain.h"
 #include "../core/ImageManager/ProgressBar.h"
 #include "../control/CConverter.h"
 #include "../control/CSettings.h"
@@ -67,10 +68,13 @@ PConverter::PConverter(V3DPluginCallback *callback, QWidget *parent) : QWidget(p
 
     //main widgets
     QFont tinyFont = QApplication::font();
-    tinyFont.setPointSize(10);
-    import_panel = new QGroupBox("Step 1: Import volume");
+    tinyFont.setPointSize(9);
+    helpBox = new QHelpBox(this);
+    helpBox->setFixedHeight(60);
+    helpBox->setIconSize(35, 35);
+    import_panel = new QGroupBox("Step 1: Import volume from:");
     import_panel->setStyle(new QWindowsStyle());
-    conversion_panel = new QGroupBox("Step 2: Convert volume to TeraFly format");
+    conversion_panel = new QGroupBox("Step 2: Convert volume to:");
     conversion_panel->setStyle(new QWindowsStyle());
     progressBar = new QProgressBar(this);
     startButton = new QPushButton(this);
@@ -80,44 +84,66 @@ PConverter::PConverter(V3DPluginCallback *callback, QWidget *parent) : QWidget(p
     stopButton->setIcon(QIcon(":/icons/stop.png"));
     stopButton->setText("Stop");
     statusBar = new QStatusBar();
-    statusBar->showMessage("Ready to import volume.");
+    statusBar->setFont(QFont("",8));
 
     //import form widget
-    volformatCombobox = new QComboBox();
-    volformatCombobox->insertItem(0, "TeraStitcher");
-    volformatCombobox->insertItem(1, "Image series");
-    volformatCombobox->insertItem(2, "Vaa3D raw");
-    volformatCombobox->setFixedWidth(200);
-    volformatCombobox->setEditable(true);
-    volformatCombobox->lineEdit()->setReadOnly(true);
-    volformatCombobox->lineEdit()->setAlignment(Qt::AlignCenter);
-    for(int i = 0; i < volformatCombobox->count(); i++)
+    inFormatCBox = new QComboBox();
+    inFormatCBox->insertItem(0, "Image series (tiled)");
+    inFormatCBox->insertItem(1, "Image series (nontiled)");
+    inFormatCBox->insertItem(2, "3D TIFF (tiled)");
+    inFormatCBox->insertItem(3, "3D TIFF (nontiled)");
+    inFormatCBox->insertItem(4, "Vaa3D raw (tiled)");
+    inFormatCBox->insertItem(5, "Vaa3D raw (nontiled)");
+    PMain::setEnabledComboBoxItem(inFormatCBox, 2, false);
+    PMain::setEnabledComboBoxItem(inFormatCBox, 3, false);
+    inFormatCBox->setEditable(true);
+    inFormatCBox->lineEdit()->setReadOnly(true);
+    inFormatCBox->lineEdit()->setAlignment(Qt::AlignCenter);
+    for(int i = 0; i < inFormatCBox->count(); i++)
     {
-      volformatCombobox->setItemData(i, Qt::AlignCenter, Qt::TextAlignmentRole);
-      if(volformatCombobox->itemText(i).compare(CSettings::instance()->getVCFormat().c_str()) == 0)
-          volformatCombobox->setCurrentIndex(i);
+      inFormatCBox->setItemData(i, Qt::AlignCenter, Qt::TextAlignmentRole);
+      if(inFormatCBox->itemText(i).compare(CSettings::instance()->getVCInputFormat().c_str()) == 0)
+          inFormatCBox->setCurrentIndex(i);
     }
-    volformatHelpbox = new QLabel();
-    volformatHelpbox->setStyleSheet("border: 1px solid; border-color: rgb(71,127,249); background-color: rgb(245,245,245); margin-top:0px; "
-                                    "margin-bottom:0px; margin-left: 27px; padding-top:4px; padding-bottom:4px; padding-left:23px; text-align:justify;");
-    volformatHelpbox->setWordWrap(true);
-    volformatHelpbox->setFont(tinyFont);
-    volformatHelpbox->setFixedWidth(700);
-    helpIcon = new QLabel("<html><table><tr style=\"vertical-align: middle;\"><td><img src=\":/icons/help.png\"></td></tr></html>");
-    helpIcon->setStyleSheet("border: none; background-color: none;");
+    inPathField    = new QLineEdit(QString(CSettings::instance()->getVCInputPath().c_str()));
+    inDirButton = new QPushButton("Browse for dir...");
+    inFileButton = new QPushButton("Browse for file...");
 
-    volpathField    = new QLineEdit(QString(CSettings::instance()->getVCInputPath().c_str()));
-    volpathField->setFixedWidth(700);
-    voldirButton = new QPushButton("Browse for dir...");
-    volfileButton = new QPushButton("Browse for file...");
-    voldirButton->setFixedWidth(200);
-    volfileButton->setFixedWidth(200);
+    //import form layout
+    inButtonLayout = new QStackedLayout();
+    inButtonLayout->addWidget(inDirButton);
+    inButtonLayout->addWidget(inFileButton);
+    QHBoxLayout* importFormLayout = new QHBoxLayout();
+    importFormLayout->addWidget(inFormatCBox);
+    inFormatCBox->setFixedWidth(220);
+    importFormLayout->addWidget(inPathField, 1);
+    importFormLayout->addLayout(inButtonLayout);
+    import_panel->setLayout(importFormLayout);
 
     //conversion form widget
-    voloutpathField    = new QLineEdit(QString(CSettings::instance()->getVCOutputPath().c_str()));
-    voloutpathField->setFixedWidth(700);
-    voloutdirButton = new QPushButton("Browse for dir...");
-    voloutdirButton->setFixedWidth(200);
+    outFormatCBox = new QComboBox();
+    outFormatCBox->insertItem(0, "Image series (tiled)");
+    outFormatCBox->insertItem(1, "Image series (nontiled)");
+    outFormatCBox->insertItem(2, "3D TIFF (tiled)");
+    outFormatCBox->insertItem(3, "3D TIFF (nontiled)");
+    outFormatCBox->insertItem(4, "Vaa3D raw (tiled)");
+    outFormatCBox->insertItem(5, "Vaa3D raw (nontiled)");
+    PMain::setEnabledComboBoxItem(outFormatCBox, 1, false);
+    PMain::setEnabledComboBoxItem(outFormatCBox, 2, false);
+    PMain::setEnabledComboBoxItem(outFormatCBox, 3, false);
+    PMain::setEnabledComboBoxItem(outFormatCBox, 5, false);
+    outFormatCBox->setEditable(true);
+    outFormatCBox->lineEdit()->setReadOnly(true);
+    outFormatCBox->lineEdit()->setAlignment(Qt::AlignCenter);
+    for(int i = 0; i < outFormatCBox->count(); i++)
+    {
+      outFormatCBox->setItemData(i, Qt::AlignCenter, Qt::TextAlignmentRole);
+      if(outFormatCBox->itemText(i).compare(CSettings::instance()->getVCOutputFormat().c_str()) == 0)
+          outFormatCBox->setCurrentIndex(i);
+    }
+    outPathField    = new QLineEdit(QString(CSettings::instance()->getVCOutputPath().c_str()));
+    outDirButton = new QPushButton("Browse for dir...");
+    outFileButton = new QPushButton("Browse for file...");
     resolutionsLayout = new QGridLayout();
     resolutionsNumber = -1;
     resolutionsFields = 0;
@@ -128,47 +154,37 @@ PConverter::PConverter(V3DPluginCallback *callback, QWidget *parent) : QWidget(p
     stacksWidthField->setMinimum(100);
     stacksWidthField->setMaximum(10000);
     stacksWidthField->setValue(CSettings::instance()->getVCStacksWidth());
+    stacksWidthField->setSuffix(" (X)");
     stacksHeightField = new QSpinBox();
     stacksHeightField->setAlignment(Qt::AlignCenter);
     stacksHeightField->setMinimum(100);
     stacksHeightField->setMaximum(10000);
-    stacksHeightField->setValue(CSettings::instance()->getVCStacksHeight());
+    stacksHeightField->setSuffix(" (Y)");
+    stacksHeightField->setValue(CSettings::instance()->getVCStacksHeight());    
+    stacksDepthField = new QSpinBox();
+    stacksDepthField->setAlignment(Qt::AlignCenter);
+    stacksDepthField->setMinimum(100);
+    stacksDepthField->setMaximum(10000);
+    stacksDepthField->setSuffix(" (Z)");
+    stacksDepthField->setValue(CSettings::instance()->getVCStacksDepth());
     memoryField = new QLabel();
     memoryField->setAlignment(Qt::AlignLeft);
 
-    //import form layout
-    QVBoxLayout* importFormLayout = new QVBoxLayout();
-    importFormLayout->addWidget(new QLabel("Select the format of the volume to be imported:"));
-    QHBoxLayout* formatLayout = new QHBoxLayout();
-    formatLayout->addWidget(volformatCombobox);
-    QStackedLayout *helpLayout = new QStackedLayout();
-    helpLayout->addWidget(volformatHelpbox);
-    helpLayout->addWidget(helpIcon);
-    helpLayout->setStackingMode(QStackedLayout::StackAll);
-    formatLayout->addLayout(helpLayout);
-    importFormLayout->addLayout(formatLayout);
-    importFormLayout->addSpacing(20);
-    importFormLayout->addWidget(new QLabel("Enter the directory or the file path of the volume to be imported:"));
-    QHBoxLayout* volPathLayout = new QHBoxLayout();
-    volButtonLayout = new QStackedLayout();
-    volButtonLayout->addWidget(voldirButton);
-    volButtonLayout->addWidget(volfileButton);
-    volPathLayout->addLayout(volButtonLayout);
-    volPathLayout->addWidget(volpathField);
-    importFormLayout->addLayout(volPathLayout);
-    import_panel->setLayout(importFormLayout);
-
     //conversion form layout
     QVBoxLayout* conversionFormLayout = new QVBoxLayout();
-    QHBoxLayout* voloutPathLayout = new QHBoxLayout();
-    voloutPathLayout->addWidget(voloutdirButton);
-    voloutPathLayout->addWidget(voloutpathField);
-    conversionFormLayout->addWidget(new QLabel("Destination folder:"));
-    conversionFormLayout->addLayout(voloutPathLayout);
+    outButtonLayout = new QStackedLayout();
+    outButtonLayout->addWidget(outDirButton);
+    outButtonLayout->addWidget(outFileButton);
+    QHBoxLayout* outputFormLayout = new QHBoxLayout();
+    outputFormLayout->addWidget(outFormatCBox);
+    outFormatCBox->setFixedWidth(220);
+    outputFormLayout->addWidget(outPathField, 1);
+    outputFormLayout->addLayout(outButtonLayout);
+    conversionFormLayout->addLayout(outputFormLayout);
     conversionFormLayout->addSpacing(30);
     QHBoxLayout* resolutionLayout = new QHBoxLayout();
     QLabel* outputLabel = new QLabel("Output:");
-    outputLabel->setFixedWidth(200);
+    outputLabel->setFixedWidth(220);
     resolutionLayout->addWidget(outputLabel);
     QLabel* selectLabel = new QLabel("Select");
     selectLabel->setAlignment(Qt::AlignCenter);
@@ -182,23 +198,21 @@ PConverter::PConverter(V3DPluginCallback *callback, QWidget *parent) : QWidget(p
     resolutionLayout->addLayout(resolutionsLayout);
     conversionFormLayout->addLayout(resolutionLayout);
     conversionFormLayout->addSpacing(50);
-    QHBoxLayout* stacksWidthLayout = new QHBoxLayout();
-    QLabel* stacksWidthLabel = new QLabel("Stacks width:");
-    stacksWidthLabel->setFixedWidth(200);
-    stacksWidthLayout->addWidget(stacksWidthLabel);
-    stacksWidthLayout->addWidget(stacksWidthField);
-    stacksWidthLayout->addStretch(1);
-    conversionFormLayout->addLayout(stacksWidthLayout);
-    QHBoxLayout* stacksHeightLayout = new QHBoxLayout();
-    QLabel* stacksHeightLabel = new QLabel("Stacks height:");
-    stacksHeightLabel->setFixedWidth(200);
-    stacksHeightLayout->addWidget(stacksHeightLabel);
-    stacksHeightLayout->addWidget(stacksHeightField);
-    stacksHeightLayout->addStretch(1);
-    conversionFormLayout->addLayout(stacksHeightLayout);
+
+    QHBoxLayout* stacksDimLayout = new QHBoxLayout();
+    QLabel* stacksDimLabel = new QLabel("Stacks dims:");
+    stacksDimLabel->setFixedWidth(220);
+    stacksDimLayout->addWidget(stacksDimLabel);
+    stacksDimLayout->addWidget(stacksWidthField);
+    stacksDimLayout->addSpacing(10);
+    stacksDimLayout->addWidget(stacksHeightField);
+    stacksDimLayout->addSpacing(10);
+    stacksDimLayout->addWidget(stacksDepthField);
+
+    conversionFormLayout->addLayout(stacksDimLayout);
     QHBoxLayout* ramLayout = new QHBoxLayout();
     QLabel* memoryLabel = new QLabel("Estimated RAM usage:");
-    memoryLabel->setFixedWidth(200);
+    memoryLabel->setFixedWidth(220);
     ramLayout->addWidget(memoryLabel);
     ramLayout->addWidget(memoryField, 0, Qt::AlignLeft);
     ramLayout->addStretch(1);
@@ -208,35 +222,43 @@ PConverter::PConverter(V3DPluginCallback *callback, QWidget *parent) : QWidget(p
     conversion_panel->setEnabled(false);
 
 
-    //general layout
+    //overall layout
     QVBoxLayout* layout = new QVBoxLayout();
     layout->addWidget(import_panel);
+    layout->addSpacing(10);
     layout->addWidget(conversion_panel);
+    layout->addSpacing(5);
+    layout->addWidget(helpBox);
+    layout->addStretch(1);
     layout->addWidget(statusBar);
     QWidget* container = new QWidget();
-    QGridLayout* gridLayout = new QGridLayout();
-    gridLayout->addWidget(progressBar, 0,0,1,18);
-    gridLayout->addWidget(startButton, 0,18,1,1);
-    gridLayout->addWidget(stopButton, 0,19,1,1);
-    container->setLayout(gridLayout);
-    layout->addWidget(container);
+    QGridLayout* bottomBar = new QGridLayout();
+    bottomBar->addWidget(progressBar, 0,0,1,18);
+    bottomBar->addWidget(startButton, 0,18,1,1);
+    bottomBar->addWidget(stopButton, 0,19,1,1);
+    bottomBar->setContentsMargins(0,0,0,5);
+    container->setLayout(bottomBar);
+    layout->addWidget(container);    
+    layout->setSpacing(0);
+    layout->setContentsMargins(10,5,10,0);
     setLayout(layout);
     setWindowTitle(tr("TeraConverter"));
-    layout->setSizeConstraint( QLayout::SetFixedSize );
+    this->setFixedSize(800,600);
 
     //signals and slots
     connect(startButton, SIGNAL(clicked()), this, SLOT(startButtonClicked()));
     connect(stopButton, SIGNAL(clicked()), this, SLOT(stopButtonClicked()));
     connect(this, SIGNAL(sendProgressBarChanged(int, int, int, const char*)), this, SLOT(progressBarChanged(int, int, int, const char*)), Qt::QueuedConnection);
-    connect(volformatCombobox, SIGNAL(currentIndexChanged(QString)), this, SLOT(volformatChanged(QString)));
+    connect(inFormatCBox, SIGNAL(currentIndexChanged(QString)), this, SLOT(volformatChanged(QString)));
+    connect(outFormatCBox, SIGNAL(currentIndexChanged(QString)), this, SLOT(volformatChanged(QString)));
     connect(CConverter::instance(), SIGNAL(sendOperationOutcome(MyException*)), this, SLOT(operationDone(MyException*)), Qt::QueuedConnection);
-    connect(voldirButton, SIGNAL(clicked()), this, SLOT(voldirButtonClicked()));
-    connect(volfileButton, SIGNAL(clicked()), this, SLOT(volfileButtonClicked()));
-    connect(voloutdirButton, SIGNAL(clicked()), this, SLOT(voldiroutButtonClicked()));
-    connect(volpathField, SIGNAL(textChanged(QString)), this, SLOT(settingsChanged()));
-    connect(volpathField, SIGNAL(editingFinished()), this, SLOT(startButtonClicked()));
-    connect(voloutpathField, SIGNAL(textChanged(QString)), this, SLOT(settingsChanged()));
-    connect(volformatCombobox, SIGNAL(currentIndexChanged(int)), this, SLOT(settingsChanged()));
+    connect(inDirButton, SIGNAL(clicked()), this, SLOT(voldirButtonClicked()));
+    connect(inFileButton, SIGNAL(clicked()), this, SLOT(volfileButtonClicked()));
+    connect(outDirButton, SIGNAL(clicked()), this, SLOT(voldiroutButtonClicked()));
+    connect(inPathField, SIGNAL(textChanged(QString)), this, SLOT(settingsChanged()));
+    connect(inPathField, SIGNAL(editingFinished()), this, SLOT(startButtonClicked()));
+    connect(outPathField, SIGNAL(textChanged(QString)), this, SLOT(settingsChanged()));
+    connect(inFormatCBox, SIGNAL(currentIndexChanged(int)), this, SLOT(settingsChanged()));
     connect(stacksWidthField, SIGNAL(valueChanged(int)), this, SLOT(settingsChanged()));
     connect(stacksHeightField, SIGNAL(valueChanged(int)), this, SLOT(settingsChanged()));
     resetGUI();
@@ -278,41 +300,45 @@ void PConverter::startButtonClicked()
     printf("--------------------- teramanager plugin [thread *] >> PConverter::startButtonClicked()\n");
     #endif
 
-    CConverter::instance()->setMembers(this);
-    import_panel->setEnabled(false);
-    conversion_panel->setEnabled(false);
-    progressBar->setEnabled(true);
-    startButton->setEnabled(false);
-    stopButton->setEnabled(true);
-    if(!CConverter::instance()->getConversionMode())
+    try
     {
-        statusBar->clearMessage();
-        statusBar->showMessage("Importing volume...");
-        progressBar->setMinimum(0);
-        progressBar->setMaximum(0);
-    }
-    else
-    {
-        //checking destination dir is empty
-        QDir directory(voloutpathField->text());
-        QStringList dir_entries = directory.entryList();
-        if(dir_entries.size() > 2 && QMessageBox::information(this, "Warning", "The directory you selected is NOT empty. \n\nIf you continue, the conversion "
-                                               "process could fail if the directories to be created already exist in the given path.", "Continue", "Cancel"))
+        CConverter::instance()->setMembers(this);
+        import_panel->setEnabled(false);
+        conversion_panel->setEnabled(false);
+        progressBar->setEnabled(true);
+        startButton->setEnabled(false);
+        stopButton->setEnabled(true);
+        if(!CConverter::instance()->getConversionMode())
         {
             statusBar->clearMessage();
-            statusBar->showMessage("Ready to convert volume.");
-            progressBar->setEnabled(false);
-            progressBar->setMaximum(1);         //needed to stop animation on some operating systems
-            startButton->setEnabled(true);
-            stopButton->setEnabled(false);
-            import_panel->setEnabled(false);
-            conversion_panel->setEnabled(true);
-            return;
+            statusBar->showMessage("Importing volume...");
+            progressBar->setMinimum(0);
+            progressBar->setMaximum(0);
         }
-        progressBar->setMinimum(0);
-        progressBar->setMaximum(100);
+        else
+        {
+            //checking destination dir is empty
+            QDir directory(outPathField->text());
+            QStringList dir_entries = directory.entryList();
+            if(dir_entries.size() > 2 && QMessageBox::information(this, "Warning", "The directory you selected is NOT empty. \n\nIf you continue, the conversion "
+                                                   "process could fail if the directories to be created already exist in the given path.", "Continue", "Cancel"))
+            {
+                statusBar->clearMessage();
+                statusBar->showMessage("Ready to convert volume.");
+                progressBar->setEnabled(false);
+                progressBar->setMaximum(1);         //needed to stop animation on some operating systems
+                startButton->setEnabled(true);
+                stopButton->setEnabled(false);
+                import_panel->setEnabled(false);
+                conversion_panel->setEnabled(true);
+                return;
+            }
+            progressBar->setMinimum(0);
+            progressBar->setMaximum(100);
+        }
+        CConverter::instance()->start();
     }
-    CConverter::instance()->start();
+    catch(MyException &ex) {QMessageBox::critical(this,QObject::tr("Error"), QObject::tr(ex.what()),QObject::tr("Ok"));}
 }
 
 //called when stopButton has been clicked
@@ -360,10 +386,10 @@ void PConverter::voldirButtonClicked()
     dialog.setWindowTitle("Select volume's directory");
     dialog.setDirectory(CSettings::instance()->getVCInputPath().c_str());
     if(dialog.exec())
-        volpathField->setText(dialog.directory().absolutePath());
+        inPathField->setText(dialog.directory().absolutePath());
 
     //launching import
-    if(volpathField->text().toStdString().compare("") != 0)
+    if(inPathField->text().toStdString().compare("") != 0)
         startButtonClicked();
 }
 
@@ -385,10 +411,10 @@ void PConverter::volfileButtonClicked()
     dialog.setDirectory(CSettings::instance()->getVCInputPath().c_str());
     if(dialog.exec())
         if(!dialog.selectedFiles().empty())
-            volpathField->setText(dialog.selectedFiles().front());
+            inPathField->setText(dialog.selectedFiles().front());
 
     //launching import
-    if(volpathField->text().toStdString().compare("") != 0)
+    if(inPathField->text().toStdString().compare("") != 0)
         startButtonClicked();
 }
 
@@ -399,7 +425,7 @@ void PConverter::voldiroutButtonClicked()
     #endif
 
     //obtaining volume's directory
-    voloutpathField->setText(QFileDialog::getExistingDirectory(this, QObject::tr("Select volume's directory"), CSettings::instance()->getVCOutputPath().c_str()));
+    outPathField->setText(QFileDialog::getExistingDirectory(this, QObject::tr("Select volume's directory"), CSettings::instance()->getVCOutputPath().c_str()));
 }
 
 /**********************************************************************************
@@ -408,9 +434,9 @@ void PConverter::voldiroutButtonClicked()
 ***********************************************************************************/
 void PConverter::settingsChanged()
 {
-    CSettings::instance()->setVCInputPath(volpathField->text().toStdString());
-    CSettings::instance()->setVCOutputPath(voloutpathField->text().toStdString());
-    CSettings::instance()->setVCFormat(volformatCombobox->currentText().toStdString());
+    CSettings::instance()->setVCInputPath(inPathField->text().toStdString());
+    CSettings::instance()->setVCOutputPath(outPathField->text().toStdString());
+    CSettings::instance()->setVCInputFormat(inFormatCBox->currentText().toStdString());
     CSettings::instance()->setVCStacksWidth(stacksWidthField->value());
     CSettings::instance()->setVCStacksHeight(stacksHeightField->value());
     CSettings::instance()->writeSettings();
@@ -418,26 +444,49 @@ void PConverter::settingsChanged()
 
 void PConverter::volformatChanged ( const QString & text )
 {
-    if(volformatCombobox->currentText().compare("TeraStitcher", Qt::CaseInsensitive) == 0)
+    QComboBox* sender = static_cast<QComboBox*>(QObject::sender());
+    QStackedLayout *buttonLayout = 0;
+    QPushButton *dirButton = 0;
+    QPushButton *fileButton = 0;
+    if(sender == outFormatCBox)
     {
-        volformatHelpbox->setText("<html><p style=\"text-align:justify;\"> Two-leveled folder structure where each 2nd-level folder contains a "
-                                  "stack of the corresponding row and column of the matrix of stacks (possibly composed by 1 single stack). Each "
-                                  "image stack is stored as a series of 2D images. Supported formats for single 2D images are BMP, DIB, JPEG, "
-                                  "JPG, JPE, PNG, PBM, PGM, PPM, SR, RAS, TIFF, TIF. </p></html>");
-        volButtonLayout->setCurrentWidget(voldirButton);
+        buttonLayout = outButtonLayout;
+        dirButton    = outDirButton;
+        fileButton   = outFileButton;
     }
-    else if(volformatCombobox->currentText().compare("Image series", Qt::CaseInsensitive) == 0)
+    else
     {
-        volformatHelpbox->setText("<html><p style=\"text-align:justify;\"> A folder containing a series of 2D images. Supported formats for single "
-                                  "2D images are BMP, DIB, JPEG, JPG, JPE, PNG, PBM, PGM, PPM, SR, RAS, TIFF, TIF. </p></html>");
-        volButtonLayout->setCurrentWidget(voldirButton);
+        sender = inFormatCBox;
+        buttonLayout = inButtonLayout;
+        dirButton    = inDirButton;
+        fileButton   = inFileButton;
     }
-    else if(volformatCombobox->currentText().compare("Vaa3D raw", Qt::CaseInsensitive) == 0)
+
+    if(sender->currentText().compare("Image series (tiled)", Qt::CaseInsensitive) == 0)
     {
-        volformatHelpbox->setText("<html><p style=\"text-align:justify;\"> Vaa3D raw 4D format. Supported suffixes are: .raw, .RAW, .v3draw, .V3DRAW </p></html>");
-        volButtonLayout->setCurrentWidget(volfileButton);
+        helpBox->setText("Two-leveled folder structure (see <a href=\"http://code.google.com/p/terastitcher/wiki/SupportedFormats\">here</a>) with each tile composed "
+                                  "by a series of 2D images.");
+        buttonLayout->setCurrentWidget(dirButton);
     }
-    else ;
+    else if(sender->currentText().compare("Image series (nontiled)", Qt::CaseInsensitive) == 0)
+    {
+        helpBox->setText("A folder containing a series of 2D images. Supported formats for single "
+                                  "2D images are BMP, DIB, JPEG, JPG, JPE, PNG, PBM, PGM, PPM, SR, RAS, TIFF, TIF.");
+        buttonLayout->setCurrentWidget(dirButton);
+    }
+    else if(sender->currentText().compare("Vaa3D raw (tiled)", Qt::CaseInsensitive) == 0)
+    {
+        helpBox->setText("Two-leveled folder structure (see <a href=\"http://code.google.com/p/terastitcher/wiki/SupportedFormats\">here</a>) with each tile composed "
+                                  "by a series of 3D blocks stored into Vaa3D raw files.");
+        buttonLayout->setCurrentWidget(dirButton);
+    }
+    else if(sender->currentText().compare("Vaa3D raw (nontiled)", Qt::CaseInsensitive) == 0)
+    {
+        helpBox->setText("Vaa3D raw 4D format. Supported suffixes are: .raw, .RAW, .v3draw, .V3DRAW");
+        buttonLayout->setCurrentWidget(fileButton);
+    }
+    else
+        helpBox->setText("<html><p style=\"text-align:justify;\"> Format not yet supported. </p></html>");
 }
 
 //overrides closeEvent method of QWidget
@@ -448,7 +497,7 @@ void PConverter::closeEvent(QCloseEvent *evt)
     #endif
 
     if(progressBar->isEnabled() && QMessageBox::information(this, "Warning", "An operation is still in progress. Terminating it can be unsafe and cause Vaa3D to crash. \n"
-                                                                    "\nPlease save your data first.", "Close TeraStitcher plugin", "Cancel"))
+                                                                    "\nPlease save your data first.", "Close TeraConverter plugin", "Cancel"))
     {
         evt->ignore();
     }

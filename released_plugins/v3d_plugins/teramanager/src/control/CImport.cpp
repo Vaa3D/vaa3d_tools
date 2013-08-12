@@ -28,16 +28,19 @@
 
 #include "../presentation/PDialogImport.h"
 #include "../presentation/PMain.h"
+#include "../presentation/PLog.h"
 #include "CImport.h"
 #include "CPlugin.h"
 #include <sstream>
 #include <limits>
 #include <algorithm>
+#include "../core/ImageManager/StackedVolume.h"
+#include "../core/ImageManager/TiledVolume.h"
 
 using namespace teramanager;
 
 CImport* CImport::uniqueInstance = NULL;
-bool sortVolumesAscendingSize (StackedVolume* i,StackedVolume* j) { return (i->getMVoxels() < j->getMVoxels()); }
+bool sortVolumesAscendingSize (VirtualVolume* i,VirtualVolume* j) { return (i->getMVoxels() < j->getMVoxels()); }
 
 void CImport::uninstance()
 {
@@ -100,8 +103,13 @@ void CImport::run()
     printf("--------------------- teramanager plugin [thread *] >> CImport::run()\n");
     #endif
 
+    char errMsg[IM_STATIC_STRINGS_SIZE];
+
     try
     {
+        QElapsedTimer timerIO;
+        timerIO.start();
+
         /********************* 1) IMPORTING CURRENT VOLUME ***********************
         If metadata binary file doesn't exist or the volume has to be re-imported,
         further informations must be provided to the constructor.
@@ -109,21 +117,58 @@ void CImport::run()
         string mdata_fpath = path;
         mdata_fpath.append("/");
         mdata_fpath.append(IM_METADATA_FILE_NAME);
-        if(!StackedVolume::fileExists(mdata_fpath.c_str()) || reimport)
+        if(!QFile::exists(mdata_fpath.c_str()) || reimport)
         {
             //checking current members validity
             if(AXS_1 != axis_invalid && AXS_2 != axis_invalid && AXS_3 != axis_invalid && VXL_1 != 0 && VXL_2 != 0 && VXL_3 != 0)
-                volumes.push_back(new StackedVolume(path.c_str(), ref_sys(AXS_1,AXS_2,AXS_3),VXL_1,VXL_2,VXL_3, reimport));
+            {
+                VirtualVolume* volume = 0;
+                try
+                {
+                    volume = new StackedVolume(path.c_str(), ref_sys(AXS_1,AXS_2,AXS_3),VXL_1,VXL_2,VXL_3, reimport);
+                }
+                catch(...)
+                {
+                    try
+                    {
+                        volume = new TiledVolume(path.c_str(), ref_sys(AXS_1,AXS_2,AXS_3),VXL_1,VXL_2,VXL_3, reimport);
+                    }
+                    catch(...)
+                    {
+                        sprintf(errMsg, "Unable to import volume at \"%s\"", path.c_str());
+                        throw MyException(errMsg);
+                    }
+                }
+                volumes.push_back(volume);
+            }
             else
             {
-                char errMsg[IM_STATIC_STRINGS_SIZE];
-                sprintf(errMsg, "in CImport::run(): invalid parameters AXS_1(%s), AXS_2(%s), AXS_3(%s), VXL_1(%.4f), VXL_2(%.4f), VXL_3(%.4f)",
+                sprintf(errMsg, "Invalid parameters AXS_1(%s), AXS_2(%s), AXS_3(%s), VXL_1(%.4f), VXL_2(%.4f), VXL_3(%.4f)",
                         axis_to_str(AXS_1), axis_to_str(AXS_2), axis_to_str(AXS_3), VXL_1, VXL_2, VXL_3);
                 throw MyException(errMsg);
             }
         }
         else
-            volumes.push_back(new StackedVolume(path.c_str(), ref_sys(axis_invalid,axis_invalid,axis_invalid),0,0,0));
+        {
+            VirtualVolume* volume = 0;
+            try
+            {
+                volume = new StackedVolume(path.c_str(), ref_sys(axis_invalid,axis_invalid,axis_invalid),0,0,0);
+            }
+            catch(...)
+            {
+                try
+                {
+                    volume = new TiledVolume(path.c_str(), ref_sys(axis_invalid,axis_invalid,axis_invalid),0,0,0);
+                }
+                catch(...)
+                {
+                    sprintf(errMsg, "Unable to import volume at \"%s\"", path.c_str());
+                    throw MyException(errMsg);
+                }
+            }
+            volumes.push_back(volume);
+        }
 
         /********************* 2) IMPORTING OTHER VOLUMES ***********************
         If multiresolution mode is enabled, importing all the available resolutions
@@ -132,17 +177,41 @@ void CImport::run()
         if(multiresMode)
         {
             //detecting candidate volumes
-            vector<StackedVolume*> candidateVols;
+            vector<VirtualVolume*> candidateVols;
             QDir curParentDir(path.c_str());
             curParentDir.cdUp();
             QStringList otherDirs = curParentDir.entryList(QDir::AllDirs | QDir::NoDotAndDotDot);
             for(int k=0; k<otherDirs.size(); k++)
             {
+                string path_i = curParentDir.absolutePath().append("/").append(otherDirs.at(k).toLocal8Bit().constData()).toStdString();
                 try
                 {
-                    StackedVolume* candidate_vol = new StackedVolume(curParentDir.absolutePath().append("/").append(otherDirs.at(k).toLocal8Bit().constData()).toStdString().c_str(),
-                                                                     ref_sys(volumes[0]->getAXS_1(),volumes[0]->getAXS_2(),volumes[0]->getAXS_3()),
-                                                                     volumes[0]->getVXL_1(),volumes[0]->getVXL_2(),volumes[0]->getVXL_3(), reimport, false);
+                    VirtualVolume* candidate_vol = 0;
+                    if(dynamic_cast<StackedVolume*>(volumes[0]))
+                    {
+                        candidate_vol = new StackedVolume(path_i.c_str(),
+                                                                         ref_sys(dynamic_cast<StackedVolume*>(volumes[0])->getAXS_1(),
+                                                                         dynamic_cast<StackedVolume*>(volumes[0])->getAXS_2(),
+                                                                         dynamic_cast<StackedVolume*>(volumes[0])->getAXS_3()),
+                                                                         dynamic_cast<StackedVolume*>(volumes[0])->getVXL_1(),
+                                                                         dynamic_cast<StackedVolume*>(volumes[0])->getVXL_2(),
+                                                                         dynamic_cast<StackedVolume*>(volumes[0])->getVXL_3(), reimport, false);
+                    }
+                    else if(dynamic_cast<TiledVolume*>(volumes[0]))
+                    {
+                        candidate_vol = new TiledVolume(path_i.c_str(),
+                                                                         ref_sys(dynamic_cast<TiledVolume*>(volumes[0])->getAXS_1(),
+                                                                         dynamic_cast<TiledVolume*>(volumes[0])->getAXS_2(),
+                                                                         dynamic_cast<TiledVolume*>(volumes[0])->getAXS_3()),
+                                                                         dynamic_cast<TiledVolume*>(volumes[0])->getVXL_1(),
+                                                                         dynamic_cast<TiledVolume*>(volumes[0])->getVXL_2(),
+                                                                         dynamic_cast<TiledVolume*>(volumes[0])->getVXL_3(), reimport, false);
+                    }
+                    else
+                    {
+                        sprintf(errMsg, "Unable to import volume at \"%s\"", path_i.c_str());
+                        throw MyException(errMsg);
+                    }
                     candidateVols.push_back(candidate_vol);
                 }
                 catch(...){}
@@ -155,9 +224,35 @@ void CImport::run()
                 if(candidateVols[k]->getMVoxels() != volumes[0]->getMVoxels())
                 {
                     int ratio = pow((volumes[0]->getMVoxels() / candidateVols[k]->getMVoxels()),(1/3.0f)) + 0.5;
-                    volumes.push_back(new StackedVolume(candidateVols[k]->getROOT_DIR(),
-                                                        ref_sys(volumes[0]->getAXS_1(),volumes[0]->getAXS_2(),volumes[0]->getAXS_3()),
-                                                        volumes[0]->getVXL_1()*ratio,volumes[0]->getVXL_2()*ratio,volumes[0]->getVXL_3()*ratio, reimport));
+
+                    VirtualVolume* vol = 0;
+                    if(dynamic_cast<StackedVolume*>(volumes[0]))
+                    {
+                        vol = new StackedVolume(candidateVols[k]->getROOT_DIR(),
+                                                                         ref_sys(dynamic_cast<StackedVolume*>(volumes[0])->getAXS_1(),
+                                                                         dynamic_cast<StackedVolume*>(volumes[0])->getAXS_2(),
+                                                                         dynamic_cast<StackedVolume*>(volumes[0])->getAXS_3()),
+                                                                         dynamic_cast<StackedVolume*>(volumes[0])->getVXL_1()*ratio,
+                                                                         dynamic_cast<StackedVolume*>(volumes[0])->getVXL_2()*ratio,
+                                                                         dynamic_cast<StackedVolume*>(volumes[0])->getVXL_3()*ratio, reimport);
+                    }
+                    else if(dynamic_cast<TiledVolume*>(volumes[0]))
+                    {
+                        vol = new TiledVolume(candidateVols[k]->getROOT_DIR(),
+                                                                         ref_sys(dynamic_cast<TiledVolume*>(volumes[0])->getAXS_1(),
+                                                                         dynamic_cast<TiledVolume*>(volumes[0])->getAXS_2(),
+                                                                         dynamic_cast<TiledVolume*>(volumes[0])->getAXS_3()),
+                                                                         dynamic_cast<TiledVolume*>(volumes[0])->getVXL_1()*ratio,
+                                                                         dynamic_cast<TiledVolume*>(volumes[0])->getVXL_2()*ratio,
+                                                                         dynamic_cast<TiledVolume*>(volumes[0])->getVXL_3()*ratio, reimport);
+                    }
+                    else
+                    {
+                        sprintf(errMsg, "Unable to import volume at \"%s\"", candidateVols[k]->getROOT_DIR());
+                        throw MyException(errMsg);
+                    }
+                    volumes.push_back(vol);
+
                     delete candidateVols[k];
                 }
             }
@@ -269,6 +364,8 @@ void CImport::run()
             volMapImage->setFileName("VolumeMap");
             volMapImage->setData(volMapData, volMapWidth, volMapHeight, volMapDepth, nchannels, V3D_UINT8);
         }
+
+        PLog::getInstance()->appendIO(timerIO.elapsed(), "Volume imported and map loaded");
 
         //everything went OK
         emit sendOperationOutcome(0, volMapImage);

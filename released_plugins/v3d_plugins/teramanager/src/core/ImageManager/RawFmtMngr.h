@@ -146,6 +146,13 @@ char *loadRaw2WholeStack(char * filename, unsigned char * & img, V3DLONG * & sz,
  * if there are no exceptions
  */
 
+char *initRawFile ( char *filename, const V3DLONG *sz, int datatype );
+
+char *writeSlice2RawFile ( char *filename, int slice, unsigned char *img, int img_height, int img_width );
+
+char *copyRawFileBlock2Buffer ( char *filename, int sV0, int sV1, int sH0, int sH1, int sD0, int sD1,
+							    unsigned char *buf, int pxl_size, int offs, int stridex, int stridexy, int stridexyz );
+
 #endif
 
 

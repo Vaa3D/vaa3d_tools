@@ -67,9 +67,11 @@ class teramanager::CSettings
         //TeraConverter members
         string volumeConverterInputPathLRU;
         string volumeConverterOutputPathLRU;
-        string volumeConverterFormatLRU;
+        string volumeConverterInputFormatLRU;
+        string volumeConverterOutputFormatLRU;
         int volumeConverterStacksWidthLRU;
         int volumeConverterStacksHeightLRU;
+        int volumeConverterStacksDepthLRU;
 
     public:
 
@@ -121,14 +123,18 @@ class teramanager::CSettings
         //GET and SET methods for TeraConverter
         string getVCInputPath(){return volumeConverterInputPathLRU;}
         string getVCOutputPath(){return volumeConverterOutputPathLRU;}
-        string getVCFormat(){return volumeConverterFormatLRU;}
+        string getVCInputFormat(){return volumeConverterInputFormatLRU;}
+        string getVCOutputFormat(){return volumeConverterOutputFormatLRU;}
         int getVCStacksWidth(){return volumeConverterStacksWidthLRU;}
         int getVCStacksHeight(){return volumeConverterStacksHeightLRU;}
+        int getVCStacksDepth(){return volumeConverterStacksDepthLRU;}
         void setVCInputPath(string newval){volumeConverterInputPathLRU = newval;}
         void setVCOutputPath(string newval){volumeConverterOutputPathLRU = newval;}
-        void setVCFormat(string newval){volumeConverterFormatLRU = newval;}
+        void setVCInputFormat(string newval){volumeConverterInputFormatLRU = newval;}
+        void setVCOutputFormat(string newval){volumeConverterOutputFormatLRU = newval;}
         void setVCStacksWidth(int newval){volumeConverterStacksWidthLRU = newval;}
         void setVCStacksHeight(int newval){volumeConverterStacksHeightLRU = newval;}
+        void setVCStacksDepth(int newval){volumeConverterStacksDepthLRU = newval;}
 
         //save and restore application settings
         void writeSettings();

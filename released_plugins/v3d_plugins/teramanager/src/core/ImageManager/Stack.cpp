@@ -223,6 +223,10 @@ void Stack::init()
 	entries_lev3.sort();
 	DEPTH = (int)entries_lev3.size();
 
+    //----- Alessandro added on August 12, 2013
+    //----- Bug fixed: exceeding the maximum number of directories opened at the same time
+    closedir(cur_dir_lev3);
+
 	//checking if current stack is not empty
 	if(DEPTH == 0)
 	{

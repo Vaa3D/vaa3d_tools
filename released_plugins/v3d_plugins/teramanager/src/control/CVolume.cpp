@@ -215,7 +215,7 @@ void CVolume::run()
 
     try
     {
-        StackedVolume* volume = CImport::instance()->getVolume(voiResIndex);
+        VirtualVolume* volume = CImport::instance()->getVolume(voiResIndex);
 
 
         //---- Alessandro 2013-04-17: if VOI exceeds limits it is automatically adjusted. This is very useful in the cases the user is zooming-in

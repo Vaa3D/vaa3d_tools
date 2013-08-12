@@ -189,9 +189,6 @@ class teramanager::PMain : public QWidget
         //layout
         int marginLeft;                 //width of first column containing labels only
 
-        //very useful (not included in Qt): disables the given item of the given combobox
-        void setEnabledComboBoxItem(QComboBox* cbox, int _index, bool enabled);
-
     public:
 
         /*********************************************************************************
@@ -375,6 +372,10 @@ class teramanager::PMain : public QWidget
         ***********************************************************************************/
         void debugAction1Triggered();
         void showLogTriggered();
+
+
+        //very useful (not included in Qt): disables the given item of the given combobox
+        static void setEnabledComboBoxItem(QComboBox* cbox, int _index, bool enabled);
 };
 
 #endif // PMAIN_GUI_H

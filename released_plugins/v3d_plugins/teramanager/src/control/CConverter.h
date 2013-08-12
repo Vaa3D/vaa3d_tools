@@ -46,8 +46,8 @@ class teramanager::CConverter : public QThread
         * instantiated by calling the static method "istance(...)"
         **********************************************************************************/
         static CConverter* uniqueInstance;
-        CConverter() : QThread(), volPath(undefined_str), volFormat(undefined_str), vc(0), conversionMode(false), resolutions(0),
-            resolutionsSize(0), stacksWidth(undefined_int32), stacksHeight(undefined_int32), volOutPath(undefined_str), fileMode(false)
+        CConverter() : QThread(), inVolPath(undefined_str), inVolFormat(undefined_str), vc(0), conversionMode(false), resolutions(0),
+            resolutionsSize(0), stacksWidth(undefined_int32), stacksHeight(undefined_int32), outVolPath(undefined_str), fileMode(false)
         {
             #ifdef TMP_DEBUG
             printf("--------------------- teramanager plugin [thread *] >> CConverter::CConverter()\n");
@@ -59,15 +59,17 @@ class teramanager::CConverter : public QThread
         void run();
 
         //members
-        string volPath;             //absolute path of the folder or file containing the volume to be converted
-        string volFormat;           //the unique ID of the volume format
-        bool fileMode;              //whether the volume to be importes is stored into a file (fileMode=true) or a folder (fileMode=false)
-        bool conversionMode;        //whether the conversion mode is active or not(as it is initially, when the import mode is activated)
+        string inVolPath;           //absolute path of the folder or file containing the volume to be converted
+        string inVolFormat;         //the unique ID of the volume's input format
+        bool fileMode;              //whether the volume to be imported is stored into a file (fileMode=true) or a folder (fileMode=false)
+        bool conversionMode;        //whether the conversion mode is active or not (as it is initially, when the import mode is activated)
         bool *resolutions;          //array of resolutions activation flags
         int resolutionsSize;        //size of <resolutions>
         int stacksWidth;            //width of each stack after conversion
         int stacksHeight;           //height of each stack after conversion
-        string volOutPath;          //absolute path of the folder where to store the converted volume
+        int stacksDepth;            //depth of each stack after conversion (optional)
+        string outVolPath;          //absolute path of the folder where to store the converted volume
+        string outVolFormat;        //the unique ID of the volume's output format
         VolumeConverter *vc;        //handle of the <VolumeConverter> object which is responsible of volume conversion from the given format
 
 
@@ -100,15 +102,17 @@ class teramanager::CConverter : public QThread
         //reset method
         void reset()
         {
-            volPath = undefined_str;
-            volFormat = undefined_str;
+            inVolPath = undefined_str;
+            inVolFormat = undefined_str;
             vc = 0;
             conversionMode = false;
             resolutions = 0;
             resolutionsSize = 0;
             stacksWidth  = undefined_int32;
             stacksHeight = undefined_int32;
-            volOutPath = undefined_str;
+            stacksDepth = undefined_int32;
+            outVolPath = undefined_str;
+            outVolFormat = undefined_str;
             fileMode = false;
         }
 

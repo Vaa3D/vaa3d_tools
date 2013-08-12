@@ -32,7 +32,9 @@
 #include <QThread>
 #include <string>
 #include <vector>
+#include "../core/ImageManager/VirtualVolume.h"
 #include "../core/ImageManager/StackedVolume.h"
+#include "../core/ImageManager/TiledVolume.h"
 #include "CPlugin.h"
 
 class teramanager::CImport : public QThread
@@ -71,7 +73,7 @@ class teramanager::CImport : public QThread
         uint8* volMapData;                          //volume map data
         int volMapHeight, volMapWidth, volMapDepth; //volume map dimensions
         int nchannels;                              //volume map channels
-        std::vector<StackedVolume*> volumes;        //array of the imported volumes
+        std::vector<VirtualVolume*> volumes;        //array of the imported volumes
 
 
     public:
@@ -104,8 +106,8 @@ class teramanager::CImport : public QThread
             return -1;
         }
         bool isEmpty(){return volumes.size() == 0;}
-        StackedVolume* getHighestResVolume(){if(!volumes.empty()) return volumes.back(); else return 0;}
-        StackedVolume* getVolume(int resolutionIdx)
+        VirtualVolume* getHighestResVolume(){if(!volumes.empty()) return volumes.back(); else return 0;}
+        VirtualVolume* getVolume(int resolutionIdx)
         {
             if(resolutionIdx < volumes.size()) return volumes[resolutionIdx];
             else return 0;

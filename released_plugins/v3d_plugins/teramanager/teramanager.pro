@@ -10,9 +10,9 @@ CONFIG += use_static_libs
 CONFIG += use_experimental_features
 
 
-#QMAKE_CXXFLAGS += -Wall
-#QMAKE_CXXFLAGS += -pedantic
-#QMAKE_CXXFLAGS += -Werror
+QMAKE_CXXFLAGS += -Wall
+QMAKE_CXXFLAGS += -pedantic
+QMAKE_CXXFLAGS += -Werror
 
 #set up third party libraries
 use_static_libs{
@@ -103,6 +103,7 @@ use_experimental_features{
 
 
 #set up plugin
+DEFINES += _VAA3D_PLUGIN_MODE
 RESOURCES += icons.qrc
 HEADERS += ./src/control/CAnnotations.h
 HEADERS += ./src/control/CConverter.h
@@ -126,7 +127,10 @@ HEADERS += ./src/core/ImageManager/SimpleVolume.h
 HEADERS += ./src/core/ImageManager/Stack.h
 HEADERS += ./src/core/ImageManager/StackedVolume.h
 HEADERS += ./src/core/ImageManager/VirtualVolume.h
+HEADERS += ./src/core/ImageManager/TiledVolume.h
+HEADERS += ./src/core/ImageManager/Block.h
 HEADERS += ./src/core/VolumeConverter/VolumeConverter.h
+
 SOURCES += ./src/control/CAnnotations.cpp
 SOURCES += ./src/control/CConverter.cpp
 SOURCES += ./src/control/CExplorerWindow.cpp
@@ -149,6 +153,8 @@ SOURCES += ./src/core/ImageManager/SimpleVolume.cpp
 SOURCES += ./src/core/ImageManager/Stack.cpp
 SOURCES += ./src/core/ImageManager/StackedVolume.cpp
 SOURCES += ./src/core/ImageManager/VirtualVolume.cpp
+SOURCES += ./src/core/ImageManager/TiledVolume.cpp
+SOURCES += ./src/core/ImageManager/Block.cpp
 SOURCES += ./src/core/VolumeConverter/VolumeConverter.cpp
 
 

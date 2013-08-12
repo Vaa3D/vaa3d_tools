@@ -96,7 +96,7 @@ void RawVolume::initChannels ( ) throw (MyException) {
 
 REAL_T *RawVolume::loadSubvolume_to_REAL_T(int V0,int V1, int H0, int H1, int D0, int D1)  throw (MyException) {
 	#if IM_VERBOSE > 3
-        printf("\t\t\t\tin SimpleVolume::loadSubvolume(V0=%d, V1=%d, H0=%d, H1=%d, D0=%d, D1=%d%s)\n", V0, V1, H0, H1, D0, D1);
+        printf("\t\t\t\tin RawVolume::loadSubvolume_to_REAL_T(V0=%d, V1=%d, H0=%d, H1=%d, D0=%d, D1=%d)\n", V0, V1, H0, H1, D0, D1);
 	#endif
 
 	char msg[IM_STATIC_STRINGS_SIZE];
@@ -124,15 +124,17 @@ REAL_T *RawVolume::loadSubvolume_to_REAL_T(int V0,int V1, int H0, int H1, int D0
 uint8 *RawVolume::loadSubvolume_to_UINT8(int V0,int V1, int H0, int H1, int D0, int D1, int *channels) throw (MyException) {
 
 	// check #channels
-	if ( CHANS == 1 )
-		*channels = 1;
-	else if ( CHANS <=3 )
-		*channels = 3;
-	else {
-		char err_msg[IM_STATIC_STRINGS_SIZE];
-		sprintf(err_msg,"RawVolume::loadSubvolume_to_UINT8: too many channels [%d]",CHANS);
-		throw MyException(err_msg);
-	}
+	//if ( CHANS == 1 )
+	//	*channels = 1;
+	//else if ( CHANS <=3 )
+	//	*channels = 3;
+	//else {
+	//	char err_msg[IM_STATIC_STRINGS_SIZE];
+	//	sprintf(err_msg,"RawVolume::loadSubvolume_to_UINT8: too many channels [%d]",CHANS);
+	//	throw MyException(err_msg);
+	//}
+	*channels = CHANS; 	// returns the exact number of channels;
+	// WARNING: the caller must check if it suppports only 1 or 3 channels 
 	
 	//initializations
 	V0 = (V0 == -1 ? 0	     : V0);

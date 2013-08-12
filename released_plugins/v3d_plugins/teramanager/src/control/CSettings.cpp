@@ -75,9 +75,11 @@ void CSettings::loadDefaultSettings()
     //TeraConverter settings
     volumeConverterInputPathLRU = "";
     volumeConverterOutputPathLRU = "";
-    volumeConverterFormatLRU = "Vaa3D raw";
+    volumeConverterInputFormatLRU = "Vaa3D raw (nontiled)";
+    volumeConverterOutputFormatLRU = "Vaa3D raw (tiled)";
     volumeConverterStacksWidthLRU = 256;
     volumeConverterStacksHeightLRU = 256;
+    volumeConverterStacksDepthLRU = 256;
 }
 
 void CSettings::writeSettings()
@@ -111,9 +113,11 @@ void CSettings::writeSettings()
 
     settings.setValue("volumeConverterInputPathLRU", QString(volumeConverterInputPathLRU.c_str()));
     settings.setValue("volumeConverterOutputPathLRU", QString(volumeConverterOutputPathLRU.c_str()));
-    settings.setValue("volumeConverterFormatLRU", QString(volumeConverterFormatLRU.c_str()));
+    settings.setValue("volumeConverterInputFormatLRU", QString(volumeConverterInputFormatLRU.c_str()));
+    settings.setValue("volumeConverterOutputFormatLRU", QString(volumeConverterOutputFormatLRU.c_str()));
     settings.setValue("volumeConverterStacksWidthLRU", volumeConverterStacksWidthLRU);
     settings.setValue("volumeConverterStacksHeightLRU", volumeConverterStacksHeightLRU);
+    settings.setValue("volumeConverterStacksDepthLRU", volumeConverterStacksDepthLRU);
 }
 
 
@@ -158,10 +162,14 @@ void CSettings::readSettings()
         volumeConverterInputPathLRU = settings.value("volumeConverterInputPathLRU").toString().toStdString();
     if(settings.contains("volumeConverterOutputPathLRU"))
         volumeConverterOutputPathLRU = settings.value("volumeConverterOutputPathLRU").toString().toStdString();
-    if(settings.contains("volumeConverterFormatLRU"))
-        volumeConverterFormatLRU = settings.value("volumeConverterFormatLRU").toString().toStdString();
+    if(settings.contains("volumeConverterInputFormatLRU"))
+        volumeConverterInputFormatLRU = settings.value("volumeConverterInputFormatLRU").toString().toStdString();
+    if(settings.contains("volumeConverterOutputFormatLRU"))
+        volumeConverterOutputFormatLRU = settings.value("volumeConverterOutputFormatLRU").toString().toStdString();
     if(settings.contains("volumeConverterStacksWidthLRU"))
         volumeConverterStacksWidthLRU = settings.value("volumeConverterStacksWidthLRU").toInt();
     if(settings.contains("volumeConverterStacksHeightLRU"))
         volumeConverterStacksHeightLRU = settings.value("volumeConverterStacksHeightLRU").toInt();
+    if(settings.contains("volumeConverterStacksDepthLRU"))
+        volumeConverterStacksDepthLRU = settings.value("volumeConverterStacksDepthLRU").toInt();
 }

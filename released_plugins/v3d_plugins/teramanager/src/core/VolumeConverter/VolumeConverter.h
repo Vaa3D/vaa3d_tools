@@ -73,7 +73,7 @@
 #include "../ImageManager/MyException.h"
 
 #include "../ImageManager/VirtualVolume.h"
-#include "../ImageManager/StackedVolume.h" // required for constant STACKED_FORMAT
+#include "../ImageManager/StackedVolume.h" 
 
 // possible output format
 #define REAL_REPRESENTATION      "intensity"  // images are managed internally with REAL_INTERNAL_REP representation
@@ -163,14 +163,34 @@ public:
 		*						  allowed dimensions will be set, which will result in a volume composed by  one large 
 		*						  tile only.
 		* [method]              : method used to compute pixel whel halving image size (default: by mean)
-		* [seed]                : used to initiate random positions of objects
 		* [show_progress_bar]	: enables/disables progress bar with estimated time remaining.
 		* [saved_img_format]	: determines saved images format ("png","tif","jpeg", etc.).
 		* [saved_img_depth]		: determines saved images bitdepth (16 or 8).
 		**************************************************************************************************************/
 		void generateTiles(std::string output_path, bool* resolutions = NULL, 
-			int slice_height = -1, int slice_width = -1, int method = HALVE_BY_MEAN, int seed = 10, bool show_progress_bar = true, 
+			int slice_height = -1, int slice_width = -1, int method = HALVE_BY_MEAN, bool show_progress_bar = true, 
 			const char* saved_img_format = IM_DEF_IMG_FORMAT, int saved_img_depth = IM_DEF_IMG_DEPTH)	throw (MyException);
+		
+
+		/*************************************************************************************************************
+		* Method to be called for tile generation. <> parameters are mandatory, while [] are optional.
+		* <output_path>			: absolute directory path where generated tiles have to be stored.
+		* [resolutions]			: pointer to an array of S_MAX_MULTIRES  size which boolean entries identify the acti-
+		*						  vaction/deactivation of the i-th resolution.  If not given, all resolutions will  be
+		*						  activated.
+		* [block_height]	    : desired dimensions of tiled  blocks after merging.  It is actually an upper-bound of
+		* [block_width]			  the actual slice dimensions, which will be computed in such a way that all tiles di-
+		* [block_depth]			  mensions can differ by 1 pixel only along both directions. If not given, the maximum
+		*						  allowed dimensions will be set, which will result in a volume composed by  one large 
+		*						  tile only.
+		* [method]              : method used to compute pixel whel halving image size (default: by mean)
+		* [show_progress_bar]	: enables/disables progress bar with estimated time remaining.
+		* [saved_img_format]	: determines saved images format ("raw", "png","tif","jpeg", etc.).
+		* [saved_img_depth]		: determines saved images bitdepth (16 or 8).
+		**************************************************************************************************************/
+		void generateTilesVaa3DRaw(std::string output_path, bool* resolutions = NULL, 
+			int block_height = -1, int block_width = -1, int block_depth = -1, int method = HALVE_BY_MEAN, bool show_progress_bar = true, 
+			const char* saved_img_format = "raw", int saved_img_depth = IM_DEF_IMG_DEPTH)	throw (MyException);
 		
 
         /*************************************************************************************************************

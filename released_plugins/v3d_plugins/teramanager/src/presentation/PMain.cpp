@@ -1185,7 +1185,7 @@ void PMain::importDone(MyException *ex, Image4DSimple* vmap_image)
     else
     {
         //otherwise inserting volume's informations
-        StackedVolume* volume = CImport::instance()->getHighestResVolume();
+        VirtualVolume* volume = CImport::instance()->getHighestResVolume();
         info_panel->setEnabled(true);
 
         double GVoxels = (volume->getDIM_V()/1000.0f)*(volume->getDIM_H()/1000.0f)*(volume->getDIM_D()/1000.0f);
@@ -1207,10 +1207,20 @@ void PMain::importDone(MyException *ex, Image4DSimple* vmap_image)
         vol_height_field->setText(QString::number(volume->getDIM_V()));
         vol_width_field->setText(QString::number(volume->getDIM_H()));
         vol_depth_field->setText(QString::number(volume->getDIM_D()));
-        nrows_field->setText(QString::number(volume->getN_ROWS()));
-        ncols_field->setText(QString::number(volume->getN_COLS()));
-        stack_height_field->setText(QString::number(volume->getStacksHeight()));
-        stack_width_field->setText(QString::number(volume->getStacksWidth()));
+        if(dynamic_cast<StackedVolume*>(volume))
+        {
+            nrows_field->setText(QString::number(dynamic_cast<StackedVolume*>(volume)->getN_ROWS()));
+            ncols_field->setText(QString::number(dynamic_cast<StackedVolume*>(volume)->getN_COLS()));
+            stack_height_field->setText(QString::number(dynamic_cast<StackedVolume*>(volume)->getStacksHeight()));
+            stack_width_field->setText(QString::number(dynamic_cast<StackedVolume*>(volume)->getStacksWidth()));
+        }
+        else if(dynamic_cast<TiledVolume*>(volume))
+        {
+            nrows_field->setText(QString::number(dynamic_cast<TiledVolume*>(volume)->getN_ROWS()));
+            ncols_field->setText(QString::number(dynamic_cast<TiledVolume*>(volume)->getN_COLS()));
+            stack_height_field->setText(QString::number(dynamic_cast<TiledVolume*>(volume)->getStacksHeight()));
+            stack_width_field->setText(QString::number(dynamic_cast<TiledVolume*>(volume)->getStacksWidth()));
+        }
         stack_depth_field->setText(QString::number(volume->getDIM_D()));
         vxl_V_field->setText(QString::number(volume->getVXL_V(), 'f', 2));
         vxl_H_field->setText(QString::number(volume->getVXL_H(), 'f', 2));
@@ -1273,7 +1283,7 @@ void PMain::importDone(MyException *ex, Image4DSimple* vmap_image)
             for(int i=0; i<CImport::instance()->getResolutions(); i++)
             {
                 QString option = "";
-                StackedVolume* vol = CImport::instance()->getVolume(i);
+                VirtualVolume* vol = CImport::instance()->getVolume(i);
                 float vxl_v = vol->getVXL_V() < 0 ? vol->getVXL_V()*-1 : vol->getVXL_V();
                 float vxl_h = vol->getVXL_H() < 0 ? vol->getVXL_H()*-1 : vol->getVXL_H();
                 float vxl_d = vol->getVXL_D() < 0 ? vol->getVXL_D()*-1 : vol->getVXL_D();

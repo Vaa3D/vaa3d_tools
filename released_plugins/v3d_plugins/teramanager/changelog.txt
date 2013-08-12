@@ -11,6 +11,17 @@ ties names are:
 - Rem: a feature no longer available
 
 ============================================================================================
+Version 0.9.2
+August 12th, 2013
+--------------------------------------------------------------------------------------------
+- New: added support for "V3D raw (tiled)" format to both TeraConverter and TeraFly.
+- New: TeraConverter's GUI redesigned so as to convert from any format A to any format B.
+- Fix: fixed a bug which caused TeraConverter/TeraFly to crash when importing  tiled volumes 
+       with a very high number of tiles (> 1000).  It  was found  that  directories were not
+       closed and the maximum number of directories opened at the same time was reached.
+--------------------------------------------------------------------------------------------
+
+
 Version 0.9.1
 August 10th, 2013
 --------------------------------------------------------------------------------------------

@@ -117,7 +117,7 @@ class teramanager::CVolume : public QThread
 
             sourceObject = _sourceObject;
             voiResIndex = _voiResIndex;
-            StackedVolume* volume = CImport::instance()->getVolume(voiResIndex);
+            VirtualVolume* volume = CImport::instance()->getVolume(voiResIndex);
 
             //---- Alessandro 2013-08-06: reestabilished automatic VOI adjustement. This way, get methods return the actual VOI instead of the virtual one.
             voiV0 = _V0 >=0                   ? _V0 : 0;

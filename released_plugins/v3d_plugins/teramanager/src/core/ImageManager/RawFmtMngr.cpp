@@ -293,8 +293,10 @@ char *loadRaw2Metadata ( char * filename, V3DLONG * &sz, int &datatype, int &b_s
 
 	// try 2 byte integers first
 	int tmpn=(int)fread(sz_2bytes, 2, 4, fid); // because I have already checked the file size to be bigger than the header, no need to check the number of actual bytes read.
-	if (tmpn!=4)
+	if (tmpn!=4) {
+		if (keyread) {delete []keyread; keyread=0;}
 		return ("This program only reads [4] units");
+	}
 	memcpy(mysz,sz_2bytes,2*4); // save bytes in case it is a 4 byte file
 	if (b_swap) {
 		for (i=0;i<4;i++) 
@@ -316,8 +318,10 @@ char *loadRaw2Metadata ( char * filename, V3DLONG * &sz, int &datatype, int &b_s
 	if ( is_4_byte_file ) {
 		// reads four more 2 byte elements 
 		tmpn=(int)fread(mysz+2, 2, 4, fid); // because I have already checked the file size to be bigger than the header, no need to check the number of actual bytes read. 
-		if (tmpn!=4)
+		if (tmpn!=4) {
+			if (keyread) {delete []keyread; keyread=0;}
 			return ("This program only reads [4] units");
+		}
 		if (b_swap) {
 			for (i=0;i<4;i++) 
 				swap4bytes((void *)(mysz+i));
@@ -326,8 +330,10 @@ char *loadRaw2Metadata ( char * filename, V3DLONG * &sz, int &datatype, int &b_s
 		for (i=0;i<4;i++) {
 			totalUnit *= mysz[i];
 		}
-		if ((totalUnit*unitSize+4*2+2+1+lenkey) == fileSize) 
+		if ((totalUnit*unitSize+4*2+2+1+lenkey) == fileSize) {
+			if (keyread) {delete []keyread; keyread=0;}
 			return ("The input file has a size different from what specified in the header");
+		}
 	}
 
 	//int tmpn=(int)fread(mysz, 4, 4, fid); // because I have already checked the file size to be bigger than the header, no need to check the number of actual bytes read. 
@@ -412,7 +418,7 @@ char *loadRaw2SubStack ( void *fhandle, unsigned char *img, V3DLONG *sz,
 			for (j = starty; j< endy; j++)
 			{
 				rewind(fid);
-				fseek(fid, head+(c*pgsz1 + k*pgsz2 + j*pgsz3 + startx)*unitSize, SEEK_SET);
+				fseek(fid, (long)(head+(c*pgsz1 + k*pgsz2 + j*pgsz3 + startx)*unitSize), SEEK_SET);
 				ftell(fid);	
 				fread(img+(c*cn+(k-startz)*kn + (j-starty)*tmpw)*unitSize,unitSize,tmpw,fid);
 			}
@@ -514,8 +520,10 @@ char *loadRaw2WholeStack ( char * filename, unsigned char * & img, V3DLONG * & s
 		return ("Fail to allocate memory");
 
 	V3DLONG nread = fread(keyread, 1, lenkey, fid);
-	if (nread!=lenkey)
+	if (nread!=lenkey) {
+		if (keyread) {delete []keyread; keyread=0;}
 		return ("File unrecognized or corrupted file");
+	}
 
 	keyread[lenkey] = '\0';
 
@@ -580,8 +588,10 @@ char *loadRaw2WholeStack ( char * filename, unsigned char * & img, V3DLONG * & s
 	BIT32_UNIT mysz[4];
 	mysz[0]=mysz[1]=mysz[2]=mysz[3]=0;
 	int tmpn=(int)fread(mysz, 4, 4, fid); // because I have already checked the file size to be bigger than the header, no need to check the number of actual bytes read. 
-	if (tmpn!=4)
+	if (tmpn!=4) {
+		if (keyread) {delete []keyread; keyread=0;}
 		return ("This program only reads [4] units");
+	}
 
 	if (b_swap)
 	{
@@ -693,6 +703,252 @@ char *loadRaw2WholeStack ( char * filename, unsigned char * & img, V3DLONG * & s
 	//printf("*** for loadRaw2Stack() all readin bytes: minvv=%5.3f maxvv=%5.3f\n", minvv, maxvv);	
 	
 	return ((char *) 0);
+}
+
+
+char *initRawFile(char *filename, const V3DLONG *sz, int datatype) {
+
+	int i;
+	char *completeFilename = new char[strlen(filename)+4+1];
+	strcpy(completeFilename,filename);
+	strcat(completeFilename,".raw");
+
+	FILE * fid = fopen(completeFilename, "wb");
+	if (!fid)
+	{
+		if ( completeFilename ) { delete completeFilename; completeFilename = 0; }
+		return ("Fail to open file for writing.\n");
+	}
+
+	/* Write header */
+	char formatkey[] = "raw_image_stack_by_hpeng";
+	int lenkey = (int)strlen(formatkey);
+
+	V3DLONG nwrite = fwrite(formatkey, 1, lenkey, fid);
+	if (nwrite!=lenkey)
+	{
+		if ( completeFilename ) { delete completeFilename; completeFilename = 0; }
+		return ("File write error.\n");
+	}
+
+	char endianCodeMachine = checkMachineEndian();
+	if (endianCodeMachine!='B' && endianCodeMachine!='L')
+	{
+		if ( completeFilename ) { delete completeFilename; completeFilename = 0; }
+		return ("This program only supports big- or little- endian but not other format. Cannot save data on this machine.\n");
+	}
+
+	nwrite = fwrite(&endianCodeMachine, 1, 1, fid);
+	if (nwrite!=1)
+	{
+		if ( completeFilename ) { delete completeFilename; completeFilename = 0; }
+		return ("Error happened in file writing.\n");
+	}
+
+	//int b_swap = (endianCodeMachine==endianCodeData)?0:1;
+	//int b_swap = 0; //for this machine itself, should not swap data.
+
+	short int dcode = (short int)datatype;
+	if (dcode!=1 && dcode!=2 && dcode!=4)
+	{
+		if ( completeFilename ) { delete completeFilename; completeFilename = 0; }
+		return ("Unrecognized data type code.\n");
+	}
+
+	//if (b_swap) swap2bytes((void *)&dcode);
+	nwrite = fwrite(&dcode, 2, 1, fid); /* because I have already checked the file size to be bigger than the header, no need to check the number of actual bytes read. */
+	if (nwrite!=1)
+	{
+		if ( completeFilename ) { delete completeFilename; completeFilename = 0; }
+		return ("Writing file error.\n");
+	}
+
+	BIT32_UNIT mysz[4];
+	for (i=0;i<4;i++) 
+		mysz[i] = (BIT32_UNIT) sz[i];
+	nwrite = fwrite(mysz, sizeof(BIT32_UNIT), 4, fid); /* because I have already checked the file size to be bigger than the header, no need to check the number of actual bytes read. */
+	if (nwrite!=4)
+	{
+		return ("Writing file error.\n");
+	}
+
+	V3DLONG totalUnit = 1;
+	for (i=0;i<4;i++)
+	{
+		totalUnit *= sz[i];
+	}
+
+	int header_length = ftell(fid);
+
+	fseek(fid,(long)(totalUnit-1),SEEK_CUR); // last byte has to be actually written to file
+
+	unsigned char buf[1];
+	fwrite(buf,sizeof(unsigned char),1,fid);
+
+	closeRawFile(fid);
+
+	if ( completeFilename ) { delete completeFilename; completeFilename = 0; }
+
+	return 0;
+}
+
+
+char *writeSlice2RawFile ( char *filename, int slice, unsigned char *img, int img_height, int img_width ) {
+
+	char *err_rawfmt;
+	FILE *fid;
+	void *fhandle;
+	V3DLONG *sz = 0;
+	int datatype;
+	int b_swap;
+	int header_len;
+	
+	if ( (err_rawfmt = loadRaw2Metadata(filename,sz,datatype,b_swap,fhandle,header_len)) != 0 ) {
+		return err_rawfmt;
+	}
+	if ( (sz[1] != img_height) || (sz[0] != img_width) ) 
+	{
+		delete []sz;
+		return ("Wrong slice dimensions.\n");
+	}
+
+	closeRawFile((FILE *)fhandle);
+
+	fid = fopen(filename, "r+b");
+	if (!fid)
+	{
+		delete []sz;
+		return ("Fail to open file for writing slice.\n");
+	}
+
+
+	V3DLONG slice_size = sz[0]*sz[1];
+	V3DLONG block_size = slice_size*sz[2];
+	for ( int c=0; c<sz[3]; c++ ) {
+		//int a = 0;
+		//for ( int j=0; j<slice_size; j++ )
+		//	if ( img[c][j] > 31 ) {
+		//		printf("%d %d %d %d\n",c,slice,j,img[c][j]);
+		//		a = 1;
+		//		break;
+		//	}
+		fseek(fid,(long)(header_len + c*block_size + slice*slice_size),SEEK_SET);
+		fwrite((img + (c*slice_size)),sizeof(unsigned char),slice_size,fid);
+		//if ( a )
+		//	closeRawFile(fid);
+	}
+
+	closeRawFile(fid);
+
+	delete []sz;
+
+	return 0;
+}
+
+
+char *copyRawFileBlock2Buffer ( char *filename, int sV0, int sV1, int sH0, int sH1, int sD0, int sD1,
+							    unsigned char *buf, int pxl_size, int offs, int stridex, int stridexy, int stridexyz ) {
+
+	if ( pxl_size != sizeof(unsigned char) ) 
+	{
+		return ("Wrong pixel size.\n");
+	}
+
+	char *err_rawfmt;
+	FILE *fid;
+	void *fhandle;
+	V3DLONG *sz = 0;
+	int datatype;
+	int b_swap;
+	int header_len;
+	
+	if ( (err_rawfmt = loadRaw2Metadata(filename,sz,datatype,b_swap,fhandle,header_len)) != 0 ) {
+		return err_rawfmt;
+	}
+	if ( datatype != 1 ) 
+	{
+		delete []sz;
+		return ("Wrong file data type.\n");
+	}
+	fid = (FILE *) fhandle;
+
+	fseek (fid, 0, SEEK_END);
+	V3DLONG fileSize = ftell(fid);
+	rewind(fid);
+		
+	V3DLONG unitSize = datatype; /* temporarily I use the same number, which indicates the number of bytes for each data point (pixel). This can be extended in the future. */
+	
+	V3DLONG totalUnit = 1;
+	for (int i=0;i<4;i++)
+	{
+		totalUnit *= sz[i];
+	}	
+	
+	V3DLONG startx = sH0;
+	V3DLONG starty = sV0;
+	V3DLONG startz = sD0;
+	V3DLONG endx   = sH1;
+	V3DLONG endy   = sV1;
+	V3DLONG endz   = sD1; 
+
+	V3DLONG tmpw = endx - startx; // width of sub block
+	V3DLONG tmph = endy - starty; // height of sub block
+	V3DLONG tmpz = endz - startz; // depth of sub block
+
+	V3DLONG head = header_len; //4*4+2+1+lenkey; // header_len ?
+	V3DLONG pgsz1=sz[2]*sz[1]*sz[0]; // #values per channel
+	V3DLONG pgsz2=sz[1]*sz[0];       // #values per slice
+	V3DLONG pgsz3=sz[0];
+	V3DLONG cn = tmpw*tmph*tmpz;  
+	V3DLONG kn = tmpw*tmph;      
+	V3DLONG total = tmpw*tmph*tmpz*sz[3];
+
+	V3DLONG count=0;
+	V3DLONG c,j,k;
+
+	unsigned char *buftmp_c;
+	unsigned char *buftmp_k;
+	unsigned char *buftmp_j;
+	for (c=0, buftmp_c=(buf + (offs*unitSize)); c<sz[3]; c++, buftmp_c+=(stridexyz*unitSize))
+	{
+		for (k = startz, buftmp_k=buftmp_c; k < endz; k++, buftmp_k+=(stridexy*unitSize)) 
+		{
+			for (j = starty, buftmp_j=buftmp_k; j< endy; j++, buftmp_j+=(stridex*unitSize))
+			{
+				rewind(fid);
+				fseek(fid, (long)(head+(c*pgsz1 + k*pgsz2 + j*pgsz3 + startx)*unitSize), SEEK_SET);
+				ftell(fid);	
+				fread(buftmp_j,unitSize,tmpw,fid);
+			}
+		}
+	}
+
+	/* swap the data bytes if necessary */
+	
+	if (b_swap==1)
+	{
+		return ("Byte swap not supported.\n");
+		//if (unitSize==2)
+		//{
+		//	for (i=0;i<total; i++)
+		//	{
+		//		swap2bytes((void *)(img+i*unitSize));
+		//	}
+		//}
+		//else if (unitSize==4)
+		//{
+		//	for (i=0;i<total; i++)
+		//	{
+		//		swap4bytes((void *)(img+i*unitSize));
+		//	}
+		//}
+	}
+
+	closeRawFile(fid);
+
+	delete[] sz;
+
+	return 0;
 }
 
 

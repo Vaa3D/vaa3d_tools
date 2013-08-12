@@ -32,6 +32,7 @@
 #include <QtGui>
 #include <v3d_interface.h>
 #include "../control/CPlugin.h"
+#include "QHelpBox.h"
 
 class teramanager::PConverter : public QWidget
 {
@@ -54,23 +55,26 @@ class teramanager::PConverter : public QWidget
         //main widgets
         QGroupBox* import_panel;
         QGroupBox* conversion_panel;
+        QHelpBox* helpBox;              //"What's this" helpbox
         QProgressBar* progressBar;      //progress bar
         QPushButton* startButton;       //start button
         QPushButton* stopButton;        //stop button
         QStatusBar* statusBar;          //status bar
 
         //import form widget
-        QComboBox* volformatCombobox;   //combobox for volume format selection
-        QLabel* helpIcon;
-        QLabel* volformatHelpbox;       //help box describing the selected volume format
-        QLineEdit *volpathField;        //field for either volume's directory or file path
-        QPushButton *voldirButton;      //browse for volume's directory button
-        QPushButton *volfileButton;     //browse for volume's file button
-        QStackedLayout* volButtonLayout;//stacked layout used to show only one of the two buttons
+        QComboBox* inFormatCBox;        //combobox for volume's input format selection
+        QLineEdit *inPathField;         //field for volume's input path
+        QPushButton *inDirButton;       //browse for volume's input directory button
+        QPushButton *inFileButton;      //browse for volume's input file button
+        QStackedLayout* inButtonLayout; //stacked layout used to show only one of the two buttons
 
         //conversion form widget
-        QPushButton *voloutdirButton;      //browse for volume's output directory button
-        QLineEdit *voloutpathField;        //field for volume's output directory path
+        QComboBox* outFormatCBox;       //combobox for volume's input format selection
+        QLineEdit *outPathField;        //field for volume's output path
+        QPushButton *outDirButton;      //browse for volume's output directory button
+        QPushButton *outFileButton;     //browse for volume's output file button
+        QStackedLayout* outButtonLayout;//stacked layout used to show only one of the two buttons
+
         QGridLayout* resolutionsLayout; //layout containing resolutions dynamically added after volume import
         int resolutionsNumber;          //number of selectable resolutions (it is detected at runtime)
         QLabel** resolutionsFields;     //dynamic array of resolution fields
@@ -78,6 +82,7 @@ class teramanager::PConverter : public QWidget
         QCheckBox** resolutionsCboxs;   //dynamic array of resolution comboboxes
         QSpinBox* stacksWidthField;     //field to select stacks width
         QSpinBox* stacksHeightField;    //field to select stacks height
+        QSpinBox* stacksDepthField;     //field to select stacks depth (optional)
         QLabel* memoryField;            //field for memory usage estimation
 
         //friend class declarations

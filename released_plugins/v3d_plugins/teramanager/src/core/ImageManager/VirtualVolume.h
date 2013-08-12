@@ -93,6 +93,7 @@ public:
     float   getVXL_D() {return VXL_D;}
     int     getCHANS() {return CHANS;}
     char*   getROOT_DIR() {return this->root_dir;}
+    float  getMVoxels(){return (DIM_V/1024.0f)*(DIM_H/1024.0f)*DIM_D;}
 
 	/*************************************************************************************************************
     * Save image method. <> parameters are mandatory, while [] are optional.
@@ -133,9 +134,51 @@ public:
                                       int start_height=0, int end_height =-1, int start_width=0, int end_width=-1,
                                       const char* img_format = IM_DEF_IMG_FORMAT, int img_depth = IM_DEF_IMG_DEPTH ) throw (MyException);
 
+
+ 	/*************************************************************************************************************
+    * Save image method to Vaa3D raw format. <> parameters are mandatory, while [] are optional.
+    * <img_path>                : absolute path of image to be saved. It DOES NOT include its extension, which is
+    *                             provided by the [img_format] parameter.
+    * <raw_img>                 : image to be saved. Raw data is in [0,1] and it is stored row-wise in a 1D array.
+    * <raw_img_height/width>    : dimensions of raw_img.
+    * [start/end_height/width]  : optional ROI (region of interest) to be set on the given image.
+    * [img_format]              : image format extension to be used (e.g. "tif", "png", etc.)
+    * [img_depth]               : image bitdepth to be used (8 or 16)
+	**************************************************************************************************************/
+	static void saveImage_to_Vaa3DRaw(int slice, std::string img_path, REAL_T* raw_img, int raw_img_height, int raw_img_width, 
+                              int start_height = 0, int end_height = - 1, int start_width = 0, int end_width = - 1,
+                              const char* img_format = IM_DEF_IMG_FORMAT, int img_depth = IM_DEF_IMG_DEPTH		 
+							  )
+																								   throw (MyException);
+
+   /*************************************************************************************************************
+    * Save image method from uint8 raw data to Vaa3D raw format. <> parameters are mandatory, while [] are optional.
+    * <img_path>                : absolute path of image to be saved. It DOES NOT include its extension, which is
+    *                             provided by the [img_format] parameter.
+    * <raw_ch>                  : array of pointers to raw data of the channels with values in [0,255].
+    *                             For grayscale images raw_ch[0] is the pointer to the raw image data.
+    *                             For colour images raw_ch[0] is the pointer to the raw image data of the RED channel.
+    * <n_chans>                 : number of channels (length of raw_ch).
+	* <offset>                  : offset to be added to raw_ch[i] to get actual data
+    * <raw_img_height/width>    : dimensions of raw_img.        
+    * [start/end_height/width]  : optional ROI (region of interest) to be set on the given image.
+    * [img_format]              : image format extension to be used (e.g. "tif", "png", etc.)
+    * [img_depth]               : image bitdepth to be used (8 or 16)
+    **************************************************************************************************************/
+    static void saveImage_from_UINT8_to_Vaa3DRaw (int slice, std::string img_path, 
+                                      uint8** raw_ch, int n_chans, int offset,
+									  int raw_img_height, int raw_img_width,
+                                      int start_height=0, int end_height =-1, int start_width=0, int end_width=-1,
+                                      const char* img_format = IM_DEF_IMG_FORMAT, int img_depth = IM_DEF_IMG_DEPTH ) throw (MyException);
+
+
+
 	/*************************************************************************************************************
 	* Performs downsampling at a halved frequency on the given 3D image.  The given image is overwritten in order
 	* to store its halvesampled version without allocating any additional resources.
+	*
+	* WARNING: Since the downsampling is carried out for more slices, a stride is introduced between downsampled
+	* slices. The stride introduced is (height*width)
 	**************************************************************************************************************/
 	static void halveSample( REAL_T* img, int height, int width, int depth, int method = HALVE_BY_MEAN );
 
