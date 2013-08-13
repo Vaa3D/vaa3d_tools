@@ -237,7 +237,7 @@ CExplorerWindow::CExplorerWindow(V3DPluginCallback2 *_V3D_env, int _resIndex, ui
         pMain->D1_sbox->setValue(pMain->D1_sbox->maximum());
 
         //signal connections
-        connect(CVolume::instance(), SIGNAL(sendOperationOutcome(MyException*,void*)), this, SLOT(loadingDone(MyException*,void*)), Qt::QueuedConnection);
+        connect(CVolume::instance(), SIGNAL(sendOperationOutcome(MyException*,void*,qint64)), this, SLOT(loadingDone(MyException*,void*,qint64)), Qt::QueuedConnection);
         connect(view3DWidget, SIGNAL(changeXCut0(int)), this, SLOT(Vaa3D_changeXCut0(int)));
         connect(view3DWidget, SIGNAL(changeXCut1(int)), this, SLOT(Vaa3D_changeXCut1(int)));
         connect(view3DWidget, SIGNAL(changeYCut0(int)), this, SLOT(Vaa3D_changeYCut0(int)));
@@ -443,7 +443,7 @@ bool CExplorerWindow::eventFilter(QObject *object, QEvent *event)
 * performed. If an exception has occurred in the <CVolume> thread, it is propagated
 * and managed in the current thread (ex != 0).
 ***********************************************************************************/
-void CExplorerWindow::loadingDone(MyException *ex, void* sourceObject)
+void CExplorerWindow::loadingDone(MyException *ex, void* sourceObject, qint64 elapsed_time)
 {
     #ifdef TMP_DEBUG
     printf("--------------------- teramanager plugin [thread *] >> CExplorerWindow[%s]::loadingDone(%s)\n",
@@ -457,6 +457,12 @@ void CExplorerWindow::loadingDone(MyException *ex, void* sourceObject)
         QMessageBox::critical(this,QObject::tr("Error"), QObject::tr(ex->what()),QObject::tr("Ok"));
     else if(sourceObject == this)
     {
+        //first updating IO time
+        char message[1000];
+        sprintf(message, "Loaded volume X=[%d, %d) Y=[%d, %d) Z=[%d, %d) from resolution %d",
+                cVolume->getVoiH0(), cVolume->getVoiH1(), cVolume->getVoiV0(), cVolume->getVoiV1(), cVolume->getVoiD0(), cVolume->getVoiD1(), cVolume->getVoiResIndex());
+        PLog::getInstance()->appendIO(elapsed_time, message);
+
         //copying loaded data
         QElapsedTimer timer;
         timer.start();
@@ -471,7 +477,6 @@ void CExplorerWindow::loadingDone(MyException *ex, void* sourceObject)
         //releasing memory used for storing loaded data
         delete[] cVolume->getVoiData();
         cVolume->resetVoiData();
-        char message[1000];
         sprintf(message, "Block X=[%d, %d) Y=[%d, %d) Z=[%d, %d) copied into view %s",
                 cVolume->getVoiH0(), cVolume->getVoiH1(),
                 cVolume->getVoiV0(), cVolume->getVoiV1(),
@@ -554,7 +559,7 @@ void CExplorerWindow::newView(int x, int y, int z, int resolution, bool fromVaa3
     saveSubvolSpinboxState();
 
     //disconnecting current window from GUI's listeners and event filters
-    disconnect(CVolume::instance(), SIGNAL(sendOperationOutcome(MyException*,void*)), this, SLOT(loadingDone(MyException*,void*)));
+    disconnect(CVolume::instance(), SIGNAL(sendOperationOutcome(MyException*,void*,qint64)), this, SLOT(loadingDone(MyException*,void*,qint64)));
     disconnect(view3DWidget, SIGNAL(changeXCut0(int)), this, SLOT(Vaa3D_changeXCut0(int)));
     disconnect(view3DWidget, SIGNAL(changeXCut1(int)), this, SLOT(Vaa3D_changeXCut1(int)));
     disconnect(view3DWidget, SIGNAL(changeYCut0(int)), this, SLOT(Vaa3D_changeYCut0(int)));
@@ -949,7 +954,7 @@ void CExplorerWindow::restoreViewFrom(CExplorerWindow* source) throw (MyExceptio
     if(source)
     {
         //signal disconnections
-        source->disconnect(CVolume::instance(), SIGNAL(sendOperationOutcome(MyException*,void*)), source, SLOT(loadingDone(MyException*,void*)));
+        source->disconnect(CVolume::instance(), SIGNAL(sendOperationOutcome(MyException*,void*,qint64)), source, SLOT(loadingDone(MyException*,void*,qint64)));
         source->disconnect(source->view3DWidget, SIGNAL(changeXCut0(int)), source, SLOT(Vaa3D_changeXCut0(int)));
         source->disconnect(source->view3DWidget, SIGNAL(changeXCut1(int)), source, SLOT(Vaa3D_changeXCut1(int)));
         source->disconnect(source->view3DWidget, SIGNAL(changeYCut0(int)), source, SLOT(Vaa3D_changeYCut0(int)));
@@ -1061,7 +1066,7 @@ void CExplorerWindow::restoreViewFrom(CExplorerWindow* source) throw (MyExceptio
         pMain->traslZpos->setEnabled(volD1 < CImport::instance()->getVolume(volResIndex)->getDIM_D());
 
         //signal connections
-        connect(CVolume::instance(), SIGNAL(sendOperationOutcome(MyException*,void*)), this, SLOT(loadingDone(MyException*,void*)));
+        connect(CVolume::instance(), SIGNAL(sendOperationOutcome(MyException*,void*,qint64)), this, SLOT(loadingDone(MyException*,void*,qint64)));
         connect(view3DWidget, SIGNAL(changeXCut0(int)), this, SLOT(Vaa3D_changeXCut0(int)));
         connect(view3DWidget, SIGNAL(changeXCut1(int)), this, SLOT(Vaa3D_changeXCut1(int)));
         connect(view3DWidget, SIGNAL(changeYCut0(int)), this, SLOT(Vaa3D_changeYCut0(int)));

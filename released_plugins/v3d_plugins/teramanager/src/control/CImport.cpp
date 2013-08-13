@@ -365,10 +365,10 @@ void CImport::run()
             volMapImage->setData(volMapData, volMapWidth, volMapHeight, volMapDepth, nchannels, V3D_UINT8);
         }
 
-        PLog::getInstance()->appendIO(timerIO.elapsed(), "Volume imported and map loaded");
+        //PLog::getInstance()->appendIO(timerIO.elapsed(), "Volume imported and map loaded");
 
         //everything went OK
-        emit sendOperationOutcome(0, volMapImage);
+        emit sendOperationOutcome(0, volMapImage, timerIO.elapsed());
     }
     catch( MyException& exception)  {reset(); emit sendOperationOutcome(new MyException(exception.what()), 0);}
     catch(const char* error)        {reset(); emit sendOperationOutcome(new MyException(error), 0);}

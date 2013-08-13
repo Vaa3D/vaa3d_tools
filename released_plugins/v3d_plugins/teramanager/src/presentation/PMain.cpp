@@ -661,8 +661,8 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
 
     // signals and slots
     connect(loadButton, SIGNAL(clicked()), this, SLOT(loadButtonClicked()));
-    connect(CImport::instance(), SIGNAL(sendOperationOutcome(MyException*, Image4DSimple*)), this, SLOT(importDone(MyException*, Image4DSimple*)), Qt::QueuedConnection);
-    connect(CVolume::instance(), SIGNAL(sendOperationOutcome(MyException*,void*)), SLOT(loadingDone(MyException*,void*)), Qt::QueuedConnection);
+    connect(CImport::instance(), SIGNAL(sendOperationOutcome(MyException*, Image4DSimple*, qint64)), this, SLOT(importDone(MyException*, Image4DSimple*,qint64)), Qt::QueuedConnection);
+    connect(CVolume::instance(), SIGNAL(sendOperationOutcome(MyException*,void*, qint64)), SLOT(loadingDone(MyException*,void*, qint64)), Qt::QueuedConnection);
     connect(enableMultiresMode, SIGNAL(stateChanged(int)), this, SLOT(mode3D_checkbox_changed(int)), Qt::QueuedConnection);
     connect(volMapMaxSizeSBox, SIGNAL(valueChanged(int)), this, SLOT(settingsChanged(int)), Qt::QueuedConnection);
     connect(Vdim_sbox, SIGNAL(valueChanged(int)), this, SLOT(settingsChanged(int)), Qt::QueuedConnection);
@@ -1170,7 +1170,7 @@ void PMain::about()
 * aged in the current thread (ex != 0). Otherwise, volume information are imported
 * in the GUI by the <StackedVolume> handle of <CImport>.
 **********************************************************************************/
-void PMain::importDone(MyException *ex, Image4DSimple* vmap_image)
+void PMain::importDone(MyException *ex, Image4DSimple* vmap_image, qint64 elapsed_time)
 {
     #ifdef TMP_DEBUG
     printf("--------------------- teramanager plugin [thread *] >> PMain::import_done(%s)\n",  (ex? "error" : ""));
@@ -1184,6 +1184,9 @@ void PMain::importDone(MyException *ex, Image4DSimple* vmap_image)
     }
     else
     {
+        //first updating IO time
+        PLog::getInstance()->appendIO(elapsed_time, "Volume imported and map loaded");
+
         //otherwise inserting volume's informations
         VirtualVolume* volume = CImport::instance()->getHighestResVolume();
         info_panel->setEnabled(true);
@@ -1328,7 +1331,7 @@ void PMain::importDone(MyException *ex, Image4DSimple* vmap_image)
 * If an exception has occurred in the <CVolume> thread, it is propagated and
 * managed in the current thread (ex != 0).
 ***********************************************************************************/
-void PMain::loadingDone(MyException *ex, void* sourceObject)
+void PMain::loadingDone(MyException *ex, void* sourceObject, qint64 elapsed_time)
 {
     #ifdef TMP_DEBUG
     printf("--------------------- teramanager plugin [thread *] >> PMain::loading_done(%s)\n",  (ex? "error" : ""));

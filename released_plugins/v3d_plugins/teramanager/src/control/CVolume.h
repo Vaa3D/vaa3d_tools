@@ -142,7 +142,7 @@ class teramanager::CVolume : public QThread
         * Carries the outcome of the operation associated  to this thread  as well as the
         * the object that requested the operation
         **********************************************************************************/
-        void sendOperationOutcome(MyException* ex, void* sourceObj);
+        void sendOperationOutcome(MyException* ex, void* sourceObj, qint64 elapsed_time = 0);
 };
 
 #endif // CLOADSUBVOLUME_H

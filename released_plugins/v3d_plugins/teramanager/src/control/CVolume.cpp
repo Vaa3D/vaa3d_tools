@@ -242,12 +242,13 @@ void CVolume::run()
             voiData = volume->loadSubvolume_to_UINT8(voiV0, voiV1, voiH0, voiH1, voiD0, voiD1, &nchannels);
         else
             throw MyException("No volume has been imported yet.");
-        char message[1000];
+
+        /*char message[1000];
         sprintf(message, "Loaded volume X=[%d, %d) Y=[%d, %d) Z=[%d, %d) from resolution %d", voiH0, voiH1, voiV0, voiV1, voiD0, voiD1, voiResIndex);
-        PLog::getInstance()->appendIO(timerIO.elapsed(), message);
+        PLog::getInstance()->appendIO(timerIO.elapsed(), message);*/
 
         //everything went OK
-        emit sendOperationOutcome(0, sourceObject);
+        emit sendOperationOutcome(0, sourceObject, timerIO.elapsed());
     }
     catch( MyException& exception)  {emit sendOperationOutcome(new MyException(exception.what()), sourceObject);}
     catch(const char* error)        {emit sendOperationOutcome(new MyException(error), sourceObject);}

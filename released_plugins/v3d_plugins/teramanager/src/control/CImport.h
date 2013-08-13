@@ -139,7 +139,7 @@ class teramanager::CImport : public QThread
         /*********************************************************************************
         * Carries the outcome of the operation associated to this thread.
         **********************************************************************************/
-        void sendOperationOutcome(MyException* ex, Image4DSimple* vmap_image = 0);
+        void sendOperationOutcome(MyException* ex, Image4DSimple* vmap_image = 0, qint64 elapsed_time = 0);
 };
 
 #endif // CIMPORT_H

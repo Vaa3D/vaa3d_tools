@@ -148,7 +148,6 @@ void myV3dR_GLWidget::updateImageDataFast()
 
     renderer->setupData(_idep);
     static_cast<Renderer_gl1*>(renderer)->loadVol();
-    //renderer->reinitializeVol(renderer->class_version());
     update();
 }
 
