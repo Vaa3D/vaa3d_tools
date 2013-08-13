@@ -10,9 +10,9 @@ CONFIG += use_static_libs
 CONFIG += use_experimental_features
 
 
-QMAKE_CXXFLAGS += -Wall
-QMAKE_CXXFLAGS += -pedantic
-QMAKE_CXXFLAGS += -Werror
+#QMAKE_CXXFLAGS += -Wall
+#QMAKE_CXXFLAGS += -pedantic
+#QMAKE_CXXFLAGS += -Werror
 
 #set up third party libraries
 use_static_libs{
