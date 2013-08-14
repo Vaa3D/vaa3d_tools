@@ -32,6 +32,7 @@ void processImage(V3DPluginCallback2 &callback, QWidget *parent);
 void processImage2(V3DPluginCallback2 &callback, QWidget *parent);
 bool processImage(const V3DPluginArgList & input, V3DPluginArgList & output);
 void processImage3(V3DPluginCallback2 &callback, QWidget *parent);
+void processImage4(V3DPluginCallback2 &callback, QWidget *parent);
 
 
 template <class T> void AdpThresholding(T* data1d,
@@ -77,6 +78,7 @@ QStringList adpThresholding::menulist() const
         <<tr("Enhancement_fixedWindow")
         <<tr("Enhancement_adpWindow")
         <<tr("HighlightSoma")
+        <<tr("BatchAPP2")
 		<<tr("about");
 }
 
@@ -101,6 +103,10 @@ void adpThresholding::domenu(const QString &menu_name, V3DPluginCallback2 &callb
     else if(menu_name == tr("HighlightSoma"))
     {
        processImage3(callback,parent);
+
+    } else if(menu_name == tr("BatchAPP2"))
+    {
+       processImage4(callback,parent);
 
     }
     else
@@ -425,7 +431,7 @@ void processImage2(V3DPluginCallback2 &callback, QWidget *parent)
     int datatype;
     V3DLONG * in_zz = 0;
     //loadImage("/local1/data/Staci/L2-3_PyramidalNeuron_2/gsdtImage.v3draw", gsdtdata1d, in_zz, datatype,0);
-    loadImage("/local1/data/Staci/L2-3_PyramidalNeuron_1/gsdtImage_mean.tif", gsdtdata1d, in_zz, datatype,0);
+    loadImage("/local1/data/Staci/L2-3_PyramidalNeuron_2/adaptive_enhancement_result.v3draw", gsdtdata1d, in_zz, datatype,0);
 
     /*unsigned char * gsdtdata1d2 = 0;
     int datatype2;
@@ -914,7 +920,7 @@ void processImage3(V3DPluginCallback2 &callback, QWidget *parent)
     unsigned char * gsdtdata1d = 0;
     int datatype;
     V3DLONG * in_zz = 0;
-    loadImage("/local1/data/Staci/L2-3_PyramidalNeuron_2/blended.v3draw", gsdtdata1d, in_zz, datatype,0);
+    loadImage("/local1/data/Staci/L2-3_PyramidalNeuron_2/Cropped_results/Crop1/adaptive_enhancement_result.v3draw", gsdtdata1d, in_zz, datatype,0);
 
     //find local gsdt for soma area
 
@@ -1004,7 +1010,7 @@ void processImage3(V3DPluginCallback2 &callback, QWidget *parent)
     // display
     Image4DSimple * new4DImage = new Image4DSimple();
     new4DImage->setData((unsigned char *)outimg, N, M, P, 1, pixeltype);
-    //new4DImage->setData((unsigned char *)gsdtdata1d, 400, 400, P, 1, pixeltype);
+   // new4DImage->setData((unsigned char *)gsdtdata1d, N, M, P, 1, pixeltype);
     v3dhandle newwin = callback.newImageWindow();
     callback.setImage(newwin, new4DImage);
     callback.setImageName(newwin, "3D adaptive enhancement result");
@@ -1071,7 +1077,7 @@ template <class T> void AdpThresholding_adpwindow_v2(T* data1d,
          }
            for(V3DLONG iz = 0; iz < P; iz++)
             {
-                printf("zhi zhou is %d\n",iz);
+                printf("zhi zhou is %d %d %d %d\n",iz, P, M , N);
                 V3DLONG offsetk = iz*M*N;
                 for(V3DLONG iy = 0; iy < M; iy++)
                 {
@@ -1096,4 +1102,53 @@ template <class T> void AdpThresholding_adpwindow_v2(T* data1d,
         outimg = pImage2;
         return;
 
+}
+
+
+void processImage4(V3DPluginCallback2 &callback, QWidget *parent)
+{
+    v3dhandle curwin = callback.currentImageWindow();
+    if (!curwin)
+    {
+        QMessageBox::information(0, "", "You don't have any image open in the main window.");
+        return;
+    }
+
+    Image4DSimple* p4DImage = callback.getImage(curwin);
+
+    if (!p4DImage)
+    {
+        QMessageBox::information(0, "", "The image pointer is invalid. Ensure your data is valid and try again!");
+        return;
+    }
+
+
+    //invoke app2 function
+    V3DPluginArgItem arg;
+    V3DPluginArgList input;
+    V3DPluginArgList output;
+
+
+    for(int th = 88; th<120;th = th+5)
+    {
+
+        arg.type = "random";std::vector<char*> args1;
+        std:: string inputName(callback.getImageName(curwin).toStdString());char* inputName2 =  new char[inputName.length() + 1]; strcpy(inputName2, inputName.c_str());
+        args1.push_back(inputName2); arg.p = (void *) & args1; input<< arg;
+        arg.type = "random";std::vector<char*> args;
+        char channel = '0';
+        string threshold = boost::lexical_cast<string>(th); char* threshold2 =  new char[threshold.length() + 1]; strcpy(threshold2, threshold.c_str());
+        args.push_back("NULL");args.push_back(&channel);args.push_back(threshold2);arg.p = (void *) & args; input << arg;
+        arg.type = "random";std::vector<char*> args2;args2.push_back("NULL"); arg.p = (void *) & args2; output<< arg;
+
+        QString full_plugin_name = "Neuron2";
+        QString func_name = "app2";
+
+        callback.callPluginFunc(full_plugin_name,func_name, input,output);
+    }
+
+
+
+
+    return;
 }

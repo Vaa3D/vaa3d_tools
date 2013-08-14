@@ -25,11 +25,6 @@ template <class T> void AdpThresholding_adpwindow(T* data1d,
                     unsigned int c,
                     T* &outimg,T* gsdtdata1d);
 
-template <class T> void local_global(T* localEnahancedArea,T* data1d,
-                    V3DLONG *in_sz,
-                    unsigned int c,
-                    V3DLONG xb, V3DLONG xe, V3DLONG yb,V3DLONG ye);
-
 
 int swapthree(float& dummya, float& dummyb, float& dummyc);
 
@@ -38,6 +33,22 @@ template <class T> void block_detection(T* data1d,
                     unsigned int c,double &th,
                     T* &outimg,V3DLONG xb, V3DLONG xe, V3DLONG yb,V3DLONG ye);
 template <class SDATATYPE> int pwi_fusing(SDATATYPE *data1d, SDATATYPE *subject1d, V3DLONG *sz_subject, SDATATYPE *target1d, V3DLONG *sz_target, V3DLONG *offset, V3DLONG new_sz0, V3DLONG new_sz1, V3DLONG new_sz2);
+
+template <class T> void soma_detection(T* data1d,
+                    V3DLONG *in_sz,
+                    unsigned int c,
+                    int x,
+                    int y,
+                    V3DLONG somasize,
+                    T* &outimg);
+
+template <class T> void AdpThresholding_adpwindow_v2(T* data1d,
+                    V3DLONG *in_sz,
+                    unsigned int c,
+                    T* &outimg,T* gsdtdata1d,T* gsdtsoma,
+                                                  int x,
+                                                  int y);
+
 
 QStringList local_enhancement::menulist() const
 {
@@ -112,8 +123,83 @@ void processImage(V3DPluginCallback2 &callback, QWidget *parent)
     V3DLONG in_sz[4];
     sc = 1;
     in_sz[0] = N; in_sz[1] = M; in_sz[2] = P; in_sz[3] = sc;
+    int c = sc;
+
+    //soma location
+    V3DLONG offsetc = (c-1)*pagesz;
+    int soma_x,soma_y,soma_z;
+    LandmarkList soma_center = callback.getLandmark(curwin);
+    if(soma_center.count()== 0)
+    {
+        QMessageBox::information(0, "", "Please define the soma location using the marker.");
+        return;
+    }
+    LocationSimple tmpLocation(0,0,0);
+    tmpLocation = soma_center.at(0);
+    tmpLocation.getCoord(soma_x,soma_y,soma_z);
+
 
     V3DLONG i = 0;
+    double th_soma = 0;
+
+    for(V3DLONG iz = 0; iz < P; iz++)
+    {
+        double PixelSum = 0;
+        V3DLONG offsetk = iz*M*N;
+        for(V3DLONG iy = soma_y-200; iy <  soma_y+200; iy++)
+        {
+            V3DLONG offsetj = iy*N;
+            for(V3DLONG ix = soma_x-200; ix < soma_x+200; ix++)
+            {
+
+             double PixelVaule = data1d[offsetc + offsetk + offsetj + ix];
+             PixelSum = PixelSum + PixelVaule;
+             i++;
+            }
+        }
+        th_soma = th_soma + PixelSum/(400*400*P);
+    }
+
+    void* somaarea = 0;
+    switch (pixeltype)
+    {
+    case V3D_UINT8: soma_detection(data1d, in_sz, c,soma_x,soma_y,i,(unsigned char* &)somaarea); break;
+    case V3D_UINT16: soma_detection((unsigned short int *)data1d, in_sz, c, soma_x,soma_y,i,(unsigned short int* &)somaarea); break;
+    case V3D_FLOAT32: soma_detection((float *)data1d, in_sz, c, soma_x,soma_y,i,(float* &)somaarea);break;
+    default: v3d_msg("Invalid data type. Do nothing."); return;
+    }
+    V3DLONG soma_sz[4];
+    soma_sz[0] = 400; soma_sz[1] = 400; soma_sz[2] = P; soma_sz[3] = sc;
+    saveImage("temp.v3draw", (unsigned char *)somaarea, soma_sz, pixeltype);
+    V3DPluginArgItem arg;
+    V3DPluginArgList input;
+    V3DPluginArgList output;
+
+
+    arg.type = "random";std::vector<char*> args1;
+    args1.push_back("temp.v3draw"); arg.p = (void *) & args1; input<< arg;
+    arg.type = "random";std::vector<char*> args;
+    char channel = '0' + (c-1);
+    string threshold = boost::lexical_cast<string>(th_soma); char* threshold2 =  new char[threshold.length() + 1]; strcpy(threshold2, threshold.c_str());
+    args.push_back(threshold2);args.push_back("1");args.push_back(&channel);args.push_back("1"); arg.p = (void *) & args; input << arg;
+    arg.type = "random";std::vector<char*> args2;args2.push_back("gsdtImage.v3draw"); arg.p = (void *) & args2; output<< arg;
+
+    QString full_plugin_name = "gsdt";
+    QString func_name = "gsdt";
+
+    callback.callPluginFunc(full_plugin_name,func_name, input,output);
+
+    unsigned char * gsdtsoma = 0;
+    char * outimg_file = ((vector<char*> *)(output.at(0).p))->at(0);
+    int datatype;
+    V3DLONG * in_zz = 0;
+
+    loadImage(outimg_file, gsdtsoma, in_zz, datatype,0);
+    remove("temp.v3draw");
+    remove("gsdtImage.v3draw");
+
+
+    i = 0;
     double th_global = 0;
 
     for(V3DLONG iz = 0; iz < P; iz++)
@@ -135,7 +221,7 @@ void processImage(V3DPluginCallback2 &callback, QWidget *parent)
     }
 
 
-    int c = 1;
+
     V3DLONG Ws = 1000;
     int county = 0;
     unsigned char* subject1d_y = NULL;
@@ -323,18 +409,23 @@ void processImage(V3DPluginCallback2 &callback, QWidget *parent)
 
 
 
-    //display
+    void* outimg = 0;
+    switch (pixeltype)
+    {
+    case V3D_UINT8: AdpThresholding_adpwindow_v2(data1d, in_sz, c,(unsigned char* &)outimg, target1d_y,gsdtsoma,soma_x,soma_y); break;
+    case V3D_UINT16: AdpThresholding_adpwindow_v2((unsigned short int *)data1d, in_sz, c, (unsigned short int* &)outimg,(unsigned short int *)target1d_y,(unsigned short int *)gsdtsoma,soma_x,soma_y); break;
+    case V3D_FLOAT32: AdpThresholding_adpwindow_v2((float *)data1d, in_sz, c, (float* &)outimg,(float *)target1d_y,(float *)gsdtsoma,soma_x,soma_y);break;
+    default: v3d_msg("Invalid data type. Do nothing."); return;
+    }
 
     // display
     Image4DSimple * new4DImage = new Image4DSimple();
-    new4DImage->setData((unsigned char *)target1d_y,szTar_y[0], szTar_y[1], szTar_y[2], 1, pixeltype);
+    new4DImage->setData((unsigned char *)outimg,N, M, P, 1, pixeltype);
     v3dhandle newwin = callback.newImageWindow();
     callback.setImage(newwin, new4DImage);
-    callback.setImageName(newwin, "Local adaptive enhancement result");
+    callback.setImageName(newwin, "Local_adaptive_enhancement_result");
     callback.updateImageWindow(newwin);
     return;
-
-        return;
 }
 
 template <class T> void AdpThresholding_adpwindow(T* data1d,
@@ -579,38 +670,6 @@ template <class T> void block_detection(T* data1d,
 
 }
 
-template <class T> void local_global(T* localdata1d,T *data1d,
-                    V3DLONG *in_sz,
-                    unsigned int c,
-                    V3DLONG xb, V3DLONG xe, V3DLONG yb,V3DLONG ye)
-
-{
-
-
-         V3DLONG N = in_sz[0];
-         V3DLONG M = in_sz[1];
-         V3DLONG P = in_sz[2];
-         V3DLONG pagesz = N*M*P;
-         V3DLONG offsetc = (c-1)*pagesz;
-
-         int i = 0;
-          for(V3DLONG iz = 0; iz < P; iz++)
-          {
-              V3DLONG offsetk = iz*M*N;
-              for(V3DLONG iy = yb; iy <  ye+1; iy++)
-              {
-                  V3DLONG offsetj = iy*N;
-                  for(V3DLONG ix = xb; ix < xe+1; ix++)
-                  {
-                      data1d[offsetc+offsetk + offsetj + ix] = localdata1d[i];
-                      i++;
-                  }
-              }
-          }
-
-        //outimg = pImage;
-
-}
 
 // pairwise image blending function
 template <class SDATATYPE>
@@ -740,3 +799,132 @@ int pwi_fusing(SDATATYPE *data1d, SDATATYPE *subject1d, V3DLONG *sz_subject, SDA
     return true;
 }
 
+template <class T> void soma_detection(T* data1d,
+                                       V3DLONG *in_sz,
+                                       unsigned int c,
+                                       int x,
+                                       int y,
+                                       V3DLONG somasize,
+                                       T* &outimg)
+
+{
+
+
+         V3DLONG N = in_sz[0];
+         V3DLONG M = in_sz[1];
+         V3DLONG P = in_sz[2];
+         V3DLONG pagesz = N*M*P;
+         V3DLONG offsetc = (c-1)*pagesz;
+
+         T *pImage = new T [somasize];
+        if (!pImage)
+        {
+            printf("Fail to allocate memory.\n");
+            return;
+         }
+         else
+         {
+            int i = 0;
+            for(V3DLONG iz = 0; iz < P; iz++)
+            {
+                V3DLONG offsetk = iz*M*N;
+                for(V3DLONG iy = y-200; iy < y+200; iy++)
+                {
+                    V3DLONG offsetj = iy*N;
+                    for(V3DLONG ix = x-200; ix < x+200; ix++)
+                    {
+
+                        T PixelValue = data1d[offsetc+offsetk + offsetj + ix];
+                        pImage[i] = PixelValue;
+                        i++;
+                    }
+                }
+            }
+        }
+
+        outimg = pImage;
+}
+
+template <class T> void AdpThresholding_adpwindow_v2(T* data1d,
+                                                  V3DLONG *in_sz,
+                                                  unsigned int c,
+                                                  T* &outimg,
+                                                  T* gsdtdatald,T* gsdtsoma,
+                                                  int x,
+                                                  int y)
+{
+
+         V3DLONG N = in_sz[0];
+         V3DLONG M = in_sz[1];
+         V3DLONG P = in_sz[2];
+         V3DLONG sc = in_sz[3];
+         V3DLONG pagesz = N*M*P;
+         V3DLONG offsetc = (c-1)*pagesz;
+
+         int Th_gsdt = 150;
+
+        T *pSoma = new T [pagesz];
+        if (!pSoma)
+       {
+           printf("Fail to allocate memory.\n");
+           return;
+        }
+        else
+        {
+           for(V3DLONG i=0; i<pagesz; i++)
+               pSoma[i] = 0;
+         }
+       int i = 0;
+        for(V3DLONG iz = 0; iz < P; iz++)
+        {
+            V3DLONG offsetk = iz*M*N;
+            for(V3DLONG iy = y-200; iy <  y+200; iy++)
+            {
+                V3DLONG offsetj = iy*N;
+                for(V3DLONG ix = x-200; ix < x+200; ix++)
+                {
+                    pSoma[offsetk + offsetj + ix] = gsdtsoma[i];
+                    i++;
+                }
+            }
+        }
+
+
+       T *pImage2 = new T [pagesz];
+       if (!pImage2)
+       {
+           printf("Fail to allocate memory.\n");
+           return;
+        }
+        else
+        {
+           for(V3DLONG i=0; i<pagesz; i++)
+               pImage2[i] = 0;
+         }
+           for(V3DLONG iz = 0; iz < P; iz++)
+            {
+                V3DLONG offsetk = iz*M*N;
+                for(V3DLONG iy = 0; iy < M; iy++)
+                {
+                    V3DLONG offsetj = iy*N;
+                    for(V3DLONG ix = 0; ix < N; ix++)
+                    {
+                            T SomaValue = pSoma[offsetc+offsetk + offsetj + ix];
+
+                            if(SomaValue < Th_gsdt)
+                            {
+                                T dataval2 = gsdtdatald[offsetk+offsetj+ix];
+                                pImage2[offsetk+offsetj+ix] = dataval2;
+                            }else
+                                pImage2[offsetk+offsetj+ix] =  data1d[offsetk+offsetj+ix];
+                    }
+
+
+                }
+
+            }
+
+        outimg = pImage2;
+        return;
+
+}
