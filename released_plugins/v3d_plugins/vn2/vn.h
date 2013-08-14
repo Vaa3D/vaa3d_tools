@@ -32,6 +32,7 @@ struct PARA_VN //VN - V3DNeuron
         V3DLONG in_sz0[4] = {p4dImage->getXDim(), p4dImage->getYDim(), p4dImage->getZDim(), p4dImage->getCDim()};
         
         V3DLONG view3d_datasz0, view3d_datasz1, view3d_datasz2;
+        //v3d_msg("test"); //what is the crazy useless line in avoiding the strange crash of vaa3d // by PHC, 2013-08-14
         View3DControl * view3d = callback.getView3DControl(curwin);
         if (!view3d)
         {
