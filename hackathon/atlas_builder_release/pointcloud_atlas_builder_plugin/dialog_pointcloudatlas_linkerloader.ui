@@ -1,0 +1,186 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>Dialog_pointcloudatlas_linkerloader</class>
+ <widget class="QDialog" name="Dialog_pointcloudatlas_linkerloader">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>905</width>
+    <height>389</height>
+   </rect>
+  </property>
+  <property name="minimumSize">
+   <size>
+    <width>772</width>
+    <height>190</height>
+   </size>
+  </property>
+  <property name="maximumSize">
+   <size>
+    <width>1200</width>
+    <height>400</height>
+   </size>
+  </property>
+  <property name="windowTitle">
+   <string>Pointcloud atlas linker file editor</string>
+  </property>
+  <widget class="QWidget" name="layoutWidget">
+   <property name="geometry">
+    <rect>
+     <x>10</x>
+     <y>10</y>
+     <width>878</width>
+     <height>366</height>
+    </rect>
+   </property>
+   <layout class="QVBoxLayout" name="verticalLayout">
+    <item>
+     <layout class="QGridLayout" name="gridLayout">
+      <item row="2" column="0" colspan="4">
+       <widget class="Line" name="line_2">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="0">
+       <widget class="QLabel" name="label_classname">
+        <property name="text">
+         <string>Signal name (e.g. gene name PS1)</string>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="1">
+       <widget class="QLineEdit" name="lineEdit_category_name"/>
+      </item>
+      <item row="3" column="3">
+       <widget class="QLabel" name="label_info_num_apo_files">
+        <property name="text">
+         <string># of valid pointcloud files</string>
+        </property>
+       </widget>
+      </item>
+      <item row="4" column="0">
+       <widget class="QLabel" name="label_sigclass">
+        <property name="text">
+         <string>Signal channel folder</string>
+        </property>
+       </widget>
+      </item>
+      <item row="4" column="1">
+       <widget class="QLineEdit" name="lineEdit_anofolder_sig"/>
+      </item>
+      <item row="4" column="2">
+       <widget class="QPushButton" name="pushButton_sig_folder">
+        <property name="text">
+         <string>Folder ...</string>
+        </property>
+       </widget>
+      </item>
+      <item row="4" column="3">
+       <widget class="QLineEdit" name="lineEdit_anofolder_sig_nfiles">
+        <property name="layoutDirection">
+         <enum>Qt::LeftToRight</enum>
+        </property>
+       </widget>
+      </item>
+      <item row="5" column="0">
+       <widget class="QLabel" name="label_refclass">
+        <property name="text">
+         <string>Reference channel folder</string>
+        </property>
+       </widget>
+      </item>
+      <item row="5" column="1">
+       <widget class="QLineEdit" name="lineEdit_anofolder_ref"/>
+      </item>
+      <item row="5" column="2">
+       <widget class="QPushButton" name="pushButton_ref_folder">
+        <property name="text">
+         <string>Folder ...</string>
+        </property>
+       </widget>
+      </item>
+      <item row="5" column="3">
+       <widget class="QLineEdit" name="lineEdit_anofolder_ref_nfiles">
+        <property name="layoutDirection">
+         <enum>Qt::LeftToRight</enum>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="0">
+       <widget class="QLabel" name="label_common_referencemarker">
+        <property name="text">
+         <string>Common reference (e.g. gene name EVE)</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="1">
+       <widget class="QLineEdit" name="lineEdit_common_referencemarker"/>
+      </item>
+     </layout>
+    </item>
+    <item>
+     <widget class="Line" name="line_3">
+      <property name="orientation">
+       <enum>Qt::Horizontal</enum>
+      </property>
+     </widget>
+    </item>
+    <item>
+     <widget class="QLabel" name="label_info_existing_classes">
+      <property name="text">
+       <string>Existing signals are: </string>
+      </property>
+     </widget>
+    </item>
+    <item>
+     <widget class="Line" name="line">
+      <property name="orientation">
+       <enum>Qt::Horizontal</enum>
+      </property>
+     </widget>
+    </item>
+    <item>
+     <layout class="QHBoxLayout" name="horizontalLayout">
+      <item>
+       <widget class="QLabel" name="label">
+        <property name="text">
+         <string>Tip: If any texts above become red color, you need to enter valid file/folder info. 
+ If the common target pointcloud ref file is left empty, then define target automatically.</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="pushButton_cancel">
+        <property name="text">
+         <string>Cancel</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="pushButton_finish">
+        <property name="text">
+         <string>Finish</string>
+        </property>
+        <property name="default">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="pushButton_addanother">
+        <property name="text">
+         <string>Add a new signal</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </item>
+   </layout>
+  </widget>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

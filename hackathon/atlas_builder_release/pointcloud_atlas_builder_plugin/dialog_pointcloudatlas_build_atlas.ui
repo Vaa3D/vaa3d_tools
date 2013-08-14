@@ -1,0 +1,250 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>Dialog_pointcloudatlas_buildatlas</class>
+ <widget class="QDialog" name="Dialog_pointcloudatlas_buildatlas">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>670</width>
+    <height>373</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Point cloud atlas building editor</string>
+  </property>
+  <widget class="QLabel" name="label_linker_file">
+   <property name="geometry">
+    <rect>
+     <x>30</x>
+     <y>25</y>
+     <width>121</width>
+     <height>17</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Select a linker file:</string>
+   </property>
+  </widget>
+  <widget class="QLineEdit" name="lineEdit_linker_file">
+   <property name="geometry">
+    <rect>
+     <x>150</x>
+     <y>20</y>
+     <width>361</width>
+     <height>22</height>
+    </rect>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="pushButton_linker_file">
+   <property name="geometry">
+    <rect>
+     <x>520</x>
+     <y>16</y>
+     <width>77</width>
+     <height>32</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>File...</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="pushButton_cancel">
+   <property name="geometry">
+    <rect>
+     <x>170</x>
+     <y>315</y>
+     <width>151</width>
+     <height>32</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Cancel</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="pushButton_ok">
+   <property name="geometry">
+    <rect>
+     <x>330</x>
+     <y>315</y>
+     <width>141</width>
+     <height>32</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>OK</string>
+   </property>
+   <property name="default">
+    <bool>true</bool>
+   </property>
+  </widget>
+  <widget class="QLabel" name="label_ref_file">
+   <property name="geometry">
+    <rect>
+     <x>30</x>
+     <y>60</y>
+     <width>231</width>
+     <height>22</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Select a target file for registration:</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="pushButton_ref_file">
+   <property name="geometry">
+    <rect>
+     <x>520</x>
+     <y>57</y>
+     <width>81</width>
+     <height>32</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>File...</string>
+   </property>
+  </widget>
+  <widget class="QLineEdit" name="lineEdit_ref_file">
+   <property name="geometry">
+    <rect>
+     <x>250</x>
+     <y>60</y>
+     <width>261</width>
+     <height>22</height>
+    </rect>
+   </property>
+  </widget>
+  <widget class="QLabel" name="label_stack_ratio">
+   <property name="geometry">
+    <rect>
+     <x>40</x>
+     <y>212</y>
+     <width>281</width>
+     <height>22</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Annotated stack must pass a ratio (0~1) of:</string>
+   </property>
+  </widget>
+  <widget class="QLineEdit" name="lineEdit_stack_ratio">
+   <property name="geometry">
+    <rect>
+     <x>330</x>
+     <y>215</y>
+     <width>191</width>
+     <height>22</height>
+    </rect>
+   </property>
+  </widget>
+  <widget class="QLabel" name="label_forceadd_celllist_file">
+   <property name="geometry">
+    <rect>
+     <x>40</x>
+     <y>255</y>
+     <width>181</width>
+     <height>22</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Select force added cell file:</string>
+   </property>
+  </widget>
+  <widget class="QLineEdit" name="lineEdit_forceadd_celllist_file">
+   <property name="geometry">
+    <rect>
+     <x>220</x>
+     <y>255</y>
+     <width>301</width>
+     <height>22</height>
+    </rect>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="pushButton_forceadd_celllist_file">
+   <property name="geometry">
+    <rect>
+     <x>530</x>
+     <y>250</y>
+     <width>81</width>
+     <height>32</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>File...</string>
+   </property>
+  </widget>
+  <widget class="Line" name="line">
+   <property name="geometry">
+    <rect>
+     <x>10</x>
+     <y>295</y>
+     <width>661</width>
+     <height>16</height>
+    </rect>
+   </property>
+   <property name="orientation">
+    <enum>Qt::Horizontal</enum>
+   </property>
+  </widget>
+  <widget class="QLabel" name="label_refmarkercpt_file">
+   <property name="geometry">
+    <rect>
+     <x>30</x>
+     <y>100</y>
+     <width>331</width>
+     <height>16</height>
+    </rect>
+   </property>
+   <property name="sizePolicy">
+    <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+     <horstretch>0</horstretch>
+     <verstretch>0</verstretch>
+    </sizepolicy>
+   </property>
+   <property name="text">
+    <string>Reference marker control point file for registration:</string>
+   </property>
+  </widget>
+  <widget class="QLineEdit" name="lineEdit_refmarkercpt_file">
+   <property name="geometry">
+    <rect>
+     <x>30</x>
+     <y>138</y>
+     <width>481</width>
+     <height>22</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string/>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="pushButton_refmarkercpt_file">
+   <property name="geometry">
+    <rect>
+     <x>520</x>
+     <y>134</y>
+     <width>77</width>
+     <height>32</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>File...</string>
+   </property>
+  </widget>
+  <widget class="QRadioButton" name="radioButton_saveregtag">
+   <property name="geometry">
+    <rect>
+     <x>30</x>
+     <y>180</y>
+     <width>171</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Save registration data</string>
+   </property>
+  </widget>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

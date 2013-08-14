@@ -1,0 +1,417 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>Dialog_pointcloudatlas_adjust_preference</class>
+ <widget class="QDialog" name="Dialog_pointcloudatlas_adjust_preference">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>746</width>
+    <height>595</height>
+   </rect>
+  </property>
+  <property name="sizePolicy">
+   <sizepolicy hsizetype="Maximum" vsizetype="Maximum">
+    <horstretch>0</horstretch>
+    <verstretch>0</verstretch>
+   </sizepolicy>
+  </property>
+  <property name="windowTitle">
+   <string>Pointcloud atlas adjust preference editor</string>
+  </property>
+  <widget class="Line" name="line">
+   <property name="geometry">
+    <rect>
+     <x>-10</x>
+     <y>502</y>
+     <width>876</width>
+     <height>16</height>
+    </rect>
+   </property>
+   <property name="orientation">
+    <enum>Qt::Horizontal</enum>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="pushButton_input_folder">
+   <property name="geometry">
+    <rect>
+     <x>633</x>
+     <y>16</y>
+     <width>77</width>
+     <height>32</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Folder...</string>
+   </property>
+  </widget>
+  <widget class="QLineEdit" name="lineEdit_input_folder">
+   <property name="geometry">
+    <rect>
+     <x>130</x>
+     <y>21</y>
+     <width>491</width>
+     <height>22</height>
+    </rect>
+   </property>
+  </widget>
+  <widget class="QLabel" name="label_input_folder">
+   <property name="geometry">
+    <rect>
+     <x>30</x>
+     <y>26</y>
+     <width>91</width>
+     <height>16</height>
+    </rect>
+   </property>
+   <property name="maximumSize">
+    <size>
+     <width>158</width>
+     <height>16777215</height>
+    </size>
+   </property>
+   <property name="text">
+    <string>Input folder:</string>
+   </property>
+  </widget>
+  <widget class="QLabel" name="label_existing_celltype_files">
+   <property name="geometry">
+    <rect>
+     <x>29</x>
+     <y>255</y>
+     <width>161</width>
+     <height>16</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Existing cell type files:</string>
+   </property>
+  </widget>
+  <widget class="QListWidget" name="listWidget_existing_celltype_files">
+   <property name="geometry">
+    <rect>
+     <x>29</x>
+     <y>279</y>
+     <width>591</width>
+     <height>91</height>
+    </rect>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="pushButton_remove_celltype_files">
+   <property name="geometry">
+    <rect>
+     <x>630</x>
+     <y>310</y>
+     <width>71</width>
+     <height>32</height>
+    </rect>
+   </property>
+   <property name="sizePolicy">
+    <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+     <horstretch>0</horstretch>
+     <verstretch>0</verstretch>
+    </sizepolicy>
+   </property>
+   <property name="text">
+    <string>Remove</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="pushButton_finish">
+   <property name="geometry">
+    <rect>
+     <x>430</x>
+     <y>532</y>
+     <width>181</width>
+     <height>32</height>
+    </rect>
+   </property>
+   <property name="sizePolicy">
+    <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+     <horstretch>0</horstretch>
+     <verstretch>0</verstretch>
+    </sizepolicy>
+   </property>
+   <property name="text">
+    <string>Finish</string>
+   </property>
+   <property name="default">
+    <bool>true</bool>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="pushButton_cancel">
+   <property name="geometry">
+    <rect>
+     <x>190</x>
+     <y>532</y>
+     <width>181</width>
+     <height>32</height>
+    </rect>
+   </property>
+   <property name="sizePolicy">
+    <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+     <horstretch>0</horstretch>
+     <verstretch>0</verstretch>
+    </sizepolicy>
+   </property>
+   <property name="text">
+    <string>Cancel</string>
+   </property>
+  </widget>
+  <widget class="QLabel" name="label_output_folder">
+   <property name="geometry">
+    <rect>
+     <x>30</x>
+     <y>58</y>
+     <width>101</width>
+     <height>16</height>
+    </rect>
+   </property>
+   <property name="maximumSize">
+    <size>
+     <width>158</width>
+     <height>16777215</height>
+    </size>
+   </property>
+   <property name="text">
+    <string>Output folder:</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="pushButton_output_folder">
+   <property name="geometry">
+    <rect>
+     <x>633</x>
+     <y>53</y>
+     <width>77</width>
+     <height>32</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Folder...</string>
+   </property>
+  </widget>
+  <widget class="QLineEdit" name="lineEdit_output_folder">
+   <property name="geometry">
+    <rect>
+     <x>130</x>
+     <y>58</y>
+     <width>491</width>
+     <height>22</height>
+    </rect>
+   </property>
+  </widget>
+  <widget class="QLabel" name="label_cellname_file_prefix">
+   <property name="geometry">
+    <rect>
+     <x>30</x>
+     <y>118</y>
+     <width>141</width>
+     <height>16</height>
+    </rect>
+   </property>
+   <property name="maximumSize">
+    <size>
+     <width>158</width>
+     <height>16777215</height>
+    </size>
+   </property>
+   <property name="text">
+    <string>Cell name file prefix:</string>
+   </property>
+  </widget>
+  <widget class="QLineEdit" name="lineEdit_cellname_file_prefix">
+   <property name="geometry">
+    <rect>
+     <x>177</x>
+     <y>117</y>
+     <width>441</width>
+     <height>22</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string/>
+   </property>
+  </widget>
+  <widget class="QLineEdit" name="lineEdit_cellname_file_surfix">
+   <property name="geometry">
+    <rect>
+     <x>177</x>
+     <y>159</y>
+     <width>441</width>
+     <height>22</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string/>
+   </property>
+  </widget>
+  <widget class="QLabel" name="label_cellname_file_surfix">
+   <property name="geometry">
+    <rect>
+     <x>30</x>
+     <y>160</y>
+     <width>141</width>
+     <height>16</height>
+    </rect>
+   </property>
+   <property name="maximumSize">
+    <size>
+     <width>158</width>
+     <height>16777215</height>
+    </size>
+   </property>
+   <property name="text">
+    <string>Cell name file suffix:</string>
+   </property>
+  </widget>
+  <widget class="QLineEdit" name="lineEdit_celltype_file">
+   <property name="geometry">
+    <rect>
+     <x>127</x>
+     <y>220</y>
+     <width>491</width>
+     <height>22</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string/>
+   </property>
+  </widget>
+  <widget class="QLabel" name="label_celltype_file">
+   <property name="geometry">
+    <rect>
+     <x>30</x>
+     <y>222</y>
+     <width>141</width>
+     <height>16</height>
+    </rect>
+   </property>
+   <property name="maximumSize">
+    <size>
+     <width>158</width>
+     <height>16777215</height>
+    </size>
+   </property>
+   <property name="text">
+    <string>Cell type file: </string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="pushButton_celltype_file">
+   <property name="geometry">
+    <rect>
+     <x>630</x>
+     <y>217</y>
+     <width>77</width>
+     <height>32</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>File...</string>
+   </property>
+  </widget>
+  <widget class="QLabel" name="label_cellstat_file_surfix">
+   <property name="geometry">
+    <rect>
+     <x>33</x>
+     <y>422</y>
+     <width>151</width>
+     <height>16</height>
+    </rect>
+   </property>
+   <property name="maximumSize">
+    <size>
+     <width>158</width>
+     <height>16777215</height>
+    </size>
+   </property>
+   <property name="text">
+    <string>Cell statistics file surfix:</string>
+   </property>
+  </widget>
+  <widget class="QLineEdit" name="lineEdit_cellstat_file_surfix">
+   <property name="geometry">
+    <rect>
+     <x>210</x>
+     <y>418</y>
+     <width>411</width>
+     <height>22</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string/>
+   </property>
+  </widget>
+  <widget class="QLabel" name="label_markermap_file">
+   <property name="geometry">
+    <rect>
+     <x>34</x>
+     <y>463</y>
+     <width>151</width>
+     <height>16</height>
+    </rect>
+   </property>
+   <property name="maximumSize">
+    <size>
+     <width>158</width>
+     <height>16777215</height>
+    </size>
+   </property>
+   <property name="text">
+    <string>Marker map file:</string>
+   </property>
+  </widget>
+  <widget class="QLineEdit" name="lineEdit_markermap_file">
+   <property name="geometry">
+    <rect>
+     <x>210</x>
+     <y>462</y>
+     <width>411</width>
+     <height>22</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string/>
+   </property>
+  </widget>
+  <widget class="Line" name="line_2">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>90</y>
+     <width>876</width>
+     <height>16</height>
+    </rect>
+   </property>
+   <property name="orientation">
+    <enum>Qt::Horizontal</enum>
+   </property>
+  </widget>
+  <widget class="Line" name="line_3">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>190</y>
+     <width>876</width>
+     <height>16</height>
+    </rect>
+   </property>
+   <property name="orientation">
+    <enum>Qt::Horizontal</enum>
+   </property>
+  </widget>
+  <widget class="Line" name="line_4">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>385</y>
+     <width>876</width>
+     <height>16</height>
+    </rect>
+   </property>
+   <property name="orientation">
+    <enum>Qt::Horizontal</enum>
+   </property>
+  </widget>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

@@ -1,0 +1,274 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>Dialog_pointcloudatlas_merge_coexpression</class>
+ <widget class="QDialog" name="Dialog_pointcloudatlas_merge_coexpression">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>778</width>
+    <height>488</height>
+   </rect>
+  </property>
+  <property name="sizePolicy">
+   <sizepolicy hsizetype="Maximum" vsizetype="Maximum">
+    <horstretch>0</horstretch>
+    <verstretch>0</verstretch>
+   </sizepolicy>
+  </property>
+  <property name="windowTitle">
+   <string>Pointcloud atlas merge coexpressed cells editor</string>
+  </property>
+  <widget class="Line" name="line_4">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>240</y>
+     <width>876</width>
+     <height>16</height>
+    </rect>
+   </property>
+   <property name="orientation">
+    <enum>Qt::Horizontal</enum>
+   </property>
+  </widget>
+  <widget class="QLabel" name="label_coexpression_file">
+   <property name="geometry">
+    <rect>
+     <x>10</x>
+     <y>270</y>
+     <width>211</width>
+     <height>16</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Select the coexpression file:</string>
+   </property>
+  </widget>
+  <widget class="QLineEdit" name="lineEdit_coexpression_file">
+   <property name="geometry">
+    <rect>
+     <x>190</x>
+     <y>270</y>
+     <width>481</width>
+     <height>22</height>
+    </rect>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="pushButton_coexpression_file">
+   <property name="geometry">
+    <rect>
+     <x>680</x>
+     <y>266</y>
+     <width>77</width>
+     <height>32</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>File...</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="pushButton_input_atlas_file">
+   <property name="geometry">
+    <rect>
+     <x>683</x>
+     <y>10</y>
+     <width>77</width>
+     <height>32</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>File...</string>
+   </property>
+  </widget>
+  <widget class="QLineEdit" name="lineEdit_input_atlas_file">
+   <property name="geometry">
+    <rect>
+     <x>180</x>
+     <y>15</y>
+     <width>491</width>
+     <height>22</height>
+    </rect>
+   </property>
+  </widget>
+  <widget class="QLabel" name="label_input_atlas_file">
+   <property name="geometry">
+    <rect>
+     <x>12</x>
+     <y>15</y>
+     <width>158</width>
+     <height>16</height>
+    </rect>
+   </property>
+   <property name="maximumSize">
+    <size>
+     <width>158</width>
+     <height>16777215</height>
+    </size>
+   </property>
+   <property name="text">
+    <string>Select an atlas file (.apo):</string>
+   </property>
+  </widget>
+  <widget class="Line" name="line_3">
+   <property name="geometry">
+    <rect>
+     <x>11</x>
+     <y>50</y>
+     <width>876</width>
+     <height>16</height>
+    </rect>
+   </property>
+   <property name="orientation">
+    <enum>Qt::Horizontal</enum>
+   </property>
+  </widget>
+  <widget class="QLabel" name="label_existing_input_atlases">
+   <property name="geometry">
+    <rect>
+     <x>11</x>
+     <y>70</y>
+     <width>130</width>
+     <height>16</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Existing atlases are: </string>
+   </property>
+  </widget>
+  <widget class="QListWidget" name="listWidget_existing_input_atlases">
+   <property name="geometry">
+    <rect>
+     <x>11</x>
+     <y>94</y>
+     <width>661</width>
+     <height>131</height>
+    </rect>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="pushButton_input_atlas_remove">
+   <property name="geometry">
+    <rect>
+     <x>684</x>
+     <y>160</y>
+     <width>81</width>
+     <height>32</height>
+    </rect>
+   </property>
+   <property name="sizePolicy">
+    <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+     <horstretch>0</horstretch>
+     <verstretch>0</verstretch>
+    </sizepolicy>
+   </property>
+   <property name="text">
+    <string>Remove</string>
+   </property>
+  </widget>
+  <widget class="Line" name="line">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>400</y>
+     <width>876</width>
+     <height>16</height>
+    </rect>
+   </property>
+   <property name="orientation">
+    <enum>Qt::Horizontal</enum>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="pushButton_finish">
+   <property name="geometry">
+    <rect>
+     <x>420</x>
+     <y>430</y>
+     <width>181</width>
+     <height>32</height>
+    </rect>
+   </property>
+   <property name="sizePolicy">
+    <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+     <horstretch>0</horstretch>
+     <verstretch>0</verstretch>
+    </sizepolicy>
+   </property>
+   <property name="text">
+    <string>Finish</string>
+   </property>
+   <property name="default">
+    <bool>true</bool>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="pushButton_cancel">
+   <property name="geometry">
+    <rect>
+     <x>200</x>
+     <y>430</y>
+     <width>181</width>
+     <height>32</height>
+    </rect>
+   </property>
+   <property name="sizePolicy">
+    <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+     <horstretch>0</horstretch>
+     <verstretch>0</verstretch>
+    </sizepolicy>
+   </property>
+   <property name="text">
+    <string>Cancel</string>
+   </property>
+  </widget>
+  <widget class="Line" name="line_2">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>310</y>
+     <width>876</width>
+     <height>16</height>
+    </rect>
+   </property>
+   <property name="orientation">
+    <enum>Qt::Horizontal</enum>
+   </property>
+  </widget>
+  <widget class="QLabel" name="label_output_folder">
+   <property name="geometry">
+    <rect>
+     <x>10</x>
+     <y>330</y>
+     <width>631</width>
+     <height>16</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Output folder:</string>
+   </property>
+  </widget>
+  <widget class="QLabel" name="label_output_file_prefix">
+   <property name="geometry">
+    <rect>
+     <x>10</x>
+     <y>360</y>
+     <width>311</width>
+     <height>16</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Prefix of the names of output merged files</string>
+   </property>
+  </widget>
+  <widget class="QLineEdit" name="lineEdit_output_file_prefix">
+   <property name="geometry">
+    <rect>
+     <x>320</x>
+     <y>360</y>
+     <width>351</width>
+     <height>21</height>
+    </rect>
+   </property>
+  </widget>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

@@ -1,0 +1,288 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>Dialog_pointcloudatlas_detect_coexpression</class>
+ <widget class="QDialog" name="Dialog_pointcloudatlas_detect_coexpression">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>790</width>
+    <height>575</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Pointcloud atlas detect coexpression editor</string>
+  </property>
+  <widget class="Line" name="line_3">
+   <property name="geometry">
+    <rect>
+     <x>11</x>
+     <y>56</y>
+     <width>876</width>
+     <height>16</height>
+    </rect>
+   </property>
+   <property name="orientation">
+    <enum>Qt::Horizontal</enum>
+   </property>
+  </widget>
+  <widget class="Line" name="line">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>300</y>
+     <width>791</width>
+     <height>16</height>
+    </rect>
+   </property>
+   <property name="orientation">
+    <enum>Qt::Horizontal</enum>
+   </property>
+  </widget>
+  <widget class="QListWidget" name="listWidget_info_existing_atlases">
+   <property name="geometry">
+    <rect>
+     <x>11</x>
+     <y>94</y>
+     <width>651</width>
+     <height>192</height>
+    </rect>
+   </property>
+  </widget>
+  <widget class="QLabel" name="label_info_existing_atlases">
+   <property name="geometry">
+    <rect>
+     <x>11</x>
+     <y>70</y>
+     <width>130</width>
+     <height>16</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Existing atlases are: </string>
+   </property>
+  </widget>
+  <widget class="QLabel" name="label_atlas_file">
+   <property name="geometry">
+    <rect>
+     <x>12</x>
+     <y>15</y>
+     <width>158</width>
+     <height>16</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Select an atlas file (.apo):</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="pushButton_atlas_file">
+   <property name="geometry">
+    <rect>
+     <x>670</x>
+     <y>10</y>
+     <width>91</width>
+     <height>32</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>File...</string>
+   </property>
+  </widget>
+  <widget class="QLineEdit" name="lineEdit_atlas_file">
+   <property name="geometry">
+    <rect>
+     <x>180</x>
+     <y>15</y>
+     <width>481</width>
+     <height>22</height>
+    </rect>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="pushButton_cancel">
+   <property name="geometry">
+    <rect>
+     <x>190</x>
+     <y>520</y>
+     <width>181</width>
+     <height>32</height>
+    </rect>
+   </property>
+   <property name="sizePolicy">
+    <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+     <horstretch>0</horstretch>
+     <verstretch>0</verstretch>
+    </sizepolicy>
+   </property>
+   <property name="text">
+    <string>Cancel</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="pushButton_atlas_file_remove">
+   <property name="geometry">
+    <rect>
+     <x>670</x>
+     <y>160</y>
+     <width>91</width>
+     <height>32</height>
+    </rect>
+   </property>
+   <property name="sizePolicy">
+    <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+     <horstretch>0</horstretch>
+     <verstretch>0</verstretch>
+    </sizepolicy>
+   </property>
+   <property name="text">
+    <string>Remove</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="pushButton_finish">
+   <property name="geometry">
+    <rect>
+     <x>380</x>
+     <y>520</y>
+     <width>181</width>
+     <height>32</height>
+    </rect>
+   </property>
+   <property name="sizePolicy">
+    <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+     <horstretch>0</horstretch>
+     <verstretch>0</verstretch>
+    </sizepolicy>
+   </property>
+   <property name="text">
+    <string>Finish</string>
+   </property>
+   <property name="default">
+    <bool>true</bool>
+   </property>
+  </widget>
+  <widget class="QLabel" name="label_output_file">
+   <property name="geometry">
+    <rect>
+     <x>20</x>
+     <y>450</y>
+     <width>311</width>
+     <height>16</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Prefix of the names of output coexpression files:</string>
+   </property>
+  </widget>
+  <widget class="QLineEdit" name="lineEdit_output_file">
+   <property name="geometry">
+    <rect>
+     <x>330</x>
+     <y>450</y>
+     <width>241</width>
+     <height>21</height>
+    </rect>
+   </property>
+  </widget>
+  <widget class="Line" name="line_2">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>490</y>
+     <width>791</width>
+     <height>16</height>
+    </rect>
+   </property>
+   <property name="orientation">
+    <enum>Qt::Horizontal</enum>
+   </property>
+  </widget>
+  <widget class="QCheckBox" name="checkBox_symmetry_rule">
+   <property name="geometry">
+    <rect>
+     <x>350</x>
+     <y>330</y>
+     <width>111</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Symmetry rule</string>
+   </property>
+  </widget>
+  <widget class="QLabel" name="label_coexpression_rules">
+   <property name="geometry">
+    <rect>
+     <x>20</x>
+     <y>320</y>
+     <width>130</width>
+     <height>16</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Coexpression rules:</string>
+   </property>
+  </widget>
+  <widget class="QCheckBox" name="checkBox_bilateral_rule">
+   <property name="geometry">
+    <rect>
+     <x>350</x>
+     <y>360</y>
+     <width>121</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Bilateral rule</string>
+   </property>
+  </widget>
+  <widget class="QLabel" name="label_distance_rule">
+   <property name="geometry">
+    <rect>
+     <x>20</x>
+     <y>360</y>
+     <width>181</width>
+     <height>16</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Distance less than (pixels):</string>
+   </property>
+  </widget>
+  <widget class="QLineEdit" name="lineEdit_distance_rule">
+   <property name="geometry">
+    <rect>
+     <x>195</x>
+     <y>360</y>
+     <width>71</width>
+     <height>21</height>
+    </rect>
+   </property>
+  </widget>
+  <widget class="Line" name="line_5">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>390</y>
+     <width>791</width>
+     <height>16</height>
+    </rect>
+   </property>
+   <property name="orientation">
+    <enum>Qt::Horizontal</enum>
+   </property>
+  </widget>
+  <widget class="QLabel" name="label_output_folder">
+   <property name="geometry">
+    <rect>
+     <x>20</x>
+     <y>420</y>
+     <width>631</width>
+     <height>16</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Output folder:</string>
+   </property>
+  </widget>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>
