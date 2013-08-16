@@ -276,7 +276,7 @@ double computeHausdorff(const NeuronTree & nt)
 {
 #define LMINMAX 2
 #define LMAXMIN 1
-#define NCELL 5000        // max# nonempty lattice cells in Hausdorff analysis
+#define NCELL 500000        // max# nonempty lattice cells in Hausdorff analysis
 
 	int n;
 
