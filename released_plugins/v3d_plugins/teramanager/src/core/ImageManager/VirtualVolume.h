@@ -166,7 +166,7 @@ public:
     * [img_depth]               : image bitdepth to be used (8 or 16)
     **************************************************************************************************************/
     static void saveImage_from_UINT8_to_Vaa3DRaw (int slice, std::string img_path, 
-                                      uint8** raw_ch, int n_chans, int offset,
+                                      uint8** raw_ch, int n_chans, sint64 offset,
 									  int raw_img_height, int raw_img_width,
                                       int start_height=0, int end_height =-1, int start_width=0, int end_width=-1,
                                       const char* img_format = IM_DEF_IMG_FORMAT, int img_depth = IM_DEF_IMG_DEPTH ) throw (MyException);

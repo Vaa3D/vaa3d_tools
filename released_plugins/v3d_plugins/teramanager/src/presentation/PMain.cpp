@@ -204,12 +204,20 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     importOptionsWidget->setDefaultWidget(import_form);
     importOptionsMenu->addAction(importOptionsWidget);    
     debugMenu = menuBar->addMenu("Debug");
-    debugAction1 = new QAction("Action 1", debugMenu);
-    connect(debugAction1, SIGNAL(triggered()), this, SLOT(debugAction1Triggered()));
-    debugMenu->addAction(debugAction1);
-    debugAction2 = new QAction("Show log", debugMenu);
-    connect(debugAction2, SIGNAL(triggered()), this, SLOT(showLogTriggered()));
-    debugMenu->addAction(debugAction2);
+    //debugAction1 = new QAction("Action 1", debugMenu);
+    //connect(debugAction1, SIGNAL(triggered()), this, SLOT(debugAction1Triggered()));
+    //debugMenu->addAction(debugAction1);
+    debugShowLogAction = new QAction("Show log", debugMenu);
+    connect(debugShowLogAction, SIGNAL(triggered()), this, SLOT(showLogTriggered()));
+    debugMenu->addAction(debugShowLogAction);
+    debugStreamingStepsMenu = new QMenu("Streaming steps");
+    debugStreamingStepsActionWidget = new QWidgetAction(this);
+    debugStreamingStepsSBox = new QSpinBox();
+    debugStreamingStepsSBox->setMinimum(1);
+    debugStreamingStepsSBox->setMaximum(10);
+    debugStreamingStepsActionWidget->setDefaultWidget(debugStreamingStepsSBox);
+    debugStreamingStepsMenu->addAction(debugStreamingStepsActionWidget);
+    debugMenu->addMenu(debugStreamingStepsMenu);
     helpMenu = menuBar->addMenu("Help");
     aboutAction = new QAction("About", this);
     aboutAction->setIcon(QIcon(":/icons/about.png"));
@@ -662,7 +670,7 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     // signals and slots
     connect(loadButton, SIGNAL(clicked()), this, SLOT(loadButtonClicked()));
     connect(CImport::instance(), SIGNAL(sendOperationOutcome(MyException*, Image4DSimple*, qint64)), this, SLOT(importDone(MyException*, Image4DSimple*,qint64)), Qt::QueuedConnection);
-    connect(CVolume::instance(), SIGNAL(sendOperationOutcome(MyException*,void*, qint64)), SLOT(loadingDone(MyException*,void*, qint64)), Qt::QueuedConnection);
+    connect(CVolume::instance(), SIGNAL(sendOperationOutcome(uint8*, MyException*,void*, qint64, QString, int)), SLOT(loadingDone(uint8*, MyException*,void*, qint64, QString, int)), Qt::QueuedConnection);
     connect(enableMultiresMode, SIGNAL(stateChanged(int)), this, SLOT(mode3D_checkbox_changed(int)), Qt::QueuedConnection);
     connect(volMapMaxSizeSBox, SIGNAL(valueChanged(int)), this, SLOT(settingsChanged(int)), Qt::QueuedConnection);
     connect(Vdim_sbox, SIGNAL(valueChanged(int)), this, SLOT(settingsChanged(int)), Qt::QueuedConnection);
@@ -1331,7 +1339,7 @@ void PMain::importDone(MyException *ex, Image4DSimple* vmap_image, qint64 elapse
 * If an exception has occurred in the <CVolume> thread, it is propagated and
 * managed in the current thread (ex != 0).
 ***********************************************************************************/
-void PMain::loadingDone(MyException *ex, void* sourceObject, qint64 elapsed_time)
+void PMain::loadingDone(uint8 *data, MyException *ex, void* sourceObject, qint64 elapsed_time, QString op_dsc, int step)
 {
     #ifdef TMP_DEBUG
     printf("--------------------- teramanager plugin [thread *] >> PMain::loading_done(%s)\n",  (ex? "error" : ""));
@@ -1346,7 +1354,7 @@ void PMain::loadingDone(MyException *ex, void* sourceObject, qint64 elapsed_time
     {
         Image4DSimple* img = new Image4DSimple();
         img->setFileName(CImport::instance()->getHighestResVolume()->getROOT_DIR());
-        img->setData(cVolume->getVoiData(), cVolume->getVoiH1()-cVolume->getVoiH0(),
+        img->setData(data, cVolume->getVoiH1()-cVolume->getVoiH0(),
                      cVolume->getVoiV1()-cVolume->getVoiV0(), cVolume->getVoiD1()-cVolume->getVoiD0(), cVolume->getNChannels(), V3D_UINT8);
         v3dhandle new_win = V3D_env->newImageWindow(img->getFileName());
         V3D_env->setImage(new_win, img);

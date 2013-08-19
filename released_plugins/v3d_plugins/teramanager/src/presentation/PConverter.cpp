@@ -317,6 +317,26 @@ void PConverter::startButtonClicked()
         }
         else
         {
+            //if destination dir does not exist, asking for creation
+            if(!QFile::exists(outPathField->text()))
+            {
+                if(!QMessageBox::information(this, "Create dir?", "The directory you selected does not exist. Create it?", "Yes", "Cancel"))
+                    QDir().mkdir(outPathField->text());
+                else
+                {
+                    statusBar->clearMessage();
+                    statusBar->showMessage("Ready to convert volume.");
+                    progressBar->setEnabled(false);
+                    progressBar->setMaximum(1);         //needed to stop animation on some operating systems
+                    startButton->setEnabled(true);
+                    stopButton->setEnabled(false);
+                    import_panel->setEnabled(false);
+                    conversion_panel->setEnabled(true);
+                    return;
+                }
+            }
+
+
             //checking destination dir is empty
             QDir directory(outPathField->text());
             QStringList dir_entries = directory.entryList();
@@ -437,8 +457,10 @@ void PConverter::settingsChanged()
     CSettings::instance()->setVCInputPath(inPathField->text().toStdString());
     CSettings::instance()->setVCOutputPath(outPathField->text().toStdString());
     CSettings::instance()->setVCInputFormat(inFormatCBox->currentText().toStdString());
+    CSettings::instance()->setVCOutputFormat(outFormatCBox->currentText().toStdString());
     CSettings::instance()->setVCStacksWidth(stacksWidthField->value());
     CSettings::instance()->setVCStacksHeight(stacksHeightField->value());
+    CSettings::instance()->setVCStacksDepth(stacksDepthField->value());
     CSettings::instance()->writeSettings();
 }
 
@@ -467,23 +489,35 @@ void PConverter::volformatChanged ( const QString & text )
         helpBox->setText("Two-leveled folder structure (see <a href=\"http://code.google.com/p/terastitcher/wiki/SupportedFormats\">here</a>) with each tile composed "
                                   "by a series of 2D images.");
         buttonLayout->setCurrentWidget(dirButton);
+
+        if(sender == outFormatCBox)
+            stacksDepthField->setVisible(false);
     }
     else if(sender->currentText().compare("Image series (nontiled)", Qt::CaseInsensitive) == 0)
     {
         helpBox->setText("A folder containing a series of 2D images. Supported formats for single "
                                   "2D images are BMP, DIB, JPEG, JPG, JPE, PNG, PBM, PGM, PPM, SR, RAS, TIFF, TIF.");
         buttonLayout->setCurrentWidget(dirButton);
+
+        if(sender == outFormatCBox)
+            stacksDepthField->setVisible(false);
     }
     else if(sender->currentText().compare("Vaa3D raw (tiled)", Qt::CaseInsensitive) == 0)
     {
         helpBox->setText("Two-leveled folder structure (see <a href=\"http://code.google.com/p/terastitcher/wiki/SupportedFormats\">here</a>) with each tile composed "
                                   "by a series of 3D blocks stored into Vaa3D raw files.");
         buttonLayout->setCurrentWidget(dirButton);
+
+        if(sender == outFormatCBox)
+            stacksDepthField->setVisible(true);
     }
     else if(sender->currentText().compare("Vaa3D raw (nontiled)", Qt::CaseInsensitive) == 0)
     {
         helpBox->setText("Vaa3D raw 4D format. Supported suffixes are: .raw, .RAW, .v3draw, .V3DRAW");
         buttonLayout->setCurrentWidget(fileButton);
+
+        if(sender == outFormatCBox)
+            stacksDepthField->setVisible(false);
     }
     else
         helpBox->setText("<html><p style=\"text-align:justify;\"> Format not yet supported. </p></html>");

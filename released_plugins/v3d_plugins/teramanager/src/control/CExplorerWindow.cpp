@@ -237,7 +237,7 @@ CExplorerWindow::CExplorerWindow(V3DPluginCallback2 *_V3D_env, int _resIndex, ui
         pMain->D1_sbox->setValue(pMain->D1_sbox->maximum());
 
         //signal connections
-        connect(CVolume::instance(), SIGNAL(sendOperationOutcome(MyException*,void*,qint64)), this, SLOT(loadingDone(MyException*,void*,qint64)), Qt::QueuedConnection);
+        connect(CVolume::instance(), SIGNAL(sendOperationOutcome(uint8*, MyException*,void*,qint64, QString, int)), this, SLOT(loadingDone(uint8*, MyException*,void*,qint64, QString, int)), Qt::BlockingQueuedConnection);
         connect(view3DWidget, SIGNAL(changeXCut0(int)), this, SLOT(Vaa3D_changeXCut0(int)));
         connect(view3DWidget, SIGNAL(changeXCut1(int)), this, SLOT(Vaa3D_changeXCut1(int)));
         connect(view3DWidget, SIGNAL(changeYCut0(int)), this, SLOT(Vaa3D_changeYCut0(int)));
@@ -443,13 +443,14 @@ bool CExplorerWindow::eventFilter(QObject *object, QEvent *event)
 * performed. If an exception has occurred in the <CVolume> thread, it is propagated
 * and managed in the current thread (ex != 0).
 ***********************************************************************************/
-void CExplorerWindow::loadingDone(MyException *ex, void* sourceObject, qint64 elapsed_time)
+void CExplorerWindow::loadingDone(uint8 *data, MyException *ex, void* sourceObject, qint64 elapsed_time, QString op_dsc, int step)
 {
     #ifdef TMP_DEBUG
     printf("--------------------- teramanager plugin [thread *] >> CExplorerWindow[%s]::loadingDone(%s)\n",
             titleShort.c_str(),  (ex? "error" : ""));
     #endif
 
+    char message[1000];
     CVolume* cVolume = CVolume::instance();
 
     //if an exception has occurred, showing a message error
@@ -457,50 +458,59 @@ void CExplorerWindow::loadingDone(MyException *ex, void* sourceObject, qint64 el
         QMessageBox::critical(this,QObject::tr("Error"), QObject::tr(ex->what()),QObject::tr("Ok"));
     else if(sourceObject == this)
     {
-        //first updating IO time
-        char message[1000];
-        sprintf(message, "Loaded volume X=[%d, %d) Y=[%d, %d) Z=[%d, %d) from resolution %d",
-                cVolume->getVoiH0(), cVolume->getVoiH1(), cVolume->getVoiV0(), cVolume->getVoiV1(), cVolume->getVoiD0(), cVolume->getVoiD1(), cVolume->getVoiResIndex());
-        PLog::getInstance()->appendIO(elapsed_time, message);
+        try
+        {
+            //first updating IO time
+            PLog::getInstance()->appendIO(elapsed_time, op_dsc.toStdString());
 
-        //copying loaded data
-        QElapsedTimer timer;
-        timer.start();
-        uint32 img_dims[4]       = {volH1-volH0, volV1-volV0, volD1-volD0, nchannels};
-        uint32 img_offset[3]     = {cVolume->getVoiH0()-volH0, cVolume->getVoiV0()-volV0, cVolume->getVoiD0()-volD0};
-        uint32 new_img_dims[4]   = {cVolume->getVoiH1()-cVolume->getVoiH0(),  cVolume->getVoiV1()-cVolume->getVoiV0(), cVolume->getVoiD1()-cVolume->getVoiD0(),  nchannels};
-        uint32 new_img_offset[3] = {0, 0, 0};
-        uint32 new_img_count[3]  = {new_img_dims[0], new_img_dims[1], new_img_dims[2]};
-        copyVOI(cVolume->getVoiData(), new_img_dims, new_img_offset, new_img_count,
-                view3DWidget->getiDrawExternalParameter()->image4d->getRawData(), img_dims, img_offset);
+            //copying loaded data
+            QElapsedTimer timer;
+            timer.start();
+            uint32 img_dims[4]       = {volH1-volH0, volV1-volV0, volD1-volD0, nchannels};
+            uint32 img_offset[3]     = {cVolume->getVoiH0()-volH0, cVolume->getVoiV0()-volV0, cVolume->getVoiD0()-volD0};
+            uint32 new_img_dims[4]   = {cVolume->getVoiH1()-cVolume->getVoiH0(),  cVolume->getVoiV1()-cVolume->getVoiV0(), cVolume->getVoiD1()-cVolume->getVoiD0(),  nchannels};
+            uint32 new_img_offset[3] = {0, 0, 0};
+            uint32 new_img_count[3]  = {new_img_dims[0], new_img_dims[1], new_img_dims[2]};
+            copyVOI(data, new_img_dims, new_img_offset, new_img_count,
+                    view3DWidget->getiDrawExternalParameter()->image4d->getRawData(), img_dims, img_offset);
+            sprintf(message, "Streaming %d/%d: Copied block X=[%d, %d) Y=[%d, %d) Z=[%d, %d) to resolution %d",
+                              step, cVolume->getStreamingSteps(), cVolume->getVoiH0(), cVolume->getVoiH1(), cVolume->getVoiV0(), cVolume->getVoiV1(), cVolume->getVoiD0(), cVolume->getVoiD1(), cVolume->getVoiResIndex());
+            PLog::getInstance()->appendCPU(timer.elapsed(), message);
 
-        //releasing memory used for storing loaded data
-        delete[] cVolume->getVoiData();
-        cVolume->resetVoiData();
-        sprintf(message, "Block X=[%d, %d) Y=[%d, %d) Z=[%d, %d) copied into view %s",
-                cVolume->getVoiH0(), cVolume->getVoiH1(),
-                cVolume->getVoiV0(), cVolume->getVoiV1(),
-                cVolume->getVoiD0(), cVolume->getVoiD1(), title.c_str());
-        PLog::getInstance()->appendCPU(timer.elapsed(), message);
+            //releasing memory if streaming is not active
+            if(cVolume->getStreamingSteps() == 1)
+                delete[] data;
 
-        //updating image data
-        timer.restart();
-        #ifdef USE_EXPERIMENTAL_FEATURES
-        myV3dR_GLWidget::cast(view3DWidget)->updateImageDataFast();
-        #else
-        view3DWidget->updateImageData();
-        #endif
-        sprintf(message, "Block X=[%d, %d) Y=[%d, %d) Z=[%d, %d) rendered into view %s",
-                cVolume->getVoiH0(), cVolume->getVoiH1(),
-                cVolume->getVoiV0(), cVolume->getVoiV1(),
-                cVolume->getVoiD0(), cVolume->getVoiD1(), title.c_str());
-        PLog::getInstance()->appendGPU(timer.elapsed(), message);
+            //updating image data
+            timer.restart();
+            #ifdef USE_EXPERIMENTAL_FEATURES
+            myV3dR_GLWidget::cast(view3DWidget)->updateImageDataFast();
+            #else
+            view3DWidget->updateImageData();
+            #endif
+            sprintf(message, "Streaming %d/%d: Block X=[%d, %d) Y=[%d, %d) Z=[%d, %d) rendered into view %s",
+                    step, cVolume->getStreamingSteps(), cVolume->getVoiH0(), cVolume->getVoiH1(),
+                    cVolume->getVoiV0(), cVolume->getVoiV1(),
+                    cVolume->getVoiD0(), cVolume->getVoiD1(), title.c_str());
+            PLog::getInstance()->appendGPU(timer.elapsed(), message);
+            //QMessageBox::information(this, "Done", "Press OK to continue");
+
+            //resetting some widgets
+            if(cVolume->getStreamingSteps() == step)
+            {
+                PMain::getInstance()->resetGUI();
+                PMain::getInstance()->subvol_panel->setEnabled(true);
+                PMain::getInstance()->loadButton->setEnabled(true);
+            }
+        }
+        catch(MyException &ex)
+        {
+            QMessageBox::critical(PMain::getInstance(),QObject::tr("Error"), QObject::tr(ex.what()),QObject::tr("Ok"));
+            PMain::getInstance()->resetGUI();
+            PMain::getInstance()->subvol_panel->setEnabled(true);
+            PMain::getInstance()->loadButton->setEnabled(true);
+        }
     }
-
-    //resetting some widgets
-    PMain::getInstance()->resetGUI();
-    PMain::getInstance()->subvol_panel->setEnabled(true);
-    PMain::getInstance()->loadButton->setEnabled(true);
 }
 
 /**********************************************************************************
@@ -559,7 +569,7 @@ void CExplorerWindow::newView(int x, int y, int z, int resolution, bool fromVaa3
     saveSubvolSpinboxState();
 
     //disconnecting current window from GUI's listeners and event filters
-    disconnect(CVolume::instance(), SIGNAL(sendOperationOutcome(MyException*,void*,qint64)), this, SLOT(loadingDone(MyException*,void*,qint64)));
+    disconnect(CVolume::instance(), SIGNAL(sendOperationOutcome(uint8*, MyException*,void*,qint64, QString, int)), this, SLOT(loadingDone(uint8*, MyException*,void*,qint64, QString, int)));
     disconnect(view3DWidget, SIGNAL(changeXCut0(int)), this, SLOT(Vaa3D_changeXCut0(int)));
     disconnect(view3DWidget, SIGNAL(changeXCut1(int)), this, SLOT(Vaa3D_changeXCut1(int)));
     disconnect(view3DWidget, SIGNAL(changeYCut0(int)), this, SLOT(Vaa3D_changeYCut0(int)));
@@ -602,6 +612,8 @@ void CExplorerWindow::newView(int x, int y, int z, int resolution, bool fromVaa3
     //loading new data in a separate thread. When done, the "loadingDone" method of the new window will be called
     pMain.statusBar->showMessage("Loading image data...");
     cVolume->setSource(this->next);
+    cVolume->setPrebufferedData(lowresData);
+    cVolume->setStreamingSteps(PMain::getInstance()->debugStreamingStepsSBox->value());
     cVolume->start();
 
     //if the resolution of the loaded voi is the same of the current one, this window will be closed
@@ -697,6 +709,10 @@ void
         uint scaling /*= 1 */)  //scaling factor (integer only)
 throw (MyException)
 {
+    //if source and destination are the same thing, returning without doing anything
+    if(src == dst)
+        return;
+
     //cheking preconditions
     if(src_dims[3] != dst_dims[3])
         QMessageBox::critical(0, "Error", "Can't copy VOI to destination image: different number of channels",QObject::tr("Ok"));
@@ -954,7 +970,7 @@ void CExplorerWindow::restoreViewFrom(CExplorerWindow* source) throw (MyExceptio
     if(source)
     {
         //signal disconnections
-        source->disconnect(CVolume::instance(), SIGNAL(sendOperationOutcome(MyException*,void*,qint64)), source, SLOT(loadingDone(MyException*,void*,qint64)));
+        source->disconnect(CVolume::instance(), SIGNAL(sendOperationOutcome(uint8*, MyException*,void*,qint64, QString, int)), source, SLOT(loadingDone(uint8*, MyException*,void*,qint64, QString, int)));
         source->disconnect(source->view3DWidget, SIGNAL(changeXCut0(int)), source, SLOT(Vaa3D_changeXCut0(int)));
         source->disconnect(source->view3DWidget, SIGNAL(changeXCut1(int)), source, SLOT(Vaa3D_changeXCut1(int)));
         source->disconnect(source->view3DWidget, SIGNAL(changeYCut0(int)), source, SLOT(Vaa3D_changeYCut0(int)));
@@ -1066,7 +1082,7 @@ void CExplorerWindow::restoreViewFrom(CExplorerWindow* source) throw (MyExceptio
         pMain->traslZpos->setEnabled(volD1 < CImport::instance()->getVolume(volResIndex)->getDIM_D());
 
         //signal connections
-        connect(CVolume::instance(), SIGNAL(sendOperationOutcome(MyException*,void*,qint64)), this, SLOT(loadingDone(MyException*,void*,qint64)));
+        connect(CVolume::instance(), SIGNAL(sendOperationOutcome(uint8*, MyException*,void*,qint64, QString, int)), this, SLOT(loadingDone(uint8*, MyException*,void*,qint64, QString, int)), Qt::BlockingQueuedConnection);
         connect(view3DWidget, SIGNAL(changeXCut0(int)), this, SLOT(Vaa3D_changeXCut0(int)));
         connect(view3DWidget, SIGNAL(changeXCut1(int)), this, SLOT(Vaa3D_changeXCut1(int)));
         connect(view3DWidget, SIGNAL(changeYCut0(int)), this, SLOT(Vaa3D_changeYCut0(int)));

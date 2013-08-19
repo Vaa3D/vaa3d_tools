@@ -1,6 +1,6 @@
-# CmakeLists.txt in ImageManager2 dir
+# CmakeLists.txt in ImageManager dir
 
-# Adds a library called ImageManager2 (ImageManager2.a under Linux, ImageManager2.lib under Windows) from the all .h and .cpp files
-file(GLOB ImageManager2_headers *.h)
-file(GLOB ImageManager2_sources *.cpp)
-add_library(ImageManager2 STATIC ${ImageManager2_headers} ${ImageManager2_sources})
+# Adds a library called ImageManager (ImageManager.a under Linux, ImageManager.lib under Windows) from the all .h and .cpp files
+file(GLOB ImageManager_headers *.h)
+file(GLOB ImageManager_sources *.cpp)
+add_library(ImageManager STATIC ${ImageManager_headers} ${ImageManager_sources})

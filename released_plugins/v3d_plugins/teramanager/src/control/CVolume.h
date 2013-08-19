@@ -61,9 +61,10 @@ class teramanager::CVolume : public QThread
         //members
         int voiResIndex;                            //volume of interest resolution index
         int voiV0,voiV1,voiH0,voiH1,voiD0,voiD1;    //volume of interest coordinates
-        uint8* voiData;                             //volume of interest data
+        uint8* prebufferedData;                     //volume of interest prebuffered data
         int nchannels;                              //volume of interest channel's number
         void* sourceObject;                         //the object that requested the VOI
+        int streamingSteps;                         //
 
     public:
 
@@ -81,8 +82,9 @@ class teramanager::CVolume : public QThread
         ~CVolume();
 
         //GET and SET methods
-        uint8* getVoiData() throw (MyException) {if(voiData) return voiData; else throw MyException("CVolume::getVoiData(): No data available");}
-        void resetVoiData(){voiData = 0;}
+        void setPrebufferedData(uint8* _data){prebufferedData = _data;}
+        void setStreamingSteps(int nsteps){streamingSteps = nsteps;}
+        int getStreamingSteps(){return streamingSteps;}
         void reset()
         {
             #ifdef TMP_DEBUG
@@ -90,9 +92,10 @@ class teramanager::CVolume : public QThread
             #endif
 
             voiResIndex = -1;
-            voiData = 0;
+            prebufferedData = 0;
             voiV0 = voiV1 = voiH0 = voiH1 = voiD0 = voiD1 = nchannels = -1;
             sourceObject = 0;
+            streamingSteps = 1;
         }
         int getVoiV0(){return voiV0;}
         int getVoiV1(){return voiV1;}
@@ -126,12 +129,6 @@ class teramanager::CVolume : public QThread
             voiH1 = _H1 <= volume->getDIM_H() ? _H1 : volume->getDIM_H();
             voiD0 = _D0 >=0                   ? _D0 : 0;
             voiD1 = _D1 <= volume->getDIM_D() ? _D1 : volume->getDIM_D();
-//            voiV0 = _V0;
-//            voiV1 = _V1;
-//            voiH0 = _H0;
-//            voiH1 = _H1;
-//            voiD0 = _D0;
-//            voiD1 = _D1;
             nchannels = -1;
         }
         void setSource(void* _sourceObject){sourceObject =_sourceObject;}
@@ -142,7 +139,7 @@ class teramanager::CVolume : public QThread
         * Carries the outcome of the operation associated  to this thread  as well as the
         * the object that requested the operation
         **********************************************************************************/
-        void sendOperationOutcome(MyException* ex, void* sourceObj, qint64 elapsed_time = 0);
+        void sendOperationOutcome(uint8* data, MyException* ex, void* sourceObj, qint64 elapsed_time = 0, QString op_dsc="", int step=0);
 };
 
 #endif // CLOADSUBVOLUME_H

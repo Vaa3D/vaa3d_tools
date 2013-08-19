@@ -26,6 +26,7 @@
 *       specific prior written permission.
 ********************************************************************************************************************************************************************************************/
 
+#include <typeinfo>
 #include "CVolume.h"
 #include "CImport.h"
 #include "../presentation/PLog.h"
@@ -216,7 +217,7 @@ void CVolume::run()
     try
     {
         VirtualVolume* volume = CImport::instance()->getVolume(voiResIndex);
-
+        char msg[1024];
 
         //---- Alessandro 2013-04-17: if VOI exceeds limits it is automatically adjusted. This is very useful in the cases the user is zooming-in
         //around peripheral regions
@@ -230,28 +231,73 @@ void CVolume::run()
         //checking subvolume interval
         if(voiV1 - voiV0 <=0 || voiH1 - voiH0 <=0 || voiD1 - voiD0 <=0)
         {
-            char errMsg[1024];
-            sprintf(errMsg, "Invalid subvolume intervals inserted: X=[%d, %d), Y=[%d, %d), Z=[%d, %d)", voiH0, voiH1, voiV0, voiV1, voiD0, voiD1);
-            throw MyException(errMsg);
+            sprintf(msg, "Invalid subvolume intervals inserted: X=[%d, %d), Y=[%d, %d), Z=[%d, %d)", voiH0, voiH1, voiV0, voiV1, voiD0, voiD1);
+            throw MyException(msg);
         }
 
         //checking for an imported volume
-        QElapsedTimer timerIO;
-        timerIO.start();
         if(volume)
-            voiData = volume->loadSubvolume_to_UINT8(voiV0, voiV1, voiH0, voiH1, voiD0, voiD1, &nchannels);
+        {
+            if(streamingSteps == 1)
+            {
+                QElapsedTimer timerIO;
+                timerIO.start();
+                uint8* voiData = volume->loadSubvolume_to_UINT8(voiV0, voiV1, voiH0, voiH1, voiD0, voiD1, &nchannels);
+
+                sprintf(msg, "Block X=[%d, %d) Y=[%d, %d) Z=[%d, %d) loaded from res %d",
+                        voiH0, voiH1, voiV0, voiV1, voiD0, voiD1, voiResIndex);
+
+                emit sendOperationOutcome(voiData, 0, sourceObject, timerIO.elapsed(), msg, 1);
+            }
+            else
+            {
+                TiledVolume* vaa3D_volume = dynamic_cast<TiledVolume*>(volume);
+                if(!vaa3D_volume)
+                    throw MyException("Streaming not yet supported for the current format. Please restart the plugin.");
+
+                //VERSION 1: reading/writing from/to the same buffer (unsafe, see Producer-Consumer problem)
+                void *stream_descr = vaa3D_volume->streamedLoadSubvolume_open(streamingSteps, prebufferedData, voiV0, voiV1, voiH0, voiH1, voiD0, voiD1);
+                for (int currentStep = 1; currentStep <= streamingSteps; currentStep++)
+                {
+                    QElapsedTimer timerIO;
+                    timerIO.start();
+                    prebufferedData = vaa3D_volume->streamedLoadSubvolume_dostep(stream_descr);
+
+                    sprintf(msg, "Streaming %d/%d: Block X=[%d, %d) Y=[%d, %d) Z=[%d, %d) loaded from res %d",
+                            currentStep, streamingSteps, voiH0, voiH1, voiV0, voiV1, voiD0, voiD1, voiResIndex);
+
+                    emit sendOperationOutcome(prebufferedData, 0, sourceObject, timerIO.elapsed(), msg, currentStep);
+                }
+                prebufferedData = vaa3D_volume->streamedLoadSubvolume_close(stream_descr);
+
+                //VERSION 2:reading/writing from/to different buffers (unsafe, see Producer-Consumer problem)
+                /*size_t data_size = (voiV1-voiV0) * (voiH1-voiH0) * (voiD1-voiD0) * vaa3D_volume->getCHANS();
+                void *stream_descr = vaa3D_volume->streamedLoadSubvolume_open(streamingSteps, prebufferedData, voiV0, voiV1, voiH0, voiH1, voiD0, voiD1);
+                for (int currentStep = 1; currentStep <= streamingSteps; currentStep++)
+                {
+                    QElapsedTimer timerIO;
+                    timerIO.start();
+                    prebufferedData = vaa3D_volume->streamedLoadSubvolume_dostep(stream_descr);
+
+                    uint8* voiData = new uint8[data_size];
+                    for(uint8 *buf_p = prebufferedData, *data_p = voiData; buf_p - prebufferedData < data_size; buf_p++, data_p++)
+                        *data_p = *buf_p;
+
+
+                    sprintf(msg, "Streaming %d/%d: Block X=[%d, %d) Y=[%d, %d) Z=[%d, %d) loaded from res %d (step %d/%d)",
+                            currentStep, streamingSteps, voiH0, voiH1, voiV0, voiV1, voiD0, voiD1, voiResIndex);
+
+                    emit sendOperationOutcome(voiData, 0, sourceObject, timerIO.elapsed(), msg, currentStep);
+                }*/
+            }
+        }
         else
             throw MyException("No volume has been imported yet.");
 
-        /*char message[1000];
-        sprintf(message, "Loaded volume X=[%d, %d) Y=[%d, %d) Z=[%d, %d) from resolution %d", voiH0, voiH1, voiV0, voiV1, voiD0, voiD1, voiResIndex);
-        PLog::getInstance()->appendIO(timerIO.elapsed(), message);*/
 
-        //everything went OK
-        emit sendOperationOutcome(0, sourceObject, timerIO.elapsed());
     }
-    catch( MyException& exception)  {emit sendOperationOutcome(new MyException(exception.what()), sourceObject);}
-    catch(const char* error)        {emit sendOperationOutcome(new MyException(error), sourceObject);}
-    catch(...)                      {emit sendOperationOutcome(new MyException("Unknown error occurred"), sourceObject);}
+    catch( MyException& exception)  {emit sendOperationOutcome(0, new MyException(exception.what()), sourceObject);}
+    catch(const char* error)        {emit sendOperationOutcome(0, new MyException(error), sourceObject);}
+    catch(...)                      {emit sendOperationOutcome(0, new MyException("Unknown error occurred"), sourceObject);}
 }
 

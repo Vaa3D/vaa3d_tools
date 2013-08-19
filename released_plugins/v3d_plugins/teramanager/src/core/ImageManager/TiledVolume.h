@@ -143,6 +143,32 @@ class TiledVolume : public VirtualVolume
 
 		//returns true if file exists at the given filepath
 		static bool fileExists(const char *filepath);
+
+		// OPERATIONS FOR STREAMED SUBVOLUME LOAD 
+
+		/* start a streamed load operation: returns an opaque descriptor of the streamed operation
+		 * buf is a dynamically allocated, initialized buffer that should not be neither manipulated 
+		 * nor deallocated by the caller until the operation terminates 
+		 * (see close operations for details)
+		 */
+        void *streamedLoadSubvolume_open ( int steps, uint8 *buf, int V0=-1,int V1=-1, int H0=-1, int H1=-1, int D0=-1, int D1=-1 );
+
+		/* perform one step of a streamed operation: returns a pointer to a read-only buffer 
+		 * with updated data; the returned buffer should not be deallocated
+		 * the optional parameter buffer2 is an initialized buffer of the same dimensions of 
+		 * the returned buffer with reference data to be used to check that the returned buffer 
+		 * is updated with exactly the same data contained in buffer2
+		 * if the default value of buffer2 (null pointer) is passed no check is performed
+		 */
+        uint8 *streamedLoadSubvolume_dostep ( void *stream_descr, unsigned char *buffer2=0 );
+
+		/* close a streamed load operation: by default return the initial buffer that can be 
+		 * freely used and must be deallocated 
+		 * if return_buffer is set to false, the initial buffer is deallocated, it cannot be 
+		 * resuded by the caller and the operation returns a null pointer
+		 */
+         uint8 *streamedLoadSubvolume_close ( void *stream_descr, bool return_buffer=true );
+
 };
 
 #endif //_TILED_VOLUME_H

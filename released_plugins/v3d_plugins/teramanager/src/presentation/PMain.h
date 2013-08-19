@@ -76,11 +76,16 @@ class teramanager::PMain : public QWidget
         QWidgetAction* importOptionsWidget;
         QMenu* helpMenu;                //"Help" menu
         QAction* aboutAction;           //"About" menu action
-        QMenu* debugMenu;               //"Debug" menu for debugging purposes
-        QAction* debugAction1;          //debug menu action #1
-        QAction* debugAction2;          //debug menu action #2
         QMenu *recentVolumesMenu;
         QAction* clearRecentVolumesAction;
+
+        //debug menu widgets
+        QMenu* debugMenu;               //"Debug" menu for debugging purposes
+        QAction* debugAction1;          //debug menu action #1
+        QAction* debugShowLogAction;          //debug menu action #2
+        QMenu* debugStreamingStepsMenu;
+        QWidgetAction* debugStreamingStepsActionWidget;
+        QSpinBox *debugStreamingStepsSBox;
 
         //toolbar widgets
         QToolBar* toolBar;              //tool bar with buttons
@@ -326,7 +331,7 @@ class teramanager::PMain : public QWidget
         * If an exception has occurred in the <CVolume> thread, it is propagated and
         * managed in the current thread (ex != 0).
         ***********************************************************************************/
-        void loadingDone(MyException *ex, void* sourceObject, qint64 elapsed_time = 0);
+        void loadingDone(uint8* data, MyException *ex, void* sourceObject, qint64 elapsed_time = 0, QString op_dsc="", int step=0);
 
         /**********************************************************************************
         * Called when the GUI widgets that control application settings change.

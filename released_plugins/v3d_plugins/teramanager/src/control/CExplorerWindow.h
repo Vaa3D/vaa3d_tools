@@ -292,7 +292,7 @@ class teramanager::CExplorerWindow : public QWidget
         * performed. If an exception has occurred in the <CVolume> thread, it is propagated
         * and managed in the current thread (ex != 0).
         ***********************************************************************************/
-        void loadingDone(MyException *ex, void* sourceObject, qint64 elapsed_time);
+        void loadingDone(uint8* data, MyException *ex, void* sourceObject, qint64 elapsed_time, QString op_dsc, int step);
 
         /**********************************************************************************
         * Linked to volume cut scrollbars of Vaa3D widget containing the 3D renderer.

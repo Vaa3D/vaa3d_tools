@@ -63,6 +63,8 @@ Peng, H, Ruan, Z., Atasoy, D., and Sternson, S. (2010) “Automatic reconstructi
 #ifndef RAWFMTMNGR_H
 #define RAWFMTMNGR_H
 
+#include "IM_defs.h"
+
 //the folowing conditional compilation is added by PHC, 2010-05-20
 //#if defined (_MSC_VER)
 //#include "../basic_c_fun/vcdiff.h"
@@ -91,6 +93,53 @@ typedef char BIT8_UNIT;
 typedef short int BIT16_UNIT;
 typedef int BIT32_UNIT;
 typedef V3DLONG BIT64_UNIT;
+
+# define DEFAULT_MAX_BLOCKS 27
+
+/* structure containing data to manage a sub-block in a streamed copy
+ */
+struct Block_Descr_t {
+	char *filename;   // complete path of file containing the sub-block
+	void *fhandle;    // handle to file containing the sub-block
+	int datatype;     // size of pixel in bytes
+	int header_len;   // header length
+	sint64 foffs;     // offset in the file from which start next copy step
+	sint64 boffs;     // offset in the buffer from which start next copy step
+	sint64 stridex;   // stripe stride of the 3D image stored in the file 
+	sint64 stridexy;  // slice stride of the 3D image stored in the file
+	sint64 stridexyz; // block stride of the 3D image stored in the file
+	int width;        // width of stripes to be copied
+	int height;       // height of slices to be copied
+	int n_stripes;    // total number of stripes to be copied
+	int step_n;       // number of stripes to be copied in the next step
+	int step_r;       // number of steps after which step_n has to decremented by 1
+};
+
+class Streamer_Descr_t {
+
+public:
+	unsigned char *buf;        // pointer to 3D buffer in which sub-blocks have to be copied
+	int            pxl_size;   // buffer pixel size in bytes
+	sint64         stridex;    // line stride of the 3D buffer
+	sint64         stridexy;   // slice stride of the 3D buffer
+	sint64         stridexyz;  // block stride of the 3D buffer (pixels in one channel)
+	sint64         n_chans;    // number of channels in the buffer
+	int            steps;      // steps in which the copy jas to be decomposed
+	Block_Descr_t *bDescr;     // array of sub-blocks decriptors
+	int            max_blocks; // maximum elements of bDescr
+	int            n_blocks;   // number of sub-blocks descriptors
+	int            cur_step;   // current step
+
+public:
+	Streamer_Descr_t ( unsigned char *_buf, int _pxl_size, sint64 _stridex, sint64 _stridexy, sint64 _stridexyz, sint64 _n_chans, int _steps );
+
+	~Streamer_Descr_t ( );
+
+	char *addSubBlock ( char *filename, sint64 boffs, int sV0, int sV1, int sH0, int sH1, int sD0, int sD1 );
+};
+
+
+/***************************** FUNCTION HEADERS *****************************/
 
 char *loadRaw2Metadata ( char * filename, V3DLONG * &sz, int &datatype, int &b_swap, void * &fhandle, int &header_len );
 /* opens the file filename in raw format containing a 4D image and returns in parameters:
@@ -136,7 +185,20 @@ char *loadRaw2SubStack ( void *fhandle, unsigned char *img, V3DLONG *sz,
 char *loadRaw2WholeStack(char * filename, unsigned char * & img, V3DLONG * & sz, int & datatype); //4-byte raw reading
 /* opens and reads the file filename in raw format containing a 4D image and returns 
  * in parameters:
- *    img:      a pointer to a newly allocated buffere where the wole omage is stored
+ *    img:      a pointer to a newly allocated buffer where the whole image is stored
+ *              one channel after another
+ *    sz:       a four component array containing image dimensions along horizontal (x), 
+ *              vertical (y), depth (z) directions, and the number of channels
+ *    datatype: the number of bytes per pixel
+ *
+ * if some exception occurs, returns a string describing the exception; returns a NULL pointer
+ * if there are no exceptions
+ */
+
+char *saveWholeStack2Raw(const char * filename, unsigned char *img, V3DLONG *sz, int datatype); //4-byte raw reading
+/* save a 4D image in raw format 
+ * in parameters:
+ *    img:      a pointer to the buffer where the whole image is stored
  *              one channel after another
  *    sz:       a four component array containing image dimensions along horizontal (x), 
  *              vertical (y), depth (z) directions, and the number of channels
@@ -147,11 +209,54 @@ char *loadRaw2WholeStack(char * filename, unsigned char * & img, V3DLONG * & sz,
  */
 
 char *initRawFile ( char *filename, const V3DLONG *sz, int datatype );
+/* creates a file containing an empty 3D, multi-channel image 
+ *
+ * filename: complete path of the file to be initialized
+ * sz:       4-element array containing width, height, depth and the number of channels 
+ * datatype: pixel size in bytes
+ */
 
 char *writeSlice2RawFile ( char *filename, int slice, unsigned char *img, int img_height, int img_width );
+/* writes one slice to a file containing a 3D image
+ * 
+ * filename:   complete path of the file to be modified
+ * img:        pointer to slice (2D buffer)
+ * img_height: height of the slice
+ * img_width:  width of the slice
+ */
 
 char *copyRawFileBlock2Buffer ( char *filename, int sV0, int sV1, int sH0, int sH1, int sD0, int sD1,
-							    unsigned char *buf, int pxl_size, int offs, int stridex, int stridexy, int stridexyz );
+							    unsigned char *buf, int pxl_size, sint64 offs, sint64 stridex, sint64 stridexy, sint64 stridexyz );
+/* copies a block in file 'filename' to a region of 3D buffer buf
+ *
+ * filename:      complete path of the file to be read
+ * sv0, ..., sD0: indices of the up, left, front pixel of the block stored in 'filename'
+ * sv1, ..., sD1: indices of the bottom, right, back pixel of the block stored in 'filename'
+ * buf:           pointer to buffer to be filled
+ * pxl_size:      pixel size in bytes
+ * offs:          offset on buf from which the copy has to start
+ * stridex:       number of pixels of the 3D buffer along x (H) dimension
+ * stridexy:      number of pixels in one slice of the 3D buffer (plane xy or VH)
+ * stridexyz:     number of pixels in one channel of the 3D buffer (volume xyz or VHD)
+ * 
+ * WARNING: current implementation assumes that datatype is 1-byte pixels and that 
+ * the endianess of the machine is the same as that of the machine that generated the
+ * data in 'filename'
+ */
+
+char *streamer_open ( Streamer_Descr_t *streamer );
+/* initilizes a streamed load operation based on the content of the descriptor 'streamer'
+ */
+
+char *streamer_dostep ( Streamer_Descr_t *streamer, unsigned char *buffer2=0 );
+/* performs one step of the streamed operation specified by 'streamer'
+ * if the second parameter is not a null pointer, uses it to check if data copied into
+ * the operation buffer is exactly the same as that contained in buffer2
+ */
+
+char *streamer_close ( Streamer_Descr_t *streamer );
+/* closes the streamed operation specified by 'streamer'
+ */
 
 #endif
 

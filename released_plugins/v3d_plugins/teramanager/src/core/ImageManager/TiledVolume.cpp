@@ -828,10 +828,6 @@ uint8* TiledVolume::loadSubvolume_to_UINT8(int V0,int V1, int H0, int H1, int D0
 
 	char *err_rawfmt;
 
-	//char msg[IM_STATIC_STRINGS_SIZE];
-	//sprintf(msg,"in TiledVolume::loadSubvolume_to_UINT8: not completed yet");
-	//throw MyException(msg);
-
     //initializations
     V0 = V0 < 0 ? 0 : V0;
     H0 = H0 < 0 ? 0 : H0;
@@ -949,10 +945,10 @@ uint8* TiledVolume::loadSubvolume_to_UINT8(int V0,int V1, int H0, int H1, int D0
 								sV0,sV1,sH0,sH1,sD0,sD1,
 								(unsigned char *)subvol,
 								sizeof(uint8),
-								(int)(bH0+bV0*sbv_width+bD0*sbv_width*sbv_height),
-								(int)sbv_width,
-								(int)(sbv_width*sbv_height),
-								(int)(sbv_width*sbv_height*sbv_depth)) ) != 0 ) 
+								bH0+bV0*sbv_width+bD0*sbv_width*sbv_height,
+								sbv_width,
+								sbv_width*sbv_height,
+								sbv_width*sbv_height*sbv_depth) ) != 0 ) 
 						{
 							char err_msg[IM_STATIC_STRINGS_SIZE];
 							sprintf(err_msg,
@@ -960,72 +956,6 @@ uint8* TiledVolume::loadSubvolume_to_UINT8(int V0,int V1, int H0, int H1, int D0
 								BLOCKS[row][col]->getFILENAMES()[k], err_rawfmt);
 							throw MyException(err_msg);
 						}
-
-//    IplImage* slice = cvLoadImage(slice_fullpath, CV_LOAD_IMAGE_ANYCOLOR);  //without CV_LOAD_IMAGE_ANYDEPTH, image is converted to 8-bits if needed
-					//    if(!slice)
-					//        throw MyException(std::string("Unable to load slice at \"").append(slice_fullpath).append("\"").c_str());
-
-					//    //if this is the first time a slice is loaded, detecting the number of channels and safely allocating memory for data
-					//    if(first_time)
-					//    {
-					//        first_time = false;
-					//        sbv_channels = slice->nChannels;
-					//        if(sbv_channels != 1 && sbv_channels != 3)
-					//            throw MyException(std::string("Unsupported number of channels at \"").append(slice_fullpath).append("\". Only 1 and 3-channels images are supported").c_str());
-
-					//        try
-					//        {
-					//            subvol = new uint8[sbv_height * sbv_width * sbv_depth * sbv_channels];
-					//        }
-					//        catch(...){throw MyException("in TiledVolume::loadSubvolume_to_UINT8: unable to allocate memory");}
-					//    }
-					//    //otherwise checking that all the other slices have the same bitdepth of the first one
-					//    else if(slice->nChannels != sbv_channels)
-					//        throw MyException(std::string("Image depth mismatch at slice at \"").append(slice_fullpath).append("\": all slices must have the same bitdepth").c_str());
-
-
-					//    //computing offsets
-					//    int slice_step = slice->widthStep / sizeof(uint8);
-					//    int ABS_V_offset = V0 - STACKS[row][col]->getABS_V();
-					//    int ABS_H_offset = (H0 - STACKS[row][col]->getABS_H())*((int)sbv_channels);
-
-					//    //different procedures for 1 and 3 channels images
-					//    int istart, iend, jstart, jend;
-					//    istart  = intersect_area->V0-V0;
-					//    iend    = intersect_area->V1-V0;
-					//    jstart  = intersect_area->H0-H0;
-					//    jend    = intersect_area->H1-H0;
-					//    if(sbv_channels == 1)
-					//    {
-					//        sint64 k_offset = k*sbv_height*sbv_width;
-					//        for(int i = istart; i < iend; i++)
-					//        {
-					//            uint8* slice_row = ((uint8*)slice->imageData) + (i+ABS_V_offset)*slice_step;
-					//            for(int j = jstart; j < jend; j++)
-					//                subvol[k_offset + i*sbv_width + j] = slice_row[j+ABS_H_offset];
-					//        }
-					//    }
-					//    else if(sbv_channels == 3)
-					//    {
-
-					//        sint64 offset1 =                                     k*sbv_height*sbv_width;
-					//        sint64 offset2 =   sbv_height*sbv_width*sbv_depth  + offset1;
-					//        sint64 offset3 = 2*sbv_height*sbv_width*sbv_depth  + k*sbv_height*sbv_width;
-					//        for(int i = istart; i < iend; i++)
-					//        {
-					//            uint8* slice_row = ((uint8*)slice->imageData) + (i+ABS_V_offset)*slice_step;
-					//            for(int j1 = jstart, j2 = jstart*3; j1 < jend; j1++, j2+=3)
-					//            {
-					//                subvol[offset1 + i*sbv_width + j1] = slice_row[j2 + ABS_H_offset + 2];
-					//                subvol[offset2 + i*sbv_width + j1] = slice_row[j2 + ABS_H_offset + 1];
-					//                subvol[offset3 + i*sbv_width + j1] = slice_row[j2 + ABS_H_offset];
-					//            }
-					//        }
-					//    }
-					//    else
-					//        throw MyException(std::string("Unsupported number of channels at \"").append(slice_fullpath).append("\". Only 1 and 3-channels images are supported").c_str());
-
-					//    cvReleaseImage(&slice);
 					}
 					delete intersect_area;
 				}
@@ -1590,4 +1520,130 @@ void TiledVolume::saveMIPs(bool direction_V, bool direction_H, bool direction_D,
 		cvReleaseImage(&MIP_H_img);
 	if(MIP_D_img)
 		cvReleaseImage(&MIP_D_img);
+}
+
+
+// OPERATIONS FOR STREAMED SUBVOLUME LOAD 
+
+void *TiledVolume::streamedLoadSubvolume_open ( int steps, uint8 *buf, int V0,int V1, int H0, int H1, int D0, int D1 ) {
+
+    #if IM_VERBOSE > 3
+    printf("\t\t\t\tin TiledVolume::streamedLoadSubvolume_open(steps=%d, V0=%d, V1=%d, H0=%d, H1=%d, D0=%d, D1=%d)\n", steps, V0, V1, H0, H1, D0, D1);
+    #endif
+
+    //checks
+	if ( V0>=V1 || H0>=H1 || D0>=D1 || V0<0 || H0<0 || D0<0 || V1>(int)DIM_V || H1>(int)DIM_H || D1>(int)DIM_D ) {
+		char msg[1000];
+		sprintf(msg,"in TiledVolume::streamedLoadSubvolume_open: invalid sub-block vertices");
+		throw MyException(msg);
+	}
+
+	char *err_rawfmt;
+
+	sint64 stridex = H1 - H0;
+	sint64 stridexy = stridex * (V1 - V0);
+	sint64 stridexyz = stridexy * (D1 - D0);
+	Streamer_Descr_t *stream_descr = new Streamer_Descr_t(buf,sizeof(unsigned char),stridex,stridexy,stridexyz,this->CHANS,steps);
+	if ( !stream_descr ) {
+		char msg[1000];
+		sprintf(msg,"in TiledVolume::streamedLoadSubvolume_open: Unable to allocate stream descriptor");
+		throw MyException(msg);
+	}
+
+    //initializing the number of channels with an undefined value (it will be detected from the first slice read)
+    sint64 sbv_channels = this->CHANS;
+
+    //scanning of stacks matrix for data loading and storing into subvol
+    Rect_t subvol_area;
+    subvol_area.H0 = H0;
+    subvol_area.V0 = V0;
+    subvol_area.H1 = H1;
+    subvol_area.V1 = V1;
+
+    char slice_fullpath[IM_STATIC_STRINGS_SIZE];
+
+	Segm_t *intersect_segm = BLOCKS[0][0]->Intersects(D0,D1);
+
+	if (intersect_segm) // there is intersection
+	{
+		for(int row=0; row<N_ROWS; row++) 
+		{
+			for(int col=0; col<N_COLS; col++)
+			{
+				Rect_t *intersect_area = BLOCKS[row][col]->Intersects(subvol_area);
+				if(intersect_area) // there is intersection
+				{
+					#if IM_VERBOSE > 3
+					printf("\t\t\t\tin TiledVolume::streamedLoadSubvolume_open: using STACK[%d,%d] for area %d-%d(V) x %d-%d(H)\n", row, col, intersect_area->V0-V0, intersect_area->V1-V0, intersect_area->H0-H0, intersect_area->H1-H0);
+					#endif
+
+					for(int k=intersect_segm->ind0; k<=intersect_segm->ind1; k++)
+					{
+						//loading region
+						sprintf(slice_fullpath, "%s/%s/%s", root_dir, BLOCKS[row][col]->getDIR_NAME(), BLOCKS[row][col]->getFILENAMES()[k]);
+						
+						// vertices of file block
+						int sV0 = (V0<intersect_area->V0) ? 0 : (V0 - BLOCKS[row][col]->getABS_V());
+						int sV1 = (V1>intersect_area->V1) ? BLOCKS[row][col]->getHEIGHT() : (V1 - BLOCKS[row][col]->getABS_V());
+						int sH0 = (H0<intersect_area->H0) ? 0 : (H0 - BLOCKS[row][col]->getABS_H());
+						int sH1 = (H1>intersect_area->H1) ? BLOCKS[row][col]->getWIDTH() : (H1 - BLOCKS[row][col]->getABS_H());
+						int sD0 = (D0<BLOCKS[row][col]->getBLOCK_ABS_D()[k]) ? 0 : (D0 - BLOCKS[row][col]->getBLOCK_ABS_D()[k]);
+						int sD1 = (D1>(int)(BLOCKS[row][col]->getBLOCK_ABS_D()[k]+BLOCKS[row][col]->getBLOCK_SIZE()[k])) ? (int)BLOCKS[row][col]->getBLOCK_SIZE()[k] : (int)(D1 - BLOCKS[row][col]->getBLOCK_ABS_D()[k]);
+
+						// vertices of buffer block
+						int bV0 = (V0>intersect_area->V0) ? 0 : (int)(intersect_area->V0 - V0);
+						int bH0 = (H0>intersect_area->H0) ? 0 : (intersect_area->H0 - H0);
+						int bD0 = (D0>BLOCKS[row][col]->getBLOCK_ABS_D()[k]) ? 0 : (BLOCKS[row][col]->getBLOCK_ABS_D()[k] - D0);
+
+						if ( (err_rawfmt = stream_descr->addSubBlock(
+								slice_fullpath,bH0+bV0*stridex+bD0*stridexy,sV0,sV1,sH0,sH1,sD0,sD1)) != 0 ) 
+						{
+							char err_msg[IM_STATIC_STRINGS_SIZE];
+							sprintf(err_msg,
+								"TiledVolume::streamedLoadSubvolume_open: error in adding the block of file %s (%s)", 
+								BLOCKS[row][col]->getFILENAMES()[k], err_rawfmt);
+							throw MyException(err_msg);
+						}
+					}
+					delete intersect_area;
+				}
+			}
+		}
+		delete intersect_segm;
+	}
+
+	if ( (err_rawfmt = streamer_open(stream_descr)) != 0 ) {
+		return err_rawfmt;
+	}
+
+	return stream_descr;
+}
+
+uint8 *TiledVolume::streamedLoadSubvolume_dostep ( void *stream_descr, unsigned char *buffer2 ) {
+
+	char *err_rawfmt;
+	
+	if ( (err_rawfmt = streamer_dostep((Streamer_Descr_t *)stream_descr,buffer2)) != 0 ) {
+		char msg[1000];
+		sprintf(msg,"in TiledVolume::streamedLoadSubvolume_dostep: Unable to perform next step (%s)",err_rawfmt);
+		throw MyException(msg);
+	}
+
+	return ((Streamer_Descr_t *)stream_descr)->buf;
+}
+
+uint8 *TiledVolume::streamedLoadSubvolume_close ( void *stream_descr, bool return_buffer ) {
+
+	uint8 *temp = ((Streamer_Descr_t *)stream_descr)->buf;
+
+	streamer_close((Streamer_Descr_t *)stream_descr);
+
+	delete ((Streamer_Descr_t *)stream_descr);
+
+	if ( return_buffer )
+		return temp;
+	else {
+		delete[] ((Streamer_Descr_t *)stream_descr)->buf;
+		return 0;
+	}
 }

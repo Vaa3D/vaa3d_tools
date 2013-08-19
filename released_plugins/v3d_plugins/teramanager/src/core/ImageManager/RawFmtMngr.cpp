@@ -706,6 +706,85 @@ char *loadRaw2WholeStack ( char * filename, unsigned char * & img, V3DLONG * & s
 }
 
 
+char *saveWholeStack2Raw(const char *filename, unsigned char *img, V3DLONG *sz, int datatype) {
+
+	int i;
+
+	FILE * fid = fopen(filename, "wb");
+	if (!fid)
+	{
+		return ("Fail to open file for writing.\n");
+	}
+
+	/* Write header */
+	char formatkey[] = "raw_image_stack_by_hpeng";
+	int lenkey = (int)strlen(formatkey);
+
+	V3DLONG nwrite = fwrite(formatkey, 1, lenkey, fid);
+	if (nwrite!=lenkey)
+	{
+		return ("File write error.\n");
+	}
+
+	char endianCodeMachine = checkMachineEndian();
+	if (endianCodeMachine!='B' && endianCodeMachine!='L')
+	{
+		return ("This program only supports big- or little- endian but not other format. Cannot save data on this machine.\n");
+	}
+
+	nwrite = fwrite(&endianCodeMachine, 1, 1, fid);
+	if (nwrite!=1)
+	{
+		return ("Error happened in file writing.\n");
+	}
+
+	//int b_swap = (endianCodeMachine==endianCodeData)?0:1;
+	//int b_swap = 0; //for this machine itself, should not swap data.
+
+	short int dcode = (short int)datatype;
+	if (dcode!=1 && dcode!=2 && dcode!=4)
+	{
+		return ("Unrecognized data type code.\n");
+	}
+
+	//if (b_swap) swap2bytes((void *)&dcode);
+	nwrite = fwrite(&dcode, 2, 1, fid); /* because I have already checked the file size to be bigger than the header, no need to check the number of actual bytes read. */
+	if (nwrite!=1)
+	{
+		return ("Writing file error.\n");
+	}
+
+	V3DLONG unitSize = datatype; /* temporarily I use the same number, which indicates the number of bytes for each data point (pixel). This can be extended in the future. */
+
+	BIT32_UNIT mysz[4];
+	for (i=0;i<4;i++) 
+		mysz[i] = (BIT32_UNIT) sz[i];
+	nwrite = fwrite(mysz, sizeof(BIT32_UNIT), 4, fid); /* because I have already checked the file size to be bigger than the header, no need to check the number of actual bytes read. */
+	if (nwrite!=4)
+	{
+		return ("Writing file error.\n");
+	}
+
+	V3DLONG totalUnit = 1;
+	for (i=0;i<4;i++)
+	{
+		totalUnit *= sz[i];
+	}
+
+	nwrite = fwrite(img, unitSize, totalUnit, fid);
+	if (nwrite!=totalUnit)
+	{
+		return ("Something wrong in file writing. The program wrote a different number of pixels than expected.\n");
+	}
+
+	/* clean and return */
+
+	fclose(fid);
+
+	return ((char *) 0);
+}
+
+
 char *initRawFile(char *filename, const V3DLONG *sz, int datatype) {
 
 	int i;
@@ -812,7 +891,7 @@ char *writeSlice2RawFile ( char *filename, int slice, unsigned char *img, int im
 		return ("Wrong slice dimensions.\n");
 	}
 
-	closeRawFile((FILE *)fhandle);
+	closeRawFile(fhandle);
 
 	fid = fopen(filename, "r+b");
 	if (!fid)
@@ -847,7 +926,7 @@ char *writeSlice2RawFile ( char *filename, int slice, unsigned char *img, int im
 
 
 char *copyRawFileBlock2Buffer ( char *filename, int sV0, int sV1, int sH0, int sH1, int sD0, int sD1,
-							    unsigned char *buf, int pxl_size, int offs, int stridex, int stridexy, int stridexyz ) {
+							    unsigned char *buf, int pxl_size, sint64 offs, sint64 stridex, sint64 stridexy, sint64 stridexyz ) {
 
 	if ( pxl_size != sizeof(unsigned char) ) 
 	{
@@ -877,12 +956,6 @@ char *copyRawFileBlock2Buffer ( char *filename, int sV0, int sV1, int sH0, int s
 	rewind(fid);
 		
 	V3DLONG unitSize = datatype; /* temporarily I use the same number, which indicates the number of bytes for each data point (pixel). This can be extended in the future. */
-	
-	V3DLONG totalUnit = 1;
-	for (int i=0;i<4;i++)
-	{
-		totalUnit *= sz[i];
-	}	
 	
 	V3DLONG startx = sH0;
 	V3DLONG starty = sV0;
@@ -950,6 +1023,208 @@ char *copyRawFileBlock2Buffer ( char *filename, int sV0, int sV1, int sH0, int s
 
 	return 0;
 }
+
+
+char *streamer_open ( Streamer_Descr_t *streamer ) {
+
+	char *err_rawfmt;
+	void *fhandle;
+	V3DLONG *sz = 0;
+	int datatype;
+	int b_swap;
+	int header_len;
+	
+	for ( int i=0; i<streamer->n_blocks; i++ ) {
+		if ( (err_rawfmt = loadRaw2Metadata(streamer->bDescr[i].filename,
+											sz,datatype,b_swap,fhandle,header_len)) != 0 ) {
+			return err_rawfmt;
+		}
+		streamer->bDescr[i].fhandle = fhandle;
+	}
+
+	return 0;
+}
+
+char *streamer_dostep ( Streamer_Descr_t *streamer, unsigned char *buffer2 ) {
+
+	streamer->cur_step++;
+
+	if ( streamer->cur_step > streamer->steps ) {
+		return ("Too many steps in a streamed operation.\n");
+	}
+
+	for ( int i=0; i<streamer->n_blocks; i++ ) { 
+
+		if ( streamer->cur_step > streamer->bDescr[i].step_r ) { // from now the number of stripes to be copied is decremented by 1 
+			streamer->bDescr[i].step_n--;
+			streamer->bDescr[i].step_r = streamer->steps; // guarantees that next times this clause should be skipped
+		}
+
+		// copy step_n stripes of i-th sub-block from file to buffer
+		FILE *fid;
+		fid = (FILE *) streamer->bDescr[i].fhandle;
+
+		fseek (fid, 0, SEEK_END);
+		V3DLONG fileSize = ftell(fid);
+		rewind(fid);
+			
+		V3DLONG unitSize = streamer->bDescr[i].datatype; /* temporarily I use the same number, which indicates the number of bytes for each data point (pixel). This can be extended in the future. */
+		
+		int bstridey = (int) (streamer->stridexy / streamer->stridex);                     // stridey of buffer
+		int fstridey = (int) (streamer->bDescr[i].stridexy / streamer->bDescr[i].stridex); // stridey of file
+
+		for ( int c=0; c<streamer->n_chans; c++ ) {
+
+			// set initial pointer to buffer; each channel starts from the same relative position
+			unsigned char *buftmp = streamer->buf + ((c * streamer->stridexyz) + 
+				streamer->bDescr[i].boffs + streamer->stridex * (streamer->cur_step - 1)) * (int)unitSize; 
+ 
+			// beginning of second slice in the buffer
+			unsigned char *next_bslice = streamer->buf + ((c * streamer->stridexyz) + 
+				streamer->bDescr[i].boffs + streamer->bDescr[i].height * streamer->stridex) * (int)unitSize; 
+
+			// set initial position of file; each channel starts from the same relative position
+			sint64 postmp = streamer->bDescr[i].header_len + ((c * streamer->bDescr[i].stridexyz) + 
+				streamer->bDescr[i].foffs + streamer->bDescr[i].stridex * (streamer->cur_step - 1)) * (int)unitSize;                                       
+
+			// beginning of second slice in the file
+			sint64 next_fslice = streamer->bDescr[i].header_len + ((c * streamer->bDescr[i].stridexyz) + 
+				streamer->bDescr[i].foffs + streamer->bDescr[i].height * streamer->bDescr[i].stridex) * (int)unitSize;  
+
+			for (int s=0; s<streamer->bDescr[i].step_n; s++, 
+														buftmp+=streamer->steps * streamer->stridex * (int)unitSize,
+														postmp+=streamer->steps * streamer->bDescr[i].stridex * (int)unitSize ) { 
+				// before the copy, the pointer to buffer and the file position has to be advanced of steps stripes
+
+				if ( buftmp >= next_bslice ) { // moved to next buffer slice
+					//further incease the pointer to buffer to skip other sub-blocks 
+					buftmp += streamer->stridex * (bstridey - streamer->bDescr[i].height) * (int)unitSize;
+					next_bslice += streamer->stridexy * (int)unitSize;
+				}
+				if ( postmp >= next_fslice ) { // moved to next file slice
+					//further incease the position into file to skip other sub-blocks 
+					postmp += streamer->bDescr[i].stridex * (fstridey - streamer->bDescr[i].height) * (int)unitSize;
+					next_fslice += streamer->bDescr[i].stridexy * (int)unitSize;
+				}
+
+				// copy one stripe
+				rewind(fid);
+				fseek(fid,(long)postmp,SEEK_SET);
+				ftell(fid);	
+				fread(buftmp,unitSize,streamer->bDescr[i].width,fid);
+
+				// WARNING: code for testing
+				if ( buffer2 ) { 
+					for ( int j=0; j<streamer->bDescr[i].width; j++ ) {
+						unsigned char *buftmp2 = buffer2 + (buftmp - streamer->buf);
+						if ( buftmp[j]!=buftmp2[j] ) {
+							//printf("%d %d\n",buftmp[j],buftmp2[j]);
+							return ("Mismatch between streamed and non-streamed operation.\n");
+						}
+					}
+				}
+			}
+		}
+	}
+
+	return 0;
+}
+
+char *streamer_close ( Streamer_Descr_t *streamer ) {
+
+	for ( int i=0; i<streamer->n_blocks; i++ ) {
+		closeRawFile(streamer->bDescr[i].fhandle);
+	}
+
+	return 0;
+}
+
+
+/***************************** Streamer_Descr_t METHODS *****************************/
+
+Streamer_Descr_t::Streamer_Descr_t ( unsigned char *_buf, int _pxl_size, sint64 _stridex, sint64 _stridexy, sint64 _stridexyz, sint64 _n_chans, int _steps ) { 
+	buf        = _buf; 
+	pxl_size   = _pxl_size;
+	stridex    = _stridex;
+	stridexy   = _stridexy;
+	stridexyz  = _stridexyz;
+	n_chans    = _n_chans;
+	steps      = _steps;
+	max_blocks = DEFAULT_MAX_BLOCKS;
+	n_blocks   = 0;
+	bDescr     = new Block_Descr_t[DEFAULT_MAX_BLOCKS];
+	cur_step  = 0; // the first step is 1
+}
+
+Streamer_Descr_t::~Streamer_Descr_t ( ) { 
+		
+	#if IM_VERBOSE > 3
+	printf("\t\t\t\tin Streamer_Descr_t::~Streamer_Descr_t(void)\n");
+	#endif
+
+	if ( bDescr ) {
+		for ( int i=0; i<n_blocks; i++ )
+			delete bDescr[i].filename;
+		delete[] bDescr;
+	}
+}
+
+char *Streamer_Descr_t::addSubBlock ( char *filename, sint64 boffs, int sV0, int sV1, int sH0, int sH1, int sD0, int sD1 ) {
+
+	// get file attributes
+	char *err_rawfmt;
+	void *fhandle;
+	V3DLONG *sz = 0;
+	int datatype;
+	int b_swap;
+	int header_len;
+	
+	if ( (err_rawfmt = loadRaw2Metadata(filename,sz,datatype,b_swap,fhandle,header_len)) != 0 ) {
+		return err_rawfmt;
+	}
+	
+	closeRawFile((FILE *)fhandle);
+
+	if ( datatype != 1 ) 
+	{
+		delete []sz;
+		return ("Wrong file data type.\n");
+	}
+
+	// check if blocks are too many
+	if ( n_blocks == max_blocks ) {
+		Block_Descr_t *tmp = bDescr;
+		max_blocks += DEFAULT_MAX_BLOCKS;
+		bDescr = new Block_Descr_t[max_blocks];
+		memcpy(bDescr,tmp,n_blocks*sizeof(Block_Descr_t));
+		delete tmp;
+	}
+
+	// initializes a new block descriptor
+	bDescr[n_blocks].stridex    = (int)sz[0];
+	bDescr[n_blocks].stridexy   = (int)(sz[0]*sz[1]);
+	bDescr[n_blocks].stridexyz  = (int)(sz[0]*sz[1]*sz[2]);
+	bDescr[n_blocks].foffs      = (sH0 + sV0*bDescr[n_blocks].stridex + sD0*bDescr[n_blocks].stridexy) * datatype; // the header_len offset is added in the dostep operation
+	bDescr[n_blocks].boffs      = boffs;
+	bDescr[n_blocks].width      = sH1 - sH0;
+	bDescr[n_blocks].height     = sV1 - sV0;
+	bDescr[n_blocks].n_stripes  = (sV1 - sV0) * (sD1 - sD0);
+	bDescr[n_blocks].step_n     = bDescr[n_blocks].n_stripes / this->steps + 1; // in case the remainder is not 0
+	bDescr[n_blocks].step_r     = bDescr[n_blocks].n_stripes % this->steps;
+	bDescr[n_blocks].fhandle    = 0;
+	bDescr[n_blocks].filename   = new char[strlen(filename)+1];
+	strcpy(bDescr[n_blocks].filename,filename);
+	bDescr[n_blocks].datatype   = datatype;
+	bDescr[n_blocks].header_len = header_len;
+
+	n_blocks++,
+
+	// terminates
+	delete []sz;
+
+	return 0;
+}
+
 
 
 

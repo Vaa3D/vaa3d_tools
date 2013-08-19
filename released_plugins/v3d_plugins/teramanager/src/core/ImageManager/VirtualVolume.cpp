@@ -276,12 +276,12 @@ void VirtualVolume::saveImage_to_Vaa3DRaw(int slice, std::string img_path, REAL_
 	sprintf(msg,"in VirtualVolume::saveImage_to_Vaa3DRaw: not implemented yet");
 	throw MyException(msg);
 
-	uint8  *row_data_8bit;
-	uint16 *row_data_16bit;
-	uint32 img_data_step;
-	float scale_factor_16b, scale_factor_8b;
+	//uint8  *row_data_8bit;
+	//uint16 *row_data_16bit;
+	//uint32 img_data_step;
+	//float scale_factor_16b, scale_factor_8b;
 	int img_height, img_width;
-	int i,j;
+	//int i, j;
 	char img_filepath[5000];
 
 	//setting some default parameters and image dimensions
@@ -309,8 +309,8 @@ void VirtualVolume::saveImage_to_Vaa3DRaw(int slice, std::string img_path, REAL_
 	sprintf(img_filepath, "%s.%s", img_path.c_str(), img_format);
 
 	//converting raw data in image data
-	scale_factor_16b = 65535.0F;
-	scale_factor_8b  = 255.0F;
+	//scale_factor_16b = 65535.0F;
+	//scale_factor_8b  = 255.0F;
 	//if(img->depth == IPL_DEPTH_8U)
 	//{
 	//	img_data_step = img->widthStep / sizeof(uint8);
@@ -349,7 +349,7 @@ void VirtualVolume::saveImage_to_Vaa3DRaw(int slice, std::string img_path, REAL_
 * [img_format]              : image format extension to be used (e.g. "tif", "png", etc.)
 * [img_depth]               : image bitdepth to be used (8 or 16)
 **************************************************************************************************************/
-void VirtualVolume::saveImage_from_UINT8_to_Vaa3DRaw (int slice, std::string img_path, uint8** raw_ch, int n_chans, int offset, 
+void VirtualVolume::saveImage_from_UINT8_to_Vaa3DRaw (int slice, std::string img_path, uint8** raw_ch, int n_chans, sint64 offset, 
                        int raw_img_height, int raw_img_width, int start_height, int end_height, int start_width,
                        int end_width, const char* img_format, int img_depth ) throw (MyException)
 {
@@ -428,13 +428,15 @@ void VirtualVolume::halveSample ( REAL_T* img, int height, int width, int depth,
 
 	float A,B,C,D,E,F,G,H;
 
+	// indices are sint64 because offsets can be larger that 2^31 - 1
+
 	if ( method == HALVE_BY_MEAN ) {
 
-		for(int z=0; z<depth/2; z++)
+		for(sint64 z=0; z<depth/2; z++)
 		{
-			for(int i=0; i<height/2; i++)
+			for(sint64 i=0; i<height/2; i++)
 			{
-				for(int j=0; j<width/2; j++)
+				for(sint64 j=0; j<width/2; j++)
 				{
 					//computing 8-neighbours
 					A = img[2*z*width*height +2*i*width + 2*j];
@@ -455,11 +457,11 @@ void VirtualVolume::halveSample ( REAL_T* img, int height, int width, int depth,
 	}
 	else if ( method == HALVE_BY_MAX ) {
 
-		for(int z=0; z<depth/2; z++)
+		for(sint64 z=0; z<depth/2; z++)
 		{
-			for(int i=0; i<height/2; i++)
+			for(sint64 i=0; i<height/2; i++)
 			{
-				for(int j=0; j<width/2; j++)
+				for(sint64 j=0; j<width/2; j++)
 				{
 					//computing max of 8-neighbours
 					A = img[2*z*width*height + 2*i*width + 2*j];
@@ -501,15 +503,17 @@ void VirtualVolume::halveSample_UINT8 ( uint8** img, int height, int width, int 
 
 	float A,B,C,D,E,F,G,H;
 
+	// indices are sint64 because offsets can be larger that 2^31 - 1
+
 	if ( method == HALVE_BY_MEAN ) {   
 
-		for(int c=0; c<channels; c++)
+		for(sint64 c=0; c<channels; c++)
 		{
-			for(int z=0; z<depth/2; z++)
+			for(sint64 z=0; z<depth/2; z++)
 			{
-				for(int i=0; i<height/2; i++)
+				for(sint64 i=0; i<height/2; i++)
 				{
-					for(int j=0; j<width/2; j++)
+					for(sint64 j=0; j<width/2; j++)
 					{
 						//computing 8-neighbours
 						A = img[c][2*z*width*height + 2*i*width + 2*j];
@@ -531,13 +535,13 @@ void VirtualVolume::halveSample_UINT8 ( uint8** img, int height, int width, int 
 	}
 	else if ( method == HALVE_BY_MAX ) {
 
-	for(int c=0; c<channels; c++)
+	for(sint64 c=0; c<channels; c++)
 	{
-		for(int z=0; z<depth/2; z++)
+		for(sint64 z=0; z<depth/2; z++)
 		{
-			for(int i=0; i<height/2; i++)
+			for(sint64 i=0; i<height/2; i++)
 			{
-				for(int j=0; j<width/2; j++)
+				for(sint64 j=0; j<width/2; j++)
 				{
 					//computing max of 8-neighbours
 					A = img[c][2*z*width*height + 2*i*width + 2*j];

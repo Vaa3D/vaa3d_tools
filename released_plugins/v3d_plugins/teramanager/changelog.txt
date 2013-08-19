@@ -11,6 +11,20 @@ ties names are:
 - Rem: a feature no longer available
 
 ============================================================================================
+
+Version 0.9.4
+August 19th, 2013
+--------------------------------------------------------------------------------------------
+- New: "Line streaming" feature implemented. By setting the number of streaming steps  under
+       the menu "Debug -> streaming steps" to value "x", data will be loaded (and refreshed)
+       every "x" lines along the X axis.
+- Opt: Tiles dimension along Z is now hidden if the destination format does not support it.
+- New: added "Create dir" in TeraConverter dialog if destination dir does not exist.
+- Fix: fixed a major bug which  caused TeraConverter to  crash when converting to the format
+       "Image series (tiled)".
+- Fix: fixed a minor bug in the TeraConverter LRU management.
+--------------------------------------------------------------------------------------------
+
 Version 0.9.3
 August 13th, 2013
 --------------------------------------------------------------------------------------------

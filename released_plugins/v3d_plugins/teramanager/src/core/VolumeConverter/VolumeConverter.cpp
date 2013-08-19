@@ -241,7 +241,7 @@ void VolumeConverter::generateTiles(std::string output_path, bool* resolutions,
 
 	//allocated even if not used
 	org_channels = channels; // save for checks
-	supported_channels = (channels) ? 3 : 1; // only 1 or 3 channels supported if output format is stacks of tiffs 2D
+    supported_channels = (channels>1) ? 3 : 1; // only 1 or 3 channels supported if output format is stacks of tiffs 2D
 	ubuffer = new uint8 *[supported_channels];
 	memset(ubuffer,0,supported_channels*sizeof(uint8));
 
@@ -589,6 +589,7 @@ void VolumeConverter::generateTilesVaa3DRaw(std::string output_path, bool* resol
 		
 			for (int i=1; i<channels; i++ ) { // WARNING: assume 1-byte pixels
 				// offsets are to be computed taking into account that buffer size along D may be different
+				// WARNING: the offset must be of tipe sint64 
 				ubuffer[i] = ubuffer[i-1] + (height * width * ((z_parts<=z_ratio) ? z_max_res : (depth%z_max_res)));
 			}
 		}
@@ -658,7 +659,7 @@ void VolumeConverter::generateTilesVaa3DRaw(std::string output_path, bool* resol
 				for(int stack_row = 0, start_height = 0, end_height = 0; stack_row < n_stacks_V[i]; stack_row++)
 				{
 					//incrementing end_height
-					end_height = start_height + stacks_height[i][stack_row][0][0]-1; // WARNING TO BE CHECKED FOR CORRECTNESS
+					end_height = start_height + stacks_height[i][stack_row][0][0]-1; 
 						
 					//computing V_DIR_path and creating the directory the first time it is needed
 					std::stringstream V_DIR_path;
@@ -672,7 +673,7 @@ void VolumeConverter::generateTilesVaa3DRaw(std::string output_path, bool* resol
 
 					for(int stack_column = 0, start_width=0, end_width=0; stack_column < n_stacks_H[i]; stack_column++)
 					{
-						end_width  = start_width  + stacks_width [i][stack_row][stack_column][0]-1; // WARNING TO BE CHECKED FOR CORRECTNESS
+						end_width  = start_width  + stacks_width [i][stack_row][stack_column][0]-1; 
 							
 						//computing H_DIR_path and creating the directory the first time it is needed
 						std::stringstream H_DIR_path;
@@ -764,7 +765,7 @@ void VolumeConverter::generateTilesVaa3DRaw(std::string output_path, bool* resol
 									img_path.str(), 
 									ubuffer,
 									channels,
-									(int)(buffer_z*(height/POW_INT(2,i))*(width/POW_INT(2,i))),  // stride to be added
+									buffer_z*(height/POW_INT(2,i))*(width/POW_INT(2,i)),  // stride to be added
 									(int)height/(POW_INT(2,i)),(int)width/(POW_INT(2,i)),
 									start_height,end_height,start_width,end_width, 
 									saved_img_format, saved_img_depth);
@@ -864,5 +865,5 @@ int VolumeConverter::getMultiresABS_D(int res)
 	if(volume->getVXL_D() > 0)
 		return (int) ROUND(volume->getABS_D(D0)*10);
 	else
-		return (int) ROUND(volume->getABS_D(D0 - 1 + volume->getVXL_D()*POW_INT(2,res)*10));
+		return (int) ROUND(volume->getABS_D((int)(D0 - 1 + volume->getVXL_D()*POW_INT(2,res)*10)));
 }
