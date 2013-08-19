@@ -135,10 +135,14 @@ void processImage(V3DPluginCallback2 &callback, QWidget *parent)
     //input
     bool ok1,ok4;
     unsigned int Ws=1000, c=1;
-
-    Ws = QInputDialog::getInteger(parent, "Block Size",
+    if(N < M)
+        Ws = QInputDialog::getInteger(parent, "Block Size",
                                   "Enter block size:",
                                   1000, 1, N, 1, &ok1);
+    else
+        Ws = QInputDialog::getInteger(parent, "Block Size",
+                                  "Enter block size:",
+                                  1000, 1, M, 1, &ok1);
     if(ok1)
     {
         if(sc==1)
@@ -231,7 +235,7 @@ void processImage(V3DPluginCallback2 &callback, QWidget *parent)
 
     V3DLONG i = 0;
     double th_global = 0;
-
+    V3DLONG offsetc = (c-1)*pagesz;
     for(V3DLONG iz = 0; iz < P; iz++)
     {
         double PixelSum = 0;
@@ -242,7 +246,7 @@ void processImage(V3DPluginCallback2 &callback, QWidget *parent)
             for(V3DLONG ix = 0; ix < N; ix++)
             {
 
-             double PixelVaule = data1d[offsetk + offsetj + ix];
+             double PixelVaule = data1d[offsetc+offsetk + offsetj + ix];
              PixelSum = PixelSum + PixelVaule;
              i++;
             }
@@ -293,7 +297,7 @@ void processImage(V3DPluginCallback2 &callback, QWidget *parent)
 
                  if(th < th_global) th = th_global;
                  V3DLONG block_sz[4];
-                 block_sz[0] = xe-xb+1; block_sz[1] = ye-yb+1; block_sz[2] = P; block_sz[3] = sc;
+                 block_sz[0] = xe-xb+1; block_sz[1] = ye-yb+1; block_sz[2] = P; block_sz[3] = 1;
                  saveImage("temp.v3draw", (unsigned char *)blockarea, block_sz, pixeltype);
                  V3DPluginArgItem arg;
                  V3DPluginArgList input;
@@ -303,7 +307,7 @@ void processImage(V3DPluginCallback2 &callback, QWidget *parent)
                  arg.type = "random";std::vector<char*> args1;
                  args1.push_back("temp.v3draw"); arg.p = (void *) & args1; input<< arg;
                  arg.type = "random";std::vector<char*> args;
-                 char channel = '0' + (c-1);
+                 char channel = '0';
                  string threshold = boost::lexical_cast<string>(th); char* threshold2 =  new char[threshold.length() + 1]; strcpy(threshold2, threshold.c_str());
                  args.push_back(threshold2);args.push_back("1");args.push_back(&channel);args.push_back("1"); arg.p = (void *) & args; input << arg;
                  arg.type = "random";std::vector<char*> args2;args2.push_back("gsdtImage.v3draw"); arg.p = (void *) & args2; output<< arg;
@@ -324,9 +328,9 @@ void processImage(V3DPluginCallback2 &callback, QWidget *parent)
 
                  switch (pixeltype)
                  {
-                 case V3D_UINT8: AdpThresholding_adpwindow((unsigned char *)blockarea, block_sz, c,(unsigned char* &)localEnahancedArea, gsdtblock); break;
-                 case V3D_UINT16: AdpThresholding_adpwindow((unsigned short int *)blockarea, block_sz, c, (unsigned short int* &)localEnahancedArea,(unsigned short int *)gsdtblock); break;
-                 case V3D_FLOAT32: AdpThresholding_adpwindow((float *)blockarea, block_sz, c, (float* &)localEnahancedArea,(float *)gsdtblock);break;
+                 case V3D_UINT8: AdpThresholding_adpwindow((unsigned char *)blockarea, block_sz, 1,(unsigned char* &)localEnahancedArea, gsdtblock); break;
+                 case V3D_UINT16: AdpThresholding_adpwindow((unsigned short int *)blockarea, block_sz, 1, (unsigned short int* &)localEnahancedArea,(unsigned short int *)gsdtblock); break;
+                 case V3D_FLOAT32: AdpThresholding_adpwindow((float *)blockarea, block_sz, 1, (float* &)localEnahancedArea,(float *)gsdtblock);break;
                  default: v3d_msg("Invalid data type. Do nothing."); return;
                  }
 
@@ -338,7 +342,7 @@ void processImage(V3DPluginCallback2 &callback, QWidget *parent)
                      target1d = new unsigned char [targetsize];
                      for(int i = 0; i<targetsize;i++)
                          target1d[i] = localEnahancedArea[i];
-                     szTar[0] = xe-xb+1; szTar[1] = ye-yb+1; szTar[2] = P; szTar[3] = sc;
+                     szTar[0] = xe-xb+1; szTar[1] = ye-yb+1; szTar[2] = P; szTar[3] = 1;
 
                  }else
                 {
@@ -347,7 +351,7 @@ void processImage(V3DPluginCallback2 &callback, QWidget *parent)
                     subject1d = new unsigned char [subjectsize];
                     for(int i = 0; i<subjectsize;i++)
                         subject1d[i] = localEnahancedArea[i];
-                    szSub[0] = xe-xb+1; szSub[1] = ye-yb+1; szSub[2] = P; szSub[3] = sc;
+                    szSub[0] = xe-xb+1; szSub[1] = ye-yb+1; szSub[2] = P; szSub[3] = 1;
 
                     V3DLONG *offset = new V3DLONG [3];
                     offset[0] = xb;
@@ -357,7 +361,7 @@ void processImage(V3DPluginCallback2 &callback, QWidget *parent)
                     new_sz1 = szSub[1];
                     new_sz2 = szSub[2];
 
-                    V3DLONG totalplxs = sc*new_sz0*new_sz1*new_sz2;
+                    V3DLONG totalplxs = new_sz0*new_sz1*new_sz2;
                     unsigned char* data1d_blended = NULL;
                     data1d_blended = new unsigned char [totalplxs];
                     memset(data1d_blended, 0, sizeof(unsigned char)*totalplxs);
@@ -369,7 +373,7 @@ void processImage(V3DPluginCallback2 &callback, QWidget *parent)
                     target1d = new unsigned char [targetsize];
                     for(int i = 0; i<targetsize;i++)
                         target1d[i] = data1d_blended[i];
-                    szTar[0] = new_sz0; szTar[1] = new_sz1; szTar[2] = new_sz2; szTar[3] = sc;
+                    szTar[0] = new_sz0; szTar[1] = new_sz1; szTar[2] = new_sz2; szTar[3] = 1;
 
 
                 }
@@ -385,7 +389,7 @@ void processImage(V3DPluginCallback2 &callback, QWidget *parent)
                 target1d_y = new unsigned char [targetsize_y];
                 for(int i = 0; i<targetsize_y;i++)
                     target1d_y[i] = target1d[i];
-                szTar_y[0] = new_sz0; szTar_y[1] = new_sz1; szTar_y[2] = P; szTar_y[3] = sc;
+                szTar_y[0] = new_sz0; szTar_y[1] = new_sz1; szTar_y[2] = P; szTar_y[3] = 1;
 
             }else
             {
@@ -393,7 +397,7 @@ void processImage(V3DPluginCallback2 &callback, QWidget *parent)
                subject1d_y = new unsigned char [subjectsize_y];
                for(int i = 0; i<subjectsize_y;i++)
                    subject1d_y[i] = target1d[i];
-               szSub_y[0] = new_sz0; szSub_y[1] = new_sz1; szSub_y[2] = P; szSub_y[3] = sc;
+               szSub_y[0] = new_sz0; szSub_y[1] = new_sz1; szSub_y[2] = P; szSub_y[3] = 1;
 
                V3DLONG *offset = new V3DLONG [3];
                offset[0] = 0;
@@ -403,7 +407,7 @@ void processImage(V3DPluginCallback2 &callback, QWidget *parent)
                new_sz1 = ye+1;
                new_sz2 = szSub_y[2];
 
-               V3DLONG totalplxs = sc*new_sz0*new_sz1*new_sz2;
+               V3DLONG totalplxs = new_sz0*new_sz1*new_sz2;
                unsigned char* data1d_blended_y = NULL;
                data1d_blended_y = new unsigned char [totalplxs];
                memset(data1d_blended_y, 0, sizeof(unsigned char)*totalplxs);
@@ -415,7 +419,7 @@ void processImage(V3DPluginCallback2 &callback, QWidget *parent)
                target1d_y = new unsigned char [targetsize_y];
                for(int i = 0; i<targetsize_y;i++)
                    target1d_y[i] = data1d_blended_y[i];
-               szTar_y[0] = new_sz0; szTar_y[1] = new_sz1; szTar_y[2] = new_sz2; szTar_y[3] = sc;
+               szTar_y[0] = new_sz0; szTar_y[1] = new_sz1; szTar_y[2] = new_sz2; szTar_y[3] = 1;
               /* Image4DSimple * new4DImage = new Image4DSimple();
                new4DImage->setData((unsigned char *)target1d_y, new_sz0, new_sz1,new_sz2, 1, pixeltype);
                v3dhandle newwin = callback.newImageWindow();
@@ -484,7 +488,7 @@ bool processImage1(const V3DPluginArgList & input, V3DPluginArgList & output,V3D
     V3DLONG * in_sz = 0;
 
     unsigned int c = ch;//-1;
-    unsigned int sc = ch;
+
 
     int datatype;
     if(!loadImage(inimg_file, data1d, in_sz, datatype))
@@ -496,10 +500,11 @@ bool processImage1(const V3DPluginArgList & input, V3DPluginArgList & output,V3D
     V3DLONG N = in_sz[0];
     V3DLONG M = in_sz[1];
     V3DLONG P = in_sz[2];
+    V3DLONG pagesz = N*M*P;
 
     V3DLONG i = 0;
     double th_global = 0;
-
+    V3DLONG offsetc = (c-1)*pagesz;
     for(V3DLONG iz = 0; iz < P; iz++)
     {
         double PixelSum = 0;
@@ -510,7 +515,7 @@ bool processImage1(const V3DPluginArgList & input, V3DPluginArgList & output,V3D
             for(V3DLONG ix = 0; ix < N; ix++)
             {
 
-             double PixelVaule = data1d[offsetk + offsetj + ix];
+             double PixelVaule = data1d[offsetc+offsetk + offsetj + ix];
              PixelSum = PixelSum + PixelVaule;
              i++;
             }
@@ -523,6 +528,15 @@ bool processImage1(const V3DPluginArgList & input, V3DPluginArgList & output,V3D
     unsigned char* target1d_y = NULL;
     V3DLONG szSub_y[4];
     V3DLONG szTar_y[4];
+    if(Ws>M || Ws>N)
+    {
+        if(M>N)
+            Ws = N;
+        else
+            Ws = M;
+
+    }
+
 
     for(V3DLONG iy = 0; iy < M; iy = iy+Ws-Ws/10)
     {
@@ -558,7 +572,7 @@ bool processImage1(const V3DPluginArgList & input, V3DPluginArgList & output,V3D
 
                  if(th < th_global) th = th_global;
                  V3DLONG block_sz[4];
-                 block_sz[0] = xe-xb+1; block_sz[1] = ye-yb+1; block_sz[2] = P; block_sz[3] = sc;
+                 block_sz[0] = xe-xb+1; block_sz[1] = ye-yb+1; block_sz[2] = P; block_sz[3] = 1;
                  saveImage("temp.v3draw", (unsigned char *)blockarea, block_sz, datatype);
                  V3DPluginArgItem arg;
                  V3DPluginArgList input;
@@ -568,7 +582,7 @@ bool processImage1(const V3DPluginArgList & input, V3DPluginArgList & output,V3D
                  arg.type = "random";std::vector<char*> args1;
                  args1.push_back("temp.v3draw"); arg.p = (void *) & args1; input<< arg;
                  arg.type = "random";std::vector<char*> args;
-                 char channel = '0' + (c-1);
+                 char channel = '0';
                  string threshold = boost::lexical_cast<string>(th); char* threshold2 =  new char[threshold.length() + 1]; strcpy(threshold2, threshold.c_str());
                  args.push_back(threshold2);args.push_back("1");args.push_back(&channel);args.push_back("1"); arg.p = (void *) & args; input << arg;
                  arg.type = "random";std::vector<char*> args2;args2.push_back("gsdtImage.v3draw"); arg.p = (void *) & args2; output<< arg;
@@ -589,9 +603,9 @@ bool processImage1(const V3DPluginArgList & input, V3DPluginArgList & output,V3D
 
                  switch (datatype)
                  {
-                 case V3D_UINT8: AdpThresholding_adpwindow((unsigned char *)blockarea, block_sz, c,(unsigned char* &)localEnahancedArea, gsdtblock); break;
-                 case V3D_UINT16: AdpThresholding_adpwindow((unsigned short int *)blockarea, block_sz, c, (unsigned short int* &)localEnahancedArea,(unsigned short int *)gsdtblock); break;
-                 case V3D_FLOAT32: AdpThresholding_adpwindow((float *)blockarea, block_sz, c, (float* &)localEnahancedArea,(float *)gsdtblock);break;
+                 case V3D_UINT8: AdpThresholding_adpwindow((unsigned char *)blockarea, block_sz, 1,(unsigned char* &)localEnahancedArea, gsdtblock); break;
+                 case V3D_UINT16: AdpThresholding_adpwindow((unsigned short int *)blockarea, block_sz, 1, (unsigned short int* &)localEnahancedArea,(unsigned short int *)gsdtblock); break;
+                 case V3D_FLOAT32: AdpThresholding_adpwindow((float *)blockarea, block_sz, 1, (float* &)localEnahancedArea,(float *)gsdtblock);break;
                  default: v3d_msg("Invalid data type. Do nothing."); return false;
                  }
 
@@ -603,7 +617,7 @@ bool processImage1(const V3DPluginArgList & input, V3DPluginArgList & output,V3D
                      target1d = new unsigned char [targetsize];
                      for(int i = 0; i<targetsize;i++)
                          target1d[i] = localEnahancedArea[i];
-                     szTar[0] = xe-xb+1; szTar[1] = ye-yb+1; szTar[2] = P; szTar[3] = sc;
+                     szTar[0] = xe-xb+1; szTar[1] = ye-yb+1; szTar[2] = P; szTar[3] = 1;
 
                  }else
                 {
@@ -612,7 +626,7 @@ bool processImage1(const V3DPluginArgList & input, V3DPluginArgList & output,V3D
                     subject1d = new unsigned char [subjectsize];
                     for(int i = 0; i<subjectsize;i++)
                         subject1d[i] = localEnahancedArea[i];
-                    szSub[0] = xe-xb+1; szSub[1] = ye-yb+1; szSub[2] = P; szSub[3] = sc;
+                    szSub[0] = xe-xb+1; szSub[1] = ye-yb+1; szSub[2] = P; szSub[3] = 1;
 
                     V3DLONG *offset = new V3DLONG [3];
                     offset[0] = xb;
@@ -622,7 +636,7 @@ bool processImage1(const V3DPluginArgList & input, V3DPluginArgList & output,V3D
                     new_sz1 = szSub[1];
                     new_sz2 = szSub[2];
 
-                    V3DLONG totalplxs = sc*new_sz0*new_sz1*new_sz2;
+                    V3DLONG totalplxs = new_sz0*new_sz1*new_sz2;
                     unsigned char* data1d_blended = NULL;
                     data1d_blended = new unsigned char [totalplxs];
                     memset(data1d_blended, 0, sizeof(unsigned char)*totalplxs);
@@ -634,7 +648,7 @@ bool processImage1(const V3DPluginArgList & input, V3DPluginArgList & output,V3D
                     target1d = new unsigned char [targetsize];
                     for(int i = 0; i<targetsize;i++)
                         target1d[i] = data1d_blended[i];
-                    szTar[0] = new_sz0; szTar[1] = new_sz1; szTar[2] = new_sz2; szTar[3] = sc;
+                    szTar[0] = new_sz0; szTar[1] = new_sz1; szTar[2] = new_sz2; szTar[3] = 1;
 
 
                 }
@@ -650,7 +664,7 @@ bool processImage1(const V3DPluginArgList & input, V3DPluginArgList & output,V3D
                 target1d_y = new unsigned char [targetsize_y];
                 for(int i = 0; i<targetsize_y;i++)
                     target1d_y[i] = target1d[i];
-                szTar_y[0] = new_sz0; szTar_y[1] = new_sz1; szTar_y[2] = P; szTar_y[3] = sc;
+                szTar_y[0] = new_sz0; szTar_y[1] = new_sz1; szTar_y[2] = P; szTar_y[3] = 1;
 
             }else
             {
@@ -658,7 +672,7 @@ bool processImage1(const V3DPluginArgList & input, V3DPluginArgList & output,V3D
                subject1d_y = new unsigned char [subjectsize_y];
                for(int i = 0; i<subjectsize_y;i++)
                    subject1d_y[i] = target1d[i];
-               szSub_y[0] = new_sz0; szSub_y[1] = new_sz1; szSub_y[2] = P; szSub_y[3] = sc;
+               szSub_y[0] = new_sz0; szSub_y[1] = new_sz1; szSub_y[2] = P; szSub_y[3] = 1;
 
                V3DLONG *offset = new V3DLONG [3];
                offset[0] = 0;
@@ -668,7 +682,7 @@ bool processImage1(const V3DPluginArgList & input, V3DPluginArgList & output,V3D
                new_sz1 = ye+1;
                new_sz2 = szSub_y[2];
 
-               V3DLONG totalplxs = sc*new_sz0*new_sz1*new_sz2;
+               V3DLONG totalplxs = new_sz0*new_sz1*new_sz2;
                unsigned char* data1d_blended_y = NULL;
                data1d_blended_y = new unsigned char [totalplxs];
                memset(data1d_blended_y, 0, sizeof(unsigned char)*totalplxs);
@@ -680,7 +694,7 @@ bool processImage1(const V3DPluginArgList & input, V3DPluginArgList & output,V3D
                target1d_y = new unsigned char [targetsize_y];
                for(int i = 0; i<targetsize_y;i++)
                    target1d_y[i] = data1d_blended_y[i];
-               szTar_y[0] = new_sz0; szTar_y[1] = new_sz1; szTar_y[2] = new_sz2; szTar_y[3] = sc;
+               szTar_y[0] = new_sz0; szTar_y[1] = new_sz1; szTar_y[2] = new_sz2; szTar_y[3] = 1;
             }
 
 
