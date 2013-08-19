@@ -20,6 +20,9 @@ using namespace std;
 Q_EXPORT_PLUGIN2(local_enhancement, local_enhancement);
  
 void processImage(V3DPluginCallback2 &callback, QWidget *parent);
+bool processImage1(const V3DPluginArgList & input, V3DPluginArgList & output,V3DPluginCallback2 &callback);
+
+
 template <class T> void AdpThresholding_adpwindow(T* data1d,
                     V3DLONG *in_sz,
                     unsigned int c,
@@ -79,16 +82,19 @@ void local_enhancement::domenu(const QString &menu_name, V3DPluginCallback2 &cal
 
 bool local_enhancement::dofunc(const QString & func_name, const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback,  QWidget * parent)
 {
-	vector<char*> infiles, inparas, outfiles;
-	if(input.size() >= 1) infiles = *((vector<char*> *)input.at(0).p);
-	if(input.size() >= 2) inparas = *((vector<char*> *)input.at(1).p);
-	if(output.size() >= 1) outfiles = *((vector<char*> *)output.at(0).p);
 
 	if (func_name == tr("localEnhancement"))
 	{
+        return processImage1(input, output,callback);
 	}
 	else if (func_name == tr("help"))
 	{
+        cout<<"Usage : v3d -x local_enhancement -f localEnhancement -i <inimg_file> -o <outimg_file> -p <ws> <ch>"<<endl;
+        cout<<endl;
+        cout<<"ws          block window size (pixel #), default 1000"<<endl;
+        cout<<"ch          the input channel value, default 1 and start from 1, default 1"<<endl;
+        cout<<endl;
+        cout<<endl;
 	}
 	else return false;
 }
@@ -427,6 +433,248 @@ void processImage(V3DPluginCallback2 &callback, QWidget *parent)
     callback.updateImageWindow(newwin);
     return;
 }
+
+bool processImage1(const V3DPluginArgList & input, V3DPluginArgList & output,V3DPluginCallback2 &callback)
+{
+    cout<<"Welcome to local enhancement filter"<<endl;
+    if (output.size() != 1) return false;
+    unsigned int Ws = 1000, ch=1;
+    if (input.size()>=2)
+    {
+
+        vector<char*> paras = (*(vector<char*> *)(input.at(1).p));
+        cout<<paras.size()<<endl;
+        if(paras.size() >= 1) Ws = atoi(paras.at(0));
+        if(paras.size() >= 2) ch = atoi(paras.at(1));
+    }
+
+    char * inimg_file = ((vector<char*> *)(input.at(0).p))->at(0);
+    char * outimg_file = ((vector<char*> *)(output.at(0).p))->at(0);
+
+    cout<<"Ws = "<<Ws<<endl;
+    cout<<"ch = "<<ch<<endl;
+    cout<<"inimg_file = "<<inimg_file<<endl;
+    cout<<"outimg_file = "<<outimg_file<<endl;
+
+    unsigned char * data1d = 0,  * outimg1d = 0;
+    V3DLONG * in_sz = 0;
+
+    unsigned int c = ch;//-1;
+    unsigned int sc = ch;
+
+    int datatype;
+    if(!loadImage(inimg_file, data1d, in_sz, datatype))
+    {
+        cerr<<"load image "<<inimg_file<<" error!"<<endl;
+        return false;
+    }
+
+    V3DLONG N = in_sz[0];
+    V3DLONG M = in_sz[1];
+    V3DLONG P = in_sz[2];
+
+    V3DLONG i = 0;
+    double th_global = 0;
+
+    for(V3DLONG iz = 0; iz < P; iz++)
+    {
+        double PixelSum = 0;
+        V3DLONG offsetk = iz*M*N;
+        for(V3DLONG iy = 0; iy <  M; iy++)
+        {
+            V3DLONG offsetj = iy*N;
+            for(V3DLONG ix = 0; ix < N; ix++)
+            {
+
+             double PixelVaule = data1d[offsetk + offsetj + ix];
+             PixelSum = PixelSum + PixelVaule;
+             i++;
+            }
+        }
+        th_global = th_global + PixelSum/(M*N*P);
+    }
+
+    int county = 0;
+    unsigned char* subject1d_y = NULL;
+    unsigned char* target1d_y = NULL;
+    V3DLONG szSub_y[4];
+    V3DLONG szTar_y[4];
+
+    for(V3DLONG iy = 0; iy < M; iy = iy+Ws-Ws/10)
+    {
+        unsigned char* subject1d = NULL;
+        unsigned char* target1d = NULL;
+
+        V3DLONG szSub[4];
+        V3DLONG szTar[4];
+        V3DLONG new_sz0 = 0;
+        V3DLONG new_sz1 = 0;
+        V3DLONG new_sz2 = 0;
+        V3DLONG yb = iy;
+        V3DLONG ye = iy+Ws-1; if(ye>=M-1) ye = M-1;
+
+        int count = 0;
+        for(V3DLONG ix = 0; ix < N; ix = ix+Ws-Ws/10)
+        {
+                V3DLONG xb = ix;
+                V3DLONG xe = ix+Ws-1; if(xe>=N-1) xe = N-1;
+
+
+
+
+                 double  th = 0;
+                 void* blockarea = 0;
+                 switch (datatype)
+                 {
+                 case V3D_UINT8: block_detection(data1d, in_sz, c, th,(unsigned char* &)blockarea,xb,xe,yb,ye); break;
+                 case V3D_UINT16: block_detection((unsigned short int *)data1d, in_sz, c, th,(unsigned short int* &)blockarea,xb,xe,yb,ye); break;
+                 case V3D_FLOAT32: block_detection((float *)data1d, in_sz, c,th,(float* &)blockarea,xb,xe,yb,ye);break;
+                 default: v3d_msg("Invalid data type. Do nothing."); return false;
+                 }
+
+                 if(th < th_global) th = th_global;
+                 V3DLONG block_sz[4];
+                 block_sz[0] = xe-xb+1; block_sz[1] = ye-yb+1; block_sz[2] = P; block_sz[3] = sc;
+                 saveImage("temp.v3draw", (unsigned char *)blockarea, block_sz, datatype);
+                 V3DPluginArgItem arg;
+                 V3DPluginArgList input;
+                 V3DPluginArgList output;
+
+
+                 arg.type = "random";std::vector<char*> args1;
+                 args1.push_back("temp.v3draw"); arg.p = (void *) & args1; input<< arg;
+                 arg.type = "random";std::vector<char*> args;
+                 char channel = '0' + (c-1);
+                 string threshold = boost::lexical_cast<string>(th); char* threshold2 =  new char[threshold.length() + 1]; strcpy(threshold2, threshold.c_str());
+                 args.push_back(threshold2);args.push_back("1");args.push_back(&channel);args.push_back("1"); arg.p = (void *) & args; input << arg;
+                 arg.type = "random";std::vector<char*> args2;args2.push_back("gsdtImage.v3draw"); arg.p = (void *) & args2; output<< arg;
+
+                 QString full_plugin_name = "gsdt";
+                 QString func_name = "gsdt";
+
+                 callback.callPluginFunc(full_plugin_name,func_name, input,output);
+
+                 unsigned char * gsdtblock = 0;
+                 int datatype;
+                 V3DLONG * in_zz = 0;
+                 char * outimg_file = ((vector<char*> *)(output.at(0).p))->at(0);
+                 loadImage(outimg_file, gsdtblock, in_zz, datatype,0);
+                 remove("temp.v3draw");
+                 remove("gsdtImage.v3draw");
+                 unsigned char* localEnahancedArea = NULL;
+
+                 switch (datatype)
+                 {
+                 case V3D_UINT8: AdpThresholding_adpwindow((unsigned char *)blockarea, block_sz, c,(unsigned char* &)localEnahancedArea, gsdtblock); break;
+                 case V3D_UINT16: AdpThresholding_adpwindow((unsigned short int *)blockarea, block_sz, c, (unsigned short int* &)localEnahancedArea,(unsigned short int *)gsdtblock); break;
+                 case V3D_FLOAT32: AdpThresholding_adpwindow((float *)blockarea, block_sz, c, (float* &)localEnahancedArea,(float *)gsdtblock);break;
+                 default: v3d_msg("Invalid data type. Do nothing."); return false;
+                 }
+
+
+                 if (count==0)
+                 {
+
+                     V3DLONG targetsize = block_sz[0]*block_sz[1]*block_sz[2];
+                     target1d = new unsigned char [targetsize];
+                     for(int i = 0; i<targetsize;i++)
+                         target1d[i] = localEnahancedArea[i];
+                     szTar[0] = xe-xb+1; szTar[1] = ye-yb+1; szTar[2] = P; szTar[3] = sc;
+
+                 }else
+                {
+
+                    V3DLONG subjectsize = block_sz[0]*block_sz[1]*block_sz[2];
+                    subject1d = new unsigned char [subjectsize];
+                    for(int i = 0; i<subjectsize;i++)
+                        subject1d[i] = localEnahancedArea[i];
+                    szSub[0] = xe-xb+1; szSub[1] = ye-yb+1; szSub[2] = P; szSub[3] = sc;
+
+                    V3DLONG *offset = new V3DLONG [3];
+                    offset[0] = xb;
+                    offset[1] = 0;
+                    offset[2] = 0;
+                    new_sz0 = xe+1;
+                    new_sz1 = szSub[1];
+                    new_sz2 = szSub[2];
+
+                    V3DLONG totalplxs = sc*new_sz0*new_sz1*new_sz2;
+                    unsigned char* data1d_blended = NULL;
+                    data1d_blended = new unsigned char [totalplxs];
+                    memset(data1d_blended, 0, sizeof(unsigned char)*totalplxs);
+                    int success;
+
+                    success = pwi_fusing<unsigned char>((unsigned char *)data1d_blended, (unsigned char *)subject1d, szSub, (unsigned char *)target1d, szTar, offset, new_sz0, new_sz1, new_sz2);
+
+                    V3DLONG targetsize = new_sz0*new_sz1*new_sz2;
+                    target1d = new unsigned char [targetsize];
+                    for(int i = 0; i<targetsize;i++)
+                        target1d[i] = data1d_blended[i];
+                    szTar[0] = new_sz0; szTar[1] = new_sz1; szTar[2] = new_sz2; szTar[3] = sc;
+
+
+                }
+                count ++;
+
+        }
+
+
+            if (county==0)
+            {
+
+                V3DLONG targetsize_y = new_sz0*new_sz1*new_sz2;
+                target1d_y = new unsigned char [targetsize_y];
+                for(int i = 0; i<targetsize_y;i++)
+                    target1d_y[i] = target1d[i];
+                szTar_y[0] = new_sz0; szTar_y[1] = new_sz1; szTar_y[2] = P; szTar_y[3] = sc;
+
+            }else
+            {
+               V3DLONG subjectsize_y = new_sz0*new_sz1*new_sz2;
+               subject1d_y = new unsigned char [subjectsize_y];
+               for(int i = 0; i<subjectsize_y;i++)
+                   subject1d_y[i] = target1d[i];
+               szSub_y[0] = new_sz0; szSub_y[1] = new_sz1; szSub_y[2] = P; szSub_y[3] = sc;
+
+               V3DLONG *offset = new V3DLONG [3];
+               offset[0] = 0;
+               offset[1] = yb;
+               offset[2] = 0;
+               new_sz0 = szSub_y[0];
+               new_sz1 = ye+1;
+               new_sz2 = szSub_y[2];
+
+               V3DLONG totalplxs = sc*new_sz0*new_sz1*new_sz2;
+               unsigned char* data1d_blended_y = NULL;
+               data1d_blended_y = new unsigned char [totalplxs];
+               memset(data1d_blended_y, 0, sizeof(unsigned char)*totalplxs);
+               int success;
+               success = pwi_fusing<unsigned char>((unsigned char *)data1d_blended_y, (unsigned char *)subject1d_y, szSub_y, (unsigned char *)target1d_y, szTar_y, offset, new_sz0, new_sz1, new_sz2);
+
+
+               V3DLONG targetsize_y = new_sz0*new_sz1*new_sz2;
+               target1d_y = new unsigned char [targetsize_y];
+               for(int i = 0; i<targetsize_y;i++)
+                   target1d_y[i] = data1d_blended_y[i];
+               szTar_y[0] = new_sz0; szTar_y[1] = new_sz1; szTar_y[2] = new_sz2; szTar_y[3] = sc;
+            }
+
+
+        county++;
+    }
+
+    // save image
+    in_sz[3]=1;
+    saveImage(outimg_file, (unsigned char *)target1d_y, in_sz, datatype);
+
+    if(target1d_y) {delete []target1d_y; target1d_y =0;}
+    if(subject1d_y) {delete []subject1d_y; subject1d_y =0;}
+    if (data1d) {delete []data1d; data1d=0;}
+    if (in_sz) {delete []in_sz; in_sz=0;}
+
+    return true;
+}
+
 
 template <class T> void AdpThresholding_adpwindow(T* data1d,
                                                   V3DLONG *in_sz,
