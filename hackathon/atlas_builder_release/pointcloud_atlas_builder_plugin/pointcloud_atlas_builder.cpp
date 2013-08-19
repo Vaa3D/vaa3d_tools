@@ -10,8 +10,8 @@
 
 #include "pointcloud_atlas_builder.h"
 
-#include "../v3d_main/basic_c_fun/v3d_message.h"
-#include "../v3d_main/basic_c_fun/basic_surf_objs.h"
+#include "v3d_message.h"
+#include "basic_surf_objs.h"
 
 #include "../pointcloud_atlas_builder/pointcloud_atlas_io.h"
 #include "../pointcloud_atlas_builder/FL_atlasBuilder.h"

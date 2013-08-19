@@ -4,7 +4,8 @@
 
 TEMPLATE      = lib
 CONFIG       += plugin qt 
-INCLUDEPATH  += ../v3d_main/basic_c_fun
+V3DMAIN = ../../../v3d_main
+INCLUDEPATH  += $$V3DMAIN/basic_c_fun
 HEADERS       = pointcloud_atlas_builder.h  \
         	dialog_pointcloudatlas_linkerloader.h \
 #		dialog_pointcloudatlas_detect_coexpression_input.h \
@@ -21,7 +22,7 @@ HEADERS       = pointcloud_atlas_builder.h  \
 		../pointcloud_atlas_builder/FL_atlasBuilder.h \
 		../pointcloud_atlas_builder/converter_pcatlas_data.h \
 		../pointcloud_atlas_builder/FL_registerAffine.h \
-		../v3d_main/cellseg/FL_sort2.h
+		$$V3DMAIN/cellseg/FL_sort2.h
 
 SOURCES       = pointcloud_atlas_builder.cpp  \
         	dialog_pointcloudatlas_linkerloader.cpp \
@@ -47,19 +48,19 @@ FORMS += dialog_pointcloudatlas_linkerloader.ui \
 	dialog_pointcloudatlas_build_atlas.ui
 
 TARGET        = $$qtLibraryTarget(pointcloud_atlas_builder)   #this should be the project name, i.e. the name of the .pro file
-DESTDIR       = /Users/longf/work/v3d_external/bin/plugins/atlas_builder/pointcloud_atlas_builder #better set a subdirectory here so that the plugin will be arranged nicely 
+DESTDIR       = $$V3DMAIN/../bin/plugins/atlas_builder/pointcloud_atlas_builder #better set a subdirectory here so that the plugin will be arranged nicely 
 
 macx:LIBS += -lm \
-    -L../v3d_main/jba/c++ \
-    -lv3dnewmat \
+    -L$$V3DMAIN/jba/c++ \
+    -lv3dnewmat 
 
 win32:LIBS += \
-    -L../v3d_main/jba/c++ \
-    -lv3dnewmat \
+    -L$$V3DMAIN/jba/c++ \
+    -lv3dnewmat 
 
 unix:LIBS += \
-    -L../v3d_main/jba/c++ \
-    -lv3dnewmat \
+    -L$$V3DMAIN/jba/c++ \
+    -lv3dnewmat 
 
 LIBS = $$unique(LIBS)
 
