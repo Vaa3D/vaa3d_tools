@@ -189,9 +189,8 @@ bool proc_app2(PARA_APP2 &p, const QString & versionStr)
         }
     }
     
-    QString outtmpfile = QString(p.p4dImage->getFileName()) + "_extract_tmp000.raw";
-    p4dImageNew->saveImage(qPrintable(outtmpfile));
-    v3d_msg(QString("save immediate input image to ") + outtmpfile, 0);
+    //QString outtmpfile = QString(p.p4dImage->getFileName()) + "_extract_tmp000.raw";
+    //p4dImageNew->saveImage(qPrintable(outtmpfile));  v3d_msg(QString("save immediate input image to ") + outtmpfile, 0);
     
     if (p.bkg_thresh < 0)
     {
@@ -355,9 +354,44 @@ bool proc_app2(PARA_APP2 &p, const QString & versionStr)
         }
     }
     cout<<"======================================="<<endl;
-    cout<<"Pruning neuron tree"<<endl;
+
+    //save a copy of the ini tree
+    cout<<"Save the initial unprunned tree"<<endl;
     vector<MyMarker*> & inswc = outtree;
-    saveSWC_file(QString(p.p4dImage->getFileName()).append("_ini.swc").toStdString(), inswc, infostring);
+    {
+        V3DLONG tmpi;
+
+        vector<MyMarker*> tmpswc;
+        for (tmpi=0; tmpi<tmpswc.size(); tmpi++)
+        {
+            MyMarker * curp = new MyMarker;
+            curp->x = inswc[tmpi]->x;
+            curp->y = inswc[tmpi]->y;
+            curp->z = inswc[tmpi]->z;
+
+            if (dfactor_xy>1) curp->x *= dfactor_xy;
+            curp->x += (p.xc0);
+            if (dfactor_xy>1) curp->x += dfactor_xy/2;
+
+            if (dfactor_xy>1) curp->y *= dfactor_xy;
+            curp->y += (p.yc0);
+            if (dfactor_xy>1) curp->y += dfactor_xy/2;
+
+            if (dfactor_z>1) curp->z *= dfactor_z;
+            curp->z += (p.zc0);
+            if (dfactor_z>1)  curp->z += dfactor_z/2;
+
+            tmpswc.push_back(curp);
+        }
+        saveSWC_file(QString(p.p4dImage->getFileName()).append("_ini.swc").toStdString(), tmpswc, infostring);
+
+        for(tmpi = 0; tmpi < tmpswc.size(); tmpi++) delete tmpswc[i];
+        tmpswc.clear();
+    }
+
+
+
+    cout<<"Pruning neuron tree"<<endl;
 
     vector<MyMarker*> outswc;
     if(p.is_coverage_prune)
@@ -487,7 +521,7 @@ bool proc_app2(PARA_APP2 &p, const QString & versionStr)
     }
     //release memory
     if(phi){delete [] phi; phi = 0;}
-    for(int i = 0; i < outtree.size(); i++) delete outtree[i];
+    for(V3DLONG i = 0; i < outtree.size(); i++) delete outtree[i];
     outtree.clear();
     
     if (!b_menu)

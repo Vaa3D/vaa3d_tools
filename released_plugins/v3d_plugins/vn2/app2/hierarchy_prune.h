@@ -290,7 +290,9 @@ template<class T> bool happ(vector<MyMarker*> &inswc, vector<MyMarker*> & outswc
 				if(p == root_marker) break;
 				p = p->parent;
 			}
-			if(sum_int/tol_num <= bkg_thresh || dark_num/tol_num >= 0.2) delete_index_set.insert(i);
+            if(sum_int/tol_num <= bkg_thresh ||
+               dark_num/tol_num >= 0.2)
+                delete_index_set.insert(i);
 		}
 		vector<HierarchySegment*> tmp_segs;
 		for(int i = 0; i < filter_segs.size(); i++)
