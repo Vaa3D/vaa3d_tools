@@ -10,12 +10,14 @@
 #include <fstream>
 #include <iostream>
 #include <math.h>
-#include <stdlib.h>
 #include <vector>
 #include "stackutil.h"
-#include <Eigen/Dense>
 #include <boost/lexical_cast.hpp>
-using namespace Eigen;
+
+#define WANT_STREAM       // include iostream and iomanipulators
+#include "../../../../v3d_external/v3d_main/jba/newmat11/newmatap.h"
+#include "../../../../v3d_external/v3d_main/jba/newmat11/newmatio.h"
+
 using namespace std;
 Q_EXPORT_PLUGIN2(local_enhancement, local_enhancement);
  
@@ -30,6 +32,7 @@ template <class T> void AdpThresholding_adpwindow(T* data1d,
 
 
 int swapthree(float& dummya, float& dummyb, float& dummyc);
+float abs(float num);
 
 template <class T> void block_detection(T* data1d,
                     V3DLONG *in_sz,
@@ -743,17 +746,33 @@ template <class T> void AdpThresholding_adpwindow(T* data1d,
                         float fxz = 0.25*(data1d[(ze)*M*N+offsetj+xe]+data1d[(zb)*M*N+offsetj+xb]-data1d[(ze)*M*N+offsetj+xb]-data1d[(zb)*M*N+offsetj+xe]);
                         float fyz = 0.25*(data1d[(ze)*M*N+(ye)*N+ix]+data1d[(zb)*M*N+(yb)*N+ix]-data1d[(ze)*M*N+(yb)*N+ix]-data1d[(zb)*M*N+(ye)*N+ix]);
 
-                        Matrix3f A;
+                       /* Matrix3f A;
                         A << fxx,fxy,fxz,fxy,fyy,fyz,fxz,fyz,fzz;
                         SelfAdjointEigenSolver<Matrix3f> eigensolver(A, false);
 
-                        float a1 = eigensolver.eigenvalues()(0);
-                        float a2 = eigensolver.eigenvalues()(1);
-                        float a3 = eigensolver.eigenvalues()(2);
+                        float a11 = eigensolver.eigenvalues()(0);
+                        float a22 = eigensolver.eigenvalues()(1);
+                        float a33 = eigensolver.eigenvalues()(2);*/
+
+                        SymmetricMatrix Cov_Matrix(3);
+                        Cov_Matrix.Row(1) << fxx;
+                        Cov_Matrix.Row(2) << fxy << fyy;
+                        Cov_Matrix.Row(3) << fxz << fyz <<fzz;
+
+                        DiagonalMatrix DD;
+                        //cout << "Matrix" << endl;
+                        //cout << Cov_Matrix << endl <<endl;
+
+                        EigenValues(Cov_Matrix,DD);
+                      //  cout << "EigenValues" << endl;
+                     //   cout <<  DD << endl <<endl;
+                        float a1 = DD(1);
+                        float a2 = DD(2);
+                        float a3 = DD(3);
+
+                      //  printf("\ncomparison %.4f,%.4f,%.4f\n\n\n",a1,a2,a3);
+
                         swapthree(a1, a2, a3);
-                        float output1 = 0;
-                        float output2 = 0;
-                        float output3 = 0;
                         if(a1<0 && a2 < 0)
                         {
                               T dataval =  abs(a2)*(abs(a2)-abs(a3))/abs(a1);
@@ -1174,5 +1193,17 @@ template <class T> void AdpThresholding_adpwindow_v2(T* data1d,
 
         outimg = pImage2;
         return;
+
+}
+
+float abs(float num)
+{
+    float num2;
+    if(num<0)
+        num2 = -num;
+    else
+        num2 = num;
+    return num2;
+
 
 }
