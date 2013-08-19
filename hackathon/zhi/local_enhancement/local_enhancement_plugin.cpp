@@ -130,12 +130,33 @@ void processImage(V3DPluginCallback2 &callback, QWidget *parent)
     ImagePixelType pixeltype = p4DImage->getDatatype();
 
     V3DLONG in_sz[4];
-    sc = 1;
     in_sz[0] = N; in_sz[1] = M; in_sz[2] = P; in_sz[3] = sc;
-    int c = sc;
 
+    //input
+    bool ok1,ok4;
+    unsigned int Ws=1000, c=1;
+
+    Ws = QInputDialog::getInteger(parent, "Block Size",
+                                  "Enter block size:",
+                                  1000, 1, N, 1, &ok1);
+    if(ok1)
+    {
+        if(sc==1)
+        {
+            c=1;
+            ok4=true;
+        }
+        else
+        {
+           c = QInputDialog::getInteger(parent, "Channel",
+                                             "Enter channel NO:",
+                                             1, 1, sc, 1, &ok4);
+        }
+    }
+    else
+        return;
     //soma location
-    V3DLONG offsetc = (c-1)*pagesz;
+    /*V3DLONG offsetc = (c-1)*pagesz;
     int soma_x,soma_y,soma_z;
     LandmarkList soma_center = callback.getLandmark(curwin);
     if(soma_center.count()== 0)
@@ -205,10 +226,10 @@ void processImage(V3DPluginCallback2 &callback, QWidget *parent)
 
     loadImage(outimg_file, gsdtsoma, in_zz, datatype,0);
     remove("temp.v3draw");
-    remove("gsdtImage.v3draw");
+    remove("gsdtImage.v3draw");*/
 
 
-    i = 0;
+    V3DLONG i = 0;
     double th_global = 0;
 
     for(V3DLONG iz = 0; iz < P; iz++)
@@ -231,7 +252,7 @@ void processImage(V3DPluginCallback2 &callback, QWidget *parent)
 
 
 
-    V3DLONG Ws = 1000;
+   // V3DLONG Ws = 1000;
     int county = 0;
     unsigned char* subject1d_y = NULL;
     unsigned char* target1d_y = NULL;
@@ -418,18 +439,18 @@ void processImage(V3DPluginCallback2 &callback, QWidget *parent)
 
 
 
-    void* outimg = 0;
+   /* void* outimg = 0;
     switch (pixeltype)
     {
     case V3D_UINT8: AdpThresholding_adpwindow_v2(data1d, in_sz, c,(unsigned char* &)outimg, target1d_y,gsdtsoma,soma_x,soma_y); break;
     case V3D_UINT16: AdpThresholding_adpwindow_v2((unsigned short int *)data1d, in_sz, c, (unsigned short int* &)outimg,(unsigned short int *)target1d_y,(unsigned short int *)gsdtsoma,soma_x,soma_y); break;
     case V3D_FLOAT32: AdpThresholding_adpwindow_v2((float *)data1d, in_sz, c, (float* &)outimg,(float *)target1d_y,(float *)gsdtsoma,soma_x,soma_y);break;
     default: v3d_msg("Invalid data type. Do nothing."); return;
-    }
+    }*/
 
     // display
     Image4DSimple * new4DImage = new Image4DSimple();
-    new4DImage->setData((unsigned char *)outimg,N, M, P, 1, pixeltype);
+    new4DImage->setData((unsigned char *)target1d_y,N, M, P, 1, pixeltype);
     v3dhandle newwin = callback.newImageWindow();
     callback.setImage(newwin, new4DImage);
     callback.setImageName(newwin, "Local_adaptive_enhancement_result");
@@ -1145,6 +1166,7 @@ template <class T> void AdpThresholding_adpwindow_v2(T* data1d,
         for(V3DLONG iz = 0; iz < P; iz++)
         {
             V3DLONG offsetk = iz*M*N;
+
             for(V3DLONG iy = y-200; iy <  y+200; iy++)
             {
                 V3DLONG offsetj = iy*N;
