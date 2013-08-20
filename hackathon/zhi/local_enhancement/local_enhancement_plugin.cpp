@@ -2,7 +2,7 @@
  * This is a test plugin, you can use it as a demo.
  * 2013-08-05 : by Zhi Zhou
  */
- 
+
 #include "v3d_message.h"
 #include <vector>
 #include "local_enhancement_plugin.h"
@@ -15,91 +15,132 @@
 #include <boost/lexical_cast.hpp>
 
 #define WANT_STREAM       // include iostream and iomanipulators
-#include "../../../../v3d_external/v3d_main/jba/newmat11/newmatap.h"
-#include "../../../../v3d_external/v3d_main/jba/newmat11/newmatio.h"
+#include "../../../v3d_main/jba/newmat11/newmatap.h"
+#include "../../../v3d_main/jba/newmat11/newmatio.h"
 
 using namespace std;
 Q_EXPORT_PLUGIN2(local_enhancement, local_enhancement);
- 
+
 void processImage(V3DPluginCallback2 &callback, QWidget *parent);
 bool processImage1(const V3DPluginArgList & input, V3DPluginArgList & output,V3DPluginCallback2 &callback);
 
 
-template <class T> void AdpThresholding_adpwindow(T* data1d,
-                    V3DLONG *in_sz,
-                    unsigned int c,
-                    T* &outimg,T* gsdtdata1d);
+template <class T> void AdpThresholding_adpwindow(const T* data1d,
+                                                  V3DLONG *in_sz,
+                                                  unsigned int c,
+                                                  T* &outimg, const T* gsdtdata1d);
+
+template <class T> T zhi_abs(T num)
+{
+    return (num<0) ? -num : num;
+}
 
 
-int swapthree(float& dummya, float& dummyb, float& dummyc);
-float abs(float num);
+template <class T> bool swapthree(T& dummya, T& dummyb, T& dummyc)
+{
+
+    if ( (zhi_abs(dummya) >= zhi_abs(dummyb)) && (zhi_abs(dummyb) >= zhi_abs(dummyc)) )
+    {
+    }
+    else if ( (zhi_abs(dummya) >= zhi_abs(dummyc)) && (zhi_abs(dummyc) >= zhi_abs(dummyb)) )
+    {
+        T temp = dummyb;
+        dummyb = dummyc;
+        dummyc = temp;
+    }
+    else if ( (zhi_abs(dummyb) >= zhi_abs(dummya)) && (zhi_abs(dummya) >= zhi_abs(dummyc)) )
+    {
+        T temp = dummya;
+        dummya = dummyb;
+        dummyb = temp;
+    }
+    else if ( (zhi_abs(dummyb) >= zhi_abs(dummyc)) && (zhi_abs(dummyc) >= zhi_abs(dummya)) )
+    {
+        T temp = dummya;
+        dummya = dummyb;
+        dummyb = dummyc;
+        dummyc = temp;
+    }
+    else if ( (zhi_abs(dummyc) >= zhi_abs(dummya)) && (zhi_abs(dummya) >= zhi_abs(dummyb)) )
+    {
+        T temp = dummya;
+        dummya = dummyc;
+        dummyc = dummyb;
+        dummyb = temp;
+    }
+    else if ( (zhi_abs(dummyc) >= zhi_abs(dummyb)) && (zhi_abs(dummyb) >= zhi_abs(dummya)) )
+    {
+        T temp = dummyc;
+        dummyc = dummya;
+        dummya = temp;
+    }
+    else
+    {
+        return false;
+    }
+
+    return true;
+}
+
 
 template <class T> void block_detection(T* data1d,
-                    V3DLONG *in_sz,
-                    unsigned int c,double &th,
-                    T* &outimg,V3DLONG xb, V3DLONG xe, V3DLONG yb,V3DLONG ye);
+                                        V3DLONG *in_sz,
+                                        unsigned int c,double &th,
+                                        T* &outimg,V3DLONG xb, V3DLONG xe, V3DLONG yb,V3DLONG ye);
 template <class SDATATYPE> int pwi_fusing(SDATATYPE *data1d, SDATATYPE *subject1d, V3DLONG *sz_subject, SDATATYPE *target1d, V3DLONG *sz_target, V3DLONG *offset, V3DLONG new_sz0, V3DLONG new_sz1, V3DLONG new_sz2);
 
 template <class T> void soma_detection(T* data1d,
-                    V3DLONG *in_sz,
-                    unsigned int c,
-                    int x,
-                    int y,
-                    V3DLONG somasize,
-                    T* &outimg);
-
-template <class T> void AdpThresholding_adpwindow_v2(T* data1d,
-                    V3DLONG *in_sz,
-                    unsigned int c,
-                    T* &outimg,T* gsdtdata1d,T* gsdtsoma,
-                                                  int x,
-                                                  int y);
-
+                                       V3DLONG *in_sz,
+                                       unsigned int c,
+                                       int x,
+                                       int y,
+                                       V3DLONG somasize,
+                                       T* &outimg);
 
 QStringList local_enhancement::menulist() const
 {
-	return QStringList() 
-		<<tr("localEnhancement")
-		<<tr("about");
+    return QStringList()
+            <<tr("localEnhancement")
+           <<tr("about");
 }
 
 QStringList local_enhancement::funclist() const
 {
-	return QStringList()
-		<<tr("localEnhancement")
-		<<tr("help");
+    return QStringList()
+            <<tr("localEnhancement")
+           <<tr("help");
 }
 
 void local_enhancement::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
 {
-	if (menu_name == tr("localEnhancement"))
-	{
+    if (menu_name == tr("localEnhancement"))
+    {
         processImage(callback,parent);
-	}
-	else
-	{
-		v3d_msg(tr("This is a test plugin, you can use it as a demo.. "
-			"Developed by Zhi Zhou, 2013-08-05"));
-	}
+    }
+    else
+    {
+        v3d_msg(tr("This is a test plugin, you can use it as a demo.. "
+                   "Developed by Zhi Zhou, 2013-08-05"));
+    }
 }
 
 bool local_enhancement::dofunc(const QString & func_name, const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback,  QWidget * parent)
 {
 
-	if (func_name == tr("localEnhancement"))
-	{
+    if (func_name == tr("localEnhancement"))
+    {
         return processImage1(input, output,callback);
-	}
-	else if (func_name == tr("help"))
-	{
-        cout<<"Usage : v3d -x local_enhancement -f localEnhancement -i <inimg_file> -o <outimg_file> -p <ws> <ch>"<<endl;
+    }
+    else if (func_name == tr("help"))
+    {
+        cout<<"Usage : v3d -x dllname -f localEnhancement -i <inimg_file> -o <outimg_file> -p <ws> <ch>"<<endl;
         cout<<endl;
         cout<<"ws          block window size (pixel #), default 1000"<<endl;
         cout<<"ch          the input channel value, default 1 and start from 1, default 1"<<endl;
         cout<<endl;
         cout<<endl;
-	}
-	else return false;
+    }
+    else return false;
 }
 
 void processImage(V3DPluginCallback2 &callback, QWidget *parent)
@@ -137,12 +178,12 @@ void processImage(V3DPluginCallback2 &callback, QWidget *parent)
     unsigned int Ws=1000, c=1;
     if(N < M)
         Ws = QInputDialog::getInteger(parent, "Block Size",
-                                  "Enter block size:",
-                                  1000, 1, N, 1, &ok1);
+                                      "Enter block size:",
+                                      1000, 1, N, 1, &ok1);
     else
         Ws = QInputDialog::getInteger(parent, "Block Size",
-                                  "Enter block size:",
-                                  1000, 1, M, 1, &ok1);
+                                      "Enter block size:",
+                                      1000, 1, M, 1, &ok1);
     if(ok1)
     {
         if(sc==1)
@@ -152,9 +193,9 @@ void processImage(V3DPluginCallback2 &callback, QWidget *parent)
         }
         else
         {
-           c = QInputDialog::getInteger(parent, "Channel",
-                                             "Enter channel NO:",
-                                             1, 1, sc, 1, &ok4);
+            c = QInputDialog::getInteger(parent, "Channel",
+                                         "Enter channel NO:",
+                                         1, 1, sc, 1, &ok4);
         }
     }
     else
@@ -246,9 +287,9 @@ void processImage(V3DPluginCallback2 &callback, QWidget *parent)
             for(V3DLONG ix = 0; ix < N; ix++)
             {
 
-             double PixelVaule = data1d[offsetc+offsetk + offsetj + ix];
-             PixelSum = PixelSum + PixelVaule;
-             i++;
+                double PixelVaule = data1d[offsetc+offsetk + offsetj + ix];
+                PixelSum = PixelSum + PixelVaule;
+                i++;
             }
         }
         th_global = th_global + PixelSum/(M*N*P);
@@ -256,7 +297,7 @@ void processImage(V3DPluginCallback2 &callback, QWidget *parent)
 
 
 
-   // V3DLONG Ws = 1000;
+    // V3DLONG Ws = 1000;
     int county = 0;
     unsigned char* subject1d_y = NULL;
     unsigned char* target1d_y = NULL;
@@ -279,156 +320,152 @@ void processImage(V3DPluginCallback2 &callback, QWidget *parent)
         int count = 0;
         for(V3DLONG ix = 0; ix < N; ix = ix+Ws-Ws/10)
         {
-                V3DLONG xb = ix;
-                V3DLONG xe = ix+Ws-1; if(xe>=N-1) xe = N-1;
+            V3DLONG xb = ix;
+            V3DLONG xe = ix+Ws-1; if(xe>=N-1) xe = N-1;
+
+            double  th = 0;
+            void* blockarea = 0;
+            switch (pixeltype)
+            {
+            case V3D_UINT8: block_detection(data1d, in_sz, c, th,(unsigned char* &)blockarea,xb,xe,yb,ye); break;
+            case V3D_UINT16: block_detection((unsigned short int *)data1d, in_sz, c, th,(unsigned short int* &)blockarea,xb,xe,yb,ye); break;
+            case V3D_FLOAT32: block_detection((float *)data1d, in_sz, c,th,(float* &)blockarea,xb,xe,yb,ye);break;
+            default: v3d_msg("Invalid data type. Do nothing."); return;
+            }
+
+            if(th < th_global) th = th_global;
+            V3DLONG block_sz[4];
+            block_sz[0] = xe-xb+1; block_sz[1] = ye-yb+1; block_sz[2] = P; block_sz[3] = 1;
+            saveImage("temp.v3draw", (unsigned char *)blockarea, block_sz, pixeltype);
+            V3DPluginArgItem arg;
+            V3DPluginArgList input;
+            V3DPluginArgList output;
+
+            arg.type = "random";std::vector<char*> args1;
+            args1.push_back("temp.v3draw"); arg.p = (void *) & args1; input<< arg;
+            arg.type = "random";std::vector<char*> args;
+            char channel = '0';
+            string threshold = boost::lexical_cast<string>(th); char* threshold2 =  new char[threshold.length() + 1]; strcpy(threshold2, threshold.c_str());
+            args.push_back(threshold2);args.push_back("1");args.push_back(&channel);args.push_back("1"); arg.p = (void *) & args; input << arg;
+            arg.type = "random";std::vector<char*> args2;args2.push_back("gsdtImage.v3draw"); arg.p = (void *) & args2; output<< arg;
+
+            QString full_plugin_name = "gsdt";
+            QString func_name = "gsdt";
+
+            callback.callPluginFunc(full_plugin_name,func_name, input,output);
+
+            unsigned char * gsdtblock = 0;
+            int datatype;
+            V3DLONG * in_zz = 0;
+            char * outimg_file = ((vector<char*> *)(output.at(0).p))->at(0);
+            loadImage(outimg_file, gsdtblock, in_zz, datatype,0);
+            remove("temp.v3draw");
+            remove("gsdtImage.v3draw");
+            unsigned char* localEnahancedArea = NULL;
+
+            switch (pixeltype)
+            {
+            case V3D_UINT8: AdpThresholding_adpwindow((unsigned char *)blockarea, block_sz, 1,(unsigned char* &)localEnahancedArea, gsdtblock); break;
+            case V3D_UINT16: AdpThresholding_adpwindow((unsigned short int *)blockarea, block_sz, 1, (unsigned short int* &)localEnahancedArea,(unsigned short int *)gsdtblock); break;
+            case V3D_FLOAT32: AdpThresholding_adpwindow((float *)blockarea, block_sz, 1, (float* &)localEnahancedArea,(float *)gsdtblock);break;
+            default: v3d_msg("Invalid data type. Do nothing."); return;
+            }
 
 
+            if (count==0)
+            {
+
+                V3DLONG targetsize = block_sz[0]*block_sz[1]*block_sz[2];
+                target1d = new unsigned char [targetsize];
+                for(int i = 0; i<targetsize;i++)
+                    target1d[i] = localEnahancedArea[i];
+                szTar[0] = xe-xb+1; szTar[1] = ye-yb+1; szTar[2] = P; szTar[3] = 1;
+
+            }else
+            {
+
+                V3DLONG subjectsize = block_sz[0]*block_sz[1]*block_sz[2];
+                subject1d = new unsigned char [subjectsize];
+                for(int i = 0; i<subjectsize;i++)
+                    subject1d[i] = localEnahancedArea[i];
+                szSub[0] = xe-xb+1; szSub[1] = ye-yb+1; szSub[2] = P; szSub[3] = 1;
+
+                V3DLONG *offset = new V3DLONG [3];
+                offset[0] = xb;
+                offset[1] = 0;
+                offset[2] = 0;
+                new_sz0 = xe+1;
+                new_sz1 = szSub[1];
+                new_sz2 = szSub[2];
+
+                V3DLONG totalplxs = new_sz0*new_sz1*new_sz2;
+                unsigned char* data1d_blended = NULL;
+                data1d_blended = new unsigned char [totalplxs];
+                memset(data1d_blended, 0, sizeof(unsigned char)*totalplxs);
+                int success;
+
+                success = pwi_fusing<unsigned char>((unsigned char *)data1d_blended, (unsigned char *)subject1d, szSub, (unsigned char *)target1d, szTar, offset, new_sz0, new_sz1, new_sz2);
+
+                V3DLONG targetsize = new_sz0*new_sz1*new_sz2;
+                target1d = new unsigned char [targetsize];
+                for(int i = 0; i<targetsize;i++)
+                    target1d[i] = data1d_blended[i];
+                szTar[0] = new_sz0; szTar[1] = new_sz1; szTar[2] = new_sz2; szTar[3] = 1;
 
 
-                 double  th = 0;
-                 void* blockarea = 0;
-                 switch (pixeltype)
-                 {
-                 case V3D_UINT8: block_detection(data1d, in_sz, c, th,(unsigned char* &)blockarea,xb,xe,yb,ye); break;
-                 case V3D_UINT16: block_detection((unsigned short int *)data1d, in_sz, c, th,(unsigned short int* &)blockarea,xb,xe,yb,ye); break;
-                 case V3D_FLOAT32: block_detection((float *)data1d, in_sz, c,th,(float* &)blockarea,xb,xe,yb,ye);break;
-                 default: v3d_msg("Invalid data type. Do nothing."); return;
-                 }
-
-                 if(th < th_global) th = th_global;
-                 V3DLONG block_sz[4];
-                 block_sz[0] = xe-xb+1; block_sz[1] = ye-yb+1; block_sz[2] = P; block_sz[3] = 1;
-                 saveImage("temp.v3draw", (unsigned char *)blockarea, block_sz, pixeltype);
-                 V3DPluginArgItem arg;
-                 V3DPluginArgList input;
-                 V3DPluginArgList output;
-
-
-                 arg.type = "random";std::vector<char*> args1;
-                 args1.push_back("temp.v3draw"); arg.p = (void *) & args1; input<< arg;
-                 arg.type = "random";std::vector<char*> args;
-                 char channel = '0';
-                 string threshold = boost::lexical_cast<string>(th); char* threshold2 =  new char[threshold.length() + 1]; strcpy(threshold2, threshold.c_str());
-                 args.push_back(threshold2);args.push_back("1");args.push_back(&channel);args.push_back("1"); arg.p = (void *) & args; input << arg;
-                 arg.type = "random";std::vector<char*> args2;args2.push_back("gsdtImage.v3draw"); arg.p = (void *) & args2; output<< arg;
-
-                 QString full_plugin_name = "gsdt";
-                 QString func_name = "gsdt";
-
-                 callback.callPluginFunc(full_plugin_name,func_name, input,output);
-
-                 unsigned char * gsdtblock = 0;
-                 int datatype;
-                 V3DLONG * in_zz = 0;
-                 char * outimg_file = ((vector<char*> *)(output.at(0).p))->at(0);
-                 loadImage(outimg_file, gsdtblock, in_zz, datatype,0);
-                 remove("temp.v3draw");
-                 remove("gsdtImage.v3draw");
-                 unsigned char* localEnahancedArea = NULL;
-
-                 switch (pixeltype)
-                 {
-                 case V3D_UINT8: AdpThresholding_adpwindow((unsigned char *)blockarea, block_sz, 1,(unsigned char* &)localEnahancedArea, gsdtblock); break;
-                 case V3D_UINT16: AdpThresholding_adpwindow((unsigned short int *)blockarea, block_sz, 1, (unsigned short int* &)localEnahancedArea,(unsigned short int *)gsdtblock); break;
-                 case V3D_FLOAT32: AdpThresholding_adpwindow((float *)blockarea, block_sz, 1, (float* &)localEnahancedArea,(float *)gsdtblock);break;
-                 default: v3d_msg("Invalid data type. Do nothing."); return;
-                 }
-
-
-                 if (count==0)
-                 {
-
-                     V3DLONG targetsize = block_sz[0]*block_sz[1]*block_sz[2];
-                     target1d = new unsigned char [targetsize];
-                     for(int i = 0; i<targetsize;i++)
-                         target1d[i] = localEnahancedArea[i];
-                     szTar[0] = xe-xb+1; szTar[1] = ye-yb+1; szTar[2] = P; szTar[3] = 1;
-
-                 }else
-                {
-
-                    V3DLONG subjectsize = block_sz[0]*block_sz[1]*block_sz[2];
-                    subject1d = new unsigned char [subjectsize];
-                    for(int i = 0; i<subjectsize;i++)
-                        subject1d[i] = localEnahancedArea[i];
-                    szSub[0] = xe-xb+1; szSub[1] = ye-yb+1; szSub[2] = P; szSub[3] = 1;
-
-                    V3DLONG *offset = new V3DLONG [3];
-                    offset[0] = xb;
-                    offset[1] = 0;
-                    offset[2] = 0;
-                    new_sz0 = xe+1;
-                    new_sz1 = szSub[1];
-                    new_sz2 = szSub[2];
-
-                    V3DLONG totalplxs = new_sz0*new_sz1*new_sz2;
-                    unsigned char* data1d_blended = NULL;
-                    data1d_blended = new unsigned char [totalplxs];
-                    memset(data1d_blended, 0, sizeof(unsigned char)*totalplxs);
-                    int success;
-
-                    success = pwi_fusing<unsigned char>((unsigned char *)data1d_blended, (unsigned char *)subject1d, szSub, (unsigned char *)target1d, szTar, offset, new_sz0, new_sz1, new_sz2);
-
-                    V3DLONG targetsize = new_sz0*new_sz1*new_sz2;
-                    target1d = new unsigned char [targetsize];
-                    for(int i = 0; i<targetsize;i++)
-                        target1d[i] = data1d_blended[i];
-                    szTar[0] = new_sz0; szTar[1] = new_sz1; szTar[2] = new_sz2; szTar[3] = 1;
-
-
-                }
-                count ++;
+            }
+            count ++;
 
         }
 
 
-            if (county==0)
-            {
+        if (county==0)
+        {
 
-                V3DLONG targetsize_y = new_sz0*new_sz1*new_sz2;
-                target1d_y = new unsigned char [targetsize_y];
-                for(int i = 0; i<targetsize_y;i++)
-                    target1d_y[i] = target1d[i];
-                szTar_y[0] = new_sz0; szTar_y[1] = new_sz1; szTar_y[2] = P; szTar_y[3] = 1;
+            V3DLONG targetsize_y = new_sz0*new_sz1*new_sz2;
+            target1d_y = new unsigned char [targetsize_y];
+            for(int i = 0; i<targetsize_y;i++)
+                target1d_y[i] = target1d[i];
+            szTar_y[0] = new_sz0; szTar_y[1] = new_sz1; szTar_y[2] = P; szTar_y[3] = 1;
 
-            }else
-            {
-               V3DLONG subjectsize_y = new_sz0*new_sz1*new_sz2;
-               subject1d_y = new unsigned char [subjectsize_y];
-               for(int i = 0; i<subjectsize_y;i++)
-                   subject1d_y[i] = target1d[i];
-               szSub_y[0] = new_sz0; szSub_y[1] = new_sz1; szSub_y[2] = P; szSub_y[3] = 1;
+        }else
+        {
+            V3DLONG subjectsize_y = new_sz0*new_sz1*new_sz2;
+            subject1d_y = new unsigned char [subjectsize_y];
+            for(int i = 0; i<subjectsize_y;i++)
+                subject1d_y[i] = target1d[i];
+            szSub_y[0] = new_sz0; szSub_y[1] = new_sz1; szSub_y[2] = P; szSub_y[3] = 1;
 
-               V3DLONG *offset = new V3DLONG [3];
-               offset[0] = 0;
-               offset[1] = yb;
-               offset[2] = 0;
-               new_sz0 = szSub_y[0];
-               new_sz1 = ye+1;
-               new_sz2 = szSub_y[2];
+            V3DLONG *offset = new V3DLONG [3];
+            offset[0] = 0;
+            offset[1] = yb;
+            offset[2] = 0;
+            new_sz0 = szSub_y[0];
+            new_sz1 = ye+1;
+            new_sz2 = szSub_y[2];
 
-               V3DLONG totalplxs = new_sz0*new_sz1*new_sz2;
-               unsigned char* data1d_blended_y = NULL;
-               data1d_blended_y = new unsigned char [totalplxs];
-               memset(data1d_blended_y, 0, sizeof(unsigned char)*totalplxs);
-               int success;
-               success = pwi_fusing<unsigned char>((unsigned char *)data1d_blended_y, (unsigned char *)subject1d_y, szSub_y, (unsigned char *)target1d_y, szTar_y, offset, new_sz0, new_sz1, new_sz2);
+            V3DLONG totalplxs = new_sz0*new_sz1*new_sz2;
+            unsigned char* data1d_blended_y = NULL;
+            data1d_blended_y = new unsigned char [totalplxs];
+            memset(data1d_blended_y, 0, sizeof(unsigned char)*totalplxs);
+            int success;
+            success = pwi_fusing<unsigned char>((unsigned char *)data1d_blended_y, (unsigned char *)subject1d_y, szSub_y, (unsigned char *)target1d_y, szTar_y, offset, new_sz0, new_sz1, new_sz2);
 
 
-               V3DLONG targetsize_y = new_sz0*new_sz1*new_sz2;
-               target1d_y = new unsigned char [targetsize_y];
-               for(int i = 0; i<targetsize_y;i++)
-                   target1d_y[i] = data1d_blended_y[i];
-               szTar_y[0] = new_sz0; szTar_y[1] = new_sz1; szTar_y[2] = new_sz2; szTar_y[3] = 1;
-              /* Image4DSimple * new4DImage = new Image4DSimple();
+            V3DLONG targetsize_y = new_sz0*new_sz1*new_sz2;
+            target1d_y = new unsigned char [targetsize_y];
+            for(int i = 0; i<targetsize_y;i++)
+                target1d_y[i] = data1d_blended_y[i];
+            szTar_y[0] = new_sz0; szTar_y[1] = new_sz1; szTar_y[2] = new_sz2; szTar_y[3] = 1;
+            /* Image4DSimple * new4DImage = new Image4DSimple();
                new4DImage->setData((unsigned char *)target1d_y, new_sz0, new_sz1,new_sz2, 1, pixeltype);
                v3dhandle newwin = callback.newImageWindow();
                callback.setImage(newwin, new4DImage);
                callback.setImageName(newwin, "3D adaptive enhancement result");
                callback.updateImageWindow(newwin);*/
-            }
+        }
 
-               /* Image4DSimple * new4DImage = new Image4DSimple();
+        /* Image4DSimple * new4DImage = new Image4DSimple();
                new4DImage->setData((unsigned char *)target1d, new_sz0, new_sz1,new_sz2, 1, pixeltype);
                v3dhandle newwin = callback.newImageWindow();
                callback.setImage(newwin, new4DImage);
@@ -440,17 +477,6 @@ void processImage(V3DPluginCallback2 &callback, QWidget *parent)
         county++;
     }
 
-
-
-
-   /* void* outimg = 0;
-    switch (pixeltype)
-    {
-    case V3D_UINT8: AdpThresholding_adpwindow_v2(data1d, in_sz, c,(unsigned char* &)outimg, target1d_y,gsdtsoma,soma_x,soma_y); break;
-    case V3D_UINT16: AdpThresholding_adpwindow_v2((unsigned short int *)data1d, in_sz, c, (unsigned short int* &)outimg,(unsigned short int *)target1d_y,(unsigned short int *)gsdtsoma,soma_x,soma_y); break;
-    case V3D_FLOAT32: AdpThresholding_adpwindow_v2((float *)data1d, in_sz, c, (float* &)outimg,(float *)target1d_y,(float *)gsdtsoma,soma_x,soma_y);break;
-    default: v3d_msg("Invalid data type. Do nothing."); return;
-    }*/
 
     // display
     Image4DSimple * new4DImage = new Image4DSimple();
@@ -515,9 +541,9 @@ bool processImage1(const V3DPluginArgList & input, V3DPluginArgList & output,V3D
             for(V3DLONG ix = 0; ix < N; ix++)
             {
 
-             double PixelVaule = data1d[offsetc+offsetk + offsetj + ix];
-             PixelSum = PixelSum + PixelVaule;
-             i++;
+                double PixelVaule = data1d[offsetc+offsetk + offsetj + ix];
+                PixelSum = PixelSum + PixelVaule;
+                i++;
             }
         }
         th_global = th_global + PixelSum/(M*N*P);
@@ -554,148 +580,148 @@ bool processImage1(const V3DPluginArgList & input, V3DPluginArgList & output,V3D
         int count = 0;
         for(V3DLONG ix = 0; ix < N; ix = ix+Ws-Ws/10)
         {
-                V3DLONG xb = ix;
-                V3DLONG xe = ix+Ws-1; if(xe>=N-1) xe = N-1;
+            V3DLONG xb = ix;
+            V3DLONG xe = ix+Ws-1; if(xe>=N-1) xe = N-1;
 
 
 
 
-                 double  th = 0;
-                 void* blockarea = 0;
-                 switch (datatype)
-                 {
-                 case V3D_UINT8: block_detection(data1d, in_sz, c, th,(unsigned char* &)blockarea,xb,xe,yb,ye); break;
-                 case V3D_UINT16: block_detection((unsigned short int *)data1d, in_sz, c, th,(unsigned short int* &)blockarea,xb,xe,yb,ye); break;
-                 case V3D_FLOAT32: block_detection((float *)data1d, in_sz, c,th,(float* &)blockarea,xb,xe,yb,ye);break;
-                 default: v3d_msg("Invalid data type. Do nothing."); return false;
-                 }
+            double  th = 0;
+            void* blockarea = 0;
+            switch (datatype)
+            {
+            case V3D_UINT8: block_detection(data1d, in_sz, c, th,(unsigned char* &)blockarea,xb,xe,yb,ye); break;
+            case V3D_UINT16: block_detection((unsigned short int *)data1d, in_sz, c, th,(unsigned short int* &)blockarea,xb,xe,yb,ye); break;
+            case V3D_FLOAT32: block_detection((float *)data1d, in_sz, c,th,(float* &)blockarea,xb,xe,yb,ye);break;
+            default: v3d_msg("Invalid data type. Do nothing."); return false;
+            }
 
-                 if(th < th_global) th = th_global;
-                 V3DLONG block_sz[4];
-                 block_sz[0] = xe-xb+1; block_sz[1] = ye-yb+1; block_sz[2] = P; block_sz[3] = 1;
-                 saveImage("temp.v3draw", (unsigned char *)blockarea, block_sz, datatype);
-                 V3DPluginArgItem arg;
-                 V3DPluginArgList input;
-                 V3DPluginArgList output;
-
-
-                 arg.type = "random";std::vector<char*> args1;
-                 args1.push_back("temp.v3draw"); arg.p = (void *) & args1; input<< arg;
-                 arg.type = "random";std::vector<char*> args;
-                 char channel = '0';
-                 string threshold = boost::lexical_cast<string>(th); char* threshold2 =  new char[threshold.length() + 1]; strcpy(threshold2, threshold.c_str());
-                 args.push_back(threshold2);args.push_back("1");args.push_back(&channel);args.push_back("1"); arg.p = (void *) & args; input << arg;
-                 arg.type = "random";std::vector<char*> args2;args2.push_back("gsdtImage.v3draw"); arg.p = (void *) & args2; output<< arg;
-
-                 QString full_plugin_name = "gsdt";
-                 QString func_name = "gsdt";
-
-                 callback.callPluginFunc(full_plugin_name,func_name, input,output);
-
-                 unsigned char * gsdtblock = 0;
-                 int datatype;
-                 V3DLONG * in_zz = 0;
-                 char * outimg_file = ((vector<char*> *)(output.at(0).p))->at(0);
-                 loadImage(outimg_file, gsdtblock, in_zz, datatype,0);
-                 remove("temp.v3draw");
-                 remove("gsdtImage.v3draw");
-                 unsigned char* localEnahancedArea = NULL;
-
-                 switch (datatype)
-                 {
-                 case V3D_UINT8: AdpThresholding_adpwindow((unsigned char *)blockarea, block_sz, 1,(unsigned char* &)localEnahancedArea, gsdtblock); break;
-                 case V3D_UINT16: AdpThresholding_adpwindow((unsigned short int *)blockarea, block_sz, 1, (unsigned short int* &)localEnahancedArea,(unsigned short int *)gsdtblock); break;
-                 case V3D_FLOAT32: AdpThresholding_adpwindow((float *)blockarea, block_sz, 1, (float* &)localEnahancedArea,(float *)gsdtblock);break;
-                 default: v3d_msg("Invalid data type. Do nothing."); return false;
-                 }
+            if(th < th_global) th = th_global;
+            V3DLONG block_sz[4];
+            block_sz[0] = xe-xb+1; block_sz[1] = ye-yb+1; block_sz[2] = P; block_sz[3] = 1;
+            saveImage("temp.v3draw", (unsigned char *)blockarea, block_sz, datatype);
+            V3DPluginArgItem arg;
+            V3DPluginArgList input;
+            V3DPluginArgList output;
 
 
-                 if (count==0)
-                 {
+            arg.type = "random";std::vector<char*> args1;
+            args1.push_back("temp.v3draw"); arg.p = (void *) & args1; input<< arg;
+            arg.type = "random";std::vector<char*> args;
+            char channel = '0';
+            string threshold = boost::lexical_cast<string>(th); char* threshold2 =  new char[threshold.length() + 1]; strcpy(threshold2, threshold.c_str());
+            args.push_back(threshold2);args.push_back("1");args.push_back(&channel);args.push_back("1"); arg.p = (void *) & args; input << arg;
+            arg.type = "random";std::vector<char*> args2;args2.push_back("gsdtImage.v3draw"); arg.p = (void *) & args2; output<< arg;
 
-                     V3DLONG targetsize = block_sz[0]*block_sz[1]*block_sz[2];
-                     target1d = new unsigned char [targetsize];
-                     for(int i = 0; i<targetsize;i++)
-                         target1d[i] = localEnahancedArea[i];
-                     szTar[0] = xe-xb+1; szTar[1] = ye-yb+1; szTar[2] = P; szTar[3] = 1;
+            QString full_plugin_name = "gsdt";
+            QString func_name = "gsdt";
 
-                 }else
-                {
+            callback.callPluginFunc(full_plugin_name,func_name, input,output);
 
-                    V3DLONG subjectsize = block_sz[0]*block_sz[1]*block_sz[2];
-                    subject1d = new unsigned char [subjectsize];
-                    for(int i = 0; i<subjectsize;i++)
-                        subject1d[i] = localEnahancedArea[i];
-                    szSub[0] = xe-xb+1; szSub[1] = ye-yb+1; szSub[2] = P; szSub[3] = 1;
+            unsigned char * gsdtblock = 0;
+            int datatype;
+            V3DLONG * in_zz = 0;
+            char * outimg_file = ((vector<char*> *)(output.at(0).p))->at(0);
+            loadImage(outimg_file, gsdtblock, in_zz, datatype,0);
+            remove("temp.v3draw");
+            remove("gsdtImage.v3draw");
+            unsigned char* localEnahancedArea = NULL;
 
-                    V3DLONG *offset = new V3DLONG [3];
-                    offset[0] = xb;
-                    offset[1] = 0;
-                    offset[2] = 0;
-                    new_sz0 = xe+1;
-                    new_sz1 = szSub[1];
-                    new_sz2 = szSub[2];
-
-                    V3DLONG totalplxs = new_sz0*new_sz1*new_sz2;
-                    unsigned char* data1d_blended = NULL;
-                    data1d_blended = new unsigned char [totalplxs];
-                    memset(data1d_blended, 0, sizeof(unsigned char)*totalplxs);
-                    int success;
-
-                    success = pwi_fusing<unsigned char>((unsigned char *)data1d_blended, (unsigned char *)subject1d, szSub, (unsigned char *)target1d, szTar, offset, new_sz0, new_sz1, new_sz2);
-
-                    V3DLONG targetsize = new_sz0*new_sz1*new_sz2;
-                    target1d = new unsigned char [targetsize];
-                    for(int i = 0; i<targetsize;i++)
-                        target1d[i] = data1d_blended[i];
-                    szTar[0] = new_sz0; szTar[1] = new_sz1; szTar[2] = new_sz2; szTar[3] = 1;
+            switch (datatype)
+            {
+            case V3D_UINT8: AdpThresholding_adpwindow((unsigned char *)blockarea, block_sz, 1,(unsigned char* &)localEnahancedArea, gsdtblock); break;
+            case V3D_UINT16: AdpThresholding_adpwindow((unsigned short int *)blockarea, block_sz, 1, (unsigned short int* &)localEnahancedArea,(unsigned short int *)gsdtblock); break;
+            case V3D_FLOAT32: AdpThresholding_adpwindow((float *)blockarea, block_sz, 1, (float* &)localEnahancedArea,(float *)gsdtblock);break;
+            default: v3d_msg("Invalid data type. Do nothing."); return false;
+            }
 
 
-                }
-                count ++;
+            if (count==0)
+            {
+
+                V3DLONG targetsize = block_sz[0]*block_sz[1]*block_sz[2];
+                target1d = new unsigned char [targetsize];
+                for(int i = 0; i<targetsize;i++)
+                    target1d[i] = localEnahancedArea[i];
+                szTar[0] = xe-xb+1; szTar[1] = ye-yb+1; szTar[2] = P; szTar[3] = 1;
+
+            }else
+            {
+
+                V3DLONG subjectsize = block_sz[0]*block_sz[1]*block_sz[2];
+                subject1d = new unsigned char [subjectsize];
+                for(int i = 0; i<subjectsize;i++)
+                    subject1d[i] = localEnahancedArea[i];
+                szSub[0] = xe-xb+1; szSub[1] = ye-yb+1; szSub[2] = P; szSub[3] = 1;
+
+                V3DLONG *offset = new V3DLONG [3];
+                offset[0] = xb;
+                offset[1] = 0;
+                offset[2] = 0;
+                new_sz0 = xe+1;
+                new_sz1 = szSub[1];
+                new_sz2 = szSub[2];
+
+                V3DLONG totalplxs = new_sz0*new_sz1*new_sz2;
+                unsigned char* data1d_blended = NULL;
+                data1d_blended = new unsigned char [totalplxs];
+                memset(data1d_blended, 0, sizeof(unsigned char)*totalplxs);
+                int success;
+
+                success = pwi_fusing<unsigned char>((unsigned char *)data1d_blended, (unsigned char *)subject1d, szSub, (unsigned char *)target1d, szTar, offset, new_sz0, new_sz1, new_sz2);
+
+                V3DLONG targetsize = new_sz0*new_sz1*new_sz2;
+                target1d = new unsigned char [targetsize];
+                for(int i = 0; i<targetsize;i++)
+                    target1d[i] = data1d_blended[i];
+                szTar[0] = new_sz0; szTar[1] = new_sz1; szTar[2] = new_sz2; szTar[3] = 1;
+
+
+            }
+            count ++;
 
         }
 
 
-            if (county==0)
-            {
+        if (county==0)
+        {
 
-                V3DLONG targetsize_y = new_sz0*new_sz1*new_sz2;
-                target1d_y = new unsigned char [targetsize_y];
-                for(int i = 0; i<targetsize_y;i++)
-                    target1d_y[i] = target1d[i];
-                szTar_y[0] = new_sz0; szTar_y[1] = new_sz1; szTar_y[2] = P; szTar_y[3] = 1;
+            V3DLONG targetsize_y = new_sz0*new_sz1*new_sz2;
+            target1d_y = new unsigned char [targetsize_y];
+            for(int i = 0; i<targetsize_y;i++)
+                target1d_y[i] = target1d[i];
+            szTar_y[0] = new_sz0; szTar_y[1] = new_sz1; szTar_y[2] = P; szTar_y[3] = 1;
 
-            }else
-            {
-               V3DLONG subjectsize_y = new_sz0*new_sz1*new_sz2;
-               subject1d_y = new unsigned char [subjectsize_y];
-               for(int i = 0; i<subjectsize_y;i++)
-                   subject1d_y[i] = target1d[i];
-               szSub_y[0] = new_sz0; szSub_y[1] = new_sz1; szSub_y[2] = P; szSub_y[3] = 1;
+        }else
+        {
+            V3DLONG subjectsize_y = new_sz0*new_sz1*new_sz2;
+            subject1d_y = new unsigned char [subjectsize_y];
+            for(int i = 0; i<subjectsize_y;i++)
+                subject1d_y[i] = target1d[i];
+            szSub_y[0] = new_sz0; szSub_y[1] = new_sz1; szSub_y[2] = P; szSub_y[3] = 1;
 
-               V3DLONG *offset = new V3DLONG [3];
-               offset[0] = 0;
-               offset[1] = yb;
-               offset[2] = 0;
-               new_sz0 = szSub_y[0];
-               new_sz1 = ye+1;
-               new_sz2 = szSub_y[2];
+            V3DLONG *offset = new V3DLONG [3];
+            offset[0] = 0;
+            offset[1] = yb;
+            offset[2] = 0;
+            new_sz0 = szSub_y[0];
+            new_sz1 = ye+1;
+            new_sz2 = szSub_y[2];
 
-               V3DLONG totalplxs = new_sz0*new_sz1*new_sz2;
-               unsigned char* data1d_blended_y = NULL;
-               data1d_blended_y = new unsigned char [totalplxs];
-               memset(data1d_blended_y, 0, sizeof(unsigned char)*totalplxs);
-               int success;
-               success = pwi_fusing<unsigned char>((unsigned char *)data1d_blended_y, (unsigned char *)subject1d_y, szSub_y, (unsigned char *)target1d_y, szTar_y, offset, new_sz0, new_sz1, new_sz2);
+            V3DLONG totalplxs = new_sz0*new_sz1*new_sz2;
+            unsigned char* data1d_blended_y = NULL;
+            data1d_blended_y = new unsigned char [totalplxs];
+            memset(data1d_blended_y, 0, sizeof(unsigned char)*totalplxs);
+            int success;
+            success = pwi_fusing<unsigned char>((unsigned char *)data1d_blended_y, (unsigned char *)subject1d_y, szSub_y, (unsigned char *)target1d_y, szTar_y, offset, new_sz0, new_sz1, new_sz2);
 
 
-               V3DLONG targetsize_y = new_sz0*new_sz1*new_sz2;
-               target1d_y = new unsigned char [targetsize_y];
-               for(int i = 0; i<targetsize_y;i++)
-                   target1d_y[i] = data1d_blended_y[i];
-               szTar_y[0] = new_sz0; szTar_y[1] = new_sz1; szTar_y[2] = new_sz2; szTar_y[3] = 1;
-            }
+            V3DLONG targetsize_y = new_sz0*new_sz1*new_sz2;
+            target1d_y = new unsigned char [targetsize_y];
+            for(int i = 0; i<targetsize_y;i++)
+                target1d_y[i] = data1d_blended_y[i];
+            szTar_y[0] = new_sz0; szTar_y[1] = new_sz1; szTar_y[2] = new_sz2; szTar_y[3] = 1;
+        }
 
 
         county++;
@@ -714,261 +740,190 @@ bool processImage1(const V3DPluginArgList & input, V3DPluginArgList & output,V3D
 }
 
 
-template <class T> void AdpThresholding_adpwindow(T* data1d,
+template <class T> void AdpThresholding_adpwindow(const T* data1d,
                                                   V3DLONG *in_sz,
                                                   unsigned int c,
-                                                  T* &outimg,T* gsdtdatald)
+                                                  T* &outimg, const T* gsdtdatald)
 {
+    if (outimg)
+    {
+        v3d_msg("Warning: you have supplied an non-empty output image pointer. This program will force to free it now. But you may want to double check.");
+        delete []outimg;
+        outimg = 0;
+    }
 
+    V3DLONG N = in_sz[0];
+    V3DLONG M = in_sz[1];
+    V3DLONG P = in_sz[2];
+    V3DLONG sc = in_sz[3];
+    V3DLONG pagesz = N*M*P;
+    int Wx,Wy,Wz;
+    V3DLONG offsetc = (c-1)*pagesz;
 
-         V3DLONG N = in_sz[0];
-         V3DLONG M = in_sz[1];
-         V3DLONG P = in_sz[2];
-         V3DLONG sc = in_sz[3];
-         V3DLONG pagesz = N*M*P;
-         int Wx,Wy,Wz;
-         V3DLONG offsetc = (c-1)*pagesz;
-
-         T *pImage = new T [pagesz];
-        if (!pImage)
-        {
-            printf("Fail to allocate memory.\n");
-            return;
-         }
-         else
-         {
-            for(V3DLONG i=0; i<pagesz; i++)
-                pImage[i] = 0;
-          }
-
-           T maxfl = 0;
-         //outimg = pImage;
-
-        for(V3DLONG iz = 0; iz < P; iz++)
-        {
-            printf("Enhancement : %d %% completed \n", iz);
-            V3DLONG offsetk = iz*M*N;
-            for(V3DLONG iy = 0; iy < M; iy++)
-            {
-                V3DLONG offsetj = iy*N;
-                for(V3DLONG ix = 0; ix < N; ix++)
-                {
-
-                    T GsdtValue = gsdtdatald[offsetk + offsetj + ix];
-                    T PixelValue = data1d[offsetc+offsetk + offsetj + ix];
-                    Wx = (int)round((log(GsdtValue)/log(2)));
-                    //printf("%d %d\n",PixelValue,Wx);
-
-                    if (Wx > 0 && PixelValue > 0)
-                    {
-                        Wy = Wx;
-                        Wz = Wx*2;
-
-                        V3DLONG xb = ix-Wx; if(xb<0) xb = 0;
-                        V3DLONG xe = ix+Wx; if(xe>=N-1) xe = N-1;
-                        V3DLONG yb = iy-Wy; if(yb<0) yb = 0;
-                        V3DLONG ye = iy+Wy; if(ye>=M-1) ye = M-1;
-                        V3DLONG zb = iz-Wz; if(zb<0) zb = 0;
-                        V3DLONG ze = iz+Wz; if(ze>=P-1) ze = P-1;
-
-                       // printf("window size is %d\n",Wx);
-                        //Seletive approach
-                        float  fxx = data1d[offsetk+offsetj+xe]+ data1d[offsetk+offsetj+xb]- 2*data1d[offsetk+offsetj+ix];
-                        float fyy = data1d[offsetk+(ye)*N+ix]+data1d[offsetk+(yb)*N+ix]-2*data1d[offsetk+offsetj+ix];
-                        float fzz = data1d[(ze)*M*N+offsetj+ix]+data1d[(zb)*M*N+offsetj+ix]- 2*data1d[offsetk+offsetj+ix];
-
-                        float fxy = 0.25*(data1d[offsetk+(ye)*N+xe]+data1d[offsetk+(yb)*N+xb]-data1d[offsetk+(ye)*N+xb]-data1d[offsetk+(yb)*N+xe]);
-                        float fxz = 0.25*(data1d[(ze)*M*N+offsetj+xe]+data1d[(zb)*M*N+offsetj+xb]-data1d[(ze)*M*N+offsetj+xb]-data1d[(zb)*M*N+offsetj+xe]);
-                        float fyz = 0.25*(data1d[(ze)*M*N+(ye)*N+ix]+data1d[(zb)*M*N+(yb)*N+ix]-data1d[(ze)*M*N+(yb)*N+ix]-data1d[(zb)*M*N+(ye)*N+ix]);
-
-                       /* Matrix3f A;
-                        A << fxx,fxy,fxz,fxy,fyy,fyz,fxz,fyz,fzz;
-                        SelfAdjointEigenSolver<Matrix3f> eigensolver(A, false);
-
-                        float a11 = eigensolver.eigenvalues()(0);
-                        float a22 = eigensolver.eigenvalues()(1);
-                        float a33 = eigensolver.eigenvalues()(2);*/
-
-                        SymmetricMatrix Cov_Matrix(3);
-                        Cov_Matrix.Row(1) << fxx;
-                        Cov_Matrix.Row(2) << fxy << fyy;
-                        Cov_Matrix.Row(3) << fxz << fyz <<fzz;
-
-                        DiagonalMatrix DD;
-                        //cout << "Matrix" << endl;
-                        //cout << Cov_Matrix << endl <<endl;
-
-                        EigenValues(Cov_Matrix,DD);
-                      //  cout << "EigenValues" << endl;
-                     //   cout <<  DD << endl <<endl;
-                        float a1 = DD(1);
-                        float a2 = DD(2);
-                        float a3 = DD(3);
-
-                      //  printf("\ncomparison %.4f,%.4f,%.4f\n\n\n",a1,a2,a3);
-
-                        swapthree(a1, a2, a3);
-                        if(a1<0 && a2 < 0)
-                        {
-                              T dataval =  abs(a2)*(abs(a2)-abs(a3))/abs(a1);
-                              pImage[offsetk+offsetj+ix] = dataval;
-                              if(maxfl<dataval) maxfl = dataval;
-                        }
-
-
-                    }else
-                      pImage[offsetk+offsetj+ix] = 0;
-                }
-            }
-        }
-
-       T *pImage2 = new T [pagesz];
-       if (!pImage2)
-       {
-           printf("Fail to allocate memory.\n");
-           return;
-        }
-        else
-        {
-           for(V3DLONG i=0; i<pagesz; i++)
-               pImage2[i] = 0;
-         }
-       for(V3DLONG iz = 0; iz < P; iz++)
-        {
-            V3DLONG offsetk = iz*M*N;
-            for(V3DLONG iy = 0; iy < M; iy++)
-            {
-                V3DLONG offsetj = iy*N;
-                for(V3DLONG ix = 0; ix < N; ix++)
-                {
-                             T dataval2 = 1+254*pImage[offsetk+offsetj+ix]/maxfl;
-                             pImage2[offsetk+offsetj+ix] = dataval2;
-
-                }
-
-
-            }
-
-        }
-        outimg = pImage2;
+    T *pImage = new T [pagesz];
+    if (!pImage)
+    {
+        printf("Fail to allocate memory.\n");
         return;
-
-}
-int swapthree(float& dummya, float& dummyb, float& dummyc)
-{
-
-    if ( (abs(dummya) >= abs(dummyb)) && (abs(dummyb) >= abs(dummyc)) )
-    {
-        return 1;
     }
-
-
-    else if ( (abs(dummya) >= abs(dummyc)) && (abs(dummyc) >= abs(dummyb)) )
-
-    {
-        float temp = dummyb;
-        dummyb = dummyc;
-        dummyc = temp;
-
-        return 1;
-    }
-
-    else if ( (abs(dummyb) >= abs(dummya)) && (abs(dummya) >= abs(dummyc)) )
-    {
-        float temp = dummya;
-        dummya = dummyb;
-        dummyb = temp;
-
-        return 1;
-    }
-
-
-    else if ( (abs(dummyb) >= abs(dummyc)) && (abs(dummyc) >= abs(dummya)) )
-    {
-        float temp = dummya;
-        dummya = dummyb;
-        dummyb = dummyc;
-        dummyc = temp;
-
-        return 1;
-    }
-
-
-    else if ( (abs(dummyc) >= abs(dummya)) && (abs(dummya) >= abs(dummyb)) )
-    {
-        float temp = dummya;
-        dummya = dummyc;
-        dummyc = dummyb;
-        dummyb = temp;
-
-        return 1;
-    }
-
-
-    else if ( (abs(dummyc) >= abs(dummyb)) && (abs(dummyb) >= abs(dummya)) )
-    {
-        float temp = dummyc;
-        dummyc = dummya;
-        dummya = temp;
-
-        return 1;
-    }
-
-
     else
-       {
-           return 0;
-       }
+    {
+        for(V3DLONG i=0; i<pagesz; i++)
+            pImage[i] = 0;
+    }
 
-}
+    T maxfl = 0;
 
-template <class T> void block_detection(T* data1d,
-                                       V3DLONG *in_sz,
-                                       unsigned int c,double &th,
-                                       T* &outimg,V3DLONG xb,V3DLONG xe,V3DLONG yb,V3DLONG ye)
-
-{
-
-
-         V3DLONG N = in_sz[0];
-         V3DLONG M = in_sz[1];
-         V3DLONG P = in_sz[2];
-         V3DLONG pagesz = N*M*P;
-         V3DLONG offsetc = (c-1)*pagesz;
-         T *pImage = new T [(xe-xb+1)*(ye-yb+1)*P];
-         double th1 = 0;
-         if (!pImage)
-         {
-            printf("Fail to allocate memory.\n");
-            return;
-         }
-         else
-         {
-            int i = 0;
-            for(V3DLONG iz = 0; iz < P; iz++)
+    for(V3DLONG iz = 0; iz < P; iz++)
+    {
+        printf("\r Enhancement : %d %% completed ", int(float(iz)/P*100)); fflush(stdout);
+        V3DLONG offsetk = iz*M*N;
+        for(V3DLONG iy = 0; iy < M; iy++)
+        {
+            V3DLONG offsetj = iy*N;
+            for(V3DLONG ix = 0; ix < N; ix++)
             {
-                double PixelSum = 0;
+                T GsdtValue = gsdtdatald[offsetk + offsetj + ix];
+                T PixelValue = data1d[offsetc+offsetk + offsetj + ix];
+                Wx = (int)round((log(GsdtValue)/log(2)));
+                //printf("%d %d\n",PixelValue,Wx);
 
-                V3DLONG offsetk = iz*M*N;
-                for(V3DLONG iy = yb; iy < ye+1; iy++)
+                if (Wx > 0 && PixelValue > 0)
                 {
-                    V3DLONG offsetj = iy*N;
-                    for(V3DLONG ix = xb; ix < xe+1; ix++)
-                    {
+                    Wy = Wx;
+                    Wz = Wx*2;
 
-                        T PixelValue = data1d[offsetc+offsetk + offsetj + ix];
-                        pImage[i] = PixelValue;
-                        PixelSum = PixelSum + PixelValue;
-                        i++;
+                    V3DLONG xb = ix-Wx; if(xb<0) xb = 0;
+                    V3DLONG xe = ix+Wx; if(xe>=N-1) xe = N-1;
+                    V3DLONG yb = iy-Wy; if(yb<0) yb = 0;
+                    V3DLONG ye = iy+Wy; if(ye>=M-1) ye = M-1;
+                    V3DLONG zb = iz-Wz; if(zb<0) zb = 0;
+                    V3DLONG ze = iz+Wz; if(ze>=P-1) ze = P-1;
+
+                    // printf("window size is %d\n",Wx);
+                    //Seletive approach
+                    double fxx = data1d[offsetk+offsetj+xe]+ data1d[offsetk+offsetj+xb]- 2*data1d[offsetk+offsetj+ix];
+                    double fyy = data1d[offsetk+(ye)*N+ix]+data1d[offsetk+(yb)*N+ix]-2*data1d[offsetk+offsetj+ix];
+                    double fzz = data1d[(ze)*M*N+offsetj+ix]+data1d[(zb)*M*N+offsetj+ix]- 2*data1d[offsetk+offsetj+ix];
+
+                    double fxy = 0.25*(data1d[offsetk+(ye)*N+xe]+data1d[offsetk+(yb)*N+xb]-data1d[offsetk+(ye)*N+xb]-data1d[offsetk+(yb)*N+xe]);
+                    double fxz = 0.25*(data1d[(ze)*M*N+offsetj+xe]+data1d[(zb)*M*N+offsetj+xb]-data1d[(ze)*M*N+offsetj+xb]-data1d[(zb)*M*N+offsetj+xe]);
+                    double fyz = 0.25*(data1d[(ze)*M*N+(ye)*N+ix]+data1d[(zb)*M*N+(yb)*N+ix]-data1d[(ze)*M*N+(yb)*N+ix]-data1d[(zb)*M*N+(ye)*N+ix]);
+
+                    SymmetricMatrix Cov_Matrix(3);
+                    Cov_Matrix.Row(1) << fxx;
+                    Cov_Matrix.Row(2) << fxy << fyy;
+                    Cov_Matrix.Row(3) << fxz << fyz <<fzz;
+
+                    DiagonalMatrix DD;
+                    //cout << "Matrix" << endl;
+                    //cout << Cov_Matrix << endl <<endl;
+
+                    EigenValues(Cov_Matrix,DD);
+                    //  cout << "EigenValues" << endl;
+                    //   cout <<  DD << endl <<endl;
+                    double a1 = DD(1), a2 = DD(2), a3 = DD(3);
+
+                    //  printf("\ncomparison %.4f,%.4f,%.4f\n\n\n",a1,a2,a3);
+
+                    swapthree(a1, a2, a3);
+                    if(a1<0 && a2 < 0)
+                    {
+                        T dataval =  zhi_abs(a2)*(zhi_abs(a2)-zhi_abs(a3))/zhi_abs(a1);
+                        pImage[offsetk+offsetj+ix] = dataval;
+                        if(maxfl<dataval) maxfl = dataval;
                     }
                 }
-                 th1 = th1 + PixelSum/((xe-xb+1)*(ye-yb+1)*P);
-
-
+                else
+                    pImage[offsetk+offsetj+ix] = 0;
             }
         }
-        th = th1;
-        outimg = pImage;
+    }
+
+    printf("\n");
+
+    T *pImage2 = new T [pagesz];
+    if (!pImage2)
+    {
+        printf("Fail to allocate memory.\n");
+        return;
+    }
+    else
+    {
+        for(V3DLONG i=0; i<pagesz; i++)
+            pImage2[i] = 0;
+    }
+
+    if (maxfl>0)
+    {
+        for(V3DLONG iz = 0; iz < P; iz++)
+        {
+            V3DLONG offsetk = iz*M*N;
+            for(V3DLONG iy = 0; iy < M; iy++)
+            {
+                V3DLONG offsetj = iy*N;
+                for(V3DLONG ix = 0; ix < N; ix++)
+                {
+                    T dataval2 = 1+254*pImage[offsetk+offsetj+ix]/maxfl;
+                    pImage2[offsetk+offsetj+ix] = dataval2;
+
+                }
+            }
+        }
+    }
+    outimg = pImage2;
+    return;
+
+}
+
+
+template <class T> void block_detection(T* data1d,
+                                        V3DLONG *in_sz,
+                                        unsigned int c,double &th,
+                                        T* &outimg,V3DLONG xb,V3DLONG xe,V3DLONG yb,V3DLONG ye)
+
+{
+
+
+    V3DLONG N = in_sz[0];
+    V3DLONG M = in_sz[1];
+    V3DLONG P = in_sz[2];
+    V3DLONG pagesz = N*M*P;
+    V3DLONG offsetc = (c-1)*pagesz;
+    T *pImage = new T [(xe-xb+1)*(ye-yb+1)*P];
+    double th1 = 0;
+    if (!pImage)
+    {
+        printf("Fail to allocate memory.\n");
+        return;
+    }
+    else
+    {
+        int i = 0;
+        for(V3DLONG iz = 0; iz < P; iz++)
+        {
+            double PixelSum = 0;
+
+            V3DLONG offsetk = iz*M*N;
+            for(V3DLONG iy = yb; iy < ye+1; iy++)
+            {
+                V3DLONG offsetj = iy*N;
+                for(V3DLONG ix = xb; ix < xe+1; ix++)
+                {
+
+                    T PixelValue = data1d[offsetc+offsetk + offsetj + ix];
+                    pImage[i] = PixelValue;
+                    PixelSum = PixelSum + PixelValue;
+                    i++;
+                }
+            }
+            th1 = th1 + PixelSum/((xe-xb+1)*(ye-yb+1)*P);
+
+
+        }
+    }
+    th = th1;
+    outimg = pImage;
 
 }
 
@@ -1064,7 +1019,7 @@ int pwi_fusing(SDATATYPE *data1d, SDATATYPE *subject1d, V3DLONG *sz_subject, SDA
                 V3DLONG offsets_j = offsets_k + (j-ty_start)*tx;
                 for(V3DLONG i=tx_start; i<tx_end; i++)
                 {
-                     V3DLONG idx = offset_j + i;
+                    V3DLONG idx = offset_j + i;
                     if(data1d[idx])
                     {
                         if(offset[0] > 0)
@@ -1112,134 +1067,123 @@ template <class T> void soma_detection(T* data1d,
 {
 
 
-         V3DLONG N = in_sz[0];
-         V3DLONG M = in_sz[1];
-         V3DLONG P = in_sz[2];
-         V3DLONG pagesz = N*M*P;
-         V3DLONG offsetc = (c-1)*pagesz;
+    V3DLONG N = in_sz[0];
+    V3DLONG M = in_sz[1];
+    V3DLONG P = in_sz[2];
+    V3DLONG pagesz = N*M*P;
+    V3DLONG offsetc = (c-1)*pagesz;
 
-         T *pImage = new T [somasize];
-        if (!pImage)
-        {
-            printf("Fail to allocate memory.\n");
-            return;
-         }
-         else
-         {
-            int i = 0;
-            for(V3DLONG iz = 0; iz < P; iz++)
-            {
-                V3DLONG offsetk = iz*M*N;
-                for(V3DLONG iy = y-200; iy < y+200; iy++)
-                {
-                    V3DLONG offsetj = iy*N;
-                    for(V3DLONG ix = x-200; ix < x+200; ix++)
-                    {
-
-                        T PixelValue = data1d[offsetc+offsetk + offsetj + ix];
-                        pImage[i] = PixelValue;
-                        i++;
-                    }
-                }
-            }
-        }
-
-        outimg = pImage;
-}
-
-template <class T> void AdpThresholding_adpwindow_v2(T* data1d,
-                                                  V3DLONG *in_sz,
-                                                  unsigned int c,
-                                                  T* &outimg,
-                                                  T* gsdtdatald,T* gsdtsoma,
-                                                  int x,
-                                                  int y)
-{
-
-         V3DLONG N = in_sz[0];
-         V3DLONG M = in_sz[1];
-         V3DLONG P = in_sz[2];
-         V3DLONG sc = in_sz[3];
-         V3DLONG pagesz = N*M*P;
-         V3DLONG offsetc = (c-1)*pagesz;
-
-         int Th_gsdt = 150;
-
-        T *pSoma = new T [pagesz];
-        if (!pSoma)
-       {
-           printf("Fail to allocate memory.\n");
-           return;
-        }
-        else
-        {
-           for(V3DLONG i=0; i<pagesz; i++)
-               pSoma[i] = 0;
-         }
-       int i = 0;
+    T *pImage = new T [somasize];
+    if (!pImage)
+    {
+        printf("Fail to allocate memory.\n");
+        return;
+    }
+    else
+    {
+        int i = 0;
         for(V3DLONG iz = 0; iz < P; iz++)
         {
             V3DLONG offsetk = iz*M*N;
-
-            for(V3DLONG iy = y-200; iy <  y+200; iy++)
+            for(V3DLONG iy = y-200; iy < y+200; iy++)
             {
                 V3DLONG offsetj = iy*N;
                 for(V3DLONG ix = x-200; ix < x+200; ix++)
                 {
-                    pSoma[offsetk + offsetj + ix] = gsdtsoma[i];
+
+                    T PixelValue = data1d[offsetc+offsetk + offsetj + ix];
+                    pImage[i] = PixelValue;
                     i++;
                 }
             }
         }
+    }
 
+    outimg = pImage;
+}
 
-       T *pImage2 = new T [pagesz];
-       if (!pImage2)
-       {
-           printf("Fail to allocate memory.\n");
-           return;
-        }
-        else
+template <class T> void AdpThresholding_adpwindow_v2(T* data1d,
+                                                     V3DLONG *in_sz,
+                                                     unsigned int c,
+                                                     T* &outimg,
+                                                     T* gsdtdatald,T* gsdtsoma,
+                                                     int x,
+                                                     int y)
+{
+
+    V3DLONG N = in_sz[0];
+    V3DLONG M = in_sz[1];
+    V3DLONG P = in_sz[2];
+    V3DLONG sc = in_sz[3];
+    V3DLONG pagesz = N*M*P;
+    V3DLONG offsetc = (c-1)*pagesz;
+
+    int Th_gsdt = 150;
+
+    T *pSoma = new T [pagesz];
+    if (!pSoma)
+    {
+        printf("Fail to allocate memory.\n");
+        return;
+    }
+    else
+    {
+        for(V3DLONG i=0; i<pagesz; i++)
+            pSoma[i] = 0;
+    }
+    int i = 0;
+    for(V3DLONG iz = 0; iz < P; iz++)
+    {
+        V3DLONG offsetk = iz*M*N;
+
+        for(V3DLONG iy = y-200; iy <  y+200; iy++)
         {
-           for(V3DLONG i=0; i<pagesz; i++)
-               pImage2[i] = 0;
-         }
-           for(V3DLONG iz = 0; iz < P; iz++)
+            V3DLONG offsetj = iy*N;
+            for(V3DLONG ix = x-200; ix < x+200; ix++)
             {
-                V3DLONG offsetk = iz*M*N;
-                for(V3DLONG iy = 0; iy < M; iy++)
+                pSoma[offsetk + offsetj + ix] = gsdtsoma[i];
+                i++;
+            }
+        }
+    }
+
+
+    T *pImage2 = new T [pagesz];
+    if (!pImage2)
+    {
+        printf("Fail to allocate memory.\n");
+        return;
+    }
+    else
+    {
+        for(V3DLONG i=0; i<pagesz; i++)
+            pImage2[i] = 0;
+    }
+    for(V3DLONG iz = 0; iz < P; iz++)
+    {
+        V3DLONG offsetk = iz*M*N;
+        for(V3DLONG iy = 0; iy < M; iy++)
+        {
+            V3DLONG offsetj = iy*N;
+            for(V3DLONG ix = 0; ix < N; ix++)
+            {
+                T SomaValue = pSoma[offsetc+offsetk + offsetj + ix];
+
+                if(SomaValue < Th_gsdt)
                 {
-                    V3DLONG offsetj = iy*N;
-                    for(V3DLONG ix = 0; ix < N; ix++)
-                    {
-                            T SomaValue = pSoma[offsetc+offsetk + offsetj + ix];
-
-                            if(SomaValue < Th_gsdt)
-                            {
-                                T dataval2 = gsdtdatald[offsetk+offsetj+ix];
-                                pImage2[offsetk+offsetj+ix] = dataval2;
-                            }else
-                                pImage2[offsetk+offsetj+ix] =  data1d[offsetk+offsetj+ix];
-                    }
-
-
-                }
-
+                    T dataval2 = gsdtdatald[offsetk+offsetj+ix];
+                    pImage2[offsetk+offsetj+ix] = dataval2;
+                }else
+                    pImage2[offsetk+offsetj+ix] =  data1d[offsetk+offsetj+ix];
             }
 
-        outimg = pImage2;
-        return;
+
+        }
+
+    }
+
+    outimg = pImage2;
+    return;
 
 }
 
-float abs(float num)
-{
-    float num2;
-    if(num<0)
-        num2 = -num;
-    else
-        num2 = num;
-    return num2;
-
-
-}
