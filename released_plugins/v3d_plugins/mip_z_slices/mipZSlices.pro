@@ -41,4 +41,6 @@ unix:LIBS += -L$$VAA3DPATH/v3d_main/common_lib/src_packages/mylib_tiff -lmylib
 
 
 TARGET	= $$qtLibraryTarget(mipZSlices)
-DESTDIR	= $$VAA3DPATH/bin/plugins/image_projection/maximum_intensity_projection_Z_Slices/
+#DESTDIR	= $$VAA3DPATH/bin/plugins/image_projection/maximum_intensity_projection_Z_Slices/
+DESTDIR = ../../v3d/plugins/image_projection/maximum_intensity_projection_Z_Slices/
+

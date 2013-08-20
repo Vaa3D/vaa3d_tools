@@ -81,5 +81,8 @@ SOURCES += ./src/presentation/*.cpp
 
 #set up target
 TARGET	= $$qtLibraryTarget(terastitcherplugin)
-DESTDIR	= ../../../bin/plugins/image_stitching/terastitcher
+#DESTDIR	= ../../../bin/plugins/image_stitching/terastitcher
+DESTDIR = ../../v3d/plugins/image_stitching/terastitcher
+
+
 RESOURCES += icons.qrc

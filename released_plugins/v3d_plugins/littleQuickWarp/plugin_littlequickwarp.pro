@@ -4,7 +4,7 @@
 
 TEMPLATE	 = lib
 CONFIG		+= qt plugin warn_off
-CONFIG		+= x86_64
+#CONFIG		+= x86_64
 
 V3DMAINPATH   = ../../../v3d_main
 JBADIR        = ../../../../brainaligner
@@ -48,5 +48,5 @@ SOURCES      += plugin_littlequickwarp.cpp
 
 
 TARGET	= $$qtLibraryTarget(littlequickwarp)
-#DESTDIR	= ../../v3d/plugins/littlequickwarp/
-DESTDIR	= ../../../bin/plugins/image_registration/littleQuickWarp/
+DESTDIR	= ../../v3d/plugins/image_registration/littleQuickWarp/
+#DESTDIR	= ../../../bin/plugins/image_registration/littleQuickWarp/
