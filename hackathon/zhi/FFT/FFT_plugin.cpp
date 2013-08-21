@@ -97,10 +97,23 @@ void processImage(V3DPluginCallback2 &callback, QWidget *parent)
      // filter
      V3DLONG in_sz[4];
      in_sz[0] = N; in_sz[1] = M; in_sz[2] = P; in_sz[3] = sc;
-    
-    v3d_msg("Need to add an imput box here for color channel...");
-    
-    unsigned int c = 1;
+     bool ok1;
+     unsigned int c=1;
+
+     if(sc==1)
+     {
+         c=1;
+         ok1=true;
+     }
+     else
+     {
+             c = QInputDialog::getInteger(parent, "Channel",
+                                          "Enter channel NO:",
+                                         1, 1, sc, 1, &ok1);
+     }
+
+     if(ok1==false)
+     return;
 
     ImagePixelType pixeltype = p4DImage->getDatatype();
     void* outimg = 0;
@@ -129,6 +142,12 @@ template <class T> void FFT_HP(T* data1d,
                      T* &outimg)
 {
 
+        if (outimg)
+        {
+            v3d_msg("Warning: you have supplied an non-empty output image pointer. This program will force to free it now. But you may want to double check.");
+            delete []outimg;
+            outimg = 0;
+        }
          V3DLONG N = in_sz[0];
          V3DLONG M = in_sz[1];
          V3DLONG P = in_sz[2];

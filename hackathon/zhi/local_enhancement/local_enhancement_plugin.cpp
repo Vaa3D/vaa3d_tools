@@ -415,7 +415,6 @@ void processImage(V3DPluginCallback2 &callback, QWidget *parent)
 
             }
             count ++;
-
         }
 
 
@@ -477,10 +476,15 @@ void processImage(V3DPluginCallback2 &callback, QWidget *parent)
         county++;
     }
 
+    V3DLONG output_size = in_sz[0]*in_sz[1]*in_sz[2];
+    unsigned char* datald_output = NULL;
+    datald_output = new unsigned char [output_size];
+    for(int i = 0; i<output_size;i++)
+        datald_output[i] = 255*(target1d_y[i]-1)/254;
 
     // display
     Image4DSimple * new4DImage = new Image4DSimple();
-    new4DImage->setData((unsigned char *)target1d_y,N, M, P, 1, pixeltype);
+    new4DImage->setData((unsigned char *)datald_output,N, M, P, 1, pixeltype);
     v3dhandle newwin = callback.newImageWindow();
     callback.setImage(newwin, new4DImage);
     callback.setImageName(newwin, "Local_adaptive_enhancement_result");
@@ -621,8 +625,8 @@ bool processImage1(const V3DPluginArgList & input, V3DPluginArgList & output,V3D
             unsigned char * gsdtblock = 0;
             int datatype;
             V3DLONG * in_zz = 0;
-            char * outimg_file = ((vector<char*> *)(output.at(0).p))->at(0);
-            loadImage(outimg_file, gsdtblock, in_zz, datatype,0);
+            char * outimg_file2= ((vector<char*> *)(output.at(0).p))->at(0);
+            loadImage(outimg_file2, gsdtblock, in_zz, datatype,0);
             remove("temp.v3draw");
             remove("gsdtImage.v3draw");
             unsigned char* localEnahancedArea = NULL;
@@ -728,8 +732,14 @@ bool processImage1(const V3DPluginArgList & input, V3DPluginArgList & output,V3D
     }
 
     // save image
+    V3DLONG output_size = in_sz[0]*in_sz[1]*in_sz[2];
+    unsigned char* datald_output = NULL;
+    datald_output = new unsigned char [output_size];
+    for(int i = 0; i<output_size;i++)
+        datald_output[i] = 255*(target1d_y[i]-1)/254;
+
     in_sz[3]=1;
-    saveImage(outimg_file, (unsigned char *)target1d_y, in_sz, datatype);
+    saveImage(outimg_file, (unsigned char *)datald_output, in_sz, datatype);
 
     if(target1d_y) {delete []target1d_y; target1d_y =0;}
     if(subject1d_y) {delete []subject1d_y; subject1d_y =0;}
@@ -785,7 +795,7 @@ template <class T> void AdpThresholding_adpwindow(const T* data1d,
             {
                 T GsdtValue = gsdtdatald[offsetk + offsetj + ix];
                 T PixelValue = data1d[offsetc+offsetk + offsetj + ix];
-                Wx = (int)round((log(GsdtValue)/log(2)));
+                Wx = (int)round((0.3*log(GsdtValue)/log(2)));
                 //printf("%d %d\n",PixelValue,Wx);
 
                 if (Wx > 0 && PixelValue > 0)
@@ -884,6 +894,12 @@ template <class T> void block_detection(T* data1d,
 
 {
 
+    if (outimg)
+    {
+        v3d_msg("Warning: you have supplied an non-empty output image pointer. This program will force to free it now. But you may want to double check.");
+        delete []outimg;
+        outimg = 0;
+    }
 
     V3DLONG N = in_sz[0];
     V3DLONG M = in_sz[1];
@@ -1065,7 +1081,12 @@ template <class T> void soma_detection(T* data1d,
                                        T* &outimg)
 
 {
-
+    if (outimg)
+    {
+        v3d_msg("Warning: you have supplied an non-empty output image pointer. This program will force to free it now. But you may want to double check.");
+        delete []outimg;
+        outimg = 0;
+    }
 
     V3DLONG N = in_sz[0];
     V3DLONG M = in_sz[1];
@@ -1110,6 +1131,12 @@ template <class T> void AdpThresholding_adpwindow_v2(T* data1d,
                                                      int x,
                                                      int y)
 {
+    if (outimg)
+    {
+        v3d_msg("Warning: you have supplied an non-empty output image pointer. This program will force to free it now. But you may want to double check.");
+        delete []outimg;
+        outimg = 0;
+    }
 
     V3DLONG N = in_sz[0];
     V3DLONG M = in_sz[1];
