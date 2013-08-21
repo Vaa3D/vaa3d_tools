@@ -296,17 +296,17 @@ void StackedVolume::applyReferenceSystem(ref_sys reference_system, float VXL_1, 
 		VXL_H = VXL_1 ; 
 		VXL_D = VXL_3 ;
 		int tmp_coord_1, tmp_coord_2, tmp_coord_3, tmp_coord_4, tmp_coord_5, tmp_coord_6;
-		extractCoordinates(STACKS[0][0], 1, &tmp_coord_1, &tmp_coord_2, &tmp_coord_3);
+        extractCoordinates(STACKS[0][0], 0, &tmp_coord_1, &tmp_coord_2, &tmp_coord_3);
 		if(N_ROWS > 1)
 		{
-			extractCoordinates(STACKS[1][0], 1, &tmp_coord_4, &tmp_coord_5, &tmp_coord_6);
+            extractCoordinates(STACKS[1][0], 0, &tmp_coord_4, &tmp_coord_5, &tmp_coord_6);
 			this->MEC_V = (tmp_coord_5 - tmp_coord_2)/10.0F;
 		}
 		else
 			this->MEC_V = getStacksHeight()*VXL_V;		
 		if(N_COLS > 1)
 		{
-			extractCoordinates(STACKS[0][1], 1, &tmp_coord_4, &tmp_coord_5, &tmp_coord_6);
+            extractCoordinates(STACKS[0][1], 0, &tmp_coord_4, &tmp_coord_5, &tmp_coord_6);
 			this->MEC_H = (tmp_coord_4 - tmp_coord_1)/10.0F;
 		}
 		else
@@ -330,18 +330,18 @@ void StackedVolume::applyReferenceSystem(ref_sys reference_system, float VXL_1, 
 		VXL_H = VXL_2;
 		VXL_D = VXL_3;
 		int tmp_coord_1, tmp_coord_2, tmp_coord_3, tmp_coord_4, tmp_coord_5, tmp_coord_6;
-		extractCoordinates(STACKS[0][0], 1, &tmp_coord_1, &tmp_coord_2, &tmp_coord_3);
+        extractCoordinates(STACKS[0][0], 0, &tmp_coord_1, &tmp_coord_2, &tmp_coord_3);
 		
 		if(N_ROWS > 1)
 		{
-			extractCoordinates(STACKS[1][0], 1, &tmp_coord_4, &tmp_coord_5, &tmp_coord_6);
+            extractCoordinates(STACKS[1][0], 0, &tmp_coord_4, &tmp_coord_5, &tmp_coord_6);
 			this->MEC_V = (tmp_coord_4 - tmp_coord_1)/10.0F;		
 		}
 		else
 			this->MEC_V = getStacksHeight()*VXL_V;		
 		if(N_COLS > 1)
 		{
-			extractCoordinates(STACKS[0][1], 1, &tmp_coord_4, &tmp_coord_5, &tmp_coord_6);
+            extractCoordinates(STACKS[0][1], 0, &tmp_coord_4, &tmp_coord_5, &tmp_coord_6);
 			this->MEC_H = (tmp_coord_5 - tmp_coord_2)/10.0F;
 		}
 		else
@@ -774,9 +774,9 @@ void StackedVolume::mirror(axis mrr_axis)
 //extract spatial coordinates (in millimeters) of given Stack object
 void StackedVolume::extractCoordinates(Stack* stk, int z, int* crd_1, int* crd_2, int* crd_3)
 {
-	#if VM_VERBOSE > 3
-	printf("\t\t\t\tin StackedVolume::extractCoordinates(...)\n");
-	#endif
+    //#if VM_VERBOSE > 3
+    printf("\t\t\t\tin StackedVolume::extractCoordinates(stk=\"%s\", z = %d)\n", stk->getDIR_NAME(), z);
+    //#endif
 
 	bool found_ABS_X=false;
 	bool found_ABS_Y=false;
@@ -810,7 +810,7 @@ void StackedVolume::extractCoordinates(Stack* stk, int z, int* crd_1, int* crd_2
 	{
 		char msg[200];
 		sprintf(msg,"in StackedVolume::extractCoordinates(directory_name=\"%s\"): format 000000_000000 or X_000000_X_000000 not found", stk->getDIR_NAME());
-		throw msg;
+        throw MyException(msg);
 	}
 
 	//loading estimation for absolute Z stack position
@@ -837,7 +837,7 @@ void StackedVolume::extractCoordinates(Stack* stk, int z, int* crd_1, int* crd_2
 		{
 			char msg[200];
 			sprintf(msg,"in StackedVolume::extractCoordinates(...): unable to extract Z position from filename %s", first_file_name);
-			throw msg;
+            throw MyException(msg);
 		}
 	}
 }

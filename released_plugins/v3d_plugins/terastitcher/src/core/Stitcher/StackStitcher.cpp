@@ -138,11 +138,11 @@ void StackStitcher::computeDisplacements(int algorithm_type, int start_row, int 
 		sprintf(buffer, "in StackStitcher::computeDisplacements(...): overlap_H(=%d) must be in [%d,%d]", overlap_H,S_OVERLAP_MIN, volume->getStacksWidth());
 		throw MyException(buffer);
 	}
-	if(subvol_DIM_D < S_SUBVOL_DIM_D_MIN || subvol_DIM_D > volume->getN_SLICES())
+    /*if(subvol_DIM_D < S_SUBVOL_DIM_D_MIN || subvol_DIM_D > volume->getN_SLICES())
 	{
 		sprintf(buffer, "in StackStitcher::computeDisplacements(...): subvol_DIM_D(=%d) must be in [%d,%d]", subvol_DIM_D, S_SUBVOL_DIM_D_MIN, volume->getN_SLICES());
 		throw MyException(buffer);
-	}
+    }*/
 
 	//Pairwise Displacement Algorithm initialization
 	algorithm = PDAlgo::instanceAlgorithm(algorithm_type);

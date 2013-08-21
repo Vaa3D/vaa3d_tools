@@ -75,7 +75,7 @@ PTabDisplComp::PTabDisplComp(QMyTabWidget* _container, int _tab_index) : QWidget
     subvoldims_sbox = new QSpinBox();
     subvoldims_sbox->setAlignment(Qt::AlignCenter);
     subvoldims_sbox->setMaximum(600);
-    subvoldims_sbox->setMinimum(50);
+    subvoldims_sbox->setMinimum(1);
     memocc_label = new QLabel("Estimated memory usage:");
     memocc_field = new QLineEdit();
     memocc_field->setReadOnly(true);
