@@ -50,6 +50,7 @@ class teramanager::CExplorerWindow : public QWidget
         V3dR_MainWindow* window3D;      //the window enclosing <view3DWidget>
         CExplorerWindow *next, *prev;   //the next (higher resolution) and previous (lower resolution) <CExplorerWindow> objects
         int volResIndex;                //resolution index of the volume displayed in the current window (see member <volumes> of CImport)
+        uint8* imgData;
         int volV0, volV1;               //first and last vertical coordinates of the volume displayed in the current window
         int volH0, volH1;               //first and last horizontal coordinates of the volume displayed in the current window
         int volD0, volD1;               //first and last depth coordinates of the volume displayed in the current window
@@ -73,6 +74,9 @@ class teramanager::CExplorerWindow : public QWidget
         static CExplorerWindow *last;   //pointer to the last window of the multiresolution explorer windows chain
         static CExplorerWindow *current;//pointer to the current window of the multiresolution explorer windows chain
         static int nInstances;          //number of instantiated objects
+
+        //MUTEX
+        QMutex updateGraphicsInProgress;
 
         //inhibiting default constructor
         CExplorerWindow();
@@ -127,7 +131,7 @@ class teramanager::CExplorerWindow : public QWidget
     public:
 
         //CONSTRUCTOR, DECONSTRUCTOR
-        CExplorerWindow(V3DPluginCallback2* _V3D_env, int _resIndex, uint8* imgData, int _volV0, int _volV1,
+        CExplorerWindow(V3DPluginCallback2* _V3D_env, int _resIndex, uint8* _imgData, int _volV0, int _volV1,
                         int _volH0, int _volH1, int _volD0, int _volD1, int _nchannels, CExplorerWindow* _prev);
         ~CExplorerWindow();
         static void uninstance(){
@@ -143,6 +147,9 @@ class teramanager::CExplorerWindow : public QWidget
             }
             first=last=0;
         }
+
+        //performs all the operations needed to show 3D data (such as creating Vaa3D widgets)
+        void show();
 
         //GET methods
         static CExplorerWindow* getCurrent(){return current;}
@@ -283,6 +290,7 @@ class teramanager::CExplorerWindow : public QWidget
 
         //PMain instance is allowed to access class private members
         friend class PMain;
+        friend class CVolume;
 
 
     public slots:

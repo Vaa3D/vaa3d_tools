@@ -159,7 +159,7 @@ void VirtualVolume::saveImage_from_UINT8 (std::string img_path, uint8* raw_ch1, 
     int img_height, img_width;
     int nchannels = 0;
 
-    //detecting the number of channels
+    //detecting the number of channels (WARNING: the number of channels is an attribute of the volume
     nchannels = static_cast<int>(raw_ch1!=0) + static_cast<int>(raw_ch2!=0) + static_cast<int>(raw_ch3!=0);
 
     //setting some default parameters and image dimensions
@@ -175,7 +175,9 @@ void VirtualVolume::saveImage_from_UINT8 (std::string img_path, uint8* raw_ch1, 
                 raw_img_height, raw_img_width, start_height, end_height, start_width, end_width);
         throw MyException(buffer);
     }
-    if(nchannels != 1 && nchannels != 3)
+	// nchannels may be also 2
+    //if(nchannels != 1 && nchannels != 3)
+    if(nchannels > 3)
     {
         sprintf(buffer,"in saveImage_from_UINT8(): unsupported number of channels (= %d)\n",nchannels);
         throw MyException(buffer);
@@ -185,9 +187,10 @@ void VirtualVolume::saveImage_from_UINT8 (std::string img_path, uint8* raw_ch1, 
         sprintf(buffer,"in saveImage_from_UINT8(..., img_depth=%d, ...): unsupported bit depth for greyscale images\n",img_depth);
         throw MyException(buffer);
     }
-    if(img_depth != 8 && nchannels == 3)
+    //if(img_depth != 8 && nchannels == 3) // nchannels may be also 2
+    if(img_depth != 8 && nchannels > 1)
     {
-        sprintf(buffer,"in saveImage_from_UINT8(..., img_depth=%d, ...): unsupported bit depth for 3-channels images\n",img_depth);
+        sprintf(buffer,"in saveImage_from_UINT8(..., img_depth=%d, ...): unsupported bit depth for multi-channels images\n",img_depth);
         throw MyException(buffer);
     }
 
@@ -202,6 +205,21 @@ void VirtualVolume::saveImage_from_UINT8 (std::string img_path, uint8* raw_ch1, 
             for(int j1 = 0, j2 = start_width; j1 < img_width*3; j1+=3, j2++)
             {
                 row_data_8bit[j1  ] = raw_ch3[(i+start_height)*raw_img_width + j2];
+                row_data_8bit[j1+1] = raw_ch2[(i+start_height)*raw_img_width + j2];
+                row_data_8bit[j1+2] = raw_ch1[(i+start_height)*raw_img_width + j2];
+            }
+        }
+    }
+    if(nchannels == 2)
+    {
+        img = cvCreateImage(cvSize(img_width, img_height), IPL_DEPTH_8U, 3);
+        int img_data_step = img->widthStep / sizeof(uint8);
+        for(int i = 0; i <img_height; i++)
+        {
+            uint8* row_data_8bit = ((uint8*)(img->imageData)) + i*img_data_step;
+            for(int j1 = 0, j2 = start_width; j1 < img_width*3; j1+=3, j2++)
+            {
+                row_data_8bit[j1  ] = 0;
                 row_data_8bit[j1+1] = raw_ch2[(i+start_height)*raw_img_width + j2];
                 row_data_8bit[j1+2] = raw_ch1[(i+start_height)*raw_img_width + j2];
             }

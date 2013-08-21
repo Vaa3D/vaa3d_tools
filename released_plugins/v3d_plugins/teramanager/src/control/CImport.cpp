@@ -365,8 +365,6 @@ void CImport::run()
             volMapImage->setData(volMapData, volMapWidth, volMapHeight, volMapDepth, nchannels, V3D_UINT8);
         }
 
-        //PLog::getInstance()->appendIO(timerIO.elapsed(), "Volume imported and map loaded");
-
         //everything went OK
         emit sendOperationOutcome(0, volMapImage, timerIO.elapsed());
     }

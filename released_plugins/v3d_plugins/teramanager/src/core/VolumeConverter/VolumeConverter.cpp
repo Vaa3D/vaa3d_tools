@@ -241,9 +241,9 @@ void VolumeConverter::generateTiles(std::string output_path, bool* resolutions,
 
 	//allocated even if not used
 	org_channels = channels; // save for checks
-    supported_channels = (channels>1) ? 3 : 1; // only 1 or 3 channels supported if output format is stacks of tiffs 2D
+	supported_channels = (channels>1) ? 3 : 1; // only 1 or 3 channels supported if output format is stacks of tiffs 2D
 	ubuffer = new uint8 *[supported_channels];
-	memset(ubuffer,0,supported_channels*sizeof(uint8));
+	memset(ubuffer,0,supported_channels*sizeof(uint8 *)); // initializes to null pointers
 
 	for(sint64 z = this->D0, z_parts = 1; z < this->D1; z += z_max_res, z_parts++)
 	{
@@ -252,19 +252,26 @@ void VolumeConverter::generateTiles(std::string output_path, bool* resolutions,
 			rbuffer = volume->loadSubvolume_to_REAL_T(V0,V1,H0,H1,(int)(z-D0),(z-D0+z_max_res <= D1) ? (int)(z-D0+z_max_res) : D1);
 		else { // internal_rep == UINT8_INTERNAL_REP
 			ubuffer[0] = volume->loadSubvolume_to_UINT8(V0,V1,H0,H1,(int)(z-D0),(z-D0+z_max_res <= D1) ? (int)(z-D0+z_max_res) : D1,&channels);
+			// WARNING: next code assumes that channels is 1 or 3, but implementations of loadSubvolume_to_UINT8 do not guarantee this condition
 			if ( org_channels != channels ) {
 				char err_msg[IM_STATIC_STRINGS_SIZE];
 				sprintf(err_msg,"The volume contains images with a different number of channels (%d,%d)", org_channels, channels);
 				throw MyException(err_msg);
 			}
 		
+			// code has been changed because the load operation can return 1, 2 or 3 channels
+			/*
 			if ( supported_channels == 3 ) {
 				// offsets are to be computed taking into account that buffer size along D may be different
 				ubuffer[1] = ubuffer[0] + (height * width * ((z_parts<=z_ratio) ? z_max_res : (depth%z_max_res)));
 				ubuffer[2] = ubuffer[1] + (height * width * ((z_parts<=z_ratio) ? z_max_res : (depth%z_max_res)));
 			}
+			*/
+			// elements of ubuffer not set are null pointers
+			for ( int c=1; c<channels; c++ )
+				ubuffer[c] = ubuffer[c-1] + (height * width * ((z_parts<=z_ratio) ? z_max_res : (depth%z_max_res)));
 		}
-
+		
 		//updating the progress bar
 		if(show_progress_bar)
 		{	
@@ -291,7 +298,7 @@ void VolumeConverter::generateTiles(std::string output_path, bool* resolutions,
 				if ( internal_rep == REAL_INTERNAL_REP )
 					VirtualVolume::halveSample(rbuffer,(int)height/(POW_INT(2,i-1)),(int)width/(POW_INT(2,i-1)),(int)z_size/(POW_INT(2,i-1)),method);
 				else // internal_rep == UINT8_INTERNAL_REP
-					VirtualVolume::halveSample_UINT8(ubuffer,(int)height/(POW_INT(2,i-1)),(int)width/(POW_INT(2,i-1)),(int)z_size/(POW_INT(2,i-1)),supported_channels,method);
+					VirtualVolume::halveSample_UINT8(ubuffer,(int)height/(POW_INT(2,i-1)),(int)width/(POW_INT(2,i-1)),(int)z_size/(POW_INT(2,i-1)),channels,method);
 
 			//saving at current resolution if it has been selected and iff buffer is at least 1 voxel (Z) deep
 			if(resolutions[i] && (z_size/(POW_INT(2,i))) > 0)
@@ -357,7 +364,7 @@ void VolumeConverter::generateTiles(std::string output_path, bool* resolutions,
 									start_height,end_height,start_width,end_width, 
 									saved_img_format, saved_img_depth);
 							else // internal_rep == UINT8_INTERNAL_REP
-								if ( supported_channels == 1 )
+								if ( channels == 1 )
 									VirtualVolume::saveImage_from_UINT8(img_path.str(), 
 										ubuffer[0] + buffer_z*(height/POW_INT(2,i))*(width/POW_INT(2,i)), // adds the stride
 										(uint8 *) 0,
@@ -365,7 +372,15 @@ void VolumeConverter::generateTiles(std::string output_path, bool* resolutions,
 										(int)height/(POW_INT(2,i)),(int)width/(POW_INT(2,i)),
 										start_height,end_height,start_width,end_width, 
 										saved_img_format, saved_img_depth);
-								else // supported_channels = 3
+								else if ( channels == 2 ) 
+									VirtualVolume::saveImage_from_UINT8(img_path.str(), 
+										ubuffer[0] + buffer_z*(height/POW_INT(2,i))*(width/POW_INT(2,i)), // adds the stride
+										ubuffer[1] + buffer_z*(height/POW_INT(2,i))*(width/POW_INT(2,i)), // adds the stride
+										(uint8 *) 0,
+										(int)height/(POW_INT(2,i)),(int)width/(POW_INT(2,i)),
+										start_height,end_height,start_width,end_width, 
+										saved_img_format, saved_img_depth);
+								else // channels = 3
 									VirtualVolume::saveImage_from_UINT8(img_path.str(), 
 										ubuffer[0] + buffer_z*(height/POW_INT(2,i))*(width/POW_INT(2,i)), // adds the stride
 										ubuffer[1] + buffer_z*(height/POW_INT(2,i))*(width/POW_INT(2,i)), // adds the stride

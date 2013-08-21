@@ -123,9 +123,9 @@ class teramanager::PConverter : public QWidget
 
         void startButtonClicked();
         void stopButtonClicked();
-        void voldirButtonClicked();
-        void volfileButtonClicked();
-        void voldiroutButtonClicked();
+        void inDirButtonClicked();
+        void inFileButtonClicked();
+        void outDirButtonClicked();
         void volformatChanged ( const QString & text );
 
         /**********************************************************************************

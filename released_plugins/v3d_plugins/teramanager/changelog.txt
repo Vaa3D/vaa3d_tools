@@ -12,6 +12,25 @@ ties names are:
 
 ============================================================================================
 
+todo:
+1) pipeline I/O - GPU (aspettando misure)
+d2) TeraConverter: disabilitare output "Image series(tiled)" con input "Vaa3D*"
+d3) mettere stampe per risolvere problema mdata.bin per Peng
+d4) ripristinare finestre dialogo non native in TeraConverter
+5) TeraStitcher 2D (commit SVN)
+6) TeraFly bug: "Do you confirm" change resolution.
+
+Version 0.9.5
+August 21th, 2013
+--------------------------------------------------------------------------------------------
+- Opt: faster zooming-in. While a new window is displayed with  low res data,  high res data
+       are loaded in the I/O thread.
+- Fix: changed output file dialog in TeraConverter from native to non-native dialog.
+- Fix: fixed bug which caused TeraConverter to crash when converting "V3D*" to "Image series 
+       (tiled)"
+--------------------------------------------------------------------------------------------
+
+
 Version 0.9.4
 August 19th, 2013
 --------------------------------------------------------------------------------------------

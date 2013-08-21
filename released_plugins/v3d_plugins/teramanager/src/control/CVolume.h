@@ -33,6 +33,7 @@
 #include <string>
 #include "CPlugin.h"
 #include "CImport.h"
+#include "CExplorerWindow.h"
 
 class teramanager::CVolume : public QThread
 {
@@ -61,10 +62,12 @@ class teramanager::CVolume : public QThread
         //members
         int voiResIndex;                            //volume of interest resolution index
         int voiV0,voiV1,voiH0,voiH1,voiD0,voiD1;    //volume of interest coordinates
-        uint8* prebufferedData;                     //volume of interest prebuffered data
         int nchannels;                              //volume of interest channel's number
-        void* sourceObject;                         //the object that requested the VOI
+        QWidget* source;                            //the object that requested the VOI
         int streamingSteps;                         //
+
+        QMutex bufferMutex;
+        uint8* buffer;                              //volume of interest prebuffered data
 
     public:
 
@@ -74,7 +77,7 @@ class teramanager::CVolume : public QThread
         **********************************************************************************/
         static CVolume* instance()
         {
-            if (uniqueInstance == NULL)
+            if (uniqueInstance == 0)
                 uniqueInstance = new CVolume();
             return uniqueInstance;
         }
@@ -82,7 +85,17 @@ class teramanager::CVolume : public QThread
         ~CVolume();
 
         //GET and SET methods
-        void setPrebufferedData(uint8* _data){prebufferedData = _data;}
+        void initBuffer(uint8* data, int size)
+        {
+            if(buffer)
+                delete[] buffer;
+            buffer = new uint8[size];
+
+            for(uint8 *buf_p = buffer, *data_p = data; buf_p - buffer < size; buf_p++, data_p++)
+                *buf_p = *data_p;
+        }
+        uint8* getBuffer(){return buffer;}
+
         void setStreamingSteps(int nsteps){streamingSteps = nsteps;}
         int getStreamingSteps(){return streamingSteps;}
         void reset()
@@ -92,9 +105,9 @@ class teramanager::CVolume : public QThread
             #endif
 
             voiResIndex = -1;
-            prebufferedData = 0;
+            buffer = 0;
             voiV0 = voiV1 = voiH0 = voiH1 = voiD0 = voiD1 = nchannels = -1;
-            sourceObject = 0;
+            source = 0;
             streamingSteps = 1;
         }
         int getVoiV0(){return voiV0;}
@@ -111,14 +124,14 @@ class teramanager::CVolume : public QThread
         static float scaleVCoord(float coord, int srcRes, int dstRes) throw (MyException);
         static float scaleHCoord(float coord, int srcRes, int dstRes) throw (MyException);
         static float scaleDCoord(float coord, int srcRes, int dstRes) throw (MyException);
-        void setVoi(void* _sourceObject, int _voiResIndex, int _V0, int _V1, int _H0, int _H1, int _D0, int _D1)
+        void setVoi(QWidget* _sourceObject, int _voiResIndex, int _V0, int _V1, int _H0, int _H1, int _D0, int _D1)
         {
             #ifdef TMP_DEBUG
             printf("--------------------- teramanager plugin [thread *] >> CVolume::setVoi(..., _voiResIndex = %d, _V0 = %d, _V1=%d, _H0 = %d, _H1=%d, _D0 = %d, _D1=%d)\n",
                     _voiResIndex, _V0, _V1, _H0, _H1, _D0, _D1);
             #endif
 
-            sourceObject = _sourceObject;
+            source = _sourceObject;
             voiResIndex = _voiResIndex;
             VirtualVolume* volume = CImport::instance()->getVolume(voiResIndex);
 
@@ -131,7 +144,9 @@ class teramanager::CVolume : public QThread
             voiD1 = _D1 <= volume->getDIM_D() ? _D1 : volume->getDIM_D();
             nchannels = -1;
         }
-        void setSource(void* _sourceObject){sourceObject =_sourceObject;}
+        void setSource(QWidget* _sourceObject){source =_sourceObject;}
+
+        friend class CExplorerWindow;
 
     signals:
 

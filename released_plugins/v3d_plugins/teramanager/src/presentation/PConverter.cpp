@@ -252,9 +252,9 @@ PConverter::PConverter(V3DPluginCallback *callback, QWidget *parent) : QWidget(p
     connect(inFormatCBox, SIGNAL(currentIndexChanged(QString)), this, SLOT(volformatChanged(QString)));
     connect(outFormatCBox, SIGNAL(currentIndexChanged(QString)), this, SLOT(volformatChanged(QString)));
     connect(CConverter::instance(), SIGNAL(sendOperationOutcome(MyException*)), this, SLOT(operationDone(MyException*)), Qt::QueuedConnection);
-    connect(inDirButton, SIGNAL(clicked()), this, SLOT(voldirButtonClicked()));
-    connect(inFileButton, SIGNAL(clicked()), this, SLOT(volfileButtonClicked()));
-    connect(outDirButton, SIGNAL(clicked()), this, SLOT(voldiroutButtonClicked()));
+    connect(inDirButton, SIGNAL(clicked()), this, SLOT(inDirButtonClicked()));
+    connect(inFileButton, SIGNAL(clicked()), this, SLOT(inFileButtonClicked()));
+    connect(outDirButton, SIGNAL(clicked()), this, SLOT(outDirButtonClicked()));
     connect(inPathField, SIGNAL(textChanged(QString)), this, SLOT(settingsChanged()));
     connect(inPathField, SIGNAL(editingFinished()), this, SLOT(startButtonClicked()));
     connect(outPathField, SIGNAL(textChanged(QString)), this, SLOT(settingsChanged()));
@@ -390,10 +390,10 @@ void PConverter::stopButtonClicked()
     }
 }
 
-void PConverter::voldirButtonClicked()
+void PConverter::inDirButtonClicked()
 {
     #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread *] >> PConverter::voldirButtonClicked()\n");
+    printf("--------------------- teramanager plugin [thread *] >> PConverter::inDirButtonClicked()\n");
     #endif
 
     //obtaining volume's directory
@@ -413,10 +413,10 @@ void PConverter::voldirButtonClicked()
         startButtonClicked();
 }
 
-void PConverter::volfileButtonClicked()
+void PConverter::inFileButtonClicked()
 {
     #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread *] >> PConverter::volfileButtonClicked()\n");
+    printf("--------------------- teramanager plugin [thread *] >> PConverter::inFileButtonClicked()\n");
     #endif
 
     //obtaining volume's filepath
@@ -438,14 +438,28 @@ void PConverter::volfileButtonClicked()
         startButtonClicked();
 }
 
-void PConverter::voldiroutButtonClicked()
+void PConverter::outDirButtonClicked()
 {
     #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread *] >> PConverter::voldiroutButtonClicked()\n");
+    printf("--------------------- teramanager plugin [thread *] >> PConverter::outDirButtonClicked()\n");
     #endif
 
     //obtaining volume's directory
-    outPathField->setText(QFileDialog::getExistingDirectory(this, QObject::tr("Select volume's directory"), CSettings::instance()->getVCOutputPath().c_str()));
+    //---- Alessandro 2013-05-20: obtaining volume's directory with QFileDialog instead of platform native file dialogs
+    //                            since a strange behaviour has been shown by native file dialogs on MacOS X.
+    // outPathField->setText(QFileDialog::getExistingDirectory(this, QObject::tr("Select volume's directory"), CSettings::instance()->getVCOutputPath().c_str()));
+    //
+    QFileDialog dialog(0);
+    dialog.setFileMode(QFileDialog::DirectoryOnly);
+    dialog.setViewMode(QFileDialog::Detail);
+    dialog.setWindowFlags(Qt::WindowStaysOnTopHint);
+    dialog.setWindowTitle("Select the directory where the converted volume has to be stored");
+    dialog.setDirectory(CSettings::instance()->getVCOutputPath().c_str());
+    if(dialog.exec())
+        outPathField->setText(dialog.directory().absolutePath());
+
+    //obtaining volume's directory
+
 }
 
 /**********************************************************************************

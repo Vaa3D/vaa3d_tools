@@ -247,48 +247,47 @@ void CVolume::run()
                 sprintf(msg, "Block X=[%d, %d) Y=[%d, %d) Z=[%d, %d) loaded from res %d",
                         voiH0, voiH1, voiV0, voiV1, voiD0, voiD1, voiResIndex);
 
-                emit sendOperationOutcome(voiData, 0, sourceObject, timerIO.elapsed(), msg, 1);
+                CExplorerWindow* destination = dynamic_cast<CExplorerWindow*>(source);
+                if(destination)
+                {
+                    /**/ destination->updateGraphicsInProgress.lock();
+                    /**/ destination->updateGraphicsInProgress.unlock();
+                }
+                emit sendOperationOutcome(voiData, 0, source, timerIO.elapsed(), msg, 1);
             }
             else
             {
+                //checking preconditions
                 TiledVolume* vaa3D_volume = dynamic_cast<TiledVolume*>(volume);
                 if(!vaa3D_volume)
                     throw MyException("Streaming not yet supported for the current format. Please restart the plugin.");
+                if(!buffer)
+                    throw MyException("Buffer not initialized");
+                CExplorerWindow* destination = dynamic_cast<CExplorerWindow*>(source);
+                if(!destination)
+                    throw MyException("Streaming not yet supported for this type of destination");
 
-                //VERSION 1: reading/writing from/to the same buffer (unsafe, see Producer-Consumer problem)
-                void *stream_descr = vaa3D_volume->streamedLoadSubvolume_open(streamingSteps, prebufferedData, voiV0, voiV1, voiH0, voiH1, voiD0, voiD1);
+                //VERSION 1: reading/writing from/to the same buffer with MUTEX (see Producer-Consumer problem)
+                void *stream_descr = vaa3D_volume->streamedLoadSubvolume_open(streamingSteps, buffer, voiV0, voiV1, voiH0, voiH1, voiD0, voiD1);
                 for (int currentStep = 1; currentStep <= streamingSteps; currentStep++)
                 {
+                    /**/ bufferMutex.lock();
                     QElapsedTimer timerIO;
                     timerIO.start();
-                    prebufferedData = vaa3D_volume->streamedLoadSubvolume_dostep(stream_descr);
+                    buffer = vaa3D_volume->streamedLoadSubvolume_dostep(stream_descr);
+                    qint64 elapsedTime = timerIO.elapsed();
+                    /**/ bufferMutex.unlock();
 
                     sprintf(msg, "Streaming %d/%d: Block X=[%d, %d) Y=[%d, %d) Z=[%d, %d) loaded from res %d",
                             currentStep, streamingSteps, voiH0, voiH1, voiV0, voiV1, voiD0, voiD1, voiResIndex);
 
-                    emit sendOperationOutcome(prebufferedData, 0, sourceObject, timerIO.elapsed(), msg, currentStep);
+                    /**/ destination->updateGraphicsInProgress.lock();
+                    /**/ destination->updateGraphicsInProgress.unlock();
+                    emit sendOperationOutcome(buffer, 0, destination, elapsedTime, msg, currentStep);
                 }
-                prebufferedData = vaa3D_volume->streamedLoadSubvolume_close(stream_descr);
-
-                //VERSION 2:reading/writing from/to different buffers (unsafe, see Producer-Consumer problem)
-                /*size_t data_size = (voiV1-voiV0) * (voiH1-voiH0) * (voiD1-voiD0) * vaa3D_volume->getCHANS();
-                void *stream_descr = vaa3D_volume->streamedLoadSubvolume_open(streamingSteps, prebufferedData, voiV0, voiV1, voiH0, voiH1, voiD0, voiD1);
-                for (int currentStep = 1; currentStep <= streamingSteps; currentStep++)
-                {
-                    QElapsedTimer timerIO;
-                    timerIO.start();
-                    prebufferedData = vaa3D_volume->streamedLoadSubvolume_dostep(stream_descr);
-
-                    uint8* voiData = new uint8[data_size];
-                    for(uint8 *buf_p = prebufferedData, *data_p = voiData; buf_p - prebufferedData < data_size; buf_p++, data_p++)
-                        *data_p = *buf_p;
-
-
-                    sprintf(msg, "Streaming %d/%d: Block X=[%d, %d) Y=[%d, %d) Z=[%d, %d) loaded from res %d (step %d/%d)",
-                            currentStep, streamingSteps, voiH0, voiH1, voiV0, voiV1, voiD0, voiD1, voiResIndex);
-
-                    emit sendOperationOutcome(voiData, 0, sourceObject, timerIO.elapsed(), msg, currentStep);
-                }*/
+                buffer = vaa3D_volume->streamedLoadSubvolume_close(stream_descr);
+                delete[] buffer;
+                buffer = 0;
             }
         }
         else
@@ -296,8 +295,8 @@ void CVolume::run()
 
 
     }
-    catch( MyException& exception)  {emit sendOperationOutcome(0, new MyException(exception.what()), sourceObject);}
-    catch(const char* error)        {emit sendOperationOutcome(0, new MyException(error), sourceObject);}
-    catch(...)                      {emit sendOperationOutcome(0, new MyException("Unknown error occurred"), sourceObject);}
+    catch( MyException& exception)  {emit sendOperationOutcome(0, new MyException(exception.what()), source);}
+    catch(const char* error)        {emit sendOperationOutcome(0, new MyException(error), source);}
+    catch(...)                      {emit sendOperationOutcome(0, new MyException("Unknown error occurred"), source);}
 }
 

@@ -43,67 +43,18 @@ CExplorerWindow* CExplorerWindow::last = 0;
 CExplorerWindow* CExplorerWindow::current = 0;
 int CExplorerWindow::nInstances = 0;
 
-CExplorerWindow::CExplorerWindow(V3DPluginCallback2 *_V3D_env, int _resIndex, uint8 *imgData, int _volV0, int _volV1,
-                                 int _volH0, int _volH1, int _volD0, int _volD1, int _nchannels, CExplorerWindow *_prev): QWidget()
+void CExplorerWindow::show()
 {
-    //initializations
-    resetZoomHistory();
-    setActive(false);
-    this->V3D_env = _V3D_env;
-    this->prev = _prev;
-    this->next = 0;
-    this->volResIndex = _resIndex;
-    this->volV0 = _volV0;
-    this->volV1 = _volV1;
-    this->volH0 = _volH0;
-    this->volH1 = _volH1;
-    this->volD0 = _volD0;
-    this->volD1 = _volD1;
-    this->nchannels = _nchannels;
-    this->toBeClosed = false;
-    char ctitle[1024];
-    sprintf(ctitle, "Res(%d x %d x %d),Volume X=[%d,%d], Y=[%d,%d], Z=[%d,%d], %d channels", CImport::instance()->getVolume(volResIndex)->getDIM_H(),
-            CImport::instance()->getVolume(volResIndex)->getDIM_V(), CImport::instance()->getVolume(volResIndex)->getDIM_D(),
-            volH0+1, volH1, volV0+1, volV1, volD0+1, volD1, nchannels);
-    this->title = ctitle;
-    sprintf(ctitle, "Res{%d}), Vol{[%d,%d) [%d,%d) [%d,%d)}", volResIndex, volH0, volH1, volV0, volV1, volD0, volD1);
-    this->titleShort = ctitle;
-    V0_sbox_min = V1_sbox_max = H0_sbox_min = H1_sbox_max = D0_sbox_min = D1_sbox_max = V0_sbox_val = V1_sbox_val = H0_sbox_val = H1_sbox_val = D0_sbox_val = D1_sbox_val = -1;
-    PMain* pMain = PMain::getInstance();
+    /**/ updateGraphicsInProgress.lock();
 
     #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread *] >> CExplorerWindow[%s]::CExplorerWindow()\n",  titleShort.c_str());
+    printf("--------------------- teramanager plugin [thread *] >> CExplorerWindow[%s]::show()\n",  titleShort.c_str());
     #endif
+
+    PMain* pMain = PMain::getInstance();
 
     try
     {
-        //making prev (if exist) the last view and checking that it belongs to a lower resolution
-        if(prev)
-        {
-            prev->makeLastView();
-            if(prev->volResIndex > volResIndex)
-                throw MyException("in CExplorerWindow(): attempting to break the ascending order of resolution history. This feature is not supported yet.");
-        }
-
-        //check that the number of instantiated objects does not exceed the number of available resolutions
-        nInstances++;
-        #ifdef TMP_DEBUG
-        printf("--------------------- teramanager plugin [thread *] >> CExplorerWindow::nInstances++, nInstances = %d\n",  nInstances);
-        #endif
-        if(nInstances > CImport::instance()->getResolutions() +1)
-            throw MyException(QString("in CExplorerWindow(): exceeded the maximum number of views opened at the same time.\n\nPlease signal this issue to developers.").toStdString().c_str());
-
-
-        //deactivating previous window and activating the current one
-        if(prev)
-        {
-            prev->view3DWidget->removeEventFilter(prev);
-            prev->window3D->removeEventFilter(prev);
-            prev->resetZoomHistory();
-            prev->setActive(false);
-        }
-        setActive(true);
-
         //opening tri-view window (and hiding it asap)
         QElapsedTimer timer;
         timer.start();
@@ -165,7 +116,7 @@ CExplorerWindow::CExplorerWindow(V3DPluginCallback2 *_V3D_env, int _resIndex, ui
             view3DWidget->doAbsoluteRot(prev->view3DWidget->xRot(), prev->view3DWidget->yRot(), prev->view3DWidget->zRot());
 
             //sync widgets
-            syncWindows(prev->window3D, window3D);            
+            syncWindows(prev->window3D, window3D);
             PLog::getInstance()->appendGPU(timer.elapsed(), QString("Syncronized views \"").append(title.c_str()).append("\" and \"").append(prev->title.c_str()).append("\"").toStdString());
 
             //storing annotations done in the previous view and loading annotations of the current view
@@ -267,6 +218,86 @@ CExplorerWindow::CExplorerWindow(V3DPluginCallback2 *_V3D_env, int _resIndex, ui
 
         //saving subvol spinboxes state ---- Alessandro 2013-04-23: not sure if this is really needed
         saveSubvolSpinboxState();
+    }
+    catch(MyException &ex)
+    {
+        QMessageBox::critical(PMain::getInstance(),QObject::tr("Error"), QObject::tr(ex.what()),QObject::tr("Ok"));
+        PMain::getInstance()->closeVolume();
+    }
+    catch(const char* error)
+    {
+        QMessageBox::critical(PMain::getInstance(),QObject::tr("Error"), QObject::tr(error),QObject::tr("Ok"));
+        PMain::getInstance()->closeVolume();
+    }
+    catch(...)
+    {
+        QMessageBox::critical(PMain::getInstance(),QObject::tr("Error"), QObject::tr("Unknown error occurred"),QObject::tr("Ok"));
+        PMain::getInstance()->closeVolume();
+    }
+
+    /**/ updateGraphicsInProgress.unlock();
+}
+
+CExplorerWindow::CExplorerWindow(V3DPluginCallback2 *_V3D_env, int _resIndex, uint8 *_imgData, int _volV0, int _volV1,
+                                 int _volH0, int _volH1, int _volD0, int _volD1, int _nchannels, CExplorerWindow *_prev): QWidget()
+{
+    //initializations
+    resetZoomHistory();
+    setActive(false);
+    this->V3D_env = _V3D_env;
+    this->prev = _prev;
+    this->next = 0;
+    this->volResIndex = _resIndex;
+    this->volV0 = _volV0;
+    this->volV1 = _volV1;
+    this->volH0 = _volH0;
+    this->volH1 = _volH1;
+    this->volD0 = _volD0;
+    this->volD1 = _volD1;
+    this->nchannels = _nchannels;
+    this->toBeClosed = false;
+    this->imgData = _imgData;
+    char ctitle[1024];
+    sprintf(ctitle, "Res(%d x %d x %d),Volume X=[%d,%d], Y=[%d,%d], Z=[%d,%d], %d channels", CImport::instance()->getVolume(volResIndex)->getDIM_H(),
+            CImport::instance()->getVolume(volResIndex)->getDIM_V(), CImport::instance()->getVolume(volResIndex)->getDIM_D(),
+            volH0+1, volH1, volV0+1, volV1, volD0+1, volD1, nchannels);
+    this->title = ctitle;
+    sprintf(ctitle, "Res{%d}), Vol{[%d,%d) [%d,%d) [%d,%d)}", volResIndex, volH0, volH1, volV0, volV1, volD0, volD1);
+    this->titleShort = ctitle;
+    V0_sbox_min = V1_sbox_max = H0_sbox_min = H1_sbox_max = D0_sbox_min = D1_sbox_max = V0_sbox_val = V1_sbox_val = H0_sbox_val = H1_sbox_val = D0_sbox_val = D1_sbox_val = -1;
+
+    #ifdef TMP_DEBUG
+    printf("--------------------- teramanager plugin [thread *] >> CExplorerWindow[%s]::CExplorerWindow()\n",  titleShort.c_str());
+    #endif
+
+    try
+    {
+        //making prev (if exist) the last view and checking that it belongs to a lower resolution
+        if(prev)
+        {
+            prev->makeLastView();
+            if(prev->volResIndex > volResIndex)
+                throw MyException("in CExplorerWindow(): attempting to break the ascending order of resolution history. This feature is not supported yet.");
+        }
+
+        //check that the number of instantiated objects does not exceed the number of available resolutions
+        nInstances++;
+        #ifdef TMP_DEBUG
+        printf("--------------------- teramanager plugin [thread *] >> CExplorerWindow::nInstances++, nInstances = %d\n",  nInstances);
+        #endif
+        if(nInstances > CImport::instance()->getResolutions() +1)
+            throw MyException(QString("in CExplorerWindow(): exceeded the maximum number of views opened at the same time.\n\nPlease signal this issue to developers.").toStdString().c_str());
+
+
+        //deactivating previous window and activating the current one
+        if(prev)
+        {
+            prev->view3DWidget->removeEventFilter(prev);
+            prev->window3D->removeEventFilter(prev);
+            prev->resetZoomHistory();
+            prev->setActive(false);
+        }
+        setActive(true);
     }
     catch(MyException &ex)
     {
@@ -464,6 +495,7 @@ void CExplorerWindow::loadingDone(uint8 *data, MyException *ex, void* sourceObje
             PLog::getInstance()->appendIO(elapsed_time, op_dsc.toStdString());
 
             //copying loaded data
+            /**/ CVolume::instance()->bufferMutex.lock();
             QElapsedTimer timer;
             timer.start();
             uint32 img_dims[4]       = {volH1-volH0, volV1-volV0, volD1-volD0, nchannels};
@@ -473,27 +505,32 @@ void CExplorerWindow::loadingDone(uint8 *data, MyException *ex, void* sourceObje
             uint32 new_img_count[3]  = {new_img_dims[0], new_img_dims[1], new_img_dims[2]};
             copyVOI(data, new_img_dims, new_img_offset, new_img_count,
                     view3DWidget->getiDrawExternalParameter()->image4d->getRawData(), img_dims, img_offset);
+            qint64 elapsedTime = timer.elapsed();
+            /**/ CVolume::instance()->bufferMutex.unlock();
+
+            //updating log
             sprintf(message, "Streaming %d/%d: Copied block X=[%d, %d) Y=[%d, %d) Z=[%d, %d) to resolution %d",
                               step, cVolume->getStreamingSteps(), cVolume->getVoiH0(), cVolume->getVoiH1(), cVolume->getVoiV0(), cVolume->getVoiV1(), cVolume->getVoiD0(), cVolume->getVoiD1(), cVolume->getVoiResIndex());
-            PLog::getInstance()->appendCPU(timer.elapsed(), message);
+            PLog::getInstance()->appendCPU(elapsedTime, message);
 
             //releasing memory if streaming is not active
             if(cVolume->getStreamingSteps() == 1)
                 delete[] data;
 
             //updating image data
+            /**/ updateGraphicsInProgress.lock();
             timer.restart();
-            #ifdef USE_EXPERIMENTAL_FEATURES
-            myV3dR_GLWidget::cast(view3DWidget)->updateImageDataFast();
-            #else
+            //#ifdef USE_EXPERIMENTAL_FEATURES
+            //myV3dR_GLWidget::cast(view3DWidget)->updateImageDataFast();
+            //#else
             view3DWidget->updateImageData();
-            #endif
+            //#endif
             sprintf(message, "Streaming %d/%d: Block X=[%d, %d) Y=[%d, %d) Z=[%d, %d) rendered into view %s",
                     step, cVolume->getStreamingSteps(), cVolume->getVoiH0(), cVolume->getVoiH1(),
                     cVolume->getVoiV0(), cVolume->getVoiV1(),
                     cVolume->getVoiD0(), cVolume->getVoiD1(), title.c_str());
             PLog::getInstance()->appendGPU(timer.elapsed(), message);
-            //QMessageBox::information(this, "Done", "Press OK to continue");
+            /**/ updateGraphicsInProgress.unlock();
 
             //resetting some widgets
             if(cVolume->getStreamingSteps() == step)
@@ -604,7 +641,7 @@ void CExplorerWindow::newView(int x, int y, int z, int resolution, bool fromVaa3
             rVoiH0, rVoiH1, rVoiV0, rVoiV1, rVoiD0, rVoiD1, title.c_str());
     PLog::getInstance()->appendCPU(timer.elapsed(), message);
 
-    //opening a new window
+    //creating a new window
     this->next = new CExplorerWindow(V3D_env, resolution, lowresData,
                                      cVolume->getVoiV0(), cVolume->getVoiV1(), cVolume->getVoiH0(), cVolume->getVoiH1(), cVolume->getVoiD0(), cVolume->getVoiD1(),
                                      nchannels, this);
@@ -612,9 +649,12 @@ void CExplorerWindow::newView(int x, int y, int z, int resolution, bool fromVaa3
     //loading new data in a separate thread. When done, the "loadingDone" method of the new window will be called
     pMain.statusBar->showMessage("Loading image data...");
     cVolume->setSource(this->next);
-    cVolume->setPrebufferedData(lowresData);
+    cVolume->initBuffer(lowresData, (cVolume->getVoiH1()-cVolume->getVoiH0())*(cVolume->getVoiV1()-cVolume->getVoiV0())*(cVolume->getVoiD1()-cVolume->getVoiD0())*nchannels);
     cVolume->setStreamingSteps(PMain::getInstance()->debugStreamingStepsSBox->value());
     cVolume->start();
+
+    //meanwhile, showing the new window
+    next->show();
 
     //if the resolution of the loaded voi is the same of the current one, this window will be closed
     if(resolution == volResIndex)
@@ -669,7 +709,9 @@ uint8* CExplorerWindow::getVOI(int x0, int x1, int y0, int y1, int z0, int z1,
 
     //otherwise COPYING + SCALING
     //fast scaling by pixel replication
-    if(xDimInterp % (x1-x0) <= 1 && yDimInterp % (y1-y0) <= 1 && zDimInterp % (z1-z0) <= 1)
+    if( ( (xDimInterp % (x1-x0) <= 1) || (xDimInterp % (x1-x0+1) <= 1)) &&
+        ( (yDimInterp % (y1-y0) <= 1) || (yDimInterp % (y1-y0+1) <= 1)) &&
+        ( (zDimInterp % (z1-z0) <= 1) || (zDimInterp % (z1-z0+1) <= 1)))
     {
         //checking for uniform scaling along the three axes
         uint scal = xDimInterp / (x1-x0);

@@ -906,10 +906,8 @@ void PMain::openVolume(string path /* = "" */)
             dialog.setDirectory(CSettings::instance()->getVolumePathLRU().c_str());
             if(dialog.exec())
             {
-                printf("dialog.directory().absolutePath() = \"%s\"\n", dialog.directory().absolutePath().toStdString().c_str());
-                printf("dialog.directory().dirName() = \"%s\"\n", dialog.directory().dirName().toStdString().c_str());
-                printf("dialog.directory().currentPath() = \"%s\"\n", dialog.directory().currentPath().toStdString().c_str());
-                printf("dialog.directory().tempPath() = \"%s\"\n", dialog.directory().tempPath().toStdString().c_str());
+                printf("--------------------- teramanager plugin [thread *] >> PMain::openVolume(path = \"%s\"): user selected directory \"%s\"\n",
+                       path.c_str(), dialog.directory().absolutePath().toStdString().c_str());
                 import_path = dialog.directory().absolutePath().toStdString();
             }
 
@@ -923,7 +921,7 @@ void PMain::openVolume(string path /* = "" */)
             throw MyException("A volume has been already imported! Please close the current volume first.");
 
         //checking that the inserted path exists
-        if(!StackedVolume::fileExists(import_path.c_str()))
+        if(!QFile::exists(import_path.c_str()))
             throw MyException("The inserted path does not exist!");
 
         //storing the path into CSettings
@@ -953,10 +951,13 @@ void PMain::openVolume(string path /* = "" */)
         string vmap_fpath = import_path;
         vmap_fpath.append("/");
         vmap_fpath.append(TMP_VMAP_FNAME);
-        if(!StackedVolume::fileExists(mdata_fpath.c_str()) || reimport_checkbox->isChecked()) // ||
-          //(!StackedVolume::fileExists(vmap_fpath.c_str()) && enableMultiresMode->isChecked()))    ---- Alessandro 2013-01-06: we do not want converted volumes to be imported again. I don't understand the function of this line of code
-            if(PDialogImport::instance(this)->exec() == QDialog::Rejected)
+        if(!QFile::exists(mdata_fpath.c_str()) || reimport_checkbox->isChecked())
+        {
+           printf("--------------------- teramanager plugin [thread *] >> PMain::openVolume(path = \"%s\"): mdata.bin file not found at \"%s\" or reimport checkbox is checked (%s)\n",
+                  path.c_str(), mdata_fpath.c_str(), reimport_checkbox->isChecked() ? "true" : "false");
+           if(PDialogImport::instance(this)->exec() == QDialog::Rejected)
                 return;
+        }
         CImport::instance()->setPath(import_path);
         CImport::instance()->setReimport(reimport_checkbox->isChecked());
         CImport::instance()->setMultiresMode(enableMultiresMode->isChecked());
@@ -1315,9 +1316,10 @@ void PMain::importDone(MyException *ex, Image4DSimple* vmap_image, qint64 elapse
             CAnnotations::instance(volume->getDIM_V(), volume->getDIM_H(), volume->getDIM_D());
 
             //starting 3D exploration
-            new CExplorerWindow(V3D_env, CImport::instance()->getVMapResIndex(), CImport::instance()->getVMap(),
+            CExplorerWindow *new_win = new CExplorerWindow(V3D_env, CImport::instance()->getVMapResIndex(), CImport::instance()->getVMap(),
                                 0, CImport::instance()->getVMapHeight(), 0, CImport::instance()->getVMapWidth(),
                                 0, CImport::instance()->getVMapDepth(), CImport::instance()->getNChannels(), 0);
+            new_win->show();
 
             helpBox->setText(HTbase);
         }
