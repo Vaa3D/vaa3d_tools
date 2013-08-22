@@ -70,7 +70,7 @@ void TPAlgoMST::execute() throw (MyException)
 
 	float ***D;									//distances matrix for VHD directions
 	std::pair<int*,int*> **predecessors;	//predecessor matrix for VHD directions
-	int src_row, src_col;						//source vertex
+	int src_row=0, src_col=0;						//source vertex
 
 	//0) fixing the source as the stitchable Stack nearest to the top-left corner
 	int min_distance = std::numeric_limits<int>::max();

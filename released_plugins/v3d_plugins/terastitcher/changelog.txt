@@ -11,6 +11,27 @@ ties names are:
 - Rem: a feature no longer available
 
 ============================================================================================
+Version 1.1.0
+August 22st, 2013
+--------------------------------------------------------------------------------------------
+- New: added automatic completion of the "projout" command line parameter. Whatever the user
+       input (missing prefix, name or extension),  the tool is able to auto-complete it with
+	   default values (volume's path  for missing path, the operation name for missing name,
+	   and "xml" extension for missing extension).
+- Fix: fixed a bug which caused the  "Place tiles"  step to crash when  no stitchable stacks
+       are found.
+- Fix: fixed bug which caused TeraStitcher to crash  when importing volumes with a huge num-
+       ber of tiles (> 10000).
+--------------------------------------------------------------------------------------------
+
+
+Version 1.0.9
+August 22st, 2013
+--------------------------------------------------------------------------------------------
+- Fix: fixed compilation bug on VS 2010.
+--------------------------------------------------------------------------------------------
+
+
 Version 1.0.8
 August 21st, 2013
 --------------------------------------------------------------------------------------------

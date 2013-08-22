@@ -774,9 +774,9 @@ void StackedVolume::mirror(axis mrr_axis)
 //extract spatial coordinates (in millimeters) of given Stack object
 void StackedVolume::extractCoordinates(Stack* stk, int z, int* crd_1, int* crd_2, int* crd_3)
 {
-    //#if VM_VERBOSE > 3
+    #if VM_VERBOSE > 3
     printf("\t\t\t\tin StackedVolume::extractCoordinates(stk=\"%s\", z = %d)\n", stk->getDIR_NAME(), z);
-    //#endif
+    #endif
 
 	bool found_ABS_X=false;
 	bool found_ABS_Y=false;
