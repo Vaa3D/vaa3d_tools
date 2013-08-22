@@ -120,10 +120,10 @@ bool AtlasGuidedStrAnnoPartialPlugin::dofunc(const QString &func_name, const V3D
           cout<<"Usage : v3d -x atlasguided -f seganno -i <inimg_file> <inmarker_file> <inatlas_file> <incell_file> [<incell2_file>] -o <outatlas_file> <outseglab_file> -p <refchannel> <ratio> <fgthresh> <initemp> <minitemp> <ann_rate> <iter> <useCell2>"<<endl;
 		cout<<endl;
           cout<<"inimg_file      name of input image file"<<endl;
-		cout<<"inmarker_file   name of input marker file"<<endl;
+        cout<<"inmarker_file   name of input marker file (the markers will define initial head and tail marker position from V3D) (should be specified as NULL if non-defined)" <<endl;
           cout<<"inatlas_file    name of input atlas file"<<endl;
           cout<<"incell_file     name of input interesting cell file"<<endl;
-          cout<<"incell2_file    name of input secondary interesting cell file. If useCell2 is 0, this field is empty"<<endl;
+          cout<<"incell2_file    name of input secondary interesting cell file (these cells will be warped as well based on atlas). If useCell2 is 0, this field is empty"<<endl;
 
           cout<<"outatlas_file   name of output atlas file"<<endl;
           cout<<"outseglab_file  name of output seg-label file"<<endl;
@@ -146,7 +146,7 @@ bool AtlasGuidedStrAnnoPartialPlugin::dofunc(const QString &func_name, const V3D
 
 bool AtlasGuidedStrAnnoPartial(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 &callback, int mode)
 {
-     cout<<"Welcome to Atlas Guided StrAnno"<<endl;
+     cout<<"Welcome to Atlas Guided Segmentation and Annotation"<<endl;
 
      if (output.size() < 1) return false;
 
@@ -444,29 +444,35 @@ bool do_AtlasGuidedStrAnno(V3DPluginCallback2 &callback,
 	}
 
 	//------------------------------------------------------------------------------------------------------------------------------------
-	printf("2. Import markers. \n");
+    printf("3. Import markers. \n");
 	//get initial head and tail marker position from V3D
 	vector< vector<double> > vec2d_markers;
 	if(!paras_str.b_markerfromV3D)
 	{
-		if(qs_filename_marker_input.isEmpty())
+        if(qs_filename_marker_input.isEmpty() || qs_filename_marker_input.toUpper()=="NULL")
 		{
-			v3d_msg(QString("Invalid marker path!"));
+            v3d_msg(QString("Invalid marker path! Ignore it!"), 0);
+            vec2d_markers.clear();
+            /* //commented by PHC 2013-08-21
 			if(p_img_8u) 								{delete []p_img_8u;			p_img_8u=0;}
 			if(p_img_input && !paras_str.b_imgfromV3D) 	{delete []p_img_input;		p_img_input=0;}
 			if(sz_img_input)						 	{delete []sz_img_input;		sz_img_input=0;}
 			return false;
+            */
 		}
-		QList<ImageMarker> ql_markers=readMarker_file(qs_filename_marker_input);
-		printf("\t>>read %d markers from file: %s.\n",ql_markers.size(),qPrintable(qs_filename_marker_input));
-		vector<double> vec_marker(3,0);
-		for(V3DLONG i=0;i<ql_markers.size();i++)
-		{
-			vec_marker[0]=ql_markers[i].x;
-			vec_marker[1]=ql_markers[i].y;
-			vec_marker[2]=ql_markers[i].z;
-			vec2d_markers.push_back(vec_marker);
-		}
+        else
+        {
+            QList<ImageMarker> ql_markers=readMarker_file(qs_filename_marker_input);
+            printf("\t>>read %d markers from file: %s.\n",ql_markers.size(),qPrintable(qs_filename_marker_input));
+            vector<double> vec_marker(3,0);
+            for(V3DLONG i=0;i<ql_markers.size();i++)
+            {
+                vec_marker[0]=ql_markers[i].x;
+                vec_marker[1]=ql_markers[i].y;
+                vec_marker[2]=ql_markers[i].z;
+                vec2d_markers.push_back(vec_marker);
+            }
+        }
 	}
 	else
 	{
@@ -492,7 +498,7 @@ bool do_AtlasGuidedStrAnno(V3DPluginCallback2 &callback,
 	}
 
 	//------------------------------------------------------------------------------------------------------------------------------------
-	printf("3. Read atlas apo file. \n");
+    printf("4. Read atlas apo file. \n");
 	QList<CellAPO> ql_atlasapo;
 	ql_atlasapo=readAPO_file(qs_filename_atals_input);
 	printf("\t>>read %d points from [%s]\n",ql_atlasapo.size(),qPrintable(qs_filename_atals_input));
@@ -506,7 +512,7 @@ bool do_AtlasGuidedStrAnno(V3DPluginCallback2 &callback,
 	}
 
 	//------------------------------------------------------------------------------------------------------------------------------------
-	printf("4. Read interesting cell file. \n");
+    printf("5. Read interesting cell file. \n");
 	QList<QString> ql_celloi_name;
 	if(!readCelloi_file(qs_filename_celloi_input,ql_celloi_name))
 	{
@@ -523,7 +529,7 @@ bool do_AtlasGuidedStrAnno(V3DPluginCallback2 &callback,
 
 
 	//------------------------------------------------------------------------------------------------------------------------------------
-	printf("5. Do Straightening. \n");
+    printf("6. Do Straightening. \n");
 	unsigned char *p_strimg=0;
 	V3DLONG *sz_strimg=0;
 	vector< vector< vector< vector<V3DLONG> > > > vec4d_mappingfield_str2ori;
@@ -562,7 +568,7 @@ bool do_AtlasGuidedStrAnno(V3DPluginCallback2 &callback,
 	}
 
 	//------------------------------------------------------------------------------------------------------------------------------------
-	printf("6. Do Annotation. \n");
+    printf("7. Do Annotation. \n");
 	QList<CellAPO> ql_musclecell_output;
 	unsigned char *p_img8u_seglabel=0;
 	COutputInfo outputinfo;
@@ -637,7 +643,7 @@ bool do_AtlasGuidedStrAnno(V3DPluginCallback2 &callback,
 	QList<CellAPO> ql_cellio2_tps;
 	if( b_use_celloi_2 || !qs_filename_celloi_2_input.isEmpty()) // b_use_celloi_2 = DLG_stranno.checkBox_celloi_2->isChecked()
 	{
-		printf("6~7. Warping the secondary interesting cells. \n");
+        printf("8-9. Warping the secondary interesting cells. \n");
 
 		QList<QString> ql_celloi2_name;
 		if(!readCelloi_file(qs_filename_celloi_2_input,ql_celloi2_name))
@@ -748,7 +754,7 @@ bool do_AtlasGuidedStrAnno(V3DPluginCallback2 &callback,
 	}
 
 	//------------------------------------------------------------------------------------------------------------------------------------
-	printf("7. Map the annotated cell back to non-straightened image. \n");
+    printf("10. Map the annotated cell back to non-straightened image. \n");
 	QList<CellAPO> ql_musclecell_output_ori(ql_musclecell_output);
 
 	//map back to non-straightened image
@@ -796,7 +802,7 @@ bool do_AtlasGuidedStrAnno(V3DPluginCallback2 &callback,
 	}
 
 	//------------------------------------------------------------------------------------------------------------------------------------
-	printf("8. Save segmentation label image to file. \n");
+    printf("11. Save segmentation label image to file. \n");
 	if(!qs_filename_seglabel_output.isEmpty() && p_img8u_seglabel)
 	{
 		V3DLONG sz_seglabelimg[4]={sz_img_input[0],sz_img_input[1],sz_img_input[2],1};
