@@ -11,14 +11,12 @@ ties names are:
 - Rem: a feature no longer available
 
 ============================================================================================
-
-todo:
-1) pipeline I/O - GPU (aspettando misure)
-d2) TeraConverter: disabilitare output "Image series(tiled)" con input "Vaa3D*"
-d3) mettere stampe per risolvere problema mdata.bin per Peng
-d4) ripristinare finestre dialogo non native in TeraConverter
-5) TeraStitcher 2D (commit SVN)
-6) TeraFly bug: "Do you confirm" change resolution.
+Version 0.9.6
+August 22th, 2013
+--------------------------------------------------------------------------------------------
+- Fix: fixed a bug which caused incorrect behaviour in TeraConverter when clicking  "Cancel"
+       in the file dialog for choosing the input volume.
+--------------------------------------------------------------------------------------------
 
 Version 0.9.5
 August 21th, 2013

@@ -406,11 +406,15 @@ void PConverter::inDirButtonClicked()
     dialog.setWindowTitle("Select volume's directory");
     dialog.setDirectory(CSettings::instance()->getVCInputPath().c_str());
     if(dialog.exec())
+    {
         inPathField->setText(dialog.directory().absolutePath());
 
-    //launching import
-    if(inPathField->text().toStdString().compare("") != 0)
-        startButtonClicked();
+        //launching import
+        if(inPathField->text().toStdString().compare("") != 0)
+            startButtonClicked();
+    }
+
+
 }
 
 void PConverter::inFileButtonClicked()
@@ -430,12 +434,14 @@ void PConverter::inFileButtonClicked()
     dialog.setNameFilter(tr("V3D raw files (*.raw *.RAW *.v3draw *.V3DRAW)"));
     dialog.setDirectory(CSettings::instance()->getVCInputPath().c_str());
     if(dialog.exec())
+    {
         if(!dialog.selectedFiles().empty())
             inPathField->setText(dialog.selectedFiles().front());
 
-    //launching import
-    if(inPathField->text().toStdString().compare("") != 0)
-        startButtonClicked();
+        //launching import
+        if(inPathField->text().toStdString().compare("") != 0)
+            startButtonClicked();
+    }
 }
 
 void PConverter::outDirButtonClicked()
