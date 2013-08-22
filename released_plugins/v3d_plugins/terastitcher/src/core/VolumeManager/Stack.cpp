@@ -40,6 +40,12 @@
 #else
 	#include <dirent.h>
 #endif
+#ifdef min
+#undef min
+#endif
+#ifdef max
+#undef max
+#endif
 #include <list>
 #include <string>
 #include <cv.h>
