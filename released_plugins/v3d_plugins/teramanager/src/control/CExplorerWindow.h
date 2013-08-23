@@ -173,14 +173,19 @@ class teramanager::CExplorerWindow : public QWidget
         void restoreViewFrom(CExplorerWindow* source) throw (MyException);
 
         /**********************************************************************************
-        * Generates new view centered at the given 3D point on the given resolution and ha-
-        * ving the given dimensions (optional).  VOI's dimensions from the GUI will be used
-        * if dx,dy,dz are not provided.
+        * Generates a new view using the given coordinates.
         * Called by the current <CExplorerWindow> when the user zooms in and the higher res-
         * lution has to be loaded.
         ***********************************************************************************/
-        void newView(int x, int y, int z, int resolution, bool fromVaa3Dcoordinates = false,
-                     int dx=-1, int dy=-1, int dz=-1);
+        void
+        newView(
+            int x, int y, int z,                //can be either the VOI's center (default)
+                                                //or the VOI's ending point (see x0,y0,z0)
+            int resolution,                     //resolution index of the view requested
+            bool fromVaa3Dcoordinates = false,  //if coordinates were obtained from Vaa3D
+            int dx=-1, int dy=-1, int dz=-1,    //VOI [x-dx,x+dx), [y-dy,y+dy), [z-dz,z+dz)
+            int x0=-1, int y0=-1, int z0=-1     //VOI [x0, x), [y0, y), [z0, z)
+        );
 
         /**********************************************************************************
         * Resizes  the  given image subvolume in a  newly allocated array using the fastest

@@ -551,18 +551,21 @@ void CExplorerWindow::loadingDone(uint8 *data, MyException *ex, void* sourceObje
 }
 
 /**********************************************************************************
-* Generates new view centered at the given 3D point on the given resolution and ha-
-* ving the given dimensions (optional).  VOI's dimensions from the GUI will be used
-* if dx,dy,dz are not provided.
+* Generates a new view using the given coordinates.
 * Called by the current <CExplorerWindow> when the user zooms in and the higher res-
 * lution has to be loaded.
 ***********************************************************************************/
-void CExplorerWindow::newView(int x, int y, int z, int resolution, bool fromVaa3Dcoordinates /* = false */,
-                              int dx /* = -1 */, int dy /* = -1 */, int dz /* = -1 */)
+void
+CExplorerWindow::newView(
+    int x, int y, int z,                            //can be either the VOI's center (default) or the VOI's ending point (see x0,y0,z0)
+    int resolution,                                 //resolution index of the view requested
+    bool fromVaa3Dcoordinates /*= false*/,          //if coordinates were obtained from Vaa3D
+    int dx/*=-1*/, int dy/*=-1*/, int dz/*=-1*/,    //VOI [x-dx,x+dx), [y-dy,y+dy), [z-dz,z+dz)
+    int x0/*=-1*/, int y0/*=-1*/, int z0/*=-1*/)    //VOI [x0, x), [y0, y), [z0, z)
 {
     #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread *] >> CExplorerWindow[%s]::newView(x = %d, y = %d, z = %d, res = %d, dx = %d, dy = %d, dz = %d)\n",
-           title.c_str(), x, y, z, resolution, dx, dy, dz );
+    printf("--------------------- teramanager plugin [thread *] >> CExplorerWindow[%s]::newView(x = %d, y = %d, z = %d, res = %d, dx = %d, dy = %d, dz = %d, x0 = %d, y0 = %d, z0 = %d)\n",
+           title.c_str(), x, y, z, resolution, dx, dy, dz, x0, y0, z0);
     #endif
 
     //checking preconditions with automatic correction, where possible
@@ -581,26 +584,65 @@ void CExplorerWindow::newView(int x, int y, int z, int resolution, bool fromVaa3
     pMain.loadButton->setEnabled(false);
     pMain.statusBar->showMessage("Changing resolution...");
 
-    //computing VOI in the coordinates of the given resolution
+    //scaling VOI to the given resolution
     float ratio = static_cast<float>(CImport::instance()->getVolume(resolution)->getDIM_D())/CImport::instance()->getVolume(volResIndex)->getDIM_D();
-    int VoiCenterX = getGlobalHCoord(x, resolution, fromVaa3Dcoordinates);
-    int VoiCenterY = getGlobalVCoord(y, resolution, fromVaa3Dcoordinates);
-    int VoiCenterZ = getGlobalDCoord(z, resolution, fromVaa3Dcoordinates);
-    dx = dx == -1 ? int_inf : static_cast<int>(dx*ratio+0.5f);
-    dy = dy == -1 ? int_inf : static_cast<int>(dy*ratio+0.5f);
-    dz = dz == -1 ? int_inf : static_cast<int>(dz*ratio+0.5f);
+    x = getGlobalHCoord(x, resolution, fromVaa3Dcoordinates);
+    y = getGlobalVCoord(y, resolution, fromVaa3Dcoordinates);
+    z = getGlobalDCoord(z, resolution, fromVaa3Dcoordinates);
+    if(x0 != -1)
+        x0 = getGlobalHCoord(x0, resolution, fromVaa3Dcoordinates);
+    else
+        dx = dx == -1 ? int_inf : static_cast<int>(dx*ratio+0.5f);
+    if(y0 != -1)
+        y0 = getGlobalVCoord(y0, resolution, fromVaa3Dcoordinates);
+    else
+        dy = dy == -1 ? int_inf : static_cast<int>(dy*ratio+0.5f);
+    if(z0 != -1)
+        z0 = getGlobalDCoord(z0, resolution, fromVaa3Dcoordinates);
+    else
+        dz = dz == -1 ? int_inf : static_cast<int>(dz*ratio+0.5f);
 
     //cropping bounding box if its larger than the maximum allowed
-    printf("--------------------- teramanager plugin [thread *] >> CExplorerWindow[%s]: cropping bbox dims from (%d,%d,%d) to ",
-           title.c_str(), dx, dy, dz );
-    dx = std::min(dx, static_cast<int>(pMain.Hdim_sbox->value()/2.0f+0.5f));
-    dy = std::min(dy, static_cast<int>(pMain.Vdim_sbox->value()/2.0f+0.5f));
-    dz = std::min(dz, static_cast<int>(pMain.Ddim_sbox->value()/2.0f+0.5f));
-    printf("(%d,%d,%d)\n", dx, dy, dz );
+    if(dx != -1 && dy != -1 && dz != -1)
+    {
+        printf("--------------------- teramanager plugin [thread *] >> CExplorerWindow[%s]: cropping bbox dims from (%d,%d,%d) to ",
+               title.c_str(), dx, dy, dz );
+        dx = std::min(dx, static_cast<int>(pMain.Hdim_sbox->value()/2.0f+0.5f));
+        dy = std::min(dy, static_cast<int>(pMain.Vdim_sbox->value()/2.0f+0.5f));
+        dz = std::min(dz, static_cast<int>(pMain.Ddim_sbox->value()/2.0f+0.5f));
+        printf("(%d,%d,%d)\n", dx, dy, dz );
+    }
+    else
+    {
+        printf("--------------------- teramanager plugin [thread *] >> CExplorerWindow[%s]: cropping bbox dims from [%d,%d) [%d,%d) [%d,%d) to ",
+               title.c_str(), x0, x, y0, y, z0, z );
+        if(x - x0 > pMain.Hdim_sbox->value())
+        {
+            int margin = ( (x - x0) - pMain.Hdim_sbox->value() )/2 ;
+            x  -= margin;
+            x0 += margin;
+        }
+        if(y - y0 > pMain.Vdim_sbox->value())
+        {
+            int margin = ( (y - y0) - pMain.Vdim_sbox->value() )/2 ;
+            y  -= margin;
+            y0 += margin;
+        }
+        if(z - z0 > pMain.Ddim_sbox->value())
+        {
+            int margin = ( (z - z0) - pMain.Ddim_sbox->value() )/2 ;
+            z  -= margin;
+            z0 += margin;
+        }
+        printf("[%d,%d) [%d,%d) [%d,%d)\n", x0, x, y0, y, z0, z );
+    }
 
     //preparing VOI for loading (the actual VOI that can be loaded may differ from the one selected, e.g. along volume's borders)
     CVolume* cVolume = CVolume::instance();
-    cVolume->setVoi(0, resolution, VoiCenterY-dy, VoiCenterY+dy, VoiCenterX-dx, VoiCenterX+dx, VoiCenterZ-dz, VoiCenterZ+dz);
+    if(dx != -1 && dy != -1 && dz != -1)
+        cVolume->setVoi(0, resolution, y-dy, y+dy, x-dx, x+dx, z-dz, z+dz);
+    else
+        cVolume->setVoi(0, resolution, y0, y, x0, x, z0, z);
 
     //saving min, max and values of PMain GUI VOI's widgets
     saveSubvolSpinboxState();
@@ -709,6 +751,7 @@ uint8* CExplorerWindow::getVOI(int x0, int x1, int y0, int y1, int z0, int z1,
 
     //otherwise COPYING + SCALING
     //fast scaling by pixel replication
+    // - NOTE: interpolated image is allowed to be slightly larger than the source image resulting after scaling.
     if( ( (xDimInterp % (x1-x0) <= 1) || (xDimInterp % (x1-x0+1) <= 1)) &&
         ( (yDimInterp % (y1-y0) <= 1) || (yDimInterp % (y1-y0+1) <= 1)) &&
         ( (zDimInterp % (z1-z0) <= 1) || (zDimInterp % (z1-z0+1) <= 1)))
@@ -1225,7 +1268,8 @@ void CExplorerWindow::invokedFromVaa3D(v3d_imaging_paras* params /* = 0 */)
 
         //zoom-in around marker or ROI triggers a new window
         if(roi->ops_type == 1)
-            current->newView(roiCenterX, roiCenterY, roiCenterZ, volResIndex+1, false, static_cast<int>((roi->xe-roi->xs)/2.0f+0.5f), static_cast<int>((roi->ye-roi->ys)/2.0f+0.5f), static_cast<int>((roi->ze-roi->zs)/2.0f+0.5f));
+            //current->newView(roiCenterX, roiCenterY, roiCenterZ, volResIndex+1, false, static_cast<int>((roi->xe-roi->xs)/2.0f+0.5f), static_cast<int>((roi->ye-roi->ys)/2.0f+0.5f), static_cast<int>((roi->ze-roi->zs)/2.0f+0.5f));
+            current->newView(roi->xe, roi->ye, roi->ze, volResIndex+1, false, -1, -1, -1, roi->xs, roi->ys, roi->zs);
 
         //zoom-in with mouse scroll up may trigger a new window if caching is not possible
         else if(roi->ops_type == 2)

@@ -671,21 +671,21 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     connect(loadButton, SIGNAL(clicked()), this, SLOT(loadButtonClicked()));
     connect(CImport::instance(), SIGNAL(sendOperationOutcome(MyException*, Image4DSimple*, qint64)), this, SLOT(importDone(MyException*, Image4DSimple*,qint64)), Qt::QueuedConnection);
     connect(CVolume::instance(), SIGNAL(sendOperationOutcome(uint8*, MyException*,void*, qint64, QString, int)), SLOT(loadingDone(uint8*, MyException*,void*, qint64, QString, int)), Qt::QueuedConnection);
-    connect(enableMultiresMode, SIGNAL(stateChanged(int)), this, SLOT(mode3D_checkbox_changed(int)), Qt::QueuedConnection);
-    connect(volMapMaxSizeSBox, SIGNAL(valueChanged(int)), this, SLOT(settingsChanged(int)), Qt::QueuedConnection);
-    connect(Vdim_sbox, SIGNAL(valueChanged(int)), this, SLOT(settingsChanged(int)), Qt::QueuedConnection);
-    connect(Hdim_sbox, SIGNAL(valueChanged(int)), this, SLOT(settingsChanged(int)), Qt::QueuedConnection);
-    connect(Ddim_sbox, SIGNAL(valueChanged(int)), this, SLOT(settingsChanged(int)), Qt::QueuedConnection);
-    connect(Vdim_sbox, SIGNAL(valueChanged(int)), this, SLOT(zoomInVoiSizeChanged(int)), Qt::QueuedConnection);
-    connect(Hdim_sbox, SIGNAL(valueChanged(int)), this, SLOT(zoomInVoiSizeChanged(int)), Qt::QueuedConnection);
-    connect(Ddim_sbox, SIGNAL(valueChanged(int)), this, SLOT(zoomInVoiSizeChanged(int)), Qt::QueuedConnection);
+    connect(enableMultiresMode, SIGNAL(stateChanged(int)), this, SLOT(mode3D_checkbox_changed(int)));
+    connect(volMapMaxSizeSBox, SIGNAL(valueChanged(int)), this, SLOT(settingsChanged(int)));
+    connect(Vdim_sbox, SIGNAL(valueChanged(int)), this, SLOT(settingsChanged(int)));
+    connect(Hdim_sbox, SIGNAL(valueChanged(int)), this, SLOT(settingsChanged(int)));
+    connect(Ddim_sbox, SIGNAL(valueChanged(int)), this, SLOT(settingsChanged(int)));
+    connect(Vdim_sbox, SIGNAL(valueChanged(int)), this, SLOT(zoomInVoiSizeChanged(int)));
+    connect(Hdim_sbox, SIGNAL(valueChanged(int)), this, SLOT(zoomInVoiSizeChanged(int)));
+    connect(Ddim_sbox, SIGNAL(valueChanged(int)), this, SLOT(zoomInVoiSizeChanged(int)));
     connect(V0_sbox, SIGNAL(valueChanged(int)), this, SLOT(highestVOISizeChanged(int)));
     connect(V1_sbox, SIGNAL(valueChanged(int)), this, SLOT(highestVOISizeChanged(int)));
     connect(H0_sbox, SIGNAL(valueChanged(int)), this, SLOT(highestVOISizeChanged(int)));
     connect(H1_sbox, SIGNAL(valueChanged(int)), this, SLOT(highestVOISizeChanged(int)));
     connect(D0_sbox, SIGNAL(valueChanged(int)), this, SLOT(highestVOISizeChanged(int)));
     connect(D1_sbox, SIGNAL(valueChanged(int)), this, SLOT(highestVOISizeChanged(int)));
-    connect(resolution_cbox, SIGNAL(currentIndexChanged(int)), this, SLOT(resolutionIndexChanged(int)), Qt::QueuedConnection);
+    connect(resolution_cbox, SIGNAL(currentIndexChanged(int)), this, SLOT(resolutionIndexChanged(int)));
     connect(traslXpos, SIGNAL(clicked()), this, SLOT(traslXposClicked()));
     connect(traslXneg, SIGNAL(clicked()), this, SLOT(traslXnegClicked()));
     connect(traslYpos, SIGNAL(clicked()), this, SLOT(traslYposClicked()));
@@ -1292,6 +1292,7 @@ void PMain::importDone(MyException *ex, Image4DSimple* vmap_image, qint64 elapse
             gradientBar->setNSteps(CImport::instance()->getResolutions());
 
             //inserting available resolutions
+            resolution_cbox->setEnabled(false);
             for(int i=0; i<CImport::instance()->getResolutions(); i++)
             {
                 QString option = "";
