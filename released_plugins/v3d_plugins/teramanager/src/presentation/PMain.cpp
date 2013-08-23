@@ -892,12 +892,16 @@ void PMain::openVolume(string path /* = "" */)
 
     try
     {
-        string import_path = path;
+        QString import_path = path.c_str();
 
-        if(import_path.empty())
+        if(import_path.isEmpty())
         {
             //---- Alessandro 2013-05-20: obtaining volume's directory with QFileDialog instead of platform native file dialogs
             //                            since a strange behaviour has been shown by native file dialogs on MacOS X.
+
+
+            /* //comment by PHC, 20130823 to solve the mdata.bin cannot be detected problem
+
             QFileDialog dialog(0);
             dialog.setFileMode(QFileDialog::DirectoryOnly);
             dialog.setViewMode(QFileDialog::Detail);
@@ -914,6 +918,17 @@ void PMain::openVolume(string path /* = "" */)
             //if no directory has been selected, terminating this method
             if(import_path.empty())
                 return;
+
+            */
+
+            //adde by PHC 20130823
+            import_path = QFileDialog::getExistingDirectory(this, tr("Select a folder for a resolution of the volume image yopu want to visualize"),
+                                                            CSettings::instance()->getVolumePathLRU().c_str(),
+                                                             QFileDialog::ShowDirsOnly
+                                                        //     | QFileDialog::DontResolveSymlinks   //maybe I should allow symbolic links as well, by PHC, 20130823
+                                                                    );
+            if (import_path.isEmpty())
+                return;
         }
 
         //first checking that no volume has imported yet
@@ -921,12 +936,12 @@ void PMain::openVolume(string path /* = "" */)
             throw MyException("A volume has been already imported! Please close the current volume first.");
 
         //checking that the inserted path exists
-        if(!QFile::exists(import_path.c_str()))
-            throw MyException("The inserted path does not exist!");
+        //if(!QFile::exists(import_path))
+        //    throw MyException("The inserted path does not exist!");
 
         //storing the path into CSettings
-        CSettings::instance()->setVolumePathLRU(import_path);
-        CSettings::instance()->addVolumePathToHistory(import_path);
+        CSettings::instance()->setVolumePathLRU(qPrintable(import_path));
+        CSettings::instance()->addVolumePathToHistory(qPrintable(import_path));
         CSettings::instance()->writeSettings();
 
         //updating recent volumes menu
@@ -945,20 +960,21 @@ void PMain::openVolume(string path /* = "" */)
         recentVolumesMenu->addAction(clearRecentVolumesAction);
 
         //check if additional informations are required
-        string mdata_fpath = import_path;
+        QString mdata_fpath = import_path;
+        qDebug() << "inportpath = [" << mdata_fpath << "]";
         mdata_fpath.append("/");
         mdata_fpath.append(IM_METADATA_FILE_NAME);
-        string vmap_fpath = import_path;
+        QString vmap_fpath = import_path;
         vmap_fpath.append("/");
         vmap_fpath.append(TMP_VMAP_FNAME);
-        if(!QFile::exists(mdata_fpath.c_str()) || reimport_checkbox->isChecked())
+        if(!QFile::exists(mdata_fpath) || reimport_checkbox->isChecked())
         {
            printf("--------------------- teramanager plugin [thread *] >> PMain::openVolume(path = \"%s\"): mdata.bin file not found at \"%s\" or reimport checkbox is checked (%s)\n",
-                  path.c_str(), mdata_fpath.c_str(), reimport_checkbox->isChecked() ? "true" : "false");
+                  path.c_str(), qPrintable(mdata_fpath), reimport_checkbox->isChecked() ? "true" : "false");
            if(PDialogImport::instance(this)->exec() == QDialog::Rejected)
                 return;
         }
-        CImport::instance()->setPath(import_path);
+        CImport::instance()->setPath(qPrintable(import_path));
         CImport::instance()->setReimport(reimport_checkbox->isChecked());
         CImport::instance()->setMultiresMode(enableMultiresMode->isChecked());
         CImport::instance()->setRegenerateVolumeMap(regenerateVolMap->isChecked());
