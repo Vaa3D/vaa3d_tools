@@ -922,7 +922,7 @@ void PMain::openVolume(string path /* = "" */)
             */
 
             //adde by PHC 20130823
-            import_path = QFileDialog::getExistingDirectory(this, tr("Select a folder for a resolution of the volume image yopu want to visualize"),
+            import_path = QFileDialog::getExistingDirectory(this, tr("Select a folder for a resolution of the volume image you want to visualize"),
                                                             CSettings::instance()->getVolumePathLRU().c_str(),
                                                              QFileDialog::ShowDirsOnly
                                                         //     | QFileDialog::DontResolveSymlinks   //maybe I should allow symbolic links as well, by PHC, 20130823

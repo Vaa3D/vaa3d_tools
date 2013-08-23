@@ -36,7 +36,6 @@
 #include <QtGui>
 #include <v3d_interface.h>
 #include "../core/ImageManager/MyException.h"
-#include "../core/ImageManager/IM_defs.h"
 #include <limits>
 
 /*******************************************************************************************************************************
@@ -98,6 +97,8 @@ namespace teramanager
     *    TYPES         *
     ********************
     ---------------------------------------------------------------------------------------------------------------------------*/
+    typedef unsigned int uint32;
+
     //interval type
     struct interval_t
     {

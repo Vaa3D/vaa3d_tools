@@ -205,7 +205,7 @@ void CExplorerWindow::show()
         #ifdef USE_EXPERIMENTAL_FEATURES
         disconnect(window3D->zoomSlider, SIGNAL(valueChanged(int)), view3DWidget, SLOT(setZoom(int)));
         connect(window3D->zoomSlider, SIGNAL(valueChanged(int)), this, SLOT(setZoom(int)));
-        #endif USE_EXPERIMENTAL_FEATURES
+        #endif //USE_EXPERIMENTAL_FEATURES
 
         //changing window flags (disabling minimize/maximize buttons)
         // ---- Alessandro 2013-04-22 fixed: this causes (somehow) window3D not to respond correctly to the move() method

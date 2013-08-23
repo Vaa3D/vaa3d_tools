@@ -96,7 +96,7 @@ void CSettings::writeSettings()
 
     settings.beginWriteArray("volumePathHistory");
     std::list<string>::iterator it = volumePathHistory.begin();
-    for (int i = 0; i < volumePathHistory.size(); ++i, it++) {
+    for (size_t i = 0; i < volumePathHistory.size(); ++i, it++) {
         settings.setArrayIndex(i);
         QString path(it->c_str());
         settings.setValue("path", path);

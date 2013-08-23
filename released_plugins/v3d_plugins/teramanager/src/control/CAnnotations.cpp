@@ -3,6 +3,7 @@
 #include <list>
 #include "CAnnotations.h"
 #include "locale.h"
+#include <math.h>
 
 using namespace teramanager;
 using namespace std;
@@ -77,9 +78,9 @@ void CAnnotations::Octree::_rec_insert(const Poctant& p_octant, annotation& neur
 //                p_octant->D_start, p_octant->D_start+p_octant->D_dim,
 //                neuron.y, neuron.x, neuron.z);
         p_octant->n_annotations++;
-        uint32 V_dim_halved = ROUND((float)p_octant->V_dim/2);
-        uint32 H_dim_halved = ROUND((float)p_octant->H_dim/2);
-        uint32 D_dim_halved = ROUND((float)p_octant->D_dim/2);
+        uint32 V_dim_halved = static_cast<int>(round((float)p_octant->V_dim/2));
+        uint32 H_dim_halved = static_cast<int>(round((float)p_octant->H_dim/2));
+        uint32 D_dim_halved = static_cast<int>(round((float)p_octant->D_dim/2));
 
         //child1: [V_start,			V_start+V_dim/2),[H_start,			H_start+H_dim/2),[D_start,			D_start+D_dim/2)
         if	   (neuron.y >= p_octant->V_start	&& neuron.y < p_octant->V_start+V_dim_halved		&&
@@ -281,11 +282,11 @@ void CAnnotations::Octree::_rec_search(const Poctant& p_octant, const interval_t
         }
         else
         {
-            uint32 V_dim_halved = ROUND((float)p_octant->V_dim/2);
+            uint32 V_dim_halved = static_cast<int>(round((float)p_octant->V_dim/2));
             uint32 V_halved		= p_octant->V_start+V_dim_halved;
-            uint32 H_dim_halved = ROUND((float)p_octant->H_dim/2);
+            uint32 H_dim_halved = static_cast<int>(round((float)p_octant->H_dim/2));
             uint32 H_halved		= p_octant->H_start+H_dim_halved;
-            uint32 D_dim_halved = ROUND((float)p_octant->D_dim/2);
+            uint32 D_dim_halved = static_cast<int>(round((float)p_octant->D_dim/2));
             uint32 D_halved		= p_octant->D_start+D_dim_halved;
 
             if(intersects(V_int, H_int, D_int, p_octant->V_start, V_dim_halved, p_octant->H_start, H_dim_halved, p_octant->D_start,	D_dim_halved))
@@ -331,11 +332,11 @@ CAnnotations::Octree::Poctant CAnnotations::Octree::_rec_find(const Poctant& p_o
         else
         {
             //printf("_rec_find(): smisting...\n");
-            uint32 V_dim_halved = ROUND((float)p_octant->V_dim/2);
+            uint32 V_dim_halved = static_cast<int>(round((float)p_octant->V_dim/2));
             uint32 V_halved	= p_octant->V_start+V_dim_halved;
-            uint32 H_dim_halved = ROUND((float)p_octant->H_dim/2);
+            uint32 H_dim_halved = static_cast<int>(round((float)p_octant->H_dim/2));
             uint32 H_halved	= p_octant->H_start+H_dim_halved;
-            uint32 D_dim_halved = ROUND((float)p_octant->D_dim/2);
+            uint32 D_dim_halved = static_cast<int>(round((float)p_octant->D_dim/2));
             uint32 D_halved	= p_octant->D_start+D_dim_halved;
 
             //printf("V[%d-%d),H[%d-%d),D[%d-%d) intersects V[%d-%d),H[%d-%d),D[%d-%d)?...", V_int.start, V_int.end, H_int.start, H_int.end, D_int.start, D_int.end, p_octant->V_start, p_octant->V_start+V_dim_halved,   p_octant->H_start,  p_octant->H_start+H_dim_halved, p_octant->D_start,	p_octant->D_start+D_dim_halved);
@@ -395,11 +396,11 @@ uint32 CAnnotations::Octree::_rec_count(const Poctant& p_octant, const interval_
         else
         {
             uint32 neuron_count = 0;
-            uint32 V_dim_halved = ROUND((float)p_octant->V_dim/2);
+            uint32 V_dim_halved = static_cast<int>(round((float)p_octant->V_dim/2));
             uint32 V_halved		= p_octant->V_start+V_dim_halved;
-            uint32 H_dim_halved = ROUND((float)p_octant->H_dim/2);
+            uint32 H_dim_halved = static_cast<int>(round((float)p_octant->H_dim/2));
             uint32 H_halved		= p_octant->H_start+H_dim_halved;
-            uint32 D_dim_halved = ROUND((float)p_octant->D_dim/2);
+            uint32 D_dim_halved = static_cast<int>(round((float)p_octant->D_dim/2));
             uint32 D_halved		= p_octant->D_start+D_dim_halved;
 
             if(intersects(V_int, H_int, D_int, p_octant->V_start, V_dim_halved, p_octant->H_start, H_dim_halved, p_octant->D_start,	D_dim_halved))
@@ -437,22 +438,22 @@ bool inline CAnnotations::Octree::intersects(const interval_t& V1_int,		 const i
                                                            uint32& V2_start, uint32& V2_dim, uint32& H2_start, uint32& H2_dim, uint32& D2_start, uint32& D2_dim) throw(MyException)
 {
     return 	( V1_int.start  < (V2_start + V2_dim)	&&
-                  V1_int.end    >  V2_start		&&
-                  H1_int.start  < (H2_start + H2_dim)	&&
-                  H1_int.end    >  H2_start		&&
-                  D1_int.start  < (D2_start + D2_dim)	&&
-                  D1_int.end    >  D2_start	 );
+              V1_int.end    >  V2_start             &&
+              H1_int.start  < (H2_start + H2_dim)	&&
+              H1_int.end    >  H2_start             &&
+              D1_int.start  < (D2_start + D2_dim)	&&
+              D1_int.end    >  D2_start	 );
 }
 
 //returns true if first volume contains second volume
 bool inline CAnnotations::Octree::contains  (const interval_t& V1_int,		 const interval_t& H1_int,		   const interval_t& D1_int,
                                              uint32& V2_start, uint32& V2_dim, uint32& H2_start, uint32& H2_dim, uint32& D2_start, uint32& D2_dim) throw(MyException)
 {
-    return (  V1_int.start  <=  V2_start                &&
+    return (  V1_int.start  <=  V2_start            &&
               V1_int.end    >=  (V2_start+V2_dim)	&&
-              H1_int.start  <=  H2_start		&&
+              H1_int.start  <=  H2_start            &&
               H1_int.end    >=  (H2_start+H2_dim)	&&
-              D1_int.start  <=  D2_start		&&
+              D1_int.start  <=  D2_start            &&
               D1_int.end    >=  (D2_start+D2_dim));
 }
 
@@ -581,7 +582,7 @@ void CAnnotations::addLandmarks(LandmarkList* markers) throw (MyException)
 void CAnnotations::removeLandmarks(std::list<LocationSimple> &markers) throw (MyException)
 {
     #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread ?] >> CAnnotations::removeLandmarks(markers[size = %d])\n",
+    printf("--------------------- teramanager plugin [thread ?] >> CAnnotations::removeLandmarks(markers[size = %lu])\n",
            markers.size());
     #endif
 
@@ -629,7 +630,7 @@ void CAnnotations::removeLandmarks(std::list<LocationSimple> &markers) throw (My
 void CAnnotations::removeCurves(std::list<NeuronSWC> &curves) throw (MyException)
 {
     #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread ?] >> CAnnotations::removeCurves(curves->listNeuron[size = %d])\n", curves.size());
+    printf("--------------------- teramanager plugin [thread ?] >> CAnnotations::removeCurves(curves->listNeuron[size = %lu])\n", curves.size());
     #endif
 
     if(octree)
@@ -747,7 +748,7 @@ void CAnnotations::findLandmarks(interval_t X_range, interval_t Y_range, interva
             markers.push_back(marker);
         }
     }
-    printf("...%d markers loaded\n", markers.size());
+    printf("...%lu markers loaded\n", markers.size());
 }
 
 void CAnnotations::findCurves(interval_t X_range, interval_t Y_range, interval_t Z_range, std::list<NeuronSWC> &curves) throw (MyException)
@@ -774,7 +775,7 @@ void CAnnotations::findCurves(interval_t X_range, interval_t Y_range, interval_t
                 sources.push_back(source);
         }
     }
-    for(int i=0; i<sources.size(); i++)
+    for(size_t i=0; i<sources.size(); i++)
     {
         annotation* annP = sources[i];
         while(annP)
@@ -791,7 +792,7 @@ void CAnnotations::findCurves(interval_t X_range, interval_t Y_range, interval_t
             annP = annP->next;
         }
     }
-    printf("...%d curve points loaded (nodes = %d, sources = %d)\n", curves.size(), nodes.size(), sources.size());
+    printf("...%lu curve points loaded (nodes = %lu, sources = %lu)\n", curves.size(), nodes.size(), sources.size());
 }
 
 /*********************************************************************************
@@ -930,7 +931,7 @@ void CAnnotations::load(const char* filepath) throw (MyException)
                 ann->x = i->x;
                 ann->y = i->y;
                 ann->z = i->z;
-                printf("--------------------- teramanager plugin >> inserting curve point %d(%d)=(%.1f,%.1f,%.1f)\n", ann->ID, i->n, ann->x, ann->y, ann->z);
+                printf("--------------------- teramanager plugin >> inserting curve point %d=(%.1f,%.1f,%.1f)\n", ann->ID, ann->x, ann->y, ann->z);
                 octree->insert(*ann);
                 annotationsMap[i->n] = ann;
                 swcMap[i->n] = &(*i);
@@ -941,7 +942,7 @@ void CAnnotations::load(const char* filepath) throw (MyException)
                 if(i->second->prev)
                     i->second->prev->next = i->second;
             }
-            printf("--------------------- teramanager plugin >> inserted %d curve points\n", annotationsMap.size());
+            printf("--------------------- teramanager plugin >> inserted %lu curve points\n", annotationsMap.size());
         }
         else
         {

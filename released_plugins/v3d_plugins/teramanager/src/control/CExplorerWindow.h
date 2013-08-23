@@ -286,7 +286,7 @@ class teramanager::CExplorerWindow : public QWidget
                     return false;
             return true;
         }
-        inline bool zoomHistoryPushBack(int zoom){
+        inline void zoomHistoryPushBack(int zoom){
             if(zoomHistory[ZOOM_HISTORY_SIZE-1] != zoom)
                 for(int i=0; i<ZOOM_HISTORY_SIZE-1; i++)
                     zoomHistory[i] = zoomHistory[i+1];

@@ -1,8 +1,32 @@
+//------------------------------------------------------------------------------------------------
+// Copyright (c) 2012  Alessandro Bria and Giulio Iannello (University Campus Bio-Medico of Rome).  
+// All rights reserved.
+//------------------------------------------------------------------------------------------------
+
+/*******************************************************************************************************************************************************************************************
+*    LICENSE NOTICE
+********************************************************************************************************************************************************************************************
+*    By downloading/using/running/editing/changing any portion of codes in this package you agree to this license. If you do not agree to this license, do not download/use/run/edit/change
+*    this code.
+********************************************************************************************************************************************************************************************
+*    1. This material is free for non-profit research, but needs a special license for any commercial purpose. Please contact Alessandro Bria at a.bria@unicas.it or Giulio Iannello at 
+*       g.iannello@unicampus.it for further details.
+*    2. You agree to appropriately cite this work in your related studies and publications.
+*    3. This material is provided by  the copyright holders (Alessandro Bria  and  Giulio Iannello),  University Campus Bio-Medico and contributors "as is" and any express or implied war-
+*       ranties, including, but  not limited to,  any implied warranties  of merchantability,  non-infringement, or fitness for a particular purpose are  disclaimed. In no event shall the
+*       copyright owners, University Campus Bio-Medico, or contributors be liable for any direct, indirect, incidental, special, exemplary, or  consequential  damages  (including, but not 
+*       limited to, procurement of substitute goods or services; loss of use, data, or profits;reasonable royalties; or business interruption) however caused  and on any theory of liabil-
+*       ity, whether in contract, strict liability, or tort  (including negligence or otherwise) arising in any way out of the use of this software,  even if advised of the possibility of
+*       such damage.
+*    4. Neither the name of University  Campus Bio-Medico of Rome, nor Alessandro Bria and Giulio Iannello, may be used to endorse or  promote products  derived from this software without
+*       specific prior written permission.
+********************************************************************************************************************************************************************************************/
+
 /*
  * This file is a modified version of code extracted from the files stackutil.cpp and
  * stackutil-11.cpp of the V3D project. See the following licence notice for more details.
  *
- * modified by Giulio Iannello, Centro Integrsto di Ricerca, Universita' Campus Bio-Medico di Roma
+ * modified by Giulio Iannello, Centro Integrato di Ricerca, Universita' Campus Bio-Medico di Roma
  * December 2012
  */
 
@@ -1118,6 +1142,63 @@ char *streamer_dostep ( Streamer_Descr_t *streamer, unsigned char *buffer2 ) {
 					for ( int j=0; j<streamer->bDescr[i].width; j++ ) {
 						unsigned char *buftmp2 = buffer2 + (buftmp - streamer->buf);
 						if ( buftmp[j]!=buftmp2[j] ) {
+							//printf("%d %d\n",buftmp[j],buftmp2[j]);
+							return ("Mismatch between streamed and non-streamed operation.\n");
+						}
+					}
+				}
+			}
+		}
+	}
+
+	return 0;
+}
+
+char *streamer_cpydata ( Streamer_Descr_t *streamer, unsigned char *buffer, unsigned char *buffer2 ) {
+
+	if ( streamer->cur_step > streamer->steps ) {
+		return ("Too many steps in a streamed operation.\n");
+	}
+
+	for ( int i=0; i<streamer->n_blocks; i++ ) { 
+
+		V3DLONG unitSize = streamer->bDescr[i].datatype; /* temporarily I use the same number, which indicates the number of bytes for each data point (pixel). This can be extended in the future. */
+	
+		int bstridey = (int) (streamer->stridexy / streamer->stridex);                     // stridey of buffer
+		int fstridey = (int) (streamer->bDescr[i].stridexy / streamer->bDescr[i].stridex); // stridey of file
+
+		for ( int c=0; c<streamer->n_chans; c++ ) {
+
+			// set initial pointer to buffers; each channel starts from the same relative position
+			unsigned char *sbuftmp = streamer->buf + ((c * streamer->stridexyz) + 
+				streamer->bDescr[i].boffs + streamer->stridex * (streamer->cur_step - 1)) * (int)unitSize; 
+			unsigned char *dbuftmp = buffer + (sbuftmp - streamer->buf);
+
+			// beginning of second slice in the buffer
+			unsigned char *next_bslice = streamer->buf + ((c * streamer->stridexyz) + 
+				streamer->bDescr[i].boffs + streamer->bDescr[i].height * streamer->stridex) * (int)unitSize; 
+
+			for (int s=0; s<streamer->bDescr[i].step_n; s++, 
+														sbuftmp+=streamer->steps * streamer->stridex * (int)unitSize,
+														dbuftmp+=streamer->steps * streamer->stridex * (int)unitSize ) { 
+				// before the copy, the pointers to both buffer have to be advanced of steps stripes
+
+				if ( sbuftmp >= next_bslice ) { // moved to next buffer slice
+					//further incease the pointer to buffer to skip other sub-blocks 
+					sbuftmp += streamer->stridex * (bstridey - streamer->bDescr[i].height) * (int)unitSize;
+					dbuftmp += streamer->stridex * (bstridey - streamer->bDescr[i].height) * (int)unitSize;
+					next_bslice += streamer->stridexy * (int)unitSize;
+				}
+
+				// copy one stripe
+				memcpy(dbuftmp,sbuftmp,streamer->bDescr[i].width);
+				//memcpy(dbuftmp,sbuftmp,streamer->stridex);
+
+				// WARNING: code for testing
+				if ( buffer2 ) { 
+					for ( int j=0; j<streamer->bDescr[i].width; j++ ) {
+						unsigned char *buftmp2 = buffer2 + (sbuftmp - streamer->buf);
+						if ( dbuftmp[j]!=buftmp2[j] ) {
 							//printf("%d %d\n",buftmp[j],buftmp2[j]);
 							return ("Mismatch between streamed and non-streamed operation.\n");
 						}

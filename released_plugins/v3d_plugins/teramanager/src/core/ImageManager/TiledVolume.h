@@ -12,10 +12,6 @@
 *    1. This material is free for non-profit research, but needs a special license for any commercial purpose. Please contact Alessandro Bria at a.bria@unicas.it or Giulio Iannello at 
 *       g.iannello@unicampus.it for further details.
 *    2. You agree to appropriately cite this work in your related studies and publications.
-*
-*       Bria, A., et al., (2012) "Stitching Terabyte-sized 3D Images Acquired in Confocal Ultramicroscopy", Proceedings of the 9th IEEE International Symposium on Biomedical Imaging.
-*       Bria, A., Iannello, G., "A Tool for Fast 3D Automatic Stitching of Teravoxel-sized Datasets", submitted on July 2012 to IEEE Transactions on Information Technology in Biomedicine.
-*
 *    3. This material is provided by  the copyright holders (Alessandro Bria  and  Giulio Iannello),  University Campus Bio-Medico and contributors "as is" and any express or implied war-
 *       ranties, including, but  not limited to,  any implied warranties  of merchantability,  non-infringement, or fitness for a particular purpose are  disclaimed. In no event shall the
 *       copyright owners, University Campus Bio-Medico, or contributors be liable for any direct, indirect, incidental, special, exemplary, or  consequential  damages  (including, but not 
@@ -154,18 +150,29 @@ class TiledVolume : public VirtualVolume
         void *streamedLoadSubvolume_open ( int steps, uint8 *buf, int V0=-1,int V1=-1, int H0=-1, int H1=-1, int D0=-1, int D1=-1 );
 
 		/* perform one step of a streamed operation: returns a pointer to a read-only buffer 
-		 * with updated data; the returned buffer should not be deallocated
+		 * with updated data; the returned buffer should not be deallocated;
 		 * the optional parameter buffer2 is an initialized buffer of the same dimensions of 
-		 * the returned buffer with reference data to be used to check that the returned buffer 
-		 * is updated with exactly the same data contained in buffer2
-		 * if the default value of buffer2 (null pointer) is passed no check is performed
+		 * the returned buffer with reference data to be used to check that the updated positions 
+		 * of the returned buffer contain exactly the same data contained in buffer2 at those positions
+		 * no check is performed if the default value of buffer2 (null pointer) is passed 
 		 */
         uint8 *streamedLoadSubvolume_dostep ( void *stream_descr, unsigned char *buffer2=0 );
 
+		/* copies the last data read from files to a user provided buffer
+		 * positions to which data are copied are depend on which data have been read in 
+		 * the last step
+		 * the user provided buffer can be freely accessed by the caller after the operation is terminated;
+		 * the optional parameter buffer2 is an initialized buffer of the same dimensions of 
+		 * the user provided buffer with reference data to be used to check that the updated positions 
+		 * of the user provided buffer contain exactly the same data contained in buffer2 at those positions
+		 * no check is performed if the default value of buffer2 (null pointer) is passed 
+		 */
+         void streamedLoadSubvolume_cpydata ( void *stream_descr, unsigned char *buffer, unsigned char *buffer2=0 );
+
 		/* close a streamed load operation: by default return the initial buffer that can be 
-		 * freely used and must be deallocated 
+		 * freely used and must be deallocated by the caller
 		 * if return_buffer is set to false, the initial buffer is deallocated, it cannot be 
-		 * resuded by the caller and the operation returns a null pointer
+		 * reused by the caller and the operation returns a null pointer
 		 */
          uint8 *streamedLoadSubvolume_close ( void *stream_descr, bool return_buffer=true );
 

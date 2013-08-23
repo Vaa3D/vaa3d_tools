@@ -50,8 +50,8 @@ class teramanager::CImport : public QThread
         static CImport* uniqueInstance;
         CImport() : QThread(), path(""), AXS_1(axis(0)), AXS_2(axis(0)), AXS_3(axis(0)),
                                VXL_1(0), VXL_2(0), VXL_3(0), reimport(false), multiresMode(false),
-                               volMapData(0), volMapHeight(-1), volMapWidth(-1), volMapDepth(-1),
-                               nchannels(-1), volMapMaxSize(50)
+                               volMapMaxSize(50), volMapData(0), volMapHeight(-1), volMapWidth(-1), volMapDepth(-1),
+                               nchannels(-1)
         {
             #ifdef TMP_DEBUG
             printf("--------------------- teramanager plugin [thread *] >> CImport::CImport()\n");
@@ -100,7 +100,7 @@ class teramanager::CImport : public QThread
         int getNChannels(){return nchannels;}
         int getVMapResIndex()
         {
-            for(int k=0; k<volumes.size(); k++)
+            for(size_t k=0; k<volumes.size(); k++)
                 if(volumes[k]->getDIM_D() == volMapDepth)
                     return k;
             return -1;
@@ -109,7 +109,7 @@ class teramanager::CImport : public QThread
         VirtualVolume* getHighestResVolume(){if(!volumes.empty()) return volumes.back(); else return 0;}
         VirtualVolume* getVolume(int resolutionIdx)
         {
-            if(resolutionIdx < volumes.size()) return volumes[resolutionIdx];
+            if(resolutionIdx < static_cast<int>(volumes.size())) return volumes[resolutionIdx];
             else return 0;
         }
         int getResolutions(){return volumes.size();}
@@ -129,7 +129,7 @@ class teramanager::CImport : public QThread
             #endif
 
             path=""; AXS_1=AXS_2=AXS_3=axis_invalid; VXL_1=VXL_2=VXL_3=0; reimport=false;
-            for(int i=0; i<volumes.size(); i++)
+            for(size_t i=0; i<volumes.size(); i++)
                 delete volumes[i];
             volumes.clear();
         }

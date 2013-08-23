@@ -11,6 +11,16 @@ ties names are:
 - Rem: a feature no longer available
 
 ============================================================================================
+Version 0.9.8
+August 23th, 2013
+--------------------------------------------------------------------------------------------
+- Fix: fixed TeraFly's file dialog issue on MacOS.
+- Fix: fixed a bug which could cause the TeraConverter's progress bar not to work.
+- Fix: fixed some compiler warnings.
+- Dev: updated ImageManager / VolumeConverter modules.
+--------------------------------------------------------------------------------------------
+
+
 Version 0.9.7
 August 23th, 2013
 --------------------------------------------------------------------------------------------

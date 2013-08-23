@@ -44,7 +44,7 @@ namespace teramanager
     *    PARAMETERS    *
     ********************
     ---------------------------------------------------------------------------------------------------------------------------*/
-    std::string version = "0.9.7";
+    std::string version = "0.9.8";
     /*-------------------------------------------------------------------------------------------------------------------------*/
 }
 
@@ -110,5 +110,6 @@ bool CPlugin::dofunc(const QString & func_name, const V3DPluginArgList & input, 
     #endif
 
     printf("TeraManager plugin needs Vaa3D GUI to be executed.\n");
+    return true;
 }
 

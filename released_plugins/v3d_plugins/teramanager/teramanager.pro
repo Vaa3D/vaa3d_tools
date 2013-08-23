@@ -8,6 +8,7 @@ QT += opengl
 #CONFIG += x86_64
 CONFIG += use_static_libs
 CONFIG += use_experimental_features
+DEFINES += _VAA3D_PLUGIN_MODE
 
 
 #QMAKE_CXXFLAGS += -Wall
