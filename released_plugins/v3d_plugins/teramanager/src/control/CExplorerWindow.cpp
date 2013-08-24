@@ -35,6 +35,7 @@
 #include "renderer_gl1.h"
 #include "v3dr_colormapDialog.h"
 #include "V3Dsubclasses.h"
+#include <math.h>
 
 using namespace teramanager;
 
@@ -327,15 +328,18 @@ CExplorerWindow::~CExplorerWindow()
     #endif
 
     //removing the event filter from the 3D renderer and from the 3D window
+    isActive = false;
     view3DWidget->removeEventFilter(this);
     window3D->removeEventFilter(this);
 
     //just closing windows
-    V3D_env->close3DWindow(window);
+    V3D_env->close3DWindow(window); //--- Alessandro 24/08/2013: this causes crash at the deepest resolution when the plugin is invoked by Vaa3D
     triViewWidget->close();
+
 
     //decreasing the number of instantiated objects
     nInstances--;
+
 
     #ifdef TMP_DEBUG
     printf("--------------------- teramanager plugin [thread *] >> CExplorerWindow::nInstances--, nInstances = %d\n",  nInstances);
@@ -344,6 +348,7 @@ CExplorerWindow::~CExplorerWindow()
     #ifdef TMP_DEBUG
     printf("--------------------- teramanager plugin [thread *] >> CExplorerWindow[%s] destroyed\n",  titleShort.c_str() );
     #endif
+
 }
 
 
@@ -520,11 +525,7 @@ void CExplorerWindow::loadingDone(uint8 *data, MyException *ex, void* sourceObje
             //updating image data
             /**/ updateGraphicsInProgress.lock();
             timer.restart();
-            //#ifdef USE_EXPERIMENTAL_FEATURES
-            //myV3dR_GLWidget::cast(view3DWidget)->updateImageDataFast();
-            //#else
             view3DWidget->updateImageData();
-            //#endif
             sprintf(message, "Streaming %d/%d: Block X=[%d, %d) Y=[%d, %d) Z=[%d, %d) rendered into view %s",
                     step, cVolume->getStreamingSteps(), cVolume->getVoiH0(), cVolume->getVoiH1(),
                     cVolume->getVoiV0(), cVolume->getVoiV1(),
@@ -618,21 +619,21 @@ CExplorerWindow::newView(
                title.c_str(), x0, x, y0, y, z0, z );
         if(x - x0 > pMain.Hdim_sbox->value())
         {
-            int margin = ( (x - x0) - pMain.Hdim_sbox->value() )/2 ;
-            x  -= margin;
-            x0 += margin;
+            float margin = ( (x - x0) - pMain.Hdim_sbox->value() )/2.0f ;
+            x  = static_cast<int>(round(x  - margin));
+            x0 = static_cast<int>(round(x0 + margin));
         }
         if(y - y0 > pMain.Vdim_sbox->value())
         {
-            int margin = ( (y - y0) - pMain.Vdim_sbox->value() )/2 ;
-            y  -= margin;
-            y0 += margin;
+            float margin = ( (y - y0) - pMain.Vdim_sbox->value() )/2.0f ;
+            y  = static_cast<int>(round(y  - margin));
+            y0 = static_cast<int>(round(y0 + margin));
         }
         if(z - z0 > pMain.Ddim_sbox->value())
         {
-            int margin = ( (z - z0) - pMain.Ddim_sbox->value() )/2 ;
-            z  -= margin;
-            z0 += margin;
+            float margin = ( (z - z0) - pMain.Ddim_sbox->value() )/2.0f ;
+            z  = static_cast<int>(round(z  - margin));
+            z0 = static_cast<int>(round(z0 + margin));
         }
         printf("[%d,%d) [%d,%d) [%d,%d)\n", x0, x, y0, y, z0, z );
     }
@@ -691,8 +692,9 @@ CExplorerWindow::newView(
     //loading new data in a separate thread. When done, the "loadingDone" method of the new window will be called
     pMain.statusBar->showMessage("Loading image data...");
     cVolume->setSource(this->next);
-    cVolume->initBuffer(lowresData, (cVolume->getVoiH1()-cVolume->getVoiH0())*(cVolume->getVoiV1()-cVolume->getVoiV0())*(cVolume->getVoiD1()-cVolume->getVoiD0())*nchannels);
     cVolume->setStreamingSteps(PMain::getInstance()->debugStreamingStepsSBox->value());
+    if(PMain::getInstance()->debugStreamingStepsSBox->value() > 1)
+        cVolume->initBuffer(lowresData, (cVolume->getVoiH1()-cVolume->getVoiH0())*(cVolume->getVoiV1()-cVolume->getVoiV0())*(cVolume->getVoiD1()-cVolume->getVoiD0())*nchannels);
     cVolume->start();
 
     //meanwhile, showing the new window
@@ -801,7 +803,13 @@ throw (MyException)
     //cheking preconditions
     if(src_dims[3] != dst_dims[3])
         QMessageBox::critical(0, "Error", "Can't copy VOI to destination image: different number of channels",QObject::tr("Ok"));
-    //other preconditions...TODO
+    for(int d=0; d<3; d++)
+    {
+        if(src_offset[d] + src_count[d] > src_dims[d])
+            QMessageBox::critical(0, "Error", QString("Can't copy VOI to destination image: VOI exceeded source dimension along axis ").append(QString::number(d)),QObject::tr("Ok"));
+        if(dst_offset[d] + src_count[d]*scaling > dst_dims[d])
+            QMessageBox::critical(0, "Error", QString("Can't copy VOI to destination image: VOI exceeded destination dimension along axis ").append(QString::number(d)),QObject::tr("Ok"));
+    }
 
     //quick version (with precomputed offsets, strides and counts: "1" for "dst", "2" for "src")
     uint32 stride_c1       =  dst_dims [2] * dst_dims[1]   * dst_dims[0];
@@ -1258,9 +1266,17 @@ void CExplorerWindow::invokedFromVaa3D(v3d_imaging_paras* params /* = 0 */)
                current->titleShort.c_str(), roi->xs, roi->xe, roi->ys, roi->ye, roi->zs, roi->ze);
     #endif
 
+
     //the ROI selection is catched only if a <CExplorerWindow> is opened
     if(current)
     {
+        //--- Alessandro 24/08/2013: to prevent the plugin to crash at the deepest resolution when the plugin is invoked by Vaa3D
+        if(current->volResIndex == CImport::instance()->getResolutions()-1)
+        {
+            QMessageBox::warning(this, "Warning", "Vaa3D-invoked actions at the highest resolution have been temporarily removed. Please contact the developers.");
+            return;
+        }
+
         //retrieving ROI infos propagated by Vaa3D
         int roiCenterX = roi->xe-(roi->xe-roi->xs)/2;
         int roiCenterY = roi->ye-(roi->ye-roi->ys)/2;
@@ -1268,7 +1284,6 @@ void CExplorerWindow::invokedFromVaa3D(v3d_imaging_paras* params /* = 0 */)
 
         //zoom-in around marker or ROI triggers a new window
         if(roi->ops_type == 1)
-            //current->newView(roiCenterX, roiCenterY, roiCenterZ, volResIndex+1, false, static_cast<int>((roi->xe-roi->xs)/2.0f+0.5f), static_cast<int>((roi->ye-roi->ys)/2.0f+0.5f), static_cast<int>((roi->ze-roi->zs)/2.0f+0.5f));
             current->newView(roi->xe, roi->ye, roi->ze, volResIndex+1, false, -1, -1, -1, roi->xs, roi->ys, roi->zs);
 
         //zoom-in with mouse scroll up may trigger a new window if caching is not possible

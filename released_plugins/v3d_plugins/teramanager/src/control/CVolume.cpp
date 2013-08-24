@@ -244,6 +244,7 @@ void CVolume::run()
                 timerIO.start();
                 uint8* voiData = volume->loadSubvolume_to_UINT8(voiV0, voiV1, voiH0, voiH1, voiD0, voiD1, &nchannels);
 
+                qint64 elapsedTime = timerIO.elapsed();
                 sprintf(msg, "Block X=[%d, %d) Y=[%d, %d) Z=[%d, %d) loaded from res %d",
                         voiH0, voiH1, voiV0, voiV1, voiD0, voiD1, voiResIndex);
 
@@ -253,7 +254,7 @@ void CVolume::run()
                     /**/ destination->updateGraphicsInProgress.lock();
                     /**/ destination->updateGraphicsInProgress.unlock();
                 }
-                emit sendOperationOutcome(voiData, 0, source, timerIO.elapsed(), msg, 1);
+                emit sendOperationOutcome(voiData, 0, source, elapsedTime, msg, 1);
             }
             else
             {
@@ -267,7 +268,7 @@ void CVolume::run()
                 if(!destination)
                     throw MyException("Streaming not yet supported for this type of destination");
 
-                //VERSION 1: reading/writing from/to the same buffer with MUTEX (see Producer-Consumer problem)
+                //reading/writing from/to the same buffer with MUTEX (see Producer-Consumer problem)
                 void *stream_descr = vaa3D_volume->streamedLoadSubvolume_open(streamingSteps, buffer, voiV0, voiV1, voiH0, voiH1, voiD0, voiD1);
                 for (int currentStep = 1; currentStep <= streamingSteps; currentStep++)
                 {

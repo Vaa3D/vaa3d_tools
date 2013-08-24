@@ -44,7 +44,7 @@ namespace teramanager
     *    PARAMETERS    *
     ********************
     ---------------------------------------------------------------------------------------------------------------------------*/
-    std::string version = "0.9.8";
+    std::string version = "0.9.9";
     /*-------------------------------------------------------------------------------------------------------------------------*/
 }
 
@@ -100,6 +100,7 @@ void CPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWi
     {
         return;
     }
+    printf("--------------------- teramanager plugin [thread *] >> CPlugin::domenu() finished\n");
 }
 
 // 5 - Call the functions corresponding to dofunc

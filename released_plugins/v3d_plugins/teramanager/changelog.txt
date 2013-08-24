@@ -11,6 +11,19 @@ ties names are:
 - Rem: a feature no longer available
 
 ============================================================================================
+Version 0.9.9
+August 24th, 2013
+--------------------------------------------------------------------------------------------
+- Rem: Vaa3D-invoked actions (such as zoom-in around marker, 1-right-click, 1-right-stroke)
+       triggered at the highest resolution are now ignored due to the presence of a lost bug
+       which causes TeraFly to crash. A message is shown informing the user that this feature
+       has been temporarily removed.
+- Fix: fixed a bug which sporadically caused TeraFly to crash with the following sequence of
+       actions: opening volume -> exploring -> closing volume -> opening another volume.
+- Fix: fixed minor bugs (i.e. that did not cause any unexpected behaviour)
+--------------------------------------------------------------------------------------------
+
+
 Version 0.9.8
 August 23th, 2013
 --------------------------------------------------------------------------------------------
