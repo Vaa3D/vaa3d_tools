@@ -381,7 +381,8 @@ void processImage(V3DPluginCallback2 &callback, QWidget *parent)
                     target1d[i] = localEnahancedArea[i];
                 szTar[0] = xe-xb+1; szTar[1] = ye-yb+1; szTar[2] = P; szTar[3] = 1;
 
-            }else
+              }
+            else
             {
 
                 V3DLONG subjectsize = block_sz[0]*block_sz[1]*block_sz[2];
@@ -413,6 +414,8 @@ void processImage(V3DPluginCallback2 &callback, QWidget *parent)
                 szTar[0] = new_sz0; szTar[1] = new_sz1; szTar[2] = new_sz2; szTar[3] = 1;
 
 
+
+
             }
             count ++;
         }
@@ -426,6 +429,7 @@ void processImage(V3DPluginCallback2 &callback, QWidget *parent)
             for(int i = 0; i<targetsize_y;i++)
                 target1d_y[i] = target1d[i];
             szTar_y[0] = new_sz0; szTar_y[1] = new_sz1; szTar_y[2] = P; szTar_y[3] = 1;
+
 
         }else
         {
@@ -795,8 +799,8 @@ template <class T> void AdpThresholding_adpwindow(const T* data1d,
             {
                 T GsdtValue = gsdtdatald[offsetk + offsetj + ix];
                 T PixelValue = data1d[offsetc+offsetk + offsetj + ix];
-                Wx = (int)round((0.3*log(GsdtValue)/log(2)));
-                //printf("%d %d\n",PixelValue,Wx);
+                Wx = (int)round((0.4*log(GsdtValue)/log(2)));
+
 
                 if (Wx > 0 && PixelValue > 0)
                 {
@@ -835,13 +839,14 @@ template <class T> void AdpThresholding_adpwindow(const T* data1d,
                     double a1 = DD(1), a2 = DD(2), a3 = DD(3);
 
                     //  printf("\ncomparison %.4f,%.4f,%.4f\n\n\n",a1,a2,a3);
-
-                    swapthree(a1, a2, a3);
+                      swapthree(a1, a2, a3);
                     if(a1<0 && a2 < 0)
                     {
                         T dataval =  zhi_abs(a2)*(zhi_abs(a2)-zhi_abs(a3))/zhi_abs(a1);
                         pImage[offsetk+offsetj+ix] = dataval;
                         if(maxfl<dataval) maxfl = dataval;
+                        if(ix ==161 && iy == 44 && iz ==78)
+                        printf("zhi zhou is %d %d %d %d\n",PixelValue,GsdtValue,Wx,dataval);
                     }
                 }
                 else
