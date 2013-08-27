@@ -799,7 +799,7 @@ template <class T> void AdpThresholding_adpwindow(const T* data1d,
             {
                 T GsdtValue = gsdtdatald[offsetk + offsetj + ix];
                 T PixelValue = data1d[offsetc+offsetk + offsetj + ix];
-                Wx = (int)round((0.4*log(GsdtValue)/log(2)));
+                Wx = (int)round((0.3*log(GsdtValue)/log(2)));
 
 
                 if (Wx > 0 && PixelValue > 0)
