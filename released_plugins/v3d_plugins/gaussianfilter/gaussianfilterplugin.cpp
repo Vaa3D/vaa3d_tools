@@ -7,13 +7,14 @@
 // add dofunc() by Jianlong Zhou, 2012-04-08
 
 #include <QtGui>
-
+#include <v3d_interface.h>
 #include <math.h>
 #include <stdlib.h>
 #include <iostream>
 
 #include "v3d_message.h"
 #include "stackutil.h"
+#include "common_dialog.h"
 
 #include "gaussianfilterplugin.h"
 
@@ -24,7 +25,6 @@ using namespace std;
 //Q_EXPORT_PLUGIN2 ( PluginName, ClassName )
 //The value of PluginName should correspond to the TARGET specified in the plugin's project file.
 Q_EXPORT_PLUGIN2(gaussianfilter, GaussianFilterPlugin)
-
 
 void processImage(V3DPluginCallback2 &callback, QWidget *parent);
 bool processImage(const V3DPluginArgList & input, V3DPluginArgList & output);
@@ -172,7 +172,7 @@ void processImage(V3DPluginCallback2 &callback, QWidget *parent)
 	if (!p4DImage)
 	{
 		v3d_msg("The image pointer is invalid. Ensure your data is valid and try again!");
-		return;
+        return;
 	}
 
 
@@ -184,50 +184,30 @@ void processImage(V3DPluginCallback2 &callback, QWidget *parent)
      V3DLONG P = p4DImage->getZDim();
      V3DLONG sc = p4DImage->getCDim();
 
-	//input
-	bool ok1, ok2, ok3, ok4, ok5;
-	unsigned int Wx=1, Wy=1, Wz=1, c=1;
-     double sigma = 1.0;
+     vector<string> items;
+     items.push_back("Window size (# voxels) along x");
+     items.push_back("Window size (# voxels) along y");
+     items.push_back("Window size (# voxels) along z");
+     items.push_back("Channel (1 ~ )");
+     items.push_back("Sigma value");
+     CommonDialog dialog(items);
+     dialog.setWindowTitle(title);
+     if(dialog.exec() != QDialog::Accepted) return;
 
-	Wx = QInputDialog::getInteger(parent, "Window X ",
-								  "Enter window size (# voxels) along x:",
-								  7, 1, N, 1, &ok1);
+     int Wx = 7, Wy = 7, Wz = 7, c = 1;
+     double sigma = 3.0;
+     dialog.get_num("Window size (# voxels) along x", Wx);
+     dialog.get_num("Window size (# voxels) along y", Wy);
+     dialog.get_num("Window size (# voxels) along z", Wy);
+     dialog.get_num("Channel (1 ~ )", c);
+     dialog.get_num("Sigma value", sigma);
 
-	if(ok1)
-	{
-		Wy = QInputDialog::getInteger(parent, "Window Y",
-									  "Enter window size  (# voxels) along y:",
-									  7, 1, M, 1, &ok2);
-	}
-	else
-		return;
+     if(c < 0 || c >= sc)
+     {
+        v3d_msg(QObject::tr("channel value is out of range").arg(sc-1));
+        return;
+     }
 
-	if(ok2)
-	{
-		Wz = QInputDialog::getInteger(parent, "Window Z",
-									  "Enter window size  (# voxels) along z:",
-									  3, 1, P, 1, &ok3);
-	}
-	else
-		return;
-
-	if(ok3)
-	{
-		c = QInputDialog::getInteger(parent, "Channel",
-									 "Enter channel NO (starts from 1):",
-									 1, 1, sc, 1, &ok4);
-	}
-	else
-		return;
-
-     if(ok4)
-	{
-		sigma = QInputDialog::getDouble(parent, "Sigma",
-									 "Enter Sigma value:",
-									 1, 0.1, 100, 1, &ok5);
-	}
-	else
-		return;
 
      // gaussian_filter
      V3DLONG in_sz[4];

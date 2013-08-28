@@ -37,6 +37,9 @@ SOURCES += $$V3DMAINPATH/basic_c_fun/mg_utilities.cpp
 SOURCES += $$V3DMAINPATH/basic_c_fun/mg_image_lib.cpp
 SOURCES += $$V3DMAINPATH/basic_c_fun/stackutil.cpp
 
+HEADERS += common_dialog.h
+
+
 TARGET        = $$qtLibraryTarget(gaussianfilter)
 DESTDIR       = ../../v3d/plugins/image_filters/Gaussian_Filter
 
