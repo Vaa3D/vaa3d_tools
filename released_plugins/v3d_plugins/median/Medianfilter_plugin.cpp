@@ -312,7 +312,7 @@ template <class T> void median_filter(T* data1d,
     //Median Filtering
     for(V3DLONG iz = 0; iz < P; iz++)
     {
-         printf("median filter : %d %% completed \r", ((iz + 1)*100) / P);
+         printf("\r median filter : %d %% completed ", ((iz + 1)*100) / P);fflush(stdout);
         V3DLONG offsetk = iz*M*N;
         for(V3DLONG iy = 0; iy < M; iy++)
         {
@@ -444,7 +444,7 @@ void processImage2(V3DPluginCallback2 &callback, QWidget *parent)
     in_sz[0] = N; in_sz[1] = M; in_sz[2] = P; in_sz[3] = sc;
 
     ImagePixelType pixeltype = p4DImage->getDatatype();
-    saveImage("temp.tif", (unsigned char *)data1d, in_sz, pixeltype);
+    saveImage("temp.v3draw", (unsigned char *)data1d, in_sz, pixeltype);
     //invoke gsdt function
     V3DPluginArgItem arg;
     V3DPluginArgList input;
@@ -651,7 +651,7 @@ template <class T> void adp_median_filter(T* data1d,
     //Median Filtering
     for(V3DLONG iz = 0; iz < P; iz++)
     {
-         printf("median filter : %d %% completed \r", ((iz + 1)*100) / P);
+        printf("\r median filter : %d %% completed ", ((iz + 1)*100) / P);fflush(stdout);
         V3DLONG offsetk = iz*M*N;
         for(V3DLONG iy = 0; iy < M; iy++)
         {
