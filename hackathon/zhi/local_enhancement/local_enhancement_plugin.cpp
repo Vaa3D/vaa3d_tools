@@ -13,6 +13,7 @@
 #include <vector>
 #include "stackutil.h"
 #include <boost/lexical_cast.hpp>
+#include "../../../v3d_main/jba/c++/convert_type2uint8.h"
 
 #define WANT_STREAM       // include iostream and iomanipulators
 #include "../../../v3d_main/jba/newmat11/newmatap.h"
@@ -292,12 +293,12 @@ void processImage(V3DPluginCallback2 &callback, QWidget *parent)
 
     callback.callPluginFunc(full_plugin_name,func_name, input,output);
 
-    unsigned char * data1d2 = 0;
+    unsigned char * data1d3 = 0;
     int datatype;
     V3DLONG * in_zz = 0;
 
     char * outimg_file = ((vector<char*> *)(output.at(0).p))->at(0);
-    loadImage(outimg_file, data1d2, in_zz, datatype);
+    loadImage(outimg_file, data1d3, in_zz, datatype);
     remove("temp.v3draw");
     remove("gfImage.v3draw");
 
@@ -305,6 +306,12 @@ void processImage(V3DPluginCallback2 &callback, QWidget *parent)
     double th_global = 0;
     double Gf_max = 0;
     V3DLONG offsetc = (c-1)*pagesz;
+	unsigned char* data1d2 = 0;
+    data1d2 = new unsigned char [pagesz];
+	
+	double min,max;
+	rescale_to_0_255_and_copy((float *)data1d3,pagesz,min,max,data1d2);
+	
     for(V3DLONG iz = 0; iz < P; iz++)
     {
         double PixelSum = 0;
@@ -514,12 +521,12 @@ void processImage(V3DPluginCallback2 &callback, QWidget *parent)
         datald_output[i] = 255*(target1d_y[i]-1)/254;
 
     // display
-   /* Image4DSimple * new4DImage = new Image4DSimple();
+    Image4DSimple * new4DImage = new Image4DSimple();
     new4DImage->setData((unsigned char *)datald_output,N, M, P, 1, pixeltype);
     v3dhandle newwin = callback.newImageWindow();
     callback.setImage(newwin, new4DImage);
     callback.setImageName(newwin, "Local_adaptive_enhancement_result");
-    callback.updateImageWindow(newwin);*/
+    callback.updateImageWindow(newwin);
     return;
 }
 
