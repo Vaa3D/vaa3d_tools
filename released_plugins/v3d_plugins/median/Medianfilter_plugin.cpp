@@ -312,7 +312,7 @@ template <class T> void median_filter(T* data1d,
     //Median Filtering
     for(V3DLONG iz = 0; iz < P; iz++)
     {
-          printf("\r Median Filtering : %d %% completed ", int(float(iz+1)/P*100)); fflush(stdout);
+         printf("median filter : %d %% completed \r", ((iz + 1)*100) / P);
         V3DLONG offsetk = iz*M*N;
         for(V3DLONG iy = 0; iy < M; iy++)
         {
@@ -651,7 +651,7 @@ template <class T> void adp_median_filter(T* data1d,
     //Median Filtering
     for(V3DLONG iz = 0; iz < P; iz++)
     {
-        printf("median filter : %d %% completed \n", ((iz + 1)*100) / P);
+         printf("median filter : %d %% completed \r", ((iz + 1)*100) / P);
         V3DLONG offsetk = iz*M*N;
         for(V3DLONG iy = 0; iy < M; iy++)
         {
