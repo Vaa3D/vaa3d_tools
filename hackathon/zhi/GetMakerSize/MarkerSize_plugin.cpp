@@ -7,7 +7,6 @@
 #include <vector>
 #include "MarkerSize_plugin.h"
 #include "basic_surf_objs.h"
-
 #include <iostream>
 
 
@@ -127,6 +126,7 @@ void processImage(V3DPluginCallback2 &callback, QWidget *parent)
         V3DLONG offsetj = iy*N;
         V3DLONG PixelValue = data1d[offsetk + offsetj + ix];
         int Ws = 2*(int)round((log(PixelValue)/log(2)));
+        //int Ws = 2*PixelValue;
         printf("window size is %d %d (%d %d %d)\n", Ws,PixelValue,ix,iy,iz);
         NeuronSWC S;
         if(Ws>=0)
@@ -285,7 +285,6 @@ void processImage(V3DPluginCallback2 &callback, QWidget *parent)
     }
 
 
-
     QString outfilename = imgname + "_marker.swc";
     if (outfilename.startsWith("http", Qt::CaseInsensitive))
     {
@@ -294,6 +293,11 @@ void processImage(V3DPluginCallback2 &callback, QWidget *parent)
     }
     //v3d_msg(QString("The anticipated output file is [%1]").arg(outfilename));
     writeSWC_file(outfilename,marker_windows);
+    NeuronTree nt = readSWC_file(outfilename);
+    callback.setSWC(curwin, nt);
+    callback.open3DWindow(curwin);
+    callback.getView3DControl(curwin)->updateWithTriView();
     v3d_msg(QString("You have totally [%1] markers for the file [%2] and the computed MST has been saved to the file [%3]").arg(marknum).arg(imgname).arg(outfilename));
+
     return;
 }

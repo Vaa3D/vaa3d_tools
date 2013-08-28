@@ -181,6 +181,16 @@ void processImage(V3DPluginCallback2 &callback, QWidget *parent)
     }
     //v3d_msg(QString("The anticipated output file is [%1]").arg(outfilename));
     writeSWC_file(outfilename,marker_MST);
+    NeuronTree nt = readSWC_file(outfilename);
+    callback.setSWC(curwin, nt);
+    callback.open3DWindow(curwin);
+    callback.getView3DControl(curwin)->updateWithTriView();
+
+    NeuronTree nt_output = readSWC_file(outfilename);
+    callback.setSWC(curwin, nt_output);
+    callback.open3DWindow(curwin);
+    callback.getView3DControl(curwin)->updateWithTriView();
+
     v3d_msg(QString("You have totally [%1] markers for the file [%2] and the computed MST has been saved to the file [%3]").arg(marknum).arg(imgname).arg(outfilename));
     return;
 }

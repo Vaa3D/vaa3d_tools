@@ -109,8 +109,7 @@ template <class T> bool compute_Anisotropy(const T* data1d, V3DLONG N, V3DLONG M
             double pc1 = DD(3);
             double pc2 = DD(2);
            // Score = Score + (pc1-pc2);
-            Score = (pc1+1)/(pc2+1);
-
+            Score = pc1-pc2;
          }
         catch (...)
         {
@@ -622,7 +621,7 @@ bool processImage3(const V3DPluginArgList & input, V3DPluginArgList & output)
                 V3DLONG PixelValue1 = data1d1[offsetc+offsetk + offsetj + ix];
                 V3DLONG PixelValue2 = data1d2[offsetc+offsetk + offsetj + ix];
               //  Ws1 = (int)round((log(PixelValue1)/log(2)));
-                Ws = (int)round((log(PixelValue2)/log(2)));
+                Ws = 2*(int)round((log(PixelValue2)/log(2)));
 
                if (Ws > 0 && PixelValue1 > 0 && PixelValue2>0 )
                 {
@@ -654,6 +653,8 @@ bool processImage3(const V3DPluginArgList & input, V3DPluginArgList & output)
     myfile << (double)Score1/num;
     myfile << "   ";
     myfile << (double)Score2/num;
+    myfile << "   ";
+    myfile << (double)Score2/Score1;
     myfile << "\n";
     myfile.close();
     return true;
