@@ -908,9 +908,11 @@ template <class T> void AdpThresholding_adpwindow(const T* data1d,
                       swapthree(a1, a2, a3);
                     if(a1<0 && a2 < 0)
                     {
-                        T dataval = zhi_abs(a2)*(zhi_abs(a2)-zhi_abs(a3))/zhi_abs(a1);
+                        T dataval = (T)(zhi_abs(a2)*(zhi_abs(a2)-zhi_abs(a3))/zhi_abs(a1)); //seems the best at this moment. commented by HP, 2013-08-28. Do NOT Use the following formula instead.
+                        //T dataval = (T)(double(PixelValue) * (double(zhi_abs(a2))-double(zhi_abs(a3)))/double(zhi_abs(a1)));
+
                         pImage[offsetk+offsetj+ix] = dataval;
-                        if(maxfl<dataval) maxfl = dataval;
+                        if (maxfl<dataval) maxfl = dataval;
                     }
                 }
                 else
