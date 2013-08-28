@@ -911,8 +911,6 @@ template <class T> void AdpThresholding_adpwindow(const T* data1d,
                         T dataval = zhi_abs(a2)*(zhi_abs(a2)-zhi_abs(a3))/zhi_abs(a1);
                         pImage[offsetk+offsetj+ix] = dataval;
                         if(maxfl<dataval) maxfl = dataval;
-                        if(ix ==161 && iy == 44 && iz ==78)
-                        printf("zhi zhou is %d %d %d %d\n",PixelValue,GsdtValue,Wx,dataval);
                     }
                 }
                 else
