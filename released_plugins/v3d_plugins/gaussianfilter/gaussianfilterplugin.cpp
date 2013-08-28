@@ -202,7 +202,7 @@ void processImage(V3DPluginCallback2 &callback, QWidget *parent)
      dialog.get_num("Channel (1 ~ )", c);
      dialog.get_num("Sigma value", sigma);
 
-     if(c < 0 || c >= sc)
+     if(c < 0 || c > sc)
      {
         v3d_msg(QObject::tr("channel value is out of range").arg(sc-1));
         return;
