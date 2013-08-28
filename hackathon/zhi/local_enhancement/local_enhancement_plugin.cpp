@@ -304,14 +304,14 @@ void processImage(V3DPluginCallback2 &callback, QWidget *parent)
 
     V3DLONG i = 0;
     double th_global = 0;
-    double Gf_max = 0;
     V3DLONG offsetc = (c-1)*pagesz;
 	unsigned char* data1d2 = 0;
     data1d2 = new unsigned char [pagesz];
 	
 	double min,max;
 	rescale_to_0_255_and_copy((float *)data1d3,pagesz,min,max,data1d2);
-	
+
+
     for(V3DLONG iz = 0; iz < P; iz++)
     {
         double PixelSum = 0;
@@ -363,14 +363,14 @@ void processImage(V3DPluginCallback2 &callback, QWidget *parent)
             {
             case V3D_UINT8: block_detection(data1d2, in_sz, c, th,(unsigned char* &)blockarea,xb,xe,yb,ye); break;
             case V3D_UINT16: block_detection((unsigned short int *)data1d2, in_sz, c, th,(unsigned short int* &)blockarea,xb,xe,yb,ye); break;
-            case V3D_FLOAT32: block_detection((float *)data1d, in_sz, c,th,(float* &)blockarea,xb,xe,yb,ye);break;
+            case V3D_FLOAT32: block_detection((float *)data1d2, in_sz, c,th,(float* &)blockarea,xb,xe,yb,ye);break;
             default: v3d_msg("Invalid data type. Do nothing."); return;
             }
 
             if(th < th_global) th = th_global;
             V3DLONG block_sz[4];
             block_sz[0] = xe-xb+1; block_sz[1] = ye-yb+1; block_sz[2] = P; block_sz[3] = 1;
-            saveImage("temp.v3draw", (unsigned char *)blockarea, block_sz, pixeltype);
+            saveImage("temp.v3draw", (unsigned char *)blockarea, block_sz, 1);
             V3DPluginArgItem arg;
             V3DPluginArgList input;
             V3DPluginArgList output;
@@ -378,9 +378,8 @@ void processImage(V3DPluginCallback2 &callback, QWidget *parent)
             arg.type = "random";std::vector<char*> args1;
             args1.push_back("temp.v3draw"); arg.p = (void *) & args1; input<< arg;
             arg.type = "random";std::vector<char*> args;
-            char channel = '0';
             string threshold = boost::lexical_cast<string>(th); char* threshold2 =  new char[threshold.length() + 1]; strcpy(threshold2, threshold.c_str());
-            args.push_back(threshold2);args.push_back("1");args.push_back(&channel);args.push_back("1"); arg.p = (void *) & args; input << arg;
+            args.push_back(threshold2);args.push_back("1");args.push_back("0");args.push_back("1"); arg.p = (void *) & args; input << arg;
             arg.type = "random";std::vector<char*> args2;args2.push_back("gsdtImage.v3draw"); arg.p = (void *) & args2; output<< arg;
 
             QString full_plugin_name = "gsdt";
@@ -552,24 +551,55 @@ bool processImage1(const V3DPluginArgList & input, V3DPluginArgList & output,V3D
     cout<<"inimg_file = "<<inimg_file<<endl;
     cout<<"outimg_file = "<<outimg_file<<endl;
 
-    unsigned char * data1d = 0,  * outimg1d = 0;
-    V3DLONG * in_sz = 0;
+   // unsigned char * data1d = 0,  * outimg1d = 0;
+  //  V3DLONG * in_sz = 0;
 
     unsigned int c = ch;//-1;
 
 
-    int datatype;
+   /* int datatype;
     if(!loadImage(inimg_file, data1d, in_sz, datatype))
     {
         cerr<<"load image "<<inimg_file<<" error!"<<endl;
         return false;
-    }
+    }*/
+
+    V3DPluginArgItem arg;
+    V3DPluginArgList input2;
+    V3DPluginArgList output2;
+
+
+    arg.type = "random";std::vector<char*> args1;
+    args1.push_back(inimg_file); arg.p = (void *) & args1; input2<< arg;
+    arg.type = "random";std::vector<char*> args;
+    char channel = '0' + ch;
+    args.push_back("3");args.push_back("3");args.push_back("3");args.push_back(&channel); args.push_back("1.0"); arg.p = (void *) & args; input2 << arg;
+    arg.type = "random";std::vector<char*> args2;args2.push_back("gfImage.v3draw"); arg.p = (void *) & args2; output2<< arg;
+
+    QString full_plugin_name = "gaussian";
+    QString func_name = "gf";
+
+    callback.callPluginFunc(full_plugin_name,func_name, input2,output2);
+
+    unsigned char * data1d2 = 0;
+    int datatype;
+    V3DLONG * in_sz = 0;
+
+    char * outimg_file2 = ((vector<char*> *)(output2.at(0).p))->at(0);
+    loadImage(outimg_file2, data1d2, in_sz, datatype);
+    remove("gfImage.v3draw");
 
     V3DLONG N = in_sz[0];
     V3DLONG M = in_sz[1];
     V3DLONG P = in_sz[2];
     V3DLONG pagesz = N*M*P;
 
+    unsigned char* data1d = 0;
+    data1d = new unsigned char [pagesz];
+
+    double min,max;
+    rescale_to_0_255_and_copy((float *)data1d2,pagesz,min,max,data1d);
+    datatype = V3D_UINT8;
     V3DLONG i = 0;
     double th_global = 0;
     V3DLONG offsetc = (c-1)*pagesz;
@@ -641,7 +671,7 @@ bool processImage1(const V3DPluginArgList & input, V3DPluginArgList & output,V3D
             if(th < th_global) th = th_global;
             V3DLONG block_sz[4];
             block_sz[0] = xe-xb+1; block_sz[1] = ye-yb+1; block_sz[2] = P; block_sz[3] = 1;
-            saveImage("temp.v3draw", (unsigned char *)blockarea, block_sz, datatype);
+            saveImage("temp.v3draw", (unsigned char *)blockarea, block_sz, 1);
             V3DPluginArgItem arg;
             V3DPluginArgList input;
             V3DPluginArgList output;
@@ -650,9 +680,8 @@ bool processImage1(const V3DPluginArgList & input, V3DPluginArgList & output,V3D
             arg.type = "random";std::vector<char*> args1;
             args1.push_back("temp.v3draw"); arg.p = (void *) & args1; input<< arg;
             arg.type = "random";std::vector<char*> args;
-            char channel = '0';
             string threshold = boost::lexical_cast<string>(th); char* threshold2 =  new char[threshold.length() + 1]; strcpy(threshold2, threshold.c_str());
-            args.push_back(threshold2);args.push_back("1");args.push_back(&channel);args.push_back("1"); arg.p = (void *) & args; input << arg;
+            args.push_back(threshold2);args.push_back("1");args.push_back("0");args.push_back("1"); arg.p = (void *) & args; input << arg;
             arg.type = "random";std::vector<char*> args2;args2.push_back("gsdtImage.v3draw"); arg.p = (void *) & args2; output<< arg;
 
             QString full_plugin_name = "gsdt";
@@ -777,11 +806,12 @@ bool processImage1(const V3DPluginArgList & input, V3DPluginArgList & output,V3D
         datald_output[i] = 255*(target1d_y[i]-1)/254;
 
     in_sz[3]=1;
-    saveImage(outimg_file, (unsigned char *)datald_output, in_sz, datatype);
+    saveImage(outimg_file, (unsigned char *)datald_output, in_sz, 1);
 
     if(target1d_y) {delete []target1d_y; target1d_y =0;}
     if(subject1d_y) {delete []subject1d_y; subject1d_y =0;}
     if (data1d) {delete []data1d; data1d=0;}
+    if (data1d2) {delete []data1d2; data1d2=0;}
     if (in_sz) {delete []in_sz; in_sz=0;}
 
     return true;
