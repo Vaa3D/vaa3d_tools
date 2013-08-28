@@ -173,6 +173,7 @@ void processImage(V3DPluginCallback2 &callback, QWidget *parent)
     V3DLONG in_sz[4];
     in_sz[0] = N; in_sz[1] = M; in_sz[2] = P; in_sz[3] = sc;
 
+
     //input
     bool ok1,ok4;
     unsigned int Ws=1000, c=1;
@@ -272,10 +273,37 @@ void processImage(V3DPluginCallback2 &callback, QWidget *parent)
     loadImage(outimg_file, gsdtsoma, in_zz, datatype,0);
     remove("temp.v3draw");
     remove("gsdtImage.v3draw");*/
+    saveImage("temp.v3draw", (unsigned char *)data1d, in_sz, pixeltype);
+    //invoke gsdt function
+    V3DPluginArgItem arg;
+    V3DPluginArgList input;
+    V3DPluginArgList output;
 
+
+    arg.type = "random";std::vector<char*> args1;
+    args1.push_back("temp.v3draw"); arg.p = (void *) & args1; input<< arg;
+    arg.type = "random";std::vector<char*> args;
+    char channel = '0' + c;
+    args.push_back("3");args.push_back("3");args.push_back("3");args.push_back(&channel); args.push_back("1.0"); arg.p = (void *) & args; input << arg;
+    arg.type = "random";std::vector<char*> args2;args2.push_back("gfImage.v3draw"); arg.p = (void *) & args2; output<< arg;
+
+    QString full_plugin_name = "gaussian";
+    QString func_name = "gf";
+
+    callback.callPluginFunc(full_plugin_name,func_name, input,output);
+
+    unsigned char * data1d2 = 0;
+    int datatype;
+    V3DLONG * in_zz = 0;
+
+    char * outimg_file = ((vector<char*> *)(output.at(0).p))->at(0);
+    loadImage(outimg_file, data1d2, in_zz, datatype);
+    remove("temp.v3draw");
+    remove("gfImage.v3draw");
 
     V3DLONG i = 0;
     double th_global = 0;
+    double Gf_max = 0;
     V3DLONG offsetc = (c-1)*pagesz;
     for(V3DLONG iz = 0; iz < P; iz++)
     {
@@ -287,14 +315,13 @@ void processImage(V3DPluginCallback2 &callback, QWidget *parent)
             for(V3DLONG ix = 0; ix < N; ix++)
             {
 
-                double PixelVaule = data1d[offsetc+offsetk + offsetj + ix];
+                double PixelVaule = data1d2[offsetc+offsetk + offsetj + ix];
                 PixelSum = PixelSum + PixelVaule;
                 i++;
             }
         }
         th_global = th_global + PixelSum/(M*N*P);
     }
-
 
 
     // V3DLONG Ws = 1000;
@@ -327,8 +354,8 @@ void processImage(V3DPluginCallback2 &callback, QWidget *parent)
             void* blockarea = 0;
             switch (pixeltype)
             {
-            case V3D_UINT8: block_detection(data1d, in_sz, c, th,(unsigned char* &)blockarea,xb,xe,yb,ye); break;
-            case V3D_UINT16: block_detection((unsigned short int *)data1d, in_sz, c, th,(unsigned short int* &)blockarea,xb,xe,yb,ye); break;
+            case V3D_UINT8: block_detection(data1d2, in_sz, c, th,(unsigned char* &)blockarea,xb,xe,yb,ye); break;
+            case V3D_UINT16: block_detection((unsigned short int *)data1d2, in_sz, c, th,(unsigned short int* &)blockarea,xb,xe,yb,ye); break;
             case V3D_FLOAT32: block_detection((float *)data1d, in_sz, c,th,(float* &)blockarea,xb,xe,yb,ye);break;
             default: v3d_msg("Invalid data type. Do nothing."); return;
             }
@@ -487,12 +514,12 @@ void processImage(V3DPluginCallback2 &callback, QWidget *parent)
         datald_output[i] = 255*(target1d_y[i]-1)/254;
 
     // display
-    Image4DSimple * new4DImage = new Image4DSimple();
+   /* Image4DSimple * new4DImage = new Image4DSimple();
     new4DImage->setData((unsigned char *)datald_output,N, M, P, 1, pixeltype);
     v3dhandle newwin = callback.newImageWindow();
     callback.setImage(newwin, new4DImage);
     callback.setImageName(newwin, "Local_adaptive_enhancement_result");
-    callback.updateImageWindow(newwin);
+    callback.updateImageWindow(newwin);*/
     return;
 }
 
@@ -797,15 +824,17 @@ template <class T> void AdpThresholding_adpwindow(const T* data1d,
             V3DLONG offsetj = iy*N;
             for(V3DLONG ix = 0; ix < N; ix++)
             {
+
                 T GsdtValue = gsdtdatald[offsetk + offsetj + ix];
                 T PixelValue = data1d[offsetc+offsetk + offsetj + ix];
-                Wx = (int)round((0.3*log(GsdtValue)/log(2)));
+                Wx = (int)round((0.1*log(GsdtValue)/log(2)));
 
+                if(Wx == 0) Wx = 1;
 
                 if (Wx > 0 && PixelValue > 0)
                 {
                     Wy = Wx;
-                    Wz = Wx*2;
+                    Wz = Wx;
 
                     V3DLONG xb = ix-Wx; if(xb<0) xb = 0;
                     V3DLONG xe = ix+Wx; if(xe>=N-1) xe = N-1;
@@ -842,7 +871,7 @@ template <class T> void AdpThresholding_adpwindow(const T* data1d,
                       swapthree(a1, a2, a3);
                     if(a1<0 && a2 < 0)
                     {
-                        T dataval =  zhi_abs(a2)*(zhi_abs(a2)-zhi_abs(a3))/zhi_abs(a1);
+                        T dataval = zhi_abs(a2)*(zhi_abs(a2)-zhi_abs(a3))/zhi_abs(a1);
                         pImage[offsetk+offsetj+ix] = dataval;
                         if(maxfl<dataval) maxfl = dataval;
                         if(ix ==161 && iy == 44 && iz ==78)
