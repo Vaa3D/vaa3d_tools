@@ -77,33 +77,29 @@ class GaussianFilterDialog : public QDialog
             pRoiList=cb.getROI(cb.currentImageWindow());
             int chn_num = image->getCDim();
 
-            wx_spinbox = new QSpinBox();
-            wx_spinbox->setValue(7);
-            wy_spinbox = new QSpinBox();
-            wy_spinbox->setValue(7);
-            wz_spinbox = new QSpinBox();
-            wz_spinbox->setValue(7);
-            sigma_spinbox = new QSpinBox();
-            sigma_spinbox->setValue(3.0);
+            wx_editor = new QLineEdit(QString("").setNum(7));
+            wy_editor = new QLineEdit(QString("").setNum(7));
+            wz_editor = new QLineEdit(QString("").setNum(7));
+            sigma_editor = new QLineEdit(QString("").setNum(3));
             channel_spinbox = new QSpinBox();
             channel_spinbox->setRange(1,chn_num);
 
 
             gridLayout->addWidget(new QLabel("Window size (# voxels) along x"),0,0);
-            gridLayout->addWidget(wx_spinbox, 0,1,1,5);
+            gridLayout->addWidget(wx_editor, 0,1,1,5);
             gridLayout->addWidget(new QLabel("Window size (# voxels) along y"),1,0);
-            gridLayout->addWidget(wy_spinbox, 1,1,1,5);
+            gridLayout->addWidget(wy_editor, 1,1,1,5);
             gridLayout->addWidget(new QLabel("Window size (# voxels) along z"),2,0);
-            gridLayout->addWidget(wz_spinbox, 2,1,1,5);
+            gridLayout->addWidget(wz_editor, 2,1,1,5);
             gridLayout->addWidget(new QLabel("Sigma value"),3,0);
-            gridLayout->addWidget(sigma_spinbox, 3,1,1,5);
+            gridLayout->addWidget(sigma_editor, 3,1,1,5);
             gridLayout->addWidget(new QLabel("Channel"),4,0);
             gridLayout->addWidget(channel_spinbox, 4,1,1,5);
 
             ok     = new QPushButton("OK");
             cancel = new QPushButton("Cancel");
             gridLayout->addWidget(cancel, 5,0);
-            gridLayout->addWidget(ok,     5,2);
+            gridLayout->addWidget(ok,     5,1,1,5);;
 
             setLayout(gridLayout);
             setWindowTitle(QString("Gaussian Filter"));
@@ -119,10 +115,10 @@ class GaussianFilterDialog : public QDialog
         public slots:
         void update()
         {
-            Wx = wx_spinbox->text().toInt();
-            Wy = wy_spinbox->text().toInt();
-            Wz = wz_spinbox->text().toInt();
-            sigma = sigma_spinbox->text().toDouble();
+            Wx = atof(wx_editor->text().toStdString().c_str());
+            Wy = atof(wy_editor->text().toStdString().c_str());
+            Wz = atof(wz_editor->text().toStdString().c_str());
+            sigma = atof(sigma_editor->text().toStdString().c_str());
             ch = channel_spinbox->text().toInt();
         }
 
@@ -134,10 +130,10 @@ class GaussianFilterDialog : public QDialog
         QGridLayout *gridLayout;
         QPushButton* ok;
         QPushButton* cancel;
-        QSpinBox * wx_spinbox;
-        QSpinBox * wy_spinbox;
-        QSpinBox * wz_spinbox;
-        QSpinBox * sigma_spinbox;
+        QLineEdit * wx_editor;
+        QLineEdit * wy_editor;
+        QLineEdit * wz_editor;
+        QLineEdit * sigma_editor;
         QSpinBox * channel_spinbox;
 
     };
