@@ -25,7 +25,7 @@ using namespace std;
  * Output : phi       distance tranformed output image
  *
  * Notice : 
- * 1. the input pixel number should not be larger than 2G if sizeof(long) == 4
+ * 1. the input pixel number should not be larger than 2G if sizeof(long) == 4 //this should have been solved by changing "long" to "V3DLONG". see changes introduced in version 634
  * 2. The background point is of intensity 0
  * *****************************************************************************/
 

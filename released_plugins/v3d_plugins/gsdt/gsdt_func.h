@@ -8,7 +8,7 @@
 
 #include <v3d_interface.h>
 
-int gsdt(V3DPluginCallback2 &callback, QWidget *parent);
+bool gsdt(V3DPluginCallback2 &callback, QWidget *parent);
 bool gsdt(const V3DPluginArgList & input, V3DPluginArgList & output);
 
 #endif

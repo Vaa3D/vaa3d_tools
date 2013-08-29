@@ -17,7 +17,7 @@ using namespace std;
 
 const QString title = QObject::tr("Grayscale Distance Transformation Plugin");
 
-int gsdt(V3DPluginCallback2 &callback, QWidget *parent)
+bool gsdt(V3DPluginCallback2 &callback, QWidget *parent)
 {
 	v3dhandleList win_list = callback.getImageWindowList();
 
@@ -28,6 +28,12 @@ int gsdt(V3DPluginCallback2 &callback, QWidget *parent)
 	}
 	v3dhandle curwin = callback.currentImageWindow();
 	Image4DSimple * p4DImage = callback.getImage(curwin);
+    if (!p4DImage || !p4DImage->valid())
+    {
+        v3d_msg("The image is not valid. Do nothing.");
+        return false;
+    }
+
 	V3DLONG sz0 = p4DImage->getXDim();
 	V3DLONG sz1 = p4DImage->getYDim();
 	V3DLONG sz2 = p4DImage->getZDim();
@@ -52,7 +58,7 @@ int gsdt(V3DPluginCallback2 &callback, QWidget *parent)
 	if(cnn_type < 1 || cnn_type > 3 || channel < 0 || channel >= sz3)
 	{
 		v3d_msg(QObject::tr("Connection type or channel value is out of range").arg(sz3-1));
-		return 0;
+        return false;
 	}
 
 	cout<<"bkg_thresh = "<<bkg_thresh<<endl;
@@ -62,10 +68,26 @@ int gsdt(V3DPluginCallback2 &callback, QWidget *parent)
 
 	unsigned char * inimg1d = p4DImage->getRawDataAtChannel(channel);
     float * phi = 0;
-	fastmarching_dt(inimg1d, phi, sz0, sz1, sz2, cnn_type, bkg_thresh, z_thickness);
+
+    switch(p4DImage->getDatatype())
+    {
+    case V3D_UINT8:
+        fastmarching_dt(inimg1d, phi, sz0, sz1, sz2, cnn_type, bkg_thresh, z_thickness);
+        break;
+    case V3D_UINT16:
+        fastmarching_dt((unsigned short int *)inimg1d, phi, sz0, sz1, sz2, cnn_type, bkg_thresh, z_thickness);
+        break;
+    case V3D_FLOAT32:
+        fastmarching_dt((float *)inimg1d, phi, sz0, sz1, sz2, cnn_type, bkg_thresh, z_thickness);
+        break;
+    default:
+        v3d_msg("You should have never seen this warning in GSDT.");
+        return false;
+    }
 
 	float min_val = phi[0], max_val = phi[0];
     V3DLONG tol_sz = sz0 * sz1 * sz2;
+
 	unsigned char * outimg1d = new unsigned char[tol_sz];
     for(V3DLONG i = 0; i < tol_sz; i++) {if(phi[i] == INF) continue; min_val = MIN(min_val, phi[i]); max_val = MAX(max_val, phi[i]);}
 	cout<<"min_val = "<<min_val<<" max_val = "<<max_val<<endl;
@@ -83,12 +105,13 @@ int gsdt(V3DPluginCallback2 &callback, QWidget *parent)
 	delete [] phi; phi = 0;
 
 	Image4DSimple * new4DImage = new Image4DSimple();
-	new4DImage->setData(outimg1d, sz0, sz1, sz2, 1, V3D_UINT8);
+    new4DImage->setData(outimg1d, sz0, sz1, sz2, 1, V3D_UINT8);
 	v3dhandle newwin = callback.newImageWindow();
 	callback.setImage(newwin, new4DImage);
 	callback.setImageName(newwin, title);
 	callback.updateImageWindow(newwin);
-	return 1;
+
+    return true;
 }
 
 bool gsdt(const V3DPluginArgList & input, V3DPluginArgList & output)
@@ -122,7 +145,7 @@ bool gsdt(const V3DPluginArgList & input, V3DPluginArgList & output)
      }
      else if(datatype == 2)
      {
-          if(!fastmarching_dt((short int*)inimg1d, phi, in_sz[0], in_sz[1], in_sz[2], cnn_type, bkg_thresh, z_thickness)) return false;
+          if(!fastmarching_dt((unsigned short int*)inimg1d, phi, in_sz[0], in_sz[1], in_sz[2], cnn_type, bkg_thresh, z_thickness)) return false;
      }
      else if(datatype == 4)
      {
