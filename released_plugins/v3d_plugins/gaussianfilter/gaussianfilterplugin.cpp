@@ -198,7 +198,7 @@ void processImage(V3DPluginCallback2 &callback, QWidget *parent)
      double sigma = 3.0;
      dialog.get_num("Window size (# voxels) along x", Wx);
      dialog.get_num("Window size (# voxels) along y", Wy);
-     dialog.get_num("Window size (# voxels) along z", Wy);
+     dialog.get_num("Window size (# voxels) along z", Wz);
      dialog.get_num("Channel (1 ~ )", c);
      dialog.get_num("Sigma value", sigma);
 
