@@ -224,11 +224,12 @@ void processImage(V3DPluginCallback2 &callback, QWidget *parent)
 
      // display
      Image4DSimple * new4DImage = new Image4DSimple();
-     new4DImage->setData((unsigned char *)outimg, N, M, P, 1, V3D_FLOAT32);
+     new4DImage->setData(outimg, N, M, P, 1, V3D_FLOAT32);
      v3dhandle newwin = callback.newImageWindow();
      callback.setImage(newwin, new4DImage);
      callback.setImageName(newwin, title);
      callback.updateImageWindow(newwin);
+	return;
 }
 
 
@@ -246,6 +247,13 @@ template <class T> void gaussian_filter(T* data1d,
     {
         v3d_msg("Invalid parameters to gaussian_filter().", 0);
         return;
+    }
+	
+	if (outimg)
+    {
+        v3d_msg("Warning: you have supplied an non-empty output image pointer. This program will force to free it now. But you may want to double check.");
+        delete []outimg;
+        outimg = 0;
     }
 
      // for filter kernel
