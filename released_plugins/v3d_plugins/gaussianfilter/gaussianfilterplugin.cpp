@@ -26,7 +26,7 @@ using namespace std;
 Q_EXPORT_PLUGIN2(gaussianfilter, GaussianFilterPlugin)
 
 void processImage(V3DPluginCallback2 &callback, QWidget *parent);
-bool processImage(const V3DPluginArgList & input, V3DPluginArgList & output);
+bool processImage(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPluginArgList & output);
 template <class T> void gaussian_filter(T* data1d,
                                         V3DLONG *in_sz,
                                         unsigned int Wx,
@@ -66,7 +66,7 @@ bool GaussianFilterPlugin::dofunc(const QString &func_name, const V3DPluginArgLi
 {
      if (func_name == tr("gf"))
 	{
-		return processImage(input, output);
+        return processImage(callback, input, output);
 	}
 	else if(func_name == tr("help"))
 	{
@@ -84,7 +84,7 @@ bool GaussianFilterPlugin::dofunc(const QString &func_name, const V3DPluginArgLi
 	}
 }
 
-bool processImage(const V3DPluginArgList & input, V3DPluginArgList & output)
+bool processImage(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPluginArgList & output)
 {
 	cout<<"Welcome to Gaussian filter"<<endl;
 	if (output.size() != 1) return false;
@@ -113,45 +113,46 @@ bool processImage(const V3DPluginArgList & input, V3DPluginArgList & output)
 
      double sigma_s2 = 0.5/(sigma*sigma);
 
-	unsigned char * data1d = 0,  * outimg1d = 0;
-	float * phi = 0;
-	V3DLONG * in_sz = 0;
+    Image4DSimple *inimg = callback.loadImage(inimg_file);
+    if (!inimg || !inimg->valid())
+    {
+        v3d_msg("Fail to open the image file.", 0);
+        return false;
+    }
 
-	int datatype;
-	if(!loadImage(inimg_file, data1d, in_sz, datatype))
-     {
-          cerr<<"load image "<<inimg_file<<" error!"<<endl;
-          return false;
-     }
-
-     if(c > in_sz[3])// check the input channel number range
+     if(c > inimg->getCDim())// check the input channel number range
      {
           v3d_msg("The input channel number is out of real channel range.\n", 0 );
           return false;
      }
 
 	//input
-     float* outimg = 0;
+     float* outimg = 0; //no need to delete it later as the Image4DSimple variable "outimg" will do the job
 
-     switch (datatype)
+     V3DLONG in_sz[4];
+     in_sz[0] = inimg->getXDim();
+     in_sz[1] = inimg->getYDim();
+     in_sz[2] = inimg->getZDim();
+     in_sz[3] = inimg->getCDim();
+
+     switch (inimg->getDatatype())
      {
-          case 1: gaussian_filter(data1d, in_sz, Wx, Wy, Wz, c, sigma, outimg); break;
-          case 2: gaussian_filter((unsigned short int*)data1d, in_sz, Wx, Wy, Wz, c, sigma, outimg); break;
-          case 4: gaussian_filter((float *)data1d, in_sz, Wx, Wy, Wz, c, sigma, outimg); break;
+          case V3D_UINT8: gaussian_filter(inimg->getRawData(), in_sz, Wx, Wy, Wz, c, sigma, outimg); break;
+          case V3D_UINT16: gaussian_filter((unsigned short int*)(inimg->getRawData()), in_sz, Wx, Wy, Wz, c, sigma, outimg); break;
+          case V3D_FLOAT32: gaussian_filter((float *)(inimg->getRawData()), in_sz, Wx, Wy, Wz, c, sigma, outimg); break;
           default:
-               v3d_msg("Invalid datatype.");
-               if (data1d) {delete []data1d; data1d=0;}
-               if (in_sz) {delete []in_sz; in_sz=0;}
+               v3d_msg("Invalid datatype in Gaussian fileter.", 0);
+               if (inimg) {delete inimg; inimg=0;}
                return false;
      }
 
      // save image
-     in_sz[3]=1;
-     saveImage(outimg_file, (unsigned char *)outimg, in_sz, 4);
+     Image4DSimple outimg1;
+     outimg1.setData((unsigned char *)outimg, in_sz[0], in_sz[1], in_sz[2], 1, V3D_FLOAT32);
 
-     if(outimg) {delete []outimg; outimg =0;}
-     if(data1d) {delete []data1d; data1d=0;}
-     if(in_sz)  {delete []in_sz; in_sz=0;}
+     callback.saveImage(&outimg1, outimg_file);
+
+     if(inimg) {delete inimg; inimg =0;}
 
      return true;
 }
