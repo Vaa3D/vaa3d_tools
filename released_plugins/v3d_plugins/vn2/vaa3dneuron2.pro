@@ -71,4 +71,6 @@ SOURCES += $$V3DMAINPATH/basic_c_fun/imageio_mylib.cpp \
 
 
 TARGET	= $$qtLibraryTarget(vn2)
-DESTDIR	= ../../v3d/plugins/neuron_tracing/Vaa3D_Neuron2
+#DESTDIR = ../../v3d/plugins/neuron_tracing/Vaa3D_Neuron2
+DESTDIR	= $$V3DMAINPATH/../bin/plugins/neuron_tracing/Vaa3D_Neuron2
+

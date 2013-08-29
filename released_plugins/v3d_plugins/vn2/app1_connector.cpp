@@ -151,10 +151,7 @@ bool proc_app1(PARA_APP1 &p, const QString & versionStr)
             datatype = V3D_UINT8;
         }
         
-        printf("x = %ld\n", in_sz[0]);
-        printf("y = %ld\n", in_sz[1]);
-        printf("z = %ld\n", in_sz[2]);
-        printf("c = %ld\n", in_sz[3]);
+        printf("x = %ld, y = %ld, z = %ld, c = %ld\n", in_sz[0], in_sz[1], in_sz[2], in_sz[3]);
         
         if (!p.b_256cube)
         {
@@ -266,8 +263,7 @@ bool proc_app1(PARA_APP1 &p, const QString & versionStr)
     {
         trace_para.imgTH = 0;
     }
-    trace_para.visible_thresh = p.visible_thresh;
-    
+    trace_para.visible_thresh = p.visible_thresh;    
 
     LocationSimple p0;
     vector<LocationSimple> pp;
@@ -298,16 +294,16 @@ bool proc_app1(PARA_APP1 &p, const QString & versionStr)
 
     img_subject = p4dImageNew->getRawDataAtChannel(0);
     
-    if (p.p4dImage->getDatatype()==1 && nChannelsToUse==1 && channelsToUse[0]==0)
+    if (nChannelsToUse==1 && channelsToUse[0]==0)
     {
         img_new = img_subject;
     }
-    else //this part needs further check later. for brainbow tracing
+    else //this part needs further check/rewrite later. for brainbow tracing
     {
         //fprintf (stderr, "Now only support 8bit data [%s]. Exit. \n", dfile_subject);
         
-        total_units = (V3DLONG)sz_subject[0]*(V3DLONG)sz_subject[1]*(V3DLONG)sz_subject[2];
-        channel_bytes = total_units * datatype_subject;
+        total_units =  p4dImageNew->getTotalUnitNumberPerChannel();
+        channel_bytes = total_units * p4dImageNew->getUnitBytes();
         total_bytes = nChannelsToUse * total_units;
         
         if (img_new) {delete []img_new; img_new=0;}
@@ -388,14 +384,14 @@ bool proc_app1(PARA_APP1 &p, const QString & versionStr)
         if(inmarkers.empty())
         {
             cout<<"Start detecting cellbody"<<endl;
-            switch(p.p4dImage->getDatatype())
+
+            //should always use UINT8 here as indata has been converted to uint8
+            fastmarching_dt_XY(indata1d, phi, sz_tracing[0], sz_tracing[1], sz_tracing[2], 2, p.bkg_thresh);
+
+            if (!phi)
             {
-                case V3D_UINT8:
-                    fastmarching_dt_XY(indata1d, phi, sz_tracing[0], sz_tracing[1], sz_tracing[2], 2, p.bkg_thresh);
-                    break;
-                case V3D_UINT16:
-                    fastmarching_dt_XY((short int*)indata1d, phi, sz_tracing[0], sz_tracing[1], sz_tracing[2], 2, p.bkg_thresh);
-                    break;
+                v3d_msg("Fail to run the GSDT code. Exit.", 0);
+                goto Label_exit;
             }
             
             V3DLONG sz0 = in_sz[0];
