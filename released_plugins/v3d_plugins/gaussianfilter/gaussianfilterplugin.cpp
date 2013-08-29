@@ -160,24 +160,17 @@ bool processImage(const V3DPluginArgList & input, V3DPluginArgList & output)
 
 void processImage(V3DPluginCallback2 &callback, QWidget *parent)
 {
-     v3dhandle curwin = callback.currentImageWindow();
-	if (!curwin)
+    v3dhandleList win_list = callback.getImageWindowList();
+	
+	if(win_list.size()<1)
 	{
-        v3d_msg("You don't have any image open in the main window.");
+		QMessageBox::information(0, title, QObject::tr("No image is open."));
 		return;
 	}
-
-     Image4DSimple* p4DImage = callback.getImage(curwin);
-
-	if (!p4DImage)
-	{
-		v3d_msg("The image pointer is invalid. Ensure your data is valid and try again!");
-        return;
-	}
-
-
-     unsigned char* data1d = p4DImage->getRawData();
-     V3DLONG pagesz = p4DImage->getTotalUnitNumberPerChannel();
+	v3dhandle curwin = callback.currentImageWindow();
+	Image4DSimple * p4DImage = callback.getImage(curwin);
+	
+	V3DLONG pagesz = p4DImage->getTotalUnitNumberPerChannel();
 
      V3DLONG N = p4DImage->getXDim();
      V3DLONG M = p4DImage->getYDim();
@@ -207,7 +200,8 @@ void processImage(V3DPluginCallback2 &callback, QWidget *parent)
         v3d_msg(QObject::tr("channel value is out of range").arg(sc-1));
         return;
      }
-
+	
+	unsigned char* data1d = p4DImage->getRawData();
 
      // gaussian_filter
      V3DLONG in_sz[4];
@@ -224,7 +218,7 @@ void processImage(V3DPluginCallback2 &callback, QWidget *parent)
 
      // display
      Image4DSimple * new4DImage = new Image4DSimple();
-     new4DImage->setData(outimg, N, M, P, 1, V3D_FLOAT32);
+     new4DImage->setData((unsigned char *)outimg, N, M, P, 1, V3D_FLOAT32);
      v3dhandle newwin = callback.newImageWindow();
      callback.setImage(newwin, new4DImage);
      callback.setImageName(newwin, title);
