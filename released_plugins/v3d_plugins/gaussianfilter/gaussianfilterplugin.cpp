@@ -202,7 +202,7 @@ void processImage(V3DPluginCallback2 &callback, QWidget *parent)
      dialog.get_num("Channel (1 ~ )", c);
      dialog.get_num("Sigma value", sigma);
 
-     if(c < 0 || c > sc)
+     if(c < 1 || c > sc)
      {
         v3d_msg(QObject::tr("channel value is out of range").arg(sc-1));
         return;
@@ -314,7 +314,10 @@ template <class T> void gaussian_filter(T* data1d,
           for (unsigned int Weight = 0; Weight < Wx; ++Weight)
                WeightsX[Weight] /= k;
 
-
+		 printf("\n x dierction");
+		 
+		 for (unsigned int Weight = 0; Weight < Wx; ++Weight)
+			 printf("/n%f",WeightsX[Weight]);
 
           //   Allocate 1-D extension array
           float  *extension_bufferX = 0;
