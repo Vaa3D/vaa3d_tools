@@ -519,9 +519,41 @@ void processImage(V3DPluginCallback2 &callback, QWidget *parent)
     for(int i = 0; i<output_size;i++)
         datald_output[i] = 255*(target1d_y[i]-1)/254;
 
+    saveImage("result_woGf.v3draw", (unsigned char *)datald_output, in_zz, pixeltype);
+    V3DPluginArgItem arg_out;
+    V3DPluginArgList input2;
+    V3DPluginArgList output2;
+
+
+    arg_out.type = "random";std::vector<char*> args_out1;
+    args_out1.push_back("result_woGf.v3draw"); arg_out.p = (void *) & args_out1; input2<< arg_out;
+    arg_out.type = "random";std::vector<char*> args_out;
+    args_out.push_back("3");args.push_back("3");args_out.push_back("3");args_out.push_back("1"); args_out.push_back("1.0"); arg_out.p = (void *) & args_out; input2 << arg_out;
+    arg_out.type = "random";std::vector<char*> args_out2;
+    args_out2.push_back("gfImage_v2.v3draw"); arg_out.p = (void *) & args_out2; output2<< arg_out;
+
+    full_plugin_name = "gaussian";
+    func_name = "gf";
+
+    callback.callPluginFunc(full_plugin_name,func_name, input2,output2);
+
+    unsigned char * data1d_float = 0;
+    in_zz = 0;
+
+    char * outimg_file2 = ((vector<char*> *)(output2.at(0).p))->at(0);
+    loadImage(outimg_file2, data1d_float, in_zz, datatype);
+    remove("result_woGf.v3draw");
+    remove("gfImage_v2.v3draw");
+
+    unsigned char* data1d_uint8 = 0;
+    data1d_uint8 = new unsigned char [pagesz];
+
+    rescale_to_0_255_and_copy((float *)data1d_float,pagesz,min,max,data1d_uint8);
+
+
     // display
     Image4DSimple * new4DImage = new Image4DSimple();
-    new4DImage->setData((unsigned char *)datald_output,N, M, P, 1, pixeltype);
+    new4DImage->setData((unsigned char *)data1d_uint8,N, M, P, 1, pixeltype);
     v3dhandle newwin = callback.newImageWindow();
     callback.setImage(newwin, new4DImage);
     callback.setImageName(newwin, "Local_adaptive_enhancement_result");
@@ -804,15 +836,49 @@ bool processImage1(const V3DPluginArgList & input, V3DPluginArgList & output,V3D
     datald_output = new unsigned char [output_size];
     for(int i = 0; i<output_size;i++)
         datald_output[i] = 255*(target1d_y[i]-1)/254;
-
     in_sz[3]=1;
-    saveImage(outimg_file, (unsigned char *)datald_output, in_sz, 1);
+    saveImage("result_woGf.v3draw", (unsigned char *)datald_output, in_sz, 1);
+    V3DPluginArgItem arg_out;
+    V3DPluginArgList input3;
+    V3DPluginArgList output3;
+
+
+    arg_out.type = "random";std::vector<char*> args_out1;
+    args_out1.push_back("result_woGf.v3draw"); arg_out.p = (void *) & args_out1; input3<< arg_out;
+    arg_out.type = "random";std::vector<char*> args_out;
+    args_out.push_back("3");args.push_back("3");args_out.push_back("3");args_out.push_back("1"); args_out.push_back("1.0"); arg_out.p = (void *) & args_out; input3 << arg_out;
+    arg_out.type = "random";std::vector<char*> args_out2;
+    args_out2.push_back("gfImage_v2.v3draw"); arg_out.p = (void *) & args_out2; output3<< arg_out;
+
+    full_plugin_name = "gaussian";
+    func_name = "gf";
+
+    callback.callPluginFunc(full_plugin_name,func_name, input3,output3);
+
+    unsigned char * data1d_float = 0;
+    V3DLONG *in_zz = 0;
+
+    char * outimg_file3 = ((vector<char*> *)(output3.at(0).p))->at(0);
+    loadImage(outimg_file3, data1d_float, in_zz, datatype);
+    remove("result_woGf.v3draw");
+    remove("gfImage_v2.v3draw");
+
+    unsigned char* data1d_uint8 = 0;
+    data1d_uint8 = new unsigned char [pagesz];
+
+    rescale_to_0_255_and_copy((float *)data1d_float,pagesz,min,max,data1d_uint8);
+
+
+    saveImage(outimg_file, (unsigned char *)data1d_uint8, in_sz, 1);
 
     if(target1d_y) {delete []target1d_y; target1d_y =0;}
     if(subject1d_y) {delete []subject1d_y; subject1d_y =0;}
     if (data1d) {delete []data1d; data1d=0;}
     if (data1d2) {delete []data1d2; data1d2=0;}
     if (in_sz) {delete []in_sz; in_sz=0;}
+    if (datald_output) {delete []datald_output; datald_output=0;}
+    if (data1d_float) {delete []data1d_float; data1d_float=0;}
+    if (data1d_uint8) {delete []data1d_uint8; data1d_uint8=0;}
 
     return true;
 }
