@@ -41,6 +41,108 @@ public:
      bool dofunc(const QString &func_name, const V3DPluginArgList &input, V3DPluginArgList &output, V3DPluginCallback2 &callback, QWidget *parent);
 };
 
+//define a simple dialog for choose Gaussian Filter parameters
+class GaussianFilterDialog : public QDialog
+    {
+        Q_OBJECT
+
+    public:
+        GaussianFilterDialog(V3DPluginCallback2 &cb, QWidget *parent)
+        {
+            //initialization of variables
+            image = 0;
+            gridLayout = 0;
+
+            //
+
+            v3dhandleList win_list = cb.getImageWindowList();
+
+            if(win_list.size()<1)
+            {
+                QMessageBox::information(0, "Gaussian Filter", QObject::tr("No image is open."));
+                return;
+            }
+
+            //create a dialog
+            gridLayout = new QGridLayout();
+
+            image = cb.getImage(cb.currentImageWindow());
+
+            if (!image || !image->valid())
+            {
+                v3d_msg("The image is not valid yet. Check your data.");
+                return;
+            }
+
+            pRoiList=cb.getROI(cb.currentImageWindow());
+            int chn_num = image->getCDim();
+
+            wx_spinbox = new QSpinBox();
+            wx_spinbox->setValue(7);
+            wy_spinbox = new QSpinBox();
+            wy_spinbox->setValue(7);
+            wz_spinbox = new QSpinBox();
+            wz_spinbox->setValue(7);
+            sigma_spinbox = new QSpinBox();
+            sigma_spinbox->setValue(3.0);
+            channel_spinbox = new QSpinBox();
+            channel_spinbox->setRange(1,chn_num);
+
+
+            gridLayout->addWidget(new QLabel("Window size (# voxels) along x"),0,0);
+            gridLayout->addWidget(wx_spinbox, 0,1,1,5);
+            gridLayout->addWidget(new QLabel("Window size (# voxels) along y"),1,0);
+            gridLayout->addWidget(wy_spinbox, 1,1,1,5);
+            gridLayout->addWidget(new QLabel("Window size (# voxels) along z"),2,0);
+            gridLayout->addWidget(wz_spinbox, 2,1,1,5);
+            gridLayout->addWidget(new QLabel("Sigma value"),3,0);
+            gridLayout->addWidget(sigma_spinbox, 3,1,1,5);
+            gridLayout->addWidget(new QLabel("Channel"),4,0);
+            gridLayout->addWidget(channel_spinbox, 4,1,1,5);
+
+            ok     = new QPushButton("OK");
+            cancel = new QPushButton("Cancel");
+            gridLayout->addWidget(cancel, 5,0);
+            gridLayout->addWidget(ok,     5,2);
+
+            setLayout(gridLayout);
+            setWindowTitle(QString("Gaussian Filter"));
+
+            //slot interface
+            connect(ok,     SIGNAL(clicked()), this, SLOT(accept()));
+            connect(cancel, SIGNAL(clicked()), this, SLOT(reject()));
+            update();
+        }
+
+        ~GaussianFilterDialog(){}
+
+        public slots:
+        void update()
+        {
+            Wx = wx_spinbox->text().toInt();
+            Wy = wy_spinbox->text().toInt();
+            Wz = wz_spinbox->text().toInt();
+            sigma = sigma_spinbox->text().toDouble();
+            ch = channel_spinbox->text().toInt();
+        }
+
+    public:
+        int Wx,Wy,Wz,ch;
+        double sigma;
+        Image4DSimple* image;
+        ROIList pRoiList;
+        QGridLayout *gridLayout;
+        QPushButton* ok;
+        QPushButton* cancel;
+        QSpinBox * wx_spinbox;
+        QSpinBox * wy_spinbox;
+        QSpinBox * wz_spinbox;
+        QSpinBox * sigma_spinbox;
+        QSpinBox * channel_spinbox;
+
+    };
+
+
 #endif
 
 

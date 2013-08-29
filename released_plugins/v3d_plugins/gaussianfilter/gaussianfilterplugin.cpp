@@ -14,7 +14,6 @@
 
 #include "v3d_message.h"
 #include "stackutil.h"
-#include "common_dialog.h"
 
 #include "gaussianfilterplugin.h"
 
@@ -160,50 +159,59 @@ bool processImage(const V3DPluginArgList & input, V3DPluginArgList & output)
 
 void processImage(V3DPluginCallback2 &callback, QWidget *parent)
 {
-    v3dhandleList win_list = callback.getImageWindowList();
-	
-	if(win_list.size()<1)
-	{
-		QMessageBox::information(0, title, QObject::tr("No image is open."));
-		return;
-	}
-	v3dhandle curwin = callback.currentImageWindow();
-	Image4DSimple * p4DImage = callback.getImage(curwin);
-	
-	V3DLONG pagesz = p4DImage->getTotalUnitNumberPerChannel();
+    v3dhandle curwin = callback.currentImageWindow();
+    if (!curwin)
+    {
+        QMessageBox::information(0, "", "You don't have any image open in the main window.");
+        return;
+    }
+
+    Image4DSimple* p4DImage = callback.getImage(curwin);
+
+    if (!p4DImage)
+    {
+        QMessageBox::information(0, "", "The image pointer is invalid. Ensure your data is valid and try again!");
+        return;
+    }
+
+    unsigned char* data1d = p4DImage->getRawData();
+    //V3DLONG totalpxls = p4DImage->getTotalBytes();
+    V3DLONG pagesz = p4DImage->getTotalUnitNumberPerChannel();
 
      V3DLONG N = p4DImage->getXDim();
      V3DLONG M = p4DImage->getYDim();
      V3DLONG P = p4DImage->getZDim();
      V3DLONG sc = p4DImage->getCDim();
 
-     vector<string> items;
-     items.push_back("Window size (# voxels) along x");
-     items.push_back("Window size (# voxels) along y");
-     items.push_back("Window size (# voxels) along z");
-     items.push_back("Channel (1 ~ )");
-     items.push_back("Sigma value");
-     CommonDialog dialog(items);
-     dialog.setWindowTitle(title);
-     if(dialog.exec() != QDialog::Accepted) return;
+     //add input dialog
 
-     int Wx = 7, Wy = 7, Wz = 7, c = 1;
-     double sigma = 3.0;
-     dialog.get_num("Window size (# voxels) along x", Wx);
-     dialog.get_num("Window size (# voxels) along y", Wy);
-     dialog.get_num("Window size (# voxels) along z", Wz);
-     dialog.get_num("Channel (1 ~ )", c);
-     dialog.get_num("Sigma value", sigma);
-
-     if(c < 1 || c > sc)
-     {
-        v3d_msg(QObject::tr("channel value is out of range").arg(sc-1));
+    GaussianFilterDialog dialog(callback, parent);
+    if (!dialog.image)
         return;
-     }
-	
-	unsigned char* data1d = p4DImage->getRawData();
 
-     // gaussian_filter
+    if (dialog.exec()!=QDialog::Accepted)
+        return;
+
+    dialog.update();
+
+    Image4DSimple* subject = dialog.image;
+    if (!subject)
+        return;
+    ROIList pRoiList = dialog.pRoiList;
+
+    int Wx = dialog.Wx;
+    int Wy = dialog.Wy;
+    int Wz = dialog.Wz;
+    int c = dialog.ch;
+    double sigma = dialog.sigma;
+
+    cout<<"Wx = "<<Wx<<endl;
+    cout<<"Wy = "<<Wy<<endl;
+    cout<<"Wz = "<<Wz<<endl;
+    cout<<"sigma = "<<sigma<<endl;
+    cout<<"ch = "<<c<<endl;
+
+    // gaussian_filter
      V3DLONG in_sz[4];
      in_sz[0] = N; in_sz[1] = M; in_sz[2] = P; in_sz[3] = sc;
 
