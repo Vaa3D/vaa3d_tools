@@ -60,7 +60,7 @@ class MultiscaleEnhancementDialog : public QDialog
             pRoiList=cb.getROI(cb.currentImageWindow());
             int chn_num = image->getCDim();
 
-            minD_editor = new QLineEdit(QString("").setNum(3));
+            minD_editor = new QLineEdit(QString("").setNum(4));
             maxD_editor = new QLineEdit(QString("").setNum(10));
             scale_editor = new QLineEdit(QString("").setNum(5));
             channel_spinbox = new QSpinBox();
