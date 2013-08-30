@@ -244,7 +244,7 @@ bool proc_app2(V3DPluginCallback2 &callback, PARA_APP2 &p, const QString & versi
             case V3D_UINT8:
                 fastmarching_dt_XY(indata1d, phi, in_sz[0], in_sz[1], in_sz[2],p.cnn_type, p.bkg_thresh);
                 break;
-            case V3D_UINT16:
+            case V3D_UINT16:  //this is no longer needed, as the data type has been converted above
                 fastmarching_dt_XY((short int*)indata1d, phi, in_sz[0], in_sz[1], in_sz[2],p.cnn_type, p.bkg_thresh);
                 break;
         }
@@ -288,7 +288,7 @@ bool proc_app2(V3DPluginCallback2 &callback, PARA_APP2 &p, const QString & versi
                     case V3D_UINT8:
                         fastmarching_dt(indata1d, phi, in_sz[0], in_sz[1], in_sz[2], p.cnn_type, p.bkg_thresh);
                         break;
-                    case V3D_UINT16:
+                    case V3D_UINT16:  //this is no longer needed, as the data type has been converted above
                         fastmarching_dt((short int *)indata1d, phi, in_sz[0], in_sz[1], in_sz[2], p.cnn_type, p.bkg_thresh);
                         break;
                     default:
@@ -308,7 +308,7 @@ bool proc_app2(V3DPluginCallback2 &callback, PARA_APP2 &p, const QString & versi
                     v3d_msg("8bit", 0);
                     fastmarching_tree(inmarkers[0], indata1d, outtree, in_sz[0], in_sz[1], in_sz[2], p.cnn_type, p.bkg_thresh, p.is_break_accept);
                     break;
-                case V3D_UINT16:
+                case V3D_UINT16: //this is no longer needed, as the data type has been converted above
                     v3d_msg("16bit", 0);
                     fastmarching_tree(inmarkers[0], (short int*)indata1d, outtree, in_sz[0], in_sz[1], in_sz[2], p.cnn_type, p.bkg_thresh, p.is_break_accept);
                     break;
@@ -361,7 +361,7 @@ bool proc_app2(V3DPluginCallback2 &callback, PARA_APP2 &p, const QString & versi
         V3DLONG tmpi;
 
         vector<MyMarker*> tmpswc;
-        for (tmpi=0; tmpi<tmpswc.size(); tmpi++)
+        for (tmpi=0; tmpi<inswc.size(); tmpi++)
         {
             MyMarker * curp = new MyMarker;
             curp->x = inswc[tmpi]->x;
