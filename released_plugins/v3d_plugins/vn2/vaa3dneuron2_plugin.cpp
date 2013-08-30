@@ -52,7 +52,7 @@ void NTApp2Plugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback
             if (!p.app2_dialog())
                 return;
             
-            if (!proc_app2(p, versionStr))
+            if (!proc_app2(callback, p, versionStr))
                 return;
         }
         else //if (menu_name == "Vaa3D-Neuron2-APP1")
@@ -66,7 +66,7 @@ void NTApp2Plugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback
             if (!p.app1_dialog())
                 return;
             
-            if (!proc_app1(p, versionStr))
+            if (!proc_app1(callback, p, versionStr))
                 return;
         }
     }
@@ -90,7 +90,7 @@ bool NTApp2Plugin::dofunc(const QString &func_name, const V3DPluginArgList &inpu
         if (!p.fetch_para_commandline(input, output, callback, parent))
             return false;
         
-        if (!proc_app2(p, versionStr))
+        if (!proc_app2(callback, p, versionStr))
             return false;
     }
     else if(func_name == "app1")
@@ -100,7 +100,7 @@ bool NTApp2Plugin::dofunc(const QString &func_name, const V3DPluginArgList &inpu
         if (!p.fetch_para_commandline(input, output, callback, parent))
             return false;
         
-        if (!proc_app1(p, versionStr))
+        if (!proc_app1(callback, p, versionStr))
             return false;
     }
     else //if (func_name == "help")

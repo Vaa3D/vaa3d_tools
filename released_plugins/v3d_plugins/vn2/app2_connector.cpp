@@ -14,7 +14,7 @@
 #include "volimg_proc.h"
 
 
-bool proc_app2(PARA_APP2 &p, const QString & versionStr)
+bool proc_app2(V3DPluginCallback2 &callback, PARA_APP2 &p, const QString & versionStr)
 {
     bool b_menu = true;
     
@@ -26,10 +26,9 @@ bool proc_app2(PARA_APP2 &p, const QString & versionStr)
         b_menu = false;
         
         //in this case try to read the image files
-        p.p4dImage = new Image4DSimple;
         QString infile = p.inimg_file;
-        p.p4dImage->loadImage( (char *)(qPrintable(infile) ));
-        if (!p.p4dImage->valid())
+        p.p4dImage = callback.loadImage((char *)(qPrintable(infile) ));
+        if (!p.p4dImage || !p.p4dImage->valid())
             return false;
         else
         {

@@ -104,7 +104,7 @@ struct PARA_APP1: public PARA_VN
     bool fetch_para_commandline(const V3DPluginArgList &input, V3DPluginArgList &output, V3DPluginCallback2 &callback, QWidget *parent);
 };
 
-bool proc_app1(PARA_APP1 &p, const QString & versionStr);
+bool proc_app1(V3DPluginCallback2 &callback, PARA_APP1 &p, const QString & versionStr);
 
 #endif
 

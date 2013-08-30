@@ -132,7 +132,7 @@ struct PARA_APP2: public PARA_VN
     bool fetch_para_commandline(const V3DPluginArgList &input, V3DPluginArgList &output, V3DPluginCallback2 &callback, QWidget *parent);
 };
 
-bool proc_app2(PARA_APP2 &p, const QString & versionStr);
+bool proc_app2(V3DPluginCallback2 &callback, PARA_APP2 &p, const QString & versionStr);
 
 #endif
 

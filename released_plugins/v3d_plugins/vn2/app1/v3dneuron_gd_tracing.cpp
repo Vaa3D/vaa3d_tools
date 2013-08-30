@@ -1272,23 +1272,23 @@ bool dt_v3dneuron(unsigned char *p1d, V3DLONG sz[3], float imgTH, bool b_to_back
 		*tmpdatap = sqrt(double(*indatap++));
 	}
 
-	bool b_save_tmpres = false;
-	if (b_save_tmpres)
-	{
-		float *label_float = new float [len];
-		for (V3DLONG i=0;i<len; i++) label_float[i] = label[i];
-		if (b_3d_dt)
-		{
-			saveImage("tmp_dt_3d_dist.raw", (unsigned char *)p1dt, sz, 4);
-			saveImage("tmp_dt_3d_label.raw", (unsigned char *)label_float, sz, 4);
-		}
-		else
-		{
-			saveImage("tmp_dt_2d_dist.raw", (unsigned char *)p1dt, sz, 4);
-			saveImage("tmp_dt_2d_label.raw", (unsigned char *)label_float, sz, 4);
-		}
-		if (label_float) { delete []label_float; label_float=0;}
-	}
+//	bool b_save_tmpres = false;
+//	if (b_save_tmpres)
+//	{
+//		float *label_float = new float [len];
+//		for (V3DLONG i=0;i<len; i++) label_float[i] = label[i];
+//		if (b_3d_dt)
+//		{
+//			saveImage("tmp_dt_3d_dist.raw", (unsigned char *)p1dt, sz, 4);
+//			saveImage("tmp_dt_3d_label.raw", (unsigned char *)label_float, sz, 4);
+//		}
+//		else
+//		{
+//			saveImage("tmp_dt_2d_dist.raw", (unsigned char *)p1dt, sz, 4);
+//			saveImage("tmp_dt_2d_label.raw", (unsigned char *)label_float, sz, 4);
+//		}
+//		if (label_float) { delete []label_float; label_float=0;}
+//	}
 	
 	if (label) {delete []label; label=0;}
 	return true;
