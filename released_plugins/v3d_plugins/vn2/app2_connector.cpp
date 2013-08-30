@@ -357,37 +357,43 @@ bool proc_app2(V3DPluginCallback2 &callback, PARA_APP2 &p, const QString & versi
     //save a copy of the ini tree
     cout<<"Save the initial unprunned tree"<<endl;
     vector<MyMarker*> & inswc = outtree;
+
+    if (1)
     {
         V3DLONG tmpi;
 
         vector<MyMarker*> tmpswc;
         for (tmpi=0; tmpi<inswc.size(); tmpi++)
         {
-            MyMarker * curp = new MyMarker;
-            curp->x = inswc[tmpi]->x;
-            curp->y = inswc[tmpi]->y;
-            curp->z = inswc[tmpi]->z;
-
-            if (dfactor_xy>1) curp->x *= dfactor_xy;
-            curp->x += (p.xc0);
-            if (dfactor_xy>1) curp->x += dfactor_xy/2;
-
-            if (dfactor_xy>1) curp->y *= dfactor_xy;
-            curp->y += (p.yc0);
-            if (dfactor_xy>1) curp->y += dfactor_xy/2;
-
-            if (dfactor_z>1) curp->z *= dfactor_z;
-            curp->z += (p.zc0);
-            if (dfactor_z>1)  curp->z += dfactor_z/2;
-
+            MyMarker * curp = new MyMarker(*(inswc[tmpi]));
             tmpswc.push_back(curp);
-        }
-        saveSWC_file(QString(p.p4dImage->getFileName()).append("_ini.swc").toStdString(), tmpswc, infostring);
 
-        for(tmpi = 0; tmpi < tmpswc.size(); tmpi++) delete tmpswc[i];
+            if (dfactor_xy>1) inswc[tmpi]->x *= dfactor_xy;
+            inswc[tmpi]->x += (p.xc0);
+            if (dfactor_xy>1) inswc[tmpi]->x += dfactor_xy/2;
+
+            if (dfactor_xy>1) inswc[tmpi]->y *= dfactor_xy;
+            inswc[tmpi]->y += (p.yc0);
+            if (dfactor_xy>1) inswc[tmpi]->y += dfactor_xy/2;
+
+            if (dfactor_z>1) inswc[tmpi]->z *= dfactor_z;
+            inswc[tmpi]->z += (p.zc0);
+            if (dfactor_z>1)  inswc[tmpi]->z += dfactor_z/2;
+        }
+
+        saveSWC_file(QString(p.p4dImage->getFileName()).append("_ini.swc").toStdString(), inswc, infostring);
+
+        for (tmpi=0; tmpi<inswc.size(); tmpi++)
+        {
+            inswc[tmpi]->x = tmpswc[tmpi]->x;
+            inswc[tmpi]->y = tmpswc[tmpi]->y;
+            inswc[tmpi]->z = tmpswc[tmpi]->z;
+        }
+
+        for(tmpi = 0; tmpi < tmpswc.size(); tmpi++)
+            delete tmpswc[tmpi];
         tmpswc.clear();
     }
-
 
 
     cout<<"Pruning neuron tree"<<endl;
@@ -553,12 +559,12 @@ bool PARA_APP2::fetch_para_commandline(const V3DPluginArgList &input, V3DPluginA
     //outswc_file = outfiles.empty() ? inimg_file + "_app2.swc" : outfiles[0];
     
     //try to use as much as the default value in the PARA_APP2 constructor as possible
-    channel = paras.size() >= k+1 ? atoi(paras[k]) : channel;  k++;//0;
-    bkg_thresh = paras.size() >= k+1 ? atoi(paras[k]) : bkg_thresh; k++;// 30;
-    b_256cube = paras.size() >= k+1 ? atoi(paras[k]) : b_256cube; k++;// true
-    b_RadiusFrom2D = paras.size() >= k+1 ? atoi(paras[k]) : b_RadiusFrom2D; k++;// true
-    is_gsdt = paras.size() >= k+1 ? atoi(paras[k]) : is_gsdt; k++;// true
-    length_thresh = paras.size() >= k+1 ? atof(paras[k]) : length_thresh; k++;// 1.0;
+    channel = (paras.size() >= k+1) ? atoi(paras[k]) : channel;  k++;//0;
+    bkg_thresh = (paras.size() >= k+1) ? atoi(paras[k]) : bkg_thresh; k++;// 30;
+    b_256cube = (paras.size() >= k+1) ? atoi(paras[k]) : b_256cube; k++;// true
+    b_RadiusFrom2D = (paras.size() >= k+1) ? atoi(paras[k]) : b_RadiusFrom2D; k++;// true
+    is_gsdt = (paras.size() >= k+1) ? atoi(paras[k]) : is_gsdt; k++;// true
+    length_thresh = (paras.size() >= k+1) ? atof(paras[k]) : length_thresh; k++;// 1.0;
     //cnn_type = 2; // default connection type 2
     //SR_ratio = 3.0/9.0;
     //is_coverage_prune = true;
