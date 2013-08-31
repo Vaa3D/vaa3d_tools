@@ -78,6 +78,9 @@ class teramanager::CExplorerWindow : public QWidget
         //MUTEX
         QMutex updateGraphicsInProgress;
 
+        //TIMER
+        QElapsedTimer zoomInTimer;
+
         //inhibiting default constructor
         CExplorerWindow();
 

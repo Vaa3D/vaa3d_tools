@@ -12,9 +12,15 @@ PLog::PLog(QWidget *parent) : QDialog(parent)
 
     setWindowTitle("TeraFly's log");
 
-    timeTotal = new QLineEdit();
-    timeTotal->setReadOnly(true);
-    timeTotal->setAlignment(Qt::AlignCenter);
+    timeActual = new QLineEdit();
+    timeActual->setReadOnly(true);
+    timeActual->setAlignment(Qt::AlignCenter);
+    perfGain = new QLineEdit();
+    perfGain->setReadOnly(true);
+    perfGain->setAlignment(Qt::AlignCenter);
+    timeSum = new QLineEdit();
+    timeSum->setReadOnly(true);
+    timeSum->setAlignment(Qt::AlignCenter);
     timeIO = new QLineEdit();
     timeIO->setReadOnly(true);
     timeIO->setAlignment(Qt::AlignCenter);
@@ -40,14 +46,18 @@ PLog::PLog(QWidget *parent) : QDialog(parent)
 
     QGridLayout* timeLayout = new QGridLayout();
     timeLayout->setSpacing(5);
-    timeLayout->addWidget(new QLabel("Total"), 0, 0, 1, 1, Qt::AlignCenter);
-    timeLayout->addWidget(new QLabel("IO"), 0, 1, 1, 1, Qt::AlignCenter);
-    timeLayout->addWidget(new QLabel("GPU"), 0, 2, 1, 1, Qt::AlignCenter);
-    timeLayout->addWidget(new QLabel("CPU"), 0, 3, 1, 1, Qt::AlignCenter);
-    timeLayout->addWidget(timeTotal, 1, 0, 1, 1);
-    timeLayout->addWidget(timeIO, 1, 1, 1, 1);
-    timeLayout->addWidget(timeGPU, 1, 2, 1, 1);
-    timeLayout->addWidget(timeCPU, 1, 3, 1, 1);
+    timeLayout->addWidget(new QLabel("Actual time"), 0, 0, 1, 1, Qt::AlignCenter);
+    timeLayout->addWidget(new QLabel("Performance gain"), 0, 1, 1, 1, Qt::AlignCenter);
+    timeLayout->addWidget(new QLabel("Sum"), 0, 2, 1, 1, Qt::AlignCenter);
+    timeLayout->addWidget(new QLabel("IO"), 0, 3, 1, 1, Qt::AlignCenter);
+    timeLayout->addWidget(new QLabel("GPU"), 0, 4, 1, 1, Qt::AlignCenter);
+    timeLayout->addWidget(new QLabel("CPU"), 0, 5, 1, 1, Qt::AlignCenter);
+    timeLayout->addWidget(timeActual, 1, 0, 1, 1);
+    timeLayout->addWidget(perfGain, 1, 1, 1, 1);
+    timeLayout->addWidget(timeSum, 1, 2, 1, 1);
+    timeLayout->addWidget(timeIO, 1, 3, 1, 1);
+    timeLayout->addWidget(timeGPU, 1, 4, 1, 1);
+    timeLayout->addWidget(timeCPU, 1, 5, 1, 1);
 
     QGridLayout* layout = new QGridLayout();
     layout->setMargin(20);
@@ -73,19 +83,25 @@ float PLog::toFloat(QString timeField)
 //updates time percentages
 void PLog::updatePercentages()
 {
+    float timeActualf = toFloat(timeActual->text());
     float timeIOf = toFloat(timeIO->text());
     float timeGPUf = toFloat(timeGPU->text());
     float timeCPUf = toFloat(timeCPU->text());
-    float timeTotalf = timeIOf + timeGPUf + timeCPUf;
+    float timeSumf = timeIOf + timeGPUf + timeCPUf;
 
-    float timeIOperc = (timeIOf / timeTotalf) * 100.0f;
-    float timeGPUperc = (timeGPUf / timeTotalf) * 100.0f;
-    float timeCPUperc = (timeCPUf / timeTotalf) * 100.0f;
+    float timeIOperc = (timeIOf / timeSumf) * 100.0f;
+    float timeGPUperc = (timeGPUf / timeSumf) * 100.0f;
+    float timeCPUperc = (timeCPUf / timeSumf) * 100.0f;
 
-    timeTotal->setText(QString::number(timeTotalf, 'f', 3).append("s"));
+    float perfGainf = ( (timeSumf-timeActualf)/timeSumf ) * 100.0f;
+    if(perfGainf < 0.0f)
+        perfGainf = 0.0f;
+
+    timeSum->setText(QString::number(timeSumf, 'f', 3).append("s"));
     timeIO->setText(QString::number(timeIOf, 'f', 3).append("s (").append(QString::number(timeIOperc, 'f', 1)).append("\%)"));
     timeGPU->setText(QString::number(timeGPUf, 'f', 3).append("s (").append(QString::number(timeGPUperc, 'f', 1)).append("\%)"));
     timeCPU->setText(QString::number(timeCPUf, 'f', 3).append("s (").append(QString::number(timeCPUperc, 'f', 1)).append("\%)"));
+    perfGain->setText(QString::number(perfGainf, 'f', 1).append("\%"));
 }
 
 void PLog::append(string text)
@@ -112,12 +128,21 @@ void PLog::appendCPU(int milliseconds, string message)
     append(QString("CPU operation ( ").append(QString::number(milliseconds/1000.0f, 'f', 3)).append("s ): ").append(message.c_str()).toStdString());
     updatePercentages();
 }
+void PLog::appendActual(int milliseconds, string message)
+{
+    timeActual->setText(QString::number(toFloat(timeActual->text()) + milliseconds / 1000.0f, 'f', 3).append("s"));
+    append(QString("ACT operation ( ").append(QString::number(milliseconds/1000.0f, 'f', 3)).append("s ): ").append(message.c_str()).toStdString());
+    updatePercentages();
+}
+
 
 void PLog::reset()
 {
     log->setText("");
     append(QString("Log started on ").append(QDateTime::currentDateTime().date().toString()).toStdString());
-    timeTotal->setText("0.000s");
+    timeActual->setText("0.000s");
+    perfGain->setText("0.0\%");
+    timeSum->setText("0.000s");
     timeIO->setText("0.000s (0.0\%)");
     timeGPU->setText("0.000s (0.0\%)");
     timeCPU->setText("0.000s (0.0\%)");

@@ -11,6 +11,18 @@ ties names are:
 - Rem: a feature no longer available
 
 ============================================================================================
+Version 0.9.10
+August 31th, 2013
+--------------------------------------------------------------------------------------------
+- New: improved time measuring log with the addition of the following columns:
+       - "Actual time": measures the actual time spent for performing time-consuming operat-
+         ions  (such as volume opening, zoomin-in and traslations).
+       - "Performance gain": measures  the percentage of performance gain of the actual time
+         (which may include parallelized algorithms) with respect to the sum  of IO, CPU and
+         GPU times.
+--------------------------------------------------------------------------------------------
+
+
 Version 0.9.9
 August 24th, 2013
 --------------------------------------------------------------------------------------------

@@ -107,7 +107,6 @@ void CImport::run()
 
     try
     {
-        QElapsedTimer timerIO;
         timerIO.start();
 
         /********************* 1) IMPORTING CURRENT VOLUME ***********************

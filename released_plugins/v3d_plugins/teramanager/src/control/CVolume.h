@@ -68,6 +68,7 @@ class teramanager::CVolume : public QThread
 
         QMutex bufferMutex;
         uint8* buffer;                              //volume of interest prebuffered data
+        bool finished;
 
     public:
 
@@ -98,6 +99,7 @@ class teramanager::CVolume : public QThread
 
         void setStreamingSteps(int nsteps){streamingSteps = nsteps;}
         int getStreamingSteps(){return streamingSteps;}
+        bool hasFinished(){return finished;}
         void reset()
         {
             #ifdef TMP_DEBUG
@@ -109,6 +111,7 @@ class teramanager::CVolume : public QThread
             voiV0 = voiV1 = voiH0 = voiH1 = voiD0 = voiD1 = nchannels = -1;
             source = 0;
             streamingSteps = 1;
+            finished = false;
         }
         int getVoiV0(){return voiV0;}
         int getVoiV1(){return voiV1;}

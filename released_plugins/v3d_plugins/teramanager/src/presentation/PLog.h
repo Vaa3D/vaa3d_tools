@@ -15,7 +15,7 @@ class teramanager::PLog : public QDialog
         QTextEdit *log;
         QPushButton* closeButton;
         QPushButton* resetButton;
-        QLineEdit *timeIO, *timeGPU, *timeCPU, *timeTotal;
+        QLineEdit *timeIO, *timeGPU, *timeCPU, *timeSum, *timeActual, *perfGain;
 
         /*********************************************************************************
         * Singleton design pattern: this class can have one instance only,  which must be
@@ -56,6 +56,7 @@ class teramanager::PLog : public QDialog
         void appendIO(int milliseconds, string message);
         void appendGPU(int milliseconds, string message);
         void appendCPU(int milliseconds, string message);
+        void appendActual(int milliseconds, string message);
 
     signals:
 

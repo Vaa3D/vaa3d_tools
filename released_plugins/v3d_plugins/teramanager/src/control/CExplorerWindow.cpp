@@ -404,7 +404,6 @@ bool CExplorerWindow::eventFilter(QObject *object, QEvent *event)
                 setActive(false);
                 resetZoomHistory();
                 prev->restoreViewFrom(this);
-                event->ignore();
                 return true;
             }
         }
@@ -540,6 +539,14 @@ void CExplorerWindow::loadingDone(uint8 *data, MyException *ex, void* sourceObje
                 PMain::getInstance()->subvol_panel->setEnabled(true);
                 PMain::getInstance()->loadButton->setEnabled(true);
             }
+
+            //updating actual time
+            if(cVolume->hasFinished())
+            {
+                sprintf(message, "Successfully generated view %s", title.c_str());
+                PLog::getInstance()->appendActual(prev->zoomInTimer.elapsed(), message);
+            }
+
         }
         catch(MyException &ex)
         {
@@ -568,6 +575,8 @@ CExplorerWindow::newView(
     printf("--------------------- teramanager plugin [thread *] >> CExplorerWindow[%s]::newView(x = %d, y = %d, z = %d, res = %d, dx = %d, dy = %d, dz = %d, x0 = %d, y0 = %d, z0 = %d)\n",
            title.c_str(), x, y, z, resolution, dx, dy, dz, x0, y0, z0);
     #endif
+
+    zoomInTimer.restart();
 
     //checking preconditions with automatic correction, where possible
     if(resolution >= CImport::instance()->getResolutions())
@@ -703,6 +712,7 @@ CExplorerWindow::newView(
     //if the resolution of the loaded voi is the same of the current one, this window will be closed
     if(resolution == volResIndex)
     {
+        prev->zoomInTimer = zoomInTimer;
         prev->next = next;
         next->prev = prev;
         this->toBeClosed = true;
@@ -1087,6 +1097,7 @@ void CExplorerWindow::restoreViewFrom(CExplorerWindow* source) throw (MyExceptio
         setActive(true);
 
         //registrating views: ---- Alessandro 2013-04-18 fixed: determining unique triple of rotation angles and assigning absolute rotation
+        printf("\n\nregistrating views\n\n");
         source->view3DWidget->absoluteRotPose();
         view3DWidget->doAbsoluteRot(source->view3DWidget->xRot(), source->view3DWidget->yRot(), source->view3DWidget->zRot());
 
@@ -1106,19 +1117,26 @@ void CExplorerWindow::restoreViewFrom(CExplorerWindow* source) throw (MyExceptio
         }
 
 
-        //positioning the current 3D window exactly at the <source> window position
-        QPoint location = source->window3D->pos();
-        triViewWidget->setVisible(true);
+        //showing current view (with triViewWidget minimized)
+        printf("\n\nshowing current view (with triViewWidget minimized)\n\n");
+        //triViewWidget->setVisible(true);
         triViewWidget->setWindowState(Qt::WindowMinimized);
-        window3D->setVisible(true);
+        //window3D->setVisible(true);
+
+        //positioning the current 3D window exactly at the <source> window position
+        printf("\n\npositioning the current 3D window exactly at the <source> window position\n\n");
+        QPoint location = source->window3D->pos();
         resize(source->window3D->size());
         move(location);
 
+        //hiding <source>
+        printf("\n\nhiding <source>\n\n");
         source->window3D->setVisible(false);
         source->triViewWidget->setVisible(false);
         source->view3DWidget->setCursor(Qt::ArrowCursor);
 
-        //applying the same color map only if it differs from the source one
+        //applying the same color map only if it differs from the source one        
+        printf("\n\napplying the same color map only if it differs from the source one \n\n");
         Renderer_gl2* source_renderer = (Renderer_gl2*)(source->view3DWidget->getRenderer());
         Renderer_gl2* curr_renderer = (Renderer_gl2*)(view3DWidget->getRenderer());
         bool changed_cmap = false;

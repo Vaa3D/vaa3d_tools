@@ -74,9 +74,12 @@ class teramanager::CImport : public QThread
         int volMapHeight, volMapWidth, volMapDepth; //volume map dimensions
         int nchannels;                              //volume map channels
         std::vector<VirtualVolume*> volumes;        //array of the imported volumes
+        QElapsedTimer timerIO;                      //for time measuring
 
 
     public:
+
+        friend class PMain;
 
         /*********************************************************************************
         * Singleton design pattern: this class can have one instance only,  which must be

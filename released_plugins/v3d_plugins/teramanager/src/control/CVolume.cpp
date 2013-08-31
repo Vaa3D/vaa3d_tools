@@ -254,6 +254,7 @@ void CVolume::run()
                     /**/ destination->updateGraphicsInProgress.lock();
                     /**/ destination->updateGraphicsInProgress.unlock();
                 }
+                finished = true;
                 emit sendOperationOutcome(voiData, 0, source, elapsedTime, msg, 1);
             }
             else
@@ -284,6 +285,10 @@ void CVolume::run()
 
                     /**/ destination->updateGraphicsInProgress.lock();
                     /**/ destination->updateGraphicsInProgress.unlock();
+
+
+                    finished = currentStep == streamingSteps;
+
                     emit sendOperationOutcome(buffer, 0, destination, elapsedTime, msg, currentStep);
                 }
                 buffer = vaa3D_volume->streamedLoadSubvolume_close(stream_descr);

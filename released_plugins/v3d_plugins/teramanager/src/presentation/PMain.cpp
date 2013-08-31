@@ -1213,6 +1213,8 @@ void PMain::importDone(MyException *ex, Image4DSimple* vmap_image, qint64 elapse
         PLog::getInstance()->appendIO(elapsed_time, "Volume imported and map loaded");
 
         //otherwise inserting volume's informations
+        QElapsedTimer timerGUI;
+        timerGUI.start();
         VirtualVolume* volume = CImport::instance()->getHighestResVolume();
         info_panel->setEnabled(true);
 
@@ -1332,6 +1334,9 @@ void PMain::importDone(MyException *ex, Image4DSimple* vmap_image, qint64 elapse
             //instantiating CAnnotations
             CAnnotations::instance(volume->getDIM_V(), volume->getDIM_H(), volume->getDIM_D());
 
+            //updating GUI time
+            PLog::getInstance()->appendGPU(timerGUI.elapsed(), "TeraFly's GUI initialized");
+
             //starting 3D exploration
             CExplorerWindow *new_win = new CExplorerWindow(V3D_env, CImport::instance()->getVMapResIndex(), CImport::instance()->getVMap(),
                                 0, CImport::instance()->getVMapHeight(), 0, CImport::instance()->getVMapWidth(),
@@ -1347,10 +1352,14 @@ void PMain::importDone(MyException *ex, Image4DSimple* vmap_image, qint64 elapse
 
         //finally storing in application settings the path of the opened volume
         CSettings::instance()->setVolumePathLRU(CImport::instance()->getPath());
+
+        //updating actual time
+        PLog::getInstance()->appendActual(CImport::instance()->timerIO.elapsed(), "TeraFly 3D exploration started");
     }
 
     //resetting some widgets
     resetGUI();
+
 }
 
 /**********************************************************************************
