@@ -462,11 +462,11 @@ void processImage3(V3DPluginCallback2 &callback, QWidget *parent)
 
      //add input dialog
      bool ok1,ok4;
-     unsigned int scale = 5, c=1;
+     unsigned int scale = 6, c=1;
 
      scale = QInputDialog::getInteger(parent, "Iteration Time",
                                        "Enter the maximum iternation time:",
-                                       5, 1, 20, 1, &ok1);
+                                       6, 1, 20, 1, &ok1);
 
      if(ok1)
      {
