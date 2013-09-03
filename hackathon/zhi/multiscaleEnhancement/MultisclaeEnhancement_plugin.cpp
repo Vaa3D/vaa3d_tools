@@ -545,7 +545,6 @@ void processImage3(V3DPluginCallback2 &callback, QWidget *parent)
        if(count==0)
         {
             maxDT1 = 2;
-            maxDT1 = 1;
         }
 
         if(maxDT1 > maxDT2 || maxDT1>=0)
@@ -845,12 +844,6 @@ bool processImage3(const V3DPluginArgList & input, V3DPluginArgList & output,V3D
         }
 
         unsigned char* EnahancedImage = NULL;
-        if(count==0)
-         {
-             maxDT1 = 2;
-             maxDT1 = 1;
-         }
-
         switch (datatype)
         {
         case V3D_UINT8: AdpThresholding_adpwindow((unsigned char *)data1d_gf, in_sz, 1,sigma,(unsigned char* &)EnahancedImage, gsdtld,3); break;
@@ -860,6 +853,12 @@ bool processImage3(const V3DPluginArgList & input, V3DPluginArgList & output,V3D
         }
 
         maxDT1 = getdtmax(callback,EnahancedImage,in_sz);
+
+        if(count==0)
+         {
+             maxDT1 = 2;
+         }
+
         if(maxDT1 > maxDT2 || maxDT1>=0)
         {
             if (count==0)
