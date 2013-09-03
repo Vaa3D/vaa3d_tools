@@ -967,7 +967,8 @@ void PMain::openVolume(string path /* = "" */)
         QString vmap_fpath = import_path;
         vmap_fpath.append("/");
         vmap_fpath.append(TMP_VMAP_FNAME);
-        if(!QFile::exists(mdata_fpath) || reimport_checkbox->isChecked())
+        QString cmap_fpath = import_path + "/cmap.bin";
+        if( (!QFile::exists(mdata_fpath) && !QFile::exists(cmap_fpath)) || reimport_checkbox->isChecked())
         {
            printf("--------------------- teramanager plugin [thread *] >> PMain::openVolume(path = \"%s\"): mdata.bin file not found at \"%s\" or reimport checkbox is checked (%s)\n",
                   path.c_str(), qPrintable(mdata_fpath), reimport_checkbox->isChecked() ? "true" : "false");

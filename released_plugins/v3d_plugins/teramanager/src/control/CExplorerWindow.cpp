@@ -70,6 +70,8 @@ void CExplorerWindow::show()
         //opening 3D view window
         V3D_env->open3DWindow(window);
         view3DWidget = (V3dR_GLWidget*)(V3D_env->getView3DControl(window));
+        if(!view3DWidget->getiDrawExternalParameter())
+            QMessageBox::critical(PMain::getInstance(),QObject::tr("Error"), QObject::tr("Unable to get iDrawExternalParameter from Vaa3D's V3dR_GLWidget"),QObject::tr("Ok"));
         window3D = view3DWidget->getiDrawExternalParameter()->window3D;
         PLog::getInstance()->appendGPU(timer.elapsed(), QString("Opened view ").append(title.c_str()).toStdString());
 
@@ -576,147 +578,166 @@ CExplorerWindow::newView(
            title.c_str(), x, y, z, resolution, dx, dy, dz, x0, y0, z0);
     #endif
 
-    zoomInTimer.restart();
-
     //checking preconditions with automatic correction, where possible
     if(resolution >= CImport::instance()->getResolutions())
         resolution = volResIndex;
 
-    //deactivating current window
-    setActive(false);
+    zoomInTimer.restart();
 
-    //putting GUI in waiting state
-    view3DWidget->setCursor(Qt::WaitCursor);
-    PMain& pMain = *(PMain::getInstance());
-    pMain.progressBar->setEnabled(true);
-    pMain.progressBar->setMinimum(0);
-    pMain.progressBar->setMaximum(0);
-    pMain.loadButton->setEnabled(false);
-    pMain.statusBar->showMessage("Changing resolution...");
-
-    //scaling VOI to the given resolution
-    float ratio = static_cast<float>(CImport::instance()->getVolume(resolution)->getDIM_D())/CImport::instance()->getVolume(volResIndex)->getDIM_D();
-    x = getGlobalHCoord(x, resolution, fromVaa3Dcoordinates);
-    y = getGlobalVCoord(y, resolution, fromVaa3Dcoordinates);
-    z = getGlobalDCoord(z, resolution, fromVaa3Dcoordinates);
-    if(x0 != -1)
-        x0 = getGlobalHCoord(x0, resolution, fromVaa3Dcoordinates);
-    else
-        dx = dx == -1 ? int_inf : static_cast<int>(dx*ratio+0.5f);
-    if(y0 != -1)
-        y0 = getGlobalVCoord(y0, resolution, fromVaa3Dcoordinates);
-    else
-        dy = dy == -1 ? int_inf : static_cast<int>(dy*ratio+0.5f);
-    if(z0 != -1)
-        z0 = getGlobalDCoord(z0, resolution, fromVaa3Dcoordinates);
-    else
-        dz = dz == -1 ? int_inf : static_cast<int>(dz*ratio+0.5f);
-
-    //cropping bounding box if its larger than the maximum allowed
-    if(dx != -1 && dy != -1 && dz != -1)
+    try
     {
-        printf("--------------------- teramanager plugin [thread *] >> CExplorerWindow[%s]: cropping bbox dims from (%d,%d,%d) to ",
-               title.c_str(), dx, dy, dz );
-        dx = std::min(dx, static_cast<int>(pMain.Hdim_sbox->value()/2.0f+0.5f));
-        dy = std::min(dy, static_cast<int>(pMain.Vdim_sbox->value()/2.0f+0.5f));
-        dz = std::min(dz, static_cast<int>(pMain.Ddim_sbox->value()/2.0f+0.5f));
-        printf("(%d,%d,%d)\n", dx, dy, dz );
+        //deactivating current window
+        setActive(false);
+
+        //putting GUI in waiting state
+        view3DWidget->setCursor(Qt::WaitCursor);
+        PMain& pMain = *(PMain::getInstance());
+        pMain.progressBar->setEnabled(true);
+        pMain.progressBar->setMinimum(0);
+        pMain.progressBar->setMaximum(0);
+        pMain.loadButton->setEnabled(false);
+        pMain.statusBar->showMessage("Changing resolution...");
+
+        //scaling VOI to the given resolution
+        float ratio = static_cast<float>(CImport::instance()->getVolume(resolution)->getDIM_D())/CImport::instance()->getVolume(volResIndex)->getDIM_D();
+        x = getGlobalHCoord(x, resolution, fromVaa3Dcoordinates);
+        y = getGlobalVCoord(y, resolution, fromVaa3Dcoordinates);
+        z = getGlobalDCoord(z, resolution, fromVaa3Dcoordinates);
+        if(x0 != -1)
+            x0 = getGlobalHCoord(x0, resolution, fromVaa3Dcoordinates);
+        else
+            dx = dx == -1 ? int_inf : static_cast<int>(dx*ratio+0.5f);
+        if(y0 != -1)
+            y0 = getGlobalVCoord(y0, resolution, fromVaa3Dcoordinates);
+        else
+            dy = dy == -1 ? int_inf : static_cast<int>(dy*ratio+0.5f);
+        if(z0 != -1)
+            z0 = getGlobalDCoord(z0, resolution, fromVaa3Dcoordinates);
+        else
+            dz = dz == -1 ? int_inf : static_cast<int>(dz*ratio+0.5f);
+
+        //cropping bounding box if its larger than the maximum allowed
+        if(dx != -1 && dy != -1 && dz != -1)
+        {
+            printf("--------------------- teramanager plugin [thread *] >> CExplorerWindow[%s]: cropping bbox dims from (%d,%d,%d) to ",
+                   title.c_str(), dx, dy, dz );
+            dx = std::min(dx, static_cast<int>(pMain.Hdim_sbox->value()/2.0f+0.5f));
+            dy = std::min(dy, static_cast<int>(pMain.Vdim_sbox->value()/2.0f+0.5f));
+            dz = std::min(dz, static_cast<int>(pMain.Ddim_sbox->value()/2.0f+0.5f));
+            printf("(%d,%d,%d)\n", dx, dy, dz );
+        }
+        else
+        {
+            printf("--------------------- teramanager plugin [thread *] >> CExplorerWindow[%s]: cropping bbox dims from [%d,%d) [%d,%d) [%d,%d) to ",
+                   title.c_str(), x0, x, y0, y, z0, z );
+            if(x - x0 > pMain.Hdim_sbox->value())
+            {
+                float margin = ( (x - x0) - pMain.Hdim_sbox->value() )/2.0f ;
+                x  = static_cast<int>(round(x  - margin));
+                x0 = static_cast<int>(round(x0 + margin));
+            }
+            if(y - y0 > pMain.Vdim_sbox->value())
+            {
+                float margin = ( (y - y0) - pMain.Vdim_sbox->value() )/2.0f ;
+                y  = static_cast<int>(round(y  - margin));
+                y0 = static_cast<int>(round(y0 + margin));
+            }
+            if(z - z0 > pMain.Ddim_sbox->value())
+            {
+                float margin = ( (z - z0) - pMain.Ddim_sbox->value() )/2.0f ;
+                z  = static_cast<int>(round(z  - margin));
+                z0 = static_cast<int>(round(z0 + margin));
+            }
+            printf("[%d,%d) [%d,%d) [%d,%d)\n", x0, x, y0, y, z0, z );
+        }
+
+        //preparing VOI for loading (the actual VOI that can be loaded may differ from the one selected, e.g. along volume's borders)
+        CVolume* cVolume = CVolume::instance();
+        try
+        {
+            if(dx != -1 && dy != -1 && dz != -1)
+                cVolume->setVoi(0, resolution, y-dy, y+dy, x-dx, x+dx, z-dz, z+dz);
+            else
+                cVolume->setVoi(0, resolution, y0, y, x0, x, z0, z);
+        }
+        catch(MyException &ex)
+        {
+            printf("--------------------- teramanager plugin [thread *] !! WARNING in newView !! Exception thrown when setting VOI: \"%s\". Aborting newView\n", ex.what());
+            setActive(true);
+            view3DWidget->setCursor(Qt::ArrowCursor);
+            PMain::getInstance()->resetGUI();
+            return;
+        }
+
+        //saving min, max and values of PMain GUI VOI's widgets
+        saveSubvolSpinboxState();
+
+        //disconnecting current window from GUI's listeners and event filters
+        disconnect(CVolume::instance(), SIGNAL(sendOperationOutcome(uint8*, MyException*,void*,qint64, QString, int)), this, SLOT(loadingDone(uint8*, MyException*,void*,qint64, QString, int)));
+        disconnect(view3DWidget, SIGNAL(changeXCut0(int)), this, SLOT(Vaa3D_changeXCut0(int)));
+        disconnect(view3DWidget, SIGNAL(changeXCut1(int)), this, SLOT(Vaa3D_changeXCut1(int)));
+        disconnect(view3DWidget, SIGNAL(changeYCut0(int)), this, SLOT(Vaa3D_changeYCut0(int)));
+        disconnect(view3DWidget, SIGNAL(changeYCut1(int)), this, SLOT(Vaa3D_changeYCut1(int)));
+        disconnect(view3DWidget, SIGNAL(changeZCut0(int)), this, SLOT(Vaa3D_changeZCut0(int)));
+        disconnect(view3DWidget, SIGNAL(changeZCut1(int)), this, SLOT(Vaa3D_changeZCut1(int)));
+        disconnect(PMain::getInstance()->V0_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeV0sbox(int)));
+        disconnect(PMain::getInstance()->V1_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeV1sbox(int)));
+        disconnect(PMain::getInstance()->H0_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeH0sbox(int)));
+        disconnect(PMain::getInstance()->H1_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeH1sbox(int)));
+        disconnect(PMain::getInstance()->D0_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeD0sbox(int)));
+        disconnect(PMain::getInstance()->D1_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeD1sbox(int)));
+        view3DWidget->removeEventFilter(this);
+        window3D->removeEventFilter(this);
+
+
+        //obtaining low res data from current window to be displayed in a new window while the user waits for the new high res data
+        QElapsedTimer timer;
+        timer.start();
+        int rVoiH0 = CVolume::scaleHCoord(cVolume->getVoiH0(), resolution, volResIndex);
+        int rVoiH1 = CVolume::scaleHCoord(cVolume->getVoiH1(), resolution, volResIndex);
+        int rVoiV0 = CVolume::scaleVCoord(cVolume->getVoiV0(), resolution, volResIndex);
+        int rVoiV1 = CVolume::scaleVCoord(cVolume->getVoiV1(), resolution, volResIndex);
+        int rVoiD0 = CVolume::scaleDCoord(cVolume->getVoiD0(), resolution, volResIndex);
+        int rVoiD1 = CVolume::scaleDCoord(cVolume->getVoiD1(), resolution, volResIndex);
+        uint8* lowresData = getVOI(rVoiH0, rVoiH1, rVoiV0, rVoiV1, rVoiD0, rVoiD1,
+                                   cVolume->getVoiH1()-cVolume->getVoiH0(),
+                                   cVolume->getVoiV1()-cVolume->getVoiV0(),
+                                   cVolume->getVoiD1()-cVolume->getVoiD0());
+        char message[1000];
+        sprintf(message, "Block X=[%d, %d) Y=[%d, %d) Z=[%d, %d) loaded from view %s",
+                rVoiH0, rVoiH1, rVoiV0, rVoiV1, rVoiD0, rVoiD1, title.c_str());
+        PLog::getInstance()->appendCPU(timer.elapsed(), message);
+
+        //creating a new window
+        this->next = new CExplorerWindow(V3D_env, resolution, lowresData,
+                                         cVolume->getVoiV0(), cVolume->getVoiV1(), cVolume->getVoiH0(), cVolume->getVoiH1(), cVolume->getVoiD0(), cVolume->getVoiD1(),
+                                         nchannels, this);
+
+        //loading new data in a separate thread. When done, the "loadingDone" method of the new window will be called
+        pMain.statusBar->showMessage("Loading image data...");
+        cVolume->setSource(this->next);
+        cVolume->setStreamingSteps(PMain::getInstance()->debugStreamingStepsSBox->value());
+        if(PMain::getInstance()->debugStreamingStepsSBox->value() > 1)
+            cVolume->initBuffer(lowresData, (cVolume->getVoiH1()-cVolume->getVoiH0())*(cVolume->getVoiV1()-cVolume->getVoiV0())*(cVolume->getVoiD1()-cVolume->getVoiD0())*nchannels);
+        cVolume->start();
+
+        //meanwhile, showing the new window
+        next->show();
+
+        //if the resolution of the loaded voi is the same of the current one, this window will be closed
+        if(resolution == volResIndex)
+        {
+            prev->zoomInTimer = zoomInTimer;
+            prev->next = next;
+            next->prev = prev;
+            this->toBeClosed = true;
+            delete this;
+        }
     }
-    else
+    catch(MyException &ex)
     {
-        printf("--------------------- teramanager plugin [thread *] >> CExplorerWindow[%s]: cropping bbox dims from [%d,%d) [%d,%d) [%d,%d) to ",
-               title.c_str(), x0, x, y0, y, z0, z );
-        if(x - x0 > pMain.Hdim_sbox->value())
-        {
-            float margin = ( (x - x0) - pMain.Hdim_sbox->value() )/2.0f ;
-            x  = static_cast<int>(round(x  - margin));
-            x0 = static_cast<int>(round(x0 + margin));
-        }
-        if(y - y0 > pMain.Vdim_sbox->value())
-        {
-            float margin = ( (y - y0) - pMain.Vdim_sbox->value() )/2.0f ;
-            y  = static_cast<int>(round(y  - margin));
-            y0 = static_cast<int>(round(y0 + margin));
-        }
-        if(z - z0 > pMain.Ddim_sbox->value())
-        {
-            float margin = ( (z - z0) - pMain.Ddim_sbox->value() )/2.0f ;
-            z  = static_cast<int>(round(z  - margin));
-            z0 = static_cast<int>(round(z0 + margin));
-        }
-        printf("[%d,%d) [%d,%d) [%d,%d)\n", x0, x, y0, y, z0, z );
-    }
-
-    //preparing VOI for loading (the actual VOI that can be loaded may differ from the one selected, e.g. along volume's borders)
-    CVolume* cVolume = CVolume::instance();
-    if(dx != -1 && dy != -1 && dz != -1)
-        cVolume->setVoi(0, resolution, y-dy, y+dy, x-dx, x+dx, z-dz, z+dz);
-    else
-        cVolume->setVoi(0, resolution, y0, y, x0, x, z0, z);
-
-    //saving min, max and values of PMain GUI VOI's widgets
-    saveSubvolSpinboxState();
-
-    //disconnecting current window from GUI's listeners and event filters
-    disconnect(CVolume::instance(), SIGNAL(sendOperationOutcome(uint8*, MyException*,void*,qint64, QString, int)), this, SLOT(loadingDone(uint8*, MyException*,void*,qint64, QString, int)));
-    disconnect(view3DWidget, SIGNAL(changeXCut0(int)), this, SLOT(Vaa3D_changeXCut0(int)));
-    disconnect(view3DWidget, SIGNAL(changeXCut1(int)), this, SLOT(Vaa3D_changeXCut1(int)));
-    disconnect(view3DWidget, SIGNAL(changeYCut0(int)), this, SLOT(Vaa3D_changeYCut0(int)));
-    disconnect(view3DWidget, SIGNAL(changeYCut1(int)), this, SLOT(Vaa3D_changeYCut1(int)));
-    disconnect(view3DWidget, SIGNAL(changeZCut0(int)), this, SLOT(Vaa3D_changeZCut0(int)));
-    disconnect(view3DWidget, SIGNAL(changeZCut1(int)), this, SLOT(Vaa3D_changeZCut1(int)));
-    disconnect(PMain::getInstance()->V0_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeV0sbox(int)));
-    disconnect(PMain::getInstance()->V1_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeV1sbox(int)));
-    disconnect(PMain::getInstance()->H0_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeH0sbox(int)));
-    disconnect(PMain::getInstance()->H1_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeH1sbox(int)));
-    disconnect(PMain::getInstance()->D0_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeD0sbox(int)));
-    disconnect(PMain::getInstance()->D1_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeD1sbox(int)));
-    view3DWidget->removeEventFilter(this);
-    window3D->removeEventFilter(this);
-
-
-    //obtaining low res data from current window to be displayed in a new window while the user waits for the new high res data
-    QElapsedTimer timer;
-    timer.start();
-    int rVoiH0 = CVolume::scaleHCoord(cVolume->getVoiH0(), resolution, volResIndex);
-    int rVoiH1 = CVolume::scaleHCoord(cVolume->getVoiH1(), resolution, volResIndex);
-    int rVoiV0 = CVolume::scaleVCoord(cVolume->getVoiV0(), resolution, volResIndex);
-    int rVoiV1 = CVolume::scaleVCoord(cVolume->getVoiV1(), resolution, volResIndex);
-    int rVoiD0 = CVolume::scaleDCoord(cVolume->getVoiD0(), resolution, volResIndex);
-    int rVoiD1 = CVolume::scaleDCoord(cVolume->getVoiD1(), resolution, volResIndex);
-    uint8* lowresData = getVOI(rVoiH0, rVoiH1, rVoiV0, rVoiV1, rVoiD0, rVoiD1,
-                               cVolume->getVoiH1()-cVolume->getVoiH0(),
-                               cVolume->getVoiV1()-cVolume->getVoiV0(),
-                               cVolume->getVoiD1()-cVolume->getVoiD0());
-    char message[1000];
-    sprintf(message, "Block X=[%d, %d) Y=[%d, %d) Z=[%d, %d) loaded from view %s",
-            rVoiH0, rVoiH1, rVoiV0, rVoiV1, rVoiD0, rVoiD1, title.c_str());
-    PLog::getInstance()->appendCPU(timer.elapsed(), message);
-
-    //creating a new window
-    this->next = new CExplorerWindow(V3D_env, resolution, lowresData,
-                                     cVolume->getVoiV0(), cVolume->getVoiV1(), cVolume->getVoiH0(), cVolume->getVoiH1(), cVolume->getVoiD0(), cVolume->getVoiD1(),
-                                     nchannels, this);
-
-    //loading new data in a separate thread. When done, the "loadingDone" method of the new window will be called
-    pMain.statusBar->showMessage("Loading image data...");
-    cVolume->setSource(this->next);
-    cVolume->setStreamingSteps(PMain::getInstance()->debugStreamingStepsSBox->value());
-    if(PMain::getInstance()->debugStreamingStepsSBox->value() > 1)
-        cVolume->initBuffer(lowresData, (cVolume->getVoiH1()-cVolume->getVoiH0())*(cVolume->getVoiV1()-cVolume->getVoiV0())*(cVolume->getVoiD1()-cVolume->getVoiD0())*nchannels);
-    cVolume->start();
-
-    //meanwhile, showing the new window
-    next->show();
-
-    //if the resolution of the loaded voi is the same of the current one, this window will be closed
-    if(resolution == volResIndex)
-    {
-        prev->zoomInTimer = zoomInTimer;
-        prev->next = next;
-        next->prev = prev;
-        this->toBeClosed = true;
-        delete this;
+        QMessageBox::critical(this,QObject::tr("Error"), QObject::tr(ex.what()),QObject::tr("Ok"));
+        PMain::getInstance()->resetGUI();
     }
 }
 
@@ -763,15 +784,17 @@ uint8* CExplorerWindow::getVOI(int x0, int x1, int y0, int y1, int z0, int z1,
 
     //otherwise COPYING + SCALING
     //fast scaling by pixel replication
-    // - NOTE: interpolated image is allowed to be slightly larger than the source image resulting after scaling.
-    if( ( (xDimInterp % (x1-x0) <= 1) || (xDimInterp % (x1-x0+1) <= 1)) &&
-        ( (yDimInterp % (y1-y0) <= 1) || (yDimInterp % (y1-y0+1) <= 1)) &&
-        ( (zDimInterp % (z1-z0) <= 1) || (zDimInterp % (z1-z0+1) <= 1)))
+    // - NOTE: interpolated image is allowed to be slightly larger (or even smaller) than the source image resulting after scaling.
+    if( ( (xDimInterp % (x1-x0) <= 1) || (xDimInterp % (x1-x0+1) <= 1) || (xDimInterp % (x1-x0-1) <= 1)) &&
+        ( (yDimInterp % (y1-y0) <= 1) || (yDimInterp % (y1-y0+1) <= 1) || (yDimInterp % (y1-y0-1) <= 1)) &&
+        ( (zDimInterp % (z1-z0) <= 1) || (zDimInterp % (z1-z0+1) <= 1) || (zDimInterp % (z1-z0-1) <= 1)))
     {
         //checking for uniform scaling along the three axes
-        uint scal = xDimInterp / (x1-x0);
-        if(scal != yDimInterp / (y1-y0) || scal != zDimInterp / (z1-z0))
-            QMessageBox::critical(this, "Error", "Fast nonuniform scaling not supported",QObject::tr("Ok"));
+        uint scalx = static_cast<uint>(static_cast<float>(xDimInterp) / (x1-x0) +0.5f);
+        uint scaly = static_cast<uint>(static_cast<float>(yDimInterp) / (y1-y0) +0.5f);
+        uint scalz = static_cast<uint>(static_cast<float>(zDimInterp) / (z1-z0) +0.5f);
+        if(scalx != scaly || scaly != scalz || scalx != scalz)
+            QMessageBox::critical(this, "Error", QString("Fast nonuniform scaling not supported: requested scaling along X,Y,Z is") + QString::number(scalx) + "," + QString::number(scaly) + "," + QString::number(scalz),QObject::tr("Ok"));
 
         uint32 buf_data_dims[4]   = {volH1-volH0, volV1-volV0, volD1-volD0, nchannels};
         uint32 img_dims[4]        = {xDimInterp,  yDimInterp,  zDimInterp,  nchannels};
@@ -779,7 +802,7 @@ uint8* CExplorerWindow::getVOI(int x0, int x1, int y0, int y1, int z0, int z1,
         uint32 img_offset[3]      = {x0a-x0,      y0a-y0,      z0a-z0};
         uint32 buf_data_count[3]  = {x1a-x0a,     y1a-y0a,     z1a-z0a};
 
-        copyVOI(view3DWidget->getiDrawExternalParameter()->image4d->getRawData(), buf_data_dims, buf_data_offset, buf_data_count, img, img_dims, img_offset, scal);
+        copyVOI(view3DWidget->getiDrawExternalParameter()->image4d->getRawData(), buf_data_dims, buf_data_offset, buf_data_count, img, img_dims, img_offset, scalx);
     }
 
     //interpolation
@@ -806,6 +829,13 @@ void
         uint scaling /*= 1 */)  //scaling factor (integer only)
 throw (MyException)
 {
+    #ifdef TMP_DEBUG
+    printf("--------------------- teramanager plugin [thread *] >> CExplorerWindow::copyVOI("
+           "src_dims = (%d x %d x %d x %d), src_offset = (%d, %d, %d), src_count = (%d, %d, %d), dst_dims = (%d x %d x %d x %d), dst_offset = (%d, %d, %d), scaling = %d)\n",
+           src_dims[0], src_dims[1],src_dims[2],src_dims[3], src_offset[0],src_offset[1],src_offset[2], src_count[0],src_count[1],src_count[2],
+           dst_dims[0], dst_dims[1],dst_dims[2],dst_dims[3], dst_offset[0],dst_offset[1],dst_offset[2], scaling);
+    #endif
+
     //if source and destination are the same thing, returning without doing anything
     if(src == dst)
         return;
@@ -818,7 +848,16 @@ throw (MyException)
         if(src_offset[d] + src_count[d] > src_dims[d])
             QMessageBox::critical(0, "Error", QString("Can't copy VOI to destination image: VOI exceeded source dimension along axis ").append(QString::number(d)),QObject::tr("Ok"));
         if(dst_offset[d] + src_count[d]*scaling > dst_dims[d])
-            QMessageBox::critical(0, "Error", QString("Can't copy VOI to destination image: VOI exceeded destination dimension along axis ").append(QString::number(d)),QObject::tr("Ok"));
+        {
+            //cutting copiable VOI to the largest one that can be stored into the destination image
+            int old = src_count[d];
+            src_count[d] = (dst_dims[d] - dst_offset[d]) / scaling; //it's ok to approximate this calculation to the floor.
+
+            printf("--------------------- teramanager plugin [thread *] !! WARNING in copyVOI !! VOI exceeded destination dimension along axis %d, then cutting VOI from %d to %d\n",
+                   d, old, src_count[d]);
+
+            //QMessageBox::critical(0, "Error", QString("Can't copy VOI to destination image: VOI exceeded destination dimension along axis ").append(QString::number(d)),QObject::tr("Ok"));
+        }
     }
 
     //quick version (with precomputed offsets, strides and counts: "1" for "dst", "2" for "src")

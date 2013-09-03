@@ -37,11 +37,11 @@ class VirtualVolume {
 
 protected:
 	//******OBJECT ATTRIBUTES******
-        char*  root_dir;			//C-string that contains the directory path of stacks matrix
+	char*  root_dir;				//C-string that contains the directory path of stacks matrix
 	float  VXL_V, VXL_H, VXL_D;		//[microns]: voxel dimensions (in microns) along V(Vertical), H(horizontal) and D(Depth) axes
 	float  ORG_V, ORG_H, ORG_D;		//[millimeters]: origin spatial coordinates (in millimeters) along VHD axes
 	uint32 DIM_V, DIM_H, DIM_D;		//volume dimensions (in voxels) along VHD axes
-        int    CHANS;				//number of channels
+	int    CHANS;					//number of channels
 
 	virtual void initChannels ( ) throw (MyException) = 0;
 

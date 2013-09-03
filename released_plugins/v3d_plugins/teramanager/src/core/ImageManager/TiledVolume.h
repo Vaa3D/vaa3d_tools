@@ -46,7 +46,7 @@ class TiledVolume : public VirtualVolume
 	private:	
 		//******OBJECT ATTRIBUTES******
 		uint16 N_ROWS, N_COLS;			//dimensions (in stacks) of stacks matrix along VH axes
-        Block ***BLOCKS;			    //2-D array of <Block*>
+		Block ***BLOCKS;			    //2-D array of <Block*>
         ref_sys reference_system;       //reference system of the stored volume
         float  VXL_1, VXL_2, VXL_3;     //voxel dimensions of the stored volume
 

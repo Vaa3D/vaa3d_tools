@@ -95,7 +95,7 @@ void SimpleVolume::init()
 	N_COLS = 1;
 
 	//allocating the only stack
-	sprintf(stack_i_j_path,"");
+	sprintf(stack_i_j_path,"%s",""); 
 	Stack *new_stk = new Stack(this,i,j,stack_i_j_path);
 	stacks_list.push_back(new_stk);
 

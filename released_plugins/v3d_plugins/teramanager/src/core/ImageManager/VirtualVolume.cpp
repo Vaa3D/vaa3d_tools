@@ -345,6 +345,9 @@ void VirtualVolume::saveImage_to_Vaa3DRaw(int slice, std::string img_path, REAL_
 	//			row_data_16bit[j] = (uint16) (raw_img[(i+start_height)*raw_img_width+j+start_width] * scale_factor_16b);
 	//	}
 	//}
+	
+	// dummy assignment: just to avoid warnings
+	raw_img[slice] = 0.0;
 }
 
 

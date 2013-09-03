@@ -1006,9 +1006,9 @@ void StackedVolume::saveVolume(const char* dir_path, uint32 max_slice_height, ui
 	uint32 dim_v, dim_h, dim_d;
 
 	//checking and adjusting default variables
-	V0 = (V0 < 0 ? 0 : V0);
-	H0 = (H0 < 0 ? 0 : H0);
-	D0 = (D0 < 0 ? 0 : D0);
+	//V0 = (V0 < 0 ? 0 : V0); // uint32: cannot be negative
+	//H0 = (H0 < 0 ? 0 : H0);
+	//D0 = (D0 < 0 ? 0 : D0);
 	V1 = ((V1 == 0 || V1 > DIM_V) ? DIM_V : V1);
 	H1 = ((H1 == 0 || H1 > DIM_H) ? DIM_H : H1);
 	D1 = ((D1 == 0 || D1 > DIM_D) ? DIM_D : D1);
@@ -1127,9 +1127,9 @@ void StackedVolume::saveOverlappingStacks(char* dir_path, uint32 slice_height, u
 	uint32 dim_d;
 
 	//checking and adjusting default variables
-	V0 = (V0 < 0 ? 0 : V0);
-	H0 = (H0 < 0 ? 0 : H0);
-	D0 = (D0 < 0 ? 0 : D0);
+	//V0 = (V0 < 0 ? 0 : V0); // uint32: cannot be negative
+	//H0 = (H0 < 0 ? 0 : H0);
+	//D0 = (D0 < 0 ? 0 : D0);
 	V1 = ((V1 == 0 || V1 > DIM_V) ? DIM_V : V1);
 	H1 = ((H1 == 0 || H1 > DIM_H) ? DIM_H : H1);
 	D1 = ((D1 == 0 || D1 > DIM_D) ? DIM_D : D1);
@@ -1334,9 +1334,9 @@ void StackedVolume::saveMIPs(bool direction_V, bool direction_H, bool direction_
 	int img_step;
 
 	//checking and adjusting default variables
-	V0 = (V0 < 0 ? 0 : V0);
-	H0 = (H0 < 0 ? 0 : H0);
-	D0 = (D0 < 0 ? 0 : D0);
+	//V0 = (V0 < 0 ? 0 : V0); // uint32: cannot be negative
+	//H0 = (H0 < 0 ? 0 : H0);
+	//D0 = (D0 < 0 ? 0 : D0);
 	V1 = ((V1 == 0 || V1 > DIM_V) ? DIM_V : V1);
 	H1 = ((H1 == 0 || H1 > DIM_H) ? DIM_H : H1);
 	D1 = ((D1 == 0 || D1 > DIM_D) ? DIM_D : D1);

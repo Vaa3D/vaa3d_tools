@@ -30,6 +30,8 @@
 #include "CVolume.h"
 #include "CImport.h"
 #include "../presentation/PLog.h"
+#include "../core/ImageManager/TiledVolume.h"
+#include "../core/ImageManager/TiledMCVolume.h"
 
 using namespace teramanager;
 
@@ -260,8 +262,9 @@ void CVolume::run()
             else
             {
                 //checking preconditions
-                TiledVolume* vaa3D_volume = dynamic_cast<TiledVolume*>(volume);
-                if(!vaa3D_volume)
+                TiledVolume* vaa3D_volume_RGB = dynamic_cast<TiledVolume*>(volume);
+                TiledMCVolume* vaa3D_volume_4D= dynamic_cast<TiledMCVolume*>(volume);
+                if(!vaa3D_volume_RGB && !vaa3D_volume_4D)
                     throw MyException("Streaming not yet supported for the current format. Please restart the plugin.");
                 if(!buffer)
                     throw MyException("Buffer not initialized");
@@ -270,13 +273,20 @@ void CVolume::run()
                     throw MyException("Streaming not yet supported for this type of destination");
 
                 //reading/writing from/to the same buffer with MUTEX (see Producer-Consumer problem)
-                void *stream_descr = vaa3D_volume->streamedLoadSubvolume_open(streamingSteps, buffer, voiV0, voiV1, voiH0, voiH1, voiD0, voiD1);
+                void *stream_descr = 0;
+                if(vaa3D_volume_RGB)
+                    stream_descr = vaa3D_volume_RGB->streamedLoadSubvolume_open(streamingSteps, buffer, voiV0, voiV1, voiH0, voiH1, voiD0, voiD1);
+                else
+                    stream_descr = vaa3D_volume_4D->streamedLoadSubvolume_open(streamingSteps, buffer, voiV0, voiV1, voiH0, voiH1, voiD0, voiD1);
                 for (int currentStep = 1; currentStep <= streamingSteps; currentStep++)
                 {
                     /**/ bufferMutex.lock();
                     QElapsedTimer timerIO;
                     timerIO.start();
-                    buffer = vaa3D_volume->streamedLoadSubvolume_dostep(stream_descr);
+                    if(vaa3D_volume_RGB)
+                        buffer = vaa3D_volume_RGB->streamedLoadSubvolume_dostep(stream_descr);
+                    else if(vaa3D_volume_4D)
+                        buffer = vaa3D_volume_4D->streamedLoadSubvolume_dostep(stream_descr);
                     qint64 elapsedTime = timerIO.elapsed();
                     /**/ bufferMutex.unlock();
 
@@ -291,7 +301,10 @@ void CVolume::run()
 
                     emit sendOperationOutcome(buffer, 0, destination, elapsedTime, msg, currentStep);
                 }
-                buffer = vaa3D_volume->streamedLoadSubvolume_close(stream_descr);
+                if(vaa3D_volume_RGB)
+                    buffer = vaa3D_volume_RGB->streamedLoadSubvolume_close(stream_descr);
+                else if(vaa3D_volume_4D)
+                    buffer = vaa3D_volume_4D->streamedLoadSubvolume_close(stream_descr);
                 delete[] buffer;
                 buffer = 0;
             }

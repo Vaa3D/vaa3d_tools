@@ -36,6 +36,7 @@
 #include <algorithm>
 #include "../core/ImageManager/StackedVolume.h"
 #include "../core/ImageManager/TiledVolume.h"
+#include "../core/ImageManager/TiledMCVolume.h"
 
 using namespace teramanager;
 
@@ -116,7 +117,8 @@ void CImport::run()
         string mdata_fpath = path;
         mdata_fpath.append("/");
         mdata_fpath.append(IM_METADATA_FILE_NAME);
-        if(!QFile::exists(mdata_fpath.c_str()) || reimport)
+        string cmap_fpath = path + "/cmap.bin";
+        if( (!QFile::exists(mdata_fpath.c_str()) && !QFile::exists(cmap_fpath.c_str())) || reimport)
         {
             //checking current members validity
             if(AXS_1 != axis_invalid && AXS_2 != axis_invalid && AXS_3 != axis_invalid && VXL_1 != 0 && VXL_2 != 0 && VXL_3 != 0)
@@ -147,18 +149,17 @@ void CImport::run()
                 throw MyException(errMsg);
             }
         }
+        //no need for using metadata inserted by the user
         else
         {
             VirtualVolume* volume = 0;
-            try
-            {
-                volume = new StackedVolume(path.c_str(), ref_sys(axis_invalid,axis_invalid,axis_invalid),0,0,0);
-            }
-            catch(...)
+
+            //TileMCVolume is detected if cmap.bin file exists
+            if(QFile::exists(cmap_fpath.c_str()))
             {
                 try
                 {
-                    volume = new TiledVolume(path.c_str(), ref_sys(axis_invalid,axis_invalid,axis_invalid),0,0,0);
+                    volume = new TiledMCVolume(path.c_str(), ref_sys(axis_invalid,axis_invalid,axis_invalid),0,0,0);
                 }
                 catch(...)
                 {
@@ -166,6 +167,27 @@ void CImport::run()
                     throw MyException(errMsg);
                 }
             }
+            else
+            {
+                //otherwise attemping to load other formats
+                try
+                {
+                    volume = new StackedVolume(path.c_str(), ref_sys(axis_invalid,axis_invalid,axis_invalid),0,0,0);
+                }
+                catch(...)
+                {
+                    try
+                    {
+                        volume = new TiledVolume(path.c_str(), ref_sys(axis_invalid,axis_invalid,axis_invalid),0,0,0);
+                    }
+                    catch(...)
+                    {
+                        sprintf(errMsg, "Unable to import current volume at \"%s\"", path.c_str());
+                        throw MyException(errMsg);
+                    }
+                }
+            }
+
             volumes.push_back(volume);
         }
 
@@ -186,6 +208,7 @@ void CImport::run()
                 try
                 {
                     VirtualVolume* candidate_vol = 0;
+
                     if(dynamic_cast<StackedVolume*>(volumes[0]))
                     {
                         candidate_vol = new StackedVolume(path_i.c_str(),
@@ -206,6 +229,16 @@ void CImport::run()
                                                                          dynamic_cast<TiledVolume*>(volumes[0])->getVXL_2(),
                                                                          dynamic_cast<TiledVolume*>(volumes[0])->getVXL_3(), reimport, false);
                     }
+                    else if(dynamic_cast<TiledMCVolume*>(volumes[0]))
+                    {
+                        candidate_vol = new TiledMCVolume(path_i.c_str(),
+                                                                         ref_sys(dynamic_cast<TiledMCVolume*>(volumes[0])->getAXS_1(),
+                                                                         dynamic_cast<TiledMCVolume*>(volumes[0])->getAXS_2(),
+                                                                         dynamic_cast<TiledMCVolume*>(volumes[0])->getAXS_3()),
+                                                                         dynamic_cast<TiledMCVolume*>(volumes[0])->getVXL_1(),
+                                                                         dynamic_cast<TiledMCVolume*>(volumes[0])->getVXL_2(),
+                                                                         dynamic_cast<TiledMCVolume*>(volumes[0])->getVXL_3(), reimport, false);
+                    }
                     else
                     {
                         sprintf(errMsg, "Unable to import volume at \"%s\"", path_i.c_str());
@@ -213,7 +246,10 @@ void CImport::run()
                     }
                     candidateVols.push_back(candidate_vol);
                 }
-                catch(...){}
+                catch(...)
+                {
+                    throw MyException("A problem occurred when importing volume. Please contact the developer");
+                }
             }
 
             //importing candidate volumes
@@ -244,6 +280,16 @@ void CImport::run()
                                                                          dynamic_cast<TiledVolume*>(volumes[0])->getVXL_1()*ratio,
                                                                          dynamic_cast<TiledVolume*>(volumes[0])->getVXL_2()*ratio,
                                                                          dynamic_cast<TiledVolume*>(volumes[0])->getVXL_3()*ratio, reimport);
+                    }
+                    else if(dynamic_cast<TiledMCVolume*>(volumes[0]))
+                    {
+                        vol = new TiledMCVolume(candidateVols[k]->getROOT_DIR(),
+                                                                         ref_sys(dynamic_cast<TiledMCVolume*>(volumes[0])->getAXS_1(),
+                                                                         dynamic_cast<TiledMCVolume*>(volumes[0])->getAXS_2(),
+                                                                         dynamic_cast<TiledMCVolume*>(volumes[0])->getAXS_3()),
+                                                                         dynamic_cast<TiledMCVolume*>(volumes[0])->getVXL_1()*ratio,
+                                                                         dynamic_cast<TiledMCVolume*>(volumes[0])->getVXL_2()*ratio,
+                                                                         dynamic_cast<TiledMCVolume*>(volumes[0])->getVXL_3()*ratio, reimport);
                     }
                     else
                     {

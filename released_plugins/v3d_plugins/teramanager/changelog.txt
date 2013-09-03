@@ -11,6 +11,20 @@ ties names are:
 - Rem: a feature no longer available
 
 ============================================================================================
+Version 0.9.11
+September 3rd, 2013
+--------------------------------------------------------------------------------------------
+- New: added support in TeraFly for format "Vaa3D raw (tiled, 4D)".
+- New: added support in TeraConverter for format "Vaa3D raw (tiled, 4D)" for storing 4D vol-
+       umes with any number of channels. Each channel is stored into a separate folder cont-
+       aining a two-level tiled format.
+- Fix: fixed a bug  which caused  TeraFly to crash  when zooming-in  to a region outside the
+       volume.
+- Fix: fixed a bug which sporadically caused "Interpolation of the prebuffered image not yet 
+       implemented" error. 
+--------------------------------------------------------------------------------------------
+
+
 Version 0.9.10
 August 31th, 2013
 --------------------------------------------------------------------------------------------

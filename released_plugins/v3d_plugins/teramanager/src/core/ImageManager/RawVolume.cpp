@@ -42,7 +42,7 @@ RawVolume::RawVolume(const char* _file_name)  throw (MyException)
 RawVolume::~RawVolume(void)
 {
 	#if IM_VERBOSE > 3
-	printf("\t\t\t\tin RawVolume::~SimpleVolume(void)\n");
+	printf("\t\t\t\tin RawVolume::~RawVolume(void)\n");
 	#endif
 
 	if(file_name)
@@ -163,7 +163,7 @@ uint8 *RawVolume::loadSubvolume_to_UINT8(int V0,int V1, int H0, int H1, int D0, 
 # define PATH_BUF_LEN   5000
 
 static char path_buffer[PATH_BUF_LEN];
-static char *suffixes[] = { ".raw", ".RAW", ".v3draw", ".V3DRAW", "" };
+static const char *suffixes[] = { ".raw", ".RAW", ".v3draw", ".V3DRAW", "" };
 static int  suf_lens[] = {      3,      3,         6,         6     };
 
 char *get_path ( const char *_file_name ) throw (MyException) {

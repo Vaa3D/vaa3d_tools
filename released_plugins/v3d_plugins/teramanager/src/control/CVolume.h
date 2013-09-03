@@ -127,7 +127,7 @@ class teramanager::CVolume : public QThread
         static float scaleVCoord(float coord, int srcRes, int dstRes) throw (MyException);
         static float scaleHCoord(float coord, int srcRes, int dstRes) throw (MyException);
         static float scaleDCoord(float coord, int srcRes, int dstRes) throw (MyException);
-        void setVoi(QWidget* _sourceObject, int _voiResIndex, int _V0, int _V1, int _H0, int _H1, int _D0, int _D1)
+        void setVoi(QWidget* _sourceObject, int _voiResIndex, int _V0, int _V1, int _H0, int _H1, int _D0, int _D1) throw (MyException)
         {
             #ifdef TMP_DEBUG
             printf("--------------------- teramanager plugin [thread *] >> CVolume::setVoi(..., _voiResIndex = %d, _V0 = %d, _V1=%d, _H0 = %d, _H1=%d, _D0 = %d, _D1=%d)\n",
@@ -145,6 +145,11 @@ class teramanager::CVolume : public QThread
             voiH1 = _H1 <= volume->getDIM_H() ? _H1 : volume->getDIM_H();
             voiD0 = _D0 >=0                   ? _D0 : 0;
             voiD1 = _D1 <= volume->getDIM_D() ? _D1 : volume->getDIM_D();
+
+            //---- Alessandro 2013-09-03: added check to detect invalid VOI
+            if(voiV1 - voiV0 <= 0 || voiH1 - voiH0 <= 0 || voiD1 - voiD0 <= 0)
+                throw MyException("Invalid VOI selected");
+
             nchannels = -1;
         }
         void setSource(QWidget* _sourceObject){source =_sourceObject;}

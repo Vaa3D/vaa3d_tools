@@ -129,6 +129,7 @@ HEADERS += ./src/core/ImageManager/Stack.h
 HEADERS += ./src/core/ImageManager/StackedVolume.h
 HEADERS += ./src/core/ImageManager/VirtualVolume.h
 HEADERS += ./src/core/ImageManager/TiledVolume.h
+HEADERS += ./src/core/ImageManager/TiledMCVolume.h
 HEADERS += ./src/core/ImageManager/Block.h
 HEADERS += ./src/core/VolumeConverter/VolumeConverter.h
 
@@ -155,6 +156,7 @@ SOURCES += ./src/core/ImageManager/Stack.cpp
 SOURCES += ./src/core/ImageManager/StackedVolume.cpp
 SOURCES += ./src/core/ImageManager/VirtualVolume.cpp
 SOURCES += ./src/core/ImageManager/TiledVolume.cpp
+SOURCES += ./src/core/ImageManager/TiledMCVolume.cpp
 SOURCES += ./src/core/ImageManager/Block.cpp
 SOURCES += ./src/core/VolumeConverter/VolumeConverter.cpp
 

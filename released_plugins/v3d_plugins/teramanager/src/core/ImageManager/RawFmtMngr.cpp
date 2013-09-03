@@ -231,7 +231,7 @@ char *loadRaw2Metadata ( char * filename, V3DLONG * &sz, int &datatype, int &b_s
 
 	FILE * fid = fopen(filename, "rb");
 	if (!fid)
-		return ("Fail to open file for reading");
+		return ((char *)"Fail to open file for reading");
 
 	fseek (fid, 0, SEEK_END);
 	V3DLONG fileSize = ftell(fid);
@@ -245,22 +245,22 @@ char *loadRaw2Metadata ( char * filename, V3DLONG * &sz, int &datatype, int &b_s
 	// for 4 byte integers: datatype has 2 bytes, and sz has 4*4 bytes and endian flag has 1 byte
 	// WARNINIG: this should still be valid even for 2 byte integres assuming that there are at least 8 data bytes
 	if (fileSize<lenkey+2+4*4+1)  
-		return ("The size of your input file is too small and is not correct, -- it is too small to contain the legal header");
+		return ((char *)"The size of your input file is too small and is not correct, -- it is too small to contain the legal header");
 
 	char * keyread = new char [lenkey+1];
 	if (!keyread)
-		return ("Fail to allocate memory");
+		return ((char *)"Fail to allocate memory");
 
 	V3DLONG nread = fread(keyread, 1, lenkey, fid);
 	if (nread!=lenkey)
-		return ("File unrecognized or corrupted file");
+		return ((char *)"File unrecognized or corrupted file");
 
 	keyread[lenkey] = '\0';
 
 	V3DLONG i;
 	if (strcmp(formatkey, keyread)) { /* is non-zero then the two strings are different */
 		if (keyread) {delete []keyread; keyread=0;}
-		return ("Unrecognized file format");
+		return ((char *)"Unrecognized file format");
 	}
 
 	char endianCodeData;
@@ -268,7 +268,7 @@ char *loadRaw2Metadata ( char * filename, V3DLONG * &sz, int &datatype, int &b_s
 	if (endianCodeData!='B' && endianCodeData!='L')
 	{
 		if (keyread) {delete []keyread; keyread=0;}
-		return ("This program only supports big- or little- endian but not other format. Check your data endian");
+		return ((char *)"This program only supports big- or little- endian but not other format. Check your data endian");
 	}
 
 	char endianCodeMachine;
@@ -276,7 +276,7 @@ char *loadRaw2Metadata ( char * filename, V3DLONG * &sz, int &datatype, int &b_s
 	if (endianCodeMachine!='B' && endianCodeMachine!='L')
 	{
 		if (keyread) {delete []keyread; keyread=0;}
-		return ("This program only supports big- or little- endian but not other format. Check your data endian");
+		return ((char *)"This program only supports big- or little- endian but not other format. Check your data endian");
 	}
 
 	b_swap = (endianCodeMachine==endianCodeData)?0:1;
@@ -302,7 +302,7 @@ char *loadRaw2Metadata ( char * filename, V3DLONG * &sz, int &datatype, int &b_s
 
 		default:
 			if (keyread) {delete []keyread; keyread=0;}
-			return ("Unrecognized data type code. The file type is incorrect or this code is not supported in this version");
+			return ((char *)"Unrecognized data type code. The file type is incorrect or this code is not supported in this version");
 	}
 
 	V3DLONG unitSize = datatype; // temporarily I use the same number, which indicates the number of bytes for each data point (pixel). This can be extended in the future. 
@@ -319,7 +319,7 @@ char *loadRaw2Metadata ( char * filename, V3DLONG * &sz, int &datatype, int &b_s
 	int tmpn=(int)fread(sz_2bytes, 2, 4, fid); // because I have already checked the file size to be bigger than the header, no need to check the number of actual bytes read.
 	if (tmpn!=4) {
 		if (keyread) {delete []keyread; keyread=0;}
-		return ("This program only reads [4] units");
+		return ((char *)"This program only reads [4] units");
 	}
 	memcpy(mysz,sz_2bytes,2*4); // save bytes in case it is a 4 byte file
 	if (b_swap) {
@@ -344,7 +344,7 @@ char *loadRaw2Metadata ( char * filename, V3DLONG * &sz, int &datatype, int &b_s
 		tmpn=(int)fread(mysz+2, 2, 4, fid); // because I have already checked the file size to be bigger than the header, no need to check the number of actual bytes read. 
 		if (tmpn!=4) {
 			if (keyread) {delete []keyread; keyread=0;}
-			return ("This program only reads [4] units");
+			return ((char *)"This program only reads [4] units");
 		}
 		if (b_swap) {
 			for (i=0;i<4;i++) 
@@ -356,7 +356,7 @@ char *loadRaw2Metadata ( char * filename, V3DLONG * &sz, int &datatype, int &b_s
 		}
 		if ((totalUnit*unitSize+4*2+2+1+lenkey) == fileSize) {
 			if (keyread) {delete []keyread; keyread=0;}
-			return ("The input file has a size different from what specified in the header");
+			return ((char *)"The input file has a size different from what specified in the header");
 		}
 	}
 
@@ -378,7 +378,7 @@ char *loadRaw2Metadata ( char * filename, V3DLONG * &sz, int &datatype, int &b_s
 	if (!sz)
 	{
 		if (keyread) {delete []keyread; keyread=0;}
-		return ("Fail to allocate memory");
+		return ((char *)"Fail to allocate memory");
 	}
 
 	for (i=0;i<4;i++)
@@ -412,7 +412,7 @@ char *loadRaw2SubStack ( void *fhandle, unsigned char *img, V3DLONG *sz,
 	FILE * fid = (FILE *) fhandle;
 	
 	fseek (fid, 0, SEEK_END);
-	V3DLONG fileSize = ftell(fid);
+	//V3DLONG fileSize = ftell(fid); // unused
 	rewind(fid);
 		
 	V3DLONG unitSize = datatype; /* temporarily I use the same number, which indicates the number of bytes for each data point (pixel). This can be extended in the future. */
@@ -433,7 +433,7 @@ char *loadRaw2SubStack ( void *fhandle, unsigned char *img, V3DLONG *sz,
 	V3DLONG kn = tmpw*tmph;
 	V3DLONG total = tmpw*tmph*tmpz*sz[3];
 
-	V3DLONG count=0;
+	//V3DLONG count=0; // unused
 	V3DLONG c,j,k;
 	for (c = 0; c < sz[3]; c++)
 	{
@@ -516,7 +516,7 @@ char *loadRaw2WholeStack ( char * filename, unsigned char * & img, V3DLONG * & s
 	FILE * fid = fopen(filename, "rb");
 	if (!fid)
 	{
-		return ("Fail to open file for reading");
+		return ((char *)"Fail to open file for reading");
 	}
 
 	fseek (fid, 0, SEEK_END);
@@ -541,12 +541,12 @@ char *loadRaw2WholeStack ( char * filename, unsigned char * & img, V3DLONG * & s
 
 	char * keyread = new char [lenkey+1];
 	if (!keyread)
-		return ("Fail to allocate memory");
+		return ((char *)"Fail to allocate memory");
 
 	V3DLONG nread = fread(keyread, 1, lenkey, fid);
 	if (nread!=lenkey) {
 		if (keyread) {delete []keyread; keyread=0;}
-		return ("File unrecognized or corrupted file");
+		return ((char *)"File unrecognized or corrupted file");
 	}
 
 	keyread[lenkey] = '\0';
@@ -555,7 +555,7 @@ char *loadRaw2WholeStack ( char * filename, unsigned char * & img, V3DLONG * & s
 	if (strcmp(formatkey, keyread)) /* is non-zero then the two strings are different */
 	{
 		if (keyread) {delete []keyread; keyread=0;}
-		return ("Unrecognized file format");
+		return ((char *)"Unrecognized file format");
 	}
 
 	char endianCodeData;
@@ -564,7 +564,7 @@ char *loadRaw2WholeStack ( char * filename, unsigned char * & img, V3DLONG * & s
 	if (endianCodeData!='B' && endianCodeData!='L')
 	{
 		if (keyread) {delete []keyread; keyread=0;}
-		return ("This program only supports big- or little- endian but not other format. Check your data endian");
+		return ((char *)"This program only supports big- or little- endian but not other format. Check your data endian");
 	}
 
 	char endianCodeMachine;
@@ -573,13 +573,13 @@ char *loadRaw2WholeStack ( char * filename, unsigned char * & img, V3DLONG * & s
 	if (endianCodeMachine!='B' && endianCodeMachine!='L')
 	{
 		if (keyread) {delete []keyread; keyread=0;}
-		return ("This program only supports big- or little- endian but not other format. Check your data endian");
+		return ((char *)"This program only supports big- or little- endian but not other format. Check your data endian");
 	}
 
 	int b_swap = (endianCodeMachine==endianCodeData)?0:1;
 	if (b_VERBOSE_PRINT)
     {
-        printf("machine endian=[%c] data endian=[%c] b_swap=%d\n", endianCodeMachine, endianCodeData, b_swap);
+        printf((char *)"machine endian=[%c] data endian=[%c] b_swap=%d\n", endianCodeMachine, endianCodeData, b_swap);
     }
 
 
@@ -604,7 +604,7 @@ char *loadRaw2WholeStack ( char * filename, unsigned char * & img, V3DLONG * & s
 
 		default:
 			if (keyread) {delete []keyread; keyread=0;}
-			return ("Unrecognized data type code. The file type is incorrect or this code is not supported in this version");
+			return ((char *)"Unrecognized data type code. The file type is incorrect or this code is not supported in this version");
 	}
 
 	V3DLONG unitSize = datatype; // temporarily I use the same number, which indicates the number of bytes for each data point (pixel). This can be extended in the future. 
@@ -614,7 +614,7 @@ char *loadRaw2WholeStack ( char * filename, unsigned char * & img, V3DLONG * & s
 	int tmpn=(int)fread(mysz, 4, 4, fid); // because I have already checked the file size to be bigger than the header, no need to check the number of actual bytes read. 
 	if (tmpn!=4) {
 		if (keyread) {delete []keyread; keyread=0;}
-		return ("This program only reads [4] units");
+		return ((char *)"This program only reads [4] units");
 	}
 
 	if (b_swap)
@@ -635,7 +635,7 @@ char *loadRaw2WholeStack ( char * filename, unsigned char * & img, V3DLONG * & s
 	if (!sz)
 	{
 		if (keyread) {delete []keyread; keyread=0;}
-		return ("Fail to allocate memory");
+		return ((char *)"Fail to allocate memory");
 	}
 
 	V3DLONG totalUnit = 1;
@@ -666,7 +666,7 @@ char *loadRaw2WholeStack ( char * filename, unsigned char * & img, V3DLONG * & s
 	{
 		if (keyread) {delete []keyread; keyread=0;}
 		if (sz) {delete []sz; sz=0;}
-		return ("Fail to allocate memory in loadRaw2Stack()");
+		return ((char *)"Fail to allocate memory in loadRaw2Stack()");
 	}
 
 	V3DLONG remainingBytes = totalBytes;
@@ -737,7 +737,7 @@ char *saveWholeStack2Raw(const char *filename, unsigned char *img, V3DLONG *sz, 
 	FILE * fid = fopen(filename, "wb");
 	if (!fid)
 	{
-		return ("Fail to open file for writing.\n");
+		return ((char *)"Fail to open file for writing.\n");
 	}
 
 	/* Write header */
@@ -747,19 +747,19 @@ char *saveWholeStack2Raw(const char *filename, unsigned char *img, V3DLONG *sz, 
 	V3DLONG nwrite = fwrite(formatkey, 1, lenkey, fid);
 	if (nwrite!=lenkey)
 	{
-		return ("File write error.\n");
+		return ((char *)"File write error.\n");
 	}
 
 	char endianCodeMachine = checkMachineEndian();
 	if (endianCodeMachine!='B' && endianCodeMachine!='L')
 	{
-		return ("This program only supports big- or little- endian but not other format. Cannot save data on this machine.\n");
+		return ((char *)"This program only supports big- or little- endian but not other format. Cannot save data on this machine.\n");
 	}
 
 	nwrite = fwrite(&endianCodeMachine, 1, 1, fid);
 	if (nwrite!=1)
 	{
-		return ("Error happened in file writing.\n");
+		return ((char *)"Error happened in file writing.\n");
 	}
 
 	//int b_swap = (endianCodeMachine==endianCodeData)?0:1;
@@ -768,14 +768,14 @@ char *saveWholeStack2Raw(const char *filename, unsigned char *img, V3DLONG *sz, 
 	short int dcode = (short int)datatype;
 	if (dcode!=1 && dcode!=2 && dcode!=4)
 	{
-		return ("Unrecognized data type code.\n");
+		return ((char *)"Unrecognized data type code.\n");
 	}
 
 	//if (b_swap) swap2bytes((void *)&dcode);
 	nwrite = fwrite(&dcode, 2, 1, fid); /* because I have already checked the file size to be bigger than the header, no need to check the number of actual bytes read. */
 	if (nwrite!=1)
 	{
-		return ("Writing file error.\n");
+		return ((char *)"Writing file error.\n");
 	}
 
 	V3DLONG unitSize = datatype; /* temporarily I use the same number, which indicates the number of bytes for each data point (pixel). This can be extended in the future. */
@@ -786,7 +786,7 @@ char *saveWholeStack2Raw(const char *filename, unsigned char *img, V3DLONG *sz, 
 	nwrite = fwrite(mysz, sizeof(BIT32_UNIT), 4, fid); /* because I have already checked the file size to be bigger than the header, no need to check the number of actual bytes read. */
 	if (nwrite!=4)
 	{
-		return ("Writing file error.\n");
+		return ((char *)"Writing file error.\n");
 	}
 
 	V3DLONG totalUnit = 1;
@@ -798,7 +798,7 @@ char *saveWholeStack2Raw(const char *filename, unsigned char *img, V3DLONG *sz, 
 	nwrite = fwrite(img, unitSize, totalUnit, fid);
 	if (nwrite!=totalUnit)
 	{
-		return ("Something wrong in file writing. The program wrote a different number of pixels than expected.\n");
+		return ((char *)"Something wrong in file writing. The program wrote a different number of pixels than expected.\n");
 	}
 
 	/* clean and return */
@@ -820,7 +820,7 @@ char *initRawFile(char *filename, const V3DLONG *sz, int datatype) {
 	if (!fid)
 	{
 		if ( completeFilename ) { delete completeFilename; completeFilename = 0; }
-		return ("Fail to open file for writing.\n");
+		return ((char *)"Fail to open file for writing.\n");
 	}
 
 	/* Write header */
@@ -831,21 +831,21 @@ char *initRawFile(char *filename, const V3DLONG *sz, int datatype) {
 	if (nwrite!=lenkey)
 	{
 		if ( completeFilename ) { delete completeFilename; completeFilename = 0; }
-		return ("File write error.\n");
+		return ((char *)"File write error.\n");
 	}
 
 	char endianCodeMachine = checkMachineEndian();
 	if (endianCodeMachine!='B' && endianCodeMachine!='L')
 	{
 		if ( completeFilename ) { delete completeFilename; completeFilename = 0; }
-		return ("This program only supports big- or little- endian but not other format. Cannot save data on this machine.\n");
+		return ((char *)"This program only supports big- or little- endian but not other format. Cannot save data on this machine.\n");
 	}
 
 	nwrite = fwrite(&endianCodeMachine, 1, 1, fid);
 	if (nwrite!=1)
 	{
 		if ( completeFilename ) { delete completeFilename; completeFilename = 0; }
-		return ("Error happened in file writing.\n");
+		return ((char *)"Error happened in file writing.\n");
 	}
 
 	//int b_swap = (endianCodeMachine==endianCodeData)?0:1;
@@ -855,7 +855,7 @@ char *initRawFile(char *filename, const V3DLONG *sz, int datatype) {
 	if (dcode!=1 && dcode!=2 && dcode!=4)
 	{
 		if ( completeFilename ) { delete completeFilename; completeFilename = 0; }
-		return ("Unrecognized data type code.\n");
+		return ((char *)"Unrecognized data type code.\n");
 	}
 
 	//if (b_swap) swap2bytes((void *)&dcode);
@@ -863,7 +863,7 @@ char *initRawFile(char *filename, const V3DLONG *sz, int datatype) {
 	if (nwrite!=1)
 	{
 		if ( completeFilename ) { delete completeFilename; completeFilename = 0; }
-		return ("Writing file error.\n");
+		return ((char *)"Writing file error.\n");
 	}
 
 	BIT32_UNIT mysz[4];
@@ -872,21 +872,25 @@ char *initRawFile(char *filename, const V3DLONG *sz, int datatype) {
 	nwrite = fwrite(mysz, sizeof(BIT32_UNIT), 4, fid); /* because I have already checked the file size to be bigger than the header, no need to check the number of actual bytes read. */
 	if (nwrite!=4)
 	{
-		return ("Writing file error.\n");
+		return ((char *)"Writing file error.\n");
 	}
 
-	V3DLONG totalUnit = 1;
-	for (i=0;i<4;i++)
-	{
-		totalUnit *= sz[i];
-	}
-
-	int header_length = ftell(fid);
-
-	fseek(fid,(long)(totalUnit-1),SEEK_CUR); // last byte has to be actually written to file
-
-	unsigned char buf[1];
-	fwrite(buf,sizeof(unsigned char),1,fid);
+	// WARNING: 
+	// The following code that fully allocate the file is made useless 
+	// by the use of r+ mode in writeSlice2RawFile
+	//
+	//V3DLONG totalUnit = 1;
+	//for (i=0;i<4;i++)
+	//{
+	//	totalUnit *= sz[i];
+	//}
+	//
+	//int header_length = ftell(fid); // ununsed
+	//
+	//fseek(fid,(long)(totalUnit-1),SEEK_CUR); // last byte has to be actually written to file
+	//
+	//unsigned char buf[1];
+	//fwrite(buf,sizeof(unsigned char),1,fid);
 
 	closeRawFile(fid);
 
@@ -912,16 +916,16 @@ char *writeSlice2RawFile ( char *filename, int slice, unsigned char *img, int im
 	if ( (sz[1] != img_height) || (sz[0] != img_width) ) 
 	{
 		delete []sz;
-		return ("Wrong slice dimensions.\n");
+		return ((char *)"Wrong slice dimensions.\n");
 	}
 
-	closeRawFile(fhandle);
+	closeRawFile(fhandle); // needed to reopen file in r+ mode
 
 	fid = fopen(filename, "r+b");
 	if (!fid)
 	{
 		delete []sz;
-		return ("Fail to open file for writing slice.\n");
+		return ((char *)"Fail to open file for writing slice.\n");
 	}
 
 
@@ -954,7 +958,7 @@ char *copyRawFileBlock2Buffer ( char *filename, int sV0, int sV1, int sH0, int s
 
 	if ( pxl_size != sizeof(unsigned char) ) 
 	{
-		return ("Wrong pixel size.\n");
+		return ((char *)"Wrong pixel size.\n");
 	}
 
 	char *err_rawfmt;
@@ -971,12 +975,12 @@ char *copyRawFileBlock2Buffer ( char *filename, int sV0, int sV1, int sH0, int s
 	if ( datatype != 1 ) 
 	{
 		delete []sz;
-		return ("Wrong file data type.\n");
+		return ((char *)"Wrong file data type.\n");
 	}
 	fid = (FILE *) fhandle;
 
 	fseek (fid, 0, SEEK_END);
-	V3DLONG fileSize = ftell(fid);
+	//V3DLONG fileSize = ftell(fid); // unused
 	rewind(fid);
 		
 	V3DLONG unitSize = datatype; /* temporarily I use the same number, which indicates the number of bytes for each data point (pixel). This can be extended in the future. */
@@ -996,11 +1000,11 @@ char *copyRawFileBlock2Buffer ( char *filename, int sV0, int sV1, int sH0, int s
 	V3DLONG pgsz1=sz[2]*sz[1]*sz[0]; // #values per channel
 	V3DLONG pgsz2=sz[1]*sz[0];       // #values per slice
 	V3DLONG pgsz3=sz[0];
-	V3DLONG cn = tmpw*tmph*tmpz;  
-	V3DLONG kn = tmpw*tmph;      
-	V3DLONG total = tmpw*tmph*tmpz*sz[3];
+	//V3DLONG cn = tmpw*tmph*tmpz;  // unused
+	//V3DLONG kn = tmpw*tmph; // unused     
+	//V3DLONG total = tmpw*tmph*tmpz*sz[3]; // unused
 
-	V3DLONG count=0;
+	//V3DLONG count=0; // unused
 	V3DLONG c,j,k;
 
 	unsigned char *buftmp_c;
@@ -1024,7 +1028,7 @@ char *copyRawFileBlock2Buffer ( char *filename, int sV0, int sV1, int sH0, int s
 	
 	if (b_swap==1)
 	{
-		return ("Byte swap not supported.\n");
+		return ((char *)"Byte swap not supported.\n");
 		//if (unitSize==2)
 		//{
 		//	for (i=0;i<total; i++)
@@ -1074,7 +1078,7 @@ char *streamer_dostep ( Streamer_Descr_t *streamer, unsigned char *buffer2 ) {
 	streamer->cur_step++;
 
 	if ( streamer->cur_step > streamer->steps ) {
-		return ("Too many steps in a streamed operation.\n");
+		return ((char *)"Too many steps in a streamed operation.\n");
 	}
 
 	for ( int i=0; i<streamer->n_blocks; i++ ) { 
@@ -1089,7 +1093,7 @@ char *streamer_dostep ( Streamer_Descr_t *streamer, unsigned char *buffer2 ) {
 		fid = (FILE *) streamer->bDescr[i].fhandle;
 
 		fseek (fid, 0, SEEK_END);
-		V3DLONG fileSize = ftell(fid);
+		//V3DLONG fileSize = ftell(fid); // unused
 		rewind(fid);
 			
 		V3DLONG unitSize = streamer->bDescr[i].datatype; /* temporarily I use the same number, which indicates the number of bytes for each data point (pixel). This can be extended in the future. */
@@ -1143,7 +1147,7 @@ char *streamer_dostep ( Streamer_Descr_t *streamer, unsigned char *buffer2 ) {
 						unsigned char *buftmp2 = buffer2 + (buftmp - streamer->buf);
 						if ( buftmp[j]!=buftmp2[j] ) {
 							//printf("%d %d\n",buftmp[j],buftmp2[j]);
-							return ("Mismatch between streamed and non-streamed operation.\n");
+							return ((char *)"Mismatch between streamed and non-streamed operation.\n");
 						}
 					}
 				}
@@ -1157,7 +1161,7 @@ char *streamer_dostep ( Streamer_Descr_t *streamer, unsigned char *buffer2 ) {
 char *streamer_cpydata ( Streamer_Descr_t *streamer, unsigned char *buffer, unsigned char *buffer2 ) {
 
 	if ( streamer->cur_step > streamer->steps ) {
-		return ("Too many steps in a streamed operation.\n");
+		return ((char *)"Too many steps in a streamed operation.\n");
 	}
 
 	for ( int i=0; i<streamer->n_blocks; i++ ) { 
@@ -1165,7 +1169,7 @@ char *streamer_cpydata ( Streamer_Descr_t *streamer, unsigned char *buffer, unsi
 		V3DLONG unitSize = streamer->bDescr[i].datatype; /* temporarily I use the same number, which indicates the number of bytes for each data point (pixel). This can be extended in the future. */
 	
 		int bstridey = (int) (streamer->stridexy / streamer->stridex);                     // stridey of buffer
-		int fstridey = (int) (streamer->bDescr[i].stridexy / streamer->bDescr[i].stridex); // stridey of file
+		//int fstridey = (int) (streamer->bDescr[i].stridexy / streamer->bDescr[i].stridex); // stridey of file (unused)
 
 		for ( int c=0; c<streamer->n_chans; c++ ) {
 
@@ -1200,7 +1204,7 @@ char *streamer_cpydata ( Streamer_Descr_t *streamer, unsigned char *buffer, unsi
 						unsigned char *buftmp2 = buffer2 + (sbuftmp - streamer->buf);
 						if ( dbuftmp[j]!=buftmp2[j] ) {
 							//printf("%d %d\n",buftmp[j],buftmp2[j]);
-							return ("Mismatch between streamed and non-streamed operation.\n");
+							return ((char *)"Mismatch between streamed and non-streamed operation.\n");
 						}
 					}
 				}
@@ -1269,7 +1273,7 @@ char *Streamer_Descr_t::addSubBlock ( char *filename, sint64 boffs, int sV0, int
 	if ( datatype != 1 ) 
 	{
 		delete []sz;
-		return ("Wrong file data type.\n");
+		return ((char *)"Wrong file data type.\n");
 	}
 
 	// check if blocks are too many

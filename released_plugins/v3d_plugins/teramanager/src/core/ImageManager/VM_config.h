@@ -57,6 +57,7 @@
 #endif
 
 //directory creation
+#ifndef make_dir // to avoid double definitions
 #ifdef _WIN32
 #include <direct.h>
 #define make_dir(V) _mkdir(V)
@@ -65,6 +66,7 @@
 #include <sys/types.h>
 #include <stdlib.h>
 #define make_dir(V) mkdir(V,S_IRWXU | S_IRWXG | S_IROTH | S_IWOTH | S_IXOTH)
+#endif
 #endif
 
 //file deleting

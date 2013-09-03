@@ -31,6 +31,7 @@
 #include "../core/ImageManager/RawVolume.h"
 #include "../core/ImageManager/SimpleVolume.h"
 #include "../core/ImageManager/TiledVolume.h"
+#include "../core/ImageManager/TiledMCVolume.h"
 #include "../core/VolumeConverter/VolumeConverter.h"
 
 using namespace teramanager;
@@ -84,10 +85,15 @@ void CConverter::setMembers(PConverter* pConverter) throw (MyException)
             inVolFormat = SIMPLE_FORMAT;
             fileMode = false;
         }
-        else if(inVolFormat.compare("Vaa3D raw (tiled)") == 0)
+        else if(inVolFormat.compare("Vaa3D raw (tiled, RGB)") == 0)
         {
             inVolFormat = TILED_FORMAT;
-            fileMode = true;
+            fileMode = false;
+        }
+        else if(inVolFormat.compare("Vaa3D raw (tiled, 4D)") == 0)
+        {
+            inVolFormat = TILED_MC_FORMAT;
+            fileMode = false;
         }
         else if(inVolFormat.compare("Vaa3D raw (nontiled)") == 0)
         {
@@ -109,9 +115,14 @@ void CConverter::setMembers(PConverter* pConverter) throw (MyException)
             outVolFormat = STACKED_FORMAT;
             fileMode = false;
         }
-        else if(outVolFormat.compare("Vaa3D raw (tiled)") == 0)
+        else if(outVolFormat.compare("Vaa3D raw (tiled, RGB)") == 0)
         {
             outVolFormat = TILED_FORMAT;
+            fileMode = true;
+        }
+        else if(outVolFormat.compare("Vaa3D raw (tiled, 4D)") == 0)
+        {
+            outVolFormat = TILED_MC_FORMAT;
             fileMode = true;
         }
         else
@@ -171,6 +182,8 @@ void CConverter::run()
                 vc->generateTiles(outVolPath, resolutions, stacksHeight, stacksWidth);
             else if(outVolFormat.compare(TILED_FORMAT) == 0)
                 vc->generateTilesVaa3DRaw(outVolPath, resolutions, stacksHeight, stacksWidth, stacksDepth);
+            else if(outVolFormat.compare(TILED_MC_FORMAT) == 0)
+                vc->generateTilesVaa3DRawMC(outVolPath, resolutions, stacksHeight, stacksWidth, stacksDepth);
             else
             {
                 char errMsg[1024];

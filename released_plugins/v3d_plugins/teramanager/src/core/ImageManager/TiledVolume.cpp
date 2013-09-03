@@ -540,11 +540,11 @@ void TiledVolume::rotate(int theta)
 //	Stack*** new_STACK_2D_ARRAY = NULL;
 //	int new_N_ROWS = 0, new_N_COLS = 0;
 //
-//	switch(theta)
-//	{
-//		case(0): break;
-//
-//		case(90):
+	switch(theta)
+	{
+		case(0): break;
+
+		case(90):
 //		{
 //			new_N_COLS = N_ROWS;
 //			new_N_ROWS = N_COLS;
@@ -561,9 +561,9 @@ void TiledVolume::rotate(int theta)
 //					new_STACK_2D_ARRAY[i][j]->setROW_INDEX(i);
 //					new_STACK_2D_ARRAY[i][j]->setCOL_INDEX(j);
 //				}
-//			break;
+			break;
 //		}
-//		case(180):
+		case(180):
 //		{
 //			new_N_COLS=N_COLS;
 //			new_N_ROWS=N_ROWS;
@@ -580,9 +580,9 @@ void TiledVolume::rotate(int theta)
 //					new_STACK_2D_ARRAY[i][j]->setROW_INDEX(i);
 //					new_STACK_2D_ARRAY[i][j]->setCOL_INDEX(j);
 //				}
-//			break;
+			break;
 //		}
-//		case(270):
+		case(270):
 //		{
 //			new_N_COLS=N_ROWS;
 //			new_N_ROWS=N_COLS;
@@ -599,9 +599,9 @@ void TiledVolume::rotate(int theta)
 //					new_STACK_2D_ARRAY[i][j]->setROW_INDEX(i);
 //					new_STACK_2D_ARRAY[i][j]->setCOL_INDEX(j);
 //				}
-//			break;
+			break;
 //		}
-//	}
+	}
 //
 //
 //	//deallocating current STACK_2DARRAY object
@@ -637,9 +637,9 @@ void TiledVolume::mirror(axis mrr_axis)
 //
 //	Stack*** new_STACK_2D_ARRAY;
 //
-//	switch(mrr_axis)
-//	{
-//		case(1):
+	switch(mrr_axis)
+	{
+		case(1):
 //		{
 //			//allocating new_STACK_2D_ARRAY
 //			new_STACK_2D_ARRAY = new Stack**[N_ROWS];
@@ -653,9 +653,9 @@ void TiledVolume::mirror(axis mrr_axis)
 //					new_STACK_2D_ARRAY[i][j]->setROW_INDEX(i);
 //					new_STACK_2D_ARRAY[i][j]->setCOL_INDEX(j);
 //				}
-//			break;
+			break;
 //		}		
-//		case(2):
+		case(2):
 //		{
 //			//allocating new_STACK_2D_ARRAY
 //			new_STACK_2D_ARRAY = new Stack**[N_ROWS];
@@ -669,10 +669,10 @@ void TiledVolume::mirror(axis mrr_axis)
 //					new_STACK_2D_ARRAY[i][j]->setROW_INDEX(i);
 //					new_STACK_2D_ARRAY[i][j]->setCOL_INDEX(j);
 //				}
-//			break;
+			break;
 //		}
-//		default: break;
-//	}
+		default: break;
+	}
 //
 //	//deallocating current STACK_2DARRAY object
 //	for(int row=0; row<N_ROWS; row++)
@@ -807,8 +807,9 @@ REAL_T* TiledVolume::loadSubvolume(int V0,int V1, int H0, int H1, int D0, int D1
 				//			subvol[k*sbv_height*sbv_width + i*sbv_width + j] = (data+(i-ABS_V_stk+V0)*step)[j-ABS_H_stk+H0];
 				//}
 
-				//if(release_stacks)
+				if(release_blocks)
 				//	STACKS[row][col]->releaseStack();
+				;
 			}
 		}
 	return subvol;
@@ -930,11 +931,11 @@ uint8* TiledVolume::loadSubvolume_to_UINT8(int V0,int V1, int H0, int H1, int D0
 
 						// vertices of buffer block
 						int bV0 = (V0>intersect_area->V0) ? 0 : (int)(intersect_area->V0 - V0);
-						int bV1 = (V1<intersect_area->V1) ? (int)sbv_height : (intersect_area->V1 - V0);
+						//int bV1 = (V1<intersect_area->V1) ? (int)sbv_height : (intersect_area->V1 - V0); // unused
 						int bH0 = (H0>intersect_area->H0) ? 0 : (intersect_area->H0 - H0);
-						int bH1 = (H1<intersect_area->H1) ? (int)sbv_width : (int)(intersect_area->H1 - H0);
+						//int bH1 = (H1<intersect_area->H1) ? (int)sbv_width : (int)(intersect_area->H1 - H0); // unused
 						int bD0 = (D0>BLOCKS[row][col]->getBLOCK_ABS_D()[k]) ? 0 : (BLOCKS[row][col]->getBLOCK_ABS_D()[k] - D0);
-						int bD1 = (D1<(int)(BLOCKS[row][col]->getBLOCK_ABS_D()[k]+BLOCKS[row][col]->getBLOCK_SIZE()[k])) ? (int)sbv_depth : (BLOCKS[row][col]->getBLOCK_ABS_D()[k]+BLOCKS[row][col]->getBLOCK_SIZE()[k] - D0);
+						//int bD1 = (D1<(int)(BLOCKS[row][col]->getBLOCK_ABS_D()[k]+BLOCKS[row][col]->getBLOCK_SIZE()[k])) ? (int)sbv_depth : (BLOCKS[row][col]->getBLOCK_ABS_D()[k]+BLOCKS[row][col]->getBLOCK_SIZE()[k] - D0); // unused
 
 						if ( (err_rawfmt = copyRawFileBlock2Buffer(
 								slice_fullpath,
@@ -1038,9 +1039,9 @@ void TiledVolume::saveVolume(const char* dir_path, uint32 max_slice_height, uint
 	uint32 dim_v, dim_h, dim_d;
 
 	//checking and adjusting default variables
-	V0 = (V0 < 0 ? 0 : V0);
-	H0 = (H0 < 0 ? 0 : H0);
-	D0 = (D0 < 0 ? 0 : D0);
+	//V0 = (V0 < 0 ? 0 : V0); // uint32: cannot be negative
+	//H0 = (H0 < 0 ? 0 : H0);
+	//D0 = (D0 < 0 ? 0 : D0);
 	V1 = ((V1 == 0 || V1 > DIM_V) ? DIM_V : V1);
 	H1 = ((H1 == 0 || H1 > DIM_H) ? DIM_H : H1);
 	D1 = ((D1 == 0 || D1 > DIM_D) ? DIM_D : D1);
@@ -1159,9 +1160,9 @@ void TiledVolume::saveOverlappingStacks(char* dir_path, uint32 slice_height, uin
 	uint32 dim_d;
 
 	//checking and adjusting default variables
-	V0 = (V0 < 0 ? 0 : V0);
-	H0 = (H0 < 0 ? 0 : H0);
-	D0 = (D0 < 0 ? 0 : D0);
+	//V0 = (V0 < 0 ? 0 : V0); // uint32: cannot be negative
+	//H0 = (H0 < 0 ? 0 : H0);
+	//D0 = (D0 < 0 ? 0 : D0);
 	V1 = ((V1 == 0 || V1 > DIM_V) ? DIM_V : V1);
 	H1 = ((H1 == 0 || H1 > DIM_H) ? DIM_H : H1);
 	D1 = ((D1 == 0 || D1 > DIM_D) ? DIM_D : D1);
@@ -1279,8 +1280,8 @@ void TiledVolume::saveSubVolume(REAL_T* subvol, int V0, int V1, int H0, int H1, 
 	sprintf(msg,"in TiledVolume::saveSubVolume: not completed yet");
 	throw MyException(msg);
 
-	int height = V1-V0;
-	int width  = H1-H0;
+	int height = V1-V0; 
+	int width  = H1-H0; 
 	int depth  = D1-D0;
 	char tmp[1000];
 	sprintf(tmp,"%02d_%02d_%02d",V_idx,H_idx,D_idx);
@@ -1302,6 +1303,7 @@ void TiledVolume::saveSubVolume(REAL_T* subvol, int V0, int V1, int H0, int H1, 
 			//cvReleaseImage(&slice);
 		}
 	}
+	*subvol = (REAL_T) (height + width); // dummy assingment: just to avoid a warning
 }
 
 //returns true if file exists at the given filepath
@@ -1353,8 +1355,8 @@ void TiledVolume::releaseStacks(int first_file, int last_file)
 	sprintf(msg,"in TiledVolume::releaseStacks: not implemented yet");
 	throw MyException(msg);
 
-	//first_file = (first_file == -1 ? 0		: first_file);
-	//last_file  = (last_file  == -1 ? DIM_D	: last_file);
+	first_file = (first_file == -1 ? 0		: first_file);
+	last_file  = (last_file  == -1 ? DIM_D	: last_file);
 	//for(int row_index=0; row_index<N_ROWS; row_index++)
 	//	for(int col_index=0; col_index<N_COLS; col_index++)
 	//		STACKS[row_index][col_index]->releaseStack(first_file,last_file);
@@ -1374,9 +1376,9 @@ void TiledVolume::saveMIPs(bool direction_V, bool direction_H, bool direction_D,
 	int img_step;
 
 	//checking and adjusting default variables
-	V0 = (V0 < 0 ? 0 : V0);
-	H0 = (H0 < 0 ? 0 : H0);
-	D0 = (D0 < 0 ? 0 : D0);
+	//V0 = (V0 < 0 ? 0 : V0); // uint32: cannot be negative
+	//H0 = (H0 < 0 ? 0 : H0);
+	//D0 = (D0 < 0 ? 0 : D0);
 	V1 = ((V1 == 0 || V1 > DIM_V) ? DIM_V : V1);
 	H1 = ((H1 == 0 || H1 > DIM_H) ? DIM_H : H1);
 	D1 = ((D1 == 0 || D1 > DIM_D) ? DIM_D : D1);
@@ -1546,8 +1548,7 @@ void *TiledVolume::streamedLoadSubvolume_open ( int steps, uint8 *buf, int V0,in
 		throw MyException(msg);
 	}
 
-    //initializing the number of channels with an undefined value (it will be detected from the first slice read)
-    sint64 sbv_channels = this->CHANS;
+    // sint64 sbv_channels = this->CHANS; // unused
 
     //scanning of stacks matrix for data loading and storing into subvol
     Rect_t subvol_area;

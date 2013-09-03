@@ -39,6 +39,7 @@ typedef float          REAL_T;
 #define IM_VERBOSE 4
 #define IM_SAVE_SUBVOLUMES
 #define IM_METADATA_FILE_NAME "mdata.bin"
+#define IM_CHANNEL_PREFIX "CH_"
 #define IM_METADATA_FILE_VERSION 2
 #define IM_STATIC_STRINGS_SIZE 3000
 #define IM_DEF_IMG_FORMAT "tif"
@@ -91,16 +92,14 @@ typedef float          REAL_T;
 #endif // iannello ADDED
 
 //directory creation
+#ifndef make_dir // to avoid double definitions
 #ifdef _WIN32
 #include <direct.h>
-#ifndef make_dir
 #define make_dir(x) _mkdir(x)
-#endif
 #else
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <stdlib.h>
-#ifndef make_dir
 #define make_dir(x) mkdir(x,S_IRWXU | S_IRWXG | S_IROTH | S_IWOTH | S_IXOTH)
 #endif
 #endif
