@@ -485,11 +485,12 @@ void processImage3(V3DPluginCallback2 &callback, QWidget *parent)
      else
          return;
 
-    double maxDT1 = 2;
-    double maxDT2 = 1;
+    double maxDT1 = 0.5;
+    double maxDT2 = 0.5;
     V3DLONG in_sz[4];
     in_sz[0] = N; in_sz[1] = M; in_sz[2] = P; in_sz[3] = sc;
     in_sz[3] = c;
+    V3DLONG offsetc = (c-1)*pagesz;
     saveImage("temp.v3draw", (unsigned char *)data1d, in_sz, pixeltype);
 
     unsigned char *EnahancedImage_final=0;
@@ -501,12 +502,24 @@ void processImage3(V3DPluginCallback2 &callback, QWidget *parent)
         printf("max in dt is %.2f, sigma is %.2f\n\n\n",maxDT1,sigma);
 
         unsigned char * data1d_gf = 0;
-        switch (pixeltype)
+        if(count==0)
         {
-          case V3D_UINT8: callGussianoPlugin(callback,pagesz,sigma,c,(unsigned char* &)data1d_gf); break;
-          case V3D_UINT16: callGussianoPlugin(callback,pagesz,sigma,c,(unsigned short int* &)data1d_gf); break;
-          case V3D_FLOAT32: callGussianoPlugin(callback,pagesz,sigma,c, (float* &)data1d_gf);break;
-          default: v3d_msg("Invalid data type. Do nothing."); return;
+            data1d_gf = new unsigned char [pagesz];
+            for(int i = 0; i<pagesz;i++)
+                data1d_gf[i] = data1d[offsetc+i];
+        }
+        else
+        {
+            switch (pixeltype)
+            {
+              case V3D_UINT8: callGussianoPlugin(callback,pagesz,sigma,c,(unsigned char* &)data1d_gf); break;
+              case V3D_UINT16: callGussianoPlugin(callback,pagesz,sigma,c,(unsigned short int* &)data1d_gf); break;
+              case V3D_FLOAT32: callGussianoPlugin(callback,pagesz,sigma,c, (float* &)data1d_gf);break;
+              default: v3d_msg("Invalid data type. Do nothing."); return;
+            }
+
+
+
         }
 
         unsigned char * gsdtld = 0;
@@ -529,6 +542,12 @@ void processImage3(V3DPluginCallback2 &callback, QWidget *parent)
         }
 
         maxDT1 = getdtmax(callback,EnahancedImage,in_sz);
+       if(count==0)
+        {
+            maxDT1 = 2;
+            maxDT1 = 1;
+        }
+
         if(maxDT1 > maxDT2 || maxDT1>=0)
         {
             if (count==0)
@@ -783,11 +802,12 @@ bool processImage3(const V3DPluginArgList & input, V3DPluginArgList & output,V3D
          return false;
      }
 
-    double maxDT1 = 2;
-    double maxDT2 = 1;
+    double maxDT1 = 0.5;
+    double maxDT2 = 0.5;
     in_sz[3] = c;
     V3DLONG pagesz = in_sz[0]*in_sz[1]*in_sz[2];
     saveImage("temp.v3draw", (unsigned char *)data1d, in_sz, datatype);
+    V3DLONG offsetc = (c-1)*pagesz;
 
     unsigned char *EnahancedImage_final=0;
     double min,max;
@@ -798,12 +818,21 @@ bool processImage3(const V3DPluginArgList & input, V3DPluginArgList & output,V3D
         printf("max in dt is %.2f, sigma is %.2f\n\n\n",maxDT1,sigma);
 
         unsigned char * data1d_gf = 0;
-        switch (datatype)
+        if(count==0)
         {
-          case V3D_UINT8: callGussianoPlugin(callback,pagesz,sigma,c,(unsigned char* &)data1d_gf); break;
-          case V3D_UINT16: callGussianoPlugin(callback,pagesz,sigma,c,(unsigned short int* &)data1d_gf); break;
-          case V3D_FLOAT32: callGussianoPlugin(callback,pagesz,sigma,c, (float* &)data1d_gf);break;
-          default: v3d_msg("Invalid data type. Do nothing."); return false;
+            data1d_gf = new unsigned char [pagesz];
+            for(int i = 0; i<pagesz;i++)
+                data1d_gf[i] = data1d[offsetc+i];
+        }
+        else
+        {
+            switch (datatype)
+            {
+              case V3D_UINT8: callGussianoPlugin(callback,pagesz,sigma,c,(unsigned char* &)data1d_gf); break;
+              case V3D_UINT16: callGussianoPlugin(callback,pagesz,sigma,c,(unsigned short int* &)data1d_gf); break;
+              case V3D_FLOAT32: callGussianoPlugin(callback,pagesz,sigma,c, (float* &)data1d_gf);break;
+              default: v3d_msg("Invalid data type. Do nothing."); return false;
+            }
         }
 
         unsigned char * gsdtld = 0;
@@ -816,6 +845,11 @@ bool processImage3(const V3DPluginArgList & input, V3DPluginArgList & output,V3D
         }
 
         unsigned char* EnahancedImage = NULL;
+        if(count==0)
+         {
+             maxDT1 = 2;
+             maxDT1 = 1;
+         }
 
         switch (datatype)
         {
