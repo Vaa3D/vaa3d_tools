@@ -498,7 +498,7 @@ void processImage3(V3DPluginCallback2 &callback, QWidget *parent)
     for(int count = 0; count < scale; count++)
     {
 
-        double sigma = maxDT1/2;
+        double sigma = 2*maxDT1/3;
         printf("max in dt is %.2f, sigma is %.2f\n\n\n",maxDT1,sigma);
 
         unsigned char * data1d_gf = 0;
@@ -542,6 +542,7 @@ void processImage3(V3DPluginCallback2 &callback, QWidget *parent)
         }
 
         maxDT1 = getdtmax(callback,EnahancedImage,in_sz);
+        printf("ZHI ZHOU max dt is %d",maxDT1);
        if(count==0)
         {
             maxDT1 = 2;
@@ -1134,23 +1135,103 @@ template <class T> void AdpThresholding_adpwindow(const T* data1d,
                     Wy = Wx;
                     Wz = Wx;
 
-                    V3DLONG xb = ix-Wx; if(xb<0) xb = 0;
-                    V3DLONG xe = ix+Wx; if(xe>=N-1) xe = N-1;
-                    V3DLONG yb = iy-Wy; if(yb<0) yb = 0;
-                    V3DLONG ye = iy+Wy; if(ye>=M-1) ye = M-1;
-                    V3DLONG zb = iz-Wz; if(zb<0) zb = 0;
-                    V3DLONG ze = iz+Wz; if(ze>=P-1) ze = P-1;
+                    V3DLONG xb = ix-Wx;
+                    V3DLONG xe = ix+Wx;
+                    V3DLONG yb = iy-Wy;
+                    V3DLONG ye = iy+Wy;
+                    V3DLONG zb = iz-Wz;
+                    V3DLONG ze = iz+Wz;
+
+                    double xleft,xright,yleft,yright,zleft,zright;
+                    double xyleft,xyright,xleftyright,xrightyleft,xzleft,xzright,xleftzright,xrightzleft,yzleft,yzright,yleftzright,yrightzleft;
+                    if(xb<0)
+                         xleft = 0;
+                    else
+                          xleft = data1d[offsetk+offsetj+xb];
+                    if(xe>=N-1)
+                         xright = 0;
+                    else
+                         xright = data1d[offsetk+offsetj+xe];
+                    if(yb<0)
+                         yleft = 0;
+                    else
+                         yleft = data1d[offsetk+(yb)*N+ix];
+                    if(ye >= M-1)
+                         yright = 0;
+                    else
+                         yright = data1d[offsetk+(ye)*N+ix];
+                    if(zb < 0)
+                         zleft = 0;
+                    else
+                         zleft = data1d[(zb)*M*N+offsetj+ix];
+                    if(ze >= P-1)
+                         zright = 0;
+                    else
+                         zright = data1d[(ze)*M*N+offsetj+ix];
+
 
                     // printf("window size is %d\n",Wx);
                     //Seletive approach
 
-                    double fxx = data1d[offsetk+offsetj+xe]+ data1d[offsetk+offsetj+xb]- 2*data1d[offsetk+offsetj+ix];
-                    double fyy = data1d[offsetk+(ye)*N+ix]+data1d[offsetk+(yb)*N+ix]-2*data1d[offsetk+offsetj+ix];
-                    double fzz = data1d[(ze)*M*N+offsetj+ix]+data1d[(zb)*M*N+offsetj+ix]- 2*data1d[offsetk+offsetj+ix];
+                    double fxx = xleft + xright - 2*data1d[offsetk+offsetj+ix];
+                    double fyy = yleft + yright - 2*data1d[offsetk+offsetj+ix];
+                    double fzz = zleft + zright - 2*data1d[offsetk+offsetj+ix];
 
-                    double fxy = 0.25*(data1d[offsetk+(ye)*N+xe]+data1d[offsetk+(yb)*N+xb]-data1d[offsetk+(ye)*N+xb]-data1d[offsetk+(yb)*N+xe]);
-                    double fxz = 0.25*(data1d[(ze)*M*N+offsetj+xe]+data1d[(zb)*M*N+offsetj+xb]-data1d[(ze)*M*N+offsetj+xb]-data1d[(zb)*M*N+offsetj+xe]);
-                    double fyz = 0.25*(data1d[(ze)*M*N+(ye)*N+ix]+data1d[(zb)*M*N+(yb)*N+ix]-data1d[(ze)*M*N+(yb)*N+ix]-data1d[(zb)*M*N+(ye)*N+ix]);
+                    if(xb < 0 || yb < 0)
+                         xyleft = 0;
+                    else
+                         xyleft = data1d[offsetk+(yb)*N+xb];
+                    if(xe >= N-1 || ye >= M-1)
+                         xyright = 0;
+                    else
+                         xyright = data1d[offsetk+(ye)*N+xe];
+                    if(xb < 0 || ye >= M-1)
+                         xleftyright = 0;
+                    else
+                         xleftyright = data1d[offsetk+(ye)*N+xb];
+                    if(xe >= N-1 || yb < 0)
+                         xrightyleft = 0;
+                    else
+                         xrightyleft =  data1d[offsetk+(yb)*N+xe];
+
+                    double fxy = 0.25*(xyright + xyleft - xleftyright -xrightyleft);
+
+                    if(xb < 0 || zb < 0)
+                         xzleft = 0;
+                    else
+                         xzleft = data1d[(zb)*M*N+offsetj+xb];
+                    if(xe >= N-1 || ze >= P-1)
+                         xzright = 0;
+                    else
+                         xzright = data1d[(ze)*M*N+offsetj+xe];
+                    if(xb <0 || ze >= P-1)
+                         xleftzright = 0;
+                    else
+                         xleftzright = data1d[(ze)*M*N+offsetj+xb];
+                    if(xe >= N-1 || zb < 0)
+                         xrightzleft = 0;
+                    else
+                         xrightzleft = data1d[(zb)*M*N+offsetj+xe];
+
+                    double fxz = 0.25*(xzright + xzleft - xleftzright -xrightzleft);
+
+                    if(yb <0 || zb <0)
+                         yzleft = 0;
+                    else
+                         yzleft = data1d[(zb)*M*N+(yb)*N+ix];
+                    if(ye >= M-1 || ze >= P-1)
+                         yzright = 0;
+                    else
+                         yzright = data1d[(ze)*M*N+(ye)*N+ix];
+                    if(yb <0 || ze >= P-1)
+                         yleftzright = 0;
+                    else
+                         yleftzright = data1d[(ze)*M*N+(yb)*N+ix];
+                    if(ye >= M-1 || zb < 0)
+                         yrightzleft = 0;
+                    else
+                         yrightzleft = data1d[(zb)*M*N+(ye)*N+ix];
+                    double fyz = 0.25*(yzright + yzleft - yleftzright - yrightzleft);
                     if(dim==3)
                     {
                         SymmetricMatrix Cov_Matrix(3);
