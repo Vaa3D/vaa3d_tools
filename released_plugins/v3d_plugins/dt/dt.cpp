@@ -22,7 +22,7 @@ using namespace std;
 Q_EXPORT_PLUGIN2(dt, DtPlugin);
 
 void dtimg(V3DPluginCallback2 &callback, QWidget *parent, int method_code);
-bool dtimg(const V3DPluginArgList & input, V3DPluginArgList & output);
+bool dtimg(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPluginArgList & output);
 
 //plugin funcs
 const QString title = "Distance transform";
@@ -67,11 +67,11 @@ bool DtPlugin::dofunc(const QString &func_name, const V3DPluginArgList &input, V
 {
      if (func_name == tr("dt"))
 	{
-          return dtimg(input, output);
+          return dtimg(callback, input, output);
 	}
 	else if(func_name == tr("help"))
 	{
-		cout<<"Usage : v3d -x Fast_Distance -f dt -i <inimg_file> -o <outimg_file> -p <method> <channel> <first> <rescale> <marker_file> "<<endl;
+        cout<<"Usage : v3d -x dll_name -f dt -i <inimg_file> -o <outimg_file> -p <method> <channel> <first> <rescale> <marker_file> "<<endl;
 		cout<<endl;
 		cout<<"method       1: 3D, 2: 2D (for all individual Z-sections), default 1 "<<endl;
 		cout<<"channel      channel number to do dt (first channel is 1), default 1"<<endl;
@@ -87,7 +87,7 @@ bool DtPlugin::dofunc(const QString &func_name, const V3DPluginArgList &input, V
 
 }
 
-bool dtimg(const V3DPluginArgList & input, V3DPluginArgList & output)
+bool dtimg(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPluginArgList & output)
 {
      cout<<"Welcome to Distance transform"<<endl;
      if(input.size()<1 || output.size() != 1) return false;
@@ -108,6 +108,13 @@ bool dtimg(const V3DPluginArgList & input, V3DPluginArgList & output)
           }
 	}
 
+     if (method_code!=1 && method_code!=2)
+     {
+         v3d_msg("Invalid DT method code. It must be either 1 or 2.");
+         return false;
+     }
+
+
 	char * inimg_file = ((vector<char*> *)(input.at(0).p))->at(0);
 	char * outimg_file = ((vector<char*> *)(output.at(0).p))->at(0);
 	cout<<"method_code = "<<method_code<<endl;
@@ -118,46 +125,23 @@ bool dtimg(const V3DPluginArgList & input, V3DPluginArgList & output)
 	cout<<"inimg_file = "<<inimg_file<<endl;
 	cout<<"outimg_file = "<<outimg_file<<endl;
 
-	unsigned char * data1d = 0;
-	V3DLONG * in_sz = 0;
-
      unsigned int ch = channel-1; // for channel starting from 0.
 
-	int datatype;
-	if(!loadImage(inimg_file, data1d, in_sz, datatype))
-     {
-          cerr<<"load image "<<inimg_file<<" error!"<<endl;
-          return false;
-     }
-
-     if (datatype != 1)
-     {
-          v3d_msg("Right now this plugin supports only UINT8 data. Do nothing.");
-          if (data1d) {delete []data1d; data1d=0;}
-          if (in_sz) {delete []in_sz; in_sz=0;}
-          return false;
-     }
-
-
-
-     Image4DSimple subject;
-     if(datatype == 1)
-     {
-          subject.setData((unsigned char*)data1d, in_sz[0], in_sz[1], in_sz[2], in_sz[3], V3D_UINT8);
-     }
-     else
+     Image4DSimple *subject = callback.loadImage(inimg_file);
+     if(subject->getDatatype() != V3D_UINT8)
      {
           printf("\nError: The program only supports UINT8 datatype.\n");
+          if (subject) {delete subject; subject=0;}
           return false;
      }
 
-
-     Image4DProxy<Image4DSimple> pSub(&subject);
+     Image4DProxy<Image4DSimple> pSub(subject);
      // do dt
-     V3DLONG sz0 = in_sz[0];
-     V3DLONG sz1 = in_sz[1];
-     V3DLONG sz2 = in_sz[2];
-     V3DLONG sz3 = in_sz[3];
+
+     V3DLONG sz0 = subject->getXDim();
+     V3DLONG sz1 = subject->getYDim();
+     V3DLONG sz2 = subject->getZDim();
+     V3DLONG sz3 = subject->getCDim();
 	V3DLONG pagesz_sub = sz0*sz1*sz2;
 
      // read marker file
@@ -217,16 +201,11 @@ bool dtimg(const V3DPluginArgList & input, V3DPluginArgList & output)
 	V3DLONG sz_data[4]; sz_data[0]=sz0; sz_data[1]=sz1; sz_data[2]=sz2; sz_data[3]=1;
 	if (method_code==1)
 		dt3d_binary(pData, pDist, pLabel, sz_data, 1);
-	else if (method_code==2)
+    else // (method_code==2)
 	{
 		V3DLONG pagesz = sz0*sz1;
 		for (V3DLONG kk=0;kk<sz2;kk++)
 			dt2d_binary(pData+kk*pagesz, pDist+kk*pagesz, pLabel+kk*pagesz, sz_data, 1);
-	}
-	else
-	{
-		v3d_msg("Invalid DT method code. You should never see this message. Report this bug to the developer");
-		return false;
 	}
 
 	V3DLONG maxtest=0, mintest=INF;
@@ -258,18 +237,18 @@ bool dtimg(const V3DPluginArgList & input, V3DPluginArgList & output)
 	}
 
      // save image
-     in_sz[3] = 1;
-     saveImage(outimg_file, (unsigned char *)pData, in_sz, 1);
+    Image4DSimple outimg;
+    outimg.setData(pData, sz0, sz1, sz2, 1, V3D_UINT8);
+
+     callback.saveImage(&outimg, outimg_file);
 
 	if (pDist) {delete []pDist; pDist=0;}
 	if (pLabel) {delete []pLabel; pLabel=0;}
+    if (subject) {delete subject; subject=0;}
 
-     //if (data1d) {delete []data1d; data1d=0;}
-     if (in_sz) {delete []in_sz; in_sz=0;}
+    //pData will be freed through outimg
 
      return true;
-
-
 }
 
 
