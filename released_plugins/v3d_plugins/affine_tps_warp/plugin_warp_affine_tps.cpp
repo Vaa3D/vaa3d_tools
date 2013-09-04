@@ -505,16 +505,16 @@ void WarpImageBaseonMatchedPairs(V3DPluginCallback &callback, QWidget *parent)
 	}
 
 	//------------------------------------------------------------------------------------------------------------------------------------
-	printf("2. Read subject image. \n");
+    printf("2. Read subject image. \n");
 	unsigned char *p_img_sub=0;
-	long *sz_img_sub=0;
-	int datatype_sub=0;
-	if(!loadImage((char *)qPrintable(qs_filename_sub),p_img_sub,sz_img_sub,datatype_sub))
-	{
-		printf("ERROR: loadImage() return false in loading [%s].\n", qPrintable(qs_filename_sub));
-		return;
-	}
-	printf("\t>>read image file [%s] complete.\n",qPrintable(qs_filename_sub));
+    V3DLONG sz_img_sub[4];
+    int datatype_sub=0;
+    if(!simple_loadimage_wrapper(callback, (char *)qPrintable(qs_filename_sub),p_img_sub,sz_img_sub,datatype_sub))
+    {
+        printf("ERROR: loadImage() return false in loading [%s].\n", qPrintable(qs_filename_sub));
+        return;
+    }
+    printf("\t>>read image file [%s] complete.\n",qPrintable(qs_filename_sub));
 	printf("\t\timage size: [w=%ld, h=%ld, z=%ld, c=%ld]\n",sz_img_sub[0],sz_img_sub[1],sz_img_sub[2],sz_img_sub[3]);
 	printf("\t\tdatatype: %d\n",datatype_sub);
 
@@ -540,12 +540,11 @@ void WarpImageBaseonMatchedPairs(V3DPluginCallback &callback, QWidget *parent)
 		{
 			printf("ERROR: q_imagewarp_affine return false!\n");
 			if(p_img_sub) 			{delete []p_img_sub;			p_img_sub=0;}
-			if(sz_img_sub) 			{delete []sz_img_sub;			sz_img_sub=0;}
-			return;
+            return;
 		}
 
 		//save image
-		saveImage(qPrintable(qs_filename_sub2tar_affine),p_img_sub2tar,sz_img_sub,1);
+        simple_saveimage_wrapper(callback, qPrintable(qs_filename_sub2tar_affine),p_img_sub2tar,sz_img_sub,1);
 		qsl_outputinfo.push_back(QString("[%1]").arg(qs_filename_sub2tar_affine));
 		if(p_img_sub2tar) 			{delete []p_img_sub2tar;			p_img_sub2tar=0;}
 	}
@@ -559,12 +558,11 @@ void WarpImageBaseonMatchedPairs(V3DPluginCallback &callback, QWidget *parent)
 		{
 			printf("ERROR: q_imagewarp_tps() return false!\n");
 			if(p_img_sub) 			{delete []p_img_sub;			p_img_sub=0;}
-			if(sz_img_sub) 			{delete []sz_img_sub;			sz_img_sub=0;}
-			return;
+            return;
 		}
 
 		//save image
-		saveImage(qPrintable(qs_filename_sub2tar_tps),p_img_sub2tar,sz_img_sub,1);
+        simple_saveimage_wrapper(callback, qPrintable(qs_filename_sub2tar_tps),p_img_sub2tar,sz_img_sub,1);
 		qsl_outputinfo.push_back(QString("[%1]").arg(qs_filename_sub2tar_tps));
 		if(p_img_sub2tar) 			{delete []p_img_sub2tar;			p_img_sub2tar=0;}
 	}
@@ -581,6 +579,5 @@ void WarpImageBaseonMatchedPairs(V3DPluginCallback &callback, QWidget *parent)
 	printf("6. free memory. \n");
 	if(p_img_sub2tar) 		{delete []p_img_sub2tar;		p_img_sub2tar=0;}
 	if(p_img_sub) 			{delete []p_img_sub;			p_img_sub=0;}
-	if(sz_img_sub) 			{delete []sz_img_sub;			sz_img_sub=0;}
 
 }
