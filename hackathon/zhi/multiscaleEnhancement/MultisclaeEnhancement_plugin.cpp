@@ -1071,12 +1071,25 @@ template <class T> void AdpThresholding_adpwindow(const T* data1d,
                                                   double sigma,
                                                   T* &outimg, const T* gsdtdatald,unsigned int dim)
 {
+    if (!in_sz)
+    {
+        v3d_msg("Invalid input size information");
+        return;
+    }
+
+    if (c>in_sz[3] || c<1)
+    {
+        v3d_msg("Invalid channel information");
+        return;
+    }
+
     if (outimg)
     {
         v3d_msg("Warning: you have supplied an non-empty output image pointer. This program will force to free it now. But you may want to double check.");
         delete []outimg;
         outimg = 0;
     }
+
 
     V3DLONG N = in_sz[0];
     V3DLONG M = in_sz[1];
