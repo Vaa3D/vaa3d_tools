@@ -57,8 +57,8 @@ void Image4DSimple::loadImage(char filename[], bool b_useMyLib)
 	int pixelnbits=1; //100817
 
 	//060815, 060924, 070805
-	char * curFileSurfix = getSurfix(imgSrcFile);
-	printf("The current input file has the surfix [%s]\n", curFileSurfix);
+	char * curFileSurfix = getSuffix(imgSrcFile);
+	printf("The current input file has the suffix [%s]\n", curFileSurfix);
 
 	if (strcasecmp(curFileSurfix, "tif")==0 || strcasecmp(curFileSurfix, "tiff")==0 ||
 		strcasecmp(curFileSurfix, "lsm")==0 ) //read tiff/lsm stacks
@@ -135,7 +135,7 @@ void Image4DSimple::loadImage(char filename[], bool b_useMyLib)
 	}
 	else //then assume it is Hanchuan's RAW format
 	{
-		v3d_msg("The data is not with a TIF surfix, -- now this program assumes it is RAW format defined by Hanchuan Peng. \n", false);
+		v3d_msg("The data is not with a TIF suffix, -- now this program assumes it is RAW format defined by Hanchuan Peng. \n", false);
 		if (loadRaw2Stack(imgSrcFile, data1d, tmp_sz, tmp_datatype))
 		{
 			printf("The data doesn't look like a correct 4-byte-size RAW file. Try 2-byte-raw. \n");
@@ -399,8 +399,8 @@ bool Image4DSimple::saveImage(const char filename[])
 	}
 
 	//061009
-	char * curFileSurfix = getSurfix((char *)filename);
-	printf("The current output file has the surfix [%s]\n", curFileSurfix);
+	char * curFileSurfix = getSuffix((char *)filename);
+	printf("The current output file has the suffix [%s]\n", curFileSurfix);
 	if (strcasecmp(curFileSurfix, "tif")==0 || strcasecmp(curFileSurfix, "tiff")==0) //read tiff stacks
 	{
 		if (saveStack2Tif(filename, data1d, mysz, dt)!=0)
@@ -412,7 +412,7 @@ bool Image4DSimple::saveImage(const char filename[])
 	}
 	else //then assume it is Hanchuan's RAW format
 	{
-		printf("The data is not with a TIF surfix, -- now this program assumes it is RAW format defined by Hanchuan Peng. \n");
+		printf("The data is not with a TIF suffix, -- now this program assumes it is RAW format defined by Hanchuan Peng. \n");
 		if (saveStack2Raw(filename, data1d, mysz, dt)!=0)   //0 is no error //note that as I updated the saveStack2Raw to RAW-4-byte, the actual mask file cannot be read by the old wano program, i.e. the wano must be updated on Windows machine as well. 060921
 			//if (saveStack2Raw_2byte(filename, data1d, mysz, dt)!=0)   //for compatability save it to 2-byte raw //re-commented on 081124. always save to 4-byte raw
 		{
