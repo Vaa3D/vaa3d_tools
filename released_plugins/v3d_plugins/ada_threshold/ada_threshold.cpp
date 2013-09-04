@@ -52,7 +52,7 @@ void BinaryProcess(T *apsInput, T * aspOutput, V3DLONG iImageWidth, V3DLONG iIma
 }
 
 void thimg(V3DPluginCallback2 &callback, QWidget *parent, int method_code);
-bool thimg(const V3DPluginArgList & input, V3DPluginArgList & output);
+bool thimg(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPluginArgList & output);
 
 //plugin funcs
 const QString title = "adaptive threshold transform";
@@ -94,7 +94,7 @@ bool ThPlugin::dofunc(const QString &func_name, const V3DPluginArgList &input, V
 {
      if (func_name == tr("adath"))
 	{
-		return thimg(input, output);
+        return thimg(callback, input, output);
 	}
 	else if(func_name == tr("help"))
 	{
@@ -109,7 +109,7 @@ bool ThPlugin::dofunc(const QString &func_name, const V3DPluginArgList &input, V
 	}
 }
 
-bool thimg(const V3DPluginArgList & input, V3DPluginArgList & output)
+bool thimg(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPluginArgList & output)
 {
 	cout<<"Welcome to Gaussian filter"<<endl;
 	if (input.size()<1 || output.size() != 1) return false;
@@ -129,32 +129,30 @@ bool thimg(const V3DPluginArgList & input, V3DPluginArgList & output)
 	cout<<"inimg_file = "<<inimg_file<<endl;
 	cout<<"outimg_file = "<<outimg_file<<endl;
 
-	unsigned char * data1d = 0;
-	V3DLONG * in_sz = 0;
-
-	int datatype;
-	if(!loadImage(inimg_file, data1d, in_sz, datatype))
-     {
-          cerr<<"load image "<<inimg_file<<" error!"<<endl;
-          return false;
-     }
+    Image4DSimple *subject = callback.loadImage(inimg_file);
+    if(!subject || !subject->valid())
+    {
+         v3d_msg("Fail to load the input image.");
+         if (subject) {delete subject; subject=0;}
+         return false;
+    }
 
      clock_t start_t = clock(); // record time point
      // =====================================================================>>>>>>>>>
-	V3DLONG sz0 = in_sz[0];
-     V3DLONG sz1 = in_sz[1];
-     V3DLONG sz2 = in_sz[2];
-	V3DLONG sz3 = in_sz[3];
-	V3DLONG pagesz_sub = sz0*sz1*sz2;
+     V3DLONG sz0 = subject->getXDim();
+     V3DLONG sz1 = subject->getYDim();
+     V3DLONG sz2 = subject->getZDim();
+     V3DLONG sz3 = subject->getCDim();
+    V3DLONG pagesz_sub = sz0*sz1*sz2;
 
 	//----------------------------------------------------------------------------------------------------------------------------------
 	V3DLONG channelsz = sz0*sz1*sz2;
 	void *pData=NULL;
 
 	V3DLONG sz_data[4]; sz_data[0]=sz0; sz_data[1]=sz1; sz_data[2]=sz2; sz_data[3]=1;
-		switch (datatype)
+        switch (subject->getDatatype())
 		{
-			case 1:
+            case V3D_UINT8:
 				try
 				{
 					pData = (void *)(new unsigned char [sz3*channelsz]);
@@ -167,14 +165,14 @@ bool thimg(const V3DPluginArgList & input, V3DPluginArgList & output)
 				}
 
 				{
-					unsigned char * pSubtmp_uint8 = data1d;
+                    unsigned char * pSubtmp_uint8 = subject->getRawData();
 
 					for (V3DLONG ich=0; ich<sz3; ich++)
 						BinaryProcess(pSubtmp_uint8+ich*channelsz, (unsigned char *)pData+ich*channelsz, sz0, sz1, sz2, h, d  );
 				}
 				break;
 
-			case 2:
+            case V3D_UINT16:
 				try
 				{
 					pData = (void *)(new short int [sz3*channelsz]);
@@ -187,7 +185,7 @@ bool thimg(const V3DPluginArgList & input, V3DPluginArgList & output)
 				}
 
 				{
-					short int * pSubtmp_uint16 = (short int *)data1d;
+                    short int * pSubtmp_uint16 = (short int *)subject->getRawData();
 
 					for (V3DLONG ich=0; ich<sz3; ich++)
 						BinaryProcess(pSubtmp_uint16+ich*channelsz, (short int *)pData+ich*channelsz, sz0, sz1, sz2, h, d );
@@ -195,7 +193,7 @@ bool thimg(const V3DPluginArgList & input, V3DPluginArgList & output)
 
 				break;
 
-			case 4:
+            case V3D_FLOAT32:
 				try
 				{
 					pData = (void *)(new float [sz3*channelsz]);
@@ -208,7 +206,7 @@ bool thimg(const V3DPluginArgList & input, V3DPluginArgList & output)
 				}
 
 				{
-					float * pSubtmp_float32 = (float *)data1d;
+                    float * pSubtmp_float32 = (float *)subject->getRawData();
 
 					for (V3DLONG ich=0; ich<sz3; ich++)
 						BinaryProcess(pSubtmp_float32+ich*channelsz, (float *)pData+ich*channelsz, sz0, sz1, sz2, h, d );
@@ -226,12 +224,13 @@ bool thimg(const V3DPluginArgList & input, V3DPluginArgList & output)
 	printf("time eclapse %d s for dist computing!\n", (end_t-start_t)/1000000);
 
      // =====================================================================<<<<<<<<<
+    Image4DSimple outimg;
+    outimg.setData((unsigned char *)pData, sz0, sz1, sz2, sz3, subject->getDatatype());
 
-     saveImage(outimg_file, (unsigned char *)pData, in_sz, datatype);
+    callback.saveImage(&outimg, outimg_file);
+    v3d_msg("Finish saving output file.",0);
 
-     if(pData) {delete []pData; pData =0;}
-     if(data1d) {delete []data1d; data1d=0;}
-     if(in_sz)  {delete []in_sz; in_sz=0;}
+     if(subject) {delete []subject; subject=0;}
 
      return true;
 }
