@@ -80,7 +80,7 @@ bool DtPlugin::dofunc(const QString &func_name, const V3DPluginArgList &input, V
 		cout<<"rescale      Rescale output image intensity to [0,255], 1: rescale, 0: not rescale, default 0"<<endl;
           cout<<"marker_file  marker file name if 'first' is set to 1" <<endl;
 		cout<<endl;
-		cout<<"e.g. v3d -x Fast_Distance -f dt -i input.raw -o output.raw -p 1 1 0 0 mymarker.marker"<<endl;
+        cout<<"e.g. v3d -x dll_name (need replacement) -f dt -i input.raw -o output.raw -p 1 1 0 0 mymarker.marker"<<endl;
 		cout<<endl;
 		return true;
 	}
