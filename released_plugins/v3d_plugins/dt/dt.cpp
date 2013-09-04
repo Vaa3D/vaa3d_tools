@@ -121,9 +121,9 @@ bool dtimg(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPlug
      cout<<"channel = "<<channel<<endl;
 	cout<<"b_use_1stmarker = "<<b_use_1stmarker<<endl;
      cout<<"b_rescale = "<<b_rescale<<endl;
-     cout<<"marker_file = "<<marker_file<<endl;
-	cout<<"inimg_file = "<<inimg_file<<endl;
-	cout<<"outimg_file = "<<outimg_file<<endl;
+     if (marker_file) cout<<"marker_file = "<<marker_file<<endl;
+    cout<<"inimg_file = ["<<inimg_file<<"]"<<endl;
+    cout<<"outimg_file = ["<<outimg_file<<"]"<<endl;
 
      unsigned int ch = channel-1; // for channel starting from 0.
 
@@ -248,6 +248,7 @@ bool dtimg(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPlug
 
     //pData will be freed through outimg
 
+    v3d_msg("Finish running and file saving.", 0);
      return true;
 }
 
