@@ -11,6 +11,15 @@ ties names are:
 - Rem: a feature no longer available
 
 ============================================================================================
+Version 0.9.12
+September 4rd, 2013
+--------------------------------------------------------------------------------------------
+- Fix: fixed bug "setCurHiddenSelectedWindow"  which caused TeraFly  to incorrectly interact
+       with Vaa3D when the tri-view windows were hidden. Tri-view windows now are only mini-
+       mized when the corresponding 3D window is hidden.
+--------------------------------------------------------------------------------------------
+
+
 Version 0.9.11
 September 3rd, 2013
 --------------------------------------------------------------------------------------------

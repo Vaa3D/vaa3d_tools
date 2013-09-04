@@ -109,7 +109,7 @@ void CExplorerWindow::show()
 
             //hiding both tri-view and 3D view
             prev->window3D->setVisible(false);
-            prev->triViewWidget->setVisible(false);
+            //prev->triViewWidget->setVisible(false);       //---- Alessandro 2013-09-04 fixed: this causes Vaa3D's setCurHiddenSelectedWindow() to fail
             prev->view3DWidget->setCursor(Qt::ArrowCursor);
 
             //registrating views: ---- Alessandro 2013-04-18 fixed: determining unique triple of rotation angles and assigning absolute rotation
@@ -1158,9 +1158,7 @@ void CExplorerWindow::restoreViewFrom(CExplorerWindow* source) throw (MyExceptio
 
         //showing current view (with triViewWidget minimized)
         printf("\n\nshowing current view (with triViewWidget minimized)\n\n");
-        //triViewWidget->setVisible(true);
         triViewWidget->setWindowState(Qt::WindowMinimized);
-        //window3D->setVisible(true);
 
         //positioning the current 3D window exactly at the <source> window position
         printf("\n\npositioning the current 3D window exactly at the <source> window position\n\n");
@@ -1171,7 +1169,7 @@ void CExplorerWindow::restoreViewFrom(CExplorerWindow* source) throw (MyExceptio
         //hiding <source>
         printf("\n\nhiding <source>\n\n");
         source->window3D->setVisible(false);
-        source->triViewWidget->setVisible(false);
+        //source->triViewWidget->setVisible(false);       //---- Alessandro 2013-09-04 fixed: this causes Vaa3D's setCurHiddenSelectedWindow() to fail
         source->view3DWidget->setCursor(Qt::ArrowCursor);
 
         //applying the same color map only if it differs from the source one        
@@ -1330,7 +1328,8 @@ void CExplorerWindow::invokedFromVaa3D(v3d_imaging_paras* params /* = 0 */)
         //--- Alessandro 24/08/2013: to prevent the plugin to crash at the deepest resolution when the plugin is invoked by Vaa3D
         if(current->volResIndex == CImport::instance()->getResolutions()-1)
         {
-            QMessageBox::warning(this, "Warning", "Vaa3D-invoked actions at the highest resolution have been temporarily removed. Please contact the developers.");
+            QMessageBox::warning(this, "Warning", "Vaa3D-invoked actions at the highest resolution have been temporarily removed. "
+                                 "Please use different operations such as \"Double-click zoom-in\" or \"Traslate\".");
             return;
         }
 
