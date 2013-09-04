@@ -44,7 +44,7 @@ namespace teramanager
     *    PARAMETERS    *
     ********************
     ---------------------------------------------------------------------------------------------------------------------------*/
-    std::string version = "0.9.12";
+    std::string version = "0.9.13";
     /*-------------------------------------------------------------------------------------------------------------------------*/
 }
 
@@ -95,6 +95,8 @@ void CPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWi
     {
         if(CExplorerWindow::getCurrent())
             CExplorerWindow::getCurrent()->invokedFromVaa3D();
+        else
+            printf("--------------------- teramanager plugin [thread *] !! WARNING !! No suitable handler for Vaa3D invocation. TeraFly may not be instantiated or running in multiresolution mode.\n");
     }
     else
     {

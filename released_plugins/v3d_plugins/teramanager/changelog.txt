@@ -11,8 +11,18 @@ ties names are:
 - Rem: a feature no longer available
 
 ============================================================================================
+Version 0.9.13
+September 4th, 2013
+--------------------------------------------------------------------------------------------
+- Fix: fixed a bug which caused Vaa3D's modes "1-right-stroke to define a 3D curve..." to be
+       covertly propagated to other views.
+- Fix: fixed a bug which caused TeraFly not to cache high res views under certain conditions
+- Fix: fixed a bug which caused TeraFly to crash when zoomin-in too fast with mouse scroll.
+--------------------------------------------------------------------------------------------
+
+
 Version 0.9.12
-September 4rd, 2013
+September 4th, 2013
 --------------------------------------------------------------------------------------------
 - Fix: fixed bug "setCurHiddenSelectedWindow"  which caused TeraFly  to incorrectly interact
        with Vaa3D when the tri-view windows were hidden. Tri-view windows now are only mini-

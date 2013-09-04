@@ -81,7 +81,7 @@ void CExplorerWindow::show()
 
         //if the previous explorer window exists
         if(prev)
-        {
+        {           
             //applying the same color map only if it differs from the previous one
             Renderer_gl2* prev_renderer = (Renderer_gl2*)(prev->view3DWidget->getRenderer());
             Renderer_gl2* curr_renderer = (Renderer_gl2*)(view3DWidget->getRenderer());
@@ -97,6 +97,8 @@ void CExplorerWindow::show()
                     curr_cmap[i] = prev_cmap[i];
                 }
             }
+
+            printf("\n\n\nprev->selectMode = %d\n\n\n", prev_renderer->selectMode);
 
             timer.restart();
             if(changed_cmap)
@@ -1094,6 +1096,7 @@ void CExplorerWindow::loadAnnotations() throw (MyException)
     V3D_env->setSWC(window, vaa3dCurves);
     V3D_env->pushObjectIn3DWindow(window);
     view3DWidget->enableMarkerLabel(false);
+    view3DWidget->getRenderer()->endSelectMode();
     PLog::getInstance()->appendGPU(timer.elapsed(), QString("Loaded 3D annotations into view ").append(title.c_str()).toStdString());
 }
 
@@ -1136,7 +1139,6 @@ void CExplorerWindow::restoreViewFrom(CExplorerWindow* source) throw (MyExceptio
         setActive(true);
 
         //registrating views: ---- Alessandro 2013-04-18 fixed: determining unique triple of rotation angles and assigning absolute rotation
-        printf("\n\nregistrating views\n\n");
         source->view3DWidget->absoluteRotPose();
         view3DWidget->doAbsoluteRot(source->view3DWidget->xRot(), source->view3DWidget->yRot(), source->view3DWidget->zRot());
 
@@ -1157,23 +1159,19 @@ void CExplorerWindow::restoreViewFrom(CExplorerWindow* source) throw (MyExceptio
 
 
         //showing current view (with triViewWidget minimized)
-        printf("\n\nshowing current view (with triViewWidget minimized)\n\n");
         triViewWidget->setWindowState(Qt::WindowMinimized);
 
         //positioning the current 3D window exactly at the <source> window position
-        printf("\n\npositioning the current 3D window exactly at the <source> window position\n\n");
         QPoint location = source->window3D->pos();
         resize(source->window3D->size());
         move(location);
 
         //hiding <source>
-        printf("\n\nhiding <source>\n\n");
         source->window3D->setVisible(false);
         //source->triViewWidget->setVisible(false);       //---- Alessandro 2013-09-04 fixed: this causes Vaa3D's setCurHiddenSelectedWindow() to fail
         source->view3DWidget->setCursor(Qt::ArrowCursor);
 
-        //applying the same color map only if it differs from the source one        
-        printf("\n\napplying the same color map only if it differs from the source one \n\n");
+        //applying the same color map only if it differs from the source one
         Renderer_gl2* source_renderer = (Renderer_gl2*)(source->view3DWidget->getRenderer());
         Renderer_gl2* curr_renderer = (Renderer_gl2*)(view3DWidget->getRenderer());
         bool changed_cmap = false;
@@ -1311,126 +1309,157 @@ XYZ CExplorerWindow::getRenderer3DPoint(int x, int y)  throw (MyException)
 ***********************************************************************************/
 void CExplorerWindow::invokedFromVaa3D(v3d_imaging_paras* params /* = 0 */)
 {
-    v3d_imaging_paras* roi = params? params : (v3d_imaging_paras*) current->view3DWidget->getiDrawExternalParameter()->image4d->getCustomStructPointer();
+    if(!isActive || toBeClosed)
+        return;
+
     #ifdef TMP_DEBUG
-    if(!current)
-        printf("--------------------- teramanager plugin [thread ?] >> CExplorerWindow::Vaa3D_selectedROI([%d-%d], [%d-%d], [%d-%d])\n",
-               roi->xs, roi->xe, roi->ys, roi->ye, roi->zs, roi->ze);
+    if(params)
+        printf("--------------------- teramanager plugin [thread ?] >> CExplorerWindow[%s]::invokedFromVaa3D([%d-%d], [%d-%d], [%d-%d])\n",
+               titleShort.c_str(), params->xs, params->xe, params->ys, params->ye, params->zs, params->ze);
     else
-        printf("--------------------- teramanager plugin [thread ?] >> CExplorerWindow[%s]::Vaa3D_selectedROI([%d-%d], [%d-%d], [%d-%d])\n",
-               current->titleShort.c_str(), roi->xs, roi->xe, roi->ys, roi->ye, roi->zs, roi->ze);
+        printf("--------------------- teramanager plugin [thread ?] >> CExplorerWindow[%s]::invokedFromVaa3D()\n", titleShort.c_str());
+    #endif
+
+    //--- Alessandro 04/09/2013: added precondition checks to solve a bug which causes invokedFromVaa3D to be called without the customStructPointer available
+    //                           in Vaa3D. This happens because Vaa3D someway bypasses TeraFly for handling the zoomin-in with mouse scroll or because TeraFly
+    //                           does not correctly disconnects Vaa3D from the setZoom slots as a new view is created.
+    v3d_imaging_paras* roi = 0;
+    if(params)
+        roi = params;
+    else
+    {
+        if(view3DWidget->getiDrawExternalParameter())
+        {
+            if(view3DWidget->getiDrawExternalParameter()->image4d)
+            {
+                if(view3DWidget->getiDrawExternalParameter()->image4d->getCustomStructPointer())
+                    roi = static_cast<v3d_imaging_paras*>(view3DWidget->getiDrawExternalParameter()->image4d->getCustomStructPointer());
+                else
+                    ;//QMessageBox::critical(this,QObject::tr("Error"), QObject::tr("Unable to get customStructPointer from Vaa3D V3dR_GLWidget"),QObject::tr("Ok"));
+            }
+            else
+                ;//QMessageBox::critical(this,QObject::tr("Error"), QObject::tr("Unable to get My4DImage from Vaa3D V3dR_GLWidget"),QObject::tr("Ok"));
+        }
+        else
+            ;//QMessageBox::critical(this,QObject::tr("Error"), QObject::tr("Unable to get iDrawExternalParameter from Vaa3D V3dR_GLWidget"),QObject::tr("Ok"));
+    }
+    if(!roi)
+    {
+        printf("--------------------- teramanager plugin [thread *] !! WARNING in CExplorerWindow[%s]::invokedFromVaa3D() !! Unable to get customStructPointer from Vaa3D V3dR_GLWidget. Aborting invokedFromVaa3D()\n", titleShort.c_str());
+        return;
+    }
+
+    #ifdef TMP_DEBUG
+    if(params == 0)
+        printf("--------------------- teramanager plugin [thread ?] >> CExplorerWindow[%s]::Vaa3D_selectedROI(): Vaa3D ROI is [%d-%d], [%d-%d], [%d-%d]\n",
+               titleShort.c_str(), roi->xs, roi->xe, roi->ys, roi->ye, roi->zs, roi->ze);
     #endif
 
 
-    //the ROI selection is catched only if a <CExplorerWindow> is opened
-    if(current)
+    //--- Alessandro 24/08/2013: to prevent the plugin to crash at the deepest resolution when the plugin is invoked by Vaa3D
+    if(volResIndex == CImport::instance()->getResolutions()-1)
     {
-        //--- Alessandro 24/08/2013: to prevent the plugin to crash at the deepest resolution when the plugin is invoked by Vaa3D
-        if(current->volResIndex == CImport::instance()->getResolutions()-1)
+        QMessageBox::warning(this, "Warning", "Vaa3D-invoked actions at the highest resolution have been temporarily removed. "
+                             "Please use different operations such as \"Double-click zoom-in\" or \"Traslate\".");
+        return;
+    }
+
+    //retrieving ROI infos propagated by Vaa3D
+    int roiCenterX = roi->xe-(roi->xe-roi->xs)/2;
+    int roiCenterY = roi->ye-(roi->ye-roi->ys)/2;
+    int roiCenterZ = roi->ze-(roi->ze-roi->zs)/2;
+
+    //zoom-in around marker or ROI triggers a new window
+    if(roi->ops_type == 1)
+        newView(roi->xe, roi->ye, roi->ze, volResIndex+1, false, -1, -1, -1, roi->xs, roi->ys, roi->zs);
+
+    //zoom-in with mouse scroll up may trigger a new window if caching is not possible
+    else if(roi->ops_type == 2)
+    {
+        if(volResIndex != CImport::instance()->getResolutions()-1 &&   //do nothing if highest resolution has been reached
+           isZoomDerivativePos())                                      //accepting zoom-in only when zoom factor derivative is positive
         {
-            QMessageBox::warning(this, "Warning", "Vaa3D-invoked actions at the highest resolution have been temporarily removed. "
-                                 "Please use different operations such as \"Double-click zoom-in\" or \"Traslate\".");
-            return;
-        }
-
-        //retrieving ROI infos propagated by Vaa3D
-        int roiCenterX = roi->xe-(roi->xe-roi->xs)/2;
-        int roiCenterY = roi->ye-(roi->ye-roi->ys)/2;
-        int roiCenterZ = roi->ze-(roi->ze-roi->zs)/2;
-
-        //zoom-in around marker or ROI triggers a new window
-        if(roi->ops_type == 1)
-            current->newView(roi->xe, roi->ye, roi->ze, volResIndex+1, false, -1, -1, -1, roi->xs, roi->ys, roi->zs);
-
-        //zoom-in with mouse scroll up may trigger a new window if caching is not possible
-        else if(roi->ops_type == 2)
-        {
-            if(current->volResIndex != CImport::instance()->getResolutions()-1 &&   //do nothing if highest resolution has been reached
-               isZoomDerivativePos())                                               //accepting zoom-in only when zoom factor derivative is positive
+            //trying caching if next view exists
+            if(next)
             {
-                //trying caching if next view exists
-                if(current->next)
+                //converting Vaa3D VOI local coordinates to TeraFly coordinates of the next resolution
+                float gXS = getGlobalHCoord(static_cast<float>(roi->xs), next->volResIndex, false, true);
+                float gXE = getGlobalHCoord(static_cast<float>(roi->xe), next->volResIndex, false, true);
+                float gYS = getGlobalVCoord(static_cast<float>(roi->ys), next->volResIndex, false, true);
+                float gYE = getGlobalVCoord(static_cast<float>(roi->ye), next->volResIndex, false, true);
+                float gZS = getGlobalDCoord(static_cast<float>(roi->zs), next->volResIndex, false, true);
+                float gZE = getGlobalDCoord(static_cast<float>(roi->ze), next->volResIndex, false, true);
+                QRectF gXRect(QPointF(gXS, 0), QPointF(gXE, 1));
+                QRectF gYRect(QPointF(gYS, 0), QPointF(gYE, 1));
+                QRectF gZRect(QPointF(gZS, 0), QPointF(gZE, 1));
+
+                //obtaining the actual requested VOI under the existing constraints (i.e., maximum view dimensions)
+                printf("--------------------- teramanager plugin [thread ?] >> CExplorerWindow::Vaa3D_selectedROI(): requested voi [%.0f-%.0f][%.0f-%.0f][%.0f-%.0f]...",
+                       gXS, gXE, gYS, gYE, gZS, gZE);
+                if(gXE-gXS > PMain::getInstance()->Hdim_sbox->value())
                 {
-                    //converting Vaa3D VOI local coordinates to TeraFly coordinates of the next resolution
-                    float gXS = current->getGlobalHCoord(static_cast<float>(roi->xs), current->next->volResIndex);
-                    float gXE = current->getGlobalHCoord(static_cast<float>(roi->xe), current->next->volResIndex);
-                    float gYS = current->getGlobalVCoord(static_cast<float>(roi->ys), current->next->volResIndex);
-                    float gYE = current->getGlobalVCoord(static_cast<float>(roi->ye), current->next->volResIndex);
-                    float gZS = current->getGlobalDCoord(static_cast<float>(roi->zs), current->next->volResIndex);
-                    float gZE = current->getGlobalDCoord(static_cast<float>(roi->ze), current->next->volResIndex);
-                    QRectF gXRect(QPointF(gXS, 0), QPointF(gXE, 1));
-                    QRectF gYRect(QPointF(gYS, 0), QPointF(gYE, 1));
-                    QRectF gZRect(QPointF(gZS, 0), QPointF(gZE, 1));
-
-                    //obtaining the actual requested VOI under the existing constraints (i.e., maximum view dimensions)
-                    printf("--------------------- teramanager plugin [thread ?] >> CExplorerWindow::Vaa3D_selectedROI(): requested voi [%.0f-%.0f][%.0f-%.0f][%.0f-%.0f]...",
-                           gXS, gXE, gYS, gYE, gZS, gZE);
-                    if(gXE-gXS > PMain::getInstance()->Hdim_sbox->value())
-                    {
-                        float center = gXS+(gXE-gXS)/2;
-                        gXS = center - PMain::getInstance()->Hdim_sbox->value()/2;
-                        gXE = center + PMain::getInstance()->Hdim_sbox->value()/2;
-                    }
-                    if(gYE-gYS > PMain::getInstance()->Vdim_sbox->value())
-                    {
-                        float center = gYS+(gYE-gYS)/2;
-                        gYS = center - PMain::getInstance()->Vdim_sbox->value()/2;
-                        gYE = center + PMain::getInstance()->Vdim_sbox->value()/2;
-                    }
-                    if(gZE-gZS > PMain::getInstance()->Ddim_sbox->value())
-                    {
-                        float center = gZS+(gZE-gZS)/2;
-                        gZS = center - PMain::getInstance()->Ddim_sbox->value()/2;
-                        gZE = center + PMain::getInstance()->Ddim_sbox->value()/2;
-                    }
-                    printf("but actual requested VOI is [%.0f-%.0f][%.0f-%.0f][%.0f-%.0f]\n", gXS, gXE, gYS, gYE, gZS, gZE);
-
-                    //obtaining coordinates of the cached resolution
-                    float gXScached = static_cast<float>(current->next->volH0);
-                    float gXEcached = static_cast<float>(current->next->volH1);
-                    float gYScached = static_cast<float>(current->next->volV0);
-                    float gYEcached = static_cast<float>(current->next->volV1);
-                    float gZScached = static_cast<float>(current->next->volD0);
-                    float gZEcached = static_cast<float>(current->next->volD1);
-                    QRectF gXRectCached(QPoint(gXScached, 0), QPoint(gXEcached, 1));
-                    QRectF gYRectCached(QPoint(gYScached, 0), QPoint(gYEcached, 1));
-                    QRectF gZRectCached(QPoint(gZScached, 0), QPoint(gZEcached, 1));
-
-                    //computing intersection volume and Vaa3D VOI coverage factor
-                    float intersectionX = gXRect.intersected(gXRectCached).width();
-                    float intersectionY = gYRect.intersected(gYRectCached).width();
-                    float intersectionZ = gZRect.intersected(gZRectCached).width();
-                    float intersectionVol =  intersectionX*intersectionY*intersectionZ;
-                    float voiVol = (gXE-gXS)*(gYE-gYS)*(gZE-gZS);
-                    float cachedVol = (gXEcached-gXScached)*(gYEcached-gYScached)*(gZEcached-gZScached);
-                    float coverageFactor = voiVol != 0 ? intersectionVol/voiVol : 0;
-                    printf("--------------------- teramanager plugin [thread ?] >> CExplorerWindow::Vaa3D_selectedROI(): actual requested voi[%.0f-%.0f][%.0f-%.0f][%.0f-%.0f] and cached[%.0f-%.0f][%.0f-%.0f][%.0f-%.0f]...\n",
-                           gXS, gXE, gYS, gYE, gZS, gZE, gXScached, gXEcached, gYScached, gYEcached, gZScached, gZEcached);
-                    printf("--------------------- teramanager plugin [thread ?] >> CExplorerWindow::Vaa3D_selectedROI(): intersection is %.0f x %.0f x %.0f with coverage factor = %.2f\n",
-                           intersectionX, intersectionY, intersectionZ, coverageFactor);
-
-                    //if Vaa3D VOI is covered for the selected percentage by the existing cached volume, just restoring its view
-                    if(coverageFactor >= PMain::getInstance()->cacheSens->value()/100.0f)
-                    {
-                        current->setActive(false);
-                        current->resetZoomHistory();
-                        current->next->restoreViewFrom(current);
-                    }
-
-                    //otherwise invoking a new view
-                    else
-                        current->newView(roiCenterX, roiCenterY, roiCenterZ, volResIndex+1, false, static_cast<int>((roi->xe-roi->xs)/2.0f+0.5f), static_cast<int>((roi->ye-roi->ys)/2.0f+0.5f), static_cast<int>((roi->ze-roi->zs)/2.0f+0.5f));
+                    float center = gXS+(gXE-gXS)/2;
+                    gXS = center - PMain::getInstance()->Hdim_sbox->value()/2;
+                    gXE = center + PMain::getInstance()->Hdim_sbox->value()/2;
                 }
+                if(gYE-gYS > PMain::getInstance()->Vdim_sbox->value())
+                {
+                    float center = gYS+(gYE-gYS)/2;
+                    gYS = center - PMain::getInstance()->Vdim_sbox->value()/2;
+                    gYE = center + PMain::getInstance()->Vdim_sbox->value()/2;
+                }
+                if(gZE-gZS > PMain::getInstance()->Ddim_sbox->value())
+                {
+                    float center = gZS+(gZE-gZS)/2;
+                    gZS = center - PMain::getInstance()->Ddim_sbox->value()/2;
+                    gZE = center + PMain::getInstance()->Ddim_sbox->value()/2;
+                }
+                printf("but actual requested VOI is [%.0f-%.0f][%.0f-%.0f][%.0f-%.0f]\n", gXS, gXE, gYS, gYE, gZS, gZE);
+
+                //obtaining coordinates of the cached resolution
+                float gXScached = static_cast<float>(next->volH0);
+                float gXEcached = static_cast<float>(next->volH1);
+                float gYScached = static_cast<float>(next->volV0);
+                float gYEcached = static_cast<float>(next->volV1);
+                float gZScached = static_cast<float>(next->volD0);
+                float gZEcached = static_cast<float>(next->volD1);
+                QRectF gXRectCached(QPoint(gXScached, 0), QPoint(gXEcached, 1));
+                QRectF gYRectCached(QPoint(gYScached, 0), QPoint(gYEcached, 1));
+                QRectF gZRectCached(QPoint(gZScached, 0), QPoint(gZEcached, 1));
+
+                //computing intersection volume and Vaa3D VOI coverage factor
+                float intersectionX = gXRect.intersected(gXRectCached).width();
+                float intersectionY = gYRect.intersected(gYRectCached).width();
+                float intersectionZ = gZRect.intersected(gZRectCached).width();
+                float intersectionVol =  intersectionX*intersectionY*intersectionZ;
+                float voiVol = (gXE-gXS)*(gYE-gYS)*(gZE-gZS);
+                float cachedVol = (gXEcached-gXScached)*(gYEcached-gYScached)*(gZEcached-gZScached);
+                float coverageFactor = voiVol != 0 ? intersectionVol/voiVol : 0;
+                printf("--------------------- teramanager plugin [thread ?] >> CExplorerWindow::Vaa3D_selectedROI(): actual requested voi[%.0f-%.0f][%.0f-%.0f][%.0f-%.0f] and cached[%.0f-%.0f][%.0f-%.0f][%.0f-%.0f]...\n",
+                       gXS, gXE, gYS, gYE, gZS, gZE, gXScached, gXEcached, gYScached, gYEcached, gZScached, gZEcached);
+                printf("--------------------- teramanager plugin [thread ?] >> CExplorerWindow::Vaa3D_selectedROI(): intersection is %.0f x %.0f x %.0f with coverage factor = %.2f\n",
+                       intersectionX, intersectionY, intersectionZ, coverageFactor);
+
+                //if Vaa3D VOI is covered for the selected percentage by the existing cached volume, just restoring its view
+                if(coverageFactor >= PMain::getInstance()->cacheSens->value()/100.0f)
+                {
+                    setActive(false);
+                    resetZoomHistory();
+                    next->restoreViewFrom(this);
+                }
+
+                //otherwise invoking a new view
                 else
-                    current->newView(roiCenterX, roiCenterY, roiCenterZ, volResIndex+1, false, static_cast<int>((roi->xe-roi->xs)/2.0f+0.5f), static_cast<int>((roi->ye-roi->ys)/2.0f+0.5f), static_cast<int>((roi->ze-roi->zs)/2.0f+0.5f));
+                    newView(roiCenterX, roiCenterY, roiCenterZ, volResIndex+1, false, static_cast<int>((roi->xe-roi->xs)/2.0f+0.5f), static_cast<int>((roi->ye-roi->ys)/2.0f+0.5f), static_cast<int>((roi->ze-roi->zs)/2.0f+0.5f));
             }
             else
-                printf("--------------------- teramanager plugin [thread ?] >> CExplorerWindow::Vaa3D_selectedROI(): ignoring Vaa3D mouse scroll up zoom-in\n");
-
+                newView(roiCenterX, roiCenterY, roiCenterZ, volResIndex+1, false, static_cast<int>((roi->xe-roi->xs)/2.0f+0.5f), static_cast<int>((roi->ye-roi->ys)/2.0f+0.5f), static_cast<int>((roi->ze-roi->zs)/2.0f+0.5f));
         }
         else
-            QMessageBox::critical(PMain::getInstance(),QObject::tr("Error"), QObject::tr("in CExplorerWindow::Vaa3D_selectedROI(): unsupported (or unset) operation type"),QObject::tr("Ok"));
+            printf("--------------------- teramanager plugin [thread ?] >> CExplorerWindow::Vaa3D_selectedROI(): ignoring Vaa3D mouse scroll up zoom-in\n");
     }
+    else
+        QMessageBox::critical(this,QObject::tr("Error"), QObject::tr("in CExplorerWindow::Vaa3D_selectedROI(): unsupported (or unset) operation type"),QObject::tr("Ok"));
 }
 
 /**********************************************************************************
@@ -1439,7 +1468,7 @@ void CExplorerWindow::invokedFromVaa3D(v3d_imaging_paras* params /* = 0 */)
 * resolution volume image space. If resIndex is not set, the returned global coord-
 * inate will be in the highest resolution image space.
 ***********************************************************************************/
-int CExplorerWindow::getGlobalVCoord(int localVCoord, int resIndex /* = -1 */, bool fromVaa3Dcoordinates /* = false */)
+int CExplorerWindow::getGlobalVCoord(int localVCoord, int resIndex /* = -1 */, bool fromVaa3Dcoordinates /* = false */, bool cutOutOfRange /* = false */)
 {
     #ifdef TMP_DEBUG
     printf("--------------------- teramanager plugin [thread *] >> CExplorerWindow[%s]::getGlobalVCoord(coord = %d, res = %d, fromVaa3D = %s)...",
@@ -1449,6 +1478,13 @@ int CExplorerWindow::getGlobalVCoord(int localVCoord, int resIndex /* = -1 */, b
     //setting resIndex if it has not been set
     if(resIndex == -1)
         resIndex = CImport::instance()->getResolutions()-1;
+
+    //cutting out-of-range coordinate, if <cutOutOfRange> is set
+    if(cutOutOfRange)
+    {
+        localVCoord = localVCoord <  0                                                       ? 0                                                       : localVCoord;
+        localVCoord = localVCoord >= CImport::instance()->getVolume(volResIndex)->getDIM_V() ? CImport::instance()->getVolume(volResIndex)->getDIM_V() : localVCoord;
+    }
 
     //if the Vaa3D image size limit has been reached along this direction, mapping Vaa3D coordinates to the non-downsampled image space coordinate system
     if(fromVaa3Dcoordinates && (volV1-volV0 > LIMIT_VOLY))
@@ -1462,7 +1498,7 @@ int CExplorerWindow::getGlobalVCoord(int localVCoord, int resIndex /* = -1 */, b
 
     return (volV0+localVCoord)*ratio + 0.5f;
 }
-int CExplorerWindow::getGlobalHCoord(int localHCoord, int resIndex /* = -1 */, bool fromVaa3Dcoordinates /* = false */)
+int CExplorerWindow::getGlobalHCoord(int localHCoord, int resIndex /* = -1 */, bool fromVaa3Dcoordinates /* = false */, bool cutOutOfRange /* = false */)
 {
     #ifdef TMP_DEBUG
     printf("--------------------- teramanager plugin [thread *] >> CExplorerWindow[%s]::getGlobalHCoord(coord = %d, res = %d, fromVaa3D = %s)...",
@@ -1472,6 +1508,13 @@ int CExplorerWindow::getGlobalHCoord(int localHCoord, int resIndex /* = -1 */, b
     //setting resIndex if it has not been set
     if(resIndex == -1)
         resIndex = CImport::instance()->getResolutions()-1;
+
+    //cutting out-of-range coordinate, if <cutOutOfRange> is set
+    if(cutOutOfRange)
+    {
+        localHCoord = localHCoord <  0                                                       ? 0                                                       : localHCoord;
+        localHCoord = localHCoord >= CImport::instance()->getVolume(volResIndex)->getDIM_H() ? CImport::instance()->getVolume(volResIndex)->getDIM_H() : localHCoord;
+    }
 
     //if the Vaa3D image size limit has been reached along this direction, mapping Vaa3D coordinates to the non-downsampled image space coordinate system
     if(fromVaa3Dcoordinates && (volH1-volH0 > LIMIT_VOLX))
@@ -1485,7 +1528,7 @@ int CExplorerWindow::getGlobalHCoord(int localHCoord, int resIndex /* = -1 */, b
 
     return (volH0+localHCoord)*ratio + 0.5f;
 }
-int CExplorerWindow::getGlobalDCoord(int localDCoord, int resIndex /* = -1 */, bool fromVaa3Dcoordinates /* = false */)
+int CExplorerWindow::getGlobalDCoord(int localDCoord, int resIndex /* = -1 */, bool fromVaa3Dcoordinates /* = false */, bool cutOutOfRange /* = false */)
 {
     #ifdef TMP_DEBUG
     printf("--------------------- teramanager plugin [thread *] >> CExplorerWindow[%s]::getGlobalDCoord(coord = %d, res = %d, fromVaa3D = %s)...",
@@ -1495,6 +1538,13 @@ int CExplorerWindow::getGlobalDCoord(int localDCoord, int resIndex /* = -1 */, b
     //setting resIndex if it has not been set
     if(resIndex == -1)
         resIndex = CImport::instance()->getResolutions()-1;
+
+    //cutting out-of-range coordinate, if <cutOutOfRange> is set
+    if(cutOutOfRange)
+    {
+        localDCoord = localDCoord <  0                                                       ? 0                                                       : localDCoord;
+        localDCoord = localDCoord >= CImport::instance()->getVolume(volResIndex)->getDIM_D() ? CImport::instance()->getVolume(volResIndex)->getDIM_D() : localDCoord;
+    }
 
     //if the Vaa3D image size limit has been reached along this direction, mapping Vaa3D coordinates to the non-downsampled image space coordinate system
     if(fromVaa3Dcoordinates && (volD1-volD0 > LIMIT_VOLZ))
@@ -1508,7 +1558,7 @@ int CExplorerWindow::getGlobalDCoord(int localDCoord, int resIndex /* = -1 */, b
 
     return (volD0+localDCoord)*ratio + 0.5f;
 }
-float CExplorerWindow::getGlobalVCoord(float localVCoord, int resIndex /* = -1 */, bool fromVaa3Dcoordinates /* = false */)
+float CExplorerWindow::getGlobalVCoord(float localVCoord, int resIndex /* = -1 */, bool fromVaa3Dcoordinates /* = false */, bool cutOutOfRange /* = false */)
 {
     #ifdef TMP_DEBUG
     printf("--------------------- teramanager plugin [thread *] >> CExplorerWindow[%s]::getGlobalVCoord(coord = %.1f, res = %d, fromVaa3D = %s)...",
@@ -1519,19 +1569,26 @@ float CExplorerWindow::getGlobalVCoord(float localVCoord, int resIndex /* = -1 *
     if(resIndex == -1)
         resIndex = CImport::instance()->getResolutions()-1;
 
+    //cutting out-of-range coordinate, if <cutOutOfRange> is set
+    if(cutOutOfRange)
+    {
+        localVCoord = localVCoord <  0                                                       ? 0                                                       : localVCoord;
+        localVCoord = localVCoord >= CImport::instance()->getVolume(volResIndex)->getDIM_V() ? CImport::instance()->getVolume(volResIndex)->getDIM_V() : localVCoord;
+    }
+
     //if the Vaa3D image size limit has been reached along this direction, mapping Vaa3D coordinates to the non-downsampled image space coordinate system
     if(fromVaa3Dcoordinates && (volV1-volV0 > LIMIT_VOLY))
         localVCoord *= static_cast<float>(volV1-volV0-1)/(LIMIT_VOLY-1);
 
     float ratio = (CImport::instance()->getVolume(resIndex)->getDIM_V()-1.0f)/(CImport::instance()->getVolume(volResIndex)->getDIM_V()-1.0f);
 
-#ifdef TMP_DEBUG
-printf("%.1f\n", (volV0+localVCoord)*ratio);
-#endif
+    #ifdef TMP_DEBUG
+    printf("%.1f\n", (volV0+localVCoord)*ratio);
+    #endif
 
     return (volV0+localVCoord)*ratio;
 }
-float CExplorerWindow::getGlobalHCoord(float localHCoord, int resIndex /* = -1 */, bool fromVaa3Dcoordinates /* = false */)
+float CExplorerWindow::getGlobalHCoord(float localHCoord, int resIndex /* = -1 */, bool fromVaa3Dcoordinates /* = false */, bool cutOutOfRange /* = false */)
 {
 
     #ifdef TMP_DEBUG
@@ -1542,6 +1599,13 @@ float CExplorerWindow::getGlobalHCoord(float localHCoord, int resIndex /* = -1 *
     //setting resIndex if it has not been set
     if(resIndex == -1)
         resIndex = CImport::instance()->getResolutions()-1;
+
+    //cutting out-of-range coordinate, if <cutOutOfRange> is set
+    if(cutOutOfRange)
+    {
+        localHCoord = localHCoord <  0                                                       ? 0                                                       : localHCoord;
+        localHCoord = localHCoord >= CImport::instance()->getVolume(volResIndex)->getDIM_H() ? CImport::instance()->getVolume(volResIndex)->getDIM_H() : localHCoord;
+    }
 
     //if the Vaa3D image size limit has been reached along this direction, mapping Vaa3D coordinates to the non-downsampled image space coordinate system
     if(fromVaa3Dcoordinates && (volH1-volH0 > LIMIT_VOLX))
@@ -1555,7 +1619,7 @@ float CExplorerWindow::getGlobalHCoord(float localHCoord, int resIndex /* = -1 *
 
     return (volH0+localHCoord)*ratio;
 }
-float CExplorerWindow::getGlobalDCoord(float localDCoord, int resIndex /* = -1 */, bool fromVaa3Dcoordinates /* = false */)
+float CExplorerWindow::getGlobalDCoord(float localDCoord, int resIndex /* = -1 */, bool fromVaa3Dcoordinates /* = false */, bool cutOutOfRange /* = false */)
 {
     #ifdef TMP_DEBUG
     printf("--------------------- teramanager plugin [thread *] >> CExplorerWindow[%s]::getGlobalDCoord(coord = %.1f, res = %d, fromVaa3D = %s)...",
@@ -1565,6 +1629,13 @@ float CExplorerWindow::getGlobalDCoord(float localDCoord, int resIndex /* = -1 *
     //setting resIndex if it has not been set
     if(resIndex == -1)
         resIndex = CImport::instance()->getResolutions()-1;
+
+    //cutting out-of-range coordinate, if <cutOutOfRange> is set
+    if(cutOutOfRange)
+    {
+        localDCoord = localDCoord <  0                                                       ? 0                                                       : localDCoord;
+        localDCoord = localDCoord >= CImport::instance()->getVolume(volResIndex)->getDIM_D() ? CImport::instance()->getVolume(volResIndex)->getDIM_D() : localDCoord;
+    }
 
     //if the Vaa3D image size limit has been reached along this direction, mapping Vaa3D coordinates to the non-downsampled image space coordinate system
     if(fromVaa3Dcoordinates && (volD1-volD0 > LIMIT_VOLZ))
@@ -1799,46 +1870,5 @@ void CExplorerWindow::syncWindows(V3dR_MainWindow* src, V3dR_MainWindow* dst)
     dst->checkBox_displayAxes->setChecked(src->checkBox_displayAxes->isChecked());
     dst->checkBox_displayBoundingBox->setChecked(src->checkBox_displayBoundingBox->isChecked());
     dst->checkBox_OrthoView->setChecked(src->checkBox_OrthoView->isChecked());
-
-
-//    // volume display control
-//    QRadioButton *dispType_maxip, *dispType_minip, *dispType_alpha, *dispType_cs3d;
-//    QLabel *thicknessSlider_Label, *transparentSlider_Label; //for disable, by RZC 080822
-//    QDoubleSpinBox *zthicknessBox; //by PHC, 090215
-//    QComboBox *comboBox_channel;
-//    QAbstractSlider *thicknessSlider, *transparentSlider;
-//    QCheckBox *checkBox_channelR, *checkBox_channelG, *checkBox_channelB, *checkBox_channelA, *checkBox_volCompress;
-//    QPushButton *volumeColormapButton;
-
-//    // surface display control
-//    QCheckBox *checkBox_displayMarkers, *checkBox_displaySurf, *checkBox_markerLabel, *checkBox_surfStretch;
-//    QSpinBox * spinBox_markerSize; // 090422 RZC
-//    QPushButton *updateLandmarkButton, *loadSaveObjectsButton;
-//    QPushButton *surfobjManagerButton; //or Object Manager button
-
-//    // other control
-//    QCheckBox *checkBox_displayAxes, *checkBox_displayBoundingBox, *checkBox_OrthoView;
-//    QPushButton *colorButton, *brightButton, *reloadDataButton;
-//    QPushButton *movieSaveButton, *animateButton;
-//    QComboBox * comboRotType;
-
-//    QTabWidget *tabOptions;
-
-//    // rotation, zoom, shift control
-//    QAbstractSlider *xRotSlider, *yRotSlider, *zRotSlider;
-//    QAbstractSlider *zoomSlider, *xShiftSlider, *yShiftSlider;
-//    QSpinBox *xRotBox, *yRotBox, *zRotBox, *zoomBox, *xShiftBox, *yShiftBox;
-//    QCheckBox *checkBox_absoluteRot;
-//    QPushButton *zoomReset, *rotReset, *rotAbsolute, *rotAbsolutePose;
-
-//    QTabWidget *tabRotZoom;
-
-//    // cut plane control
-//    QAbstractSlider *xcminSlider, *xcmaxSlider, *ycminSlider, *ycmaxSlider, *zcminSlider, *zcmaxSlider, *fcutSlider;
-//    QAbstractButton *xcLock, *ycLock, *zcLock;
-//    QCheckBox *checkBox_xCS, *checkBox_yCS, *checkBox_zCS, *checkBox_fCS;
-//    QAbstractSlider *xCSSlider, *yCSSlider, *zCSSlider, *fCSSlider;
-//    QAbstractSlider *xSminSlider, *xSmaxSlider, *ySminSlider, *ySmaxSlider, *zSminSlider, *zSmaxSlider;
-//    QStackedLayout *stackedCutPlane;
 }
 
