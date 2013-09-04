@@ -128,6 +128,12 @@ bool dtimg(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPlug
      unsigned int ch = channel-1; // for channel starting from 0.
 
      Image4DSimple *subject = callback.loadImage(inimg_file);
+     if(!subject || !subject->valid())
+     {
+          v3d_msg("Fail to load the input image.");
+          if (subject) {delete subject; subject=0;}
+          return false;
+     }
      if(subject->getDatatype() != V3D_UINT8)
      {
           printf("\nError: The program only supports UINT8 datatype.\n");
