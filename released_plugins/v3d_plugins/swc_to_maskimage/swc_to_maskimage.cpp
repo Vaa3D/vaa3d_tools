@@ -907,6 +907,8 @@ bool swc_to_maskimage(V3DPluginCallback2 & callback, const V3DPluginArgList & in
 	siz[0] = nx; siz[1] = ny; siz[2] = nz; siz[3] = 1;
     simple_saveimage_wrapper(callback, qPrintable(qs_output), pData, siz, V3D_UINT8);
 
+    if (pData) {delete []pData; pData=0;}
+
 	return true;
 }
 
