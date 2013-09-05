@@ -1,3 +1,5 @@
+//last change: by PHC 20130905. Creating this file actually fix the Windows VC++ build problem of creating dynamic library files. (w/o this, the dll was created but not the .lib file and .exp file), and thus the plugin cannot be instantiated.
+
 #include "swc2mask_plugin.h"
 
 #include <iostream>
