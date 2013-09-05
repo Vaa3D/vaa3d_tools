@@ -153,7 +153,7 @@ bool processImage(V3DPluginCallback2 &callback, const V3DPluginArgList & input, 
      else
      {
           for (V3DLONG i=0;i<N;i++)
-               data1d[i] = vv;
+               data1d[i] = vv; //this is a BUG (not considering the data type), should be fixed later
 
           // save image
           simple_saveimage_wrapper(callback, outimg_file, (unsigned char *)data1d, in_sz, datatype);
