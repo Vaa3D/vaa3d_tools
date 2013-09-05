@@ -160,10 +160,11 @@ bool selectiveEnhancement::dofunc(const QString & func_name, const V3DPluginArgL
 	}
     else if (func_name == tr("help"))
     {
-        cout<<"Usage : v3d -x dllname -f adaptive_auto -i <inimg_file> -o <outimg_file> -p <scale> <ch>"<<endl;
+        cout<<"Usage : v3d -x dllname -f adaptive_auto -i <inimg_file> -o <outimg_file> -p <scale> <ch> <ratio>"<<endl;
         cout<<endl;
         cout<<"scale       the iteration time, default 5"<<endl;
-        cout<<"ch          the input channel value, default 1 and start from 1, default 1"<<endl;
+        cout<<"ch          the input channel value, start from 1, default 1"<<endl;
+        cout<<"ratio       the window size ratio, default 0.1"<<endl;
         cout<<endl;
         cout<<endl;
     }
@@ -796,6 +797,7 @@ bool processImage3(const V3DPluginArgList & input, V3DPluginArgList & output,V3D
     cout<<"Welcome to adaptive enhancement filter"<<endl;
     if (output.size() != 1) return false;
     unsigned int scale = 5, ch=1;
+    double ratio = 0.1;
     if (input.size()>=2)
     {
 
@@ -803,6 +805,7 @@ bool processImage3(const V3DPluginArgList & input, V3DPluginArgList & output,V3D
         cout<<paras.size()<<endl;
         if(paras.size() >= 1) scale = atoi(paras.at(0));
         if(paras.size() >= 2) ch = atoi(paras.at(1));
+        if(paras.size() >= 3) ratio = atoi(paras.at(1));
     }
 
     char * inimg_file = ((vector<char*> *)(input.at(0).p))->at(0);
@@ -810,6 +813,7 @@ bool processImage3(const V3DPluginArgList & input, V3DPluginArgList & output,V3D
 
     cout<<"scale = "<<scale<<endl;
     cout<<"ch = "<<ch<<endl;
+    cout<<"ratio = "<<ch<<endl;
     cout<<"inimg_file = "<<inimg_file<<endl;
     cout<<"outimg_file = "<<outimg_file<<endl;
 
@@ -817,7 +821,6 @@ bool processImage3(const V3DPluginArgList & input, V3DPluginArgList & output,V3D
     V3DLONG * in_sz = 0;
     unsigned int c = ch;//-1;
 
-    double ratio = 1;
     int datatype;
      if(!loadImage(inimg_file, data1d, in_sz, datatype))
      {
