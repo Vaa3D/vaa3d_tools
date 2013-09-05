@@ -129,7 +129,7 @@ bool processImage(V3DPluginCallback2 &callback, const V3DPluginArgList & input, 
     if (datatype!=1)
     {
         cerr << "invalid datatype found. Only support 8bit data" <<endl;
-        if (data1) {delete []data1d; data1d=0;}
+        if (data1d) {delete []data1d; data1d=0;}
         return false;
     }
 
