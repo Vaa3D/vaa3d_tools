@@ -1,5 +1,6 @@
 #ifndef __MY_SURF_OBJS_CPP__
 #define __MY_SURF_OBJS_CPP__
+
 #include <iostream>
 #include <fstream>
 #include <vector>
@@ -22,7 +23,7 @@ using namespace std;
 vector<MyMarker> readMarker_file(string marker_file)
 {
 	vector<MyMarker> markers; markers.reserve(1000);
-	ifstream ifs(marker_file.c_str()); if(ifs.fail()){cout<<" unable to open marker file "<<marker_file<<endl; return markers;}
+    ifstream ifs(marker_file.c_str()); if(ifs.fail()){cout<<" unable to open marker file "<<marker_file<<endl; return markers;}
 	set<MyMarker> marker_set;
 	int count = 0;
 	while(ifs.good())
@@ -37,24 +38,23 @@ vector<MyMarker> readMarker_file(string marker_file)
 
 		if(marker_set.find(marker) != marker_set.end())
 		{
-			cout<<"omit duplicated marker"<<markers.size()<<" : x = "<<marker.x<<" y = "<<marker.y<<" z = "<<marker.z<<" r = "<<marker.radius<<endl;
+            cout<<"omit duplicated marker"<<markers.size()<<" : x = "<<marker.x<<" y = "<<marker.y<<" z = "<<marker.z<<" r = "<<marker.radius<<endl;
 		}
 		else 
 		{
 			markers.push_back(marker);
 			marker_set.insert(marker);
-			if(0) cout<<"marker"<<markers.size()<<" : x = "<<marker.x<<" y = "<<marker.y<<" z = "<<marker.z<<" r = "<<marker.radius<<endl;
 		}
 		count++;
 	}
-	cout<<count<<" marker read"<<endl;
+    cout<<count<<" marker read"<<endl;
 	ifs.close();
 	return markers;
 }
 
 bool readMarker_file(string marker_file, vector<MyMarker*> &markers)
 {
-	ifstream ifs(marker_file.c_str()); if(ifs.fail()){cout<<" unable to open marker file "<<marker_file<<endl; return false;}
+    ifstream ifs(marker_file.c_str()); if(ifs.fail()){cout<<" unable to open marker file "<<marker_file<<endl; return false;}
 	set<MyMarker> marker_set; // to check the duplicated marker
 	while(ifs.good())
 	{
@@ -68,13 +68,13 @@ bool readMarker_file(string marker_file, vector<MyMarker*> &markers)
 
 		if(marker_set.find(*marker) != marker_set.end())
 		{
-			cout<<"omit duplicated marker"<<markers.size()<<" : x = "<<marker->x<<" y = "<<marker->y<<" z = "<<marker->z<<" r = "<<marker->radius<<endl;
+            cout<<"omit duplicated marker"<<markers.size()<<" : x = "<<marker->x<<" y = "<<marker->y<<" z = "<<marker->z<<" r = "<<marker->radius<<endl;
 		}
 		else
 		{
 			markers.push_back(marker);
 			marker_set.insert(*marker);
-			if(0) cout<<"marker"<<markers.size()<<" : x = "<<marker->x<<" y = "<<marker->y<<" z = "<<marker->z<<" r = "<<marker->radius<<endl;
+            if(0) cout<<"marker"<<markers.size()<<" : x = "<<marker->x<<" y = "<<marker->y<<" z = "<<marker->z<<" r = "<<marker->radius<<endl;
 		}
 	}
 	ifs.close();
@@ -83,14 +83,14 @@ bool readMarker_file(string marker_file, vector<MyMarker*> &markers)
 
 bool saveMarker_file(string marker_file, vector<MyMarker> & outmarkers)
 {
-	cout<<"save "<<outmarkers.size()<<" markers to file "<<marker_file<<endl;
+    cout<<"save "<<outmarkers.size()<<" markers to file "<<marker_file<<endl;
 	ofstream ofs(marker_file.c_str()); 
 	
 	if(ofs.fail())
 	{
-		cout<<"open marker file error"<<endl; 
+        cout<<"open marker file error"<<endl;
 		return false;
-	}
+    }
 	ofs<<"#x, y, z, radius"<<endl;
 	for(int i = 0; i < outmarkers.size(); i++)
 	{
@@ -102,12 +102,12 @@ bool saveMarker_file(string marker_file, vector<MyMarker> & outmarkers)
 
 bool saveMarker_file(string marker_file, vector<MyMarker*> & outmarkers)
 {
-	cout<<"save "<<outmarkers.size()<<" markers to file "<<marker_file<<endl;
+    cout<<"save "<<outmarkers.size()<<" markers to file "<<marker_file<<endl;
 	ofstream ofs(marker_file.c_str()); 
 	
 	if(ofs.fail())
 	{
-		cout<<"open marker file error"<<endl; 
+        cout<<"open marker file error"<<endl;
 		return false;
 	}
 	ofs<<"#x, y, z, radius"<<endl;
@@ -127,7 +127,7 @@ vector<MyMarker*> readSWC_file(string swc_file)
 
 	if(ifs.fail()) 
 	{
-		cout<<"open swc file : "<< swc_file <<" error"<<endl;
+        cout<<"open swc file : "<< swc_file <<" error"<<endl;
 		return swc;
 	}
 
@@ -170,13 +170,13 @@ bool saveSWC_file(string swc_file, vector<MyMarker*> & outmarkers)
 {
 	if(swc_file.find_last_of(".dot") == swc_file.size() - 1) return saveDot_file(swc_file, outmarkers);
 
-	cout<<"marker num = "<<outmarkers.size()<<", save swc file to "<<swc_file<<endl;
+    cout<<"marker num = "<<outmarkers.size()<<", save swc file to "<<swc_file<<endl;
 	map<MyMarker*, int> ind;	
 	ofstream ofs(swc_file.c_str()); 
 	
 	if(ofs.fail())
 	{
-		cout<<"open swc file error"<<endl; 
+        cout<<"open swc file error"<<endl;
 		return false;
 	}
 	ofs<<"#name "<<swc_file<<endl;
@@ -198,13 +198,13 @@ bool saveSWC_file(string swc_file, vector<MyMarker*> & outmarkers)
 
 bool saveDot_file(string dot_file, vector<MyMarker*> & outmarkers)
 {
-	cout<<"marker num = "<<outmarkers.size()<<", save swc file to "<<dot_file<<endl;
+    cout<<"marker num = "<<outmarkers.size()<<", save swc file to "<<dot_file<<endl;
 	map<MyMarker*, int> ind;	
 	ofstream ofs(dot_file.c_str()); 
 	
 	if(ofs.fail())
 	{
-		cout<<"open swc file error"<<endl; 
+        cout<<"open swc file error"<<endl;
 		return false;
 	}
 	ofs<<"digraph \""<<dot_file<<"\" {"<<endl;
@@ -233,7 +233,7 @@ bool readESWC_file(string swc_file, vector<MyMarkerX*> & swc)
 
 	if(ifs.fail()) 
 	{
-		cout<<"open swc file : "<< swc_file <<" error"<<endl;
+        cout<<"open swc file : "<< swc_file <<" error"<<endl;
 		return false;
 	}
 
@@ -277,13 +277,13 @@ bool readESWC_file(string swc_file, vector<MyMarkerX*> & swc)
 
 bool saveESWC_file(string swc_file, vector<MyMarkerX*> & outmarkers)
 {
-	cout<<"marker num = "<<outmarkers.size()<<", save swc file to "<<swc_file<<endl;
+    cout<<"marker num = "<<outmarkers.size()<<", save swc file to "<<swc_file<<endl;
 	map<MyMarkerX*, int> ind;	
 	ofstream ofs(swc_file.c_str()); 
 	
 	if(ofs.fail())
 	{
-		cout<<"open swc file error"<<endl; 
+        cout<<"open swc file error"<<endl;
 		return false;
 	}
 	ofs<<"#name "<<swc_file<<endl;
