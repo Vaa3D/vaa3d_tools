@@ -53,7 +53,7 @@ void ComputemaskImage(NeuronTree neurons,
 
 QHash<V3DLONG, V3DLONG> NeuronNextPn(const NeuronTree &neurons);
 void swc_to_maskimage_toolbox(const V3DPluginArgList & input, V3DPluginCallback2 & callback, QWidget * parent);
-bool swc_to_maskimage(const V3DPluginArgList & input, V3DPluginArgList & output);
+bool swc_to_maskimage(V3DPluginCallback2 & callback, const V3DPluginArgList & input, V3DPluginArgList & output);
 void printHelp();
 
 

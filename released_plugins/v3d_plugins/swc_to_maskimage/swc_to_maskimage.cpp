@@ -46,7 +46,7 @@ bool SWC_TO_MASKIMAGElugin::dofunc(const QString & func_name, const V3DPluginArg
 {
 	if (func_name==tr("swc_to_maskimage"))
 	{
-		swc_to_maskimage(input, output);
+        swc_to_maskimage(callback, input, output);
 	}
 	else if (func_name==tr("help"))
 	{
@@ -810,7 +810,7 @@ void SetsizeDialog::update()
 
 }
 
-bool swc_to_maskimage(const V3DPluginArgList & input, V3DPluginArgList & output)
+bool swc_to_maskimage(V3DPluginCallback2 & callback, const V3DPluginArgList & input, V3DPluginArgList & output)
 {
 	vector<char*> * pinfiles = (input.size() >= 1) ? (vector<char*> *) input[0].p : 0;
 	vector<char*> * poutfiles = (output.size() >= 1) ? (vector<char*> *) output[0].p : 0;
@@ -905,7 +905,7 @@ bool swc_to_maskimage(const V3DPluginArgList & input, V3DPluginArgList & output)
 	}
 	V3DLONG siz[4];
 	siz[0] = nx; siz[1] = ny; siz[2] = nz; siz[3] = 1;
-	saveImage(qPrintable(qs_output), pData, siz, V3D_UINT8);
+    simple_saveimage_wrapper(callback, qPrintable(qs_output), pData, siz, V3D_UINT8);
 
 	return true;
 }
