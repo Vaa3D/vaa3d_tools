@@ -126,9 +126,14 @@ bool processImage(V3DPluginCallback2 &callback, const V3DPluginArgList & input, 
           cerr<<"load image "<<inimg_file<<" error!"<<endl;
           return false;
      }
+    if (datatype!=1)
+    {
+        cerr << "invalid datatype found. Only support 8bit data" <<endl;
+        if (data1) {delete []data1d; data1d=0;}
+        return false;
+    }
 
-
-     V3DLONG N = datatype * in_sz[0] * in_sz[1] * in_sz[2] * in_sz[3]; // getTotalBytes
+    V3DLONG N = datatype * in_sz[0] * in_sz[1] * in_sz[2] * in_sz[3]; // getTotalBytes
 	V3DLONG szx = in_sz[0], szy = in_sz[1], szz = in_sz[2], szc = in_sz[3];
 
 	if (!data1d || szx<=0 || szy<=0 || szz<=0 || szc<=0)
