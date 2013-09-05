@@ -5,7 +5,7 @@ CONFIG	+= qt plugin warn_off
 VAA3D_DIR = ../../../v3d_main
 INCLUDEPATH	+= . $$VAA3D_DIR/basic_c_fun
 INCLUDEPATH     += $$VAA3D_DIR/common_lib/include
-LIBS += -L. -lv3dtiff -L$$VAA3D_DIR/common_lib/lib
+#LIBS += -L. -lv3dtiff -L$$VAA3D_DIR/common_lib/lib
 
 HEADERS	+= swc2mask_plugin.h
 HEADERS += my_surf_objs.h
@@ -13,17 +13,17 @@ HEADERS += swc_convert.h
 HEADERS += src/swc2mask.h
 HEADERS += $$VAA3D_DIR/basic_c_fun/customary_structs/vaa3d_neurontoolbox_para.h
 HEADERS += $$VAA3D_DIR/basic_c_fun/basic_surf_objs.h
-HEADERS += $$VAA3D_DIR/basic_c_fun/stackutil.h
-HEADERS += $$VAA3D_DIR/basic_c_fun/mg_utilities.h
-HEADERS += $$VAA3D_DIR/basic_c_fun/mg_image_lib.h
+#HEADERS += $$VAA3D_DIR/basic_c_fun/stackutil.h
+#HEADERS += $$VAA3D_DIR/basic_c_fun/mg_utilities.h
+#HEADERS += $$VAA3D_DIR/basic_c_fun/mg_image_lib.h
 
 SOURCES += my_surf_objs.cpp
 SOURCES += swc_convert.cpp
 SOURCES += $$VAA3D_DIR/basic_c_fun/basic_surf_objs.cpp
 SOURCES	+= $$VAA3D_DIR/basic_c_fun/v3d_message.cpp
-SOURCES	+= $$VAA3D_DIR/basic_c_fun/stackutil.cpp
-SOURCES	+= $$VAA3D_DIR/basic_c_fun/mg_image_lib.cpp
-SOURCES	+= $$VAA3D_DIR/basic_c_fun/mg_utilities.cpp
+#SOURCES	+= $$VAA3D_DIR/basic_c_fun/stackutil.cpp
+#SOURCES	+= $$VAA3D_DIR/basic_c_fun/mg_image_lib.cpp
+#SOURCES	+= $$VAA3D_DIR/basic_c_fun/mg_utilities.cpp
 
 TARGET	= $$qtLibraryTarget(swc2mask)
 DESTDIR	= ../../v3d/plugins/neuron_utilities/swc_to_maskimage_cylinder_unit/

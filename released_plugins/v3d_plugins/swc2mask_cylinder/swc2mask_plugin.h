@@ -143,10 +143,15 @@ public:
 			vector<char*> outfiles = (poutfiles != 0) ? * poutfiles : vector<char*>();
 			vector<char*> paras = (pparas != 0) ? * pparas : vector<char*>();
 
+            if(paras.size() != 0 && paras.size() != 3)
+            {
+                cerr<<"input para error!"<<endl; return false;
+            }
+
 			string inimg_file;
 			string inswc_file;
 			unsigned char * inimg1d = 0; int datatype = 0;
-			V3DLONG * in_sz = 0;
+            V3DLONG in_sz[4];
 
 			V3DLONG sz0 = 0, sz1 = 0, sz2 = 0;
 
@@ -170,12 +175,12 @@ public:
 					cerr<<"Input files error!"<<endl;
 					return false;
 				}
-				if(!loadImage((char*)inimg_file.c_str(), inimg1d, in_sz, datatype)) {cerr<<"Load image "<<inimg_file<<" error!"<<endl; return false;}
+                if(!simple_loadimage_wrapper(callback, (char*)inimg_file.c_str(), inimg1d, in_sz, datatype))
+                {cerr<<"Load image "<<inimg_file<<" error!"<<endl; return false;}
 				//if(datatype != V3D_UINT8){cerr<<"Currently only support 8bit image as input"<<endl; return false;}
 				sz0 = in_sz[0]; sz1 = in_sz[1]; sz2 = in_sz[2];
-				if(in_sz[3] > 1) {cerr<<"Use red channel as input."<<endl;}
+                if(in_sz[3] > 1) {cout<<"Use red channel as input."<<endl;}
 			}
-			if(paras.size() != 0 && paras.size() != 3){cerr<<"input para error!"<<endl; return false;}
 
 			vector<MyMarker*> inswc = readSWC_file(inswc_file);
 			string outimg_file = outfiles.empty() ? basename(inswc_file) + "_out.raw" : outfiles[0];
@@ -260,24 +265,24 @@ public:
 					}
 				}
 				V3DLONG out_sz[4] = {sz0, sz1, sz2, 1};
-				if(!saveImage(outimg_file.c_str(), inimg1d, out_sz, datatype))
+                if(!simple_saveimage_wrapper(callback, outimg_file.c_str(), inimg1d, out_sz, datatype))
 				{
 					cerr<<"Unable to save image to file "<<outimg_file<<endl; 
 					return false;
 				}
 				if(inimg1d){delete [] inimg1d; inimg1d = 0;}
-				if(in_sz){delete [] in_sz; in_sz = 0;}
+                //if(in_sz){delete [] in_sz; in_sz = 0;}
 			}
 			else
 			{
 				V3DLONG out_sz[4] = {sz0, sz1, sz2, 1};
-				if(!saveImage(outimg_file.c_str(), outimg1d, out_sz, V3D_UINT8))
+                if(!simple_saveimage_wrapper(callback, (outimg_file.c_str(), outimg1d, out_sz, V3D_UINT8))
 				{
 					cerr<<"Unable to save image to file "<<outimg_file<<endl; 
 					return false;
 				}
 			}
-			if(outimg1d){delete [] outimg1d; outimg1d = 0;}
+            if(outimg1d){delete [] outimg1d; outimg1d = 0;}
 			return true;
 		}
 		else if(func_name == "TOOLBOXswc2mask")
@@ -360,7 +365,7 @@ public:
 		}
 		else if(func_name == "help")
 		{
-			cout<<"Usage : v3d -x swc_to_maskimage_cylinder -f swc2mask -i <swc_file> [-p <sz0> <sz1> <sz2>] [-o <outimg_file>]"<<endl;
+            cout<<"Usage : v3d -x dll_name -f swc2mask -i <swc_file> [-p <sz0> <sz1> <sz2>] [-o <outimg_file>]"<<endl;
 			cout<<endl;
 			cout<<"Produce mask image from swc structure. The outimg size will be the bounding box of swc structure or provided size."<<endl;
 		}
