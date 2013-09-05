@@ -20,7 +20,7 @@ using namespace std;
 Q_EXPORT_PLUGIN2(canvas_eraser, CanvasEraserPlugin)
 
 void processImage(V3DPluginCallback2 &callback, QWidget *parent, unsigned int flag);
-bool processImage(const V3DPluginArgList & input, V3DPluginArgList & output);
+bool processImage(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPluginArgList & output);
 
 
 
@@ -73,7 +73,7 @@ bool CanvasEraserPlugin::dofunc(const QString &func_name, const V3DPluginArgList
 {
      if (func_name == tr("cae"))
 	{
-		return processImage(input, output);
+        return processImage(callback, input, output);
 	}
 	else if(func_name == tr("help"))
 	{
@@ -90,7 +90,7 @@ bool CanvasEraserPlugin::dofunc(const QString &func_name, const V3DPluginArgList
 	}
 }
 
-bool processImage(const V3DPluginArgList & input, V3DPluginArgList & output)
+bool processImage(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPluginArgList & output)
 {
 	cout<<"Welcome to Canvas Eraser"<<endl;
 	if (input.size()<1 || output.size() != 1) return false;
@@ -119,9 +119,9 @@ bool processImage(const V3DPluginArgList & input, V3DPluginArgList & output)
 
 	unsigned char * data1d = 0;
 
-	V3DLONG * in_sz = 0;
+    V3DLONG in_sz[4];
 	int datatype;
-	if(!loadImage(inimg_file, data1d, in_sz, datatype))
+    if (!simple_loadimage_wrapper(callback, inimg_file, data1d, in_sz, datatype))
      {
           cerr<<"load image "<<inimg_file<<" error!"<<endl;
           return false;
@@ -148,7 +148,7 @@ bool processImage(const V3DPluginArgList & input, V3DPluginArgList & output)
 
           // save image
           V3DLONG out_sz[]={xdim,ydim,zdim,szc};
-          saveImage(outimg_file, (unsigned char *)nm, out_sz, datatype);
+          simple_saveimage_wrapper(callback, outimg_file, (unsigned char *)nm, out_sz, datatype);
      }
      else
      {
@@ -156,11 +156,10 @@ bool processImage(const V3DPluginArgList & input, V3DPluginArgList & output)
                data1d[i] = vv;
 
           // save image
-          saveImage(outimg_file, (unsigned char *)data1d, in_sz, datatype);
+          simple_saveimage_wrapper(callback, outimg_file, (unsigned char *)data1d, in_sz, datatype);
      }
 
      if(data1d) {delete []data1d; data1d=0;}
-     if(in_sz)  {delete []in_sz; in_sz=0;}
 
      return true;
 }
