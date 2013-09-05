@@ -72,7 +72,12 @@ int create_plugin(V3DPluginCallback2 &callback, QWidget *parent)
 		save_folder.erase(0,1);
 		save_folder = QDir::homePath().toStdString() + save_folder;
 	}
-	else if(save_folder[0] != '/' && save_folder[0] != '.') save_folder = "./" + save_folder; 
+    else if (save_folder[1] == ':') //for windows. added by PHC, 20130905
+    {
+        //do nothing
+    }
+    else if (save_folder[0] != '/' && save_folder[0] != '.')
+        save_folder = "./" + save_folder;
 
 	pt.PLUGIN_HEADER = pt.PLUGIN_NAME + "_plugin.h";
 	pt.PLUGIN_CPP =  pt.PLUGIN_NAME + "_plugin.cpp";
