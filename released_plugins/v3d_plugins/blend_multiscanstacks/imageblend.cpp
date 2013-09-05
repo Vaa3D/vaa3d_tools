@@ -1722,55 +1722,56 @@ bool ImageBlendPlugin::dofunc(const QString & func_name, const V3DPluginArgList 
         QString m_InputFileName2(infilelist->at(1));
 
         // load images
-        Image4DSimple p4DImage1, p4DImage2;
+        Image4DSimple *p4DImage1 = v3d.loadImage((char *)qPrintable(m_InputFileName1)),
+                *p4DImage2 = v3d.loadImage((char *)qPrintable(m_InputFileName2));
 
         V3DLONG *sz_img1 = 0;
         int datatype_img1 = 0;
         unsigned char* p1dImg1 = 0;
 
-        if(QFileInfo(m_InputFileName1).suffix().toUpper().compare("LSM") == 0)
-        {
-            p4DImage1.loadImage(const_cast<char *>(m_InputFileName1.toStdString().c_str()), true); // Mylib
-        }
-        else
-        {
-            p4DImage1.loadImage(const_cast<char *>(m_InputFileName1.toStdString().c_str()), false); // libtiff
-        }
+//        if(QFileInfo(m_InputFileName1).suffix().toUpper().compare("LSM") == 0)
+//        {
+//            p4DImage1.loadImage(const_cast<char *>(m_InputFileName1.toStdString().c_str()), true); // Mylib
+//        }
+//        else
+//        {
+//            p4DImage1.loadImage(const_cast<char *>(m_InputFileName1.toStdString().c_str()), false); // libtiff
+//        }
 
-        p1dImg1 = p4DImage1.getRawData();
+        p1dImg1 = p4DImage1->getRawData();
 
         sz_img1 = new V3DLONG [4];
 
-        sz_img1[0] = p4DImage1.getXDim();
-        sz_img1[1] = p4DImage1.getYDim();
-        sz_img1[2] = p4DImage1.getZDim();
-        sz_img1[3] = p4DImage1.getCDim();
+        sz_img1[0] = p4DImage1->getXDim();
+        sz_img1[1] = p4DImage1->getYDim();
+        sz_img1[2] = p4DImage1->getZDim();
+        sz_img1[3] = p4DImage1->getCDim();
 
-        datatype_img1 = p4DImage1.getUnitBytes();
+        datatype_img1 = p4DImage1->getUnitBytes();
 
         V3DLONG *sz_img2 = 0;
         int datatype_img2 = 0;
         unsigned char* p1dImg2 = 0;
 
-        if(QFileInfo(m_InputFileName2).suffix().toUpper().compare("LSM") == 0)
-        {
-            p4DImage2.loadImage(const_cast<char *>(m_InputFileName2.toStdString().c_str()), true); // Mylib
-        }
-        else
-        {
-            p4DImage2.loadImage(const_cast<char *>(m_InputFileName2.toStdString().c_str()), false); // libtiff
-        }
+//        if(QFileInfo(m_InputFileName2).suffix().toUpper().compare("LSM") == 0)
+//        {
+//            p4DImage2.loadImage(const_cast<char *>(m_InputFileName2.toStdString().c_str()), true); // Mylib
+//        }
+//        else
+//        {
+//            p4DImage2.loadImage(const_cast<char *>(m_InputFileName2.toStdString().c_str()), false); // libtiff
+//        }
 
-        p1dImg2 = p4DImage2.getRawData();
+        p1dImg2 = p4DImage2->getRawData();
 
         sz_img2 = new V3DLONG [4];
 
-        sz_img2[0] = p4DImage2.getXDim();
-        sz_img2[1] = p4DImage2.getYDim();
-        sz_img2[2] = p4DImage2.getZDim();
-        sz_img2[3] = p4DImage2.getCDim();
+        sz_img2[0] = p4DImage2->getXDim();
+        sz_img2[1] = p4DImage2->getYDim();
+        sz_img2[2] = p4DImage2->getZDim();
+        sz_img2[3] = p4DImage2->getCDim();
 
-        datatype_img2 = p4DImage2.getUnitBytes();
+        datatype_img2 = p4DImage2->getUnitBytes();
 
         // check dims datatype
         if(datatype_img1 != datatype_img2)
@@ -1789,21 +1790,21 @@ bool ImageBlendPlugin::dofunc(const QString & func_name, const V3DPluginArgList 
         if(b_morecolorstack_first && sz_img1[3]<sz_img2[3])
         {
             //
-            qDebug()<<"original stack 1 "<<p1dImg1<<sz_img1[0]<<sz_img1[1]<<sz_img1[2]<<sz_img1[3]<<p4DImage1.getTotalUnitNumber();
-            qDebug()<<"original stack 2 "<<p1dImg2<<sz_img2[0]<<sz_img2[1]<<sz_img2[2]<<sz_img2[3]<<p4DImage2.getTotalUnitNumber();
+            qDebug()<<"original stack 1 "<<p1dImg1<<sz_img1[0]<<sz_img1[1]<<sz_img1[2]<<sz_img1[3]<<p4DImage1->getTotalUnitNumber();
+            qDebug()<<"original stack 2 "<<p1dImg2<<sz_img2[0]<<sz_img2[1]<<sz_img2[2]<<sz_img2[3]<<p4DImage2->getTotalUnitNumber();
 
             unsigned char *p1 = NULL;
             unsigned char *p2 = NULL;
 
             try
             {
-                V3DLONG totalplxs1 = p4DImage1.getTotalBytes();
+                V3DLONG totalplxs1 = p4DImage1->getTotalBytes();
                 p1 = new unsigned char [totalplxs1];
-                memcpy(p1, p4DImage1.getRawData(), totalplxs1);
+                memcpy(p1, p4DImage1->getRawData(), totalplxs1);
 
-                V3DLONG totalplxs2 = p4DImage2.getTotalBytes();
+                V3DLONG totalplxs2 = p4DImage2->getTotalBytes();
                 p2 = new unsigned char [totalplxs2];
-                memcpy(p2, p4DImage2.getRawData(), totalplxs2);
+                memcpy(p2, p4DImage2->getRawData(), totalplxs2);
             }
             catch (...)
             {
@@ -1813,18 +1814,18 @@ bool ImageBlendPlugin::dofunc(const QString & func_name, const V3DPluginArgList 
                 return false;
             }
 
-            p4DImage1.setData(p2, sz_img2[0], sz_img2[1], sz_img2[2], sz_img2[3], (ImagePixelType)datatype_img2);
-            p4DImage2.setData(p1, sz_img1[0], sz_img1[1], sz_img1[2], sz_img1[3], (ImagePixelType)datatype_img1);
+            p4DImage1->setData(p2, sz_img2[0], sz_img2[1], sz_img2[2], sz_img2[3], (ImagePixelType)datatype_img2);
+            p4DImage2->setData(p1, sz_img1[0], sz_img1[1], sz_img1[2], sz_img1[3], (ImagePixelType)datatype_img1);
 
             //
-            p1dImg1 = p4DImage1.getRawData();
-            sz_img1[3] = p4DImage1.getCDim();
+            p1dImg1 = p4DImage1->getRawData();
+            sz_img1[3] = p4DImage1->getCDim();
 
-            p1dImg2 = p4DImage2.getRawData();
-            sz_img2[3] = p4DImage2.getCDim();
+            p1dImg2 = p4DImage2->getRawData();
+            sz_img2[3] = p4DImage2->getCDim();
 
-            qDebug()<<"switched stack 1 "<<p1dImg1<< " "<<sz_img1[0]<< " "<<sz_img1[1]<< " "<<sz_img1[2]<< " "<<sz_img1[3]<< " "<<p4DImage1.getTotalUnitNumber();
-            qDebug()<<"switched stack 2 "<<p1dImg2<< " "<<sz_img2[0]<< " "<<sz_img2[1]<< " "<<sz_img2[2]<< " "<<sz_img2[3]<< " "<<p4DImage2.getTotalUnitNumber();
+            qDebug()<<"switched stack 1 "<<p1dImg1<< " "<<sz_img1[0]<< " "<<sz_img1[1]<< " "<<sz_img1[2]<< " "<<sz_img1[3]<< " "<<p4DImage1->getTotalUnitNumber();
+            qDebug()<<"switched stack 2 "<<p1dImg2<< " "<<sz_img2[0]<< " "<<sz_img2[1]<< " "<<sz_img2[2]<< " "<<sz_img2[3]<< " "<<p4DImage2->getTotalUnitNumber();
         }
 
         //
@@ -1988,7 +1989,7 @@ bool ImageBlendPlugin::dofunc(const QString & func_name, const V3DPluginArgList 
         qDebug()<<"ref ..."<<ref1<<ref2<<"null color ..."<<b_img1existNULL<<nullcolor1<<b_img2existNULL<<nullcolor2;
 
 		//step 3: need to run a simple stitching to figure out the displacement
-		if(!stitch_paired_images_with_refchan(p4DImage1, ref1, p4DImage2, ref2))
+        if(!stitch_paired_images_with_refchan(*p4DImage1, ref1, *p4DImage2, ref2))
 		{
 			fprintf(stderr, "The stitching step fails and thus return.\n");
 			return false;
@@ -2168,7 +2169,7 @@ bool ImageBlendPlugin::dofunc(const QString & func_name, const V3DPluginArgList 
             if(b_saveimage)
             {
                 //save
-                if (saveImage(blendImageName.toStdString().c_str(), (const unsigned char *)pOutput, szOutput, 1)!=true)
+                if (simple_saveimage_wrapper(v3d, blendImageName.toStdString().c_str(), pOutput, szOutput, 1)!=true)
                 {
                     fprintf(stderr, "Error happens in file writing. Exit. \n");
                     return false;
@@ -2357,7 +2358,7 @@ bool ImageBlendPlugin::dofunc(const QString & func_name, const V3DPluginArgList 
             if(b_saveimage)
             {
                 //save
-                if (saveImage(blendImageName.toStdString().c_str(), (const unsigned char *)pOutput, szOutput, 2)!=true)
+                if (simple_saveimage_wrapper(v3d, blendImageName.toStdString().c_str(), (unsigned char *)pOutput, szOutput, 2)!=true)
                 {
                     fprintf(stderr, "Error happens in file writing. Exit. \n");
                     return false;
@@ -2543,7 +2544,7 @@ bool ImageBlendPlugin::dofunc(const QString & func_name, const V3DPluginArgList 
             if(b_saveimage)
             {
                 //save
-                if (saveImage(blendImageName.toStdString().c_str(), (const unsigned char *)pOutput, szOutput, 4)!=true)
+                if (simple_saveimage_wrapper(v3d, blendImageName.toStdString().c_str(), (unsigned char *)pOutput, szOutput, 4)!=true)
                 {
                     fprintf(stderr, "Error happens in file writing. Exit. \n");
                     return false;
