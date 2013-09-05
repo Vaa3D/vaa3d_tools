@@ -1,3 +1,5 @@
+//last change: by PHC, add the <string> include for Windows VC++ build. 20130905
+
 #ifndef __MY_SURF_OBJS_CPP__
 #define __MY_SURF_OBJS_CPP__
 
