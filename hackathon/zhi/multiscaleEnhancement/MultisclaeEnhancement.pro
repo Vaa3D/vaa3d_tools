@@ -2,7 +2,7 @@
 TEMPLATE	= lib
 CONFIG	+= qt plugin warn_off
 #CONFIG	+= x86_64
-V3DMAINPATH = ../../../../v3d_external/v3d_main
+V3DMAINPATH = ../../../v3d_main
 INCLUDEPATH	+= $$V3DMAINPATH/basic_c_fun
 INCLUDEPATH += $$V3DMAINPATH/common_lib/include
 INCLUDEPATH += $$V3DMAINPATH/jba/newmat11
@@ -38,4 +38,4 @@ SOURCES += $$V3DMAINPATH/basic_c_fun/mg_image_lib.cpp
 SOURCES += $$V3DMAINPATH/basic_c_fun/stackutil.cpp
 
 TARGET	= $$qtLibraryTarget(MultisclaeEnhancement)
-DESTDIR	= ../../../../v3d_external/bin/plugins/MultisclaeEnhancement/
+DESTDIR	= ../../../bin/plugins/MultisclaeEnhancement

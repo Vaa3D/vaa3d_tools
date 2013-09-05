@@ -10,7 +10,6 @@
 #include <fstream>
 #include <iostream>
 #include <math.h>
-#include <vector>
 #include "stackutil.h"
 #include <boost/lexical_cast.hpp>
 #include "../../../v3d_main/jba/c++/convert_type2uint8.h"
@@ -44,7 +43,7 @@ template <class T> void AdpThresholding_adpwindow(const T* data1d,
                                                   V3DLONG *in_sz,
                                                   unsigned int c,
                                                   double sigma,
-                                                  T* &outimg, const T* gsdtdata1d,unsigned int dim);
+                                                  T* &outimg, const T* gsdtdata1d,unsigned int dim,double ratio);
 
 template <class T> void callgsdtPlugin(V3DPluginCallback2 &callback,const T* data1d,
                                                   V3DLONG *in_sz,
@@ -347,7 +346,7 @@ void processImage2(V3DPluginCallback2 &callback, QWidget *parent)
     int c = dialog.ch;
     double r = pow((d1/d0),1/(range-1));
 
-
+    double ratio = 0.1;
     V3DLONG in_sz[4];
     in_sz[0] = N; in_sz[1] = M; in_sz[2] = P; in_sz[3] = sc;
     in_sz[3] = c;
@@ -380,9 +379,9 @@ void processImage2(V3DPluginCallback2 &callback, QWidget *parent)
 
         switch (pixeltype)
         {
-        case V3D_UINT8: AdpThresholding_adpwindow((unsigned char *)data1d_gf, in_sz, 1,sigma,(unsigned char* &)EnahancedImage, gsdtld,3); break;
-        case V3D_UINT16: AdpThresholding_adpwindow((unsigned short int *)data1d_gf, in_sz, 1, sigma,(unsigned short int* &)EnahancedImage,(unsigned short int *)gsdtld,3); break;
-        case V3D_FLOAT32: AdpThresholding_adpwindow((float *)data1d_gf, in_sz, 1, sigma,(float* &)EnahancedImage,(float *)gsdtld,3);break;
+        case V3D_UINT8: AdpThresholding_adpwindow((unsigned char *)data1d_gf, in_sz, 1,sigma,(unsigned char* &)EnahancedImage, gsdtld,3,ratio); break;
+        case V3D_UINT16: AdpThresholding_adpwindow((unsigned short int *)data1d_gf, in_sz, 1, sigma,(unsigned short int* &)EnahancedImage,(unsigned short int *)gsdtld,3,ratio); break;
+        case V3D_FLOAT32: AdpThresholding_adpwindow((float *)data1d_gf, in_sz, 1, sigma,(float* &)EnahancedImage,(float *)gsdtld,3,ratio);break;
         default: v3d_msg("Invalid data type. Do nothing."); return;
         }
 
@@ -461,8 +460,9 @@ void processImage3(V3DPluginCallback2 &callback, QWidget *parent)
      V3DLONG sc = p4DImage->getCDim();
 
      //add input dialog
-     bool ok1,ok4;
+     bool ok1,ok2,ok3;
      unsigned int scale = 6, c=1;
+     double ratio = 0.1;
 
      scale = QInputDialog::getInteger(parent, "Iteration Time",
                                        "Enter the maximum iternation time:",
@@ -473,17 +473,30 @@ void processImage3(V3DPluginCallback2 &callback, QWidget *parent)
          if(sc==1)
          {
              c=1;
-             ok4=true;
+             ok2=true;
          }
          else
          {
              c = QInputDialog::getInteger(parent, "Channel",
                                           "Enter channel NO:",
-                                          1, 1, sc, 1, &ok4);
+                                          1, 1, sc, 1, &ok2);
          }
      }
      else
          return;
+
+     if(ok2)
+     {
+         ratio = QInputDialog::getDouble(parent, "Ratio",
+                                      "Enter window size ratio:",
+                                      0.1, 0.1, 1, 1, &ok3);
+     }
+     else
+         return;
+
+     if(ok3 ==false)
+         return;
+
 
     double maxDT1 = 0.5;
     double maxDT2 = 0.5;
@@ -498,7 +511,7 @@ void processImage3(V3DPluginCallback2 &callback, QWidget *parent)
     for(int count = 0; count < scale; count++)
     {
 
-        double sigma = 2*maxDT1/3;
+        double sigma = 0.6*maxDT1;
         printf("max in dt is %.2f, sigma is %.2f\n\n\n",maxDT1,sigma);
 
         unsigned char * data1d_gf = 0;
@@ -535,14 +548,13 @@ void processImage3(V3DPluginCallback2 &callback, QWidget *parent)
 
         switch (pixeltype)
         {
-        case V3D_UINT8: AdpThresholding_adpwindow((unsigned char *)data1d_gf, in_sz, 1,sigma,(unsigned char* &)EnahancedImage, gsdtld,3); break;
-        case V3D_UINT16: AdpThresholding_adpwindow((unsigned short int *)data1d_gf, in_sz, 1, sigma,(unsigned short int* &)EnahancedImage,(unsigned short int *)gsdtld,3); break;
-        case V3D_FLOAT32: AdpThresholding_adpwindow((float *)data1d_gf, in_sz, 1, sigma,(float* &)EnahancedImage,(float *)gsdtld,3);break;
+        case V3D_UINT8: AdpThresholding_adpwindow((unsigned char *)data1d_gf, in_sz, 1,sigma,(unsigned char* &)EnahancedImage, gsdtld,3,ratio); break;
+        case V3D_UINT16: AdpThresholding_adpwindow((unsigned short int *)data1d_gf, in_sz, 1, sigma,(unsigned short int* &)EnahancedImage,(unsigned short int *)gsdtld,3,ratio); break;
+        case V3D_FLOAT32: AdpThresholding_adpwindow((float *)data1d_gf, in_sz, 1, sigma,(float* &)EnahancedImage,(float *)gsdtld,3,ratio);break;
         default: v3d_msg("Invalid data type. Do nothing."); return;
         }
 
         maxDT1 = getdtmax(callback,EnahancedImage,in_sz);
-        printf("ZHI ZHOU max dt is %d",maxDT1);
        if(count==0)
         {
             maxDT1 = 2;
@@ -627,9 +639,9 @@ void processImage4(V3DPluginCallback2 &callback, QWidget *parent)
      V3DLONG P = p4DImage->getZDim();
      V3DLONG sc = p4DImage->getCDim();
      //add input dialog
-     bool ok1,ok4;
+     bool ok1,ok2,ok3;
      unsigned int scale = 5, c=1;
-
+     double ratio = 0.1;
      scale = QInputDialog::getInteger(parent, "Iteration Time",
                                        "Enter the maximum iternation time:",
                                        5, 1, 20, 1, &ok1);
@@ -639,16 +651,27 @@ void processImage4(V3DPluginCallback2 &callback, QWidget *parent)
          if(sc==1)
          {
              c=1;
-             ok4=true;
+             ok2=true;
          }
          else
          {
              c = QInputDialog::getInteger(parent, "Channel",
                                           "Enter channel NO:",
-                                          1, 1, sc, 1, &ok4);
+                                          1, 1, sc, 1, &ok2);
          }
      }
      else
+         return;
+
+     if(ok2)
+     {
+         ratio = QInputDialog::getDouble(parent, "Ratio",
+                                      "Enter window size ratio:",
+                                      0.1, 1, 1, 1, &ok3);
+     }
+     else
+         return;
+     if(ok3 ==false)
          return;
      V3DLONG offsetc = (c-1)*pagesz_3d;
      unsigned char *EnahancedImage_final_3D = 0;
@@ -696,9 +719,9 @@ void processImage4(V3DPluginCallback2 &callback, QWidget *parent)
 
                 switch (pixeltype)
                 {
-                case V3D_UINT8: AdpThresholding_adpwindow((unsigned char *)data1d_gf, in_sz, 1,sigma,(unsigned char* &)EnahancedImage, gsdtld,2); break;
-                case V3D_UINT16: AdpThresholding_adpwindow((unsigned short int *)data1d_gf, in_sz, 1, sigma,(unsigned short int* &)EnahancedImage,(unsigned short int *)gsdtld,2); break;
-                case V3D_FLOAT32: AdpThresholding_adpwindow((float *)data1d_gf, in_sz, 1, sigma,(float* &)EnahancedImage,(float *)gsdtld,2);break;
+                case V3D_UINT8: AdpThresholding_adpwindow((unsigned char *)data1d_gf, in_sz, 1,sigma,(unsigned char* &)EnahancedImage, gsdtld,2,ratio); break;
+                case V3D_UINT16: AdpThresholding_adpwindow((unsigned short int *)data1d_gf, in_sz, 1, sigma,(unsigned short int* &)EnahancedImage,(unsigned short int *)gsdtld,2,ratio); break;
+                case V3D_FLOAT32: AdpThresholding_adpwindow((float *)data1d_gf, in_sz, 1, sigma,(float* &)EnahancedImage,(float *)gsdtld,2,ratio);break;
                 default: v3d_msg("Invalid data type. Do nothing."); return;
                 }
 
@@ -794,7 +817,7 @@ bool processImage3(const V3DPluginArgList & input, V3DPluginArgList & output,V3D
     V3DLONG * in_sz = 0;
     unsigned int c = ch;//-1;
 
-
+    double ratio = 1;
     int datatype;
      if(!loadImage(inimg_file, data1d, in_sz, datatype))
      {
@@ -814,7 +837,7 @@ bool processImage3(const V3DPluginArgList & input, V3DPluginArgList & output,V3D
     for(int count = 0; count < scale; count++)
     {
 
-        double sigma = maxDT1/2;
+        double sigma = 0.6*maxDT1;
         printf("max in dt is %.2f, sigma is %.2f\n\n\n",maxDT1,sigma);
 
         unsigned char * data1d_gf = 0;
@@ -847,9 +870,9 @@ bool processImage3(const V3DPluginArgList & input, V3DPluginArgList & output,V3D
         unsigned char* EnahancedImage = NULL;
         switch (datatype)
         {
-        case V3D_UINT8: AdpThresholding_adpwindow((unsigned char *)data1d_gf, in_sz, 1,sigma,(unsigned char* &)EnahancedImage, gsdtld,3); break;
-        case V3D_UINT16: AdpThresholding_adpwindow((unsigned short int *)data1d_gf, in_sz, 1, sigma,(unsigned short int* &)EnahancedImage,(unsigned short int *)gsdtld,3); break;
-        case V3D_FLOAT32: AdpThresholding_adpwindow((float *)data1d_gf, in_sz, 1, sigma,(float* &)EnahancedImage,(float *)gsdtld,3);break;
+        case V3D_UINT8: AdpThresholding_adpwindow((unsigned char *)data1d_gf, in_sz, 1,sigma,(unsigned char* &)EnahancedImage, gsdtld,3,ratio); break;
+        case V3D_UINT16: AdpThresholding_adpwindow((unsigned short int *)data1d_gf, in_sz, 1, sigma,(unsigned short int* &)EnahancedImage,(unsigned short int *)gsdtld,3,ratio); break;
+        case V3D_FLOAT32: AdpThresholding_adpwindow((float *)data1d_gf, in_sz, 1, sigma,(float* &)EnahancedImage,(float *)gsdtld,3,ratio);break;
         default: v3d_msg("Invalid data type. Do nothing."); return false;
         }
 
@@ -1070,7 +1093,7 @@ template <class T> void AdpThresholding_adpwindow(const T* data1d,
                                                   V3DLONG *in_sz,
                                                   unsigned int c,
                                                   double sigma,
-                                                  T* &outimg, const T* gsdtdatald,unsigned int dim)
+                                                  T* &outimg, const T* gsdtdatald,unsigned int dim,double ratio)
 {
     if (!in_sz)
     {
@@ -1126,16 +1149,24 @@ template <class T> void AdpThresholding_adpwindow(const T* data1d,
 
                 T GsdtValue = gsdtdatald[offsetk + offsetj + ix];
                 T PixelValue = data1d[offsetc+offsetk + offsetj + ix];
-                Wx = (int)round((0.1*log(GsdtValue)/log(2)));
+                Wx = (int)round((ratio*log(GsdtValue)/log(2)));
+                if(ratio<0.5)
+                {
+                    if(Wx == 0) Wx = 1;
+                    Wy = Wx;
+                    Wz = Wx;
+                }
+                else
+                {
+                    Wy = Wx;
+                    Wz = 2*Wx;
+                }
 
-                if(Wx == 0) Wx = 1;
 
                 if (Wx > 0 && PixelValue > 0)
                 {
-                    Wy = Wx;
-                    Wz = Wx;
 
-                    V3DLONG xb = ix-Wx;
+                   /* V3DLONG xb = ix-Wx;
                     V3DLONG xe = ix+Wx;
                     V3DLONG yb = iy-Wy;
                     V3DLONG ye = iy+Wy;
@@ -1181,15 +1212,15 @@ template <class T> void AdpThresholding_adpwindow(const T* data1d,
                          xyleft = 0;
                     else
                          xyleft = data1d[offsetk+(yb)*N+xb];
-                    if(xe >= N-1 || ye >= M-1)
+                    if(xe > N-1 || ye > M-1)
                          xyright = 0;
                     else
                          xyright = data1d[offsetk+(ye)*N+xe];
-                    if(xb < 0 || ye >= M-1)
+                    if(xb < 0 || ye > M-1)
                          xleftyright = 0;
                     else
                          xleftyright = data1d[offsetk+(ye)*N+xb];
-                    if(xe >= N-1 || yb < 0)
+                    if(xe > N-1 || yb < 0)
                          xrightyleft = 0;
                     else
                          xrightyleft =  data1d[offsetk+(yb)*N+xe];
@@ -1200,15 +1231,15 @@ template <class T> void AdpThresholding_adpwindow(const T* data1d,
                          xzleft = 0;
                     else
                          xzleft = data1d[(zb)*M*N+offsetj+xb];
-                    if(xe >= N-1 || ze >= P-1)
+                    if(xe > N-1 || ze > P-1)
                          xzright = 0;
                     else
                          xzright = data1d[(ze)*M*N+offsetj+xe];
-                    if(xb <0 || ze >= P-1)
+                    if(xb <0 || ze > P-1)
                          xleftzright = 0;
                     else
                          xleftzright = data1d[(ze)*M*N+offsetj+xb];
-                    if(xe >= N-1 || zb < 0)
+                    if(xe > N-1 || zb < 0)
                          xrightzleft = 0;
                     else
                          xrightzleft = data1d[(zb)*M*N+offsetj+xe];
@@ -1219,7 +1250,7 @@ template <class T> void AdpThresholding_adpwindow(const T* data1d,
                          yzleft = 0;
                     else
                          yzleft = data1d[(zb)*M*N+(yb)*N+ix];
-                    if(ye >= M-1 || ze >= P-1)
+                    if(ye > M-1 || ze > P-1)
                          yzright = 0;
                     else
                          yzright = data1d[(ze)*M*N+(ye)*N+ix];
@@ -1227,11 +1258,29 @@ template <class T> void AdpThresholding_adpwindow(const T* data1d,
                          yleftzright = 0;
                     else
                          yleftzright = data1d[(ze)*M*N+(yb)*N+ix];
-                    if(ye >= M-1 || zb < 0)
+                    if(ye > M-1 || zb < 0)
                          yrightzleft = 0;
                     else
                          yrightzleft = data1d[(zb)*M*N+(ye)*N+ix];
-                    double fyz = 0.25*(yzright + yzleft - yleftzright - yrightzleft);
+                    double fyz = 0.25*(yzright + yzleft - yleftzright - yrightzleft);*/
+
+                    V3DLONG xb = ix-Wx; if(xb<0) xb = 0;
+                    V3DLONG xe = ix+Wx; if(xe>=N-1) xe = N-1;
+                    V3DLONG yb = iy-Wy; if(yb<0) yb = 0;
+                    V3DLONG ye = iy+Wy; if(ye>=M-1) ye = M-1;
+                    V3DLONG zb = iz-Wz; if(zb<0) zb = 0;
+                    V3DLONG ze = iz+Wz; if(ze>=P-1) ze = P-1;
+
+                   // printf("window size is %d\n",Wx);
+                    //Seletive approach
+                    double  fxx = data1d[offsetk+offsetj+xe]+ data1d[offsetk+offsetj+xb]- 2*data1d[offsetk+offsetj+ix];
+                    double fyy = data1d[offsetk+(ye)*N+ix]+data1d[offsetk+(yb)*N+ix]-2*data1d[offsetk+offsetj+ix];
+                    double fzz = data1d[(ze)*M*N+offsetj+ix]+data1d[(zb)*M*N+offsetj+ix]- 2*data1d[offsetk+offsetj+ix];
+
+                    double fxy = 0.25*(data1d[offsetk+(ye)*N+xe]+data1d[offsetk+(yb)*N+xb]-data1d[offsetk+(ye)*N+xb]-data1d[offsetk+(yb)*N+xe]);
+                    double fxz = 0.25*(data1d[(ze)*M*N+offsetj+xe]+data1d[(zb)*M*N+offsetj+xb]-data1d[(ze)*M*N+offsetj+xb]-data1d[(zb)*M*N+offsetj+xe]);
+                    double fyz = 0.25*(data1d[(ze)*M*N+(ye)*N+ix]+data1d[(zb)*M*N+(yb)*N+ix]-data1d[(ze)*M*N+(yb)*N+ix]-data1d[(zb)*M*N+(ye)*N+ix]);
+
                     if(dim==3)
                     {
                         SymmetricMatrix Cov_Matrix(3);
