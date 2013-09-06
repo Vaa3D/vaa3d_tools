@@ -83,10 +83,28 @@ bool convertImg2Atlas(V3DPluginCallback2 &callback, const V3DPluginArgList & inp
     cout<<"inimg_file = "<<inimg_file<<endl;
     cout<<"outimg_folder = "<<outimg_folder<<endl;
 
+    //now write files
+    QFileInfo fileinfo = QFileInfo( QString(inimg_file) );
+    QString folderName = QString(outimg_folder);
+
+    qDebug()<<"output foldername:" << folderName << endl;
+
+    QDir d(folderName);
+    if (!d.exists(folderName))
+        d.mkdir(folderName);
+    QString fileName = folderName + "/c.atlas";
+    FILE *fp = fopen(qPrintable(fileName), "wt");
+    if (!fp)
+    {
+        v3d_msg("Unable to open the output file location for writing. Check your folder path.", 0);
+        return false;
+    }
+
     Image4DSimple * indata = callback.loadImage(inimg_file);
     if (!indata || !indata->valid())
     {
-        v3d_msg("This plugin fails to load input image file.");
+        v3d_msg("This plugin fails to load input image file.", 0);
+        if(fp) fclose(fp);
         return false;
     }
 
@@ -96,16 +114,6 @@ bool convertImg2Atlas(V3DPluginCallback2 &callback, const V3DPluginArgList & inp
     sz[2] = indata->getZDim();
     sz[3] = 1;
 
-    //now write files
-    QFileInfo fileinfo = QFileInfo( QString(inimg_file) );
-    QString path = fileinfo.absolutePath();
-    QString folderName = path + "/" + QString(outimg_folder);
-
-    qDebug()<<"output foldername:" << folderName << endl;
-
-    QDir d(folderName);
-    if (!d.exists(folderName))
-        d.mkdir(folderName);
 
     unsigned char simple_cmap[14*3]  = {0,   0,   0,
                                         255, 0,   0,
@@ -122,11 +130,6 @@ bool convertImg2Atlas(V3DPluginCallback2 &callback, const V3DPluginArgList & inp
                                         255, 128, 255,
                                         255, 255, 255
                                        };
-
-    QString fileName = folderName + "/c.atlas";
-    FILE *fp = fopen(qPrintable(fileName), "wt");
-    if (!fp)
-        return false;
 
     for (V3DLONG i=0;i<indata->getCDim();i++)
     {
