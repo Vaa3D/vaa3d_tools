@@ -56,18 +56,9 @@ bool ConvertFileFormatPlugin::dofunc(const QString & func_name, const V3DPluginA
         if (!inimg || !inimg->valid())
             return false;
 
-        return callback.saveImage(inimg, outfiles.at(0));
+        callback.saveImage(inimg, outfiles.at(0));
 
-
-//        inimg.loadImage(infiles.at(0));
-//        if (!inimg.valid())
-//        {
-//            v3d_msg("Fail to load the specified input image.", 0);
-//            return false;
-//        }
-//
-//        if (!inimg.saveImage(outfiles.at(0)))
-//            return false;
+        if (inimg) {delete inimg; inimg=0;}
     }
 	else if (func_name == tr("help"))
 	{
