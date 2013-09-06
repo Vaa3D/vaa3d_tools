@@ -347,7 +347,7 @@ void processImage2(V3DPluginCallback2 &callback, QWidget *parent)
     int c = dialog.ch;
     double r = pow((d1/d0),1/(range-1));
 
-    double ratio = 0.1;
+    double ratio = 1;
     V3DLONG in_sz[4];
     in_sz[0] = N; in_sz[1] = M; in_sz[2] = P; in_sz[3] = sc;
     in_sz[3] = c;
@@ -467,7 +467,7 @@ void processImage3(V3DPluginCallback2 &callback, QWidget *parent)
 
      scale = QInputDialog::getInteger(parent, "Iteration Time",
                                        "Enter the maximum iternation time:",
-                                       6, 1, 20, 1, &ok1);
+                                       3, 1, 20, 1, &ok1);
 
      if(ok1)
      {
@@ -531,9 +531,6 @@ void processImage3(V3DPluginCallback2 &callback, QWidget *parent)
               case V3D_FLOAT32: callGussianoPlugin(callback,pagesz,sigma,c, (float* &)data1d_gf);break;
               default: v3d_msg("Invalid data type. Do nothing."); return;
             }
-
-
-
         }
 
         unsigned char * gsdtld = 0;
@@ -556,12 +553,14 @@ void processImage3(V3DPluginCallback2 &callback, QWidget *parent)
         }
 
         maxDT1 = getdtmax(callback,EnahancedImage,in_sz);
+
+        printf("maxDT1 is %0.2f, maxDT2 is %0.2f, count is %d\n\n\n",maxDT1,maxDT2,count);
        if(count==0)
         {
             maxDT1 = 2;
         }
 
-        if(maxDT1 > maxDT2 || maxDT1>=0)
+        if(maxDT1 > maxDT2 && maxDT1>=0)
         {
             if (count==0)
             {
@@ -591,8 +590,9 @@ void processImage3(V3DPluginCallback2 &callback, QWidget *parent)
                     EnahancedImage_final[i] = EnahancedImage_max[i];
 
             }
+
+
             maxDT2 = maxDT1;
-            count++;
         }
         else
             break;
@@ -777,14 +777,14 @@ void processImage4(V3DPluginCallback2 &callback, QWidget *parent)
      }
 
 
-     // double min,max;
-    //  unsigned char* EnahancedImage_final_nomal = 0;
-    //  EnahancedImage_final_nomal = new unsigned char [pagesz_3d];
+    double min,max;
+    unsigned char* EnahancedImage_final_nomal = 0;
+    EnahancedImage_final_nomal = new unsigned char [pagesz_3d];
 
-   //   rescale_to_0_255_and_copy((unsigned char *)EnahancedImage_final_3D,pagesz_3d,min,max,EnahancedImage_final_nomal);
+    rescale_to_0_255_and_copy((unsigned char *)EnahancedImage_final_3D,pagesz_3d,min,max,EnahancedImage_final_nomal);
 
     Image4DSimple * new4DImage = new Image4DSimple();
-    new4DImage->setData((unsigned char *)EnahancedImage_final_3D,N, M, P, 1, pixeltype);
+    new4DImage->setData((unsigned char *)EnahancedImage_final_nomal,N, M, P, 1, pixeltype);
     v3dhandle newwin = callback.newImageWindow();
     callback.setImage(newwin, new4DImage);
     callback.setImageName(newwin, "Multiscale_adaptive_auto_enhancement_result_2D");
@@ -917,7 +917,6 @@ bool processImage3(const V3DPluginArgList & input, V3DPluginArgList & output,V3D
 
             }
             maxDT2 = maxDT1;
-            count++;
         }
         else
             break;
@@ -1415,8 +1414,7 @@ template <class T> void callgsdtPlugin(V3DPluginCallback2 &callback,const T* dat
     }
 
     saveImage("temp_gf.v3draw", (unsigned char *)data1d, in_sz, 1);
-
-
+    th = 1.5*th;
     V3DPluginArgItem arg;
     V3DPluginArgList input;
     V3DPluginArgList output;
@@ -1467,7 +1465,26 @@ template <class T> double getdtmax(V3DPluginCallback2 &callback,const T* data1d,
     V3DLONG pagesz = N*M*P;
     saveImage("temp_enhanced.v3draw", (unsigned char *)data1d, in_sz, 1);
 
+    double th = 0;
+    for(V3DLONG iz = 0; iz < P; iz++)
+    {
+        double PixelSum = 0;
+        V3DLONG offsetk = iz*M*N;
+        for(V3DLONG iy = 0; iy < M; iy++)
+        {
+            V3DLONG offsetj = iy*N;
+            for(V3DLONG ix = 0; ix < N; ix++)
+            {
 
+            V3DLONG PixelVaule = data1d[offsetk + offsetj + ix];
+            PixelSum = PixelSum + PixelVaule;
+
+            }
+        }
+            th = th + PixelSum/(M*N*P);
+    }
+
+    th = th*1.6;
     V3DPluginArgItem arg;
     V3DPluginArgList input;
     V3DPluginArgList output;
@@ -1475,7 +1492,8 @@ template <class T> double getdtmax(V3DPluginCallback2 &callback,const T* data1d,
     arg.type = "random";std::vector<char*> args1;
     args1.push_back("temp_enhanced.v3draw"); arg.p = (void *) & args1; input<< arg;
     arg.type = "random";std::vector<char*> args;
-    args.push_back("1");args.push_back("1");args.push_back("0");args.push_back("0"); arg.p = (void *) & args; input << arg;
+    string threshold = boost::lexical_cast<string>(th); char* threshold2 =  new char[threshold.length() + 1]; strcpy(threshold2, threshold.c_str());
+    args.push_back("1");args.push_back("1");args.push_back("0");args.push_back("0");args.push_back("0");args.push_back(threshold2); arg.p = (void *) & args; input << arg;
     arg.type = "random";std::vector<char*> args2;args2.push_back("gtImage.v3draw"); arg.p = (void *) & args2; output<< arg;
 
     QString full_plugin_name = "Fast_Distance";
@@ -1490,7 +1508,7 @@ template <class T> double getdtmax(V3DPluginCallback2 &callback,const T* data1d,
     char * outimg_file = ((vector<char*> *)(output.at(0).p))->at(0);
     loadImage(outimg_file, data1d_gt, in_zz, datatype);
     remove("temp_enhanced.v3draw");
-    remove("gtImage.v3draw");
+    //remove("gtImage.v3draw");
     double maxfl = 0;
     for(V3DLONG i=0; i<pagesz; i++)
     {
@@ -1498,6 +1516,7 @@ template <class T> double getdtmax(V3DPluginCallback2 &callback,const T* data1d,
         if(dataValue > maxfl)   maxfl = dataValue;
 
     }
+    printf("zhi zhou is %.2f",maxfl);
 
     return maxfl;
 
