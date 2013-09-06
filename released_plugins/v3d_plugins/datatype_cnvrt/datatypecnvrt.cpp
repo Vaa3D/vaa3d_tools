@@ -27,7 +27,7 @@ Q_EXPORT_PLUGIN2(datatypeconvert, DTCPlugin);
 
 // func datatype converting main
 int  datatype_converting(V3DPluginCallback2 &callback, QWidget *parent);
-bool datatype_converting(const V3DPluginArgList & input, V3DPluginArgList & output);
+bool datatype_converting(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPluginArgList & output);
 
 // func converting
 template <class Tpre, class Tpost>
@@ -67,7 +67,7 @@ bool DTCPlugin::dofunc(const QString &func_name, const V3DPluginArgList &input, 
 {
      if (func_name == tr("dtc"))
 	{
-		return datatype_converting(input, output);
+        return datatype_converting(callback, input, output);
 	}
 	else if(func_name == tr("help"))
 	{
@@ -83,7 +83,7 @@ bool DTCPlugin::dofunc(const QString &func_name, const V3DPluginArgList &input, 
 }
 
 
-bool datatype_converting(const V3DPluginArgList & input, V3DPluginArgList & output)
+bool datatype_converting(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPluginArgList & output)
 {
     cout<<"DataType/file_format Converter"<<endl;
 	if (output.size() != 1) return false;
@@ -109,10 +109,10 @@ bool datatype_converting(const V3DPluginArgList & input, V3DPluginArgList & outp
      }
 
 	unsigned char * subject1d = 0;
-	V3DLONG * in_sz = 0;
+    V3DLONG in_sz[4];
 
 	int sub_dt;
-	if(!loadImage(inimg_file, subject1d, in_sz, sub_dt))
+    if(simple_loadimage_wrapper(callback, inimg_file, subject1d, in_sz, sub_dt))
      {
           cerr<<"load image "<<inimg_file<<" error!"<<endl;
           return false;
@@ -152,7 +152,7 @@ bool datatype_converting(const V3DPluginArgList & input, V3DPluginArgList & outp
 		}
 
           // save image
-          saveImage(outimg_file, (unsigned char *)data1d, in_sz, 1);
+          simple_saveimage_wrapper(callback, outimg_file, (unsigned char *)data1d, in_sz, 1);
           if (data1d) {delete []data1d; data1d=0;}
 	}
 	else if(tar_dt == 2) //V3D_UINT16
@@ -184,7 +184,7 @@ bool datatype_converting(const V3DPluginArgList & input, V3DPluginArgList & outp
 		}
 
           // save image
-          saveImage(outimg_file, (unsigned char *)data1d, in_sz, 2);
+          simple_saveimage_wrapper(callback, outimg_file, (unsigned char *)data1d, in_sz, 2);
           if (data1d) {delete []data1d; data1d=0;}
 	}
 	else if(tar_dt == 4) //V3D_FLOAT32
@@ -216,17 +216,16 @@ bool datatype_converting(const V3DPluginArgList & input, V3DPluginArgList & outp
 		}
 
           // save image
-          saveImage(outimg_file, (unsigned char *)data1d, in_sz, 4);
+          simple_saveimage_wrapper(callback, outimg_file, (unsigned char *)data1d, in_sz, 4);
           if (data1d) {delete []data1d; data1d=0;}
 	}
 	else
 	{
-		v3d_msg("Currently this program only support UINT8, UINT16, and FLOAT32 data type.");
+        v3d_msg("Currently this program only supports UINT8, UINT16, and FLOAT32 data type.", 0);
 		return false;
 	}
 
      if(subject1d) {delete []subject1d; subject1d=0;}
-     if(in_sz) {delete []in_sz; in_sz=0;}
 
      return true;
 }
