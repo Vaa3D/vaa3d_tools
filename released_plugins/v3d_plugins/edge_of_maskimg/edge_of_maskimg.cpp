@@ -22,7 +22,7 @@ using namespace std;
 Q_EXPORT_PLUGIN2(edge_of_maskimg, EdgeOfMaskImgPlugin);
 
 void findedgeimg(V3DPluginCallback2 &callback, QWidget *parent, int method_code);
-bool findedgeimg(const V3DPluginArgList & input, V3DPluginArgList & output);
+bool findedgeimg(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPluginArgList & output);
 
 
 QStringList EdgeOfMaskImgPlugin::menulist() const
@@ -50,30 +50,30 @@ void EdgeOfMaskImgPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &c
 QStringList EdgeOfMaskImgPlugin::funclist() const
 {
 	return QStringList()
-		<<tr("masking")
+        <<tr("find_edge")
 		<<tr("help");
 }
 
 
 bool EdgeOfMaskImgPlugin::dofunc(const QString &func_name, const V3DPluginArgList &input, V3DPluginArgList &output, V3DPluginCallback2 &callback, QWidget *parent)
 {
-     if (func_name == tr("masking"))
+     if (func_name == tr("find_edge"))
 	{
-		return findedgeimg(input, output);
+        return findedgeimg(callback, input, output);
 	}
 	else if(func_name == tr("help"))
 	{
-		cout<<"Usage : v3d -x masking -f masking -i <inimg_file> -o <outimg_file> -p <method_code>"<<endl;
+        cout<<"Usage : v3d -x masking -f find_edge -i <inimg_file> -o <outimg_file> -p <method_code>"<<endl;
 		cout<<endl;
 		cout<<"method_code  0: Label edge of a mask image using the original label values, 1: Label edge of a mask image using intensity 255"<<endl;
 		cout<<endl;
-		cout<<"e.g. v3d -x masking -f masking -i input.raw -o output.raw -p 0"<<endl;
+        cout<<"e.g. v3d -x masking -f find_edge -i input.raw -o output.raw -p 0"<<endl;
 		cout<<endl;
 		return true;
 	}
 }
 
-bool findedgeimg(const V3DPluginArgList & input, V3DPluginArgList & output)
+bool findedgeimg(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPluginArgList & output)
 {
 	cout<<"Welcome to Label edge of a mask image"<<endl;
 	if (output.size() != 1) return false;
@@ -91,41 +91,18 @@ bool findedgeimg(const V3DPluginArgList & input, V3DPluginArgList & output)
 	cout<<"inimg_file = "<<inimg_file<<endl;
 	cout<<"outimg_file = "<<outimg_file<<endl;
 
-	unsigned char * data1d = 0;
-	V3DLONG * in_sz = 0;
-
-	int datatype;
-	if(!loadImage(inimg_file, data1d, in_sz, datatype))
+     Image4DSimple *image = callback.loadImage(inimg_file);
+     if (!image || !image->valid())
      {
           cerr<<"load image "<<inimg_file<<" error!"<<endl;
           return false;
      }
 
-     cout<<"datatype = "<<datatype<<endl;
-     Image4DSimple image;
-     if(datatype == 1)
-     {
-          image.setData((unsigned char*)data1d, in_sz[0], in_sz[1], in_sz[2], in_sz[3], V3D_UINT8);
-     }
-     else if(datatype == 2)
-     {
-          image.setData((unsigned char*)data1d, in_sz[0], in_sz[1], in_sz[2], in_sz[3], V3D_UINT16);
-     }
-     else if(datatype == 4)
-     {
-          image.setData((unsigned char*)data1d, in_sz[0], in_sz[1], in_sz[2], in_sz[3], V3D_FLOAT32);
-     }
-     else
-     {
-          printf("\nError: The program only supports UINT8, UINT16, and FLOAT32 datatype.\n");
-          return false;
-     }
-
-
-     V3DLONG szx=in_sz[0], szy=in_sz[1], szz=in_sz[2], szc=in_sz[3];
-     V3DLONG N;
-
-     N = datatype*szx*szy*szz*szc;
+     V3DLONG szx=image->getXDim(),
+             szy=image->getYDim(),
+             szz=image->getZDim(),
+             szc=image->getCDim();
+     V3DLONG N = image->getTotalUnitNumber();
 
      //create the output buffer
 	unsigned char *outputData = 0;
@@ -140,7 +117,8 @@ bool findedgeimg(const V3DPluginArgList & input, V3DPluginArgList & output)
 		if (outputData) {delete []outputData; outputData=0;}
 		return false;
 	}
-	Image4DSimple outputImage;
+
+    Image4DSimple outputImage;
 	outputImage.setData((unsigned char*)outputData, szx, szy, szz, szc, V3D_UINT8);
 	Image4DProxy<Image4DSimple> outputIProxy(&outputImage);
 
@@ -148,7 +126,7 @@ bool findedgeimg(const V3DPluginArgList & input, V3DPluginArgList & output)
     {
 		bool bset255 = (method_code==0) ? false : true;
 
-		Image4DProxy<Image4DSimple> p(&image);
+        Image4DProxy<Image4DSimple> p(image);
 		Image4DProxy_foreach(p, ix, iy, iz, ic)
 		{
 			double v = p.value_at(ix, iy, iz, ic);
@@ -178,11 +156,11 @@ bool findedgeimg(const V3DPluginArgList & input, V3DPluginArgList & output)
 			//note that all value had been preset as 0, thus no need to set as the background color in case not an edge point
 		}
     }
-     //how about save float??
-     saveImage(outimg_file, (unsigned char *)outputImage.getRawData(), in_sz, 1);
 
-     //if (data1d) {delete []data1d; data1d=0;}
-     if (in_sz) {delete []in_sz; in_sz=0;}
+     //how about save float??
+    callback.saveImage(&outputImage, outimg_file);
+
+    if (image) {delete image; image=0;}
 
      return true;
 }
@@ -212,7 +190,7 @@ void findedgeimg(V3DPluginCallback2 &callback, QWidget *parent, int method_code)
 	Image4DSimple* image = callback.getImage(curwin);
 	QString m_InputFileName = callback.getImageName(curwin);
 
-	if (!image)
+    if (!image || !image->valid())
 	{
 		v3d_msg("The image pointer is invalid. Ensure your data is valid and try again!");
 		return;
@@ -220,14 +198,8 @@ void findedgeimg(V3DPluginCallback2 &callback, QWidget *parent, int method_code)
 
 	unsigned char* data1d = image->getRawData();
 
-	V3DLONG N = image->getTotalBytes();
+    V3DLONG N = image->getTotalUnitNumber();
 	V3DLONG szx = image->getXDim(), szy = image->getYDim(), szz = image->getZDim(), szc = image->getCDim();
-
-	if (!data1d || szx<=0 || szy<=0 || szz<=0 || szc<=0)
-	{
-		throw("Your data to the plugin is invalid. Check the data and try again.");
-		return;
-	}
 
 	//create the output buffer
 	unsigned char *outputData = 0;
