@@ -22,7 +22,7 @@ Q_EXPORT_PLUGIN2(channelsplit, ChannelSplitPlugin)
 
 
 void processImage(V3DPluginCallback2 &callback, QWidget *parent, const QString & menu_name);
-bool processImage(const V3DPluginArgList & input, V3DPluginArgList & output);
+bool processImage(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPluginArgList & output);
 template <class T> bool extract_a_channel(T* data1d, V3DLONG *sz, V3DLONG c, void * &outimg);
 
 const QString title = QObject::tr("Channel Split Plugin");
@@ -58,7 +58,7 @@ bool ChannelSplitPlugin::dofunc(const QString &func_name, const V3DPluginArgList
 {
     if (func_name == tr("split_extract_channels"))
 	{
-		return processImage(input, output);
+        return processImage(callback, input, output);
 	}
 	else if(func_name == tr("help"))
 	{
@@ -70,7 +70,7 @@ bool ChannelSplitPlugin::dofunc(const QString &func_name, const V3DPluginArgList
 	}
 }
 
-bool processImage(const V3DPluginArgList & input, V3DPluginArgList & output)
+bool processImage(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPluginArgList & output)
 {
 	if(input.size() < 1 || output.size() != 1) 
         return false;
@@ -94,12 +94,12 @@ bool processImage(const V3DPluginArgList & input, V3DPluginArgList & output)
 
 	bool b_res=false;
     unsigned char * data1d = 0;
-	V3DLONG * in_sz = 0;
+    V3DLONG in_sz[4];
     void* outimg = 0;
     V3DLONG cb, ce, k;
     
 	int datatype;
-	if(!loadImage(inimg_file, data1d, in_sz, datatype)) 
+    if(simple_loadimage_wrapper(callback, inimg_file, data1d, in_sz, datatype))
     {
         cerr<<"load image "<<inimg_file<<" error!"<<endl; 
         return false;
@@ -128,9 +128,9 @@ bool processImage(const V3DPluginArgList & input, V3DPluginArgList & output)
         // save image
         V3DLONG oldc = in_sz[3]; in_sz[3]=1;
         if (cb==ce)
-            saveImage(outimg_file, (unsigned char *)outimg, in_sz, datatype); 
+            simple_saveimage_wrapper(callback, outimg_file, (unsigned char *)outimg, in_sz, datatype);
         else
-            saveImage(qPrintable(QString("").setNum(k).prepend("_C").prepend(outimg_file).append(".v3draw")), (unsigned char *)outimg, in_sz, datatype);
+            simple_saveimage_wrapper(callback, qPrintable(QString("").setNum(k).prepend("_C").prepend(outimg_file).append(".v3draw")), (unsigned char *)outimg, in_sz, datatype);
         
         //
         in_sz[3] = oldc; //this sentence is important
@@ -140,7 +140,7 @@ bool processImage(const V3DPluginArgList & input, V3DPluginArgList & output)
 
 Label_exit:
      if (data1d) {delete []data1d; data1d=0;}
-     if (in_sz) {delete []in_sz; in_sz=0;}
+     if (outimg) {delete []outimg; outimg=0;}
      return b_res;
 }
 
