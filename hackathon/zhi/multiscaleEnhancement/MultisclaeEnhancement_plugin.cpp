@@ -24,6 +24,7 @@ void processImage(V3DPluginCallback2 &callback, QWidget *parent);
 void processImage2(V3DPluginCallback2 &callback, QWidget *parent);
 void processImage3(V3DPluginCallback2 &callback, QWidget *parent);
 void processImage4(V3DPluginCallback2 &callback, QWidget *parent);
+void processImage5(V3DPluginCallback2 &callback, QWidget *parent);
 
 bool processImage3(const V3DPluginArgList & input, V3DPluginArgList & output,V3DPluginCallback2 &callback);
 
@@ -48,6 +49,7 @@ template <class T> void AdpThresholding_adpwindow(const T* data1d,
 template <class T> void callgsdtPlugin(V3DPluginCallback2 &callback,const T* data1d,
                                                   V3DLONG *in_sz,
                                                   unsigned int c,
+                                                  double th_global,
                                                   T* &outimg);
 
 template <class T> double getdtmax(V3DPluginCallback2 &callback,const T* data1d,V3DLONG *in_sz);
@@ -103,6 +105,7 @@ template <class T> bool swapthree(T& dummya, T& dummyb, T& dummyc)
 
     return true;
 }
+template <class SDATATYPE> int pwi_fusing(SDATATYPE *data1d, SDATATYPE *subject1d, V3DLONG *sz_subject, SDATATYPE *target1d, V3DLONG *sz_target, V3DLONG *offset, V3DLONG new_sz0, V3DLONG new_sz1, V3DLONG new_sz2);
 
  
 QStringList selectiveEnhancement::menulist() const
@@ -110,6 +113,7 @@ QStringList selectiveEnhancement::menulist() const
 	return QStringList() 
         <<tr("adaptive_auto")
         <<tr("adaptive_auto_2D")
+        <<tr("adaptive_auto_blocks")
         <<tr("adaptive")
 		<<tr("selective")
         <<tr("about");
@@ -139,6 +143,10 @@ void selectiveEnhancement::domenu(const QString &menu_name, V3DPluginCallback2 &
     else if(menu_name == tr("adaptive_auto_2D"))
     {
          processImage4(callback,parent);
+    }
+    else if(menu_name == tr("adaptive_auto_blocks"))
+    {
+         processImage5(callback,parent);
     }
 	else
 	{
@@ -230,7 +238,7 @@ void processImage(V3DPluginCallback2 &callback, QWidget *parent)
     unsigned char *EnahancedImage_final=0;
     for(int d = 0; d < range; d++)
     {
-        double sigma = pow(r,d)*d0/4;
+        double sigma = pow(r,d)*d0/2;
         unsigned char * data1d_gf = 0;
         switch (pixeltype)
         {
@@ -370,9 +378,9 @@ void processImage2(V3DPluginCallback2 &callback, QWidget *parent)
         unsigned char * gsdtld = 0;
         switch (pixeltype)
         {
-            case V3D_UINT8: callgsdtPlugin(callback,(unsigned char *)data1d_gf, in_sz, 1,(unsigned char* &)gsdtld); break;
-            case V3D_UINT16: callgsdtPlugin(callback,(unsigned short int *)data1d_gf, in_sz, 1,(unsigned short int* &)gsdtld); break;
-            case V3D_FLOAT32: callgsdtPlugin(callback,(float *)data1d_gf, in_sz, 1,(float* &)gsdtld); break;
+            case V3D_UINT8: callgsdtPlugin(callback,(unsigned char *)data1d_gf, in_sz, 1,0,(unsigned char* &)gsdtld); break;
+            case V3D_UINT16: callgsdtPlugin(callback,(unsigned short int *)data1d_gf, in_sz, 1,0,(unsigned short int* &)gsdtld); break;
+            case V3D_FLOAT32: callgsdtPlugin(callback,(float *)data1d_gf, in_sz, 1,0,(float* &)gsdtld); break;
             default: v3d_msg("Invalid data type. Do nothing."); return;
         }
 
@@ -426,7 +434,7 @@ void processImage2(V3DPluginCallback2 &callback, QWidget *parent)
     rescale_to_0_255_and_copy((unsigned char *)EnahancedImage_final,pagesz,min,max,EnahancedImage_final_nomal);
 
     Image4DSimple * new4DImage = new Image4DSimple();
-    new4DImage->setData((unsigned char *)EnahancedImage_final_nomal,N, M, P, 1, pixeltype);
+    new4DImage->setData((unsigned char *)EnahancedImage_final,N, M, P, 1, pixeltype);
     v3dhandle newwin = callback.newImageWindow();
     callback.setImage(newwin, new4DImage);
     callback.setImageName(newwin, "Multiscale_adaptive_enhancement_result");
@@ -536,9 +544,9 @@ void processImage3(V3DPluginCallback2 &callback, QWidget *parent)
         unsigned char * gsdtld = 0;
         switch (pixeltype)
         {
-            case V3D_UINT8: callgsdtPlugin(callback,(unsigned char *)data1d_gf, in_sz, 1,(unsigned char* &)gsdtld); break;
-            case V3D_UINT16: callgsdtPlugin(callback,(unsigned short int *)data1d_gf, in_sz, 1,(unsigned short int* &)gsdtld); break;
-            case V3D_FLOAT32: callgsdtPlugin(callback,(float *)data1d_gf, in_sz, 1,(float* &)gsdtld); break;
+            case V3D_UINT8: callgsdtPlugin(callback,(unsigned char *)data1d_gf, in_sz, 1,0,(unsigned char* &)gsdtld); break;
+            case V3D_UINT16: callgsdtPlugin(callback,(unsigned short int *)data1d_gf, in_sz, 1,0,(unsigned short int* &)gsdtld); break;
+            case V3D_FLOAT32: callgsdtPlugin(callback,(float *)data1d_gf, in_sz, 1,0,(float* &)gsdtld); break;
             default: v3d_msg("Invalid data type. Do nothing."); return;
         }
 
@@ -710,9 +718,9 @@ void processImage4(V3DPluginCallback2 &callback, QWidget *parent)
                 unsigned char * gsdtld = 0;
                 switch (pixeltype)
                 {
-                    case V3D_UINT8: callgsdtPlugin(callback,(unsigned char *)data1d_gf, in_sz, 1,(unsigned char* &)gsdtld); break;
-                    case V3D_UINT16: callgsdtPlugin(callback,(unsigned short int *)data1d_gf, in_sz, 1,(unsigned short int* &)gsdtld); break;
-                    case V3D_FLOAT32: callgsdtPlugin(callback,(float *)data1d_gf, in_sz, 1,(float* &)gsdtld); break;
+                    case V3D_UINT8: callgsdtPlugin(callback,(unsigned char *)data1d_gf, in_sz, 1,0,(unsigned char* &)gsdtld); break;
+                    case V3D_UINT16: callgsdtPlugin(callback,(unsigned short int *)data1d_gf, in_sz, 1,0,(unsigned short int* &)gsdtld); break;
+                    case V3D_FLOAT32: callgsdtPlugin(callback,(float *)data1d_gf, in_sz, 1,0,(float* &)gsdtld); break;
                     default: v3d_msg("Invalid data type. Do nothing."); return;
                 }
 
@@ -792,6 +800,294 @@ void processImage4(V3DPluginCallback2 &callback, QWidget *parent)
     return;
 }
 
+void processImage5(V3DPluginCallback2 &callback, QWidget *parent)
+{
+    v3dhandle curwin = callback.currentImageWindow();
+    if (!curwin)
+    {
+        QMessageBox::information(0, "", "You don't have any image open in the main window.");
+        return;
+    }
+
+    Image4DSimple* p4DImage = callback.getImage(curwin);
+
+    if (!p4DImage)
+    {
+        QMessageBox::information(0, "", "The image pointer is invalid. Ensure your data is valid and try again!");
+        return;
+    }
+
+    unsigned char* data1d = p4DImage->getRawData();
+    //V3DLONG totalpxls = p4DImage->getTotalBytes();
+    V3DLONG pagesz = p4DImage->getTotalUnitNumberPerChannel();
+
+    V3DLONG N = p4DImage->getXDim();
+    V3DLONG M = p4DImage->getYDim();
+    V3DLONG P = p4DImage->getZDim();
+    V3DLONG sc = p4DImage->getCDim();
+    ImagePixelType pixeltype = p4DImage->getDatatype();
+
+    V3DLONG in_sz[4];
+    in_sz[0] = N; in_sz[1] = M; in_sz[2] = P; in_sz[3] = sc;
+
+
+    //input
+    bool ok1,ok4;
+    unsigned int Ws=1000, c=1;
+    if(N < M)
+        Ws = QInputDialog::getInteger(parent, "Block Size",
+                                      "Enter block size:",
+                                      1000, 1, N, 1, &ok1);
+    else
+        Ws = QInputDialog::getInteger(parent, "Block Size",
+                                      "Enter block size:",
+                                      1000, 1, M, 1, &ok1);
+    if(ok1)
+    {
+        if(sc==1)
+        {
+            c=1;
+            ok4=true;
+        }
+        else
+        {
+            c = QInputDialog::getInteger(parent, "Channel",
+                                         "Enter channel NO:",
+                                         1, 1, sc, 1, &ok4);
+        }
+    }
+    else
+        return;
+
+    V3DLONG offsetc = (c-1)*pagesz;
+    // V3DLONG Ws = 1000;
+    int county = 0;
+    unsigned char* subject1d_y = NULL;
+    unsigned char* target1d_y = NULL;
+    V3DLONG szSub_y[4];
+    V3DLONG szTar_y[4];
+    double ratio = 1.0;
+
+    for(V3DLONG iy = 0; iy < M; iy = iy+Ws-Ws/10)
+    {
+        unsigned char* subject1d = NULL;
+        unsigned char* target1d = NULL;
+
+        V3DLONG szSub[4];
+        V3DLONG szTar[4];
+        V3DLONG new_sz0 = 0;
+        V3DLONG new_sz1 = 0;
+        V3DLONG new_sz2 = 0;
+        V3DLONG yb = iy;
+        V3DLONG ye = iy+Ws-1; if(ye>=M-1) ye = M-1;
+
+        int count = 0;
+        for(V3DLONG ix = 0; ix < N; ix = ix+Ws-Ws/10)
+        {
+            V3DLONG xb = ix;
+            V3DLONG xe = ix+Ws-1; if(xe>=N-1) xe = N-1;
+
+            unsigned char *blockarea=0;
+            V3DLONG blockpagesz = (xe-xb+1)*(ye-yb+1)*P;
+            blockarea = new unsigned char [blockpagesz];
+            double th_global = 0;
+            int i = 0;
+            for(V3DLONG iz = 0; iz < P; iz++)
+            {
+                double PixelSum = 0;
+                V3DLONG offsetk = iz*M*N;
+                for(V3DLONG iy = yb; iy < ye+1; iy++)
+                {
+                    V3DLONG offsetj = iy*N;
+                    for(V3DLONG ix = xb; ix < xe+1; ix++)
+                    {
+
+                        blockarea[i] = data1d[offsetc+offsetk + offsetj + ix];
+                        PixelSum = PixelSum + (double)data1d[offsetc+offsetk + offsetj + ix];
+                        i++;
+                    }
+                }
+                 th_global = th_global + PixelSum/(M*N*P);
+            }
+
+            V3DLONG block_sz[4];
+            block_sz[0] = xe-xb+1; block_sz[1] = ye-yb+1; block_sz[2] = P; block_sz[3] = 1;
+            saveImage("temp.v3draw", (unsigned char *)blockarea, block_sz, 1);
+            unsigned char *EnahancedImage_final=0;
+            unsigned char *localEnahancedArea=0;
+            double sigma = 0;
+            for(int scale = 0; scale < 2; scale++)
+            {
+                unsigned char * data1d_gf = 0;
+                if(scale==0)
+                {
+                    sigma = 0.3;
+                    data1d_gf = new unsigned char [blockpagesz];
+                    for(int i = 0; i<blockpagesz;i++)
+                        data1d_gf[i] = blockarea[i];
+                }
+                else
+                {
+                    sigma = 1.2;
+                    switch (pixeltype)
+                    {
+                      case V3D_UINT8: callGussianoPlugin(callback,blockpagesz,sigma,c,(unsigned char* &)data1d_gf); break;
+                      case V3D_UINT16: callGussianoPlugin(callback,blockpagesz,sigma,c,(unsigned short int* &)data1d_gf); break;
+                      case V3D_FLOAT32: callGussianoPlugin(callback,blockpagesz,sigma,c, (float* &)data1d_gf);break;
+                      default: v3d_msg("Invalid data type. Do nothing."); return;
+                    }
+                }
+
+                unsigned char * gsdtld = 0;
+                switch (pixeltype)
+                {
+                    case V3D_UINT8: callgsdtPlugin(callback,(unsigned char *)data1d_gf, block_sz, 1,th_global,(unsigned char* &)gsdtld); break;
+                    case V3D_UINT16: callgsdtPlugin(callback,(unsigned short int *)data1d_gf, block_sz, 1,th_global,(unsigned short int* &)gsdtld); break;
+                    case V3D_FLOAT32: callgsdtPlugin(callback,(float *)data1d_gf, block_sz, 1,th_global,(float* &)gsdtld); break;
+                    default: v3d_msg("Invalid data type. Do nothing."); return;
+                }
+
+                unsigned char* EnahancedImage = NULL;
+
+                switch (pixeltype)
+                {
+                case V3D_UINT8: AdpThresholding_adpwindow((unsigned char *)data1d_gf, block_sz, 1,sigma,(unsigned char* &)EnahancedImage, gsdtld,3,ratio); break;
+                case V3D_UINT16: AdpThresholding_adpwindow((unsigned short int *)data1d_gf, block_sz, 1, sigma,(unsigned short int* &)EnahancedImage,(unsigned short int *)gsdtld,3,ratio); break;
+                case V3D_FLOAT32: AdpThresholding_adpwindow((float *)data1d_gf, block_sz, 1, sigma,(float* &)EnahancedImage,(float *)gsdtld,3,ratio);break;
+                default: v3d_msg("Invalid data type. Do nothing."); return;
+                }
+
+               if(scale==0)
+               {
+
+                   EnahancedImage_final = new unsigned char [blockpagesz];
+                        for(int i = 0; i<blockpagesz;i++)
+                            EnahancedImage_final[i] = EnahancedImage[i];
+
+               }
+               else
+               {
+
+                  localEnahancedArea = new unsigned char [blockpagesz];
+                  for(int i = 0; i<blockpagesz;i++)
+                  {
+                     int a1 = EnahancedImage[i];
+                     int a2 = EnahancedImage_final[i];
+                     if(a1>a2)
+                        localEnahancedArea[i] =  EnahancedImage[i];
+                     else
+                        localEnahancedArea[i] =  EnahancedImage_final[i];
+
+                  }
+                  remove("temp.v3draw");
+               }
+
+            }
+
+            if (count==0)
+            {
+
+                V3DLONG targetsize = block_sz[0]*block_sz[1]*block_sz[2];
+                target1d = new unsigned char [targetsize];
+                for(int i = 0; i<targetsize;i++)
+                    target1d[i] = localEnahancedArea[i];
+                szTar[0] = xe-xb+1; szTar[1] = ye-yb+1; szTar[2] = P; szTar[3] = 1;
+
+              }
+            else
+            {
+
+                V3DLONG subjectsize = block_sz[0]*block_sz[1]*block_sz[2];
+                subject1d = new unsigned char [subjectsize];
+                for(int i = 0; i<subjectsize;i++)
+                    subject1d[i] = localEnahancedArea[i];
+                szSub[0] = xe-xb+1; szSub[1] = ye-yb+1; szSub[2] = P; szSub[3] = 1;
+
+                V3DLONG *offset = new V3DLONG [3];
+                offset[0] = xb;
+                offset[1] = 0;
+                offset[2] = 0;
+                new_sz0 = xe+1;
+                new_sz1 = szSub[1];
+                new_sz2 = szSub[2];
+
+                V3DLONG totalplxs = new_sz0*new_sz1*new_sz2;
+                unsigned char* data1d_blended = NULL;
+                data1d_blended = new unsigned char [totalplxs];
+                memset(data1d_blended, 0, sizeof(unsigned char)*totalplxs);
+                int success;
+
+                success = pwi_fusing<unsigned char>((unsigned char *)data1d_blended, (unsigned char *)subject1d, szSub, (unsigned char *)target1d, szTar, offset, new_sz0, new_sz1, new_sz2);
+
+                V3DLONG targetsize = new_sz0*new_sz1*new_sz2;
+                target1d = new unsigned char [targetsize];
+                for(int i = 0; i<targetsize;i++)
+                    target1d[i] = data1d_blended[i];
+                szTar[0] = new_sz0; szTar[1] = new_sz1; szTar[2] = new_sz2; szTar[3] = 1;
+
+
+
+
+            }
+            count ++;
+
+        }
+
+
+        if (county==0)
+        {
+
+            V3DLONG targetsize_y = new_sz0*new_sz1*new_sz2;
+            target1d_y = new unsigned char [targetsize_y];
+            for(int i = 0; i<targetsize_y;i++)
+                target1d_y[i] = target1d[i];
+            szTar_y[0] = new_sz0; szTar_y[1] = new_sz1; szTar_y[2] = P; szTar_y[3] = 1;
+
+
+        }
+        else
+        {
+            V3DLONG subjectsize_y = new_sz0*new_sz1*new_sz2;
+            subject1d_y = new unsigned char [subjectsize_y];
+            for(int i = 0; i<subjectsize_y;i++)
+                subject1d_y[i] = target1d[i];
+            szSub_y[0] = new_sz0; szSub_y[1] = new_sz1; szSub_y[2] = P; szSub_y[3] = 1;
+
+            V3DLONG *offset = new V3DLONG [3];
+            offset[0] = 0;
+            offset[1] = yb;
+            offset[2] = 0;
+            new_sz0 = szSub_y[0];
+            new_sz1 = ye+1;
+            new_sz2 = szSub_y[2];
+
+            V3DLONG totalplxs = new_sz0*new_sz1*new_sz2;
+            unsigned char* data1d_blended_y = NULL;
+            data1d_blended_y = new unsigned char [totalplxs];
+            memset(data1d_blended_y, 0, sizeof(unsigned char)*totalplxs);
+            int success;
+            success = pwi_fusing<unsigned char>((unsigned char *)data1d_blended_y, (unsigned char *)subject1d_y, szSub_y, (unsigned char *)target1d_y, szTar_y, offset, new_sz0, new_sz1, new_sz2);
+
+
+            V3DLONG targetsize_y = new_sz0*new_sz1*new_sz2;
+            target1d_y = new unsigned char [targetsize_y];
+            for(int i = 0; i<targetsize_y;i++)
+                target1d_y[i] = data1d_blended_y[i];
+            szTar_y[0] = new_sz0; szTar_y[1] = new_sz1; szTar_y[2] = new_sz2; szTar_y[3] = 1;
+        }
+        county++;
+    }
+
+    // display
+    Image4DSimple * new4DImage = new Image4DSimple();
+    new4DImage->setData((unsigned char *)target1d_y,N, M, P, 1, pixeltype);
+    v3dhandle newwin = callback.newImageWindow();
+    callback.setImage(newwin, new4DImage);
+    callback.setImageName(newwin, "Local_adaptive_enhancement_result");
+    callback.updateImageWindow(newwin);
+    return;
+}
+
 bool processImage3(const V3DPluginArgList & input, V3DPluginArgList & output,V3DPluginCallback2 &callback)
 {
     cout<<"Welcome to adaptive enhancement filter"<<endl;
@@ -864,9 +1160,9 @@ bool processImage3(const V3DPluginArgList & input, V3DPluginArgList & output,V3D
         unsigned char * gsdtld = 0;
         switch (datatype)
         {
-            case V3D_UINT8: callgsdtPlugin(callback,(unsigned char *)data1d_gf, in_sz, 1,(unsigned char* &)gsdtld); break;
-            case V3D_UINT16: callgsdtPlugin(callback,(unsigned short int *)data1d_gf, in_sz, 1,(unsigned short int* &)gsdtld); break;
-            case V3D_FLOAT32: callgsdtPlugin(callback,(float *)data1d_gf, in_sz, 1,(float* &)gsdtld); break;
+            case V3D_UINT8: callgsdtPlugin(callback,(unsigned char *)data1d_gf, in_sz, 1,0,(unsigned char* &)gsdtld); break;
+            case V3D_UINT16: callgsdtPlugin(callback,(unsigned short int *)data1d_gf, in_sz, 1,0,(unsigned short int* &)gsdtld); break;
+            case V3D_FLOAT32: callgsdtPlugin(callback,(float *)data1d_gf, in_sz, 1,0,(float* &)gsdtld); break;
             default: v3d_msg("Invalid data type. Do nothing."); return false;
         }
 
@@ -1152,7 +1448,7 @@ template <class T> void AdpThresholding_adpwindow(const T* data1d,
                 T GsdtValue = gsdtdatald[offsetk + offsetj + ix];
                 T PixelValue = data1d[offsetc+offsetk + offsetj + ix];
                 Wx = (int)round((ratio*log(GsdtValue)/log(2)));
-                if(ratio<0.5)
+                if(ratio ==0.1)
                 {
                     if(Wx == 0) Wx = 1;
                     Wy = Wx;
@@ -1160,6 +1456,7 @@ template <class T> void AdpThresholding_adpwindow(const T* data1d,
                 }
                 else
                 {
+
                     Wy = Wx;
                     Wz = 2*Wx;
                 }
@@ -1379,6 +1676,7 @@ template <class T> void AdpThresholding_adpwindow(const T* data1d,
 template <class T> void callgsdtPlugin(V3DPluginCallback2 &callback,const T* data1d,
                                                   V3DLONG *in_sz,
                                                   unsigned int c,
+                                                  double th_global,
                                                   T* &outimg)
 {
     if (outimg)
@@ -1393,6 +1691,7 @@ template <class T> void callgsdtPlugin(V3DPluginCallback2 &callback,const T* dat
     V3DLONG P = in_sz[2];
     V3DLONG pagesz = N*M*P;
     V3DLONG offsetc = (c-1)*pagesz;
+    double th_final = 0;
 
     //Set gsdt parameters
     double th = 0;
@@ -1410,11 +1709,34 @@ template <class T> void callgsdtPlugin(V3DPluginCallback2 &callback,const T* dat
                 PixelSum = PixelSum + PixelVaule;
             }
         }
-        th += + PixelSum/(M*N*P);
+        th += PixelSum/(M*N*P);
     }
 
+    double std = 0;
+
+    for(V3DLONG iz = 0; iz < P; iz++)
+    {
+        double stdSum = 0;
+        V3DLONG offsetk = iz*M*N;
+        for(V3DLONG iy = 0; iy <  M; iy++)
+        {
+            V3DLONG offsetj = iy*N;
+            for(V3DLONG ix = 0; ix < N; ix++)
+            {
+
+                double PixelVaule = data1d[offsetc+offsetk + offsetj + ix];
+                stdSum = stdSum + pow(PixelVaule-th,2);
+            }
+        }
+         std += stdSum/(M*N*P);
+    }
+
+    if(th > th_global)
+       th_final = th;
+    else
+       th_final = th_global;
+    printf("mean is %.2f, std is %.2f\n\n\n",th,sqrt(std));
     saveImage("temp_gf.v3draw", (unsigned char *)data1d, in_sz, 1);
-    th = 1.5*th;
     V3DPluginArgItem arg;
     V3DPluginArgList input;
     V3DPluginArgList output;
@@ -1422,7 +1744,7 @@ template <class T> void callgsdtPlugin(V3DPluginCallback2 &callback,const T* dat
     arg.type = "random";std::vector<char*> args1;
     args1.push_back("temp_gf.v3draw"); arg.p = (void *) & args1; input<< arg;
     arg.type = "random";std::vector<char*> args;
-    string threshold = boost::lexical_cast<string>(th); char* threshold2 =  new char[threshold.length() + 1]; strcpy(threshold2, threshold.c_str());
+    string threshold = boost::lexical_cast<string>(th_final); char* threshold2 =  new char[threshold.length() + 1]; strcpy(threshold2, threshold.c_str());
     args.push_back(threshold2);args.push_back("1");args.push_back("0");args.push_back("1"); arg.p = (void *) & args; input << arg;
     arg.type = "random";std::vector<char*> args2;args2.push_back("gsdtImage.v3draw"); arg.p = (void *) & args2; output<< arg;
 
@@ -1484,7 +1806,7 @@ template <class T> double getdtmax(V3DPluginCallback2 &callback,const T* data1d,
             th = th + PixelSum/(M*N*P);
     }
 
-    th = th*1.6;
+
     V3DPluginArgItem arg;
     V3DPluginArgList input;
     V3DPluginArgList output;
@@ -1508,7 +1830,7 @@ template <class T> double getdtmax(V3DPluginCallback2 &callback,const T* data1d,
     char * outimg_file = ((vector<char*> *)(output.at(0).p))->at(0);
     loadImage(outimg_file, data1d_gt, in_zz, datatype);
     remove("temp_enhanced.v3draw");
-    //remove("gtImage.v3draw");
+    remove("gtImage.v3draw");
     double maxfl = 0;
     for(V3DLONG i=0; i<pagesz; i++)
     {
@@ -1521,4 +1843,132 @@ template <class T> double getdtmax(V3DPluginCallback2 &callback,const T* data1d,
     return maxfl;
 
 
+}
+
+// pairwise image blending function
+template <class SDATATYPE>
+int pwi_fusing(SDATATYPE *data1d, SDATATYPE *subject1d, V3DLONG *sz_subject, SDATATYPE *target1d, V3DLONG *sz_target, V3DLONG *offset,V3DLONG new_sz0, V3DLONG new_sz1, V3DLONG new_sz2)
+{
+    //
+
+    V3DLONG sx = sz_subject[0], sy = sz_subject[1], sz = sz_subject[2], sc = sz_subject[3];
+    V3DLONG tx = sz_target[0], ty = sz_target[1], tz = sz_target[2], tc = sz_target[3];
+
+    V3DLONG offset_tx, offset_ty, offset_tz, offset_sx, offset_sy, offset_sz;
+    if(offset[0]<0)
+    {
+        offset_sx = 0; offset_tx = -offset[0];
+    }
+    else
+    {
+        offset_sx = offset[0]; offset_tx = 0;
+    }
+    if(offset[1]<0)
+    {
+        offset_sy = 0; offset_ty = -offset[1];
+    }
+    else
+    {
+        offset_sy = offset[1]; offset_ty = 0;
+    }
+    if(offset[2]<0)
+    {
+        offset_sz = 0; offset_tz = -offset[2];
+    }
+    else
+    {
+        offset_sz = offset[2]; offset_tz = 0;
+    }
+
+    qDebug("new_sz0 %ld new_sz1 %ld offset_tx %ld offset_ty %ld offset_sx %ld offset_sy %ld", new_sz0, new_sz1, offset_tx, offset_ty, offset_sx, offset_sy);
+
+    //outputs
+    V3DLONG offset_data = new_sz0*new_sz1*new_sz2;
+    V3DLONG offset_target = tx*ty*tz;
+    V3DLONG offset_subject = sx*sy*sz;
+
+    V3DLONG i_start, j_start, k_start;
+    V3DLONG sz_start = offset_sz, sz_end = sz_start + sz; if(sz_start<0) k_start=0; else k_start=sz_start; if(sz_end>new_sz2) sz_end=new_sz2;
+    V3DLONG sy_start = offset_sy, sy_end = sy_start + sy; if(sy_start<0) j_start=0; else j_start=sy_start; if(sy_end>new_sz1) sy_end=new_sz1;
+    V3DLONG sx_start = offset_sx, sx_end = sx_start + sx; if(sx_start<0) i_start=0; else i_start=sx_start; if(sx_end>new_sz0) sx_end=new_sz0;
+
+    //cout<< k_start << " " << sz_end  << " " << j_start  << " " << sy_end  << " " << i_start  << " " << sx_end << endl;
+
+    for(V3DLONG c=0; c<sc; c++)
+    {
+        V3DLONG offset_c = c*offset_data;
+        V3DLONG offsets_c = c*offset_subject;
+        for(V3DLONG k=k_start; k<sz_end; k++)
+        {
+            V3DLONG offset_k = offset_c + k*new_sz0*new_sz1;
+            V3DLONG offsets_k = offsets_c + (k-k_start)*sx*sy; if (k-k_start >= sz) continue;
+            for(V3DLONG j=j_start; j<sy_end; j++)
+            {
+                V3DLONG offset_j = offset_k + j*new_sz0;
+                V3DLONG offsets_j = offsets_k + (j-j_start)*sx; if (j-j_start >= sy) continue;
+                for(V3DLONG i=i_start; i<sx_end; i++)
+                {
+                    V3DLONG idx = offset_j + i;
+
+                    data1d[idx] = subject1d[offsets_j + i - i_start];
+                }
+            }
+        }
+    }
+
+    V3DLONG tz_start = offset_tz, tz_end = offset_tz + tz; if(tz_start<0) tz_start=0; if(tz_end>new_sz2) tz_end=new_sz2;
+    V3DLONG ty_start = offset_ty, ty_end = offset_ty + ty; if(ty_start<0) ty_start=0; if(ty_end>new_sz1) ty_end=new_sz1;
+    V3DLONG tx_start = offset_tx, tx_end = offset_tx + tx;	if(tx_start<0) tx_start=0; if(tx_end>new_sz0) tx_end=new_sz0;
+
+    //cout<< tz_start << " " << tz_end  << " " << ty_start  << " " << ty_end  << " " << tx_start  << " " << tx_end << endl;
+
+    for(V3DLONG c=0; c<sc; c++)
+    {
+        V3DLONG offset_c = c*offset_data;
+        V3DLONG offsets_c = c*offset_target;
+        for(V3DLONG k=tz_start; k<tz_end; k++)
+        {
+            V3DLONG offset_k = offset_c + k*new_sz0*new_sz1;
+            V3DLONG offsets_k = offsets_c + (k-tz_start)*tx*ty;
+            for(V3DLONG j=ty_start; j<ty_end; j++)
+            {
+                V3DLONG offset_j = offset_k + j*new_sz0;
+                V3DLONG offsets_j = offsets_k + (j-ty_start)*tx;
+                for(V3DLONG i=tx_start; i<tx_end; i++)
+                {
+                    V3DLONG idx = offset_j + i;
+                    if(data1d[idx])
+                    {
+                        if(offset[0] > 0)
+                        {
+                            V3DLONG overlap_range = tx - offset[0];
+                            V3DLONG tar_range= i - offset[0]+1;
+                            double tar_ratio = (double)tar_range/overlap_range;
+                            //qDebug("overlap_range %ld tar_range %ld tar_ratio %.4f sub_ratio %.4f", overlap_range, tar_range, tar_ratio, 1-tar_ratio);
+                            data1d[idx] = (SDATATYPE) ( tar_ratio*data1d[idx] + (1-tar_ratio)*target1d[offsets_j + i - tx_start] );
+
+                            //data1d[idx] = (SDATATYPE) ( (data1d[idx] + target1d[offsets_j + i - tx_start])/2.0 );
+                        }else
+                        {
+                            V3DLONG overlap_range = ty - offset[1];
+                            V3DLONG tar_range= j - offset[1]+1;
+                            double tar_ratio = (double)tar_range/overlap_range;
+                            data1d[idx] = (SDATATYPE) ( tar_ratio*data1d[idx] + (1-tar_ratio)*target1d[offsets_j + i - tx_start] );
+
+
+                        }
+                    }
+                    else
+                    {
+                        data1d[idx] = (SDATATYPE) target1d[offsets_j + i - tx_start];
+                    }
+
+                }
+            }
+        }
+    }
+
+
+
+    return true;
 }
