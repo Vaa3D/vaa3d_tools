@@ -203,6 +203,33 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     importOptionsWidget = new QWidgetAction(this);
     importOptionsWidget->setDefaultWidget(import_form);
     importOptionsMenu->addAction(importOptionsWidget);    
+
+    threeDMenu = optionsMenu->addMenu("3D");
+    curvesMenu = threeDMenu->addMenu("Curves");
+    curveAspectMenu = curvesMenu->addMenu("Aspect");
+    curveDimsMenu = curvesMenu->addMenu("Skeleton width");
+    curveAspectTube = new QAction("Tube", this);
+    curveAspectSkeleton = new QAction("Skeleton", this);
+    curveAspectTube->setCheckable(true);
+    curveAspectSkeleton->setCheckable(true);
+    QActionGroup* curveAspectMutex = new QActionGroup(this);
+    curveAspectMutex->addAction(curveAspectTube);
+    curveAspectMutex->addAction(curveAspectSkeleton);
+    curveAspectMutex->setExclusive(true);
+    curveAspectMenu->addAction(curveAspectTube);
+    curveAspectMenu->addAction(curveAspectSkeleton);
+    curveDimsWidget = new QWidgetAction(this);
+    QSpinBox* curveDimsSpinBox = new QSpinBox();
+    curveDimsSpinBox->setMinimum(1);
+    curveDimsSpinBox->setMaximum(10);
+    curveDimsSpinBox->setSuffix(" (pixels)");
+    curveDimsWidget->setDefaultWidget(curveDimsSpinBox);
+    curveDimsMenu->addAction(curveDimsWidget);
+    curveAspectSkeleton->setChecked(true);
+    curveDimsSpinBox->setValue(1);
+    connect(curveAspectSkeleton, SIGNAL(changed()), this, SLOT(curveAspectChanged()));
+    connect(curveDimsSpinBox, SIGNAL(valueChanged(int)), this, SLOT(curveDimsChanged(int)));
+
     debugMenu = menuBar->addMenu("Debug");
     //debugAction1 = new QAction("Action 1", debugMenu);
     //connect(debugAction1, SIGNAL(triggered()), this, SLOT(debugAction1Triggered()));
@@ -1788,4 +1815,44 @@ void PMain::showLogTriggered()
     #endif
 
     PLog::instance(this)->show();
+}
+
+/**********************************************************************************
+* Called when the correspondent Options->3D->Curve actions are triggered
+***********************************************************************************/
+void PMain::curveDimsChanged(int dim)
+{
+    #ifdef TMP_DEBUG
+    printf("--------------------- teramanager plugin [thread *] >> PMain::curveDimsChanged(%d)\n", dim);
+    #endif
+
+    if(CExplorerWindow::current)
+    {
+        CExplorerWindow::current->view3DWidget->getRenderer()->lineWidth = dim;
+        CExplorerWindow::current->view3DWidget->updateTool();
+        CExplorerWindow::current->view3DWidget->update();
+    }
+}
+
+void PMain::curveAspectChanged()
+{
+    #ifdef TMP_DEBUG
+    printf("--------------------- teramanager plugin [thread *] >> PMain::curveAspectChanged()\n");
+    #endif
+
+    if(CExplorerWindow::current)
+    {
+        if(curveAspectTube->isChecked())
+        {
+            CExplorerWindow::current->view3DWidget->getRenderer()->lineType = 0;
+            CExplorerWindow::current->view3DWidget->updateTool();
+            CExplorerWindow::current->view3DWidget->update();
+        }
+        else if(curveAspectSkeleton->isChecked())
+        {
+            CExplorerWindow::current->view3DWidget->getRenderer()->lineType = 1;
+            CExplorerWindow::current->view3DWidget->updateTool();
+            CExplorerWindow::current->view3DWidget->update();
+        }
+    }
 }

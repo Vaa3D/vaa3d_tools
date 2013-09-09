@@ -11,6 +11,17 @@ ties names are:
 - Rem: a feature no longer available
 
 ============================================================================================
+Version 0.9.14
+September 9th, 2013
+--------------------------------------------------------------------------------------------
+- Opt: tried to remove plugin dependecy from Vaa3D libraries v3dtiff and mylib,  still  need
+       to be tested on other platforms.
+- New: added menu "Options->3D->curves" to set 3D curves properties, such as aspect (tube or
+       skeleton) and dimensions (for skeleton mode only).
+- Fix: fixed a bug which caused skeleton mode not to be propagated among 3D views.
+--------------------------------------------------------------------------------------------
+
+
 Version 0.9.13
 September 4th, 2013
 --------------------------------------------------------------------------------------------

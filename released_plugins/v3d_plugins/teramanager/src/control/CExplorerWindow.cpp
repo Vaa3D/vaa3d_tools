@@ -32,6 +32,7 @@
 #include "CAnnotations.h"
 #include "../presentation/PMain.h"
 #include "../presentation/PLog.h"
+#include "renderer.h"
 #include "renderer_gl1.h"
 #include "v3dr_colormapDialog.h"
 #include "V3Dsubclasses.h"
@@ -74,6 +75,7 @@ void CExplorerWindow::show()
             QMessageBox::critical(PMain::getInstance(),QObject::tr("Error"), QObject::tr("Unable to get iDrawExternalParameter from Vaa3D's V3dR_GLWidget"),QObject::tr("Ok"));
         window3D = view3DWidget->getiDrawExternalParameter()->window3D;
         PLog::getInstance()->appendGPU(timer.elapsed(), QString("Opened view ").append(title.c_str()).toStdString());
+
 
         //installing the event filter on the 3D renderer and on the 3D window
         view3DWidget->installEventFilter(this);
@@ -1870,5 +1872,9 @@ void CExplorerWindow::syncWindows(V3dR_MainWindow* src, V3dR_MainWindow* dst)
     dst->checkBox_displayAxes->setChecked(src->checkBox_displayAxes->isChecked());
     dst->checkBox_displayBoundingBox->setChecked(src->checkBox_displayBoundingBox->isChecked());
     dst->checkBox_OrthoView->setChecked(src->checkBox_OrthoView->isChecked());
+
+    //propagating skeleton mode and line width
+    dst->getGLWidget()->getRenderer()->lineType = src->getGLWidget()->getRenderer()->lineType;
+    dst->getGLWidget()->getRenderer()->lineWidth = src->getGLWidget()->getRenderer()->lineWidth;
 }
 

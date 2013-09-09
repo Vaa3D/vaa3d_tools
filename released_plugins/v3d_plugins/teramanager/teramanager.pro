@@ -49,26 +49,20 @@ INCLUDEPATH+= $$QT_PATH/demos/shared
 INCLUDEPATH += $$V3DMAINPATH/basic_c_fun
 INCLUDEPATH += $$V3DMAINPATH/3drenderer
 INCLUDEPATH += $$V3DMAINPATH/common_lib/include
-INCLUDEPATH += $$V3DMAINPATH/common_lib/src_packages/mylib_tiff
+#INCLUDEPATH += $$V3DMAINPATH/common_lib/src_packages/mylib_tiff
 INCLUDEPATH += $$V3DMAINPATH/basic_c_fun/customary_structs
-SOURCES += $$V3DMAINPATH/basic_c_fun/v3d_message.cpp \
-    src/presentation/PAbout.cpp \
-    src/presentation/PLog.cpp
+SOURCES += $$V3DMAINPATH/basic_c_fun/v3d_message.cpp
 SOURCES += $$V3DMAINPATH/basic_c_fun/stackutil.cpp
-SOURCES += $$V3DMAINPATH/basic_c_fun/mg_image_lib.cpp
+#SOURCES += $$V3DMAINPATH/basic_c_fun/mg_image_lib.cpp
 SOURCES += $$V3DMAINPATH/basic_c_fun/mg_utilities.cpp
 SOURCES += $$V3DMAINPATH/basic_c_fun/basic_memory.cpp
 SOURCES += $$V3DMAINPATH/basic_c_fun/basic_4dimage.cpp
-SOURCES += $$V3DMAINPATH/basic_c_fun/imageio_mylib.cpp
+#SOURCES += $$V3DMAINPATH/basic_c_fun/imageio_mylib.cpp
 SOURCES += $$V3DMAINPATH/basic_c_fun/basic_surf_objs.cpp
-HEADERS += $$V3DMAINPATH/common_lib/src_packages/mylib_tiff/image.h \
-    src/control/V3Dsubclasses.h \
-    src/presentation/QLineTree.h \
-    src/presentation/PAbout.h \
-    src/presentation/PLog.h
-HEADERS += $$V3DMAINPATH/basic_c_fun/imageio_mylib.h
-LIBS += -L. -lv3dtiff -L$$V3DMAINPATH/common_lib/lib \
-            -L$$V3DMAINPATH/common_lib/src_packages/mylib_tiff -lmylib
+#HEADERS += $$V3DMAINPATH/common_lib/src_packages/mylib_tiff/image.h \
+#HEADERS += $$V3DMAINPATH/basic_c_fun/imageio_mylib.h
+#LIBS += -L. -lv3dtiff -L$$V3DMAINPATH/common_lib/lib \
+#            -L$$V3DMAINPATH/common_lib/src_packages/mylib_tiff -lmylib
 
 #Vaa3D sources needed to use experimental features
 use_experimental_features{
@@ -106,6 +100,7 @@ use_experimental_features{
 #set up plugin
 DEFINES += _VAA3D_PLUGIN_MODE
 RESOURCES += icons.qrc
+HEADERS += ./src/control/V3Dsubclasses.h
 HEADERS += ./src/control/CAnnotations.h
 HEADERS += ./src/control/CConverter.h
 HEADERS += ./src/control/CExplorerWindow.h
@@ -121,6 +116,8 @@ HEADERS += ./src/presentation/QArrowButton.h
 HEADERS += ./src/presentation/QGradientBar.h
 HEADERS += ./src/presentation/QHelpBox.h
 HEADERS += ./src/presentation/QLineTree.h
+HEADERS += ./src/presentation/PAbout.h
+HEADERS += ./src/presentation/PLog.h
 HEADERS += ./src/core/ImageManager/ProgressBar.h
 HEADERS += ./src/core/ImageManager/RawFmtMngr.h
 HEADERS += ./src/core/ImageManager/RawVolume.h
@@ -144,6 +141,8 @@ SOURCES += ./src/control/V3Dsubclasses.cpp
 SOURCES += ./src/presentation/PConverter.cpp
 SOURCES += ./src/presentation/PDialogImport.cpp
 SOURCES += ./src/presentation/PMain.cpp
+SOURCES += ./src/presentation/PAbout.cpp
+SOURCES += ./src/presentation/PLog.cpp
 SOURCES += ./src/presentation/QArrowButton.cpp
 SOURCES += ./src/presentation/QGradientBar.cpp
 SOURCES += ./src/presentation/QHelpBox.cpp

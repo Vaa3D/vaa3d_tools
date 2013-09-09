@@ -72,7 +72,15 @@ class teramanager::PMain : public QWidget
         QAction* clearAnnotationsAction;//"Clear annotations" menu action
         QAction* exitAction;            //"Exit" menu action
         QMenu* optionsMenu;             //"Options" menu
-        QMenu* importOptionsMenu;       //"Import" menu
+        QMenu* importOptionsMenu;       //"Import" menu level 2
+        QMenu* threeDMenu;              //"3D" menu level 2
+        QMenu* curvesMenu;              //"Curves" menu level 3
+        QMenu* curveDimsMenu;           //"Curve dims" menu level 4
+        QWidgetAction* curveDimsWidget; //"Curve dims" menu action widget
+        QSpinBox* curveDimsSpinBox;     //"Curve dims" spinbox
+        QMenu* curveAspectMenu;             //"Curve aspect" menu level 4
+        QAction* curveAspectTube;       //"Tube" action
+        QAction* curveAspectSkeleton;   //"Skeleton" action
         QWidgetAction* importOptionsWidget;
         QMenu* helpMenu;                //"Help" menu
         QAction* aboutAction;           //"About" menu action
@@ -377,6 +385,12 @@ class teramanager::PMain : public QWidget
         ***********************************************************************************/
         void debugAction1Triggered();
         void showLogTriggered();
+
+        /**********************************************************************************
+        * Called when the correspondent Options->3D->Curve actions are triggered
+        ***********************************************************************************/
+        void curveDimsChanged(int dim);
+        void curveAspectChanged();
 
 
         //very useful (not included in Qt): disables the given item of the given combobox
