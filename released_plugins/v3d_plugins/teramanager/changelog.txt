@@ -11,6 +11,16 @@ ties names are:
 - Rem: a feature no longer available
 
 ============================================================================================
+Version 0.9.15
+September 10th, 2013
+--------------------------------------------------------------------------------------------
+- Fix: fixed bug in the TeraConverter's  "Image series (nontiled)" format  which  caused all 
+       files in a folder to be loaded as images. A filter is now used to discard unsupported
+       files with unsupported image extensions.
+- Fix: fixed TeraConverter's file dialog issue on MacOS.
+--------------------------------------------------------------------------------------------
+
+
 Version 0.9.14
 September 9th, 2013
 --------------------------------------------------------------------------------------------

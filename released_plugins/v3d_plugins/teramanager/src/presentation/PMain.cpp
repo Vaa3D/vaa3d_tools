@@ -923,32 +923,7 @@ void PMain::openVolume(string path /* = "" */)
 
         if(import_path.isEmpty())
         {
-            //---- Alessandro 2013-05-20: obtaining volume's directory with QFileDialog instead of platform native file dialogs
-            //                            since a strange behaviour has been shown by native file dialogs on MacOS X.
-
-
-            /* //comment by PHC, 20130823 to solve the mdata.bin cannot be detected problem
-
-            QFileDialog dialog(0);
-            dialog.setFileMode(QFileDialog::DirectoryOnly);
-            dialog.setViewMode(QFileDialog::Detail);
-            dialog.setWindowFlags(Qt::WindowStaysOnTopHint);
-            dialog.setWindowTitle("Select volume's directory");
-            dialog.setDirectory(CSettings::instance()->getVolumePathLRU().c_str());
-            if(dialog.exec())
-            {
-                printf("--------------------- teramanager plugin [thread *] >> PMain::openVolume(path = \"%s\"): user selected directory \"%s\"\n",
-                       path.c_str(), dialog.directory().absolutePath().toStdString().c_str());
-                import_path = dialog.directory().absolutePath().toStdString();
-            }
-
-            //if no directory has been selected, terminating this method
-            if(import_path.empty())
-                return;
-
-            */
-
-            //adde by PHC 20130823
+            //added by PHC 20130823
             import_path = QFileDialog::getExistingDirectory(this, tr("Select a folder for a resolution of the volume image you want to visualize"),
                                                             CSettings::instance()->getVolumePathLRU().c_str(),
                                                              QFileDialog::ShowDirsOnly
@@ -1060,32 +1035,21 @@ void PMain::loadAnnotations()
     {
         if(CExplorerWindow::getCurrent())
         {
-            //obtaining path
+            //obtaining current volume's parent folder path
             QDir dir(CImport::instance()->getPath().c_str());
             dir.cdUp();
 
-            //---- Alessandro 2013-05-20: obtaining volume's directory with QFileDialog instead of platform native file dialogs
-            //                            since a strange behaviour has been shown by native file dialogs on MacOS X.
-            string path = "";
-            QFileDialog dialog(0);
-            dialog.setFileMode(QFileDialog::ExistingFile);
-            dialog.setViewMode(QFileDialog::Detail);
-            dialog.setWindowFlags(Qt::WindowStaysOnTopHint);
-            dialog.setWindowTitle("Open annotation file");
-            dialog.setNameFilter(tr("annotation files (*.ano)"));
-            dialog.setDirectory(dir.absolutePath().toStdString().c_str());
-            if(dialog.exec())
-                if(!dialog.selectedFiles().empty())
-                    path = dialog.selectedFiles().front().toStdString();
-
-            if(strcmp(path.c_str(), "") == 0)
+            //---- Alessandro 2013-09-10: using native file dialogs instead of Qt's file dialogs that don't work properly on MacOS X.
+            QString path = QFileDialog::getOpenFileName(this, "Open annotation file", dir.absolutePath(), tr("annotation files (*.ano)"));
+            if(!path.isEmpty())
+            {
+                annotationsPathLRU = path.toStdString();
+                CAnnotations::getInstance()->load(annotationsPathLRU.c_str());
+                CExplorerWindow::getCurrent()->loadAnnotations();
+                saveAnnotationsAction->setEnabled(true);
+            }
+            else
                 return;
-            annotationsPathLRU = path;
-
-            CAnnotations::getInstance()->load(annotationsPathLRU.c_str());
-            CExplorerWindow::getCurrent()->loadAnnotations();
-            saveAnnotationsAction->setEnabled(true);
-
         }
     }
     catch(MyException &ex)
@@ -1132,35 +1096,23 @@ void PMain::saveAnnotationsAs()
     {
         if(CExplorerWindow::getCurrent())
         {
+            //obtaining current volume's parent folder path
             QDir dir(CImport::instance()->getPath().c_str());
             dir.cdUp();
 
-            //---- Alessandro 2013-05-20: obtaining volume's directory with QFileDialog instead of platform native file dialogs
-            //                            since a strange behaviour has been shown by native file dialogs on MacOS X.
-            string path = "";
-            QFileDialog dialog(0);
-            dialog.setFileMode(QFileDialog::AnyFile);
-            dialog.setViewMode(QFileDialog::Detail);
-            dialog.setWindowFlags(Qt::WindowStaysOnTopHint);
-            dialog.setWindowTitle("Save annotation file as");
-            dialog.setNameFilter(tr("annotation files (*.ano)"));
-            dialog.setDirectory(dir.absolutePath().toStdString().c_str());
-            dialog.setAcceptMode(QFileDialog::AcceptSave);
-            if(dialog.exec())
-                if(!dialog.selectedFiles().empty())
-                    path = dialog.selectedFiles().front().toStdString();
-
-            if(strcmp(path.c_str(), "") == 0)
+            //---- Alessandro 2013-09-10: using native file dialogs instead of Qt's file dialogs that don't work properly on MacOS X.
+            QString path = QFileDialog::getSaveFileName(this, "Save annotation file as", dir.absolutePath(), tr("annotation files (*.ano)"));
+            if(!path.isEmpty())
+            {
+                annotationsPathLRU = path.toStdString();
+                if(annotationsPathLRU.find(".ano") == string::npos)
+                    annotationsPathLRU.append(".ano");
+                CExplorerWindow::getCurrent()->storeAnnotations();
+                CAnnotations::getInstance()->save(annotationsPathLRU.c_str());
+                saveAnnotationsAction->setEnabled(true);
+            }
+            else
                 return;
-            annotationsPathLRU = path;
-
-            if(annotationsPathLRU.find(".ano") == string::npos)
-                annotationsPathLRU.append(".ano");
-
-
-            CExplorerWindow::getCurrent()->storeAnnotations();
-            CAnnotations::getInstance()->save(annotationsPathLRU.c_str());
-            saveAnnotationsAction->setEnabled(true);
         }
     }
     catch(MyException &ex)

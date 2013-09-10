@@ -254,7 +254,7 @@ uint8 *SimpleVolume::loadSubvolume_to_UINT8(int V0,int V1, int H0, int H1, int D
 					if(!slice)
 					{
 						char msg[IM_STATIC_STRINGS_SIZE];
-						sprintf(msg,"in Stack[%d,%d]::loadStack(%d,%d): unable to open image \"%s\". Wrong path or format.\nSupported formats are BMP, DIB, JPEG, JPG, JPE, PNG, PBM, PGM, PPM, SR, RAS, TIFF, TIF", 
+                        sprintf(msg,"in Stack[%d,%d]::loadStack(%d,%d): unable to open image \"%s\". Wrong path or format.\nSupported formats are BMP, DIB, JPEG, JPG, JPE, JP2, PNG, PBM, PGM, PPM, SR, RAS, TIFF, TIF",
 							STACKS[row][col]->getROW_INDEX(), STACKS[row][col]->getCOL_INDEX(), first_file, last_file, slice_fullpath);
 						throw MyException(msg);
 					}		

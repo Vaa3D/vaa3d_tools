@@ -208,13 +208,41 @@ void Stack::init()
 		sprintf(errMsg, "in Stack::init(): can't open directory \"%s\"", abs_path);
 		throw MyException(errMsg);
 	}
-
 	//scanning third level of hierarchy which entries need to be ordered alphabetically. This is done using STL.
 	while ((entry_lev3=readdir(cur_dir_lev3)))
 	{
 		tmp = entry_lev3->d_name;
-		if(tmp.compare(".") != 0 && tmp.compare("..") != 0 && tmp.find(".") != string::npos)
-			entries_lev3.push_back(tmp);
+        if(tmp.compare(".") != 0 && tmp.compare("..") != 0  && //discarding system entries "." and ".."
+           tmp.find(".") != string::npos                    && //discarding directories
+           ( VirtualVolume::hasEnding(tmp, ".BMP") ||          //filtering supported image extensions
+             VirtualVolume::hasEnding(tmp, ".bmp") ||
+             VirtualVolume::hasEnding(tmp, ".DIB") ||
+             VirtualVolume::hasEnding(tmp, ".dib") ||
+             VirtualVolume::hasEnding(tmp, ".JPEG")||
+             VirtualVolume::hasEnding(tmp, ".jpeg")||
+             VirtualVolume::hasEnding(tmp, ".JPG") ||
+             VirtualVolume::hasEnding(tmp, ".jpg") ||
+             VirtualVolume::hasEnding(tmp, ".JPE") ||
+             VirtualVolume::hasEnding(tmp, ".jpe") ||
+             VirtualVolume::hasEnding(tmp, ".JP2") ||
+             VirtualVolume::hasEnding(tmp, ".jp2") ||
+             VirtualVolume::hasEnding(tmp, ".PNG") ||
+             VirtualVolume::hasEnding(tmp, ".png") ||
+             VirtualVolume::hasEnding(tmp, ".PBM") ||
+             VirtualVolume::hasEnding(tmp, ".pbm") ||
+             VirtualVolume::hasEnding(tmp, ".PGM") ||
+             VirtualVolume::hasEnding(tmp, ".pgm") ||
+             VirtualVolume::hasEnding(tmp, ".PPM") ||
+             VirtualVolume::hasEnding(tmp, ".ppm") ||
+             VirtualVolume::hasEnding(tmp, ".SR")  ||
+             VirtualVolume::hasEnding(tmp, ".sr")  ||
+             VirtualVolume::hasEnding(tmp, ".RAS") ||
+             VirtualVolume::hasEnding(tmp, ".ras") ||
+             VirtualVolume::hasEnding(tmp, ".TIFF")||
+             VirtualVolume::hasEnding(tmp, ".tiff")||
+             VirtualVolume::hasEnding(tmp, ".TIF") ||
+             VirtualVolume::hasEnding(tmp, ".tif")))
+            entries_lev3.push_back(tmp);
 	}
 	entries_lev3.sort();
 	DEPTH = (int)entries_lev3.size();
@@ -223,11 +251,14 @@ void Stack::init()
     //----- Bug fixed: exceeding the maximum number of directories opened at the same time
     closedir(cur_dir_lev3);
 
+    for(entry_k = entries_lev3.begin(); entry_k != entries_lev3.end(); entry_k++)
+        printf("in Stack[%d,%d]::init(): found \"%s\"\n", ROW_INDEX, COL_INDEX, entry_k->c_str());
+
 	//checking if current stack is not empty
 	if(DEPTH == 0)
 	{
 		char msg[1000];
-                sprintf(msg,"in Stack[%d,%d]::init(): stack in \"%s\" is empty", ROW_INDEX, COL_INDEX, abs_path);
+                sprintf(msg,"in Stack[%d,%d]::init(): stack in \"%s\" is empty or no supported images were found", ROW_INDEX, COL_INDEX, abs_path);
 		throw MyException(msg);
 	}
 
@@ -250,14 +281,16 @@ void Stack::init()
 	//extracting HEIGHT and WIDTH attributes from first slice
 	char slice_fullpath[IM_STATIC_STRINGS_SIZE];
 	sprintf(slice_fullpath, "%s/%s/%s", CONTAINER->getROOT_DIR(), DIR_NAME, FILENAMES[0]);
+    printf("in Stack[%d,%d]::init(): trying to load image at \"%s\"\n", ROW_INDEX, COL_INDEX, slice_fullpath);
     IplImage *img_tmp = cvLoadImage(slice_fullpath, CV_LOAD_IMAGE_GRAYSCALE);
 	if(!img_tmp)
 	{
 		char msg[IM_STATIC_STRINGS_SIZE];
-		sprintf(msg,"in Stack[%d,%d]::init(): unable to open image \"%s\". Wrong path or format.\nSupported formats are BMP, DIB, JPEG, JPG, JPE, PNG, PBM, PGM, PPM, SR, RAS, TIFF, TIF", 
+        sprintf(msg,"in Stack[%d,%d]::init(): unable to open image \"%s\". Wrong path or format.\nSupported formats are BMP, DIB, JPEG, JPG, JPE, JP2, PNG, PBM, PGM, PPM, SR, RAS, TIFF, TIF",
 			ROW_INDEX, COL_INDEX, slice_fullpath);
 		throw MyException(msg);
 	}
+    printf("in Stack[%d,%d]::init(): successfully loaded image at \"%s\"\n", ROW_INDEX, COL_INDEX, slice_fullpath);
 	HEIGHT = img_tmp->height;
 	WIDTH  = img_tmp->width;
 	cvReleaseImage(&img_tmp);
@@ -309,7 +342,7 @@ void Stack::loadStack(int first_file, int last_file)
 			if(!slice_img_i)
 			{
 				char msg[1000];
-				sprintf(msg,"in Stack[%d,%d]::loadStack(%d,%d): unable to open image \"%s\". Wrong path or format.\nSupported formats are BMP, DIB, JPEG, JPG, JPE, PNG, PBM, PGM, PPM, SR, RAS, TIFF, TIF", 
+                sprintf(msg,"in Stack[%d,%d]::loadStack(%d,%d): unable to open image \"%s\". Wrong path or format.\nSupported formats are BMP, DIB, JPEG, JPG, JPE, JP2, PNG, PBM, PGM, PPM, SR, RAS, TIFF, TIF",
 					ROW_INDEX, COL_INDEX, first_file, last_file, slice_fullpath);
 				throw MyException(msg);
 			}		

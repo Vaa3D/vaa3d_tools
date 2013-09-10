@@ -398,25 +398,15 @@ void PConverter::inDirButtonClicked()
     printf("--------------------- teramanager plugin [thread *] >> PConverter::inDirButtonClicked()\n");
     #endif
 
-    //obtaining volume's directory
-    //---- Alessandro 2013-05-20: obtaining volume's directory with QFileDialog instead of platform native file dialogs
-    //                            since a strange behaviour has been shown by native file dialogs on MacOS X.
-    QFileDialog dialog(0);
-    dialog.setFileMode(QFileDialog::DirectoryOnly);
-    dialog.setViewMode(QFileDialog::Detail);
-    dialog.setWindowFlags(Qt::WindowStaysOnTopHint);
-    dialog.setWindowTitle("Select volume's directory");
-    dialog.setDirectory(CSettings::instance()->getVCInputPath().c_str());
-    if(dialog.exec())
+    //---- Alessandro 2013-09-10: using native file dialogs instead of Qt's file dialogs that don't work properly on MacOS X.
+    QString path = QFileDialog::getExistingDirectory(this, "Select volume's folder", CSettings::instance()->getVCInputPath().c_str(), QFileDialog::ShowDirsOnly);
+    if(!path.isEmpty())
     {
-        inPathField->setText(dialog.directory().absolutePath());
+        inPathField->setText(path);
 
         //launching import
-        if(inPathField->text().toStdString().compare("") != 0)
-            startButtonClicked();
+        startButtonClicked();
     }
-
-
 }
 
 void PConverter::inFileButtonClicked()
@@ -425,24 +415,14 @@ void PConverter::inFileButtonClicked()
     printf("--------------------- teramanager plugin [thread *] >> PConverter::inFileButtonClicked()\n");
     #endif
 
-    //obtaining volume's filepath
-    //---- Alessandro 2013-05-20: obtaining volume's directory with QFileDialog instead of platform native file dialogs
-    //                            since a strange behaviour has been shown by native file dialogs on MacOS X.
-    QFileDialog dialog(0);
-    dialog.setFileMode(QFileDialog::ExistingFile);
-    dialog.setViewMode(QFileDialog::Detail);
-    dialog.setWindowFlags(Qt::WindowStaysOnTopHint);
-    dialog.setWindowTitle("Select volume's file");
-    dialog.setNameFilter(tr("V3D raw files (*.raw *.RAW *.v3draw *.V3DRAW)"));
-    dialog.setDirectory(CSettings::instance()->getVCInputPath().c_str());
-    if(dialog.exec())
+    //---- Alessandro 2013-09-10: using native file dialogs instead of Qt's file dialogs that don't work properly on MacOS X.
+    QString path = QFileDialog::getOpenFileName(this, "Select volume's file", CSettings::instance()->getVCInputPath().c_str(), tr("V3D raw files (*.raw *.RAW *.v3draw *.V3DRAW)"));
+    if(!path.isEmpty())
     {
-        if(!dialog.selectedFiles().empty())
-            inPathField->setText(dialog.selectedFiles().front());
+        inPathField->setText(path);
 
         //launching import
-        if(inPathField->text().toStdString().compare("") != 0)
-            startButtonClicked();
+        startButtonClicked();
     }
 }
 
@@ -452,22 +432,10 @@ void PConverter::outDirButtonClicked()
     printf("--------------------- teramanager plugin [thread *] >> PConverter::outDirButtonClicked()\n");
     #endif
 
-    //obtaining volume's directory
-    //---- Alessandro 2013-05-20: obtaining volume's directory with QFileDialog instead of platform native file dialogs
-    //                            since a strange behaviour has been shown by native file dialogs on MacOS X.
-    // outPathField->setText(QFileDialog::getExistingDirectory(this, QObject::tr("Select volume's directory"), CSettings::instance()->getVCOutputPath().c_str()));
-    //
-    QFileDialog dialog(0);
-    dialog.setFileMode(QFileDialog::DirectoryOnly);
-    dialog.setViewMode(QFileDialog::Detail);
-    dialog.setWindowFlags(Qt::WindowStaysOnTopHint);
-    dialog.setWindowTitle("Select the directory where the converted volume has to be stored");
-    dialog.setDirectory(CSettings::instance()->getVCOutputPath().c_str());
-    if(dialog.exec())
-        outPathField->setText(dialog.directory().absolutePath());
-
-    //obtaining volume's directory
-
+    //---- Alessandro 2013-09-10: using native file dialogs instead of Qt's file dialogs that don't work properly on MacOS X.
+    QString path = QFileDialog::getExistingDirectory(this, "Select the directory where the converted volume has to be stored", CSettings::instance()->getVCOutputPath().c_str(), QFileDialog::ShowDirsOnly);
+    if(!path.isEmpty())
+        outPathField->setText(path);
 }
 
 /**********************************************************************************
