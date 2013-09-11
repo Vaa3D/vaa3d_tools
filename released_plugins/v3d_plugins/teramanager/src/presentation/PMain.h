@@ -109,8 +109,12 @@ class teramanager::PMain : public QWidget
 
         //info panel widgets, contain informations of the loaded volume
         QGroupBox* info_panel;
-        QLabel* vol_size_field;
-        QLabel* vol_size_label;
+        QLabel* vol_size_files_field;
+        QLabel* vol_size_files_label;
+        QLabel* vol_size_voxel_field;
+        QLabel* vol_size_voxel_label;
+        QLabel* vol_size_bytes_field;
+        QLabel* vol_size_bytes_label;
         QLabel* vol_height_mm_field;
         QLabel* vol_width_mm_field;
         QLabel* vol_depth_mm_field;

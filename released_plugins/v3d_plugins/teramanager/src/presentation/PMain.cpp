@@ -371,11 +371,21 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
 
     //info panel widgets
     info_panel = new QGroupBox("Volume's informations");
-    vol_size_label = new QLabel();
-    vol_size_field = new QLabel();
-    vol_size_field->setAlignment(Qt::AlignCenter);
-    vol_size_field->setStyleSheet("border: 1px solid; border-color: gray; background-color: rgb(245,245,245); padding-left:5px; padding-right:5px");
-    vol_size_field->setFont(tinyFont);
+    vol_size_voxel_label = new QLabel();
+    vol_size_voxel_field = new QLabel();
+    vol_size_voxel_field->setAlignment(Qt::AlignCenter);
+    vol_size_voxel_field->setStyleSheet("border: 1px solid; border-color: gray; background-color: rgb(245,245,245); padding-left:5px; padding-right:5px");
+    vol_size_voxel_field->setFont(tinyFont);
+    vol_size_files_label = new QLabel();
+    vol_size_files_field = new QLabel();
+    vol_size_files_field->setAlignment(Qt::AlignCenter);
+    vol_size_files_field->setStyleSheet("border: 1px solid; border-color: gray; background-color: rgb(245,245,245); padding-left:5px; padding-right:5px");
+    vol_size_files_field->setFont(tinyFont);
+    vol_size_bytes_label = new QLabel();
+    vol_size_bytes_field = new QLabel();
+    vol_size_bytes_field->setAlignment(Qt::AlignCenter);
+    vol_size_bytes_field->setStyleSheet("border: 1px solid; border-color: gray; background-color: rgb(245,245,245); padding-left:5px; padding-right:5px");
+    vol_size_bytes_field->setFont(tinyFont);
     volume_dims_label = new QLabel("Dims (vxl):");
     direction_V_label_0 = new QLabel("(Y)");
     direction_H_label_0 = new QLabel("(X)");
@@ -530,65 +540,71 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     //info panel
     QGridLayout* info_panel_layout = new QGridLayout();
 
-    info_panel_layout->addWidget(new QLabel("Size:"),      0,0,1,1);
-    info_panel_layout->addWidget(vol_size_field,           0,2,1,2);
-    info_panel_layout->addWidget(vol_size_label,           0,4,1,4);
+    info_panel_layout->addWidget(new QLabel("Size (in files):"), 0,0,1,1);
+    info_panel_layout->addWidget(vol_size_files_field,           0,2,1,2);
+    info_panel_layout->addWidget(vol_size_files_label,           0,4,1,4);
 
-    info_panel_layout->addWidget(new QLabel("Dims (mm):"),      1,0,1,1);
-    info_panel_layout->addWidget(vol_width_mm_field,            1,2,1,2);
-    info_panel_layout->addWidget(new QLabel("(X)"),             1,4,1,1);
-    info_panel_layout->addWidget(new QLabel(QChar(0x00D7)),     1,5,1,1);
-    info_panel_layout->addWidget(vol_height_mm_field,           1,6,1,2);
-    info_panel_layout->addWidget(new QLabel("(Y)"),             1,8,1,1);
-    info_panel_layout->addWidget(new QLabel(QChar(0x00D7)),     1,9,1,1);
-    info_panel_layout->addWidget(vol_depth_mm_field,            1,10,1,2);
-    info_panel_layout->addWidget(new QLabel("(Z)"),             1,12,1,1);
+    info_panel_layout->addWidget(new QLabel("Size (in memory):"),1,0,1,1);
+    info_panel_layout->addWidget(vol_size_bytes_field,           1,2,1,2);
+    info_panel_layout->addWidget(vol_size_bytes_label,           1,4,1,2);
+    info_panel_layout->addWidget(vol_size_voxel_field,           1,6,1,2);
+    info_panel_layout->addWidget(vol_size_voxel_label,           1,8,1,2);
+
+    info_panel_layout->addWidget(new QLabel("Dims (mm):"),      2,0,1,1);
+    info_panel_layout->addWidget(vol_width_mm_field,            2,2,1,2);
+    info_panel_layout->addWidget(new QLabel("(X)"),             2,4,1,1);
+    info_panel_layout->addWidget(new QLabel(QChar(0x00D7)),     2,5,1,1);
+    info_panel_layout->addWidget(vol_height_mm_field,           2,6,1,2);
+    info_panel_layout->addWidget(new QLabel("(Y)"),             2,8,1,1);
+    info_panel_layout->addWidget(new QLabel(QChar(0x00D7)),     2,9,1,1);
+    info_panel_layout->addWidget(vol_depth_mm_field,            2,10,1,2);
+    info_panel_layout->addWidget(new QLabel("(Z)"),             2,12,1,1);
 
     volume_dims_label->setFixedWidth(marginLeft);
-    info_panel_layout->addWidget(volume_dims_label,     2,0,1,1);
-    info_panel_layout->addWidget(vol_width_field,       2,2,1,2);
-    info_panel_layout->addWidget(direction_H_label_0,   2,4,1,1);
-    info_panel_layout->addWidget(by_label_01,           2,5,1,1);
-    info_panel_layout->addWidget(vol_height_field,      2,6,1,2);
-    info_panel_layout->addWidget(direction_V_label_0,   2,8,1,1);
-    info_panel_layout->addWidget(by_label_02,           2,9,1,1);
-    info_panel_layout->addWidget(vol_depth_field,       2,10,1,2);
-    info_panel_layout->addWidget(direction_D_label_0,   2,12,1,1);
+    info_panel_layout->addWidget(volume_dims_label,     3,0,1,1);
+    info_panel_layout->addWidget(vol_width_field,       3,2,1,2);
+    info_panel_layout->addWidget(direction_H_label_0,   3,4,1,1);
+    info_panel_layout->addWidget(by_label_01,           3,5,1,1);
+    info_panel_layout->addWidget(vol_height_field,      3,6,1,2);
+    info_panel_layout->addWidget(direction_V_label_0,   3,8,1,1);
+    info_panel_layout->addWidget(by_label_02,           3,9,1,1);
+    info_panel_layout->addWidget(vol_depth_field,       3,10,1,2);
+    info_panel_layout->addWidget(direction_D_label_0,   3,12,1,1);
 
-    info_panel_layout->addWidget(volume_stacks_label,   3,0,1,1);
-    info_panel_layout->addWidget(ncols_field,           3,2,1,2);
-    info_panel_layout->addWidget(direction_H_label_1,   3,4,1,1);
-    info_panel_layout->addWidget(by_label_1,            3,5,1,1);
-    info_panel_layout->addWidget(nrows_field,           3,6,1,2);
-    info_panel_layout->addWidget(direction_V_label_1,   3,8,1,1);
+    info_panel_layout->addWidget(volume_stacks_label,   4,0,1,1);
+    info_panel_layout->addWidget(ncols_field,           4,2,1,2);
+    info_panel_layout->addWidget(direction_H_label_1,   4,4,1,1);
+    info_panel_layout->addWidget(by_label_1,            4,5,1,1);
+    info_panel_layout->addWidget(nrows_field,           4,6,1,2);
+    info_panel_layout->addWidget(direction_V_label_1,   4,8,1,1);
 
-    info_panel_layout->addWidget(stacks_dims_label,     4,0,1,1);
-    info_panel_layout->addWidget(stack_width_field,     4,2,1,2);
-    info_panel_layout->addWidget(direction_H_label_2,   4,4,1,1);
-    info_panel_layout->addWidget(by_label_2,            4,5,1,1);
-    info_panel_layout->addWidget(stack_height_field,    4,6,1,2);
-    info_panel_layout->addWidget(direction_V_label_2,   4,8,1,1);
-    info_panel_layout->addWidget(by_label_3,            4,9,1,1);
-    info_panel_layout->addWidget(stack_depth_field,     4,10,1,2);
-    info_panel_layout->addWidget(direction_D_label_2,   4,12,1,1);
+    info_panel_layout->addWidget(stacks_dims_label,     5,0,1,1);
+    info_panel_layout->addWidget(stack_width_field,     5,2,1,2);
+    info_panel_layout->addWidget(direction_H_label_2,   5,4,1,1);
+    info_panel_layout->addWidget(by_label_2,            5,5,1,1);
+    info_panel_layout->addWidget(stack_height_field,    5,6,1,2);
+    info_panel_layout->addWidget(direction_V_label_2,   5,8,1,1);
+    info_panel_layout->addWidget(by_label_3,            5,9,1,1);
+    info_panel_layout->addWidget(stack_depth_field,     5,10,1,2);
+    info_panel_layout->addWidget(direction_D_label_2,   5,12,1,1);
 
-    info_panel_layout->addWidget(voxel_dims_label,      5,0,1,1);
-    info_panel_layout->addWidget(vxl_H_field,           5,2,1,2);
-    info_panel_layout->addWidget(direction_H_label_3,   5,4,1,1);
-    info_panel_layout->addWidget(by_label_4,            5,5,1,1);
-    info_panel_layout->addWidget(vxl_V_field,           5,6,1,2);
-    info_panel_layout->addWidget(direction_V_label_3,   5,8,1,1);
-    info_panel_layout->addWidget(by_label_5,            5,9,1,1);
-    info_panel_layout->addWidget(vxl_D_field,           5,10,1,2);
-    info_panel_layout->addWidget(direction_D_label_3,   5,12,1,1);
+    info_panel_layout->addWidget(voxel_dims_label,      6,0,1,1);
+    info_panel_layout->addWidget(vxl_H_field,           6,2,1,2);
+    info_panel_layout->addWidget(direction_H_label_3,   6,4,1,1);
+    info_panel_layout->addWidget(by_label_4,            6,5,1,1);
+    info_panel_layout->addWidget(vxl_V_field,           6,6,1,2);
+    info_panel_layout->addWidget(direction_V_label_3,   6,8,1,1);
+    info_panel_layout->addWidget(by_label_5,            6,9,1,1);
+    info_panel_layout->addWidget(vxl_D_field,           6,10,1,2);
+    info_panel_layout->addWidget(direction_D_label_3,   6,12,1,1);
 
-    info_panel_layout->addWidget(origin_label,          6,0,1,1);
-    info_panel_layout->addWidget(org_H_field,           6,2,1,2);
-    info_panel_layout->addWidget(direction_H_label_4,   6,4,1,1);
-    info_panel_layout->addWidget(org_V_field,           6,6,1,2);
-    info_panel_layout->addWidget(direction_V_label_4,   6,8,1,1);
-    info_panel_layout->addWidget(org_D_field,           6,10,1,2);
-    info_panel_layout->addWidget(direction_D_label_4,   6,12,1,1);
+    info_panel_layout->addWidget(origin_label,          7,0,1,1);
+    info_panel_layout->addWidget(org_H_field,           7,2,1,2);
+    info_panel_layout->addWidget(direction_H_label_4,   7,4,1,1);
+    info_panel_layout->addWidget(org_V_field,           7,6,1,2);
+    info_panel_layout->addWidget(direction_V_label_4,   7,8,1,1);
+    info_panel_layout->addWidget(org_D_field,           7,10,1,2);
+    info_panel_layout->addWidget(direction_D_label_4,   7,12,1,1);
     info_panel->setLayout(info_panel_layout);
     info_panel->setStyle(new QWindowsStyle());
 
@@ -760,8 +776,12 @@ void PMain::reset()
 
     //reseting info panel widgets
     info_panel->setEnabled(false);
-    vol_size_label->setText("");
-    vol_size_field->setText("n.a.");
+    vol_size_files_label->setText("");
+    vol_size_files_field->setText("n.a.");
+    vol_size_voxel_label->setText("");
+    vol_size_voxel_field->setText("n.a.");
+    vol_size_bytes_label->setText("");
+    vol_size_bytes_field->setText("n.a.");
     vol_height_mm_field->setText("n.a.");
     vol_width_mm_field->setText("n.a.");
     vol_depth_mm_field->setText("n.a.");
@@ -1202,13 +1222,23 @@ void PMain::importDone(MyException *ex, Image4DSimple* vmap_image, qint64 elapse
         double TVoxels = GVoxels/1000.0;
         if(TVoxels < 0.1)
         {
-            vol_size_field->setText(QString("<b>").append(QString::number(GVoxels, 'f', 1).append("</b>")));
-            vol_size_label->setText("GVoxels");
+            double GBytes = GVoxels*CImport::instance()->getNChannels();
+            vol_size_files_field->setText(QString("<b>").append(QString::number(GBytes, 'f', 1).append("</b>")));
+            vol_size_bytes_field->setText(QString::number(GBytes, 'f', 1));
+            vol_size_voxel_field->setText(QString::number(GVoxels, 'f', 1));
+            vol_size_files_label->setText("GBytes");
+            vol_size_bytes_label->setText("GBytes");
+            vol_size_voxel_label->setText("GVoxels");
         }
         else
         {
-            vol_size_field->setText(QString("<b>").append(QString::number(TVoxels, 'f', 1).append("</b>")));
-            vol_size_label->setText("TVoxels");
+            double TBytes = TVoxels*CImport::instance()->getNChannels();
+            vol_size_files_field->setText(QString("<b>").append(QString::number(TBytes, 'f', 1).append("</b>")));
+            vol_size_bytes_field->setText(QString::number(TBytes, 'f', 1));
+            vol_size_voxel_field->setText(QString::number(TVoxels, 'f', 1));
+            vol_size_files_label->setText("TBytes");
+            vol_size_bytes_label->setText("TBytes");
+            vol_size_voxel_label->setText("TVoxels");
         }
 
         vol_height_mm_field->setText(QString::number(fabs(volume->getDIM_V()*volume->getVXL_V()/1000.0f), 'f', 2));
