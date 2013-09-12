@@ -180,14 +180,14 @@ public:
 
 	static void halveSample_UINT8 ( uint8** img, int height, int width, int depth, int channels, int method = HALVE_BY_MEAN );
 
-    //utility function: returns true if "fullString" ends with "ending"
-    inline static bool hasEnding (std::string const &fullString, std::string const &ending)
-    {
-        if (fullString.length() >= ending.length())
-            return (0 == fullString.compare (fullString.length() - ending.length(), ending.length(), ending));
-        else
-            return false;
-    }
+	//utility function: returns true if "fullString" ends with "ending"
+	inline static bool hasEnding (std::string const &fullString, std::string const &ending)
+	{
+	   if (fullString.length() >= ending.length())
+		  return (0 == fullString.compare (fullString.length() - ending.length(), ending.length(), ending));
+	   else
+		  return false;
+	}
 };
 
 #endif

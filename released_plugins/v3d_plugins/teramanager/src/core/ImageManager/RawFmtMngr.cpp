@@ -911,6 +911,7 @@ char *writeSlice2RawFile ( char *filename, int slice, unsigned char *img, int im
 	int header_len;
 	
 	if ( (err_rawfmt = loadRaw2Metadata(filename,sz,datatype,b_swap,fhandle,header_len)) != 0 ) {
+		if ( sz ) delete[] sz;
 		return err_rawfmt;
 	}
 	if ( (sz[1] != img_height) || (sz[0] != img_width) ) 
@@ -970,6 +971,7 @@ char *copyRawFileBlock2Buffer ( char *filename, int sV0, int sV1, int sH0, int s
 	int header_len;
 	
 	if ( (err_rawfmt = loadRaw2Metadata(filename,sz,datatype,b_swap,fhandle,header_len)) != 0 ) {
+		if ( sz ) delete[] sz;
 		return err_rawfmt;
 	}
 	if ( datatype != 1 ) 
@@ -1028,6 +1030,7 @@ char *copyRawFileBlock2Buffer ( char *filename, int sV0, int sV1, int sH0, int s
 	
 	if (b_swap==1)
 	{
+		if ( sz ) delete[] sz;
 		return ((char *)"Byte swap not supported.\n");
 		//if (unitSize==2)
 		//{
@@ -1065,10 +1068,13 @@ char *streamer_open ( Streamer_Descr_t *streamer ) {
 	for ( int i=0; i<streamer->n_blocks; i++ ) {
 		if ( (err_rawfmt = loadRaw2Metadata(streamer->bDescr[i].filename,
 											sz,datatype,b_swap,fhandle,header_len)) != 0 ) {
+			if ( sz ) delete[] sz;
 			return err_rawfmt;
 		}
 		streamer->bDescr[i].fhandle = fhandle;
 	}
+
+	if ( sz ) delete[] sz;
 
 	return 0;
 }
@@ -1265,6 +1271,7 @@ char *Streamer_Descr_t::addSubBlock ( char *filename, sint64 boffs, int sV0, int
 	int header_len;
 	
 	if ( (err_rawfmt = loadRaw2Metadata(filename,sz,datatype,b_swap,fhandle,header_len)) != 0 ) {
+		if ( sz ) delete[] sz;
 		return err_rawfmt;
 	}
 	

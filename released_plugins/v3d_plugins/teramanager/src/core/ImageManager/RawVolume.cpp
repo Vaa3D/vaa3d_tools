@@ -75,6 +75,7 @@ void RawVolume::init ( ) throw (MyException)
 
 	char *internal_msg;
 	if ( (internal_msg = loadRaw2Metadata(file_name,sz,datatype,b_swap,fhandle,header_len)) ) {
+		if ( sz ) delete[] sz;
 		char err_msg[IM_STATIC_STRINGS_SIZE];
 		sprintf(err_msg,"RawVolume::init: error in loading metadata - %s",internal_msg);
 		throw MyException(err_msg);
@@ -83,6 +84,8 @@ void RawVolume::init ( ) throw (MyException)
 	DIM_V = (uint32) sz[1]; // in raw format first dimension is horizontal
 	DIM_H = (uint32) sz[0];
 	DIM_D = (uint32) sz[2];
+
+	delete[] sz;
 }
 
 void RawVolume::initChannels ( ) throw (MyException) {

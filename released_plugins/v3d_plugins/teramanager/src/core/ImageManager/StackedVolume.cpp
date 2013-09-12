@@ -69,7 +69,7 @@ StackedVolume::StackedVolume(const char* _root_dir)  throw (MyException)
 	{
 		char errMsg[IM_STATIC_STRINGS_SIZE];
 		sprintf(errMsg, "in StackedVolume::StackedVolume(...): unable to find metadata file at %s", mdata_filepath);
-		throw (errMsg);
+        throw MyException(errMsg);
 	}
 }
 

@@ -35,6 +35,7 @@
 * WARNING: StackedVolume is already included by VolumeConverter.h
 *******************************************************************************************************/
 #include "../ImageManager/SimpleVolume.h"
+#include "../ImageManager/SimpleVolumeRaw.h"
 #include "../ImageManager/RawVolume.h"
 #include "../ImageManager/TiledVolume.h"
 #include "../ImageManager/TiledMCVolume.h"
@@ -72,6 +73,8 @@ void VolumeConverter::setSrcVolume(const char* _root_dir, const char* _fmt, cons
 		volume = new StackedVolume(_root_dir,ref_sys(vertical,horizontal,depth),(float)1.0,(float)1.0,(float)1.0);
 	else if ( strcmp(_fmt,SIMPLE_FORMAT) == 0 ) 
 		volume = new SimpleVolume(_root_dir);
+	else if ( strcmp(_fmt,SIMPLE_RAW_FORMAT) == 0 ) 
+		volume = new SimpleVolumeRaw(_root_dir);
 	else if ( strcmp(_fmt,RAW_FORMAT) == 0 ) 
 		volume = new RawVolume(_root_dir);
 	else if ( strcmp(_fmt,TILED_FORMAT) == 0 ) 
@@ -79,7 +82,7 @@ void VolumeConverter::setSrcVolume(const char* _root_dir, const char* _fmt, cons
 	else if ( strcmp(_fmt,TILED_MC_FORMAT) == 0 ) 
 		volume = new TiledMCVolume(_root_dir);
 	else {
-		char err_msg[IM_STATIC_STRINGS_SIZE];
+        char err_msg[IM_STATIC_STRINGS_SIZE];
 		sprintf(err_msg,"VolumeConverter::setSrcVolume: unsupported volume format");
 		throw MyException(err_msg);
 	}

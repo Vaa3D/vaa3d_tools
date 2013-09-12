@@ -92,9 +92,10 @@ PConverter::PConverter(V3DPluginCallback *callback, QWidget *parent) : QWidget(p
     inFormatCBox->insertItem(1, "Image series (nontiled)");
     inFormatCBox->insertItem(2, "3D TIFF (tiled)");
     inFormatCBox->insertItem(3, "3D TIFF (nontiled)");
-    inFormatCBox->insertItem(4, "Vaa3D raw (tiled, RGB)");
-    inFormatCBox->insertItem(5, "Vaa3D raw (tiled, 4D)");
-    inFormatCBox->insertItem(6, "Vaa3D raw (nontiled)");
+    inFormatCBox->insertItem(4, "Vaa3D raw");
+    inFormatCBox->insertItem(5, "Vaa3D raw (tiled, RGB)");
+    inFormatCBox->insertItem(6, "Vaa3D raw (tiled, 4D)");
+    inFormatCBox->insertItem(7, "Vaa3D raw (series)");
     PMain::setEnabledComboBoxItem(inFormatCBox, 2, false);
     PMain::setEnabledComboBoxItem(inFormatCBox, 3, false);
     inFormatCBox->setEditable(true);
@@ -127,13 +128,15 @@ PConverter::PConverter(V3DPluginCallback *callback, QWidget *parent) : QWidget(p
     outFormatCBox->insertItem(1, "Image series (nontiled)");
     outFormatCBox->insertItem(2, "3D TIFF (tiled)");
     outFormatCBox->insertItem(3, "3D TIFF (nontiled)");
-    outFormatCBox->insertItem(4, "Vaa3D raw (tiled, RGB)");
-    outFormatCBox->insertItem(5, "Vaa3D raw (tiled, 4D)");
-    outFormatCBox->insertItem(6, "Vaa3D raw (nontiled)");
+    outFormatCBox->insertItem(4, "Vaa3D raw");
+    outFormatCBox->insertItem(5, "Vaa3D raw (tiled, RGB)");
+    outFormatCBox->insertItem(6, "Vaa3D raw (tiled, 4D)");
+    outFormatCBox->insertItem(7, "Vaa3D raw (series)");
     PMain::setEnabledComboBoxItem(outFormatCBox, 1, false);
     PMain::setEnabledComboBoxItem(outFormatCBox, 2, false);
     PMain::setEnabledComboBoxItem(outFormatCBox, 3, false);
-    PMain::setEnabledComboBoxItem(outFormatCBox, 6, false);
+    PMain::setEnabledComboBoxItem(outFormatCBox, 4, false);
+    PMain::setEnabledComboBoxItem(outFormatCBox, 7, false);
     outFormatCBox->setEditable(true);
     outFormatCBox->lineEdit()->setReadOnly(true);
     outFormatCBox->lineEdit()->setAlignment(Qt::AlignCenter);
@@ -510,10 +513,18 @@ void PConverter::volformatChanged ( const QString & text )
         if(sender == outFormatCBox)
             stacksDepthField->setVisible(true);
     }
-    else if(sender->currentText().compare("Vaa3D raw (nontiled)", Qt::CaseInsensitive) == 0)
+    else if(sender->currentText().compare("Vaa3D raw", Qt::CaseInsensitive) == 0)
     {
-        helpBox->setText("Vaa3D raw 4D format. Supported suffixes are: .raw, .RAW, .v3draw, .V3DRAW");
+        helpBox->setText("Vaa3D raw 4D format (single file). Supported suffixes are: .raw, .RAW, .v3draw, .V3DRAW");
         buttonLayout->setCurrentWidget(fileButton);
+
+        if(sender == outFormatCBox)
+            stacksDepthField->setVisible(false);
+    }
+    else if(sender->currentText().compare("Vaa3D raw (series)", Qt::CaseInsensitive) == 0)
+    {
+        helpBox->setText("A folder containing a series of Vaa3D raw files. Supported suffixes are: .raw, .RAW, .v3draw, .V3DRAW");
+        buttonLayout->setCurrentWidget(dirButton);
 
         if(sender == outFormatCBox)
             stacksDepthField->setVisible(false);

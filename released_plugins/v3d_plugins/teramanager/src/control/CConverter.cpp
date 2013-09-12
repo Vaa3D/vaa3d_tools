@@ -30,6 +30,7 @@
 #include "CPlugin.h"
 #include "../core/ImageManager/RawVolume.h"
 #include "../core/ImageManager/SimpleVolume.h"
+#include "../core/ImageManager/SimpleVolumeRaw.h"
 #include "../core/ImageManager/TiledVolume.h"
 #include "../core/ImageManager/TiledMCVolume.h"
 #include "../core/VolumeConverter/VolumeConverter.h"
@@ -95,10 +96,15 @@ void CConverter::setMembers(PConverter* pConverter) throw (MyException)
             inVolFormat = TILED_MC_FORMAT;
             fileMode = false;
         }
-        else if(inVolFormat.compare("Vaa3D raw (nontiled)") == 0)
+        else if(inVolFormat.compare("Vaa3D raw") == 0)
         {
             inVolFormat = RAW_FORMAT;
             fileMode = true;
+        }
+        else if(inVolFormat.compare("Vaa3D raw (series)") == 0)
+        {
+            inVolFormat = SIMPLE_RAW_FORMAT;
+            fileMode = false;
         }
         else
         {
@@ -197,5 +203,6 @@ void CConverter::run()
     }
     catch( MyException& exception)  {emit sendOperationOutcome(new MyException(exception.what()));}
     catch(const char* error)        {emit sendOperationOutcome(new MyException(error));}
+    catch(char* error)              {emit sendOperationOutcome(new MyException(error));}
     catch(...)                      {emit sendOperationOutcome(new MyException("Unknown error occurred"));}
 }

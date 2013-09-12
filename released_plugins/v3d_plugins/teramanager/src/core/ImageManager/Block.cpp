@@ -296,9 +296,9 @@ void Block::init()
 	sprintf(slice_fullpath, "%s/%s/%s", CONTAINER->getROOT_DIR(), DIR_NAME, FILENAMES[0]);
 
 	if ( (err_rawfmt = loadRaw2Metadata(slice_fullpath,sz,datatype,b_swap,dummy,header_len)) != 0 ) {
-		delete []sz;
+		if ( sz ) delete[] sz;
 		char msg[IM_STATIC_STRINGS_SIZE];
-        sprintf(msg,"in Block[%d,%d]::init(): unable to open block \"%s\". Wrong path or format.\nSupported formats are BMP, DIB, JPEG, JPG, JPE, JP2, PNG, PBM, PGM, PPM, SR, RAS, TIFF, TIF\n%s",
+		sprintf(msg,"in Block[%d,%d]::init(): unable to open block \"%s\". Wrong path or format.\nSupported formats are BMP, DIB, JPEG, JPG, JPE, JP2, PNG, PBM, PGM, PPM, SR, RAS, TIFF, TIF\n%s", 
 			ROW_INDEX, COL_INDEX, slice_fullpath,err_rawfmt);
 		throw MyException(msg);
 	}
@@ -317,9 +317,9 @@ void Block::init()
 	for ( int ib=1; ib<(int)N_BLOCKS; ib++ ) {
 		sprintf(slice_fullpath, "%s/%s/%s", CONTAINER->getROOT_DIR(), DIR_NAME, FILENAMES[ib]);
 		if ( (err_rawfmt = loadRaw2Metadata(slice_fullpath,sz,datatype,b_swap,dummy,header_len)) != 0 ) {
-			delete []sz;
+			if ( sz ) delete[] sz;
 			char msg[IM_STATIC_STRINGS_SIZE];
-            sprintf(msg,"in Block[%d,%d]::init(): unable to open block \"%s\". Wrong path or format.\nSupported formats are BMP, DIB, JPEG, JPG, JPE, JP2, PNG, PBM, PGM, PPM, SR, RAS, TIFF, TIF\n%s",
+			sprintf(msg,"in Block[%d,%d]::init(): unable to open block \"%s\". Wrong path or format.\nSupported formats are BMP, DIB, JPEG, JPG, JPE, JP2, PNG, PBM, PGM, PPM, SR, RAS, TIFF, TIF\n%s", 
 				ROW_INDEX, COL_INDEX, slice_fullpath,err_rawfmt);
 			throw MyException(msg);
 		}
@@ -328,7 +328,7 @@ void Block::init()
 		DEPTH += BLOCK_SIZE[ib];
 	}
 
-	delete []sz;
+	delete[] sz;
 }
 
 //PRINT method

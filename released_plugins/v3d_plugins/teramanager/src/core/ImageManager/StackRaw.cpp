@@ -22,8 +22,9 @@
 *       specific prior written permission.
 ********************************************************************************************************************************************************************************************/
 
-#include "Stack.h"
+#include "StackRaw.h"
 #include "VirtualVolume.h"
+#include "RawFmtMngr.h"
 #include "MyException.h"
 #include <cxcore.h>
 #include <highgui.h>
@@ -38,10 +39,10 @@
 
 using namespace std;
 
-Stack::Stack(VirtualVolume* _CONTAINER, int _ROW_INDEX, int _COL_INDEX, char* _DIR_NAME)
+StackRaw::StackRaw(VirtualVolume* _CONTAINER, int _ROW_INDEX, int _COL_INDEX, char* _DIR_NAME)
 {
 	#if IM_VERBOSE > 3
-	printf("\t\t\t\tin Stack::Stack(VirtualVolume* _CONTAINER, int _ROW_INDEX=%d, int _COL_INDEX=%d, char* _DIR_NAME=%s)\n",
+	printf("\t\t\t\tin StackRaw::StackRaw(VirtualVolume* _CONTAINER, int _ROW_INDEX=%d, int _COL_INDEX=%d, char* _DIR_NAME=%s)\n",
 		    _ROW_INDEX, _COL_INDEX, _DIR_NAME);
 	#endif
 
@@ -61,10 +62,10 @@ Stack::Stack(VirtualVolume* _CONTAINER, int _ROW_INDEX, int _COL_INDEX, char* _D
 	init();
 }
 
-Stack::Stack(VirtualVolume* _CONTAINER, int _ROW_INDEX, int _COL_INDEX, FILE* bin_file)
+StackRaw::StackRaw(VirtualVolume* _CONTAINER, int _ROW_INDEX, int _COL_INDEX, FILE* bin_file)
 {
 	#if IM_VERBOSE > 3
-	printf("\t\t\t\tin Stack::Stack(VirtualVolume* _CONTAINER, int _ROW_INDEX=%d, int _COL_INDEX=%d, FILE* bin_file)\n",
+	printf("\t\t\t\tin StackRaw::StackRaw(VirtualVolume* _CONTAINER, int _ROW_INDEX=%d, int _COL_INDEX=%d, FILE* bin_file)\n",
 		_ROW_INDEX, _COL_INDEX);
 	#endif
 
@@ -86,10 +87,10 @@ Stack::Stack(VirtualVolume* _CONTAINER, int _ROW_INDEX, int _COL_INDEX, FILE* bi
 		this->STACKED_IMAGE[z] = NULL;
 }
 
-Stack::~Stack(void)
+StackRaw::~StackRaw(void)
 {
 	#if IM_VERBOSE > 3
-	printf("\t\t\t\tin Stack[%d,%d]::~Stack()\n",ROW_INDEX, COL_INDEX);
+	printf("\t\t\t\tin StackRaw[%d,%d]::~StackRaw()\n",ROW_INDEX, COL_INDEX);
 	#endif
 
 	for(uint32 z=0; z<DEPTH; z++)
@@ -109,10 +110,10 @@ Stack::~Stack(void)
 }
 
 //binarizing-unbinarizing methods
-void Stack::binarizeInto(FILE* file)
+void StackRaw::binarizeInto(FILE* file)
 {
 	#if IM_VERBOSE > 3
-	printf("\t\t\t\tin Stack[%d,%d]::binarizeInto(...)\n",ROW_INDEX, COL_INDEX);
+	printf("\t\t\t\tin StackRaw[%d,%d]::binarizeInto(...)\n",ROW_INDEX, COL_INDEX);
 	#endif
 
 	//LOCAL VARIABLES
@@ -135,10 +136,10 @@ void Stack::binarizeInto(FILE* file)
 	}
 }
 
-void Stack::unBinarizeFrom(FILE* file)
+void StackRaw::unBinarizeFrom(FILE* file)
 {
 	#if IM_VERBOSE > 3
-	printf("\t\t\t\tin Stack[%d,%d]::unBinarizeFrom(...)\n",ROW_INDEX, COL_INDEX);
+	printf("\t\t\t\tin StackRaw[%d,%d]::unBinarizeFrom(...)\n",ROW_INDEX, COL_INDEX);
 	#endif
 
 	//LOCAL VARIABLES
@@ -148,46 +149,46 @@ void Stack::unBinarizeFrom(FILE* file)
 
 	fread_return_val = fread(&HEIGHT, sizeof(int), 1, file);
 	if(fread_return_val != 1)
-		throw MyException("in Stack::unBinarizeFrom(...): error while reading binary metadata file");
+		throw MyException("in StackRaw::unBinarizeFrom(...): error while reading binary metadata file");
 	fread_return_val = fread(&WIDTH, sizeof(int), 1, file);
 	if(fread_return_val != 1)
-		throw MyException("in Stack::unBinarizeFrom(...): error while reading binary metadata file");
+		throw MyException("in StackRaw::unBinarizeFrom(...): error while reading binary metadata file");
 	fread_return_val = fread(&DEPTH, sizeof(int), 1, file);
 	if(fread_return_val != 1)
-		throw MyException("in Stack::unBinarizeFrom(...): error while reading binary metadata file");
+		throw MyException("in StackRaw::unBinarizeFrom(...): error while reading binary metadata file");
 	fread_return_val = fread(&ABS_V, sizeof(int), 1, file);
 	if(fread_return_val != 1)
-		throw MyException("in Stack::unBinarizeFrom(...): error while reading binary metadata file");
+		throw MyException("in StackRaw::unBinarizeFrom(...): error while reading binary metadata file");
 	fread_return_val = fread(&ABS_H, sizeof(int), 1, file);
 	if(fread_return_val != 1)
-		throw MyException("in Stack::unBinarizeFrom(...): error while reading binary metadata file");
+		throw MyException("in StackRaw::unBinarizeFrom(...): error while reading binary metadata file");
 	fread_return_val = fread(&str_size, sizeof(uint16), 1, file);
 	if(fread_return_val != 1)
-		throw MyException("in Stack::unBinarizeFrom(...): error while reading binary metadata file");
+		throw MyException("in StackRaw::unBinarizeFrom(...): error while reading binary metadata file");
 	DIR_NAME = new char[str_size];
 	if(fread_return_val != 1)
-		throw MyException("in Stack::unBinarizeFrom(...): error while reading binary metadata file");
+		throw MyException("in StackRaw::unBinarizeFrom(...): error while reading binary metadata file");
 	fread_return_val = fread(DIR_NAME, str_size, 1, file);
 	FILENAMES = new char*[DEPTH];
 	for(i = 0; i < DEPTH; i++)
 	{
 		fread_return_val = fread(&str_size, sizeof(uint16), 1, file);
 		if(fread_return_val != 1)
-			throw MyException("in Stack::unBinarizeFrom(...): error while reading binary metadata file");
+			throw MyException("in StackRaw::unBinarizeFrom(...): error while reading binary metadata file");
 
 		FILENAMES[i] = new char[str_size];
 		fread_return_val = fread(FILENAMES[i], str_size, 1, file);
 		if(fread_return_val != 1)
-			throw MyException("in Stack::unBinarizeFrom(...): error while reading binary metadata file");
+			throw MyException("in StackRaw::unBinarizeFrom(...): error while reading binary metadata file");
 	
 	}
 }
 
 //Initializes all object's members given DIR_NAME
-void Stack::init()
+void StackRaw::init()
 {
 	#if IM_VERBOSE > 3
-	printf("\t\t\t\tin Stack[%d,%d]::init()\n",ROW_INDEX, COL_INDEX);
+	printf("\t\t\t\tin StackRaw[%d,%d]::init()\n",ROW_INDEX, COL_INDEX);
 	#endif
 
 	//LOCAL variables
@@ -205,7 +206,7 @@ void Stack::init()
 	if (!cur_dir_lev3)
 	{
 		char errMsg[IM_STATIC_STRINGS_SIZE];
-		sprintf(errMsg, "in Stack::init(): can't open directory \"%s\"", abs_path);
+		sprintf(errMsg, "in StackRaw::init(): can't open directory \"%s\"", abs_path);
 		throw MyException(errMsg);
 	}
 
@@ -219,18 +220,15 @@ void Stack::init()
 	entries_lev3.sort();
 	DEPTH = (int)entries_lev3.size();
 
-	//----- Alessandro added on August 12, 2013
-    	//----- Bug fixed: exceeding the maximum number of directories opened at the same time
-    	closedir(cur_dir_lev3);
-
-    	for(entry_k = entries_lev3.begin(); entry_k != entries_lev3.end(); entry_k++)
-     	printf("in Stack[%d,%d]::init(): found \"%s\"\n", ROW_INDEX, COL_INDEX, entry_k->c_str());
+    //----- Alessandro added on August 12, 2013
+    //----- Bug fixed: exceeding the maximum number of directories opened at the same time
+    closedir(cur_dir_lev3);
 
 	//checking if current stack is not empty
 	if(DEPTH == 0)
 	{
 		char msg[1000];
-                sprintf(msg,"in Stack[%d,%d]::init(): stack in \"%s\" is empty or no supported images were found", ROW_INDEX, COL_INDEX, abs_path);
+                sprintf(msg,"in StackRaw[%d,%d]::init(): stack in \"%s\" is empty", ROW_INDEX, COL_INDEX, abs_path);
 		throw MyException(msg);
 	}
 
@@ -253,23 +251,36 @@ void Stack::init()
 	//extracting HEIGHT and WIDTH attributes from first slice
 	char slice_fullpath[IM_STATIC_STRINGS_SIZE];
 	sprintf(slice_fullpath, "%s/%s/%s", CONTAINER->getROOT_DIR(), DIR_NAME, FILENAMES[0]);
-	printf("in Stack[%d,%d]::init(): trying to load image at \"%s\"\n", ROW_INDEX, COL_INDEX, slice_fullpath);
-	IplImage *img_tmp = cvLoadImage(slice_fullpath, CV_LOAD_IMAGE_GRAYSCALE);
-	if(!img_tmp)
-	{
+
+    //IplImage *img_tmp = cvLoadImage(slice_fullpath, CV_LOAD_IMAGE_GRAYSCALE);
+
+	// get file attributes
+	char *err_rawfmt;
+	void *fhandle;
+	V3DLONG *sz = 0;
+	int datatype;
+	int b_swap;
+	int header_len;
+	
+	if ( (err_rawfmt = loadRaw2Metadata(slice_fullpath,sz,datatype,b_swap,fhandle,header_len)) != 0 ) {
+		if ( sz ) delete[] sz;
 		char msg[IM_STATIC_STRINGS_SIZE];
-		sprintf(msg,"in Stack[%d,%d]::init(): unable to open image \"%s\". Wrong path or format.\nSupported formats are BMP, DIB, JPEG, JPG, JPE, JP2, PNG, PBM, PGM, PPM, SR, RAS, TIFF, TIF",
-			ROW_INDEX, COL_INDEX, slice_fullpath);
+		sprintf(msg,"in StackRaw[%d,%d]::init(): unable to open image \"%s\". Wrong path or format (%s)", 
+			ROW_INDEX, COL_INDEX, slice_fullpath,err_rawfmt);
 		throw MyException(msg);
 	}
-	printf("in Stack[%d,%d]::init(): successfully loaded image at \"%s\"\n", ROW_INDEX, COL_INDEX, slice_fullpath);
-	HEIGHT = img_tmp->height;
-	WIDTH  = img_tmp->width;
-	cvReleaseImage(&img_tmp);
+
+	// I should check that sz[2] is 1
+
+	HEIGHT = (int)sz[1];
+	WIDTH  = (int)sz[0];
+	//cvReleaseImage(&img_tmp);
+	
+	delete[] sz;
 }
 
 //PRINT method
-void Stack::print()
+void StackRaw::print()
 {
 	printf("\t |\t[%d,%d]\n", ROW_INDEX, COL_INDEX);
 	printf("\t |\tDirectory:\t\t%s\n", DIR_NAME);
@@ -282,10 +293,10 @@ void Stack::print()
 }
 
 //loads images of current stack (from 'first_file' to 'last_file' extremes included, if not specified loads entire stack)
-void Stack::loadStack(int first_file, int last_file)
+void StackRaw::loadStack(int first_file, int last_file)
 {	
 	#if IM_VERBOSE > 4
-	printf("\t\t\t\t\n Stack[%d,%d]::loadStack(first_file=%d, last_file=%d)\n",ROW_INDEX, COL_INDEX, first_file, last_file);
+	printf("\t\t\t\t\n StackRaw[%d,%d]::loadStackRaw(first_file=%d, last_file=%d)\n",ROW_INDEX, COL_INDEX, first_file, last_file);
 	#endif
 
 	//LOCAL VARIABLES
@@ -314,7 +325,7 @@ void Stack::loadStack(int first_file, int last_file)
 			if(!slice_img_i)
 			{
 				char msg[1000];
-				sprintf(msg,"in Stack[%d,%d]::loadStack(%d,%d): unable to open image \"%s\". Wrong path or format.\nSupported formats are BMP, DIB, JPEG, JPG, JPE, PNG, PBM, PGM, PPM, SR, RAS, TIFF, TIF", 
+				sprintf(msg,"in StackRaw[%d,%d]::loadStack(%d,%d): unable to open image \"%s\". Wrong path or format.\nSupported formats are BMP, DIB, JPEG, JPG, JPE, PNG, PBM, PGM, PPM, SR, RAS, TIFF, TIF", 
 					ROW_INDEX, COL_INDEX, first_file, last_file, slice_fullpath);
 				throw MyException(msg);
 			}		
@@ -333,10 +344,10 @@ void Stack::loadStack(int first_file, int last_file)
 }
 
 //releases images of current stack (from 'first_file' to 'last_file' extremes included, if not specified loads entire stack)
-void Stack::releaseStack(int first_file, int last_file)
+void StackRaw::releaseStack(int first_file, int last_file)
 {
 	#if IM_VERBOSE > 4
-	printf("\t\t\t\tin Stack[%d,%d]::releaseStack(first_file=%d, last_file=%d)\n",ROW_INDEX, COL_INDEX, first_file, last_file);
+	printf("\t\t\t\tin StackRaw[%d,%d]::releaseStack(first_file=%d, last_file=%d)\n",ROW_INDEX, COL_INDEX, first_file, last_file);
 	#endif
 
 	//initializations
@@ -355,16 +366,16 @@ void Stack::releaseStack(int first_file, int last_file)
 }
 
 //show the selected slice with a simple GUI
-void Stack::show(int D_index, int window_HEIGHT, int window_WIDTH)
+void StackRaw::show(int D_index, int window_HEIGHT, int window_WIDTH)
 {
 	#if IM_VERBOSE > 2
-	printf("\t\t\tin Stack[%d,%d]::show(D_index=%d, win_height=%d, win_width=%d)\n",ROW_INDEX, COL_INDEX, D_index, window_HEIGHT, window_WIDTH);
+	printf("\t\t\tin StackRaw[%d,%d]::show(D_index=%d, win_height=%d, win_width=%d)\n",ROW_INDEX, COL_INDEX, D_index, window_HEIGHT, window_WIDTH);
 	#endif
 
 	if(!STACKED_IMAGE[D_index])
 	{
 		char msg[1000];
-		sprintf(msg,"in Stack[%d,%d]::show(D_index=%d, win_height=%d, win_width=%d): image at depth %d has not been loaded", 
+		sprintf(msg,"in StackRaw[%d,%d]::show(D_index=%d, win_height=%d, win_width=%d): image at depth %d has not been loaded", 
 			ROW_INDEX, COL_INDEX, D_index, window_HEIGHT, window_WIDTH, D_index);
 		throw MyException(msg);
 	}
@@ -396,7 +407,7 @@ void Stack::show(int D_index, int window_HEIGHT, int window_WIDTH)
 }
 
 //returns a pointer to the intersection rectangle if the given area intersects current stack, otherwise returns NULL
-Rect_t* Stack::Intersects(const Rect_t& area)
+Rect_t* StackRaw::Intersects(const Rect_t& area)
 {
 	//first determining if intersection occurs
 	bool intersects =  ( area.H0    < (int)(ABS_H + WIDTH)	&& 
@@ -420,10 +431,10 @@ Rect_t* Stack::Intersects(const Rect_t& area)
 }
 
 //delete slices from disk from first_file to last_file, extremes included
-void Stack::deleteSlices(int first_file, int last_file)
+void StackRaw::deleteSlices(int first_file, int last_file)
 {
 	#if IM_VERBOSE > 3
-	printf("\t\t\t\tin Stack[%d,%d]::deleteSlices(first_file=%d, last_file=%d)\n",ROW_INDEX, COL_INDEX, first_file, last_file);
+	printf("\t\t\t\tin StackRaw[%d,%d]::deleteSlices(first_file=%d, last_file=%d)\n",ROW_INDEX, COL_INDEX, first_file, last_file);
 	#endif
 
 	first_file = (first_file == -1 ? 0	     : first_file);

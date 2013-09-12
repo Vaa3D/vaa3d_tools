@@ -11,6 +11,16 @@ ties names are:
 - Rem: a feature no longer available
 
 ============================================================================================
+Version 0.9.17
+September 12th, 2013
+--------------------------------------------------------------------------------------------
+- Rem: removed "Size (in memory") info box in TeraFly.
+- New: added in  TeraConverter  input format "Vaa3D raw (series)" for  converting  series of
+       Vaa3D raw files containing single z-planes.
+- Fix: fixed a bug in TeraConverter which may cause it to crash without reporting any error
+--------------------------------------------------------------------------------------------
+
+
 Version 0.9.16
 September 11th, 2013
 --------------------------------------------------------------------------------------------

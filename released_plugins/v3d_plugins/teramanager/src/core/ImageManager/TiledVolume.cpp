@@ -71,7 +71,7 @@ TiledVolume::TiledVolume(const char* _root_dir)  throw (MyException)
 	{
 		char errMsg[IM_STATIC_STRINGS_SIZE];
 		sprintf(errMsg, "in TiledVolume::TiledVolume(...): unable to find metadata file at %s", mdata_filepath);
-		throw (errMsg);
+        throw MyException(errMsg);
 	}
 }
 

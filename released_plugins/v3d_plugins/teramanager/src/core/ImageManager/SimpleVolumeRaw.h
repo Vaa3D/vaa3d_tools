@@ -22,86 +22,35 @@
 *       specific prior written permission.
 ********************************************************************************************************************************************************************************************/
 
-#ifndef _IM_DEFS_H
-#define _IM_DEFS_H
+# ifndef _SIMPLE_VOLUME_RAW_H
+# define _SIMPLE_VOLUME_RAW_H
 
-/******************************
- ***    TYPES definitions   ***
- ******************************/
-typedef unsigned char  uint8;			//8-bit  unsigned integer data type
-typedef unsigned short uint16;			//16-bit unsigned integer data type
-typedef unsigned int   uint32;			//32-bit unsigned integer data type
-typedef int            sint32;                  //32-bit signed integer data type
-typedef long long      sint64;			//64-bit signed integer data type
-typedef float          REAL_T;
+# include "VirtualVolume.h" 
 
+# define SIMPLE_RAW_FORMAT "SimpleRaw" 
 
-#define IM_VERBOSE 4
-#define IM_SAVE_SUBVOLUMES
-#define IM_METADATA_FILE_NAME "mdata.bin"
-#define IM_CHANNEL_PREFIX "CH_"
-#define IM_METADATA_FILE_VERSION 2
-#define IM_STATIC_STRINGS_SIZE 3000
-#define IM_DEF_IMG_FORMAT "tif"
-#define IM_DEF_IMG_DEPTH 8
+//FORWARD-DECLARATIONS
+class  StackRaw;
 
-//for time computation
-#include <ctime>
-#ifdef _WIN32
-#define TIME( arg ) (((double) clock()) / CLOCKS_PER_SEC)
-#else
-#define TIME( arg ) (time( arg ))
-#endif
+class SimpleVolumeRaw : public VirtualVolume {
+private:
+	uint16 N_ROWS, N_COLS;		//dimensions (in stacks) of stacks matrix along VH axes
+    StackRaw ***STACKS;			//2-D array of <Stack*>
 
-#ifndef MAX
-#define MAX(a,b)       (((a)>(b)) ? (a) : (b))
-#endif
-#ifndef SIGN // iannello ADDED
-#define SIGN( arg ) (arg < 0 ? -1 : 1)
-#endif // iannello ADDED
-#define ROUND( arg ) ( SIGN(arg) == 1 ? arg + 0.5 : arg - 0.5)
+	void init ( );
 
-//"PAUSE" function
-#ifdef _WIN32
-#define system_PAUSE() system("PAUSE"); cout<<endl;
-#define system_CLEAR() system("cls");
-#else
-#define system_CLEAR() system("clear");
-#define system_PAUSE()											\
-	cout<<"\n\nPress RETURN key to continue..."<<endl<<endl;	\
-	cin.clear();												\
-	cin.ignore();												\
-	cin.get();
-#endif
+	// iannello returns the number of channels of images composing the volume
+	void initChannels ( ) throw (MyException);
 
-//file deleting
-#ifndef RM_FILE // iannello ADDED
-#ifdef _WIN32
-#define RM_FILE( arg ) 					\
-	char sys_cmd[500]; 					\
-	sprintf(sys_cmd, "del /F /Q %s", arg);  \
-	if(system(sys_cmd)!=0)				\
-		fprintf(stderr,"Can't delete file %s\n", arg);
-#else
-#define RM_FILE( arg ) \
-	char sys_cmd[500]; \
-	sprintf(sys_cmd, "rm -f %s", arg); \
-	if(system(sys_cmd)!=0)				\
-		fprintf(stderr,"Can't delete file %s\n", arg);
-#endif
-#endif // iannello ADDED
+public:
+	SimpleVolumeRaw(const char* _root_dir)  throw (MyException);
 
-//directory creation
-#ifndef make_dir // to avoid double definitions
-#ifdef _WIN32
-#include <direct.h>
-#define make_dir(x) _mkdir(x)
-#else
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <stdlib.h>
-#define make_dir(x) mkdir(x,S_IRWXU | S_IRWXG | S_IROTH | S_IWOTH | S_IXOTH)
-#endif
-#endif
+	~SimpleVolumeRaw(void);
 
-#endif //_IM_DEFS_H
+	REAL_T *loadSubvolume_to_REAL_T(int V0=-1,int V1=-1, int H0=-1, int H1=-1, int D0=-1, int D1=-1)  throw (MyException);
+
+    uint8 *loadSubvolume_to_UINT8(int V0=-1,int V1=-1, int H0=-1, int H1=-1, int D0=-1, int D1=-1, int *channels=0) 																										throw (MyException);
+};		
+
+# endif // _SIMPLE_VOLUME
+
