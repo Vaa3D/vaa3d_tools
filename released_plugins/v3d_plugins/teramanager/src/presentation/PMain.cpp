@@ -943,12 +943,25 @@ void PMain::openVolume(string path /* = "" */)
 
         if(import_path.isEmpty())
         {
+            #ifdef _USE_QT_DIALOGS
+            QFileDialog dialog(0);
+            dialog.setFileMode(QFileDialog::Directory);
+            dialog.setViewMode(QFileDialog::Detail);
+            dialog.setWindowFlags(Qt::WindowStaysOnTopHint);
+            dialog.setWindowTitle("Select volume's directory");
+            dialog.setDirectory(CSettings::instance()->getVolumePathLRU().c_str());
+            if(dialog.exec())
+                import_path = dialog.directory().absolutePath().toStdString().c_str();
+
+            #else
             //added by PHC 20130823
             import_path = QFileDialog::getExistingDirectory(this, tr("Select a folder for a resolution of the volume image you want to visualize"),
                                                             CSettings::instance()->getVolumePathLRU().c_str(),
                                                              QFileDialog::ShowDirsOnly
                                                         //     | QFileDialog::DontResolveSymlinks   //maybe I should allow symbolic links as well, by PHC, 20130823
                                                                     );
+            #endif
+
             if (import_path.isEmpty())
                 return;
         }
@@ -1059,8 +1072,23 @@ void PMain::loadAnnotations()
             QDir dir(CImport::instance()->getPath().c_str());
             dir.cdUp();
 
-            //---- Alessandro 2013-09-10: using native file dialogs instead of Qt's file dialogs that don't work properly on MacOS X.
+            #ifdef _USE_QT_DIALOGS
+            QString path = "";
+            QFileDialog dialog(0);
+            dialog.setFileMode(QFileDialog::ExistingFile);
+            dialog.setViewMode(QFileDialog::Detail);
+            dialog.setWindowFlags(Qt::WindowStaysOnTopHint);
+            dialog.setWindowTitle("Open annotation file");
+            dialog.setNameFilter(tr("annotation files (*.ano)"));
+            dialog.setDirectory(dir.absolutePath().toStdString().c_str());
+            if(dialog.exec())
+               if(!dialog.selectedFiles().empty())
+                   path = dialog.selectedFiles().front();
+
+            #else
             QString path = QFileDialog::getOpenFileName(this, "Open annotation file", dir.absolutePath(), tr("annotation files (*.ano)"));
+            #endif
+
             if(!path.isEmpty())
             {
                 annotationsPathLRU = path.toStdString();
@@ -1120,8 +1148,24 @@ void PMain::saveAnnotationsAs()
             QDir dir(CImport::instance()->getPath().c_str());
             dir.cdUp();
 
-            //---- Alessandro 2013-09-10: using native file dialogs instead of Qt's file dialogs that don't work properly on MacOS X.
+            #ifdef _USE_QT_DIALOGS
+            QString path = "";
+            QFileDialog dialog(0);
+            dialog.setFileMode(QFileDialog::AnyFile);
+            dialog.setAcceptMode(QFileDialog::AcceptSave);
+            dialog.setViewMode(QFileDialog::Detail);
+            dialog.setWindowFlags(Qt::WindowStaysOnTopHint);
+            dialog.setWindowTitle("Save annotation file as");
+            dialog.setNameFilter(tr("annotation files (*.ano)"));
+            dialog.setDirectory(dir.absolutePath().toStdString().c_str());
+            if(dialog.exec())
+               if(!dialog.selectedFiles().empty())
+                   path = dialog.selectedFiles().front();
+
+            #else
             QString path = QFileDialog::getSaveFileName(this, "Save annotation file as", dir.absolutePath(), tr("annotation files (*.ano)"));
+            #endif
+
             if(!path.isEmpty())
             {
                 annotationsPathLRU = path.toStdString();

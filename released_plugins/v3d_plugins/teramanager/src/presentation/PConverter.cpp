@@ -401,8 +401,21 @@ void PConverter::inDirButtonClicked()
     printf("--------------------- teramanager plugin [thread *] >> PConverter::inDirButtonClicked()\n");
     #endif
 
-    //---- Alessandro 2013-09-10: using native file dialogs instead of Qt's file dialogs that don't work properly on MacOS X.
+    #ifdef _USE_QT_DIALOGS
+    QString path;
+    QFileDialog dialog(0);
+    dialog.setFileMode(QFileDialog::Directory);
+    dialog.setViewMode(QFileDialog::Detail);
+    dialog.setWindowFlags(Qt::WindowStaysOnTopHint);
+    dialog.setWindowTitle("Select volume's folder");
+    dialog.setDirectory(CSettings::instance()->getVCInputPath().c_str());
+    if(dialog.exec())
+        path = dialog.directory().absolutePath();
+
+    #else
     QString path = QFileDialog::getExistingDirectory(this, "Select volume's folder", CSettings::instance()->getVCInputPath().c_str(), QFileDialog::ShowDirsOnly);
+    #endif
+
     if(!path.isEmpty())
     {
         inPathField->setText(path);
@@ -418,8 +431,23 @@ void PConverter::inFileButtonClicked()
     printf("--------------------- teramanager plugin [thread *] >> PConverter::inFileButtonClicked()\n");
     #endif
 
-    //---- Alessandro 2013-09-10: using native file dialogs instead of Qt's file dialogs that don't work properly on MacOS X.
+    #ifdef _USE_QT_DIALOGS
+    QString path = "";
+    QFileDialog dialog(0);
+    dialog.setFileMode(QFileDialog::ExistingFile);
+    dialog.setViewMode(QFileDialog::Detail);
+    dialog.setWindowFlags(Qt::WindowStaysOnTopHint);
+    dialog.setWindowTitle("Select volume's file");
+    dialog.setNameFilter(tr("V3D raw files (*.raw *.RAW *.v3draw *.V3DRAW)"));
+    dialog.setDirectory(CSettings::instance()->getVCInputPath().c_str());
+    if(dialog.exec())
+       if(!dialog.selectedFiles().empty())
+           path = dialog.selectedFiles().front();
+
+    #else
     QString path = QFileDialog::getOpenFileName(this, "Select volume's file", CSettings::instance()->getVCInputPath().c_str(), tr("V3D raw files (*.raw *.RAW *.v3draw *.V3DRAW)"));
+    #endif
+
     if(!path.isEmpty())
     {
         inPathField->setText(path);
@@ -435,8 +463,21 @@ void PConverter::outDirButtonClicked()
     printf("--------------------- teramanager plugin [thread *] >> PConverter::outDirButtonClicked()\n");
     #endif
 
-    //---- Alessandro 2013-09-10: using native file dialogs instead of Qt's file dialogs that don't work properly on MacOS X.
+    #ifdef _USE_QT_DIALOGS
+    QString path;
+    QFileDialog dialog(0);
+    dialog.setFileMode(QFileDialog::Directory);
+    dialog.setViewMode(QFileDialog::Detail);
+    dialog.setWindowFlags(Qt::WindowStaysOnTopHint);
+    dialog.setWindowTitle("Select the directory where the converted volume has to be stored");
+    dialog.setDirectory(CSettings::instance()->getVCOutputPath().c_str());
+    if(dialog.exec())
+        path = dialog.directory().absolutePath();
+
+    #else
     QString path = QFileDialog::getExistingDirectory(this, "Select the directory where the converted volume has to be stored", CSettings::instance()->getVCOutputPath().c_str(), QFileDialog::ShowDirsOnly);
+    #endif
+
     if(!path.isEmpty())
         outPathField->setText(path);
 }
