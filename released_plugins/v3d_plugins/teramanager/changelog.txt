@@ -11,6 +11,15 @@ ties names are:
 - Rem: a feature no longer available
 
 ============================================================================================
+Version 0.9.19
+September 14th, 2013
+--------------------------------------------------------------------------------------------
+- Fix: fixed a bug in TeraConverter which caused resolutions with "0" pixels to be automat-
+       ically selected in the GUI. This causes an error when TeraConverter tries to produce
+       the mdata.bin for the "phantom" resolution after the conversion.
+--------------------------------------------------------------------------------------------
+
+
 Version 0.9.18
 September 13th, 2013
 --------------------------------------------------------------------------------------------

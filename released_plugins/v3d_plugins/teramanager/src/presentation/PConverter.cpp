@@ -313,7 +313,7 @@ void PConverter::startButtonClicked()
         progressBar->setEnabled(true);
         startButton->setEnabled(false);
         stopButton->setEnabled(true);
-        if(!CConverter::instance()->getConversionMode())
+        if(!CConverter::instance()->isConversionModeEnabled())
         {
             statusBar->clearMessage();
             statusBar->showMessage("Importing volume...");
@@ -379,7 +379,7 @@ void PConverter::stopButtonClicked()
         return;
     else
     {
-        if(!CConverter::instance()->getConversionMode())
+        if(!CConverter::instance()->isConversionModeEnabled())
             this->resetGUI();
         else
         {
@@ -625,7 +625,7 @@ void PConverter::operationDone(MyException *ex)
     if(ex)
     {
         QMessageBox::critical(this,QObject::tr("Error"), QObject::tr(ex->what()),QObject::tr("Ok"));
-        if(!CConverter::instance()->getConversionMode())
+        if(!CConverter::instance()->isConversionModeEnabled())
             this->resetGUI();
         else
         {
@@ -639,7 +639,7 @@ void PConverter::operationDone(MyException *ex)
             conversion_panel->setEnabled(true);
         }
     }
-    else if(CConverter::instance()->getConversionMode())
+    else if(CConverter::instance()->isConversionModeEnabled())
     {
         statusBar->clearMessage();
         statusBar->showMessage("Conversion successfully performed!");
@@ -674,7 +674,8 @@ void PConverter::operationDone(MyException *ex)
                 float MVoxels = (height/1024.0f)*(width/1024.0f)*depth;
                 if(MVoxels < CSettings::instance()->getVolMapSizeLimit() || resolutionsNumber >= S_MAX_MULTIRES)
                     deepest_resolution_reached = true;
-                resolutionsNumber++;
+                if(height != 0 && width != 0 && depth != 0)
+                    resolutionsNumber++;
             }
             resolutionsFields = new QLabel*[resolutionsNumber];
             resolutionsSizes = new QLabel*[resolutionsNumber];

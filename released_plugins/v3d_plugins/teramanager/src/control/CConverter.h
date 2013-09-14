@@ -90,7 +90,7 @@ class teramanager::CConverter : public QThread
 
         //GET and SET methods
         void setMembers(PConverter* pConverter) throw (MyException);
-        bool getConversionMode(){return conversionMode;}
+        bool isConversionModeEnabled(){return conversionMode;}
         VolumeConverter* getVolumeConverter() throw (MyException)
         {
             if(vc == 0)

@@ -143,6 +143,12 @@ void VolumeConverter::generateTiles(std::string output_path, bool* resolutions,
 				int slice_height, int slice_width, int method, bool show_progress_bar, const char* saved_img_format, 
 				int saved_img_depth)	throw (MyException)
 {
+    printf("in VolumeConverter::generateTiles(path = \"%s\", resolutions = ", output_path.c_str());
+    for(int i=0; i< S_MAX_MULTIRES; i++)
+        printf("%d", resolutions[i]);
+    printf(", slice_height = %d, slice_width = %d, method = %d, show_progress_bar = %s, saved_img_format = %s, saved_img_depth = %d)\n",
+           slice_height, slice_width, method, show_progress_bar ? "true" : "false", saved_img_format, saved_img_depth);
+
 	//LOCAL VARIABLES
     sint64 height, width, depth;	//height, width and depth of the whole volume that covers all stacks
 	REAL_T* rbuffer;			//buffer where temporary image data are stored (REAL_INTERNAL_REP)
