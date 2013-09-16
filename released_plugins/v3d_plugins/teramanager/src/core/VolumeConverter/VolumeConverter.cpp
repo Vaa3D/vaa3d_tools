@@ -47,6 +47,7 @@
 #include <sstream>
 #include <cstdio>
 
+#include "check_and_makedir.h" //added by Hanchuan Peng, 20130915
 
 //initialization of class members
 double VolumeConverter::time_displ_comp=0;
@@ -54,6 +55,7 @@ double VolumeConverter::time_merging=0;
 double VolumeConverter::time_stack_desc=0;
 double VolumeConverter::time_stack_restore=0;
 double VolumeConverter::time_multiresolution=0;
+
 
 
 VolumeConverter::VolumeConverter( ) {
@@ -227,7 +229,7 @@ void VolumeConverter::generateTiles(std::string output_path, bool* resolutions,
             {
                 //creating directory that will contain image data at current resolution
                 file_path[res_i]<<output_path<<"/RES("<<height/POW_INT(2,res_i)<<"x"<<width/POW_INT(2,res_i)<<"x"<<depth/POW_INT(2,res_i)<<")";
-                if(make_dir(file_path[res_i].str().c_str())!=0)
+                if(!check_and_make_dir(file_path[res_i].str().c_str()))
                 {
                     char err_msg[S_MAX_MULTIRES];
                     sprintf(err_msg, "in generateTiles(...): unable to create DIR = \"%s\"\n", file_path[res_i].str().c_str());
@@ -577,7 +579,7 @@ void VolumeConverter::generateTilesVaa3DRaw(std::string output_path, bool* resol
             {
                 //creating directory that will contain image data at current resolution
                 file_path[res_i]<<output_path<<"/RES("<<height/POW_INT(2,res_i)<<"x"<<width/POW_INT(2,res_i)<<"x"<<depth/POW_INT(2,res_i)<<")";
-                if(make_dir(file_path[res_i].str().c_str())!=0)
+                if(!check_and_make_dir(file_path[res_i].str().c_str()))
                 {
                     char err_msg[S_MAX_MULTIRES];
                     sprintf(err_msg, "in generateTilesVaa3DRaw(...): unable to create DIR = \"%s\"\n", file_path[res_i].str().c_str());
@@ -1057,7 +1059,7 @@ void VolumeConverter::generateTilesVaa3DRawMC ( std::string output_path, bool* r
 		dir_name.fill('0');
 		dir_name << c;
 		chans_dir[c] = output_path + "/" + IM_CHANNEL_PREFIX + dir_name.str();
-		if(make_dir(chans_dir[c].c_str())!=0) {
+        if(!check_and_make_dir(chans_dir[c].c_str())) {
 			char err_msg[S_MAX_MULTIRES];
 			sprintf(err_msg, "in generateTilesVaa3DRawMC(...): unable to create DIR = \"%s\"\n", chans_dir[c].c_str());
 			throw MyException(err_msg);
@@ -1068,7 +1070,7 @@ void VolumeConverter::generateTilesVaa3DRawMC ( std::string output_path, bool* r
 				//creating directory that will contain image data at current resolution
 				//resolution_dir = chans_dir[c] + file_path[res_i].str();
 				resolution_dir = file_path[res_i].str() + chans_dir[c];
-				if(make_dir(resolution_dir.c_str())!=0)
+                if(!check_and_make_dir(resolution_dir.c_str()))
 				{
 					char err_msg[S_MAX_MULTIRES];
 					sprintf(err_msg, "in generateTilesVaa3DRawMC(...): unable to create DIR = \"%s\"\n", file_path[res_i].str().c_str());
@@ -1508,7 +1510,7 @@ void VolumeConverter::generateTilesVaa3DRawMC ( std::string output_path, bool* r
 			file_path[res_i] << output_path << "/RES("<<height/POW_INT(2,res_i) 
 							 << "x" << width/POW_INT(2,res_i) 
 							 << "x" << depth/POW_INT(2,res_i) << ")";
-			if(make_dir(file_path[res_i].str().c_str())!=0) {
+            if(!check_and_make_dir(file_path[res_i].str().c_str())) {
 				char err_msg[S_MAX_MULTIRES];
 				sprintf(err_msg, "in generateTilesVaa3DRawMC(...): unable to create DIR = \"%s\"\n", file_path[res_i].str().c_str());
 				throw MyException(err_msg);
@@ -1517,7 +1519,7 @@ void VolumeConverter::generateTilesVaa3DRawMC ( std::string output_path, bool* r
 			for ( int c=0; c<channels; c++ ) {
 				//creating directory that will contain image data at current resolution
 				resolution_dir = file_path[res_i].str() + chans_dir[c];
-				if(make_dir(resolution_dir.c_str())!=0)
+                if(!check_and_make_dir(resolution_dir.c_str()))
 				{
 					char err_msg[S_MAX_MULTIRES];
 					sprintf(err_msg, "in generateTilesVaa3DRawMC(...): unable to create DIR = \"%s\"\n", chans_dir[c].c_str());
