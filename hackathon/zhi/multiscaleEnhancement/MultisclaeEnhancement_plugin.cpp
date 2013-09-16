@@ -623,7 +623,7 @@ void processImage_adaptive_auto(V3DPluginCallback2 &callback, QWidget *parent)
     }
 
     // display
-    remove("temp.v3draw");
+    //remove("temp.v3draw");
 
     //set up output image
 
@@ -1669,7 +1669,6 @@ template <class T> void callGussianoPlugin(V3DPluginCallback2 &callback,
     V3DPluginArgList input;
     V3DPluginArgList output;
 
-
     arg.type = "random";std::vector<char*> args1;
     args1.push_back("temp.v3draw"); arg.p = (void *) & args1; input<< arg;
     arg.type = "random";std::vector<char*> args;
@@ -1691,28 +1690,30 @@ template <class T> void callGussianoPlugin(V3DPluginCallback2 &callback,
 
     char * outimg_file = ((vector<char*> *)(output.at(0).p))->at(0);
     simple_loadimage_wrapper(callback, outimg_file, data1d_Gf, in_zz, datatype);
-    remove("gfImage.v3draw");
+    //remove("gfImage.v3draw");
     unsigned char* data1d = 0;
     data1d = new unsigned char [pagesz];
 
     double min,max;
     rescale_to_0_255_and_copy((float *)data1d_Gf,pagesz,min,max,data1d);
+    if(data1d_Gf) {delete []data1d_Gf; data1d_Gf =0;}
 
-    T *pImage = new T [pagesz];
-    if (!pImage)
+    try
+    {
+        outimg = new T [pagesz];
+    }
+    catch (...)
     {
         printf("Fail to allocate memory.\n");
+        if(data1d) {delete []data1d; data1d =0;}
         return;
     }
-    else
-    {
-        for(V3DLONG i=0; i<pagesz; i++)
-            pImage[i] = data1d[i];
-    }
-    if(data1d_Gf) {delete []data1d_Gf; data1d_Gf =0;}
+
+    for(V3DLONG i=0; i<pagesz; i++)
+        outimg[i] = data1d[i];
+
     if(data1d) {delete []data1d; data1d =0;}
 
-    outimg = pImage;
     return;
 }
 
@@ -1741,7 +1742,6 @@ template <class T> void AdpThresholding_adpwindow(const T* data1d,
         outimg = 0;
     }
 
-
     V3DLONG N = in_sz[0];
     V3DLONG M = in_sz[1];
     V3DLONG P = in_sz[2];
@@ -1759,7 +1759,7 @@ template <class T> void AdpThresholding_adpwindow(const T* data1d,
     else
     {
         for(V3DLONG i=0; i<pagesz; i++)
-            pImage[i] = 0;
+            pImage[i] = 1;
     }
 
     T maxfl = 0;
@@ -1773,7 +1773,6 @@ template <class T> void AdpThresholding_adpwindow(const T* data1d,
             V3DLONG offsetj = iy*N;
             for(V3DLONG ix = 0; ix < N; ix++)
             {
-
                 T GsdtValue = gsdtdatald[offsetk + offsetj + ix];
                 T PixelValue = data1d[offsetc+offsetk + offsetj + ix];
                 Wx = (int)round((ratio*log(GsdtValue)/log(2)));
@@ -1785,15 +1784,12 @@ template <class T> void AdpThresholding_adpwindow(const T* data1d,
                 }
                 else
                 {
-
                     Wy = Wx;
                     Wz = 2*Wx;
                 }
 
-
                 if (Wx > 0 && PixelValue > 0)
                 {
-
                     /* V3DLONG xb = ix-Wx;
                     V3DLONG xe = ix+Wx;
                     V3DLONG yb = iy-Wy;
@@ -1901,7 +1897,7 @@ template <class T> void AdpThresholding_adpwindow(const T* data1d,
 
                     // printf("window size is %d\n",Wx);
                     //Seletive approach
-                    double  fxx = data1d[offsetk+offsetj+xe]+ data1d[offsetk+offsetj+xb]- 2*data1d[offsetk+offsetj+ix];
+                    double fxx = data1d[offsetk+offsetj+xe]+ data1d[offsetk+offsetj+xb]- 2*data1d[offsetk+offsetj+ix];
                     double fyy = data1d[offsetk+(ye)*N+ix]+data1d[offsetk+(yb)*N+ix]-2*data1d[offsetk+offsetj+ix];
                     double fzz = data1d[(ze)*M*N+offsetj+ix]+data1d[(zb)*M*N+offsetj+ix]- 2*data1d[offsetk+offsetj+ix];
 
@@ -1921,12 +1917,12 @@ template <class T> void AdpThresholding_adpwindow(const T* data1d,
                         EigenValues(Cov_Matrix,DD);
                         double a1 = DD(1), a2 = DD(2), a3 = DD(3);
                         swapthree(a1, a2, a3);
-                        if(a1<0 && a2 < 0)
+                        if(a1<0 && a2<0)
                         {
                             T dataval = (T)(sigma*sigma*pow((zhi_abs(a2)-zhi_abs(a3)),3)/zhi_abs(a1)); //seems the best at this moment. commented by HP, 2013-08-28. Do NOT Use the following formula instead.
                             //T dataval = (T)(double(PixelValue) * (double(zhi_abs(a2))-double(zhi_abs(a3)))/double(zhi_abs(a1)));
 
-                            pImage[offsetk+offsetj+ix] = dataval;
+                            pImage[offsetk+offsetj+ix] = 2;//dataval;
                             if (maxfl<dataval) maxfl = dataval;
                         }
                     }
@@ -1953,10 +1949,7 @@ template <class T> void AdpThresholding_adpwindow(const T* data1d,
                             pImage[offsetk+offsetj+ix] = dataval;
                             if (maxfl<dataval) maxfl = dataval;
                         }
-
-
                     }
-
                 }
                 else
                     pImage[offsetk+offsetj+ix] = 0;
@@ -1964,41 +1957,8 @@ template <class T> void AdpThresholding_adpwindow(const T* data1d,
         }
     }
 
-
-    /*   T *pImage2 = new T [pagesz];
-    if (!pImage2)
-    {
-        printf("Fail to allocate memory.\n");
-        return;
-    }
-    else
-    {
-        for(V3DLONG i=0; i<pagesz; i++)
-            pImage2[i] = 0;
-    }
-
-    if (maxfl>0)
-    {
-        for(V3DLONG iz = 0; iz < P; iz++)
-        {
-            V3DLONG offsetk = iz*M*N;
-            for(V3DLONG iy = 0; iy < M; iy++)
-            {
-                V3DLONG offsetj = iy*N;
-                for(V3DLONG ix = 0; ix < N; ix++)
-                {
-                    T dataval2 = 255*pImage[offsetk+offsetj+ix]/maxfl;
-                    pImage2[offsetk+offsetj+ix] = dataval2;
-
-                }
-            }
-        }
-    }*/
-
-
     outimg = pImage;
     return;
-
 }
 
 
@@ -2066,6 +2026,7 @@ template <class T> void callgsdtPlugin(V3DPluginCallback2 &callback,const T* dat
         th_final = th_global;
     printf("mean is %.2f, std is %.2f\n\n\n",th,sqrt(std));
     simple_saveimage_wrapper(callback, "temp_gf.v3draw", (unsigned char *)data1d, in_sz, 1);
+
     V3DPluginArgItem arg;
     V3DPluginArgList input;
     V3DPluginArgList output;
@@ -2088,8 +2049,8 @@ template <class T> void callgsdtPlugin(V3DPluginCallback2 &callback,const T* dat
 
     char * outimg_file = ((vector<char*> *)(output.at(0).p))->at(0);
     simple_loadimage_wrapper(callback, outimg_file, data1d_gsdt, in_zz, datatype);
-    remove("temp_gf.v3draw");
-    remove("gsdtImage.v3draw");
+    //remove("temp_gf.v3draw");
+    //remove("gsdtImage.v3draw");
 
     T *pImage = new T [pagesz];
     if (!pImage)
