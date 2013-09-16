@@ -1764,6 +1764,8 @@ template <class T> void AdpThresholding_adpwindow(const T* data1d,
 
     T maxfl = 0;
 
+    double LOG2 = log(2.0);
+
     for(V3DLONG iz = 0; iz < P; iz++)
     {
         printf("\r Enhancement : %d %% completed ", int(float(iz)/P*100)); fflush(stdout);
@@ -1775,7 +1777,7 @@ template <class T> void AdpThresholding_adpwindow(const T* data1d,
             {
                 T GsdtValue = gsdtdatald[offsetk + offsetj + ix];
                 T PixelValue = data1d[offsetc+offsetk + offsetj + ix];
-                Wx = (int)round((ratio*log(GsdtValue)/log(2)));
+                Wx = (int)round((ratio*log(double(GsdtValue)+1.0)/LOG2));
                 if(ratio ==0.1)
                 {
                     if(Wx == 0) Wx = 1;
