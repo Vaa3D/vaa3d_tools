@@ -53,6 +53,28 @@ template <class T> void callgsdtPlugin(V3DPluginCallback2 &callback,const T* dat
                                                   double th_global,
                                                   T* &outimg);
 
+template <class T> void enhancementWithsoma(V3DPluginCallback2 &callback,
+                                      const T* data1d,
+                                      T* data1d_enhanced,
+                                      V3DLONG *in_sz,
+                                      unsigned int c,
+                                      T* &outimg);
+
+template <class T> void somalocation(V3DPluginCallback2 &callback,
+                                     const T* data1d,
+                                     V3DLONG *in_sz,
+                                     unsigned int c,
+                                     int &soma_x,
+                                     int &soma_y);
+
+template <class T> void soma_detection(T* data1d,
+                                       V3DLONG *in_sz,
+                                       unsigned int c,
+                                       int x,
+                                       int y,
+                                       V3DLONG somasize,
+                                       T* &outimg);
+
 template <class T> double getdtmax(V3DPluginCallback2 &callback,const T* data1d,V3DLONG *in_sz);
 
 template <class T> T zhi_abs(T num)
@@ -848,7 +870,7 @@ void processImage_adaptive_auto_blocks(V3DPluginCallback2 &callback, QWidget *pa
 
     //input
     bool ok1,ok4;
-    unsigned int Ws=1000, c=1;
+    unsigned int Ws=1000, c=1,p=0;
     if(N < M)
         Ws = QInputDialog::getInteger(parent, "Block Size",
                                       "Enter block size:",
@@ -874,8 +896,11 @@ void processImage_adaptive_auto_blocks(V3DPluginCallback2 &callback, QWidget *pa
     else
         return;
 
+    if(QMessageBox::Yes == QMessageBox::question (0, "", QString("Include soma detection?"), QMessageBox::Yes, QMessageBox::No))    p = 1;
+
+
     V3DLONG offsetc = (c-1)*pagesz;
-    // V3DLONG Ws = 1000;
+   // Ws = 2000;
     int county = 0;
     unsigned char* subject1d_y = NULL;
     unsigned char* target1d_y = NULL;
@@ -909,7 +934,7 @@ void processImage_adaptive_auto_blocks(V3DPluginCallback2 &callback, QWidget *pa
             int i = 0;
             for(V3DLONG iz = 0; iz < P; iz++)
             {
-                double PixelSum = 0;
+               // double PixelSum = 0;
                 V3DLONG offsetk = iz*M*N;
                 for(V3DLONG iy = yb; iy < ye+1; iy++)
                 {
@@ -918,13 +943,12 @@ void processImage_adaptive_auto_blocks(V3DPluginCallback2 &callback, QWidget *pa
                     {
 
                         blockarea[i] = data1d[offsetc+offsetk + offsetj + ix];
-                        PixelSum = PixelSum + (double)data1d[offsetc+offsetk + offsetj + ix];
+               //         PixelSum = PixelSum + (double)data1d[offsetc+offsetk + offsetj + ix];
                         i++;
                     }
                 }
-                 th_global = th_global + PixelSum/(M*N*P);
+                // th_global = th_global + PixelSum/(M*N*P);
             }
-
             V3DLONG block_sz[4];
             block_sz[0] = xe-xb+1; block_sz[1] = ye-yb+1; block_sz[2] = P; block_sz[3] = 1;
             simple_saveimage_wrapper(callback, "temp.v3draw", (unsigned char *)blockarea, block_sz, 1);
@@ -989,14 +1013,17 @@ void processImage_adaptive_auto_blocks(V3DPluginCallback2 &callback, QWidget *pa
                      int a1 = EnahancedImage[i];
                      int a2 = EnahancedImage_final[i];
                      if(a1>a2)
-                        localEnahancedArea[i] =  EnahancedImage[i];
+                        localEnahancedArea[i] =  EnahancedImage[i]+1;
                      else
-                        localEnahancedArea[i] =  EnahancedImage_final[i];
+                        localEnahancedArea[i] =  EnahancedImage_final[i]+1;
 
                   }
                   remove("temp.v3draw");
-               }
+                }
 
+                if(data1d_gf) {delete []data1d_gf; data1d_gf =0;}
+                if(gsdtld) {delete []gsdtld; gsdtld =0;}
+                if(EnahancedImage) {delete []EnahancedImage; EnahancedImage =0;}
             }
 
             if (count==0)
@@ -1008,7 +1035,7 @@ void processImage_adaptive_auto_blocks(V3DPluginCallback2 &callback, QWidget *pa
                     target1d[i] = localEnahancedArea[i];
                 szTar[0] = xe-xb+1; szTar[1] = ye-yb+1; szTar[2] = P; szTar[3] = 1;
 
-              }
+            }
             else
             {
 
@@ -1039,12 +1066,13 @@ void processImage_adaptive_auto_blocks(V3DPluginCallback2 &callback, QWidget *pa
                 for(int i = 0; i<targetsize;i++)
                     target1d[i] = data1d_blended[i];
                 szTar[0] = new_sz0; szTar[1] = new_sz1; szTar[2] = new_sz2; szTar[3] = 1;
-
-
-
-
-            }
+             }
             count ++;
+
+            if(blockarea) {delete []blockarea; blockarea =0;}
+            if(EnahancedImage_final) {delete []EnahancedImage_final; EnahancedImage_final =0;}
+            if(localEnahancedArea) {delete []localEnahancedArea; localEnahancedArea =0;}
+
 
         }
 
@@ -1089,13 +1117,40 @@ void processImage_adaptive_auto_blocks(V3DPluginCallback2 &callback, QWidget *pa
             for(int i = 0; i<targetsize_y;i++)
                 target1d_y[i] = data1d_blended_y[i];
             szTar_y[0] = new_sz0; szTar_y[1] = new_sz1; szTar_y[2] = new_sz2; szTar_y[3] = 1;
+
+            if(data1d_blended_y) {delete []data1d_blended_y; data1d_blended_y =0;}
+
         }
         county++;
+
+        if(subject1d) {delete []subject1d; subject1d =0;}
+        if(target1d) {delete []target1d; target1d =0;}
     }
+
+    unsigned char* Enhancement_output = 0;
+   /* unsigned char* target1d_y = 0;
+    V3DLONG in_zz[4];
+    int datatype;
+    simple_loadimage_wrapper(callback, "/local2/Median_filtered_images/invert_Second_L2-3_PyramidalNeuron_50px_3umStageComp-10000_median_output_blended.v3draw", target1d_y, in_zz, datatype);
+*/
+
+    if(p==1)
+    {
+      enhancementWithsoma(callback,(unsigned char *)data1d,(unsigned char*)target1d_y,in_sz,1,(unsigned char *&)Enhancement_output);
+    }
+    else
+    {
+       Enhancement_output = new unsigned char [pagesz];
+       for(int i = 0; i<pagesz;i++)
+           Enhancement_output[i] = target1d_y[i];
+    }
+
+    if(subject1d_y) {delete []subject1d_y; subject1d_y =0;}
+    if(target1d_y) {delete []target1d_y; target1d_y =0;}
 
     // display
     Image4DSimple * new4DImage = new Image4DSimple();
-    new4DImage->setData((unsigned char *)target1d_y,N, M, P, 1, pixeltype);
+    new4DImage->setData((unsigned char *)Enhancement_output,N, M, P, 1, pixeltype);
     v3dhandle newwin = callback.newImageWindow();
     callback.setImage(newwin, new4DImage);
     callback.setImageName(newwin, "Local_adaptive_enhancement_result");
@@ -1322,7 +1377,7 @@ bool processImage_adaptive_auto_blocks(const V3DPluginArgList & input, V3DPlugin
             int i = 0;
             for(V3DLONG iz = 0; iz < P; iz++)
             {
-                double PixelSum = 0;
+              //  double PixelSum = 0;
                 V3DLONG offsetk = iz*M*N;
                 for(V3DLONG iy = yb; iy < ye+1; iy++)
                 {
@@ -1331,11 +1386,11 @@ bool processImage_adaptive_auto_blocks(const V3DPluginArgList & input, V3DPlugin
                     {
 
                         blockarea[i] = data1d[offsetc+offsetk + offsetj + ix];
-                        PixelSum = PixelSum + (double)data1d[offsetc+offsetk + offsetj + ix];
+                   //     PixelSum = PixelSum + (double)data1d[offsetc+offsetk + offsetj + ix];
                         i++;
                     }
                 }
-                 th_global = th_global + PixelSum/(M*N*P);
+             //    th_global = th_global + PixelSum/(M*N*P);
             }
 
             V3DLONG block_sz[4];
@@ -1402,13 +1457,17 @@ bool processImage_adaptive_auto_blocks(const V3DPluginArgList & input, V3DPlugin
                      int a1 = EnahancedImage[i];
                      int a2 = EnahancedImage_final[i];
                      if(a1>a2)
-                        localEnahancedArea[i] =  EnahancedImage[i];
+                        localEnahancedArea[i] =  EnahancedImage[i]+1;
                      else
-                        localEnahancedArea[i] =  EnahancedImage_final[i];
+                        localEnahancedArea[i] =  EnahancedImage_final[i]+1;
 
                   }
                   remove("temp.v3draw");
                }
+
+               if(data1d_gf) {delete []data1d_gf; data1d_gf =0;}
+               if(gsdtld) {delete []gsdtld; gsdtld =0;}
+               if(EnahancedImage) {delete []EnahancedImage; EnahancedImage =0;}
 
             }
 
@@ -1453,11 +1512,11 @@ bool processImage_adaptive_auto_blocks(const V3DPluginArgList & input, V3DPlugin
                     target1d[i] = data1d_blended[i];
                 szTar[0] = new_sz0; szTar[1] = new_sz1; szTar[2] = new_sz2; szTar[3] = 1;
 
-
-
-
             }
             count ++;
+            if(blockarea) {delete []blockarea; blockarea =0;}
+            if(EnahancedImage_final) {delete []EnahancedImage_final; EnahancedImage_final =0;}
+            if(localEnahancedArea) {delete []localEnahancedArea; localEnahancedArea =0;}
 
         }
 
@@ -1502,8 +1561,13 @@ bool processImage_adaptive_auto_blocks(const V3DPluginArgList & input, V3DPlugin
             for(int i = 0; i<targetsize_y;i++)
                 target1d_y[i] = data1d_blended_y[i];
             szTar_y[0] = new_sz0; szTar_y[1] = new_sz1; szTar_y[2] = new_sz2; szTar_y[3] = 1;
+
+            if(data1d_blended_y) {delete []data1d_blended_y; data1d_blended_y =0;}
         }
         county++;
+
+        if(subject1d) {delete []subject1d; subject1d =0;}
+        if(target1d) {delete []target1d; target1d =0;}
     }
 
     // save image
@@ -1512,7 +1576,6 @@ bool processImage_adaptive_auto_blocks(const V3DPluginArgList & input, V3DPlugin
     datald_output = new unsigned char [pagesz];
     rescale_to_0_255_and_copy((unsigned char *)target1d_y,pagesz,min,max,datald_output);
     in_sz[3]=1;
-
 
     simple_saveimage_wrapper(callback, outimg_file, (unsigned char *)datald_output, in_sz, 1);
 
@@ -2061,8 +2124,7 @@ template <class T> void callgsdtPlugin(V3DPluginCallback2 &callback,const T* dat
     }
 
     outimg = pImage;
-
-    if (data1d_gsdt) {delete []data1d_gsdt; data1d_gsdt=0;}
+    if(data1d_gsdt) {delete []data1d_gsdt; data1d_gsdt =0;}
     return;
 
 }
@@ -2126,11 +2188,9 @@ template <class T> double getdtmax(V3DPluginCallback2 &callback,const T* data1d,
         if(dataValue > maxfl)   maxfl = dataValue;
 
     }
-    printf("zhi zhou is %.2f",maxfl);
 
 
     if (data1d_gt) {delete []data1d_gt; data1d_gt=0;}
-
     return maxfl;
 
 
@@ -2262,4 +2322,351 @@ int pwi_fusing(SDATATYPE *data1d, SDATATYPE *subject1d, V3DLONG *sz_subject, SDA
 
 
     return true;
+}
+
+template <class T> void enhancementWithsoma(V3DPluginCallback2 &callback,
+                                            const T* data1d,
+                                            T* data1d_enhanced,
+                                            V3DLONG *in_sz,
+                                            unsigned int c,
+                                            T* &outimg)
+
+{
+    if (outimg)
+    {
+        v3d_msg("Warning: you have supplied an non-empty output image pointer. This program will force to free it now. But you may want to double check.");
+        delete []outimg;
+        outimg = 0;
+    }
+
+    int soma_x = 0;
+    int soma_y = 0;
+    somalocation(callback,data1d,in_sz,1,soma_x,soma_y);
+    printf("\n soma location is (%d, %d)\n\n", soma_x,soma_y);
+
+    V3DLONG N = in_sz[0];
+    V3DLONG M = in_sz[1];
+    V3DLONG P = in_sz[2];
+    V3DLONG pagesz = N*M*P;
+    V3DLONG offsetc = (c-1)*pagesz;
+
+    V3DLONG i = 0;
+    double th_soma = 0;
+
+    for(V3DLONG iz = 0; iz < P; iz++)
+    {
+        double PixelSum = 0;
+        V3DLONG offsetk = iz*M*N;
+        for(V3DLONG iy = soma_y-200; iy <  soma_y+200; iy++)
+        {
+            V3DLONG offsetj = iy*N;
+            for(V3DLONG ix = soma_x-200; ix < soma_x+200; ix++)
+            {
+
+             double PixelVaule = data1d[offsetc + offsetk + offsetj + ix];
+             PixelSum = PixelSum + PixelVaule;
+             i++;
+            }
+        }
+        th_soma = th_soma + PixelSum/(400*400*P);
+    }
+
+    void* somaarea = 0;
+    soma_detection((unsigned char*)data1d, in_sz, c,soma_x,soma_y,i,(unsigned char* &)somaarea);
+
+    V3DLONG soma_sz[4];
+    soma_sz[0] = 400; soma_sz[1] = 400; soma_sz[2] = P; soma_sz[3] = 1;
+    simple_saveimage_wrapper(callback,"temp_soma.v3draw", (unsigned char *)somaarea, soma_sz, 1);
+    V3DPluginArgItem arg;
+    V3DPluginArgList input;
+    V3DPluginArgList output;
+
+
+    arg.type = "random";std::vector<char*> args1;
+    args1.push_back("temp_soma.v3draw"); arg.p = (void *) & args1; input<< arg;
+    arg.type = "random";std::vector<char*> args;
+    char channel = '0' + (c-1);
+    string threshold = boost::lexical_cast<string>(th_soma); char* threshold2 =  new char[threshold.length() + 1]; strcpy(threshold2, threshold.c_str());
+    args.push_back(threshold2);args.push_back("1");args.push_back(&channel);args.push_back("1"); arg.p = (void *) & args; input << arg;
+    arg.type = "random";std::vector<char*> args2;args2.push_back("gsdtImage_soma.v3draw"); arg.p = (void *) & args2; output<< arg;
+
+    QString full_plugin_name = "gsdt";
+    QString func_name = "gsdt";
+
+    callback.callPluginFunc(full_plugin_name,func_name, input,output);
+
+    unsigned char * gsdtsoma = 0;
+    char * outimg_file = ((vector<char*> *)(output.at(0).p))->at(0);
+    int datatype;
+    V3DLONG in_zz[4];
+
+    if(!simple_loadimage_wrapper(callback,outimg_file, gsdtsoma, in_zz, datatype))
+    {
+        cerr<<"load image "<<outimg_file<<" error!"<<endl;
+        return;
+    }
+
+    remove("temp_soma.v3draw");
+    remove("gsdtImage_soma.v3draw");
+
+    int Th_gsdt = 100;
+
+    T *pSoma = new T [pagesz];
+    if (!pSoma)
+    {
+        printf("Fail to allocate memory.\n");
+        return;
+    }
+    else
+    {
+        for(V3DLONG i=0; i<pagesz; i++)
+            pSoma[i] = 0;
+    }
+
+    i = 0;
+    for(V3DLONG iz = 0; iz < P; iz++)
+    {
+        V3DLONG offsetk = iz*M*N;
+
+        for(V3DLONG iy = soma_y-200; iy <  soma_y+200; iy++)
+        {
+            V3DLONG offsetj = iy*N;
+            for(V3DLONG ix = soma_x-200; ix < soma_x+200; ix++)
+            {
+                pSoma[offsetk + offsetj + ix] = gsdtsoma[i];
+                i++;
+            }
+        }
+    }
+
+    T *pImage2 = new T [pagesz];
+    if (!pImage2)
+    {
+        printf("Fail to allocate memory.\n");
+        return;
+    }
+    else
+    {
+        for(V3DLONG i=0; i<pagesz; i++)
+            pImage2[i] = 0;
+    }
+    for(V3DLONG iz = 0; iz < P; iz++)
+    {
+        V3DLONG offsetk = iz*M*N;
+        for(V3DLONG iy = 0; iy < M; iy++)
+        {
+            V3DLONG offsetj = iy*N;
+            for(V3DLONG ix = 0; ix < N; ix++)
+            {
+                T SomaValue = pSoma[offsetc+offsetk + offsetj + ix];
+
+                if(SomaValue < Th_gsdt)
+                {
+                    T dataval2 = data1d_enhanced[offsetk+offsetj+ix];
+                    pImage2[offsetk+offsetj+ix] = dataval2;
+                }
+                else
+                    pImage2[offsetk+offsetj+ix] =  data1d[offsetk+offsetj+ix];
+            }
+
+
+        }
+
+    }
+
+    outimg = pImage2;
+
+    if(gsdtsoma) {delete []gsdtsoma; gsdtsoma =0;}
+    if(somaarea) {delete []somaarea; somaarea =0;}
+    if(pSoma) {delete []pSoma; pSoma =0;}
+    return;
+
+
+}
+
+template <class T> void somalocation(V3DPluginCallback2 &callback,
+                                     const T* data1d,
+                                     V3DLONG *in_sz,
+                                     unsigned int c,
+                                     int &soma_x,
+                                     int &soma_y)
+{
+
+
+    V3DLONG N = in_sz[0];
+    V3DLONG M = in_sz[1];
+    V3DLONG P = in_sz[2];
+    V3DLONG pagesz = N*M*P;
+    V3DLONG offsetc = (c-1)*pagesz;
+
+
+    V3DLONG pageszDS = (N/4)*(M/4)*(P/4);
+    unsigned char* datald_downsample = 0;
+    datald_downsample = new unsigned char [pageszDS];
+    for(V3DLONG i=0; i<pageszDS; i++)
+        datald_downsample[i] = 0;
+
+    V3DLONG DSN = in_sz[0]/4;
+    V3DLONG DSM = in_sz[1]/4;
+    V3DLONG DSP = in_sz[2]/4;
+
+    double th = 0;
+    V3DLONG dsiz=0;
+    for(V3DLONG iz = 0; iz < P; iz = iz+4)
+    {
+        double PixelSum = 0;
+        V3DLONG offsetk = iz*M*N;
+        V3DLONG dsoffsetk = dsiz*DSM*DSN;
+        V3DLONG dsiy=0;
+        for(V3DLONG iy = 0; iy <  M; iy = iy+4)
+        {
+            V3DLONG offsetj = iy*N;
+            V3DLONG dsoffsetj = dsiy*DSN;
+            V3DLONG dsix=0;
+            for(V3DLONG ix = 0; ix < N; ix = ix+4)
+            {
+
+                V3DLONG index_pim = offsetc+offsetk + offsetj + ix;
+                V3DLONG DSindex_pim = dsoffsetk+dsoffsetj+dsix;
+                if(DSindex_pim <= pageszDS)
+                {
+                   double PixelVaule = data1d[index_pim];
+                   PixelSum = PixelSum + PixelVaule;
+                   datald_downsample[DSindex_pim] = data1d[index_pim];
+                    dsix++;
+                }
+            }
+            dsiy++;
+        }
+        th += PixelSum/((M/4)*(N/4)*(P/4));
+        dsiz++;
+    }
+
+    double std = 0;
+    for(V3DLONG dsiz = 0; dsiz < DSP; dsiz++)
+    {
+        V3DLONG dsoffsetk = dsiz*DSM*DSN;
+        double stdSum=0;
+        for(V3DLONG dsiy = 0; dsiy < DSM; dsiy++)
+        {
+            V3DLONG dsoffsetj = dsiy*DSN;
+            for(V3DLONG dsix = 0; dsix < DSN; dsix++)
+            {
+                double PixelVaule = datald_downsample[dsoffsetk+dsoffsetj+dsix];
+                stdSum = stdSum + pow(PixelVaule-th,2);
+
+            }
+        }
+         std += stdSum/((M/4)*(N/4)*(P/4));
+    }
+
+
+    double th_gsdt = th + 3*sqrt(std);
+    printf("downsample mean is %.2f, std is %.2f\n\n\n",th,sqrt(std));
+
+    V3DLONG in_ds[4];
+    in_ds[0] = N/4; in_ds[1] = M/4; in_ds[2] = P/4; in_ds[3] = 1;
+    simple_saveimage_wrapper(callback,"temp_ds.v3draw", (unsigned char *)datald_downsample, in_ds, 1);
+
+    V3DPluginArgItem arg;
+    V3DPluginArgList input;
+    V3DPluginArgList output;
+
+    arg.type = "random";std::vector<char*> args1;
+    args1.push_back("temp_ds.v3draw"); arg.p = (void *) & args1; input<< arg;
+    arg.type = "random";std::vector<char*> args;
+    string threshold = boost::lexical_cast<string>(th_gsdt); char* threshold2 =  new char[threshold.length() + 1]; strcpy(threshold2, threshold.c_str());
+    args.push_back(threshold2);args.push_back("1");args.push_back("0");args.push_back("1"); arg.p = (void *) & args; input << arg;
+    arg.type = "random";std::vector<char*> args2;args2.push_back("gsdtImage_ds.v3draw"); arg.p = (void *) & args2; output<< arg;
+
+    QString full_plugin_name = "gsdt";
+    QString func_name = "gsdt";
+
+    callback.callPluginFunc(full_plugin_name,func_name, input,output);
+
+    unsigned char * data1d_gsdt_ds = 0;
+    int datatype;
+    V3DLONG in_zz[4];
+
+    char * outimg_file = ((vector<char*> *)(output.at(0).p))->at(0);
+    simple_loadimage_wrapper(callback,outimg_file, data1d_gsdt_ds, in_zz, datatype);
+    remove("temp_ds.v3draw");
+    remove("gsdtImage_ds.v3draw");
+
+    double maxdl = 0;
+    for(V3DLONG dsiz = 0; dsiz < DSP; dsiz++)
+    {
+        V3DLONG dsoffsetk = dsiz*DSM*DSN;
+        for(V3DLONG dsiy = 0; dsiy < DSM; dsiy++)
+        {
+            V3DLONG dsoffsetj = dsiy*DSN;
+            for(V3DLONG dsix = 0; dsix < DSN; dsix++)
+            {
+                double dsValue = data1d_gsdt_ds[dsoffsetk+dsoffsetj+dsix];
+                if(dsValue>maxdl)
+                {
+                    maxdl = dsValue;
+                    soma_x = dsix*4;
+                    soma_y = dsiy*4;
+
+                }
+            }
+        }
+    }
+
+    if(datald_downsample) {delete []datald_downsample; datald_downsample =0;}
+    if(data1d_gsdt_ds) {delete []data1d_gsdt_ds; data1d_gsdt_ds =0;}
+    return;
+}
+
+template <class T> void soma_detection(T* data1d,
+                                       V3DLONG *in_sz,
+                                       unsigned int c,
+                                       int x,
+                                       int y,
+                                       V3DLONG somasize,
+                                       T* &outimg)
+
+{
+    if (outimg)
+    {
+        v3d_msg("Warning: you have supplied an non-empty output image pointer. This program will force to free it now. But you may want to double check.");
+        delete []outimg;
+        outimg = 0;
+    }
+
+    V3DLONG N = in_sz[0];
+    V3DLONG M = in_sz[1];
+    V3DLONG P = in_sz[2];
+    V3DLONG pagesz = N*M*P;
+    V3DLONG offsetc = (c-1)*pagesz;
+
+    T *pImage = new T [somasize];
+    if (!pImage)
+    {
+        printf("Fail to allocate memory.\n");
+        return;
+    }
+    else
+    {
+        int i = 0;
+        for(V3DLONG iz = 0; iz < P; iz++)
+        {
+            V3DLONG offsetk = iz*M*N;
+            for(V3DLONG iy = y-200; iy < y+200; iy++)
+            {
+                V3DLONG offsetj = iy*N;
+                for(V3DLONG ix = x-200; ix < x+200; ix++)
+                {
+
+                    T PixelValue = data1d[offsetc+offsetk + offsetj + ix];
+                    pImage[i] = PixelValue;
+                    i++;
+                }
+            }
+        }
+    }
+
+    outimg = pImage;
+    return;
 }
