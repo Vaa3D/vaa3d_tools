@@ -631,6 +631,9 @@ void processImage_adaptive_auto(V3DPluginCallback2 &callback, QWidget *parent)
     callback.setImage(newwin, new4DImage);
     callback.setImageName(newwin, "Multiscale_adaptive_auto_enhancement_result");
     callback.updateImageWindow(newwin);
+
+    //there are quite some variables not freed, they are all memory bugs!!! // noted by PHC 20130915
+
     return;
 }
 
