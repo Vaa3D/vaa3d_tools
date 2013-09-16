@@ -224,8 +224,9 @@ void processImage(V3DPluginCallback2 &callback, QWidget *parent)
 	
     char * outimg_file = ((vector<char*> *)(output.at(0).p))->at(0);
     loadImage(outimg_file, gsdtdata1d, in_zz, datatype,0);
-    remove( "gsdtImage.tiff"); 	
+    remove( "gsdtImage.tiff");
     remove("temp.tif");
+
     void* outimg = 0; 
     switch (pixeltype)
     {
