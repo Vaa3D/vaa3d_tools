@@ -245,7 +245,7 @@ void processImage(V3DPluginCallback2 &callback, QWidget *parent)
     V3DLONG in_sz[4];
     in_sz[0] = N; in_sz[1] = M; in_sz[2] = P; in_sz[3] = sc;
     in_sz[3] = c;
-    saveImage("temp.v3draw", (unsigned char *)data1d, in_sz, pixeltype);
+    simple_saveimage_wrapper(callback, "temp.v3draw", (unsigned char *)data1d, in_sz, pixeltype);
     int count = 0;
     unsigned char *EnahancedImage_final=0;
     for(int d = 0; d < range; d++)
@@ -371,7 +371,7 @@ void processImage2(V3DPluginCallback2 &callback, QWidget *parent)
     V3DLONG in_sz[4];
     in_sz[0] = N; in_sz[1] = M; in_sz[2] = P; in_sz[3] = sc;
     in_sz[3] = c;
-    saveImage("temp.v3draw", (unsigned char *)data1d, in_sz, pixeltype);
+    simple_saveimage_wrapper(callback, "temp.v3draw", (unsigned char *)data1d, in_sz, pixeltype);
     int count = 0;
     unsigned char *EnahancedImage_final=0;
     double min,max;
@@ -525,7 +525,7 @@ void processImage3(V3DPluginCallback2 &callback, QWidget *parent)
     in_sz[0] = N; in_sz[1] = M; in_sz[2] = P; in_sz[3] = sc;
     in_sz[3] = c;
     V3DLONG offsetc = (c-1)*pagesz;
-    saveImage("temp.v3draw", (unsigned char *)data1d, in_sz, pixeltype);
+    simple_saveimage_wrapper(callback, "temp.v3draw", (unsigned char *)data1d, in_sz, pixeltype);
 
     unsigned char *EnahancedImage_final=0;
     double min,max;
@@ -711,7 +711,7 @@ void processImage4(V3DPluginCallback2 &callback, QWidget *parent)
             double maxDT2 = 1;
             V3DLONG in_sz[4];
             in_sz[0] = N; in_sz[1] = M; in_sz[2] = 1;in_sz[3] = c;
-            saveImage("temp.v3draw", (unsigned char *)data1d2D, in_sz, pixeltype);
+            simple_saveimage_wrapper(callback, "temp.v3draw", (unsigned char *)data1d2D, in_sz, pixeltype);
 
 
             unsigned char *EnahancedImage_final=0;
@@ -924,7 +924,7 @@ void processImage5(V3DPluginCallback2 &callback, QWidget *parent)
 
             V3DLONG block_sz[4];
             block_sz[0] = xe-xb+1; block_sz[1] = ye-yb+1; block_sz[2] = P; block_sz[3] = 1;
-            saveImage("temp.v3draw", (unsigned char *)blockarea, block_sz, 1);
+            simple_saveimage_wrapper(callback, "temp.v3draw", (unsigned char *)blockarea, block_sz, 1);
             unsigned char *EnahancedImage_final=0;
             unsigned char *localEnahancedArea=0;
             double sigma = 0;
@@ -1126,11 +1126,11 @@ bool processImage3(const V3DPluginArgList & input, V3DPluginArgList & output,V3D
     cout<<"outimg_file = "<<outimg_file<<endl;
 
     unsigned char * data1d = 0;
-    V3DLONG * in_sz = 0;
+    V3DLONG in_sz[4];
     unsigned int c = ch;//-1;
 
     int datatype;
-     if(!loadImage(inimg_file, data1d, in_sz, datatype))
+     if(!simple_loadimage_wrapper(callback, inimg_file, data1d, in_sz, datatype))
      {
          cerr<<"load image "<<inimg_file<<" error!"<<endl;
          return false;
@@ -1140,7 +1140,7 @@ bool processImage3(const V3DPluginArgList & input, V3DPluginArgList & output,V3D
     double maxDT2 = 0.5;
     in_sz[3] = c;
     V3DLONG pagesz = in_sz[0]*in_sz[1]*in_sz[2];
-    saveImage("temp.v3draw", (unsigned char *)data1d, in_sz, datatype);
+    simple_saveimage_wrapper(callback, "temp.v3draw", (unsigned char *)data1d, in_sz, datatype);
     V3DLONG offsetc = (c-1)*pagesz;
 
     unsigned char *EnahancedImage_final=0;
@@ -1239,12 +1239,11 @@ bool processImage3(const V3DPluginArgList & input, V3DPluginArgList & output,V3D
     EnahancedImage_final_nomal = new unsigned char [pagesz];
 
     rescale_to_0_255_and_copy((unsigned char *)EnahancedImage_final,pagesz,min,max,EnahancedImage_final_nomal);
-    saveImage(outimg_file, (unsigned char *)EnahancedImage_final_nomal, in_sz, 1);
+    simple_saveimage_wrapper(callback, outimg_file, (unsigned char *)EnahancedImage_final_nomal, in_sz, 1);
 
     if(EnahancedImage_final) {delete []EnahancedImage_final; EnahancedImage_final =0;}
-    if(in_sz) {delete []in_sz; in_sz =0;}
 
-
+    if (data1d) {delete []data1d; data1d=0;}
     return true;
 }
 
@@ -1273,9 +1272,9 @@ bool processImage5(const V3DPluginArgList & input, V3DPluginArgList & output,V3D
 
     unsigned int c = ch;//-1;
     unsigned char * data1d = 0;
-    V3DLONG * in_sz = 0;
+    V3DLONG in_sz[4];
     int datatype;
-    if(!loadImage(inimg_file, data1d, in_sz, datatype))
+    if(!simple_loadimage_wrapper(callback, inimg_file, data1d, in_sz, datatype))
     {
         cerr<<"load image "<<inimg_file<<" error!"<<endl;
         return false;
@@ -1338,7 +1337,7 @@ bool processImage5(const V3DPluginArgList & input, V3DPluginArgList & output,V3D
 
             V3DLONG block_sz[4];
             block_sz[0] = xe-xb+1; block_sz[1] = ye-yb+1; block_sz[2] = P; block_sz[3] = 1;
-            saveImage("temp.v3draw", (unsigned char *)blockarea, block_sz, 1);
+            simple_saveimage_wrapper(callback, "temp.v3draw", (unsigned char *)blockarea, block_sz, 1);
             unsigned char *EnahancedImage_final=0;
             unsigned char *localEnahancedArea=0;
             double sigma = 0;
@@ -1512,12 +1511,11 @@ bool processImage5(const V3DPluginArgList & input, V3DPluginArgList & output,V3D
     in_sz[3]=1;
 
 
-    saveImage(outimg_file, (unsigned char *)datald_output, in_sz, 1);
+    simple_saveimage_wrapper(callback, outimg_file, (unsigned char *)datald_output, in_sz, 1);
 
     if(target1d_y) {delete []target1d_y; target1d_y =0;}
     if(subject1d_y) {delete []subject1d_y; subject1d_y =0;}
     if (data1d) {delete []data1d; data1d=0;}
-    if (in_sz) {delete []in_sz; in_sz=0;}
     if (datald_output) {delete []datald_output; datald_output=0;}
     return true;
 }
@@ -1643,10 +1641,10 @@ template <class T> void callGussianoPlugin(V3DPluginCallback2 &callback,
 
     unsigned char * data1d_Gf = 0;
     int datatype;
-    V3DLONG * in_zz = 0;
+    V3DLONG in_zz[4];
 
     char * outimg_file = ((vector<char*> *)(output.at(0).p))->at(0);
-    loadImage(outimg_file, data1d_Gf, in_zz, datatype);
+    simple_loadimage_wrapper(callback, outimg_file, data1d_Gf, in_zz, datatype);
     remove("gfImage.v3draw");
     unsigned char* data1d = 0;
     data1d = new unsigned char [pagesz];
@@ -2021,7 +2019,7 @@ template <class T> void callgsdtPlugin(V3DPluginCallback2 &callback,const T* dat
     else
        th_final = th_global;
     printf("mean is %.2f, std is %.2f\n\n\n",th,sqrt(std));
-    saveImage("temp_gf.v3draw", (unsigned char *)data1d, in_sz, 1);
+    simple_saveimage_wrapper(callback, "temp_gf.v3draw", (unsigned char *)data1d, in_sz, 1);
     V3DPluginArgItem arg;
     V3DPluginArgList input;
     V3DPluginArgList output;
@@ -2040,10 +2038,10 @@ template <class T> void callgsdtPlugin(V3DPluginCallback2 &callback,const T* dat
 
     unsigned char * data1d_gsdt = 0;
     int datatype;
-    V3DLONG * in_zz = 0;
+    V3DLONG in_zz[4];
 
     char * outimg_file = ((vector<char*> *)(output.at(0).p))->at(0);
-    loadImage(outimg_file, data1d_gsdt, in_zz, datatype);
+    simple_loadimage_wrapper(callback, outimg_file, data1d_gsdt, in_zz, datatype);
     remove("temp_gf.v3draw");
     remove("gsdtImage.v3draw");
 
@@ -2060,6 +2058,8 @@ template <class T> void callgsdtPlugin(V3DPluginCallback2 &callback,const T* dat
     }
 
     outimg = pImage;
+
+    if (data1d_gsdt) {delete []data1d_gsdt; data1d_gsdt=0;}
     return;
 
 }
@@ -2070,7 +2070,7 @@ template <class T> double getdtmax(V3DPluginCallback2 &callback,const T* data1d,
     V3DLONG M = in_sz[1];
     V3DLONG P = in_sz[2];
     V3DLONG pagesz = N*M*P;
-    saveImage("temp_enhanced.v3draw", (unsigned char *)data1d, in_sz, 1);
+    simple_saveimage_wrapper(callback, "temp_enhanced.v3draw", (unsigned char *)data1d, in_sz, 1);
 
     double th = 0;
     for(V3DLONG iz = 0; iz < P; iz++)
@@ -2110,10 +2110,10 @@ template <class T> double getdtmax(V3DPluginCallback2 &callback,const T* data1d,
 
     unsigned char * data1d_gt = 0;
     int datatype;
-    V3DLONG * in_zz = 0;
+    V3DLONG in_zz[4];
 
     char * outimg_file = ((vector<char*> *)(output.at(0).p))->at(0);
-    loadImage(outimg_file, data1d_gt, in_zz, datatype);
+    simple_loadimage_wrapper(callback, outimg_file, data1d_gt, in_zz, datatype);
     remove("temp_enhanced.v3draw");
     remove("gtImage.v3draw");
     double maxfl = 0;
@@ -2124,6 +2124,9 @@ template <class T> double getdtmax(V3DPluginCallback2 &callback,const T* data1d,
 
     }
     printf("zhi zhou is %.2f",maxfl);
+
+
+    if (data1d_gt) {delete []data1d_gt; data1d_gt=0;}
 
     return maxfl;
 
