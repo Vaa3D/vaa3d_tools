@@ -20,14 +20,14 @@
 
 using namespace std;
 Q_EXPORT_PLUGIN2(MultisclaeEnhancement, selectiveEnhancement);
-void processImage(V3DPluginCallback2 &callback, QWidget *parent);
-void processImage2(V3DPluginCallback2 &callback, QWidget *parent);
-void processImage3(V3DPluginCallback2 &callback, QWidget *parent);
-void processImage4(V3DPluginCallback2 &callback, QWidget *parent);
-void processImage5(V3DPluginCallback2 &callback, QWidget *parent);
+void processImage_selective(V3DPluginCallback2 &callback, QWidget *parent);
+void processImage_adaptive(V3DPluginCallback2 &callback, QWidget *parent);
+void processImage_adaptive_auto(V3DPluginCallback2 &callback, QWidget *parent);
+void processImage_adaptive_auto_2D(V3DPluginCallback2 &callback, QWidget *parent);
+void processImage_adaptive_auto_blocks(V3DPluginCallback2 &callback, QWidget *parent);
 
-bool processImage3(const V3DPluginArgList & input, V3DPluginArgList & output,V3DPluginCallback2 &callback);
-bool processImage5(const V3DPluginArgList & input, V3DPluginArgList & output,V3DPluginCallback2 &callback);
+bool processImage_adaptive_auto(const V3DPluginArgList & input, V3DPluginArgList & output,V3DPluginCallback2 &callback);
+bool processImage_adaptive_auto_blocks(const V3DPluginArgList & input, V3DPluginArgList & output,V3DPluginCallback2 &callback);
 
 template <class T> void selectiveEnhancement(const T* data1d,
                                                   V3DLONG *in_sz,
@@ -131,23 +131,23 @@ void selectiveEnhancement::domenu(const QString &menu_name, V3DPluginCallback2 &
 {
 	if (menu_name == tr("selective"))
 	{
-         processImage(callback,parent);
+         processImage_selective(callback,parent);
 	}
     else if(menu_name == tr("adaptive"))
     {
-         processImage2(callback,parent);
+         processImage_adaptive(callback,parent);
     }
     else if(menu_name == tr("adaptive_auto"))
     {
-         processImage3(callback,parent);
+         processImage_adaptive_auto(callback,parent);
     }
     else if(menu_name == tr("adaptive_auto_2D"))
     {
-         processImage4(callback,parent);
+         processImage_adaptive_auto_2D(callback,parent);
     }
     else if(menu_name == tr("adaptive_auto_blocks"))
     {
-         processImage5(callback,parent);
+         processImage_adaptive_auto_blocks(callback,parent);
     }
 	else
 	{
@@ -165,11 +165,11 @@ bool selectiveEnhancement::dofunc(const QString & func_name, const V3DPluginArgL
 
     if (func_name == tr("adaptive_auto"))
 	{
-        return processImage3(input, output,callback);
+        return processImage_adaptive_auto(input, output,callback);
 	}
     else if (func_name == tr("adaptive_auto_block"))
     {
-        return processImage5(input, output,callback);
+        return processImage_adaptive_auto_blocks(input, output,callback);
     }
     else if (func_name == tr("help"))
     {
@@ -193,7 +193,7 @@ bool selectiveEnhancement::dofunc(const QString & func_name, const V3DPluginArgL
 	return true;
 }
 
-void processImage(V3DPluginCallback2 &callback, QWidget *parent)
+void processImage_selective(V3DPluginCallback2 &callback, QWidget *parent)
 {
     v3dhandle curwin = callback.currentImageWindow();
     if (!curwin)
@@ -319,7 +319,7 @@ void processImage(V3DPluginCallback2 &callback, QWidget *parent)
     return;
 }
 
-void processImage2(V3DPluginCallback2 &callback, QWidget *parent)
+void processImage_adaptive(V3DPluginCallback2 &callback, QWidget *parent)
 {
     v3dhandle curwin = callback.currentImageWindow();
     if (!curwin)
@@ -454,7 +454,7 @@ void processImage2(V3DPluginCallback2 &callback, QWidget *parent)
     return;
 }
 
-void processImage3(V3DPluginCallback2 &callback, QWidget *parent)
+void processImage_adaptive_auto(V3DPluginCallback2 &callback, QWidget *parent)
 {
     v3dhandle curwin = callback.currentImageWindow();
     if (!curwin)
@@ -634,7 +634,7 @@ void processImage3(V3DPluginCallback2 &callback, QWidget *parent)
     return;
 }
 
-void processImage4(V3DPluginCallback2 &callback, QWidget *parent)
+void processImage_adaptive_auto_2D(V3DPluginCallback2 &callback, QWidget *parent)
 {
     v3dhandle curwin = callback.currentImageWindow();
     if (!curwin)
@@ -812,7 +812,7 @@ void processImage4(V3DPluginCallback2 &callback, QWidget *parent)
     return;
 }
 
-void processImage5(V3DPluginCallback2 &callback, QWidget *parent)
+void processImage_adaptive_auto_blocks(V3DPluginCallback2 &callback, QWidget *parent)
 {
     v3dhandle curwin = callback.currentImageWindow();
     if (!curwin)
@@ -1100,7 +1100,7 @@ void processImage5(V3DPluginCallback2 &callback, QWidget *parent)
     return;
 }
 
-bool processImage3(const V3DPluginArgList & input, V3DPluginArgList & output,V3DPluginCallback2 &callback)
+bool processImage_adaptive_auto(const V3DPluginArgList & input, V3DPluginArgList & output,V3DPluginCallback2 &callback)
 {
     cout<<"Welcome to adaptive enhancement filter"<<endl;
     if (output.size() != 1) return false;
@@ -1247,7 +1247,7 @@ bool processImage3(const V3DPluginArgList & input, V3DPluginArgList & output,V3D
     return true;
 }
 
-bool processImage5(const V3DPluginArgList & input, V3DPluginArgList & output,V3DPluginCallback2 &callback)
+bool processImage_adaptive_auto_blocks(const V3DPluginArgList & input, V3DPluginArgList & output,V3DPluginCallback2 &callback)
 {
     cout<<"Welcome to enhancement filter with blocks"<<endl;
     if (output.size() != 1) return false;
