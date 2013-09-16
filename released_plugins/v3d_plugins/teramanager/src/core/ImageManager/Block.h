@@ -45,6 +45,7 @@ class Block
 		uint32			HEIGHT, WIDTH, DEPTH;		//VHD (Vertical, Horizontal, Depth) dimensions of current stack
 		uint32          N_BLOCKS;                   //number of blocks along z
 		uint32          N_CHANS;                    //number of channels
+		uint32          N_BYTESxCHAN;               //number of bytes per channel
 		int				ROW_INDEX, COL_INDEX;		//row and col index relative to stack matrix
 		int				ABS_V,		ABS_H;			//absolute VH voxel coordinates of current stack
 		uint32         *BLOCK_SIZE;                 //dimensions of blocks along z
@@ -72,6 +73,7 @@ class Block
 		uint32 getDEPTH()			{return DEPTH;}
 		uint32 getN_BLOCKS()		{return N_BLOCKS;}
 		uint32 getN_CHANS()		    {return N_CHANS;}
+		uint32 getN_BYTESxCHAN()	{return N_BYTESxCHAN;}
 		int getABS_V()				{return ABS_V;}
 		int getABS_H()				{return ABS_H;}
 		uint32 *getBLOCK_SIZE()     {return BLOCK_SIZE;}

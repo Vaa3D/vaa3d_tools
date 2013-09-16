@@ -139,10 +139,21 @@ void SimpleVolume::initChannels ( ) throw (MyException) {
 	char slice_fullpath[IM_STATIC_STRINGS_SIZE];
 
 	sprintf(slice_fullpath, "%s/%s/%s", root_dir, STACKS[0][0]->getDIR_NAME(), STACKS[0][0]->getFILENAMES()[0]);
-	IplImage* slice = cvLoadImage(slice_fullpath, CV_LOAD_IMAGE_ANYCOLOR);  //without CV_LOAD_IMAGE_ANYDEPTH, image is converted to 8-bits if needed
+	IplImage* slice = cvLoadImage(slice_fullpath, CV_LOAD_IMAGE_ANYDEPTH | CV_LOAD_IMAGE_ANYCOLOR);  //without CV_LOAD_IMAGE_ANYDEPTH, image is converted to 8-bits if needed
 	if(!slice)
 		throw MyException(std::string("Unable to load slice at \"").append(slice_fullpath).append("\"").c_str());
     CHANS = slice->nChannels;
+	if ( slice->depth == IPL_DEPTH_8U )
+		BYTESxCHAN = 1; 
+	else if ( slice->depth == IPL_DEPTH_16U )
+		BYTESxCHAN = 2; 
+	else if ( slice->depth == IPL_DEPTH_32F )
+		BYTESxCHAN = 4;
+	else {
+		char msg[IM_STATIC_STRINGS_SIZE];
+		sprintf(msg,"in SimpleVolume::initChannels: unknown color depth");
+		throw MyException(msg);
+	}
 
 	cvReleaseImage(&slice);
 }
@@ -201,6 +212,17 @@ REAL_T *SimpleVolume::loadSubvolume_to_REAL_T(int V0,int V1, int H0, int H1, int
 
 uint8 *SimpleVolume::loadSubvolume_to_UINT8(int V0,int V1, int H0, int H1, int D0, int D1, int *channels) throw (MyException) {
 
+    #if IM_VERBOSE > 3
+    printf("\t\t\t\tin SimpleVolume::loadSubvolume_to_UINT8(V0=%d, V1=%d, H0=%d, H1=%d, D0=%d, D1=%d)\n", V0, V1, H0, H1, D0, D1);
+    #endif
+
+    //checking for non implemented features
+	//if( this->BYTESxCHAN != 1 ) {
+	//	char err_msg[IM_STATIC_STRINGS_SIZE];
+	//	sprintf(err_msg,"SimpleVolume::loadSubvolume_to_UINT8: invalid number of bytes per channel (%d)",this->BYTESxCHAN); 
+	//	throw MyException(err_msg);
+	//}
+
 	//initializations
 	V0 = (V0 == -1 ? 0	     : V0);
 	V1 = (V1 == -1 ? DIM_V   : V1);
@@ -218,6 +240,7 @@ uint8 *SimpleVolume::loadSubvolume_to_UINT8(int V0,int V1, int H0, int H1, int D
 
     //initializing the number of channels with an undefined value (it will be detected from the first slice read)
     sint64 sbv_channels = -1;
+	sint64 sbv_bytes_chan = -1;
 
 	//scanning of stacks matrix for data loading and storing into subvol
 	Rect_t subvol_area;
@@ -227,12 +250,12 @@ uint8 *SimpleVolume::loadSubvolume_to_UINT8(int V0,int V1, int H0, int H1, int D
 	subvol_area.V1 = V1;
 	bool first_time = true;
 
-	for(int row=0; row<N_ROWS; row++) 
+	for(int row=0; row<N_ROWS; row++) // probably can be eliminated: N_ROWS is always 1
 	{
-		for(int col=0; col<N_COLS; col++)
+		for(int col=0; col<N_COLS; col++) // probably can be eliminated: N_ROWS is always 1
 		{
 			Rect_t *intersect_area = STACKS[row][col]->Intersects(subvol_area);
-			if(intersect_area)
+			if(intersect_area) // probably can be eliminated: intersect_area is always true
 			{
 				// set input parameters
 				int first_file = D0;
@@ -249,13 +272,12 @@ uint8 *SimpleVolume::loadSubvolume_to_UINT8(int V0,int V1, int H0, int H1, int D
 							STACKS[row][col]->getDIR_NAME(), 
 							STACKS[row][col]->getFILENAMES()[D0+k]);
 					//loading image
-					slice = cvLoadImage(slice_fullpath, CV_LOAD_IMAGE_ANYCOLOR);  //without CV_LOAD_IMAGE_ANYDEPTH, image is converted to 8-bits if needed
+					slice = cvLoadImage(slice_fullpath, CV_LOAD_IMAGE_ANYDEPTH | CV_LOAD_IMAGE_ANYCOLOR);  //without CV_LOAD_IMAGE_ANYDEPTH, image is converted to 8-bits if needed
 					// old version: slice_img_i = cvLoadImage(slice_fullpath, CV_LOAD_IMAGE_GRAYSCALE | CV_LOAD_IMAGE_ANYDEPTH);
 					if(!slice)
 					{
 						char msg[IM_STATIC_STRINGS_SIZE];
-						sprintf(msg,"in Stack[%d,%d]::loadStack(%d,%d): unable to open image \"%s\". Wrong path or format.\nSupported formats are BMP, DIB, JPEG, JPG, JPE, JP2, PNG, PBM, PGM, PPM, SR, RAS, TIFF, TIF", 
-							STACKS[row][col]->getROW_INDEX(), STACKS[row][col]->getCOL_INDEX(), first_file, last_file, slice_fullpath);
+						sprintf(msg,"in SimpleVolume::loadSubvolume_to_UINT: unable to open image \"%s\". Wrong path or format.\nSupported formats are BMP, DIB, JPEG, JPG, JPE, JP2, PNG, PBM, PGM, PPM, SR, RAS, TIFF, TIF", slice_fullpath);
 						throw MyException(msg);
 					}		
 
@@ -264,21 +286,28 @@ uint8 *SimpleVolume::loadSubvolume_to_UINT8(int V0,int V1, int H0, int H1, int D
                     {
                         first_time = false;
                         sbv_channels = slice->nChannels;
+						sbv_bytes_chan = slice->depth / 8;
                         if(sbv_channels != 1 && sbv_channels != 3)
                             throw MyException(std::string("Unsupported number of channels at \"").append(slice_fullpath).append("\". Only 1 and 3-channels images are supported").c_str());
+                        if(sbv_bytes_chan != this->BYTESxCHAN)
+                            throw MyException(std::string("Wrong number of bits per channel\"").c_str());
 
                         try
                         {
-                            subvol = new uint8[sbv_height * sbv_width * sbv_depth * sbv_channels];
+                            subvol = new uint8[sbv_height * sbv_width * sbv_depth * sbv_channels * sbv_bytes_chan];
                         }
                         catch(...){throw MyException("in StackedVolume::loadSubvolume_to_UINT8: unable to allocate memory");}
                     }
                     //otherwise checking that all the other slices have the same bitdepth of the first one
-                    else if(slice->nChannels != sbv_channels)
-                        throw MyException(std::string("Image depth mismatch at slice at \"").append(slice_fullpath).append("\": all slices must have the same bitdepth").c_str());
+					else {
+						if(slice->nChannels != sbv_channels)
+							throw MyException(std::string("Image depth mismatch at slice at \"").append(slice_fullpath).append("\": all slices must have the same bitdepth").c_str());
+                        if((slice->depth/8) != sbv_bytes_chan)
+                            throw MyException(std::string("Image bytes per channel mismatch at slice at \"").append(slice_fullpath).append("\": all slices must have the same bitdepth").c_str());
+					}
 
 					//computing offsets
-                    int slice_step = slice->widthStep / sizeof(uint8);
+                    int slice_step = slice->widthStep / sizeof(uint8); // widthStep takes already into account the number of bytes per channel
                     int ABS_V_offset = V0 - STACKS[row][col]->getABS_V();
                     int ABS_H_offset = (H0 - STACKS[row][col]->getABS_H())*((int)sbv_channels);
 
@@ -290,28 +319,40 @@ uint8 *SimpleVolume::loadSubvolume_to_UINT8(int V0,int V1, int H0, int H1, int D
                     jend    = intersect_area->H1-H0;
                     if(sbv_channels == 1)
                     {
-                        sint64 k_offset = k*sbv_height*sbv_width;
+ 						// about subvol index: actually there is always just one stack, 
+						// hence all the subvolume has to be filled
+						// this is why for k=0 is k_offset=0
+						sint64 k_offset = k*sbv_height*sbv_width*sbv_bytes_chan;
                         for(int i = istart; i < iend; i++)
                         {
                             uint8* slice_row = ((uint8*)slice->imageData) + (i+ABS_V_offset)*slice_step;
-                            for(int j = jstart; j < jend; j++)
-                                subvol[k_offset + i*sbv_width + j] = slice_row[j+ABS_H_offset];
+							int c = 0; // controls the number of bytes to be copied
+							for(int j = (jstart * sbv_bytes_chan); c <((jend-jstart) * sbv_bytes_chan); j++, c++) { 
+								// all horizontal indices have to be multiplied by sbv_bytes_chan, including jstart
+								// the number of bytes to be copied is [(jend-jstart) * sbv_bytes_chan]
+                                subvol[k_offset + i*sbv_width*sbv_bytes_chan + j] = slice_row[j+ABS_H_offset];
+							}
                         }
                     }
-                    else if(sbv_channels == 3)
+                    else if(sbv_channels == 3) // channels in subvol are separated, where as in slice_row are arranged in triplets
                     {
-
-                        sint64 offset1 =                                     k*sbv_height*sbv_width;
-                        sint64 offset2 =   sbv_height*sbv_width*sbv_depth  + offset1;
-                        sint64 offset3 = 2*sbv_height*sbv_width*sbv_depth  + k*sbv_height*sbv_width;
+ 						// about subvol index: actually there is always just one stack, 
+						// hence all the subvolume has to be filled
+						// this is why for k=0 offset1=0
+                        sint64 offset1 = k*sbv_height*sbv_width*sbv_bytes_chan;
+                        sint64 offset2 = offset1 + sbv_height*sbv_width*sbv_bytes_chan*sbv_depth;
+                        sint64 offset3 = offset2 + sbv_height*sbv_width*sbv_bytes_chan*sbv_depth;
                         for(int i = istart; i < iend; i++)
                         {
                             uint8* slice_row = ((uint8*)slice->imageData) + (i+ABS_V_offset)*slice_step;
-                            for(int j1 = jstart, j2 = jstart*3; j1 < jend; j1++, j2+=3)
+ 							int c = 0; // controls the number of bytes to be copied
+							for(int j1 = (jstart * sbv_bytes_chan), j2 = (3 * jstart * sbv_bytes_chan); c <((jend-jstart) * sbv_bytes_chan); j1++, j2+=3, c++)
                             {
-                                subvol[offset1 + i*sbv_width + j1] = slice_row[j2 + ABS_H_offset + 2];
-                                subvol[offset2 + i*sbv_width + j1] = slice_row[j2 + ABS_H_offset + 1];
-                                subvol[offset3 + i*sbv_width + j1] = slice_row[j2 + ABS_H_offset];
+								// all horizontal indices have to be multiplied by sbv_bytes_chan, including jstart
+ 								// the number of triplets to be copied is [(jend-jstart) * sbv_bytes_chan]
+								subvol[offset1 + i*sbv_width*sbv_bytes_chan + j1] = slice_row[j2 + ABS_H_offset + 2];
+                                subvol[offset2 + i*sbv_width*sbv_bytes_chan + j1] = slice_row[j2 + ABS_H_offset + 1];
+                                subvol[offset3 + i*sbv_width*sbv_bytes_chan + j1] = slice_row[j2 + ABS_H_offset];
                             }
                         }
                     }

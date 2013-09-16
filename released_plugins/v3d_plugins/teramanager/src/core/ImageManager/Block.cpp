@@ -60,6 +60,7 @@ Block::Block(VirtualVolume* _CONTAINER, int _ROW_INDEX, int _COL_INDEX, char* _D
 	HEIGHT = WIDTH = DEPTH = 0;
 	N_BLOCKS = 0;
 	N_CHANS = 0;
+	N_BYTESxCHAN = 0;
 	ABS_V = ABS_H = 0;
 	BLOCK_SIZE = 0;
 	BLOCK_ABS_D = 0;
@@ -83,6 +84,7 @@ Block::Block(VirtualVolume* _CONTAINER, int _ROW_INDEX, int _COL_INDEX, FILE* bi
 	HEIGHT = WIDTH = DEPTH = 0;
 	N_BLOCKS = 0;
 	N_CHANS = 0;
+	N_BYTESxCHAN = 0;
 	ABS_V = ABS_H = 0;
 	BLOCK_SIZE = 0;
 	BLOCK_ABS_D = 0;
@@ -151,6 +153,7 @@ void Block::binarizeInto(FILE* file)
 		fwrite(BLOCK_SIZE+i, sizeof(uint32), 1, file);
 		fwrite(BLOCK_ABS_D+i, sizeof(int), 1, file);
 	}
+	fwrite(&N_BYTESxCHAN, sizeof(uint32), 1, file);
 }
 
 void Block::unBinarizeFrom(FILE* file)
@@ -217,6 +220,10 @@ void Block::unBinarizeFrom(FILE* file)
 		if(fread_return_val != 1)
 			throw MyException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
 	}
+	fread_return_val = fread(&N_BYTESxCHAN, sizeof(uint32), 1, file);
+	if(fread_return_val != 1)
+		throw MyException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
+
 }
 
 //Initializes all object's members given DIR_NAME
@@ -304,9 +311,10 @@ void Block::init()
 	}
 	closeRawFile((FILE *)dummy);
 
-	HEIGHT = (uint32)sz[1];
-	WIDTH  = (uint32)sz[0];
-	N_CHANS = (uint32)sz[3];
+	HEIGHT       = (uint32)sz[1];
+	WIDTH        = (uint32)sz[0];
+	N_CHANS      = (uint32)sz[3];
+	N_BYTESxCHAN = (uint32)datatype;
 
 	//extracting DEPTH and other attributes from all blocks
 	BLOCK_SIZE = new uint32[N_BLOCKS];
@@ -339,6 +347,7 @@ void Block::print()
 	printf("\t |\tDimensions:\t\t%d(V) x %d(H) x %d(D)\n", HEIGHT, WIDTH, DEPTH);
 	printf("\t |\tNumber of blocks:\t\t%d\n", N_BLOCKS);
 	printf("\t |\tNumber of channels:\t\t%d\n", N_CHANS);
+	printf("\t |\tNumber of bytes per channel:\t\t%d\n", N_BYTESxCHAN);
 	printf("\t |\tAbsolute position:\t%d(V) x %d(H) x %d(D)\n", ABS_V, ABS_H, 0);
 	/*printf("\t |\tFilenames:\t\n");
 	for(int z=0; z<DEPTH; z++)

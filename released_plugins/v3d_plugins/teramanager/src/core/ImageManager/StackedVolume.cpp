@@ -94,23 +94,23 @@ StackedVolume::StackedVolume(const char* _root_dir, ref_sys _reference_system, f
 	//trying to unserialize an already existing metadata file, if it doesn't exist the full initialization procedure is performed and metadata is saved
 	char mdata_filepath[IM_STATIC_STRINGS_SIZE];
 	sprintf(mdata_filepath, "%s/%s", root_dir, IM_METADATA_FILE_NAME);
-        if(fileExists(mdata_filepath) && !overwrite_mdata)
-            load(mdata_filepath);
+	if(fileExists(mdata_filepath) && !overwrite_mdata)
+		load(mdata_filepath);
 	else
 	{
-            if(_reference_system.first == axis_invalid ||  _reference_system.second == axis_invalid ||
-              _reference_system.third == axis_invalid || _VXL_1 == 0 || _VXL_2 == 0 || _VXL_3 == 0)
-                throw MyException("in StackedVolume::StackedVolume(...): invalid importing parameters");
+        if(_reference_system.first == axis_invalid ||  _reference_system.second == axis_invalid ||
+          _reference_system.third == axis_invalid || _VXL_1 == 0 || _VXL_2 == 0 || _VXL_3 == 0)
+            throw MyException("in StackedVolume::StackedVolume(...): invalid importing parameters");
 
-            reference_system.first  = _reference_system.first;
-            reference_system.second = _reference_system.second;
-            reference_system.third  = _reference_system.third;
-            VXL_1 = _VXL_1;
-            VXL_2 = _VXL_2;
-            VXL_3 = _VXL_3;
-            init();
-            if(save_mdata)
-                save(mdata_filepath);
+        reference_system.first  = _reference_system.first;
+        reference_system.second = _reference_system.second;
+        reference_system.third  = _reference_system.third;
+        VXL_1 = _VXL_1;
+        VXL_2 = _VXL_2;
+        VXL_3 = _VXL_3;
+        init();
+        if(save_mdata)
+            save(mdata_filepath);
 	}
 	initChannels();
 }
@@ -507,10 +507,21 @@ void StackedVolume::initChannels ( ) throw (MyException) {
 	char slice_fullpath[IM_STATIC_STRINGS_SIZE];
 
 	sprintf(slice_fullpath, "%s/%s/%s", root_dir, STACKS[0][0]->getDIR_NAME(), STACKS[0][0]->getFILENAMES()[0]);
-	IplImage* slice = cvLoadImage(slice_fullpath, CV_LOAD_IMAGE_ANYCOLOR);  //without CV_LOAD_IMAGE_ANYDEPTH, image is converted to 8-bits if needed
+	IplImage* slice = cvLoadImage(slice_fullpath, CV_LOAD_IMAGE_ANYDEPTH | CV_LOAD_IMAGE_ANYCOLOR);  //without CV_LOAD_IMAGE_ANYDEPTH, image is converted to 8-bits if needed
 	if(!slice)
 		throw MyException(std::string("Unable to load slice at \"").append(slice_fullpath).append("\"").c_str());
     CHANS = slice->nChannels;
+	if ( slice->depth == IPL_DEPTH_8U )
+		BYTESxCHAN = 1; 
+	else if ( slice->depth == IPL_DEPTH_16U )
+		BYTESxCHAN = 2; 
+	else if ( slice->depth == IPL_DEPTH_32F )
+		BYTESxCHAN = 4;
+	else {
+		char msg[IM_STATIC_STRINGS_SIZE];
+		sprintf(msg,"in SimpleVolume::initChannels: unknown color depth");
+		throw MyException(msg);
+	}
 
 	cvReleaseImage(&slice);
 }
@@ -861,7 +872,7 @@ uint8* StackedVolume::loadSubvolume_to_UINT8(int V0,int V1, int H0, int H1, int 
                 {
                     //loading slice
                     sprintf(slice_fullpath, "%s/%s/%s", root_dir, STACKS[row][col]->getDIR_NAME(), STACKS[row][col]->getFILENAMES()[D0+k]);
-                    IplImage* slice = cvLoadImage(slice_fullpath, CV_LOAD_IMAGE_ANYCOLOR);  //without CV_LOAD_IMAGE_ANYDEPTH, image is converted to 8-bits if needed
+                    IplImage* slice = cvLoadImage(slice_fullpath, CV_LOAD_IMAGE_ANYDEPTH | CV_LOAD_IMAGE_ANYCOLOR);  //without CV_LOAD_IMAGE_ANYDEPTH, image is converted to 8-bits if needed
                     if(!slice)
                         throw MyException(std::string("Unable to load slice at \"").append(slice_fullpath).append("\"").c_str());
 

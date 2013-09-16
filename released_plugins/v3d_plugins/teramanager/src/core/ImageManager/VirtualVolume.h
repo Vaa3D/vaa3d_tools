@@ -42,6 +42,7 @@ protected:
 	float  ORG_V, ORG_H, ORG_D;		//[millimeters]: origin spatial coordinates (in millimeters) along VHD axes
 	uint32 DIM_V, DIM_H, DIM_D;		//volume dimensions (in voxels) along VHD axes
 	int    CHANS;					//number of channels
+	int    BYTESxCHAN;              //number of bytes per channel
 
 	virtual void initChannels ( ) throw (MyException) = 0;
 
@@ -61,6 +62,7 @@ public:
 		DIM_V = DIM_H = DIM_D = 0;
 
 		CHANS = 0;
+		BYTESxCHAN = 0;
     }
 
 	virtual ~VirtualVolume() { 
@@ -88,6 +90,7 @@ public:
     float   getVXL_H() {return VXL_H;}
     float   getVXL_D() {return VXL_D;}
     int     getCHANS() {return CHANS;}
+    int     getBYTESxCHAN() {return BYTESxCHAN;}
     char*   getROOT_DIR() {return this->root_dir;}
     float  getMVoxels(){return (DIM_V/1024.0f)*(DIM_H/1024.0f)*DIM_D;}
 
@@ -178,7 +181,7 @@ public:
 	**************************************************************************************************************/
 	static void halveSample( REAL_T* img, int height, int width, int depth, int method = HALVE_BY_MEAN );
 
-	static void halveSample_UINT8 ( uint8** img, int height, int width, int depth, int channels, int method = HALVE_BY_MEAN );
+	static void halveSample_UINT8 ( uint8** img, int height, int width, int depth, int channels, int method = HALVE_BY_MEAN, int bytes_chan = 1 );
 
 	//utility function: returns true if "fullString" ends with "ending"
 	inline static bool hasEnding (std::string const &fullString, std::string const &ending)

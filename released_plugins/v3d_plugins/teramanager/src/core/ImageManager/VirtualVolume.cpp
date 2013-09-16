@@ -377,7 +377,9 @@ void VirtualVolume::saveImage_from_UINT8_to_Vaa3DRaw (int slice, std::string img
 
     //LOCAL VARIABLES
     char buffer[IM_STATIC_STRINGS_SIZE];
-    int img_height, img_width;
+    sint64 img_height, img_width;
+	sint64 img_width_b; // image width in bytes
+	int img_bytes_per_chan;
 
 	//add offset to raw_ch
 	uint8** raw_ch_temp = new uint8 *[n_chans];
@@ -398,23 +400,33 @@ void VirtualVolume::saveImage_from_UINT8_to_Vaa3DRaw (int slice, std::string img
         throw MyException(buffer);
     }
 
+ //if(img_depth != 8 && img_depth != 16 && n_chans == 1)
+ //   {
+ //       sprintf(buffer,"in saveImage_from_UINT8(..., img_depth=%d, ...): unsupported bit depth for greyscale images\n",img_depth);
+ //       throw MyException(buffer);
+ //   }
+ //   if(img_depth != 8 && n_chans > 1)
+ //   {
+ //       sprintf(buffer,"in saveImage_from_UINT8(..., img_depth=%d, ...): unsupported bit depth for multi-channel images\n",img_depth);
+ //       throw MyException(buffer);
+ //   }
 	if(img_depth != 8 && img_depth != 16 && n_chans == 1)
-    {
-        sprintf(buffer,"in saveImage_from_UINT8(..., img_depth=%d, ...): unsupported bit depth for greyscale images\n",img_depth);
-        throw MyException(buffer);
-    }
-    if(img_depth != 8 && n_chans > 1)
-    {
-        sprintf(buffer,"in saveImage_from_UINT8(..., img_depth=%d, ...): unsupported bit depth for multi-channel images\n",img_depth);
-        throw MyException(buffer);
-    }
+	{
+		sprintf(buffer,"in saveImage_from_UINT8(..., img_depth=%d, ...): unsupported bit depth\n",img_depth);
+		throw MyException(buffer);
+	}
+	img_bytes_per_chan = (img_depth == 8) ? 1 : 2;
+	// all width parameters have to be multiplied by the number of bytes per channel
+	img_width_b    = img_width * img_bytes_per_chan; 
+	raw_img_width *= img_bytes_per_chan;
+	start_width   *= img_bytes_per_chan;
 
-	uint8 *imageData = new uint8[img_height * img_width * n_chans];
+	uint8 *imageData = new uint8[img_height * img_width_b * n_chans];
 	for ( int c=0; c<n_chans; c++ ) {
 		for(int i=0; i<img_height; i++)
 		{
-			uint8* row_data_8bit = imageData + c*img_height*img_width + i*img_width;
-			for(int j=0; j<img_width; j++)
+			uint8* row_data_8bit = imageData + c*img_height*img_width_b + i*img_width_b;
+			for(int j=0; j<img_width_b; j++)
 				row_data_8bit[j] = raw_ch_temp[c][(i+start_height)*raw_img_width + (j+start_width)];
             }
 	}
@@ -513,7 +525,7 @@ void VirtualVolume::halveSample ( REAL_T* img, int height, int width, int depth,
 }
 
 
-void VirtualVolume::halveSample_UINT8 ( uint8** img, int height, int width, int depth, int channels, int method ) {
+void VirtualVolume::halveSample_UINT8 ( uint8** img, int height, int width, int depth, int channels, int method, int bytes_chan ) {
 	#ifdef S_TIME_CALC
 	double proc_time = -TIME(0);
 	#endif
@@ -522,7 +534,37 @@ void VirtualVolume::halveSample_UINT8 ( uint8** img, int height, int width, int 
 
 	// indices are sint64 because offsets can be larger that 2^31 - 1
 
-	if ( method == HALVE_BY_MEAN ) {   
+	if ( bytes_chan == 1 ) {
+
+		if ( method == HALVE_BY_MEAN ) {   
+
+			for(sint64 c=0; c<channels; c++)
+			{
+				for(sint64 z=0; z<depth/2; z++)
+				{
+					for(sint64 i=0; i<height/2; i++)
+					{
+						for(sint64 j=0; j<width/2; j++)
+						{
+							//computing 8-neighbours
+							A = img[c][2*z*width*height + 2*i*width + 2*j];
+							B = img[c][2*z*width*height + 2*i*width + (2*j+1)];
+							C = img[c][2*z*width*height + (2*i+1)*width + 2*j];
+							D = img[c][2*z*width*height + (2*i+1)*width + (2*j+1)];
+							E = img[c][(2*z+1)*width*height + 2*i*width + 2*j];
+							F = img[c][(2*z+1)*width*height + 2*i*width + (2*j+1)];
+							G = img[c][(2*z+1)*width*height + (2*i+1)*width + 2*j];
+							H = img[c][(2*z+1)*width*height + (2*i+1)*width + (2*j+1)];
+
+							//computing mean
+							img[c][z*(width/2)*(height/2) + i*(width/2) + j] = (uint8) ROUND((A+B+C+D+E+F+G+H)/(float)8);
+						}
+					}
+				}
+			}
+		}
+
+		else if ( method == HALVE_BY_MAX ) {
 
 		for(sint64 c=0; c<channels; c++)
 		{
@@ -532,62 +574,115 @@ void VirtualVolume::halveSample_UINT8 ( uint8** img, int height, int width, int 
 				{
 					for(sint64 j=0; j<width/2; j++)
 					{
-						//computing 8-neighbours
+						//computing max of 8-neighbours
 						A = img[c][2*z*width*height + 2*i*width + 2*j];
 						B = img[c][2*z*width*height + 2*i*width + (2*j+1)];
-						C = img[c][2*z*width*height + (2*i+1)*width + 2*j];
-						D = img[c][2*z*width*height + (2*i+1)*width + (2*j+1)];
-						E = img[c][(2*z+1)*width*height + 2*i*width + 2*j];
-						F = img[c][(2*z+1)*width*height + 2*i*width + (2*j+1)];
-						G = img[c][(2*z+1)*width*height + (2*i+1)*width + 2*j];
-						H = img[c][(2*z+1)*width*height + (2*i+1)*width + (2*j+1)];
+						if ( B > A ) A = B;
+						B = img[c][2*z*width*height + (2*i+1)*width + 2*j];
+						if ( B > A ) A = B;
+						B = img[c][2*z*width*height + (2*i+1)*width + (2*j+1)];
+						if ( B > A ) A = B;
+						B = img[c][(2*z+1)*width*height + 2*i*width + 2*j];
+						if ( B > A ) A = B;
+						B = img[c][(2*z+1)*width*height + 2*i*width + (2*j+1)];
+						if ( B > A ) A = B;
+						B = img[c][(2*z+1)*width*height + (2*i+1)*width + 2*j];
+						if ( B > A ) A = B;
+						B = img[c][(2*z+1)*width*height + (2*i+1)*width + (2*j+1)];
+						if ( B > A ) A = B;
 
 						//computing mean
-						img[c][z*(width/2)*(height/2) + i*(width/2) + j] = (uint8) ROUND((A+B+C+D+E+F+G+H)/(float)8);
+						img[c][z*(width/2)*(height/2) + i*(width/2) + j] = (uint8) ROUND(A);
 					}
 				}
 			}
 		}
 
+		}
+		else {
+			char buffer[IM_STATIC_STRINGS_SIZE];
+			sprintf(buffer,"in VirtualVolume::halveSample_UINT8(...): invalid halving method\n");
+			throw MyException(buffer);
+		}
+
 	}
-	else if ( method == HALVE_BY_MAX ) {
+	else if ( bytes_chan == 2 ) {
 
-	for(sint64 c=0; c<channels; c++)
-	{
-		for(sint64 z=0; z<depth/2; z++)
-		{
-			for(sint64 i=0; i<height/2; i++)
+		uint16 **img16 = (uint16 **) img;
+
+		if ( method == HALVE_BY_MEAN ) {   
+
+			for(sint64 c=0; c<channels; c++)
 			{
-				for(sint64 j=0; j<width/2; j++)
+				for(sint64 z=0; z<depth/2; z++)
 				{
-					//computing max of 8-neighbours
-					A = img[c][2*z*width*height + 2*i*width + 2*j];
-					B = img[c][2*z*width*height + 2*i*width + (2*j+1)];
-					if ( B > A ) A = B;
-					B = img[c][2*z*width*height + (2*i+1)*width + 2*j];
-					if ( B > A ) A = B;
-					B = img[c][2*z*width*height + (2*i+1)*width + (2*j+1)];
-					if ( B > A ) A = B;
-					B = img[c][(2*z+1)*width*height + 2*i*width + 2*j];
-					if ( B > A ) A = B;
-					B = img[c][(2*z+1)*width*height + 2*i*width + (2*j+1)];
-					if ( B > A ) A = B;
-					B = img[c][(2*z+1)*width*height + (2*i+1)*width + 2*j];
-					if ( B > A ) A = B;
-					B = img[c][(2*z+1)*width*height + (2*i+1)*width + (2*j+1)];
-					if ( B > A ) A = B;
+					for(sint64 i=0; i<height/2; i++)
+					{
+						for(sint64 j=0; j<width/2; j++)
+						{
+							//computing 8-neighbours
+							A = img16[c][2*z*width*height + 2*i*width + 2*j];
+							B = img16[c][2*z*width*height + 2*i*width + (2*j+1)];
+							C = img16[c][2*z*width*height + (2*i+1)*width + 2*j];
+							D = img16[c][2*z*width*height + (2*i+1)*width + (2*j+1)];
+							E = img16[c][(2*z+1)*width*height + 2*i*width + 2*j];
+							F = img16[c][(2*z+1)*width*height + 2*i*width + (2*j+1)];
+							G = img16[c][(2*z+1)*width*height + (2*i+1)*width + 2*j];
+							H = img16[c][(2*z+1)*width*height + (2*i+1)*width + (2*j+1)];
 
-					//computing mean
-					img[c][z*(width/2)*(height/2) + i*(width/2) + j] = (uint8) ROUND(A);
+							//computing mean
+							img[c][z*(width/2)*(height/2) + i*(width/2) + j] = (uint8) ROUND((A+B+C+D+E+F+G+H)/(float)8);
+						}
+					}
 				}
 			}
 		}
-	}
+
+		else if ( method == HALVE_BY_MAX ) {
+
+		for(sint64 c=0; c<channels; c++)
+		{
+			for(sint64 z=0; z<depth/2; z++)
+			{
+				for(sint64 i=0; i<height/2; i++)
+				{
+					for(sint64 j=0; j<width/2; j++)
+					{
+						//computing max of 8-neighbours
+						A = img16[c][2*z*width*height + 2*i*width + 2*j];
+						B = img16[c][2*z*width*height + 2*i*width + (2*j+1)];
+						if ( B > A ) A = B;
+						B = img16[c][2*z*width*height + (2*i+1)*width + 2*j];
+						if ( B > A ) A = B;
+						B = img16[c][2*z*width*height + (2*i+1)*width + (2*j+1)];
+						if ( B > A ) A = B;
+						B = img16[c][(2*z+1)*width*height + 2*i*width + 2*j];
+						if ( B > A ) A = B;
+						B = img16[c][(2*z+1)*width*height + 2*i*width + (2*j+1)];
+						if ( B > A ) A = B;
+						B = img16[c][(2*z+1)*width*height + (2*i+1)*width + 2*j];
+						if ( B > A ) A = B;
+						B = img16[c][(2*z+1)*width*height + (2*i+1)*width + (2*j+1)];
+						if ( B > A ) A = B;
+
+						//computing mean
+						img[c][z*(width/2)*(height/2) + i*(width/2) + j] = (uint8) ROUND(A);
+					}
+				}
+			}
+		}
+
+		}
+		else {
+			char buffer[IM_STATIC_STRINGS_SIZE];
+			sprintf(buffer,"in VirtualVolume::halveSample_UINT8(...): invalid halving method\n");
+			throw MyException(buffer);
+		}
 
 	}
 	else {
 		char buffer[IM_STATIC_STRINGS_SIZE];
-		sprintf(buffer,"in halveSample_UINT8(...): invalid halving method\n");
+		sprintf(buffer,"VirtualVolume::in halveSample_UINT8(...): invalid number of bytes per channel (%d)\n", bytes_chan);
         throw MyException(buffer);
 	}
 

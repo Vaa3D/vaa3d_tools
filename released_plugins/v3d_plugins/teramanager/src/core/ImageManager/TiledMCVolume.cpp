@@ -84,7 +84,7 @@ TiledMCVolume::TiledMCVolume(const char* _root_dir)  throw (MyException)
 TiledMCVolume::TiledMCVolume(const char* _root_dir, ref_sys _reference_system, float _VXL_1, float _VXL_2, float _VXL_3, bool overwrite_mdata, bool save_mdata)  throw (MyException)
 : VirtualVolume(_root_dir) // iannello ADDED
 {
-        #if IM_VERBOSE > 3
+	#if IM_VERBOSE > 3
 	printf("\t\t\t\tin TiledMCVolume::TiledMCVolume(_root_dir=%s, ref_sys reference_system={%d,%d,%d}, VXL_1=%.4f, VXL_2=%.4f, VXL_3=%.4f)\n",
                           _root_dir, _reference_system.first, _reference_system.second, _reference_system.third, _VXL_1, _VXL_2, _VXL_3);
 	#endif
@@ -199,6 +199,8 @@ void TiledMCVolume::save(char* metadata_filepath) throw (MyException)
 		fwrite(&str_size, sizeof(uint16), 1, file);
 		fwrite(CHDIRNAMES[c], str_size, 1, file);
 	}
+
+	fwrite(&BYTESxCHAN, sizeof(int), 1, file);
 
 	fclose(file);
 }
@@ -341,6 +343,10 @@ void TiledMCVolume::load(char* metadata_filepath) throw (MyException)
 		sprintf(channel_c_path,"%s/%s",root_dir,CHDIRNAMES[c]);
 		vol_ch[c] = new TiledVolume(channel_c_path);
 	}
+
+	fread_return_val = fread(&BYTESxCHAN, sizeof(int), 1, file);
+	if(fread_return_val != 1)
+		throw MyException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
 
 	fclose(file);
 }
@@ -533,7 +539,7 @@ void TiledMCVolume::init()
 }
 
 void TiledMCVolume::initChannels ( ) throw (MyException) {
-    ;
+    BYTESxCHAN = vol_ch[0]->getBYTESxCHAN();
 }
 
 //PRINT method
@@ -822,6 +828,13 @@ uint8* TiledMCVolume::loadSubvolume_to_UINT8(int V0,int V1, int H0, int H1, int 
     printf("\t\t\t\tin TiledMCVolume::loadSubvolume_to_UINT8(V0=%d, V1=%d, H0=%d, H1=%d, D0=%d, D1=%d)\n", V0, V1, H0, H1, D0, D1);
     #endif
 
+    //checking for non implemented features
+	if( this->BYTESxCHAN != 1 ) {
+		char err_msg[IM_STATIC_STRINGS_SIZE];
+		sprintf(err_msg,"TiledMCVolume::loadSubvolume_to_UINT8: invalid number of bytes per channel (%d)",this->BYTESxCHAN); 
+		throw MyException(err_msg);
+	}
+
 	//char *err_rawfmt;
 
     //initializations
@@ -920,6 +933,13 @@ void *TiledMCVolume::streamedLoadSubvolume_open ( int steps, uint8 *buf, int V0,
     #if IM_VERBOSE > 3
     printf("\t\t\t\tin TiledMCVolume::streamedLoadSubvolume_open(steps=%d, V0=%d, V1=%d, H0=%d, H1=%d, D0=%d, D1=%d)\n", steps, V0, V1, H0, H1, D0, D1);
     #endif
+
+    //checking for non implemented features
+	if( this->BYTESxCHAN != 1 ) {
+		char err_msg[IM_STATIC_STRINGS_SIZE];
+		sprintf(err_msg,"TiledMCVolume::streamedLoadSubvolume_open: invalid number of bytes per channel (%d)",this->BYTESxCHAN); 
+		throw MyException(err_msg);
+	}
 
     //checks
 	if ( V0>=V1 || H0>=H1 || D0>=D1 || V0<0 || H0<0 || D0<0 || V1>(int)DIM_V || H1>(int)DIM_H || D1>(int)DIM_D ) {

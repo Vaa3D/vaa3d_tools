@@ -243,6 +243,8 @@ void TiledVolume::load(char* metadata_filepath) throw (MyException)
             throw MyException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
 
     fread_return_val = fread(&reference_system.third, sizeof(axis), 1, file);
+    if(fread_return_val != 1)
+            throw MyException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
 
     fread_return_val = fread(&VXL_1, sizeof(float), 1, file);
     if(fread_return_val != 1)
@@ -504,6 +506,7 @@ void TiledVolume::init()
 
 void TiledVolume::initChannels ( ) throw (MyException) {
     CHANS = BLOCKS[0][0]->getN_CHANS();
+	BYTESxCHAN = BLOCKS[0][0]->getN_BYTESxCHAN();
 }
 
 //PRINT method
@@ -822,6 +825,13 @@ uint8* TiledVolume::loadSubvolume_to_UINT8(int V0,int V1, int H0, int H1, int D0
     #if IM_VERBOSE > 3
     printf("\t\t\t\tin TiledVolume::loadSubvolume_to_UINT8(V0=%d, V1=%d, H0=%d, H1=%d, D0=%d, D1=%d)\n", V0, V1, H0, H1, D0, D1);
     #endif
+
+    //checking for non implemented features
+	if( this->BYTESxCHAN != 1 ) {
+		char err_msg[IM_STATIC_STRINGS_SIZE];
+		sprintf(err_msg,"TiledVolume::loadSubvolume_to_UINT8: invalid number of bytes per channel (%d)",this->BYTESxCHAN); 
+		throw MyException(err_msg);
+	}
 
 	char *err_rawfmt;
 
@@ -1528,6 +1538,13 @@ void *TiledVolume::streamedLoadSubvolume_open ( int steps, uint8 *buf, int V0,in
     #if IM_VERBOSE > 3
     printf("\t\t\t\tin TiledVolume::streamedLoadSubvolume_open(steps=%d, V0=%d, V1=%d, H0=%d, H1=%d, D0=%d, D1=%d)\n", steps, V0, V1, H0, H1, D0, D1);
     #endif
+
+    //checking for non implemented features
+	if( this->BYTESxCHAN != 1 ) {
+		char err_msg[IM_STATIC_STRINGS_SIZE];
+		sprintf(err_msg,"TiledVolume::streamedLoadSubvolume_open: invalid number of bytes per channel (%d)",this->BYTESxCHAN); 
+		throw MyException(err_msg);
+	}
 
     //checks
 	if ( V0>=V1 || H0>=H1 || D0>=D1 || V0<0 || H0<0 || D0<0 || V1>(int)DIM_V || H1>(int)DIM_H || D1>(int)DIM_D ) {

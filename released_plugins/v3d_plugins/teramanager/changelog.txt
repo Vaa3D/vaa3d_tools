@@ -11,6 +11,15 @@ ties names are:
 - Rem: a feature no longer available
 
 ============================================================================================
+Version 0.9.20
+September 16th, 2013
+--------------------------------------------------------------------------------------------
+- Fix: fixed some bugs in TeraConverter which caused the plugin to crash when  converting to
+       a nonempty folder.
+- Dev: done some preliminary work to add support for 16-bit images.
+--------------------------------------------------------------------------------------------
+
+
 Version 0.9.19
 September 14th, 2013
 --------------------------------------------------------------------------------------------

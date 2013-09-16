@@ -58,16 +58,44 @@
 
 //directory creation
 #ifndef make_dir // to avoid double definitions
+
 #ifdef _WIN32
+
 #include <direct.h>
+
+// returns zero if the directory exists
 #define make_dir(V) _mkdir(V)
+
+// returns not zero also if the directory exists
+//inline bool make_dir(const char* arg){
+//    printf("Creating directory \"%s\" ...", arg);
+//    bool done = _mkdir(arg) == 0;
+//    bool result = done || errno != ENOENT;
+//    printf("%s\n", result? "DONE!" : "ERROR!");
+//    return result;
+//}
+
 #else
+
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <stdlib.h>
+
+// returns zero if the directory exists
 #define make_dir(V) mkdir(V,S_IRWXU | S_IRWXG | S_IROTH | S_IWOTH | S_IXOTH)
+
+// returns not zero also if the directory exists
+//inline bool make_dir(const char* arg){
+//    printf("Creating directory \"%s\" ...", arg);
+//    bool done = mkdir(arg,S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) == 0;
+//    bool result = done || errno == EEXIST;
+//    printf("%s\n", result? "DONE!" : "ERROR!");
+//    return result;
+//}
+
 #endif
-#endif
+
+#endif    // ifndef make_dir
 
 //file deleting
 #ifndef RM_FILE

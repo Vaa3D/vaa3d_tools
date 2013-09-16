@@ -203,6 +203,8 @@ public:
         int getCOL0(){return COL_START;}
         int getCOL1(){return COL_END;}
 
+		VirtualVolume *getVolume() {return volume;}
+
         /*************************************************************************************************************
         * Functions used to obtain absolute coordinates at different resolutions from relative coordinates
         **************************************************************************************************************/
@@ -210,7 +212,7 @@ public:
         std::string getMultiresABS_V_string(int res, int REL_V);
         int getMultiresABS_H(int res, int REL_H);
         std::string getMultiresABS_H_string(int res, int REL_H);
-	   int getMultiresABS_D(int res);
+		int getMultiresABS_D(int res);
 
         /*************************************************************************************************************
         * NEW TILED FORMAT SUPPORTING MULTIPLE CHANNELS

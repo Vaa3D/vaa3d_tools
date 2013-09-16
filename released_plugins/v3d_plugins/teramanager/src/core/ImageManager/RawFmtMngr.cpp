@@ -930,8 +930,8 @@ char *writeSlice2RawFile ( char *filename, int slice, unsigned char *img, int im
 	}
 
 
-	V3DLONG slice_size = sz[0]*sz[1];
-	V3DLONG block_size = slice_size*sz[2];
+	V3DLONG slice_size = sz[0]*sz[1]*datatype;
+	V3DLONG block_size = slice_size*sz[2]*datatype;
 	for ( int c=0; c<sz[3]; c++ ) {
 		//int a = 0;
 		//for ( int j=0; j<slice_size; j++ )
