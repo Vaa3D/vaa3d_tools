@@ -429,6 +429,13 @@ void processImage_adaptive(V3DPluginCallback2 &callback, QWidget *parent)
         }
 
 
+        /*Image4DSimple * new4DImage = new Image4DSimple();
+        new4DImage->setData((unsigned char *)EnahancedImage,N, M, P, 1, pixeltype);
+        v3dhandle newwin = callback.newImageWindow();
+        callback.setImage(newwin, new4DImage);
+        callback.setImageName(newwin, "Multiscale_adaptive_enhancement_result");
+        callback.updateImageWindow(newwin);*/
+
         if (count==0)
         {
 
@@ -512,7 +519,7 @@ void processImage_adaptive_auto(V3DPluginCallback2 &callback, QWidget *parent)
 
     scale = QInputDialog::getInteger(parent, "Iteration Time",
                                      "Enter the maximum iternation time:",
-                                     3, 1, 20, 1, &ok1);
+                                     2, 1, 20, 1, &ok1);
 
     if(ok1)
     {
@@ -535,7 +542,7 @@ void processImage_adaptive_auto(V3DPluginCallback2 &callback, QWidget *parent)
     {
         ratio = QInputDialog::getDouble(parent, "Ratio",
                                         "Enter window size ratio:", //what is this??? should improve terminology
-                                        0.1, 0.1, 1, 1, &ok3);
+                                        0.1, 0.1, 3, 1, &ok3);
     }
     else
         return;
@@ -544,9 +551,9 @@ void processImage_adaptive_auto(V3DPluginCallback2 &callback, QWidget *parent)
         return;
 
 
-    double maxDT1 = 0.5;
+    double maxDT1 = 1.5;
     double maxDT2 = 0.5;
-
+    double sigma = 0;
     V3DLONG in_sz[4];
     in_sz[0] = p4DImage->getXDim();
     in_sz[1] = p4DImage->getYDim();
@@ -563,7 +570,7 @@ void processImage_adaptive_auto(V3DPluginCallback2 &callback, QWidget *parent)
     double min, max;
     for(unsigned int count = 0; count < scale; count++)
     {
-        double sigma = 0.6*maxDT1;
+        sigma = 0.6 *maxDT1;
         printf("max in dt is %.2f, sigma is %.2f\n\n\n",maxDT1,sigma);
 
         //Gaussian smoothing
@@ -575,8 +582,9 @@ void processImage_adaptive_auto(V3DPluginCallback2 &callback, QWidget *parent)
         switch (pixeltype)
         {
         case V3D_UINT8:
-            if (count==0) //do not filter for the scale 0
+            if (count==0 && ratio==0.1) //do not filter for the scale 0
             {
+                sigma = 0.6*0.5;
                 data1d_gf = new unsigned char [pagesz];
                 for(int i = 0; i<pagesz;i++)
                     data1d_gf[i] = data1d[offsetc+i];
@@ -623,7 +631,7 @@ void processImage_adaptive_auto(V3DPluginCallback2 &callback, QWidget *parent)
     }
 
     // display
-    //remove("temp.v3draw");
+    remove("temp.v3draw");
 
     //set up output image
 
@@ -1690,7 +1698,7 @@ template <class T> void callGussianoPlugin(V3DPluginCallback2 &callback,
 
     char * outimg_file = ((vector<char*> *)(output.at(0).p))->at(0);
     simple_loadimage_wrapper(callback, outimg_file, data1d_Gf, in_zz, datatype);
-    //remove("gfImage.v3draw");
+    remove("gfImage.v3draw");
     unsigned char* data1d = 0;
     data1d = new unsigned char [pagesz];
 
@@ -1899,6 +1907,21 @@ template <class T> void AdpThresholding_adpwindow(const T* data1d,
 
                     // printf("window size is %d\n",Wx);
                     //Seletive approach
+                  /*  double fxx,fyy,fzz;
+                    if((data1d[offsetk+offsetj+xe]-data1d[offsetk+offsetj+ix]) > (data1d[offsetk+offsetj+xb]-data1d[offsetk+offsetj+ix]))
+                        fxx = 2* (data1d[offsetk+offsetj+xe]-data1d[offsetk+offsetj+ix]);
+                    else
+                        fxx = 2*(data1d[offsetk+offsetj+xb]- data1d[offsetk+offsetj+ix]);
+
+                    if ((data1d[offsetk+offsetj+xe] - data1d[offsetk+offsetj+ix]) > (data1d[offsetk+offsetj+xb]-data1d[offsetk+offsetj+ix]))
+                        fyy = 2*(data1d[offsetk+offsetj+xe] - data1d[offsetk+offsetj+ix]);
+                    else
+                        fyy = 2*(data1d[offsetk+offsetj+xb]-data1d[offsetk+offsetj+ix]);
+                    if( (data1d[(ze)*M*N+offsetj+ix] -data1d[offsetk+offsetj+ix]) > (data1d[(zb)*M*N+offsetj+ix]-data1d[offsetk+offsetj+ix]) )
+                        fzz = 2*(data1d[(ze)*M*N+offsetj+ix] -data1d[offsetk+offsetj+ix]);
+                    else
+                        fzz = 2*(data1d[(zb)*M*N+offsetj+ix]-data1d[offsetk+offsetj+ix]);*/
+
                     double fxx = data1d[offsetk+offsetj+xe]+ data1d[offsetk+offsetj+xb]- 2*data1d[offsetk+offsetj+ix];
                     double fyy = data1d[offsetk+(ye)*N+ix]+data1d[offsetk+(yb)*N+ix]-2*data1d[offsetk+offsetj+ix];
                     double fzz = data1d[(ze)*M*N+offsetj+ix]+data1d[(zb)*M*N+offsetj+ix]- 2*data1d[offsetk+offsetj+ix];
@@ -1924,7 +1947,7 @@ template <class T> void AdpThresholding_adpwindow(const T* data1d,
                             T dataval = (T)(sigma*sigma*pow((zhi_abs(a2)-zhi_abs(a3)),3)/zhi_abs(a1)); //seems the best at this moment. commented by HP, 2013-08-28. Do NOT Use the following formula instead.
                             //T dataval = (T)(double(PixelValue) * (double(zhi_abs(a2))-double(zhi_abs(a3)))/double(zhi_abs(a1)));
 
-                            pImage[offsetk+offsetj+ix] = 2;//dataval;
+                            pImage[offsetk+offsetj+ix] = dataval;//dataval;
                             if (maxfl<dataval) maxfl = dataval;
                         }
                     }
@@ -2051,8 +2074,8 @@ template <class T> void callgsdtPlugin(V3DPluginCallback2 &callback,const T* dat
 
     char * outimg_file = ((vector<char*> *)(output.at(0).p))->at(0);
     simple_loadimage_wrapper(callback, outimg_file, data1d_gsdt, in_zz, datatype);
-    //remove("temp_gf.v3draw");
-    //remove("gsdtImage.v3draw");
+    remove("temp_gf.v3draw");
+    remove("gsdtImage.v3draw");
 
     T *pImage = new T [pagesz];
     if (!pImage)
