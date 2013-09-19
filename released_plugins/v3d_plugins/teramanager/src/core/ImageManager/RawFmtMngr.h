@@ -174,6 +174,8 @@ char *loadRaw2Metadata ( char * filename, V3DLONG * &sz, int &datatype, int &b_s
  *              is different (1) from the one of the current machine
  *    fhandle:  a pointer to a FILE structure associated to the file which is left opened
  *
+ * the file is not closed
+ *
  * if some exception occurs, returns a string describing the exception; returns a NULL pointer
  * if there are no exceptions
  */

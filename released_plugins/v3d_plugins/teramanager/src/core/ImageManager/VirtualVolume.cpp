@@ -149,6 +149,13 @@ void VirtualVolume::saveImage_from_UINT8 (std::string img_path, uint8* raw_ch1, 
             img_path.c_str(), raw_img_height, raw_img_width, start_height, end_height, start_width, end_width);
     #endif
 
+    //checking for non implemented features
+	if( img_depth != 8 ) {
+		char err_msg[IM_STATIC_STRINGS_SIZE];
+		sprintf(err_msg,"SimpleVolume::loadSubvolume_to_UINT8: invalid number of bits per channel (%d)",img_depth); 
+		throw MyException(err_msg);
+	}
+
     //LOCAL VARIABLES
     char buffer[IM_STATIC_STRINGS_SIZE];
     IplImage* img = 0;
@@ -286,9 +293,16 @@ void VirtualVolume::saveImage_to_Vaa3DRaw(int slice, std::string img_path, REAL_
 		img_path.c_str(), raw_img_height, raw_img_width, start_height, end_height, start_width, end_width);
 	#endif
 
+    //checking for non implemented features
 	char msg[IM_STATIC_STRINGS_SIZE];
 	sprintf(msg,"in VirtualVolume::saveImage_to_Vaa3DRaw: not implemented yet");
 	throw MyException(msg);
+
+	if( img_depth != 8 ) {
+		char err_msg[IM_STATIC_STRINGS_SIZE];
+		sprintf(err_msg,"SimpleVolume::loadSubvolume_to_UINT8: invalid number of bits per channel (%d)",img_depth); 
+		throw MyException(err_msg);
+	}
 
 	//uint8  *row_data_8bit;
 	//uint16 *row_data_16bit;
@@ -382,6 +396,7 @@ void VirtualVolume::saveImage_from_UINT8_to_Vaa3DRaw (int slice, std::string img
 	int img_bytes_per_chan;
 
 	//add offset to raw_ch
+	//for each channel adds to raw_ch the offset of current slice from the beginning of buffer 
 	uint8** raw_ch_temp = new uint8 *[n_chans];
 	for (int i=0; i<n_chans; i++)
 		raw_ch_temp[i] = raw_ch[i] + offset;
@@ -631,7 +646,7 @@ void VirtualVolume::halveSample_UINT8 ( uint8** img, int height, int width, int 
 							H = img16[c][(2*z+1)*width*height + (2*i+1)*width + (2*j+1)];
 
 							//computing mean
-							img[c][z*(width/2)*(height/2) + i*(width/2) + j] = (uint8) ROUND((A+B+C+D+E+F+G+H)/(float)8);
+							img16[c][z*(width/2)*(height/2) + i*(width/2) + j] = (uint16) ROUND((A+B+C+D+E+F+G+H)/(float)8);
 						}
 					}
 				}

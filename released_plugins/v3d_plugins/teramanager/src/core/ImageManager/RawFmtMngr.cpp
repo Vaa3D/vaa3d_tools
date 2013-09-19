@@ -219,6 +219,127 @@ void swap4bytes(void *targetp)
     *(tp+2) = a;
 }
 
+/* This function opens 2-4D image stack from raw data and returns metadata contained in the header
+ * assuming that sz elements are stored as 4-bytes integers.
+ * The input parameters sz, and datatype should be empty, especially the pointer "sz". 
+ * The file is not closed and the file handle is returned in fhandle.
+ */
+static
+char *loadMetadata ( char * filename, V3DLONG * &sz, int &datatype, int &b_swap, void * &fhandle, int &header_len ) {
+
+	FILE * fid = fopen(filename, "rb");
+	if (!fid)
+		return ((char *)"Fail to open file for reading");
+
+	fseek (fid, 0, SEEK_END);
+	V3DLONG fileSize = ftell(fid);
+	rewind(fid);
+
+	/* Read header */
+
+	char formatkey[] = "raw_image_stack_by_hpeng";
+	V3DLONG lenkey = strlen(formatkey);
+
+	// for 4 byte integers: datatype has 2 bytes, and sz has 4*4 bytes and endian flag has 1 byte
+	// WARNINIG: this should still be valid even for 2 byte integres assuming that there are at least 8 data bytes
+	if (fileSize<lenkey+2+4*4+1)  
+		return ((char *)"The size of your input file is too small and is not correct, -- it is too small to contain the legal header");
+
+	char * keyread = new char [lenkey+1];
+	if (!keyread)
+		return ((char *)"Fail to allocate memory");
+
+	V3DLONG nread = fread(keyread, 1, lenkey, fid);
+	if (nread!=lenkey)
+		return ((char *)"File unrecognized or corrupted file");
+
+	keyread[lenkey] = '\0';
+
+	V3DLONG i;
+	if (strcmp(formatkey, keyread)) { /* is non-zero then the two strings are different */
+		if (keyread) {delete []keyread; keyread=0;}
+		return ((char *)"Unrecognized file format");
+	}
+
+	char endianCodeData;
+	fread(&endianCodeData, 1, 1, fid);
+	if (endianCodeData!='B' && endianCodeData!='L')
+	{
+		if (keyread) {delete []keyread; keyread=0;}
+		return ((char *)"This program only supports big- or little- endian but not other format. Check your data endian");
+	}
+
+	char endianCodeMachine;
+	endianCodeMachine = checkMachineEndian();
+	if (endianCodeMachine!='B' && endianCodeMachine!='L')
+	{
+		if (keyread) {delete []keyread; keyread=0;}
+		return ((char *)"This program only supports big- or little- endian but not other format. Check your data endian");
+	}
+
+	b_swap = (endianCodeMachine==endianCodeData)?0:1;
+
+	short int dcode = 0;
+	fread(&dcode, 2, 1, fid); /* because I have already checked the file size to be bigger than the header, no need to check the number of actual bytes read. */
+	if (b_swap)
+		swap2bytes((void *)&dcode);
+
+	switch (dcode)
+	{
+		case 1:
+			datatype = 1; /* temporarily I use the same number, which indicates the number of bytes for each data point (pixel). This can be extended in the future. */
+			break;
+
+		case 2:
+			datatype = 2;
+			break;
+
+		case 4:
+			datatype = 4;
+			break;
+
+		default:
+			if (keyread) {delete []keyread; keyread=0;}
+			return ((char *)"Unrecognized data type code. The file type is incorrect or this code is not supported in this version");
+	}
+
+	V3DLONG unitSize = datatype; // temporarily I use the same number, which indicates the number of bytes for each data point (pixel). This can be extended in the future. 
+
+	BIT32_UNIT mysz[4]; // actual buffer 
+	mysz[0]=mysz[1]=mysz[2]=mysz[3]=0;
+
+	int tmpn=(int)fread(mysz, 4, 4, fid); // because I have already checked the file size to be bigger than the header, no need to check the number of actual bytes read. 
+	if (tmpn!=4) {
+		if (keyread) {delete []keyread; keyread=0;}
+		return ((char *)"This program only reads [4] units");
+	}
+	if (b_swap) {
+		for (i=0;i<4;i++) 
+			swap4bytes((void *)(mysz+i));
+	}
+
+	if (sz) {delete []sz; sz=0;}
+	sz = new V3DLONG [4]; // reallocate the memory if the input parameter is non-null. Note that this requests the input is also an NULL point, the same to img. 
+	if (!sz)
+	{
+		if (keyread) {delete []keyread; keyread=0;}
+		return ((char *)"Fail to allocate memory");
+	}
+
+	for (i=0;i<4;i++)
+	{
+		sz[i] = (V3DLONG)mysz[i];
+	}
+
+	// clean and return 
+	if (keyread) {delete [] keyread; keyread = 0;}
+
+	fhandle = fid;
+	header_len = ftell(fid);
+
+	return ((char *) 0);
+}
+
 
 /****************************************************
  * EXTERNAL FUNCTIONS
@@ -354,24 +475,11 @@ char *loadRaw2Metadata ( char * filename, V3DLONG * &sz, int &datatype, int &b_s
 		for (i=0;i<4;i++) {
 			totalUnit *= mysz[i];
 		}
-		if ((totalUnit*unitSize+4*2+2+1+lenkey) == fileSize) {
+		if ((totalUnit*unitSize+4*4+2+1+lenkey) != fileSize) {
 			if (keyread) {delete []keyread; keyread=0;}
 			return ((char *)"The input file has a size different from what specified in the header");
 		}
 	}
-
-	//int tmpn=(int)fread(mysz, 4, 4, fid); // because I have already checked the file size to be bigger than the header, no need to check the number of actual bytes read. 
-	//if (tmpn!=4)
-	//	return ("This program only reads [4] units");
-
-	//if (b_swap)
-	//{
-	//	for (i=0;i<4;i++)
-	//	{
-	//		//swap2bytes((void *)(mysz+i));
-	//		swap4bytes((void *)(mysz+i));
-	//	}
-	//}
 
 	if (sz) {delete []sz; sz=0;}
 	sz = new V3DLONG [4]; // reallocate the memory if the input parameter is non-null. Note that this requests the input is also an NULL point, the same to img. 
@@ -388,7 +496,6 @@ char *loadRaw2Metadata ( char * filename, V3DLONG * &sz, int &datatype, int &b_s
 
 	// clean and return 
 	if (keyread) {delete [] keyread; keyread = 0;}
-	//fclose(fid); //bug fix on 060412
 
 	fhandle = fid;
 	header_len = ftell(fid);
@@ -910,7 +1017,7 @@ char *writeSlice2RawFile ( char *filename, int slice, unsigned char *img, int im
 	int b_swap;
 	int header_len;
 	
-	if ( (err_rawfmt = loadRaw2Metadata(filename,sz,datatype,b_swap,fhandle,header_len)) != 0 ) {
+	if ( (err_rawfmt = loadMetadata(filename,sz,datatype,b_swap,fhandle,header_len)) != 0 ) {
 		if ( sz ) delete[] sz;
 		return err_rawfmt;
 	}
@@ -931,7 +1038,7 @@ char *writeSlice2RawFile ( char *filename, int slice, unsigned char *img, int im
 
 
 	V3DLONG slice_size = sz[0]*sz[1]*datatype;
-	V3DLONG block_size = slice_size*sz[2]*datatype;
+	V3DLONG block_size = slice_size*sz[2]; // it has been already multiplied by datatype
 	for ( int c=0; c<sz[3]; c++ ) {
 		//int a = 0;
 		//for ( int j=0; j<slice_size; j++ )

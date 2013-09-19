@@ -355,8 +355,9 @@ uint8 *SimpleVolumeRaw::loadSubvolume_to_UINT8(int V0,int V1, int H0, int H1, in
                         for(int i = istart; i < iend; i++)
                         {
                             uint8* slice_row = ((uint8*)(slice + c*sbv_height*sbv_width*datatype)) + (i+ABS_V_offset)*slice_step;
-                            for(int j = jstart; j < jend; j++)
-                                subvol[c_offset + k_offset + i*sbv_width + j] = slice_row[j+ABS_H_offset];
+							int c = 0;
+                            for(int j = jstart; c < ((jend-jstart) * datatype); j++, c++)
+                                subvol[c_offset + k_offset + i*sbv_width*datatype + j] = slice_row[j+ABS_H_offset];
                         }
                     }
 

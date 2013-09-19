@@ -43,6 +43,7 @@ typedef float          REAL_T;
 #define IM_METADATA_FILE_VERSION 2
 #define IM_STATIC_STRINGS_SIZE 3000
 #define IM_DEF_IMG_FORMAT "tif"
+#define IM_NUL_IMG_DEPTH 0
 #define IM_DEF_IMG_DEPTH 8
 
 //for time computation

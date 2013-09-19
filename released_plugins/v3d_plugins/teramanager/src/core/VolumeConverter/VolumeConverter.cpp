@@ -150,16 +150,28 @@ void VolumeConverter::generateTiles(std::string output_path, bool* resolutions,
     printf(", slice_height = %d, slice_width = %d, method = %d, show_progress_bar = %s, saved_img_format = %s, saved_img_depth = %d)\n",
            slice_height, slice_width, method, show_progress_bar ? "true" : "false", saved_img_format, saved_img_depth);
 
+	if ( saved_img_depth == 0 ) // Tiff2DStck currently supports only 8 bits depth 
+		saved_img_depth = 8;
+		
+	if ( saved_img_depth != 8 ) {
+		char err_msg[IM_STATIC_STRINGS_SIZE];
+		sprintf(err_msg,"VolumeConverter::generateTilesVaa3DRaw: mismatch between bits per channel of source (%d) and destination (%d)",
+			volume->getBYTESxCHAN() * 8, saved_img_depth);
+		throw MyException(err_msg);
+	}
+	
 	if ( saved_img_depth != (volume->getBYTESxCHAN() * 8) ) {
 		char err_msg[IM_STATIC_STRINGS_SIZE];
 		sprintf(err_msg,"VolumeConverter::generateTilesVaa3DRaw: mismatch between bits per channel of source (%d) and destination (%d)",
 			volume->getBYTESxCHAN() * 8, saved_img_depth);
 		throw MyException(err_msg);
 	}
+	
 	//LOCAL VARIABLES
     sint64 height, width, depth;	//height, width and depth of the whole volume that covers all stacks
 	REAL_T* rbuffer;			//buffer where temporary image data are stored (REAL_INTERNAL_REP)
 	uint8** ubuffer;			//array of buffers where temporary image data of channels are stored (UINT8_INTERNAL_REP)
+	int bytes_chan = volume->getBYTESxCHAN();
 	//uint8*  ubuffer_ch2;	    //buffer temporary image data of channel 1 are stored (UINT8_INTERNAL_REP)
 	//uint8*  ubuffer_ch3;	    //buffer temporary image data of channel 1 are stored (UINT8_INTERNAL_REP)
 	int org_channels = 0;       //store the number of channels read the first time (for checking purposes)
@@ -285,7 +297,7 @@ void VolumeConverter::generateTiles(std::string output_path, bool* resolutions,
 			*/
 			// elements of ubuffer not set are null pointers
 			for ( int c=1; c<channels; c++ )
-				ubuffer[c] = ubuffer[c-1] + (height * width * ((z_parts<=z_ratio) ? z_max_res : (depth%z_max_res)));
+				ubuffer[c] = ubuffer[c-1] + (height * width * ((z_parts<=z_ratio) ? z_max_res : (depth%z_max_res)) * bytes_chan);
 		}
 		
 		//updating the progress bar
@@ -314,7 +326,7 @@ void VolumeConverter::generateTiles(std::string output_path, bool* resolutions,
 				if ( internal_rep == REAL_INTERNAL_REP )
 					VirtualVolume::halveSample(rbuffer,(int)height/(POW_INT(2,i-1)),(int)width/(POW_INT(2,i-1)),(int)z_size/(POW_INT(2,i-1)),method);
 				else // internal_rep == UINT8_INTERNAL_REP
-					VirtualVolume::halveSample_UINT8(ubuffer,(int)height/(POW_INT(2,i-1)),(int)width/(POW_INT(2,i-1)),(int)z_size/(POW_INT(2,i-1)),channels,method);
+					VirtualVolume::halveSample_UINT8(ubuffer,(int)height/(POW_INT(2,i-1)),(int)width/(POW_INT(2,i-1)),(int)z_size/(POW_INT(2,i-1)),channels,method,bytes_chan);
 
 			//saving at current resolution if it has been selected and iff buffer is at least 1 voxel (Z) deep
 			if(resolutions[i] && (z_size/(POW_INT(2,i))) > 0)
@@ -390,17 +402,17 @@ void VolumeConverter::generateTiles(std::string output_path, bool* resolutions,
 										saved_img_format, saved_img_depth);
 								else if ( channels == 2 ) 
 									VirtualVolume::saveImage_from_UINT8(img_path.str(), 
-										ubuffer[0] + buffer_z*(height/POW_INT(2,i))*(width/POW_INT(2,i)), // adds the stride
-										ubuffer[1] + buffer_z*(height/POW_INT(2,i))*(width/POW_INT(2,i)), // adds the stride
+										ubuffer[0] + buffer_z*(height/POW_INT(2,i))*(width/POW_INT(2,i))*bytes_chan, // stride to be added for slice buffer_z
+										ubuffer[1] + buffer_z*(height/POW_INT(2,i))*(width/POW_INT(2,i))*bytes_chan, // stride to be added for slice buffer_z
 										(uint8 *) 0,
 										(int)height/(POW_INT(2,i)),(int)width/(POW_INT(2,i)),
 										start_height,end_height,start_width,end_width, 
 										saved_img_format, saved_img_depth);
 								else // channels = 3
 									VirtualVolume::saveImage_from_UINT8(img_path.str(), 
-										ubuffer[0] + buffer_z*(height/POW_INT(2,i))*(width/POW_INT(2,i)), // adds the stride
-										ubuffer[1] + buffer_z*(height/POW_INT(2,i))*(width/POW_INT(2,i)), // adds the stride
-										ubuffer[2] + buffer_z*(height/POW_INT(2,i))*(width/POW_INT(2,i)), // adds the stride
+										ubuffer[0] + buffer_z*(height/POW_INT(2,i))*(width/POW_INT(2,i))*bytes_chan, // stride to be added for slice buffer_z
+										ubuffer[1] + buffer_z*(height/POW_INT(2,i))*(width/POW_INT(2,i))*bytes_chan, // stride to be added for slice buffer_z
+										ubuffer[2] + buffer_z*(height/POW_INT(2,i))*(width/POW_INT(2,i))*bytes_chan, // stride to be added for slice buffer_z
 										(int)height/(POW_INT(2,i)),(int)width/(POW_INT(2,i)),
 										start_height,end_height,start_width,end_width, 
 										saved_img_format, saved_img_depth);
@@ -487,6 +499,9 @@ void VolumeConverter::generateTilesVaa3DRaw(std::string output_path, bool* resol
     printf(", block_height = %d, block_width = %d, block_depth = %d, method = %d, show_progress_bar = %s, saved_img_format = %s, saved_img_depth = %d)\n",
            block_height, block_width, block_depth, method, show_progress_bar ? "true" : "false", saved_img_format, saved_img_depth);
 
+	if ( saved_img_depth == 0 ) // default is to generate an image with the same depth of the source
+		saved_img_depth = volume->getBYTESxCHAN() * 8;
+		
 	if ( saved_img_depth != (volume->getBYTESxCHAN() * 8) ) {
 		char err_msg[IM_STATIC_STRINGS_SIZE];
 		sprintf(err_msg,"VolumeConverter::generateTilesVaa3DRaw: mismatch between bits per channel of source (%d) and destination (%d)",
@@ -498,6 +513,7 @@ void VolumeConverter::generateTilesVaa3DRaw(std::string output_path, bool* resol
     sint64 height, width, depth;	//height, width and depth of the whole volume that covers all stacks
 	REAL_T* rbuffer;			//buffer where temporary image data are stored (REAL_INTERNAL_REP)
 	uint8** ubuffer;			//array of buffers where temporary image data of channels are stored (UINT8_INTERNAL_REP)
+	int bytes_chan = volume->getBYTESxCHAN();
 	//uint8*  ubuffer_ch2;	    //buffer temporary image data of channel 1 are stored (UINT8_INTERNAL_REP)
 	//uint8*  ubuffer_ch3;	    //buffer temporary image data of channel 1 are stored (UINT8_INTERNAL_REP)
 	int org_channels = 0;       //store the number of channels read the first time (for checking purposes)
@@ -644,7 +660,7 @@ void VolumeConverter::generateTilesVaa3DRaw(std::string output_path, bool* resol
 			for (int i=1; i<channels; i++ ) { // WARNING: assume 1-byte pixels
 				// offsets are to be computed taking into account that buffer size along D may be different
 				// WARNING: the offset must be of tipe sint64 
-				ubuffer[i] = ubuffer[i-1] + (height * width * ((z_parts<=z_ratio) ? z_max_res : (depth%z_max_res)));
+				ubuffer[i] = ubuffer[i-1] + (height * width * ((z_parts<=z_ratio) ? z_max_res : (depth%z_max_res)) * bytes_chan);
 			}
 		}
 		// WARNING: should check that buffer has been actually allocated
@@ -693,7 +709,7 @@ void VolumeConverter::generateTilesVaa3DRaw(std::string output_path, bool* resol
 				if ( internal_rep == REAL_INTERNAL_REP )
 					VirtualVolume::halveSample(rbuffer,(int)height/(POW_INT(2,i-1)),(int)width/(POW_INT(2,i-1)),(int)z_size/(POW_INT(2,i-1)),method);
 				else // internal_rep == UINT8_INTERNAL_REP
-					VirtualVolume::halveSample_UINT8(ubuffer,(int)height/(POW_INT(2,i-1)),(int)width/(POW_INT(2,i-1)),(int)z_size/(POW_INT(2,i-1)),channels,method);
+					VirtualVolume::halveSample_UINT8(ubuffer,(int)height/(POW_INT(2,i-1)),(int)width/(POW_INT(2,i-1)),(int)z_size/(POW_INT(2,i-1)),channels,method,bytes_chan);
 
 			//saving at current resolution if it has been selected and iff buffer is at least 1 voxel (Z) deep
 			if(resolutions[i] && (z_size/(POW_INT(2,i))) > 0)
@@ -833,7 +849,7 @@ void VolumeConverter::generateTilesVaa3DRaw(std::string output_path, bool* resol
 									img_path.str(), 
 									ubuffer,
 									channels,
-									buffer_z*(height/POW_INT(2,i))*(width/POW_INT(2,i)),  // stride to be added
+									buffer_z*(height/POW_INT(2,i))*(width/POW_INT(2,i))*bytes_chan,  // stride to be added for slice buffer_z
 									(int)height/(POW_INT(2,i)),(int)width/(POW_INT(2,i)),
 									start_height,end_height,start_width,end_width, 
 									saved_img_format, saved_img_depth);
@@ -972,6 +988,9 @@ void VolumeConverter::generateTilesVaa3DRawMC ( std::string output_path, bool* r
     printf(", block_height = %d, block_width = %d, block_depth = %d, method = %d, show_progress_bar = %s, saved_img_format = %s, saved_img_depth = %d)\n",
            block_height, block_width, block_depth, method, show_progress_bar ? "true" : "false", saved_img_format, saved_img_depth);
 
+	if ( saved_img_depth == 0 ) // default is to generate an image with the same depth of the source
+		saved_img_depth = volume->getBYTESxCHAN() * 8;
+		
 	if ( saved_img_depth != (volume->getBYTESxCHAN() * 8) ) {
 		char err_msg[IM_STATIC_STRINGS_SIZE];
 		sprintf(err_msg,"VolumeConverter::generateTilesVaa3DRaw: mismatch between bits per channel of source (%d) and destination (%d)",
@@ -983,6 +1002,7 @@ void VolumeConverter::generateTilesVaa3DRawMC ( std::string output_path, bool* r
     sint64 height, width, depth;	//height, width and depth of the whole volume that covers all stacks
 	REAL_T* rbuffer;			//buffer where temporary image data are stored (REAL_INTERNAL_REP)
 	uint8** ubuffer;			//array of buffers where temporary image data of channels are stored (UINT8_INTERNAL_REP)
+	int bytes_chan = volume->getBYTESxCHAN();
 	//uint8*  ubuffer_ch2;	    //buffer temporary image data of channel 1 are stored (UINT8_INTERNAL_REP)
 	//uint8*  ubuffer_ch3;	    //buffer temporary image data of channel 1 are stored (UINT8_INTERNAL_REP)
 	int org_channels = 0;       //store the number of channels read the first time (for checking purposes)
@@ -1166,7 +1186,7 @@ void VolumeConverter::generateTilesVaa3DRawMC ( std::string output_path, bool* r
 			for (int i=1; i<channels; i++ ) { // WARNING: assume 1-byte pixels
 				// offsets are to be computed taking into account that buffer size along D may be different
 				// WARNING: the offset must be of tipe sint64 
-				ubuffer[i] = ubuffer[i-1] + (height * width * ((z_parts<=z_ratio) ? z_max_res : (depth%z_max_res)));
+				ubuffer[i] = ubuffer[i-1] + (height * width * ((z_parts<=z_ratio) ? z_max_res : (depth%z_max_res)) * bytes_chan);
 			}
 		}
 		// WARNING: should check that buffer has been actually allocated
@@ -1215,7 +1235,7 @@ void VolumeConverter::generateTilesVaa3DRawMC ( std::string output_path, bool* r
 				if ( internal_rep == REAL_INTERNAL_REP )
 					VirtualVolume::halveSample(rbuffer,(int)height/(POW_INT(2,i-1)),(int)width/(POW_INT(2,i-1)),(int)z_size/(POW_INT(2,i-1)),method);
 				else // internal_rep == UINT8_INTERNAL_REP
-					VirtualVolume::halveSample_UINT8(ubuffer,(int)height/(POW_INT(2,i-1)),(int)width/(POW_INT(2,i-1)),(int)z_size/(POW_INT(2,i-1)),channels,method);
+					VirtualVolume::halveSample_UINT8(ubuffer,(int)height/(POW_INT(2,i-1)),(int)width/(POW_INT(2,i-1)),(int)z_size/(POW_INT(2,i-1)),channels,method,bytes_chan);
 
 			//saving at current resolution if it has been selected and iff buffer is at least 1 voxel (Z) deep
 			if(resolutions[i] && (z_size/(POW_INT(2,i))) > 0)
@@ -1357,7 +1377,7 @@ void VolumeConverter::generateTilesVaa3DRawMC ( std::string output_path, bool* r
 										img_path.str(), 
 										ubuffer + c,
 										1,
-										buffer_z*(height/POW_INT(2,i))*(width/POW_INT(2,i)),  // stride to be added
+										buffer_z*(height/POW_INT(2,i))*(width/POW_INT(2,i))*bytes_chan,  // stride to be added for slice buffer_z
 										(int)height/(POW_INT(2,i)),(int)width/(POW_INT(2,i)),
 										start_height,end_height,start_width,end_width, 
 										saved_img_format, saved_img_depth);
@@ -1454,6 +1474,9 @@ void VolumeConverter::generateTilesVaa3DRawMC ( std::string output_path, bool* r
     printf(", block_height = %d, block_width = %d, block_depth = %d, method = %d, show_progress_bar = %s, saved_img_format = %s, saved_img_depth = %d)\n",
            block_height, block_width, block_depth, method, show_progress_bar ? "true" : "false", saved_img_format, saved_img_depth);
 
+	if ( saved_img_depth == 0 ) // default is to generate an image with the same depth of the source
+		saved_img_depth = volume->getBYTESxCHAN() * 8;
+		
 	if ( saved_img_depth != (volume->getBYTESxCHAN() * 8) ) {
 		char err_msg[IM_STATIC_STRINGS_SIZE];
 		sprintf(err_msg,"VolumeConverter::generateTilesVaa3DRaw: mismatch between bits per channel of source (%d) and destination (%d)",
@@ -1465,6 +1488,7 @@ void VolumeConverter::generateTilesVaa3DRawMC ( std::string output_path, bool* r
     sint64 height, width, depth;	//height, width and depth of the whole volume that covers all stacks
 	REAL_T* rbuffer;			//buffer where temporary image data are stored (REAL_INTERNAL_REP)
 	uint8** ubuffer;			//array of buffers where temporary image data of channels are stored (UINT8_INTERNAL_REP)
+	int bytes_chan = volume->getBYTESxCHAN();
 	//uint8*  ubuffer_ch2;	    //buffer temporary image data of channel 1 are stored (UINT8_INTERNAL_REP)
 	//uint8*  ubuffer_ch3;	    //buffer temporary image data of channel 1 are stored (UINT8_INTERNAL_REP)
 	int org_channels = 0;       //store the number of channels read the first time (for checking purposes)
@@ -1644,7 +1668,7 @@ void VolumeConverter::generateTilesVaa3DRawMC ( std::string output_path, bool* r
 			for (int i=1; i<channels; i++ ) { // WARNING: assume 1-byte pixels
 				// offsets are to be computed taking into account that buffer size along D may be different
 				// WARNING: the offset must be of tipe sint64 
-				ubuffer[i] = ubuffer[i-1] + (height * width * ((z_parts<=z_ratio) ? z_max_res : (depth%z_max_res)));
+				ubuffer[i] = ubuffer[i-1] + (height * width * ((z_parts<=z_ratio) ? z_max_res : (depth%z_max_res)) * bytes_chan);
 			}
 		}
 		// WARNING: should check that buffer has been actually allocated
@@ -1693,7 +1717,7 @@ void VolumeConverter::generateTilesVaa3DRawMC ( std::string output_path, bool* r
 				if ( internal_rep == REAL_INTERNAL_REP )
 					VirtualVolume::halveSample(rbuffer,(int)height/(POW_INT(2,i-1)),(int)width/(POW_INT(2,i-1)),(int)z_size/(POW_INT(2,i-1)),method);
 				else // internal_rep == UINT8_INTERNAL_REP
-					VirtualVolume::halveSample_UINT8(ubuffer,(int)height/(POW_INT(2,i-1)),(int)width/(POW_INT(2,i-1)),(int)z_size/(POW_INT(2,i-1)),channels,method);
+					VirtualVolume::halveSample_UINT8(ubuffer,(int)height/(POW_INT(2,i-1)),(int)width/(POW_INT(2,i-1)),(int)z_size/(POW_INT(2,i-1)),channels,method,bytes_chan);
 
 			//saving at current resolution if it has been selected and iff buffer is at least 1 voxel (Z) deep
 			if(resolutions[i] && (z_size/(POW_INT(2,i))) > 0)
@@ -1835,7 +1859,7 @@ void VolumeConverter::generateTilesVaa3DRawMC ( std::string output_path, bool* r
 										img_path.str(), 
 										ubuffer + c,
 										1,
-										buffer_z*(height/POW_INT(2,i))*(width/POW_INT(2,i)),  // stride to be added
+										buffer_z*(height/POW_INT(2,i))*(width/POW_INT(2,i))*bytes_chan,  // stride to be added for slice buffer_z
 										(int)height/(POW_INT(2,i)),(int)width/(POW_INT(2,i)),
 										start_height,end_height,start_width,end_width, 
 										saved_img_format, saved_img_depth);

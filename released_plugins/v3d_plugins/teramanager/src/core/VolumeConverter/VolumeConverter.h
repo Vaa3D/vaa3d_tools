@@ -165,7 +165,7 @@ public:
 		**************************************************************************************************************/
 		void generateTiles(std::string output_path, bool* resolutions = NULL, 
 			int slice_height = -1, int slice_width = -1, int method = HALVE_BY_MEAN, bool show_progress_bar = true, 
-			const char* saved_img_format = IM_DEF_IMG_FORMAT, int saved_img_depth = IM_DEF_IMG_DEPTH)	throw (MyException);
+			const char* saved_img_format = IM_DEF_IMG_FORMAT, int saved_img_depth = IM_NUL_IMG_DEPTH)	throw (MyException);
 		
 
 		/*************************************************************************************************************
@@ -186,7 +186,7 @@ public:
 		**************************************************************************************************************/
 		void generateTilesVaa3DRaw(std::string output_path, bool* resolutions = NULL, 
 			int block_height = -1, int block_width = -1, int block_depth = -1, int method = HALVE_BY_MEAN, bool show_progress_bar = true, 
-			const char* saved_img_format = "raw", int saved_img_depth = IM_DEF_IMG_DEPTH)	throw (MyException);
+			const char* saved_img_format = "raw", int saved_img_depth = IM_NUL_IMG_DEPTH)	throw (MyException);
 		
 
         /*************************************************************************************************************
@@ -236,7 +236,7 @@ public:
 		**************************************************************************************************************/
 		void generateTilesVaa3DRawMC ( std::string output_path, bool* resolutions = NULL, 
 			int block_height = -1, int block_width = -1, int block_depth = -1, int method = HALVE_BY_MEAN, bool show_progress_bar = true, 
-			const char* saved_img_format = "raw", int saved_img_depth = IM_DEF_IMG_DEPTH )	throw (MyException);
+			const char* saved_img_format = "raw", int saved_img_depth = IM_NUL_IMG_DEPTH )	throw (MyException);
 
 };
 

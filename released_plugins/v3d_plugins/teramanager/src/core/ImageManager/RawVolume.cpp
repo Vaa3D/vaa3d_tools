@@ -128,11 +128,11 @@ uint8 *RawVolume::loadSubvolume_to_UINT8(int V0,int V1, int H0, int H1, int D0, 
     #endif
 
     //checking for non implemented features
-	if( this->BYTESxCHAN != 1 ) {
-		char err_msg[IM_STATIC_STRINGS_SIZE];
-		sprintf(err_msg,"RawVolume::loadSubvolume_to_UINT8: invalid number of bytes per channel (%d)",this->BYTESxCHAN); 
-		throw MyException(err_msg);
-	}
+	//if( this->BYTESxCHAN != 1 ) {
+	//	char err_msg[IM_STATIC_STRINGS_SIZE];
+	//	sprintf(err_msg,"RawVolume::loadSubvolume_to_UINT8: invalid number of bytes per channel (%d)",this->BYTESxCHAN); 
+	//	throw MyException(err_msg);
+	//}
 
 	// check #channels
 	//if ( CHANS == 1 )

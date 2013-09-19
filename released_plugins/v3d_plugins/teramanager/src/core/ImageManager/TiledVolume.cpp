@@ -97,7 +97,10 @@ TiledVolume::TiledVolume(const char* _root_dir, ref_sys _reference_system, float
 	char mdata_filepath[IM_STATIC_STRINGS_SIZE];
 	sprintf(mdata_filepath, "%s/%s", root_dir, IM_METADATA_FILE_NAME);
     if(fileExists(mdata_filepath) && !overwrite_mdata)
+	{
 		load(mdata_filepath);
+		initChannels();
+	}
 	else
 	{
         if(_reference_system.first == axis_invalid ||  _reference_system.second == axis_invalid ||

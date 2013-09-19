@@ -336,7 +336,7 @@ uint8 *SimpleVolume::loadSubvolume_to_UINT8(int V0,int V1, int H0, int H1, int D
                     }
                     else if(sbv_channels == 3) // channels in subvol are separated, where as in slice_row are arranged in triplets
                     {
- 						// about subvol index: actually there is always just one stack, 
+						// about subvol index: actually there is always just one stack, 
 						// hence all the subvolume has to be filled
 						// this is why for k=0 offset1=0
                         sint64 offset1 = k*sbv_height*sbv_width*sbv_bytes_chan;
@@ -346,18 +346,21 @@ uint8 *SimpleVolume::loadSubvolume_to_UINT8(int V0,int V1, int H0, int H1, int D
                         {
                             uint8* slice_row = ((uint8*)slice->imageData) + (i+ABS_V_offset)*slice_step;
  							int c = 0; // controls the number of bytes to be copied
-							for(int j1 = (jstart * sbv_bytes_chan), j2 = (3 * jstart * sbv_bytes_chan); c <((jend-jstart) * sbv_bytes_chan); j1++, j2+=3, c++)
+							for(int j1 = (jstart * sbv_bytes_chan), j2 = (3 * jstart * sbv_bytes_chan); c <(jend-jstart); j1+=sbv_bytes_chan, j2+=3*sbv_bytes_chan, c++)
                             {
 								// all horizontal indices have to be multiplied by sbv_bytes_chan, including jstart
- 								// the number of triplets to be copied is [(jend-jstart) * sbv_bytes_chan]
-								subvol[offset1 + i*sbv_width*sbv_bytes_chan + j1] = slice_row[j2 + ABS_H_offset + 2];
-                                subvol[offset2 + i*sbv_width*sbv_bytes_chan + j1] = slice_row[j2 + ABS_H_offset + 1];
-                                subvol[offset3 + i*sbv_width*sbv_bytes_chan + j1] = slice_row[j2 + ABS_H_offset];
+ 								// the number of triplets to be copied is (jend-jstart)
+								for ( int b=0; b<sbv_bytes_chan; b++ ) {
+									// each triplet consists of sbv_bytes_chan bytes
+									subvol[offset1 + i*sbv_width*sbv_bytes_chan + j1 + b] = slice_row[j2 + b + ABS_H_offset + 2*sbv_bytes_chan];
+									subvol[offset2 + i*sbv_width*sbv_bytes_chan + j1 + b] = slice_row[j2 + b + ABS_H_offset + sbv_bytes_chan];
+									subvol[offset3 + i*sbv_width*sbv_bytes_chan + j1 + b] = slice_row[j2 + b + ABS_H_offset];
+								}
                             }
                         }
                     }
                     else
-                        throw MyException(std::string("Unsupported number of channels at \"").append(slice_fullpath).append("\". Only 1 and 3-channels images are supported").c_str());
+                        throw MyException(std::string("Unsupported number of channels at \"").append(slice_fullpath).append("\". Only 1 and 3-channels images are supported in this format").c_str());
 
 					//releasing image
 					cvReleaseImage(&slice);
