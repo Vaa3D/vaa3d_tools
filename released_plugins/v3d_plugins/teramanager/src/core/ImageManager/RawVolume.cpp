@@ -80,7 +80,7 @@ void RawVolume::init ( ) throw (MyException)
 		sprintf(err_msg,"RawVolume::init: error in loading metadata - %s",internal_msg);
 		throw MyException(err_msg);
 	}
-	closeRawFile((FILE *)fhandle);
+	// fhandle must remain opened since it is a private member of RawVolume 
 
 	DIM_V = (uint32) sz[1]; // in raw format first dimension is horizontal
 	DIM_H = (uint32) sz[0];
