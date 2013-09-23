@@ -46,24 +46,19 @@ LIBS+= -lopencv_core -lopencv_imgproc -lopencv_highgui \
 #set up Vaa3D stuff needed by the plugin
 V3DMAINPATH =  ../../../v3d_main
 QT_PATH = $$dirname(QMAKE_QMAKE)/..
+
 INCLUDEPATH+= $$QT_PATH/demos/shared
 INCLUDEPATH += $$V3DMAINPATH/basic_c_fun
 INCLUDEPATH += $$V3DMAINPATH/3drenderer
 INCLUDEPATH += $$V3DMAINPATH/common_lib/include
-#INCLUDEPATH += $$V3DMAINPATH/common_lib/src_packages/mylib_tiff
 INCLUDEPATH += $$V3DMAINPATH/basic_c_fun/customary_structs
+
 SOURCES += $$V3DMAINPATH/basic_c_fun/v3d_message.cpp
 SOURCES += $$V3DMAINPATH/basic_c_fun/stackutil.cpp
-#SOURCES += $$V3DMAINPATH/basic_c_fun/mg_image_lib.cpp
 SOURCES += $$V3DMAINPATH/basic_c_fun/mg_utilities.cpp
 SOURCES += $$V3DMAINPATH/basic_c_fun/basic_memory.cpp
 SOURCES += $$V3DMAINPATH/basic_c_fun/basic_4dimage.cpp
-#SOURCES += $$V3DMAINPATH/basic_c_fun/imageio_mylib.cpp
 SOURCES += $$V3DMAINPATH/basic_c_fun/basic_surf_objs.cpp
-#HEADERS += $$V3DMAINPATH/common_lib/src_packages/mylib_tiff/image.h \
-#HEADERS += $$V3DMAINPATH/basic_c_fun/imageio_mylib.h
-#LIBS += -L. -lv3dtiff -L$$V3DMAINPATH/common_lib/lib \
-#            -L$$V3DMAINPATH/common_lib/src_packages/mylib_tiff -lmylib
 
 #Vaa3D sources needed to use experimental features
 use_experimental_features{
