@@ -197,17 +197,18 @@ bool selectiveEnhancement::dofunc(const QString & func_name, const V3DPluginArgL
     {
         cout<<"Usage : v3d -x dllname -f adaptive_auto -i <inimg_file> -o <outimg_file> -p <scale> <ch> <ratio> <soma>"<<endl;
         cout<<endl;
-        cout<<"scale       the iteration time, default 5"<<endl;
+        cout<<"scale       the iteration time, default 2"<<endl;
         cout<<"ch          the input channel value, start from 1, default 1"<<endl;
-        cout<<"ratio       the window size calibration ratio, default 0.1"<<endl;
+        cout<<"ratio       the window size calibration ratio, default 1"<<endl;
         cout<<"soma        soma detection, 1: detect, 0: not detect, default 0"<<endl;
         cout<<endl;
         cout<<endl;
 
-        cout<<"Usage : v3d -x dllname -f adaptive_auto_block -i <inimg_file> -o <outimg_file> -p <ws> <ch> <soma>" <<endl;
+        cout<<"Usage : v3d -x dllname -f adaptive_auto_block -i <inimg_file> -o <outimg_file> -p <ws> <ch> <ratio> <soma>" <<endl;
         cout<<endl;
         cout<<"ws          block window size (pixel #), default 1000"<<endl;
-        cout<<"ch          the input channel value, default 1 and start from 1, default 1"<<endl;
+        cout<<"ch          the input channel value, start from 1, default 1"<<endl;
+        cout<<"ratio       the window size calibration ratio, default 1"<<endl;
         cout<<"soma        soma detection, 1: detect, 0: not detect, default 0"<<endl;
         cout<<endl;
         cout<<endl;;
@@ -693,7 +694,7 @@ void processImage_adaptive_auto_2D(V3DPluginCallback2 &callback, QWidget *parent
 
 
         unsigned char *EnahancedImage_final=0;
-        for(int count = 0; count < scale; count++)
+        for(unsigned int  count = 0; count < scale; count++)
         {
             double sigma = maxDT1/2;
             unsigned char * data1d_gf = 0;
@@ -778,12 +779,13 @@ void processImage_adaptive_auto_blocks(V3DPluginCallback2 &callback, QWidget *pa
     ImagePixelType pixeltype = p4DImage->getDatatype();
 
     V3DLONG in_sz[4];
-    in_sz[0] = N; in_sz[1] = M; in_sz[2] = P; in_sz[3] = sc;
+    in_sz[0] = N; in_sz[1] = M; in_sz[2] = P; in_sz[3] = 1;
 
 
     //input
-    bool ok1 = false,ok4 = false;
+    bool ok1 = false,ok2 = false,ok3 = false;
     unsigned int Ws=1000, c=1,p=0;
+    double ratio = 1.0;
     if(N < M)
         Ws = QInputDialog::getInteger(parent, "Block Size",
                                       "Enter block size:",
@@ -797,14 +799,24 @@ void processImage_adaptive_auto_blocks(V3DPluginCallback2 &callback, QWidget *pa
         if(sc==1)
         {
             c=1;
-            ok4=true;
+            ok2=true;
         }
         else
         {
             c = QInputDialog::getInteger(parent, "Channel",
                                          "Enter channel NO:",
-                                         1, 1, sc, 1, &ok4);
+                                         1, 1, sc, 1, &ok2);
         }
+    }
+    else
+        return;
+
+
+    if(ok2)
+    {
+        ratio = QInputDialog::getDouble(parent, "Calibration Ratio",
+                                        "Enter window size calibration ratio:",
+                                        1, 0.1, 3, 1, &ok3);
     }
     else
         return;
@@ -819,7 +831,6 @@ void processImage_adaptive_auto_blocks(V3DPluginCallback2 &callback, QWidget *pa
     unsigned char* target1d_y = 0;
     V3DLONG szSub_y[4];
     V3DLONG szTar_y[4];
-    double ratio = 1.0;
 
     for(V3DLONG iy = 0; iy < M; iy = iy+Ws-Ws/10)
     {
@@ -1002,23 +1013,60 @@ void processImage_adaptive_auto_blocks(V3DPluginCallback2 &callback, QWidget *pa
         if(target1d) {delete []target1d; target1d =0;}
     }
 
-    unsigned char* Enhancement_output = 0;
+    unsigned char* Enhancement_soma = 0;
     if(p==1)
     {
-        enhancementWithsoma(callback,(unsigned char *)data1d,(unsigned char*)target1d_y,in_sz,1,(unsigned char *&)Enhancement_output);
+        enhancementWithsoma(callback,(unsigned char *)data1d,(unsigned char*)target1d_y,in_sz,1,(unsigned char *&)Enhancement_soma);
     }
     else
     {
-        Enhancement_output = new unsigned char [pagesz];
-        memcpy(Enhancement_output, target1d_y, pagesz);
+        Enhancement_soma = new unsigned char [pagesz];
+        memcpy(Enhancement_soma, target1d_y, pagesz);
     }
 
+    simple_saveimage_wrapper(callback,"result_woGf.v3draw", (unsigned char *)Enhancement_soma, in_sz, 1);
+    V3DPluginArgItem arg;
+    V3DPluginArgList input;
+    V3DPluginArgList output;
+
+    arg.type = "random";std::vector<char*> args1;
+    args1.push_back("result_woGf.v3draw"); arg.p = (void *) & args1; input<< arg;
+    arg.type = "random";std::vector<char*> args;
+    args.push_back("3");args.push_back("3");args.push_back("3");args.push_back("1"); args.push_back("2"); arg.p = (void *) & args; input << arg;
+    arg.type = "random";std::vector<char*> args2;args2.push_back("gfImage_v2.v3draw"); arg.p = (void *) & args2; output<< arg;
+
+    QString full_plugin_name = "gaussian";
+    QString func_name = "gf";
+
+    callback.callPluginFunc(full_plugin_name,func_name, input,output);
+
+    unsigned char * data1d_float = 0;
+    int datatype;
+    V3DLONG in_zz[4];
+
+    char * outimg_file = ((vector<char*> *)(output.at(0).p))->at(0);
+    if(!simple_loadimage_wrapper(callback,outimg_file, data1d_float, in_zz, datatype))
+    {
+        cerr<<"load image "<<outimg_file<<" error!"<<endl;
+        return;
+    }
+    remove("result_woGf.v3draw");
+    remove("gfImage_v2.v3draw");
+
+    double min,max;
+    unsigned char* data1d_uint8 = 0;
+    data1d_uint8 = new unsigned char [pagesz];
+
+    rescale_to_0_255_and_copy((float *)data1d_float,pagesz,min,max,data1d_uint8);
+
+    if (Enhancement_soma) {delete []Enhancement_soma; Enhancement_soma=0;}
+    if (data1d_float) { delete []data1d_float; data1d_float=0;}
     if(subject1d_y) {delete []subject1d_y; subject1d_y =0;}
     if(target1d_y) {delete []target1d_y; target1d_y =0;}
 
     //set up output image
     Image4DSimple * new4DImage = new Image4DSimple();
-    new4DImage->setData((unsigned char *)Enhancement_output,N, M, P, 1, V3D_UINT8);
+    new4DImage->setData((unsigned char *)data1d_uint8,N, M, P, 1, V3D_UINT8);
     v3dhandle newwin = callback.newImageWindow();
     callback.setImage(newwin, new4DImage);
     callback.setImageName(newwin, "Local_adaptive_enhancement_result");
@@ -1030,8 +1078,8 @@ bool processImage_adaptive_auto(const V3DPluginArgList & input, V3DPluginArgList
 {
     cout<<"Welcome to adaptive enhancement filter"<<endl;
     if (output.size() != 1) return false;
-    unsigned int scale = 5, c=1, p = 0;
-    float ratio = 0.1;
+    unsigned int scale = 2, c=1, p = 0;
+    float ratio = 1;
     if (input.size()>=2)
     {
 
@@ -1081,7 +1129,7 @@ bool processImage_adaptive_auto(const V3DPluginArgList & input, V3DPluginArgList
 
 
     double sigma = 0.3;
-    for(int count = 0; count < scale; count++)
+    for(unsigned int  count = 0; count < scale; count++)
     {
 
         unsigned char * data1d_gf = 0;
@@ -1123,7 +1171,7 @@ bool processImage_adaptive_auto(const V3DPluginArgList & input, V3DPluginArgList
         if(gsdtld) {delete []gsdtld; gsdtld =0;}
     }
 
-    //remove("temp.v3draw");
+    remove("temp.v3draw");
 
     unsigned char* Enhancement_soma = 0;
     if(p==1)
@@ -1184,9 +1232,10 @@ bool processImage_adaptive_auto(const V3DPluginArgList & input, V3DPluginArgList
 
 bool processImage_adaptive_auto_blocks(const V3DPluginArgList & input, V3DPluginArgList & output,V3DPluginCallback2 &callback)
 {
-    cout<<"Welcome to enhancement filter with blocks"<<endl;
+    cout<<"Welcome to adaptive enhancement filter with blocks"<<endl;
     if (output.size() != 1) return false;
-    unsigned int Ws = 1000, c=1;
+    unsigned int Ws = 1000, c=1, p = 0;
+    float ratio = 1.0;
     if (input.size()>=2)
     {
 
@@ -1194,6 +1243,9 @@ bool processImage_adaptive_auto_blocks(const V3DPluginArgList & input, V3DPlugin
         cout<<paras.size()<<endl;
         if(paras.size() >= 1) Ws = atoi(paras.at(0));
         if(paras.size() >= 2) c = atoi(paras.at(1));
+        if(paras.size() >= 3) ratio = atof(paras.at(2));
+        if(paras.size() >= 4) p = atoi(paras.at(3));
+
     }
 
     char * inimg_file = ((vector<char*> *)(input.at(0).p))->at(0);
@@ -1201,6 +1253,8 @@ bool processImage_adaptive_auto_blocks(const V3DPluginArgList & input, V3DPlugin
 
     cout<<"Ws = "<<Ws<<endl;
     cout<<"c = "<<c<<endl;
+    cout<<"ratio = "<<ratio<<endl;
+    cout<<"soma = "<<p<<endl;
     cout<<"inimg_file = "<<inimg_file<<endl;
     cout<<"outimg_file = "<<outimg_file<<endl;
 
@@ -1225,8 +1279,6 @@ bool processImage_adaptive_auto_blocks(const V3DPluginArgList & input, V3DPlugin
     unsigned char* target1d_y = NULL;
     V3DLONG szSub_y[4];
     V3DLONG szTar_y[4];
-    double ratio = 1.0;
-
 
     for(V3DLONG iy = 0; iy < M; iy = iy+Ws-Ws/10)
     {
@@ -1409,20 +1461,59 @@ bool processImage_adaptive_auto_blocks(const V3DPluginArgList & input, V3DPlugin
         if(target1d) {delete []target1d; target1d =0;}
     }
 
+    unsigned char* Enhancement_soma = 0;
+    if(p==1)
+    {
+        enhancementWithsoma(callback,(unsigned char *)data1d,(unsigned char*)target1d_y,in_sz,1,(unsigned char *&)Enhancement_soma);
+    }
+    else
+    {
+        Enhancement_soma = new unsigned char [pagesz];
+        memcpy(Enhancement_soma, target1d_y, pagesz);
+    }
+    in_sz[3] = 1;
+    simple_saveimage_wrapper(callback,"result_woGf.v3draw", (unsigned char *)Enhancement_soma, in_sz, 1);
+    V3DPluginArgItem arg;
+    V3DPluginArgList input;
+    V3DPluginArgList output;
 
-    // save image
+    arg.type = "random";std::vector<char*> args1;
+    args1.push_back("result_woGf.v3draw"); arg.p = (void *) & args1; input<< arg;
+    arg.type = "random";std::vector<char*> args;
+    args.push_back("3");args.push_back("3");args.push_back("3");args.push_back("1"); args.push_back("2"); arg.p = (void *) & args; input << arg;
+    arg.type = "random";std::vector<char*> args2;args2.push_back("gfImage_v2.v3draw"); arg.p = (void *) & args2; output<< arg;
+
+    QString full_plugin_name = "gaussian";
+    QString func_name = "gf";
+
+    callback.callPluginFunc(full_plugin_name,func_name, input,output);
+
+    unsigned char * data1d_float = 0;
+    V3DLONG in_zz[4];
+    datatype = 0;
+    char * outimg_file2 = ((vector<char*> *)(output.at(0).p))->at(0);
+    if(!simple_loadimage_wrapper(callback,outimg_file2, data1d_float, in_zz, datatype))
+    {
+        cerr<<"load image "<<outimg_file2<<" error!"<<endl;
+        return false;
+    }
+
+    remove("result_woGf.v3draw");
+    remove("gfImage_v2.v3draw");
+
     double min,max;
-    unsigned char* datald_output = 0;
-    datald_output = new unsigned char [pagesz];
-    rescale_to_0_255_and_copy((unsigned char *)target1d_y,pagesz,min,max,datald_output);
-    in_sz[3]=1;
+    unsigned char* data1d_uint8 = 0;
+    data1d_uint8 = new unsigned char [pagesz];
+    rescale_to_0_255_and_copy((float *)data1d_float,pagesz,min,max,data1d_uint8);
+    simple_saveimage_wrapper(callback, outimg_file, (unsigned char *)data1d_uint8, in_sz, 1);
 
-    simple_saveimage_wrapper(callback, outimg_file, (unsigned char *)datald_output, in_sz, 1);
 
+    if (Enhancement_soma) {delete []Enhancement_soma; Enhancement_soma=0;}
+    if (data1d_float) { delete []data1d_float; data1d_float=0;}
+    if (data1d_uint8) {delete []data1d_uint8; data1d_uint8=0;}
     if(target1d_y) {delete []target1d_y; target1d_y =0;}
     if(subject1d_y) {delete []subject1d_y; subject1d_y =0;}
     if (data1d) {delete []data1d; data1d=0;}
-    if (datald_output) {delete []datald_output; datald_output=0;}
     return true;
 }
 

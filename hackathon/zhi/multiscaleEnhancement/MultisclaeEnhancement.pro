@@ -17,5 +17,5 @@ HEADERS	+= MultisclaeEnhancement_plugin.h
 SOURCES	+= MultisclaeEnhancement_plugin.cpp
 SOURCES	+= $$V3DMAINPATH/basic_c_fun/v3d_message.cpp
 
-TARGET	= $$qtLibraryTarget(MultisclaeEnhancement)
-DESTDIR	= ../../../bin/plugins/MultiscaleEnhancement
+TARGET	= $$qtLibraryTarget(multiscaleEnhancement)
+DESTDIR	= ../../../bin/plugins/multiscaleEnhancement
