@@ -305,7 +305,7 @@ void Block::init()
 	if ( (err_rawfmt = loadRaw2Metadata(slice_fullpath,sz,datatype,b_swap,dummy,header_len)) != 0 ) {
 		if ( sz ) delete[] sz;
 		char msg[IM_STATIC_STRINGS_SIZE];
-		sprintf(msg,"in Block[%d,%d]::init(): unable to open block \"%s\". Wrong path or format(%s)", 
+		sprintf(msg,"in Block[%d,%d]::init(): unable to open block \"%s\". Wrong path or format (%s)", 
 			ROW_INDEX, COL_INDEX, slice_fullpath,err_rawfmt);
 		throw MyException(msg);
 	}
@@ -327,11 +327,12 @@ void Block::init()
 		if ( (err_rawfmt = loadRaw2Metadata(slice_fullpath,sz,datatype,b_swap,dummy,header_len)) != 0 ) {
 			if ( sz ) delete[] sz;
 			char msg[IM_STATIC_STRINGS_SIZE];
-			sprintf(msg,"in Block[%d,%d]::init(): unable to open block \"%s\". Wrong path or format(%s)", 
+			sprintf(msg,"in Block[%d,%d]::init(): unable to open block \"%s\". Wrong path or format (%s)", 
 				ROW_INDEX, COL_INDEX, slice_fullpath,err_rawfmt);
 			throw MyException(msg);
-		}		
+		}
 		closeRawFile((FILE *)dummy);
+
 		BLOCK_SIZE[ib] = (uint32)sz[2];
 		BLOCK_ABS_D[ib] = DEPTH;
 		DEPTH += BLOCK_SIZE[ib];

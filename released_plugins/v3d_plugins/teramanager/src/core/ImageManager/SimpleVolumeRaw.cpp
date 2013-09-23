@@ -156,6 +156,7 @@ void SimpleVolumeRaw::initChannels ( ) throw (MyException) {
 			slice_fullpath,err_rawfmt);
 		throw MyException(msg);
 	}
+	closeRawFile((FILE *)fhandle);
 
 	CHANS = (int)sz[3];
 	BYTESxCHAN = datatype;
@@ -219,18 +220,25 @@ REAL_T *SimpleVolumeRaw::loadSubvolume_to_REAL_T(int V0,int V1, int H0, int H1, 
 }
 
 
-uint8 *SimpleVolumeRaw::loadSubvolume_to_UINT8(int V0,int V1, int H0, int H1, int D0, int D1, int *channels) throw (MyException) {
+uint8 *SimpleVolumeRaw::loadSubvolume_to_UINT8(int V0,int V1, int H0, int H1, int D0, int D1, int *channels, int ret_type) throw (MyException) {
 
     #if IM_VERBOSE > 3
     printf("\t\t\t\tin SimpleVolumeRaw::loadSubvolume_to_UINT8(V0=%d, V1=%d, H0=%d, H1=%d, D0=%d, D1=%d)\n", V0, V1, H0, H1, D0, D1);
     #endif
 
     //checking for non implemented features
-	//if( this->BYTESxCHAN != 1 ) {
-	//	char err_msg[IM_STATIC_STRINGS_SIZE];
-	//	sprintf(err_msg,"SimpleVolumeRaw::loadSubvolume_to_UINT8: invalid number of bytes per channel (%d)",this->BYTESxCHAN); 
-	//	throw MyException(err_msg);
-	//}
+	if( this->BYTESxCHAN > 2 ) {
+		char err_msg[IM_STATIC_STRINGS_SIZE];
+		sprintf(err_msg,"SimpleVolumeRaw::loadSubvolume_to_UINT8: invalid number of bytes per channel (%d)",this->BYTESxCHAN); 
+		throw MyException(err_msg);
+	}
+
+	if ( (ret_type == IM_DEF_IMG_DEPTH) && ((8 * this->BYTESxCHAN) != IM_DEF_IMG_DEPTH)  ) {
+		// return type is 8 bits, but native depth is not 8 bits
+		char err_msg[IM_STATIC_STRINGS_SIZE];
+		sprintf(err_msg,"SimpleVolumeRaw::loadSubvolume_to_UINT8: non supported return type (%d bits) - native type is %d bits",ret_type, 8*this->BYTESxCHAN); 
+		throw MyException(err_msg);
+	}
 
 	//initializations
 	V0 = (V0 == -1 ? 0	     : V0);
@@ -329,7 +337,7 @@ uint8 *SimpleVolumeRaw::loadSubvolume_to_UINT8(int V0,int V1, int H0, int H1, in
                         }
                         catch(...){
 							if ( sz ) delete[] sz;
-							throw MyException("in StackedVolume::loadSubvolume_to_UINT8: unable to allocate memory");
+							throw MyException("in SimpleVolumeRaw::loadSubvolume_to_UINT8: unable to allocate memory");
 						}
                     }
                     //otherwise checking that all the other slices have the same bitdepth of the first one
@@ -339,7 +347,7 @@ uint8 *SimpleVolumeRaw::loadSubvolume_to_UINT8(int V0,int V1, int H0, int H1, in
 					}
 
 					//computing offsets
-                    int slice_step = sz[0] * datatype; // WARNING, not sure: to be checked
+                    int slice_step = (int)sz[0] * datatype; // WARNING, not sure: to be checked
                     int ABS_V_offset = V0 - STACKS[row][col]->getABS_V();
                     int ABS_H_offset = (H0 - STACKS[row][col]->getABS_H())*((int)sbv_channels);
 

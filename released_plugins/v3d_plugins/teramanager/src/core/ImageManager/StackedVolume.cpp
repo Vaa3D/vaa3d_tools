@@ -76,7 +76,7 @@ StackedVolume::StackedVolume(const char* _root_dir)  throw (MyException)
 StackedVolume::StackedVolume(const char* _root_dir, ref_sys _reference_system, float _VXL_1, float _VXL_2, float _VXL_3, bool overwrite_mdata, bool save_mdata)  throw (MyException)
 : VirtualVolume(_root_dir) // iannello ADDED
 {
-        #if IM_VERBOSE > 3
+    #if IM_VERBOSE > 3
 	printf("\t\t\t\tin StackedVolume::StackedVolume(_root_dir=%s, ref_sys reference_system={%d,%d,%d}, VXL_1=%.4f, VXL_2=%.4f, VXL_3=%.4f)\n",
                           _root_dir, _reference_system.first, _reference_system.second, _reference_system.third, _VXL_1, _VXL_2, _VXL_3);
 	#endif
@@ -767,6 +767,13 @@ REAL_T* StackedVolume::loadSubvolume(int V0,int V1, int H0, int H1, int D0, int 
 	printf("\t\t\t\tin StackedVolume::loadSubvolume(V0=%d, V1=%d, H0=%d, H1=%d, D0=%d, D1=%d%s)\n", V0, V1, H0, H1, D0, D1, (involved_stacks? ", involved_stacks" : ""));
 	#endif
 
+    //checking for non implemented features
+	if( this->BYTESxCHAN != 1 ) {
+		char err_msg[IM_STATIC_STRINGS_SIZE];
+		sprintf(err_msg,"StackedVolume::loadSubvolume: invalid number of bytes per channel (%d)",this->BYTESxCHAN); 
+		throw MyException(err_msg);
+	}
+
 	//initializations
 	V0 = (V0 == -1 ? 0	     : V0);
 	V1 = (V1 == -1 ? DIM_V   : V1);
@@ -823,11 +830,25 @@ REAL_T* StackedVolume::loadSubvolume(int V0,int V1, int H0, int H1, int D0, int 
 
 //loads given subvolume in a 1-D array of uint8 while releasing stacks slices memory when they are no longer needed
 //---03 nov 2011: added color support
-uint8* StackedVolume::loadSubvolume_to_UINT8(int V0,int V1, int H0, int H1, int D0, int D1, int *channels) throw (MyException)
+uint8* StackedVolume::loadSubvolume_to_UINT8(int V0,int V1, int H0, int H1, int D0, int D1, int *channels, int ret_type) throw (MyException)
 {
     #if IM_VERBOSE > 3
     printf("\t\t\t\tin StackedVolume::loadSubvolume_to_UINT8(V0=%d, V1=%d, H0=%d, H1=%d, D0=%d, D1=%d)\n", V0, V1, H0, H1, D0, D1);
     #endif
+
+    //checking for non implemented features
+	if( this->BYTESxCHAN != 1 ) {
+		char err_msg[IM_STATIC_STRINGS_SIZE];
+		sprintf(err_msg,"StackedVolume::loadSubvolume_to_UINT8: invalid number of bytes per channel (%d)",this->BYTESxCHAN); 
+		throw MyException(err_msg);
+	}
+
+	if ( (ret_type == IM_DEF_IMG_DEPTH) && ((8 * this->BYTESxCHAN) != IM_DEF_IMG_DEPTH)  ) {
+		// return type is 8 bits, but native depth is not 8 bits
+		char err_msg[IM_STATIC_STRINGS_SIZE];
+		sprintf(err_msg,"RawVolume::loadSubvolume_to_UINT8: non supported return type (%d bits) - native type is %d bits",ret_type, 8*this->BYTESxCHAN); 
+		throw MyException(err_msg);
+	}
 
     //initializations
     V0 = V0 < 0 ? 0 : V0;

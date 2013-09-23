@@ -509,7 +509,7 @@ void TiledVolume::init()
 
 void TiledVolume::initChannels ( ) throw (MyException) {
     CHANS = BLOCKS[0][0]->getN_CHANS();
-	BYTESxCHAN = BLOCKS[0][0]->getN_BYTESxCHAN();
+	BYTESxCHAN = (int)BLOCKS[0][0]->getN_BYTESxCHAN();
 }
 
 //PRINT method
@@ -766,6 +766,13 @@ REAL_T* TiledVolume::loadSubvolume(int V0,int V1, int H0, int H1, int D0, int D1
 	sprintf(msg,"in TiledVolume::loadSubvolume: not completed yet");
 	throw MyException(msg);
 
+    //checking for non implemented features
+	if( this->BYTESxCHAN != 1 ) {
+		char err_msg[IM_STATIC_STRINGS_SIZE];
+		sprintf(err_msg,"TiledVolume::loadSubvolume: invalid number of bytes per channel (%d)",this->BYTESxCHAN); 
+		throw MyException(err_msg);
+	}
+
 	//initializations
 	V0 = (V0 == -1 ? 0	     : V0);
 	V1 = (V1 == -1 ? DIM_V   : V1);
@@ -823,7 +830,7 @@ REAL_T* TiledVolume::loadSubvolume(int V0,int V1, int H0, int H1, int D0, int D1
 
 //loads given subvolume in a 1-D array of uint8 while releasing stacks slices memory when they are no longer needed
 //---03 nov 2011: added color support
-uint8* TiledVolume::loadSubvolume_to_UINT8(int V0,int V1, int H0, int H1, int D0, int D1, int *channels) throw (MyException)
+uint8* TiledVolume::loadSubvolume_to_UINT8(int V0,int V1, int H0, int H1, int D0, int D1, int *channels, int ret_type ) throw (MyException)
 {
     #if IM_VERBOSE > 3
     printf("\t\t\t\tin TiledVolume::loadSubvolume_to_UINT8(V0=%d, V1=%d, H0=%d, H1=%d, D0=%d, D1=%d)\n", V0, V1, H0, H1, D0, D1);
@@ -833,6 +840,14 @@ uint8* TiledVolume::loadSubvolume_to_UINT8(int V0,int V1, int H0, int H1, int D0
 	if( this->BYTESxCHAN != 1 ) {
 		char err_msg[IM_STATIC_STRINGS_SIZE];
 		sprintf(err_msg,"TiledVolume::loadSubvolume_to_UINT8: invalid number of bytes per channel (%d)",this->BYTESxCHAN); 
+		throw MyException(err_msg);
+	}
+
+	if ( (ret_type == IM_DEF_IMG_DEPTH) && ((8 * this->BYTESxCHAN) != IM_DEF_IMG_DEPTH)  ) {
+		// does not support depth conversion: 
+		// return type is 8 bits, but native depth is not 8 bits
+		char err_msg[IM_STATIC_STRINGS_SIZE];
+		sprintf(err_msg,"RawVolume::loadSubvolume_to_UINT8: non supported return type (%d bits) - native type is %d bits",ret_type, 8*this->BYTESxCHAN); 
 		throw MyException(err_msg);
 	}
 
@@ -858,6 +873,7 @@ uint8* TiledVolume::loadSubvolume_to_UINT8(int V0,int V1, int H0, int H1, int D0
 
     //initializing the number of channels with an undefined value (it will be detected from the first slice read)
     sint64 sbv_channels = -1;
+	sint64 sbv_bytes_chan = -1;
 
     //scanning of stacks matrix for data loading and storing into subvol
     Rect_t subvol_area;
@@ -891,9 +907,10 @@ uint8* TiledVolume::loadSubvolume_to_UINT8(int V0,int V1, int H0, int H1, int D0
 					    {
 					        first_time = false;
 							sbv_channels = this->CHANS;
+							sbv_bytes_chan = this->BYTESxCHAN;
 					        try
 					        {
-					            subvol = new uint8[sbv_height * sbv_width * sbv_depth * sbv_channels];
+					            subvol = new uint8[sbv_height * sbv_width * sbv_depth * sbv_channels * sbv_bytes_chan];
 					        }
 					        catch(...){throw MyException("in TiledVolume::loadSubvolume_to_UINT8: unable to allocate memory");}
 					    }

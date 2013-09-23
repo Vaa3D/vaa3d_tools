@@ -279,7 +279,7 @@ void VolumeConverter::generateTiles(std::string output_path, bool* resolutions,
 		if ( internal_rep == REAL_INTERNAL_REP )
 			rbuffer = volume->loadSubvolume_to_REAL_T(V0,V1,H0,H1,(int)(z-D0),(z-D0+z_max_res <= D1) ? (int)(z-D0+z_max_res) : D1);
 		else { // internal_rep == UINT8_INTERNAL_REP
-			ubuffer[0] = volume->loadSubvolume_to_UINT8(V0,V1,H0,H1,(int)(z-D0),(z-D0+z_max_res <= D1) ? (int)(z-D0+z_max_res) : D1,&channels);
+			ubuffer[0] = volume->loadSubvolume_to_UINT8(V0,V1,H0,H1,(int)(z-D0),(z-D0+z_max_res <= D1) ? (int)(z-D0+z_max_res) : D1,&channels,IM_NATIVE_RTYPE);
 			// WARNING: next code assumes that channels is 1 or 3, but implementations of loadSubvolume_to_UINT8 do not guarantee this condition
 			if ( org_channels != channels ) {
 				char err_msg[IM_STATIC_STRINGS_SIZE];
@@ -525,7 +525,7 @@ void VolumeConverter::generateTilesVaa3DRaw(std::string output_path, bool* resol
     int ***stacks_height[S_MAX_MULTIRES];   //array of matrices of tiles dimensions at i-th resolution
 	int ***stacks_width[S_MAX_MULTIRES];	
 	int ***stacks_depth[S_MAX_MULTIRES];
-    std::stringstream file_path[S_MAX_MULTIRES];                            //array of root directory name at i-th resolution
+    std::stringstream file_path[S_MAX_MULTIRES];  //array of root directory name at i-th resolution
 	int resolutions_size = 0;
 
 	/* DEFINITIONS OF VARIABILES THAT MANAGE TILES (BLOCKS) ALONG D-direction
@@ -667,7 +667,7 @@ void VolumeConverter::generateTilesVaa3DRaw(std::string output_path, bool* resol
 		if ( internal_rep == REAL_INTERNAL_REP )
 			rbuffer = volume->loadSubvolume_to_REAL_T(V0,V1,H0,H1,(int)(z-D0),(z-D0+z_max_res <= D1) ? (int)(z-D0+z_max_res) : D1);
 		else { // internal_rep == UINT8_INTERNAL_REP
-			ubuffer[0] = volume->loadSubvolume_to_UINT8(V0,V1,H0,H1,(int)(z-D0),(z-D0+z_max_res <= D1) ? (int)(z-D0+z_max_res) : D1,&channels);
+			ubuffer[0] = volume->loadSubvolume_to_UINT8(V0,V1,H0,H1,(int)(z-D0),(z-D0+z_max_res <= D1) ? (int)(z-D0+z_max_res) : D1,&channels,IM_NATIVE_RTYPE);
 			if ( org_channels != channels ) {
 				char err_msg[IM_STATIC_STRINGS_SIZE];
 				sprintf(err_msg,"The volume contains images with a different number of channels (%d,%d)", org_channels, channels);
@@ -889,6 +889,7 @@ void VolumeConverter::generateTilesVaa3DRaw(std::string output_path, bool* resol
 	ref_sys reference(axis(1),axis(2),axis(3));
 	TiledVolume   *tprobe;
 	StackedVolume *sprobe;
+	int n_err = 0; 
 	sprobe = dynamic_cast<StackedVolume *>(volume);
 	if ( sprobe ) {
 		reference.first  = sprobe->getAXS_1();
@@ -911,8 +912,14 @@ void VolumeConverter::generateTilesVaa3DRaw(std::string output_path, bool* resol
             //one when dealing with CLSM data. The right reference system is stored in the <StackedVolume> object. A possible solution to implement
             //is to check whether <volume> is a pointer to a <StackedVolume> object, then specialize it to <StackedVolume*> and get its reference
             //system.
-            TiledVolume temp_vol(file_path[res_i].str().c_str(),reference,
+			try {
+				TiledVolume temp_vol(file_path[res_i].str().c_str(),reference,
 						volume->getVXL_V()*pow(2.0f,res_i), volume->getVXL_H()*pow(2.0f,res_i),volume->getVXL_D()*pow(2.0f,res_i));
+			}
+			catch ( ... ) {
+				printf("\t\t\t\tin VolumeConverter::generateTilesVaa3DRaw: cannot be created file mdata.bin in %s\n\n",file_path[res_i].str().c_str());
+				n_err++;
+			}
 
 //          StackedVolume temp_vol(file_path[res_i].str().c_str(),ref_sys(axis(1),axis(2),axis(3)), volume->getVXL_V()*(res_i+1),
 //                      volume->getVXL_H()*(res_i+1),volume->getVXL_D()*(res_i+1));
@@ -941,6 +948,12 @@ void VolumeConverter::generateTilesVaa3DRaw(std::string output_path, bool* resol
 		delete []stacks_height[res_i];
 		delete []stacks_width[res_i]; 
 		delete []stacks_depth[res_i]; 
+	}
+
+	if ( n_err ) { // errors in mdat.bin creation
+		char err_msg[IM_STATIC_STRINGS_SIZE];
+		sprintf(err_msg,"VolumeConverter::generateTilesVaa3DRaw: %d errors in creating mdata.bin files", n_err);
+		throw MyException(err_msg);
 	}
 }
 
@@ -1025,19 +1038,40 @@ void VolumeConverter::generateTilesVaa3DRawMC ( std::string output_path, bool* r
 	int org_channels = 0;       //store the number of channels read the first time (for checking purposes)
     //REAL_T* stripe_up=NULL;		//will contain up-stripe and down-stripe computed by calling 'getStripe' method (unused)
 	sint64 z_ratio, z_max_res;
-	sint64 n_slices_pred;       // number of slices of previous gropus
     int n_stacks_V[S_MAX_MULTIRES];        //arrays of number of tiles along V, H and D directions respectively at i-th resolution
     int n_stacks_H[S_MAX_MULTIRES];
 	int n_stacks_D[S_MAX_MULTIRES];  
     int ***stacks_height[S_MAX_MULTIRES];   //array of matrices of tiles dimensions at i-th resolution
 	int ***stacks_width[S_MAX_MULTIRES];	
 	int ***stacks_depth[S_MAX_MULTIRES];
-	int slice_start[S_MAX_MULTIRES];   // array of offsets: offsets of first ald last slice of current block
-	int slice_end[S_MAX_MULTIRES];
 	std::string *chans_dir;
 	std::string resolution_dir;
     std::stringstream file_path[S_MAX_MULTIRES];                            //array of root directory name at i-th resolution
 	int resolutions_size = 0;
+
+	/* DEFINITIONS OF VARIABILES THAT MANAGE TILES (BLOCKS) ALONG D-direction
+	 * In the following the term 'group' means the groups of slices that are 
+	 * processed together to generate slices of all resolution requested
+	 */
+
+	/* stack_block[i] is the index of current block along z (it depends on the resolution i)
+	 * current block is the block in which falls the first slice of the group
+	 * of slices that is currently being processed, i.e. from z to z+z_max_res-1
+	 */
+	int stack_block[S_MAX_MULTIRES]; 
+
+	/* these arrays are the indices of first and last slice of current block at resolution i
+	 * WARNING: the slice index refers to the index of the slice in the volume at resolution i 
+	 */
+	int slice_start[S_MAX_MULTIRES];   
+	int slice_end[S_MAX_MULTIRES];
+
+	/* the number of slice of already processed groups at current resolution
+	 * the index of the slice to be saved at current resolution is:
+	 *
+	 *      n_slices_pred + z_buffer
+	 */
+	sint64 n_slices_pred;       
 
 	if ( volume == 0 ) {
 		char err_msg[IM_STATIC_STRINGS_SIZE];
@@ -1176,15 +1210,11 @@ void VolumeConverter::generateTilesVaa3DRawMC ( std::string output_path, bool* r
 	memset(ubuffer,0,channels*sizeof(uint8));
 	org_channels = channels; // save for checks
 
-	/* current block is the block in which falls the first slice of the group
-	 * of slices that are currently being processed, i.e. from z to z+z_max_res-1
-	 */
-	int stack_block = 0; // index of current block along z
-
 	//slice_start and slice_end of current block depend on the resolution
 	for(int res_i=0; res_i< resolutions_size; res_i++) {
+		stack_block[res_i] = 0;
 		slice_start[res_i] = this->D0; 
-		slice_end[res_i] = slice_start[res_i] + (stacks_depth[res_i][0][0][0] - 1) * POW_INT(2,res_i);
+		slice_end[res_i] = slice_start[res_i] + stacks_depth[res_i][0][0][0] - 1;
 	}
 
 	for(sint64 z = this->D0, z_parts = 1; z < this->D1; z += z_max_res, z_parts++)
@@ -1193,7 +1223,7 @@ void VolumeConverter::generateTilesVaa3DRawMC ( std::string output_path, bool* r
 		if ( internal_rep == REAL_INTERNAL_REP )
 			rbuffer = volume->loadSubvolume_to_REAL_T(V0,V1,H0,H1,(int)(z-D0),(z-D0+z_max_res <= D1) ? (int)(z-D0+z_max_res) : D1);
 		else { // internal_rep == UINT8_INTERNAL_REP
-			ubuffer[0] = volume->loadSubvolume_to_UINT8(V0,V1,H0,H1,(int)(z-D0),(z-D0+z_max_res <= D1) ? (int)(z-D0+z_max_res) : D1,&channels);
+			ubuffer[0] = volume->loadSubvolume_to_UINT8(V0,V1,H0,H1,(int)(z-D0),(z-D0+z_max_res <= D1) ? (int)(z-D0+z_max_res) : D1,&channels,IM_NATIVE_RTYPE);
 			if ( org_channels != channels ) {
 				char err_msg[IM_STATIC_STRINGS_SIZE];
 				sprintf(err_msg,"The volume contains images with a different number of channels (%d,%d)", org_channels, channels);
@@ -1227,11 +1257,10 @@ void VolumeConverter::generateTilesVaa3DRawMC ( std::string output_path, bool* r
 			}
 
 			// check if current block is changed
-			if ( z > slice_end[i] ) {
-				stack_block++;
-				//slice_start and slice_end of current block depend on the resolution
-				slice_start[i] = slice_end[i] + POW_INT(2,i);
-				slice_end[i] += stacks_depth[i][0][0][stack_block] * POW_INT(2,i);
+			if ( (z / POW_INT(2,i)) > slice_end[i] ) {
+				stack_block[i]++;
+				slice_start[i] = slice_end[i] + 1;
+				slice_end[i] += stacks_depth[i][0][0][stack_block[i]];
 			}
 
 			// find abs_pos_z at resolution i
@@ -1242,7 +1271,8 @@ void VolumeConverter::generateTilesVaa3DRawMC ( std::string output_path, bool* r
 								(POW_INT(2,i)*slice_start[i]) * volume->getVXL_D());
 
 			//compute the number of slice of previous groups at resolution i
-			n_slices_pred  = z_max_res * (z_parts - 1) / POW_INT(2,i);
+			//note that z_parts in the number and not an index (starts from 1)
+			n_slices_pred  = (z_parts - 1) * z_max_res / POW_INT(2,i);
 
 			//buffer size along D is different when the remainder of the subdivision by z_max_res is considered
 			sint64 z_size = (z_parts<=z_ratio) ? z_max_res : (depth%z_max_res);
@@ -1366,7 +1396,7 @@ void VolumeConverter::generateTilesVaa3DRawMC ( std::string output_path, bool* r
 								img_path << H_DIR_path.str() << "/" 
 											<< this->getMultiresABS_V_string(i,start_height) << "_" 
 											<< this->getMultiresABS_H_string(i,start_width) << "_";
-								if ( (z+buffer_z) > slice_end[i] ) { // start a new block along z
+								if ( (z/POW_INT(2,i)+buffer_z) > slice_end[i] ) { // start a new block along z
 									abs_pos_z_next.width(6);
 									abs_pos_z_next.fill('0');
 									abs_pos_z_next << (int)(this->getMultiresABS_D(i) + // all stacks start at the same D position
@@ -1511,19 +1541,40 @@ void VolumeConverter::generateTilesVaa3DRawMC ( std::string output_path, bool* r
 	int org_channels = 0;       //store the number of channels read the first time (for checking purposes)
     //REAL_T* stripe_up=NULL;		//will contain up-stripe and down-stripe computed by calling 'getStripe' method (unused)
 	sint64 z_ratio, z_max_res;
-	sint64 n_slices_pred;       // number of slices of previous gropus
     int n_stacks_V[S_MAX_MULTIRES];        //arrays of number of tiles along V, H and D directions respectively at i-th resolution
     int n_stacks_H[S_MAX_MULTIRES];
 	int n_stacks_D[S_MAX_MULTIRES];  
     int ***stacks_height[S_MAX_MULTIRES];   //array of matrices of tiles dimensions at i-th resolution
 	int ***stacks_width[S_MAX_MULTIRES];	
 	int ***stacks_depth[S_MAX_MULTIRES];
-	int slice_start[S_MAX_MULTIRES];   // array of offsets: offsets of first ald last slice of current block
-	int slice_end[S_MAX_MULTIRES];
 	std::string *chans_dir;
 	std::string resolution_dir;
     std::stringstream file_path[S_MAX_MULTIRES];                            //array of root directory name at i-th resolution
 	int resolutions_size = 0;
+
+	/* DEFINITIONS OF VARIABILES THAT MANAGE TILES (BLOCKS) ALONG D-direction
+	 * In the following the term 'group' means the groups of slices that are 
+	 * processed together to generate slices of all resolution requested
+	 */
+
+	/* stack_block[i] is the index of current block along z (it depends on the resolution i)
+	 * current block is the block in which falls the first slice of the group
+	 * of slices that is currently being processed, i.e. from z to z+z_max_res-1
+	 */
+	int stack_block[S_MAX_MULTIRES]; 
+
+	/* these arrays are the indices of first and last slice of current block at resolution i
+	 * WARNING: the slice index refers to the index of the slice in the volume at resolution i 
+	 */
+	int slice_start[S_MAX_MULTIRES];   
+	int slice_end[S_MAX_MULTIRES];
+
+	/* the number of slice of already processed groups at current resolution
+	 * the index of the slice to be saved at current resolution is:
+	 *
+	 *      n_slices_pred + z_buffer
+	 */
+	sint64 n_slices_pred;       
 
 	if ( volume == 0 ) {
 		char err_msg[IM_STATIC_STRINGS_SIZE];
@@ -1658,15 +1709,11 @@ void VolumeConverter::generateTilesVaa3DRawMC ( std::string output_path, bool* r
 	memset(ubuffer,0,channels*sizeof(uint8));
 	org_channels = channels; // save for checks
 
-	/* current block is the block in which falls the first slice of the group
-	 * of slices that are currently being processed, i.e. from z to z+z_max_res-1
-	 */
-	int stack_block = 0; // index of current block along z
-
 	//slice_start and slice_end of current block depend on the resolution
 	for(int res_i=0; res_i< resolutions_size; res_i++) {
+		stack_block[res_i] = 0;
 		slice_start[res_i] = this->D0; 
-		slice_end[res_i] = slice_start[res_i] + (stacks_depth[res_i][0][0][0] - 1) * POW_INT(2,res_i);
+		slice_end[res_i] = slice_start[res_i] + stacks_depth[res_i][0][0][0] - 1;
 	}
 
 	for(sint64 z = this->D0, z_parts = 1; z < this->D1; z += z_max_res, z_parts++)
@@ -1675,7 +1722,7 @@ void VolumeConverter::generateTilesVaa3DRawMC ( std::string output_path, bool* r
 		if ( internal_rep == REAL_INTERNAL_REP )
 			rbuffer = volume->loadSubvolume_to_REAL_T(V0,V1,H0,H1,(int)(z-D0),(z-D0+z_max_res <= D1) ? (int)(z-D0+z_max_res) : D1);
 		else { // internal_rep == UINT8_INTERNAL_REP
-			ubuffer[0] = volume->loadSubvolume_to_UINT8(V0,V1,H0,H1,(int)(z-D0),(z-D0+z_max_res <= D1) ? (int)(z-D0+z_max_res) : D1,&channels);
+			ubuffer[0] = volume->loadSubvolume_to_UINT8(V0,V1,H0,H1,(int)(z-D0),(z-D0+z_max_res <= D1) ? (int)(z-D0+z_max_res) : D1,&channels,IM_NATIVE_RTYPE);
 			if ( org_channels != channels ) {
 				char err_msg[IM_STATIC_STRINGS_SIZE];
 				sprintf(err_msg,"The volume contains images with a different number of channels (%d,%d)", org_channels, channels);
@@ -1709,11 +1756,10 @@ void VolumeConverter::generateTilesVaa3DRawMC ( std::string output_path, bool* r
 			}
 
 			// check if current block is changed
-			if ( z > slice_end[i] ) {
-				stack_block++;
-				//slice_start and slice_end of current block depend on the resolution
-				slice_start[i] = slice_end[i] + POW_INT(2,i);
-				slice_end[i] += stacks_depth[i][0][0][stack_block] * POW_INT(2,i);
+			if ( (z / POW_INT(2,i)) > slice_end[i] ) {
+				stack_block[i]++;
+				slice_start[i] = slice_end[i] + 1;
+				slice_end[i] += stacks_depth[i][0][0][stack_block[i]];
 			}
 
 			// find abs_pos_z at resolution i
@@ -1724,7 +1770,8 @@ void VolumeConverter::generateTilesVaa3DRawMC ( std::string output_path, bool* r
 								(POW_INT(2,i)*slice_start[i]) * volume->getVXL_D());
 
 			//compute the number of slice of previous groups at resolution i
-			n_slices_pred  = z_max_res * (z_parts - 1) / POW_INT(2,i);
+			//note that z_parts in the number and not an index (starts from 1)
+			n_slices_pred  = (z_parts - 1) * z_max_res / POW_INT(2,i);
 
 			//buffer size along D is different when the remainder of the subdivision by z_max_res is considered
 			sint64 z_size = (z_parts<=z_ratio) ? z_max_res : (depth%z_max_res);
@@ -1848,7 +1895,7 @@ void VolumeConverter::generateTilesVaa3DRawMC ( std::string output_path, bool* r
 								img_path << H_DIR_path.str() << "/" 
 											<< this->getMultiresABS_V_string(i,start_height) << "_" 
 											<< this->getMultiresABS_H_string(i,start_width) << "_";
-								if ( (z+buffer_z) > slice_end[i] ) { // start a new block along z
+								if ( (z/POW_INT(2,i)+buffer_z) > slice_end[i] ) { // start a new block along z
 									abs_pos_z_next.width(6);
 									abs_pos_z_next.fill('0');
 									abs_pos_z_next << (int)(this->getMultiresABS_D(i) + // all stacks start at the same D position

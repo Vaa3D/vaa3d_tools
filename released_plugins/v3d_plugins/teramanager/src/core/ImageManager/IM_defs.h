@@ -46,6 +46,8 @@ typedef float          REAL_T;
 #define IM_NUL_IMG_DEPTH 0
 #define IM_DEF_IMG_DEPTH 8
 
+#define IM_NATIVE_RTYPE  0 // loadVolume returns 1 byte per channel type
+
 //for time computation
 #include <ctime>
 #ifdef _WIN32

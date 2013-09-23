@@ -210,18 +210,25 @@ REAL_T *SimpleVolume::loadSubvolume_to_REAL_T(int V0,int V1, int H0, int H1, int
 }
 
 
-uint8 *SimpleVolume::loadSubvolume_to_UINT8(int V0,int V1, int H0, int H1, int D0, int D1, int *channels) throw (MyException) {
+uint8 *SimpleVolume::loadSubvolume_to_UINT8(int V0,int V1, int H0, int H1, int D0, int D1, int *channels, int ret_type) throw (MyException) {
 
     #if IM_VERBOSE > 3
     printf("\t\t\t\tin SimpleVolume::loadSubvolume_to_UINT8(V0=%d, V1=%d, H0=%d, H1=%d, D0=%d, D1=%d)\n", V0, V1, H0, H1, D0, D1);
     #endif
 
     //checking for non implemented features
-	//if( this->BYTESxCHAN != 1 ) {
-	//	char err_msg[IM_STATIC_STRINGS_SIZE];
-	//	sprintf(err_msg,"SimpleVolume::loadSubvolume_to_UINT8: invalid number of bytes per channel (%d)",this->BYTESxCHAN); 
-	//	throw MyException(err_msg);
-	//}
+	if( this->BYTESxCHAN > 2 ) {
+		char err_msg[IM_STATIC_STRINGS_SIZE];
+		sprintf(err_msg,"SimpleVolume::loadSubvolume_to_UINT8: invalid number of bytes per channel (%d)",this->BYTESxCHAN); 
+		throw MyException(err_msg);
+	}
+
+	if ( (ret_type == IM_DEF_IMG_DEPTH) && ((8 * this->BYTESxCHAN) != IM_DEF_IMG_DEPTH)  ) {
+		// return type is 8 bits, but native depth is not 8 bits
+		char err_msg[IM_STATIC_STRINGS_SIZE];
+		sprintf(err_msg,"SimpleVolume::loadSubvolume_to_UINT8: non supported return type (%d bits) - native type is %d bits",ret_type, 8*this->BYTESxCHAN); 
+		throw MyException(err_msg);
+	}
 
 	//initializations
 	V0 = (V0 == -1 ? 0	     : V0);
@@ -296,7 +303,7 @@ uint8 *SimpleVolume::loadSubvolume_to_UINT8(int V0,int V1, int H0, int H1, int D
                         {
                             subvol = new uint8[sbv_height * sbv_width * sbv_depth * sbv_channels * sbv_bytes_chan];
                         }
-                        catch(...){throw MyException("in StackedVolume::loadSubvolume_to_UINT8: unable to allocate memory");}
+                        catch(...){throw MyException("in SimpleVolume::loadSubvolume_to_UINT8: unable to allocate memory");}
                     }
                     //otherwise checking that all the other slices have the same bitdepth of the first one
 					else {
@@ -327,7 +334,7 @@ uint8 *SimpleVolume::loadSubvolume_to_UINT8(int V0,int V1, int H0, int H1, int D
                         {
                             uint8* slice_row = ((uint8*)slice->imageData) + (i+ABS_V_offset)*slice_step;
 							int c = 0; // controls the number of bytes to be copied
-							for(int j = (jstart * sbv_bytes_chan); c <((jend-jstart) * sbv_bytes_chan); j++, c++) { 
+							for(sint64 j = (jstart * sbv_bytes_chan); c <((jend-jstart) * sbv_bytes_chan); j++, c++) { 
 								// all horizontal indices have to be multiplied by sbv_bytes_chan, including jstart
 								// the number of bytes to be copied is [(jend-jstart) * sbv_bytes_chan]
                                 subvol[k_offset + i*sbv_width*sbv_bytes_chan + j] = slice_row[j+ABS_H_offset];
@@ -346,7 +353,7 @@ uint8 *SimpleVolume::loadSubvolume_to_UINT8(int V0,int V1, int H0, int H1, int D
                         {
                             uint8* slice_row = ((uint8*)slice->imageData) + (i+ABS_V_offset)*slice_step;
  							int c = 0; // controls the number of bytes to be copied
-							for(int j1 = (jstart * sbv_bytes_chan), j2 = (3 * jstart * sbv_bytes_chan); c <(jend-jstart); j1+=sbv_bytes_chan, j2+=3*sbv_bytes_chan, c++)
+							for(sint64 j1 = (jstart * sbv_bytes_chan), j2 = (3 * jstart * sbv_bytes_chan); c <(jend-jstart); j1+=sbv_bytes_chan, j2+=3*sbv_bytes_chan, c++)
                             {
 								// all horizontal indices have to be multiplied by sbv_bytes_chan, including jstart
  								// the number of triplets to be copied is (jend-jstart)

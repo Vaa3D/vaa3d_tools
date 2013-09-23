@@ -74,7 +74,7 @@ public:
 	virtual REAL_T *loadSubvolume_to_REAL_T(int V0,int V1, int H0, int H1, int D0, int D1)  throw (MyException) = 0;
 
     //loads given subvolume in a 1-D array of uint8 while releasing stacks slices memory when they are no longer needed
-    virtual uint8 *loadSubvolume_to_UINT8(int V0,int V1, int H0, int H1, int D0, int D1, int *channels) throw (MyException) = 0;
+    virtual uint8 *loadSubvolume_to_UINT8(int V0,int V1, int H0, int H1, int D0, int D1, int *channels=0, int ret_type=IM_DEF_IMG_DEPTH) throw (MyException) = 0;
 
     // ******GET METHODS******
     float   getORG_V() {return ORG_V;}

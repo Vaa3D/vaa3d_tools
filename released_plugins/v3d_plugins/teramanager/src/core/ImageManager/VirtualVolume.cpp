@@ -450,9 +450,9 @@ void VirtualVolume::saveImage_from_UINT8_to_Vaa3DRaw (int slice, std::string img
     sprintf(buffer, "%s.%s", img_path.c_str(), img_format);
 
 	char *err_rawfmt;
-	if ( (err_rawfmt = writeSlice2RawFile (buffer,slice,(unsigned char *)imageData,img_height,img_width)) != 0 ) {
+	if ( (err_rawfmt = writeSlice2RawFile (buffer,slice,(unsigned char *)imageData,(int)img_height,(int)img_width)) != 0 ) {
 		char err_msg[IM_STATIC_STRINGS_SIZE];
-        sprintf(err_msg,"VirtualVolume::saveImage_from_UINT8_to_Vaa3DRaw: error in saving slice %d (%d x %d) in file %s (writeSlice2RawFile: %s)", slice,img_height,img_width,buffer,err_rawfmt);
+		sprintf(err_msg,"VirtualVolume::saveImage_from_UINT8_to_Vaa3DRaw: error in saving slice %d (%d x %d) in file %s (writeSlice2RawFile: %s)", slice,img_height,img_width,buffer,err_rawfmt);
 		throw MyException(err_msg);
 	};
 

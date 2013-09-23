@@ -222,10 +222,10 @@ void swap4bytes(void *targetp)
 /* This function opens 2-4D image stack from raw data and returns metadata contained in the header
  * assuming that sz elements are stored as 4-bytes integers.
  * The input parameters sz, and datatype should be empty, especially the pointer "sz". 
- * The file is not closed and the file handle is returned in fhandle.
+ * The file is closed.
  */
 static
-char *loadMetadata ( char * filename, V3DLONG * &sz, int &datatype, int &b_swap, void * &fhandle, int &header_len ) {
+char *loadMetadata ( char * filename, V3DLONG * &sz, int &datatype, int &b_swap, int &header_len ) {
 
 	FILE * fid = fopen(filename, "rb");
 	if (!fid)
@@ -334,8 +334,9 @@ char *loadMetadata ( char * filename, V3DLONG * &sz, int &datatype, int &b_swap,
 	// clean and return 
 	if (keyread) {delete [] keyread; keyread = 0;}
 
-	fhandle = fid;
 	header_len = ftell(fid);
+
+	fclose(fid); 
 
 	return ((char *) 0);
 }
@@ -1011,13 +1012,12 @@ char *writeSlice2RawFile ( char *filename, int slice, unsigned char *img, int im
 
 	char *err_rawfmt;
 	FILE *fid;
-	void *fhandle;
 	V3DLONG *sz = 0;
 	int datatype;
 	int b_swap;
 	int header_len;
 	
-	if ( (err_rawfmt = loadMetadata(filename,sz,datatype,b_swap,fhandle,header_len)) != 0 ) {
+	if ( (err_rawfmt = loadMetadata(filename,sz,datatype,b_swap,header_len)) != 0 ) {
 		if ( sz ) delete[] sz;
 		return err_rawfmt;
 	}
@@ -1026,8 +1026,6 @@ char *writeSlice2RawFile ( char *filename, int slice, unsigned char *img, int im
 		delete []sz;
 		return ((char *)"Wrong slice dimensions.\n");
 	}
-
-	closeRawFile(fhandle); // needed to reopen file in r+ mode
 
 	fid = fopen(filename, "r+b");
 	if (!fid)
@@ -1371,19 +1369,16 @@ char *Streamer_Descr_t::addSubBlock ( char *filename, sint64 boffs, int sV0, int
 
 	// get file attributes
 	char *err_rawfmt;
-	void *fhandle;
 	V3DLONG *sz = 0;
 	int datatype;
 	int b_swap;
 	int header_len;
 	
-	if ( (err_rawfmt = loadRaw2Metadata(filename,sz,datatype,b_swap,fhandle,header_len)) != 0 ) {
+	if ( (err_rawfmt = loadMetadata(filename,sz,datatype,b_swap,header_len)) != 0 ) {
 		if ( sz ) delete[] sz;
 		return err_rawfmt;
 	}
 	
-	closeRawFile((FILE *)fhandle);
-
 	if ( datatype != 1 ) 
 	{
 		delete []sz;

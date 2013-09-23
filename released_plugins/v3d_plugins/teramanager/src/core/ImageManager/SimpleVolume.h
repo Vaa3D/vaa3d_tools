@@ -49,7 +49,7 @@ public:
 
 	REAL_T *loadSubvolume_to_REAL_T(int V0=-1,int V1=-1, int H0=-1, int H1=-1, int D0=-1, int D1=-1)  throw (MyException);
 
-    uint8 *loadSubvolume_to_UINT8(int V0=-1,int V1=-1, int H0=-1, int H1=-1, int D0=-1, int D1=-1, int *channels=0) 																										throw (MyException);
+    uint8 *loadSubvolume_to_UINT8(int V0=-1,int V1=-1, int H0=-1, int H1=-1, int D0=-1, int D1=-1, int *channels=0, int ret_type=IM_DEF_IMG_DEPTH)  throw (MyException);
 };		
 
 # endif // _SIMPLE_VOLUME

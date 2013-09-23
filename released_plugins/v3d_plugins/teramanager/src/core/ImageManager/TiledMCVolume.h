@@ -110,7 +110,7 @@ class TiledMCVolume : public VirtualVolume
                                                                   std::list<Block*> *involved_blocks = 0, bool release_blocks = false)  throw (MyException);
 
         //loads given subvolume in a 1-D array of uint8 while releasing stacks slices memory when they are no longer needed
-        uint8 *loadSubvolume_to_UINT8(int V0=-1,int V1=-1, int H0=-1, int H1=-1, int D0=-1, int D1=-1, int *channels=0) throw (MyException);
+        uint8 *loadSubvolume_to_UINT8(int V0=-1,int V1=-1, int H0=-1, int H1=-1, int D0=-1, int D1=-1, int *channels=0, int ret_type=IM_DEF_IMG_DEPTH) throw (MyException);
 
 		//returns true if file exists at the given filepath
 		static bool fileExists(const char *filepath);

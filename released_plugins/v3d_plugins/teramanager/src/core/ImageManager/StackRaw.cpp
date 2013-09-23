@@ -269,6 +269,7 @@ void StackRaw::init()
 			ROW_INDEX, COL_INDEX, slice_fullpath,err_rawfmt);
 		throw MyException(msg);
 	}
+	closeRawFile((FILE *)fhandle);
 
 	// I should check that sz[2] is 1
 
