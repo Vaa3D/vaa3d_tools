@@ -498,7 +498,34 @@ bool proc_app2(V3DPluginCallback2 &callback, PARA_APP2 &p, const QString & versi
         tmpstr =  qPrintable( qtstr.setNum(etime1).prepend("#neuron preprocessing time (milliseconds) = ") ); infostring.push_back(tmpstr);
         tmpstr =  qPrintable( qtstr.setNum(etime2).prepend("#neuron tracing time (milliseconds) = ") ); infostring.push_back(tmpstr);
         saveSWC_file(outswc_file.toStdString(), outswc, infostring);
-        
+
+        //call sort_swc function
+
+        V3DPluginArgItem arg;
+        V3DPluginArgList input_resample;
+        V3DPluginArgList input_sort;
+        V3DPluginArgList output;
+
+        arg.type = "random";std::vector<char*> arg_input_resample;
+        std:: string fileName_Qstring(outswc_file.toStdString());char* fileName_string =  new char[fileName_Qstring.length() + 1]; strcpy(fileName_string, fileName_Qstring.c_str());
+        arg_input_resample.push_back(fileName_string);
+        arg.p = (void *) & arg_input_resample; input_resample<< arg;
+        arg.type = "random";std::vector<char*> arg_resample_para; arg_resample_para.push_back("10");arg.p = (void *) & arg_resample_para; input_resample << arg;
+        arg.type = "random";std::vector<char*> arg_output;arg_output.push_back(fileName_string); arg.p = (void *) & arg_output; output<< arg;
+
+        QString full_plugin_name_resample = "resample_swc";
+        QString func_name_resample = "resample_swc";
+        callback.callPluginFunc(full_plugin_name_resample,func_name_resample,input_resample,output);
+
+        arg.type = "random";std::vector<char*> arg_input_sort;
+        arg_input_sort.push_back(fileName_string);
+        arg.p = (void *) & arg_input_sort; input_sort<< arg;
+        arg.type = "random";std::vector<char*> arg_sort_para; arg_sort_para.push_back("0");arg.p = (void *) & arg_sort_para; input_sort << arg;
+        QString full_plugin_name_sort = "sort_neuron_swc";
+        QString func_name_sort = "sort_swc";
+        callback.callPluginFunc(full_plugin_name_sort,func_name_sort, input_sort,output);
+
+
         v3d_msg(QString("The tracing uses %1 ms (%2 ms for preprocessing and %3 for tracing). Now you can drag and drop the generated swc fle [%4] into Vaa3D."
                         ).arg(etime1+etime2).arg(etime1).arg(etime2).arg(outswc_file), b_menu);
         
