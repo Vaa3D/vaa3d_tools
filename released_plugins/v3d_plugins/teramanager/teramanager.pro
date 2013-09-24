@@ -43,6 +43,14 @@ LIBS+= -lopencv_core -lopencv_imgproc -lopencv_highgui \
  -lIlmImf \
  -llibjasper 
 
+
+#to solve GTK libraries issue with OpenCV on linux
+unix:!mac{
+        CONFIG += link_pkgconfig
+        PKGCONFIG += gtk+-2.0
+        PKGCONFIG += gmodule-2.0
+}
+
 #set up Vaa3D stuff needed by the plugin
 V3DMAINPATH =  ../../../v3d_main
 QT_PATH = $$dirname(QMAKE_QMAKE)/..
