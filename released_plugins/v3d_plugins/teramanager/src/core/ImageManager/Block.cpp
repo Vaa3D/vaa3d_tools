@@ -383,38 +383,39 @@ Rect_t* Block::Intersects(const Rect_t& area)
 
 
 Segm_t* Block::Intersects(int D0, int D1) {
-	int i0, i1;
-	bool found0 = false;
-	if ( D0 >= 0 ) { 
-		i0 = 0;
-		while ( i0<(int)(N_BLOCKS-1) && !found0 )
-			if ( D0 < BLOCK_ABS_D[i0-1] )
-				found0 = true;
-			else
-				i0++;
-	}
-	// found0 -> D0 is in block i0
-	bool found1 = false;
-	if ( D1 <= (int)DEPTH ) {
-		i1 = (int)N_BLOCKS-1;
-		while ( i1>=0 && !found1 )
-			if ( D1 > BLOCK_ABS_D[i1] )
-				found1 = true;
-			else
-				i1--;
-	}
-	// found1 -> D1 is in block i1
-	if ( found0 || found1 ) {
-		Segm_t *intersect_segm = new Segm_t;
-		intersect_segm->D0 = MAX(D0,0);
-		intersect_segm->D1 = MIN(D1,(int)DEPTH);
-		intersect_segm->ind0 = found0 ? i0 : 0;
-		intersect_segm->ind1 = found1 ? i1 : N_BLOCKS-1;
 
-		return intersect_segm;
-	}
-	else
+	if ( D0 >= BLOCK_ABS_D[N_BLOCKS-1]+BLOCK_SIZE[N_BLOCKS-1] || D1 < 0 )
+		// there is no intersection
 		return NULL;
+
+	bool found0, found1;
+	int i0, i1;
+
+	found0 = false;
+	i0     = 0;
+	while ( i0<(int)(N_BLOCKS-1) && !found0 )
+		if ( D0 < BLOCK_ABS_D[i0+1] )
+			found0 = true;
+		else
+			i0++;
+	// !found0 -> i0 = N_BLOCKS-1
+
+	found1 = false;
+	i1     = (int)(N_BLOCKS-1);
+	while ( i1>0 && !found1 )
+		if ( D1 > BLOCK_ABS_D[i1] )
+			found1 = true;
+		else
+			i1--;
+	// !found1 -> i1 = 0
+
+	Segm_t *intersect_segm = new Segm_t;
+	intersect_segm->D0 = MAX(D0,0);
+	intersect_segm->D1 = MIN(D1,(int)DEPTH);
+	intersect_segm->ind0 = i0;
+	intersect_segm->ind1 = i1;
+
+	return intersect_segm;
 }
 
 
