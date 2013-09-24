@@ -79,7 +79,7 @@ void check_menu(V3DPluginCallback2 &callback, QWidget *parent)
     for (V3DLONG i=1;i<neuron.size();i++)
     {
 
-        if(neuron.at(i).n -neuron.at(i).pn < 1)
+        if(neuron.at(i).n -neuron.at(i-1).n < 1)
         {
             v3d_msg("the swc file is not sorted!");
             return;
