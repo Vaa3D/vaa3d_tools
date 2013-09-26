@@ -990,6 +990,8 @@ uint8* TiledVolume::loadSubvolume_to_UINT8(int V0,int V1, int H0, int H1, int D0
 		}
 		delete intersect_segm;
 	}
+	else
+        throw MyException("in TiledVolume::loadSubvolume_to_UINT8: depth interval out of range");
 	
     //returning outputs
     if(channels)

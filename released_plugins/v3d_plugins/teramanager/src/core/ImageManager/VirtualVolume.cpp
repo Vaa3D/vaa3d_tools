@@ -438,10 +438,10 @@ void VirtualVolume::saveImage_from_UINT8_to_Vaa3DRaw (int slice, std::string img
 
 	uint8 *imageData = new uint8[img_height * img_width_b * n_chans];
 	for ( int c=0; c<n_chans; c++ ) {
-		for(int i=0; i<img_height; i++)
+		for(sint64 i=0; i<img_height; i++)
 		{
 			uint8* row_data_8bit = imageData + c*img_height*img_width_b + i*img_width_b;
-			for(int j=0; j<img_width_b; j++)
+			for(sint64 j=0; j<img_width_b; j++)
 				row_data_8bit[j] = raw_ch_temp[c][(i+start_height)*raw_img_width + (j+start_width)];
             }
 	}
