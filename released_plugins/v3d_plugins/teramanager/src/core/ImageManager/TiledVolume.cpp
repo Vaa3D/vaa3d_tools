@@ -907,17 +907,7 @@ uint8* TiledVolume::loadSubvolume_to_UINT8(int V0,int V1, int H0, int H1, int D0
 					    {
 					        first_time = false;
 							sbv_channels = this->CHANS;
-
-							if ( ret_type == IM_NATIVE_RTYPE ) {
-								sbv_bytes_chan = this->BYTESxCHAN;
-							}
-							else {
-								char err_msg[IM_STATIC_STRINGS_SIZE];
-								sprintf(err_msg,
-									"TiledVolume::loadSubvolume_to_UINT8: return type (%d bits) is not the native type (%d bits)", 
-										ret_type, 8*this->BYTESxCHAN);
-								throw MyException(err_msg);
-							}
+							sbv_bytes_chan = this->BYTESxCHAN;
 
 							try
 					        {
