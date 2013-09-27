@@ -42,6 +42,37 @@
 
 using namespace std;
 
+/****************************************************************************/
+
+/* function to check endianness of the machine 
+ * returns: 
+ *  L for little endian machines
+ *  B for big endian machines
+ *  M for machines that swap 16-bits words
+ *  N for unknown endianness
+ */
+static
+char checkMachineEndian()
+{
+    char e='N'; //for unknown endianness
+
+    V3DLONG int a=0x44332211;
+    unsigned char * p = (unsigned char *)&a;
+    if ((*p==0x11) && (*(p+1)==0x22) && (*(p+2)==0x33) && (*(p+3)==0x44))
+        e = 'L';
+    else if ((*p==0x44) && (*(p+1)==0x33) && (*(p+2)==0x22) && (*(p+3)==0x11))
+        e = 'B';
+    else if ((*p==0x22) && (*(p+1)==0x11) && (*(p+2)==0x44) && (*(p+3)==0x33))
+        e = 'M';
+    else
+        e = 'N';
+
+    //printf("[%c] \n", e);
+    return e;
+}
+
+/****************************************************************************/
+
 TiledVolume::TiledVolume(const char* _root_dir)  throw (MyException)
 : VirtualVolume(_root_dir) // iannello ADDED
 {
@@ -843,13 +874,18 @@ uint8* TiledVolume::loadSubvolume_to_UINT8(int V0,int V1, int H0, int H1, int D0
 	//	throw MyException(err_msg);
 	//}
 
-	if ( (ret_type == IM_DEF_IMG_DEPTH) && ((8 * this->BYTESxCHAN) != IM_DEF_IMG_DEPTH)  ) {
+	//if ( (ret_type == IM_DEF_IMG_DEPTH) && ((8 * this->BYTESxCHAN) != IM_DEF_IMG_DEPTH) ) {
 		// does not support depth conversion: 
 		// return type is 8 bits, but native depth is not 8 bits
+	if ( (ret_type != IM_NATIVE_RTYPE) && (ret_type != IM_DEF_IMG_DEPTH) ) {
+		// return type should be converted, but not to 8 bits per channel
 		char err_msg[IM_STATIC_STRINGS_SIZE];
 		sprintf(err_msg,"RawVolume::loadSubvolume_to_UINT8: non supported return type (%d bits) - native type is %d bits",ret_type, 8*this->BYTESxCHAN); 
 		throw MyException(err_msg);
 	}
+
+	// reduction factor to be applied to the loaded buffer
+	int red_factor = (ret_type == IM_NATIVE_RTYPE) ? 1 : ((8 * this->BYTESxCHAN) / ret_type);
 
 	char *err_rawfmt;
 
@@ -911,7 +947,9 @@ uint8* TiledVolume::loadSubvolume_to_UINT8(int V0,int V1, int H0, int H1, int D0
 
 							try
 					        {
-					            subvol = new uint8[sbv_height * sbv_width * sbv_depth * sbv_channels * sbv_bytes_chan];
+								subvol = new uint8[sbv_height * sbv_width * sbv_depth * sbv_channels * sbv_bytes_chan];
+					            //if ( !subvol )
+								//	throw MyException("in TiledVolume::loadSubvolume_to_UINT8: unable to allocate memory");
 					        }
 					        catch(...){throw MyException("in TiledVolume::loadSubvolume_to_UINT8: unable to allocate memory");}
 					    }
@@ -998,7 +1036,55 @@ uint8* TiledVolume::loadSubvolume_to_UINT8(int V0,int V1, int H0, int H1, int D0
     if(channels)
         *channels = (int)sbv_channels;
 
-    return subvol;
+	if ( red_factor > 1 ) { // the buffer has to be reduced
+		int c, i, j, p;
+		sint64 totalUnits = sbv_height * sbv_width * sbv_depth * sbv_channels;
+		sint64 totalBlockSize = sbv_height * sbv_width * sbv_depth;
+
+		char endianCodeMachine = checkMachineEndian();
+		if ( endianCodeMachine == 'L' ) {
+			j = red_factor - 1; // MSB is the last
+		}
+		else if ( endianCodeMachine == 'B' ) {
+			j = 0;              // MSB is the first
+		}
+		else {
+			char err_msg[IM_STATIC_STRINGS_SIZE];
+			sprintf(err_msg,"TiledVolume::loadSubvolume_to_UINT8: unknown machine endianess (%c)", endianCodeMachine);
+			throw MyException(err_msg);
+		}
+
+		// look for maximum values in each channel and rescale each channel separately
+		unsigned short maxVal;
+		unsigned short *temp = (unsigned short *) subvol;
+		sint64 count;
+		for ( c=0; c<sbv_channels; c++, temp+=totalBlockSize ) {
+			for ( i=0, maxVal=0; i<totalBlockSize; i++ )
+				if ( temp[i] > maxVal )
+					maxVal = temp[i];
+			for ( i=1, p=8*red_factor; i<maxVal; i<<=1, p-- )
+				;
+			// p represents the number of bits of the shift
+			for ( i=0, count=0; i<totalBlockSize; i++ ) {
+				//if ( temp[i] > (0.9*maxVal) )
+				//	count++;
+                temp[i] <<= p;
+			}
+			printf("\t\t\t\tin TiledVolume::loadSubvolume_to_UINT8: c=%d, maxVal=%d, p=%d, count=%ld\n\n",c,maxVal,p,count);
+		}
+		
+		uint8 *temp_buf = new uint8[totalUnits];
+		memset(temp_buf,0,totalUnits);
+		for ( i=0; i<totalUnits; i++, j+=red_factor )
+			temp_buf[i] = subvol[j];
+		//for ( i=0; i<(sbv_height * sbv_width * sbv_depth); i++, j+=red_factor )
+		//	(temp_buf + (sbv_height * sbv_width * sbv_depth))[i] = (subvol + (sbv_height * sbv_width * sbv_depth * sbv_bytes_chan))[j];
+
+		delete[] subvol;
+		subvol = temp_buf;
+	}
+
+	return subvol;
 }
 		
 

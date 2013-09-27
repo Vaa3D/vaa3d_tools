@@ -1112,24 +1112,11 @@ char *copyRawFileBlock2Buffer ( char *filename, int sV0, int sV1, int sH0, int s
 	//V3DLONG total = tmpw*tmph*tmpz*sz[3]; // unused
 
 	//V3DLONG count=0; // unused
-	V3DLONG c,j,k;
+	V3DLONG c,i,j,k;
 
 	unsigned char *buftmp_c;
 	unsigned char *buftmp_k;
 	unsigned char *buftmp_j;
-	for (c=0, buftmp_c=(buf + (offs*unitSize)); c<sz[3]; c++, buftmp_c+=(stridexyz*unitSize))
-	{
-		for (k = startz, buftmp_k=buftmp_c; k < endz; k++, buftmp_k+=(stridexy*unitSize)) 
-		{
-			for (j = starty, buftmp_j=buftmp_k; j< endy; j++, buftmp_j+=(stridex*unitSize))
-			{
-				rewind(fid);
-				fseek(fid, (long)(head+(c*pgsz1 + k*pgsz2 + j*pgsz3 + startx)*unitSize), SEEK_SET);
-				ftell(fid);	
-				fread(buftmp_j,unitSize,tmpw,fid);
-			}
-		}
-	}
 
 	/* swap the data bytes if necessary */
 	
@@ -1137,20 +1124,51 @@ char *copyRawFileBlock2Buffer ( char *filename, int sV0, int sV1, int sH0, int s
 	{
 		if ( sz ) delete[] sz;
 		return ((char *)"Byte swap not supported.\n");
-		//if (unitSize==2)
-		//{
-		//	for (i=0;i<total; i++)
-		//	{
-		//		swap2bytes((void *)(img+i*unitSize));
-		//	}
-		//}
-		//else if (unitSize==4)
-		//{
-		//	for (i=0;i<total; i++)
-		//	{
-		//		swap4bytes((void *)(img+i*unitSize));
-		//	}
-		//}
+
+		for (c=0, buftmp_c=(buf + (offs*unitSize)); c<sz[3]; c++, buftmp_c+=(stridexyz*unitSize))
+		{
+			for (k = startz, buftmp_k=buftmp_c; k < endz; k++, buftmp_k+=(stridexy*unitSize)) 
+			{
+				for (j = starty, buftmp_j=buftmp_k; j< endy; j++, buftmp_j+=(stridex*unitSize))
+				{
+					rewind(fid);
+					fseek(fid, (long)(head+(c*pgsz1 + k*pgsz2 + j*pgsz3 + startx)*unitSize), SEEK_SET);
+					ftell(fid);	
+					fread(buftmp_j,unitSize,tmpw,fid);
+
+					// swap the bytes: this code has not be checked yey
+					if (unitSize==2)
+					{
+						for (i=0;i<tmpw; i++)
+						{
+							swap2bytes((void *)(buftmp_j+i*unitSize));
+						}
+					}
+					else if (unitSize==4)
+					{
+						for (i=0;i<tmpw; i++)
+						{
+							swap4bytes((void *)(buftmp_j+i*unitSize));
+						}
+					}
+				}
+			}
+		}
+	}
+	else{ // no swap is required
+		for (c=0, buftmp_c=(buf + (offs*unitSize)); c<sz[3]; c++, buftmp_c+=(stridexyz*unitSize))
+		{
+			for (k = startz, buftmp_k=buftmp_c; k < endz; k++, buftmp_k+=(stridexy*unitSize)) 
+			{
+				for (j = starty, buftmp_j=buftmp_k; j< endy; j++, buftmp_j+=(stridex*unitSize))
+				{
+					rewind(fid);
+					fseek(fid, (long)(head+(c*pgsz1 + k*pgsz2 + j*pgsz3 + startx)*unitSize), SEEK_SET);
+					ftell(fid);	
+					fread(buftmp_j,unitSize,tmpw,fid);
+				}
+			}
+		}
 	}
 
 	closeRawFile(fid);
