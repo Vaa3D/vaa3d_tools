@@ -334,7 +334,7 @@ char *loadMetadata ( char * filename, V3DLONG * &sz, int &datatype, int &b_swap,
 	// clean and return 
 	if (keyread) {delete [] keyread; keyread = 0;}
 
-	header_len = ftell(fid);
+	header_len = (int)ftell(fid);
 
 	fclose(fid); 
 
@@ -499,7 +499,7 @@ char *loadRaw2Metadata ( char * filename, V3DLONG * &sz, int &datatype, int &b_s
 	if (keyread) {delete [] keyread; keyread = 0;}
 
 	fhandle = fid;
-	header_len = ftell(fid);
+	header_len = (int)ftell(fid);
 
 	return ((char *) 0);
 }
@@ -1062,10 +1062,10 @@ char *writeSlice2RawFile ( char *filename, int slice, unsigned char *img, int im
 char *copyRawFileBlock2Buffer ( char *filename, int sV0, int sV1, int sH0, int sH1, int sD0, int sD1,
 							    unsigned char *buf, int pxl_size, sint64 offs, sint64 stridex, sint64 stridexy, sint64 stridexyz ) {
 
-	if ( pxl_size != sizeof(unsigned char) ) 
-	{
-		return ((char *)"Wrong pixel size.\n");
-	}
+	//if ( pxl_size != sizeof(unsigned char) ) 
+	//{
+	//	return ((char *)"Wrong pixel size.\n");
+	//}
 
 	char *err_rawfmt;
 	FILE *fid;
@@ -1079,10 +1079,10 @@ char *copyRawFileBlock2Buffer ( char *filename, int sV0, int sV1, int sH0, int s
 		if ( sz ) delete[] sz;
 		return err_rawfmt;
 	}
-	if ( datatype != 1 ) 
+	if ( datatype != pxl_size ) 
 	{
 		delete []sz;
-		return ((char *)"Wrong file data type.\n");
+		return ((char *)"requested and native data types are different.\n");
 	}
 	fid = (FILE *) fhandle;
 

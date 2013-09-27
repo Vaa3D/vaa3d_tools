@@ -837,11 +837,11 @@ uint8* TiledVolume::loadSubvolume_to_UINT8(int V0,int V1, int H0, int H1, int D0
     #endif
 
     //checking for non implemented features
-	if( this->BYTESxCHAN != 1 ) {
-		char err_msg[IM_STATIC_STRINGS_SIZE];
-		sprintf(err_msg,"TiledVolume::loadSubvolume_to_UINT8: invalid number of bytes per channel (%d)",this->BYTESxCHAN); 
-		throw MyException(err_msg);
-	}
+	//if( this->BYTESxCHAN != 1 ) {
+	//	char err_msg[IM_STATIC_STRINGS_SIZE];
+	//	sprintf(err_msg,"TiledVolume::loadSubvolume_to_UINT8: invalid number of bytes per channel (%d)",this->BYTESxCHAN); 
+	//	throw MyException(err_msg);
+	//}
 
 	if ( (ret_type == IM_DEF_IMG_DEPTH) && ((8 * this->BYTESxCHAN) != IM_DEF_IMG_DEPTH)  ) {
 		// does not support depth conversion: 
@@ -907,8 +907,19 @@ uint8* TiledVolume::loadSubvolume_to_UINT8(int V0,int V1, int H0, int H1, int D0
 					    {
 					        first_time = false;
 							sbv_channels = this->CHANS;
-							sbv_bytes_chan = this->BYTESxCHAN;
-					        try
+
+							if ( ret_type == IM_NATIVE_RTYPE ) {
+								sbv_bytes_chan = this->BYTESxCHAN;
+							}
+							else {
+								char err_msg[IM_STATIC_STRINGS_SIZE];
+								sprintf(err_msg,
+									"TiledVolume::loadSubvolume_to_UINT8: return type (%d bits) is not the native type (%d bits)", 
+										ret_type, 8*this->BYTESxCHAN);
+								throw MyException(err_msg);
+							}
+
+							try
 					        {
 					            subvol = new uint8[sbv_height * sbv_width * sbv_depth * sbv_channels * sbv_bytes_chan];
 					        }
@@ -971,7 +982,7 @@ uint8* TiledVolume::loadSubvolume_to_UINT8(int V0,int V1, int H0, int H1, int D0
 								slice_fullpath,
 								sV0,sV1,sH0,sH1,sD0,sD1,
 								(unsigned char *)subvol,
-								sizeof(uint8),
+								sbv_bytes_chan, // this is native rtype, it has substituted sizeof(uint8)
 								bH0+bV0*sbv_width+bD0*sbv_width*sbv_height,
 								sbv_width,
 								sbv_width*sbv_height,
