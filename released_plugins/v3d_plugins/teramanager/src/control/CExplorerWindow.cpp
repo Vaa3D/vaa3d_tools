@@ -264,6 +264,7 @@ CExplorerWindow::CExplorerWindow(V3DPluginCallback2 *_V3D_env, int _resIndex, ui
     this->nchannels = _nchannels;
     this->toBeClosed = false;
     this->imgData = _imgData;
+    this->isReady = false;
     char ctitle[1024];
     sprintf(ctitle, "Res(%d x %d x %d),Volume X=[%d,%d], Y=[%d,%d], Z=[%d,%d], %d channels", CImport::instance()->getVolume(volResIndex)->getDIM_H(),
             CImport::instance()->getVolume(volResIndex)->getDIM_V(), CImport::instance()->getVolume(volResIndex)->getDIM_D(),
@@ -538,28 +539,36 @@ void CExplorerWindow::loadingDone(uint8 *data, MyException *ex, void* sourceObje
             PLog::getInstance()->appendGPU(timer.elapsed(), message);
             /**/ updateGraphicsInProgress.unlock();
 
-            //resetting some widgets
-            if(cVolume->getStreamingSteps() == step)
-            {
-                PMain::getInstance()->resetGUI();
-                PMain::getInstance()->subvol_panel->setEnabled(true);
-                PMain::getInstance()->loadButton->setEnabled(true);
-            }
-
-            //updating actual time
+            //operations to be performed when all image data have been loaded
             if(cVolume->hasFinished())
             {
+                //resetting TeraFly's GUI
+                PMain::getInstance()->resetGUI();
+
+
+                //---- Alessandro 2013-09-28 fixed: processing pending events related trasl* buttons (previously deactivated) prevents the user from
+                //                                  triggering multiple traslations at the same time.
+                QApplication::processEvents();
+                PMain::getInstance()->traslXneg->setActive(true);
+                PMain::getInstance()->traslXpos->setActive(true);
+                PMain::getInstance()->traslYneg->setActive(true);
+                PMain::getInstance()->traslYpos->setActive(true);
+                PMain::getInstance()->traslZneg->setActive(true);
+                PMain::getInstance()->traslZpos->setActive(true);
+
+                //current window is now ready for user input
+                isReady = true;
+
+                //saving elapsed time to log
                 sprintf(message, "Successfully generated view %s", title.c_str());
                 PLog::getInstance()->appendActual(prev->zoomInTimer.elapsed(), message);
             }
-
         }
         catch(MyException &ex)
         {
             QMessageBox::critical(PMain::getInstance(),QObject::tr("Error"), QObject::tr(ex.what()),QObject::tr("Ok"));
             PMain::getInstance()->resetGUI();
-            PMain::getInstance()->subvol_panel->setEnabled(true);
-            PMain::getInstance()->loadButton->setEnabled(true);
+            isReady = true;
         }
     }
 }
@@ -582,6 +591,10 @@ CExplorerWindow::newView(
            title.c_str(), x, y, z, resolution, dx, dy, dz, x0, y0, z0);
     #endif
 
+    //deactivating current window and processing all pending events
+    setActive(false);
+    QApplication::processEvents();
+
     //checking preconditions with automatic correction, where possible
     if(resolution >= CImport::instance()->getResolutions())
         resolution = volResIndex;
@@ -590,9 +603,6 @@ CExplorerWindow::newView(
 
     try
     {
-        //deactivating current window
-        setActive(false);
-
         //putting GUI in waiting state
         view3DWidget->setCursor(Qt::WaitCursor);
         PMain& pMain = *(PMain::getInstance());
@@ -731,6 +741,8 @@ CExplorerWindow::newView(
         //if the resolution of the loaded voi is the same of the current one, this window will be closed
         if(resolution == volResIndex)
         {
+            printf("--------------------- teramanager plugin [thread *] >> CExplorerWindow[%s]::newView(...): is going to be destroyed\n", title.c_str());
+
             prev->zoomInTimer = zoomInTimer;
             prev->next = next;
             next->prev = prev;
@@ -1257,6 +1269,9 @@ void CExplorerWindow::restoreViewFrom(CExplorerWindow* source) throw (MyExceptio
         this->window3D->raise();
         this->window3D->activateWindow();
         this->window3D->show();
+
+        //current windows not gets ready to user input
+        isReady = true;
     }
 }
 

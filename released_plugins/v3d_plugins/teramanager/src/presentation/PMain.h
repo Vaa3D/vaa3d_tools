@@ -396,9 +396,9 @@ class teramanager::PMain : public QWidget
         void curveDimsChanged(int dim);
         void curveAspectChanged();
 
-
         //very useful (not included in Qt): disables the given item of the given combobox
         static void setEnabledComboBoxItem(QComboBox* cbox, int _index, bool enabled);
+
 };
 
 #endif // PMAIN_GUI_H

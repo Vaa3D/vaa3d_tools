@@ -2,7 +2,7 @@
 
 using namespace teramanager;
 
-QArrowButton::QArrowButton(QWidget *parent, QColor arrowColor, int arrowSize, int arrowWidth, int arrowMargin, int arrowOrientation) : QPushButton(parent)
+QArrowButton::QArrowButton(QWidget *parent, QColor arrowColor, int arrowSize, int arrowWidth, int arrowMargin, int arrowOrientation, bool _mousePressedBlocking) : QPushButton(parent)
 {
     arrColor = arrowColor;
     arrSize = arrowSize;
@@ -13,6 +13,8 @@ QArrowButton::QArrowButton(QWidget *parent, QColor arrowColor, int arrowSize, in
     scalePressed = 0.7;
     mouseOver = false;
     mousePressed = false;
+    mousePressedBlocking = _mousePressedBlocking;
+    active = true;
 }
 
 void QArrowButton::paintEvent(QPaintEvent * evt)

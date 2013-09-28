@@ -59,6 +59,7 @@ class teramanager::CExplorerWindow : public QWidget
         string titleShort;              //short title of current window
         bool toBeClosed;                //true when the current window is marked as going to be closed
         bool isActive;                  //false when the current window is set as not active (e.g. when after zooming-in/out)
+        bool isReady;                   //true when current window is ready for receiving user inputs (i.e. all image data have been loaded)
         int zoomHistory[ZOOM_HISTORY_SIZE];//last 4 zoom values
         std::list<LocationSimple> loaded_markers; //list of markers loaded from <CAnnotations> when the current view is created
         std::list<NeuronSWC> loaded_curves;       //list of curve points loaded from <CAnnotations> when the current view is created
@@ -268,6 +269,8 @@ class teramanager::CExplorerWindow : public QWidget
             #endif
 
             isActive = active;
+            if(!isActive)
+                isReady = false;
         }
 
         /**********************************************************************************

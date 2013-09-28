@@ -218,6 +218,7 @@ void CVolume::run()
 
     try
     {
+        finished = false;
         VirtualVolume* volume = CImport::instance()->getVolume(voiResIndex);
         char msg[1024];
 

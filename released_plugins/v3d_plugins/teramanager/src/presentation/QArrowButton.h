@@ -21,6 +21,9 @@ class teramanager::QArrowButton : public QPushButton
         bool mouseOver;            //true when mouse is within button
         bool mousePressed;         //true when mouse is pressed within button
 
+        bool mousePressedBlocking; //if true, mousePressEvent events block the current button until it is reactivated by setActive(true)
+        bool active;               //if true, mousePressEvent events are correctly forwarded to the superclass, otherwise they are ignored
+
         //prevents from using the default constructor
         QArrowButton() : QPushButton(0){}
         QArrowButton(QWidget *parent = 0) : QPushButton(parent){}
@@ -28,7 +31,10 @@ class teramanager::QArrowButton : public QPushButton
     public:
 
         //the only available public constructor
-        QArrowButton(QWidget *parent, QColor arrowColor, int arrowSize, int arrowWidth, int arrowMargin, int arrowOrientation);
+        QArrowButton(QWidget *parent, QColor arrowColor, int arrowSize, int arrowWidth, int arrowMargin, int arrowOrientation, bool mousePressedBlocking = false);
+
+        void setActive(bool _active){active = _active;}
+        bool isActive(){return active;}
 
         void leaveEvent(QEvent * e)
         {
@@ -42,8 +48,13 @@ class teramanager::QArrowButton : public QPushButton
         }
         void mousePressEvent(QMouseEvent *e)
         {
-            mousePressed = true;
-            QPushButton::mousePressEvent(e);
+            if(active)
+            {
+                if(mousePressedBlocking)
+                    active = false;
+                mousePressed = true;
+                QPushButton::mousePressEvent(e);
+            }
         }
         void mouseReleaseEvent(QMouseEvent *e)
         {

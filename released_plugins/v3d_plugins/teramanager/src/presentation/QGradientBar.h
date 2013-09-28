@@ -12,6 +12,7 @@ class teramanager::QGradientBar : public QWidget
 
         int nSteps;
         int step;
+        bool active;
 
     public:
 

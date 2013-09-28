@@ -11,6 +11,15 @@ ties names are:
 - Rem: a feature no longer available
 
 ============================================================================================
+Version 0.9.24
+September 28th, 2013
+--------------------------------------------------------------------------------------------
+- Fix: fixed a bug which caused TeraFly to crash when clicking several times on the Traslate
+       buttons. Now the first event is correctly registered and the subsequent ones are ign-
+       ored until the new view has been completely loaded.
+--------------------------------------------------------------------------------------------
+
+
 Version 0.9.23
 September 20th, 2013
 --------------------------------------------------------------------------------------------
