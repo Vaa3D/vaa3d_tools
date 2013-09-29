@@ -273,6 +273,11 @@ void CImport::run()
                     }
                     candidateVols.push_back(candidate_vol);
                 }
+                catch(MyException& exception)
+                {
+                    sprintf(errMsg, "A problem occurred when importing volume at \"%s\": %s", path.c_str(), exception.what());
+                    throw MyException(errMsg);
+                }
                 catch(...)
                 {
                     throw MyException("A problem occurred when importing volume. Please contact the developer");
