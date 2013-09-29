@@ -835,14 +835,14 @@ uint8* CExplorerWindow::getVOI(int x0, int x1, int y0, int y1, int z0, int z1,
 ***********************************************************************************/
 void
     CExplorerWindow::copyVOI(
-        uint8 const * src,      //pointer to const data source
-        uint32 src_dims[4],     //dimensions of "src" along X, Y, Z and channels
-        uint32 src_offset[3],   //VOI's offset along X, Y, Z
-        uint32 src_count[3],    //VOI's dimensions along X, Y, Z
-        uint8* dst,             //pointer to data destination
-        uint32 dst_dims[4],     //dimensions of "dst" along X, Y, Z and channels
-        uint32 dst_offset[3],   //offset of "dst" along X, Y, Z
-        uint scaling /*= 1 */)  //scaling factor (integer only)
+        uint8 const * src,          //pointer to const data source
+        uint src_dims[4],           //dimensions of "src" along X, Y, Z and channels
+        uint src_offset[3],         //VOI's offset along X, Y, Z
+        uint src_count[3],          //VOI's dimensions along X, Y, Z
+        uint8* dst,                 //pointer to data destination
+        uint dst_dims[4],           //dimensions of "dst" along X, Y, Z and channels
+        uint dst_offset[3],         //offset of "dst" along X, Y, Z
+        uint scaling /*= 1 */)      //scaling factor (integer only)
 throw (MyException)
 {
     #ifdef TMP_DEBUG

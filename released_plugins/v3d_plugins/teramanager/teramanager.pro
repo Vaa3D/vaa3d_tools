@@ -29,7 +29,8 @@ use_static_libs{
     LIBS += -L./lib/opencv/unix_x86_64/3rdparty
     }
     win32{
-    LIBS += -L./lib/opencv/win64
+    LIBS += -L"$$_PRO_FILE_PWD_/lib/opencv/win64"
+    LIBS += -L"$$_PRO_FILE_PWD_/lib/opencv/win64/3rdparty"
     }
 } else{
     #OpenCV headers and library folders
@@ -52,7 +53,17 @@ unix:!mac{
 }
 
 #set up Vaa3D stuff needed by the plugin
-V3DMAINPATH =  ../../../v3d_main
+win32{
+    V3DMAINPATH =  ../../../../v3d_external/v3d_main
+    INCLUDEPATH += $$V3DMAINPATH/vaa3d_msvc-build-4_8_4_vc11-Release
+    INCLUDEPATH += $$V3DMAINPATH/common_lib/src_packages/tiff-4.0.1/libtiff
+    CONFIG -= use_experimental_features
+    QMAKE_CXXFLAGS += /MD
+}
+else{
+    V3DMAINPATH =  ../../../v3d_main
+}
+
 QT_PATH = $$dirname(QMAKE_QMAKE)/..
 
 INCLUDEPATH+= $$QT_PATH/demos/shared

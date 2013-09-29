@@ -109,6 +109,7 @@ namespace teramanager
     /*-------------------------------------------------------------------------------------------------------------------------*/
 }
 
+
 class teramanager::CPlugin : public QObject, public V3DPluginInterface2_1
 {
     Q_OBJECT

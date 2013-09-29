@@ -202,15 +202,14 @@ class teramanager::CExplorerWindow : public QWidget
         * Copies the given VOI from "src" to "dst". Offsets and scaling are supported.
         ***********************************************************************************/
         static void
-            copyVOI(
-                uint8 const * src,      //pointer to const data source
-                uint32 src_dims[4],     //dimensions of "src" along X, Y, Z and channels
-                uint32 src_offset[3],   //VOI's offset along X, Y, Z
-                uint32 src_count[3],    //VOI's dimensions along X, Y, Z
-                uint8* dst,             //pointer to data destination
-                uint32 dst_dims[4],     //dimensions of "dst" along X, Y, Z
-                uint32 dst_offset[3],   //offset of "dst" along X, Y, Z
-                uint scaling = 1)       //scaling factor (integer only)
+            copyVOI(uint8 const * src,      //pointer to const data source
+                uint src_dims[],            //dimensions of "src" along X, Y, Z and channels
+                uint src_offset[],          //VOI's offset along X, Y, Z
+                uint src_count[],           //VOI's dimensions along X, Y, Z
+                uint8* dst,                 //pointer to data destination
+                uint dst_dims[],            //dimensions of "dst" along X, Y, Z
+                uint dst_offset[],          //offset of "dst" along X, Y, Z
+                uint scaling = 1)           //scaling factor (integer only)
         throw (MyException);
 
         /**********************************************************************************

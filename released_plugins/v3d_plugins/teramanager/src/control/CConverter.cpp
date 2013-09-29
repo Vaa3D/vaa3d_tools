@@ -203,6 +203,5 @@ void CConverter::run()
     }
     catch( MyException& exception)  {emit sendOperationOutcome(new MyException(exception.what()));}
     catch(const char* error)        {emit sendOperationOutcome(new MyException(error));}
-    catch(char* error)              {emit sendOperationOutcome(new MyException(error));}
     catch(...)                      {emit sendOperationOutcome(new MyException("Unknown error occurred"));}
 }

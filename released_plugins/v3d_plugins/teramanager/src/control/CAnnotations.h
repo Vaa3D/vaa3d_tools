@@ -2,6 +2,7 @@
 #define CANNOTATIONS_H
 
 #include "CPlugin.h"
+#include "math.h"
 
 //annotation structure
 struct teramanager::annotation
@@ -153,6 +154,13 @@ class teramanager::CAnnotations
                 void print();
 
                 friend class CAnnotations;
+
+                static inline double round(double val){
+                    return floor(val + 0.5);
+                }
+                static inline double round(float val){
+                    return floor(val + 0.5f);
+                }
         };
 
 
