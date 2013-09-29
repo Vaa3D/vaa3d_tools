@@ -124,20 +124,42 @@ void CImport::run()
             if(AXS_1 != axis_invalid && AXS_2 != axis_invalid && AXS_3 != axis_invalid && VXL_1 != 0 && VXL_2 != 0 && VXL_3 != 0)
             {
                 VirtualVolume* volume = 0;
-                try
-                {
-                    volume = new StackedVolume(path.c_str(), ref_sys(AXS_1,AXS_2,AXS_3),VXL_1,VXL_2,VXL_3, reimport);
-                }
-                catch(...)
+
+                //TileMCVolume is detected if cmap.bin file exists
+                if(QFile::exists(cmap_fpath.c_str()))
                 {
                     try
                     {
-                        volume = new TiledVolume(path.c_str(), ref_sys(AXS_1,AXS_2,AXS_3),VXL_1,VXL_2,VXL_3, reimport);
+                        volume = new TiledMCVolume(path.c_str(), ref_sys(AXS_1,AXS_2,AXS_3),VXL_1,VXL_2,VXL_3, reimport);
+                    }
+                    catch(MyException& exception)
+                    {
+                        sprintf(errMsg, "Unable to import TiledMC volume at \"%s\": %s", path.c_str(), exception.what());
+                        throw MyException(errMsg);
                     }
                     catch(...)
                     {
-                        sprintf(errMsg, "Unable to import volume at \"%s\"", path.c_str());
+                        sprintf(errMsg, "Unable to import TiledMC volume at \"%s\"", path.c_str());
                         throw MyException(errMsg);
+                    }
+                }
+                else
+                {
+                    try
+                    {
+                        volume = new StackedVolume(path.c_str(), ref_sys(AXS_1,AXS_2,AXS_3),VXL_1,VXL_2,VXL_3, reimport);
+                    }
+                    catch(...)
+                    {
+                        try
+                        {
+                            volume = new TiledVolume(path.c_str(), ref_sys(AXS_1,AXS_2,AXS_3),VXL_1,VXL_2,VXL_3, reimport);
+                        }
+                        catch(...)
+                        {
+                            sprintf(errMsg, "Unable to import volume at \"%s\"", path.c_str());
+                            throw MyException(errMsg);
+                        }
                     }
                 }
                 volumes.push_back(volume);
@@ -161,9 +183,14 @@ void CImport::run()
                 {
                     volume = new TiledMCVolume(path.c_str(), ref_sys(axis_invalid,axis_invalid,axis_invalid),0,0,0);
                 }
+                catch(MyException& exception)
+                {
+                    sprintf(errMsg, "Unable to import TiledMC volume at \"%s\": %s", path.c_str(), exception.what());
+                    throw MyException(errMsg);
+                }
                 catch(...)
                 {
-                    sprintf(errMsg, "Unable to import volume at \"%s\"", path.c_str());
+                    sprintf(errMsg, "Unable to import TiledMC volume at \"%s\"", path.c_str());
                     throw MyException(errMsg);
                 }
             }

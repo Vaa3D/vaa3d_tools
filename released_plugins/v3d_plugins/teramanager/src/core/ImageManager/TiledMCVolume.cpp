@@ -85,8 +85,8 @@ TiledMCVolume::TiledMCVolume(const char* _root_dir, ref_sys _reference_system, f
 : VirtualVolume(_root_dir) // iannello ADDED
 {
 	#if IM_VERBOSE > 3
-	printf("\t\t\t\tin TiledMCVolume::TiledMCVolume(_root_dir=%s, ref_sys reference_system={%d,%d,%d}, VXL_1=%.4f, VXL_2=%.4f, VXL_3=%.4f)\n",
-                          _root_dir, _reference_system.first, _reference_system.second, _reference_system.third, _VXL_1, _VXL_2, _VXL_3);
+    printf("\t\t\t\tin TiledMCVolume::TiledMCVolume(_root_dir=%s, ref_sys reference_system={%d,%d,%d}, VXL_1=%.4f, VXL_2=%.4f, VXL_3=%.4f, overwrite_mdata = %s, save_mdata = %s)\n",
+           _root_dir, _reference_system.first, _reference_system.second, _reference_system.third, _VXL_1, _VXL_2, _VXL_3, overwrite_mdata ? "true": "false", save_mdata ? "true": "false");
 	#endif
 
 	// iannello this->root_dir = new char[strlen(_root_dir)+1];
