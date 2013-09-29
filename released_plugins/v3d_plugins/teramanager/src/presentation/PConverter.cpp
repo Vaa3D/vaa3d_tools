@@ -48,11 +48,10 @@ void PConverter::uninstance()
     #endif
 
     CConverter::uninstance();
-    CSettings::uninstance();
     if(uniqueInstance)
     {
         delete uniqueInstance;
-        uniqueInstance = NULL;
+        uniqueInstance = 0;
     }
 }
 

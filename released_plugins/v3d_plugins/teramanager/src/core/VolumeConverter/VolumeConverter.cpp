@@ -351,7 +351,7 @@ void VolumeConverter::generateTiles(std::string output_path, bool* resolutions,
 					//computing V_DIR_path and creating the directory the first time it is needed
 					std::stringstream V_DIR_path;
 					V_DIR_path << base_path.str() << this->getMultiresABS_V_string(i,start_height);
-					if(z==D0 && make_dir(V_DIR_path.str().c_str())!=0)
+                    if(z==D0 && !check_and_make_dir(V_DIR_path.str().c_str()))
 					{
 						char err_msg[S_STATIC_STRINGS_SIZE];
 						sprintf(err_msg, "in mergeTiles(...): unable to create V_DIR = \"%s\"\n", V_DIR_path.str().c_str());
@@ -365,7 +365,7 @@ void VolumeConverter::generateTiles(std::string output_path, bool* resolutions,
 						//computing H_DIR_path and creating the directory the first time it is needed
 						std::stringstream H_DIR_path;
 						H_DIR_path << V_DIR_path.str() << "/" << this->getMultiresABS_V_string(i,start_height) << "_" << this->getMultiresABS_H_string(i,start_width);
-						if(z==D0 && make_dir(H_DIR_path.str().c_str())!=0)
+                        if(z==D0 && !check_and_make_dir(H_DIR_path.str().c_str()))
 						{
 							char err_msg[S_STATIC_STRINGS_SIZE];
 							sprintf(err_msg, "in mergeTiles(...): unable to create H_DIR = \"%s\"\n", H_DIR_path.str().c_str());
@@ -751,7 +751,7 @@ void VolumeConverter::generateTilesVaa3DRaw(std::string output_path, bool* resol
 					//computing V_DIR_path and creating the directory the first time it is needed
 					std::stringstream V_DIR_path;
 					V_DIR_path << base_path.str() << this->getMultiresABS_V_string(i,start_height);
-					if(z==D0 && make_dir(V_DIR_path.str().c_str())!=0)
+                    if(z==D0 && !check_and_make_dir(V_DIR_path.str().c_str()))
 					{
 						char err_msg[S_STATIC_STRINGS_SIZE];
 						sprintf(err_msg, "in generateTilesVaa3DRaw(...): unable to create V_DIR = \"%s\"\n", V_DIR_path.str().c_str());
@@ -766,7 +766,7 @@ void VolumeConverter::generateTilesVaa3DRaw(std::string output_path, bool* resol
 						std::stringstream H_DIR_path;
 						H_DIR_path << V_DIR_path.str() << "/" << this->getMultiresABS_V_string(i,start_height) << "_" << this->getMultiresABS_H_string(i,start_width);
 						if ( z==D0 ) {
-							if (make_dir(H_DIR_path.str().c_str())!=0) 
+                            if (!check_and_make_dir(H_DIR_path.str().c_str()))
 							{
 								char err_msg[S_STATIC_STRINGS_SIZE];
 								sprintf(err_msg, "in generateTilesVaa3DRaw(...): unable to create H_DIR = \"%s\"\n", H_DIR_path.str().c_str());
@@ -1309,7 +1309,7 @@ void VolumeConverter::generateTilesVaa3DRawMC ( std::string output_path, bool* r
 						//computing V_DIR_path and creating the directory the first time it is needed
 						std::stringstream V_DIR_path;
 						V_DIR_path << base_path.str() << this->getMultiresABS_V_string(i,start_height);
-						if(z==D0 && make_dir(V_DIR_path.str().c_str())!=0)
+                        if(z==D0 && !check_and_make_dir(V_DIR_path.str().c_str()))
 						{
 							char err_msg[S_STATIC_STRINGS_SIZE];
 							sprintf(err_msg, "in generateTilesVaa3DRawMC(...): unable to create V_DIR = \"%s\"\n", V_DIR_path.str().c_str());
@@ -1324,7 +1324,7 @@ void VolumeConverter::generateTilesVaa3DRawMC ( std::string output_path, bool* r
 							std::stringstream H_DIR_path;
 							H_DIR_path << V_DIR_path.str() << "/" << this->getMultiresABS_V_string(i,start_height) << "_" << this->getMultiresABS_H_string(i,start_width);
 							if ( z==D0 ) {
-								if (make_dir(H_DIR_path.str().c_str())!=0) 
+                                if (!check_and_make_dir(H_DIR_path.str().c_str()))
 								{
 									char err_msg[S_STATIC_STRINGS_SIZE];
 									sprintf(err_msg, "in generateTilesVaa3DRawMC(...): unable to create H_DIR = \"%s\"\n", H_DIR_path.str().c_str());
@@ -1808,7 +1808,7 @@ void VolumeConverter::generateTilesVaa3DRawMC ( std::string output_path, bool* r
 						//computing V_DIR_path and creating the directory the first time it is needed
 						std::stringstream V_DIR_path;
 						V_DIR_path << base_path.str() << this->getMultiresABS_V_string(i,start_height);
-						if(z==D0 && make_dir(V_DIR_path.str().c_str())!=0)
+                        if(z==D0 && !check_and_make_dir(V_DIR_path.str().c_str()))
 						{
 							char err_msg[S_STATIC_STRINGS_SIZE];
 							sprintf(err_msg, "in generateTilesVaa3DRawMC(...): unable to create V_DIR = \"%s\"\n", V_DIR_path.str().c_str());
@@ -1823,7 +1823,7 @@ void VolumeConverter::generateTilesVaa3DRawMC ( std::string output_path, bool* r
 							std::stringstream H_DIR_path;
 							H_DIR_path << V_DIR_path.str() << "/" << this->getMultiresABS_V_string(i,start_height) << "_" << this->getMultiresABS_H_string(i,start_width);
 							if ( z==D0 ) {
-								if (make_dir(H_DIR_path.str().c_str())!=0) 
+                                if (!check_and_make_dir(H_DIR_path.str().c_str()))
 								{
 									char err_msg[S_STATIC_STRINGS_SIZE];
 									sprintf(err_msg, "in generateTilesVaa3DRawMC(...): unable to create H_DIR = \"%s\"\n", H_DIR_path.str().c_str());
