@@ -36,7 +36,6 @@
 #include "renderer_gl1.h"
 #include "v3dr_colormapDialog.h"
 #include "V3Dsubclasses.h"
-#include <math.h>
 
 using namespace teramanager;
 

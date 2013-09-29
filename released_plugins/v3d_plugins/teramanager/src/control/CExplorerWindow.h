@@ -298,6 +298,13 @@ class teramanager::CExplorerWindow : public QWidget
             zoomHistory[ZOOM_HISTORY_SIZE-1] = zoom;
         }
 
+        static inline double round(double val){
+            return floor(val + 0.5);
+        }
+        static inline double round(float val){
+            return floor(val + 0.5f);
+        }
+
         //PMain instance is allowed to access class private members
         friend class PMain;
         friend class CVolume;
