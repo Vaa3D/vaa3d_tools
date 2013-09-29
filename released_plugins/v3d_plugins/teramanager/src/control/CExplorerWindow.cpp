@@ -1507,6 +1507,10 @@ int CExplorerWindow::getGlobalVCoord(int localVCoord, int resIndex /* = -1 */, b
     if(fromVaa3Dcoordinates && (volV1-volV0 > LIMIT_VOLY))
         localVCoord = static_cast<int>(localVCoord* ( static_cast<float>(volV1-volV0-1)/(LIMIT_VOLY-1) ) +0.5f);
 
+    //--- Alessandro 29/09/2013: fixing "division by zero" bug in case of volumes with 1 pixel size along the considered direction
+    if(CImport::instance()->getVolume(volResIndex)->getDIM_V() == 1)
+        return 0;
+
     float ratio = (CImport::instance()->getVolume(resIndex)->getDIM_V()-1.0f)/(CImport::instance()->getVolume(volResIndex)->getDIM_V()-1.0f);
 
     #ifdef TMP_DEBUG
@@ -1536,6 +1540,10 @@ int CExplorerWindow::getGlobalHCoord(int localHCoord, int resIndex /* = -1 */, b
     //if the Vaa3D image size limit has been reached along this direction, mapping Vaa3D coordinates to the non-downsampled image space coordinate system
     if(fromVaa3Dcoordinates && (volH1-volH0 > LIMIT_VOLX))
         localHCoord = static_cast<int>(localHCoord* ( static_cast<float>(volH1-volH0-1)/(LIMIT_VOLX-1) ) +0.5f);
+
+    //--- Alessandro 29/09/2013: fixing "division by zero" bug in case of volumes with 1 pixel size along the considered direction
+    if(CImport::instance()->getVolume(volResIndex)->getDIM_H() == 1)
+        return 0;
 
     float ratio = (CImport::instance()->getVolume(resIndex)->getDIM_H()-1.0f)/(CImport::instance()->getVolume(volResIndex)->getDIM_H()-1.0f);
 
@@ -1567,6 +1575,10 @@ int CExplorerWindow::getGlobalDCoord(int localDCoord, int resIndex /* = -1 */, b
     if(fromVaa3Dcoordinates && (volD1-volD0 > LIMIT_VOLZ))
         localDCoord = static_cast<int>(localDCoord* ( static_cast<float>(volD1-volD0-1)/(LIMIT_VOLZ-1) ) +0.5f);
 
+    //--- Alessandro 29/09/2013: fixing "division by zero" bug in case of volumes with 1 pixel size along the considered direction
+    if(CImport::instance()->getVolume(volResIndex)->getDIM_D() == 1)
+        return 0;
+
     float ratio = (CImport::instance()->getVolume(resIndex)->getDIM_D()-1.0f)/(CImport::instance()->getVolume(volResIndex)->getDIM_D()-1.0f);
 
     #ifdef TMP_DEBUG
@@ -1596,6 +1608,10 @@ float CExplorerWindow::getGlobalVCoord(float localVCoord, int resIndex /* = -1 *
     //if the Vaa3D image size limit has been reached along this direction, mapping Vaa3D coordinates to the non-downsampled image space coordinate system
     if(fromVaa3Dcoordinates && (volV1-volV0 > LIMIT_VOLY))
         localVCoord *= static_cast<float>(volV1-volV0-1)/(LIMIT_VOLY-1);
+
+    //--- Alessandro 29/09/2013: fixing "division by zero" bug in case of volumes with 1 pixel size along the considered direction
+    if(CImport::instance()->getVolume(volResIndex)->getDIM_V() == 1)
+        return 0.0f;
 
     float ratio = (CImport::instance()->getVolume(resIndex)->getDIM_V()-1.0f)/(CImport::instance()->getVolume(volResIndex)->getDIM_V()-1.0f);
 
@@ -1628,6 +1644,10 @@ float CExplorerWindow::getGlobalHCoord(float localHCoord, int resIndex /* = -1 *
     if(fromVaa3Dcoordinates && (volH1-volH0 > LIMIT_VOLX))
         localHCoord *= static_cast<float>(volH1-volH0-1)/(LIMIT_VOLX-1);
 
+    //--- Alessandro 29/09/2013: fixing "division by zero" bug in case of volumes with 1 pixel size along the considered direction
+    if(CImport::instance()->getVolume(volResIndex)->getDIM_H() == 1)
+        return 0.0f;
+
     float ratio = (CImport::instance()->getVolume(resIndex)->getDIM_H()-1.0f)/(CImport::instance()->getVolume(volResIndex)->getDIM_H()-1.0f);
 
     #ifdef TMP_DEBUG
@@ -1657,6 +1677,10 @@ float CExplorerWindow::getGlobalDCoord(float localDCoord, int resIndex /* = -1 *
     //if the Vaa3D image size limit has been reached along this direction, mapping Vaa3D coordinates to the non-downsampled image space coordinate system
     if(fromVaa3Dcoordinates && (volD1-volD0 > LIMIT_VOLZ))
         localDCoord *= static_cast<float>(volD1-volD0-1)/(LIMIT_VOLZ-1);
+
+    //--- Alessandro 29/09/2013: fixing "division by zero" bug in case of volumes with 1 pixel size along the considered direction
+    if(CImport::instance()->getVolume(volResIndex)->getDIM_D() == 1)
+        return 0.0f;
 
     float ratio = (CImport::instance()->getVolume(resIndex)->getDIM_D()-1.0f)/(CImport::instance()->getVolume(volResIndex)->getDIM_D()-1.0f);
 

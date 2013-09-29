@@ -11,6 +11,19 @@ ties names are:
 - Rem: a feature no longer available
 
 ============================================================================================
+Version 0.9.25
+September 29th, 2013
+--------------------------------------------------------------------------------------------
+- Dev: added consistency check for the volume map. Once volume map is loaded, its dimensions
+       and channels are compared to those of all the loaded volumes. If no correspondence is
+       found with at least one of these volumes, the consistency check fails and an error is
+       displayed to the user.
+- Fix: fixed wrong RAM estimation in TeraConverter.
+- Fix: fixed a bug in TeraFly which caused  an  incorrect behaviour  in case of a resolution
+       with just 1 slice along Z.
+--------------------------------------------------------------------------------------------
+
+
 Version 0.9.24
 September 28th, 2013
 --------------------------------------------------------------------------------------------

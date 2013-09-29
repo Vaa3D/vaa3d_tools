@@ -742,7 +742,7 @@ void PConverter::updateContent()
         int layer_height = vc->getV1()-vc->getV0();
         int layer_width = vc->getH1()-vc->getH0();
         int layer_depth = pow(2.0f, max_res);
-        float GBytes = (layer_height/1024.0f)*(layer_width/1024.0f)*(layer_depth/1024.0f)*4;
+        float GBytes = (layer_height/1024.0f)*(layer_width/1024.0f)*(layer_depth/1024.0f)*vc->getVolume()->getCHANS()*vc->getVolume()->getBYTESxCHAN();
         memoryField->setText(QString::number(GBytes, 'f', 3).append(" GB"));
     }
     catch(MyException &ex)

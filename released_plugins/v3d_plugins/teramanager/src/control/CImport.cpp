@@ -435,6 +435,18 @@ void CImport::run()
             volMapImage = new Image4DSimple();
             volMapImage->setFileName("VolumeMap");
             volMapImage->setData(volMapData, volMapWidth, volMapHeight, volMapDepth, nchannels, V3D_UINT8);
+
+            //--- Alessandro 29/09/2013: checking that the loaded vmap corresponds to one of the loaded volumes
+            bool check_passed = false;
+            for(int i=0; i<volumes.size() && !check_passed; i++)
+                if(volumes[i]->getDIM_V() == volMapHeight &&
+                   volumes[i]->getDIM_H() == volMapWidth  &&
+                   volumes[i]->getDIM_D() == volMapDepth  &&
+                   volumes[i]->getCHANS() == nchannels)
+                    check_passed = true;
+            if(!check_passed)
+                throw MyException(QString("Volume map stored at \"").append(volMapPath.c_str()).append("\" does not correspond to any of the loaded resolutions. Please delete or regenerate the volume map.").toStdString().c_str());
+
         }
 
         //everything went OK
