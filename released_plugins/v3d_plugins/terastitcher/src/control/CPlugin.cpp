@@ -45,7 +45,7 @@ namespace terastitcher
     *    PARAMETERS    *
     ********************
     ---------------------------------------------------------------------------------------------------------------------------*/
-    std::string version = "1.0.8";
+    std::string version = "1.2.0";
     /*-------------------------------------------------------------------------------------------------------------------------*/
 }
 
@@ -88,5 +88,7 @@ bool CPlugin::dofunc(const QString & func_name, const V3DPluginArgList & input, 
 {
     printf("TeraStitcher plugin needs Vaa3D GUI to be executed.\n"
            "If you want to run TeraStitcher from command line, please download and use the command-line TeraStitcher available at http://www.iconfoundation.net/?q=products\n");
+
+    return true;
 }
 

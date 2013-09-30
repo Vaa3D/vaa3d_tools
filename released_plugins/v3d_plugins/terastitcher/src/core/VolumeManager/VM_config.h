@@ -53,6 +53,7 @@
 //directory creation
 #ifdef _WIN32
 #include <direct.h>
+#include <errno.h>
 static bool make_dir(const char* arg)
 {
 	printf("Creating directory \"%s\" ...", arg);

@@ -75,7 +75,6 @@ void CDisplComp::run()
     }
     catch( MyException& exception)  {emit sendOperationOutcome(&exception);}
     catch(const char* error)        {emit sendOperationOutcome(new MyException(error));}
-    catch(char* error)              {emit sendOperationOutcome(new MyException(error));}
     catch(std::bad_alloc& ba)       {emit sendOperationOutcome(new MyException(ba.what()));}
     //catch(...)                      {emit sendOperationOutcome(new MyException("Unkwnown error has occurred"));}
 }
