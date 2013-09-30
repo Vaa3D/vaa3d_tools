@@ -171,6 +171,7 @@ HEADERS += ./src/core/ImageManager/TiledMCVolume.h
 HEADERS += ./src/core/ImageManager/Block.h
 HEADERS += ./src/core/VolumeConverter/VolumeConverter.h
 HEADERS += ./src/core/VolumeConverter/check_and_makedir.h
+HEADERS += ./src/core/VolumeConverter/resumer.h
 
 
 SOURCES += ./src/control/CAnnotations.cpp
@@ -204,6 +205,7 @@ SOURCES += ./src/core/ImageManager/TiledMCVolume.cpp
 SOURCES += ./src/core/ImageManager/Block.cpp
 SOURCES += ./src/core/VolumeConverter/VolumeConverter.cpp
 SOURCES += ./src/core/VolumeConverter/check_and_makedir.cpp
+SOURCES += ./src/core/VolumeConverter/resumer.cpp
 
 
 #set up target
