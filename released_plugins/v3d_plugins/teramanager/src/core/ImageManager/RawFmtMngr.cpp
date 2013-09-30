@@ -1437,6 +1437,53 @@ char *Streamer_Descr_t::addSubBlock ( char *filename, sint64 boffs, int sV0, int
 	return 0;
 }
 
+/********* SUPPORT TO VISUALIZATION OF 16/32 BITS PER CHANNEL ***********/
+
+char *convert2depth8bits ( int red_factor, sint64 totalBlockSize, sint64 sbv_channels, uint8 *&subvol ) {
+	int c, i, j, p;
+	sint64 totalUnits = totalBlockSize * sbv_channels;
+
+	char endianCodeMachine = checkMachineEndian();
+	if ( endianCodeMachine == 'L' ) {
+		j = red_factor - 1; // MSB is the last
+	}
+	else if ( endianCodeMachine == 'B' ) {
+		j = 0;              // MSB is the first
+	}
+	else {
+		return "unknown machine endianess"; 
+	}
+
+	// look for maximum values in each channel and rescale each channel separately
+	unsigned short maxVal;
+	unsigned short *temp = (unsigned short *) subvol;
+	sint64 count;
+	for ( c=0; c<sbv_channels; c++, temp+=totalBlockSize ) {
+		for ( i=0, maxVal=0; i<totalBlockSize; i++ )
+			if ( temp[i] > maxVal )
+				maxVal = temp[i];
+		for ( i=1, p=8*red_factor; i<maxVal; i<<=1, p-- )
+			;
+		// p represents the number of bits of the shift
+		for ( i=0, count=0; i<totalBlockSize; i++ ) {
+			if ( temp[i] > (0.5*maxVal) )
+				count++;
+            temp[i] <<= p;
+		}
+		printf("\t\t\t\tin RawFmtMngr - convert2depth8bits: c=%d, maxVal=%d, p=%d, count=%ld\n\n",c,maxVal,p,count);
+	}
+	
+	uint8 *temp_buf = new uint8[totalUnits];
+	memset(temp_buf,0,totalUnits);
+	for ( i=0; i<totalUnits; i++, j+=red_factor )
+		temp_buf[i] = subvol[j];
+
+	delete[] subvol;
+	subvol = temp_buf;
+
+	return 0;
+}
+
 
 
 

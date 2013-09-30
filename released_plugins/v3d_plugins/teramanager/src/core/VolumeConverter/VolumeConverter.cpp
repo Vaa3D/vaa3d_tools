@@ -48,6 +48,7 @@
 #include <cstdio>
 
 #include "check_and_makedir.h" //added by Hanchuan Peng, 20130915
+#include "resumer.h"
 
 //initialization of class members
 double VolumeConverter::time_displ_comp=0;
@@ -365,6 +366,7 @@ void VolumeConverter::generateTiles(std::string output_path, bool* resolutions,
 						//computing H_DIR_path and creating the directory the first time it is needed
 						std::stringstream H_DIR_path;
 						H_DIR_path << V_DIR_path.str() << "/" << this->getMultiresABS_V_string(i,start_height) << "_" << this->getMultiresABS_H_string(i,start_width);
+
                         if(z==D0 && !check_and_make_dir(H_DIR_path.str().c_str()))
 						{
 							char err_msg[S_STATIC_STRINGS_SIZE];
@@ -654,15 +656,30 @@ void VolumeConverter::generateTilesVaa3DRaw(std::string output_path, bool* resol
 	memset(ubuffer,0,channels*sizeof(uint8));
 	org_channels = channels; // save for checks
 
-	//slice_start and slice_end of current block depend on the resolution
-	for(int res_i=0; res_i< resolutions_size; res_i++) {
-		stack_block[res_i] = 0;
-		slice_start[res_i] = this->D0; 
-		slice_end[res_i] = slice_start[res_i] + stacks_depth[res_i][0][0][0] - 1;
+	FILE *fhandle;
+	sint64 z;
+	sint64 z_parts;
+	if ( initResumer("Vaa3DRaw",output_path.c_str(),resolutions_size,resolutions,block_height,block_width,block_depth,method,saved_img_format,saved_img_depth,fhandle) ) {
+		readResumerState(fhandle,output_path.c_str(),resolutions_size,stack_block,slice_start,slice_end,z,z_parts);
+	}
+	else {
+		//slice_start and slice_end of current block depend on the resolution
+		for(int res_i=0; res_i< resolutions_size; res_i++) {
+			stack_block[res_i] = 0;
+			slice_start[res_i] = this->D0; 
+			slice_end[res_i] = slice_start[res_i] + stacks_depth[res_i][0][0][0] - 1;
+		}
+		z = this->D0;
+		z_parts = 1;
 	}
 
-	for(sint64 z = this->D0, z_parts = 1; z < this->D1; z += z_max_res, z_parts++)
+	for(/* sint64 z = this->D0, z_parts = 1 */; z < this->D1; z += z_max_res, z_parts++)
 	{
+		//if ( z > (this->D1/2) ) {
+		//	closeResumer(fhandle);
+		//	throw MyException("interruption for test");
+		//}
+
 		// fill one slice block
 		if ( internal_rep == REAL_INTERNAL_REP )
 			rbuffer = volume->loadSubvolume_to_REAL_T(V0,V1,H0,H1,(int)(z-D0),(z-D0+z_max_res <= D1) ? (int)(z-D0+z_max_res) : D1);
@@ -766,7 +783,7 @@ void VolumeConverter::generateTilesVaa3DRaw(std::string output_path, bool* resol
 						std::stringstream H_DIR_path;
 						H_DIR_path << V_DIR_path.str() << "/" << this->getMultiresABS_V_string(i,start_height) << "_" << this->getMultiresABS_H_string(i,start_width);
 						if ( z==D0 ) {
-                            if (!check_and_make_dir(H_DIR_path.str().c_str()))
+							if(!check_and_make_dir(H_DIR_path.str().c_str()))
 							{
 								char err_msg[S_STATIC_STRINGS_SIZE];
 								sprintf(err_msg, "in generateTilesVaa3DRaw(...): unable to create H_DIR = \"%s\"\n", H_DIR_path.str().c_str());
@@ -883,7 +900,12 @@ void VolumeConverter::generateTilesVaa3DRaw(std::string output_path, bool* resol
 			delete rbuffer;
 		else // internal_rep == UINT8_INTERNAL_REP
 			delete ubuffer[0]; // other buffer pointers are only offsets
+		
+		// save next group data
+		saveResumerState(fhandle,resolutions_size,stack_block,slice_start,slice_end,z+z_max_res,z_parts+1);
 	}
+
+	closeResumer(fhandle,output_path.c_str());
 
 	// reloads created volumes to generate .bin file descriptors at all resolutions
 	ref_sys reference(axis(1),axis(2),axis(3));
@@ -1309,7 +1331,7 @@ void VolumeConverter::generateTilesVaa3DRawMC ( std::string output_path, bool* r
 						//computing V_DIR_path and creating the directory the first time it is needed
 						std::stringstream V_DIR_path;
 						V_DIR_path << base_path.str() << this->getMultiresABS_V_string(i,start_height);
-                        if(z==D0 && !check_and_make_dir(V_DIR_path.str().c_str()))
+						if(z==D0 && !check_and_make_dir(V_DIR_path.str().c_str()))
 						{
 							char err_msg[S_STATIC_STRINGS_SIZE];
 							sprintf(err_msg, "in generateTilesVaa3DRawMC(...): unable to create V_DIR = \"%s\"\n", V_DIR_path.str().c_str());
@@ -1324,7 +1346,7 @@ void VolumeConverter::generateTilesVaa3DRawMC ( std::string output_path, bool* r
 							std::stringstream H_DIR_path;
 							H_DIR_path << V_DIR_path.str() << "/" << this->getMultiresABS_V_string(i,start_height) << "_" << this->getMultiresABS_H_string(i,start_width);
 							if ( z==D0 ) {
-                                if (!check_and_make_dir(H_DIR_path.str().c_str()))
+								if(!check_and_make_dir(H_DIR_path.str().c_str()))
 								{
 									char err_msg[S_STATIC_STRINGS_SIZE];
 									sprintf(err_msg, "in generateTilesVaa3DRawMC(...): unable to create H_DIR = \"%s\"\n", H_DIR_path.str().c_str());
@@ -1808,7 +1830,7 @@ void VolumeConverter::generateTilesVaa3DRawMC ( std::string output_path, bool* r
 						//computing V_DIR_path and creating the directory the first time it is needed
 						std::stringstream V_DIR_path;
 						V_DIR_path << base_path.str() << this->getMultiresABS_V_string(i,start_height);
-                        if(z==D0 && !check_and_make_dir(V_DIR_path.str().c_str()))
+						if(z==D0 && !check_and_make_dir(V_DIR_path.str().c_str()))
 						{
 							char err_msg[S_STATIC_STRINGS_SIZE];
 							sprintf(err_msg, "in generateTilesVaa3DRawMC(...): unable to create V_DIR = \"%s\"\n", V_DIR_path.str().c_str());
@@ -1823,7 +1845,7 @@ void VolumeConverter::generateTilesVaa3DRawMC ( std::string output_path, bool* r
 							std::stringstream H_DIR_path;
 							H_DIR_path << V_DIR_path.str() << "/" << this->getMultiresABS_V_string(i,start_height) << "_" << this->getMultiresABS_H_string(i,start_width);
 							if ( z==D0 ) {
-                                if (!check_and_make_dir(H_DIR_path.str().c_str()))
+								if(!check_and_make_dir(H_DIR_path.str().c_str()))
 								{
 									char err_msg[S_STATIC_STRINGS_SIZE];
 									sprintf(err_msg, "in generateTilesVaa3DRawMC(...): unable to create H_DIR = \"%s\"\n", H_DIR_path.str().c_str());

@@ -26,6 +26,8 @@
 #include <string>
 #include "StackedVolume.h"
 #include "Stack.h"
+#include "RawFmtMngr.h"
+
 #ifdef _WIN32
 #include "dirent_win.h"
 #else
@@ -39,6 +41,7 @@
 #include "ProgressBar.h"
 
 using namespace std;
+
 
 StackedVolume::StackedVolume(const char* _root_dir)  throw (MyException)
 : VirtualVolume(_root_dir) // iannello ADDED
@@ -833,22 +836,29 @@ REAL_T* StackedVolume::loadSubvolume(int V0,int V1, int H0, int H1, int D0, int 
 uint8* StackedVolume::loadSubvolume_to_UINT8(int V0,int V1, int H0, int H1, int D0, int D1, int *channels, int ret_type) throw (MyException)
 {
     #if IM_VERBOSE > 3
-    printf("\t\t\t\tin StackedVolume::loadSubvolume_to_UINT8(V0=%d, V1=%d, H0=%d, H1=%d, D0=%d, D1=%d)\n", V0, V1, H0, H1, D0, D1);
+    printf("\t\t\t\tin StackedVolume::loadSubvolume_to_UINT8(V0=%d, V1=%d, H0=%d, H1=%d, D0=%d, D1=%d, *channels=%d, ret_type=%d)\n", 
+		V0, V1, H0, H1, D0, D1, *channels, ret_type);
     #endif
 
     //checking for non implemented features
-	if( this->BYTESxCHAN != 1 ) {
-		char err_msg[IM_STATIC_STRINGS_SIZE];
-		sprintf(err_msg,"StackedVolume::loadSubvolume_to_UINT8: invalid number of bytes per channel (%d)",this->BYTESxCHAN); 
-		throw MyException(err_msg);
-	}
+	//if( this->BYTESxCHAN != 1 ) {
+	//	char err_msg[IM_STATIC_STRINGS_SIZE];
+	//	sprintf(err_msg,"StackedVolume::loadSubvolume_to_UINT8: invalid number of bytes per channel (%d)",this->BYTESxCHAN); 
+	//	throw MyException(err_msg);
+	//}
 
-	if ( (ret_type == IM_DEF_IMG_DEPTH) && ((8 * this->BYTESxCHAN) != IM_DEF_IMG_DEPTH)  ) {
+	//if ( (ret_type == IM_DEF_IMG_DEPTH) && ((8 * this->BYTESxCHAN) != IM_DEF_IMG_DEPTH) ) {
+		// does not support depth conversion: 
 		// return type is 8 bits, but native depth is not 8 bits
+	if ( (ret_type != IM_NATIVE_RTYPE) && (ret_type != IM_DEF_IMG_DEPTH) ) {
+		// return type should be converted, but not to 8 bits per channel
 		char err_msg[IM_STATIC_STRINGS_SIZE];
 		sprintf(err_msg,"RawVolume::loadSubvolume_to_UINT8: non supported return type (%d bits) - native type is %d bits",ret_type, 8*this->BYTESxCHAN); 
 		throw MyException(err_msg);
 	}
+
+	// reduction factor to be applied to the loaded buffer
+	int red_factor = (ret_type == IM_NATIVE_RTYPE) ? 1 : ((8 * this->BYTESxCHAN) / ret_type);
 
     //initializations
     V0 = V0 < 0 ? 0 : V0;
@@ -965,6 +975,16 @@ uint8* StackedVolume::loadSubvolume_to_UINT8(int V0,int V1, int H0, int H1, int 
     //returning outputs
     if(channels)
         *channels = (int)sbv_channels;
+
+	if ( red_factor > 1 ) { // the buffer has to be reduced
+		char *err_rawfmt;
+		if ( err_rawfmt = convert2depth8bits(red_factor,(sbv_height*sbv_width*sbv_depth),sbv_channels,subvol) ) {
+			char err_msg[IM_STATIC_STRINGS_SIZE];
+			sprintf(err_msg,"TiledVolume::loadSubvolume_to_UINT8: %s", err_rawfmt);
+			throw MyException(err_msg);
+		}
+	}
+
     return subvol;
 }
 

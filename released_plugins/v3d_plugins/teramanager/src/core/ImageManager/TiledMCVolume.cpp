@@ -85,8 +85,8 @@ TiledMCVolume::TiledMCVolume(const char* _root_dir, ref_sys _reference_system, f
 : VirtualVolume(_root_dir) // iannello ADDED
 {
 	#if IM_VERBOSE > 3
-    printf("\t\t\t\tin TiledMCVolume::TiledMCVolume(_root_dir=%s, ref_sys reference_system={%d,%d,%d}, VXL_1=%.4f, VXL_2=%.4f, VXL_3=%.4f, overwrite_mdata = %s, save_mdata = %s)\n",
-           _root_dir, _reference_system.first, _reference_system.second, _reference_system.third, _VXL_1, _VXL_2, _VXL_3, overwrite_mdata ? "true": "false", save_mdata ? "true": "false");
+	printf("\t\t\t\tin TiledMCVolume::TiledMCVolume(_root_dir=%s, ref_sys reference_system={%d,%d,%d}, VXL_1=%.4f, VXL_2=%.4f, VXL_3=%.4f)\n",
+                          _root_dir, _reference_system.first, _reference_system.second, _reference_system.third, _VXL_1, _VXL_2, _VXL_3);
 	#endif
 
 	// iannello this->root_dir = new char[strlen(_root_dir)+1];
@@ -828,18 +828,22 @@ REAL_T* TiledMCVolume::loadSubvolume(int V0,int V1, int H0, int H1, int D0, int 
 uint8* TiledMCVolume::loadSubvolume_to_UINT8(int V0,int V1, int H0, int H1, int D0, int D1, int *channels, int ret_type) throw (MyException)
 {
     #if IM_VERBOSE > 3
-    printf("\t\t\t\tin TiledMCVolume::loadSubvolume_to_UINT8(V0=%d, V1=%d, H0=%d, H1=%d, D0=%d, D1=%d)\n", V0, V1, H0, H1, D0, D1);
+    printf("\t\t\t\tin StackedVolume::loadSubvolume_to_UINT8(V0=%d, V1=%d, H0=%d, H1=%d, D0=%d, D1=%d, *channels=%d, ret_type=%d)\n", 
+		V0, V1, H0, H1, D0, D1, *channels, ret_type);
     #endif
 
     //checking for non implemented features
-	if( this->BYTESxCHAN != 1 ) {
-		char err_msg[IM_STATIC_STRINGS_SIZE];
-		sprintf(err_msg,"TiledMCVolume::loadSubvolume_to_UINT8: invalid number of bytes per channel (%d)",this->BYTESxCHAN); 
-		throw MyException(err_msg);
-	}
+	//if( this->BYTESxCHAN != 1 ) {
+	//	char err_msg[IM_STATIC_STRINGS_SIZE];
+	//	sprintf(err_msg,"TiledMCVolume::loadSubvolume_to_UINT8: invalid number of bytes per channel (%d)",this->BYTESxCHAN); 
+	//	throw MyException(err_msg);
+	//}
 
-	if ( (ret_type == IM_DEF_IMG_DEPTH) && ((8 * this->BYTESxCHAN) != IM_DEF_IMG_DEPTH)  ) {
+	//if ( (ret_type == IM_DEF_IMG_DEPTH) && ((8 * this->BYTESxCHAN) != IM_DEF_IMG_DEPTH)  ) {
+		// does not support depth conversion: 
 		// return type is 8 bits, but native depth is not 8 bits
+	if ( (ret_type != IM_NATIVE_RTYPE) && (ret_type != IM_DEF_IMG_DEPTH) ) {
+		// return type should be converted, but not to 8 bits per channel
 		char err_msg[IM_STATIC_STRINGS_SIZE];
 		sprintf(err_msg,"RawVolume::loadSubvolume_to_UINT8: non supported return type (%d bits) - native type is %d bits",ret_type, 8*this->BYTESxCHAN); 
 		throw MyException(err_msg);
@@ -871,7 +875,7 @@ uint8* TiledMCVolume::loadSubvolume_to_UINT8(int V0,int V1, int H0, int H1, int 
 	uint8 *subvol_ch;
 
 	for ( int c=0; c<n_active; c++ ) {
-		subvol_ch = vol_ch[active[c]]->loadSubvolume_to_UINT8(V0,V1,H0,H1,D0,D1,&dummy_ch);
+		subvol_ch = vol_ch[active[c]]->loadSubvolume_to_UINT8(V0,V1,H0,H1,D0,D1,&dummy_ch,ret_type);
 		memcpy(subvol + c*sbv_ch_dim, subvol_ch, sbv_ch_dim*sizeof(uint8));
 		delete[] subvol_ch;
 	}

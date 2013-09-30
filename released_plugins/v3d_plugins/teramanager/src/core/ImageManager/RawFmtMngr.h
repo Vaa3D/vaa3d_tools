@@ -292,6 +292,17 @@ char *streamer_close ( Streamer_Descr_t *streamer );
 /* closes the streamed operation specified by 'streamer'
  */
 
+char *convert2depth8bits ( int red_factor, sint64 totalBlockSize, sint64 sbv_channels, uint8 *&subvol );
+/* convert the buffer pointed by subvol to 8 bits per channel
+ *
+ * red_factor:     number of bytes per channel in the input buffer 
+ *                 (reduction factor for the conversion to 8 bits
+ * totalBlockSize: number of voxels in each channel (sbv_height*sbv_width*sbv_depth)
+ * sbv_channels:   number of channels
+ * subvol:         buffer to be converted (of length totalBlockSize*sbv_channels*red_factor); 
+ *                 returns the converted buffer (of length totalBlockSize*sbv_channels)
+ */
+
 #endif
 
 
