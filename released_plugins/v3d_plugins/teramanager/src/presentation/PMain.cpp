@@ -225,8 +225,9 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     curveDimsSpinBox->setSuffix(" (pixels)");
     curveDimsWidget->setDefaultWidget(curveDimsSpinBox);
     curveDimsMenu->addAction(curveDimsWidget);
-    curveAspectSkeleton->setChecked(true);
+    curveAspectTube->setChecked(true);
     curveDimsSpinBox->setValue(1);
+    connect(curveAspectTube, SIGNAL(changed()), this, SLOT(curveAspectChanged()));
     connect(curveAspectSkeleton, SIGNAL(changed()), this, SLOT(curveAspectChanged()));
     connect(curveDimsSpinBox, SIGNAL(valueChanged(int)), this, SLOT(curveDimsChanged(int)));
 
@@ -245,6 +246,22 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     debugStreamingStepsActionWidget->setDefaultWidget(debugStreamingStepsSBox);
     debugStreamingStepsMenu->addAction(debugStreamingStepsActionWidget);
     debugMenu->addMenu(debugStreamingStepsMenu);
+
+    debugVerbosityMenu = new QMenu("Verbosity");
+    debugVerbosityActionWidget = new QWidgetAction(this);
+    debugVerbosityCBox = new QComboBox();
+    debugVerbosityCBox->addItem("Silent mode");
+    debugVerbosityCBox->addItem("Level 1");
+    debugVerbosityCBox->addItem("Level 2");
+    debugVerbosityCBox->addItem("Level 3");
+    debugVerbosityCBox->addItem("Verbose");
+    CSettings::instance()->readSettings();
+    debugVerbosityCBox->setCurrentIndex(itm::DEBUG);
+    debugVerbosityActionWidget->setDefaultWidget(debugVerbosityCBox);
+    debugVerbosityMenu->addAction(debugVerbosityActionWidget);
+    connect(debugVerbosityCBox, SIGNAL(currentIndexChanged(int)), this, SLOT(verbosityChanged(int)));
+    debugMenu->addMenu(debugVerbosityMenu);
+
     helpMenu = menuBar->addMenu("Help");
     aboutAction = new QAction("About", this);
     aboutAction->setIcon(QIcon(":/icons/about.png"));
@@ -1254,9 +1271,11 @@ void PMain::importDone(MyException *ex, Image4DSimple* vmap_image, qint64 elapse
     else
     {
         //first updating IO time
+        /**/itm::debug(itm::LEV_MAX, "updating IO time", __itm__current__function__);
         PLog::getInstance()->appendIO(elapsed_time, "Volume imported and map loaded");
 
         //otherwise inserting volume's informations
+        /**/itm::debug(itm::LEV_MAX, "inserting volume's informations", __itm__current__function__);
         QElapsedTimer timerGUI;
         timerGUI.start();
         VirtualVolume* volume = CImport::instance()->getHighestResVolume();
@@ -1314,6 +1333,7 @@ void PMain::importDone(MyException *ex, Image4DSimple* vmap_image, qint64 elapse
         org_D_field->setText(QString::number(volume->getORG_D(), 'f', 2));
 
         //and setting subvol widgets limits
+        /**/itm::debug(itm::LEV_MAX, "setting subvol widgets limits", __itm__current__function__);
         V0_sbox->setMinimum(1);
         V0_sbox->setMaximum(volume->getDIM_V());
         V0_sbox->setValue(1);
@@ -1338,6 +1358,7 @@ void PMain::importDone(MyException *ex, Image4DSimple* vmap_image, qint64 elapse
         highestVOISizeChanged(0);
 
         //updating menu items
+        /**/itm::debug(itm::LEV_MAX, "updating menu items", __itm__current__function__);
         openVolumeAction->setEnabled(false);
         recentVolumesMenu->setEnabled(false);
         openVolumeToolButton->setEnabled(false);
@@ -1364,6 +1385,7 @@ void PMain::importDone(MyException *ex, Image4DSimple* vmap_image, qint64 elapse
             gradientBar->setNSteps(CImport::instance()->getResolutions());
 
             //inserting available resolutions
+            /**/itm::debug(itm::LEV_MAX, "inserting available resolutions", __itm__current__function__);
             resolution_cbox->setEnabled(false);
             for(int i=0; i<CImport::instance()->getResolutions(); i++)
             {
@@ -1386,15 +1408,19 @@ void PMain::importDone(MyException *ex, Image4DSimple* vmap_image, qint64 elapse
 
 
             //instantiating CAnnotations
+            /**/itm::debug(itm::LEV_MAX, "instantiating CAnnotations", __itm__current__function__);
             CAnnotations::instance(volume->getDIM_V(), volume->getDIM_H(), volume->getDIM_D());
 
             //updating GUI time
+            /**/itm::debug(itm::LEV_MAX, "updating GUI time", __itm__current__function__);
             PLog::getInstance()->appendGPU(timerGUI.elapsed(), "TeraFly's GUI initialized");
 
             //starting 3D exploration
+            /**/itm::debug(itm::LEV_MAX, "instantiating CExplorerWindow", __itm__current__function__);
             CExplorerWindow *new_win = new CExplorerWindow(V3D_env, CImport::instance()->getVMapResIndex(), CImport::instance()->getVMap(),
                                 0, CImport::instance()->getVMapHeight(), 0, CImport::instance()->getVMapWidth(),
                                 0, CImport::instance()->getVMapDepth(), CImport::instance()->getNChannels(), 0);
+            /**/itm::debug(itm::LEV_MAX, "showing CExplorerWindow", __itm__current__function__);
             new_win->show();
 
             helpBox->setText(HTbase);
@@ -1881,4 +1907,13 @@ void PMain::curveAspectChanged()
             CExplorerWindow::current->view3DWidget->update();
         }
     }
+}
+
+/**********************************************************************************
+* Linked to verbosity combobox
+***********************************************************************************/
+void PMain::verbosityChanged(int i)
+{
+    itm::DEBUG = i;
+    CSettings::instance()->writeSettings();
 }

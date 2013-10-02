@@ -78,7 +78,7 @@ class teramanager::PMain : public QWidget
         QMenu* curveDimsMenu;           //"Curve dims" menu level 4
         QWidgetAction* curveDimsWidget; //"Curve dims" menu action widget
         QSpinBox* curveDimsSpinBox;     //"Curve dims" spinbox
-        QMenu* curveAspectMenu;             //"Curve aspect" menu level 4
+        QMenu* curveAspectMenu;         //"Curve aspect" menu level 4
         QAction* curveAspectTube;       //"Tube" action
         QAction* curveAspectSkeleton;   //"Skeleton" action
         QWidgetAction* importOptionsWidget;
@@ -90,10 +90,13 @@ class teramanager::PMain : public QWidget
         //debug menu widgets
         QMenu* debugMenu;               //"Debug" menu for debugging purposes
         QAction* debugAction1;          //debug menu action #1
-        QAction* debugShowLogAction;          //debug menu action #2
+        QAction* debugShowLogAction;    //debug menu action "Show log"
         QMenu* debugStreamingStepsMenu;
         QWidgetAction* debugStreamingStepsActionWidget;
         QSpinBox *debugStreamingStepsSBox;
+        QMenu* debugVerbosityMenu;
+        QWidgetAction* debugVerbosityActionWidget;
+        QComboBox *debugVerbosityCBox;
 
         //toolbar widgets
         QToolBar* toolBar;              //tool bar with buttons
@@ -395,6 +398,11 @@ class teramanager::PMain : public QWidget
         ***********************************************************************************/
         void curveDimsChanged(int dim);
         void curveAspectChanged();
+
+        /**********************************************************************************
+        * Linked to verbosity combobox
+        ***********************************************************************************/
+        void verbosityChanged(int i);
 
         //very useful (not included in Qt): disables the given item of the given combobox
         static void setEnabledComboBoxItem(QComboBox* cbox, int _index, bool enabled);

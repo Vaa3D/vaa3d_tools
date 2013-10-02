@@ -114,6 +114,7 @@ void CImport::run()
         If metadata binary file doesn't exist or the volume has to be re-imported,
         further informations must be provided to the constructor.
         *************************************************************************/
+        /**/itm::debug(itm::LEV_MAX, "importing current volume", __itm__current__function__);
         string mdata_fpath = path;
         mdata_fpath.append("/");
         mdata_fpath.append(IM_METADATA_FILE_NAME);
@@ -406,6 +407,7 @@ void CImport::run()
 
 
             //checking plugin version
+            /**/itm::debug(itm::LEV_MAX, "checking plugin version from vmap", __itm__current__function__);
             uint16 verstr_size;
             fread_return_val = fread(&verstr_size, sizeof(uint16), 1, volMapBin);
             if(fread_return_val != 1)
@@ -419,7 +421,8 @@ void CImport::run()
                                   " (").append(version).append(") older than 0.7. Please check the \"Regenerate volume map\" option from \"File->Options\".").toStdString().c_str());
             delete[] version;
 
-            //loading metadata and data
+            //loading metadata and data            
+            /**/itm::debug(itm::LEV_MAX, "loading metadata and data from vmap", __itm__current__function__);
             fread_return_val = fread(&nchannels, sizeof(int), 1, volMapBin);
             if(fread_return_val != 1)
                 throw MyException("Unable to read volume map file (<nchannels> field). It must be regenerated.");
@@ -441,7 +444,8 @@ void CImport::run()
             volMapImage->setFileName("VolumeMap");
             volMapImage->setData(volMapData, volMapWidth, volMapHeight, volMapDepth, nchannels, V3D_UINT8);
 
-            //--- Alessandro 29/09/2013: checking that the loaded vmap corresponds to one of the loaded volumes
+            //--- Alessandro 29/09/2013: checking that the loaded vmap corresponds to one of the loaded volumes            
+            /**/itm::debug(itm::LEV_MAX, "checking that the loaded vmap corresponds to one of the loaded volumes", __itm__current__function__);
             bool check_passed = false;
             for(int i=0; i<volumes.size() && !check_passed; i++)
                 if(volumes[i]->getDIM_V() == volMapHeight &&

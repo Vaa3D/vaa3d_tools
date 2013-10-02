@@ -118,6 +118,9 @@ void CSettings::writeSettings()
     settings.setValue("volumeConverterStacksWidthLRU", volumeConverterStacksWidthLRU);
     settings.setValue("volumeConverterStacksHeightLRU", volumeConverterStacksHeightLRU);
     settings.setValue("volumeConverterStacksDepthLRU", volumeConverterStacksDepthLRU);
+
+
+    settings.setValue("verbosity", itm::DEBUG);
 }
 
 
@@ -150,6 +153,7 @@ void CSettings::readSettings()
     if(settings.contains("traslZ"))
         traslZ = settings.value("traslZ").toInt();
     int size = settings.beginReadArray("volumePathHistory");
+    volumePathHistory.clear();
     for (int i = 0; i < size; ++i)
     {
         settings.setArrayIndex(i);
@@ -172,4 +176,9 @@ void CSettings::readSettings()
         volumeConverterStacksHeightLRU = settings.value("volumeConverterStacksHeightLRU").toInt();
     if(settings.contains("volumeConverterStacksDepthLRU"))
         volumeConverterStacksDepthLRU = settings.value("volumeConverterStacksDepthLRU").toInt();
+
+     if(settings.contains("verbosity"))
+         itm::DEBUG = settings.value("verbosity").toInt();
+     else
+         itm::NO_DEBUG;
 }
