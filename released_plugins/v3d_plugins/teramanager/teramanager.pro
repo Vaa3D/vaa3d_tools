@@ -85,6 +85,9 @@ win32{
 
     #this solves undefined symbols like "Read_LSM_Stack" and similar
     SOURCES += $$V3DMAINPATH/basic_c_fun/mg_image_lib.cpp
+
+    #on Windows 7+ the best option is to use native fonts
+    DEFINES += _USE_NATIVE_FONTS
 }
 
 #Vaa3D headers and sources needed by the plugin
@@ -214,6 +217,6 @@ SOURCES += ./src/core/VolumeConverter/check_and_makedir.cpp
 SOURCES += ./src/core/VolumeConverter/resumer.cpp
 
 
-#set up target
+#set up your own target
 TARGET	= $$qtLibraryTarget(teramanagerplugin)
-DESTDIR	= ../../../bin/plugins/teramanager
+DESTDIR	= $$V3DBUILDPATH/../v3d/Windows_MSVC_64_release/plugins/teramanager

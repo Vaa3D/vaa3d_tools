@@ -131,12 +131,9 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
 
     //creating fonts
     QFont tinyFont = QApplication::font();
+    #ifndef _USE_NATIVE_FONTS
     tinyFont.setPointSize(10);
-    QFont smallFont = QApplication::font();
-    smallFont.setPointSize(11);
-    QFont xlabelFont = QApplication::font();
-    xlabelFont.setBold(true);
-    xlabelFont.setPointSize(11);
+    #endif
 
     //import form widgets
     import_form = new QWidget();
@@ -619,7 +616,9 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     info_panel_layout->addWidget(org_D_field,           6,10,1,2);
     info_panel_layout->addWidget(direction_D_label_4,   6,12,1,1);
     info_panel->setLayout(info_panel_layout);
+    #ifndef _USE_NATIVE_FONTS
     info_panel->setStyle(new QWindowsStyle());
+    #endif
 
     //subvolume selection widgets
     QGridLayout* subvol_panel_layout = new QGridLayout();
@@ -642,7 +641,9 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
 
     subvol_panel_layout->addWidget(loadButton,          3, 0, 1, 13);
     subvol_panel->setLayout(subvol_panel_layout);
+    #ifndef _USE_NATIVE_FONTS
     subvol_panel->setStyle(new QWindowsStyle());
+    #endif
 
     //multiresolution mode widgets
     QGridLayout* multiresModePanelLayout= new QGridLayout();
@@ -691,7 +692,9 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     multiresModePanelLayout->addWidget(traslZlabel,                             7, 11, 1, 1);
     multiresModePanelLayout->addWidget(traslZpos,                               7, 12, 1, 1);
     multires_panel->setLayout(multiresModePanelLayout);
+    #ifndef _USE_NATIVE_FONTS
     multires_panel->setStyle(new QWindowsStyle());
+    #endif
 
     //overall
     QVBoxLayout* layout = new QVBoxLayout();
