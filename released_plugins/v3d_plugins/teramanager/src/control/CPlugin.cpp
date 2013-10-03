@@ -44,8 +44,8 @@ namespace teramanager
     *    PARAMETERS    *
     ********************
     ---------------------------------------------------------------------------------------------------------------------------*/
-    std::string version = "0.9.26";     //software version
-    int DEBUG = NO_DEBUG;                //debug level
+    std::string version = "0.9.27";     //software version
+    int DEBUG = LEV_MAX;                //debug level
     /*-------------------------------------------------------------------------------------------------------------------------*/
 }
 
@@ -71,9 +71,7 @@ QStringList CPlugin::funclist() const
 // 4 - Call the functions corresponding to the domenu items. 
 void CPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
 {
-    #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread *] >> CPlugin::domenu(\"%s\")\n",  menu_name.toStdString().c_str());
-    #endif
+    /**/itm::debug(itm::LEV1, strprintf("menu_name = %s", menu_name.toStdString().c_str()).c_str(), __itm__current__function__);
 
     //overriding the current locale with the standard POSIX locale
     setlocale(LC_ALL, "POSIX");
@@ -97,21 +95,19 @@ void CPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWi
         if(CExplorerWindow::getCurrent())
             CExplorerWindow::getCurrent()->invokedFromVaa3D();
         else
-            printf("--------------------- teramanager plugin [thread *] !! WARNING !! No suitable handler for Vaa3D invocation. TeraFly may not be instantiated or running in multiresolution mode.\n");
+            /**/itm::warning("WARNING !! No suitable handler for Vaa3D invocation. TeraFly may not be instantiated or running in multiresolution mode.", __itm__current__function__);
     }
     else
     {
         return;
     }
-    printf("--------------------- teramanager plugin [thread *] >> CPlugin::domenu() finished\n");
+    /**/itm::debug(itm::LEV1, "EOF", __itm__current__function__);
 }
 
 // 5 - Call the functions corresponding to dofunc
 bool CPlugin::dofunc(const QString & func_name, const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback,  QWidget * parent)
 {
-    #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread *] >> CPlugin::dofunc(\"%s\")\n",  func_name.toStdString().c_str());
-    #endif
+    /**/itm::debug(itm::LEV1, strprintf("func_name = %s", func_name.toStdString().c_str()).c_str(), __itm__current__function__);
 
     printf("TeraManager plugin needs Vaa3D GUI to be executed.\n");
     return true;

@@ -48,10 +48,7 @@ class teramanager::CVolume : public QThread
         static CVolume* uniqueInstance;
         CVolume() : QThread()
         {
-            #ifdef TMP_DEBUG
-            printf("--------------------- teramanager plugin [thread *] >> CVolume::CVolume()\n");
-            printf("--------------------- teramanager plugin [thread *] >> CVolume created\n");
-            #endif
+         /**/itm::debug(itm::LEV1, 0, __itm__current__function__);
 
             reset();
         }
@@ -102,9 +99,7 @@ class teramanager::CVolume : public QThread
         bool hasFinished(){return finished;}
         void reset()
         {
-            #ifdef TMP_DEBUG
-            printf("--------------------- teramanager plugin [thread *] >> CVolume::reset()\n");
-            #endif
+            /**/itm::debug(itm::LEV1, 0, __itm__current__function__);
 
             voiResIndex = -1;
             buffer = 0;
@@ -129,10 +124,8 @@ class teramanager::CVolume : public QThread
         static float scaleDCoord(float coord, int srcRes, int dstRes) throw (MyException);
         void setVoi(QWidget* _sourceObject, int _voiResIndex, int _V0, int _V1, int _H0, int _H1, int _D0, int _D1) throw (MyException)
         {
-            #ifdef TMP_DEBUG
-            printf("--------------------- teramanager plugin [thread *] >> CVolume::setVoi(..., _voiResIndex = %d, _V0 = %d, _V1=%d, _H0 = %d, _H1=%d, _D0 = %d, _D1=%d)\n",
-                    _voiResIndex, _V0, _V1, _H0, _H1, _D0, _D1);
-            #endif
+            /**/itm::debug(itm::LEV1, strprintf("_voiResIndex = %d, _V0 = %d, _V1=%d, _H0 = %d, _H1=%d, _D0 = %d, _D1=%d",
+                                                _voiResIndex, _V0, _V1, _H0, _H1, _D0, _D1).c_str(), __itm__current__function__);
 
             source = _sourceObject;
             voiResIndex = _voiResIndex;

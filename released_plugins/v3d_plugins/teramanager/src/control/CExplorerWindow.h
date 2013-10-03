@@ -138,10 +138,9 @@ class teramanager::CExplorerWindow : public QWidget
         CExplorerWindow(V3DPluginCallback2* _V3D_env, int _resIndex, uint8* _imgData, int _volV0, int _volV1,
                         int _volH0, int _volH1, int _volD0, int _volD1, int _nchannels, CExplorerWindow* _prev);
         ~CExplorerWindow();
-        static void uninstance(){
-            #ifdef TMP_DEBUG
-            printf("--------------------- teramanager plugin [thread ?] >> CExplorerWindow::uninstance()\n");
-            #endif
+        static void uninstance()
+        {
+            /**/itm::debug(itm::LEV1, 0, __itm__current__function__);
 
             while(first){
                 CExplorerWindow* p = first->next;
@@ -262,10 +261,7 @@ class teramanager::CExplorerWindow : public QWidget
         ***********************************************************************************/
         void setActive(bool active)
         {
-            #ifdef TMP_DEBUG
-            printf("--------------------- teramanager plugin [thread *] >> CExplorerWindow[%s]::setActive(%s)\n",
-                    titleShort.c_str() , active ? "true" : "false");
-            #endif
+            /**/itm::debug(itm::LEV1, strprintf("title = %s, active = %s", titleShort.c_str() , active ? "true" : "false").c_str(), __itm__current__function__);
 
             isActive = active;
             if(!isActive)

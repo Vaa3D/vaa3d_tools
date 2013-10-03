@@ -16,9 +16,7 @@ bool isMarker (annotation* ano) { return ano->type == 0;}
 
 void CAnnotations::uninstance()
 {
-    #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread ?] >> CAnnotations::uninstance()\n");
-    #endif
+    /**/itm::debug(itm::LEV1, 0, __itm__current__function__);
 
     if(uniqueInstance)
     {
@@ -31,16 +29,12 @@ void CAnnotations::uninstance()
 
 CAnnotations::~CAnnotations()
 {
-    #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread ?] >> CAnnotations::~CAnnotations()\n");
-    #endif
+    /**/itm::debug(itm::LEV1, 0, __itm__current__function__);
 
     if(octree)
         delete octree;
 
-    #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread ?] >> CAnnotations destroyed\n");
-    #endif
+    /**/itm::debug(itm::LEV1, "object successfully destroyed", __itm__current__function__);
 }
 
 //recursive support method of 'clear' method
@@ -459,6 +453,8 @@ bool inline CAnnotations::Octree::contains  (const interval_t& V1_int,		 const i
 
 CAnnotations::Octree::Octree(uint32 _DIM_V, uint32 _DIM_H, uint32 _DIM_D)
 {
+    /**/itm::debug(itm::LEV1, strprintf("dimV = %d, dimH = %d, dimD = %d", _DIM_V, _DIM_H, _DIM_D).c_str(), __itm__current__function__);
+
     DIM_V = _DIM_V;
     DIM_H = _DIM_H;
     DIM_D = _DIM_D;
@@ -467,19 +463,17 @@ CAnnotations::Octree::Octree(uint32 _DIM_V, uint32 _DIM_H, uint32 _DIM_D)
 
 CAnnotations::Octree::~Octree(void)
 {
-    #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread ?] >> CAnnotations::~Octree()\n");
-    #endif
+    /**/itm::debug(itm::LEV1, 0, __itm__current__function__);
 
     clear();
+
+    /**/itm::debug(itm::LEV1, "object successfully DESTROYED", __itm__current__function__);
 }
 
 //clears octree content and deallocates used memory
 void CAnnotations::Octree::clear() throw(MyException)
 {
-    #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread ?] >> CAnnotations::clear()\n");
-    #endif
+    /**/itm::debug(itm::LEV1, 0, __itm__current__function__);
 
     _rec_clear(root);
     root = 0;
@@ -556,10 +550,7 @@ uint32 CAnnotations::Octree::count(interval_t V_int, interval_t H_int, interval_
 **********************************************************************************/
 void CAnnotations::addLandmarks(LandmarkList* markers) throw (MyException)
 {
-    #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread ?] >> CAnnotations::addLandmarks(markers[size = %d])\n",
-           markers->size());
-    #endif
+    /**/itm::debug(itm::LEV1, strprintf("markers->size = %d", markers->size()).c_str(), __itm__current__function__);
 
     for(int i=0; i<markers->size(); i++)
     {
@@ -581,10 +572,7 @@ void CAnnotations::addLandmarks(LandmarkList* markers) throw (MyException)
 
 void CAnnotations::removeLandmarks(std::list<LocationSimple> &markers) throw (MyException)
 {
-    #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread ?] >> CAnnotations::removeLandmarks(markers[size = %lu])\n",
-           markers.size());
-    #endif
+    /**/itm::debug(itm::LEV1, strprintf("markers->size = %d", markers.size()).c_str(), __itm__current__function__);
 
     //if the octree is instantiated
     if(octree)
@@ -604,8 +592,7 @@ void CAnnotations::removeLandmarks(std::list<LocationSimple> &markers) throw (My
                 }
             }
             else
-                printf("--------------------- teramanager plugin >> marker (%.1f, %.1f, %.1f) not found in the Octree!!!\n", i->x, i->y, i->z);
-
+                /**/itm::warning(strprintf("marker (%.1f, %.1f, %.1f) not found in the Octree!!!", i->x, i->y, i->z).c_str(), __itm__current__function__);
         }
         tbdList.sort();
         tbdList.unique();
@@ -629,9 +616,7 @@ void CAnnotations::removeLandmarks(std::list<LocationSimple> &markers) throw (My
 
 void CAnnotations::removeCurves(std::list<NeuronSWC> &curves) throw (MyException)
 {
-    #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread ?] >> CAnnotations::removeCurves(curves->listNeuron[size = %lu])\n", curves.size());
-    #endif
+    /**/itm::debug(itm::LEV1, strprintf("curves.size = %d", curves.size()).c_str(), __itm__current__function__);
 
     if(octree)
     {
@@ -654,7 +639,7 @@ void CAnnotations::removeCurves(std::list<NeuronSWC> &curves) throw (MyException
                         //throw MyException("in CAnnotations::removeCurves(): found 2 coincident curves starting points. Curves sharing the same source point are not supported yet.");
                 }
                 else
-                    printf("--------------------- teramanager plugin >> source curve point (%.1f, %.1f, %.1f) not found in the Octree!!!\n", i->x, i->y, i->z);
+                    /**/itm::warning(strprintf("curve point (%.1f, %.1f, %.1f) not found in the Octree!!!", i->x, i->y, i->z).c_str(), __itm__current__function__);
             }
         }
         sources.sort();
@@ -687,10 +672,7 @@ void CAnnotations::removeCurves(std::list<NeuronSWC> &curves) throw (MyException
 
 void CAnnotations::addCurves(NeuronTree* curves) throw (MyException)
 {
-    #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread ?] >> CAnnotations::addCurves(curves->listNeuron[size() = %d])\n",
-           curves->listNeuron.size());
-    #endif
+    /**/itm::debug(itm::LEV1, strprintf("curves.size = %d", curves->listNeuron.size()).c_str(), __itm__current__function__);
 
     std::map<int, annotation*> annotationsMap;
     std::map<int, NeuronSWC*> swcMap;
@@ -725,10 +707,8 @@ void CAnnotations::addCurves(NeuronTree* curves) throw (MyException)
 **********************************************************************************/
 void CAnnotations::findLandmarks(interval_t X_range, interval_t Y_range, interval_t Z_range, std::list<LocationSimple> &markers) throw (MyException)
 {
-    #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread ?] >> CAnnotations::findLandmarks(X[%d,%d), Y[%d,%d), Z[%d,%d))",
-           X_range.start, X_range.end, Y_range.start, Y_range.end, Z_range.start, Z_range.end);
-    #endif
+    /**/itm::debug(itm::LEV1, strprintf("X_range = [%d,%d), Y_range = [%d,%d), Z_range = [%d,%d)",
+                                        X_range.start, X_range.end, Y_range.start, Y_range.end, Z_range.start, Z_range.end).c_str(), __itm__current__function__);
 
     std::list<annotation*> nodes;
     octree->find(Y_range, X_range, Z_range, nodes);
@@ -748,15 +728,12 @@ void CAnnotations::findLandmarks(interval_t X_range, interval_t Y_range, interva
             markers.push_back(marker);
         }
     }
-    printf("...%lu markers loaded\n", markers.size());
 }
 
 void CAnnotations::findCurves(interval_t X_range, interval_t Y_range, interval_t Z_range, std::list<NeuronSWC> &curves) throw (MyException)
 {
-    #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread ?] >> CAnnotations::findCurves(X[%d,%d), Y[%d,%d), Z[%d,%d))",
-           X_range.start, X_range.end, Y_range.start, Y_range.end, Z_range.start, Z_range.end);
-    #endif
+    /**/itm::debug(itm::LEV1, strprintf("X_range = [%d,%d), Y_range = [%d,%d), Z_range = [%d,%d)",
+                                        X_range.start, X_range.end, Y_range.start, Y_range.end, Z_range.start, Z_range.end).c_str(), __itm__current__function__);
 
     std::list<annotation*> nodes;
     octree->find(Y_range, X_range, Z_range, nodes);
@@ -792,7 +769,6 @@ void CAnnotations::findCurves(interval_t X_range, interval_t Y_range, interval_t
             annP = annP->next;
         }
     }
-    printf("...%lu curve points loaded (nodes = %lu, sources = %lu)\n", curves.size(), nodes.size(), sources.size());
 }
 
 /*********************************************************************************
@@ -800,9 +776,7 @@ void CAnnotations::findCurves(interval_t X_range, interval_t Y_range, interval_t
 **********************************************************************************/
 void CAnnotations::save(const char* filepath) throw (MyException)
 {
-    #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread ?] >> CAnnotations::save()\n");
-    #endif
+    /**/itm::debug(itm::LEV1, strprintf("filepath = \"%s\"", filepath).c_str(), __itm__current__function__);
 
     //retrieving annotations
     std::list<annotation*> annotations;
@@ -854,9 +828,7 @@ void CAnnotations::save(const char* filepath) throw (MyException)
 }
 void CAnnotations::load(const char* filepath) throw (MyException)
 {
-    #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread ?] >> CAnnotations::load()\n");
-    #endif
+    /**/itm::debug(itm::LEV1, strprintf("filepath = \"%s\"", filepath).c_str(), __itm__current__function__);
 
     //precondition checks
     if(!octree)
@@ -909,10 +881,10 @@ void CAnnotations::load(const char* filepath) throw (MyException)
                 ann->x = i->x;
                 ann->y = i->y;
                 ann->z = i->z;
-                printf("--------------------- teramanager plugin >> inserting marker %d=(%.1f,%.1f,%.1f)\n", ann->ID, ann->x, ann->y, ann->z);
+                //printf("--------------------- teramanager plugin >> inserting marker %d=(%.1f,%.1f,%.1f)\n", ann->ID, ann->x, ann->y, ann->z);
                 octree->insert(*ann);
             }
-            printf("--------------------- teramanager plugin >> inserted %d markers\n", cells.size());
+            //printf("--------------------- teramanager plugin >> inserted %d markers\n", cells.size());
         }
         else if(strcmp(filetype, "SWCFILE") == 0)
         {
@@ -931,7 +903,7 @@ void CAnnotations::load(const char* filepath) throw (MyException)
                 ann->x = i->x;
                 ann->y = i->y;
                 ann->z = i->z;
-                printf("--------------------- teramanager plugin >> inserting curve point %d=(%.1f,%.1f,%.1f)\n", ann->ID, ann->x, ann->y, ann->z);
+                //printf("--------------------- teramanager plugin >> inserting curve point %d=(%.1f,%.1f,%.1f)\n", ann->ID, ann->x, ann->y, ann->z);
                 octree->insert(*ann);
                 annotationsMap[i->n] = ann;
                 swcMap[i->n] = &(*i);
@@ -942,7 +914,7 @@ void CAnnotations::load(const char* filepath) throw (MyException)
                 if(i->second->prev)
                     i->second->prev->next = i->second;
             }
-            printf("--------------------- teramanager plugin >> inserted %lu curve points\n", annotationsMap.size());
+            //printf("--------------------- teramanager plugin >> inserted %lu curve points\n", annotationsMap.size());
         }
         else
         {

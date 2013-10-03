@@ -41,9 +41,7 @@ CConverter* CConverter::uniqueInstance = NULL;
 
 void CConverter::uninstance()
 {
-    #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread ?] >> CConverter::uninstance()\n");
-    #endif
+    /**/itm::debug(itm::LEV1, 0, __itm__current__function__);
 
     if(uniqueInstance)
     {
@@ -54,19 +52,18 @@ void CConverter::uninstance()
 
 CConverter::~CConverter()
 {
-    #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread *] >> CConverter::~CConverter()\n");
-    printf("--------------------- teramanager plugin [thread *] >> CConverter destroyed\n");
-    #endif
+    /**/itm::debug(itm::LEV1, 0, __itm__current__function__);
+
     if(resolutions)
         delete[] resolutions;
+    resolutions = 0;
+
+    /**/itm::debug(itm::LEV1, "object successfully DESTROYED", __itm__current__function__);
 }
 
 void CConverter::setMembers(PConverter* pConverter) throw (MyException)
 {
-    #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread *] >> CConverter::setMembers()\n");
-    #endif
+    /**/itm::debug(itm::LEV1, 0, __itm__current__function__);
 
     char errMsg[1024];
 
@@ -161,9 +158,7 @@ void CConverter::setMembers(PConverter* pConverter) throw (MyException)
 //automatically called when current thread is started
 void CConverter::run()
 {
-    #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread *] >> CConverter::run()\n");
-    #endif
+    /**/itm::debug(itm::LEV1, 0, __itm__current__function__);
 
     try
     {
@@ -200,6 +195,8 @@ void CConverter::run()
 
         //everything went OK
         emit sendOperationOutcome(0);
+
+        /**/itm::debug(itm::LEV1, "EOF", __itm__current__function__);
     }
     catch( MyException& exception)  {emit sendOperationOutcome(new MyException(exception.what()));}
     catch(const char* error)        {emit sendOperationOutcome(new MyException(error));}

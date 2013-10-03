@@ -29,7 +29,6 @@
 #ifndef __TERAMANAGER_C_PLUGIN_H__
 #define __TERAMANAGER_C_PLUGIN_H__
 
-#define TMP_DEBUG 1                 //debug verbosity level
 #define TMP_VMAP_FNAME "vmap.bin"   //name of volume map binary file
 #define TMP_VMAP_MAXSIZE 200        //maximum size (in MVoxels) of the volume 3D map to be generated
 
@@ -175,8 +174,8 @@ namespace teramanager
     inline void debug(debug_level dbg_level, const char* message=0, const char* source=0){
         if(DEBUG >= dbg_level){
             if(message && source)
-                printf("\n--------------------- teramanager plugin: DEBUG (level %d, source: \"%s\") ----\n"
-                         "               |====> message: \"%s\"\n\n", dbg_level, source, message);
+                printf("\n--------------------- teramanager plugin: DEBUG (level %d) ----: in \"%s\") ----\n"
+                         "                      message: %s\n\n", dbg_level, source, message);
             else if(message)
                 printf("\n--------------------- teramanager plugin: DEBUG (level %d) ----: %s\n", dbg_level, message);
             else if(source)

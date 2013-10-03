@@ -6,9 +6,7 @@ PLog* PLog::uniqueInstance = 0;
 
 PLog::PLog(QWidget *parent) : QDialog(parent)
 {
-    #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread *] >> PLog::PLog()\n");
-    #endif
+    /**/itm::debug(itm::LEV1, 0, __itm__current__function__);
 
     setWindowTitle("TeraFly's log");
 
@@ -83,6 +81,8 @@ float PLog::toFloat(QString timeField)
 //updates time percentages
 void PLog::updatePercentages()
 {
+    /**/itm::debug(itm::LEV1, 0, __itm__current__function__);
+
     float timeActualf = toFloat(timeActual->text());
     float timeIOf = toFloat(timeIO->text());
     float timeGPUf = toFloat(timeGPU->text());
@@ -138,6 +138,8 @@ void PLog::appendActual(int milliseconds, string message)
 
 void PLog::reset()
 {
+    /**/itm::debug(itm::LEV1, 0, __itm__current__function__);
+
     log->setText("");
     append(QString("Log started on ").append(QDateTime::currentDateTime().date().toString()).toStdString());
     timeActual->setText("0.000s");

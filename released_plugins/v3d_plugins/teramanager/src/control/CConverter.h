@@ -49,10 +49,7 @@ class teramanager::CConverter : public QThread
         CConverter() : QThread(), inVolPath(undefined_str), inVolFormat(undefined_str), fileMode(false), conversionMode(false), resolutions(0),
             resolutionsSize(0), stacksWidth(undefined_int32), stacksHeight(undefined_int32), outVolPath(undefined_str), outVolFormat(undefined_str), vc(0)
         {
-            #ifdef TMP_DEBUG
-            printf("--------------------- teramanager plugin [thread *] >> CConverter::CConverter()\n");
-            printf("--------------------- teramanager plugin [thread *] >> CConverter created\n");
-            #endif
+            /**/itm::debug(itm::LEV1, 0, __itm__current__function__);
         }
 
         //automatically called when current thread is started

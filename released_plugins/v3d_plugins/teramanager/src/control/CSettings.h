@@ -44,10 +44,7 @@ class teramanager::CSettings
         static CSettings* uniqueInstance;
         CSettings()
         {
-            #ifdef TMP_DEBUG
-            printf("--------------------- teramanager plugin [thread ?] >> CSettings::CSettings()\n");
-            printf("--------------------- teramanager plugin [thread ?] >> CSettings created\n");
-            #endif
+             /**/itm::debug(itm::LEV1, 0, __itm__current__function__);
             loadDefaultSettings();
             readSettings();
         }

@@ -35,13 +35,11 @@
 
 using namespace teramanager;
 
-CVolume* CVolume::uniqueInstance = NULL;
+CVolume* CVolume::uniqueInstance = 0;
 
 void CVolume::uninstance()
 {
-    #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread ?] >> CVolume::uninstance()\n");
-    #endif
+    /**/itm::debug(itm::LEV1, 0, __itm__current__function__);
 
     if(uniqueInstance)
     {
@@ -52,18 +50,12 @@ void CVolume::uninstance()
 
 CVolume::~CVolume()
 {
-    #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread *] >> CVolume::~CVolume()\n");
-    printf("--------------------- teramanager plugin [thread *] >> CVolume destroyed\n");
-    #endif
+    /**/itm::debug(itm::LEV1, 0, __itm__current__function__);
 }
 
 int CVolume::scaleVCoord(int coord, int srcRes, int dstRes) throw (MyException)
 {
-    #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread ?] >> CVolume::scaleVCoord(coord = %d, srcRes = %d, dstRes = %d)\n",
-           coord, srcRes, dstRes);
-    #endif
+    /**/itm::debug(itm::LEV_MAX, strprintf("coord = %d, srcRes = %d, dstRes = %d", coord, srcRes, dstRes).c_str(), __itm__current__function__);
 
     //checks
     if(srcRes < 0 || srcRes >= CImport::instance()->getResolutions())
@@ -86,10 +78,7 @@ int CVolume::scaleVCoord(int coord, int srcRes, int dstRes) throw (MyException)
 
 int CVolume::scaleHCoord(int coord, int srcRes, int dstRes) throw (MyException)
 {
-    #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread ?] >> CVolume::scaleHCoord(coord = %d, srcRes = %d, dstRes = %d)\n",
-           coord, srcRes, dstRes);
-    #endif
+    /**/itm::debug(itm::LEV_MAX, strprintf("coord = %d, srcRes = %d, dstRes = %d", coord, srcRes, dstRes).c_str(), __itm__current__function__);
 
     //checks
     if(srcRes < 0 || srcRes >= CImport::instance()->getResolutions())
@@ -111,10 +100,7 @@ int CVolume::scaleHCoord(int coord, int srcRes, int dstRes) throw (MyException)
 
 int CVolume::scaleDCoord(int coord, int srcRes, int dstRes) throw (MyException)
 {
-    #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread ?] >> CVolume::scaleDCoord(coord = %d, srcRes = %d, dstRes = %d)\n",
-           coord, srcRes, dstRes);
-    #endif
+    /**/itm::debug(itm::LEV_MAX, strprintf("coord = %d, srcRes = %d, dstRes = %d", coord, srcRes, dstRes).c_str(), __itm__current__function__);
 
     //checks
     if(srcRes < 0 || srcRes >= CImport::instance()->getResolutions())
@@ -136,10 +122,7 @@ int CVolume::scaleDCoord(int coord, int srcRes, int dstRes) throw (MyException)
 
 float CVolume::scaleVCoord(float coord, int srcRes, int dstRes) throw (MyException)
 {
-    #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread ?] >> CVolume::scaleVCoord(coord = %.1f, srcRes = %.1f, dstRes = %.1f)\n",
-           coord, srcRes, dstRes);
-    #endif
+    /**/itm::debug(itm::LEV_MAX, strprintf("coord = %.3f, srcRes = %d, dstRes = %d", coord, srcRes, dstRes).c_str(), __itm__current__function__);
 
     //checks
     if(srcRes < 0 || srcRes >= CImport::instance()->getResolutions())
@@ -161,10 +144,7 @@ float CVolume::scaleVCoord(float coord, int srcRes, int dstRes) throw (MyExcepti
 
 float CVolume::scaleHCoord(float coord, int srcRes, int dstRes) throw (MyException)
 {
-    #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread ?] >> CVolume::scaleHCoord(coord = %.1f, srcRes = %.1f, dstRes = %.1f)\n",
-           coord, srcRes, dstRes);
-    #endif
+    /**/itm::debug(itm::LEV_MAX, strprintf("coord = %.3f, srcRes = %d, dstRes = %d", coord, srcRes, dstRes).c_str(), __itm__current__function__);
 
     //checks
     if(srcRes < 0 || srcRes >= CImport::instance()->getResolutions())
@@ -186,10 +166,7 @@ float CVolume::scaleHCoord(float coord, int srcRes, int dstRes) throw (MyExcepti
 
 float CVolume::scaleDCoord(float coord, int srcRes, int dstRes) throw (MyException)
 {
-    #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread ?] >> CVolume::scaleDCoord(coord = %.1f, srcRes = %.1f, dstRes = %.1f)\n",
-           coord, srcRes, dstRes);
-    #endif
+    /**/itm::debug(itm::LEV_MAX, strprintf("coord = %.3f, srcRes = %d, dstRes = %d", coord, srcRes, dstRes).c_str(), __itm__current__function__);
 
     //checks
     if(srcRes < 0 || srcRes >= CImport::instance()->getResolutions())
@@ -212,9 +189,7 @@ float CVolume::scaleDCoord(float coord, int srcRes, int dstRes) throw (MyExcepti
 //automatically called when current thread is started
 void CVolume::run()
 {
-    #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread *] >> CVolume::run()\n");
-    #endif
+    /**/itm::debug(itm::LEV1, 0, __itm__current__function__);
 
     try
     {
@@ -313,7 +288,7 @@ void CVolume::run()
         else
             throw MyException("No volume has been imported yet.");
 
-
+        /**/itm::debug(itm::LEV1, "EOF", __itm__current__function__);
     }
     catch( MyException& exception)  {emit sendOperationOutcome(0, new MyException(exception.what()), source);}
     catch(const char* error)        {emit sendOperationOutcome(0, new MyException(error), source);}

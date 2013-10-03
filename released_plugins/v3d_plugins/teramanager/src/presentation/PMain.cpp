@@ -65,10 +65,12 @@ string PMain::HTtraslateNeg = "Translate the view along this axis in its <i>oppo
 string PMain::HTvolcuts = "Define a volume of interest (<b>VOI</b>) using <b>absolute spatial coordinates</b> (i.e. referred to the highest resolution). "
                           "You may then choose the resolution you want to display it from the <i>Jump to res</i> pull-down menu.";
 
-PMain* PMain::uniqueInstance = NULL;
+PMain* PMain::uniqueInstance = 0;
 PMain* PMain::instance(V3DPluginCallback2 *callback, QWidget *parent)
 {
-    if (uniqueInstance == NULL)
+    /**/itm::debug(itm::LEV1, 0, __itm__current__function__);
+
+    if (uniqueInstance == 0)
         uniqueInstance = new PMain(callback, parent);
     else
     {
@@ -97,9 +99,7 @@ PMain* PMain::getInstance()
 
 void PMain::uninstance()
 {
-    #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread ?] >> PMain::uninstance()\n");
-    #endif
+    /**/itm::debug(itm::LEV1, 0, __itm__current__function__);
 
     CImport::uninstance();
     PDialogImport::uninstance();
@@ -108,6 +108,7 @@ void PMain::uninstance()
     CExplorerWindow::uninstance();
     CSettings::uninstance();
     CAnnotations::uninstance();
+    PLog::uninstance();
     if(uniqueInstance)
         delete uniqueInstance;
     uniqueInstance = 0;
@@ -115,17 +116,12 @@ void PMain::uninstance()
 
 PMain::~PMain()
 {
-    #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread *] >> PMain::~PMain()\n");
-    printf("--------------------- teramanager plugin [thread *] >> PMain destroyed\n");
-    #endif
+    /**/itm::debug(itm::LEV1, 0, __itm__current__function__);
 }
 
 PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
 {
-    #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread *] >> PMain::PMain()\n");
-    #endif
+    /**/itm::debug(itm::LEV1, 0, __itm__current__function__);
 
     //initializing members
     V3D_env = callback;
@@ -765,17 +761,13 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     show();
     move(QApplication::desktop()->screen()->rect().center() - rect().center());
 
-    #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread *] >> PMain created\n");
-    #endif
+    /**/itm::debug(itm::LEV1, "object successfully constructed", __itm__current__function__);
 }
 
 //reset everything
 void PMain::reset()
 {
-    #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread *] >> PMain::reset()\n");
-    #endif
+    /**/itm::debug(itm::LEV1, 0, __itm__current__function__);
 
     //resetting menu options and widgets
     openVolumeAction->setEnabled(true);
@@ -867,6 +859,8 @@ void PMain::reset()
 //reset GUI method
 void PMain::resetGUI()
 {
+    /**/itm::debug(itm::LEV1, 0, __itm__current__function__);
+
     progressBar->setEnabled(false);
     progressBar->setMaximum(1);         //needed to stop animation on some operating systems
     statusBar->clearMessage();
@@ -877,15 +871,15 @@ void PMain::resetGUI()
 //Called when "enable3Dmode" state changed.
 void PMain::mode3D_checkbox_changed(int)
 {
+    /**/itm::debug(itm::LEV1, 0, __itm__current__function__);
+
     volMapWidget->setVisible(enableMultiresMode->isChecked());
 }
 
 //called when loadButton has been clicked
 void PMain::loadButtonClicked()
 { 
-    #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread *] >> PMain loadButtonClicked() called\n");
-    #endif
+    /**/itm::debug(itm::LEV1, 0, __itm__current__function__);
 
     try
     {
@@ -919,9 +913,7 @@ void PMain::loadButtonClicked()
 ***********************************************************************************/
 void PMain::openVolumeActionTriggered()
 {
-    #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread *] >> PMain::openVolumeActionTriggered() launched\n");
-    #endif
+    /**/itm::debug(itm::LEV1, 0, __itm__current__function__);
 
     this->openVolume(qobject_cast<QAction*>(sender())->text().toStdString());
 }
@@ -931,9 +923,7 @@ void PMain::openVolumeActionTriggered()
 ***********************************************************************************/
 void PMain::clearRecentVolumesTriggered()
 {
-    #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread *] >> PMain::clearRecentVolumesTriggered() launched\n");
-    #endif
+    /**/itm::debug(itm::LEV1, 0, __itm__current__function__);
 
     CSettings::instance()->clearVolumePathHistory();
     QList<QAction*> actions = recentVolumesMenu->actions();
@@ -950,9 +940,7 @@ void PMain::clearRecentVolumesTriggered()
 ***********************************************************************************/
 void PMain::openVolume(string path /* = "" */)
 {
-    #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread *] >> PMain::openVolume(path = \"%s\")\n", path.c_str());
-    #endif
+    /**/itm::debug(itm::LEV1, strprintf("path = \"%s\"", path.c_str()).c_str(), __itm__current__function__);
 
     try
     {
@@ -986,10 +974,6 @@ void PMain::openVolume(string path /* = "" */)
         //first checking that no volume has imported yet
         if(!CImport::instance()->isEmpty())
             throw MyException("A volume has been already imported! Please close the current volume first.");
-
-        //checking that the inserted path exists
-        //if(!QFile::exists(import_path))
-        //    throw MyException("The inserted path does not exist!");
 
         //storing the path into CSettings
         CSettings::instance()->setVolumePathLRU(qPrintable(import_path));
@@ -1058,9 +1042,7 @@ void PMain::openVolume(string path /* = "" */)
 ***********************************************************************************/
 void PMain::closeVolume()
 {
-    #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread *] >> PMain::closeVolume()\n");
-    #endif
+    /**/itm::debug(itm::LEV1, 0, __itm__current__function__);
 
     CImport::instance()->reset();
     CVolume::instance()->reset();
@@ -1077,9 +1059,7 @@ void PMain::closeVolume()
 ***********************************************************************************/
 void PMain::loadAnnotations()
 {
-    #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread *] >> PMain::loadAnnotations()\n");
-    #endif
+    /**/itm::debug(itm::LEV1, 0, __itm__current__function__);
 
     try
     {
@@ -1129,9 +1109,7 @@ void PMain::loadAnnotations()
 ***********************************************************************************/
 void PMain::saveAnnotations()
 {
-    #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread *] >> PMain::saveAnnotations()\n");
-    #endif
+    /**/itm::debug(itm::LEV1, 0, __itm__current__function__);
 
     try
     {
@@ -1153,9 +1131,7 @@ void PMain::saveAnnotations()
 }
 void PMain::saveAnnotationsAs()
 {
-    #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread *] >> PMain::saveAnnotationsAs()\n");
-    #endif
+    /**/itm::debug(itm::LEV1, 0, __itm__current__function__);
 
     try
     {
@@ -1207,9 +1183,7 @@ void PMain::saveAnnotationsAs()
 ***********************************************************************************/
 void PMain::clearAnnotations()
 {
-    #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread *] >> PMain::clearAnnotations()\n");
-    #endif
+    /**/itm::debug(itm::LEV1, 0, __itm__current__function__);
 
     try
     {
@@ -1230,9 +1204,7 @@ void PMain::clearAnnotations()
 ***********************************************************************************/
 void PMain::exit()
 {
-    #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread *] >> PMain::exit()\n");
-    #endif
+    /**/itm::debug(itm::LEV1, 0, __itm__current__function__);
 
     this->close();
 }
@@ -1242,9 +1214,7 @@ void PMain::exit()
 ***********************************************************************************/
 void PMain::about()
 {
-    #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread *] >> PMain::about()\n");
-    #endif 
+    /**/itm::debug(itm::LEV1, 0, __itm__current__function__);
 
     PAbout::instance(this)->exec();
 }
@@ -1258,9 +1228,7 @@ void PMain::about()
 **********************************************************************************/
 void PMain::importDone(MyException *ex, Image4DSimple* vmap_image, qint64 elapsed_time)
 {
-    #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread *] >> PMain::import_done(%s)\n",  (ex? "error" : ""));
-    #endif
+    /**/itm::debug(itm::LEV1, strprintf("ex = %s", (ex? "error" : "0")).c_str(), __itm__current__function__);
 
     //if an exception has occurred, showing a message error and re-enabling import form
     if(ex)
@@ -1449,9 +1417,7 @@ void PMain::importDone(MyException *ex, Image4DSimple* vmap_image, qint64 elapse
 ***********************************************************************************/
 void PMain::loadingDone(uint8 *data, MyException *ex, void* sourceObject, qint64 elapsed_time, QString op_dsc, int step)
 {
-    #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread *] >> PMain::loading_done(%s)\n",  (ex? "error" : ""));
-    #endif
+    /**/itm::debug(itm::LEV1, strprintf("ex = %s", (ex? "error" : "0")).c_str(), __itm__current__function__);
 
     CVolume* cVolume = CVolume::instance();
 
@@ -1477,9 +1443,7 @@ void PMain::loadingDone(uint8 *data, MyException *ex, void* sourceObject, qint64
 //overrides closeEvent method of QWidget
 void PMain::closeEvent(QCloseEvent *evt)
 {
-    #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread *] >> PMain::closeEvent()\n");
-    #endif
+    /**/itm::debug(itm::LEV1, 0, __itm__current__function__);
 
     if(evt)
     {
@@ -1503,6 +1467,8 @@ void PMain::closeEvent(QCloseEvent *evt)
 ***********************************************************************************/
 void PMain::settingsChanged(int)
 {
+    /**/itm::debug(itm::LEV1, 0, __itm__current__function__);
+
     CSettings::instance()->setVolMapSizeLimit(volMapMaxSizeSBox->value());
     CSettings::instance()->setVOIdimV(Vdim_sbox->value());
     CSettings::instance()->setVOIdimH(Hdim_sbox->value());
@@ -1516,9 +1482,7 @@ void PMain::settingsChanged(int)
 ***********************************************************************************/
 void PMain::resolutionIndexChanged(int i)
 {
-    #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread *] >> PMain::resolutionIndexChanged()\n");
-    #endif
+    /**/itm::debug(itm::LEV1, strprintf("resolution = %d", i).c_str(), __itm__current__function__);
 
     try
     {
@@ -1570,6 +1534,8 @@ void PMain::resolutionIndexChanged(int i)
 ***********************************************************************************/
 void PMain::zoomInVoiSizeChanged(int i)
 {
+    /**/itm::debug(itm::LEV2, strprintf("i = %d", i).c_str(), __itm__current__function__);
+
     float MVoxels = (Vdim_sbox->value()/1024.0f)*(Hdim_sbox->value()/1024.0f)*Ddim_sbox->value();
     zoominVoiSize->setText(QString::number(MVoxels, 'f', 1));
 }
@@ -1580,6 +1546,8 @@ void PMain::zoomInVoiSizeChanged(int i)
 ***********************************************************************************/
 void PMain::highestVOISizeChanged(int i)
 {
+    /**/itm::debug(itm::LEV2, strprintf("i = %d", i).c_str(), __itm__current__function__);
+
     float MVoxels = ((V1_sbox->value()-V0_sbox->value())/1024.0f)*((H1_sbox->value()-H0_sbox->value())/1024.0f)*(D1_sbox->value()-D0_sbox->value());
     loadButton->setText(QString("Load (").append(QString::number(MVoxels, 'f', 0)).append(" MVoxels)"));
 }
@@ -1589,9 +1557,7 @@ void PMain::highestVOISizeChanged(int i)
 ***********************************************************************************/
 void PMain::traslXposClicked()
 {
-    #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread *] >> PMain::traslXposClicked()\n");
-    #endif
+    /**/itm::debug(itm::LEV2, 0, __itm__current__function__);
 
     CExplorerWindow* expl = CExplorerWindow::getCurrent();
     if(expl)
@@ -1601,9 +1567,7 @@ void PMain::traslXposClicked()
 }
 void PMain::traslXnegClicked()
 {
-    #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread *] >> PMain::traslXnegClicked()\n");
-    #endif
+    /**/itm::debug(itm::LEV2, 0, __itm__current__function__);
 
     CExplorerWindow* expl = CExplorerWindow::getCurrent();
     if(expl)
@@ -1613,9 +1577,7 @@ void PMain::traslXnegClicked()
 }
 void PMain::traslYposClicked()
 {
-    #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread *] >> PMain::traslYposClicked()\n");
-    #endif
+    /**/itm::debug(itm::LEV2, 0, __itm__current__function__);
 
     CExplorerWindow* expl = CExplorerWindow::getCurrent();
     if(expl)
@@ -1625,9 +1587,7 @@ void PMain::traslYposClicked()
 }
 void PMain::traslYnegClicked()
 {
-    #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread *] >> PMain::traslYnegClicked()\n");
-    #endif
+    /**/itm::debug(itm::LEV2, 0, __itm__current__function__);
 
     CExplorerWindow* expl = CExplorerWindow::getCurrent();
     if(expl)
@@ -1637,9 +1597,7 @@ void PMain::traslYnegClicked()
 }
 void PMain::traslZposClicked()
 {
-    #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread *] >> PMain::traslZposClicked()\n");
-    #endif
+    /**/itm::debug(itm::LEV2, 0, __itm__current__function__);
 
     CExplorerWindow* expl = CExplorerWindow::getCurrent();
     if(expl)
@@ -1649,9 +1607,7 @@ void PMain::traslZposClicked()
 }
 void PMain::traslZnegClicked()
 {
-    #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread *] >> PMain::traslZnegClicked()\n");
-    #endif
+    /**/itm::debug(itm::LEV2, 0, __itm__current__function__);
 
     CExplorerWindow* expl = CExplorerWindow::getCurrent();
     if(expl)
@@ -1775,6 +1731,8 @@ void PMain::displayToolTip(QWidget* widget, QEvent* event, string msg)
 ***********************************************************************************/
 void PMain::resetMultiresControls()
 {
+    /**/itm::debug(itm::LEV1, 0, __itm__current__function__);
+
     cacheSens->setValue(70);
     zoomInSens->setValue(40);
     zoomOutSens->setValue(0);
@@ -1799,6 +1757,8 @@ void PMain::setEnabledComboBoxItem(QComboBox* cbox, int _index, bool enabled)
 ***********************************************************************************/
 void PMain::zoomInSensChanged(int i)
 {
+    /**/itm::debug(itm::LEV2, "TODO!", __itm__current__function__);
+
 //    zoomInThreshold = i;
 }
 
@@ -1807,9 +1767,7 @@ void PMain::zoomInSensChanged(int i)
 ***********************************************************************************/
 void PMain::debugAction1Triggered()
 {
-    #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread *] >> PMain::debugAction1Triggered()\n");
-    #endif
+    /**/itm::debug(itm::LEV1, 0, __itm__current__function__);
 
     #ifdef USE_EXPERIMENTAL_FEATURES
     CExplorerWindow* cur_win = CExplorerWindow::getCurrent();
@@ -1862,9 +1820,7 @@ void PMain::debugAction1Triggered()
 
 void PMain::showLogTriggered()
 {
-    #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread *] >> PMain::showLogTriggered()\n");
-    #endif
+    /**/itm::debug(itm::LEV1, 0, __itm__current__function__);
 
     PLog::instance(this)->show();
 }
@@ -1874,9 +1830,7 @@ void PMain::showLogTriggered()
 ***********************************************************************************/
 void PMain::curveDimsChanged(int dim)
 {
-    #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread *] >> PMain::curveDimsChanged(%d)\n", dim);
-    #endif
+    /**/itm::debug(itm::LEV2, 0, __itm__current__function__);
 
     if(CExplorerWindow::current)
     {
@@ -1888,9 +1842,7 @@ void PMain::curveDimsChanged(int dim)
 
 void PMain::curveAspectChanged()
 {
-    #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread *] >> PMain::curveAspectChanged()\n");
-    #endif
+    /**/itm::debug(itm::LEV2, 0, __itm__current__function__);
 
     if(CExplorerWindow::current)
     {
@@ -1914,6 +1866,8 @@ void PMain::curveAspectChanged()
 ***********************************************************************************/
 void PMain::verbosityChanged(int i)
 {
+    /**/itm::debug(itm::LEV1, strprintf("i = %d", i).c_str(), __itm__current__function__);
+
     itm::DEBUG = i;
     CSettings::instance()->writeSettings();
 }

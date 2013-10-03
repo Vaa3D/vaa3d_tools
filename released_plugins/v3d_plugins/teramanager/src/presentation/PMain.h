@@ -53,7 +53,7 @@ class teramanager::PMain : public QWidget
         * instantiated by calling static method "istance(...)"
         **********************************************************************************/
         static PMain* uniqueInstance;
-        PMain(){}
+        PMain(){    /**/itm::debug(itm::LEV1, 0, __itm__current__function__);   }
         PMain(V3DPluginCallback2 *callback, QWidget *parent);
 
         //members

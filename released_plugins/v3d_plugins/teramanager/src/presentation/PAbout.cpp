@@ -6,9 +6,7 @@ PAbout* PAbout::uniqueInstance = 0;
 
 PAbout::PAbout(QWidget *parent) : QDialog(parent)
 {
-    #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread *] >> PAbout::PAbout()\n");
-    #endif
+    /**/itm::debug(itm::LEV1, 0, __itm__current__function__);
 
     setWindowTitle("About TeraFly");
 

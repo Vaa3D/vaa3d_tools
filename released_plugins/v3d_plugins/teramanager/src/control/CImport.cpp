@@ -45,9 +45,7 @@ bool sortVolumesAscendingSize (VirtualVolume* i,VirtualVolume* j) { return (i->g
 
 void CImport::uninstance()
 {
-    #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread ?] >> CImport::uninstance()\n");
-    #endif
+    /**/itm::debug(itm::LEV1, 0, __itm__current__function__);
 
     if(uniqueInstance)
     {
@@ -58,25 +56,19 @@ void CImport::uninstance()
 
 CImport::~CImport()
 {
-    #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread *] >> CImport::~CImport()\n");
-    #endif
+    /**/itm::debug(itm::LEV1, 0, __itm__current__function__);
 
     for(int k=0; k<volumes.size(); k++)
         if(volumes[k])
             delete volumes[k];
 
-    #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread *] >> CImport destroyed\n");
-    #endif
+    /**/itm::debug(itm::LEV1, "object successfully DESTROYED", __itm__current__function__);
 }
 
 //SET methods
 void CImport::setAxes(string axs1, string axs2, string axs3)
 {
-    #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread *] >> CImport::setAxes(%s, %s, %s)\n",  axs1.c_str(), axs2.c_str(), axs3.c_str());
-    #endif
+    /**/itm::debug(itm::LEV1, strprintf("axes = (%s, %s, %s)", axs1.c_str(), axs2.c_str(), axs3.c_str()).c_str(), __itm__current__function__);
 
     AXS_1 = axis(atoi(axs1.c_str()));
     AXS_2 = axis(atoi(axs2.c_str()));
@@ -84,9 +76,7 @@ void CImport::setAxes(string axs1, string axs2, string axs3)
 }
 void CImport::setVoxels(std::string vxl1, std::string vxl2, std::string vxl3)
 {
-    #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread *] >> CImport::setVoxels(%s, %s, %s)\n",  vxl1.c_str(), vxl2.c_str(), vxl3.c_str());
-    #endif
+    /**/itm::debug(itm::LEV1, strprintf("voxels = (%s, %s, %s)", vxl1.c_str(), vxl2.c_str(), vxl3.c_str()).c_str(), __itm__current__function__);
 
     std::istringstream tmp1(vxl1), tmp2(vxl2), tmp3(vxl3);
     tmp1.imbue(std::locale("C"));
@@ -100,9 +90,7 @@ void CImport::setVoxels(std::string vxl1, std::string vxl2, std::string vxl3)
 //automatically called when current thread is started
 void CImport::run()
 {
-    #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread *] >> CImport::run()\n");
-    #endif
+    /**/itm::debug(itm::LEV1, 0, __itm__current__function__);
 
     char errMsg[IM_STATIC_STRINGS_SIZE];
 
@@ -114,13 +102,15 @@ void CImport::run()
         If metadata binary file doesn't exist or the volume has to be re-imported,
         further informations must be provided to the constructor.
         *************************************************************************/
-        /**/itm::debug(itm::LEV_MAX, "importing current volume", __itm__current__function__);
+        /**/itm::debug(itm::LEV_MAX, strprintf("importing current volume at \"%s\"", path.c_str()).c_str(), __itm__current__function__);
         string mdata_fpath = path;
         mdata_fpath.append("/");
         mdata_fpath.append(IM_METADATA_FILE_NAME);
         string cmap_fpath = path + "/cmap.bin";
         if( (!QFile::exists(mdata_fpath.c_str()) && !QFile::exists(cmap_fpath.c_str())) || reimport)
         {
+            /**/itm::debug(itm::LEV_MAX, "entering first time import (or reimport) section", __itm__current__function__);
+
             //checking current members validity
             if(AXS_1 != axis_invalid && AXS_2 != axis_invalid && AXS_3 != axis_invalid && VXL_1 != 0 && VXL_2 != 0 && VXL_3 != 0)
             {
@@ -129,6 +119,7 @@ void CImport::run()
                 //TileMCVolume is detected if cmap.bin file exists
                 if(QFile::exists(cmap_fpath.c_str()))
                 {
+                    /**/itm::debug(itm::LEV_MAX, strprintf("TiledMCVolume detected since cmap.bin has been found at \"%d\"", cmap_fpath.c_str()).c_str(), __itm__current__function__);
                     try
                     {
                         volume = new TiledMCVolume(path.c_str(), ref_sys(AXS_1,AXS_2,AXS_3),VXL_1,VXL_2,VXL_3, reimport);
@@ -146,12 +137,15 @@ void CImport::run()
                 }
                 else
                 {
+                    /**/itm::debug(itm::LEV_MAX, "TiledMCVolume discarded since cmap.bin was not found", __itm__current__function__);
                     try
                     {
+                        /**/itm::debug(itm::LEV_MAX, "Trying to open volume with StackedVolume", __itm__current__function__);
                         volume = new StackedVolume(path.c_str(), ref_sys(AXS_1,AXS_2,AXS_3),VXL_1,VXL_2,VXL_3, reimport);
                     }
                     catch(...)
                     {
+                        /**/itm::debug(itm::LEV_MAX, "Trying to open volume with TiledVolume", __itm__current__function__);
                         try
                         {
                             volume = new TiledVolume(path.c_str(), ref_sys(AXS_1,AXS_2,AXS_3),VXL_1,VXL_2,VXL_3, reimport);
@@ -175,11 +169,15 @@ void CImport::run()
         //no need for using metadata inserted by the user
         else
         {
+            /**/itm::debug(itm::LEV_MAX, "Entering 2+nd-time import section", __itm__current__function__);
+
             VirtualVolume* volume = 0;
 
             //TileMCVolume is detected if cmap.bin file exists
             if(QFile::exists(cmap_fpath.c_str()))
             {
+                /**/itm::debug(itm::LEV_MAX, strprintf("TiledMCVolume detected since cmap.bin has been found at \"%d\"", cmap_fpath.c_str()).c_str(), __itm__current__function__);
+
                 try
                 {
                     volume = new TiledMCVolume(path.c_str(), ref_sys(axis_invalid,axis_invalid,axis_invalid),0,0,0);
@@ -197,15 +195,18 @@ void CImport::run()
             }
             else
             {
+                /**/itm::debug(itm::LEV_MAX, "TiledMCVolume discarded since cmap.bin was not found", __itm__current__function__);
                 //otherwise attemping to load other formats
                 try
                 {
+                    /**/itm::debug(itm::LEV_MAX, "Trying to open volume with StackedVolume", __itm__current__function__);
                     volume = new StackedVolume(path.c_str(), ref_sys(axis_invalid,axis_invalid,axis_invalid),0,0,0);
                 }
                 catch(...)
                 {
                     try
                     {
+                        /**/itm::debug(itm::LEV_MAX, "Trying to open volume with TiledVolume", __itm__current__function__);
                         volume = new TiledVolume(path.c_str(), ref_sys(axis_invalid,axis_invalid,axis_invalid),0,0,0);
                     }
                     catch(...)
@@ -225,7 +226,10 @@ void CImport::run()
         *************************************************************************/
         if(multiresMode)
         {
+            /**/itm::debug(itm::LEV_MAX, "Importing other volumes of the multiresolution octree", __itm__current__function__);
+
             //detecting candidate volumes
+            /**/itm::debug(itm::LEV_MAX, "Detecting volumes that CAN be loaded (let us call them CANDIDATE volumes: the correspondent structures will be destroyed after this step)", __itm__current__function__);
             vector<VirtualVolume*> candidateVols;
             QDir curParentDir(path.c_str());
             curParentDir.cdUp();
@@ -233,6 +237,9 @@ void CImport::run()
             for(int k=0; k<otherDirs.size(); k++)
             {
                 string path_i = curParentDir.absolutePath().append("/").append(otherDirs.at(k).toLocal8Bit().constData()).toStdString();
+
+                /**/itm::debug(itm::LEV_MAX, strprintf("Checking for loadable volume at \"%s\"", path_i.c_str()).c_str(), __itm__current__function__);
+
                 try
                 {
                     VirtualVolume* candidate_vol = 0;
@@ -272,6 +279,9 @@ void CImport::run()
                         sprintf(errMsg, "Unable to import volume at \"%s\"", path_i.c_str());
                         throw MyException(errMsg);
                     }
+
+                    /**/itm::debug(itm::LEV_MAX, "volume loadable!", __itm__current__function__);
+
                     candidateVols.push_back(candidate_vol);
                 }
                 catch(MyException& exception)
@@ -286,6 +296,7 @@ void CImport::run()
             }
 
             //importing candidate volumes
+            /**/itm::debug(itm::LEV_MAX, "Importing loadable volumes (previously checked)", __itm__current__function__);
             for(int k=0; k<candidateVols.size(); k++)
             {
                 //current volume (now stored in volumes[0]) should be discarded
@@ -294,6 +305,9 @@ void CImport::run()
                     int ratio = pow((volumes[0]->getMVoxels() / candidateVols[k]->getMVoxels()),(1/3.0f)) + 0.5;
 
                     VirtualVolume* vol = 0;
+
+                    /**/itm::debug(itm::LEV_MAX, strprintf("Importing loadable volume at \"%s\"", candidateVols[k]->getROOT_DIR()).c_str(), __itm__current__function__);
+
                     if(dynamic_cast<StackedVolume*>(volumes[0]))
                     {
                         vol = new StackedVolume(candidateVols[k]->getROOT_DIR(),
@@ -330,16 +344,23 @@ void CImport::run()
                         throw MyException(errMsg);
                     }
                     volumes.push_back(vol);
-
-                    delete candidateVols[k];
                 }
+            } 
+
+            /**/itm::debug(itm::LEV_MAX, "Destroying candidate volumes", __itm__current__function__);
+            for(int k=0; k<candidateVols.size(); k++)
+            {
+                delete candidateVols[k];
+                candidateVols[k] = 0;
             }
+            candidateVols.clear();
 
             //check the number of volumes (at least 2)
             if(volumes.size() < 2)
                 throw MyException("One resolution found only: at least two resolutions are needed for the multiresolution mode.");
 
             //sorting volumes by ascending size
+            /**/itm::debug(itm::LEV_MAX, "Sorting volumes by ascending size", __itm__current__function__);
             std::sort(volumes.begin(), volumes.end(), sortVolumesAscendingSize);
         }
 
@@ -356,6 +377,8 @@ void CImport::run()
             volMapPath.append(TMP_VMAP_FNAME);
             if(!StackedVolume::fileExists(volMapPath.c_str()) || reimport || regenerateVolMap)
             {
+                /**/itm::debug(itm::LEV_MAX, "Entering volume's map generation section", __itm__current__function__);
+
                 //searching for the highest resolution available which size is less then the maximum allowed
                 int volMapIndex = -1;
                 for(int k=0; k<volumes.size(); k++)
@@ -398,6 +421,7 @@ void CImport::run()
             }
 
             //at this point we should have the volume map stored in the volume's directory
+            /**/itm::debug(itm::LEV_MAX, "Entering volume's map loading section", __itm__current__function__);
             size_t fread_return_val;
             FILE *volMapBin = fopen(volMapPath.c_str(), "rb");
 
@@ -460,6 +484,8 @@ void CImport::run()
 
         //everything went OK
         emit sendOperationOutcome(0, volMapImage, timerIO.elapsed());
+
+        /**/itm::debug(itm::LEV1, "EOF", __itm__current__function__);
     }
     catch( MyException& exception)  {reset(); emit sendOperationOutcome(new MyException(exception.what()), 0);}
     catch(const char* error)        {reset(); emit sendOperationOutcome(new MyException(error), 0);}

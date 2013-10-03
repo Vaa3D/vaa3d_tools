@@ -43,9 +43,7 @@ PConverter* PConverter::instance(V3DPluginCallback *callback, QWidget *parent)
 }
 void PConverter::uninstance()
 {
-    #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread ?] >> PConverter::uninstance()\n");
-    #endif
+    /**/itm::debug(itm::LEV1, 0, __itm__current__function__);
 
     CConverter::uninstance();
     if(uniqueInstance)
@@ -57,9 +55,7 @@ void PConverter::uninstance()
 
 PConverter::PConverter(V3DPluginCallback *callback, QWidget *parent) : QWidget(parent)
 {
-    #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread *] >> PConverter::PConverter()\n");
-    #endif
+    /**/itm::debug(itm::LEV1, 0, __itm__current__function__);
 
     //initializing members
     V3D_env = callback;
@@ -271,17 +267,12 @@ PConverter::PConverter(V3DPluginCallback *callback, QWidget *parent) : QWidget(p
     this->setWindowFlags(Qt::WindowStaysOnTopHint);
     this->setFocusPolicy(Qt::StrongFocus);
 
-    #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread *] >> PConverter created\n");
-    #endif
+    /**/itm::debug(itm::LEV1, "object successfully created", __itm__current__function__);
 }
 
 PConverter::~PConverter()
 {
-    #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread *] >> PConverter::~PConverter()\n");
-    printf("--------------------- teramanager plugin [thread *] >> PConverter destroyed\n");
-    #endif
+    /**/itm::debug(itm::LEV1, 0, __itm__current__function__);
 }
 
 //reset GUI method
@@ -300,9 +291,7 @@ void PConverter::resetGUI()
 //called when startButton has been clicked
 void PConverter::startButtonClicked()
 {
-    #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread *] >> PConverter::startButtonClicked()\n");
-    #endif
+    /**/itm::debug(itm::LEV1, 0, __itm__current__function__);
 
     try
     {
@@ -368,9 +357,7 @@ void PConverter::startButtonClicked()
 //called when stopButton has been clicked
 void PConverter::stopButtonClicked()
 {
-    #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread *] >> PConverter::stopButtonClicked()\n");
-    #endif
+    /**/itm::debug(itm::LEV1, 0, __itm__current__function__);
 
     if(QMessageBox::information(this, "Warning", "Terminating this step can be unsafe and cause Vaa3D to crash. \n"
                                               "\nPlease save your data first or click on \"Cancel\" and close the "
@@ -396,9 +383,7 @@ void PConverter::stopButtonClicked()
 
 void PConverter::inDirButtonClicked()
 {
-    #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread *] >> PConverter::inDirButtonClicked()\n");
-    #endif
+    /**/itm::debug(itm::LEV1, 0, __itm__current__function__);
 
     #ifdef _USE_QT_DIALOGS
     QString path;
@@ -426,9 +411,7 @@ void PConverter::inDirButtonClicked()
 
 void PConverter::inFileButtonClicked()
 {
-    #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread *] >> PConverter::inFileButtonClicked()\n");
-    #endif
+    /**/itm::debug(itm::LEV1, 0, __itm__current__function__);
 
     #ifdef _USE_QT_DIALOGS
     QString path = "";
@@ -458,9 +441,7 @@ void PConverter::inFileButtonClicked()
 
 void PConverter::outDirButtonClicked()
 {
-    #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread *] >> PConverter::outDirButtonClicked()\n");
-    #endif
+    /**/itm::debug(itm::LEV1, 0, __itm__current__function__);
 
     #ifdef _USE_QT_DIALOGS
     QString path;
@@ -576,9 +557,7 @@ void PConverter::volformatChanged ( const QString & text )
 //overrides closeEvent method of QWidget
 void PConverter::closeEvent(QCloseEvent *evt)
 {
-    #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread *] >> PConverter::closeEvent()\n");
-    #endif
+    /**/itm::debug(itm::LEV1, 0, __itm__current__function__);
 
     if(progressBar->isEnabled() && QMessageBox::information(this, "Warning", "An operation is still in progress. Terminating it can be unsafe and cause Vaa3D to crash. \n"
                                                                     "\nPlease save your data first.", "Close TeraConverter plugin", "Cancel"))
@@ -615,9 +594,7 @@ void PConverter::progressBarChanged(int val, int minutes, int seconds, const cha
 ***********************************************************************************/
 void PConverter::operationDone(MyException *ex)
 {
-    #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread *] >> PConverter::operationDone(%s) launched\n",  (ex? ex->what() : ""));
-    #endif
+    /**/itm::debug(itm::LEV1, strprintf("ex = %s", (ex? "error" : "0")).c_str(), __itm__current__function__);
 
 
     //if an exception has occurred, showing a message error
@@ -713,9 +690,7 @@ void PConverter::operationDone(MyException *ex)
 ***********************************************************************************/
 void PConverter::updateContent()
 {
-    #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread *] >> PConverter::updateContent()\n");
-    #endif
+    /**/itm::debug(itm::LEV3, 0, __itm__current__function__);
 
     try
     {

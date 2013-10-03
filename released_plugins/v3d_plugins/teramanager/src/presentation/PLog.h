@@ -37,6 +37,8 @@ class teramanager::PLog : public QDialog
         **********************************************************************************/
         static PLog* instance(QWidget *parent)
         {
+            /**/itm::debug(itm::LEV1, 0, __itm__current__function__);
+
             if (uniqueInstance == 0)
                 uniqueInstance = new PLog(parent);
             return uniqueInstance;

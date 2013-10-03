@@ -178,16 +178,11 @@ class teramanager::CAnnotations
         static CAnnotations* uniqueInstance;
         CAnnotations(uint32 volHeight, uint32 volWidth, uint32 volDepth) : octreeDimX(volWidth), octreeDimY(volHeight), octreeDimZ(volDepth)
         {
-            #ifdef TMP_DEBUG
-            printf("--------------------- teramanager plugin [thread ?] >> CAnnotations::CAnnotations(volHeight = %d, volWidth = %d, volDepth = %d)\n",
-                   volHeight, volWidth, volDepth);
-            #endif
+            /**/itm::debug(itm::LEV1, strprintf("volHeight = %d, volWidth = %d, volDepth = %d", volHeight, volWidth, volDepth).c_str(), __itm__current__function__);
 
             octree = new Octree(octreeDimY, octreeDimX, octreeDimZ);
 
-            #ifdef TMP_DEBUG
-            printf("--------------------- teramanager plugin [thread ?] >> CAnnotations created\n");
-            #endif
+            /**/itm::debug(itm::LEV1, "object successfully constructed", __itm__current__function__);
         }
 
     public:
@@ -241,9 +236,7 @@ class teramanager::CAnnotations
         **********************************************************************************/
         void clear()  throw (MyException)
         {
-            #ifdef TMP_DEBUG
-            printf("--------------------- teramanager plugin [thread ?] >> CAnnotations::clear()\n");
-            #endif
+            /**/itm::debug(itm::LEV1, 0, __itm__current__function__);
 
             delete octree;
             octree = new Octree(octreeDimY, octreeDimX, octreeDimZ);

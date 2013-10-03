@@ -50,9 +50,7 @@ void PDialogImport::uninstance()
 
 PDialogImport::PDialogImport(QWidget* parent) : QDialog(parent)
 {
-    #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread *] >> PDialogImport::PDialogImport()\n");
-    #endif
+    /**/itm::debug(itm::LEV1, 0, __itm__current__function__);
 
     //import form widgets
     QFont tinyFont = QApplication::font();
@@ -146,18 +144,13 @@ PDialogImport::PDialogImport(QWidget* parent) : QDialog(parent)
     connect(import_button, SIGNAL(clicked()), this, SLOT(import_button_clicked()));
     connect(cancel_button, SIGNAL(clicked()), this, SLOT(close()));
 
-    #ifdef TSP_DEBUG
-    printf("--------------------- teramanager plugin [thread *] >> PDialogImport created\n");
-    #endif
+    /**/itm::debug(itm::LEV1, "object successfully constructed", __itm__current__function__);
 }
 
 
 PDialogImport::~PDialogImport()
 {
-    #ifdef TSP_DEBUG
-    printf("--------------------- teramanager plugin [thread *] >> PDialogImport::~PDialogImport()\n");
-    printf("--------------------- teramanager plugin [thread *] >> PDialogImport destroyed\n");
-    #endif
+    /**/itm::debug(itm::LEV1, 0, __itm__current__function__);
 }
 
 //reset method
@@ -176,9 +169,7 @@ void PDialogImport::reset()
 ***********************************************************************************/
 void PDialogImport::import_button_clicked()
 {
-    #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread *] >> PDialogImport::import_button_clicked()\n");
-    #endif
+    /**/itm::debug(itm::LEV1, 0, __itm__current__function__);
 
     try
     {

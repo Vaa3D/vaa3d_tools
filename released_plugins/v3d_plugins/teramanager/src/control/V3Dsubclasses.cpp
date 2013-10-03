@@ -12,9 +12,7 @@ using namespace std;
 //converts mouse 2D position into image 3D point
 XYZ myRenderer_gl1::get3DPoint(int x, int y)
 {
-    #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread *] >> myRenderer_gl1[%s]::get3DPoint(%d, %d)\n", "unknown", x, y);
-    #endif
+    /**/itm::debug(itm::LEV1, strprintf("x = %d, y = %d", x, y).c_str(), __itm__current__function__);
 
     Renderer_gl1::MarkerPos pos;
     pos.x = x;
@@ -31,9 +29,7 @@ XYZ myRenderer_gl1::get3DPoint(int x, int y)
 
 void myV3dR_GLWidget::setZoomO(int zr)
 {
-    #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread *] >> myV3dR_GLWidget[%s]::setZoomO(%d)\n", data_title.toStdString().c_str(), zr);
-    #endif
+    /**/itm::debug(itm::LEV_MAX, strprintf("title = %s, zoom = %d", data_title.toStdString().c_str(), zr).c_str(), __itm__current__function__);
 
     //qDebug("V3dR_GLWidget::setZoom = %i",zr);
     zr = CLAMP(-ZOOM_RANGE, ZOOM_RANGE, zr);
@@ -53,9 +49,7 @@ void myV3dR_GLWidget::setZoomO(int zr)
 
 void myV3dR_GLWidget::setZoomO(float zr)
 {
-    #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread *] >> myV3dR_GLWidget[%s]::setZoomO(%.0f)\n", data_title.toStdString().c_str(), zr);
-    #endif
+    /**/itm::debug(itm::LEV_MAX, strprintf("title = %s, zoom = %.2f", data_title.toStdString().c_str(), zr).c_str(), __itm__current__function__);
 
     //qDebug("V3dR_GLWidget::setZoom = %i",zr);
     zr = CLAMP(-ZOOM_RANGE, ZOOM_RANGE, zr);
@@ -75,9 +69,8 @@ void myV3dR_GLWidget::setZoomO(float zr)
 
 void myV3dR_GLWidget::wheelEventO(QWheelEvent *event)
 {
-    #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread *] >> myV3dR_GLWidget[%s]::wheelEventO(%d, %d)\n", data_title.toStdString().c_str(), event->pos().x(), event->pos().y());
-    #endif
+    /**/itm::debug(itm::LEV_MAX, strprintf("title = %s, mouse_x = %d, mouse_y = %d",
+                                           data_title.toStdString().c_str(), event->pos().x(), event->pos().y()).c_str(), __itm__current__function__);
 
     this->setFocus(); // accept KeyPressEvent, by RZC 081028
 
@@ -118,9 +111,7 @@ void myV3dR_GLWidget::wheelEventO(QWheelEvent *event)
 //zoomIn method(s)
 void myV3dR_GLWidget::zoomIn(const char* method)
 {
-    #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread *] >> myV3dR_GLWidget[%s]::zoomInmethod=\"%s\")\n", data_title.toStdString().c_str(), method);
-    #endif
+    /**/itm::debug(itm::LEV1, strprintf("title = %s, method = %s", data_title.toStdString().c_str(), method).c_str(), __itm__current__function__);
 
     if(strcmp(method, "WYSIWYG (10 markers)") == 0)
         this->renderer->zoomview_wheel_event();
@@ -146,9 +137,7 @@ void myV3dR_GLWidget::zoomIn(const char* method)
 //fast version (without displaying progress bar) of updateImageData method
 void myV3dR_GLWidget::updateImageDataFast()
 {
-    #ifdef TMP_DEBUG
-    printf("--------------------- teramanager plugin [thread *] >> myV3dR_GLWidget[%s]::updateImageDataFast()\n", data_title.toStdString().c_str());
-    #endif
+    /**/itm::debug(itm::LEV_MAX, strprintf("title = %s", data_title.toStdString().c_str()).c_str(), __itm__current__function__);
 
     renderer->setupData(_idep);
     static_cast<Renderer_gl1*>(renderer)->loadVol();
