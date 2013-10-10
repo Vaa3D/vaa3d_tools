@@ -150,6 +150,11 @@ void CImport::run()
                         {
                             volume = new TiledVolume(path.c_str(), ref_sys(AXS_1,AXS_2,AXS_3),VXL_1,VXL_2,VXL_3, reimport);
                         }
+                        catch(MyException& exception)
+                        {
+                            sprintf(errMsg, "Unable to import TiledMC volume at \"%s\": %s", path.c_str(), exception.what());
+                            throw MyException(errMsg);
+                        }
                         catch(...)
                         {
                             sprintf(errMsg, "Unable to import volume at \"%s\"", path.c_str());
@@ -276,7 +281,7 @@ void CImport::run()
                     }
                     else
                     {
-                        sprintf(errMsg, "Unable to import volume at \"%s\"", path_i.c_str());
+                        sprintf(errMsg, "Unable to import volume at \"%s\": cast failed", path_i.c_str());
                         throw MyException(errMsg);
                     }
 
@@ -340,7 +345,7 @@ void CImport::run()
                     }
                     else
                     {
-                        sprintf(errMsg, "Unable to import volume at \"%s\"", candidateVols[k]->getROOT_DIR());
+                        sprintf(errMsg, "Unable to import volume at \"%s\": cast failed", candidateVols[k]->getROOT_DIR());
                         throw MyException(errMsg);
                     }
                     volumes.push_back(vol);
