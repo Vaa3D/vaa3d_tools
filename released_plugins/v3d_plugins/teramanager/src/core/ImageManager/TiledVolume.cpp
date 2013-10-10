@@ -532,93 +532,92 @@ void TiledVolume::print()
 //rotate stacks matrix around D axis (accepted values are theta=0,90,180,270)
 void TiledVolume::rotate(int theta)
 {
-
 	char msg[IM_STATIC_STRINGS_SIZE];
 	sprintf(msg,"in TiledVolume::rotate: not implemented yet");
 	throw MyException(msg);
 
-//	//PRECONDITIONS:
-//	//	1) current TiledVolume object has been initialized (init() method has been called)
-//	//	2) accepted values for 'theta' are 0,90,180,270
-//
-//	//POSTCONDITIONS:
-//	//  1) a new 2D-array of Stack* objects is created considering a rotation of 'theta' angle of current TiledVolume object
-//
-//	Stack*** new_STACK_2D_ARRAY = NULL;
-//	int new_N_ROWS = 0, new_N_COLS = 0;
-//
+    //PRECONDITIONS:
+    //	1) current TiledVolume object has been initialized (init() method has been called)
+    //	2) accepted values for 'theta' are 0,90,180,270
+
+    //POSTCONDITIONS:
+    //  1) a new 2D-array of Block* objects is created considering a rotation of 'theta' angle of current TiledVolume object
+
+    Block*** new_Block_2D_ARRAY = NULL;
+    int new_N_ROWS = 0, new_N_COLS = 0;
+
 	switch(theta)
 	{
 		case(0): break;
 
 		case(90):
-//		{
-//			new_N_COLS = N_ROWS;
-//			new_N_ROWS = N_COLS;
-//
-//			//allocating new_STACK_2D_ARRAY
-//			new_STACK_2D_ARRAY = new Stack**[new_N_ROWS];
-//			for(int i=0; i<new_N_ROWS; i++)
-//				new_STACK_2D_ARRAY[i] = new Stack*[new_N_COLS];
-//
-//			//populating new_STACK_2D_ARRAY
-//			for(int i=0; i<new_N_ROWS; i++)
-//				for(int j=0; j<new_N_COLS; j++){
-//					new_STACK_2D_ARRAY[i][j] = STACKS[N_ROWS-1-j][i];
-//					new_STACK_2D_ARRAY[i][j]->setROW_INDEX(i);
-//					new_STACK_2D_ARRAY[i][j]->setCOL_INDEX(j);
-//				}
+        {
+            new_N_COLS = N_ROWS;
+            new_N_ROWS = N_COLS;
+
+            //allocating new_Block_2D_ARRAY
+            new_Block_2D_ARRAY = new Block**[new_N_ROWS];
+            for(int i=0; i<new_N_ROWS; i++)
+                new_Block_2D_ARRAY[i] = new Block*[new_N_COLS];
+
+            //populating new_Block_2D_ARRAY
+            for(int i=0; i<new_N_ROWS; i++)
+                for(int j=0; j<new_N_COLS; j++){
+                    new_Block_2D_ARRAY[i][j] = BLOCKS[N_ROWS-1-j][i];
+                    new_Block_2D_ARRAY[i][j]->setROW_INDEX(i);
+                    new_Block_2D_ARRAY[i][j]->setCOL_INDEX(j);
+                }
 			break;
-//		}
+        }
 		case(180):
-//		{
-//			new_N_COLS=N_COLS;
-//			new_N_ROWS=N_ROWS;
-//
-//			//allocating new_STACK_2D_ARRAY
-//			new_STACK_2D_ARRAY = new Stack**[new_N_ROWS];
-//			for(int i=0; i<new_N_ROWS; i++)
-//				new_STACK_2D_ARRAY[i] = new Stack*[new_N_COLS];
-//
-//			//populating new_STACK_2D_ARRAY
-//			for(int i=0; i<new_N_ROWS; i++)
-//				for(int j=0; j<new_N_COLS; j++){
-//					new_STACK_2D_ARRAY[i][j] = STACKS[N_ROWS-1-i][N_COLS-1-j];
-//					new_STACK_2D_ARRAY[i][j]->setROW_INDEX(i);
-//					new_STACK_2D_ARRAY[i][j]->setCOL_INDEX(j);
-//				}
+        {
+            new_N_COLS=N_COLS;
+            new_N_ROWS=N_ROWS;
+
+            //allocating new_Block_2D_ARRAY
+            new_Block_2D_ARRAY = new Block**[new_N_ROWS];
+            for(int i=0; i<new_N_ROWS; i++)
+                new_Block_2D_ARRAY[i] = new Block*[new_N_COLS];
+
+            //populating new_Block_2D_ARRAY
+            for(int i=0; i<new_N_ROWS; i++)
+                for(int j=0; j<new_N_COLS; j++){
+                    new_Block_2D_ARRAY[i][j] = BLOCKS[N_ROWS-1-i][N_COLS-1-j];
+                    new_Block_2D_ARRAY[i][j]->setROW_INDEX(i);
+                    new_Block_2D_ARRAY[i][j]->setCOL_INDEX(j);
+                }
 			break;
-//		}
+        }
 		case(270):
-//		{
-//			new_N_COLS=N_ROWS;
-//			new_N_ROWS=N_COLS;
-//
-//			//allocating new_STACK_2D_ARRAY
-//			new_STACK_2D_ARRAY = new Stack**[new_N_ROWS];
-//			for(int i=0; i<new_N_ROWS; i++)
-//				new_STACK_2D_ARRAY[i] = new Stack*[new_N_COLS];
-//
-//			//populating new_STACK_2D_ARRAY
-//			for(int i=0; i<new_N_ROWS; i++)
-//				for(int j=0; j<new_N_COLS; j++){
-//					new_STACK_2D_ARRAY[i][j] = STACKS[j][N_COLS-1-i];
-//					new_STACK_2D_ARRAY[i][j]->setROW_INDEX(i);
-//					new_STACK_2D_ARRAY[i][j]->setCOL_INDEX(j);
-//				}
+        {
+            new_N_COLS=N_ROWS;
+            new_N_ROWS=N_COLS;
+
+            //allocating new_Block_2D_ARRAY
+            new_Block_2D_ARRAY = new Block**[new_N_ROWS];
+            for(int i=0; i<new_N_ROWS; i++)
+                new_Block_2D_ARRAY[i] = new Block*[new_N_COLS];
+
+            //populating new_Block_2D_ARRAY
+            for(int i=0; i<new_N_ROWS; i++)
+                for(int j=0; j<new_N_COLS; j++){
+                    new_Block_2D_ARRAY[i][j] = BLOCKS[j][N_COLS-1-i];
+                    new_Block_2D_ARRAY[i][j]->setROW_INDEX(i);
+                    new_Block_2D_ARRAY[i][j]->setCOL_INDEX(j);
+                }
 			break;
-//		}
+        }
 	}
-//
-//
-//	//deallocating current STACK_2DARRAY object
-//	for(int row=0; row<N_ROWS; row++)
-//		delete[] STACKS[row];
-//	delete[] STACKS;
-//
-//	STACKS = new_STACK_2D_ARRAY;
-//	N_COLS = new_N_COLS;
-//	N_ROWS = new_N_ROWS;
+
+
+    //deallocating current Block_2DARRAY object
+    for(int row=0; row<N_ROWS; row++)
+        delete[] BLOCKS[row];
+    delete[] BLOCKS;
+
+    BLOCKS = new_Block_2D_ARRAY;
+    N_COLS = new_N_COLS;
+    N_ROWS = new_N_ROWS;
 }
 
 //mirror stacks matrix along mrr_axis (accepted values are mrr_axis=1,2,3)
@@ -628,65 +627,65 @@ void TiledVolume::mirror(axis mrr_axis)
 	sprintf(msg,"in TiledVolume::mirror: not implemented yet");
 	throw MyException(msg);
 
-//	//PRECONDITIONS:
-//	//	1) current TiledVolume object has been initialized (init() method has been called)
-//	//	2) accepted values for 'mrr_axis' are 1(V axis), 2(H axis) or 3(D axis)
-//
-//	//POSTCONDITIONS:
-//	//  1) a new 2D-array of Stack* objects is created considering a mirrorization along 'axis' of current TiledVolume object
-//
-//	if(mrr_axis!= 1 && mrr_axis != 2)
-//	{
-//		char msg[1000];
-//		sprintf(msg,"in TiledVolume::mirror(axis mrr_axis=%d): unsupported axis mirroring", mrr_axis);
-//		throw MyException(msg);
-//	}
-//
-//	Stack*** new_STACK_2D_ARRAY;
-//
-	switch(mrr_axis)
-	{
-		case(1):
-//		{
-//			//allocating new_STACK_2D_ARRAY
-//			new_STACK_2D_ARRAY = new Stack**[N_ROWS];
-//			for(int i=0; i<N_ROWS; i++)
-//				new_STACK_2D_ARRAY[i] = new Stack*[N_COLS];
-//
-//			//populating new_STACK_2D_ARRAY
-//			for(int i=0; i<N_ROWS; i++)
-//				for(int j=0; j<N_COLS; j++){
-//					new_STACK_2D_ARRAY[i][j]=STACKS[N_ROWS-1-i][j];
-//					new_STACK_2D_ARRAY[i][j]->setROW_INDEX(i);
-//					new_STACK_2D_ARRAY[i][j]->setCOL_INDEX(j);
-//				}
-			break;
-//		}		
-		case(2):
-//		{
-//			//allocating new_STACK_2D_ARRAY
-//			new_STACK_2D_ARRAY = new Stack**[N_ROWS];
-//			for(int i=0; i<N_ROWS; i++)
-//				new_STACK_2D_ARRAY[i] = new Stack*[N_COLS];
-//
-//			//populating new_STACK_2D_ARRAY
-//			for(int i=0; i<N_ROWS; i++)
-//				for(int j=0; j<N_COLS; j++){
-//					new_STACK_2D_ARRAY[i][j] = STACKS[i][N_COLS-1-j];
-//					new_STACK_2D_ARRAY[i][j]->setROW_INDEX(i);
-//					new_STACK_2D_ARRAY[i][j]->setCOL_INDEX(j);
-//				}
-			break;
-//		}
-		default: break;
-	}
-//
-//	//deallocating current STACK_2DARRAY object
-//	for(int row=0; row<N_ROWS; row++)
-//		delete[] STACKS[row];
-//	delete[] STACKS;
-//
-//	STACKS = new_STACK_2D_ARRAY;
+    //PRECONDITIONS:
+    //	1) current TiledVolume object has been initialized (init() method has been called)
+    //	2) accepted values for 'mrr_axis' are 1(V axis), 2(H axis) or 3(D axis)
+
+    //POSTCONDITIONS:
+    //  1) a new 2D-array of Stack* objects is created considering a mirrorization along 'axis' of current TiledVolume object
+
+    if(mrr_axis!= 1 && mrr_axis != 2)
+    {
+        char msg[1000];
+        sprintf(msg,"in TiledVolume::mirror(axis mrr_axis=%d): unsupported axis mirroring", mrr_axis);
+        throw MyException(msg);
+    }
+
+    Block*** new_BLOCK_2D_ARRAY;
+
+    switch(mrr_axis)
+    {
+        case(1):
+        {
+            //allocating new_STACK_2D_ARRAY
+            new_BLOCK_2D_ARRAY = new Block**[N_ROWS];
+            for(int i=0; i<N_ROWS; i++)
+                new_BLOCK_2D_ARRAY[i] = new Block*[N_COLS];
+
+            //populating new_STACK_2D_ARRAY
+            for(int i=0; i<N_ROWS; i++)
+                for(int j=0; j<N_COLS; j++){
+                    new_BLOCK_2D_ARRAY[i][j]=BLOCKS[N_ROWS-1-i][j];
+                    new_BLOCK_2D_ARRAY[i][j]->setROW_INDEX(i);
+                    new_BLOCK_2D_ARRAY[i][j]->setCOL_INDEX(j);
+                }
+            break;
+        }
+        case(2):
+        {
+            //allocating new_STACK_2D_ARRAY
+            new_BLOCK_2D_ARRAY = new Block**[N_ROWS];
+            for(int i=0; i<N_ROWS; i++)
+                new_BLOCK_2D_ARRAY[i] = new Block*[N_COLS];
+
+            //populating new_STACK_2D_ARRAY
+            for(int i=0; i<N_ROWS; i++)
+                for(int j=0; j<N_COLS; j++){
+                    new_BLOCK_2D_ARRAY[i][j] = BLOCKS[i][N_COLS-1-j];
+                    new_BLOCK_2D_ARRAY[i][j]->setROW_INDEX(i);
+                    new_BLOCK_2D_ARRAY[i][j]->setCOL_INDEX(j);
+                }
+            break;
+        }
+        default: break;
+    }
+
+    //deallocating current STACK_2DARRAY object
+    for(int row=0; row<N_ROWS; row++)
+        delete[] BLOCKS[row];
+    delete[] BLOCKS;
+
+    BLOCKS = new_BLOCK_2D_ARRAY;
 }
 
 //extract spatial coordinates (in millimeters) of given Stack object
