@@ -532,10 +532,6 @@ void TiledVolume::print()
 //rotate stacks matrix around D axis (accepted values are theta=0,90,180,270)
 void TiledVolume::rotate(int theta)
 {
-	char msg[IM_STATIC_STRINGS_SIZE];
-	sprintf(msg,"in TiledVolume::rotate: not implemented yet");
-	throw MyException(msg);
-
     //PRECONDITIONS:
     //	1) current TiledVolume object has been initialized (init() method has been called)
     //	2) accepted values for 'theta' are 0,90,180,270
@@ -623,10 +619,6 @@ void TiledVolume::rotate(int theta)
 //mirror stacks matrix along mrr_axis (accepted values are mrr_axis=1,2,3)
 void TiledVolume::mirror(axis mrr_axis)
 {
-	char msg[IM_STATIC_STRINGS_SIZE];
-	sprintf(msg,"in TiledVolume::mirror: not implemented yet");
-	throw MyException(msg);
-
     //PRECONDITIONS:
     //	1) current TiledVolume object has been initialized (init() method has been called)
     //	2) accepted values for 'mrr_axis' are 1(V axis), 2(H axis) or 3(D axis)
