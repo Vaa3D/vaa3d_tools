@@ -260,13 +260,13 @@ bool q_atlas2image(const CParas &paras,V3DPluginCallback &callback,
 			}
 	printf("\t>>foregroud voxel number: %ld\n",V3DLONG(vec_fg_ind.size()));
 
-	{
-	unsigned char *p_img_tmp=new unsigned char[l_npixel_s]();
-	for(V3DLONG i=0;i<vec_fg_ind.size();i++)
-		p_img_tmp[vec_fg_ind[i]]=255;
-	saveImage("j:/srs_test/test/img_fg.raw",p_img_tmp,sz_img_s,1);
-	delete []p_img_tmp;
-	}
+//	{
+//	unsigned char *p_img_tmp=new unsigned char[l_npixel_s]();
+//	for(V3DLONG i=0;i<vec_fg_ind.size();i++)
+//		p_img_tmp[vec_fg_ind[i]]=255;
+//	saveImage("/Users/qul/work/v3d_2.0/sub_projects/atlasguided_seganno/img_fg.raw",p_img_tmp,sz_img_s,1);
+//	delete []p_img_tmp;
+//	}
 	}
 
 	//------------------------------------------------------------------------------------------------------------------------------------
@@ -1805,10 +1805,7 @@ bool q_atlas2image_musclecell_ini_affine(const CParas &paras,V3DPluginCallback &
 					//set anisotropic weight factor (along AP direction )
 					double d_attenu_90;
 					if(d_T<d_T_min)
-					{
-						//d_attenu_90=8;
-						d_attenu_90=1;//qul@20131008
-					}
+						d_attenu_90=8;
 					else
 						d_attenu_90=1;
 					//compute the angle between the vector(pixel to cell) and X axis (degree)
@@ -1914,7 +1911,7 @@ bool q_atlas2image_musclecell_ini_affine(const CParas &paras,V3DPluginCallback &
 				x_ori(i+1,3)=vec_musclecell[i].y;
 				x_ori(i+1,4)=vec_musclecell[i].z;
 			}
-			//x_tps=x_ori*x4x4_affine;				//affine transform
+//			x_tps=x_ori*x4x4_affine;				//affine transform
 			x_tps=x_ori*x4x4_affine+xnxn_K*xnx4_c;	//tps transform
 			for(unsigned V3DLONG i=0;i<vec_musclecell_affine.size();i++)
 			{
@@ -1950,8 +1947,7 @@ bool q_atlas2image_musclecell_ini_affine(const CParas &paras,V3DPluginCallback &
 
 		//------------------------------------------------------------------
 		//6). jude whether stop iter
-		//if(d_totalposchange<0.1 && d_T<=d_T_min)
-		if(d_totalposchange<0.1 && d_T<=d_T_min && d_lamda<1e-3)	//qul@20131009
+		if(d_totalposchange<0.1 && d_T<=d_T_min)
 			b_stopiter=1;
 
 		//------------------------------------------------------------------
@@ -2066,14 +2062,14 @@ bool q_atlas2image_musclecell_ini_affine(const CParas &paras,V3DPluginCallback &
 //		callback.screenShot3DWindow(curwin, BMPfilename);
 
 		//------------------------------------------------------------------
-		//if(b_stopiter)
-		//	break;
+		if(b_stopiter)
+			break;
 
 		//------------------------------------------------------------------
 		//7). decrease temperature
 		if(d_T>d_T_min) d_T*=d_annealingrate;
-		if(d_T<=d_T_min) d_lamda*=d_annealingrate; //qul@20131008
-		//d_lamda*=d_annealingrate;
+//		if(d_T<=d_T_min) d_lamda*=d_annealingrate;
+		d_lamda*=d_annealingrate;
 
 	}
 	vec_musclecell_output=vec_musclecell_last;
