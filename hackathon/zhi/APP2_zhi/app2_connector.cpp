@@ -25,7 +25,7 @@ struct root_node
 
 };
 
-template <class T> void app2_block(V3DPluginCallback2 &callback,MyMarker root, T * somald,  V3DLONG *soma_sz,T * indata1d,V3DLONG *in_sz, PARA_APP2 &p,double dfactor_xy, double dfactor_z,V3DLONG xb, V3DLONG xe,V3DLONG yb, V3DLONG ye)
+template <class T> void app2_block(V3DPluginCallback2 &callback,MyMarker root, T * somald,  V3DLONG *soma_sz,T * indata1d,V3DLONG *in_sz, PARA_APP2 &p,double dfactor_xy, double dfactor_z,V3DLONG xb, V3DLONG xe,V3DLONG yb, V3DLONG ye,struct root_node *head)
 {
     cout<<"======================================="<<endl;
     cout<<"Construct the neuron tree"<<endl;
@@ -86,7 +86,7 @@ template <class T> void app2_block(V3DPluginCallback2 &callback,MyMarker root, T
 
 
    cout<<"Pruning neuron tree"<<endl;
-   if (1)
+   if (inswc.size()>20)
    {
     vector<MyMarker*> outswc;
     if(p.is_coverage_prune)
@@ -112,32 +112,48 @@ template <class T> void app2_block(V3DPluginCallback2 &callback,MyMarker root, T
         tmps.setNum(int(root.x+0.5+xb)).prepend("_x"); rootposstr += tmps;
         tmps.setNum(int(root.y+0.5+yb)).prepend("_y"); rootposstr += tmps;
         tmps.setNum(int(root.z+0.5)).prepend("_z"); rootposstr += tmps;
-        //QString outswc_file = callback.getImageName(curwin) + rootposstr + "_app2.swc";
-        QString outswc_file = QString(p.p4dImage->getFileName()) + "_app2_temp.swc";
+        QString outswc_file = QString(p.p4dImage->getFileName()) + rootposstr + "_app2_temp.swc";
 
        // QString blockstr="", tmps2;
      //   tmps2.setNum(int(xb)).prepend("_x"); blockstr += tmps2;
      //   tmps2.setNum(int(yb)).prepend("_y"); blockstr += tmps2;
-        QString blockswc_file = QString(p.p4dImage->getFileName()) + "_app2_v3.swc";
+        QString blockswc_file = QString(p.p4dImage->getFileName()) + "_app2_v4.swc";
 
 
-        if(outswc.size() >1 )
+        if(outswc.size() > 10)
         {
+            struct root_node *walker_inside;
+            struct root_node *newNode;
+            walker_inside = head;
+            while(walker_inside->next != NULL)
+            {
+                 walker_inside = walker_inside->next;
+            }
+
+
             for(V3DLONG d = 0; d < inswc.size(); d++)
             {
 
                   V3DLONG dz = inswc[d]->z;
                   V3DLONG dy = inswc[d]->y + yb;
                   V3DLONG dx = inswc[d]->x + xb;
-                 if(dx < xe-2 && dy < ye-3 && dx >= xb+2 && dy >= yb+3)
-                 {
+              //   if(dx < xe -1 && dy < ye-1 && dx > xb && dy >= yb)
+              //   {
                       indata1d[dz*in_sz[0]*in_sz[1] + dy*in_sz[0] + dx] = 0;
+             //    }
+
+                 if((xe < in_sz[0]-1 && dx == xe-1)|| (ye < in_sz[1]-1 && dy == ye-1)|| (xb >0 && dx == xb) || (yb > 0 && dy == yb))
+                 {
+                         newNode =  new root_node[1];
+                         newNode->root_x = dx;
+                         newNode->root_y = dy;
+                         newNode->root_z = dz;
+                         newNode->next = NULL;
+                         walker_inside->next = newNode;
+                         walker_inside = walker_inside->next;
                  }
+
             }
-
-
-
-
 
             for(i = 0; i < outswc.size(); i++) //add scaling 121127, PHC //add cutbox offset 121202, PHC
             {
@@ -197,7 +213,6 @@ template <class T> void app2_block(V3DPluginCallback2 &callback,MyMarker root, T
              QString func_name_sort = "sort_swc";
              callback.callPluginFunc(full_plugin_name_sort,func_name_sort, input_sort,output);
 
-
              vector<MyMarker*> temp_out_swc = readSWC_file(outswc_file.toStdString());
              ifstream ifs(blockswc_file.toStdString().c_str());
              if(ifs)
@@ -211,7 +226,8 @@ template <class T> void app2_block(V3DPluginCallback2 &callback,MyMarker root, T
              }
              else
              {
-                saveSWC_file(blockswc_file.toStdString(), temp_out_swc);
+
+                 saveSWC_file(blockswc_file.toStdString(), temp_out_swc);
              }
 
              //remove(outswc_file.toStdString().c_str());
@@ -481,99 +497,22 @@ bool proc_app2(V3DPluginCallback2 &callback, PARA_APP2 &p, const QString & versi
     //crop the area with soma
     //inmarkers[0].x = 1037; inmarkers[0].y = 1242; inmarkers[0].z = 28;
 
+    struct root_node *head = new root_node[1];
+    struct root_node *walker;
+  //  struct root_node *newNode;
+    struct root_node *temp;
+    MyMarker root;
+
+    head->root_x = inmarkers[0].x;
+    head->root_y = inmarkers[0].y;
+    head->root_z = inmarkers[0].z;
+    head->next = NULL;
+    walker = head;
+
+
     V3DLONG N = in_sz[0];
     V3DLONG M = in_sz[1];
     V3DLONG P = in_sz[2];
-
-
-
-    V3DLONG xb = inmarkers[0].x - 512; if(xb<0) xb = 0;
-    V3DLONG xe = inmarkers[0].x + 512; if(xe>=N-1) xe = N-1;
-    V3DLONG yb = inmarkers[0].y - 512; if(yb<0) yb = 0;
-    V3DLONG ye = inmarkers[0].y + 512; if(ye>=M-1) ye = M-1;
-
-    printf("boundry is (%d, %d, %d, %d)\n\n",xb,xe,yb,ye);
-    V3DLONG somasz = (xe-xb)*(ye-yb)*P;
-    unsigned char *somald = 0;
-    somald = new unsigned char [somasz];
-
-    V3DLONG isoma = 0;
-    for(V3DLONG iz = 0; iz < P; iz++)
-    {
-        V3DLONG offsetk = iz*M*N;
-        for(V3DLONG iy = yb; iy < ye; iy++)
-        {
-            V3DLONG offsetj = iy*N;
-            for(V3DLONG ix = xb; ix < xe; ix++)
-            {
-                somald[isoma] = indata1d[offsetk + offsetj + ix];
-                isoma++;
-            }
-        }
-    }
-
-    V3DLONG soma_sz[4];
-    soma_sz[0] = xe-xb;
-    soma_sz[1] = ye-yb;
-    soma_sz[2] = P;
-    soma_sz[3] = 1;
-
-    MyMarker root;
-    root.x = inmarkers[0].x  - xb;
-    root.y = inmarkers[0].y  - yb;
-    root.z = inmarkers[0].z;
-//   simple_saveimage_wrapper(callback, "/local2/Project_app2/APP2_UPDATED/temp.v3draw",  (unsigned char *)somald, soma_sz, V3D_UINT8);
-
-
-  //  simple_saveimage_wrapper(callback, "/local2/Project_app2/APP2-FUNCTION_TEST3/temp.v3draw",  (unsigned char *)indata1d, in_sz, V3D_UINT8);
-
-
-    QString totalswc_file = QString(p.p4dImage->getFileName()) + "_app2_v3.swc";
-
-     app2_block(callback,root, somald, soma_sz,indata1d, in_sz,p,dfactor_xy, dfactor_z,xb,xe,yb,ye);
-
-    vector<MyMarker*> parents_swc = readSWC_file(totalswc_file.toStdString());
-    if (somald) {delete somald; somald=NULL;}
-
-
-    //creat linked list
-    struct root_node *head = new root_node[1];
-    struct root_node *walker;
-    struct root_node *walker_inside;
-    struct root_node *newNode;
-    struct root_node *temp;
-
-    int num = 0;
-    for(V3DLONG d = 0; d < parents_swc.size(); d++)
-    {
-        if((xe < N-1 && parents_swc[d]->x >= xe-2)|| (ye < M-1 && parents_swc[d]->y >= ye-3)|| (xb >0 && parents_swc[d]->x < xb+2) || (yb > 0 && parents_swc[d]->y < yb+3))
-        {
-            if(num ==0)
-            {
-                head->root_x = parents_swc[d]->x;
-                head->root_y = parents_swc[d]->y;
-                head->root_z = parents_swc[d]->z;
-                head->next = NULL;
-                walker = head;
-            }
-            else
-            {
-                newNode =  new root_node[1];
-                newNode->root_x = parents_swc[d]->x;
-                newNode->root_y = parents_swc[d]->y;
-                newNode->root_z = parents_swc[d]->z;
-                newNode->next = NULL;
-                walker->next = newNode;
-                walker = walker->next;
-            }
-
-
-            num++;
-        }
-    }
-
-
-    walker = head;
 
     while(walker != NULL)
     {
@@ -612,29 +551,7 @@ bool proc_app2(V3DPluginCallback2 &callback, PARA_APP2 &p, const QString & versi
             root.z = walker->root_z ;
 
             printf("root is (%d, %d, %d)\n\n\n",walker->root_x,walker->root_y,walker->root_z);
-            app2_block(callback,root, blockld, block_sz,indata1d, in_sz,p,dfactor_xy, dfactor_z,ixb,ixe,iyb,iye);
-            QString outswc_file = QString(p.p4dImage->getFileName()) + "_app2_temp.swc";
-            vector<MyMarker*> temp_out_swc = readSWC_file(outswc_file.toStdString());
-            walker_inside = head;
-            while(walker_inside->next != NULL)
-            {
-                 walker_inside = walker_inside->next;
-            }
-
-            for(V3DLONG d = 0; d < temp_out_swc.size(); d++)
-            {
-                if((ixe < N-1 && temp_out_swc[d]->x >= ixe-2)|| (iye < M-1 && temp_out_swc[d]->y >= iye-3)|| (ixb >0 && temp_out_swc[d]->x < ixb+2) || (iyb > 0 && temp_out_swc[d]->y < iyb+3))
-                {
-                        newNode =  new root_node[1];
-                        newNode->root_x = temp_out_swc[d]->x;
-                        newNode->root_y = temp_out_swc[d]->y;
-                        newNode->root_z = temp_out_swc[d]->z;
-                        newNode->next = NULL;
-                        walker_inside->next = newNode;
-                        walker_inside = walker_inside->next;
-                }
-            }
-            remove(outswc_file.toStdString().c_str());
+            app2_block(callback,root, blockld, block_sz,indata1d, in_sz,p,dfactor_xy, dfactor_z,ixb,ixe,iyb,iye,head);
             walker = walker->next;
 
             if (blockld) {delete blockld; blockld=NULL;}
@@ -648,236 +565,6 @@ bool proc_app2(V3DPluginCallback2 &callback, PARA_APP2 &p, const QString & versi
        temp = head;
     }
 
-   /* for(int n = 0; n<4;n++)
-    {
-
-        if(n==0)
-        {
-            xb = inmarkers[0].x - 505 - 1024 ; if(xb<0) xb = 0;
-            xe = inmarkers[0].x - 505; if(xe>=N-1) xe = N-1;
-            yb = inmarkers[0].y - 512; if(yb<0) yb = 0;
-            ye = inmarkers[0].y + 512; if(ye>=M-1) ye = M-1;
-        }
-        else if(n == 1)
-        {
-            xb = inmarkers[0].x - 512; if(xb<0) xb = 0;
-            xe = inmarkers[0].x + 512; if(xe>=N-1) xe = N-1;
-            yb = inmarkers[0].y - 505 - 1024; if(yb<0) yb = 0;
-            ye = inmarkers[0].y - 505; if(ye>=M-1) ye = M-1;
-        }
-        else if (n ==2)
-        {
-            xb = inmarkers[0].x + 505; if(xb<0) xb = 0;
-            xe = inmarkers[0].x + 505 + 1024; if(xe>=N-1) xe = N-1;
-            yb = inmarkers[0].y - 512; if(yb<0) yb = 0;
-            ye = inmarkers[0].y + 512; if(ye>=M-1) ye = M-1;
-        }
-        else
-        {
-            xb = inmarkers[0].x - 512; if(xb<0) xb = 0;
-            xe = inmarkers[0].x + 512; if(xe>=N-1) xe = N-1;
-            yb = inmarkers[0].y + 505; if(yb<0) yb = 0;
-            ye = inmarkers[0].y + 505 + 1024; if(ye>=M-1) ye = M-1;
-        }
-
-        printf("boundry is (%d, %d, %d, %d)\n\n",xb,xe,yb,ye);
-
-        V3DLONG blocksz = (xe-xb)*(ye-yb)*P;
-        unsigned char *blockld = 0;
-        blockld = new unsigned char [blocksz];
-
-        V3DLONG i = 0;
-        for(V3DLONG iz = 0; iz < P; iz++)
-        {
-            V3DLONG offsetk = iz*M*N;
-            for(V3DLONG iy = yb; iy < ye; iy++)
-            {
-                V3DLONG offsetj = iy*N;
-                for(V3DLONG ix = xb; ix < xe; ix++)
-                {
-                    blockld[i] = indata1d[offsetk + offsetj + ix];
-                    i++;
-                }
-            }
-        }
-
-        V3DLONG block_sz[4];
-        block_sz[0] = xe-xb;
-        block_sz[1] = ye-yb;
-        block_sz[2] = P;
-        block_sz[3] = 1;
-
-        for(V3DLONG d = 0; d < parents_swc.size(); d++)
-        {
-             if((n == 0 && parents_swc[d]->x < xe)||(n == 1 && parents_swc[d]->y < ye)||(n == 2 && parents_swc[d]->x > xb)||(n == 3 && parents_swc[d]->y > yb))
-             {
-                 root.x = parents_swc[d]->x - xb;
-                 root.y = parents_swc[d]->y - yb;
-                 root.z = parents_swc[d]->z;
-                 app2_block(callback,root, blockld, block_sz,p,dfactor_xy, dfactor_z,xb,yb);
-
-                printf("root is(%.2f, %.2f,%.2f %d), size is %d\n\n",inmarkers[0].x,inmarkers[0].y,inmarkers[0].z,i,parents_swc.size());
-
-                cout<<"======================================="<<endl;
-                cout<<"Construct the neuron tree"<<endl;
-                vector<MyMarker *> outtree;
-                fastmarching_tree(inmarkers[0], somald, outtree, soma_sz[0], soma_sz[1], soma_sz[2], p.cnn_type, p.bkg_thresh, p.is_break_accept);
-
-                cout<<"======================================="<<endl;
-
-                //save a copy of the ini tree
-                cout<<"Save the initial unprunned tree"<<endl;
-                vector<MyMarker*> & inswc = outtree;
-
-                if (1)
-                {
-                    V3DLONG tmpi;
-
-                    vector<MyMarker*> tmpswc;
-                    for (tmpi=0; tmpi<inswc.size(); tmpi++)
-                    {
-                        MyMarker * curp = new MyMarker(*(inswc[tmpi]));
-                        tmpswc.push_back(curp);
-
-                        if (dfactor_xy>1) inswc[tmpi]->x *= dfactor_xy;
-                        inswc[tmpi]->x += (p.xc0);
-                        if (dfactor_xy>1) inswc[tmpi]->x += dfactor_xy/2;
-
-                        if (dfactor_xy>1) inswc[tmpi]->y *= dfactor_xy;
-                        inswc[tmpi]->y += (p.yc0);
-                        if (dfactor_xy>1) inswc[tmpi]->y += dfactor_xy/2;
-
-                        if (dfactor_z>1) inswc[tmpi]->z *= dfactor_z;
-                        inswc[tmpi]->z += (p.zc0);
-                        if (dfactor_z>1)  inswc[tmpi]->z += dfactor_z/2;
-                    }
-
-                    saveSWC_file(QString(p.p4dImage->getFileName()).append("_ini.swc").toStdString(), inswc, infostring);
-
-                    for (tmpi=0; tmpi<inswc.size(); tmpi++)
-                    {
-                        inswc[tmpi]->x = tmpswc[tmpi]->x;
-                        inswc[tmpi]->y = tmpswc[tmpi]->y;
-                        inswc[tmpi]->z = tmpswc[tmpi]->z;
-                    }
-
-                    for(tmpi = 0; tmpi < tmpswc.size(); tmpi++)
-                        delete tmpswc[tmpi];
-                    tmpswc.clear();
-                }
-
-
-               cout<<"Pruning neuron tree"<<endl;
-
-                vector<MyMarker*> outswc;
-                if(p.is_coverage_prune)
-                {
-                    v3d_msg("start to use happ.\n", 0);
-                    happ(inswc, outswc, somald, soma_sz[0], soma_sz[1], soma_sz[2], p.bkg_thresh, p.length_thresh, p.SR_ratio);
-                }
-                else
-                {
-                    hierarchy_prune(inswc, outswc, somald, soma_sz[0], soma_sz[1], soma_sz[2], p.length_thresh);
-                    if(1) //get radius
-                    {
-                        double real_thres = 40; //PHC 20121011
-                        if (real_thres<p.bkg_thresh) real_thres = p.bkg_thresh;
-                        for(i = 0; i < outswc.size(); i++)
-                        {
-                            outswc[i]->radius = markerRadius(somald, soma_sz, *(outswc[i]), real_thres);
-                        }
-                    }
-                }
-
-                qint64 etime2 = timer2.elapsed();
-                qDebug() << " **** neuron tracing procedure takes [" << etime2 << " milliseconds]";
-
-                if (p4dImageNew) {delete p4dImageNew; p4dImageNew=0;} //free buffer
-                    QString rootposstr="", tmps;
-                    tmps.setNum(int(inmarkers[0].x+0.5)).prepend("_x"); rootposstr += tmps;
-                    tmps.setNum(int(inmarkers[0].y+0.5)).prepend("_y"); rootposstr += tmps;
-                    tmps.setNum(int(inmarkers[0].z+0.5)).prepend("_z"); rootposstr += tmps;
-                    //QString outswc_file = callback.getImageName(curwin) + rootposstr + "_app2.swc";
-                    QString outswc_file = QString(p.p4dImage->getFileName()) + rootposstr + "_app2.swc";
-
-                    if(outswc.size() >1 )
-                    {
-                        for(i = 0; i < outswc.size(); i++) //add scaling 121127, PHC //add cutbox offset 121202, PHC
-                        {
-                            if (dfactor_xy>1) outswc[i]->x *= dfactor_xy;
-                            outswc[i]->x += (p.xc0);
-                            if (dfactor_xy>1) outswc[i]->x += dfactor_xy/2; //note that the offset corretion might not be accurate. PHC 121127
-
-                            if (dfactor_xy>1) outswc[i]->y *= dfactor_xy;
-                            outswc[i]->y += (p.yc0);
-                            if (dfactor_xy>1) outswc[i]->y += dfactor_xy/2;
-
-                            if (dfactor_z>1) outswc[i]->z *= dfactor_z;
-                            outswc[i]->z += (p.zc0);
-                            if (dfactor_z>1)  outswc[i]->z += dfactor_z/2;
-
-                            outswc[i]->radius *= dfactor_xy; //use xy for now
-                        }
-
-                        //re-estimate the radius using the original image
-                        double real_thres = 40; //PHC 20121011
-                        if (real_thres<p.bkg_thresh) real_thres = p.bkg_thresh;
-                        int method_radius_est = ( p.b_RadiusFrom2D ) ? 1 : 2;
-                        for(i = 0; i < outswc.size(); i++)
-                        {
-                           //printf(" node %ld of %ld.\n", i, outswc.size());
-                          outswc[i]->radius = markerRadius(somald, soma_sz, *(outswc[i]), real_thres, method_radius_est);
-                          outswc[i]->x = outswc[i]->x + xb;
-                          outswc[i]->y = outswc[i]->y + yb;
-                        }
-                        //prepare the output comments for neuron info in the swc file
-
-                        tmpstr =  qPrintable( qtstr.setNum(etime1).prepend("#neuron preprocessing time (milliseconds) = ") ); infostring.push_back(tmpstr);
-                        tmpstr =  qPrintable( qtstr.setNum(etime2).prepend("#neuron tracing time (milliseconds) = ") ); infostring.push_back(tmpstr);
-                        saveSWC_file(outswc_file.toStdString(), outswc, infostring);
-
-                        //call sort_swc function
-                         V3DPluginArgItem arg;
-                         V3DPluginArgList input_resample;
-                         V3DPluginArgList input_sort;
-                         V3DPluginArgList output;
-
-                         arg.type = "random";std::vector<char*> arg_input_resample;
-                         std:: string fileName_Qstring(outswc_file.toStdString());char* fileName_string =  new char[fileName_Qstring.length() + 1]; strcpy(fileName_string, fileName_Qstring.c_str());
-                         arg_input_resample.push_back(fileName_string);
-                         arg.p = (void *) & arg_input_resample; input_resample<< arg;
-                         arg.type = "random";std::vector<char*> arg_resample_para; arg_resample_para.push_back("10");arg.p = (void *) & arg_resample_para; input_resample << arg;
-                         arg.type = "random";std::vector<char*> arg_output;arg_output.push_back(fileName_string); arg.p = (void *) & arg_output; output<< arg;
-
-                         QString full_plugin_name_resample = "resample_swc";
-                         QString func_name_resample = "resample_swc";
-                         callback.callPluginFunc(full_plugin_name_resample,func_name_resample,input_resample,output);
-
-                         arg.type = "random";std::vector<char*> arg_input_sort;
-                         arg_input_sort.push_back(fileName_string);
-                         arg.p = (void *) & arg_input_sort; input_sort<< arg;
-                         arg.type = "random";std::vector<char*> arg_sort_para; arg_sort_para.push_back("0");arg.p = (void *) & arg_sort_para; input_sort << arg;
-                         QString full_plugin_name_sort = "sort_neuron_swc";
-                         QString func_name_sort = "sort_swc";
-                         callback.callPluginFunc(full_plugin_name_sort,func_name_sort, input_sort,output);
-
-                         if(phi){delete [] phi; phi = 0;}
-
-                         for(V3DLONG i = 0; i < outtree.size(); i++) delete outtree[i];
-                         outtree.clear();
-                      }
-
-    //                v3d_msg(QString("The tracing uses %1 ms (%2 ms for preprocessing and %3 for tracing). Now you can drag and drop the generated swc fle [%4] into Vaa3D."
-    //                                ).arg(etime1+etime2).arg(etime1).arg(etime2).arg(outswc_file), b_menu);
-
-
-            }
-
-        }
-
-       if (blockld) {delete blockld; blockld=NULL;}
-    }*/
-        //release memory
     if (!b_menu)
     {
        if (p.p4dImage) {delete p.p4dImage; p.p4dImage=NULL;}
