@@ -20,12 +20,13 @@ struct root_node
     V3DLONG root_x;
     V3DLONG root_y;
     V3DLONG root_z;
+    V3DLONG parent;
     struct root_node* next;
 
 
 };
 
-template <class T> void app2_block(V3DPluginCallback2 &callback,MyMarker root, T * somald,  V3DLONG *soma_sz,T * indata1d,V3DLONG *in_sz, PARA_APP2 &p,double dfactor_xy, double dfactor_z,V3DLONG xb, V3DLONG xe,V3DLONG yb, V3DLONG ye,struct root_node *head)
+template <class T> void app2_block(V3DPluginCallback2 &callback,MyMarker root, T * somald,  V3DLONG *soma_sz,T * indata1d,V3DLONG *in_sz, PARA_APP2 &p,double dfactor_xy, double dfactor_z,V3DLONG *boundary,struct root_node *head,V3DLONG root_parent)
 {
     cout<<"======================================="<<endl;
     cout<<"Construct the neuron tree"<<endl;
@@ -36,6 +37,11 @@ template <class T> void app2_block(V3DPluginCallback2 &callback,MyMarker root, T
 
     //save a copy of the ini tree
     cout<<"Save the initial unprunned tree"<<endl;
+    V3DLONG xb =  boundary[0];
+    V3DLONG xe =  boundary[1];
+    V3DLONG yb =  boundary[2];
+    V3DLONG ye =  boundary[3];
+
     vector<MyMarker*> & inswc = outtree;
     V3DLONG i;
     if (1)
@@ -86,7 +92,7 @@ template <class T> void app2_block(V3DPluginCallback2 &callback,MyMarker root, T
 
 
    cout<<"Pruning neuron tree"<<endl;
-   if (inswc.size()>20)
+   if (1)
    {
     vector<MyMarker*> outswc;
     if(p.is_coverage_prune)
@@ -120,7 +126,7 @@ template <class T> void app2_block(V3DPluginCallback2 &callback,MyMarker root, T
         QString blockswc_file = QString(p.p4dImage->getFileName()) + "_app2_v4.swc";
 
 
-        if(outswc.size() > 10)
+        if(outswc.size() > 1)
         {
             struct root_node *walker_inside;
             struct root_node *newNode;
@@ -137,21 +143,10 @@ template <class T> void app2_block(V3DPluginCallback2 &callback,MyMarker root, T
                   V3DLONG dz = inswc[d]->z;
                   V3DLONG dy = inswc[d]->y + yb;
                   V3DLONG dx = inswc[d]->x + xb;
-              //   if(dx < xe -1 && dy < ye-1 && dx > xb && dy >= yb)
-              //   {
-                      indata1d[dz*in_sz[0]*in_sz[1] + dy*in_sz[0] + dx] = 0;
-             //    }
-
-                 if((xe < in_sz[0]-1 && dx == xe-1)|| (ye < in_sz[1]-1 && dy == ye-1)|| (xb >0 && dx == xb) || (yb > 0 && dy == yb))
+                 if(dx < xe -4 && dy < ye-4 && dx >= xb+3 && dy >= yb+3)
                  {
-                         newNode =  new root_node[1];
-                         newNode->root_x = dx;
-                         newNode->root_y = dy;
-                         newNode->root_z = dz;
-                         newNode->next = NULL;
-                         walker_inside->next = newNode;
-                         walker_inside = walker_inside->next;
-                 }
+                      indata1d[dz*in_sz[0]*in_sz[1] + dy*in_sz[0] + dx] = 0;
+                }
 
             }
 
@@ -215,9 +210,37 @@ template <class T> void app2_block(V3DPluginCallback2 &callback,MyMarker root, T
 
              vector<MyMarker*> temp_out_swc = readSWC_file(outswc_file.toStdString());
              ifstream ifs(blockswc_file.toStdString().c_str());
+
+             for(V3DLONG d = 0; d < temp_out_swc.size(); d++)
+             {
+                  V3DLONG dx = temp_out_swc[d]->x;
+                  V3DLONG dy = temp_out_swc[d]->y;
+                  V3DLONG dz = temp_out_swc[d]->z;
+                 if((xe < in_sz[0]-1 && dx >= xe-4)|| (ye < in_sz[1]-1 && dy >= ye-4)|| (xb >0 && dx <= xb+3) || (yb > 0 && dy <= yb+3))
+                 {
+                         newNode =  new root_node[1];
+                         newNode->root_x = dx;
+                         newNode->root_y = dy;
+                         newNode->root_z = dz;
+                         if(ifs)
+                         {
+                             vector<MyMarker*> block_out_swc = readSWC_file(blockswc_file.toStdString());
+                             newNode->parent = block_out_swc.size() + d;
+                         }
+                         else
+                            newNode->parent  = d;
+                         newNode->next = NULL;
+                         walker_inside->next = newNode;
+                         walker_inside = walker_inside->next;
+                 }
+             }
+
+
+
              if(ifs)
              {
                vector<MyMarker*> block_out_swc = readSWC_file(blockswc_file.toStdString());
+               temp_out_swc[0]->parent = block_out_swc[root_parent];
                for(int j = 0; j < temp_out_swc.size(); j++)
                {
                    block_out_swc.push_back(temp_out_swc[j]);
@@ -230,7 +253,7 @@ template <class T> void app2_block(V3DPluginCallback2 &callback,MyMarker root, T
                  saveSWC_file(blockswc_file.toStdString(), temp_out_swc);
              }
 
-             //remove(outswc_file.toStdString().c_str());
+             remove(outswc_file.toStdString().c_str());
              for(V3DLONG i = 0; i < outtree.size(); i++) delete outtree[i];
              outtree.clear();
         }
@@ -495,7 +518,7 @@ bool proc_app2(V3DPluginCallback2 &callback, PARA_APP2 &p, const QString & versi
 
 
     //crop the area with soma
-    //inmarkers[0].x = 1037; inmarkers[0].y = 1242; inmarkers[0].z = 28;
+    inmarkers[0].x = 1033; inmarkers[0].y = 1238; inmarkers[0].z = 25;
 
     struct root_node *head = new root_node[1];
     struct root_node *walker;
@@ -506,6 +529,7 @@ bool proc_app2(V3DPluginCallback2 &callback, PARA_APP2 &p, const QString & versi
     head->root_x = inmarkers[0].x;
     head->root_y = inmarkers[0].y;
     head->root_z = inmarkers[0].z;
+    head->parent = 0;
     head->next = NULL;
     walker = head;
 
@@ -546,12 +570,18 @@ bool proc_app2(V3DPluginCallback2 &callback, PARA_APP2 &p, const QString & versi
             block_sz[2] = P;
             block_sz[3] = 1;
 
+            V3DLONG boundary[4];
+            boundary[0] = ixb;
+            boundary[1] = ixe;
+            boundary[2] = iyb;
+            boundary[3] = iye;
+
             root.x = walker->root_x  - ixb;
             root.y = walker->root_y  - iyb;
             root.z = walker->root_z ;
 
-            printf("root is (%d, %d, %d)\n\n\n",walker->root_x,walker->root_y,walker->root_z);
-            app2_block(callback,root, blockld, block_sz,indata1d, in_sz,p,dfactor_xy, dfactor_z,ixb,ixe,iyb,iye,head);
+            printf("root is (%d, %d, %d), parent is %d\n\n\n",walker->root_x,walker->root_y,walker->root_z,walker->parent);
+            app2_block(callback,root, blockld, block_sz,indata1d, in_sz,p,dfactor_xy, dfactor_z,boundary,head,walker->parent);
             walker = walker->next;
 
             if (blockld) {delete blockld; blockld=NULL;}
