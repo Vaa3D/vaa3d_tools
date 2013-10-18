@@ -264,7 +264,7 @@ bool q_atlas2image(const CParas &paras,V3DPluginCallback &callback,
 	unsigned char *p_img_tmp=new unsigned char[l_npixel_s]();
 	for(V3DLONG i=0;i<vec_fg_ind.size();i++)
 		p_img_tmp[vec_fg_ind[i]]=255;
-	saveImage("img_fg.raw",p_img_tmp,sz_img_s,1);
+	saveImage("j:/srs_test/result_qu/img_fg.raw",p_img_tmp,sz_img_s,1);
 	delete []p_img_tmp;
 	}
 	}
@@ -1806,8 +1806,8 @@ bool q_atlas2image_musclecell_ini_affine(const CParas &paras,V3DPluginCallback &
 					double d_attenu_90;
 					if(d_T<d_T_min)
 					{
-						//d_attenu_90=8;
-						d_attenu_90=1;//qul@20131008
+						d_attenu_90=8;
+						//d_attenu_90=1;//qul@20131008
 					}
 					else
 						d_attenu_90=1;
@@ -1950,8 +1950,8 @@ bool q_atlas2image_musclecell_ini_affine(const CParas &paras,V3DPluginCallback &
 
 		//------------------------------------------------------------------
 		//6). jude whether stop iter
-		//if(d_totalposchange<0.1 && d_T<=d_T_min)
-		if(d_totalposchange<0.1 && d_T<=d_T_min && d_lamda<1e-3)	//qul@20131009
+		if(d_totalposchange<0.1 && d_T<=d_T_min)
+		//if(d_totalposchange<0.1 && d_T<=d_T_min && d_lamda<1e-3)	//qul@20131009
 			b_stopiter=1;
 
 		//------------------------------------------------------------------
@@ -2066,8 +2066,8 @@ bool q_atlas2image_musclecell_ini_affine(const CParas &paras,V3DPluginCallback &
 //		callback.screenShot3DWindow(curwin, BMPfilename);
 
 		//------------------------------------------------------------------
-		//if(b_stopiter)
-		//	break;
+		if(b_stopiter)
+			break;
 
 		//------------------------------------------------------------------
 		//7). decrease temperature
