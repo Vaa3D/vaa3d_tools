@@ -525,7 +525,8 @@ bool proc_app2(V3DPluginCallback2 &callback, PARA_APP2 &p, const QString & versi
         QString func_name_sort = "sort_swc";
         callback.callPluginFunc(full_plugin_name_sort,func_name_sort, input_sort,output);
 
-
+        vector<MyMarker*> temp_out_swc = readSWC_file(outswc_file.toStdString());
+        saveSWC_file(outswc_file.toStdString(), temp_out_swc, infostring);
         v3d_msg(QString("The tracing uses %1 ms (%2 ms for preprocessing and %3 for tracing). Now you can drag and drop the generated swc fle [%4] into Vaa3D."
                         ).arg(etime1+etime2).arg(etime1).arg(etime2).arg(outswc_file), b_menu);
         
