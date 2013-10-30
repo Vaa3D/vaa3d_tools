@@ -57,6 +57,7 @@ class teramanager::CVolume : public QThread
         void run();
 
         //members
+        //I suspect the "int" below might be problematic in the long run, but I leave them as is at this moment. I would use V3D_LONG instead.  by PHC 20131029
         int voiResIndex;                            //volume of interest resolution index
         int voiV0,voiV1,voiH0,voiH1,voiD0,voiD1;    //volume of interest coordinates
         int nchannels;                              //volume of interest channel's number
@@ -132,12 +133,13 @@ class teramanager::CVolume : public QThread
             VirtualVolume* volume = CImport::instance()->getVolume(voiResIndex);
 
             //---- Alessandro 2013-08-06: reestabilished automatic VOI adjustement. This way, get methods return the actual VOI instead of the virtual one.
-            voiV0 = _V0 >=0                   ? _V0 : 0;
-            voiV1 = _V1 <= volume->getDIM_V() ? _V1 : volume->getDIM_V();
-            voiH0 = _H0 >=0                   ? _H0 : 0;
-            voiH1 = _H1 <= volume->getDIM_H() ? _H1 : volume->getDIM_H();
-            voiD0 = _D0 >=0                   ? _D0 : 0;
-            voiD1 = _D1 <= volume->getDIM_D() ? _D1 : volume->getDIM_D();
+            //add () by PHC, 20131029
+            voiV0 = (_V0 >=0)                   ? _V0 : 0;
+            voiV1 = (_V1 <= volume->getDIM_V()) ? _V1 : volume->getDIM_V();
+            voiH0 = (_H0 >=0)                   ? _H0 : 0;
+            voiH1 = (_H1 <= volume->getDIM_H()) ? _H1 : volume->getDIM_H();
+            voiD0 = (_D0 >=0)                   ? _D0 : 0;
+            voiD1 = (_D1 <= volume->getDIM_D()) ? _D1 : volume->getDIM_D();
 
             //---- Alessandro 2013-09-03: added check to detect invalid VOI
             if(voiV1 - voiV0 <= 0 || voiH1 - voiH0 <= 0 || voiD1 - voiD0 <= 0)
