@@ -1622,7 +1622,7 @@ float CExplorerWindow::getGlobalDCoord(float localDCoord, int resIndex /* = -1 *
 ***********************************************************************************/
 int CExplorerWindow::getLocalVCoord(int highestResGlobalVCoord, bool toVaa3Dcoordinates /* = false */)
 {
-    /**/itm::debug(itm::LEV3, strprintf("title = %s, coord = %d, res = %d, toVaa3Dcoordinates = %s",
+    /**/itm::debug(itm::LEV3, strprintf("title = %s, coord = %d, toVaa3Dcoordinates = %s",
                                         titleShort.c_str(), highestResGlobalVCoord, toVaa3Dcoordinates ? "true" : "false").c_str(), __itm__current__function__);
 
     float ratio = (CImport::instance()->getHighestResVolume()->getDIM_V()-1.0f)/(CImport::instance()->getVolume(volResIndex)->getDIM_V()-1.0f);
@@ -1638,7 +1638,7 @@ int CExplorerWindow::getLocalVCoord(int highestResGlobalVCoord, bool toVaa3Dcoor
 }
 int CExplorerWindow::getLocalHCoord(int highestResGlobalHCoord, bool toVaa3Dcoordinates /* = false */)
 {
-    /**/itm::debug(itm::LEV3, strprintf("title = %s, coord = %d, res = %d, toVaa3Dcoordinates = %s",
+    /**/itm::debug(itm::LEV3, strprintf("title = %s, coord = %d, toVaa3Dcoordinates = %s",
                                         titleShort.c_str(), highestResGlobalHCoord, toVaa3Dcoordinates ? "true" : "false").c_str(), __itm__current__function__);
 
     float ratio = (CImport::instance()->getHighestResVolume()->getDIM_H()-1.0f)/(CImport::instance()->getVolume(volResIndex)->getDIM_H()-1.0f);
@@ -1654,7 +1654,7 @@ int CExplorerWindow::getLocalHCoord(int highestResGlobalHCoord, bool toVaa3Dcoor
 }
 int CExplorerWindow::getLocalDCoord(int highestResGlobalDCoord, bool toVaa3Dcoordinates /* = false */)
 {
-    /**/itm::debug(itm::LEV3, strprintf("title = %s, coord = %d, res = %d, toVaa3Dcoordinates = %s",
+    /**/itm::debug(itm::LEV3, strprintf("title = %s, coord = %d, toVaa3Dcoordinates = %s",
                                         titleShort.c_str(), highestResGlobalDCoord, toVaa3Dcoordinates ? "true" : "false").c_str(), __itm__current__function__);
 
     float ratio = (CImport::instance()->getHighestResVolume()->getDIM_D()-1.0f)/(CImport::instance()->getVolume(volResIndex)->getDIM_D()-1.0f);
@@ -1670,7 +1670,7 @@ int CExplorerWindow::getLocalDCoord(int highestResGlobalDCoord, bool toVaa3Dcoor
 }
 float CExplorerWindow::getLocalVCoord(float highestResGlobalVCoord, bool toVaa3Dcoordinates /* = false */)
 {
-    /**/itm::debug(itm::LEV3, strprintf("title = %s, coord = %.2f, res = %d, toVaa3Dcoordinates = %s",
+    /**/itm::debug(itm::LEV3, strprintf("title = %s, coord = %.2f, toVaa3Dcoordinates = %s",
                                         titleShort.c_str(), highestResGlobalVCoord, toVaa3Dcoordinates ? "true" : "false").c_str(), __itm__current__function__);
 
     float ratio = (CImport::instance()->getHighestResVolume()->getDIM_V()-1.0f)/(CImport::instance()->getVolume(volResIndex)->getDIM_V()-1.0f);
@@ -1686,7 +1686,7 @@ float CExplorerWindow::getLocalVCoord(float highestResGlobalVCoord, bool toVaa3D
 }
 float CExplorerWindow::getLocalHCoord(float highestResGlobalHCoord, bool toVaa3Dcoordinates /* = false */)
 {
-    /**/itm::debug(itm::LEV3, strprintf("title = %s, coord = %.2f, res = %d, toVaa3Dcoordinates = %s",
+    /**/itm::debug(itm::LEV3, strprintf("title = %s, coord = %.2f, toVaa3Dcoordinates = %s",
                                         titleShort.c_str(), highestResGlobalHCoord, toVaa3Dcoordinates ? "true" : "false").c_str(), __itm__current__function__);
 
     float ratio = (CImport::instance()->getHighestResVolume()->getDIM_H()-1.0f)/(CImport::instance()->getVolume(volResIndex)->getDIM_H()-1.0f);
@@ -1702,7 +1702,7 @@ float CExplorerWindow::getLocalHCoord(float highestResGlobalHCoord, bool toVaa3D
 }
 float CExplorerWindow::getLocalDCoord(float highestResGlobalDCoord, bool toVaa3Dcoordinates /* = false */)
 {
-    /**/itm::debug(itm::LEV3, strprintf("title = %s, coord = %.2f, res = %d, toVaa3Dcoordinates = %s",
+    /**/itm::debug(itm::LEV3, strprintf("title = %s, coord = %.2f, toVaa3Dcoordinates = %s",
                                         titleShort.c_str(), highestResGlobalDCoord, toVaa3Dcoordinates ? "true" : "false").c_str(), __itm__current__function__);
 
     float ratio = (CImport::instance()->getHighestResVolume()->getDIM_D()-1.0f)/(CImport::instance()->getVolume(volResIndex)->getDIM_D()-1.0f);
@@ -1723,36 +1723,48 @@ float CExplorerWindow::getLocalDCoord(float highestResGlobalDCoord, bool toVaa3D
 ***********************************************************************************/
 void CExplorerWindow::Vaa3D_changeYCut0(int s)
 {
+    /**/itm::debug(itm::LEV_MAX, strprintf("title = %s, s = %d", title.c_str(), s).c_str(), __itm__current__function__);
+
     disconnect(PMain::getInstance()->V0_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeV0sbox(int)));
     PMain::getInstance()->V0_sbox->setValue(getGlobalVCoord(s, -1, true)+1);
     connect(PMain::getInstance()->V0_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeV0sbox(int)));
 }
 void CExplorerWindow::Vaa3D_changeYCut1(int s)
 {
+    /**/itm::debug(itm::LEV_MAX, strprintf("title = %s, s = %d", title.c_str(), s).c_str(), __itm__current__function__);
+
     disconnect(PMain::getInstance()->V1_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeV1sbox(int)));
     PMain::getInstance()->V1_sbox->setValue(getGlobalVCoord(s, -1, true)+1);
     connect(PMain::getInstance()->V1_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeV1sbox(int)));
 }
 void CExplorerWindow::Vaa3D_changeXCut0(int s)
 {
+    /**/itm::debug(itm::LEV_MAX, strprintf("title = %s, s = %d", title.c_str(), s).c_str(), __itm__current__function__);
+
     disconnect(PMain::getInstance()->H0_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeH0sbox(int)));
     PMain::getInstance()->H0_sbox->setValue(getGlobalHCoord(s, -1, true)+1);
     connect(PMain::getInstance()->H0_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeH0sbox(int)));
 }
 void CExplorerWindow::Vaa3D_changeXCut1(int s)
 {
+    /**/itm::debug(itm::LEV_MAX, strprintf("title = %s, s = %d", title.c_str(), s).c_str(), __itm__current__function__);
+
     disconnect(PMain::getInstance()->H1_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeH1sbox(int)));
     PMain::getInstance()->H1_sbox->setValue(getGlobalHCoord(s, -1, true)+1);
     connect(PMain::getInstance()->H1_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeH1sbox(int)));
 }
 void CExplorerWindow::Vaa3D_changeZCut0(int s)
 {
+    /**/itm::debug(itm::LEV_MAX, strprintf("title = %s, s = %d", title.c_str(), s).c_str(), __itm__current__function__);
+
     disconnect(PMain::getInstance()->D0_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeD0sbox(int)));
     PMain::getInstance()->D0_sbox->setValue(getGlobalDCoord(s, -1, true)+1);
     connect(PMain::getInstance()->D0_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeD0sbox(int)));
 }
 void CExplorerWindow::Vaa3D_changeZCut1(int s)
 {
+    /**/itm::debug(itm::LEV_MAX, strprintf("title = %s, s = %d", title.c_str(), s).c_str(), __itm__current__function__);
+
     disconnect(PMain::getInstance()->D1_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeD1sbox(int)));
     PMain::getInstance()->D1_sbox->setValue(getGlobalDCoord(s, -1, true)+1);
     connect(PMain::getInstance()->D1_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeD1sbox(int)));
@@ -1764,36 +1776,48 @@ void CExplorerWindow::Vaa3D_changeZCut1(int s)
 ***********************************************************************************/
 void CExplorerWindow::PMain_changeV0sbox(int s)
 {
+    /**/itm::debug(itm::LEV_MAX, strprintf("title = %s, s = %d", title.c_str(), s).c_str(), __itm__current__function__);
+
     disconnect(view3DWidget, SIGNAL(changeYCut0(int)), this, SLOT(Vaa3D_changeYCut0(int)));
     view3DWidget->setYCut0(getLocalVCoord(s-1, true)+1);
     connect(view3DWidget, SIGNAL(changeYCut0(int)), this, SLOT(Vaa3D_changeYCut0(int)));
 }
 void CExplorerWindow::PMain_changeV1sbox(int s)
 {
+    /**/itm::debug(itm::LEV_MAX, strprintf("title = %s, s = %d", title.c_str(), s).c_str(), __itm__current__function__);
+
     disconnect(view3DWidget, SIGNAL(changeYCut1(int)), this, SLOT(Vaa3D_changeYCut1(int)));
     view3DWidget->setYCut1(getLocalVCoord(s-1, true)+1);
     connect(view3DWidget, SIGNAL(changeYCut1(int)), this, SLOT(Vaa3D_changeYCut1(int)));
 }
 void CExplorerWindow::PMain_changeH0sbox(int s)
 {
+    /**/itm::debug(itm::LEV_MAX, strprintf("title = %s, s = %d", title.c_str(), s).c_str(), __itm__current__function__);
+
     disconnect(view3DWidget, SIGNAL(changeXCut0(int)), this, SLOT(Vaa3D_changeXCut0(int)));
     view3DWidget->setXCut0(getLocalHCoord(s-1, true)+1);
     connect(view3DWidget, SIGNAL(changeXCut0(int)), this, SLOT(Vaa3D_changeXCut0(int)));
 }
 void CExplorerWindow::PMain_changeH1sbox(int s)
 {
+    /**/itm::debug(itm::LEV_MAX, strprintf("title = %s, s = %d", title.c_str(), s).c_str(), __itm__current__function__);
+
     disconnect(view3DWidget, SIGNAL(changeXCut1(int)), this, SLOT(Vaa3D_changeXCut1(int)));
     view3DWidget->setXCut1(getLocalHCoord(s-1, true)+1);
     connect(view3DWidget, SIGNAL(changeXCut1(int)), this, SLOT(Vaa3D_changeXCut1(int)));
 }
 void CExplorerWindow::PMain_changeD0sbox(int s)
 {
+    /**/itm::debug(itm::LEV_MAX, strprintf("title = %s, s = %d", title.c_str(), s).c_str(), __itm__current__function__);
+
     disconnect(view3DWidget, SIGNAL(changeZCut0(int)), this, SLOT(Vaa3D_changeZCut0(int)));
     view3DWidget->setZCut0(getLocalDCoord(s-1, true)+1);
     connect(view3DWidget, SIGNAL(changeZCut0(int)), this, SLOT(Vaa3D_changeZCut0(int)));
 }
 void CExplorerWindow::PMain_changeD1sbox(int s)
 {
+    /**/itm::debug(itm::LEV_MAX, strprintf("title = %s, s = %d", title.c_str(), s).c_str(), __itm__current__function__);
+
     disconnect(view3DWidget, SIGNAL(changeZCut1(int)), this, SLOT(Vaa3D_changeZCut1(int)));
     view3DWidget->setZCut1(getLocalDCoord(s-1, true)+1);
     connect(view3DWidget, SIGNAL(changeZCut1(int)), this, SLOT(Vaa3D_changeZCut1(int)));
