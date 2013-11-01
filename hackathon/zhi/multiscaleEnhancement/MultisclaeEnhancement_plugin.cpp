@@ -877,7 +877,7 @@ void processImage_adaptive_auto_blocks(V3DPluginCallback2 &callback, QWidget *pa
             try {localEnahancedArea = new unsigned char [blockpagesz];}
             catch(...)  {v3d_msg("cannot allocate memory for localEnahancedArea."); return;}
             double sigma = 0;
-            for(int scale = 0; scale < 2; scale++)
+            for(int scale = 0; scale < 1; scale++)
             {
                 unsigned char * data1d_gf = 0;
                 unsigned char * gsdtld = 0;
@@ -891,6 +891,7 @@ void processImage_adaptive_auto_blocks(V3DPluginCallback2 &callback, QWidget *pa
                         sigma = 0.3;
                         data1d_gf = new unsigned char [blockpagesz];
                         memcpy(data1d_gf, blockarea, blockpagesz);
+                        if(blockarea) {delete []blockarea; blockarea =0;}
                     }
                     else
                     {
@@ -924,12 +925,16 @@ void processImage_adaptive_auto_blocks(V3DPluginCallback2 &callback, QWidget *pa
                 if(EnahancedImage) {delete []EnahancedImage; EnahancedImage =0;}
            }
 
+
+
+
             if (count==0)
             {
                 V3DLONG targetsize = block_sz[0]*block_sz[1]*block_sz[2];
                 target1d = new unsigned char [targetsize];
                 memcpy(target1d, localEnahancedArea, targetsize);
                 szTar[0] = xe-xb+1; szTar[1] = ye-yb+1; szTar[2] = P; szTar[3] = 1;
+                if(localEnahancedArea) {delete []localEnahancedArea; localEnahancedArea =0;}
 
             }
             else
@@ -939,6 +944,7 @@ void processImage_adaptive_auto_blocks(V3DPluginCallback2 &callback, QWidget *pa
                 subject1d = new unsigned char [subjectsize];
                 memcpy(subject1d, localEnahancedArea, subjectsize);
                 szSub[0] = xe-xb+1; szSub[1] = ye-yb+1; szSub[2] = P; szSub[3] = 1;
+                if(localEnahancedArea) {delete []localEnahancedArea; localEnahancedArea =0;}
 
                 V3DLONG *offset = new V3DLONG [3];
                 offset[0] = xb;
@@ -955,16 +961,20 @@ void processImage_adaptive_auto_blocks(V3DPluginCallback2 &callback, QWidget *pa
                 int success;
 
                 success = pwi_fusing<unsigned char>((unsigned char *)data1d_blended, (unsigned char *)subject1d, szSub, (unsigned char *)target1d, szTar, offset, new_sz0, new_sz1, new_sz2);
+                if(target1d) {delete []target1d; target1d =0;}
+                if(subject1d) {delete []subject1d; subject1d =0;}
 
                 V3DLONG targetsize = new_sz0*new_sz1*new_sz2;
                 target1d = new unsigned char [targetsize];
                 memcpy(target1d, data1d_blended, targetsize);
                 szTar[0] = new_sz0; szTar[1] = new_sz1; szTar[2] = new_sz2; szTar[3] = 1;
+
+                if(data1d_blended) {delete []data1d_blended; data1d_blended =0;}
+
             }
             count ++;
 
-            if(blockarea) {delete []blockarea; blockarea =0;}
-            if(localEnahancedArea) {delete []localEnahancedArea; localEnahancedArea =0;}
+
         }
 
 
@@ -975,6 +985,8 @@ void processImage_adaptive_auto_blocks(V3DPluginCallback2 &callback, QWidget *pa
             target1d_y = new unsigned char [targetsize_y];
             memcpy(target1d_y, target1d, targetsize_y);
             szTar_y[0] = new_sz0; szTar_y[1] = new_sz1; szTar_y[2] = P; szTar_y[3] = 1;
+            if(target1d) {delete []target1d; target1d =0;}
+
         }
         else
         {
@@ -982,6 +994,8 @@ void processImage_adaptive_auto_blocks(V3DPluginCallback2 &callback, QWidget *pa
             subject1d_y = new unsigned char [subjectsize_y];
             memcpy(subject1d_y, target1d, subjectsize_y);
             szSub_y[0] = new_sz0; szSub_y[1] = new_sz1; szSub_y[2] = P; szSub_y[3] = 1;
+            if(target1d) {delete []target1d; target1d =0;}
+
 
             V3DLONG *offset = new V3DLONG [3];
             offset[0] = 0;
@@ -997,7 +1011,8 @@ void processImage_adaptive_auto_blocks(V3DPluginCallback2 &callback, QWidget *pa
             memset(data1d_blended_y, 0, sizeof(unsigned char)*totalplxs);
             int success;
             success = pwi_fusing<unsigned char>((unsigned char *)data1d_blended_y, (unsigned char *)subject1d_y, szSub_y, (unsigned char *)target1d_y, szTar_y, offset, new_sz0, new_sz1, new_sz2);
-
+            if(subject1d_y) {delete []subject1d_y; subject1d_y =0;}
+            if(target1d_y) {delete []target1d_y; target1d_y =0;}
 
             V3DLONG targetsize_y = new_sz0*new_sz1*new_sz2;
             target1d_y = new unsigned char [targetsize_y];
@@ -1008,9 +1023,6 @@ void processImage_adaptive_auto_blocks(V3DPluginCallback2 &callback, QWidget *pa
 
         }
         county++;
-
-        if(subject1d) {delete []subject1d; subject1d =0;}
-        if(target1d) {delete []target1d; target1d =0;}
     }
 
     unsigned char* Enhancement_soma = 0;
@@ -1024,7 +1036,10 @@ void processImage_adaptive_auto_blocks(V3DPluginCallback2 &callback, QWidget *pa
         memcpy(Enhancement_soma, target1d_y, pagesz);
     }
 
+
+
     simple_saveimage_wrapper(callback,"result_woGf.v3draw", (unsigned char *)Enhancement_soma, in_sz, 1);
+
     V3DPluginArgItem arg;
     V3DPluginArgList input;
     V3DPluginArgList output;
@@ -1050,7 +1065,7 @@ void processImage_adaptive_auto_blocks(V3DPluginCallback2 &callback, QWidget *pa
         cerr<<"load image "<<outimg_file<<" error!"<<endl;
         return;
     }
-    remove("result_woGf.v3draw");
+   // remove("result_woGf.v3draw");
     remove("gfImage_v2.v3draw");
 
     double min,max;
@@ -1059,10 +1074,10 @@ void processImage_adaptive_auto_blocks(V3DPluginCallback2 &callback, QWidget *pa
 
     rescale_to_0_255_and_copy((float *)data1d_float,pagesz,min,max,data1d_uint8);
 
-    if (Enhancement_soma) {delete []Enhancement_soma; Enhancement_soma=0;}
     if (data1d_float) { delete []data1d_float; data1d_float=0;}
-    if(subject1d_y) {delete []subject1d_y; subject1d_y =0;}
     if(target1d_y) {delete []target1d_y; target1d_y =0;}
+    if (Enhancement_soma) {delete []Enhancement_soma; Enhancement_soma=0;}
+
 
     //set up output image
     Image4DSimple * new4DImage = new Image4DSimple();
