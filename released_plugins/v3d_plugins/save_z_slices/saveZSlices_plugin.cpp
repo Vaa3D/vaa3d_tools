@@ -13,13 +13,17 @@ Q_EXPORT_PLUGIN2(saveZSlices, saveZSlices);
 bool parseFormatString(QString t, V3DLONG & startnum, V3DLONG & increment, V3DLONG & endnum, V3DLONG sz2);
 bool save_z_slices(V3DPluginCallback2 & callback, Image4DSimple * subject,
              V3DLONG startnum, V3DLONG increment, V3DLONG endnum, QString filenameprefix);
+bool save_z_slices(V3DPluginCallback2 & callback, QString subjectFileName,
+             V3DLONG startnum, V3DLONG increment, V3DLONG endnum, QString filenameprefix);
+
 QString gen_file_name(QString prefixstr, V3DLONG k, V3DLONG maxn, QString extstr);
 
 QStringList saveZSlices::menulist() const
 {
 	return QStringList() 
-        <<tr("save a subset of Z slices to a series of files")
-		<<tr("about");
+        <<tr("save a subset of Z slices of the current opened image to a series of files")
+        <<tr("save a subset of Z slices of an image file to a series of files")
+        <<tr("about");
 }
 
 QStringList saveZSlices::funclist() const
@@ -29,9 +33,10 @@ QStringList saveZSlices::funclist() const
 		<<tr("help");
 }
 
+
 void saveZSlices::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
 {
-    if (menu_name == tr("save a subset of Z slices to a series of files"))
+    if (menu_name == tr("save a subset of Z slices of the current opened image to a series of files"))
 	{
         v3dhandle curwin = callback.currentImageWindow();
         Image4DSimple* subject = callback.getImage(curwin);
@@ -89,6 +94,46 @@ void saveZSlices::domenu(const QString &menu_name, V3DPluginCallback2 &callback,
         v3d_msg("Done!");
 
 	}
+    else if (menu_name == tr("save a subset of Z slices of an image file to a series of files"))
+    {
+        QString m_file = QFileDialog::getOpenFileName(0, tr("Open File"),
+                                                        "",
+                                                        tr("Images (*.tif *.tiff *.lsm)"));
+
+        V3DLONG startnum, increment, endnum;
+
+        bool ok;
+        QString text = QInputDialog::getText(0, tr("Enter the range and increment"),
+                                             tr("Range (startslice:increment:endslicenum)    (startslice is 1-based, endslicenum can be 'e', increment can be 1,2,...)    (example: 1:2:e)"),
+                                             QLineEdit::Normal,
+                                             "1:3:e", &ok);
+        if (ok && !text.isEmpty())
+        {
+            if (!parseFormatString(text, startnum, increment, endnum, -1))
+            {
+                v3d_msg("The format of the string is not valid. Do nothing.");
+                return;
+            }
+        }
+        else
+            return;
+
+        QFileInfo m_info( m_file );
+
+        QString dir = QFileDialog::getExistingDirectory(0, tr("Open Directory"),
+                                                     m_info.absolutePath(),
+                                                     QFileDialog::ShowDirsOnly
+                                                     | QFileDialog::DontResolveSymlinks);
+
+
+        //copy data
+        V3DLONG sz2_new = ceil(double(endnum-startnum+1)/increment);
+
+        if (!save_z_slices(callback, m_file, startnum, increment, endnum, dir+"/z_"))
+            return;
+
+        v3d_msg("Done!");
+    }
 	else
 	{
         v3d_msg(tr("A program to save selected Z slices and export a series of files (NOT an image stack). "
@@ -150,7 +195,7 @@ bool saveZSlices::dofunc(const QString & func_name, const V3DPluginArgList & inp
 bool parseFormatString(QString t, V3DLONG & startnum, V3DLONG & increment, V3DLONG & endnum, V3DLONG sz2)
 {
     if (sz2<=0)
-        return false;
+        sz2 = (V3DLONG)1024*(V3DLONG)1024; //set as one million, by PHC 20131102
 
     QStringList list = t.split(":");
     if (list.size()<2)
@@ -192,6 +237,45 @@ bool parseFormatString(QString t, V3DLONG & startnum, V3DLONG & increment, V3DLO
     return true;
 }
 
+bool save_z_slices(V3DPluginCallback2 & callback, QString subjectFileName,
+             V3DLONG startnum, V3DLONG increment, V3DLONG endnum, QString filenameprefix)
+{
+    if (subjectFileName.isEmpty())
+        return false;
+
+    V3DLONG sz0, sz1, sz2, sz3;
+    V3DLONG sz2_new = ceil(double(endnum-startnum+1)/increment);
+
+    QString curfile = filenameprefix;
+    V3DLONG k=0, c, pagesz;
+    for (V3DLONG i=startnum, k=0; i<=endnum; i+=increment, k++)
+    {
+        printf("Current slice no = %ld\n", i);
+
+        Image4DSimple *subject = callback.loadImage((char *)qPrintable(subjectFileName), i);
+        if (!subject || !subject->valid())
+        {
+            v3d_msg("Fail to load the specified input image, or get to the end slice of the valid data.", 0);
+            break;
+        }
+
+        V3DLONG sz0 = subject->getXDim();
+        V3DLONG sz1 = subject->getYDim();
+        V3DLONG sz2 = subject->getZDim();
+        V3DLONG sz3 = subject->getCDim();
+
+        curfile = gen_file_name(filenameprefix, k, sz2_new, ".v3draw");
+        callback.saveImage(subject, (char *)qPrintable(curfile));
+
+        if (subject)
+        {
+            delete subject;
+            subject=0;
+        }
+    }
+
+    return true;
+}
 
 bool save_z_slices(V3DPluginCallback2 & callback, Image4DSimple * subject,
              V3DLONG startnum, V3DLONG increment, V3DLONG endnum, QString filenameprefix)
