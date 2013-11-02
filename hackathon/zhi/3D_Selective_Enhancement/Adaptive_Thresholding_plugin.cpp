@@ -33,6 +33,7 @@ void processImage2(V3DPluginCallback2 &callback, QWidget *parent);
 bool processImage(const V3DPluginArgList & input, V3DPluginArgList & output);
 void processImage3(V3DPluginCallback2 &callback, QWidget *parent);
 void processImage4(V3DPluginCallback2 &callback, QWidget *parent);
+void processImage5(V3DPluginCallback2 &callback, QWidget *parent);
 
 
 template <class T> void AdpThresholding(T* data1d,
@@ -77,6 +78,7 @@ QStringList adpThresholding::menulist() const
         <<tr("Enhancement_adpWindow")
         <<tr("HighlightSoma")
         <<tr("BatchAPP2")
+        <<tr("Individual_score")
 		<<tr("about");
 }
 
@@ -106,8 +108,12 @@ void adpThresholding::domenu(const QString &menu_name, V3DPluginCallback2 &callb
     {
        processImage4(callback,parent);
 
+    } else if(menu_name == tr("Individual_score"))
+    {
+       processImage5(callback,parent);
+
     }
-    else
+        else
 	{
         (menu_name == tr("help"));
         v3d_msg(tr("Detect fiber. "
@@ -1059,4 +1065,79 @@ void processImage4(V3DPluginCallback2 &callback, QWidget *parent)
 
 
     return;
+}
+
+void processImage5(V3DPluginCallback2 &callback, QWidget *parent)
+{
+    v3dhandle curwin = callback.currentImageWindow();
+    if (!curwin)
+    {
+        QMessageBox::information(0, "", "You don't have any image open in the main window.");
+        return;
+    }
+
+    Image4DSimple* p4DImage = callback.getImage(curwin);
+
+    if (!p4DImage)
+    {
+        QMessageBox::information(0, "", "The image pointer is invalid. Ensure your data is valid and try again!");
+        return;
+    }
+
+    unsigned char* data1d = p4DImage->getRawData();
+    //V3DLONG totalpxls = p4DImage->getTotalBytes();
+    V3DLONG pagesz = p4DImage->getTotalUnitNumberPerChannel();
+
+    V3DLONG N = p4DImage->getXDim();
+    V3DLONG M = p4DImage->getYDim();
+    V3DLONG P = p4DImage->getZDim();
+    V3DLONG sc = p4DImage->getCDim();
+
+    int tmpx,tmpy,tmpz;
+    LandmarkList listLandmarks = callback.getLandmark(curwin);
+    LocationSimple tmpLocation(0,0,0);
+    int marknum = listLandmarks.count();
+    for (int i=0;i<marknum;i++)
+    {
+        tmpLocation = listLandmarks.at(i);
+        tmpLocation.getCoord(tmpx,tmpy,tmpz);
+        V3DLONG ix = tmpx-1;
+        V3DLONG iy = tmpy-1;
+        V3DLONG iz = tmpz-1;
+        V3DLONG offsetk = iz*M*N;
+        V3DLONG offsetj = iy*N;
+
+        for(int ws = 1; ws <15; ws++)
+        {
+
+                V3DLONG xb = ix-ws; if(xb<0) xb = 0;
+                V3DLONG xe = ix+ws; if(xe>=N-1) xe = N-1;
+                V3DLONG yb = iy-ws; if(yb<0) yb = 0;
+                V3DLONG ye = iy+ws; if(ye>=M-1) ye = M-1;
+                V3DLONG zb = iz-ws; if(zb<0) zb = 0;
+                V3DLONG ze = iz+ws; if(ze>=P-1) ze = P-1;
+
+                 // printf("window size is %d\n",Wx);
+                  //Seletive approach
+                  float  fxx = data1d[offsetk+offsetj+xe]+ data1d[offsetk+offsetj+xb]- 2*data1d[offsetk+offsetj+ix];
+                  float fyy = data1d[offsetk+(ye)*N+ix]+data1d[offsetk+(yb)*N+ix]-2*data1d[offsetk+offsetj+ix];
+                  float fzz = data1d[(ze)*M*N+offsetj+ix]+data1d[(zb)*M*N+offsetj+ix]- 2*data1d[offsetk+offsetj+ix];
+
+                  float fxy = 0.25*(data1d[offsetk+(ye)*N+xe]+data1d[offsetk+(yb)*N+xb]-data1d[offsetk+(ye)*N+xb]-data1d[offsetk+(yb)*N+xe]);
+                  float fxz = 0.25*(data1d[(ze)*M*N+offsetj+xe]+data1d[(zb)*M*N+offsetj+xb]-data1d[(ze)*M*N+offsetj+xb]-data1d[(zb)*M*N+offsetj+xe]);
+                  float fyz = 0.25*(data1d[(ze)*M*N+(ye)*N+ix]+data1d[(zb)*M*N+(yb)*N+ix]-data1d[(ze)*M*N+(yb)*N+ix]-data1d[(zb)*M*N+(ye)*N+ix]);
+
+                  Matrix3f A;
+                  A << fxx,fxy,fxz,fxy,fyy,fyz,fxz,fyz,fzz;
+                  SelfAdjointEigenSolver<Matrix3f> eigensolver(A, false);
+
+                  float a1 = eigensolver.eigenvalues()(0);
+                  float a2 = eigensolver.eigenvalues()(1);
+                  float a3 = eigensolver.eigenvalues()(2);
+                  swapthree(a1, a2, a3);
+                  float output1 =  pow((abs(a2)-abs(a3)),3)/abs(a1);
+                  printf("%f,%f,%f,%f,%d\n",a1,a2,a3,output1,ws);
+         }
+         printf("\n\n\n");
+      }
 }
