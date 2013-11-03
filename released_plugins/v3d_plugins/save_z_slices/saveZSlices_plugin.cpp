@@ -21,8 +21,8 @@ QString gen_file_name(QString prefixstr, V3DLONG k, V3DLONG maxn, QString extstr
 QStringList saveZSlices::menulist() const
 {
 	return QStringList() 
-        <<tr("save a subset of Z slices of the current opened image to a series of files")
-        <<tr("save a subset of Z slices of an image file to a series of files")
+        <<tr("save subset Z slices of the current opened image to a series of files")
+        <<tr("save Z slices of an image file to a series of files")
         <<tr("about");
 }
 
@@ -36,7 +36,7 @@ QStringList saveZSlices::funclist() const
 
 void saveZSlices::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
 {
-    if (menu_name == tr("save a subset of Z slices of the current opened image to a series of files"))
+    if (menu_name == tr("save subset Z slices of the current opened image to a series of files"))
 	{
         v3dhandle curwin = callback.currentImageWindow();
         Image4DSimple* subject = callback.getImage(curwin);
@@ -94,7 +94,7 @@ void saveZSlices::domenu(const QString &menu_name, V3DPluginCallback2 &callback,
         v3d_msg("Done!");
 
 	}
-    else if (menu_name == tr("save a subset of Z slices of an image file to a series of files"))
+    else if (menu_name == tr("save Z slices of an image file to a series of files"))
     {
         QString m_file = QFileDialog::getOpenFileName(0, tr("Open File"),
                                                         "",
