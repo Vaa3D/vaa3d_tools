@@ -29,8 +29,9 @@ void ConvertFileFormatPlugin::domenu(const QString &menu_name, V3DPluginCallback
 {
     if (menu_name == tr("about"))
 	{
-        v3d_msg(tr("Convert a few file formats, e.g. v3draw to tif and vice versa. This plugin is most useful for command line use. "
-			"Developed by Hanchuan Peng, 2012-2013"));
+        v3d_msg(tr("This plugin converts between a few file formats, e.g. v3draw to tif and vice versa. This plugin is designed for command line use ONLY right now. \n\n"
+                   "If the file format is not supported, then the file reading may fail and thus the writing of NULL data may result in a crash. \n\n"
+                   "Developed by Hanchuan Peng, 2012-2013"));
 	}
 }
 
