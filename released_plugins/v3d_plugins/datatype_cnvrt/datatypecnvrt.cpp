@@ -112,9 +112,9 @@ bool datatype_converting(V3DPluginCallback2 &callback, const V3DPluginArgList & 
     V3DLONG in_sz[4];
 
 	int sub_dt;
-    if(simple_loadimage_wrapper(callback, inimg_file, subject1d, in_sz, sub_dt))
+    if(!simple_loadimage_wrapper(callback, inimg_file, subject1d, in_sz, sub_dt, -1))
      {
-          cerr<<"load image "<<inimg_file<<" error!"<<endl;
+          cerr<<"load image ["<<inimg_file<<"] error!"<<endl;
           return false;
      }
 
@@ -152,7 +152,10 @@ bool datatype_converting(V3DPluginCallback2 &callback, const V3DPluginArgList & 
 		}
 
           // save image
-          simple_saveimage_wrapper(callback, outimg_file, (unsigned char *)data1d, in_sz, 1);
+        v3d_msg("****** \n Finished conversion operation in memory. Now try to save file. \n****** \n\n", 0);
+          if(!simple_saveimage_wrapper(callback, outimg_file, (unsigned char *)data1d, in_sz, 1))
+              v3d_msg("Fail to save the output image.\n",0);
+
           if (data1d) {delete []data1d; data1d=0;}
 	}
 	else if(tar_dt == 2) //V3D_UINT16
@@ -184,7 +187,9 @@ bool datatype_converting(V3DPluginCallback2 &callback, const V3DPluginArgList & 
 		}
 
           // save image
-          simple_saveimage_wrapper(callback, outimg_file, (unsigned char *)data1d, in_sz, 2);
+        v3d_msg("****** \n Finished conversion operation in memory. Now try to save file. \n****** \n\n", 0);
+          if(!simple_saveimage_wrapper(callback, outimg_file, (unsigned char *)data1d, in_sz, 2))
+              v3d_msg("Fail to save the output image.\n",0);
           if (data1d) {delete []data1d; data1d=0;}
 	}
 	else if(tar_dt == 4) //V3D_FLOAT32
@@ -216,8 +221,11 @@ bool datatype_converting(V3DPluginCallback2 &callback, const V3DPluginArgList & 
 		}
 
           // save image
-          simple_saveimage_wrapper(callback, outimg_file, (unsigned char *)data1d, in_sz, 4);
-          if (data1d) {delete []data1d; data1d=0;}
+        v3d_msg("****** \n Finished conversion operation in memory. Now try to save file. \n****** \n\n", 0);
+        if(simple_saveimage_wrapper(callback, outimg_file, (unsigned char *)data1d, in_sz, 4))
+            v3d_msg("Fail to save the output image.\n",0);
+
+        if (data1d) {delete []data1d; data1d=0;}
 	}
 	else
 	{
@@ -230,14 +238,13 @@ bool datatype_converting(V3DPluginCallback2 &callback, const V3DPluginArgList & 
      return true;
 }
 
-
 // func converting
 template <class Tpre, class Tpost>
 void converting(void *pre1d, Tpost *pPost, V3DLONG imsz, ImagePixelType v3d_dt)
 {
      if (!pre1d ||!pPost || imsz<=0 )
      {
-          v3d_msg("Invalid parameters to gaussian_filter().", 0);
+          v3d_msg("Invalid parameters to converting().", 0);
           return;
      }
 
@@ -257,22 +264,17 @@ void converting(void *pre1d, Tpost *pPost, V3DLONG imsz, ImagePixelType v3d_dt)
 		if(max_v>0)
 		{
 			for(V3DLONG i=0; i<imsz; i++)
-			{
 				pPost[i] = (Tpost) 255*(double)(pPre[i] - min_v)/max_v;
-			}
 		}
 		else
 		{
 			for(V3DLONG i=0; i<imsz; i++)
-			{
 				pPost[i] = (Tpost) pPre[i];
-			}
 		}
-
 	}
 	else if(v3d_dt == V3D_UINT16)
 	{
-		Tpre max_v=0, min_v = 255;
+        Tpre max_v=0, min_v = 65535;
 
 		for(V3DLONG i=0; i<imsz; i++)
 		{
@@ -284,26 +286,19 @@ void converting(void *pre1d, Tpost *pPost, V3DLONG imsz, ImagePixelType v3d_dt)
 		if(max_v>0)
 		{
 			for(V3DLONG i=0; i<imsz; i++)
-			{
 				pPost[i] = (Tpost) 65535*(double)(pPre[i] - min_v)/max_v;
-			}
 		}
 		else
 		{
 			for(V3DLONG i=0; i<imsz; i++)
-			{
 				pPost[i] = (Tpost) pPre[i];
-			}
 		}
 
 	}
 	else if(v3d_dt == V3D_FLOAT32)
 	{
 		for(V3DLONG i=0; i<imsz; i++)
-		{
 			pPost[i] = (Tpost) pPre[i];
-		}
-
 	}
 
 }
@@ -316,7 +311,7 @@ int datatype_converting(V3DPluginCallback2 &callback, QWidget *parent)
 
 	if(win_list.size()<1)
 	{
-		QMessageBox::information(0, title, QObject::tr("No image is open."));
+        v3d_msg("No image is open.");
 		return -1;
 	}
 

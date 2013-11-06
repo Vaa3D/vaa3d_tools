@@ -3,6 +3,7 @@
  */
 
 // Upgraded to V3DPluginInterface2_1 by Jianlong Zhou, 2012-04-05
+//last change 2013-11-05 by Hanchuan Peng.
 
 #ifndef __DATATYPECNVRT_H__
 #define __DATATYPECNVRT_H__
@@ -21,7 +22,7 @@ class DTCPlugin : public QObject, public V3DPluginInterface2_1
     Q_INTERFACES(V3DPluginInterface2_1);
 
 public:
-    float getPluginVersion() const {return 1.2f;}
+    float getPluginVersion() const {return 1.3f;}
 
 	QStringList menulist() const;
 	void domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent);
