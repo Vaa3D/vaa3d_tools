@@ -112,7 +112,7 @@ bool datatype_converting(V3DPluginCallback2 &callback, const V3DPluginArgList & 
     V3DLONG in_sz[4];
 
 	int sub_dt;
-    if(!simple_loadimage_wrapper(callback, inimg_file, subject1d, in_sz, sub_dt, -1))
+    if(!simple_loadimage_wrapper(callback, inimg_file, subject1d, in_sz, sub_dt))
      {
           cerr<<"load image ["<<inimg_file<<"] error!"<<endl;
           return false;

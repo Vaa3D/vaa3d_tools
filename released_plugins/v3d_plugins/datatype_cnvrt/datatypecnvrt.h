@@ -22,7 +22,7 @@ class DTCPlugin : public QObject, public V3DPluginInterface2_1
     Q_INTERFACES(V3DPluginInterface2_1);
 
 public:
-    float getPluginVersion() const {return 1.3f;}
+    float getPluginVersion() const {return 1.31f;}
 
 	QStringList menulist() const;
 	void domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent);
