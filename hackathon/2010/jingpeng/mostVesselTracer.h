@@ -13,7 +13,7 @@
 
 
 #include "v3d_interface.h"
-#include "../../../vaa3d/v3d_main/v3d/v3d_core.h"
+#include "v3d_core.h"
 #include "basic_4dimage.h"
 #include "v3d_message.h"
 

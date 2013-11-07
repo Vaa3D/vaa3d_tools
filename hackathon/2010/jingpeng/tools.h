@@ -1,7 +1,7 @@
 #ifndef TOOLS_H
 #define TOOLS_H
 
-#include "../../../vaa3d/v3d_main/neuron_editing/v_neuronswc.h"
+#include "v_neuronswc.h"
 #include <math.h>
 #include <vector>
 #include <string>

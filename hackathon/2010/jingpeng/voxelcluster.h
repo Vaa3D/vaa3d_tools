@@ -8,7 +8,7 @@
 #include <QVector>
 
 #include "basic_landmark.h"
-#include "../../../vaa3d/v3d_main/neuron_editing/v_neuronswc.h"
+#include "v_neuronswc.h"
 
 class Voxel
 {

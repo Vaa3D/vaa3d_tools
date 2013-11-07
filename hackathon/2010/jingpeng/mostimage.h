@@ -3,10 +3,10 @@
 
 #include "basic_4dimage.h"
 #include "basic_landmark.h"
-#include "../../../vaa3d/v3d_main/v3d/v3d_core.h"
+#include "v3d_core.h"
 #include "v3d_interface.h"
-#include "../../../vaa3d/v3d_main/neuron_editing/v_neuronswc.h"
-#include "../../../vaa3d/v3d_main/neuron_editing/neuron_format_converter.h"
+#include "v_neuronswc.h"
+#include "neuron_format_converter.h"
 #include <vector>
 #include "voxelcluster.h"
 #include "mostVesselTracer.h"

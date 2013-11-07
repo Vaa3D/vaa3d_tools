@@ -1,7 +1,7 @@
 /****************************************************************************
 ** Meta object code from reading C++ file 'mostVesselTracer.h'
 **
-** Created: Fri Sep 9 10:19:11 2011
+** Created: Thu Nov 7 12:20:48 2013
 **      by: The Qt Meta Object Compiler version 62 (Qt 4.7.3)
 **
 ** WARNING! All changes made in this file will be lost!
@@ -68,6 +68,65 @@ int mostVesselTracerPlugin::qt_metacall(QMetaObject::Call _c, int _id, void **_a
     _id = QObject::qt_metacall(_c, _id, _a);
     if (_id < 0)
         return _id;
+    return _id;
+}
+static const uint qt_meta_data_AdaTDialog[] = {
+
+ // content:
+       5,       // revision
+       0,       // classname
+       0,    0, // classinfo
+       1,   14, // methods
+       0,    0, // properties
+       0,    0, // enums/sets
+       0,    0, // constructors
+       0,       // flags
+       0,       // signalCount
+
+ // slots: signature, parameters, type, tag, flags
+      12,   11,   11,   11, 0x0a,
+
+       0        // eod
+};
+
+static const char qt_meta_stringdata_AdaTDialog[] = {
+    "AdaTDialog\0\0update()\0"
+};
+
+const QMetaObject AdaTDialog::staticMetaObject = {
+    { &QDialog::staticMetaObject, qt_meta_stringdata_AdaTDialog,
+      qt_meta_data_AdaTDialog, 0 }
+};
+
+#ifdef Q_NO_DATA_RELOCATION
+const QMetaObject &AdaTDialog::getStaticMetaObject() { return staticMetaObject; }
+#endif //Q_NO_DATA_RELOCATION
+
+const QMetaObject *AdaTDialog::metaObject() const
+{
+    return QObject::d_ptr->metaObject ? QObject::d_ptr->metaObject : &staticMetaObject;
+}
+
+void *AdaTDialog::qt_metacast(const char *_clname)
+{
+    if (!_clname) return 0;
+    if (!strcmp(_clname, qt_meta_stringdata_AdaTDialog))
+        return static_cast<void*>(const_cast< AdaTDialog*>(this));
+    return QDialog::qt_metacast(_clname);
+}
+
+int AdaTDialog::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
+{
+    _id = QDialog::qt_metacall(_c, _id, _a);
+    if (_id < 0)
+        return _id;
+    if (_c == QMetaObject::InvokeMetaMethod) {
+        switch (_id) {
+        case 0: update(); break;
+        default: ;
+        }
+        _id -= 1;
+    }
     return _id;
 }
 QT_END_MOC_NAMESPACE
