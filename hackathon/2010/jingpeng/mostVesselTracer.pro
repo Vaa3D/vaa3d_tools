@@ -32,7 +32,7 @@ SOURCES      += $$V3DMAINPATH/neuron_editing/v_neuronswc.cpp
 
 TARGET        = $$qtLibraryTarget(mostVesselTracer)
 
-DESTDIR       = $$V3DMAINPATH/../bin/v3d/Linux_64/plugins/most222/
+DESTDIR       = $$V3DMAINPATH/../bin/plugins/most222/
 
 
 
