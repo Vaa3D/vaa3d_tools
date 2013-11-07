@@ -99,7 +99,7 @@ bool processImage(V3DPluginCallback2 &callback, const V3DPluginArgList & input, 
     V3DLONG cb, ce, k;
     
 	int datatype;
-    if(simple_loadimage_wrapper(callback, inimg_file, data1d, in_sz, datatype))
+    if(!simple_loadimage_wrapper(callback, inimg_file, data1d, in_sz, datatype))
     {
         cerr<<"load image "<<inimg_file<<" error!"<<endl; 
         return false;
