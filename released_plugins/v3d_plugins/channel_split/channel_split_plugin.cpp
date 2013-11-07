@@ -122,7 +122,9 @@ bool processImage(V3DPluginCallback2 &callback, const V3DPluginArgList & input, 
             case 1: b_res = extract_a_channel(data1d, in_sz, k, outimg); break;
             case 2: b_res = extract_a_channel((unsigned short int *)data1d, in_sz, k, outimg); break;
             case 4: b_res = extract_a_channel((float *)data1d, in_sz, k, outimg); break;
-            default: b_res = false; v3d_msg("Right now this plugin supports only UINT8/UINT16/FLOAT32 data. Do nothing."); goto Label_exit;
+            default:
+            b_res = false;
+            v3d_msg("Right now this plugin supports only UINT8/UINT16/FLOAT32 data. Do nothing."); goto Label_exit;
         }
 
         // save image
@@ -130,7 +132,9 @@ bool processImage(V3DPluginCallback2 &callback, const V3DPluginArgList & input, 
         if (cb==ce)
             simple_saveimage_wrapper(callback, outimg_file, (unsigned char *)outimg, in_sz, datatype);
         else
-            simple_saveimage_wrapper(callback, qPrintable(QString("").setNum(k).prepend("_C").prepend(outimg_file).append(".v3draw")), (unsigned char *)outimg, in_sz, datatype);
+            simple_saveimage_wrapper(callback,
+                                     qPrintable(QString("").setNum(k).prepend("_C").prepend(outimg_file).append(".v3draw")),
+                                     (unsigned char *)outimg, in_sz, datatype);
         
         //
         in_sz[3] = oldc; //this sentence is important
@@ -140,7 +144,7 @@ bool processImage(V3DPluginCallback2 &callback, const V3DPluginArgList & input, 
 
 Label_exit:
      if (data1d) {delete []data1d; data1d=0;}
-     if (outimg) {delete []outimg; outimg=0;}
+     //should never delete outimg here, as it is just a wrapper. by PHC 20131105
      return b_res;
 }
 
