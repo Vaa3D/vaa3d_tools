@@ -280,9 +280,11 @@ void processImage(V3DPluginCallback2 &callback, QWidget *parent)
                         }
                     }
                 }
-
-                blockvalue = blockvalue +  (maxfl/minfl)*log((double)maxfl/minfl);
-                blocknum++;
+                if(maxfl>1)
+                {
+                    blockvalue = blockvalue +  (maxfl/minfl)*log((double)maxfl/minfl);
+                    blocknum++;
+                }
                 // printf("\nEME is %.4f %d %d",blockvalue, maxfl,minfl);
             }
         }

@@ -265,7 +265,7 @@ template <class T> void app2_block(V3DPluginCallback2 &callback,MyMarker root_en
                 }
              }
 
-
+             printf("");
              if(ifs)
              {
                vector<MyMarker*> block_out_swc = readSWC_file(blockswc_file.toStdString());
