@@ -24,11 +24,11 @@
 using namespace std;
 Q_EXPORT_PLUGIN2(medianfilter, MedianFilterPlugin);
 
-void processImage1(V3DPluginCallback2 &callback, QWidget *parent);
-bool processImage1(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPluginArgList & output);
+void median_fixed_domenu(V3DPluginCallback2 &callback, QWidget *parent);
+bool median_fixed_dofunc(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPluginArgList & output);
 
-void processImage2(V3DPluginCallback2 &callback, QWidget *parent);
-bool processImage2(const V3DPluginArgList & input, V3DPluginArgList & output,V3DPluginCallback2 &callback);
+void median_adaptive_domenu(V3DPluginCallback2 &callback, QWidget *parent);
+bool median_adaptive_dofunc(const V3DPluginArgList & input, V3DPluginArgList & output,V3DPluginCallback2 &callback);
 
 template <class T> void median_filter(T* data1d,
                                       V3DLONG *in_sz,
@@ -59,11 +59,11 @@ void MedianFilterPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &ca
 {
     if (menu_name == tr("Fixed Window"))
     {
-        processImage1(callback,parent);
+        median_fixed_domenu(callback,parent);
     }
     else if (menu_name == tr("Adaptive Window"))
     {
-        processImage2(callback,parent);
+        median_adaptive_domenu(callback,parent);
     }
 }
 
@@ -82,11 +82,11 @@ bool MedianFilterPlugin::dofunc(const QString & func_name, const V3DPluginArgLis
 
     if (func_name == tr("fixed_window"))
     {
-        return processImage1(callback, input, output);
+        return median_fixed_dofunc(callback, input, output);
     }
     else if(func_name == tr("adaptive_window"))
     {
-        return processImage2(input, output,callback);
+        return median_adaptive_dofunc(input, output,callback);
     }
     else if (func_name == tr("help"))
     {
@@ -98,7 +98,7 @@ bool MedianFilterPlugin::dofunc(const QString & func_name, const V3DPluginArgLis
         cout<<"ch          the input channel value, default 1 and start from 1, default 1"<<endl;
         cout<<endl;
         cout<<endl;
-        cout<<"Usage : v3d -x Medianfilter -f adaptive_window -i <inimg_file> -o <outimg_file> -p <ch> <th_idx> <th>"<<endl;
+        cout<<"Usage : v3d -x medianfilter -f adaptive_window -i <inimg_file> -o <outimg_file> -p <ch> <th_idx> <th>"<<endl;
         cout<<endl;
         cout<<"ch	   the input channel value, default 1 and start from 1, default 1"<<endl;
 	cout<<"th_idx 	   threshold method index, 0: mean, 1: usr defined, default 0"<<endl;
@@ -109,7 +109,7 @@ bool MedianFilterPlugin::dofunc(const QString & func_name, const V3DPluginArgLis
     }
 }
 
-bool processImage1(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPluginArgList & output)
+bool median_fixed_dofunc(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPluginArgList & output)
 {
     cout<<"Welcome to Median filter with fixed window"<<endl;
     if (output.size() != 1) return false;
@@ -174,7 +174,7 @@ bool processImage1(V3DPluginCallback2 &callback, const V3DPluginArgList & input,
 }
 
 
-void processImage1(V3DPluginCallback2 &callback, QWidget *parent)
+void median_fixed_domenu(V3DPluginCallback2 &callback, QWidget *parent)
 {
     v3dhandle curwin = callback.currentImageWindow();
     if (!curwin)
@@ -368,7 +368,7 @@ printf("\n");
 
 }
 
-void processImage2(V3DPluginCallback2 &callback, QWidget *parent)
+void median_adaptive_domenu(V3DPluginCallback2 &callback, QWidget *parent)
 {
     v3dhandle curwin = callback.currentImageWindow();
     if (!curwin)
@@ -500,7 +500,7 @@ void processImage2(V3DPluginCallback2 &callback, QWidget *parent)
     return;
 }
 
-bool processImage2(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 &callback)
+bool median_adaptive_dofunc(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 &callback)
 {
     cout<<"Welcome to Median filter with adaptive window"<<endl;
     if (output.size() != 1) return false;
