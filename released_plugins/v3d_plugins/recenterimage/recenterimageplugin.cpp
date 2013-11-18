@@ -14,16 +14,16 @@
 #include <iostream>
 
 #include "basic_surf_objs.h"
-#include "stackutil.h"
+//#include "stackutil.h"
 #include "volimg_proc.h"
 #include "img_definition.h"
 #include "basic_landmark.h"
 
-#include "mg_utilities.h"
-#include "mg_image_lib.h"
+//#include "mg_utilities.h"
+//#include "mg_image_lib.h"
 
 #include "basic_landmark.h"
-#include "basic_4dimage.h"
+//#include "basic_4dimage.h"
 
 #include "recenterimageplugin.h"
 
@@ -172,10 +172,10 @@ bool ReCenterImagePlugin::dofunc(const QString & func_name, const V3DPluginArgLi
 
     //
     int datatype=0;
-    V3DLONG *sz_input = 0;
+    V3DLONG sz_input[4];
     unsigned char* input1d = 0;
 
-    if (loadImage(const_cast<char *>(infile), input1d, sz_input, datatype)!=true)
+    if (simple_loadimage_wrapper(v3d, const_cast<char *>(infile), input1d, sz_input, datatype)!=true)
     {
         printf("Error happens in reading the subject file [%s]. Exit. \n", infile);
         return false;
@@ -193,12 +193,11 @@ bool ReCenterImagePlugin::dofunc(const QString & func_name, const V3DPluginArgLi
     {
         unsigned char *pRecenteredImage = NULL;
         recentering<V3DLONG, unsigned char>( pRecenteredImage, (unsigned char*)input1d, ndimx, ndimy, ndimz, sx, sy, sz, sc);
-
         //output
         if(b_saveimage)
         {
             //save
-            if (saveImage(outputImageName.toStdString().c_str(), (const unsigned char *)pRecenteredImage, sz_output, 1)!=true)
+            if (simple_saveimage_wrapper(v3d, outputImageName.toStdString().c_str(), ( unsigned char *)pRecenteredImage, sz_output, 1)!=true)
             {
                 printf("Error happens in file writing. Exit. \n");
                 return false;
@@ -232,7 +231,7 @@ bool ReCenterImagePlugin::dofunc(const QString & func_name, const V3DPluginArgLi
         if(b_saveimage)
         {
             //save
-            if (saveImage(outputImageName.toStdString().c_str(), (const unsigned char *)pRecenteredImage, sz_output, 2)!=true)
+            if (simple_saveimage_wrapper(v3d, outputImageName.toStdString().c_str(), ( unsigned char *)pRecenteredImage, sz_output, 2)!=true)
             {
                 printf("Error happens in file writing. Exit. \n");
                 return false;
@@ -266,7 +265,7 @@ bool ReCenterImagePlugin::dofunc(const QString & func_name, const V3DPluginArgLi
         if(b_saveimage)
         {
             //save
-            if (saveImage(outputImageName.toStdString().c_str(), (const unsigned char *)pRecenteredImage, sz_output, 4)!=true)
+            if (simple_saveimage_wrapper(v3d, outputImageName.toStdString().c_str(), ( unsigned char *)pRecenteredImage, sz_output, 4)!=true)
             {
                 printf("Error happens in file writing. Exit. \n");
                 return false;
