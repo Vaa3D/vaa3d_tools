@@ -25,7 +25,7 @@ using namespace std;
 Q_EXPORT_PLUGIN2(medianfilter, MedianFilterPlugin);
 
 void processImage1(V3DPluginCallback2 &callback, QWidget *parent);
-bool processImage1(const V3DPluginArgList & input, V3DPluginArgList & output);
+bool processImage1(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPluginArgList & output);
 
 void processImage2(V3DPluginCallback2 &callback, QWidget *parent);
 bool processImage2(const V3DPluginArgList & input, V3DPluginArgList & output,V3DPluginCallback2 &callback);
@@ -82,7 +82,7 @@ bool MedianFilterPlugin::dofunc(const QString & func_name, const V3DPluginArgLis
 
     if (func_name == tr("fixed_window"))
     {
-        return processImage1(input, output);
+        return processImage1(callback, input, output);
     }
     else if(func_name == tr("adaptive_window"))
     {
@@ -109,7 +109,7 @@ bool MedianFilterPlugin::dofunc(const QString & func_name, const V3DPluginArgLis
     }
 }
 
-bool processImage1(const V3DPluginArgList & input, V3DPluginArgList & output)
+bool processImage1(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPluginArgList & output)
 {
     cout<<"Welcome to Median filter with fixed window"<<endl;
     if (output.size() != 1) return false;
@@ -136,12 +136,12 @@ bool processImage1(const V3DPluginArgList & input, V3DPluginArgList & output)
     cout<<"outimg_file = "<<outimg_file<<endl;
 
     unsigned char * data1d = 0,  * outimg1d = 0;
-    V3DLONG * in_sz = 0;
+    V3DLONG in_sz[4];
 
     unsigned int c = ch;//-1;
 
     int datatype;
-    if(!loadImage(inimg_file, data1d, in_sz, datatype))
+    if(!simple_loadimage_wrapper(callback, inimg_file, data1d, in_sz, datatype))
     {
         cerr<<"load image "<<inimg_file<<" error!"<<endl;
         return false;
@@ -158,17 +158,17 @@ bool processImage1(const V3DPluginArgList & input, V3DPluginArgList & output)
     default:
         v3d_msg("Invalid datatype.");
         if (data1d) {delete []data1d; data1d=0;}
-        if (in_sz) {delete []in_sz; in_sz=0;}
+        //if (in_sz) {delete []in_sz; in_sz=0;}
         return false;
     }
 
     // save image
     in_sz[3]=1;
-    saveImage(outimg_file, (unsigned char *)outimg, in_sz, datatype);
+    simple_saveimage_wrapper(callback, outimg_file, (unsigned char *)outimg, in_sz, datatype);
 
     if(outimg) {delete []outimg; outimg =0;}
     if (data1d) {delete []data1d; data1d=0;}
-    if (in_sz) {delete []in_sz; in_sz=0;}
+    //if (in_sz) {delete []in_sz; in_sz=0;}
 
     return true;
 }
@@ -444,7 +444,7 @@ void processImage2(V3DPluginCallback2 &callback, QWidget *parent)
     in_sz[0] = N; in_sz[1] = M; in_sz[2] = P; in_sz[3] = sc;
 
     ImagePixelType pixeltype = p4DImage->getDatatype();
-    saveImage("temp.v3draw", (unsigned char *)data1d, in_sz, pixeltype);
+    simple_saveimage_wrapper(callback, "temp.v3draw", (unsigned char *)data1d, in_sz, pixeltype);
     //invoke gsdt function
     V3DPluginArgItem arg;
     V3DPluginArgList input;
@@ -469,10 +469,14 @@ void processImage2(V3DPluginCallback2 &callback, QWidget *parent)
 
     unsigned char * gsdtdata1d = 0;
     int datatype;
-    V3DLONG * in_zz = 0;
+    V3DLONG in_zz[4];
 
     char * outimg_file = ((vector<char*> *)(output.at(0).p))->at(0);
-    loadImage(outimg_file, gsdtdata1d, in_zz, datatype,0);
+    if(!simple_loadimage_wrapper(callback, outimg_file, gsdtdata1d, in_zz, datatype))
+    {
+        v3d_msg("Fail to load image");
+        return;
+    }
     remove("gsdtImage.v3draw");
     remove("temp.v3draw");
 
@@ -496,7 +500,7 @@ void processImage2(V3DPluginCallback2 &callback, QWidget *parent)
     return;
 }
 
-bool processImage2(const V3DPluginArgList & input, V3DPluginArgList & output,V3DPluginCallback2 &callback)
+bool processImage2(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 &callback)
 {
     cout<<"Welcome to Median filter with adaptive window"<<endl;
     if (output.size() != 1) return false;
@@ -522,12 +526,12 @@ bool processImage2(const V3DPluginArgList & input, V3DPluginArgList & output,V3D
     cout<<"outimg_file = "<<outimg_file<<endl;
 
     unsigned char * data1d = 0,  * outimg1d = 0;
-    V3DLONG * in_sz = 0;
+    V3DLONG in_sz[4];
 
     unsigned int c = ch;//-1;
 
     int datatype;
-    if(!loadImage(inimg_file, data1d, in_sz, datatype))
+    if(!simple_loadimage_wrapper(callback, inimg_file, data1d, in_sz, datatype))
     {
         cerr<<"load image "<<inimg_file<<" error!"<<endl;
         return false;
@@ -584,10 +588,15 @@ bool processImage2(const V3DPluginArgList & input, V3DPluginArgList & output,V3D
 
     unsigned char * gsdtdata1d = 0;
     int datatype2;
-    V3DLONG * in_zz = 0;
+    V3DLONG in_zz[4];
 
     char * outimg_file2 = ((vector<char*> *)(output2.at(0).p))->at(0);
-    loadImage(outimg_file2, gsdtdata1d, in_zz, datatype2,1);
+    if (!simple_loadimage_wrapper(callback, outimg_file2, gsdtdata1d, in_zz, datatype2))
+    {
+        v3d_msg("Fail to load image");
+        return false;
+    }
+
     remove("gsdtImage.tiff");
     //input
     void* outimg = 0;
@@ -600,17 +609,17 @@ bool processImage2(const V3DPluginArgList & input, V3DPluginArgList & output,V3D
     default:
         v3d_msg("Invalid datatype.");
         if (data1d) {delete []data1d; data1d=0;}
-        if (in_sz) {delete []in_sz; in_sz=0;}
+        //if (in_sz) {delete []in_sz; in_sz=0;}
         return false;
     }
 
     // save image
     in_sz[3]=1;
-    saveImage(outimg_file, (unsigned char *)outimg, in_sz, datatype);
+    simple_saveimage_wrapper(callback, outimg_file, (unsigned char *)outimg, in_sz, datatype);
 
     if(outimg) {delete []outimg; outimg =0;}
     if (data1d) {delete []data1d; data1d=0;}
-    if (in_sz) {delete []in_sz; in_sz=0;}
+    //if (in_sz) {delete []in_sz; in_sz=0;}
 
     return true;
 }
