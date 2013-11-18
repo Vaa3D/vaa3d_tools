@@ -11,7 +11,7 @@
 #include <v3d_interface.h>
 
 int compute(V3DPluginCallback2 &callback, QWidget *parent);
-bool compute(const V3DPluginArgList & input, V3DPluginArgList & output);
+bool compute(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPluginArgList & output);
 
 #endif
 

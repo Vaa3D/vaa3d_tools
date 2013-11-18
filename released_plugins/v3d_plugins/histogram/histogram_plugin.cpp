@@ -43,7 +43,7 @@ bool HistogramPlugin::dofunc(const QString & func_name, const V3DPluginArgList &
 {
 	if (func_name == tr("histogram"))
 	{
-		return compute(input, output);
+        return compute(callback, input, output);
 	}
 	else
 	{
