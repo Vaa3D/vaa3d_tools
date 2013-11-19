@@ -109,10 +109,10 @@ bool extractZSlices::dofunc(const QString & func_name, const V3DPluginArgList & 
             return false;
         }
 
-        Image4DSimple inimg, outimg;
+        Image4DSimple *inimg=0, outimg;
 
-        inimg.loadImage(infiles.at(0));
-        if (!inimg.valid())
+        inimg = callback.loadImage(infiles.at(0));
+        if (!inimg || !inimg->valid())
         {
             v3d_msg("Fail to load the specified input image.", 0);
             return false;
@@ -122,7 +122,7 @@ bool extractZSlices::dofunc(const QString & func_name, const V3DPluginArgList & 
         QString paratext = inparas.at(0);
         if (!paratext.isEmpty())
         {
-            if (!parseFormatString(paratext, startnum, increment, endnum, inimg.getZDim()))
+            if (!parseFormatString(paratext, startnum, increment, endnum, inimg->getZDim()))
             {
                 v3d_msg("The format of the string is not valid. Do nothing.");
                 return false;
@@ -131,12 +131,14 @@ bool extractZSlices::dofunc(const QString & func_name, const V3DPluginArgList & 
         else
             return false;
 
-        if (!extract_z_slices(&inimg, outimg, startnum, increment, endnum))
+        if (!extract_z_slices(inimg, outimg, startnum, increment, endnum))
             return false;
 
-        if (!outimg.saveImage(outfiles.at(0)))
+        if (!callback.saveImage(&outimg, outfiles.at(0)))
             return false;
-	}
+
+        if (inimg) {delete inimg; inimg=0;}
+    }
 	else if (func_name == tr("help"))
 	{
         v3d_msg("This plugin extracts a subset of slices and export to a stack (and save to a file)", 0);
