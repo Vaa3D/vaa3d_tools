@@ -109,8 +109,6 @@ bool MIPZSlices::dofunc(const QString & func_name, const V3DPluginArgList & inpu
             return false;
         }
 
-
-
         Image4DSimple *inimg = callback.loadImage(infiles.at(0));
         Image4DSimple outimg;
 
@@ -138,6 +136,8 @@ bool MIPZSlices::dofunc(const QString & func_name, const V3DPluginArgList & inpu
 
         if (!callback.saveImage(&outimg,outfiles.at(0)))
             return false;
+
+        if (inimg) {delete inimg; inimg=0;}
 	}
 	else if (func_name == tr("help"))
 	{
