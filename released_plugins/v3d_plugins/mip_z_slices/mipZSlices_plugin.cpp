@@ -109,10 +109,12 @@ bool MIPZSlices::dofunc(const QString & func_name, const V3DPluginArgList & inpu
             return false;
         }
 
-        Image4DSimple inimg, outimg;
 
-        inimg.loadImage(infiles.at(0));
-        if (!inimg.valid())
+
+        Image4DSimple *inimg = callback.loadImage(infiles.at(0));
+        Image4DSimple outimg;
+
+        if(!inimg || !inimg->valid())
         {
             v3d_msg("Fail to load the specified input image.", 0);
             return false;
@@ -122,7 +124,7 @@ bool MIPZSlices::dofunc(const QString & func_name, const V3DPluginArgList & inpu
         QString paratext = inparas.at(0);
         if (!paratext.isEmpty())
         {
-            if (!parseFormatString(paratext, startnum, increment, endnum, inimg.getZDim()))
+            if (!parseFormatString(paratext, startnum, increment, endnum, inimg->getZDim()))
             {
                 v3d_msg("The format of the string is not valid. Do nothing.");
                 return false;
@@ -131,10 +133,10 @@ bool MIPZSlices::dofunc(const QString & func_name, const V3DPluginArgList & inpu
         else
             return false;
 
-        if (!mip_z_slices(&inimg, outimg, startnum, increment, endnum))
+        if (!mip_z_slices(inimg, outimg, startnum, increment, endnum))
             return false;
 
-        if (!outimg.saveImage(outfiles.at(0)))
+        if (!callback.saveImage(&outimg,outfiles.at(0)))
             return false;
 	}
 	else if (func_name == tr("help"))
