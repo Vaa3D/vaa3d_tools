@@ -15,7 +15,7 @@ using namespace std;
 Q_EXPORT_PLUGIN2(littlequickwarp, LittleQuickWarpPlugin);
 
 void printHelp();
-bool littlequickwarp(QString qs_filename_img_sub,QString qs_filename_marker_sub,QString qs_filename_marker_tar,
+bool littlequickwarp(V3DPluginCallback2 & callback,  QString qs_filename_img_sub,QString qs_filename_marker_sub,QString qs_filename_marker_tar,
 		int i_interpmethod_df,int i_interpmethod_img,bool b_padding,bool b_resizeimg,V3DLONG sz_resize_x,V3DLONG sz_resize_y,V3DLONG sz_resize_z,
 		QString qs_filename_img_warp);
 
@@ -50,7 +50,7 @@ void LittleQuickWarpPlugin::domenu(const QString &menu_name, V3DPluginCallback2 
     	V3DLONG sz_resize_y=DLG_littlequickwarp.lineEdit_Ydim->text().toLong();
     	V3DLONG sz_resize_z=DLG_littlequickwarp.lineEdit_Zdim->text().toLong();
     	//do warping
-    	if(!littlequickwarp(qs_filename_img_sub,qs_filename_marker_sub,qs_filename_marker_tar,
+        if(!littlequickwarp(callback, qs_filename_img_sub,qs_filename_marker_sub,qs_filename_marker_tar,
     			i_interpmethod_df,i_interpmethod_img,b_padding,b_resizeimg,sz_resize_x,sz_resize_y,sz_resize_z,
     			qs_filename_img_warp))
     	{
@@ -91,7 +91,7 @@ bool LittleQuickWarpPlugin::dofunc(const QString & func_name, const V3DPluginArg
 		V3DLONG sz_resize_z=atoi(paras.at(6));
 
 	   	//do warping
-		if(!littlequickwarp(qs_filename_img_sub,qs_filename_marker_sub,qs_filename_marker_tar,
+        if(!littlequickwarp(callback, qs_filename_img_sub,qs_filename_marker_sub,qs_filename_marker_tar,
 				i_interpmethod_df,i_interpmethod_img,b_padding,b_resizeimg,sz_resize_x,sz_resize_y,sz_resize_z,
 				qs_filename_img_warp))
 		{
@@ -124,7 +124,7 @@ void printHelp()
     return;
 }
 
-bool littlequickwarp(QString qs_filename_sub,QString qs_filename_marker_sub,QString qs_filename_marker_tar,
+bool littlequickwarp(V3DPluginCallback2 & callback,  QString qs_filename_sub,QString qs_filename_marker_sub,QString qs_filename_marker_tar,
 		int i_interpmethod_df,int i_interpmethod_img,bool b_padding_img,bool b_resizeimg,V3DLONG sz_resize_x,V3DLONG sz_resize_y,V3DLONG sz_resize_z,
 		QString qs_filename_warp)
 {
@@ -174,11 +174,11 @@ bool littlequickwarp(QString qs_filename_sub,QString qs_filename_marker_sub,QStr
 	//------------------------------------------------------------------------------------------------------------------------------------
 	printf("2. Read subject image. \n");
 	unsigned char *p_img_sub=0;
-	V3DLONG *sz_img_sub=0;
+    V3DLONG sz_img_sub[4];
 	int datatype_sub=0;
-	if(!loadImage((char *)qPrintable(qs_filename_sub),p_img_sub,sz_img_sub,datatype_sub))
+    if(!simple_loadimage_wrapper(callback, (char *)qPrintable(qs_filename_sub),p_img_sub,sz_img_sub,datatype_sub))
 	{
-		printf("ERROR: loadImage() return false in loading [%s].\n", qPrintable(qs_filename_sub));
+        printf("ERROR: simple_loadimage_wrapper() return false in loading [%s].\n", qPrintable(qs_filename_sub));
 		return false;
 	}
 	printf("\t>>read image file [%s] complete.\n",qPrintable(qs_filename_sub));
@@ -189,7 +189,7 @@ bool littlequickwarp(QString qs_filename_sub,QString qs_filename_marker_sub,QStr
 	{
     	printf("ERROR: Input image datatype is not valid, return.\n");
     	if(p_img_sub) 			{delete []p_img_sub;		p_img_sub=0;}
-    	if(sz_img_sub) 			{delete []sz_img_sub;		sz_img_sub=0;}
+        //if(sz_img_sub) 			{delete []sz_img_sub;		sz_img_sub=0;}
     	return false;
 	}
 
@@ -226,7 +226,7 @@ bool littlequickwarp(QString qs_filename_sub,QString qs_filename_marker_sub,QStr
 	{
 		printf("ERROR: imgwarp_smallmemory() return false.\n");
 		if(p_img_sub) 			{delete []p_img_sub;		p_img_sub=0;}
-		if(sz_img_sub) 			{delete []sz_img_sub;		sz_img_sub=0;}
+        //if(sz_img_sub) 			{delete []sz_img_sub;		sz_img_sub=0;}
 		return false;
 	}
 	printf(">>>>The warping process took %f seconds\n",((float)(clock()-time_warp_start))/CLOCKS_PER_SEC);
@@ -257,7 +257,7 @@ bool littlequickwarp(QString qs_filename_sub,QString qs_filename_marker_sub,QStr
 				printf("ERROR: imgresize_padding() return false.\n");
 				if(p_img_warp) 			{delete []p_img_warp;		p_img_warp=0;}
 			   	if(p_img_sub) 			{delete []p_img_sub;		p_img_sub=0;}
-				if(sz_img_sub) 			{delete []sz_img_sub;		sz_img_sub=0;}
+                //if(sz_img_sub) 			{delete []sz_img_sub;		sz_img_sub=0;}
 				return false;
 			}
 		}
@@ -265,12 +265,12 @@ bool littlequickwarp(QString qs_filename_sub,QString qs_filename_marker_sub,QStr
 
 	//------------------------------------------------------------------------------------------------------------------------------------
 	printf("5. save warped image to file: [%s]\n",qPrintable(qs_filename_warp));
-	if(!saveImage(qPrintable(qs_filename_warp),p_img_warp,sz_img_warp,datatype_sub))
+    if(!simple_saveimage_wrapper(callback, qPrintable(qs_filename_warp),p_img_warp,sz_img_warp,datatype_sub))
 	{
-		printf("ERROR: saveImage() return false.\n");
+        printf("ERROR: simple_saveimage_wrapper() return false.\n");
 		if(p_img_warp) 			{delete []p_img_warp;		p_img_warp=0;}
 	   	if(p_img_sub) 			{delete []p_img_sub;		p_img_sub=0;}
-		if(sz_img_sub) 			{delete []sz_img_sub;		sz_img_sub=0;}
+        //if(sz_img_sub) 			{delete []sz_img_sub;		sz_img_sub=0;}
 		return false;
 	}
 
@@ -278,7 +278,7 @@ bool littlequickwarp(QString qs_filename_sub,QString qs_filename_marker_sub,QStr
 	printf("6. free memory. \n");
 	if(p_img_warp) 			{delete []p_img_warp;		p_img_warp=0;}
 	if(p_img_sub) 			{delete []p_img_sub;		p_img_sub=0;}
-	if(sz_img_sub) 			{delete []sz_img_sub;		sz_img_sub=0;}
+    //if(sz_img_sub) 			{delete []sz_img_sub;		sz_img_sub=0;}
 
 	printf(">>>>The whole process took %f seconds\n",((float)(clock()-time_total_start))/CLOCKS_PER_SEC);
 	printf("Program exit success.\n");
