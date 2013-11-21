@@ -32,6 +32,6 @@ SOURCES      += $$V3DMAINDIR/basic_c_fun/v3d_message.cpp
 #LIBS         += -L$$V3DMAINDIR/common_lib/src_packages/mylib_tiff -lmylib
 
 TARGET        = $$qtLibraryTarget(recenterimage)
-#DESTDIR       = ../../v3d/plugins/image_geometry/ReCenter_Image
-DESTDIR       = ../../../bin/plugins/image_geometry/ReCenter_Image
+DESTDIR       = ../../v3d/plugins/image_geometry/ReCenter_Image
+#DESTDIR       = ../../../bin/plugins/image_geometry/ReCenter_Image
 
