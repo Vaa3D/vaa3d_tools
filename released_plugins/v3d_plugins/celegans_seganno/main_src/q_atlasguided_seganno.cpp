@@ -1507,7 +1507,9 @@ bool q_atlas2image_prior(const CParas &paras,V3DPluginCallback &callback,
 	x3x4_rigidmatrix(1,1)=h(1,1);	x3x4_rigidmatrix(1,2)=0;		x3x4_rigidmatrix(1,3)=0;		x3x4_rigidmatrix(1,4)=h(2,1);
 	x3x4_rigidmatrix(2,1)=0;		x3x4_rigidmatrix(2,2)=h(3,1);	x3x4_rigidmatrix(2,3)=0;		x3x4_rigidmatrix(2,4)=h(4,1);
 	x3x4_rigidmatrix(3,1)=0;		x3x4_rigidmatrix(3,2)=0;		x3x4_rigidmatrix(3,3)=h(5,1);	x3x4_rigidmatrix(3,4)=h(6,1);
-	cout << setw(10) << setprecision(5) << x3x4_rigidmatrix << endl;
+
+// commented by PHC 2013-11-21 to avoid Mac 10.9 building issue with newmat
+//    cout << setw(10) << setprecision(5) << x3x4_rigidmatrix << endl;
 
 	//rigid transform atlas
 	for(V3DLONG i=0;i<ql_musclecell.size();i++)
@@ -2094,9 +2096,13 @@ bool q_atlas2image_musclecell_ini_affine(const CParas &paras,V3DPluginCallback &
 		return false;
 	}
 	Matrix UV=U*V.t();
+
+    //commented below by PHC, 2013-11-21 to avoid Mac 10.9 building issue with newmat
+/*
 	cout<<D<<endl;
 	cout<<V<<endl;
 	cout<<UV<<endl;
+*/
 
 //	if((fabs(V(3,2))>fabs(V(2,2))) && (fabs(V(3,3))<fabs(V(2,3))))
 	if(fabs(atan(UV(2,3)/UV(3,3)))/3.1415926*180 > 45)
