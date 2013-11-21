@@ -264,7 +264,8 @@ bool q_atlas2image(const CParas &paras,V3DPluginCallback &callback,
 	unsigned char *p_img_tmp=new unsigned char[l_npixel_s]();
 	for(V3DLONG i=0;i<vec_fg_ind.size();i++)
 		p_img_tmp[vec_fg_ind[i]]=255;
-	saveImage("j:/srs_test/result_qu/img_fg.raw",p_img_tmp,sz_img_s,1);
+    simple_saveimage_wrapper(callback, "img_fg.raw",p_img_tmp,sz_img_s,1);
+    //saveImage("j:/srs_test/result_qu/img_fg.raw",p_img_tmp,sz_img_s,1);
 	delete []p_img_tmp;
 	}
 	}

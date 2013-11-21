@@ -354,7 +354,7 @@ bool do_AtlasGuidedStrAnno(V3DPluginCallback2 &callback,
 	//------------------------------------------------------------------------------------------------------------------------------------
 	printf("1. Import image. \n");
 	unsigned char *p_img_input=0;
-	V3DLONG *sz_img_input=0;
+    V3DLONG sz_img_input[4];
 	int datatype_input=0;
 	if(!paras_str.b_imgfromV3D)
 	{
@@ -363,7 +363,7 @@ bool do_AtlasGuidedStrAnno(V3DPluginCallback2 &callback,
 			v3d_msg(QString("invalid image path!"));
 			return false;
 		}
-		if(!loadImage((char *)qPrintable(qs_filename_img),p_img_input,sz_img_input,datatype_input))
+        if(!simple_loadimage_wrapper(callback, (char *)qPrintable(qs_filename_img),p_img_input,sz_img_input,datatype_input))
 		{
 			v3d_msg(QString("open file [%1] failed!").arg(qs_filename_img));
 			return false;
@@ -381,7 +381,7 @@ bool do_AtlasGuidedStrAnno(V3DPluginCallback2 &callback,
 		}
 		Image4DSimple* image=callback.getImage(callback.currentImageWindow());
 		p_img_input=image->getRawData();
-		sz_img_input=new V3DLONG[4]();
+        //sz_img_input=new V3DLONG[4]();
 		sz_img_input[0]=image->getXDim();	sz_img_input[1]=image->getYDim();	sz_img_input[2]=image->getZDim();	sz_img_input[3]=image->getCDim();
 		datatype_input=image->getDatatype();
 	}
@@ -398,7 +398,7 @@ bool do_AtlasGuidedStrAnno(V3DPluginCallback2 &callback,
 	{
 		printf("ERROR: Fail to allocate memory. Do nothing. \n");
 		if(p_img_input && !paras_str.b_imgfromV3D) 	{delete []p_img_input;		p_img_input=0;}
-		if(sz_img_input)						 	{delete []sz_img_input;		sz_img_input=0;}
+        //if(sz_img_input)						 	{delete []sz_img_input;		sz_img_input=0;}
 		return false;
 	}
 	if(datatype_input==1)
@@ -416,7 +416,7 @@ bool do_AtlasGuidedStrAnno(V3DPluginCallback2 &callback,
 			printf("ERROR: rescale_to_0_255_and_copy() return false.\n");
 			if(p_img_8u) 								{delete []p_img_8u;			p_img_8u=0;}
 			if(p_img_input && !paras_str.b_imgfromV3D) 	{delete []p_img_input;		p_img_input=0;}
-			if(sz_img_input)						 	{delete []sz_img_input;		sz_img_input=0;}
+            //if(sz_img_input)						 	{delete []sz_img_input;		sz_img_input=0;}
 			return false;
 		}
 	}
@@ -429,7 +429,7 @@ bool do_AtlasGuidedStrAnno(V3DPluginCallback2 &callback,
 			printf("ERROR: rescale_to_0_255_and_copy() return false.\n");
 			if(p_img_8u)								{delete []p_img_8u;			p_img_8u=0;}
 			if(p_img_input && !paras_str.b_imgfromV3D) 	{delete []p_img_input;		p_img_input=0;}
-			if(sz_img_input)						 	{delete []sz_img_input;		sz_img_input=0;}
+            //if(sz_img_input)						 	{delete []sz_img_input;		sz_img_input=0;}
 			return false;
 		}
 	}
@@ -438,7 +438,7 @@ bool do_AtlasGuidedStrAnno(V3DPluginCallback2 &callback,
 		v3d_msg(QString("Unknown datatype!\n"));
 		if(p_img_8u) 								{delete []p_img_8u;			p_img_8u=0;}
 		if(p_img_input && !paras_str.b_imgfromV3D) 	{delete []p_img_input;		p_img_input=0;}
-		if(sz_img_input)						 	{delete []sz_img_input;		sz_img_input=0;}
+        //if(sz_img_input)						 	{delete []sz_img_input;		sz_img_input=0;}
 		return false;
 	}
 	}
@@ -483,7 +483,7 @@ bool do_AtlasGuidedStrAnno(V3DPluginCallback2 &callback,
 			v3d_msg(QString("Make sure there are at least 1 image in V3D!"));
 			if(p_img_8u) 								{delete []p_img_8u;			p_img_8u=0;}
 			if(p_img_input && !paras_str.b_imgfromV3D) 	{delete []p_img_input;		p_img_input=0;}
-			if(sz_img_input)						 	{delete []sz_img_input;		sz_img_input=0;}
+            //if(sz_img_input)						 	{delete []sz_img_input;		sz_img_input=0;}
 			return false;
 		}
 		LandmarkList ml_makers=callback.getLandmark(callback.currentImageWindow());
@@ -507,7 +507,7 @@ bool do_AtlasGuidedStrAnno(V3DPluginCallback2 &callback,
 		v3d_msg(QString("Given atlas file is empty or invalid!"));
 		if(p_img_8u) 								{delete []p_img_8u;			p_img_8u=0;}
 		if(p_img_input && !paras_str.b_imgfromV3D) 	{delete []p_img_input;		p_img_input=0;}
-		if(sz_img_input) 							{delete []sz_img_input;		sz_img_input=0;}
+        //if(sz_img_input) 							{delete []sz_img_input;		sz_img_input=0;}
 		return false;
 	}
 
@@ -519,7 +519,7 @@ bool do_AtlasGuidedStrAnno(V3DPluginCallback2 &callback,
 		printf("ERROR: readCelloi_file() return false! \n");
 		if(p_img_8u) 								{delete []p_img_8u;			p_img_8u=0;}
 		if(p_img_input && !paras_str.b_imgfromV3D) 	{delete []p_img_input;		p_img_input=0;}
-		if(sz_img_input)						 	{delete []sz_img_input;		sz_img_input=0;}
+        //if(sz_img_input)						 	{delete []sz_img_input;		sz_img_input=0;}
 		return false;
 	}
 
@@ -562,7 +562,7 @@ bool do_AtlasGuidedStrAnno(V3DPluginCallback2 &callback,
 			printf("ERROR: q_celegans_restacking_xy() return false! \n");
 			if(p_img_8u) 								{delete []p_img_8u;			p_img_8u=0;}
 			if(p_img_input && !paras_str.b_imgfromV3D) 	{delete []p_img_input;		p_img_input=0;}
-			if(sz_img_input)						 	{delete []sz_img_input;		sz_img_input=0;}
+            //if(sz_img_input)						 	{delete []sz_img_input;		sz_img_input=0;}
 			return false;
 		}
 	}
@@ -598,7 +598,7 @@ bool do_AtlasGuidedStrAnno(V3DPluginCallback2 &callback,
 			if(sz_strimg) 								{delete []sz_strimg;		sz_strimg=0;}
 			if(p_img_8u) 								{delete []p_img_8u;			p_img_8u=0;}
 			if(p_img_input && !paras_str.b_imgfromV3D) 	{delete []p_img_input;		p_img_input=0;}
-			if(sz_img_input) 							{delete []sz_img_input;		sz_img_input=0;}
+            //if(sz_img_input) 							{delete []sz_img_input;		sz_img_input=0;}
 			return false;
 		}
 	}
@@ -613,7 +613,7 @@ bool do_AtlasGuidedStrAnno(V3DPluginCallback2 &callback,
 			if(sz_strimg) 								{delete []sz_strimg;		sz_strimg=0;}
 			if(p_img_8u) 								{delete []p_img_8u;			p_img_8u=0;}
 			if(p_img_input && !paras_str.b_imgfromV3D) 	{delete []p_img_input;		p_img_input=0;}
-			if(sz_img_input) 							{delete []sz_img_input;		sz_img_input=0;}
+            //if(sz_img_input) 							{delete []sz_img_input;		sz_img_input=0;}
 			return false;
 		}
 	}
@@ -628,7 +628,7 @@ bool do_AtlasGuidedStrAnno(V3DPluginCallback2 &callback,
 			if(sz_strimg) 								{delete []sz_strimg;		sz_strimg=0;}
 			if(p_img_8u) 								{delete []p_img_8u;			p_img_8u=0;}
 			if(p_img_input && !paras_str.b_imgfromV3D) 	{delete []p_img_input;		p_img_input=0;}
-			if(sz_img_input) 							{delete []sz_img_input;		sz_img_input=0;}
+            //if(sz_img_input) 							{delete []sz_img_input;		sz_img_input=0;}
 			return false;
 		}
 	}
@@ -806,7 +806,7 @@ bool do_AtlasGuidedStrAnno(V3DPluginCallback2 &callback,
 	if(!qs_filename_seglabel_output.isEmpty() && p_img8u_seglabel)
 	{
 		V3DLONG sz_seglabelimg[4]={sz_img_input[0],sz_img_input[1],sz_img_input[2],1};
-		saveImage(qPrintable(qs_filename_seglabel_output),p_img8u_seglabel,sz_seglabelimg,1);
+        simple_saveimage_wrapper(callback, qPrintable(qs_filename_seglabel_output),p_img8u_seglabel,sz_seglabelimg,1);
 	}
 
 	//------------------------------------------------------------------------------------------------------------------------------------
@@ -817,7 +817,7 @@ bool do_AtlasGuidedStrAnno(V3DPluginCallback2 &callback,
 	if(sz_strimg) 								{delete []sz_strimg;		sz_strimg=0;}
 	if(p_img_8u) 								{delete []p_img_8u;			p_img_8u=0;}
 	if(p_img_input && !paras_str.b_imgfromV3D) 	{delete []p_img_input;		p_img_input=0;}
-	if(sz_img_input) 							{delete []sz_img_input;		sz_img_input=0;}
+    //if(sz_img_input) 							{delete []sz_img_input;		sz_img_input=0;}
 
 	//------------------------------------------------------------------------------------------------------------------------------------
 	v3d_msg("Program exit successfully!\n", 0);
