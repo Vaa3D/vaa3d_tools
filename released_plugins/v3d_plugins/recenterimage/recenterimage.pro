@@ -24,7 +24,7 @@ SOURCES      += $$V3DMAINDIR/basic_c_fun/vcdiff.cpp
 #SOURCES      +=	$$V3DMAINDIR/basic_c_fun/mg_utilities.cpp
 #SOURCES      +=	$$V3DMAINDIR/basic_c_fun/mg_image_lib.cpp
 #SOURCES      += $$V3DMAINDIR/basic_c_fun/imageio_mylib.cpp
-#SOURCES      += $$V3DMAINDIR/basic_c_fun/basic_4dimage.cpp
+#SOURCES      += $$V3DMAINDIR/basic_c_fun/basic_4dimage.cpp # THIS IS INCLUDED IN THE cpp FILE.
 SOURCES      += $$V3DMAINDIR/basic_c_fun/v3d_message.cpp
 #SOURCES      += ../blend_multiscanstacks/basic_4dimage_ori.cpp
 
@@ -32,5 +32,6 @@ SOURCES      += $$V3DMAINDIR/basic_c_fun/v3d_message.cpp
 #LIBS         += -L$$V3DMAINDIR/common_lib/src_packages/mylib_tiff -lmylib
 
 TARGET        = $$qtLibraryTarget(recenterimage)
-DESTDIR       = ../../v3d/plugins/image_geometry/ReCenter_Image
+#DESTDIR       = ../../v3d/plugins/image_geometry/ReCenter_Image
+DESTDIR       = ../../../bin/plugins/image_geometry/ReCenter_Image
 

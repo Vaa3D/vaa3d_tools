@@ -23,7 +23,7 @@
 //#include "mg_image_lib.h"
 
 #include "basic_landmark.h"
-//#include "basic_4dimage.h"
+#include "basic_4dimage.h"
 
 #include "recenterimageplugin.h"
 
@@ -69,95 +69,45 @@ bool ReCenterImagePlugin::dofunc(const QString & func_name, const V3DPluginArgLi
     }
 
     char * infile = infilelist->at(0); // input images
-    char * paras = NULL; // parameters
     char * outfile = NULL; // outputs
+    V3DLONG int inx=1, iny=1, inz=1;   // user input new dimensions
+    if(output.size()>0)
+    {  //output
+        outfilelist = (vector<char*> *)(output.at(0).p); outfile = outfilelist->at(0);
+    }  //
 
-    if(output.size()>0) { outfilelist = (vector<char*> *)(output.at(0).p); outfile = outfilelist->at(0);}  // specify output
-    if(input.size()>1) { paralist = (vector<char*> *)(input.at(1).p); paras =  paralist->at(0);} // parameters
+
+
+    // BRL modified this next chunk- the original code wasn't parsing inputs correctly, at least not based on the example and plugin help
+
+    printf("input size is %d", input.size());
+    if(input.size()>1)
+    {
+       vector<char*> paras = (*(vector<char*> *)(input.at(1).p));  //
+                cout<<paras.size()<<endl;
+                if(paras.size() >= 2) inx = atoi(paras.at(1)); // just take the parameters that matter.
+                if(paras.size() >= 3) iny = atoi(paras.at(2)); // in the end the first one is completely ignored.
+                if(paras.size() >= 4) inz = atoi(paras.at(3));
+
+    } // parameters
+
 
     bool b_saveimage = true; // save the blended image by default
     V3DLONG ndimx=1, ndimy=1, ndimz=1;
+ //   printf("\n ndimx %d %d %d \n", ndimx, ndimy, ndimz);
+ //   printf("\n input stuff %d", input.size());
 
-    if(paras)
-    {
-        int argc = 0;
-        int len = strlen(paras);
-        int posb[200];
-        char * myparas = new char[len];
-        strcpy(myparas, paras);
-        for(int i = 0; i < len; i++)
-        {
-            if(i==0 && myparas[i] != ' ' && myparas[i] != '\t')
-            {
-                posb[argc++] = i;
-            }
-            else if((myparas[i-1] == ' ' || myparas[i-1] == '\t') && (myparas[i] != ' ' && myparas[i] != '\t'))
-            {
-                posb[argc++] = i;
-            }
-        }
-        char ** argv = new char* [argc];
-        for(int i = 0; i < argc; i++)
-        {
-            argv[i] = myparas + posb[i];
-        }
-        for(int i = 0; i < len; i++)
-        {
-            if(myparas[i]==' ' || myparas[i]=='\t')
-                myparas[i]='\0';
-        }
+    V3DLONG paras[4];
+    paras[0]=1; // this is the 'save blended' whatever parameter that someone left in here.
+    paras[1]=inx;
+    paras[2]=iny;
+    paras[3]=inz;
 
-        char* key;
-        for(int i=0; i<argc; i++)
-        {
-            if(i+1 != argc) // check that we haven't finished parsing yet
-            {
-                key = argv[i];
+ //   int outlen = strlen(paras);
 
-                qDebug()<<">>key ..."<<key;
+//    printf("\n new paras %d %d %d %d \n", paras[0], paras[1], paras[2], paras[3]);
 
-                if (*key == '#')
-                {
-                    while(*++key)
-                    {
-                        if (!strcmp(key, "s"))
-                        {
-                            b_saveimage = (atoi( argv[i+1] ))?true:false;
-                            i++;
-                        }
-                        else if (!strcmp(key, "x"))
-                        {
-                            ndimx = atoi( argv[i+1] );
-                            i++;
-                        }
-                        else if (!strcmp(key, "y"))
-                        {
-                            ndimy = atoi( argv[i+1] );
-                            i++;
-                        }
-                        else if (!strcmp(key, "z"))
-                        {
-                            ndimz = atoi( argv[i+1] );
-                            i++;
-                        }
-                        else
-                        {
-                            cout<<"parsing ..."<<key<<" "<<i<<" "<<"Unknown command. Type 'v3d -x plugin_name -f function_name' for usage"<<endl;
-                            return false;
-                        }
-
-                    }
-                }
-                else
-                {
-                    cout<<"parsing ..."<<key<<" "<<i<<" "<<"Unknown command. Type 'v3d -x plugin_name -f function_name' for usage"<<endl;
-                    return false;
-                }
-
-            }
-        }
-    }
-
+//-------BRL cut a bunch of stuff here and inserted simpler parsing of -p inputs following ZZ's code
     QString outputImageName;
 
     if(!outfile)
@@ -183,11 +133,15 @@ bool ReCenterImagePlugin::dofunc(const QString & func_name, const V3DPluginArgLi
     V3DLONG sx = sz_input[0], sy = sz_input[1], sz = sz_input[2], sc = sz_input[3];
 
     V3DLONG sz_output[4];
+    ndimx = paras[1];
+    ndimy = paras[2];
+    ndimz = paras[3];
+
     sz_output[0] = ndimx;
     sz_output[1] = ndimy;
     sz_output[2] = ndimz;
-    sz_output[3] = sc;
-
+    sz_output[3] = sc;// same as input
+//    printf("double check datatype %d \n", datatype);
     //
     if(datatype == 1)
     {
@@ -196,8 +150,9 @@ bool ReCenterImagePlugin::dofunc(const QString & func_name, const V3DPluginArgLi
         //output
         if(b_saveimage)
         {
-            //save
-            if (simple_saveimage_wrapper(v3d, outputImageName.toStdString().c_str(), ( unsigned char *)pRecenteredImage, sz_output, 1)!=true)
+//            printf("brl test %s \n",outputImageName.toStdString().c_str());
+//            printf("size output  %d %d %d %d \n", sz_output[0], sz_output[1], sz_output[2], sz_output[3]);
+           if (simple_saveimage_wrapper(v3d, outputImageName.toStdString().c_str(), ( unsigned char *)pRecenteredImage, sz_output, 1)!=true)
             {
                 printf("Error happens in file writing. Exit. \n");
                 return false;
