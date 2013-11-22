@@ -158,9 +158,9 @@ void lookPanel::_slot_generate()
     m_v3d.open3DWindow(curwin);
     View3DControl *view = m_v3d.getView3DControl(curwin);
     m_v3d.open3DWindow(curwin);
-    int xRot, yRot,zRot,xShift,yShift,zShift,zoom;
-    int xRot_last, yRot_last,zRot_last,xShift_last,yShift_last,zShift_last,zoom_last;
-    int count =0, N = 50;
+    float xRot, yRot,zRot,xShift,yShift,zShift,zoom;
+    float xRot_last, yRot_last,zRot_last,xShift_last,yShift_last,zShift_last,zoom_last;
+    float count =0, N = 50;
 
    while(ifs && getline(ifs, points))
    {
@@ -180,7 +180,7 @@ void lookPanel::_slot_generate()
                view->setZShift(zShift_last + i*(zShift-zShift_last)/N);
                view->setZoom(zoom_last + i*(zoom-zoom_last)/N);
                m_v3d.updateImageWindow(curwin);
-               usleep(500000);
+            //   usleep(100000);
            }
        }
        else
@@ -192,7 +192,7 @@ void lookPanel::_slot_generate()
            view->setZShift(zShift);
            view->setZoom(zoom);
            m_v3d.updateImageWindow(curwin);
-           usleep(1000000);
+          // usleep(100000);
        }
 
        xRot_last = xRot;

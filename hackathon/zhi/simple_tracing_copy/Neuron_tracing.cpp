@@ -210,9 +210,9 @@ bool do_seg(short *pData, V3DLONG sx, V3DLONG sy, V3DLONG sz, int & iVesCnt, boo
 	int iSigma[1] = {1};
 	
 	//vesselness
-    float fA = 10;
-    float fB = 10;
-    float fC = 1.0*10*5*20;
+    float fA = 500;
+    float fB = 500;
+    float fC = 1.0*10*5*200*5;
 	
 	//volume filter
 	bool bVolFilter = true;
