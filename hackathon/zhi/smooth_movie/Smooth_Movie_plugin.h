@@ -36,9 +36,9 @@ public:
     v3dhandle curwin;
     QGridLayout *gridLayout;
     V3DPluginCallback2 & m_v3d;
-    int xRot_past, yRot_past,zRot_past;
-    int xShift_past,yShift_past,zShift_past;
-    int zoom_past;
+   // int xRot_past, yRot_past,zRot_past;
+    //int xShift_past,yShift_past,zShift_past;
+    //int zoom_past;
 
 private slots:
     void _slot_record();

@@ -6,6 +6,9 @@
 #include "v3d_message.h"
 #include <vector>
 #include "Smooth_Movie_plugin.h"
+#include <fstream>
+#include <iostream>
+#include <sstream>
 using namespace std;
 Q_EXPORT_PLUGIN2(Smooth_Movie, Smooth_Movie);
 
@@ -109,7 +112,8 @@ lookPanel::lookPanel(V3DPluginCallback2 &_v3d, QWidget *parent) :
 
 lookPanel::~lookPanel()
 {
-   panel=0;
+    remove("/tmp/points.txt");
+    panel=0;
 }
 
 void lookPanel::_slot_record()
@@ -129,10 +133,101 @@ void lookPanel::_slot_record()
 
     int zoom = view->zoom();
 
-    printf("paras (xrot,yrot,zrot,xshift,yshift,zshift,zoom) are (%d,%d,%d,%d,%d,%d,%d)\n",xRot,yRot,zRot,xShift,yShift,zShift);
+    ofstream myfile;
+    myfile.open ("/tmp/points.txt",ios::out | ios::app );
+    myfile << xRot;myfile << "  ";
+    myfile << yRot;myfile << "  ";
+    myfile << zRot;myfile << "  ";
+    myfile << xShift;myfile << "  ";
+    myfile << yShift;myfile << "  ";
+    myfile << zShift;myfile << "  ";
+    myfile << zoom;
+    myfile << "\n";
+    myfile.close();
+
+   // printf("paras (xrot,yrot,zrot,xshift,yshift,zshift,zoom) are (%d,%d,%d,%d,%d,%d,%d)\n",xRot,yRot,zRot,xShift,yShift,zShift,zoom);
 
 }
 
 void lookPanel::_slot_generate()
 {
+    ifstream ifs("/tmp/points.txt");
+    string points;
+
+    curwin = m_v3d.currentImageWindow();
+    m_v3d.open3DWindow(curwin);
+    View3DControl *view = m_v3d.getView3DControl(curwin);
+    m_v3d.open3DWindow(curwin);
+    int xRot, yRot,zRot,xShift,yShift,zShift,zoom;
+    int xRot_last, yRot_last,zRot_last,xShift_last,yShift_last,zShift_last,zoom_last;
+    int count =0, N = 50;
+
+   while(ifs && getline(ifs, points))
+   {
+       std::istringstream iss(points);
+
+       iss >> xRot >> yRot >> zRot >> xShift >> yShift >> zShift >> zoom;
+       printf("paras (xrot,yrot,zrot,xshift,yshift,zshift,zoom) are (%d,%d,%d,%d,%d,%d,%d)\n",xRot,yRot,zRot,xShift,yShift,zShift,zoom);
+       if(count>0)
+       {
+
+           for (int i =1; i<N;i++)
+           {
+               view->resetRotation();
+               view->doAbsoluteRot(xRot_last+ i*(xRot-xRot_last)/N,yRot_last+i*(yRot-yRot_last)/N,zRot_last+i*(zRot-zRot_last)/N);
+               view->setXShift(xShift_last + i*(xShift-xShift_last)/N);
+               view->setYShift(yShift_last + i*(yShift-yShift_last)/N);
+               view->setZShift(zShift_last + i*(zShift-zShift_last)/N);
+               view->setZoom(zoom_last + i*(zoom-zoom_last)/N);
+               m_v3d.updateImageWindow(curwin);
+               usleep(500000);
+           }
+       }
+       else
+       {
+           view->resetRotation();
+           view->doAbsoluteRot(xRot,yRot,zRot);
+           view->setXShift(xShift);
+           view->setYShift(yShift);
+           view->setZShift(zShift);
+           view->setZoom(zoom);
+           m_v3d.updateImageWindow(curwin);
+           usleep(1000000);
+       }
+
+       xRot_last = xRot;
+       yRot_last = yRot;
+       zRot_last = zRot;
+       xShift_last = xShift;
+       yShift_last = yShift;
+       zShift_last = zShift;
+       zoom_last = zoom;
+       count++;
+   }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
