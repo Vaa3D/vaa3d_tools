@@ -98,16 +98,26 @@ lookPanel::lookPanel(V3DPluginCallback2 &_v3d, QWidget *parent) :
     QDialog(parent), m_v3d(_v3d)
 {
     QPushButton* Record     = new QPushButton("Record Points");
-    QPushButton* Generate = new QPushButton("Generate");
+    QPushButton* Preview = new QPushButton("Preview");
+    QPushButton* Show = new QPushButton("Show Points");
+    QPushButton* Delete = new QPushButton("Delete");
 
     gridLayout = new QGridLayout();
     gridLayout->addWidget(Record, 1,0);
-    gridLayout->addWidget(Generate,1,6);
-    setLayout(gridLayout);
-    setWindowTitle(QString("Generate a movie from anchor points"));
+    gridLayout->addWidget(Preview,1,6);
+    gridLayout->addWidget(Show,4,0);
+    gridLayout->addWidget(Delete,4,6);
 
+    listWidget = new QListWidget();
+    gridLayout->addWidget(listWidget,3,0);
+
+    setLayout(gridLayout);
+    setWindowTitle(QString("ZMovieMaker"));
+
+    connect(Show, SIGNAL(clicked()), this, SLOT(_slot_show()));
+    connect(Delete, SIGNAL(clicked()), this, SLOT(_slot_delete()));
     connect(Record,     SIGNAL(clicked()), this, SLOT(_slot_record()));
-    connect(Generate, SIGNAL(clicked()), this, SLOT(_slot_generate()));
+    connect(Preview, SIGNAL(clicked()), this, SLOT(_slot_preview()));
 }
 
 lookPanel::~lookPanel()
@@ -130,8 +140,11 @@ void lookPanel::_slot_record()
     int xShift = view->xShift();
     int yShift = view->yShift();
     int zShift = view->zShift();
-
     int zoom = view->zoom();
+
+    listWidget->addItem(new QListWidgetItem(QString("Anchor point (%1,%2,%3,%4,%5,%6,%7)").arg(xRot).arg(yRot).arg(zRot).arg(xShift).arg(yShift).arg(zShift).arg(zoom)));
+    gridLayout->addWidget(listWidget,3,0);
+
 
     ofstream myfile;
     myfile.open ("/tmp/points.txt",ios::out | ios::app );
@@ -149,7 +162,7 @@ void lookPanel::_slot_record()
 
 }
 
-void lookPanel::_slot_generate()
+void lookPanel::_slot_preview()
 {
     ifstream ifs("/tmp/points.txt");
     string points;
@@ -206,8 +219,61 @@ void lookPanel::_slot_generate()
    }
 }
 
+void lookPanel::_slot_delete()
+{
+    listWidget->takeItem(listWidget->currentRow());
+    ifstream ifs;
+    ifs.open("/tmp/points.txt");
+    ofstream temp;
+    string line;
+    int count =0;
+    temp.open("/tmp/points_tmp.txt");
+    while (ifs && getline(ifs,line))
+    {
+        if (count != listWidget->currentRow())
+        {
+           temp << line << endl;
+        }
+        count++;
+    }
+    temp.close();
+    ifs.close();
+    remove("/tmp/points.txt");
+    rename("/tmp/points_tmp.txt","/tmp/points.txt");
 
+}
 
+void lookPanel::_slot_show()
+{
+    ifstream ifs("/tmp/points.txt");
+    string points;
+    int count = 0;
+    float xRot, yRot,zRot,xShift,yShift,zShift,zoom;
+    while(ifs && getline(ifs, points))
+    {
+        if(count == listWidget->currentRow())
+        {
+          std::istringstream iss(points);
+          iss >> xRot >> yRot >> zRot >> xShift >> yShift >> zShift >> zoom;
+          break;
+        }
+        count++;
+
+    }
+    curwin = m_v3d.currentImageWindow();
+    m_v3d.open3DWindow(curwin);
+    View3DControl *view = m_v3d.getView3DControl(curwin);
+    m_v3d.open3DWindow(curwin);
+
+    view->resetRotation();
+    view->doAbsoluteRot(xRot,yRot,zRot);
+    view->setXShift(xShift);
+    view->setYShift(yShift);
+    view->setZShift(zShift);
+    view->setZoom(zoom);
+    m_v3d.updateImageWindow(curwin);
+
+}
 
 
 
