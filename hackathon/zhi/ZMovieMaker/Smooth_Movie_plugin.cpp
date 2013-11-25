@@ -87,6 +87,8 @@ void MovieFromPoints(V3DPluginCallback2 &v3d, QWidget *parent)
         if (panel)
         {
             panel->show();
+            panel->setAttribute(Qt::WA_QuitOnClose);
+            panel->setAttribute(Qt::WA_DeleteOnClose);
             panel->raise();
             panel->move(100,100);
             panel->activateWindow();
@@ -101,12 +103,14 @@ lookPanel::lookPanel(V3DPluginCallback2 &_v3d, QWidget *parent) :
     QPushButton* Preview = new QPushButton("Preview");
     QPushButton* Show = new QPushButton("Show Points");
     QPushButton* Delete = new QPushButton("Delete");
+    QPushButton* Upload = new QPushButton("Upload to Youtube");
 
     gridLayout = new QGridLayout();
     gridLayout->addWidget(Record, 1,0);
     gridLayout->addWidget(Preview,1,6);
     gridLayout->addWidget(Show,4,0);
     gridLayout->addWidget(Delete,4,6);
+    gridLayout->addWidget(Upload,5,0);
 
     listWidget = new QListWidget();
     gridLayout->addWidget(listWidget,3,0);
@@ -118,6 +122,7 @@ lookPanel::lookPanel(V3DPluginCallback2 &_v3d, QWidget *parent) :
     connect(Delete, SIGNAL(clicked()), this, SLOT(_slot_delete()));
     connect(Record,     SIGNAL(clicked()), this, SLOT(_slot_record()));
     connect(Preview, SIGNAL(clicked()), this, SLOT(_slot_preview()));
+    connect(Upload, SIGNAL(clicked()), this, SLOT(_slot_upload()));
 }
 
 lookPanel::~lookPanel()
@@ -145,7 +150,6 @@ void lookPanel::_slot_record()
     listWidget->addItem(new QListWidgetItem(QString("Anchor point (%1,%2,%3,%4,%5,%6,%7)").arg(xRot).arg(yRot).arg(zRot).arg(xShift).arg(yShift).arg(zShift).arg(zoom)));
     gridLayout->addWidget(listWidget,3,0);
 
-
     ofstream myfile;
     myfile.open ("/tmp/points.txt",ios::out | ios::app );
     myfile << xRot;myfile << "  ";
@@ -164,8 +168,24 @@ void lookPanel::_slot_record()
 
 void lookPanel::_slot_preview()
 {
+
     ifstream ifs("/tmp/points.txt");
+    if(!ifs)
+    {
+        v3d_msg("Please define at least one archor point.");
+        return;
+    }
+
     string points;
+
+    bool rate;
+    int  N;
+    N = QInputDialog::getInteger(this, "Sample Rate",
+                                       "Enter Sample Rate:",
+                                       10, 1, 1000, 1, &rate);
+
+    if(!rate)
+        return;
 
     curwin = m_v3d.currentImageWindow();
     m_v3d.open3DWindow(curwin);
@@ -173,7 +193,7 @@ void lookPanel::_slot_preview()
     m_v3d.open3DWindow(curwin);
     float xRot, yRot,zRot,xShift,yShift,zShift,zoom;
     float xRot_last, yRot_last,zRot_last,xShift_last,yShift_last,zShift_last,zoom_last;
-    float count =0, N = 50;
+    float count =0;
 
    while(ifs && getline(ifs, points))
    {
@@ -275,7 +295,10 @@ void lookPanel::_slot_show()
 
 }
 
-
+void lookPanel::_slot_upload()
+{
+    v3d_msg("To be implemented!");
+}
 
 
 
