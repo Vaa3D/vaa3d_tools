@@ -1,15 +1,15 @@
-/* Smooth_Movie_plugin.h
+/* ZMovieMaker_plugin.h
  * This plugin can be used to generate a smooth movie by several points
  * 2013-11-21 : by Zhi Zhou
  */
  
-#ifndef __SMOOTH_MOVIE_PLUGIN_H__
-#define __SMOOTH_MOVIE_PLUGIN_H__
+#ifndef __ZMOVIEMAKER_PLUGIN_H__
+#define __ZMOVIEMAKER_PLUGIN_H__
 
 #include <QtGui>
 #include <v3d_interface.h>
 
-class Smooth_Movie : public QObject, public V3DPluginInterface2_1
+class ZMovieMaker : public QObject, public V3DPluginInterface2_1
 {
 	Q_OBJECT
 	Q_INTERFACES(V3DPluginInterface2_1);

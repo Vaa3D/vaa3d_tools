@@ -8,9 +8,9 @@ INCLUDEPATH += $$V3DMAINPATH/common_lib/include
 
 INCLUDEPATH += main
 
-HEADERS	+= Smooth_Movie_plugin.h
-SOURCES	+= Smooth_Movie_plugin.cpp
+HEADERS	+= ZMovieMaker_plugin.h
+SOURCES	+= ZMovieMaker_plugin.cpp
 SOURCES	+= $$VAA3DPATH/basic_c_fun/v3d_message.cpp
 
-TARGET	= $$qtLibraryTarget(Smooth_Movie)
-DESTDIR	= $$VAA3DPATH/../bin/plugins/movies/Smooth_Movie/
+TARGET	= $$qtLibraryTarget(ZMovieMaker)
+DESTDIR	= $$VAA3DPATH/../bin/plugins/movies/ZMovieMaker/

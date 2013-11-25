@@ -1,28 +1,28 @@
-/* Smooth_Movie_plugin.cpp
+/* ZMovieMaker_plugin.cpp
  * This plugin can be used to generate a smooth movie by several points
  * 2013-11-21 : by Zhi Zhou
  */
  
 #include "v3d_message.h"
 #include <vector>
-#include "Smooth_Movie_plugin.h"
+#include "ZMovieMaker_plugin.h"
 #include <fstream>
 #include <iostream>
 #include <sstream>
 using namespace std;
-Q_EXPORT_PLUGIN2(Smooth_Movie, Smooth_Movie);
+Q_EXPORT_PLUGIN2(ZMovieMaker, ZMovieMaker);
 
 void MovieFromPoints(V3DPluginCallback2 &v3d, QWidget *parent);
 static lookPanel *panel = 0;
 
-QStringList Smooth_Movie::menulist() const
+QStringList ZMovieMaker::menulist() const
 {
 	return QStringList() 
         <<tr("Generate a movie by multiple anchor points")
 		<<tr("about");
 }
 
-QStringList Smooth_Movie::funclist() const
+QStringList ZMovieMaker::funclist() const
 {
     return QStringList()
         <<tr("func1")
@@ -30,7 +30,7 @@ QStringList Smooth_Movie::funclist() const
         <<tr("help");
 }
 
-void Smooth_Movie::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
+void ZMovieMaker::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
 {
     if (menu_name == tr("Generate a movie by multiple anchor points"))
 	{
@@ -42,7 +42,7 @@ void Smooth_Movie::domenu(const QString &menu_name, V3DPluginCallback2 &callback
 	}
 }
 
-bool Smooth_Movie::dofunc(const QString & func_name, const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback,  QWidget * parent)
+bool ZMovieMaker::dofunc(const QString & func_name, const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback,  QWidget * parent)
 {
     vector<char*> infiles, inparas, outfiles;
     if(input.size() >= 1) infiles = *((vector<char*> *)input.at(0).p);
