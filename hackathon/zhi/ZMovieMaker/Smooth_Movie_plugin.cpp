@@ -261,6 +261,13 @@ void lookPanel::_slot_delete()
     remove("/tmp/points.txt");
     rename("/tmp/points_tmp.txt","/tmp/points.txt");
 
+    curwin = m_v3d.currentImageWindow();
+    m_v3d.open3DWindow(curwin);
+    View3DControl *view = m_v3d.getView3DControl(curwin);
+    m_v3d.open3DWindow(curwin);
+    view->resetRotation();
+    view->resetZoomShift();
+    m_v3d.updateImageWindow(curwin);
 }
 
 void lookPanel::_slot_show()
