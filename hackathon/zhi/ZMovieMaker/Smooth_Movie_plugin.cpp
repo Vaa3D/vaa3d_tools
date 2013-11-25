@@ -241,14 +241,20 @@ void lookPanel::_slot_preview()
 
 void lookPanel::_slot_delete()
 {
-    listWidget->takeItem(listWidget->currentRow());
+    if(listWidget->currentRow()==-1)
+    {
+        v3d_msg("Please select a valid archor point.");
+        return;
+    }
+
     ifstream ifs;
     ifs.open("/tmp/points.txt");
+
     ofstream temp;
     string line;
     int count =0;
     temp.open("/tmp/points_tmp.txt");
-    while (ifs && getline(ifs,line))
+    while (getline(ifs,line))
     {
         if (count != listWidget->currentRow())
         {
@@ -256,11 +262,18 @@ void lookPanel::_slot_delete()
         }
         count++;
     }
+
+    printf("the current row is %d\n\n",count);
+
     temp.close();
     ifs.close();
     remove("/tmp/points.txt");
-    rename("/tmp/points_tmp.txt","/tmp/points.txt");
+    if(count == 1)
+       remove("/tmp/points_tmp.txt");
+    else
+       rename("/tmp/points_tmp.txt","/tmp/points.txt");
 
+    listWidget->takeItem(listWidget->currentRow());
     curwin = m_v3d.currentImageWindow();
     m_v3d.open3DWindow(curwin);
     View3DControl *view = m_v3d.getView3DControl(curwin);
@@ -272,11 +285,16 @@ void lookPanel::_slot_delete()
 
 void lookPanel::_slot_show()
 {
+    if(listWidget->currentRow()==-1)
+    {
+        v3d_msg("Please select a valid archor point.");
+        return;
+    }
     ifstream ifs("/tmp/points.txt");
     string points;
     int count = 0;
     float xRot, yRot,zRot,xShift,yShift,zShift,zoom;
-    while(ifs && getline(ifs, points))
+    while(getline(ifs, points))
     {
         if(count == listWidget->currentRow())
         {
