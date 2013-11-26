@@ -9,12 +9,20 @@
 #include <fstream>
 #include <iostream>
 #include <sstream>
+#include <math.h>
+
 using namespace std;
+const double pi = 3.1415926535897;
 Q_EXPORT_PLUGIN2(ZMovieMaker, ZMovieMaker);
 
 void MovieFromPoints(V3DPluginCallback2 &v3d, QWidget *parent);
 static lookPanel *panel = 0;
 
+void angles_to_quaternions(float q[], float xRot, float yRot,float zRot);
+void slerp_zhi(float q1[], float q2[],float alpha,float q_sample[]);
+void quaternions_to_angles(float Rot_current[], float q_sample[]);
+
+float dot_multi(float q1[], float q2[]);
 QStringList ZMovieMaker::menulist() const
 {
 	return QStringList() 
@@ -138,17 +146,25 @@ void lookPanel::_slot_record()
     View3DControl *view = m_v3d.getView3DControl(curwin);
     m_v3d.open3DWindow(curwin);
     view->absoluteRotPose();
-    int xRot = view->xRot();
-    int yRot = view->yRot();
-    int zRot = view->zRot();
+    float xRot = view->xRot();
+    float yRot = view->yRot();
+    float zRot = view->zRot();
 
-    int xShift = view->xShift();
-    int yShift = view->yShift();
-    int zShift = view->zShift();
-    int zoom = view->zoom();
+    float q[4];
+
+    float xShift = view->xShift();
+    float yShift = view->yShift();
+    float zShift = view->zShift();
+    float zoom = view->zoom();
+
 
     listWidget->addItem(new QListWidgetItem(QString("Anchor point (%1,%2,%3,%4,%5,%6,%7)").arg(xRot).arg(yRot).arg(zRot).arg(xShift).arg(yShift).arg(zShift).arg(zoom)));
     gridLayout->addWidget(listWidget,3,0);
+
+
+    angles_to_quaternions(q, xRot, yRot, zRot);
+//    printf("unit quaternion is (%f,%f,%f,%f,%f)\n\n",q[0],q[1],q[2],q[3],q[0]*q[0]+q[1]*q[1]+q[2]*q[2]+q[3]*q[3]);
+
 
     ofstream myfile;
     myfile.open ("/tmp/points.txt",ios::out | ios::app );
@@ -162,7 +178,7 @@ void lookPanel::_slot_record()
     myfile << "\n";
     myfile.close();
 
-   // printf("paras (xrot,yrot,zrot,xshift,yshift,zshift,zoom) are (%d,%d,%d,%d,%d,%d,%d)\n",xRot,yRot,zRot,xShift,yShift,zShift,zoom);
+  //  printf("paras (xrot,yrot,zrot,xshift,yshift,zshift,zoom) are (%f,%f,%f,%d,%d,%d,%d)\n",xRot,yRot,zRot,xShift,yShift,zShift,zoom);
 
 }
 
@@ -194,25 +210,39 @@ void lookPanel::_slot_preview()
     float xRot, yRot,zRot,xShift,yShift,zShift,zoom;
     float xRot_last, yRot_last,zRot_last,xShift_last,yShift_last,zShift_last,zoom_last;
     float count =0;
+    float q1[4],q2[4],q_sample[4];
+    float Rot_current[3];
 
    while(ifs && getline(ifs, points))
    {
        std::istringstream iss(points);
 
        iss >> xRot >> yRot >> zRot >> xShift >> yShift >> zShift >> zoom;
-       printf("paras (xrot,yrot,zrot,xshift,yshift,zshift,zoom) are (%d,%d,%d,%d,%d,%d,%d)\n",xRot,yRot,zRot,xShift,yShift,zShift,zoom);
+     //  printf("paras (xrot,yrot,zrot,xshift,yshift,zshift,zoom) are (%d,%d,%d,%d,%d,%d,%d)\n",xRot,yRot,zRot,xShift,yShift,zShift,zoom);
        if(count>0)
        {
 
-           for (int i =1; i<N;i++)
+           for (int i =1; i<N+1;i++)
            {
                view->resetRotation();
-               view->doAbsoluteRot(xRot_last+ i*(xRot-xRot_last)/N,yRot_last+i*(yRot-yRot_last)/N,zRot_last+i*(zRot-zRot_last)/N);
+             //  view->doAbsoluteRot(xRot_last+ i*(xRot-xRot_last)/N,yRot_last+i*(yRot-yRot_last)/N,zRot_last+i*(zRot-zRot_last)/N);
+
+               angles_to_quaternions(q1,xRot_last,yRot_last,zRot_last);
+               angles_to_quaternions(q2,xRot,yRot,zRot);
+               slerp_zhi(q1, q2,(float)i/N,q_sample);
+               quaternions_to_angles(Rot_current,q_sample);
+
+              // printf("unit quaternion q1 is (%f,%f,%f)\n",q1[0],q1[1],q1[2]);
+            //   printf("unit quaternion q2 is (%f,%f,%f)\n\n",q2[0],q2[1],q2[2]);
+               view->doAbsoluteRot(Rot_current[0],Rot_current[1],Rot_current[2]);
+
                view->setXShift(xShift_last + i*(xShift-xShift_last)/N);
                view->setYShift(yShift_last + i*(yShift-yShift_last)/N);
                view->setZShift(zShift_last + i*(zShift-zShift_last)/N);
                view->setZoom(zoom_last + i*(zoom-zoom_last)/N);
                m_v3d.updateImageWindow(curwin);
+
+
             //   usleep(100000);
            }
        }
@@ -327,15 +357,80 @@ void lookPanel::_slot_upload()
 
 
 
+void angles_to_quaternions(float q[], float xRot, float yRot,float zRot)
+{
+    float xRot_Rad = xRot * (pi/180.0); //if(xRot_Rad>pi) xRot_Rad -= 2*pi;
+    float yRot_Rad = yRot * (pi/180.0); //if(yRot_Rad>pi) yRot_Rad -= 2*pi;
+    float zRot_Rad = zRot * (pi/180.0); //if(zRot_Rad>pi) zRot_Rad -= 2*pi;
+
+    q[0] = cos(xRot_Rad/2)*cos(yRot_Rad/2)*cos(zRot_Rad/2)+sin(xRot_Rad/2)*sin(yRot_Rad/2)*sin(zRot_Rad/2);
+    q[1] = sin(xRot_Rad/2)*cos(yRot_Rad/2)*cos(zRot_Rad/2)-cos(xRot_Rad/2)*sin(yRot_Rad/2)*sin(zRot_Rad/2);
+    q[2] = cos(xRot_Rad/2)*sin(yRot_Rad/2)*cos(zRot_Rad/2)+sin(xRot_Rad/2)*cos(yRot_Rad/2)*sin(zRot_Rad/2);
+    q[3] = cos(xRot_Rad/2)*cos(yRot_Rad/2)*sin(zRot_Rad/2)-sin(xRot_Rad/2)*sin(yRot_Rad/2)*cos(zRot_Rad/2);
+
+    return;
+
+}
 
 
+void slerp_zhi(float q1[], float q2[],float t,float q_sample[])
+{
+    float cos_t = dot_multi(q1,q2);
+    float theta,beta,alpha;
+    int flag = 0;
+    if(cos_t<0)
+    {
+        cos_t = -cos_t;
+        flag =1;
+    }
+    theta = acosf(cos_t);
+    if ((1.0 - abs(cos_t)) < 1e-7)
+        beta = 1.0 - t;
+    else
+    {
+
+        beta = sinf(theta - t*theta)/sinf(theta);
+        alpha = sinf(t*theta)/sinf(theta);
+    }
+    if(flag ==1)
+        alpha = -alpha;
+
+    printf("slerp result is (%f,%f,%f,%f)\n\n",cos_t,theta,beta,t);
+
+    for(int i= 0; i<4;i++)
+    {
+        q_sample[i] = beta*q1[i] + alpha*q2[i];
+
+    }
+
+}
+
+void quaternions_to_angles(float Rot_current[], float q_sample[])
+{
+
+    float rot_x = atan2f(2*(q_sample[0]*q_sample[1]+q_sample[2]*q_sample[3]),1-2*(q_sample[1]*q_sample[1]+q_sample[2]*q_sample[2]));
+    float rot_y = asinf(2*(q_sample[0]*q_sample[2]-q_sample[3]*q_sample[1]));
+    float rot_z = atan2f(2*(q_sample[0]*q_sample[3]+q_sample[1]*q_sample[2]),1-2*(q_sample[2]*q_sample[2]+q_sample[3]*q_sample[3]));
+
+    Rot_current[0] = rot_x * (180.0/pi);  //if( Rot_current[0]<0)  Rot_current[0] = 360.0 - Rot_current[0];
+    Rot_current[1] = rot_y * (180.0/pi);  //if( Rot_current[1]<0)  Rot_current[1] = 360.0 - Rot_current[1];
+    Rot_current[2] = rot_z * (180.0/pi);  //if( Rot_current[2]<0)  Rot_current[2] = 360.0 - Rot_current[2];
+
+}
 
 
+float dot_multi(float q1[], float q2[])
+{
+    float result = 0;
 
+    for(int i= 0; i<4;i++)
+    {
+        result += q1[i] * q2[i];
 
+    }
 
-
-
+    return result;
+}
 
 
 
