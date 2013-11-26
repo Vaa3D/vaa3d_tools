@@ -384,7 +384,7 @@ void slerp_zhi(float q1[], float q2[],float t,float q_sample[])
         flag =1;
     }
     theta = acosf(cos_t);
-    if ((1.0 - abs(cos_t)) < 1e-7)
+    if ((1.0 - fabs(cos_t)) < 1e-7)
         beta = 1.0 - t;
     else
     {
