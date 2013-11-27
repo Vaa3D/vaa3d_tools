@@ -109,18 +109,18 @@ lookPanel::lookPanel(V3DPluginCallback2 &_v3d, QWidget *parent) :
 {
     QPushButton* Record     = new QPushButton("Record Anchor Points");
     QPushButton* Preview = new QPushButton("Preview");
-    QPushButton* Show = new QPushButton("Show Anchor Points");
-    QPushButton* Delete = new QPushButton("Delete");
+    QPushButton* Show = new QPushButton("Show Selected Anchor Point");
+    QPushButton* Delete = new QPushButton("Delete Selected Anchor Point");
     QPushButton* Upload = new QPushButton("Upload to Youtube");
-    QPushButton* Save = new QPushButton("Save All Anchor Points");
+    QPushButton* Save = new QPushButton("Save file");
     QPushButton* Load = new QPushButton("Load file");
 
     gridLayout = new QGridLayout();
     gridLayout->addWidget(Record, 1,0);
     gridLayout->addWidget(Preview,1,6);
     gridLayout->addWidget(Show,4,0);
-    gridLayout->addWidget(Delete,4,6);
-    gridLayout->addWidget(Save,5,0);
+    gridLayout->addWidget(Delete,5,0);
+    gridLayout->addWidget(Save,4,6);
     gridLayout->addWidget(Load,5,6);
     gridLayout->addWidget(Upload,6,0);
 
