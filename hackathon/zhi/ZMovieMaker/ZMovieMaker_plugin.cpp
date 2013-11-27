@@ -108,7 +108,7 @@ lookPanel::lookPanel(V3DPluginCallback2 &_v3d, QWidget *parent) :
     QDialog(parent), m_v3d(_v3d)
 {
     QPushButton* Record     = new QPushButton("Record Anchor Points");
-    QPushButton* Preview = new QPushButton("Preview");
+    QPushButton* Preview = new QPushButton("Preview and Save Movie");
     QPushButton* Show = new QPushButton("Show Selected Anchor Point");
     QPushButton* Delete = new QPushButton("Delete Selected Anchor Point");
     QPushButton* Upload = new QPushButton("Upload to Youtube");
@@ -167,6 +167,7 @@ void lookPanel::_slot_record()
     bool  channelB = view->channelB();
     bool  channelR = view->channelR();
     bool  channelG = view->channelG();
+
 
     listWidget->addItem(new QListWidgetItem(QString("%1,%2,%3,%4,%5,%6,%7,%8,%9,%10,%11,%12,%13,%14,%15,%16").arg(xRot).arg(yRot).arg(zRot).arg(xShift).arg(yShift).arg(zShift).arg(zoom).arg(xCut0).arg(xCut1).arg(yCut0).arg(yCut1).arg(zCut0).arg(zCut1).arg(channelR).arg(channelG).arg(channelB)));
     gridLayout->addWidget(listWidget,3,0);
@@ -255,12 +256,14 @@ void lookPanel::_slot_record()
             view->setChannelR(channelR_last);\
             view->setChannelG(channelG_last);\
             view->setChannelB(channelB_last);\
+            view->setShowSurfObjects(0);\
         }\
         else\
         {\
             view->setChannelR(channelR);\
             view->setChannelG(channelG);\
             view->setChannelB(channelB);\
+            view->setShowSurfObjects(2);\
         }\
         m_v3d.updateImageWindow(curwin);\
    }
