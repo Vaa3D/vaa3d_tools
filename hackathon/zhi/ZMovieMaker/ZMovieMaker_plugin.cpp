@@ -164,10 +164,11 @@ void lookPanel::_slot_record()
     float yCut1 = view->yCut1();
     float zCut0 = view->zCut0();
     float zCut1 = view->zCut1();
+    bool  channelB = view->channelB();
+    bool  channelR = view->channelR();
+    bool  channelG = view->channelG();
 
-
-
-    listWidget->addItem(new QListWidgetItem(QString("%1,%2,%3,%4,%5,%6,%7,%8,%9,%10,%11,%12,%13").arg(xRot).arg(yRot).arg(zRot).arg(xShift).arg(yShift).arg(zShift).arg(zoom).arg(xCut0).arg(xCut1).arg(yCut0).arg(yCut1).arg(zCut0).arg(zCut1)));
+    listWidget->addItem(new QListWidgetItem(QString("%1,%2,%3,%4,%5,%6,%7,%8,%9,%10,%11,%12,%13,%14,%15,%16").arg(xRot).arg(yRot).arg(zRot).arg(xShift).arg(yShift).arg(zShift).arg(zoom).arg(xCut0).arg(xCut1).arg(yCut0).arg(yCut1).arg(zCut0).arg(zCut1).arg(channelR).arg(channelG).arg(channelB)));
     gridLayout->addWidget(listWidget,3,0);
 }
 
@@ -185,6 +186,9 @@ void lookPanel::_slot_record()
         view->setYCut1(yCut1);\
         view->setZCut0(zCut0);\
         view->setZCut1(zCut1);\
+        view->setChannelR(channelR);\
+        view->setChannelG(channelG);\
+        view->setChannelB(channelB);\
         m_v3d.updateImageWindow(curwin);\
    }
 
@@ -203,6 +207,9 @@ void lookPanel::_slot_record()
         yCut1_last = yCut1;\
         zCut0_last = zCut0;\
         zCut1_last = zCut1;\
+        channelR_last = channelR;\
+        channelG_last = channelG;\
+        channelB_last = channelB;\
    }
 
 #define GET_PARA \
@@ -220,6 +227,9 @@ void lookPanel::_slot_record()
         yCut1 = currentParas.at(10).toFloat();\
         zCut0 = currentParas.at(11).toFloat();\
         zCut1 = currentParas.at(12).toFloat();\
+        channelR = currentParas.at(13).toInt();\
+        channelG = currentParas.at(14).toInt();\
+        channelB = currentParas.at(15).toInt();\
    }
 
 #define INTERPOLATION_PARA \
@@ -240,6 +250,18 @@ void lookPanel::_slot_record()
         view->setYCut1(yCut1_last + i*(yCut1-yCut1_last)/N);\
         view->setZCut0(zCut0_last + i*(zCut0-zCut0_last)/N);\
         view->setZCut1(zCut1_last + i*(zCut1-zCut1_last)/N);\
+        if((float)i/N < 0.5)\
+        {\
+            view->setChannelR(channelR_last);\
+            view->setChannelG(channelG_last);\
+            view->setChannelB(channelB_last);\
+        }\
+        else\
+        {\
+            view->setChannelR(channelR);\
+            view->setChannelG(channelG);\
+            view->setChannelB(channelB);\
+        }\
         m_v3d.updateImageWindow(curwin);\
    }
 
@@ -272,6 +294,7 @@ void lookPanel::_slot_preview()
     View3DControl *view = m_v3d.getView3DControl(curwin);
     m_v3d.open3DWindow(curwin);
     float xRot, yRot,zRot,xShift,yShift,zShift,zoom,xCut0,xCut1,yCut0,yCut1,zCut0,zCut1;
+    bool channelR,channelG,channelB,channelR_last,channelG_last,channelB_last;
     float xRot_last, yRot_last,zRot_last,xShift_last,yShift_last,zShift_last,zoom_last,xCut0_last,xCut1_last,yCut0_last,yCut1_last,zCut0_last,zCut1_last;
     float q1[4],q2[4],q_sample[4];
     float Rot_current[3];
@@ -281,7 +304,6 @@ void lookPanel::_slot_preview()
         QString currentPoint = listWidget->item(row)->text();
         QStringList currentParas = currentPoint.split(rx);
         GET_PARA
-
 
        if(row>0)
        {
@@ -362,6 +384,7 @@ void lookPanel::_slot_delete()
 void lookPanel::_slot_show()
 {
     float xRot, yRot,zRot,xShift,yShift,zShift,zoom,xCut0,xCut1,yCut0,yCut1,zCut0,zCut1;
+    bool channelR,channelG,channelB;
 
     if(listWidget->currentRow()==-1)
     {
@@ -421,7 +444,10 @@ void lookPanel::_slot_save()
         myfile << currentParas.at(9).toFloat();myfile << "  ";
         myfile << currentParas.at(10).toFloat();myfile << "  ";
         myfile << currentParas.at(11).toFloat();myfile << "  ";
-        myfile << currentParas.at(12).toFloat();
+        myfile << currentParas.at(12).toFloat();myfile << "  ";
+        myfile << currentParas.at(13).toFloat();myfile << "  ";
+        myfile << currentParas.at(14).toFloat();myfile << "  ";
+        myfile << currentParas.at(15).toFloat();
         myfile << "\n";
     }
     myfile.close();
@@ -445,11 +471,12 @@ void lookPanel::_slot_load()
        ifstream ifs(fileOpenName.toLatin1());
        string points;
        float xRot, yRot,zRot,xShift,yShift,zShift,zoom,xCut0,xCut1,yCut0,yCut1,zCut0,zCut1;
+       bool channelR,channelG,channelB;
        while(ifs && getline(ifs, points))
        {
          std::istringstream iss(points);
-         iss >> xRot >> yRot >> zRot >> xShift >> yShift >> zShift >> zoom >> xCut0 >> xCut1 >> yCut0 >> yCut1 >> zCut0 >> zCut1;
-         listWidget->addItem(new QListWidgetItem(QString("%1,%2,%3,%4,%5,%6,%7,%8,%9,%10,%11,%12,%13").arg(xRot).arg(yRot).arg(zRot).arg(xShift).arg(yShift).arg(zShift).arg(zoom).arg(xCut0).arg(xCut1).arg(yCut0).arg(yCut1).arg(zCut0).arg(zCut1)));
+         iss >> xRot >> yRot >> zRot >> xShift >> yShift >> zShift >> zoom >> xCut0 >> xCut1 >> yCut0 >> yCut1 >> zCut0 >> zCut1 >> channelR >> channelG >> channelB;
+         listWidget->addItem(new QListWidgetItem(QString("%1,%2,%3,%4,%5,%6,%7,%8,%9,%10,%11,%12,%13,%14,%15,%16").arg(xRot).arg(yRot).arg(zRot).arg(xShift).arg(yShift).arg(zShift).arg(zoom).arg(xCut0).arg(xCut1).arg(yCut0).arg(yCut1).arg(zCut0).arg(zCut1).arg(channelR).arg(channelG).arg(channelB)));
          gridLayout->addWidget(listWidget,3,0);
 
        }
