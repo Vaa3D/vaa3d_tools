@@ -318,6 +318,8 @@ void lookPanel::_slot_preview()
        else
        {
           SET_3DVIEW
+          view->setShowSurfObjects(0);\
+
        }
 
          UPDATE_PARA
@@ -352,6 +354,8 @@ void lookPanel::_slot_preview()
               else
               {
                   SET_3DVIEW
+                  view->setShowSurfObjects(0);\
+
                   SCREENSHOT_SAVEFRAMES
               }
 
