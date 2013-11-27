@@ -107,18 +107,22 @@ void MovieFromPoints(V3DPluginCallback2 &v3d, QWidget *parent)
 lookPanel::lookPanel(V3DPluginCallback2 &_v3d, QWidget *parent) :
     QDialog(parent), m_v3d(_v3d)
 {
-    QPushButton* Record     = new QPushButton("Record Points");
+    QPushButton* Record     = new QPushButton("Record Anchor Points");
     QPushButton* Preview = new QPushButton("Preview");
-    QPushButton* Show = new QPushButton("Show Points");
+    QPushButton* Show = new QPushButton("Show Anchor Points");
     QPushButton* Delete = new QPushButton("Delete");
     QPushButton* Upload = new QPushButton("Upload to Youtube");
+    QPushButton* Save = new QPushButton("Save All Anchor Points");
+    QPushButton* Load = new QPushButton("Load file");
 
     gridLayout = new QGridLayout();
     gridLayout->addWidget(Record, 1,0);
     gridLayout->addWidget(Preview,1,6);
     gridLayout->addWidget(Show,4,0);
     gridLayout->addWidget(Delete,4,6);
-    gridLayout->addWidget(Upload,5,0);
+    gridLayout->addWidget(Save,5,0);
+    gridLayout->addWidget(Load,5,6);
+    gridLayout->addWidget(Upload,6,0);
 
     listWidget = new QListWidget();
     gridLayout->addWidget(listWidget,3,0);
@@ -130,12 +134,13 @@ lookPanel::lookPanel(V3DPluginCallback2 &_v3d, QWidget *parent) :
     connect(Delete, SIGNAL(clicked()), this, SLOT(_slot_delete()));
     connect(Record,     SIGNAL(clicked()), this, SLOT(_slot_record()));
     connect(Preview, SIGNAL(clicked()), this, SLOT(_slot_preview()));
+    connect(Save, SIGNAL(clicked()), this, SLOT(_slot_save()));
+    connect(Load, SIGNAL(clicked()), this, SLOT(_slot_load()));
     connect(Upload, SIGNAL(clicked()), this, SLOT(_slot_upload()));
 }
 
 lookPanel::~lookPanel()
 {
-    remove("/tmp/points.txt");
     panel=0;
 }
 
@@ -149,50 +154,23 @@ void lookPanel::_slot_record()
     float xRot = view->xRot();
     float yRot = view->yRot();
     float zRot = view->zRot();
-
-    float q[4];
-
     float xShift = view->xShift();
     float yShift = view->yShift();
     float zShift = view->zShift();
     float zoom = view->zoom();
 
 
-    listWidget->addItem(new QListWidgetItem(QString("Anchor point (%1,%2,%3,%4,%5,%6,%7)").arg(xRot).arg(yRot).arg(zRot).arg(xShift).arg(yShift).arg(zShift).arg(zoom)));
+    listWidget->addItem(new QListWidgetItem(QString("%1,%2,%3,%4,%5,%6,%7").arg(xRot).arg(yRot).arg(zRot).arg(xShift).arg(yShift).arg(zShift).arg(zoom)));
     gridLayout->addWidget(listWidget,3,0);
-
-
-    angles_to_quaternions(q, xRot, yRot, zRot);
-//    printf("unit quaternion is (%f,%f,%f,%f,%f)\n\n",q[0],q[1],q[2],q[3],q[0]*q[0]+q[1]*q[1]+q[2]*q[2]+q[3]*q[3]);
-
-
-    ofstream myfile;
-    myfile.open ("/tmp/points.txt",ios::out | ios::app );
-    myfile << xRot;myfile << "  ";
-    myfile << yRot;myfile << "  ";
-    myfile << zRot;myfile << "  ";
-    myfile << xShift;myfile << "  ";
-    myfile << yShift;myfile << "  ";
-    myfile << zShift;myfile << "  ";
-    myfile << zoom;
-    myfile << "\n";
-    myfile.close();
-
-  //  printf("paras (xrot,yrot,zrot,xshift,yshift,zshift,zoom) are (%f,%f,%f,%d,%d,%d,%d)\n",xRot,yRot,zRot,xShift,yShift,zShift,zoom);
-
 }
 
 void lookPanel::_slot_preview()
 {
-
-    ifstream ifs("/tmp/points.txt");
-    if(!ifs)
+    if(!listWidget->count())
     {
         v3d_msg("Please define at least one archor point.");
         return;
     }
-
-    string points;
 
     bool rate;
     int  N;
@@ -209,41 +187,36 @@ void lookPanel::_slot_preview()
     m_v3d.open3DWindow(curwin);
     float xRot, yRot,zRot,xShift,yShift,zShift,zoom;
     float xRot_last, yRot_last,zRot_last,xShift_last,yShift_last,zShift_last,zoom_last;
-    float count =0;
     float q1[4],q2[4],q_sample[4];
     float Rot_current[3];
-
-   while(ifs && getline(ifs, points))
-   {
-       std::istringstream iss(points);
-
-       iss >> xRot >> yRot >> zRot >> xShift >> yShift >> zShift >> zoom;
-     //  printf("paras (xrot,yrot,zrot,xshift,yshift,zshift,zoom) are (%d,%d,%d,%d,%d,%d,%d)\n",xRot,yRot,zRot,xShift,yShift,zShift,zoom);
-       if(count>0)
+    QRegExp rx("(\\ |\\,|\\.|\\:|\\t)");
+    for(int row = 0; row < listWidget->count(); row++)
+    {
+        QString currentPoint = listWidget->item(row)->text();
+        QStringList currentParas = currentPoint.split(rx);
+        xRot = currentParas.at(0).toFloat();
+        yRot = currentParas.at(1).toFloat();
+        zRot = currentParas.at(2).toFloat();
+        xShift = currentParas.at(3).toFloat();
+        yShift = currentParas.at(4).toFloat();
+        zShift = currentParas.at(5).toFloat();
+        zoom = currentParas.at(6).toFloat();
+       if(row>0)
        {
-
            for (int i =1; i<N+1;i++)
            {
                view->resetRotation();
-             //  view->doAbsoluteRot(xRot_last+ i*(xRot-xRot_last)/N,yRot_last+i*(yRot-yRot_last)/N,zRot_last+i*(zRot-zRot_last)/N);
-
                angles_to_quaternions(q1,xRot_last,yRot_last,zRot_last);
                angles_to_quaternions(q2,xRot,yRot,zRot);
                slerp_zhi(q1, q2,(float)i/N,q_sample);
                quaternions_to_angles(Rot_current,q_sample);
 
-              // printf("unit quaternion q1 is (%f,%f,%f)\n",q1[0],q1[1],q1[2]);
-            //   printf("unit quaternion q2 is (%f,%f,%f)\n\n",q2[0],q2[1],q2[2]);
                view->doAbsoluteRot(Rot_current[0],Rot_current[1],Rot_current[2]);
-
                view->setXShift(xShift_last + i*(xShift-xShift_last)/N);
                view->setYShift(yShift_last + i*(yShift-yShift_last)/N);
                view->setZShift(zShift_last + i*(zShift-zShift_last)/N);
                view->setZoom(zoom_last + i*(zoom-zoom_last)/N);
                m_v3d.updateImageWindow(curwin);
-
-
-            //   usleep(100000);
            }
        }
        else
@@ -255,7 +228,6 @@ void lookPanel::_slot_preview()
            view->setZShift(zShift);
            view->setZoom(zoom);
            m_v3d.updateImageWindow(curwin);
-          // usleep(100000);
        }
 
        xRot_last = xRot;
@@ -265,8 +237,8 @@ void lookPanel::_slot_preview()
        yShift_last = yShift;
        zShift_last = zShift;
        zoom_last = zoom;
-       count++;
    }
+
 }
 
 void lookPanel::_slot_delete()
@@ -276,32 +248,6 @@ void lookPanel::_slot_delete()
         v3d_msg("Please select a valid archor point.");
         return;
     }
-
-    ifstream ifs;
-    ifs.open("/tmp/points.txt");
-
-    ofstream temp;
-    string line;
-    int count =0;
-    temp.open("/tmp/points_tmp.txt");
-    while (getline(ifs,line))
-    {
-        if (count != listWidget->currentRow())
-        {
-           temp << line << endl;
-        }
-        count++;
-    }
-
-    printf("the current row is %d\n\n",count);
-
-    temp.close();
-    ifs.close();
-    remove("/tmp/points.txt");
-    if(count == 1)
-       remove("/tmp/points_tmp.txt");
-    else
-       rename("/tmp/points_tmp.txt","/tmp/points.txt");
 
     listWidget->takeItem(listWidget->currentRow());
     curwin = m_v3d.currentImageWindow();
@@ -315,26 +261,25 @@ void lookPanel::_slot_delete()
 
 void lookPanel::_slot_show()
 {
+    float xRot, yRot,zRot,xShift,yShift,zShift,zoom;
+
     if(listWidget->currentRow()==-1)
     {
         v3d_msg("Please select a valid archor point.");
         return;
     }
-    ifstream ifs("/tmp/points.txt");
-    string points;
-    int count = 0;
-    float xRot, yRot,zRot,xShift,yShift,zShift,zoom;
-    while(getline(ifs, points))
-    {
-        if(count == listWidget->currentRow())
-        {
-          std::istringstream iss(points);
-          iss >> xRot >> yRot >> zRot >> xShift >> yShift >> zShift >> zoom;
-          break;
-        }
-        count++;
 
-    }
+    QString currentPoint = listWidget->currentItem()->text();
+    QRegExp rx("(\\ |\\,|\\.|\\:|\\t)");
+    QStringList currentParas = currentPoint.split(rx);
+    xRot = currentParas.at(0).toFloat();
+    yRot = currentParas.at(1).toFloat();
+    zRot = currentParas.at(2).toFloat();
+    xShift = currentParas.at(3).toFloat();
+    yShift = currentParas.at(4).toFloat();
+    zShift = currentParas.at(5).toFloat();
+    zoom = currentParas.at(6).toFloat();
+
     curwin = m_v3d.currentImageWindow();
     m_v3d.open3DWindow(curwin);
     View3DControl *view = m_v3d.getView3DControl(curwin);
@@ -355,7 +300,68 @@ void lookPanel::_slot_upload()
     v3d_msg("To be implemented!");
 }
 
+void lookPanel::_slot_save()
+{
+    if(!listWidget->count())
+    {
+        v3d_msg("Please define at least one archor point.");
+        return;
+    }
 
+    QFileDialog d(this);
+    d.setWindowTitle(QObject::tr("Choose output anchor point filename"));
+    d.setAcceptMode(QFileDialog::AcceptSave);
+    if (!d.exec()) return;
+    QString textfilename = (d.selectedFiles())[0] + ".txt";
+    v3d_msg(textfilename);
+    ofstream myfile;
+    myfile.open (textfilename.toLatin1(),ios::out | ios::app );
+    QRegExp rx("(\\ |\\,|\\.|\\:|\\t)");
+    for(int row = 0; row < listWidget->count(); row++)
+    {
+        QString currentPoint = listWidget->item(row)->text();
+        QStringList currentParas = currentPoint.split(rx);
+        myfile << currentParas.at(0).toFloat();myfile << "  ";
+        myfile << currentParas.at(1).toFloat();myfile << "  ";
+        myfile << currentParas.at(2).toFloat();myfile << "  ";
+        myfile << currentParas.at(3).toFloat();myfile << "  ";
+        myfile << currentParas.at(4).toFloat();myfile << "  ";
+        myfile << currentParas.at(5).toFloat();myfile << "  ";
+        myfile << currentParas.at(6).toFloat();
+        myfile << "\n";
+    }
+    myfile.close();
+
+}
+
+void lookPanel::_slot_load()
+{
+    QString fileOpenName = QFileDialog::getOpenFileName(this, QObject::tr("Open File"),
+            "",
+            QObject::tr("Supported file (*.txt)"
+                ));
+    if(fileOpenName.isEmpty())
+    {
+        return;
+    }
+
+    if (fileOpenName.size()>0)
+    {
+       listWidget->clear();
+       ifstream ifs(fileOpenName.toLatin1());
+       string points;
+       float xRot, yRot,zRot,xShift,yShift,zShift,zoom;
+       while(ifs && getline(ifs, points))
+       {
+         std::istringstream iss(points);
+         iss >> xRot >> yRot >> zRot >> xShift >> yShift >> zShift >> zoom;
+         listWidget->addItem(new QListWidgetItem(QString("%1,%2,%3,%4,%5,%6,%7").arg(xRot).arg(yRot).arg(zRot).arg(xShift).arg(yShift).arg(zShift).arg(zoom)));
+         gridLayout->addWidget(listWidget,3,0);
+
+       }
+    }
+    return;
+}
 
 void angles_to_quaternions(float q[], float xRot, float yRot,float zRot)
 {
@@ -384,8 +390,11 @@ void slerp_zhi(float q1[], float q2[],float t,float q_sample[])
         flag =1;
     }
     theta = acosf(cos_t);
-    if ((1.0 - fabs(cos_t)) < 1e-7)
+    if ((1.0 - fabsf(cos_t)) < 1e-7)
+    {
         beta = 1.0 - t;
+        alpha = t;
+    }
     else
     {
 
@@ -395,7 +404,7 @@ void slerp_zhi(float q1[], float q2[],float t,float q_sample[])
     if(flag ==1)
         alpha = -alpha;
 
-    printf("slerp result is (%f,%f,%f,%f)\n\n",cos_t,theta,beta,t);
+    printf("slerp result is (%f,%f,%f,%f,%f)\n\n",cos_t,theta,beta,alpha,t);
 
     for(int i= 0; i<4;i++)
     {

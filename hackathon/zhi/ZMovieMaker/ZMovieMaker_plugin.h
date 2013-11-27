@@ -46,6 +46,8 @@ private slots:
     void _slot_show();
     void _slot_delete();
     void _slot_upload();
+    void _slot_save();
+    void _slot_load();
 };
 
 #endif
