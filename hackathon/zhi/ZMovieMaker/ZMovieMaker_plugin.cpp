@@ -158,11 +158,97 @@ void lookPanel::_slot_record()
     float yShift = view->yShift();
     float zShift = view->zShift();
     float zoom = view->zoom();
+    float xCut0 = view->xCut0();
+    float xCut1 = view->xCut1();
+    float yCut0 = view->yCut0();
+    float yCut1 = view->yCut1();
+    float zCut0 = view->zCut0();
+    float zCut1 = view->zCut1();
 
 
-    listWidget->addItem(new QListWidgetItem(QString("%1,%2,%3,%4,%5,%6,%7").arg(xRot).arg(yRot).arg(zRot).arg(xShift).arg(yShift).arg(zShift).arg(zoom)));
+
+    listWidget->addItem(new QListWidgetItem(QString("%1,%2,%3,%4,%5,%6,%7,%8,%9,%10,%11,%12,%13").arg(xRot).arg(yRot).arg(zRot).arg(xShift).arg(yShift).arg(zShift).arg(zoom).arg(xCut0).arg(xCut1).arg(yCut0).arg(yCut1).arg(zCut0).arg(zCut1)));
     gridLayout->addWidget(listWidget,3,0);
 }
+
+#define SET_3DVIEW \
+    { \
+        view->resetRotation();\
+        view->doAbsoluteRot(xRot,yRot,zRot);\
+        view->setXShift(xShift);\
+        view->setYShift(yShift);\
+        view->setZShift(zShift);\
+        view->setZoom(zoom);\
+        view->setXCut0(xCut0);\
+        view->setXCut1(xCut1);\
+        view->setYCut0(yCut0);\
+        view->setYCut1(yCut1);\
+        view->setZCut0(zCut0);\
+        view->setZCut1(zCut1);\
+        m_v3d.updateImageWindow(curwin);\
+   }
+
+#define UPDATE_PARA \
+    { \
+        xRot_last = xRot;\
+        yRot_last = yRot;\
+        zRot_last = zRot;\
+        xShift_last = xShift;\
+        yShift_last = yShift;\
+        zShift_last = zShift;\
+        zoom_last = zoom;\
+        xCut0_last = xCut0;\
+        xCut1_last = xCut1;\
+        yCut0_last = yCut0;\
+        yCut1_last = yCut1;\
+        zCut0_last = zCut0;\
+        zCut1_last = zCut1;\
+   }
+
+#define GET_PARA \
+    { \
+        xRot = currentParas.at(0).toFloat();\
+        yRot = currentParas.at(1).toFloat();\
+        zRot = currentParas.at(2).toFloat();\
+        xShift = currentParas.at(3).toFloat();\
+        yShift = currentParas.at(4).toFloat();\
+        zShift = currentParas.at(5).toFloat();\
+        zoom = currentParas.at(6).toFloat();\
+        xCut0 = currentParas.at(7).toFloat();\
+        xCut1 = currentParas.at(8).toFloat();\
+        yCut0 = currentParas.at(9).toFloat();\
+        yCut1 = currentParas.at(10).toFloat();\
+        zCut0 = currentParas.at(11).toFloat();\
+        zCut1 = currentParas.at(12).toFloat();\
+   }
+
+#define INTERPOLATION_PARA \
+    { \
+        view->resetRotation();\
+        angles_to_quaternions(q1,xRot_last,yRot_last,zRot_last);\
+        angles_to_quaternions(q2,xRot,yRot,zRot);\
+        slerp_zhi(q1, q2,(float)i/N,q_sample);\
+        quaternions_to_angles(Rot_current,q_sample);\
+        view->doAbsoluteRot(Rot_current[0],Rot_current[1],Rot_current[2]);\
+        view->setXShift(xShift_last + i*(xShift-xShift_last)/N);\
+        view->setYShift(yShift_last + i*(yShift-yShift_last)/N);\
+        view->setZShift(zShift_last + i*(zShift-zShift_last)/N);\
+        view->setZoom(zoom_last + i*(zoom-zoom_last)/N);\
+        view->setXCut0(xCut0_last + i*(xCut0-xCut0_last)/N);\
+        view->setXCut1(xCut1_last + i*(xCut1-xCut1_last)/N);\
+        view->setYCut0(yCut0_last + i*(yCut0-yCut0_last)/N);\
+        view->setYCut1(yCut1_last + i*(yCut1-yCut1_last)/N);\
+        view->setZCut0(zCut0_last + i*(zCut0-zCut0_last)/N);\
+        view->setZCut1(zCut1_last + i*(zCut1-zCut1_last)/N);\
+        m_v3d.updateImageWindow(curwin);\
+   }
+
+#define SCREENSHOT_SAVEFRAMES \
+    { \
+        QString BMPfilename = selectedFile + QString("/%1").arg(framenum);\
+        m_v3d.screenShot3DWindow(curwin, BMPfilename);\
+        framenum++;\
+    }
 
 void lookPanel::_slot_preview()
 {
@@ -185,8 +271,8 @@ void lookPanel::_slot_preview()
     m_v3d.open3DWindow(curwin);
     View3DControl *view = m_v3d.getView3DControl(curwin);
     m_v3d.open3DWindow(curwin);
-    float xRot, yRot,zRot,xShift,yShift,zShift,zoom;
-    float xRot_last, yRot_last,zRot_last,xShift_last,yShift_last,zShift_last,zoom_last;
+    float xRot, yRot,zRot,xShift,yShift,zShift,zoom,xCut0,xCut1,yCut0,yCut1,zCut0,zCut1;
+    float xRot_last, yRot_last,zRot_last,xShift_last,yShift_last,zShift_last,zoom_last,xCut0_last,xCut1_last,yCut0_last,yCut1_last,zCut0_last,zCut1_last;
     float q1[4],q2[4],q_sample[4];
     float Rot_current[3];
     QRegExp rx("(\\ |\\,|\\.|\\:|\\t)");
@@ -194,50 +280,64 @@ void lookPanel::_slot_preview()
     {
         QString currentPoint = listWidget->item(row)->text();
         QStringList currentParas = currentPoint.split(rx);
-        xRot = currentParas.at(0).toFloat();
-        yRot = currentParas.at(1).toFloat();
-        zRot = currentParas.at(2).toFloat();
-        xShift = currentParas.at(3).toFloat();
-        yShift = currentParas.at(4).toFloat();
-        zShift = currentParas.at(5).toFloat();
-        zoom = currentParas.at(6).toFloat();
+        GET_PARA
+
+
        if(row>0)
        {
            for (int i =1; i<N+1;i++)
            {
-               view->resetRotation();
-               angles_to_quaternions(q1,xRot_last,yRot_last,zRot_last);
-               angles_to_quaternions(q2,xRot,yRot,zRot);
-               slerp_zhi(q1, q2,(float)i/N,q_sample);
-               quaternions_to_angles(Rot_current,q_sample);
-
-               view->doAbsoluteRot(Rot_current[0],Rot_current[1],Rot_current[2]);
-               view->setXShift(xShift_last + i*(xShift-xShift_last)/N);
-               view->setYShift(yShift_last + i*(yShift-yShift_last)/N);
-               view->setZShift(zShift_last + i*(zShift-zShift_last)/N);
-               view->setZoom(zoom_last + i*(zoom-zoom_last)/N);
-               m_v3d.updateImageWindow(curwin);
+               INTERPOLATION_PARA
            }
        }
        else
        {
-           view->resetRotation();
-           view->doAbsoluteRot(xRot,yRot,zRot);
-           view->setXShift(xShift);
-           view->setYShift(yShift);
-           view->setZShift(zShift);
-           view->setZoom(zoom);
-           m_v3d.updateImageWindow(curwin);
+          SET_3DVIEW
        }
 
-       xRot_last = xRot;
-       yRot_last = yRot;
-       zRot_last = zRot;
-       xShift_last = xShift;
-       yShift_last = yShift;
-       zShift_last = zShift;
-       zoom_last = zoom;
+         UPDATE_PARA
    }
+
+   if(QMessageBox::Yes == QMessageBox::question (0, "", QString("Save as movie frames?"), QMessageBox::Yes, QMessageBox::No))
+   {
+
+       QFileDialog d(this);
+       d.setWindowTitle(tr("Choose output dir:"));
+       d.setFileMode(QFileDialog::Directory);
+       if(d.exec())
+       {
+           QString selectedFile=(d.selectedFiles())[0];
+           int framenum =0;
+           for(int row = 0; row < listWidget->count(); row++)
+           {
+               QString currentPoint = listWidget->item(row)->text();
+               QStringList currentParas = currentPoint.split(rx);
+               GET_PARA
+
+
+
+              if(row>0)
+              {
+                  for (int i =1; i<N+1;i++)
+                  {
+                      INTERPOLATION_PARA
+                      SCREENSHOT_SAVEFRAMES
+                  }
+              }
+              else
+              {
+                  SET_3DVIEW
+                  SCREENSHOT_SAVEFRAMES
+              }
+
+                 UPDATE_PARA
+
+          }
+
+       }
+   }
+   else
+       return;
 
 }
 
@@ -261,7 +361,7 @@ void lookPanel::_slot_delete()
 
 void lookPanel::_slot_show()
 {
-    float xRot, yRot,zRot,xShift,yShift,zShift,zoom;
+    float xRot, yRot,zRot,xShift,yShift,zShift,zoom,xCut0,xCut1,yCut0,yCut1,zCut0,zCut1;
 
     if(listWidget->currentRow()==-1)
     {
@@ -272,26 +372,14 @@ void lookPanel::_slot_show()
     QString currentPoint = listWidget->currentItem()->text();
     QRegExp rx("(\\ |\\,|\\.|\\:|\\t)");
     QStringList currentParas = currentPoint.split(rx);
-    xRot = currentParas.at(0).toFloat();
-    yRot = currentParas.at(1).toFloat();
-    zRot = currentParas.at(2).toFloat();
-    xShift = currentParas.at(3).toFloat();
-    yShift = currentParas.at(4).toFloat();
-    zShift = currentParas.at(5).toFloat();
-    zoom = currentParas.at(6).toFloat();
+    GET_PARA
 
     curwin = m_v3d.currentImageWindow();
     m_v3d.open3DWindow(curwin);
     View3DControl *view = m_v3d.getView3DControl(curwin);
     m_v3d.open3DWindow(curwin);
 
-    view->resetRotation();
-    view->doAbsoluteRot(xRot,yRot,zRot);
-    view->setXShift(xShift);
-    view->setYShift(yShift);
-    view->setZShift(zShift);
-    view->setZoom(zoom);
-    m_v3d.updateImageWindow(curwin);
+    SET_3DVIEW
 
 }
 
@@ -327,7 +415,13 @@ void lookPanel::_slot_save()
         myfile << currentParas.at(3).toFloat();myfile << "  ";
         myfile << currentParas.at(4).toFloat();myfile << "  ";
         myfile << currentParas.at(5).toFloat();myfile << "  ";
-        myfile << currentParas.at(6).toFloat();
+        myfile << currentParas.at(6).toFloat();myfile << "  ";
+        myfile << currentParas.at(7).toFloat();myfile << "  ";
+        myfile << currentParas.at(8).toFloat();myfile << "  ";
+        myfile << currentParas.at(9).toFloat();myfile << "  ";
+        myfile << currentParas.at(10).toFloat();myfile << "  ";
+        myfile << currentParas.at(11).toFloat();myfile << "  ";
+        myfile << currentParas.at(12).toFloat();
         myfile << "\n";
     }
     myfile.close();
@@ -350,12 +444,12 @@ void lookPanel::_slot_load()
        listWidget->clear();
        ifstream ifs(fileOpenName.toLatin1());
        string points;
-       float xRot, yRot,zRot,xShift,yShift,zShift,zoom;
+       float xRot, yRot,zRot,xShift,yShift,zShift,zoom,xCut0,xCut1,yCut0,yCut1,zCut0,zCut1;
        while(ifs && getline(ifs, points))
        {
          std::istringstream iss(points);
-         iss >> xRot >> yRot >> zRot >> xShift >> yShift >> zShift >> zoom;
-         listWidget->addItem(new QListWidgetItem(QString("%1,%2,%3,%4,%5,%6,%7").arg(xRot).arg(yRot).arg(zRot).arg(xShift).arg(yShift).arg(zShift).arg(zoom)));
+         iss >> xRot >> yRot >> zRot >> xShift >> yShift >> zShift >> zoom >> xCut0 >> xCut1 >> yCut0 >> yCut1 >> zCut0 >> zCut1;
+         listWidget->addItem(new QListWidgetItem(QString("%1,%2,%3,%4,%5,%6,%7,%8,%9,%10,%11,%12,%13").arg(xRot).arg(yRot).arg(zRot).arg(xShift).arg(yShift).arg(zShift).arg(zoom).arg(xCut0).arg(xCut1).arg(yCut0).arg(yCut1).arg(zCut0).arg(zCut1)));
          gridLayout->addWidget(listWidget,3,0);
 
        }
