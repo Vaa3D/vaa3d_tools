@@ -167,10 +167,16 @@ void lookPanel::_slot_record()
     bool  channelB = view->channelB();
     bool  channelR = view->channelR();
     bool  channelG = view->channelG();
+    int   showSurf = 0;
+    if(m_v3d.getSWC(curwin).listNeuron.count()>0 && view->isShowSurfObjects() ==2)
+        showSurf = 2;
 
 
-    listWidget->addItem(new QListWidgetItem(QString("%1,%2,%3,%4,%5,%6,%7,%8,%9,%10,%11,%12,%13,%14,%15,%16").arg(xRot).arg(yRot).arg(zRot).arg(xShift).arg(yShift).arg(zShift).arg(zoom).arg(xCut0).arg(xCut1).arg(yCut0).arg(yCut1).arg(zCut0).arg(zCut1).arg(channelR).arg(channelG).arg(channelB)));
+    listWidget->addItem(new QListWidgetItem(QString("%1,%2,%3,%4,%5,%6,%7,%8,%9,%10,%11,%12,%13,%14,%15,%16,%17").arg(xRot).arg(yRot).arg(zRot).arg(xShift).arg(yShift).arg(zShift).arg(zoom).arg(xCut0).arg(xCut1).arg(yCut0).arg(yCut1).arg(zCut0).arg(zCut1).arg(channelR).arg(channelG).arg(channelB).arg(showSurf)));
     gridLayout->addWidget(listWidget,3,0);
+  //  NeuronTree nt = m_v3d.getSWC(curwin);
+  //  printf("\n\nsurface number is %d,%d\n\n", nt.listNeuron.count(),view->isShowSurfObjects());
+
 }
 
 #define SET_3DVIEW \
@@ -190,6 +196,7 @@ void lookPanel::_slot_record()
         view->setChannelR(channelR);\
         view->setChannelG(channelG);\
         view->setChannelB(channelB);\
+        view->setShowSurfObjects(showSurf);\
         m_v3d.updateImageWindow(curwin);\
    }
 
@@ -211,6 +218,7 @@ void lookPanel::_slot_record()
         channelR_last = channelR;\
         channelG_last = channelG;\
         channelB_last = channelB;\
+        showSurf_last = showSurf;\
    }
 
 #define GET_PARA \
@@ -231,6 +239,7 @@ void lookPanel::_slot_record()
         channelR = currentParas.at(13).toInt();\
         channelG = currentParas.at(14).toInt();\
         channelB = currentParas.at(15).toInt();\
+        showSurf = currentParas.at(16).toInt();\
    }
 
 #define INTERPOLATION_PARA \
@@ -256,14 +265,14 @@ void lookPanel::_slot_record()
             view->setChannelR(channelR_last);\
             view->setChannelG(channelG_last);\
             view->setChannelB(channelB_last);\
-            view->setShowSurfObjects(0);\
+            view->setShowSurfObjects(showSurf_last);\
         }\
         else\
         {\
             view->setChannelR(channelR);\
             view->setChannelG(channelG);\
             view->setChannelB(channelB);\
-            view->setShowSurfObjects(2);\
+            view->setShowSurfObjects(showSurf);\
         }\
         m_v3d.updateImageWindow(curwin);\
    }
@@ -297,8 +306,11 @@ void lookPanel::_slot_preview()
     View3DControl *view = m_v3d.getView3DControl(curwin);
     m_v3d.open3DWindow(curwin);
     float xRot, yRot,zRot,xShift,yShift,zShift,zoom,xCut0,xCut1,yCut0,yCut1,zCut0,zCut1;
+    int showSurf,showSurf_last;
     bool channelR,channelG,channelB,channelR_last,channelG_last,channelB_last;
     float xRot_last, yRot_last,zRot_last,xShift_last,yShift_last,zShift_last,zoom_last,xCut0_last,xCut1_last,yCut0_last,yCut1_last,zCut0_last,zCut1_last;
+
+
     float q1[4],q2[4],q_sample[4];
     float Rot_current[3];
     QRegExp rx("(\\ |\\,|\\.|\\:|\\t)");
@@ -318,7 +330,6 @@ void lookPanel::_slot_preview()
        else
        {
           SET_3DVIEW
-          view->setShowSurfObjects(0);\
 
        }
 
@@ -341,8 +352,6 @@ void lookPanel::_slot_preview()
                QStringList currentParas = currentPoint.split(rx);
                GET_PARA
 
-
-
               if(row>0)
               {
                   for (int i =1; i<N+1;i++)
@@ -354,8 +363,6 @@ void lookPanel::_slot_preview()
               else
               {
                   SET_3DVIEW
-                  view->setShowSurfObjects(0);\
-
                   SCREENSHOT_SAVEFRAMES
               }
 
@@ -392,6 +399,7 @@ void lookPanel::_slot_show()
 {
     float xRot, yRot,zRot,xShift,yShift,zShift,zoom,xCut0,xCut1,yCut0,yCut1,zCut0,zCut1;
     bool channelR,channelG,channelB;
+    int showSurf;
 
     if(listWidget->currentRow()==-1)
     {
@@ -404,10 +412,12 @@ void lookPanel::_slot_show()
     QStringList currentParas = currentPoint.split(rx);
     GET_PARA
 
+
     curwin = m_v3d.currentImageWindow();
     m_v3d.open3DWindow(curwin);
     View3DControl *view = m_v3d.getView3DControl(curwin);
     m_v3d.open3DWindow(curwin);
+
 
     SET_3DVIEW
 
@@ -454,7 +464,8 @@ void lookPanel::_slot_save()
         myfile << currentParas.at(12).toFloat();myfile << "  ";
         myfile << currentParas.at(13).toFloat();myfile << "  ";
         myfile << currentParas.at(14).toFloat();myfile << "  ";
-        myfile << currentParas.at(15).toFloat();
+        myfile << currentParas.at(15).toFloat();myfile << "  ";
+        myfile << currentParas.at(16).toFloat();
         myfile << "\n";
     }
     myfile.close();
@@ -479,11 +490,12 @@ void lookPanel::_slot_load()
        string points;
        float xRot, yRot,zRot,xShift,yShift,zShift,zoom,xCut0,xCut1,yCut0,yCut1,zCut0,zCut1;
        bool channelR,channelG,channelB;
+       int showSurf;
        while(ifs && getline(ifs, points))
        {
          std::istringstream iss(points);
-         iss >> xRot >> yRot >> zRot >> xShift >> yShift >> zShift >> zoom >> xCut0 >> xCut1 >> yCut0 >> yCut1 >> zCut0 >> zCut1 >> channelR >> channelG >> channelB;
-         listWidget->addItem(new QListWidgetItem(QString("%1,%2,%3,%4,%5,%6,%7,%8,%9,%10,%11,%12,%13,%14,%15,%16").arg(xRot).arg(yRot).arg(zRot).arg(xShift).arg(yShift).arg(zShift).arg(zoom).arg(xCut0).arg(xCut1).arg(yCut0).arg(yCut1).arg(zCut0).arg(zCut1).arg(channelR).arg(channelG).arg(channelB)));
+         iss >> xRot >> yRot >> zRot >> xShift >> yShift >> zShift >> zoom >> xCut0 >> xCut1 >> yCut0 >> yCut1 >> zCut0 >> zCut1 >> channelR >> channelG >> channelB >> showSurf;
+         listWidget->addItem(new QListWidgetItem(QString("%1,%2,%3,%4,%5,%6,%7,%8,%9,%10,%11,%12,%13,%14,%15,%16").arg(xRot).arg(yRot).arg(zRot).arg(xShift).arg(yShift).arg(zShift).arg(zoom).arg(xCut0).arg(xCut1).arg(yCut0).arg(yCut1).arg(zCut0).arg(zCut1).arg(channelR).arg(channelG).arg(channelB).arg(showSurf)));
          gridLayout->addWidget(listWidget,3,0);
 
        }
