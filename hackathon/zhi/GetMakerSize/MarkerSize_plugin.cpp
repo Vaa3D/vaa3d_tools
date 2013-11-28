@@ -40,7 +40,7 @@ void MarkerSize::domenu(const QString &menu_name, V3DPluginCallback2 &callback, 
 	else
 	{
 		v3d_msg(tr("This is a test plugin, you can use it as a demo.. "
-			"Developed by Zhi ZHou, 2013-08-26"));
+            "Developed by Zhi Zhou, 2013-08-26"));
 	}
 }
 
