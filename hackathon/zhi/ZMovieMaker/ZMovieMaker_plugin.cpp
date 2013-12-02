@@ -149,7 +149,6 @@ void lookPanel::_slot_record()
     curwin = m_v3d.currentImageWindow();
     m_v3d.open3DWindow(curwin);
     View3DControl *view = m_v3d.getView3DControl(curwin);
-    m_v3d.open3DWindow(curwin);
     view->absoluteRotPose();
     float xRot = view->xRot();
     float yRot = view->yRot();
@@ -335,7 +334,6 @@ void lookPanel::_slot_preview()
     curwin = m_v3d.currentImageWindow();
     m_v3d.open3DWindow(curwin);
     View3DControl *view = m_v3d.getView3DControl(curwin);
-    m_v3d.open3DWindow(curwin);
     float xRot, yRot,zRot,xShift,yShift,zShift,zoom,xCut0,xCut1,yCut0,yCut1,zCut0,zCut1;
     int showSurf,showSurf_last;
     bool channelR,channelG,channelB,channelR_last,channelG_last,channelB_last;
@@ -421,7 +419,6 @@ void lookPanel::_slot_delete()
     curwin = m_v3d.currentImageWindow();
     m_v3d.open3DWindow(curwin);
     View3DControl *view = m_v3d.getView3DControl(curwin);
-    m_v3d.open3DWindow(curwin);
     view->resetRotation();
     view->resetZoomShift();
     m_v3d.updateImageWindow(curwin);
@@ -449,7 +446,6 @@ void lookPanel::_slot_show()
     curwin = m_v3d.currentImageWindow();
     m_v3d.open3DWindow(curwin);
     View3DControl *view = m_v3d.getView3DControl(curwin);
-    m_v3d.open3DWindow(curwin);
 
     SET_3DVIEW
 
