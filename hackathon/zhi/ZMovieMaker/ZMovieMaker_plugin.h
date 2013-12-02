@@ -37,9 +37,10 @@ public:
     QGridLayout *gridLayout;
     V3DPluginCallback2 & m_v3d;
     QListWidget *listWidget;
-   // int xRot_past, yRot_past,zRot_past;
-    //int xShift_past,yShift_past,zShift_past;
-    //int zoom_past;
+    QList <V3dR_MainWindow *> windowList;
+    QComboBox* combo_surface;
+    QLabel* label_surface;
+
 private slots:
     void _slot_record();
     void _slot_preview();

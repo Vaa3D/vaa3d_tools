@@ -77,12 +77,19 @@ bool ZMovieMaker::dofunc(const QString & func_name, const V3DPluginArgList & inp
 void MovieFromPoints(V3DPluginCallback2 &v3d, QWidget *parent)
 {
     v3dhandle curwin = v3d.currentImageWindow();
-    if (!curwin)
+    if (curwin)
+        v3d.open3DWindow(curwin);
+    else
     {
-        v3d_msg("You don't have any image open in the main window.");
-        return;
+        QList <V3dR_MainWindow *> windowList = v3d.getListAll3DViewers();
+        if(windowList.count()<1)
+        {
+            v3d_msg("You don't have any image open in the main window or any surface object in the 3D view window.");
+            return;
+        }
+        else if(windowList.count()>1)
+            v3d_msg("Please choose a surface object");
     }
-    v3d.open3DWindow(curwin);
 
     if (panel)
     {
@@ -115,17 +122,33 @@ lookPanel::lookPanel(V3DPluginCallback2 &_v3d, QWidget *parent) :
     QPushButton* Save = new QPushButton("Save file");
     QPushButton* Load = new QPushButton("Load file");
 
+    v3dhandle curwin = m_v3d.currentImageWindow();
+    if (!curwin)
+        windowList = m_v3d.getListAll3DViewers();
+
+    QStringList items;
+    for (int i=0; i<windowList.count(); i++)
+        items << m_v3d.getImageName(windowList[i]);
+
+    combo_surface = new QComboBox(); combo_surface->addItems(items);
+    label_surface = new QLabel(QObject::tr("Surface List: "));
+
     gridLayout = new QGridLayout();
-    gridLayout->addWidget(Record, 1,0);
-    gridLayout->addWidget(Preview,1,6);
-    gridLayout->addWidget(Show,4,0);
-    gridLayout->addWidget(Delete,5,0);
-    gridLayout->addWidget(Save,4,6);
-    gridLayout->addWidget(Load,5,6);
-    gridLayout->addWidget(Upload,6,0);
+    gridLayout->addWidget(label_surface, 1,0,1,6);
+    gridLayout->addWidget(combo_surface, 2,0,2,6);
+    gridLayout->addWidget(Record, 4,0);
+    gridLayout->addWidget(Preview,5,6);
+    gridLayout->addWidget(Show,6,0);
+    gridLayout->addWidget(Delete,7,0);
+    gridLayout->addWidget(Save,6,6);
+    gridLayout->addWidget(Load,7,6);
+    gridLayout->addWidget(Upload,8,0);
 
     listWidget = new QListWidget();
-    gridLayout->addWidget(listWidget,3,0);
+    gridLayout->addWidget(listWidget,5,0);
+
+    if(curwin)
+        combo_surface->setEnabled(false);
 
     setLayout(gridLayout);
     setWindowTitle(QString("ZMovieMaker"));
@@ -147,8 +170,21 @@ lookPanel::~lookPanel()
 void lookPanel::_slot_record()
 {
     curwin = m_v3d.currentImageWindow();
-    m_v3d.open3DWindow(curwin);
-    View3DControl *view = m_v3d.getView3DControl(curwin);
+    View3DControl *view;
+    if(curwin)
+    {
+        m_v3d.open3DWindow(curwin);
+        view = m_v3d.getView3DControl(curwin);
+    }
+    else
+    {
+        windowList = m_v3d.getListAll3DViewers();
+        QString surfaceName = m_v3d.getImageName(windowList[combo_surface->currentIndex()]);
+        V3dR_MainWindow *surface_win = m_v3d.find3DViewerByName(surfaceName);
+       // view = m_v3d.getView3DControl(surface_win);
+        return;
+
+    }
     view->absoluteRotPose();
     float xRot = view->xRot();
     float yRot = view->yRot();
@@ -167,8 +203,8 @@ void lookPanel::_slot_record()
     bool  channelR = view->channelR();
     bool  channelG = view->channelG();
     int   showSurf = 0;
-    if(m_v3d.getSWC(curwin).listNeuron.count()>0 && view->isShowSurfObjects() ==2)
-        showSurf = 2;
+   // if(m_v3d.getSWC(curwin).listNeuron.count()>0 && view->isShowSurfObjects() ==2)
+     //   showSurf = 2;
     int xClip0 = view->xClip0();
     int xClip1 = view->xClip1();
     int yClip0 = view->yClip0();
@@ -178,7 +214,7 @@ void lookPanel::_slot_record()
 
 
     listWidget->addItem(new QListWidgetItem(QString("%1,%2,%3,%4,%5,%6,%7,%8,%9,%10,%11,%12,%13,%14,%15,%16,%17,%18,%19,%20,%21,%22,%23").arg(xRot).arg(yRot).arg(zRot).arg(xShift).arg(yShift).arg(zShift).arg(zoom).arg(xCut0).arg(xCut1).arg(yCut0).arg(yCut1).arg(zCut0).arg(zCut1).arg(channelR).arg(channelG).arg(channelB).arg(showSurf).arg(xClip0).arg(xClip1).arg(yClip0).arg(yClip1).arg(zClip0).arg(zClip1)));
-    gridLayout->addWidget(listWidget,3,0);
+    gridLayout->addWidget(listWidget,5,0);
   //  NeuronTree nt = m_v3d.getSWC(curwin);
   //  printf("\n\nsurface number is %d,%d\n\n", nt.listNeuron.count(),view->isShowSurfObjects());
   //  printf("\n\n surfacue cut is (%d,%d,%d,%d,%d,%d)\n\n",view->xClip0(),view->xClip1(),view->yClip0(),view->yClip1(),view->zClip0(),view->zClip1());
@@ -531,7 +567,7 @@ void lookPanel::_slot_load()
          std::istringstream iss(points);
          iss >> xRot >> yRot >> zRot >> xShift >> yShift >> zShift >> zoom >> xCut0 >> xCut1 >> yCut0 >> yCut1 >> zCut0 >> zCut1 >> channelR >> channelG >> channelB >> showSurf >> xClip0 >> xClip1 >> yClip0 >> xClip1 >> zClip0 >> zClip1;
          listWidget->addItem(new QListWidgetItem(QString("%1,%2,%3,%4,%5,%6,%7,%8,%9,%10,%11,%12,%13,%14,%15,%16,%17,%18,%19,%20,%21,%22,%23").arg(xRot).arg(yRot).arg(zRot).arg(xShift).arg(yShift).arg(zShift).arg(zoom).arg(xCut0).arg(xCut1).arg(yCut0).arg(yCut1).arg(zCut0).arg(zCut1).arg(channelR).arg(channelG).arg(channelB).arg(showSurf).arg(xClip0).arg(xClip1).arg(yClip0).arg(yClip1).arg(zClip0).arg(zClip1)));
-         gridLayout->addWidget(listWidget,3,0);
+         gridLayout->addWidget(listWidget,5,0);
 
        }
     }
