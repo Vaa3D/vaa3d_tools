@@ -26,7 +26,7 @@ float dot_multi(float q1[], float q2[]);
 QStringList ZMovieMaker::menulist() const
 {
 	return QStringList() 
-        <<tr("Generate a movie by multiple anchor points")
+        <<tr("Generate a movie using multiple anchor points")
 		<<tr("about");
 }
 
@@ -40,13 +40,13 @@ QStringList ZMovieMaker::funclist() const
 
 void ZMovieMaker::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
 {
-    if (menu_name == tr("Generate a movie by multiple anchor points"))
+    if (menu_name == tr("Generate a movie using multiple anchor points"))
 	{
         MovieFromPoints(callback, parent);
 	}else
 	{
-        v3d_msg(tr("This plugin can be used to generate a smooth movie by multiple anchor points. "
-			"Developed by Zhi Zhou, 2013-11-21"));
+        v3d_msg(tr("This plugin generates a smooth 3D movie using multiple anchor points. "
+			"Developed by Zhi Zhou and Hanchuan Peng, inspired by previous discussion and work with Z. Ruan and C. Bruns. 2012-2013."));
 	}
 }
 
