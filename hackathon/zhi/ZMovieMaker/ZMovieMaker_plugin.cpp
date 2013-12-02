@@ -170,12 +170,19 @@ void lookPanel::_slot_record()
     int   showSurf = 0;
     if(m_v3d.getSWC(curwin).listNeuron.count()>0 && view->isShowSurfObjects() ==2)
         showSurf = 2;
+    int xClip0 = view->xClip0();
+    int xClip1 = view->xClip1();
+    int yClip0 = view->yClip0();
+    int yClip1 = view->yClip1();
+    int zClip0 = view->zClip0();
+    int zClip1 = view->zClip1();
 
 
-    listWidget->addItem(new QListWidgetItem(QString("%1,%2,%3,%4,%5,%6,%7,%8,%9,%10,%11,%12,%13,%14,%15,%16,%17").arg(xRot).arg(yRot).arg(zRot).arg(xShift).arg(yShift).arg(zShift).arg(zoom).arg(xCut0).arg(xCut1).arg(yCut0).arg(yCut1).arg(zCut0).arg(zCut1).arg(channelR).arg(channelG).arg(channelB).arg(showSurf)));
+    listWidget->addItem(new QListWidgetItem(QString("%1,%2,%3,%4,%5,%6,%7,%8,%9,%10,%11,%12,%13,%14,%15,%16,%17,%18,%19,%20,%21,%22,%23").arg(xRot).arg(yRot).arg(zRot).arg(xShift).arg(yShift).arg(zShift).arg(zoom).arg(xCut0).arg(xCut1).arg(yCut0).arg(yCut1).arg(zCut0).arg(zCut1).arg(channelR).arg(channelG).arg(channelB).arg(showSurf).arg(xClip0).arg(xClip1).arg(yClip0).arg(yClip1).arg(zClip0).arg(zClip1)));
     gridLayout->addWidget(listWidget,3,0);
   //  NeuronTree nt = m_v3d.getSWC(curwin);
   //  printf("\n\nsurface number is %d,%d\n\n", nt.listNeuron.count(),view->isShowSurfObjects());
+  //  printf("\n\n surfacue cut is (%d,%d,%d,%d,%d,%d)\n\n",view->xClip0(),view->xClip1(),view->yClip0(),view->yClip1(),view->zClip0(),view->zClip1());
 
 }
 
@@ -197,6 +204,12 @@ void lookPanel::_slot_record()
         view->setChannelG(channelG);\
         view->setChannelB(channelB);\
         view->setShowSurfObjects(showSurf);\
+        view->setXClip0(xClip0);\
+        view->setXClip1(xClip1);\
+        view->setYClip0(yClip0);\
+        view->setYClip1(yClip1);\
+        view->setZClip0(zClip0);\
+        view->setZClip1(zClip1);\
         m_v3d.updateImageWindow(curwin);\
    }
 
@@ -219,6 +232,12 @@ void lookPanel::_slot_record()
         channelG_last = channelG;\
         channelB_last = channelB;\
         showSurf_last = showSurf;\
+        xClip0_last = xClip0;\
+        xClip1_last = xClip1;\
+        yClip0_last = yClip0;\
+        yClip1_last = yClip1;\
+        zClip0_last = zClip0;\
+        zClip1_last = zClip1;\
    }
 
 #define GET_PARA \
@@ -240,6 +259,12 @@ void lookPanel::_slot_record()
         channelG = currentParas.at(14).toInt();\
         channelB = currentParas.at(15).toInt();\
         showSurf = currentParas.at(16).toInt();\
+        xClip0 = currentParas.at(17).toInt();\
+        xClip1 = currentParas.at(18).toInt();\
+        yClip0 = currentParas.at(19).toInt();\
+        yClip1 = currentParas.at(20).toInt();\
+        zClip0 = currentParas.at(21).toInt();\
+        zClip1 = currentParas.at(22).toInt();\
    }
 
 #define INTERPOLATION_PARA \
@@ -260,6 +285,12 @@ void lookPanel::_slot_record()
         view->setYCut1(yCut1_last + i*(yCut1-yCut1_last)/N);\
         view->setZCut0(zCut0_last + i*(zCut0-zCut0_last)/N);\
         view->setZCut1(zCut1_last + i*(zCut1-zCut1_last)/N);\
+        view->setXClip0(xClip0_last + i*(xClip0-xClip0_last)/N);\
+        view->setXClip1(xClip1_last + i*(xClip1-xClip1_last)/N);\
+        view->setYClip0(yClip0_last + i*(yClip0-yClip0_last)/N);\
+        view->setYClip1(yClip1_last + i*(yClip1-yClip1_last)/N);\
+        view->setZClip0(zClip0_last + i*(zClip0-zClip0_last)/N);\
+        view->setZClip1(zClip1_last + i*(zClip1-zClip1_last)/N);\
         if((float)i/N < 0.5)\
         {\
             view->setChannelR(channelR_last);\
@@ -309,7 +340,8 @@ void lookPanel::_slot_preview()
     int showSurf,showSurf_last;
     bool channelR,channelG,channelB,channelR_last,channelG_last,channelB_last;
     float xRot_last, yRot_last,zRot_last,xShift_last,yShift_last,zShift_last,zoom_last,xCut0_last,xCut1_last,yCut0_last,yCut1_last,zCut0_last,zCut1_last;
-
+    int xClip0,xClip1,yClip0,yClip1,zClip0,zClip1;
+    int xClip0_last,xClip1_last,yClip0_last,yClip1_last,zClip0_last,zClip1_last;
 
     float q1[4],q2[4],q_sample[4];
     float Rot_current[3];
@@ -400,6 +432,7 @@ void lookPanel::_slot_show()
     float xRot, yRot,zRot,xShift,yShift,zShift,zoom,xCut0,xCut1,yCut0,yCut1,zCut0,zCut1;
     bool channelR,channelG,channelB;
     int showSurf;
+    int xClip0,xClip1,yClip0,yClip1,zClip0,zClip1;
 
     if(listWidget->currentRow()==-1)
     {
@@ -417,7 +450,6 @@ void lookPanel::_slot_show()
     m_v3d.open3DWindow(curwin);
     View3DControl *view = m_v3d.getView3DControl(curwin);
     m_v3d.open3DWindow(curwin);
-
 
     SET_3DVIEW
 
@@ -465,7 +497,13 @@ void lookPanel::_slot_save()
         myfile << currentParas.at(13).toFloat();myfile << "  ";
         myfile << currentParas.at(14).toFloat();myfile << "  ";
         myfile << currentParas.at(15).toFloat();myfile << "  ";
-        myfile << currentParas.at(16).toFloat();
+        myfile << currentParas.at(16).toFloat();myfile << "  ";
+        myfile << currentParas.at(17).toFloat();myfile << "  ";
+        myfile << currentParas.at(18).toFloat();myfile << "  ";
+        myfile << currentParas.at(19).toFloat();myfile << "  ";
+        myfile << currentParas.at(20).toFloat();myfile << "  ";
+        myfile << currentParas.at(21).toFloat();myfile << "  ";
+        myfile << currentParas.at(22).toFloat();
         myfile << "\n";
     }
     myfile.close();
@@ -491,11 +529,12 @@ void lookPanel::_slot_load()
        float xRot, yRot,zRot,xShift,yShift,zShift,zoom,xCut0,xCut1,yCut0,yCut1,zCut0,zCut1;
        bool channelR,channelG,channelB;
        int showSurf;
+       int xClip0,xClip1,yClip0,yClip1,zClip0,zClip1;
        while(ifs && getline(ifs, points))
        {
          std::istringstream iss(points);
-         iss >> xRot >> yRot >> zRot >> xShift >> yShift >> zShift >> zoom >> xCut0 >> xCut1 >> yCut0 >> yCut1 >> zCut0 >> zCut1 >> channelR >> channelG >> channelB >> showSurf;
-         listWidget->addItem(new QListWidgetItem(QString("%1,%2,%3,%4,%5,%6,%7,%8,%9,%10,%11,%12,%13,%14,%15,%16").arg(xRot).arg(yRot).arg(zRot).arg(xShift).arg(yShift).arg(zShift).arg(zoom).arg(xCut0).arg(xCut1).arg(yCut0).arg(yCut1).arg(zCut0).arg(zCut1).arg(channelR).arg(channelG).arg(channelB).arg(showSurf)));
+         iss >> xRot >> yRot >> zRot >> xShift >> yShift >> zShift >> zoom >> xCut0 >> xCut1 >> yCut0 >> yCut1 >> zCut0 >> zCut1 >> channelR >> channelG >> channelB >> showSurf >> xClip0 >> xClip1 >> yClip0 >> xClip1 >> zClip0 >> zClip1;
+         listWidget->addItem(new QListWidgetItem(QString("%1,%2,%3,%4,%5,%6,%7,%8,%9,%10,%11,%12,%13,%14,%15,%16,%17,%18,%19,%20,%21,%22,%23").arg(xRot).arg(yRot).arg(zRot).arg(xShift).arg(yShift).arg(zShift).arg(zoom).arg(xCut0).arg(xCut1).arg(yCut0).arg(yCut1).arg(zCut0).arg(zCut1).arg(channelR).arg(channelG).arg(channelB).arg(showSurf).arg(xClip0).arg(xClip1).arg(yClip0).arg(yClip1).arg(zClip0).arg(zClip1)));
          gridLayout->addWidget(listWidget,3,0);
 
        }
