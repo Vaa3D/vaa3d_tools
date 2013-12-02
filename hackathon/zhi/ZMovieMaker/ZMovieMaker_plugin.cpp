@@ -202,9 +202,7 @@ void lookPanel::_slot_record()
     bool  channelB = view->channelB();
     bool  channelR = view->channelR();
     bool  channelG = view->channelG();
-    int   showSurf = 0;
-   // if(m_v3d.getSWC(curwin).listNeuron.count()>0 && view->isShowSurfObjects() ==2)
-     //   showSurf = 2;
+    int   showSurf = view->isShowSurfObjects();
     int xClip0 = view->xClip0();
     int xClip1 = view->xClip1();
     int yClip0 = view->yClip0();
