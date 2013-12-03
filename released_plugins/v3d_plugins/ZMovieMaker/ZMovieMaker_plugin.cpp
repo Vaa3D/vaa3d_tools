@@ -77,18 +77,17 @@ bool ZMovieMaker::dofunc(const QString & func_name, const V3DPluginArgList & inp
 void MovieFromPoints(V3DPluginCallback2 &v3d, QWidget *parent)
 {
     v3dhandle curwin = v3d.currentImageWindow();
+    QList <V3dR_MainWindow *> windowList;
     if (curwin)
         v3d.open3DWindow(curwin);
     else
     {
-        QList <V3dR_MainWindow *> windowList = v3d.getListAll3DViewers();
+        windowList = v3d.getListAll3DViewers();
         if(windowList.count()<1)
         {
             v3d_msg("You don't have any image open in the main window or any surface object in the 3D view window.");
             return;
         }
-        else if(windowList.count()>1)
-            v3d_msg("Please choose a surface object");
     }
 
     if (panel)
@@ -107,6 +106,8 @@ void MovieFromPoints(V3DPluginCallback2 &v3d, QWidget *parent)
             panel->raise();
             panel->move(100,100);
             panel->activateWindow();
+           if(windowList.count()>1)
+              v3d_msg("Please choose a surface object");
         }
     }
 }
@@ -134,8 +135,8 @@ lookPanel::lookPanel(V3DPluginCallback2 &_v3d, QWidget *parent) :
     label_surface = new QLabel(QObject::tr("Surface List: "));
 
     gridLayout = new QGridLayout();
-    gridLayout->addWidget(label_surface, 1,0,1,6);
-    gridLayout->addWidget(combo_surface, 2,0,2,6);
+    gridLayout->addWidget(label_surface, 1,0,1,5);
+    gridLayout->addWidget(combo_surface, 2,0,2,5);
     gridLayout->addWidget(Record, 4,0);
     gridLayout->addWidget(Preview,5,6);
     gridLayout->addWidget(Show,6,0);
@@ -149,6 +150,7 @@ lookPanel::lookPanel(V3DPluginCallback2 &_v3d, QWidget *parent) :
 
     if(curwin)
         combo_surface->setEnabled(false);
+        label_surface->setEnabled(false);
 
     setLayout(gridLayout);
     setWindowTitle(QString("ZMovieMaker"));
@@ -181,7 +183,6 @@ void lookPanel::_slot_record()
         windowList = m_v3d.getListAll3DViewers();
         QString surfaceName = m_v3d.getImageName(windowList[combo_surface->currentIndex()]);
         V3dR_MainWindow *surface_win = m_v3d.find3DViewerByName(surfaceName);
-       // view = m_v3d.getView3DControl(surface_win);
         return;
 
     }
