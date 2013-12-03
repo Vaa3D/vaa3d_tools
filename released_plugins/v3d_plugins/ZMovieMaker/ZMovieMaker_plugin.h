@@ -9,7 +9,6 @@
 #include <QtGui>
 #include <v3d_interface.h>
 
-
 class ZMovieMaker : public QObject, public V3DPluginInterface2_1
 {
 	Q_OBJECT
@@ -41,6 +40,7 @@ public:
     QList <V3dR_MainWindow *> windowList;
     QComboBox* combo_surface;
     QLabel* label_surface;
+    V3dR_MainWindow *surface_win;
 
 private slots:
     void _slot_record();
