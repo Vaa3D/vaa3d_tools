@@ -162,6 +162,7 @@ lookPanel::lookPanel(V3DPluginCallback2 &_v3d, QWidget *parent) :
     connect(Save, SIGNAL(clicked()), this, SLOT(_slot_save()));
     connect(Load, SIGNAL(clicked()), this, SLOT(_slot_load()));
     connect(Upload, SIGNAL(clicked()), this, SLOT(_slot_upload()));
+
 }
 
 lookPanel::~lookPanel()
@@ -215,7 +216,6 @@ void lookPanel::_slot_record()
   //  NeuronTree nt = m_v3d.getSWC(curwin);
   //  printf("\n\nsurface number is %d,%d\n\n", nt.listNeuron.count(),view->isShowSurfObjects());
   //  printf("\n\n surfacue cut is (%d,%d,%d,%d,%d,%d)\n\n",view->xClip0(),view->xClip1(),view->yClip0(),view->yClip1(),view->zClip0(),view->zClip1());
-
 }
 
 #define SET_3DVIEW \
@@ -242,10 +242,6 @@ void lookPanel::_slot_record()
         view->setYClip1(yClip1);\
         view->setZClip0(zClip0);\
         view->setZClip1(zClip1);\
-        if(curwin)\
-              m_v3d.updateImageWindow(curwin);\
-        else\
-              m_v3d.updateImageWindow(surface_win);\
    }
 
 #define UPDATE_PARA \
@@ -470,7 +466,7 @@ void lookPanel::_slot_delete()
     }
 
     listWidget->takeItem(listWidget->currentRow());
-    curwin = m_v3d.currentImageWindow();
+   /* curwin = m_v3d.currentImageWindow();
     View3DControl *view;
     V3dR_MainWindow *surface_win;
     if(curwin)
@@ -486,10 +482,11 @@ void lookPanel::_slot_delete()
     }
     view->resetRotation();
     view->resetZoomShift();
+    view->
     if(curwin)
          m_v3d.updateImageWindow(curwin);
     else\
-        m_v3d.updateImageWindow(surface_win);
+        m_v3d.updateImageWindow(surface_win);*/
 
 }
 
