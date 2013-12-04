@@ -310,18 +310,6 @@ void lookPanel::_slot_record()
         view->setYShift(yShift_last + i*(yShift-yShift_last)/N);\
         view->setZShift(zShift_last + i*(zShift-zShift_last)/N);\
         view->setZoom(zoom_last + i*(zoom-zoom_last)/N);\
-        view->setXCut0(xCut0_last + i*(xCut0-xCut0_last)/N);\
-        view->setXCut1(xCut1_last + i*(xCut1-xCut1_last)/N);\
-        view->setYCut0(yCut0_last + i*(yCut0-yCut0_last)/N);\
-        view->setYCut1(yCut1_last + i*(yCut1-yCut1_last)/N);\
-        view->setZCut0(zCut0_last + i*(zCut0-zCut0_last)/N);\
-        view->setZCut1(zCut1_last + i*(zCut1-zCut1_last)/N);\
-        view->setXClip0(xClip0_last + i*(xClip0-xClip0_last)/N);\
-        view->setXClip1(xClip1_last + i*(xClip1-xClip1_last)/N);\
-        view->setYClip0(yClip0_last + i*(yClip0-yClip0_last)/N);\
-        view->setYClip1(yClip1_last + i*(yClip1-yClip1_last)/N);\
-        view->setZClip0(zClip0_last + i*(zClip0-zClip0_last)/N);\
-        view->setZClip1(zClip1_last + i*(zClip1-zClip1_last)/N);\
         if((float)i/N < 0.5)\
         {\
             view->setChannelR(channelR_last);\
@@ -336,8 +324,21 @@ void lookPanel::_slot_record()
             view->setChannelB(channelB);\
             view->setShowSurfObjects(showSurf);\
         }\
+        view->setXClip0(xClip0_last + i*(xClip0-xClip0_last)/N);\
+        view->setXClip1(xClip1_last + i*(xClip1-xClip1_last)/N);\
+        view->setYClip0(yClip0_last + i*(yClip0-yClip0_last)/N);\
+        view->setYClip1(yClip1_last + i*(yClip1-yClip1_last)/N);\
+        view->setZClip0(zClip0_last + i*(zClip0-zClip0_last)/N);\
+        view->setZClip1(zClip1_last + i*(zClip1-zClip1_last)/N);\
         if(curwin)\
-             m_v3d.updateImageWindow(curwin);\
+        {\
+            view->setXCut0(xCut0_last + i*(xCut0-xCut0_last)/N);\
+            view->setXCut1(xCut1_last + i*(xCut1-xCut1_last)/N);\
+            view->setYCut0(yCut0_last + i*(yCut0-yCut0_last)/N);\
+            view->setYCut1(yCut1_last + i*(yCut1-yCut1_last)/N);\
+            view->setZCut0(zCut0_last + i*(zCut0-zCut0_last)/N);\
+            view->setZCut1(zCut1_last + i*(zCut1-zCut1_last)/N);\
+        }\
         else\
             m_v3d.updateImageWindow(surface_win);\
    }
