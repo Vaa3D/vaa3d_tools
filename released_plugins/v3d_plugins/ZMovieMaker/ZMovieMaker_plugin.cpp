@@ -123,7 +123,7 @@ lookPanel::lookPanel(V3DPluginCallback2 &_v3d, QWidget *parent) :
     QPushButton* Save = new QPushButton("Save file");
     QPushButton* Load = new QPushButton("Load file");
 
-    v3dhandle curwin = m_v3d.currentImageWindow();
+    curwin = m_v3d.currentImageWindow();
     if (!curwin)
         windowList = m_v3d.getListAll3DViewers();
 
@@ -167,13 +167,13 @@ lookPanel::lookPanel(V3DPluginCallback2 &_v3d, QWidget *parent) :
 
 lookPanel::~lookPanel()
 {
-    panel=0;
+   panel = 0;
+   surface_win = 0;
 }
 
 void lookPanel::_slot_record()
 {
     curwin = m_v3d.currentImageWindow();
-    View3DControl *view;
     if(curwin)
     {
         m_v3d.open3DWindow(curwin);
@@ -182,7 +182,7 @@ void lookPanel::_slot_record()
     else
     {
         windowList = m_v3d.getListAll3DViewers();
-        V3dR_MainWindow *surface_win = windowList[combo_surface->currentIndex()];
+        surface_win = windowList[combo_surface->currentIndex()];
         view = m_v3d.getAnyView3DControl(surface_win);
     }
     view->absoluteRotPose();
@@ -338,6 +338,7 @@ void lookPanel::_slot_record()
             view->setYCut1(yCut1_last + i*(yCut1-yCut1_last)/N);\
             view->setZCut0(zCut0_last + i*(zCut0-zCut0_last)/N);\
             view->setZCut1(zCut1_last + i*(zCut1-zCut1_last)/N);\
+            m_v3d.updateImageWindow(curwin);\
         }\
         else\
             m_v3d.updateImageWindow(surface_win);\
@@ -371,8 +372,6 @@ void lookPanel::_slot_preview()
         return;
 
     curwin = m_v3d.currentImageWindow();
-    View3DControl *view;
-    V3dR_MainWindow *surface_win;
     if(curwin)
     {
         m_v3d.open3DWindow(curwin);
@@ -467,27 +466,7 @@ void lookPanel::_slot_delete()
     }
 
     listWidget->takeItem(listWidget->currentRow());
-   /* curwin = m_v3d.currentImageWindow();
-    View3DControl *view;
-    V3dR_MainWindow *surface_win;
-    if(curwin)
-    {
-        m_v3d.open3DWindow(curwin);
-        view = m_v3d.getView3DControl(curwin);
-    }
-    else
-    {
-        windowList = m_v3d.getListAll3DViewers();
-        surface_win = windowList[combo_surface->currentIndex()];
-        view = m_v3d.getAnyView3DControl(surface_win);
-    }
-    view->resetRotation();
-    view->resetZoomShift();
-    view->
-    if(curwin)
-         m_v3d.updateImageWindow(curwin);
-    else\
-        m_v3d.updateImageWindow(surface_win);*/
+
 
 }
 
@@ -510,7 +489,6 @@ void lookPanel::_slot_show()
     GET_PARA
 
     curwin = m_v3d.currentImageWindow();
-    View3DControl *view;
     if(curwin)
     {
         m_v3d.open3DWindow(curwin);
@@ -519,7 +497,7 @@ void lookPanel::_slot_show()
     else
     {
         windowList = m_v3d.getListAll3DViewers();
-        V3dR_MainWindow *surface_win = windowList[combo_surface->currentIndex()];
+        surface_win = windowList[combo_surface->currentIndex()];
         view = m_v3d.getAnyView3DControl(surface_win);
     }
 

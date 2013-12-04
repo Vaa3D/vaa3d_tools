@@ -41,6 +41,7 @@ public:
     QComboBox* combo_surface;
     QLabel* label_surface;
     V3dR_MainWindow *surface_win;
+    View3DControl *view;
 
 private slots:
     void _slot_record();
