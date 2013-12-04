@@ -23,6 +23,152 @@ void slerp_zhi(float q1[], float q2[],float alpha,float q_sample[]);
 void quaternions_to_angles(float Rot_current[], float q_sample[]);
 
 float dot_multi(float q1[], float q2[]);
+
+#define SET_3DVIEW \
+    { \
+        view->resetRotation();\
+        view->doAbsoluteRot(xRot,yRot,zRot);\
+        view->setXShift(xShift);\
+        view->setYShift(yShift);\
+        view->setZShift(zShift);\
+        view->setZoom(zoom);\
+        view->setXCut0(xCut0);\
+        view->setXCut1(xCut1);\
+        view->setYCut0(yCut0);\
+        view->setYCut1(yCut1);\
+        view->setZCut0(zCut0);\
+        view->setZCut1(zCut1);\
+        view->setChannelR(channelR);\
+        view->setChannelG(channelG);\
+        view->setChannelB(channelB);\
+        view->setShowSurfObjects(showSurf);\
+        view->setXClip0(xClip0);\
+        view->setXClip1(xClip1);\
+        view->setYClip0(yClip0);\
+        view->setYClip1(yClip1);\
+        view->setZClip0(zClip0);\
+        view->setZClip1(zClip1);\
+   }
+
+#define UPDATE_PARA \
+    { \
+        xRot_last = xRot;\
+        yRot_last = yRot;\
+        zRot_last = zRot;\
+        xShift_last = xShift;\
+        yShift_last = yShift;\
+        zShift_last = zShift;\
+        zoom_last = zoom;\
+        xCut0_last = xCut0;\
+        xCut1_last = xCut1;\
+        yCut0_last = yCut0;\
+        yCut1_last = yCut1;\
+        zCut0_last = zCut0;\
+        zCut1_last = zCut1;\
+        channelR_last = channelR;\
+        channelG_last = channelG;\
+        channelB_last = channelB;\
+        showSurf_last = showSurf;\
+        xClip0_last = xClip0;\
+        xClip1_last = xClip1;\
+        yClip0_last = yClip0;\
+        yClip1_last = yClip1;\
+        zClip0_last = zClip0;\
+        zClip1_last = zClip1;\
+   }
+
+#define GET_PARA \
+    { \
+        xRot = currentParas.at(0).toFloat();\
+        yRot = currentParas.at(1).toFloat();\
+        zRot = currentParas.at(2).toFloat();\
+        xShift = currentParas.at(3).toFloat();\
+        yShift = currentParas.at(4).toFloat();\
+        zShift = currentParas.at(5).toFloat();\
+        zoom = currentParas.at(6).toFloat();\
+        xCut0 = currentParas.at(7).toFloat();\
+        xCut1 = currentParas.at(8).toFloat();\
+        yCut0 = currentParas.at(9).toFloat();\
+        yCut1 = currentParas.at(10).toFloat();\
+        zCut0 = currentParas.at(11).toFloat();\
+        zCut1 = currentParas.at(12).toFloat();\
+        channelR = currentParas.at(13).toInt();\
+        channelG = currentParas.at(14).toInt();\
+        channelB = currentParas.at(15).toInt();\
+        showSurf = currentParas.at(16).toInt();\
+        xClip0 = currentParas.at(17).toInt();\
+        xClip1 = currentParas.at(18).toInt();\
+        yClip0 = currentParas.at(19).toInt();\
+        yClip1 = currentParas.at(20).toInt();\
+        zClip0 = currentParas.at(21).toInt();\
+        zClip1 = currentParas.at(22).toInt();\
+   }
+
+#define INTERPOLATION_PARA \
+    { \
+        view->resetRotation();\
+        angles_to_quaternions(q1,xRot_last,yRot_last,zRot_last);\
+        angles_to_quaternions(q2,xRot,yRot,zRot);\
+        slerp_zhi(q1, q2,(float)i/N,q_sample);\
+        quaternions_to_angles(Rot_current,q_sample);\
+        view->doAbsoluteRot(Rot_current[0],Rot_current[1],Rot_current[2]);\
+        view->setXShift(xShift_last + i*(xShift-xShift_last)/N);\
+        view->setYShift(yShift_last + i*(yShift-yShift_last)/N);\
+        view->setZShift(zShift_last + i*(zShift-zShift_last)/N);\
+        view->setZoom(zoom_last + i*(zoom-zoom_last)/N);\
+        if((float)i/N < 0.5)\
+        {\
+            view->setChannelR(channelR_last);\
+            view->setChannelG(channelG_last);\
+            view->setChannelB(channelB_last);\
+            view->setShowSurfObjects(showSurf_last);\
+        }\
+        else\
+        {\
+            view->setChannelR(channelR);\
+            view->setChannelG(channelG);\
+            view->setChannelB(channelB);\
+            view->setShowSurfObjects(showSurf);\
+        }\
+        view->setXClip0(xClip0_last + i*(xClip0-xClip0_last)/N);\
+        view->setXClip1(xClip1_last + i*(xClip1-xClip1_last)/N);\
+        view->setYClip0(yClip0_last + i*(yClip0-yClip0_last)/N);\
+        view->setYClip1(yClip1_last + i*(yClip1-yClip1_last)/N);\
+        view->setZClip0(zClip0_last + i*(zClip0-zClip0_last)/N);\
+        view->setZClip1(zClip1_last + i*(zClip1-zClip1_last)/N);\
+        if(curwin)\
+        {\
+            view->setXCut0(xCut0_last + i*(xCut0-xCut0_last)/N);\
+            view->setXCut1(xCut1_last + i*(xCut1-xCut1_last)/N);\
+            view->setYCut0(yCut0_last + i*(yCut0-yCut0_last)/N);\
+            view->setYCut1(yCut1_last + i*(yCut1-yCut1_last)/N);\
+            view->setZCut0(zCut0_last + i*(zCut0-zCut0_last)/N);\
+            view->setZCut1(zCut1_last + i*(zCut1-zCut1_last)/N);\
+            m_v3d.updateImageWindow(curwin);\
+        }\
+        else\
+            m_v3d.updateImageWindow(surface_win);\
+   }
+
+#define SCREENSHOT_SAVEFRAMES \
+    { \
+        QString BMPfilename = selectedFile + QString("/%1").arg(framenum);\
+        if(curwin)\
+            m_v3d.screenShot3DWindow(curwin, BMPfilename);\
+        else\
+            m_v3d.screenShotAny3DWindow(surface_win, BMPfilename);\
+        framenum++;\
+    }
+
+#define CHECK_WINDOWS \
+if(!curwin && windowList.count()<1)\
+{\
+    v3d_msg("You don't have any image open in the main window or any surface object in the 3D view window.");\
+    listWidget->clear();\
+    return;\
+}
+
+
 QStringList ZMovieMaker::menulist() const
 {
 	return QStringList() 
@@ -168,12 +314,16 @@ lookPanel::lookPanel(V3DPluginCallback2 &_v3d, QWidget *parent) :
 lookPanel::~lookPanel()
 {
    panel = 0;
-   surface_win = 0;
 }
 
 void lookPanel::_slot_record()
 {
     curwin = m_v3d.currentImageWindow();
+    if(!curwin)
+        windowList = m_v3d.getListAll3DViewers();
+
+    CHECK_WINDOWS
+
     if(curwin)
     {
         m_v3d.open3DWindow(curwin);
@@ -181,7 +331,6 @@ void lookPanel::_slot_record()
     }
     else
     {
-        windowList = m_v3d.getListAll3DViewers();
         surface_win = windowList[combo_surface->currentIndex()];
         view = m_v3d.getAnyView3DControl(surface_win);
     }
@@ -218,144 +367,15 @@ void lookPanel::_slot_record()
   //  printf("\n\n surfacue cut is (%d,%d,%d,%d,%d,%d)\n\n",view->xClip0(),view->xClip1(),view->yClip0(),view->yClip1(),view->zClip0(),view->zClip1());
 }
 
-#define SET_3DVIEW \
-    { \
-        view->resetRotation();\
-        view->doAbsoluteRot(xRot,yRot,zRot);\
-        view->setXShift(xShift);\
-        view->setYShift(yShift);\
-        view->setZShift(zShift);\
-        view->setZoom(zoom);\
-        view->setXCut0(xCut0);\
-        view->setXCut1(xCut1);\
-        view->setYCut0(yCut0);\
-        view->setYCut1(yCut1);\
-        view->setZCut0(zCut0);\
-        view->setZCut1(zCut1);\
-        view->setChannelR(channelR);\
-        view->setChannelG(channelG);\
-        view->setChannelB(channelB);\
-        view->setShowSurfObjects(showSurf);\
-        view->setXClip0(xClip0);\
-        view->setXClip1(xClip1);\
-        view->setYClip0(yClip0);\
-        view->setYClip1(yClip1);\
-        view->setZClip0(zClip0);\
-        view->setZClip1(zClip1);\
-   }
-
-#define UPDATE_PARA \
-    { \
-        xRot_last = xRot;\
-        yRot_last = yRot;\
-        zRot_last = zRot;\
-        xShift_last = xShift;\
-        yShift_last = yShift;\
-        zShift_last = zShift;\
-        zoom_last = zoom;\
-        xCut0_last = xCut0;\
-        xCut1_last = xCut1;\
-        yCut0_last = yCut0;\
-        yCut1_last = yCut1;\
-        zCut0_last = zCut0;\
-        zCut1_last = zCut1;\
-        channelR_last = channelR;\
-        channelG_last = channelG;\
-        channelB_last = channelB;\
-        showSurf_last = showSurf;\
-        xClip0_last = xClip0;\
-        xClip1_last = xClip1;\
-        yClip0_last = yClip0;\
-        yClip1_last = yClip1;\
-        zClip0_last = zClip0;\
-        zClip1_last = zClip1;\
-   }
-
-#define GET_PARA \
-    { \
-        xRot = currentParas.at(0).toFloat();\
-        yRot = currentParas.at(1).toFloat();\
-        zRot = currentParas.at(2).toFloat();\
-        xShift = currentParas.at(3).toFloat();\
-        yShift = currentParas.at(4).toFloat();\
-        zShift = currentParas.at(5).toFloat();\
-        zoom = currentParas.at(6).toFloat();\
-        xCut0 = currentParas.at(7).toFloat();\
-        xCut1 = currentParas.at(8).toFloat();\
-        yCut0 = currentParas.at(9).toFloat();\
-        yCut1 = currentParas.at(10).toFloat();\
-        zCut0 = currentParas.at(11).toFloat();\
-        zCut1 = currentParas.at(12).toFloat();\
-        channelR = currentParas.at(13).toInt();\
-        channelG = currentParas.at(14).toInt();\
-        channelB = currentParas.at(15).toInt();\
-        showSurf = currentParas.at(16).toInt();\
-        xClip0 = currentParas.at(17).toInt();\
-        xClip1 = currentParas.at(18).toInt();\
-        yClip0 = currentParas.at(19).toInt();\
-        yClip1 = currentParas.at(20).toInt();\
-        zClip0 = currentParas.at(21).toInt();\
-        zClip1 = currentParas.at(22).toInt();\
-   }
-
-#define INTERPOLATION_PARA \
-    { \
-        view->resetRotation();\
-        angles_to_quaternions(q1,xRot_last,yRot_last,zRot_last);\
-        angles_to_quaternions(q2,xRot,yRot,zRot);\
-        slerp_zhi(q1, q2,(float)i/N,q_sample);\
-        quaternions_to_angles(Rot_current,q_sample);\
-        view->doAbsoluteRot(Rot_current[0],Rot_current[1],Rot_current[2]);\
-        view->setXShift(xShift_last + i*(xShift-xShift_last)/N);\
-        view->setYShift(yShift_last + i*(yShift-yShift_last)/N);\
-        view->setZShift(zShift_last + i*(zShift-zShift_last)/N);\
-        view->setZoom(zoom_last + i*(zoom-zoom_last)/N);\
-        if((float)i/N < 0.5)\
-        {\
-            view->setChannelR(channelR_last);\
-            view->setChannelG(channelG_last);\
-            view->setChannelB(channelB_last);\
-            view->setShowSurfObjects(showSurf_last);\
-        }\
-        else\
-        {\
-            view->setChannelR(channelR);\
-            view->setChannelG(channelG);\
-            view->setChannelB(channelB);\
-            view->setShowSurfObjects(showSurf);\
-        }\
-        view->setXClip0(xClip0_last + i*(xClip0-xClip0_last)/N);\
-        view->setXClip1(xClip1_last + i*(xClip1-xClip1_last)/N);\
-        view->setYClip0(yClip0_last + i*(yClip0-yClip0_last)/N);\
-        view->setYClip1(yClip1_last + i*(yClip1-yClip1_last)/N);\
-        view->setZClip0(zClip0_last + i*(zClip0-zClip0_last)/N);\
-        view->setZClip1(zClip1_last + i*(zClip1-zClip1_last)/N);\
-        if(curwin)\
-        {\
-            view->setXCut0(xCut0_last + i*(xCut0-xCut0_last)/N);\
-            view->setXCut1(xCut1_last + i*(xCut1-xCut1_last)/N);\
-            view->setYCut0(yCut0_last + i*(yCut0-yCut0_last)/N);\
-            view->setYCut1(yCut1_last + i*(yCut1-yCut1_last)/N);\
-            view->setZCut0(zCut0_last + i*(zCut0-zCut0_last)/N);\
-            view->setZCut1(zCut1_last + i*(zCut1-zCut1_last)/N);\
-            m_v3d.updateImageWindow(curwin);\
-        }\
-        else\
-            m_v3d.updateImageWindow(surface_win);\
-   }
-
-#define SCREENSHOT_SAVEFRAMES \
-    { \
-        QString BMPfilename = selectedFile + QString("/%1").arg(framenum);\
-        if(curwin)\
-            m_v3d.screenShot3DWindow(curwin, BMPfilename);\
-        else\
-            m_v3d.screenShotAny3DWindow(surface_win, BMPfilename);\
-        framenum++;\
-    }
 
 void lookPanel::_slot_preview()
 {
+    curwin = m_v3d.currentImageWindow();
+    if(!curwin)
+        windowList = m_v3d.getListAll3DViewers();
+
+    CHECK_WINDOWS
+
     if(!listWidget->count())
     {
         v3d_msg("Please define at least one archor point.");
@@ -379,7 +399,6 @@ void lookPanel::_slot_preview()
     }
     else
     {
-        windowList = m_v3d.getListAll3DViewers();
         surface_win = windowList[combo_surface->currentIndex()];
         view = m_v3d.getAnyView3DControl(surface_win);
     }
@@ -459,6 +478,11 @@ void lookPanel::_slot_preview()
 
 void lookPanel::_slot_delete()
 {
+    curwin = m_v3d.currentImageWindow();
+    if(!curwin)
+        windowList = m_v3d.getListAll3DViewers();
+
+    CHECK_WINDOWS
     if(listWidget->currentRow()==-1)
     {
         v3d_msg("Please select a valid archor point.");
@@ -472,23 +496,12 @@ void lookPanel::_slot_delete()
 
 void lookPanel::_slot_show()
 {
-    float xRot, yRot,zRot,xShift,yShift,zShift,zoom,xCut0,xCut1,yCut0,yCut1,zCut0,zCut1;
-    bool channelR,channelG,channelB;
-    int showSurf;
-    int xClip0,xClip1,yClip0,yClip1,zClip0,zClip1;
-
-    if(listWidget->currentRow()==-1)
-    {
-        v3d_msg("Please select a valid archor point.");
-        return;
-    }
-
-    QString currentPoint = listWidget->currentItem()->text();
-    QRegExp rx("(\\ |\\,|\\.|\\:|\\t)");
-    QStringList currentParas = currentPoint.split(rx);
-    GET_PARA
-
     curwin = m_v3d.currentImageWindow();
+    if(!curwin)
+        windowList = m_v3d.getListAll3DViewers();
+
+    CHECK_WINDOWS
+
     if(curwin)
     {
         m_v3d.open3DWindow(curwin);
@@ -496,10 +509,26 @@ void lookPanel::_slot_show()
     }
     else
     {
-        windowList = m_v3d.getListAll3DViewers();
         surface_win = windowList[combo_surface->currentIndex()];
         view = m_v3d.getAnyView3DControl(surface_win);
     }
+
+    if(listWidget->currentRow()==-1)
+    {
+        v3d_msg("Please select a valid archor point.");
+        return;
+    }
+
+    float xRot, yRot,zRot,xShift,yShift,zShift,zoom,xCut0,xCut1,yCut0,yCut1,zCut0,zCut1;
+    bool channelR,channelG,channelB;
+    int showSurf;
+    int xClip0,xClip1,yClip0,yClip1,zClip0,zClip1;
+
+
+    QString currentPoint = listWidget->currentItem()->text();
+    QRegExp rx("(\\ |\\,|\\.|\\:|\\t)");
+    QStringList currentParas = currentPoint.split(rx);
+    GET_PARA
 
     SET_3DVIEW
 
@@ -512,6 +541,12 @@ void lookPanel::_slot_upload()
 
 void lookPanel::_slot_save()
 {
+    curwin = m_v3d.currentImageWindow();
+    if(!curwin)
+        windowList = m_v3d.getListAll3DViewers();
+
+    CHECK_WINDOWS
+
     if(!listWidget->count())
     {
         v3d_msg("Please define at least one archor point.");
@@ -562,6 +597,12 @@ void lookPanel::_slot_save()
 
 void lookPanel::_slot_load()
 {
+    curwin = m_v3d.currentImageWindow();
+    if(!curwin)
+        windowList = m_v3d.getListAll3DViewers();
+
+    CHECK_WINDOWS
+
     QString fileOpenName = QFileDialog::getOpenFileName(this, QObject::tr("Open File"),
             "",
             QObject::tr("Supported file (*.txt)"
