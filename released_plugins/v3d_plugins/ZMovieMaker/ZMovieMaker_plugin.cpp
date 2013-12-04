@@ -17,6 +17,7 @@ Q_EXPORT_PLUGIN2(ZMovieMaker, ZMovieMaker);
 
 void MovieFromPoints(V3DPluginCallback2 &v3d, QWidget *parent);
 static lookPanel *panel = 0;
+QDoubleSpinBox* SampleRate;
 
 void angles_to_quaternions(float q[], float xRot, float yRot,float zRot);
 void slerp_zhi(float q1[], float q2[],float alpha,float q_sample[]);
@@ -79,29 +80,29 @@ float dot_multi(float q1[], float q2[]);
 
 #define GET_PARA \
     { \
-        xRot = currentParas.at(0).toFloat();\
-        yRot = currentParas.at(1).toFloat();\
-        zRot = currentParas.at(2).toFloat();\
-        xShift = currentParas.at(3).toFloat();\
-        yShift = currentParas.at(4).toFloat();\
-        zShift = currentParas.at(5).toFloat();\
-        zoom = currentParas.at(6).toFloat();\
-        xCut0 = currentParas.at(7).toFloat();\
-        xCut1 = currentParas.at(8).toFloat();\
-        yCut0 = currentParas.at(9).toFloat();\
-        yCut1 = currentParas.at(10).toFloat();\
-        zCut0 = currentParas.at(11).toFloat();\
-        zCut1 = currentParas.at(12).toFloat();\
-        channelR = currentParas.at(13).toInt();\
-        channelG = currentParas.at(14).toInt();\
-        channelB = currentParas.at(15).toInt();\
-        showSurf = currentParas.at(16).toInt();\
-        xClip0 = currentParas.at(17).toInt();\
-        xClip1 = currentParas.at(18).toInt();\
-        yClip0 = currentParas.at(19).toInt();\
-        yClip1 = currentParas.at(20).toInt();\
-        zClip0 = currentParas.at(21).toInt();\
-        zClip1 = currentParas.at(22).toInt();\
+        xRot = currentParas.at(3).toFloat();\
+        yRot = currentParas.at(4).toFloat();\
+        zRot = currentParas.at(5).toFloat();\
+        xShift = currentParas.at(6).toFloat();\
+        yShift = currentParas.at(7).toFloat();\
+        zShift = currentParas.at(8).toFloat();\
+        zoom = currentParas.at(9).toFloat();\
+        xCut0 = currentParas.at(10).toFloat();\
+        xCut1 = currentParas.at(11).toFloat();\
+        yCut0 = currentParas.at(12).toFloat();\
+        yCut1 = currentParas.at(13).toFloat();\
+        zCut0 = currentParas.at(14).toFloat();\
+        zCut1 = currentParas.at(15).toFloat();\
+        channelR = currentParas.at(16).toInt();\
+        channelG = currentParas.at(17).toInt();\
+        channelB = currentParas.at(18).toInt();\
+        showSurf = currentParas.at(19).toInt();\
+        xClip0 = currentParas.at(20).toInt();\
+        xClip1 = currentParas.at(21).toInt();\
+        yClip0 = currentParas.at(22).toInt();\
+        yClip1 = currentParas.at(23).toInt();\
+        zClip0 = currentParas.at(24).toInt();\
+        zClip1 = currentParas.at(25).toInt();\
    }
 
 #define INTERPOLATION_PARA \
@@ -269,6 +270,9 @@ lookPanel::lookPanel(V3DPluginCallback2 &_v3d, QWidget *parent) :
     QPushButton* Save = new QPushButton("Save file");
     QPushButton* Load = new QPushButton("Load file");
 
+    SampleRate = new QDoubleSpinBox();
+    QLabel* SampleName = new QLabel(QObject::tr(" Sample Rate:"));
+
     curwin = m_v3d.currentImageWindow();
     if (!curwin)
         windowList = m_v3d.getListAll3DViewers();
@@ -282,22 +286,26 @@ lookPanel::lookPanel(V3DPluginCallback2 &_v3d, QWidget *parent) :
 
     gridLayout = new QGridLayout();
     gridLayout->addWidget(label_surface, 1,0,1,5);
-    gridLayout->addWidget(combo_surface, 2,0,2,5);
-    gridLayout->addWidget(Record, 4,0);
-    gridLayout->addWidget(Preview,5,6);
-    gridLayout->addWidget(Show,6,0);
-    gridLayout->addWidget(Delete,7,0);
-    gridLayout->addWidget(Save,6,6);
-    gridLayout->addWidget(Load,7,6);
-    gridLayout->addWidget(Upload,8,0);
+    gridLayout->addWidget(combo_surface, 2,0,1,5);
+    gridLayout->addWidget(Record, 3,0);
+    gridLayout->addWidget(Preview,6,6,1,3);
+    gridLayout->addWidget(Show,9,0,1,2);
+    gridLayout->addWidget(Delete,10,0,1,2);
+    gridLayout->addWidget(Save,9,2,1,3);
+    gridLayout->addWidget(Load,10,2,1,3);
+    gridLayout->addWidget(Upload,11,0);
+    gridLayout->addWidget(SampleName, 5,6,1,1);
+    gridLayout->addWidget(SampleRate, 5,7,1,2);
+    SampleRate->setMaximum(1000); SampleRate->setMinimum(30);
 
     listWidget = new QListWidget();
-    gridLayout->addWidget(listWidget,5,0);
+    gridLayout->addWidget(listWidget,4,0,5,5);
 
     if(curwin)
+    {
         combo_surface->setEnabled(false);
         label_surface->setEnabled(false);
-
+    }
     setLayout(gridLayout);
     setWindowTitle(QString("ZMovieMaker"));
 
@@ -308,6 +316,8 @@ lookPanel::lookPanel(V3DPluginCallback2 &_v3d, QWidget *parent) :
     connect(Save, SIGNAL(clicked()), this, SLOT(_slot_save()));
     connect(Load, SIGNAL(clicked()), this, SLOT(_slot_load()));
     connect(Upload, SIGNAL(clicked()), this, SLOT(_slot_upload()));
+    connect(SampleRate, SIGNAL(valueChanged(double)), this, SLOT(update()));
+
 
 }
 
@@ -361,8 +371,8 @@ void lookPanel::_slot_record()
 
 
     QString curstr = QString("%1,%2,%3,%4,%5,%6,%7,%8,%9,%10,%11,%12,%13,%14,%15,%16,%17,%18,%19,%20,%21,%22,%23").arg(xRot).arg(yRot).arg(zRot).arg(xShift).arg(yShift).arg(zShift).arg(zoom).arg(xCut0).arg(xCut1).arg(yCut0).arg(yCut1).arg(zCut0).arg(zCut1).arg(channelR).arg(channelG).arg(channelB).arg(showSurf).arg(xClip0).arg(xClip1).arg(yClip0).arg(yClip1).arg(zClip0).arg(zClip1);
-    curstr = curstr.prepend(QString("").setNum(listWidget->count()+1) + ": [");
-    curstr = curstr.append("]");
+    curstr = curstr.prepend(QString("").setNum(listWidget->count()+1) + ": [ ");
+    curstr = curstr.append(" ]");
     listWidget->addItem(new QListWidgetItem(curstr));
   //  NeuronTree nt = m_v3d.getSWC(curwin);
   //  printf("\n\nsurface number is %d,%d\n\n", nt.listNeuron.count(),view->isShowSurfObjects());
@@ -384,14 +394,8 @@ void lookPanel::_slot_preview()
         return;
     }
 
-    bool rate;
-    int  N;
-    N = QInputDialog::getInteger(this, "Sample Rate",
-                                       "Enter Sample Rate:",
-                                       10, 1, 1000, 1, &rate);
-
-    if(!rate)
-        return;
+    int  N = SampleRate->text().toDouble();
+    printf("rate is %d\n\n\n",N);
 
     curwin = m_v3d.currentImageWindow();
     if(curwin)
@@ -420,6 +424,7 @@ void lookPanel::_slot_preview()
         QString currentPoint = listWidget->item(row)->text();
         QStringList currentParas = currentPoint.split(rx);
         GET_PARA
+
 
        if(row>0)
        {
@@ -492,6 +497,27 @@ void lookPanel::_slot_delete()
     }
 
     listWidget->takeItem(listWidget->currentRow());
+
+    //update the index of anchor points
+    if(listWidget->count() > 0)
+    {
+        QList<QString> updatePointsList;
+
+        for(int row = 0; row < listWidget->count(); row++)
+        {
+            QString currentPoint = listWidget->item(row)->text();
+            currentPoint.remove(0,1);
+            currentPoint = currentPoint.prepend(QString("").setNum(row+1));
+            updatePointsList << currentPoint;
+         }
+
+        listWidget->clear();
+        for(int row = 0; row < updatePointsList.count(); row++)
+        {
+            listWidget->addItem(new QListWidgetItem(updatePointsList.at(row)));
+
+        }
+    }
 
 
 }
@@ -627,8 +653,10 @@ void lookPanel::_slot_load()
        {
          std::istringstream iss(points);
          iss >> xRot >> yRot >> zRot >> xShift >> yShift >> zShift >> zoom >> xCut0 >> xCut1 >> yCut0 >> yCut1 >> zCut0 >> zCut1 >> channelR >> channelG >> channelB >> showSurf >> xClip0 >> xClip1 >> yClip0 >> xClip1 >> zClip0 >> zClip1;
-         listWidget->addItem(new QListWidgetItem(QString("%1,%2,%3,%4,%5,%6,%7,%8,%9,%10,%11,%12,%13,%14,%15,%16,%17,%18,%19,%20,%21,%22,%23").arg(xRot).arg(yRot).arg(zRot).arg(xShift).arg(yShift).arg(zShift).arg(zoom).arg(xCut0).arg(xCut1).arg(yCut0).arg(yCut1).arg(zCut0).arg(zCut1).arg(channelR).arg(channelG).arg(channelB).arg(showSurf).arg(xClip0).arg(xClip1).arg(yClip0).arg(yClip1).arg(zClip0).arg(zClip1)));
-         gridLayout->addWidget(listWidget,5,0);
+         QString curstr = QString("%1,%2,%3,%4,%5,%6,%7,%8,%9,%10,%11,%12,%13,%14,%15,%16,%17,%18,%19,%20,%21,%22,%23").arg(xRot).arg(yRot).arg(zRot).arg(xShift).arg(yShift).arg(zShift).arg(zoom).arg(xCut0).arg(xCut1).arg(yCut0).arg(yCut1).arg(zCut0).arg(zCut1).arg(channelR).arg(channelG).arg(channelB).arg(showSurf).arg(xClip0).arg(xClip1).arg(yClip0).arg(yClip1).arg(zClip0).arg(zClip1);
+         curstr = curstr.prepend(QString("").setNum(listWidget->count()+1) + ": [ ");
+         curstr = curstr.append(" ]");
+         listWidget->addItem(new QListWidgetItem(curstr));
 
        }
     }
