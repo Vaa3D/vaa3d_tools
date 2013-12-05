@@ -7,7 +7,8 @@
 #define __ZMOVIEMAKER_PLUGIN_H__
 
 #include <QtGui>
-#include <v3d_interface.h>
+
+#include "v3d_interface.h"
 
 class ZMovieMaker : public QObject, public V3DPluginInterface2_1
 {
@@ -37,8 +38,10 @@ public:
     QGridLayout *gridLayout;
     V3DPluginCallback2 & m_v3d;
     QListWidget *listWidget;
-    QList <V3dR_MainWindow *> windowList;
-    v3dhandleList Triwindowlist;
+
+    QList <V3dR_MainWindow *> list_3dviewer;
+    v3dhandleList list_triview;
+
     QComboBox* combo_surface;
     QLabel* label_surface;
     V3dR_MainWindow *surface_win;

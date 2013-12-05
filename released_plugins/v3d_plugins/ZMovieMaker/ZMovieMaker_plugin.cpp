@@ -165,22 +165,22 @@ QString warning_msg = "Oops... The image you selected no longer exists... The fi
 
 #define CHECK_WINDWOS \
     {\
-        Triwindowlist = m_v3d.getImageWindowList();\
-        windowList = m_v3d.getListAll3DViewers();\
-         if(windowList.count() < 1 && Triwindowlist.size() <1)\
+        list_triview = m_v3d.getImageWindowList();\
+        list_3dviewer = m_v3d.getListAll3DViewers();\
+         if(list_3dviewer.count() < 1 && list_triview.size() <1)\
         {\
            v3d_msg("You don't have any image open in the main window or any surface object in the 3D view window.");\
            return;\
         }\
-        if(combo_surface->currentIndex() < Triwindowlist.size())\
+        if(combo_surface->currentIndex() < list_triview.size())\
         {\
-            curwin = Triwindowlist[combo_surface->currentIndex()];\
+            curwin = list_triview[combo_surface->currentIndex()];\
             m_v3d.open3DWindow(curwin);\
             view = m_v3d.getView3DControl(curwin);\
         }\
         else\
         {\
-            surface_win = windowList[combo_surface->currentIndex()-Triwindowlist.size()];\
+            surface_win = list_3dviewer[combo_surface->currentIndex()-list_triview.size()];\
             view = m_v3d.getAnyView3DControl(surface_win);\
         }\
     }
@@ -238,9 +238,9 @@ bool ZMovieMaker::dofunc(const QString & func_name, const V3DPluginArgList & inp
 
 void MovieFromPoints(V3DPluginCallback2 &v3d, QWidget *parent)
 {
-    QList <V3dR_MainWindow *> windowList = v3d.getListAll3DViewers();
-    v3dhandleList Triwindowlist = v3d.getImageWindowList();
-    if(windowList.count() < 1 && Triwindowlist.size() <1)
+    QList <V3dR_MainWindow *> list_3dviewer = v3d.getListAll3DViewers();
+    v3dhandleList list_triview = v3d.getImageWindowList();
+    if(list_3dviewer.count() < 1 && list_triview.size() <1)
     {
        v3d_msg("You don't have any image open in the main window or any surface object in the 3D view window.");
        return;
@@ -280,18 +280,27 @@ lookPanel::lookPanel(V3DPluginCallback2 &_v3d, QWidget *parent) :
     SampleRate = new QDoubleSpinBox();
     QLabel* SampleName = new QLabel(QObject::tr(" Sample Rate:"));
 
-    Triwindowlist = m_v3d.getImageWindowList();
-    windowList = m_v3d.getListAll3DViewers();
+    list_triview = m_v3d.getImageWindowList();
+    list_3dviewer = m_v3d.getListAll3DViewers();
 
     QStringList items;
-    for (int i=0; i<Triwindowlist.size(); i++)
-        items << m_v3d.getImageName(Triwindowlist[i]);
+    for (int i=0; i<list_triview.size(); i++)
+        items << m_v3d.getImageName(list_triview[i]);
 
-    for (int i=0; i<windowList.count(); i++)
+    for (int i=0; i<list_3dviewer.count(); i++)
     {
-        items << m_v3d.getImageName(windowList[i]);
-    }
+        QString curname = m_v3d.getImageName(list_3dviewer[i]).remove("3D View [").remove("]");
+        bool b_found=false;
+        for (int j=0; j<list_triview.size(); j++)
+            if (curname==m_v3d.getImageName(list_triview[i]))
+            {
+                b_found=true;
+                break;
+            }
 
+        if (!b_found)
+            items << m_v3d.getImageName(list_3dviewer[i]);
+    }
 
     combo_surface = new QComboBox(); combo_surface->addItems(items);
     label_surface = new QLabel(QObject::tr("Window List: "));
