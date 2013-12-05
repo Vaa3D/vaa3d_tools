@@ -25,6 +25,8 @@ void quaternions_to_angles(float Rot_current[], float q_sample[]);
 
 float dot_multi(float q1[], float q2[]);
 
+QString warning_msg = "Oops... The image you selected no longer exists... The file list has been refreshed now and you can try it again.";
+
 #define SET_3DVIEW \
     { \
         view->resetRotation();\
@@ -161,14 +163,27 @@ float dot_multi(float q1[], float q2[]);
         framenum++;\
     }
 
-#define CHECK_WINDOWS \
-if(!curwin && windowList.count()<1)\
-{\
-    v3d_msg("You don't have any image open in the main window or any surface object in the 3D view window.");\
-    listWidget->clear();\
-    return;\
-}
-
+#define CHECK_WINDWOS \
+    {\
+        Triwindowlist = m_v3d.getImageWindowList();\
+        windowList = m_v3d.getListAll3DViewers();\
+         if(windowList.count() < 1 && Triwindowlist.size() <1)\
+        {\
+           v3d_msg("You don't have any image open in the main window or any surface object in the 3D view window.");\
+           return;\
+        }\
+        if(combo_surface->currentIndex() < Triwindowlist.size())\
+        {\
+            curwin = Triwindowlist[combo_surface->currentIndex()];\
+            m_v3d.open3DWindow(curwin);\
+            view = m_v3d.getView3DControl(curwin);\
+        }\
+        else\
+        {\
+            surface_win = windowList[combo_surface->currentIndex()-Triwindowlist.size()];\
+            view = m_v3d.getAnyView3DControl(surface_win);\
+        }\
+    }
 
 QStringList ZMovieMaker::menulist() const
 {
@@ -223,18 +238,12 @@ bool ZMovieMaker::dofunc(const QString & func_name, const V3DPluginArgList & inp
 
 void MovieFromPoints(V3DPluginCallback2 &v3d, QWidget *parent)
 {
-    v3dhandle curwin = v3d.currentImageWindow();
-    QList <V3dR_MainWindow *> windowList;
-    if (curwin)
-        v3d.open3DWindow(curwin);
-    else
+    QList <V3dR_MainWindow *> windowList = v3d.getListAll3DViewers();
+    v3dhandleList Triwindowlist = v3d.getImageWindowList();
+    if(windowList.count() < 1 && Triwindowlist.size() <1)
     {
-        windowList = v3d.getListAll3DViewers();
-        if(windowList.count()<1)
-        {
-            v3d_msg("You don't have any image open in the main window or any surface object in the 3D view window.");
-            return;
-        }
+       v3d_msg("You don't have any image open in the main window or any surface object in the 3D view window.");
+       return;
     }
 
     if (panel)
@@ -253,8 +262,6 @@ void MovieFromPoints(V3DPluginCallback2 &v3d, QWidget *parent)
             panel->raise();
             panel->move(100,100);
             panel->activateWindow();
-           if(windowList.count()>1)
-              v3d_msg("Please choose a surface object");
         }
     }
 }
@@ -273,16 +280,21 @@ lookPanel::lookPanel(V3DPluginCallback2 &_v3d, QWidget *parent) :
     SampleRate = new QDoubleSpinBox();
     QLabel* SampleName = new QLabel(QObject::tr(" Sample Rate:"));
 
-    curwin = m_v3d.currentImageWindow();
-    if (!curwin)
-        windowList = m_v3d.getListAll3DViewers();
+    Triwindowlist = m_v3d.getImageWindowList();
+    windowList = m_v3d.getListAll3DViewers();
 
     QStringList items;
+    for (int i=0; i<Triwindowlist.size(); i++)
+        items << m_v3d.getImageName(Triwindowlist[i]);
+
     for (int i=0; i<windowList.count(); i++)
+    {
         items << m_v3d.getImageName(windowList[i]);
+    }
+
 
     combo_surface = new QComboBox(); combo_surface->addItems(items);
-    label_surface = new QLabel(QObject::tr("Surface List: "));
+    label_surface = new QLabel(QObject::tr("Window List: "));
 
     gridLayout = new QGridLayout();
     gridLayout->addWidget(label_surface, 1,0,1,5);
@@ -293,7 +305,7 @@ lookPanel::lookPanel(V3DPluginCallback2 &_v3d, QWidget *parent) :
     gridLayout->addWidget(Delete,10,0,1,2);
     gridLayout->addWidget(Save,9,2,1,3);
     gridLayout->addWidget(Load,10,2,1,3);
-    gridLayout->addWidget(Upload,11,0);
+    gridLayout->addWidget(Upload,11,0,1,2);
     gridLayout->addWidget(SampleName, 5,6,1,1);
     gridLayout->addWidget(SampleRate, 5,7,1,2);
     SampleRate->setMaximum(1000); SampleRate->setMinimum(30);
@@ -301,11 +313,6 @@ lookPanel::lookPanel(V3DPluginCallback2 &_v3d, QWidget *parent) :
     listWidget = new QListWidget();
     gridLayout->addWidget(listWidget,4,0,5,5);
 
-    if(curwin)
-    {
-        combo_surface->setEnabled(false);
-        label_surface->setEnabled(false);
-    }
     setLayout(gridLayout);
     setWindowTitle(QString("ZMovieMaker"));
 
@@ -328,22 +335,7 @@ lookPanel::~lookPanel()
 
 void lookPanel::_slot_record()
 {
-    curwin = m_v3d.currentImageWindow();
-    if(!curwin)
-        windowList = m_v3d.getListAll3DViewers();
-
-    CHECK_WINDOWS
-
-    if(curwin)
-    {
-        m_v3d.open3DWindow(curwin);
-        view = m_v3d.getView3DControl(curwin);
-    }
-    else
-    {
-        surface_win = windowList[combo_surface->currentIndex()];
-        view = m_v3d.getAnyView3DControl(surface_win);
-    }
+    CHECK_WINDWOS
     view->absoluteRotPose();
     float xRot = view->xRot();
     float yRot = view->yRot();
@@ -382,11 +374,7 @@ void lookPanel::_slot_record()
 
 void lookPanel::_slot_preview()
 {
-    curwin = m_v3d.currentImageWindow();
-    if(!curwin)
-        windowList = m_v3d.getListAll3DViewers();
-
-    CHECK_WINDOWS
+    CHECK_WINDWOS
 
     if(!listWidget->count())
     {
@@ -395,20 +383,6 @@ void lookPanel::_slot_preview()
     }
 
     int  N = SampleRate->text().toDouble();
-    printf("rate is %d\n\n\n",N);
-
-    curwin = m_v3d.currentImageWindow();
-    if(curwin)
-    {
-        m_v3d.open3DWindow(curwin);
-        view = m_v3d.getView3DControl(curwin);
-    }
-    else
-    {
-        surface_win = windowList[combo_surface->currentIndex()];
-        view = m_v3d.getAnyView3DControl(surface_win);
-    }
-
     float xRot, yRot,zRot,xShift,yShift,zShift,zoom,xCut0,xCut1,yCut0,yCut1,zCut0,zCut1;
     int showSurf,showSurf_last;
     bool channelR,channelG,channelB,channelR_last,channelG_last,channelB_last;
@@ -485,11 +459,8 @@ void lookPanel::_slot_preview()
 
 void lookPanel::_slot_delete()
 {
-    curwin = m_v3d.currentImageWindow();
-    if(!curwin)
-        windowList = m_v3d.getListAll3DViewers();
+    CHECK_WINDWOS
 
-    CHECK_WINDOWS
     if(listWidget->currentRow()==-1)
     {
         v3d_msg("Please select a valid archor point.");
@@ -524,22 +495,7 @@ void lookPanel::_slot_delete()
 
 void lookPanel::_slot_show()
 {
-    curwin = m_v3d.currentImageWindow();
-    if(!curwin)
-        windowList = m_v3d.getListAll3DViewers();
-
-    CHECK_WINDOWS
-
-    if(curwin)
-    {
-        m_v3d.open3DWindow(curwin);
-        view = m_v3d.getView3DControl(curwin);
-    }
-    else
-    {
-        surface_win = windowList[combo_surface->currentIndex()];
-        view = m_v3d.getAnyView3DControl(surface_win);
-    }
+    CHECK_WINDWOS
 
     if(listWidget->currentRow()==-1)
     {
@@ -569,18 +525,6 @@ void lookPanel::_slot_upload()
 
 void lookPanel::_slot_save()
 {
-    curwin = m_v3d.currentImageWindow();
-    if(!curwin)
-        windowList = m_v3d.getListAll3DViewers();
-
-    CHECK_WINDOWS
-
-    if(!listWidget->count())
-    {
-        v3d_msg("Please define at least one archor point.");
-        return;
-    }
-
     QFileDialog d(this);
     d.setWindowTitle(QObject::tr("Choose output anchor point filename"));
     d.setAcceptMode(QFileDialog::AcceptSave);
@@ -625,11 +569,6 @@ void lookPanel::_slot_save()
 
 void lookPanel::_slot_load()
 {
-    curwin = m_v3d.currentImageWindow();
-    if(!curwin)
-        windowList = m_v3d.getListAll3DViewers();
-
-    CHECK_WINDOWS
 
     QString fileOpenName = QFileDialog::getOpenFileName(this, QObject::tr("Open File"),
             "",

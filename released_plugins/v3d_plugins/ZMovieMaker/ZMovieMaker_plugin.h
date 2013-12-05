@@ -38,6 +38,7 @@ public:
     V3DPluginCallback2 & m_v3d;
     QListWidget *listWidget;
     QList <V3dR_MainWindow *> windowList;
+    v3dhandleList Triwindowlist;
     QComboBox* combo_surface;
     QLabel* label_surface;
     V3dR_MainWindow *surface_win;
