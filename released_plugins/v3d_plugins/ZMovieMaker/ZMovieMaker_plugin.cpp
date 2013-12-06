@@ -266,6 +266,43 @@ void MovieFromPoints(V3DPluginCallback2 &v3d, QWidget *parent)
     }
 }
 
+void MyComboBox::updateList()
+{
+    if (!m_v3d)
+        return;
+
+    v3dhandleList cur_list_triview = m_v3d->getImageWindowList();
+    QList <V3dR_MainWindow *> cur_list_3dviewer = m_v3d->getListAll3DViewers();
+
+    QStringList items;
+    int i;
+
+    for (i=0; i<cur_list_triview.size(); i++)
+        items << m_v3d->getImageName(cur_list_triview[i]);
+
+    for (i=0; i<cur_list_3dviewer.count(); i++)
+    {
+        QString curname = m_v3d->getImageName(cur_list_3dviewer[i]).remove("3D View [").remove("]");
+        bool b_found=false;
+        for (int j=0; j<cur_list_triview.size(); j++)
+            if (curname==m_v3d->getImageName(cur_list_triview[i]))
+            {
+                b_found=true;
+                break;
+            }
+
+        if (!b_found)
+            items << m_v3d->getImageName(cur_list_3dviewer[i]);
+    }
+
+    //update the list now
+    clear();
+    addItems(items);
+
+    return;
+}
+
+
 lookPanel::lookPanel(V3DPluginCallback2 &_v3d, QWidget *parent) :
     QDialog(parent), m_v3d(_v3d)
 {
@@ -280,29 +317,37 @@ lookPanel::lookPanel(V3DPluginCallback2 &_v3d, QWidget *parent) :
     SampleRate = new QDoubleSpinBox();
     QLabel* SampleName = new QLabel(QObject::tr(" Sample Rate:"));
 
+    //potential bugs for the following two sentences
     list_triview = m_v3d.getImageWindowList();
     list_3dviewer = m_v3d.getListAll3DViewers();
 
-    QStringList items;
-    for (int i=0; i<list_triview.size(); i++)
-        items << m_v3d.getImageName(list_triview[i]);
+//    QStringList items;
+//    for (int i=0; i<list_triview.size(); i++)
+//        items << m_v3d.getImageName(list_triview[i]);
 
-    for (int i=0; i<list_3dviewer.count(); i++)
-    {
-        QString curname = m_v3d.getImageName(list_3dviewer[i]).remove("3D View [").remove("]");
-        bool b_found=false;
-        for (int j=0; j<list_triview.size(); j++)
-            if (curname==m_v3d.getImageName(list_triview[i]))
-            {
-                b_found=true;
-                break;
-            }
+//    for (int i=0; i<list_3dviewer.count(); i++)
+//    {
+//        QString curname = m_v3d.getImageName(list_3dviewer[i]).remove("3D View [").remove("]");
+//        bool b_found=false;
+//        for (int j=0; j<list_triview.size(); j++)
+//            if (curname==m_v3d.getImageName(list_triview[i]))
+//            {
+//                b_found=true;
+//                break;
+//            }
 
-        if (!b_found)
-            items << m_v3d.getImageName(list_3dviewer[i]);
-    }
+//        if (!b_found)
+//            items << m_v3d.getImageName(list_3dviewer[i]);
+//    }
 
-    combo_surface = new QComboBox(); combo_surface->addItems(items);
+
+//    combo_surface->addItems(items);
+
+    combo_surface = new MyComboBox(&m_v3d);
+    combo_surface->updateList();
+
+    connect(combo_surface, SIGNAL(activated(int)), combo_surface, SLOT(updateList()));
+
     label_surface = new QLabel(QObject::tr("Window List: "));
 
     gridLayout = new QGridLayout();

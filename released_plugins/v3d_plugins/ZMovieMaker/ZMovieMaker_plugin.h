@@ -25,6 +25,19 @@ public:
 	bool dofunc(const QString &func_name, const V3DPluginArgList &input, V3DPluginArgList &output, V3DPluginCallback2 &callback, QWidget *parent);
 };
 
+
+class MyComboBox : public QComboBox
+{
+    Q_OBJECT
+
+public:
+    V3DPluginCallback2 * m_v3d;
+    MyComboBox(V3DPluginCallback2 * ini_v3d) {m_v3d = ini_v3d;}
+
+public slots:
+    void updateList();
+};
+
 class lookPanel: public QDialog
 {
     Q_OBJECT
@@ -42,7 +55,7 @@ public:
     QList <V3dR_MainWindow *> list_3dviewer;
     v3dhandleList list_triview;
 
-    QComboBox* combo_surface;
+    MyComboBox* combo_surface;
     QLabel* label_surface;
     V3dR_MainWindow *surface_win;
     View3DControl *view;
