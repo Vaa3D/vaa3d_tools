@@ -592,9 +592,6 @@ void lookPanel::_slot_save()
     {
         QString currentPoint = listWidget->item(row)->text();
         QStringList currentParas = currentPoint.split(rx);
-        myfile << currentParas.at(0).toFloat();myfile << "  ";
-        myfile << currentParas.at(1).toFloat();myfile << "  ";
-        myfile << currentParas.at(2).toFloat();myfile << "  ";
         myfile << currentParas.at(3).toFloat();myfile << "  ";
         myfile << currentParas.at(4).toFloat();myfile << "  ";
         myfile << currentParas.at(5).toFloat();myfile << "  ";
@@ -614,7 +611,10 @@ void lookPanel::_slot_save()
         myfile << currentParas.at(19).toFloat();myfile << "  ";
         myfile << currentParas.at(20).toFloat();myfile << "  ";
         myfile << currentParas.at(21).toFloat();myfile << "  ";
-        myfile << currentParas.at(22).toFloat();
+        myfile << currentParas.at(22).toFloat();myfile << "  ";
+        myfile << currentParas.at(23).toFloat();myfile << "  ";
+        myfile << currentParas.at(24).toFloat();myfile << "  ";
+        myfile << currentParas.at(25).toFloat();
         myfile << "\n";
     }
     myfile.close();
@@ -658,9 +658,9 @@ void lookPanel::_slot_load()
 
 void angles_to_quaternions(float q[], float xRot, float yRot,float zRot)
 {
-    float xRot_Rad = xRot * (pi/180.0); //if(xRot_Rad>pi) xRot_Rad -= 2*pi;
-    float yRot_Rad = yRot * (pi/180.0); //if(yRot_Rad>pi) yRot_Rad -= 2*pi;
-    float zRot_Rad = zRot * (pi/180.0); //if(zRot_Rad>pi) zRot_Rad -= 2*pi;
+    float xRot_Rad = xRot * (pi/180.0); // if(xRot_Rad>pi) xRot_Rad -= 2*pi;
+    float yRot_Rad = yRot * (pi/180.0); // if(yRot_Rad>pi) yRot_Rad -= 2*pi;
+    float zRot_Rad = zRot * (pi/180.0); // if(zRot_Rad>pi) zRot_Rad -= 2*pi;
 
     q[0] = cos(xRot_Rad/2)*cos(yRot_Rad/2)*cos(zRot_Rad/2)+sin(xRot_Rad/2)*sin(yRot_Rad/2)*sin(zRot_Rad/2);
     q[1] = sin(xRot_Rad/2)*cos(yRot_Rad/2)*cos(zRot_Rad/2)-cos(xRot_Rad/2)*sin(yRot_Rad/2)*sin(zRot_Rad/2);
@@ -714,9 +714,9 @@ void quaternions_to_angles(float Rot_current[], float q_sample[])
     float rot_y = asinf(2*(q_sample[0]*q_sample[2]-q_sample[3]*q_sample[1]));
     float rot_z = atan2f(2*(q_sample[0]*q_sample[3]+q_sample[1]*q_sample[2]),1-2*(q_sample[2]*q_sample[2]+q_sample[3]*q_sample[3]));
 
-    Rot_current[0] = rot_x * (180.0/pi);  //if( Rot_current[0]<0)  Rot_current[0] = 360.0 - Rot_current[0];
-    Rot_current[1] = rot_y * (180.0/pi);  //if( Rot_current[1]<0)  Rot_current[1] = 360.0 - Rot_current[1];
-    Rot_current[2] = rot_z * (180.0/pi);  //if( Rot_current[2]<0)  Rot_current[2] = 360.0 - Rot_current[2];
+    Rot_current[0] = rot_x * (180.0/pi);  // if( Rot_current[0]<0)  Rot_current[0] = 360.0 - Rot_current[0];
+    Rot_current[1] = rot_y * (180.0/pi);  // if( Rot_current[1]<0)  Rot_current[1] = 360.0 - Rot_current[1];
+    Rot_current[2] = rot_z * (180.0/pi);  // if( Rot_current[2]<0)  Rot_current[2] = 360.0 - Rot_current[2];
 
 }
 
