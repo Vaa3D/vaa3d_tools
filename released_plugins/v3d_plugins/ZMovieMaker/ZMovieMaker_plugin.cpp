@@ -353,19 +353,19 @@ lookPanel::lookPanel(V3DPluginCallback2 &_v3d, QWidget *parent) :
     gridLayout = new QGridLayout();
     gridLayout->addWidget(label_surface, 1,0,1,5);
     gridLayout->addWidget(combo_surface, 2,0,1,5);
-    gridLayout->addWidget(Record, 3,0);
-    gridLayout->addWidget(Preview,6,6,1,3);
-    gridLayout->addWidget(Show,9,0,1,2);
-    gridLayout->addWidget(Delete,10,0,1,2);
+    gridLayout->addWidget(Record, 8,0,1,2);
+    gridLayout->addWidget(Preview,5,6,1,3);
+    gridLayout->addWidget(Show,10,0,1,2);
+    gridLayout->addWidget(Delete,9,0,1,2);
     gridLayout->addWidget(Save,9,2,1,3);
     gridLayout->addWidget(Load,10,2,1,3);
-    gridLayout->addWidget(Upload,11,0,1,2);
-    gridLayout->addWidget(SampleName, 5,6,1,1);
-    gridLayout->addWidget(SampleRate, 5,7,1,2);
+    gridLayout->addWidget(Upload,11,0,1,5);
+    gridLayout->addWidget(SampleName, 4,6,1,1);
+    gridLayout->addWidget(SampleRate, 4,7,1,2);
     SampleRate->setMaximum(1000); SampleRate->setMinimum(30);
 
     listWidget = new QListWidget();
-    gridLayout->addWidget(listWidget,4,0,5,5);
+    gridLayout->addWidget(listWidget,3,0,5,5);
 
     setLayout(gridLayout);
     setWindowTitle(QString("ZMovieMaker"));
