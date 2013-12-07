@@ -9,8 +9,7 @@
 #include <fstream>
 #include <iostream>
 #include <sstream>
-#include <math.h>
-
+#include <cmath>
 using namespace std;
 const double pi = 3.1415926535897;
 Q_EXPORT_PLUGIN2(ZMovieMaker, ZMovieMaker);
@@ -22,7 +21,8 @@ QDoubleSpinBox* SampleRate;
 void angles_to_quaternions(float q[], float xRot, float yRot,float zRot);
 void slerp_zhi(float q1[], float q2[],float alpha,float q_sample[]);
 void quaternions_to_angles(float Rot_current[], float q_sample[]);
-
+void angles_to_quaternions_3DRotation(float q[], float xRot, float yRot,float zRot);
+void quaternions_to_angles_3DRotation(float Rot_current[], float q_sample[]);
 float dot_multi(float q1[], float q2[]);
 
 QString warning_msg = "Oops... The image you selected no longer exists... The file list has been refreshed now and you can try it again.";
@@ -658,9 +658,9 @@ void lookPanel::_slot_load()
 
 void angles_to_quaternions(float q[], float xRot, float yRot,float zRot)
 {
-    float xRot_Rad = xRot * (pi/180.0); // if(xRot_Rad>pi) xRot_Rad -= 2*pi;
-    float yRot_Rad = yRot * (pi/180.0); // if(yRot_Rad>pi) yRot_Rad -= 2*pi;
-    float zRot_Rad = zRot * (pi/180.0); // if(zRot_Rad>pi) zRot_Rad -= 2*pi;
+    float xRot_Rad = xRot * (pi/180.0);   //if(xRot_Rad>pi) xRot_Rad -= 2*pi;
+    float yRot_Rad = yRot * (pi/180.0);   //if(yRot_Rad>pi) yRot_Rad -= 2*pi;
+    float zRot_Rad = zRot * (pi/180.0);   //if(zRot_Rad>pi) zRot_Rad -= 2*pi;
 
     q[0] = cos(xRot_Rad/2)*cos(yRot_Rad/2)*cos(zRot_Rad/2)+sin(xRot_Rad/2)*sin(yRot_Rad/2)*sin(zRot_Rad/2);
     q[1] = sin(xRot_Rad/2)*cos(yRot_Rad/2)*cos(zRot_Rad/2)-cos(xRot_Rad/2)*sin(yRot_Rad/2)*sin(zRot_Rad/2);
@@ -671,13 +671,84 @@ void angles_to_quaternions(float q[], float xRot, float yRot,float zRot)
 
 }
 
+void angles_to_quaternions_3DRotation(float q[], float xRot, float yRot,float zRot)
+{
+    float xRot_Rad = xRot * (pi/180.0);  //if(xRot_Rad>pi) xRot_Rad -= 2*pi;
+    float yRot_Rad = yRot * (pi/180.0);  //if(yRot_Rad>pi) yRot_Rad -= 2*pi;
+    float zRot_Rad = zRot * (pi/180.0);  //if(zRot_Rad>pi) zRot_Rad -= 2*pi;
+
+    float R[3][3];
+
+    const float cosAngle1 = cosf( xRot_Rad ),  sinAngle1 = sinf( xRot_Rad );
+    const float cosAngle2 = cosf( yRot_Rad ),  sinAngle2 = sinf( yRot_Rad );
+    const float cosAngle3 = cosf( zRot_Rad ),  sinAngle3 = sinf( zRot_Rad );
+
+    // Repeated calculations (for efficiency)
+    float s1c3 = sinAngle1 * cosAngle3;
+    float s3c1 = sinAngle3 * cosAngle1;
+    float s1s3 = sinAngle1 * sinAngle3;
+    float c1c3 = cosAngle1 * cosAngle3;
+
+    const int i = 0;
+    const int j = 1;
+    const int k = 2;
+
+    R[i][i] =  cosAngle2 * cosAngle3;
+    R[i][j] = -sinAngle3 * cosAngle2;
+    R[i][k] =  sinAngle2;
+    R[j][i] =  s3c1 + sinAngle2 * s1c3;
+    R[j][j] =  c1c3 - sinAngle2 * s1s3;
+    R[j][k] = -sinAngle1 * cosAngle2;
+    R[k][i] =  s1s3 - sinAngle2 * c1c3;
+    R[k][j] =  s1c3 + sinAngle2 * s3c1;
+    R[k][k] =  cosAngle1 * cosAngle2;
+
+
+    const float tr = R[i][i] + R[j][j] + R[k][k];
+    if( tr >= R[0][0]  &&  tr >= R[1][1]  &&  tr >= R[2][2] ) {
+        q[0] = 1 + tr;
+        q[1] = R[2][1] - R[1][2];
+        q[2] = R[0][2] - R[2][0];
+        q[3] = R[1][0] - R[0][1];
+
+    // Check if R[0][0] is largest along the diagonal
+    } else if( R[0][0] >= R[1][1]  &&  R[0][0] >= R[2][2]  ) {
+        q[0] = R[2][1] - R[1][2];
+        q[1] = 1 - (tr - 2*R[0][0]);
+        q[2] = R[0][1]+R[1][0];
+        q[3] = R[0][2]+R[2][0];
+
+    // Check if R[1][1] is largest along the diagonal
+    } else if( R[1][1] >= R[2][2] ) {
+        q[0] = R[0][2] - R[2][0];
+        q[1] = R[0][1] + R[1][0];
+        q[2] = 1 - (tr - 2*R[1][1]);
+        q[3] = R[1][2] + R[2][1];
+
+    // R[2][2] is largest along the diagonal
+    } else {
+        q[0] = R[1][0] - R[0][1];
+        q[1] = R[0][2] + R[2][0];
+        q[2] = R[1][2] + R[2][1];
+        q[3] = 1 - (tr - 2*R[2][2]);
+    }
+    // Scale to unit length
+    float scale = 0.0;
+    for (int i = 0; i < 4; i++)
+        scale += q[i] * q[i];
+    scale = std::sqrt(scale);
+    if( q[0] < 0 )  scale = -scale;   // canonicalize
+    for (int i = 0; i < 4; i++)
+        q[i] *= 1.0/scale;
+
+}
 
 void slerp_zhi(float q1[], float q2[],float t,float q_sample[])
 {
     float cos_t = dot_multi(q1,q2);
     float theta,beta,alpha;
     int flag = 0;
-    if(cos_t<0)
+    if(cos_t<0.0)
     {
         cos_t = -cos_t;
         flag =1;
@@ -699,10 +770,17 @@ void slerp_zhi(float q1[], float q2[],float t,float q_sample[])
 
     printf("slerp result is (%f,%f,%f,%f,%f)\n\n",cos_t,theta,beta,alpha,t);
 
+    float scale = 0;
     for(int i= 0; i<4;i++)
     {
         q_sample[i] = beta*q1[i] + alpha*q2[i];
+        scale += q_sample[i] * q_sample[i];
+    }
 
+    scale = 1.0/std::sqrt(scale);
+
+    for (int i = 0; i < 4; i++) {
+        q_sample[i] *= scale;
     }
 
 }
@@ -714,11 +792,44 @@ void quaternions_to_angles(float Rot_current[], float q_sample[])
     float rot_y = asinf(2*(q_sample[0]*q_sample[2]-q_sample[3]*q_sample[1]));
     float rot_z = atan2f(2*(q_sample[0]*q_sample[3]+q_sample[1]*q_sample[2]),1-2*(q_sample[2]*q_sample[2]+q_sample[3]*q_sample[3]));
 
-    Rot_current[0] = rot_x * (180.0/pi);  // if( Rot_current[0]<0)  Rot_current[0] = 360.0 - Rot_current[0];
-    Rot_current[1] = rot_y * (180.0/pi);  // if( Rot_current[1]<0)  Rot_current[1] = 360.0 - Rot_current[1];
-    Rot_current[2] = rot_z * (180.0/pi);  // if( Rot_current[2]<0)  Rot_current[2] = 360.0 - Rot_current[2];
+    Rot_current[0] = rot_x * (180.0/pi);
+    Rot_current[1] = rot_y * (180.0/pi);
+    Rot_current[2] = rot_z * (180.0/pi);
+}
+
+void quaternions_to_angles_3DRotation(float Rot_current[], float q[])
+{
+    const float q00=q[0]*q[0], q11=q[1]*q[1], q22=q[2]*q[2], q33=q[3]*q[3];
+    const float q01=q[0]*q[1], q02=q[0]*q[2], q03=q[0]*q[3];
+    const float q12=q[1]*q[2], q13=q[1]*q[3], q23=q[2]*q[3];
+
+    float R[3][3];
+
+    const int i = 0;
+    const int j = 1;
+    const int k = 2;
+
+    R[i][i] =  q00+q11-q22-q33;
+    R[i][j] =  2*(q12-q03);
+    R[i][k] =  2*(q13+q02);
+    R[j][i] = 2*(q12+q03);
+    R[j][j] =   q00-q11+q22-q33;
+    R[j][k] = 2*(q23-q01);
+    R[k][i] =   2*(q13-q02);
+    R[k][j] = 2*(q23+q01);
+    R[k][k] =  q00-q11-q22+q33;
+
+    float rot_x = atan2f(R[1][2],R[2][2]);
+    float rot_y = atan2f(-R[0][2], -sqrt(R[0][0]*R[0][0]+R[0][1]*R[0][1]));
+    float rot_z = atan2f(sinf(rot_x)* R[2][0] - cosf(rot_x)*R[1][0], cosf(rot_x)*R[1][1] - sinf(rot_x)*R[2][1]);
+
+
+    Rot_current[0] = rot_x * (180.0/pi);
+    Rot_current[1] = rot_y * (180.0/pi);
+    Rot_current[2] = rot_z * (180.0/pi);
 
 }
+
 
 
 float dot_multi(float q1[], float q2[])
