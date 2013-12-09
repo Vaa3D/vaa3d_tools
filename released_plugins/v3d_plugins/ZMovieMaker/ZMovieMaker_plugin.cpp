@@ -164,27 +164,39 @@ QString warning_msg = "Oops... The image you selected no longer exists... The fi
         framenum++;\
     }
 
-#define CHECK_WINDWOS \
+#define CHECK_WINDWOS \   
+    list_triview = m_v3d.getImageWindowList();\
+    list_3dviewer = m_v3d.getListAll3DViewers();\
+    if(combo_surface->currentIndex() < list_triview.size())\
     {\
-        list_triview = m_v3d.getImageWindowList();\
-        list_3dviewer = m_v3d.getListAll3DViewers();\
-         if(list_3dviewer.count() < 1 && list_triview.size() <1)\
+        curwin = list_triview[combo_surface->currentIndex()];\
+        if(curwin)\
         {\
-           v3d_msg("You don't have any image open in the main window or any surface object in the 3D view window.");\
-           return;\
-        }\
-        if(combo_surface->currentIndex() < list_triview.size())\
-        {\
-            curwin = list_triview[combo_surface->currentIndex()];\
             m_v3d.open3DWindow(curwin);\
             view = m_v3d.getView3DControl(curwin);\
         }\
         else\
+            return;\
+    }\
+    else\
+    {\
+        QString curname = combo_surface->itemText(combo_surface->currentIndex());\
+        for (int i=0; i<list_3dviewer.count(); i++)\
         {\
-            surface_win = list_3dviewer[combo_surface->currentIndex()-list_triview.size()];\
-            view = m_v3d.getAnyView3DControl(surface_win);\
+            if(curname == m_v3d.getImageName(list_3dviewer[i]))\
+            {\
+                surface_win = list_3dviewer[i];\
+                if(surface_win)\
+                {\
+                    view = m_v3d.getAnyView3DControl(surface_win);\
+                }\
+                else\
+                    return;\
+                break;\
+            }\
         }\
-    }
+    }\
+
 
 QStringList ZMovieMaker::menulist() const
 {
@@ -416,6 +428,7 @@ lookPanel::~lookPanel()
 void lookPanel::_slot_record()
 {
     CHECK_WINDWOS
+
     view->absoluteRotPose();
     float xRot = view->xRot();
     float yRot = view->yRot();
