@@ -13,6 +13,7 @@ struct Point;
 struct Point
 {
 	double x,y,z,r;
+    V3DLONG type;
 	Point* p;
 	V3DLONG childNum;
 };
@@ -40,12 +41,14 @@ void resample_path(Segment * seg, double step)
 		{
 			path_length -= DISTP(start,start->p);
 			Point* pt = new Point;
-			double rate = (seg_r.size()*step-path_length)/(DISTP(start,start->p));
+            double rate = (seg_r.size()*step-path_length)/(DISTP(start,start->p));
 			pt->x = start->x + rate*(start->p->x-start->x);
 			pt->y = start->y + rate*(start->p->y-start->y);
 			pt->z = start->z + rate*(start->p->z-start->z);
 			pt->r = start->r*(1-rate) + start->p->r*rate;//intepolate the radius
 			pt->p = start->p;
+            if (rate<0.5) pt->type = start->type;
+            else pt->type = start->p->type;
 			seg_r.back()->p = pt;
 			seg_r.push_back(pt);
 			path_length += DISTP(start,pt);
@@ -71,6 +74,7 @@ NeuronTree resample(NeuronTree input, double step)
 		pt->y = s.y;
 		pt->z = s.z;
 		pt->r = s.r;
+        pt ->type = s.type;
 		pt->p = NULL;
 		pt->childNum = 0;
 		tree.push_back(pt);
@@ -127,7 +131,7 @@ NeuronTree resample(NeuronTree input, double step)
 		S.y = p->y;
 		S.z = p->z;
 		S.r = p->r;
-		S.type = 2;
+        S.type = p->type;
 		result.listNeuron.push_back(S);
 	}
 	for (V3DLONG i=0;i<tree.size();i++)

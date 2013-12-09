@@ -14,4 +14,4 @@ SOURCES	+= $$V3DMAINPATH/basic_c_fun/v3d_message.cpp
 SOURCES	+= $$V3DMAINPATH/basic_c_fun/basic_surf_objs.cpp
 
 TARGET	= $$qtLibraryTarget(resample_swc)
-DESTDIR	= ../../v3d/plugins/neuron_utilities/resample_swc/
+DESTDIR	= $$V3DMAINPATH/../bin/plugins/neuron_utilities/resample_swc/
