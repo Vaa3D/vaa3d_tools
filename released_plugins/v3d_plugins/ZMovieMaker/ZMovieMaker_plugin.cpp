@@ -1,6 +1,7 @@
 /* ZMovieMaker_plugin.cpp
  * This plugin can be used to generate a smooth movie by several points
  * 2013-11-21 : by Zhi Zhou
+ * 2013-12-08: fix the multiple 3d viewers / multi-tri-view bugs. by Hanchuan Peng
  */
  
 #include "v3d_message.h"
@@ -266,11 +267,21 @@ void MovieFromPoints(V3DPluginCallback2 &v3d, QWidget *parent)
     }
 }
 
+void MyComboBox::enterEvent(QEvent *e)
+{
+    updateList();
+    QComboBox::enterEvent(e);
+}
+
 void MyComboBox::updateList()
 {
     if (!m_v3d)
         return;
 
+    //need to add a few more lines to get the current highligh file and then always highlight it unless literally changed
+    QString lastDisplayfile = currentText();
+
+    // now re-check the currently opened windows
     v3dhandleList cur_list_triview = m_v3d->getImageWindowList();
     QList <V3dR_MainWindow *> cur_list_3dviewer = m_v3d->getListAll3DViewers();
 
@@ -285,7 +296,7 @@ void MyComboBox::updateList()
         QString curname = m_v3d->getImageName(cur_list_3dviewer[i]).remove("3D View [").remove("]");
         bool b_found=false;
         for (int j=0; j<cur_list_triview.size(); j++)
-            if (curname==m_v3d->getImageName(cur_list_triview[i]))
+            if (curname==m_v3d->getImageName(cur_list_triview[j]))
             {
                 b_found=true;
                 break;
@@ -298,6 +309,21 @@ void MyComboBox::updateList()
     //update the list now
     clear();
     addItems(items);
+
+    //search if the lastDisplayfile exists, if yes, then highlight it (set as current), otherwise do nothing (i.e. in this case the list will highlight the 1st one which is new)
+    int curDisplayIndex=-1; //-1 for invalid index
+    for (i=0; i<items.size(); i++)
+        if (items[i]==lastDisplayfile)
+        {
+            curDisplayIndex = i;
+            break;
+        }
+
+    if (curDisplayIndex>=0)
+        setCurrentIndex(curDisplayIndex);
+
+    //
+    update();
 
     return;
 }
@@ -346,7 +372,7 @@ lookPanel::lookPanel(V3DPluginCallback2 &_v3d, QWidget *parent) :
     combo_surface = new MyComboBox(&m_v3d);
     combo_surface->updateList();
 
-    connect(combo_surface, SIGNAL(activated(int)), combo_surface, SLOT(updateList()));
+    //connect(combo_surface, SIGNAL(activated(int)), combo_surface, SLOT(updateList()));
 
     label_surface = new QLabel(QObject::tr("Window List: "));
 

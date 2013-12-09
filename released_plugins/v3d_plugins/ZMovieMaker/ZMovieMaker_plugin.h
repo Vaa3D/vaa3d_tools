@@ -34,6 +34,8 @@ public:
     V3DPluginCallback2 * m_v3d;
     MyComboBox(V3DPluginCallback2 * ini_v3d) {m_v3d = ini_v3d;}
 
+    void enterEvent(QEvent * event);
+
 public slots:
     void updateList();
 };
