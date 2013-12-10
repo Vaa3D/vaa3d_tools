@@ -170,7 +170,7 @@ QString warning_msg = "Oops... The image you selected no longer exists... The fi
 view=0;curwin=0; \
 list_triview = m_v3d.getImageWindowList();\
 list_3dviewer = m_v3d.getListAll3DViewers();\
-if(!combo_surface) return;\
+if(!combo_surface || combo_surface->count()<=0) return;\
 if(combo_surface->currentIndex() < list_triview.size())\
 {\
     curwin = list_triview[combo_surface->currentIndex()];\
