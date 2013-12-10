@@ -46,7 +46,6 @@ class lookPanel: public QDialog
 
 public:
     lookPanel(V3DPluginCallback2 &v3d, QWidget *parent);
-    ~lookPanel();
 
 public:
     v3dhandle curwin;

@@ -164,7 +164,7 @@ QString warning_msg = "Oops... The image you selected no longer exists... The fi
         framenum++;\
     }
 
-#define CHECK_WINDWOS \   
+#define CHECK_WINDOWS \
     list_triview = m_v3d.getImageWindowList();\
     list_3dviewer = m_v3d.getListAll3DViewers();\
     if(combo_surface->currentIndex() < list_triview.size())\
@@ -251,14 +251,6 @@ bool ZMovieMaker::dofunc(const QString & func_name, const V3DPluginArgList & inp
 
 void MovieFromPoints(V3DPluginCallback2 &v3d, QWidget *parent)
 {
-    QList <V3dR_MainWindow *> list_3dviewer = v3d.getListAll3DViewers();
-    v3dhandleList list_triview = v3d.getImageWindowList();
-    if(list_3dviewer.count() < 1 && list_triview.size() <1)
-    {
-       v3d_msg("You don't have any image open in the main window or any surface object in the 3D view window.");
-       return;
-    }
-
     if (panel)
     {
         panel->show();
@@ -273,7 +265,7 @@ void MovieFromPoints(V3DPluginCallback2 &v3d, QWidget *parent)
             panel->setAttribute(Qt::WA_QuitOnClose);
             panel->setAttribute(Qt::WA_DeleteOnClose);
             panel->raise();
-            panel->move(100,100);
+            panel->move(50,50);
             panel->activateWindow();
         }
     }
@@ -322,7 +314,9 @@ void MyComboBox::updateList()
     clear();
     addItems(items);
 
-    //search if the lastDisplayfile exists, if yes, then highlight it (set as current), otherwise do nothing (i.e. in this case the list will highlight the 1st one which is new)
+    //search if the lastDisplayfile exists, if yes, then highlight it (set as current),
+    //otherwise do nothing (i.e. in this case the list will highlight the 1st one which is new)
+
     int curDisplayIndex=-1; //-1 for invalid index
     for (i=0; i<items.size(); i++)
         if (items[i]==lastDisplayfile)
@@ -394,18 +388,9 @@ lookPanel::lookPanel(V3DPluginCallback2 &_v3d, QWidget *parent) :
     connect(SampleRate, SIGNAL(valueChanged(double)), this, SLOT(update()));
 }
 
-lookPanel::~lookPanel()
-{
-    if (panel)
-    {
-        delete panel;
-        panel = 0;
-    }
-}
-
 void lookPanel::_slot_record()
 {
-    CHECK_WINDWOS
+    CHECK_WINDOWS
 
     view->absoluteRotPose();
     float xRot = view->xRot();
@@ -445,7 +430,9 @@ void lookPanel::_slot_record()
 
 void lookPanel::_slot_preview()
 {
-    CHECK_WINDWOS
+    CHECK_WINDOWS
+
+            return;
 
     if(!listWidget->count())
     {
@@ -530,7 +517,7 @@ void lookPanel::_slot_preview()
 
 void lookPanel::_slot_delete()
 {
-    CHECK_WINDWOS
+    CHECK_WINDOWS
 
     if(listWidget->currentRow()==-1)
     {
@@ -566,7 +553,7 @@ void lookPanel::_slot_delete()
 
 void lookPanel::_slot_show()
 {
-    CHECK_WINDWOS
+    CHECK_WINDOWS
 
     if(listWidget->currentRow()==-1)
     {
