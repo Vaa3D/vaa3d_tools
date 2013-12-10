@@ -1,0 +1,116 @@
+#!/usr/bin/perl
+ 
+my $s;
+
+if (@ARGV == 0) {
+  $s = 0.35;
+} else {
+  $s = $ARGV[0];
+}
+  
+my @scores;
+my @calctime;
+
+$start = time();
+$scores[0] = diadem_score("benchmark/diadem/diadem_e1", "e1",
+    '30.979 429.04 0.000', $s);
+$end = time();
+$calctime[0] = $end - $start;
+
+if (1) {
+$start = time();
+$scores[1] = diadem_score("benchmark/diadem/diadem_e2", "e2", 
+    '0.72501 391.08 25', $s);
+$end = time();
+$calctime[1] = $end - $start;
+
+$start = time();
+$scores[2] = diadem_score("benchmark/diadem/diadem_e3", "e3", 
+    '93.742 179 38', $s);
+$end = time();
+$calctime[2] = $end - $start;
+
+$start = time();
+$scores[3] = diadem_score("benchmark/diadem/diadem_e4", "e4",
+    '128.2 504.37 0.303', $s);
+$end = time();
+$calctime[3] = $end - $start;
+
+$start = time();
+$scores[4] = diadem_score("benchmark/diadem/diadem_e5", "e5",
+    '185.7 264.02 33', $s);
+$end = time();
+$calctime[4] = $end - $start;
+
+$start = time();
+$scores[5] = diadem_score("benchmark/diadem/diadem_e6", "e6",
+    '15.074 412.01 10', $s);
+$end = time();
+$calctime[5] = $end - $start;
+
+$start = time();
+$scores[6] = diadem_score("benchmark/diadem/diadem_e7", "e7",
+    '119.76 215.98 39', $s);
+$end = time();
+$calctime[6] = $end - $start;
+
+$start = time();
+$scores[7] = diadem_score("benchmark/diadem/diadem_e8", "e8",
+    '118.64 181.34 55', $s);
+$end = time();
+$calctime[7] = $end - $start;
+
+$start = time();
+$scores[8] = diadem_score("benchmark/diadem/diadem_e9", "e9",
+    '64.56 364.47 4', $s);
+$end = time();
+$calctime[8] = $end - $start;
+}
+$average_score = mean(@scores);
+
+print "time: @calctime"."\n";
+print "@scores"."\n";
+print "average: $average_score"."\n";
+
+$low = 0.852;
+$high = 0.853;
+if ($average_score < $low) {
+    print "score decreased.\n";
+} elsif ($average_score > $high) {
+    printf "score increased.\n";
+}
+
+print "\n";
+
+sub diadem_score {
+    my ($data, $id, $root, $s) = @_;
+    system "cd ../c; sh trace_all.sh $data -T 2 -r no_recon -s $s -t -push";
+    system "cd ../c; bin/edtube -stack ../data/$data.tif ../data/$data -o ../data/$data -recover";
+
+    $args = "-o struct.txt -minlen 0 -b -z 1.0 -res ../data/diadem_e1.res -screen -sp -sl -rz -dist 20 -single_break -intp";
+
+    system "cd ../c; bin/reconstruct_neuron -D../data/$data -I../data/$data.tif -root $root $args";
+
+    $data_dir = "../../data";
+    printf "cd ../java/DiademMetric; java -jar DiademMetric.jar -G $data_dir/benchmark/diadem/golden/$id".".swc -T $data_dir/$data/graph_d.swc -D 5 -m true > $data_dir/$data/rvtest.out\n";
+    system "cd ../java/DiademMetric; java -jar DiademMetric.jar -G $data_dir/benchmark/diadem/golden/$id".".swc -T $data_dir/$data/graph_d.swc -D 5 -m true > $data_dir/$data/rvtest.out";
+
+    open RESULT, '<', "../data/$data/rvtest.out";
+
+    while (<RESULT>) {
+	if (m/[sS]core[: ]+([0-9.]+)/) {
+	    $score = $1;
+	    break;
+	}
+    }
+    return $score;
+}
+
+sub mean {
+    my @args = @_;
+    my $sum = 0;
+    foreach $arg (@args) {
+	$sum += $arg;
+    }
+    return $sum/@args;
+}

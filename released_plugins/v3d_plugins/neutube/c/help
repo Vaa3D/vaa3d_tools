@@ -1,0 +1,84 @@
+#!/usr/bin/perl
+
+#if test $# -eq 0
+#then
+#    open ../doc/html/index.html
+#else
+#    grep -E ".* $1\(.*[ \t\r\n\v\f]*.*\);" *.h
+#fi
+
+if ($#ARGV < 0) {
+  if ($^O == 'linux') {
+    system('firefox ../doc/html/index.html');
+  } else {
+    system('open ../doc/html/index.html');
+  }
+} else {
+  my ($token, $option) = @ARGV;
+  my $state = 0;
+
+  opendir(DIR, ".");
+  @files = grep(/\.h$/, readdir(DIR));
+  closedir(DIR);
+  
+  my $result = $line;
+
+  # Note: It cannot recognize 'fun(D(x))'.
+  if ($option eq "-d") {
+    foreach $file (@files) {
+      open C_HEADER, "$file";
+      my $lines = join '', <C_HEADER>;
+      if ($lines =~ /(\/\*[^\/]*\*\/)?\s*(\w+\s*[\*]*\s*?$token\([^;\(\)]*\));/) {
+	print "\n".'#include "'.$file.'"'."\n\n";
+	print $2."\n\n";
+	print $1."\n";
+	break;
+      }
+      close(C_HEADER);
+    }
+  } else {
+    foreach $file (@files) {
+      open C_HEADER, "$file";
+      my $lines = join '', <C_HEADER>;
+      if ($lines =~ /(\w+\s*[\*]*\s*?$token\([^;\(\)]*\));/) {
+	print '#include "'.$file.'"'."\n";
+	print $1."\n";
+	break;
+      }
+      close(C_HEADER);
+    # $state = 0;
+#     while ($line = <C_HEADER>) {
+#       if ($state == 0) {
+# 	if ($line =~ m/$token/) {
+# 	  my $remain = $';
+# 	  if ($remain =~ m/\(([^()]|\(.+\))*\);\s*$/) {
+# 	    print $file.': '.$line."\n";
+# 	    $state = 2;
+# 	    break;
+# 	  } elsif ($remain =~ m/\(/ && !($remain =~ m/\)/)) {
+# 	    $result = $line;
+# 	    $state = 1;
+# 	  }
+# 	}
+#       } else {
+# 	if ($line =~ m/\);\s*$/) {
+# 	  print $file.": \n".$result.$line."\n";
+# 	  $state = 2;
+# 	  break;
+# 	} else {
+# 	  if ($line =~ m/\)/) {
+# 	    $state = 0;
+# 	  } else {
+# 	    $result .= $line;
+# 	  }
+# 	}
+#       }
+#     }
+#     close(C_HEADER);
+#     if ($state == 2) {
+#       print $file."\n";
+#       break;
+#     }
+    }
+  }
+}

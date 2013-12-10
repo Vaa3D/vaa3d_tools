@@ -1,0 +1,19 @@
+#!/bin/bash
+
+ext=`echo $1 | cut -d. -f2`
+if [ $ext != 'h' ]
+then
+  file=$1.h
+else
+  file=$1
+fi
+
+if [ -f $file ]
+then
+    echo "warning: file $file exists"
+else
+    ./mkheader_out $1 'Ting Zhao' > $file
+fi
+
+echo "$file created."
+#open -a '/Applications/Aquamacs Emacs.app' $file

@@ -1,0 +1,21 @@
+#!/bin/bash
+ 
+if [ $# -eq 0 ]
+then
+    id=e1
+    ds=5 
+    xyth=3.94
+    zth=2
+else
+    id=$1
+    ds=$2
+    xyth=$3
+    zth=$4
+fi
+
+
+
+cd /Users/xiejun/Neuron_Project/Code/Java/Diadem/
+java -classpath JSAP-2.1.jar:bin org/krasnow/cng/diadem/DiademMetric  -G /workdata/shell/diadem_$id/"$id".swc -T /workdata/shell/diadem_$id/"$id"_test.swc -D "$ds" -m true | /workdata/shell/pdm "$id" "$xyth" "$zth"
+
+/Users/xiejun/Neuron_Project/V3D/neurolabi/c/bin/parsediadem -D /workdata/shell/diadem_"$id"

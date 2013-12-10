@@ -1,0 +1,27 @@
+#!/bin/bash
+ 
+echo 'Start testing ...'
+
+rm -r ../data/test/flyem
+mkdir ../data/test/flyem
+mkdir ../data/test/flyem/adjusted
+
+echo "Prepare skeletonization from ~/Work/neutube/neurolabi/data/benchmark/flyem"
+
+sh -x ./flyem_prepare ~/Work/neutube/neurolabi/data/benchmark/flyem ~/Work/neutube/neurolabi/data/test/flyem
+work_dir=~/Work/neutube/neurolabi/data/test/flyem
+sh -x ../cpp/debug/bin/generate_qsub_script ~/Work/neutube/neurolabi/data/benchmark/flyem/bodyid_list.txt --option skeletonize $neuron_list --cmd_path ~/Work/neutube/neurolabi/shell/flyem_skeletonize --work_dir $work_dir --args 1 > $work_dir/cluster_skeletonize_tmp.sh --plain_test
+
+#sh $work_dir/cluster_skeletonize_tmp.sh
+
+sh -x ./flyem_skeletonize 65535 ~/Work/neutube/neurolabi/data/test/flyem test 1
+sh -x ./flyem_skeletonize 100000000 ~/Work/neutube/neurolabi/data/test/flyem test 1
+sh -x ./flyem_skeletonize 16711935 ~/Work/neutube/neurolabi/data/test/flyem test 1
+
+if [ -z $SEG_CLUSTER_NAME ]
+then
+  bin_dir=$HOME/Work/buildem/bin
+else
+  bin_dir=$HOME/Work/buildem_cl/bin
+fi
+$bin_dir/adjust_swc ~/Work/neutube/neurolabi/data/test/flyem -o ~/Work/neutube/neurolabi/data/test/flyem/adjusted --config /Users/zhaot/Work/neutube/neurolabi/data/benchmark/flyem/config.cfg

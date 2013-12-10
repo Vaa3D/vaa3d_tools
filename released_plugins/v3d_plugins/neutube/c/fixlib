@@ -1,0 +1,11 @@
+#!/bin/bash
+
+for file in $*
+do
+    if test -w $file
+    then
+	tmpfile=$file.$$
+	cat $file | sed 's/_HAVE_\([A-Z_]*\)_/HAVE_LIB\1/g' > $tmpfile
+	mv $tmpfile $file
+    fi
+done

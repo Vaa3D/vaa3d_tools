@@ -1,0 +1,8 @@
+#!/bin/bash
+
+if test $# -lt 1
+then
+   echo 'toupper word'
+else
+    echo "$*" | sed y/abcdefghijklmnopqrstuvwxyz/ABCDEFGHIJKLMNOPQRSTUVWXYZ/
+fi

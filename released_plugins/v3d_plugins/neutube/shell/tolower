@@ -1,0 +1,8 @@
+#!/bin/bash
+
+if test $# -lt 1
+then
+   echo 'tolower WORD'
+else
+    echo "$*" | sed y/ABCDEFGHIJKLMNOPQRSTUVWXYZ/abcdefghijklmnopqrstuvwxyz/
+fi

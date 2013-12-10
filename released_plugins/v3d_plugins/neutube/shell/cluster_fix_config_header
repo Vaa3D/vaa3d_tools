@@ -1,0 +1,8 @@
+#!/usr/bin/awk -f
+
+BEGIN { }
+/undef HAVE_LIBFFTW3$/ { print "#define HAVE_LIBFFTW3 1" }
+/undef HAVE_LIBFFTW3 / { print "#define HAVE_LIBFFTW3 1" }
+/undef HAVE_LIBFFTW3F/ { print "#define HAVE_LIBFFTW3F 1" }
+!/undef HAVE_LIBFFTW/ { print }
+END { }

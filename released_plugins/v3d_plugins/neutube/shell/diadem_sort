@@ -1,0 +1,60 @@
+#!/usr/bin/perl
+
+print $ARGV[0]."\n";
+
+($dataset, $xy_th, $z_th) = @ARGV;
+$golden = "/Users/zhaot/Data/diadem/"."$dataset".".swc";
+$datadir = "/Users/zhaot/Work/neurolabi/data/diadem_".$dataset;
+$miss = $datadir."/miss.txt";
+$nearby = $datadir."/nearby.txt";
+$test = $datadir."/"."graph_d.swc";
+$extra = $datadir."/extra.txt";
+$miss_swc = $datadir."/miss.swc";
+$extra_swc = $datadir."/extra.swc";
+$nearby_swc = $datadir."/nearby.swc";
+$miss_vlm = $datadir."/miss.marker";
+$extra_vlm = $datadir."/extra.marker";
+$nearby_vlm = $datadir."/nearby.marker";
+$miss_score = $datadir."/miss_score.txt";
+$extra_score = $datadir."/extra_score.txt";
+
+@lines = <STDIN>;
+
+open (FILE, ">$nearby");
+
+foreach $line (@lines) {
+    if ($line =~ m/(\([0-9\.,]*\)[ 0-9]*)/) {
+	print FILE $1."\n";
+    } else {
+	if ($line =~ m/[mM]issed/) {
+	    open (FILE, ">$miss");
+	} elsif ($line =~ m/[eE]xtra/) {
+	    open (FILE, ">$extra");
+	} elsif ($line =~ m/[sS]core[ :]+([0-9.]+)/) {
+	    print $line;
+	    $score = $1;
+	}
+    }
+}
+
+$xmlfile = $datadir."/error.xml";
+open (XML, ">$xmlfile");
+print XML '<?xml version="1.0" encoding="UTF-8"?>'."\n";
+print XML '<diadem_metric>'."\n";
+print XML '<golden>'."$golden".'</golden>'."\n";
+print XML '<xyth>'."$xy_th".'</xyth>'."\n";
+print XML '<zth>'."$z_th".'</zth>'."\n";
+print XML '<miss>'."$miss".'</miss>'."\n";
+print XML '<nearby>'."$nearby".'</nearby>'."\n";
+print XML '<test>'."$test".'</test>'."\n";
+print XML '<extra>'."$extra".'</extra>'."\n";
+print XML '<miss_swc>'."$miss_swc".'</miss_swc>'."\n";
+print XML '<extra_swc>'."$extra_swc".'</extra_swc>'."\n";
+print XML '<nearby_swc>'."$nearby_swc".'</nearby_swc>'."\n";
+print XML '<miss_vlm>'."$miss_vlm".'</miss_vlm>'."\n";
+print XML '<extra_vlm>'."$extra_vlm".'</extra_vlm>'."\n";
+print XML '<nearby_vlm>'."$nearby_vlm".'</nearby_vlm>'."\n";
+print XML '<miss_score>'."$miss_score".'</miss_score>'."\n";
+print XML '<extra_score>'."$extra_score".'</extra_score>'."\n";
+print XML '<score>'."$score".'</score>'."\n";
+print XML '</diadem_metric>'."\n";

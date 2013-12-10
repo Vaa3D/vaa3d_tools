@@ -1,0 +1,128 @@
+cmake_minimum_required(VERSION 2.8)
+
+project (neutube)
+
+find_package (Qt4)
+
+if (QT4_FOUND)
+  include ($(QT_USE_FILE))
+
+  set (NEUTUBE_SOURCES main.cpp zstackprocessor.cpp mainwindow.cpp 
+    zstackview.cpp zimagewidget.cpp zimage.cpp zstackframe.cpp zstackdoc.cpp
+    zstackpresenter.cpp zstack.cxx zlocalneuroseg.cpp zlocsegchain.cpp
+    zslider.cpp settingdialog.cpp frameinfodialog.cpp plotsettings.cpp
+    plotter.cpp zcurve.cpp zellipse.cpp zswctree.cpp zlocsegchainconn.cpp
+    zobject3d.cpp zcircle.cpp zpoint.cpp zinteractivecontext.cpp traceoutputdialog.cpp
+    bcadjustdialog.cpp ztraceproject.cpp channeldialog.cpp zpunctum.cpp zeditswcdialog.cpp
+    zstitchimagedialog.cpp zdirectionaltemplate.cpp zlocalrect.cpp zdirectionaltemplatechain.cpp
+    cannyedgedialog.cpp medianfilterdialog.cpp diffusiondialog.cpp
+    connectedthresholddialog.cpp zsinglechannelstack.cpp zmergeimagedialog.cpp
+    zrescaleswcdialog.cpp zeigenutils.cpp zbenchtimer.cpp zrandom.cpp
+    distancemapdialog.cpp zspgrowparser.cpp zvoxel.cpp regionexpanddialog.cpp
+    zvoxelarray.cpp zsuperpixelmap.cpp zsegmentmap.cpp zsuperpixelmaparray.cpp
+    zsegmentmaparray.cpp neuroniddialog.cpp zswcforest.cpp flyemskeletonizationdialog.cpp
+    zstackaccessor.cpp zstackdocument.cpp zswctreematcher.cpp zswcbranch.cpp
+    zmatrix.cpp zinttree.cpp parameterdialog.cpp zstring.cpp
+    pixelquerydialog.cpp zfilelist.cpp zrandomgenerator.cpp zfilelock.cpp
+    zargumentprocessor.cpp zjsonparser.cpp zjsonobject.cpp zjsonvalue.cpp
+    flyem/zsynapseannotation.cpp zjsonarray.cpp flyem/zsynapseannotationarray.cpp
+    flyem/zsynapseannotationmetadata.cpp flyem/zsynapseannotationanalyzer.cpp flyem/zfileparser.cpp
+    flyem/zneuronnetwork.cpp zvaa3dmarker.cpp zvaa3dapo.cpp zswcnode.cpp
+    zball.cpp ztreenode.cpp zgenericswctree.cpp ztree.cpp
+    zswctreenode.cpp zsquarematrix.cpp zsymmetricmatrix.cpp zsvggenerator.cpp
+    zdendrogram.cpp z3dwindow.cpp z3dinteractionhandler.cpp zobjsitem.cpp
+    zobjsmodel.cpp z3dvolumesource.cpp z3dvolumeraycaster.cpp z3dgeometryprocessor.cpp
+    z3dswcrenderer.cpp zcolormap.cpp zclickablelabel.cpp zcolormapeditor.cpp
+    z3dcanvasrenderer.cpp zselectfilewidget.cpp z3dtakescreenshotwidget.cpp
+    z3drendererbase.cpp z3dprimitiverenderer.cpp z3dsphererenderer.cpp z3dlinerenderer.cpp
+    z3dlinewithfixedwidthcolorrenderer.cpp z3dconerenderer.cpp z3dpunctarenderer.cpp
+    z3dchainrenderer.cpp zcolormapwidgetwitheditorwindow.cpp z3dbackgroundrenderer.cpp
+    z3dbackground.cpp z3daxis.cpp zwidgetsgroup.cpp z3dcanvas.cpp
+    zspinbox.cpp z3dgeometryrenderprocessor.cpp zparameter.cpp zstringparameter.cpp
+    z3drenderprocessor.cpp z3drenderport.cpp z3dnetworkevaluator.cpp z3dprocessor.cpp
+    z3dprocessornetwork.cpp z3dport.cpp z3dapplication.cpp zcombobox.cpp
+    znumericparameter.cpp zspinboxwithslider.cpp z3dcameraparameter.cpp
+    zeventlistenerparameter.cpp z3dtransferfunction.cpp z3dtransferfunctioneditor.cpp
+    z3dtransferfunctionwidgetwitheditorwindow.cpp z3dvolumeentryexitpoints.cpp z3dvolume.cpp
+    z3dpickingmanager.cpp z3dsdfont.cpp z3dfontrenderer.cpp zspanslider.cpp
+    z3dutils.cpp z3dmesh.cpp zcuboid.cpp ztest.cpp z3dgpuinfo.cpp
+    z3dtexture.cpp z3dframebufferobject.cpp z3dshader.cpp z3dcamera.cpp
+    z3dgl.cpp z3dglmutils.cpp zlocsegtraceexp.cpp z3dtensorrenderer.cpp
+    zswcfeatureanalyzer.cpp zswcsizefeatureanalyzer.cpp z3dcameramove.cpp z3dgraphrenderer.cpp
+    zobject3darray.cpp zdoublevector.cpp zkmeansclustering.cpp zswcshollfeatureanalyzer.cpp
+    zswcspatialfeatureanalyzer.cpp swctreenode.cpp zswcnetwork.cpp
+    zcloudnetwork.cpp zweightedpoint.cpp zweightedpointarray.cpp zpointnetwork.cpp
+    znormcolormap.cpp swctypedialog.cpp zswcpath.cpp zswctrunkanalyzer.cpp
+    zswcdisttrunkanalyzer.cpp zswcbranchingtrunkanalyzer.cpp zswctrunksizefeatureanalyzer.cpp)
+
+  set (NEUTUBE_HEADERS mainwindow.h zstackprocessor.h zimagewidget.h
+    zstackview.h zimage.h zstackframe.h zstackdoc.h zstackpresenter.h
+    zstack.hxx zstackdrawable.h zlocalneuroseg.h zlocsegchain.h
+    zswcexportable.h zdocumentable.h zinterface.h zslider.h
+    settingdialog.h frameinfodialog.h plotsettings.h plotter.h
+    zcurve.h zellipse.h zswctree.h zlocsegchainconn.h zobject3d.h
+    zcircle.h zpoint.h zinteractivecontext.h traceoutputdialog.h
+    bcadjustdialog.h ztraceproject.h channeldialog.h zpunctum.h
+    zeditswcdialog.h zstitchimagedialog.h zdirectionaltemplate.h
+    zlocalrect.h zdirectionaltemplatechain.h cannyedgedialog.h
+    medianfilterdialog.h diffusiondialog.h connectedthresholddialog.h
+    zsinglechannelstack.h zmergeimagedialog.h zrescaleswcdialog.h
+    zkmeans.h zeigenutils.h zbenchtimer.h zrandom.h zgmm.h zvbgmm.h
+    distancemapdialog.h zspgrowparser.h zvoxel.h regionexpanddialog.h
+    zvoxelarray.h zsuperpixelmap.h zsegmentmap.h zsuperpixelmaparray.h
+    zsegmentmaparray.h neuroniddialog.h zswcforest.h
+    flyemskeletonizationdialog.h zqtheader.h zstackaccessor.h
+    zstackdocument.h zswctreematcher.h zswcbranch.h zmatrix.h zinttree.h
+    parameterdialog.h zstring.h pixelquerydialog.h zfilelist.h
+    zrandomgenerator.h zfilelock.h zargumentprocessor.h zjsonparser.h
+    zjsonobject.h zjsonvalue.h flyem/zsynapseannotation.h zjsonarray.h
+    flyem/zsynapseannotationarray.h flyem/zsynapseannotationmetadata.h
+    flyem/zsynapseannotationanalyzer.h flyem/zfileparser.h
+    flyem/zneuronnetwork.h zvaa3dmarker.h zvaa3dapo.h zswcnode.h
+    zball.h ztreenode.h zgenericswctree.h ztree.h zswctreenode.h
+    zsquarematrix.h zsymmetricmatrix.h zsvggenerator.h zdendrogram.h
+    z3dwindow.h z3dinteractionhandler.h zobjsitem.h zobjsmodel.h
+    z3dvolumesource.h z3dvolumeraycaster.h z3dgeometryprocessor.h
+    z3dswcrenderer.h zcolormap.h zclickablelabel.h zcolormapeditor.h
+    z3dcanvasrenderer.h zselectfilewidget.h z3dtakescreenshotwidget.h
+    z3drendererbase.h z3dprimitiverenderer.h z3dsphererenderer.h
+    z3dlinerenderer.h z3dlinewithfixedwidthcolorrenderer.h z3dconerenderer.h
+    z3dpunctarenderer.h z3dchainrenderer.h zcolormapwidgetwitheditorwindow.h
+    z3dbackgroundrenderer.h z3dbackground.h z3daxis.h zwidgetsgroup.h
+    z3dcanvas.h zspinbox.h z3dgeometryrenderprocessor.h zparameter.h
+    zstringparameter.h z3drenderprocessor.h z3drenderport.h
+    z3dnetworkevaluator.h z3dprocessor.h z3dprocessornetwork.h
+    z3dport.h z3dapplication.h zoptionparameter.h zcombobox.h
+    znumericparameter.h zspinboxwithslider.h z3dcameraparameter.h
+    zeventlistenerparameter.h z3dtransferfunction.h z3dtransferfunctioneditor.h
+    z3dtransferfunctionwidgetwitheditorwindow.h z3dvolumeentryexitpoints.h
+    z3dvolume.h z3dpickingmanager.h z3dsdfont.h z3dfontrenderer.h
+    z3dcanvaseventlistener.h zspanslider.h z3dutils.h z3dmesh.h
+    zcuboid.h ztest.h z3dgpuinfo.h z3dtexture.h z3dframebufferobject.h
+    z3dshader.h z3dcamera.h z3dgl.h z3dglmutils.h zlocsegtraceexp.h
+    z3dtensorrenderer.h zswcfeatureanalyzer.h zswcsizefeatureanalyzer.h
+    z3dcameramove.h z3dgraphrenderer.h zobject3darray.h zdoublevector.h
+    zkmeansclustering.h zswcshollfeatureanalyzer.h zswcspatialfeatureanalyzer.h
+    swctreenode.h zswcnetwork.h zcloudnetwork.h zweightedpoint.h
+    zweightedpointarray.h zpointnetwork.h znormcolormap.h swctypedialog.h
+    zswcpath.h zswctrunkanalyzer.h zswcdisttrunkanalyzer.h
+    zswcbranchingtrunkanalyzer.h zswctrunksizefeatureanalyzer.h)
+
+  set (NEUTUBE_FORMS settingdialog.ui frameinfodialog.ui mainwindow.ui
+    traceoutputdialog.ui bcadjustdialog.ui channeldialog.ui
+    cannyedgedialog.ui medianfilterdialog.ui diffusiondialog.ui
+    connectedthresholddialog.ui zmergeimagedialog.ui zrescaleswcdialog.ui
+    distancemapdialog.ui regionexpanddialog.ui neuroniddialog.ui
+    flyemskeletonizationdialog.ui parameterdialog.ui pixelquerydialog.ui
+    swctypedialog.ui)
+
+  set (NEUTUBE_RESOURCES gui.qrc)
+
+  qt4_wrap_cpp (NEUTUBE_HEADERS_MOC ${NEUTUBE_HEADERS})
+  qt4_wrap_ui (NEUTUBE_FORMS_HEADERS ${NEUTUBE_FORMS})
+  qt4_add_resources (NEUTUBE_RESOURCES_RCC ${NEUTUBE_RESOURCES})
+
+  add_executable (neuTube ${NEUTUBE_SOURCES} ${NEUTUBE_HEADERS_MOC}
+    ${NEUTUBE_FORMS_HEADERS} ${NEUTUBE_RESOURCES_RCC})
+
+endif (QT4_FOUND)

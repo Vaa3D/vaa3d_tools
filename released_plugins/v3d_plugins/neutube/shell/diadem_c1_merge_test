@@ -1,0 +1,6 @@
+#!/bin/bash
+
+#./diadem c1
+./diadem_c1 > diadem_c1_score.txt
+../c/bin/diadem -score diadem_c1_score.txt
+ 

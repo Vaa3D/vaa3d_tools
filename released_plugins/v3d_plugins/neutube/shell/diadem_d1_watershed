@@ -1,0 +1,42 @@
+#!/bin/bash
+bin_dir=../bin
+data_id=$1
+tile_number=$2
+tmpdata=../tmpdata
+d_dir=$tmpdata/diadem_d"$data_id"
+group=`expr $tile_number / 5`
+
+start=1
+end=$group
+$bin_dir/diadem_d1_watershed $d_dir/stack -o $d_dir/watershed -seed $d_dir/seeds -range $start $end > $d_dir/watershed/log1.txt &
+
+start=`expr $end + 1`
+end=`expr $end + $group`
+$bin_dir/diadem_d1_watershed $d_dir/stack -o $d_dir/watershed -seed $d_dir/seeds -range $start $end > $d_dir/watershed/log2.txt &
+
+start=`expr $end + 1`
+end=`expr $end + $group`
+$bin_dir/diadem_d1_watershed $d_dir/stack -o $d_dir/watershed -seed $d_dir/seeds -range $start $end > $d_dir/watershed/log3.txt &
+
+start=`expr $end + 1`
+end=`expr $end + $group`
+$bin_dir/diadem_d1_watershed $d_dir/stack -o $d_dir/watershed -seed $d_dir/seeds -range $start $end > $d_dir/watershed/log4.txt &
+
+start=`expr $end + 1`
+end=$tile_number
+$bin_dir/diadem_d1_watershed $d_dir/stack -o $d_dir/watershed -seed $d_dir/seeds -range $start $end > $d_dir/watershed/log5.txt &
+
+#while [ $i -le $group ]
+#do
+#  if [ $i -lt 10 ]; then
+#    id=00"$i"
+#  elif [ $i -lt 100 ]; then
+#    id=0"$i"
+#  else
+#    id=$i
+#  fi
+#  $bin_dir/diadem_d1 -data_id $data_id -grow start -root_tile $tmpdata/diadem_d"$data_id"/stack/$id.xml -root_file $tmpdata/diadem_d"$data_id"/seeds/$id.seeds.marker -o $tmpdata/diadem_d"$data_id"/watershed
+  #bin/regionmerge ../data/diadem_d1_"$id"_label.tif
+#  i=`expr $i + 1`
+#done
+

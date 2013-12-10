@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<neutube>
+  <dataPath>/Users/zhaot/Work/neutube/neurolabi/data</dataPath>
+  <FlyEmQASegmentationTraining>
+    <test>/Users/zhaot/Work/neutube/neurolabi/data/flyem/segmentation/assignments/assignment_1/segmentation.json</test>
+    <truth>/Users/zhaot/Work/neutube/neurolabi/data/flyem/segmentation/ground_truth1/segmentation.json</truth>
+    <feature>Body_Size Border_Intensity Border_Size Body_Intensity Boundary_Prob Mito_Prob</feature>
+  </FlyEmQASegmentationTraining>
+  <FlyEmQASegmentationEvaluation>
+    <test>/Users/zhaot/Work/neutube/neurolabi/data/flyem/segmentation/assignments/assignment_2/segmentation.json</test>
+    <truth>/Users/zhaot/Work/neutube/neurolabi/data/flyem/segmentation/ground_truth2/segmentation.json</truth>
+    <threshold>0.3</threshold>
+  </FlyEmQASegmentationEvaluation>
+  <FlyEmQASegmentationClassifier>flyem_segmentation.cvt</FlyEmQASegmentationClassifier>
+  <SwcRepository>/Users/zhaot/Work/neutube/neurolabi/data/flyem/skeletonization/session3/len15/adjusted</SwcRepository>
+  <Z3DWindow>
+    <Swcs status="on">
+      <Primitive>Sphere</Primitive>
+      <Color_Mode>Topology</Color_Mode>
+    </Swcs>
+    <Mesh status="off"></Mesh>
+    <Tensor status="off"></Tensor>
+    <PunctaManager status="off"></PunctaManager>
+    <ChainManager status="off"></ChainManager>
+  </Z3DWindow>
+</neutube>

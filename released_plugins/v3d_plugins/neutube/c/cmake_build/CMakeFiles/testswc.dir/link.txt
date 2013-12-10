@@ -1,0 +1,1 @@
+/usr/bin/gcc  -DHAVE_CONFIG_H -DINTERFACE_PROGRESS_OFF -Wl,-search_paths_first -Wl,-headerpad_max_install_names   CMakeFiles/testswc.dir/testswc.c.o  -o testswc  libneurolabi.a -lpng 

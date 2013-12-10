@@ -1,0 +1,51 @@
+CC = @CC@
+MYERS_DIR = @GENELIB_DIR@
+MYERS_LIB = @GENELIB_TAG@
+#../lib/genelib/src
+UNAME := $(shell uname)
+#ifeq ($(UNAME), MINGW32_NT-6.1) || ifeq ($(UNAME), MINGW32_NT-5.1) 
+#if (findstring $(UNAME),MINGW32)
+ifneq (,$(findstring MINGW32,$(UNAME)))
+QT_PATH = C:/Qt/2010.05
+CCI =  -I./include -I$(MYERS_DIR) -I/usr/include/libxml2  -Ic:/mingw/include -Ic:/mingw/include/libxml2 -D__USE_MINGW_ANSI_STDIO -I$(QT_PATH)/mingw/include -I$(QT_PATH)/mingw/include/libxml2
+else
+CCI =  -I/usr/local/include -I./include -I$(MYERS_DIR) -I/usr/include/libxml2 -I/usr/local/include/libxml2 -I$(HOME)/local/include
+endif
+#
+
+#To enable exception handling, add -DENABLE_C_EXCEPTION and recompile
+AFLAGS = -D_OPTIONAL_CFLAG_
+CFLAGS = $(CCI) -g -Wall -std=c99 -pedantic -D_DEBUG_ -D_TEST_ $(AFLAGS) $(EXTLIB_FLAGS) @DEFS@ -DLIBMYERS_VERSION=2 @ARCH_FLAG@ @SHARED_FLAG@
+#release version c flags
+#-fprofile-arcs -ftest-coverage 
+RELEASE_CFLAGS = $(CCI) -O2 $(AFLAGS) $(EXTLIB_FLAGS) @ARCH_FLAG@ @DEFS@ @SHARED_FLAG@ 
+
+DEBUG_DIR = @DEBUG_DIR@
+RELEASE_DIR = @RELEASE_DIR@
+
+EXT_LIB_DIR = @EXT_LIB_DIR@
+
+LIB_DIR = lib
+LIB_BASE_NAME = libneurolabi
+DEBUG_SUFFIX = _debug
+STATIC_EXT= a
+
+ifeq ($(UNAME),Darwin)
+  DYLIB_EXT = dylib
+else
+  DYLIB_EXT = so
+endif
+
+#ifeq ($(UNAME), MINGW32_NT-6.1)
+#if (findstring $(UNAME),MINGW32)
+ifneq (,$(findstring MINGW32,$(UNAME)))
+LIBFLAGS = -L/usr/local/lib -L$(EXT_LIB_DIR) @LIBS@ -lpcreposix -lpcre
+else
+LIBFLAGS = -L/usr/local/lib -L$(EXT_LIB_DIR) @LIBS@
+endif
+
+#VERSION=1.0.0
+
+OTHER_LIBFLAGS =  -L/sw/lib -L/usr/X11R6/lib/ -lX11 -lXext -ljpeg -lpng -lgif -lImlib -I/Developer/SDKs/MacOSX10.4u.sdk/usr/X11R6/include -I/sw/include 
+LDFLAGS = $(LIBFLAGS) @ARCH_FLAG@
+#-fprofile-arcs -ftest-coverage

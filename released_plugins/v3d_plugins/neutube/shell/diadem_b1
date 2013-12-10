@@ -1,0 +1,27 @@
+#!/bin/bash
+gpath='/Users/zhaot/Data/diadem/diadem_b1/Section 01'
+#tpath='/Users/zhaot/Work/neurolabi/data/diadem_b1'
+#tpath='/Users/zhaot/Work/diadem_final/tmpdata/diadem_b1/section01'
+tpath='/Users/zhaot/Work/diadem_final/results/Hippocampal CA3 Interneuron/Section_01'
+if [ $# -ge 1 ]
+then
+    gpath=$1
+fi
+
+if [ $# -ge 2 ]
+then
+    tpath=$2
+fi
+ 
+i=1
+while [ $i -le 14 ]
+do
+    echo ">>> $i"
+    if [ $i -lt 10 ]
+    then
+	java -jar DiademMetric.jar -G "$gpath/0$i.swc" -T "$tpath/0$i.swc" -D 2 2>/dev/null
+    else
+	java -jar DiademMetric.jar -G "$gpath/$i.swc" -T "$tpath/$i.swc" -D 2 2>/dev/null
+    fi
+    i=`expr $i + 1`
+done

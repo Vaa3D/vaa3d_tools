@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<neutube>
+  <dataPath>/Users/zhaot/Work/neutube/neurolabi/data</dataPath>
+  <FlyEmQASegmentationTraining>
+    <test>/Users/zhaot/Work/neutube/neurolabi/data/flyem/segmentation/assignments/assignment_1/segmentation.json</test>
+    <truth>/Users/zhaot/Work/neutube/neurolabi/data/flyem/segmentation/ground_truth1/segmentation.json</truth>
+    <feature>Body_Size Border_Intensity Border_Size Body_Intensity Boundary_Prob Mito_Prob</feature>
+  </FlyEmQASegmentationTraining>
+  <FlyEmQASegmentationEvaluation>
+    <test>/Users/zhaot/Work/neutube/neurolabi/data/flyem/segmentation/assignments/assignment_2/segmentation.json</test>
+    <truth>/Users/zhaot/Work/neutube/neurolabi/data/flyem/segmentation/ground_truth2/segmentation.json</truth>
+    <threshold>0.3</threshold>
+  </FlyEmQASegmentationEvaluation>
+  <FlyEmQASegmentationClassifier>flyem_segmentation.cvt</FlyEmQASegmentationClassifier>
+  <SwcRepository>/Users/zhaot/Work/neutube/neurolabi/data/flyem/skeletonization/session3/len15/adjusted</SwcRepository>
+  <Settings status="off"></Settings>
+  <Stereo status="off"></Stereo>
+  <MainWindow>
+    <tracing status="off"></tracing>
+    <markPuncta status="off"></markPuncta>
+    <swcEdit status="off"></swcEdit>
+    <mergeImage status="off"></mergeImage>
+    <Expand>
+      <Neuron_Network status="off"></Neuron_Network>
+      <Tracing_Result status="off"></Tracing_Result>
+      <V3D_APO status="off"></V3D_APO>
+      <V3D_Marker status="off"></V3D_Marker>
+    </Expand>
+    <Process>
+      <Binarize status="off"></Binarize>
+    </Process>
+    <Trace>
+      <Binary_To_Swc status="off"></Binary_To_Swc>
+    </Trace>
+    <Threshold_Control status="off"></Threshold_Control>
+  </MainWindow>
+  <Z3DWindow>
+    <Utils status="off"></Utils>
+    <Volume status="off"></Volume>
+    <Graph status="off"></Graph>
+    <Swcs status="on">
+      <Primitive>Sphere</Primitive>
+      <Color_Mode>Topology</Color_Mode>
+      <ZScale>10.0</ZScale>
+    </Swcs>
+    <Tubes status="off"></Tubes>
+    <Puncta status="off"></Puncta>
+    <Mesh status="off"></Mesh>
+    <Tensor status="off"></Tensor>
+    <Axis status="off"></Axis>
+    <PunctaManager status="off"></PunctaManager>
+    <ChainManager status="off"></ChainManager>
+  </Z3DWindow>
+  <Object_Manager>
+    <Swc_Node status="on"></Swc_Node>
+  </Object_Manager>
+  <Autosave>
+    <Interval>300000</Interval>
+  </Autosave>
+  <Application>Biocytin</Application>
+</neutube>

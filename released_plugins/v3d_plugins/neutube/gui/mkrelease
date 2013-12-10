@@ -1,0 +1,6 @@
+#!/bin/bash
+ 
+cd ../gui-build-desktop
+#make release
+../gui/relink release
+cp ../doc/neutube_manual.pdf neutube.app
