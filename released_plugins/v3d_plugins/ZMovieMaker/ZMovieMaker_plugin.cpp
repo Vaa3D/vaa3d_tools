@@ -167,9 +167,10 @@ QString warning_msg = "Oops... The image you selected no longer exists... The fi
 
 #define CHECK_WINDOWS \
 {\
+view=0;curwin=0; \
 list_triview = m_v3d.getImageWindowList();\
 list_3dviewer = m_v3d.getListAll3DViewers();\
-curwin=0; \
+if(!combo_surface) return;\
 if(combo_surface->currentIndex() < list_triview.size())\
 {\
     curwin = list_triview[combo_surface->currentIndex()];\
@@ -200,6 +201,7 @@ else\
         }\
     }\
 }\
+if (!view) return;\
 }
 
 
@@ -402,7 +404,7 @@ void lookPanel::_slot_record()
 {
     CHECK_WINDOWS
 
-            view->absoluteRotPose();
+    view->absoluteRotPose();
     float xRot = view->xRot();
     float yRot = view->yRot();
     float zRot = view->zRot();

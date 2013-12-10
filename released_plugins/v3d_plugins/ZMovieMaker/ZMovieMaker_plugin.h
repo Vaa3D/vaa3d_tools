@@ -49,17 +49,20 @@ public:
 
 public:
     v3dhandle curwin;
-    QGridLayout *gridLayout;
-    V3DPluginCallback2 & m_v3d;
-    QListWidget *listWidget;
+    V3dR_MainWindow *surface_win;
+    View3DControl *view;
 
     QList <V3dR_MainWindow *> list_3dviewer;
     v3dhandleList list_triview;
 
+    V3DPluginCallback2 & m_v3d;
+
+    QGridLayout *gridLayout;
+    QListWidget *listWidget;
+
+
     MyComboBox* combo_surface;
     QLabel* label_surface;
-    V3dR_MainWindow *surface_win;
-    View3DControl *view;
 
 private slots:
     void _slot_record();
