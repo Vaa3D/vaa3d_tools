@@ -27,9 +27,7 @@ void neutube::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWi
 {
 	if (menu_name == tr("neutube"))
 	{
-//        system()
-
-     //   neurotube_main()
+        launchNeuTube();
 	}
 	else
 	{
@@ -56,5 +54,10 @@ bool neutube::dofunc(const QString & func_name, const V3DPluginArgList & input, 
 	else return false;
 
 	return true;
+}
+
+int neutube::launchNeuTube()
+{
+    return system("open -a neuTube.app");
 }
 
