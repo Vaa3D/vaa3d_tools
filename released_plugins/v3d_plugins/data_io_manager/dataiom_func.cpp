@@ -20,7 +20,6 @@ bool dataiom_toolbox_func(V3DPluginCallback2 & callback, QWidget * parent)
 	selectDlg->setWindowTitle("Select plugin to run...");
 	selectDlg->show();
 	return true;
-
 }
 
 bool dataiom_toolbox_func(V3DPluginCallback2 & callback, QWidget * parent, const V3DPluginArgList & input, V3DPluginArgList & output)
