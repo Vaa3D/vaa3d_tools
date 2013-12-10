@@ -3,7 +3,7 @@
  * 2013-11-21 : by Zhi Zhou
  * 2013-12-08: fix the multiple 3d viewers / multi-tri-view bugs. by Hanchuan Peng
  */
- 
+
 #include "v3d_message.h"
 #include <vector>
 #include "ZMovieMaker_plugin.h"
@@ -29,200 +29,205 @@ float dot_multi(float q1[], float q2[]);
 QString warning_msg = "Oops... The image you selected no longer exists... The file list has been refreshed now and you can try it again.";
 
 #define SET_3DVIEW \
-    { \
-        view->resetRotation();\
-        view->doAbsoluteRot(xRot,yRot,zRot);\
-        view->setXShift(xShift);\
-        view->setYShift(yShift);\
-        view->setZShift(zShift);\
-        view->setZoom(zoom);\
-        view->setXCut0(xCut0);\
-        view->setXCut1(xCut1);\
-        view->setYCut0(yCut0);\
-        view->setYCut1(yCut1);\
-        view->setZCut0(zCut0);\
-        view->setZCut1(zCut1);\
+{ \
+    view->resetRotation();\
+    view->doAbsoluteRot(xRot,yRot,zRot);\
+    view->setXShift(xShift);\
+    view->setYShift(yShift);\
+    view->setZShift(zShift);\
+    view->setZoom(zoom);\
+    view->setXCut0(xCut0);\
+    view->setXCut1(xCut1);\
+    view->setYCut0(yCut0);\
+    view->setYCut1(yCut1);\
+    view->setZCut0(zCut0);\
+    view->setZCut1(zCut1);\
+    view->setChannelR(channelR);\
+    view->setChannelG(channelG);\
+    view->setChannelB(channelB);\
+    view->setShowSurfObjects(showSurf);\
+    view->setXClip0(xClip0);\
+    view->setXClip1(xClip1);\
+    view->setYClip0(yClip0);\
+    view->setYClip1(yClip1);\
+    view->setZClip0(zClip0);\
+    view->setZClip1(zClip1);\
+}
+
+#define UPDATE_PARA \
+{ \
+    xRot_last = xRot;\
+    yRot_last = yRot;\
+    zRot_last = zRot;\
+    xShift_last = xShift;\
+    yShift_last = yShift;\
+    zShift_last = zShift;\
+    zoom_last = zoom;\
+    xCut0_last = xCut0;\
+    xCut1_last = xCut1;\
+    yCut0_last = yCut0;\
+    yCut1_last = yCut1;\
+    zCut0_last = zCut0;\
+    zCut1_last = zCut1;\
+    channelR_last = channelR;\
+    channelG_last = channelG;\
+    channelB_last = channelB;\
+    showSurf_last = showSurf;\
+    xClip0_last = xClip0;\
+    xClip1_last = xClip1;\
+    yClip0_last = yClip0;\
+    yClip1_last = yClip1;\
+    zClip0_last = zClip0;\
+    zClip1_last = zClip1;\
+}
+
+#define GET_PARA \
+{ \
+    xRot = currentParas.at(3).toFloat();\
+    yRot = currentParas.at(4).toFloat();\
+    zRot = currentParas.at(5).toFloat();\
+    xShift = currentParas.at(6).toFloat();\
+    yShift = currentParas.at(7).toFloat();\
+    zShift = currentParas.at(8).toFloat();\
+    zoom = currentParas.at(9).toFloat();\
+    xCut0 = currentParas.at(10).toFloat();\
+    xCut1 = currentParas.at(11).toFloat();\
+    yCut0 = currentParas.at(12).toFloat();\
+    yCut1 = currentParas.at(13).toFloat();\
+    zCut0 = currentParas.at(14).toFloat();\
+    zCut1 = currentParas.at(15).toFloat();\
+    channelR = currentParas.at(16).toInt();\
+    channelG = currentParas.at(17).toInt();\
+    channelB = currentParas.at(18).toInt();\
+    showSurf = currentParas.at(19).toInt();\
+    xClip0 = currentParas.at(20).toInt();\
+    xClip1 = currentParas.at(21).toInt();\
+    yClip0 = currentParas.at(22).toInt();\
+    yClip1 = currentParas.at(23).toInt();\
+    zClip0 = currentParas.at(24).toInt();\
+    zClip1 = currentParas.at(25).toInt();\
+}
+
+#define INTERPOLATION_PARA \
+{ \
+    view->resetRotation();\
+    angles_to_quaternions(q1,xRot_last,yRot_last,zRot_last);\
+    angles_to_quaternions(q2,xRot,yRot,zRot);\
+    slerp_zhi(q1, q2,(float)i/N,q_sample);\
+    quaternions_to_angles(Rot_current,q_sample);\
+    view->doAbsoluteRot(Rot_current[0],Rot_current[1],Rot_current[2]);\
+    view->setXShift(xShift_last + i*(xShift-xShift_last)/N);\
+    view->setYShift(yShift_last + i*(yShift-yShift_last)/N);\
+    view->setZShift(zShift_last + i*(zShift-zShift_last)/N);\
+    view->setZoom(zoom_last + i*(zoom-zoom_last)/N);\
+    if((float)i/N < 0.5)\
+    {\
+        view->setChannelR(channelR_last);\
+        view->setChannelG(channelG_last);\
+        view->setChannelB(channelB_last);\
+        view->setShowSurfObjects(showSurf_last);\
+    }\
+    else\
+    {\
         view->setChannelR(channelR);\
         view->setChannelG(channelG);\
         view->setChannelB(channelB);\
         view->setShowSurfObjects(showSurf);\
-        view->setXClip0(xClip0);\
-        view->setXClip1(xClip1);\
-        view->setYClip0(yClip0);\
-        view->setYClip1(yClip1);\
-        view->setZClip0(zClip0);\
-        view->setZClip1(zClip1);\
-   }
-
-#define UPDATE_PARA \
-    { \
-        xRot_last = xRot;\
-        yRot_last = yRot;\
-        zRot_last = zRot;\
-        xShift_last = xShift;\
-        yShift_last = yShift;\
-        zShift_last = zShift;\
-        zoom_last = zoom;\
-        xCut0_last = xCut0;\
-        xCut1_last = xCut1;\
-        yCut0_last = yCut0;\
-        yCut1_last = yCut1;\
-        zCut0_last = zCut0;\
-        zCut1_last = zCut1;\
-        channelR_last = channelR;\
-        channelG_last = channelG;\
-        channelB_last = channelB;\
-        showSurf_last = showSurf;\
-        xClip0_last = xClip0;\
-        xClip1_last = xClip1;\
-        yClip0_last = yClip0;\
-        yClip1_last = yClip1;\
-        zClip0_last = zClip0;\
-        zClip1_last = zClip1;\
-   }
-
-#define GET_PARA \
-    { \
-        xRot = currentParas.at(3).toFloat();\
-        yRot = currentParas.at(4).toFloat();\
-        zRot = currentParas.at(5).toFloat();\
-        xShift = currentParas.at(6).toFloat();\
-        yShift = currentParas.at(7).toFloat();\
-        zShift = currentParas.at(8).toFloat();\
-        zoom = currentParas.at(9).toFloat();\
-        xCut0 = currentParas.at(10).toFloat();\
-        xCut1 = currentParas.at(11).toFloat();\
-        yCut0 = currentParas.at(12).toFloat();\
-        yCut1 = currentParas.at(13).toFloat();\
-        zCut0 = currentParas.at(14).toFloat();\
-        zCut1 = currentParas.at(15).toFloat();\
-        channelR = currentParas.at(16).toInt();\
-        channelG = currentParas.at(17).toInt();\
-        channelB = currentParas.at(18).toInt();\
-        showSurf = currentParas.at(19).toInt();\
-        xClip0 = currentParas.at(20).toInt();\
-        xClip1 = currentParas.at(21).toInt();\
-        yClip0 = currentParas.at(22).toInt();\
-        yClip1 = currentParas.at(23).toInt();\
-        zClip0 = currentParas.at(24).toInt();\
-        zClip1 = currentParas.at(25).toInt();\
-   }
-
-#define INTERPOLATION_PARA \
-    { \
-        view->resetRotation();\
-        angles_to_quaternions(q1,xRot_last,yRot_last,zRot_last);\
-        angles_to_quaternions(q2,xRot,yRot,zRot);\
-        slerp_zhi(q1, q2,(float)i/N,q_sample);\
-        quaternions_to_angles(Rot_current,q_sample);\
-        view->doAbsoluteRot(Rot_current[0],Rot_current[1],Rot_current[2]);\
-        view->setXShift(xShift_last + i*(xShift-xShift_last)/N);\
-        view->setYShift(yShift_last + i*(yShift-yShift_last)/N);\
-        view->setZShift(zShift_last + i*(zShift-zShift_last)/N);\
-        view->setZoom(zoom_last + i*(zoom-zoom_last)/N);\
-        if((float)i/N < 0.5)\
-        {\
-            view->setChannelR(channelR_last);\
-            view->setChannelG(channelG_last);\
-            view->setChannelB(channelB_last);\
-            view->setShowSurfObjects(showSurf_last);\
-        }\
-        else\
-        {\
-            view->setChannelR(channelR);\
-            view->setChannelG(channelG);\
-            view->setChannelB(channelB);\
-            view->setShowSurfObjects(showSurf);\
-        }\
-        view->setXClip0(xClip0_last + i*(xClip0-xClip0_last)/N);\
-        view->setXClip1(xClip1_last + i*(xClip1-xClip1_last)/N);\
-        view->setYClip0(yClip0_last + i*(yClip0-yClip0_last)/N);\
-        view->setYClip1(yClip1_last + i*(yClip1-yClip1_last)/N);\
-        view->setZClip0(zClip0_last + i*(zClip0-zClip0_last)/N);\
-        view->setZClip1(zClip1_last + i*(zClip1-zClip1_last)/N);\
-        if(curwin)\
-        {\
-            view->setXCut0(xCut0_last + i*(xCut0-xCut0_last)/N);\
-            view->setXCut1(xCut1_last + i*(xCut1-xCut1_last)/N);\
-            view->setYCut0(yCut0_last + i*(yCut0-yCut0_last)/N);\
-            view->setYCut1(yCut1_last + i*(yCut1-yCut1_last)/N);\
-            view->setZCut0(zCut0_last + i*(zCut0-zCut0_last)/N);\
-            view->setZCut1(zCut1_last + i*(zCut1-zCut1_last)/N);\
-            m_v3d.updateImageWindow(curwin);\
-        }\
-        else\
-            m_v3d.updateImageWindow(surface_win);\
-   }
-
-#define SCREENSHOT_SAVEFRAMES \
-    { \
-        QString BMPfilename = selectedFile + QString("/%1").arg(framenum);\
-        if(curwin)\
-            m_v3d.screenShot3DWindow(curwin, BMPfilename);\
-        else\
-            m_v3d.screenShotAny3DWindow(surface_win, BMPfilename);\
-        framenum++;\
-    }
-
-#define CHECK_WINDOWS \
-    list_triview = m_v3d.getImageWindowList();\
-    list_3dviewer = m_v3d.getListAll3DViewers();\
-    if(combo_surface->currentIndex() < list_triview.size())\
+    }\
+    view->setXClip0(xClip0_last + i*(xClip0-xClip0_last)/N);\
+    view->setXClip1(xClip1_last + i*(xClip1-xClip1_last)/N);\
+    view->setYClip0(yClip0_last + i*(yClip0-yClip0_last)/N);\
+    view->setYClip1(yClip1_last + i*(yClip1-yClip1_last)/N);\
+    view->setZClip0(zClip0_last + i*(zClip0-zClip0_last)/N);\
+    view->setZClip1(zClip1_last + i*(zClip1-zClip1_last)/N);\
+    if(curwin)\
     {\
-        curwin = list_triview[combo_surface->currentIndex()];\
-        if(curwin)\
-        {\
-            m_v3d.open3DWindow(curwin);\
-            view = m_v3d.getView3DControl(curwin);\
-        }\
-        else\
-            return;\
+        view->setXCut0(xCut0_last + i*(xCut0-xCut0_last)/N);\
+        view->setXCut1(xCut1_last + i*(xCut1-xCut1_last)/N);\
+        view->setYCut0(yCut0_last + i*(yCut0-yCut0_last)/N);\
+        view->setYCut1(yCut1_last + i*(yCut1-yCut1_last)/N);\
+        view->setZCut0(zCut0_last + i*(zCut0-zCut0_last)/N);\
+        view->setZCut1(zCut1_last + i*(zCut1-zCut1_last)/N);\
+        m_v3d.updateImageWindow(curwin);\
     }\
     else\
+        m_v3d.update_3DViewer(surface_win); \
+}
+
+
+#define SCREENSHOT_SAVEFRAMES \
+{ \
+    QString BMPfilename = selectedFile + QString("/%1").arg(framenum);\
+    if(curwin)\
+        m_v3d.screenShot3DWindow(curwin, BMPfilename);\
+    else\
+        m_v3d.screenShot_Any3DViewer(surface_win, BMPfilename);\
+    framenum++;\
+}
+
+#define CHECK_WINDOWS \
+{\
+list_triview = m_v3d.getImageWindowList();\
+list_3dviewer = m_v3d.getListAll3DViewers();\
+curwin=0; \
+if(combo_surface->currentIndex() < list_triview.size())\
+{\
+    curwin = list_triview[combo_surface->currentIndex()];\
+    if(curwin)\
     {\
-        QString curname = combo_surface->itemText(combo_surface->currentIndex());\
-        for (int i=0; i<list_3dviewer.count(); i++)\
+        m_v3d.open3DWindow(curwin);\
+        view = m_v3d.getView3DControl(curwin);\
+    }\
+    else\
+        return;\
+}\
+else\
+{\
+    QString curname = combo_surface->itemText(combo_surface->currentIndex());\
+    v3d_msg(QString("current window selected:[%1]").arg(curname), 0);\
+    for (int i=0; i<list_3dviewer.count(); i++)\
+    {\
+        if(curname == m_v3d.getImageName(list_3dviewer[i]))\
         {\
-            if(curname == m_v3d.getImageName(list_3dviewer[i]))\
+            surface_win = list_3dviewer[i];\
+            if(surface_win)\
             {\
-                surface_win = list_3dviewer[i];\
-                if(surface_win)\
-                {\
-                    view = m_v3d.getAnyView3DControl(surface_win);\
-                }\
-                else\
-                    return;\
-                break;\
+                view = m_v3d.getView3DControl_Any3DViewer(surface_win);\
             }\
+            else\
+                return;\
+            break;\
         }\
     }\
+}\
+}
 
 
 QStringList ZMovieMaker::menulist() const
 {
-	return QStringList() 
-        <<tr("Generate a movie using multiple anchor points")
-		<<tr("about");
+    return QStringList()
+            <<tr("Generate a movie using multiple anchor points")
+           <<tr("about");
 }
 
 QStringList ZMovieMaker::funclist() const
 {
     return QStringList()
-        <<tr("func1")
-        <<tr("func2")
-        <<tr("help");
+            <<tr("func1")
+           <<tr("func2")
+          <<tr("help");
 }
 
 void ZMovieMaker::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
 {
     if (menu_name == tr("Generate a movie using multiple anchor points"))
-	{
+    {
         MovieFromPoints(callback, parent);
-	}else
-	{
+    }else
+    {
         v3d_msg(tr("This plugin generates a smooth 3D movie using multiple anchor points. "
-			"Developed by Zhi Zhou and Hanchuan Peng, inspired by previous discussion and work with Z. Ruan and C. Bruns. 2012-2013."));
-	}
+                   "Developed by Zhi Zhou and Hanchuan Peng, inspired by previous discussion and work with Z. Ruan and C. Bruns. 2012-2013."));
+    }
 }
 
 bool ZMovieMaker::dofunc(const QString & func_name, const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback,  QWidget * parent)
@@ -338,6 +343,8 @@ void MyComboBox::updateList()
 lookPanel::lookPanel(V3DPluginCallback2 &_v3d, QWidget *parent) :
     QDialog(parent), m_v3d(_v3d)
 {
+    //
+
     QPushButton* Record = new QPushButton("Add an Anchor Point");
     QPushButton* Preview = new QPushButton("Preview and Save Movie");
     QPushButton* Show = new QPushButton("Show Selected Anchor Point");
@@ -370,7 +377,10 @@ lookPanel::lookPanel(V3DPluginCallback2 &_v3d, QWidget *parent) :
     gridLayout->addWidget(Upload,11,0,1,5);
     gridLayout->addWidget(SampleName, 4,6,1,1);
     gridLayout->addWidget(SampleRate, 4,7,1,2);
-    SampleRate->setMaximum(1000); SampleRate->setMinimum(10);
+
+    SampleRate->setMaximum(1000);
+    SampleRate->setMinimum(2);
+    SampleRate->setValue(30);
 
     listWidget = new QListWidget();
     gridLayout->addWidget(listWidget,3,0,5,5);
@@ -392,7 +402,7 @@ void lookPanel::_slot_record()
 {
     CHECK_WINDOWS
 
-    view->absoluteRotPose();
+            view->absoluteRotPose();
     float xRot = view->xRot();
     float yRot = view->yRot();
     float zRot = view->zRot();
@@ -422,9 +432,9 @@ void lookPanel::_slot_record()
     curstr = curstr.prepend(QString("").setNum(listWidget->count()+1) + ": [ ");
     curstr = curstr.append(" ]");
     listWidget->addItem(new QListWidgetItem(curstr));
-  //  NeuronTree nt = m_v3d.getSWC(curwin);
-  //  printf("\n\nsurface number is %d,%d\n\n", nt.listNeuron.count(),view->isShowSurfObjects());
-  //  printf("\n\n surfacue cut is (%d,%d,%d,%d,%d,%d)\n\n",view->xClip0(),view->xClip1(),view->yClip0(),view->yClip1(),view->zClip0(),view->zClip1());
+    //  NeuronTree nt = m_v3d.getSWC(curwin);
+    //  printf("\n\nsurface number is %d,%d\n\n", nt.listNeuron.count(),view->isShowSurfObjects());
+    //  printf("\n\n surfacue cut is (%d,%d,%d,%d,%d,%d)\n\n",view->xClip0(),view->xClip1(),view->yClip0(),view->yClip1(),view->zClip0(),view->zClip1());
 }
 
 
@@ -432,21 +442,37 @@ void lookPanel::_slot_preview()
 {
     CHECK_WINDOWS
 
-            return;
-
-    if(!listWidget->count())
+    if(listWidget->count()<=0)
     {
         v3d_msg("Please define at least one archor point.");
         return;
     }
 
-    int  N = SampleRate->text().toDouble();
-    float xRot, yRot,zRot,xShift,yShift,zShift,zoom,xCut0,xCut1,yCut0,yCut1,zCut0,zCut1;
-    int showSurf,showSurf_last;
-    bool channelR,channelG,channelB,channelR_last,channelG_last,channelB_last;
-    float xRot_last, yRot_last,zRot_last,xShift_last,yShift_last,zShift_last,zoom_last,xCut0_last,xCut1_last,yCut0_last,yCut1_last,zCut0_last,zCut1_last;
-    int xClip0,xClip1,yClip0,yClip1,zClip0,zClip1;
-    int xClip0_last,xClip1_last,yClip0_last,yClip1_last,zClip0_last,zClip1_last;
+    if (!SampleRate)
+        return;
+
+    int  N = SampleRate->text().toInt();
+
+    float xRot, yRot, zRot,
+            xShift, yShift, zShift,
+            zoom,
+            xCut0, xCut1,
+            yCut0, yCut1,
+            zCut0, zCut1;
+    int showSurf, showSurf_last;
+    bool channelR, channelG, channelB,
+            channelR_last, channelG_last, channelB_last;
+    float xRot_last, yRot_last,zRot_last,
+            xShift_last,yShift_last,zShift_last,
+            zoom_last,
+            xCut0_last,xCut1_last,
+            yCut0_last,yCut1_last,
+            zCut0_last,zCut1_last;
+    int xClip0,xClip1,yClip0,
+            yClip1,zClip0,zClip1;
+    int xClip0_last,xClip1_last,
+            yClip0_last,yClip1_last,
+            zClip0_last,zClip1_last;
 
     float q1[4],q2[4],q_sample[4];
     float Rot_current[3];
@@ -455,63 +481,67 @@ void lookPanel::_slot_preview()
     {
         QString currentPoint = listWidget->item(row)->text();
         QStringList currentParas = currentPoint.split(rx);
+
         GET_PARA
 
+        if(row>0)
+        {
+            for (int i=1; i<N+1;i++)
+            {
+                INTERPOLATION_PARA
+            }
+        }
+        else
+        {
+            SET_3DVIEW
+        }
 
-       if(row>0)
-       {
-           for (int i =1; i<N+1;i++)
-           {
-               INTERPOLATION_PARA
-           }
-       }
-       else
-       {
-          SET_3DVIEW
+        UPDATE_PARA
+    }
 
-       }
+    //now really save movie
 
-         UPDATE_PARA
-   }
+    if(QMessageBox::Yes == QMessageBox::question (0, "", QString("Save as movie frames?"),
+                                                  QMessageBox::Yes, QMessageBox::No))
+    {
 
-   if(QMessageBox::Yes == QMessageBox::question (0, "", QString("Save as movie frames?"), QMessageBox::Yes, QMessageBox::No))
-   {
+        QFileDialog d(this);
+        d.setWindowTitle(tr("Choose output dir:"));
+        d.setFileMode(QFileDialog::Directory);
+        if(d.exec())
+        {
+            QString selectedFile=(d.selectedFiles())[0];
+            int framenum =0;
+            for(int row = 0; row < listWidget->count(); row++)
+            {
+                QString currentPoint = listWidget->item(row)->text();
+                QStringList currentParas = currentPoint.split(rx);
+                GET_PARA
 
-       QFileDialog d(this);
-       d.setWindowTitle(tr("Choose output dir:"));
-       d.setFileMode(QFileDialog::Directory);
-       if(d.exec())
-       {
-           QString selectedFile=(d.selectedFiles())[0];
-           int framenum =0;
-           for(int row = 0; row < listWidget->count(); row++)
-           {
-               QString currentPoint = listWidget->item(row)->text();
-               QStringList currentParas = currentPoint.split(rx);
-               GET_PARA
+                        if(row>0)
+                {
+                    for (int i =1; i<N+1;i++)
+                    {
+                        INTERPOLATION_PARA
 
-              if(row>0)
-              {
-                  for (int i =1; i<N+1;i++)
-                  {
-                      INTERPOLATION_PARA
-                      SCREENSHOT_SAVEFRAMES
-                  }
-              }
-              else
-              {
-                  SET_3DVIEW
-                  SCREENSHOT_SAVEFRAMES
-              }
+                        SCREENSHOT_SAVEFRAMES
+                    }
+                }
+                else
+                {
+                    SET_3DVIEW
 
-                 UPDATE_PARA
+                    SCREENSHOT_SAVEFRAMES
+                }
 
-          }
+                UPDATE_PARA
 
-       }
-   }
-   else
-       return;
+            }
+
+        }
+    }
+    else
+        return;
 
 }
 
@@ -519,7 +549,7 @@ void lookPanel::_slot_delete()
 {
     CHECK_WINDOWS
 
-    if(listWidget->currentRow()==-1)
+            if(listWidget->currentRow()==-1)
     {
         v3d_msg("Please select a valid archor point.");
         return;
@@ -538,7 +568,7 @@ void lookPanel::_slot_delete()
             currentPoint.remove(0,1);
             currentPoint = currentPoint.prepend(QString("").setNum(row+1));
             updatePointsList << currentPoint;
-         }
+        }
 
         listWidget->clear();
         for(int row = 0; row < updatePointsList.count(); row++)
@@ -555,7 +585,7 @@ void lookPanel::_slot_show()
 {
     CHECK_WINDOWS
 
-    if(listWidget->currentRow()==-1)
+            if(listWidget->currentRow()==-1)
     {
         v3d_msg("Please select a valid archor point.");
         return;
@@ -572,7 +602,7 @@ void lookPanel::_slot_show()
     QStringList currentParas = currentPoint.split(rx);
     GET_PARA
 
-    SET_3DVIEW
+            SET_3DVIEW
 
 }
 
@@ -629,9 +659,9 @@ void lookPanel::_slot_load()
 {
 
     QString fileOpenName = QFileDialog::getOpenFileName(this, QObject::tr("Open File"),
-            "",
-            QObject::tr("Supported file (*.txt)"
-                ));
+                                                        "",
+                                                        QObject::tr("Supported file (*.txt)"
+                                                                    ));
     if(fileOpenName.isEmpty())
     {
         return;
@@ -639,23 +669,23 @@ void lookPanel::_slot_load()
 
     if (fileOpenName.size()>0)
     {
-       listWidget->clear();
-       ifstream ifs(fileOpenName.toLatin1());
-       string points;
-       float xRot, yRot,zRot,xShift,yShift,zShift,zoom,xCut0,xCut1,yCut0,yCut1,zCut0,zCut1;
-       bool channelR,channelG,channelB;
-       int showSurf;
-       int xClip0,xClip1,yClip0,yClip1,zClip0,zClip1;
-       while(ifs && getline(ifs, points))
-       {
-         std::istringstream iss(points);
-         iss >> xRot >> yRot >> zRot >> xShift >> yShift >> zShift >> zoom >> xCut0 >> xCut1 >> yCut0 >> yCut1 >> zCut0 >> zCut1 >> channelR >> channelG >> channelB >> showSurf >> xClip0 >> xClip1 >> yClip0 >> xClip1 >> zClip0 >> zClip1;
-         QString curstr = QString("%1,%2,%3,%4,%5,%6,%7,%8,%9,%10,%11,%12,%13,%14,%15,%16,%17,%18,%19,%20,%21,%22,%23").arg(xRot).arg(yRot).arg(zRot).arg(xShift).arg(yShift).arg(zShift).arg(zoom).arg(xCut0).arg(xCut1).arg(yCut0).arg(yCut1).arg(zCut0).arg(zCut1).arg(channelR).arg(channelG).arg(channelB).arg(showSurf).arg(xClip0).arg(xClip1).arg(yClip0).arg(yClip1).arg(zClip0).arg(zClip1);
-         curstr = curstr.prepend(QString("").setNum(listWidget->count()+1) + ": [ ");
-         curstr = curstr.append(" ]");
-         listWidget->addItem(new QListWidgetItem(curstr));
+        listWidget->clear();
+        ifstream ifs(fileOpenName.toLatin1());
+        string points;
+        float xRot, yRot,zRot,xShift,yShift,zShift,zoom,xCut0,xCut1,yCut0,yCut1,zCut0,zCut1;
+        bool channelR,channelG,channelB;
+        int showSurf;
+        int xClip0,xClip1,yClip0,yClip1,zClip0,zClip1;
+        while(ifs && getline(ifs, points))
+        {
+            std::istringstream iss(points);
+            iss >> xRot >> yRot >> zRot >> xShift >> yShift >> zShift >> zoom >> xCut0 >> xCut1 >> yCut0 >> yCut1 >> zCut0 >> zCut1 >> channelR >> channelG >> channelB >> showSurf >> xClip0 >> xClip1 >> yClip0 >> xClip1 >> zClip0 >> zClip1;
+            QString curstr = QString("%1,%2,%3,%4,%5,%6,%7,%8,%9,%10,%11,%12,%13,%14,%15,%16,%17,%18,%19,%20,%21,%22,%23").arg(xRot).arg(yRot).arg(zRot).arg(xShift).arg(yShift).arg(zShift).arg(zoom).arg(xCut0).arg(xCut1).arg(yCut0).arg(yCut1).arg(zCut0).arg(zCut1).arg(channelR).arg(channelG).arg(channelB).arg(showSurf).arg(xClip0).arg(xClip1).arg(yClip0).arg(yClip1).arg(zClip0).arg(zClip1);
+            curstr = curstr.prepend(QString("").setNum(listWidget->count()+1) + ": [ ");
+            curstr = curstr.append(" ]");
+            listWidget->addItem(new QListWidgetItem(curstr));
 
-       }
+        }
     }
     return;
 }
@@ -715,21 +745,21 @@ void angles_to_quaternions_3DRotation(float q[], float xRot, float yRot,float zR
         q[2] = R[0][2] - R[2][0];
         q[3] = R[1][0] - R[0][1];
 
-    // Check if R[0][0] is largest along the diagonal
+        // Check if R[0][0] is largest along the diagonal
     } else if( R[0][0] >= R[1][1]  &&  R[0][0] >= R[2][2]  ) {
         q[0] = R[2][1] - R[1][2];
         q[1] = 1 - (tr - 2*R[0][0]);
         q[2] = R[0][1]+R[1][0];
         q[3] = R[0][2]+R[2][0];
 
-    // Check if R[1][1] is largest along the diagonal
+        // Check if R[1][1] is largest along the diagonal
     } else if( R[1][1] >= R[2][2] ) {
         q[0] = R[0][2] - R[2][0];
         q[1] = R[0][1] + R[1][0];
         q[2] = 1 - (tr - 2*R[1][1]);
         q[3] = R[1][2] + R[2][1];
 
-    // R[2][2] is largest along the diagonal
+        // R[2][2] is largest along the diagonal
     } else {
         q[0] = R[1][0] - R[0][1];
         q[1] = R[0][2] + R[2][0];
