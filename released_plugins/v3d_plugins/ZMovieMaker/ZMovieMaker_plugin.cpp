@@ -17,7 +17,7 @@ Q_EXPORT_PLUGIN2(ZMovieMaker, ZMovieMaker);
 
 void MovieFromPoints(V3DPluginCallback2 &v3d, QWidget *parent);
 static lookPanel *panel = 0;
-QDoubleSpinBox* SampleRate;
+static QSpinBox* SampleRate = 0;
 
 void angles_to_quaternions(float q[], float xRot, float yRot,float zRot);
 void slerp_zhi(float q1[], float q2[],float alpha,float q_sample[]);
@@ -344,7 +344,7 @@ void MyComboBox::updateList()
 lookPanel::lookPanel(V3DPluginCallback2 &_v3d, QWidget *parent) :
     QDialog(parent), m_v3d(_v3d)
 {
-    QPushButton* Record     = new QPushButton("Record Anchor Points");
+    QPushButton* Record = new QPushButton("Add an Anchor Point");
     QPushButton* Preview = new QPushButton("Preview and Save Movie");
     QPushButton* Show = new QPushButton("Show Selected Anchor Point");
     QPushButton* Delete = new QPushButton("Delete Selected Anchor Point");
@@ -352,39 +352,15 @@ lookPanel::lookPanel(V3DPluginCallback2 &_v3d, QWidget *parent) :
     QPushButton* Save = new QPushButton("Save file");
     QPushButton* Load = new QPushButton("Load file");
 
-    SampleRate = new QDoubleSpinBox();
-    QLabel* SampleName = new QLabel(QObject::tr(" Sample Rate:"));
+    SampleRate = new QSpinBox();
+    QLabel* SampleName = new QLabel(QObject::tr("Sampling Rate:"));
 
     //potential bugs for the following two sentences
     list_triview = m_v3d.getImageWindowList();
     list_3dviewer = m_v3d.getListAll3DViewers();
 
-//    QStringList items;
-//    for (int i=0; i<list_triview.size(); i++)
-//        items << m_v3d.getImageName(list_triview[i]);
-
-//    for (int i=0; i<list_3dviewer.count(); i++)
-//    {
-//        QString curname = m_v3d.getImageName(list_3dviewer[i]).remove("3D View [").remove("]");
-//        bool b_found=false;
-//        for (int j=0; j<list_triview.size(); j++)
-//            if (curname==m_v3d.getImageName(list_triview[i]))
-//            {
-//                b_found=true;
-//                break;
-//            }
-
-//        if (!b_found)
-//            items << m_v3d.getImageName(list_3dviewer[i]);
-//    }
-
-
-//    combo_surface->addItems(items);
-
     combo_surface = new MyComboBox(&m_v3d);
     combo_surface->updateList();
-
-    //connect(combo_surface, SIGNAL(activated(int)), combo_surface, SLOT(updateList()));
 
     label_surface = new QLabel(QObject::tr("Window List: "));
 
@@ -400,7 +376,7 @@ lookPanel::lookPanel(V3DPluginCallback2 &_v3d, QWidget *parent) :
     gridLayout->addWidget(Upload,11,0,1,5);
     gridLayout->addWidget(SampleName, 4,6,1,1);
     gridLayout->addWidget(SampleRate, 4,7,1,2);
-    SampleRate->setMaximum(1000); SampleRate->setMinimum(30);
+    SampleRate->setMaximum(1000); SampleRate->setMinimum(10);
 
     listWidget = new QListWidget();
     gridLayout->addWidget(listWidget,3,0,5,5);
@@ -410,19 +386,21 @@ lookPanel::lookPanel(V3DPluginCallback2 &_v3d, QWidget *parent) :
 
     connect(Show, SIGNAL(clicked()), this, SLOT(_slot_show()));
     connect(Delete, SIGNAL(clicked()), this, SLOT(_slot_delete()));
-    connect(Record,     SIGNAL(clicked()), this, SLOT(_slot_record()));
+    connect(Record, SIGNAL(clicked()), this, SLOT(_slot_record()));
     connect(Preview, SIGNAL(clicked()), this, SLOT(_slot_preview()));
     connect(Save, SIGNAL(clicked()), this, SLOT(_slot_save()));
     connect(Load, SIGNAL(clicked()), this, SLOT(_slot_load()));
     connect(Upload, SIGNAL(clicked()), this, SLOT(_slot_upload()));
     connect(SampleRate, SIGNAL(valueChanged(double)), this, SLOT(update()));
-
-
 }
 
 lookPanel::~lookPanel()
 {
-   panel = 0;
+    if (panel)
+    {
+        delete panel;
+        panel = 0;
+    }
 }
 
 void lookPanel::_slot_record()
