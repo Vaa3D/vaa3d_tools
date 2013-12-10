@@ -29,7 +29,7 @@ void neutube::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWi
 	{
 //        system()
 
-        neurotube_main()
+     //   neurotube_main()
 	}
 	else
 	{
