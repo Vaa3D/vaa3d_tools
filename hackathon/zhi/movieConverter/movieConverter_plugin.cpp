@@ -43,7 +43,8 @@ void MovieConverter::domenu(const QString &menu_name, V3DPluginCallback2 &callba
              if(!ok1)
                  return;
              string pfs_s = boost::lexical_cast<string>(pfs);
-             QString cmd_ffmpeg = QString("./bin/mac_ffmpeg -r %1 -i \'%2/a%d.BMP\' -y -vcodec mjpeg -qscale 0 \'%3/movie.avi\'").arg(pfs_s.c_str()).arg(selectedFile.toStdString().c_str()).arg(selectedFile.toStdString().c_str());
+             QString lociDir = getAppPath().append("/mac_ffmpeg");
+             QString cmd_ffmpeg = QString("%1 -r %2 -i \'%3/a%d.BMP\' -y -vcodec mjpeg -qscale 0 \'%4/movie.avi\'").arg(lociDir.toStdString().c_str()).arg(pfs_s.c_str()).arg(selectedFile.toStdString().c_str()).arg(selectedFile.toStdString().c_str());
              system(qPrintable(cmd_ffmpeg));
              QString movieDir = selectedFile.append("/movie.avi");
              if (!QFile(movieDir).exists())
@@ -81,3 +82,28 @@ bool MovieConverter::dofunc(const QString & func_name, const V3DPluginArgList & 
 	return true;
 }
 
+QString getAppPath()
+{
+    QString v3dAppPath("~/Work/v3d_external/v3d");
+    QDir testPluginsDir = QDir(qApp->applicationDirPath());
+
+#if defined(Q_OS_WIN)
+    if (testPluginsDir.dirName().toLower() == "debug" || testPluginsDir.dirName().toLower() == "release")
+        testPluginsDir.cdUp();
+#elif defined(Q_OS_MAC)
+    // In a Mac app bundle, plugins directory could be either
+    //  a - below the actual executable i.e. v3d.app/Contents/MacOS/plugins/
+    //  b - parallel to v3d.app i.e. foo/v3d.app and foo/plugins/
+    if (testPluginsDir.dirName() == "MacOS") {
+        QDir testUpperPluginsDir = testPluginsDir;
+        testUpperPluginsDir.cdUp();
+        testUpperPluginsDir.cdUp();
+        testUpperPluginsDir.cdUp(); // like foo/plugins next to foo/v3d.app
+        if (testUpperPluginsDir.cd("plugins")) testPluginsDir = testUpperPluginsDir;
+        testPluginsDir.cdUp();
+    }
+#endif
+
+    v3dAppPath = testPluginsDir.absolutePath();
+    return v3dAppPath;
+}
