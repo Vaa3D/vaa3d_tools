@@ -12,7 +12,7 @@ Q_EXPORT_PLUGIN2(Movie, MovieGenerator);
 QStringList MovieGenerator::menulist() const
 {
 	return QStringList() 
-                        << tr("generate a movie using ffmpeg library")
+                        << tr("convert a movie format using ffmpeg")
                         <<tr("about");
 }
 
@@ -24,7 +24,7 @@ QStringList MovieGenerator::funclist() const
 
 void MovieGenerator::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
 {
-    if (menu_name == tr("generate a movie using ffmpeg library"))
+    if (menu_name == tr("convert a movie format using ffmpeg"))
 	{
         QFileDialog d;
         d.setWindowTitle(tr("Choose movie frames dir:"));
@@ -32,7 +32,7 @@ void MovieGenerator::domenu(const QString &menu_name, V3DPluginCallback2 &callba
         if(d.exec())
         {
              QString selectedFile=(d.selectedFiles())[0];
-             QString cmd_ffmpeg = QString("./ffmpeg -f image2 -i \'%1/a%d.BMP\' -y \'%2/movie.mpg\'").arg(selectedFile.toStdString().c_str()).arg(selectedFile.toStdString().c_str());
+             QString cmd_ffmpeg = QString("./bin/mac_ffmpeg -f image2 -i \'%1/a*%d.BMP\' -y \'%2/movie.mpg\'").arg(selectedFile.toStdString().c_str()).arg(selectedFile.toStdString().c_str());
              system(qPrintable(cmd_ffmpeg));
              QString movieDir = selectedFile.append("/movie.mpg");
              if (!QFile(movieDir).exists())
@@ -49,7 +49,7 @@ void MovieGenerator::domenu(const QString &menu_name, V3DPluginCallback2 &callba
     }
 	else
 	{
-		v3d_msg(tr("Movie Generator. "
+		v3d_msg(tr("Movie Format Converter (from sequence of frames to a mpeg file). "
             "Developed by Zhi Zhou and Hanchuan Peng, 2013-12-10"));
 	}
 }
