@@ -60,7 +60,7 @@ void MovieConverter::domenu(const QString &menu_name, V3DPluginCallback2 &callba
     }
 	else
 	{
-        v3d_msg(tr("Movie Format Converter (from sequence of frames to a avi file). "
+        v3d_msg(tr("Movie Format Converter (from sequence of frames to an avi file). "
             "Developed by Zhi Zhou and Hanchuan Peng, 2013-12-10"));
 	}
 }
