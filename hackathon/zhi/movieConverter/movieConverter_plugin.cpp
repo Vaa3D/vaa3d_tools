@@ -1,5 +1,5 @@
 /* Movie_plugin.cpp
- * Movie Generator
+ * Movie Converter
  * 2013-13-10 : by Zhi Zhou
  */
  
