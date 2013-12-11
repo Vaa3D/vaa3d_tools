@@ -44,8 +44,15 @@ void MovieConverter::domenu(const QString &menu_name, V3DPluginCallback2 &callba
                  return;
              string pfs_s = boost::lexical_cast<string>(pfs);
              QString lociDir = getAppPath().append("/mac_ffmpeg");
-             QString cmd_ffmpeg = QString("%1 -r %2 -i \'%3/a%d.BMP\' -y -vcodec mjpeg -qscale 0 \'%4/movie.avi\'").arg(lociDir.toStdString().c_str()).arg(pfs_s.c_str()).arg(selectedFile.toStdString().c_str()).arg(selectedFile.toStdString().c_str());
+             QString compress;
+             if(QMessageBox::Yes == QMessageBox::question (0, "", QString("Compress Video?"),
+                                                           QMessageBox::Yes, QMessageBox::No))
+                   compress = "-vcodec mjpeg -qscale 0";
+             else
+                   compress = "-vcodec rawvideo";
+             QString cmd_ffmpeg = QString("%1 -r %2 -i \'%3/a%d.BMP\' -y %4 \'%5/movie.avi\'").arg(lociDir.toStdString().c_str()).arg(pfs_s.c_str()).arg(selectedFile.toStdString().c_str()).arg(compress.toStdString().c_str()).arg(selectedFile.toStdString().c_str());
              system(qPrintable(cmd_ffmpeg));
+             //-vcodec mjpeg -qscale 0
              QString movieDir = selectedFile.append("/movie.avi");
              if (!QFile(movieDir).exists())
              {
