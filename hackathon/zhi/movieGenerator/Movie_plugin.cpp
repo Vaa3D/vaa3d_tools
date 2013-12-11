@@ -32,7 +32,7 @@ void MovieGenerator::domenu(const QString &menu_name, V3DPluginCallback2 &callba
         if(d.exec())
         {
              QString selectedFile=(d.selectedFiles())[0];
-             QString cmd_ffmpeg = QString("./bin/mac_ffmpeg -f image2 -i \'%1/a*%d.BMP\' -y \'%2/movie.mpg\'").arg(selectedFile.toStdString().c_str()).arg(selectedFile.toStdString().c_str());
+             QString cmd_ffmpeg = QString("./bin/mac_ffmpeg -f image2 -i \'%1/a%d.BMP\' -y \'%2/movie.mpg\'  -r 14 -bits_per_raw_sample 8 ").arg(selectedFile.toStdString().c_str()).arg(selectedFile.toStdString().c_str());
              system(qPrintable(cmd_ffmpeg));
              QString movieDir = selectedFile.append("/movie.mpg");
              if (!QFile(movieDir).exists())
