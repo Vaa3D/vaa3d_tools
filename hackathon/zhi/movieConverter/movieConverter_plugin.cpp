@@ -43,7 +43,7 @@ void MovieConverter::domenu(const QString &menu_name, V3DPluginCallback2 &callba
              if(!ok1)
                  return;
              string pfs_s = boost::lexical_cast<string>(pfs);
-             QString cmd_ffmpeg = QString("./mac_ffmpeg -r %1 -i \'%2/a%d.BMP\' -y -vcodec mjpeg -qscale 0 \'%3/movie.avi\'").arg(pfs_s.c_str()).arg(selectedFile.toStdString().c_str()).arg(selectedFile.toStdString().c_str());
+             QString cmd_ffmpeg = QString("./bin/mac_ffmpeg -r %1 -i \'%2/a%d.BMP\' -y -vcodec mjpeg -qscale 0 \'%3/movie.avi\'").arg(pfs_s.c_str()).arg(selectedFile.toStdString().c_str()).arg(selectedFile.toStdString().c_str());
              system(qPrintable(cmd_ffmpeg));
              QString movieDir = selectedFile.append("/movie.avi");
              if (!QFile(movieDir).exists())
