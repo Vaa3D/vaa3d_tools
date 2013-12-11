@@ -6,6 +6,7 @@
 #include "v3d_message.h"
 #include <vector>
 #include "movieConverter_plugin.h"
+#include <boost/lexical_cast.hpp>
 using namespace std;
 Q_EXPORT_PLUGIN2(Movie, MovieConverter);
  
@@ -32,9 +33,19 @@ void MovieConverter::domenu(const QString &menu_name, V3DPluginCallback2 &callba
         if(d.exec())
         {
              QString selectedFile=(d.selectedFiles())[0];
-             QString cmd_ffmpeg = QString("./bin/mac_ffmpeg -f image2 -i \'%1/a%d.BMP\' -y \'%2/movie.mpg\'  -r 14 -bits_per_raw_sample 8 ").arg(selectedFile.toStdString().c_str()).arg(selectedFile.toStdString().c_str());
+             //input
+             bool ok1;
+             int pfs = 30;
+
+             pfs = QInputDialog::getInteger(parent, "Frame rate",
+                                           "Enter frame rate:",
+                                           30, 1, 200, 1, &ok1);
+             if(!ok1)
+                 return;
+             string pfs_s = boost::lexical_cast<string>(pfs);
+             QString cmd_ffmpeg = QString("./mac_ffmpeg -r %1 -i \'%2/a%d.BMP\' -y -vcodec mjpeg -qscale 0 \'%3/movie.avi\'").arg(pfs_s.c_str()).arg(selectedFile.toStdString().c_str()).arg(selectedFile.toStdString().c_str());
              system(qPrintable(cmd_ffmpeg));
-             QString movieDir = selectedFile.append("/movie.mpg");
+             QString movieDir = selectedFile.append("/movie.avi");
              if (!QFile(movieDir).exists())
              {
                 v3d_msg("The format is not supported, or something is wrong in your file\n");
@@ -49,7 +60,7 @@ void MovieConverter::domenu(const QString &menu_name, V3DPluginCallback2 &callba
     }
 	else
 	{
-		v3d_msg(tr("Movie Format Converter (from sequence of frames to a mpeg file). "
+        v3d_msg(tr("Movie Format Converter (from sequence of frames to a avi file). "
             "Developed by Zhi Zhou and Hanchuan Peng, 2013-12-10"));
 	}
 }
