@@ -32,12 +32,9 @@ void MovieGenerator::domenu(const QString &menu_name, V3DPluginCallback2 &callba
         if(d.exec())
         {
              QString selectedFile=(d.selectedFiles())[0];
-             QString cmd_ffmpeg = QString("ffmpeg -f image2 -i \'%1/a%d.BMP\' -y \'%2/movie.mpg\'").arg(selectedFile.toStdString().c_str()).arg(selectedFile.toStdString().c_str());
-             v3d_msg(cmd_ffmpeg);
-             //v3d_msg(cmd_ffmpeg);
+             QString cmd_ffmpeg = QString("./ffmpeg -f image2 -i \'%1/a%d.BMP\' -y \'%2/movie.mpg\'").arg(selectedFile.toStdString().c_str()).arg(selectedFile.toStdString().c_str());
              system(qPrintable(cmd_ffmpeg));
              QString movieDir = selectedFile.append("/movie.mpg");
-             v3d_msg(movieDir);
              if (!QFile(movieDir).exists())
              {
                 v3d_msg("The format is not supported, or something is wrong in your file\n");
