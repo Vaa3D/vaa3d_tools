@@ -157,7 +157,7 @@ QString warning_msg = "Oops... The image you selected no longer exists... The fi
 
 #define SCREENSHOT_SAVEFRAMES \
 { \
-    QString BMPfilename = selectedFile + QString("/%1").arg(framenum);\
+    QString BMPfilename = selectedFile + QString("/a%1").arg(framenum);\
     if(curwin)\
         m_v3d.screenShot3DWindow(curwin, BMPfilename);\
     else\
