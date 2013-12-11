@@ -5,24 +5,24 @@
  
 #include "v3d_message.h"
 #include <vector>
-#include "Movie_plugin.h"
+#include "movieConverter_plugin.h"
 using namespace std;
-Q_EXPORT_PLUGIN2(Movie, MovieGenerator);
+Q_EXPORT_PLUGIN2(Movie, MovieConverter);
  
-QStringList MovieGenerator::menulist() const
+QStringList MovieConverter::menulist() const
 {
 	return QStringList() 
                         << tr("convert a movie format using ffmpeg")
                         <<tr("about");
 }
 
-QStringList MovieGenerator::funclist() const
+QStringList MovieConverter::funclist() const
 {
 	return QStringList()
 		<<tr("help");
 }
 
-void MovieGenerator::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
+void MovieConverter::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
 {
     if (menu_name == tr("convert a movie format using ffmpeg"))
 	{
@@ -54,7 +54,7 @@ void MovieGenerator::domenu(const QString &menu_name, V3DPluginCallback2 &callba
 	}
 }
 
-bool MovieGenerator::dofunc(const QString & func_name, const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback,  QWidget * parent)
+bool MovieConverter::dofunc(const QString & func_name, const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback,  QWidget * parent)
 {
 	vector<char*> infiles, inparas, outfiles;
 	if(input.size() >= 1) infiles = *((vector<char*> *)input.at(0).p);
