@@ -1,0 +1,9 @@
+
+This folder contains two projects. 
+
+One is the Vaa3D interface code to launch neutube. This will be built every time when you batch build vaa3d_tools.
+
+The second one is the real neutube program. You need to enter the neutube folder and follow the 'README' file and respective instructions.
+
+note added by Hanchuan Peng, 2013-Dec-12
+
