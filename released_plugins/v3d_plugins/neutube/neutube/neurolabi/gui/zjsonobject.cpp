@@ -6,7 +6,7 @@
 
 #include "tz_error.h"
 #include "zjsonparser.h"
-#include "c_json.h"
+#include "tz_json.h"
 
 using namespace std;
 
