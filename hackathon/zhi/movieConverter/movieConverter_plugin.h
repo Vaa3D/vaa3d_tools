@@ -26,5 +26,28 @@ public:
 
 QString getAppPath();
 
+class controlPanel: public QDialog
+{
+    Q_OBJECT
+
+public:
+    controlPanel(V3DPluginCallback2 &v3d, QWidget *parent);
+    ~controlPanel();
+
+public:
+    long m_lframeind;
+    QLineEdit *m_pLineEdit_filepath;
+    QLineEdit *m_pLineEdit_fps;
+    QLineEdit *m_pLineEdit_filename;
+    V3DPluginCallback2 &m_v3d;
+    static controlPanel*m_pLookPanel;
+    QCheckBox* check_compress;
+
+private slots:
+    void _slot_start();
+    void _slots_openFileDlg_output();
+
+};
+
 #endif
 
