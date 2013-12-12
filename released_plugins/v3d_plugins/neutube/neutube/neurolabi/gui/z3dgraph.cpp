@@ -241,7 +241,7 @@ void Z3DGraph::importJsonFile(const string &filePath)
           }
         }
       }
-      break;
+      //break;
     }
   }
 }

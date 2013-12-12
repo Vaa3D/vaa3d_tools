@@ -15,9 +15,18 @@ __BEGIN_DECLS
 #else
 typedef void* json_t;
 typedef void* json_error_t;
+static json_t* json_object() { return 0; }
+static json_t* json_true() { return 0; }
+static json_t* json_false() { return 0; }
+static json_t* json_array() { return 0; }
+#define JSON_INDENT(v) 0
+#define json_real(v) 0
 #define json_object_foreach(data, key, value)
 #define json_load_file(path, flags, error) 0
+#define json_dump_file(path, flags, error) 0
 #define json_is_object(value) 0
+#define json_object_set(data, key, obj) 0
+#define json_object_size(value) 0
 #define json_is_array(value) 0
 #define json_is_string(value) 0
 #define json_is_integer(value) 0
@@ -27,6 +36,7 @@ typedef void* json_error_t;
 #define json_is_true(value) 0
 #define json_array_size(value) 0
 #define json_array_get(value, index) 0
+#define json_array_append(value, index) 0
 #define json_typeof(value) 0
 #define json_incref(value) UNUSED_PARAMETER(value)
 #define json_decref(value) UNUSED_PARAMETER(value)

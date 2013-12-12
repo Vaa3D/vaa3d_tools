@@ -8,11 +8,13 @@
 
 #include "zargumentprocessor.h"
 #include "ztest.h"
+#include "tz_json.h"
 #include "zobject3dscan.h"
 #include "zjsonparser.h"
 #include "zjsonobject.h"
 #include "tz_error.h"
 #include "flyem/zflyemqualityanalyzer.h"
+#define json_dump_file(a, b, c) 0
 
 ZCommandLine::ZCommandLine() : m_ravelerHeight(2599), m_zStart(1490)
 {
@@ -33,6 +35,7 @@ ZCommandLine::ECommand ZCommandLine::getCommand(const char *cmd)
 
 int ZCommandLine::runObjectMarker()
 {
+#if 0
   QDir dir(m_input[0].c_str());
   QStringList filters;
   filters << "*.sobj";
@@ -70,12 +73,14 @@ int ZCommandLine::runObjectMarker()
   json_object_set(obj, "metadata", metaObj);
 
   json_dump_file(obj, m_output.c_str(), JSON_INDENT(2));
+#endif
 
   return 0;
 }
 
 int ZCommandLine::runBoundaryOrphan()
 {
+#if 0
   FlyEm::ZIntCuboidArray blockArray;
   blockArray.loadSubstackList(ZArgumentProcessor::getStringArg("--boundary_orphan"));
   Cuboid_I boundBox = blockArray.getBoundBox();
@@ -147,6 +152,7 @@ int ZCommandLine::runBoundaryOrphan()
   json_object_set(obj, "metadata", metaObj);
 
   json_dump_file(obj, ZArgumentProcessor::getStringArg("-o"), JSON_INDENT(2));
+#endif
 
   return 0;
 }

@@ -1,7 +1,7 @@
 #ifndef C_JSON_H
 #define C_JSON_H
 
-#include "jansson.h"
+#include "tz_json.h"
 
 namespace C_Json {
 json_t* makeObject();

@@ -126,7 +126,9 @@ void ZJsonValue::decodeString(const char *str)
     json_decref(m_data);
   }
 
+#if 0
   m_data = json_loads(str, JSON_DECODE_ANY, &m_error);
+#endif
 }
 
 void ZJsonValue::print()
@@ -159,8 +161,10 @@ std::vector<ZJsonValue> ZJsonValue::toArray()
 std::string ZJsonValue::getErrorString() const
 {
   ostringstream stream;
+#if 0
   stream << "Line " << m_error.line << " Column " << m_error.column
          << ": " << m_error.text;
+#endif
 
   return stream.str();
 }
