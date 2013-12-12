@@ -1,0 +1,1464 @@
+{
+  "data": [
+    {
+      "T-bar": {
+        "status": "final", 
+        "confidence": 1.0, 
+        "body ID": -1, 
+        "location": [
+          499, 
+          10, 
+          105
+        ]
+      }, 
+      "partners": [
+        {
+          "confidence": 1.0, 
+          "body ID": -1, 
+          "location": [
+            477, 
+            8, 
+            102
+          ]
+        }, 
+        {
+          "confidence": 1.0, 
+          "body ID": -1, 
+          "location": [
+            486, 
+            0, 
+            101
+          ]
+        }, 
+        {
+          "confidence": 1.0, 
+          "body ID": -1, 
+          "location": [
+            468, 
+            15, 
+            109
+          ]
+        }, 
+        {
+          "confidence": 1.0, 
+          "body ID": -1, 
+          "location": [
+            510, 
+            1, 
+            109
+          ]
+        }, 
+        {
+          "confidence": 1.0, 
+          "body ID": -1, 
+          "location": [
+            476, 
+            0, 
+            81
+          ]
+        }
+      ]
+    }, 
+    {
+      "T-bar": {
+        "status": "final", 
+        "confidence": 1.0, 
+        "body ID": -1, 
+        "location": [
+          106, 
+          76, 
+          166
+        ]
+      }, 
+      "partners": [
+        {
+          "confidence": 1.0, 
+          "body ID": -1, 
+          "location": [
+            100, 
+            59, 
+            166
+          ]
+        }, 
+        {
+          "confidence": 1.0, 
+          "body ID": -1, 
+          "location": [
+            87, 
+            80, 
+            166
+          ]
+        }, 
+        {
+          "confidence": 1.0, 
+          "body ID": -1, 
+          "location": [
+            94, 
+            102, 
+            169
+          ]
+        }, 
+        {
+          "confidence": 1.0, 
+          "body ID": -1, 
+          "location": [
+            121, 
+            101, 
+            173
+          ]
+        }, 
+        {
+          "confidence": 1.0, 
+          "body ID": -1, 
+          "location": [
+            121, 
+            66, 
+            173
+          ]
+        }
+      ]
+    }, 
+    {
+      "T-bar": {
+        "status": "final", 
+        "multi": "multi", 
+        "confidence": 1.0, 
+        "body ID": -1, 
+        "location": [
+          105, 
+          144, 
+          173
+        ]
+      }, 
+      "partners": [
+        {
+          "confidence": 1.0, 
+          "body ID": -1, 
+          "location": [
+            88, 
+            145, 
+            173
+          ]
+        }, 
+        {
+          "confidence": 1.0, 
+          "body ID": -1, 
+          "location": [
+            103, 
+            121, 
+            173
+          ]
+        }, 
+        {
+          "confidence": 1.0, 
+          "body ID": -1, 
+          "location": [
+            92, 
+            129, 
+            173
+          ]
+        }, 
+        {
+          "confidence": 1.0, 
+          "body ID": -1, 
+          "location": [
+            117, 
+            126, 
+            173
+          ]
+        }, 
+        {
+          "confidence": 1.0, 
+          "body ID": -1, 
+          "location": [
+            114, 
+            115, 
+            166
+          ]
+        }
+      ]
+    }, 
+    {
+      "T-bar": {
+        "status": "final", 
+        "multi": "multi", 
+        "confidence": 1.0, 
+        "body ID": -1, 
+        "location": [
+          115, 
+          164, 
+          189
+        ]
+      }, 
+      "partners": [
+        {
+          "confidence": 1.0, 
+          "body ID": -1, 
+          "location": [
+            119, 
+            139, 
+            189
+          ]
+        }, 
+        {
+          "confidence": 1.0, 
+          "body ID": -1, 
+          "location": [
+            127, 
+            149, 
+            189
+          ]
+        }, 
+        {
+          "confidence": 1.0, 
+          "body ID": -1, 
+          "location": [
+            139, 
+            164, 
+            189
+          ]
+        }, 
+        {
+          "confidence": 1.0, 
+          "body ID": -1, 
+          "location": [
+            98, 
+            145, 
+            189
+          ]
+        }, 
+        {
+          "confidence": 1.0, 
+          "body ID": -1, 
+          "location": [
+            104, 
+            129, 
+            184
+          ]
+        }, 
+        {
+          "confidence": 1.0, 
+          "body ID": -1, 
+          "location": [
+            86, 
+            146, 
+            184
+          ]
+        }
+      ]
+    }, 
+    {
+      "T-bar": {
+        "status": "final", 
+        "confidence": 1.0, 
+        "body ID": -1, 
+        "location": [
+          325, 
+          34, 
+          197
+        ]
+      }, 
+      "partners": [
+        {
+          "confidence": 1.0, 
+          "body ID": -1, 
+          "location": [
+            342, 
+            28, 
+            197
+          ]
+        }, 
+        {
+          "confidence": 1.0, 
+          "body ID": -1, 
+          "location": [
+            330, 
+            21, 
+            197
+          ]
+        }, 
+        {
+          "confidence": 1.0, 
+          "body ID": -1, 
+          "location": [
+            316, 
+            21, 
+            197
+          ]
+        }, 
+        {
+          "confidence": 1.0, 
+          "body ID": -1, 
+          "location": [
+            347, 
+            49, 
+            196
+          ]
+        }, 
+        {
+          "confidence": 1.0, 
+          "body ID": -1, 
+          "location": [
+            337, 
+            19, 
+            188
+          ]
+        }, 
+        {
+          "confidence": 1.0, 
+          "body ID": -1, 
+          "location": [
+            345, 
+            40, 
+            201
+          ]
+        }, 
+        {
+          "confidence": 1.0, 
+          "body ID": -1, 
+          "location": [
+            335, 
+            30, 
+            183
+          ]
+        }, 
+        {
+          "confidence": 1.0, 
+          "body ID": -1, 
+          "location": [
+            310, 
+            28, 
+            181
+          ]
+        }, 
+        {
+          "confidence": 1.0, 
+          "body ID": -1, 
+          "location": [
+            323, 
+            9, 
+            181
+          ]
+        }, 
+        {
+          "confidence": 1.0, 
+          "body ID": -1, 
+          "location": [
+            301, 
+            24, 
+            188
+          ]
+        }
+      ]
+    }, 
+    {
+      "T-bar": {
+        "status": "final", 
+        "confidence": 1.0, 
+        "body ID": -1, 
+        "location": [
+          459, 
+          8, 
+          201
+        ]
+      }, 
+      "partners": [
+        {
+          "confidence": 1.0, 
+          "body ID": -1, 
+          "location": [
+            440, 
+            8, 
+            191
+          ]
+        }, 
+        {
+          "confidence": 1.0, 
+          "body ID": -1, 
+          "location": [
+            458, 
+            1, 
+            191
+          ]
+        }, 
+        {
+          "confidence": 1.0, 
+          "body ID": -1, 
+          "location": [
+            473, 
+            2, 
+            191
+          ]
+        }, 
+        {
+          "confidence": 1.0, 
+          "body ID": -1, 
+          "location": [
+            436, 
+            1, 
+            202
+          ]
+        }
+      ]
+    }, 
+    {
+      "T-bar": {
+        "status": "final", 
+        "multi": "multi", 
+        "confidence": 1.0, 
+        "body ID": -1, 
+        "location": [
+          81, 
+          231, 
+          203
+        ]
+      }, 
+      "partners": [
+        {
+          "confidence": 0.5, 
+          "body ID": -1, 
+          "location": [
+            73, 
+            210, 
+            206
+          ]
+        }, 
+        {
+          "confidence": 0.5, 
+          "body ID": -1, 
+          "location": [
+            64, 
+            231, 
+            206
+          ]
+        }, 
+        {
+          "confidence": 0.5, 
+          "body ID": -1, 
+          "location": [
+            63, 
+            251, 
+            206
+          ]
+        }, 
+        {
+          "confidence": 0.5, 
+          "body ID": -1, 
+          "location": [
+            64, 
+            225, 
+            184
+          ]
+        }, 
+        {
+          "confidence": 0.5, 
+          "body ID": -1, 
+          "location": [
+            70, 
+            237, 
+            214
+          ]
+        }, 
+        {
+          "confidence": 0.5, 
+          "body ID": -1, 
+          "location": [
+            100, 
+            232, 
+            214
+          ]
+        }, 
+        {
+          "confidence": 0.5, 
+          "body ID": -1, 
+          "location": [
+            98, 
+            210, 
+            214
+          ]
+        }, 
+        {
+          "confidence": 0.5, 
+          "body ID": -1, 
+          "location": [
+            83, 
+            235, 
+            218
+          ]
+        }
+      ]
+    }, 
+    {
+      "T-bar": {
+        "status": "final", 
+        "confidence": 1.0, 
+        "body ID": -1, 
+        "location": [
+          453, 
+          316, 
+          204
+        ]
+      }, 
+      "partners": [
+        {
+          "confidence": 0.5, 
+          "body ID": -1, 
+          "location": [
+            474, 
+            316, 
+            204
+          ]
+        }, 
+        {
+          "confidence": 0.5, 
+          "body ID": -1, 
+          "location": [
+            465, 
+            332, 
+            204
+          ]
+        }, 
+        {
+          "confidence": 0.5, 
+          "body ID": -1, 
+          "location": [
+            445, 
+            336, 
+            204
+          ]
+        }, 
+        {
+          "confidence": 0.5, 
+          "body ID": -1, 
+          "location": [
+            454, 
+            326, 
+            198
+          ]
+        }, 
+        {
+          "confidence": 0.5, 
+          "body ID": -1, 
+          "location": [
+            436, 
+            330, 
+            198
+          ]
+        }, 
+        {
+          "confidence": 0.5, 
+          "body ID": -1, 
+          "location": [
+            427, 
+            315, 
+            198
+          ]
+        }, 
+        {
+          "confidence": 0.5, 
+          "body ID": -1, 
+          "location": [
+            447, 
+            338, 
+            212
+          ]
+        }, 
+        {
+          "confidence": 0.5, 
+          "body ID": -1, 
+          "location": [
+            476, 
+            315, 
+            212
+          ]
+        }, 
+        {
+          "confidence": 0.5, 
+          "body ID": -1, 
+          "location": [
+            432, 
+            334, 
+            214
+          ]
+        }
+      ]
+    }, 
+    {
+      "T-bar": {
+        "status": "final", 
+        "multi": "multi", 
+        "confidence": 1.0, 
+        "body ID": -1, 
+        "location": [
+          143, 
+          267, 
+          208
+        ]
+      }, 
+      "partners": [
+        {
+          "confidence": 0.5, 
+          "body ID": -1, 
+          "location": [
+            168, 
+            268, 
+            208
+          ]
+        }, 
+        {
+          "confidence": 0.5, 
+          "body ID": -1, 
+          "location": [
+            169, 
+            287, 
+            208
+          ]
+        }, 
+        {
+          "confidence": 0.5, 
+          "body ID": -1, 
+          "location": [
+            164, 
+            317, 
+            208
+          ]
+        }, 
+        {
+          "confidence": 0.5, 
+          "body ID": -1, 
+          "location": [
+            147, 
+            334, 
+            208
+          ]
+        }, 
+        {
+          "confidence": 0.5, 
+          "body ID": -1, 
+          "location": [
+            142, 
+            287, 
+            219
+          ]
+        }, 
+        {
+          "confidence": 0.5, 
+          "body ID": -1, 
+          "location": [
+            144, 
+            248, 
+            219
+          ]
+        }, 
+        {
+          "confidence": 0.5, 
+          "body ID": -1, 
+          "location": [
+            127, 
+            254, 
+            219
+          ]
+        }
+      ]
+    }, 
+    {
+      "T-bar": {
+        "status": "final", 
+        "confidence": 1.0, 
+        "body ID": -1, 
+        "location": [
+          262, 
+          58, 
+          210
+        ]
+      }, 
+      "partners": [
+        {
+          "confidence": 0.5, 
+          "body ID": -1, 
+          "location": [
+            275, 
+            44, 
+            210
+          ]
+        }, 
+        {
+          "confidence": 0.5, 
+          "body ID": -1, 
+          "location": [
+            278, 
+            58, 
+            210
+          ]
+        }, 
+        {
+          "confidence": 0.5, 
+          "body ID": -1, 
+          "location": [
+            276, 
+            75, 
+            210
+          ]
+        }, 
+        {
+          "confidence": 0.5, 
+          "body ID": -1, 
+          "location": [
+            268, 
+            36, 
+            207
+          ]
+        }, 
+        {
+          "confidence": 0.5, 
+          "body ID": -1, 
+          "location": [
+            255, 
+            40, 
+            220
+          ]
+        }, 
+        {
+          "confidence": 0.5, 
+          "body ID": -1, 
+          "location": [
+            262, 
+            80, 
+            220
+          ]
+        }, 
+        {
+          "confidence": 0.5, 
+          "body ID": -1, 
+          "location": [
+            261, 
+            66, 
+            221
+          ]
+        }
+      ]
+    }, 
+    {
+      "T-bar": {
+        "status": "final", 
+        "multi": "multi", 
+        "confidence": 1.0, 
+        "body ID": -1, 
+        "location": [
+          81, 
+          283, 
+          212
+        ]
+      }, 
+      "partners": [
+        {
+          "confidence": 0.5, 
+          "body ID": -1, 
+          "location": [
+            67, 
+            299, 
+            212
+          ]
+        }, 
+        {
+          "confidence": 0.5, 
+          "body ID": -1, 
+          "location": [
+            60, 
+            282, 
+            212
+          ]
+        }, 
+        {
+          "confidence": 0.5, 
+          "body ID": -1, 
+          "location": [
+            66, 
+            267, 
+            212
+          ]
+        }, 
+        {
+          "confidence": 0.5, 
+          "body ID": -1, 
+          "location": [
+            63, 
+            297, 
+            199
+          ]
+        }
+      ]
+    }, 
+    {
+      "T-bar": {
+        "status": "final", 
+        "multi": "multi", 
+        "confidence": 1.0, 
+        "body ID": -1, 
+        "location": [
+          70, 
+          50, 
+          217
+        ]
+      }, 
+      "partners": [
+        {
+          "confidence": 0.5, 
+          "body ID": -1, 
+          "location": [
+            61, 
+            71, 
+            217
+          ]
+        }, 
+        {
+          "confidence": 0.5, 
+          "body ID": -1, 
+          "location": [
+            55, 
+            52, 
+            211
+          ]
+        }, 
+        {
+          "confidence": 0.5, 
+          "body ID": -1, 
+          "location": [
+            48, 
+            51, 
+            218
+          ]
+        }, 
+        {
+          "confidence": 0.5, 
+          "body ID": -1, 
+          "location": [
+            58, 
+            60, 
+            226
+          ]
+        }, 
+        {
+          "confidence": 0.5, 
+          "body ID": -1, 
+          "location": [
+            72, 
+            75, 
+            226
+          ]
+        }, 
+        {
+          "confidence": 0.5, 
+          "body ID": -1, 
+          "location": [
+            49, 
+            33, 
+            202
+          ]
+        }
+      ]
+    }, 
+    {
+      "T-bar": {
+        "status": "final", 
+        "confidence": 1.0, 
+        "body ID": -1, 
+        "location": [
+          131, 
+          214, 
+          219
+        ]
+      }, 
+      "partners": [
+        {
+          "confidence": 0.5, 
+          "body ID": -1, 
+          "location": [
+            135, 
+            204, 
+            220
+          ]
+        }, 
+        {
+          "confidence": 0.5, 
+          "body ID": -1, 
+          "location": [
+            125, 
+            202, 
+            220
+          ]
+        }, 
+        {
+          "confidence": 0.5, 
+          "body ID": -1, 
+          "location": [
+            117, 
+            219, 
+            220
+          ]
+        }, 
+        {
+          "confidence": 0.5, 
+          "body ID": -1, 
+          "location": [
+            126, 
+            234, 
+            220
+          ]
+        }, 
+        {
+          "confidence": 0.5, 
+          "body ID": -1, 
+          "location": [
+            129, 
+            215, 
+            214
+          ]
+        }, 
+        {
+          "confidence": 0.5, 
+          "body ID": -1, 
+          "location": [
+            125, 
+            218, 
+            229
+          ]
+        }
+      ]
+    }, 
+    {
+      "T-bar": {
+        "status": "final", 
+        "multi": "multi", 
+        "confidence": 1.0, 
+        "body ID": -1, 
+        "location": [
+          107, 
+          269, 
+          221
+        ]
+      }, 
+      "partners": [
+        {
+          "confidence": 0.5, 
+          "body ID": -1, 
+          "location": [
+            118, 
+            256, 
+            221
+          ]
+        }, 
+        {
+          "confidence": 0.5, 
+          "body ID": -1, 
+          "location": [
+            96, 
+            250, 
+            221
+          ]
+        }, 
+        {
+          "confidence": 0.5, 
+          "body ID": -1, 
+          "location": [
+            83, 
+            256, 
+            221
+          ]
+        }, 
+        {
+          "confidence": 0.5, 
+          "body ID": -1, 
+          "location": [
+            122, 
+            278, 
+            227
+          ]
+        }, 
+        {
+          "confidence": 0.5, 
+          "body ID": -1, 
+          "location": [
+            107, 
+            278, 
+            227
+          ]
+        }
+      ]
+    }, 
+    {
+      "T-bar": {
+        "status": "final", 
+        "multi": "multi", 
+        "confidence": 1.0, 
+        "body ID": -1, 
+        "location": [
+          101, 
+          306, 
+          225
+        ]
+      }, 
+      "partners": [
+        {
+          "confidence": 0.5, 
+          "body ID": -1, 
+          "location": [
+            90, 
+            308, 
+            233
+          ]
+        }, 
+        {
+          "confidence": 0.5, 
+          "body ID": -1, 
+          "location": [
+            97, 
+            294, 
+            233
+          ]
+        }, 
+        {
+          "confidence": 0.5, 
+          "body ID": -1, 
+          "location": [
+            112, 
+            291, 
+            233
+          ]
+        }, 
+        {
+          "confidence": 0.5, 
+          "body ID": -1, 
+          "location": [
+            115, 
+            310, 
+            233
+          ]
+        }, 
+        {
+          "confidence": 0.5, 
+          "body ID": -1, 
+          "location": [
+            105, 
+            323, 
+            233
+          ]
+        }, 
+        {
+          "confidence": 0.5, 
+          "body ID": -1, 
+          "location": [
+            91, 
+            325, 
+            228
+          ]
+        }, 
+        {
+          "confidence": 0.5, 
+          "body ID": -1, 
+          "location": [
+            113, 
+            343, 
+            221
+          ]
+        }
+      ]
+    }, 
+    {
+      "T-bar": {
+        "status": "final", 
+        "confidence": 1.0, 
+        "body ID": -1, 
+        "location": [
+          379, 
+          14, 
+          226
+        ]
+      }, 
+      "partners": [
+        {
+          "confidence": 0.5, 
+          "body ID": -1, 
+          "location": [
+            355, 
+            19, 
+            226
+          ]
+        }, 
+        {
+          "confidence": 0.5, 
+          "body ID": -1, 
+          "location": [
+            354, 
+            8, 
+            226
+          ]
+        }, 
+        {
+          "confidence": 0.5, 
+          "body ID": -1, 
+          "location": [
+            365, 
+            3, 
+            226
+          ]
+        }, 
+        {
+          "confidence": 0.5, 
+          "body ID": -1, 
+          "location": [
+            375, 
+            1, 
+            221
+          ]
+        }, 
+        {
+          "confidence": 0.5, 
+          "body ID": -1, 
+          "location": [
+            358, 
+            29, 
+            223
+          ]
+        }, 
+        {
+          "confidence": 0.5, 
+          "body ID": -1, 
+          "location": [
+            390, 
+            1, 
+            228
+          ]
+        }, 
+        {
+          "confidence": 0.5, 
+          "body ID": -1, 
+          "location": [
+            363, 
+            6, 
+            231
+          ]
+        }
+      ]
+    }, 
+    {
+      "T-bar": {
+        "status": "final", 
+        "confidence": 1.0, 
+        "body ID": -1, 
+        "location": [
+          382, 
+          323, 
+          227
+        ]
+      }, 
+      "partners": [
+        {
+          "confidence": 0.5, 
+          "body ID": -1, 
+          "location": [
+            370, 
+            334, 
+            227
+          ]
+        }, 
+        {
+          "confidence": 0.5, 
+          "body ID": -1, 
+          "location": [
+            394, 
+            335, 
+            227
+          ]
+        }, 
+        {
+          "confidence": 0.5, 
+          "body ID": -1, 
+          "location": [
+            406, 
+            321, 
+            227
+          ]
+        }, 
+        {
+          "confidence": 0.5, 
+          "body ID": -1, 
+          "location": [
+            388, 
+            338, 
+            218
+          ]
+        }, 
+        {
+          "confidence": 0.5, 
+          "body ID": -1, 
+          "location": [
+            381, 
+            339, 
+            210
+          ]
+        }, 
+        {
+          "confidence": 0.5, 
+          "body ID": -1, 
+          "location": [
+            395, 
+            329, 
+            210
+          ]
+        }, 
+        {
+          "confidence": 0.5, 
+          "body ID": -1, 
+          "location": [
+            368, 
+            331, 
+            204
+          ]
+        }
+      ]
+    }, 
+    {
+      "T-bar": {
+        "status": "final", 
+        "confidence": 1.0, 
+        "body ID": -1, 
+        "location": [
+          310, 
+          285, 
+          233
+        ]
+      }, 
+      "partners": [
+        {
+          "confidence": 0.5, 
+          "body ID": -1, 
+          "location": [
+            291, 
+            283, 
+            228
+          ]
+        }, 
+        {
+          "confidence": 0.5, 
+          "body ID": -1, 
+          "location": [
+            294, 
+            301, 
+            228
+          ]
+        }, 
+        {
+          "confidence": 0.5, 
+          "body ID": -1, 
+          "location": [
+            306, 
+            309, 
+            228
+          ]
+        }, 
+        {
+          "confidence": 0.5, 
+          "body ID": -1, 
+          "location": [
+            323, 
+            312, 
+            228
+          ]
+        }, 
+        {
+          "confidence": 0.5, 
+          "body ID": -1, 
+          "location": [
+            286, 
+            289, 
+            238
+          ]
+        }
+      ]
+    }, 
+    {
+      "T-bar": {
+        "status": "final", 
+        "confidence": 1.0, 
+        "body ID": -1, 
+        "location": [
+          303, 
+          83, 
+          235
+        ]
+      }, 
+      "partners": [
+        {
+          "confidence": 0.5, 
+          "body ID": -1, 
+          "location": [
+            290, 
+            100, 
+            244
+          ]
+        }, 
+        {
+          "confidence": 0.5, 
+          "body ID": -1, 
+          "location": [
+            287, 
+            77, 
+            244
+          ]
+        }, 
+        {
+          "confidence": 0.5, 
+          "body ID": -1, 
+          "location": [
+            292, 
+            61, 
+            244
+          ]
+        }, 
+        {
+          "confidence": 0.5, 
+          "body ID": -1, 
+          "location": [
+            284, 
+            92, 
+            236
+          ]
+        }, 
+        {
+          "confidence": 0.5, 
+          "body ID": -1, 
+          "location": [
+            294, 
+            65, 
+            230
+          ]
+        }, 
+        {
+          "confidence": 0.5, 
+          "body ID": -1, 
+          "location": [
+            307, 
+            53, 
+            234
+          ]
+        }, 
+        {
+          "confidence": 0.5, 
+          "body ID": -1, 
+          "location": [
+            314, 
+            66, 
+            225
+          ]
+        }, 
+        {
+          "confidence": 0.5, 
+          "body ID": -1, 
+          "location": [
+            290, 
+            79, 
+            222
+          ]
+        }, 
+        {
+          "confidence": 0.5, 
+          "body ID": -1, 
+          "location": [
+            294, 
+            103, 
+            222
+          ]
+        }, 
+        {
+          "confidence": 0.5, 
+          "body ID": -1, 
+          "location": [
+            314, 
+            66, 
+            222
+          ]
+        }
+      ]
+    }, 
+    {
+      "T-bar": {
+        "status": "final", 
+        "confidence": 1.0, 
+        "body ID": -1, 
+        "location": [
+          293, 
+          164, 
+          236
+        ]
+      }, 
+      "partners": [
+        {
+          "confidence": 0.5, 
+          "body ID": -1, 
+          "location": [
+            284, 
+            194, 
+            236
+          ]
+        }, 
+        {
+          "confidence": 0.5, 
+          "body ID": -1, 
+          "location": [
+            271, 
+            172, 
+            236
+          ]
+        }, 
+        {
+          "confidence": 0.5, 
+          "body ID": -1, 
+          "location": [
+            278, 
+            152, 
+            236
+          ]
+        }, 
+        {
+          "confidence": 0.5, 
+          "body ID": -1, 
+          "location": [
+            280, 
+            177, 
+            245
+          ]
+        }, 
+        {
+          "confidence": 0.5, 
+          "body ID": -1, 
+          "location": [
+            287, 
+            153, 
+            245
+          ]
+        }, 
+        {
+          "confidence": 0.5, 
+          "body ID": -1, 
+          "location": [
+            290, 
+            197, 
+            254
+          ]
+        }
+      ]
+    }
+  ], 
+  "metadata": {
+    "username": "changl", 
+    "software version": "1.6.5", 
+    "description": "synapse annotations", 
+    "file version": 1, 
+    "software revision": "4080", 
+    "computer": "emrecon11.janelia.priv", 
+    "date": "30-November-2012 15:50", 
+    "session path": "/groups/flyem/data/medulla-FIB-Z1211-25-production/align2/substacks/00044_3008-3507_2259-2758_1500-1999/psd-530-sessions/changl.530", 
+    "software": "Raveler"
+  }
+}

@@ -1,1 +1,0 @@
-/Users/zhaot/Work/neutube/neurolabi/gui/cmake_build/CMakeFiles/neutube.dir

@@ -1,0 +1,5 @@
+#!/bin/bash
+
+neutube_dir=${PWD%neurolabi/*} #pattern substitution
+cd $neutube_dir/neurolabi
+./update_library_64 "--disable-fftw --disable-fftwf --disable-xml --disable-z --disable-png --disable-jansson"

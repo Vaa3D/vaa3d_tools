@@ -1,1 +1,0 @@
-/Users/zhaot/Work/neutube/neurolabi/c/lib/libneurolabi_debug.a

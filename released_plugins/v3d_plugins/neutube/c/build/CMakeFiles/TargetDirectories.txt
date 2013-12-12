@@ -1,1 +1,0 @@
-/Users/zhaot/Work/neutube/neurolabi/c/build/CMakeFiles/neurolabi_debug.dir
