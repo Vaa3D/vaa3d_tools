@@ -108,7 +108,7 @@ controlPanel::controlPanel(V3DPluginCallback2 &_v3d, QWidget *parent) :
     pGridLayout->addWidget(new QLabel(QObject::tr("choose fps:")),2,1);
     pGridLayout->addWidget(m_pLineEdit_fps,2,2);
 
-    pGridLayout->addWidget(new QLabel(QObject::tr("File name format:")),3,1);
+    pGridLayout->addWidget(new QLabel(QObject::tr("file name format:")),3,1);
     pGridLayout->addWidget(m_pLineEdit_filename,3,2);
     pGridLayout->addWidget(pPushButton_openFileDlg_output,1,3);
     pGridLayout->addWidget(check_compress, 4,1);
@@ -130,14 +130,18 @@ void controlPanel::_slot_start()
 {
           QString pfs = m_pLineEdit_fps->text();
           QString selectedFile = m_pLineEdit_filepath->text();
-
+          QString filename = m_pLineEdit_filename->text();
+          int indexL = filename.indexOf("[");
+          QString filenameL =  filename.left(indexL);
+          int indexR = filename.indexOf("]");
+          QString filenameR =  filename.right(filename.size()-indexR-1);
           QString lociDir = getAppPath().append("/mac_ffmpeg");
           QString compress;
           if (check_compress->isChecked())
               compress = "-vcodec rawvideo";
           else
               compress = "-vcodec mjpeg -qscale 0";
-          QString cmd_ffmpeg = QString("%1 -r %2 -i \'%3/a%d.BMP\' -y %4 \'%5/movie.avi\'").arg(lociDir.toStdString().c_str()).arg(pfs.toStdString().c_str()).arg(selectedFile.toStdString().c_str()).arg(compress.toStdString().c_str()).arg(selectedFile.toStdString().c_str());
+          QString cmd_ffmpeg = QString("%1 -r %2 -i \'%3/%4%d%5\' -y %6 \'%7/movie.avi\'").arg(lociDir.toStdString().c_str()).arg(pfs.toStdString().c_str()).arg(selectedFile.toStdString().c_str()).arg(filenameL.toStdString().c_str()).arg(filenameR.toStdString().c_str()).arg(compress.toStdString().c_str()).arg(selectedFile.toStdString().c_str());
           system(qPrintable(cmd_ffmpeg));
           //-vcodec mjpeg -qscale 0
           QString movieDir = selectedFile.append("/movie.avi");
