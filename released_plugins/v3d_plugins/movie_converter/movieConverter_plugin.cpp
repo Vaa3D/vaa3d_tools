@@ -13,19 +13,20 @@ controlPanel* controlPanel::m_pLookPanel = 0;
 QStringList MovieConverter::menulist() const
 {
 	return QStringList() 
-                        << tr("convert a movie format using ffmpeg")
+                        << tr("convert a series of movie frames to a single movie file")
                         <<tr("about");
 }
 
 QStringList MovieConverter::funclist() const
 {
 	return QStringList()
-		<<tr("help");
+            <<tr("convert_frames_to_movie")
+        <<tr("help");
 }
 
 void MovieConverter::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
 {
-    if (menu_name == tr("convert a movie format using ffmpeg"))
+    if (menu_name == tr("convert a series of movie frames to a single movie file"))
 	{
         if (controlPanel::m_pLookPanel)
         {
@@ -52,7 +53,11 @@ bool MovieConverter::dofunc(const QString & func_name, const V3DPluginArgList & 
 	if(input.size() >= 2) inparas = *((vector<char*> *)input.at(1).p);
 	if(output.size() >= 1) outfiles = *((vector<char*> *)output.at(0).p);
 
-	if (func_name == tr("help"))
+    if (func_name == tr("convert_frames_to_movie"))
+    {
+        v3d_msg("To be implemented SOON."); //this should be added SOON!!!. by PHC
+    }
+    else if (func_name == tr("help"))
 	{
 		v3d_msg("To be implemented.");
 	}
@@ -63,7 +68,6 @@ bool MovieConverter::dofunc(const QString & func_name, const V3DPluginArgList & 
 
 QString getAppPath()
 {
-    QString v3dAppPath("~/Work/v3d_external/v3d");
     QDir testPluginsDir = QDir(qApp->applicationDirPath());
 
 #if defined(Q_OS_WIN)
@@ -83,8 +87,7 @@ QString getAppPath()
     }
 #endif
 
-    v3dAppPath = testPluginsDir.absolutePath();
-    return v3dAppPath;
+    return testPluginsDir.absolutePath();
 }
 
 
@@ -114,18 +117,18 @@ controlPanel::controlPanel(V3DPluginCallback2 &_v3d, QWidget *parent) :
 
 
     QGridLayout *pGridLayout = new QGridLayout();
-    pGridLayout->addWidget(new QLabel(QObject::tr("choose ffmpeg dir:")),1,1);
+    pGridLayout->addWidget(new QLabel(QObject::tr("Movie converter (ffmpeg) path:")),1,1);
     pGridLayout->addWidget(m_pLineEdit_ffmpegpath,1,2);
     pGridLayout->addWidget(pPushButton_openFileDlg_ffmpeg,1,3);
 
-    pGridLayout->addWidget(new QLabel(QObject::tr("choose input frames dir:")),2,1);
+    pGridLayout->addWidget(new QLabel(QObject::tr("Input movie-frame folder:")),2,1);
     pGridLayout->addWidget(m_pLineEdit_filepath,2,2);
     pGridLayout->addWidget(pPushButton_openFileDlg_output,2,3);
-    pGridLayout->addWidget(new QLabel(QObject::tr("file name format:")),3,1);
+    pGridLayout->addWidget(new QLabel(QObject::tr("Input movie-frame file-naming format:")),3,1);
     pGridLayout->addWidget(m_pLineEdit_filename,3,2);
 
 
-    pGridLayout->addWidget(new QLabel(QObject::tr("choose output video fps:")),4,1);
+    pGridLayout->addWidget(new QLabel(QObject::tr("Output video fps:")),4,1);
     pGridLayout->addWidget(m_pLineEdit_fps,4,2);
 
     pGridLayout->addWidget(label_type, 5,1);
@@ -137,7 +140,7 @@ controlPanel::controlPanel(V3DPluginCallback2 &_v3d, QWidget *parent) :
 
 
     setLayout(pGridLayout);
-    setWindowTitle(QString("Movie Converter"));
+    setWindowTitle(QString("Convert movie frames to a single movie file"));
 
     connect(pPushButton_start, SIGNAL(clicked()), this, SLOT(_slot_start()));
     connect(pPushButton_close, SIGNAL(clicked()), this, SLOT(_slot_close()));
@@ -160,7 +163,7 @@ void controlPanel::_slot_close()
 }
 void controlPanel::_slot_start()
 {
-          QString selectffmpeg = m_pLineEdit_ffmpegpath->text().append("/mac_ffmpeg");
+          QString selectffmpeg = m_pLineEdit_ffmpegpath->text().append("/mac_ffmpeg"); // need change! m_pLineEdit_ffmpegpath here should be full path already. noted by PHC.
           if (!QFile(selectffmpeg).exists())
           {
              v3d_msg("Can not find ffmpeg, please select again or download from http://www.ffmpeg.org");
