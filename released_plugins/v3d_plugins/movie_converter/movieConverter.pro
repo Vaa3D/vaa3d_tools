@@ -10,5 +10,5 @@ HEADERS	+= movieConverter_plugin.h
 SOURCES	+= movieConverter_plugin.cpp
 SOURCES	+= $$V3DMAINPATH/basic_c_fun/v3d_message.cpp
 
-TARGET	= $$qtLibraryTarget(Movie)
+TARGET	= $$qtLibraryTarget(movie_format_convert)
 DESTDIR	= ../../../bin/plugins/movies/Movie_Converter

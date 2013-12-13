@@ -10,7 +10,7 @@
 #include <iostream>
 
 using namespace std;
-Q_EXPORT_PLUGIN2(Movie, MovieConverter);
+Q_EXPORT_PLUGIN2(movie_format_convert, MovieConverter);
 controlPanel* controlPanel::m_pLookPanel = 0;
 QStringList MovieConverter::menulist() const
 {
