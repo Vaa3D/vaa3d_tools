@@ -54,7 +54,8 @@ QStringList open_fiji::funclist() const
 
 void open_fiji::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
 {
-    if (menu_name == tr("Import and save as v3draw"))
+    printf(menu_name.toStdString().c_str());
+    if (menu_name == tr("Import using Fiji and save as .v3draw"))
     {
 
         // input image file
@@ -158,7 +159,7 @@ void open_fiji::domenu(const QString &menu_name, V3DPluginCallback2 &callback, Q
         callback.updateImageWindow(newwin);
 
     }
-    else if (menu_name == tr("Convert .v3d to .avi"))
+    else if (menu_name == tr("Convert .v3draw to .avi"))
 	{
 
         // input image file
