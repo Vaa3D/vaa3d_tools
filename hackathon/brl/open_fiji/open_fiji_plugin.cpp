@@ -40,8 +40,8 @@ Q_EXPORT_PLUGIN2(open_fiji, open_fiji);
 QStringList open_fiji::menulist() const
 {
 	return QStringList() 
-        <<tr("Import and save as v3draw")
-        <<tr("Save as .avi")
+        <<tr("Import using Fiji and save as .v3draw")
+        <<tr("Convert .v3draw to .avi")
         <<tr("About");
 }
 
@@ -106,28 +106,31 @@ void open_fiji::domenu(const QString &menu_name, V3DPluginCallback2 &callback, Q
              }
         }
 */
+        QDir AppDir = QDir(qApp->applicationDirPath());
+        AppDir.cdUp();
+        AppDir.cdUp();
+        AppDir.cdUp();
+        QString appdirstring = AppDir.absolutePath();  // need to go 3 dir up from the app path to get to v3d_external/bin
+        v3d_msg(appdirstring);
+
    //     QString cmd_loci = QString("java -cp %1 loci.formats.tools.ImageConverter \"%2\" \"%3\"").arg(lociDir.toStdString().c_str()).arg(m_FileName.toStdString().c_str()).arg(tmpfile.toStdString().c_str());
-QString cmd_Fiji = QString("/Users/brl/vaa3d_related/v3d_external/bin/Fiji.app/Contents/MacOS/ImageJ-macosx  --headless -batch  ~/Documents/AIBS/AIBS_Group_Dev/fakeJS00.js %1:%2").arg(m_FileName.toStdString().c_str()).arg(tmpfile.toStdString().c_str());
+        QString cmd_Fiji = QString("%1/Fiji.app/Contents/MacOS/ImageJ-macosx  --headless -batch  %1/brl_FijiConvert.js %2:%3").arg(appdirstring.toStdString().c_str()).arg(m_FileName.toStdString().c_str()).arg(tmpfile.toStdString().c_str());
         system(qPrintable(cmd_Fiji));
 
         if (!tmpqfile.exists()) v3d_msg("The format is not supported, or something is wrong in your file\n");
 
         // load
-        V3DLONG *sz_relative = 0;
+        V3DLONG sz_relative[4];
         int datatype_relative = 0;
         unsigned char* relative1d = 0;
-        Image4DSimple *p4DImage1 =callback.loadImage("/Users/brl/dump/ex_Repo_hb9_eve.v3draw");
 
-      // Image4DSimple *p4DImage1 =callback.loadImage((char *)qPrintable(tmpfile));
-       printf("doublecheck \n");
-       printf(tmpfile.toStdString().c_str());
-/*        if (simple_loadimage_wrapper(callback, const_cast<char *>(tmpfile.toStdString().c_str()), relative1d, sz_relative, datatype_relative)!=true)
+        if (simple_loadimage_wrapper(callback, const_cast<char *>(tmpfile.toStdString().c_str()), relative1d, sz_relative, datatype_relative)!=true)
         {
              fprintf (stderr, "Error happens in reading the subject file [%s]. Exit. \n",tmpfile.toStdString().c_str());
              //return;
         }
 
-        */
+
         // visualize
         Image4DSimple p4DImage;
 
@@ -155,10 +158,48 @@ QString cmd_Fiji = QString("/Users/brl/vaa3d_related/v3d_external/bin/Fiji.app/C
         callback.updateImageWindow(newwin);
 
     }
-    else if (menu_name == tr("Save as .avi"))
+    else if (menu_name == tr("Convert .v3d to .avi"))
 	{
-		v3d_msg("To be implemented.");
-	}
+
+        // input image file
+        QString m_FileName = QFileDialog::getOpenFileName(parent, QObject::tr("Open An Image"),
+                                                          QDir::currentPath(),
+                                                          QObject::tr("Image File (*.*)"));
+
+
+        if(m_FileName.isEmpty())
+        {
+             printf("\nError: Your image does not exist!\n");
+             return;
+        }
+// target directory for v3draw file
+        QFileDialog d;
+         d.setWindowTitle(tr("Select Save Directory:"));
+         d.setFileMode(QFileDialog::Directory);
+        d.exec();
+
+              QString m_SaveDir=(d.selectedFiles())[0];
+
+
+          printf("filename [%s]\n",m_FileName.toStdString().c_str());
+          printf("save target [%s]\n",m_SaveDir.toStdString().c_str());
+
+        // temp
+        QString baseName = QFileInfo(m_FileName).baseName();
+        QString tmpfile = m_SaveDir.append("/").append(baseName).append(".avi");
+
+
+        QFile tmpqfile(tmpfile);
+
+
+        QDir AppDir = QDir(qApp->applicationDirPath());
+        AppDir.cdUp();
+        AppDir.cdUp();
+        AppDir.cdUp();
+        QString appdirstring = AppDir.absolutePath();  // need to go 3 dir up from the app path to get to v3d_external/bin
+
+        QString cmd_Fiji = QString("%1/Fiji.app/Contents/MacOS/ImageJ-macosx  --headless -batch  %1/brl_FijiConvert.js %2:%3").arg(appdirstring.toStdString().c_str()).arg(m_FileName.toStdString().c_str()).arg(tmpfile.toStdString().c_str());
+        system(qPrintable(cmd_Fiji));	}
 	else
 	{
 		v3d_msg(tr("Uses Fiji to save v3draw file and open. "
@@ -173,18 +214,19 @@ bool open_fiji::dofunc(const QString & func_name, const V3DPluginArgList & input
 	if(input.size() >= 2) inparas = *((vector<char*> *)input.at(1).p);
 	if(output.size() >= 1) outfiles = *((vector<char*> *)output.at(0).p);
 
-	if (func_name == tr("func1"))
+    if (func_name == tr("openfiji"))
 	{
-		v3d_msg("To be implemented.");
-	}
-	else if (func_name == tr("func2"))
+        cout<<"to be implemented... "<<endl;
+    }
+    else if (func_name == tr("v3draw2avi"))
 	{
-		v3d_msg("To be implemented.");
-	}
+        cout<<"to be implemented..."<<endl;
+    }
 	else if (func_name == tr("help"))
 	{
-		v3d_msg("To be implemented.");
-	}
+        cout<<"Usage: "<<endl;
+        cout<<"Usage : v3d -x open_fiji -f v3draw2avi -i <inimg_file> -o <outimg_file> -p "<<endl;
+    }
 	else return false;
 
 	return true;
