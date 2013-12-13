@@ -10,7 +10,7 @@ QMAKE=$1
 QMAKE_SPEC=$2
 
 cd neurolabi
-./update_library --release --disable-png
+#./update_library --release --disable-png
 if [ ! -d build ]
 then
   mkdir build
