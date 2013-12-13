@@ -112,7 +112,6 @@ void open_fiji::domenu(const QString &menu_name, V3DPluginCallback2 &callback, Q
         AppDir.cdUp();
         AppDir.cdUp();
         QString appdirstring = AppDir.absolutePath();  // need to go 3 dir up from the app path to get to v3d_external/bin
-        v3d_msg(appdirstring);
 
    //     QString cmd_loci = QString("java -cp %1 loci.formats.tools.ImageConverter \"%2\" \"%3\"").arg(lociDir.toStdString().c_str()).arg(m_FileName.toStdString().c_str()).arg(tmpfile.toStdString().c_str());
         QString cmd_Fiji = QString("%1/Fiji.app/Contents/MacOS/ImageJ-macosx  --headless -batch  %1/brl_FijiConvert.js %2:%3").arg(appdirstring.toStdString().c_str()).arg(m_FileName.toStdString().c_str()).arg(tmpfile.toStdString().c_str());
