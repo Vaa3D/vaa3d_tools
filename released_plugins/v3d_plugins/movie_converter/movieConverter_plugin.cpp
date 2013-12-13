@@ -53,10 +53,10 @@ bool MovieConverter::dofunc(const QString & func_name, const V3DPluginArgList & 
     if (func_name == tr("convert_frames_to_movie"))
     {
         cout<<"Welcome to movie converter"<<endl;
-        if(input.size() != 1) return false;
 
         char * inimg_file = ((vector<char*> *)(input.at(0).p))->at(0);
-        char * ffmpeg_file = 0;
+        const char * ffmpeg_file = getAppPath().append("/mac_ffmpeg").toStdString().c_str();
+        QString check_ffmpeg;
         char * inimg_format = "file_[NUM].bmp";
         char * output_fps = "1";
         unsigned int output_Type = 1, c = 1;
@@ -65,9 +65,10 @@ bool MovieConverter::dofunc(const QString & func_name, const V3DPluginArgList & 
 
             vector<char*> paras = (*(vector<char*> *)(input.at(1).p));
             cout<<paras.size()<<endl;
-            if(paras.size() >= 1) ffmpeg_file = ((vector<char*> *)(input.at(1).p))->at(0);
-            if(paras.size() >= 2) inimg_format = ((vector<char*> *)(input.at(1).p))->at(1);
-            if(paras.size() >= 3) output_fps = ((vector<char*> *)(input.at(1).p))->at(2);
+            if(paras.size() >= 1) check_ffmpeg = paras[0];
+            if(check_ffmpeg != "NULL") ffmpeg_file = paras[0] ;
+            if(paras.size() >= 2) inimg_format = paras[1];// ((vector<char*> *)(input.at(1).p))->at(1);
+            if(paras.size() >= 3) output_fps = paras[2];// ((vector<char*> *)(input.at(1).p))->at(2);
             if(paras.size() >= 4) output_Type = atoi(paras.at(3));
             if(paras.size() >= 5) c = atoi(paras.at(4));
         }
@@ -143,11 +144,11 @@ bool MovieConverter::dofunc(const QString & func_name, const V3DPluginArgList & 
         printf("\n**** Usage of Movie Converter ****\n");
         printf("vaa3d -x plugin_name -f convert_frames_to_movie -i <inimg_folder> -p <converter_path> <frame_format> <output_fps> <video_type> <is_compress>\n");
         printf("inimg_folder     the video frame folder path \n");
-        printf("converter_path   the movie converter(ffmpeg) path. \n");
+        printf("converter_path   the movie converter(ffmpeg) path. If do not know, please set this para to NULL and the default path will be the vaa3d main path.\n");
         printf("frame_format     the format of video frames,e.g file_[NUM].bmp\n");
         printf("output_fps       the fps for the output video. Default 14\n");
         printf("video_type       the output video type (1 for avi, 2 for mpg, and 3 for mp4. Default 1.\n");
-        printf("is_compress      If compress the video (1 for yes and 0 for no. Default 1.\n");
+        printf("is_compress      if compress the video (1 for yes and 0 for no. Default 1.\n");
 
         return true;
 	}
