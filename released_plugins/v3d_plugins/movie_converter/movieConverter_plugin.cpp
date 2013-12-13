@@ -58,8 +58,9 @@ bool MovieConverter::dofunc(const QString & func_name, const V3DPluginArgList & 
         const char * ffmpeg_file = getAppPath().append("/mac_ffmpeg").toStdString().c_str();
         QString check_ffmpeg;
         char * inimg_format = "file_[NUM].bmp";
-        char * output_fps = "1";
-        unsigned int output_Type = 1, c = 1;
+        char * output_fps = "14";
+        char * output_Type = "avi";
+        unsigned int  c = 1;
         if (input.size()>=2)
         {
 
@@ -67,9 +68,9 @@ bool MovieConverter::dofunc(const QString & func_name, const V3DPluginArgList & 
             cout<<paras.size()<<endl;
             if(paras.size() >= 1) check_ffmpeg = paras[0];
             if(check_ffmpeg != "NULL") ffmpeg_file = paras[0] ;
-            if(paras.size() >= 2) inimg_format = paras[1];// ((vector<char*> *)(input.at(1).p))->at(1);
-            if(paras.size() >= 3) output_fps = paras[2];// ((vector<char*> *)(input.at(1).p))->at(2);
-            if(paras.size() >= 4) output_Type = atoi(paras.at(3));
+            if(paras.size() >= 2) inimg_format = paras[1];
+            if(paras.size() >= 3) output_fps = paras[2];
+            if(paras.size() >= 4) output_Type = paras.at(3);
             if(paras.size() >= 5) c = atoi(paras.at(4));
         }
 
@@ -84,6 +85,7 @@ bool MovieConverter::dofunc(const QString & func_name, const V3DPluginArgList & 
         QString selectffmpeg(ffmpeg_file);
         QString filename(inimg_format);
         QString fps(output_fps);
+        QString videoType(output_Type);
 
         if (!QFile(selectffmpeg).exists())
         {
@@ -96,28 +98,22 @@ bool MovieConverter::dofunc(const QString & func_name, const V3DPluginArgList & 
         int indexR = filename.indexOf("]");
         QString filenameR =  filename.right(filename.size()-indexR-1);
         QString compress;
-        QString videoType;
-        if(output_Type == 3)
+
+        if(videoType == "mp4")
         {
               compress = "-vcodec mpeg4 -acodec aac";
-              videoType = "mp4";
-
-        }
-        else if (output_Type == 2)
+         }
+        else if (videoType == "mpg")
         {
               compress = "-vcodec mpeg2video";
-              videoType = "mpg";
-
         }
-        else if (c == 1 && output_Type == 1)
+        else if (c == 1 &&  videoType == "avi")
         {
               compress = "-vcodec mjpeg -qscale 0";
-              videoType = "avi";
-        }
-        else if (c == 0 && output_Type == 1)
+         }
+        else if (c == 0 && videoType == "avi")
         {
               compress = "-vcodec rawvideo";
-              videoType = "avi";
         }
         else
         {
@@ -145,10 +141,10 @@ bool MovieConverter::dofunc(const QString & func_name, const V3DPluginArgList & 
         printf("vaa3d -x plugin_name -f convert_frames_to_movie -i <inimg_folder> -p <converter_path> <frame_format> <output_fps> <video_type> <is_compress>\n");
         printf("inimg_folder     the video frame folder path \n");
         printf("converter_path   the movie converter(ffmpeg) path. If do not know, please set this para to NULL and the default path will be the vaa3d main path.\n");
-        printf("frame_format     the format of video frames,e.g file_[NUM].bmp\n");
+        printf("frame_format     the format of video frames,e.g. for aaa_1.bmp, please set this para to be aaa_[NUM].bmp\n");
         printf("output_fps       the fps for the output video. Default 14\n");
-        printf("video_type       the output video type (1 for avi, 2 for mpg, and 3 for mp4. Default 1.\n");
-        printf("is_compress      if compress the video (1 for yes and 0 for no. Default 1.\n");
+        printf("video_type       the output video type (avi, mpg, or mp4). Default avi.\n");
+        printf("is_compress      if compress the video (1 for yes and 0 for no). Default 1.\n");
 
         return true;
 	}
@@ -213,9 +209,10 @@ controlPanel::controlPanel(V3DPluginCallback2 &_v3d, QWidget *parent) :
     pGridLayout->addWidget(new QLabel(QObject::tr("Input movie-frame folder:")),2,1);
     pGridLayout->addWidget(m_pLineEdit_filepath,2,2);
     pGridLayout->addWidget(pPushButton_openFileDlg_output,2,3);
-    pGridLayout->addWidget(new QLabel(QObject::tr("Input movie-frame file-naming format:")),3,1);
-    pGridLayout->addWidget(m_pLineEdit_filename,3,2);
 
+    pGridLayout->addWidget(new QLabel(QObject::tr("Input movie-frame file-naming format:\n"
+                                                   "(e.g.aaa_[NUM].bmp for aaa_1.bmp)")),3,1);
+    pGridLayout->addWidget(m_pLineEdit_filename,3,2);
 
     pGridLayout->addWidget(new QLabel(QObject::tr("Output video fps:")),4,1);
     pGridLayout->addWidget(m_pLineEdit_fps,4,2);
@@ -300,7 +297,6 @@ void controlPanel::_slot_start()
           system(qPrintable(cmd_ffmpeg));
           //-vcodec mjpeg -qscale 0
           QString movieDir = selectedFile.append(QString("/movie.%1").arg(videoType));
-          v3d_msg(movieDir);
           if (!QFile(movieDir).exists())
           {
              v3d_msg("The format is not supported, or can not find ffmpeg, please select again or download from http://www.ffmpeg.org\n");
