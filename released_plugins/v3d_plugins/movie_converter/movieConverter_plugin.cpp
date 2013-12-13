@@ -94,31 +94,55 @@ controlPanel::controlPanel(V3DPluginCallback2 &_v3d, QWidget *parent) :
     m_pLookPanel = this;
     m_lframeind = 0;
 
-    m_pLineEdit_fps = new QLineEdit(QObject::tr("30"));
+    m_pLineEdit_fps = new QLineEdit(QObject::tr("14"));
     m_pLineEdit_filepath = new QLineEdit();
     m_pLineEdit_filename = new QLineEdit(QObject::tr("file_[num].bmp"));
+    m_pLineEdit_ffmpegpath = new QLineEdit(getAppPath());
     QPushButton *pPushButton_start = new QPushButton(QObject::tr("convert"));
+    QPushButton *pPushButton_close = new QPushButton(QObject::tr("close"));
     QPushButton *pPushButton_openFileDlg_output = new QPushButton(QObject::tr("..."));
-    check_compress = new QCheckBox(); check_compress->setText(QObject::tr("Compress "));check_compress->setChecked(false);
+    QPushButton *pPushButton_openFileDlg_ffmpeg = new QPushButton(QObject::tr("..."));
+    check_compress = new QCheckBox(); check_compress->setText(QObject::tr("Compress "));check_compress->setChecked(true);
+
+    QStringList items;
+    items << "avi";
+    items << "mpg";
+    items << "mp4";
+    items << "h264";
+    combo_type = new QComboBox(); combo_type->addItems(items);
+    QLabel* label_type = new QLabel(QObject::tr("output video type: "));
 
 
     QGridLayout *pGridLayout = new QGridLayout();
-    pGridLayout->addWidget(new QLabel(QObject::tr("choose video frames dir:")),1,1);
-    pGridLayout->addWidget(m_pLineEdit_filepath,1,2);
-    pGridLayout->addWidget(new QLabel(QObject::tr("choose fps:")),2,1);
-    pGridLayout->addWidget(m_pLineEdit_fps,2,2);
+    pGridLayout->addWidget(new QLabel(QObject::tr("choose ffmpeg dir:")),1,1);
+    pGridLayout->addWidget(m_pLineEdit_ffmpegpath,1,2);
+    pGridLayout->addWidget(pPushButton_openFileDlg_ffmpeg,1,3);
 
+    pGridLayout->addWidget(new QLabel(QObject::tr("choose input frames dir:")),2,1);
+    pGridLayout->addWidget(m_pLineEdit_filepath,2,2);
+    pGridLayout->addWidget(pPushButton_openFileDlg_output,2,3);
     pGridLayout->addWidget(new QLabel(QObject::tr("file name format:")),3,1);
     pGridLayout->addWidget(m_pLineEdit_filename,3,2);
-    pGridLayout->addWidget(pPushButton_openFileDlg_output,1,3);
-    pGridLayout->addWidget(check_compress, 4,1);
-    pGridLayout->addWidget(pPushButton_start,4,2);
+
+
+    pGridLayout->addWidget(new QLabel(QObject::tr("choose output video fps:")),4,1);
+    pGridLayout->addWidget(m_pLineEdit_fps,4,2);
+
+    pGridLayout->addWidget(label_type, 5,1);
+    pGridLayout->addWidget(combo_type, 5,2);
+    pGridLayout->addWidget(check_compress, 5,3);
+
+    pGridLayout->addWidget(pPushButton_start,6,2);
+    pGridLayout->addWidget(pPushButton_close,6,3);
+
 
     setLayout(pGridLayout);
     setWindowTitle(QString("Movie Converter"));
 
     connect(pPushButton_start, SIGNAL(clicked()), this, SLOT(_slot_start()));
+    connect(pPushButton_close, SIGNAL(clicked()), this, SLOT(_slot_close()));
     connect(pPushButton_openFileDlg_output, SIGNAL(clicked()), this, SLOT(_slots_openFileDlg_output()));
+    connect(pPushButton_openFileDlg_ffmpeg, SIGNAL(clicked()), this, SLOT(_slots_openFileDlg_ffmpeg()));
 
 }
 controlPanel::~controlPanel()
@@ -126,25 +150,64 @@ controlPanel::~controlPanel()
     m_pLookPanel = 0;
 }
 
+void controlPanel::_slot_close()
+{
+    if (m_pLookPanel)
+    {
+        delete m_pLookPanel;
+        m_pLookPanel=0;
+    }
+}
 void controlPanel::_slot_start()
 {
+          QString selectffmpeg = m_pLineEdit_ffmpegpath->text().append("/mac_ffmpeg");
+          if (!QFile(selectffmpeg).exists())
+          {
+             v3d_msg("Can not find ffmpeg, please select again or download from http://www.ffmpeg.org");
+             return;
+          }
+
+          QString selectedFile = 0;
+          selectedFile = m_pLineEdit_filepath->text();
+          if(selectedFile == 0)
+          {
+             v3d_msg("Please select an input video frame folder");
+             return;
+          }
+
           QString pfs = m_pLineEdit_fps->text();
-          QString selectedFile = m_pLineEdit_filepath->text();
           QString filename = m_pLineEdit_filename->text();
           int indexL = filename.indexOf("[");
           QString filenameL =  filename.left(indexL);
           int indexR = filename.indexOf("]");
           QString filenameR =  filename.right(filename.size()-indexR-1);
-          QString lociDir = getAppPath().append("/mac_ffmpeg");
           QString compress;
-          if (check_compress->isChecked())
-              compress = "-vcodec rawvideo";
+
+          QString videoType = combo_type->itemText(combo_type->currentIndex());
+          if(videoType == "mp4")
+          {
+                compress = "-vcodec mpeg4 -acodec aac";
+          }
+          else if (videoType == "h264")
+          {
+                    v3d_msg("Please choose another video type at this time.");
+                    return;
+          }
+          else if (videoType == "mpg")
+          {
+                compress = "-vcodec mpeg2video";
+
+          }
+          else if (check_compress->isChecked() && videoType =="avi")
+          {
+                compress = "-vcodec mjpeg -qscale 0";
+          }
           else
-              compress = "-vcodec mjpeg -qscale 0";
-          QString cmd_ffmpeg = QString("%1 -r %2 -i \'%3/%4%d%5\' -y %6 \'%7/movie.avi\'").arg(lociDir.toStdString().c_str()).arg(pfs.toStdString().c_str()).arg(selectedFile.toStdString().c_str()).arg(filenameL.toStdString().c_str()).arg(filenameR.toStdString().c_str()).arg(compress.toStdString().c_str()).arg(selectedFile.toStdString().c_str());
+              compress = "-vcodec rawvideo";
+          QString cmd_ffmpeg = QString("%1 -r %2 -i \'%3/%4%d%5\' -y %6 \'%7/movie.%8\'").arg(selectffmpeg.toStdString().c_str()).arg(pfs.toStdString().c_str()).arg(selectedFile.toStdString().c_str()).arg(filenameL.toStdString().c_str()).arg(filenameR.toStdString().c_str()).arg(compress.toStdString().c_str()).arg(selectedFile.toStdString().c_str()).arg(videoType.toStdString().c_str());
           system(qPrintable(cmd_ffmpeg));
           //-vcodec mjpeg -qscale 0
-          QString movieDir = selectedFile.append("/movie.avi");
+          QString movieDir = selectedFile.append(videoType);
           if (!QFile(movieDir).exists())
           {
              v3d_msg("The format is not supported, or something is wrong in your file\n");
@@ -155,7 +218,6 @@ void controlPanel::_slot_start()
              v3d_msg(QString("The movie is saved in %1").arg(movieDir));
              return;
           }
-
 
 }
 
@@ -171,3 +233,14 @@ void controlPanel::_slots_openFileDlg_output()
     }
 }
 
+void controlPanel::_slots_openFileDlg_ffmpeg()
+{
+    QFileDialog d(this);
+    d.setWindowTitle(tr("Choose ffmpeg dir:"));
+    d.setFileMode(QFileDialog::Directory);
+    if(d.exec())
+    {
+        QString selectedFile=(d.selectedFiles())[0];
+        m_pLineEdit_ffmpegpath->setText(selectedFile);
+    }
+}

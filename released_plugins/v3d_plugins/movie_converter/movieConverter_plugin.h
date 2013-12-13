@@ -39,14 +39,17 @@ public:
     QLineEdit *m_pLineEdit_filepath;
     QLineEdit *m_pLineEdit_fps;
     QLineEdit *m_pLineEdit_filename;
+    QLineEdit *m_pLineEdit_ffmpegpath;
     V3DPluginCallback2 &m_v3d;
     static controlPanel*m_pLookPanel;
     QCheckBox* check_compress;
+    QComboBox* combo_type;
 
 private slots:
     void _slot_start();
+    void _slot_close();
     void _slots_openFileDlg_output();
-
+    void _slots_openFileDlg_ffmpeg();
 };
 
 #endif
