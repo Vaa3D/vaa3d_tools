@@ -198,11 +198,52 @@ controlPanel::controlPanel(V3DPluginCallback2 &_v3d, QWidget *parent) :
     items << "mp4";
    // items << "h264";
     combo_type = new QComboBox(); combo_type->addItems(items);
-    QLabel* label_type = new QLabel(QObject::tr("Output video type: "));
+    QLabel* label_type = new QLabel(QObject::tr("Video type:        "));
 
+
+    QGroupBox *converter_panel = new QGroupBox("Converter:");
+    converter_panel->setStyle(new QWindowsStyle());
+    QGridLayout *convertLayout = new QGridLayout();
+    convertLayout->addWidget(new QLabel(QObject::tr("Movie converter (ffmpeg) path:          ")),1,1);
+    convertLayout->addWidget(m_pLineEdit_ffmpegpath,2,1,1,2);
+    convertLayout->addWidget(pPushButton_openFileDlg_ffmpeg,2,3,1,1);
+    converter_panel->setLayout(convertLayout);
+
+    QGroupBox *input_panel = new QGroupBox("Input:");
+    input_panel->setStyle(new QWindowsStyle());
+    QGridLayout *inputLayout = new QGridLayout();
+    input_panel->setStyle(new QWindowsStyle());
+    inputLayout->addWidget(new QLabel(QObject::tr("Movie-frame folder:")),1,1);
+    inputLayout->addWidget(m_pLineEdit_filepath,2,1,1,2);
+    inputLayout->addWidget(pPushButton_openFileDlg_output,2,3,1,1);
+    inputLayout->addWidget(new QLabel(QObject::tr("Mvie-frame file-naming format:\n"
+                                                   "(e.g.aaa_[NUM].bmp for aaa_1.bmp)")),3,1,1,2);
+    inputLayout->addWidget(m_pLineEdit_filename,3,3);
+    input_panel->setLayout(inputLayout);
+
+    QGroupBox *output_panel = new QGroupBox("Output:");
+    output_panel->setStyle(new QWindowsStyle());
+    QGridLayout *outputLayout = new QGridLayout();
+    outputLayout->addWidget(new QLabel(QObject::tr("Video fps:")),4,1);
+    outputLayout->addWidget(m_pLineEdit_fps,4,2);
+    outputLayout->addWidget(label_type, 5,1);
+    outputLayout->addWidget(combo_type, 5,2);
+    outputLayout->addWidget(check_compress, 5,3);
+    output_panel->setLayout(outputLayout);
+
+    QWidget* container = new QWidget();
+    QGridLayout* bottomBar = new QGridLayout();
+    bottomBar->addWidget(pPushButton_start,1,1);
+    bottomBar->addWidget(pPushButton_close,1,2);
+    container->setLayout(bottomBar);
 
     QGridLayout *pGridLayout = new QGridLayout();
-    pGridLayout->addWidget(new QLabel(QObject::tr("Movie converter (ffmpeg) path:")),1,1);
+    pGridLayout->addWidget(converter_panel);
+    pGridLayout->addWidget(input_panel);
+    pGridLayout->addWidget(output_panel);
+    pGridLayout->addWidget(container);
+
+    /*pGridLayout->addWidget(new QLabel(QObject::tr("Movie converter (ffmpeg) path:")),1,1);
     pGridLayout->addWidget(m_pLineEdit_ffmpegpath,1,2);
     pGridLayout->addWidget(pPushButton_openFileDlg_ffmpeg,1,3);
 
@@ -221,8 +262,8 @@ controlPanel::controlPanel(V3DPluginCallback2 &_v3d, QWidget *parent) :
     pGridLayout->addWidget(combo_type, 5,2);
     pGridLayout->addWidget(check_compress, 5,3);
 
-    pGridLayout->addWidget(pPushButton_start,6,2);
-    pGridLayout->addWidget(pPushButton_close,6,3);
+    pGridLayout->addWidget(pPushButton_start,5,1);
+    pGridLayout->addWidget(pPushButton_close,5,2);*/
 
 
     setLayout(pGridLayout);
