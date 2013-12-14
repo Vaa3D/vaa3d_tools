@@ -2,6 +2,7 @@
  * This plugin can be used to generate a smooth movie by several points
  * 2013-11-21 : by Zhi Zhou
  * 2013-12-08: fix the multiple 3d viewers / multi-tri-view bugs. by Hanchuan Peng
+ * 2013-12-14: add MYFLOAT (double) for better precision of floating number computation
  */
 
 #include "v3d_message.h"
@@ -15,43 +16,47 @@ using namespace std;
 const double pi = 3.1415926535897;
 Q_EXPORT_PLUGIN2(ZMovieMaker, ZMovieMaker);
 
+#define __ZMAKE_DEBUG__ 1
+#define MYFLOAT double
+
+
 void MovieFromPoints(V3DPluginCallback2 &v3d, QWidget *parent);
 static lookPanel *panel = 0;
 static QSpinBox* SampleRate = 0;
 
-void angles_to_quaternions(float q[], float xRot, float yRot,float zRot);
-void slerp_zhi(float q1[], float q2[],float alpha,float q_sample[]);
-void quaternions_to_angles(float Rot_current[], float q_sample[]);
-void angles_to_quaternions_3DRotation(float q[], float xRot, float yRot,float zRot);
-void quaternions_to_angles_3DRotation(float Rot_current[], float q_sample[]);
-float dot_multi(float q1[], float q2[]);
+void angles_to_quaternions(MYFLOAT q[], MYFLOAT xRot, MYFLOAT yRot,MYFLOAT zRot);
+void slerp_zhi(MYFLOAT q1[], MYFLOAT q2[],MYFLOAT alpha,MYFLOAT q_sample[]);
+void quaternions_to_angles(MYFLOAT Rot_current[], MYFLOAT q_sample[]);
+void angles_to_quaternions_3DRotation(MYFLOAT q[], MYFLOAT xRot, MYFLOAT yRot,MYFLOAT zRot);
+void quaternions_to_angles_3DRotation(MYFLOAT Rot_current[], MYFLOAT q_sample[]);
+MYFLOAT dot_multi(MYFLOAT q1[], MYFLOAT q2[]);
 
 QString warning_msg = "Oops... The image you selected no longer exists... The file list has been refreshed now and you can try it again.";
 
 #define SET_3DVIEW \
 { \
     view->resetRotation();\
-    view->doAbsoluteRot(xRot,yRot,zRot);\
-    view->setXShift(xShift);\
-    view->setYShift(yShift);\
-    view->setZShift(zShift);\
-    view->setZoom(zoom);\
-    view->setXCut0(xCut0);\
-    view->setXCut1(xCut1);\
-    view->setYCut0(yCut0);\
-    view->setYCut1(yCut1);\
-    view->setZCut0(zCut0);\
-    view->setZCut1(zCut1);\
+    view->doAbsoluteRot((float)xRot,(float)yRot,(float)zRot);\
+    view->setXShift((float)xShift);\
+    view->setYShift((float)yShift);\
+    view->setZShift((float)zShift);\
+    view->setZoom((float)zoom);\
+    view->setXCut0((float)xCut0);\
+    view->setXCut1((float)xCut1);\
+    view->setYCut0((float)yCut0);\
+    view->setYCut1((float)yCut1);\
+    view->setZCut0((float)zCut0);\
+    view->setZCut1((float)zCut1);\
     view->setChannelR(channelR);\
     view->setChannelG(channelG);\
     view->setChannelB(channelB);\
     view->setShowSurfObjects(showSurf);\
-    view->setXClip0(xClip0);\
-    view->setXClip1(xClip1);\
-    view->setYClip0(yClip0);\
-    view->setYClip1(yClip1);\
-    view->setZClip0(zClip0);\
-    view->setZClip1(zClip1);\
+    view->setXClip0((float)xClip0);\
+    view->setXClip1((float)xClip1);\
+    view->setYClip0((float)yClip0);\
+    view->setYClip1((float)yClip1);\
+    view->setZClip0((float)zClip0);\
+    view->setZClip1((float)zClip1);\
 }
 
 #define UPDATE_PARA \
@@ -110,17 +115,40 @@ QString warning_msg = "Oops... The image you selected no longer exists... The fi
 
 #define INTERPOLATION_PARA \
 { \
-    view->resetRotation();\
-    angles_to_quaternions(q1,xRot_last,yRot_last,zRot_last);\
-    angles_to_quaternions(q2,xRot,yRot,zRot);\
-    slerp_zhi(q1, q2,(float)i/N,q_sample);\
-    quaternions_to_angles(Rot_current,q_sample);\
-    view->doAbsoluteRot(Rot_current[0],Rot_current[1],Rot_current[2]);\
-    view->setXShift(xShift_last + i*(xShift-xShift_last)/N);\
-    view->setYShift(yShift_last + i*(yShift-yShift_last)/N);\
-    view->setZShift(zShift_last + i*(zShift-zShift_last)/N);\
-    view->setZoom(zoom_last + i*(zoom-zoom_last)/N);\
-    if((float)i/N < 0.5)\
+\
+view->resetRotation();\
+angles_to_quaternions(q1,xRot_last,yRot_last,zRot_last);\
+angles_to_quaternions(q2,xRot,yRot,zRot);\
+slerp_zhi(q1, q2,(MYFLOAT)i/N,q_sample);\
+ \
+ \
+quaternions_to_angles(Rot_current,q_sample);\
+xShift_current = (xShift_last + i*(xShift-xShift_last)/N); \
+yShift_current = (yShift_last + i*(yShift-yShift_last)/N); \
+zShift_current = (zShift_last + i*(zShift-zShift_last)/N); \
+zoom_current = (zoom_last + i*(zoom-zoom_last)/N); \
+channel_current = (MYFLOAT)i/N;\
+xClip0_current = (xClip0_last + i*(xClip0-xClip0_last)/N);\
+xClip1_current = (xClip1_last + i*(xClip1-xClip1_last)/N);\
+yClip0_current = (yClip0_last + i*(yClip0-yClip0_last)/N);\
+yClip1_current = (yClip1_last + i*(yClip1-yClip1_last)/N);\
+zClip0_current = (zClip0_last + i*(zClip0-zClip0_last)/N);\
+zClip1_current = (zClip1_last + i*(zClip1-zClip1_last)/N);\
+xCut0_current = (xCut0_last + i*(xCut0-xCut0_last)/N);\
+xCut1_current = (xCut1_last + i*(xCut1-xCut1_last)/N);\
+yCut0_current = (yCut0_last + i*(yCut0-yCut0_last)/N);\
+yCut1_current = (yCut1_last + i*(yCut1-yCut1_last)/N);\
+zCut0_current = (zCut0_last + i*(zCut0-zCut0_last)/N);\
+zCut1_current = (zCut1_last + i*(zCut1-zCut1_last)/N);\
+ \
+ \
+ \
+    view->doAbsoluteRot((float)Rot_current[0], (float)Rot_current[1], (float)Rot_current[2]);\
+    view->setXShift((float)(xShift_current));\
+    view->setYShift((float)(yShift_current));\
+    view->setZShift((float)(zShift_current));\
+    view->setZoom((float)(zoom_current));\
+    if(channel_current < 0.5)\
     {\
         view->setChannelR(channelR_last);\
         view->setChannelG(channelG_last);\
@@ -134,20 +162,20 @@ QString warning_msg = "Oops... The image you selected no longer exists... The fi
         view->setChannelB(channelB);\
         view->setShowSurfObjects(showSurf);\
     }\
-    view->setXClip0(xClip0_last + i*(xClip0-xClip0_last)/N);\
-    view->setXClip1(xClip1_last + i*(xClip1-xClip1_last)/N);\
-    view->setYClip0(yClip0_last + i*(yClip0-yClip0_last)/N);\
-    view->setYClip1(yClip1_last + i*(yClip1-yClip1_last)/N);\
-    view->setZClip0(zClip0_last + i*(zClip0-zClip0_last)/N);\
-    view->setZClip1(zClip1_last + i*(zClip1-zClip1_last)/N);\
+    view->setXClip0((float)(xClip0_current));\
+    view->setXClip1((float)(xClip1_current));\
+    view->setYClip0((float)(yClip0_current));\
+    view->setYClip1((float)(yClip1_current));\
+    view->setZClip0((float)(zClip0_current));\
+    view->setZClip1((float)(zClip1_current));\
     if(curwin)\
     {\
-        view->setXCut0(xCut0_last + i*(xCut0-xCut0_last)/N);\
-        view->setXCut1(xCut1_last + i*(xCut1-xCut1_last)/N);\
-        view->setYCut0(yCut0_last + i*(yCut0-yCut0_last)/N);\
-        view->setYCut1(yCut1_last + i*(yCut1-yCut1_last)/N);\
-        view->setZCut0(zCut0_last + i*(zCut0-zCut0_last)/N);\
-        view->setZCut1(zCut1_last + i*(zCut1-zCut1_last)/N);\
+        view->setXCut0((float)(xCut0_current));\
+        view->setXCut1((float)(xCut1_current));\
+        view->setYCut0((float)(yCut0_current));\
+        view->setYCut1((float)(yCut1_current));\
+        view->setZCut0((float)(zCut0_current));\
+        view->setZCut1((float)(zCut1_current));\
         m_v3d.updateImageWindow(curwin);\
     }\
     else\
@@ -405,19 +433,19 @@ void lookPanel::_slot_record()
     CHECK_WINDOWS
 
     view->absoluteRotPose();
-    float xRot = view->xRot();
-    float yRot = view->yRot();
-    float zRot = view->zRot();
-    float xShift = view->xShift();
-    float yShift = view->yShift();
-    float zShift = view->zShift();
-    float zoom = view->zoom();
-    float xCut0 = view->xCut0();
-    float xCut1 = view->xCut1();
-    float yCut0 = view->yCut0();
-    float yCut1 = view->yCut1();
-    float zCut0 = view->zCut0();
-    float zCut1 = view->zCut1();
+    MYFLOAT xRot = view->xRot();
+    MYFLOAT yRot = view->yRot();
+    MYFLOAT zRot = view->zRot();
+    MYFLOAT xShift = view->xShift();
+    MYFLOAT yShift = view->yShift();
+    MYFLOAT zShift = view->zShift();
+    MYFLOAT zoom = view->zoom();
+    MYFLOAT xCut0 = view->xCut0();
+    MYFLOAT xCut1 = view->xCut1();
+    MYFLOAT yCut0 = view->yCut0();
+    MYFLOAT yCut1 = view->yCut1();
+    MYFLOAT zCut0 = view->zCut0();
+    MYFLOAT zCut1 = view->zCut1();
     bool  channelB = view->channelB();
     bool  channelR = view->channelR();
     bool  channelG = view->channelG();
@@ -455,7 +483,7 @@ void lookPanel::_slot_preview()
 
     int  N = SampleRate->text().toInt();
 
-    float xRot, yRot, zRot,
+    MYFLOAT xRot, yRot, zRot,
             xShift, yShift, zShift,
             zoom,
             xCut0, xCut1,
@@ -464,7 +492,7 @@ void lookPanel::_slot_preview()
     int showSurf, showSurf_last;
     bool channelR, channelG, channelB,
             channelR_last, channelG_last, channelB_last;
-    float xRot_last, yRot_last,zRot_last,
+    MYFLOAT xRot_last, yRot_last,zRot_last,
             xShift_last,yShift_last,zShift_last,
             zoom_last,
             xCut0_last,xCut1_last,
@@ -476,8 +504,29 @@ void lookPanel::_slot_preview()
             yClip0_last,yClip1_last,
             zClip0_last,zClip1_last;
 
-    float q1[4],q2[4],q_sample[4];
-    float Rot_current[3];
+    // added by Hanchuan Peng, 2013-Dec-14 for debugging
+    MYFLOAT xShift_current;
+    MYFLOAT yShift_current;
+    MYFLOAT zShift_current;
+    MYFLOAT zoom_current;
+    MYFLOAT channel_current;
+    MYFLOAT xClip0_current;
+    MYFLOAT xClip1_current;
+    MYFLOAT yClip0_current;
+    MYFLOAT yClip1_current;
+    MYFLOAT zClip0_current;
+    MYFLOAT zClip1_current;
+    MYFLOAT xCut0_current;
+    MYFLOAT xCut1_current;
+    MYFLOAT yCut0_current;
+    MYFLOAT yCut1_current;
+    MYFLOAT zCut0_current;
+    MYFLOAT zCut1_current;
+    //
+
+
+    MYFLOAT q1[4],q2[4],q_sample[4];
+    MYFLOAT Rot_current[3];
     QRegExp rx("(\\ |\\,|\\.|\\:|\\t)");
     for(int row = 0; row < listWidget->count(); row++)
     {
@@ -488,10 +537,56 @@ void lookPanel::_slot_preview()
 
         if(row>0)
         {
+#ifdef __ZMAKE_DEBUG__
+            QStringList tmpParaLists;
+#endif
+
             for (int i=1; i<N+1;i++)
             {
                 INTERPOLATION_PARA
+
+#ifdef __ZMAKE_DEBUG__
+
+                QString tmps, tmpt;
+
+                tmpt.setNum(i).append(": [ ");
+
+                tmps.setNum(Rot_current[0]);                tmpt.append(tmps).append(" ");
+                tmps.setNum(Rot_current[1]);                tmpt.append(tmps).append(" ");
+                tmps.setNum(Rot_current[2]);                tmpt.append(tmps).append(" ");
+                tmps.setNum(xShift_current);                tmpt.append(tmps).append(" ");
+                tmps.setNum(yShift_current);                tmpt.append(tmps).append(" ");
+                tmps.setNum(zShift_current);                tmpt.append(tmps).append(" ");
+                tmps.setNum(zoom_current);                  tmpt.append(tmps).append(" ");
+                tmps.setNum(xCut0_current);                 tmpt.append(tmps).append(" ");
+                tmps.setNum(xCut1_current);                 tmpt.append(tmps).append(" ");
+                tmps.setNum(yCut0_current);                 tmpt.append(tmps).append(" ");
+                tmps.setNum(yCut1_current);                 tmpt.append(tmps).append(" ");
+                tmps.setNum(zCut0_current);                 tmpt.append(tmps).append(" ");
+                tmps.setNum(zCut1_current);                 tmpt.append(tmps).append(" ");
+                tmps.setNum(channel_current);               tmpt.append(tmps).append(" ");
+                tmps.setNum(channel_current);               tmpt.append(tmps).append(" ");
+                tmps.setNum(channel_current);               tmpt.append(tmps).append(" ");
+                tmps.setNum(1);               tmpt.append(tmps).append(" ");     //1 for showSurf. This is only debug purpose as it seems Zhi's code has some bug for this field
+                tmps.setNum(xClip0_current);                tmpt.append(tmps).append(" ");
+                tmps.setNum(xClip1_current);                tmpt.append(tmps).append(" ");
+                tmps.setNum(yClip0_current);                tmpt.append(tmps).append(" ");
+                tmps.setNum(yClip1_current);                tmpt.append(tmps).append(" ");
+                tmps.setNum(zClip0_current);                tmpt.append(tmps).append(" ");
+                tmps.setNum(zClip1_current);                tmpt.append(tmps).append(" ");
+
+
+                tmpt.append("]");
+
+                tmpParaLists << tmpt;
+#endif
+
             }
+
+#ifdef __ZMAKE_DEBUG__
+            _saveAnchorFile("/tmp/apfdebug.apftxt", tmpParaLists);
+#endif
+
         }
         else
         {
@@ -593,7 +688,7 @@ void lookPanel::_slot_show()
         return;
     }
 
-    float xRot, yRot,zRot,xShift,yShift,zShift,zoom,xCut0,xCut1,yCut0,yCut1,zCut0,zCut1;
+    MYFLOAT xRot, yRot,zRot,xShift,yShift,zShift,zoom,xCut0,xCut1,yCut0,yCut1,zCut0,zCut1;
     bool channelR,channelG,channelB;
     int showSurf;
     int xClip0,xClip1,yClip0,yClip1,zClip0,zClip1;
@@ -613,21 +708,25 @@ void lookPanel::_slot_upload()
     v3d_msg("To be implemented!");
 }
 
-void lookPanel::_slot_save()
+bool _saveAnchorFile(QString filename, QStringList ParaLists)
 {
-    QFileDialog d(this);
-    d.setWindowTitle(QObject::tr("Choose output anchor point filename"));
-    d.setAcceptMode(QFileDialog::AcceptSave);
-    if (!d.exec()) return;
-    QString textfilename = (d.selectedFiles())[0] + ".txt";
-    v3d_msg(textfilename);
-    ofstream myfile;
-    myfile.open (textfilename.toLatin1(),ios::out | ios::app );
-    QRegExp rx("(\\ |\\,|\\.|\\:|\\t)");
-    for(int row = 0; row < listWidget->count(); row++)
+    if (filename.isEmpty() || ParaLists.size()<=0)
     {
-        QString currentPoint = listWidget->item(row)->text();
-        QStringList currentParas = currentPoint.split(rx);
+        v3d_msg("Fail to invoke _saveAnchorFile(), invalid parameter or empty list.",0);
+        return false;
+    }
+
+    ofstream myfile;
+    myfile.open (filename.toLatin1(),ios::out | ios::app ); //need fix! need to check if myfile.open is successful! noted by PHC, 20131214
+    QRegExp rx("(\\ |\\,|\\.|\\:|\\t)");
+    for(int row = 0; row < ParaLists.size(); row++)
+    {
+        QStringList currentParas = ParaLists.at(row).split(rx);
+        if (currentParas.size()<26)
+        {
+            v3d_msg(QString("Format error in splitting paralist for row [%1] which is [%2]. Ignore this row!").arg(row).arg(ParaLists.at(row)));
+            continue;
+        }
         myfile << currentParas.at(3).toFloat();myfile << "  ";
         myfile << currentParas.at(4).toFloat();myfile << "  ";
         myfile << currentParas.at(5).toFloat();myfile << "  ";
@@ -651,10 +750,38 @@ void lookPanel::_slot_save()
         myfile << currentParas.at(23).toFloat();myfile << "  ";
         myfile << currentParas.at(24).toFloat();myfile << "  ";
         myfile << currentParas.at(25).toFloat();
-        myfile << "\n";
+        myfile << endl;
     }
     myfile.close();
 
+    return true;
+}
+
+
+
+bool lookPanel::saveAnchorFile(QString filename)
+{
+    if (filename.isEmpty() || !listWidget || listWidget->count()<=0)
+    {
+        v3d_msg("Fail to invoke saveAnchorFile(), maybe the file name is invalid or invalid listWidget pointer or empty anchor point list.",0);
+        return false;
+    }
+
+    QStringList paraLists;
+    for(int row = 0; row < listWidget->count(); row++)
+        paraLists << listWidget->item(row)->text();
+
+    return _saveAnchorFile(filename, paraLists);
+}
+
+void lookPanel::_slot_save()
+{    
+    QString fileName = QFileDialog::getSaveFileName(this, tr("Save Anchor Point File"),
+                               "",
+                               tr("Anchor Point File (*.apftxt *.txt *.apf)"));
+
+    if (!(fileName.isEmpty()))
+        saveAnchorFile(fileName);
 }
 
 void lookPanel::_slot_load()
@@ -662,7 +789,7 @@ void lookPanel::_slot_load()
 
     QString fileOpenName = QFileDialog::getOpenFileName(this, QObject::tr("Open File"),
                                                         "",
-                                                        QObject::tr("Supported file (*.txt)"
+                                                        QObject::tr("Anchor Point File (*.apftxt *.txt *.apf)"
                                                                     ));
     if(fileOpenName.isEmpty())
     {
@@ -674,14 +801,23 @@ void lookPanel::_slot_load()
         listWidget->clear();
         ifstream ifs(fileOpenName.toLatin1());
         string points;
-        float xRot, yRot,zRot,xShift,yShift,zShift,zoom,xCut0,xCut1,yCut0,yCut1,zCut0,zCut1;
+        MYFLOAT xRot, yRot,zRot,xShift,yShift,zShift,zoom,xCut0,xCut1,yCut0,yCut1,zCut0,zCut1;
         bool channelR,channelG,channelB;
         int showSurf;
         int xClip0,xClip1,yClip0,yClip1,zClip0,zClip1;
         while(ifs && getline(ifs, points))
         {
             std::istringstream iss(points);
-            iss >> xRot >> yRot >> zRot >> xShift >> yShift >> zShift >> zoom >> xCut0 >> xCut1 >> yCut0 >> yCut1 >> zCut0 >> zCut1 >> channelR >> channelG >> channelB >> showSurf >> xClip0 >> xClip1 >> yClip0 >> xClip1 >> zClip0 >> zClip1;
+            iss >> xRot >> yRot >> zRot >>
+                   xShift >> yShift >> zShift >>
+                   zoom >>
+                   xCut0 >> xCut1 >>
+                   yCut0 >> yCut1 >>
+                   zCut0 >> zCut1 >>
+                   channelR >> channelG >> channelB >>
+                   showSurf >>
+                   xClip0 >> xClip1 >> yClip0 >>
+                   xClip1 >> zClip0 >> zClip1;
             QString curstr = QString("%1,%2,%3,%4,%5,%6,%7,%8,%9,%10,%11,%12,%13,%14,%15,%16,%17,%18,%19,%20,%21,%22,%23").arg(xRot).arg(yRot).arg(zRot).arg(xShift).arg(yShift).arg(zShift).arg(zoom).arg(xCut0).arg(xCut1).arg(yCut0).arg(yCut1).arg(zCut0).arg(zCut1).arg(channelR).arg(channelG).arg(channelB).arg(showSurf).arg(xClip0).arg(xClip1).arg(yClip0).arg(yClip1).arg(zClip0).arg(zClip1);
             curstr = curstr.prepend(QString("").setNum(listWidget->count()+1) + ": [ ");
             curstr = curstr.append(" ]");
@@ -692,11 +828,11 @@ void lookPanel::_slot_load()
     return;
 }
 
-void angles_to_quaternions(float q[], float xRot, float yRot,float zRot)
+void angles_to_quaternions(MYFLOAT q[], MYFLOAT xRot, MYFLOAT yRot,MYFLOAT zRot)
 {
-    float xRot_Rad = xRot * (pi/180.0);   //if(xRot_Rad>pi) xRot_Rad -= 2*pi;
-    float yRot_Rad = yRot * (pi/180.0);   //if(yRot_Rad>pi) yRot_Rad -= 2*pi;
-    float zRot_Rad = zRot * (pi/180.0);   //if(zRot_Rad>pi) zRot_Rad -= 2*pi;
+    MYFLOAT xRot_Rad = xRot * (pi/180.0);   //if(xRot_Rad>pi) xRot_Rad -= 2*pi;
+    MYFLOAT yRot_Rad = yRot * (pi/180.0);   //if(yRot_Rad>pi) yRot_Rad -= 2*pi;
+    MYFLOAT zRot_Rad = zRot * (pi/180.0);   //if(zRot_Rad>pi) zRot_Rad -= 2*pi;
 
     q[0] = cos(xRot_Rad/2)*cos(yRot_Rad/2)*cos(zRot_Rad/2)+sin(xRot_Rad/2)*sin(yRot_Rad/2)*sin(zRot_Rad/2);
     q[1] = sin(xRot_Rad/2)*cos(yRot_Rad/2)*cos(zRot_Rad/2)-cos(xRot_Rad/2)*sin(yRot_Rad/2)*sin(zRot_Rad/2);
@@ -707,23 +843,23 @@ void angles_to_quaternions(float q[], float xRot, float yRot,float zRot)
 
 }
 
-void angles_to_quaternions_3DRotation(float q[], float xRot, float yRot,float zRot)
+void angles_to_quaternions_3DRotation(MYFLOAT q[], MYFLOAT xRot, MYFLOAT yRot,MYFLOAT zRot)
 {
-    float xRot_Rad = xRot * (pi/180.0);  //if(xRot_Rad>pi) xRot_Rad -= 2*pi;
-    float yRot_Rad = yRot * (pi/180.0);  //if(yRot_Rad>pi) yRot_Rad -= 2*pi;
-    float zRot_Rad = zRot * (pi/180.0);  //if(zRot_Rad>pi) zRot_Rad -= 2*pi;
+    MYFLOAT xRot_Rad = xRot * (pi/180.0);  //if(xRot_Rad>pi) xRot_Rad -= 2*pi;
+    MYFLOAT yRot_Rad = yRot * (pi/180.0);  //if(yRot_Rad>pi) yRot_Rad -= 2*pi;
+    MYFLOAT zRot_Rad = zRot * (pi/180.0);  //if(zRot_Rad>pi) zRot_Rad -= 2*pi;
 
-    float R[3][3];
+    MYFLOAT R[3][3];
 
-    const float cosAngle1 = cosf( xRot_Rad ),  sinAngle1 = sinf( xRot_Rad );
-    const float cosAngle2 = cosf( yRot_Rad ),  sinAngle2 = sinf( yRot_Rad );
-    const float cosAngle3 = cosf( zRot_Rad ),  sinAngle3 = sinf( zRot_Rad );
+    const MYFLOAT cosAngle1 = cosf( xRot_Rad ),  sinAngle1 = sinf( xRot_Rad );
+    const MYFLOAT cosAngle2 = cosf( yRot_Rad ),  sinAngle2 = sinf( yRot_Rad );
+    const MYFLOAT cosAngle3 = cosf( zRot_Rad ),  sinAngle3 = sinf( zRot_Rad );
 
     // Repeated calculations (for efficiency)
-    float s1c3 = sinAngle1 * cosAngle3;
-    float s3c1 = sinAngle3 * cosAngle1;
-    float s1s3 = sinAngle1 * sinAngle3;
-    float c1c3 = cosAngle1 * cosAngle3;
+    MYFLOAT s1c3 = sinAngle1 * cosAngle3;
+    MYFLOAT s3c1 = sinAngle3 * cosAngle1;
+    MYFLOAT s1s3 = sinAngle1 * sinAngle3;
+    MYFLOAT c1c3 = cosAngle1 * cosAngle3;
 
     const int i = 0;
     const int j = 1;
@@ -740,7 +876,7 @@ void angles_to_quaternions_3DRotation(float q[], float xRot, float yRot,float zR
     R[k][k] =  cosAngle1 * cosAngle2;
 
 
-    const float tr = R[i][i] + R[j][j] + R[k][k];
+    const MYFLOAT tr = R[i][i] + R[j][j] + R[k][k];
     if( tr >= R[0][0]  &&  tr >= R[1][1]  &&  tr >= R[2][2] ) {
         q[0] = 1 + tr;
         q[1] = R[2][1] - R[1][2];
@@ -769,7 +905,7 @@ void angles_to_quaternions_3DRotation(float q[], float xRot, float yRot,float zR
         q[3] = 1 - (tr - 2*R[2][2]);
     }
     // Scale to unit length
-    float scale = 0.0;
+    MYFLOAT scale = 0.0;
     for (int i = 0; i < 4; i++)
         scale += q[i] * q[i];
     scale = std::sqrt(scale);
@@ -779,10 +915,10 @@ void angles_to_quaternions_3DRotation(float q[], float xRot, float yRot,float zR
 
 }
 
-void slerp_zhi(float q1[], float q2[],float t,float q_sample[])
+void slerp_zhi(MYFLOAT q1[], MYFLOAT q2[],MYFLOAT t,MYFLOAT q_sample[])
 {
-    float cos_t = dot_multi(q1,q2);
-    float theta,beta,alpha;
+    MYFLOAT cos_t = dot_multi(q1,q2);
+    MYFLOAT theta,beta,alpha;
     int flag = 0;
     if(cos_t<0.0)
     {
@@ -806,7 +942,7 @@ void slerp_zhi(float q1[], float q2[],float t,float q_sample[])
 
     printf("slerp result is (%f,%f,%f,%f,%f)\n\n",cos_t,theta,beta,alpha,t);
 
-    float scale = 0;
+    MYFLOAT scale = 0;
     for(int i= 0; i<4;i++)
     {
         q_sample[i] = beta*q1[i] + alpha*q2[i];
@@ -821,25 +957,25 @@ void slerp_zhi(float q1[], float q2[],float t,float q_sample[])
 
 }
 
-void quaternions_to_angles(float Rot_current[], float q_sample[])
+void quaternions_to_angles(MYFLOAT Rot_current[], MYFLOAT q_sample[])
 {
 
-    float rot_x = atan2f(2*(q_sample[0]*q_sample[1]+q_sample[2]*q_sample[3]),1-2*(q_sample[1]*q_sample[1]+q_sample[2]*q_sample[2]));
-    float rot_y = asinf(2*(q_sample[0]*q_sample[2]-q_sample[3]*q_sample[1]));
-    float rot_z = atan2f(2*(q_sample[0]*q_sample[3]+q_sample[1]*q_sample[2]),1-2*(q_sample[2]*q_sample[2]+q_sample[3]*q_sample[3]));
+    MYFLOAT rot_x = atan2f(2*(q_sample[0]*q_sample[1]+q_sample[2]*q_sample[3]),1-2*(q_sample[1]*q_sample[1]+q_sample[2]*q_sample[2]));
+    MYFLOAT rot_y = asinf(2*(q_sample[0]*q_sample[2]-q_sample[3]*q_sample[1]));
+    MYFLOAT rot_z = atan2f(2*(q_sample[0]*q_sample[3]+q_sample[1]*q_sample[2]),1-2*(q_sample[2]*q_sample[2]+q_sample[3]*q_sample[3]));
 
     Rot_current[0] = rot_x * (180.0/pi);
     Rot_current[1] = rot_y * (180.0/pi);
     Rot_current[2] = rot_z * (180.0/pi);
 }
 
-void quaternions_to_angles_3DRotation(float Rot_current[], float q[])
+void quaternions_to_angles_3DRotation(MYFLOAT Rot_current[], MYFLOAT q[])
 {
-    const float q00=q[0]*q[0], q11=q[1]*q[1], q22=q[2]*q[2], q33=q[3]*q[3];
-    const float q01=q[0]*q[1], q02=q[0]*q[2], q03=q[0]*q[3];
-    const float q12=q[1]*q[2], q13=q[1]*q[3], q23=q[2]*q[3];
+    const MYFLOAT q00=q[0]*q[0], q11=q[1]*q[1], q22=q[2]*q[2], q33=q[3]*q[3];
+    const MYFLOAT q01=q[0]*q[1], q02=q[0]*q[2], q03=q[0]*q[3];
+    const MYFLOAT q12=q[1]*q[2], q13=q[1]*q[3], q23=q[2]*q[3];
 
-    float R[3][3];
+    MYFLOAT R[3][3];
 
     const int i = 0;
     const int j = 1;
@@ -855,9 +991,9 @@ void quaternions_to_angles_3DRotation(float Rot_current[], float q[])
     R[k][j] = 2*(q23+q01);
     R[k][k] =  q00-q11-q22+q33;
 
-    float rot_x = atan2f(R[1][2],R[2][2]);
-    float rot_y = atan2f(-R[0][2], -sqrt(R[0][0]*R[0][0]+R[0][1]*R[0][1]));
-    float rot_z = atan2f(sinf(rot_x)* R[2][0] - cosf(rot_x)*R[1][0], cosf(rot_x)*R[1][1] - sinf(rot_x)*R[2][1]);
+    MYFLOAT rot_x = atan2f(R[1][2],R[2][2]);
+    MYFLOAT rot_y = atan2f(-R[0][2], -sqrt(R[0][0]*R[0][0]+R[0][1]*R[0][1]));
+    MYFLOAT rot_z = atan2f(sinf(rot_x)* R[2][0] - cosf(rot_x)*R[1][0], cosf(rot_x)*R[1][1] - sinf(rot_x)*R[2][1]);
 
 
     Rot_current[0] = rot_x * (180.0/pi);
@@ -868,9 +1004,9 @@ void quaternions_to_angles_3DRotation(float Rot_current[], float q[])
 
 
 
-float dot_multi(float q1[], float q2[])
+MYFLOAT dot_multi(MYFLOAT q1[], MYFLOAT q2[])
 {
-    float result = 0;
+    MYFLOAT result = 0;
 
     for(int i= 0; i<4;i++)
     {
