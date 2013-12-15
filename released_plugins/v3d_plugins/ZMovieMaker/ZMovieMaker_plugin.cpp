@@ -593,7 +593,7 @@ void lookPanel::_slot_preview()
             }
 
 #ifdef __ZMAKE_DEBUG__
-            _saveAnchorFile("/Users/pengh/Downloads/apfdebug.apftxt", tmpParaLists);
+            _saveAnchorFile("/Users/pengh/Downloads/apfdebug.apftxt", tmpParaLists, true);
 #endif
 
         }
@@ -713,7 +713,7 @@ void lookPanel::_slot_upload()
     v3d_msg("To be implemented!");
 }
 
-bool _saveAnchorFile(QString filename, QStringList ParaLists)
+bool _saveAnchorFile(QString filename, QStringList ParaLists, bool b_append)
 {
     if (filename.isEmpty() || ParaLists.size()<=0)
     {
@@ -722,7 +722,10 @@ bool _saveAnchorFile(QString filename, QStringList ParaLists)
     }
 
     ofstream myfile;
-    myfile.open (filename.toLatin1(),ios::out | ios::trunc); //need fix! need to check if myfile.open is successful! noted by PHC, 20131214
+    if (b_append)
+        myfile.open (filename.toLatin1(),ios::out | ios::app); //need fix! need to check if myfile.open is successful! noted by PHC, 20131214
+    else
+        myfile.open (filename.toLatin1(),ios::out | ios::trunc); //need fix! need to check if myfile.open is successful! noted by PHC, 20131214
     QRegExp rx("(\\ |\\,|\\.|\\:|\\t)");
     for(int row = 0; row < ParaLists.size(); row++)
     {
@@ -776,7 +779,7 @@ bool lookPanel::saveAnchorFile(QString filename)
     for(int row = 0; row < listWidget->count(); row++)
         paraLists << listWidget->item(row)->text();
 
-    return _saveAnchorFile(filename, paraLists);
+    return _saveAnchorFile(filename, paraLists, false);
 }
 
 void lookPanel::_slot_save()
