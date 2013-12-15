@@ -27,7 +27,6 @@ Q_EXPORT_PLUGIN2(ZMovieMaker, ZMovieMaker);
 
 void MovieFromPoints(V3DPluginCallback2 &v3d, QWidget *parent);
 static lookPanel *panel = 0;
-static QSpinBox* SampleRate = 0;
 
 void angles_to_quaternions(MYFLOAT q[], MYFLOAT xRot, MYFLOAT yRot,MYFLOAT zRot);
 void slerp_zhi(MYFLOAT q1[], MYFLOAT q2[],MYFLOAT alpha,MYFLOAT q_sample[]);
@@ -62,7 +61,7 @@ QString warning_msg = "Oops... The image you selected no longer exists... The fi
     view->setYClip1((float)yClip1);\
     view->setZClip0((float)zClip0);\
     view->setZClip1((float)zClip1);\
-}
+    }
 
 #define UPDATE_PARA \
 { \
@@ -89,7 +88,7 @@ QString warning_msg = "Oops... The image you selected no longer exists... The fi
     yClip1_last = yClip1;\
     zClip0_last = zClip0;\
     zClip1_last = zClip1;\
-}
+    }
 
 #define GET_PARA \
 { \
@@ -116,56 +115,56 @@ QString warning_msg = "Oops... The image you selected no longer exists... The fi
     yClip1 = currentParas.at(23).toInt();\
     zClip0 = currentParas.at(24).toInt();\
     zClip1 = currentParas.at(25).toInt();\
-}
+    }
 
 #define INTERPOLATION_PARA \
 { \
-\
-view->resetRotation();\
-angles_to_quaternions(q1,xRot_last,yRot_last,zRot_last);\
-angles_to_quaternions(q2,xRot,yRot,zRot);\
-slerp_zhi(q1, q2,(MYFLOAT)i/N,q_sample);\
- \
- \
-quaternions_to_angles(Rot_current,q_sample);\
-xShift_current = (xShift_last + i*(xShift-xShift_last)/N); \
-yShift_current = (yShift_last + i*(yShift-yShift_last)/N); \
-zShift_current = (zShift_last + i*(zShift-zShift_last)/N); \
-zoom_current = (zoom_last + i*(zoom-zoom_last)/N); \
-channel_current = (MYFLOAT)i/N;\
-xClip0_current = (xClip0_last + i*(xClip0-xClip0_last)/N);\
-xClip1_current = (xClip1_last + i*(xClip1-xClip1_last)/N);\
-yClip0_current = (yClip0_last + i*(yClip0-yClip0_last)/N);\
-yClip1_current = (yClip1_last + i*(yClip1-yClip1_last)/N);\
-zClip0_current = (zClip0_last + i*(zClip0-zClip0_last)/N);\
-zClip1_current = (zClip1_last + i*(zClip1-zClip1_last)/N);\
-xCut0_current = (xCut0_last + i*(xCut0-xCut0_last)/N);\
-xCut1_current = (xCut1_last + i*(xCut1-xCut1_last)/N);\
-yCut0_current = (yCut0_last + i*(yCut0-yCut0_last)/N);\
-yCut1_current = (yCut1_last + i*(yCut1-yCut1_last)/N);\
-zCut0_current = (zCut0_last + i*(zCut0-zCut0_last)/N);\
-zCut1_current = (zCut1_last + i*(zCut1-zCut1_last)/N);\
- \
- \
- \
+    \
+    view->resetRotation();\
+    angles_to_quaternions(q1,xRot_last,yRot_last,zRot_last);\
+    angles_to_quaternions(q2,xRot,yRot,zRot);\
+    slerp_zhi(q1, q2,(MYFLOAT)i/N,q_sample);\
+    \
+    \
+    quaternions_to_angles(Rot_current,q_sample);\
+    xShift_current = (xShift_last + i*(xShift-xShift_last)/N); \
+    yShift_current = (yShift_last + i*(yShift-yShift_last)/N); \
+    zShift_current = (zShift_last + i*(zShift-zShift_last)/N); \
+    zoom_current = (zoom_last + i*(zoom-zoom_last)/N); \
+    channel_current = (MYFLOAT)i/N;\
+    xClip0_current = (xClip0_last + i*(xClip0-xClip0_last)/N);\
+    xClip1_current = (xClip1_last + i*(xClip1-xClip1_last)/N);\
+    yClip0_current = (yClip0_last + i*(yClip0-yClip0_last)/N);\
+    yClip1_current = (yClip1_last + i*(yClip1-yClip1_last)/N);\
+    zClip0_current = (zClip0_last + i*(zClip0-zClip0_last)/N);\
+    zClip1_current = (zClip1_last + i*(zClip1-zClip1_last)/N);\
+    xCut0_current = (xCut0_last + i*(xCut0-xCut0_last)/N);\
+    xCut1_current = (xCut1_last + i*(xCut1-xCut1_last)/N);\
+    yCut0_current = (yCut0_last + i*(yCut0-yCut0_last)/N);\
+    yCut1_current = (yCut1_last + i*(yCut1-yCut1_last)/N);\
+    zCut0_current = (zCut0_last + i*(zCut0-zCut0_last)/N);\
+    zCut1_current = (zCut1_last + i*(zCut1-zCut1_last)/N);\
+    \
+    \
+    \
     view->doAbsoluteRot((float)Rot_current[0], (float)Rot_current[1], (float)Rot_current[2]);\
     view->setXShift((float)(xShift_current));\
     view->setYShift((float)(yShift_current));\
     view->setZShift((float)(zShift_current));\
     view->setZoom((float)(zoom_current));\
     if(channel_current < 0.5)\
-    {\
-        view->setChannelR(channelR_last);\
-        view->setChannelG(channelG_last);\
-        view->setChannelB(channelB_last);\
-        view->setShowSurfObjects(showSurf_last);\
+{\
+    view->setChannelR(channelR_last);\
+    view->setChannelG(channelG_last);\
+    view->setChannelB(channelB_last);\
+    view->setShowSurfObjects(showSurf_last);\
     }\
     else\
-    {\
-        view->setChannelR(channelR);\
-        view->setChannelG(channelG);\
-        view->setChannelB(channelB);\
-        view->setShowSurfObjects(showSurf);\
+{\
+    view->setChannelR(channelR);\
+    view->setChannelG(channelG);\
+    view->setChannelB(channelB);\
+    view->setShowSurfObjects(showSurf);\
     }\
     view->setXClip0((float)(xClip0_current));\
     view->setXClip1((float)(xClip1_current));\
@@ -174,82 +173,82 @@ zCut1_current = (zCut1_last + i*(zCut1-zCut1_last)/N);\
     view->setZClip0((float)(zClip0_current));\
     view->setZClip1((float)(zClip1_current));\
     if(curwin)\
-    {\
-        view->setXCut0((float)(xCut0_current));\
-        view->setXCut1((float)(xCut1_current));\
-        view->setYCut0((float)(yCut0_current));\
-        view->setYCut1((float)(yCut1_current));\
-        view->setZCut0((float)(zCut0_current));\
-        view->setZCut1((float)(zCut1_current));\
-        m_v3d.updateImageWindow(curwin);\
+{\
+    view->setXCut0((float)(xCut0_current));\
+    view->setXCut1((float)(xCut1_current));\
+    view->setYCut0((float)(yCut0_current));\
+    view->setYCut1((float)(yCut1_current));\
+    view->setZCut0((float)(zCut0_current));\
+    view->setZCut1((float)(zCut1_current));\
+    m_v3d.updateImageWindow(curwin);\
     }\
     else\
-        m_v3d.update_3DViewer(surface_win); \
-}
+    m_v3d.update_3DViewer(surface_win); \
+    }
 
 
 #define SCREENSHOT_SAVEFRAMES \
 { \
     QString BMPfilename = selectedFile + QString("/a%1").arg(framenum);\
     if(curwin)\
-        m_v3d.screenShot3DWindow(curwin, BMPfilename);\
+    m_v3d.screenShot3DWindow(curwin, BMPfilename);\
     else\
-        m_v3d.screenShot_Any3DViewer(surface_win, BMPfilename);\
+    m_v3d.screenShot_Any3DViewer(surface_win, BMPfilename);\
     framenum++;\
-}
+    }
 
 #define CHECK_WINDOWS \
 {\
-view=0;curwin=0; \
-list_triview = m_v3d.getImageWindowList();\
-list_3dviewer = m_v3d.getListAll3DViewers();\
-if(!combo_surface || combo_surface->count()<=0) return;\
-if(combo_surface->currentIndex() < list_triview.size())\
+    view=0;curwin=0; \
+    list_triview = m_v3d.getImageWindowList();\
+    list_3dviewer = m_v3d.getListAll3DViewers();\
+    if(!combo_surface || combo_surface->count()<=0) return;\
+    if(combo_surface->currentIndex() < list_triview.size())\
 {\
     curwin = list_triview[combo_surface->currentIndex()];\
     if(curwin)\
-    {\
-        m_v3d.open3DWindow(curwin);\
-        view = m_v3d.getView3DControl(curwin);\
+{\
+    m_v3d.open3DWindow(curwin);\
+    view = m_v3d.getView3DControl(curwin);\
     }\
     else\
-        return;\
-}\
-else\
+    return;\
+    }\
+    else\
 {\
     QString curname = combo_surface->itemText(combo_surface->currentIndex());\
     v3d_msg(QString("current window selected:[%1]").arg(curname), 0);\
     for (int i=0; i<list_3dviewer.count(); i++)\
-    {\
-        if(curname == m_v3d.getImageName(list_3dviewer[i]))\
-        {\
-            surface_win = list_3dviewer[i];\
-            if(surface_win)\
-            {\
-                view = m_v3d.getView3DControl_Any3DViewer(surface_win);\
-            }\
-            else\
-                return;\
-            break;\
-        }\
+{\
+    if(curname == m_v3d.getImageName(list_3dviewer[i]))\
+{\
+    surface_win = list_3dviewer[i];\
+    if(surface_win)\
+{\
+    view = m_v3d.getView3DControl_Any3DViewer(surface_win);\
     }\
-}\
-if (!view) return;\
-}
+    else\
+    return;\
+    break;\
+    }\
+    }\
+    }\
+    if (!view) return;\
+    }
 
 
 QStringList ZMovieMaker::menulist() const
 {
     return QStringList()
-            <<tr("Generate a movie using multiple anchor points")
-           <<tr("about");
+          <<tr("Generate a movie using multiple anchor points")
+          <<tr("about");
 }
 
 QStringList ZMovieMaker::funclist() const
 {
     return QStringList()
-            <<tr("func1")
-           <<tr("func2")
+          <<tr("func1")
+          <<tr("func2")
           <<tr("help");
 }
 
@@ -378,17 +377,15 @@ void MyComboBox::updateList()
 lookPanel::lookPanel(V3DPluginCallback2 &_v3d, QWidget *parent) :
     QDialog(parent), m_v3d(_v3d)
 {
-    //
+    QPushButton* btn_Record = new QPushButton("Add an Anchor Point");
+    QPushButton* btn_Preview = new QPushButton("Preview and Save Movie");
+    QPushButton* btn_Show = new QPushButton("Show Selected Anchor Point");
+    QPushButton* btn_Delete = new QPushButton("Delete Selected Anchor Point");
+    QPushButton* btn_Upload = new QPushButton("Upload to Youtube");
+    QPushButton* btn_Save = new QPushButton("Save file");
+    QPushButton* btn_Load = new QPushButton("Load file");
 
-    QPushButton* Record = new QPushButton("Add an Anchor Point");
-    QPushButton* Preview = new QPushButton("Preview and Save Movie");
-    QPushButton* Show = new QPushButton("Show Selected Anchor Point");
-    QPushButton* Delete = new QPushButton("Delete Selected Anchor Point");
-    QPushButton* Upload = new QPushButton("Upload to Youtube");
-    QPushButton* Save = new QPushButton("Save file");
-    QPushButton* Load = new QPushButton("Load file");
-
-    SampleRate = new QSpinBox();
+    box_SampleRate = new QSpinBox();
     QLabel* SampleName = new QLabel(QObject::tr("Sampling Rate:"));
 
     //potential bugs for the following two sentences
@@ -403,39 +400,41 @@ lookPanel::lookPanel(V3DPluginCallback2 &_v3d, QWidget *parent) :
     gridLayout = new QGridLayout();
     gridLayout->addWidget(label_surface, 1,0,1,5);
     gridLayout->addWidget(combo_surface, 2,0,1,5);
-    gridLayout->addWidget(Record, 8,0,1,2);
-    gridLayout->addWidget(Preview,5,6,1,3);
-    gridLayout->addWidget(Show,10,0,1,2);
-    gridLayout->addWidget(Delete,9,0,1,2);
-    gridLayout->addWidget(Save,9,2,1,3);
-    gridLayout->addWidget(Load,10,2,1,3);
-    gridLayout->addWidget(Upload,11,0,1,5);
+    gridLayout->addWidget(btn_Record, 8,0,1,2);
+    gridLayout->addWidget(btn_Preview,5,6,1,3);
+    gridLayout->addWidget(btn_Show,10,0,1,2);
+    gridLayout->addWidget(btn_Delete,9,0,1,2);
+    gridLayout->addWidget(btn_Save,9,2,1,3);
+    gridLayout->addWidget(btn_Load,10,2,1,3);
+    gridLayout->addWidget(btn_Upload,11,0,1,5);
     gridLayout->addWidget(SampleName, 4,6,1,1);
-    gridLayout->addWidget(SampleRate, 4,7,1,2);
+    gridLayout->addWidget(box_SampleRate, 4,7,1,2);
 
-    SampleRate->setMaximum(1000);
-    SampleRate->setMinimum(2);
-    SampleRate->setValue(30);
+    box_SampleRate->setMaximum(1000);
+    box_SampleRate->setMinimum(2);
+    box_SampleRate->setValue(30);
 
-    listWidget = new QListWidget();
-    gridLayout->addWidget(listWidget,3,0,5,5);
+    list_anchors = new QListWidget();
+    gridLayout->addWidget(list_anchors,3,0,5,5);
 
     setLayout(gridLayout);
     setWindowTitle(QString("ZMovieMaker"));
 
-    connect(Show, SIGNAL(clicked()), this, SLOT(_slot_show()));
-    connect(Delete, SIGNAL(clicked()), this, SLOT(_slot_delete()));
-    connect(Record, SIGNAL(clicked()), this, SLOT(_slot_record()));
-    connect(Preview, SIGNAL(clicked()), this, SLOT(_slot_preview()));
-    connect(Save, SIGNAL(clicked()), this, SLOT(_slot_save()));
-    connect(Load, SIGNAL(clicked()), this, SLOT(_slot_load()));
-    connect(Upload, SIGNAL(clicked()), this, SLOT(_slot_upload()));
-    connect(SampleRate, SIGNAL(valueChanged(double)), this, SLOT(update()));
+    connect(btn_Show, SIGNAL(clicked()), this, SLOT(_slot_show()));
+    connect(btn_Delete, SIGNAL(clicked()), this, SLOT(_slot_delete()));
+    connect(btn_Record, SIGNAL(clicked()), this, SLOT(_slot_record()));
+    connect(btn_Preview, SIGNAL(clicked()), this, SLOT(_slot_preview()));
+    connect(btn_Save, SIGNAL(clicked()), this, SLOT(_slot_save()));
+    connect(btn_Load, SIGNAL(clicked()), this, SLOT(_slot_load()));
+    connect(btn_Upload, SIGNAL(clicked()), this, SLOT(_slot_upload()));
+    connect(box_SampleRate, SIGNAL(valueChanged(double)), this, SLOT(update()));
+
+    connect(list_anchors, SIGNAL(itemDoubleClicked(QListWidgetItem)), this, SLOT(_slot_show()));
 }
 
 void lookPanel::_slot_record()
 {
-    CHECK_WINDOWS
+    CHECK_WINDOWS;
 
     view->absoluteRotPose();
     MYFLOAT xRot = view->xRot();
@@ -462,11 +461,10 @@ void lookPanel::_slot_record()
     int zClip0 = view->zClip0();
     int zClip1 = view->zClip1();
 
-
     QString curstr = QString("%1,%2,%3,%4,%5,%6,%7,%8,%9,%10,%11,%12,%13,%14,%15,%16,%17,%18,%19,%20,%21,%22,%23").arg(xRot).arg(yRot).arg(zRot).arg(xShift).arg(yShift).arg(zShift).arg(zoom).arg(xCut0).arg(xCut1).arg(yCut0).arg(yCut1).arg(zCut0).arg(zCut1).arg(channelR).arg(channelG).arg(channelB).arg(showSurf).arg(xClip0).arg(xClip1).arg(yClip0).arg(yClip1).arg(zClip0).arg(zClip1);
-    curstr = curstr.prepend(QString("").setNum(listWidget->count()+1) + ": [ ");
+    curstr = curstr.prepend(QString("").setNum(list_anchors->count()+1) + ": [ ");
     curstr = curstr.append(" ]");
-    listWidget->addItem(new QListWidgetItem(curstr));
+    list_anchors->addItem(new QListWidgetItem(curstr));
     //  NeuronTree nt = m_v3d.getSWC(curwin);
     //  printf("\n\nsurface number is %d,%d\n\n", nt.listNeuron.count(),view->isShowSurfObjects());
     //  printf("\n\n surfacue cut is (%d,%d,%d,%d,%d,%d)\n\n",view->xClip0(),view->xClip1(),view->yClip0(),view->yClip1(),view->zClip0(),view->zClip1());
@@ -475,18 +473,18 @@ void lookPanel::_slot_record()
 
 void lookPanel::_slot_preview()
 {
-    CHECK_WINDOWS
+    CHECK_WINDOWS;
 
-    if(listWidget->count()<=0)
+    if(list_anchors->count()<=0)
     {
         v3d_msg("Please define at least one archor point.");
         return;
     }
 
-    if (!SampleRate)
+    if (!box_SampleRate)
         return;
 
-    int  N = SampleRate->text().toInt();
+    int  N = box_SampleRate->text().toInt();
 
     MYFLOAT xRot, yRot, zRot,
             xShift, yShift, zShift,
@@ -529,20 +527,19 @@ void lookPanel::_slot_preview()
     MYFLOAT zCut1_current;
     //
 
-
     MYFLOAT q1[4],q2[4],q_sample[4];
     MYFLOAT Rot_current[3];
     QRegExp rx("(\\ |\\,|\\.|\\:|\\t)");
-    for(int row = 0; row < listWidget->count(); row++)
+    for(int row = 0; row < list_anchors->count(); row++)
     {
-        QString currentPoint = listWidget->item(row)->text();
+        QString currentPoint = list_anchors->item(row)->text();
         QStringList currentParas = currentPoint.split(rx);
 
-        GET_PARA
+        GET_PARA;
 
         if(row==0)
         {
-            SET_3DVIEW
+            SET_3DVIEW;
         }
         else
         {
@@ -552,7 +549,7 @@ void lookPanel::_slot_preview()
 
             for (int i=1; i<=N; i++)
             {
-                INTERPOLATION_PARA
+                INTERPOLATION_PARA;
 
 #ifdef __ZMAKE_DEBUG__
 
@@ -573,10 +570,10 @@ void lookPanel::_slot_preview()
                 tmps.setNum((int)yCut1_current);                 tmpt.append(tmps).append(" ");
                 tmps.setNum((int)zCut0_current);                 tmpt.append(tmps).append(" ");
                 tmps.setNum((int)zCut1_current);                 tmpt.append(tmps).append(" ");
-                tmps.setNum((int)1);               tmpt.append(tmps).append(" ");  //set to 1 for tentative testing
-                tmps.setNum((int)1);               tmpt.append(tmps).append(" ");  //set to 1 for tentative testing
-                tmps.setNum((int)1);               tmpt.append(tmps).append(" ");  //set to 1 for tentative testing
-                tmps.setNum((int)2);               tmpt.append(tmps).append(" ");     //2 for showSurf. This is only debug purpose as it seems Zhi's code has some bug for this field
+                tmps.setNum((int)1);                             tmpt.append(tmps).append(" ");  //set to 1 for tentative testing
+                tmps.setNum((int)1);                             tmpt.append(tmps).append(" ");  //set to 1 for tentative testing
+                tmps.setNum((int)1);                             tmpt.append(tmps).append(" ");  //set to 1 for tentative testing
+                tmps.setNum((int)2);                             tmpt.append(tmps).append(" ");     //2 for showSurf. This is only debug purpose as it seems Zhi's code has some bug for this field
                 tmps.setNum((int)xClip0_current);                tmpt.append(tmps).append(" ");
                 tmps.setNum((int)xClip1_current);                tmpt.append(tmps).append(" ");
                 tmps.setNum((int)yClip0_current);                tmpt.append(tmps).append(" ");
@@ -598,7 +595,7 @@ void lookPanel::_slot_preview()
 
         }
 
-        UPDATE_PARA
+        UPDATE_PARA;
     }
 
     //now really save movie
@@ -614,9 +611,9 @@ void lookPanel::_slot_preview()
         {
             QString selectedFile=(d.selectedFiles())[0];
             int framenum =0;
-            for(int row = 0; row < listWidget->count(); row++)
+            for(int row = 0; row < list_anchors->count(); row++)
             {
-                QString currentPoint = listWidget->item(row)->text();
+                QString currentPoint = list_anchors->item(row)->text();
                 QStringList currentParas = currentPoint.split(rx);
                 GET_PARA
 
@@ -624,19 +621,19 @@ void lookPanel::_slot_preview()
                 {
                     for (int i =1; i<N+1;i++)
                     {
-                        INTERPOLATION_PARA
+                        INTERPOLATION_PARA;
 
-                        SCREENSHOT_SAVEFRAMES
+                        SCREENSHOT_SAVEFRAMES;
                     }
                 }
                 else
                 {
-                    SET_3DVIEW
+                    SET_3DVIEW;
 
-                    SCREENSHOT_SAVEFRAMES
+                    SCREENSHOT_SAVEFRAMES;
                 }
 
-                UPDATE_PARA
+                UPDATE_PARA;
 
             }
 
@@ -649,33 +646,33 @@ void lookPanel::_slot_preview()
 
 void lookPanel::_slot_delete()
 {
-    CHECK_WINDOWS
+    CHECK_WINDOWS;
 
-            if(listWidget->currentRow()==-1)
+    if(list_anchors->currentRow()==-1)
     {
         v3d_msg("Please select a valid archor point.");
         return;
     }
 
-    listWidget->takeItem(listWidget->currentRow());
+    list_anchors->takeItem(list_anchors->currentRow());
 
     //update the index of anchor points
-    if(listWidget->count() > 0)
+    if(list_anchors->count() > 0)
     {
         QList<QString> updatePointsList;
 
-        for(int row = 0; row < listWidget->count(); row++)
+        for(int row = 0; row < list_anchors->count(); row++)
         {
-            QString currentPoint = listWidget->item(row)->text();
+            QString currentPoint = list_anchors->item(row)->text();
             currentPoint.remove(0,1);
             currentPoint = currentPoint.prepend(QString("").setNum(row+1));
             updatePointsList << currentPoint;
         }
 
-        listWidget->clear();
+        list_anchors->clear();
         for(int row = 0; row < updatePointsList.count(); row++)
         {
-            listWidget->addItem(new QListWidgetItem(updatePointsList.at(row)));
+            list_anchors->addItem(new QListWidgetItem(updatePointsList.at(row)));
 
         }
     }
@@ -683,29 +680,37 @@ void lookPanel::_slot_delete()
 
 }
 
-void lookPanel::_slot_show()
+void lookPanel::_slot_show_item(QListWidgetItem *item)
 {
-    CHECK_WINDOWS
-
-            if(listWidget->currentRow()==-1)
-    {
-        v3d_msg("Please select a valid archor point.");
-        return;
-    }
+    if (!item) return;
+    QString currentPoint = item->text();
+    QRegExp rx("(\\ |\\,|\\.|\\:|\\t)");
+    QStringList currentParas = currentPoint.split(rx);
 
     MYFLOAT xRot, yRot,zRot,xShift,yShift,zShift,zoom,xCut0,xCut1,yCut0,yCut1,zCut0,zCut1;
     bool channelR,channelG,channelB;
     int showSurf;
     int xClip0,xClip1,yClip0,yClip1,zClip0,zClip1;
 
+    GET_PARA;
 
-    QString currentPoint = listWidget->currentItem()->text();
-    QRegExp rx("(\\ |\\,|\\.|\\:|\\t)");
-    QStringList currentParas = currentPoint.split(rx);
-    GET_PARA
+    SET_3DVIEW;
+}
 
-            SET_3DVIEW
+void lookPanel::_slot_show()
+{
+    CHECK_WINDOWS;
 
+    if(list_anchors->currentRow()==-1)
+    {
+        v3d_msg("Please select a valid archor point.");
+        return;
+    }
+
+    if (list_anchors)
+        _slot_show_item(list_anchors->currentItem());
+    else
+        return;
 }
 
 void lookPanel::_slot_upload()
@@ -769,15 +774,15 @@ bool _saveAnchorFile(QString filename, QStringList ParaLists, bool b_append)
 
 bool lookPanel::saveAnchorFile(QString filename)
 {
-    if (filename.isEmpty() || !listWidget || listWidget->count()<=0)
+    if (filename.isEmpty() || !list_anchors || list_anchors->count()<=0)
     {
-        v3d_msg("Fail to invoke saveAnchorFile(), maybe the file name is invalid or invalid listWidget pointer or empty anchor point list.",0);
+        v3d_msg("Fail to invoke saveAnchorFile(), maybe the file name is invalid or invalid list_anchors pointer or empty anchor point list.",0);
         return false;
     }
 
     QStringList paraLists;
-    for(int row = 0; row < listWidget->count(); row++)
-        paraLists << listWidget->item(row)->text();
+    for(int row = 0; row < list_anchors->count(); row++)
+        paraLists << list_anchors->item(row)->text();
 
     return _saveAnchorFile(filename, paraLists, false);
 }
@@ -785,8 +790,8 @@ bool lookPanel::saveAnchorFile(QString filename)
 void lookPanel::_slot_save()
 {    
     QString fileName = QFileDialog::getSaveFileName(this, tr("Save Anchor Point File"),
-                               "",
-                               tr("Anchor Point File (*.apftxt *.txt *.apf)"));
+                                                    "",
+                                                    tr("Anchor Point File (*.apftxt *.txt *.apf)"));
 
     if (!(fileName.isEmpty()))
         saveAnchorFile(fileName);
@@ -806,7 +811,7 @@ void lookPanel::_slot_load()
 
     if (fileOpenName.size()>0)
     {
-        listWidget->clear();
+        list_anchors->clear();
         ifstream ifs(fileOpenName.toLatin1());
         string points;
         MYFLOAT xRot, yRot,zRot,xShift,yShift,zShift,zoom,xCut0,xCut1,yCut0,yCut1,zCut0,zCut1;
@@ -827,9 +832,9 @@ void lookPanel::_slot_load()
                    xClip0 >> xClip1 >> yClip0 >>
                    xClip1 >> zClip0 >> zClip1;
             QString curstr = QString("%1,%2,%3,%4,%5,%6,%7,%8,%9,%10,%11,%12,%13,%14,%15,%16,%17,%18,%19,%20,%21,%22,%23").arg(xRot).arg(yRot).arg(zRot).arg(xShift).arg(yShift).arg(zShift).arg(zoom).arg(xCut0).arg(xCut1).arg(yCut0).arg(yCut1).arg(zCut0).arg(zCut1).arg(channelR).arg(channelG).arg(channelB).arg(showSurf).arg(xClip0).arg(xClip1).arg(yClip0).arg(yClip1).arg(zClip0).arg(zClip1);
-            curstr = curstr.prepend(QString("").setNum(listWidget->count()+1) + ": [ ");
+            curstr = curstr.prepend(QString("").setNum(list_anchors->count()+1) + ": [ ");
             curstr = curstr.append(" ]");
-            listWidget->addItem(new QListWidgetItem(curstr));
+            list_anchors->addItem(new QListWidgetItem(curstr));
 
         }
     }
@@ -885,28 +890,35 @@ void angles_to_quaternions_3DRotation(MYFLOAT q[], MYFLOAT xRot, MYFLOAT yRot,MY
 
 
     const MYFLOAT tr = R[i][i] + R[j][j] + R[k][k];
-    if( tr >= R[0][0]  &&  tr >= R[1][1]  &&  tr >= R[2][2] ) {
+    if( tr >= R[0][0]  &&  tr >= R[1][1]  &&  tr >= R[2][2] )
+    {
         q[0] = 1 + tr;
         q[1] = R[2][1] - R[1][2];
         q[2] = R[0][2] - R[2][0];
         q[3] = R[1][0] - R[0][1];
 
         // Check if R[0][0] is largest along the diagonal
-    } else if( R[0][0] >= R[1][1]  &&  R[0][0] >= R[2][2]  ) {
+    }
+    else if( R[0][0] >= R[1][1]  &&  R[0][0] >= R[2][2]  )
+    {
         q[0] = R[2][1] - R[1][2];
         q[1] = 1 - (tr - 2*R[0][0]);
         q[2] = R[0][1]+R[1][0];
         q[3] = R[0][2]+R[2][0];
 
         // Check if R[1][1] is largest along the diagonal
-    } else if( R[1][1] >= R[2][2] ) {
+    }
+    else if( R[1][1] >= R[2][2] )
+    {
         q[0] = R[0][2] - R[2][0];
         q[1] = R[0][1] + R[1][0];
         q[2] = 1 - (tr - 2*R[1][1]);
         q[3] = R[1][2] + R[2][1];
 
         // R[2][2] is largest along the diagonal
-    } else {
+    }
+    else
+    {
         q[0] = R[1][0] - R[0][1];
         q[1] = R[0][2] + R[2][0];
         q[2] = R[1][2] + R[2][1];
@@ -959,7 +971,8 @@ void slerp_zhi(MYFLOAT q1[], MYFLOAT q2[],MYFLOAT t,MYFLOAT q_sample[])
 
     scale = 1.0/std::sqrt(scale);
 
-    for (int i = 0; i < 4; i++) {
+    for (int i = 0; i < 4; i++)
+    {
         q_sample[i] *= scale;
     }
 
@@ -1007,7 +1020,6 @@ void quaternions_to_angles_3DRotation(MYFLOAT Rot_current[], MYFLOAT q[])
     Rot_current[0] = rot_x * (180.0/pi);
     Rot_current[1] = rot_y * (180.0/pi);
     Rot_current[2] = rot_z * (180.0/pi);
-
 }
 
 

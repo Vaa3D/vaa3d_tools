@@ -58,8 +58,8 @@ public:
     V3DPluginCallback2 & m_v3d;
 
     QGridLayout *gridLayout;
-    QListWidget *listWidget;
-
+    QListWidget *list_anchors;
+    QSpinBox* box_SampleRate;
 
     MyComboBox* combo_surface;
     QLabel* label_surface;
@@ -69,6 +69,7 @@ public:
 private slots:
     void _slot_record();
     void _slot_preview();
+    void _slot_show_item(QListWidgetItem *item);
     void _slot_show();
     void _slot_delete();
     void _slot_upload();
