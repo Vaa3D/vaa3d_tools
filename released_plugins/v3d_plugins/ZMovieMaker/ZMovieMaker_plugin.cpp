@@ -5,15 +5,20 @@
  * 2013-12-14: add MYFLOAT (double) for better precision of floating number computation
  */
 
+//TODO: need to add the anchor point move up or down operations button. by PHC 20131214
+
 #include "v3d_message.h"
-#include <vector>
 #include "ZMovieMaker_plugin.h"
+
+#include <vector>
 #include <fstream>
 #include <iostream>
 #include <sstream>
 #include <cmath>
+
 using namespace std;
 const double pi = 3.1415926535897;
+
 Q_EXPORT_PLUGIN2(ZMovieMaker, ZMovieMaker);
 
 #define __ZMAKE_DEBUG__ 1
@@ -535,13 +540,17 @@ void lookPanel::_slot_preview()
 
         GET_PARA
 
-        if(row>0)
+        if(row==0)
+        {
+            SET_3DVIEW
+        }
+        else
         {
 #ifdef __ZMAKE_DEBUG__
             QStringList tmpParaLists;
 #endif
 
-            for (int i=1; i<N+1;i++)
+            for (int i=1; i<=N; i++)
             {
                 INTERPOLATION_PARA
 
@@ -551,29 +560,29 @@ void lookPanel::_slot_preview()
 
                 tmpt.setNum(i).append(": [ ");
 
-                tmps.setNum(Rot_current[0]);                tmpt.append(tmps).append(" ");
-                tmps.setNum(Rot_current[1]);                tmpt.append(tmps).append(" ");
-                tmps.setNum(Rot_current[2]);                tmpt.append(tmps).append(" ");
-                tmps.setNum(xShift_current);                tmpt.append(tmps).append(" ");
-                tmps.setNum(yShift_current);                tmpt.append(tmps).append(" ");
-                tmps.setNum(zShift_current);                tmpt.append(tmps).append(" ");
-                tmps.setNum(zoom_current);                  tmpt.append(tmps).append(" ");
-                tmps.setNum(xCut0_current);                 tmpt.append(tmps).append(" ");
-                tmps.setNum(xCut1_current);                 tmpt.append(tmps).append(" ");
-                tmps.setNum(yCut0_current);                 tmpt.append(tmps).append(" ");
-                tmps.setNum(yCut1_current);                 tmpt.append(tmps).append(" ");
-                tmps.setNum(zCut0_current);                 tmpt.append(tmps).append(" ");
-                tmps.setNum(zCut1_current);                 tmpt.append(tmps).append(" ");
-                tmps.setNum(channel_current);               tmpt.append(tmps).append(" ");
-                tmps.setNum(channel_current);               tmpt.append(tmps).append(" ");
-                tmps.setNum(channel_current);               tmpt.append(tmps).append(" ");
-                tmps.setNum(1);               tmpt.append(tmps).append(" ");     //1 for showSurf. This is only debug purpose as it seems Zhi's code has some bug for this field
-                tmps.setNum(xClip0_current);                tmpt.append(tmps).append(" ");
-                tmps.setNum(xClip1_current);                tmpt.append(tmps).append(" ");
-                tmps.setNum(yClip0_current);                tmpt.append(tmps).append(" ");
-                tmps.setNum(yClip1_current);                tmpt.append(tmps).append(" ");
-                tmps.setNum(zClip0_current);                tmpt.append(tmps).append(" ");
-                tmps.setNum(zClip1_current);                tmpt.append(tmps).append(" ");
+                tmps.setNum((int)Rot_current[0]);                tmpt.append(tmps).append(" ");
+                tmps.setNum((int)Rot_current[1]);                tmpt.append(tmps).append(" ");
+                tmps.setNum((int)Rot_current[2]);                tmpt.append(tmps).append(" ");
+                tmps.setNum((int)xShift_current);                tmpt.append(tmps).append(" ");
+                tmps.setNum((int)yShift_current);                tmpt.append(tmps).append(" ");
+                tmps.setNum((int)zShift_current);                tmpt.append(tmps).append(" ");
+                tmps.setNum((int)zoom_current);                  tmpt.append(tmps).append(" ");
+                tmps.setNum((int)xCut0_current);                 tmpt.append(tmps).append(" ");
+                tmps.setNum((int)xCut1_current);                 tmpt.append(tmps).append(" ");
+                tmps.setNum((int)yCut0_current);                 tmpt.append(tmps).append(" ");
+                tmps.setNum((int)yCut1_current);                 tmpt.append(tmps).append(" ");
+                tmps.setNum((int)zCut0_current);                 tmpt.append(tmps).append(" ");
+                tmps.setNum((int)zCut1_current);                 tmpt.append(tmps).append(" ");
+                tmps.setNum((int)1);               tmpt.append(tmps).append(" ");  //set to 1 for tentative testing
+                tmps.setNum((int)1);               tmpt.append(tmps).append(" ");  //set to 1 for tentative testing
+                tmps.setNum((int)1);               tmpt.append(tmps).append(" ");  //set to 1 for tentative testing
+                tmps.setNum((int)2);               tmpt.append(tmps).append(" ");     //2 for showSurf. This is only debug purpose as it seems Zhi's code has some bug for this field
+                tmps.setNum((int)xClip0_current);                tmpt.append(tmps).append(" ");
+                tmps.setNum((int)xClip1_current);                tmpt.append(tmps).append(" ");
+                tmps.setNum((int)yClip0_current);                tmpt.append(tmps).append(" ");
+                tmps.setNum((int)yClip1_current);                tmpt.append(tmps).append(" ");
+                tmps.setNum((int)zClip0_current);                tmpt.append(tmps).append(" ");
+                tmps.setNum((int)zClip1_current);                tmpt.append(tmps).append(" ");
 
 
                 tmpt.append("]");
@@ -584,13 +593,9 @@ void lookPanel::_slot_preview()
             }
 
 #ifdef __ZMAKE_DEBUG__
-            _saveAnchorFile("/tmp/apfdebug.apftxt", tmpParaLists);
+            _saveAnchorFile("/Users/pengh/Downloads/apfdebug.apftxt", tmpParaLists);
 #endif
 
-        }
-        else
-        {
-            SET_3DVIEW
         }
 
         UPDATE_PARA
