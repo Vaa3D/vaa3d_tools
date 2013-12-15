@@ -940,33 +940,43 @@ void angles_to_quaternions_3DRotation(MYFLOAT q[], MYFLOAT xRot, MYFLOAT yRot,MY
 void slerp_zhi(MYFLOAT q1[], MYFLOAT q2[], MYFLOAT t, MYFLOAT q_sample[])
 {
     MYFLOAT cos_t = dot_multi(q1, q2);
-    MYFLOAT theta,beta,alpha;
+    MYFLOAT omega, theta;
+    MYFLOAT c1,  c2;
     bool flag = false;
     if(cos_t<0.0)
     {
         cos_t = -cos_t;
         flag = true;
     }
-    theta = acosf(cos_t);
-    if ((1.0 - fabsf(cos_t)) < 1e-7)
+    omega = acos(cos_t);
+    if (fabs(1.0 - fabs(cos_t)) < 0.001) //no need to interpolate in this case. the two ends are too close
     {
-        beta = 1.0 - t;
-        alpha = t;
+        c1 = 1.0 - t;
+        c2 = t;
     }
     else
     {
-        beta = sinf(theta - t*theta)/sinf(theta);
-        alpha = sinf(t*theta)/sinf(theta);
+        theta = t*omega;
+        double somega = sin(omega);
+        if (abs(somega)<0.001)
+        {
+            c1 = 1.0-t; c2 = t; //no need to interpolate in this case. the two ends are too close
+        }
+        else
+        {
+            c1 = sin(omega - theta)/sin(omega);
+            c2 = sin(theta)/sin(omega);
+        }
     }
     if(flag)
-        alpha = -alpha;
+        c2 = -c2;
 
-    printf("slerp result is (%f, %f, %f, %f, %f)\n\n", cos_t, theta, beta, alpha, t);
+    printf("slerp result is (cos_t=%f, omega=%f, c1=%f, c2=%f, t=%f)\n\n", cos_t, omega, c1, c2, t);
 
     MYFLOAT scale = 0;
     for(int i= 0; i<4;i++)
     {
-        q_sample[i] = beta*q1[i] + alpha*q2[i];
+        q_sample[i] = c1*q1[i] + c2*q2[i];
         scale += q_sample[i] * q_sample[i];
     }
 
