@@ -717,7 +717,7 @@ bool _saveAnchorFile(QString filename, QStringList ParaLists)
     }
 
     ofstream myfile;
-    myfile.open (filename.toLatin1(),ios::out | ios::app ); //need fix! need to check if myfile.open is successful! noted by PHC, 20131214
+    myfile.open (filename.toLatin1(),ios::out | ios::trunc); //need fix! need to check if myfile.open is successful! noted by PHC, 20131214
     QRegExp rx("(\\ |\\,|\\.|\\:|\\t)");
     for(int row = 0; row < ParaLists.size(); row++)
     {
