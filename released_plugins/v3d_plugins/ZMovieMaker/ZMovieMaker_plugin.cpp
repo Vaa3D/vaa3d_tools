@@ -429,7 +429,7 @@ lookPanel::lookPanel(V3DPluginCallback2 &_v3d, QWidget *parent) :
     connect(btn_Upload, SIGNAL(clicked()), this, SLOT(_slot_upload()));
     connect(box_SampleRate, SIGNAL(valueChanged(double)), this, SLOT(update()));
 
-    connect(list_anchors, SIGNAL(itemDoubleClicked(QListWidgetItem)), this, SLOT(_slot_show()));
+    connect(list_anchors, SIGNAL(itemDoubleClicked(QListWidgetItem *)), this, SLOT(_slot_show_item(QListWidgetItem *)));
 }
 
 void lookPanel::_slot_record()
@@ -676,12 +676,12 @@ void lookPanel::_slot_delete()
 
         }
     }
-
-
 }
 
 void lookPanel::_slot_show_item(QListWidgetItem *item)
 {
+    CHECK_WINDOWS;
+
     if (!item) return;
     QString currentPoint = item->text();
     QRegExp rx("(\\ |\\,|\\.|\\:|\\t)");
@@ -1020,6 +1020,8 @@ void quaternions_to_angles_3DRotation(MYFLOAT Rot_current[], MYFLOAT q[])
     Rot_current[0] = rot_x * (180.0/pi);
     Rot_current[1] = rot_y * (180.0/pi);
     Rot_current[2] = rot_z * (180.0/pi);
+
+    return;
 }
 
 
@@ -1031,7 +1033,6 @@ MYFLOAT dot_multi(MYFLOAT q1[], MYFLOAT q2[])
     for(int i= 0; i<4;i++)
     {
         result += q1[i] * q2[i];
-
     }
 
     return result;
