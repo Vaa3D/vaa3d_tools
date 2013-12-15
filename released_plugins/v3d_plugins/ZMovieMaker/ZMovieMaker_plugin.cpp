@@ -888,7 +888,6 @@ void angles_to_quaternions_3DRotation(MYFLOAT q[], MYFLOAT xRot, MYFLOAT yRot,MY
     R[k][j] =  s1c3 + sinAngle2 * s3c1;
     R[k][k] =  cosAngle1 * cosAngle2;
 
-
     const MYFLOAT tr = R[i][i] + R[j][j] + R[k][k];
     if( tr >= R[0][0]  &&  tr >= R[1][1]  &&  tr >= R[2][2] )
     {
@@ -924,26 +923,29 @@ void angles_to_quaternions_3DRotation(MYFLOAT q[], MYFLOAT xRot, MYFLOAT yRot,MY
         q[2] = R[1][2] + R[2][1];
         q[3] = 1 - (tr - 2*R[2][2]);
     }
-    // Scale to unit length
-    MYFLOAT scale = 0.0;
-    for (int i = 0; i < 4; i++)
-        scale += q[i] * q[i];
-    scale = std::sqrt(scale);
-    if( q[0] < 0 )  scale = -scale;   // canonicalize
-    for (int i = 0; i < 4; i++)
-        q[i] *= 1.0/scale;
 
+    // Scale to unit length
+    int tmpi; //change i to tmpi as 'i' has ben defined above.
+    MYFLOAT scale = 0.0;
+    for (tmpi = 0; tmpi < 4; tmpi++)
+        scale += q[tmpi] * q[tmpi];
+    scale = 1.0/std::sqrt(scale);
+    if( q[0] < 0 )  scale = -scale;   // canonicalize
+    for (tmpi = 0; tmpi < 4; tmpi++)
+        q[tmpi] *= scale;
+
+    return;
 }
 
-void slerp_zhi(MYFLOAT q1[], MYFLOAT q2[],MYFLOAT t,MYFLOAT q_sample[])
+void slerp_zhi(MYFLOAT q1[], MYFLOAT q2[], MYFLOAT t, MYFLOAT q_sample[])
 {
-    MYFLOAT cos_t = dot_multi(q1,q2);
+    MYFLOAT cos_t = dot_multi(q1, q2);
     MYFLOAT theta,beta,alpha;
-    int flag = 0;
+    bool flag = false;
     if(cos_t<0.0)
     {
         cos_t = -cos_t;
-        flag =1;
+        flag = true;
     }
     theta = acosf(cos_t);
     if ((1.0 - fabsf(cos_t)) < 1e-7)
@@ -953,14 +955,13 @@ void slerp_zhi(MYFLOAT q1[], MYFLOAT q2[],MYFLOAT t,MYFLOAT q_sample[])
     }
     else
     {
-
         beta = sinf(theta - t*theta)/sinf(theta);
         alpha = sinf(t*theta)/sinf(theta);
     }
-    if(flag ==1)
+    if(flag)
         alpha = -alpha;
 
-    printf("slerp result is (%f,%f,%f,%f,%f)\n\n",cos_t,theta,beta,alpha,t);
+    printf("slerp result is (%f, %f, %f, %f, %f)\n\n", cos_t, theta, beta, alpha, t);
 
     MYFLOAT scale = 0;
     for(int i= 0; i<4;i++)
@@ -976,14 +977,14 @@ void slerp_zhi(MYFLOAT q1[], MYFLOAT q2[],MYFLOAT t,MYFLOAT q_sample[])
         q_sample[i] *= scale;
     }
 
+    return;
 }
 
 void quaternions_to_angles(MYFLOAT Rot_current[], MYFLOAT q_sample[])
 {
-
-    MYFLOAT rot_x = atan2f(2*(q_sample[0]*q_sample[1]+q_sample[2]*q_sample[3]),1-2*(q_sample[1]*q_sample[1]+q_sample[2]*q_sample[2]));
-    MYFLOAT rot_y = asinf(2*(q_sample[0]*q_sample[2]-q_sample[3]*q_sample[1]));
-    MYFLOAT rot_z = atan2f(2*(q_sample[0]*q_sample[3]+q_sample[1]*q_sample[2]),1-2*(q_sample[2]*q_sample[2]+q_sample[3]*q_sample[3]));
+    MYFLOAT rot_x = atan2f(2.0*(q_sample[0]*q_sample[1]+q_sample[2]*q_sample[3]), 1.0-2.0*(q_sample[1]*q_sample[1]+q_sample[2]*q_sample[2]));
+    MYFLOAT rot_y = asinf(2.0*(q_sample[0]*q_sample[2]-q_sample[3]*q_sample[1]));
+    MYFLOAT rot_z = atan2f(2.0*(q_sample[0]*q_sample[3]+q_sample[1]*q_sample[2]), 1.0-2.0*(q_sample[2]*q_sample[2]+q_sample[3]*q_sample[3]));
 
     Rot_current[0] = rot_x * (180.0/pi);
     Rot_current[1] = rot_y * (180.0/pi);
@@ -992,30 +993,29 @@ void quaternions_to_angles(MYFLOAT Rot_current[], MYFLOAT q_sample[])
 
 void quaternions_to_angles_3DRotation(MYFLOAT Rot_current[], MYFLOAT q[])
 {
-    const MYFLOAT q00=q[0]*q[0], q11=q[1]*q[1], q22=q[2]*q[2], q33=q[3]*q[3];
-    const MYFLOAT q01=q[0]*q[1], q02=q[0]*q[2], q03=q[0]*q[3];
-    const MYFLOAT q12=q[1]*q[2], q13=q[1]*q[3], q23=q[2]*q[3];
+    MYFLOAT q00 = q[0]*q[0], q11=q[1]*q[1], q22=q[2]*q[2], q33=q[3]*q[3];
+    MYFLOAT q01 = q[0]*q[1], q02=q[0]*q[2], q03=q[0]*q[3];
+    MYFLOAT q12 = q[1]*q[2], q13=q[1]*q[3], q23=q[2]*q[3];
 
     MYFLOAT R[3][3];
 
-    const int i = 0;
-    const int j = 1;
-    const int k = 2;
+    int i = 0;
+    int j = 1;
+    int k = 2;
 
-    R[i][i] =  q00+q11-q22-q33;
-    R[i][j] =  2*(q12-q03);
-    R[i][k] =  2*(q13+q02);
+    R[i][i] = q00+q11-q22-q33;
+    R[i][j] = 2*(q12-q03);
+    R[i][k] = 2*(q13+q02);
     R[j][i] = 2*(q12+q03);
-    R[j][j] =   q00-q11+q22-q33;
+    R[j][j] = q00-q11+q22-q33;
     R[j][k] = 2*(q23-q01);
-    R[k][i] =   2*(q13-q02);
+    R[k][i] = 2*(q13-q02);
     R[k][j] = 2*(q23+q01);
-    R[k][k] =  q00-q11-q22+q33;
+    R[k][k] = q00-q11-q22+q33;
 
     MYFLOAT rot_x = atan2f(R[1][2],R[2][2]);
     MYFLOAT rot_y = atan2f(-R[0][2], -sqrt(R[0][0]*R[0][0]+R[0][1]*R[0][1]));
     MYFLOAT rot_z = atan2f(sinf(rot_x)* R[2][0] - cosf(rot_x)*R[1][0], cosf(rot_x)*R[1][1] - sinf(rot_x)*R[2][1]);
-
 
     Rot_current[0] = rot_x * (180.0/pi);
     Rot_current[1] = rot_y * (180.0/pi);
