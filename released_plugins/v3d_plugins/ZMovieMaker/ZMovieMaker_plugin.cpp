@@ -670,6 +670,8 @@ void lookPanel::_slot_preview()
 
             }
 
+            v3d_msg(QString("Video frams have been saved in [%1], please use ZMovieMaker to convert to a single movie.").arg(selectedFile));
+
         }
     }
 
