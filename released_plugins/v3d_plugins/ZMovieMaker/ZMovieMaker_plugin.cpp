@@ -34,6 +34,7 @@ void quaternions_to_angles(MYFLOAT Rot_current[], MYFLOAT q_sample[]);
 void angles_to_quaternions_3DRotation(MYFLOAT q[], MYFLOAT xRot, MYFLOAT yRot,MYFLOAT zRot);
 void quaternions_to_angles_3DRotation(MYFLOAT Rot_current[], MYFLOAT q_sample[]);
 MYFLOAT dot_multi(MYFLOAT q1[], MYFLOAT q2[]);
+MYFLOAT dot_multi_normalized(MYFLOAT q1[], MYFLOAT q2[]);
 
 QString warning_msg = "Oops... The image you selected no longer exists... The file list has been refreshed now and you can try it again.";
 
@@ -123,7 +124,7 @@ QString warning_msg = "Oops... The image you selected no longer exists... The fi
     view->resetRotation();\
     angles_to_quaternions(q1,xRot_last,yRot_last,zRot_last);\
     angles_to_quaternions(q2,xRot,yRot,zRot);\
-    slerp_zhi(q1, q2,(MYFLOAT)i/N,q_sample);\
+    slerp_zhi(q1, q2, (MYFLOAT)i/N, q_sample);\
     \
     \
     quaternions_to_angles(Rot_current,q_sample);\
@@ -615,11 +616,12 @@ void lookPanel::_slot_preview()
             {
                 QString currentPoint = list_anchors->item(row)->text();
                 QStringList currentParas = currentPoint.split(rx);
-                GET_PARA
 
-                        if(row>0)
+                GET_PARA;
+
+                if(row>0)
                 {
-                    for (int i =1; i<N+1;i++)
+                    for (int i=1; i<=N; i++)
                     {
                         INTERPOLATION_PARA;
 
@@ -639,9 +641,8 @@ void lookPanel::_slot_preview()
 
         }
     }
-    else
-        return;
 
+    return;
 }
 
 void lookPanel::_slot_delete()
@@ -939,39 +940,35 @@ void angles_to_quaternions_3DRotation(MYFLOAT q[], MYFLOAT xRot, MYFLOAT yRot,MY
 
 void slerp_zhi(MYFLOAT q1[], MYFLOAT q2[], MYFLOAT t, MYFLOAT q_sample[])
 {
-    MYFLOAT cos_t = dot_multi(q1, q2);
+    MYFLOAT cos_omega = dot_multi_normalized(q1, q2);
     MYFLOAT omega, theta;
     MYFLOAT c1,  c2;
     bool flag = false;
-    if(cos_t<0.0)
+
+    if (cos_omega<0)
     {
-        cos_t = -cos_t;
         flag = true;
+        cos_omega = -cos_omega;
     }
-    omega = acos(cos_t);
-    if (fabs(1.0 - fabs(cos_t)) < 0.001) //no need to interpolate in this case. the two ends are too close
+    omega = acos(cos_omega);
+
+    theta = t*omega;
+    double sin_omega = sin(omega);
+    if (fabs(sin_omega)<0.001) //use linear interpolation when the angle is close to 0
     {
-        c1 = 1.0 - t;
+        c1 = 1.0-t;
         c2 = t;
     }
     else
     {
-        theta = t*omega;
-        double somega = sin(omega);
-        if (abs(somega)<0.001)
-        {
-            c1 = 1.0-t; c2 = t; //no need to interpolate in this case. the two ends are too close
-        }
-        else
-        {
-            c1 = sin(omega - theta)/sin(omega);
-            c2 = sin(theta)/sin(omega);
-        }
+        c1 = sin(omega - theta)/sin_omega;
+        c2 = sin(theta)/sin_omega;
     }
-    if(flag)
-        c2 = -c2;
 
-    printf("slerp result is (cos_t=%f, omega=%f, c1=%f, c2=%f, t=%f)\n\n", cos_t, omega, c1, c2, t);
+    if (flag<0)
+        c2 = -c2; //equivalent to negative of one end of q1 or q2 (in this case, it is q2) for the interpolation below
+
+    printf("slerp result is (cos_t=%f, omega=%f, flag=%d, angle=%f, c1=%f, c2=%f)\n", cos_omega, omega, int(flag), omega/pi*180.0, c1, c2);
 
     MYFLOAT scale = 0;
     for(int i= 0; i<4;i++)
@@ -986,6 +983,10 @@ void slerp_zhi(MYFLOAT q1[], MYFLOAT q2[], MYFLOAT t, MYFLOAT q_sample[])
     {
         q_sample[i] *= scale;
     }
+
+    printf("current t=%f, current angle with p1=%f, current angle with p2=%f. sum angle=%f. \n\n",
+           t, acos(dot_multi_normalized(q1, q_sample))/pi*180.0, acos(dot_multi_normalized(q_sample, q2))/pi*180.0,
+           acos(dot_multi_normalized(q1, q_sample))/pi*180.0 + acos(dot_multi_normalized(q_sample, q2))/pi*180.0);
 
     return;
 }
@@ -1048,6 +1049,19 @@ MYFLOAT dot_multi(MYFLOAT q1[], MYFLOAT q2[])
     return result;
 }
 
+MYFLOAT dot_multi_normalized(MYFLOAT q1[], MYFLOAT q2[])
+{
+    MYFLOAT result = 0.0, r1=0.0, r2=0.0;
+
+    for(int i= 0; i<4;i++)
+    {
+        result += q1[i] * q2[i];
+        r1 += q1[i]*q1[i];
+        r2 += q2[i]*q2[i];
+    }
+
+    return result/sqrt(r1*r2);
+}
 
 
 
