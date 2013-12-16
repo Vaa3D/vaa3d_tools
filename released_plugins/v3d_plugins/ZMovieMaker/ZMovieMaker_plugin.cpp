@@ -390,8 +390,8 @@ lookPanel::lookPanel(V3DPluginCallback2 &_v3d, QWidget *parent) :
     QPushButton* btn_Show = new QPushButton("Show Selected Anchor Point");
     QPushButton* btn_Delete = new QPushButton("Delete Selected Anchor Point");
     QPushButton* btn_Upload = new QPushButton("Upload to Youtube");
-    QPushButton* btn_Save = new QPushButton("Save file");
-    QPushButton* btn_Load = new QPushButton("Load file");
+    QPushButton* btn_Save = new QPushButton("Save Anchor-point file");
+    QPushButton* btn_Load = new QPushButton("Load Anchor-point file");
 
     box_SampleRate = new QSpinBox();
     QLabel* SampleName = new QLabel(QObject::tr("Sampling Rate:"));
