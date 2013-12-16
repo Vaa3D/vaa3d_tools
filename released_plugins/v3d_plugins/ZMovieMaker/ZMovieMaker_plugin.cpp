@@ -36,8 +36,6 @@ void quaternions_to_angles_3DRotation(MYFLOAT Rot_current[], MYFLOAT q_sample[])
 MYFLOAT dot_multi(MYFLOAT q1[], MYFLOAT q2[]);
 MYFLOAT dot_multi_normalized(MYFLOAT q1[], MYFLOAT q2[]);
 
-QString warning_msg = "Oops... The image you selected no longer exists... The file list has been refreshed now and you can try it again.";
-
 #define SET_3DVIEW \
 { \
     view->resetRotation();\
@@ -244,6 +242,25 @@ QString warning_msg = "Oops... The image you selected no longer exists... The fi
     if (!view) return;\
     }
 
+#define UPDATE_LIST_INDEX \
+{\
+    if(list_anchors->count() > 0)\
+    {\
+        QList<QString> updatePointsList;\
+        for(int row = 0; row < list_anchors->count(); row++)\
+        {\
+            QString currentPoint = list_anchors->item(row)->text();\
+            currentPoint.remove(0,1);\
+            currentPoint = currentPoint.prepend(QString("").setNum(row+1));\
+            updatePointsList << currentPoint;\
+        }\
+        list_anchors->clear();\
+        for(int row = 0; row < updatePointsList.count(); row++)\
+        {\
+            list_anchors->addItem(new QListWidgetItem(updatePointsList.at(row)));\
+        }\
+    }\
+}
 
 QStringList ZMovieMaker::menulist() const
 {
@@ -392,6 +409,8 @@ lookPanel::lookPanel(V3DPluginCallback2 &_v3d, QWidget *parent) :
     QPushButton* btn_Upload = new QPushButton("Upload to Youtube");
     QPushButton* btn_Save = new QPushButton("Save Anchor-point file");
     QPushButton* btn_Load = new QPushButton("Load Anchor-point file");
+    QPushButton* btn_Up = new QPushButton("Move Up");
+    QPushButton* btn_Down = new QPushButton("Move Down");
 
     box_SampleRate = new QSpinBox();
     QLabel* SampleName = new QLabel(QObject::tr("Sampling Rate:"));
@@ -409,6 +428,8 @@ lookPanel::lookPanel(V3DPluginCallback2 &_v3d, QWidget *parent) :
     gridLayout->addWidget(label_surface, 1,0,1,5);
     gridLayout->addWidget(combo_surface, 2,0,1,5);
     gridLayout->addWidget(btn_Record, 8,0,1,2);
+    gridLayout->addWidget(btn_Up, 8,2,1,1);
+    gridLayout->addWidget(btn_Down, 8,4,1,1);
     gridLayout->addWidget(btn_Preview,5,6,1,3);
     gridLayout->addWidget(btn_Show,10,0,1,2);
     gridLayout->addWidget(btn_Delete,9,0,1,2);
@@ -436,6 +457,9 @@ lookPanel::lookPanel(V3DPluginCallback2 &_v3d, QWidget *parent) :
     connect(btn_Load, SIGNAL(clicked()), this, SLOT(_slot_load()));
     connect(btn_Upload, SIGNAL(clicked()), this, SLOT(_slot_upload()));
     connect(box_SampleRate, SIGNAL(valueChanged(double)), this, SLOT(update()));
+    connect(btn_Up, SIGNAL(clicked()), this, SLOT(_slot_up()));
+    connect(btn_Down, SIGNAL(clicked()), this, SLOT(_slot_down()));
+
 
     connect(list_anchors, SIGNAL(itemDoubleClicked(QListWidgetItem *)), this, SLOT(_slot_show_item(QListWidgetItem *)));
 }
@@ -664,26 +688,7 @@ void lookPanel::_slot_delete()
 
     list_anchors->takeItem(list_anchors->currentRow());
 
-    //update the index of anchor points
-    if(list_anchors->count() > 0)
-    {
-        QList<QString> updatePointsList;
-
-        for(int row = 0; row < list_anchors->count(); row++)
-        {
-            QString currentPoint = list_anchors->item(row)->text();
-            currentPoint.remove(0,1);
-            currentPoint = currentPoint.prepend(QString("").setNum(row+1));
-            updatePointsList << currentPoint;
-        }
-
-        list_anchors->clear();
-        for(int row = 0; row < updatePointsList.count(); row++)
-        {
-            list_anchors->addItem(new QListWidgetItem(updatePointsList.at(row)));
-
-        }
-    }
+    UPDATE_LIST_INDEX
 }
 
 void lookPanel::_slot_show_item(QListWidgetItem *item)
@@ -847,6 +852,50 @@ void lookPanel::_slot_load()
         }
     }
     return;
+}
+
+void lookPanel::_slot_up()
+{
+    CHECK_WINDOWS;
+
+    if(list_anchors->currentRow()==-1)
+    {
+        v3d_msg("Please select a valid archor point.");
+        return;
+    }
+
+    if(list_anchors->currentRow() > 0)
+    {
+        int currentIndex = list_anchors->currentRow();
+        QListWidgetItem *currentItem = list_anchors->takeItem(currentIndex);
+        list_anchors->insertItem(currentIndex-1, currentItem);
+        list_anchors->setCurrentRow(currentIndex-1);
+
+       UPDATE_LIST_INDEX
+    }
+
+}
+
+void lookPanel::_slot_down()
+{
+    CHECK_WINDOWS;
+
+    if(list_anchors->currentRow()==-1)
+    {
+        v3d_msg("Please select a valid archor point.");
+        return;
+    }
+
+    if(list_anchors->currentRow() < list_anchors->count()-1)
+    {
+        int currentIndex = list_anchors->currentRow();
+        QListWidgetItem *currentItem = list_anchors->takeItem(currentIndex);
+        list_anchors->insertItem(currentIndex+1, currentItem);
+        list_anchors->setCurrentRow(currentIndex+1);
+
+       UPDATE_LIST_INDEX
+    }
+
 }
 
 void angles_to_quaternions(MYFLOAT q[], MYFLOAT xRot, MYFLOAT yRot,MYFLOAT zRot)

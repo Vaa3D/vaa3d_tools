@@ -75,6 +75,8 @@ private slots:
     void _slot_upload();
     void _slot_save();
     void _slot_load();
+    void _slot_up();
+    void _slot_down();
 };
 
 bool _saveAnchorFile(QString filename, QStringList ParaLists, bool b_append);
