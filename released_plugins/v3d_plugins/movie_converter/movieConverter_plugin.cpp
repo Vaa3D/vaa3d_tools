@@ -55,7 +55,13 @@ bool MovieConverter::dofunc(const QString & func_name, const V3DPluginArgList & 
         cout<<"Welcome to movie converter"<<endl;
 
         char * inimg_file = ((vector<char*> *)(input.at(0).p))->at(0);
-        const char * ffmpeg_file = getAppPath().append("/mac_ffmpeg").toStdString().c_str();
+        const char * ffmpeg_file;
+        #if  defined(Q_OS_MAX)
+            ffmpeg_file  = getAppPath().append("/mac_ffmpeg").toStdString().c_str();
+        #elif defined(Q_OS_LINUX)
+            ffmpeg_file = getAppPath().append("/linux_ffmpeg").toStdString().c_str();
+        #endif
+
         QString check_ffmpeg;
         char * inimg_format = "file_[NUM].bmp";
         char * output_fps = "14";
@@ -185,7 +191,11 @@ controlPanel::controlPanel(V3DPluginCallback2 &_v3d, QWidget *parent) :
     m_pLineEdit_fps = new QLineEdit(QObject::tr("14"));
     m_pLineEdit_filepath = new QLineEdit();
     m_pLineEdit_filename = new QLineEdit(QObject::tr("file_[num].bmp"));
-    m_pLineEdit_ffmpegpath = new QLineEdit(getAppPath().append("/mac_ffmpeg"));
+    #if  defined(Q_OS_MAX)
+         m_pLineEdit_ffmpegpath = new QLineEdit(getAppPath().append("/mac_ffmpeg"));
+    #elif defined(Q_OS_LINUX)
+         m_pLineEdit_ffmpegpath = new QLineEdit(getAppPath().append("/linux_ffmpeg"));
+    #endif
     QPushButton *pPushButton_start = new QPushButton(QObject::tr("convert"));
     QPushButton *pPushButton_close = new QPushButton(QObject::tr("close"));
     QPushButton *pPushButton_openFileDlg_output = new QPushButton(QObject::tr("..."));
