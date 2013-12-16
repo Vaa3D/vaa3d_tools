@@ -216,8 +216,8 @@ controlPanel::controlPanel(V3DPluginCallback2 &_v3d, QWidget *parent) :
     inputLayout->addWidget(new QLabel(QObject::tr("Movie-frame folder:")),1,1);
     inputLayout->addWidget(m_pLineEdit_filepath,2,1,1,2);
     inputLayout->addWidget(pPushButton_openFileDlg_output,2,3,1,1);
-    inputLayout->addWidget(new QLabel(QObject::tr("Mvie-frame file-naming format:\n"
-                                                   "(e.g.aaa_[NUM].bmp for aaa_1.bmp)")),3,1,1,2);
+    inputLayout->addWidget(new QLabel(QObject::tr("Movie-frame file-naming format:\n"
+                                                   "(e.g. aaa[NUM].bmp for aaa1.bmp)")),3,1,1,2);
     inputLayout->addWidget(m_pLineEdit_filename,3,3);
     input_panel->setLayout(inputLayout);
 
@@ -252,7 +252,7 @@ controlPanel::controlPanel(V3DPluginCallback2 &_v3d, QWidget *parent) :
     pGridLayout->addWidget(pPushButton_openFileDlg_output,2,3);
 
     pGridLayout->addWidget(new QLabel(QObject::tr("Input movie-frame file-naming format:\n"
-                                                   "(e.g.aaa_[NUM].bmp for aaa_1.bmp)")),3,1);
+                                                   "(e.g.aaa[NUM].bmp for aaa1.bmp)")),3,1);
     pGridLayout->addWidget(m_pLineEdit_filename,3,2);
 
     pGridLayout->addWidget(new QLabel(QObject::tr("Output video fps:")),4,1);
