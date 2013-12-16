@@ -1,9 +1,6 @@
-//loader = IJ.getClassLoader();
-//raw_readerX = loader.getResource("raw_reader.class");
-//importClass("Applications.Fiji.app.plugins.3draw_io_imagejBRL.raw_reader.class")
-//IJ.getClassLoader().getResource("raw_reader.class")
+// 2013.12  BRL script to be executed in command line calls to Fiji.
 
-name = getArgument();
+name = getArgument(); // the single argument has to be split by a ":" into input and output files
 argarray = name.split(":"); 
 
 if (name=="") 
@@ -33,7 +30,7 @@ if ((inextension==".v3draw") || (inextension==".raw"))
 print("reading .v3draw or .raw file with raw reader");
 //raw_readerX.run("open="+inname);
 //imp=Opener(inname);
-IJ.run(imp, "raw reader", "open="+inname);
+IJ.run(imp, "raw reader", "open="+inname);     
 imp = IJ.getImage()
 }
 else 

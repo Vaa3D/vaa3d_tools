@@ -40,8 +40,8 @@ Q_EXPORT_PLUGIN2(open_fiji, open_fiji);
 QStringList open_fiji::menulist() const
 {
 	return QStringList() 
-        <<tr("Import using Fiji and save as .v3draw")
-        <<tr("Convert .v3draw to .avi")
+        <<tr("Import using ImageJ and save as .v3draw")
+        <<tr("Convert .v3draw file to .avi")
         <<tr("About");
 }
 
@@ -55,7 +55,7 @@ QStringList open_fiji::funclist() const
 void open_fiji::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
 {
     printf(menu_name.toStdString().c_str());
-    if (menu_name == tr("Import using Fiji and save as .v3draw"))
+    if (menu_name == tr("Import using ImageJ and save as .v3draw"))
     {
 
         // input image file
@@ -158,13 +158,13 @@ void open_fiji::domenu(const QString &menu_name, V3DPluginCallback2 &callback, Q
         callback.updateImageWindow(newwin);
 
     }
-    else if (menu_name == tr("Convert .v3draw to .avi"))
+    else if (menu_name == tr("Convert .v3draw file to .avi"))
 	{
 
         // input image file
-        QString m_FileName = QFileDialog::getOpenFileName(parent, QObject::tr("Open An Image"),
+        QString m_FileName = QFileDialog::getOpenFileName(parent, QObject::tr("Select .v3draw file"),
                                                           QDir::currentPath(),
-                                                          QObject::tr("Image File (*.*)"));
+                                                          QObject::tr("Image File (*.v3draw*)"));
 
 
         if(m_FileName.isEmpty())
