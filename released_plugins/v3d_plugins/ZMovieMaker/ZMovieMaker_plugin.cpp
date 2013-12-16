@@ -62,6 +62,13 @@ QString warning_msg = "Oops... The image you selected no longer exists... The fi
     view->setYClip1((float)yClip1);\
     view->setZClip0((float)zClip0);\
     view->setZClip1((float)zClip1);\
+    \
+    if(curwin)\
+{\
+    m_v3d.updateImageWindow(curwin);\
+    }\
+    else\
+    m_v3d.update_3DViewer(surface_win); \
     }
 
 #define UPDATE_PARA \
@@ -611,7 +618,7 @@ void lookPanel::_slot_preview()
         if(d.exec())
         {
             QString selectedFile=(d.selectedFiles())[0];
-            int framenum =0;
+            int framenum = 0;
             for(int row = 0; row < list_anchors->count(); row++)
             {
                 QString currentPoint = list_anchors->item(row)->text();
@@ -619,7 +626,13 @@ void lookPanel::_slot_preview()
 
                 GET_PARA;
 
-                if(row>0)
+                if (row==0)
+                {
+                    SET_3DVIEW;
+
+                    SCREENSHOT_SAVEFRAMES;
+                }
+                else
                 {
                     for (int i=1; i<=N; i++)
                     {
@@ -627,12 +640,6 @@ void lookPanel::_slot_preview()
 
                         SCREENSHOT_SAVEFRAMES;
                     }
-                }
-                else
-                {
-                    SET_3DVIEW;
-
-                    SCREENSHOT_SAVEFRAMES;
                 }
 
                 UPDATE_PARA;
