@@ -945,12 +945,12 @@ void slerp_zhi(MYFLOAT q1[], MYFLOAT q2[], MYFLOAT t, MYFLOAT q_sample[])
     MYFLOAT c1,  c2;
     bool flag = false;
 
+    omega = acos(cos_omega);
     if (cos_omega<0)
     {
         flag = true;
-        cos_omega = -cos_omega;
+        omega = omega - pi;
     }
-    omega = acos(cos_omega);
 
     theta = t*omega;
     double sin_omega = sin(omega);
@@ -965,7 +965,7 @@ void slerp_zhi(MYFLOAT q1[], MYFLOAT q2[], MYFLOAT t, MYFLOAT q_sample[])
         c2 = sin(theta)/sin_omega;
     }
 
-    if (flag<0)
+    if (flag)
         c2 = -c2; //equivalent to negative of one end of q1 or q2 (in this case, it is q2) for the interpolation below
 
     printf("slerp result is (cos_t=%f, omega=%f, flag=%d, angle=%f, c1=%f, c2=%f)\n", cos_omega, omega, int(flag), omega/pi*180.0, c1, c2);
