@@ -13,8 +13,7 @@
 *       g.iannello@unicampus.it for further details.
 *    2. You agree to appropriately cite this work in your related studies and publications.
 *
-*       Bria, A., et al., (2012) "Stitching Terabyte-sized 3D Images Acquired in Confocal Ultramicroscopy", Proceedings of the 9th IEEE International Symposium on Biomedical Imaging.
-*       Bria, A., Iannello, G., "TeraStitcher - A Tool for Fast 3D Automatic Stitching of Teravoxel-sized Microscopy Images", submitted for publication, 2012.
+*       Bria, A., Iannello, G., "TeraStitcher - A Tool for Fast 3D Automatic Stitching of Teravoxel-sized Microscopy Images", (2012) BMC Bioinformatics, 13 (1), art. no. 316.
 *
 *    3. This material is provided by  the copyright holders (Alessandro Bria  and  Giulio Iannello),  University Campus Bio-Medico and contributors "as is" and any express or implied war-
 *       ranties, including, but  not limited to,  any implied warranties  of merchantability,  non-infringement, or fitness for a particular purpose are  disclaimed. In no event shall the
@@ -68,18 +67,18 @@ StackedVolume::StackedVolume(const char* _stacks_dir, ref_sys reference_system, 
 	strcpy(this->stacks_dir, _stacks_dir);
 
 	//trying to unserialize an already existing metadata file, if it doesn't exist the full initialization procedure is performed and metadata is saved
-        char mdata_filepath[VM_STATIC_STRINGS_SIZE];
-        sprintf(mdata_filepath, "%s/%s", stacks_dir, VM_BIN_METADATA_FILE_NAME);
-        if(fileExists(mdata_filepath) && !overwrite_mdata)
-                loadBinaryMetadata(mdata_filepath);
-        else
+    char mdata_filepath[VM_STATIC_STRINGS_SIZE];
+    sprintf(mdata_filepath, "%s/%s", stacks_dir, VM_BIN_METADATA_FILE_NAME);
+    if(fileExists(mdata_filepath) && !overwrite_mdata)
+            loadBinaryMetadata(mdata_filepath);
+    else
 	{
-            if(reference_system.first == axis_invalid ||  reference_system.second == axis_invalid ||
-              reference_system.third == axis_invalid || VXL_1 == 0 || VXL_2 == 0 || VXL_3 == 0)
-                throw MyException("in StackedVolume::StackedVolume(...): invalid importing parameters");
-            init();
-            applyReferenceSystem(reference_system, VXL_1, VXL_2, VXL_3);
-            saveBinaryMetadata(mdata_filepath);
+		if(reference_system.first == axis_invalid ||  reference_system.second == axis_invalid ||
+			reference_system.third == axis_invalid || VXL_1 == 0 || VXL_2 == 0 || VXL_3 == 0)
+			throw MyException("in StackedVolume::StackedVolume(...): invalid importing parameters");
+		init();
+		applyReferenceSystem(reference_system, VXL_1, VXL_2, VXL_3);
+		saveBinaryMetadata(mdata_filepath);
 	}
 }
 
@@ -89,30 +88,34 @@ StackedVolume::StackedVolume(const char *xml_filepath) throw (MyException)
 	printf("\t\t\t\tin StackedVolume::StackedVolume(xml_filepath=%s)\n", xml_filepath);
 	#endif
 
-        //extracting <stacks_dir> field from XML
-        TiXmlDocument xml;
-        if(!xml.LoadFile(xml_filepath))
-        {
-            char errMsg[2000];
-            sprintf(errMsg,"in StackedVolume::StackedVolume(xml_filepath = \"%s\") : unable to load xml", xml_filepath);
-            throw MyException(errMsg);
-        }
-        TiXmlHandle hRoot(xml.FirstChildElement("TeraStitcher"));
-        TiXmlElement * pelem = hRoot.FirstChildElement("stacks_dir").Element();
-        this->stacks_dir = new char[strlen(pelem->Attribute("value"))+1];
-        strcpy(this->stacks_dir, pelem->Attribute("value"));
+    //extracting <stacks_dir> field from XML
+    TiXmlDocument xml;
+    if(!xml.LoadFile(xml_filepath))
+    {
+        char errMsg[2000];
+        sprintf(errMsg,"in StackedVolume::StackedVolume(xml_filepath = \"%s\") : unable to load xml", xml_filepath);
+        throw MyException(errMsg);
+    }
+    TiXmlHandle hRoot(xml.FirstChildElement("TeraStitcher"));
+    TiXmlElement * pelem = hRoot.FirstChildElement("stacks_dir").Element();
+    this->stacks_dir = new char[strlen(pelem->Attribute("value"))+1];
+    strcpy(this->stacks_dir, pelem->Attribute("value"));
 
 	//trying to unserialize an already existing metadata file, if it doesn't exist the full initialization procedure is performed and metadata is saved
 	char mdata_filepath[2000];
 	sprintf(mdata_filepath, "%s/%s", stacks_dir, VM_BIN_METADATA_FILE_NAME);
-	if(!fileExists(mdata_filepath))
+	if(fileExists(mdata_filepath))
 	{
-		char errMsg[1000];
-		sprintf(errMsg, "in StackedVolume::StackedVolume(char *xml_filepath): unable to find metadata file \"%s\" in the directory where the xml is stored", mdata_filepath);
-		throw MyException(errMsg);
+		// load mdata.bin content and xml content, also perform consistency check between mdata.bin and xml content
+		loadBinaryMetadata(mdata_filepath);
+		loadXML(xml_filepath);
 	}
-	loadBinaryMetadata(mdata_filepath);
-	loadXML(xml_filepath);
+	else
+	{
+		// load xml content and generate mdata.bin
+		initFromXML(xml_filepath);
+		saveBinaryMetadata(mdata_filepath);
+	}
 }
 
 StackedVolume::~StackedVolume()
@@ -453,6 +456,58 @@ void StackedVolume::loadXML(const char *xml_filepath)
 	for(i=0; i<N_ROWS; i++)
 		for(j=0; j<N_COLS; j++, pelem = pelem->NextSiblingElement())
 			STACKS[i][j]->loadXML(pelem);
+}
+
+void StackedVolume::initFromXML(const char *xml_filepath)
+{
+	#if VM_VERBOSE > 3
+	printf("\t\t\t\tin StackedVolume::initFromXML(char *xml_filename = %s)\n", xml_filename);
+		#endif
+
+	TiXmlDocument xml;
+	if(!xml.LoadFile(xml_filepath))
+	{
+		char errMsg[2000];
+		sprintf(errMsg,"in StackedVolume::initFromXML(xml_filepath = \"%s\") : unable to load xml", xml_filepath);
+		throw MyException(errMsg);
+	}
+
+	//setting ROOT element (that is the first child, i.e. <TeraStitcher> node)
+	TiXmlHandle hRoot(xml.FirstChildElement("TeraStitcher"));
+
+	//reading fields
+	TiXmlElement * pelem = hRoot.FirstChildElement("stacks_dir").Element();
+	pelem = hRoot.FirstChildElement("voxel_dims").Element();
+	pelem->QueryFloatAttribute("V", &VXL_V);
+	pelem->QueryFloatAttribute("H", &VXL_H);
+	pelem->QueryFloatAttribute("D", &VXL_D);
+	pelem = hRoot.FirstChildElement("origin").Element();
+	pelem->QueryFloatAttribute("V", &ORG_V);
+	pelem->QueryFloatAttribute("H", &ORG_H);
+	pelem->QueryFloatAttribute("D", &ORG_D);
+	pelem = hRoot.FirstChildElement("mechanical_displacements").Element();
+	pelem->QueryFloatAttribute("V", &MEC_V);
+	pelem->QueryFloatAttribute("H", &MEC_H);
+	pelem = hRoot.FirstChildElement("dimensions").Element();
+	int nrows, ncols, nslices;
+	pelem->QueryIntAttribute("stack_rows", &nrows);
+	pelem->QueryIntAttribute("stack_columns", &ncols);
+	pelem->QueryIntAttribute("stack_slices", &nslices);
+	N_ROWS = nrows;
+	N_COLS = ncols;
+	N_SLICES = nslices;
+
+	pelem = hRoot.FirstChildElement("STACKS").Element()->FirstChildElement();
+	STACKS = new Stack **[N_ROWS];
+	for(int i = 0; i < N_ROWS; i++)
+	{
+		STACKS[i] = new Stack *[N_COLS];
+		for(int j = 0; j < N_COLS; j++, pelem = pelem->NextSiblingElement())
+		{
+			STACKS[i][j] = new Stack(this, i, j, pelem->Attribute("DIR_NAME"));
+			STACKS[i][j]->loadXML(pelem);
+		}
+	}
 }
 
 void StackedVolume::saveXML(const char *xml_filename, const char *xml_filepath) throw (MyException)
