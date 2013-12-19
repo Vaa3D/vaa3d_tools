@@ -11,7 +11,7 @@ SOURCES	+= open_fiji_plugin.cpp
 SOURCES	+= $$V3DMAINPATH/basic_c_fun/v3d_message.cpp
 
 TARGET	= $$qtLibraryTarget(open_fiji)
-DESTDIR	= $$V3DMAINPATH/../../v3d_external/bin/plugins/data_IO/open_fiji
+DESTDIR	= $$V3DMAINPATH/../../v3d_external/bin/plugins/data_IO/load_image_using_ImageJ
 
 win32 {
         QMAKE_POST_LINK = copy Fiji.app ../../../../v3d_external/bin/

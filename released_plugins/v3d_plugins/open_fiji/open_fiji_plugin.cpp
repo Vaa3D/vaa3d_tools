@@ -41,7 +41,7 @@ QStringList open_fiji::menulist() const
 {
 	return QStringList() 
         <<tr("Import using ImageJ and save as .v3draw")
-        <<tr("Convert .v3draw file to .avi")
+        <<tr("Convert Z sections in a .v3draw file to .avi")
         <<tr("About");
 }
 
@@ -183,7 +183,7 @@ void open_fiji::domenu(const QString &menu_name, V3DPluginCallback2 &callback, Q
         callback.updateImageWindow(newwin);
 
     }
-    else if (menu_name == tr("Convert .v3draw file to .avi"))
+    else if (menu_name == tr("Convert Z sections in a .v3draw file to .avi"))
 	{
 
         // input image file
