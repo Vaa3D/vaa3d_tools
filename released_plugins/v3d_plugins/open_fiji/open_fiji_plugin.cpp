@@ -110,31 +110,31 @@ void open_fiji::domenu(const QString &menu_name, V3DPluginCallback2 &callback, Q
         }
 */
         QDir AppDir = QDir(qApp->applicationDirPath());
-        AppDir.cdUp();
-        AppDir.cdUp();
-        AppDir.cdUp();
-        QString appdirstring = AppDir.absolutePath();  // need to go 3 dir up from the app path to get to v3d_external/bin
-
 
         // I need to construct substrings for the various ImageJ executables...
 
 // Actually I need these for WIN32, WIN64, LINUX and MAC
 #if defined(Q_OS_MAC)
 // mac
-        QString fijiPath = "/Fiji.app/Contents/MacOS/ImageJ-macosx";
+        AppDir.cdUp();
+        AppDir.cdUp();
+        AppDir.cdUp();
+         QString fijiPath = "/Fiji.app/Contents/MacOS/ImageJ-macosx";
 #elif defined(Q_OS_LINUX)
 // linux
-         QString fijiPath = "/Fiji.app/Contents/ImageJ-linux64";
+         QString fijiPath = "/Fiji.app/ImageJ-linux64";
 #elif defined(Q_OS_WIN32)
        //32 bit windows
-         QString fijiPath = "/Fiji.app/Contents/ImageJ-win32.exe";
+         QString fijiPath = "/Fiji.app/ImageJ-win32.exe";
 #elif defined(Q_OS_WIN64)
 // 64 bit windows
-         QString fijiPath = "/Fiji.app/Contents/ImageJ-win64.exe";
+         QString fijiPath = "/Fiji.app/ImageJ-win64.exe";
 #else
         v3d_msg(tr("Currently only available for Linux, Mac OSX 10.5+ and Windows"));
         return;
 #endif
+
+        QString appdirstring = AppDir.absolutePath();  // on a mac, you need to go 3 dir up from the app path to get to v3d_external/bin
 
 
 
