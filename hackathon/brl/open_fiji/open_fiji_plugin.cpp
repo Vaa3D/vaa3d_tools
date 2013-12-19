@@ -10,7 +10,7 @@
 //  added these includes from the original iBioformatIO.cpp
 #include <QtGui>
 #include <QFileInfo>
-
+#include <QtGlobal>
 #include <cmath>
 #include <stdlib.h>
 #include <ctime>
@@ -76,7 +76,9 @@ void open_fiji::domenu(const QString &menu_name, V3DPluginCallback2 &callback, Q
         d.exec();
 
               QString m_SaveDir=(d.selectedFiles())[0];
+// on some machines, selecting a save directory seems to double up a single directory.
 
+             // I wont to parse this string for di
 
           printf("filename [%s]\n",m_FileName.toStdString().c_str());
           printf("save target [%s]\n",m_SaveDir.toStdString().c_str());
@@ -113,8 +115,31 @@ void open_fiji::domenu(const QString &menu_name, V3DPluginCallback2 &callback, Q
         AppDir.cdUp();
         QString appdirstring = AppDir.absolutePath();  // need to go 3 dir up from the app path to get to v3d_external/bin
 
+
+        // I need to construct substrings for the various ImageJ executables...
+
+// Actually I need these for WIN32, WIN64, LINUX and MAC
+#if defined(Q_OS_MAC)
+// mac
+        QString fijiPath = "/Fiji.app/Contents/MacOS/ImageJ-macosx";
+#elif defined(Q_OS_LINUX)
+// linux
+         QString fijiPath = "/Fiji.app/Contents/ImageJ-linux64";
+#elif defined(Q_OS_WIN32)
+       //32 bit windows
+         QString fijiPath = "/Fiji.app/Contents/ImageJ-win32.exe";
+#elif defined(Q_OS_WIN64)
+// 64 bit windows
+         QString fijiPath = "/Fiji.app/Contents/ImageJ-win64.exe";
+#else
+        v3d_msg(tr("Currently only available for Linux, Mac OSX 10.5+ and Windows"));
+        return;
+#endif
+
+
+
    //     QString cmd_loci = QString("java -cp %1 loci.formats.tools.ImageConverter \"%2\" \"%3\"").arg(lociDir.toStdString().c_str()).arg(m_FileName.toStdString().c_str()).arg(tmpfile.toStdString().c_str());
-        QString cmd_Fiji = QString("%1/Fiji.app/Contents/MacOS/ImageJ-macosx  --headless -batch  %1/brl_FijiConvert.js %2:%3").arg(appdirstring.toStdString().c_str()).arg(m_FileName.toStdString().c_str()).arg(tmpfile.toStdString().c_str());
+        QString cmd_Fiji = QString("%1%2  --headless -batch  %1/brl_FijiConvert.js %3:%4").arg(appdirstring.toStdString().c_str()).arg(fijiPath.toStdString().c_str()).arg(m_FileName.toStdString().c_str()).arg(tmpfile.toStdString().c_str());
         system(qPrintable(cmd_Fiji));
 
         if (!tmpqfile.exists()) v3d_msg("The format is not supported, or something is wrong in your file\n");
