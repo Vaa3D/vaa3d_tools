@@ -1201,24 +1201,24 @@ bool processImage_adaptive_auto(const V3DPluginArgList & input, V3DPluginArgList
 
     simple_saveimage_wrapper(callback,"result_woGf.v3draw", (unsigned char *)Enhancement_soma, in_sz, 1);
     V3DPluginArgItem arg;
-    V3DPluginArgList input;
-    V3DPluginArgList output;
+    V3DPluginArgList input_gf;
+    V3DPluginArgList output_gf;
 
     arg.type = "random";std::vector<char*> args1;
-    args1.push_back("result_woGf.v3draw"); arg.p = (void *) & args1; input<< arg;
+    args1.push_back("result_woGf.v3draw"); arg.p = (void *) & args1; input_gf<< arg;
     arg.type = "random";std::vector<char*> args;
-    args.push_back("3");args.push_back("3");args.push_back("3");args.push_back("1"); args.push_back("2"); arg.p = (void *) & args; input << arg;
-    arg.type = "random";std::vector<char*> args2;args2.push_back("gfImage_v2.v3draw"); arg.p = (void *) & args2; output<< arg;
+    args.push_back("3");args.push_back("3");args.push_back("3");args.push_back("1"); args.push_back("2"); arg.p = (void *) & args; input_gf << arg;
+    arg.type = "random";std::vector<char*> args2;args2.push_back("gfImage_v2.v3draw"); arg.p = (void *) & args2; output_gf<< arg;
 
     QString full_plugin_name = "gaussian";
     QString func_name = "gf";
 
-    callback.callPluginFunc(full_plugin_name,func_name, input,output);
+    callback.callPluginFunc(full_plugin_name,func_name, input_gf,output_gf);
 
     unsigned char * data1d_float = 0;
     V3DLONG in_zz[4];
     datatype = 0;
-    char * outimg_file2 = ((vector<char*> *)(output.at(0).p))->at(0);
+    char * outimg_file2 = ((vector<char*> *)(output_gf.at(0).p))->at(0);
     if(!simple_loadimage_wrapper(callback,outimg_file2, data1d_float, in_zz, datatype))
     {
         cerr<<"load image "<<outimg_file2<<" error!"<<endl;
@@ -1489,24 +1489,24 @@ bool processImage_adaptive_auto_blocks(const V3DPluginArgList & input, V3DPlugin
     in_sz[3] = 1;
     simple_saveimage_wrapper(callback,"result_woGf.v3draw", (unsigned char *)Enhancement_soma, in_sz, 1);
     V3DPluginArgItem arg;
-    V3DPluginArgList input;
-    V3DPluginArgList output;
+    V3DPluginArgList input_gf;
+    V3DPluginArgList output_gf;
 
     arg.type = "random";std::vector<char*> args1;
-    args1.push_back("result_woGf.v3draw"); arg.p = (void *) & args1; input<< arg;
+    args1.push_back("result_woGf.v3draw"); arg.p = (void *) & args1; input_gf<< arg;
     arg.type = "random";std::vector<char*> args;
-    args.push_back("3");args.push_back("3");args.push_back("3");args.push_back("1"); args.push_back("2"); arg.p = (void *) & args; input << arg;
-    arg.type = "random";std::vector<char*> args2;args2.push_back("gfImage_v2.v3draw"); arg.p = (void *) & args2; output<< arg;
+    args.push_back("3");args.push_back("3");args.push_back("3");args.push_back("1"); args.push_back("2"); arg.p = (void *) & args; input_gf << arg;
+    arg.type = "random";std::vector<char*> args2;args2.push_back("gfImage_v2.v3draw"); arg.p = (void *) & args2; output_gf<< arg;
 
     QString full_plugin_name = "gaussian";
     QString func_name = "gf";
 
-    callback.callPluginFunc(full_plugin_name,func_name, input,output);
+    callback.callPluginFunc(full_plugin_name,func_name, input_gf,output_gf);
 
     unsigned char * data1d_float = 0;
     V3DLONG in_zz[4];
     datatype = 0;
-    char * outimg_file2 = ((vector<char*> *)(output.at(0).p))->at(0);
+    char * outimg_file2 = ((vector<char*> *)(output_gf.at(0).p))->at(0);
     if(!simple_loadimage_wrapper(callback,outimg_file2, data1d_float, in_zz, datatype))
     {
         cerr<<"load image "<<outimg_file2<<" error!"<<endl;
