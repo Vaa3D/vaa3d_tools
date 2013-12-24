@@ -9,6 +9,7 @@
 #include <QtGui>
 #include <fstream>
 #include <iostream>
+#include <string>
 #include <math.h>
 #include "stackutil.h"
 #include <boost/lexical_cast.hpp>
@@ -28,6 +29,8 @@ void processImage_adaptive_auto_blocks(V3DPluginCallback2 &callback, QWidget *pa
 
 bool processImage_adaptive_auto(const V3DPluginArgList & input, V3DPluginArgList & output,V3DPluginCallback2 &callback);
 bool processImage_adaptive_auto_blocks(const V3DPluginArgList & input, V3DPluginArgList & output,V3DPluginCallback2 &callback);
+bool processImage_adaptive_auto_blocks_indv(const V3DPluginArgList & input, V3DPluginArgList & output,V3DPluginCallback2 &callback);
+
 
 template <class T> void selectiveEnhancement(const T* data1d,
                                              V3DLONG *in_sz,
@@ -192,6 +195,10 @@ bool selectiveEnhancement::dofunc(const QString & func_name, const V3DPluginArgL
     else if (func_name == tr("adaptive_auto_block"))
     {
         return processImage_adaptive_auto_blocks(input, output,callback);
+    }
+    else if (func_name == tr("adaptive_auto_block_indv"))
+    {
+        return processImage_adaptive_auto_blocks_indv(input, output,callback);
     }
     else if (func_name == tr("help"))
     {
@@ -1528,6 +1535,163 @@ bool processImage_adaptive_auto_blocks(const V3DPluginArgList & input, V3DPlugin
     if (data1d_uint8) {delete []data1d_uint8; data1d_uint8=0;}
     if(target1d_y) {delete []target1d_y; target1d_y =0;}
     if(subject1d_y) {delete []subject1d_y; subject1d_y =0;}
+    if (data1d) {delete []data1d; data1d=0;}
+    return true;
+}
+
+bool processImage_adaptive_auto_blocks_indv(const V3DPluginArgList & input, V3DPluginArgList & output,V3DPluginCallback2 &callback)
+{
+    cout<<"Welcome to adaptive enhancement filter with individual blocks"<<endl;
+    if (output.size() != 1) return false;
+    unsigned int Ws = 1000, c=1;
+    float ratio = 1.0;
+    if (input.size()>=2)
+    {
+
+        vector<char*> paras = (*(vector<char*> *)(input.at(1).p));
+        cout<<paras.size()<<endl;
+        if(paras.size() >= 1) Ws = atoi(paras.at(0));
+        if(paras.size() >= 2) c = atoi(paras.at(1));
+        if(paras.size() >= 3) ratio = atof(paras.at(2));
+    }
+
+    char * inimg_file = ((vector<char*> *)(input.at(0).p))->at(0);
+    char * outimg_file = ((vector<char*> *)(output.at(0).p))->at(0);
+
+    cout<<"Ws = "<<Ws<<endl;
+    cout<<"c = "<<c<<endl;
+    cout<<"ratio = "<<ratio<<endl;
+    cout<<"inimg_file = "<<inimg_file<<endl;
+    cout<<"outimg_folder = "<<outimg_file<<endl;
+
+
+    unsigned char * data1d = 0;
+    V3DLONG in_sz[4];
+    int datatype;
+    if(!simple_loadimage_wrapper(callback, inimg_file, data1d, in_sz, datatype))
+    {
+        cerr<<"load image "<<inimg_file<<" error!"<<endl;
+        return false;
+    }
+
+
+    V3DLONG N = in_sz[0];
+    V3DLONG M = in_sz[1];
+    V3DLONG P = in_sz[2];
+    V3DLONG pagesz = N*M*P;
+    V3DLONG offsetc = (c-1)*pagesz;
+
+    for(V3DLONG iy = 0; iy < M; iy = iy+Ws-Ws/10)
+    {
+        V3DLONG yb = iy;
+        V3DLONG ye = iy+Ws-1; if(ye>=M-1) ye = M-1;
+
+        for(V3DLONG ix = 0; ix < N; ix = ix+Ws-Ws/10)
+        {
+            V3DLONG xb = ix;
+            V3DLONG xe = ix+Ws-1; if(xe>=N-1) xe = N-1;
+
+            unsigned char *blockarea=0;
+            V3DLONG blockpagesz = (xe-xb+1)*(ye-yb+1)*P;
+            blockarea = new unsigned char [blockpagesz];
+            double th_global = 0;
+            int i = 0;
+            for(V3DLONG iz = 0; iz < P; iz++)
+            {
+                V3DLONG offsetk = iz*M*N;
+                for(V3DLONG iy = yb; iy < ye+1; iy++)
+                {
+                    V3DLONG offsetj = iy*N;
+                    for(V3DLONG ix = xb; ix < xe+1; ix++)
+                    {
+
+                        blockarea[i] = data1d[offsetc+offsetk + offsetj + ix];
+                        i++;
+                    }
+                }
+            }
+            V3DLONG block_sz[4];
+            block_sz[0] = xe-xb+1; block_sz[1] = ye-yb+1; block_sz[2] = P; block_sz[3] = 1;
+            simple_saveimage_wrapper(callback, "temp.v3draw", (unsigned char *)blockarea, block_sz, 1);
+            unsigned char *localEnahancedArea=0;
+            try {localEnahancedArea = new unsigned char [blockpagesz];}
+            catch(...)  {v3d_msg("cannot allocate memory for localEnahancedArea."); return false;}
+            double sigma = 0;
+            for(int scale = 0; scale < 2; scale++)
+            {
+                unsigned char * data1d_gf = 0;
+                unsigned char * gsdtld = 0;
+                unsigned char* EnahancedImage = 0;
+                switch (datatype)
+                {
+                case V3D_UINT8:
+                    if (scale==0) //do not filter for the scale 0
+                    {
+
+                        sigma = 0.3;
+                        data1d_gf = new unsigned char [blockpagesz];
+                        memcpy(data1d_gf, blockarea, blockpagesz);
+                    }
+                    else
+                    {
+                        sigma = 1.2;
+                        callGaussianPlugin(callback,blockpagesz,sigma,c,(unsigned char* &)data1d_gf);
+                    }
+
+                    callgsdtPlugin(callback,(unsigned char *)data1d_gf, block_sz, 1,th_global,(unsigned char* &)gsdtld);
+                    AdpThresholding_adpwindow((unsigned char *)data1d_gf, block_sz, 1,sigma,(unsigned char* &)EnahancedImage, gsdtld,3,ratio);
+                    break;
+                    default: v3d_msg("Invalid data type. Do nothing."); return false;
+                }
+
+                if (scale==0)
+                {
+                    memcpy(localEnahancedArea, EnahancedImage, blockpagesz);
+                }
+                else
+                {
+                   for(V3DLONG i = 0; i<blockpagesz; i++)
+                   {
+                      if (localEnahancedArea[i] < EnahancedImage[i])
+                          localEnahancedArea[i] = EnahancedImage[i];
+                      else
+                          localEnahancedArea[i] =  localEnahancedArea[i];
+                   }
+                   remove("temp.v3draw");
+                }
+
+                if(data1d_gf) {delete []data1d_gf; data1d_gf =0;}
+                if(gsdtld) {delete []gsdtld; gsdtld =0;}
+                if(EnahancedImage) {delete []EnahancedImage; EnahancedImage =0;}
+                if(blockarea) {delete []blockarea; blockarea =0;}
+           }
+                QString outputTile(outimg_file);
+                if (!QFile(outputTile).exists())
+                {
+                   printf("Can not find the output folder");
+                   return false;
+                }
+
+
+                QString tc_name(outimg_file);
+                tc_name.append("/stitched_image.tc");
+
+               outputTile.append(QString("/x_%1_%2_y%3_%4.raw").arg(xb).arg(xe).arg(yb).arg(ye));
+               simple_saveimage_wrapper(callback, outputTile.toStdString().c_str(), (unsigned char *)localEnahancedArea, block_sz, 1);
+
+               ofstream myfile;
+               myfile.open (tc_name.toStdString().c_str(),ios::out | ios::app );
+               QString outputilefull;
+               outputilefull.append(QString("x_%1_%2_y%3_%4.raw").arg(xb).arg(xe).arg(yb).arg(ye));
+               outputilefull.append(QString("   ( %1, %2, 0) ( %3, %4, %5)").arg(xb).arg(yb).arg(xe).arg(ye).arg(P-1));
+               myfile << outputilefull.toStdString();
+               myfile << "\n";
+               myfile.close();
+               printf("size (%d,%d,%d)\n",N,M,P);
+               if(localEnahancedArea) {delete []localEnahancedArea; localEnahancedArea =0;}
+        }
+
+    }
     if (data1d) {delete []data1d; data1d=0;}
     return true;
 }
