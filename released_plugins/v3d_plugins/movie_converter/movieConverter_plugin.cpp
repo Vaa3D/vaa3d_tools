@@ -191,7 +191,8 @@ controlPanel::controlPanel(V3DPluginCallback2 &_v3d, QWidget *parent) :
     m_pLineEdit_fps = new QLineEdit(QObject::tr("14"));
     m_pLineEdit_filepath = new QLineEdit();
     m_pLineEdit_filename = new QLineEdit(QObject::tr("file_[num].bmp"));
-    #if  defined(Q_OS_MAX)
+   // m_pLineEdit_ffmpegpath = new QLineEdit(getAppPath().append("/mac_ffmpeg"));
+    #if  defined(Q_OS_MAC)
          m_pLineEdit_ffmpegpath = new QLineEdit(getAppPath().append("/mac_ffmpeg"));
     #elif defined(Q_OS_LINUX)
          m_pLineEdit_ffmpegpath = new QLineEdit(getAppPath().append("/linux_ffmpeg"));
