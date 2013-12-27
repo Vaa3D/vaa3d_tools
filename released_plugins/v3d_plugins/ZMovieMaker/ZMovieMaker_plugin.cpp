@@ -21,7 +21,7 @@ const double pi = 3.1415926535897;
 
 Q_EXPORT_PLUGIN2(ZMovieMaker, ZMovieMaker);
 
-#define __ZMAKE_DEBUG__ 1
+//#define __ZMAKE_DEBUG__ 1
 #define MYFLOAT double
 
 
@@ -670,7 +670,7 @@ void lookPanel::_slot_preview()
 
             }
 
-            v3d_msg(QString("Video frams have been saved in [%1], please use ZMovieMaker to convert to a single movie.").arg(selectedFile));
+            v3d_msg(QString("Video frames have now been saved in the folder [%1], please use the Movie Converter plugin to convert to a single movie (e.g. avi, mpg).").arg(selectedFile));
 
         }
     }
