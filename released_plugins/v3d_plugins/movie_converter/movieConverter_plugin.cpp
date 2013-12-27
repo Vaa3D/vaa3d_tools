@@ -253,29 +253,6 @@ controlPanel::controlPanel(V3DPluginCallback2 &_v3d, QWidget *parent) :
     pGridLayout->addWidget(output_panel);
     pGridLayout->addWidget(container);
 
-    /*pGridLayout->addWidget(new QLabel(QObject::tr("Movie converter (ffmpeg) path:")),1,1);
-    pGridLayout->addWidget(m_pLineEdit_ffmpegpath,1,2);
-    pGridLayout->addWidget(pPushButton_openFileDlg_ffmpeg,1,3);
-
-    pGridLayout->addWidget(new QLabel(QObject::tr("Input movie-frame folder:")),2,1);
-    pGridLayout->addWidget(m_pLineEdit_filepath,2,2);
-    pGridLayout->addWidget(pPushButton_openFileDlg_output,2,3);
-
-    pGridLayout->addWidget(new QLabel(QObject::tr("Input movie-frame file-naming format:\n"
-                                                   "(e.g.aaa[NUM].bmp for aaa1.bmp)")),3,1);
-    pGridLayout->addWidget(m_pLineEdit_filename,3,2);
-
-    pGridLayout->addWidget(new QLabel(QObject::tr("Output video fps:")),4,1);
-    pGridLayout->addWidget(m_pLineEdit_fps,4,2);
-
-    pGridLayout->addWidget(label_type, 5,1);
-    pGridLayout->addWidget(combo_type, 5,2);
-    pGridLayout->addWidget(check_compress, 5,3);
-
-    pGridLayout->addWidget(pPushButton_start,5,1);
-    pGridLayout->addWidget(pPushButton_close,5,2);*/
-
-
     setLayout(pGridLayout);
     setWindowTitle(QString("Convert movie frames to a single movie file"));
 
