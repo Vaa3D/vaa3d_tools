@@ -33,7 +33,7 @@ void NeuronDistPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &call
 	else
 	{
 		v3d_msg(tr("The plugin to calculate distance between two neurons. Distance is defined as the average distance among all nearest pairs in two neurons.. "
-			"Developed by Yinan Wan, 2012-05-04"));
+            "Developed by Yinan Wan and Hanchuan Peng, 2012-05-04"));
 	}
 }
 
