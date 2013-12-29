@@ -19,13 +19,14 @@ const QString title = QObject::tr("Sort SWC Plugin");
 
 void sort_menu(V3DPluginCallback2 &callback, QWidget *parent)
 {
-	cout<<"callback_sort: "<<(void*)&callback<<endl;
-	callback.getImageWindowList();
-	cout<<"image window list sort"<<endl;
-	
+    //cout<<"callback_sort: "<<(void*)&callback<<endl;
+    //callback.getImageWindowList();
+    //v3d_msg("image window list sort", 0);
+
 	OpenSWCDialog * openDlg = new OpenSWCDialog(0, &callback);
 	if (!openDlg->exec())
 		return;
+
 	NeuronTree nt = openDlg->nt;
 	QList<NeuronSWC> neuron = nt.listNeuron;
 
