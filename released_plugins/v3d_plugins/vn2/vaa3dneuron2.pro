@@ -10,9 +10,16 @@ INCLUDEPATH     += app1
 INCLUDEPATH     += $$V3DMAINPATH/neuron_editing
 INCLUDEPATH     += $$V3DMAINPATH/worm_straighten_c
 
-LIBS += -L$$V3DMAINPATH/jba/c++ 
-LIBS += -lm -lv3dnewmat
+unix {
+LIBS += -L$$V3DMAINPATH/jba/c++
+LIBS += -lv3dnewmat
+}
+win32 {
+LIBS += -L$$V3DMAINPATH/common_lib/winlib64
+LIBS += -llibnewmat
+}
 
+#LIBS += -llibm
 
 HEADERS	+= vaa3dneuron2_plugin.h
 HEADERS += vn_imgpreprocess.h
