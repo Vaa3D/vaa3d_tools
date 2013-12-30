@@ -12,7 +12,6 @@
 #include <stdlib.h>
 
 #include "minMaxfilterplugin.h"
-#include "stackutil.h"
 
 using namespace std;
 
@@ -23,7 +22,7 @@ using namespace std;
 Q_EXPORT_PLUGIN2(minMaxfilter, minMaxFilterPlugin)
 
 void processImage(V3DPluginCallback2 &callback, QWidget *parent, unsigned int filterflag);
-bool processImage(const V3DPluginArgList & input, V3DPluginArgList & output);
+bool processImage(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPluginArgList & output);
 
 template <class T> void minmax_filter(T* data1d,
                      V3DLONG *in_sz,
@@ -91,7 +90,7 @@ bool minMaxFilterPlugin::dofunc(const QString &func_name, const V3DPluginArgList
 {
      if (func_name == tr("mmf"))
 	{
-		return processImage(input, output);
+        return processImage(callback, input, output);
 	}
 	else if(func_name == tr("help"))
 	{
@@ -109,7 +108,7 @@ bool minMaxFilterPlugin::dofunc(const QString &func_name, const V3DPluginArgList
 	}
 }
 
-bool processImage(const V3DPluginArgList & input, V3DPluginArgList & output)
+bool processImage(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPluginArgList & output)
 {
 	cout<<"Welcome to minmax filter"<<endl;
 	if (output.size() != 1) return false;
@@ -136,12 +135,12 @@ bool processImage(const V3DPluginArgList & input, V3DPluginArgList & output)
 	cout<<"outimg_file = "<<outimg_file<<endl;
 
 	unsigned char * data1d = 0,  * outimg1d = 0;
-	V3DLONG * in_sz = 0;
+    V3DLONG in_sz[4];
 
      unsigned int c = ch;//-1;
 
 	int datatype;
-	if(!loadImage(inimg_file, data1d, in_sz, datatype))
+    if(!simple_loadimage_wrapper(callback, inimg_file, data1d, in_sz, datatype))
      {
           cerr<<"load image "<<inimg_file<<" error!"<<endl;
           return false;
@@ -158,17 +157,15 @@ bool processImage(const V3DPluginArgList & input, V3DPluginArgList & output)
           default:
                v3d_msg("Invalid datatype.");
                if (data1d) {delete []data1d; data1d=0;}
-               if (in_sz) {delete []in_sz; in_sz=0;}
                return false;
      }
 
      // save image
      in_sz[3]=1;
-     saveImage(outimg_file, (unsigned char *)outimg, in_sz, datatype);
+     simple_saveimage_wrapper(callback, outimg_file, (unsigned char *)outimg, in_sz, datatype);
 
      if(outimg) {delete []outimg; outimg =0;}
      if (data1d) {delete []data1d; data1d=0;}
-     if (in_sz) {delete []in_sz; in_sz=0;}
 
      return true;
 }
