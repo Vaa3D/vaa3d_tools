@@ -10,7 +10,7 @@
 #include <iostream>
 
 #include "v3d_message.h"
-#include "stackutil.h"
+//#include "stackutil.h"
 
 #include "rescale_and_convert.h"
 
@@ -20,9 +20,8 @@ using namespace std;
 //The value of PluginName should correspond to the TARGET specified in the plugin's project file.
 Q_EXPORT_PLUGIN2(rescale, RescaleConvertPlugin)
 
-
 void processImage(V3DPluginCallback2 &callback, QWidget *parent, const QString & menu_name);
-bool processImage(const V3DPluginArgList & input, V3DPluginArgList & output, bool b_convert2uint8);
+bool processImage(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPluginArgList & output, bool b_convert2uint8);
 template <class T> bool rc(T* data1d, V3DLONG *sz, V3DLONG c, double apercent); 
 template <class T> bool scaleintensity(T *img, V3DLONG sz[4], V3DLONG channo, double lower_th, double higher_th, double target_min, double target_max);
 
@@ -135,12 +134,12 @@ bool RescaleConvertPlugin::dofunc(const QString &func_name, const V3DPluginArgLi
     if (func_name == tr("rescale")) 
 	{
         bool b_convert2uint8 = false;
-		return processImage(input, output, b_convert2uint8);
+        return processImage(callback, input, output, b_convert2uint8);
 	}
     else if (func_name == tr("rescale_and_convert_to_8bit")) 
 	{
         bool b_convert2uint8 = true;
-		return processImage(input, output, b_convert2uint8);
+        return processImage(callback, input, output, b_convert2uint8);
 	}
 	else if(func_name == tr("help"))
 	{
@@ -153,7 +152,7 @@ bool RescaleConvertPlugin::dofunc(const QString &func_name, const V3DPluginArgLi
 	}
 }
 
-bool processImage(const V3DPluginArgList & input, V3DPluginArgList & output, bool b_convert2uint8 = false)
+bool processImage(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPluginArgList & output, bool b_convert2uint8 = false)
 {
 	if(input.size() < 1 || output.size() != 1) 
         return false;
@@ -179,11 +178,11 @@ bool processImage(const V3DPluginArgList & input, V3DPluginArgList & output, boo
 
 	bool b_res=false;
     unsigned char * data1d = 0;
-	V3DLONG * in_sz = 0;
+    V3DLONG in_sz[4];
     V3DLONG cb, ce, k;
     
 	int datatype;
-	if(!loadImage(inimg_file, data1d, in_sz, datatype)) 
+    if(!simple_loadimage_wrapper(callback, inimg_file, data1d, in_sz, datatype))
     {
         cerr<<"load image "<<inimg_file<<" error!"<<endl; 
         return false;
@@ -218,16 +217,15 @@ bool processImage(const V3DPluginArgList & input, V3DPluginArgList & output, boo
         if (!(b_res = convert_data_to_8bit(tmpimg, in_sz, datatype)))
             goto Label_exit;
         data1d = (unsigned char *)tmpimg;
-        b_res = saveImage(outimg_file, (unsigned char *)data1d, in_sz, 1);
+        b_res = simple_saveimage_wrapper(callback, outimg_file, (unsigned char *)data1d, in_sz, 1);
     } 
     else
-        b_res = saveImage(outimg_file, (unsigned char *)data1d, in_sz, datatype); 
+        b_res = simple_saveimage_wrapper(callback, outimg_file, (unsigned char *)data1d, in_sz, datatype);
     
     //printf("b_res=[%s]\n", (b_res)?"true":"false");
 
 Label_exit:
      if (data1d) {delete []data1d; data1d=0;}
-     if (in_sz) {delete []in_sz; in_sz=0;}
      return b_res;
 }
 
