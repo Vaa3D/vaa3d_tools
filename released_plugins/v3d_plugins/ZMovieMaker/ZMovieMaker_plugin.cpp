@@ -250,7 +250,8 @@ MYFLOAT dot_multi_normalized(MYFLOAT q1[], MYFLOAT q2[]);
         for(int row = 0; row < list_anchors->count(); row++)\
         {\
             QString currentPoint = list_anchors->item(row)->text();\
-            currentPoint.remove(0,1);\
+            int indexLength = currentPoint.indexOf(":");\
+            currentPoint.remove(0,indexLength);\
             currentPoint = currentPoint.prepend(QString("").setNum(row+1));\
             updatePointsList << currentPoint;\
         }\
