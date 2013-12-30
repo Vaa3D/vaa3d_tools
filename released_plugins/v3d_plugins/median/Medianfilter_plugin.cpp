@@ -12,7 +12,7 @@
 #include "Medianfilter_plugin.h"
 #include <QtGui>
 #include <iostream>
-#include <math.h>
+#include <cmath>
 #include <stdlib.h>
 #include "../plugin_loader/v3d_plugin_loader.h"
 #include <boost/lexical_cast.hpp>
@@ -669,7 +669,7 @@ template <class T> void adp_median_filter(T* data1d,
 
                 T PixelValue = data1d[offsetc+offsetk + offsetj + ix];
                 T GsdtValue = gsdtdatald[offsetk + offsetj + ix];
-                Wx = (int)round((log(PixelValue)/log(2))/GsdtValue);
+                Wx = (int)((std::log(double(PixelValue))/std::log(double(2)))/GsdtValue + 0.5);
                 //printf("%d %d\n",PixelValue,Wx);
 
                 if ((Wx<=0)||(PixelValue==0))
