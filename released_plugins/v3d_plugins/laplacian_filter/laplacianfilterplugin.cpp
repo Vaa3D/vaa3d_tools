@@ -24,7 +24,7 @@ Q_EXPORT_PLUGIN2(laplacianfilter, LaplacianFilterPlugin)
 
 
 void processImage(V3DPluginCallback2 &callback, QWidget *parent);
-bool processImage(const V3DPluginArgList & input, V3DPluginArgList & output);
+bool processImage(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPluginArgList & output);
 template <class T> bool laplacian_filter(T* data1d, V3DLONG *in_sz, V3DLONG c, float* &outimg);
 
 const QString title = QObject::tr("Laplacian Filter Plugin");
@@ -57,7 +57,7 @@ bool LaplacianFilterPlugin::dofunc(const QString &func_name, const V3DPluginArgL
 {
      if (func_name == tr("laplacian"))
 	{
-		return processImage(input, output);
+        return processImage(callback, input, output);
 	}
 	else if(func_name == tr("help"))
 	{
@@ -70,7 +70,7 @@ bool LaplacianFilterPlugin::dofunc(const QString &func_name, const V3DPluginArgL
 	}
 }
 
-bool processImage(const V3DPluginArgList & input, V3DPluginArgList & output)
+bool processImage(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPluginArgList & output)
 {
 	cout<<"Welcome to Laplacian filter"<<endl;
 	if(input.size() < 1 || output.size() != 1) 
@@ -99,12 +99,13 @@ bool processImage(const V3DPluginArgList & input, V3DPluginArgList & output)
 	cout<<"outimg_file = "<<outimg_file<<endl;
 
 	unsigned char * data1d = 0;
-	V3DLONG * in_sz = 0;
+    V3DLONG in_sz[4];
+
     float* outimg = 0;
     bool b_res;
     
 	int datatype;
-	if(!loadImage(inimg_file, data1d, in_sz, datatype)) 
+    if(!simple_loadimage_wrapper(callback, inimg_file, data1d, in_sz, datatype))
     {
         cerr<<"load image "<<inimg_file<<" error!"<<endl; return false;
     }
@@ -128,12 +129,11 @@ bool processImage(const V3DPluginArgList & input, V3DPluginArgList & output)
 
      // save image
      in_sz[3]=1;
-     b_res = saveImage(outimg_file, (unsigned char *)outimg, in_sz, 4); //since b_res must be true right before this, it is safe to assign a value to it
+     b_res = simple_saveimage_wrapper(callback, outimg_file, (unsigned char *)outimg, in_sz, 4); //since b_res must be true right before this, it is safe to assign a value to it
 
 Label_exit:
     if(outimg) {delete []outimg; outimg =0;}
      if (data1d) {delete []data1d; data1d=0;}
-     if (in_sz) {delete []in_sz; in_sz=0;}
      return b_res;
 }
 
