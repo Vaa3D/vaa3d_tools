@@ -13,6 +13,8 @@ macx{
 }
 
 win32{
+    LIBS += -L$$V3DMAINPATH/common_lib/winlib64 -llibtiff
+    LIBS += -L$$V3DMAINPATH/common_lib/winlib64 -llibnewmat
 }
 
 unix:!macx {
