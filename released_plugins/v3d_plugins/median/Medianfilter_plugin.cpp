@@ -28,7 +28,7 @@ void median_fixed_domenu(V3DPluginCallback2 &callback, QWidget *parent);
 bool median_fixed_dofunc(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPluginArgList & output);
 
 void median_adaptive_domenu(V3DPluginCallback2 &callback, QWidget *parent);
-bool median_adaptive_dofunc(const V3DPluginArgList & input, V3DPluginArgList & output,V3DPluginCallback2 &callback);
+bool median_adaptive_dofunc(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPluginArgList & output);
 
 template <class T> void median_filter(T* data1d,
                                       V3DLONG *in_sz,
@@ -86,7 +86,7 @@ bool MedianFilterPlugin::dofunc(const QString & func_name, const V3DPluginArgLis
     }
     else if(func_name == tr("adaptive_window"))
     {
-        return median_adaptive_dofunc(input, output,callback);
+        return median_adaptive_dofunc(callback, input, output);
     }
     else if (func_name == tr("help"))
     {
@@ -168,7 +168,6 @@ bool median_fixed_dofunc(V3DPluginCallback2 &callback, const V3DPluginArgList & 
 
     if(outimg) {delete []outimg; outimg =0;}
     if (data1d) {delete []data1d; data1d=0;}
-    //if (in_sz) {delete []in_sz; in_sz=0;}
 
     return true;
 }
@@ -500,7 +499,7 @@ void median_adaptive_domenu(V3DPluginCallback2 &callback, QWidget *parent)
     return;
 }
 
-bool median_adaptive_dofunc(const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 &callback)
+bool median_adaptive_dofunc(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPluginArgList & output)
 {
     cout<<"Welcome to Median filter with adaptive window"<<endl;
     if (output.size() != 1) return false;
