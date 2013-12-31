@@ -17,6 +17,7 @@
 //#define COEF 1  
 #define COEF 0.8  
 
+#include <cmath>
 
 template <class T1> bool min_and_max(T1 * vec1d, V3DLONG cnt, T1 & minval, T1 &maxval)
 {
@@ -57,7 +58,7 @@ template <class T1, class T2> bool adaptiveThre3d(T1 ***indata3d, T2 *** outdata
 	V3DLONG szsmall[3];
 	for (V3DLONG i=0; i<3; i++)
 	{
-		szsmall[i] = floor(sz[i]/kernelstp[i])+1;
+        szsmall[i] = std::floor(double(sz[i])/kernelstp[i])+1;
 	}
 	 
 	T2 *bgddatasmall1d = new T2 [szsmall[0]*szsmall[1]*szsmall[2]];

@@ -192,7 +192,7 @@ bool FL_cellseg(Vol3DSimple <unsigned char> *img3d, Vol3DSimple <unsigned short 
 
 				if (p_num>n_num)
 				{
-					for (i=round((data_sz[2]-1)*2/3); i<data_sz[2]-1; i++)
+                    for (i=(V3DLONG)(double(data_sz[2]-1)*2/3 + 0.5); i<data_sz[2]-1; i++)
 					{	
 						V3DLONG tmp = pp[i+1]-pp[i];
 						if ((abs(double(tmp))>endmax)&(tmp<0))  //2010-05-20. by PHC. force convert from V3DLONG to double for MSVC complier
@@ -204,7 +204,7 @@ bool FL_cellseg(Vol3DSimple <unsigned char> *img3d, Vol3DSimple <unsigned short 
 				}
 				else
 				{
-					for (i=round((data_sz[2]-1)*2/3); i<data_sz[2]-1; i++)
+                    for (i=(V3DLONG)(double(data_sz[2]-1)*2/3 + 0.5); i<data_sz[2]-1; i++)
 					{	
 						V3DLONG tmp = pp[i+1]-pp[i];
 						if ((abs(double(tmp))>endmax)&(tmp>0))  //2010-05-20. by PHC. force convert from V3DLONG to double for MSVC complier

@@ -9,11 +9,11 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <math.h>
+#include <cmath>
 
 #include "img_definition.h"
-#include "stackutil.h"
-#include "basic_memory.h"
+//#include "stackutil.h"
+//#include "basic_memory.h"
 
 
 //compute 2D gradient 
