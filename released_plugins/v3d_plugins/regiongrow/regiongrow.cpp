@@ -15,7 +15,7 @@
 #include <iostream>
 
 #include "regiongrow.h"
-#include "stackutil.h"
+//#include "stackutil.h"
 
 #include <basic_surf_objs.h>
 #include <volimg_proc.h>
@@ -420,7 +420,7 @@ void rgnfindsub(int rowi,int colj, int depk, int direction,int stackinc, RgnGrow
 Q_EXPORT_PLUGIN2(regiongrow, RegionGrowPlugin);
 
 void regiongrowing(V3DPluginCallback2 &callback, QWidget *parent);
-bool regiongrowing(const V3DPluginArgList & input, V3DPluginArgList & output);
+bool regiongrowing(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPluginArgList & output);
 
 
 //plugin funcs
@@ -434,12 +434,11 @@ QStringList RegionGrowPlugin::funclist() const
 		<<tr("help");
 }
 
-
 bool RegionGrowPlugin::dofunc(const QString &func_name, const V3DPluginArgList &input, V3DPluginArgList &output, V3DPluginCallback2 &callback, QWidget *parent)
 {
      if (func_name == tr("rg"))
 	{
-		return regiongrowing(input, output);
+        return regiongrowing(callback, input, output);
 	}
 	else if(func_name == tr("help"))
 	{
@@ -457,7 +456,7 @@ bool RegionGrowPlugin::dofunc(const QString &func_name, const V3DPluginArgList &
 	}
 }
 
-bool regiongrowing(const V3DPluginArgList & input, V3DPluginArgList & output)
+bool regiongrowing(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPluginArgList & output)
 {
 	cout<<"Welcome to Gaussian filter"<<endl;
 	if (output.size() < 1) return false;
@@ -503,10 +502,10 @@ bool regiongrowing(const V3DPluginArgList & input, V3DPluginArgList & output)
      V3DLONG ch_rgb = ch-1; // for channel start from 0
 
      unsigned char* pSub = 0;
-	V3DLONG * in_sz = 0;
+    V3DLONG in_sz[4];
 
 	int datatype;
-	if(!loadImage(inimg_file, pSub, in_sz, datatype))
+    if(!simple_loadimage_wrapper(callback, inimg_file, pSub, in_sz, datatype))
      {
           cerr<<"load image "<<inimg_file<<" error!"<<endl;
           return false;
@@ -781,7 +780,7 @@ bool regiongrowing(const V3DPluginArgList & input, V3DPluginArgList & output)
      bw_file.chop(bw_file.section('.', -1).size()+1);
      QString bwimg_file = bw_file + QObject::tr("_bw.raw");
 
-     saveImage(bwimg_file.toStdString().c_str(), (unsigned char *)bw, out_sz, 1);
+     simple_saveimage_wrapper(callback, bwimg_file.toStdString().c_str(), (unsigned char *)bw, out_sz, 1);
 
 	//p4Dbw.setData((unsigned char*)bw, sx, sy, sz, 1, V3D_UINT8);
 
@@ -1044,7 +1043,7 @@ bool regiongrowing(const V3DPluginArgList & input, V3DPluginArgList & output)
           // save result image
           V3DLONG out_sz[4];
           out_sz[0]=sx; out_sz[1]=sy; out_sz[2]=sz; out_sz[3]=1;
-          saveImage(outimg_file, (unsigned char *)pRGCL, out_sz, 4);
+          simple_saveimage_wrapper(callback, outimg_file, (unsigned char *)pRGCL, out_sz, 4);
 
 	}
 	else if(n_rgn>254)
@@ -1114,7 +1113,7 @@ bool regiongrowing(const V3DPluginArgList & input, V3DPluginArgList & output)
           // save result image
           V3DLONG out_sz[4];
           out_sz[0]=sx; out_sz[1]=sy; out_sz[2]=sz; out_sz[3]=1;
-          saveImage(outimg_file, (unsigned char *)pRGCL, out_sz, 2);
+          simple_saveimage_wrapper(callback, outimg_file, (unsigned char *)pRGCL, out_sz, 2);
 
 	}
 	else
@@ -1184,7 +1183,7 @@ bool regiongrowing(const V3DPluginArgList & input, V3DPluginArgList & output)
           // save result image
           V3DLONG out_sz[4];
           out_sz[0]=sx; out_sz[1]=sy; out_sz[2]=sz; out_sz[3]=1;
-          saveImage(outimg_file, (unsigned char *)pRGCL, out_sz, 1);
+          simple_saveimage_wrapper(callback, outimg_file, (unsigned char *)pRGCL, out_sz, 1);
 	}
 
 	//
@@ -1193,7 +1192,6 @@ bool regiongrowing(const V3DPluginArgList & input, V3DPluginArgList & output)
      //========<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
      if(pSub) {delete []pSub; pSub=0;}
-     if(in_sz)  {delete []in_sz; in_sz=0;}
 
      return true;
 }
