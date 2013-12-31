@@ -14,7 +14,7 @@ class example_reset_xyz_resolutionPlugin : public QObject, public V3DPluginInter
     Q_INTERFACES(V3DPluginInterface2_1)
 
 public:
-     float getPluginVersion() const {return 1.1f;}
+     float getPluginVersion() const {return 1.2f;}
 
      QStringList menulist() const;
 	void domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent);

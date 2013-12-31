@@ -12,7 +12,6 @@
 #include <stdlib.h>
 
 #include "reset_xyz_resolution.h"
-#include "stackutil.h"
 
 using namespace std;
 
@@ -22,7 +21,7 @@ Q_EXPORT_PLUGIN2(example_reset_xyz_resolution, example_reset_xyz_resolutionPlugi
 
 
 void processImage(V3DPluginCallback2 &callback, QWidget *parent, unsigned int flag);
-bool processImage(const V3DPluginArgList & input, V3DPluginArgList & output, unsigned int flag);
+bool processImage(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPluginArgList & output, unsigned int flag);
 
 QStringList example_reset_xyz_resolutionPlugin::menulist() const
 {
@@ -102,7 +101,7 @@ bool example_reset_xyz_resolutionPlugin::dofunc(const QString &func_name, const 
 	// }
 }
 
-bool processImage(const V3DPluginArgList & input, V3DPluginArgList & output, unsigned int flag)
+bool processImage(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPluginArgList & output, unsigned int flag)
 {
 	// cout<<"Welcome to image resolution plugin"<<endl;
 
