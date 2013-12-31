@@ -121,7 +121,7 @@ void histogramDialog::updateBar()
 			for (int j=0;j<vec_rescaled.size();j++)
 			{
 				if (vec_rescaled[j]!=0)
-					vec_rescaled[j] = log10(vec_rescaled[j])* 1000.0;
+                    vec_rescaled[j] = log10(double(vec_rescaled[j]))* 1000.0;
 			}
 		}
 		minMaxInVector(vec_rescaled.data(), vec_rescaled.size(), imin, vmin, imax, vmax);
