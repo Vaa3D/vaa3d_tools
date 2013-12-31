@@ -35,7 +35,7 @@ public:
 	//void do_computation (float *apsInput, V3DLONG iImageWidth, V3DLONG iImageHeight, V3DLONG iImageLayer, V3DLONG* label){}
 	//void do_computation (unsigned char *apsInput, unsigned char * aspOutput, V3DLONG iImageWidth, V3DLONG iImageHeight, V3DLONG iImageLayer, V3DLONG h){}
 
-        float getPluginVersion() const {return 1.1f;}
+        float getPluginVersion() const {return 1.11f;}
 };
 class SetsizeDialog : public QDialog
 {

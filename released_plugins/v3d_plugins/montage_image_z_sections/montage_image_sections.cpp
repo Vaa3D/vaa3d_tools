@@ -10,7 +10,7 @@
 // add dofunc() by Jianlong Zhou, 2012-04-13
 
 #include <iostream>
-#include "stackutil.h"
+//#include "stackutil.h"
 #include "montage_image_sections.h"
 #include "v3d_message.h"
 
@@ -19,7 +19,8 @@ using namespace std;
 //The value of PluginName should correspond to the TARGET specified in the plugin's project file.
 Q_EXPORT_PLUGIN2(Montage, MONTAGEPlugin);
 
-bool do_computation(const V3DPluginArgList & input, V3DPluginArgList & output, int method_code);
+bool do_computation(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPluginArgList & output, int method_code);
+void do_computation(V3DPluginCallback2 &callback, QWidget *parent, int method_code);
 
 template <class T>
 void montage_image_sections (T *apsInput, T * aspOutput, V3DLONG iImageWidth, V3DLONG iImageHeight, V3DLONG iImageLayer,bool b_draw)
@@ -109,15 +110,13 @@ template <class T>
 }
 
 
-void do_computation(V3DPluginCallback2 &callback, QWidget *parent, int method_code);
-
 //plugin funcs
 const QString title = "montage_image_sections";
 QStringList MONTAGEPlugin::menulist() const
 {
     return QStringList()
 	<< tr("montage_image_sections")
-	<< tr ("revert a montage image to a stack")
+    << tr("revert a montage image to a stack")
 	<< tr("Help");
 }
 
@@ -137,16 +136,14 @@ void MONTAGEPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callbac
 		v3d_msg("This plugin produces a montage view of all z slices.");
 		return;
 	}
-
 }
-
 
 
 QStringList MONTAGEPlugin::funclist() const
 {
 	return QStringList()
 		<<tr("mtg")
-          <<tr("rmtg")
+        <<tr("rmtg")
 		<<tr("help");
 }
 
@@ -155,15 +152,17 @@ bool MONTAGEPlugin::dofunc(const QString &func_name, const V3DPluginArgList &inp
 {
      if (func_name == tr("mtg"))
 	{
-		return do_computation(input, output, 1);
+        return do_computation(callback, input, output, 1);
 	}
      else if (func_name == tr("rmtg"))
 	{
-		return do_computation(input, output, 2);
+        return do_computation(callback, input, output, 2);
 	}
 	else if(func_name == tr("help"))
 	{
-		cout<<"Usage : v3d -x montage -f mtg -i <inimg_file> -o <outimg_file> -p <b_draw> "<<endl;
+         cout<<"mtg - montage image slices to one image; rmtg - reverse the montage process. "<<endl;
+
+         cout<<"Usage : v3d -x montage -f mtg -i <inimg_file> -o <outimg_file> -p <b_draw> "<<endl;
           cout<<"p_draw      whether to draw lines in the montage image, 0 for not, 1 for draw, default 1"<<endl;
           cout<<"e.g. v3d -x montage -f mtg -i input.raw -o output.raw -p 1"<<endl;
 		cout<<endl;
@@ -180,7 +179,7 @@ bool MONTAGEPlugin::dofunc(const QString &func_name, const V3DPluginArgList &inp
 }
 
 
-bool do_computation(const V3DPluginArgList & input, V3DPluginArgList & output, int method_code)
+bool do_computation(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPluginArgList & output, int method_code)
 {
      cout<<"Welcome to Montage image sections"<<endl;
 	if (output.size() != 1) return false;
@@ -212,10 +211,10 @@ bool do_computation(const V3DPluginArgList & input, V3DPluginArgList & output, i
 	cout<<"outimg_file = "<<outimg_file<<endl;
 
 	unsigned char * data1d = 0;
-	V3DLONG * in_sz = 0;
+    V3DLONG in_sz[4];
 
 	int datatype;
-	if(!loadImage(inimg_file, data1d, in_sz, datatype))
+    if(!simple_loadimage_wrapper(callback, inimg_file, data1d, in_sz, datatype))
      {
           cerr<<"load image "<<inimg_file<<" error!"<<endl;
           return false;
@@ -324,7 +323,7 @@ bool do_computation(const V3DPluginArgList & input, V3DPluginArgList & output, i
 
           V3DLONG out_sz[4];
           out_sz[0]=column*sz0, out_sz[1]=row*sz1, out_sz[2]=1, out_sz[3]=sz3;
-          saveImage(outimg_file, (unsigned char *)pData, out_sz, datatype);
+          simple_saveimage_wrapper(callback, outimg_file, (unsigned char *)pData, out_sz, datatype);
 
           if(pData) {delete []pData; pData =0;}
 
@@ -422,13 +421,12 @@ bool do_computation(const V3DPluginArgList & input, V3DPluginArgList & output, i
 
           V3DLONG out_sz[4];
           out_sz[0]=column, out_sz[1]=row, out_sz[2]=scount, out_sz[3]=sz3;
-          saveImage(outimg_file, (unsigned char *)pData, out_sz, datatype);
+          simple_saveimage_wrapper(callback, outimg_file, (unsigned char *)pData, out_sz, datatype);
 
           if(pData) {delete []pData; pData =0;}
 	}
 
      if(data1d) {delete []data1d; data1d=0;}
-     if(in_sz)  {delete []in_sz; in_sz=0;}
 
      return true;
 }
