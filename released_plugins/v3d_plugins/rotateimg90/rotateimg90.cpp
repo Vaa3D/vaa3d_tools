@@ -21,7 +21,7 @@ Q_EXPORT_PLUGIN2(rotateimg90, RotateImg90Plugin)
 
 
 void processImage(V3DPluginCallback2 &callback, QWidget *parent, unsigned int rotateflag);
-bool processImage(const V3DPluginArgList & input, V3DPluginArgList & output, unsigned int rotateflag);
+bool processImage(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPluginArgList & output, unsigned int rotateflag);
 
 void rotateimage(unsigned char* data1d, V3DLONG *in_sz, ImagePixelType pixeltype, unsigned int rotateflag, unsigned char* &outimg);
 
@@ -85,15 +85,15 @@ bool RotateImg90Plugin::dofunc(const QString &func_name, const V3DPluginArgList 
 {
      if (func_name == tr("left90"))
 	{
-		return processImage(input, output, 1);
+        return processImage(callback, input, output, 1);
 	}
      else if (func_name == tr("right90"))
 	{
-		return processImage(input, output, 2);
+        return processImage(callback, input, output, 2);
 	}
      else if (func_name == tr("xy180"))
 	{
-		return processImage(input, output, 3);
+        return processImage(callback, input, output, 3);
 	}
 	else if(func_name == tr("help"))
 	{
@@ -110,7 +110,7 @@ bool RotateImg90Plugin::dofunc(const QString &func_name, const V3DPluginArgList 
 }
 
 
-bool processImage(const V3DPluginArgList & input, V3DPluginArgList & output, unsigned int rotateflag)
+bool processImage(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPluginArgList & output, unsigned int rotateflag)
 {
      cout<<"Welcome to Rotate image"<<endl;
 	if (input.size() != 1 || output.size() != 1) return false;
@@ -124,10 +124,10 @@ bool processImage(const V3DPluginArgList & input, V3DPluginArgList & output, uns
 	cout<<"outimg_file = "<<outimg_file<<endl;
 
 	unsigned char * data1d = 0;
-	V3DLONG * in_sz = 0;
+    V3DLONG in_sz[4];
 
 	int datatype;
-	if(!loadImage(inimg_file, data1d, in_sz, datatype))
+    if(!simple_loadimage_wrapper(callback, inimg_file, data1d, in_sz, datatype))
      {
           cerr<<"load image "<<inimg_file<<" error!"<<endl;
           return false;
@@ -144,7 +144,6 @@ bool processImage(const V3DPluginArgList & input, V3DPluginArgList & output, uns
           default:
                v3d_msg("Invalid datatype.");
                if (data1d) {delete []data1d; data1d=0;}
-               if (in_sz) {delete []in_sz; in_sz=0;}
                return false;
      }
 
@@ -154,12 +153,12 @@ bool processImage(const V3DPluginArgList & input, V3DPluginArgList & output, uns
           case 1:
           case 2:
                in_sz[0]=szy; in_sz[1]=szx;
-               saveImage(outimg_file, (unsigned char *)outimg, in_sz, datatype);
+               simple_saveimage_wrapper(callback, outimg_file, (unsigned char *)outimg, in_sz, datatype);
                break;
 
           case 3:
                in_sz[0]=szx; in_sz[1]=szy;
-               saveImage(outimg_file, (unsigned char *)outimg, in_sz, datatype);
+               simple_saveimage_wrapper(callback, outimg_file, (unsigned char *)outimg, in_sz, datatype);
                break;
           default:
                break;
@@ -167,7 +166,6 @@ bool processImage(const V3DPluginArgList & input, V3DPluginArgList & output, uns
 
      if (outimg) {delete []outimg; outimg =0;}
      if (data1d) {delete []data1d; data1d=0;}
-     if (in_sz) {delete []in_sz; in_sz=0;}
 
      return true;
 }
