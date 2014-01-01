@@ -32,8 +32,6 @@ QStringList markertree::menulist() const
 QStringList markertree::funclist() const
 {
 	return QStringList()
-		<<tr("func1")
-		<<tr("func2")
 		<<tr("help");
 }
 
@@ -95,7 +93,7 @@ void processImage(V3DPluginCallback2 &callback, QWidget *parent)
 		{
 			tmpLocation = listLandmarks.at(j);
 			tmpLocation.getCoord(tmpx,tmpy,tmpz);
-			markEdge[i][j] = sqrt(pow(x1-tmpx,2)+pow(y1-tmpy,2)+pow(z1-tmpz,2));
+            markEdge[i][j] = sqrt(double(x1-tmpx)*double(x1-tmpx) + double(y1-tmpy)*double(y1-tmpy) + double(z1-tmpz)*double(z1-tmpz));
 		}
 	}
 	
@@ -195,15 +193,7 @@ bool markertree::dofunc(const QString & func_name, const V3DPluginArgList & inpu
 	if(input.size() >= 2) inparas = *((vector<char*> *)input.at(1).p);
 	if(output.size() >= 1) outfiles = *((vector<char*> *)output.at(0).p);
 
-	if (func_name == tr("func1"))
-	{
-        v3d_msg("To be implemented");
-	}
-	else if (func_name == tr("func2"))
-	{
-        v3d_msg("To be implemented");
-	}
-	else if (func_name == tr("help"))
+    if (func_name == tr("help"))
 	{
         v3d_msg("To be implemented");
 	}
