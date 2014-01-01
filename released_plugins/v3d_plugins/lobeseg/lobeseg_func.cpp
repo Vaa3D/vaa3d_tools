@@ -12,9 +12,9 @@
 #include "lobeseg_main/lobeseg.h"
 #include "../../../v3d_main/worm_straighten_c/bdb_minus.h"
 
-#ifdef WIN32
-#include "getopt.h"
-#endif
+//#ifdef WIN32
+#include "getopt_new.h"
+//#endif
 
 #include <iostream>
 using namespace std;
@@ -454,7 +454,7 @@ bool lobeseg(const V3DPluginArgList & input, V3DPluginArgList & output)
 					   }
 					   break;
 			case '?' :
-					   sprintf(err_str, "Unknow option '-%c' or incomplete argument lists.", optopt);
+                       sprintf(err_str, "Unknow option '-%c' or incomplete argument lists.", c);
 						return false;
 		}
 	}

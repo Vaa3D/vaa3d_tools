@@ -84,7 +84,7 @@ getopt_new(int argc, char * const argv[], const char *optstring)
 		optopt = *place++;
 
 	/* See if option letter is one the caller wanted... */
-	if (optopt == ':' || (oli = strchr(optstring, optopt)) == NULL) {
+    if (optopt == ':' || (oli = (char *)strchr(optstring, optopt)) == NULL) {
 		if (*place == 0)
 			++optind;
 		if (opterr && *optstring != ':')

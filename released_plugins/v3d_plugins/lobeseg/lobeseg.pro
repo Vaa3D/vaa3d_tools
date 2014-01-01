@@ -11,7 +11,7 @@ INCLUDEPATH     += $$V3DMAINFOLER/common_lib/include
 HEADERS = lobeseg_plugin.h
 HEADERS += lobeseg_func.h
 HEADERS += lobeseg_gui.h
-HEADERS += getopt.h
+HEADERS += getopt_new.h
 
 HEADERS += lobeseg_main/lobeseg.h
 #HEADERS += $$V3DMAINFOLER/basic_c_fun/basic_memory.h
