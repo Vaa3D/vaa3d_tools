@@ -223,7 +223,7 @@ void printHelp()
     return;
 }
 
-bool lobeseg(const V3DPluginArgList & input, V3DPluginArgList & output)
+bool lobeseg(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPluginArgList & output)
 {
 	if(input.size() == 1) {printHelp(); return true;}
 	vector<char*> * infiles = (vector<char*> *)(input.at(0).p);
@@ -481,9 +481,9 @@ bool lobeseg(const V3DPluginArgList & input, V3DPluginArgList & output)
 
 
 	unsigned char * inimg1d = 0;
-	V3DLONG *sz=0;
+    V3DLONG sz[4];
 	int datatype;
-	loadImage(infile, inimg1d, sz, datatype);
+    simple_loadimage_wrapper(callback, infile, inimg1d, sz, datatype);
 
 	unsigned char * outimg1d = new unsigned char[sz[0] * sz[1] * sz[2] * (sz[3] + 1)];
 	for(V3DLONG i = 0 ; i < sz[0] * sz[1] * sz[2] * sz[3]; i++) outimg1d[i] = inimg1d[i];
@@ -510,7 +510,7 @@ bool lobeseg(const V3DPluginArgList & input, V3DPluginArgList & output)
 		}
 	}
 	sz[3]=sz[3]+1;
-	saveImage(outfile, outimg1d,sz, datatype);
+    simple_saveimage_wrapper(callback, outfile, outimg1d,sz, datatype);
 	return true;
 }
 

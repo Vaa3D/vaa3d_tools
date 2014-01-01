@@ -66,7 +66,7 @@ bool LobesegPlugin::dofunc(const QString & func_name, const V3DPluginArgList & i
 {
 	if (func_name == tr("lobeseg"))
 	{
-		return lobeseg(input, output);
+        return lobeseg(callback, input, output);
 	}
      else if (func_name == tr("help"))
 	{

@@ -313,7 +313,7 @@ bool do_lobeseg_bdbminus(unsigned char *inimg1d0, const V3DLONG sz[4], int datat
 				{
 					double w1 = j-j1;
 					double w2 = j2-j;
-					int tmpi = round((w2*i1 + w1*i2)/(w1+w2));
+                    int tmpi = int((w2*i1 + w1*i2)/(w1+w2) + 0.5);
 					left_bound[z][j] = tmpi;
 				}				
 			}
@@ -323,7 +323,7 @@ bool do_lobeseg_bdbminus(unsigned char *inimg1d0, const V3DLONG sz[4], int datat
 				{
 					double w1 = j-j1;
 					double w2 = j2-j;
-					int tmpi = round((w2*i1 + w1*i2)/(w1+w2));
+                    int tmpi = int((w2*i1 + w1*i2)/(w1+w2) + 0.5);
 					left_bound[z][j] = tmpi;
 				}
 			}
@@ -339,7 +339,7 @@ bool do_lobeseg_bdbminus(unsigned char *inimg1d0, const V3DLONG sz[4], int datat
 				{
 					double w1 = j-j1;
 					double w2 = j2-j;
-					int tmpi = round((w2*i1 + w1*i2)/(w1+w2));
+                    int tmpi = int((w2*i1 + w1*i2)/(w1+w2) + 0.5);
 					right_bound[z][j] = tmpi;
 				}
 			}
@@ -349,7 +349,7 @@ bool do_lobeseg_bdbminus(unsigned char *inimg1d0, const V3DLONG sz[4], int datat
 				{
 					double w1 = j-j1;
 					double w2 = j2-j;
-					int tmpi = round((w2*i1 + w1*i2)/(w1+w2));
+                    int tmpi = int((w2*i1 + w1*i2)/(w1+w2) + 0.5);
 					right_bound[z][j] = tmpi;
 				}
 			}
@@ -647,7 +647,7 @@ bool do_lobeseg_bdbminus_onesideonly(unsigned char *inimg1d, const V3DLONG sz[4]
 				{
 					double w1 = j-j1;
 					double w2 = j2-j;
-					int tmpi = round((w2*i1 + w1*i2)/(w1+w2));
+                    int tmpi = int((w2*i1 + w1*i2)/(w1+w2) + 0.5);
 					///the_bound[z][j] = tmpi;
 					the_bounds[z][j].insert(tmpi);
 				}				
@@ -658,7 +658,7 @@ bool do_lobeseg_bdbminus_onesideonly(unsigned char *inimg1d, const V3DLONG sz[4]
 				{
 					double w1 = j-j1;
 					double w2 = j2-j;
-					int tmpi = round((w2*i1 + w1*i2)/(w1+w2));
+                    int tmpi = int((w2*i1 + w1*i2)/(w1+w2) + 0.5);
 					///the_bound[z][j] = tmpi;
 					the_bounds[z][j].insert(tmpi);
 				}

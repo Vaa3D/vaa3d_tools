@@ -10,7 +10,7 @@
 
 int lobeseg_two_sides(V3DPluginCallback2 &callback, QWidget *parent);
 int lobeseg_one_side_only(V3DPluginCallback2 &callback, QWidget *parent);
-bool lobeseg(const V3DPluginArgList & input, V3DPluginArgList & output);
+bool lobeseg(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPluginArgList & output);
 void printHelp();
 #endif
 
