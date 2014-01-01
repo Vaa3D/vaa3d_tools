@@ -200,7 +200,7 @@ int lobeseg_one_side_only(V3DPluginCallback2 &callback, QWidget *parent)
 
 void printHelp()
 {
-    printf("\nUsage: v3d -p <lobeseg_plugin_name> -n lobeseg -i <input_image_file> -o <output_image_file> -par \"#c <channalNo_reference> #A <alpha: image force> #B <beta: length force> #G <gamma: smoothness force> #n <nloop> #w <local win radius> [#s #p <position> #k <direction> #N <num_of_controls>]\"\n");
+    printf("\nUsage: vaa3d -p <lobeseg_plugin_name> -n lobeseg -i <input_image_file> -o <output_image_file> -par \"#c <channalNo_reference> #A <alpha: image force> #B <beta: length force> #G <gamma: smoothness force> #n <nloop> #w <local win radius> [#s #p <position> #k <direction> #N <num_of_controls>]\"\n");
     printf("\t -i <input_image_file>              input 3D image (tif, or Hanchuan's RAW or LSM). \n");
     //printf("\t -p <prior control pt file>         input prior location of control points (note: the order will matter!). If unspecified, then randomly initialized. \n");
     printf("\t -o <output_image_file>             output image where the third channel is a mask indicating the regions. \n");
@@ -281,7 +281,7 @@ bool lobeseg(const V3DPluginArgList & input, V3DPluginArgList & output)
 	char optstring[] = "hsSi:o:c:A:B:G:n:p:k:N:";
 	int c;
 	optind = 0;
-	while((c = getopt(argc, argv, optstring)) != -1)
+    while((c = getopt_new(argc, argv, optstring)) != -1)
 	{
 		switch(c)
 		{
