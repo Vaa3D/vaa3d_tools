@@ -11,7 +11,9 @@
 
 using namespace std;
 Q_EXPORT_PLUGIN2(movie_format_convert, MovieConverter);
+
 controlPanel* controlPanel::m_pLookPanel = 0;
+
 QStringList MovieConverter::menulist() const
 {
 	return QStringList() 
@@ -35,14 +37,16 @@ void MovieConverter::domenu(const QString &menu_name, V3DPluginCallback2 &callba
             controlPanel::m_pLookPanel->show();
             return;
         }
-
-        controlPanel* p = new controlPanel(callback, parent);
-        if (p)	p->show();
+        else
+        {
+            controlPanel* p = new controlPanel(callback, parent);
+            if (p)	p->show();
+        }
     }
     else
     {
         v3d_msg(tr("Movie Format Converter (from sequence of frames to a single movie file). "
-            "Developed by Zhi Zhou and Hanchuan Peng, 2013-12-10"));
+            "Developed by Zhi Zhou and Hanchuan Peng, 2013."));
     }
 
 
@@ -60,6 +64,11 @@ bool MovieConverter::dofunc(const QString & func_name, const V3DPluginArgList & 
             ffmpeg_file  = getAppPath().append("/mac_ffmpeg").toStdString().c_str();
         #elif defined(Q_OS_LINUX)
             ffmpeg_file = getAppPath().append("/linux_ffmpeg").toStdString().c_str();
+        #elif defined(Q_OS_WIN32)
+            ffmpeg_file = getAppPath().append("/linux_ffmpeg").toStdString().c_str();
+        #else
+            v3d_msg("The OS is not recognized (not Mac, Linux or Windows). Do nothing.");
+            return;
         #endif
 
         QString check_ffmpeg;
@@ -185,18 +194,25 @@ QString getAppPath()
 controlPanel::controlPanel(V3DPluginCallback2 &_v3d, QWidget *parent) :
     QDialog(parent), m_v3d(_v3d)
 {
+    QString exepath = getAppPath();
+#if  defined(Q_OS_MAC)
+         exepath.append("/mac_ffmpeg");
+#elif defined(Q_OS_LINUX)
+         exepath.append("/linux_ffmpeg");
+#elif defined(Q_OS_WIN32)
+         exepath.append("/windows_ffmpeg.exe");
+#else
+         v3d_msg("The OS is not recognized (not Mac, Linux or Windows). Do nothing.");
+         return;
+#endif
+
     m_pLookPanel = this;
     m_lframeind = 0;
 
     m_pLineEdit_fps = new QLineEdit(QObject::tr("14"));
     m_pLineEdit_filepath = new QLineEdit();
-    m_pLineEdit_filename = new QLineEdit(QObject::tr("file_[num].bmp"));
-   // m_pLineEdit_ffmpegpath = new QLineEdit(getAppPath().append("/mac_ffmpeg"));
-    #if  defined(Q_OS_MAC)
-         m_pLineEdit_ffmpegpath = new QLineEdit(getAppPath().append("/mac_ffmpeg"));
-    #elif defined(Q_OS_LINUX)
-         m_pLineEdit_ffmpegpath = new QLineEdit(getAppPath().append("/linux_ffmpeg"));
-    #endif
+    m_pLineEdit_filename = new QLineEdit(QObject::tr("a[num].bmp"));
+    m_pLineEdit_ffmpegpath = new QLineEdit(exepath);
     QPushButton *pPushButton_start = new QPushButton(QObject::tr("convert"));
     QPushButton *pPushButton_close = new QPushButton(QObject::tr("close"));
     QPushButton *pPushButton_openFileDlg_output = new QPushButton(QObject::tr("..."));
@@ -281,7 +297,7 @@ void controlPanel::_slot_start()
           QString selectffmpeg = m_pLineEdit_ffmpegpath->text();
           if (!QFile(selectffmpeg).exists())
           {
-             v3d_msg("Can not find ffmpeg, please select again or download from http://www.ffmpeg.org");
+             v3d_msg("Cannot find ffmpeg, please select again or download from http://www.ffmpeg.org and put into a local folder.");
              return;
           }
 
@@ -318,22 +334,32 @@ void controlPanel::_slot_start()
           }
           else if (check_compress->isChecked() && videoType =="avi")
           {
-                compress = "-vcodec mjpeg -qscale 0";
+#if defined(Q_OS_WIN32)
+              compress = "-vcodec mjpeg";
+#else
+              compress = "-vcodec mjpeg -qscale 0";
+#endif
           }
           else
               compress = "-vcodec rawvideo";
-          QString cmd_ffmpeg = QString("%1 -r %2 -i \'%3/%4%d%5\' -y %6 \'%7/movie.%8\'").arg(selectffmpeg.toStdString().c_str()).arg(fps.toStdString().c_str()).arg(selectedFile.toStdString().c_str()).arg(filenameL.toStdString().c_str()).arg(filenameR.toStdString().c_str()).arg(compress.toStdString().c_str()).arg(selectedFile.toStdString().c_str()).arg(videoType.toStdString().c_str());
+
+
+          QString cmd_ffmpeg = QString("%1 -r %2 -i \"%3/%4%d%5\" -y %6 \"%7/movie.%8\"").arg(selectffmpeg.toStdString().c_str()).arg(fps.toStdString().c_str()).arg(selectedFile.toStdString().c_str()).arg(filenameL.toStdString().c_str()).arg(filenameR.toStdString().c_str()).arg(compress.toStdString().c_str()).arg(selectedFile.toStdString().c_str()).arg(videoType.toStdString().c_str());
+
+          v3d_msg(cmd_ffmpeg, 0);
+
           system(qPrintable(cmd_ffmpeg));
+
           //-vcodec mjpeg -qscale 0
-          QString movieDir = selectedFile.append(QString("/movie.%1").arg(videoType));
-          if (!QFile(movieDir).exists())
+          QString movieFile = selectedFile.append(QString("/movie.%1").arg(videoType));
+          if (!QFile(movieFile).exists())
           {
-             v3d_msg("The format is not supported, or can not find ffmpeg, please select again or download from http://www.ffmpeg.org\n");
+             v3d_msg(QString("movie file [%1] does not exist and it seems the movie conversion fails. Please check.\n").arg(movieFile));
              return;
           }
           else
           {
-             v3d_msg(QString("The movie is saved in %1").arg(movieDir));
+             v3d_msg(QString("The movie has been saved in [%1].").arg(movieFile));
              return;
           }
 

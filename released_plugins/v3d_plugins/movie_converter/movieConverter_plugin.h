@@ -15,7 +15,7 @@ class MovieConverter : public QObject, public V3DPluginInterface2_1
 	Q_INTERFACES(V3DPluginInterface2_1);
 
 public:
-	float getPluginVersion() const {return 1.1f;}
+    float getPluginVersion() const {return 1.2f;}
 
 	QStringList menulist() const;
 	void domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent);
@@ -41,7 +41,7 @@ public:
     QLineEdit *m_pLineEdit_filename;
     QLineEdit *m_pLineEdit_ffmpegpath;
     V3DPluginCallback2 &m_v3d;
-    static controlPanel*m_pLookPanel;
+    static controlPanel *m_pLookPanel;
     QCheckBox* check_compress;
     QComboBox* combo_type;
 
