@@ -68,7 +68,7 @@ bool MovieConverter::dofunc(const QString & func_name, const V3DPluginArgList & 
             ffmpeg_file = getAppPath().append("/linux_ffmpeg").toStdString().c_str();
         #else
             v3d_msg("The OS is not recognized (not Mac, Linux or Windows). Do nothing.");
-            return;
+            return false;
         #endif
 
         QString check_ffmpeg;
