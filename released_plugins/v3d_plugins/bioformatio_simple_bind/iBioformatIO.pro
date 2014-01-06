@@ -9,23 +9,23 @@ INCLUDEPATH  += $$V3DMAINDIR/basic_c_fun
 INCLUDEPATH  += $$V3DMAINDIR/common_lib/include
 
 HEADERS       = iBioformatIO.h
-HEADERS      +=	$$V3DMAINDIR/basic_c_fun/stackutil.h
-HEADERS      +=	$$V3DMAINDIR/basic_c_fun/mg_utilities.h
-HEADERS      += $$V3DMAINDIR/basic_c_fun/mg_image_lib.h
-HEADERS      += $$V3DMAINDIR/basic_c_fun/stackutil.cpp
+#HEADERS      +=	$$V3DMAINDIR/basic_c_fun/stackutil.h
+#HEADERS      +=	$$V3DMAINDIR/basic_c_fun/mg_utilities.h
+#HEADERS      += $$V3DMAINDIR/basic_c_fun/mg_image_lib.h
+#HEADERS      += $$V3DMAINDIR/basic_c_fun/stackutil.cpp
 
 SOURCES       = iBioformatIO.cpp
-SOURCES      += $$V3DMAINDIR/basic_c_fun/stackutil.cpp
-SOURCES      +=	$$V3DMAINDIR/basic_c_fun/mg_utilities.cpp
-SOURCES      +=	$$V3DMAINDIR/basic_c_fun/mg_image_lib.cpp
+#SOURCES      += $$V3DMAINDIR/basic_c_fun/stackutil.cpp
+#SOURCES      +=	$$V3DMAINDIR/basic_c_fun/mg_utilities.cpp
+#SOURCES      +=	$$V3DMAINDIR/basic_c_fun/mg_image_lib.cpp
 SOURCES      += $$V3DMAINDIR/basic_c_fun/v3d_message.cpp
 
-win32 {
-	LIBS         += -L$$V3DMAINDIR/common_lib/winlib64 -llibtiff
-}
-else {
-	LIBS         += -lm -L$$V3DMAINDIR/common_lib/lib -lv3dtiff
-}
+#win32 {
+#	LIBS         += -L$$V3DMAINDIR/common_lib/winlib64 -llibtiff
+#}
+#else {
+#	LIBS         += -lm -L$$V3DMAINDIR/common_lib/lib -lv3dtiff
+#}
 #LIBS         += -lpthread
 
 TARGET        = $$qtLibraryTarget(imageIO_Bioformat)

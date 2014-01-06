@@ -12,23 +12,23 @@
 #include <QtGui>
 #include <QFileInfo>
 
-#include <cmath>
+//#include <cmath>
 #include <stdlib.h>
 #include <ctime>
 
 #include "iBioformatIO.h"
 
-#include "basic_surf_objs.h"
-#include "stackutil.h"
-#include "volimg_proc.h"
-#include "img_definition.h"
-#include "basic_landmark.h"
+//#include "basic_surf_objs.h"
+//#include "stackutil.h"
+//#include "volimg_proc.h"
+//#include "img_definition.h"
+//#include "basic_landmark.h"
 
-#include "mg_utilities.h"
-#include "mg_image_lib.h"
+//#include "mg_utilities.h"
+//#include "mg_image_lib.h"
 
-#include "basic_landmark.h"
-#include "basic_4dimage.h"
+//#include "basic_landmark.h"
+//#include "basic_4dimage.h"
 
 #include <iostream>
 using namespace std;
@@ -92,15 +92,19 @@ void IBioformatIOPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &ca
 
         system(qPrintable(cmd_loci));
 
-        if (!tmpqfile.exists()) v3d_msg("The format is not supported, or something is wrong in your file\n");
+        if (!tmpqfile.exists())
+        {
+            v3d_msg("The temprary file does not exist. The conversion of format using Bioformats has failed. Please sue another way to convert and load using Vaa3D.\n");
+            return;
+        }
 
 
         // load
-        V3DLONG *sz_relative = 0;
+        V3DLONG sz_relative[4];
         int datatype_relative = 0;
         unsigned char* relative1d = 0;
 
-        if (loadImage(const_cast<char *>(tmpfile.toStdString().c_str()), relative1d, sz_relative, datatype_relative)!=true)
+        if (simple_loadimage_wrapper(callback, const_cast<char *>(tmpfile.toStdString().c_str()), relative1d, sz_relative, datatype_relative)!=true)
         {
              fprintf (stderr, "Error happens in reading the subject file [%s]. Exit. \n",tmpfile.toStdString().c_str());
              return;
@@ -205,7 +209,11 @@ bool IBioformatIOPlugin::dofunc(const QString & func_name, const V3DPluginArgLis
 
           system(qPrintable(cmd_loci));
 
-          if (!tmpqfile.exists()) v3d_msg("The format is not supported, or something is wrong in your file\n");
+          if (!tmpqfile.exists())
+          {
+              v3d_msg("The temprary file does not exist. The conversion of format using Bioformats has failed. Please use another way to convert and load using Vaa3D.\n");
+              return false;
+          }
 
           return true;
 	}
