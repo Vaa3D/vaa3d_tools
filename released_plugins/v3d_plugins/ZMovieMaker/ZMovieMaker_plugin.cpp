@@ -20,14 +20,12 @@ using namespace std;
 const double pi = 3.1415926535897;
 
 Q_EXPORT_PLUGIN2(ZMovieMaker, ZMovieMaker);
-
+controlPanel* controlPanel::panel = 0;
 //#define __ZMAKE_DEBUG__ 1
 #define MYFLOAT double
 
 
 void MovieFromPoints(V3DPluginCallback2 &v3d, QWidget *parent);
-static lookPanel *panel = 0;
-
 void angles_to_quaternions(MYFLOAT q[], MYFLOAT xRot, MYFLOAT yRot,MYFLOAT zRot);
 void slerp_zhi(MYFLOAT q1[], MYFLOAT q2[],MYFLOAT alpha,MYFLOAT q_sample[]);
 void quaternions_to_angles(MYFLOAT Rot_current[], MYFLOAT q_sample[]);
@@ -321,20 +319,22 @@ bool ZMovieMaker::dofunc(const QString & func_name, const V3DPluginArgList & inp
 
 void MovieFromPoints(V3DPluginCallback2 &v3d, QWidget *parent)
 {
-    if (panel)
+    if (controlPanel::panel)
     {
-        panel->show();
+        controlPanel::panel->show();
         return;
     }
     else
     {
-        panel = new lookPanel(v3d, parent);
-        if (panel)
+        controlPanel* p = new controlPanel(v3d, parent);
+        if (p)
         {
-            panel->show();
-            panel->raise();
-            panel->move(50,50);
-            panel->activateWindow();
+     //       panel->setAttribute(Qt::WA_QuitOnClose);
+      //      panel->setAttribute(Qt::WA_DeleteOnClose);
+            p->show();
+            p->raise();
+            p->move(50,50);
+            p->activateWindow();
         }
     }
 }
@@ -403,7 +403,7 @@ void MyComboBox::updateList()
 }
 
 
-lookPanel::lookPanel(V3DPluginCallback2 &_v3d, QWidget *parent) :
+controlPanel::controlPanel(V3DPluginCallback2 &_v3d, QWidget *parent) :
     QDialog(parent), m_v3d(_v3d)
 {
     QPushButton* btn_Record = new QPushButton("Add an Anchor Point");
@@ -468,7 +468,14 @@ lookPanel::lookPanel(V3DPluginCallback2 &_v3d, QWidget *parent) :
     connect(list_anchors, SIGNAL(itemDoubleClicked(QListWidgetItem *)), this, SLOT(_slot_show_item(QListWidgetItem *)));
 }
 
-void lookPanel::_slot_record()
+controlPanel::~controlPanel()
+{
+     panel=0;
+
+}
+
+
+void controlPanel::_slot_record()
 {
     CHECK_WINDOWS;
 
@@ -508,7 +515,7 @@ void lookPanel::_slot_record()
 }
 
 
-void lookPanel::_slot_preview()
+void controlPanel::_slot_preview()
 {
     CHECK_WINDOWS;
 
@@ -686,7 +693,7 @@ void lookPanel::_slot_preview()
     return;
 }
 
-void lookPanel::_slot_delete()
+void controlPanel::_slot_delete()
 {
     CHECK_WINDOWS;
 
@@ -701,7 +708,7 @@ void lookPanel::_slot_delete()
     UPDATE_LIST_INDEX
 }
 
-void lookPanel::_slot_show_item(QListWidgetItem *item)
+void controlPanel::_slot_show_item(QListWidgetItem *item)
 {
     CHECK_WINDOWS;
 
@@ -720,7 +727,7 @@ void lookPanel::_slot_show_item(QListWidgetItem *item)
     SET_3DVIEW;
 }
 
-void lookPanel::_slot_show()
+void controlPanel::_slot_show()
 {
     CHECK_WINDOWS;
 
@@ -736,7 +743,7 @@ void lookPanel::_slot_show()
         return;
 }
 
-void lookPanel::_slot_upload()
+void controlPanel::_slot_upload()
 {
     v3d_msg("To be implemented!");
 }
@@ -796,7 +803,7 @@ bool _saveAnchorFile(QString filename, QStringList ParaLists, bool b_append)
 
 
 
-bool lookPanel::saveAnchorFile(QString filename)
+bool controlPanel::saveAnchorFile(QString filename)
 {
     if (filename.isEmpty() || !list_anchors || list_anchors->count()<=0)
     {
@@ -811,7 +818,7 @@ bool lookPanel::saveAnchorFile(QString filename)
     return _saveAnchorFile(filename, paraLists, false);
 }
 
-void lookPanel::_slot_save()
+void controlPanel::_slot_save()
 {    
     QString fileName = QFileDialog::getSaveFileName(this, tr("Save Anchor Point File"),
                                                     "",
@@ -821,7 +828,7 @@ void lookPanel::_slot_save()
         saveAnchorFile(fileName);
 }
 
-void lookPanel::_slot_load()
+void controlPanel::_slot_load()
 {
 
     QString fileOpenName = QFileDialog::getOpenFileName(this, QObject::tr("Open File"),
@@ -866,7 +873,7 @@ void lookPanel::_slot_load()
     return;
 }
 
-void lookPanel::_slot_up()
+void controlPanel::_slot_up()
 {
     CHECK_WINDOWS;
 
@@ -888,7 +895,7 @@ void lookPanel::_slot_up()
 
 }
 
-void lookPanel::_slot_down()
+void controlPanel::_slot_down()
 {
     CHECK_WINDOWS;
 

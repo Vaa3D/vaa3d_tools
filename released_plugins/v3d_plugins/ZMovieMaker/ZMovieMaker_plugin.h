@@ -40,17 +40,20 @@ public slots:
     void updateList();
 };
 
-class lookPanel: public QDialog
+class controlPanel: public QDialog
 {
     Q_OBJECT
 
 public:
-    lookPanel(V3DPluginCallback2 &v3d, QWidget *parent);
+    controlPanel(V3DPluginCallback2 &v3d, QWidget *parent);
+    ~controlPanel();
 
 public:
     v3dhandle curwin;
     V3dR_MainWindow *surface_win;
     View3DControl *view;
+    static controlPanel *panel;
+
 
     QList <V3dR_MainWindow *> list_3dviewer;
     v3dhandleList list_triview;
