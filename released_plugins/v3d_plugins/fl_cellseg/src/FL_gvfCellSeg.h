@@ -6,7 +6,7 @@
 #ifndef __GVF_SEGMENTATION3D__
 #define __GVF_SEGMENTATION3D__
 
-#include "../basic_c_fun/v3d_basicdatatype.h"
+#include "v3d_basicdatatype.h"
 
 class gvfsegPara // for gradient diffusion field
 {

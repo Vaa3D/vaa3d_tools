@@ -7,8 +7,8 @@
 #include <stdlib.h>
 #include <math.h>
 
-#include "./local_basic_c_fun/img_definition.h"
-#include "./local_basic_c_fun/stackutil.h"
+#include "img_definition.h"
+//#include "stackutil.h"
 
 #include "FL_gvfCellSeg.h"
 #include "FL_defType.h"
