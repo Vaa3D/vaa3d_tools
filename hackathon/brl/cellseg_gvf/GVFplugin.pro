@@ -12,9 +12,6 @@ INCLUDEPATH     += $$PLUGINPATH/..
 HEADERS	+= GVFplugin_plugin.h
 HEADERS += $$PLUGINPATH/FL_gvfCellSeg.h
 
-
-
-
 SOURCES	+= GVFplugin_plugin.cpp
 SOURCES	+= $$VAA3DPATH/basic_c_fun/v3d_message.cpp
 SOURCES += $$PLUGINPATH/FL_gvfCellSeg.cpp
