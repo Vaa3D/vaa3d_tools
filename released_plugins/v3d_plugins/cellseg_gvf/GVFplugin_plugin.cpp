@@ -17,12 +17,10 @@ using namespace std;
 Q_EXPORT_PLUGIN2(gvf_cellseg, GVFplugin);
  
 
-
-
 QStringList GVFplugin::menulist() const
 {
 	return QStringList() 
-		<<tr("GVF_Segmentation")
+        <<tr("Gradient vector flow based Segmentation")
         <<tr("About");
 }
 
@@ -35,7 +33,7 @@ QStringList GVFplugin::funclist() const
 
 void GVFplugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
 {
-	if (menu_name == tr("GVF_Segmentation"))
+    if (menu_name == tr("Gradient vector flow based Segmentation"))
     {
 
 
@@ -73,10 +71,6 @@ void GVFplugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, Q
         V3DLONG sz3 = subject->getCDim();
 
         Image4DProxy<Image4DSimple> pSub(subject);
-
-
-
-
 
         V3DLONG channelsz = sz0*sz1*sz2;
 
@@ -203,13 +197,11 @@ void GVFplugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, Q
         }
 
         return;
-       // remove("temp.v3draw");
-       // remove("gfImage.v3draw");
     }
 	else
 	{
-		v3d_msg(tr("Implementation of Gradient Vector Flow cell body segmentation. "
-			"Developed by BRL, 2014.01.06"));
+        v3d_msg(tr("A plugin for cell segmentation using Gradient Vector Flow. "
+            "Developed by Brian Long, using the source code developed by Fuhui Long, Tianming Liu, and Hanchuan Peng (2010-2014)"));
 	}
 }
 
