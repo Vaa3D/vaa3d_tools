@@ -14,7 +14,7 @@
 #define USHORTINT16 unsigned short int
 
 using namespace std;
-Q_EXPORT_PLUGIN2(GVFplugin, GVFplugin);
+Q_EXPORT_PLUGIN2(gvf_cellseg, GVFplugin);
  
 
 
