@@ -470,7 +470,7 @@ controlPanel::controlPanel(V3DPluginCallback2 &_v3d, QWidget *parent) :
 
 controlPanel::~controlPanel()
 {
-     panel=0;
+     if(panel){delete panel; panel=0;}
 
 }
 
