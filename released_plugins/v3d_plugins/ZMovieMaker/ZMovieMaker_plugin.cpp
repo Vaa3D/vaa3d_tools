@@ -332,8 +332,6 @@ void MovieFromPoints(V3DPluginCallback2 &v3d, QWidget *parent)
         if (panel)
         {
             panel->show();
-            panel->setAttribute(Qt::WA_QuitOnClose);
-            panel->setAttribute(Qt::WA_DeleteOnClose);
             panel->raise();
             panel->move(50,50);
             panel->activateWindow();
