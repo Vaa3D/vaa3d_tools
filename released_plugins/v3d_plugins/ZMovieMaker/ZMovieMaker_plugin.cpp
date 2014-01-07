@@ -509,9 +509,6 @@ void controlPanel::_slot_record()
     curstr = curstr.prepend(QString("").setNum(list_anchors->count()+1) + ": [ ");
     curstr = curstr.append(" ]");
     list_anchors->addItem(new QListWidgetItem(curstr));
-    //  NeuronTree nt = m_v3d.getSWC(curwin);
-    //  printf("\n\nsurface number is %d,%d\n\n", nt.listNeuron.count(),view->isShowSurfObjects());
-    //  printf("\n\n surfacue cut is (%d,%d,%d,%d,%d,%d)\n\n",view->xClip0(),view->xClip1(),view->yClip0(),view->yClip1(),view->zClip0(),view->zClip1());
 }
 
 
@@ -637,7 +634,7 @@ void controlPanel::_slot_preview()
             }
 
 #ifdef __ZMAKE_DEBUG__
-            _saveAnchorFile("/Users/pengh/Downloads/apfdebug.apftxt", tmpParaLists, true);
+            _saveAnchorFile("/home/zhi/Desktop/apfdebug.apftxt", tmpParaLists, true);
 #endif
 
         }
@@ -919,14 +916,19 @@ void controlPanel::_slot_down()
 
 void angles_to_quaternions(MYFLOAT q[], MYFLOAT xRot, MYFLOAT yRot,MYFLOAT zRot)
 {
-    MYFLOAT xRot_Rad = xRot * (pi/180.0);   //if(xRot_Rad>pi) xRot_Rad -= 2*pi;
-    MYFLOAT yRot_Rad = yRot * (pi/180.0);   //if(yRot_Rad>pi) yRot_Rad -= 2*pi;
-    MYFLOAT zRot_Rad = zRot * (pi/180.0);   //if(zRot_Rad>pi) zRot_Rad -= 2*pi;
+    MYFLOAT xRot_Rad = xRot * (pi/180.0);  // if(xRot_Rad>pi) xRot_Rad -= 2*pi;
+    MYFLOAT yRot_Rad = yRot * (pi/180.0);  // if(yRot_Rad>pi) yRot_Rad -= 2*pi;
+    MYFLOAT zRot_Rad = zRot * (pi/180.0);  // if(zRot_Rad>pi) zRot_Rad -= 2*pi;
 
-    q[0] = cos(xRot_Rad/2)*cos(yRot_Rad/2)*cos(zRot_Rad/2)+sin(xRot_Rad/2)*sin(yRot_Rad/2)*sin(zRot_Rad/2);
+   /* q[0] = cos(xRot_Rad/2)*cos(yRot_Rad/2)*cos(zRot_Rad/2)+sin(xRot_Rad/2)*sin(yRot_Rad/2)*sin(zRot_Rad/2);
     q[1] = sin(xRot_Rad/2)*cos(yRot_Rad/2)*cos(zRot_Rad/2)-cos(xRot_Rad/2)*sin(yRot_Rad/2)*sin(zRot_Rad/2);
     q[2] = cos(xRot_Rad/2)*sin(yRot_Rad/2)*cos(zRot_Rad/2)+sin(xRot_Rad/2)*cos(yRot_Rad/2)*sin(zRot_Rad/2);
-    q[3] = cos(xRot_Rad/2)*cos(yRot_Rad/2)*sin(zRot_Rad/2)-sin(xRot_Rad/2)*sin(yRot_Rad/2)*cos(zRot_Rad/2);
+    q[3] = cos(xRot_Rad/2)*cos(yRot_Rad/2)*sin(zRot_Rad/2)-sin(xRot_Rad/2)*sin(yRot_Rad/2)*cos(zRot_Rad/2);*/
+
+    q[0] = -sin(xRot_Rad/2)*sin(yRot_Rad/2)*sin(zRot_Rad/2)+ cos(xRot_Rad/2)*cos(yRot_Rad/2)*cos(zRot_Rad/2);
+    q[1] = sin(xRot_Rad/2)*cos(yRot_Rad/2)*cos(zRot_Rad/2)+sin(yRot_Rad/2)*sin(zRot_Rad/2)*cos(xRot_Rad/2);
+    q[2] = -sin(xRot_Rad/2)*sin(zRot_Rad/2)*cos(yRot_Rad/2)+sin(yRot_Rad/2)*cos(xRot_Rad/2)*cos(zRot_Rad/2);
+    q[3] = sin(xRot_Rad/2)*sin(yRot_Rad/2)*cos(zRot_Rad/2)+sin(zRot_Rad/2)*cos(xRot_Rad/2)*cos(yRot_Rad/2);
 
     return;
 
@@ -1068,13 +1070,17 @@ void slerp_zhi(MYFLOAT q1[], MYFLOAT q2[], MYFLOAT t, MYFLOAT q_sample[])
 
 void quaternions_to_angles(MYFLOAT Rot_current[], MYFLOAT q_sample[])
 {
-    MYFLOAT rot_x = atan2f(2.0*(q_sample[0]*q_sample[1]+q_sample[2]*q_sample[3]), 1.0-2.0*(q_sample[1]*q_sample[1]+q_sample[2]*q_sample[2]));
+  /*  MYFLOAT rot_x = atan2f(2.0*(q_sample[0]*q_sample[1]+q_sample[2]*q_sample[3]), 1.0-2.0*(q_sample[1]*q_sample[1]+q_sample[2]*q_sample[2]));
     MYFLOAT rot_y = asinf(2.0*(q_sample[0]*q_sample[2]-q_sample[3]*q_sample[1]));
-    MYFLOAT rot_z = atan2f(2.0*(q_sample[0]*q_sample[3]+q_sample[1]*q_sample[2]), 1.0-2.0*(q_sample[2]*q_sample[2]+q_sample[3]*q_sample[3]));
+    MYFLOAT rot_z = atan2f(2.0*(q_sample[0]*q_sample[3]+q_sample[1]*q_sample[2]), 1.0-2.0*(q_sample[2]*q_sample[2]+q_sample[3]*q_sample[3]));*/
 
-    Rot_current[0] = rot_x * (180.0/pi);
-    Rot_current[1] = rot_y * (180.0/pi);
-    Rot_current[2] = rot_z * (180.0/pi);
+    MYFLOAT rot_x = atan2f(-2.0*(q_sample[2]*q_sample[3])+2.0*(q_sample[0]*q_sample[1]), 1.0-2.0*(q_sample[1]*q_sample[1]+q_sample[2]*q_sample[2]));
+    MYFLOAT rot_y = asinf(2.0*(q_sample[1]*q_sample[3]+q_sample[0]*q_sample[2]));
+    MYFLOAT rot_z = atan2f(-2.0*(q_sample[1]*q_sample[2])+2*(q_sample[0]*q_sample[3]), 1.0-2.0*(q_sample[2]*q_sample[2]+q_sample[3]*q_sample[3]));
+
+    Rot_current[0] = rot_x * (180.0/pi); // if(Rot_current[0]<0) Rot_current[0] = 360.0 + Rot_current[0];
+    Rot_current[1] = rot_y * (180.0/pi);  // if(Rot_current[0]<0) Rot_current[1] = 360.0 + Rot_current[1];
+    Rot_current[2] = rot_z * (180.0/pi);  //if(Rot_current[0]<0) Rot_current[2] = 360.0 + Rot_current[2];
 }
 
 void quaternions_to_angles_3DRotation(MYFLOAT Rot_current[], MYFLOAT q[])
