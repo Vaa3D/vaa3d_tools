@@ -11,12 +11,12 @@ extern int optind, opterr;
 #include <vector>
 using namespace std;
 #define WANT_STREAM
-#include "../../jba/newmat11/newmatap.h"
-#include "../../jba/newmat11/newmatio.h"
-#include "../../basic_c_fun/stackutil.h"
-#include "../../basic_c_fun/basic_surf_objs.h"
-#include "../../basic_c_fun/basic_memory.cpp"//note: should not include .h file, since they are template functions
-#include "../../jba/c++/convert_type2uint8.h"
+#include "../../v3d_main/jba/newmat11/newmatap.h"
+#include "../../v3d_main/jba/newmat11/newmatio.h"
+#include "../../v3d_main/basic_c_fun/stackutil.h"
+#include "../../v3d_main/basic_c_fun/basic_surf_objs.h"
+#include "../../v3d_main/basic_c_fun/basic_memory.cpp"//note: should not include .h file, since they are template functions
+#include "../../v3d_main/jba/c++/convert_type2uint8.h"
 
 
 class Coord3D_PCM
@@ -148,8 +148,8 @@ int main(int argc, char *argv[])
 	printf(">>Image affine transformation:\n");
 	printf(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n");
 	printf(">>input parameters:\n");
-	printf(">>  input target  marker:          %s\n",qPrintable(qs_filename_marker_tar));
-	printf(">>  input subject marker:          %s\n",qPrintable(qs_filename_marker_sub));
+    printf(">>  input target  marker/swc:          %s\n",qPrintable(qs_filename_marker_tar));
+    printf(">>  input subject markerswc:          %s\n",qPrintable(qs_filename_marker_sub));
 	printf(">>  input subject image:           %s\n",qPrintable(qs_filename_img_sub));
 	printf(">>  input how2affine:              %d\n",n_how2affine);
 	printf(">>-------------------------\n");
@@ -159,14 +159,39 @@ int main(int argc, char *argv[])
 	printf(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n");
 
 	//------------------------------------------------------------------------------------------------------------------------------------
-	printf("1. Read target and subject marker files. \n");
+    printf("1. Read target and subject marker/swc files. \n");
 	QList<ImageMarker> ql_marker_tar,ql_marker_sub;
+    vector<Coord3D_PCM> vec_tar,vec_sub;
+    NeuronTree ql_swc_tar,ql_swc_sub;
 	if(qs_filename_marker_tar.endsWith(".marker") && qs_filename_marker_sub.endsWith(".marker"))
     {
 		ql_marker_tar=readMarker_file(qs_filename_marker_tar);
 		ql_marker_sub=readMarker_file(qs_filename_marker_sub);
     	printf("\t>>read %d markers from [%s]\n",ql_marker_tar.size(),qPrintable(qs_filename_marker_tar));
     	printf("\t>>read %d markers from [%s]\n",ql_marker_sub.size(),qPrintable(qs_filename_marker_sub));
+        for(long i=0;i<ql_marker_tar.size();i++)
+        {
+            vec_tar.push_back(Coord3D_PCM(ql_marker_tar[i].x,ql_marker_tar[i].y,ql_marker_tar[i].z));
+        }
+        for(long i=0;i<ql_marker_sub.size();i++)
+        {
+            vec_sub.push_back(Coord3D_PCM(ql_marker_sub[i].x,ql_marker_sub[i].y,ql_marker_sub[i].z));
+        }
+    }
+    else if(qs_filename_marker_tar.endsWith(".swc") && qs_filename_marker_sub.endsWith(".swc"))
+    {
+        ql_swc_tar=readSWC_file(qs_filename_marker_tar);
+        ql_swc_sub=readSWC_file(qs_filename_marker_sub);
+        printf("\t>>read %d markers from [%s]\n",ql_swc_tar.listNeuron.size(),qPrintable(qs_filename_marker_tar));
+        printf("\t>>read %d markers from [%s]\n",ql_swc_sub.listNeuron.size(),qPrintable(qs_filename_marker_sub));
+        for(long i=0;i<ql_swc_tar.listNeuron.size();i++)
+        {
+            vec_tar.push_back(Coord3D_PCM(ql_swc_tar.listNeuron.at(i).x,ql_swc_tar.listNeuron.at(i).y,ql_swc_tar.listNeuron.at(i).z));
+        }
+        for(long i=0;i<ql_swc_sub.listNeuron.size();i++)
+        {
+            vec_sub.push_back(Coord3D_PCM(ql_swc_sub.listNeuron.at(i).x,ql_swc_sub.listNeuron.at(i).y,ql_swc_sub.listNeuron.at(i).z));
+        }
     }
     else
     {
@@ -174,15 +199,7 @@ int main(int argc, char *argv[])
     	return false;
 	}
 	//reorganize the markers to the format needed by q_affine_compute_affinmatrix_2D()
-	vector<Coord3D_PCM> vec_tar,vec_sub;
-	for(long i=0;i<ql_marker_tar.size();i++)
-	{
-		vec_tar.push_back(Coord3D_PCM(ql_marker_tar[i].x,ql_marker_tar[i].y,ql_marker_tar[i].z));
-	}
-	for(long i=0;i<ql_marker_sub.size();i++)
-	{
-		vec_sub.push_back(Coord3D_PCM(ql_marker_sub[i].x,ql_marker_sub[i].y,ql_marker_sub[i].z));
-	}
+
 
 	//------------------------------------------------------------------------------------------------------------------------------------
 	printf("2. estimate the affine matrix. \n");
