@@ -27,7 +27,7 @@ QStringList GVFplugin::menulist() const
 QStringList GVFplugin::funclist() const
 {
 	return QStringList()
-        <<tr("gvf_segmentation_brl")
+        <<tr("gvf_segmentation")
         <<tr("help");
 }
 
@@ -78,20 +78,8 @@ void GVFplugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, Q
         unsigned char *pData = 0;
 
 
-        //the original code got the segmentation parameters using a special dialog window. but
-        //  The processing function gvfCellSeg wants a gvfsegPara, and the dialog generates a segParameters...
 
-   /*     gvfsegPara segpara;
-        dialog_watershed_para *p_mydlg=0;
-        if (!p_mydlg) p_mydlg = new dialog_watershed_para(&segpara, subject);
-        int res = p_mydlg->exec();
-        if (res!=QDialog::Accepted)
-            return;
-        else
-            p_mydlg->fetchData(&segpara);
-        if (p_mydlg) {delete p_mydlg; p_mydlg=0;}
-*/
-        gvfsegPara segpara;  // I'm just going to set these manually for now:
+        gvfsegPara segpara;  // set these fields one at a time:
 
         segpara.diffusionIteration=  5;
         segpara.fusionThreshold = 10;
@@ -106,31 +94,32 @@ void GVFplugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, Q
         if (sz3>1) //only need to ask if more than one channel
         {
             c = QInputDialog::getInteger(parent, "Channel",
-                                             "Choose channel # (1):",
+                                             "Choose channel for segmentation:",
                                              1, 1, sz3, 1, &ok1);
+            c = c-1;
             if (!ok1)
                 return;
         }
 
-        // clunky way to read in parameters
+        // read in parameters
 
         segpara.diffusionIteration = QInputDialog::getInteger(parent, "Diffusion Iterations",
                                          "Choose Number of Diffusion Iterations:",
-                                         1, 1, 10, 1, &ok1);
+                                         5, 1, 10, 1, &ok1);
         if (!ok1)
             return;
 
 
         segpara.fusionThreshold = QInputDialog::getInteger(parent, "Fusion Threshold",
                                          "Choose Fusion Threshold :",
-                                         1, 1, 10, 1, &ok1);
+                                         2, 1, 10, 1, &ok1);
         if (!ok1)
             return;
 
 
         segpara.minRegion= QInputDialog::getInteger(parent, "Minimum Region",
-                                         "Choose Minimum Region Size :",
-                                         1, 1, 1000, 1, &ok1);
+                                         "Choose Minimum Region Size (voxels):",
+                                         10, 1, 1000, 1, &ok1);
         if (!ok1)
             return;
 
@@ -207,14 +196,85 @@ void GVFplugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, Q
 
 bool GVFplugin::dofunc(const QString & func_name, const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback,  QWidget * parent)
 {
-	vector<char*> infiles, inparas, outfiles;
-	if(input.size() >= 1) infiles = *((vector<char*> *)input.at(0).p);
-	if(input.size() >= 2) inparas = *((vector<char*> *)input.at(1).p);
-	if(output.size() >= 1) outfiles = *((vector<char*> *)output.at(0).p);
 
-    if (func_name == tr("gvf_segmentation_brl"))
+
+    if (func_name == tr("gvf_segmentation"))
 	{
-		v3d_msg("To be implemented.");
+       /* int c=1;
+        gvfsegPara segpara;  // default values
+        segpara.diffusionIteration = 5;
+        segpara.fusionThreshold = 3;
+        segpara.minRegion = 10;
+
+        vector<char*> infiles, inparas, outfiles;
+        if(input.size() >= 1) infiles = *((vector<char*> *)input.at(0).p);
+        if(input.size() >= 2)
+        {
+            inparas = *((vector<char*> *)input.at(1).p);
+        if(inparas.size() >= 1) c = atoi(inparas.at(0));
+        if(inparas.size() >= 2) segpara.diffusionIteration = atoi(inparas.at(1));
+        if(inparas.size() >= 3) segpara.fusionThreshold = atoi(inparas.at(2));
+        if(inparas.size() >= 4) segpara.minRegion = atoi(inparas.at(3));
+        if(output.size() >= 1) outfiles = *((vector<char*> *)output.at(0).p);
+        }
+
+        Image4DSimple *inimg = callback.loadImage(infiles);
+        if (!inimg || !inimg->valid())
+        {
+            v3d_msg("Fail to open the image file.", 0);
+            return false;
+        }
+
+        V3DLONG sz0 = inimg->getXDim();
+
+        V3DLONG sz1  = inimg->getYDim();
+
+        V3DLONG sz2  = inimg->getZDim();
+
+        V3DLONG maxc  = inimg->getCDim();
+
+if (maxc==1)
+{
+    c=1;
+}
+
+
+        // allocate memory for the images
+
+        Vol3DSimple <unsigned char> * tmp_inimg = 0;
+        Vol3DSimple <USHORTINT16> * tmp_outimg = 0;
+        try
+        {
+            tmp_inimg = new Vol3DSimple <unsigned char> (sz0, sz1, sz2);
+            tmp_outimg = new Vol3DSimple <USHORTINT16> (sz0, sz1, sz2);
+        }
+        catch (...)
+        {
+            v3d_msg("Unable to allocate memory for processing.");
+            if (tmp_inimg) {delete tmp_inimg; tmp_inimg=0;}
+            if (tmp_outimg) {delete tmp_outimg; tmp_outimg=0;}
+            return;
+        }
+
+        //copy image data into our new memory
+
+        memcpy((void *)tmp_inimg->getData1dHandle(), (void *)subject->getRawDataAtChannel(c), sz0*sz1*sz2);
+
+        //now do computation
+
+        //bool b_res = gvfCellSeg(img3d, outimg3d, segpara);
+        bool b_res = gvfCellSeg(tmp_inimg, tmp_outimg, segpara);
+
+        // clear out temporary space
+        if (tmp_inimg) {delete tmp_inimg; tmp_inimg=0;}
+
+
+        // now write to out image:
+
+
+*/
+
+       v3d_msg("To be implemented.");
 	}
 	else if (func_name == tr("help"))
 	{
