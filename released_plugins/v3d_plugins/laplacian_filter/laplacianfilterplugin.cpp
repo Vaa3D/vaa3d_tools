@@ -157,37 +157,47 @@ void processImage(V3DPluginCallback2 &callback, QWidget *parent)
      unsigned char* data1d = p4DImage->getRawData();
      V3DLONG pagesz = p4DImage->getTotalUnitNumberPerChannel();
 
-     V3DLONG N = p4DImage->getXDim();
-     V3DLONG M = p4DImage->getYDim();
-     V3DLONG P = p4DImage->getZDim();
-     V3DLONG sc = p4DImage->getCDim();
-
 	//input
 	bool ok1;
 	V3DLONG c=1;
+
+    V3DLONG in_sz[4];
+    in_sz[0] = p4DImage->getXDim();
+    in_sz[1] = p4DImage->getYDim();
+    in_sz[2] = p4DImage->getZDim();
+    in_sz[3] = p4DImage->getCDim();
 
     if (sc>1) //only need to ask if more than one channel
     {
         c = QInputDialog::getInteger(parent, "Channel",
                                          "Enter channel # (starts from 1):",
-                                         1, 1, sc, 1, &ok1);
+                                         1, 1, in_sz[3], 1, &ok1);
         if (!ok1)
             return;
     }
     
      // filtering
-     V3DLONG in_sz[4];
-     in_sz[0] = N; in_sz[1] = M; in_sz[2] = P; in_sz[3] = sc;
 
-     float * outimg = 0;
+    float * outimg = 0;
     bool b_res;
     
+    v3d_msg(QString("datatype=%1").arg(int(p4DImage->getDatatype())), 0);
+
     switch(p4DImage->getDatatype())
     {
-        case V3D_UINT8: b_res = laplacian_filter(data1d, in_sz, c-1, outimg); break;
-        case V3D_UINT16: b_res = laplacian_filter((unsigned short int *)data1d, in_sz, c-1, outimg); break;
-        case V3D_FLOAT32: b_res = laplacian_filter((float *)data1d, in_sz, c-1, outimg); break;
-        default: b_res = false; v3d_msg("Right now this plugin supports only UINT8 data. Do nothing."); return;
+        case V3D_UINT8:
+            b_res = laplacian_filter(data1d, in_sz, c-1, outimg);
+            break;
+        case V3D_UINT16:
+            b_res = laplacian_filter((unsigned short int *)data1d, in_sz, c-1, outimg);
+            break;
+        case V3D_FLOAT32:
+            b_res = laplacian_filter((float *)data1d, in_sz, c-1, outimg);
+            break;
+        default:
+            b_res = false;
+            v3d_msg("Unsupported data type. Do nothing.");
+            return;
     }
     
      if (!b_res)
@@ -198,7 +208,7 @@ void processImage(V3DPluginCallback2 &callback, QWidget *parent)
     
      // display
      Image4DSimple * new4DImage = new Image4DSimple();
-     new4DImage->setData((unsigned char *)outimg, N, M, P, 1, V3D_FLOAT32);
+     new4DImage->setData((unsigned char *)outimg, in_sz[0], in_sz[1], in_sz[2], 1, V3D_FLOAT32);
      v3dhandle newwin = callback.newImageWindow();
      callback.setImage(newwin, new4DImage);
      callback.setImageName(newwin, title);
@@ -220,7 +230,7 @@ template <class T> bool laplacian_filter(T* data1d, V3DLONG *in_sz, V3DLONG c, f
     V3DLONG channelsz = pagesz*P;
 
      //filtering
-     V3DLONG offset_init = c*channelsz;
+    V3DLONG offset_init = c*channelsz;
 
     try
     {
@@ -248,27 +258,33 @@ template <class T> bool laplacian_filter(T* data1d, V3DLONG *in_sz, V3DLONG c, f
                 
                 if (iz>=1)
                 {
-                    t += float(curdata1d[(iz-1)*pagesz + iy*N + ix]);cnt++;
+                    t += double(curdata1d[(iz-1)*pagesz + iy*N + ix]);
+                    cnt++;
                 }
                 if (iz<=P-2)
                 {
-                    t += float(curdata1d[(iz+1)*pagesz + iy*N + ix]);cnt++;
+                    t += double(curdata1d[(iz+1)*pagesz + iy*N + ix]);
+                    cnt++;
                 }
                 if (iy>=1)
                 {
-                    t += float(curdata1d[iz*pagesz + (iy-1)*M + ix]);cnt++;
+                    t += double(curdata1d[iz*pagesz + (iy-1)*N + ix]);
+                    cnt++;
                 }
                 if (iy<=M-2)
                 {
-                    t += float(curdata1d[iz*pagesz + (iy+1)*M + ix]);cnt++;
+                    t += double(curdata1d[iz*pagesz + (iy+1)*N + ix]);
+                    cnt++;
                 }
                 if (ix>=1)
                 {
-                    t += float(curdata1d[iz*pagesz + iy*N + ix-1]);cnt++;
+                    t += double(curdata1d[iz*pagesz + iy*N + ix-1]);
+                    cnt++;
                 }
                 if (ix<=N-2)
                 {
-                    t += float(curdata1d[iz*pagesz + iy*N + ix+1]);cnt++;
+                    t += double(curdata1d[iz*pagesz + iy*N + ix+1]);
+                    cnt++;
                 }
                     
                 outimg[iz*pagesz + iy*N + ix] = t - cnt*float(curdata1d[iz*pagesz + iy*N + ix]);
