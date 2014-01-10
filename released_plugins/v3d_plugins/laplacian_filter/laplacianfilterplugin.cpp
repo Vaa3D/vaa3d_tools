@@ -10,7 +10,7 @@
 #include <iostream>
 
 #include "v3d_message.h"
-#include "stackutil.h"
+//#include "stackutil.h"
 
 #include "laplacianfilterplugin.h"
 
@@ -212,10 +212,10 @@ template <class T> bool laplacian_filter(T* data1d, V3DLONG *in_sz, V3DLONG c, f
     if (!data1d || !in_sz || c<0 || outimg)
         return false;
     
-     V3DLONG N = in_sz[0];
-     V3DLONG M = in_sz[1];
-     V3DLONG P = in_sz[2];
-     V3DLONG sc = in_sz[3];
+    V3DLONG N = in_sz[0];
+    V3DLONG M = in_sz[1];
+    V3DLONG P = in_sz[2];
+    V3DLONG sc = in_sz[3];
     V3DLONG pagesz = N*M;
     V3DLONG channelsz = pagesz*P;
 
@@ -232,9 +232,10 @@ template <class T> bool laplacian_filter(T* data1d, V3DLONG *in_sz, V3DLONG c, f
           return false;
      }
 
-     for(V3DLONG i=0; i<pagesz; i++)
-         outimg[i] = data1d[i + offset_init]; 
+     T *curdata1d = data1d + offset_init;
 
+     for(V3DLONG i=0; i<pagesz; i++)
+         outimg[i] = curdata1d[i];
  
     for(V3DLONG iz = 0; iz < P; iz++)
     {
@@ -246,19 +247,31 @@ template <class T> bool laplacian_filter(T* data1d, V3DLONG *in_sz, V3DLONG c, f
                 int cnt = 0;
                 
                 if (iz>=1)
-                { t += float(data1d[(iz-1)*pagesz + iy*N + ix]);cnt++;}
+                {
+                    t += float(curdata1d[(iz-1)*pagesz + iy*N + ix]);cnt++;
+                }
                 if (iz<=P-2)
-                {    t += float(data1d[(iz+1)*pagesz + iy*N + ix]);cnt++;}               
+                {
+                    t += float(curdata1d[(iz+1)*pagesz + iy*N + ix]);cnt++;
+                }
                 if (iy>=1)
-                {    t += float(data1d[iz*pagesz + (iy-1)*M + ix]);cnt++;}
+                {
+                    t += float(curdata1d[iz*pagesz + (iy-1)*M + ix]);cnt++;
+                }
                 if (iy<=M-2)
-                {    t += float(data1d[iz*pagesz + (iy+1)*M + ix]);cnt++;}         
+                {
+                    t += float(curdata1d[iz*pagesz + (iy+1)*M + ix]);cnt++;
+                }
                 if (ix>=1)
-                {    t += float(data1d[iz*pagesz + iy*N + ix-1]);cnt++;}
+                {
+                    t += float(curdata1d[iz*pagesz + iy*N + ix-1]);cnt++;
+                }
                 if (ix<=N-2)
-                {    t += float(data1d[iz*pagesz + iy*N + ix+1]);cnt++;}
+                {
+                    t += float(curdata1d[iz*pagesz + iy*N + ix+1]);cnt++;
+                }
                     
-                outimg[iz*pagesz + iy*N + ix] = t - cnt*float(data1d[iz*pagesz + iy*N + ix]);
+                outimg[iz*pagesz + iy*N + ix] = t - cnt*float(curdata1d[iz*pagesz + iy*N + ix]);
             }
         }
     }
