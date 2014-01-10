@@ -167,7 +167,7 @@ void processImage(V3DPluginCallback2 &callback, QWidget *parent)
     in_sz[2] = p4DImage->getZDim();
     in_sz[3] = p4DImage->getCDim();
 
-    if (sc>1) //only need to ask if more than one channel
+    if (in_sz[3]>1) //only need to ask if more than one channel
     {
         c = QInputDialog::getInteger(parent, "Channel",
                                          "Enter channel # (starts from 1):",
