@@ -5,6 +5,8 @@
  
 #include "v3d_message.h"
 #include <vector>
+#include <iostream>
+#include <stdlib.h>
 #include "dialog_watershed_para.h"
 #include "volimg_proc.h"
 #include "img_definition.h"
@@ -96,7 +98,7 @@ void GVFplugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, Q
             c = QInputDialog::getInteger(parent, "Channel",
                                              "Choose channel for segmentation:",
                                              1, 1, sz3, 1, &ok1);
-            c = c-1;
+            c = c-1; //channels are indexed to 0 in Image4DSimple->getRawDataAtChannel
             if (!ok1)
                 return;
         }
@@ -152,7 +154,6 @@ void GVFplugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, Q
         // clear out temporary space
         if (tmp_inimg) {delete tmp_inimg; tmp_inimg=0;}
 
-
         if (!b_res)
         {
             v3d_msg("image segmentation  using gvfCellSeg()  failed \n");
@@ -166,7 +167,6 @@ void GVFplugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, Q
             V3DLONG new_sz2 = tmp_outimg->sz2();
             V3DLONG new_sz3 = 1;
             V3DLONG tunits = new_sz0*new_sz1*new_sz2*new_sz3;
-
 
             //
             USHORTINT16 * outvol1d = new USHORTINT16 [tunits];
@@ -200,7 +200,8 @@ bool GVFplugin::dofunc(const QString & func_name, const V3DPluginArgList & input
 
     if (func_name == tr("gvf_segmentation"))
 	{
-       /* int c=1;
+        int c=1;
+
         gvfsegPara segpara;  // default values
         segpara.diffusionIteration = 5;
         segpara.fusionThreshold = 3;
@@ -217,13 +218,40 @@ bool GVFplugin::dofunc(const QString & func_name, const V3DPluginArgList & input
         if(inparas.size() >= 4) segpara.minRegion = atoi(inparas.at(3));
         if(output.size() >= 1) outfiles = *((vector<char*> *)output.at(0).p);
         }
+        char * inimg_file = ((vector<char*> *)(input.at(0).p))->at(0);
+        char * outimg_file = ((vector<char*> *)(output.at(0).p))->at(0);
 
+        cout<<"channel choice "<<c<<endl;
+        cout<<"diffusion Iterations "<<segpara.diffusionIteration<<endl;
+        cout<<"fusion threshold "<<segpara.fusionThreshold<<endl;
+        cout<<"minimum region size"<<segpara.minRegion<<endl;
+        cout<<"inimg_file = "<<inimg_file<<endl;
+        cout<<"outimg_file = "<<outimg_file<<endl;
+
+
+        V3DLONG in_sz[4];
+        int datatype;
+        unsigned char * data1d = 0;
+        if(!simple_loadimage_wrapper(callback, inimg_file, data1d, in_sz, datatype))
+        {
+            cerr<<"load image "<<inimg_file<<" error!"<<endl;
+            return false;
+        }
+        /*
         Image4DSimple *inimg = callback.loadImage(infiles);
         if (!inimg || !inimg->valid())
         {
             v3d_msg("Fail to open the image file.", 0);
             return false;
         }
+
+
+
+     in_sz[0] = inimg->getXDim();
+     in_sz[1] = inimg->getYDim();
+     in_sz[2] = inimg->getZDim();
+     in_sz[3] = inimg->getCDim();
+
 
         V3DLONG sz0 = inimg->getXDim();
 
@@ -232,11 +260,7 @@ bool GVFplugin::dofunc(const QString & func_name, const V3DPluginArgList & input
         V3DLONG sz2  = inimg->getZDim();
 
         V3DLONG maxc  = inimg->getCDim();
-
-if (maxc==1)
-{
-    c=1;
-}
+*/
 
 
         // allocate memory for the images
@@ -245,41 +269,73 @@ if (maxc==1)
         Vol3DSimple <USHORTINT16> * tmp_outimg = 0;
         try
         {
-            tmp_inimg = new Vol3DSimple <unsigned char> (sz0, sz1, sz2);
-            tmp_outimg = new Vol3DSimple <USHORTINT16> (sz0, sz1, sz2);
+            tmp_inimg = new Vol3DSimple <unsigned char> (in_sz[0], in_sz[1], in_sz[2]);
+            tmp_outimg = new Vol3DSimple <USHORTINT16> (in_sz[0], in_sz[1], in_sz[2]);
         }
         catch (...)
         {
             v3d_msg("Unable to allocate memory for processing.");
             if (tmp_inimg) {delete tmp_inimg; tmp_inimg=0;}
             if (tmp_outimg) {delete tmp_outimg; tmp_outimg=0;}
-            return;
+            return false;
         }
 
-        //copy image data into our new memory
 
-        memcpy((void *)tmp_inimg->getData1dHandle(), (void *)subject->getRawDataAtChannel(c), sz0*sz1*sz2);
 
-        //now do computation
+        //load image
+        //
+        Image4DSimple * temp4D = callback.loadImage(inimg_file);
+        in_sz[0]=temp4D->getXDim();
+        in_sz[1]=temp4D->getYDim();
+        in_sz[2]=temp4D->getZDim();
+        in_sz[3]=temp4D->getCDim();
+                if (in_sz[3]==1)
+                {
+                    c=1;
+                }
+//transfer single channel of data from Image4DSimple to old Vol3DSimple class
 
-        //bool b_res = gvfCellSeg(img3d, outimg3d, segpara);
+        memcpy((void *)tmp_inimg->getData1dHandle(), (void *)temp4D->getRawDataAtChannel(c-1), in_sz[0]*in_sz[1]*in_sz[2]);
+        //now do computation using external function call
+
         bool b_res = gvfCellSeg(tmp_inimg, tmp_outimg, segpara);
 
         // clear out temporary space
         if (tmp_inimg) {delete tmp_inimg; tmp_inimg=0;}
 
 
-        // now write to out image:
 
 
-*/
+        // now write to file
+        in_sz[3]=1;//for single channel output from gvfCellSeg
+        simple_saveimage_wrapper(callback, outimg_file, (unsigned char *)tmp_outimg->getData1dHandle(), in_sz, 2); //the output of gvfCellSeg is in 16bit
 
-       v3d_msg("To be implemented.");
+
+        // clear out temporary space
+        if (tmp_outimg) {delete tmp_outimg; tmp_outimg=0;}
+
+        if (temp4D) {delete temp4D; temp4D=0;}
+
+
+
+
+
+
+        cout<<"Finished GVF Segmentation"<<endl;
 	}
 	else if (func_name == tr("help"))
 	{
-		v3d_msg("To be implemented.");
-	}
+        cout<<endl;
+        cout<<endl;
+        cout<<" GVF segmentation plugin usage :  vaa3d -x cell_segmentation_GVF  -f  gvf_segmentation -i <input filename> -o <output filename -p <c> <iter> <fusion> <size>"<<endl;
+        cout<<" parameters:    (default values in parentheses) "<<endl;
+        cout<<"c        =  channel of input file to use for segmentation    (1) "<<endl;
+        cout<<"iter     =  number of diffusion iterations                   (5)    "<<endl;
+        cout<<"fusion   =  fusion size threshold                            (3)  "<<endl;
+        cout<<"size     =  minimum region size in voxels                   (10)"<<endl;
+
+
+    }
 	else return false;
 
 	return true;
