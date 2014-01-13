@@ -10,4 +10,4 @@ SOURCES	+= saveToanoPlugin_plugin.cpp
 SOURCES	+= $$V3DMAINPATH/basic_c_fun/v3d_message.cpp
 
 TARGET	= $$qtLibraryTarget(saveToanoPlugin)
-DESTDIR	= ../../../bin/plugins/linker_file/saveToano/
+DESTDIR	= ../../../bin/plugins/linker_file/Save_Linker_File/

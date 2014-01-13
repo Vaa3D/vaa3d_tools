@@ -8,9 +8,6 @@
 #include "saveToanoPlugin_plugin.h"
 #include <iostream>
 #include <fstream>
-#include <string>
-
-
 
 using namespace std;
 Q_EXPORT_PLUGIN2(saveToanoPlugin, saveToanoPlugin);
@@ -72,19 +69,24 @@ void generatorAno43Dviewer(V3DPluginCallback2 &callback, QWidget *parent)
    QList<CellAPO> *APO_list;
    QList<LabelSurf> *SURFACE_list;
 
-   //QString filename_out = "/Users/charlotte_sui/Desktop/test.ano";
+   QString fileName = QFileDialog::getSaveFileName(parent, "Save Linker File",
+           "linker_file.ano",
+           "Linker File (*.ano)");
+
+   if (fileName.isEmpty())
+       return;
+
    ofstream anofile;
-   //anofile.open (filename_out.toStdString().c_str(),ios::out | ios::app );
-   anofile.open ("/Users/charlotte_sui/Desktop/test.ano",ios::out | ios::app );
+   anofile.open (fileName.toStdString().c_str(),ios::out | ios::app );
 
 
    if((SWC_list = callback.getHandleNeuronTrees_3DGlobalViewer(curwin)) && SWC_list->count()>0)
    {
        for(V3DLONG i = 0; i < SWC_list->count(); i++)
        {
-           QString temp;
-           temp = SWC_list->at(i).file.prepend("SWCFILE=");
-           anofile << temp.toStdString().c_str() << endl;
+           QString temp_swc;
+           temp_swc = SWC_list->at(i).file;
+           anofile << "SWCFILE=" << temp_swc.toStdString().c_str() << endl;
            anofile << "\n";
            anofile.close();
 
