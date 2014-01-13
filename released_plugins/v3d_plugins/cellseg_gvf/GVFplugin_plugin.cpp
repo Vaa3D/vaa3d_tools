@@ -221,12 +221,30 @@ bool GVFplugin::dofunc(const QString & func_name, const V3DPluginArgList & input
         char * inimg_file = ((vector<char*> *)(input.at(0).p))->at(0);
         char * outimg_file = ((vector<char*> *)(output.at(0).p))->at(0);
 
+
+
+
         cout<<"channel choice "<<c<<endl;
         cout<<"diffusion Iterations "<<segpara.diffusionIteration<<endl;
         cout<<"fusion threshold "<<segpara.fusionThreshold<<endl;
-        cout<<"minimum region size"<<segpara.minRegion<<endl;
+        cout<<"minimum region size "<<segpara.minRegion<<endl;
         cout<<"inimg_file = "<<inimg_file<<endl;
         cout<<"outimg_file = "<<outimg_file<<endl;
+
+        // check the input parameters for invalid choices:
+
+        if ((segpara.diffusionIteration<1)||(segpara.fusionThreshold<1)||(segpara.minRegion)<0)
+        {
+            cout<< "* * * * * * * * * * * * *  "<<endl;
+            cout<< "*"<<endl;
+            cout<< "INVALID parameter selection, type "<<endl;
+            cout<<" vaa3d -x gvf_cellseg -f help "<<endl;
+            cout<<"for more information"<<endl;
+            cout<< "* * * * * * * * * * * * *  "<<endl;
+            cout<<""<<endl;
+
+return false;
+        }
 
 
         V3DLONG in_sz[4];
@@ -237,30 +255,7 @@ bool GVFplugin::dofunc(const QString & func_name, const V3DPluginArgList & input
             cerr<<"load image "<<inimg_file<<" error!"<<endl;
             return false;
         }
-        /*
-        Image4DSimple *inimg = callback.loadImage(infiles);
-        if (!inimg || !inimg->valid())
-        {
-            v3d_msg("Fail to open the image file.", 0);
-            return false;
-        }
 
-
-
-     in_sz[0] = inimg->getXDim();
-     in_sz[1] = inimg->getYDim();
-     in_sz[2] = inimg->getZDim();
-     in_sz[3] = inimg->getCDim();
-
-
-        V3DLONG sz0 = inimg->getXDim();
-
-        V3DLONG sz1  = inimg->getYDim();
-
-        V3DLONG sz2  = inimg->getZDim();
-
-        V3DLONG maxc  = inimg->getCDim();
-*/
 
 
         // allocate memory for the images
@@ -292,7 +287,24 @@ bool GVFplugin::dofunc(const QString & func_name, const V3DPluginArgList & input
                 if (in_sz[3]==1)
                 {
                     c=1;
+                    cout<< "Image only has 1 channel, segmenting channel 1"<<endl;
                 }
+
+                if ((c>in_sz[3])||(c<1))
+                {
+                    cout<< "* * * * * * * * * * * * *  "<<endl;
+                    cout<< "*"<<endl;
+                    cout<< "INVALID CHANNEL SELECTION: User selected channel "<<c<< "; image has "<< in_sz[3] << "  channels."<<endl;
+                    cout<< " aborting segmentation !"<<endl;
+                    cout<<"*"<<endl;
+                    cout<< "* * * * * * * * * * * * *  "<<endl;
+                    cout<<""<<endl;
+
+return false;
+                }
+
+
+
 //transfer single channel of data from Image4DSimple to old Vol3DSimple class
 
         memcpy((void *)tmp_inimg->getData1dHandle(), (void *)temp4D->getRawDataAtChannel(c-1), in_sz[0]*in_sz[1]*in_sz[2]);
@@ -327,11 +339,11 @@ bool GVFplugin::dofunc(const QString & func_name, const V3DPluginArgList & input
 	{
         cout<<endl;
         cout<<endl;
-        cout<<" GVF segmentation plugin usage :  vaa3d -x cell_segmentation_GVF  -f  gvf_segmentation -i <input filename> -o <output filename -p <c> <iter> <fusion> <size>"<<endl;
+        cout<<" GVF segmentation plugin usage :  vaa3d -x gvf_cellseg  -f  gvf_segmentation -i <input filename> -o <output filename -p <c> <iter> <fusion> <size>"<<endl;
         cout<<" parameters:    (default values in parentheses) "<<endl;
         cout<<"c        =  channel of input file to use for segmentation    (1) "<<endl;
-        cout<<"iter     =  number of diffusion iterations                   (5)    "<<endl;
-        cout<<"fusion   =  fusion size threshold                            (3)  "<<endl;
+        cout<<"iter     =  number of diffusion iterations  (must be > 0)    (5)    "<<endl;
+        cout<<"fusion   =  fusion size threshold         (must be > 0)      (3)  "<<endl;
         cout<<"size     =  minimum region size in voxels                   (10)"<<endl;
 
 
