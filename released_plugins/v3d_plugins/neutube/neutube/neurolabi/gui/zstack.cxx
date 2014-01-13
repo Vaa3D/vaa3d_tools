@@ -57,9 +57,10 @@ ZStack::ZStack(int kind, int width, int height, int depth,
   setData(stack, delloc);
 }
 
-ZStack::ZStack(Mc_Stack *stack, C_Stack::Mc_Stack_Deallocator *dealloc)
+ZStack::ZStack(Mc_Stack *stack, C_Stack::Mc_Stack_Deallocator *dealloc) :
+    m_stack(stack), m_delloc(dealloc), m_preferredZScale(1.0),
+    m_isLSMFile(false)
 {
-  setData(stack, dealloc);
 }
 
 ZStack::~ZStack()

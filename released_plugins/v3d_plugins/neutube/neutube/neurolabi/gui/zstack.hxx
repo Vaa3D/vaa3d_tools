@@ -8,11 +8,8 @@
 #include <vector>
 #include <string>
 
-#ifdef _NEUTUBE_
 #include "zglmutils.h"
 #include "znumericparameter.h"
-#endif
-
 #include "tz_image_lib_defs.h"
 #include "c_stack.h"
 #include "tz_stack_document.h"
@@ -362,6 +359,9 @@ public:
   bool getLSMInfo(const QString &filepath);
   void logLSMInfo();
   void setChannelColor(int ch, double r, double g, double b);
+#else
+  glm::vec3 getChannelColor(size_t ch) { return glm::vec3(1.f,1.f,1.f); }
+  void setChannelColor(int ch, double r, double g, double b) {};
 #endif
 
 private:

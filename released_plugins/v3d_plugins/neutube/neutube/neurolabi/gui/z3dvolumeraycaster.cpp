@@ -439,7 +439,9 @@ void Z3DVolumeRaycaster::process(Z3DEye eye)
       m_rendererBase->deactivateAllRenderers();
 
       ZStack *zstack = m_stackInputPort.getFirstValidData();
+#ifdef _NEUTUBE_
       const std::vector<ZVec3Parameter*>& chCols = zstack->channelColors();
+#endif
       int maxTextureSize = Z3DGpuInfoInstance.getMaxTextureSize();
 
       size_t sliceRendererIdx = 0;
@@ -463,7 +465,9 @@ void Z3DVolumeRaycaster::process(Z3DEye eye)
               croped = croped_1;
             }
             Z3DVolume *vh = new Z3DVolume(croped);
+#ifdef _NEUTUBE_
             vh->setVolColor(chCols[c]->get());
+#endif
             m_FRVolumeSlices[sliceRendererIdx].push_back(vh);
           }
           m_image2DRenderers[sliceRendererIdx]->setChannels(m_FRVolumeSlices[sliceRendererIdx]);
@@ -498,7 +502,9 @@ void Z3DVolumeRaycaster::process(Z3DEye eye)
               croped = croped_1;
             }
             Z3DVolume *vh = new Z3DVolume(croped);
+#ifdef _NEUTUBE_
             vh->setVolColor(chCols[c]->get());
+#endif
             m_FRVolumeSlices[sliceRendererIdx].push_back(vh);
           }
           m_image2DRenderers[sliceRendererIdx]->setChannels(m_FRVolumeSlices[sliceRendererIdx]);
@@ -534,7 +540,9 @@ void Z3DVolumeRaycaster::process(Z3DEye eye)
               croped = croped_1;
             }
             Z3DVolume *vh = new Z3DVolume(croped);
+#ifdef _NEUTUBE_
             vh->setVolColor(chCols[c]->get());
+#endif
             m_FRVolumeSlices[sliceRendererIdx].push_back(vh);
           }
           m_image2DRenderers[sliceRendererIdx]->setChannels(m_FRVolumeSlices[sliceRendererIdx]);
@@ -567,7 +575,9 @@ void Z3DVolumeRaycaster::process(Z3DEye eye)
               croped = croped_1;
             }
             Z3DVolume *vh = new Z3DVolume(croped);
+#ifdef _NEUTUBE_
             vh->setVolColor(chCols[c]->get());
+#endif
             m_FRVolumeSlices[sliceRendererIdx].push_back(vh);
           }
           m_image2DRenderers[sliceRendererIdx]->setChannels(m_FRVolumeSlices[sliceRendererIdx]);
@@ -602,7 +612,9 @@ void Z3DVolumeRaycaster::process(Z3DEye eye)
               croped = croped_1;
             }
             Z3DVolume *vh = new Z3DVolume(croped);
+#ifdef _NEUTUBE_
             vh->setVolColor(chCols[c]->get());
+#endif
             m_FRVolumeSlices[sliceRendererIdx].push_back(vh);
           }
           m_image2DRenderers[sliceRendererIdx]->setChannels(m_FRVolumeSlices[sliceRendererIdx]);
@@ -638,7 +650,9 @@ void Z3DVolumeRaycaster::process(Z3DEye eye)
               croped = croped_1;
             }
             Z3DVolume *vh = new Z3DVolume(croped);
+#ifdef _NEUTUBE_
             vh->setVolColor(chCols[c]->get());
+#endif
             m_FRVolumeSlices[sliceRendererIdx].push_back(vh);
           }
           m_image2DRenderers[sliceRendererIdx]->setChannels(m_FRVolumeSlices[sliceRendererIdx]);

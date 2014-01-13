@@ -194,10 +194,12 @@ void Z3DVolumeSource::readVolumes()
       }
     } //for each cannel
 
+#ifdef _NEUTUBE_
     std::vector<ZVec3Parameter*>& chCols = m_doc->stack()->channelColors();
     for (int i=0; i<nchannel; i++) {
       m_volumes[i]->setVolColor(chCols[i]->get());
     }
+#endif
   }
 }
 
@@ -233,10 +235,12 @@ void Z3DVolumeSource::readSubVolumes(int left, int top, int front, int width,
       }
     }
 
+#ifdef _NEUTUBE_
     std::vector<ZVec3Parameter*>& chCols = m_doc->stack()->channelColors();
     for (int i=0; i<nchannel; i++) {
       m_zoomInVolumes[i]->setVolColor(chCols[i]->get());
     }
+#endif
   }
 }
 

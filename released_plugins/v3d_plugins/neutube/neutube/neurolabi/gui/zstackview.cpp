@@ -246,6 +246,7 @@ void ZStackView::updateSlider()
 
 void ZStackView::updateChannelControl()
 {
+#ifdef _NEUTUBE_
   QLayoutItem *child;
   while ((child = m_channelControlLayout->takeAt(0)) != 0) {
     if (child->widget()) {
@@ -258,6 +259,7 @@ void ZStackView::updateChannelControl()
   ZStack *stack = stackData();
   if (stack != NULL) {
     if (!stack->isVirtual()) {
+
       std::vector<ZVec3Parameter*>& channelColors = stack->channelColors();
       for (int i=0; i<stack->channelNumber(); ++i) {
         m_chVisibleState.push_back(new ZBoolParameter("", true, this));
@@ -282,8 +284,10 @@ void ZStackView::updateChannelControl()
         connect(m_chVisibleState[ch], SIGNAL(valueChanged()), this, SLOT(updateView()));
       }
       m_channelControlLayout->addStretch(1);
+
     }
   }
+#endif
 }
 
 void ZStackView::autoThreshold()
@@ -1213,12 +1217,16 @@ void ZStackView::paintStackBuffer()
   updateCanvas();
 
   bool showImage = false;
+#ifdef _NEUTUBE_
   for (size_t i=0; i<m_chVisibleState.size(); ++i) {
     if (m_chVisibleState[i]->get()) {
       showImage = true;
       break;
     }
   }
+#else
+  showImage = true;
+#endif
 
   if (buddyPresenter()->interactiveContext().isNormalView()) {
     if (!stack->isVirtual() && showImage) {

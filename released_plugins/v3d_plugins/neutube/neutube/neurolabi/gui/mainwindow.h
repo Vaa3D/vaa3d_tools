@@ -54,6 +54,10 @@ public slots:
   void addStackFrame(ZStackFrame *frame, bool isReady = true);
   void presentStackFrame(ZStackFrame *frame);
   void openFile(const QString &fileName);
+  void updateAction();
+  void updateMenu();
+  void updateStatusBar();
+  void enableStackActions(bool b);
 
 private:
   Ui::MainWindow *m_ui;
@@ -167,9 +171,6 @@ private slots:
   void test();
 
   // slots for frame
-  void updateAction();
-  void updateMenu();
-  void updateStatusBar();
   void updateFrameInfoDlg();
   void updateActiveUndoStack();
   void removeStackFrame(ZStackFrame *frame);
@@ -304,7 +305,6 @@ private:
   void updateRecentFileActions();
   QString strippedName(const QString &fullFileName);
 
-  void enableStackActions(bool b);
   void createUndoView();
   //bool loadTraceFile(const QString &fileName);
 
