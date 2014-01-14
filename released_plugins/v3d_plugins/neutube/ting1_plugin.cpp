@@ -11,7 +11,7 @@
 #include "zstackframe.h"
 
 using namespace std;
-Q_EXPORT_PLUGIN2(ting1, neutube);
+Q_EXPORT_PLUGIN2(neutube, neutube);
 
 
 neutube::neutube() : m_3dApp(QCoreApplication::applicationDirPath())
