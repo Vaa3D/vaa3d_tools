@@ -1,0 +1,22 @@
+#!/bin/bash
+
+classname=$1
+pluginclass=$2
+echo '#include <QDesignerCustomWidgetInterface>'
+echo ' '
+echo "class $pluginclass : public QObject,"
+echo '                     public QDesignerCustomWidgetInterface'
+echo '{'
+echo '  Q_OBJECT'
+echo '  QINTERFACES(QDesignerCustomWidgetInterface)'
+echo ' '
+echo 'public:'
+echo "  $pluginclass(QObject *parent = 0)"
+echo '  QString name() const;'
+echo '  QString includeFile() const;'
+echo '  QIcon icon() const;'
+echo '  QString tooTip() const;'
+echo '  QString whatsThis() const;'
+echo '  bool isContainer() const;'
+echo '  QWidget *createWidget(QWidget *parent);'
+echo '};'

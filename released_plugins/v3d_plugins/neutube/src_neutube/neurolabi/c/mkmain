@@ -1,0 +1,12 @@
+#!/bin/bash
+
+file=$1.c
+if [ -f $file ]
+then
+    echo "warning: file $file exists"
+else
+    ./mkmain_out 'Ting Zhao' $* > $file
+fi
+
+echo "$file is created."
+#open -a '/Applications/Aquamacs Emacs.app' $file

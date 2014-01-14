@@ -1,0 +1,92 @@
+{
+  "data": [
+    {
+      "T-bar": {
+        "status": "final", 
+        "confidence": 1.0, 
+        "body ID": -1, 
+        "location": [
+          499, 
+          10, 
+          105
+        ]
+      }, 
+      "partners": [
+        {
+          "confidence": 1.0, 
+          "body ID": -1, 
+          "location": [
+            479, 
+            8, 
+            106
+          ]
+        }, 
+        {
+          "confidence": 1.0, 
+          "body ID": -1, 
+          "location": [
+            460, 
+            14, 
+            105
+          ]
+        }, 
+        {
+          "confidence": 1.0, 
+          "body ID": -1, 
+          "location": [
+            482, 
+            1, 
+            105
+          ]
+        }, 
+        {
+          "confidence": 1.0, 
+          "body ID": -1, 
+          "location": [
+            511, 
+            4, 
+            110
+          ]
+        }, 
+        {
+          "confidence": 1.0, 
+          "body ID": -1, 
+          "location": [
+            509, 
+            9, 
+            123
+          ]
+        }, 
+        {
+          "confidence": 1.0, 
+          "body ID": -1, 
+          "location": [
+            486, 
+            10, 
+            117
+          ]
+        }, 
+        {
+          "confidence": 1.0, 
+          "body ID": -1, 
+          "location": [
+            492, 
+            9, 
+            120
+          ]
+        }
+      ]
+    }  
+  ], 
+  "metadata": {
+    "username": "anicetor", 
+    "software version": "1.6.5", 
+    "description": "synapse annotations", 
+    "file version": 1, 
+    "software revision": "4080", 
+    "computer": "emrecon7.janelia.priv", 
+    "date": "03-December-2012 12:37", 
+    "session path": "/groups/flyem/data/medulla-FIB-Z1211-25-production/align2/substacks/00044_3008-3507_2259-2758_1500-1999/psd-528-sessions/anicetor.528", 
+    "software": "Raveler"
+  }
+}

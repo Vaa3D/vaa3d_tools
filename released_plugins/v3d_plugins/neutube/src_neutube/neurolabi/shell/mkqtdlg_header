@@ -1,0 +1,33 @@
+#!/bin/bash
+ 
+dlgclass=$1
+dlgclass_upper=`toupper $dlgclass`
+dlgclass_lower=`tolower $dlgclass`
+
+echo "#ifndef $dlgclass_upper"_H
+echo "#define $dlgclass_upper"_H
+echo ' '
+echo '#include <QDialog>'
+echo ' '
+
+if test -f "$dlgclass_lower.ui"
+then
+echo "#include \"ui_$dlgclass_lower.h\""
+fi
+
+echo ' '
+echo "class $dlgclass : public QDialog"
+if test -f "$dlgclass_lower.ui"
+then
+echo "               , public Ui_$dlgclass"
+fi
+
+echo '{'
+echo '  Q_OBJECT'
+echo ' '
+echo 'public:'
+echo "  $dlgclass(QWidget *parent = 0);"
+echo '};'
+
+echo ' '
+echo "#endif" 

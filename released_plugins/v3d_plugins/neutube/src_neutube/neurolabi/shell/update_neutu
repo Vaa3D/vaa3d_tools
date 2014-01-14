@@ -1,0 +1,24 @@
+#!/bin/bash
+
+if [ $# -lt 1 ]
+then
+  echo 'Usage: ./update <source>'
+fi
+
+source_dir=$1
+
+if [ ! -d $source_dir ]
+then
+  /opt/bin/git clone /groups/flyem/home/zhaot/Work/neutube_ws/.git $source_dir
+fi
+
+build_dir=$source_dir/neurolabi/build
+
+cd $source_dir
+/opt/bin/git pull
+sh build.sh /opt/Trolltech/Qt4.8.5/bin/qmake /opt/Trolltech/Qt4.8.5/mkspecs/linux-g++
+/groups/flyem/home/zhaot/Work/neutube_ws/neurolabi/shell/install_neutu /opt/Download/neutube /opt/NeuTu
+
+
+
+ 

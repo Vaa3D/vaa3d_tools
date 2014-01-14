@@ -1,0 +1,54 @@
+#!/bin/bash
+ 
+make PROG=testswc
+make PROG=testgraph
+make PROG=testarray
+make PROG=testutilities
+make PROG=testneuroseg
+make PROG=testneurochain
+make PROG=testmatrix
+make PROG=testspgrow
+make PROG=testgeo3d
+make PROG=testdlist
+make PROG=testbitmask
+make PROG=testwatershed
+make PROG=teststacknbr
+
+echo "Start testing"
+echo "Testing SWC ..."
+bin/testswc -t
+
+echo "Testing Graph ..."
+bin/testgraph -t
+
+bin/testarray -t
+
+echo "Testing utilities ..."
+bin/testutilities -t
+
+echo "Testing neuroseg ..."
+bin/testneuroseg -t
+
+echo "Testing neurochain ..."
+bin/testneurochain -t
+
+echo "Testing matrix ..."
+bin/testmatrix -t
+
+echo "Testing sp growing ..."
+bin/testspgrow -t
+
+echo "Testing 3d geometry ..."
+bin/testgeo3d -t
+
+echo "Testing doubly linked list ..."
+bin/testdlist -t
+
+echo "Testing bit mask ..."
+bin/testbitmask -t
+
+echo "Testing watershed ..."
+bin/testwatershed -t
+
+echo "Testing teststacknbr ..."
+bin/teststacknbr -t

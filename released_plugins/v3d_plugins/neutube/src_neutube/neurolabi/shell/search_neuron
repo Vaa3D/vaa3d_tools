@@ -1,0 +1,29 @@
+#!/bin/bash
+
+target_neuron=$1
+neuron_list=`cat $2`
+data_dir=$3
+work_dir=$4
+body_map_dir="$work_dir"/body_maps 
+sorted_map_dir="$work_dir"/sorted_body_map
+bin_dir=../cpp/debug/bin
+database_file="$work_dir"/neuron_list.txt
+
+mkdir $body_map_dir
+mkdir $sorted_map_dir
+
+$bin_dir/sort_bodymap $data_dir -o $sorted_map_dir
+
+$bin_dir/map_body $data_dir --body_map $sorted_map_dir -o $body_map_dir --intv 4 4 0
+
+echo '' > $database_file
+
+for neuron in $neuron_list
+do
+  $bin_dir/extract_bounded_neuron $body_map_dir --body_id $neuron -o $work_dir/neuron"$neuron".tif
+  $bin_dir/skeletonize $work_dir/neuron"$neuron".tif -o $work_dir/neuron"$neuron".swc
+  echo $work_dir/neuron"$neuron".swc >> $database_file
+done
+
+$bin_dir/search_swc $target_neuron --database $database_file
+ 

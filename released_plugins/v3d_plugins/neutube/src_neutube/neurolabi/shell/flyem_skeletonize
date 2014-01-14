@@ -1,0 +1,64 @@
+#!/bin/bash
+ 
+if [ $# -lt 2 ]
+then
+  echo 'Usage: flyem_skeletonize <neuron_id> <work_dir> [<prefix>] [<test>]'
+  exit 1
+fi
+
+neuron=$1
+work_dir=$2
+body_map_dir="$work_dir"/body_maps 
+sorted_map_dir="$work_dir"/sorted_body_map
+#Test if it's on a cluster node
+if [ -z $SEG_CLUSTER_NAME ]
+then
+  bin_dir=$HOME/Work/buildem/bin
+else
+  bin_dir=$HOME/Work/buildem_cl/bin
+fi
+output_prefix=${3:-neuron}
+
+testing=0
+if [ $# -eq 4 ]
+then
+  testing=$4
+fi
+
+neuron_name="$output_prefix"_"$neuron"
+len_thre=15
+
+if [ -f "$work_dir"/len"$len_thre"/"$neuron_name".swc ]
+then
+  echo "$neuron_name has been skeletonized"
+  exit 0
+fi
+
+if [ ! -f $work_dir/"$neuron_name".tif ]; then
+  if [ $testing -eq 1 ]
+  then
+    $bin_dir/extract_bounded_neuron $body_map_dir --body_id $neuron -o $work_dir/"$neuron_name".tif --isolate 2 1 --final_ds 9
+  else
+    $bin_dir/extract_bounded_neuron $body_map_dir --body_id $neuron -o $work_dir/"$neuron_name".tif --final_ds 9 --sorted_map /groups/flyem/home/zhaot/Work/neutube/neurolabi/data/skeletonization/session2/sorted_body_map
+  fi
+fi
+
+if [ $? -ne 0 ]
+then
+  echo "skeletonization failed"
+  exit 1
+fi
+
+if [ $testing -eq 1 ]
+then
+  $bin_dir/skeletonize $work_dir/"$neuron_name".tif -o $work_dir/"$neuron_name".swc --length_threshold 5 --interpolate
+else
+  $bin_dir/skeletonize $work_dir/"$neuron_name".tif -o "$work_dir"/len"$len_thre"/"$neuron_name".swc --length_threshold $len_thre --interpolate
+fi
+ 
+ 
+if [ $? -ne 0 ]
+then
+  echo "skeletonization failed"
+  exit 1
+fi

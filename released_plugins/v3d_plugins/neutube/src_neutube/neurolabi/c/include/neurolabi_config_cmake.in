@@ -1,0 +1,42 @@
+#cmakedefine ARCH_BIT @ARCH_BIT@
+#cmakedefine HAVE_LIBFFTW3
+#cmakedefine HAVE_LIBFFTW3F
+#cmakedefine HAVE_LIBZ
+#cmakedefine HAVE_LIBXML2
+#cmakedefine HAVE_LIBPNG
+#cmakedefine HAVE_LIBJANSSON
+
+#cmakedefine HAVE_STDDEF_H
+#cmakedefine HAVE_STDINT_H
+#cmakedefine HAVE_STDLIB_H
+#cmakedefine HAVE_STRING_H
+#cmakedefine HAVE_STRINGS_H
+#cmakedefine HAVE_SYS_TIME_H
+#cmakedefine HAVE_UNISTD_H
+#cmakedefine HAVE_REGEX_H
+#cmakedefine HAVE_DIRENT_H
+
+#cmakedefine HAVE_BZERO
+#cmakedefine HAVE_FLOOR
+#cmakedefine HAVE_ROUND
+#cmakedefine HAVE_LRNT
+#cmakedefine HAVE_GETTIMEOFDAY
+#cmakedefine HAVE_MEMMOVE
+#cmakedefine HAVE_MEMSET 
+#cmakedefine HAVE_REGCOMP
+#cmakedefine HAVE_SQRT
+#cmakedefine HAVE_MEMSET_PATTERN4
+#cmakedefine HAVE_GETLN
+
+#cmakedefine SIZEOF_CHAR @SIZEOF_CHAR@
+#cmakedefine SIZEOF_INT @SIZEOF_INT@
+#cmakedefine SIZEOF_SHORT @SIZEOF_SHORT@
+#cmakedefine SIZEOF_LONG @SIZEOF_LONG@
+
+#cmakedefine INTERFACE_PROGRESS_OFF
+
+/* Define to 'inline', '__inline__' or '__inline' if that's what the C compiler
+   calls it, or to nothing if 'inline' is not supported under any name.  */
+#ifndef __cplusplus
+#define inline @INLINE_KEYWORD@
+#endif

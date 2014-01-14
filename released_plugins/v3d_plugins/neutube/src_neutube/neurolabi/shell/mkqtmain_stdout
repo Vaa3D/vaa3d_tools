@@ -1,0 +1,10 @@
+#!/bin/bash
+ 
+echo '#include <QApplication>'
+echo ' '
+echo 'int main(int argc, char *argv[])'
+echo '{'
+echo '  QApplication app(argc, argv);'
+echo ' '
+echo '  return app.exec();'
+echo '}'

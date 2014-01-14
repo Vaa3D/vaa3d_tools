@@ -1,0 +1,24 @@
+#!/bin/bash
+
+if test $# -lt 1
+then
+    echo 'reconstruct_neuron <data> [minlen] [z_scale]'
+else
+    if test $# -lt 2
+    then
+	minlen=25
+    else
+	minlen=$2
+    fi
+
+    if test $# -lt 3
+    then
+	z_scale=1.0
+    else
+	z_scale=$3
+    fi
+
+    bin/reconstruct_neuron -Rregion_label.tif -Tsoma.tif -Mregion_id.txt -D../data/$1 -I../data/$1.tif -o struct.txt -minlen $minlen -b -z $z_scale -res ../data/$1.res -screen -rb -rz
+fi
+
+ 

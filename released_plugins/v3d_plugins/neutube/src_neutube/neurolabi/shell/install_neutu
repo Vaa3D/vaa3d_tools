@@ -1,0 +1,33 @@
+#!/bin/bash
+
+if [ $# -lt 2 ]
+then
+  echo 'Usage: ./install_neutu <source> <target>'
+fi
+
+source_dir=$1
+target_dir=$2
+
+if [ ! -d $source_dir ]
+then
+  echo "$source_dir does not exist"
+  exit 1
+fi
+
+build_dir=$source_dir/neurolabi/build
+
+if [ ! -d $target_dir ]
+then
+  mkdir $target_dir
+fi
+
+
+cp $source_dir/neurolabi/build/neuTube $target_dir/NeuTu
+cp -r $source_dir/neurolabi/gui/doc $target_dir/
+cp $source_dir/neurolabi/gui/biocytin_config.xml $target_dir/config.xml
+
+echo "Done."
+echo "NeuTu installed in $target_dir"
+
+
+ 

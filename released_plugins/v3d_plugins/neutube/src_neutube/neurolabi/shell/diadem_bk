@@ -1,0 +1,91 @@
+#!/bin/bash
+ 
+if [ $# -eq 0 ]
+then
+    id=3
+else
+    id=$1; shift
+fi
+
+source assert_succ.sh
+
+usage="Usage: $prog_name [dataid -t trace_args]"
+
+trace_args="-r no_recon"
+recon_args="-o struct.txt -minlen 0 -z 1.0 -res ../data/diadem_e3.res -screen -sl -rz"
+
+while getopts t:r: option
+do
+    case $option in
+	t)
+	    trace_args="$trace_args $OPTARG";;
+	r)
+	    recon_args="$recon_args $OPTARG";;
+	\?)
+	    echo $usage
+	    exit 2;;
+    esac
+done
+	    
+cd ../c
+if [ $id == '1' ] || [ $id == '2' ] || [ $id == '3' ]
+then
+    sh trace_all.sh diadem_e$id $trace_args
+    assert_succ
+fi
+
+args=$recon_args
+
+name=$id
+
+case "$id" in
+3)
+bin/reconstruct_neuron -D../data/diadem_e3 -I../data/diadem_e3.tif -root 94 179 38 $args
+assert_succ
+name=e$id
+xy_th=3.94
+z_th=6.068
+;;
+2)
+bin/reconstruct_neuron -D../data/diadem_e2 -I../data/diadem_e2.tif -root 1 391 25 $args
+assert_succ
+name=e$id
+xy_th=3.94
+z_th=6.068
+;;
+1)
+bin/reconstruct_neuron -D../data/diadem_e1 -I../data/diadem_e1.tif -root 31 430 0 $args
+assert_succ
+name=e$id
+xy_th=3.94
+z_th=6.068
+;;
+'a1')
+args=" -o struct.txt -minlen 0 -z 1.0 -dist 20 -sp"
+diadem_a1_ds=diadem_a1_decon
+bin/reconstruct_neuron -D../data/tmp -I../data/$diadem_a1_ds.tif $args
+assert_succ
+bin/edswc -resize 2 2 1 ../data/tmp/graph_d.swc -o ../data/tmp/graph_d2.swc
+assert_succ
+bin/edswc ../data/tmp/graph_d2.swc -root 4882 1797 19 -clean_root -o ../data/diadem_a1/graph_d.swc
+assert_succ
+xy_th=37.33
+z_th=26.4
+id=1
+;;
+'c1')
+args="-o struct.txt -minlen 0 -z 1.0 -res ../data/diadem_c1.res -screen -sl -rz  -ct -rtlist ../data/diadem_c1_root.txt"
+bin/reconstruct_neuron -D../data/diadem_c1 -I../data/diadem_c1.tif $args
+id=3
+esac
+
+cd ../shell
+#java -jar DiademMetric.jar -G /Users/zhaot/Data/diadem/OP_"$id".swc -T /Users/zhaot/Work/neurolabi/data/diadem_e$id/graph_d.swc -D 5 -m true | pdm "e$id"
+#java -classpath JSAP-2.1.jar:bin org/krasnow/cng/diadem/DiademMetric  -G /Users/zhaot/Data/diadem/OP_"$id".swc -T /Users/zhaot/Work/neurolabi/data/diadem_e$id/graph_d.swc -D 5 -m true | diadem_sort "e$id"
+
+java -jar DiademMetric.jar -G /Users/zhaot/Data/diadem/"$name".swc -T /Users/zhaot/Work/neurolabi/data/diadem_$name/graph_d.swc -D $id -m true | diadem_sort "$name" $xy_th $z_th
+assert_succ
+
+cd ../c
+bin/parsediadem $name
+assert_succ

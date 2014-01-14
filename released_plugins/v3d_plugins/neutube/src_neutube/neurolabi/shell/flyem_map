@@ -1,0 +1,33 @@
+#!/bin/bash
+ 
+i=161
+datadir="../data/flyem/dalhousie"
+outdir="/media/Iomega HDD/data/dalhousie"
+mkdir "$datadir/neuron$neuron_id"
+while [ $i -le 1460 ]
+  do
+  echo $i
+  if [ $i -lt 1000 ] 
+  then
+  infile="$datadir/ds/sp_map.00$i.tif";
+  outfile="$outdir/body_maps/sp_map.00$i.tif"
+  if [ ! -f "$outfile" ]
+  then
+  if [ -f $infile ]
+  then
+  ../cpp/debug/bin/test $infile -o "$outfile" --body_map "$datadir/pixel_body/bodymap_$i" --plane_id $i
+  fi
+  fi
+  else
+  infile="$datadir/ds/sp_map.0$i.tif";
+  outfile="$outdir/body_maps/sp_map.0$i.tif"
+  if [ ! -f "$outfile" ]
+  then
+  if [ -f $infile ]
+  then
+  ../cpp/debug/bin/test $infile -o "$outfile" --body_map "$datadir/pixel_body/bodymap_$i" --plane_id $i
+  fi
+  fi
+  fi
+  i=`expr $i + 1`
+done

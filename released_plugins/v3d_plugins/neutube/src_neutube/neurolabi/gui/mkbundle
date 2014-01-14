@@ -1,0 +1,43 @@
+#!/bin/bash
+ 
+#procedure to make a release bundle
+
+mkdir itube.app/Contents/Frameworks
+
+cp -R /usr/local/Trolltech/Qt-4.4.3/lib/QtCore.framework itube.app/Contents/Frameworks/
+cp -R /usr/local/Trolltech/Qt-4.4.3/lib/QtGui.framework itube.app/Contents/Frameworks/
+
+install_name_tool -id @executable_path/../Frameworks/QtCore.framework/Versions/4/QtCore itube.app/Contents/Frameworks/QtCore.framework/Versions/4/QtCore
+install_name_tool -id @executable_path/../Frameworks/QtGui.framework/Versions/4/QtGui itube.app/Contents/Frameworks/QtGui.framework/Versions/4/QtGui
+
+install_name_tool -change /usr/local/Trolltech/Qt-4.4.3/lib/QtCore.framework/Versions/4/QtCore @executable_path/../Frameworks/QtCore.framework/Versions/4/QtCore itube.app/Contents/MacOs/itube
+
+install_name_tool -change /usr/local/Trolltech/Qt-4.4.3/lib/QtGui.framework/Versions/4/QtGui @executable_path/../Frameworks/QtGui.framework/Versions/4/QtGui itube.app/Contents/MacOs/itube
+
+install_name_tool -change /usr/local/Trolltech/Qt-4.4.3/lib/QtCore.framework/Versions/4/QtCore @executable_path/../Frameworks/QtCore.framework/Versions/4/QtCore itube.app/Contents/Frameworks/QtGui.framework/Versions/4/QtGui
+
+mkdir itube.app/Contents/plugins
+cp -R /usr/local/Trolltech/Qt-4.4.3/plugins/accessible itube.app/Contents/plugins
+
+install_name_tool -change /usr/local/Trolltech/Qt-4.4.3/lib/QtCore.framework/Versions/4/QtCore @executable_path/../Frameworks/QtCore.framework/Versions/4/QtCore itube.app/Contents/plugins/accessible/libqtaccessiblewidgets.dylib
+
+install_name_tool -change /usr/local/Trolltech/Qt-4.4.3/lib/QtGui.framework/Versions/4/QtGui @executable_path/../Frameworks/QtGui.framework/Versions/4/QtGui itube.app/Contents/plugins/accessible/libqtaccessiblewidgets.dylib
+
+cp -R /usr/local/Trolltech/Qt-4.4.3/plugins/imageformats itube.app/Contents/plugins
+
+install_name_tool -change /usr/local/Trolltech/Qt-4.4.3/lib/QtCore.framework/Versions/4/QtCore @executable_path/../Frameworks/QtCore.framework/Versions/4/QtCore itube.app/Contents/plugins/imageformats/libqjpeg.dylib
+
+install_name_tool -change /usr/local/Trolltech/Qt-4.4.3/lib/QtGui.framework/Versions/4/QtGui @executable_path/../Frameworks/QtGui.framework/Versions/4/QtGui itube.app/Contents/plugins/imageformats/libqjpeg.dylib
+
+install_name_tool -change /usr/local/Trolltech/Qt-4.4.3/lib/QtCore.framework/Versions/4/QtCore @executable_path/../Frameworks/QtCore.framework/Versions/4/QtCore itube.app/Contents/plugins/imageformats/libqsvg.dylib
+
+install_name_tool -change /usr/local/Trolltech/Qt-4.4.3/lib/QtGui.framework/Versions/4/QtGui @executable_path/../Frameworks/QtGui.framework/Versions/4/QtGui itube.app/Contents/plugins/imageformats/libqsvg.dylib
+
+install_name_tool -change /usr/local/Trolltech/Qt-4.4.3/lib/QtCore.framework/Versions/4/QtCore @executable_path/../Frameworks/QtCore.framework/Versions/4/QtCore itube.app/Contents/plugins/imageformats/libqgif.dylib
+
+install_name_tool -change /usr/local/Trolltech/Qt-4.4.3/lib/QtGui.framework/Versions/4/QtGui @executable_path/../Frameworks/QtGui.framework/Versions/4/QtGui itube.app/Contents/plugins/imageformats/libqgif.dylib
+
+mkdir itube.app/Contents/lib
+cp /usr/local/lib/libgsl.0.dylib itube.app/Contents/lib
+
+install_name_tool -change /usr/local/lib/libgsl.0.dylib @executable_path/../lib/libgsl.0.dylib itube.app/Contents/MacOs/itube

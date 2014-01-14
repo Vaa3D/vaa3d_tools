@@ -1,0 +1,20 @@
+#!/bin/bash
+
+debug/bin/Tbar_apply_sa --result_file test/golden/vol3d.h5_boundpred8.h5 --param_file test/golden/tbar_param.txt --jsonoutputfile test/test.json --test test
+
+file_list=( 'detected1.tif' 'bb.tif' 'bb2.tif' 'bb3.tif' 'objlist.csv' 'split_objlist.csv' 'center.csv' 'merged_center.csv' )
+
+for file in ${file_list[@]}
+do
+  diff test/$file test/golden/$file
+
+  if [ $? -ne 0 ]
+  then
+    echo "Testing failed at $file."
+    exit 1
+  fi
+done
+
+echo "Testing passed."
+
+ 

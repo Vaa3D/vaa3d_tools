@@ -1,0 +1,65 @@
+#!/bin/bash
+BASEDIR=$(dirname $0)
+cd $BASEDIR/c
+cdir=`pwd`
+allvar=$@
+echo $allvar
+compile_64bit=0
+#compile_shared=0
+
+AFLAGS=-D_OPTIONAL_FLAGS
+
+lib_config=lib
+force_update=0
+
+for var in "$@"
+do
+  is_config_option=1
+  if [ $var == "-nopb" ]; then
+    AFLAGS=-DINTERFACE_PROGRESS_OFF
+    is_config_option=0
+  fi
+  if [ $var == "--enable-shared" ]; then
+    #compile_shared=1
+    lib_config=dy$lib_config
+  fi
+  if [ $var == "--release" ]; then
+    lib_config=${lib_config}_release
+    is_config_option=0
+  fi
+  if [ $var == "--force-update" ]
+  then
+    force_update=1
+    is_config_option=0
+  fi
+  if [ $is_config_option -eq 1 ]
+  then
+    all_config_option="$all_config_option $var"
+  fi
+done
+
+arch=`uname -a | sed 's/.*x86_64.*/x86_64/'`
+
+if [ $arch = 'x86_64' ]; then
+  all_config_option="$all_config_option --enable-64bit"
+fi
+
+if [ $force_update -eq 1 ]
+then
+  make clean -f configure.makefile
+fi
+make -f configure.makefile CONFIG_OPTION="CFLAGS=-I$HOME/local/include LDFLAGS=-L$HOME/local/lib $all_config_option"
+
+echo 'updating neurolabi ...'
+cd $cdir
+
+if [ $force_update -eq 1 ]
+then
+  make clean
+fi
+make $lib_config AFLAGS="$AFLAGS" 
+
+#if [ $compile_shared -eq 1 ]; then
+#  make dylib AFLAGS="$AFLAGS"
+#fi
+

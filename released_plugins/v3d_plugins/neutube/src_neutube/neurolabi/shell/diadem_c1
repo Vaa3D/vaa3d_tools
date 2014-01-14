@@ -1,0 +1,52 @@
+#!/bin/bash
+gpath='/Users/zhaot/Data/diadem/Neocortical Layer 6 Axons/Manual Reconstructions'
+#tpath='/Users/zhaot/Work/neurolabi/data/diadem_c1'
+#tpath='/Volumes/myerslab/Diadem_Eugene_Myers/results/Neocortical Layer 6 Axons'
+#tpath='/Users/zhaot/Work/diadem_final/results/Neocortical Layer 6 Axons'
+#tpath='/Users/zhaot/Data/diadem/Neocortical Layer 6 Axons/refined_swc'
+#tpath='/Volumes/myerslab/Jun/New_NL_Swc/Neocortical Layer 6 Axons'
+#tpath='/Volumes/myerslab/Jun/NL_scores/updated'
+#tpath='/Volumes/myerslab/zhaot/diadem_test/results/Neocortical Layer 6 Axons'
+#tpath='/Volumes/myerslab/Jun/NL_scores/updated'
+tpath='/Volumes/myerslab/Jun/New_NL_Swc/Neocortical Layer 6 Axons'
+
+if [ $# -ge 1 ]
+then
+    gpath=$1
+fi
+
+if [ $# -ge 2 ]
+then
+    tpath=$2
+fi
+
+prefix1=graph
+if [ $# -ge 3 ]
+then
+    prefix1=$3
+fi
+
+prefix2=''
+if [ $# -ge 4 ]
+then
+   prefix2=$4
+fi
+ 
+suffix=''
+
+prefix1='NC_'
+#suffix='.final'
+
+i=1
+while [ $i -le 34 ]
+do
+  echo ">>> $i"
+  if [ $i -lt 10 ]
+  then
+    prefix3="$prefix2"0
+    java -jar DiademMetric.jar -G "$gpath/NC_0$i.swc" -T "$tpath/$prefix1$prefix3$i$suffix.swc" -D 3 2>/dev/null
+  else
+    java -jar DiademMetric.jar -G "$gpath/NC_$i.swc" -T "$tpath/$prefix1$i$suffix.swc" -D 3 2>/dev/null
+  fi
+  i=`expr $i + 1`
+done

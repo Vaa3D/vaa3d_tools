@@ -1,0 +1,25 @@
+all: @LIBFILE@
+
+sources = cdf.c fct_min.c image_filters.c lu_matrix.c xfig.c \
+          contour_lib.c fct_root.c image_lib.c utilities.c   \
+          draw_lib.c hash.c level_set.c water_shed.c fft.c tiff_io.c tiff_image.c
+
+modules = $(addprefix @PREFIX@,$(sources:.c=.o))
+
+AFLAGS=-D_OPTIONAL_FLAGS
+
+@PREFIX@%.o: %.p
+	awk -f manager.awk $< > $*.c
+	gcc -g $(AFLAGS) @ARCH_FLAG@ -c $*.c -o $@
+#-arch x86_64
+
+@LIBFILE@: $(modules)
+	@ar cr $@ $(modules)
+	@ranlib $@
+#	libtool -static -o $@ $(modules)
+
+clean:
+	rm $(modules) *.c @LIBFILE@
+
+package:
+	tar -zcf myers.pack.tar.gz README *.h *.p *.pdf manager.awk Makefile

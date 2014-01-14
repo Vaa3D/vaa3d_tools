@@ -1,0 +1,34 @@
+#!/bin/sh
+
+DIR="$( cd -P "$( dirname "$0" )" && pwd )"
+cd $DIR
+
+DIRECTORY="../gui-build-Desktop-Release"
+
+if [[ -d "$DIRECTORY" && ! -L "$DIRECTORY" ]] ; then
+    cd $DIRECTORY
+else
+	DIRECTORY="../gui-build-desktop-Qt_4_8_3_in_PATH__System__Release"
+	if [[ -d "$DIRECTORY" && ! -L "$DIRECTORY" ]] ; then
+    	cd $DIRECTORY
+    else
+    	DIRECTORY="../build-gui-Desktop-Release"
+		if [[ -d "$DIRECTORY" && ! -L "$DIRECTORY" ]] ; then
+    		cd $DIRECTORY
+    	else
+    		echo "Can not find release directory. Abort."
+    		exit
+    	fi
+    fi
+fi
+
+if [ -e "neuTube.app" ]; then
+	macdeployqt neuTube.app
+	if [ -e "neuTube.app.zip" ]; then
+		rm neuTube.app.zip
+	fi
+	zip -qr neuTube.app.zip neuTube.app
+	rm -r neuTube.app
+else
+	echo "neuTube.app not build yet."
+fi

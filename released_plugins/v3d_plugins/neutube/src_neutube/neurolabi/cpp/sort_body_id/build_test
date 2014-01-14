@@ -1,0 +1,19 @@
+#!/bin/bash
+
+BUILDEM_DIR=$HOME/Work/buildem
+rm -rf $BUILDEM_DIR/src/libneurolabi*
+if [ ! -d debug ]
+then
+  mkdir debug
+fi
+
+cd debug
+rm -rf *
+cmake -DBUILDEM_DIR=$BUILDEM_DIR ..
+make
+cmake -DBUILDEM_DIR=$BUILDEM_DIR ..
+make
+
+#cd ..
+#./run_test
+ 

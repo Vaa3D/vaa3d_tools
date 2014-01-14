@@ -1,0 +1,21 @@
+{
+  "type": "composite",
+  "config": [
+    {
+      "type": "layer",
+      "config": {
+        "start": 0.0,
+        "length": 60000.0,
+        "top": 1,
+        "bottom": 5,
+        "exclusive": true
+      }
+    },
+    {
+      "type": "tip_distance",
+      "config": {
+        "min_dist": 100.0
+      }
+    }
+  ]
+}

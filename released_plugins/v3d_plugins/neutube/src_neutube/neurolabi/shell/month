@@ -1,0 +1,1 @@
+date | sed 's_[ ][ ]*_-_g' | cut -d- -f2

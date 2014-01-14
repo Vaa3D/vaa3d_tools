@@ -1,0 +1,8 @@
+{
+  "type": "deep_angle",
+  "config": {
+    "min_dist": 1.0,
+    "deep_level": 3,
+    "deep_dist": 10000.0
+  }
+}

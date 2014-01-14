@@ -1,0 +1,38 @@
+#!/bin/bash
+ 
+dir1=$1
+dir2=$2
+
+echo $dir1
+echo $dir2
+
+n1=`ls $dir1/*.tb | wc -w`
+echo $n1
+
+n2=`ls $dir2/*.tb | wc -w`
+echo $n2
+
+if [ $n1 -ne $n2 ]
+then
+    echo "Different tube number."
+    exit 1
+fi
+
+for file in `ls $dir1 | grep tb`
+do
+    if [ ! -e "$dir2/$file" ]
+    then
+	echo "$dir2/$file does not exit"
+	exit 1
+    fi
+
+    diff "$dir1/$file" "$dir2/$file"
+
+    if [ $? -ne 0 ]
+    then
+	echo "Different file: $file"
+	exit 1
+    fi
+done
+
+echo "Same tracing results."

@@ -1,0 +1,48 @@
+#!/bin/bash
+
+cd ../c
+#bin/diadem_d1 -grow start
+#bin/diadem_d1 -grow ../data/diadem_d1_147_146_pos.txt
+#bin/diadem_d1 -grow ../data/diadem_d1_146_145_pos.txt
+#bin/diadem_d1 -grow ../data/diadem_d1_145_144_pos.txt
+#bin/diadem_d1 -grow ../data/diadem_d1_144_143_pos.txt
+#bin/diadem_d1 -grow ../data/diadem_d1_143_148_pos.txt
+#bin/diadem_d1 -grow ../data/diadem_d1_148_142_012_pos.txt
+#bin/diadem_d1 -grow ../data/diadem_d1_142_012_013_pos.txt
+#bin/diadem_d1 -grow ../data/diadem_d1_013_014_pos.txt
+#bin/diadem_d1 -grow ../data/diadem_d1_014_024_pos.txt
+#bin/diadem_d1 -grow ../data/diadem_d1_013__014_024_pos.txt
+#bin/diadem_d1 -grow ../data/diadem_d1_014_024__035_023_015_pos.txt
+#bin/diadem_d1 -grow ../data/diadem_d1_024_023_pos.txt
+#bin/diadem_d1 -grow ../data/diadem_d1_024_015_pos.txt
+#bin/diadem_d1 -grow ../data/diadem_d1_023_035_pos.txt
+#bin/diadem_d1 -grow ../data/diadem_d1_035_036_pos.txt
+#bin/diadem_d1 -grow ../data/diadem_d1_023_025_pos.txt
+#bin/diadem_d1 -grow ../data/diadem_d1_035_023_015__036_025_016_pos.txt
+#bin/diadem_d1 -grow ../data/diadem_d1_015_016_pos.txt
+#bin/diadem_d1 -grow ../data/diadem_d1_025_026.txt
+#bin/diadem_d1 -grow ../data/diadem_d1_036_037.txt
+#bin/diadem_d1 -grow ../data/diadem_d1_036_025_016__037_026_047_pos.txt
+#bin/diadem_d1 -grow ../data/diadem_d1_036_025_016__037_026_pos.txt
+#bin/diadem_d1 -grow ../data/diadem_d1_037_026__047_pos.txt
+#bin/diadem_d1 -grow ../data/diadem_d1_047__056_068_pos.txt
+
+i=68
+while [ $i -le 152 ]
+do
+  if [ $i -lt 10 ]; then
+    id=00"$i"
+  elif [ $i -lt 100 ]; then
+    id=0"$i"
+  else
+    id=$i
+  fi
+  if [ ! -d ~/Data/diadem/Neuromuscular\ Projection\ Fibers/Image\ Stacks/$id ]
+  then
+    cp -r /Volumes/myerslab/DIADEM\ DATA/Neuromuscular\ Projection\ Fibers/Image\ Stacks/$id ~/Data/diadem/Neuromuscular\ Projection\ Fibers/Image\ Stacks/
+  fi
+  bin/diadem_d1 -grow start -root_tile ../data/diadem_d1_$id.xml -root_file /Volumes/myerslab/zhaot/DIADEM_NM/seeds/$id.seeds.marker
+  #bin/regionmerge ../data/diadem_d1_"$id"_label.tif
+  i=`expr $i + 1`
+done
+

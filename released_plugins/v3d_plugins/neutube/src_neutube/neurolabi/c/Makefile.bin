@@ -1,0 +1,240 @@
+include Makefile-def
+
+PROG = testneurotrace
+MAIN = $(PROG).c
+MAINS = testimglib.c extract_lobster_neuron.c fly_neuron_blobmask.c \
+	fly_neuron_bundle.c fly_neuron_bundle_label.c fly_neuron_bundle_seed.c \
+	fly_neuron_chain_feat.c fly_neuron_export.c fly_neuron_grow_bundle.c \
+	fly_neuron_highpass.c fly_neuron_highpass_binarize.c \
+	fly_neuron_holemask.c fly_neuron_holeobj.c fly_neuron_label.c \
+	fly_neuron_label2.c fly_neuron_lowpass.c fly_neuron_lowpass_binarize.c \
+	fly_neuron_mask.c fly_neuron_seed.c fly_neuron_soma.c \
+	fly_neuron_soma_model.c fly_neuron_test.c gen_fly_neuron.c \
+	gen_fly_neuron2.c gen_fly_neuron3.c gentestdata.c \
+	lobster_neuron_seed.c testarraylist.c testarraytrans.c testbitmask.c \
+	testbwdist.c testcolor.c testerror.c testgeo3d.c testgsllinalg.c \
+	testhistogram.c testimagearray.c testimgfilter.c testimglib.c \
+	testimglib2.c testmicnuc.c testneurochain.c testneuroseg.c \
+	testneurotrace.c testobjdetect.c testsampling.c teststackcode.c \
+	teststackdraw.c teststacknbr.c testsystem.c testtarray.c \
+	testthreshold.c testtiffio.c testvoxelgraph.c testvrml.c \
+	trace_fly_neuron.c trace_fly_neuron2.c trace_lobster_neuron.c \
+	trace_lobster_neuron2.c testscalarfield.c bwsolid.c detect_soma.c \
+	diadem_c1_data.c diadem_d1.c diadem_d1_merge.c diadem_d1_split.c \
+	diadem_d1_watershed.c diadem_e1_data.c drawmask.c edswc.c \
+	extract_line.c imbinarize.c imexpr.c imop.c reconstruct_neuron.c \
+	regionmerge.c rmsobj.c sort_seed.c stitchstack.c testarray.c \
+	testdlist.c testgraph.c testmatrix.c testr2rect.c testrand.c \
+	testspgrow.c testswc.c testutilities.c testwatershed.c trace_neuron3.c \
+	trace_seed.c
+
+TZMODULES =  tz_image_lib.c tz_math_lib.c tz_fftw.c tz_darray.c tz_complex.c \
+	     tz_dmatrix.c tz_utilities.c tz_matlabio.c tz_array.c tz_error.c \
+	     tz_farray.c tz_complex_f.c tz_fftwf.c tz_fmatrix.c tz_mxutils.c \
+	     tz_dimage_lib.c tz_fimage_lib.c tz_iarray.c tz_imatrix.c \
+	     tz_string.c tz_iimage_lib.c tz_pipe.c tz_arraytrans.c \
+	     tz_image_code.c tz_3dgeom.c tz_object_tmpl.c tz_stack_bwmorph.c \
+	     tz_neuroseg.c tz_neuropos.c tz_object_3d.c tz_int_linked_list.c \
+	     tz_object_3d_linked_list.c tz_objdetect.c tz_pixel_array.c \
+	     tz_stack_draw.c tz_u8array.c tz_u16array.c tz_u8matrix.c \
+	     tz_stack_math.c tz_image_io.c tz_object_3d_linked_list_ext.c \
+	     tz_stack_threshold.c tz_stack_attribute.c tz_stack_relation.c \
+	     tz_object_3d_operation.c tz_geometry.c tz_stack_lib.c \
+	     tz_stack_stat.c tz_voxel_linked_list.c tz_voxel_graphics.c \
+	     tz_voxel.c tz_voxeltrans.c tz_geo3d_vector.c tz_tvoxel.c  \
+	     tz_double_linked_list.c tz_stack_sampling.c tz_stack_utils.c \
+	     tz_local_neuroseg.c tz_neurofield.c tz_geo3d_utils.c tz_bitmask.c \
+	     tz_geoangle_utils.c tz_stack_neighborhood.c tz_stack_objlabel.c \
+	     tz_gsl_linalg.c tz_optimize_utils.c tz_arrayview.c \
+	     tz_int_arraylist.c tz_image_attribute.c tz_image_relation.c \
+	     tz_image_array.c tz_int_histogram.c tz_stack_io.c tz_interface.c \
+	     tz_coordinate_3d.c tz_geo3d_point_array.c tz_stack_objmask.c \
+	     tz_vrml_io.c tz_geo3d_circle.c tz_xz_orientation.c \
+	     tz_vrml_material.c tz_perceptor.c tz_cont_fun.c \
+	     tz_geo3d_scalar_field.c tz_neuroseg_plane.c \
+	     tz_local_neuroseg_plane.c tz_bifold_neuroseg.c \
+	     tz_local_bifold_neuroseg.c tz_int_doubly_linked_list.c \
+	     tz_local_neuroseg_plane_doubly_linked_list.c  \
+	     tz_local_neuroseg_ellipse_doubly_linked_list.c \
+	     tz_unipointer_linked_list.c tz_vrml_utils.c tz_locnp_chain.c \
+	     tz_neuroseg_ellipse.c tz_local_neuroseg_ellipse.c tz_unipointer.c \
+	     tz_locne_chain.c tz_graph.c tz_graph_workspace.c tz_arrayqueue.c \
+	     tz_graph_utils.c tz_voxel_linked_list_ext.c tz_locseg_chain.c \
+	     tz_locseg_chain_exp.c tz_local_neuroseg_doubly_linked_list.c \
+	     tz_trace_utils.c tz_stack.c tz_stack_graph.c \
+	     tz_locseg_node_doubly_linked_list.c tz_locseg_node.c \
+	     tz_neuron_component.c tz_neuron_structure.c tz_swc_cell.c \
+	     tz_color.c tz_neurocomp_conn.c tz_random.c tz_locnp_node.c \
+	     tz_locnp_node_doubly_linked_list.c tz_locseg_chain_com.c \
+	     tz_locnp_chain_com.c tz_locne_node.c \
+	     tz_locne_node_doubly_linked_list.c tz_locne_chain_com.c \
+	     tz_math.c tz_mc_stack.c tz_image_trans.c tz_string_workspace.c \
+	     tz_locseg_chain_network.c tz_neuron_component_arraylist.c \
+	     tz_rastergeom.c tz_tiff_image.c tz_swc_arraylist.c \
+	     tz_geo3d_ball.c tz_intpair_map.c tz_workspace.c tz_xml_utils.c \
+	     tz_stack_document.c tz_swc.c tz_swc_tree.c \
+	     tz_unipointer_arraylist.c tz_locseg_chain_knot.c \
+	     tz_geo3d_ellipse.c tz_stack_tile.c tz_stack_tile_arraylist.c \
+	     tz_sp_grow.c tz_stack_watershed.c tz_geo3d_cuboid.c tz_cuboid_i.c \
+	     tz_stack_tile_i.c tz_stack_tile_i_arraylist.c tz_testdata.c \
+	     tz_local_rpi_neuroseg.c tz_rpi_neuroseg.c tz_receptor_transform.c \
+	     tz_locrect_chain_com.c tz_locrect_node.c \
+	     tz_locrect_node_doubly_linked_list.c tz_r2_rect.c tz_r2_ellipse.c \
+	     tz_apo.c tz_png_io.c tz_file_list.c tz_json.c
+
+MYERS_FILES = cdf.c fct_min.c \
+	      contour_lib.c fct_root.c image_lib.c utilities.c   \
+	      draw_lib.c level_set.c hash.c water_shed.c tiff_io.c \
+	      tiff_image.c
+
+MYERS_MODULES = $(addprefix $(MYERS_DIR)/,$(MYERS_FILES))
+
+OTHER_MODULES = tz_image_disp.c
+
+MODULES = $(TZMODULES) $(MYERS_MODULES)
+BINDIR = bin
+DEPDIR = $(OBJDIR)
+SRCS = $(MODULES)
+ALLSRCS = $(MODULES) $(MAIN)
+LIBOBJS = $(addprefix $(OBJDIR)/,$(TZMODULES:.c=.o)) $(MYERS_MODULES:.c=.o)
+
+MAINOBJ = $(OBJDIR)/$(PROG).o
+OBJS =  $(LIBOBJS) $(MAIN:.c=.o))
+BINS = $(addprefix $(BINDIR)/,$(MAINS:.c=))
+DEBUG_FLAG = true
+
+ifeq ($(DEBUG_FLAG),true)
+  LIB_NAME=$(LIB_BASE_NAME)$(MUTATION)$(VERSION)${DEBUG_SUFFIX}
+else
+  LIB_NAME=$(LIB_BASE_NAME)$(MUTATION)$(VERSION)
+endif
+
+LIB_PATH = $(LIB_DIR)/$(LIB_NAME).${STATIC_EXT}
+DYLIB_PATH = $(LIB_DIR)/$(LIB_NAME).${DYLIB_EXT}
+
+$(BINDIR)/$(PROG): $(MAINOBJ) $(LIB_PATH)
+ifeq ($(DEBUG_FLAG),true)
+	$(CC) $(MAINOBJ) $(LIB_PATH) $(LDFLAGS) -o $@
+else
+	$(CC) $(MAINOBJ) $(LIB_PATH) $(LDFLAGS) $(RELEASE_LDFLAGS) -o $@
+endif
+
+clean:
+	rm -f core $(BINS) $(LIBOBJS) $(DEPDIR)/*.P $(LIB_PATH) $(DYLIB_PATH)
+
+.PHONY: tags
+
+tags:
+	etags  *.c *.h $(MYERS_DIR)/*.c $(MYERS_DIR)/*.h private/*.c
+	ctags -w -R --language-force=C --fields=+ias --extra=+q *.c *.h $(MYERS_DIR)/*.c $(MYERS_DIR)/*.h private/*.c
+
+package:
+	tar -zcf neurolabi.tar *.t *.c *.h run Makefile
+
+.PHONY: lib
+
+lib: $(LIB_PATH)
+
+$(LIB_PATH): $(LIBOBJS)
+	@ar cr $@ $(LIBOBJS)
+	@ranlib $@ 
+#	libtool -static -o $@ $(addprefix $(OBJDIR)/,$(TZMODULES:.c=.o))
+
+.PHONY: dylib
+
+dylib: $(DYLIB_PATH)
+
+$(DYLIB_PATH): $(LIBOBJS)
+ifeq ($(UNAME),Linux)
+	gcc -shared -Wl,-soname,$(DYLIB_FILE) -o $(DYLIB_PATH) $(LIBOBJS) #$(LIBFLAGS)
+endif
+ifeq ($(UNAME),Darwin)
+	gcc -dynamiclib -current_version 1.0.0 -o $(DYLIB_PATH) $(LIBOBJS) $(LDFLAGS) 
+endif
+
+#build shared lib for linux
+#add fPIC to CFlAGS
+#ld -shared -soname libneurolabi.so.1 -o lib/libneurolabi.so $(addprefix $(OBJDIR)/,$(TZMODULES:.c=.o))
+
+test:
+	@echo $(VPATH)
+
+df = $(DEPDIR)/$(*F)
+MAKEDEPEND = gcc -M $(CCI) $< | sed 's/.*[.]o/$(OBJDIR)\/&/' >> $(df).d 
+
+$(OBJDIR)/tz_tiff_image.o: ${MYERS_DIR}/tiff_image.c
+
+${MYERS_DIR}/tiff_image.c: ${MYERS_DIR}/tiff_image.p
+	awk -f $(MYERS_DIR)/manager.awk $< > $@
+
+MYERS_MODULES = $(addprefix $(MYERS_DIR)/,$(MYERS_FILES))
+$(MYERS_DIR)/%.o: ${MYERS_DIR}/%.p
+	awk -f $(MYERS_DIR)/manager.awk $< > $(MYERS_DIR)/$*.c
+	gcc -c $(CFLAGS) $(MYERS_DIR)/$*.c -o $@
+
+
+$(OBJDIR)/%.o: %.c
+	@$(MAKEDEPEND);\
+	cp $(df).d $(df).P;\
+	sed -e 's/#.*//' -e 's/^[^:]*: *//' -e 's/ *\\$$//' \
+	-e '/^$$/ d' -e 's/$$/ :/' < $(df).d >> $(df).P;\
+	rm -f $(df).d
+	gcc -c $(CFLAGS) $< -o $@
+
+install: 
+	@if [ ! -d $(INSTALL_DIR)/lib ]; then mkdir -p $(INSTALL_DIR)/lib; fi
+	cp $(LIB_PATH) $(INSTALL_DIR)/lib
+	@if [ ! -d $(INSTALL_DIR)/include/neurolabi ]; then mkdir -p $(INSTALL_DIR)/include/neurolabi; fi
+	cp *.h $(INSTALL_DIR)/include/neurolabi        
+	chmod a+w $(INSTALL_DIR)/include/neurolabi/*.h
+	cp include/*.h $(INSTALL_DIR)/include/neurolabi
+	cp $(MYERS_DIR)/*.h $(INSTALL_DIR)/include/neurolabi
+
+-include $(ALLSRCS:%.c=$(DEPDIR)/%.P)
+
+#PROG = testimglib
+#PROG = testneuroseg
+#PROG = gentestdata
+#PROG = testneurotrace
+#PROG = testvoxelgraph
+#PROG = testarraytrans
+#PROG = testbwdist
+#PROG = teststackcode
+#PROG = testneurochain
+#PROG= testtiffio
+#PROG = testthreshold
+#PROG = extract_lobster_neuron
+#PROG = lobster_neuron_seed
+#PROG = trace_lobster_neuron
+#PROG = fly_neuron_highpass
+#PROG = fly_neuron_lowpass
+#PROG = fly_neuron_highpass_binarize
+#PROG = fly_neuron_lowpass_binarize
+#PROG = fly_neuron_mask
+#PROG = fly_neuron_holemask
+#PROG = fly_neuron_seed
+#PROG = fly_neuron_blobmask
+#PROG = fly_neuron_holeobj
+#PROG = fly_neuron_soma
+#PROG = fly_neuron_bundle
+#PROG = fly_neuron_grow_bundle
+#PROG = fly_neuron_bundle_seed
+#PROG = trace_fly_neuron
+#PROG = fly_neuron_label
+#PROG = fly_neuron_label2
+#PROG = testbitmask
+#PROG = testgeo3d
+#PROG = teststacknbr
+#PROG = testobjdetect
+#PROG = testgsllinalg
+#PROG = testtarray
+#PROG = testerror
+#PROG = testarraylist
+#PROG = testimagearray
+#PROG = testimgfilter
+#PROG = testmicnuc
+#PROG = gen_fly_neuron2
+#PROG = testcolor
+#PROG = testsystem
+#PROG = testsampling
+#PROG = teststackdraw

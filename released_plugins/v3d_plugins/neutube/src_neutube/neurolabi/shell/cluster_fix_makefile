@@ -1,0 +1,7 @@
+#!/usr/bin/awk -f
+
+BEGIN { }
+/^CCI = / { print "CCI =  -I/groups/flyem/home/zhaot/local/include -I/usr/local/include -I./include -I$(MYERS_DIR) -I/usr/include/libxml2" }
+/^LIBFLAGS = / { print "LIBFLAGS = -L$(MYERS_DIR) -L/groups/flyem/home/zhaot/local/lib -L$(EXT_LIB_DIR)  -l$(MYERS_LIB) -lpng -lm -lxml2 -lz -lfftw3f -lfftw3" }
+!/^CCI = / && !/^LIBFLAGS = / { print }
+END { }

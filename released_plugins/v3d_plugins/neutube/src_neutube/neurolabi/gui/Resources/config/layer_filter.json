@@ -1,0 +1,10 @@
+{
+  "type": "layer",
+  "config": {
+    "start": 0.0,
+    "length": 60000.0,
+    "top": 1,
+    "bottom": 10,
+    "exclusive": false
+  }
+}
