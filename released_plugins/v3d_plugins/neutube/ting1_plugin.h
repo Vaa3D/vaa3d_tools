@@ -8,9 +8,10 @@
 
 #include <QtGui>
 #include <v3d_interface.h>
-#include "mainwindow.h"
 #include "z3dapplication.h"
 
+
+class MainWindow;
 
 class neutube : public QObject, public V3DPluginInterface2_1
 {
