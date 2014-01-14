@@ -1,9 +1,0 @@
-#!/bin/bash
-
-body_id=$1
-
-cd /home/zhaot/Work/neutube/neurolabi/data/flyem/dalhousie/pixel_body
-grep -E "\<$body_id\>$" * > ../"$body_id".range
-cd /home/zhaot/Work/neutube/neurolabi/c
-bin/flyem_range /home/zhaot/Work/neutube/neurolabi/data/flyem/dalhousie/"$1".range
- 

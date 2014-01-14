@@ -1,5 +1,0 @@
-#!/bin/bash
-
-tmpfile=Makefile.bin.$$
-cat Makefile.bin | sed "s/^TZMODULES[ ]*=.*/& $1/" > $tmpfile
-mv $tmpfile Makefile.bin

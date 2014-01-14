@@ -1,3 +1,0 @@
-note
-
-1. Once a swc tree is selected, selected nodes that belong to this tree should be cleared. setSwcSelected and setSwcTreeNodeSelected function will take care of this.

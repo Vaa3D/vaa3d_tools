@@ -1,7 +1,0 @@
-#!/usr/bin/awk -f
-
-BEGIN { }
-/^FIND_LIBRARY\(fftwLib/ { print "FIND_LIBRARY(fftwLib NAMES fftw3 /groups/flyem/home/zhaot/local/lib)" }
-/^FIND_LIBRARY\(fftwfLib/ { print "FIND_LIBRARY(fftwfLib NAMES fftw3f /groups/flyem/home/zhaot/local/lib)" }
-!/^FIND_LIBRARY\(fftwLib/ && !/^FIND_LIBRARY\(fftwfLib/ { print }
-END { }

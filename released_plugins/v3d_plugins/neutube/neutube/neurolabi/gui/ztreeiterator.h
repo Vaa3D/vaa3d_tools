@@ -1,6 +1,0 @@
-#ifndef ZTREEITERATOR_H
-#define ZTREEITERATOR_H
-
-
-
-#endif // ZTREEITERATOR_H
