@@ -24,5 +24,52 @@ public:
 	bool dofunc(const QString &func_name, const V3DPluginArgList &input, V3DPluginArgList &output, V3DPluginCallback2 &callback, QWidget *parent);
 };
 
+class MyComboBox : public QComboBox
+{
+    Q_OBJECT
+
+public:
+    V3DPluginCallback2 * m_v3d;
+    MyComboBox(V3DPluginCallback2 * ini_v3d) {m_v3d = ini_v3d;}
+
+    void enterEvent(QEvent * event);
+
+public slots:
+    void updateList();
+};
+
+class controlPanel: public QDialog
+{
+    Q_OBJECT
+
+public:
+    controlPanel(V3DPluginCallback2 &v3d, QWidget *parent);
+    ~controlPanel();
+
+public:
+    v3dhandle curwin;
+    V3dR_MainWindow *surface_win;
+    View3DControl *view;
+    static controlPanel *panel;
+    QLineEdit *m_pLineEdit_filename;
+
+
+    QList <V3dR_MainWindow *> list_3dviewer;
+
+    V3DPluginCallback2 & m_v3d;
+
+    QGridLayout *gridLayout;
+
+    MyComboBox* combo_surface;
+    QLabel* label_surface;
+
+    bool saveAnchorFile(QString filename);
+
+private slots:
+    void _slot_link();
+    void _slot_save();
+};
+
+
 #endif
 
