@@ -10,7 +10,6 @@
 #include "nvinterface.h"
 #include "zstackframe.h"
 
-#include "mainwindow.h"
 
 using namespace std;
 Q_EXPORT_PLUGIN2(neutube, neutube);
