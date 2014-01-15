@@ -26,6 +26,7 @@ void processImage_adaptive(V3DPluginCallback2 &callback, QWidget *parent);
 void processImage_adaptive_auto(V3DPluginCallback2 &callback, QWidget *parent);
 void processImage_adaptive_auto_2D(V3DPluginCallback2 &callback, QWidget *parent);
 void processImage_adaptive_auto_blocks(V3DPluginCallback2 &callback, QWidget *parent);
+void processImage_detect_soma(V3DPluginCallback2 &callback, QWidget *parent);
 
 bool processImage_adaptive_auto(const V3DPluginArgList & input, V3DPluginArgList & output,V3DPluginCallback2 &callback);
 bool processImage_adaptive_auto_blocks(const V3DPluginArgList & input, V3DPluginArgList & output,V3DPluginCallback2 &callback);
@@ -77,6 +78,14 @@ template <class T> void soma_detection(T* data1d,
                                        int y,
                                        V3DLONG somasize,
                                        T* &outimg);
+
+template <class T> void median_filter(T* data1d,
+                                      V3DLONG *in_sz,
+                                      unsigned int Wx,
+                                      unsigned int Wy,
+                                      unsigned int Wz,
+                                      unsigned int c,
+                                      T* &outimg);
 
 template <class T> double getdtmax(V3DPluginCallback2 &callback,const T* data1d,V3DLONG *in_sz);
 
@@ -142,6 +151,7 @@ QStringList selectiveEnhancement::menulist() const
           <<tr("adaptive_auto_blocks")
          <<tr("adaptive")
         <<tr("selective")
+       <<tr("soma detection")
        <<tr("about");
 }
 
@@ -170,10 +180,15 @@ void selectiveEnhancement::domenu(const QString &menu_name, V3DPluginCallback2 &
     {
         processImage_adaptive_auto_2D(callback,parent);
     }
+    else if(menu_name == tr("soma detection"))
+    {
+        processImage_detect_soma(callback,parent);
+    }
     else if(menu_name == tr("adaptive_auto_blocks"))
     {
         processImage_adaptive_auto_blocks(callback,parent);
     }
+
     else
     {
         v3d_msg(QString("Multi-scale enhancement of an image with fiber structures. v%1"
@@ -1096,6 +1111,59 @@ void processImage_adaptive_auto_blocks(V3DPluginCallback2 &callback, QWidget *pa
     return;
 }
 
+void processImage_detect_soma(V3DPluginCallback2 &callback, QWidget *parent)
+{
+    v3dhandle curwin = callback.currentImageWindow();
+    if (!curwin)
+    {
+        v3d_msg("You don't have any image open in the main window.");
+        return;
+    }
+
+    Image4DSimple* p4DImage = callback.getImage(curwin);
+    QString p4DImage_name = callback.getImageName(curwin);
+    p4DImage_name.append("_soma.v3draw");
+
+    if (!p4DImage)
+    {
+        v3d_msg("The image pointer is invalid. Ensure your data is valid and try again!");
+        return;
+    }
+
+    unsigned char* data1d_enhanced = p4DImage->getRawData();
+    V3DLONG pagesz = p4DImage->getTotalUnitNumberPerChannel();
+
+    V3DLONG N = p4DImage->getXDim();
+    V3DLONG M = p4DImage->getYDim();
+    V3DLONG P = p4DImage->getZDim();
+    V3DLONG sc = p4DImage->getCDim();
+    ImagePixelType pixeltype = p4DImage->getDatatype();
+
+    V3DLONG in_sz[4];
+    in_sz[0] = N; in_sz[1] = M; in_sz[2] = P; in_sz[3] = sc;
+
+    QString fileOpenName;
+    fileOpenName = QFileDialog::getOpenFileName(0, QObject::tr("Choose original image dir:"));
+
+    unsigned char * data1d_original = 0;
+    int datatype;
+    V3DLONG in_zz[4];
+
+    if(!simple_loadimage_wrapper(callback,fileOpenName.toStdString().c_str(), data1d_original, in_zz, datatype))
+    {
+        cerr<<"load image "<<fileOpenName.toStdString().c_str()<<" error!"<<endl;
+        return;
+    }
+
+    unsigned char* Enhancement_soma = 0;
+    enhancementWithsoma(callback,(unsigned char *)data1d_original,(unsigned char*)data1d_enhanced,in_sz,1,(unsigned char *&)Enhancement_soma);
+    simple_saveimage_wrapper(callback,p4DImage_name.toStdString().c_str(), (unsigned char *)Enhancement_soma, in_sz, 1);
+    if(Enhancement_soma) {delete Enhancement_soma; Enhancement_soma = 0;}
+    if(data1d_original) {delete data1d_original; data1d_original = 0;}
+    return;
+
+}
+
 bool processImage_adaptive_auto(const V3DPluginArgList & input, V3DPluginArgList & output,V3DPluginCallback2 &callback)
 {
     cout<<"Welcome to adaptive enhancement filter"<<endl;
@@ -1581,6 +1649,35 @@ bool processImage_adaptive_auto_blocks_indv(const V3DPluginArgList & input, V3DP
     V3DLONG pagesz = N*M*P;
     V3DLONG offsetc = (c-1)*pagesz;
 
+    V3DLONG tilenum = (floor(N/(0.9*Ws))+1.0)*(floor(M/(0.9*Ws))+1.0);
+    int count = 2;
+    ifstream ifile(outimg_file);
+    if (!ifile)
+    {
+       printf("Can not find the output folder");
+       return false;
+    }
+
+    QString tc_name(outimg_file);
+    tc_name.append("/stitched_image.tc");
+
+    ofstream myfile;
+    myfile.open (tc_name.toStdString().c_str(),ios::out | ios::app );
+    myfile << "# thumbnail file \n";
+    myfile << "NULL \n\n";
+    myfile << "# tiles \n";
+    myfile << tilenum << " \n\n";
+    myfile << "# dimensions (XYZC) \n";
+    myfile << N << " " << M << " " << P << " " << 1 << " ";
+    myfile << "\n\n";
+    myfile << "# origin (XYZ) \n";
+    myfile << "0.000000 0.000000 0.000000 \n\n";
+    myfile << "# resolution (XYZ) \n";
+    myfile << "1.000000 1.000000 1.000000 \n\n";
+    myfile << "# image coordinates look up table \n";
+    myfile.close();
+
+
     for(V3DLONG iy = 0; iy < M; iy = iy+Ws-Ws/10)
     {
         V3DLONG yb = iy;
@@ -1610,14 +1707,27 @@ bool processImage_adaptive_auto_blocks_indv(const V3DPluginArgList & input, V3DP
                     }
                 }
             }
+
             V3DLONG block_sz[4];
             block_sz[0] = xe-xb+1; block_sz[1] = ye-yb+1; block_sz[2] = P; block_sz[3] = 1;
-            simple_saveimage_wrapper(callback, "temp.v3draw", (unsigned char *)blockarea, block_sz, 1);
+            unsigned char *blockarea_median=0;
+            int ws = 2;
+            //apply median filter
+            switch (datatype)
+            {
+            case V3D_UINT8: median_filter(blockarea, block_sz, ws, ws, ws, c,(unsigned char* &)blockarea_median);
+                 break;
+                 default: v3d_msg("Invalid data type. Do nothing."); return false;
+            }
+
+            if(blockarea) {delete []blockarea; blockarea =0;}
+
+            simple_saveimage_wrapper(callback, "temp.v3draw", (unsigned char *)blockarea_median, block_sz, 1);
             unsigned char *localEnahancedArea=0;
             try {localEnahancedArea = new unsigned char [blockpagesz];}
             catch(...)  {v3d_msg("cannot allocate memory for localEnahancedArea."); return false;}
-            double sigma = 0;
-            for(int scale = 0; scale < 2; scale++)
+            double sigma = 1;
+            for(int scale = 0; scale < count; scale++)
             {
                 unsigned char * data1d_gf = 0;
                 unsigned char * gsdtld = 0;
@@ -1628,9 +1738,11 @@ bool processImage_adaptive_auto_blocks_indv(const V3DPluginArgList & input, V3DP
                     if (scale==0) //do not filter for the scale 0
                     {
 
-                        sigma = 0.3;
+                        if(count ==2)
+                            sigma = 0.3;
+
                         data1d_gf = new unsigned char [blockpagesz];
-                        memcpy(data1d_gf, blockarea, blockpagesz);
+                        memcpy(data1d_gf, blockarea_median, blockpagesz);
                     }
                     else
                     {
@@ -1663,35 +1775,27 @@ bool processImage_adaptive_auto_blocks_indv(const V3DPluginArgList & input, V3DP
                 if(data1d_gf) {delete []data1d_gf; data1d_gf =0;}
                 if(gsdtld) {delete []gsdtld; gsdtld =0;}
                 if(EnahancedImage) {delete []EnahancedImage; EnahancedImage =0;}
-                if(blockarea) {delete []blockarea; blockarea =0;}
+                if(blockarea_median) {delete []blockarea_median; blockarea_median =0;}
            }
-                QString outputTile(outimg_file);
-                if (!QFile(outputTile).exists())
-                {
-                   printf("Can not find the output folder");
-                   return false;
-                }
-
-
-                QString tc_name(outimg_file);
-                tc_name.append("/stitched_image.tc");
-
-               outputTile.append(QString("/x_%1_%2_y%3_%4.raw").arg(xb).arg(xe).arg(yb).arg(ye));
+               QString outputTile(outimg_file);
+               outputTile.append(QString("/x_%1_%2_y_%3_%4.raw").arg(xb).arg(xe).arg(yb).arg(ye));
                simple_saveimage_wrapper(callback, outputTile.toStdString().c_str(), (unsigned char *)localEnahancedArea, block_sz, 1);
 
-               ofstream myfile;
                myfile.open (tc_name.toStdString().c_str(),ios::out | ios::app );
                QString outputilefull;
-               outputilefull.append(QString("x_%1_%2_y%3_%4.raw").arg(xb).arg(xe).arg(yb).arg(ye));
+               outputilefull.append(QString("x_%1_%2_y_%3_%4.raw").arg(xb).arg(xe).arg(yb).arg(ye));
                outputilefull.append(QString("   ( %1, %2, 0) ( %3, %4, %5)").arg(xb).arg(yb).arg(xe).arg(ye).arg(P-1));
                myfile << outputilefull.toStdString();
                myfile << "\n";
                myfile.close();
-               printf("size (%d,%d,%d)\n",N,M,P);
                if(localEnahancedArea) {delete []localEnahancedArea; localEnahancedArea =0;}
         }
 
     }
+    myfile.open (tc_name.toStdString().c_str(),ios::out | ios::app );
+    myfile << "\n# MST LUT\n";
+    myfile.close();
+
     if (data1d) {delete []data1d; data1d=0;}
     return true;
 }
@@ -2346,7 +2450,15 @@ template <class T> void enhancementWithsoma(V3DPluginCallback2 &callback,
 
     int soma_x = 0;
     int soma_y = 0;
-    somalocation(callback,data1d,in_sz,1,soma_x,soma_y);
+    v3dhandle curwin = callback.currentImageWindow();
+    LandmarkList listLandmarks = callback.getLandmark(curwin);
+    if(listLandmarks.count() ==0)
+        somalocation(callback,data1d,in_sz,1,soma_x,soma_y);
+    else
+    {
+        soma_x = listLandmarks.at(0).x;
+        soma_y = listLandmarks.at(0).y;
+    }
     printf("\n soma location is (%d, %d)\n\n", soma_x,soma_y);
 
     V3DLONG N = in_sz[0];
@@ -2694,4 +2806,99 @@ template <class T> void soma_detection(T* data1d,
 
     outimg = pImage;
     return;
+}
+
+template <class T> void median_filter(T* data1d,
+                                      V3DLONG *in_sz,
+                                      unsigned int Wx,
+                                      unsigned int Wy,
+                                      unsigned int Wz,
+                                      unsigned int c,
+                                      T* &outimg)
+{
+
+    V3DLONG N = in_sz[0];
+    V3DLONG M = in_sz[1];
+    V3DLONG P = in_sz[2];
+    V3DLONG sc = in_sz[3];
+    V3DLONG pagesz = N*M*P;
+
+    T *arr,tmp;
+    int ii,jj;
+    int size = (2*Wx+1)*(2*Wy+1)*(2*Wz+1);
+    arr = new T[size];
+
+    //filtering
+    V3DLONG offsetc = (c-1)*pagesz;
+
+    //declare temporary pointer
+    T *pImage = new T [pagesz];
+    if (!pImage)
+    {
+        printf("Fail to allocate memory.\n");
+        return;
+    }
+    else
+    {
+        for(V3DLONG i=0; i<pagesz; i++)
+            pImage[i] = 0;
+    }
+
+    //Median Filtering
+    for(V3DLONG iz = 0; iz < P; iz++)
+    {
+         printf("\r median filter : %d %% completed ", ((iz + 1)*100) / P);fflush(stdout);
+        V3DLONG offsetk = iz*M*N;
+        for(V3DLONG iy = 0; iy < M; iy++)
+        {
+            V3DLONG offsetj = iy*N;
+            for(V3DLONG ix = 0; ix < N; ix++)
+            {
+
+                V3DLONG xb = ix-Wx; if(xb<0) xb = 0;
+                V3DLONG xe = ix+Wx; if(xe>=N-1) xe = N-1;
+                V3DLONG yb = iy-Wy; if(yb<0) yb = 0;
+                V3DLONG ye = iy+Wy; if(ye>=M-1) ye = M-1;
+                V3DLONG zb = iz-Wz; if(zb<0) zb = 0;
+                V3DLONG ze = iz+Wz; if(ze>=P-1) ze = P-1;
+                ii = 0;
+
+                for(V3DLONG k=zb; k<=ze; k++)
+                {
+                    V3DLONG offsetkl = k*M*N;
+                    for(V3DLONG j=yb; j<=ye; j++)
+                    {
+                        V3DLONG offsetjl = j*N;
+                        for(V3DLONG i=xb; i<=xe; i++)
+                        {
+                            T dataval = data1d[ offsetc + offsetkl + offsetjl + i];
+                            arr[ii] = dataval;
+                            if (ii>0)
+                            {
+                                jj = ii;
+                                while(jj > 0 && arr[jj-1]>arr[jj])
+                                {
+                                    tmp = arr[jj];
+                                    arr[jj] = arr[jj-1];
+                                    arr[jj-1] = tmp;
+                                    jj--;
+                                }
+                            }
+                            ii++;
+                        }
+                    }
+                }
+
+
+                //set value
+                V3DLONG index_pim = offsetk + offsetj + ix;
+                pImage[index_pim] = arr[int(0.5*ii)+1];
+            }
+        }
+    }
+printf("\n");
+
+    outimg = pImage;
+    delete [] arr;
+
 }
