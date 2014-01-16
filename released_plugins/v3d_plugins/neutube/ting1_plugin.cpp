@@ -89,13 +89,13 @@ void call_neutube()
         QString tmpfile;
     
 #if defined(Q_OS_WIN)
-    tmpfile = getAppPath().append("neutube.exe");
+    tmpfile = getAppPath().append("neuTube.exe");
 
 #elif defined (Q_OS_MAC)
-    tmpfile = getAppPath().append("neutube.app");
+    tmpfile = getAppPath().append("neuTube.app");
 
 #else
-    tmpfile = getAppPath().append("neutube");
+    tmpfile = getAppPath().append("neuTube");
 
 #endif
     
