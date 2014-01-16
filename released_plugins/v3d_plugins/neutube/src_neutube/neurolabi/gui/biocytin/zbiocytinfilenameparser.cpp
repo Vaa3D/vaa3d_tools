@@ -1,6 +1,7 @@
 #include "zbiocytinfilenameparser.h"
 #include <iostream>
 #include <cmath>
+#include <algorithm>
 
 #include "zstring.h"
 
@@ -69,7 +70,6 @@ std::string ZBiocytinFileNameParser::getSuffix(ESuffixRole role)
 int ZBiocytinFileNameParser::getTileIndex(const string &path)
 {
   int index = ZString(path).lastInteger();
-
   return abs(index);
 }
 

@@ -17,6 +17,7 @@
 #include <iostream>
 #include <sstream>
 #include <QDebug>
+#include <algorithm>
 
 namespace glm {
 typedef detail::tvec3<unsigned char, highp> col3;

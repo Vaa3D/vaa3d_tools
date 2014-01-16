@@ -1,6 +1,7 @@
 #include "zrandom.h"
 #include <QThreadStorage>
 #include "QsLog.h"
+#include <algorithm>
 
 #if defined(_WIN32) || defined(_WIN64)
 

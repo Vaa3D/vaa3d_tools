@@ -11,6 +11,7 @@
 #include "stdint.h"
 #else
 #include <stdint.h>
+#include <algorithm>
 #endif
 
 

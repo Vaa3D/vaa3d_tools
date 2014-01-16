@@ -42,7 +42,7 @@
 #	include <initializer_list>
 #endif //GLM_HAS_INITIALIZER_LISTS
 #include <cstddef>
-
+#include <algorithm>
 namespace glm{
 namespace detail
 {

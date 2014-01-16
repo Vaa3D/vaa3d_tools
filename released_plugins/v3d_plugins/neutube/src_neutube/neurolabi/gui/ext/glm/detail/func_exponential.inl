@@ -30,7 +30,7 @@
 #include "_vectorize.hpp"
 #include <limits>
 #include <cassert>
-
+#include <algorithm>
 namespace glm
 {
 	// pow

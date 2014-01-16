@@ -27,7 +27,7 @@
 ///////////////////////////////////////////////////////////////////////////////////
 
 #include <limits>
-
+#include <algorithm>
 namespace glm
 {
 	template <typename T, precision P, template <typename, precision> class vecType>
