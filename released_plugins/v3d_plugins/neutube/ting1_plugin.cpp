@@ -9,6 +9,33 @@
 using namespace std;
 Q_EXPORT_PLUGIN2(ting1, neutube);
  
+void call_neutube();
+
+QString getAppPath()
+{
+	QDir testPluginsDir = QDir(qApp->applicationDirPath());
+    
+#if defined(Q_OS_WIN)
+	if (testPluginsDir.dirName().toLower() == "debug" || testPluginsDir.dirName().toLower() == "release")
+    testPluginsDir.cdUp();
+#elif defined(Q_OS_MAC)
+	// In a Mac app bundle, plugins directory could be either
+	//  a - below the actual executable i.e. v3d.app/Contents/MacOS/plugins/
+	//  b - parallel to v3d.app i.e. foo/v3d.app and foo/plugins/
+	if (testPluginsDir.dirName() == "MacOS") {
+		QDir testUpperPluginsDir = testPluginsDir;
+		testUpperPluginsDir.cdUp();
+		testUpperPluginsDir.cdUp();
+		testUpperPluginsDir.cdUp(); // like foo/plugins next to foo/v3d.app
+		if (testUpperPluginsDir.cd("plugins")) testPluginsDir = testUpperPluginsDir;
+		testPluginsDir.cdUp();
+	}
+#endif
+    
+	return testPluginsDir.absolutePath();
+}
+
+
 QStringList neutube::menulist() const
 {
 	return QStringList() 
@@ -27,14 +54,12 @@ void neutube::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWi
 {
 	if (menu_name == tr("neutube"))
 	{
-//        system()
-
-     //   neurotube_main()
+           call_neutube();
 	}
 	else
 	{
-		v3d_msg(tr("a collaboration with Hanchuan. "
-			"Developed by Ting Zhao and HP, 2012-12-9"));
+		v3d_msg(tr("A plugin to invoke NeuTube neuron reconstruction. "
+			"Developed by Hanchuan Peng and Ting Zhao, 2013-2014"));
 	}
 }
 
@@ -58,3 +83,43 @@ bool neutube::dofunc(const QString & func_name, const V3DPluginArgList & input, 
 	return true;
 }
 
+
+void call_neutube()
+{
+        QString tmpfile;
+    
+#if defined(Q_OS_WIN)
+    tmpfile = getAppPath().append("neutube.exe");
+
+#elif defined (Q_OS_MAC)
+    tmpfile = getAppPath().append("neutube.app");
+
+#else
+    tmpfile = getAppPath().append("neutube");
+
+#endif
+    
+        //
+        QFile tmpqfile(tmpfile);
+        if (!tmpqfile.exists())
+    {
+        v3d_msg("Cannot locate the executable of NeuTube program. Now you can specify where it is.");
+        tmpfile = QFileDialog::getOpenFileName(0, QObject::tr("select the executable of NeuTube program"),
+                                                          QDir::currentPath(),
+                                                          QObject::tr("Executable File (*.*)"));
+        
+        if(tmpfile.isEmpty())
+        {
+            return;
+        }
+    }
+    
+#if defined(Q_OS_WIN)
+    system(qPrintable(tmpfile));
+#elif defined (Q_OS_MAC)
+    system(qPrintable(tmpfile.prepend("open ")));
+#else
+    system(qPrintable(tmpfile.prepend("sh ")));
+#endif
+    
+}
