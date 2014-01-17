@@ -106,7 +106,7 @@ void call_neutube()
         v3d_msg("Cannot locate the executable of NeuTube program. Now you can specify where it is.");
         tmpfile = QFileDialog::getOpenFileName(0, QObject::tr("select the executable of NeuTube program"),
                                                           QDir::currentPath(),
-                                                          QObject::tr("Executable File (*.*)"));
+                                                          QObject::tr("Executable File (*)"));
         
         if(tmpfile.isEmpty())
         {
