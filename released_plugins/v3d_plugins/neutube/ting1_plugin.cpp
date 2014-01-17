@@ -86,7 +86,14 @@ bool neutube::dofunc(const QString & func_name, const V3DPluginArgList & input, 
 
 void call_neutube()
 {
-        QString tmpfile;
+    QSettings setting("Vaa3D_tools", "neutube");
+    QString tmpfile = setting.value("neutube_binary_path").toByteArray();
+
+    v3d_msg(QString("The default path of neutube is [%1]").arg(tmpfile), 0);
+
+    QFile tmpqfile(tmpfile);
+    if (!tmpqfile.exists())
+    {
     
 #if defined(Q_OS_WIN)
     tmpfile = getAppPath().append("neuTube.exe");
@@ -98,10 +105,10 @@ void call_neutube()
     tmpfile = getAppPath().append("neuTube");
 
 #endif
-    
+    }
+
         //
-        QFile tmpqfile(tmpfile);
-        if (!tmpqfile.exists())
+    if (!tmpqfile.exists())
     {
         v3d_msg("Cannot locate the executable of NeuTube program. Now you can specify where it is.");
         tmpfile = QFileDialog::getOpenFileName(0, QObject::tr("select the executable of NeuTube program"),
@@ -113,6 +120,10 @@ void call_neutube()
             return;
         }
     }
+
+    //now have found the neuTube location. thus save it for future use
+
+    setting.setValue("neutube_binary_path", qPrintable(tmpfile));
     
 #if defined(Q_OS_WIN)
     system(qPrintable(tmpfile));
@@ -123,3 +134,4 @@ void call_neutube()
 #endif
     
 }
+
