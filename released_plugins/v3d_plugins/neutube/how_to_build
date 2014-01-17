@@ -14,6 +14,6 @@ Build neuTube on Mac:
 
 Build neuTube on Linux:
 
-  sh build.sh /usr/local/Trolltech/Qt-4.7.1/bin/qmake /usr/local/Trolltech/Qt-4.7.1/mkspecs/macx-linux-g++
+  sh build.sh /usr/local/Trolltech/Qt-4.7.1/bin/qmake /usr/local/Trolltech/Qt-4.7.1/mkspecs/linux-g++
 
 
