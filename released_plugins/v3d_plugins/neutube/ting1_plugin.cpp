@@ -119,7 +119,7 @@ void call_neutube()
 #elif defined (Q_OS_MAC)
     system(qPrintable(tmpfile.prepend("open ")));
 #else
-    system(qPrintable(tmpfile.prepend("sh ")));
+    system(qPrintable(tmpfile.prepend("")));
 #endif
     
 }
