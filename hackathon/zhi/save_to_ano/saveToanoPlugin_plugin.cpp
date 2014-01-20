@@ -194,8 +194,7 @@ void controlPanel::_slot_link()
         v3d_msg("No SWC, APO, and Surface files from the selected 3D viewer window, please try it later!");
         return;
     }
-
-
+    
     ofstream anofile;
     anofile.open (fileName.toStdString().c_str(),ios::out | ios::app );
 
