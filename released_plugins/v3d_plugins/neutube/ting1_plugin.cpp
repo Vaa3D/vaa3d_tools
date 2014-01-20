@@ -105,6 +105,9 @@ void call_neutube()
     tmpfile = getAppPath().append("neuTube");
 
 #endif
+
+    tmpqfile.setFileName(tmpfile);
+
     }
 
         //
@@ -119,6 +122,8 @@ void call_neutube()
         {
             return;
         }
+
+        tmpqfile.setFileName(tmpfile);
     }
 
     //now have found the neuTube location. thus save it for future use
