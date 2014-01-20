@@ -33,6 +33,7 @@
 
 using namespace std;
 
+void call_open_using_imagej();
 
 
 Q_EXPORT_PLUGIN2(open_fiji, open_fiji);
@@ -42,6 +43,8 @@ QStringList open_fiji::menulist() const
 	return QStringList() 
         <<tr("Import using ImageJ and save as .v3draw")
         <<tr("Convert Z sections in a .v3draw file to .avi")
+
+       << tr("test")
         <<tr("About");
 }
 
@@ -52,10 +55,80 @@ QStringList open_fiji::funclist() const
 		<<tr("help");
 }
 
+
+void call_open_using_imagej()
+{
+    QSettings setting("Vaa3D_tools", "open_imagej");
+    QString imagej_binary_file = setting.value("imagej_binary_path").toByteArray();
+    QString tmp_conversion_folder = setting.value("imagej_conversion_folder").toByteArray();
+
+    v3d_msg(QString("The default path of imagej is [%1]").arg(imagej_binary_file), 0);
+    v3d_msg(QString("The default temporary location for saving intermediate conversion files is [%1]").arg(tmp_conversion_folder), 0);
+
+    QFile f_imagej_binary_file(imagej_binary_file);
+    if (!f_imagej_binary_file.exists())
+    {
+
+#if defined(Q_OS_MAC)
+         imagej_binary_file = getAppPath().append("/Fiji.app/Contents/MacOS/ImageJ-macosx");
+#elif defined(Q_OS_LINUX)
+        imagej_binary_file = getAppPath().append("/Fiji.app/ImageJ-linux64");
+#elif defined(Q_OS_WIN32)
+        imagej_binary_file = getAppPath().append("/Fiji.app/ImageJ-win32.exe");
+#elif defined(Q_OS_WIN64)
+        imagej_binary_file = getAppPath().append("/Fiji.app/ImageJ-win64.exe");
+#else
+        v3d_msg(tr("Currently only available for Linux, Mac OSX 10.5+ and Windows"));
+        return;
+#endif
+
+        f_imagej_binary_file.setFileName(imagej_binary_file);
+    }
+
+    if (!f_imagej_binary_file.exists())
+    {
+        v3d_msg("Cannot locate the executable of ImageJ/Fiji program. Now you can specify where it is.");
+        imagej_binary_file = QFileDialog::getOpenFileName(0, QObject::tr("select the executable of ImageJ/Fiji program"),
+                                                          QDir::currentPath(),
+                                                          QObject::tr("Executable File (*)"));
+
+        if(imagej_binary_file.isEmpty())
+        {
+            return;
+        }
+
+        f_imagej_binary_file.setFileName(imagej_binary_file);
+    }
+
+    //now have found the ImageJ location. thus save it for future use
+
+    setting.setValue("imagej_binary_path", qPrintable(imagej_binary_file));
+
+    //now call ImageJ
+
+    QString appdirstring = QDir(imagej_binary_file).absolutePath();  // on a mac, you need to go 3 dir up from the app path to get to v3d_external/bin
+
+    QString m_FileName="ttt";
+    QString tmpfile="qqq";
+
+
+    QString cmd_Fiji = QString("%1  --headless -batch  %1/brl_FijiConvert.js %2:%3").arg(imagej_binary_file.toStdString().c_str()).arg(m_FileName.toStdString().c_str()).arg(tmpfile.toStdString().c_str());
+    v3d_msg(cmd_Fiji);
+
+    system(qPrintable(cmd_Fiji));
+
+    //if (!tmpqfile.exists()) v3d_msg("The format is not supported, or something is wrong in your file\n"); //need change later
+}
+
+
 void open_fiji::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
 {
     printf(menu_name.toStdString().c_str());
-    if (menu_name == tr("Import using ImageJ and save as .v3draw"))
+    if (menu_name == tr("test"))
+    {
+        call_open_using_imagej();
+    }
+    else if (menu_name == tr("Import using ImageJ and save as .v3draw"))
     {
 
         // input image file
@@ -89,26 +162,6 @@ void open_fiji::domenu(const QString &menu_name, V3DPluginCallback2 &callback, Q
 
 
         QFile tmpqfile(tmpfile);
-  //      if (tmpqfile.exists()) system(qPrintable(QString("rm -f \"%1\"").arg(tmpfile)));
-
-
-  //      QString lociDir = getAppPath().append("/mac_ffmpeg");
-
-       //look for loci_tools.jar
-  //      QString lociDir = ("loci_tools.jar");
- /*       if (!QFile(lociDir).exists())
-        {
-             printf("loci_tools.jar is not in current directory, search v3d app path.\n");
-             lociDir = getAppPath().append("loci_tools.jar");
-             printf(qPrintable(lociDir));
-             printf("\n");
-             if (!QFile(lociDir).exists())
-             {
-                  v3d_msg("Cannot find loci_tools.jar, please download it and make sure it is put under the Vaa3D executable folder, parallel to the Vaa3D executable and the plugins folder.");
-                  return;
-             }
-        }
-*/
         QDir AppDir = QDir(qApp->applicationDirPath());
 
         // I need to construct substrings for the various ImageJ executables...
