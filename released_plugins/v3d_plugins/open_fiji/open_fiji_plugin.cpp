@@ -42,9 +42,6 @@ QStringList open_fiji::menulist() const
 {
 	return QStringList() 
         <<tr("Import using ImageJ and save as .v3draw")
-        <<tr("Convert Z sections in a .v3draw file to .avi")
-
-       << tr("test")
         <<tr("About");
 }
 
@@ -56,14 +53,15 @@ QStringList open_fiji::funclist() const
 }
 
 
-void call_open_using_imagej()
+void call_open_using_imagej(bool ismenu, QString inputfile, QString savefile,V3DPluginCallback2 &callback)
 {
+
+
     QSettings setting("Vaa3D_tools", "open_imagej");
     QString imagej_binary_file = setting.value("imagej_binary_path").toByteArray();
-    QString tmp_conversion_folder = setting.value("imagej_conversion_folder").toByteArray();
 
     v3d_msg(QString("The default path of imagej is [%1]").arg(imagej_binary_file), 0);
-    v3d_msg(QString("The default temporary location for saving intermediate conversion files is [%1]").arg(tmp_conversion_folder), 0);
+   // v3d_msg(QString("The default temporary location for saving intermediate conversion files is [%1]").arg(tmp_conversion_folder), 0);
 
     QFile f_imagej_binary_file(imagej_binary_file);
     if (!f_imagej_binary_file.exists())
@@ -87,18 +85,44 @@ void call_open_using_imagej()
 
     if (!f_imagej_binary_file.exists())
     {
-        v3d_msg("Cannot locate the executable of ImageJ/Fiji program. Now you can specify where it is.");
-        imagej_binary_file = QFileDialog::getOpenFileName(0, QObject::tr("select the executable of ImageJ/Fiji program"),
+        v3d_msg("Cannot locate the executable of ImageJ/Fiji program. Please specify Fiji location.");
+//        v3d_msg("Cannot locate the executable of ImageJ/Fiji program. Now you can specify where it is.",0);
+        // use this code above for dofunc version- prints to command line instead of window
+
+        imagej_binary_file = QFileDialog::getOpenFileName(0, QObject::tr("Locate your ImageJ/Fiji application"),
                                                           QDir::currentPath(),
-                                                          QObject::tr("Executable File (*)"));
+                                                          QObject::tr(" *"));
 
         if(imagej_binary_file.isEmpty())
         {
             return;
         }
 
+        // the user will select the .app location, not the the command line executable location, which is OS-dependent
+
+        //  need these for WIN32, WIN64, LINUX and MAC
+        #if defined(Q_OS_MAC)
+        // mac
+
+                 QString fijiPath = imagej_binary_file.append("/Contents/MacOS/ImageJ-macosx");
+        #elif defined(Q_OS_LINUX)
+        // linux
+                 QString fijiPath = imagej_binary_file.append("/ImageJ-linux64";
+        #elif defined(Q_OS_WIN32)
+               //32 bit windows
+                 QString fijiPath = imagej_binary_file.append("/ImageJ-win32.exe");
+        #elif defined(Q_OS_WIN64)
+        // 64 bit windows
+                 QString fijiPath = imagej_binary_file.append("/ImageJ-win64.exe");
+        #else
+                v3d_msg(tr("Currently only available for Linux, Mac OSX 10.5+ and Windows"));
+                return;
+        #endif
+
         f_imagej_binary_file.setFileName(imagej_binary_file);
     }
+
+    // the user will select the .app location on mac and linux
 
     //now have found the ImageJ location. thus save it for future use
 
@@ -106,105 +130,25 @@ void call_open_using_imagej()
 
     //now call ImageJ
 
-    QString appdirstring = QDir(imagej_binary_file).absolutePath();  // on a mac, you need to go 3 dir up from the app path to get to v3d_external/bin
-
-    QString m_FileName="ttt";
-    QString tmpfile="qqq";
+    QString v3dAppPath = getAppPath();
 
 
-    QString cmd_Fiji = QString("%1  --headless -batch  %1/brl_FijiConvert.js %2:%3").arg(imagej_binary_file.toStdString().c_str()).arg(m_FileName.toStdString().c_str()).arg(tmpfile.toStdString().c_str());
-    v3d_msg(cmd_Fiji);
+    QString cmd_Fiji = QString("%1  --headless -batch  %2/brl_FijiConvert.js %3:%4").arg(imagej_binary_file.toStdString().c_str()).arg(v3dAppPath.toStdString().c_str()).arg(inputfile.toStdString().c_str()).arg(savefile.toStdString().c_str());
+   // v3d_msg(cmd_Fiji);
 
     system(qPrintable(cmd_Fiji));
 
-    //if (!tmpqfile.exists()) v3d_msg("The format is not supported, or something is wrong in your file\n"); //need change later
-}
+    if (!QFile(savefile).exists()) v3d_msg("File conversion failed.\n"); //need change later
 
-
-void open_fiji::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
-{
-    printf(menu_name.toStdString().c_str());
-    if (menu_name == tr("test"))
-    {
-        call_open_using_imagej();
-    }
-    else if (menu_name == tr("Import using ImageJ and save as .v3draw"))
-    {
-
-        // input image file
-        QString m_FileName = QFileDialog::getOpenFileName(parent, QObject::tr("Open An Image"),
-                                                          QDir::currentPath(),
-                                                          QObject::tr("Image File (*.*)"));
-
-
-        if(m_FileName.isEmpty())
-        {
-             printf("\nError: Your image does not exist!\n");
-             return;
-        }
-// target directory for v3draw file
-        QFileDialog d;
-         d.setWindowTitle(tr("Select Save Directory:"));
-         d.setFileMode(QFileDialog::Directory);
-        d.exec();
-
-              QString m_SaveDir=(d.selectedFiles())[0];
-// on some machines, selecting a save directory seems to double up a single directory.
-
-             // I wont to parse this string for di
-
-          printf("filename [%s]\n",m_FileName.toStdString().c_str());
-          printf("save target [%s]\n",m_SaveDir.toStdString().c_str());
-
-        // temp
-        QString baseName = QFileInfo(m_FileName).baseName();
-        QString tmpfile = m_SaveDir.append("/").append(baseName).append(".v3draw");
-
-
-        QFile tmpqfile(tmpfile);
-        QDir AppDir = QDir(qApp->applicationDirPath());
-
-        // I need to construct substrings for the various ImageJ executables...
-
-// Actually I need these for WIN32, WIN64, LINUX and MAC
-#if defined(Q_OS_MAC)
-// mac
-        AppDir.cdUp();
-        AppDir.cdUp();
-        AppDir.cdUp();
-         QString fijiPath = "/Fiji.app/Contents/MacOS/ImageJ-macosx";
-#elif defined(Q_OS_LINUX)
-// linux
-         QString fijiPath = "/Fiji.app/ImageJ-linux64";
-#elif defined(Q_OS_WIN32)
-       //32 bit windows
-         QString fijiPath = "/Fiji.app/ImageJ-win32.exe";
-#elif defined(Q_OS_WIN64)
-// 64 bit windows
-         QString fijiPath = "/Fiji.app/ImageJ-win64.exe";
-#else
-        v3d_msg(tr("Currently only available for Linux, Mac OSX 10.5+ and Windows"));
-        return;
-#endif
-
-        QString appdirstring = AppDir.absolutePath();  // on a mac, you need to go 3 dir up from the app path to get to v3d_external/bin
-
-
-
-   //     QString cmd_loci = QString("java -cp %1 loci.formats.tools.ImageConverter \"%2\" \"%3\"").arg(lociDir.toStdString().c_str()).arg(m_FileName.toStdString().c_str()).arg(tmpfile.toStdString().c_str());
-        QString cmd_Fiji = QString("%1%2  --headless -batch  %1/brl_FijiConvert.js %3:%4").arg(appdirstring.toStdString().c_str()).arg(fijiPath.toStdString().c_str()).arg(m_FileName.toStdString().c_str()).arg(tmpfile.toStdString().c_str());
-        system(qPrintable(cmd_Fiji));
-
-        if (!tmpqfile.exists()) v3d_msg("The format is not supported, or something is wrong in your file\n");
-
+    if (ismenu) { // display image if it's being called from the menu. otherwise don't!
         // load
         V3DLONG sz_relative[4];
         int datatype_relative = 0;
         unsigned char* relative1d = 0;
 
-        if (simple_loadimage_wrapper(callback, const_cast<char *>(tmpfile.toStdString().c_str()), relative1d, sz_relative, datatype_relative)!=true)
+        if (simple_loadimage_wrapper(callback, const_cast<char *>(savefile.toStdString().c_str()), relative1d, sz_relative, datatype_relative)!=true)
         {
-             fprintf (stderr, "Error happens in reading the subject file [%s]. Exit. \n",tmpfile.toStdString().c_str());
+             fprintf (stderr, "Error happens while reading the subject file [%s]. Exit. \n",savefile.toStdString().c_str());
              //return;
         }
 
@@ -232,78 +176,77 @@ void open_fiji::domenu(const QString &menu_name, V3DPluginCallback2 &callback, Q
 
         v3dhandle newwin = callback.newImageWindow();
         callback.setImage(newwin, &p4DImage);
-        callback.setImageName(newwin, tmpfile.toStdString().c_str());
+        callback.setImageName(newwin, savefile.toStdString().c_str());
         callback.updateImageWindow(newwin);
-
     }
-    else if (menu_name == tr("Convert Z sections in a .v3draw file to .avi"))
-	{
+}
+
+
+void open_fiji::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
+{
+    printf(menu_name.toStdString().c_str());
+    if (menu_name == tr("Import using ImageJ and save as .v3draw"))
+    {
+
 
         // input image file
-        QString m_FileName = QFileDialog::getOpenFileName(parent, QObject::tr("Select .v3draw file"),
+        QString m_FileName = QFileDialog::getOpenFileName(parent, QObject::tr("Choose file to import"),
                                                           QDir::currentPath(),
-                                                          QObject::tr("Image File (*.v3draw*)"));
-
+                                                          QObject::tr("Image File (*.*)"));
 
         if(m_FileName.isEmpty())
         {
              printf("\nError: Your image does not exist!\n");
              return;
         }
-// target directory for v3draw file
+        // target directory for v3draw file
         QFileDialog d;
          d.setWindowTitle(tr("Select Save Directory:"));
          d.setFileMode(QFileDialog::Directory);
-        d.exec();
+         d.exec();
 
-              QString m_SaveDir=(d.selectedFiles())[0];
-
-
+              QString m_SaveDir=(d.selectedFiles())[0]; // on some machines, selecting a save directory seems to double up a single directory.
+            //print some output to the commandline for informational purposes
           printf("filename [%s]\n",m_FileName.toStdString().c_str());
           printf("save target [%s]\n",m_SaveDir.toStdString().c_str());
 
-        // temp
+        // temp directory
         QString baseName = QFileInfo(m_FileName).baseName();
-        QString tmpfile = m_SaveDir.append("/").append(baseName).append(".avi");
+        QString savefile = m_SaveDir.append("/").append(baseName).append(".v3draw");
 
-
-        QFile tmpqfile(tmpfile);
-
-
-        QDir AppDir = QDir(qApp->applicationDirPath());
-        AppDir.cdUp();
-        AppDir.cdUp();
-        AppDir.cdUp();
-        QString appdirstring = AppDir.absolutePath();  // need to go 3 dir up from the app path to get to v3d_external/bin
-
-        QString cmd_Fiji = QString("%1/Fiji.app/Contents/MacOS/ImageJ-macosx  --headless -batch  %1/brl_FijiConvert.js %2:%3").arg(appdirstring.toStdString().c_str()).arg(m_FileName.toStdString().c_str()).arg(tmpfile.toStdString().c_str());
-        system(qPrintable(cmd_Fiji));	}
+        call_open_using_imagej(true, m_FileName, savefile, callback);
+    }
 	else
 	{
-		v3d_msg(tr("Uses Fiji to save v3draw file and open. "
+        v3d_msg(tr("Uses Fiji to save .v3draw file and open in vaa3d. "
 			"Developed by Brian Long, 2013-12-12"));
 	}
 }
 
 bool open_fiji::dofunc(const QString & func_name, const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback,  QWidget * parent)
 {
-	vector<char*> infiles, inparas, outfiles;
-	if(input.size() >= 1) infiles = *((vector<char*> *)input.at(0).p);
-	if(input.size() >= 2) inparas = *((vector<char*> *)input.at(1).p);
-	if(output.size() >= 1) outfiles = *((vector<char*> *)output.at(0).p);
-
     if (func_name == tr("openfiji"))
-	{
-        cout<<"to be implemented... "<<endl;
+    {
+    vector<char*> infiles, outfiles;
+    if(input.size()==0) {
+        cout<<"for usage type: vaa3d -x open_fiji -f help"<<endl;
+        return false;
     }
-    else if (func_name == tr("v3draw2avi"))
-	{
-        cout<<"to be implemented..."<<endl;
+    if(input.size() >= 1) infiles = *((vector<char*> *)input.at(0).p);
+    if(input.size() >= 2)
+    {
+    if(output.size() >= 1) outfiles = *((vector<char*> *)output.at(0).p);
+    }
+    char * inimg_file = ((vector<char*> *)(input.at(0).p))->at(0);
+    char * outimg_file = ((vector<char*> *)(output.at(0).p))->at(0);
+
+
+        call_open_using_imagej(false, QString(inimg_file    ),QString(outimg_file), callback);
+
     }
 	else if (func_name == tr("help"))
 	{
-        cout<<"Usage: "<<endl;
-        cout<<"Usage : v3d -x open_fiji -f v3draw2avi -i <inimg_file> -o <outimg_file> -p "<<endl;
+        cout<<"Usage : vaa3d -x open_fiji -f openfiji -i <input_file_name> -o <output_file_name>  "<<endl;
     }
 	else return false;
 
