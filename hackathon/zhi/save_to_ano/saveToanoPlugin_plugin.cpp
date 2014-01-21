@@ -181,7 +181,11 @@ void controlPanel::_slot_save()
 void controlPanel::_slot_link()
 {
     QString fileName = m_pLineEdit_filename->text();
-    QList <V3dR_MainWindow *> cur_list_3dviewer = m_v3d.getListAll3DViewers();
+    SurfaceLists_in_3dviewer listItem = fetch_3dviewer_datafilelist(parent, fileName);
+    listItem.imgfile;
+
+     aa = m_v3d.getView3DControl_Any3DViewer(cur_list_3dviewer.at(combo_surface->currentIndex()));
+
     QList<NeuronTree> *SWC_list;
     SWC_list = m_v3d.getHandleNeuronTrees_Any3DViewer(cur_list_3dviewer.at(combo_surface->currentIndex()));
     QList<CellAPO> *APO_list;
