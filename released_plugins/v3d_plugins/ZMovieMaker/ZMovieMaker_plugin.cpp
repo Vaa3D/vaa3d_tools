@@ -59,6 +59,7 @@ MYFLOAT dot_multi_normalized(MYFLOAT q1[], MYFLOAT q2[]);
     view->setZClip0((float)zClip0);\
     view->setZClip1((float)zClip1);\
     view->setFrontCut((float)frontCut);\
+    view->volumeTimePoint();\
     \
     if(curwin)\
 {\
@@ -94,6 +95,7 @@ MYFLOAT dot_multi_normalized(MYFLOAT q1[], MYFLOAT q2[]);
     zClip0_last = zClip0;\
     zClip1_last = zClip1;\
     frontCut_last = frontCut;\
+    timePoint_last = timePoint;\
     }
 
 #define GET_PARA \
@@ -122,6 +124,7 @@ MYFLOAT dot_multi_normalized(MYFLOAT q1[], MYFLOAT q2[]);
     zClip0 = currentParas.at(24).toInt();\
     zClip1 = currentParas.at(25).toInt();\
     frontCut = currentParas.at(26).toFloat();\
+    timePoint = currentParas.at(27).toInt();\
     }
 
 #define INTERPOLATION_PARA \
@@ -152,6 +155,7 @@ MYFLOAT dot_multi_normalized(MYFLOAT q1[], MYFLOAT q2[]);
     zCut0_current = (zCut0_last + i*(zCut0-zCut0_last)/N);\
     zCut1_current = (zCut1_last + i*(zCut1-zCut1_last)/N);\
     frontCut_current = (frontCut_last + i*(frontCut-frontCut_last)/N);\
+    timePoint_current = (timePoint_last + i*(timePoint-timePoint_last)/N);\
     \
     \
     \
@@ -160,6 +164,7 @@ MYFLOAT dot_multi_normalized(MYFLOAT q1[], MYFLOAT q2[]);
     view->setYShift((float)(yShift_current));\
     view->setZShift((float)(zShift_current));\
     view->setZoom((float)(zoom_current));\
+    view->setVolumeTimePoint(timePoint_current);\
     if(channel_current < 0.5)\
 {\
     view->setChannelR(channelR_last);\
@@ -478,7 +483,6 @@ controlPanel::~controlPanel()
 void controlPanel::_slot_record()
 {
     CHECK_WINDOWS;
-
     view->absoluteRotPose();
     MYFLOAT xRot = view->xRot();
     MYFLOAT yRot = view->yRot();
@@ -504,8 +508,9 @@ void controlPanel::_slot_record()
     int yClip1 = view->yClip1();
     int zClip0 = view->zClip0();
     int zClip1 = view->zClip1();
+    int timePoint = view->volumeTimePoint();
 
-    QString curstr = QString("%1,%2,%3,%4,%5,%6,%7,%8,%9,%10,%11,%12,%13,%14,%15,%16,%17,%18,%19,%20,%21,%22,%23,%24").arg(xRot).arg(yRot).arg(zRot).arg(xShift).arg(yShift).arg(zShift).arg(zoom).arg(xCut0).arg(xCut1).arg(yCut0).arg(yCut1).arg(zCut0).arg(zCut1).arg(channelR).arg(channelG).arg(channelB).arg(showSurf).arg(xClip0).arg(xClip1).arg(yClip0).arg(yClip1).arg(zClip0).arg(zClip1).arg(frontCut);
+    QString curstr = QString("%1,%2,%3,%4,%5,%6,%7,%8,%9,%10,%11,%12,%13,%14,%15,%16,%17,%18,%19,%20,%21,%22,%23,%24,%25").arg(xRot).arg(yRot).arg(zRot).arg(xShift).arg(yShift).arg(zShift).arg(zoom).arg(xCut0).arg(xCut1).arg(yCut0).arg(yCut1).arg(zCut0).arg(zCut1).arg(channelR).arg(channelG).arg(channelB).arg(showSurf).arg(xClip0).arg(xClip1).arg(yClip0).arg(yClip1).arg(zClip0).arg(zClip1).arg(frontCut).arg(timePoint);
     curstr = curstr.prepend(QString("").setNum(list_anchors->count()+1) + ": [ ");
     curstr = curstr.append(" ]");
     list_anchors->addItem(new QListWidgetItem(curstr));
@@ -534,7 +539,8 @@ void controlPanel::_slot_preview()
             yCut0, yCut1,
             zCut0, zCut1,
             frontCut;
-    int showSurf, showSurf_last;
+    int showSurf, showSurf_last,
+        timePoint,timePoint_last;
     bool channelR, channelG, channelB,
             channelR_last, channelG_last, channelB_last;
     MYFLOAT xRot_last, yRot_last,zRot_last,
@@ -569,6 +575,7 @@ void controlPanel::_slot_preview()
     MYFLOAT zCut0_current;
     MYFLOAT zCut1_current;
     MYFLOAT frontCut_current;
+    MYFLOAT timePoint_current;
     //
 
     MYFLOAT q1[4],q2[4],q_sample[4];
@@ -717,7 +724,7 @@ void controlPanel::_slot_show_item(QListWidgetItem *item)
     MYFLOAT xRot, yRot,zRot,xShift,yShift,zShift,zoom,xCut0,xCut1,yCut0,yCut1,zCut0,zCut1,frontCut;
     bool channelR,channelG,channelB;
     int showSurf;
-    int xClip0,xClip1,yClip0,yClip1,zClip0,zClip1;
+    int xClip0,xClip1,yClip0,yClip1,zClip0,zClip1,timePoint;
 
     GET_PARA;
 
@@ -762,7 +769,7 @@ bool _saveAnchorFile(QString filename, QStringList ParaLists, bool b_append)
     for(int row = 0; row < ParaLists.size(); row++)
     {
         QStringList currentParas = ParaLists.at(row).split(rx);
-        if (currentParas.size()<26)
+        if (currentParas.size()<27)
         {
             v3d_msg(QString("Format error in splitting paralist for row [%1] which is [%2]. Ignore this row!").arg(row).arg(ParaLists.at(row)));
             continue;
@@ -790,7 +797,8 @@ bool _saveAnchorFile(QString filename, QStringList ParaLists, bool b_append)
         myfile << currentParas.at(23).toFloat();myfile << "  ";
         myfile << currentParas.at(24).toFloat();myfile << "  ";
         myfile << currentParas.at(25).toFloat();myfile << "  ";
-        myfile << currentParas.at(26).toFloat();
+        myfile << currentParas.at(26).toFloat();myfile << "  ";
+        myfile << currentParas.at(27).toFloat();
         myfile << endl;
     }
     myfile.close();
@@ -844,7 +852,7 @@ void controlPanel::_slot_load()
         string points;
         MYFLOAT xRot, yRot,zRot,xShift,yShift,zShift,zoom,xCut0,xCut1,yCut0,yCut1,zCut0,zCut1,frontCut;
         bool channelR,channelG,channelB;
-        int showSurf;
+        int showSurf,timePoint;
         int xClip0,xClip1,yClip0,yClip1,zClip0,zClip1;
         while(ifs && getline(ifs, points))
         {
@@ -859,8 +867,9 @@ void controlPanel::_slot_load()
                    showSurf >>
                    xClip0 >> xClip1 >> yClip0 >>
                    xClip1 >> zClip0 >> zClip1 >>
-                   frontCut;
-            QString curstr = QString("%1,%2,%3,%4,%5,%6,%7,%8,%9,%10,%11,%12,%13,%14,%15,%16,%17,%18,%19,%20,%21,%22,%23,%24").arg(xRot).arg(yRot).arg(zRot).arg(xShift).arg(yShift).arg(zShift).arg(zoom).arg(xCut0).arg(xCut1).arg(yCut0).arg(yCut1).arg(zCut0).arg(zCut1).arg(channelR).arg(channelG).arg(channelB).arg(showSurf).arg(xClip0).arg(xClip1).arg(yClip0).arg(yClip1).arg(zClip0).arg(zClip1).arg(frontCut);
+                   frontCut >>
+                   timePoint;
+            QString curstr = QString("%1,%2,%3,%4,%5,%6,%7,%8,%9,%10,%11,%12,%13,%14,%15,%16,%17,%18,%19,%20,%21,%22,%23,%24,%25").arg(xRot).arg(yRot).arg(zRot).arg(xShift).arg(yShift).arg(zShift).arg(zoom).arg(xCut0).arg(xCut1).arg(yCut0).arg(yCut1).arg(zCut0).arg(zCut1).arg(channelR).arg(channelG).arg(channelB).arg(showSurf).arg(xClip0).arg(xClip1).arg(yClip0).arg(yClip1).arg(zClip0).arg(zClip1).arg(frontCut).arg(timePoint);
             curstr = curstr.prepend(QString("").setNum(list_anchors->count()+1) + ": [ ");
             curstr = curstr.append(" ]");
             list_anchors->addItem(new QListWidgetItem(curstr));
