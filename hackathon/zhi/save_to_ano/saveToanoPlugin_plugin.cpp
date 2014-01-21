@@ -9,6 +9,8 @@
 #include <iostream>
 #include <fstream>
 
+
+
 using namespace std;
 Q_EXPORT_PLUGIN2(saveToanoPlugin, saveToanoPlugin);
 
@@ -181,19 +183,12 @@ void controlPanel::_slot_save()
 void controlPanel::_slot_link()
 {
     QString fileName = m_pLineEdit_filename->text();
-    SurfaceLists_in_3dviewer listItem = fetch_3dviewer_datafilelist(parent, fileName);
-    listItem.imgfile;
+    SurfaceLists_in_3dviewer listItem = fetch_3dviewer_datafilelist(m_v3d, fileName);
 
-     aa = m_v3d.getView3DControl_Any3DViewer(cur_list_3dviewer.at(combo_surface->currentIndex()));
 
-    QList<NeuronTree> *SWC_list;
-    SWC_list = m_v3d.getHandleNeuronTrees_Any3DViewer(cur_list_3dviewer.at(combo_surface->currentIndex()));
-    QList<CellAPO> *APO_list;
-    APO_list = m_v3d.getHandleAPOCellList_Any3DViewer(cur_list_3dviewer.at(combo_surface->currentIndex()));
-    QList<LabelSurf> SURFACE_list;
-    SURFACE_list = m_v3d.getListLabelSurf_Any3DViewer(cur_list_3dviewer.at(combo_surface->currentIndex()));
+    QStringList SWC_list = listItem.swc_file_list;
 
-    if(SWC_list->count()<1 && APO_list->count()<1 && SURFACE_list.count()<1)
+    /*if(SWC_list->count()<1 && APO_list->count()<1 && SURFACE_list.count()<1)
     {
         v3d_msg("No SWC, APO, and Surface files from the selected 3D viewer window, please try it later!");
         return;
@@ -238,7 +233,7 @@ void controlPanel::_slot_link()
     }
 
 
-    anofile.close();
+    anofile.close();*/
     return;
 }
 

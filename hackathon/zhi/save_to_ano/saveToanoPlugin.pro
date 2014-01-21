@@ -6,7 +6,7 @@ V3DMAINPATH = ../../../v3d_main
 INCLUDEPATH += $$V3DMAINPATH/common_lib/include
 
 INCLUDEPATH	+= $$V3DMAINPATH/basic_c_fun
-INCLUDEPATH	+= $$V3DMAINPATH/3drenderer
+#INCLUDEPATH	+= $$V3DMAINPATH/3drenderer
 
 HEADERS	+= saveToanoPlugin_plugin.h
 SOURCES	+= saveToanoPlugin_plugin.cpp
