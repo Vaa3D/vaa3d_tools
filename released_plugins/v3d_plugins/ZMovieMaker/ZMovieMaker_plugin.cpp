@@ -59,7 +59,7 @@ MYFLOAT dot_multi_normalized(MYFLOAT q1[], MYFLOAT q2[]);
     view->setZClip0((float)zClip0);\
     view->setZClip1((float)zClip1);\
     view->setFrontCut((float)frontCut);\
-    view->volumeTimePoint();\
+    view->setVolumeTimePoint((int)timePoint);\
     \
     if(curwin)\
 {\
@@ -164,7 +164,7 @@ MYFLOAT dot_multi_normalized(MYFLOAT q1[], MYFLOAT q2[]);
     view->setYShift((float)(yShift_current));\
     view->setZShift((float)(zShift_current));\
     view->setZoom((float)(zoom_current));\
-    view->setVolumeTimePoint(timePoint_current);\
+    view->setVolumeTimePoint((int)timePoint_current);\
     if(channel_current < 0.5)\
 {\
     view->setChannelR(channelR_last);\
