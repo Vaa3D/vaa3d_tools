@@ -183,7 +183,7 @@ void controlPanel::_slot_save()
 void controlPanel::_slot_link()
 {
     QString fileName = m_pLineEdit_filename->text();
-    SurfaceLists_in_3dviewer listItem = fetch_3dviewer_datafilelist(m_v3d, fileName);
+    DataLists_in_3dviewer listItem = m_v3d.fetch_3dviewer_datafilelist(fileName);
 
 
     QStringList SWC_list = listItem.swc_file_list;
