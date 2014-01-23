@@ -86,6 +86,7 @@ int main(int argc, char* argv[])
   printf("Creating seeds for tracing ...\n");
 
   Stack *mask = Read_Stack(Get_String_Arg("image"));
+  Translate_Stack(mask, GREY, 1);
 
   //Stack_Not(mask, mask);
 
