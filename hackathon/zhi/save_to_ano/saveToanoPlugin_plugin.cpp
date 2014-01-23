@@ -187,29 +187,32 @@ void controlPanel::_slot_link()
 
 
     QStringList SWC_list = listItem.swc_file_list;
+    QString imgname = listItem.imgfile;
+    QString surfacename = listItem.surface_file;
+    QStringList APO_list = listItem.pointcloud_file_list;
 
-    /*if(SWC_list->count()<1 && APO_list->count()<1 && SURFACE_list.count()<1)
+   /* if(SWC_list.size()<1 && APO_list->count()<1 && SURFACE_list.count()<1)
     {
         v3d_msg("No SWC, APO, and Surface files from the selected 3D viewer window, please try it later!");
         return;
     }
-    
+    */
+    v3d_msg(imgname);
+    printf("size is %d\n",SWC_list.size());
     ofstream anofile;
     anofile.open (fileName.toStdString().c_str(),ios::out | ios::app );
 
 
-    if(SWC_list->count()>0)
+    if(SWC_list.size()>0)
     {
-        for(V3DLONG i = 0; i < SWC_list->count(); i++)
+        for(V3DLONG i = 0; i < SWC_list.size(); i++)
         {
-            QString temp_swc;
-            temp_swc = SWC_list->at(i).file;
-            anofile << "SWCFILE=" << temp_swc.toStdString().c_str() << endl;
+            anofile << "SWCFILE=" << SWC_list.at(i).toStdString().c_str() << endl;
         }
 
     }
 
-    if(APO_list->count()>0)
+    /*if(APO_list->count()>0)
     {
         for(V3DLONG i = 0; i < APO_list->count(); i++)
         {
@@ -230,10 +233,10 @@ void controlPanel::_slot_link()
             anofile << "SURFILE=" << temp_surface.toStdString().c_str() << endl;
         }
 
-    }
+    }*/
 
 
-    anofile.close();*/
+    anofile.close();
     return;
 }
 
