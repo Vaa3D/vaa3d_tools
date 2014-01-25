@@ -66,8 +66,8 @@ public:
     bool saveAnchorFile(QString filename);
 
 private slots:
-    void _slot_link();
-    void _slot_save();
+    void _slot_saveano();
+    void _slot_selectfile();
 };
 
 

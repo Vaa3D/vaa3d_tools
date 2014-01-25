@@ -132,10 +132,10 @@ void MyComboBox::updateList()
 controlPanel::controlPanel(V3DPluginCallback2 &_v3d, QWidget *parent) :
     QDialog(parent), m_v3d(_v3d)
 {
-    QPushButton* btn_link = new QPushButton("Link to an ano file");
+    QPushButton* btn_saveano = new QPushButton("Save a linker file of all displayed content in a 3D viewer");
     m_pLineEdit_filename = new QLineEdit();
     list_3dviewer = m_v3d.getListAll3DViewers();
-    QPushButton* btn_save = new QPushButton("Select");
+    QPushButton* btn_file = new QPushButton("... Select output file");
 
 
     combo_surface = new MyComboBox(&m_v3d);
@@ -148,14 +148,14 @@ controlPanel::controlPanel(V3DPluginCallback2 &_v3d, QWidget *parent) :
     gridLayout->addWidget(combo_surface, 2,0,1,5);
     gridLayout->addWidget(new QLabel(QObject::tr("Saved linker file path:")),3,0,1,2);
     gridLayout->addWidget(m_pLineEdit_filename,3,2,1,2);
-    gridLayout->addWidget(btn_save,3,4,1,1);
-    gridLayout->addWidget(btn_link, 4,0,1,1);
+    gridLayout->addWidget(btn_file,3,4,1,1);
+    gridLayout->addWidget(btn_saveano, 4,0,1,1);
 
     setLayout(gridLayout);
     setWindowTitle(QString("Save a linker file"));
 
-    connect(btn_link, SIGNAL(clicked()), this, SLOT(_slot_link()));
-    connect(btn_save, SIGNAL(clicked()), this, SLOT(_slot_save()));
+    connect(btn_saveano, SIGNAL(clicked()), this, SLOT(_slot_saveano()));
+    connect(btn_file, SIGNAL(clicked()), this, SLOT(_slot_selectfile()));
 
 }
 
@@ -165,7 +165,7 @@ controlPanel::~controlPanel()
 
 }
 
-void controlPanel::_slot_save()
+void controlPanel::_slot_selectfile()
 {
     QFileDialog d(this);
     QString fileName;
@@ -180,28 +180,21 @@ void controlPanel::_slot_save()
 
 }
 
-void controlPanel::_slot_link()
+void controlPanel::_slot_saveano()
 {
-    QString fileName = m_pLineEdit_filename->text();
-    DataLists_in_3dviewer listItem = m_v3d.fetch_3dviewer_datafilelist(fileName);
+    QString fileName = m_pLineEdit_filename->text(); //this is why it did not work. I intentionally leave this line here for future check!
 
+    DataLists_in_3dviewer listItem = m_v3d.fetch_3dviewer_datafilelist(combo_surface->currentText());
 
     QStringList SWC_list = listItem.swc_file_list;
     QString imgname = listItem.imgfile;
     QString surfacename = listItem.surface_file;
     QStringList APO_list = listItem.pointcloud_file_list;
 
-   /* if(SWC_list.size()<1 && APO_list->count()<1 && SURFACE_list.count()<1)
-    {
-        v3d_msg("No SWC, APO, and Surface files from the selected 3D viewer window, please try it later!");
-        return;
-    }
-    */
     v3d_msg(imgname);
     printf("size is %d\n",SWC_list.size());
     ofstream anofile;
     anofile.open (fileName.toStdString().c_str(),ios::out | ios::app );
-
 
     if(SWC_list.size()>0)
     {
@@ -211,30 +204,6 @@ void controlPanel::_slot_link()
         }
 
     }
-
-    /*if(APO_list->count()>0)
-    {
-        for(V3DLONG i = 0; i < APO_list->count(); i++)
-        {
-            QString temp_apo;
-            temp_apo = APO_list->at(i).name;
-            anofile << "APOFILE=" << temp_apo.toStdString().c_str() << endl;
-        }
-
-    }
-
-
-    if(SURFACE_list.count()>0)
-    {
-        for(V3DLONG i = 0; i < SURFACE_list.count(); i++)
-        {
-            QString temp_surface;
-            temp_surface = SURFACE_list.at(i).name;
-            anofile << "SURFILE=" << temp_surface.toStdString().c_str() << endl;
-        }
-
-    }*/
-
 
     anofile.close();
     return;
