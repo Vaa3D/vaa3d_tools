@@ -165,35 +165,41 @@ void controlPanel::_slot_saveano()
             "linker_file.ano",
             "Linker File (*.ano)");
 
-    if(!fileName.isEmpty())
-    {
-        return;
-    }
-
-    DataLists_in_3dviewer listItem = m_v3d.fetch_3dviewer_datafilelist(combo_surface->currentText());
-
-
+    QString curwinname = combo_surface->currentText().remove("3D View [").remove("]");
+    DataLists_in_3dviewer listItem = m_v3d.fetch_3dviewer_datafilelist(curwinname);
 
     QStringList SWC_list = listItem.swc_file_list;
     QString imgname = listItem.imgfile;
     QString surfacename = listItem.surface_file;
     QStringList APO_list = listItem.pointcloud_file_list;
 
-    v3d_msg(imgname);
-    printf("size is %d\n",SWC_list.size());
     ofstream anofile;
     anofile.open (fileName.toStdString().c_str(),ios::out | ios::app );
 
-    if(SWC_list.size()>0)
+    if(SWC_list.count()>0)
     {
-        for(V3DLONG i = 0; i < SWC_list.size(); i++)
+        for(V3DLONG i = 0; i < SWC_list.count(); i++)
         {
             anofile << "SWCFILE=" << SWC_list.at(i).toStdString().c_str() << endl;
         }
 
     }
 
+    if(APO_list.count()>0)
+    {
+        for(V3DLONG i = 0; i < APO_list.count(); i++)
+        {
+            anofile << "APOFILE=" << APO_list.at(i).toStdString().c_str() << endl;
+        }
+
+    }
+
+    if(imgname.size()>0) anofile << "RAWIMG=" << imgname.toStdString().c_str() << endl;
+    if(surfacename.size()>0) anofile << "SURFILE=" << surfacename.toStdString().c_str() << endl;
+
     anofile.close();
+
+    v3d_msg(QString("The APO file is save in:[%1]").arg(fileName.toStdString().c_str()));
     return;
 }
 
