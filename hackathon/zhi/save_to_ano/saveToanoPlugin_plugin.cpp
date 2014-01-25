@@ -135,8 +135,6 @@ controlPanel::controlPanel(V3DPluginCallback2 &_v3d, QWidget *parent) :
     QPushButton* btn_saveano = new QPushButton("Save a linker file of all displayed content in a 3D viewer");
     m_pLineEdit_filename = new QLineEdit();
     list_3dviewer = m_v3d.getListAll3DViewers();
-    QPushButton* btn_file = new QPushButton("... Select output file");
-
 
     combo_surface = new MyComboBox(&m_v3d);
     combo_surface->updateList();
@@ -146,17 +144,12 @@ controlPanel::controlPanel(V3DPluginCallback2 &_v3d, QWidget *parent) :
     gridLayout = new QGridLayout();
     gridLayout->addWidget(label_surface, 1,0,1,5);
     gridLayout->addWidget(combo_surface, 2,0,1,5);
-    gridLayout->addWidget(new QLabel(QObject::tr("Saved linker file path:")),3,0,1,2);
-    gridLayout->addWidget(m_pLineEdit_filename,3,2,1,2);
-    gridLayout->addWidget(btn_file,3,4,1,1);
-    gridLayout->addWidget(btn_saveano, 4,0,1,1);
+    gridLayout->addWidget(btn_saveano, 3,0,1,1);
 
     setLayout(gridLayout);
     setWindowTitle(QString("Save a linker file"));
 
     connect(btn_saveano, SIGNAL(clicked()), this, SLOT(_slot_saveano()));
-    connect(btn_file, SIGNAL(clicked()), this, SLOT(_slot_selectfile()));
-
 }
 
 controlPanel::~controlPanel()
@@ -165,9 +158,8 @@ controlPanel::~controlPanel()
 
 }
 
-void controlPanel::_slot_selectfile()
+void controlPanel::_slot_saveano()
 {
-    QFileDialog d(this);
     QString fileName;
     fileName = QFileDialog::getSaveFileName(this, "Save Linker File",
             "linker_file.ano",
@@ -175,16 +167,12 @@ void controlPanel::_slot_selectfile()
 
     if(!fileName.isEmpty())
     {
-        m_pLineEdit_filename->setText(fileName);
+        return;
     }
 
-}
-
-void controlPanel::_slot_saveano()
-{
-    QString fileName = m_pLineEdit_filename->text(); //this is why it did not work. I intentionally leave this line here for future check!
-
     DataLists_in_3dviewer listItem = m_v3d.fetch_3dviewer_datafilelist(combo_surface->currentText());
+
+
 
     QStringList SWC_list = listItem.swc_file_list;
     QString imgname = listItem.imgfile;

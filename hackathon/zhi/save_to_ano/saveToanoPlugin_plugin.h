@@ -67,7 +67,6 @@ public:
 
 private slots:
     void _slot_saveano();
-    void _slot_selectfile();
 };
 
 
