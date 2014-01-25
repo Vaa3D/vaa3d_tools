@@ -170,6 +170,7 @@ void controlPanel::_slot_saveano()
 
     QStringList SWC_list = listItem.swc_file_list;
     QString imgname = listItem.imgfile;
+    QString labelfieldname = listItem.labelfield_file;
     QString surfacename = listItem.surface_file;
     QStringList APO_list = listItem.pointcloud_file_list;
 
@@ -196,6 +197,7 @@ void controlPanel::_slot_saveano()
 
     if(imgname.size()>0) anofile << "RAWIMG=" << imgname.toStdString().c_str() << endl;
     if(surfacename.size()>0) anofile << "SURFILE=" << surfacename.toStdString().c_str() << endl;
+    if(labelfieldname.size()>0) anofile << "SURFILE=" << labelfieldname.toStdString().c_str() << endl;
 
     anofile.close();
 
