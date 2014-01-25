@@ -12,7 +12,7 @@
 
 
 using namespace std;
-Q_EXPORT_PLUGIN2(saveToanoPlugin, saveToanoPlugin);
+Q_EXPORT_PLUGIN2(save3dviewer2linker, saveToanoPlugin);
 
 void generatorAno43Dviewer(V3DPluginCallback2 &callback, QWidget *parent);
 controlPanel* controlPanel::panel = 0;

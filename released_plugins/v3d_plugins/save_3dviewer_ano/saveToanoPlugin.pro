@@ -12,5 +12,5 @@ HEADERS	+= saveToanoPlugin_plugin.h
 SOURCES	+= saveToanoPlugin_plugin.cpp
 SOURCES	+= $$V3DMAINPATH/basic_c_fun/v3d_message.cpp
 
-TARGET	= $$qtLibraryTarget(saveToanoPlugin)
-DESTDIR	= ../../../bin/plugins/linker_file/Save_Linker_File/
+TARGET	= $$qtLibraryTarget(save3dviewer2linker)
+DESTDIR	= ../../v3d/plugins/linker_file/Save_3Dviewer_Content_to_Linker_File/
