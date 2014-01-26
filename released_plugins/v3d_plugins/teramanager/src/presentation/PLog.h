@@ -43,7 +43,7 @@ class teramanager::PLog : public QDialog
                 uniqueInstance = new PLog(parent);
             return uniqueInstance;
         }
-        static PLog* getInstance(){return instance(PMain::getInstance());}
+        static PLog* getInstance(){/**/itm::debug(itm::LEV1, 0, __itm__current__function__); return instance(PMain::getInstance());}
         static void uninstance()
         {
             if(uniqueInstance)

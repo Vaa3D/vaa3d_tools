@@ -96,7 +96,8 @@ INCLUDEPATH += $$V3DMAINPATH/basic_c_fun
 INCLUDEPATH += $$V3DMAINPATH/3drenderer
 INCLUDEPATH += $$V3DMAINPATH/common_lib/include
 INCLUDEPATH += $$V3DMAINPATH/basic_c_fun/customary_structs
-SOURCES += $$V3DMAINPATH/basic_c_fun/v3d_message.cpp
+SOURCES += $$V3DMAINPATH/basic_c_fun/v3d_message.cpp \
+    src/presentation/QGLRefSys.cpp
 SOURCES += $$V3DMAINPATH/basic_c_fun/stackutil.cpp
 SOURCES += $$V3DMAINPATH/basic_c_fun/mg_utilities.cpp
 SOURCES += $$V3DMAINPATH/basic_c_fun/basic_memory.cpp
@@ -149,7 +150,8 @@ use_experimental_features{
 #set up plugin
 DEFINES += _VAA3D_PLUGIN_MODE
 RESOURCES += icons.qrc
-HEADERS += ./src/control/V3Dsubclasses.h
+HEADERS += ./src/control/V3Dsubclasses.h \
+    src/presentation/QGLRefSys.h
 HEADERS += ./src/control/CAnnotations.h
 HEADERS += ./src/control/CConverter.h
 HEADERS += ./src/control/CExplorerWindow.h

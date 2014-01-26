@@ -4,9 +4,11 @@
 #define V3DSUBCLASSES_H
 
 #include "CPlugin.h"
+#include "renderer_gl1.h"
 #include "renderer_gl2.h"
 #include "v3dr_glwidget.h"
 #include "v3dr_mainwindow.h"
+#include "v3d_imaging_para.h"
 
 /**********************************************************************************
 * Vaa3D subclasses needed to access/override protected members/methods
@@ -81,6 +83,22 @@ class teramanager::myImage4DSimple : Image4DSimple
         //casting
         //--- note ---: dynamic_cast would be better, but needs too many Vaa3D sources to be included
         static myImage4DSimple* cast(Image4DSimple* instance){return static_cast<myImage4DSimple*>(instance);}
+};
+
+
+struct teramanager::point
+{
+    float x,y,z;
+    point(void) : x(0.0f), y(0.0f), z(0.0f){}
+    point(XYZ &p) : x(p.x), y(p.y), z(p.z){}
+
+    bool operator == (const point &p) const{
+        return p.x == x && p.y == y && p.z == z;
+    }
+
+    bool operator <  (const point &p) const{
+        return p.x < x && p.y < y && p.z < z;
+    }
 };
 
 #endif // V3DSUBCLASSES_H

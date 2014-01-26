@@ -91,12 +91,12 @@ class teramanager::CExplorerWindow : public QWidget
         * resolution volume image space. If resIndex is not set, the returned global coord-
         * inate will be in the highest resolution image space.
         ***********************************************************************************/
-        int getGlobalVCoord(int localVCoord, int resIndex = -1, bool fromVaa3Dcoordinates = false, bool cutOutOfRange = false);
-        int getGlobalHCoord(int localHCoord, int resIndex = -1, bool fromVaa3Dcoordinates = false, bool cutOutOfRange = false);
-        int getGlobalDCoord(int localDCoord, int resIndex = -1, bool fromVaa3Dcoordinates = false, bool cutOutOfRange = false);
-        float getGlobalVCoord(float localVCoord, int resIndex = -1, bool fromVaa3Dcoordinates = false, bool cutOutOfRange = false);
-        float getGlobalHCoord(float localHCoord, int resIndex = -1, bool fromVaa3Dcoordinates = false, bool cutOutOfRange = false);
-        float getGlobalDCoord(float localDCoord, int resIndex = -1, bool fromVaa3Dcoordinates = false, bool cutOutOfRange = false);
+        int getGlobalVCoord(int localVCoord, int resIndex = -1, bool fromVaa3Dcoordinates = false, bool cutOutOfRange = false, const char* src = 0);
+        int getGlobalHCoord(int localHCoord, int resIndex = -1, bool fromVaa3Dcoordinates = false, bool cutOutOfRange = false, const char* src = 0);
+        int getGlobalDCoord(int localDCoord, int resIndex = -1, bool fromVaa3Dcoordinates = false, bool cutOutOfRange = false, const char* src = 0);
+        float getGlobalVCoord(float localVCoord, int resIndex = -1, bool fromVaa3Dcoordinates = false, bool cutOutOfRange = false, const char* src = 0);
+        float getGlobalHCoord(float localHCoord, int resIndex = -1, bool fromVaa3Dcoordinates = false, bool cutOutOfRange = false, const char* src = 0);
+        float getGlobalDCoord(float localDCoord, int resIndex = -1, bool fromVaa3Dcoordinates = false, bool cutOutOfRange = false, const char* src = 0);
 
         /**********************************************************************************
         * Returns the local coordinate (which starts from 0) in the current resolution vol-
@@ -155,7 +155,7 @@ class teramanager::CExplorerWindow : public QWidget
         void show();
 
         //GET methods
-        static CExplorerWindow* getCurrent(){return current;}
+        static CExplorerWindow* getCurrent(){/**/itm::debug(itm::LEV_MAX, 0, __itm__current__function__); return current;}
         int getResIndex(){return volResIndex;}
         V3dR_MainWindow* getWindow3D(){return window3D;}
         V3dR_GLWidget* getGLWidget(){return view3DWidget;}
@@ -317,7 +317,7 @@ class teramanager::CExplorerWindow : public QWidget
 
         /**********************************************************************************
         * Linked to volume cut scrollbars of Vaa3D widget containing the 3D renderer.
-        * This implements the syncronization Vaa3D-->TeraManager of subvolume selection.
+        * This implements the syncronization Vaa3D-->TeraFly of subvolume selection.
         ***********************************************************************************/
         void Vaa3D_changeXCut0(int s);
         void Vaa3D_changeXCut1(int s);
@@ -328,7 +328,7 @@ class teramanager::CExplorerWindow : public QWidget
 
         /**********************************************************************************
         * Linked to PMain GUI VOI's widgets.
-        * This implements the syncronization TeraManager-->Vaa3D of subvolume selection.
+        * This implements the syncronization TeraFly-->Vaa3D of subvolume selection.
         ***********************************************************************************/
         void PMain_changeV0sbox(int s);
         void PMain_changeV1sbox(int s);
@@ -336,6 +336,12 @@ class teramanager::CExplorerWindow : public QWidget
         void PMain_changeH1sbox(int s);
         void PMain_changeD0sbox(int s);
         void PMain_changeD1sbox(int s);
+
+        /**********************************************************************************
+        * Linked to PMain GUI QGLRefSys widget.
+        * This implements the syncronization Vaa3D-->TeraFly of rotations.
+        ***********************************************************************************/
+        void Vaa3D_rotationchanged(int s);
 
         #ifdef USE_EXPERIMENTAL_FEATURES
         /**********************************************************************************

@@ -62,12 +62,14 @@ namespace teramanager
     class QHelpBox;             //Qt-customized class to model help box
     class QGradientBar;         //Qt-customized class to model a gradient-colored bar
     class QLineTree;            //Qt-customized class to model a three-lined tree
+    class QGLRefSys;            //Qt-customized OpenGL widget to render the XYZ reference system applied to a 3D cube
     struct annotation;          //base class for annotations
 
     class myRenderer_gl1;       //Vaa3D-customized class
     class myV3dR_GLWidget;      //Vaa3D-customized class
     class myV3dR_MainWindow;    //Vaa3D-customized class
-    class myImage4DSimple;      //Vaa3D-customized class
+    class myImage4DSimple;      //Vaa3D-customized class    
+    struct point;
 
     enum  debug_level { NO_DEBUG, LEV1, LEV2, LEV3, LEV_MAX };  //debug levels
     /*-------------------------------------------------------------------------------------------------------------------------*/
@@ -95,6 +97,8 @@ namespace teramanager
     ---------------------------------------------------------------------------------------------------------------------------*/
     extern std::string version;                 //version number of current module
     extern int DEBUG;							//debug level of current module
+    extern bool DEBUG_TO_FILE;                  //whether debug messages should be printed on the screen or to a file (default: screen)
+    extern std::string DEBUG_FILE_PATH;         //filepath where to save debug information
     /*-------------------------------------------------------------------------------------------------------------------------*/
 
 
@@ -164,22 +168,50 @@ namespace teramanager
     ************************************************
     ---------------------------------------------------------------------------------------------------------------------------*/
     inline void warning(const char* message, const char* source = 0){
-        if(source)
-            printf("\n**** WARNING (source: \"%s\") ****\n"
-            "    |=> \"%s\"\n\n", source, message);
+        if(DEBUG_TO_FILE)
+        {
+            FILE* f = fopen(DEBUG_FILE_PATH.c_str(), "a");
+            if(source)
+                fprintf(f, "\n**** WARNING (source: \"%s\") ****\n"
+                "    |=> \"%s\"\n\n", source, message);
+            else
+                fprintf(f, "\n**** WARNING ****: %s\n", message);
+            fclose(f);
+        }
         else
-            printf("\n**** WARNING ****: %s\n", message);
+        {
+            if(source)
+                printf("\n**** WARNING (source: \"%s\") ****\n"
+                "    |=> \"%s\"\n\n", source, message);
+            else
+                printf("\n**** WARNING ****: %s\n", message);
+        }
     }
 
     inline void debug(debug_level dbg_level, const char* message=0, const char* source=0){
         if(DEBUG >= dbg_level){
-            if(message && source)
-                printf("\n--------------------- teramanager plugin: DEBUG (level %d) ----: in \"%s\") ----\n"
-                         "                      message: %s\n\n", dbg_level, source, message);
-            else if(message)
-                printf("\n--------------------- teramanager plugin: DEBUG (level %d) ----: %s\n", dbg_level, message);
-            else if(source)
-                printf("\n--------------------- teramanager plugin: DEBUG (level %d) ----: in \"%s\"\n", dbg_level, source);
+            if(DEBUG_TO_FILE)
+            {
+                FILE* f = fopen(DEBUG_FILE_PATH.c_str(), "a");
+                if(message && source)
+                    fprintf(f, "\n--------------------- teramanager plugin: DEBUG (level %d) ----: in \"%s\") ----\n"
+                             "                      message: %s\n\n", dbg_level, source, message);
+                else if(message)
+                    fprintf(f, "\n--------------------- teramanager plugin: DEBUG (level %d) ----: %s\n", dbg_level, message);
+                else if(source)
+                    fprintf(f, "\n--------------------- teramanager plugin: DEBUG (level %d) ----: in \"%s\"\n", dbg_level, source);
+                fclose(f);
+            }
+            else
+            {
+                if(message && source)
+                    printf("\n--------------------- teramanager plugin: DEBUG (level %d) ----: in \"%s\") ----\n"
+                             "                      message: %s\n\n", dbg_level, source, message);
+                else if(message)
+                    printf("\n--------------------- teramanager plugin: DEBUG (level %d) ----: %s\n", dbg_level, message);
+                else if(source)
+                    printf("\n--------------------- teramanager plugin: DEBUG (level %d) ----: in \"%s\"\n", dbg_level, source);
+            }
         }
     }
     /*-------------------------------------------------------------------------------------------------------------------------*/

@@ -11,6 +11,30 @@ ties names are:
 - Rem: a feature no longer available
 
 ============================================================================================
+Version 0.9.3
+January 26th, 2014
+--------------------------------------------------------------------------------------------
+- New: added interactive cube-based  3D reference  system in the TeraFly GUI.  Rotations are
+       syncronized Vaa3D --> TeraFly. *** EXPERIMENTAL ***
+	  Todo:
+       - add syncronization TeraFly --> Vaa3D
+	  - fix syncronization Vaa3D --> TeraFly (unique XYZ rotation needed)
+- Opt: improved font size on non-Windows operative systems.
+- Fix: fixed bug which might cause TeraFly to crash when rapidly clicking on the directional
+       shift controls.
+- New: added zoom-in method "Foreground (20 markers + mean-shift)".  This is now the default
+       zoom-in method and  works as follows.  We  define  a set of N (=20) 2D  points on the
+       screen  randomly  chosen within  distance d (=10% of the viewport diagonal)  from the
+       center of  the viewport. For each 2D point, PPA is applied to estimate the correspon-
+       ding 3D point. Then, mean-shift-based mode-seeking is applied to find the ROI center.
+       
+       NOTE: this method has been tested and compared  with the previously  used approaches.
+             It releveals to be much more reliable specially on noisy, low-contrasted images
+             and on images with little information content  (just a few objects on the back-
+             ground).
+- Dev: removed unused slot zoomInSensChanged().
+--------------------------------------------------------------------------------------------
+
 Version 0.9.29
 October 31st, 2013
 --------------------------------------------------------------------------------------------

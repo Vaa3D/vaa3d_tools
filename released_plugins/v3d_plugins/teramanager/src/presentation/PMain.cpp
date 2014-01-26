@@ -261,6 +261,8 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     connect(aboutAction, SIGNAL(triggered()), this, SLOT(about()));
     helpMenu->addAction(aboutAction);
 
+    refSys = new QGLRefSys(this);
+
     //toolbar
     toolBar = new QToolBar("ToolBar", this);
     toolBar->setOrientation(Qt::Vertical);
@@ -365,13 +367,13 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     controlsResetButton->setIcon(QIcon(":/icons/reset.png"));
     controlsLineTree = new QLineTree(this, Qt::gray, 0.5, 3, 11);
     zoomInMethod = new QComboBox(this);
-    zoomInMethod->addItem("WYSIWYG (10 markers)");
+    zoomInMethod->addItem("WYSIWYG (5 markers)");
+    zoomInMethod->addItem("Foreground (20 markers + mean-shift)");
     zoomInMethod->addItem("Foreground (1 marker)");
-    zoomInMethod->addItem("Foreground (spread markers)");
-    setEnabledComboBoxItem(zoomInMethod, 2, false);
     zoomInMethod->installEventFilter(this);
 
     #ifndef USE_EXPERIMENTAL_FEATURES
+    zoomInMethod->setCurrentIndex(0);
     zoomInMethod->setEnabled(false);    
     zoomInSens->setEnabled(false);
     #else
@@ -639,8 +641,15 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     subvol_panel_layout->addWidget(to_label_3,          2, 5, 1, 1);
     subvol_panel_layout->addWidget(D1_sbox,             2, 6, 1, 3);
 
-    subvol_panel_layout->addWidget(loadButton,          3, 0, 1, 13);
-    subvol_panel->setLayout(subvol_panel_layout);
+    //subvol_panel_layout->addWidget(loadButton,          3, 0, 1, 13);
+
+    refSys->setFixedWidth(100);
+    QHBoxLayout* subvol_panel_outerL = new QHBoxLayout();
+    subvol_panel_outerL->addLayout(subvol_panel_layout, 1);
+    subvol_panel_outerL->addSpacing(10);
+    subvol_panel_outerL->addWidget(refSys);
+
+    subvol_panel->setLayout(subvol_panel_outerL);
     #ifndef _USE_NATIVE_FONTS
     subvol_panel->setStyle(new QWindowsStyle());
     #endif
@@ -752,7 +761,6 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     connect(traslZpos, SIGNAL(clicked()), this, SLOT(traslZposClicked()));
     connect(traslZneg, SIGNAL(clicked()), this, SLOT(traslZnegClicked()));
     connect(controlsResetButton, SIGNAL(clicked()), this, SLOT(resetMultiresControls()));
-    connect(zoomInSens, SIGNAL(valueChanged(int)), this, SLOT(zoomInSensChanged(int)));
 
     //reset widgets
     reset();
@@ -849,6 +857,9 @@ void PMain::reset()
     H1_sbox->setValue(0);
     D0_sbox->setValue(0);
     D1_sbox->setValue(0);
+    refSys->setXRotation(200);
+    refSys->setYRotation(50);
+    refSys->setZRotation(0);
 
     //resetting progress bar and text
     progressBar->setEnabled(false);
@@ -1556,6 +1567,19 @@ void PMain::highestVOISizeChanged(int i)
 }
 
 /**********************************************************************************
+* Enables / Disables directional shift controls
+***********************************************************************************/
+void PMain::setEnabledDirectionalShifts(bool enabled)
+{
+    traslXneg->setEnabled(enabled);
+    traslXpos->setEnabled(enabled);
+    traslYneg->setEnabled(enabled);
+    traslYpos->setEnabled(enabled);
+    traslZneg->setEnabled(enabled);
+    traslZpos->setEnabled(enabled);
+}
+
+/**********************************************************************************
 * Called when the correspondent buttons are clicked
 ***********************************************************************************/
 void PMain::traslXposClicked()
@@ -1563,60 +1587,72 @@ void PMain::traslXposClicked()
     /**/itm::debug(itm::LEV2, 0, __itm__current__function__);
 
     CExplorerWindow* expl = CExplorerWindow::getCurrent();
-    if(expl)
+    if(expl && expl->isActive && !expl->toBeClosed)
+    {
         expl->newView((expl->volH1-expl->volH0)/2 + (expl->volH1-expl->volH0)*CSettings::instance()->getTraslX()/100.0f,
                       (expl->volV1-expl->volV0)/2,
                       (expl->volD1-expl->volD0)/2, expl->volResIndex, false);
+    }
 }
 void PMain::traslXnegClicked()
 {
     /**/itm::debug(itm::LEV2, 0, __itm__current__function__);
 
     CExplorerWindow* expl = CExplorerWindow::getCurrent();
-    if(expl)
+    if(expl && expl->isActive && !expl->toBeClosed)
+    {
         expl->newView((expl->volH1-expl->volH0)/2 - (expl->volH1-expl->volH0)*CSettings::instance()->getTraslX()/100.0f,
                       (expl->volV1-expl->volV0)/2,
                       (expl->volD1-expl->volD0)/2, expl->volResIndex, false);
+    }
 }
 void PMain::traslYposClicked()
 {
     /**/itm::debug(itm::LEV2, 0, __itm__current__function__);
 
     CExplorerWindow* expl = CExplorerWindow::getCurrent();
-    if(expl)
+    if(expl && expl->isActive && !expl->toBeClosed)
+    {
         expl->newView((expl->volH1-expl->volH0)/2,
                       (expl->volV1-expl->volV0)/2 + (expl->volV1-expl->volV0)*CSettings::instance()->getTraslY()/100.0f,
                       (expl->volD1-expl->volD0)/2, expl->volResIndex, false);
+    }
 }
 void PMain::traslYnegClicked()
 {
     /**/itm::debug(itm::LEV2, 0, __itm__current__function__);
 
     CExplorerWindow* expl = CExplorerWindow::getCurrent();
-    if(expl)
+    if(expl && expl->isActive && !expl->toBeClosed)
+    {
         expl->newView((expl->volH1-expl->volH0)/2,
                       (expl->volV1-expl->volV0)/2 - (expl->volV1-expl->volV0)*CSettings::instance()->getTraslY()/100.0f,
                       (expl->volD1-expl->volD0)/2, expl->volResIndex, false);
+    }
 }
 void PMain::traslZposClicked()
 {
     /**/itm::debug(itm::LEV2, 0, __itm__current__function__);
 
     CExplorerWindow* expl = CExplorerWindow::getCurrent();
-    if(expl)
+    if(expl && expl->isActive && !expl->toBeClosed)
+    {
         expl->newView((expl->volH1-expl->volH0)/2,
                       (expl->volV1-expl->volV0)/2,
                       (expl->volD1-expl->volD0)/2 + (expl->volD1-expl->volD0)*CSettings::instance()->getTraslZ()/100.0f, expl->volResIndex, false);
+    }
 }
 void PMain::traslZnegClicked()
 {
     /**/itm::debug(itm::LEV2, 0, __itm__current__function__);
 
     CExplorerWindow* expl = CExplorerWindow::getCurrent();
-    if(expl)
+    if(expl && expl->isActive && !expl->toBeClosed)
+    {
         expl->newView((expl->volH1-expl->volH0)/2,
                       (expl->volV1-expl->volV0)/2,
                       (expl->volD1-expl->volD0)/2 - (expl->volD1-expl->volD0)*CSettings::instance()->getTraslZ()/100.0f, expl->volResIndex, false);
+    }
 }
 
 /**********************************************************************************
@@ -1753,16 +1789,6 @@ void PMain::setEnabledComboBoxItem(QComboBox* cbox, int _index, bool enabled)
 
     //the magic
     cbox->model()->setData( index, enabled ? v2 : v1, Qt::UserRole -1);
-}
-
-/**********************************************************************************
-* Called when the correspondent slider is changed
-***********************************************************************************/
-void PMain::zoomInSensChanged(int i)
-{
-    /**/itm::debug(itm::LEV2, "TODO!", __itm__current__function__);
-
-//    zoomInThreshold = i;
 }
 
 /**********************************************************************************

@@ -3,8 +3,6 @@
 #include "V3Dsubclasses.h"
 #include "../presentation/PMain.h"
 #include "CExplorerWindow.h"
-#include "v3d_imaging_para.h"
-#include "renderer_gl1.h"
 
 using namespace teramanager;
 using namespace std;
@@ -129,6 +127,102 @@ void myV3dR_GLWidget::zoomIn(const char* method)
         if(CExplorerWindow::getCurrent())
             CExplorerWindow::getCurrent()->invokedFromVaa3D(roi);
 
+    }
+    else if(strcmp(method, "Foreground (20 markers + mean-shift)") == 0)
+    {
+        // parameters
+        float dperc = 0.1f;             // distance to center of the viewport, expressed in terms of fraction of the viewport diagonal
+        int n = 20;                     // number of points
+        int msradius = 100;             // mean-shift kernel radius (in pixels)
+        float shift_tolerance = 0.1f;   // mean-shift shift detection threshold (in pixels)
+
+        QElapsedTimer timer;
+        timer.start();
+
+        //finding the n points in the cylinder of radius r centered on the viewport
+        std::vector<XYZ> points;
+        int dmax   = static_cast<int>(sqrt(static_cast<float>(viewW*viewW + viewH*viewH))*dperc +0.5f);
+        int centerX = viewW/2;
+        int centerY = viewH/2;
+        for(int i=0; i<n; i++)
+        {
+            double alpha = ( (2*pi) / n) * i;
+            double r = rand()%dmax;
+            int px = static_cast<int>(centerX + r*cos(alpha) +0.5f);
+            int py = static_cast<int>(centerY + r*sin(alpha) +0.5f);
+            points.push_back(myRenderer_gl1::cast(static_cast<Renderer_gl1*>(this->getRenderer()))->get3DPoint(px, py));
+        }
+
+        //mean-shift clustering with kernel K(s)= { 1 if ||s|| <= msradius, 0 otherwise }
+        std::vector<XYZ> points_shifted = points;
+        bool shifted = true;
+        while(shifted)
+        {
+            shifted = false;
+            for(int i=0; i<n; i++)
+            {
+                float xi = points[i].x;
+                float yi = points[i].y;
+                float zi = points[i].z;
+                points_shifted[i].x = points_shifted[i].y = points_shifted[i].z = 0;
+                int N = 0;
+
+                for(int j=0; j<n; j++)
+                {
+                    float xj = points[j].x;
+                    float yj = points[j].y;
+                    float zj = points[j].z;
+
+                    if( sqrt( (xj-xi)*(xj-xi) + (yj-yi)*(yj-yi) + (zj-zi)*(zj-zi) ) <= msradius)
+                    {
+                        points_shifted[i].x += xj;
+                        points_shifted[i].y += yj;
+                        points_shifted[i].z += zj;
+                        N++;
+                    }
+                }
+
+                // N should never be 0, because at least one point is within the ball centered on the ith point (i.e., the point itself)
+                points_shifted[i].x /= N;
+                points_shifted[i].y /= N;
+                points_shifted[i].z /= N;
+
+                // detect shift
+                if(fabs(points_shifted[i].x - points[i].x) > shift_tolerance ||
+                   fabs(points_shifted[i].y - points[i].y) > shift_tolerance ||
+                   fabs(points_shifted[i].z - points[i].z) > shift_tolerance)
+                    shifted = true;
+            }
+
+            points = points_shifted;
+        }
+        std:map<point, int> votes;
+        for(int i=0; i<n; i++)
+            votes[point(points[i])]++;
+
+        point thepoint;
+        int mostvoted = 0;
+        for(std::map<point, int>::iterator it = votes.begin(); it != votes.end(); it++)
+        {
+            if(it->second > mostvoted)
+            {
+                thepoint  = it->first;
+                mostvoted = it->second;
+            }
+        }
+
+        //QMessageBox::information(this, "Mean-shift based zoom-in", strprintf("ROI center is (%.0f, %.0f, %.0f) with %d/%d votes (%d ms)\n", thepoint.x, thepoint.y, thepoint.z, mostvoted, n, timer.elapsed()).c_str());
+
+        v3d_imaging_paras* roi = new v3d_imaging_paras;
+        roi->ops_type = 2;
+        roi->xs = thepoint.x - PMain::getInstance()->Hdim_sbox->value()/2;
+        roi->xe = thepoint.x + PMain::getInstance()->Hdim_sbox->value()/2;
+        roi->ys = thepoint.y - PMain::getInstance()->Vdim_sbox->value()/2;
+        roi->ye = thepoint.y + PMain::getInstance()->Vdim_sbox->value()/2;
+        roi->zs = thepoint.z - PMain::getInstance()->Ddim_sbox->value()/2;
+        roi->ze = thepoint.z + PMain::getInstance()->Ddim_sbox->value()/2;
+        if(CExplorerWindow::getCurrent())
+            CExplorerWindow::getCurrent()->invokedFromVaa3D(roi);
     }
     else
         QMessageBox::critical(PMain::getInstance(),QObject::tr("Error"), QString("Unsupported zoom-in method \"").append(method).append("\""),QObject::tr("Ok"));

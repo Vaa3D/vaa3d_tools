@@ -176,17 +176,17 @@ void CExplorerWindow::show()
         pMain->traslZpos->setEnabled(volD1 < CImport::instance()->getVolume(volResIndex)->getDIM_D());
 
         //setting min, max and value of PMain GUI VOI's widgets
-        pMain->V0_sbox->setMinimum(getGlobalVCoord(view3DWidget->yCut0(), -1, true)+1);
+        pMain->V0_sbox->setMinimum(getGlobalVCoord(view3DWidget->yCut0(), -1, true, false, __itm__current__function__)+1);
         pMain->V0_sbox->setValue(pMain->V0_sbox->minimum());
-        pMain->V1_sbox->setMaximum(getGlobalVCoord(view3DWidget->yCut1(), -1, true)+1);
+        pMain->V1_sbox->setMaximum(getGlobalVCoord(view3DWidget->yCut1(), -1, true, false, __itm__current__function__)+1);
         pMain->V1_sbox->setValue(pMain->V1_sbox->maximum());
-        pMain->H0_sbox->setMinimum(getGlobalHCoord(view3DWidget->xCut0(), -1, true)+1);
+        pMain->H0_sbox->setMinimum(getGlobalHCoord(view3DWidget->xCut0(), -1, true, false, __itm__current__function__)+1);
         pMain->H0_sbox->setValue(pMain->H0_sbox->minimum());
-        pMain->H1_sbox->setMaximum(getGlobalHCoord(view3DWidget->xCut1(), -1, true)+1);
+        pMain->H1_sbox->setMaximum(getGlobalHCoord(view3DWidget->xCut1(), -1, true, false, __itm__current__function__)+1);
         pMain->H1_sbox->setValue(pMain->H1_sbox->maximum());
-        pMain->D0_sbox->setMinimum(getGlobalDCoord(view3DWidget->zCut0(), -1, true)+1);
+        pMain->D0_sbox->setMinimum(getGlobalDCoord(view3DWidget->zCut0(), -1, true, false, __itm__current__function__)+1);
         pMain->D0_sbox->setValue(pMain->D0_sbox->minimum());
-        pMain->D1_sbox->setMaximum(getGlobalDCoord(view3DWidget->zCut1(), -1, true)+1);
+        pMain->D1_sbox->setMaximum(getGlobalDCoord(view3DWidget->zCut1(), -1, true, false, __itm__current__function__)+1);
         pMain->D1_sbox->setValue(pMain->D1_sbox->maximum());
 
         //signal connections
@@ -197,6 +197,9 @@ void CExplorerWindow::show()
         connect(view3DWidget, SIGNAL(changeYCut1(int)), this, SLOT(Vaa3D_changeYCut1(int)));
         connect(view3DWidget, SIGNAL(changeZCut0(int)), this, SLOT(Vaa3D_changeZCut0(int)));
         connect(view3DWidget, SIGNAL(changeZCut1(int)), this, SLOT(Vaa3D_changeZCut1(int)));
+        connect(view3DWidget, SIGNAL(xRotationChanged(int)), this, SLOT(Vaa3D_rotationchanged(int)));
+        connect(view3DWidget, SIGNAL(yRotationChanged(int)), this, SLOT(Vaa3D_rotationchanged(int)));
+        connect(view3DWidget, SIGNAL(zRotationChanged(int)), this, SLOT(Vaa3D_rotationchanged(int)));
         connect(PMain::getInstance()->V0_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeV0sbox(int)));
         connect(PMain::getInstance()->V1_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeV1sbox(int)));
         connect(PMain::getInstance()->H0_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeH0sbox(int)));
@@ -248,7 +251,7 @@ CExplorerWindow::CExplorerWindow(V3DPluginCallback2 *_V3D_env, int _resIndex, ui
 
     //initializations
     resetZoomHistory();
-    setActive(false);
+    isActive = isReady = false;
     this->V3D_env = _V3D_env;
     this->prev = _prev;
     this->next = 0;
@@ -330,7 +333,6 @@ CExplorerWindow::~CExplorerWindow()
     //just closing windows
     V3D_env->close3DWindow(window); //--- Alessandro 24/08/2013: this causes crash at the deepest resolution when the plugin is invoked by Vaa3D
     triViewWidget->close();
-
 
     //decreasing the number of instantiated objects
     nInstances--;
@@ -523,13 +525,17 @@ void CExplorerWindow::loadingDone(uint8 *data, MyException *ex, void* sourceObje
 
                 //---- Alessandro 2013-09-28 fixed: processing pending events related trasl* buttons (previously deactivated) prevents the user from
                 //                                  triggering multiple traslations at the same time.
-                QApplication::processEvents();
+                //---- Alessandro 2014-01-26 fixed: processEvents() is no longer needed, since the trasl* button slots have been made safer and do not
+                //                                  trigger any action when the the current window is not active (or has to be closed)
+                //QApplication::processEvents();
                 PMain::getInstance()->traslXneg->setActive(true);
                 PMain::getInstance()->traslXpos->setActive(true);
                 PMain::getInstance()->traslYneg->setActive(true);
                 PMain::getInstance()->traslYpos->setActive(true);
                 PMain::getInstance()->traslZneg->setActive(true);
                 PMain::getInstance()->traslZpos->setActive(true);
+
+//                PMain::getInstance()->setEnabledDirectionalShifts(true);
 
                 //current window is now ready for user input
                 isReady = true;
@@ -564,9 +570,20 @@ CExplorerWindow::newView(
     /**/itm::debug(itm::LEV1, strprintf("title = %s, x = %d, y = %d, z = %d, res = %d, dx = %d, dy = %d, dz = %d, x0 = %d, y0 = %d, z0 = %d",
                                         titleShort.c_str(),  x, y, z, resolution, dx, dy, dz, x0, y0, z0).c_str(), __itm__current__function__);
 
+    //checking preconditions
+    if(!isActive || toBeClosed)
+    {
+        QMessageBox::warning(0, "Unexpected behaviour", "Precondition check \"!isActive || toBeClosed\" failed. Please contact the developers");
+        return;
+    }
+
     //deactivating current window and processing all pending events
     setActive(false);
     QApplication::processEvents();
+
+    //after processEvents(), it might be that this windows is no longer valid
+    if(toBeClosed)
+        return;
 
     //checking preconditions with automatic correction, where possible
     if(resolution >= CImport::instance()->getResolutions())
@@ -587,19 +604,19 @@ CExplorerWindow::newView(
 
         //scaling VOI to the given resolution
         float ratio = static_cast<float>(CImport::instance()->getVolume(resolution)->getDIM_D())/CImport::instance()->getVolume(volResIndex)->getDIM_D();
-        x = getGlobalHCoord(x, resolution, fromVaa3Dcoordinates);
-        y = getGlobalVCoord(y, resolution, fromVaa3Dcoordinates);
-        z = getGlobalDCoord(z, resolution, fromVaa3Dcoordinates);
+        x = getGlobalHCoord(x, resolution, fromVaa3Dcoordinates, false, __itm__current__function__);
+        y = getGlobalVCoord(y, resolution, fromVaa3Dcoordinates, false, __itm__current__function__);
+        z = getGlobalDCoord(z, resolution, fromVaa3Dcoordinates, false, __itm__current__function__);
         if(x0 != -1)
-            x0 = getGlobalHCoord(x0, resolution, fromVaa3Dcoordinates);
+            x0 = getGlobalHCoord(x0, resolution, fromVaa3Dcoordinates, false, __itm__current__function__);
         else
             dx = dx == -1 ? int_inf : static_cast<int>(dx*ratio+0.5f);
         if(y0 != -1)
-            y0 = getGlobalVCoord(y0, resolution, fromVaa3Dcoordinates);
+            y0 = getGlobalVCoord(y0, resolution, fromVaa3Dcoordinates, false, __itm__current__function__);
         else
             dy = dy == -1 ? int_inf : static_cast<int>(dy*ratio+0.5f);
         if(z0 != -1)
-            z0 = getGlobalDCoord(z0, resolution, fromVaa3Dcoordinates);
+            z0 = getGlobalDCoord(z0, resolution, fromVaa3Dcoordinates, false, __itm__current__function__);
         else
             dz = dz == -1 ? int_inf : static_cast<int>(dz*ratio+0.5f);
 
@@ -670,6 +687,9 @@ CExplorerWindow::newView(
         disconnect(view3DWidget, SIGNAL(changeYCut1(int)), this, SLOT(Vaa3D_changeYCut1(int)));
         disconnect(view3DWidget, SIGNAL(changeZCut0(int)), this, SLOT(Vaa3D_changeZCut0(int)));
         disconnect(view3DWidget, SIGNAL(changeZCut1(int)), this, SLOT(Vaa3D_changeZCut1(int)));
+        disconnect(view3DWidget, SIGNAL(xRotationChanged(int)), this, SLOT(Vaa3D_rotationchanged(int)));
+        disconnect(view3DWidget, SIGNAL(yRotationChanged(int)), this, SLOT(Vaa3D_rotationchanged(int)));
+        disconnect(view3DWidget, SIGNAL(zRotationChanged(int)), this, SLOT(Vaa3D_rotationchanged(int)));
         disconnect(PMain::getInstance()->V0_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeV0sbox(int)));
         disconnect(PMain::getInstance()->V1_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeV1sbox(int)));
         disconnect(PMain::getInstance()->H0_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeH0sbox(int)));
@@ -901,7 +921,7 @@ void CExplorerWindow::makeLastView() throw (MyException)
     /**/itm::debug(itm::LEV1, strprintf("title = %s", titleShort.c_str()).c_str(), __itm__current__function__);
 
     if(CExplorerWindow::current != this)
-        throw MyException(QString("in CExplorerWindow::makeLastView(): this view is not the current one, thus can't be make the last view").toStdString().c_str());
+        throw MyException(QString("in CExplorerWindow::makeLastView(): this view is not the current one, thus can't be made the last view").toStdString().c_str());
 
     while(CExplorerWindow::last != this)
     {
@@ -976,9 +996,9 @@ void CExplorerWindow::storeAnnotations() throw (MyException)
         //converting local coordinates into global coordinates
         for(int i=0; i<editedMarkers.size(); i++)
         {
-            editedMarkers[i].x = getGlobalHCoord(editedMarkers[i].x);
-            editedMarkers[i].y = getGlobalVCoord(editedMarkers[i].y);
-            editedMarkers[i].z = getGlobalDCoord(editedMarkers[i].z);
+            editedMarkers[i].x = getGlobalHCoord(editedMarkers[i].x, -1, false, false, __itm__current__function__);
+            editedMarkers[i].y = getGlobalVCoord(editedMarkers[i].y, -1, false, false, __itm__current__function__);
+            editedMarkers[i].z = getGlobalDCoord(editedMarkers[i].z, -1, false, false, __itm__current__function__);
         }
 
         //storing markers
@@ -999,9 +1019,9 @@ void CExplorerWindow::storeAnnotations() throw (MyException)
         //converting local coordinates into global coordinates
         for(int i=0; i<editedCurves.listNeuron.size(); i++)
         {
-            editedCurves.listNeuron[i].x = getGlobalHCoord(editedCurves.listNeuron[i].x);
-            editedCurves.listNeuron[i].y = getGlobalVCoord(editedCurves.listNeuron[i].y);
-            editedCurves.listNeuron[i].z = getGlobalDCoord(editedCurves.listNeuron[i].z);
+            editedCurves.listNeuron[i].x = getGlobalHCoord(editedCurves.listNeuron[i].x, -1, false, false, __itm__current__function__);
+            editedCurves.listNeuron[i].y = getGlobalVCoord(editedCurves.listNeuron[i].y, -1, false, false, __itm__current__function__);
+            editedCurves.listNeuron[i].z = getGlobalDCoord(editedCurves.listNeuron[i].z, -1, false, false, __itm__current__function__);
         }
 
         //storing markers
@@ -1089,6 +1109,9 @@ void CExplorerWindow::restoreViewFrom(CExplorerWindow* source) throw (MyExceptio
         source->disconnect(source->view3DWidget, SIGNAL(changeYCut1(int)), source, SLOT(Vaa3D_changeYCut1(int)));
         source->disconnect(source->view3DWidget, SIGNAL(changeZCut0(int)), source, SLOT(Vaa3D_changeZCut0(int)));
         source->disconnect(source->view3DWidget, SIGNAL(changeZCut1(int)), source, SLOT(Vaa3D_changeZCut1(int)));
+        source->disconnect(source->view3DWidget, SIGNAL(xRotationChanged(int)), source, SLOT(Vaa3D_rotationchanged(int)));
+        source->disconnect(source->view3DWidget, SIGNAL(yRotationChanged(int)), source, SLOT(Vaa3D_rotationchanged(int)));
+        source->disconnect(source->view3DWidget, SIGNAL(zRotationChanged(int)), source, SLOT(Vaa3D_rotationchanged(int)));
         source->disconnect(PMain::getInstance()->V0_sbox, SIGNAL(valueChanged(int)), source, SLOT(PMain_changeV0sbox(int)));
         source->disconnect(PMain::getInstance()->V1_sbox, SIGNAL(valueChanged(int)), source, SLOT(PMain_changeV1sbox(int)));
         source->disconnect(PMain::getInstance()->H0_sbox, SIGNAL(valueChanged(int)), source, SLOT(PMain_changeH0sbox(int)));
@@ -1202,6 +1225,9 @@ void CExplorerWindow::restoreViewFrom(CExplorerWindow* source) throw (MyExceptio
         connect(view3DWidget, SIGNAL(changeYCut1(int)), this, SLOT(Vaa3D_changeYCut1(int)));
         connect(view3DWidget, SIGNAL(changeZCut0(int)), this, SLOT(Vaa3D_changeZCut0(int)));
         connect(view3DWidget, SIGNAL(changeZCut1(int)), this, SLOT(Vaa3D_changeZCut1(int)));
+        connect(view3DWidget, SIGNAL(xRotationChanged(int)), this, SLOT(Vaa3D_rotationchanged(int)));
+        connect(view3DWidget, SIGNAL(yRotationChanged(int)), this, SLOT(Vaa3D_rotationchanged(int)));
+        connect(view3DWidget, SIGNAL(zRotationChanged(int)), this, SLOT(Vaa3D_rotationchanged(int)));
         connect(PMain::getInstance()->V0_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeV0sbox(int)));
         connect(PMain::getInstance()->V1_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeV1sbox(int)));
         connect(PMain::getInstance()->H0_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeH0sbox(int)));
@@ -1344,12 +1370,12 @@ void CExplorerWindow::invokedFromVaa3D(v3d_imaging_paras* params /* = 0 */)
             if(next)
             {
                 //converting Vaa3D VOI local coordinates to TeraFly coordinates of the next resolution
-                float gXS = getGlobalHCoord(static_cast<float>(roi->xs), next->volResIndex, false, true);
-                float gXE = getGlobalHCoord(static_cast<float>(roi->xe), next->volResIndex, false, true);
-                float gYS = getGlobalVCoord(static_cast<float>(roi->ys), next->volResIndex, false, true);
-                float gYE = getGlobalVCoord(static_cast<float>(roi->ye), next->volResIndex, false, true);
-                float gZS = getGlobalDCoord(static_cast<float>(roi->zs), next->volResIndex, false, true);
-                float gZE = getGlobalDCoord(static_cast<float>(roi->ze), next->volResIndex, false, true);
+                float gXS = getGlobalHCoord(static_cast<float>(roi->xs), next->volResIndex, false, true, __itm__current__function__);
+                float gXE = getGlobalHCoord(static_cast<float>(roi->xe), next->volResIndex, false, true, __itm__current__function__);
+                float gYS = getGlobalVCoord(static_cast<float>(roi->ys), next->volResIndex, false, true, __itm__current__function__);
+                float gYE = getGlobalVCoord(static_cast<float>(roi->ye), next->volResIndex, false, true, __itm__current__function__);
+                float gZS = getGlobalDCoord(static_cast<float>(roi->zs), next->volResIndex, false, true, __itm__current__function__);
+                float gZE = getGlobalDCoord(static_cast<float>(roi->ze), next->volResIndex, false, true, __itm__current__function__);
                 QRectF gXRect(QPointF(gXS, 0), QPointF(gXE, 1));
                 QRectF gYRect(QPointF(gYS, 0), QPointF(gYE, 1));
                 QRectF gZRect(QPointF(gZS, 0), QPointF(gZE, 1));
@@ -1433,10 +1459,10 @@ void CExplorerWindow::invokedFromVaa3D(v3d_imaging_paras* params /* = 0 */)
 * resolution volume image space. If resIndex is not set, the returned global coord-
 * inate will be in the highest resolution image space.
 ***********************************************************************************/
-int CExplorerWindow::getGlobalVCoord(int localVCoord, int resIndex /* = -1 */, bool fromVaa3Dcoordinates /* = false */, bool cutOutOfRange /* = false */)
+int CExplorerWindow::getGlobalVCoord(int localVCoord, int resIndex /* = -1 */, bool fromVaa3Dcoordinates /* = false */, bool cutOutOfRange /* = false */, const char *src /* =0 */)
 {
-    /**/itm::debug(itm::LEV3, strprintf("title = %s, coord = %d, res = %d, fromVaa3D = %s, cutOutOfRange = %s",
-                                        titleShort.c_str(), localVCoord, resIndex,  fromVaa3Dcoordinates ? "true" : "false", cutOutOfRange ? "true" : "false").c_str(), __itm__current__function__);
+    /**/itm::debug(itm::LEV3, strprintf("title = %s, coord = %d, res = %d, fromVaa3D = %s, cutOutOfRange = %s, src = %s",
+                                        titleShort.c_str(), localVCoord, resIndex,  fromVaa3Dcoordinates ? "true" : "false", cutOutOfRange ? "true" : "false", src ? src : "unknown").c_str(), __itm__current__function__);
 
     //setting resIndex if it has not been set
     if(resIndex == -1)
@@ -1463,10 +1489,10 @@ int CExplorerWindow::getGlobalVCoord(int localVCoord, int resIndex /* = -1 */, b
 
     return (volV0+localVCoord)*ratio + 0.5f;
 }
-int CExplorerWindow::getGlobalHCoord(int localHCoord, int resIndex /* = -1 */, bool fromVaa3Dcoordinates /* = false */, bool cutOutOfRange /* = false */)
+int CExplorerWindow::getGlobalHCoord(int localHCoord, int resIndex /* = -1 */, bool fromVaa3Dcoordinates /* = false */, bool cutOutOfRange /* = false */, const char *src /* =0 */)
 {
-    /**/itm::debug(itm::LEV3, strprintf("title = %s, coord = %d, res = %d, fromVaa3D = %s, cutOutOfRange = %s",
-                                        titleShort.c_str(), localHCoord, resIndex,  fromVaa3Dcoordinates ? "true" : "false", cutOutOfRange ? "true" : "false").c_str(), __itm__current__function__);
+    /**/itm::debug(itm::LEV3, strprintf("title = %s, coord = %d, res = %d, fromVaa3D = %s, cutOutOfRange = %s, src = %s",
+                                        titleShort.c_str(), localHCoord, resIndex,  fromVaa3Dcoordinates ? "true" : "false", cutOutOfRange ? "true" : "false", src ? src : "unknown").c_str(), __itm__current__function__);
 
     //setting resIndex if it has not been set
     if(resIndex == -1)
@@ -1493,10 +1519,10 @@ int CExplorerWindow::getGlobalHCoord(int localHCoord, int resIndex /* = -1 */, b
 
     return (volH0+localHCoord)*ratio + 0.5f;
 }
-int CExplorerWindow::getGlobalDCoord(int localDCoord, int resIndex /* = -1 */, bool fromVaa3Dcoordinates /* = false */, bool cutOutOfRange /* = false */)
+int CExplorerWindow::getGlobalDCoord(int localDCoord, int resIndex /* = -1 */, bool fromVaa3Dcoordinates /* = false */, bool cutOutOfRange /* = false */, const char *src /* =0 */)
 {
-    /**/itm::debug(itm::LEV3, strprintf("title = %s, coord = %d, res = %d, fromVaa3D = %s, cutOutOfRange = %s",
-                                        titleShort.c_str(), localDCoord, resIndex,  fromVaa3Dcoordinates ? "true" : "false", cutOutOfRange ? "true" : "false").c_str(), __itm__current__function__);
+    /**/itm::debug(itm::LEV3, strprintf("title = %s, coord = %d, res = %d, fromVaa3D = %s, cutOutOfRange = %s, src = %s",
+                                        titleShort.c_str(), localDCoord, resIndex,  fromVaa3Dcoordinates ? "true" : "false", cutOutOfRange ? "true" : "false", src ? src : "unknown").c_str(), __itm__current__function__);
 
     //setting resIndex if it has not been set
     if(resIndex == -1)
@@ -1523,10 +1549,10 @@ int CExplorerWindow::getGlobalDCoord(int localDCoord, int resIndex /* = -1 */, b
 
     return (volD0+localDCoord)*ratio + 0.5f;
 }
-float CExplorerWindow::getGlobalVCoord(float localVCoord, int resIndex /* = -1 */, bool fromVaa3Dcoordinates /* = false */, bool cutOutOfRange /* = false */)
+float CExplorerWindow::getGlobalVCoord(float localVCoord, int resIndex /* = -1 */, bool fromVaa3Dcoordinates /* = false */, bool cutOutOfRange /* = false */, const char *src /* =0 */)
 {
-    /**/itm::debug(itm::LEV3, strprintf("title = %s, coord = %.2f, res = %d, fromVaa3D = %s, cutOutOfRange = %s",
-                                        titleShort.c_str(), localVCoord, resIndex,  fromVaa3Dcoordinates ? "true" : "false", cutOutOfRange ? "true" : "false").c_str(), __itm__current__function__);
+    /**/itm::debug(itm::LEV3, strprintf("title = %s, coord = %.2f, res = %d, fromVaa3D = %s, cutOutOfRange = %s, src = %s",
+                                        titleShort.c_str(), localVCoord, resIndex,  fromVaa3Dcoordinates ? "true" : "false", cutOutOfRange ? "true" : "false", src ? src : "unknown").c_str(), __itm__current__function__);
 
     //setting resIndex if it has not been set
     if(resIndex == -1)
@@ -1553,11 +1579,11 @@ float CExplorerWindow::getGlobalVCoord(float localVCoord, int resIndex /* = -1 *
 
     return (volV0+localVCoord)*ratio;
 }
-float CExplorerWindow::getGlobalHCoord(float localHCoord, int resIndex /* = -1 */, bool fromVaa3Dcoordinates /* = false */, bool cutOutOfRange /* = false */)
+float CExplorerWindow::getGlobalHCoord(float localHCoord, int resIndex /* = -1 */, bool fromVaa3Dcoordinates /* = false */, bool cutOutOfRange /* = false */, const char *src /* =0 */)
 {
 
-    /**/itm::debug(itm::LEV3, strprintf("title = %s, coord = %.2f, res = %d, fromVaa3D = %s, cutOutOfRange = %s",
-                                        titleShort.c_str(), localHCoord, resIndex,  fromVaa3Dcoordinates ? "true" : "false", cutOutOfRange ? "true" : "false").c_str(), __itm__current__function__);
+    /**/itm::debug(itm::LEV3, strprintf("title = %s, coord = %.2f, res = %d, fromVaa3D = %s, cutOutOfRange = %s, src = %s",
+                                        titleShort.c_str(), localHCoord, resIndex,  fromVaa3Dcoordinates ? "true" : "false", cutOutOfRange ? "true" : "false", src ? src : "unknown").c_str(), __itm__current__function__);
 
     //setting resIndex if it has not been set
     if(resIndex == -1)
@@ -1584,10 +1610,10 @@ float CExplorerWindow::getGlobalHCoord(float localHCoord, int resIndex /* = -1 *
 
     return (volH0+localHCoord)*ratio;
 }
-float CExplorerWindow::getGlobalDCoord(float localDCoord, int resIndex /* = -1 */, bool fromVaa3Dcoordinates /* = false */, bool cutOutOfRange /* = false */)
+float CExplorerWindow::getGlobalDCoord(float localDCoord, int resIndex /* = -1 */, bool fromVaa3Dcoordinates /* = false */, bool cutOutOfRange /* = false */, const char *src /* =0 */)
 {
-    /**/itm::debug(itm::LEV3, strprintf("title = %s, coord = %.2f, res = %d, fromVaa3D = %s, cutOutOfRange = %s",
-                                        titleShort.c_str(), localDCoord, resIndex,  fromVaa3Dcoordinates ? "true" : "false", cutOutOfRange ? "true" : "false").c_str(), __itm__current__function__);
+    /**/itm::debug(itm::LEV3, strprintf("title = %s, coord = %.2f, res = %d, fromVaa3D = %s, cutOutOfRange = %s, src = %s",
+                                        titleShort.c_str(), localDCoord, resIndex,  fromVaa3Dcoordinates ? "true" : "false", cutOutOfRange ? "true" : "false", src ? src : "unknown").c_str(), __itm__current__function__);
 
     //setting resIndex if it has not been set
     if(resIndex == -1)
@@ -1726,7 +1752,7 @@ void CExplorerWindow::Vaa3D_changeYCut0(int s)
     /**/itm::debug(itm::LEV_MAX, strprintf("title = %s, s = %d", title.c_str(), s).c_str(), __itm__current__function__);
 
     disconnect(PMain::getInstance()->V0_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeV0sbox(int)));
-    PMain::getInstance()->V0_sbox->setValue(getGlobalVCoord(s, -1, true)+1);
+    PMain::getInstance()->V0_sbox->setValue(getGlobalVCoord(s, -1, true, false, __itm__current__function__)+1);
     connect(PMain::getInstance()->V0_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeV0sbox(int)));
 }
 void CExplorerWindow::Vaa3D_changeYCut1(int s)
@@ -1734,7 +1760,7 @@ void CExplorerWindow::Vaa3D_changeYCut1(int s)
     /**/itm::debug(itm::LEV_MAX, strprintf("title = %s, s = %d", title.c_str(), s).c_str(), __itm__current__function__);
 
     disconnect(PMain::getInstance()->V1_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeV1sbox(int)));
-    PMain::getInstance()->V1_sbox->setValue(getGlobalVCoord(s, -1, true)+1);
+    PMain::getInstance()->V1_sbox->setValue(getGlobalVCoord(s, -1, true, false, __itm__current__function__)+1);
     connect(PMain::getInstance()->V1_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeV1sbox(int)));
 }
 void CExplorerWindow::Vaa3D_changeXCut0(int s)
@@ -1742,7 +1768,7 @@ void CExplorerWindow::Vaa3D_changeXCut0(int s)
     /**/itm::debug(itm::LEV_MAX, strprintf("title = %s, s = %d", title.c_str(), s).c_str(), __itm__current__function__);
 
     disconnect(PMain::getInstance()->H0_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeH0sbox(int)));
-    PMain::getInstance()->H0_sbox->setValue(getGlobalHCoord(s, -1, true)+1);
+    PMain::getInstance()->H0_sbox->setValue(getGlobalHCoord(s, -1, true, false, __itm__current__function__)+1);
     connect(PMain::getInstance()->H0_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeH0sbox(int)));
 }
 void CExplorerWindow::Vaa3D_changeXCut1(int s)
@@ -1750,7 +1776,7 @@ void CExplorerWindow::Vaa3D_changeXCut1(int s)
     /**/itm::debug(itm::LEV_MAX, strprintf("title = %s, s = %d", title.c_str(), s).c_str(), __itm__current__function__);
 
     disconnect(PMain::getInstance()->H1_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeH1sbox(int)));
-    PMain::getInstance()->H1_sbox->setValue(getGlobalHCoord(s, -1, true)+1);
+    PMain::getInstance()->H1_sbox->setValue(getGlobalHCoord(s, -1, true, false, __itm__current__function__)+1);
     connect(PMain::getInstance()->H1_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeH1sbox(int)));
 }
 void CExplorerWindow::Vaa3D_changeZCut0(int s)
@@ -1758,7 +1784,7 @@ void CExplorerWindow::Vaa3D_changeZCut0(int s)
     /**/itm::debug(itm::LEV_MAX, strprintf("title = %s, s = %d", title.c_str(), s).c_str(), __itm__current__function__);
 
     disconnect(PMain::getInstance()->D0_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeD0sbox(int)));
-    PMain::getInstance()->D0_sbox->setValue(getGlobalDCoord(s, -1, true)+1);
+    PMain::getInstance()->D0_sbox->setValue(getGlobalDCoord(s, -1, true, false, __itm__current__function__)+1);
     connect(PMain::getInstance()->D0_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeD0sbox(int)));
 }
 void CExplorerWindow::Vaa3D_changeZCut1(int s)
@@ -1766,7 +1792,7 @@ void CExplorerWindow::Vaa3D_changeZCut1(int s)
     /**/itm::debug(itm::LEV_MAX, strprintf("title = %s, s = %d", title.c_str(), s).c_str(), __itm__current__function__);
 
     disconnect(PMain::getInstance()->D1_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeD1sbox(int)));
-    PMain::getInstance()->D1_sbox->setValue(getGlobalDCoord(s, -1, true)+1);
+    PMain::getInstance()->D1_sbox->setValue(getGlobalDCoord(s, -1, true, false, __itm__current__function__)+1);
     connect(PMain::getInstance()->D1_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeD1sbox(int)));
 }
 
@@ -1856,6 +1882,39 @@ void CExplorerWindow::alignToRight(QWidget* widget)
     {
         widget->setMaximumHeight(std::max(widget_new_height,widget->height()));
         widget->resize(widget->width(), widget_new_height);
+    }
+}
+
+/**********************************************************************************
+* Linked to PMain GUI QGLRefSys widget.
+* This implements the syncronization Vaa3D-->TeraFly of rotations.
+***********************************************************************************/
+void CExplorerWindow::Vaa3D_rotationchanged(int s)
+{
+    if(isActive && !toBeClosed)
+    {
+//        printf("disconnect\n");
+//        disconnect(view3DWidget, SIGNAL(xRotationChanged(int)), this, SLOT(Vaa3D_rotationchanged(int)));
+//        disconnect(view3DWidget, SIGNAL(yRotationChanged(int)), this, SLOT(Vaa3D_rotationchanged(int)));
+//        disconnect(view3DWidget, SIGNAL(zRotationChanged(int)), this, SLOT(Vaa3D_rotationchanged(int)));
+
+        //printf("view3DWidget->absoluteRotPose()\n");
+        //view3DWidget->absoluteRotPose();
+        //printf("PMain::getInstance()->refSys\n");
+        QGLRefSys* refsys = PMain::getInstance()->refSys;
+        //printf(" refsys->setXRotation(view3DWidget->xRot())\n");
+        refsys->setXRotation(view3DWidget->xRot());
+        //printf(" refsys->setXRotation(view3DWidget->yRot())\n");
+        refsys->setYRotation(view3DWidget->yRot());
+        //printf(" refsys->setXRotation(view3DWidget->zRot())\n");
+        refsys->setZRotation(view3DWidget->zRot());
+
+        //view3DWidget->doAbsoluteRot(view3DWidget->xRot(), view3DWidget->yRot(), view3DWidget->zRot());
+
+//        printf("connect\n");
+//        connect(view3DWidget, SIGNAL(xRotationChanged(int)), this, SLOT(Vaa3D_rotationchanged(int)));
+//        connect(view3DWidget, SIGNAL(yRotationChanged(int)), this, SLOT(Vaa3D_rotationchanged(int)));
+//        connect(view3DWidget, SIGNAL(zRotationChanged(int)), this, SLOT(Vaa3D_rotationchanged(int)));
     }
 }
 
