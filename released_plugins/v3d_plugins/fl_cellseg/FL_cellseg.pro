@@ -53,5 +53,5 @@ FORMS += $$SRCDIR/FL_watershedSegPara.ui
 #FORMS += FL_levelsetSegPara.ui 
 
 TARGET        = $$qtLibraryTarget(plugin_cellseg)
-DESTDIR       = ../../v3d/plugins/image_segmentation/Cell_Segmentation
+DESTDIR       = ../../v3d/plugins/image_segmentation/Cell_Segmentation_Watershed
 
