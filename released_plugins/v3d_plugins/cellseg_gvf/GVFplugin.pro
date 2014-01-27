@@ -17,4 +17,4 @@ SOURCES	+= $$VAA3DPATH/basic_c_fun/v3d_message.cpp
 SOURCES += $$PLUGINPATH/FL_gvfCellSeg.cpp
 
 TARGET	= $$qtLibraryTarget(gvf_cellseg)
-DESTDIR	= ../../v3d/plugins/image_segmentation/cell_segmentation_GVF/
+DESTDIR	= ../../v3d/plugins/image_segmentation/Cell_Segmentation_GVF/
