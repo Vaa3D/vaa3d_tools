@@ -2,7 +2,7 @@
 TEMPLATE      = lib
 CONFIG       += plugin warn_off
 
-V3DMAINPATH = ../../../v3d_external/v3d_main
+V3DMAINPATH = ../../../v3d_main
 INCLUDEPATH  += $$V3DMAINPATH/basic_c_fun
 INCLUDEPATH  += $$V3DMAINPATH/jba/newmat11
 
