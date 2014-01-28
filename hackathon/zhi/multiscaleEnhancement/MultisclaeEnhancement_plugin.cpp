@@ -2021,6 +2021,12 @@ template <class T> void AdpThresholding_adpwindow(const T* data1d,
             {
                 T GsdtValue = gsdtdatald[offsetk + offsetj + ix];
                 T PixelValue = data1d[offsetc+offsetk + offsetj + ix];
+
+#define  __PHC_DEBUG__
+#ifdef __PHC_DEBUG__
+
+                Wx = Wy = Wz = 3;
+#else
                 Wx = (int)round((ratio*log(double(GsdtValue)+1.0)/LOG2));
                 if(ratio ==0.1)
                 {
@@ -2033,6 +2039,7 @@ template <class T> void AdpThresholding_adpwindow(const T* data1d,
                     Wy = Wx;
                     Wz = 2*Wx;
                 }
+#endif
 
                 if (Wx > 0 && PixelValue > 0)
                 {
