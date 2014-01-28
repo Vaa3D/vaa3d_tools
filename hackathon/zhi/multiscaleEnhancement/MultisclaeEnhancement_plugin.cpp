@@ -217,12 +217,13 @@ bool selectiveEnhancement::dofunc(const QString & func_name, const V3DPluginArgL
     }
     else if (func_name == tr("help"))
     {
-        cout<<"Usage : v3d -x dllname -f adaptive_auto -i <inimg_file> -o <outimg_file> -p <scale> <ch> <ratio> <soma>"<<endl;
+        cout<<"Usage : v3d -x dllname -f adaptive_auto -i <inimg_file> -o <outimg_file> -p <scale> <ch> <ratio> <soma> <bulr>"<<endl;
         cout<<endl;
         cout<<"scale       the iteration time, default 2"<<endl;
         cout<<"ch          the input channel value, start from 1, default 1"<<endl;
         cout<<"ratio       the window size calibration ratio, default 1"<<endl;
         cout<<"soma        soma detection, 1: detect, 0: not detect, default 0"<<endl;
+        cout<<"blur        Gaussian blur after enhancement, 1: blur, 0: not blur, default 0"<<endl;
         cout<<endl;
         cout<<endl;
 
@@ -472,7 +473,7 @@ void processImage_adaptive_auto(V3DPluginCallback2 &callback, QWidget *parent)
 
     //add input dialog
     bool ok1=false,ok2=false,ok3=false;
-    unsigned int scale = 6, c=1, p = 0;
+    unsigned int scale = 6, c=1, p = 0, q = 0;
     double ratio = 0.1;
 
     scale = QInputDialog::getInteger(parent, "Iteration Time",
@@ -509,6 +510,7 @@ void processImage_adaptive_auto(V3DPluginCallback2 &callback, QWidget *parent)
         return;
 
     if(QMessageBox::Yes == QMessageBox::question (0, "", QString("Include soma detection?"), QMessageBox::Yes, QMessageBox::No))    p = 1;
+    if(QMessageBox::Yes == QMessageBox::question (0, "", QString("Gaussian blur after enhancement?"), QMessageBox::Yes, QMessageBox::No))    q = 1;
 
 
     double sigma = 0.3;
@@ -582,43 +584,53 @@ void processImage_adaptive_auto(V3DPluginCallback2 &callback, QWidget *parent)
         memcpy(Enhancement_soma, EnahancedImage_final, pagesz);
     }
 
-    simple_saveimage_wrapper(callback,"result_woGf.v3draw", (unsigned char *)Enhancement_soma, in_sz, 1);
-    V3DPluginArgItem arg;
-    V3DPluginArgList input;
-    V3DPluginArgList output;
-
-    arg.type = "random";std::vector<char*> args1;
-    args1.push_back("result_woGf.v3draw"); arg.p = (void *) & args1; input<< arg;
-    arg.type = "random";std::vector<char*> args;
-    args.push_back("3");args.push_back("3");args.push_back("3");args.push_back("1"); args.push_back("2"); arg.p = (void *) & args; input << arg;
-    arg.type = "random";std::vector<char*> args2;args2.push_back("gfImage_v2.v3draw"); arg.p = (void *) & args2; output<< arg;
-
-    QString full_plugin_name = "gaussian";
-    QString func_name = "gf";
-
-    callback.callPluginFunc(full_plugin_name,func_name, input,output);
-
-    unsigned char * data1d_float = 0;
-    int datatype;
-    V3DLONG in_zz[4];
-
-    char * outimg_file = ((vector<char*> *)(output.at(0).p))->at(0);
-    if(!simple_loadimage_wrapper(callback,outimg_file, data1d_float, in_zz, datatype))
-    {
-        cerr<<"load image "<<outimg_file<<" error!"<<endl;
-        return;
-    }
-    remove("result_woGf.v3draw");
-    remove("gfImage_v2.v3draw");
-
-    double min,max;
     unsigned char* data1d_uint8 = 0;
-    data1d_uint8 = new unsigned char [pagesz];
+    if(q ==1)
+    {
+        simple_saveimage_wrapper(callback,"result_woGf.v3draw", (unsigned char *)Enhancement_soma, in_sz, 1);
+        V3DPluginArgItem arg;
+        V3DPluginArgList input;
+        V3DPluginArgList output;
 
-    rescale_to_0_255_and_copy((float *)data1d_float,pagesz,min,max,data1d_uint8);
+        arg.type = "random";std::vector<char*> args1;
+        args1.push_back("result_woGf.v3draw"); arg.p = (void *) & args1; input<< arg;
+        arg.type = "random";std::vector<char*> args;
+        args.push_back("3");args.push_back("3");args.push_back("3");args.push_back("1"); args.push_back("2"); arg.p = (void *) & args; input << arg;
+        arg.type = "random";std::vector<char*> args2;args2.push_back("gfImage_v2.v3draw"); arg.p = (void *) & args2; output<< arg;
+
+        QString full_plugin_name = "gaussian";
+        QString func_name = "gf";
+
+        callback.callPluginFunc(full_plugin_name,func_name, input,output);
+
+        unsigned char * data1d_float = 0;
+        int datatype;
+        V3DLONG in_zz[4];
+
+        char * outimg_file = ((vector<char*> *)(output.at(0).p))->at(0);
+        if(!simple_loadimage_wrapper(callback,outimg_file, data1d_float, in_zz, datatype))
+        {
+            cerr<<"load image "<<outimg_file<<" error!"<<endl;
+            return;
+        }
+        remove("result_woGf.v3draw");
+        remove("gfImage_v2.v3draw");
+
+        double min,max;
+
+        data1d_uint8 = new unsigned char [pagesz];
+
+        rescale_to_0_255_and_copy((float *)data1d_float,pagesz,min,max,data1d_uint8);
+        if (data1d_float) { delete []data1d_float; data1d_float=0;}
+    }
+    else
+    {
+        data1d_uint8 = new unsigned char [pagesz];
+        memcpy(data1d_uint8, Enhancement_soma, pagesz);
+    }
+
 
     if (Enhancement_soma) {delete []Enhancement_soma; Enhancement_soma=0;}
-    if (data1d_float) { delete []data1d_float; data1d_float=0;}
     if (EnahancedImage_final) { delete []EnahancedImage_final; EnahancedImage_final=0;}
     //set up output image
 
@@ -1168,8 +1180,8 @@ bool processImage_adaptive_auto(const V3DPluginArgList & input, V3DPluginArgList
 {
     cout<<"Welcome to adaptive enhancement filter"<<endl;
     if (output.size() != 1) return false;
-    unsigned int scale = 2, c=1, p = 0;
-    float ratio = 1;
+    unsigned int scale = 2, c=1, p = 0,q = 0;
+    double ratio = 1.0;
     if (input.size()>=2)
     {
 
@@ -1179,6 +1191,7 @@ bool processImage_adaptive_auto(const V3DPluginArgList & input, V3DPluginArgList
         if(paras.size() >= 2) c = atoi(paras.at(1));
         if(paras.size() >= 3) ratio = atof(paras.at(2));
         if(paras.size() >= 4) p = atoi(paras.at(3));
+        if(paras.size() >= 5) q = atoi(paras.at(4));
     }
 
     char * inimg_file = ((vector<char*> *)(input.at(0).p))->at(0);
@@ -1188,6 +1201,7 @@ bool processImage_adaptive_auto(const V3DPluginArgList & input, V3DPluginArgList
     cout<<"ch = "<<c<<endl;
     cout<<"ratio = "<<ratio<<endl;
     cout<<"soma = "<<p<<endl;
+    cout<<"Gaussian blur = "<<q<<endl;
     cout<<"inimg_file = "<<inimg_file<<endl;
     cout<<"outimg_file = "<<outimg_file<<endl;
 
@@ -1209,7 +1223,6 @@ bool processImage_adaptive_auto(const V3DPluginArgList & input, V3DPluginArgList
     V3DLONG offsetc = (c-1)*pagesz;
 
     int datatype = subject->getDatatype();
-
 
     simple_saveimage_wrapper(callback, "temp.v3draw", (unsigned char *)subject->getRawDataAtChannel(c-1), in_sz, datatype);
 
@@ -1274,45 +1287,54 @@ bool processImage_adaptive_auto(const V3DPluginArgList & input, V3DPluginArgList
         memcpy(Enhancement_soma, EnahancedImage_final, pagesz);
     }
 
-    simple_saveimage_wrapper(callback,"result_woGf.v3draw", (unsigned char *)Enhancement_soma, in_sz, 1);
-    V3DPluginArgItem arg;
-    V3DPluginArgList input_gf;
-    V3DPluginArgList output_gf;
-
-    arg.type = "random";std::vector<char*> args1;
-    args1.push_back("result_woGf.v3draw"); arg.p = (void *) & args1; input_gf<< arg;
-    arg.type = "random";std::vector<char*> args;
-    args.push_back("3");args.push_back("3");args.push_back("3");args.push_back("1"); args.push_back("2"); arg.p = (void *) & args; input_gf << arg;
-    arg.type = "random";std::vector<char*> args2;args2.push_back("gfImage_v2.v3draw"); arg.p = (void *) & args2; output_gf<< arg;
-
-    QString full_plugin_name = "gaussian";
-    QString func_name = "gf";
-
-    callback.callPluginFunc(full_plugin_name,func_name, input_gf,output_gf);
-
-    unsigned char * data1d_float = 0;
-    V3DLONG in_zz[4];
-    datatype = 0;
-    char * outimg_file2 = ((vector<char*> *)(output_gf.at(0).p))->at(0);
-    if(!simple_loadimage_wrapper(callback,outimg_file2, data1d_float, in_zz, datatype))
-    {
-        cerr<<"load image "<<outimg_file2<<" error!"<<endl;
-        return false;
-    }
-
-    remove("result_woGf.v3draw");
-    remove("gfImage_v2.v3draw");
-
-    double min,max;
     unsigned char* data1d_uint8 = 0;
-    data1d_uint8 = new unsigned char [pagesz];
-    rescale_to_0_255_and_copy((float *)data1d_float,pagesz,min,max,data1d_uint8);
+    if(q==1)
+    {
+        simple_saveimage_wrapper(callback,"result_woGf.v3draw", (unsigned char *)Enhancement_soma, in_sz, 1);
+        V3DPluginArgItem arg;
+        V3DPluginArgList input_gf;
+        V3DPluginArgList output_gf;
 
+        arg.type = "random";std::vector<char*> args1;
+        args1.push_back("result_woGf.v3draw"); arg.p = (void *) & args1; input_gf<< arg;
+        arg.type = "random";std::vector<char*> args;
+        args.push_back("3");args.push_back("3");args.push_back("3");args.push_back("1"); args.push_back("2"); arg.p = (void *) & args; input_gf << arg;
+        arg.type = "random";std::vector<char*> args2;args2.push_back("gfImage_v2.v3draw"); arg.p = (void *) & args2; output_gf<< arg;
+
+        QString full_plugin_name = "gaussian";
+        QString func_name = "gf";
+
+        callback.callPluginFunc(full_plugin_name,func_name, input_gf,output_gf);
+
+        unsigned char * data1d_float = 0;
+        V3DLONG in_zz[4];
+        datatype = 0;
+        char * outimg_file2 = ((vector<char*> *)(output_gf.at(0).p))->at(0);
+        if(!simple_loadimage_wrapper(callback,outimg_file2, data1d_float, in_zz, datatype))
+        {
+            cerr<<"load image "<<outimg_file2<<" error!"<<endl;
+            return false;
+        }
+
+        remove("result_woGf.v3draw");
+        remove("gfImage_v2.v3draw");
+
+        double min,max;
+
+        data1d_uint8 = new unsigned char [pagesz];
+        rescale_to_0_255_and_copy((float *)data1d_float,pagesz,min,max,data1d_uint8);
+        if (data1d_float) { delete []data1d_float; data1d_float=0;}
+
+    }
+    else
+    {
+        data1d_uint8 = new unsigned char [pagesz];
+        memcpy(data1d_uint8, Enhancement_soma, pagesz);
+    }
     simple_saveimage_wrapper(callback, outimg_file, (unsigned char *)data1d_uint8, in_sz, 1);
 
 
     if (Enhancement_soma) {delete []Enhancement_soma; Enhancement_soma=0;}
-    if (data1d_float) { delete []data1d_float; data1d_float=0;}
     if (EnahancedImage_final) { delete []EnahancedImage_final; EnahancedImage_final=0;}
     if (data1d_uint8) {delete []data1d_uint8; data1d_uint8=0;}
     if (subject) {delete subject; subject=0;}
@@ -2022,7 +2044,7 @@ template <class T> void AdpThresholding_adpwindow(const T* data1d,
                 T GsdtValue = gsdtdatald[offsetk + offsetj + ix];
                 T PixelValue = data1d[offsetc+offsetk + offsetj + ix];
 
-#define  __PHC_DEBUG__
+//#define  __PHC_DEBUG__
 #ifdef __PHC_DEBUG__
 
                 Wx = Wy = Wz = 3;
