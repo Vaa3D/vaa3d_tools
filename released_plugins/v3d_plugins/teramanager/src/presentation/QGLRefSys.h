@@ -22,6 +22,9 @@ class teramanager::QGLRefSys : public QGLWidget
 
         QSize minimumSizeHint() const;
         QSize sizeHint() const;
+        int getXRot(){return xRot;}
+        int getYRot(){return yRot;}
+        int getZRot(){return zRot;}
 
     public slots:
 
@@ -37,6 +40,8 @@ class teramanager::QGLRefSys : public QGLWidget
         void yRotationChanged(int angle);
         void zRotationChanged(int angle);
 
+        void mouseReleased();
+
     protected:
 
         // OpenGL initialization, viewport resizing, and painting methods MUST be overriden
@@ -47,6 +52,7 @@ class teramanager::QGLRefSys : public QGLWidget
         // Qt mouse event handlers to control rotation with the mouse
         void mousePressEvent(QMouseEvent *event);
         void mouseMoveEvent(QMouseEvent *event);
+        void mouseReleaseEvent(QMouseEvent *event);
 
         int heightForWidth( int w ) { return w; }
 };

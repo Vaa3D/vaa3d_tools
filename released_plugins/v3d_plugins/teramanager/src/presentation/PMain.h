@@ -267,6 +267,8 @@ class teramanager::PMain : public QWidget
         static string HTtraslateNeg;
         static string HTvolcuts;
         static string HTzoomInMethod;
+        static string HTrefsys;
+        static string HTresolution;
 
 
     public slots:

@@ -11,6 +11,14 @@ ties names are:
 - Rem: a feature no longer available
 
 ============================================================================================
+Version 0.9.31
+January 29th, 2014
+--------------------------------------------------------------------------------------------
+- New: added syncronization TeraFly --> Vaa3D on the 3D interactive reference system
+- Fix: fixed syncronization Vaa3D --> TeraFly on the 3D interactive reference system
+--------------------------------------------------------------------------------------------
+
+
 Version 0.9.3
 January 26th, 2014
 --------------------------------------------------------------------------------------------

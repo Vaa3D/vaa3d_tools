@@ -338,10 +338,11 @@ class teramanager::CExplorerWindow : public QWidget
         void PMain_changeD1sbox(int s);
 
         /**********************************************************************************
-        * Linked to PMain GUI QGLRefSys widget.
-        * This implements the syncronization Vaa3D-->TeraFly of rotations.
+        * Linked to PMain GUI<->QGLRefSys widget.
+        * This implements the syncronization Vaa3D<-->TeraFly of rotations.
         ***********************************************************************************/
         void Vaa3D_rotationchanged(int s);
+        void PMain_rotationchanged();
 
         #ifdef USE_EXPERIMENTAL_FEATURES
         /**********************************************************************************

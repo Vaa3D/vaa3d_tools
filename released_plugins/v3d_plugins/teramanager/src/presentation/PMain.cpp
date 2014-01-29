@@ -64,6 +64,8 @@ string PMain::HTtraslatePos = "Translate the view along this axis in its <i>natu
 string PMain::HTtraslateNeg = "Translate the view along this axis in its <i>opposite</i> direction.";
 string PMain::HTvolcuts = "Define a volume of interest (<b>VOI</b>) using <b>absolute spatial coordinates</b> (i.e. referred to the highest resolution). "
                           "You may then choose the resolution you want to display it from the <i>Jump to res</i> pull-down menu.";
+string PMain::HTrefsys = "Rotate the reference system";
+string PMain::HTresolution = "A heat map like bar that indicates the currently displayed resolution (the \"hotter\", the higher)";
 
 PMain* PMain::uniqueInstance = 0;
 PMain* PMain::instance(V3DPluginCallback2 *callback, QWidget *parent)
@@ -262,6 +264,7 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     helpMenu->addAction(aboutAction);
 
     refSys = new QGLRefSys(this);
+    refSys->installEventFilter(this);
 
     //toolbar
     toolBar = new QToolBar("ToolBar", this);
@@ -301,6 +304,7 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     //multiresolution mode widgets
     multires_panel = new QGroupBox("Multiresolution mode");
     gradientBar = new QGradientBar(this);
+    gradientBar->installEventFilter(this);
     Vdim_sbox = new QSpinBox();
     Vdim_sbox->setAlignment(Qt::AlignCenter);
     Vdim_sbox->setMaximum(1000);
@@ -1674,6 +1678,13 @@ bool PMain::eventFilter(QObject *object, QEvent *event)
         else if(event->type() == QEvent::Leave)
             helpBox->setText(HTbase);
     }
+    else if((object == gradientBar) && multires_panel->isEnabled())
+    {
+        if(event->type() == QEvent::Enter)
+            helpBox->setText(HTresolution);
+        else if(event->type() == QEvent::Leave)
+            helpBox->setText(HTbase);
+    }
     else if((object == zoomOutSens) && multires_panel->isEnabled())
     {
         if(event->type() == QEvent::Enter)
@@ -1727,6 +1738,13 @@ bool PMain::eventFilter(QObject *object, QEvent *event)
     {
         if(event->type() == QEvent::Enter)
             helpBox->setText(HTvolcuts);
+        else if(event->type() == QEvent::Leave)
+            helpBox->setText(HTbase);
+    }
+    else if((object == refSys) && multires_panel->isEnabled())
+    {
+        if(event->type() == QEvent::Enter)
+            helpBox->setText(HTrefsys);
         else if(event->type() == QEvent::Leave)
             helpBox->setText(HTbase);
     }

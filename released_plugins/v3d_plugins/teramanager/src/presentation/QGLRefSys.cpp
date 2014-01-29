@@ -109,8 +109,8 @@ void QGLRefSys::paintGL()
     glLoadIdentity();                                   //resets projection and modelview matrices
     glTranslatef(0.0, 0.0, -15.0);                      //move along z-axis
     glRotatef(xRot, 1.0, 0.0, 0.0);                     //rotate around x-axis
-    glRotatef(-180+yRot, 0.0, 1.0, 0.0);                 //rotate around y-axis
-    glRotatef(-180+zRot, 0.0, 0.0, 1.0);                 //rotate around z-axis
+    glRotatef(yRot, 0.0, 1.0, 0.0);                     //rotate around y-axis
+    glRotatef(zRot, 0.0, 0.0, 1.0);                     //rotate around z-axis
 
     // CUBE FACES
     if(this->isEnabled())
@@ -186,7 +186,7 @@ void QGLRefSys::paintGL()
         glVertex3f(-1.0, -1.0,  1.0);
     glEnd(); // GL_LINES
 
-    // ARROWS
+    // AXES
     double radius=0.2;
     double height=1.4;
     float headRadius = 2.3*radius;
@@ -200,9 +200,9 @@ void QGLRefSys::paintGL()
         glColor3f(0.6,0.6,0.6);
     //----------------------------------Y-head----------------------------------//
     glBegin(GL_TRIANGLE_FAN);
-        glVertex3f(0, shift+height+headHeight, 0);  /* center */
+        glVertex3f(0, -shift-height-headHeight, 0);  /* center */
         for (double i = 0; i <= 2 * PI; i += resolution)
-            glVertex3f(headRadius * cos(i), shift+height, headRadius * sin(i));
+            glVertex3f(headRadius * cos(i), -shift-height, headRadius * sin(i));
     glEnd();
     //----------------------------------Y-base----------------------------------//
 //    glBegin(GL_TRIANGLE_FAN);
@@ -215,11 +215,11 @@ void QGLRefSys::paintGL()
     glBegin(GL_QUAD_STRIP);
         for (double i = 0; i <= 2 * PI; i += resolution)
         {
-            glVertex3f(radius * cos(i), shift, radius * sin(i));
-            glVertex3f(radius * cos(i), shift+height, radius * sin(i));
+            glVertex3f(radius * cos(i), -shift, radius * sin(i));
+            glVertex3f(radius * cos(i), -shift-height, radius * sin(i));
         }
-        glVertex3f(radius, shift, 0);
-        glVertex3f(radius, shift+height, 0);
+        glVertex3f(radius, -shift, 0);
+        glVertex3f(radius, -shift-height, 0);
     glEnd();
 
 
@@ -258,9 +258,9 @@ void QGLRefSys::paintGL()
         glColor3f(0.6,0.6,0.6);
     //----------------------------------Z-head----------------------------------//
     glBegin(GL_TRIANGLE_FAN);
-        glVertex3f(0, 0, shift+height+headHeight);  /* center */
+        glVertex3f(0, 0, -shift-height-headHeight);  /* center */
         for (double i = 0; i <= 2 * PI; i += resolution)
-            glVertex3f(headRadius * cos(i), headRadius * sin(i), shift+height);
+            glVertex3f(headRadius * cos(i), headRadius * sin(i), -shift-height);
     glEnd();
     //----------------------------------Z-base----------------------------------//
 //    glBegin(GL_TRIANGLE_FAN);
@@ -273,11 +273,39 @@ void QGLRefSys::paintGL()
     glBegin(GL_QUAD_STRIP);
         for (double i = 0; i <= 2 * PI; i += resolution)
         {
-            glVertex3f(radius * cos(i), radius * sin(i), shift);
-            glVertex3f(radius * cos(i), radius * sin(i), shift+height);
+            glVertex3f(radius * cos(i), radius * sin(i), -shift);
+            glVertex3f(radius * cos(i), radius * sin(i), -shift-height);
         }
-        glVertex3f(radius, 0, shift);
-        glVertex3f(radius, 0, shift+height);
+        glVertex3f(radius, 0, -shift);
+        glVertex3f(radius, 0, -shift-height);
+    glEnd();
+
+
+    // INVERSE AXES
+
+    glLineWidth(3.0);
+    glBegin(GL_LINES);
+        //----------------Y-axis--------------//
+        if(isEnabled())
+            glColor3f(0.0,200.0/255,0.0);
+        else
+            glColor3f(0.6,0.6,0.6);
+        glVertex3f(0,1,0);
+        glVertex3f(0,1+headHeight+height,0);
+        //----------------X-axis--------------//
+        if(isEnabled())
+            glColor3f(1.0,0.0,0.0);
+        else
+            glColor3f(0.6,0.6,0.6);
+        glVertex3f(-1,0,0);
+        glVertex3f(-1-headHeight-height,0,0);
+        //----------------Z-axis--------------//
+        if(isEnabled())
+            glColor3f(0.0,0.0,1.0);
+        else
+            glColor3f(0.6,0.6,0.6);
+        glVertex3f(0,0,1);
+        glVertex3f(0,0,1+headHeight+height);
     glEnd();
 
 }
@@ -300,4 +328,10 @@ void QGLRefSys::mouseMoveEvent(QMouseEvent *event)
         setZRotation(zRot + 8 * dx);
     }
     lastPos = event->pos();
+}
+
+
+void QGLRefSys::mouseReleaseEvent(QMouseEvent *event)
+{
+    emit mouseReleased();
 }
