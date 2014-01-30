@@ -77,7 +77,7 @@ template <class T> bool compute_Anisotropy_sphere(const T* data1d, V3DLONG N, V3
         mv = s/n;
     }
 
-    double spatial_deviation = sqrt(double(xm-x0)*(xm-x0) + double(ym-y0)*(ym-y0) + double(zm-z0)*(zm-z0));
+    double spatial_deviation = sqrt(double(xm-x0)*(xm-x0) + double(ym-y0)*(ym-y0) + double(zm-z0)*(zm-z0)) + 1;
 
     avevalue = mv;
 
@@ -297,7 +297,8 @@ void processImage(V3DPluginCallback2 &callback, QWidget *parent, int flag)
                             compute_Anisotropy_sphere(data1d, N, M, P, c, ix, iy, iz, rs, score_each, ave_v);
                             if(rs==2) ave_last = ave_v;
 
-                            if(score_each > score_max && ave_v < ave_last*1.1 && ave_v>ave_last*0.9)
+                            //if(score_each > score_max && ave_v < ave_last*1.1 && ave_v>ave_last*0.9)
+                            if (score_each > score_max)
                             {
                                 score_max = score_each;
                                 ave_last = ave_v;
