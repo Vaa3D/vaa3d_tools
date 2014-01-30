@@ -36,13 +36,14 @@ template <class T> bool compute_Anisotropy_sphere(const T* data1d, V3DLONG N, V3
     V3DLONG i,j,k;
     double w;
 
-    //first get the center of mass
+    //first get the average value
     double x2, y2, z2;
     double rx2 = double(rs+1)*(rs+1);
     double ry2 = rx2, rz2 = rx2;
     double tmpd;
     double xm=0,ym=0,zm=0, s=0, mv=0, n=0;
 
+    s = 0; n = 0;
     for(k=zb; k<=ze; k++)
     {
         V3DLONG offsetkl = k*M*N;
@@ -61,20 +62,56 @@ template <class T> bool compute_Anisotropy_sphere(const T* data1d, V3DLONG N, V3
                 if (x2/rx2 + tmpd > 1.0)
                     continue;
 
-                w = double(data1d[offsetc+offsetkl + offsetjl + i]);
+                s += double(data1d[offsetc+offsetkl + offsetjl + i]);
+                n = n+1;
+            }
+        }
+    }
+    if (n!=0)
+        mv = s/n;
+    else
+        mv = 0;
+
+    //now get the center of mass
+    s = 0; n=0;
+    for(k=zb; k<=ze; k++)
+    {
+        V3DLONG offsetkl = k*M*N;
+        z2 = k-z0; z2*=z2;
+        for(j=yb; j<=ye; j++)
+        {
+            V3DLONG offsetjl = j*N;
+            y2 = j-y0; y2*=y2;
+            tmpd = y2/ry2 + z2/rz2;
+            if (tmpd>1.0)
+                continue;
+
+            for(i=xb; i<=xe; i++)
+            {
+                x2 = i-x0; x2*=x2;
+                if (x2/rx2 + tmpd > 1.0)
+                    continue;
+
+                w = double(data1d[offsetc+offsetkl + offsetjl + i]) - mv;
+                if (w>0)
+                {
                 xm += w*i;
                 ym += w*j;
                 zm += w*k;
                 s += w;
                 n = n+1;
+                }
             }
         }
     }
 
-    if(s>0)
+    if(n>0)
     {
         xm /= s; ym /=s; zm /=s;
-        mv = s/n;
+    }
+    else
+    {
+        xm = x0; ym=y0; zm=z0;
     }
 
     double spatial_deviation = sqrt(double(xm-x0)*(xm-x0) + double(ym-y0)*(ym-y0) + double(zm-z0)*(zm-z0)) + 1;
@@ -104,13 +141,16 @@ template <class T> bool compute_Anisotropy_sphere(const T* data1d, V3DLONG N, V3
                     continue;
 
                 dfx = double(i)-xm;
-                w = double(data1d[offsetc+offsetkl + offsetjl + i]) - mv;  if (w<0) w=0;
+                w = double(data1d[offsetc+offsetkl + offsetjl + i]) - mv;
+                if (w>0)
+                {
                 cc11 += w*dfx*dfx;
                 cc12 += w*dfx*dfy;
                 cc13 += w*dfx*dfz;
                 cc22 += w*dfy*dfy;
                 cc23 += w*dfy*dfz;
                 cc33 += w*dfz*dfz;
+                }
 
             }
         }
@@ -132,7 +172,8 @@ template <class T> bool compute_Anisotropy_sphere(const T* data1d, V3DLONG N, V3
         double pc1 = DD(3);
         double pc2 = DD(2);
         // double pc3 = DD(1);
-        Score = sqrt(pc1)/sqrt(pc2)/spatial_deviation;
+        Score = pc1/pc2/spatial_deviation;
+        //Score = sqrt(pc1)/sqrt(pc2)/spatial_deviation;
     }
     catch (...)
     {
