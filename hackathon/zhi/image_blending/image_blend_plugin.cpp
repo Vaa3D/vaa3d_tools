@@ -52,7 +52,7 @@ bool image_blend::dofunc(const QString & func_name, const V3DPluginArgList & inp
         if(!simple_loadimage_wrapper(callback, inimg_file1, image1, in_sz1, datatype1))
         {
             cerr<<"load image1 "<<inimg_file1<<" error!"<<endl;
-            if (image1) {delete image1; image1=0;}
+            if (image1) {delete []image1; image1=0;}
             return false;
         }
         V3DLONG pagesz1 = in_sz1[0]*in_sz1[1]*in_sz1[2];
@@ -63,7 +63,7 @@ bool image_blend::dofunc(const QString & func_name, const V3DPluginArgList & inp
         if(!simple_loadimage_wrapper(callback, inimg_file2, image2, in_sz2, datatype2))
         {
             cerr<<"load image2 "<<inimg_file2<<" error!"<<endl;
-             if (image2) {delete image2; image2=0;}
+             if (image2) {delete []image2; image2=0;}
             return false;
         }
 
@@ -72,8 +72,8 @@ bool image_blend::dofunc(const QString & func_name, const V3DPluginArgList & inp
         if(pagesz1 != pagesz2)
         {
              v3d_msg("Two images have differnt size.");
-             if (image1) {delete image1; image1=0;}
-             if (image2) {delete image2; image2=0;}
+             if (image1) {delete []image1; image1=0;}
+             if (image2) {delete []image2; image2=0;}
              return false;
         }
 
