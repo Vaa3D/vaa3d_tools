@@ -2,7 +2,7 @@
  * This is a test plugin, you can use it as a demo.
  * 2013-01-28 : by Zhi
  */
- 
+
 #include "v3d_message.h"
 #include <vector>
 #include "Image_enhancement_Anisotropy_plugin.h"
@@ -11,18 +11,20 @@
 
 
 using namespace std;
-Q_EXPORT_PLUGIN2(Image_enhancement_Anisotropy, anisotropy_enhancement);
+Q_EXPORT_PLUGIN2(image_anisotropy_map, anisotropy_enhancement);
 
 void processImage(V3DPluginCallback2 &callback, QWidget *parent, int flag);
 
 
-template <class T> bool compute_Anisotropy_sphere(const T* data1d, V3DLONG N, V3DLONG M, V3DLONG P, int c,
-                       V3DLONG x0, V3DLONG y0, V3DLONG z0,
-                       V3DLONG rs,double &Score)
+template <class T> bool compute_Anisotropy_sphere(const T* data1d, V3DLONG N, V3DLONG M, V3DLONG P, V3DLONG c,
+                                                  V3DLONG x0, V3DLONG y0, V3DLONG z0,
+                                                  V3DLONG rs, double &Score, double & avevalue)
 {
+    if (!data1d || N<=0 || M<=0 || P<=0 || c<0 || x0<0 || x0>N-1 || y0<0 || y0>M-1 || z0<0 || z0>P-1 || rs<1)
+        return false;
 
-    //get the boundary
-    V3DLONG offsetc = (c-1)*(N*M*P);
+        //get the boundary
+        V3DLONG offsetc = (c)*(N*M*P);
 
     V3DLONG xb = x0-rs;if(xb<0) xb = 0;
     V3DLONG xe = x0+rs; if(xe>=N-1) xe = N-1;
@@ -41,7 +43,6 @@ template <class T> bool compute_Anisotropy_sphere(const T* data1d, V3DLONG N, V3
     double tmpd;
     double xm=0,ym=0,zm=0, s=0, mv=0, n=0;
 
-
     for(k=zb; k<=ze; k++)
     {
         V3DLONG offsetkl = k*M*N;
@@ -56,7 +57,7 @@ template <class T> bool compute_Anisotropy_sphere(const T* data1d, V3DLONG N, V3
 
             for(i=xb; i<=xe; i++)
             {
-               x2 = i-x0; x2*=x2;
+                x2 = i-x0; x2*=x2;
                 if (x2/rx2 + tmpd > 1.0)
                     continue;
 
@@ -74,127 +75,130 @@ template <class T> bool compute_Anisotropy_sphere(const T* data1d, V3DLONG N, V3
     {
         xm /= s; ym /=s; zm /=s;
         mv = s/n;
-      //  mv = s/(double(ze-zb+1)*(ye-yb+1)*(xe-xb+1));
-
     }
-        double cc11=0, cc12=0, cc13=0, cc22=0, cc23=0, cc33=0;
-        double dfx, dfy, dfz;
-        for(k=zb; k<=ze; k++)
+
+    double spatial_deviation = sqrt(double(xm-x0)*(xm-x0) + double(ym-y0)*(ym-y0) + double(zm-z0)*(zm-z0));
+
+    avevalue = mv;
+
+    double cc11=0, cc12=0, cc13=0, cc22=0, cc23=0, cc33=0;
+    double dfx, dfy, dfz;
+    for(k=zb; k<=ze; k++)
+    {
+        z2 = k-z0; z2*=z2;
+        dfz = double(k)-zm;
+        V3DLONG offsetkl = k*M*N;
+        for(j=yb; j<=ye; j++)
         {
-            z2 = k-z0; z2*=z2;
-            dfz = double(k)-zm;
-            V3DLONG offsetkl = k*M*N;
-            for(j=yb; j<=ye; j++)
+            y2 = j-y0; y2*=y2;
+            tmpd = y2/ry2 + z2/rz2;
+            if (tmpd>1.0)
+                continue;
+
+            dfy = double(j)-ym;
+            V3DLONG offsetjl = j*N;
+            for(i=xb; i<=xe; i++)
             {
-                y2 = j-y0; y2*=y2;
-                tmpd = y2/ry2 + z2/rz2;
-                if (tmpd>1.0)
+                x2 = i-x0; x2*=x2;
+                if (x2/rx2 + tmpd > 1.0)
                     continue;
 
-                dfy = double(j)-ym;
-                V3DLONG offsetjl = j*N;
-                for(i=xb; i<=xe; i++)
-                {
-                    x2 = i-x0; x2*=x2;
-                    if (x2/rx2 + tmpd > 1.0)
-                        continue;
+                dfx = double(i)-xm;
+                w = double(data1d[offsetc+offsetkl + offsetjl + i]) - mv;  if (w<0) w=0;
+                cc11 += w*dfx*dfx;
+                cc12 += w*dfx*dfy;
+                cc13 += w*dfx*dfz;
+                cc22 += w*dfy*dfy;
+                cc23 += w*dfy*dfz;
+                cc33 += w*dfz*dfz;
 
-                    dfx = double(i)-xm;
-                    w = double(data1d[offsetc+offsetkl + offsetjl + i]) - mv;  if (w<0) w=0;
-                    cc11 += w*dfx*dfx;
-                    cc12 += w*dfx*dfy;
-                    cc13 += w*dfx*dfz;
-                    cc22 += w*dfy*dfy;
-                    cc23 += w*dfy*dfz;
-                    cc33 += w*dfz*dfz;
-
-                }
             }
         }
-        cc11 /= s; 	cc12 /= s; 	cc13 /= s; 	cc22 /= s; 	cc23 /= s; 	cc33 /= s;
-        try
-        {
-            //then find the eigen vector
-            SymmetricMatrix Cov_Matrix(3);
-            Cov_Matrix.Row(1) << cc11;
-            Cov_Matrix.Row(2) << cc12 << cc22;
-            Cov_Matrix.Row(3) << cc13 << cc23 << cc33;
+    }
+    cc11 /= s; 	cc12 /= s; 	cc13 /= s; 	cc22 /= s; 	cc23 /= s; 	cc33 /= s;
+    try
+    {
+        //then find the eigen vector
+        SymmetricMatrix Cov_Matrix(3);
+        Cov_Matrix.Row(1) << cc11;
+        Cov_Matrix.Row(2) << cc12 << cc22;
+        Cov_Matrix.Row(3) << cc13 << cc23 << cc33;
 
-            DiagonalMatrix DD;
-            Matrix VV;
-            EigenValues(Cov_Matrix,DD,VV);;
+        DiagonalMatrix DD;
+        Matrix VV;
+        EigenValues(Cov_Matrix,DD,VV);;
 
-            //output the result
-            double pc1 = DD(3);
-            double pc2 = DD(2);
-           // double pc3 = DD(1);
-            Score = sqrt(pc1)/sqrt(pc2);
-         }
-        catch (...)
-        {
-            Score = 0;
-        }
+        //output the result
+        double pc1 = DD(3);
+        double pc2 = DD(2);
+        // double pc3 = DD(1);
+        Score = sqrt(pc1)/sqrt(pc2)/spatial_deviation;
+    }
+    catch (...)
+    {
+        Score = 0;
+    }
 
-        return true;
+    return true;
 
 }
 
- 
+
 QStringList anisotropy_enhancement::menulist() const
 {
-	return QStringList() 
-        <<tr("fixed window")
-        <<tr("adaptive window")
-		<<tr("about");
+    return QStringList()
+            <<tr("fixed window")
+           <<tr("adaptive window")
+          <<tr("about");
 }
 
 QStringList anisotropy_enhancement::funclist() const
 {
-	return QStringList()
-		<<tr("func1")
-		<<tr("func2")
-		<<tr("help");
+    return QStringList()
+            <<tr("func1")
+           <<tr("func2")
+          <<tr("help");
 }
 
 void anisotropy_enhancement::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
 {
     if (menu_name == tr("fixed window"))
-	{
+    {
         processImage(callback,parent,0);
-	}
+    }
     else if (menu_name == tr("adaptive window"))
-	{
+    {
         processImage(callback,parent,1);
-	}
-	else
-	{
+    }
+    else
+    {
         v3d_msg(tr("This plugin uses anisotropy property to enhance image "
-			"Developed by Zhi, 2013-01-28"));
-	}
+                   "Developed by Zhi, 2013-01-28"));
+    }
 }
 
 bool anisotropy_enhancement::dofunc(const QString & func_name, const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback,  QWidget * parent)
 {
-	vector<char*> infiles, inparas, outfiles;
-	if(input.size() >= 1) infiles = *((vector<char*> *)input.at(0).p);
-	if(input.size() >= 2) inparas = *((vector<char*> *)input.at(1).p);
-	if(output.size() >= 1) outfiles = *((vector<char*> *)output.at(0).p);
+    vector<char*> infiles, inparas, outfiles;
+    if(input.size() >= 1) infiles = *((vector<char*> *)input.at(0).p);
+    if(input.size() >= 2) inparas = *((vector<char*> *)input.at(1).p);
+    if(output.size() >= 1) outfiles = *((vector<char*> *)output.at(0).p);
 
-	if (func_name == tr("func1"))
-	{
-		v3d_msg("To be implemented.");
-	}
-	else if (func_name == tr("func2"))
-	{
-		v3d_msg("To be implemented.");
-	}
-	else if (func_name == tr("help"))
-	{
-		v3d_msg("To be implemented.");
-	}
-	else return false;
+    if (func_name == tr("func1"))
+    {
+        v3d_msg("To be implemented.");
+    }
+    else if (func_name == tr("func2"))
+    {
+        v3d_msg("To be implemented.");
+    }
+    else if (func_name == tr("help"))
+    {
+        v3d_msg("To be implemented.");
+    }
+    else return false;
 
-	return true;
+    return true;
 }
 
 void processImage(V3DPluginCallback2 &callback, QWidget *parent, int flag)
@@ -230,31 +234,37 @@ void processImage(V3DPluginCallback2 &callback, QWidget *parent, int flag)
     double rs = 0;
 
     if(flag ==0)
-        rs = QInputDialog::getDouble(parent, "Window size ",
-                                  "Enter Window size:",
-                                  1, 1, 30, 1, &ok1);
+        rs = QInputDialog::getDouble(parent, "Radius of the window for computing anisotropy map",
+                                     "Window radius:",
+                                     1, 1, 30, 1, &ok1);
     else
         ok1=true;
     if(ok1)
     {
-    if(sc==1)
+        if(sc==1)
         {
             c=1;
             ok2=true;
         }
         else
         {
-           c = QInputDialog::getInteger(parent, "Channel",
-                                             "Enter channel NO:",
-                                             1, 1, sc, 1, &ok1);
+            c = QInputDialog::getInteger(parent, "Channel",
+                                         "Enter channel NO:",
+                                         1, 1, sc, 1, &ok1);
         }
     }
 
-    V3DLONG offsetc = (c-1)*pagesz;
+    c = c-1;
+
+    V3DLONG offsetc = (c)*pagesz;
     float* datald_output = 0;
     datald_output = new float[pagesz];
     for(V3DLONG i = 0; i<pagesz;i++)
         datald_output[i] = 0;
+
+    double score_max = 0, ave_last=0;
+    double score_each = 0, ave_v=0;
+
     for(V3DLONG iz = 0; iz < P; iz++)
     {
         printf("\r Evaluation : %d %% completed ", int(float(iz)/P*100)); fflush(stdout);
@@ -265,37 +275,38 @@ void processImage(V3DPluginCallback2 &callback, QWidget *parent, int flag)
             for(V3DLONG ix = 0; ix < N; ix++)
             {
                 V3DLONG PixelValue = data1d[offsetc+offsetk + offsetj + ix];
-                if(flag ==0)
+                if(flag == 0) //for fixed window
                 {
                     if (rs > 0 && PixelValue > 0)
                     {
-                       double score_each = 0;
-                       compute_Anisotropy_sphere(data1d, N, M, P,c,ix, iy, iz, rs,score_each);
-                       if(score_each>0)
-                       {
-                             datald_output[offsetk + offsetj + ix] = score_each;
-
-                       }
-
+                        compute_Anisotropy_sphere(data1d, N, M, P, c, ix, iy, iz, rs, score_each, ave_v);
+                        if(score_each>0)
+                        {
+                            datald_output[offsetk + offsetj + ix] = score_each;
+                        }
                     }
-
                 }
                 else
                 {
                     if(PixelValue > 0)
                     {
-                        double score_max = 0;
-                        double score_each = 0;
+                        score_max = 0;
+                        ave_last = 0;
                         for(rs = 2; rs < 31; rs++)
                         {
-                            compute_Anisotropy_sphere(data1d, N, M, P,c,ix, iy, iz, rs,score_each);
-                            if(score_each > score_max) score_max = score_each;
+                            compute_Anisotropy_sphere(data1d, N, M, P, c, ix, iy, iz, rs, score_each, ave_v);
+                            if(rs==2) ave_last = ave_v;
+
+                            if(score_each > score_max && ave_v < ave_last*1.1 && ave_v>ave_last*0.9)
+                            {
+                                score_max = score_each;
+                                ave_last = ave_v;
+                            }
                             else
                             {
                                 break;
                             }
                         }
-
                         datald_output[offsetk + offsetj + ix] = score_max;
                     }
 
