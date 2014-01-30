@@ -39,6 +39,7 @@ bool image_blend::dofunc(const QString & func_name, const V3DPluginArgList & inp
 	if (func_name == tr("image_blend"))
 	{
         if (output.size() != 1) return false;
+        if (input.size() != 2) return false;
 
         char * inimg_file1 = ((vector<char*> *)(input.at(0).p))->at(0);
         char * inimg_file2 = ((vector<char*> *)(input.at(1).p))->at(0);
