@@ -41,59 +41,59 @@ bool image_blend::dofunc(const QString & func_name, const V3DPluginArgList & inp
         if (output.size() != 1) return false;
 
         char * inimg_file1 = ((vector<char*> *)(input.at(0).p))->at(0);
-        char * inimg_file2 = ((vector<char*> *)(output.at(0).p))->at(0);
+        char * inimg_file2 = ((vector<char*> *)(input.at(1).p))->at(0);
 
-        char * output_file = ((vector<char*> *)(input.at(1).p))->at(0);
+        char * output_file = ((vector<char*> *)(output.at(0).p))->at(0);
 
-        Image4DSimple *data1d1 = callback.loadImage(inimg_file1);
-        if(!data1d1 || !data1d1->valid())
-        {
-             v3d_msg("Fail to load the input image1.");
-             if (data1d1) {delete data1d1; data1d1=0;}
-             return false;
-        }
-
-        Image4DSimple *data1d2 = callback.loadImage(inimg_file2);
-        if(!data1d2 || !data1d2->valid())
-        {
-             v3d_msg("Fail to load the input image2.");
-             if (data1d2) {delete data1d2; data1d2=0;}
-             return false;
-        }
-
-        V3DLONG in_sz[4];
-        in_sz[0] = data1d1->getXDim();
-        in_sz[1] = data1d1->getYDim();
-        in_sz[2] = data1d1->getZDim();
-        in_sz[3] = 3;
-        V3DLONG pagesz = in_sz[0]*in_sz[1]*in_sz[2];
 
         unsigned char * image1 = 0;
-        image1 = data1d1->getRawData();
+        V3DLONG in_sz1[4];
+        int datatype1;
+        if(!simple_loadimage_wrapper(callback, inimg_file1, image1, in_sz1, datatype1))
+        {
+            cerr<<"load image1 "<<inimg_file1<<" error!"<<endl;
+            if (image1) {delete image1; image1=0;}
+            return false;
+        }
+        V3DLONG pagesz1 = in_sz1[0]*in_sz1[1]*in_sz1[2];
 
         unsigned char * image2 = 0;
-        image2 = data1d2->getRawData();
+        V3DLONG in_sz2[4];
+        int datatype2;
+        if(!simple_loadimage_wrapper(callback, inimg_file2, image2, in_sz2, datatype2))
+        {
+            cerr<<"load image2 "<<inimg_file2<<" error!"<<endl;
+             if (image2) {delete image2; image2=0;}
+            return false;
+        }
 
+        V3DLONG pagesz2 = in_sz2[0]*in_sz2[1]*in_sz2[2];
+
+        if(pagesz1 != pagesz2)
+        {
+             v3d_msg("Two images have differnt size.");
+             if (image1) {delete image1; image1=0;}
+             if (image2) {delete image2; image2=0;}
+             return false;
+        }
 
         unsigned char *data_blended = 0;
-        try {data_blended = new unsigned char [pagesz*3];}
+        try {data_blended = new unsigned char [pagesz1*3];}
         catch(...)  {v3d_msg("cannot allocate memory for data_blended."); return false;}
-        for(V3DLONG i = 0; i < pagesz*3; i++)
+        for(V3DLONG i = 0; i < pagesz1*3; i++)
         {
-            if(i < pagesz)
+            if(i < pagesz1)
                 data_blended[i] = image1[i];
-            else if(i < 2*pagesz)
-                data_blended[i] = image2[i-pagesz];
+            else if(i < 2*pagesz1)
+                data_blended[i] = image2[i-pagesz1];
             else
                 data_blended[i] = 0;
         }
-
-        simple_saveimage_wrapper(callback, output_file, (unsigned char *)data_blended, in_sz, 1);
+        in_sz1[3] = 3;
+        simple_saveimage_wrapper(callback, output_file, (unsigned char *)data_blended, in_sz1, 1);
 
         if (image1) {delete []image1; image1=0;}
         if (image2) {delete []image2; image2=0;}
-        if (data1d1) {delete data1d1; data1d1=0;}
-        if (data1d2) {delete data1d2; data1d2=0;}
         if (data_blended) {delete []data_blended; data_blended=0;}
 
 	}
