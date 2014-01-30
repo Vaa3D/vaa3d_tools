@@ -127,9 +127,8 @@ template <class T> bool compute_Anisotropy_sphere(const T* data1d, V3DLONG N, V3
             //output the result
             double pc1 = DD(3);
             double pc2 = DD(2);
-            double pc3 = DD(1);
-           // Score = Score + (pc1-pc2);
-            Score = pc1/pc2;
+           // double pc3 = DD(1);
+            Score = sqrt(pc1)/sqrt(pc2);
          }
         catch (...)
         {
@@ -293,7 +292,6 @@ void processImage(V3DPluginCallback2 &callback, QWidget *parent, int flag)
                             if(score_each > score_max) score_max = score_each;
                             else
                             {
-                                if(score_max>30.0) printf("(%d,%d,%d),%d,%.4f\n",ix,iy,iz,rs,score_max);
                                 break;
                             }
                         }
