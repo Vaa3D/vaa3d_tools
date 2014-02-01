@@ -11,6 +11,19 @@ ties names are:
 - Rem: a feature no longer available
 
 ============================================================================================
+Version 0.9.32
+February 1st, 2014
+--------------------------------------------------------------------------------------------
+- New: the interactive cube of the 3D reference system now has XYZ dimensions proportional to 
+       the one of the currently viewed ROI.
+- Fix: fixed bug which caused the "Import" dialog box to be shown when opening  volumes that
+       do not exist anymore from the "Recent volumes" menu.
+- New: added  "downsampling method"  combobox in TeraConverter.  Currently,  two options are
+       supported: Mean (average value within 2x2x2 cube) and Max (maximum value within 2x2x2
+       cube).
+--------------------------------------------------------------------------------------------
+
+
 Version 0.9.31
 January 29th, 2014
 --------------------------------------------------------------------------------------------

@@ -13,6 +13,9 @@ class teramanager::QGLRefSys : public QGLWidget
         int xRot;               //rotation angle (in degrees) along the X axis
         int yRot;               //rotation angle (in degrees) along the Y axis
         int zRot;               //rotation angle (in degrees) along the Z axis
+        float xDim;             //x dimension (between 0.0 and 1.0)
+        float yDim;             //y dimension (between 0.0 and 1.0)
+        float zDim;             //z dimension (between 0.0 and 1.0)
         QPoint lastPos;         //previous location of the mouse cursor to determine how much the object in the scene should be rotated, and in which direction
 
     public:
@@ -25,6 +28,7 @@ class teramanager::QGLRefSys : public QGLWidget
         int getXRot(){return xRot;}
         int getYRot(){return yRot;}
         int getZRot(){return zRot;}
+        void setDims(int dimX, int dimY, int dimZ);
 
     public slots:
 

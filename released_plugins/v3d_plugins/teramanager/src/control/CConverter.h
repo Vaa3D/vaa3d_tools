@@ -65,6 +65,7 @@ class teramanager::CConverter : public QThread
         int stacksWidth;            //width of each stack after conversion
         int stacksHeight;           //height of each stack after conversion
         int stacksDepth;            //depth of each stack after conversion (optional)
+        int downsamplingMethod;     //downsampling method
         string outVolPath;          //absolute path of the folder where to store the converted volume
         string outVolFormat;        //the unique ID of the volume's output format
         VolumeConverter *vc;        //handle of the <VolumeConverter> object which is responsible of volume conversion from the given format
@@ -111,6 +112,7 @@ class teramanager::CConverter : public QThread
             outVolPath = undefined_str;
             outVolFormat = undefined_str;
             fileMode = false;
+            downsamplingMethod = 0;
         }
 
     signals:

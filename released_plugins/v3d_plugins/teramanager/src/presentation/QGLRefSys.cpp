@@ -13,6 +13,9 @@ QGLRefSys::QGLRefSys(QWidget *parent) : QGLWidget(QGLFormat(QGL::SampleBuffers),
     xRot = 0;
     yRot = 0;
     zRot = 0;
+    xDim = 0.7f;
+    yDim = 0.7f;
+    zDim = 0.7f;
 
     setAttribute(Qt::WA_TranslucentBackground,true);
     setWindowFlags(Qt::FramelessWindowHint | Qt::WindowStaysOnTopHint );
@@ -43,6 +46,34 @@ QSize QGLRefSys::sizeHint() const
 //    while (angle > 360 * 16)
 //        angle -= 360 * 16;
 //}
+
+
+void QGLRefSys::setDims(int dimX, int dimY, int dimZ)
+{
+    if(dimX >= dimY && dimX >= dimZ)
+    {
+        xDim = 1.0;
+        yDim = static_cast<float>(dimY)/dimX;
+        zDim = static_cast<float>(dimZ)/dimX;
+    }
+    else if(dimY >= dimX && dimY >= dimZ)
+    {
+        yDim = 1.0;
+        xDim = static_cast<float>(dimX)/dimY;
+        zDim = static_cast<float>(dimZ)/dimY;
+    }
+    else if (dimZ >= dimY && dimZ >= dimX)
+    {
+        zDim = 1.0;
+        yDim = static_cast<float>(dimY)/dimZ;
+        xDim = static_cast<float>(dimX)/dimZ;
+    }
+    xDim = xDim < 0.2 ? 0.2 : xDim;
+    yDim = yDim < 0.2 ? 0.2 : yDim;
+    zDim = zDim < 0.2 ? 0.2 : zDim;
+    printf("\n\n PROVA3: xDim = %.2f, yDim = %.2f, zDim = %.2f\n\n", xDim, yDim, zDim);
+
+}
 
 void QGLRefSys::setXRotation(int angle)
 {
@@ -80,6 +111,11 @@ void QGLRefSys::initializeGL()
     glEnable(GL_DEPTH_TEST);       // activate the depth buffer
     glShadeModel(GL_SMOOTH);       // select shade model (can be either smooth or flat)
     glEnable(GL_MULTISAMPLE);      // activate multisample
+
+    glEnable (GL_LINE_SMOOTH);
+    glEnable (GL_BLEND);
+    glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glHint (GL_LINE_SMOOTH_HINT, GL_DONT_CARE);
 }
 
 
@@ -119,35 +155,35 @@ void QGLRefSys::paintGL()
         glColor3f(0.75,0.75,0.75);
     glBegin(GL_QUADS);
         //---------front-----------//
-        glVertex3f(1.0,1.0,1.0);
-        glVertex3f(-1.0,1.0,1.0);
-        glVertex3f(-1.0,-1.0,1.0);
-        glVertex3f(1.0,-1.0,1.0);
+        glVertex3f(xDim,yDim,zDim);
+        glVertex3f(-xDim,yDim,zDim);
+        glVertex3f(-xDim,-yDim,zDim);
+        glVertex3f(xDim,-yDim,zDim);
         //---------back----------//
-        glVertex3f(1.0,1.0,-1.0);
-        glVertex3f(-1.0,1.0,-1.0);
-        glVertex3f(-1.0,-1.0,-1.0);
-        glVertex3f(1.0,-1.0,-1.0);
+        glVertex3f(xDim,yDim,-zDim);
+        glVertex3f(-xDim,yDim,-zDim);
+        glVertex3f(-xDim,-yDim,-zDim);
+        glVertex3f(xDim,-yDim,-zDim);
         //---------top-----------//
-        glVertex3f(-1.0,1.0,1.0);
-        glVertex3f(1.0,1.0,1.0);
-        glVertex3f(1.0,1.0,-1.0);
-        glVertex3f(-1.0,1.0,-1.0);
+        glVertex3f(-xDim,yDim,zDim);
+        glVertex3f(xDim,yDim,zDim);
+        glVertex3f(xDim,yDim,-zDim);
+        glVertex3f(-xDim,yDim,-zDim);
         //-------bottom----------//
-        glVertex3f(1.0,-1.0,1.0);
-        glVertex3f(1.0,-1.0,-1.0);
-        glVertex3f(-1.0,-1.0,-1.0);
-        glVertex3f(-1.0,-1.0,1.0);
+        glVertex3f(xDim,-yDim,zDim);
+        glVertex3f(xDim,-yDim,-zDim);
+        glVertex3f(-xDim,-yDim,-zDim);
+        glVertex3f(-xDim,-yDim,zDim);
         //--------right----------//
-        glVertex3f(1.0,1.0,1.0);
-        glVertex3f(1.0,-1.0,1.0);
-        glVertex3f(1.0,-1.0,-1.0);
-        glVertex3f(1.0,1.0,-1.0);
+        glVertex3f(xDim,yDim,zDim);
+        glVertex3f(xDim,-yDim,zDim);
+        glVertex3f(xDim,-yDim,-zDim);
+        glVertex3f(xDim,yDim,-zDim);
         //---------left----------//
-        glVertex3f(-1.0,1.0,1.0);
-        glVertex3f(-1.0,-1.0,1.0);
-        glVertex3f(-1.0,-1.0,-1.0);
-        glVertex3f(-1.0,1.0,-1.0);
+        glVertex3f(-xDim,yDim,zDim);
+        glVertex3f(-xDim,-yDim,zDim);
+        glVertex3f(-xDim,-yDim,-zDim);
+        glVertex3f(-xDim,yDim,-zDim);
     glEnd();
 
     // CUBE CONTOUR
@@ -155,45 +191,45 @@ void QGLRefSys::paintGL()
         glColor3f(0.0,0.0,0.0);
     else
         glColor3f(0.5,0.5,0.5);
-    glLineWidth(2.0);
+    glLineWidth(1.0);
     glBegin(GL_LINES);
         //-------top lines---------//
-        glVertex3f(-1.0, 1.0, -1.0);
-        glVertex3f( 1.0, 1.0, -1.0);
-        glVertex3f( 1.0, 1.0, -1.0);
-        glVertex3f( 1.0, 1.0,  1.0);
-        glVertex3f( 1.0, 1.0,  1.0);
-        glVertex3f(-1.0, 1.0,  1.0);
-        glVertex3f(-1.0, 1.0,  1.0);
-        glVertex3f(-1.0, 1.0, -1.0);
+        glVertex3f(-xDim, yDim, -zDim);
+        glVertex3f( xDim, yDim, -zDim);
+        glVertex3f( xDim, yDim, -zDim);
+        glVertex3f( xDim, yDim,  zDim);
+        glVertex3f( xDim, yDim,  zDim);
+        glVertex3f(-xDim, yDim,  zDim);
+        glVertex3f(-xDim, yDim,  zDim);
+        glVertex3f(-xDim, yDim, -zDim);
         //------bottom lines-------//
-        glVertex3f(-1.0, -1.0, -1.0);
-        glVertex3f( 1.0, -1.0, -1.0);
-        glVertex3f( 1.0, -1.0, -1.0);
-        glVertex3f( 1.0, -1.0,  1.0);
-        glVertex3f( 1.0, -1.0,  1.0);
-        glVertex3f(-1.0, -1.0,  1.0);
-        glVertex3f(-1.0, -1.0,  1.0);
-        glVertex3f(-1.0, -1.0, -1.0);
+        glVertex3f(-xDim, -yDim, -zDim);
+        glVertex3f( xDim, -yDim, -zDim);
+        glVertex3f( xDim, -yDim, -zDim);
+        glVertex3f( xDim, -yDim,  zDim);
+        glVertex3f( xDim, -yDim,  zDim);
+        glVertex3f(-xDim, -yDim,  zDim);
+        glVertex3f(-xDim, -yDim,  zDim);
+        glVertex3f(-xDim, -yDim, -zDim);
         //--------side lines-------//
-        glVertex3f(-1.0, 1.0, -1.0);
-        glVertex3f(-1.0, -1.0, -1.0);
-        glVertex3f( 1.0, 1.0, -1.0);
-        glVertex3f( 1.0, -1.0, -1.0);
-        glVertex3f( 1.0, 1.0,  1.0);
-        glVertex3f( 1.0, -1.0,  1.0);
-        glVertex3f(-1.0, 1.0,  1.0);
-        glVertex3f(-1.0, -1.0,  1.0);
+        glVertex3f(-xDim, yDim,  -zDim);
+        glVertex3f(-xDim, -yDim, -zDim);
+        glVertex3f( xDim, yDim,  -zDim);
+        glVertex3f( xDim, -yDim, -zDim);
+        glVertex3f( xDim, yDim,  zDim);
+        glVertex3f( xDim, -yDim, zDim);
+        glVertex3f(-xDim, yDim,  zDim);
+        glVertex3f(-xDim, -yDim, zDim);
     glEnd(); // GL_LINES
 
     // AXES
     double radius=0.2;
-    double height=1.4;
+    double height=2.39;
     float headRadius = 2.3*radius;
     float headHeight = 0.7;
     const double PI = 3.1415926535897;
     double resolution = PI/200;
-    double shift = 1.0;
+    double shift = 0.01;
     if(isEnabled())
         glColor3f(0.0,200.0/255,0.0);
     else
@@ -290,22 +326,22 @@ void QGLRefSys::paintGL()
             glColor3f(0.0,200.0/255,0.0);
         else
             glColor3f(0.6,0.6,0.6);
-        glVertex3f(0,1,0);
-        glVertex3f(0,1+headHeight+height,0);
+        glVertex3f(0,shift,0);
+        glVertex3f(0,shift+headHeight+height,0);
         //----------------X-axis--------------//
         if(isEnabled())
             glColor3f(1.0,0.0,0.0);
         else
             glColor3f(0.6,0.6,0.6);
-        glVertex3f(-1,0,0);
-        glVertex3f(-1-headHeight-height,0,0);
+        glVertex3f(-shift,0,0);
+        glVertex3f(-shift-headHeight-height,0,0);
         //----------------Z-axis--------------//
         if(isEnabled())
             glColor3f(0.0,0.0,1.0);
         else
             glColor3f(0.6,0.6,0.6);
-        glVertex3f(0,0,1);
-        glVertex3f(0,0,1+headHeight+height);
+        glVertex3f(0,0,shift);
+        glVertex3f(0,0,shift+headHeight+height);
     glEnd();
 
 }

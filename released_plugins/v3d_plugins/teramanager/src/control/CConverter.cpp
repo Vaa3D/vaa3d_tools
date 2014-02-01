@@ -152,6 +152,13 @@ void CConverter::setMembers(PConverter* pConverter) throw (MyException)
         stacksWidth = pConverter->stacksWidthField->value();
         stacksHeight = pConverter->stacksHeightField->value();
         stacksDepth = pConverter->stacksDepthField->value();
+        downsamplingMethod = pConverter->downsamplingCbox->currentIndex();
+        if(downsamplingMethod == 0)
+            downsamplingMethod = HALVE_BY_MEAN;
+        else if(downsamplingMethod == 1)
+            downsamplingMethod = HALVE_BY_MAX;
+        else
+            throw MyException(strprintf("Unsupported downsampling method").c_str());
     }
 }
 
@@ -180,11 +187,11 @@ void CConverter::run()
                 throw MyException(QString("Unable to find the directory \"").append(outVolPath.c_str()).append("\"").toStdString().c_str());
 
             if(outVolFormat.compare(STACKED_FORMAT) == 0)
-                vc->generateTiles(outVolPath, resolutions, stacksHeight, stacksWidth);
+                vc->generateTiles(outVolPath, resolutions, stacksHeight, stacksWidth, downsamplingMethod);
             else if(outVolFormat.compare(TILED_FORMAT) == 0)
-                vc->generateTilesVaa3DRaw(outVolPath, resolutions, stacksHeight, stacksWidth, stacksDepth);
+                vc->generateTilesVaa3DRaw(outVolPath, resolutions, stacksHeight, stacksWidth, stacksDepth, downsamplingMethod);
             else if(outVolFormat.compare(TILED_MC_FORMAT) == 0)
-                vc->generateTilesVaa3DRawMC(outVolPath, resolutions, stacksHeight, stacksWidth, stacksDepth);
+                vc->generateTilesVaa3DRawMC(outVolPath, resolutions, stacksHeight, stacksWidth, stacksDepth, downsamplingMethod);
             else
             {
                 char errMsg[1024];

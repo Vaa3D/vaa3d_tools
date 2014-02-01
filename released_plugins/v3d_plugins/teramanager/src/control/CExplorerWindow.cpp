@@ -223,6 +223,7 @@ void CExplorerWindow::show()
         this->window3D->show();
 
         // updating reference system
+        PMain::getInstance()->refSys->setDims(volH1-volH0+1, volV1-volV0+1, volD1-volD0+1);
         this->view3DWidget->updateGL();     // if omitted, Vaa3D_rotationchanged somehow resets rotation to 0,0,0
         Vaa3D_rotationchanged(0);
 
@@ -1265,6 +1266,9 @@ void CExplorerWindow::restoreViewFrom(CExplorerWindow* source) throw (MyExceptio
         this->window3D->raise();
         this->window3D->activateWindow();
         this->window3D->show();
+
+        // update reference system dimension
+        PMain::getInstance()->refSys->setDims(volH1-volH0+1, volV1-volV0+1, volD1-volD0+1);
 
         //current windows not gets ready to user input
         isReady = true;

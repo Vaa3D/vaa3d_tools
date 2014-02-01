@@ -169,6 +169,9 @@ PConverter::PConverter(V3DPluginCallback *callback, QWidget *parent) : QWidget(p
     stacksDepthField->setValue(CSettings::instance()->getVCStacksDepth());
     memoryField = new QLabel();
     memoryField->setAlignment(Qt::AlignLeft);
+    downsamplingCbox = new QComboBox(this);
+    downsamplingCbox->addItem(QString("Mean (2").append(QChar(0x00D7)).append("2").append(QChar(0x00D7)).append("2)"));
+    downsamplingCbox->addItem(QString("Max  (2").append(QChar(0x00D7)).append("2").append(QChar(0x00D7)).append("2)"));
 
     //conversion form layout
     QVBoxLayout* conversionFormLayout = new QVBoxLayout();
@@ -197,25 +200,38 @@ PConverter::PConverter(V3DPluginCallback *callback, QWidget *parent) : QWidget(p
     resolutionsLayout->addWidget(sizeLabel, 0, 3, 1, 2);
     resolutionLayout->addLayout(resolutionsLayout);
     conversionFormLayout->addLayout(resolutionLayout);
-    conversionFormLayout->addSpacing(50);
+    conversionFormLayout->addSpacing(30);
 
     QHBoxLayout* stacksDimLayout = new QHBoxLayout();
     QLabel* stacksDimLabel = new QLabel("Stacks dims:");
     stacksDimLabel->setFixedWidth(220);
     stacksDimLayout->addWidget(stacksDimLabel);
     stacksDimLayout->addWidget(stacksWidthField);
-    stacksDimLayout->addSpacing(10);
+    stacksWidthField->setFixedWidth(160);
+    stacksDimLayout->addStretch(1);
     stacksDimLayout->addWidget(stacksHeightField);
-    stacksDimLayout->addSpacing(10);
+    stacksHeightField->setFixedWidth(160);
+    stacksDimLayout->addStretch(1);
     stacksDimLayout->addWidget(stacksDepthField);
-
+    stacksDepthField->setFixedWidth(160);
     conversionFormLayout->addLayout(stacksDimLayout);
+
+    QHBoxLayout* downSampleMethLayout = new QHBoxLayout();
+    QLabel* downSampleMethLabel = new QLabel("Downsampling method:");
+    downSampleMethLabel->setFixedWidth(220);
+    downSampleMethLayout->addWidget(downSampleMethLabel);
+    downSampleMethLayout->addWidget(downsamplingCbox, 0, Qt::AlignLeft);
+    downsamplingCbox->setFixedWidth(160);
+    downSampleMethLayout->addStretch(1);
+
     QHBoxLayout* ramLayout = new QHBoxLayout();
     QLabel* memoryLabel = new QLabel("Estimated RAM usage:");
     memoryLabel->setFixedWidth(220);
     ramLayout->addWidget(memoryLabel);
     ramLayout->addWidget(memoryField, 0, Qt::AlignLeft);
     ramLayout->addStretch(1);
+    conversionFormLayout->addSpacing(10);
+    conversionFormLayout->addLayout(downSampleMethLayout);
     conversionFormLayout->addSpacing(10);
     conversionFormLayout->addLayout(ramLayout);
     conversion_panel->setLayout(conversionFormLayout);

@@ -864,6 +864,7 @@ void PMain::reset()
     refSys->setXRotation(200);
     refSys->setYRotation(50);
     refSys->setZRotation(0);
+    refSys->setDims(1,1,1);
 
     //resetting progress bar and text
     progressBar->setEnabled(false);
@@ -988,10 +989,14 @@ void PMain::openVolume(string path /* = "" */)
             if (import_path.isEmpty())
                 return;
         }
+        else if(!QFile::exists(path.c_str()))
+            throw MyException(strprintf("Path \"%s\" does not exist", path.c_str()).c_str());
 
-        //first checking that no volume has imported yet
+
+        //then checking that no volume has imported yet
         if(!CImport::instance()->isEmpty())
             throw MyException("A volume has been already imported! Please close the current volume first.");
+
 
         //storing the path into CSettings
         CSettings::instance()->setVolumePathLRU(qPrintable(import_path));

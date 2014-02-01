@@ -84,6 +84,7 @@ class teramanager::PConverter : public QWidget
         QSpinBox* stacksHeightField;    //field to select stacks height
         QSpinBox* stacksDepthField;     //field to select stacks depth (optional)
         QLabel* memoryField;            //field for memory usage estimation
+        QComboBox* downsamplingCbox;    //downsampling method
 
         //friend class declarations
         friend class CConverter;
