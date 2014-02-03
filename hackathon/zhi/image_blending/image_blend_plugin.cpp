@@ -228,10 +228,18 @@ bool image_blend::dofunc(const QString & func_name, const V3DPluginArgList & inp
 
         for(V3DLONG i = 0; i < pagesz*3; i++)
             data_blended[i] = 0;
+        V3DLONG j = 0;
         for(V3DLONG i = (channel_output1-1)*pagesz; i < channel_output1*pagesz; i++)
-            data_blended[i] = image1[(channel_input1-1)*pagesz + i];
+        {
+            data_blended[i] = image1[(channel_input1-1)*pagesz + j];
+            j++;
+        }
+        j = 0;
         for(V3DLONG i = (channel_output2-1)*pagesz; i < channel_output2*pagesz; i++)
-            data_blended[i] = image2[(channel_input2-1)*pagesz + i];
+        {
+            data_blended[i] = image2[(channel_input2-1)*pagesz + j];
+            j++;
+        }
 
         simple_saveimage_wrapper(callback, output_file, (unsigned char *)data_blended, in_sz, 1);
 
