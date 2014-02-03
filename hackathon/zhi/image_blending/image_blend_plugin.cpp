@@ -186,7 +186,7 @@ bool image_blend::dofunc(const QString & func_name, const V3DPluginArgList & inp
             return false;
         }
 
-        if(in_sz1[3] < channel_input1)
+        if(channel_input1 > in_sz1[3] || channel_input1 < 1)
         {
             cerr<<"Invalid channel number for: "<<inimg_file1.toStdString()<<" error!"<<endl;
             if (image1) {delete []image1; image1=0;}
@@ -201,7 +201,7 @@ bool image_blend::dofunc(const QString & func_name, const V3DPluginArgList & inp
              if (image2) {delete []image2; image2=0;}
             return false;
         }
-        if(in_sz2[3] < channel_input2)
+        if(channel_input2 > in_sz2[3] || channel_input2 < 1)
         {
             cerr<<"Invalid channel number for: "<<inimg_file2.toStdString()<<" error!"<<endl;
             if (image2) {delete []image2; image2=0;}
@@ -231,7 +231,7 @@ bool image_blend::dofunc(const QString & func_name, const V3DPluginArgList & inp
         for(V3DLONG i = (channel_output1-1)*pagesz; i < channel_output1*pagesz; i++)
             data_blended[i] = image1[(channel_input1-1)*pagesz + i];
         for(V3DLONG i = (channel_output2-1)*pagesz; i < channel_output2*pagesz; i++)
-            data_blended[i] = image2[(channel_input2-1)*pagesz + i - pagesz];
+            data_blended[i] = image2[(channel_input2-1)*pagesz + i];
 
         simple_saveimage_wrapper(callback, output_file, (unsigned char *)data_blended, in_sz, 1);
 
