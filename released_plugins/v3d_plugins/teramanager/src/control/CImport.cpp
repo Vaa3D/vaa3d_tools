@@ -226,10 +226,9 @@ void CImport::run()
         }
 
         /********************* 2) IMPORTING OTHER VOLUMES ***********************
-        If multiresolution mode is enabled, importing all the available resolutions
-        within the current volume's parent directory.
+        Importing all the available resolutions within the current volume's
+        parent directory.
         *************************************************************************/
-        if(multiresMode)
         {
             /**/itm::debug(itm::LEV_MAX, "Importing other volumes of the multiresolution octree", __itm__current__function__);
 
@@ -370,11 +369,10 @@ void CImport::run()
         }
 
         /********************** 3) GENERATING VOLUME 3D MAP ***********************
-        If multiresolution mode is enabled, it could be convenient to generate once
-        for all a volume map from a low-resolution volume.
+        It is convenient to generate once for all a volume map from one of the
+        lowest-resolution volumes.
         *************************************************************************/
         Image4DSimple* volMapImage = 0;
-        if(multiresMode)
         {
             //searching for an already existing map, if not available we try to generate it from the lower resolutions
             string volMapPath = path;

@@ -42,7 +42,7 @@ void CSettings::uninstance()
     if(uniqueInstance)
     {
         delete uniqueInstance;
-        uniqueInstance = NULL;
+        uniqueInstance = 0;
     }
 }
 
@@ -61,8 +61,9 @@ void CSettings::loadDefaultSettings()
     volumePathLRU = "";
     annotationPathLRU = "";
     volMapSizeLimit = 30;
-    VOIdimV = VOIdimH = 200;
-    VOIdimD = 50;
+    VOIdimV = VOIdimH = 256;
+    VOIdimD = 128;
+    VOIdimT = 20;
     traslX = traslY = traslZ = 50;  //percentage value
 
     //TeraConverter settings
@@ -98,6 +99,7 @@ void CSettings::writeSettings()
     settings.setValue("VOIdimV", VOIdimV);
     settings.setValue("VOIdimH", VOIdimH);
     settings.setValue("VOIdimD", VOIdimD);
+    settings.setValue("VOIdimT", VOIdimT);
     settings.setValue("traslX", traslX);
     settings.setValue("traslY", traslY);
     settings.setValue("traslZ", traslZ);
@@ -134,7 +136,9 @@ void CSettings::readSettings()
     if(settings.contains("VOIdimH"))
         VOIdimH = settings.value("VOIdimH").toInt();
     if(settings.contains("VOIdimD"))
-        VOIdimD = settings.value("VOIdimD").toInt();    
+        VOIdimD = settings.value("VOIdimD").toInt();
+    if(settings.contains("VOIdimT"))
+        VOIdimT = settings.value("VOIdimT").toInt();
     if(settings.contains("traslX"))
         traslX = settings.value("traslX").toInt();
     if(settings.contains("traslY"))

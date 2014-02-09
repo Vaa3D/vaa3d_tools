@@ -41,8 +41,7 @@
 
 using namespace teramanager;
 
-string PMain::HTwelcome = "Go to <i>File->Open volume</i> and select the directory of any resolution. The volume will be opened in <b>multiresolution mode</b>. "
-                          "To disable multiresolution mode or to change volume import options, go to <i>Options->Import</i>.";
+string PMain::HTwelcome = "Go to <i>File->Open volume</i> and select the directory of any resolution. To change volume import options, go to <i>Options->Import</i>.";
 //string PMain::HTbase =    "<u>Navigate through different resolutions by</u>:<br><br>"
 //                          "<b>zoom-in</b>: right-click-><i>Zoom-in HighRezImage</i> on image/marker;<br>"
 //                          "<b>zoom-out</b>: mouse scroll down;<br>"
@@ -52,7 +51,7 @@ string PMain::HTvoiDim =  "Set the <b>dimensions</b> (in voxels) of the volume o
                           "Please be careful not to set a too big region or you will soon use up your <b>graphic card's memory</b>. ";
 string PMain::HTjumpToRes = "Choose from pull-down menu the <b>resolution</b> you want to jump to and the displayed image will be loaded at the resolution selected. "
                             "To load only a volume of interest (<b>VOI</b>) at the selected resolution, you may use the Vaa3D <i>Volume Cut</i> scrollbars "
-                            "or the <i>Highest resolution volume's coordinates</i> spinboxes embedded in this plugin.";
+                            "or the <i>Global coordinates</i> spinboxes embedded in this plugin.";
 string PMain::HTzoomOutThres = "Select the <b>zoom</b> factor threshold to restore the lower resolution when zooming-out with <i>mouse scroll down</i>. The default is set to 0. "
                            "Set it to -100 to disable this feature.";
 string PMain::HTzoomInThres = "Select the <b>zoom</b> factor threshold to trigger the higher resolution when zooming-in with <i>mouse scroll up</i>. The default is set to 50. "
@@ -129,7 +128,7 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     V3D_env = callback;
     parentWidget = parent;
     annotationsPathLRU = "";
-    marginLeft = 90;
+    marginLeft = 85;
 
     //creating fonts
     QFont tinyFont = QApplication::font();
@@ -140,8 +139,6 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     //import form widgets
     import_form = new QWidget();
     reimport_checkbox = new QCheckBox("Re-import");
-    enableMultiresMode = new QCheckBox("Enable multiresolution mode");
-    enableMultiresMode->setChecked(true);
     volMapWidget = new QWidget();
     regenerateVolMap = new QCheckBox("Regenerate volume map");
     regenerateVolMap->setChecked(false);
@@ -226,13 +223,17 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     connect(curveAspectSkeleton, SIGNAL(changed()), this, SLOT(curveAspectChanged()));
     connect(curveDimsSpinBox, SIGNAL(valueChanged(int)), this, SLOT(curveDimsChanged(int)));
 
+    // "Debug" menu
     debugMenu = menuBar->addMenu("Debug");
-    //debugAction1 = new QAction("Action 1", debugMenu);
-    //connect(debugAction1, SIGNAL(triggered()), this, SLOT(debugAction1Triggered()));
-    //debugMenu->addAction(debugAction1);
+    /* ------------------------------ debug action 1 ------------------------------ */
+    debugAction1 = new QAction("Generate time series", debugMenu);
+    connect(debugAction1, SIGNAL(triggered()), this, SLOT(debugAction1Triggered()));
+    debugMenu->addAction(debugAction1);    
+    /* --------------------------------- show log --------------------------------- */
     debugShowLogAction = new QAction("Show log", debugMenu);
     connect(debugShowLogAction, SIGNAL(triggered()), this, SLOT(showLogTriggered()));
-    debugMenu->addAction(debugShowLogAction);
+    debugMenu->addAction(debugShowLogAction);    
+    /* ------------------------------ streaming steps ----------------------------- */
     debugStreamingStepsMenu = new QMenu("Streaming steps");
     debugStreamingStepsActionWidget = new QWidgetAction(this);
     debugStreamingStepsSBox = new QSpinBox();
@@ -240,8 +241,8 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     debugStreamingStepsSBox->setMaximum(10);
     debugStreamingStepsActionWidget->setDefaultWidget(debugStreamingStepsSBox);
     debugStreamingStepsMenu->addAction(debugStreamingStepsActionWidget);
-    debugMenu->addMenu(debugStreamingStepsMenu);
-
+    debugMenu->addMenu(debugStreamingStepsMenu);    
+    /* --------------------------------- verbosity -------------------------------- */
     debugVerbosityMenu = new QMenu("Verbosity");
     debugVerbosityActionWidget = new QWidgetAction(this);
     debugVerbosityCBox = new QComboBox();
@@ -255,16 +256,23 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     debugVerbosityActionWidget->setDefaultWidget(debugVerbosityCBox);
     debugVerbosityMenu->addAction(debugVerbosityActionWidget);
     connect(debugVerbosityCBox, SIGNAL(currentIndexChanged(int)), this, SLOT(verbosityChanged(int)));
-    debugMenu->addMenu(debugVerbosityMenu);
+    debugMenu->addMenu(debugVerbosityMenu);    
+    /* -------------------------------- time series ------------------------------- */
+    debugTimeSeriesMenu = new QMenu("Time series size");
+    debugTimeSeriesWidget = new QWidgetAction(this);
+    debugTimeSeriesSBox = new QSpinBox();
+    debugTimeSeriesSBox->setMinimum(1);
+    debugTimeSeriesSBox->setMaximum(500);
+    debugTimeSeriesSBox->setValue(100);
+    debugTimeSeriesWidget->setDefaultWidget(debugTimeSeriesSBox);
+    debugTimeSeriesMenu->addAction(debugTimeSeriesWidget);
+    debugMenu->addMenu(debugTimeSeriesMenu);
 
     helpMenu = menuBar->addMenu("Help");
     aboutAction = new QAction("About", this);
     aboutAction->setIcon(QIcon(":/icons/about.png"));
     connect(aboutAction, SIGNAL(triggered()), this, SLOT(about()));
     helpMenu->addAction(aboutAction);
-
-    refSys = new QGLRefSys(this);
-    refSys->installEventFilter(this);
 
     //toolbar
     toolBar = new QToolBar("ToolBar", this);
@@ -301,92 +309,11 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     toolBar->setStyleSheet("QToolBar{background:qlineargradient(x1: 0, y1: 0, x2: 1, y2: 0,"
                            "stop: 0 rgb(150,150,150), stop: 1 rgb(190,190,190));}");
 
-    //multiresolution mode widgets
-    multires_panel = new QGroupBox("Multiresolution mode");
-    gradientBar = new QGradientBar(this);
-    gradientBar->installEventFilter(this);
-    Vdim_sbox = new QSpinBox();
-    Vdim_sbox->setAlignment(Qt::AlignCenter);
-    Vdim_sbox->setMaximum(1000);
-    Vdim_sbox->setValue(CSettings::instance()->getVOIdimV());
-    Vdim_sbox->setSuffix(" (Y)");
-    Vdim_sbox->installEventFilter(this);
-    Hdim_sbox = new QSpinBox();
-    Hdim_sbox->setAlignment(Qt::AlignCenter);
-    Hdim_sbox->setMaximum(1000);
-    Hdim_sbox->setValue(CSettings::instance()->getVOIdimH());
-    Hdim_sbox->setSuffix(" (X)");
-    Hdim_sbox->installEventFilter(this);
-    Ddim_sbox = new QSpinBox();
-    Ddim_sbox->setAlignment(Qt::AlignCenter);
-    Ddim_sbox->setMaximum(1000);
-    Ddim_sbox->setValue(CSettings::instance()->getVOIdimD());
-    Ddim_sbox->setSuffix(" (Z)");
-    Ddim_sbox->installEventFilter(this);
-    by_label_6 = new QLabel(QChar(0x00D7));
-    by_label_7 = new QLabel(QChar(0x00D7));
-    zoominVoiSize = new QLabel();
-    zoominVoiSize->setAlignment(Qt::AlignCenter);
-    zoominVoiSize->setStyleSheet("border: 1px solid; border-color: gray; background-color: rgb(245,245,245); padding-left:5px; padding-right:5px");
-    zoominVoiSize->setFont(tinyFont);
-    resolution_cbox = new QComboBox();
-    resolution_cbox->installEventFilter(this);
-    zoomOutSens = new QSlider(Qt::Horizontal, this);
-    zoomOutSens->setTickPosition(QSlider::TicksBelow);
-    zoomOutSens->setMinimum(-100);
-    zoomOutSens->setMaximum(0);
-    zoomOutSens->setSingleStep(10);
-    zoomOutSens->setPageStep(20);
-    zoomOutSens->installEventFilter(this);
-    zoomInSens = new QSlider(Qt::Horizontal, this);
-    zoomInSens->setTickPosition(QSlider::TicksBelow);
-    zoomInSens->setMinimum(0);
-    zoomInSens->setMaximum(100);
-    zoomInSens->setSingleStep(10);
-    zoomInSens->setPageStep(20);
-    zoomInSens->installEventFilter(this);
-    cacheSens = new QSlider(Qt::Horizontal, this);
-    cacheSens->setTickPosition(QSlider::TicksBelow);
-    cacheSens->setMinimum(0);
-    cacheSens->setMaximum(100);
-    cacheSens->setSingleStep(5);
-    cacheSens->setPageStep(5);
-    cacheSens->installEventFilter(this);
-    traslXpos = new QArrowButton(this, QColor(255,0,0), 15, 6, 0, Qt::LeftToRight, true);
-    traslXneg = new QArrowButton(this, QColor(255,0,0), 15, 6, 0, Qt::RightToLeft, true);
-    traslXlabel = new QLabel("");
-    traslYpos = new QArrowButton(this, QColor(0,200,0), 15, 6, 0, Qt::LeftToRight, true);
-    traslYneg = new QArrowButton(this, QColor(0,200,0), 15, 6, 0, Qt::RightToLeft, true);
-    traslYlabel = new QLabel("");
-    traslZpos = new QArrowButton(this, QColor(0,0,255), 15, 6, 0, Qt::LeftToRight, true);
-    traslZneg = new QArrowButton(this, QColor(0,0,255), 15, 6, 0, Qt::RightToLeft, true);
-    traslZlabel = new QLabel("");
-    traslXpos->installEventFilter(this);
-    traslXneg->installEventFilter(this);
-    traslYpos->installEventFilter(this);
-    traslYneg->installEventFilter(this);
-    traslZpos->installEventFilter(this);
-    traslZneg->installEventFilter(this);
-    controlsResetButton = new QPushButton(this);
-    controlsResetButton->setIcon(QIcon(":/icons/reset.png"));
-    controlsLineTree = new QLineTree(this, Qt::gray, 0.5, 3, 11);
-    zoomInMethod = new QComboBox(this);
-    zoomInMethod->addItem("WYSIWYG (5 markers)");
-    zoomInMethod->addItem("Foreground (20 markers + mean-shift)");
-    zoomInMethod->addItem("Foreground (1 marker)");
-    zoomInMethod->installEventFilter(this);
+    // TAB widget: where to store pages
+    tabs = new QTabWidget(this);
 
-    #ifndef USE_EXPERIMENTAL_FEATURES
-    zoomInMethod->setCurrentIndex(0);
-    zoomInMethod->setEnabled(false);    
-    zoomInSens->setEnabled(false);
-    #else
-    zoomInMethod->setCurrentIndex(1);
-    #endif
-
-
-    //info panel widgets
-    info_panel = new QGroupBox("Volume's informations");
+    //Page "Volume's info": contains informations of the loaded volume
+    info_page = new QWidget();
     vol_size_voxel_label = new QLabel();
     vol_size_voxel_field = new QLabel();
     vol_size_voxel_field->setAlignment(Qt::AlignCenter);
@@ -419,7 +346,7 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     vol_depth_field = new QLabel();
     vol_depth_field->setAlignment(Qt::AlignCenter);
     vol_depth_field->setStyleSheet("border: 1px solid; border-color: gray; background-color: rgb(245,245,245); padding-left:5px; padding-right:5px");
-    vol_depth_field->setFont(tinyFont);    
+    vol_depth_field->setFont(tinyFont);
     vol_height_mm_field = new QLabel();
     vol_height_mm_field->setAlignment(Qt::AlignCenter);
     vol_height_mm_field->setStyleSheet("border: 1px solid; border-color: gray; background-color: rgb(245,245,245); padding-left:5px; padding-right:5px");
@@ -497,8 +424,101 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     org_D_field->setStyleSheet("border: 1px solid; border-color: gray; background-color: rgb(245,245,245); padding-left:5px; padding-right:5px");
     org_D_field->setFont(tinyFont);
 
-    //subvol panel widgets
-    subvol_panel = new QGroupBox("Highest resolution volume's coordinates");
+    //Page "Controls": contains navigation controls
+    /* ------- local viewer panel widgets ------- */
+    controls_page = new QWidget();
+    localViewer_panel = new QGroupBox("Local viewer");
+    gradientBar = new QGradientBar(this);
+    gradientBar->installEventFilter(this);
+    Vdim_sbox = new QSpinBox();
+    Vdim_sbox->setAlignment(Qt::AlignCenter);
+    Vdim_sbox->setMaximum(1000);
+    Vdim_sbox->setValue(CSettings::instance()->getVOIdimV());
+    Vdim_sbox->setSuffix(" (Y)");
+    Vdim_sbox->installEventFilter(this);
+    Hdim_sbox = new QSpinBox();
+    Hdim_sbox->setAlignment(Qt::AlignCenter);
+    Hdim_sbox->setMaximum(1000);
+    Hdim_sbox->setValue(CSettings::instance()->getVOIdimH());
+    Hdim_sbox->setSuffix(" (X)");
+    Hdim_sbox->installEventFilter(this);
+    Ddim_sbox = new QSpinBox();
+    Ddim_sbox->setAlignment(Qt::AlignCenter);
+    Ddim_sbox->setMaximum(1000);
+    Ddim_sbox->setValue(CSettings::instance()->getVOIdimD());
+    Ddim_sbox->setSuffix(" (Z)");
+    Ddim_sbox->installEventFilter(this);
+    Tdim_sbox = new QSpinBox();
+    Tdim_sbox->setAlignment(Qt::AlignCenter);
+    Tdim_sbox->setMaximum(1000);
+    Tdim_sbox->setMinimum(1);
+    Tdim_sbox->setValue(CSettings::instance()->getVOIdimT());
+    Tdim_sbox->setSuffix(" (t)");
+    Tdim_sbox->installEventFilter(this);
+
+    resolution_cbox = new QComboBox();
+    resolution_cbox->installEventFilter(this);
+    /* ------- zoom options panel widgets ------- */
+    zoom_panel = new QGroupBox("Zoom-in/out");
+    zoomOutSens = new QSlider(Qt::Horizontal, this);
+    zoomOutSens->setTickPosition(QSlider::TicksBelow);
+    zoomOutSens->setMinimum(-100);
+    zoomOutSens->setMaximum(0);
+    zoomOutSens->setSingleStep(10);
+    zoomOutSens->setPageStep(20);
+    zoomOutSens->installEventFilter(this);
+    zoomInSens = new QSlider(Qt::Horizontal, this);
+    zoomInSens->setTickPosition(QSlider::TicksBelow);
+    zoomInSens->setMinimum(0);
+    zoomInSens->setMaximum(100);
+    zoomInSens->setSingleStep(10);
+    zoomInSens->setPageStep(20);
+    zoomInSens->installEventFilter(this);
+    cacheSens = new QSlider(Qt::Horizontal, this);
+    cacheSens->setTickPosition(QSlider::TicksBelow);
+    cacheSens->setMinimum(0);
+    cacheSens->setMaximum(100);
+    cacheSens->setSingleStep(5);
+    cacheSens->setPageStep(5);
+    cacheSens->installEventFilter(this);
+    controlsResetButton = new QPushButton(this);
+    controlsResetButton->setIcon(QIcon(":/icons/reset.png"));
+    controlsLineTree = new QLineTree(this, Qt::gray, 0.5, 3, 11);
+    zoomInMethod = new QComboBox(this);
+    zoomInMethod->addItem("WYSIWYG (5 markers)");
+    zoomInMethod->addItem("Foreground (20 markers + mean-shift)");
+    zoomInMethod->addItem("Foreground (1 marker)");
+    zoomInMethod->installEventFilter(this);
+    #ifndef USE_EXPERIMENTAL_FEATURES
+    zoomInMethod->setCurrentIndex(0);
+    zoomInMethod->setEnabled(false);    
+    zoomInSens->setEnabled(false);
+    #else
+    zoomInMethod->setCurrentIndex(1);
+    #endif
+
+    //"Global coordinates" widgets
+    globalCoord_panel = new QGroupBox("Global coordinates");
+    traslXpos = new QArrowButton(this, QColor(255,0,0), 15, 6, 0, Qt::LeftToRight, true);
+    traslXneg = new QArrowButton(this, QColor(255,0,0), 15, 6, 0, Qt::RightToLeft, true);
+    traslXlabel = new QLabel("");
+    traslYpos = new QArrowButton(this, QColor(0,200,0), 15, 6, 0, Qt::LeftToRight, true);
+    traslYneg = new QArrowButton(this, QColor(0,200,0), 15, 6, 0, Qt::RightToLeft, true);
+    traslYlabel = new QLabel("");
+    traslZpos = new QArrowButton(this, QColor(0,0,255), 15, 6, 0, Qt::LeftToRight, true);
+    traslZneg = new QArrowButton(this, QColor(0,0,255), 15, 6, 0, Qt::RightToLeft, true);
+    traslZlabel = new QLabel("");
+    traslTpos = new QArrowButton(this, QColor(150,150,150), 15, 6, 0, Qt::LeftToRight, true);
+    traslTneg = new QArrowButton(this, QColor(150,150,150), 15, 6, 0, Qt::RightToLeft, true);
+    traslTlabel = new QLabel("");
+    traslXpos->installEventFilter(this);
+    traslXneg->installEventFilter(this);
+    traslYpos->installEventFilter(this);
+    traslYneg->installEventFilter(this);
+    traslZpos->installEventFilter(this);
+    traslZneg->installEventFilter(this);
+    traslTpos->installEventFilter(this);
+    traslTneg->installEventFilter(this);
     V0_sbox = new QSpinBox();
     V0_sbox->setAlignment(Qt::AlignCenter);
     V1_sbox = new QSpinBox();
@@ -511,22 +531,28 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     D0_sbox->setAlignment(Qt::AlignCenter);
     D1_sbox = new QSpinBox();
     D1_sbox->setAlignment(Qt::AlignCenter);
+    T0_sbox = new QSpinBox();
+    T0_sbox->setAlignment(Qt::AlignCenter);
+    T1_sbox = new QSpinBox();
+    T1_sbox->setAlignment(Qt::AlignCenter);
     V0_sbox->installEventFilter(this);
     V1_sbox->installEventFilter(this);
     H0_sbox->installEventFilter(this);
     H1_sbox->installEventFilter(this);
     D0_sbox->installEventFilter(this);
     D1_sbox->installEventFilter(this);
+    T0_sbox->installEventFilter(this);
+    T1_sbox->installEventFilter(this);
     to_label_1 = new QLabel("to");
     to_label_1->setAlignment(Qt::AlignCenter);
     to_label_2 = new QLabel("to");
     to_label_2->setAlignment(Qt::AlignCenter);
     to_label_3 = new QLabel("to");
     to_label_3->setAlignment(Qt::AlignCenter);
-    loadButton = new QPushButton(this);
-    loadButton->setIcon(QIcon(":/icons/load.png"));
-    loadButton->setText("Load");
-    loadButton->setIconSize(QSize(30,30));
+    to_label_4 = new QLabel("to");
+    to_label_4->setAlignment(Qt::AlignCenter);
+    refSys = new QGLRefSys(tabs);
+    refSys->installEventFilter(this);
 
     //other widgets
     helpBox = new QHelpBox(this);
@@ -537,7 +563,6 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     //import form
     QVBoxLayout* import_form_layout = new QVBoxLayout();
     import_form_layout->addWidget(reimport_checkbox);
-    import_form_layout->addWidget(enableMultiresMode);
     QHBoxLayout* volMapSizeRow = new QHBoxLayout();
     volMapMaxSizeSBox->setMaximumWidth(60);
     volMapSizeRow->addWidget(volMapMaxSizeSBox);
@@ -547,13 +572,12 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     //volMapWidgetLayout->addWidget(regenerateVolMap);
     volMapWidgetLayout->setMargin(0);
     volMapWidget->setLayout(volMapWidgetLayout);
-    volMapWidget->setContentsMargins(20,0,0,0);
+    volMapWidget->setContentsMargins(0,0,0,0);
     import_form_layout->addWidget(volMapWidget);
     import_form_layout->addWidget(regenerateVolMap);
     import_form->setLayout(import_form_layout);
 
-
-    //info panel
+    //Page "Volume's info": contains informations of the loaded volume
     QGridLayout* info_panel_layout = new QGridLayout();
 
     info_panel_layout->addWidget(new QLabel("Size (in files):"), 0,0,1,1);
@@ -621,102 +645,226 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     info_panel_layout->addWidget(direction_V_label_4,   6,8,1,1);
     info_panel_layout->addWidget(org_D_field,           6,10,1,2);
     info_panel_layout->addWidget(direction_D_label_4,   6,12,1,1);
-    info_panel->setLayout(info_panel_layout);
+
+    QVBoxLayout* info_page_layout = new QVBoxLayout(info_page);
+    info_page_layout->addLayout(info_panel_layout, 0);
+    info_page_layout->addStretch(1);
+    info_page->setLayout(info_page_layout);
     #ifndef _USE_NATIVE_FONTS
-    info_panel->setStyle(new QWindowsStyle());
+    info_page->setStyle(new QWindowsStyle());
     #endif
 
-    //subvolume selection widgets
-    QGridLayout* subvol_panel_layout = new QGridLayout();
-    QLabel* xCutLabel = new QLabel("X-cut interval:");
-    xCutLabel->setFixedWidth(marginLeft);
-    subvol_panel_layout->addWidget(xCutLabel,           0, 0, 1, 1);
-    subvol_panel_layout->addWidget(H0_sbox,             0, 2, 1, 3);
-    subvol_panel_layout->addWidget(to_label_1,          0, 5, 1, 1);
-    subvol_panel_layout->addWidget(H1_sbox,             0, 6, 1, 3);
-
-    subvol_panel_layout->addWidget(new QLabel("Y-cut interval:"), 1, 0, 1, 1);
-    subvol_panel_layout->addWidget(V0_sbox,             1, 2, 1, 3);
-    subvol_panel_layout->addWidget(to_label_2,          1, 5, 1, 1);
-    subvol_panel_layout->addWidget(V1_sbox,             1, 6, 1,3);
-
-    subvol_panel_layout->addWidget(new QLabel("Z-cut interval:"), 2, 0, 1, 1);
-    subvol_panel_layout->addWidget(D0_sbox,             2, 2, 1, 3);
-    subvol_panel_layout->addWidget(to_label_3,          2, 5, 1, 1);
-    subvol_panel_layout->addWidget(D1_sbox,             2, 6, 1, 3);
-
-    //subvol_panel_layout->addWidget(loadButton,          3, 0, 1, 13);
-
-    refSys->setFixedWidth(100);
-    QHBoxLayout* subvol_panel_outerL = new QHBoxLayout();
-    subvol_panel_outerL->addLayout(subvol_panel_layout, 1);
-    subvol_panel_outerL->addSpacing(10);
-    subvol_panel_outerL->addWidget(refSys);
-
-    subvol_panel->setLayout(subvol_panel_outerL);
+    // "Global coordinates" panel layout
+    QHBoxLayout* global_coordinates_layout = new QHBoxLayout();
+    /* ------------- left block ---------------- */
+    QWidget* refSysContainer = new QWidget();
+    refSysContainer->setFixedWidth(marginLeft);
+    refSysContainer->setStyleSheet(" border-style: solid; border-width: 1px; border-color: rgb(150,150,150);");
+    QHBoxLayout* refSysContainerLayout = new QHBoxLayout();
+    refSysContainerLayout->setContentsMargins(1,1,1,1);
+    refSysContainerLayout->addWidget(refSys, 1);
+    refSysContainer->setLayout(refSysContainerLayout);
+    /* ----------- central block --------------- */
+    QHBoxLayout *xShiftLayout = new QHBoxLayout();
+    xShiftLayout->setContentsMargins(0,0,0,0);
+    int fixedArrowWidth = 25;
+    traslXneg->setFixedWidth(fixedArrowWidth);
+    traslXpos->setFixedWidth(fixedArrowWidth);
+    xShiftLayout->addStretch();
+    xShiftLayout->addWidget(traslXneg, 0);
+    xShiftLayout->addWidget(traslXlabel, 0);
+    xShiftLayout->addWidget(traslXpos, 0);
+    xShiftLayout->addStretch();
+    xShiftLayout->setSpacing(5);
+    QWidget* xShiftWidget = new QWidget();
+    xShiftWidget->setFixedWidth(marginLeft);
+    xShiftWidget->setLayout(xShiftLayout);
+    QHBoxLayout *yShiftLayout = new QHBoxLayout();
+    yShiftLayout->setContentsMargins(0,0,0,0);
+    traslYneg->setFixedWidth(fixedArrowWidth);
+    traslYpos->setFixedWidth(fixedArrowWidth);
+    yShiftLayout->addStretch();
+    yShiftLayout->addWidget(traslYneg, 0);
+    yShiftLayout->addWidget(traslYlabel, 0);
+    yShiftLayout->addWidget(traslYpos, 0);
+    yShiftLayout->addStretch();
+    yShiftLayout->setSpacing(5);
+    QWidget* yShiftWidget = new QWidget();
+    yShiftWidget->setFixedWidth(marginLeft);
+    yShiftWidget->setLayout(yShiftLayout);
+    QHBoxLayout *zShiftLayout = new QHBoxLayout();
+    zShiftLayout->setContentsMargins(0,0,0,0);
+    traslZneg->setFixedWidth(fixedArrowWidth);
+    traslZpos->setFixedWidth(fixedArrowWidth);
+    zShiftLayout->addStretch();
+    zShiftLayout->addWidget(traslZneg, 0);
+    zShiftLayout->addWidget(traslZlabel, 0);
+    zShiftLayout->addWidget(traslZpos, 0);
+    zShiftLayout->addStretch();
+    zShiftLayout->setSpacing(5);
+    QWidget* zShiftWidget = new QWidget();
+    zShiftWidget->setFixedWidth(marginLeft);
+    zShiftWidget->setLayout(zShiftLayout);
+    QHBoxLayout *tShiftLayout = new QHBoxLayout();
+    tShiftLayout->setContentsMargins(0,0,0,0);
+    traslTneg->setFixedWidth(fixedArrowWidth);
+    traslTpos->setFixedWidth(fixedArrowWidth);
+    tShiftLayout->addStretch();
+    tShiftLayout->addWidget(traslTneg, 0);
+    tShiftLayout->addWidget(traslTlabel, 0);
+    tShiftLayout->addWidget(traslTpos, 0);
+    tShiftLayout->addStretch();
+    tShiftLayout->setSpacing(5);
+    QWidget* tShiftWidget = new QWidget();
+    tShiftWidget->setFixedWidth(marginLeft);
+    tShiftWidget->setLayout(tShiftLayout);
+    QVBoxLayout *centralBlockLayout = new QVBoxLayout();
+    centralBlockLayout->setContentsMargins(0,0,0,0);
+    centralBlockLayout->addWidget(xShiftWidget, 0);
+    centralBlockLayout->addWidget(yShiftWidget, 0);
+    centralBlockLayout->addWidget(zShiftWidget, 0);
+    centralBlockLayout->addWidget(tShiftWidget, 0);
+    /* ------------- right block --------------- */
+    QHBoxLayout *xGlobalCoordLayout = new QHBoxLayout();
+    xGlobalCoordLayout->setContentsMargins(0,0,0,0);
+    xGlobalCoordLayout->addWidget(H0_sbox, 1);
+    xGlobalCoordLayout->addWidget(to_label_1, 0);
+    xGlobalCoordLayout->addWidget(H1_sbox, 1);
+    QHBoxLayout *yGlobalCoordLayout = new QHBoxLayout();
+    yGlobalCoordLayout->setContentsMargins(0,0,0,0);
+    yGlobalCoordLayout->addWidget(V0_sbox, 1);
+    yGlobalCoordLayout->addWidget(to_label_2, 0);
+    yGlobalCoordLayout->addWidget(V1_sbox, 1);
+    QHBoxLayout *zGlobalCoordLayout = new QHBoxLayout();
+    zGlobalCoordLayout->setContentsMargins(0,0,0,0);
+    zGlobalCoordLayout->addWidget(D0_sbox, 1);
+    zGlobalCoordLayout->addWidget(to_label_3, 0);
+    zGlobalCoordLayout->addWidget(D1_sbox, 1);
+    QHBoxLayout *tGlobalCoordLayout = new QHBoxLayout();
+    tGlobalCoordLayout->setContentsMargins(0,0,0,0);
+    tGlobalCoordLayout->addWidget(T0_sbox, 1);
+    tGlobalCoordLayout->addWidget(to_label_4, 0);
+    tGlobalCoordLayout->addWidget(T1_sbox, 1);
+    QVBoxLayout *rightBlockLayout = new QVBoxLayout();
+    rightBlockLayout->setContentsMargins(0,0,0,0);
+    rightBlockLayout->addLayout(xGlobalCoordLayout, 0);
+    rightBlockLayout->addLayout(yGlobalCoordLayout, 0);
+    rightBlockLayout->addLayout(zGlobalCoordLayout, 0);
+    rightBlockLayout->addLayout(tGlobalCoordLayout, 0);
+    /* ------------- FINALIZATION -------------- */
+    global_coordinates_layout->addWidget(refSysContainer, 0);
+    global_coordinates_layout->addLayout(centralBlockLayout, 0);
+    global_coordinates_layout->addLayout(rightBlockLayout, 1);
+    globalCoord_panel->setLayout(global_coordinates_layout);
     #ifndef _USE_NATIVE_FONTS
-    subvol_panel->setStyle(new QWindowsStyle());
+    globalCoord_panel->setStyle(new QWindowsStyle());
     #endif
 
-    //multiresolution mode widgets
-    QGridLayout* multiresModePanelLayout= new QGridLayout();
-    QLabel* jumpToResLabel = new QLabel("Jump to res:");
-    jumpToResLabel->setFixedWidth(marginLeft);
-
-
-    multiresModePanelLayout->addWidget(new QLabel("Resolution:"),               0, 0, 1, 1);
-    multiresModePanelLayout->addWidget(gradientBar,                             0, 2, 1, 11);
-    multiresModePanelLayout->addWidget(jumpToResLabel,                          1, 0, 1, 1);
-    multiresModePanelLayout->addWidget(resolution_cbox,                         1, 2, 1, 11);
-    multiresModePanelLayout->addWidget(new QLabel("View max dims:"),         2, 0, 1, 1);
-    multiresModePanelLayout->addWidget(Hdim_sbox,                               2, 2, 1, 3);
-    multiresModePanelLayout->addWidget(by_label_6,                              2, 5, 1, 1);
-    multiresModePanelLayout->addWidget(Vdim_sbox,                               2, 6, 1, 3);
-    multiresModePanelLayout->addWidget(by_label_7,                              2, 9, 1, 1);
-    multiresModePanelLayout->addWidget(Ddim_sbox,                               2, 10, 1, 3);
-//    multiresModePanelLayout->addWidget(new QLabel("Zoom-in VOI size:"),         2, 0, 1, 1);
-//    multiresModePanelLayout->addWidget(zoominVoiSize,                           2, 2, 1, 3);
-//    multiresModePanelLayout->addWidget(new QLabel("MVoxels"),                   2, 5, 1, 9);
-    multiresModePanelLayout->addWidget(new QLabel("Zoom-in method:"),           3 , 0, 1, 1);
-    multiresModePanelLayout->addWidget(zoomInMethod,                            3, 2, 1, 11);
-    multiresModePanelLayout->addWidget(new QLabel("Zoom-in  thres:"),           4 , 0, 1, 1);
-    multiresModePanelLayout->addWidget(zoomInSens,                              4, 2, 1, 9);
-    multiresModePanelLayout->addWidget(new QLabel("Caching  sens:"),           5 , 0, 1, 1);
-    multiresModePanelLayout->addWidget(cacheSens,                               5, 2, 1, 9);
-    controlsLineTree->setSizePolicy(QSizePolicy::Expanding,QSizePolicy::Expanding);
-    multiresModePanelLayout->addWidget(controlsLineTree,                        4, 11, 3, 1);
-    multiresModePanelLayout->addWidget(controlsResetButton,                     5, 12, 1, 1);
-    multiresModePanelLayout->addWidget(new QLabel("Zoom-out thres:"),           6 , 0, 1, 1);
-    multiresModePanelLayout->addWidget(zoomOutSens,                             6, 2, 1, 9);
-    traslXneg->setMaximumWidth(25);
-    traslXpos->setMaximumWidth(25);
-    traslYneg->setMaximumWidth(25);
-    traslYpos->setMaximumWidth(25);
-    traslZneg->setMaximumWidth(25);
-    traslZpos->setMaximumWidth(25);
-    multiresModePanelLayout->addWidget(new QLabel("Translate:"),                7, 0, 1, 1);
-    multiresModePanelLayout->addWidget(traslXneg,                               7, 2, 1, 1);
-    multiresModePanelLayout->addWidget(traslXlabel,                             7, 3, 1, 1);
-    multiresModePanelLayout->addWidget(traslXpos,                               7, 4, 1, 1);
-    multiresModePanelLayout->addWidget(traslYneg,                               7, 6, 1, 1);
-    multiresModePanelLayout->addWidget(traslYlabel,                             7, 7, 1, 1);
-    multiresModePanelLayout->addWidget(traslYpos,                               7, 8, 1, 1);
-    multiresModePanelLayout->addWidget(traslZneg,                               7, 10, 1, 1);
-    multiresModePanelLayout->addWidget(traslZlabel,                             7, 11, 1, 1);
-    multiresModePanelLayout->addWidget(traslZpos,                               7, 12, 1, 1);
-    multires_panel->setLayout(multiresModePanelLayout);
+    //local viewer panel
+    QVBoxLayout* localviewer_panel_layout= new QVBoxLayout();
+    /* --------------------- first row ---------------------- */
+    QHBoxLayout *resolutionSelection_layout = new QHBoxLayout();
+    resolutionSelection_layout->setContentsMargins(0,0,0,0);
+    QLabel *resolutionLabel = new QLabel("Resolution:");
+    //resolutionLabel->setStyleSheet("background-color:blue");
+    resolutionLabel->setFixedWidth(marginLeft);
+    resolutionSelection_layout->addWidget(resolutionLabel, 0);
+    resolutionSelection_layout->addWidget(resolution_cbox, 1);
+    /* -------------------- second row ---------------------- */
+    QHBoxLayout *resolutionBar_layout = new QHBoxLayout();
+    resolutionBar_layout->setContentsMargins(0,0,0,0);
+    QLabel *emptyLabel = new QLabel("");
+    emptyLabel->setFixedWidth(marginLeft);
+    resolutionBar_layout->addWidget(emptyLabel, 0);
+    resolutionBar_layout->addWidget(gradientBar, 1);
+    /* --------------------- third row ---------------------- */
+    QHBoxLayout *VOImaxsize_layout = new QHBoxLayout();
+    VOImaxsize_layout->setContentsMargins(0,0,0,0);
+    QLabel *viewMaxDimsLabel = new QLabel("Max dims:");
+    viewMaxDimsLabel->setFixedWidth(marginLeft);
+    VOImaxsize_layout->addWidget(viewMaxDimsLabel, 0, Qt::AlignLeft);
+    QWidget* fourSpinboxes = new QWidget();
+    QHBoxLayout *fourSpinboxes_layout = new QHBoxLayout();
+    fourSpinboxes_layout->setContentsMargins(0,0,0,0);
+    fourSpinboxes_layout->addWidget(Hdim_sbox, 1);
+    fourSpinboxes_layout->addWidget(Vdim_sbox, 1);
+    fourSpinboxes_layout->addWidget(Ddim_sbox, 1);
+    fourSpinboxes_layout->addWidget(Tdim_sbox, 1);
+    fourSpinboxes->setLayout(fourSpinboxes_layout);
+    VOImaxsize_layout->addWidget(fourSpinboxes, 1, Qt::AlignLeft);
+    /* ------------- FINALIZATION -------------- */
+    localviewer_panel_layout->addLayout(resolutionSelection_layout, 0);
+    localviewer_panel_layout->addLayout(resolutionBar_layout, 0);
+    localviewer_panel_layout->addLayout(VOImaxsize_layout, 0);
+    localViewer_panel->setLayout(localviewer_panel_layout);
     #ifndef _USE_NATIVE_FONTS
-    multires_panel->setStyle(new QWindowsStyle());
+    localViewer_panel->setStyle(new QWindowsStyle());
     #endif
+
+    //zoom options panel
+    QVBoxLayout* zoomOptions_panel_layout= new QVBoxLayout();
+    /* --------------------- first row ---------------------- */
+    QHBoxLayout *zoomInMethod_layout = new QHBoxLayout();
+    zoomInMethod_layout->setContentsMargins(0,0,0,0);
+    QLabel *zoomInMethodLabel = new QLabel("Z/i method:");
+    //zoomInMethodLabel->setStyleSheet("background-color:blue");
+    zoomInMethodLabel->setFixedWidth(marginLeft);
+    zoomInMethod_layout->addWidget(zoomInMethodLabel, 0);
+    zoomInMethod_layout->addWidget(zoomInMethod, 1);
+    /* -------------------- second row ---------------------- */
+    QHBoxLayout *zoomControls_layout = new QHBoxLayout();
+    zoomControls_layout->setContentsMargins(0,0,0,0);
+    /* -------------------- second row: first column -------- */
+    QVBoxLayout *zoomControls_col1_layout = new QVBoxLayout();
+    zoomControls_col1_layout->setContentsMargins(0,0,0,0);
+    QLabel *zoomInThresholdLabel = new QLabel("Z/i thres:");
+    zoomInThresholdLabel->setFixedWidth(marginLeft);
+    QLabel *cachingSensLabel = new QLabel("Z/i cache:");
+    cachingSensLabel->setFixedWidth(marginLeft);
+    QLabel* zoomOutThres = new QLabel("Z/o thres:");
+    zoomOutThres->setFixedWidth(marginLeft);
+    zoomControls_col1_layout->addWidget(zoomInThresholdLabel, 0);
+    zoomControls_col1_layout->addWidget(cachingSensLabel, 0);
+    zoomControls_col1_layout->addWidget(zoomOutThres, 0);
+    /* -------------------- second row: second column ------- */
+    QVBoxLayout *zoomControls_col2_layout = new QVBoxLayout();
+    zoomControls_col2_layout->setContentsMargins(0,0,0,0);
+    zoomControls_col2_layout->addWidget(zoomInSens, 0);
+    zoomControls_col2_layout->addWidget(cacheSens, 0);
+    zoomControls_col2_layout->addWidget(zoomOutSens, 0);
+    /* -------------------- second row: third column -------- */
+    /* -------------------- second row: fourth column ------- */
+    /* -------------------- second row: FINALIZATION -------- */
+    zoomControls_layout->addLayout(zoomControls_col1_layout, 0);
+    zoomControls_layout->addLayout(zoomControls_col2_layout, 1);
+    zoomControls_layout->addWidget(controlsLineTree, 0);
+    zoomControls_layout->addWidget(controlsResetButton, 0);
+    /* -------------------- FINALIZATION -------------------- */
+    zoomOptions_panel_layout->addLayout(zoomInMethod_layout, 0);
+    zoomOptions_panel_layout->addLayout(zoomControls_layout, 0);
+    zoom_panel->setLayout(zoomOptions_panel_layout);
+    #ifndef _USE_NATIVE_FONTS
+    zoom_panel->setStyle(new QWindowsStyle());
+    #endif
+
+    // Page "Controls" layout
+    QVBoxLayout* controlsLayout = new QVBoxLayout(controls_page);
+    controlsLayout->addWidget(localViewer_panel, 0);
+    controlsLayout->addWidget(zoom_panel, 0);
+    controlsLayout->addWidget(globalCoord_panel, 0);
+    controlsLayout->addStretch(1);
+    controls_page->setLayout(controlsLayout);
+
+    //pages
+    tabs->addTab(controls_page, "Controls");
+    tabs->addTab(info_page, "Volume's info");
 
     //overall
     QVBoxLayout* layout = new QVBoxLayout();
     QHBoxLayout* centralLayout = new QHBoxLayout();
     QVBoxLayout* innerLayout = new QVBoxLayout();
     QVBoxLayout* bottomLayout = new QVBoxLayout();
-    innerLayout->addWidget(info_panel, 0);
-    innerLayout->addWidget(multires_panel, 0);
-    innerLayout->addWidget(subvol_panel, 0);
+    innerLayout->addWidget(tabs, 0);
     innerLayout->addStretch(1);
     innerLayout->addWidget(helpBox, 0, Qt::AlignBottom);
     innerLayout->setContentsMargins(10, 5, 10, 10);
@@ -740,23 +888,13 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     this->setFont(tinyFont);
 
     // signals and slots
-    connect(loadButton, SIGNAL(clicked()), this, SLOT(loadButtonClicked()));
     connect(CImport::instance(), SIGNAL(sendOperationOutcome(MyException*, Image4DSimple*, qint64)), this, SLOT(importDone(MyException*, Image4DSimple*,qint64)), Qt::QueuedConnection);
     connect(CVolume::instance(), SIGNAL(sendOperationOutcome(uint8*, MyException*,void*, qint64, QString, int)), SLOT(loadingDone(uint8*, MyException*,void*, qint64, QString, int)), Qt::QueuedConnection);
-    connect(enableMultiresMode, SIGNAL(stateChanged(int)), this, SLOT(mode3D_checkbox_changed(int)));
     connect(volMapMaxSizeSBox, SIGNAL(valueChanged(int)), this, SLOT(settingsChanged(int)));
     connect(Vdim_sbox, SIGNAL(valueChanged(int)), this, SLOT(settingsChanged(int)));
     connect(Hdim_sbox, SIGNAL(valueChanged(int)), this, SLOT(settingsChanged(int)));
     connect(Ddim_sbox, SIGNAL(valueChanged(int)), this, SLOT(settingsChanged(int)));
-    connect(Vdim_sbox, SIGNAL(valueChanged(int)), this, SLOT(zoomInVoiSizeChanged(int)));
-    connect(Hdim_sbox, SIGNAL(valueChanged(int)), this, SLOT(zoomInVoiSizeChanged(int)));
-    connect(Ddim_sbox, SIGNAL(valueChanged(int)), this, SLOT(zoomInVoiSizeChanged(int)));
-    connect(V0_sbox, SIGNAL(valueChanged(int)), this, SLOT(highestVOISizeChanged(int)));
-    connect(V1_sbox, SIGNAL(valueChanged(int)), this, SLOT(highestVOISizeChanged(int)));
-    connect(H0_sbox, SIGNAL(valueChanged(int)), this, SLOT(highestVOISizeChanged(int)));
-    connect(H1_sbox, SIGNAL(valueChanged(int)), this, SLOT(highestVOISizeChanged(int)));
-    connect(D0_sbox, SIGNAL(valueChanged(int)), this, SLOT(highestVOISizeChanged(int)));
-    connect(D1_sbox, SIGNAL(valueChanged(int)), this, SLOT(highestVOISizeChanged(int)));
+    connect(Tdim_sbox, SIGNAL(valueChanged(int)), this, SLOT(settingsChanged(int)));
     connect(resolution_cbox, SIGNAL(currentIndexChanged(int)), this, SLOT(resolutionIndexChanged(int)));
     connect(traslXpos, SIGNAL(clicked()), this, SLOT(traslXposClicked()));
     connect(traslXneg, SIGNAL(clicked()), this, SLOT(traslXnegClicked()));
@@ -764,6 +902,8 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     connect(traslYneg, SIGNAL(clicked()), this, SLOT(traslYnegClicked()));
     connect(traslZpos, SIGNAL(clicked()), this, SLOT(traslZposClicked()));
     connect(traslZneg, SIGNAL(clicked()), this, SLOT(traslZnegClicked()));
+    connect(traslTpos, SIGNAL(clicked()), this, SLOT(traslTposClicked()));
+    connect(traslTneg, SIGNAL(clicked()), this, SLOT(traslTnegClicked()));
     connect(controlsResetButton, SIGNAL(clicked()), this, SLOT(resetMultiresControls()));
 
     //reset widgets
@@ -775,6 +915,8 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     setMaximumSize(this->minimumWidth(), this->minimumHeight());
     show();
     move(QApplication::desktop()->screen()->rect().center() - rect().center());
+
+    setFixedWidth(500);
 
     /**/itm::debug(itm::LEV1, "object successfully constructed", __itm__current__function__);
 }
@@ -799,7 +941,7 @@ void PMain::reset()
     clearAnnotationsAction->setEnabled(false);
 
     //reseting info panel widgets
-    info_panel->setEnabled(false);
+    info_page->setEnabled(false);
     vol_size_files_label->setText("");
     vol_size_files_field->setText("n.a.");
     vol_size_voxel_label->setText("");
@@ -825,11 +967,12 @@ void PMain::reset()
     org_D_field->setText("n.a.");
 
     //resetting multiresolution mode widgets
-    multires_panel->setEnabled(false);
+    localViewer_panel->setEnabled(false);
+    zoom_panel->setEnabled(false);
     Vdim_sbox->setValue(CSettings::instance()->getVOIdimV());
     Hdim_sbox->setValue(CSettings::instance()->getVOIdimH());
     Ddim_sbox->setValue(CSettings::instance()->getVOIdimD());
-    zoominVoiSize->setText("n.a.");
+    Tdim_sbox->setValue(CSettings::instance()->getVOIdimT());
     resolution_cbox->setEnabled(false);
     while(resolution_cbox->count())
         resolution_cbox->removeItem(0);
@@ -842,25 +985,31 @@ void PMain::reset()
     traslZlabel->setAlignment(Qt::AlignCenter);
     traslZlabel->setTextFormat(Qt::RichText);
     traslZlabel->setText("<font size=\"4\">Z</font>");
+    traslTlabel->setAlignment(Qt::AlignCenter);
+    traslTlabel->setTextFormat(Qt::RichText);
+    traslTlabel->setText("<font size=\"4\">t</font>");
     traslXpos->setEnabled(false);
     traslXneg->setEnabled(false);
     traslYpos->setEnabled(false);
     traslYneg->setEnabled(false);
     traslZpos->setEnabled(false);
     traslZneg->setEnabled(false);
+//    traslTpos->setEnabled(false);
+//    traslTneg->setEnabled(false);
     gradientBar->setEnabled(false);
     gradientBar->setNSteps(-1);
     gradientBar->setStep(0);
 
-    //resetting subvol panel widgets    
-    loadButton->setVisible(false);
-    subvol_panel->setEnabled(false);
+    //resetting subvol panel widgets
+    globalCoord_panel->setEnabled(false);
     V0_sbox->setValue(0);
     V1_sbox->setValue(0);
     H0_sbox->setValue(0);
     H1_sbox->setValue(0);
     D0_sbox->setValue(0);
     D1_sbox->setValue(0);
+    T0_sbox->setValue(0);
+    T1_sbox->setValue(0);
     refSys->setXRotation(200);
     refSys->setYRotation(50);
     refSys->setZRotation(0);
@@ -886,46 +1035,6 @@ void PMain::resetGUI()
     statusBar->showMessage("Ready.");
 }
 
-
-//Called when "enable3Dmode" state changed.
-void PMain::mode3D_checkbox_changed(int)
-{
-    /**/itm::debug(itm::LEV1, 0, __itm__current__function__);
-
-    volMapWidget->setVisible(enableMultiresMode->isChecked());
-}
-
-//called when loadButton has been clicked
-void PMain::loadButtonClicked()
-{ 
-    /**/itm::debug(itm::LEV1, 0, __itm__current__function__);
-
-    try
-    {
-        //first checking that a volume has been properly imported
-        if(!CImport::instance()->getHighestResVolume())
-            throw MyException("A volume should be imported first.");
-
-        //disabling import form and enabling progress bar animation and tab wait animation
-        progressBar->setEnabled(true);
-        progressBar->setMinimum(0);
-        progressBar->setMaximum(0);
-        loadButton->setEnabled(false);
-        subvol_panel->setEnabled(false);
-        statusBar->showMessage("Loading selected subvolume...");
-
-        //starting operation
-        CVolume::instance()->setVoi(this, CImport::instance()->getResolutions()-1, V0_sbox->value()-1, V1_sbox->value()-1,H0_sbox->value()-1, H1_sbox->value()-1, D0_sbox->value()-1, D1_sbox->value()-1);
-        CVolume::instance()->start();
-    }
-    catch(MyException &ex)
-    {
-        QMessageBox::critical(this,QObject::tr("Error"), QObject::tr(ex.what()),QObject::tr("Ok"));
-        resetGUI();
-        subvol_panel->setEnabled(true);
-        loadButton->setEnabled(true);
-    }
-}
 
 /**********************************************************************************
 * Called when a path in the "Recent volumes" menu is selected.
@@ -1036,7 +1145,6 @@ void PMain::openVolume(string path /* = "" */)
         }
         CImport::instance()->setPath(qPrintable(import_path));
         CImport::instance()->setReimport(reimport_checkbox->isChecked());
-        CImport::instance()->setMultiresMode(enableMultiresMode->isChecked());
         CImport::instance()->setRegenerateVolumeMap(regenerateVolMap->isChecked());
         CImport::instance()->setVolMapMaxSize(volMapMaxSizeSBox->value());
 
@@ -1044,7 +1152,6 @@ void PMain::openVolume(string path /* = "" */)
         progressBar->setEnabled(true);
         progressBar->setMinimum(0);
         progressBar->setMaximum(0);
-        loadButton->setEnabled(false);
         import_form->setEnabled(false);
         statusBar->showMessage("Importing volume...");
 
@@ -1270,7 +1377,7 @@ void PMain::importDone(MyException *ex, Image4DSimple* vmap_image, qint64 elapse
         QElapsedTimer timerGUI;
         timerGUI.start();
         VirtualVolume* volume = CImport::instance()->getHighestResVolume();
-        info_panel->setEnabled(true);
+        info_page->setEnabled(true);
 
         double GVoxels = (volume->getDIM_V()/1000.0f)*(volume->getDIM_H()/1000.0f)*(volume->getDIM_D()/1000.0f);
         double TVoxels = GVoxels/1000.0;
@@ -1342,11 +1449,15 @@ void PMain::importDone(MyException *ex, Image4DSimple* vmap_image, qint64 elapse
         D0_sbox->setValue(1);
         D1_sbox->setMinimum(1);
         D1_sbox->setMaximum(volume->getDIM_D());
-        D1_sbox->setValue(volume->getDIM_D());
+        D1_sbox->setValue(volume->getDIM_D());        
+        T0_sbox->setMinimum(1);
+        T0_sbox->setMaximum(CImport::instance()->getTDim());
+        T0_sbox->setValue(1);
+        T1_sbox->setMinimum(1);
+        T1_sbox->setMaximum(CImport::instance()->getTDim());
+        T1_sbox->setValue(CImport::instance()->getTDim());
         import_form->setEnabled(false);
-        subvol_panel->setEnabled(true);
-        loadButton->setEnabled(true);
-        highestVOISizeChanged(0);
+        globalCoord_panel->setEnabled(true);
 
         //updating menu items
         /**/itm::debug(itm::LEV_MAX, "updating menu items", __itm__current__function__);
@@ -1357,69 +1468,60 @@ void PMain::importDone(MyException *ex, Image4DSimple* vmap_image, qint64 elapse
         closeVolumeAction->setEnabled(true);
         clearAnnotationsAction->setEnabled(true);
 
-        //if multiresulution mode is enabled
-        if(enableMultiresMode->isChecked())
+        //enabling multiresolution panel and hiding volume map options
+        this->localViewer_panel->setEnabled(true);
+        this->zoom_panel->setEnabled(true);
+        this->volMapWidget->setVisible(false);
+
+        //enabling menu actions
+        loadAnnotationsAction->setEnabled(true);
+        saveAnnotationsAsAction->setEnabled(true);
+
+        //updating gradient bar widget
+        gradientBar->setEnabled(true);
+        gradientBar->setNSteps(CImport::instance()->getResolutions());
+
+        //inserting available resolutions
+        /**/itm::debug(itm::LEV_MAX, "inserting available resolutions", __itm__current__function__);
+        resolution_cbox->setEnabled(false);
+        for(int i=0; i<CImport::instance()->getResolutions(); i++)
         {
-            //enabling multiresolution panel and hiding volume map options
-            this->multires_panel->setEnabled(true);
-            this->volMapWidget->setVisible(false);
-
-            //enabling menu actions
-            loadAnnotationsAction->setEnabled(true);
-            saveAnnotationsAsAction->setEnabled(true);
-
-            //updating zoom-in VOI size
-            zoomInVoiSizeChanged(0);
-
-            //updating gradient bar widget
-            gradientBar->setEnabled(true);
-            gradientBar->setNSteps(CImport::instance()->getResolutions());
-
-            //inserting available resolutions
-            /**/itm::debug(itm::LEV_MAX, "inserting available resolutions", __itm__current__function__);
-            resolution_cbox->setEnabled(false);
-            for(int i=0; i<CImport::instance()->getResolutions(); i++)
-            {
-                QString option = "";
-                VirtualVolume* vol = CImport::instance()->getVolume(i);
-                float vxl_v = vol->getVXL_V() < 0 ? vol->getVXL_V()*-1 : vol->getVXL_V();
-                float vxl_h = vol->getVXL_H() < 0 ? vol->getVXL_H()*-1 : vol->getVXL_H();
-                float vxl_d = vol->getVXL_D() < 0 ? vol->getVXL_D()*-1 : vol->getVXL_D();
-                option = option + QString::number(vol->getDIM_H()) + QChar(0x00D7) + QString::number(vol->getDIM_V()) + QChar(0x00D7) + QString::number(vol->getDIM_D()) +
-                        " (voxel: " + QString::number(vxl_h, 'f', 1) + QChar(0x00D7) + QString::number(vxl_v, 'f', 1) + QChar(0x00D7) +
-                        QString::number(vxl_d, 'f', 1) + " " + QChar(0x03BC)+"m)";
-                resolution_cbox->insertItem(i, option);
-            }
-            resolution_cbox->setEnabled(true);
-
-            //updating traslation widgets
-            traslXlabel->setText("<font size=\"4\" color=\"red\"><b>X</b></font>");
-            traslYlabel->setText("<font size=\"4\" color=\"green\"><b>Y</b></font>");
-            traslZlabel->setText("<font size=\"4\" color=\"blue\"><b>Z</b></font>");
-
-
-            //instantiating CAnnotations
-            /**/itm::debug(itm::LEV_MAX, "instantiating CAnnotations", __itm__current__function__);
-            CAnnotations::instance(volume->getDIM_V(), volume->getDIM_H(), volume->getDIM_D());
-
-            //updating GUI time
-            /**/itm::debug(itm::LEV_MAX, "updating GUI time", __itm__current__function__);
-            PLog::getInstance()->appendGPU(timerGUI.elapsed(), "TeraFly's GUI initialized");
-
-            //starting 3D exploration
-            /**/itm::debug(itm::LEV_MAX, "instantiating CExplorerWindow", __itm__current__function__);
-            CExplorerWindow *new_win = new CExplorerWindow(V3D_env, CImport::instance()->getVMapResIndex(), CImport::instance()->getVMap(),
-                                0, CImport::instance()->getVMapHeight(), 0, CImport::instance()->getVMapWidth(),
-                                0, CImport::instance()->getVMapDepth(), CImport::instance()->getNChannels(), 0);
-            /**/itm::debug(itm::LEV_MAX, "showing CExplorerWindow", __itm__current__function__);
-            new_win->show();
-
-            helpBox->setText(HTbase);
+            QString option = "";
+            VirtualVolume* vol = CImport::instance()->getVolume(i);
+            float vxl_v = vol->getVXL_V() < 0 ? vol->getVXL_V()*-1 : vol->getVXL_V();
+            float vxl_h = vol->getVXL_H() < 0 ? vol->getVXL_H()*-1 : vol->getVXL_H();
+            float vxl_d = vol->getVXL_D() < 0 ? vol->getVXL_D()*-1 : vol->getVXL_D();
+            option = option + QString::number(vol->getDIM_H()) + QChar(0x00D7) + QString::number(vol->getDIM_V()) + QChar(0x00D7) + QString::number(vol->getDIM_D()) +
+                    " (voxel: " + QString::number(vxl_h, 'f', 1) + QChar(0x00D7) + QString::number(vxl_v, 'f', 1) + QChar(0x00D7) +
+                    QString::number(vxl_d, 'f', 1) + " " + QChar(0x03BC)+"m)";
+            resolution_cbox->insertItem(i, option);
         }
-        else
-        {
-            loadButton->setVisible(true);
-        }
+        resolution_cbox->setEnabled(true);
+
+        //updating traslation widgets
+        traslXlabel->setText("<font size=\"4\" color=\"red\"><b>X</b></font>");
+        traslYlabel->setText("<font size=\"4\" color=\"green\"><b>Y</b></font>");
+        traslZlabel->setText("<font size=\"4\" color=\"blue\"><b>Z</b></font>");
+        traslTlabel->setText("<font size=\"4\" color=\"gray\"><b>t</b></font>");
+
+
+        //instantiating CAnnotations
+        /**/itm::debug(itm::LEV_MAX, "instantiating CAnnotations", __itm__current__function__);
+        CAnnotations::instance(volume->getDIM_V(), volume->getDIM_H(), volume->getDIM_D());
+
+        //updating GUI time
+        /**/itm::debug(itm::LEV_MAX, "updating GUI time", __itm__current__function__);
+        PLog::getInstance()->appendGPU(timerGUI.elapsed(), "TeraFly's GUI initialized");
+
+        //starting 3D exploration
+        /**/itm::debug(itm::LEV_MAX, "instantiating CExplorerWindow", __itm__current__function__);
+        CExplorerWindow *new_win = new CExplorerWindow(V3D_env, CImport::instance()->getVMapResIndex(), CImport::instance()->getVMap(),
+                            0, CImport::instance()->getVMapHeight(), 0, CImport::instance()->getVMapWidth(),
+                            0, CImport::instance()->getVMapDepth(), CImport::instance()->getNChannels(), 0);
+        /**/itm::debug(itm::LEV_MAX, "showing CExplorerWindow", __itm__current__function__);
+        new_win->show();
+
+        helpBox->setText(HTbase);
 
         //finally storing in application settings the path of the opened volume
         CSettings::instance()->setVolumePathLRU(CImport::instance()->getPath());
@@ -1459,8 +1561,7 @@ void PMain::loadingDone(uint8 *data, MyException *ex, void* sourceObject, qint64
 
     //resetting some widgets
     resetGUI();
-    subvol_panel->setEnabled(true);
-    loadButton->setEnabled(true);
+    globalCoord_panel->setEnabled(true);
 }
 
 //overrides closeEvent method of QWidget
@@ -1496,6 +1597,7 @@ void PMain::settingsChanged(int)
     CSettings::instance()->setVOIdimV(Vdim_sbox->value());
     CSettings::instance()->setVOIdimH(Hdim_sbox->value());
     CSettings::instance()->setVOIdimD(Ddim_sbox->value());
+    CSettings::instance()->setVOIdimD(Tdim_sbox->value());
     CSettings::instance()->writeSettings();
 }
 
@@ -1517,7 +1619,8 @@ void PMain::resolutionIndexChanged(int i)
             int voiH1 = CVolume::scaleHCoord(H1_sbox->value()-1, CImport::instance()->getResolutions()-1, i);
             int voiD0 = CVolume::scaleDCoord(D0_sbox->value()-1, CImport::instance()->getResolutions()-1, i);
             int voiD1 = CVolume::scaleDCoord(D1_sbox->value()-1, CImport::instance()->getResolutions()-1, i);
-            float MVoxels = ((voiV1-voiV0+1)/1024.0f)*((voiH1-voiH0+1)/1024.0f)*(voiD1-voiD0+1);
+            int voiTDim = std::min(CImport::instance()->getTDim(), Tdim_sbox->value());
+            float MVoxels = ((voiV1-voiV0+1)/1024.0f)*((voiH1-voiH0+1)/1024.0f)*(voiD1-voiD0+1)*voiTDim;
             if(QMessageBox::Yes == QMessageBox::question(this, "Confirm", QString("The volume to be loaded is ").append(QString::number(MVoxels, 'f', 1)).append(" MVoxels big.\n\nDo you confirm?"), QMessageBox::No | QMessageBox::Yes, QMessageBox::Yes))
             {
                 //voi set
@@ -1527,8 +1630,7 @@ void PMain::resolutionIndexChanged(int i)
                 progressBar->setEnabled(true);
                 progressBar->setMinimum(0);
                 progressBar->setMaximum(0);
-                loadButton->setEnabled(false);
-                subvol_panel->setEnabled(false);
+                globalCoord_panel->setEnabled(false);
                 statusBar->showMessage("Loading selected subvolume...");
 
                 //saving state of subvol spinboxes
@@ -1545,34 +1647,9 @@ void PMain::resolutionIndexChanged(int i)
     {
         QMessageBox::critical(this,QObject::tr("Error"), QObject::tr(ex.what()),QObject::tr("Ok"));
         resetGUI();
-        subvol_panel->setEnabled(true);
-        loadButton->setEnabled(true);
+        globalCoord_panel->setEnabled(true);
         resolution_cbox->setCurrentIndex(CExplorerWindow::getCurrent()->getResIndex());
     }
-}
-
-/**********************************************************************************
-* Linked to zoom-in VOI spinboxes.
-* This updates the zoom-in VOI size widget.
-***********************************************************************************/
-void PMain::zoomInVoiSizeChanged(int i)
-{
-    /**/itm::debug(itm::LEV2, strprintf("i = %d", i).c_str(), __itm__current__function__);
-
-    float MVoxels = (Vdim_sbox->value()/1024.0f)*(Hdim_sbox->value()/1024.0f)*Ddim_sbox->value();
-    zoominVoiSize->setText(QString::number(MVoxels, 'f', 1));
-}
-
-/**********************************************************************************
-* Linked to highest res VOI's selection spinboxes.
-* This updates the load button text.
-***********************************************************************************/
-void PMain::highestVOISizeChanged(int i)
-{
-    /**/itm::debug(itm::LEV2, strprintf("i = %d", i).c_str(), __itm__current__function__);
-
-    float MVoxels = ((V1_sbox->value()-V0_sbox->value())/1024.0f)*((H1_sbox->value()-H0_sbox->value())/1024.0f)*(D1_sbox->value()-D0_sbox->value());
-    loadButton->setText(QString("Load (").append(QString::number(MVoxels, 'f', 0)).append(" MVoxels)"));
 }
 
 /**********************************************************************************
@@ -1586,6 +1663,8 @@ void PMain::setEnabledDirectionalShifts(bool enabled)
     traslYpos->setEnabled(enabled);
     traslZneg->setEnabled(enabled);
     traslZpos->setEnabled(enabled);
+//    traslTneg->setEnabled(enabled);
+//    traslTpos->setEnabled(enabled);
 }
 
 /**********************************************************************************
@@ -1663,34 +1742,54 @@ void PMain::traslZnegClicked()
                       (expl->volD1-expl->volD0)/2 - (expl->volD1-expl->volD0)*CSettings::instance()->getTraslZ()/100.0f, expl->volResIndex, false);
     }
 }
+void PMain::traslTposClicked()
+{
+    /**/itm::debug(itm::LEV2, 0, __itm__current__function__);
+
+    CExplorerWindow* expl = CExplorerWindow::getCurrent();
+    if(expl && expl->isActive && !expl->toBeClosed)
+    {
+        QMessageBox::information(this, "To be implemented", "The 5D feature is currently under development. Please stay tuned!");
+    }
+}
+void PMain::traslTnegClicked()
+{
+    /**/itm::debug(itm::LEV2, 0, __itm__current__function__);
+
+    CExplorerWindow* expl = CExplorerWindow::getCurrent();
+    if(expl && expl->isActive && !expl->toBeClosed)
+    {
+        QMessageBox::information(this, "To be implemented", "The 5D feature is currently under development. Please stay tuned!");
+    }
+}
 
 /**********************************************************************************
 * Filters events generated by the widgets to which a help message must be associated
 ***********************************************************************************/
 bool PMain::eventFilter(QObject *object, QEvent *event)
 {
-    if ((object == Vdim_sbox || object == Hdim_sbox || object == Ddim_sbox) && multires_panel->isEnabled())
+    if ((object == Vdim_sbox || object == Hdim_sbox || object == Ddim_sbox || object == Tdim_sbox) && localViewer_panel->isEnabled())
     {
         if(event->type() == QEvent::Enter)
             helpBox->setText(HTvoiDim);
         else if(event->type() == QEvent::Leave)
             helpBox->setText(HTbase);
     }
-    else if((object == resolution_cbox) && multires_panel->isEnabled())
+    else if((object == resolution_cbox) && localViewer_panel->isEnabled())
     {
         if(event->type() == QEvent::Enter)
             helpBox->setText(HTjumpToRes);
         else if(event->type() == QEvent::Leave)
             helpBox->setText(HTbase);
     }
-    else if((object == gradientBar) && multires_panel->isEnabled())
+    else if((object == gradientBar) && localViewer_panel->isEnabled())
     {
         if(event->type() == QEvent::Enter)
             helpBox->setText(HTresolution);
         else if(event->type() == QEvent::Leave)
             helpBox->setText(HTbase);
     }
-    else if((object == zoomOutSens) && multires_panel->isEnabled())
+    else if((object == zoomOutSens) && globalCoord_panel->isEnabled())
     {
         if(event->type() == QEvent::Enter)
             helpBox->setText(HTzoomOutThres);
@@ -1699,7 +1798,7 @@ bool PMain::eventFilter(QObject *object, QEvent *event)
 
         displayToolTip(zoomOutSens, event, QString::number(zoomOutSens->value()).toStdString());
     }
-    else if((object == zoomInSens) && multires_panel->isEnabled())
+    else if((object == zoomInSens) && globalCoord_panel->isEnabled())
     {
         if(event->type() == QEvent::Enter)
             helpBox->setText(HTzoomInThres);
@@ -1708,14 +1807,14 @@ bool PMain::eventFilter(QObject *object, QEvent *event)
 
         displayToolTip(zoomInSens, event, QString::number(zoomInSens->value()).toStdString());
     }
-    else if((object == zoomInMethod) && multires_panel->isEnabled())
+    else if((object == zoomInMethod) && globalCoord_panel->isEnabled())
     {
         if(event->type() == QEvent::Enter)
             helpBox->setText(HTzoomInMethod);
         else if(event->type() == QEvent::Leave)
             helpBox->setText(HTbase);
     }
-    else if((object == cacheSens) && multires_panel->isEnabled())
+    else if((object == cacheSens) && zoom_panel->isEnabled())
     {
         if(event->type() == QEvent::Enter)
             helpBox->setText(HTcacheSens);
@@ -1725,28 +1824,31 @@ bool PMain::eventFilter(QObject *object, QEvent *event)
         displayToolTip(cacheSens, event, QString::number(cacheSens->value()).append("%").toStdString());
 
     }
-    else if ((object == traslXpos || object == traslYpos || object == traslZpos) && multires_panel->isEnabled())
+    else if ((object == traslXpos || object == traslYpos || object == traslZpos || object == traslTpos) && globalCoord_panel->isEnabled())
     {
         if(event->type() == QEvent::Enter)
             helpBox->setText(HTtraslatePos);
         else if(event->type() == QEvent::Leave)
             helpBox->setText(HTbase);
     }
-    else if ((object == traslXneg || object == traslYneg || object == traslZneg) && multires_panel->isEnabled())
+    else if ((object == traslXneg || object == traslYneg || object == traslZneg || object == traslTneg) && globalCoord_panel->isEnabled())
     {
         if(event->type() == QEvent::Enter)
             helpBox->setText(HTtraslateNeg);
         else if(event->type() == QEvent::Leave)
             helpBox->setText(HTbase);
     }
-    else if ((object == V0_sbox || object == V1_sbox || object == H0_sbox || object == H1_sbox || object == D0_sbox || object == D1_sbox) && subvol_panel->isEnabled())
+    else if ((object == V0_sbox || object == V1_sbox ||
+              object == H0_sbox || object == H1_sbox ||
+              object == D0_sbox || object == D1_sbox ||
+              object == T0_sbox || object == T1_sbox ) && globalCoord_panel->isEnabled())
     {
         if(event->type() == QEvent::Enter)
             helpBox->setText(HTvolcuts);
         else if(event->type() == QEvent::Leave)
             helpBox->setText(HTbase);
     }
-    else if((object == refSys) && multires_panel->isEnabled())
+    else if((object == refSys) && globalCoord_panel->isEnabled())
     {
         if(event->type() == QEvent::Enter)
             helpBox->setText(HTrefsys);
@@ -1821,53 +1923,127 @@ void PMain::debugAction1Triggered()
 {
     /**/itm::debug(itm::LEV1, 0, __itm__current__function__);
 
-    #ifdef USE_EXPERIMENTAL_FEATURES
+//    #ifdef USE_EXPERIMENTAL_FEATURES
+//    CExplorerWindow* cur_win = CExplorerWindow::getCurrent();
+//    if(cur_win)
+//    {
+//        int dimx = cur_win->volH1 - cur_win->volH0;
+//        int dimy = cur_win->volV1 - cur_win->volV0;
+//        int dimz = cur_win->volD1 - cur_win->volD0;
+//        int cx = (dimx)/2;
+//        int cy = (dimy)/2;
+//        int cz = (dimz)/2;
+//        int r = 50;
+//        int side = 2*r;
+//        float vol = pow(2.0f*r, 3);
+//        int count = 0;
+
+//        static bool first_time = true;
+//        static bool restore_data = false;
+//        static uint8* data_saved = new uint8[static_cast<int>(vol)];
+//        uint8* data = cur_win->view3DWidget->getiDrawExternalParameter()->image4d->getRawData();
+//        if(first_time)
+//        {
+//            first_time = false;
+//            for(int k = cz - r; k < cz + r; k++)
+//                for(int i = cy - r; i < cy + r; i++)
+//                    for(int j = cx - r; j < cx + r; j++, count++)
+//                        data_saved[(k-cz+r)*side*side +(i-cy+r)*side + (j-cx+r)] = data[k*dimy*dimx + i*dimx + j];
+//        }
+
+//        if(restore_data)
+//        {
+//            for(int k = cz - r; k < cz + r; k++)
+//                for(int i = cy - r; i < cy + r; i++)
+//                    for(int j = cx - r; j < cx + r; j++, count++)
+//                        data[k*dimy*dimx + i*dimx + j] = data_saved[(k-cz+r)*side*side +(i-cy+r)*side + (j-cx+r)];
+//        }
+//        else
+//        {
+//            for(int k = cz - r; k < cz + r; k++)
+//                for(int i = cy - r; i < cy + r; i++)
+//                    for(int j = cx - r; j < cx + r; j++, count++)
+//                        data[k*dimy*dimx + i*dimx + j] = (count / vol) *255;
+//        }
+//        restore_data = !restore_data;
+
+//        myV3dR_GLWidget::cast(cur_win->view3DWidget)->updateImageDataFast();
+//    }
+//    #endif
+
     CExplorerWindow* cur_win = CExplorerWindow::getCurrent();
     if(cur_win)
     {
-        int dimx = cur_win->volH1 - cur_win->volH0;
-        int dimy = cur_win->volV1 - cur_win->volV0;
-        int dimz = cur_win->volD1 - cur_win->volD0;
-        int cx = (dimx)/2;
-        int cy = (dimy)/2;
-        int cz = (dimz)/2;
-        int r = 50;
-        int side = 2*r;
-        float vol = pow(2.0f*r, 3);
-        int count = 0;
+        printf("Retrieve Image4DSimple\n");
+        Image4DSimple *image4D = V3D_env->getImage(cur_win->window);
+        if(!image4D)
+            printf("ERROR!\n");
 
-        static bool first_time = true;
-        static bool restore_data = false;
-        static uint8* data_saved = new uint8[static_cast<int>(vol)];
-        uint8* data = cur_win->view3DWidget->getiDrawExternalParameter()->image4d->getRawData();
-        if(first_time)
+        // generate time series from the currently displayed image
+        V3DLONG xDim = cur_win->volH1 - cur_win->volH0;
+        V3DLONG yDim = cur_win->volV1 - cur_win->volV0;
+        V3DLONG zDim = cur_win->volD1 - cur_win->volD0;
+        V3DLONG cDim = cur_win->nchannels;
+        V3DLONG tDim = QInputDialog::getInt(this, "Generation of 5D data", "Number of time frames", 10, 2, 1000);
+        V3DLONG size = xDim*yDim*zDim*cDim*tDim;
+
+        printf("Allocate memory \n");
+        uint8 *data5D = new uint8[size];
+        uint8 *data4D = image4D->getRawData();
+        printf("Generate 5D series\n");
+        for(int t=0; t<tDim; t++)
         {
-            first_time = false;
-            for(int k = cz - r; k < cz + r; k++)
-                for(int i = cy - r; i < cy + r; i++)
-                    for(int j = cx - r; j < cx + r; j++, count++)
-                        data_saved[(k-cz+r)*side*side +(i-cy+r)*side + (j-cx+r)] = data[k*dimy*dimx + i*dimx + j];
+            float w = static_cast<float>(t)/(tDim-1);
+            V3DLONG st = t*xDim*yDim*zDim*cDim;
+            for(int c=0; c<cDim; c++)
+            {
+                V3DLONG sc = c*xDim*yDim*zDim;
+                for(int z=0; z<zDim; z++)
+                {
+                    V3DLONG sz = z*xDim*yDim;
+                    for(int y=0; y<yDim; y++)
+                    {
+                        V3DLONG sy = y*xDim;
+                        for(int x=0; x<xDim; x++)
+                        {
+                            /*if(t != 0 &&
+                               (z % (tDim-t) == 0 ||
+                               y % (tDim-t) == 0 ||
+                               x % (tDim-t) == 0))
+                                data5D[st+sc+sz+sy+x] = 0;
+                            else
+                                data5D[st+sc+sz+sy+x] = data4D[sc+sz+sy+x];*/
+                            //data5D[st+sc+sz+sy+x] = data4D[sc+sz+sy+x] + rand()%50;
+                            data5D[st+sc+sz+sy+x] = static_cast<uint8>((1-w)*data4D[sc+sz+sy+x] + w*(rand()%256) +0.5f);
+                        }
+                    }
+                }
+            }
         }
 
-        if(restore_data)
-        {
-            for(int k = cz - r; k < cz + r; k++)
-                for(int i = cy - r; i < cy + r; i++)
-                    for(int j = cx - r; j < cx + r; j++, count++)
-                        data[k*dimy*dimx + i*dimx + j] = data_saved[(k-cz+r)*side*side +(i-cy+r)*side + (j-cx+r)];
-        }
-        else
-        {
-            for(int k = cz - r; k < cz + r; k++)
-                for(int i = cy - r; i < cy + r; i++)
-                    for(int j = cx - r; j < cx + r; j++, count++)
-                        data[k*dimy*dimx + i*dimx + j] = (count / vol) *255;
-        }
-        restore_data = !restore_data;
+        printf("Create new Image4DSimple, dimensions are x(%d), y(%d), z(%d), c(%d), t(%d)\n", xDim, yDim, zDim, cDim, tDim);
+        Image4DSimple* image5D = new Image4DSimple();
+        image5D->setFileName("5D Image");
+        image5D->setData(data5D, xDim, yDim, zDim, cDim*tDim, V3D_UINT8);
+        image5D->setTDim(tDim);
+        image5D->setTimePackType(TIME_PACK_C);
 
-        myV3dR_GLWidget::cast(cur_win->view3DWidget)->updateImageDataFast();
+        printf("Display 5D Image in a new window\n");
+        v3dhandle window5D= V3D_env->newImageWindow("5D Image");
+        XFormWidget* treeview = (XFormWidget*)window5D;
+        treeview->setWindowState(Qt::WindowMinimized);
+        V3D_env->setImage(window5D, image5D);
+        V3D_env->open3DWindow(window5D);
+
+//        image4D->setData(data5D, xDim, yDim, zDim, cDim*tDim, V3D_UINT8);
+//        image4D->setTDim(tDim);
+//        image4D->setTimePackType(TIME_PACK_C);
+//        V3D_env->pushImageIn3DWindow(cur_win->window);
+//        //V3D_env->pushTimepointIn3DWindow(cur_win->window, 9);
+//        cur_win->view3DWidget->updateGL();
+//        //cur_win->view3DWidget->updateImageData();
     }
-    #endif
+
 }
 
 void PMain::showLogTriggered()

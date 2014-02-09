@@ -71,7 +71,6 @@ void QGLRefSys::setDims(int dimX, int dimY, int dimZ)
     xDim = xDim < 0.2 ? 0.2 : xDim;
     yDim = yDim < 0.2 ? 0.2 : yDim;
     zDim = zDim < 0.2 ? 0.2 : zDim;
-    printf("\n\n PROVA3: xDim = %.2f, yDim = %.2f, zDim = %.2f\n\n", xDim, yDim, zDim);
 
 }
 

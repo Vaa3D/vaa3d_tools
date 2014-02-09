@@ -49,7 +49,7 @@ class teramanager::CImport : public QThread
         **********************************************************************************/
         static CImport* uniqueInstance;
         CImport() : QThread(), path(""), AXS_1(axis(0)), AXS_2(axis(0)), AXS_3(axis(0)),
-                               VXL_1(0), VXL_2(0), VXL_3(0), reimport(false), multiresMode(false),
+                               VXL_1(0), VXL_2(0), VXL_3(0), reimport(false),
                                volMapMaxSize(50), volMapData(0), volMapHeight(-1), volMapWidth(-1), volMapDepth(-1),
                                nchannels(-1)
         {
@@ -64,7 +64,6 @@ class teramanager::CImport : public QThread
         axis AXS_1, AXS_2, AXS_3;                   //reference system of the volume
         float VXL_1, VXL_2, VXL_3;                  //voxel dimensions of the volume
         bool reimport;                              //true if the volume has to be reimported
-        bool multiresMode;                          //true if multiresolution mode is enabled
         bool regenerateVolMap;                      //trye if volume map has to be regenerated
         int volMapMaxSize;                          //maximum size (in MVoxels) of volume map
         uint8* volMapData;                          //volume map data
@@ -117,9 +116,10 @@ class teramanager::CImport : public QThread
         void setAxes(string axs1, string axs2, string axs3);
         void setVoxels(std::string vxl1, std::string vxl2, std::string vxl3);
         void setReimport(bool _reimport){reimport = _reimport;}
-        void setMultiresMode(bool _multires_mode){multiresMode = _multires_mode;}
         void setRegenerateVolumeMap(bool _regenerateVolMap){regenerateVolMap = _regenerateVolMap;}
         void setVolMapMaxSize(int _volMapMaxSize){volMapMaxSize = _volMapMaxSize;}
+
+        /**/ int getTDim(){return 1;} /**/ //temp method
 
         //reset method
         void reset()

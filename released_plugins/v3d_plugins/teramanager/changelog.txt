@@ -11,6 +11,16 @@ ties names are:
 - Rem: a feature no longer available
 
 ============================================================================================
+Version 0.9.4
+February 9th, 2014
+--------------------------------------------------------------------------------------------
+- New: GUI has been re-designed from scratch for  5D image  interaction and to optimize user
+       interaction. 
+- Dev: added "Generate time series" entry in the "Debug" menu. On click, a 5D image  is gen-
+       erated from the currently displayed image.
+--------------------------------------------------------------------------------------------
+
+
 Version 0.9.32
 February 1st, 2014
 --------------------------------------------------------------------------------------------

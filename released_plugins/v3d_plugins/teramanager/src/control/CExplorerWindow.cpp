@@ -614,7 +614,6 @@ CExplorerWindow::newView(
         pMain.progressBar->setEnabled(true);
         pMain.progressBar->setMinimum(0);
         pMain.progressBar->setMaximum(0);
-        pMain.loadButton->setEnabled(false);
         pMain.statusBar->showMessage("Changing resolution...");
 
         //scaling VOI to the given resolution
@@ -1273,33 +1272,6 @@ void CExplorerWindow::restoreViewFrom(CExplorerWindow* source) throw (MyExceptio
         //current windows not gets ready to user input
         isReady = true;
     }
-}
-
-/**********************************************************************************
-* Estimates actual image voxel size (in pixels) of the 3D renderer.
-* This depends on the zoom and on the dimensions of the 3D  renderer. This calcula-
-* tion is based on MATLAB curve  fitting results on  a set of measures manually ex-
-* tracted on the renderer.
-***********************************************************************************/
-float CExplorerWindow::estimateRendererVoxelSize()
-{
-    float x = this->view3DWidget->height();
-    float y = this->view3DWidget->zoom();
-
-    double p00 = -36.22;
-    double p10 = 0.119;
-    double p01 = 0.1276;
-    double p20 = -0.0001223;
-    double p11 = -0.0002108;
-    double p02 = -0.0007288;
-    double p30 = 4.344e-008;
-    double p21 = 9.092e-008;
-    double p12 = 9.931e-006;
-    double p03 = 3.047e-006;
-
-    double res = p00 + p10*x + p01*y +p20*x*x +p11*x*y + p02*y*y + p30*x*x*x + p21*x*x*y +
-                p12*x*y*y + p03*y*y*y;
-    return (float)res;
 }
 
 /**********************************************************************************

@@ -112,14 +112,6 @@ class teramanager::CExplorerWindow : public QWidget
 
 
         /**********************************************************************************
-        * Estimates actual image voxel size (in pixels) of the 3D renderer.
-        * This depends on the zoom and on the dimensions of the 3D  renderer. This calcula-
-        * tion is based on MATLAB curve  fitting results on  a set of measures manually ex-
-        * tracted on the renderer.
-        ***********************************************************************************/
-        float estimateRendererVoxelSize();
-
-        /**********************************************************************************
         * Returns the most  likely 3D  point in the  image that the user is pointing on the
         * renderer at the given location.
         * This is based on the Vaa3D 3D point selection with one mouse click.

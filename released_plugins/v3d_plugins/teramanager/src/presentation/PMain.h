@@ -92,27 +92,30 @@ class teramanager::PMain : public QWidget
         QMenu* debugMenu;               //"Debug" menu for debugging purposes
         QAction* debugAction1;          //debug menu action #1
         QAction* debugShowLogAction;    //debug menu action "Show log"
-        QMenu* debugStreamingStepsMenu;
-        QWidgetAction* debugStreamingStepsActionWidget;
-        QSpinBox *debugStreamingStepsSBox;
-        QMenu* debugVerbosityMenu;
-        QWidgetAction* debugVerbosityActionWidget;
-        QComboBox *debugVerbosityCBox;
+        QMenu* debugStreamingStepsMenu;                    // streaming steps entry
+        QWidgetAction* debugStreamingStepsActionWidget;    // streaming steps action
+        QSpinBox *debugStreamingStepsSBox;                 // streaming steps widget (a spinbox)
+        QMenu* debugVerbosityMenu;                         // verbosity entry
+        QWidgetAction* debugVerbosityActionWidget;         // verbosity action
+        QComboBox *debugVerbosityCBox;                     // verbosity widget (a combobox)
+        QMenu* debugTimeSeriesMenu;                        // time series entry
+        QWidgetAction* debugTimeSeriesWidget;              // time series action
+        QSpinBox *debugTimeSeriesSBox;                     // time series widget (a spinbox)
 
         //toolbar widgets
         QToolBar* toolBar;              //tool bar with buttons
         QToolButton *openVolumeToolButton; //tool button for volume opening
 
         //import form widgets
-        QWidget* import_form;         //import form containing input fields
+        QWidget* import_form;           //import form containing input fields
         QCheckBox *reimport_checkbox;   //checkbox to be used to reimport a volume already imported
-        QCheckBox *enableMultiresMode;  //checkbox to be used to generate and show a 3D volume map
         QWidget* volMapWidget;          //widget containing volume map options
         QCheckBox *regenerateVolMap;    //if activated, the volume map will be regenerated
         QSpinBox  *volMapMaxSizeSBox;   //to set the maximum allowed size (in MVoxels) of the volume map
 
-        //info panel widgets, contain informations of the loaded volume
-        QGroupBox* info_panel;
+        QTabWidget *tabs;               //tab widget
+        //Page "Volume's info": contains informations of the loaded volume
+        QWidget* info_page;
         QLabel* vol_size_files_field;
         QLabel* vol_size_files_label;
         QLabel* vol_size_voxel_field;
@@ -163,32 +166,26 @@ class teramanager::PMain : public QWidget
         QLabel* org_H_field;
         QLabel* org_D_field;
 
-        //subvol panel widgets
-        QGroupBox* subvol_panel;
-        QSpinBox* V0_sbox;
-        QSpinBox* V1_sbox;
-        QSpinBox* H0_sbox;
-        QSpinBox* H1_sbox;
-        QSpinBox* D0_sbox;
-        QSpinBox* D1_sbox;
-        QLabel* to_label_1;
-        QLabel* to_label_2;
-        QLabel* to_label_3;
-        QPushButton* loadButton;
-
-        //multiresolution mode widgets
-        QGroupBox* multires_panel;
+        //Page "Controls": contains navigation controls
+        /* ------- local viewer panel widgets ------- */
+        QGroupBox* localViewer_panel;
         QGradientBar* gradientBar;
         QSpinBox* Vdim_sbox;
         QSpinBox* Hdim_sbox;
         QSpinBox* Ddim_sbox;
-        QLabel* by_label_6;
-        QLabel* by_label_7;
+        QSpinBox* Tdim_sbox;
         QComboBox* resolution_cbox;
-        QLabel* zoominVoiSize;
+        /* ------- zoom options panel widgets ------- */
+        QGroupBox* zoom_panel;
         QSlider* cacheSens;
         QSlider* zoomInSens;
         QSlider* zoomOutSens;
+        QLineTree* controlsLineTree;
+        QPushButton* controlsResetButton;
+        QComboBox* zoomInMethod;
+        /* ------- global coord panel widgets ------- */
+        QWidget* controls_page;
+        QGroupBox* globalCoord_panel;
         QArrowButton* traslXpos;
         QLabel* traslXlabel;
         QArrowButton* traslXneg;
@@ -198,9 +195,21 @@ class teramanager::PMain : public QWidget
         QArrowButton* traslZpos;
         QLabel* traslZlabel;
         QArrowButton* traslZneg;
-        QLineTree* controlsLineTree;
-        QPushButton* controlsResetButton;
-        QComboBox* zoomInMethod;
+        QArrowButton* traslTpos;
+        QLabel* traslTlabel;
+        QArrowButton* traslTneg;
+        QSpinBox* V0_sbox;
+        QSpinBox* V1_sbox;
+        QSpinBox* H0_sbox;
+        QSpinBox* H1_sbox;
+        QSpinBox* D0_sbox;
+        QSpinBox* D1_sbox;
+        QSpinBox* T0_sbox;
+        QSpinBox* T1_sbox;
+        QLabel* to_label_1;
+        QLabel* to_label_2;
+        QLabel* to_label_3;
+        QLabel* to_label_4;
 
         //other widgets
         QHelpBox* helpBox;              //help box
@@ -274,12 +283,6 @@ class teramanager::PMain : public QWidget
     public slots:
 
         /**********************************************************************************
-        * Called when "enable3Dmode" state changed.
-        * Enables or disables the correspondent panel
-        ***********************************************************************************/
-        void mode3D_checkbox_changed(int);
-
-        /**********************************************************************************
         * Called when "Open volume" menu action is triggered.
         * If path is not provided, opens a QFileDialog to select volume's path.
         ***********************************************************************************/
@@ -335,12 +338,6 @@ class teramanager::PMain : public QWidget
         void resetMultiresControls();
 
         /**********************************************************************************
-        * Called when "loadButton" has been clicked.
-        * The selected subvolume is loaded and shown into Vaa3D.
-        ***********************************************************************************/
-        void loadButtonClicked();
-
-        /**********************************************************************************
         * Called by <CImport> when the associated operation has been performed.
         * If an exception has occurred in the <CImport> thread,  it is propagated and man-
         * aged in the current thread (ex != 0). Otherwise, volume information are imported
@@ -368,18 +365,6 @@ class teramanager::PMain : public QWidget
         void resolutionIndexChanged(int i);
 
         /**********************************************************************************
-        * Linked to zoom-in VOI spinboxes.
-        * This updates the zoom-in VOI size widget.
-        ***********************************************************************************/
-        void zoomInVoiSizeChanged(int i);
-
-        /**********************************************************************************
-        * Linked to highest res VOI's selection spinboxes.
-        * This updates the load button text.
-        ***********************************************************************************/
-        void highestVOISizeChanged(int i);
-
-        /**********************************************************************************
         * Called when the correspont buttons are clicked
         ***********************************************************************************/
         void traslXposClicked();
@@ -388,6 +373,8 @@ class teramanager::PMain : public QWidget
         void traslYnegClicked();
         void traslZposClicked();
         void traslZnegClicked();
+        void traslTposClicked();
+        void traslTnegClicked();
 
         /**********************************************************************************
         * Called when the correspondent debug actions are triggered

@@ -57,6 +57,7 @@ class teramanager::CSettings
         int VOIdimV;
         int VOIdimH;
         int VOIdimD;
+        int VOIdimT;
         int traslX;             //traslation percentage with respect to the actual VOI along X axis
         int traslY;             //traslation percentage with respect to the actual VOI along Y axis
         int traslZ;             //traslation percentage with respect to the actual VOI along Z axis
@@ -93,6 +94,7 @@ class teramanager::CSettings
         int getVOIdimV(){return VOIdimV;}
         int getVOIdimH(){return VOIdimH;}
         int getVOIdimD(){return VOIdimD;}
+        int getVOIdimT(){return VOIdimT;}
         int getTraslX(){return traslX;}
         int getTraslY(){return traslY;}
         int getTraslZ(){return traslZ;}
@@ -113,6 +115,7 @@ class teramanager::CSettings
         void setVOIdimV(int _VOIdimV){VOIdimV = _VOIdimV;}
         void setVOIdimH(int _VOIdimH){VOIdimH = _VOIdimH;}
         void setVOIdimD(int _VOIdimD){VOIdimD = _VOIdimD;}
+        void setVOIdimT(int _VOIdimT){VOIdimT = _VOIdimT;}
         void setTraslX(int _traslX){traslX = _traslX;}
         void setTraslY(int _traslY){traslY = _traslY;}
         void setTraslZ(int _traslZ){traslZ = _traslZ;}
