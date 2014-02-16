@@ -26,7 +26,7 @@
 #define _STACK_RAW_H
 
 #include <stdio.h>
-#include "IM_defs.h"
+#include "IM_config.h"
 
 //FORWARD-DECLARATIONS
 struct CvMat;
@@ -48,7 +48,7 @@ class StackRaw
 		VirtualVolume*	CONTAINER;					//pointer to <VirtualVolume> object that contains the current object
 		CvMat**			STACKED_IMAGE;				//1-D dinamic array of <CvMat> pointers. Every <CvMat> stores a single 2-D image
 		char**			FILENAMES;					//1-D dinamic array of <char>  pointers to images filanames
-		uint32			HEIGHT, WIDTH, DEPTH;		//VHD (Vertical, Horizontal, Depth) dimensions of current stack
+        iim::uint32			HEIGHT, WIDTH, DEPTH;		//VHD (Vertical, Horizontal, Depth) dimensions of current stack
 		int				ROW_INDEX,  COL_INDEX;		//row and col index relative to stack matrix
 		int				ABS_V,		ABS_H;			//absolute VH voxel coordinates of current stack
 		char*			DIR_NAME;					//string containing current stack directory
@@ -69,9 +69,9 @@ class StackRaw
 		char* getDIR_NAME()			{return DIR_NAME;}
 		int getROW_INDEX()			{return ROW_INDEX;}
 		int getCOL_INDEX()			{return COL_INDEX;}
-		uint32 getHEIGHT()			{return HEIGHT;}
-		uint32 getWIDTH()			{return WIDTH;}
-		uint32 getDEPTH()			{return DEPTH;}
+        iim::uint32 getHEIGHT()			{return HEIGHT;}
+        iim::uint32 getWIDTH()			{return WIDTH;}
+        iim::uint32 getDEPTH()			{return DEPTH;}
 		int getABS_V()				{return ABS_V;}
 		int getABS_H()				{return ABS_H;}
 		char** getFILENAMES()		{return FILENAMES;}
@@ -96,12 +96,6 @@ class StackRaw
 
 		//returns a pointer to the intersection rectangle if the given area intersects current stack, otherwise returns NULL
 		Rect_t* Intersects(const Rect_t& area);
-
-		//show the selected slice with a simple GUI
-		void show(int D_index, int window_HEIGHT=0, int window_WIDTH=0);
-
-		//delete slices from disk from first_file to last_file, extremes included
-		void deleteSlices(int first_file, int last_file);
 };
 
 #endif //_STACK_H

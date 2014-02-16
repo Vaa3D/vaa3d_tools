@@ -87,12 +87,12 @@ class teramanager::CConverter : public QThread
         ~CConverter();
 
         //GET and SET methods
-        void setMembers(PConverter* pConverter) throw (MyException);
+        void setMembers(PConverter* pConverter) throw (RuntimeException);
         bool isConversionModeEnabled(){return conversionMode;}
-        VolumeConverter* getVolumeConverter() throw (MyException)
+        VolumeConverter* getVolumeConverter() throw (RuntimeException)
         {
             if(vc == 0)
-                throw MyException("in CConverter::getVolumeConverter(): volume converter object does not exist");
+                throw RuntimeException("in CConverter::getVolumeConverter(): volume converter object does not exist");
             return vc;
         }
 
@@ -120,7 +120,7 @@ class teramanager::CConverter : public QThread
         /*********************************************************************************
         * Carries the outcome of the operation associated to this thread.
         **********************************************************************************/
-        void sendOperationOutcome(MyException* ex);
+        void sendOperationOutcome(itm::RuntimeException* ex);
 };
 
 #endif // CCONVERTER_H

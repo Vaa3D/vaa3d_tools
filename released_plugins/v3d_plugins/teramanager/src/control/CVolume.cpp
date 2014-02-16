@@ -53,15 +53,15 @@ CVolume::~CVolume()
     /**/itm::debug(itm::LEV1, 0, __itm__current__function__);
 }
 
-int CVolume::scaleVCoord(int coord, int srcRes, int dstRes) throw (MyException)
+int CVolume::scaleVCoord(int coord, int srcRes, int dstRes) throw (RuntimeException)
 {
     /**/itm::debug(itm::LEV_MAX, strprintf("coord = %d, srcRes = %d, dstRes = %d", coord, srcRes, dstRes).c_str(), __itm__current__function__);
 
     //checks
     if(srcRes < 0 || srcRes >= CImport::instance()->getResolutions())
-        throw MyException("Invalid source resolution of coordinate mapping operation");
+        throw RuntimeException("Invalid source resolution of coordinate mapping operation");
     if(dstRes < 0 || dstRes >= CImport::instance()->getResolutions())
-        throw MyException("Invalid destination resolution of coordinate mapping operation");
+        throw RuntimeException("Invalid destination resolution of coordinate mapping operation");
 
     //computation
     if(srcRes == dstRes)
@@ -76,15 +76,15 @@ int CVolume::scaleVCoord(int coord, int srcRes, int dstRes) throw (MyException)
     }
 }
 
-int CVolume::scaleHCoord(int coord, int srcRes, int dstRes) throw (MyException)
+int CVolume::scaleHCoord(int coord, int srcRes, int dstRes) throw (RuntimeException)
 {
     /**/itm::debug(itm::LEV_MAX, strprintf("coord = %d, srcRes = %d, dstRes = %d", coord, srcRes, dstRes).c_str(), __itm__current__function__);
 
     //checks
     if(srcRes < 0 || srcRes >= CImport::instance()->getResolutions())
-        throw MyException("Invalid source resolution of coordinate mapping operation");
+        throw RuntimeException("Invalid source resolution of coordinate mapping operation");
     if(dstRes < 0 || dstRes >= CImport::instance()->getResolutions())
-        throw MyException("Invalid destination resolution of coordinate mapping operation");
+        throw RuntimeException("Invalid destination resolution of coordinate mapping operation");
 
     //computation
     if(srcRes == dstRes)
@@ -98,15 +98,15 @@ int CVolume::scaleHCoord(int coord, int srcRes, int dstRes) throw (MyException)
     }
 }
 
-int CVolume::scaleDCoord(int coord, int srcRes, int dstRes) throw (MyException)
+int CVolume::scaleDCoord(int coord, int srcRes, int dstRes) throw (RuntimeException)
 {
     /**/itm::debug(itm::LEV_MAX, strprintf("coord = %d, srcRes = %d, dstRes = %d", coord, srcRes, dstRes).c_str(), __itm__current__function__);
 
     //checks
     if(srcRes < 0 || srcRes >= CImport::instance()->getResolutions())
-        throw MyException("Invalid source resolution of coordinate mapping operation");
+        throw RuntimeException("Invalid source resolution of coordinate mapping operation");
     if(dstRes < 0 || dstRes >= CImport::instance()->getResolutions())
-        throw MyException("Invalid destination resolution of coordinate mapping operation");
+        throw RuntimeException("Invalid destination resolution of coordinate mapping operation");
 
     //computation
     if(srcRes == dstRes)
@@ -120,15 +120,15 @@ int CVolume::scaleDCoord(int coord, int srcRes, int dstRes) throw (MyException)
     }
 }
 
-float CVolume::scaleVCoord(float coord, int srcRes, int dstRes) throw (MyException)
+float CVolume::scaleVCoord(float coord, int srcRes, int dstRes) throw (RuntimeException)
 {
     /**/itm::debug(itm::LEV_MAX, strprintf("coord = %.3f, srcRes = %d, dstRes = %d", coord, srcRes, dstRes).c_str(), __itm__current__function__);
 
     //checks
     if(srcRes < 0 || srcRes >= CImport::instance()->getResolutions())
-        throw MyException("Invalid source resolution of coordinate mapping operation");
+        throw RuntimeException("Invalid source resolution of coordinate mapping operation");
     if(dstRes < 0 || dstRes >= CImport::instance()->getResolutions())
-        throw MyException("Invalid destination resolution of coordinate mapping operation");
+        throw RuntimeException("Invalid destination resolution of coordinate mapping operation");
 
     //computation
     if(srcRes == dstRes)
@@ -142,15 +142,15 @@ float CVolume::scaleVCoord(float coord, int srcRes, int dstRes) throw (MyExcepti
     }
 }
 
-float CVolume::scaleHCoord(float coord, int srcRes, int dstRes) throw (MyException)
+float CVolume::scaleHCoord(float coord, int srcRes, int dstRes) throw (RuntimeException)
 {
     /**/itm::debug(itm::LEV_MAX, strprintf("coord = %.3f, srcRes = %d, dstRes = %d", coord, srcRes, dstRes).c_str(), __itm__current__function__);
 
     //checks
     if(srcRes < 0 || srcRes >= CImport::instance()->getResolutions())
-        throw MyException("Invalid source resolution of coordinate mapping operation");
+        throw RuntimeException("Invalid source resolution of coordinate mapping operation");
     if(dstRes < 0 || dstRes >= CImport::instance()->getResolutions())
-        throw MyException("Invalid destination resolution of coordinate mapping operation");
+        throw RuntimeException("Invalid destination resolution of coordinate mapping operation");
 
     //computation
     if(srcRes == dstRes)
@@ -164,15 +164,15 @@ float CVolume::scaleHCoord(float coord, int srcRes, int dstRes) throw (MyExcepti
     }
 }
 
-float CVolume::scaleDCoord(float coord, int srcRes, int dstRes) throw (MyException)
+float CVolume::scaleDCoord(float coord, int srcRes, int dstRes) throw (RuntimeException)
 {
     /**/itm::debug(itm::LEV_MAX, strprintf("coord = %.3f, srcRes = %d, dstRes = %d", coord, srcRes, dstRes).c_str(), __itm__current__function__);
 
     //checks
     if(srcRes < 0 || srcRes >= CImport::instance()->getResolutions())
-        throw MyException("Invalid source resolution of coordinate mapping operation");
+        throw RuntimeException("Invalid source resolution of coordinate mapping operation");
     if(dstRes < 0 || dstRes >= CImport::instance()->getResolutions())
-        throw MyException("Invalid destination resolution of coordinate mapping operation");
+        throw RuntimeException("Invalid destination resolution of coordinate mapping operation");
 
     //computation
     if(srcRes == dstRes)
@@ -210,7 +210,7 @@ void CVolume::run()
         if(voiV1 - voiV0 <=0 || voiH1 - voiH0 <=0 || voiD1 - voiD0 <=0)
         {
             sprintf(msg, "Invalid subvolume intervals inserted: X=[%d, %d), Y=[%d, %d), Z=[%d, %d)", voiH0, voiH1, voiV0, voiV1, voiD0, voiD1);
-            throw MyException(msg);
+            throw RuntimeException(msg);
         }
 
         //checking for an imported volume
@@ -241,12 +241,12 @@ void CVolume::run()
                 TiledVolume* vaa3D_volume_RGB = dynamic_cast<TiledVolume*>(volume);
                 TiledMCVolume* vaa3D_volume_4D= dynamic_cast<TiledMCVolume*>(volume);
                 if(!vaa3D_volume_RGB && !vaa3D_volume_4D)
-                    throw MyException("Streaming not yet supported for the current format. Please restart the plugin.");
+                    throw RuntimeException("Streaming not yet supported for the current format. Please restart the plugin.");
                 if(!buffer)
-                    throw MyException("Buffer not initialized");
+                    throw RuntimeException("Buffer not initialized");
                 CExplorerWindow* destination = dynamic_cast<CExplorerWindow*>(source);
                 if(!destination)
-                    throw MyException("Streaming not yet supported for this type of destination");
+                    throw RuntimeException("Streaming not yet supported for this type of destination");
 
                 //reading/writing from/to the same buffer with MUTEX (see Producer-Consumer problem)
                 void *stream_descr = 0;
@@ -286,12 +286,13 @@ void CVolume::run()
             }
         }
         else
-            throw MyException("No volume has been imported yet.");
+            throw RuntimeException("No volume has been imported yet.");
 
         /**/itm::debug(itm::LEV1, "EOF", __itm__current__function__);
     }
-    catch( MyException& exception)  {emit sendOperationOutcome(0, new MyException(exception.what()), source);}
-    catch(const char* error)        {emit sendOperationOutcome(0, new MyException(error), source);}
-    catch(...)                      {emit sendOperationOutcome(0, new MyException("Unknown error occurred"), source);}
+    catch( iim::IOException& exception)  {reset(); emit sendOperationOutcome(0, new RuntimeException(exception.what()), source);}
+    catch( RuntimeException& exception)  {emit sendOperationOutcome(0, new RuntimeException(exception.what()), source);}
+    catch(const char* error)        {emit sendOperationOutcome(0, new RuntimeException(error), source);}
+    catch(...)                      {emit sendOperationOutcome(0, new RuntimeException("Unknown error occurred"), source);}
 }
 

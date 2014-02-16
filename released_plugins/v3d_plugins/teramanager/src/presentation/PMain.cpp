@@ -888,8 +888,8 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     this->setFont(tinyFont);
 
     // signals and slots
-    connect(CImport::instance(), SIGNAL(sendOperationOutcome(MyException*, Image4DSimple*, qint64)), this, SLOT(importDone(MyException*, Image4DSimple*,qint64)), Qt::QueuedConnection);
-    connect(CVolume::instance(), SIGNAL(sendOperationOutcome(uint8*, MyException*,void*, qint64, QString, int)), SLOT(loadingDone(uint8*, MyException*,void*, qint64, QString, int)), Qt::QueuedConnection);
+    connect(CImport::instance(), SIGNAL(sendOperationOutcome(itm::RuntimeException*, Image4DSimple*, qint64)), this, SLOT(importDone(itm::RuntimeException*, Image4DSimple*,qint64)), Qt::QueuedConnection);
+    connect(CVolume::instance(), SIGNAL(sendOperationOutcome(itm::uint8*, itm::RuntimeException*,void*, qint64, QString, int)), SLOT(loadingDone(itm::uint8*, itm::RuntimeException*,void*, qint64, QString, int)), Qt::QueuedConnection);
     connect(volMapMaxSizeSBox, SIGNAL(valueChanged(int)), this, SLOT(settingsChanged(int)));
     connect(Vdim_sbox, SIGNAL(valueChanged(int)), this, SLOT(settingsChanged(int)));
     connect(Hdim_sbox, SIGNAL(valueChanged(int)), this, SLOT(settingsChanged(int)));
@@ -1099,12 +1099,12 @@ void PMain::openVolume(string path /* = "" */)
                 return;
         }
         else if(!QFile::exists(path.c_str()))
-            throw MyException(strprintf("Path \"%s\" does not exist", path.c_str()).c_str());
+            throw RuntimeException(strprintf("Path \"%s\" does not exist", path.c_str()).c_str());
 
 
         //then checking that no volume has imported yet
         if(!CImport::instance()->isEmpty())
-            throw MyException("A volume has been already imported! Please close the current volume first.");
+            throw RuntimeException("A volume has been already imported! Please close the current volume first.");
 
 
         //storing the path into CSettings
@@ -1131,7 +1131,7 @@ void PMain::openVolume(string path /* = "" */)
         QString mdata_fpath = import_path;
         qDebug() << "inportpath = [" << mdata_fpath << "]";
         mdata_fpath.append("/");
-        mdata_fpath.append(IM_METADATA_FILE_NAME);
+        mdata_fpath.append(iim::MDATA_BIN_FILE_NAME.c_str());
         QString vmap_fpath = import_path;
         vmap_fpath.append("/");
         vmap_fpath.append(TMP_VMAP_FNAME);
@@ -1158,7 +1158,7 @@ void PMain::openVolume(string path /* = "" */)
         //starting import
         CImport::instance()->start();
     }
-    catch(MyException &ex)
+    catch(RuntimeException &ex)
     {
         QMessageBox::critical(this,QObject::tr("Error"), QObject::tr(ex.what()),QObject::tr("Ok"));
         PMain::getInstance()->resetGUI();
@@ -1227,7 +1227,7 @@ void PMain::loadAnnotations()
                 return;
         }
     }
-    catch(MyException &ex)
+    catch(RuntimeException &ex)
     {
         QMessageBox::critical(this,QObject::tr("Error"), QObject::tr(ex.what()),QObject::tr("Ok"));
     }
@@ -1254,7 +1254,7 @@ void PMain::saveAnnotations()
             CAnnotations::getInstance()->save(annotationsPathLRU.c_str());
         }
     }
-    catch(MyException &ex)
+    catch(RuntimeException &ex)
     {
         QMessageBox::critical(this,QObject::tr("Error"), QObject::tr(ex.what()),QObject::tr("Ok"));
     }
@@ -1302,7 +1302,7 @@ void PMain::saveAnnotationsAs()
                 return;
         }
     }
-    catch(MyException &ex)
+    catch(RuntimeException &ex)
     {
         QMessageBox::critical(this,QObject::tr("Error"), QObject::tr(ex.what()),QObject::tr("Ok"));
     }
@@ -1323,7 +1323,7 @@ void PMain::clearAnnotations()
             CExplorerWindow::getCurrent()->loadAnnotations();
         }
     }
-    catch(MyException &ex)
+    catch(RuntimeException &ex)
     {
         QMessageBox::critical(this,QObject::tr("Error"), QObject::tr(ex.what()),QObject::tr("Ok"));
     }
@@ -1356,7 +1356,7 @@ void PMain::about()
 * aged in the current thread (ex != 0). Otherwise, volume information are imported
 * in the GUI by the <StackedVolume> handle of <CImport>.
 **********************************************************************************/
-void PMain::importDone(MyException *ex, Image4DSimple* vmap_image, qint64 elapsed_time)
+void PMain::importDone(RuntimeException *ex, Image4DSimple* vmap_image, qint64 elapsed_time)
 {
     /**/itm::debug(itm::LEV1, strprintf("ex = %s", (ex? "error" : "0")).c_str(), __itm__current__function__);
 
@@ -1383,7 +1383,7 @@ void PMain::importDone(MyException *ex, Image4DSimple* vmap_image, qint64 elapse
         double TVoxels = GVoxels/1000.0;
         if(TVoxels < 0.1)
         {
-            double GBytes = GVoxels*CImport::instance()->getNChannels();
+            double GBytes = GVoxels*CImport::instance()->getVMapCDim();
             vol_size_files_field->setText(QString("<b>").append(QString::number(GBytes, 'f', 1).append("</b>")));
             vol_size_bytes_field->setText(QString::number(GBytes, 'f', 1));
             vol_size_voxel_field->setText(QString::number(GVoxels, 'f', 1));
@@ -1393,7 +1393,7 @@ void PMain::importDone(MyException *ex, Image4DSimple* vmap_image, qint64 elapse
         }
         else
         {
-            double TBytes = TVoxels*CImport::instance()->getNChannels();
+            double TBytes = TVoxels*CImport::instance()->getVMapCDim();
             vol_size_files_field->setText(QString("<b>").append(QString::number(TBytes, 'f', 1).append("</b>")));
             vol_size_bytes_field->setText(QString::number(TBytes, 'f', 1));
             vol_size_voxel_field->setText(QString::number(TVoxels, 'f', 1));
@@ -1451,11 +1451,11 @@ void PMain::importDone(MyException *ex, Image4DSimple* vmap_image, qint64 elapse
         D1_sbox->setMaximum(volume->getDIM_D());
         D1_sbox->setValue(volume->getDIM_D());        
         T0_sbox->setMinimum(1);
-        T0_sbox->setMaximum(CImport::instance()->getTDim());
+        T0_sbox->setMaximum(CImport::instance()->getVMapTDim());
         T0_sbox->setValue(1);
         T1_sbox->setMinimum(1);
-        T1_sbox->setMaximum(CImport::instance()->getTDim());
-        T1_sbox->setValue(CImport::instance()->getTDim());
+        T1_sbox->setMaximum(CImport::instance()->getVMapTDim());
+        T1_sbox->setValue(CImport::instance()->getVMapTDim());
         import_form->setEnabled(false);
         globalCoord_panel->setEnabled(true);
 
@@ -1515,9 +1515,9 @@ void PMain::importDone(MyException *ex, Image4DSimple* vmap_image, qint64 elapse
 
         //starting 3D exploration
         /**/itm::debug(itm::LEV_MAX, "instantiating CExplorerWindow", __itm__current__function__);
-        CExplorerWindow *new_win = new CExplorerWindow(V3D_env, CImport::instance()->getVMapResIndex(), CImport::instance()->getVMap(),
-                            0, CImport::instance()->getVMapHeight(), 0, CImport::instance()->getVMapWidth(),
-                            0, CImport::instance()->getVMapDepth(), CImport::instance()->getNChannels(), 0);
+        CExplorerWindow *new_win = new CExplorerWindow(V3D_env, CImport::instance()->getVMapResIndex(), CImport::instance()->getVMapRawData(),
+                            0, CImport::instance()->getVMapYDim(), 0, CImport::instance()->getVMapXDim(),
+                            0, CImport::instance()->getVMapZDim(), CImport::instance()->getVMapCDim(), 0);
         /**/itm::debug(itm::LEV_MAX, "showing CExplorerWindow", __itm__current__function__);
         new_win->show();
 
@@ -1540,7 +1540,7 @@ void PMain::importDone(MyException *ex, Image4DSimple* vmap_image, qint64 elapse
 * If an exception has occurred in the <CVolume> thread, it is propagated and
 * managed in the current thread (ex != 0).
 ***********************************************************************************/
-void PMain::loadingDone(uint8 *data, MyException *ex, void* sourceObject, qint64 elapsed_time, QString op_dsc, int step)
+void PMain::loadingDone(uint8 *data, RuntimeException *ex, void* sourceObject, qint64 elapsed_time, QString op_dsc, int step)
 {
     /**/itm::debug(itm::LEV1, strprintf("ex = %s", (ex? "error" : "0")).c_str(), __itm__current__function__);
 
@@ -1619,7 +1619,7 @@ void PMain::resolutionIndexChanged(int i)
             int voiH1 = CVolume::scaleHCoord(H1_sbox->value()-1, CImport::instance()->getResolutions()-1, i);
             int voiD0 = CVolume::scaleDCoord(D0_sbox->value()-1, CImport::instance()->getResolutions()-1, i);
             int voiD1 = CVolume::scaleDCoord(D1_sbox->value()-1, CImport::instance()->getResolutions()-1, i);
-            int voiTDim = std::min(CImport::instance()->getTDim(), Tdim_sbox->value());
+            int voiTDim = std::min(CImport::instance()->getVMapTDim(), Tdim_sbox->value());
             float MVoxels = ((voiV1-voiV0+1)/1024.0f)*((voiH1-voiH0+1)/1024.0f)*(voiD1-voiD0+1)*voiTDim;
             if(QMessageBox::Yes == QMessageBox::question(this, "Confirm", QString("The volume to be loaded is ").append(QString::number(MVoxels, 'f', 1)).append(" MVoxels big.\n\nDo you confirm?"), QMessageBox::No | QMessageBox::Yes, QMessageBox::Yes))
             {
@@ -1643,7 +1643,7 @@ void PMain::resolutionIndexChanged(int i)
                 resolution_cbox->setCurrentIndex(CExplorerWindow::getCurrent()->getResIndex());
         }
     }
-    catch(MyException &ex)
+    catch(RuntimeException &ex)
     {
         QMessageBox::critical(this,QObject::tr("Error"), QObject::tr(ex.what()),QObject::tr("Ok"));
         resetGUI();
@@ -1789,7 +1789,7 @@ bool PMain::eventFilter(QObject *object, QEvent *event)
         else if(event->type() == QEvent::Leave)
             helpBox->setText(HTbase);
     }
-    else if((object == zoomOutSens) && globalCoord_panel->isEnabled())
+    else if((object == zoomOutSens) && zoom_panel->isEnabled())
     {
         if(event->type() == QEvent::Enter)
             helpBox->setText(HTzoomOutThres);
@@ -1798,7 +1798,7 @@ bool PMain::eventFilter(QObject *object, QEvent *event)
 
         displayToolTip(zoomOutSens, event, QString::number(zoomOutSens->value()).toStdString());
     }
-    else if((object == zoomInSens) && globalCoord_panel->isEnabled())
+    else if((object == zoomInSens) && zoom_panel->isEnabled())
     {
         if(event->type() == QEvent::Enter)
             helpBox->setText(HTzoomInThres);
@@ -1807,7 +1807,7 @@ bool PMain::eventFilter(QObject *object, QEvent *event)
 
         displayToolTip(zoomInSens, event, QString::number(zoomInSens->value()).toStdString());
     }
-    else if((object == zoomInMethod) && globalCoord_panel->isEnabled())
+    else if((object == zoomInMethod) && zoom_panel->isEnabled())
     {
         if(event->type() == QEvent::Enter)
             helpBox->setText(HTzoomInMethod);
@@ -2097,5 +2097,6 @@ void PMain::verbosityChanged(int i)
     /**/itm::debug(itm::LEV1, strprintf("i = %d", i).c_str(), __itm__current__function__);
 
     itm::DEBUG = i;
+    iim::DEBUG = i;
     CSettings::instance()->writeSettings();
 }

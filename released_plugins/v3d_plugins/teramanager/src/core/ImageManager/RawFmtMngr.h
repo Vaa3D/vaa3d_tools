@@ -87,7 +87,7 @@ Peng, H, Ruan, Z., Atasoy, D., and Sternson, S. (2010) “Automatic reconstructi
 #ifndef RAWFMTMNGR_H
 #define RAWFMTMNGR_H
 
-#include "IM_defs.h"
+#include "IM_config.h"
 
 //the folowing conditional compilation is added by PHC, 2010-05-20
 //#if defined (_MSC_VER)
@@ -129,11 +129,11 @@ struct Block_Descr_t {
 	void *fhandle;    // handle to file containing the sub-block
 	int datatype;     // size of pixel in bytes
 	int header_len;   // header length
-	sint64 foffs;     // offset in the file from which start next copy step
-	sint64 boffs;     // offset in the buffer from which start next copy step
-	sint64 stridex;   // stripe stride of the 3D image stored in the file 
-	sint64 stridexy;  // slice stride of the 3D image stored in the file
-	sint64 stridexyz; // block stride of the 3D image stored in the file
+    iim::sint64 foffs;     // offset in the file from which start next copy step
+    iim::sint64 boffs;     // offset in the buffer from which start next copy step
+    iim::sint64 stridex;   // stripe stride of the 3D image stored in the file
+    iim::sint64 stridexy;  // slice stride of the 3D image stored in the file
+    iim::sint64 stridexyz; // block stride of the 3D image stored in the file
 	int width;        // width of stripes to be copied
 	int height;       // height of slices to be copied
 	int n_stripes;    // total number of stripes to be copied
@@ -146,10 +146,10 @@ class Streamer_Descr_t {
 public:
 	unsigned char *buf;        // pointer to 3D buffer in which sub-blocks have to be copied
 	int            pxl_size;   // buffer pixel size in bytes
-	sint64         stridex;    // line stride of the 3D buffer
-	sint64         stridexy;   // slice stride of the 3D buffer
-	sint64         stridexyz;  // block stride of the 3D buffer (pixels in one channel)
-	sint64         n_chans;    // number of channels in the buffer
+    iim::sint64         stridex;    // line stride of the 3D buffer
+    iim::sint64         stridexy;   // slice stride of the 3D buffer
+    iim::sint64         stridexyz;  // block stride of the 3D buffer (pixels in one channel)
+    iim::sint64         n_chans;    // number of channels in the buffer
 	int            steps;      // steps in which the copy jas to be decomposed
 	Block_Descr_t *bDescr;     // array of sub-blocks decriptors
 	int            max_blocks; // maximum elements of bDescr
@@ -157,11 +157,11 @@ public:
 	int            cur_step;   // current step
 
 public:
-	Streamer_Descr_t ( unsigned char *_buf, int _pxl_size, sint64 _stridex, sint64 _stridexy, sint64 _stridexyz, sint64 _n_chans, int _steps );
+    Streamer_Descr_t ( unsigned char *_buf, int _pxl_size, iim::sint64 _stridex, iim::sint64 _stridexy, iim::sint64 _stridexyz, iim::sint64 _n_chans, int _steps );
 
 	~Streamer_Descr_t ( );
 
-	char *addSubBlock ( char *filename, sint64 boffs, int sV0, int sV1, int sH0, int sH1, int sD0, int sD1 );
+    char *addSubBlock ( char *filename, iim::sint64 boffs, int sV0, int sV1, int sH0, int sH1, int sD0, int sD1 );
 };
 
 
@@ -254,7 +254,7 @@ char *writeSlice2RawFile ( char *filename, int slice, unsigned char *img, int im
  */
 
 char *copyRawFileBlock2Buffer ( char *filename, int sV0, int sV1, int sH0, int sH1, int sD0, int sD1,
-							    unsigned char *buf, int pxl_size, sint64 offs, sint64 stridex, sint64 stridexy, sint64 stridexyz );
+                                unsigned char *buf, int pxl_size, iim::sint64 offs, iim::sint64 stridex, iim::sint64 stridexy, iim::sint64 stridexyz );
 /* copies a block in file 'filename' to a region of 3D buffer buf
  *
  * filename:      complete path of the file to be read
@@ -292,7 +292,7 @@ char *streamer_close ( Streamer_Descr_t *streamer );
 /* closes the streamed operation specified by 'streamer'
  */
 
-char *convert2depth8bits ( int red_factor, sint64 totalBlockSize, sint64 sbv_channels, uint8 *&subvol );
+char *convert2depth8bits ( int red_factor, iim::sint64 totalBlockSize, iim::sint64 sbv_channels, iim::uint8 *&subvol );
 /* convert the buffer pointed by subvol to 8 bits per channel
  *
  * red_factor:     number of bytes per channel in the input buffer 

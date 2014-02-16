@@ -46,30 +46,31 @@
 #include <stdlib.h>
 #include <sstream>
 #include <cstdio>
-
 #include "check_and_makedir.h" //added by Hanchuan Peng, 20130915
 #include "resumer.h"
 
-//initialization of class members
-double VolumeConverter::time_displ_comp=0;
-double VolumeConverter::time_merging=0;
-double VolumeConverter::time_stack_desc=0;
-double VolumeConverter::time_stack_restore=0;
-double VolumeConverter::time_multiresolution=0;
+using namespace iim;
 
+VolumeConverter::VolumeConverter( )
+{
+    /**/iim::debug(iim::LEV3, 0, __iim__current__function__);
 
-VolumeConverter::VolumeConverter( ) {
 	volume = (VirtualVolume *) 0;
 }
 
 
-VolumeConverter::~VolumeConverter() { 
+VolumeConverter::~VolumeConverter()
+{
+    /**/iim::debug(iim::LEV3, 0, __iim__current__function__);
+
 	if(volume)
 		delete volume;
 }
 
 
-void VolumeConverter::setSrcVolume(const char* _root_dir, const char* _fmt, const char* _out_fmt) throw (MyException) {
+void VolumeConverter::setSrcVolume(const char* _root_dir, const char* _fmt, const char* _out_fmt) throw (IOException)
+{
+    /**/iim::debug(iim::LEV3, strprintf("_root_dir = %s, _fmt = %s, _out_fmt = %s", _root_dir, _fmt, _out_fmt).c_str(), __iim__current__function__);
 
 	if ( strcmp(_fmt,STACKED_FORMAT) == 0 ) 
 		volume = new StackedVolume(_root_dir,ref_sys(vertical,horizontal,depth),(float)1.0,(float)1.0,(float)1.0);
@@ -84,9 +85,9 @@ void VolumeConverter::setSrcVolume(const char* _root_dir, const char* _fmt, cons
 	else if ( strcmp(_fmt,RAW_FORMAT) == 0 ) 
 		volume = new RawVolume(_root_dir);
 	else {
-        char err_msg[IM_STATIC_STRINGS_SIZE];
+        char err_msg[STATIC_STRINGS_SIZE];
 		sprintf(err_msg,"VolumeConverter::setSrcVolume: unsupported volume format");
-		throw MyException(err_msg);
+        throw IOException(err_msg);
 	}
 
 	//channels = (volume->getCHANS()>1) ? 3 : 1; // only 1 or 3 channels supported
@@ -112,9 +113,9 @@ void VolumeConverter::setSrcVolume(const char* _root_dir, const char* _fmt, cons
 		internal_rep = UINT8_INTERNAL_REP;
 	}
 	else {
-		char err_msg[IM_STATIC_STRINGS_SIZE];
+		char err_msg[STATIC_STRINGS_SIZE];
 		sprintf(err_msg,"VolumeConverter::setSrcVolume: unsupported output format (%s)",out_fmt);
-		throw MyException(err_msg);
+        throw IOException(err_msg);
 	}
 
 	V0 = 0;
@@ -143,7 +144,7 @@ void VolumeConverter::setSrcVolume(const char* _root_dir, const char* _fmt, cons
 **************************************************************************************************************/
 void VolumeConverter::generateTiles(std::string output_path, bool* resolutions, 
 				int slice_height, int slice_width, int method, bool show_progress_bar, const char* saved_img_format, 
-				int saved_img_depth)	throw (MyException)
+                int saved_img_depth, std::string frame_dir)	throw (IOException)
 {
     printf("in VolumeConverter::generateTiles(path = \"%s\", resolutions = ", output_path.c_str());
     for(int i=0; i< S_MAX_MULTIRES; i++)
@@ -155,29 +156,29 @@ void VolumeConverter::generateTiles(std::string output_path, bool* resolutions,
 		saved_img_depth = 8;
 		
 	if ( saved_img_depth != 8 ) {
-		char err_msg[IM_STATIC_STRINGS_SIZE];
+		char err_msg[STATIC_STRINGS_SIZE];
 		sprintf(err_msg,"VolumeConverter::generateTilesVaa3DRaw: mismatch between bits per channel of source (%d) and destination (%d)",
 			volume->getBYTESxCHAN() * 8, saved_img_depth);
-		throw MyException(err_msg);
+        throw IOException(err_msg);
 	}
 	
 	if ( saved_img_depth != (volume->getBYTESxCHAN() * 8) ) {
-		char err_msg[IM_STATIC_STRINGS_SIZE];
+		char err_msg[STATIC_STRINGS_SIZE];
 		sprintf(err_msg,"VolumeConverter::generateTilesVaa3DRaw: mismatch between bits per channel of source (%d) and destination (%d)",
 			volume->getBYTESxCHAN() * 8, saved_img_depth);
-		throw MyException(err_msg);
+        throw IOException(err_msg);
 	}
 	
 	//LOCAL VARIABLES
     sint64 height, width, depth;	//height, width and depth of the whole volume that covers all stacks
-	REAL_T* rbuffer;			//buffer where temporary image data are stored (REAL_INTERNAL_REP)
+    real32* rbuffer;			//buffer where temporary image data are stored (REAL_INTERNAL_REP)
 	uint8** ubuffer;			//array of buffers where temporary image data of channels are stored (UINT8_INTERNAL_REP)
 	int bytes_chan = volume->getBYTESxCHAN();
 	//uint8*  ubuffer_ch2;	    //buffer temporary image data of channel 1 are stored (UINT8_INTERNAL_REP)
 	//uint8*  ubuffer_ch3;	    //buffer temporary image data of channel 1 are stored (UINT8_INTERNAL_REP)
 	int org_channels = 0;       //store the number of channels read the first time (for checking purposes)
 	int supported_channels;     //channels to be supported (stacks of tiffs 2D only supports 1 or 3 channels)
-    // REAL_T* stripe_up=NULL;		//will contain up-stripe and down-stripe computed by calling 'getStripe' method (unused)
+    // real32* stripe_up=NULL;		//will contain up-stripe and down-stripe computed by calling 'getStripe' method (unused)
 	sint64 z_ratio, z_max_res;
     int n_stacks_V[S_MAX_MULTIRES], n_stacks_H[S_MAX_MULTIRES];             //array of number of tiles along V and H directions respectively at i-th resolution
     int **stacks_height[S_MAX_MULTIRES], **stacks_width[S_MAX_MULTIRES];	//array of matrices of tiles dimensions at i-th resolution
@@ -185,9 +186,9 @@ void VolumeConverter::generateTiles(std::string output_path, bool* resolutions,
 	int resolutions_size = 0;
 
 	if ( volume == 0 ) {
-		char err_msg[IM_STATIC_STRINGS_SIZE];
+		char err_msg[STATIC_STRINGS_SIZE];
 		sprintf(err_msg,"VolumeConverter::generateTiles: undefined source volume");
-		throw MyException(err_msg);
+        throw IOException(err_msg);
 	}
 
 	//initializing the progress bar
@@ -210,9 +211,9 @@ void VolumeConverter::generateTiles(std::string output_path, bool* resolutions,
     slice_width  = (slice_width  == -1 ? (int)width  : slice_width);
     if(slice_height < S_MIN_SLICE_DIM || slice_width < S_MIN_SLICE_DIM)
     {
-        char err_msg[IM_STATIC_STRINGS_SIZE];
+        char err_msg[STATIC_STRINGS_SIZE];
         sprintf(err_msg,"The minimum dimension for both slice width and height is %d", S_MIN_SLICE_DIM);
-        throw MyException(err_msg);
+        throw IOException(err_msg);
     }
 	if(resolutions == NULL)
 	{
@@ -252,7 +253,7 @@ void VolumeConverter::generateTiles(std::string output_path, bool* resolutions,
                 {
                     char err_msg[S_MAX_MULTIRES];
                     sprintf(err_msg, "in generateTiles(...): unable to create DIR = \"%s\"\n", file_path[res_i].str().c_str());
-                    throw MyException(err_msg);
+                    throw IOException(err_msg);
                 }
             }
 	}
@@ -263,9 +264,9 @@ void VolumeConverter::generateTiles(std::string output_path, bool* resolutions,
 
 	// check the number of channels
 	if ( channels > 3 ) {
-		char err_msg[IM_STATIC_STRINGS_SIZE];
+		char err_msg[STATIC_STRINGS_SIZE];
 		sprintf(err_msg,"The volume contains too many channels (%d)", channels);
-		throw MyException(err_msg);
+        throw IOException(err_msg);
 	}
 
 	//allocated even if not used
@@ -278,14 +279,14 @@ void VolumeConverter::generateTiles(std::string output_path, bool* resolutions,
 	{
 		// fill one slice block
 		if ( internal_rep == REAL_INTERNAL_REP )
-			rbuffer = volume->loadSubvolume_to_REAL_T(V0,V1,H0,H1,(int)(z-D0),(z-D0+z_max_res <= D1) ? (int)(z-D0+z_max_res) : D1);
+            rbuffer = volume->loadSubvolume_to_real32(V0,V1,H0,H1,(int)(z-D0),(z-D0+z_max_res <= D1) ? (int)(z-D0+z_max_res) : D1);
 		else { // internal_rep == UINT8_INTERNAL_REP
-			ubuffer[0] = volume->loadSubvolume_to_UINT8(V0,V1,H0,H1,(int)(z-D0),(z-D0+z_max_res <= D1) ? (int)(z-D0+z_max_res) : D1,&channels,IM_NATIVE_RTYPE);
+            ubuffer[0] = volume->loadSubvolume_to_UINT8(V0,V1,H0,H1,(int)(z-D0),(z-D0+z_max_res <= D1) ? (int)(z-D0+z_max_res) : D1,&channels,iim::NATIVE_RTYPE);
 			// WARNING: next code assumes that channels is 1 or 3, but implementations of loadSubvolume_to_UINT8 do not guarantee this condition
 			if ( org_channels != channels ) {
-				char err_msg[IM_STATIC_STRINGS_SIZE];
+				char err_msg[STATIC_STRINGS_SIZE];
 				sprintf(err_msg,"The volume contains images with a different number of channels (%d,%d)", org_channels, channels);
-				throw MyException(err_msg);
+                throw IOException(err_msg);
 			}
 		
 			// code has been changed because the load operation can return 1, 2 or 3 channels
@@ -343,6 +344,17 @@ void VolumeConverter::generateTiles(std::string output_path, bool* resolutions,
 				std::stringstream base_path;
                                 base_path << output_path << "/RES(" << (int)(height/POW_INT(2,i)) << "x" << (int)(width/POW_INT(2,i)) << "x" << (int)(depth/POW_INT(2,i)) << ")/";
 
+				//if frame_dir not empty must create frame directory
+				if ( frame_dir != "" ) {
+					base_path << frame_dir << "/";
+					if(!check_and_make_dir(base_path.str().c_str())) 
+					{
+						char err_msg[S_MAX_MULTIRES];
+						sprintf(err_msg, "in generateTiles(...): unable to create DIR = \"%s\"\n", base_path.str().c_str());
+                        throw IOException(err_msg);
+					}
+				}
+
 				//looping on new stacks
 				for(int stack_row = 0, start_height = 0, end_height = 0; stack_row < n_stacks_V[i]; stack_row++)
 				{
@@ -356,7 +368,7 @@ void VolumeConverter::generateTiles(std::string output_path, bool* resolutions,
 					{
 						char err_msg[S_STATIC_STRINGS_SIZE];
 						sprintf(err_msg, "in mergeTiles(...): unable to create V_DIR = \"%s\"\n", V_DIR_path.str().c_str());
-						throw MyException(err_msg);
+                        throw IOException(err_msg);
 					}
 
 					for(int stack_column = 0, start_width=0, end_width=0; stack_column < n_stacks_H[i]; stack_column++)
@@ -371,7 +383,7 @@ void VolumeConverter::generateTiles(std::string output_path, bool* resolutions,
 						{
 							char err_msg[S_STATIC_STRINGS_SIZE];
 							sprintf(err_msg, "in mergeTiles(...): unable to create H_DIR = \"%s\"\n", H_DIR_path.str().c_str());
-							throw MyException(err_msg);
+                            throw IOException(err_msg);
 						}
 
 						//saving HERE
@@ -493,7 +505,7 @@ void VolumeConverter::generateTiles(std::string output_path, bool* resolutions,
 void VolumeConverter::generateTilesVaa3DRaw(std::string output_path, bool* resolutions, 
 				int block_height, int block_width, int block_depth, int method, 
 				bool show_progress_bar, const char* saved_img_format, 
-				int saved_img_depth)	throw (MyException)
+                int saved_img_depth, std::string frame_dir)	throw (IOException)
 {
     printf("in VolumeConverter::generateTilesVaa3DRaw(path = \"%s\", resolutions = ", output_path.c_str());
     for(int i=0; i< S_MAX_MULTIRES; i++)
@@ -505,21 +517,21 @@ void VolumeConverter::generateTilesVaa3DRaw(std::string output_path, bool* resol
 		saved_img_depth = volume->getBYTESxCHAN() * 8;
 		
 	if ( saved_img_depth != (volume->getBYTESxCHAN() * 8) ) {
-		char err_msg[IM_STATIC_STRINGS_SIZE];
+		char err_msg[STATIC_STRINGS_SIZE];
 		sprintf(err_msg,"VolumeConverter::generateTilesVaa3DRaw: mismatch between bits per channel of source (%d) and destination (%d)",
 			volume->getBYTESxCHAN() * 8, saved_img_depth);
-		throw MyException(err_msg);
+        throw IOException(err_msg);
 	}
 
 	//LOCAL VARIABLES
     sint64 height, width, depth;	//height, width and depth of the whole volume that covers all stacks
-	REAL_T* rbuffer;			//buffer where temporary image data are stored (REAL_INTERNAL_REP)
+    real32* rbuffer;			//buffer where temporary image data are stored (REAL_INTERNAL_REP)
 	uint8** ubuffer;			//array of buffers where temporary image data of channels are stored (UINT8_INTERNAL_REP)
 	int bytes_chan = volume->getBYTESxCHAN();
 	//uint8*  ubuffer_ch2;	    //buffer temporary image data of channel 1 are stored (UINT8_INTERNAL_REP)
 	//uint8*  ubuffer_ch3;	    //buffer temporary image data of channel 1 are stored (UINT8_INTERNAL_REP)
 	int org_channels = 0;       //store the number of channels read the first time (for checking purposes)
-    //REAL_T* stripe_up=NULL;		//will contain up-stripe and down-stripe computed by calling 'getStripe' method (unused)
+    //real32* stripe_up=NULL;		//will contain up-stripe and down-stripe computed by calling 'getStripe' method (unused)
 	sint64 z_ratio, z_max_res;
     int n_stacks_V[S_MAX_MULTIRES];        //arrays of number of tiles along V, H and D directions respectively at i-th resolution
     int n_stacks_H[S_MAX_MULTIRES];
@@ -555,9 +567,9 @@ void VolumeConverter::generateTilesVaa3DRaw(std::string output_path, bool* resol
 	sint64 n_slices_pred;       
 
 	if ( volume == 0 ) {
-		char err_msg[IM_STATIC_STRINGS_SIZE];
+		char err_msg[STATIC_STRINGS_SIZE];
 		sprintf(err_msg,"VolumeConverter::generateTilesVaa3DRaw: undefined source volume");
-		throw MyException(err_msg);
+        throw IOException(err_msg);
 	}
 
 	//initializing the progress bar
@@ -586,9 +598,9 @@ void VolumeConverter::generateTilesVaa3DRaw(std::string output_path, bool* resol
     block_depth  = (block_depth  == -1 ? (int)depth  : block_depth);
     if(block_height < S_MIN_SLICE_DIM || block_width < S_MIN_SLICE_DIM || block_depth < S_MIN_SLICE_DIM)
     { 
-        char err_msg[IM_STATIC_STRINGS_SIZE];
+        char err_msg[STATIC_STRINGS_SIZE];
         sprintf(err_msg,"The minimum dimension for block height, width, and depth is %d", S_MIN_SLICE_DIM);
-        throw MyException(err_msg);
+        throw IOException(err_msg);
     }
 
 	if(resolutions == NULL)
@@ -642,7 +654,7 @@ void VolumeConverter::generateTilesVaa3DRaw(std::string output_path, bool* resol
                 {
                     char err_msg[S_MAX_MULTIRES];
                     sprintf(err_msg, "in generateTilesVaa3DRaw(...): unable to create DIR = \"%s\"\n", file_path[res_i].str().c_str());
-                    throw MyException(err_msg);
+                    throw IOException(err_msg);
                 }
             }
 	}
@@ -682,13 +694,13 @@ void VolumeConverter::generateTilesVaa3DRaw(std::string output_path, bool* resol
 
 		// fill one slice block
 		if ( internal_rep == REAL_INTERNAL_REP )
-			rbuffer = volume->loadSubvolume_to_REAL_T(V0,V1,H0,H1,(int)(z-D0),(z-D0+z_max_res <= D1) ? (int)(z-D0+z_max_res) : D1);
+            rbuffer = volume->loadSubvolume_to_real32(V0,V1,H0,H1,(int)(z-D0),(z-D0+z_max_res <= D1) ? (int)(z-D0+z_max_res) : D1);
 		else { // internal_rep == UINT8_INTERNAL_REP
-			ubuffer[0] = volume->loadSubvolume_to_UINT8(V0,V1,H0,H1,(int)(z-D0),(z-D0+z_max_res <= D1) ? (int)(z-D0+z_max_res) : D1,&channels,IM_NATIVE_RTYPE);
+            ubuffer[0] = volume->loadSubvolume_to_UINT8(V0,V1,H0,H1,(int)(z-D0),(z-D0+z_max_res <= D1) ? (int)(z-D0+z_max_res) : D1,&channels,iim::NATIVE_RTYPE);
 			if ( org_channels != channels ) {
-				char err_msg[IM_STATIC_STRINGS_SIZE];
+				char err_msg[STATIC_STRINGS_SIZE];
 				sprintf(err_msg,"The volume contains images with a different number of channels (%d,%d)", org_channels, channels);
-				throw MyException(err_msg);
+                throw IOException(err_msg);
 			}
 		
 			for (int i=1; i<channels; i++ ) { // WARNING: assume 1-byte pixels
@@ -757,7 +769,19 @@ void VolumeConverter::generateTilesVaa3DRaw(std::string output_path, bool* resol
 
 				//storing in 'base_path' the absolute path of the directory that will contain all stacks
 				std::stringstream base_path;
-				base_path << output_path << "/RES(" << (int)(height/POW_INT(2,i)) << "x" << (int)(width/POW_INT(2,i)) << "x" << (int)(depth/POW_INT(2,i)) << ")/";
+				base_path << output_path << "/RES(" << (int)(height/POW_INT(2,i)) << "x" << 
+					(int)(width/POW_INT(2,i)) << "x" << (int)(depth/POW_INT(2,i)) << ")/";
+
+				//if frame_dir not empty must create frame directory
+				if ( frame_dir != "" ) {
+					base_path << frame_dir << "/";
+					if(!check_and_make_dir(base_path.str().c_str())) 
+					{
+						char err_msg[S_MAX_MULTIRES];
+						sprintf(err_msg, "in generateTilesVaa3DRaw(...): unable to create DIR = \"%s\"\n", base_path.str().c_str());
+                        throw IOException(err_msg);
+					}
+				}
 
 				//looping on new stacks
 				for(int stack_row = 0, start_height = 0, end_height = 0; stack_row < n_stacks_V[i]; stack_row++)
@@ -772,7 +796,7 @@ void VolumeConverter::generateTilesVaa3DRaw(std::string output_path, bool* resol
 					{
 						char err_msg[S_STATIC_STRINGS_SIZE];
 						sprintf(err_msg, "in generateTilesVaa3DRaw(...): unable to create V_DIR = \"%s\"\n", V_DIR_path.str().c_str());
-						throw MyException(err_msg);
+                        throw IOException(err_msg);
 					}
 
 					for(int stack_column = 0, start_width=0, end_width=0; stack_column < n_stacks_H[i]; stack_column++)
@@ -787,7 +811,7 @@ void VolumeConverter::generateTilesVaa3DRaw(std::string output_path, bool* resol
 							{
 								char err_msg[S_STATIC_STRINGS_SIZE];
 								sprintf(err_msg, "in generateTilesVaa3DRaw(...): unable to create H_DIR = \"%s\"\n", H_DIR_path.str().c_str());
-								throw MyException(err_msg);
+                                throw IOException(err_msg);
 							}
 							else { // the directory has been created for the first time
 								   // initialize block files
@@ -809,13 +833,13 @@ void VolumeConverter::generateTilesVaa3DRaw(std::string output_path, bool* resol
 									else {
 										char err_msg[S_STATIC_STRINGS_SIZE];
 										sprintf(err_msg, "in generateTilesVaa3DRaw(...): unknown image depth (%d)", saved_img_depth);
-										throw MyException(err_msg);
+                                        throw IOException(err_msg);
 									}
 								}
 								else {
 									char err_msg[S_STATIC_STRINGS_SIZE];
 									sprintf(err_msg, "in generateTilesVaa3DRaw(...): unknown internal representation (%d)", internal_rep);
-									throw MyException(err_msg);
+                                    throw IOException(err_msg);
 								}
 
 								int slice_start_temp = 0;
@@ -835,9 +859,9 @@ void VolumeConverter::generateTilesVaa3DRaw(std::string output_path, bool* resol
 												  << abs_pos_z_temp.str();
 
 									if ( (err_rawfmt = initRawFile((char *)img_path_temp.str().c_str(),sz,datatype)) != 0 ) {
-										char err_msg[IM_STATIC_STRINGS_SIZE];
+										char err_msg[STATIC_STRINGS_SIZE];
 										sprintf(err_msg,"VolumeConverter::generateTilesVaa3DRaw: error in initializing block file - %s", err_rawfmt);
-										throw MyException(err_msg);
+                                        throw IOException(err_msg);
 									};
 
 									slice_start_temp += (int)sz[2];
@@ -973,9 +997,9 @@ void VolumeConverter::generateTilesVaa3DRaw(std::string output_path, bool* resol
 	}
 
 	if ( n_err ) { // errors in mdat.bin creation
-		char err_msg[IM_STATIC_STRINGS_SIZE];
+		char err_msg[STATIC_STRINGS_SIZE];
 		sprintf(err_msg,"VolumeConverter::generateTilesVaa3DRaw: %d errors in creating mdata.bin files", n_err);
-		throw MyException(err_msg);
+        throw IOException(err_msg);
 	}
 }
 
@@ -1032,7 +1056,7 @@ int VolumeConverter::getMultiresABS_D(int res)
 void VolumeConverter::generateTilesVaa3DRawMC ( std::string output_path, bool* resolutions, 
 				int block_height, int block_width, int block_depth, int method, 
 				bool show_progress_bar, const char* saved_img_format, 
-				int saved_img_depth )	throw (MyException)
+				int saved_img_depth, std::string frame_dir )	throw (MyException)
 {
     printf("in VolumeConverter::generateTilesVaa3DRawMC(path = \"%s\", resolutions = ", output_path.c_str());
     for(int i=0; i< S_MAX_MULTIRES; i++)
@@ -1044,7 +1068,7 @@ void VolumeConverter::generateTilesVaa3DRawMC ( std::string output_path, bool* r
 		saved_img_depth = volume->getBYTESxCHAN() * 8;
 		
 	if ( saved_img_depth != (volume->getBYTESxCHAN() * 8) ) {
-		char err_msg[IM_STATIC_STRINGS_SIZE];
+		char err_msg[STATIC_STRINGS_SIZE];
 		sprintf(err_msg,"VolumeConverter::generateTilesVaa3DRaw: mismatch between bits per channel of source (%d) and destination (%d)",
 			volume->getBYTESxCHAN() * 8, saved_img_depth);
 		throw MyException(err_msg);
@@ -1052,13 +1076,13 @@ void VolumeConverter::generateTilesVaa3DRawMC ( std::string output_path, bool* r
 
 	//LOCAL VARIABLES
     sint64 height, width, depth;	//height, width and depth of the whole volume that covers all stacks
-	REAL_T* rbuffer;			//buffer where temporary image data are stored (REAL_INTERNAL_REP)
+    real32* rbuffer;			//buffer where temporary image data are stored (REAL_INTERNAL_REP)
 	uint8** ubuffer;			//array of buffers where temporary image data of channels are stored (UINT8_INTERNAL_REP)
 	int bytes_chan = volume->getBYTESxCHAN();
 	//uint8*  ubuffer_ch2;	    //buffer temporary image data of channel 1 are stored (UINT8_INTERNAL_REP)
 	//uint8*  ubuffer_ch3;	    //buffer temporary image data of channel 1 are stored (UINT8_INTERNAL_REP)
 	int org_channels = 0;       //store the number of channels read the first time (for checking purposes)
-    //REAL_T* stripe_up=NULL;		//will contain up-stripe and down-stripe computed by calling 'getStripe' method (unused)
+    //real32* stripe_up=NULL;		//will contain up-stripe and down-stripe computed by calling 'getStripe' method (unused)
 	sint64 z_ratio, z_max_res;
     int n_stacks_V[S_MAX_MULTIRES];        //arrays of number of tiles along V, H and D directions respectively at i-th resolution
     int n_stacks_H[S_MAX_MULTIRES];
@@ -1096,7 +1120,7 @@ void VolumeConverter::generateTilesVaa3DRawMC ( std::string output_path, bool* r
 	sint64 n_slices_pred;       
 
 	if ( volume == 0 ) {
-		char err_msg[IM_STATIC_STRINGS_SIZE];
+		char err_msg[STATIC_STRINGS_SIZE];
 		sprintf(err_msg,"VolumeConverter::generateTilesVaa3DRawMC: undefined source volume");
 		throw MyException(err_msg);
 	}
@@ -1127,7 +1151,7 @@ void VolumeConverter::generateTilesVaa3DRawMC ( std::string output_path, bool* r
     block_depth  = (block_depth  == -1 ? (int)depth  : block_depth);
     if(block_height < S_MIN_SLICE_DIM || block_width < S_MIN_SLICE_DIM || block_depth < S_MIN_SLICE_DIM)
     { 
-        char err_msg[IM_STATIC_STRINGS_SIZE];
+        char err_msg[STATIC_STRINGS_SIZE];
         sprintf(err_msg,"The minimum dimension for block height, width, and depth is %d", S_MIN_SLICE_DIM);
         throw MyException(err_msg);
     }
@@ -1243,11 +1267,11 @@ void VolumeConverter::generateTilesVaa3DRawMC ( std::string output_path, bool* r
 	{
 		// fill one slice block
 		if ( internal_rep == REAL_INTERNAL_REP )
-			rbuffer = volume->loadSubvolume_to_REAL_T(V0,V1,H0,H1,(int)(z-D0),(z-D0+z_max_res <= D1) ? (int)(z-D0+z_max_res) : D1);
+            rbuffer = volume->loadSubvolume_to_real32(V0,V1,H0,H1,(int)(z-D0),(z-D0+z_max_res <= D1) ? (int)(z-D0+z_max_res) : D1);
 		else { // internal_rep == UINT8_INTERNAL_REP
-			ubuffer[0] = volume->loadSubvolume_to_UINT8(V0,V1,H0,H1,(int)(z-D0),(z-D0+z_max_res <= D1) ? (int)(z-D0+z_max_res) : D1,&channels,IM_NATIVE_RTYPE);
+            ubuffer[0] = volume->loadSubvolume_to_UINT8(V0,V1,H0,H1,(int)(z-D0),(z-D0+z_max_res <= D1) ? (int)(z-D0+z_max_res) : D1,&channels,iim::NATIVE_RTYPE);
 			if ( org_channels != channels ) {
-				char err_msg[IM_STATIC_STRINGS_SIZE];
+				char err_msg[STATIC_STRINGS_SIZE];
 				sprintf(err_msg,"The volume contains images with a different number of channels (%d,%d)", org_channels, channels);
 				throw MyException(err_msg);
 			}
@@ -1398,7 +1422,7 @@ void VolumeConverter::generateTilesVaa3DRawMC ( std::string output_path, bool* r
 													  << abs_pos_z_temp.str();
 
 										if ( (err_rawfmt = initRawFile((char *)img_path_temp.str().c_str(),sz,datatype)) != 0 ) {
-											char err_msg[IM_STATIC_STRINGS_SIZE];
+											char err_msg[STATIC_STRINGS_SIZE];
 											sprintf(err_msg,"VolumeConverter::generateTilesVaa3DRawMC: error in initializing block file - %s", err_rawfmt);
 											throw MyException(err_msg);
 										};
@@ -1535,7 +1559,7 @@ void VolumeConverter::generateTilesVaa3DRawMC ( std::string output_path, bool* r
 void VolumeConverter::generateTilesVaa3DRawMC ( std::string output_path, bool* resolutions, 
 				int block_height, int block_width, int block_depth, int method, 
 				bool show_progress_bar, const char* saved_img_format, 
-				int saved_img_depth )	throw (MyException)
+                int saved_img_depth, std::string frame_dir )	throw (IOException)
 {
     printf("in VolumeConverter::generateTilesVaa3DRawMC(path = \"%s\", resolutions = ", output_path.c_str());
     for(int i=0; i< S_MAX_MULTIRES; i++)
@@ -1547,21 +1571,21 @@ void VolumeConverter::generateTilesVaa3DRawMC ( std::string output_path, bool* r
 		saved_img_depth = volume->getBYTESxCHAN() * 8;
 		
 	if ( saved_img_depth != (volume->getBYTESxCHAN() * 8) ) {
-		char err_msg[IM_STATIC_STRINGS_SIZE];
+		char err_msg[STATIC_STRINGS_SIZE];
 		sprintf(err_msg,"VolumeConverter::generateTilesVaa3DRaw: mismatch between bits per channel of source (%d) and destination (%d)",
 			volume->getBYTESxCHAN() * 8, saved_img_depth);
-		throw MyException(err_msg);
+        throw IOException(err_msg);
 	}
 
 	//LOCAL VARIABLES
     sint64 height, width, depth;	//height, width and depth of the whole volume that covers all stacks
-	REAL_T* rbuffer;			//buffer where temporary image data are stored (REAL_INTERNAL_REP)
+    real32* rbuffer;			//buffer where temporary image data are stored (REAL_INTERNAL_REP)
 	uint8** ubuffer;			//array of buffers where temporary image data of channels are stored (UINT8_INTERNAL_REP)
 	int bytes_chan = volume->getBYTESxCHAN();
 	//uint8*  ubuffer_ch2;	    //buffer temporary image data of channel 1 are stored (UINT8_INTERNAL_REP)
 	//uint8*  ubuffer_ch3;	    //buffer temporary image data of channel 1 are stored (UINT8_INTERNAL_REP)
 	int org_channels = 0;       //store the number of channels read the first time (for checking purposes)
-    //REAL_T* stripe_up=NULL;		//will contain up-stripe and down-stripe computed by calling 'getStripe' method (unused)
+    //real32* stripe_up=NULL;		//will contain up-stripe and down-stripe computed by calling 'getStripe' method (unused)
 	sint64 z_ratio, z_max_res;
     int n_stacks_V[S_MAX_MULTIRES];        //arrays of number of tiles along V, H and D directions respectively at i-th resolution
     int n_stacks_H[S_MAX_MULTIRES];
@@ -1599,9 +1623,9 @@ void VolumeConverter::generateTilesVaa3DRawMC ( std::string output_path, bool* r
 	sint64 n_slices_pred;       
 
 	if ( volume == 0 ) {
-		char err_msg[IM_STATIC_STRINGS_SIZE];
+		char err_msg[STATIC_STRINGS_SIZE];
 		sprintf(err_msg,"VolumeConverter::generateTilesVaa3DRawMC: undefined source volume");
-		throw MyException(err_msg);
+        throw IOException(err_msg);
 	}
 
 	//initializing the progress bar
@@ -1630,9 +1654,9 @@ void VolumeConverter::generateTilesVaa3DRawMC ( std::string output_path, bool* r
     block_depth  = (block_depth  == -1 ? (int)depth  : block_depth);
     if(block_height < S_MIN_SLICE_DIM || block_width < S_MIN_SLICE_DIM || block_depth < S_MIN_SLICE_DIM)
     { 
-        char err_msg[IM_STATIC_STRINGS_SIZE];
+        char err_msg[STATIC_STRINGS_SIZE];
         sprintf(err_msg,"The minimum dimension for block height, width, and depth is %d", S_MIN_SLICE_DIM);
-        throw MyException(err_msg);
+        throw IOException(err_msg);
     }
 
 	if(resolutions == NULL)
@@ -1691,7 +1715,7 @@ void VolumeConverter::generateTilesVaa3DRawMC ( std::string output_path, bool* r
 		dir_name.width(n_digits);
 		dir_name.fill('0');
 		dir_name << c;
-		chans_dir[c] = "/" + (IM_CHANNEL_PREFIX + dir_name.str());
+        chans_dir[c] = "/" + (iim::CHANNEL_PREFIX + dir_name.str());
 	}
 
 	// computing resolutions directory names
@@ -1705,7 +1729,18 @@ void VolumeConverter::generateTilesVaa3DRawMC ( std::string output_path, bool* r
             if(!check_and_make_dir(file_path[res_i].str().c_str())) { // HP 130914
 				char err_msg[S_MAX_MULTIRES];
 				sprintf(err_msg, "in generateTilesVaa3DRawMC(...): unable to create DIR = \"%s\"\n", file_path[res_i].str().c_str());
-				throw MyException(err_msg);
+                throw IOException(err_msg);
+			}
+
+			//if frame_dir not empty must create frame directory
+			if ( frame_dir != "" ) {
+				file_path[res_i] << "/" << frame_dir << "/";
+				if(!check_and_make_dir(file_path[res_i].str().c_str())) 
+				{
+					char err_msg[S_MAX_MULTIRES];
+					sprintf(err_msg, "in generateTilesVaa3DRawMC(...): unable to create DIR = \"%s\"\n", file_path[res_i].str().c_str());
+                    throw IOException(err_msg);
+				}
 			}
 
 			for ( int c=0; c<channels; c++ ) {
@@ -1716,7 +1751,7 @@ void VolumeConverter::generateTilesVaa3DRawMC ( std::string output_path, bool* r
 				{
 					char err_msg[S_MAX_MULTIRES];
 					sprintf(err_msg, "in generateTilesVaa3DRawMC(...): unable to create DIR = \"%s\"\n", chans_dir[c].c_str());
-					throw MyException(err_msg);
+                    throw IOException(err_msg);
 				}
 			}
 		}
@@ -1742,13 +1777,13 @@ void VolumeConverter::generateTilesVaa3DRawMC ( std::string output_path, bool* r
 	{
 		// fill one slice block
 		if ( internal_rep == REAL_INTERNAL_REP )
-			rbuffer = volume->loadSubvolume_to_REAL_T(V0,V1,H0,H1,(int)(z-D0),(z-D0+z_max_res <= D1) ? (int)(z-D0+z_max_res) : D1);
+            rbuffer = volume->loadSubvolume_to_real32(V0,V1,H0,H1,(int)(z-D0),(z-D0+z_max_res <= D1) ? (int)(z-D0+z_max_res) : D1);
 		else { // internal_rep == UINT8_INTERNAL_REP
-			ubuffer[0] = volume->loadSubvolume_to_UINT8(V0,V1,H0,H1,(int)(z-D0),(z-D0+z_max_res <= D1) ? (int)(z-D0+z_max_res) : D1,&channels,IM_NATIVE_RTYPE);
+            ubuffer[0] = volume->loadSubvolume_to_UINT8(V0,V1,H0,H1,(int)(z-D0),(z-D0+z_max_res <= D1) ? (int)(z-D0+z_max_res) : D1,&channels,iim::NATIVE_RTYPE);
 			if ( org_channels != channels ) {
-				char err_msg[IM_STATIC_STRINGS_SIZE];
+				char err_msg[STATIC_STRINGS_SIZE];
 				sprintf(err_msg,"The volume contains images with a different number of channels (%d,%d)", org_channels, channels);
-				throw MyException(err_msg);
+                throw IOException(err_msg);
 			}
 		
 			for (int i=1; i<channels; i++ ) { // WARNING: assume 1-byte pixels
@@ -1834,7 +1869,7 @@ void VolumeConverter::generateTilesVaa3DRawMC ( std::string output_path, bool* r
 						{
 							char err_msg[S_STATIC_STRINGS_SIZE];
 							sprintf(err_msg, "in generateTilesVaa3DRawMC(...): unable to create V_DIR = \"%s\"\n", V_DIR_path.str().c_str());
-							throw MyException(err_msg);
+                            throw IOException(err_msg);
 						}
 
 						for(int stack_column = 0, start_width=0, end_width=0; stack_column < n_stacks_H[i]; stack_column++)
@@ -1849,7 +1884,7 @@ void VolumeConverter::generateTilesVaa3DRawMC ( std::string output_path, bool* r
 								{
 									char err_msg[S_STATIC_STRINGS_SIZE];
 									sprintf(err_msg, "in generateTilesVaa3DRawMC(...): unable to create H_DIR = \"%s\"\n", H_DIR_path.str().c_str());
-									throw MyException(err_msg);
+                                    throw IOException(err_msg);
 								}
 								else { // the directory has been created for the first time
 									   // initialize block files
@@ -1871,13 +1906,13 @@ void VolumeConverter::generateTilesVaa3DRawMC ( std::string output_path, bool* r
 										else {
 											char err_msg[S_STATIC_STRINGS_SIZE];
 											sprintf(err_msg, "in generateTilesVaa3DRaw(...): unknown image depth (%d)", saved_img_depth);
-											throw MyException(err_msg);
+                                            throw IOException(err_msg);
 										}
 									}
 									else {
 										char err_msg[S_STATIC_STRINGS_SIZE];
 										sprintf(err_msg, "in generateTilesVaa3DRaw(...): unknown internal representation (%d)", internal_rep);
-										throw MyException(err_msg);
+                                        throw IOException(err_msg);
 									}
 
 									int slice_start_temp = 0;
@@ -1897,9 +1932,9 @@ void VolumeConverter::generateTilesVaa3DRawMC ( std::string output_path, bool* r
 													  << abs_pos_z_temp.str();
 
 										if ( (err_rawfmt = initRawFile((char *)img_path_temp.str().c_str(),sz,datatype)) != 0 ) {
-											char err_msg[IM_STATIC_STRINGS_SIZE];
+											char err_msg[STATIC_STRINGS_SIZE];
 											sprintf(err_msg,"VolumeConverter::generateTilesVaa3DRawMC: error in initializing block file - %s", err_rawfmt);
-											throw MyException(err_msg);
+                                            throw IOException(err_msg);
 										};
 
 										slice_start_temp += (int)sz[2];

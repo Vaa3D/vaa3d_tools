@@ -40,7 +40,7 @@
 
 using namespace teramanager;
 
-CImport* CImport::uniqueInstance = NULL;
+CImport* CImport::uniqueInstance = 0;
 bool sortVolumesAscendingSize (VirtualVolume* i,VirtualVolume* j) { return (i->getMVoxels() < j->getMVoxels()); }
 
 void CImport::uninstance()
@@ -92,8 +92,6 @@ void CImport::run()
 {
     /**/itm::debug(itm::LEV1, 0, __itm__current__function__);
 
-    char errMsg[IM_STATIC_STRINGS_SIZE];
-
     try
     {
         timerIO.start();
@@ -105,7 +103,7 @@ void CImport::run()
         /**/itm::debug(itm::LEV_MAX, strprintf("importing current volume at \"%s\"", path.c_str()).c_str(), __itm__current__function__);
         string mdata_fpath = path;
         mdata_fpath.append("/");
-        mdata_fpath.append(IM_METADATA_FILE_NAME);
+        mdata_fpath.append(iim::MDATA_BIN_FILE_NAME.c_str());
         string cmap_fpath = path + "/cmap.bin";
         if( (!QFile::exists(mdata_fpath.c_str()) && !QFile::exists(cmap_fpath.c_str())) || reimport)
         {
@@ -119,20 +117,18 @@ void CImport::run()
                 //TileMCVolume is detected if cmap.bin file exists
                 if(QFile::exists(cmap_fpath.c_str()))
                 {
-                    /**/itm::debug(itm::LEV_MAX, strprintf("TiledMCVolume detected since cmap.bin has been found at \"%d\"", cmap_fpath.c_str()).c_str(), __itm__current__function__);
+                    /**/itm::debug(itm::LEV_MAX, strprintf("TiledMCVolume detected since cmap.bin has been found at \"%s\"", cmap_fpath.c_str()).c_str(), __itm__current__function__);
                     try
                     {
                         volume = new TiledMCVolume(path.c_str(), ref_sys(AXS_1,AXS_2,AXS_3),VXL_1,VXL_2,VXL_3, reimport);
                     }
-                    catch(MyException& exception)
+                    catch(iim::IOException& exception)
                     {
-                        sprintf(errMsg, "Unable to import TiledMC volume at \"%s\": %s", path.c_str(), exception.what());
-                        throw MyException(errMsg);
+                        throw RuntimeException(strprintf("Unable to import TiledMC volume at \"%s\": %s", path.c_str(), exception.what()).c_str());
                     }
                     catch(...)
                     {
-                        sprintf(errMsg, "Unable to import TiledMC volume at \"%s\"", path.c_str());
-                        throw MyException(errMsg);
+                        throw RuntimeException(strprintf("Unable to import TiledMC volume at \"%s\"", path.c_str()).c_str());
                     }
                 }
                 else
@@ -150,26 +146,21 @@ void CImport::run()
                         {
                             volume = new TiledVolume(path.c_str(), ref_sys(AXS_1,AXS_2,AXS_3),VXL_1,VXL_2,VXL_3, reimport);
                         }
-                        catch(MyException& exception)
+                        catch(iim::IOException& exception)
                         {
-                            sprintf(errMsg, "Unable to import TiledMC volume at \"%s\": %s", path.c_str(), exception.what());
-                            throw MyException(errMsg);
+                            throw RuntimeException(strprintf("Unable to import TiledMC volume at \"%s\": %s", path.c_str(), exception.what()).c_str());
                         }
                         catch(...)
                         {
-                            sprintf(errMsg, "Unable to import volume at \"%s\"", path.c_str());
-                            throw MyException(errMsg);
+                            throw RuntimeException(strprintf("Unable to import volume at \"%s\"", path.c_str()).c_str());
                         }
                     }
                 }
                 volumes.push_back(volume);
             }
             else
-            {
-                sprintf(errMsg, "Invalid parameters AXS_1(%s), AXS_2(%s), AXS_3(%s), VXL_1(%.4f), VXL_2(%.4f), VXL_3(%.4f)",
-                        axis_to_str(AXS_1), axis_to_str(AXS_2), axis_to_str(AXS_3), VXL_1, VXL_2, VXL_3);
-                throw MyException(errMsg);
-            }
+                throw RuntimeException(strprintf("Invalid parameters AXS_1(%s), AXS_2(%s), AXS_3(%s), VXL_1(%.4f), VXL_2(%.4f), VXL_3(%.4f)",
+                                            axis_to_str(AXS_1), axis_to_str(AXS_2), axis_to_str(AXS_3), VXL_1, VXL_2, VXL_3).c_str());
         }
         //no need for using metadata inserted by the user
         else
@@ -187,15 +178,13 @@ void CImport::run()
                 {
                     volume = new TiledMCVolume(path.c_str(), ref_sys(axis_invalid,axis_invalid,axis_invalid),0,0,0);
                 }
-                catch(MyException& exception)
+                catch(iim::IOException& exception)
                 {
-                    sprintf(errMsg, "Unable to import TiledMC volume at \"%s\": %s", path.c_str(), exception.what());
-                    throw MyException(errMsg);
+                    throw RuntimeException(strprintf("Unable to import TiledMC volume at \"%s\": %s", path.c_str(), exception.what()).c_str());
                 }
                 catch(...)
                 {
-                    sprintf(errMsg, "Unable to import TiledMC volume at \"%s\"", path.c_str());
-                    throw MyException(errMsg);
+                    throw RuntimeException(strprintf("Unable to import TiledMC volume at \"%s\"", path.c_str()).c_str());
                 }
             }
             else
@@ -216,8 +205,7 @@ void CImport::run()
                     }
                     catch(...)
                     {
-                        sprintf(errMsg, "Unable to import current volume at \"%s\"", path.c_str());
-                        throw MyException(errMsg);
+                        throw RuntimeException(strprintf("Unable to import current volume at \"%s\"", path.c_str()).c_str());
                     }
                 }
             }
@@ -279,23 +267,19 @@ void CImport::run()
                                                                          dynamic_cast<TiledMCVolume*>(volumes[0])->getVXL_3(), reimport, false);
                     }
                     else
-                    {
-                        sprintf(errMsg, "Unable to import volume at \"%s\": cast failed", path_i.c_str());
-                        throw MyException(errMsg);
-                    }
+                        throw RuntimeException(strprintf("Unable to import volume at \"%s\": cast failed", path_i.c_str()).c_str());
 
                     /**/itm::debug(itm::LEV_MAX, "volume loadable!", __itm__current__function__);
 
                     candidateVols.push_back(candidate_vol);
                 }
-                catch(MyException& exception)
+                catch(iim::IOException& exception)
                 {
-                    sprintf(errMsg, "A problem occurred when importing volume at \"%s\": %s", path.c_str(), exception.what());
-                    throw MyException(errMsg);
+                    throw RuntimeException(strprintf("A problem occurred when importing volume at \"%s\": %s", path.c_str(), exception.what()).c_str());
                 }
                 catch(...)
                 {
-                    throw MyException("A problem occurred when importing volume. Please contact the developer");
+                    throw RuntimeException("A problem occurred when importing volume. Please contact the developer");
                 }
             }
 
@@ -343,10 +327,7 @@ void CImport::run()
                                                                          dynamic_cast<TiledMCVolume*>(volumes[0])->getVXL_3()*ratio, reimport);
                     }
                     else
-                    {
-                        sprintf(errMsg, "Unable to import volume at \"%s\": cast failed", candidateVols[k]->getROOT_DIR());
-                        throw MyException(errMsg);
-                    }
+                        throw RuntimeException(strprintf("Unable to import volume at \"%s\": cast failed", candidateVols[k]->getROOT_DIR()).c_str());
                     volumes.push_back(vol);
                 }
             } 
@@ -361,7 +342,7 @@ void CImport::run()
 
             //check the number of volumes (at least 2)
             if(volumes.size() < 2)
-                throw MyException("One resolution found only: at least two resolutions are needed for the multiresolution mode.");
+                throw RuntimeException("One resolution found only: at least two resolutions are needed for the multiresolution mode.");
 
             //sorting volumes by ascending size
             /**/itm::debug(itm::LEV_MAX, "Sorting volumes by ascending size", __itm__current__function__);
@@ -378,7 +359,7 @@ void CImport::run()
             string volMapPath = path;
             volMapPath.append("/");
             volMapPath.append(TMP_VMAP_FNAME);
-            if(!StackedVolume::fileExists(volMapPath.c_str()) || reimport || regenerateVolMap)
+            if(!iim::isFile(volMapPath.c_str()) || reimport || regenerateVMap)
             {
                 /**/itm::debug(itm::LEV_MAX, "Entering volume's map generation section", __itm__current__function__);
 
@@ -386,40 +367,40 @@ void CImport::run()
                 int volMapIndex = -1;
                 for(int k=0; k<volumes.size(); k++)
                 {
-                    if(volumes[k]->getMVoxels() < volMapMaxSize)
+                    if(volumes[k]->getMVoxels() < vmapMaxSize)
                         volMapIndex = k;
                 }
 
                 //if found, generating and saving the corresponding map, otherwise throwing an exception
                 if(volMapIndex != -1)
                 {
-                    uint8* vmap_raw = volumes[volMapIndex]->loadSubvolume_to_UINT8(-1, -1, -1, -1, -1, -1, &nchannels);
-                    volMapHeight = volumes[volMapIndex]->getDIM_V();
-                    volMapWidth  = volumes[volMapIndex]->getDIM_H();
-                    volMapDepth  = volumes[volMapIndex]->getDIM_D();
+                    uint8* vmap_raw = volumes[volMapIndex]->loadSubvolume_to_UINT8(-1, -1, -1, -1, -1, -1, &vmapCDim);
+                    vmapYDim = volumes[volMapIndex]->getDIM_V();
+                    vmapXDim  = volumes[volMapIndex]->getDIM_H();
+                    vmapZDim  = volumes[volMapIndex]->getDIM_D();
                     FILE *volMapBin = fopen(volMapPath.c_str(), "wb");
 
                     // --- Alessandro 2013-04-23: added exception when file can't be opened in write mode
                     if(!volMapBin)
-                        throw MyException(QString("Cannot write volume map at \"").append(volMapPath.c_str()).append("\"\n\nPlease check write permissions on this storage.").toStdString().c_str());
+                        throw RuntimeException(QString("Cannot write volume map at \"").append(volMapPath.c_str()).append("\"\n\nPlease check write permissions on this storage.").toStdString().c_str());
 
                     uint16 verstr_size = static_cast<uint16>(strlen(CPlugin::getMajorVersion().c_str()) + 1);
                     fwrite(&verstr_size, sizeof(uint16), 1, volMapBin);
                     fwrite(CPlugin::getMajorVersion().c_str(), verstr_size, 1, volMapBin);
-                    fwrite(&nchannels, sizeof(int), 1, volMapBin);
-                    fwrite(&volMapHeight, sizeof(uint32), 1, volMapBin);
-                    fwrite(&volMapWidth,  sizeof(uint32), 1, volMapBin);
-                    fwrite(&volMapDepth,  sizeof(uint32), 1, volMapBin);
-                    fwrite(vmap_raw, volMapHeight*volMapWidth*volMapDepth*nchannels, 1, volMapBin);
+                    fwrite(&vmapCDim, sizeof(int), 1, volMapBin);
+                    fwrite(&vmapYDim, sizeof(uint32), 1, volMapBin);
+                    fwrite(&vmapXDim,  sizeof(uint32), 1, volMapBin);
+                    fwrite(&vmapZDim,  sizeof(uint32), 1, volMapBin);
+                    fwrite(vmap_raw, vmapYDim*vmapXDim*vmapZDim*vmapCDim, 1, volMapBin);
                     fclose(volMapBin);
                 }
                 else
                 {
                     QString msg = "Can't generate 3D volume map: the volume map size limit is "+
-                                  QString::number(volMapMaxSize) + " MVoxels while the lower resolution found has size " +
+                                  QString::number(vmapMaxSize) + " MVoxels while the lower resolution found has size " +
                                   QString::number(volumes[0]->getMVoxels(), 'f', 0) + " MVoxels";
 
-                    throw MyException(msg.toStdString().c_str());
+                    throw RuntimeException(msg.toStdString().c_str());
                 }
             }
 
@@ -430,7 +411,7 @@ void CImport::run()
 
             // --- Alessandro 2013-04-23: added exception when file can't be opened in read mode
             if(!volMapBin)
-                throw MyException(QString("Cannot read volume map at \"").append(volMapPath.c_str()).append("\"\n\nPlease check read permissions on this storage or whether the path is correct.").toStdString().c_str());
+                throw RuntimeException(QString("Cannot read volume map at \"").append(volMapPath.c_str()).append("\"\n\nPlease check read permissions on this storage or whether the path is correct.").toStdString().c_str());
 
 
             //checking plugin version
@@ -438,50 +419,50 @@ void CImport::run()
             uint16 verstr_size;
             fread_return_val = fread(&verstr_size, sizeof(uint16), 1, volMapBin);
             if(fread_return_val != 1)
-                throw MyException("Unable to read volume map file (<version_size> field). It must be regenerated.");
+                throw RuntimeException("Unable to read volume map file (<version_size> field). It must be regenerated.");
             char *version = new char[verstr_size];
             fread_return_val = fread(version, verstr_size, 1, volMapBin);
             if(fread_return_val != 1)
-                throw MyException("Unable to read volume map file (<version> field). It must be regenerated.");
+                throw RuntimeException("Unable to read volume map file (<version> field). It must be regenerated.");
             if(atof(version) < 0.7f)
-                throw MyException(QString("Volume map file was generated with a plugin version"
+                throw RuntimeException(QString("Volume map file was generated with a plugin version"
                                   " (").append(version).append(") older than 0.7. Please check the \"Regenerate volume map\" option from \"File->Options\".").toStdString().c_str());
             delete[] version;
 
             //loading metadata and data            
             /**/itm::debug(itm::LEV_MAX, "loading metadata and data from vmap", __itm__current__function__);
-            fread_return_val = fread(&nchannels, sizeof(int), 1, volMapBin);
+            fread_return_val = fread(&vmapCDim, sizeof(int), 1, volMapBin);
             if(fread_return_val != 1)
-                throw MyException("Unable to read volume map file (<nchannels> field). It must be regenerated.");
-            fread_return_val = fread(&volMapHeight, sizeof(uint32), 1, volMapBin);
+                throw RuntimeException("Unable to read volume map file (<nchannels> field). It must be regenerated.");
+            fread_return_val = fread(&vmapYDim, sizeof(uint32), 1, volMapBin);
             if(fread_return_val != 1)
-                throw MyException("Unable to read volume map file (<volMapHeight> field). It must be regenerated.");
-            fread_return_val = fread(&volMapWidth,  sizeof(uint32), 1, volMapBin);
+                throw RuntimeException("Unable to read volume map file (<volMapHeight> field). It must be regenerated.");
+            fread_return_val = fread(&vmapXDim,  sizeof(uint32), 1, volMapBin);
             if(fread_return_val != 1)
-                throw MyException("Unable to read volume map file (<volMapWidth> field). It must be regenerated.");
-            fread_return_val = fread(&volMapDepth,  sizeof(uint32), 1, volMapBin);
+                throw RuntimeException("Unable to read volume map file (<volMapWidth> field). It must be regenerated.");
+            fread_return_val = fread(&vmapZDim,  sizeof(uint32), 1, volMapBin);
             if(fread_return_val != 1)
-                throw MyException("Unable to read volume map file (<volMapDepth> field). It must be regenerated.");
-            volMapData = new uint8[volMapHeight*volMapWidth*volMapDepth*nchannels];
-            fread_return_val = fread(volMapData, volMapHeight*volMapWidth*volMapDepth*nchannels, 1, volMapBin);
+                throw RuntimeException("Unable to read volume map file (<volMapDepth> field). It must be regenerated.");
+            vmapData = new uint8[vmapYDim*vmapXDim*vmapZDim*vmapCDim];
+            fread_return_val = fread(vmapData, vmapYDim*vmapXDim*vmapZDim*vmapCDim, 1, volMapBin);
             if(fread_return_val != 1)
-                throw MyException("Unable to read volume map file (<volMapData> field). It must be regenerated.");
+                throw RuntimeException("Unable to read volume map file (<volMapData> field). It must be regenerated.");
             fclose(volMapBin);
             volMapImage = new Image4DSimple();
             volMapImage->setFileName("VolumeMap");
-            volMapImage->setData(volMapData, volMapWidth, volMapHeight, volMapDepth, nchannels, V3D_UINT8);
+            volMapImage->setData(vmapData, vmapXDim, vmapYDim, vmapZDim, vmapCDim, V3D_UINT8);
 
             //--- Alessandro 29/09/2013: checking that the loaded vmap corresponds to one of the loaded volumes            
             /**/itm::debug(itm::LEV_MAX, "checking that the loaded vmap corresponds to one of the loaded volumes", __itm__current__function__);
             bool check_passed = false;
             for(int i=0; i<volumes.size() && !check_passed; i++)
-                if(volumes[i]->getDIM_V() == volMapHeight &&
-                   volumes[i]->getDIM_H() == volMapWidth  &&
-                   volumes[i]->getDIM_D() == volMapDepth  &&
-                   volumes[i]->getCHANS() == nchannels)
+                if(volumes[i]->getDIM_V() == vmapYDim &&
+                   volumes[i]->getDIM_H() == vmapXDim  &&
+                   volumes[i]->getDIM_D() == vmapZDim  &&
+                   volumes[i]->getCHANS() == vmapCDim)
                     check_passed = true;
             if(!check_passed)
-                throw MyException(QString("Volume map stored at \"").append(volMapPath.c_str()).append("\" does not correspond to any of the loaded resolutions. Please delete or regenerate the volume map.").toStdString().c_str());
+                throw RuntimeException(QString("Volume map stored at \"").append(volMapPath.c_str()).append("\" does not correspond to any of the loaded resolutions. Please delete or regenerate the volume map.").toStdString().c_str());
 
         }
 
@@ -490,7 +471,8 @@ void CImport::run()
 
         /**/itm::debug(itm::LEV1, "EOF", __itm__current__function__);
     }
-    catch( MyException& exception)  {reset(); emit sendOperationOutcome(new MyException(exception.what()), 0);}
-    catch(const char* error)        {reset(); emit sendOperationOutcome(new MyException(error), 0);}
-    catch(...)                      {reset(); emit sendOperationOutcome(new MyException("Unknown error occurred"), 0);}
+    catch( iim::IOException& exception)  {reset(); emit sendOperationOutcome(new RuntimeException(exception.what()), 0);}
+    catch( RuntimeException& exception)  {reset(); emit sendOperationOutcome(new RuntimeException(exception.what()), 0);}
+    catch(const char* error)        {reset(); emit sendOperationOutcome(new RuntimeException(error), 0);}
+    catch(...)                      {reset(); emit sendOperationOutcome(new RuntimeException("Unknown error occurred"), 0);}
 }

@@ -29,6 +29,7 @@
 #include <QSettings>
 #include <iostream>
 #include "CSettings.h"
+#include "../core/ImageManager/IM_config.h"
 
 using namespace teramanager;
 using namespace std;
@@ -171,7 +172,10 @@ void CSettings::readSettings()
         volumeConverterStacksDepthLRU = settings.value("volumeConverterStacksDepthLRU").toInt();
 
      if(settings.contains("verbosity"))
+     {
          itm::DEBUG = settings.value("verbosity").toInt();
+         iim::DEBUG = settings.value("verbosity").toInt();
+     }
      else
          itm::NO_DEBUG;
 }

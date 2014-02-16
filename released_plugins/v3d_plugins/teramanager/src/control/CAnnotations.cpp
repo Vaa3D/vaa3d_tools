@@ -38,7 +38,7 @@ CAnnotations::~CAnnotations()
 }
 
 //recursive support method of 'clear' method
-void CAnnotations::Octree::_rec_clear(const Poctant& p_octant) throw(MyException)
+void CAnnotations::Octree::_rec_clear(const Poctant& p_octant) throw(RuntimeException)
 {
     if(p_octant)
     {
@@ -61,7 +61,7 @@ void CAnnotations::Octree::_rec_clear(const Poctant& p_octant) throw(MyException
 }
 
 //recursive support method of 'insert' method
-void CAnnotations::Octree::_rec_insert(const Poctant& p_octant, annotation& neuron) throw(MyException)
+void CAnnotations::Octree::_rec_insert(const Poctant& p_octant, annotation& neuron) throw(RuntimeException)
 {
     //if the octant is greater than a point, the insert is recursively postponed until a 1x1x1 leaf octant is reached
     if(p_octant->V_dim > 1 || p_octant->H_dim > 1 || p_octant->D_dim > 1)
@@ -187,7 +187,7 @@ void CAnnotations::Octree::_rec_insert(const Poctant& p_octant, annotation& neur
         {
             char msg[1000];
             sprintf(msg,"in CAnnotations::Octree::insert(...): Cannot find the proper region wherein to insert given neuron [%.0f,%.0f,%.0f]", neuron.y, neuron.x, neuron.z);
-            throw MyException(msg);
+            throw RuntimeException(msg);
         }
     }
     else
@@ -204,7 +204,7 @@ void CAnnotations::Octree::_rec_insert(const Poctant& p_octant, annotation& neur
 //                        p_octant->H_start, p_octant->H_start+p_octant->H_dim,
 //                        p_octant->V_start, p_octant->V_start+p_octant->V_dim,
 //                        p_octant->D_start, p_octant->D_start+p_octant->D_dim, neuron.x, neuron.y, neuron.z, neuron.ID, neuron.type,  p_octant->neuron->x, p_octant->neuron->y, p_octant->neuron->z, p_octant->neuron->ID, p_octant->neuron->type);
-//            throw MyException(msg);
+//            throw RuntimeException(msg);
 //        }
         p_octant->n_annotations++;
         neuron.container = static_cast<void*>(p_octant);
@@ -213,7 +213,7 @@ void CAnnotations::Octree::_rec_insert(const Poctant& p_octant, annotation& neur
 }
 
 //recursive support method of 'deep_count' method
-uint32 CAnnotations::Octree::_rec_deep_count(const Poctant& p_octant) throw(MyException)
+uint32 CAnnotations::Octree::_rec_deep_count(const Poctant& p_octant) throw(RuntimeException)
 {
     if(p_octant)
         if(p_octant->V_dim == 1 && p_octant->H_dim == 1 && p_octant->D_dim == 1)
@@ -226,7 +226,7 @@ uint32 CAnnotations::Octree::_rec_deep_count(const Poctant& p_octant) throw(MyEx
 }
 
 //recursive support method of 'height' method
-uint32 CAnnotations::Octree::_rec_height(const Poctant& p_octant) throw(MyException)
+uint32 CAnnotations::Octree::_rec_height(const Poctant& p_octant) throw(RuntimeException)
 {
     if(p_octant)
     {
@@ -265,7 +265,7 @@ void CAnnotations::Octree::_rec_print(const Poctant& p_octant)
 }
 
 //recursive support method of 'find' method
-void CAnnotations::Octree::_rec_search(const Poctant& p_octant, const interval_t& V_int, const interval_t& H_int, const interval_t& D_int, std::list<annotation*>& neurons)  throw(MyException)
+void CAnnotations::Octree::_rec_search(const Poctant& p_octant, const interval_t& V_int, const interval_t& H_int, const interval_t& D_int, std::list<annotation*>& neurons)  throw(RuntimeException)
 {
     if(p_octant)
     {
@@ -311,7 +311,7 @@ void CAnnotations::Octree::_rec_search(const Poctant& p_octant, const interval_t
 }
 
 //recursive support method of 'rec_find' method
-CAnnotations::Octree::Poctant CAnnotations::Octree::_rec_find(const Poctant& p_octant, const interval_t& V_int, const interval_t& H_int, const interval_t& D_int) throw(MyException)
+CAnnotations::Octree::Poctant CAnnotations::Octree::_rec_find(const Poctant& p_octant, const interval_t& V_int, const interval_t& H_int, const interval_t& D_int) throw(RuntimeException)
 {
     //printf("\n_rec_find(p_octant=%d, V_int=[%d-%d), H_int=[%d-%d), D_int=[%d-%d))\n", p_octant, V_int.start, V_int.end, H_int.start, H_int.end, D_int.start, D_int.end);
 
@@ -381,7 +381,7 @@ CAnnotations::Octree::Poctant CAnnotations::Octree::_rec_find(const Poctant& p_o
 }
 
 //recursive support method of 'count' method
-uint32 CAnnotations::Octree::_rec_count(const Poctant& p_octant, const interval_t& V_int, const interval_t& H_int, const interval_t& D_int) throw(MyException)
+uint32 CAnnotations::Octree::_rec_count(const Poctant& p_octant, const interval_t& V_int, const interval_t& H_int, const interval_t& D_int) throw(RuntimeException)
 {
     if(p_octant)
     {
@@ -429,7 +429,7 @@ uint32 CAnnotations::Octree::_rec_count(const Poctant& p_octant, const interval_
 
 //returns true if two given volumes intersect each other
 bool inline CAnnotations::Octree::intersects(const interval_t& V1_int,		 const interval_t& H1_int,		   const interval_t& D1_int,
-                                                           uint32& V2_start, uint32& V2_dim, uint32& H2_start, uint32& H2_dim, uint32& D2_start, uint32& D2_dim) throw(MyException)
+                                                           uint32& V2_start, uint32& V2_dim, uint32& H2_start, uint32& H2_dim, uint32& D2_start, uint32& D2_dim) throw(RuntimeException)
 {
     return 	( V1_int.start  < (V2_start + V2_dim)	&&
               V1_int.end    >  V2_start             &&
@@ -441,7 +441,7 @@ bool inline CAnnotations::Octree::intersects(const interval_t& V1_int,		 const i
 
 //returns true if first volume contains second volume
 bool inline CAnnotations::Octree::contains  (const interval_t& V1_int,		 const interval_t& H1_int,		   const interval_t& D1_int,
-                                             uint32& V2_start, uint32& V2_dim, uint32& H2_start, uint32& H2_dim, uint32& D2_start, uint32& D2_dim) throw(MyException)
+                                             uint32& V2_start, uint32& V2_dim, uint32& H2_start, uint32& H2_dim, uint32& D2_start, uint32& D2_dim) throw(RuntimeException)
 {
     return (  V1_int.start  <=  V2_start            &&
               V1_int.end    >=  (V2_start+V2_dim)	&&
@@ -471,7 +471,7 @@ CAnnotations::Octree::~Octree(void)
 }
 
 //clears octree content and deallocates used memory
-void CAnnotations::Octree::clear() throw(MyException)
+void CAnnotations::Octree::clear() throw(RuntimeException)
 {
     /**/itm::debug(itm::LEV1, 0, __itm__current__function__);
 
@@ -480,13 +480,13 @@ void CAnnotations::Octree::clear() throw(MyException)
 }
 
 //insert given neuron in the octree
-void CAnnotations::Octree::insert(annotation& neuron)  throw(MyException)
+void CAnnotations::Octree::insert(annotation& neuron)  throw(RuntimeException)
 {
     _rec_insert(root,neuron);
 }
 
 //search for the annotations at the given coordinate. If found, returns the address of the annotations list
-std::list<annotation*>* CAnnotations::Octree::find(float x, float y, float z) throw(MyException)
+std::list<annotation*>* CAnnotations::Octree::find(float x, float y, float z) throw(RuntimeException)
 {
     interval_t V_range(static_cast<int>(floor(y)), static_cast<int>(ceil(y)));
     interval_t H_range(static_cast<int>(floor(x)), static_cast<int>(ceil(x)));
@@ -505,13 +505,13 @@ std::list<annotation*>* CAnnotations::Octree::find(float x, float y, float z) th
 }
 
 //returns the number of neurons (=leafs) in the octree by exploring the entire data structure
-uint32 CAnnotations::Octree::deep_count() throw(MyException)
+uint32 CAnnotations::Octree::deep_count() throw(RuntimeException)
 {
     return _rec_deep_count(root);
 }
 
 //returns the octree height
-uint32 CAnnotations::Octree::height() throw(MyException)
+uint32 CAnnotations::Octree::height() throw(RuntimeException)
 {
     return _rec_height(root);
 }
@@ -525,13 +525,13 @@ void CAnnotations::Octree::print()
 }
 
 //search for neurons in the given 3D volume and puts found neurons into 'neurons'
-void CAnnotations::Octree::find(interval_t V_int, interval_t H_int, interval_t D_int, std::list<annotation*>& neurons) throw(MyException)
+void CAnnotations::Octree::find(interval_t V_int, interval_t H_int, interval_t D_int, std::list<annotation*>& neurons) throw(RuntimeException)
 {
     _rec_search(root, V_int, H_int, D_int, neurons);
 }
 
 //returns the number of neurons (=leafs) in the given volume without exploring the entire data structure
-uint32 CAnnotations::Octree::count(interval_t V_int, interval_t H_int, interval_t D_int) throw(MyException)
+uint32 CAnnotations::Octree::count(interval_t V_int, interval_t H_int, interval_t D_int) throw(RuntimeException)
 {
     //adjusting default parameters
     V_int.start = V_int.start == -1 ? 0		: V_int.start;
@@ -548,7 +548,7 @@ uint32 CAnnotations::Octree::count(interval_t V_int, interval_t H_int, interval_
 /*********************************************************************************
 * Adds the given annotation(s)
 **********************************************************************************/
-void CAnnotations::addLandmarks(LandmarkList* markers) throw (MyException)
+void CAnnotations::addLandmarks(LandmarkList* markers) throw (RuntimeException)
 {
     /**/itm::debug(itm::LEV1, strprintf("markers->size = %d", markers->size()).c_str(), __itm__current__function__);
 
@@ -570,7 +570,7 @@ void CAnnotations::addLandmarks(LandmarkList* markers) throw (MyException)
     }
 }
 
-void CAnnotations::removeLandmarks(std::list<LocationSimple> &markers) throw (MyException)
+void CAnnotations::removeLandmarks(std::list<LocationSimple> &markers) throw (RuntimeException)
 {
     /**/itm::debug(itm::LEV1, strprintf("markers->size = %d", markers.size()).c_str(), __itm__current__function__);
 
@@ -614,7 +614,7 @@ void CAnnotations::removeLandmarks(std::list<LocationSimple> &markers) throw (My
 }
 
 
-void CAnnotations::removeCurves(std::list<NeuronSWC> &curves) throw (MyException)
+void CAnnotations::removeCurves(std::list<NeuronSWC> &curves) throw (RuntimeException)
 {
     /**/itm::debug(itm::LEV1, strprintf("curves.size = %d", curves.size()).c_str(), __itm__current__function__);
 
@@ -636,7 +636,7 @@ void CAnnotations::removeCurves(std::list<NeuronSWC> &curves) throw (MyException
                             sources.push_back(*it);
                     }
                     //if(sources.size()-sizeStored > 1)
-                        //throw MyException("in CAnnotations::removeCurves(): found 2 coincident curves starting points. Curves sharing the same source point are not supported yet.");
+                        //throw RuntimeException("in CAnnotations::removeCurves(): found 2 coincident curves starting points. Curves sharing the same source point are not supported yet.");
                 }
                 else
                     /**/itm::warning(strprintf("curve point (%.1f, %.1f, %.1f) not found in the Octree!!!", i->x, i->y, i->z).c_str(), __itm__current__function__);
@@ -670,7 +670,7 @@ void CAnnotations::removeCurves(std::list<NeuronSWC> &curves) throw (MyException
     }
 }
 
-void CAnnotations::addCurves(NeuronTree* curves) throw (MyException)
+void CAnnotations::addCurves(NeuronTree* curves) throw (RuntimeException)
 {
     /**/itm::debug(itm::LEV1, strprintf("curves.size = %d", curves->listNeuron.size()).c_str(), __itm__current__function__);
 
@@ -705,7 +705,7 @@ void CAnnotations::addCurves(NeuronTree* curves) throw (MyException)
 /*********************************************************************************
 * Retrieves the annotation(s) in the given volume space
 **********************************************************************************/
-void CAnnotations::findLandmarks(interval_t X_range, interval_t Y_range, interval_t Z_range, std::list<LocationSimple> &markers) throw (MyException)
+void CAnnotations::findLandmarks(interval_t X_range, interval_t Y_range, interval_t Z_range, std::list<LocationSimple> &markers) throw (RuntimeException)
 {
     /**/itm::debug(itm::LEV1, strprintf("X_range = [%d,%d), Y_range = [%d,%d), Z_range = [%d,%d)",
                                         X_range.start, X_range.end, Y_range.start, Y_range.end, Z_range.start, Z_range.end).c_str(), __itm__current__function__);
@@ -730,7 +730,7 @@ void CAnnotations::findLandmarks(interval_t X_range, interval_t Y_range, interva
     }
 }
 
-void CAnnotations::findCurves(interval_t X_range, interval_t Y_range, interval_t Z_range, std::list<NeuronSWC> &curves) throw (MyException)
+void CAnnotations::findCurves(interval_t X_range, interval_t Y_range, interval_t Z_range, std::list<NeuronSWC> &curves) throw (RuntimeException)
 {
     /**/itm::debug(itm::LEV1, strprintf("X_range = [%d,%d), Y_range = [%d,%d), Z_range = [%d,%d)",
                                         X_range.start, X_range.end, Y_range.start, Y_range.end, Z_range.start, Z_range.end).c_str(), __itm__current__function__);
@@ -774,7 +774,7 @@ void CAnnotations::findCurves(interval_t X_range, interval_t Y_range, interval_t
 /*********************************************************************************
 * Save/load methods
 **********************************************************************************/
-void CAnnotations::save(const char* filepath) throw (MyException)
+void CAnnotations::save(const char* filepath) throw (RuntimeException)
 {
     /**/itm::debug(itm::LEV1, strprintf("filepath = \"%s\"", filepath).c_str(), __itm__current__function__);
 
@@ -790,7 +790,7 @@ void CAnnotations::save(const char* filepath) throw (MyException)
     {
         char errMsg[STATIC_STRING_SIZE];
         sprintf(errMsg, "in CAnnotations::save(): cannot save to path \"%s\"", filepath);
-        throw MyException(errMsg);
+        throw RuntimeException(errMsg);
     }
     fprintf(f, "APOFILE=%s\n",anoFile.dirName().toStdString().append(".apo").c_str());
     fprintf(f, "SWCFILE=%s\n",anoFile.dirName().toStdString().append(".swc").c_str());
@@ -826,13 +826,13 @@ void CAnnotations::save(const char* filepath) throw (MyException)
     //file closing
     fclose(f);
 }
-void CAnnotations::load(const char* filepath) throw (MyException)
+void CAnnotations::load(const char* filepath) throw (RuntimeException)
 {
     /**/itm::debug(itm::LEV1, strprintf("filepath = \"%s\"", filepath).c_str(), __itm__current__function__);
 
     //precondition checks
     if(!octree)
-        throw MyException("CAnnotations::load(): octree not yet initialized");
+        throw RuntimeException("CAnnotations::load(): octree not yet initialized");
 
     //clearing annotations
     this->clear();
@@ -843,7 +843,7 @@ void CAnnotations::load(const char* filepath) throw (MyException)
     if(!f)
     {
         sprintf(errMsg, "in CAnnotations::save(): cannot load file \"%s\"", filepath);
-        throw MyException(errMsg);
+        throw RuntimeException(errMsg);
     }
 
     //reading ANO file line by line
@@ -857,7 +857,7 @@ void CAnnotations::load(const char* filepath) throw (MyException)
         {
             sprintf(errMsg, "in CAnnotations::load(const char* filepath = \"%s\"): expected line \"%s\", found \"%s\"",
                     filepath, "<filetype>=<filename>", lineBuf);
-            throw MyException(errMsg);
+            throw RuntimeException(errMsg);
         }
         char * pch;
         pch = strtok (tokenizer,"=");
@@ -919,7 +919,7 @@ void CAnnotations::load(const char* filepath) throw (MyException)
         else
         {
             sprintf(errMsg, "in CAnnotations::load(const char* filepath = \"%s\"): unable to recognize file type \"%s\"", filepath, filetype);
-            throw MyException(errMsg);
+            throw RuntimeException(errMsg);
         }
 
     }

@@ -25,9 +25,6 @@
 #include "Block.h"
 #include "VirtualVolume.h"
 #include "RawFmtMngr.h"
-
-#include "MyException.h"
-
 #include <cxcore.h>
 #include <highgui.h>
 #ifdef _WIN32
@@ -40,13 +37,11 @@
 #include <cv.h>
 
 using namespace std;
+using namespace iim;
 
 Block::Block(VirtualVolume* _CONTAINER, int _ROW_INDEX, int _COL_INDEX, char* _DIR_NAME)
 {
-	#if IM_VERBOSE > 3
-	printf("\t\t\t\tin Block::Block(VirtualVolume* _CONTAINER, int _ROW_INDEX=%d, int _COL_INDEX=%d, char* _DIR_NAME=%s)\n",
-		    _ROW_INDEX, _COL_INDEX, _DIR_NAME);
-	#endif
+    /**/iim::debug(iim::LEV3, strprintf("_ROW_INDEX=%d, _COL_INDEX=%d, _DIR_NAME=%s", _ROW_INDEX, _COL_INDEX, _DIR_NAME).c_str(), __iim__current__function__);
 
 	this->CONTAINER = _CONTAINER;
 
@@ -70,10 +65,7 @@ Block::Block(VirtualVolume* _CONTAINER, int _ROW_INDEX, int _COL_INDEX, char* _D
 
 Block::Block(VirtualVolume* _CONTAINER, int _ROW_INDEX, int _COL_INDEX, FILE* bin_file)
 {
-	#if IM_VERBOSE > 3
-	printf("\t\t\t\tin Block::Block(VirtualVolume* _CONTAINER, int _ROW_INDEX=%d, int _COL_INDEX=%d, FILE* bin_file)\n",
-		_ROW_INDEX, _COL_INDEX);
-	#endif
+    /**/iim::debug(iim::LEV3, strprintf("_ROW_INDEX=%d, _COL_INDEX=%d", _ROW_INDEX, _COL_INDEX).c_str(), __iim__current__function__);
 
 	CONTAINER = _CONTAINER;
 	ROW_INDEX = _ROW_INDEX;
@@ -99,9 +91,7 @@ Block::Block(VirtualVolume* _CONTAINER, int _ROW_INDEX, int _COL_INDEX, FILE* bi
 
 Block::~Block(void)
 {
-	#if IM_VERBOSE > 3
-	printf("\t\t\t\tin Block[%d,%d]::~Block()\n",ROW_INDEX, COL_INDEX);
-	#endif
+    /**/iim::debug(iim::LEV3, strprintf("ROW_INDEX=%d, COL_INDEX=%d", ROW_INDEX, COL_INDEX).c_str(), __iim__current__function__);
 
 	if (BLOCK_SIZE)
 		delete[] BLOCK_SIZE;
@@ -127,9 +117,7 @@ Block::~Block(void)
 //binarizing-unbinarizing methods
 void Block::binarizeInto(FILE* file)
 {
-	#if IM_VERBOSE > 3
-	printf("\t\t\t\tin Block[%d,%d]::binarizeInto(...)\n",ROW_INDEX, COL_INDEX);
-	#endif
+    /**/iim::debug(iim::LEV3, strprintf("ROW_INDEX=%d, COL_INDEX=%d", ROW_INDEX, COL_INDEX).c_str(), __iim__current__function__);
 
 	//LOCAL VARIABLES
 	uint16 str_size;
@@ -158,9 +146,7 @@ void Block::binarizeInto(FILE* file)
 
 void Block::unBinarizeFrom(FILE* file)
 {
-	#if IM_VERBOSE > 3
-	printf("\t\t\t\tin Block[%d,%d]::unBinarizeFrom(...)\n",ROW_INDEX, COL_INDEX);
-	#endif
+    /**/iim::debug(iim::LEV3, strprintf("ROW_INDEX=%d, COL_INDEX=%d", ROW_INDEX, COL_INDEX).c_str(), __iim__current__function__);
 
 	//LOCAL VARIABLES
 	uint16 str_size;
@@ -169,34 +155,34 @@ void Block::unBinarizeFrom(FILE* file)
 
 	fread_return_val = fread(&HEIGHT, sizeof(uint32), 1, file);
 	if(fread_return_val != 1)
-		throw MyException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
+        throw IOException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
 	fread_return_val = fread(&WIDTH, sizeof(uint32), 1, file);
 	if(fread_return_val != 1)
-		throw MyException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
+        throw IOException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
 	fread_return_val = fread(&DEPTH, sizeof(uint32), 1, file);
 	if(fread_return_val != 1)
-		throw MyException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
+        throw IOException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
 	fread_return_val = fread(&N_BLOCKS, sizeof(uint32), 1, file);
 	if(fread_return_val != 1)
-		throw MyException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
+        throw IOException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
 	fread_return_val = fread(&N_CHANS, sizeof(uint32), 1, file);
 	if(fread_return_val != 1)
-		throw MyException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
+        throw IOException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
 	fread_return_val = fread(&ABS_V, sizeof(int), 1, file);
 	if(fread_return_val != 1)
-		throw MyException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
+        throw IOException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
 	fread_return_val = fread(&ABS_H, sizeof(int), 1, file);
 	if(fread_return_val != 1)
-		throw MyException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
+        throw IOException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
 	fread_return_val = fread(&str_size, sizeof(uint16), 1, file);
 	if(fread_return_val != 1)
-		throw MyException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
+        throw IOException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
 	DIR_NAME = new char[str_size];
 	if(fread_return_val != 1)
-		throw MyException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
+        throw IOException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
 	fread_return_val = fread(DIR_NAME, str_size, 1, file);
 	if(fread_return_val != 1)
-		throw MyException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
+        throw IOException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
 
 	FILENAMES = new char*[N_BLOCKS];
 	BLOCK_SIZE = new uint32[N_BLOCKS];
@@ -205,51 +191,48 @@ void Block::unBinarizeFrom(FILE* file)
 	{
 		fread_return_val = fread(&str_size, sizeof(uint16), 1, file);
 		if(fread_return_val != 1)
-			throw MyException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
+            throw IOException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
 
 		FILENAMES[i] = new char[str_size];
 		fread_return_val = fread(FILENAMES[i], str_size, 1, file);
 		if(fread_return_val != 1)
-			throw MyException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
+            throw IOException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
 	
 		fread_return_val = fread(BLOCK_SIZE+i, sizeof(uint32), 1, file);
 		if(fread_return_val != 1)
-			throw MyException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
+            throw IOException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
 
 		fread_return_val = fread(BLOCK_ABS_D+i, sizeof(int), 1, file);
 		if(fread_return_val != 1)
-			throw MyException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
+            throw IOException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
 	}
 	fread_return_val = fread(&N_BYTESxCHAN, sizeof(uint32), 1, file);
 	if(fread_return_val != 1)
-		throw MyException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
+        throw IOException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
 
 }
 
 //Initializes all object's members given DIR_NAME
 void Block::init()
 {
-	#if IM_VERBOSE > 3
-	printf("\t\t\t\tin Block[%d,%d]::init()\n",ROW_INDEX, COL_INDEX);
-	#endif
+    /**/iim::debug(iim::LEV3, strprintf("ROW_INDEX=%d, COL_INDEX=%d", ROW_INDEX, COL_INDEX).c_str(), __iim__current__function__);
 
 	//LOCAL variables
 	string tmp;
 	DIR *cur_dir_lev3;
 	dirent *entry_lev3;
 	list<string> entries_lev3;
-	list<string>::iterator entry_k;
 	string entry;
 
 	//building filenames_list
-	char abs_path[IM_STATIC_STRINGS_SIZE];
+	char abs_path[STATIC_STRINGS_SIZE];
 	sprintf(abs_path,"%s/%s", CONTAINER->getROOT_DIR(), DIR_NAME);
 	cur_dir_lev3 = opendir(abs_path);
 	if (!cur_dir_lev3)
 	{
-		char errMsg[IM_STATIC_STRINGS_SIZE];
+		char errMsg[STATIC_STRINGS_SIZE];
 		sprintf(errMsg, "in Block::init(): can't open directory \"%s\"", abs_path);
-		throw MyException(errMsg);
+        throw IOException(errMsg);
 	}
 
 	//scanning third level of hierarchy which entries need to be ordered alphabetically. This is done using STL.
@@ -271,7 +254,7 @@ void Block::init()
 	{
 		char msg[1000];
                 sprintf(msg,"in Block[%d,%d]::init(): stack in \"%s\" is empty", ROW_INDEX, COL_INDEX, abs_path);
-		throw MyException(msg);
+        throw IOException(msg);
 	}
 
 	//converting filenames_list (STL list of C-strings) into FILENAMES (1-D array of C-strings)
@@ -299,15 +282,15 @@ void Block::init()
 	int header_len;
 
 	//extracting HEIGHT, WIDTH and N_CHANS attributes from first slice
-	char slice_fullpath[IM_STATIC_STRINGS_SIZE];
+	char slice_fullpath[STATIC_STRINGS_SIZE];
 	sprintf(slice_fullpath, "%s/%s/%s", CONTAINER->getROOT_DIR(), DIR_NAME, FILENAMES[0]);
 
 	if ( (err_rawfmt = loadRaw2Metadata(slice_fullpath,sz,datatype,b_swap,dummy,header_len)) != 0 ) {
 		if ( sz ) delete[] sz;
-		char msg[IM_STATIC_STRINGS_SIZE];
+		char msg[STATIC_STRINGS_SIZE];
 		sprintf(msg,"in Block[%d,%d]::init(): unable to open block \"%s\". Wrong path or format (%s)", 
 			ROW_INDEX, COL_INDEX, slice_fullpath,err_rawfmt);
-		throw MyException(msg);
+        throw IOException(msg);
 	}
 	closeRawFile((FILE *)dummy);
 
@@ -326,10 +309,10 @@ void Block::init()
 		sprintf(slice_fullpath, "%s/%s/%s", CONTAINER->getROOT_DIR(), DIR_NAME, FILENAMES[ib]);
 		if ( (err_rawfmt = loadRaw2Metadata(slice_fullpath,sz,datatype,b_swap,dummy,header_len)) != 0 ) {
 			if ( sz ) delete[] sz;
-			char msg[IM_STATIC_STRINGS_SIZE];
+			char msg[STATIC_STRINGS_SIZE];
 			sprintf(msg,"in Block[%d,%d]::init(): unable to open block \"%s\". Wrong path or format (%s)", 
 				ROW_INDEX, COL_INDEX, slice_fullpath,err_rawfmt);
-			throw MyException(msg);
+            throw IOException(msg);
 		}
 		closeRawFile((FILE *)dummy);
 

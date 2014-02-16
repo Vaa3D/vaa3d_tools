@@ -35,11 +35,14 @@
 #include <highgui.h>
 
 using namespace std;
+using namespace iim;
 
 
-SimpleVolume::SimpleVolume(const char* _root_dir)  throw (MyException)
-: VirtualVolume(_root_dir,(float)1.0,(float)1.0,(float)1.0) 
+SimpleVolume::SimpleVolume(const char* _root_dir)  throw (IOException)
+: VirtualVolume(_root_dir, 1.0f, 1.0f, 1.0f)
 {
+    /**/iim::debug(iim::LEV3, strprintf("_root_dir = \"%s\"", root_dir).c_str(), __iim__current__function__);
+
 	init();
 	initChannels();
 }
@@ -47,12 +50,7 @@ SimpleVolume::SimpleVolume(const char* _root_dir)  throw (MyException)
 
 SimpleVolume::~SimpleVolume(void)
 {
-	#if IM_VERBOSE > 3
-	printf("\t\t\t\tin SimpleVolume::~SimpleVolume(void)\n");
-	#endif
-
-	// iannello if(root_dir)
-	// iannello 	delete[] root_dir;
+    /**/iim::debug(iim::LEV3, 0, __iim__current__function__);
 
 	if(STACKS)
 	{
@@ -69,9 +67,7 @@ SimpleVolume::~SimpleVolume(void)
 
 void SimpleVolume::init()
 {
-	#if IM_VERBOSE > 3
-        printf("\t\t\t\tin SimpleVolume::init()\n");
-	#endif
+    /**/iim::debug(iim::LEV3, 0, __iim__current__function__);
 
 	/************************* 1) LOADING STRUCTURE *************************    
 	*************************************************************************/
@@ -80,14 +76,14 @@ void SimpleVolume::init()
 	DIR *cur_dir_lev1;				//pointer to DIR, the data structure that represents a DIRECTORY (level 1 of hierarchical structure)
 	int i=0,j=0;					//for counting of N_ROWS, N_COLS
     list<Stack*> stacks_list;                       //each stack found in the hierarchy is pushed into this list
-	char stack_i_j_path[IM_STATIC_STRINGS_SIZE];
+	char stack_i_j_path[STATIC_STRINGS_SIZE];
 
 	//obtaining DIR pointer to root_dir (=NULL if directory doesn't exist)
 	if (!(cur_dir_lev1=opendir(root_dir)))
 	{
-		char msg[IM_STATIC_STRINGS_SIZE];
+		char msg[STATIC_STRINGS_SIZE];
 		sprintf(msg,"in SimpleVolume::init(...): Unable to open directory \"%s\"", root_dir);
-		throw MyException(msg);
+        throw IOException(msg);
 	}
 
 	// Simple format has only one stack
@@ -135,13 +131,16 @@ void SimpleVolume::init()
 		}
 }
 
-void SimpleVolume::initChannels ( ) throw (MyException) {
-	char slice_fullpath[IM_STATIC_STRINGS_SIZE];
+void SimpleVolume::initChannels ( ) throw (IOException)
+{
+    /**/iim::debug(iim::LEV3, 0, __iim__current__function__);
+
+	char slice_fullpath[STATIC_STRINGS_SIZE];
 
 	sprintf(slice_fullpath, "%s/%s/%s", root_dir, STACKS[0][0]->getDIR_NAME(), STACKS[0][0]->getFILENAMES()[0]);
 	IplImage* slice = cvLoadImage(slice_fullpath, CV_LOAD_IMAGE_ANYDEPTH | CV_LOAD_IMAGE_ANYCOLOR);  //without CV_LOAD_IMAGE_ANYDEPTH, image is converted to 8-bits if needed
 	if(!slice)
-		throw MyException(std::string("Unable to load slice at \"").append(slice_fullpath).append("\"").c_str());
+        throw IOException(std::string("Unable to load slice at \"").append(slice_fullpath).append("\"").c_str());
     CHANS = slice->nChannels;
 	if ( slice->depth == IPL_DEPTH_8U )
 		BYTESxCHAN = 1; 
@@ -150,16 +149,18 @@ void SimpleVolume::initChannels ( ) throw (MyException) {
 	else if ( slice->depth == IPL_DEPTH_32F )
 		BYTESxCHAN = 4;
 	else {
-		char msg[IM_STATIC_STRINGS_SIZE];
+		char msg[STATIC_STRINGS_SIZE];
 		sprintf(msg,"in SimpleVolume::initChannels: unknown color depth");
-		throw MyException(msg);
+        throw IOException(msg);
 	}
 
 	cvReleaseImage(&slice);
 }
 
 
-REAL_T *SimpleVolume::loadSubvolume_to_REAL_T(int V0,int V1, int H0, int H1, int D0, int D1)  throw (MyException) {
+real32 *SimpleVolume::loadSubvolume_to_real32(int V0,int V1, int H0, int H1, int D0, int D1)  throw (IOException)
+{
+    /**/iim::debug(iim::LEV3, strprintf("V0 = %d, V1 = %d, H0 = %d, H1 = %d, D0 = %d, D1 = %d", V0, V1, H0, H1, D0, D1).c_str(), __iim__current__function__);
 
 	//initializations
 	V0 = (V0 == -1 ? 0	     : V0);
@@ -173,7 +174,7 @@ REAL_T *SimpleVolume::loadSubvolume_to_REAL_T(int V0,int V1, int H0, int H1, int
 	sint64 sbv_height = V1 - V0;
 	sint64 sbv_width  = H1 - H0;
 	sint64 sbv_depth  = D1 - D0;
-	REAL_T *subvol = new REAL_T[sbv_height * sbv_width * sbv_depth];
+    real32 *subvol = new real32[sbv_height * sbv_width * sbv_depth];
 
 	//scanning of stacks matrix for data loading and storing into subvol
 	Rect_t subvol_area;
@@ -210,25 +211,22 @@ REAL_T *SimpleVolume::loadSubvolume_to_REAL_T(int V0,int V1, int H0, int H1, int
 }
 
 
-uint8 *SimpleVolume::loadSubvolume_to_UINT8(int V0,int V1, int H0, int H1, int D0, int D1, int *channels, int ret_type) throw (MyException) {
+uint8 *SimpleVolume::loadSubvolume_to_UINT8(int V0,int V1, int H0, int H1, int D0, int D1, int *channels, int ret_type) throw (IOException) {
 
-    #if IM_VERBOSE > 3
-    printf("\t\t\t\tin StackedVolume::loadSubvolume_to_UINT8(V0=%d, V1=%d, H0=%d, H1=%d, D0=%d, D1=%d, *channels=%d, ret_type=%d)\n", 
-		V0, V1, H0, H1, D0, D1, *channels, ret_type);
-    #endif
+    /**/iim::debug(iim::LEV3, strprintf("V0 = %d, V1 = %d, H0 = %d, H1 = %d, D0 = %d, D1 = %d, *channels=%d, ret_type=%d", V0, V1, H0, H1, D0, D1, *channels, ret_type).c_str(), __iim__current__function__);
 
     //checking for non implemented features
 	if( this->BYTESxCHAN > 2 ) {
-		char err_msg[IM_STATIC_STRINGS_SIZE];
+		char err_msg[STATIC_STRINGS_SIZE];
 		sprintf(err_msg,"SimpleVolume::loadSubvolume_to_UINT8: invalid number of bytes per channel (%d)",this->BYTESxCHAN); 
-		throw MyException(err_msg);
+        throw IOException(err_msg);
 	}
 
-	if ( (ret_type == IM_DEF_IMG_DEPTH) && ((8 * this->BYTESxCHAN) != IM_DEF_IMG_DEPTH)  ) {
+    if ( (ret_type == iim::DEF_IMG_DEPTH) && ((8 * this->BYTESxCHAN) != iim::DEF_IMG_DEPTH)  ) {
 		// return type is 8 bits, but native depth is not 8 bits
-		char err_msg[IM_STATIC_STRINGS_SIZE];
+		char err_msg[STATIC_STRINGS_SIZE];
 		sprintf(err_msg,"SimpleVolume::loadSubvolume_to_UINT8: non supported return type (%d bits) - native type is %d bits",ret_type, 8*this->BYTESxCHAN); 
-		throw MyException(err_msg);
+        throw IOException(err_msg);
 	}
 
 	//initializations
@@ -265,12 +263,8 @@ uint8 *SimpleVolume::loadSubvolume_to_UINT8(int V0,int V1, int H0, int H1, int D
 			Rect_t *intersect_area = STACKS[row][col]->Intersects(subvol_area);
 			if(intersect_area) // probably can be eliminated: intersect_area is always true
 			{
-				// set input parameters
-				int first_file = D0;
-				int last_file  = D1 - 1;
-
 				//LOCAL VARIABLES
-				char slice_fullpath[IM_STATIC_STRINGS_SIZE];
+				char slice_fullpath[STATIC_STRINGS_SIZE];
 				IplImage *slice;
 
 				for(int k=0; k<sbv_depth; k++)
@@ -284,9 +278,9 @@ uint8 *SimpleVolume::loadSubvolume_to_UINT8(int V0,int V1, int H0, int H1, int D
 					// old version: slice_img_i = cvLoadImage(slice_fullpath, CV_LOAD_IMAGE_GRAYSCALE | CV_LOAD_IMAGE_ANYDEPTH);
 					if(!slice)
 					{
-						char msg[IM_STATIC_STRINGS_SIZE];
+						char msg[STATIC_STRINGS_SIZE];
 						sprintf(msg,"in SimpleVolume::loadSubvolume_to_UINT: unable to open image \"%s\". Wrong path or format.\nSupported formats are BMP, DIB, JPEG, JPG, JPE, JP2, PNG, PBM, PGM, PPM, SR, RAS, TIFF, TIF", slice_fullpath);
-						throw MyException(msg);
+                        throw IOException(msg);
 					}		
 
 					//if this is the first time a slice is loaded, detecting the number of channels and safely allocating memory for data
@@ -296,22 +290,22 @@ uint8 *SimpleVolume::loadSubvolume_to_UINT8(int V0,int V1, int H0, int H1, int D
                         sbv_channels = slice->nChannels;
 						sbv_bytes_chan = slice->depth / 8;
                         if(sbv_channels != 1 && sbv_channels != 3)
-                            throw MyException(std::string("Unsupported number of channels at \"").append(slice_fullpath).append("\". Only 1 and 3-channels images are supported").c_str());
+                            throw IOException(std::string("Unsupported number of channels at \"").append(slice_fullpath).append("\". Only 1 and 3-channels images are supported").c_str());
                         if(sbv_bytes_chan != this->BYTESxCHAN)
-                            throw MyException(std::string("Wrong number of bits per channel\"").c_str());
+                            throw IOException(std::string("Wrong number of bits per channel\"").c_str());
 
                         try
                         {
                             subvol = new uint8[sbv_height * sbv_width * sbv_depth * sbv_channels * sbv_bytes_chan];
                         }
-                        catch(...){throw MyException("in SimpleVolume::loadSubvolume_to_UINT8: unable to allocate memory");}
+                        catch(...){throw IOException("in SimpleVolume::loadSubvolume_to_UINT8: unable to allocate memory");}
                     }
                     //otherwise checking that all the other slices have the same bitdepth of the first one
 					else {
 						if(slice->nChannels != sbv_channels)
-							throw MyException(std::string("Image depth mismatch at slice at \"").append(slice_fullpath).append("\": all slices must have the same bitdepth").c_str());
+                            throw IOException(std::string("Image depth mismatch at slice at \"").append(slice_fullpath).append("\": all slices must have the same bitdepth").c_str());
                         if((slice->depth/8) != sbv_bytes_chan)
-                            throw MyException(std::string("Image bytes per channel mismatch at slice at \"").append(slice_fullpath).append("\": all slices must have the same bitdepth").c_str());
+                            throw IOException(std::string("Image bytes per channel mismatch at slice at \"").append(slice_fullpath).append("\": all slices must have the same bitdepth").c_str());
 					}
 
 					//computing offsets
@@ -368,7 +362,7 @@ uint8 *SimpleVolume::loadSubvolume_to_UINT8(int V0,int V1, int H0, int H1, int D
                         }
                     }
                     else
-                        throw MyException(std::string("Unsupported number of channels at \"").append(slice_fullpath).append("\". Only 1 and 3-channels images are supported in this format").c_str());
+                        throw IOException(std::string("Unsupported number of channels at \"").append(slice_fullpath).append("\". Only 1 and 3-channels images are supported in this format").c_str());
 
 					//releasing image
 					cvReleaseImage(&slice);

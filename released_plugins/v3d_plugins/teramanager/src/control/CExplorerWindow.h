@@ -50,7 +50,7 @@ class teramanager::CExplorerWindow : public QWidget
         V3dR_MainWindow* window3D;      //the window enclosing <view3DWidget>
         CExplorerWindow *next, *prev;   //the next (higher resolution) and previous (lower resolution) <CExplorerWindow> objects
         int volResIndex;                //resolution index of the volume displayed in the current window (see member <volumes> of CImport)
-        uint8* imgData;
+        itm::uint8* imgData;
         int volV0, volV1;               //first and last vertical coordinates of the volume displayed in the current window
         int volH0, volH1;               //first and last horizontal coordinates of the volume displayed in the current window
         int volD0, volD1;               //first and last depth coordinates of the volume displayed in the current window
@@ -116,7 +116,7 @@ class teramanager::CExplorerWindow : public QWidget
         * renderer at the given location.
         * This is based on the Vaa3D 3D point selection with one mouse click.
         ***********************************************************************************/
-        XYZ getRenderer3DPoint(int x, int y) throw (MyException);
+        XYZ getRenderer3DPoint(int x, int y) throw (RuntimeException);
 
         /**********************************************************************************
         * Syncronizes widgets from <src> to <dst>
@@ -127,7 +127,7 @@ class teramanager::CExplorerWindow : public QWidget
     public:
 
         //CONSTRUCTOR, DECONSTRUCTOR
-        CExplorerWindow(V3DPluginCallback2* _V3D_env, int _resIndex, uint8* _imgData, int _volV0, int _volV1,
+        CExplorerWindow(V3DPluginCallback2* _V3D_env, int _resIndex, itm::uint8* _imgData, int _volV0, int _volV1,
                         int _volH0, int _volH1, int _volD0, int _volD1, int _nchannels, CExplorerWindow* _prev);
         ~CExplorerWindow();
         static void uninstance()
@@ -165,7 +165,7 @@ class teramanager::CExplorerWindow : public QWidget
         * Called by the next(prev) <CExplorerWindow>  when the user  zooms out(in) and  the
         * lower(higher) resoolution has to be reestabilished.
         ***********************************************************************************/
-        void restoreViewFrom(CExplorerWindow* source) throw (MyException);
+        void restoreViewFrom(CExplorerWindow* source) throw (RuntimeException);
 
         /**********************************************************************************
         * Generates a new view using the given coordinates.
@@ -186,34 +186,34 @@ class teramanager::CExplorerWindow : public QWidget
         * Resizes  the  given image subvolume in a  newly allocated array using the fastest
         * achievable interpolation method. The image currently shown is used as data source.
         ***********************************************************************************/
-        uint8* getVOI(int x0, int x1, int y0, int y1, int z0, int z1,
-                      int xDimInterp, int yDimInterp, int zDimInterp) throw (MyException);
+        itm::uint8* getVOI(int x0, int x1, int y0, int y1, int z0, int z1,
+                      int xDimInterp, int yDimInterp, int zDimInterp) throw (RuntimeException);
 
         /**********************************************************************************
         * Copies the given VOI from "src" to "dst". Offsets and scaling are supported.
         ***********************************************************************************/
         static void
-            copyVOI(uint8 const * src,      //pointer to const data source
+            copyVOI(itm::uint8 const * src,      //pointer to const data source
                 uint src_dims[],            //dimensions of "src" along X, Y, Z and channels
                 uint src_offset[],          //VOI's offset along X, Y, Z
                 uint src_count[],           //VOI's dimensions along X, Y, Z
-                uint8* dst,                 //pointer to data destination
+                itm::uint8* dst,                 //pointer to data destination
                 uint dst_dims[],            //dimensions of "dst" along X, Y, Z
                 uint dst_offset[],          //offset of "dst" along X, Y, Z
                 uint scaling = 1)           //scaling factor (integer only)
-        throw (MyException);
+        throw (RuntimeException);
 
         /**********************************************************************************
         * Makes the current view the last one by  deleting (and deallocting) its subsequent
         * views.
         ***********************************************************************************/
-        void makeLastView() throw (MyException);
+        void makeLastView() throw (RuntimeException);
 
         /**********************************************************************************
         * Annotations are stored/loaded) to/from the <CAnnotations> object
         ***********************************************************************************/
-        void storeAnnotations() throw (MyException);
-        void loadAnnotations() throw (MyException);
+        void storeAnnotations() throw (RuntimeException);
+        void loadAnnotations() throw (RuntimeException);
 
         /**********************************************************************************
         * Saves/restores the state of PMain spinboxes for subvolume selection
@@ -305,7 +305,7 @@ class teramanager::CExplorerWindow : public QWidget
         * performed. If an exception has occurred in the <CVolume> thread, it is propagated
         * and managed in the current thread (ex != 0).
         ***********************************************************************************/
-        void loadingDone(uint8* data, MyException *ex, void* sourceObject, qint64 elapsed_time, QString op_dsc, int step);
+        void loadingDone(itm::uint8* data, itm::RuntimeException *ex, void* sourceObject, qint64 elapsed_time, QString op_dsc, int step);
 
         /**********************************************************************************
         * Linked to volume cut scrollbars of Vaa3D widget containing the 3D renderer.

@@ -26,7 +26,7 @@
 #define _TILED_VOLUME_H
 
 //#include "IM_defs.h"
-//#include "MyException.h"
+//#include "iim::MyException.h"
 #include "VirtualVolume.h" // ADDED
 #include <list>
 #include <string>
@@ -45,7 +45,7 @@ class TiledVolume : public VirtualVolume
 {
 	private:	
 		//******OBJECT ATTRIBUTES******
-		uint16 N_ROWS, N_COLS;			//dimensions (in stacks) of stacks matrix along VH axes
+        iim::uint16 N_ROWS, N_COLS;			//dimensions (in stacks) of stacks matrix along VH axes
 		Block ***BLOCKS;			    //2-D array of <Block*>
         ref_sys reference_system;       //reference system of the stored volume
         float  VXL_1, VXL_2, VXL_3;     //voxel dimensions of the stored volume
@@ -63,24 +63,24 @@ class TiledVolume : public VirtualVolume
 		void mirror(axis mrr_axis);
 
 		//extract spatial coordinates (in millimeters) of given Stack object reading directory and filenames as spatial coordinates
-		void extractCoordinates(Block* stk, int z, int* crd_1, int* crd_2, int* crd_3);
+        void extractCoordinates(Block* stk, int z, int* crd_1, int* crd_2, int* crd_3);
 
 		// iannello returns the number of channels of images composing the volume
-		void initChannels ( ) throw (MyException);
+        void initChannels ( ) throw (iim::IOException);
 
 	public:
 		//CONSTRUCTORS-DECONSTRUCTOR
-		TiledVolume(const char* _root_dir)  throw (MyException);
+        TiledVolume(const char* _root_dir)  throw (iim::IOException);
         TiledVolume(const char* _root_dir, ref_sys _reference_system,
 					float _VXL_1, float _VXL_2, float _VXL_3, 
-					bool overwrite_mdata = false, bool save_mdata=true)  throw (MyException);
+                    bool overwrite_mdata = false, bool save_mdata=true)  throw (iim::IOException);
 
 		~TiledVolume(void);
 
 		//GET methods
 		Block*** getBLOCKS(){return BLOCKS;}
-        uint16 getN_ROWS(){return N_ROWS;}
-        uint16 getN_COLS(){return N_COLS;}
+        iim::uint16 getN_ROWS(){return N_ROWS;}
+        iim::uint16 getN_COLS(){return N_COLS;}
         int    getStacksHeight();
         int    getStacksWidth();
         float  getVXL_1(){return VXL_1;}
@@ -95,58 +95,33 @@ class TiledVolume : public VirtualVolume
 		void print();
 
 		//saving-loading methods to/from metadata binary file
-		void save(char* metadata_filepath) throw (MyException);
-		void load(char* metadata_filepath) throw (MyException);
+        void save(char* metadata_filepath) throw (iim::IOException);
+        void load(char* metadata_filepath) throw (iim::IOException);
 
-		//loads given subvolume in a 1-D array of REAL_T while releasing stacks slices memory when they are no longer needed
-		inline REAL_T *loadSubvolume_to_REAL_T(int V0=-1,int V1=-1, int H0=-1, int H1=-1, int D0=-1, int D1=-1)  throw (MyException) {
+        //loads given subvolume in a 1-D array of iim::real32 while releasing stacks slices memory when they are no longer needed
+        inline iim::real32 *loadSubvolume_to_real32(int V0=-1,int V1=-1, int H0=-1, int H1=-1, int D0=-1, int D1=-1)  throw (iim::IOException) {
 			return loadSubvolume(V0,V1,H0,H1,D0,D1,0,true);
 		}
 
         //loads given subvolume in a 1-D array and puts used Stacks into 'involved_stacks' iff not null
-        REAL_T *loadSubvolume(int V0=-1,int V1=-1, int H0=-1, int H1=-1, int D0=-1, int D1=-1,
-                                                                  std::list<Block*> *involved_blocks = 0, bool release_blocks = false)  throw (MyException);
+        iim::real32 *loadSubvolume(int V0=-1,int V1=-1, int H0=-1, int H1=-1, int D0=-1, int D1=-1,
+                                                                  std::list<Block*> *involved_blocks = 0, bool release_blocks = false)  throw (iim::IOException);
 
-        //loads given subvolume in a 1-D array of uint8 while releasing stacks slices memory when they are no longer needed
-        uint8 *loadSubvolume_to_UINT8(int V0=-1,int V1=-1, int H0=-1, int H1=-1, int D0=-1, int D1=-1, int *channels=0, int ret_type=IM_DEF_IMG_DEPTH) throw (MyException);
-
-		//saves given subvolume as a stack of 8-bit grayscale images in a directory created in the default path
-		static void saveSubVolume(REAL_T* subvol, int V0, int V1, int H0, int H1, int D0, int D1, int V_idx, int H_idx, int D_idx);
-
-		//saves in 'dir_path' the selected subvolume in stacked format, with the given stacks dimensions
-		void saveVolume(const char* dir_path, uint32 max_slice_height=0, uint32 max_slice_width=0, 
-			            uint32 V0=0, uint32 V1=0, uint32 H0=0, uint32 H1=0, uint32 D0=0, uint32 D1=0, 
-						const char* img_format=IM_DEF_IMG_FORMAT, int img_depth=IM_DEF_IMG_DEPTH) throw (MyException);
-
-		//saves in 'dir_path' the selected subvolume in multi-stack format, with the exact given stacks dimensions and the given overlap between adjacent stacks
-		void saveOverlappingStacks(char* dir_path, uint32 slice_height, uint32 slice_width,	uint32 overlap_size,
-						uint32 V0=0, uint32 V1=0, uint32 H0=0, uint32 H1=0, uint32 D0=0, uint32 D1=0) throw (MyException);
-
-		//saves the Maximum Intensity Projections (MIP) of the selected subvolume along the selected direction into the given paths
-		void saveMIPs(bool direction_V = true, bool direction_H = true, bool direction_D = true, 
-			          char* MIP_V_path = NULL, char* MIP_H_path = NULL, char* MIP_D_path = NULL,
-					  uint32 V0=0, uint32 V1=0, uint32 H0=0, uint32 H1=0, uint32 D0=0, uint32 D1=0) throw (MyException);
-
-		//shows the selected slice with a simple GUI
-		//void show(REAL_T *vol, int vol_DIM_V, int vol_DIM_H, int D_index, int window_HEIGHT=0, int window_WIDTH=0);
-
-		//deletes slices from disk from first_file to last_file, extremes included
-		//void deleteSlices(int first_file, int last_file);
+        //loads given subvolume in a 1-D array of iim::uint8 while releasing stacks slices memory when they are no longer needed
+        iim::uint8 *loadSubvolume_to_UINT8(int V0=-1,int V1=-1, int H0=-1, int H1=-1, int D0=-1, int D1=-1, int *channels=0, int ret_type=iim::DEF_IMG_DEPTH) throw (iim::IOException);
 
 		//releases allocated memory of stacks
 		void releaseStacks(int first_file=-1, int last_file=-1);
 
-		//returns true if file exists at the given filepath
-		static bool fileExists(const char *filepath);
 
-		// OPERATIONS FOR STREAMED SUBVOLUME LOAD 
+        // OPERATIONS FOR STREAMED SUBVOLUME LOAD
 
 		/* start a streamed load operation: returns an opaque descriptor of the streamed operation
 		 * buf is a dynamically allocated, initialized buffer that should not be neither manipulated 
 		 * nor deallocated by the caller until the operation terminates 
 		 * (see close operations for details)
 		 */
-        void *streamedLoadSubvolume_open ( int steps, uint8 *buf, int V0=-1,int V1=-1, int H0=-1, int H1=-1, int D0=-1, int D1=-1 );
+        void *streamedLoadSubvolume_open ( int steps, iim::uint8 *buf, int V0=-1,int V1=-1, int H0=-1, int H1=-1, int D0=-1, int D1=-1 );
 
 		/* perform one step of a streamed operation: returns a pointer to a read-only buffer 
 		 * with updated data; the returned buffer should not be deallocated;
@@ -155,7 +130,7 @@ class TiledVolume : public VirtualVolume
 		 * of the returned buffer contain exactly the same data contained in buffer2 at those positions
 		 * no check is performed if the default value of buffer2 (null pointer) is passed 
 		 */
-        uint8 *streamedLoadSubvolume_dostep ( void *stream_descr, unsigned char *buffer2=0 );
+        iim::uint8 *streamedLoadSubvolume_dostep ( void *stream_descr, unsigned char *buffer2=0 );
 
 		/* copies the last data read from files to a user provided buffer
 		 * positions to which data are copied are depend on which data have been read in 
@@ -173,7 +148,7 @@ class TiledVolume : public VirtualVolume
 		 * if return_buffer is set to false, the initial buffer is deallocated, it cannot be 
 		 * reused by the caller and the operation returns a null pointer
 		 */
-         uint8 *streamedLoadSubvolume_close ( void *stream_descr, bool return_buffer=true );
+         iim::uint8 *streamedLoadSubvolume_close ( void *stream_descr, bool return_buffer=true );
 
 };
 

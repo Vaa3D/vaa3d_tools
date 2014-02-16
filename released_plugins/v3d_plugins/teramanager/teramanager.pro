@@ -10,9 +10,9 @@ CONFIG += use_experimental_features
 DEFINES += _VAA3D_PLUGIN_MODE
 #DEFINES += _USE_QT_DIALOGS
 
-#QMAKE_CXXFLAGS += -Wall
-#QMAKE_CXXFLAGS += -pedantic
-#QMAKE_CXXFLAGS += -Werror
+QMAKE_CXXFLAGS += -Wall
+QMAKE_CXXFLAGS += -pedantic
+QMAKE_CXXFLAGS += -Werror
 
 
 #set up Vaa3D and Qt source path
@@ -180,9 +180,12 @@ HEADERS += ./src/core/ImageManager/VirtualVolume.h
 HEADERS += ./src/core/ImageManager/TiledVolume.h
 HEADERS += ./src/core/ImageManager/TiledMCVolume.h
 HEADERS += ./src/core/ImageManager/Block.h
+HEADERS += ./src/core/ImageManager/TimeSeries.h
+HEADERS += ./src/core/ImageManager/IM_defs.h
 HEADERS += ./src/core/VolumeConverter/VolumeConverter.h
 HEADERS += ./src/core/VolumeConverter/check_and_makedir.h
 HEADERS += ./src/core/VolumeConverter/resumer.h
+HEADERS += ./src/core/ImageManager/IM_config.h
 
 SOURCES += ./src/control/CAnnotations.cpp
 SOURCES += ./src/control/CConverter.cpp
@@ -214,6 +217,8 @@ SOURCES += ./src/core/ImageManager/VirtualVolume.cpp
 SOURCES += ./src/core/ImageManager/TiledVolume.cpp
 SOURCES += ./src/core/ImageManager/TiledMCVolume.cpp
 SOURCES += ./src/core/ImageManager/Block.cpp
+SOURCES += ./src/core/ImageManager/TimeSeries.cpp
+SOURCES += ./src/core/ImageManager/IM_config.cpp
 SOURCES += ./src/core/VolumeConverter/VolumeConverter.cpp
 SOURCES += ./src/core/VolumeConverter/check_and_makedir.cpp
 SOURCES += ./src/core/VolumeConverter/resumer.cpp

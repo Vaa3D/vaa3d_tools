@@ -37,6 +37,8 @@
 #include "../core/ImageManager/TiledVolume.h"
 #include "CPlugin.h"
 
+using namespace std;
+
 class teramanager::CImport : public QThread
 {
     Q_OBJECT
@@ -50,26 +52,32 @@ class teramanager::CImport : public QThread
         static CImport* uniqueInstance;
         CImport() : QThread(), path(""), AXS_1(axis(0)), AXS_2(axis(0)), AXS_3(axis(0)),
                                VXL_1(0), VXL_2(0), VXL_3(0), reimport(false),
-                               volMapMaxSize(50), volMapData(0), volMapHeight(-1), volMapWidth(-1), volMapDepth(-1),
-                               nchannels(-1)
+                               vmapMaxSize(50), vmapData(0), vmapYDim(-1), vmapXDim(-1), vmapZDim(-1),
+                               vmapCDim(-1), vmapTDim(-1)
         {
             /**/itm::debug(itm::LEV1, 0, __itm__current__function__);
         }
 
-        //automatically called when current thread is started
+        // automatically called when current thread is started
         void run();
 
-        //members
-        std::string path;                           //where the volume is stored
-        axis AXS_1, AXS_2, AXS_3;                   //reference system of the volume
+        // volume members
+        string path;                                //folder where to start the scan process to find the volumes
+        axis AXS_1, AXS_2, AXS_3;                   //spatial reference system of the volume
         float VXL_1, VXL_2, VXL_3;                  //voxel dimensions of the volume
         bool reimport;                              //true if the volume has to be reimported
-        bool regenerateVolMap;                      //trye if volume map has to be regenerated
-        int volMapMaxSize;                          //maximum size (in MVoxels) of volume map
-        uint8* volMapData;                          //volume map data
-        int volMapHeight, volMapWidth, volMapDepth; //volume map dimensions
-        int nchannels;                              //volume map channels
-        std::vector<VirtualVolume*> volumes;        //array of the imported volumes
+        vector<VirtualVolume*> volumes;             //stores the volumes at the different resolutions
+
+        // volume map members
+        /* We call "volume map" a binary file where to store the image content that has to be loaded and
+         * displayed immediately after a volume is imported. Usually, this corresponds to a low-resolution
+         * version of the whole volume, hence the description "volume map". */
+        bool regenerateVMap;                        //true if volume map has to be regenerated
+        int vmapMaxSize;                            //maximum size (in MVoxels) of volume map
+        itm::uint8* vmapData;                            //volume map data
+        int vmapYDim, vmapXDim, vmapZDim, vmapCDim, vmapTDim; //volume map dimensions
+
+        // other members
         QElapsedTimer timerIO;                      //for time measuring
 
 
@@ -83,7 +91,7 @@ class teramanager::CImport : public QThread
         **********************************************************************************/
         static CImport* instance()
         {
-            if (uniqueInstance == NULL)
+            if (!uniqueInstance)
                 uniqueInstance = new CImport();
             return uniqueInstance;
         }
@@ -92,15 +100,16 @@ class teramanager::CImport : public QThread
 
         //GET and SET methods
         string getPath(){return path;}
-        uint8* getVMap(){return volMapData;}
-        int getVMapHeight(){return volMapHeight;}
-        int getVMapWidth(){return volMapWidth;}
-        int getVMapDepth(){return volMapDepth;}
-        int getNChannels(){return nchannels;}
+        itm::uint8* getVMapRawData(){return vmapData;}
+        int getVMapXDim(){return vmapXDim;}
+        int getVMapYDim(){return vmapYDim;}
+        int getVMapZDim(){return vmapZDim;}
+        int getVMapCDim(){return vmapCDim;}
+        int getVMapTDim(){return vmapTDim;}
         int getVMapResIndex()
         {
             for(size_t k=0; k<volumes.size(); k++)
-                if(volumes[k]->getDIM_D() == volMapDepth)
+                if(volumes[k]->getDIM_D() == vmapZDim)
                     return k;
             return -1;
         }
@@ -116,10 +125,10 @@ class teramanager::CImport : public QThread
         void setAxes(string axs1, string axs2, string axs3);
         void setVoxels(std::string vxl1, std::string vxl2, std::string vxl3);
         void setReimport(bool _reimport){reimport = _reimport;}
-        void setRegenerateVolumeMap(bool _regenerateVolMap){regenerateVolMap = _regenerateVolMap;}
-        void setVolMapMaxSize(int _volMapMaxSize){volMapMaxSize = _volMapMaxSize;}
+        void setRegenerateVolumeMap(bool _regenerateVolMap){regenerateVMap = _regenerateVolMap;}
+        void setVolMapMaxSize(int _volMapMaxSize){vmapMaxSize = _volMapMaxSize;}
 
-        /**/ int getTDim(){return 1;} /**/ //temp method
+        /**/
 
         //reset method
         void reset()
@@ -137,7 +146,7 @@ class teramanager::CImport : public QThread
         /*********************************************************************************
         * Carries the outcome of the operation associated to this thread.
         **********************************************************************************/
-        void sendOperationOutcome(MyException* ex, Image4DSimple* vmap_image = 0, qint64 elapsed_time = 0);
+        void sendOperationOutcome(itm::RuntimeException* ex, Image4DSimple* vmap_image = 0, qint64 elapsed_time = 0);
 };
 
 #endif // CIMPORT_H

@@ -27,8 +27,6 @@
 ********************************************************************************************************************************************************************************************/
 
 #include "PDialogImport.h"
-#include "../core/ImageManager/MyException.h"
-#include "../core/ImageManager/StackedVolume.h"
 #include "PMain.h"
 #include "../control/CImport.h"
 
@@ -135,8 +133,8 @@ PDialogImport::PDialogImport(QWidget* parent) : QDialog(parent)
     setLayout(layout);
 
     //windows flags and title
-    char title[IM_STATIC_STRINGS_SIZE];
-    sprintf(title, "\"%s\" metadata file not found", IM_METADATA_FILE_NAME);
+    char title[1024];
+    sprintf(title, "\"%s\" metadata file not found", iim::MDATA_BIN_FILE_NAME.c_str());
     this->setWindowTitle(title);
     this->setWindowFlags(Qt::Dialog | Qt::WindowTitleHint | Qt::WindowStaysOnTopHint | Qt::WindowCloseButtonHint);
 
@@ -178,37 +176,37 @@ void PDialogImport::import_button_clicked()
         if(axs1_field->validator()->validate(tbv,pos) != QValidator::Acceptable)
         {
             axs1_field->setFocus();
-            throw MyException("One or more fields not properly filled");
+            throw RuntimeException("One or more fields not properly filled");
         }
         tbv = axs2_field->text();
         if(axs2_field->validator()->validate(tbv,pos) != QValidator::Acceptable)
         {
             axs2_field->setFocus();
-            throw MyException("One or more fields not properly filled");
+            throw RuntimeException("One or more fields not properly filled");
         }
         tbv = axs3_field->text();
         if(axs3_field->validator()->validate(tbv,pos) != QValidator::Acceptable)
         {
             axs3_field->setFocus();
-            throw MyException("One or more fields not properly filled");
+            throw RuntimeException("One or more fields not properly filled");
         }
         tbv = vxl1_field->text();
         if(vxl1_field->validator()->validate(tbv,pos) != QValidator::Acceptable)
         {
             vxl1_field->setFocus();
-            throw MyException("One or more fields not properly filled");
+            throw RuntimeException("One or more fields not properly filled");
         }
         tbv = vxl2_field->text();
         if(vxl2_field->validator()->validate(tbv,pos) != QValidator::Acceptable)
         {
             vxl2_field->setFocus();
-            throw MyException("One or more fields not properly filled");
+            throw RuntimeException("One or more fields not properly filled");
         }
         tbv = vxl3_field->text();
         if(vxl3_field->validator()->validate(tbv,pos) != QValidator::Acceptable)
         {
             vxl3_field->setFocus();
-            throw MyException("One or more fields not properly filled");
+            throw RuntimeException("One or more fields not properly filled");
         }
         CImport::instance()->setAxes(axs1_field->text().toStdString().c_str(),
                                      axs2_field->text().toStdString().c_str(),
@@ -220,7 +218,7 @@ void PDialogImport::import_button_clicked()
         hide();
         reset();
     }
-    catch(MyException &ex)
+    catch(RuntimeException &ex)
     {
         QMessageBox::critical(this,QObject::tr("Error"), QObject::tr(ex.what()),QObject::tr("Ok"));
     }

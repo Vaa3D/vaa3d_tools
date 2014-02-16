@@ -34,22 +34,22 @@ class  StackRaw;
 
 class SimpleVolumeRaw : public VirtualVolume {
 private:
-	uint16 N_ROWS, N_COLS;		//dimensions (in stacks) of stacks matrix along VH axes
+    iim::uint16 N_ROWS, N_COLS;		//dimensions (in stacks) of stacks matrix along VH axes
     StackRaw ***STACKS;			//2-D array of <Stack*>
 
 	void init ( );
 
 	// iannello returns the number of channels of images composing the volume
-	void initChannels ( ) throw (MyException);
+    void initChannels ( ) throw (iim::IOException);
 
 public:
-	SimpleVolumeRaw(const char* _root_dir)  throw (MyException);
+    SimpleVolumeRaw(const char* _root_dir)  throw (iim::IOException);
 
 	~SimpleVolumeRaw(void);
 
-	REAL_T *loadSubvolume_to_REAL_T(int V0=-1,int V1=-1, int H0=-1, int H1=-1, int D0=-1, int D1=-1)  throw (MyException);
+    iim::real32 *loadSubvolume_to_real32(int V0=-1,int V1=-1, int H0=-1, int H1=-1, int D0=-1, int D1=-1)  throw (iim::IOException);
 
-    uint8 *loadSubvolume_to_UINT8(int V0=-1,int V1=-1, int H0=-1, int H1=-1, int D0=-1, int D1=-1, int *channels=0, int ret_type=IM_DEF_IMG_DEPTH) throw (MyException);
+    iim::uint8 *loadSubvolume_to_UINT8(int V0=-1,int V1=-1, int H0=-1, int H1=-1, int D0=-1, int D1=-1, int *channels=0, int ret_type=iim::DEF_IMG_DEPTH) throw (iim::IOException);
 };		
 
 # endif // _SIMPLE_VOLUME

@@ -26,7 +26,7 @@
 #define _BLOCK_H
 
 #include <stdio.h>
-#include "IM_defs.h"
+#include "IM_config.h"
 
 //FORWARD-DECLARATIONS
 class  VirtualVolume;
@@ -42,14 +42,14 @@ class Block
 		//*********** OBJECT ATTRIBUTES ***********
 		VirtualVolume*	CONTAINER;					//pointer to <VirtualVolume> object that contains the current object
 		char**			FILENAMES;					//1-D dinamic array of <char>  pointers to blocks filanames
-		uint32			HEIGHT, WIDTH, DEPTH;		//VHD (Vertical, Horizontal, Depth) dimensions of current stack
-		uint32          N_BLOCKS;                   //number of blocks along z
-		uint32          N_CHANS;                    //number of channels
-		uint32          N_BYTESxCHAN;               //number of bytes per channel
+        iim::uint32		HEIGHT, WIDTH, DEPTH;		//VHD (Vertical, Horizontal, Depth) dimensions of current stack
+        iim::uint32     N_BLOCKS;                   //number of blocks along z
+        iim::uint32     N_CHANS;                    //number of channels
+        iim::uint32     N_BYTESxCHAN;               //number of bytes per channel
 		int				ROW_INDEX, COL_INDEX;		//row and col index relative to stack matrix
 		int				ABS_V,		ABS_H;			//absolute VH voxel coordinates of current stack
-		uint32         *BLOCK_SIZE;                 //dimensions of blocks along z
-		int            *BLOCK_ABS_D;                //absolute D voxel coordinates of blocks
+        iim::uint32     *BLOCK_SIZE;                 //dimensions of blocks along z
+        int             *BLOCK_ABS_D;                //absolute D voxel coordinates of blocks
 		char*			DIR_NAME;					//string containing current stack directory
 
 		//******** OBJECT PRIVATE METHODS *********
@@ -68,15 +68,15 @@ class Block
 		char* getDIR_NAME()			{return DIR_NAME;}
 		int getROW_INDEX()			{return ROW_INDEX;}
 		int getCOL_INDEX()			{return COL_INDEX;}
-		uint32 getHEIGHT()			{return HEIGHT;}
-		uint32 getWIDTH()			{return WIDTH;}
-		uint32 getDEPTH()			{return DEPTH;}
-		uint32 getN_BLOCKS()		{return N_BLOCKS;}
-		uint32 getN_CHANS()		    {return N_CHANS;}
-		uint32 getN_BYTESxCHAN()	{return N_BYTESxCHAN;}
+        iim::uint32 getHEIGHT()			{return HEIGHT;}
+        iim::uint32 getWIDTH()			{return WIDTH;}
+        iim::uint32 getDEPTH()			{return DEPTH;}
+        iim::uint32 getN_BLOCKS()		{return N_BLOCKS;}
+        iim::uint32 getN_CHANS()		    {return N_CHANS;}
+        iim::uint32 getN_BYTESxCHAN()	{return N_BYTESxCHAN;}
 		int getABS_V()				{return ABS_V;}
 		int getABS_H()				{return ABS_H;}
-		uint32 *getBLOCK_SIZE()     {return BLOCK_SIZE;}
+        iim::uint32 *getBLOCK_SIZE()     {return BLOCK_SIZE;}
 		int    *getBLOCK_ABS_D()    {return BLOCK_ABS_D;}
 		char** getFILENAMES()		{return FILENAMES;}
 
@@ -93,20 +93,10 @@ class Block
 		void binarizeInto(FILE* file);
 		void unBinarizeFrom(FILE* file);
 
-		//loads/releases images of current stack (from 'first_file' to 'last_file' extremes included, if not specified loads entire stack)
-		//void loadStack   (int first_file=-1, int last_file=-1);
-		//void releaseStack(int first_file=-1, int last_file=-1);
-
 		//returns a pointer to the intersection rectangle if the given area intersects current stack, otherwise returns NULL
 		Rect_t* Intersects(const Rect_t& area);
 
 		Segm_t* Intersects(int D0, int D1);
-
-		//show the selected slice with a simple GUI
-		//void show(int D_index, int window_HEIGHT=0, int window_WIDTH=0);
-
-		//delete slices from disk from first_file to last_file, extremes included
-		//void deleteSlices(int first_file, int last_file);
 };
 
 #endif //_BLOCK_H

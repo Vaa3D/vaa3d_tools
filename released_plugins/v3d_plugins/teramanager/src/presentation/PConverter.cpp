@@ -267,7 +267,7 @@ PConverter::PConverter(V3DPluginCallback *callback, QWidget *parent) : QWidget(p
     connect(this, SIGNAL(sendProgressBarChanged(int, int, int, const char*)), this, SLOT(progressBarChanged(int, int, int, const char*)), Qt::QueuedConnection);
     connect(inFormatCBox, SIGNAL(currentIndexChanged(QString)), this, SLOT(volformatChanged(QString)));
     connect(outFormatCBox, SIGNAL(currentIndexChanged(QString)), this, SLOT(volformatChanged(QString)));
-    connect(CConverter::instance(), SIGNAL(sendOperationOutcome(MyException*)), this, SLOT(operationDone(MyException*)), Qt::QueuedConnection);
+    connect(CConverter::instance(), SIGNAL(sendOperationOutcome(itm::RuntimeException*)), this, SLOT(operationDone(itm::RuntimeException*)), Qt::QueuedConnection);
     connect(inDirButton, SIGNAL(clicked()), this, SLOT(inDirButtonClicked()));
     connect(inFileButton, SIGNAL(clicked()), this, SLOT(inFileButtonClicked()));
     connect(outDirButton, SIGNAL(clicked()), this, SLOT(outDirButtonClicked()));
@@ -367,7 +367,7 @@ void PConverter::startButtonClicked()
         }
         CConverter::instance()->start();
     }
-    catch(MyException &ex) {QMessageBox::critical(this,QObject::tr("Error"), QObject::tr(ex.what()),QObject::tr("Ok"));}
+    catch(RuntimeException &ex) {QMessageBox::critical(this,QObject::tr("Error"), QObject::tr(ex.what()),QObject::tr("Ok"));}
 }
 
 //called when stopButton has been clicked
@@ -608,7 +608,7 @@ void PConverter::progressBarChanged(int val, int minutes, int seconds, const cha
 * If an exception has occurred in the <CConverter> thread, it is propagated and
 * managed in the current thread (ex != 0).
 ***********************************************************************************/
-void PConverter::operationDone(MyException *ex)
+void PConverter::operationDone(RuntimeException *ex)
 {
     /**/itm::debug(itm::LEV1, strprintf("ex = %s", (ex? "error" : "0")).c_str(), __itm__current__function__);
 
@@ -697,7 +697,7 @@ void PConverter::operationDone(MyException *ex)
             //updating content
             updateContent();
         }
-        catch(MyException &ex) {QMessageBox::critical(this,QObject::tr("Error"), QObject::tr(ex.what()),QObject::tr("Ok"));}
+        catch(RuntimeException &ex) {QMessageBox::critical(this,QObject::tr("Error"), QObject::tr(ex.what()),QObject::tr("Ok"));}
     }
 }
 
@@ -736,7 +736,7 @@ void PConverter::updateContent()
         float GBytes = (layer_height/1024.0f)*(layer_width/1024.0f)*(layer_depth/1024.0f)*vc->getVolume()->getCHANS()*vc->getVolume()->getBYTESxCHAN();
         memoryField->setText(QString::number(GBytes, 'f', 3).append(" GB"));
     }
-    catch(MyException &ex)
+    catch(RuntimeException &ex)
     {
         QMessageBox::critical(this,QObject::tr("Error"), QObject::tr(ex.what()),QObject::tr("Ok"));
     }

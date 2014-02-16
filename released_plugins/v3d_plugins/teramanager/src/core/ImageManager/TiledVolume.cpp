@@ -41,14 +41,13 @@
 #include "ProgressBar.h"
 
 using namespace std;
+using namespace iim;
 
 
-TiledVolume::TiledVolume(const char* _root_dir)  throw (MyException)
+TiledVolume::TiledVolume(const char* _root_dir)  throw (IOException)
 : VirtualVolume(_root_dir) // iannello ADDED
 {
-	#if IM_VERBOSE > 3
-	printf("\t\t\t\tin TiledVolume::TiledVolume(_root_dir=%s)\n",	_root_dir);
-	#endif
+    /**/iim::debug(iim::LEV3, strprintf("_root_dir=%s", _root_dir).c_str(), __iim__current__function__);
 
 	// iannello this->root_dir = new char[strlen(_root_dir)+1];
 	// iannello strcpy(this->root_dir,_root_dir);
@@ -61,28 +60,26 @@ TiledVolume::TiledVolume(const char* _root_dir)  throw (MyException)
 	VXL_1 = VXL_2 = VXL_3 = 0;
 
 	//without any configuration parameter, volume import must be done from the metadata file stored in the root directory, if it exists
-	char mdata_filepath[IM_STATIC_STRINGS_SIZE];
-	sprintf(mdata_filepath, "%s/%s", root_dir, IM_METADATA_FILE_NAME);
-	if(fileExists(mdata_filepath)) 
+    char mdata_filepath[STATIC_STRINGS_SIZE];
+    sprintf(mdata_filepath, "%s/%s", root_dir, iim::MDATA_BIN_FILE_NAME.c_str());
+    if(iim::isFile(mdata_filepath))
 	{
 		load(mdata_filepath);
 		initChannels();
 	}
 	else
 	{
-		char errMsg[IM_STATIC_STRINGS_SIZE];
+        char errMsg[STATIC_STRINGS_SIZE];
 		sprintf(errMsg, "in TiledVolume::TiledVolume(...): unable to find metadata file at %s", mdata_filepath);
-        throw MyException(errMsg);
+        throw IOException(errMsg);
 	}
 }
 
-TiledVolume::TiledVolume(const char* _root_dir, ref_sys _reference_system, float _VXL_1, float _VXL_2, float _VXL_3, bool overwrite_mdata, bool save_mdata)  throw (MyException)
+TiledVolume::TiledVolume(const char* _root_dir, ref_sys _reference_system, float _VXL_1, float _VXL_2, float _VXL_3, bool overwrite_mdata, bool save_mdata)  throw (IOException)
 : VirtualVolume(_root_dir) // iannello ADDED
 {
-        #if IM_VERBOSE > 3
-	printf("\t\t\t\tin TiledVolume::TiledVolume(_root_dir=%s, ref_sys reference_system={%d,%d,%d}, VXL_1=%.4f, VXL_2=%.4f, VXL_3=%.4f)\n",
-                          _root_dir, _reference_system.first, _reference_system.second, _reference_system.third, _VXL_1, _VXL_2, _VXL_3);
-	#endif
+    /**/iim::debug(iim::LEV3, strprintf("_root_dir=%s, ref_sys reference_system={%d,%d,%d}, VXL_1=%.4f, VXL_2=%.4f, VXL_3=%.4f",
+                                        _root_dir, _reference_system.first, _reference_system.second, _reference_system.third, _VXL_1, _VXL_2, _VXL_3).c_str(), __iim__current__function__);
 
 	// iannello this->root_dir = new char[strlen(_root_dir)+1];
 	// iannello strcpy(this->root_dir,_root_dir);
@@ -95,9 +92,9 @@ TiledVolume::TiledVolume(const char* _root_dir, ref_sys _reference_system, float
 	VXL_1 = VXL_2 = VXL_3 = 0;
 
 	//trying to unserialize an already existing metadata file, if it doesn't exist the full initialization procedure is performed and metadata is saved
-	char mdata_filepath[IM_STATIC_STRINGS_SIZE];
-	sprintf(mdata_filepath, "%s/%s", root_dir, IM_METADATA_FILE_NAME);
-    if(fileExists(mdata_filepath) && !overwrite_mdata)
+    char mdata_filepath[STATIC_STRINGS_SIZE];
+    sprintf(mdata_filepath, "%s/%s", root_dir, iim::MDATA_BIN_FILE_NAME.c_str());
+    if(iim::isFile(mdata_filepath) && !overwrite_mdata)
 	{
 		load(mdata_filepath);
 		initChannels();
@@ -106,7 +103,7 @@ TiledVolume::TiledVolume(const char* _root_dir, ref_sys _reference_system, float
 	{
         if(_reference_system.first == axis_invalid ||  _reference_system.second == axis_invalid ||
           _reference_system.third == axis_invalid || _VXL_1 == 0 || _VXL_2 == 0 || _VXL_3 == 0)
-            throw MyException("in TiledVolume::TiledVolume(...): invalid importing parameters");
+            throw IOException("in TiledVolume::TiledVolume(...): invalid importing parameters");
 
         reference_system.first  = _reference_system.first;
         reference_system.second = _reference_system.second;
@@ -123,9 +120,7 @@ TiledVolume::TiledVolume(const char* _root_dir, ref_sys _reference_system, float
 
 TiledVolume::~TiledVolume(void)
 {
-	#if IM_VERBOSE > 3
-	printf("\t\t\t\tin TiledVolume::~TiledVolume(void)\n");
-	#endif
+    /**/iim::debug(iim::LEV3, 0, __iim__current__function__);
 
 	// iannello if(root_dir)
 	// iannello 	delete[] root_dir;
@@ -146,11 +141,9 @@ TiledVolume::~TiledVolume(void)
 int TiledVolume::getStacksHeight(){return BLOCKS[0][0]->getHEIGHT();}
 int TiledVolume::getStacksWidth(){return BLOCKS[0][0]->getWIDTH();}
 
-void TiledVolume::save(char* metadata_filepath) throw (MyException)
+void TiledVolume::save(char* metadata_filepath) throw (IOException)
 {
-	#if IM_VERBOSE > 3
-	printf("\t\t\t\tin TiledVolume::save(metadata_filepath=%s)\n", metadata_filepath);
-	#endif
+    /**/iim::debug(iim::LEV3, strprintf("metadata_filepath=%s", metadata_filepath).c_str(), __iim__current__function__);
 
 	//LOCAL VARIABLES
 	FILE *file;
@@ -161,12 +154,12 @@ void TiledVolume::save(char* metadata_filepath) throw (MyException)
     // --- Alessandro 2013-04-23: added exception when file can't be opened in write mode
     if(!file)
     {
-        char errMsg[IM_STATIC_STRINGS_SIZE];
+        char errMsg[STATIC_STRINGS_SIZE];
         sprintf(errMsg, "in TiledVolume::save(): cannot write metadata binary file at \"%s\".\n\nPlease check write permissions on this storage.", metadata_filepath);
-        throw MyException(errMsg);
+        throw IOException(errMsg);
     }
 
-    float mdata_version = static_cast<float>(IM_METADATA_FILE_VERSION);
+    float mdata_version = static_cast<float>(iim::MDATA_BIN_FILE_VERSION);
     fwrite(&mdata_version, sizeof(float), 1, file); // --- Alessandro 2012-12-31: added field for metadata file version
     fwrite(&reference_system.first, sizeof(axis), 1, file);
     fwrite(&reference_system.second, sizeof(axis), 1, file); // iannello CORRECTED
@@ -193,11 +186,9 @@ void TiledVolume::save(char* metadata_filepath) throw (MyException)
 	fclose(file);
 }
 
-void TiledVolume::load(char* metadata_filepath) throw (MyException)
+void TiledVolume::load(char* metadata_filepath) throw (IOException)
 {
-	#if IM_VERBOSE > 3
-	printf("\t\t\t\tin TiledVolume::load(metadata_filepath=%s)\n", metadata_filepath);
-	#endif
+    /**/iim::debug(iim::LEV3, strprintf("metadata_filepath=%s", metadata_filepath).c_str(), __iim__current__function__);
 
 	//LOCAL VARIABLES
 	FILE *file;
@@ -209,19 +200,19 @@ void TiledVolume::load(char* metadata_filepath) throw (MyException)
     // --- Alessandro 2013-04-23: added exception when file can't be opened in read mode
     if(!file)
     {
-        char errMsg[IM_STATIC_STRINGS_SIZE];
+        char errMsg[STATIC_STRINGS_SIZE];
         sprintf(errMsg, "in TiledVolume::load(): cannot read metadata binary file at \"%s\".\n\nPlease check read permissions on this storage.", metadata_filepath);
-        throw MyException(errMsg);
+        throw IOException(errMsg);
     }
 
     // --- Alessandro 2012-12-31: added field for metadata file version
     float mdata_version_read = 0;
-    float mdata_version = static_cast<float>(IM_METADATA_FILE_VERSION);
+    float mdata_version = static_cast<float>(iim::MDATA_BIN_FILE_VERSION);
     fread_return_val = fread(&mdata_version_read, sizeof(float), 1, file);
     if(fread_return_val != 1 || mdata_version_read != mdata_version)
     {
         // --- Alessandro 2013-01-06: instead of throwing an exception, it is better to mantain compatibility
-//            char errMsg[IM_STATIC_STRINGS_SIZE];
+//            char errMsg[STATIC_STRINGS_SIZE];
 //            sprintf(errMsg, "in Block::unBinarizeFrom(...): metadata file version (%.2f) is different from the supported one (%.2f). "
 //                    "Please re-import the current volume.", mdata_version_read, mdata_version);
 //            throw MyException(errMsg);
@@ -231,80 +222,80 @@ void TiledVolume::load(char* metadata_filepath) throw (MyException)
         uint16 str_size;
         fread_return_val = fread(&str_size, sizeof(uint16), 1, file);
         if(fread_return_val != 1)
-                throw MyException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
-        char stored_root_dir[IM_STATIC_STRINGS_SIZE];
+                throw IOException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
+        char stored_root_dir[STATIC_STRINGS_SIZE];
         fread_return_val = fread(stored_root_dir, str_size, 1, file);
         if(fread_return_val != 1)
-                throw MyException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
+                throw IOException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
     }
 
     fread_return_val = fread(&reference_system.first, sizeof(axis), 1, file);
     if(fread_return_val != 1)
-            throw MyException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
+            throw IOException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
 
     fread_return_val = fread(&reference_system.second, sizeof(axis), 1, file);
     if(fread_return_val != 1)
-            throw MyException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
+            throw IOException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
 
     fread_return_val = fread(&reference_system.third, sizeof(axis), 1, file);
     if(fread_return_val != 1)
-            throw MyException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
+            throw IOException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
 
     fread_return_val = fread(&VXL_1, sizeof(float), 1, file);
     if(fread_return_val != 1)
-            throw MyException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
+            throw IOException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
 
     fread_return_val = fread(&VXL_2, sizeof(float), 1, file);
     if(fread_return_val != 1)
-            throw MyException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
+            throw IOException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
 
     fread_return_val = fread(&VXL_3, sizeof(float), 1, file);
     if(fread_return_val != 1)
-            throw MyException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
+            throw IOException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
 
 	fread_return_val = fread(&VXL_V, sizeof(float), 1, file);
 	if(fread_return_val != 1)
-		throw MyException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
+        throw IOException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
 
 	fread_return_val = fread(&VXL_H, sizeof(float), 1, file);
 	if(fread_return_val != 1)
-		throw MyException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
+        throw IOException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
 
 	fread_return_val = fread(&VXL_D, sizeof(float), 1, file);
 	if(fread_return_val != 1)
-		throw MyException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
+        throw IOException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
 
 	fread_return_val = fread(&ORG_V, sizeof(float), 1, file);
 	if(fread_return_val != 1)
-		throw MyException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
+        throw IOException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
 
 	fread_return_val = fread(&ORG_H, sizeof(float), 1, file);
 	if(fread_return_val != 1)
-		throw MyException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
+        throw IOException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
 
 	fread_return_val = fread(&ORG_D, sizeof(float), 1, file);
 	if(fread_return_val != 1)
-		throw MyException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
+        throw IOException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
 
 	fread_return_val = fread(&DIM_V, sizeof(uint32), 1, file);
 	if(fread_return_val != 1)
-		throw MyException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
+        throw IOException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
 
 	fread_return_val = fread(&DIM_H, sizeof(uint32), 1, file);
 	if(fread_return_val != 1)
-		throw MyException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
+        throw IOException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
 
 	fread_return_val = fread(&DIM_D, sizeof(uint32), 1, file);
 	if(fread_return_val != 1)
-		throw MyException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
+        throw IOException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
 
 	fread_return_val = fread(&N_ROWS, sizeof(uint16), 1, file);
 	if(fread_return_val != 1)
-		throw MyException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
+        throw IOException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
 
 	fread_return_val = fread(&N_COLS, sizeof(uint16), 1, file);
 	if(fread_return_val != 1)
-		throw MyException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
+        throw IOException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
 
 
 	BLOCKS = new Block **[N_ROWS];
@@ -320,9 +311,7 @@ void TiledVolume::load(char* metadata_filepath) throw (MyException)
 
 void TiledVolume::init()
 {
-	#if IM_VERBOSE > 3
-        printf("\t\t\t\tin TiledVolume::init()\n");
-	#endif
+    /**/iim::debug(iim::LEV3, 0, __iim__current__function__);
 
 	/************************* 1) LOADING STRUCTURE *************************    
 	*************************************************************************/
@@ -340,14 +329,14 @@ void TiledVolume::init()
     list<string>::iterator entry_i;                 //iterator for list 'entries_lev1'
     list<string> entries_lev2;                      //list of entries of second level of hierarchy
     list<string>::iterator entry_j;                 //iterator for list 'entries_lev2'
-	char block_i_j_path[IM_STATIC_STRINGS_SIZE];
+    char block_i_j_path[STATIC_STRINGS_SIZE];
 
 	//obtaining DIR pointer to root_dir (=NULL if directory doesn't exist)
 	if (!(cur_dir_lev1=opendir(root_dir)))
 	{
-        char msg[IM_STATIC_STRINGS_SIZE];
+        char msg[STATIC_STRINGS_SIZE];
         sprintf(msg,"in TiledVolume::init(...): Unable to open directory \"%s\"", root_dir);
-        throw MyException(msg);
+        throw IOException(msg);
 	}
 
 	//scanning first level of hierarchy which entries need to be ordered alphabetically. This is done using STL.
@@ -371,7 +360,7 @@ void TiledVolume::init()
 		tmp_path.append(*entry_i);
 		cur_dir_lev2 = opendir(tmp_path.c_str());
 		if (!cur_dir_lev2)
-			throw MyException("in TiledVolume::init(...): A problem occurred during scanning of subdirectories");
+            throw IOException("in TiledVolume::init(...): A problem occurred during scanning of subdirectories");
 
 		//scanning second level of hierarchy which entries need to be ordered alphabetically. This is done using STL.
 		while ((entry_lev2=readdir(cur_dir_lev2)))
@@ -395,13 +384,13 @@ void TiledVolume::init()
 		if (N_COLS == 0)
 			N_COLS = j;
 		else if (j != N_COLS)
-			throw MyException("in TiledVolume::init(...): Number of second-level directories is not the same for all first-level directories!");
+            throw IOException("in TiledVolume::init(...): Number of second-level directories is not the same for all first-level directories!");
 	}
 	entries_lev1.clear();
 
 	//intermediate check
 	if(N_ROWS == 0 || N_COLS == 0)
-            throw MyException("in TiledVolume::init(...): Unable to find stacks in the given directory");
+            throw IOException("in TiledVolume::init(...): Unable to find stacks in the given directory");
 
 	//converting stacks_list (STL list of Block*) into BLOCKS (2-D array of Block*)
 	BLOCKS = new Block**[N_ROWS];
@@ -464,10 +453,10 @@ void TiledVolume::init()
 	//unsupported reference system
 	else
 	{
-        char msg[IM_STATIC_STRINGS_SIZE];
+        char msg[STATIC_STRINGS_SIZE];
         sprintf(msg, "in TiledVolume::init(...): the reference system {%d,%d,%d} is not supported.",
                 reference_system.first, reference_system.second, reference_system.third);
-        throw MyException(msg);
+        throw IOException(msg);
 	}
 
 	//some little adjustments of the origin
@@ -508,7 +497,10 @@ void TiledVolume::init()
 	}
 }
 
-void TiledVolume::initChannels ( ) throw (MyException) {
+void TiledVolume::initChannels ( ) throw (IOException)
+{
+    /**/iim::debug(iim::LEV3, 0, __iim__current__function__);
+
     CHANS = BLOCKS[0][0]->getN_CHANS();
 	BYTESxCHAN = (int)BLOCKS[0][0]->getN_BYTESxCHAN();
 }
@@ -532,6 +524,8 @@ void TiledVolume::print()
 //rotate stacks matrix around D axis (accepted values are theta=0,90,180,270)
 void TiledVolume::rotate(int theta)
 {
+    /**/iim::debug(iim::LEV3, strprintf("theta=%d", theta).c_str(), __iim__current__function__);
+
     //PRECONDITIONS:
     //	1) current TiledVolume object has been initialized (init() method has been called)
     //	2) accepted values for 'theta' are 0,90,180,270
@@ -619,6 +613,8 @@ void TiledVolume::rotate(int theta)
 //mirror stacks matrix along mrr_axis (accepted values are mrr_axis=1,2,3)
 void TiledVolume::mirror(axis mrr_axis)
 {
+    /**/iim::debug(iim::LEV3, strprintf("mrr_axis=%d", mrr_axis).c_str(), __iim__current__function__);
+
     //PRECONDITIONS:
     //	1) current TiledVolume object has been initialized (init() method has been called)
     //	2) accepted values for 'mrr_axis' are 1(V axis), 2(H axis) or 3(D axis)
@@ -630,7 +626,7 @@ void TiledVolume::mirror(axis mrr_axis)
     {
         char msg[1000];
         sprintf(msg,"in TiledVolume::mirror(axis mrr_axis=%d): unsupported axis mirroring", mrr_axis);
-        throw MyException(msg);
+        throw IOException(msg);
     }
 
     Block*** new_BLOCK_2D_ARRAY;
@@ -683,86 +679,84 @@ void TiledVolume::mirror(axis mrr_axis)
 //extract spatial coordinates (in millimeters) of given Stack object
 void TiledVolume::extractCoordinates(Block* blk, int z, int* crd_1, int* crd_2, int* crd_3)
 {
-	bool found_ABS_X=false;
-	bool found_ABS_Y=false;
+    bool found_ABS_X=false;
+    bool found_ABS_Y=false;
 
-	//loading estimations for absolute X and Y stack positions
-	char * pch;
-	char buffer[100];
-	strcpy(buffer,&(blk->getDIR_NAME()[0]));
-	pch = strtok (buffer,"/_");
-	pch = strtok (NULL, "/_");
+    //loading estimations for absolute X and Y stack positions
+    char * pch;
+    char buffer[100];
+    strcpy(buffer,&(blk->getDIR_NAME()[0]));
+    pch = strtok (buffer,"/_");
+    pch = strtok (NULL, "/_");
 
-	while (pch != NULL)
-	{
-		if(!found_ABS_X)
-		{
-			if(sscanf(pch, "%d", crd_1) == 1)
-				found_ABS_X=true;
-		}
-		else if(!found_ABS_Y)
-		{
-			if(sscanf(pch, "%d", crd_2) == 1)
-				found_ABS_Y=true;
-		}
-		else
-			break;
+    while (pch != NULL)
+    {
+        if(!found_ABS_X)
+        {
+            if(sscanf(pch, "%d", crd_1) == 1)
+                found_ABS_X=true;
+        }
+        else if(!found_ABS_Y)
+        {
+            if(sscanf(pch, "%d", crd_2) == 1)
+                found_ABS_Y=true;
+        }
+        else
+            break;
 
-		pch = strtok (NULL, "/_");
-	}
+        pch = strtok (NULL, "/_");
+    }
 
-	if(!found_ABS_X || !found_ABS_Y)
-	{
-		char msg[200];
-		sprintf(msg,"in TiledVolume::extractCoordinates(directory_name=\"%s\"): format 000000_000000 or X_000000_X_000000 not found", blk->getDIR_NAME());
-		throw msg;
-	}
+    if(!found_ABS_X || !found_ABS_Y)
+    {
+        char msg[200];
+        sprintf(msg,"in TiledVolume::extractCoordinates(directory_name=\"%s\"): format 000000_000000 or X_000000_X_000000 not found", blk->getDIR_NAME());
+        throw msg;
+    }
 
-	//loading estimation for absolute Z stack position
-	if(crd_3!= NULL)
-	{
-		char* first_file_name = blk->getFILENAMES()[z];
+    //loading estimation for absolute Z stack position
+    if(crd_3!= NULL)
+    {
+        char* first_file_name = blk->getFILENAMES()[z];
 
-		char * pch;
-		char lastTokenized[100];
-		char buffer[500];
-		strcpy(buffer,&(first_file_name[0]));
+        char * pch;
+        char lastTokenized[100];
+        char buffer[500];
+        strcpy(buffer,&(first_file_name[0]));
 
-		pch = strtok (buffer,"_");
-		while (pch != NULL)
-		{
-			strcpy(lastTokenized,pch);
-			pch = strtok (NULL, "_");
-		}
+        pch = strtok (buffer,"_");
+        while (pch != NULL)
+        {
+            strcpy(lastTokenized,pch);
+            pch = strtok (NULL, "_");
+        }
 
-		pch = strtok (lastTokenized,".");
-		strcpy(lastTokenized,pch);
+        pch = strtok (lastTokenized,".");
+        strcpy(lastTokenized,pch);
 
-		if(sscanf(lastTokenized, "%d", crd_3) != 1)
-		{
-			char msg[200];
-			sprintf(msg,"in TiledVolume::extractCoordinates(...): unable to extract Z position from filename %s", first_file_name);
-			throw msg;
-		}
-	}
+        if(sscanf(lastTokenized, "%d", crd_3) != 1)
+        {
+            char msg[200];
+            sprintf(msg,"in TiledVolume::extractCoordinates(...): unable to extract Z position from filename %s", first_file_name);
+            throw msg;
+        }
+    }
 }
 
 //loads given subvolume in a 1-D array of float
-REAL_T* TiledVolume::loadSubvolume(int V0,int V1, int H0, int H1, int D0, int D1, list<Block*> *involved_blocks, bool release_blocks) throw (MyException)
+real32* TiledVolume::loadSubvolume(int V0,int V1, int H0, int H1, int D0, int D1, list<Block*> *involved_blocks, bool release_blocks) throw (IOException)
 {
-	#if IM_VERBOSE > 3
-	printf("\t\t\t\tin TiledVolume::loadSubvolume(V0=%d, V1=%d, H0=%d, H1=%d, D0=%d, D1=%d%s)\n", V0, V1, H0, H1, D0, D1, (involved_blocks? ", involved_stacks" : ""));
-	#endif
+    /**/iim::debug(iim::LEV3, strprintf("V0=%d, V1=%d, H0=%d, H1=%d, D0=%d, D1=%d, %s", V0, V1, H0, H1, D0, D1, (involved_blocks? ", involved_stacks" : "")).c_str(), __iim__current__function__);
 
-	char msg[IM_STATIC_STRINGS_SIZE];
+    char msg[STATIC_STRINGS_SIZE];
 	sprintf(msg,"in TiledVolume::loadSubvolume: not completed yet");
-	throw MyException(msg);
+    throw IOException(msg);
 
     //checking for non implemented features
 	if( this->BYTESxCHAN != 1 ) {
-		char err_msg[IM_STATIC_STRINGS_SIZE];
+        char err_msg[STATIC_STRINGS_SIZE];
 		sprintf(err_msg,"TiledVolume::loadSubvolume: invalid number of bytes per channel (%d)",this->BYTESxCHAN); 
-		throw MyException(err_msg);
+        throw IOException(err_msg);
 	}
 
 	//initializations
@@ -777,7 +771,7 @@ REAL_T* TiledVolume::loadSubvolume(int V0,int V1, int H0, int H1, int D0, int D1
 	sint64 sbv_height = V1 - V0;
 	sint64 sbv_width  = H1 - H0;
 	sint64 sbv_depth  = D1 - D0;
-	REAL_T *subvol = new REAL_T[sbv_height * sbv_width * sbv_depth];
+    real32 *subvol = new real32[sbv_height * sbv_width * sbv_depth];
 
 	//scanning of stacks matrix for data loading and storing into subvol
 	Rect_t subvol_area;
@@ -791,9 +785,7 @@ REAL_T* TiledVolume::loadSubvolume(int V0,int V1, int H0, int H1, int D0, int D1
 			Rect_t *intersect_area = BLOCKS[row][col]->Intersects(subvol_area);
 			if(intersect_area)
 			{
-				#if IM_VERBOSE > 4
-				printf("\t\t\t\tin TiledVolume::loadSubvolume(): using STACK[%d,%d] for area %d-%d(V) x %d-%d(H)\n", row, col, intersect_area->V0-V0, intersect_area->V1-V0, intersect_area->H0-H0, intersect_area->H1-H0);
-				#endif
+                //printf("\t\t\t\tin TiledVolume::loadSubvolume(): using STACK[%d,%d] for area %d-%d(V) x %d-%d(H)\n", row, col, intersect_area->V0-V0, intersect_area->V1-V0, intersect_area->H0-H0, intersect_area->H1-H0);
 
 				//STACKS[row][col]->loadStack(D0, D1-1);
 				//if(involved_stacks)
@@ -822,32 +814,29 @@ REAL_T* TiledVolume::loadSubvolume(int V0,int V1, int H0, int H1, int D0, int D1
 
 //loads given subvolume in a 1-D array of uint8 while releasing stacks slices memory when they are no longer needed
 //---03 nov 2011: added color support
-uint8* TiledVolume::loadSubvolume_to_UINT8(int V0,int V1, int H0, int H1, int D0, int D1, int *channels, int ret_type ) throw (MyException)
+uint8* TiledVolume::loadSubvolume_to_UINT8(int V0,int V1, int H0, int H1, int D0, int D1, int *channels, int ret_type ) throw (IOException)
 {
-    #if IM_VERBOSE > 3
-    printf("\t\t\t\tin StackedVolume::loadSubvolume_to_UINT8(V0=%d, V1=%d, H0=%d, H1=%d, D0=%d, D1=%d, *channels=%d, ret_type=%d)\n", 
-		V0, V1, H0, H1, D0, D1, *channels, ret_type);
-    #endif
+    /**/iim::debug(iim::LEV3, strprintf("V0=%d, V1=%d, H0=%d, H1=%d, D0=%d, D1=%d, *channels=%d, ret_type=%d", V0, V1, H0, H1, D0, D1, *channels, ret_type).c_str(), __iim__current__function__);
 
     //checking for non implemented features
 	//if( this->BYTESxCHAN != 1 ) {
-	//	char err_msg[IM_STATIC_STRINGS_SIZE];
+    //	char err_msg[STATIC_STRINGS_SIZE];
 	//	sprintf(err_msg,"TiledVolume::loadSubvolume_to_UINT8: invalid number of bytes per channel (%d)",this->BYTESxCHAN); 
 	//	throw MyException(err_msg);
 	//}
 
-	//if ( (ret_type == IM_DEF_IMG_DEPTH) && ((8 * this->BYTESxCHAN) != IM_DEF_IMG_DEPTH) ) {
+    //if ( (ret_type == iim::DEF_IMG_DEPTH) && ((8 * this->BYTESxCHAN) != iim::DEF_IMG_DEPTH) ) {
 		// does not support depth conversion: 
 		// return type is 8 bits, but native depth is not 8 bits
-	if ( (ret_type != IM_NATIVE_RTYPE) && (ret_type != IM_DEF_IMG_DEPTH) ) {
+    if ( (ret_type != iim::NATIVE_RTYPE) && (ret_type != iim::DEF_IMG_DEPTH) ) {
 		// return type should be converted, but not to 8 bits per channel
-		char err_msg[IM_STATIC_STRINGS_SIZE];
+        char err_msg[STATIC_STRINGS_SIZE];
 		sprintf(err_msg,"RawVolume::loadSubvolume_to_UINT8: non supported return type (%d bits) - native type is %d bits",ret_type, 8*this->BYTESxCHAN); 
-		throw MyException(err_msg);
+        throw IOException(err_msg);
 	}
 
 	// reduction factor to be applied to the loaded buffer
-	int red_factor = (ret_type == IM_NATIVE_RTYPE) ? 1 : ((8 * this->BYTESxCHAN) / ret_type);
+    int red_factor = (ret_type == iim::NATIVE_RTYPE) ? 1 : ((8 * this->BYTESxCHAN) / ret_type);
 
 	char *err_rawfmt;
 
@@ -862,7 +851,7 @@ uint8* TiledVolume::loadSubvolume_to_UINT8(int V0,int V1, int H0, int H1, int D0
 
     //checking that the interval is valid
     if(V1-V0 <=0 || H1-H0 <= 0 || D1-D0 <= 0)
-        throw MyException("in TiledVolume::loadSubvolume_to_UINT8: invalid subvolume intervals");
+        throw IOException("in TiledVolume::loadSubvolume_to_UINT8: invalid subvolume intervals");
 
     //computing dimensions
     sint64 sbv_height = V1 - V0;
@@ -880,7 +869,7 @@ uint8* TiledVolume::loadSubvolume_to_UINT8(int V0,int V1, int H0, int H1, int D0
     subvol_area.H1 = H1;
     subvol_area.V1 = V1;
 
-    char slice_fullpath[IM_STATIC_STRINGS_SIZE];
+    char slice_fullpath[STATIC_STRINGS_SIZE];
     bool first_time = true;
 
 	Segm_t *intersect_segm = BLOCKS[0][0]->Intersects(D0,D1);
@@ -894,9 +883,7 @@ uint8* TiledVolume::loadSubvolume_to_UINT8(int V0,int V1, int H0, int H1, int D0
 				Rect_t *intersect_area = BLOCKS[row][col]->Intersects(subvol_area);
 				if(intersect_area) // there is intersection
 				{
-					#if IM_VERBOSE > 3
-					printf("\t\t\t\tin TiledVolume::loadSubvolume_to_UINT8(): using STACK[%d,%d] for area %d-%d(V) x %d-%d(H)\n", row, col, intersect_area->V0-V0, intersect_area->V1-V0, intersect_area->H0-H0, intersect_area->H1-H0);
-					#endif
+                    //printf("\t\t\t\tin TiledVolume::loadSubvolume_to_UINT8(): using STACK[%d,%d] for area %d-%d(V) x %d-%d(H)\n", row, col, intersect_area->V0-V0, intersect_area->V1-V0, intersect_area->H0-H0, intersect_area->H1-H0);
 
 					for(int k=intersect_segm->ind0; k<=intersect_segm->ind1; k++)
 					{
@@ -913,7 +900,7 @@ uint8* TiledVolume::loadSubvolume_to_UINT8(int V0,int V1, int H0, int H1, int D0
 					            //if ( !subvol )
 								//	throw MyException("in TiledVolume::loadSubvolume_to_UINT8: unable to allocate memory");
 					        }
-					        catch(...){throw MyException("in TiledVolume::loadSubvolume_to_UINT8: unable to allocate memory");}
+                            catch(...){throw IOException("in TiledVolume::loadSubvolume_to_UINT8: unable to allocate memory");}
 					    }
 						//loading region
 						sprintf(slice_fullpath, "%s/%s/%s", root_dir, BLOCKS[row][col]->getDIR_NAME(), BLOCKS[row][col]->getFILENAMES()[k]);
@@ -978,11 +965,11 @@ uint8* TiledVolume::loadSubvolume_to_UINT8(int V0,int V1, int H0, int H1, int D0
 								sbv_width*sbv_height,
 								sbv_width*sbv_height*sbv_depth) ) != 0 ) 
 						{
-							char err_msg[IM_STATIC_STRINGS_SIZE];
+                            char err_msg[STATIC_STRINGS_SIZE];
 							sprintf(err_msg,
 								"TiledVolume::loadSubvolume_to_UINT8: error in extracting a block from file %s (%s)", 
 								BLOCKS[row][col]->getFILENAMES()[k], err_rawfmt);
-							throw MyException(err_msg);
+                            throw IOException(err_msg);
 						}
 					}
 					delete intersect_area;
@@ -992,7 +979,7 @@ uint8* TiledVolume::loadSubvolume_to_UINT8(int V0,int V1, int H0, int H1, int D0
 		delete intersect_segm;
 	}
 	else
-        throw MyException("in TiledVolume::loadSubvolume_to_UINT8: depth interval out of range");
+        throw IOException("in TiledVolume::loadSubvolume_to_UINT8: depth interval out of range");
 	
     //returning outputs
     if(channels)
@@ -1001,9 +988,9 @@ uint8* TiledVolume::loadSubvolume_to_UINT8(int V0,int V1, int H0, int H1, int D0
 	if ( red_factor > 1 ) { // the buffer has to be reduced
 
 		if ( err_rawfmt = convert2depth8bits(red_factor,(sbv_height*sbv_width*sbv_depth),sbv_channels,subvol) ) {
-			char err_msg[IM_STATIC_STRINGS_SIZE];
+            char err_msg[STATIC_STRINGS_SIZE];
 			sprintf(err_msg,"TiledVolume::loadSubvolume_to_UINT8: %s", err_rawfmt);
-			throw MyException(err_msg);
+            throw IOException(err_msg);
 		}
 
 		//int c, i, j, p;
@@ -1018,7 +1005,7 @@ uint8* TiledVolume::loadSubvolume_to_UINT8(int V0,int V1, int H0, int H1, int D0
 		//	j = 0;              // MSB is the first
 		//}
 		//else {
-		//	char err_msg[IM_STATIC_STRINGS_SIZE];
+        //	char err_msg[STATIC_STRINGS_SIZE];
 		//	sprintf(err_msg,"TiledVolume::loadSubvolume_to_UINT8: unknown machine endianess (%c)", endianCodeMachine);
 		//	throw MyException(err_msg);
 		//}
@@ -1057,391 +1044,14 @@ uint8* TiledVolume::loadSubvolume_to_UINT8(int V0,int V1, int H0, int H1, int D0
 }
 		
 
-//show the selected slice with a simple GUI
-//void TiledVolume::show(REAL_T *vol, int vol_DIM_V, int vol_DIM_H, int D_index, int window_HEIGHT, int window_WIDTH)
-//{
-//	#if IM_VERBOSE > 2
-//	printf("\t\t\tin TiledVolume::show(REAL_T *vol, vol_DIM_V=%d, vol_DIM_H=%d, D_index=%d, win_height=%d, win_width=%d)\n",
-//		vol_DIM_V, vol_DIM_H, D_index, window_HEIGHT, window_WIDTH);
-//	#endif
-//
-//	//converting selected slice of vol (1-D array of REAL_T) into a CvMat
-//	CvMat *slice = cvCreateMat(vol_DIM_V, vol_DIM_H, CV_32FC1);
-//	for(int i=0; i<slice->rows; i++)
-//	{
-//		float *row_ptr = (float*)(slice->data.ptr+slice->step*i);
-//		for(int j=0; j<slice->cols; j++)
-//			row_ptr[j] = vol[D_index*vol_DIM_V*vol_DIM_H + i*vol_DIM_H +j];
-//	}
-//
-//	//showing slice
-//	CvSize window_dims;
-//	window_dims.height = window_HEIGHT ? window_HEIGHT : vol_DIM_V;
-//	window_dims.width  = window_WIDTH  ? window_WIDTH  : vol_DIM_H;
-//	char buffer[200];
-//	CvMat* mat_rescaled = cvCreateMat(vol_DIM_V, vol_DIM_H, CV_16UC1);
-//	IplImage* image_resized = cvCreateImage(window_dims, IPL_DEPTH_16U, 1);
-//	IplImage* img_buffer = cvCreateImageHeader(window_dims, IPL_DEPTH_16U, 1);
-//
-//	cvConvertScale(slice,mat_rescaled, 65535);
-//	cvResize(cvGetImage(mat_rescaled,img_buffer), image_resized, CV_INTER_CUBIC);
-//
-//	sprintf(buffer,"SLICE %d of volume %d x %d",D_index, vol_DIM_V, vol_DIM_H);
-//	cvNamedWindow(buffer,1);
-//	cvShowImage(buffer,image_resized);
-//	while(1)
-//	{
-//		if(cvWaitKey(100)==27) break;
-//	}
-//
-//	cvDestroyWindow(buffer);
-//
-//	cvReleaseMat(&slice);
-//	cvReleaseMat(&mat_rescaled);
-//	cvReleaseImage(&image_resized);
-//	cvReleaseImageHeader(&img_buffer);
-//}
-
-//delete slices from disk from first_file to last_file, extremes included
-//void TiledVolume::deleteSlices(int first_file, int last_file)
-//{
-//	for(int row=0; row<N_ROWS; row++)
-//		for(int col=0; col<N_COLS; col++)
-//			STACKS[row][col]->deleteSlices(first_file,last_file);
-//}
-
-//saves in 'dir_path' the current volume (from D0 to D1) in stacked format, with the given stacks dimensions
-void TiledVolume::saveVolume(const char* dir_path, uint32 max_slice_height, uint32 max_slice_width, uint32 V0, uint32 V1, uint32 H0, uint32 H1, uint32 D0, uint32 D1, const char* img_format, int img_depth) throw (MyException)
-{
-	//**LOCAL VARIABLES**
-	interval_t *subvols_V;					//1D array of subvolumes V intervals that partition volume along V axis
-	interval_t *subvols_H;					//1D array of subvolumes H intervals that partition volume along H axis
-	uint32 subvols_V_size;					//size of subvols_V array
-	uint32 subvols_H_size;					//size of subvols_H array
-	uint32 vxl_count;						
-	uint32 tmp_dim;							//TMP variable used for volume partitioning
-	float V_crd, H_crd, D_crd;				
-	char dir_name[IM_STATIC_STRINGS_SIZE];	//
-	char err_msg[IM_STATIC_STRINGS_SIZE];	//
-	REAL_T *subvol;
-	uint32 dim_v, dim_h, dim_d;
-
-	//checking and adjusting default variables
-	//V0 = (V0 < 0 ? 0 : V0); // uint32: cannot be negative
-	//H0 = (H0 < 0 ? 0 : H0);
-	//D0 = (D0 < 0 ? 0 : D0);
-	V1 = ((V1 == 0 || V1 > DIM_V) ? DIM_V : V1);
-	H1 = ((H1 == 0 || H1 > DIM_H) ? DIM_H : H1);
-	D1 = ((D1 == 0 || D1 > DIM_D) ? DIM_D : D1);
-	if(V0 >= V1)
-	{
-		sprintf(err_msg, "in TiledVolume::saveVolume(...): invalid interval selected. V0(%d) >= V1(%d)!", V0, V1);
-		throw MyException(err_msg);
-	}
-	if(H0 >= H1)
-	{
-		sprintf(err_msg, "in TiledVolume::saveVolume(...): invalid interval selected. H0(%d) >= H1(%d)!", H0, H1);
-		throw MyException(err_msg);
-	}
-	if(D0 >= D1)
-	{
-		sprintf(err_msg, "in TiledVolume::saveVolume(...): invalid interval selected. D0(%d) >= D1(%d)!", D0, D1);
-		throw MyException(err_msg);
-	}
-	max_slice_height = (max_slice_height == 0 ? DIM_V : max_slice_height);
-	max_slice_width  = (max_slice_width  == 0 ? DIM_H : max_slice_width);
-
-	//initializations
-	dim_v = V1 - V0;
-	dim_h = H1 - H0;
-	dim_d = D1 - D0;
-
-	
-	//computing partition of volume into overlapping subvolumes
-	subvols_V_size = (int) ceil (dim_v / (float) max_slice_height);
-	subvols_H_size = (int) ceil (dim_h / (float) max_slice_width);
-	subvols_V = new interval_t[subvols_V_size];
-	subvols_H = new interval_t[subvols_H_size];
-	vxl_count = V0;
-	for(uint32 i=0; i<subvols_V_size; i++)
-	{
-		tmp_dim = (i < dim_v % subvols_V_size ? dim_v/subvols_V_size +1 :  dim_v/subvols_V_size);
-		subvols_V[i].start = vxl_count;
-		subvols_V[i].end   = vxl_count + tmp_dim;
-		vxl_count+=tmp_dim;
-	}	
-	vxl_count = H0;
-	for(uint32 i=0; i<subvols_H_size; i++)
-	{
-		tmp_dim = (i < dim_h % subvols_H_size ? dim_h/subvols_H_size +1 :  dim_h/subvols_H_size);
-		subvols_H[i].start = vxl_count;
-		subvols_H[i].end   = vxl_count + tmp_dim;
-		vxl_count+=tmp_dim;
-	}	
-
-	//progress bar initialization
-	char progressBarBuff[2000];
-        sprintf(progressBarBuff, "Volume conversion from %s-stack(height=%d, width=%d) to %s-stack(height=%d, width=%d)",
-		    ((N_ROWS == 1 && N_COLS == 1)				  ? "MONO" :"MULTI"), BLOCKS[0][0]->getHEIGHT(), BLOCKS[0][0]->getWIDTH(),
-			((subvols_V_size == 1 && subvols_H_size == 1) ? "MONO" :"MULTI"), subvols_V[0].end - subvols_V[0].start, subvols_H[0].end - subvols_H[0].start);
-        ProgressBar::getInstance()->start(progressBarBuff);
-        ProgressBar::getInstance()->update(0,"Initializing...");
-        ProgressBar::getInstance()->show();
-
-	
-	//creating root directory	
-	make_dir(dir_path);
-
-	//saving stacked volume
-	D_crd = ORG_D + D0 * (VXL_D/1000);
-	for(uint32 k=D0; k<D1; k++, D_crd += VXL_D/1000)
-	{
-		sprintf(progressBarBuff, "Converting slice %d of %d", (k-D0+1), dim_d);
-                ProgressBar::getInstance()->update((((REAL_T)100/dim_d)*(k-D0+1)), progressBarBuff);
-                ProgressBar::getInstance()->show();
-
-		for(uint32 i=0; i<subvols_V_size; i++)
-		{
-			V_crd = ORG_V + subvols_V[i].start * (VXL_V/1000);
-			if(VXL_V < 0)
-				V_crd+= (subvols_V[i].end - subvols_V[i].start -1)*(VXL_V/1000);
-			sprintf(dir_name, "%s/%06d", dir_path, ((int)(V_crd*10000)) );
-			make_dir(dir_name);
-
-			for(uint32 j=0; j<subvols_H_size; j++)
-			{
-				H_crd = ORG_H + subvols_H[j].start * (VXL_H/1000);
-				if(VXL_H < 0)
-					H_crd+= (subvols_H[i].end - subvols_H[i].start -1)*(VXL_H/1000);
-				sprintf(dir_name, "%s/%06d/%06d_%06d", dir_path, ((int)(V_crd*10000)), ((int)(V_crd*10000)), ((int)(H_crd*10000)) );
-				make_dir(dir_name);
-
-				subvol = loadSubvolume(subvols_V[i].start, subvols_V[i].end, subvols_H[j].start, subvols_H[j].end, k, k+1);
-				sprintf(dir_name, "%s/%06d/%06d_%06d/%06d_%06d_%06d", dir_path, ((int)(V_crd*10000)), ((int)(V_crd*10000)), ((int)(H_crd*10000)),
-																	((int)(V_crd*10000)), ((int)(H_crd*10000)), ((int)(D_crd*10000)));
-				
-				saveImage(dir_path, subvol, subvols_V[i].end-subvols_V[i].start, subvols_H[j].end-subvols_H[j].start, 0, -1, 0, -1, img_format, img_depth);
-
-				delete[] subvol;	
-			}
-		}
-		releaseStacks(k,k);
-	}
-	delete[] subvols_V;
-	delete[] subvols_H;	
-}
-
-//saves in 'dir_path' the selected subvolume in multi-stack format, with the exact given stacks dimensions and the given overlap between adjacent stacks
-void TiledVolume::saveOverlappingStacks(char* dir_path, uint32 slice_height, uint32 slice_width,	uint32 overlap_size, uint32 V0, uint32 V1, uint32 H0, uint32 H1, uint32 D0, uint32 D1) throw (MyException)
-{
-	//**LOCAL VARIABLES**
-	interval_t *subvols_V;			//1D array of subvolumes V intervals that partition volume along V axis
-	interval_t *subvols_H;			//1D array of subvolumes H intervals that partition volume along H axis
-	int subvols_V_size;				//size of subvols_V array
-	int subvols_H_size;				//size of subvols_H array
-	int vxl_count;					//TMP variable used for volume partitioning
-	float V_crd, H_crd, D_crd;		//TMP variable used for voxel coordinates
-	char dir_name[IM_STATIC_STRINGS_SIZE];
-	char err_msg[IM_STATIC_STRINGS_SIZE];
-	REAL_T *subvol;
-	IplImage *slice;
-	uint32 dim_d;
-
-	//checking and adjusting default variables
-	//V0 = (V0 < 0 ? 0 : V0); // uint32: cannot be negative
-	//H0 = (H0 < 0 ? 0 : H0);
-	//D0 = (D0 < 0 ? 0 : D0);
-	V1 = ((V1 == 0 || V1 > DIM_V) ? DIM_V : V1);
-	H1 = ((H1 == 0 || H1 > DIM_H) ? DIM_H : H1);
-	D1 = ((D1 == 0 || D1 > DIM_D) ? DIM_D : D1);
-	if(V0 >= V1){
-		sprintf(err_msg, "in TiledVolume::saveVolume(...): invalid interval selected. V0(%d) >= V1(%d)!", V0, V1);
-		throw MyException(err_msg);
-	}
-	if(H0 >= H1){
-		sprintf(err_msg, "in TiledVolume::saveVolume(...): invalid interval selected. H0(%d) >= H1(%d)!", H0, H1);
-		throw MyException(err_msg);
-	}
-	if(D0 >= D1){
-		sprintf(err_msg, "in TiledVolume::saveVolume(...): invalid interval selected. D0(%d) >= D1(%d)!", D0, D1);
-		throw MyException(err_msg);
-	}
-
-	//initializations
-	dim_d = D1 - D0;
-	subvols_V_size = 0;
-	subvols_H_size = 0;
-
-	//computing dimensions along V and H as well as number of stacks
-	for(uint32 dim_v_acc=overlap_size; dim_v_acc<= V1 - V0; dim_v_acc += slice_height-overlap_size)
-		subvols_V_size++;
-	for(uint32 dim_h_acc=overlap_size; dim_h_acc<= H1 - H0; dim_h_acc += slice_width-overlap_size)
-		subvols_H_size++;
-
-	//computing partition of volume into overlapping subvolumes
-	subvols_V = new interval_t[subvols_V_size];
-	subvols_H = new interval_t[subvols_H_size];
-	vxl_count = V0;
-	for(int i=0; i<subvols_V_size; i++)
-	{
-		subvols_V[i].start = vxl_count;
-		subvols_V[i].end   = vxl_count + slice_height;
-		vxl_count += slice_height - overlap_size;
-	}	
-	vxl_count = H0;
-	for(int i=0; i<subvols_H_size; i++)
-	{
-		subvols_H[i].start = vxl_count;
-		subvols_H[i].end   = vxl_count + slice_width;
-		vxl_count += slice_width - overlap_size;
-	}	
-
-	//progress bar initialization
-	char progressBarBuff[IM_STATIC_STRINGS_SIZE];
-        sprintf(progressBarBuff, "Volume conversion from %s-stack(height=%d, width=%d) to %s-stack(height=%d, width=%d)",
-		    ((N_ROWS == 1 && N_COLS == 1)				  ? "MONO" :"MULTI"), BLOCKS[0][0]->getHEIGHT(), BLOCKS[0][0]->getWIDTH(),
-                        ((subvols_V_size == 1 && subvols_H_size == 1) ? "MONO" :"MULTI"), subvols_V[0].end - subvols_V[0].start, subvols_H[0].end - subvols_H[0].start);
-        ProgressBar::getInstance()->start(progressBarBuff);
-        ProgressBar::getInstance()->update(0,"Initializing...");
-        ProgressBar::getInstance()->show();
-
-	
-	//creating root directory	
-	make_dir(dir_path);
-
-	//saving stacked volume
-	D_crd = ORG_D + D0 * (VXL_D/1000.0f);
-	for(uint32 k=D0; k<D1; k++, D_crd += VXL_D/1000.0f)
-	{
-		sprintf(progressBarBuff, "Converting slice %d of %d", (k-D0+1), dim_d);
-                ProgressBar::getInstance()->update((((REAL_T)100/dim_d)*(k-D0+1)), progressBarBuff);
-                ProgressBar::getInstance()->show();
-
-		for(int i=0; i<subvols_V_size; i++)
-		{
-			V_crd = ORG_V + subvols_V[i].start * (VXL_V/1000.0f);
-			if(VXL_V < 0)
-				V_crd+= (subvols_V[i].end - subvols_V[i].start -1)*(VXL_V/1000.0f);
-			sprintf(dir_name, "%s/%06d", dir_path, ((int)(V_crd*10000.0f)) );
-			make_dir(dir_name);
-
-			for(int j=0; j<subvols_H_size; j++)
-			{
-				H_crd = ORG_H + subvols_H[j].start * (VXL_H/1000.0f);
-				if(VXL_H < 0)
-					H_crd+= (subvols_H[i].end - subvols_H[i].start -1)*(VXL_H/1000.0f);
-				sprintf(dir_name, "%s/%06d/%06d_%06d", dir_path, ((int)(V_crd*10000.0f)), ((int)(V_crd*10000.0f)), ((int)(H_crd*10000.0f)) );
-				make_dir(dir_name);
-
-				subvol = loadSubvolume(subvols_V[i].start, subvols_V[i].end, subvols_H[j].start, subvols_H[j].end, k, k+1);
-				sprintf(dir_name, "%s/%06d/%06d_%06d/%06d_%06d_%06d.tif", dir_path, ((int)(V_crd*10000.0f)), ((int)(V_crd*10000.0f)), ((int)(H_crd*10000.0f)),
-																	((int)(V_crd*10000.0f)), ((int)(H_crd*10000.0f)), ((int)(D_crd*10000.0f)));
-				
-				uint32 width  = subvols_H[j].end-subvols_H[j].start;
-				uint32 height = subvols_V[i].end-subvols_V[i].start;
-
-				slice = cvCreateImage(cvSize(width,height),IPL_DEPTH_8U,1);
-				uchar* slice_data_row_ptr;
-				int slice_step = slice->widthStep/sizeof(uchar);
-				for(uint32 y=0; y<height; y++)
-				{
-					slice_data_row_ptr = ((uchar*)(slice->imageData)) + y*slice_step;
-					for(uint32 x=0; x<width; x++)
-						slice_data_row_ptr[x]=(uchar)(subvol[y*width + x]*255);
-				}
-
-				cvSaveImage(dir_name,slice);
-				cvReleaseImage(&slice);
-				delete[] subvol;	
-			}
-		}
-		releaseStacks(k,k);
-	}
-	delete[] subvols_V;
-	delete[] subvols_H;	
-}
-
-//save given subvolume as a stack of 8-bit grayscale images in a directory created in the default path
-void TiledVolume::saveSubVolume(REAL_T* subvol, int V0, int V1, int H0, int H1, int D0, int D1, int V_idx, int H_idx, int D_idx)
-{
-	char msg[IM_STATIC_STRINGS_SIZE];
-	sprintf(msg,"in TiledVolume::saveSubVolume: not completed yet");
-	throw MyException(msg);
-
-	int height = V1-V0; 
-	int width  = H1-H0; 
-	int depth  = D1-D0;
-	char tmp[1000];
-	sprintf(tmp,"%02d_%02d_%02d",V_idx,H_idx,D_idx);
-	make_dir(tmp);
-	for(int z=0; z<depth; z++)
-	{
-		sprintf(tmp,"%02d_%02d_%02d/%02d_%02d_%04d.tif",V_idx,H_idx,D_idx,V_idx,H_idx,D0+z);
-
-		if(!fileExists(tmp))
-		{
-			//IplImage *slice = cvCreateImage(cvSize(H1-H0,V1-V0),IPL_DEPTH_8U,1);
-			//uchar* slice_data = (uchar*)slice->imageData;
-			//int slice_step = slice->widthStep;
-			//for(int x=0; x<width; x++)
-			//	for(int y=0; y<height; y++)
-			//		slice_data[y*slice_step+x]=(uchar)(subvol[z*width*height + y*width + x]*255);		
-			//
-			//cvSaveImage(tmp,slice);
-			//cvReleaseImage(&slice);
-		}
-	}
-	*subvol = (REAL_T) (height + width); // dummy assingment: just to avoid a warning
-}
-
-//returns true if file exists at the given filepath
-bool TiledVolume::fileExists(const char *filepath)
-{
-	//LOCAL VARIABLES
-	string file_path_string =filepath;
-	string file_name;
-	string dir_path;
-	bool file_exists = false;
-	DIR* directory;
-	dirent* dir_entry;
-
-	//extracting dir_path and file_name from file_path
-	char * tmp;
-	tmp = strtok (&file_path_string[0],"/\\");
-	while (tmp != NULL)
-	{
-		file_name = tmp;
-		tmp = strtok (NULL, "/\\");
-	}
-	file_path_string =filepath;
-	dir_path=file_path_string.substr(0,file_path_string.find(file_name));
-
-	//obtaining DIR pointer to directory (=NULL if directory doesn't exist)
-	if (!(directory=opendir(&(dir_path[0]))))
-	{
-		char msg[1000];
-		sprintf(msg,"in fileExists(filepath=%s): Unable to open directory \"%s\"", filepath, dir_path.c_str());
-		throw MyException(msg);
-	}
-
-	//scanning for given file
-	while (!file_exists && (dir_entry=readdir(directory)))
-	{
-		//storing in tmp i-th entry and checking that it not contains '.', so that I can exclude '..', '.' and files entries
-		if(!strcmp(&(file_name[0]), dir_entry->d_name))
-			file_exists = true;
-	}
-	closedir(directory);
-
-	return file_exists;
-}
-
 //releases allocated memory of stacks
 void TiledVolume::releaseStacks(int first_file, int last_file)
 {
-	char msg[IM_STATIC_STRINGS_SIZE];
+    /**/iim::debug(iim::LEV3, strprintf("first_file=%d, last_file=%d", first_file, last_file).c_str(), __iim__current__function__);
+
+    char msg[STATIC_STRINGS_SIZE];
 	sprintf(msg,"in TiledVolume::releaseStacks: not implemented yet");
-	throw MyException(msg);
+    throw IOException(msg);
 
 	first_file = (first_file == -1 ? 0		: first_file);
 	last_file  = (last_file  == -1 ? DIM_D	: last_file);
@@ -1450,185 +1060,26 @@ void TiledVolume::releaseStacks(int first_file, int last_file)
 	//		STACKS[row_index][col_index]->releaseStack(first_file,last_file);
 }
 
-//saves the Maximum Intensity Projections (MIP) of the selected subvolume along the selected direction into the given paths
-void TiledVolume::saveMIPs(bool direction_V, bool direction_H, bool direction_D, char* MIP_V_path, char* MIP_H_path, char* MIP_D_path,
-							 uint32 V0, uint32 V1, uint32 H0, uint32 H1, uint32 D0, uint32 D1) throw (MyException)
-{
-	//LOCAL VARIABLES
-	char err_msg[2000];
-	REAL_T *MIP_V, *MIP_H, *MIP_D, *slice;
-	IplImage *MIP_V_img, *MIP_H_img, *MIP_D_img;
-	uint32 dim_v, dim_h, dim_d;
-	uint32 i, j, k;
-	uchar* img_data_row_ptr;
-	int img_step;
-
-	//checking and adjusting default variables
-	//V0 = (V0 < 0 ? 0 : V0); // uint32: cannot be negative
-	//H0 = (H0 < 0 ? 0 : H0);
-	//D0 = (D0 < 0 ? 0 : D0);
-	V1 = ((V1 == 0 || V1 > DIM_V) ? DIM_V : V1);
-	H1 = ((H1 == 0 || H1 > DIM_H) ? DIM_H : H1);
-	D1 = ((D1 == 0 || D1 > DIM_D) ? DIM_D : D1);
-	if(V0 >= V1)
-	{
-		sprintf(err_msg, "in TiledVolume::saveVolume(...): invalid interval selected. V0(%d) >= V1(%d)!", V0, V1);
-		throw MyException(err_msg);
-	}
-	if(H0 >= H1)
-	{
-		sprintf(err_msg, "in TiledVolume::saveVolume(...): invalid interval selected. H0(%d) >= H1(%d)!", H0, H1);
-		throw MyException(err_msg);
-	}
-	if(D0 >= D1)
-	{
-		sprintf(err_msg, "in TiledVolume::saveVolume(...): invalid interval selected. D0(%d) >= D1(%d)!", D0, D1);
-		throw MyException(err_msg);
-	}
-	if(MIP_V_path == NULL && direction_V)
-	{
-		MIP_V_path = new char[strlen(root_dir)+11];
-		sprintf(MIP_V_path, "%s/MIP_V.png", root_dir);
-	}	
-	if(MIP_H_path == NULL && direction_H)
-	{
-		MIP_H_path = new char[strlen(root_dir)+11];
-		sprintf(MIP_H_path, "%s/MIP_H.png", root_dir);
-	}	
-	if(MIP_D_path == NULL && direction_D)
-	{
-		MIP_D_path = new char[strlen(root_dir)+11];
-		sprintf(MIP_D_path, "%s/MIP_D.png", root_dir);
-	}
-
-	//initializations and memory allocations
-	dim_v = V1 - V0;
-	dim_h = H1 - H0;
-	dim_d = D1 - D0;
-	MIP_V = MIP_H = MIP_D = NULL;
-	MIP_V_img = MIP_H_img = MIP_D_img = NULL;
-	if(direction_V)
-	{
-		MIP_V = new REAL_T[dim_h * dim_d];
-		for(i=0; i<dim_h * dim_d; i++)
-			MIP_V[i] = 0.0F;
-		MIP_V_img = cvCreateImage(cvSize(dim_h, dim_d), IPL_DEPTH_8U, 1);
-	}
-	if(direction_H)
-	{
-		MIP_H = new REAL_T[dim_d * dim_v];
-		for(i=0; i<dim_d * dim_v; i++)
-			MIP_H[i] = 0.0F;
-		MIP_H_img = cvCreateImage(cvSize(dim_d, dim_v), IPL_DEPTH_8U, 1);
-	}
-	if(direction_D)
-	{
-		MIP_D = new REAL_T[dim_h * dim_v];
-		for(i=0; i<dim_h * dim_v; i++)
-			MIP_D[i] = 0.0F;
-		MIP_D_img = cvCreateImage(cvSize(dim_h, dim_v), IPL_DEPTH_8U, 1);
-	}
-
-	//progress bar initialization
-	char progressBarBuff[2000];
-	sprintf(progressBarBuff, "Extraction of MIPs from V[%d - %d], H[%d - %d], D[%d - %d]", V0, V1, H0, H1, D0, D1);
-        ProgressBar::getInstance()->start(progressBarBuff);
-        ProgressBar::getInstance()->update(0,"Initializing...");
-        ProgressBar::getInstance()->show();
-
-	//MIPs computation
-	for(k = 0; k < dim_d; k++)
-	{
-		sprintf(progressBarBuff, "Processing slice %d of %d", (k+1), dim_d);
-                ProgressBar::getInstance()->update((((REAL_T)100/dim_d)*(k+1)), progressBarBuff);
-                ProgressBar::getInstance()->show();
-
-		slice = loadSubvolume(V0, V1, H0, H1, k+D0, k+D0+1, NULL, true);
-		for(i = 0; i < dim_v; i++)
-			for(j = 0; j < dim_h; j++)
-			{
-				if(MIP_V)
-					MIP_V[k*dim_h+j] = MAX(MIP_V[k*dim_h+j], slice[i*dim_h+j]);
-				if(MIP_H)
-					MIP_H[i*dim_d+k] = MAX(MIP_H[i*dim_d+k], slice[i*dim_h+j]);
-				if(MIP_D)
-					MIP_D[i*dim_h+j] = MAX(MIP_D[i*dim_h+j], slice[i*dim_h+j]);
-			}
-		delete[] slice;
-	}
-
-	//converting array to <IplImage> and saving
-	if(MIP_V)
-	{
-		img_step = MIP_V_img->widthStep/sizeof(uchar);
-		for(i = 0; i < (uint32)MIP_V_img->height; i++)
-		{
-			img_data_row_ptr = ((uchar*)(MIP_V_img->imageData)) + i*img_step;
-			for(j = 0; j < (uint32)MIP_V_img->width; j++)
-				img_data_row_ptr[j] = (uchar)(MIP_V[i*MIP_V_img->width+j]*255);
-		}
-		cvSaveImage(MIP_V_path, MIP_V_img);
-	}	
-	if(MIP_H)
-	{
-		img_step = MIP_H_img->widthStep/sizeof(uchar);
-		for(i = 0; i < (uint32)MIP_H_img->height; i++)
-		{
-			img_data_row_ptr = ((uchar*)(MIP_H_img->imageData)) + i*img_step;
-			for(j = 0; j < (uint32)MIP_H_img->width; j++)
-				img_data_row_ptr[j] = (uchar)(MIP_H[i*MIP_H_img->width+j]*255);
-		}
-		cvSaveImage(MIP_H_path, MIP_H_img);
-	}	
-	if(MIP_D)
-	{
-		img_step = MIP_D_img->widthStep/sizeof(uchar);
-		for(i = 0; i < (uint32)MIP_D_img->height; i++)
-		{
-			img_data_row_ptr = ((uchar*)(MIP_D_img->imageData)) + i*img_step;
-			for(j = 0; j < (uint32)MIP_D_img->width; j++)
-				img_data_row_ptr[j] = (uchar)(MIP_D[i*MIP_D_img->width+j]*255);
-		}
-		cvSaveImage(MIP_D_path, MIP_D_img);
-	}
-
-
-	//deallocations
-	if(MIP_V)
-		delete[] MIP_V;
-	if(MIP_H)
-		delete[] MIP_H;
-	if(MIP_D)
-		delete[] MIP_D;
-	if(MIP_V_img)
-		cvReleaseImage(&MIP_V_img);
-	if(MIP_H_img)
-		cvReleaseImage(&MIP_H_img);
-	if(MIP_D_img)
-		cvReleaseImage(&MIP_D_img);
-}
 
 
 // OPERATIONS FOR STREAMED SUBVOLUME LOAD 
 
-void *TiledVolume::streamedLoadSubvolume_open ( int steps, uint8 *buf, int V0,int V1, int H0, int H1, int D0, int D1 ) {
-
-    #if IM_VERBOSE > 3
-    printf("\t\t\t\tin TiledVolume::streamedLoadSubvolume_open(steps=%d, V0=%d, V1=%d, H0=%d, H1=%d, D0=%d, D1=%d)\n", steps, V0, V1, H0, H1, D0, D1);
-    #endif
+void *TiledVolume::streamedLoadSubvolume_open ( int steps, uint8 *buf, int V0,int V1, int H0, int H1, int D0, int D1 )
+{
+    /**/iim::debug(iim::LEV3, strprintf("steps=%d, V0=%d, V1=%d, H0=%d, H1=%d, D0=%d, D1=%d", steps, V0, V1, H0, H1, D0, D1).c_str(), __iim__current__function__);
 
     //checking for non implemented features
 	if( this->BYTESxCHAN != 1 ) {
-		char err_msg[IM_STATIC_STRINGS_SIZE];
+        char err_msg[STATIC_STRINGS_SIZE];
 		sprintf(err_msg,"TiledVolume::streamedLoadSubvolume_open: invalid number of bytes per channel (%d)",this->BYTESxCHAN); 
-		throw MyException(err_msg);
+        throw IOException(err_msg);
 	}
 
     //checks
 	if ( V0>=V1 || H0>=H1 || D0>=D1 || V0<0 || H0<0 || D0<0 || V1>(int)DIM_V || H1>(int)DIM_H || D1>(int)DIM_D ) {
 		char msg[1000];
 		sprintf(msg,"in TiledVolume::streamedLoadSubvolume_open: invalid sub-block vertices");
-		throw MyException(msg);
+        throw IOException(msg);
 	}
 
 	char *err_rawfmt;
@@ -1640,7 +1091,7 @@ void *TiledVolume::streamedLoadSubvolume_open ( int steps, uint8 *buf, int V0,in
 	if ( !stream_descr ) {
 		char msg[1000];
 		sprintf(msg,"in TiledVolume::streamedLoadSubvolume_open: Unable to allocate stream descriptor");
-		throw MyException(msg);
+        throw IOException(msg);
 	}
 
     // sint64 sbv_channels = this->CHANS; // unused
@@ -1652,7 +1103,7 @@ void *TiledVolume::streamedLoadSubvolume_open ( int steps, uint8 *buf, int V0,in
     subvol_area.H1 = H1;
     subvol_area.V1 = V1;
 
-    char slice_fullpath[IM_STATIC_STRINGS_SIZE];
+    char slice_fullpath[STATIC_STRINGS_SIZE];
 
 	Segm_t *intersect_segm = BLOCKS[0][0]->Intersects(D0,D1);
 
@@ -1665,9 +1116,7 @@ void *TiledVolume::streamedLoadSubvolume_open ( int steps, uint8 *buf, int V0,in
 				Rect_t *intersect_area = BLOCKS[row][col]->Intersects(subvol_area);
 				if(intersect_area) // there is intersection
 				{
-					#if IM_VERBOSE > 3
-					printf("\t\t\t\tin TiledVolume::streamedLoadSubvolume_open: using STACK[%d,%d] for area %d-%d(V) x %d-%d(H)\n", row, col, intersect_area->V0-V0, intersect_area->V1-V0, intersect_area->H0-H0, intersect_area->H1-H0);
-					#endif
+                    //printf("\t\t\t\tin TiledVolume::streamedLoadSubvolume_open: using STACK[%d,%d] for area %d-%d(V) x %d-%d(H)\n", row, col, intersect_area->V0-V0, intersect_area->V1-V0, intersect_area->H0-H0, intersect_area->H1-H0);
 
 					for(int k=intersect_segm->ind0; k<=intersect_segm->ind1; k++)
 					{
@@ -1690,11 +1139,11 @@ void *TiledVolume::streamedLoadSubvolume_open ( int steps, uint8 *buf, int V0,in
 						if ( (err_rawfmt = stream_descr->addSubBlock(
 								slice_fullpath,bH0+bV0*stridex+bD0*stridexy,sV0,sV1,sH0,sH1,sD0,sD1)) != 0 ) 
 						{
-							char err_msg[IM_STATIC_STRINGS_SIZE];
+                            char err_msg[STATIC_STRINGS_SIZE];
 							sprintf(err_msg,
 								"TiledVolume::streamedLoadSubvolume_open: error in adding the block of file %s (%s)", 
 								BLOCKS[row][col]->getFILENAMES()[k], err_rawfmt);
-							throw MyException(err_msg);
+                            throw IOException(err_msg);
 						}
 					}
 					delete intersect_area;
@@ -1711,31 +1160,37 @@ void *TiledVolume::streamedLoadSubvolume_open ( int steps, uint8 *buf, int V0,in
 	return stream_descr;
 }
 
-uint8 *TiledVolume::streamedLoadSubvolume_dostep ( void *stream_descr, unsigned char *buffer2 ) {
+uint8 *TiledVolume::streamedLoadSubvolume_dostep ( void *stream_descr, unsigned char *buffer2 )
+{
+    /**/iim::debug(iim::LEV3, 0, __iim__current__function__);
 
 	char *err_rawfmt;
 	
 	if ( (err_rawfmt = streamer_dostep((Streamer_Descr_t *)stream_descr,buffer2)) != 0 ) {
 		char msg[1000];
 		sprintf(msg,"in TiledVolume::streamedLoadSubvolume_dostep: Unable to perform next step (%s)",err_rawfmt);
-		throw MyException(msg);
+        throw IOException(msg);
 	}
 
 	return ((Streamer_Descr_t *)stream_descr)->buf;
 }
 
-void TiledVolume::streamedLoadSubvolume_cpydata ( void *stream_descr, unsigned char *buffer, unsigned char *buffer2 ) {
+void TiledVolume::streamedLoadSubvolume_cpydata ( void *stream_descr, unsigned char *buffer, unsigned char *buffer2 )
+{
+    /**/iim::debug(iim::LEV3, 0, __iim__current__function__);
 
 	char *err_rawfmt;
 	
 	if ( (err_rawfmt = streamer_cpydata((Streamer_Descr_t *)stream_descr,buffer,buffer2)) != 0 ) {
 		char msg[1000];
 		sprintf(msg,"in TiledVolume::streamedLoadSubvolume_dostep: Unable to perform next step (%s)",err_rawfmt);
-		throw MyException(msg);
+        throw IOException(msg);
 	}
 }
 
-uint8 *TiledVolume::streamedLoadSubvolume_close ( void *stream_descr, bool return_buffer ) {
+uint8 *TiledVolume::streamedLoadSubvolume_close ( void *stream_descr, bool return_buffer )
+{
+    /**/iim::debug(iim::LEV3, 0, __iim__current__function__);
 
 	uint8 *temp = ((Streamer_Descr_t *)stream_descr)->buf;
 

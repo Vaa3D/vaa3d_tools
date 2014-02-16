@@ -190,7 +190,7 @@ void CExplorerWindow::show()
         pMain->D1_sbox->setValue(pMain->D1_sbox->maximum());
 
         //signal connections
-        connect(CVolume::instance(), SIGNAL(sendOperationOutcome(uint8*, MyException*,void*,qint64, QString, int)), this, SLOT(loadingDone(uint8*, MyException*,void*,qint64, QString, int)), Qt::BlockingQueuedConnection);
+        connect(CVolume::instance(), SIGNAL(sendOperationOutcome(itm::uint8*,itm::RuntimeException*,void*,qint64,QString,int)), this,  SLOT(loadingDone(itm::uint8*,itm::RuntimeException*,void*,qint64,QString,int)), Qt::BlockingQueuedConnection);
         connect(view3DWidget, SIGNAL(changeXCut0(int)), this, SLOT(Vaa3D_changeXCut0(int)));
         connect(view3DWidget, SIGNAL(changeXCut1(int)), this, SLOT(Vaa3D_changeXCut1(int)));
         connect(view3DWidget, SIGNAL(changeYCut0(int)), this, SLOT(Vaa3D_changeYCut0(int)));
@@ -230,7 +230,7 @@ void CExplorerWindow::show()
         //saving subvol spinboxes state ---- Alessandro 2013-04-23: not sure if this is really needed
         saveSubvolSpinboxState();
     }
-    catch(MyException &ex)
+    catch(RuntimeException &ex)
     {
         QMessageBox::critical(PMain::getInstance(),QObject::tr("Error"), QObject::tr(ex.what()),QObject::tr("Ok"));
         PMain::getInstance()->closeVolume();
@@ -288,14 +288,14 @@ CExplorerWindow::CExplorerWindow(V3DPluginCallback2 *_V3D_env, int _resIndex, ui
         {
             prev->makeLastView();
             if(prev->volResIndex > volResIndex)
-                throw MyException("in CExplorerWindow(): attempting to break the ascending order of resolution history. This feature is not supported yet.");
+                throw RuntimeException("in CExplorerWindow(): attempting to break the ascending order of resolution history. This feature is not supported yet.");
         }
 
         //check that the number of instantiated objects does not exceed the number of available resolutions
         nInstances++;
         /**/itm::debug(itm::LEV_MAX, strprintf("nInstances++, nInstances = %d", nInstances).c_str(), __itm__current__function__);
         if(nInstances > CImport::instance()->getResolutions() +1)
-            throw MyException(QString("in CExplorerWindow(): exceeded the maximum number of views opened at the same time.\n\nPlease signal this issue to developers.").toStdString().c_str());
+            throw RuntimeException(QString("in CExplorerWindow(): exceeded the maximum number of views opened at the same time.\n\nPlease signal this issue to developers.").toStdString().c_str());
 
 
         //deactivating previous window and activating the current one
@@ -308,7 +308,7 @@ CExplorerWindow::CExplorerWindow(V3DPluginCallback2 *_V3D_env, int _resIndex, ui
         }
         setActive(true);
     }
-    catch(MyException &ex)
+    catch(RuntimeException &ex)
     {
         QMessageBox::critical(PMain::getInstance(),QObject::tr("Error"), QObject::tr(ex.what()),QObject::tr("Ok"));
         PMain::getInstance()->closeVolume();
@@ -468,7 +468,7 @@ bool CExplorerWindow::eventFilter(QObject *object, QEvent *event)
         }
         return false;
     }
-    catch(MyException &ex)
+    catch(RuntimeException &ex)
     {
         QMessageBox::critical(PMain::getInstance(),QObject::tr("Error"), QObject::tr(ex.what()),QObject::tr("Ok"));
         return false;
@@ -480,7 +480,7 @@ bool CExplorerWindow::eventFilter(QObject *object, QEvent *event)
 * performed. If an exception has occurred in the <CVolume> thread, it is propagated
 * and managed in the current thread (ex != 0).
 ***********************************************************************************/
-void CExplorerWindow::loadingDone(uint8 *data, MyException *ex, void* sourceObject, qint64 elapsed_time, QString op_dsc, int step)
+void CExplorerWindow::loadingDone(uint8 *data, RuntimeException *ex, void* sourceObject, qint64 elapsed_time, QString op_dsc, int step)
 {
     /**/itm::debug(itm::LEV1, strprintf("title = %s, ex = ", titleShort.c_str(),  (ex? "error" : "0")).c_str(), __itm__current__function__);
 
@@ -560,7 +560,7 @@ void CExplorerWindow::loadingDone(uint8 *data, MyException *ex, void* sourceObje
                 PLog::getInstance()->appendActual(prev->zoomInTimer.elapsed(), message);
             }
         }
-        catch(MyException &ex)
+        catch(RuntimeException &ex)
         {
             QMessageBox::critical(PMain::getInstance(),QObject::tr("Error"), QObject::tr(ex.what()),QObject::tr("Ok"));
             PMain::getInstance()->resetGUI();
@@ -680,7 +680,7 @@ CExplorerWindow::newView(
             else
                 cVolume->setVoi(0, resolution, y0, y, x0, x, z0, z);
         }
-        catch(MyException &ex)
+        catch(RuntimeException &ex)
         {
             /**/itm::warning(strprintf("Exception thrown when setting VOI: \"%s\". Aborting newView", ex.what()).c_str(), __itm__current__function__);
 
@@ -694,7 +694,7 @@ CExplorerWindow::newView(
         saveSubvolSpinboxState();
 
         //disconnecting current window from GUI's listeners and event filters
-        disconnect(CVolume::instance(), SIGNAL(sendOperationOutcome(uint8*, MyException*,void*,qint64, QString, int)), this, SLOT(loadingDone(uint8*, MyException*,void*,qint64, QString, int)));
+        disconnect(CVolume::instance(), SIGNAL(sendOperationOutcome(itm::uint8*, itm::RuntimeException*,void*,qint64, QString, int)), this, SLOT(loadingDone(itm::uint8*, itm::RuntimeException*,void*,qint64, QString, int)));
         disconnect(view3DWidget, SIGNAL(changeXCut0(int)), this, SLOT(Vaa3D_changeXCut0(int)));
         disconnect(view3DWidget, SIGNAL(changeXCut1(int)), this, SLOT(Vaa3D_changeXCut1(int)));
         disconnect(view3DWidget, SIGNAL(changeYCut0(int)), this, SLOT(Vaa3D_changeYCut0(int)));
@@ -761,7 +761,7 @@ CExplorerWindow::newView(
             delete this;
         }
     }
-    catch(MyException &ex)
+    catch(RuntimeException &ex)
     {
         QMessageBox::critical(this,QObject::tr("Error"), QObject::tr(ex.what()),QObject::tr("Ok"));
         PMain::getInstance()->resetGUI();
@@ -773,7 +773,7 @@ CExplorerWindow::newView(
 * achievable scaling method. The image currently shown is used as data source.
 ***********************************************************************************/
 uint8* CExplorerWindow::getVOI(int x0, int x1, int y0, int y1, int z0, int z1,
-                               int xDimInterp, int yDimInterp, int zDimInterp) throw (MyException)
+                               int xDimInterp, int yDimInterp, int zDimInterp) throw (RuntimeException)
 {
     /**/itm::debug(itm::LEV1, strprintf("title = %s, x0 = %d, x1 = %d, y0 = %d, y1 = %d, z0 = %d, z1 = %d, xDim = %d, yDim = %d, zDim = %d",
                                         titleShort.c_str(), x0, x1, y0, y1, z0, z1, xDimInterp, yDimInterp, zDimInterp).c_str(), __itm__current__function__);
@@ -850,7 +850,7 @@ void
         uint dst_dims[4],           //dimensions of "dst" along X, Y, Z and channels
         uint dst_offset[3],         //offset of "dst" along X, Y, Z
         uint scaling /*= 1 */)      //scaling factor (integer only)
-throw (MyException)
+throw (RuntimeException)
 {
     /**/itm::debug(itm::LEV1, strprintf("src_dims = (%d x %d x %d x %d), src_offset = (%d, %d, %d), src_count = (%d, %d, %d), dst_dims = (%d x %d x %d x %d), dst_offset = (%d, %d, %d), scaling = %d",
                                         src_dims[0], src_dims[1],src_dims[2],src_dims[3], src_offset[0],src_offset[1],src_offset[2], src_count[0],src_count[1],src_count[2],
@@ -931,12 +931,12 @@ throw (MyException)
 * Makes the current view the last one by  deleting (and deallocting) its subsequent
 * views.
 ***********************************************************************************/
-void CExplorerWindow::makeLastView() throw (MyException)
+void CExplorerWindow::makeLastView() throw (RuntimeException)
 {
     /**/itm::debug(itm::LEV1, strprintf("title = %s", titleShort.c_str()).c_str(), __itm__current__function__);
 
     if(CExplorerWindow::current != this)
-        throw MyException(QString("in CExplorerWindow::makeLastView(): this view is not the current one, thus can't be made the last view").toStdString().c_str());
+        throw RuntimeException(QString("in CExplorerWindow::makeLastView(): this view is not the current one, thus can't be made the last view").toStdString().c_str());
 
     while(CExplorerWindow::last != this)
     {
@@ -990,7 +990,7 @@ void CExplorerWindow::restoreSubvolSpinboxState()
 /**********************************************************************************
 * Annotations are stored/loaded) to/from the <CAnnotations> object
 ***********************************************************************************/
-void CExplorerWindow::storeAnnotations() throw (MyException)
+void CExplorerWindow::storeAnnotations() throw (RuntimeException)
 {
     /**/itm::debug(itm::LEV1, strprintf("title = %s", titleShort.c_str()).c_str(), __itm__current__function__);
 
@@ -1046,7 +1046,7 @@ void CExplorerWindow::storeAnnotations() throw (MyException)
     PLog::getInstance()->appendCPU(timer.elapsed(), QString("Stored 3D annotations from view ").append(title.c_str()).toStdString());
 }
 
-void CExplorerWindow::loadAnnotations() throw (MyException)
+void CExplorerWindow::loadAnnotations() throw (RuntimeException)
 {
     /**/itm::debug(itm::LEV1, strprintf("title = %s", titleShort.c_str()).c_str(), __itm__current__function__);
 
@@ -1110,14 +1110,14 @@ void CExplorerWindow::loadAnnotations() throw (MyException)
 * Called by the next(prev) <CExplorerWindow>  when the user  zooms out(in) and  the
 * lower(higher) resoolution has to be reestabilished.
 ***********************************************************************************/
-void CExplorerWindow::restoreViewFrom(CExplorerWindow* source) throw (MyException)
+void CExplorerWindow::restoreViewFrom(CExplorerWindow* source) throw (RuntimeException)
 {
     /**/itm::debug(itm::LEV1, strprintf("title = %s, source->title = %s", titleShort.c_str(), source->titleShort.c_str()).c_str(), __itm__current__function__);
 
     if(source)
     {
         //signal disconnections
-        source->disconnect(CVolume::instance(), SIGNAL(sendOperationOutcome(uint8*, MyException*,void*,qint64, QString, int)), source, SLOT(loadingDone(uint8*, MyException*,void*,qint64, QString, int)));
+        source->disconnect(CVolume::instance(), SIGNAL(sendOperationOutcome(itm::uint8*, itm::RuntimeException*,void*,qint64, QString, int)), source, SLOT(loadingDone(itm::uint8*, itm::RuntimeException*,void*,qint64, QString, int)));
         source->disconnect(source->view3DWidget, SIGNAL(changeXCut0(int)), source, SLOT(Vaa3D_changeXCut0(int)));
         source->disconnect(source->view3DWidget, SIGNAL(changeXCut1(int)), source, SLOT(Vaa3D_changeXCut1(int)));
         source->disconnect(source->view3DWidget, SIGNAL(changeYCut0(int)), source, SLOT(Vaa3D_changeYCut0(int)));
@@ -1234,7 +1234,7 @@ void CExplorerWindow::restoreViewFrom(CExplorerWindow* source) throw (MyExceptio
         pMain->traslZpos->setEnabled(volD1 < CImport::instance()->getVolume(volResIndex)->getDIM_D());
 
         //signal connections
-        connect(CVolume::instance(), SIGNAL(sendOperationOutcome(uint8*, MyException*,void*,qint64, QString, int)), this, SLOT(loadingDone(uint8*, MyException*,void*,qint64, QString, int)), Qt::BlockingQueuedConnection);
+        connect(CVolume::instance(), SIGNAL(sendOperationOutcome(itm::uint8*, itm::RuntimeException*,void*,qint64, QString, int)), this, SLOT(loadingDone(itm::uint8*, itm::RuntimeException*,void*,qint64, QString, int)), Qt::BlockingQueuedConnection);
         connect(view3DWidget, SIGNAL(changeXCut0(int)), this, SLOT(Vaa3D_changeXCut0(int)));
         connect(view3DWidget, SIGNAL(changeXCut1(int)), this, SLOT(Vaa3D_changeXCut1(int)));
         connect(view3DWidget, SIGNAL(changeYCut0(int)), this, SLOT(Vaa3D_changeYCut0(int)));
@@ -1279,14 +1279,14 @@ void CExplorerWindow::restoreViewFrom(CExplorerWindow* source) throw (MyExceptio
 * renderer at the given location.
 * This is based on the Vaa3D 3D point selection with one mouse click.
 ***********************************************************************************/
-XYZ CExplorerWindow::getRenderer3DPoint(int x, int y)  throw (MyException)
+XYZ CExplorerWindow::getRenderer3DPoint(int x, int y)  throw (RuntimeException)
 {
     /**/itm::debug(itm::LEV1, strprintf("title = %s, x = %d, y = %d", titleShort.c_str(), x, y).c_str(), __itm__current__function__);
 
     #ifdef USE_EXPERIMENTAL_FEATURES
     return myRenderer_gl1::cast(static_cast<Renderer_gl1*>(view3DWidget->getRenderer()))->get3DPoint(x, y);
     #else
-    throw MyException("Double click zoom-in feature is disabled in the current version");
+    throw RuntimeException("Double click zoom-in feature is disabled in the current version");
     #endif
 }
 

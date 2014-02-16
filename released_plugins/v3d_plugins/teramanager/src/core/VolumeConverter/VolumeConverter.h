@@ -66,7 +66,6 @@
 #include <math.h>
 #include "S_config.h"
 #include "../ImageManager/VM_config.h"
-#include "../ImageManager/MyException.h"
 
 #include "../ImageManager/VirtualVolume.h"
 #include "../ImageManager/StackedVolume.h" 
@@ -103,29 +102,7 @@ class VolumeConverter
 		const char *out_fmt;    // output format (for future use, currently not used: the output format is derived
 		                  // implicitly from internal_rep and the format of the source image)
 
-		/******CLASS MEMBERS******/
-		static double time_displ_comp;				//time employed for pairwise displacements computation
-        static double time_merging;				//time employed to merge stacks
-		static double time_stack_desc;				//time employed to compute stacks descriptions
-		static double time_stack_restore;			//time employed to restore stacks
-		static double time_multiresolution;			//time employed to obtain stitched volume at different resolutions
-
-
-		/***OBJECT PRIVATE METHODS****/
-
-
-		/***CLASS PRIVATE METHODS****/
-		
-		/*************************************************************************************************************
-		* Performs downsampling at a halved frequency on the given 3D image.  The given image is overwritten in order
-		* to store its halvesampled version without allocating any additional resources.
-		**************************************************************************************************************/
-		//static void halveSample(REAL_T* img, int height, int width, int depth);
-
-		//void save ( char* metadata_filepath, char *root_dir, ref_sys reference_system, 
-		//			float VXL_1, float VXL_2, float VXL_3, float ORG_1, float ORG_2, float ORG_3,
-		//			uint32 DIM_V, uint32 DIM_H, uint32 DIM_D, uint16 N_ROWS, uint16 N_COLS ) throw (MyException);
-public:
+    public:
 
 		// Constructors
 		VolumeConverter(void);
@@ -144,7 +121,7 @@ public:
 		* graylevel and multi channel and it will be saved as RGB; at most three channels are supported; if channels
 		* of original image are two, the third RGB channel (Blue channel) is set to all zero
 		*************************************************************************************************************/
-		void setSrcVolume(const char* _root_dir, const char* _fmt = STACKED_FORMAT, const char* _out_fmt = REAL_REPRESENTATION) throw (MyException);
+        void setSrcVolume(const char* _root_dir, const char* _fmt = STACKED_FORMAT, const char* _out_fmt = REAL_REPRESENTATION) throw (iim::IOException);
 
 
 		/*************************************************************************************************************
@@ -165,7 +142,8 @@ public:
 		**************************************************************************************************************/
 		void generateTiles(std::string output_path, bool* resolutions = NULL, 
 			int slice_height = -1, int slice_width = -1, int method = HALVE_BY_MEAN, bool show_progress_bar = true, 
-			const char* saved_img_format = IM_DEF_IMG_FORMAT, int saved_img_depth = IM_NUL_IMG_DEPTH)	throw (MyException);
+            const char* saved_img_format = iim::DEF_IMG_FORMAT.c_str(), int saved_img_depth = iim::NUL_IMG_DEPTH,
+            std::string frame_dir = "")	throw (iim::IOException);
 		
 
 		/*************************************************************************************************************
@@ -183,10 +161,13 @@ public:
 		* [show_progress_bar]	: enables/disables progress bar with estimated time remaining.
 		* [saved_img_format]	: determines saved images format ("raw", "png","tif","jpeg", etc.).
 		* [saved_img_depth]		: determines saved images bitdepth (16 or 8).
+		* [frame_dir]           : name of the directory containing a frame (without the final "/")
+		*                         if it is a null string the image does not belong to a time serie (default)
 		**************************************************************************************************************/
 		void generateTilesVaa3DRaw(std::string output_path, bool* resolutions = NULL, 
 			int block_height = -1, int block_width = -1, int block_depth = -1, int method = HALVE_BY_MEAN, bool show_progress_bar = true, 
-			const char* saved_img_format = "raw", int saved_img_depth = IM_NUL_IMG_DEPTH)	throw (MyException);
+            const char* saved_img_format = "raw", int saved_img_depth = iim::NUL_IMG_DEPTH,
+            std::string frame_dir = "")	throw (iim::IOException);
 		
 
         /*************************************************************************************************************
@@ -202,7 +183,6 @@ public:
         int getROW1(){return ROW_END;}
         int getCOL0(){return COL_START;}
         int getCOL1(){return COL_END;}
-
 		VirtualVolume *getVolume() {return volume;}
 
         /*************************************************************************************************************
@@ -236,7 +216,8 @@ public:
 		**************************************************************************************************************/
 		void generateTilesVaa3DRawMC ( std::string output_path, bool* resolutions = NULL, 
 			int block_height = -1, int block_width = -1, int block_depth = -1, int method = HALVE_BY_MEAN, bool show_progress_bar = true, 
-			const char* saved_img_format = "raw", int saved_img_depth = IM_NUL_IMG_DEPTH )	throw (MyException);
+            const char* saved_img_format = "raw", int saved_img_depth = iim::NUL_IMG_DEPTH,
+            std::string frame_dir = "")	throw (iim::IOException);
 
 };
 

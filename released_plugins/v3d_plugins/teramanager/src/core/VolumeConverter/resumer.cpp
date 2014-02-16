@@ -45,76 +45,33 @@
 )
 
 using namespace std;
-
-static
-bool fileExists(const char *filepath)
-{
-	//LOCAL VARIABLES
-	string file_path_string =filepath;
-	string file_name;
-	string dir_path;
-	bool file_exists = false;
-	DIR* directory;
-	dirent* dir_entry;
-
-	//extracting dir_path and file_name from file_path
-	char * tmp;
-	tmp = strtok (&file_path_string[0],"/\\");
-	while (tmp != NULL)
-	{
-		file_name = tmp;
-		tmp = strtok (NULL, "/\\");
-	}
-	file_path_string =filepath;
-	dir_path=file_path_string.substr(0,file_path_string.find(file_name));
-
-	//obtaining DIR pointer to directory (=NULL if directory doesn't exist)
-	if (!(directory=opendir(&(dir_path[0]))))
-	{
-		char msg[1000];
-		sprintf(msg,"in fileExists(filepath=%s): Unable to open directory \"%s\"", filepath, dir_path.c_str());
-		throw MyException(msg);
-	}
-
-	//scanning for given file
-	while (!file_exists && (dir_entry=readdir(directory)))
-	{
-		//storing in tmp i-th entry and checking that it not contains '.', so that I can exclude '..', '.' and files entries
-		if(!strcmp(&(file_name[0]), dir_entry->d_name))
-			file_exists = true;
-	}
-	closedir(directory);
-
-	return file_exists;
-}
-
-
+using namespace iim;
 
 
 bool initResumer ( const char *out_fmt, const char *output_path, int resolutions_size, bool* resolutions, 
 				   int block_height, int block_width, int block_depth, int method, 
-				   const char* saved_img_format, int saved_img_depth, FILE *&fhandle ) throw (MyException) 
+                   const char* saved_img_format, int saved_img_depth, FILE *&fhandle ) throw (IOException)
 {
 	size_t  str_len;
-	char resumer_filepath[IM_STATIC_STRINGS_SIZE];
+	char resumer_filepath[STATIC_STRINGS_SIZE];
 	char err_msg[S_STATIC_STRINGS_SIZE];
 
 	sprintf(resumer_filepath, "%s/%s", output_path, RESUMER_STATUS_FILE_NAME);
-	if ( fileExists(resumer_filepath) ) {
+    if ( iim::isFile(resumer_filepath) ) {
 		if ( (fhandle = fopen(resumer_filepath,"rb")) == 0 ) {
 			sprintf(err_msg, "in initResumer: file %s cannot be opened for reading",output_path);
-			throw MyException(err_msg);
+            throw IOException(err_msg);
 		}
 		else {
-			char _out_fmt[IM_STATIC_STRINGS_SIZE];
-			char _output_path[IM_STATIC_STRINGS_SIZE];
+			char _out_fmt[STATIC_STRINGS_SIZE];
+			char _output_path[STATIC_STRINGS_SIZE];
 			int  _resolutions_size;
 			bool _resolutions[S_MAX_MULTIRES];
 			int  _block_height;
 			int  _block_width;
 			int  _block_depth;
 			int  _method;
-			char _saved_img_format[IM_STATIC_STRINGS_SIZE];
+			char _saved_img_format[STATIC_STRINGS_SIZE];
 			int  _saved_img_depth;
 
 			rewind(fhandle);
@@ -124,7 +81,7 @@ bool initResumer ( const char *out_fmt, const char *output_path, int resolutions
 				fclose(fhandle);
 				sprintf(err_msg, "in initResumer: saved format of output image (%s) differ from requested format (%s)", 
 					_out_fmt,out_fmt);
-				throw MyException(err_msg);
+                throw IOException(err_msg);
 			}
 
 			fread(&str_len,sizeof(size_t),1,fhandle);
@@ -145,7 +102,7 @@ bool initResumer ( const char *out_fmt, const char *output_path, int resolutions
 				fclose(fhandle);
 				sprintf(err_msg, "in initResumer: saved parameters differ from current parameters", 
 					_out_fmt,out_fmt);
-				throw MyException(err_msg);
+                throw IOException(err_msg);
 			}
 
 			bool res_err = true;
@@ -159,7 +116,7 @@ bool initResumer ( const char *out_fmt, const char *output_path, int resolutions
 				fclose(fhandle);
 				sprintf(err_msg, "in initResumer: saved resolutions differ from requested resoolutions", 
 					_out_fmt,out_fmt);
-				throw MyException(err_msg);
+                throw IOException(err_msg);
 			}
 
 		}
@@ -174,7 +131,7 @@ bool initResumer ( const char *out_fmt, const char *output_path, int resolutions
 	else {
 		if ( (fhandle = fopen(resumer_filepath,"ab")) == 0 ) {
 			sprintf(err_msg, "in initResumer: file %s cannot be opened for append",output_path);
-			throw MyException(err_msg);
+            throw IOException(err_msg);
 		}
 		else {
 			str_len = strlen(out_fmt) + 1;
@@ -199,7 +156,7 @@ bool initResumer ( const char *out_fmt, const char *output_path, int resolutions
 }
 
 void readResumerState ( FILE *&fhandle, const char *output_path, int &resolutions_size, int *stack_block, int *slice_start, int *slice_end, 
-				 sint64 &z, sint64 &z_parts ) throw (MyException)
+                 sint64 &z, sint64 &z_parts ) throw (IOException)
 {
 	fread(&resolutions_size,sizeof(int),1,fhandle);
 	fread(stack_block,sizeof(int),resolutions_size,fhandle);
@@ -210,17 +167,17 @@ void readResumerState ( FILE *&fhandle, const char *output_path, int &resolution
 
 	fclose(fhandle);
 
-	char resumer_filepath[IM_STATIC_STRINGS_SIZE];
+	char resumer_filepath[STATIC_STRINGS_SIZE];
 	sprintf(resumer_filepath, "%s/%s", output_path, RESUMER_STATUS_FILE_NAME);
 	if ( (fhandle = fopen(resumer_filepath,"ab")) == 0 ) {
 		char err_msg[S_STATIC_STRINGS_SIZE];
 		sprintf(err_msg, "in initResumer: the resume state file cannot be re-opened in append mode");
-		throw MyException(err_msg);
+        throw IOException(err_msg);
 	}
 }
 
 void saveResumerState ( FILE *fhandle, int resolutions_size, int *stack_block, int *slice_start, int *slice_end, 
-				 sint64 z, sint64 z_parts ) throw (MyException)
+                 sint64 z, sint64 z_parts ) throw (IOException)
 {
 	fwrite(&resolutions_size,sizeof(int),1,fhandle);
 	fwrite(stack_block,sizeof(int),resolutions_size,fhandle);
@@ -230,14 +187,14 @@ void saveResumerState ( FILE *fhandle, int resolutions_size, int *stack_block, i
 	fwrite(&z_parts,sizeof(sint64),1,fhandle);
 }
 
-void closeResumer ( FILE *fhandle, const char *output_path ) throw (MyException)
+void closeResumer ( FILE *fhandle, const char *output_path ) throw (IOException)
 {
 	//char err_msg[S_STATIC_STRINGS_SIZE];
 
 	fclose(fhandle);
 
 	if ( output_path ) {
-		char resumer_filepath[IM_STATIC_STRINGS_SIZE];
+		char resumer_filepath[STATIC_STRINGS_SIZE];
 		sprintf(resumer_filepath, "%s/%s", output_path, RESUMER_STATUS_FILE_NAME);
 		remove(resumer_filepath);
 	}

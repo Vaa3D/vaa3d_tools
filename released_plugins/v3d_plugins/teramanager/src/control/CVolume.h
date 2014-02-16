@@ -65,7 +65,7 @@ class teramanager::CVolume : public QThread
         int streamingSteps;                         //
 
         QMutex bufferMutex;
-        uint8* buffer;                              //volume of interest prebuffered data
+        itm::uint8* buffer;                              //volume of interest prebuffered data
         bool finished;
 
     public:
@@ -84,16 +84,16 @@ class teramanager::CVolume : public QThread
         ~CVolume();
 
         //GET and SET methods
-        void initBuffer(uint8* data, int size)
+        void initBuffer(itm::uint8* data, int size)
         {
             if(buffer)
                 delete[] buffer;
-            buffer = new uint8[size];
+            buffer = new itm::uint8[size];
 
-            for(uint8 *buf_p = buffer, *data_p = data; buf_p - buffer < size; buf_p++, data_p++)
+            for(itm::uint8 *buf_p = buffer, *data_p = data; buf_p - buffer < size; buf_p++, data_p++)
                 *buf_p = *data_p;
         }
-        uint8* getBuffer(){return buffer;}
+        itm::uint8* getBuffer(){return buffer;}
 
         void setStreamingSteps(int nsteps){streamingSteps = nsteps;}
         int getStreamingSteps(){return streamingSteps;}
@@ -117,13 +117,13 @@ class teramanager::CVolume : public QThread
         int getVoiD1(){return voiD1;}
         int getNChannels(){return nchannels;}
         int getVoiResIndex(){return voiResIndex;}
-        static int scaleVCoord(int coord, int srcRes, int dstRes) throw (MyException);
-        static int scaleHCoord(int coord, int srcRes, int dstRes) throw (MyException);
-        static int scaleDCoord(int coord, int srcRes, int dstRes) throw (MyException);
-        static float scaleVCoord(float coord, int srcRes, int dstRes) throw (MyException);
-        static float scaleHCoord(float coord, int srcRes, int dstRes) throw (MyException);
-        static float scaleDCoord(float coord, int srcRes, int dstRes) throw (MyException);
-        void setVoi(QWidget* _sourceObject, int _voiResIndex, int _V0, int _V1, int _H0, int _H1, int _D0, int _D1) throw (MyException)
+        static int scaleVCoord(int coord, int srcRes, int dstRes) throw (RuntimeException);
+        static int scaleHCoord(int coord, int srcRes, int dstRes) throw (RuntimeException);
+        static int scaleDCoord(int coord, int srcRes, int dstRes) throw (RuntimeException);
+        static float scaleVCoord(float coord, int srcRes, int dstRes) throw (RuntimeException);
+        static float scaleHCoord(float coord, int srcRes, int dstRes) throw (RuntimeException);
+        static float scaleDCoord(float coord, int srcRes, int dstRes) throw (RuntimeException);
+        void setVoi(QWidget* _sourceObject, int _voiResIndex, int _V0, int _V1, int _H0, int _H1, int _D0, int _D1) throw (RuntimeException)
         {
             /**/itm::debug(itm::LEV1, strprintf("_voiResIndex = %d, _V0 = %d, _V1=%d, _H0 = %d, _H1=%d, _D0 = %d, _D1=%d",
                                                 _voiResIndex, _V0, _V1, _H0, _H1, _D0, _D1).c_str(), __itm__current__function__);
@@ -143,7 +143,7 @@ class teramanager::CVolume : public QThread
 
             //---- Alessandro 2013-09-03: added check to detect invalid VOI
             if(voiV1 - voiV0 <= 0 || voiH1 - voiH0 <= 0 || voiD1 - voiD0 <= 0)
-                throw MyException("Invalid VOI selected");
+                throw RuntimeException("Invalid VOI selected");
 
             nchannels = -1;
         }
@@ -157,7 +157,7 @@ class teramanager::CVolume : public QThread
         * Carries the outcome of the operation associated  to this thread  as well as the
         * the object that requested the operation
         **********************************************************************************/
-        void sendOperationOutcome(uint8* data, MyException* ex, void* sourceObj, qint64 elapsed_time = 0, QString op_dsc="", int step=0);
+        void sendOperationOutcome(itm::uint8* data, itm::RuntimeException* ex, void* sourceObj, qint64 elapsed_time = 0, QString op_dsc="", int step=0);
 };
 
 #endif // CLOADSUBVOLUME_H

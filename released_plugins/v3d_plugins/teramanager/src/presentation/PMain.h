@@ -343,14 +343,14 @@ class teramanager::PMain : public QWidget
         * aged in the current thread (ex != 0). Otherwise, volume information are imported
         * in the GUI by the <StackedVolume> handle of <CImport>.
         ***********************************************************************************/
-        void importDone(MyException *ex, Image4DSimple* vmap_image=0, qint64 elapsed_time = 0);
+        void importDone(itm::RuntimeException *ex, Image4DSimple* vmap_image=0, qint64 elapsed_time = 0);
 
         /**********************************************************************************
         * Called by <CVolume> when the associated operation has been performed.
         * If an exception has occurred in the <CVolume> thread, it is propagated and
         * managed in the current thread (ex != 0).
         ***********************************************************************************/
-        void loadingDone(uint8* data, MyException *ex, void* sourceObject, qint64 elapsed_time = 0, QString op_dsc="", int step=0);
+        void loadingDone(itm::uint8* data, itm::RuntimeException *ex, void* sourceObject, qint64 elapsed_time = 0, QString op_dsc="", int step=0);
 
         /**********************************************************************************
         * Called when the GUI widgets that control application settings change.

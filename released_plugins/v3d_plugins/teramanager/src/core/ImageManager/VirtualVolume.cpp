@@ -30,6 +30,7 @@
 #include <highgui.h>
 #include <stdio.h>
 
+using namespace iim;
 
 
 /*************************************************************************************************************
@@ -42,14 +43,12 @@
 * [img_format]              : image format extension to be used (e.g. "tif", "png", etc.)
 * [img_depth]               : image bitdepth to be used (8 or 16)
 **************************************************************************************************************/
-void VirtualVolume::saveImage(std::string img_path, REAL_T* raw_img, int raw_img_height, int  raw_img_width, 
+void VirtualVolume::saveImage(std::string img_path, real32* raw_img, int raw_img_height, int  raw_img_width,
 							 int start_height, int end_height, int start_width, int end_width, 
-							 const char* img_format, int img_depth) throw (MyException)
+                             const char* img_format, int img_depth) throw (IOException)
 {
-	#if IO_M_VERBOSE > 4
-        printf("\t\t\t\tin VirtualVolume::saveImage(img_path=%s, raw_img_height=%d, raw_img_width=%d, start_height=%d, end_height=%d, start_width=%d, end_width=%d)\n",
-		img_path.c_str(), raw_img_height, raw_img_width, start_height, end_height, start_width, end_width);
-	#endif
+    /**/iim::debug(iim::LEV3, strprintf("img_path=%s, raw_img_height=%d, raw_img_width=%d, start_height=%d, end_height=%d, start_width=%d, end_width=%d",
+                                        img_path.c_str(), raw_img_height, raw_img_width, start_height, end_height, start_width, end_width).c_str(), __iim__current__function__);
 
 	IplImage *img;
 	uint8  *row_data_8bit;
@@ -69,16 +68,16 @@ void VirtualVolume::saveImage(std::string img_path, REAL_T* raw_img, int raw_img
 	//checking parameters correctness
 	if(!(start_height>=0 && end_height>start_height && end_height<raw_img_height && start_width>=0 && end_width>start_width && end_width<raw_img_width))
 	{
-		char err_msg[IM_STATIC_STRINGS_SIZE];
+		char err_msg[STATIC_STRINGS_SIZE];
 		sprintf(err_msg,"in saveImage(..., raw_img_height=%d, raw_img_width=%d, start_height=%d, end_height%d, start_width=%d, end_width=%d): invalid image portion\n",
 			raw_img_height, raw_img_width, start_height, end_height, start_width, end_width);
-		throw MyException(err_msg);
+        throw IOException(err_msg);
 	}
 	if(img_depth != 8 && img_depth != 16)
 	{
-		char err_msg[IM_STATIC_STRINGS_SIZE];		
+		char err_msg[STATIC_STRINGS_SIZE];		
 		sprintf(err_msg,"in saveImage(..., img_depth=%d, ...): unsupported bit depth\n",img_depth);
-		throw MyException(err_msg);
+        throw IOException(err_msg);
 	}
 
 	//generating complete path for image to be saved
@@ -111,11 +110,11 @@ void VirtualVolume::saveImage(std::string img_path, REAL_T* raw_img, int raw_img
 
 	//saving image
 	try{cvSaveImage(img_filepath, img);}
-	catch(std::exception ex)
+    catch(...)
 	{
-		char err_msg[IM_STATIC_STRINGS_SIZE];		
+		char err_msg[STATIC_STRINGS_SIZE];		
 		sprintf(err_msg,"in saveImage(...): unable to save image at \"%s\". Unsupported format or wrong path.\n",img_filepath);
-		throw MyException(err_msg);
+        throw IOException(err_msg);
 	}
 
 	//releasing memory of img
@@ -142,22 +141,19 @@ void VirtualVolume::saveImage(std::string img_path, REAL_T* raw_img, int raw_img
 **************************************************************************************************************/
 void VirtualVolume::saveImage_from_UINT8 (std::string img_path, uint8* raw_ch1, uint8* raw_ch2, uint8* raw_ch3, 
                            int raw_img_height, int raw_img_width, int start_height, int end_height, int start_width,
-                           int end_width, const char* img_format, int img_depth ) throw (MyException)
+                           int end_width, const char* img_format, int img_depth ) throw (IOException)
 {
-    #if IO_M_VERBOSE > 4
-    printf("\t\t\t\tin VirtualVolume::saveImage_from_UINT8(img_path=%s, raw_img_height=%d, raw_img_width=%d, start_height=%d, end_height=%d, start_width=%d, end_width=%d)\n",
-            img_path.c_str(), raw_img_height, raw_img_width, start_height, end_height, start_width, end_width);
-    #endif
+    /**/iim::debug(iim::LEV3, strprintf("img_path=%s, raw_img_height=%d, raw_img_width=%d, start_height=%d, end_height=%d, start_width=%d, end_width=%d=%s", img_path.c_str(), raw_img_height, raw_img_width, start_height, end_height, start_width, end_width).c_str(), __iim__current__function__);
 
     //checking for non implemented features
 	if( img_depth != 8 ) {
-		char err_msg[IM_STATIC_STRINGS_SIZE];
+		char err_msg[STATIC_STRINGS_SIZE];
 		sprintf(err_msg,"SimpleVolume::loadSubvolume_to_UINT8: invalid number of bits per channel (%d)",img_depth); 
-		throw MyException(err_msg);
+        throw IOException(err_msg);
 	}
 
     //LOCAL VARIABLES
-    char buffer[IM_STATIC_STRINGS_SIZE];
+    char buffer[STATIC_STRINGS_SIZE];
     IplImage* img = 0;
     int img_height, img_width;
     int nchannels = 0;
@@ -176,25 +172,25 @@ void VirtualVolume::saveImage_from_UINT8 (std::string img_path, uint8* raw_ch1, 
     {
         sprintf(buffer,"in saveImage_from_UINT8(..., raw_img_height=%d, raw_img_width=%d, start_height=%d, end_height%d, start_width=%d, end_width=%d): invalid image portion\n",
                 raw_img_height, raw_img_width, start_height, end_height, start_width, end_width);
-        throw MyException(buffer);
+        throw IOException(buffer);
     }
 	// nchannels may be also 2
     //if(nchannels != 1 && nchannels != 3)
     if(nchannels > 3)
     {
         sprintf(buffer,"in saveImage_from_UINT8(): unsupported number of channels (= %d)\n",nchannels);
-        throw MyException(buffer);
+        throw IOException(buffer);
     }
     if(img_depth != 8 && img_depth != 16 && nchannels == 1)
     {
         sprintf(buffer,"in saveImage_from_UINT8(..., img_depth=%d, ...): unsupported bit depth for greyscale images\n",img_depth);
-        throw MyException(buffer);
+        throw IOException(buffer);
     }
     //if(img_depth != 8 && nchannels == 3) // nchannels may be also 2
     if(img_depth != 8 && nchannels > 1)
     {
         sprintf(buffer,"in saveImage_from_UINT8(..., img_depth=%d, ...): unsupported bit depth for multi-channels images\n",img_depth);
-        throw MyException(buffer);
+        throw IOException(buffer);
     }
 
     //converting raw data into OpenCV image data
@@ -262,9 +258,9 @@ void VirtualVolume::saveImage_from_UINT8 (std::string img_path, uint8* raw_ch1, 
     try{cvSaveImage(buffer, img);}
     catch(std::exception ex)
     {
-        char err_msg[IM_STATIC_STRINGS_SIZE];
+        char err_msg[STATIC_STRINGS_SIZE];
         sprintf(err_msg,"in saveImage_from_UINT8(...): unable to save image at \"%s\". Unsupported format or wrong path.\n",buffer);
-        throw MyException(err_msg);
+        throw IOException(err_msg);
     }
 
     //releasing memory
@@ -283,25 +279,22 @@ void VirtualVolume::saveImage_from_UINT8 (std::string img_path, uint8* raw_ch1, 
 * [img_format]              : image format extension to be used (e.g. "tif", "png", etc.)
 * [img_depth]               : image bitdepth to be used (8 or 16)
 **************************************************************************************************************/
-void VirtualVolume::saveImage_to_Vaa3DRaw(int slice, std::string img_path, REAL_T* raw_img, int raw_img_height, int  raw_img_width, 
+void VirtualVolume::saveImage_to_Vaa3DRaw(int slice, std::string img_path, real32* raw_img, int raw_img_height, int  raw_img_width,
 						 int start_height, int end_height, int start_width, int end_width, 
 						 const char* img_format, int img_depth
-						 ) throw (MyException)
+                         ) throw (IOException)
 {
-	#if IO_M_VERBOSE > 4
-        printf("\t\t\t\tin VirtualVolume::saveImage(img_path=%s, raw_img_height=%d, raw_img_width=%d, start_height=%d, end_height=%d, start_width=%d, end_width=%d)\n",
-		img_path.c_str(), raw_img_height, raw_img_width, start_height, end_height, start_width, end_width);
-	#endif
+    /**/iim::debug(iim::LEV3, strprintf("img_path=%s, raw_img_height=%d, raw_img_width=%d, start_height=%d, end_height=%d, start_width=%d, end_width=%d", img_path.c_str(), raw_img_height, raw_img_width, start_height, end_height, start_width, end_width).c_str(), __iim__current__function__);
 
     //checking for non implemented features
-	char msg[IM_STATIC_STRINGS_SIZE];
+	char msg[STATIC_STRINGS_SIZE];
 	sprintf(msg,"in VirtualVolume::saveImage_to_Vaa3DRaw: not implemented yet");
-	throw MyException(msg);
+    throw IOException(msg);
 
 	if( img_depth != 8 ) {
-		char err_msg[IM_STATIC_STRINGS_SIZE];
+		char err_msg[STATIC_STRINGS_SIZE];
 		sprintf(err_msg,"SimpleVolume::loadSubvolume_to_UINT8: invalid number of bits per channel (%d)",img_depth); 
-		throw MyException(err_msg);
+        throw IOException(err_msg);
 	}
 
 	//uint8  *row_data_8bit;
@@ -321,16 +314,16 @@ void VirtualVolume::saveImage_to_Vaa3DRaw(int slice, std::string img_path, REAL_
 	//checking parameters correctness
 	if(!(start_height>=0 && end_height>start_height && end_height<raw_img_height && start_width>=0 && end_width>start_width && end_width<raw_img_width))
 	{
-		char err_msg[IM_STATIC_STRINGS_SIZE];
+		char err_msg[STATIC_STRINGS_SIZE];
 		sprintf(err_msg,"in saveImage(..., raw_img_height=%d, raw_img_width=%d, start_height=%d, end_height%d, start_width=%d, end_width=%d): invalid image portion\n",
 			raw_img_height, raw_img_width, start_height, end_height, start_width, end_width);
-		throw MyException(err_msg);
+        throw IOException(err_msg);
 	}
 	if(img_depth != 8 && img_depth != 16)
 	{
-		char err_msg[IM_STATIC_STRINGS_SIZE];		
+		char err_msg[STATIC_STRINGS_SIZE];		
 		sprintf(err_msg,"in saveImage(..., img_depth=%d, ...): unsupported bit depth\n",img_depth);
-		throw MyException(err_msg);
+        throw IOException(err_msg);
 	}
 
 	//generating complete path for image to be saved
@@ -382,15 +375,12 @@ void VirtualVolume::saveImage_to_Vaa3DRaw(int slice, std::string img_path, REAL_
 **************************************************************************************************************/
 void VirtualVolume::saveImage_from_UINT8_to_Vaa3DRaw (int slice, std::string img_path, uint8** raw_ch, int n_chans, sint64 offset, 
                        int raw_img_height, int raw_img_width, int start_height, int end_height, int start_width,
-                       int end_width, const char* img_format, int img_depth ) throw (MyException)
+                       int end_width, const char* img_format, int img_depth ) throw (IOException)
 {
-    #if IO_M_VERBOSE > 4
-    printf("\t\t\t\tin VirtualVolume::saveImage_from_UINT8(img_path=%s, raw_img_height=%d, raw_img_width=%d, start_height=%d, end_height=%d, start_width=%d, end_width=%d)\n",
-            img_path.c_str(), raw_img_height, raw_img_width, start_height, end_height, start_width, end_width);
-    #endif
+    /**/iim::debug(iim::LEV3, strprintf("img_path=%s, raw_img_height=%d, raw_img_width=%d, start_height=%d, end_height=%d, start_width=%d, end_width=%d", img_path.c_str(), raw_img_height, raw_img_width, start_height, end_height, start_width, end_width).c_str(), __iim__current__function__);
 
     //LOCAL VARIABLES
-    char buffer[IM_STATIC_STRINGS_SIZE];
+    char buffer[STATIC_STRINGS_SIZE];
     sint64 img_height, img_width;
 	sint64 img_width_b; // image width in bytes
 	int img_bytes_per_chan;
@@ -412,7 +402,7 @@ void VirtualVolume::saveImage_from_UINT8_to_Vaa3DRaw (int slice, std::string img
     {
         sprintf(buffer,"in saveImage_from_UINT8(..., raw_img_height=%d, raw_img_width=%d, start_height=%d, end_height%d, start_width=%d, end_width=%d): invalid image portion\n",
                 raw_img_height, raw_img_width, start_height, end_height, start_width, end_width);
-        throw MyException(buffer);
+        throw IOException(buffer);
     }
 
  //if(img_depth != 8 && img_depth != 16 && n_chans == 1)
@@ -428,7 +418,7 @@ void VirtualVolume::saveImage_from_UINT8_to_Vaa3DRaw (int slice, std::string img
 	if(img_depth != 8 && img_depth != 16 && n_chans == 1)
 	{
 		sprintf(buffer,"in saveImage_from_UINT8(..., img_depth=%d, ...): unsupported bit depth\n",img_depth);
-		throw MyException(buffer);
+        throw IOException(buffer);
 	}
 	img_bytes_per_chan = (img_depth == 8) ? 1 : 2;
 	// all width parameters have to be multiplied by the number of bytes per channel
@@ -451,9 +441,9 @@ void VirtualVolume::saveImage_from_UINT8_to_Vaa3DRaw (int slice, std::string img
 
 	char *err_rawfmt;
 	if ( (err_rawfmt = writeSlice2RawFile (buffer,slice,(unsigned char *)imageData,(int)img_height,(int)img_width)) != 0 ) {
-		char err_msg[IM_STATIC_STRINGS_SIZE];
+		char err_msg[STATIC_STRINGS_SIZE];
 		sprintf(err_msg,"VirtualVolume::saveImage_from_UINT8_to_Vaa3DRaw: error in saving slice %d (%d x %d) in file %s (writeSlice2RawFile: %s)", slice,img_height,img_width,buffer,err_rawfmt);
-		throw MyException(err_msg);
+        throw IOException(err_msg);
 	};
 
 	delete imageData;
@@ -464,12 +454,8 @@ void VirtualVolume::saveImage_from_UINT8_to_Vaa3DRaw (int slice, std::string img
 * Performs downsampling at a halved frequency on the given 3D image.  The given image is overwritten in order
 * to store its halvesampled version without allocating any additional resources.
 **************************************************************************************************************/
-void VirtualVolume::halveSample ( REAL_T* img, int height, int width, int depth, int method )
+void VirtualVolume::halveSample ( real32* img, int height, int width, int depth, int method )
 {
-	#ifdef S_TIME_CALC
-	double proc_time = -TIME(0);
-	#endif
-
 	float A,B,C,D,E,F,G,H;
 
 	// indices are sint64 because offsets can be larger that 2^31 - 1
@@ -532,18 +518,16 @@ void VirtualVolume::halveSample ( REAL_T* img, int height, int width, int depth,
 
 	}
 	else {
-		char buffer[IM_STATIC_STRINGS_SIZE];
+		char buffer[STATIC_STRINGS_SIZE];
 		sprintf(buffer,"in halveSample(...): invalid halving method\n");
-        throw MyException(buffer);
+        throw IOException(buffer);
 	}
 	
 }
 
 
-void VirtualVolume::halveSample_UINT8 ( uint8** img, int height, int width, int depth, int channels, int method, int bytes_chan ) {
-	#ifdef S_TIME_CALC
-	double proc_time = -TIME(0);
-	#endif
+void VirtualVolume::halveSample_UINT8 ( uint8** img, int height, int width, int depth, int channels, int method, int bytes_chan )
+{
 
 	float A,B,C,D,E,F,G,H;
 
@@ -572,7 +556,7 @@ void VirtualVolume::halveSample_UINT8 ( uint8** img, int height, int width, int 
 							H = img[c][(2*z+1)*width*height + (2*i+1)*width + (2*j+1)];
 
 							//computing mean
-							img[c][z*(width/2)*(height/2) + i*(width/2) + j] = (uint8) ROUND((A+B+C+D+E+F+G+H)/(float)8);
+                            img[c][z*(width/2)*(height/2) + i*(width/2) + j] = (uint8) iim::round((A+B+C+D+E+F+G+H)/(float)8);
 						}
 					}
 				}
@@ -607,7 +591,7 @@ void VirtualVolume::halveSample_UINT8 ( uint8** img, int height, int width, int 
 						if ( B > A ) A = B;
 
 						//computing mean
-						img[c][z*(width/2)*(height/2) + i*(width/2) + j] = (uint8) ROUND(A);
+                        img[c][z*(width/2)*(height/2) + i*(width/2) + j] = (uint8) iim::round(A);
 					}
 				}
 			}
@@ -615,9 +599,9 @@ void VirtualVolume::halveSample_UINT8 ( uint8** img, int height, int width, int 
 
 		}
 		else {
-			char buffer[IM_STATIC_STRINGS_SIZE];
+			char buffer[STATIC_STRINGS_SIZE];
 			sprintf(buffer,"in VirtualVolume::halveSample_UINT8(...): invalid halving method\n");
-			throw MyException(buffer);
+            throw IOException(buffer);
 		}
 
 	}
@@ -646,7 +630,7 @@ void VirtualVolume::halveSample_UINT8 ( uint8** img, int height, int width, int 
 							H = img16[c][(2*z+1)*width*height + (2*i+1)*width + (2*j+1)];
 
 							//computing mean
-							img16[c][z*(width/2)*(height/2) + i*(width/2) + j] = (uint16) ROUND((A+B+C+D+E+F+G+H)/(float)8);
+                            img16[c][z*(width/2)*(height/2) + i*(width/2) + j] = (uint16) iim::round((A+B+C+D+E+F+G+H)/(float)8);
 						}
 					}
 				}
@@ -681,7 +665,7 @@ void VirtualVolume::halveSample_UINT8 ( uint8** img, int height, int width, int 
 						if ( B > A ) A = B;
 
 						//computing mean
-						img[c][z*(width/2)*(height/2) + i*(width/2) + j] = (uint8) ROUND(A);
+                        img[c][z*(width/2)*(height/2) + i*(width/2) + j] = (uint8) iim::round(A);
 					}
 				}
 			}
@@ -689,20 +673,23 @@ void VirtualVolume::halveSample_UINT8 ( uint8** img, int height, int width, int 
 
 		}
 		else {
-			char buffer[IM_STATIC_STRINGS_SIZE];
+			char buffer[STATIC_STRINGS_SIZE];
 			sprintf(buffer,"in VirtualVolume::halveSample_UINT8(...): invalid halving method\n");
-			throw MyException(buffer);
+            throw IOException(buffer);
 		}
 
 	}
 	else {
-		char buffer[IM_STATIC_STRINGS_SIZE];
+		char buffer[STATIC_STRINGS_SIZE];
 		sprintf(buffer,"VirtualVolume::in halveSample_UINT8(...): invalid number of bytes per channel (%d)\n", bytes_chan);
-        throw MyException(buffer);
+        throw IOException(buffer);
 	}
+}
 
-	#ifdef S_TIME_CALC
-	proc_time += TIME(0);
-	VolumeConverter::time_multiresolution+=proc_time;
-	#endif
+// tries to automatically detect the volume format and returns the imported volume if succeeds (otherwise throws an exception)
+VirtualVolume* VirtualVolume::instance(const char* path) throw (IOException)
+{
+    /**/iim::debug(iim::LEV3, strprintf("path=%s", path).c_str(), __iim__current__function__);
+
+    // check precondition #1: path exists
 }

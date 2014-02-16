@@ -44,14 +44,14 @@ class TiledMCVolume : public VirtualVolume
 {
 	private:	
 		//******OBJECT ATTRIBUTES******
-		uint16 N_ROWS, N_COLS;			//dimensions (in stacks) of stacks matrix along VH axes
+        iim::uint16 N_ROWS, N_COLS;			//dimensions (in stacks) of stacks matrix along VH axes
         //Block ***BLOCKS;			    //2-D array of <Block*>
         ref_sys reference_system;       //reference system of the stored volume
         float  VXL_1, VXL_2, VXL_3;     //voxel dimensions of the stored volume
 
 		char        **CHDIRNAMES;			//1-D dinamic array of <char>  pointers to channels directory names
 		TiledVolume **vol_ch;
-		uint32       *active;
+        iim::uint32       *active;
 		int           n_active;
 
 		//***OBJECT PRIVATE METHODS****
@@ -66,25 +66,22 @@ class TiledMCVolume : public VirtualVolume
 		//mirror stacks matrix along mrr_axis (accepted values are mrr_axis=1,2,3)
 		void mirror(axis mrr_axis);
 
-		//extract spatial coordinates (in millimeters) of given Stack object reading directory and filenames as spatial coordinates
-		//void extractCoordinates(Block* stk, int z, int* crd_1, int* crd_2, int* crd_3);
-
 		// iannello returns the number of channels of images composing the volume
-		void initChannels ( ) throw (MyException);
+        void initChannels ( ) throw (iim::IOException);
 
 	public:
 		//CONSTRUCTORS-DECONSTRUCTOR
-		TiledMCVolume(const char* _root_dir)  throw (MyException);
+        TiledMCVolume(const char* _root_dir)  throw (iim::IOException);
         TiledMCVolume(const char* _root_dir, ref_sys _reference_system,
 					float _VXL_1, float _VXL_2, float _VXL_3, 
-					bool overwrite_mdata = false, bool save_mdata=true)  throw (MyException);
+                    bool overwrite_mdata = false, bool save_mdata=true)  throw (iim::IOException);
 
 		~TiledMCVolume(void);
 
 		//GET methods
 		//Block*** getBLOCKS(){return BLOCKS;}
-        uint16 getN_ROWS(){return N_ROWS;}
-        uint16 getN_COLS(){return N_COLS;}
+        iim::uint16 getN_ROWS(){return N_ROWS;}
+        iim::uint16 getN_COLS(){return N_COLS;}
         float  getVXL_1(){return VXL_1;}
         float  getVXL_2(){return VXL_2;}
         float  getVXL_3(){return VXL_3;}
@@ -97,26 +94,23 @@ class TiledMCVolume : public VirtualVolume
 		void print();
 
 		//saving-loading methods to/from metadata binary file
-		void save(char* metadata_filepath) throw (MyException);
-		void load(char* metadata_filepath) throw (MyException);
+        void save(char* metadata_filepath) throw (iim::IOException);
+        void load(char* metadata_filepath) throw (iim::IOException);
 
-		//loads given subvolume in a 1-D array of REAL_T while releasing stacks slices memory when they are no longer needed
-		inline REAL_T *loadSubvolume_to_REAL_T(int V0=-1,int V1=-1, int H0=-1, int H1=-1, int D0=-1, int D1=-1)  throw (MyException) {
+        //loads given subvolume in a 1-D array of iim::real32 while releasing stacks slices memory when they are no longer needed
+        inline iim::real32 *loadSubvolume_to_real32(int V0=-1,int V1=-1, int H0=-1, int H1=-1, int D0=-1, int D1=-1)  throw (iim::IOException) {
 			return loadSubvolume(V0,V1,H0,H1,D0,D1,0,true);
 		}
 
         //loads given subvolume in a 1-D array and puts used Stacks into 'involved_stacks' iff not null
-        REAL_T *loadSubvolume(int V0=-1,int V1=-1, int H0=-1, int H1=-1, int D0=-1, int D1=-1,
-                                                                  std::list<Block*> *involved_blocks = 0, bool release_blocks = false)  throw (MyException);
+        iim::real32 *loadSubvolume(int V0=-1,int V1=-1, int H0=-1, int H1=-1, int D0=-1, int D1=-1,
+                                                                  std::list<Block*> *involved_blocks = 0, bool release_blocks = false)  throw (iim::IOException);
 
-        //loads given subvolume in a 1-D array of uint8 while releasing stacks slices memory when they are no longer needed
-        uint8 *loadSubvolume_to_UINT8(int V0=-1,int V1=-1, int H0=-1, int H1=-1, int D0=-1, int D1=-1, int *channels=0, int ret_type=IM_DEF_IMG_DEPTH) throw (MyException);
-
-		//returns true if file exists at the given filepath
-		static bool fileExists(const char *filepath);
+        //loads given subvolume in a 1-D array of iim::uint8 while releasing stacks slices memory when they are no longer needed
+        iim::uint8 *loadSubvolume_to_UINT8(int V0=-1,int V1=-1, int H0=-1, int H1=-1, int D0=-1, int D1=-1, int *channels=0, int ret_type=iim::DEF_IMG_DEPTH) throw (iim::IOException);
 
 		//sets active channels
-		void setActiveChannels ( uint32 *_active, int _n_active );
+        void setActiveChannels ( iim::uint32 *_active, int _n_active );
 
 
 		// OPERATIONS FOR STREAMED SUBVOLUME LOAD 
@@ -126,7 +120,7 @@ class TiledMCVolume : public VirtualVolume
 		 * nor deallocated by the caller until the operation terminates 
 		 * (see close operations for details)
 		 */
-        void *streamedLoadSubvolume_open ( int steps, uint8 *buf, int V0=-1,int V1=-1, int H0=-1, int H1=-1, int D0=-1, int D1=-1 );
+        void *streamedLoadSubvolume_open ( int steps, iim::uint8 *buf, int V0=-1,int V1=-1, int H0=-1, int H1=-1, int D0=-1, int D1=-1 );
 
 		/* perform one step of a streamed operation: returns a pointer to a read-only buffer 
 		 * with updated data; the returned buffer should not be deallocated;
@@ -135,7 +129,7 @@ class TiledMCVolume : public VirtualVolume
 		 * of the returned buffer contain exactly the same data contained in buffer2 at those positions
 		 * no check is performed if the default value of buffer2 (null pointer) is passed 
 		 */
-        uint8 *streamedLoadSubvolume_dostep ( void *stream_descr, unsigned char *buffer2=0 );
+        iim::uint8 *streamedLoadSubvolume_dostep ( void *stream_descr, unsigned char *buffer2=0 );
 
 		/* copies the last data read from files to a user provided buffer
 		 * positions to which data are copied are depend on which data have been read in 
@@ -153,7 +147,7 @@ class TiledMCVolume : public VirtualVolume
 		 * if return_buffer is set to false, the initial buffer is deallocated, it cannot be 
 		 * reused by the caller and the operation returns a null pointer
 		 */
-         uint8 *streamedLoadSubvolume_close ( void *stream_descr, bool return_buffer=true );
+         iim::uint8 *streamedLoadSubvolume_close ( void *stream_descr, bool return_buffer=true );
 
 };
 

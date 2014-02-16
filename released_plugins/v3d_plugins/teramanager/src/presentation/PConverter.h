@@ -139,7 +139,7 @@ class teramanager::PConverter : public QWidget
         * If an exception has occurred in the <CConverter> thread, it is propagated and
         * managed in the current thread (ex != 0).
         ***********************************************************************************/
-        void operationDone(MyException *ex);
+        void operationDone(itm::RuntimeException *ex);
 
         /**********************************************************************************
         * Called when the GUI widgets that control application settings change.

@@ -34,7 +34,6 @@
 
 #include <QtGui>
 #include <v3d_interface.h>
-#include "../core/ImageManager/MyException.h"
 #include <limits>
 
 /*******************************************************************************************************************************
@@ -72,6 +71,7 @@ namespace teramanager
     struct point;
 
     enum  debug_level { NO_DEBUG, LEV1, LEV2, LEV3, LEV_MAX };  //debug levels
+    class RuntimeException;		//exception thrown by functions in the current module
     /*-------------------------------------------------------------------------------------------------------------------------*/
 
 
@@ -106,6 +106,7 @@ namespace teramanager
     *    TYPES         *
     ********************
     ---------------------------------------------------------------------------------------------------------------------------*/
+    typedef unsigned char uint8;
     typedef unsigned int uint32;
 
     //interval type
@@ -214,6 +215,23 @@ namespace teramanager
             }
         }
     }
+
+    class RuntimeException
+    {
+        private:
+
+            std::string source;
+            std::string message;
+            RuntimeException(void);
+
+        public:
+
+            RuntimeException(std::string _message, std::string _source = "unknown"){
+                source = _source; message = _message;}
+            ~RuntimeException(void){}
+            const char* what() const {return message.c_str();}
+            const char* getSource() const {return source.c_str();}
+    };
     /*-------------------------------------------------------------------------------------------------------------------------*/
 }
 namespace itm = teramanager;	//a short alias for the current namespace: Icon Tera Manager (itm)

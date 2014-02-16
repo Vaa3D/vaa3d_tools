@@ -25,12 +25,15 @@
 # include "RawVolume.h"
 # include <stdio.h>
 
+using namespace iim;
 
-static char *get_path ( const char *_file_name ) throw (MyException);
+static char *get_path ( const char *_file_name ) throw (IOException);
 
-RawVolume::RawVolume(const char* _file_name)  throw (MyException)
-: VirtualVolume(get_path(_file_name),(float)1.0,(float)1.0,(float)1.0) 
+RawVolume::RawVolume(const char* _file_name)  throw (IOException)
+: VirtualVolume(get_path(_file_name), 1.0f, 1.0f, 1.0f)
 {
+    /**/iim::debug(iim::LEV3, strprintf("_file_name = \"%s\"", _file_name).c_str(), __iim__current__function__);
+
 	this->file_name = new char[strlen(_file_name)+1];
 	strcpy(this->file_name, _file_name);
 
@@ -41,9 +44,7 @@ RawVolume::RawVolume(const char* _file_name)  throw (MyException)
 
 RawVolume::~RawVolume(void)
 {
-	#if IM_VERBOSE > 3
-	printf("\t\t\t\tin RawVolume::~RawVolume(void)\n");
-	#endif
+    /**/iim::debug(iim::LEV3, 0, __iim__current__function__);
 
 	if(file_name)
 		delete[] file_name;
@@ -56,11 +57,9 @@ RawVolume::~RawVolume(void)
 }
 
 
-void RawVolume::init ( ) throw (MyException)
+void RawVolume::init ( ) throw (IOException)
 {
-	#if IM_VERBOSE > 3
-        printf("\t\t\t\tin RawVolume::init()\n");
-	#endif
+    /**/iim::debug(iim::LEV3, 0, __iim__current__function__);
 
 	/************************* 1) LOADING STRUCTURE *************************    
 	*************************************************************************/
@@ -76,9 +75,9 @@ void RawVolume::init ( ) throw (MyException)
 	char *internal_msg;
 	if ( (internal_msg = loadRaw2Metadata(file_name,sz,datatype,b_swap,fhandle,header_len)) ) {
 		if ( sz ) delete[] sz;
-		char err_msg[IM_STATIC_STRINGS_SIZE];
+		char err_msg[STATIC_STRINGS_SIZE];
 		sprintf(err_msg,"RawVolume::init: error in loading metadata - %s",internal_msg);
-		throw MyException(err_msg);
+        throw IOException(err_msg);
 	}
 	// fhandle must remain opened since it is a private member of RawVolume 
 
@@ -89,20 +88,22 @@ void RawVolume::init ( ) throw (MyException)
 	// sz shold not be deallocated
 }
 
-void RawVolume::initChannels ( ) throw (MyException) {
+void RawVolume::initChannels ( ) throw (IOException)
+{
+    /**/iim::debug(iim::LEV3, 0, __iim__current__function__);
+
 	CHANS = (int) sz[3];
 	BYTESxCHAN = datatype;
 }
 
 
-REAL_T *RawVolume::loadSubvolume_to_REAL_T(int V0,int V1, int H0, int H1, int D0, int D1)  throw (MyException) {
-	#if IM_VERBOSE > 3
-        printf("\t\t\t\tin RawVolume::loadSubvolume_to_REAL_T(V0=%d, V1=%d, H0=%d, H1=%d, D0=%d, D1=%d)\n", V0, V1, H0, H1, D0, D1);
-	#endif
+real32 *RawVolume::loadSubvolume_to_real32(int V0,int V1, int H0, int H1, int D0, int D1)  throw (IOException)
+{
+    /**/iim::debug(iim::LEV3, strprintf("V0=%d, V1=%d, H0=%d, H1=%d, D0=%d, D1=%d", V0, V1, H0, H1, D0, D1).c_str(), __iim__current__function__);
 
-	char msg[IM_STATIC_STRINGS_SIZE];
-	sprintf(msg,"in RawVolume::loadSubvolume_to_REAL_T: not implemented yet");
-	throw MyException(msg);
+	char msg[STATIC_STRINGS_SIZE];
+    sprintf(msg,"in RawVolume::loadSubvolume_to_real32: not implemented yet");
+    throw IOException(msg);
 
 	//initializations
 	V0 = (V0 == -1 ? 0	     : V0);
@@ -116,31 +117,29 @@ REAL_T *RawVolume::loadSubvolume_to_REAL_T(int V0,int V1, int H0, int H1, int D0
 	sint64 sbv_height = V1 - V0;
 	sint64 sbv_width  = H1 - H0;
 	sint64 sbv_depth  = D1 - D0;
-	REAL_T *subvol = new REAL_T[sbv_height * sbv_width * sbv_depth];
+    real32 *subvol = new real32[sbv_height * sbv_width * sbv_depth];
 
 	return subvol;
 }
 
 
-uint8 *RawVolume::loadSubvolume_to_UINT8(int V0,int V1, int H0, int H1, int D0, int D1, int *channels, int ret_type) throw (MyException) {
+uint8 *RawVolume::loadSubvolume_to_UINT8(int V0,int V1, int H0, int H1, int D0, int D1, int *channels, int ret_type) throw (IOException)
+{
 
-    #if IM_VERBOSE > 3
-    printf("\t\t\t\tin StackedVolume::loadSubvolume_to_UINT8(V0=%d, V1=%d, H0=%d, H1=%d, D0=%d, D1=%d, *channels=%d, ret_type=%d)\n", 
-		V0, V1, H0, H1, D0, D1, *channels, ret_type);
-    #endif
+    /**/iim::debug(iim::LEV3, strprintf("V0=%d, V1=%d, H0=%d, H1=%d, D0=%d, D1=%d, *channels=%d, ret_type=%d", V0, V1, H0, H1, D0, D1, *channels, ret_type).c_str(), __iim__current__function__);
 
     //checking for non implemented features
 	if( this->BYTESxCHAN > 2 ) {
-		char err_msg[IM_STATIC_STRINGS_SIZE];
+		char err_msg[STATIC_STRINGS_SIZE];
 		sprintf(err_msg,"RawVolume::loadSubvolume_to_UINT8: invalid number of bytes per channel (%d)",this->BYTESxCHAN); 
-		throw MyException(err_msg);
+        throw IOException(err_msg);
 	}
 
-	if ( (ret_type == IM_DEF_IMG_DEPTH) && ((8 * this->BYTESxCHAN) != IM_DEF_IMG_DEPTH)  ) {
+    if ( (ret_type == iim::DEF_IMG_DEPTH) && ((8 * this->BYTESxCHAN) != iim::DEF_IMG_DEPTH)  ) {
 		// return type is 8 bits, but native depth is not 8 bits
-		char err_msg[IM_STATIC_STRINGS_SIZE];
+		char err_msg[STATIC_STRINGS_SIZE];
 		sprintf(err_msg,"RawVolume::loadSubvolume_to_UINT8: non supported return type (%d bits) - native type is %d bits",ret_type, 8*this->BYTESxCHAN); 
-		throw MyException(err_msg);
+        throw IOException(err_msg);
 	}
 
 	// check #channels
@@ -149,7 +148,7 @@ uint8 *RawVolume::loadSubvolume_to_UINT8(int V0,int V1, int H0, int H1, int D0, 
 	//else if ( CHANS <=3 )
 	//	*channels = 3;
 	//else {
-	//	char err_msg[IM_STATIC_STRINGS_SIZE];
+	//	char err_msg[STATIC_STRINGS_SIZE];
 	//	sprintf(err_msg,"RawVolume::loadSubvolume_to_UINT8: too many channels [%d]",CHANS);
 	//	throw MyException(err_msg);
 	//}
@@ -174,9 +173,9 @@ uint8 *RawVolume::loadSubvolume_to_UINT8(int V0,int V1, int H0, int H1, int D0, 
 
 	char *internal_msg;
 	if ( (internal_msg = loadRaw2SubStack(fhandle,subvol,sz,H0,V0,D0,H1,V1,D1,datatype,b_swap,header_len)) ) {
-		char err_msg[IM_STATIC_STRINGS_SIZE];
+		char err_msg[STATIC_STRINGS_SIZE];
 		sprintf(err_msg,"RawVolume::init: error in loading metadata - %s",internal_msg);
-		throw MyException(err_msg);
+        throw IOException(err_msg);
 	}
 
 	return subvol;
@@ -190,16 +189,16 @@ static char path_buffer[PATH_BUF_LEN];
 static const char *suffixes[] = { ".raw", ".RAW", ".v3draw", ".V3DRAW", "" };
 static int  suf_lens[] = {      3,      3,         6,         6     };
 
-char *get_path ( const char *_file_name ) throw (MyException) {
+char *get_path ( const char *_file_name ) throw (IOException) {
 	strcpy(path_buffer,_file_name);
 	char *tPtr = 0;
 	for ( int i=0; !tPtr && *suffixes[i] != '\0'; i++ )
 		// check only if last characters match the suffix
 		tPtr = strstr(path_buffer+strlen(path_buffer)-suf_lens[i]-1,suffixes[i]);
 	if ( !tPtr ) {
-		char err_msg[IM_STATIC_STRINGS_SIZE];
+		char err_msg[STATIC_STRINGS_SIZE];
 		sprintf(err_msg,"RawVolume::get_path: unknown suffix of source file");
-		throw MyException(err_msg);
+        throw IOException(err_msg);
 	}
 	tPtr--;
 	while ( *tPtr != '\\' && *tPtr != '/' )

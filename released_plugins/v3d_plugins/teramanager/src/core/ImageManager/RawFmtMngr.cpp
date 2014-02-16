@@ -140,6 +140,8 @@ Peng, H, Ruan, Z., Atasoy, D., and Sternson, S. (2010) “Automatic reconstructi
 #include <math.h>
 
 #include "RawFmtMngr.h"
+using namespace iim;
+
 //#include "basic_memory.cpp" //change basic_memory.h to basic_memory.cpp, 080302
 
 /*
@@ -1370,11 +1372,8 @@ Streamer_Descr_t::Streamer_Descr_t ( unsigned char *_buf, int _pxl_size, sint64 
 	cur_step  = 0; // the first step is 1
 }
 
-Streamer_Descr_t::~Streamer_Descr_t ( ) { 
-		
-	#if IM_VERBOSE > 3
-	printf("\t\t\t\tin Streamer_Descr_t::~Streamer_Descr_t(void)\n");
-	#endif
+Streamer_Descr_t::~Streamer_Descr_t ( )
+{
 
 	if ( bDescr ) {
 		for ( int i=0; i<n_blocks; i++ )

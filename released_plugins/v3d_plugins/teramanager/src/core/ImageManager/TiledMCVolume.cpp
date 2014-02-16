@@ -41,16 +41,15 @@
 #include "ProgressBar.h"
 
 using namespace std;
+using namespace iim;
 
 #define IM_MC_METADATA_FILE_NAME "cmap.bin"
 
 
-TiledMCVolume::TiledMCVolume(const char* _root_dir)  throw (MyException)
+TiledMCVolume::TiledMCVolume(const char* _root_dir)  throw (IOException)
 : VirtualVolume(_root_dir) // iannello ADDED
 {
-	#if IM_VERBOSE > 3
-	printf("\t\t\t\tin TiledMCVolume::TiledMCVolume(_root_dir=%s)\n",	_root_dir);
-	#endif
+    /**/iim::debug(iim::LEV3, strprintf("_root_dir=%s", _root_dir).c_str(), __iim__current__function__);
 
 	// iannello this->root_dir = new char[strlen(_root_dir)+1];
 	// iannello strcpy(this->root_dir,_root_dir);
@@ -66,28 +65,26 @@ TiledMCVolume::TiledMCVolume(const char* _root_dir)  throw (MyException)
 
 
 	//without any configuration parameter, volume import must be done from the metadata file stored in the root directory, if it exists
-	char mdata_filepath[IM_STATIC_STRINGS_SIZE];
+	char mdata_filepath[STATIC_STRINGS_SIZE];
 	sprintf(mdata_filepath, "%s/%s", root_dir, IM_MC_METADATA_FILE_NAME);
-	if(fileExists(mdata_filepath)) 
+    if(iim::isFile(mdata_filepath))
 	{
 		load(mdata_filepath);
 		initChannels();
 	}
 	else
 	{
-		char errMsg[IM_STATIC_STRINGS_SIZE];
+		char errMsg[STATIC_STRINGS_SIZE];
 		sprintf(errMsg, "in TiledMCVolume::TiledMCVolume(...): unable to find metadata file at %s", mdata_filepath);
-        throw MyException(errMsg);
+        throw IOException(errMsg);
 	}
 }
 
-TiledMCVolume::TiledMCVolume(const char* _root_dir, ref_sys _reference_system, float _VXL_1, float _VXL_2, float _VXL_3, bool overwrite_mdata, bool save_mdata)  throw (MyException)
+TiledMCVolume::TiledMCVolume(const char* _root_dir, ref_sys _reference_system, float _VXL_1, float _VXL_2, float _VXL_3, bool overwrite_mdata, bool save_mdata)  throw (IOException)
 : VirtualVolume(_root_dir) // iannello ADDED
 {
-	#if IM_VERBOSE > 3
-	printf("\t\t\t\tin TiledMCVolume::TiledMCVolume(_root_dir=%s, ref_sys reference_system={%d,%d,%d}, VXL_1=%.4f, VXL_2=%.4f, VXL_3=%.4f)\n",
-                          _root_dir, _reference_system.first, _reference_system.second, _reference_system.third, _VXL_1, _VXL_2, _VXL_3);
-	#endif
+    /**/iim::debug(iim::LEV3, strprintf("_root_dir=%s, ref_sys reference_system={%d,%d,%d}, VXL_1=%.4f, VXL_2=%.4f, VXL_3=%.4f",
+                                        _root_dir, _reference_system.first, _reference_system.second, _reference_system.third, _VXL_1, _VXL_2, _VXL_3).c_str(), __iim__current__function__);
 
 	// iannello this->root_dir = new char[strlen(_root_dir)+1];
 	// iannello strcpy(this->root_dir,_root_dir);
@@ -102,9 +99,9 @@ TiledMCVolume::TiledMCVolume(const char* _root_dir, ref_sys _reference_system, f
 	n_active = 0;
 
 	//trying to unserialize an already existing metadata file, if it doesn't exist the full initialization procedure is performed and metadata is saved
-	char mdata_filepath[IM_STATIC_STRINGS_SIZE];
+	char mdata_filepath[STATIC_STRINGS_SIZE];
 	sprintf(mdata_filepath, "%s/%s", root_dir, IM_MC_METADATA_FILE_NAME);
-    if(fileExists(mdata_filepath) && !overwrite_mdata)
+    if(iim::isFile(mdata_filepath) && !overwrite_mdata)
 	{
 		load(mdata_filepath);
 		initChannels();
@@ -113,7 +110,7 @@ TiledMCVolume::TiledMCVolume(const char* _root_dir, ref_sys _reference_system, f
 	{
         if(_reference_system.first == axis_invalid ||  _reference_system.second == axis_invalid ||
           _reference_system.third == axis_invalid || _VXL_1 == 0 || _VXL_2 == 0 || _VXL_3 == 0)
-            throw MyException("in TiledMCVolume::TiledMCVolume(...): invalid importing parameters");
+            throw IOException("in TiledMCVolume::TiledMCVolume(...): invalid importing parameters");
 
         reference_system.first  = _reference_system.first;
         reference_system.second = _reference_system.second;
@@ -130,9 +127,7 @@ TiledMCVolume::TiledMCVolume(const char* _root_dir, ref_sys _reference_system, f
 
 TiledMCVolume::~TiledMCVolume(void)
 {
-	#if IM_VERBOSE > 3
-	printf("\t\t\t\tin TiledMCVolume::~TiledMCVolume(void)\n");
-	#endif
+    /**/iim::debug(iim::LEV3, 0, __iim__current__function__);
 
 	if ( CHDIRNAMES )
 		delete[] CHDIRNAMES;
@@ -146,11 +141,9 @@ TiledMCVolume::~TiledMCVolume(void)
 }
 
 
-void TiledMCVolume::save(char* metadata_filepath) throw (MyException)
+void TiledMCVolume::save(char* metadata_filepath) throw (IOException)
 {
-	#if IM_VERBOSE > 3
-	printf("\t\t\t\tin TiledMCVolume::save(metadata_filepath=%s)\n", metadata_filepath);
-	#endif
+    /**/iim::debug(iim::LEV3, strprintf("metadata_filepath=%s", metadata_filepath).c_str(), __iim__current__function__);
 
 	//LOCAL VARIABLES
 	uint16 str_size;
@@ -161,14 +154,14 @@ void TiledMCVolume::save(char* metadata_filepath) throw (MyException)
     // --- Alessandro 2013-04-23: added exception when file can't be opened in write mode
     if(!file)
     {
-        char errMsg[IM_STATIC_STRINGS_SIZE];
+        char errMsg[STATIC_STRINGS_SIZE];
         sprintf(errMsg, "in TiledMCVolume::save(): cannot write metadata binary file at \"%s\".\n\nPlease check write permissions on this storage.", metadata_filepath);
-        throw MyException(errMsg);
+        throw IOException(errMsg);
     }
 
 	// WARNING: check that channel subdirectories have consistent mdata files
 
-    float mdata_version = static_cast<float>(IM_METADATA_FILE_VERSION);
+    float mdata_version = static_cast<float>(iim::MDATA_BIN_FILE_VERSION);
     fwrite(&mdata_version, sizeof(float), 1, file); // --- Alessandro 2012-12-31: added field for metadata file version
     fwrite(&reference_system.first, sizeof(axis), 1, file);
     fwrite(&reference_system.second, sizeof(axis), 1, file); // iannello CORRECTED
@@ -208,11 +201,9 @@ void TiledMCVolume::save(char* metadata_filepath) throw (MyException)
 	fclose(file);
 }
 
-void TiledMCVolume::load(char* metadata_filepath) throw (MyException)
+void TiledMCVolume::load(char* metadata_filepath) throw (IOException)
 {
-	#if IM_VERBOSE > 3
-	printf("\t\t\t\tin TiledMCVolume::load(metadata_filepath=%s)\n", metadata_filepath);
-	#endif
+    /**/iim::debug(iim::LEV3, strprintf("metadata_filepath=%s", metadata_filepath).c_str(), __iim__current__function__);
 
 	//LOCAL VARIABLES
 	FILE *file;
@@ -225,19 +216,19 @@ void TiledMCVolume::load(char* metadata_filepath) throw (MyException)
     // --- Alessandro 2013-04-23: added exception when file can't be opened in read mode
     if(!file)
     {
-        char errMsg[IM_STATIC_STRINGS_SIZE];
+        char errMsg[STATIC_STRINGS_SIZE];
         sprintf(errMsg, "in TiledMCVolume::load(): cannot read metadata binary file at \"%s\".\n\nPlease check read permissions on this storage.", metadata_filepath);
-        throw MyException(errMsg);
+        throw IOException(errMsg);
     }
 
     // --- Alessandro 2012-12-31: added field for metadata file version
     float mdata_version_read = 0;
-    float mdata_version = static_cast<float>(IM_METADATA_FILE_VERSION);
+    float mdata_version = static_cast<float>(iim::MDATA_BIN_FILE_VERSION);
     fread_return_val = fread(&mdata_version_read, sizeof(float), 1, file);
     if(fread_return_val != 1 || mdata_version_read != mdata_version)
     {
         // --- Alessandro 2013-01-06: instead of throwing an exception, it is better to mantain compatibility
-//            char errMsg[IM_STATIC_STRINGS_SIZE];
+//            char errMsg[STATIC_STRINGS_SIZE];
 //            sprintf(errMsg, "in Block::unBinarizeFrom(...): metadata file version (%.2f) is different from the supported one (%.2f). "
 //                    "Please re-import the current volume.", mdata_version_read, mdata_version);
 //            throw MyException(errMsg);
@@ -247,101 +238,101 @@ void TiledMCVolume::load(char* metadata_filepath) throw (MyException)
         uint16 str_size;
         fread_return_val = fread(&str_size, sizeof(uint16), 1, file);
         if(fread_return_val != 1)
-                throw MyException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
-        char stored_root_dir[IM_STATIC_STRINGS_SIZE];
+                throw IOException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
+        char stored_root_dir[STATIC_STRINGS_SIZE];
         fread_return_val = fread(stored_root_dir, str_size, 1, file);
         if(fread_return_val != 1)
-                throw MyException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
+                throw IOException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
     }
 
     fread_return_val = fread(&reference_system.first, sizeof(axis), 1, file);
     if(fread_return_val != 1)
-            throw MyException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
+            throw IOException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
 
     fread_return_val = fread(&reference_system.second, sizeof(axis), 1, file);
     if(fread_return_val != 1)
-            throw MyException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
+            throw IOException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
 
     fread_return_val = fread(&reference_system.third, sizeof(axis), 1, file);
 
     fread_return_val = fread(&VXL_1, sizeof(float), 1, file);
     if(fread_return_val != 1)
-            throw MyException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
+            throw IOException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
 
     fread_return_val = fread(&VXL_2, sizeof(float), 1, file);
     if(fread_return_val != 1)
-            throw MyException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
+            throw IOException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
 
     fread_return_val = fread(&VXL_3, sizeof(float), 1, file);
     if(fread_return_val != 1)
-            throw MyException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
+            throw IOException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
 
 	fread_return_val = fread(&VXL_V, sizeof(float), 1, file);
 	if(fread_return_val != 1)
-		throw MyException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
+        throw IOException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
 
 	fread_return_val = fread(&VXL_H, sizeof(float), 1, file);
 	if(fread_return_val != 1)
-		throw MyException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
+        throw IOException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
 
 	fread_return_val = fread(&VXL_D, sizeof(float), 1, file);
 	if(fread_return_val != 1)
-		throw MyException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
+        throw IOException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
 
 	fread_return_val = fread(&ORG_V, sizeof(float), 1, file);
 	if(fread_return_val != 1)
-		throw MyException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
+        throw IOException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
 
 	fread_return_val = fread(&ORG_H, sizeof(float), 1, file);
 	if(fread_return_val != 1)
-		throw MyException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
+        throw IOException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
 
 	fread_return_val = fread(&ORG_D, sizeof(float), 1, file);
 	if(fread_return_val != 1)
-		throw MyException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
+        throw IOException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
 
 	fread_return_val = fread(&DIM_V, sizeof(uint32), 1, file);
 	if(fread_return_val != 1)
-		throw MyException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
+        throw IOException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
 
 	fread_return_val = fread(&DIM_H, sizeof(uint32), 1, file);
 	if(fread_return_val != 1)
-		throw MyException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
+        throw IOException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
 
 	fread_return_val = fread(&DIM_D, sizeof(uint32), 1, file);
 	if(fread_return_val != 1)
-		throw MyException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
+        throw IOException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
 
 	fread_return_val = fread(&N_ROWS, sizeof(uint16), 1, file);
 	if(fread_return_val != 1)
-		throw MyException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
+        throw IOException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
 
 	fread_return_val = fread(&N_COLS, sizeof(uint16), 1, file);
 	if(fread_return_val != 1)
-		throw MyException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
+        throw IOException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
 
 	fread_return_val = fread(&CHANS, sizeof(int), 1, file);
 	if(fread_return_val != 1)
-		throw MyException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
+        throw IOException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
 
 	n_active = CHANS;
 	active = new uint32[n_active];
 	for ( int c=0; c<CHANS; c++ )
 		active[c] = c; // all channels are assumed active
 
-	char channel_c_path[IM_STATIC_STRINGS_SIZE];
+	char channel_c_path[STATIC_STRINGS_SIZE];
 	CHDIRNAMES = new char*[CHANS];
 	vol_ch     = new TiledVolume *[CHANS];
 	for ( int c = 0; c < CHANS; c++)
 	{
 		fread_return_val = fread(&str_size, sizeof(uint16), 1, file);
 		if(fread_return_val != 1)
-			throw MyException("in Stack::unBinarizeFrom(...): error while reading binary metadata file");
+            throw IOException("in Stack::unBinarizeFrom(...): error while reading binary metadata file");
 
 		CHDIRNAMES[c] = new char[str_size];
 		fread_return_val = fread(CHDIRNAMES[c], str_size, 1, file);
 		if(fread_return_val != 1)
-			throw MyException("in Stack::unBinarizeFrom(...): error while reading binary metadata file");
+            throw IOException("in Stack::unBinarizeFrom(...): error while reading binary metadata file");
 
 		sprintf(channel_c_path,"%s/%s",root_dir,CHDIRNAMES[c]);
 		vol_ch[c] = new TiledVolume(channel_c_path);
@@ -349,16 +340,14 @@ void TiledMCVolume::load(char* metadata_filepath) throw (MyException)
 
 	fread_return_val = fread(&BYTESxCHAN, sizeof(int), 1, file);
 	if(fread_return_val != 1)
-		throw MyException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
+        throw IOException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
 
 	fclose(file);
 }
 
 void TiledMCVolume::init()
 {
-	#if IM_VERBOSE > 3
-        printf("\t\t\t\tin TiledMCVolume::init()\n");
-	#endif
+    /**/iim::debug(iim::LEV3, 0, __iim__current__function__);
 
 	/************************* 1) LOADING STRUCTURE *************************    
 	*************************************************************************/
@@ -368,19 +357,17 @@ void TiledMCVolume::init()
     string tmp;						//string that contains temp data during computation
 	DIR *cur_dir_lev1;				//pointer to DIR, the data structure that represents a DIRECTORY (level 1 of hierarchical structure)
 	dirent *entry_lev1;				//pointer to DIRENT, the data structure that represents a DIRECTORY ENTRY inside a directory (level 1)
-	//int i=0,j=0;					//for counting of N_ROWS, N_COLS
 	int c;
-    list<Block*> channels_list;                       //each stack found in the hierarchy is pushed into this list
     list<string> entries_lev1;                      //list of entries of first level of hierarchy
     list<string>::iterator entry_i;                 //iterator for list 'entries_lev1'
-	//char channel_c_path[IM_STATIC_STRINGS_SIZE];
+	//char channel_c_path[STATIC_STRINGS_SIZE];
 
 	//obtaining DIR pointer to root_dir (=NULL if directory doesn't exist)
 	if (!(cur_dir_lev1=opendir(root_dir)))
 	{
-        char msg[IM_STATIC_STRINGS_SIZE];
+        char msg[STATIC_STRINGS_SIZE];
         sprintf(msg,"in TiledMCVolume::init(...): Unable to open directory \"%s\"", root_dir);
-        throw MyException(msg);
+        throw IOException(msg);
 	}
 
 	//scanning first level of hierarchy which entries need to be ordered alphabetically. This is done using STL.
@@ -412,12 +399,12 @@ void TiledMCVolume::init()
 		if (N_ROWS == 0)
 			N_ROWS = vol_ch[c]->getN_ROWS();
 		else if (vol_ch[c]->getN_ROWS() != N_ROWS)
-			throw MyException("in TiledMCVolume::init(...): Number of tiles is not the same for all channels!");
+            throw IOException("in TiledMCVolume::init(...): Number of tiles is not the same for all channels!");
 
 		if (N_COLS == 0)
 			N_COLS = vol_ch[c]->getN_COLS();
 		else if (vol_ch[c]->getN_COLS() != N_COLS)
-			throw MyException("in TiledMCVolume::init(...): Number of tiles is not the same for all channels!");
+            throw IOException("in TiledMCVolume::init(...): Number of tiles is not the same for all channels!");
 	}
 
 	CHDIRNAMES = new char*[CHANS];
@@ -433,7 +420,7 @@ void TiledMCVolume::init()
 
 	//intermediate check
 	if(N_ROWS == 0 || N_COLS == 0)
-            throw MyException("in TiledMCVolume::init(...): Unable to initialize N_ROWS, N_COLS");
+            throw IOException("in TiledMCVolume::init(...): Unable to initialize N_ROWS, N_COLS");
 
 	/******************* 2) SETTING THE REFERENCE SYSTEM ********************
 	The entire application uses a vertical-horizontal reference system, so
@@ -491,10 +478,10 @@ void TiledMCVolume::init()
 	//unsupported reference system
 	else
 	{
-        char msg[IM_STATIC_STRINGS_SIZE];
+        char msg[STATIC_STRINGS_SIZE];
         sprintf(msg, "in TiledMCVolume::init(...): the reference system {%d,%d,%d} is not supported.",
                 reference_system.first, reference_system.second, reference_system.third);
-        throw MyException(msg);
+        throw IOException(msg);
 	}
 
 	// WARNINIG: following code should not be executed
@@ -541,7 +528,10 @@ void TiledMCVolume::init()
 	//}
 }
 
-void TiledMCVolume::initChannels ( ) throw (MyException) {
+void TiledMCVolume::initChannels ( ) throw (IOException)
+{
+    /**/iim::debug(iim::LEV3, 0, __iim__current__function__);
+
     BYTESxCHAN = vol_ch[0]->getBYTESxCHAN();
 }
 
@@ -564,10 +554,11 @@ void TiledMCVolume::print()
 //rotate stacks matrix around D axis (accepted values are theta=0,90,180,270)
 void TiledMCVolume::rotate(int theta)
 {
+    /**/iim::debug(iim::LEV3, strprintf("theta=%d", theta).c_str(), __iim__current__function__);
 
-	char msg[IM_STATIC_STRINGS_SIZE];
+	char msg[STATIC_STRINGS_SIZE];
 	sprintf(msg,"in TiledMCVolume::rotate: not implemented yet");
-	throw MyException(msg);
+    throw IOException(msg);
 
 //	//PRECONDITIONS:
 //	//	1) current TiledMCVolume object has been initialized (init() method has been called)
@@ -656,9 +647,7 @@ void TiledMCVolume::rotate(int theta)
 //mirror stacks matrix along mrr_axis (accepted values are mrr_axis=1,2,3)
 void TiledMCVolume::mirror(axis mrr_axis)
 {
-	char msg[IM_STATIC_STRINGS_SIZE];
-	sprintf(msg,"in TiledMCVolume::mirror: not implemented yet");
-	throw MyException(msg);
+    /**/iim::debug(iim::LEV3, strprintf("mrr_axis=%d", mrr_axis).c_str(), __iim__current__function__);
 
 //	//PRECONDITIONS:
 //	//	1) current TiledMCVolume object has been initialized (init() method has been called)
@@ -721,83 +710,14 @@ void TiledMCVolume::mirror(axis mrr_axis)
 //	STACKS = new_STACK_2D_ARRAY;
 }
 
-//extract spatial coordinates (in millimeters) of given Stack object
-//void TiledMCVolume::extractCoordinates(Block* blk, int z, int* crd_1, int* crd_2, int* crd_3)
-//{
-//	bool found_ABS_X=false;
-//	bool found_ABS_Y=false;
-//
-//	//loading estimations for absolute X and Y stack positions
-//	char * pch;
-//	char buffer[100];
-//	strcpy(buffer,&(blk->getDIR_NAME()[0]));
-//	pch = strtok (buffer,"/_");
-//	pch = strtok (NULL, "/_");
-//
-//	while (pch != NULL)
-//	{
-//		if(!found_ABS_X)
-//		{
-//			if(sscanf(pch, "%d", crd_1) == 1)
-//				found_ABS_X=true;
-//		}
-//		else if(!found_ABS_Y)
-//		{
-//			if(sscanf(pch, "%d", crd_2) == 1)
-//				found_ABS_Y=true;
-//		}
-//		else
-//			break;
-//
-//		pch = strtok (NULL, "/_");
-//	}
-//
-//	if(!found_ABS_X || !found_ABS_Y)
-//	{
-//		char msg[200];
-//		sprintf(msg,"in TiledMCVolume::extractCoordinates(directory_name=\"%s\"): format 000000_000000 or X_000000_X_000000 not found", blk->getDIR_NAME());
-//		throw msg;
-//	}
-//
-//	//loading estimation for absolute Z stack position
-//	if(crd_3!= NULL)
-//	{
-//		char* first_file_name = blk->getFILENAMES()[z];
-//
-//		char * pch;
-//		char lastTokenized[100];
-//		char buffer[500];
-//		strcpy(buffer,&(first_file_name[0]));
-//
-//		pch = strtok (buffer,"_");
-//		while (pch != NULL)
-//		{
-//			strcpy(lastTokenized,pch);
-//			pch = strtok (NULL, "_");
-//		}
-//
-//		pch = strtok (lastTokenized,".");
-//		strcpy(lastTokenized,pch);
-//
-//		if(sscanf(lastTokenized, "%d", crd_3) != 1)
-//		{
-//			char msg[200];
-//			sprintf(msg,"in TiledMCVolume::extractCoordinates(...): unable to extract Z position from filename %s", first_file_name);
-//			throw msg;
-//		}
-//	}
-//}
-
 //loads given subvolume in a 1-D array of float
-REAL_T* TiledMCVolume::loadSubvolume(int V0,int V1, int H0, int H1, int D0, int D1, list<Block*> *involved_blocks, bool release_blocks) throw (MyException)
+real32* TiledMCVolume::loadSubvolume(int V0,int V1, int H0, int H1, int D0, int D1, list<Block*> *involved_blocks, bool release_blocks) throw (IOException)
 {
-	#if IM_VERBOSE > 3
-	printf("\t\t\t\tin TiledMCVolume::loadSubvolume(V0=%d, V1=%d, H0=%d, H1=%d, D0=%d, D1=%d%s)\n", V0, V1, H0, H1, D0, D1, (involved_blocks? ", involved_stacks" : ""));
-	#endif
+    /**/iim::debug(iim::LEV3, strprintf("V0=%d, V1=%d, H0=%d, H1=%d, D0=%d, D1=%d, %s", V0, V1, H0, H1, D0, D1, (involved_blocks? ", involved_stacks" : "")).c_str(), __iim__current__function__);
 
-	char msg[IM_STATIC_STRINGS_SIZE];
+	char msg[STATIC_STRINGS_SIZE];
 	sprintf(msg,"in TiledMCVolume::loadSubvolume: not completed yet");
-	throw MyException(msg);
+    throw IOException(msg);
 
 	//initializations
 	V0 = (V0 == -1 ? 0	     : V0);
@@ -811,7 +731,7 @@ REAL_T* TiledMCVolume::loadSubvolume(int V0,int V1, int H0, int H1, int D0, int 
 	sint64 sbv_height = V1 - V0;
 	sint64 sbv_width  = H1 - H0;
 	sint64 sbv_depth  = D1 - D0;
-	REAL_T *subvol = new REAL_T[sbv_height * sbv_width * sbv_depth];
+    real32 *subvol = new real32[sbv_height * sbv_width * sbv_depth];
 
 	//scanning of stacks matrix for data loading and storing into subvol
 	Rect_t subvol_area;
@@ -825,28 +745,25 @@ REAL_T* TiledMCVolume::loadSubvolume(int V0,int V1, int H0, int H1, int D0, int 
 
 //loads given subvolume in a 1-D array of uint8 while releasing stacks slices memory when they are no longer needed
 //---03 nov 2011: added color support
-uint8* TiledMCVolume::loadSubvolume_to_UINT8(int V0,int V1, int H0, int H1, int D0, int D1, int *channels, int ret_type) throw (MyException)
+uint8* TiledMCVolume::loadSubvolume_to_UINT8(int V0,int V1, int H0, int H1, int D0, int D1, int *channels, int ret_type) throw (IOException)
 {
-    #if IM_VERBOSE > 3
-    printf("\t\t\t\tin StackedVolume::loadSubvolume_to_UINT8(V0=%d, V1=%d, H0=%d, H1=%d, D0=%d, D1=%d, *channels=%d, ret_type=%d)\n", 
-		V0, V1, H0, H1, D0, D1, *channels, ret_type);
-    #endif
+    /**/iim::debug(iim::LEV3, strprintf("V0=%d, V1=%d, H0=%d, H1=%d, D0=%d, D1=%d, *channels=%d, ret_type=%d", V0, V1, H0, H1, D0, D1, *channels, ret_type).c_str(), __iim__current__function__);
 
     //checking for non implemented features
 	//if( this->BYTESxCHAN != 1 ) {
-	//	char err_msg[IM_STATIC_STRINGS_SIZE];
+	//	char err_msg[STATIC_STRINGS_SIZE];
 	//	sprintf(err_msg,"TiledMCVolume::loadSubvolume_to_UINT8: invalid number of bytes per channel (%d)",this->BYTESxCHAN); 
 	//	throw MyException(err_msg);
 	//}
 
-	//if ( (ret_type == IM_DEF_IMG_DEPTH) && ((8 * this->BYTESxCHAN) != IM_DEF_IMG_DEPTH)  ) {
+    //if ( (ret_type == iim::DEF_IMG_DEPTH) && ((8 * this->BYTESxCHAN) != iim::DEF_IMG_DEPTH)  ) {
 		// does not support depth conversion: 
 		// return type is 8 bits, but native depth is not 8 bits
-	if ( (ret_type != IM_NATIVE_RTYPE) && (ret_type != IM_DEF_IMG_DEPTH) ) {
+    if ( (ret_type != iim::NATIVE_RTYPE) && (ret_type != iim::DEF_IMG_DEPTH) ) {
 		// return type should be converted, but not to 8 bits per channel
-		char err_msg[IM_STATIC_STRINGS_SIZE];
+		char err_msg[STATIC_STRINGS_SIZE];
 		sprintf(err_msg,"RawVolume::loadSubvolume_to_UINT8: non supported return type (%d bits) - native type is %d bits",ret_type, 8*this->BYTESxCHAN); 
-		throw MyException(err_msg);
+        throw IOException(err_msg);
 	}
 
 	//char *err_rawfmt;
@@ -861,7 +778,7 @@ uint8* TiledMCVolume::loadSubvolume_to_UINT8(int V0,int V1, int H0, int H1, int 
 
     //checking that the interval is valid
     if(V1-V0 <=0 || H1-H0 <= 0 || D1-D0 <= 0)
-        throw MyException("in TiledMCVolume::loadSubvolume_to_UINT8: invalid subvolume intervals");
+        throw IOException("in TiledMCVolume::loadSubvolume_to_UINT8: invalid subvolume intervals");
 
     //computing dimensions
     sint64 sbv_height = V1 - V0;
@@ -887,47 +804,10 @@ uint8* TiledMCVolume::loadSubvolume_to_UINT8(int V0,int V1, int H0, int H1, int 
     return subvol;
 }
 
-bool TiledMCVolume::fileExists(const char *filepath)
+void TiledMCVolume::setActiveChannels ( uint32 *_active, int _n_active )
 {
-	//LOCAL VARIABLES
-	string file_path_string =filepath;
-	string file_name;
-	string dir_path;
-	bool file_exists = false;
-	DIR* directory;
-	dirent* dir_entry;
+    /**/iim::debug(iim::LEV3, 0, __iim__current__function__);
 
-	//extracting dir_path and file_name from file_path
-	char * tmp;
-	tmp = strtok (&file_path_string[0],"/\\");
-	while (tmp != NULL)
-	{
-		file_name = tmp;
-		tmp = strtok (NULL, "/\\");
-	}
-	file_path_string =filepath;
-	dir_path=file_path_string.substr(0,file_path_string.find(file_name));
-
-	//obtaining DIR pointer to directory (=NULL if directory doesn't exist)
-	if (!(directory=opendir(&(dir_path[0]))))
-	{
-		char msg[1000];
-		sprintf(msg,"in fileExists(filepath=%s): Unable to open directory \"%s\"", filepath, dir_path.c_str());
-		throw MyException(msg);
-	}
-
-	//scanning for given file
-	while (!file_exists && (dir_entry=readdir(directory)))
-	{
-		//storing in tmp i-th entry and checking that it not contains '.', so that I can exclude '..', '.' and files entries
-		if(!strcmp(&(file_name[0]), dir_entry->d_name))
-			file_exists = true;
-	}
-	closedir(directory);
-	return file_exists;
-}
-
-void TiledMCVolume::setActiveChannels ( uint32 *_active, int _n_active ) {
 	if ( active )
 		delete[] active;
 	active   = _active;
@@ -942,24 +822,22 @@ struct stream_MC_descr_t {
 	void **descr_list;
 };
 
-void *TiledMCVolume::streamedLoadSubvolume_open ( int steps, uint8 *buf, int V0,int V1, int H0, int H1, int D0, int D1 ) {
-
-    #if IM_VERBOSE > 3
-    printf("\t\t\t\tin TiledMCVolume::streamedLoadSubvolume_open(steps=%d, V0=%d, V1=%d, H0=%d, H1=%d, D0=%d, D1=%d)\n", steps, V0, V1, H0, H1, D0, D1);
-    #endif
+void *TiledMCVolume::streamedLoadSubvolume_open ( int steps, uint8 *buf, int V0,int V1, int H0, int H1, int D0, int D1 )
+{
+    /**/iim::debug(iim::LEV3, strprintf("steps=%d, V0=%d, V1=%d, H0=%d, H1=%d, D0=%d, D1=%d", steps, V0, V1, H0, H1, D0, D1).c_str(), __iim__current__function__);
 
     //checking for non implemented features
 	if( this->BYTESxCHAN != 1 ) {
-		char err_msg[IM_STATIC_STRINGS_SIZE];
+		char err_msg[STATIC_STRINGS_SIZE];
 		sprintf(err_msg,"TiledMCVolume::streamedLoadSubvolume_open: invalid number of bytes per channel (%d)",this->BYTESxCHAN); 
-		throw MyException(err_msg);
+        throw IOException(err_msg);
 	}
 
     //checks
 	if ( V0>=V1 || H0>=H1 || D0>=D1 || V0<0 || H0<0 || D0<0 || V1>(int)DIM_V || H1>(int)DIM_H || D1>(int)DIM_D ) {
 		char msg[1000];
 		sprintf(msg,"in TiledMCVolume::streamedLoadSubvolume_open: invalid sub-block vertices");
-		throw MyException(msg);
+        throw IOException(msg);
 	}
 
 	sint64 sbv_height = V1 - V0;
@@ -978,7 +856,9 @@ void *TiledMCVolume::streamedLoadSubvolume_open ( int steps, uint8 *buf, int V0,
 	return stream_descr;
 }
 
-uint8 *TiledMCVolume::streamedLoadSubvolume_dostep ( void *stream_descr, unsigned char *buffer2 ) {
+uint8 *TiledMCVolume::streamedLoadSubvolume_dostep ( void *stream_descr, unsigned char *buffer2 )
+{
+    /**/iim::debug(iim::LEV3, 0, __iim__current__function__);
 
 	uint8 *dummy;
 	uint8 *buf = vol_ch[active[0]]->streamedLoadSubvolume_dostep(
@@ -995,7 +875,9 @@ uint8 *TiledMCVolume::streamedLoadSubvolume_dostep ( void *stream_descr, unsigne
 	return buf;
 }
 
-void TiledMCVolume::streamedLoadSubvolume_cpydata ( void *stream_descr, unsigned char *buffer, unsigned char *buffer2 ) {
+void TiledMCVolume::streamedLoadSubvolume_cpydata ( void *stream_descr, unsigned char *buffer, unsigned char *buffer2 )
+{
+    /**/iim::debug(iim::LEV3, 0, __iim__current__function__);
 
 	for ( int c=0; c<n_active; c++ ) {
 		vol_ch[active[c]]->streamedLoadSubvolume_cpydata(
@@ -1006,7 +888,9 @@ void TiledMCVolume::streamedLoadSubvolume_cpydata ( void *stream_descr, unsigned
 	}
 }
 
-uint8 *TiledMCVolume::streamedLoadSubvolume_close ( void *stream_descr, bool return_buffer ) {
+uint8 *TiledMCVolume::streamedLoadSubvolume_close ( void *stream_descr, bool return_buffer )
+{
+    /**/iim::debug(iim::LEV3, 0, __iim__current__function__);
 
 	uint8 *dummy;
 	uint8 *temp = vol_ch[0]->streamedLoadSubvolume_close(((stream_MC_descr_t *)stream_descr)->descr_list[0],true);

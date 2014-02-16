@@ -61,7 +61,7 @@ CConverter::~CConverter()
     /**/itm::debug(itm::LEV1, "object successfully DESTROYED", __itm__current__function__);
 }
 
-void CConverter::setMembers(PConverter* pConverter) throw (MyException)
+void CConverter::setMembers(PConverter* pConverter) throw (RuntimeException)
 {
     /**/itm::debug(itm::LEV1, 0, __itm__current__function__);
 
@@ -106,7 +106,7 @@ void CConverter::setMembers(PConverter* pConverter) throw (MyException)
         else
         {
             sprintf(errMsg, "Input format \"%s\" not yet supported", inVolFormat.c_str());
-            throw MyException(errMsg);
+            throw RuntimeException(errMsg);
         }
     }
     else
@@ -131,15 +131,15 @@ void CConverter::setMembers(PConverter* pConverter) throw (MyException)
         else
         {
             sprintf(errMsg, "Output format \"%s\" not yet supported", outVolFormat.c_str());
-            throw MyException(errMsg);
+            throw RuntimeException(errMsg);
         }
         resolutionsSize = pConverter->resolutionsNumber;
         if(resolutionsSize <= 0)
-            throw MyException("No resolutions selected");
+            throw RuntimeException("No resolutions selected");
         if(resolutionsSize > S_MAX_MULTIRES)
         {
             sprintf(errMsg, "Exceeded the maximum number (%d) of resolutions that can be produced", S_MAX_MULTIRES);
-            throw MyException(errMsg);
+            throw RuntimeException(errMsg);
         }
         resolutions = new bool[S_MAX_MULTIRES];
         for(int i=0; i<S_MAX_MULTIRES; i++)
@@ -158,7 +158,7 @@ void CConverter::setMembers(PConverter* pConverter) throw (MyException)
         else if(downsamplingMethod == 1)
             downsamplingMethod = HALVE_BY_MAX;
         else
-            throw MyException(strprintf("Unsupported downsampling method").c_str());
+            throw RuntimeException(strprintf("Unsupported downsampling method").c_str());
     }
 }
 
@@ -173,9 +173,9 @@ void CConverter::run()
         {
             //first checking that the given filepath or folder exists
             if(!fileMode && !QDir(inVolPath.c_str()).exists())
-                throw MyException(QString("Unable to find the directory \"").append(inVolPath.c_str()).append("\"").toStdString().c_str());
+                throw RuntimeException(QString("Unable to find the directory \"").append(inVolPath.c_str()).append("\"").toStdString().c_str());
             if(fileMode && !QFile(inVolPath.c_str()).exists())
-                throw MyException(QString("Unable to find the file \"").append(inVolPath.c_str()).append("\"").toStdString().c_str());
+                throw RuntimeException(QString("Unable to find the file \"").append(inVolPath.c_str()).append("\"").toStdString().c_str());
 
             vc = new VolumeConverter();
             vc->setSrcVolume(inVolPath.c_str(), inVolFormat.c_str(), "RGB");
@@ -184,7 +184,7 @@ void CConverter::run()
         {
             //first checking that the given folder exists
             if(!fileMode && !QDir(outVolPath.c_str()).exists())
-                throw MyException(QString("Unable to find the directory \"").append(outVolPath.c_str()).append("\"").toStdString().c_str());
+                throw RuntimeException(QString("Unable to find the directory \"").append(outVolPath.c_str()).append("\"").toStdString().c_str());
 
             if(outVolFormat.compare(STACKED_FORMAT) == 0)
                 vc->generateTiles(outVolPath, resolutions, stacksHeight, stacksWidth, downsamplingMethod);
@@ -196,7 +196,7 @@ void CConverter::run()
             {
                 char errMsg[1024];
                 sprintf(errMsg, "Output format \"%s\" not yet supported", outVolFormat.c_str());
-                throw MyException(errMsg);
+                throw RuntimeException(errMsg);
             }
         }
 
@@ -205,7 +205,8 @@ void CConverter::run()
 
         /**/itm::debug(itm::LEV1, "EOF", __itm__current__function__);
     }
-    catch( MyException& exception)  {emit sendOperationOutcome(new MyException(exception.what()));}
-    catch(const char* error)        {emit sendOperationOutcome(new MyException(error));}
-    catch(...)                      {emit sendOperationOutcome(new MyException("Unknown error occurred"));}
+    catch( iim::IOException& exception)  {reset(); emit sendOperationOutcome(new RuntimeException(exception.what()));}
+    catch( RuntimeException& exception)  {emit sendOperationOutcome(new RuntimeException(exception.what()));}
+    catch(const char* error)        {emit sendOperationOutcome(new RuntimeException(error));}
+    catch(...)                      {emit sendOperationOutcome(new RuntimeException("Unknown error occurred"));}
 }

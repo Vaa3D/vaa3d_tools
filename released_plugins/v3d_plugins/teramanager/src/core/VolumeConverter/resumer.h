@@ -25,22 +25,21 @@
 #ifndef RESUMER_H
 #define RESUMER_H
 
-#include "../ImageManager/MyException.h"
-#include "../ImageManager/IM_defs.h"
+#include "../ImageManager/IM_config.h"
 
 #include <stdio.h>
 
 bool initResumer ( const char *out_fmt, const char *output_path, int resolution_size,bool* resolutions, 
 				   int block_height, int block_width, int block_depth, int method, 
-				   const char* saved_img_format, int saved_img_depth, FILE *&fhandle ) throw (MyException);
+                   const char* saved_img_format, int saved_img_depth, FILE *&fhandle ) throw (iim::IOException);
 
 void readResumerState ( FILE *&fhandle, const char *output_path, int &resolution_size, int *stack_block, int *slice_start, int *slice_end, 
-				 sint64 &z, sint64 &z_parts ) throw (MyException);
+                 iim::sint64 &z, iim::sint64 &z_parts ) throw (iim::IOException);
 
 void saveResumerState ( FILE *fhandle, int resolution_size, int *stack_block, int *slice_start, int *slice_end, 
-				 sint64 z, sint64 z_parts ) throw (MyException);
+                 iim::sint64 z, iim::sint64 z_parts ) throw (iim::IOException);
 
-void closeResumer ( FILE *fhandle, const char *output_path = 0 ) throw (MyException);
+void closeResumer ( FILE *fhandle, const char *output_path = 0 ) throw (iim::IOException);
 
 #endif
 
