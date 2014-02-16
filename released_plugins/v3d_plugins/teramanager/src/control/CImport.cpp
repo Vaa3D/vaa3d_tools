@@ -39,6 +39,7 @@
 #include "../core/ImageManager/TiledMCVolume.h"
 
 using namespace teramanager;
+using namespace iim;
 
 CImport* CImport::uniqueInstance = 0;
 bool sortVolumesAscendingSize (VirtualVolume* i,VirtualVolume* j) { return (i->getMVoxels() < j->getMVoxels()); }
@@ -167,49 +168,7 @@ void CImport::run()
         {
             /**/itm::debug(itm::LEV_MAX, "Entering 2+nd-time import section", __itm__current__function__);
 
-            VirtualVolume* volume = 0;
-
-            //TileMCVolume is detected if cmap.bin file exists
-            if(QFile::exists(cmap_fpath.c_str()))
-            {
-                /**/itm::debug(itm::LEV_MAX, strprintf("TiledMCVolume detected since cmap.bin has been found at \"%d\"", cmap_fpath.c_str()).c_str(), __itm__current__function__);
-
-                try
-                {
-                    volume = new TiledMCVolume(path.c_str(), ref_sys(axis_invalid,axis_invalid,axis_invalid),0,0,0);
-                }
-                catch(iim::IOException& exception)
-                {
-                    throw RuntimeException(strprintf("Unable to import TiledMC volume at \"%s\": %s", path.c_str(), exception.what()).c_str());
-                }
-                catch(...)
-                {
-                    throw RuntimeException(strprintf("Unable to import TiledMC volume at \"%s\"", path.c_str()).c_str());
-                }
-            }
-            else
-            {
-                /**/itm::debug(itm::LEV_MAX, "TiledMCVolume discarded since cmap.bin was not found", __itm__current__function__);
-                //otherwise attemping to load other formats
-                try
-                {
-                    /**/itm::debug(itm::LEV_MAX, "Trying to open volume with StackedVolume", __itm__current__function__);
-                    volume = new StackedVolume(path.c_str(), ref_sys(axis_invalid,axis_invalid,axis_invalid),0,0,0);
-                }
-                catch(...)
-                {
-                    try
-                    {
-                        /**/itm::debug(itm::LEV_MAX, "Trying to open volume with TiledVolume", __itm__current__function__);
-                        volume = new TiledVolume(path.c_str(), ref_sys(axis_invalid,axis_invalid,axis_invalid),0,0,0);
-                    }
-                    catch(...)
-                    {
-                        throw RuntimeException(strprintf("Unable to import current volume at \"%s\"", path.c_str()).c_str());
-                    }
-                }
-            }
-
+            VirtualVolume* volume = VirtualVolume::instance(path.c_str());
             volumes.push_back(volume);
         }
 
@@ -275,7 +234,7 @@ void CImport::run()
                 }
                 catch(iim::IOException& exception)
                 {
-                    throw RuntimeException(strprintf("A problem occurred when importing volume at \"%s\": %s", path.c_str(), exception.what()).c_str());
+                    throw RuntimeException(strprintf("A problem occurred when importing volume at \"%s\": %s", path_i.c_str(), exception.what()).c_str());
                 }
                 catch(...)
                 {
@@ -358,7 +317,7 @@ void CImport::run()
             //searching for an already existing map, if not available we try to generate it from the lower resolutions
             string volMapPath = path;
             volMapPath.append("/");
-            volMapPath.append(TMP_VMAP_FNAME);
+            volMapPath.append(VMAP_BIN_FILE_NAME.c_str());
             if(!iim::isFile(volMapPath.c_str()) || reimport || regenerateVMap)
             {
                 /**/itm::debug(itm::LEV_MAX, "Entering volume's map generation section", __itm__current__function__);

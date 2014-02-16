@@ -30,24 +30,15 @@
 #include <list>
 #include <string>
 
-#define TILED_MC_FORMAT "TiledMC" 
-
-//FORWARD-DECLARATIONS
-class  Block;
-
-//******* ABSTRACT TYPES DEFINITIONS *******
-#include "StackedVolume.h" 
-
-
 //every object of this class has the default (1,2,3) reference system
 class TiledMCVolume : public VirtualVolume
 {
 	private:	
 		//******OBJECT ATTRIBUTES******
         iim::uint16 N_ROWS, N_COLS;			//dimensions (in stacks) of stacks matrix along VH axes
-        //Block ***BLOCKS;			    //2-D array of <Block*>
-        ref_sys reference_system;       //reference system of the stored volume
-        float  VXL_1, VXL_2, VXL_3;     //voxel dimensions of the stored volume
+        //Block ***BLOCKS;                  //2-D array of <Block*>
+        iim::ref_sys reference_system;      //reference system of the stored volume
+        float  VXL_1, VXL_2, VXL_3;         //voxel dimensions of the stored volume
 
 		char        **CHDIRNAMES;			//1-D dinamic array of <char>  pointers to channels directory names
 		TiledVolume **vol_ch;
@@ -64,7 +55,7 @@ class TiledMCVolume : public VirtualVolume
 		void rotate(int theta);
 
 		//mirror stacks matrix along mrr_axis (accepted values are mrr_axis=1,2,3)
-		void mirror(axis mrr_axis);
+        void mirror(iim::axis mrr_axis);
 
 		// iannello returns the number of channels of images composing the volume
         void initChannels ( ) throw (iim::IOException);
@@ -72,22 +63,21 @@ class TiledMCVolume : public VirtualVolume
 	public:
 		//CONSTRUCTORS-DECONSTRUCTOR
         TiledMCVolume(const char* _root_dir)  throw (iim::IOException);
-        TiledMCVolume(const char* _root_dir, ref_sys _reference_system,
+        TiledMCVolume(const char* _root_dir, iim::ref_sys _reference_system,
 					float _VXL_1, float _VXL_2, float _VXL_3, 
                     bool overwrite_mdata = false, bool save_mdata=true)  throw (iim::IOException);
 
 		~TiledMCVolume(void);
 
 		//GET methods
-		//Block*** getBLOCKS(){return BLOCKS;}
         iim::uint16 getN_ROWS(){return N_ROWS;}
         iim::uint16 getN_COLS(){return N_COLS;}
         float  getVXL_1(){return VXL_1;}
         float  getVXL_2(){return VXL_2;}
         float  getVXL_3(){return VXL_3;}
-        axis   getAXS_1(){return reference_system.first;}
-        axis   getAXS_2(){return reference_system.second;}
-        axis   getAXS_3(){return reference_system.third;}
+        iim::axis   getAXS_1(){return reference_system.first;}
+        iim::axis   getAXS_2(){return reference_system.second;}
+        iim::axis   getAXS_3(){return reference_system.third;}
 
 
 		//PRINT method

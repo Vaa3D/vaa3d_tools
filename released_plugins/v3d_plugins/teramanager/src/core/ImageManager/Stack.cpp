@@ -206,17 +206,17 @@ void Stack::init()
 	DEPTH = (int)entries_lev3.size();
 
 	//----- Alessandro added on August 12, 2013
-    	//----- Bug fixed: exceeding the maximum number of directories opened at the same time
-    	closedir(cur_dir_lev3);
+    //----- Bug fixed: exceeding the maximum number of directories opened at the same time
+    closedir(cur_dir_lev3);
 
-    	for(entry_k = entries_lev3.begin(); entry_k != entries_lev3.end(); entry_k++)
-     	printf("in Stack[%d,%d]::init(): found \"%s\"\n", ROW_INDEX, COL_INDEX, entry_k->c_str());
+    for(entry_k = entries_lev3.begin(); entry_k != entries_lev3.end(); entry_k++)
+        /**/iim::debug(iim::LEV3, strprintf("ROW_INDEX=%d, COL_INDEX=%d, found \"%s\"", ROW_INDEX, COL_INDEX, entry_k->c_str()).c_str(), __iim__current__function__);
 
 	//checking if current stack is not empty
 	if(DEPTH == 0)
 	{
 		char msg[1000];
-                sprintf(msg,"in Stack[%d,%d]::init(): stack in \"%s\" is empty or no supported images were found", ROW_INDEX, COL_INDEX, abs_path);
+        sprintf(msg,"in Stack[%d,%d]::init(): stack in \"%s\" is empty or no supported images were found", ROW_INDEX, COL_INDEX, abs_path);
         throw IOException(msg);
 	}
 
@@ -239,7 +239,7 @@ void Stack::init()
 	//extracting HEIGHT and WIDTH attributes from first slice
 	char slice_fullpath[STATIC_STRINGS_SIZE];
 	sprintf(slice_fullpath, "%s/%s/%s", CONTAINER->getROOT_DIR(), DIR_NAME, FILENAMES[0]);
-	printf("in Stack[%d,%d]::init(): trying to load image at \"%s\"\n", ROW_INDEX, COL_INDEX, slice_fullpath);
+    /**/iim::debug(iim::LEV3, strprintf("ROW_INDEX=%d, COL_INDEX=%d: trying to load image at \"%s\"", ROW_INDEX, COL_INDEX, slice_fullpath).c_str(), __iim__current__function__);
 	IplImage *img_tmp = cvLoadImage(slice_fullpath, CV_LOAD_IMAGE_GRAYSCALE);
 	if(!img_tmp)
 	{
@@ -248,7 +248,7 @@ void Stack::init()
 			ROW_INDEX, COL_INDEX, slice_fullpath);
         throw IOException(msg);
 	}
-	printf("in Stack[%d,%d]::init(): successfully loaded image at \"%s\"\n", ROW_INDEX, COL_INDEX, slice_fullpath);
+    /**/iim::debug(iim::LEV3, strprintf("ROW_INDEX=%d, COL_INDEX=%d: successfully loaded image at \"%s\"", ROW_INDEX, COL_INDEX, slice_fullpath).c_str(), __iim__current__function__);
 	HEIGHT = img_tmp->height;
 	WIDTH  = img_tmp->width;
 	cvReleaseImage(&img_tmp);

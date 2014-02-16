@@ -23,7 +23,6 @@
 ********************************************************************************************************************************************************************************************/
 
 #include "resumer.h"
-#include "S_config.h"
 
 #ifdef _WIN32
 #include "dirent_win.h"
@@ -54,7 +53,7 @@ bool initResumer ( const char *out_fmt, const char *output_path, int resolutions
 {
 	size_t  str_len;
 	char resumer_filepath[STATIC_STRINGS_SIZE];
-	char err_msg[S_STATIC_STRINGS_SIZE];
+	char err_msg[STATIC_STRINGS_SIZE];
 
 	sprintf(resumer_filepath, "%s/%s", output_path, RESUMER_STATUS_FILE_NAME);
     if ( iim::isFile(resumer_filepath) ) {
@@ -66,7 +65,7 @@ bool initResumer ( const char *out_fmt, const char *output_path, int resolutions
 			char _out_fmt[STATIC_STRINGS_SIZE];
 			char _output_path[STATIC_STRINGS_SIZE];
 			int  _resolutions_size;
-			bool _resolutions[S_MAX_MULTIRES];
+            bool _resolutions[TMITREE_MAX_HEIGHT];
 			int  _block_height;
 			int  _block_width;
 			int  _block_depth;
@@ -170,7 +169,7 @@ void readResumerState ( FILE *&fhandle, const char *output_path, int &resolution
 	char resumer_filepath[STATIC_STRINGS_SIZE];
 	sprintf(resumer_filepath, "%s/%s", output_path, RESUMER_STATUS_FILE_NAME);
 	if ( (fhandle = fopen(resumer_filepath,"ab")) == 0 ) {
-		char err_msg[S_STATIC_STRINGS_SIZE];
+		char err_msg[STATIC_STRINGS_SIZE];
 		sprintf(err_msg, "in initResumer: the resume state file cannot be re-opened in append mode");
         throw IOException(err_msg);
 	}
@@ -189,7 +188,7 @@ void saveResumerState ( FILE *fhandle, int resolutions_size, int *stack_block, i
 
 void closeResumer ( FILE *fhandle, const char *output_path ) throw (IOException)
 {
-	//char err_msg[S_STATIC_STRINGS_SIZE];
+	//char err_msg[STATIC_STRINGS_SIZE];
 
 	fclose(fhandle);
 

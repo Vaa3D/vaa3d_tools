@@ -50,7 +50,7 @@ class teramanager::CImport : public QThread
         * instantiated by calling the static method "istance(...)"
         **********************************************************************************/
         static CImport* uniqueInstance;
-        CImport() : QThread(), path(""), AXS_1(axis(0)), AXS_2(axis(0)), AXS_3(axis(0)),
+        CImport() : QThread(), path(""), AXS_1(iim::axis(0)), AXS_2(iim::axis(0)), AXS_3(iim::axis(0)),
                                VXL_1(0), VXL_2(0), VXL_3(0), reimport(false),
                                vmapMaxSize(50), vmapData(0), vmapYDim(-1), vmapXDim(-1), vmapZDim(-1),
                                vmapCDim(-1), vmapTDim(-1)
@@ -63,7 +63,7 @@ class teramanager::CImport : public QThread
 
         // volume members
         string path;                                //folder where to start the scan process to find the volumes
-        axis AXS_1, AXS_2, AXS_3;                   //spatial reference system of the volume
+        iim::axis AXS_1, AXS_2, AXS_3;              //spatial reference system of the volume
         float VXL_1, VXL_2, VXL_3;                  //voxel dimensions of the volume
         bool reimport;                              //true if the volume has to be reimported
         vector<VirtualVolume*> volumes;             //stores the volumes at the different resolutions
@@ -135,7 +135,7 @@ class teramanager::CImport : public QThread
         {
             /**/itm::debug(itm::LEV1, 0, __itm__current__function__);
 
-            path=""; AXS_1=AXS_2=AXS_3=axis_invalid; VXL_1=VXL_2=VXL_3=0; reimport=false;
+            path=""; AXS_1=AXS_2=AXS_3=iim::axis_invalid; VXL_1=VXL_2=VXL_3=0; reimport=false;
             for(size_t i=0; i<volumes.size(); i++)
                 delete volumes[i];
             volumes.clear();

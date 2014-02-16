@@ -64,11 +64,8 @@
 
 #include <string>
 #include <math.h>
-#include "S_config.h"
-#include "../ImageManager/VM_config.h"
 
 #include "../ImageManager/VirtualVolume.h"
-#include "../ImageManager/StackedVolume.h" 
 
 // possible output format
 #define REAL_REPRESENTATION      "intensity"  // images are managed internally with REAL_INTERNAL_REP representation
@@ -121,7 +118,7 @@ class VolumeConverter
 		* graylevel and multi channel and it will be saved as RGB; at most three channels are supported; if channels
 		* of original image are two, the third RGB channel (Blue channel) is set to all zero
 		*************************************************************************************************************/
-        void setSrcVolume(const char* _root_dir, const char* _fmt = STACKED_FORMAT, const char* _out_fmt = REAL_REPRESENTATION) throw (iim::IOException);
+        void setSrcVolume(const char* _root_dir, const char* _fmt = iim::STACKED_FORMAT.c_str(), const char* _out_fmt = REAL_REPRESENTATION) throw (iim::IOException);
 
 
 		/*************************************************************************************************************

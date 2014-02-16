@@ -38,6 +38,8 @@
 #include "../control/V3Dsubclasses.h"
 #include "renderer_gl1.h"
 #include "v3dr_mainwindow.h"
+#include <typeinfo>
+#include "../core/ImageManager/TimeSeries.h"
 
 using namespace teramanager;
 
@@ -1076,6 +1078,8 @@ void PMain::openVolume(string path /* = "" */)
 
         if(import_path.isEmpty())
         {
+            /**/itm::debug(itm::LEV2, "import_path is empty, launching file dialog", __itm__current__function__);
+
             #ifdef _USE_QT_DIALOGS
             QFileDialog dialog(0);
             dialog.setFileMode(QFileDialog::Directory);
@@ -1098,9 +1102,24 @@ void PMain::openVolume(string path /* = "" */)
             if (import_path.isEmpty())
                 return;
         }
-        else if(!QFile::exists(path.c_str()))
-            throw RuntimeException(strprintf("Path \"%s\" does not exist", path.c_str()).c_str());
+        else
+        {
+            /**/itm::debug(itm::LEV2, strprintf("import_path is not empty (= \"%s\")", import_path.toStdString().c_str()).c_str(), __itm__current__function__);
 
+            if(!QFile::exists(import_path))
+                throw RuntimeException(strprintf("Path \"%s\" does not exist", import_path.toStdString().c_str()).c_str());
+        }
+
+        /* ---- temporary code ---- */
+//        TimeSeries* ts = new TimeSeries(import_path.toStdString().c_str());
+//        return;
+//        VirtualVolume* vol = VirtualVolume::instance(import_path.toStdString().c_str());
+//        if(vol)
+//            printf("VOLUME FOUND! Type = \"%s\"\n", typeid(*vol).name());
+//        else
+//            printf("VOLUME not found :-(\n");
+//        return;
+        /* ------------------------ */
 
         //then checking that no volume has imported yet
         if(!CImport::instance()->isEmpty())
@@ -1134,7 +1153,7 @@ void PMain::openVolume(string path /* = "" */)
         mdata_fpath.append(iim::MDATA_BIN_FILE_NAME.c_str());
         QString vmap_fpath = import_path;
         vmap_fpath.append("/");
-        vmap_fpath.append(TMP_VMAP_FNAME);
+        vmap_fpath.append(VMAP_BIN_FILE_NAME.c_str());
         QString cmap_fpath = import_path + "/cmap.bin";
         if( (!QFile::exists(mdata_fpath) && !QFile::exists(cmap_fpath)) || reimport_checkbox->isChecked())
         {
@@ -1157,6 +1176,12 @@ void PMain::openVolume(string path /* = "" */)
 
         //starting import
         CImport::instance()->start();
+    }
+    catch(iim::IOException &ex)
+    {
+        QMessageBox::critical(this,QObject::tr("Error"), QObject::tr(ex.what()),QObject::tr("Ok"));
+        PMain::getInstance()->resetGUI();
+        CImport::instance()->reset();
     }
     catch(RuntimeException &ex)
     {

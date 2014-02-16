@@ -311,33 +311,33 @@ void StackedVolume::init()
 
 	//LOCAL VARIABLES
 	string tmp_path;				//string that contains temp paths during computation
-        string tmp;						//string that contains temp data during computation
+    string tmp;						//string that contains temp data during computation
 	DIR *cur_dir_lev1;				//pointer to DIR, the data structure that represents a DIRECTORY (level 1 of hierarchical structure)
 	DIR *cur_dir_lev2;				//pointer to DIR, the data structure that represents a DIRECTORY (level 2 of hierarchical structure)
 	dirent *entry_lev1;				//pointer to DIRENT, the data structure that represents a DIRECTORY ENTRY inside a directory (level 1)
 	dirent *entry_lev2;				//pointer to DIRENT, the data structure that represents a DIRECTORY ENTRY inside a directory (level 2)
 	int i=0,j=0;					//for counting of N_ROWS, N_COLS
-        list<Stack*> stacks_list;                       //each stack found in the hierarchy is pushed into this list
-        list<string> entries_lev1;                      //list of entries of first level of hierarchy
-        list<string>::iterator entry_i;                 //iterator for list 'entries_lev1'
-        list<string> entries_lev2;                      //list of entries of second level of hierarchy
-        list<string>::iterator entry_j;                 //iterator for list 'entries_lev2'
+    list<Stack*> stacks_list;       //each stack found in the hierarchy is pushed into this list
+    list<string> entries_lev1;      //list of entries of first level of hierarchy
+    list<string>::iterator entry_i; //iterator for list 'entries_lev1'
+    list<string> entries_lev2;      //list of entries of second level of hierarchy
+    list<string>::iterator entry_j; //iterator for list 'entries_lev2'
     char stack_i_j_path[STATIC_STRINGS_SIZE];
 
 	//obtaining DIR pointer to root_dir (=NULL if directory doesn't exist)
 	if (!(cur_dir_lev1=opendir(root_dir)))
 	{
-            char msg[STATIC_STRINGS_SIZE];
-            sprintf(msg,"in StackedVolume::init(...): Unable to open directory \"%s\"", root_dir);
-            throw IOException(msg);
+        char msg[STATIC_STRINGS_SIZE];
+        sprintf(msg,"in StackedVolume::init(...): Unable to open directory \"%s\"", root_dir);
+        throw IOException(msg);
 	}
 
 	//scanning first level of hierarchy which entries need to be ordered alphabetically. This is done using STL.
 	while ((entry_lev1=readdir(cur_dir_lev1)))
 	{
-            tmp=entry_lev1->d_name;
-            if(tmp.find(".") == string::npos && tmp.find(" ") == string::npos)
-                    entries_lev1.push_front(entry_lev1->d_name);
+        tmp=entry_lev1->d_name;
+        if(tmp.find(".") == string::npos && tmp.find(" ") == string::npos)
+            entries_lev1.push_front(entry_lev1->d_name);
 	}
 	closedir(cur_dir_lev1);
 	entries_lev1.sort();
@@ -399,11 +399,11 @@ void StackedVolume::init()
 
 	//adjusting possible sign mismatch betwwen reference system and VXL
 	//in these cases VXL is adjusted to match with reference system
-	if(SIGN(reference_system.first) != SIGN(VXL_1))
+    if(sgn(reference_system.first) != sgn(VXL_1))
             VXL_1*=-1.0f;
-	if(SIGN(reference_system.second) != SIGN(VXL_2))
+    if(sgn(reference_system.second) != sgn(VXL_2))
             VXL_2*=-1.0f;
-	if(SIGN(reference_system.third) != SIGN(VXL_3))
+    if(sgn(reference_system.third) != sgn(VXL_3))
             VXL_3*=-1.0f;
 
 	//HVD --> VHD
@@ -978,21 +978,4 @@ void StackedVolume::releaseStacks(int first_file, int last_file)
 	for(int row_index=0; row_index<N_ROWS; row_index++)
 		for(int col_index=0; col_index<N_COLS; col_index++)
 			STACKS[row_index][col_index]->releaseStack(first_file,last_file);
-}
-
-const char* axis_to_str(axis ax)
-{
-	if(ax == 1)
-		return "Vertical";
-	else if(ax == -1)
-		return "Inverse Vertical";
-	else if(ax == 2)
-		return "Horizontal";
-	else if(ax == -2)
-		return "Inverse Horizontal";
-	else if(ax == 3)
-		return "Depth";
-	else if(ax == -3)
-		return "Inverse Depth";
-	else return "<unknown>";
 }

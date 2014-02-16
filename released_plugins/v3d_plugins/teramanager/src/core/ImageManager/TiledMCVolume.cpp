@@ -43,8 +43,6 @@
 using namespace std;
 using namespace iim;
 
-#define IM_MC_METADATA_FILE_NAME "cmap.bin"
-
 
 TiledMCVolume::TiledMCVolume(const char* _root_dir)  throw (IOException)
 : VirtualVolume(_root_dir) // iannello ADDED
@@ -66,7 +64,7 @@ TiledMCVolume::TiledMCVolume(const char* _root_dir)  throw (IOException)
 
 	//without any configuration parameter, volume import must be done from the metadata file stored in the root directory, if it exists
 	char mdata_filepath[STATIC_STRINGS_SIZE];
-	sprintf(mdata_filepath, "%s/%s", root_dir, IM_MC_METADATA_FILE_NAME);
+    sprintf(mdata_filepath, "%s/%s", root_dir, MC_MDATA_BIN_FILE_NAME.c_str());
     if(iim::isFile(mdata_filepath))
 	{
 		load(mdata_filepath);
@@ -100,7 +98,7 @@ TiledMCVolume::TiledMCVolume(const char* _root_dir, ref_sys _reference_system, f
 
 	//trying to unserialize an already existing metadata file, if it doesn't exist the full initialization procedure is performed and metadata is saved
 	char mdata_filepath[STATIC_STRINGS_SIZE];
-	sprintf(mdata_filepath, "%s/%s", root_dir, IM_MC_METADATA_FILE_NAME);
+    sprintf(mdata_filepath, "%s/%s", root_dir, MC_MDATA_BIN_FILE_NAME.c_str());
     if(iim::isFile(mdata_filepath) && !overwrite_mdata)
 	{
 		load(mdata_filepath);
@@ -420,7 +418,7 @@ void TiledMCVolume::init()
 
 	//intermediate check
 	if(N_ROWS == 0 || N_COLS == 0)
-            throw IOException("in TiledMCVolume::init(...): Unable to initialize N_ROWS, N_COLS");
+        throw IOException("in TiledMCVolume::init(...): Unable to initialize N_ROWS, N_COLS");
 
 	/******************* 2) SETTING THE REFERENCE SYSTEM ********************
 	The entire application uses a vertical-horizontal reference system, so
@@ -429,11 +427,11 @@ void TiledMCVolume::init()
 
 	//adjusting possible sign mismatch betwwen reference system and VXL
 	//in these cases VXL is adjusted to match with reference system
-	if(SIGN(reference_system.first) != SIGN(VXL_1))
+    if(sgn(reference_system.first) != sgn(VXL_1))
             VXL_1*=-1.0f;
-	if(SIGN(reference_system.second) != SIGN(VXL_2))
+    if(sgn(reference_system.second) != sgn(VXL_2))
             VXL_2*=-1.0f;
-	if(SIGN(reference_system.third) != SIGN(VXL_3))
+    if(sgn(reference_system.third) != sgn(VXL_3))
             VXL_3*=-1.0f;
 
 	//HVD --> VHD

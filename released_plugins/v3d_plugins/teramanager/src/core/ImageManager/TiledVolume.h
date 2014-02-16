@@ -25,20 +25,12 @@
 #ifndef _TILED_VOLUME_H
 #define _TILED_VOLUME_H
 
-//#include "IM_defs.h"
-//#include "iim::MyException.h"
 #include "VirtualVolume.h" // ADDED
 #include <list>
 #include <string>
 
-#define TILED_FORMAT "Tiled" // ADDED
-
 //FORWARD-DECLARATIONS
 class  Block;
-
-//******* ABSTRACT TYPES DEFINITIONS *******
-#include "StackedVolume.h" 
-
 
 //every object of this class has the default (1,2,3) reference system
 class TiledVolume : public VirtualVolume
@@ -46,9 +38,9 @@ class TiledVolume : public VirtualVolume
 	private:	
 		//******OBJECT ATTRIBUTES******
         iim::uint16 N_ROWS, N_COLS;			//dimensions (in stacks) of stacks matrix along VH axes
-		Block ***BLOCKS;			    //2-D array of <Block*>
-        ref_sys reference_system;       //reference system of the stored volume
-        float  VXL_1, VXL_2, VXL_3;     //voxel dimensions of the stored volume
+        Block ***BLOCKS;                    //2-D array of <Block*>
+        iim::ref_sys reference_system;       //reference system of the stored volume
+        float  VXL_1, VXL_2, VXL_3;         //voxel dimensions of the stored volume
 
 		//***OBJECT PRIVATE METHODS****
 		TiledVolume(void);
@@ -60,7 +52,7 @@ class TiledVolume : public VirtualVolume
 		void rotate(int theta);
 
 		//mirror stacks matrix along mrr_axis (accepted values are mrr_axis=1,2,3)
-		void mirror(axis mrr_axis);
+        void mirror(iim::axis mrr_axis);
 
 		//extract spatial coordinates (in millimeters) of given Stack object reading directory and filenames as spatial coordinates
         void extractCoordinates(Block* stk, int z, int* crd_1, int* crd_2, int* crd_3);
@@ -71,7 +63,7 @@ class TiledVolume : public VirtualVolume
 	public:
 		//CONSTRUCTORS-DECONSTRUCTOR
         TiledVolume(const char* _root_dir)  throw (iim::IOException);
-        TiledVolume(const char* _root_dir, ref_sys _reference_system,
+        TiledVolume(const char* _root_dir, iim::ref_sys _reference_system,
 					float _VXL_1, float _VXL_2, float _VXL_3, 
                     bool overwrite_mdata = false, bool save_mdata=true)  throw (iim::IOException);
 
@@ -86,9 +78,9 @@ class TiledVolume : public VirtualVolume
         float  getVXL_1(){return VXL_1;}
         float  getVXL_2(){return VXL_2;}
         float  getVXL_3(){return VXL_3;}
-        axis   getAXS_1(){return reference_system.first;}
-        axis   getAXS_2(){return reference_system.second;}
-        axis   getAXS_3(){return reference_system.third;}
+        iim::axis   getAXS_1(){return reference_system.first;}
+        iim::axis   getAXS_2(){return reference_system.second;}
+        iim::axis   getAXS_3(){return reference_system.third;}
 
 
 		//PRINT method

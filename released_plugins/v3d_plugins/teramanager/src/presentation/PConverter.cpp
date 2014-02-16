@@ -664,7 +664,7 @@ void PConverter::operationDone(RuntimeException *ex)
                 int width = (vc->getH1()-vc->getH0())/pow(2.0f, resolutionsNumber);
                 int depth = (vc->getD1()-vc->getD0())/pow(2.0f, resolutionsNumber);
                 float MVoxels = (height/1024.0f)*(width/1024.0f)*depth;
-                if(MVoxels < CSettings::instance()->getVolMapSizeLimit() || resolutionsNumber >= S_MAX_MULTIRES)
+                if(MVoxels < CSettings::instance()->getVolMapSizeLimit() || resolutionsNumber >= iim::TMITREE_MAX_HEIGHT)
                     deepest_resolution_reached = true;
                 if(height != 0 && width != 0 && depth != 0)
                     resolutionsNumber++;

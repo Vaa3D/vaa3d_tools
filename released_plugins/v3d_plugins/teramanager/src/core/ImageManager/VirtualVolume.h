@@ -91,7 +91,7 @@ public:
     int     getCHANS() {return CHANS;}
     int     getBYTESxCHAN() {return BYTESxCHAN;}
     char*   getROOT_DIR() {return this->root_dir;}
-    float  getMVoxels(){return (DIM_V/1024.0f)*(DIM_H/1024.0f)*DIM_D;}
+    float   getMVoxels(){return (DIM_V/1024.0f)*(DIM_H/1024.0f)*DIM_D;}
 
 	/*************************************************************************************************************
     * Save image method. <> parameters are mandatory, while [] are optional.
@@ -191,8 +191,9 @@ public:
 		  return false;
 	}
 
-    // tries to automatically detect the volume format and returns the imported volume if succeeds (otherwise throws an exception)
-    VirtualVolume* instance(const char* path) throw (iim::IOException);
+    // tries to automatically detect the volume format and returns the imported volume if succeeds (otherwise returns 0)
+    // WARNING: all metadata files (if needed by that format) are assumed to be present. Otherwise, that format will be skipped.
+    static VirtualVolume* instance(const char* path) throw (iim::IOException);
 };
 
 #endif

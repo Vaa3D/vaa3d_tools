@@ -29,9 +29,6 @@
 #ifndef __TERAMANAGER_C_PLUGIN_H__
 #define __TERAMANAGER_C_PLUGIN_H__
 
-#define TMP_VMAP_FNAME "vmap.bin"   //name of volume map binary file
-#define TMP_VMAP_MAXSIZE 200        //maximum size (in MVoxels) of the volume 3D map to be generated
-
 #include <QtGui>
 #include <v3d_interface.h>
 #include <limits>
@@ -79,15 +76,16 @@ namespace teramanager
     *    CONSTANTS     *
     ********************
     ---------------------------------------------------------------------------------------------------------------------------*/
-    const char undefined_str[] = "undefined";
-    const int  undefined_int32 = -1;
-    const int  int_inf = std::numeric_limits<int>::max();
-    const float undefined_real32 = -1.0f;
-    const int STATIC_STRING_SIZE = 2000;
-    const int FILE_LINE_BUFFER_SIZE = 10000;
+    const char   undefined_str[] = "undefined";
+    const int    undefined_int32 = -1;
+    const int    int_inf = std::numeric_limits<int>::max();
+    const float  undefined_real32 = -1.0f;
+    const int    STATIC_STRING_SIZE = 2000;
+    const int    FILE_LINE_BUFFER_SIZE = 10000;
     const double pi = 3.14159265359;
-    const int MAX_ANNOTATIONS_NUMBER = 1000000; //the maximum number of annotations objects (markers, curve points, etc.)
-    const int ZOOM_HISTORY_SIZE = 3;
+    const int    MAX_ANNOTATIONS_NUMBER = 1000000;       //maximum number of annotations objects (markers, curve points, etc.)
+    const int    ZOOM_HISTORY_SIZE = 3;
+    const std::string VMAP_BIN_FILE_NAME = "vmap.bin";   //name of volume map binary file
     /*-------------------------------------------------------------------------------------------------------------------------*/
 
 

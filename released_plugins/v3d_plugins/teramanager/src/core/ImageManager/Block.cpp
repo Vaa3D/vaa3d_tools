@@ -155,34 +155,32 @@ void Block::unBinarizeFrom(FILE* file)
 
 	fread_return_val = fread(&HEIGHT, sizeof(uint32), 1, file);
 	if(fread_return_val != 1)
-        throw IOException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
+        throw IOException("in Block::unBinarizeFrom(...): error while reading binary metadata file (HEIGHT)");
 	fread_return_val = fread(&WIDTH, sizeof(uint32), 1, file);
 	if(fread_return_val != 1)
-        throw IOException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
+        throw IOException("in Block::unBinarizeFrom(...): error while reading binary metadata file (WIDTH)");
 	fread_return_val = fread(&DEPTH, sizeof(uint32), 1, file);
 	if(fread_return_val != 1)
-        throw IOException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
+        throw IOException("in Block::unBinarizeFrom(...): error while reading binary metadata file (DEPTH)");
 	fread_return_val = fread(&N_BLOCKS, sizeof(uint32), 1, file);
 	if(fread_return_val != 1)
-        throw IOException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
+        throw IOException("in Block::unBinarizeFrom(...): error while reading binary metadata file (N_BLOCKS)");
 	fread_return_val = fread(&N_CHANS, sizeof(uint32), 1, file);
 	if(fread_return_val != 1)
-        throw IOException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
+        throw IOException("in Block::unBinarizeFrom(...): error while reading binary metadata file (N_CHANS)");
 	fread_return_val = fread(&ABS_V, sizeof(int), 1, file);
 	if(fread_return_val != 1)
-        throw IOException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
+        throw IOException("in Block::unBinarizeFrom(...): error while reading binary metadata file (ABS_V)");
 	fread_return_val = fread(&ABS_H, sizeof(int), 1, file);
 	if(fread_return_val != 1)
-        throw IOException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
+        throw IOException("in Block::unBinarizeFrom(...): error while reading binary metadata file (ABS_H)");
 	fread_return_val = fread(&str_size, sizeof(uint16), 1, file);
 	if(fread_return_val != 1)
-        throw IOException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
+        throw IOException("in Block::unBinarizeFrom(...): error while reading binary metadata file (str_size)");
 	DIR_NAME = new char[str_size];
+    fread_return_val = fread(DIR_NAME, str_size, 1, file);
 	if(fread_return_val != 1)
-        throw IOException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
-	fread_return_val = fread(DIR_NAME, str_size, 1, file);
-	if(fread_return_val != 1)
-        throw IOException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
+        throw IOException("in Block::unBinarizeFrom(...): error while reading binary metadata file (DIR_NAME)");
 
 	FILENAMES = new char*[N_BLOCKS];
 	BLOCK_SIZE = new uint32[N_BLOCKS];
@@ -191,24 +189,24 @@ void Block::unBinarizeFrom(FILE* file)
 	{
 		fread_return_val = fread(&str_size, sizeof(uint16), 1, file);
 		if(fread_return_val != 1)
-            throw IOException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
+            throw IOException(strprintf("in Block[%d]::unBinarizeFrom(...): error while reading binary metadata file (str_size)", i).c_str());
 
 		FILENAMES[i] = new char[str_size];
 		fread_return_val = fread(FILENAMES[i], str_size, 1, file);
 		if(fread_return_val != 1)
-            throw IOException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
+            throw IOException(strprintf("in Block[%d]::unBinarizeFrom(...): error while reading binary metadata file (FILENAMES)", i).c_str());
 	
 		fread_return_val = fread(BLOCK_SIZE+i, sizeof(uint32), 1, file);
 		if(fread_return_val != 1)
-            throw IOException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
+            throw IOException(strprintf("in Block[%d]::unBinarizeFrom(...): error while reading binary metadata file (BLOCK_SIZE)", i).c_str());
 
 		fread_return_val = fread(BLOCK_ABS_D+i, sizeof(int), 1, file);
 		if(fread_return_val != 1)
-            throw IOException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
+            throw IOException(strprintf("in Block[%d]::unBinarizeFrom(...): error while reading binary metadata file (BLOCK_ABS_D)", i).c_str());
 	}
 	fread_return_val = fread(&N_BYTESxCHAN, sizeof(uint32), 1, file);
 	if(fread_return_val != 1)
-        throw IOException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
+        throw IOException(strprintf("in Block[%d]::unBinarizeFrom(...): error while reading binary metadata file (N_BYTESxCHAN)", i).c_str());
 
 }
 

@@ -10,7 +10,7 @@ class TimeSeries : public VirtualVolume
     protected:
 
         std::vector<VirtualVolume*> frames;     // each time frame corresponds to a complete volumetric image
-        iim::uint32 t0, t1;                          // only time frames in [t0, t1] are active (default: all)
+        iim::uint32 t0, t1;                     // only time frames in [t0, t1] are active (default: all)
 
         // pure virtual method inherithed from abstract class <VirtualVolume>
         void initChannels() throw (iim::IOException);

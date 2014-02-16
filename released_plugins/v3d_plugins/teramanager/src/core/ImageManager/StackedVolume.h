@@ -25,34 +25,12 @@
 #ifndef _STACKED_VOLUME_H
 #define _STACKED_VOLUME_H
 
-//#include "IM_defs.h"
-//#include "iim::MyException.h"
 #include "VirtualVolume.h" // ADDED
 #include <list>
 #include <string>
 
-#define STACKED_FORMAT "Stacked" // ADDED
-
 //FORWARD-DECLARATIONS
 class  Stack;
-
-//******* ABSTRACT TYPES DEFINITIONS *******
-struct VHD_triple{int V, H, D;};
-struct interval_t
-{
-	int start, end;
-    interval_t(void) :				   start(-1),	  end(-1)  {}
-    interval_t(int _start, int _end) : start(_start), end(_end){}
-};
-enum axis {vertical=1, inv_vertical=-1, horizontal=2, inv_horizontal=-2, depth=3, inv_depth=-3, axis_invalid=0};
-const char* axis_to_str(axis ax);
-struct ref_sys 
-{
-	axis first, second, third; 
-	ref_sys(axis _first, axis _second, axis _third) : first(_first), second(_second), third(_third){}
-	ref_sys(const ref_sys &_rvalue) : first(_rvalue.first), second(_rvalue.second), third(_rvalue.third){}
-	ref_sys(): first(axis_invalid), second(axis_invalid), third(axis_invalid){}
-};
 
 //every object of this class has the default (1,2,3) reference system
 class StackedVolume : public VirtualVolume
@@ -71,7 +49,7 @@ class StackedVolume : public VirtualVolume
 		//******OBJECT ATTRIBUTES******
         iim::uint16 N_ROWS, N_COLS;		//dimensions (in stacks) of stacks matrix along VH axes
         Stack ***STACKS;			    //2-D array of <Stack*>
-        ref_sys reference_system;       //reference system of the stored volume
+        iim::ref_sys reference_system;  //reference system of the stored volume
         float  VXL_1, VXL_2, VXL_3;     //voxel dimensions of the stored volume
 
 		//***OBJECT PRIVATE METHODS****
@@ -84,7 +62,7 @@ class StackedVolume : public VirtualVolume
 		void rotate(int theta);
 
 		//mirror stacks matrix along mrr_axis (accepted values are mrr_axis=1,2,3)
-		void mirror(axis mrr_axis);
+        void mirror(iim::axis mrr_axis);
 
 		//extract spatial coordinates (in millimeters) of given Stack object reading directory and filenames as spatial coordinates
 		void extractCoordinates(Stack* stk, int z, int* crd_1, int* crd_2, int* crd_3);
@@ -93,9 +71,10 @@ class StackedVolume : public VirtualVolume
         void initChannels ( ) throw (iim::IOException);
 
 	public:
+
 		//CONSTRUCTORS-DECONSTRUCTOR
         StackedVolume(const char* _root_dir)  throw (iim::IOException);
-        StackedVolume(const char* _root_dir, ref_sys _reference_system,
+        StackedVolume(const char* _root_dir, iim::ref_sys _reference_system,
 					  float _VXL_1, float _VXL_2, float _VXL_3, 
                       bool overwrite_mdata = false, bool save_mdata=true)  throw (iim::IOException);
 		~StackedVolume(void);
@@ -119,9 +98,9 @@ class StackedVolume : public VirtualVolume
         float  getVXL_1(){return VXL_1;}
         float  getVXL_2(){return VXL_2;}
         float  getVXL_3(){return VXL_3;}
-        axis   getAXS_1(){return reference_system.first;}
-        axis   getAXS_2(){return reference_system.second;}
-        axis   getAXS_3(){return reference_system.third;}
+        iim::axis   getAXS_1(){return reference_system.first;}
+        iim::axis   getAXS_2(){return reference_system.second;}
+        iim::axis   getAXS_3(){return reference_system.third;}
 
 
 		//PRINT method

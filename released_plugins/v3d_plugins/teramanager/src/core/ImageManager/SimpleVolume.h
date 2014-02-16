@@ -27,29 +27,30 @@
 
 # include "VirtualVolume.h" 
 
-# define SIMPLE_FORMAT "Simple" 
-
 //FORWARD-DECLARATIONS
 class  Stack;
 
-class SimpleVolume : public VirtualVolume {
-private:
-    iim::uint16 N_ROWS, N_COLS;		//dimensions (in stacks) of stacks matrix along VH axes
-    Stack ***STACKS;			//2-D array of <Stack*>
+class SimpleVolume : public VirtualVolume
+{
+    private:
 
-	void init ( );
+        iim::uint16 N_ROWS, N_COLS;		//dimensions (in stacks) of stacks matrix along VH axes
+        Stack ***STACKS;			//2-D array of <Stack*>
 
-	// iannello returns the number of channels of images composing the volume
-    void initChannels ( ) throw (iim::IOException);
+        void init ( );
 
-public:
-    SimpleVolume(const char* _root_dir)  throw (iim::IOException);
+        // iannello returns the number of channels of images composing the volume
+        void initChannels ( ) throw (iim::IOException);
 
-	~SimpleVolume(void);
+    public:
 
-    iim::real32 *loadSubvolume_to_real32(int V0=-1,int V1=-1, int H0=-1, int H1=-1, int D0=-1, int D1=-1)  throw (iim::IOException);
+        SimpleVolume(const char* _root_dir)  throw (iim::IOException);
 
-    iim::uint8 *loadSubvolume_to_UINT8(int V0=-1,int V1=-1, int H0=-1, int H1=-1, int D0=-1, int D1=-1, int *channels=0, int ret_type=iim::DEF_IMG_DEPTH)  throw (iim::IOException);
+        ~SimpleVolume(void);
+
+        iim::real32 *loadSubvolume_to_real32(int V0=-1,int V1=-1, int H0=-1, int H1=-1, int D0=-1, int D1=-1)  throw (iim::IOException);
+
+        iim::uint8 *loadSubvolume_to_UINT8(int V0=-1,int V1=-1, int H0=-1, int H1=-1, int D0=-1, int D1=-1, int *channels=0, int ret_type=iim::DEF_IMG_DEPTH)  throw (iim::IOException);
 };		
 
 # endif // _SIMPLE_VOLUME

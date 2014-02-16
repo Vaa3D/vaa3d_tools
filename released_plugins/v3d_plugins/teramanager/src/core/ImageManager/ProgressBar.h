@@ -27,44 +27,44 @@
 
 #include <iostream>
 #include <string.h>
-#include "VM_config.h"
+#include "IM_config.h"
 
 class ProgressBar
 {
 	private:
 
-                /*********************************************************************************
-                * Singleton design pattern: this class can have one instance only,  which must be
-                * instantiated by calling static method "istance(...)"
-                **********************************************************************************/
-                static ProgressBar* uniqueInstance;
-                ProgressBar();
+        /*********************************************************************************
+        * Singleton design pattern: this class can have one instance only,  which must be
+        * instantiated by calling static method "istance(...)"
+        **********************************************************************************/
+        static ProgressBar* uniqueInstance;
+        ProgressBar();
 
-                char operation_desc[1000];
-		float progress_value;
-                char progress_info[1000];
-		double proctime;
-		int minutes_remaining;
-                int seconds_remaining;
+        char operation_desc[1000];
+        float progress_value;
+        char progress_info[1000];
+        double proctime;
+        int minutes_remaining;
+        int seconds_remaining;
 
 	public:
 
-                /**********************************************************************************
-                * Singleton design pattern: this class can have one instance only,  which must be
-                * instantiated by calling static method "instance(...)"
-                ***********************************************************************************/
-                static ProgressBar* instance();
-                static ProgressBar* getInstance()
-                {
-                    if(uniqueInstance)
-                        return uniqueInstance;
-                    else
-                        return instance();
-                }
-                ~ProgressBar(){}
+        /**********************************************************************************
+        * Singleton design pattern: this class can have one instance only,  which must be
+        * instantiated by calling static method "instance(...)"
+        ***********************************************************************************/
+        static ProgressBar* instance();
+        static ProgressBar* getInstance()
+        {
+            if(uniqueInstance)
+                return uniqueInstance;
+            else
+                return instance();
+        }
+        ~ProgressBar(){}
 
 
-                void start(const char* new_operation_desc);
+        void start(const char* new_operation_desc);
 		void update(float new_progress_value, const char* new_progress_info);
 		void updateInfo(const char* new_progress_info);
 		void show();

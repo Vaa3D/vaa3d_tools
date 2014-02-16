@@ -75,32 +75,32 @@ void CConverter::setMembers(PConverter* pConverter) throw (RuntimeException)
         inVolFormat = pConverter->inFormatCBox->currentText().toStdString();
         if(inVolFormat.compare("Image series (tiled)") == 0)
         {
-            inVolFormat = STACKED_FORMAT;
+            inVolFormat = iim::STACKED_FORMAT;
             fileMode = false;
         }
         else if(inVolFormat.compare("Image series (nontiled)") == 0)
         {
-            inVolFormat = SIMPLE_FORMAT;
+            inVolFormat = iim::SIMPLE_FORMAT;
             fileMode = false;
         }
         else if(inVolFormat.compare("Vaa3D raw (tiled, RGB)") == 0)
         {
-            inVolFormat = TILED_FORMAT;
+            inVolFormat = iim::TILED_FORMAT;
             fileMode = false;
         }
         else if(inVolFormat.compare("Vaa3D raw (tiled, 4D)") == 0)
         {
-            inVolFormat = TILED_MC_FORMAT;
+            inVolFormat = iim::TILED_MC_FORMAT;
             fileMode = false;
         }
         else if(inVolFormat.compare("Vaa3D raw") == 0)
         {
-            inVolFormat = RAW_FORMAT;
+            inVolFormat = iim::RAW_FORMAT;
             fileMode = true;
         }
         else if(inVolFormat.compare("Vaa3D raw (series)") == 0)
         {
-            inVolFormat = SIMPLE_RAW_FORMAT;
+            inVolFormat = iim::SIMPLE_RAW_FORMAT;
             fileMode = false;
         }
         else
@@ -115,17 +115,17 @@ void CConverter::setMembers(PConverter* pConverter) throw (RuntimeException)
         outVolFormat = pConverter->outFormatCBox->currentText().toStdString();
         if(outVolFormat.compare("Image series (tiled)") == 0)
         {
-            outVolFormat = STACKED_FORMAT;
+            outVolFormat = iim::STACKED_FORMAT;
             fileMode = false;
         }
         else if(outVolFormat.compare("Vaa3D raw (tiled, RGB)") == 0)
         {
-            outVolFormat = TILED_FORMAT;
+            outVolFormat = iim::TILED_FORMAT;
             fileMode = true;
         }
         else if(outVolFormat.compare("Vaa3D raw (tiled, 4D)") == 0)
         {
-            outVolFormat = TILED_MC_FORMAT;
+            outVolFormat = iim::TILED_MC_FORMAT;
             fileMode = true;
         }
         else
@@ -136,13 +136,13 @@ void CConverter::setMembers(PConverter* pConverter) throw (RuntimeException)
         resolutionsSize = pConverter->resolutionsNumber;
         if(resolutionsSize <= 0)
             throw RuntimeException("No resolutions selected");
-        if(resolutionsSize > S_MAX_MULTIRES)
+        if(resolutionsSize > iim::TMITREE_MAX_HEIGHT)
         {
-            sprintf(errMsg, "Exceeded the maximum number (%d) of resolutions that can be produced", S_MAX_MULTIRES);
+            sprintf(errMsg, "Exceeded the maximum number (%d) of resolutions that can be produced", iim::TMITREE_MAX_HEIGHT);
             throw RuntimeException(errMsg);
         }
-        resolutions = new bool[S_MAX_MULTIRES];
-        for(int i=0; i<S_MAX_MULTIRES; i++)
+        resolutions = new bool[iim::TMITREE_MAX_HEIGHT];
+        for(int i=0; i<iim::TMITREE_MAX_HEIGHT; i++)
         {
             if(i < resolutionsSize)
                 resolutions[i] = pConverter->resolutionsCboxs[i]->isChecked();
@@ -186,11 +186,11 @@ void CConverter::run()
             if(!fileMode && !QDir(outVolPath.c_str()).exists())
                 throw RuntimeException(QString("Unable to find the directory \"").append(outVolPath.c_str()).append("\"").toStdString().c_str());
 
-            if(outVolFormat.compare(STACKED_FORMAT) == 0)
+            if(outVolFormat.compare(iim::STACKED_FORMAT) == 0)
                 vc->generateTiles(outVolPath, resolutions, stacksHeight, stacksWidth, downsamplingMethod);
-            else if(outVolFormat.compare(TILED_FORMAT) == 0)
+            else if(outVolFormat.compare(iim::TILED_FORMAT) == 0)
                 vc->generateTilesVaa3DRaw(outVolPath, resolutions, stacksHeight, stacksWidth, stacksDepth, downsamplingMethod);
-            else if(outVolFormat.compare(TILED_MC_FORMAT) == 0)
+            else if(outVolFormat.compare(iim::TILED_MC_FORMAT) == 0)
                 vc->generateTilesVaa3DRawMC(outVolPath, resolutions, stacksHeight, stacksWidth, stacksDepth, downsamplingMethod);
             else
             {

@@ -7,7 +7,6 @@ CONFIG  += qt plugin warn_off
 QT += opengl
 CONFIG += use_static_libs
 CONFIG += use_experimental_features
-DEFINES += _VAA3D_PLUGIN_MODE
 #DEFINES += _USE_QT_DIALOGS
 
 QMAKE_CXXFLAGS += -Wall
@@ -183,7 +182,6 @@ HEADERS += ./src/core/ImageManager/Block.h
 HEADERS += ./src/core/ImageManager/TimeSeries.h
 HEADERS += ./src/core/ImageManager/IM_defs.h
 HEADERS += ./src/core/VolumeConverter/VolumeConverter.h
-HEADERS += ./src/core/VolumeConverter/check_and_makedir.h
 HEADERS += ./src/core/VolumeConverter/resumer.h
 HEADERS += ./src/core/ImageManager/IM_config.h
 
@@ -220,7 +218,6 @@ SOURCES += ./src/core/ImageManager/Block.cpp
 SOURCES += ./src/core/ImageManager/TimeSeries.cpp
 SOURCES += ./src/core/ImageManager/IM_config.cpp
 SOURCES += ./src/core/VolumeConverter/VolumeConverter.cpp
-SOURCES += ./src/core/VolumeConverter/check_and_makedir.cpp
 SOURCES += ./src/core/VolumeConverter/resumer.cpp
 
 

@@ -22,9 +22,14 @@
 *       specific prior written permission.
 ********************************************************************************************************************************************************************************************/
 
-# include "VirtualVolume.h"
-
-# include "RawFmtMngr.h"
+#include "VirtualVolume.h"
+#include "SimpleVolume.h"
+#include "SimpleVolumeRaw.h"
+#include "RawVolume.h"
+#include "TiledVolume.h"
+#include "TiledMCVolume.h"
+#include "StackedVolume.h"
+#include "RawFmtMngr.h"
 
 #include <cxcore.h>
 #include <highgui.h>
@@ -686,10 +691,68 @@ void VirtualVolume::halveSample_UINT8 ( uint8** img, int height, int width, int 
 	}
 }
 
-// tries to automatically detect the volume format and returns the imported volume if succeeds (otherwise throws an exception)
+// tries to automatically detect the volume format and returns the imported volume if succeeds (otherwise returns 0)
+// WARNING: all metadata files (if needed by that format) are assumed to be present. Otherwise, that format will be skipped.
 VirtualVolume* VirtualVolume::instance(const char* path) throw (IOException)
 {
-    /**/iim::debug(iim::LEV3, strprintf("path=%s", path).c_str(), __iim__current__function__);
+    /**/iim::debug(iim::LEV3, strprintf("path = \"%s\"", path).c_str(), __iim__current__function__);
 
-    // check precondition #1: path exists
+    VirtualVolume* volume = 0;
+
+    // try all directory formats
+    if(isDirectory(path))
+    {
+        try
+        {
+            volume = new TiledMCVolume(path);
+        }
+        catch(...)
+        {
+            try
+            {
+                volume = new StackedVolume(path);
+            }
+            catch(...)
+            {
+                try
+                {
+                    volume = new TiledVolume(path);
+                }
+                catch(...)
+                {
+                    try
+                    {
+                        volume = new SimpleVolume(path);
+                    }
+                    catch(...)
+                    {
+                        try
+                        {
+                            volume = new SimpleVolumeRaw(path);
+                        }
+                        catch(...)
+                        {
+                            ;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    // try all file formats
+    else if(isFile(path))
+    {
+        try
+        {
+            volume = new RawVolume(path);
+        }
+        catch(...)
+        {
+            ;
+        }
+    }
+    else
+        throw IOException(strprintf("Path = \"%s\" does not exist", path), __iim__current__function__);
+
+    return volume;
 }

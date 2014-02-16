@@ -406,11 +406,11 @@ void TiledVolume::init()
 
 	//adjusting possible sign mismatch betwwen reference system and VXL
 	//in these cases VXL is adjusted to match with reference system
-	if(SIGN(reference_system.first) != SIGN(VXL_1))
+    if(sgn(reference_system.first) != sgn(VXL_1))
             VXL_1*=-1.0f;
-	if(SIGN(reference_system.second) != SIGN(VXL_2))
+    if(sgn(reference_system.second) != sgn(VXL_2))
             VXL_2*=-1.0f;
-	if(SIGN(reference_system.third) != SIGN(VXL_3))
+    if(sgn(reference_system.third) != sgn(VXL_3))
             VXL_3*=-1.0f;
 
 	//HVD --> VHD

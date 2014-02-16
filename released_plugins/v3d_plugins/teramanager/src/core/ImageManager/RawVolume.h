@@ -26,9 +26,6 @@
 # define _RAW_VOLUME_H
 
 # include "VirtualVolume.h" 
-
-# define RAW_FORMAT "Raw" 
-
 # include "RawFmtMngr.h"
 
 typedef char BIT8_UNIT;
@@ -37,30 +34,33 @@ typedef int BIT32_UNIT;
 typedef V3DLONG BIT64_UNIT;
 
 
-class RawVolume : public VirtualVolume {
-private:
-	char *file_name;
-	unsigned char *img;
-	V3DLONG *sz;
-	int datatype;
-	int b_swap;
-	int header_len;
+class RawVolume : public VirtualVolume
+{
+    private:
 
-	void *fhandle;
+        char *file_name;
+        unsigned char *img;
+        V3DLONG *sz;
+        int datatype;
+        int b_swap;
+        int header_len;
 
-    void init ( ) throw (iim::IOException);
+        void *fhandle;
 
-	// iannello returns the number of channels of images composing the volume
-    void initChannels ( ) throw (iim::IOException);
+        void init ( ) throw (iim::IOException);
 
-public:
-    RawVolume(const char* _file_name)  throw (iim::IOException);
+        // iannello returns the number of channels of images composing the volume
+        void initChannels ( ) throw (iim::IOException);
 
-	~RawVolume(void);
+    public:
 
-    iim::real32 *loadSubvolume_to_real32(int V0=-1,int V1=-1, int H0=-1, int H1=-1, int D0=-1, int D1=-1)  throw (iim::IOException);
+        RawVolume(const char* _file_name)  throw (iim::IOException);
 
-    iim::uint8 *loadSubvolume_to_UINT8(int V0=-1,int V1=-1, int H0=-1, int H1=-1, int D0=-1, int D1=-1, int *channels=0, int ret_type=iim::DEF_IMG_DEPTH)  throw (iim::IOException);
+        ~RawVolume(void);
+
+        iim::real32 *loadSubvolume_to_real32(int V0=-1,int V1=-1, int H0=-1, int H1=-1, int D0=-1, int D1=-1)  throw (iim::IOException);
+
+        iim::uint8 *loadSubvolume_to_UINT8(int V0=-1,int V1=-1, int H0=-1, int H1=-1, int D0=-1, int D1=-1, int *channels=0, int ret_type=iim::DEF_IMG_DEPTH)  throw (iim::IOException);
 };		
 
 # endif
