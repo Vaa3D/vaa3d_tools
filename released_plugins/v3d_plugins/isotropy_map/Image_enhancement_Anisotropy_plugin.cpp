@@ -156,6 +156,8 @@ template <class T> bool compute_Anisotropy_sphere(const T* data1d, V3DLONG N, V3
         }
     }
     cc11 /= s; 	cc12 /= s; 	cc13 /= s; 	cc22 /= s; 	cc23 /= s; 	cc33 /= s;
+
+    Score = 1; //the Score should at least be 1.
     try
     {
         //then find the eigen vector
@@ -166,7 +168,7 @@ template <class T> bool compute_Anisotropy_sphere(const T* data1d, V3DLONG N, V3
 
         DiagonalMatrix DD;
         Matrix VV;
-        EigenValues(Cov_Matrix,DD,VV);;
+        EigenValues(Cov_Matrix,DD,VV);
 
         //output the result
         double pc1 = DD(3);
@@ -188,8 +190,8 @@ template <class T> bool compute_Anisotropy_sphere(const T* data1d, V3DLONG N, V3
 QStringList anisotropy_enhancement::menulist() const
 {
     return QStringList()
-            <<tr("fixed window")
-           <<tr("adaptive window")
+            <<tr("anisotropy map of a fixed window")
+           <<tr("anisotropy map of using adaptive windows")
           <<tr("about");
 }
 
@@ -203,18 +205,17 @@ QStringList anisotropy_enhancement::funclist() const
 
 void anisotropy_enhancement::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
 {
-    if (menu_name == tr("fixed window"))
+    if (menu_name == tr("anisotropy map of a fixed window"))
     {
         processImage(callback,parent,0);
     }
-    else if (menu_name == tr("adaptive window"))
+    else if (menu_name == tr("anisotropy map of using adaptive windows"))
     {
         processImage(callback,parent,1);
     }
     else
     {
-        v3d_msg(tr("This plugin uses anisotropy property to enhance image "
-                   "Developed by Zhi, 2013-01-28"));
+        v3d_msg(tr("This plugin calculates the PCA-based anisotropy map of an image. by Hanchuan Peng & Zhi Zhou."));
     }
 }
 
