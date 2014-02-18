@@ -6,6 +6,9 @@
 #include "v3d_message.h"
 #include <vector>
 #include "neuTube_zhi_plugin.h"
+#include "nvinterface.h"
+/*#include "zstack.hxx"
+
 
 #include "c_stack.h"
 #include "tz_stack.h"
@@ -14,13 +17,30 @@
 #include "tz_stack_lib.h"
 #include "tz_int_histogram.h"
 
-#include "image_lib.h"
+#include "image_lib.h"*/
+
+#include <stdlib.h>
+#include <stdio.h>
+#include <utilities.h>
+#include <string.h>
+#include "tz_error.h"
+#include "tz_int_histogram.h"
+#include "tz_stack_threshold.h"
+#include "tz_stack_lib.h"
+#include "tz_stack_stat.h"
+#include "tz_stack_attribute.h"
+#include "tz_stack_bwmorph.h"
+#include "tz_stack.h"
+#include "tz_stack_attribute.h"
+#include "tz_stack_objlabel.h"
+#include "tz_iarray.h"
+#include "tz_image_io.h"
 
 using namespace std;
 Q_EXPORT_PLUGIN2(neuTube_zhi, neuTube_zhi);
 
 void autotrace(V3DPluginCallback2 &callback, QWidget *parent);
-int autoThreshold(Stack *stack);
+//int autoThreshold(Stack *stack);
 
 QStringList neuTube_zhi::menulist() const
 {
@@ -82,7 +102,9 @@ void autotrace(V3DPluginCallback2 &callback, QWidget *parent)
         return;
     }
 
-    unsigned char* data1d = p4DImage->getRawData();
+    Mc_Stack *stack = NVInterface::makeStack(p4DImage);
+
+   /* unsigned char* data1d = p4DImage->getRawData();
     V3DLONG N = p4DImage->getXDim();
     V3DLONG M = p4DImage->getYDim();
     V3DLONG P = p4DImage->getZDim();
@@ -115,11 +137,11 @@ void autotrace(V3DPluginCallback2 &callback, QWidget *parent)
 
     int thre = autoThreshold(stack);
 
-    printf("threshold is %d\n\n",thre);
+    printf("threshold is %d\n\n",thre);*/
     return;
 }
 
-int autoThreshold(Stack *stack)
+/*int autoThreshold(Stack *stack)
 {
   int thre = 0;
   if (stack->array != NULL) {
@@ -148,4 +170,4 @@ int autoThreshold(Stack *stack)
     free(hist);
   }
   return thre;
-}
+}*/
