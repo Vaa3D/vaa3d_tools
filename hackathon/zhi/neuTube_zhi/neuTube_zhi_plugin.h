@@ -8,7 +8,6 @@
 
 #include <QtGui>
 #include <v3d_interface.h>
-#include "include/tz_cdefs.h"
 
 class neuTube_zhi : public QObject, public V3DPluginInterface2_1
 {
