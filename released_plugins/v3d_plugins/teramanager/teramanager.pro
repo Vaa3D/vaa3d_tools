@@ -180,7 +180,6 @@ HEADERS += ./src/core/ImageManager/TiledVolume.h
 HEADERS += ./src/core/ImageManager/TiledMCVolume.h
 HEADERS += ./src/core/ImageManager/Block.h
 HEADERS += ./src/core/ImageManager/TimeSeries.h
-HEADERS += ./src/core/ImageManager/IM_defs.h
 HEADERS += ./src/core/VolumeConverter/VolumeConverter.h
 HEADERS += ./src/core/VolumeConverter/resumer.h
 HEADERS += ./src/core/ImageManager/IM_config.h
