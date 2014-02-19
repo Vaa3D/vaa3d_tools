@@ -111,7 +111,7 @@ void myV3dR_GLWidget::zoomIn(const char* method)
 {
     /**/itm::debug(itm::LEV1, strprintf("title = %s, method = %s", data_title.toStdString().c_str(), method).c_str(), __itm__current__function__);
 
-    if(strcmp(method, "WYSIWYG (10 markers)") == 0)
+    if(strcmp(method, "WYSIWYG (5 markers)") == 0)
         this->renderer->zoomview_wheel_event();
     else if(strcmp(method, "Foreground (1 marker)") == 0)
     {
