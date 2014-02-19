@@ -22,7 +22,16 @@
 #include "tz_stack_sampling.h"
 #include "tz_u16array.h"
 #include "tz_u8array.h"
-//#include "tz_farray.h"
+#include "tz_farray.h"
+#include "tz_object_3d.h"
+#include "tz_object_3d_linked_list.h"
+#include "tz_geo3d_utils.h"
+#include "tz_voxel.h"
+#include "tz_voxel_linked_list.h"
+#include "tz_pixel_array.h"
+#include "tz_stack_utils.h"
+#include "tz_geo3d_scalar_field.h"
+#include "tz_workspace.h"
 
 #include "image_lib.h"
 
@@ -120,7 +129,7 @@ void autotrace(V3DPluginCallback2 &callback, QWidget *parent)
             for(V3DLONG x = 0; x < N; x++)
             {
                    double dataval = data1d[offsetc + offsetk + offsetj + x];
-                   Set_Stack_Pixel(stack,x,y,z,c,dataval);
+                   Set_Stack_Pixel(stack,x,y,z,c-1,dataval);
             }
         }
     }
@@ -131,7 +140,7 @@ void autotrace(V3DPluginCallback2 &callback, QWidget *parent)
     Stack_Threshold_Binarize(mask, thre);
     Translate_Stack(mask, GREY, 1);
 
-    //Trace_Workspace *m_traceWorkspace = NULL;
+   // Trace_Workspace *m_traceWorkspace = NULL;
 
     double z_scale = 1.0;
 
@@ -182,6 +191,31 @@ void autotrace(V3DPluginCallback2 &callback, QWidget *parent)
     /* free <dist> */
     Kill_Stack(dist);
 
+    /* alloc <voxel_array> */
+    Voxel_P *voxel_array = Voxel_List_To_Array(list, 1, NULL, NULL);
+
+    uint16 *pa_array = (uint16 *) pa->array;
+
+    /* alloc <seed_field> */
+    Geo3d_Scalar_Field *seed_field = Make_Geo3d_Scalar_Field(pa->size);
+    seed_field->size = 0;
+    int i;
+    for (i = 0; i < pa->size; i++) {
+      seed_field->points[seed_field->size][0] = voxel_array[i]->x;
+      seed_field->points[seed_field->size][1] = voxel_array[i]->y;
+      seed_field->points[seed_field->size][2] = z_scale * voxel_array[i]->z;
+      seed_field->values[seed_field->size] = sqrt((double)pa_array[i]);
+      seed_field->size++;
+    }
+
+    /* free <list> */
+    Kill_Voxel_List(list);
+
+    /* free <voxel_array> */
+    free(voxel_array);
+
+    /* free <pa> */
+    Kill_Pixel_Array(pa);
 
 
     printf("threshold is %d\n\n",thre);

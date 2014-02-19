@@ -54,7 +54,16 @@ SOURCES +=  $$SRCNEUTUBEPATH/neurolabi/c/tz_voxel_graphics.c
 SOURCES +=  $$SRCNEUTUBEPATH/neurolabi/c/tz_stack_sampling.c
 SOURCES +=  $$SRCNEUTUBEPATH/neurolabi/c/tz_u16array.c
 SOURCES +=  $$SRCNEUTUBEPATH/neurolabi/c/tz_u8array.c
-#SOURCES +=  $$SRCNEUTUBEPATH/neurolabi/c/tz_farray.c
+SOURCES +=  $$SRCNEUTUBEPATH/neurolabi/c/tz_farray.c
+SOURCES +=  $$SRCNEUTUBEPATH/neurolabi/c/tz_object_3d.c
+SOURCES +=  $$SRCNEUTUBEPATH/neurolabi/c/tz_object_3d_linked_list.c
+SOURCES +=  $$SRCNEUTUBEPATH/neurolabi/c/tz_geo3d_utils.c
+SOURCES +=  $$SRCNEUTUBEPATH/neurolabi/c/tz_voxel.c
+SOURCES +=  $$SRCNEUTUBEPATH/neurolabi/c/tz_voxel_linked_list.c
+SOURCES +=  $$SRCNEUTUBEPATH/neurolabi/c/tz_pixel_array.c
+SOURCES +=  $$SRCNEUTUBEPATH/neurolabi/c/tz_stack_utils.c
+SOURCES +=  $$SRCNEUTUBEPATH/neurolabi/c/tz_geo3d_scalar_field.c
+SOURCES +=  $$SRCNEUTUBEPATH/neurolabi/c/tz_workspace.c
 
 TARGET	= $$qtLibraryTarget(neuTube_zhi)
 DESTDIR	= ../../../../v3d_external/bin/plugins/neuTube_zhi/
