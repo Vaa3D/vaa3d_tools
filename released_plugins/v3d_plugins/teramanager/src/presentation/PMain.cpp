@@ -138,20 +138,10 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     tinyFont.setPointSize(10);
     #endif
 
-    //import form widgets
-    import_form = new QWidget();
-    reimport_checkbox = new QCheckBox("Re-import");
-    volMapWidget = new QWidget();
-    regenerateVolMap = new QCheckBox("Regenerate volume map");
-    regenerateVolMap->setChecked(false);
-    volMapMaxSizeSBox = new QSpinBox();
-    volMapMaxSizeSBox->setMaximum(10);
-    volMapMaxSizeSBox->setMaximum(1000);
-    volMapMaxSizeSBox->setValue(CSettings::instance()->getVolMapSizeLimit());
-    volMapMaxSizeSBox->setAlignment(Qt::AlignCenter);
-
     //initializing menu
+    /**/itm::debug(itm::LEV3, "initializing menu", __itm__current__function__);
     menuBar = new QMenuBar(0);
+    /* --------------------------- "File" menu --------------------------- */
     fileMenu = menuBar->addMenu("File");
     openVolumeAction = new QAction("Open volume", this);
     openVolumeAction->setIcon(QIcon(":/icons/open_volume.png"));
@@ -192,12 +182,27 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     fileMenu->addAction(clearAnnotationsAction);
     fileMenu->addSeparator();
     fileMenu->addAction(exitAction);
+    /* ------------------------- "Options" menu -------------------------- */
     optionsMenu = menuBar->addMenu("Options");
+    /* ------------------------- "Options" menu: Import ------------------ */
     importOptionsMenu = optionsMenu->addMenu("Import");
-    importOptionsWidget = new QWidgetAction(this);
-    importOptionsWidget->setDefaultWidget(import_form);
-    importOptionsMenu->addAction(importOptionsWidget);    
-
+    regenMData_cAction = new QAction("Regenerate metadata", this);
+    regenMData_cAction->setCheckable(true);
+    importOptionsMenu-> addAction(regenMData_cAction);
+    regenVMap_cAction = new QAction("Regenerate volume map", this);
+    regenVMap_cAction->setCheckable(true);
+    importOptionsMenu-> addAction(regenVMap_cAction);
+    volMapSizeMenu = new QMenu("Maximum volume map size");
+    volMapSizeWidget = new QWidgetAction(this);
+    volMapSizeSBox = new QSpinBox();
+    volMapSizeSBox->setMinimum(1);
+    volMapSizeSBox->setValue(CSettings::instance()->getVolMapSizeLimit());
+    volMapSizeSBox->setMaximum(500);
+    volMapSizeSBox->setSuffix(" MVoxels");
+    volMapSizeWidget->setDefaultWidget(volMapSizeSBox);
+    volMapSizeMenu->addAction(volMapSizeWidget);
+    importOptionsMenu->addMenu(volMapSizeMenu);
+    /* ------------------------- "Options" menu: 3D ---------------------- */
     threeDMenu = optionsMenu->addMenu("3D");
     curvesMenu = threeDMenu->addMenu("Curves");
     curveAspectMenu = curvesMenu->addMenu("Aspect");
@@ -314,7 +319,8 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     // TAB widget: where to store pages
     tabs = new QTabWidget(this);
 
-    //Page "Volume's info": contains informations of the loaded volume
+    //Page "Volume's info": contains informations of the loaded volume    
+    /**/itm::debug(itm::LEV3, "Page \"Volume's info\"", __itm__current__function__);
     info_page = new QWidget();
     vol_size_voxel_label = new QLabel();
     vol_size_voxel_field = new QLabel();
@@ -427,6 +433,7 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     org_D_field->setFont(tinyFont);
 
     //Page "Controls": contains navigation controls
+    /**/itm::debug(itm::LEV3, "Page \"Controls\"", __itm__current__function__);
     /* ------- local viewer panel widgets ------- */
     controls_page = new QWidget();
     localViewer_panel = new QGroupBox("Local viewer");
@@ -457,10 +464,11 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     Tdim_sbox->setValue(CSettings::instance()->getVOIdimT());
     Tdim_sbox->setSuffix(" (t)");
     Tdim_sbox->installEventFilter(this);
-
     resolution_cbox = new QComboBox();
     resolution_cbox->installEventFilter(this);
+
     /* ------- zoom options panel widgets ------- */
+    /**/itm::debug(itm::LEV3, "zoom options panel", __itm__current__function__);
     zoom_panel = new QGroupBox("Zoom-in/out");
     zoomOutSens = new QSlider(Qt::Horizontal, this);
     zoomOutSens->setTickPosition(QSlider::TicksBelow);
@@ -500,6 +508,7 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     #endif
 
     //"Global coordinates" widgets
+    /**/itm::debug(itm::LEV3, "\"Global coordinates\" panel", __itm__current__function__);
     globalCoord_panel = new QGroupBox("Global coordinates");
     traslXpos = new QArrowButton(this, QColor(255,0,0), 15, 6, 0, Qt::LeftToRight, true);
     traslXneg = new QArrowButton(this, QColor(255,0,0), 15, 6, 0, Qt::RightToLeft, true);
@@ -562,22 +571,7 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     statusBar = new QStatusBar();
 
     //****LAYOUT SECTIONS****
-    //import form
-    QVBoxLayout* import_form_layout = new QVBoxLayout();
-    import_form_layout->addWidget(reimport_checkbox);
-    QHBoxLayout* volMapSizeRow = new QHBoxLayout();
-    volMapMaxSizeSBox->setMaximumWidth(60);
-    volMapSizeRow->addWidget(volMapMaxSizeSBox);
-    volMapSizeRow->addWidget(new QLabel("MVoxels volume map size limit"));
-    QVBoxLayout* volMapWidgetLayout = new QVBoxLayout();
-    volMapWidgetLayout->addLayout(volMapSizeRow);
-    //volMapWidgetLayout->addWidget(regenerateVolMap);
-    volMapWidgetLayout->setMargin(0);
-    volMapWidget->setLayout(volMapWidgetLayout);
-    volMapWidget->setContentsMargins(0,0,0,0);
-    import_form_layout->addWidget(volMapWidget);
-    import_form_layout->addWidget(regenerateVolMap);
-    import_form->setLayout(import_form_layout);
+    /**/itm::debug(itm::LEV3, "Layouting", __itm__current__function__);
 
     //Page "Volume's info": contains informations of the loaded volume
     QGridLayout* info_panel_layout = new QGridLayout();
@@ -889,10 +883,11 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     #endif
     this->setFont(tinyFont);
 
-    // signals and slots
+    // signals and slots    
+    /**/itm::debug(itm::LEV3, "Signals and slots", __itm__current__function__);
     connect(CImport::instance(), SIGNAL(sendOperationOutcome(itm::RuntimeException*, Image4DSimple*, qint64)), this, SLOT(importDone(itm::RuntimeException*, Image4DSimple*,qint64)), Qt::QueuedConnection);
     connect(CVolume::instance(), SIGNAL(sendOperationOutcome(itm::uint8*, itm::RuntimeException*,void*, qint64, QString, int)), SLOT(loadingDone(itm::uint8*, itm::RuntimeException*,void*, qint64, QString, int)), Qt::QueuedConnection);
-    connect(volMapMaxSizeSBox, SIGNAL(valueChanged(int)), this, SLOT(settingsChanged(int)));
+    connect(volMapSizeSBox, SIGNAL(valueChanged(int)), this, SLOT(settingsChanged(int)));
     connect(Vdim_sbox, SIGNAL(valueChanged(int)), this, SLOT(settingsChanged(int)));
     connect(Hdim_sbox, SIGNAL(valueChanged(int)), this, SLOT(settingsChanged(int)));
     connect(Ddim_sbox, SIGNAL(valueChanged(int)), this, SLOT(settingsChanged(int)));
@@ -934,8 +929,6 @@ void PMain::reset()
     recentVolumesMenu->setEnabled(true);
     closeVolumeAction->setEnabled(false);
     importOptionsMenu->setEnabled(true);
-    importOptionsWidget->setEnabled(true);
-    import_form->setEnabled(true);
     aboutAction->setEnabled(true);
     loadAnnotationsAction->setEnabled(false);
     saveAnnotationsAction->setEnabled(false);
@@ -1147,31 +1140,22 @@ void PMain::openVolume(string path /* = "" */)
         recentVolumesMenu->addAction(clearRecentVolumesAction);
 
         //check if additional informations are required
-        QString mdata_fpath = import_path;
-        qDebug() << "inportpath = [" << mdata_fpath << "]";
-        mdata_fpath.append("/");
-        mdata_fpath.append(iim::MDATA_BIN_FILE_NAME.c_str());
-        QString vmap_fpath = import_path;
-        vmap_fpath.append("/");
-        vmap_fpath.append(VMAP_BIN_FILE_NAME.c_str());
-        QString cmap_fpath = import_path + "/cmap.bin";
-        if( (!QFile::exists(mdata_fpath) && !QFile::exists(cmap_fpath)) || reimport_checkbox->isChecked())
+        if(!VirtualVolume::isDirectlyImportable(qPrintable(import_path))  || regenMData_cAction->isChecked())
         {
-           printf("--------------------- teramanager plugin [thread *] >> PMain::openVolume(path = \"%s\"): mdata.bin file not found at \"%s\" or reimport checkbox is checked (%s)\n",
-                  path.c_str(), qPrintable(mdata_fpath), reimport_checkbox->isChecked() ? "true" : "false");
            if(PDialogImport::instance(this)->exec() == QDialog::Rejected)
                 return;
+           CImport::instance()->setReimport(true);
+           CImport::instance()->setRegenerateVolumeMap(true);
         }
+        else
+            CImport::instance()->setRegenerateVolumeMap(regenVMap_cAction->isChecked());
         CImport::instance()->setPath(qPrintable(import_path));
-        CImport::instance()->setReimport(reimport_checkbox->isChecked());
-        CImport::instance()->setRegenerateVolumeMap(regenerateVolMap->isChecked());
-        CImport::instance()->setVolMapMaxSize(volMapMaxSizeSBox->value());
+        CImport::instance()->setVolMapMaxSize(volMapSizeSBox->value());
 
         //disabling import form and enabling progress bar animation
         progressBar->setEnabled(true);
         progressBar->setMinimum(0);
         progressBar->setMaximum(0);
-        import_form->setEnabled(false);
         statusBar->showMessage("Importing volume...");
 
         //starting import
@@ -1389,7 +1373,6 @@ void PMain::importDone(RuntimeException *ex, Image4DSimple* vmap_image, qint64 e
     if(ex)
     {
         QMessageBox::critical(this,QObject::tr("Error"), QObject::tr(ex->what()),QObject::tr("Ok"));
-        import_form->setEnabled(true);
     }
     else
     {
@@ -1481,7 +1464,6 @@ void PMain::importDone(RuntimeException *ex, Image4DSimple* vmap_image, qint64 e
         T1_sbox->setMinimum(1);
         T1_sbox->setMaximum(CImport::instance()->getVMapTDim());
         T1_sbox->setValue(CImport::instance()->getVMapTDim());
-        import_form->setEnabled(false);
         globalCoord_panel->setEnabled(true);
 
         //updating menu items
@@ -1496,7 +1478,6 @@ void PMain::importDone(RuntimeException *ex, Image4DSimple* vmap_image, qint64 e
         //enabling multiresolution panel and hiding volume map options
         this->localViewer_panel->setEnabled(true);
         this->zoom_panel->setEnabled(true);
-        this->volMapWidget->setVisible(false);
 
         //enabling menu actions
         loadAnnotationsAction->setEnabled(true);
@@ -1618,7 +1599,7 @@ void PMain::settingsChanged(int)
 {
     /**/itm::debug(itm::LEV1, 0, __itm__current__function__);
 
-    CSettings::instance()->setVolMapSizeLimit(volMapMaxSizeSBox->value());
+    CSettings::instance()->setVolMapSizeLimit(volMapSizeSBox->value());
     CSettings::instance()->setVOIdimV(Vdim_sbox->value());
     CSettings::instance()->setVOIdimH(Hdim_sbox->value());
     CSettings::instance()->setVOIdimD(Ddim_sbox->value());

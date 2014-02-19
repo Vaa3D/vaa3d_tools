@@ -91,7 +91,18 @@ public:
     int     getCHANS() {return CHANS;}
     int     getBYTESxCHAN() {return BYTESxCHAN;}
     char*   getROOT_DIR() {return this->root_dir;}
-    float   getMVoxels(){return (DIM_V/1024.0f)*(DIM_H/1024.0f)*DIM_D;}
+    virtual float   getMVoxels(){return (DIM_V/1024.0f)*(DIM_H/1024.0f)*DIM_D;} // can be overriden
+
+    // added by Alessandro on 2014-02-18: returns a unique ID that identifies the volume format
+    virtual std::string getPrintableFormat() = 0;
+
+    // added by Alessandro on 2014-02-18: additional info on the reference system (where available)
+    virtual float getVXL_1() = 0;
+    virtual float getVXL_2() = 0;
+    virtual float getVXL_3() = 0;
+    virtual iim::axis getAXS_1() = 0;
+    virtual iim::axis getAXS_2() = 0;
+    virtual iim::axis getAXS_3() = 0;
 
 	/*************************************************************************************************************
     * Save image method. <> parameters are mandatory, while [] are optional.
@@ -194,6 +205,22 @@ public:
     // tries to automatically detect the volume format and returns the imported volume if succeeds (otherwise returns 0)
     // WARNING: all metadata files (if needed by that format) are assumed to be present. Otherwise, that format will be skipped.
     static VirtualVolume* instance(const char* path) throw (iim::IOException);
+
+    // returns the imported volume if succeeds (otherwise returns 0)
+    // WARNING: no assumption is made on metadata files, which are possibly (re-)generated using the additional informations provided.
+    static VirtualVolume* instance(const char* path, std::string format,
+                                   iim::axis AXS_1 = iim::axis_invalid, iim::axis AXS_2 = iim::axis_invalid, iim::axis AXS_3 = iim::axis_invalid,
+                                   float VXL_1=0.0f, float VXL_2=0.0f, float VXL_3=0.0f) throw (iim::IOException);
+
+    // checks whether the volume stored in "path" can be imported directly (i.e., w/o additional metadata provided by the user)
+    static bool isDirectlyImportable(const char* path){
+        VirtualVolume* vol = 0;
+        try{vol = instance(path);}
+        catch(...){}
+        bool result = vol != 0;
+        delete vol;
+        return result;
+    }
 };
 
 #endif

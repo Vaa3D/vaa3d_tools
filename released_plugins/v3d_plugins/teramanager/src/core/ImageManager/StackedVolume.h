@@ -102,6 +102,9 @@ class StackedVolume : public VirtualVolume
         iim::axis   getAXS_2(){return reference_system.second;}
         iim::axis   getAXS_3(){return reference_system.third;}
 
+        // returns a unique ID that identifies the volume format
+        std::string getPrintableFormat(){return iim::STACKED_FORMAT;}
+
 
 		//PRINT method
 		void print();

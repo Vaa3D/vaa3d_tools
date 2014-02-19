@@ -45,6 +45,11 @@
 #include <stdio.h>
 #endif
 
+//#ifdef __MACH__
+//#include <mach/clock.h>
+//#include <mach/mach.h>
+//#endif
+
 namespace IconImageManager
 {
 
@@ -80,12 +85,15 @@ namespace IconImageManager
     const int         NATIVE_RTYPE = 0;                         // loadVolume returns 1 byte per channel type
     const std::string DEF_IMG_FORMAT = "tif";                   // default image format
     const int         STATIC_STRINGS_SIZE = 1024;               // size of static C-strings
-    const std::string TILED_MC_FORMAT = "TiledMC";              // unique ID for the TiledMCVolume class
-    const std::string TILED_FORMAT = "Tiled";                   // unique ID for the TiledVolume class
-    const std::string STACKED_FORMAT = "Stacked";               // unique ID for the StackedVolume class
-    const std::string SIMPLE_FORMAT = "Simple";                 // unique ID for the SimpleVolume class
-    const std::string SIMPLE_RAW_FORMAT = "SimpleRaw";          // unique ID for the SimpleVolumeRaw class
-    const std::string RAW_FORMAT = "Raw";                       // unique ID for the RawVolume class
+    const std::string TILED_MC_FORMAT    = "Vaa3D raw (tiled, 4D)";    // unique ID for the TiledMCVolume class
+    const std::string TILED_FORMAT       = "Vaa3D raw (tiled, RGB)";   // unique ID for the TiledVolume class
+    const std::string STACKED_FORMAT     = "Image series (tiled)";     // unique ID for the StackedVolume class
+    const std::string SIMPLE_FORMAT      = "Image series (nontiled)";  // unique ID for the SimpleVolume class
+    const std::string SIMPLE_RAW_FORMAT  = "Vaa3D raw (series)";       // unique ID for the SimpleVolumeRaw class
+    const std::string RAW_FORMAT         = "Vaa3D raw";                // unique ID for the RawVolume class
+    const std::string TIF3D_FORMAT       = "3D TIFF (nontiled)";       // unique ID for the Tiff3DVolume class
+    const std::string TILED_TIF3D_FORMAT = "3D TIFF (tiled)";       // unique ID for the TiledTiff3DVolume class
+
     const double      PI = 3.14159265;                          // pi
     const int         TMITREE_MAX_HEIGHT  = 10;                 // maximum depth of the TMITREE
     const int         TMITREE_MIN_BLOCK_DIM = 250;              // minimum dimension of TMITREE block along X/Y/Z
@@ -107,7 +115,7 @@ namespace IconImageManager
     ********************
     ---------------------------------------------------------------------------------------------------------------------------*/
     enum  axis        { vertical=1, inv_vertical=-1, horizontal=2, inv_horizontal=-2, depth=3, inv_depth=-3, axis_invalid=0};
-    enum  debug_level { NO_DEBUG, LEV1, LEV2, LEV3 };
+    enum  debug_level { NO_DEBUG, LEV1, LEV2, LEV3, LEV_MAX };
     /*-------------------------------------------------------------------------------------------------------------------------*/
 
 
@@ -224,17 +232,30 @@ namespace IconImageManager
     }
 
     //time computation
-    #ifdef _WIN32
-    inline double getTimeSeconds(){
-        return static_cast<double>(clock()) / CLOCKS_PER_SEC;
-    }
-    #else
-    inline double getTimeSeconds(){
-        timespec event;
-        clock_gettime(CLOCK_REALTIME, &event);
-        return (event.tv_sec*1000.0 + event.tv_nsec/1000000.0)/1000.0;
-    }
-    #endif
+//    #ifdef _WIN32
+//    inline double getTimeSeconds(){
+//        return static_cast<double>(clock()) / CLOCKS_PER_SEC;
+//    }
+//    #else
+//        #ifdef __MACH__ // OS X does not have clock_gettime, use clock_get_time
+//        inline double getTimeSeconds()
+//        {
+//            clock_serv_t cclock;
+//            mach_timespec_t mts;
+//            host_get_clock_service(mach_host_self(), CALENDAR_CLOCK, &cclock);
+//            clock_get_time(cclock, &mts);
+//            mach_port_deallocate(mach_task_self(), cclock);
+//            return mts.tv_sec;
+//        }
+//        #else
+//        inline double getTimeSeconds(){
+//            timespec event;
+//            clock_gettime(CLOCK_REALTIME, &event);
+//            return (event.tv_sec*1000.0 + event.tv_nsec/1000000.0)/1000.0;
+//        }
+//        #endif
+//    #endif
+
 
     //make dir
     #ifdef _WIN32

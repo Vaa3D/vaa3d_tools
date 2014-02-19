@@ -73,36 +73,18 @@ void CConverter::setMembers(PConverter* pConverter) throw (RuntimeException)
     {
         inVolPath = pConverter->inPathField->text().toStdString();
         inVolFormat = pConverter->inFormatCBox->currentText().toStdString();
-        if(inVolFormat.compare("Image series (tiled)") == 0)
-        {
-            inVolFormat = iim::STACKED_FORMAT;
+        if(inVolFormat.compare(iim::STACKED_FORMAT) == 0)
             fileMode = false;
-        }
-        else if(inVolFormat.compare("Image series (nontiled)") == 0)
-        {
-            inVolFormat = iim::SIMPLE_FORMAT;
+        else if(inVolFormat.compare(iim::SIMPLE_FORMAT) == 0)
             fileMode = false;
-        }
-        else if(inVolFormat.compare("Vaa3D raw (tiled, RGB)") == 0)
-        {
-            inVolFormat = iim::TILED_FORMAT;
+        else if(inVolFormat.compare(iim::TILED_FORMAT) == 0)
             fileMode = false;
-        }
-        else if(inVolFormat.compare("Vaa3D raw (tiled, 4D)") == 0)
-        {
-            inVolFormat = iim::TILED_MC_FORMAT;
+        else if(inVolFormat.compare(iim::TILED_MC_FORMAT) == 0)
             fileMode = false;
-        }
-        else if(inVolFormat.compare("Vaa3D raw") == 0)
-        {
-            inVolFormat = iim::RAW_FORMAT;
+        else if(inVolFormat.compare(iim::RAW_FORMAT) == 0)
             fileMode = true;
-        }
-        else if(inVolFormat.compare("Vaa3D raw (series)") == 0)
-        {
-            inVolFormat = iim::SIMPLE_RAW_FORMAT;
+        else if(inVolFormat.compare(iim::SIMPLE_RAW_FORMAT) == 0)
             fileMode = false;
-        }
         else
         {
             sprintf(errMsg, "Input format \"%s\" not yet supported", inVolFormat.c_str());
@@ -113,22 +95,9 @@ void CConverter::setMembers(PConverter* pConverter) throw (RuntimeException)
     {
         outVolPath = pConverter->outPathField->text().toStdString();
         outVolFormat = pConverter->outFormatCBox->currentText().toStdString();
-        if(outVolFormat.compare("Image series (tiled)") == 0)
-        {
-            outVolFormat = iim::STACKED_FORMAT;
-            fileMode = false;
-        }
-        else if(outVolFormat.compare("Vaa3D raw (tiled, RGB)") == 0)
-        {
-            outVolFormat = iim::TILED_FORMAT;
-            fileMode = true;
-        }
-        else if(outVolFormat.compare("Vaa3D raw (tiled, 4D)") == 0)
-        {
-            outVolFormat = iim::TILED_MC_FORMAT;
-            fileMode = true;
-        }
-        else
+        if(outVolFormat.compare(iim::STACKED_FORMAT)  != 0 &&
+           outVolFormat.compare(iim::TILED_FORMAT)    != 0 &&
+           outVolFormat.compare(iim::TILED_MC_FORMAT) != 0)
         {
             sprintf(errMsg, "Output format \"%s\" not yet supported", outVolFormat.c_str());
             throw RuntimeException(errMsg);

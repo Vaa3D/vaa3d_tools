@@ -48,18 +48,19 @@ class teramanager::PDialogImport : public QDialog
 
         //widgets
         QLabel* import_form_desc_1;     //contains text describing import form usage
-        QLabel* import_form_desc_2;
+        QComboBox* inFormatCBox;        //combobox for volume's input format selection
+        QCheckBox* tsCheckBox;          //checkbox to mark the volume to be imported as a time series
         QLabel* first_direction_label;  //label "First direction"
         QLabel* second_direction_label; //label "Second direction"
         QLabel* third_direction_label;  //label "Third direction"
         QLabel* axes_label;             //label "Axes"
-        QLineEdit *axs1_field;          //field for first direction axis
-        QLineEdit *axs2_field;          //field for second direction axis
-        QLineEdit *axs3_field;          //field for third direction axis
+        QComboBox *axs1_field;          //field for first direction axis
+        QComboBox *axs2_field;          //field for second direction axis
+        QComboBox *axs3_field;          //field for third direction axis
         QLabel* voxels_dims_label;      //label "Voxel dimensions"
-        QLineEdit *vxl1_field;          //field for voxel dimension along first direction
-        QLineEdit *vxl2_field;          //field for voxel dimension along second direction
-        QLineEdit *vxl3_field;          //field for voxel dimension along third direction
+        QDoubleSpinBox *vxl1_field;     //field for voxel dimension along first direction
+        QDoubleSpinBox *vxl2_field;     //field for voxel dimension along second direction
+        QDoubleSpinBox *vxl3_field;     //field for voxel dimension along third direction
         QPushButton* import_button;     //ok button
         QPushButton* cancel_button;     //cancel button
 

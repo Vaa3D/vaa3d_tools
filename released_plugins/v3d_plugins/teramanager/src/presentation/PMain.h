@@ -82,7 +82,6 @@ class teramanager::PMain : public QWidget
         QMenu* curveAspectMenu;         //"Curve aspect" menu level 4
         QAction* curveAspectTube;       //"Tube" action
         QAction* curveAspectSkeleton;   //"Skeleton" action
-        QWidgetAction* importOptionsWidget;
         QMenu* helpMenu;                //"Help" menu
         QAction* aboutAction;           //"About" menu action
         QMenu *recentVolumesMenu;
@@ -103,15 +102,15 @@ class teramanager::PMain : public QWidget
         QSpinBox *debugTimeSeriesSBox;                     // time series widget (a spinbox)
 
         //toolbar widgets
-        QToolBar* toolBar;              //tool bar with buttons
-        QToolButton *openVolumeToolButton; //tool button for volume opening
+        QToolBar* toolBar;                                  //tool bar with buttons
+        QToolButton *openVolumeToolButton;                  //tool button for volume opening
 
         //import form widgets
-        QWidget* import_form;           //import form containing input fields
-        QCheckBox *reimport_checkbox;   //checkbox to be used to reimport a volume already imported
-        QWidget* volMapWidget;          //widget containing volume map options
-        QCheckBox *regenerateVolMap;    //if activated, the volume map will be regenerated
-        QSpinBox  *volMapMaxSizeSBox;   //to set the maximum allowed size (in MVoxels) of the volume map
+        QAction *regenMData_cAction;                        // if active, metadata will be regenerated
+        QAction *regenVMap_cAction;                         // if active, volume map is regenerated
+        QMenu* volMapSizeMenu;                              // volume map size entry
+        QWidgetAction* volMapSizeWidget;                    // volume map size action
+        QSpinBox *volMapSizeSBox;                           // volume map size widget (a spinbox)
 
         QTabWidget *tabs;               //tab widget
         //Page "Volume's info": contains informations of the loaded volume

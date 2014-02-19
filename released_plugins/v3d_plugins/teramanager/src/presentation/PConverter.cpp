@@ -83,14 +83,14 @@ PConverter::PConverter(V3DPluginCallback *callback, QWidget *parent) : QWidget(p
 
     //import form widget
     inFormatCBox = new QComboBox();
-    inFormatCBox->insertItem(0, "Image series (tiled)");
-    inFormatCBox->insertItem(1, "Image series (nontiled)");
-    inFormatCBox->insertItem(2, "3D TIFF (tiled)");
-    inFormatCBox->insertItem(3, "3D TIFF (nontiled)");
-    inFormatCBox->insertItem(4, "Vaa3D raw");
-    inFormatCBox->insertItem(5, "Vaa3D raw (tiled, RGB)");
-    inFormatCBox->insertItem(6, "Vaa3D raw (tiled, 4D)");
-    inFormatCBox->insertItem(7, "Vaa3D raw (series)");
+    inFormatCBox->insertItem(0, iim::STACKED_FORMAT.c_str());
+    inFormatCBox->insertItem(1, iim::SIMPLE_FORMAT.c_str());
+    inFormatCBox->insertItem(2, iim::TILED_TIF3D_FORMAT.c_str());
+    inFormatCBox->insertItem(3, iim::TIF3D_FORMAT.c_str());
+    inFormatCBox->insertItem(4, iim::RAW_FORMAT.c_str());
+    inFormatCBox->insertItem(5, iim::TILED_FORMAT.c_str());
+    inFormatCBox->insertItem(6, iim::TILED_MC_FORMAT.c_str());
+    inFormatCBox->insertItem(7, iim::SIMPLE_RAW_FORMAT.c_str());
     PMain::setEnabledComboBoxItem(inFormatCBox, 2, false);
     PMain::setEnabledComboBoxItem(inFormatCBox, 3, false);
     inFormatCBox->setEditable(true);
@@ -119,14 +119,14 @@ PConverter::PConverter(V3DPluginCallback *callback, QWidget *parent) : QWidget(p
 
     //conversion form widget
     outFormatCBox = new QComboBox();
-    outFormatCBox->insertItem(0, "Image series (tiled)");
-    outFormatCBox->insertItem(1, "Image series (nontiled)");
-    outFormatCBox->insertItem(2, "3D TIFF (tiled)");
-    outFormatCBox->insertItem(3, "3D TIFF (nontiled)");
-    outFormatCBox->insertItem(4, "Vaa3D raw");
-    outFormatCBox->insertItem(5, "Vaa3D raw (tiled, RGB)");
-    outFormatCBox->insertItem(6, "Vaa3D raw (tiled, 4D)");
-    outFormatCBox->insertItem(7, "Vaa3D raw (series)");
+    outFormatCBox->insertItem(0, iim::STACKED_FORMAT.c_str());
+    outFormatCBox->insertItem(1, iim::SIMPLE_FORMAT.c_str());
+    outFormatCBox->insertItem(2, iim::TILED_TIF3D_FORMAT.c_str());
+    outFormatCBox->insertItem(3, iim::TIF3D_FORMAT.c_str());
+    outFormatCBox->insertItem(4, iim::RAW_FORMAT.c_str());
+    outFormatCBox->insertItem(5, iim::TILED_FORMAT.c_str());
+    outFormatCBox->insertItem(6, iim::TILED_MC_FORMAT.c_str());
+    outFormatCBox->insertItem(7, iim::SIMPLE_RAW_FORMAT.c_str());
     PMain::setEnabledComboBoxItem(outFormatCBox, 1, false);
     PMain::setEnabledComboBoxItem(outFormatCBox, 2, false);
     PMain::setEnabledComboBoxItem(outFormatCBox, 3, false);

@@ -36,6 +36,7 @@
 #include "../core/ImageManager/StackedVolume.h"
 #include "../core/ImageManager/TiledVolume.h"
 #include "CPlugin.h"
+#include "CSettings.h"
 
 using namespace std;
 
@@ -50,31 +51,34 @@ class teramanager::CImport : public QThread
         * instantiated by calling the static method "istance(...)"
         **********************************************************************************/
         static CImport* uniqueInstance;
-        CImport() : QThread(), path(""), AXS_1(iim::axis(0)), AXS_2(iim::axis(0)), AXS_3(iim::axis(0)),
-                               VXL_1(0), VXL_2(0), VXL_3(0), reimport(false),
-                               vmapMaxSize(50), vmapData(0), vmapYDim(-1), vmapXDim(-1), vmapZDim(-1),
-                               vmapCDim(-1), vmapTDim(-1)
+        CImport() : QThread()
         {
             /**/itm::debug(itm::LEV1, 0, __itm__current__function__);
+            vmapData = 0;
+            reset();
         }
 
         // automatically called when current thread is started
         void run();
 
-        // volume members
-        string path;                                //folder where to start the scan process to find the volumes
-        iim::axis AXS_1, AXS_2, AXS_3;              //spatial reference system of the volume
-        float VXL_1, VXL_2, VXL_3;                  //voxel dimensions of the volume
-        bool reimport;                              //true if the volume has to be reimported
-        vector<VirtualVolume*> volumes;             //stores the volumes at the different resolutions
 
-        // volume map members
         /* We call "volume map" a binary file where to store the image content that has to be loaded and
          * displayed immediately after a volume is imported. Usually, this corresponds to a low-resolution
          * version of the whole volume, hence the description "volume map". */
-        bool regenerateVMap;                        //true if volume map has to be regenerated
+
+        // input members
+        string path;                                // path of the volume to be imported
+        bool reimport;                              /* (optional) true if the volume has to be reimported */
+        bool regenerateVMap;                        /* (optional) true if volume map has to be regenerated */
+        iim::axis AXS_1, AXS_2, AXS_3;              /* (optional) spatial reference system of the volume to be imported */
+        float VXL_1, VXL_2, VXL_3;                  /* (optional) voxel dimensions of the volume to be imported */
+        string format;                              /* (optional) format of the volume to be imported */
+        bool isTimeSeries;                          /* (optional) whether the volume to be imported is a time series */
+
+        // output members
+        vector<VirtualVolume*> volumes;             // stores the volumes at the different resolutions
         int vmapMaxSize;                            //maximum size (in MVoxels) of volume map
-        itm::uint8* vmapData;                            //volume map data
+        itm::uint8* vmapData;                       //volume map data
         int vmapYDim, vmapXDim, vmapZDim, vmapCDim, vmapTDim; //volume map dimensions
 
         // other members
@@ -98,7 +102,7 @@ class teramanager::CImport : public QThread
         static void uninstance();
         ~CImport();
 
-        //GET and SET methods
+        // GET methods
         string getPath(){return path;}
         itm::uint8* getVMapRawData(){return vmapData;}
         int getVMapXDim(){return vmapXDim;}
@@ -121,24 +125,37 @@ class teramanager::CImport : public QThread
             else return 0;
         }
         int getResolutions(){return volumes.size();}
+
+        // SET methods
         void setPath(string new_path){path = new_path;}
         void setAxes(string axs1, string axs2, string axs3);
-        void setVoxels(std::string vxl1, std::string vxl2, std::string vxl3);
+        void setVoxels(float vxl1, float vxl2, float vxl3);
         void setReimport(bool _reimport){reimport = _reimport;}
         void setRegenerateVolumeMap(bool _regenerateVolMap){regenerateVMap = _regenerateVolMap;}
         void setVolMapMaxSize(int _volMapMaxSize){vmapMaxSize = _volMapMaxSize;}
+        void setFormat(string _format){format = _format;}
+        void setTimeSeries(bool _isTimeSeries){isTimeSeries = _isTimeSeries;}
 
-        /**/
-
-        //reset method
+        // reset method
         void reset()
         {
             /**/itm::debug(itm::LEV1, 0, __itm__current__function__);
 
-            path=""; AXS_1=AXS_2=AXS_3=iim::axis_invalid; VXL_1=VXL_2=VXL_3=0; reimport=false;
+            path="";
+            reimport=false;
+            regenerateVMap = false;
+            AXS_1=AXS_2=AXS_3=iim::axis_invalid;
+            VXL_1=VXL_2=VXL_3=0.0f;
+            format = "";
+            isTimeSeries = false;
             for(size_t i=0; i<volumes.size(); i++)
                 delete volumes[i];
             volumes.clear();
+//            if(vmapData)
+//                delete[] vmapData;        // vmap MUST NOT be deallocated from TeraFly, since it is handled directly by Vaa3D
+            vmapData = 0;
+            vmapXDim = vmapYDim = vmapZDim = vmapTDim = vmapCDim = -1;
+            vmapMaxSize = CSettings::instance()->getVolMapSizeLimit();
         }
 
     signals:

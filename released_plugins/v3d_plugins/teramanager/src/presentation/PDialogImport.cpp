@@ -56,41 +56,88 @@ PDialogImport::PDialogImport(QWidget* parent) : QDialog(parent)
     QFont bigFont = QApplication::font();
     bigFont.setPointSize(14);
     import_form_desc_1 = new QLabel("<html><table><tr style=\"vertical-align: middle;\"><td><img src=\":/icons/help.png\"></td>"
-                          "<td><p style=\"text-align:justify; margin-left:10px;\"> The metadata binary file contains <b>volume descriptors</b> needed "
-                          "to manage properly and efficiently all the images contained in the two-leveled hierarchical directory structure. It "
-                          "does NOT contain absolute filepath, hence the entire volume can be easily moved or renamed. </p> <p style=\"text-align:justify; margin-left:10px;\">"
-                          "The metadata binary file is <b> automatically saved </b> when a volume is imported for the first time or re-imported. "
-                          "However, in these cases additional informations are required. </p> </td></tr></table> </html>");
+                          "<td><p style=\"text-align:justify; margin-left:10px; margin-right:3px\"> TeraFly was unable to import this volume directly. That could "
+                          "be caused by an unsupported volume format or by corrupt or missing <b>metadata</b> files. <br><br>"
+                          "Please provide additional information through the form below and then click on the <i>Import volume</i> button. <br><br>If your volume's format "
+                          "is not selectable from the list, you might consider to use <b>TeraConverter</b> to produce a format which is supported by TeraFly. </p> </td></tr></table> </html>");
     import_form_desc_1->setStyleSheet("border: 1px solid; border-color: gray; background-color: rgb(245,245,245); margin-top:10px; margin-bottom:10px; padding-top:10px; padding-bottom:10px;");
     import_form_desc_1->setWordWrap(true);
     import_form_desc_1->setFont(tinyFont);
-    import_form_desc_2 = new QLabel("<html><i>Please fill all the fields and pay attention that the minus \"-\" sign before an axis is interpreted as a rotation by 180 degrees.</i></html>");
-    import_form_desc_2->setWordWrap(true);
+
+    inFormatCBox = new QComboBox();
+    inFormatCBox->insertItem(0, iim::STACKED_FORMAT.c_str());
+    inFormatCBox->insertItem(1, iim::SIMPLE_FORMAT.c_str());
+    inFormatCBox->insertItem(2, iim::TILED_TIF3D_FORMAT.c_str());
+    inFormatCBox->insertItem(3, iim::TIF3D_FORMAT.c_str());
+    inFormatCBox->insertItem(4, iim::RAW_FORMAT.c_str());
+    inFormatCBox->insertItem(5, iim::TILED_FORMAT.c_str());
+    inFormatCBox->insertItem(6, iim::TILED_MC_FORMAT.c_str());
+    inFormatCBox->insertItem(7, iim::SIMPLE_RAW_FORMAT.c_str());
+    PMain::setEnabledComboBoxItem(inFormatCBox, 1, false);
+    PMain::setEnabledComboBoxItem(inFormatCBox, 2, false);
+    PMain::setEnabledComboBoxItem(inFormatCBox, 3, false);
+    PMain::setEnabledComboBoxItem(inFormatCBox, 4, false);
+    PMain::setEnabledComboBoxItem(inFormatCBox, 7, false);
+    inFormatCBox->setEditable(true);
+    inFormatCBox->lineEdit()->setReadOnly(true);
+    inFormatCBox->lineEdit()->setAlignment(Qt::AlignCenter);
+    tsCheckBox = new QCheckBox("5D (time series)");
+
     first_direction_label = new QLabel("First direction");
     second_direction_label = new QLabel("Second direction");
     third_direction_label = new QLabel("Third direction");
-    axes_label = new QLabel("Axes (1 = Vertical, 2 = Horizontal, 3 = Depth)");
-    voxels_dims_label = new QLabel("Voxel's dimensions (micrometers)");
-    QRegExp axs_regexp("^-?[123]$");
-    QRegExp vxl_regexp("^[0-9]+\\.?[0-9]*$");
-    axs1_field = new QLineEdit();
-    axs1_field->setAlignment(Qt::AlignCenter);
-    axs1_field->setValidator(new QRegExpValidator(axs_regexp, axs1_field));
-    axs2_field = new QLineEdit();
-    axs2_field->setAlignment(Qt::AlignCenter);
-    axs2_field->setValidator(new QRegExpValidator(axs_regexp, axs2_field));
-    axs3_field = new QLineEdit();
-    axs3_field->setAlignment(Qt::AlignCenter);
-    axs3_field->setValidator(new QRegExpValidator(axs_regexp, axs3_field));
-    vxl1_field = new QLineEdit();
+    first_direction_label->setFont(QFont("", 8));
+    second_direction_label->setFont(QFont("", 8));
+    third_direction_label->setFont(QFont("", 8));
+    axes_label = new QLabel("Axes:");
+    voxels_dims_label = new QLabel(QString("Voxel's dims (").append(QChar(0x03BC)).append("m):"));
+
+    axs1_field = new QComboBox();
+    axs1_field->addItem("X");
+    axs1_field->addItem("-X");
+    axs1_field->addItem("Y");
+    axs1_field->addItem("-Y");
+    axs1_field->addItem("Z");
+    axs1_field->addItem("-Z");
+    axs1_field->setEditable(true);
+    axs1_field->lineEdit()->setReadOnly(true);
+    axs1_field->lineEdit()->setAlignment(Qt::AlignCenter);
+    for(int i = 0; i < axs1_field->count(); i++)
+        axs1_field->setItemData(i, Qt::AlignCenter, Qt::TextAlignmentRole);
+
+    axs2_field = new QComboBox();
+    axs2_field->addItem("X");
+    axs2_field->addItem("-X");
+    axs2_field->addItem("Y");
+    axs2_field->addItem("-Y");
+    axs2_field->addItem("Z");
+    axs2_field->addItem("-Z");
+    axs2_field->setEditable(true);
+    axs2_field->lineEdit()->setReadOnly(true);
+    axs2_field->lineEdit()->setAlignment(Qt::AlignCenter);
+    for(int i = 0; i < axs2_field->count(); i++)
+        axs2_field->setItemData(i, Qt::AlignCenter, Qt::TextAlignmentRole);
+
+    axs3_field = new QComboBox();
+    axs3_field->addItem("X");
+    axs3_field->addItem("-X");
+    axs3_field->addItem("Y");
+    axs3_field->addItem("-Y");
+    axs3_field->addItem("Z");
+    axs3_field->addItem("-Z");
+    axs3_field->setEditable(true);
+    axs3_field->lineEdit()->setReadOnly(true);
+    axs3_field->lineEdit()->setAlignment(Qt::AlignCenter);
+    for(int i = 0; i < axs3_field->count(); i++)
+        axs3_field->setItemData(i, Qt::AlignCenter, Qt::TextAlignmentRole);
+
+    vxl1_field = new QDoubleSpinBox();
     vxl1_field->setAlignment(Qt::AlignCenter);
-    vxl1_field->setValidator(new QRegExpValidator(vxl_regexp, vxl1_field));
-    vxl2_field = new QLineEdit();
+    vxl2_field = new QDoubleSpinBox();
     vxl2_field->setAlignment(Qt::AlignCenter);
-    vxl2_field->setValidator(new QRegExpValidator(vxl_regexp, vxl2_field));
-    vxl3_field = new QLineEdit();
+    vxl3_field = new QDoubleSpinBox();
     vxl3_field->setAlignment(Qt::AlignCenter);
-    vxl3_field->setValidator(new QRegExpValidator(vxl_regexp, vxl3_field));
+
     import_button = new QPushButton(" Import volume");
     import_button->setIcon(QIcon(":/icons/import.png"));
     import_button->setIconSize(QSize(30,30));
@@ -105,42 +152,70 @@ PDialogImport::PDialogImport(QWidget* parent) : QDialog(parent)
 
     /*** LAYOUT SECTION ***/
     QVBoxLayout *layout = new QVBoxLayout();
-
-    QWidget* container = new QWidget();
-    QGridLayout* grid_layout = new QGridLayout();
-    grid_layout->addWidget(first_direction_label, 0, 2, 1, 1, Qt::AlignHCenter);
-    grid_layout->addWidget(second_direction_label, 0, 3, 1, 1, Qt::AlignHCenter);
-    grid_layout->addWidget(third_direction_label, 0, 4, 1, 1, Qt::AlignHCenter);
-    grid_layout->addWidget(axes_label, 1, 0, 1, 2);
-    grid_layout->addWidget(axs1_field, 1, 2, 1, 1, Qt::AlignHCenter);
-    grid_layout->addWidget(axs2_field, 1, 3, 1, 1, Qt::AlignHCenter);
-    grid_layout->addWidget(axs3_field, 1, 4, 1, 1, Qt::AlignHCenter);
-    grid_layout->addWidget(voxels_dims_label, 2, 0, 1, 2);
-    grid_layout->addWidget(vxl1_field, 2, 2, 1, 1, Qt::AlignHCenter);
-    grid_layout->addWidget(vxl2_field, 2, 3, 1, 1, Qt::AlignHCenter);
-    grid_layout->addWidget(vxl3_field, 2, 4, 1, 1, Qt::AlignHCenter);
-    container->setLayout(grid_layout);
+    layout->setContentsMargins(20,20,20,20);
+    /* --------------- volume's format ---------------- */
+    QHBoxLayout* volumeFormatLayout = new QHBoxLayout();
+//    volumeFormatLayout->setContentsMargins(5,5,5,5);
+    QLabel* volumeFormatLabel = new QLabel("Volume's format:");
+    volumeFormatLabel->setFixedWidth(200);
+    volumeFormatLayout->addWidget(volumeFormatLabel);
+    volumeFormatLayout->addWidget(inFormatCBox, 1);
+    volumeFormatLayout->addWidget(tsCheckBox);
+    /* -------------- metadata row #1 ----------------- */
+    QHBoxLayout* mdataRow1Layout = new QHBoxLayout();
+//    mdataRow1Layout->setContentsMargins(5,5,5,5);
+    mdataRow1Layout->addSpacing(200);
+    first_direction_label->setAlignment(Qt::AlignCenter);
+    second_direction_label->setAlignment(Qt::AlignCenter);
+    third_direction_label->setAlignment(Qt::AlignCenter);
+    mdataRow1Layout->addWidget(first_direction_label, 1);
+    mdataRow1Layout->addWidget(second_direction_label, 1);
+    mdataRow1Layout->addWidget(third_direction_label, 1);
+    /* -------------- metadata row #2 ----------------- */
+    QHBoxLayout* mdataRow2Layout = new QHBoxLayout();
+//    mdataRow2Layout->setContentsMargins(5,5,5,5);
+    axes_label->setFixedWidth(200);
+    mdataRow2Layout->addWidget(axes_label);
+    mdataRow2Layout->addWidget(axs1_field, 1);
+    mdataRow2Layout->addWidget(axs2_field, 1);
+    mdataRow2Layout->addWidget(axs3_field, 1);
+    /* -------------- metadata row #3 ----------------- */
+    QHBoxLayout* mdataRow3Layout = new QHBoxLayout();
+//    mdataRow3Layout->setContentsMargins(5,5,5,5);
+    voxels_dims_label->setFixedWidth(200);
+    mdataRow3Layout->addWidget(voxels_dims_label);
+    mdataRow3Layout->addWidget(vxl1_field, 1);
+    mdataRow3Layout->addWidget(vxl2_field, 1);
+    mdataRow3Layout->addWidget(vxl3_field, 1);
+    /* ------------------ buttons --------------------- */
     QHBoxLayout* buttons_layout = new QHBoxLayout();
+//    buttons_layout->setContentsMargins(5,5,5,5);
     buttons_layout->addWidget(import_button);
     buttons_layout->addWidget(cancel_button);
-
+    /* ------------------ OVERALL --------------------- */
     layout->addWidget(import_form_desc_1);
-    layout->addWidget(import_form_desc_2);
-    layout->addWidget(container);
+    layout->addLayout(volumeFormatLayout);
+    layout->addSpacing(20);
+    layout->addLayout(mdataRow1Layout);
+    layout->addLayout(mdataRow2Layout);
+    layout->addLayout(mdataRow3Layout);
+    layout->addSpacing(30);
     layout->addLayout(buttons_layout);
-
     layout->setSizeConstraint( QLayout::SetFixedSize );
     setLayout(layout);
 
     //windows flags and title
     char title[1024];
-    sprintf(title, "\"%s\" metadata file not found", iim::MDATA_BIN_FILE_NAME.c_str());
+    sprintf(title, "Unable to import this volume");
     this->setWindowTitle(title);
     this->setWindowFlags(Qt::Dialog | Qt::WindowTitleHint | Qt::WindowStaysOnTopHint | Qt::WindowCloseButtonHint);
 
     // signals and slots
     connect(import_button, SIGNAL(clicked()), this, SLOT(import_button_clicked()));
     connect(cancel_button, SIGNAL(clicked()), this, SLOT(close()));
+
+//    setFixedSize(800, 600);
+    reset();
 
     /**/itm::debug(itm::LEV1, "object successfully constructed", __itm__current__function__);
 }
@@ -154,12 +229,21 @@ PDialogImport::~PDialogImport()
 //reset method
 void PDialogImport::reset()
 {
-    axs1_field->setText("");
-    axs2_field->setText("");
-    axs3_field->setText("");
-    vxl1_field->setText("");
-    vxl2_field->setText("");
-    vxl3_field->setText("");
+    axs1_field->setCurrentIndex(0);
+    axs2_field->setCurrentIndex(2);
+    axs3_field->setCurrentIndex(4);
+    vxl1_field->setMinimum(0.1);
+    vxl1_field->setMaximum(1000.0);
+    vxl1_field->setSingleStep(0.1);
+    vxl1_field->setValue(1.0);
+    vxl2_field->setMinimum(0.1);
+    vxl2_field->setMaximum(1000.0);
+    vxl2_field->setSingleStep(0.1);
+    vxl2_field->setValue(1.0);
+    vxl3_field->setMinimum(0.1);
+    vxl3_field->setMaximum(1000.0);
+    vxl3_field->setSingleStep(0.1);
+    vxl3_field->setValue(1.0);
 }
 
 /**********************************************************************************
@@ -171,49 +255,14 @@ void PDialogImport::import_button_clicked()
 
     try
     {
-        int pos=0;
-        QString tbv = axs1_field->text();
-        if(axs1_field->validator()->validate(tbv,pos) != QValidator::Acceptable)
-        {
-            axs1_field->setFocus();
-            throw RuntimeException("One or more fields not properly filled");
-        }
-        tbv = axs2_field->text();
-        if(axs2_field->validator()->validate(tbv,pos) != QValidator::Acceptable)
-        {
-            axs2_field->setFocus();
-            throw RuntimeException("One or more fields not properly filled");
-        }
-        tbv = axs3_field->text();
-        if(axs3_field->validator()->validate(tbv,pos) != QValidator::Acceptable)
-        {
-            axs3_field->setFocus();
-            throw RuntimeException("One or more fields not properly filled");
-        }
-        tbv = vxl1_field->text();
-        if(vxl1_field->validator()->validate(tbv,pos) != QValidator::Acceptable)
-        {
-            vxl1_field->setFocus();
-            throw RuntimeException("One or more fields not properly filled");
-        }
-        tbv = vxl2_field->text();
-        if(vxl2_field->validator()->validate(tbv,pos) != QValidator::Acceptable)
-        {
-            vxl2_field->setFocus();
-            throw RuntimeException("One or more fields not properly filled");
-        }
-        tbv = vxl3_field->text();
-        if(vxl3_field->validator()->validate(tbv,pos) != QValidator::Acceptable)
-        {
-            vxl3_field->setFocus();
-            throw RuntimeException("One or more fields not properly filled");
-        }
-        CImport::instance()->setAxes(axs1_field->text().toStdString().c_str(),
-                                     axs2_field->text().toStdString().c_str(),
-                                     axs3_field->text().toStdString().c_str());
-        CImport::instance()->setVoxels(vxl1_field->text().toStdString().c_str(),
-                                       vxl2_field->text().toStdString().c_str(),
-                                       vxl3_field->text().toStdString().c_str());
+        CImport::instance()->setAxes(axs1_field->currentText().toStdString(),
+                                     axs2_field->currentText().toStdString(),
+                                     axs3_field->currentText().toStdString());
+        CImport::instance()->setVoxels(static_cast<float>(vxl1_field->value()),
+                                       static_cast<float>(vxl2_field->value()),
+                                       static_cast<float>(vxl3_field->value()));
+        CImport::instance()->setFormat(inFormatCBox->currentText().toStdString());
+        CImport::instance()->setTimeSeries(tsCheckBox->isChecked());
         accept();
         hide();
         reset();

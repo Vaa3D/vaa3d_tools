@@ -15,7 +15,7 @@ TimeSeries::TimeSeries(const char *rootDir) throw (IOException) : VirtualVolume(
 {
     /**/iim::debug(iim::LEV2, strprintf("rootDir = %s", root_dir).c_str(), __iim__current__function__);
 
-    // check precondition #1: valid folder
+    // check condition #1: valid folder
     if(!isDirectory(root_dir))
         throw IOException(strprintf("in TimeSeries::TimeSeries(): \"%s\" not a valid folder", rootDir).c_str());
 
@@ -34,6 +34,10 @@ TimeSeries::TimeSeries(const char *rootDir) throw (IOException) : VirtualVolume(
     }
     closedir(cur_dir);
     entries.sort();
+
+    // check condition #2: at least one time frame has been found
+    if(entries.empty())
+        throw IOException(strprintf("in TimeSeries::TimeSeries(): no time frames found within \"%s\"", rootDir).c_str());
 
     // import each folder as a separate VirtualVolume
     // WARNING: all metadata files (if needed by that format) are assumed to be present. Otherwise, that format will be skipped.
@@ -63,6 +67,19 @@ TimeSeries::TimeSeries(const char *rootDir) throw (IOException) : VirtualVolume(
         if( frames[k]->getBYTESxCHAN() != frames[k+1]->getBYTESxCHAN())
             throw IOException(strprintf("in TimeSeries::TimeSeries(): frames have different bytes per channel in folder \"%s\"", root_dir).c_str());
     }
+
+    // assigning to the attributes of time series the attributes of the first frame
+    VXL_V = frames[0]->getVXL_V();
+    VXL_H = frames[0]->getVXL_H();
+    VXL_D = frames[0]->getVXL_D();
+    ORG_V = frames[0]->getORG_V();
+    ORG_H = frames[0]->getORG_H();
+    ORG_D = frames[0]->getORG_D();
+    DIM_V = frames[0]->getDIM_V();
+    DIM_H = frames[0]->getDIM_H();
+    DIM_D = frames[0]->getDIM_D();
+    CHANS = frames[0]->getCHANS();
+    BYTESxCHAN = frames[0]->getBYTESxCHAN();
 
     t0 = 0;
     t1 = frames.size()-1;

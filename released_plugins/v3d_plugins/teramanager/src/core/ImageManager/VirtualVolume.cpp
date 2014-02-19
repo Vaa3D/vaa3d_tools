@@ -30,6 +30,7 @@
 #include "TiledMCVolume.h"
 #include "StackedVolume.h"
 #include "RawFmtMngr.h"
+#include "TimeSeries.h"
 
 #include <cxcore.h>
 #include <highgui.h>
@@ -732,7 +733,14 @@ VirtualVolume* VirtualVolume::instance(const char* path) throw (IOException)
                         }
                         catch(...)
                         {
-                            ;
+                            try
+                            {
+                                volume = new TimeSeries(path);
+                            }
+                            catch(...)
+                            {
+                                ;
+                            }
                         }
                     }
                 }
@@ -753,6 +761,68 @@ VirtualVolume* VirtualVolume::instance(const char* path) throw (IOException)
     }
     else
         throw IOException(strprintf("Path = \"%s\" does not exist", path), __iim__current__function__);
+
+    return volume;
+}
+
+// returns the imported volume if succeeds (otherwise returns 0)
+// WARNING: no assumption is made on metadata files, which are possibly (re-)generated using the additional informations provided.
+VirtualVolume* VirtualVolume::instance(const char* path, std::string format,
+                                       iim::axis AXS_1, iim::axis AXS_2, iim::axis AXS_3, /* = iim::axis_invalid */
+                                       float VXL_1 /* = 0 */, float VXL_2 /* = 0 */, float VXL_3 /* = 0 */) throw (iim::IOException)
+{
+    /**/iim::debug(iim::LEV3, strprintf("path = \"%s\", format = %s, AXS_1 = %s, AXS_2 = %s, AXS_3 = %s, VXL_1 = %.2f, VXL_2 = %.2f, VXL_3 = %.2f",
+                                        path, format.c_str(), axis_to_str(AXS_1), axis_to_str(AXS_2), axis_to_str(AXS_3),
+                                        VXL_1, VXL_2, VXL_3).c_str(), __iim__current__function__);
+
+    VirtualVolume* volume = 0;
+
+    // directory formats
+    if(isDirectory(path))
+    {
+        if(format.compare(TILED_MC_FORMAT) == 0)
+        {
+            if(AXS_1 != axis_invalid && AXS_2 != axis_invalid && AXS_3 != axis_invalid && VXL_1 != 0 && VXL_2 != 0 && VXL_3 != 0)
+                volume = new TiledMCVolume(path, ref_sys(AXS_1,AXS_2,AXS_3), VXL_1, VXL_2, VXL_3, true, true);
+            else
+                throw IOException(strprintf("Invalid parameters AXS_1(%s), AXS_2(%s), AXS_3(%s), VXL_1(%.2f), VXL_2(%.2f), VXL_3(%.2f)",
+                                            axis_to_str(AXS_1), axis_to_str(AXS_2), axis_to_str(AXS_3), VXL_1, VXL_2, VXL_3).c_str());
+        }
+        else if(format.compare(STACKED_FORMAT) == 0)
+        {
+            if(AXS_1 != axis_invalid && AXS_2 != axis_invalid && AXS_3 != axis_invalid && VXL_1 != 0 && VXL_2 != 0 && VXL_3 != 0)
+                volume = new StackedVolume(path, ref_sys(AXS_1,AXS_2,AXS_3), VXL_1, VXL_2, VXL_3, true, true);
+            else
+                throw IOException(strprintf("Invalid parameters AXS_1(%s), AXS_2(%s), AXS_3(%s), VXL_1(%.2f), VXL_2(%.2f), VXL_3(%.2f)",
+                                            axis_to_str(AXS_1), axis_to_str(AXS_2), axis_to_str(AXS_3), VXL_1, VXL_2, VXL_3).c_str());
+        }
+        else if(format.compare(TILED_FORMAT) == 0)
+        {
+            if(AXS_1 != axis_invalid && AXS_2 != axis_invalid && AXS_3 != axis_invalid && VXL_1 != 0 && VXL_2 != 0 && VXL_3 != 0)
+                volume = new TiledVolume(path, ref_sys(AXS_1,AXS_2,AXS_3), VXL_1, VXL_2, VXL_3, true, true);
+            else
+                throw IOException(strprintf("Invalid parameters AXS_1(%s), AXS_2(%s), AXS_3(%s), VXL_1(%.2f), VXL_2(%.2f), VXL_3(%.2f)",
+                                            axis_to_str(AXS_1), axis_to_str(AXS_2), axis_to_str(AXS_3), VXL_1, VXL_2, VXL_3).c_str());
+        }
+        else if(format.compare(SIMPLE_RAW_FORMAT) == 0)
+            volume = new SimpleVolumeRaw(path);
+        else if(format.compare(SIMPLE_FORMAT) == 0)
+            volume = new SimpleVolume(path);
+        else
+            throw IOException(strprintf("Unsupported format", format.c_str()), __iim__current__function__);
+    }
+    // file formats
+    else if(isFile(path))
+    {
+
+        if(format.compare(RAW_FORMAT) == 0)
+            volume = new RawVolume(path);
+        else
+            throw IOException(strprintf("Unsupported format", format.c_str()), __iim__current__function__);
+    }
+    else
+        throw IOException(strprintf("Path = \"%s\" does not exist", path), __iim__current__function__);
+
 
     return volume;
 }

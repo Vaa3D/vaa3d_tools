@@ -48,6 +48,17 @@ class SimpleVolumeRaw : public VirtualVolume
 
         ~SimpleVolumeRaw(void);
 
+        // returns a unique ID that identifies the volume format
+        std::string getPrintableFormat(){return iim::SIMPLE_RAW_FORMAT;}
+
+        // added by Alessandro on 2014-02-18: additional info on the reference system (where available)
+        float getVXL_1() {return VXL_H;}
+        float getVXL_2() {return VXL_V;}
+        float getVXL_3() {return VXL_D;}
+        iim::axis getAXS_1() {return iim::horizontal;}
+        iim::axis getAXS_2() {return iim::vertical;}
+        iim::axis getAXS_3() {return iim::depth;}
+
         iim::real32 *loadSubvolume_to_real32(int V0=-1,int V1=-1, int H0=-1, int H1=-1, int D0=-1, int D1=-1)  throw (iim::IOException);
 
         iim::uint8 *loadSubvolume_to_UINT8(int V0=-1,int V1=-1, int H0=-1, int H1=-1, int D0=-1, int D1=-1, int *channels=0, int ret_type=iim::DEF_IMG_DEPTH) throw (iim::IOException);
