@@ -1,0 +1,13 @@
+CTC = awk -f manager.awk
+
+GENFILES = cdf.c fct_min.c image_filters.c lu_matrix.c xfig.c \
+          contour_lib.c fct_root.c image_lib.c utilities.c   \
+          draw_lib.c hash.c level_set.c water_shed.c fft.c tiff_io.c tiff_image.c
+
+.PHONY: all  
+
+all: $(GENFILES)         
+
+%.c: %.p
+	$(CTC) $< > $*.c
+

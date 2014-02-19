@@ -6,8 +6,7 @@
 #include "v3d_message.h"
 #include <vector>
 #include "neuTube_zhi_plugin.h"
-#include "nvinterface.h"
-/*#include "zstack.hxx"
+//#include "zstack.hxx"
 
 
 #include "c_stack.h"
@@ -16,31 +15,24 @@
 #include "tz_stack_attribute.h"
 #include "tz_stack_lib.h"
 #include "tz_int_histogram.h"
-
-#include "image_lib.h"*/
-
-#include <stdlib.h>
-#include <stdio.h>
-#include <utilities.h>
-#include <string.h>
-#include "tz_error.h"
-#include "tz_int_histogram.h"
 #include "tz_stack_threshold.h"
-#include "tz_stack_lib.h"
-#include "tz_stack_stat.h"
-#include "tz_stack_attribute.h"
 #include "tz_stack_bwmorph.h"
-#include "tz_stack.h"
-#include "tz_stack_attribute.h"
-#include "tz_stack_objlabel.h"
-#include "tz_iarray.h"
-#include "tz_image_io.h"
+#include "tz_objdetect.h"
+#include "tz_voxel_graphics.h"
+#include "tz_stack_sampling.h"
+#include "tz_u16array.h"
+#include "tz_u8array.h"
+#include "tz_farray.h"
+
+#include "zneurontracer.h"
+
+#include "image_lib.h"
 
 using namespace std;
 Q_EXPORT_PLUGIN2(neuTube_zhi, neuTube_zhi);
 
 void autotrace(V3DPluginCallback2 &callback, QWidget *parent);
-//int autoThreshold(Stack *stack);
+int autoThreshold(Stack *stack);
 
 QStringList neuTube_zhi::menulist() const
 {
@@ -102,9 +94,9 @@ void autotrace(V3DPluginCallback2 &callback, QWidget *parent)
         return;
     }
 
-    Mc_Stack *stack = NVInterface::makeStack(p4DImage);
+    //Mc_Stack *stack = NVInterface::makeStack(p4DImage);
 
-   /* unsigned char* data1d = p4DImage->getRawData();
+    unsigned char* data1d = p4DImage->getRawData();
     V3DLONG N = p4DImage->getXDim();
     V3DLONG M = p4DImage->getYDim();
     V3DLONG P = p4DImage->getZDim();
@@ -116,7 +108,7 @@ void autotrace(V3DPluginCallback2 &callback, QWidget *parent)
     Stack *stack;
     switch (pixeltype)
     {
-    case V3D_UINT8: stack = Make_Stack(GREY,N,M,P);break;
+    case V3D_UINT8: stack = Make_Stack(GREY,(int)N,(int)M,(int)P);break;
     default: v3d_msg("Invalid data type. Do nothing."); return;
     }
 
@@ -137,11 +129,68 @@ void autotrace(V3DPluginCallback2 &callback, QWidget *parent)
 
     int thre = autoThreshold(stack);
 
-    printf("threshold is %d\n\n",thre);*/
+    Stack *mask = Copy_Stack(stack);
+    Stack_Threshold_Binarize(mask, thre);
+    Translate_Stack(mask, GREY, 1);
+
+    Trace_Workspace *m_traceWorkspace = NULL;
+
+    double z_scale = 1.0;
+
+    Stack *mask2 = mask;
+    /* resample the stack for dist calc if z is different */
+    if (z_scale != 1.0) {
+      mask2 = Resample_Stack_Depth(mask, NULL, z_scale);
+      Stack_Binarize(mask2);
+    }
+
+    /* alloc <dist> */
+    Stack *dist = Stack_Bwdist_L_U16(mask2, NULL, 0);
+
+    if (mask != mask2) {
+      Kill_Stack(mask2);
+    }
+
+    /* alloc <seeds> */
+    Stack *seeds = Stack_Locmax_Region(dist, 26);
+
+    /* alloc <objs> */
+    Object_3d_List *objs = Stack_Find_Object_N(seeds, NULL, 1, 0, 26);
+
+    Zero_Stack(seeds);
+
+    int objnum = 0;
+    while (objs != NULL) {
+      Object_3d *obj = objs->data;
+      Voxel_t center;
+      Object_3d_Central_Voxel(obj, center);
+      Set_Stack_Pixel(seeds, center[0], center[1], center[2], 0, 1);
+      objs = objs->next;
+      objnum++;
+    }
+
+    /* free <objs> */
+    Kill_Object_3d_List(objs);
+
+    /* alloc <list> */
+    Voxel_List *list = Stack_To_Voxel_List(seeds);
+
+    /* free <seeds> */
+    Kill_Stack(seeds);
+
+    /* alloc <pa> */
+    Pixel_Array *pa = Voxel_List_Sampling(dist, list);
+
+    /* free <dist> */
+    Kill_Stack(dist);
+
+
+
+    printf("threshold is %d\n\n",thre);
     return;
 }
 
-/*int autoThreshold(Stack *stack)
+int autoThreshold(Stack *stack)
 {
   int thre = 0;
   if (stack->array != NULL) {
@@ -170,4 +219,4 @@ void autotrace(V3DPluginCallback2 &callback, QWidget *parent)
     free(hist);
   }
   return thre;
-}*/
+}
