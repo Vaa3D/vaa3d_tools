@@ -22,9 +22,7 @@
 #include "tz_stack_sampling.h"
 #include "tz_u16array.h"
 #include "tz_u8array.h"
-#include "tz_farray.h"
-
-#include "zneurontracer.h"
+//#include "tz_farray.h"
 
 #include "image_lib.h"
 
@@ -133,7 +131,7 @@ void autotrace(V3DPluginCallback2 &callback, QWidget *parent)
     Stack_Threshold_Binarize(mask, thre);
     Translate_Stack(mask, GREY, 1);
 
-    Trace_Workspace *m_traceWorkspace = NULL;
+    //Trace_Workspace *m_traceWorkspace = NULL;
 
     double z_scale = 1.0;
 

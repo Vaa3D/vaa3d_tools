@@ -22,7 +22,7 @@ INCLUDEPATH += $$SRCNEUTUBEPATH/neurolabi/lib/libpng-1.6.7 $$SRCNEUTUBEPATH/neur
 #    -framework OpenGL -framework ApplicationServices -framework CoreFoundation
 
 
-LIBS += -L/local1/work/v3d_external/v3d_main/common_lib/src_packages/mylib_tiff -lmylib
+LIBS += -L$$VAA3DPATH/common_lib/src_packages/mylib_tiff -lmylib
 
 
 #LIBS += -L/$$SRCNEUTUBEPATH/neurolabi/lib/fftw-3.3.2 -lfftw3f
@@ -54,7 +54,7 @@ SOURCES +=  $$SRCNEUTUBEPATH/neurolabi/c/tz_voxel_graphics.c
 SOURCES +=  $$SRCNEUTUBEPATH/neurolabi/c/tz_stack_sampling.c
 SOURCES +=  $$SRCNEUTUBEPATH/neurolabi/c/tz_u16array.c
 SOURCES +=  $$SRCNEUTUBEPATH/neurolabi/c/tz_u8array.c
-SOURCES +=  $$SRCNEUTUBEPATH/neurolabi/c/tz_farray.c
+#SOURCES +=  $$SRCNEUTUBEPATH/neurolabi/c/tz_farray.c
 
 TARGET	= $$qtLibraryTarget(neuTube_zhi)
 DESTDIR	= ../../../../v3d_external/bin/plugins/neuTube_zhi/
