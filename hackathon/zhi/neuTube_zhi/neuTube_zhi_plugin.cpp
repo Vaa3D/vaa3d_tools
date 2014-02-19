@@ -32,6 +32,39 @@
 #include "tz_stack_utils.h"
 #include "tz_geo3d_scalar_field.h"
 #include "tz_workspace.h"
+#include "tz_trace_defs.h"
+#include "tz_local_neuroseg.h"
+#include "tz_darray.h"
+#include "tz_math.h"
+#include "tz_locseg_chain.h"
+#include "tz_trace_utils.h"
+#include "tz_locseg_chain_com.h"
+#include "tz_stack_graph.h"
+#include "tz_neuroseg.h"
+#include "tz_bitmask.h"
+#include "tz_neuropos.h"
+#include "tz_3dgeom.h"
+#include "tz_coordinate_3d.h"
+#include "tz_geo3d_point_array.h"
+#include "tz_geometry.h"
+#include "tz_cont_fun.h"
+#include "tz_perceptor.h"
+#include "tz_optimize_utils.h"
+#include "tz_geoangle_utils.h"
+#include "tz_neurofield.h"
+#include "tz_locseg_node.h"
+#include "tz_locseg_node_doubly_linked_list.h"
+#include "tz_geo3d_vector.h"
+#include "tz_locseg_chain_knot.h"
+#include "tz_unipointer_arraylist.h"
+#include "tz_unipointer_linked_list.h"
+#include "tz_stack_math.h"
+#include "tz_stack_relation.h"
+#include "tz_geo3d_circle.h"
+#include "tz_xz_orientation.h"
+#include "tz_swc_cell.h"
+
+
 
 #include "image_lib.h"
 
@@ -40,6 +73,7 @@ Q_EXPORT_PLUGIN2(neuTube_zhi, neuTube_zhi);
 
 void autotrace(V3DPluginCallback2 &callback, QWidget *parent);
 int autoThreshold(Stack *stack);
+void loadTraceMask(bool traceMasked,Trace_Workspace *m_traceWorkspace);
 
 QStringList neuTube_zhi::menulist() const
 {
@@ -140,11 +174,14 @@ void autotrace(V3DPluginCallback2 &callback, QWidget *parent)
     Stack_Threshold_Binarize(mask, thre);
     Translate_Stack(mask, GREY, 1);
 
-   // Trace_Workspace *m_traceWorkspace = NULL;
+    /* alloc <mask2> */
+    Stack *mask2 = Stack_Majority_Filter_R(mask, NULL, 26, 4);
 
+    /* free <mask>, <mask2> => <mask> */
+    Kill_Stack(mask);
+    mask = mask2;
     double z_scale = 1.0;
 
-    Stack *mask2 = mask;
     /* resample the stack for dist calc if z is different */
     if (z_scale != 1.0) {
       mask2 = Resample_Stack_Depth(mask, NULL, z_scale);
@@ -217,8 +254,215 @@ void autotrace(V3DPluginCallback2 &callback, QWidget *parent)
     /* free <pa> */
     Kill_Pixel_Array(pa);
 
+    /* now the seeds are in <field> */
+    /* <mask> => <seed_mask> */
 
-    printf("threshold is %d\n\n",thre);
+    Trace_Workspace *m_traceWorkspace = New_Trace_Workspace();
+    Locseg_Chain_Default_Trace_Workspace(m_traceWorkspace, stack);
+
+    m_traceWorkspace->fit_workspace = New_Locseg_Fit_Workspace();
+
+    Stack *seed_mask = mask;
+    Zero_Stack(seed_mask);
+    Locseg_Fit_Workspace *fws =
+        (Locseg_Fit_Workspace*) m_traceWorkspace->fit_workspace;
+    Stack_Fit_Score old_fs = fws->sws->fs;
+
+    fws->sws->fs.n = 2;
+    fws->sws->fs.options[0] = STACK_FIT_DOT;
+    fws->sws->fs.options[1] = STACK_FIT_CORRCOEF;
+
+    /* alloc <locseg> */
+    Local_Neuroseg *locseg = (Local_Neuroseg *)
+                             malloc(seed_field->size * sizeof(Local_Neuroseg));
+    /* alloc <values> */
+    double *values = darray_malloc(seed_field->size);
+
+    /* fit segment on each seed */
+    for (i = 0; i < seed_field->size; i++) {
+      qDebug("-----------------------------> seed: %d / %d\n",
+             i, seed_field->size);
+
+      int index = i;
+      int x = iround(seed_field->points[index][0]);
+      int y = iround(seed_field->points[index][1]);
+      int z = iround(seed_field->points[index][2]);
+
+      double width = seed_field->values[index];
+
+      ssize_t seed_offset =
+          Stack_Util_Offset(x, y, z, stack->width, stack->height,
+               stack->depth);
+
+      if (seed_offset < 0) {
+        continue;
+      }
+
+      if (width < 3.0) {
+        width += 0.5;
+      }
+
+      Set_Neuroseg(&(locseg[i].seg), width * z_scale, 0.0, NEUROSEG_DEFAULT_H,
+                   TZ_PI_2, 0.0, 0.0, 0.0, 1.0 / z_scale);
+  /*
+      Set_Neuroseg(&(locseg[i].seg), width * z_scale, 0.0, NEUROSEG_HEIGHT,
+                   0.0, 0.0, 0.0, 0.0, 1.0 / z_scale);
+  */
+      double cpos[3];
+      cpos[0] = x;
+      cpos[1] = y;
+      cpos[2] = z;
+
+      Set_Neuroseg_Position(&(locseg[i]), cpos, NEUROSEG_CENTER);
+
+      if (seed_mask->array[seed_offset] > 0) {
+        qDebug("labeled\n");
+        values[i] = 0.0;
+        continue;
+      }
+
+      Local_Neuroseg_Optimize_W(locseg + i, stack, 1.0, 0, fws);
+
+      values[i] = fws->sws->fs.scores[1];
+
+      qDebug("%g\n", values[i]);
+
+      /* label seed_mask */
+      if (values[i] > LOCAL_NEUROSEG_MIN_CORRCOEF) {
+        Local_Neuroseg_Label_G(locseg + i, seed_mask, -1, 2, 1.0);
+      } else {
+        Local_Neuroseg_Label_G(locseg + i, seed_mask, -1, 1, 1.0);
+      }
+
+      //addLocsegChain(new ZLocsegChain(Copy_Local_Neuroseg(locseg + i)));
+    }
+
+    fws->sws->fs = old_fs;
+    Kill_Stack(seed_mask);
+
+    /* make trace mask */
+    if (m_traceWorkspace->trace_mask == NULL) {
+      m_traceWorkspace->trace_mask =
+        Make_Stack(GREY16, stack->width, stack->height,
+       stack->depth);
+      Zero_Stack(m_traceWorkspace->trace_mask);
+    }
+
+    /* trace all seeds */
+    int nchain;
+    m_traceWorkspace->min_chain_length = 10;
+    m_traceWorkspace->min_score = 0.1;
+
+    Locseg_Chain **chain =
+      Trace_Locseg_S(stack, 1.0, locseg, values, seed_field->size,
+                     m_traceWorkspace, &nchain);
+
+
+    /* tune ends */
+    Locseg_Label_Workspace *ws = New_Locseg_Label_Workspace();
+    ws->signal = stack;
+    ws->sratio = 1.0;
+    ws->sdiff = 0.0;
+    ws->option = 6;
+
+   /* Zero_Stack(m_traceWorkspace->trace_mask);
+    for (i = 0; i < nchain; i++) {
+      if(chain[i] != NULL) {
+        Locseg_Chain_Label_W(chain[i], m_traceWorkspace->trace_mask, 1.0,
+                             0, Locseg_Chain_Length(chain[i]) - 1,
+                             ws);
+      }
+    }*/
+
+    Stack_Binarize(m_traceWorkspace->trace_mask);
+
+    double old_step = m_traceWorkspace->trace_step;
+    BOOL old_refit = m_traceWorkspace->refit;
+    BOOL traceMasked = Trace_Workspace_Is_Masked(m_traceWorkspace);
+
+    loadTraceMask(true,m_traceWorkspace);
+    m_traceWorkspace->trace_step = 0.1;
+    m_traceWorkspace->refit = FALSE;
+
+    for (i = 0; i < nchain; i++) {
+      if (chain[i] != NULL) {
+        /* erase the mask */
+        ws->option = 7;
+        Locseg_Chain_Label_W(chain[i], m_traceWorkspace->trace_mask, 1.0,
+                             0, Locseg_Chain_Length(chain[i]) - 1,
+                             ws);
+
+        m_traceWorkspace->trace_status[0] = TRACE_NORMAL;
+        m_traceWorkspace->trace_status[1] = TRACE_NORMAL;
+        Trace_Locseg(stack, 1.0, chain[i], m_traceWorkspace);
+        Locseg_Chain_Down_Sample(chain[i]);
+
+        Locseg_Chain_Tune_End(chain[i], stack, 1.0,
+                              m_traceWorkspace->trace_mask, DL_HEAD);
+        Locseg_Chain_Tune_End(chain[i], stack, 1.0,
+                              m_traceWorkspace->trace_mask, DL_TAIL);
+
+        if (Locseg_Chain_Length(chain[i]) > 0) {
+          ws->option = 6;
+          Locseg_Chain_Label_W(chain[i], m_traceWorkspace->trace_mask, 1.0,
+                               0, Locseg_Chain_Length(chain[i]) - 1, ws);
+        }
+      }
+    }
+
+    ws->signal = NULL;
+    Kill_Locseg_Label_Workspace(ws);
+
+    m_traceWorkspace->trace_step = old_step;
+    m_traceWorkspace->refit = old_refit;
+    loadTraceMask(traceMasked,m_traceWorkspace);
+
+    Zero_Stack(m_traceWorkspace->trace_mask);
+    m_traceWorkspace->chain_id = 0;
+
+
+    /* add chains */
+   // for (i = 0; i < nchain; i++) {
+   //   if (chain[i] != NULL) {
+   //     if (Locseg_Chain_Length(chain[i]) > 0) {
+   //       ZLocsegChain *zchain = new ZLocsegChain(chain[i]);
+   //       if (zchain->confidence(stack) > 0.03) {
+   //         addLocsegChain(zchain);
+   //       } else {
+   //         delete zchain;
+   //       }
+   //     }
+   //   }
+   // }
+
+    QString outswc_file = QString(p4DImage->getFileName()) + "_neutube.swc";
+
+    FILE *tube_fp = fopen(outswc_file.toStdString().c_str(), "w");
+    int start_id = 1;
+    for (i = 0; i < nchain; i++)
+    {
+        if (chain[i] != NULL && Locseg_Chain_Length(chain[i]) > 0)
+        {
+          int n = Locseg_Chain_Swc_Fprint_T(tube_fp,chain[i],2, start_id,-1, DL_FORWARD, 1.0, NULL);
+
+            start_id += n;
+        }
+    }
+
+    fclose(tube_fp);
+
+    free(chain);
+
+    /* free <seed_field> */
+    Kill_Geo3d_Scalar_Field(seed_field);
+
+    /* free <values> */
+    free(values);
+
+    /* free <locseg> */
+    free(locseg);
+
+    v3d_msg(QString("Now you can drag and drop the generated swc fle [%1] into Vaa3D.").arg(outswc_file));
     return;
 }
 
@@ -251,4 +495,13 @@ int autoThreshold(Stack *stack)
     free(hist);
   }
   return thre;
+}
+
+void loadTraceMask(bool traceMasked,Trace_Workspace *m_traceWorkspace)
+{
+  if (traceMasked) {
+    Trace_Workspace_Set_Fit_Mask(m_traceWorkspace, m_traceWorkspace->trace_mask);
+  } else {
+    Trace_Workspace_Set_Fit_Mask(m_traceWorkspace, NULL);
+  }
 }
