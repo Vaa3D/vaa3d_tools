@@ -430,7 +430,7 @@ bool CExplorerWindow::eventFilter(QObject *object, QEvent *event)
         if (object == view3DWidget && event->type() == QEvent::MouseButtonRelease)
         {
             this->Vaa3D_rotationchanged(0);
-            return true;
+            return false;
         }
 
         /********************* INTERCEPTING CLOSE EVENTS **************************
