@@ -96,6 +96,7 @@ SOURCES +=  $$SRCNEUTUBEPATH/neurolabi/c/tz_stack_relation.c
 SOURCES +=  $$SRCNEUTUBEPATH/neurolabi/c/tz_geo3d_circle.c
 SOURCES +=  $$SRCNEUTUBEPATH/neurolabi/c/tz_xz_orientation.c
 SOURCES +=  $$SRCNEUTUBEPATH/neurolabi/c/tz_swc_cell.c
+SOURCES +=  $$SRCNEUTUBEPATH/neurolabi/c/tz_error.c
 
 TARGET	= $$qtLibraryTarget(neuTube_zhi)
 DESTDIR	= ../../../../v3d_external/bin/plugins/neuTube_zhi/

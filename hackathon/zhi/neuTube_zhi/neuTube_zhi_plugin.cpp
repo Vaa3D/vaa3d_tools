@@ -63,8 +63,7 @@
 #include "tz_geo3d_circle.h"
 #include "tz_xz_orientation.h"
 #include "tz_swc_cell.h"
-
-
+#include "tz_error.h"
 
 #include "image_lib.h"
 
@@ -74,6 +73,7 @@ Q_EXPORT_PLUGIN2(neuTube_zhi, neuTube_zhi);
 void autotrace(V3DPluginCallback2 &callback, QWidget *parent);
 int autoThreshold(Stack *stack);
 void loadTraceMask(bool traceMasked,Trace_Workspace *m_traceWorkspace);
+double confidence(Locseg_Chain *chain,Stack *stack);
 
 QStringList neuTube_zhi::menulist() const
 {
@@ -180,8 +180,13 @@ void autotrace(V3DPluginCallback2 &callback, QWidget *parent)
     /* free <mask>, <mask2> => <mask> */
     Kill_Stack(mask);
     mask = mask2;
-    double z_scale = 1.0;
 
+    double z_scale = 1.0;
+  /*  if (N != P) {
+      z_scale = (double)N / P;
+    }*/
+
+    mask2 = mask;
     /* resample the stack for dist calc if z is different */
     if (z_scale != 1.0) {
       mask2 = Resample_Stack_Depth(mask, NULL, z_scale);
@@ -345,8 +350,9 @@ void autotrace(V3DPluginCallback2 &callback, QWidget *parent)
       m_traceWorkspace->trace_mask =
         Make_Stack(GREY16, stack->width, stack->height,
        stack->depth);
-      Zero_Stack(m_traceWorkspace->trace_mask);
     }
+
+    Zero_Stack(m_traceWorkspace->trace_mask);
 
     /* trace all seeds */
     int nchain;
@@ -365,15 +371,16 @@ void autotrace(V3DPluginCallback2 &callback, QWidget *parent)
     ws->sdiff = 0.0;
     ws->option = 6;
 
-   /* Zero_Stack(m_traceWorkspace->trace_mask);
+    Zero_Stack(m_traceWorkspace->trace_mask);
+    /*
     for (i = 0; i < nchain; i++) {
       if(chain[i] != NULL) {
         Locseg_Chain_Label_W(chain[i], m_traceWorkspace->trace_mask, 1.0,
                              0, Locseg_Chain_Length(chain[i]) - 1,
                              ws);
       }
-    }*/
-
+    }
+*/
     Stack_Binarize(m_traceWorkspace->trace_mask);
 
     double old_step = m_traceWorkspace->trace_step;
@@ -420,21 +427,6 @@ void autotrace(V3DPluginCallback2 &callback, QWidget *parent)
     Zero_Stack(m_traceWorkspace->trace_mask);
     m_traceWorkspace->chain_id = 0;
 
-
-    /* add chains */
-   // for (i = 0; i < nchain; i++) {
-   //   if (chain[i] != NULL) {
-   //     if (Locseg_Chain_Length(chain[i]) > 0) {
-   //       ZLocsegChain *zchain = new ZLocsegChain(chain[i]);
-   //       if (zchain->confidence(stack) > 0.03) {
-   //         addLocsegChain(zchain);
-   //       } else {
-   //         delete zchain;
-   //       }
-   //     }
-   //   }
-   // }
-
     QString outswc_file = QString(p4DImage->getFileName()) + "_neutube.swc";
 
     FILE *tube_fp = fopen(outswc_file.toStdString().c_str(), "w");
@@ -443,9 +435,11 @@ void autotrace(V3DPluginCallback2 &callback, QWidget *parent)
     {
         if (chain[i] != NULL && Locseg_Chain_Length(chain[i]) > 0)
         {
-          int n = Locseg_Chain_Swc_Fprint_T(tube_fp,chain[i],2, start_id,-1, DL_FORWARD, 1.0, NULL);
-
-            start_id += n;
+            if(confidence(chain[i],stack) > 0.5)
+            {
+                  int n = Locseg_Chain_Swc_Fprint_T(tube_fp,chain[i],2, start_id,-1, DL_FORWARD, 1.0, NULL);
+                  start_id += n;
+            }
         }
     }
 
@@ -470,6 +464,15 @@ int autoThreshold(Stack *stack)
 {
   int thre = 0;
   if (stack->array != NULL) {
+
+      double scale = 1.0*stack->width * stack->height * stack->depth * stack->kind /
+          (2.0*1024*1024*1024);
+      if (scale >= 1.0) {
+        scale = ceil(sqrt(scale + 0.1));
+        stack = C_Stack::resize(stack, stack->width/scale, stack->height/scale, stack->depth);
+      }
+
+
     int conn = 18;
     Stack *locmax = Stack_Locmax_Region(stack, conn);
     Stack_Label_Objects_Ns(locmax, NULL, 1, 2, 3, conn);
@@ -504,4 +507,17 @@ void loadTraceMask(bool traceMasked,Trace_Workspace *m_traceWorkspace)
   } else {
     Trace_Workspace_Set_Fit_Mask(m_traceWorkspace, NULL);
   }
+}
+
+double confidence(Locseg_Chain *chain,Stack *stack)
+{
+
+    /* parameters learned from logistic regression */
+    double c[3] = {1.1072, 5.3103, -2.0465};
+
+    double x1 = Locseg_Chain_Geolen(chain);
+    double x2 = Locseg_Chain_Average_Score(chain, stack,1.0,STACK_FIT_CORRCOEF);
+
+    return 1.0 / (1.0 + exp((x1 * c[0] + x2 * c[1] + x1 * x2 * c[2])));
+
 }
