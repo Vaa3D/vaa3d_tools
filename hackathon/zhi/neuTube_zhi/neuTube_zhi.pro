@@ -29,6 +29,8 @@ LIBS         += -L$$VAA3DPATH/common_lib/lib -lfftw3f -lfftw3f_threads
 #LIBS += -L/$$SRCNEUTUBEPATH/neurolabi/lib/fftw3/lib -lfftw3
 #LIBS += -L$$SRCNEUTUBEPATH/neurolabi/lib/fftw3/lib -lfftw3 -lfftw3f
 
+DEFINES += HAVE_LIBFFTW3
+
 HEADERS	+= neuTube_zhi_plugin.h
 
 SOURCES	+= neuTube_zhi_plugin.cpp

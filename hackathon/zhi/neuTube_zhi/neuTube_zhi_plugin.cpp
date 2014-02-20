@@ -67,6 +67,8 @@
 
 #include "image_lib.h"
 
+
+
 using namespace std;
 Q_EXPORT_PLUGIN2(neuTube_zhi, neuTube_zhi);
 
@@ -356,8 +358,8 @@ void autotrace(V3DPluginCallback2 &callback, QWidget *parent)
 
     /* trace all seeds */
     int nchain;
-    m_traceWorkspace->min_chain_length = 10;
-    m_traceWorkspace->min_score = 0.1;
+    m_traceWorkspace->min_chain_length = 20;
+    m_traceWorkspace->min_score = 0.35;
 
     Locseg_Chain **chain =
       Trace_Locseg_S(stack, 1.0, locseg, values, seed_field->size,
