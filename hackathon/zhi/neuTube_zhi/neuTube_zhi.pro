@@ -1,8 +1,8 @@
 
 TEMPLATE	= lib
 CONFIG	+= qt plugin warn_off
-QT += opengl xml
-#CONFIG	+= x86_64
+#QT += opengl xml
+CONFIG	+= x86_64
 VAA3DPATH = ../../../../v3d_external/v3d_main
 INCLUDEPATH	+= $$VAA3DPATH/basic_c_fun
 SRCNEUTUBEPATH = ../../../released_plugins/v3d_plugins/neutube/src_neutube
@@ -23,11 +23,10 @@ INCLUDEPATH += $$SRCNEUTUBEPATH/neurolabi/c/include $$SRCNEUTUBEPATH/neurolabi/g
 #    -framework OpenGL -framework ApplicationServices -framework CoreFoundation
 
 
-LIBS         += -L$$VAA3DPATH/common_lib/src_packages/mylib_tiff -lmylib
-LIBS         += -L$$VAA3DPATH/common_lib/lib -lfftw3f -lfftw3f_threads
-
-#LIBS += -L/$$SRCNEUTUBEPATH/neurolabi/lib/fftw3/lib -lfftw3
-#LIBS += -L$$SRCNEUTUBEPATH/neurolabi/lib/fftw3/lib -lfftw3 -lfftw3f
+LIBS += -L../../../released_plugins/v3d_plugins/neutube/src_neutube/neurolabi/lib/fftw3/lib -lfftw3f
+LIBS += -L../../../released_plugins/v3d_plugins/neutube/src_neutube/neurolabi/lib/fftw3/lib -lfftw3
+LIBS += -L../../../released_plugins/v3d_plugins/neutube/src_neutube/neurolabi/c/lib -lneurolabi
+LIBS += -L../../../released_plugins/v3d_plugins/neutube/src_neutube/neurolabi/lib/xml/lib -lxml2
 
 DEFINES += HAVE_LIBFFTW3
 
@@ -37,7 +36,9 @@ SOURCES	+= neuTube_zhi_plugin.cpp
 SOURCES	+= $$VAA3DPATH/basic_c_fun/v3d_message.cpp
 SOURCES += $$VAA3DPATH/basic_c_fun/basic_surf_objs.cpp
 
+#SOURCES +=  phc_image_lib.c
 SOURCES +=  $$SRCNEUTUBEPATH/neurolabi/lib/genelib/src/image_lib.c
+
 SOURCES +=  $$SRCNEUTUBEPATH/neurolabi/c/tz_stack.c
 SOURCES +=  $$SRCNEUTUBEPATH/neurolabi/c/tz_stack_lib.c
 SOURCES +=  $$SRCNEUTUBEPATH/neurolabi/c/tz_stack_attribute.c
@@ -99,6 +100,8 @@ SOURCES +=  $$SRCNEUTUBEPATH/neurolabi/c/tz_geo3d_circle.c
 SOURCES +=  $$SRCNEUTUBEPATH/neurolabi/c/tz_xz_orientation.c
 SOURCES +=  $$SRCNEUTUBEPATH/neurolabi/c/tz_swc_cell.c
 SOURCES +=  $$SRCNEUTUBEPATH/neurolabi/c/tz_error.c
+SOURCES +=  $$SRCNEUTUBEPATH/neurolabi/c/tz_fimage_lib.c
+
 
 TARGET	= $$qtLibraryTarget(neuTube_zhi)
 DESTDIR	= ../../../../v3d_external/bin/plugins/neuTube_zhi/
