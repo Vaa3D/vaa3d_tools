@@ -471,9 +471,8 @@ int autoThreshold(Stack *stack)
           (2.0*1024*1024*1024);
       if (scale >= 1.0) {
         scale = ceil(sqrt(scale + 0.1));
-        stack = C_Stack::resize(stack, stack->width/scale, stack->height/scale, stack->depth);
+        stack = Resize_Stack(stack, stack->width/scale, stack->height/scale, stack->depth);
       }
-
 
     int conn = 18;
     Stack *locmax = Stack_Locmax_Region(stack, conn);
