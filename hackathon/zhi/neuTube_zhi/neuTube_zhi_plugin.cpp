@@ -202,9 +202,6 @@ void autotrace(V3DPluginCallback2 &callback, QWidget *parent)
     mask = mask2;
 
     double z_scale = 1.0;
-  /*  if (N != P) {
-      z_scale = (double)N / P;
-    }*/
 
     mask2 = mask;
     /* resample the stack for dist calc if z is different */
@@ -282,10 +279,14 @@ void autotrace(V3DPluginCallback2 &callback, QWidget *parent)
     /* now the seeds are in <field> */
     /* <mask> => <seed_mask> */
 
-    Trace_Workspace *m_traceWorkspace = New_Trace_Workspace();
+    Trace_Workspace *m_traceWorkspace  = New_Trace_Workspace();
     Locseg_Chain_Default_Trace_Workspace(m_traceWorkspace, stack);
 
     m_traceWorkspace->fit_workspace = New_Locseg_Fit_Workspace();
+
+    m_traceWorkspace->tune_end = TRUE;
+    m_traceWorkspace->add_hit = TRUE;
+
 
     Stack *seed_mask = mask;
     Zero_Stack(seed_mask);
@@ -362,6 +363,7 @@ void autotrace(V3DPluginCallback2 &callback, QWidget *parent)
       //addLocsegChain(new ZLocsegChain(Copy_Local_Neuroseg(locseg + i)));
     }
 
+
     fws->sws->fs = old_fs;
     Kill_Stack(seed_mask);
 
@@ -375,12 +377,12 @@ void autotrace(V3DPluginCallback2 &callback, QWidget *parent)
     Zero_Stack(m_traceWorkspace->trace_mask);
 
     /* trace all seeds */
-    int nchain;
-    m_traceWorkspace->min_chain_length = 20;
-    m_traceWorkspace->min_score = 0.35;
 
-    Locseg_Chain **chain =
-      Trace_Locseg_S(stack, 1.0, locseg, values, seed_field->size,
+   // m_traceWorkspace->min_chain_length = 20;
+   // m_traceWorkspace->min_score = 0.35;
+     int nchain;
+     Locseg_Chain **chain =
+     Trace_Locseg_S(stack, 1.0, locseg, values, seed_field->size,
                      m_traceWorkspace, &nchain);
 
 
@@ -391,16 +393,16 @@ void autotrace(V3DPluginCallback2 &callback, QWidget *parent)
     ws->sdiff = 0.0;
     ws->option = 6;
 
-    Zero_Stack(m_traceWorkspace->trace_mask);
-    /*
+    /*Zero_Stack(m_traceWorkspace->trace_mask);
+
     for (i = 0; i < nchain; i++) {
       if(chain[i] != NULL) {
         Locseg_Chain_Label_W(chain[i], m_traceWorkspace->trace_mask, 1.0,
                              0, Locseg_Chain_Length(chain[i]) - 1,
                              ws);
       }
-    }
-*/
+    }*/
+
     Stack_Binarize(m_traceWorkspace->trace_mask);
 
     double old_step = m_traceWorkspace->trace_step;
@@ -436,6 +438,7 @@ void autotrace(V3DPluginCallback2 &callback, QWidget *parent)
         }
       }
     }
+
 
     ws->signal = NULL;
     Kill_Locseg_Label_Workspace(ws);
@@ -485,13 +488,13 @@ int autoThreshold(Stack *stack)
   int thre = 0;
   if (stack->array != NULL) {
 
-      double scale = 1.0*stack->width * stack->height * stack->depth * stack->kind /
+      /*double scale = 1.0*stack->width * stack->height * stack->depth * stack->kind /
           (2.0*1024*1024*1024);
       if (scale >= 1.0) {
         scale = ceil(sqrt(scale + 0.1));
         stack = Resize_Stack(stack, stack->width/scale, stack->height/scale, stack->depth);
       }
-
+*/
     int conn = 18;
     Stack *locmax = Stack_Locmax_Region(stack, conn);
     Stack_Label_Objects_Ns(locmax, NULL, 1, 2, 3, conn);
