@@ -76,6 +76,7 @@ void autotrace(V3DPluginCallback2 &callback, QWidget *parent);
 int autoThreshold(Stack *stack);
 void loadTraceMask(bool traceMasked,Trace_Workspace *m_traceWorkspace);
 double confidence(Locseg_Chain *chain,Stack *stack);
+Swc_Tree* swcReconstruction(Locseg_Chain **chain, int nchian,Stack *stack);
 
 QStringList neuTube_zhi::menulist() const
 {
@@ -146,7 +147,7 @@ void autotrace(V3DPluginCallback2 &callback, QWidget *parent)
     V3DLONG sc = p4DImage->getCDim();
 
     bool ok1;
-    int c;
+    int c,p = 0;
 
     if(sc==1)
     {
@@ -162,6 +163,9 @@ void autotrace(V3DPluginCallback2 &callback, QWidget *parent)
 
     if(!ok1)
         return;
+
+    if(QMessageBox::Yes == QMessageBox::question (0, "", QString("Merge Close Nodes?"), QMessageBox::Yes, QMessageBox::No))    p = 1;
+
 
     V3DLONG pagesz = N*M*P;
 
@@ -452,21 +456,33 @@ void autotrace(V3DPluginCallback2 &callback, QWidget *parent)
 
     QString outswc_file = QString(p4DImage->getFileName()) + "_neutube.swc";
 
-    FILE *tube_fp = fopen(outswc_file.toStdString().c_str(), "w");
-    int start_id = 1;
-    for (i = 0; i < nchain; i++)
+    if(p)
     {
-        if (chain[i] != NULL && Locseg_Chain_Length(chain[i]) > 0)
-        {
-            if(confidence(chain[i],stack) > 0.5)
+            Swc_Tree *rawTree = swcReconstruction(chain,nchain,stack);
+            if (rawTree != NULL)
             {
-                  int n = Locseg_Chain_Swc_Fprint_T(tube_fp,chain[i],2, start_id,-1, DL_FORWARD, 1.0, NULL);
-                  start_id += n;
+              Write_Swc_Tree(outswc_file.toStdString().c_str(), rawTree);
+              Kill_Swc_Tree(rawTree);
             }
         }
+    else
+    {
+        FILE *tube_fp = fopen(outswc_file.toStdString().c_str(), "w");
+        int start_id = 1;
+        for (i = 0; i < nchain; i++)
+        {
+            if (chain[i] != NULL && Locseg_Chain_Length(chain[i]) > 0)
+            {
+                if(confidence(chain[i],stack) > 0.5)
+                {
+                      int n = Locseg_Chain_Swc_Fprint_T(tube_fp,chain[i],2, start_id,-1, DL_FORWARD, 1.0, NULL);
+                      start_id += n;
+                }
+            }
+        }
+        fclose(tube_fp);
     }
 
-    fclose(tube_fp);
 
     free(chain);
 
@@ -541,5 +557,71 @@ double confidence(Locseg_Chain *chain,Stack *stack)
     double x2 = Locseg_Chain_Average_Score(chain, stack,1.0,STACK_FIT_CORRCOEF);
 
     return 1.0 / (1.0 + exp((x1 * c[0] + x2 * c[1] + x1 * x2 * c[2])));
+
+}
+
+Swc_Tree* swcReconstruction(Locseg_Chain **chain, int chain_number, Stack *stack)
+{
+
+    Swc_Tree *tree = NULL;
+    if(chain_number > 0)
+    {
+        Neuron_Component *chain_array = Make_Neuron_Component_Array(chain_number);
+        int chain_number2 = 0;
+        for (int i = 0; i < chain_number; i++)
+        {
+          if(chain[i] != NULL && Locseg_Chain_Length(chain[i]) > 0)
+          {
+              if(confidence(chain[i],stack) > 0.5)
+              {
+                    Set_Neuron_Component(chain_array + chain_number2,NEUROCOMP_TYPE_LOCSEG_CHAIN,Copy_Locseg_Chain(chain[i]));
+                    chain_number2++;
+              }
+          }
+        }
+
+        Connection_Test_Workspace *ctw = New_Connection_Test_Workspace();
+
+        Neuron_Structure *ns = NULL;
+        ns = Locseg_Chain_Comp_Neurostruct(chain_array, chain_number2,NULL, 1.0, ctw);
+        Process_Neuron_Structure(ns);
+        Neuron_Structure* ns2= Neuron_Structure_Locseg_Chain_To_Circle_S(ns, 1.0, 1.0);
+        tree = Neuron_Structure_To_Swc_Tree_Circle_Z(ns2, 1.0, NULL);
+
+        Swc_Tree_Node *tn = NULL;
+        Swc_Tree_Node *tmp_tn = NULL;
+
+        Swc_Tree_Iterator_Start(tree, 2, FALSE);
+        tn = Swc_Tree_Next(tree);
+        while ((tmp_tn = Swc_Tree_Next(tree)) != NULL) {
+          if (Swc_Tree_Node_Data(tmp_tn)->d > Swc_Tree_Node_Data(tn)->d) {
+            tn = tmp_tn;
+          }
+        }
+
+        if (tn != NULL) {
+          Swc_Tree_Node_Set_Root(tn);
+        }
+
+        Swc_Tree_Remove_Zigzag(tree);
+        Swc_Tree_Tune_Branch(tree);
+        Swc_Tree_Remove_Spur(tree);
+        Swc_Tree_Merge_Close_Node(tree, 0.01);
+
+        //Swc_Tree_Remove_Overshoot(tree);
+        Swc_Tree_Resort_Id(tree);
+
+        /* free <ns2> */
+        Kill_Neuron_Structure(ns2);
+        /* free <ns> */
+        ns->comp = NULL;
+        Kill_Neuron_Structure(ns);
+
+        /* free <chain_array> */
+        Clean_Neuron_Component_Array(chain_array, chain_number);
+        free(chain_array);
+
+    }
+    return tree;
 
 }
