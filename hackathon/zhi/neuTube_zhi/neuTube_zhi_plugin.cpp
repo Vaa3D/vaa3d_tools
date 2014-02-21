@@ -145,8 +145,26 @@ void autotrace(V3DPluginCallback2 &callback, QWidget *parent)
     V3DLONG P = p4DImage->getZDim();
     V3DLONG sc = p4DImage->getCDim();
 
+    bool ok1;
+    int c;
+
+    if(sc==1)
+    {
+        c=1;
+        ok1=true;
+    }
+    else
+    {
+        c = QInputDialog::getInteger(parent, "Channel",
+                                         "Enter channel NO:",
+                                         1, 1, sc, 1, &ok1);
+    }
+
+    if(!ok1)
+        return;
+
     V3DLONG pagesz = N*M*P;
-    int c = 1;
+
     ImagePixelType pixeltype = p4DImage->getDatatype();
     Stack *stack;
     switch (pixeltype)
@@ -165,7 +183,7 @@ void autotrace(V3DPluginCallback2 &callback, QWidget *parent)
             for(V3DLONG x = 0; x < N; x++)
             {
                    double dataval = data1d[offsetc + offsetk + offsetj + x];
-                   Set_Stack_Pixel(stack,x,y,z,c-1,dataval);
+                   Set_Stack_Pixel(stack,x,y,z,0,dataval);
             }
         }
     }
