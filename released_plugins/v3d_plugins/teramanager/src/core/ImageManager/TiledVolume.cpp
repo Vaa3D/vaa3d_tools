@@ -501,8 +501,13 @@ void TiledVolume::initChannels ( ) throw (IOException)
 {
     /**/iim::debug(iim::LEV3, 0, __iim__current__function__);
 
-    CHANS = BLOCKS[0][0]->getN_CHANS();
+    DIM_C = BLOCKS[0][0]->getN_CHANS();
 	BYTESxCHAN = (int)BLOCKS[0][0]->getN_BYTESxCHAN();
+
+    n_active = DIM_C;
+    active = new uint32[n_active];
+    for ( int c=0; c<DIM_C; c++ )
+        active[c] = c; // all channels are assumed active
 }
 
 //PRINT method
@@ -816,7 +821,7 @@ real32* TiledVolume::loadSubvolume(int V0,int V1, int H0, int H1, int D0, int D1
 //---03 nov 2011: added color support
 uint8* TiledVolume::loadSubvolume_to_UINT8(int V0,int V1, int H0, int H1, int D0, int D1, int *channels, int ret_type ) throw (IOException)
 {
-    /**/iim::debug(iim::LEV3, strprintf("V0=%d, V1=%d, H0=%d, H1=%d, D0=%d, D1=%d, *channels=%d, ret_type=%d", V0, V1, H0, H1, D0, D1, *channels, ret_type).c_str(), __iim__current__function__);
+    /**/iim::debug(iim::LEV3, strprintf("V0=%d, V1=%d, H0=%d, H1=%d, D0=%d, D1=%d, *channels=%d, ret_type=%d", V0, V1, H0, H1, D0, D1, channels ? *channels : -1, ret_type).c_str(), __iim__current__function__);
 
     //checking for non implemented features
 	//if( this->BYTESxCHAN != 1 ) {
@@ -891,7 +896,7 @@ uint8* TiledVolume::loadSubvolume_to_UINT8(int V0,int V1, int H0, int H1, int D0
 					    if(first_time)
 					    {
 					        first_time = false;
-							sbv_channels = this->CHANS;
+							sbv_channels = this->DIM_C;
 							sbv_bytes_chan = this->BYTESxCHAN;
 
 							try
@@ -1087,7 +1092,7 @@ void *TiledVolume::streamedLoadSubvolume_open ( int steps, uint8 *buf, int V0,in
 	sint64 stridex = H1 - H0;
 	sint64 stridexy = stridex * (V1 - V0);
 	sint64 stridexyz = stridexy * (D1 - D0);
-	Streamer_Descr_t *stream_descr = new Streamer_Descr_t(buf,sizeof(unsigned char),stridex,stridexy,stridexyz,this->CHANS,steps);
+	Streamer_Descr_t *stream_descr = new Streamer_Descr_t(buf,sizeof(unsigned char),stridex,stridexy,stridexyz,this->DIM_C,steps);
 	if ( !stream_descr ) {
 		char msg[1000];
 		sprintf(msg,"in TiledVolume::streamedLoadSubvolume_open: Unable to allocate stream descriptor");

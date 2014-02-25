@@ -54,6 +54,7 @@ class teramanager::CExplorerWindow : public QWidget
         int volV0, volV1;               //first and last vertical coordinates of the volume displayed in the current window
         int volH0, volH1;               //first and last horizontal coordinates of the volume displayed in the current window
         int volD0, volD1;               //first and last depth coordinates of the volume displayed in the current window
+        int volT0, volT1;               //first and last time coordinates of the volume displayed in the current window
         int nchannels;                  //number of image channels
         string title;                   //title of current window
         string titleShort;              //short title of current window
@@ -69,6 +70,8 @@ class teramanager::CExplorerWindow : public QWidget
         int H1_sbox_max, H1_sbox_val;   //to save the state of subvolume spinboxes when the current window is hidden
         int D0_sbox_min, D0_sbox_val;   //to save the state of subvolume spinboxes when the current window is hidden
         int D1_sbox_max, D1_sbox_val;   //to save the state of subvolume spinboxes when the current window is hidden
+        int T0_sbox_min, T0_sbox_val;   //to save the state of subvolume spinboxes when the current window is hidden
+        int T1_sbox_max, T1_sbox_val;   //to save the state of subvolume spinboxes when the current window is hidden
 
         //CLASS members
         static CExplorerWindow *first;  //pointer to the first window of the multiresolution explorer windows chain
@@ -128,7 +131,7 @@ class teramanager::CExplorerWindow : public QWidget
 
         //CONSTRUCTOR, DECONSTRUCTOR
         CExplorerWindow(V3DPluginCallback2* _V3D_env, int _resIndex, itm::uint8* _imgData, int _volV0, int _volV1,
-                        int _volH0, int _volH1, int _volD0, int _volD1, int _nchannels, CExplorerWindow* _prev);
+                        int _volH0, int _volH1, int _volD0, int _volD1, int _volT0, int _volT1, int _nchannels, CExplorerWindow* _prev);
         ~CExplorerWindow();
         static void uninstance()
         {
@@ -177,6 +180,7 @@ class teramanager::CExplorerWindow : public QWidget
             int x, int y, int z,                //can be either the VOI's center (default)
                                                 //or the VOI's ending point (see x0,y0,z0)
             int resolution,                     //resolution index of the view requested
+            int t0, int t1,                     //time frames selection
             bool fromVaa3Dcoordinates = false,  //if coordinates were obtained from Vaa3D
             int dx=-1, int dy=-1, int dz=-1,    //VOI [x-dx,x+dx), [y-dy,y+dy), [z-dz,z+dz)
             int x0=-1, int y0=-1, int z0=-1     //VOI [x0, x), [y0, y), [z0, z)
@@ -193,13 +197,13 @@ class teramanager::CExplorerWindow : public QWidget
         * Copies the given VOI from "src" to "dst". Offsets and scaling are supported.
         ***********************************************************************************/
         static void
-            copyVOI(itm::uint8 const * src,      //pointer to const data source
-                uint src_dims[],            //dimensions of "src" along X, Y, Z and channels
-                uint src_offset[],          //VOI's offset along X, Y, Z
-                uint src_count[],           //VOI's dimensions along X, Y, Z
-                itm::uint8* dst,                 //pointer to data destination
-                uint dst_dims[],            //dimensions of "dst" along X, Y, Z
-                uint dst_offset[],          //offset of "dst" along X, Y, Z
+            copyVOI(itm::uint8 const * src, //pointer to const data source
+                uint src_dims[5],           //dimensions of "src" along X, Y, Z, channels and T
+                uint src_offset[3],         //VOI's offset along X, Y, Z
+                uint src_count[3],          //VOI's dimensions along X, Y, Z
+                itm::uint8* dst,            //pointer to data destination
+                uint dst_dims[5],           //dimensions of "dst" along X, Y, Z, channels and T
+                uint dst_offset[3],         //offset of "dst" along X, Y, Z
                 uint scaling = 1)           //scaling factor (integer only)
         throw (RuntimeException);
 

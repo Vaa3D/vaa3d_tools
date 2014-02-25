@@ -44,7 +44,7 @@ namespace teramanager
     *    PARAMETERS    *
     ********************
     ---------------------------------------------------------------------------------------------------------------------------*/
-    std::string version = "0.9.41";     //software version
+    std::string version = "0.9.42";     //software version
     int DEBUG = LEV_MAX;               //debug level
     bool DEBUG_TO_FILE = false;        //whether debug messages should be printed on the screen or to a file (default: screen)
     std::string DEBUG_FILE_PATH = "/home/alex/Scrivania/terafly_debug.log";   //filepath where to save debug information
@@ -114,4 +114,26 @@ bool CPlugin::dofunc(const QString & func_name, const V3DPluginArgList & input, 
     printf("TeraManager plugin needs Vaa3D GUI to be executed.\n");
     return true;
 }
+
+// returns true if version >= min_required_version, where version format is version.major.minor
+bool CPlugin::checkPluginVersion(std::string version, std::string min_required_version)
+{
+    vector<string> tokens_A, tokens_B;
+    itm::split(version, ".", tokens_A);
+    itm::split(min_required_version, ".", tokens_B);
+
+    int verA = tokens_A.size() > 0 ? atoi(tokens_A[0].c_str()) : 0;
+    int verB = tokens_B.size() > 0 ? atoi(tokens_B[0].c_str()) : 0;
+
+    int majA = tokens_A.size() > 1 ? atoi(tokens_A[1].c_str()) : 0;
+    int majB = tokens_B.size() > 1 ? atoi(tokens_B[1].c_str()) : 0;
+
+    int minA = tokens_A.size() > 2 ? atoi(tokens_A[2].c_str()) : 0;
+    int minB = tokens_B.size() > 2 ? atoi(tokens_B[2].c_str()) : 0;
+
+    return verA >= verB && majA >= majB && minA >= minB;
+
+}
+
+
 

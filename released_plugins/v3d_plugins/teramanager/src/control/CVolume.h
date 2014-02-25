@@ -58,14 +58,14 @@ class teramanager::CVolume : public QThread
 
         //members
         //I suspect the "int" below might be problematic in the long run, but I leave them as is at this moment. I would use V3D_LONG instead.  by PHC 20131029
-        int voiResIndex;                            //volume of interest resolution index
-        int voiV0,voiV1,voiH0,voiH1,voiD0,voiD1;    //volume of interest coordinates
-        int nchannels;                              //volume of interest channel's number
-        QWidget* source;                            //the object that requested the VOI
+        int voiResIndex;                                            //volume of interest resolution index
+        int voiV0,voiV1,voiH0,voiH1,voiD0,voiD1, voiT0, voiT1;      //volume of interest coordinates
+        int nchannels;                                              //volume of interest channel's number
+        QWidget* source;                                            //the object that requested the VOI
         int streamingSteps;                         //
 
         QMutex bufferMutex;
-        itm::uint8* buffer;                              //volume of interest prebuffered data
+        itm::uint8* buffer;                                         //volume of interest prebuffered data
         bool finished;
 
     public:
@@ -104,7 +104,7 @@ class teramanager::CVolume : public QThread
 
             voiResIndex = -1;
             buffer = 0;
-            voiV0 = voiV1 = voiH0 = voiH1 = voiD0 = voiD1 = nchannels = -1;
+            voiV0 = voiV1 = voiH0 = voiH1 = voiD0 = voiD1 = voiT0 = voiT1 = nchannels = -1;
             source = 0;
             streamingSteps = 1;
             finished = false;
@@ -115,6 +115,8 @@ class teramanager::CVolume : public QThread
         int getVoiH1(){return voiH1;}
         int getVoiD0(){return voiD0;}
         int getVoiD1(){return voiD1;}
+        int getVoiT0(){return voiT0;}
+        int getVoiT1(){return voiT1;}
         int getNChannels(){return nchannels;}
         int getVoiResIndex(){return voiResIndex;}
         static int scaleVCoord(int coord, int srcRes, int dstRes) throw (RuntimeException);
@@ -123,10 +125,10 @@ class teramanager::CVolume : public QThread
         static float scaleVCoord(float coord, int srcRes, int dstRes) throw (RuntimeException);
         static float scaleHCoord(float coord, int srcRes, int dstRes) throw (RuntimeException);
         static float scaleDCoord(float coord, int srcRes, int dstRes) throw (RuntimeException);
-        void setVoi(QWidget* _sourceObject, int _voiResIndex, int _V0, int _V1, int _H0, int _H1, int _D0, int _D1) throw (RuntimeException)
+        void setVoi(QWidget* _sourceObject, int _voiResIndex, int _V0, int _V1, int _H0, int _H1, int _D0, int _D1, int _T0, int _T1) throw (RuntimeException)
         {
-            /**/itm::debug(itm::LEV1, strprintf("_voiResIndex = %d, _V0 = %d, _V1=%d, _H0 = %d, _H1=%d, _D0 = %d, _D1=%d",
-                                                _voiResIndex, _V0, _V1, _H0, _H1, _D0, _D1).c_str(), __itm__current__function__);
+            /**/itm::debug(itm::LEV1, strprintf("_voiResIndex = %d, _V0 = %d, _V1=%d, _H0 = %d, _H1=%d, _D0 = %d, _D1=%d, _T0 = %d, _T1=%d",
+                                                _voiResIndex, _V0, _V1, _H0, _H1, _D0, _D1, _T0, _T1).c_str(), __itm__current__function__);
 
             source = _sourceObject;
             voiResIndex = _voiResIndex;
@@ -140,9 +142,11 @@ class teramanager::CVolume : public QThread
             voiH1 = (_H1 <= volume->getDIM_H()) ? _H1 : volume->getDIM_H();
             voiD0 = (_D0 >=0)                   ? _D0 : 0;
             voiD1 = (_D1 <= volume->getDIM_D()) ? _D1 : volume->getDIM_D();
+            voiT0 = (_T0 >=0)                   ? _T0 : 0;
+            voiT1 = (_T1 <  volume->getDIM_T()) ? _T1 : volume->getDIM_T()-1;
 
             //---- Alessandro 2013-09-03: added check to detect invalid VOI
-            if(voiV1 - voiV0 <= 0 || voiH1 - voiH0 <= 0 || voiD1 - voiD0 <= 0)
+            if(voiV1 - voiV0 <= 0 || voiH1 - voiH0 <= 0 || voiD1 - voiD0 <= 0 || voiT1 - voiT0 < 0)
                 throw RuntimeException("Invalid VOI selected");
 
             nchannels = -1;

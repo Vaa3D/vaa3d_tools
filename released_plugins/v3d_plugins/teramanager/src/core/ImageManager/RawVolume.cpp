@@ -92,8 +92,13 @@ void RawVolume::initChannels ( ) throw (IOException)
 {
     /**/iim::debug(iim::LEV3, 0, __iim__current__function__);
 
-	CHANS = (int) sz[3];
+	DIM_C = (int) sz[3];
 	BYTESxCHAN = datatype;
+
+    n_active = DIM_C;
+    active = new uint32[n_active];
+    for ( int c=0; c<DIM_C; c++ )
+        active[c] = c; // all channels are assumed active
 }
 
 
@@ -125,8 +130,7 @@ real32 *RawVolume::loadSubvolume_to_real32(int V0,int V1, int H0, int H1, int D0
 
 uint8 *RawVolume::loadSubvolume_to_UINT8(int V0,int V1, int H0, int H1, int D0, int D1, int *channels, int ret_type) throw (IOException)
 {
-
-    /**/iim::debug(iim::LEV3, strprintf("V0=%d, V1=%d, H0=%d, H1=%d, D0=%d, D1=%d, *channels=%d, ret_type=%d", V0, V1, H0, H1, D0, D1, *channels, ret_type).c_str(), __iim__current__function__);
+    /**/iim::debug(iim::LEV3, strprintf("V0=%d, V1=%d, H0=%d, H1=%d, D0=%d, D1=%d, *channels=%d, ret_type=%d", V0, V1, H0, H1, D0, D1, channels ? *channels : -1, ret_type).c_str(), __iim__current__function__);
 
     //checking for non implemented features
 	if( this->BYTESxCHAN > 2 ) {
@@ -152,7 +156,10 @@ uint8 *RawVolume::loadSubvolume_to_UINT8(int V0,int V1, int H0, int H1, int D0, 
 	//	sprintf(err_msg,"RawVolume::loadSubvolume_to_UINT8: too many channels [%d]",CHANS);
 	//	throw MyException(err_msg);
 	//}
-	*channels = CHANS; 	// returns the exact number of channels;
+    if(channels)
+        *channels = DIM_C; 	// returns the exact number of channels;
+    else
+        channels = &DIM_C;
 	// WARNING: the caller must check if it suppports only 1 or 3 channels 
 	
 	//initializations

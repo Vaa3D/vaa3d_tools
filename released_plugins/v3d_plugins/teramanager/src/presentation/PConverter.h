@@ -67,6 +67,7 @@ class teramanager::PConverter : public QWidget
         QPushButton *inDirButton;       //browse for volume's input directory button
         QPushButton *inFileButton;      //browse for volume's input file button
         QStackedLayout* inButtonLayout; //stacked layout used to show only one of the two buttons
+        QCheckBox* timeSeriesCheckBox;  //time series checkbox
 
         //conversion form widget
         QComboBox* outFormatCBox;       //combobox for volume's input format selection
@@ -75,16 +76,24 @@ class teramanager::PConverter : public QWidget
         QPushButton *outFileButton;     //browse for volume's output file button
         QStackedLayout* outButtonLayout;//stacked layout used to show only one of the two buttons
 
-        QGridLayout* resolutionsLayout; //layout containing resolutions dynamically added after volume import
-        int resolutionsNumber;          //number of selectable resolutions (it is detected at runtime)
-        QLabel** resolutionsFields;     //dynamic array of resolution fields
-        QLabel** resolutionsSizes;      //dynamic array of resolution size fields
-        QCheckBox** resolutionsCboxs;   //dynamic array of resolution comboboxes
+        QVBoxLayout* resolutionsLayout; //layout containing resolutions dynamically added after volume import
+        std::vector<QSpinBox*>  resolutionsDimsX;   //dynamic array of resolution fields
+        std::vector<QSpinBox*>  resolutionsDimsY;   //dynamic array of resolution fields
+        std::vector<QSpinBox*>  resolutionsDimsZ;   //dynamic array of resolution fields
+        std::vector<QSpinBox*>  resolutionsDimsC;   //dynamic array of resolution fields
+        std::vector<QSpinBox*>  resolutionsDimsT;   //dynamic array of resolution fields
+        std::vector<QLineEdit*> resolutionsSizes;   //dynamic array of resolution size fields
+        std::vector<QCheckBox*> resolutionsCboxs;   //dynamic array of resolution comboboxes
+        std::vector<QHBoxLayout*> resolutionsRowsLayouts;
+
+        QPushButton* addResolutionButton;
         QSpinBox* stacksWidthField;     //field to select stacks width
         QSpinBox* stacksHeightField;    //field to select stacks height
         QSpinBox* stacksDepthField;     //field to select stacks depth (optional)
         QLabel* memoryField;            //field for memory usage estimation
         QComboBox* downsamplingCbox;    //downsampling method
+
+        bool operationInProgress;
 
         //friend class declarations
         friend class CConverter;
@@ -127,7 +136,8 @@ class teramanager::PConverter : public QWidget
         void inDirButtonClicked();
         void inFileButtonClicked();
         void outDirButtonClicked();
-        void volformatChanged ( const QString & text );
+        void volformatChanged ( int );
+        void addResolution();
 
         /**********************************************************************************
         * <sendProgressBarChanged> event handler

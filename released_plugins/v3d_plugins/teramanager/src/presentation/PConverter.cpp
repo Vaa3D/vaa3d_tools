@@ -60,6 +60,7 @@ PConverter::PConverter(V3DPluginCallback *callback, QWidget *parent) : QWidget(p
     //initializing members
     V3D_env = callback;
     parentWidget = parent;
+    operationInProgress = false;
 
     //main widgets
     QFont tinyFont = QApplication::font();
@@ -105,16 +106,24 @@ PConverter::PConverter(V3DPluginCallback *callback, QWidget *parent) : QWidget(p
     inPathField    = new QLineEdit(QString(CSettings::instance()->getVCInputPath().c_str()));
     inDirButton = new QPushButton("Browse for dir...");
     inFileButton = new QPushButton("Browse for file...");
+    timeSeriesCheckBox = new QCheckBox("Time series (5D)");
 
     //import form layout
     inButtonLayout = new QStackedLayout();
     inButtonLayout->addWidget(inDirButton);
     inButtonLayout->addWidget(inFileButton);
-    QHBoxLayout* importFormLayout = new QHBoxLayout();
-    importFormLayout->addWidget(inFormatCBox);
+    QHBoxLayout* importFormRow1Layout = new QHBoxLayout();
+    importFormRow1Layout->addWidget(inFormatCBox);
     inFormatCBox->setFixedWidth(220);
-    importFormLayout->addWidget(inPathField, 1);
-    importFormLayout->addLayout(inButtonLayout);
+    importFormRow1Layout->addWidget(inPathField, 1);
+    importFormRow1Layout->addLayout(inButtonLayout);
+    QHBoxLayout* importFormRow2Layout = new QHBoxLayout();
+    timeSeriesCheckBox->setFixedWidth(220);
+    importFormRow2Layout->addWidget(timeSeriesCheckBox, 0);
+    importFormRow2Layout->addStretch(1);
+    QVBoxLayout* importFormLayout = new QVBoxLayout();
+    importFormLayout->addLayout(importFormRow1Layout);
+    importFormLayout->addLayout(importFormRow2Layout);
     import_panel->setLayout(importFormLayout);
 
     //conversion form widget
@@ -144,11 +153,8 @@ PConverter::PConverter(V3DPluginCallback *callback, QWidget *parent) : QWidget(p
     outPathField    = new QLineEdit(QString(CSettings::instance()->getVCOutputPath().c_str()));
     outDirButton = new QPushButton("Browse for dir...");
     outFileButton = new QPushButton("Browse for file...");
-    resolutionsLayout = new QGridLayout();
-    resolutionsNumber = -1;
-    resolutionsFields = 0;
-    resolutionsSizes = 0;
-    resolutionsCboxs = 0;
+    resolutionsLayout = new QVBoxLayout();
+    addResolutionButton = new QPushButton("+");
     stacksWidthField = new QSpinBox();
     stacksWidthField->setAlignment(Qt::AlignCenter);
     stacksWidthField->setMinimum(100);
@@ -184,36 +190,58 @@ PConverter::PConverter(V3DPluginCallback *callback, QWidget *parent) : QWidget(p
     outputFormLayout->addWidget(outPathField, 1);
     outputFormLayout->addLayout(outButtonLayout);
     conversionFormLayout->addLayout(outputFormLayout);
-    conversionFormLayout->addSpacing(30);
-    QHBoxLayout* resolutionLayout = new QHBoxLayout();
-    QLabel* outputLabel = new QLabel("Output:");
+    conversionFormLayout->addSpacing(20);
+    QLabel* outputLabel = new QLabel("Resolutions:");
     outputLabel->setFixedWidth(220);
-    resolutionLayout->addWidget(outputLabel);
-    QLabel* selectLabel = new QLabel("Select");
-    selectLabel->setAlignment(Qt::AlignCenter);
-    resolutionsLayout->addWidget(selectLabel, 0, 0, 1, 1);
-    QLabel* resolutionLabel = new QLabel(QString("Resolution (X ").append(QChar(0x00D7)).append(" Y ").append(QChar(0x00D7)).append(" Z)"));
-    resolutionLabel->setAlignment(Qt::AlignCenter);
-    resolutionsLayout->addWidget(resolutionLabel, 0, 1, 1, 2);
-    QLabel* sizeLabel = new QLabel("Size (GVoxels)");
+    QLabel* sizeLabel = new QLabel("Size (GB)");
     sizeLabel->setAlignment(Qt::AlignCenter);
-    resolutionsLayout->addWidget(sizeLabel, 0, 3, 1, 2);
-    resolutionLayout->addLayout(resolutionsLayout);
-    conversionFormLayout->addLayout(resolutionLayout);
-    conversionFormLayout->addSpacing(30);
+
+
+    QHBoxLayout* resolutionsHeaderLayout = new QHBoxLayout();
+    resolutionsHeaderLayout->addWidget(outputLabel, 0);
+    resolutionsHeaderLayout->addSpacing(15);
+    QLabel* labelX = new QLabel("X");
+    labelX->setAlignment(Qt::AlignCenter);
+    labelX->setFixedWidth(80);
+    resolutionsHeaderLayout->addWidget(labelX, 0);
+    QLabel* labelY = new QLabel("Y");
+    labelY->setAlignment(Qt::AlignCenter);
+    labelY->setFixedWidth(80);
+    resolutionsHeaderLayout->addWidget(labelY, 0);
+    QLabel* labelZ = new QLabel("Z");
+    labelZ->setAlignment(Qt::AlignCenter);
+    labelZ->setFixedWidth(80);
+    resolutionsHeaderLayout->addWidget(labelZ, 0);
+    QLabel* labelC = new QLabel("CH");
+    labelC->setAlignment(Qt::AlignCenter);
+    labelC->setFixedWidth(65);
+    resolutionsHeaderLayout->addWidget(labelC, 0);
+    QLabel* labelT = new QLabel("t");
+    labelT->setAlignment(Qt::AlignCenter);
+    labelT->setFixedWidth(65);
+    resolutionsHeaderLayout->addWidget(labelT, 0);
+    resolutionsHeaderLayout->addWidget(sizeLabel, 1);
+
+    resolutionsLayout->addLayout(resolutionsHeaderLayout);
+    conversionFormLayout->addLayout(resolutionsLayout, 0);
+
+    QHBoxLayout *addResolutionLayout = new QHBoxLayout();
+    QLabel* arlLabel = new QLabel();
+    arlLabel->setFixedWidth(220);
+    addResolutionLayout->addWidget(arlLabel);
+    addResolutionLayout->addWidget(addResolutionButton, 0);
+    conversionFormLayout->addLayout(addResolutionLayout, 0);
+    conversionFormLayout->addSpacing(20);
 
     QHBoxLayout* stacksDimLayout = new QHBoxLayout();
-    QLabel* stacksDimLabel = new QLabel("Stacks dims:");
+    QLabel* stacksDimLabel = new QLabel("Block dims:");
     stacksDimLabel->setFixedWidth(220);
     stacksDimLayout->addWidget(stacksDimLabel);
-    stacksDimLayout->addWidget(stacksWidthField);
-    stacksWidthField->setFixedWidth(160);
-    stacksDimLayout->addStretch(1);
-    stacksDimLayout->addWidget(stacksHeightField);
-    stacksHeightField->setFixedWidth(160);
-    stacksDimLayout->addStretch(1);
-    stacksDimLayout->addWidget(stacksDepthField);
-    stacksDepthField->setFixedWidth(160);
+    stacksDimLayout->addWidget(stacksWidthField, 1);
+    stacksDimLayout->addSpacing(15);
+    stacksDimLayout->addWidget(stacksHeightField, 1);
+    stacksDimLayout->addSpacing(15);
+    stacksDimLayout->addWidget(stacksDepthField, 1);
     conversionFormLayout->addLayout(stacksDimLayout);
 
     QHBoxLayout* downSampleMethLayout = new QHBoxLayout();
@@ -246,6 +274,7 @@ PConverter::PConverter(V3DPluginCallback *callback, QWidget *parent) : QWidget(p
     layout->addSpacing(5);
     layout->addWidget(helpBox);
     layout->addStretch(1);
+    layout->addSpacing(10);
     layout->addWidget(statusBar);
     QWidget* container = new QWidget();
     QGridLayout* bottomBar = new QGridLayout();
@@ -259,14 +288,15 @@ PConverter::PConverter(V3DPluginCallback *callback, QWidget *parent) : QWidget(p
     layout->setContentsMargins(10,5,10,0);
     setLayout(layout);
     setWindowTitle(tr("TeraConverter"));
-    this->setFixedSize(800,600);
+    this->setFixedWidth(800);
 
     //signals and slots
     connect(startButton, SIGNAL(clicked()), this, SLOT(startButtonClicked()));
     connect(stopButton, SIGNAL(clicked()), this, SLOT(stopButtonClicked()));
     connect(this, SIGNAL(sendProgressBarChanged(int, int, int, const char*)), this, SLOT(progressBarChanged(int, int, int, const char*)), Qt::QueuedConnection);
-    connect(inFormatCBox, SIGNAL(currentIndexChanged(QString)), this, SLOT(volformatChanged(QString)));
-    connect(outFormatCBox, SIGNAL(currentIndexChanged(QString)), this, SLOT(volformatChanged(QString)));
+    connect(inFormatCBox, SIGNAL(currentIndexChanged(int)), this, SLOT(volformatChanged(int)));
+    connect(outFormatCBox, SIGNAL(currentIndexChanged(int)), this, SLOT(volformatChanged(int)));
+    connect(timeSeriesCheckBox, SIGNAL(stateChanged(int)), this, SLOT(volformatChanged(int)));
     connect(CConverter::instance(), SIGNAL(sendOperationOutcome(itm::RuntimeException*)), this, SLOT(operationDone(itm::RuntimeException*)), Qt::QueuedConnection);
     connect(inDirButton, SIGNAL(clicked()), this, SLOT(inDirButtonClicked()));
     connect(inFileButton, SIGNAL(clicked()), this, SLOT(inFileButtonClicked()));
@@ -277,6 +307,7 @@ PConverter::PConverter(V3DPluginCallback *callback, QWidget *parent) : QWidget(p
     connect(inFormatCBox, SIGNAL(currentIndexChanged(int)), this, SLOT(settingsChanged()));
     connect(stacksWidthField, SIGNAL(valueChanged(int)), this, SLOT(settingsChanged()));
     connect(stacksHeightField, SIGNAL(valueChanged(int)), this, SLOT(settingsChanged()));
+    connect(addResolutionButton, SIGNAL(clicked()), this, SLOT(addResolution()));
     resetGUI();
 
     //set always on top
@@ -300,13 +331,18 @@ void PConverter::resetGUI()
     stopButton->setEnabled(false);    
     statusBar->clearMessage();
     statusBar->showMessage("Ready to import volume.");
-    volformatChanged("none");
+    volformatChanged(0);
     import_panel->setEnabled(true);
+    operationInProgress = false;
 }
 
 //called when startButton has been clicked
 void PConverter::startButtonClicked()
 {
+    if(operationInProgress)
+        return;
+    operationInProgress = true;
+
     /**/itm::debug(itm::LEV1, 0, __itm__current__function__);
 
     try
@@ -393,6 +429,7 @@ void PConverter::stopButtonClicked()
             stopButton->setEnabled(false);
             import_panel->setEnabled(false);
             conversion_panel->setEnabled(true);
+            operationInProgress = false;
         }
     }
 }
@@ -494,7 +531,7 @@ void PConverter::settingsChanged()
     CSettings::instance()->writeSettings();
 }
 
-void PConverter::volformatChanged ( const QString & text )
+void PConverter::volformatChanged (int )
 {
     QComboBox* sender = static_cast<QComboBox*>(QObject::sender());
     QStackedLayout *buttonLayout = 0;
@@ -506,7 +543,7 @@ void PConverter::volformatChanged ( const QString & text )
         dirButton    = outDirButton;
         fileButton   = outFileButton;
     }
-    else
+    else // both inFormatCBox and timeSeriesCheckBox
     {
         sender = inFormatCBox;
         buttonLayout = inButtonLayout;
@@ -514,7 +551,7 @@ void PConverter::volformatChanged ( const QString & text )
         fileButton   = inFileButton;
     }
 
-    if(sender->currentText().compare("Image series (tiled)", Qt::CaseInsensitive) == 0)
+    if(sender->currentText().compare(iim::STACKED_FORMAT.c_str(), Qt::CaseInsensitive) == 0)
     {
         helpBox->setText("Two-leveled folder structure (see <a href=\"http://code.google.com/p/terastitcher/wiki/SupportedFormats\">here</a>) with each tile composed "
                                   "by a series of 2D images.");
@@ -523,7 +560,7 @@ void PConverter::volformatChanged ( const QString & text )
         if(sender == outFormatCBox)
             stacksDepthField->setVisible(false);
     }
-    else if(sender->currentText().compare("Image series (nontiled)", Qt::CaseInsensitive) == 0)
+    else if(sender->currentText().compare(iim::SIMPLE_FORMAT.c_str(), Qt::CaseInsensitive) == 0)
     {
         helpBox->setText("A folder containing a series of 2D images. Supported formats for single "
                                   "2D images are BMP, DIB, JPEG, JPG, JPE, PNG, PBM, PGM, PPM, SR, RAS, TIFF, TIF.");
@@ -532,7 +569,7 @@ void PConverter::volformatChanged ( const QString & text )
         if(sender == outFormatCBox)
             stacksDepthField->setVisible(false);
     }
-    else if(sender->currentText().compare("Vaa3D raw (tiled, RGB)", Qt::CaseInsensitive) == 0)
+    else if(sender->currentText().compare(iim::TILED_FORMAT.c_str(), Qt::CaseInsensitive) == 0)
     {
         helpBox->setText("Two-leveled folder structure (see <a href=\"http://code.google.com/p/terastitcher/wiki/SupportedFormats\">here</a>) with each tile composed "
                                   "by a series of 3D blocks stored into Vaa3D raw files containing up to 3 channels (RGB).");
@@ -541,7 +578,7 @@ void PConverter::volformatChanged ( const QString & text )
         if(sender == outFormatCBox)
             stacksDepthField->setVisible(true);
     }
-    else if(sender->currentText().compare("Vaa3D raw (tiled, 4D)", Qt::CaseInsensitive) == 0)
+    else if(sender->currentText().compare(iim::TILED_MC_FORMAT.c_str(), Qt::CaseInsensitive) == 0)
     {
         helpBox->setText("Three-leveled folder structure (first level for channels, other two levels for tiling X vs Y) with each tile composed "
                                   "by a series of 3D blocks stored into Vaa3D raw files containing a single channel.");
@@ -550,15 +587,18 @@ void PConverter::volformatChanged ( const QString & text )
         if(sender == outFormatCBox)
             stacksDepthField->setVisible(true);
     }
-    else if(sender->currentText().compare("Vaa3D raw", Qt::CaseInsensitive) == 0)
+    else if(sender->currentText().compare(iim::RAW_FORMAT.c_str(), Qt::CaseInsensitive) == 0)
     {
         helpBox->setText("Vaa3D raw 4D format (single file). Supported suffixes are: .raw, .RAW, .v3draw, .V3DRAW");
-        buttonLayout->setCurrentWidget(fileButton);
+        if(timeSeriesCheckBox->isChecked())
+            buttonLayout->setCurrentWidget(dirButton);
+        else
+            buttonLayout->setCurrentWidget(fileButton);
 
         if(sender == outFormatCBox)
             stacksDepthField->setVisible(false);
     }
-    else if(sender->currentText().compare("Vaa3D raw (series)", Qt::CaseInsensitive) == 0)
+    else if(sender->currentText().compare(iim::SIMPLE_RAW_FORMAT.c_str(), Qt::CaseInsensitive) == 0)
     {
         helpBox->setText("A folder containing a series of Vaa3D raw files. Supported suffixes are: .raw, .RAW, .v3draw, .V3DRAW");
         buttonLayout->setCurrentWidget(dirButton);
@@ -597,8 +637,10 @@ void PConverter::progressBarChanged(int val, int minutes, int seconds, const cha
     remaining_time.append(" minutes and ");
     remaining_time.append(QString::number(seconds));
     remaining_time.append(" seconds remaining");
-    if(message)
-        statusBar->showMessage(message);
+    if(message && strlen(message) != 0)
+    {
+        statusBar->showMessage(message + QString(": ") + remaining_time);
+    }
     else
         statusBar->showMessage(remaining_time);
 }
@@ -656,49 +698,27 @@ void PConverter::operationDone(RuntimeException *ex)
         {
             //generating at runtime the needed resolutions, which depend on the current volume size
             VolumeConverter *vc = CConverter::instance()->getVolumeConverter(); //throws an exception if volume has not been imported yet!
-            resolutionsNumber = 0;
-            bool deepest_resolution_reached = false;
-            while(!deepest_resolution_reached)
+            int res = 1;
+            bool add_a_resolution = true;
+            while(add_a_resolution)
             {
-                int height = (vc->getV1()-vc->getV0())/pow(2.0f, resolutionsNumber);
-                int width = (vc->getH1()-vc->getH0())/pow(2.0f, resolutionsNumber);
-                int depth = (vc->getD1()-vc->getD0())/pow(2.0f, resolutionsNumber);
-                float MVoxels = (height/1024.0f)*(width/1024.0f)*depth;
-                if(MVoxels < CSettings::instance()->getVolMapSizeLimit() || resolutionsNumber >= iim::TMITREE_MAX_HEIGHT)
-                    deepest_resolution_reached = true;
-                if(height != 0 && width != 0 && depth != 0)
-                    resolutionsNumber++;
+                int height = (vc->getV1()-vc->getV0())/pow(2.0f, res);
+                int width = (vc->getH1()-vc->getH0())/pow(2.0f, res);
+                int depth = (vc->getD1()-vc->getD0())/pow(2.0f, res);
+
+                add_a_resolution = height > CSettings::instance()->getVOIdimV() ||
+                                   width  > CSettings::instance()->getVOIdimH() ||
+                                   depth  > CSettings::instance()->getVOIdimD();
+
+                if(add_a_resolution)
+                    res++;
             }
-            resolutionsFields = new QLabel*[resolutionsNumber];
-            resolutionsSizes = new QLabel*[resolutionsNumber];
-            resolutionsCboxs = new QCheckBox*[resolutionsNumber];
-            for(int i=0; i<resolutionsNumber; i++)
-            {
-                int height = (vc->getV1()-vc->getV0())/pow(2.0f, i);
-                int width = (vc->getH1()-vc->getH0())/pow(2.0f, i);
-                int depth = (vc->getD1()-vc->getD0())/pow(2.0f, i);
-                float GBytes = (height/1024.0f)*(width/1024.0f)*(depth/1024.0f);
-
-                resolutionsFields[i] = new QLabel(QString::number(height).append(" ").append(QChar(0x00D7)).append(" ").append(QString::number(width)).append(" ").append(QChar(0x00D7)).append(" ").append(QString::number(depth)));
-                resolutionsFields[i]->setAlignment(Qt::AlignCenter);
-                resolutionsSizes[i] = new QLabel(QString::number(GBytes,'f',3));
-                resolutionsSizes[i]->setAlignment(Qt::AlignCenter);
-                resolutionsCboxs[i] = new QCheckBox();
-                resolutionsCboxs[i]->setStyleSheet("::indicator {subcontrol-position: center; subcontrol-origin: padding;}");
-                resolutionsCboxs[i]->setChecked(true);
-                resolutionsLayout->addWidget(resolutionsCboxs[i],  i+1, 0, 1, 1);
-                resolutionsLayout->addWidget(resolutionsFields[i], i+1, 1, 1, 2);
-                resolutionsLayout->addWidget(resolutionsSizes[i],  i+1, 3, 1, 2);
-
-                connect(resolutionsCboxs[i], SIGNAL(stateChanged(int)), this, SLOT(updateContent()));
-
-            }
-
-            //updating content
-            updateContent();
+            for(int i=0; i<=res; i++)
+                addResolution();
         }
         catch(RuntimeException &ex) {QMessageBox::critical(this,QObject::tr("Error"), QObject::tr(ex.what()),QObject::tr("Ok"));}
     }
+    operationInProgress = false;
 }
 
 /**********************************************************************************
@@ -712,18 +732,27 @@ void PConverter::updateContent()
     {
         //checking that at least one resolution has been selected
         bool selected = false;
-        for(int i=0; i<resolutionsNumber; i++)
-            selected = selected | resolutionsCboxs[i]->isChecked();
+        for(int i=0; i<resolutionsCboxs.size(); i++)
+        {
+            selected = selected || resolutionsCboxs[i]->isChecked();
+            resolutionsDimsX[i]->setEnabled(resolutionsCboxs[i]->isChecked());
+            resolutionsDimsY[i]->setEnabled(resolutionsCboxs[i]->isChecked());
+            resolutionsDimsZ[i]->setEnabled(resolutionsCboxs[i]->isChecked());
+            resolutionsDimsC[i]->setEnabled(resolutionsCboxs[i]->isChecked());
+            resolutionsDimsT[i]->setEnabled(resolutionsCboxs[i]->isChecked() && timeSeriesCheckBox->isChecked());
+            resolutionsSizes[i]->setEnabled(resolutionsCboxs[i]->isChecked());
+        }
         if(!selected)
         {
             QMessageBox::warning(this,QObject::tr("Warning"), "At least one resolution must be selected",QObject::tr("Ok"));
             resolutionsCboxs[0]->setChecked(true);
+            updateContent();
         }
 
         //determining the maximum resolution selected
         VolumeConverter *vc = CConverter::instance()->getVolumeConverter(); //throws an exception if volume has not been imported yet!
         int max_res = 0;
-        for(int i=0; i<resolutionsNumber; i++)
+        for(int i=0; i<resolutionsCboxs.size(); i++)
         {
             if(resolutionsCboxs[i]->isChecked())
                 max_res = std::max(max_res, i);
@@ -733,8 +762,108 @@ void PConverter::updateContent()
         int layer_height = vc->getV1()-vc->getV0();
         int layer_width = vc->getH1()-vc->getH0();
         int layer_depth = pow(2.0f, max_res);
-        float GBytes = (layer_height/1024.0f)*(layer_width/1024.0f)*(layer_depth/1024.0f)*vc->getVolume()->getCHANS()*vc->getVolume()->getBYTESxCHAN();
+        float GBytes = (layer_height/1024.0f)*(layer_width/1024.0f)*(layer_depth/1024.0f)*vc->getVolume()->getDIM_C()*vc->getVolume()->getBYTESxCHAN();
         memoryField->setText(QString::number(GBytes, 'f', 3).append(" GB"));
+    }
+    catch(RuntimeException &ex)
+    {
+        QMessageBox::critical(this,QObject::tr("Error"), QObject::tr(ex.what()),QObject::tr("Ok"));
+    }
+}
+
+
+void PConverter::addResolution()
+{
+    /**/itm::debug(itm::LEV3, 0, __itm__current__function__);
+
+    try
+    {
+        VolumeConverter *vc = CConverter::instance()->getVolumeConverter(); //throws an exception if volume has not been imported yet!
+
+        int i = resolutionsCboxs.size();
+        int height = (vc->getV1()-vc->getV0())/pow(2.0f, i);
+        int width = (vc->getH1()-vc->getH0())/pow(2.0f, i);
+        int depth = (vc->getD1()-vc->getD0())/pow(2.0f, i);
+
+        if(height < 2 ||
+           width  < 2 ||
+           depth  < 2 ||
+           i >= iim::TMITREE_MAX_HEIGHT)
+            return;
+
+        float GBytes = (height/1024.0f)*(width/1024.0f)*(depth/1024.0f)*vc->getVolume()->getDIM_C()*vc->getVolume()->getDIM_T()*vc->getVolume()->getBYTESxCHAN();
+
+        resolutionsDimsX.push_back(new QSpinBox());
+        resolutionsDimsX[i]->setAlignment(Qt::AlignCenter);
+        resolutionsDimsX[i]->setReadOnly(true);
+        resolutionsDimsX[i]->setMinimum(width);
+        resolutionsDimsX[i]->setMaximum(width);
+        resolutionsDimsX[i]->setValue(width);
+        resolutionsDimsX[i]->setFixedWidth(80);
+
+        resolutionsDimsY.push_back(new QSpinBox());
+        resolutionsDimsY[i]->setAlignment(Qt::AlignCenter);
+        resolutionsDimsY[i]->setReadOnly(true);
+        resolutionsDimsY[i]->setMinimum(height);
+        resolutionsDimsY[i]->setMaximum(height);
+        resolutionsDimsY[i]->setValue(height);
+        resolutionsDimsY[i]->setFixedWidth(80);
+
+
+        resolutionsDimsZ.push_back(new QSpinBox());
+        resolutionsDimsZ[i]->setAlignment(Qt::AlignCenter);
+        resolutionsDimsZ[i]->setReadOnly(true);
+        resolutionsDimsZ[i]->setMinimum(depth);
+        resolutionsDimsZ[i]->setMaximum(depth);
+        resolutionsDimsZ[i]->setValue(depth);
+        resolutionsDimsZ[i]->setFixedWidth(80);
+
+        resolutionsDimsC.push_back(new QSpinBox());
+        resolutionsDimsC[i]->setAlignment(Qt::AlignCenter);
+        resolutionsDimsC[i]->setReadOnly(true);
+        resolutionsDimsC[i]->setMinimum(vc->getVolume()->getDIM_C());
+        resolutionsDimsC[i]->setMaximum(vc->getVolume()->getDIM_C());
+        resolutionsDimsC[i]->setValue(vc->getVolume()->getDIM_C());
+        resolutionsDimsC[i]->setFixedWidth(65);
+
+        resolutionsDimsT.push_back(new QSpinBox());
+        resolutionsDimsT[i]->setAlignment(Qt::AlignCenter);
+        resolutionsDimsT[i]->setReadOnly(true);
+        resolutionsDimsT[i]->setMinimum(vc->getVolume()->getDIM_T());
+        resolutionsDimsT[i]->setMaximum(vc->getVolume()->getDIM_T());
+        resolutionsDimsT[i]->setValue(vc->getVolume()->getDIM_T());
+        resolutionsDimsT[i]->setFixedWidth(65);
+        resolutionsDimsT[i]->setEnabled(timeSeriesCheckBox->isChecked());
+
+
+        resolutionsSizes.push_back(new QLineEdit(QString::number(GBytes,'f',3)));
+        resolutionsSizes[i]->setAlignment(Qt::AlignCenter);
+        resolutionsSizes[i]->setReadOnly(true);
+
+        resolutionsCboxs.push_back(new QCheckBox());
+        resolutionsCboxs[i]->setStyleSheet("::indicator {subcontrol-position: center; subcontrol-origin: padding;}");
+        resolutionsCboxs[i]->setChecked(true);
+        resolutionsCboxs[i]->setFixedWidth(15);
+
+        QHBoxLayout *resolutionsRowiLayout = new QHBoxLayout();
+
+        QLabel* phantomLabel = new QLabel();
+        phantomLabel->setFixedWidth(220);
+        resolutionsRowiLayout->addWidget(phantomLabel);
+        resolutionsRowiLayout->addWidget(resolutionsCboxs[i], 0);
+        resolutionsRowiLayout->addWidget(resolutionsDimsX[i], 0);
+        resolutionsRowiLayout->addWidget(resolutionsDimsY[i], 0);
+        resolutionsRowiLayout->addWidget(resolutionsDimsZ[i], 0);
+        resolutionsRowiLayout->addWidget(resolutionsDimsC[i], 0);
+        resolutionsRowiLayout->addWidget(resolutionsDimsT[i], 0);
+        resolutionsRowiLayout->addWidget(resolutionsSizes[i], 1);
+        resolutionsLayout->addLayout(resolutionsRowiLayout, 0);
+        resolutionsRowsLayouts.push_back(resolutionsRowiLayout);
+
+        connect(resolutionsCboxs[i], SIGNAL(stateChanged(int)), this, SLOT(updateContent()));
+
+        //updating content
+        updateContent();
     }
     catch(RuntimeException &ex)
     {

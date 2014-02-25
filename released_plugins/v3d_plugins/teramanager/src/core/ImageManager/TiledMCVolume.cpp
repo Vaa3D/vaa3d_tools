@@ -130,7 +130,7 @@ TiledMCVolume::~TiledMCVolume(void)
 	if ( CHDIRNAMES )
 		delete[] CHDIRNAMES;
 	if ( vol_ch ) {
-		for ( int c=0; c<CHANS; c++ )
+		for ( int c=0; c<DIM_C; c++ )
 			delete vol_ch[c];
 		delete[] vol_ch;
 	}
@@ -179,16 +179,16 @@ void TiledMCVolume::save(char* metadata_filepath) throw (IOException)
 	fwrite(&N_ROWS, sizeof(uint16), 1, file);
 	fwrite(&N_COLS, sizeof(uint16), 1, file);
 
-	fwrite(&CHANS, sizeof(int), 1, file);
+	fwrite(&DIM_C, sizeof(int), 1, file);
 
 	// save channel directories names
 	int n_digits = 1;
-	int _channels = CHANS / 10;	
+	int _channels = DIM_C / 10;	
 	while ( _channels ) {
 		n_digits++;
 		_channels /= 10;
 	}
-	for ( int c=0; c<CHANS; c++ ) {
+	for ( int c=0; c<DIM_C; c++ ) {
 		str_size = (uint16)(strlen(CHDIRNAMES[c]) + 1);
 		fwrite(&str_size, sizeof(uint16), 1, file);
 		fwrite(CHDIRNAMES[c], str_size, 1, file);
@@ -309,19 +309,19 @@ void TiledMCVolume::load(char* metadata_filepath) throw (IOException)
 	if(fread_return_val != 1)
         throw IOException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
 
-	fread_return_val = fread(&CHANS, sizeof(int), 1, file);
+	fread_return_val = fread(&DIM_C, sizeof(int), 1, file);
 	if(fread_return_val != 1)
         throw IOException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
 
-	n_active = CHANS;
+	n_active = DIM_C;
 	active = new uint32[n_active];
-	for ( int c=0; c<CHANS; c++ )
+	for ( int c=0; c<DIM_C; c++ )
 		active[c] = c; // all channels are assumed active
 
 	char channel_c_path[STATIC_STRINGS_SIZE];
-	CHDIRNAMES = new char*[CHANS];
-	vol_ch     = new TiledVolume *[CHANS];
-	for ( int c = 0; c < CHANS; c++)
+	CHDIRNAMES = new char*[DIM_C];
+	vol_ch     = new TiledVolume *[DIM_C];
+	for ( int c = 0; c < DIM_C; c++)
 	{
 		fread_return_val = fread(&str_size, sizeof(uint16), 1, file);
 		if(fread_return_val != 1)
@@ -377,14 +377,14 @@ void TiledMCVolume::init()
 	}
 	closedir(cur_dir_lev1);
 	entries_lev1.sort();
-	CHANS = (uint16) entries_lev1.size();
-	n_active = CHANS;
+	DIM_C = (uint16) entries_lev1.size();
+	n_active = DIM_C;
 	active = new uint32[n_active];
-	for ( c=0; c<CHANS; c++ )
+	for ( c=0; c<DIM_C; c++ )
 		active[c] = c; // all channels are assumed active
 
 	//for each entry of first level, creating channel volume
-	vol_ch = new TiledVolume *[CHANS];
+	vol_ch = new TiledVolume *[DIM_C];
 	for(entry_i = entries_lev1.begin(), c=0; entry_i!= entries_lev1.end(); entry_i++, c++)
 	{
 		//building absolute path of first level entry to be used for "opendir(...)"
@@ -405,8 +405,8 @@ void TiledMCVolume::init()
             throw IOException("in TiledMCVolume::init(...): Number of tiles is not the same for all channels!");
 	}
 
-	CHDIRNAMES = new char*[CHANS];
-	for(c=0; c<CHANS; c++)
+	CHDIRNAMES = new char*[DIM_C];
+	for(c=0; c<DIM_C; c++)
 	{
 		tmp = entries_lev1.front();
 		CHDIRNAMES[c] = new char[tmp.size()+1];
@@ -745,7 +745,7 @@ real32* TiledMCVolume::loadSubvolume(int V0,int V1, int H0, int H1, int D0, int 
 //---03 nov 2011: added color support
 uint8* TiledMCVolume::loadSubvolume_to_UINT8(int V0,int V1, int H0, int H1, int D0, int D1, int *channels, int ret_type) throw (IOException)
 {
-    /**/iim::debug(iim::LEV3, strprintf("V0=%d, V1=%d, H0=%d, H1=%d, D0=%d, D1=%d, *channels=%d, ret_type=%d", V0, V1, H0, H1, D0, D1, *channels, ret_type).c_str(), __iim__current__function__);
+    /**/iim::debug(iim::LEV3, strprintf("V0=%d, V1=%d, H0=%d, H1=%d, D0=%d, D1=%d, *channels=%d, ret_type=%d", V0, V1, H0, H1, D0, D1, channels ? *channels : -1, ret_type).c_str(), __iim__current__function__);
 
     //checking for non implemented features
 	//if( this->BYTESxCHAN != 1 ) {
@@ -802,15 +802,16 @@ uint8* TiledMCVolume::loadSubvolume_to_UINT8(int V0,int V1, int H0, int H1, int 
     return subvol;
 }
 
-void TiledMCVolume::setActiveChannels ( uint32 *_active, int _n_active )
-{
-    /**/iim::debug(iim::LEV3, 0, __iim__current__function__);
+// moved to VirtualVolume.cpp by Alessandro on 2014-02-20
+//void TiledMCVolume::setActiveChannels ( uint32 *_active, int _n_active )
+//{
+//    /**/iim::debug(iim::LEV3, 0, __iim__current__function__);
 
-	if ( active )
-		delete[] active;
-	active   = _active;
-	n_active = _n_active;
-}
+//	if ( active )
+//		delete[] active;
+//	active   = _active;
+//	n_active = _n_active;
+//}
 
 
 // OPERATIONS FOR STREAMED SUBVOLUME LOAD 

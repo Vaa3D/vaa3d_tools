@@ -171,11 +171,12 @@ void CSettings::readSettings()
     if(settings.contains("volumeConverterStacksDepthLRU"))
         volumeConverterStacksDepthLRU = settings.value("volumeConverterStacksDepthLRU").toInt();
 
-     if(settings.contains("verbosity"))
-     {
-         itm::DEBUG = settings.value("verbosity").toInt();
-         iim::DEBUG = settings.value("verbosity").toInt();
-     }
-     else
-         itm::NO_DEBUG;
+//     if(settings.contains("verbosity"))
+//     {
+//         itm::DEBUG = settings.value("verbosity").toInt();
+//         iim::DEBUG = settings.value("verbosity").toInt();
+//     }
+//     else
+    iim::DEBUG = iim::NO_DEBUG;
+    itm::DEBUG = itm::NO_DEBUG;
 }

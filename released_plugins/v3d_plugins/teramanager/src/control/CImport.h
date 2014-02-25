@@ -74,12 +74,12 @@ class teramanager::CImport : public QThread
         float VXL_1, VXL_2, VXL_3;                  /* (optional) voxel dimensions of the volume to be imported */
         string format;                              /* (optional) format of the volume to be imported */
         bool isTimeSeries;                          /* (optional) whether the volume to be imported is a time series */
+        int vmapYDimMax, vmapXDimMax, vmapZDimMax, vmapCDimMax, vmapTDimMax; //volume map maximum dimensions
 
         // output members
         vector<VirtualVolume*> volumes;             // stores the volumes at the different resolutions
-        int vmapMaxSize;                            //maximum size (in MVoxels) of volume map
         itm::uint8* vmapData;                       //volume map data
-        int vmapYDim, vmapXDim, vmapZDim, vmapCDim, vmapTDim; //volume map dimensions
+        itm::uint32 vmapYDim, vmapXDim, vmapZDim, vmapCDim, vmapTDim; //volume map actualdimensions
 
         // other members
         QElapsedTimer timerIO;                      //for time measuring
@@ -105,11 +105,11 @@ class teramanager::CImport : public QThread
         // GET methods
         string getPath(){return path;}
         itm::uint8* getVMapRawData(){return vmapData;}
-        int getVMapXDim(){return vmapXDim;}
-        int getVMapYDim(){return vmapYDim;}
-        int getVMapZDim(){return vmapZDim;}
-        int getVMapCDim(){return vmapCDim;}
-        int getVMapTDim(){return vmapTDim;}
+        itm::uint32 getVMapXDim(){return vmapXDim;}
+        itm::uint32 getVMapYDim(){return vmapYDim;}
+        itm::uint32 getVMapZDim(){return vmapZDim;}
+        itm::uint32 getVMapCDim(){return vmapCDim;}
+        itm::uint32 getVMapTDim(){return vmapTDim;}
         int getVMapResIndex()
         {
             for(size_t k=0; k<volumes.size(); k++)
@@ -132,7 +132,6 @@ class teramanager::CImport : public QThread
         void setVoxels(float vxl1, float vxl2, float vxl3);
         void setReimport(bool _reimport){reimport = _reimport;}
         void setRegenerateVolumeMap(bool _regenerateVolMap){regenerateVMap = _regenerateVolMap;}
-        void setVolMapMaxSize(int _volMapMaxSize){vmapMaxSize = _volMapMaxSize;}
         void setFormat(string _format){format = _format;}
         void setTimeSeries(bool _isTimeSeries){isTimeSeries = _isTimeSeries;}
 
@@ -155,15 +154,26 @@ class teramanager::CImport : public QThread
 //                delete[] vmapData;        // vmap MUST NOT be deallocated from TeraFly, since it is handled directly by Vaa3D
             vmapData = 0;
             vmapXDim = vmapYDim = vmapZDim = vmapTDim = vmapCDim = -1;
-            vmapMaxSize = CSettings::instance()->getVolMapSizeLimit();
+            updateMaxDims();
         }
+
+        void updateMaxDims(){
+            vmapYDimMax = CSettings::instance()->getVOIdimV();
+            vmapXDimMax = CSettings::instance()->getVOIdimH();
+            vmapZDimMax = CSettings::instance()->getVOIdimD();
+            vmapTDimMax = CSettings::instance()->getVOIdimT();
+            vmapCDimMax = 3;
+        }
+
+        // returns true if the volume map exists and is compatible with the current version
+        static bool checkVolumeMap(std::string vmapFilepath, std::string min_required_version) throw (itm::RuntimeException);
 
     signals:
 
         /*********************************************************************************
         * Carries the outcome of the operation associated to this thread.
         **********************************************************************************/
-        void sendOperationOutcome(itm::RuntimeException* ex, Image4DSimple* vmap_image = 0, qint64 elapsed_time = 0);
+        void sendOperationOutcome(itm::RuntimeException* ex, qint64 elapsed_time = 0);
 };
 
 #endif // CIMPORT_H

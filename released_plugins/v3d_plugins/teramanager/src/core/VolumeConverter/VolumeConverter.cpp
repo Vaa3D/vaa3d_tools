@@ -25,6 +25,7 @@
 #include "VolumeConverter.h"
 #include "../ImageManager/ProgressBar.h"
 #include <math.h>
+#include <string>
 
 /*******************************************************************************************************
 * Volume formats supported:
@@ -39,6 +40,7 @@
 #include "../ImageManager/TiledVolume.h"
 #include "../ImageManager/TiledMCVolume.h"
 #include "../ImageManager/StackedVolume.h"
+#include "../ImageManager/TimeSeries.h"
 /******************************************************************************************************/
 
 #include <limits>
@@ -67,34 +69,22 @@ VolumeConverter::~VolumeConverter()
 }
 
 
-void VolumeConverter::setSrcVolume(const char* _root_dir, const char* _fmt, const char* _out_fmt) throw (IOException)
+void VolumeConverter::setSrcVolume(const char* _root_dir, const char* _fmt, const char* _out_fmt, bool time_series /* = false */) throw (IOException)
 {
-    /**/iim::debug(iim::LEV3, strprintf("_root_dir = %s, _fmt = %s, _out_fmt = %s", _root_dir, _fmt, _out_fmt).c_str(), __iim__current__function__);
+    /**/iim::debug(iim::LEV3, strprintf("_root_dir = %s, _fmt = %s, _out_fmt = %s, time_series = %s",
+                                         _root_dir, _fmt, _out_fmt, time_series ? "true" : "false").c_str(), __iim__current__function__);
 
-    if ( strcmp(_fmt,STACKED_FORMAT.c_str()) == 0 )
-		volume = new StackedVolume(_root_dir,ref_sys(vertical,horizontal,depth),(float)1.0,(float)1.0,(float)1.0);
-    else if ( strcmp(_fmt,TILED_FORMAT.c_str()) == 0 )
-		volume = new TiledVolume(_root_dir,ref_sys(vertical,horizontal,depth),(float)1.0,(float)1.0,(float)1.0);
-    else if ( strcmp(_fmt,TILED_MC_FORMAT.c_str()) == 0 )
-		volume = new TiledMCVolume(_root_dir,ref_sys(vertical,horizontal,depth),(float)1.0,(float)1.0,(float)1.0);
-    else if ( strcmp(_fmt,SIMPLE_FORMAT.c_str()) == 0 )
-		volume = new SimpleVolume(_root_dir);
-    else if ( strcmp(_fmt,SIMPLE_RAW_FORMAT.c_str()) == 0 )
-		volume = new SimpleVolumeRaw(_root_dir);
-    else if ( strcmp(_fmt,RAW_FORMAT.c_str()) == 0 )
-		volume = new RawVolume(_root_dir);
-	else {
-        char err_msg[STATIC_STRINGS_SIZE];
-		sprintf(err_msg,"VolumeConverter::setSrcVolume: unsupported volume format");
-        throw IOException(err_msg);
-	}
+    if(time_series)
+        volume = new TimeSeries(_root_dir, _fmt);
+    else
+        volume = VirtualVolume::instance(_root_dir, _fmt, vertical, horizontal, depth, 1.0f, 1.0f, 1.0f);
 
-	//channels = (volume->getCHANS()>1) ? 3 : 1; // only 1 or 3 channels supported
-	channels = volume->getCHANS();
+	//channels = (volume->getDIM_C()>1) ? 3 : 1; // only 1 or 3 channels supported
+	channels = volume->getDIM_C();
 
 	if ( strcmp(_out_fmt,REAL_REPRESENTATION) == 0 ) {
 		if ( channels > 1 ) {
-			fprintf(stderr,"*** warning *** more than 1 channel, the internal representation has been changed\n");
+            fprintf(stderr,"*** warning *** more than 1 channel, the internal representation has been changed\n");
 			out_fmt = UINT8x3_REPRESENTATION;
 			internal_rep = UINT8_INTERNAL_REP;
 		}
@@ -148,8 +138,8 @@ void VolumeConverter::generateTiles(std::string output_path, bool* resolutions,
     printf("in VolumeConverter::generateTiles(path = \"%s\", resolutions = ", output_path.c_str());
     for(int i=0; i< TMITREE_MAX_HEIGHT; i++)
         printf("%d", resolutions[i]);
-    printf(", slice_height = %d, slice_width = %d, method = %d, show_progress_bar = %s, saved_img_format = %s, saved_img_depth = %d)\n",
-           slice_height, slice_width, method, show_progress_bar ? "true" : "false", saved_img_format, saved_img_depth);
+    printf(", slice_height = %d, slice_width = %d, method = %d, show_progress_bar = %s, saved_img_format = %s, saved_img_depth = %d, frame_dir = \"%s\")\n",
+           slice_height, slice_width, method, show_progress_bar ? "true" : "false", saved_img_format, saved_img_depth, frame_dir.c_str());
 
 	if ( saved_img_depth == 0 ) // Tiff2DStck currently supports only 8 bits depth 
 		saved_img_depth = 8;
@@ -194,9 +184,9 @@ void VolumeConverter::generateTiles(std::string output_path, bool* resolutions,
 	char progressBarMsg[200];
 	if(show_progress_bar)
 	{
-                   ProgressBar::getInstance()->start("Multiresolution tile generation");
-                   ProgressBar::getInstance()->update(0,"Initializing...");
-                   ProgressBar::getInstance()->show();
+       ProgressBar::getInstance()->start("Multiresolution tile generation");
+       ProgressBar::getInstance()->update(0,"Initializing...");
+       ProgressBar::getInstance()->show();
 	}
 
 	//computing dimensions of volume to be stitched
@@ -250,9 +240,20 @@ void VolumeConverter::generateTiles(std::string output_path, bool* resolutions,
                 //if(make_dir(file_path[res_i].str().c_str())!=0)
                 if(!check_and_make_dir(file_path[res_i].str().c_str())) // HP 130914
                 {
-                    char err_msg[TMITREE_MAX_HEIGHT];
+                    char err_msg[STATIC_STRINGS_SIZE];
                     sprintf(err_msg, "in generateTiles(...): unable to create DIR = \"%s\"\n", file_path[res_i].str().c_str());
                     throw IOException(err_msg);
+                }
+
+                //if frame_dir not empty must create frame directory (@FIXED by Alessandro on 2014-02-25)
+                if ( frame_dir != "" ) {
+                    file_path[res_i] << "/" << frame_dir << "/";
+                    if(!check_and_make_dir(file_path[res_i].str().c_str()))
+                    {
+                        char err_msg[STATIC_STRINGS_SIZE];
+                        sprintf(err_msg, "in generateTilesVaa3DRaw(...): unable to create DIR = \"%s\"\n", file_path[res_i].str().c_str());
+                        throw IOException(err_msg);
+                    }
                 }
             }
 	}
@@ -348,7 +349,7 @@ void VolumeConverter::generateTiles(std::string output_path, bool* resolutions,
 					base_path << frame_dir << "/";
 					if(!check_and_make_dir(base_path.str().c_str())) 
 					{
-                        char err_msg[TMITREE_MAX_HEIGHT];
+                        char err_msg[STATIC_STRINGS_SIZE];
 						sprintf(err_msg, "in generateTiles(...): unable to create DIR = \"%s\"\n", base_path.str().c_str());
                         throw IOException(err_msg);
 					}
@@ -509,8 +510,8 @@ void VolumeConverter::generateTilesVaa3DRaw(std::string output_path, bool* resol
     printf("in VolumeConverter::generateTilesVaa3DRaw(path = \"%s\", resolutions = ", output_path.c_str());
     for(int i=0; i< TMITREE_MAX_HEIGHT; i++)
         printf("%d", resolutions[i]);
-    printf(", block_height = %d, block_width = %d, block_depth = %d, method = %d, show_progress_bar = %s, saved_img_format = %s, saved_img_depth = %d)\n",
-           block_height, block_width, block_depth, method, show_progress_bar ? "true" : "false", saved_img_format, saved_img_depth);
+    printf(", block_height = %d, block_width = %d, block_depth = %d, method = %d, show_progress_bar = %s, saved_img_format = %s, saved_img_depth = %d, frame_dir = \"%s\")\n",
+           block_height, block_width, block_depth, method, show_progress_bar ? "true" : "false", saved_img_format, saved_img_depth, frame_dir.c_str());
 
 	if ( saved_img_depth == 0 ) // default is to generate an image with the same depth of the source
 		saved_img_depth = volume->getBYTESxCHAN() * 8;
@@ -651,9 +652,20 @@ void VolumeConverter::generateTilesVaa3DRaw(std::string output_path, bool* resol
                 //if(make_dir(file_path[res_i].str().c_str())!=0)
                 if(!check_and_make_dir(file_path[res_i].str().c_str())) // HP 130914
                 {
-                    char err_msg[TMITREE_MAX_HEIGHT];
+                    char err_msg[STATIC_STRINGS_SIZE];
                     sprintf(err_msg, "in generateTilesVaa3DRaw(...): unable to create DIR = \"%s\"\n", file_path[res_i].str().c_str());
                     throw IOException(err_msg);
+                }
+
+                //if frame_dir not empty must create frame directory (@FIXED by Alessandro on 2014-02-25)
+                if ( frame_dir != "" ) {
+                    file_path[res_i] << "/" << frame_dir << "/";
+                    if(!check_and_make_dir(file_path[res_i].str().c_str()))
+                    {
+                        char err_msg[STATIC_STRINGS_SIZE];
+                        sprintf(err_msg, "in generateTilesVaa3DRaw(...): unable to create DIR = \"%s\"\n", file_path[res_i].str().c_str());
+                        throw IOException(err_msg);
+                    }
                 }
             }
 	}
@@ -776,7 +788,7 @@ void VolumeConverter::generateTilesVaa3DRaw(std::string output_path, bool* resol
 					base_path << frame_dir << "/";
 					if(!check_and_make_dir(base_path.str().c_str())) 
 					{
-                        char err_msg[TMITREE_MAX_HEIGHT];
+                        char err_msg[STATIC_STRINGS_SIZE];
 						sprintf(err_msg, "in generateTilesVaa3DRaw(...): unable to create DIR = \"%s\"\n", base_path.str().c_str());
                         throw IOException(err_msg);
 					}
@@ -961,8 +973,14 @@ void VolumeConverter::generateTilesVaa3DRaw(std::string output_path, bool* resol
 				TiledVolume temp_vol(file_path[res_i].str().c_str(),reference,
 						volume->getVXL_V()*pow(2.0f,res_i), volume->getVXL_H()*pow(2.0f,res_i),volume->getVXL_D()*pow(2.0f,res_i));
 			}
-			catch ( ... ) {
-				printf("\t\t\t\tin VolumeConverter::generateTilesVaa3DRaw: cannot be created file mdata.bin in %s\n\n",file_path[res_i].str().c_str());
+            catch (IOException & ex)
+            {
+                printf("n VolumeConverter::generateTilesVaa3DRaw: cannot create file mdata.bin in %s [reason: %s]\n\n",file_path[res_i].str().c_str(), ex.what());
+                n_err++;
+            }
+            catch ( ... )
+            {
+                printf("in VolumeConverter::generateTilesVaa3DRaw: cannot create file mdata.bin in %s [no reason available]\n\n",file_path[res_i].str().c_str());
 				n_err++;
 			}
 
@@ -1060,8 +1078,8 @@ void VolumeConverter::generateTilesVaa3DRawMC ( std::string output_path, bool* r
     printf("in VolumeConverter::generateTilesVaa3DRawMC(path = \"%s\", resolutions = ", output_path.c_str());
     for(int i=0; i< S_MAX_MULTIRES; i++)
         printf("%d", resolutions[i]);
-    printf(", block_height = %d, block_width = %d, block_depth = %d, method = %d, show_progress_bar = %s, saved_img_format = %s, saved_img_depth = %d)\n",
-           block_height, block_width, block_depth, method, show_progress_bar ? "true" : "false", saved_img_format, saved_img_depth);
+    printf(", block_height = %d, block_width = %d, block_depth = %d, method = %d, show_progress_bar = %s, saved_img_format = %s, saved_img_depth = %d, frame_dir = \"%s\")\n",
+           block_height, block_width, block_depth, method, show_progress_bar ? "true" : "false", saved_img_format, saved_img_depth, frame_dir.c_str());
 
 	if ( saved_img_depth == 0 ) // default is to generate an image with the same depth of the source
 		saved_img_depth = volume->getBYTESxCHAN() * 8;
@@ -1563,8 +1581,8 @@ void VolumeConverter::generateTilesVaa3DRawMC ( std::string output_path, bool* r
     printf("in VolumeConverter::generateTilesVaa3DRawMC(path = \"%s\", resolutions = ", output_path.c_str());
     for(int i=0; i< TMITREE_MAX_HEIGHT; i++)
         printf("%d", resolutions[i]);
-    printf(", block_height = %d, block_width = %d, block_depth = %d, method = %d, show_progress_bar = %s, saved_img_format = %s, saved_img_depth = %d)\n",
-           block_height, block_width, block_depth, method, show_progress_bar ? "true" : "false", saved_img_format, saved_img_depth);
+    printf(", block_height = %d, block_width = %d, block_depth = %d, method = %d, show_progress_bar = %s, saved_img_format = %s, saved_img_depth = %d, frame_dir = \"%s\")\n",
+           block_height, block_width, block_depth, method, show_progress_bar ? "true" : "false", saved_img_format, saved_img_depth, frame_dir.c_str());
 
 	if ( saved_img_depth == 0 ) // default is to generate an image with the same depth of the source
 		saved_img_depth = volume->getBYTESxCHAN() * 8;
@@ -1631,9 +1649,9 @@ void VolumeConverter::generateTilesVaa3DRawMC ( std::string output_path, bool* r
 	char progressBarMsg[200];
 	if(show_progress_bar)
 	{
-                   ProgressBar::getInstance()->start("Multiresolution tile generation");
-                   ProgressBar::getInstance()->update(0,"Initializing...");
-                   ProgressBar::getInstance()->show();
+       ProgressBar::getInstance()->start("Multiresolution tile generation");
+       ProgressBar::getInstance()->update(0,"Initializing...");
+       ProgressBar::getInstance()->show();
 	}
 
 	//computing dimensions of volume to be stitched
@@ -1726,7 +1744,7 @@ void VolumeConverter::generateTilesVaa3DRawMC ( std::string output_path, bool* r
                              << "x" << depth/powInt(2,res_i) << ")";
 			//if(make_dir(file_path[res_i].str().c_str())!=0) {
             if(!check_and_make_dir(file_path[res_i].str().c_str())) { // HP 130914
-                char err_msg[TMITREE_MAX_HEIGHT];
+                char err_msg[STATIC_STRINGS_SIZE];
 				sprintf(err_msg, "in generateTilesVaa3DRawMC(...): unable to create DIR = \"%s\"\n", file_path[res_i].str().c_str());
                 throw IOException(err_msg);
 			}
@@ -1736,7 +1754,7 @@ void VolumeConverter::generateTilesVaa3DRawMC ( std::string output_path, bool* r
 				file_path[res_i] << "/" << frame_dir << "/";
 				if(!check_and_make_dir(file_path[res_i].str().c_str())) 
 				{
-                    char err_msg[TMITREE_MAX_HEIGHT];
+                    char err_msg[STATIC_STRINGS_SIZE];
 					sprintf(err_msg, "in generateTilesVaa3DRawMC(...): unable to create DIR = \"%s\"\n", file_path[res_i].str().c_str());
                     throw IOException(err_msg);
 				}
@@ -1748,7 +1766,7 @@ void VolumeConverter::generateTilesVaa3DRawMC ( std::string output_path, bool* r
 				//if(make_dir(resolution_dir.c_str())!=0)
                 if(!check_and_make_dir(resolution_dir.c_str())) // HP 130914
 				{
-                    char err_msg[TMITREE_MAX_HEIGHT];
+                    char err_msg[STATIC_STRINGS_SIZE];
 					sprintf(err_msg, "in generateTilesVaa3DRawMC(...): unable to create DIR = \"%s\"\n", chans_dir[c].c_str());
                     throw IOException(err_msg);
 				}
@@ -2066,6 +2084,57 @@ void VolumeConverter::generateTilesVaa3DRawMC ( std::string output_path, bool* r
 	}
 
 	delete[] chans_dir;
+}
+
+// unified access point for volume conversion (@ADDED by Alessandro on 2014-02-24)
+void VolumeConverter::convertTo(
+    std::string output_path,                        // path where to save the converted volume
+    std::string output_format,                      // format of the converted volume (see IM_config.h)
+    int output_bitdepth /*= iim::NUL_IMG_DEPTH*/,   // output image bitdepth
+    bool isTimeSeries /*= false*/,                  // whether the volume is a time series
+    bool *resolutions /*= 0*/,                      // array of resolutions
+    int block_height /*= -1*/,                      // tile's height (for tiled formats)
+    int block_width  /*= -1*/,                      // tile's width  (for tiled formats)
+    int block_depth  /*= -1*/,                      // tile's depth  (for tiled formats)
+    int method /*=HALVE_BY_MEAN*/                   // downsampling method
+) throw (iim::IOException)
+{
+    printf("in VolumeConverter::convertTo(output_path = \"%s\", output_format = \"%s\", output_bitdepth = %d, isTimeSeries = %s, resolutions = ",
+           output_path.c_str(), output_format.c_str(), output_bitdepth, isTimeSeries ? "true" : "false");
+    for(int i=0; i< TMITREE_MAX_HEIGHT && resolutions; i++)
+        printf("%d", resolutions[i]);
+    printf(", block_height = %d, block_width = %d, block_depth = %d, method = %d)\n",
+           block_height, block_width, block_depth, method);
+
+    if(isTimeSeries)
+    {
+        for(int t=0; t<volume->getDIM_T(); t++)
+        {
+            ProgressBar::instance()->setMessage(1, strprintf("Converting time frame %d/%d", t+1, volume->getDIM_T()).c_str());
+            volume->setActiveFrames(t,t);
+            std::string frame_dir = iim::TIME_FRAME_PREFIX + strprintf("%06d", t);
+            if(output_format.compare(iim::STACKED_FORMAT) == 0)
+                generateTiles(output_path, resolutions, block_height, block_width, method, true, iim::DEF_IMG_FORMAT.c_str(), output_bitdepth, frame_dir);
+            else if(output_format.compare(iim::TILED_FORMAT) == 0)
+                generateTilesVaa3DRaw(output_path, resolutions, block_height, block_width, block_depth, method, true, "raw", output_bitdepth, frame_dir);
+            else if(output_format.compare(iim::TILED_MC_FORMAT) == 0)
+                generateTilesVaa3DRawMC(output_path, resolutions, block_height, block_width, block_depth, method, true, "raw", output_bitdepth, frame_dir);
+            else
+                throw iim::IOException(strprintf("Output format \"%s\" not supported", output_format.c_str()).c_str());
+        }
+        ProgressBar::instance()->reset();
+    }
+    else
+    {
+        if(output_format.compare(iim::STACKED_FORMAT) == 0)
+            generateTiles(output_path, resolutions, block_height, block_width, method, true, iim::DEF_IMG_FORMAT.c_str(), output_bitdepth);
+        else if(output_format.compare(iim::TILED_FORMAT) == 0)
+            generateTilesVaa3DRaw(output_path, resolutions, block_height, block_width, block_depth, method, true, "raw", output_bitdepth);
+        else if(output_format.compare(iim::TILED_MC_FORMAT) == 0)
+            generateTilesVaa3DRawMC(output_path, resolutions, block_height, block_width, block_depth, method, true, "raw", output_bitdepth);
+        else
+            throw iim::IOException(strprintf("Output format \"%s\" not supported", output_format.c_str()).c_str());
+    }
 }
 
 # endif

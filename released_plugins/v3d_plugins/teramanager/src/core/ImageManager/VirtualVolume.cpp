@@ -149,7 +149,8 @@ void VirtualVolume::saveImage_from_UINT8 (std::string img_path, uint8* raw_ch1, 
                            int raw_img_height, int raw_img_width, int start_height, int end_height, int start_width,
                            int end_width, const char* img_format, int img_depth ) throw (IOException)
 {
-    /**/iim::debug(iim::LEV3, strprintf("img_path=%s, raw_img_height=%d, raw_img_width=%d, start_height=%d, end_height=%d, start_width=%d, end_width=%d=%s", img_path.c_str(), raw_img_height, raw_img_width, start_height, end_height, start_width, end_width).c_str(), __iim__current__function__);
+    /**/iim::debug(iim::LEV3, strprintf("img_path=%s, raw_img_height=%d, raw_img_width=%d, start_height=%d, end_height=%d, start_width=%d, end_width=%d, img_format=%s, img_depth=%d",
+                                        img_path.c_str(), raw_img_height, raw_img_width, start_height, end_height, start_width, end_width, img_format, img_depth).c_str(), __iim__current__function__);
 
     //checking for non implemented features
 	if( img_depth != 8 ) {
@@ -809,20 +810,58 @@ VirtualVolume* VirtualVolume::instance(const char* path, std::string format,
         else if(format.compare(SIMPLE_FORMAT) == 0)
             volume = new SimpleVolume(path);
         else
-            throw IOException(strprintf("Unsupported format", format.c_str()), __iim__current__function__);
+            throw IOException(strprintf("in VirtualVolume::instance(): Unsupported format \"%s\" for path \"%s\" which is a directory", format.c_str(), path), __iim__current__function__);
     }
     // file formats
     else if(isFile(path))
     {
-
         if(format.compare(RAW_FORMAT) == 0)
             volume = new RawVolume(path);
         else
-            throw IOException(strprintf("Unsupported format", format.c_str()), __iim__current__function__);
+            throw IOException(strprintf("in VirtualVolume::instance(): Unsupported format \"%s\" for path \"%s\" which is a file", format.c_str(), path), __iim__current__function__);
     }
     else
-        throw IOException(strprintf("Path = \"%s\" does not exist", path), __iim__current__function__);
+        throw IOException(strprintf("in VirtualVolume::instance(): path = \"%s\" does not exist", path), __iim__current__function__);
 
 
     return volume;
+}
+
+// (@MOVED from TiledMCVolume.cpp by Alessandro on 2014-02-20)
+void VirtualVolume::setActiveChannels ( uint32 *_active, int _n_active )
+{
+    /**/iim::debug(iim::LEV3, 0, __iim__current__function__);
+
+    if ( active )
+        delete[] active;
+    active   = _active;
+    n_active = _n_active;
+}
+
+// returns true if the given format is hierarchical, i.e. if it consists of nested folders (1 level at least)
+bool VirtualVolume::isHierarchical(std::string format) throw (iim::IOException)
+{
+    /**/iim::debug(iim::LEV3, strprintf("format = %s", format.c_str()).c_str(), __iim__current__function__);
+
+    if(format.compare(TILED_FORMAT) == 0)
+        return true;
+    else if(format.compare(TILED_MC_FORMAT) == 0)
+        return true;
+    else if(format.compare(STACKED_FORMAT) == 0)
+        return true;
+    else if(format.compare(TIME_SERIES) == 0)
+        return true;
+    else if(format.compare(SIMPLE_FORMAT) == 0)
+        return true;
+    else if(format.compare(SIMPLE_RAW_FORMAT) == 0)
+        return true;
+    else if(format.compare(TILED_TIF3D_FORMAT) == 0)
+        return true;
+    else if(format.compare(RAW_FORMAT) == 0)
+        return false;
+    else if(format.compare(TIF3D_FORMAT) == 0)
+        return false;
+    else
+        throw IOException(strprintf("Unsupported format %s", format.c_str()), __iim__current__function__);
+
 }

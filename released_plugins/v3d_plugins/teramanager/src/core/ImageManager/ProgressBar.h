@@ -40,9 +40,10 @@ class ProgressBar
         static ProgressBar* uniqueInstance;
         ProgressBar();
 
-        char operation_desc[1000];
+        char message_level_1[1000];     // main operation
+        char message_level_2[1000];     // sub-operation
+        char message_level_3[1000];     // sub-sub-operation
         float progress_value;
-        char progress_info[1000];
         double proctime;
         int minutes_remaining;
         int seconds_remaining;
@@ -67,7 +68,9 @@ class ProgressBar
         void start(const char* new_operation_desc);
 		void update(float new_progress_value, const char* new_progress_info);
 		void updateInfo(const char* new_progress_info);
+        void setMessage(int level, const char* message);
 		void show();
+        void reset();
 };
 
 #endif

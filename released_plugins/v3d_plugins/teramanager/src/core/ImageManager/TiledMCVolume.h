@@ -42,8 +42,8 @@ class TiledMCVolume : public VirtualVolume
 
 		char        **CHDIRNAMES;			//1-D dinamic array of <char>  pointers to channels directory names
 		TiledVolume **vol_ch;
-        iim::uint32       *active;
-		int           n_active;
+//      iim::uint32   *active;              // @MOVED to "VirtualVolume" by Alessandro on 2014-02-20
+//		int           n_active;             // @MOVED to "VirtualVolume" by Alessandro on 2014-02-20
 
 		//***OBJECT PRIVATE METHODS****
 		TiledMCVolume(void);
@@ -100,10 +100,12 @@ class TiledMCVolume : public VirtualVolume
                                                                   std::list<Block*> *involved_blocks = 0, bool release_blocks = false)  throw (iim::IOException);
 
         //loads given subvolume in a 1-D array of iim::uint8 while releasing stacks slices memory when they are no longer needed
-        iim::uint8 *loadSubvolume_to_UINT8(int V0=-1,int V1=-1, int H0=-1, int H1=-1, int D0=-1, int D1=-1, int *channels=0, int ret_type=iim::DEF_IMG_DEPTH) throw (iim::IOException);
+        iim::uint8 *loadSubvolume_to_UINT8(int V0=-1,int V1=-1, int H0=-1, int H1=-1, int D0=-1, int D1=-1,
+                                                   int *channels=0, int ret_type=iim::DEF_IMG_DEPTH) throw (iim::IOException);
 
-		//sets active channels
-        void setActiveChannels ( iim::uint32 *_active, int _n_active );
+        // moved to VirtualVolume.h by Alessandro on 2014-02-20
+//		//sets active channels
+//        void setActiveChannels ( iim::uint32 *_active, int _n_active );
 
 
 		// OPERATIONS FOR STREAMED SUBVOLUME LOAD 

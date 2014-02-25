@@ -123,7 +123,8 @@ class StackedVolume : public VirtualVolume
                                                                   std::list<Stack*> *involved_stacks = 0, bool release_stacks = false)  throw (iim::IOException);
 
         //loads given subvolume in a 1-D array of iim::uint8 while releasing stacks slices memory when they are no longer needed
-        iim::uint8 *loadSubvolume_to_UINT8(int V0=-1,int V1=-1, int H0=-1, int H1=-1, int D0=-1, int D1=-1, int *channels=0, int ret_type=iim::DEF_IMG_DEPTH) throw (iim::IOException);
+        iim::uint8 *loadSubvolume_to_UINT8(int V0=-1,int V1=-1, int H0=-1, int H1=-1, int D0=-1, int D1=-1,
+                                                   int *channels=0, int ret_type=iim::DEF_IMG_DEPTH) throw (iim::IOException);
 
 
 		//releases allocated memory of stacks

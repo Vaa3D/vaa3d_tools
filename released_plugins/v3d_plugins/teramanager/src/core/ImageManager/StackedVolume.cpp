@@ -498,7 +498,7 @@ void StackedVolume::initChannels ( ) throw (IOException)
 	IplImage* slice = cvLoadImage(slice_fullpath, CV_LOAD_IMAGE_ANYDEPTH | CV_LOAD_IMAGE_ANYCOLOR);  //without CV_LOAD_IMAGE_ANYDEPTH, image is converted to 8-bits if needed
 	if(!slice)
         throw IOException(std::string("Unable to load slice at \"").append(slice_fullpath).append("\"").c_str());
-    CHANS = slice->nChannels;
+    DIM_C = slice->nChannels;
 	if ( slice->depth == IPL_DEPTH_8U )
 		BYTESxCHAN = 1; 
 	else if ( slice->depth == IPL_DEPTH_16U )
@@ -510,6 +510,11 @@ void StackedVolume::initChannels ( ) throw (IOException)
 		sprintf(msg,"in SimpleVolume::initChannels: unknown color depth");
         throw IOException(msg);
 	}
+
+    n_active = DIM_C;
+    active = new uint32[n_active];
+    for ( int c=0; c<DIM_C; c++ )
+        active[c] = c; // all channels are assumed active
 
 	cvReleaseImage(&slice);
 }
@@ -820,7 +825,7 @@ real32* StackedVolume::loadSubvolume(int V0,int V1, int H0, int H1, int D0, int 
 //---03 nov 2011: added color support
 uint8* StackedVolume::loadSubvolume_to_UINT8(int V0,int V1, int H0, int H1, int D0, int D1, int *channels, int ret_type) throw (IOException)
 {
-    /**/iim::debug(iim::LEV3, strprintf("V0=%d, V1=%d, H0=%d, H1=%d, D0=%d, D1=%d, *channels=%d, ret_type=%d", V0, V1, H0, H1, D0, D1, *channels, ret_type).c_str(), __iim__current__function__);
+    /**/iim::debug(iim::LEV3, strprintf("V0=%d, V1=%d, H0=%d, H1=%d, D0=%d, D1=%d, *channels=%d, ret_type=%d", V0, V1, H0, H1, D0, D1, channels ? *channels : -1, ret_type).c_str(), __iim__current__function__);
 
     //checking for non implemented features
 	//if( this->BYTESxCHAN != 1 ) {

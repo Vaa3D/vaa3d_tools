@@ -59,6 +59,7 @@ class teramanager::CConverter : public QThread
         string inVolPath;           //absolute path of the folder or file containing the volume to be converted
         string inVolFormat;         //the unique ID of the volume's input format
         bool fileMode;              //whether the volume to be imported is stored into a file (fileMode=true) or a folder (fileMode=false)
+        bool time_series;           //whether the volume to be imported is a time series (default = false)
         bool conversionMode;        //whether the conversion mode is active or not (as it is initially, when the import mode is activated)
         bool *resolutions;          //array of resolutions activation flags
         int resolutionsSize;        //size of <resolutions>
@@ -113,6 +114,7 @@ class teramanager::CConverter : public QThread
             outVolFormat = undefined_str;
             fileMode = false;
             downsamplingMethod = 0;
+            time_series = false;
         }
 
     signals:

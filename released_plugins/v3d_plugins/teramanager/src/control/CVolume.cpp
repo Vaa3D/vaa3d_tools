@@ -44,7 +44,7 @@ void CVolume::uninstance()
     if(uniqueInstance)
     {
         delete uniqueInstance;
-        uniqueInstance = NULL;
+        uniqueInstance = 0;
     }
 }
 
@@ -205,11 +205,13 @@ void CVolume::run()
         voiH1 = voiH1 <= volume->getDIM_H() ? voiH1 : volume->getDIM_H();
         voiD0 = voiD0 >=0                   ? voiD0 : 0;
         voiD1 = voiD1 <= volume->getDIM_D() ? voiD1 : volume->getDIM_D();
+        voiT0 = voiT0 >=0                   ? voiT0 : 0;
+        voiT1 = voiT1 <  volume->getDIM_T() ? voiT1 : volume->getDIM_T()-1;
 
         //checking subvolume interval
-        if(voiV1 - voiV0 <=0 || voiH1 - voiH0 <=0 || voiD1 - voiD0 <=0)
+        if(voiV1 - voiV0 <=0 || voiH1 - voiH0 <=0 || voiD1 - voiD0 <=0 || voiT1 - voiT0 <0)
         {
-            sprintf(msg, "Invalid subvolume intervals inserted: X=[%d, %d), Y=[%d, %d), Z=[%d, %d)", voiH0, voiH1, voiV0, voiV1, voiD0, voiD1);
+            sprintf(msg, "Invalid subvolume intervals inserted: X=[%d, %d), Y=[%d, %d), Z=[%d, %d), T=[%d, %d]", voiH0, voiH1, voiV0, voiV1, voiD0, voiD1, voiT0, voiT1);
             throw RuntimeException(msg);
         }
 
@@ -220,11 +222,12 @@ void CVolume::run()
             {
                 QElapsedTimer timerIO;
                 timerIO.start();
+                volume->setActiveFrames(voiT0, voiT1);
                 uint8* voiData = volume->loadSubvolume_to_UINT8(voiV0, voiV1, voiH0, voiH1, voiD0, voiD1, &nchannels);
 
                 qint64 elapsedTime = timerIO.elapsed();
-                sprintf(msg, "Block X=[%d, %d) Y=[%d, %d) Z=[%d, %d) loaded from res %d",
-                        voiH0, voiH1, voiV0, voiV1, voiD0, voiD1, voiResIndex);
+                sprintf(msg, "Block X=[%d, %d) Y=[%d, %d) Z=[%d, %d), T=[%d, %d] loaded from res %d",
+                        voiH0, voiH1, voiV0, voiV1, voiD0, voiD1, voiT0, voiT1, voiResIndex);
 
                 CExplorerWindow* destination = dynamic_cast<CExplorerWindow*>(source);
                 if(destination)

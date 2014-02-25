@@ -104,8 +104,16 @@ namespace teramanager
     *    TYPES         *
     ********************
     ---------------------------------------------------------------------------------------------------------------------------*/
-    typedef unsigned char uint8;
-    typedef unsigned int uint32;
+    typedef signed char	sint8;					//8-bit  signed   integers (-128                       -> +127)
+    typedef short sint16;						//16-bit signed   integers (-32,768                    -> +32,767)
+    typedef int sint32;							//32-bit signed   integers (-2,147,483,648             -> +2,147,483,647)
+    typedef long long sint64;					//64-bit signed   integers (9,223,372,036,854,775,808 -> +9,223,372,036,854,775,807)
+    typedef unsigned char uint8;				//8-bit  unsigned integers (0 -> +255)
+    typedef unsigned short int uint16;			//16-bit unsigned integers (0 -> +65,535)
+    typedef unsigned int uint32;				//32-bit unsigned integers (0 -> +4,294,967,295)
+    typedef unsigned long long uint64;			//64-bit unsigned integers (0 -> +18,446,744,073,709,551,615
+    typedef float real32;						//real single precision
+    typedef double real64;						//real double precision
 
     //interval type
     struct interval_t
@@ -142,6 +150,24 @@ namespace teramanager
                 size *= 2;
         }
         return str;
+    }
+
+    // split
+    inline void	split(std::string& theString, std::string delim, std::vector<std::string>& tokens)
+    {
+        size_t  start = 0, end = 0;
+        while ( end != std::string::npos)
+        {
+            end = theString.find( delim, start);
+
+            // If at end, use length=maxLength.  Else use length=end-start.
+            tokens.push_back( theString.substr( start,
+                (end == std::string::npos) ? std::string::npos : end - start));
+
+            // If at end, use start=maxSize.  Else use start=end+delimiter.
+            start = (   ( end > (std::string::npos - delim.size()) )
+                ?  std::string::npos  :  end + delim.size());
+        }
     }
 
     //cross-platform current function macro
@@ -257,7 +283,17 @@ class teramanager::CPlugin : public QObject, public V3DPluginInterface2_1
             QString tmp(major_version.c_str());
             return tmp.toFloat();
         }
+        static float getMinorVersionFloat(string _version)
+        {
+            size_t pos = _version.rfind(".");
+            string minor_version = _version.substr(pos, string::npos);
+            QString tmp(minor_version.c_str());
+            return tmp.toFloat();
+        }
         static string getMajorVersion(){return QString::number(getMajorVersionFloat(version), 'f', 1).toStdString();}
+
+        // returns true if version >= min_required_version, where version format is version.major.minor
+        static bool checkPluginVersion(std::string version, std::string min_required_version);
 };
 
 #endif

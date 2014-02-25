@@ -37,7 +37,7 @@
 
 using namespace teramanager;
 
-CConverter* CConverter::uniqueInstance = NULL;
+CConverter* CConverter::uniqueInstance = 0;
 
 void CConverter::uninstance()
 {
@@ -46,7 +46,7 @@ void CConverter::uninstance()
     if(uniqueInstance)
     {
         delete uniqueInstance;
-        uniqueInstance = NULL;
+        uniqueInstance = 0;
     }
 }
 
@@ -73,23 +73,8 @@ void CConverter::setMembers(PConverter* pConverter) throw (RuntimeException)
     {
         inVolPath = pConverter->inPathField->text().toStdString();
         inVolFormat = pConverter->inFormatCBox->currentText().toStdString();
-        if(inVolFormat.compare(iim::STACKED_FORMAT) == 0)
-            fileMode = false;
-        else if(inVolFormat.compare(iim::SIMPLE_FORMAT) == 0)
-            fileMode = false;
-        else if(inVolFormat.compare(iim::TILED_FORMAT) == 0)
-            fileMode = false;
-        else if(inVolFormat.compare(iim::TILED_MC_FORMAT) == 0)
-            fileMode = false;
-        else if(inVolFormat.compare(iim::RAW_FORMAT) == 0)
-            fileMode = true;
-        else if(inVolFormat.compare(iim::SIMPLE_RAW_FORMAT) == 0)
-            fileMode = false;
-        else
-        {
-            sprintf(errMsg, "Input format \"%s\" not yet supported", inVolFormat.c_str());
-            throw RuntimeException(errMsg);
-        }
+        fileMode = !VirtualVolume::isHierarchical(inVolFormat) && !pConverter->timeSeriesCheckBox->isChecked();
+        time_series = pConverter->timeSeriesCheckBox->isChecked();
     }
     else
     {
@@ -102,7 +87,7 @@ void CConverter::setMembers(PConverter* pConverter) throw (RuntimeException)
             sprintf(errMsg, "Output format \"%s\" not yet supported", outVolFormat.c_str());
             throw RuntimeException(errMsg);
         }
-        resolutionsSize = pConverter->resolutionsNumber;
+        resolutionsSize = pConverter->resolutionsCboxs.size();
         if(resolutionsSize <= 0)
             throw RuntimeException("No resolutions selected");
         if(resolutionsSize > iim::TMITREE_MAX_HEIGHT)
@@ -122,6 +107,7 @@ void CConverter::setMembers(PConverter* pConverter) throw (RuntimeException)
         stacksHeight = pConverter->stacksHeightField->value();
         stacksDepth = pConverter->stacksDepthField->value();
         downsamplingMethod = pConverter->downsamplingCbox->currentIndex();
+        time_series = pConverter->timeSeriesCheckBox->isChecked();
         if(downsamplingMethod == 0)
             downsamplingMethod = HALVE_BY_MEAN;
         else if(downsamplingMethod == 1)
@@ -140,14 +126,8 @@ void CConverter::run()
     {
         if(!conversionMode)
         {
-            //first checking that the given filepath or folder exists
-            if(!fileMode && !QDir(inVolPath.c_str()).exists())
-                throw RuntimeException(QString("Unable to find the directory \"").append(inVolPath.c_str()).append("\"").toStdString().c_str());
-            if(fileMode && !QFile(inVolPath.c_str()).exists())
-                throw RuntimeException(QString("Unable to find the file \"").append(inVolPath.c_str()).append("\"").toStdString().c_str());
-
             vc = new VolumeConverter();
-            vc->setSrcVolume(inVolPath.c_str(), inVolFormat.c_str(), "RGB");
+            vc->setSrcVolume(inVolPath.c_str(), inVolFormat.c_str(), "RGB", time_series);
         }
         else
         {
@@ -155,18 +135,7 @@ void CConverter::run()
             if(!fileMode && !QDir(outVolPath.c_str()).exists())
                 throw RuntimeException(QString("Unable to find the directory \"").append(outVolPath.c_str()).append("\"").toStdString().c_str());
 
-            if(outVolFormat.compare(iim::STACKED_FORMAT) == 0)
-                vc->generateTiles(outVolPath, resolutions, stacksHeight, stacksWidth, downsamplingMethod);
-            else if(outVolFormat.compare(iim::TILED_FORMAT) == 0)
-                vc->generateTilesVaa3DRaw(outVolPath, resolutions, stacksHeight, stacksWidth, stacksDepth, downsamplingMethod);
-            else if(outVolFormat.compare(iim::TILED_MC_FORMAT) == 0)
-                vc->generateTilesVaa3DRawMC(outVolPath, resolutions, stacksHeight, stacksWidth, stacksDepth, downsamplingMethod);
-            else
-            {
-                char errMsg[1024];
-                sprintf(errMsg, "Output format \"%s\" not yet supported", outVolFormat.c_str());
-                throw RuntimeException(errMsg);
-            }
+            vc->convertTo(outVolPath, outVolFormat, iim::NUL_IMG_DEPTH, time_series, resolutions, stacksHeight, stacksWidth, stacksDepth, downsamplingMethod);
         }
 
         //everything went OK

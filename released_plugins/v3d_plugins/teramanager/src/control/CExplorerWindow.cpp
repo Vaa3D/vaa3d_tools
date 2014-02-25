@@ -62,7 +62,9 @@ void CExplorerWindow::show()
         triViewWidget->setWindowState(Qt::WindowMinimized);
         Image4DSimple* image = new Image4DSimple();
         image->setFileName(title.c_str());
-        image->setData(imgData, volH1-volH0, volV1-volV0, volD1-volD0, nchannels, V3D_UINT8);
+        image->setData(imgData, volH1-volH0, volV1-volV0, volD1-volD0, nchannels*(volT1-volT0+1), V3D_UINT8);
+        image->setTDim(volT1-volT0+1);
+        image->setTimePackType(TIME_PACK_C);
         V3D_env->setImage(window, image);
 
         //opening 3D view window
@@ -116,6 +118,11 @@ void CExplorerWindow::show()
             view3DWidget->setZoom(prev->view3DWidget->zoom()/ratio);
             prev->view3DWidget->absoluteRotPose();
             view3DWidget->doAbsoluteRot(prev->view3DWidget->xRot(), prev->view3DWidget->yRot(), prev->view3DWidget->zRot());
+
+            // select the same time frame (if available)
+            int t_prev = prev->volT0 + prev->window3D->timeSlider->value();
+            if( t_prev >= volT0 && t_prev <= volT1 )
+                window3D->timeSlider->setValue(t_prev - volT0);
 
             //sync widgets
             syncWindows(prev->window3D, window3D);
@@ -174,6 +181,8 @@ void CExplorerWindow::show()
         pMain->traslXpos->setEnabled(volH1 < CImport::instance()->getVolume(volResIndex)->getDIM_H());
         pMain->traslZneg->setEnabled(volD0 > 0);
         pMain->traslZpos->setEnabled(volD1 < CImport::instance()->getVolume(volResIndex)->getDIM_D());
+        pMain->traslTneg->setEnabled(volT0 > 0);
+        pMain->traslTpos->setEnabled(volT1 < CImport::instance()->getVolume(volResIndex)->getDIM_T()-1);
 
         //setting min, max and value of PMain GUI VOI's widgets
         pMain->V0_sbox->setMinimum(getGlobalVCoord(view3DWidget->yCut0(), -1, true, false, __itm__current__function__)+1);
@@ -250,10 +259,10 @@ void CExplorerWindow::show()
 }
 
 CExplorerWindow::CExplorerWindow(V3DPluginCallback2 *_V3D_env, int _resIndex, uint8 *_imgData, int _volV0, int _volV1,
-                                 int _volH0, int _volH1, int _volD0, int _volD1, int _nchannels, CExplorerWindow *_prev): QWidget()
+                                 int _volH0, int _volH1, int _volD0, int _volD1, int _volT0, int _volT1, int _nchannels, CExplorerWindow *_prev): QWidget()
 {
-    /**/itm::debug(itm::LEV1, strprintf("_resIndex = %d, _V0 = %d, _V1 = %d, _H0 = %d, _H1 = %d, _D0 = %d, _D1 = %d, _nchannels = %d",
-                                        _resIndex, _volV0, _volV1, _volH0, _volH1, _volD0, _volD1, _nchannels).c_str(), __itm__current__function__);
+    /**/itm::debug(itm::LEV1, strprintf("_resIndex = %d, _V0 = %d, _V1 = %d, _H0 = %d, _H1 = %d, _D0 = %d, _D1 = %d, _T0 = %d, _T1 = %d, _nchannels = %d",
+                                        _resIndex, _volV0, _volV1, _volH0, _volH1, _volD0, _volD1, _volT0, _volT1, _nchannels).c_str(), __itm__current__function__);
 
     //initializations
     resetZoomHistory();
@@ -268,18 +277,23 @@ CExplorerWindow::CExplorerWindow(V3DPluginCallback2 *_V3D_env, int _resIndex, ui
     this->volH1 = _volH1;
     this->volD0 = _volD0;
     this->volD1 = _volD1;
+    this->volT0 = _volT0;
+    this->volT1 = _volT1;
     this->nchannels = _nchannels;
     this->toBeClosed = false;
     this->imgData = _imgData;
     this->isReady = false;
     char ctitle[1024];
-    sprintf(ctitle, "Res(%d x %d x %d),Volume X=[%d,%d], Y=[%d,%d], Z=[%d,%d], %d channels", CImport::instance()->getVolume(volResIndex)->getDIM_H(),
+    sprintf(ctitle, "Res(%d x %d x %d),Volume X=[%d,%d], Y=[%d,%d], Z=[%d,%d], T=[%d,%d], %d channels", CImport::instance()->getVolume(volResIndex)->getDIM_H(),
             CImport::instance()->getVolume(volResIndex)->getDIM_V(), CImport::instance()->getVolume(volResIndex)->getDIM_D(),
-            volH0+1, volH1, volV0+1, volV1, volD0+1, volD1, nchannels);
+            volH0+1, volH1, volV0+1, volV1, volD0+1, volD1, volT0, volT1, nchannels);
     this->title = ctitle;
-    sprintf(ctitle, "Res{%d}), Vol{[%d,%d) [%d,%d) [%d,%d)}", volResIndex, volH0, volH1, volV0, volV1, volD0, volD1);
+    sprintf(ctitle, "Res{%d}), Vol{[%d,%d) [%d,%d) [%d,%d) [%d,%d]}", volResIndex, volH0, volH1, volV0, volV1, volD0, volD1, volT0, volT1);
     this->titleShort = ctitle;
-    V0_sbox_min = V1_sbox_max = H0_sbox_min = H1_sbox_max = D0_sbox_min = D1_sbox_max = V0_sbox_val = V1_sbox_val = H0_sbox_val = H1_sbox_val = D0_sbox_val = D1_sbox_val = -1;
+    V0_sbox_min = V0_sbox_val = V1_sbox_max = V1_sbox_val =
+    H0_sbox_min = H0_sbox_val = H1_sbox_max = H1_sbox_val =
+    D0_sbox_min = D0_sbox_val = D1_sbox_max = D1_sbox_val =
+    T0_sbox_min = T0_sbox_val = T1_sbox_max = T1_sbox_val = -1;
 
     try
     {
@@ -420,7 +434,7 @@ bool CExplorerWindow::eventFilter(QObject *object, QEvent *event)
         {
             QMouseEvent* mouseEvt = (QMouseEvent*)event;
             XYZ point = getRenderer3DPoint(mouseEvt->x(), mouseEvt->y());
-            newView(point.x, point.y, point.z, volResIndex+1);
+            newView(point.x, point.y, point.z, volResIndex+1, volT0, volT1);
             return true;
         }
 
@@ -501,9 +515,10 @@ void CExplorerWindow::loadingDone(uint8 *data, RuntimeException *ex, void* sourc
             /**/ CVolume::instance()->bufferMutex.lock();
             QElapsedTimer timer;
             timer.start();
-            uint32 img_dims[4]       = {volH1-volH0, volV1-volV0, volD1-volD0, nchannels};
+            uint32 img_dims[5]       = {volH1-volH0, volV1-volV0, volD1-volD0, nchannels, volT1-volT0+1};
             uint32 img_offset[3]     = {cVolume->getVoiH0()-volH0, cVolume->getVoiV0()-volV0, cVolume->getVoiD0()-volD0};
-            uint32 new_img_dims[4]   = {cVolume->getVoiH1()-cVolume->getVoiH0(),  cVolume->getVoiV1()-cVolume->getVoiV0(), cVolume->getVoiD1()-cVolume->getVoiD0(),  nchannels};
+            uint32 new_img_dims[5]   = {cVolume->getVoiH1()-cVolume->getVoiH0(),  cVolume->getVoiV1()-cVolume->getVoiV0(),
+                                        cVolume->getVoiD1()-cVolume->getVoiD0(),  nchannels, cVolume->getVoiT1()-cVolume->getVoiT0()+1};
             uint32 new_img_offset[3] = {0, 0, 0};
             uint32 new_img_count[3]  = {new_img_dims[0], new_img_dims[1], new_img_dims[2]};
             copyVOI(data, new_img_dims, new_img_offset, new_img_count,
@@ -512,8 +527,9 @@ void CExplorerWindow::loadingDone(uint8 *data, RuntimeException *ex, void* sourc
             /**/ CVolume::instance()->bufferMutex.unlock();
 
             //updating log
-            sprintf(message, "Streaming %d/%d: Copied block X=[%d, %d) Y=[%d, %d) Z=[%d, %d) to resolution %d",
-                              step, cVolume->getStreamingSteps(), cVolume->getVoiH0(), cVolume->getVoiH1(), cVolume->getVoiV0(), cVolume->getVoiV1(), cVolume->getVoiD0(), cVolume->getVoiD1(), cVolume->getVoiResIndex());
+            sprintf(message, "Streaming %d/%d: Copied block X=[%d, %d) Y=[%d, %d) Z=[%d, %d) T=[%d, %d]  to resolution %d",
+                              step, cVolume->getStreamingSteps(), cVolume->getVoiH0(), cVolume->getVoiH1(), cVolume->getVoiV0(), cVolume->getVoiV1(),
+                              cVolume->getVoiD0(), cVolume->getVoiD1(), cVolume->getVoiT0(), cVolume->getVoiT1(), cVolume->getVoiResIndex());
             PLog::getInstance()->appendCPU(elapsedTime, message);
 
             //releasing memory if streaming is not active
@@ -524,10 +540,11 @@ void CExplorerWindow::loadingDone(uint8 *data, RuntimeException *ex, void* sourc
             /**/ updateGraphicsInProgress.lock();
             timer.restart();
             view3DWidget->updateImageData();
-            sprintf(message, "Streaming %d/%d: Block X=[%d, %d) Y=[%d, %d) Z=[%d, %d) rendered into view %s",
+            sprintf(message, "Streaming %d/%d: Block X=[%d, %d) Y=[%d, %d) Z=[%d, %d) T=[%d, %d] rendered into view %s",
                     step, cVolume->getStreamingSteps(), cVolume->getVoiH0(), cVolume->getVoiH1(),
                     cVolume->getVoiV0(), cVolume->getVoiV1(),
-                    cVolume->getVoiD0(), cVolume->getVoiD1(), title.c_str());
+                    cVolume->getVoiD0(), cVolume->getVoiD1(),
+                    cVolume->getVoiT0(), cVolume->getVoiT1(), title.c_str());
             PLog::getInstance()->appendGPU(timer.elapsed(), message);
             /**/ updateGraphicsInProgress.unlock();
 
@@ -549,6 +566,8 @@ void CExplorerWindow::loadingDone(uint8 *data, RuntimeException *ex, void* sourc
                 PMain::getInstance()->traslYpos->setActive(true);
                 PMain::getInstance()->traslZneg->setActive(true);
                 PMain::getInstance()->traslZpos->setActive(true);
+                PMain::getInstance()->traslTneg->setActive(true);
+                PMain::getInstance()->traslTpos->setActive(true);
 
 //                PMain::getInstance()->setEnabledDirectionalShifts(true);
 
@@ -578,12 +597,13 @@ void
 CExplorerWindow::newView(
     int x, int y, int z,                            //can be either the VOI's center (default) or the VOI's ending point (see x0,y0,z0)
     int resolution,                                 //resolution index of the view requested
+    int t0, int t1,                                 //time frames selection
     bool fromVaa3Dcoordinates /*= false*/,          //if coordinates were obtained from Vaa3D
     int dx/*=-1*/, int dy/*=-1*/, int dz/*=-1*/,    //VOI [x-dx,x+dx), [y-dy,y+dy), [z-dz,z+dz)
     int x0/*=-1*/, int y0/*=-1*/, int z0/*=-1*/)    //VOI [x0, x), [y0, y), [z0, z)
 {
-    /**/itm::debug(itm::LEV1, strprintf("title = %s, x = %d, y = %d, z = %d, res = %d, dx = %d, dy = %d, dz = %d, x0 = %d, y0 = %d, z0 = %d",
-                                        titleShort.c_str(),  x, y, z, resolution, dx, dy, dz, x0, y0, z0).c_str(), __itm__current__function__);
+    /**/itm::debug(itm::LEV1, strprintf("title = %s, x = %d, y = %d, z = %d, res = %d, dx = %d, dy = %d, dz = %d, x0 = %d, y0 = %d, z0 = %d, t0 = %d, t1 = %d",
+                                        titleShort.c_str(),  x, y, z, resolution, dx, dy, dz, x0, y0, z0, t0, t1).c_str(), __itm__current__function__);
 
     //checking preconditions
     if(!isActive || toBeClosed)
@@ -676,9 +696,9 @@ CExplorerWindow::newView(
         try
         {
             if(dx != -1 && dy != -1 && dz != -1)
-                cVolume->setVoi(0, resolution, y-dy, y+dy, x-dx, x+dx, z-dz, z+dz);
+                cVolume->setVoi(0, resolution, y-dy, y+dy, x-dx, x+dx, z-dz, z+dz, t0, t1);
             else
-                cVolume->setVoi(0, resolution, y0, y, x0, x, z0, z);
+                cVolume->setVoi(0, resolution, y0, y, x0, x, z0, z, t0, t1);
         }
         catch(RuntimeException &ex)
         {
@@ -729,14 +749,14 @@ CExplorerWindow::newView(
                                    cVolume->getVoiV1()-cVolume->getVoiV0(),
                                    cVolume->getVoiD1()-cVolume->getVoiD0());
         char message[1000];
-        sprintf(message, "Block X=[%d, %d) Y=[%d, %d) Z=[%d, %d) loaded from view %s",
-                rVoiH0, rVoiH1, rVoiV0, rVoiV1, rVoiD0, rVoiD1, title.c_str());
+        sprintf(message, "Block X=[%d, %d) Y=[%d, %d) Z=[%d, %d) T[%d, %d] loaded from view %s",
+                rVoiH0, rVoiH1, rVoiV0, rVoiV1, rVoiD0, rVoiD1, t0, t1, title.c_str());
         PLog::getInstance()->appendCPU(timer.elapsed(), message);
 
         //creating a new window
         this->next = new CExplorerWindow(V3D_env, resolution, lowresData,
                                          cVolume->getVoiV0(), cVolume->getVoiV1(), cVolume->getVoiH0(), cVolume->getVoiH1(), cVolume->getVoiD0(), cVolume->getVoiD1(),
-                                         nchannels, this);
+                                         t0, t1, nchannels, this);
 
         //loading new data in a separate thread. When done, the "loadingDone" method of the new window will be called
         pMain.statusBar->showMessage("Loading image data...");
@@ -779,7 +799,7 @@ uint8* CExplorerWindow::getVOI(int x0, int x1, int y0, int y1, int z0, int z1,
                                         titleShort.c_str(), x0, x1, y0, y1, z0, z1, xDimInterp, yDimInterp, zDimInterp).c_str(), __itm__current__function__);
 
     //alloating image data and initializing to zero (black)
-    size_t img_dim = xDimInterp * yDimInterp * zDimInterp * nchannels;
+    size_t img_dim = static_cast<size_t>(xDimInterp) * yDimInterp * zDimInterp * nchannels * (volT1-volT0+1);
     uint8* img = new uint8[img_dim];
     for(uint8* img_p = img; img_p-img < img_dim; img_p++)
         *img_p=0;
@@ -819,8 +839,8 @@ uint8* CExplorerWindow::getVOI(int x0, int x1, int y0, int y1, int z0, int z1,
         if(scalx != scaly || scaly != scalz || scalx != scalz)
             QMessageBox::critical(this, "Error", QString("Fast nonuniform scaling not supported: requested scaling along X,Y,Z is") + QString::number(scalx) + "," + QString::number(scaly) + "," + QString::number(scalz),QObject::tr("Ok"));
 
-        uint32 buf_data_dims[4]   = {volH1-volH0, volV1-volV0, volD1-volD0, nchannels};
-        uint32 img_dims[4]        = {xDimInterp,  yDimInterp,  zDimInterp,  nchannels};
+        uint32 buf_data_dims[5]   = {volH1-volH0, volV1-volV0, volD1-volD0, nchannels, volT1-volT0+1};
+        uint32 img_dims[5]        = {xDimInterp,  yDimInterp,  zDimInterp,  nchannels, volT1-volT0+1};
         uint32 buf_data_offset[3] = {x0a-volH0,   y0a-volV0,   z0a-volD0};
         uint32 img_offset[3]      = {x0a-x0,      y0a-y0,      z0a-z0};
         uint32 buf_data_count[3]  = {x1a-x0a,     y1a-y0a,     z1a-z0a};
@@ -843,18 +863,18 @@ uint8* CExplorerWindow::getVOI(int x0, int x1, int y0, int y1, int z0, int z1,
 void
     CExplorerWindow::copyVOI(
         uint8 const * src,          //pointer to const data source
-        uint src_dims[4],           //dimensions of "src" along X, Y, Z and channels
+        uint src_dims[5],           //dimensions of "src" along X, Y, Z, channels and T
         uint src_offset[3],         //VOI's offset along X, Y, Z
         uint src_count[3],          //VOI's dimensions along X, Y, Z
         uint8* dst,                 //pointer to data destination
-        uint dst_dims[4],           //dimensions of "dst" along X, Y, Z and channels
+        uint dst_dims[5],           //dimensions of "dst" along X, Y, Z, channels and T
         uint dst_offset[3],         //offset of "dst" along X, Y, Z
         uint scaling /*= 1 */)      //scaling factor (integer only)
 throw (RuntimeException)
 {
-    /**/itm::debug(itm::LEV1, strprintf("src_dims = (%d x %d x %d x %d), src_offset = (%d, %d, %d), src_count = (%d, %d, %d), dst_dims = (%d x %d x %d x %d), dst_offset = (%d, %d, %d), scaling = %d",
-                                        src_dims[0], src_dims[1],src_dims[2],src_dims[3], src_offset[0],src_offset[1],src_offset[2], src_count[0],src_count[1],src_count[2],
-                                        dst_dims[0], dst_dims[1],dst_dims[2],dst_dims[3], dst_offset[0],dst_offset[1],dst_offset[2], scaling).c_str(), __itm__current__function__);
+    /**/itm::debug(itm::LEV1, strprintf("src_dims = (%d x %d x %d x %d x %d), src_offset = (%d, %d, %d), src_count = (%d, %d, %d), dst_dims = (%d x %d x %d x %d x %d), dst_offset = (%d, %d, %d), scaling = %d",
+                                        src_dims[0], src_dims[1],src_dims[2],src_dims[3],src_dims[4], src_offset[0],src_offset[1],src_offset[2], src_count[0],src_count[1],src_count[2],
+                                        dst_dims[0], dst_dims[1],dst_dims[2],dst_dims[3],dst_dims[4], dst_offset[0],dst_offset[1],dst_offset[2], scaling).c_str(), __itm__current__function__);
 
     //if source and destination are the same thing, returning without doing anything
     if(src == dst)
@@ -863,6 +883,8 @@ throw (RuntimeException)
     //cheking preconditions
     if(src_dims[3] != dst_dims[3])
         QMessageBox::critical(0, "Error", "Can't copy VOI to destination image: different number of channels",QObject::tr("Ok"));
+    if(src_dims[4] != dst_dims[4])
+        QMessageBox::critical(0, "Error", "Can't copy VOI to destination image: different number of time frames",QObject::tr("Ok"));
     for(int d=0; d<3; d++)
     {
         if(src_offset[d] + src_count[d] > src_dims[d])
@@ -881,50 +903,58 @@ throw (RuntimeException)
     }
 
     //quick version (with precomputed offsets, strides and counts: "1" for "dst", "2" for "src")
-    uint32 stride_c1       =  dst_dims [2] * dst_dims[1]   * dst_dims[0];
-    uint32 stride_c2       =  src_dims [2] * src_dims[1]   * src_dims[0];
-    const uint32 stride_k1 =                 dst_dims[1]   * dst_dims[0] * scaling;
-    const uint32 count_k1  = src_count [2] * dst_dims[1]   * dst_dims[0] * scaling;
-    const uint32 offset_k2 = src_offset[2] * src_dims[1]   * src_dims[0];
-    const uint32 stride_k2 =                 src_dims[1]   * src_dims[0];
-    //const uint32 count_k2= src_count [2] * src_dims[1]   * src_dims[0];            //not used in the OR so as to speed up the inner loops
-    const uint32 stride_i1 =                                 dst_dims[0] * scaling;
-    const uint32 count_i1  =                 src_count[1]  * dst_dims[0] * scaling;
-    const uint32 offset_i2 =                 src_offset[1] * src_dims[0];
-    const uint32 stride_i2 =                                 src_dims[0];
-    //const uint32 count_i2  =               src_count[1]  * src_dims[0];            //not used in the OR so as to speed up the inner loops
-    const uint32 stride_j1 =                                               scaling;
-    const uint32 count_j1  =                                 src_count[0]* scaling;
-    const uint32 offset_j2 =                                 src_offset[0];
-    //const uint32 count_j2  =                               src_count[0];           //not used in the OR so as to speed up the inner loops
-    const uint32 dst_dim = dst_dims [3] * dst_dims [2] * dst_dims [1] * dst_dims [0];
+    uint64 stride_c1       =                 dst_dims [2] * dst_dims[1]   * dst_dims[0];
+    uint64 stride_c2       =                 src_dims [2] * src_dims[1]   * src_dims[0];
+    uint64 stride_t1       =  dst_dims [3] * stride_c1;
+    uint64 stride_t2       =  src_dims [3] * stride_c2;
+    const uint64 count_c1  =  dst_dims [3] * dst_dims [2] * dst_dims[1]   * dst_dims[0];
+    const uint64 stride_k1 =                                dst_dims[1]   * dst_dims[0] * scaling;
+    const uint64 count_k1  =                 src_count[2] * dst_dims[1]   * dst_dims[0] * scaling;
+    const uint64 offset_k2 =                 src_offset[2]* src_dims[1]   * src_dims[0];
+    const uint64 stride_k2 =                                src_dims[1]   * src_dims[0];
+    //const uint64 count_k2=                 src_count[2] * src_dims[1]   * src_dims[0];            //not used in the OR so as to speed up the inner loops
+    const uint64 stride_i1 =                                                dst_dims[0] * scaling;
+    const uint64 count_i1  =                                src_count[1]  * dst_dims[0] * scaling;
+    const uint64 offset_i2 =                                src_offset[1] * src_dims[0];
+    const uint64 stride_i2 =                                                src_dims[0];
+    //const uint64 count_i2  =                              src_count[1]  * src_dims[0];            //not used in the OR so as to speed up the inner loops
+    const uint64 stride_j1 =                                                              scaling;
+    const uint64 count_j1  =                                                src_count[0]* scaling;
+    const uint64 offset_j2 =                                                src_offset[0];
+    //const uint64 count_j2  =                                              src_count[0];           //not used in the OR so as to speed up the inner loops
+    const uint64 dst_dim = static_cast<uint64>(dst_dims [4]) * dst_dims [3] * dst_dims [2] * dst_dims [1] * dst_dims [0];
 
     for(int sk = 0; sk < scaling; sk++)
         for(int si = 0; si < scaling; si++)
             for(int sj = 0; sj < scaling; sj++)
             {
-                const uint32 offset_k1 = dst_offset[2] * dst_dims[1]    * dst_dims[0]   * scaling + sk * dst_dims[1] * dst_dims[0] ;
-                const uint32 offset_i1 =                 dst_offset[1]  * dst_dims[0]   * scaling + si * dst_dims[0];
-                const uint32 offset_j1 =                                  dst_offset[0] * scaling + sj;
+                const uint64 offset_k1 = dst_offset[2] * dst_dims[1]    * dst_dims[0]   * scaling + sk * dst_dims[1] * dst_dims[0] ;
+                const uint64 offset_i1 =                 dst_offset[1]  * dst_dims[0]   * scaling + si * dst_dims[0];
+                const uint64 offset_j1 =                                  dst_offset[0] * scaling + sj;
 
-                for(uint8 *img_c1 = dst, *img_c2 = const_cast<uint8*>(src); img_c1 - dst < dst_dim; img_c1 += stride_c1, img_c2 += stride_c2)
+                for(uint8 *img_t1 = dst, *img_t2 = const_cast<uint8*>(src); img_t1 - dst < dst_dim; img_t1 += stride_t1, img_t2 += stride_t2)
                 {
-                    uint8* const start_k1 = img_c1 + offset_k1;
-                    uint8* const start_k2 = img_c2 + offset_k2;
-                    for(uint8 *img_k1 = start_k1, *img_k2 = start_k2; img_k1 - start_k1  < count_k1; img_k1 += stride_k1, img_k2 += stride_k2)
+                    for(uint8 *img_c1 = img_t1, *img_c2 = img_t2; img_c1 - img_t1 < count_c1; img_c1 += stride_c1, img_c2 += stride_c2)
                     {
-                        uint8* const start_i1 = img_k1 + offset_i1;
-                        uint8* const start_i2 = img_k2 + offset_i2;
-                        for(uint8 *img_i1 = start_i1, *img_i2 = start_i2; img_i1 - start_i1  < count_i1; img_i1 += stride_i1, img_i2 += stride_i2)
+                        uint8* const start_k1 = img_c1 + offset_k1;
+                        uint8* const start_k2 = img_c2 + offset_k2;
+                        for(uint8 *img_k1 = start_k1, *img_k2 = start_k2; img_k1 - start_k1  < count_k1; img_k1 += stride_k1, img_k2 += stride_k2)
                         {
-                            uint8* const start_j1 = img_i1 + offset_j1;
-                            uint8* const start_j2 = img_i2 + offset_j2;
-                            for(uint8 *img_j1 = start_j1, *img_j2 = start_j2; img_j1 - start_j1  < count_j1; img_j1 += stride_j1, img_j2++)
-                                *img_j1 = *img_j2;
+                            uint8* const start_i1 = img_k1 + offset_i1;
+                            uint8* const start_i2 = img_k2 + offset_i2;
+                            for(uint8 *img_i1 = start_i1, *img_i2 = start_i2; img_i1 - start_i1  < count_i1; img_i1 += stride_i1, img_i2 += stride_i2)
+                            {
+                                uint8* const start_j1 = img_i1 + offset_j1;
+                                uint8* const start_j2 = img_i2 + offset_j2;
+                                for(uint8 *img_j1 = start_j1, *img_j2 = start_j2; img_j1 - start_j1  < count_j1; img_j1 += stride_j1, img_j2++)
+                                    *img_j1 = *img_j2;
+                            }
                         }
                     }
                 }
              }
+
+    /**/itm::debug(itm::LEV3, "copy VOI finished",  __itm__current__function__);
 }
 
 /**********************************************************************************
@@ -961,12 +991,16 @@ void CExplorerWindow::saveSubvolSpinboxState()
     H1_sbox_max = pMain.H1_sbox->maximum();
     D0_sbox_min = pMain.D0_sbox->minimum();
     D1_sbox_max = pMain.D1_sbox->maximum();
+    T0_sbox_min = pMain.T0_sbox->minimum();
+    T1_sbox_max = pMain.T1_sbox->maximum();
     V0_sbox_val = pMain.V0_sbox->value();
     V1_sbox_val = pMain.V1_sbox->value();
     H0_sbox_val = pMain.H0_sbox->value();
     H1_sbox_val = pMain.H1_sbox->value();
     D0_sbox_val = pMain.D0_sbox->value();
     D1_sbox_val = pMain.D1_sbox->value();
+    T0_sbox_val = pMain.T0_sbox->value();
+    T1_sbox_val = pMain.T1_sbox->value();
 }
 void CExplorerWindow::restoreSubvolSpinboxState()
 {  
@@ -979,12 +1013,16 @@ void CExplorerWindow::restoreSubvolSpinboxState()
     pMain.H1_sbox->setMaximum(H1_sbox_max);
     pMain.D0_sbox->setMinimum(D0_sbox_min);
     pMain.D1_sbox->setMaximum(D1_sbox_max);
+    pMain.T0_sbox->setMinimum(T0_sbox_min);
+    pMain.T1_sbox->setMaximum(T1_sbox_max);
     pMain.V0_sbox->setValue(V0_sbox_val);
     pMain.V1_sbox->setValue(V1_sbox_val);
     pMain.H0_sbox->setValue(H0_sbox_val);
     pMain.H1_sbox->setValue(H1_sbox_val);
     pMain.D0_sbox->setValue(D0_sbox_val);
     pMain.D1_sbox->setValue(D1_sbox_val);
+    pMain.T0_sbox->setValue(T0_sbox_val);
+    pMain.T1_sbox->setValue(T1_sbox_val);
 }
 
 /**********************************************************************************
@@ -1258,6 +1296,11 @@ void CExplorerWindow::restoreViewFrom(CExplorerWindow* source) throw (RuntimeExc
         //loading annotations of the current view
         this->loadAnnotations();
 
+        // select the same time frame (if available)
+        int t_source = source->volT0 + source->window3D->timeSlider->value();
+        if( t_source >= volT0 && t_source <= volT1 )
+            window3D->timeSlider->setValue(t_source - volT0);
+
         //sync widgets
         syncWindows(source->window3D, window3D);
 
@@ -1351,7 +1394,7 @@ void CExplorerWindow::invokedFromVaa3D(v3d_imaging_paras* params /* = 0 */)
 
     //zoom-in around marker or ROI triggers a new window
     if(roi->ops_type == 1)
-        newView(roi->xe, roi->ye, roi->ze, volResIndex+1, false, -1, -1, -1, roi->xs, roi->ys, roi->zs);
+        newView(roi->xe, roi->ye, roi->ze, volResIndex+1, volT0, volT1, false, -1, -1, -1, roi->xs, roi->ys, roi->zs);
 
     //zoom-in with mouse scroll up may trigger a new window if caching is not possible
     else if(roi->ops_type == 2)
@@ -1434,10 +1477,10 @@ void CExplorerWindow::invokedFromVaa3D(v3d_imaging_paras* params /* = 0 */)
 
                 //otherwise invoking a new view
                 else
-                    newView(roiCenterX, roiCenterY, roiCenterZ, volResIndex+1, false, static_cast<int>((roi->xe-roi->xs)/2.0f+0.5f), static_cast<int>((roi->ye-roi->ys)/2.0f+0.5f), static_cast<int>((roi->ze-roi->zs)/2.0f+0.5f));
+                    newView(roiCenterX, roiCenterY, roiCenterZ, volResIndex+1, volT0, volT1, false, static_cast<int>((roi->xe-roi->xs)/2.0f+0.5f), static_cast<int>((roi->ye-roi->ys)/2.0f+0.5f), static_cast<int>((roi->ze-roi->zs)/2.0f+0.5f));
             }
             else
-                newView(roiCenterX, roiCenterY, roiCenterZ, volResIndex+1, false, static_cast<int>((roi->xe-roi->xs)/2.0f+0.5f), static_cast<int>((roi->ye-roi->ys)/2.0f+0.5f), static_cast<int>((roi->ze-roi->zs)/2.0f+0.5f));
+                newView(roiCenterX, roiCenterY, roiCenterZ, volResIndex+1, volT0, volT1, false, static_cast<int>((roi->xe-roi->xs)/2.0f+0.5f), static_cast<int>((roi->ye-roi->ys)/2.0f+0.5f), static_cast<int>((roi->ze-roi->zs)/2.0f+0.5f));
         }
         else
             /**/itm::debug(itm::LEV_MAX, strprintf("title = %s, ignoring Vaa3D mouse scroll up zoom-in", titleShort.c_str()).c_str(), __itm__current__function__);

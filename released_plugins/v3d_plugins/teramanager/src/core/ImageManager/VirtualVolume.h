@@ -36,14 +36,17 @@ class VirtualVolume {
 
 protected:
 	//******OBJECT ATTRIBUTES******
-	char*  root_dir;				//C-string that contains the directory path of stacks matrix
-	float  VXL_V, VXL_H, VXL_D;		//[microns]: voxel dimensions (in microns) along V(Vertical), H(horizontal) and D(Depth) axes
-	float  ORG_V, ORG_H, ORG_D;		//[millimeters]: origin spatial coordinates (in millimeters) along VHD axes
-    iim::uint32 DIM_V, DIM_H, DIM_D;//volume dimensions (in voxels) along VHD axes
-	int    CHANS;					//number of channels
-	int    BYTESxCHAN;              //number of bytes per channel
+    char*  root_dir;				// C-string that contains the directory path of stacks matrix
+    float  VXL_V, VXL_H, VXL_D;		// [microns]: voxel dimensions (in microns) along V(Vertical), H(horizontal) and D(Depth) axes
+    float  ORG_V, ORG_H, ORG_D;		// [millimeters]: origin spatial coordinates (in millimeters) along VHD axes
+    iim::uint32 DIM_V, DIM_H, DIM_D;// volume dimensions (in voxels) along VHD axes
+    int    DIM_C;					// number of channels        (@ADDED by Iannello   on ..........)
+    int    BYTESxCHAN;              // number of bytes per channel
+    iim::uint32   *active;          // array  of active channels (@MOVED from "TiledMCVolume" by Alessandro on 2014-02-20)
+    int           n_active;         // number of active channels (@MOVED from "TiledMCVolume" by Alessandro on 2014-02-20)
 
-    virtual void initChannels ( ) throw (iim::IOException) = 0;
+    int    DIM_T;					// number of time frames         (@ADDED by Alessandro on 2014-02-20)
+    iim::uint32 t0, t1;             // active frames are in [t0, t1] (@ADDED by Alessandro on 2014-02-20)
 
 public:
 	//CONSTRUCTORS-DECONSTRUCTOR
@@ -60,20 +63,29 @@ public:
 		ORG_V = ORG_H = ORG_D = (float) 0.0;
 		DIM_V = DIM_H = DIM_D = 0;
 
-		CHANS = 0;
+        DIM_C = 0;
 		BYTESxCHAN = 0;
+        active = (iim::uint32 *)0;
+        n_active = 0;
+
+        t0 = t1 = 0;
+        DIM_T = 1;
+
     }
 
 	virtual ~VirtualVolume() { 
 		if(root_dir)
 			delete[] root_dir;
-	}
+	}    
+
+    virtual void initChannels ( ) throw (iim::IOException) = 0;
 
     //loads given subvolume in a 1-D array of iim::real32 while releasing stacks slices memory when they are no longer needed
     virtual iim::real32 *loadSubvolume_to_real32(int V0,int V1, int H0, int H1, int D0, int D1)  throw (iim::IOException) = 0;
 
     //loads given subvolume in a 1-D array of iim::uint8 while releasing stacks slices memory when they are no longer needed
-    virtual iim::uint8 *loadSubvolume_to_UINT8(int V0,int V1, int H0, int H1, int D0, int D1, int *channels=0, int ret_type=iim::DEF_IMG_DEPTH) throw (iim::IOException) = 0;
+    virtual iim::uint8 *loadSubvolume_to_UINT8(int V0=-1,int V1=-1, int H0=-1, int H1=-1, int D0=-1, int D1=-1,
+                                               int *channels=0, int ret_type=iim::DEF_IMG_DEPTH) throw (iim::IOException) = 0;
 
     // ******GET METHODS******
     float   getORG_V() {return ORG_V;}
@@ -88,21 +100,34 @@ public:
     float   getVXL_V() {return VXL_V;}
     float   getVXL_H() {return VXL_H;}
     float   getVXL_D() {return VXL_D;}
-    int     getCHANS() {return CHANS;}
+    int     getDIM_C() {return DIM_C;}
+    int     getDIM_T() {return DIM_T;}  //@ADDED by Alessandro on 2014-02-18
     int     getBYTESxCHAN() {return BYTESxCHAN;}
     char*   getROOT_DIR() {return this->root_dir;}
-    virtual float   getMVoxels(){return (DIM_V/1024.0f)*(DIM_H/1024.0f)*DIM_D;} // can be overriden
+    virtual float   getMVoxels(){return (DIM_V/1024.0f)*(DIM_H/1024.0f)*DIM_D*DIM_T;} // can be overriden
+    iim::uint32 getNActiveFrames(){return t1 -t0 +1;}
+    int getNACtiveChannels(){return n_active;}
+    iim::uint32* getActiveChannels(){return active;}
 
-    // added by Alessandro on 2014-02-18: returns a unique ID that identifies the volume format
+    // @ADDED by Alessandro on 2014-02-18: returns a unique ID that identifies the volume format
     virtual std::string getPrintableFormat() = 0;
 
-    // added by Alessandro on 2014-02-18: additional info on the reference system (where available)
+    // @ADDED by Alessandro on 2014-02-18: additional info on the reference system (where available)
     virtual float getVXL_1() = 0;
     virtual float getVXL_2() = 0;
     virtual float getVXL_3() = 0;
     virtual iim::axis getAXS_1() = 0;
     virtual iim::axis getAXS_2() = 0;
     virtual iim::axis getAXS_3() = 0;
+
+    // set active channels (@MOVED from TileMCVolume.h by Alessandro on 2014-02-20)
+    void setActiveChannels ( iim::uint32 *_active, int _n_active );
+
+    // set methods (@MOVED from TimeSeries.h by Alessandro on 2014-02-20)
+    void setActiveFrames(int _t0, int _t1){
+        t0 = std::max(0, std::min(_t0,DIM_T-1));
+        t1 = std::max(0, std::min(_t1,DIM_T-1));
+    }
 
 	/*************************************************************************************************************
     * Save image method. <> parameters are mandatory, while [] are optional.
@@ -221,6 +246,9 @@ public:
         delete vol;
         return result;
     }
+
+    // returns true if the given format is hierarchical, i.e. if it consists of nested folders (1 level at least)
+    static bool isHierarchical(std::string format) throw (iim::IOException);
 };
 
 #endif

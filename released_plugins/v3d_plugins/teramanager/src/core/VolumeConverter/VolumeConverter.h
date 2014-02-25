@@ -118,8 +118,21 @@ class VolumeConverter
 		* graylevel and multi channel and it will be saved as RGB; at most three channels are supported; if channels
 		* of original image are two, the third RGB channel (Blue channel) is set to all zero
 		*************************************************************************************************************/
-        void setSrcVolume(const char* _root_dir, const char* _fmt = iim::STACKED_FORMAT.c_str(), const char* _out_fmt = REAL_REPRESENTATION) throw (iim::IOException);
+        void setSrcVolume(const char* _root_dir, const char* _fmt = iim::STACKED_FORMAT.c_str(),
+                          const char* _out_fmt = REAL_REPRESENTATION, bool time_series = false) throw (iim::IOException);
 
+        // unified access point for volume conversion (@ADDED by Alessandro on 2014-02-24)
+        void convertTo(
+            std::string output_path,                    // path where to save the converted volume
+            std::string output_format,                  // format of the converted volume (see IM_config.h)
+            int output_bitdepth = iim::NUL_IMG_DEPTH,   // output image bitdepth
+            bool isTimeSeries = false,                  // whether the volume is a time series
+            bool *resolutions = 0,                      // array of resolutions
+            int block_height = -1,                      // tile's height (for tiled formats)
+            int block_width  = -1,                      // tile's width  (for tiled formats)
+            int block_depth  = -1,                      // tile's depth  (for tiled formats)
+            int method = HALVE_BY_MEAN                  // downsampling method
+        ) throw (iim::IOException);
 
 		/*************************************************************************************************************
 		* Method to be called for tile generation. <> parameters are mandatory, while [] are optional.

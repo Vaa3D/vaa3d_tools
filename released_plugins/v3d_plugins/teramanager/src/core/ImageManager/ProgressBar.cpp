@@ -42,7 +42,7 @@ using namespace std;
 ProgressBar* ProgressBar::uniqueInstance = NULL;
 ProgressBar* ProgressBar::instance()
 {
-    if (uniqueInstance == NULL)
+    if (uniqueInstance == 0)
         uniqueInstance = new ProgressBar();
     uniqueInstance = new ProgressBar();
     return uniqueInstance;
@@ -50,9 +50,16 @@ ProgressBar* ProgressBar::instance()
 
 ProgressBar::ProgressBar()
 {
-    strcpy(this->operation_desc, "none");
+    reset();
+}
+
+
+void ProgressBar::reset()
+{
+    strcpy(this->message_level_1, "");
+    strcpy(this->message_level_2, "");
+    strcpy(this->message_level_3, "");
     progress_value=0;
-    strcpy(this->progress_info, "");
     proctime = 0;
     minutes_remaining = 0;
     seconds_remaining = 0;
@@ -61,9 +68,9 @@ ProgressBar::ProgressBar()
 
 void ProgressBar::start(const char *new_operation_desc)
 {
-    strcpy(this->operation_desc, new_operation_desc);
+    strcpy(this->message_level_2, new_operation_desc);
     this->progress_value=0;
-    strcpy(this->progress_info, "");
+    strcpy(this->message_level_3, "");
     proctime = -TIME(0);
     minutes_remaining = 0;
     seconds_remaining = 0;
@@ -77,7 +84,7 @@ void ProgressBar::start(const char *new_operation_desc)
 void ProgressBar::update(float new_progress_value, const char* new_progress_info)
 {
     progress_value=new_progress_value;
-    strcpy(progress_info,new_progress_info);
+    strcpy(message_level_3,new_progress_info);
 
     if(new_progress_value!=0)
     {
@@ -89,15 +96,14 @@ void ProgressBar::update(float new_progress_value, const char* new_progress_info
 
 void ProgressBar::updateInfo(const char* new_progress_info)
 {
-    strcpy(progress_info,new_progress_info);
+    strcpy(message_level_3,new_progress_info);
 }
 
 void ProgressBar::show()
 {
-
     #ifdef _VAA3D_PLUGIN_MODE
     int progress_value_int = (int) (progress_value+0.5f);
-    teramanager::PConverter::instance()->emitProgressBarChanged(progress_value_int, minutes_remaining, seconds_remaining%60);
+    teramanager::PConverter::instance()->emitProgressBarChanged(progress_value_int, minutes_remaining, seconds_remaining%60, message_level_1);
     #else
     system_CLEAR();
     printf("OPERATION:\t%s\n",this->operation_desc);
@@ -111,4 +117,15 @@ void ProgressBar::show()
             printf(":");
     printf("\n\n");
     #endif
+}
+
+
+void ProgressBar::setMessage(int level, const char* message)
+{
+    if(level == 1)
+        strcpy(message_level_1,message);
+    else if(level == 2)
+        strcpy(message_level_2,message);
+    else if(level == 3)
+        strcpy(message_level_3,message);
 }

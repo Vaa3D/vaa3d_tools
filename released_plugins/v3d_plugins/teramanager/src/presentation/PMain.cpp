@@ -232,10 +232,6 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
 
     // "Debug" menu
     debugMenu = menuBar->addMenu("Debug");
-    /* ------------------------------ debug action 1 ------------------------------ */
-    debugAction1 = new QAction("Generate time series", debugMenu);
-    connect(debugAction1, SIGNAL(triggered()), this, SLOT(debugAction1Triggered()));
-    debugMenu->addAction(debugAction1);    
     /* --------------------------------- show log --------------------------------- */
     debugShowLogAction = new QAction("Show log", debugMenu);
     connect(debugShowLogAction, SIGNAL(triggered()), this, SLOT(showLogTriggered()));
@@ -264,16 +260,25 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     debugVerbosityMenu->addAction(debugVerbosityActionWidget);
     connect(debugVerbosityCBox, SIGNAL(currentIndexChanged(int)), this, SLOT(verbosityChanged(int)));
     debugMenu->addMenu(debugVerbosityMenu);    
+    /* ------------------------------ debug action 1 ------------------------------ */
+    debugAction1 = new QAction("Debug action", debugMenu);
+    connect(debugAction1, SIGNAL(triggered()), this, SLOT(debugAction1Triggered()));
+    debugMenu->addAction(debugAction1);
+    /* --------------------- add gaussian noise to time series -------------------- */
+    addGaussianNoiseToTimeSeries = new QAction("Add gaussian noise to time series", debugMenu);
+    addGaussianNoiseToTimeSeries->setCheckable(true);
+    connect(addGaussianNoiseToTimeSeries, SIGNAL(triggered()), this, SLOT(addGaussianNoiseTriggered()));
+    debugMenu->addAction(addGaussianNoiseToTimeSeries);
     /* -------------------------------- time series ------------------------------- */
-    debugTimeSeriesMenu = new QMenu("Time series size");
-    debugTimeSeriesWidget = new QWidgetAction(this);
-    debugTimeSeriesSBox = new QSpinBox();
-    debugTimeSeriesSBox->setMinimum(1);
-    debugTimeSeriesSBox->setMaximum(500);
-    debugTimeSeriesSBox->setValue(100);
-    debugTimeSeriesWidget->setDefaultWidget(debugTimeSeriesSBox);
-    debugTimeSeriesMenu->addAction(debugTimeSeriesWidget);
-    debugMenu->addMenu(debugTimeSeriesMenu);
+//    debugTimeSeriesMenu = new QMenu("Time series size");
+//    debugTimeSeriesWidget = new QWidgetAction(this);
+//    debugTimeSeriesSBox = new QSpinBox();
+//    debugTimeSeriesSBox->setMinimum(1);
+//    debugTimeSeriesSBox->setMaximum(500);
+//    debugTimeSeriesSBox->setValue(100);
+//    debugTimeSeriesWidget->setDefaultWidget(debugTimeSeriesSBox);
+//    debugTimeSeriesMenu->addAction(debugTimeSeriesWidget);
+//    debugMenu->addMenu(debugTimeSeriesMenu);
 
     helpMenu = menuBar->addMenu("Help");
     aboutAction = new QAction("About", this);
@@ -544,8 +549,10 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     D1_sbox->setAlignment(Qt::AlignCenter);
     T0_sbox = new QSpinBox();
     T0_sbox->setAlignment(Qt::AlignCenter);
+    T0_sbox->setReadOnly(true);
     T1_sbox = new QSpinBox();
     T1_sbox->setAlignment(Qt::AlignCenter);
+    T1_sbox->setReadOnly(true);
     V0_sbox->installEventFilter(this);
     V1_sbox->installEventFilter(this);
     H0_sbox->installEventFilter(this);
@@ -885,8 +892,7 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
 
     // signals and slots    
     /**/itm::debug(itm::LEV3, "Signals and slots", __itm__current__function__);
-    connect(CImport::instance(), SIGNAL(sendOperationOutcome(itm::RuntimeException*, Image4DSimple*, qint64)), this, SLOT(importDone(itm::RuntimeException*, Image4DSimple*,qint64)), Qt::QueuedConnection);
-    connect(CVolume::instance(), SIGNAL(sendOperationOutcome(itm::uint8*, itm::RuntimeException*,void*, qint64, QString, int)), SLOT(loadingDone(itm::uint8*, itm::RuntimeException*,void*, qint64, QString, int)), Qt::QueuedConnection);
+    connect(CImport::instance(), SIGNAL(sendOperationOutcome(itm::RuntimeException*, qint64)), this, SLOT(importDone(itm::RuntimeException*, qint64)), Qt::QueuedConnection);
     connect(volMapSizeSBox, SIGNAL(valueChanged(int)), this, SLOT(settingsChanged(int)));
     connect(Vdim_sbox, SIGNAL(valueChanged(int)), this, SLOT(settingsChanged(int)));
     connect(Hdim_sbox, SIGNAL(valueChanged(int)), this, SLOT(settingsChanged(int)));
@@ -962,7 +968,8 @@ void PMain::reset()
     org_D_field->setText("n.a.");
 
     //resetting multiresolution mode widgets
-    localViewer_panel->setEnabled(false);
+    gradientBar->setEnabled(false);
+    resolution_cbox->setEnabled(false);
     zoom_panel->setEnabled(false);
     Vdim_sbox->setValue(CSettings::instance()->getVOIdimV());
     Hdim_sbox->setValue(CSettings::instance()->getVOIdimH());
@@ -989,8 +996,8 @@ void PMain::reset()
     traslYneg->setEnabled(false);
     traslZpos->setEnabled(false);
     traslZneg->setEnabled(false);
-//    traslTpos->setEnabled(false);
-//    traslTneg->setEnabled(false);
+    traslTpos->setEnabled(false);
+    traslTneg->setEnabled(false);
     gradientBar->setEnabled(false);
     gradientBar->setNSteps(-1);
     gradientBar->setStep(0);
@@ -1104,7 +1111,8 @@ void PMain::openVolume(string path /* = "" */)
         }
 
         /* ---- temporary code ---- */
-//        TimeSeries* ts = new TimeSeries(import_path.toStdString().c_str());
+//        TimeSeries* ts = new TimeSeries(import_path.toStdString().c_str(), iim::RAW_FORMAT);
+//        printf("FOUND %d x %d x %d x %d x %d\n", ts->getDIM_H(), ts->getDIM_V(), ts->getDIM_D(), ts->getDIM_C(), ts->getDIM_T());
 //        return;
 //        VirtualVolume* vol = VirtualVolume::instance(import_path.toStdString().c_str());
 //        if(vol)
@@ -1150,7 +1158,6 @@ void PMain::openVolume(string path /* = "" */)
         else
             CImport::instance()->setRegenerateVolumeMap(regenVMap_cAction->isChecked());
         CImport::instance()->setPath(qPrintable(import_path));
-        CImport::instance()->setVolMapMaxSize(volMapSizeSBox->value());
 
         //disabling import form and enabling progress bar animation
         progressBar->setEnabled(true);
@@ -1159,6 +1166,7 @@ void PMain::openVolume(string path /* = "" */)
         statusBar->showMessage("Importing volume...");
 
         //starting import
+        CImport::instance()->updateMaxDims();
         CImport::instance()->start();
     }
     catch(iim::IOException &ex)
@@ -1365,7 +1373,7 @@ void PMain::about()
 * aged in the current thread (ex != 0). Otherwise, volume information are imported
 * in the GUI by the <StackedVolume> handle of <CImport>.
 **********************************************************************************/
-void PMain::importDone(RuntimeException *ex, Image4DSimple* vmap_image, qint64 elapsed_time)
+void PMain::importDone(RuntimeException *ex, qint64 elapsed_time)
 {
     /**/itm::debug(itm::LEV1, strprintf("ex = %s", (ex? "error" : "0")).c_str(), __itm__current__function__);
 
@@ -1475,8 +1483,9 @@ void PMain::importDone(RuntimeException *ex, Image4DSimple* vmap_image, qint64 e
         closeVolumeAction->setEnabled(true);
         clearAnnotationsAction->setEnabled(true);
 
-        //enabling multiresolution panel and hiding volume map options
-        this->localViewer_panel->setEnabled(true);
+        //enabling multiresolution panel and hiding volume map options        
+        gradientBar->setEnabled(true);
+        resolution_cbox->setEnabled(true);
         this->zoom_panel->setEnabled(true);
 
         //enabling menu actions
@@ -1523,7 +1532,7 @@ void PMain::importDone(RuntimeException *ex, Image4DSimple* vmap_image, qint64 e
         /**/itm::debug(itm::LEV_MAX, "instantiating CExplorerWindow", __itm__current__function__);
         CExplorerWindow *new_win = new CExplorerWindow(V3D_env, CImport::instance()->getVMapResIndex(), CImport::instance()->getVMapRawData(),
                             0, CImport::instance()->getVMapYDim(), 0, CImport::instance()->getVMapXDim(),
-                            0, CImport::instance()->getVMapZDim(), CImport::instance()->getVMapCDim(), 0);
+                            0, CImport::instance()->getVMapZDim(), 0, CImport::instance()->getVMapTDim()-1, CImport::instance()->getVMapCDim(), 0);
         /**/itm::debug(itm::LEV_MAX, "showing CExplorerWindow", __itm__current__function__);
         new_win->show();
 
@@ -1539,35 +1548,6 @@ void PMain::importDone(RuntimeException *ex, Image4DSimple* vmap_image, qint64 e
     //resetting some widgets
     resetGUI();
 
-}
-
-/**********************************************************************************
-* Called by <CVolume> when the associated operation has been performed.
-* If an exception has occurred in the <CVolume> thread, it is propagated and
-* managed in the current thread (ex != 0).
-***********************************************************************************/
-void PMain::loadingDone(uint8 *data, RuntimeException *ex, void* sourceObject, qint64 elapsed_time, QString op_dsc, int step)
-{
-    /**/itm::debug(itm::LEV1, strprintf("ex = %s", (ex? "error" : "0")).c_str(), __itm__current__function__);
-
-    CVolume* cVolume = CVolume::instance();
-
-    //if an exception has occurred, showing a message error
-    if(ex)
-        QMessageBox::critical(this,QObject::tr("Error"), QObject::tr(ex->what()),QObject::tr("Ok"));
-    else if(sourceObject == this)
-    {
-        Image4DSimple* img = new Image4DSimple();
-        img->setFileName(CImport::instance()->getHighestResVolume()->getROOT_DIR());
-        img->setData(data, cVolume->getVoiH1()-cVolume->getVoiH0(),
-                     cVolume->getVoiV1()-cVolume->getVoiV0(), cVolume->getVoiD1()-cVolume->getVoiD0(), cVolume->getNChannels(), V3D_UINT8);
-        v3dhandle new_win = V3D_env->newImageWindow(img->getFileName());
-        V3D_env->setImage(new_win, img);
-    }
-
-    //resetting some widgets
-    resetGUI();
-    globalCoord_panel->setEnabled(true);
 }
 
 //overrides closeEvent method of QWidget
@@ -1603,7 +1583,7 @@ void PMain::settingsChanged(int)
     CSettings::instance()->setVOIdimV(Vdim_sbox->value());
     CSettings::instance()->setVOIdimH(Hdim_sbox->value());
     CSettings::instance()->setVOIdimD(Ddim_sbox->value());
-    CSettings::instance()->setVOIdimD(Tdim_sbox->value());
+    CSettings::instance()->setVOIdimT(Tdim_sbox->value());
     CSettings::instance()->writeSettings();
 }
 
@@ -1625,12 +1605,12 @@ void PMain::resolutionIndexChanged(int i)
             int voiH1 = CVolume::scaleHCoord(H1_sbox->value()-1, CImport::instance()->getResolutions()-1, i);
             int voiD0 = CVolume::scaleDCoord(D0_sbox->value()-1, CImport::instance()->getResolutions()-1, i);
             int voiD1 = CVolume::scaleDCoord(D1_sbox->value()-1, CImport::instance()->getResolutions()-1, i);
-            int voiTDim = std::min(CImport::instance()->getVMapTDim(), Tdim_sbox->value());
+            int voiTDim = std::min(static_cast<int>(CImport::instance()->getVMapTDim()), Tdim_sbox->value());
             float MVoxels = ((voiV1-voiV0+1)/1024.0f)*((voiH1-voiH0+1)/1024.0f)*(voiD1-voiD0+1)*voiTDim;
             if(QMessageBox::Yes == QMessageBox::question(this, "Confirm", QString("The volume to be loaded is ").append(QString::number(MVoxels, 'f', 1)).append(" MVoxels big.\n\nDo you confirm?"), QMessageBox::No | QMessageBox::Yes, QMessageBox::Yes))
             {
                 //voi set
-                CVolume::instance()->setVoi(CExplorerWindow::getCurrent(), i, voiV0, voiV1+1, voiH0, voiH1+1, voiD0, voiD1+1);
+                CVolume::instance()->setVoi(CExplorerWindow::getCurrent(), i, voiV0, voiV1+1, voiH0, voiH1+1, voiD0, voiD1+1, T0_sbox->value(), T1_sbox->value());
 
                 //disabling import form and enabling progress bar animation and tab wait animation
                 progressBar->setEnabled(true);
@@ -1669,8 +1649,8 @@ void PMain::setEnabledDirectionalShifts(bool enabled)
     traslYpos->setEnabled(enabled);
     traslZneg->setEnabled(enabled);
     traslZpos->setEnabled(enabled);
-//    traslTneg->setEnabled(enabled);
-//    traslTpos->setEnabled(enabled);
+    traslTneg->setEnabled(enabled);
+    traslTpos->setEnabled(enabled);
 }
 
 /**********************************************************************************
@@ -1685,7 +1665,7 @@ void PMain::traslXposClicked()
     {
         expl->newView((expl->volH1-expl->volH0)/2 + (expl->volH1-expl->volH0)*CSettings::instance()->getTraslX()/100.0f,
                       (expl->volV1-expl->volV0)/2,
-                      (expl->volD1-expl->volD0)/2, expl->volResIndex, false);
+                      (expl->volD1-expl->volD0)/2, expl->volResIndex, expl->volT0, expl->volT1, false);
     }
 }
 void PMain::traslXnegClicked()
@@ -1697,7 +1677,7 @@ void PMain::traslXnegClicked()
     {
         expl->newView((expl->volH1-expl->volH0)/2 - (expl->volH1-expl->volH0)*CSettings::instance()->getTraslX()/100.0f,
                       (expl->volV1-expl->volV0)/2,
-                      (expl->volD1-expl->volD0)/2, expl->volResIndex, false);
+                      (expl->volD1-expl->volD0)/2, expl->volResIndex, expl->volT0, expl->volT1, false);
     }
 }
 void PMain::traslYposClicked()
@@ -1709,7 +1689,7 @@ void PMain::traslYposClicked()
     {
         expl->newView((expl->volH1-expl->volH0)/2,
                       (expl->volV1-expl->volV0)/2 + (expl->volV1-expl->volV0)*CSettings::instance()->getTraslY()/100.0f,
-                      (expl->volD1-expl->volD0)/2, expl->volResIndex, false);
+                      (expl->volD1-expl->volD0)/2, expl->volResIndex, expl->volT0, expl->volT1, false);
     }
 }
 void PMain::traslYnegClicked()
@@ -1721,7 +1701,7 @@ void PMain::traslYnegClicked()
     {
         expl->newView((expl->volH1-expl->volH0)/2,
                       (expl->volV1-expl->volV0)/2 - (expl->volV1-expl->volV0)*CSettings::instance()->getTraslY()/100.0f,
-                      (expl->volD1-expl->volD0)/2, expl->volResIndex, false);
+                      (expl->volD1-expl->volD0)/2, expl->volResIndex, expl->volT0, expl->volT1, false);
     }
 }
 void PMain::traslZposClicked()
@@ -1733,7 +1713,7 @@ void PMain::traslZposClicked()
     {
         expl->newView((expl->volH1-expl->volH0)/2,
                       (expl->volV1-expl->volV0)/2,
-                      (expl->volD1-expl->volD0)/2 + (expl->volD1-expl->volD0)*CSettings::instance()->getTraslZ()/100.0f, expl->volResIndex, false);
+                      (expl->volD1-expl->volD0)/2 + (expl->volD1-expl->volD0)*CSettings::instance()->getTraslZ()/100.0f, expl->volResIndex, expl->volT0, expl->volT1, false);
     }
 }
 void PMain::traslZnegClicked()
@@ -1745,7 +1725,7 @@ void PMain::traslZnegClicked()
     {
         expl->newView((expl->volH1-expl->volH0)/2,
                       (expl->volV1-expl->volV0)/2,
-                      (expl->volD1-expl->volD0)/2 - (expl->volD1-expl->volD0)*CSettings::instance()->getTraslZ()/100.0f, expl->volResIndex, false);
+                      (expl->volD1-expl->volD0)/2 - (expl->volD1-expl->volD0)*CSettings::instance()->getTraslZ()/100.0f, expl->volResIndex, expl->volT0, expl->volT1, false);
     }
 }
 void PMain::traslTposClicked()
@@ -1922,9 +1902,15 @@ void PMain::setEnabledComboBoxItem(QComboBox* cbox, int _index, bool enabled)
     cbox->model()->setData( index, enabled ? v2 : v1, Qt::UserRole -1);
 }
 
+
 /**********************************************************************************
 * Called when the correspondent debug actions are triggered
 ***********************************************************************************/
+void PMain::addGaussianNoiseTriggered()
+{
+    iim::ADD_NOISE_TO_TIME_SERIES = addGaussianNoiseToTimeSeries->isChecked();
+}
+
 void PMain::debugAction1Triggered()
 {
     /**/itm::debug(itm::LEV1, 0, __itm__current__function__);

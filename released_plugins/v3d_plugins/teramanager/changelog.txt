@@ -11,6 +11,29 @@ ties names are:
 - Rem: a feature no longer available
 
 ============================================================================================
+Version 0.9.5
+February 25th, 2014
+--------------------------------------------------------------------------------------------
+- New: added 5D feature in TeraFly. Currently, directional shifts are disabled.
+- Rem: removed  permament setting  "verbosity". It  is set to the NO_DEBUG level by default. 
+       The user now has to increase the verbosity level every time he needs it.
+       WARNING: From now on, TeraFly is silent by default. Please increase the bverbosity le-
+       vel from the TeraFly's menu "Debug" -> "Verbsosity" when needed.
+- Opt: moved vmap.bin location to the root dir where all the resolutions are stored. Previo-
+       usly, it was within the resolution opened by the user.
+- New: added 5D volume data conversion in TeraConverter. The "time" dimension can be coupled
+       with ANY of the supported formats.
+- New: TeraConveter GUI redesigned so as to deal with 5D data
+- New: "Max dims" spinboxes within the "Local viewer" panel are now ALWAYS enabled and their
+       setting is used also to generate the volume map (before they were used only to gener-
+       ate the subsequent ROIs).
+- Fix: fixed compilation issue on MacOSX "undeclared identifier 'CLOCK_REALTIME'
+- Fix: fixed compilation warning "WARNING: Failure to find: src/core/ImageManager/IM_defs.h"
+- Fix: fixed bug which prevented "one-stroke for high-rez" function to work properly
+- Fix: fixed runtime error "Zoom-in method "WYSIWYG (5 markers)" unsupported"
+--------------------------------------------------------------------------------------------
+
+
 Version 0.9.41
 February 16th, 2014
 --------------------------------------------------------------------------------------------

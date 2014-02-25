@@ -92,7 +92,8 @@ namespace IconImageManager
     const std::string SIMPLE_RAW_FORMAT  = "Vaa3D raw (series)";       // unique ID for the SimpleVolumeRaw class
     const std::string RAW_FORMAT         = "Vaa3D raw";                // unique ID for the RawVolume class
     const std::string TIF3D_FORMAT       = "3D TIFF (nontiled)";       // unique ID for the Tiff3DVolume class
-    const std::string TILED_TIF3D_FORMAT = "3D TIFF (tiled)";       // unique ID for the TiledTiff3DVolume class
+    const std::string TILED_TIF3D_FORMAT = "3D TIFF (tiled)";          // unique ID for the TiledTiff3DVolume class
+    const std::string TIME_SERIES        = "Time series";              // unique ID for the TimeSeries class
 
     const double      PI = 3.14159265;                          // pi
     const int         TMITREE_MAX_HEIGHT  = 10;                 // maximum depth of the TMITREE
@@ -105,8 +106,9 @@ namespace IconImageManager
     ******************** - default values have to be set in IM_config.cpp.
     ---------------------------------------------------------------------------------------------------------------------------*/
     extern int DEBUG;                                           // debug level of current module
-    extern bool DEBUG_TO_FILE;                                  //whether debug messages should be printed on the screen or to a file (default: screen)
-    extern std::string DEBUG_FILE_PATH;                         //filepath where to save debug information
+    extern bool DEBUG_TO_FILE;                                  // whether debug messages should be printed on the screen or to a file (default: screen)
+    extern std::string DEBUG_FILE_PATH;                         // filepath where to save debug information
+    extern bool ADD_NOISE_TO_TIME_SERIES;                       // whether to mark individual frames of a time series with increasing gaussian noise
     /*-------------------------------------------------------------------------------------------------------------------------*/
 
 
@@ -261,18 +263,18 @@ namespace IconImageManager
     #ifdef _WIN32
     #include <errno.h>
     inline bool makeDir(const char* arg){
-        printf("Creating directory \"%s\" ...", arg);
+//        printf("Creating directory \"%s\" ...", arg);
         bool done = _mkdir(arg) == 0;
         bool result = done || errno != ENOENT;
-        printf("%s\n", result? "DONE!" : "ERROR!");
+//        printf("%s\n", result? "DONE!" : "ERROR!");
         return result;
     }
     #else
     inline bool makeDir(const char* arg){
-        printf("Creating directory \"%s\" ...", arg);
+//        printf("Creating directory \"%s\" ...", arg);
         bool done = mkdir(arg, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) == 0;
         bool result = done || errno == EEXIST;
-        printf("%s\n", result? "DONE!" : "ERROR!");
+//        printf("%s\n", result? "DONE!" : "ERROR!");
         return result;
     }
     #endif
