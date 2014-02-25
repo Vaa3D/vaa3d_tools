@@ -11,6 +11,18 @@ ties names are:
 - Rem: a feature no longer available
 
 ============================================================================================
+Version 0.9.51
+February 25th, 2014
+--------------------------------------------------------------------------------------------
+- Opt: improved TeraConverter's GUI: "Time series (5D)" checkbox renamed to "Time series of"
+       and moved at the top-most row.
+- New: added time frame absolute coordinate in the TeraFly's GUI.
+- New: added directional shift along t.
+- Fix: fixed bug which caused TeraFly to crash when substituting the first view with another
+       one (e.g. as a result of a directional shift along t)
+--------------------------------------------------------------------------------------------
+
+
 Version 0.9.5
 February 25th, 2014
 --------------------------------------------------------------------------------------------

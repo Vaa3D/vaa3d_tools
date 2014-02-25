@@ -223,7 +223,7 @@ void CVolume::run()
                 QElapsedTimer timerIO;
                 timerIO.start();
                 volume->setActiveFrames(voiT0, voiT1);
-                uint8* voiData = volume->loadSubvolume_to_UINT8(voiV0, voiV1, voiH0, voiH1, voiD0, voiD1, &nchannels);
+                uint8* voiData = volume->loadSubvolume_to_UINT8(voiV0, voiV1, voiH0, voiH1, voiD0, voiD1);
 
                 qint64 elapsedTime = timerIO.elapsed();
                 sprintf(msg, "Block X=[%d, %d) Y=[%d, %d) Z=[%d, %d), T=[%d, %d] loaded from res %d",
@@ -232,8 +232,10 @@ void CVolume::run()
                 CExplorerWindow* destination = dynamic_cast<CExplorerWindow*>(source);
                 if(destination)
                 {
+                    /**/itm::debug(itm::LEV3, "Waiting for updateGraphicsInProgress mutex", __itm__current__function__);
                     /**/ destination->updateGraphicsInProgress.lock();
                     /**/ destination->updateGraphicsInProgress.unlock();
+                    /**/itm::debug(itm::LEV3, "Access granted from updateGraphicsInProgress mutex", __itm__current__function__);
                 }
                 finished = true;
                 emit sendOperationOutcome(voiData, 0, source, elapsedTime, msg, 1);

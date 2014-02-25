@@ -65,7 +65,7 @@ void CSettings::loadDefaultSettings()
     VOIdimV = VOIdimH = 256;
     VOIdimD = 128;
     VOIdimT = 20;
-    traslX = traslY = traslZ = 50;  //percentage value
+    traslX = traslY = traslZ = traslT = 50;  //percentage value
 
     //TeraConverter settings
     volumeConverterInputPathLRU = "";
@@ -104,6 +104,7 @@ void CSettings::writeSettings()
     settings.setValue("traslX", traslX);
     settings.setValue("traslY", traslY);
     settings.setValue("traslZ", traslZ);
+    settings.setValue("traslT", traslT);
 
     settings.setValue("volumeConverterInputPathLRU", QString(volumeConverterInputPathLRU.c_str()));
     settings.setValue("volumeConverterOutputPathLRU", QString(volumeConverterOutputPathLRU.c_str()));
@@ -146,6 +147,8 @@ void CSettings::readSettings()
         traslY = settings.value("traslY").toInt();
     if(settings.contains("traslZ"))
         traslZ = settings.value("traslZ").toInt();
+    if(settings.contains("traslT"))
+        traslT = settings.value("traslT").toInt();
     int size = settings.beginReadArray("volumePathHistory");
     volumePathHistory.clear();
     for (int i = 0; i < size; ++i)

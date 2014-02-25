@@ -43,6 +43,7 @@ CExplorerWindow* CExplorerWindow::first = 0;
 CExplorerWindow* CExplorerWindow::last = 0;
 CExplorerWindow* CExplorerWindow::current = 0;
 int CExplorerWindow::nInstances = 0;
+int CExplorerWindow::nTotalInstances = 0;
 
 void CExplorerWindow::show()
 {
@@ -122,7 +123,12 @@ void CExplorerWindow::show()
             // select the same time frame (if available)
             int t_prev = prev->volT0 + prev->window3D->timeSlider->value();
             if( t_prev >= volT0 && t_prev <= volT1 )
+            {
                 window3D->timeSlider->setValue(t_prev - volT0);
+                pMain->frameCoord->setText(strprintf("t = %d/%d", t_prev, CImport::instance()->getVolume(0)->getDIM_T()-1).c_str());
+            }
+            else
+                pMain->frameCoord->setText(strprintf("t = %d/%d", volT0, CImport::instance()->getVolume(0)->getDIM_T()-1).c_str());
 
             //sync widgets
             syncWindows(prev->window3D, window3D);
@@ -198,6 +204,11 @@ void CExplorerWindow::show()
         pMain->D1_sbox->setMaximum(getGlobalDCoord(view3DWidget->zCut1(), -1, true, false, __itm__current__function__)+1);
         pMain->D1_sbox->setValue(pMain->D1_sbox->maximum());
 
+        pMain->T0_sbox->setMinimum(volT0);
+        pMain->T0_sbox->setValue(pMain->T0_sbox->minimum());
+        pMain->T1_sbox->setMaximum(volT1);
+        pMain->T1_sbox->setValue(pMain->T1_sbox->maximum());
+
         //signal connections
         connect(CVolume::instance(), SIGNAL(sendOperationOutcome(itm::uint8*,itm::RuntimeException*,void*,qint64,QString,int)), this,  SLOT(loadingDone(itm::uint8*,itm::RuntimeException*,void*,qint64,QString,int)), Qt::BlockingQueuedConnection);
         connect(view3DWidget, SIGNAL(changeXCut0(int)), this, SLOT(Vaa3D_changeXCut0(int)));
@@ -206,6 +217,7 @@ void CExplorerWindow::show()
         connect(view3DWidget, SIGNAL(changeYCut1(int)), this, SLOT(Vaa3D_changeYCut1(int)));
         connect(view3DWidget, SIGNAL(changeZCut0(int)), this, SLOT(Vaa3D_changeZCut0(int)));
         connect(view3DWidget, SIGNAL(changeZCut1(int)), this, SLOT(Vaa3D_changeZCut1(int)));
+        connect(window3D->timeSlider, SIGNAL(valueChanged(int)), this, SLOT(Vaa3D_changeTSlider(int)));
         //connect(view3DWidget, SIGNAL(xRotationChanged(int)), this, SLOT(Vaa3D_rotationchanged(int)));
         //connect(view3DWidget, SIGNAL(yRotationChanged(int)), this, SLOT(Vaa3D_rotationchanged(int)));
         //connect(view3DWidget, SIGNAL(zRotationChanged(int)), this, SLOT(Vaa3D_rotationchanged(int)));
@@ -265,6 +277,7 @@ CExplorerWindow::CExplorerWindow(V3DPluginCallback2 *_V3D_env, int _resIndex, ui
                                         _resIndex, _volV0, _volV1, _volH0, _volH1, _volD0, _volD1, _volT0, _volT1, _nchannels).c_str(), __itm__current__function__);
 
     //initializations
+    ID = nTotalInstances++;
     resetZoomHistory();
     isActive = isReady = false;
     this->V3D_env = _V3D_env;
@@ -284,11 +297,11 @@ CExplorerWindow::CExplorerWindow(V3DPluginCallback2 *_V3D_env, int _resIndex, ui
     this->imgData = _imgData;
     this->isReady = false;
     char ctitle[1024];
-    sprintf(ctitle, "Res(%d x %d x %d),Volume X=[%d,%d], Y=[%d,%d], Z=[%d,%d], T=[%d,%d], %d channels", CImport::instance()->getVolume(volResIndex)->getDIM_H(),
+    sprintf(ctitle, "ID(%d), Res(%d x %d x %d),Volume X=[%d,%d], Y=[%d,%d], Z=[%d,%d], T=[%d,%d], %d channels", ID, CImport::instance()->getVolume(volResIndex)->getDIM_H(),
             CImport::instance()->getVolume(volResIndex)->getDIM_V(), CImport::instance()->getVolume(volResIndex)->getDIM_D(),
             volH0+1, volH1, volV0+1, volV1, volD0+1, volD1, volT0, volT1, nchannels);
     this->title = ctitle;
-    sprintf(ctitle, "Res{%d}), Vol{[%d,%d) [%d,%d) [%d,%d) [%d,%d]}", volResIndex, volH0, volH1, volV0, volV1, volD0, volD1, volT0, volT1);
+    sprintf(ctitle, "ID(%d), Res{%d}, Vol{[%d,%d) [%d,%d) [%d,%d) [%d,%d]}", ID, volResIndex, volH0, volH1, volV0, volV1, volD0, volD1, volT0, volT1);
     this->titleShort = ctitle;
     V0_sbox_min = V0_sbox_val = V1_sbox_max = V1_sbox_val =
     H0_sbox_min = H0_sbox_val = H1_sbox_max = H1_sbox_val =
@@ -516,11 +529,11 @@ void CExplorerWindow::loadingDone(uint8 *data, RuntimeException *ex, void* sourc
             QElapsedTimer timer;
             timer.start();
             uint32 img_dims[5]       = {volH1-volH0, volV1-volV0, volD1-volD0, nchannels, volT1-volT0+1};
-            uint32 img_offset[3]     = {cVolume->getVoiH0()-volH0, cVolume->getVoiV0()-volV0, cVolume->getVoiD0()-volD0};
+            uint32 img_offset[5]     = {cVolume->getVoiH0()-volH0, cVolume->getVoiV0()-volV0, cVolume->getVoiD0()-volD0, 0, cVolume->getVoiT0()-volT0};
             uint32 new_img_dims[5]   = {cVolume->getVoiH1()-cVolume->getVoiH0(),  cVolume->getVoiV1()-cVolume->getVoiV0(),
                                         cVolume->getVoiD1()-cVolume->getVoiD0(),  nchannels, cVolume->getVoiT1()-cVolume->getVoiT0()+1};
-            uint32 new_img_offset[3] = {0, 0, 0};
-            uint32 new_img_count[3]  = {new_img_dims[0], new_img_dims[1], new_img_dims[2]};
+            uint32 new_img_offset[5] = {0, 0, 0, 0, 0};
+            uint32 new_img_count[5]  = {new_img_dims[0], new_img_dims[1], new_img_dims[2], new_img_dims[3], new_img_dims[4]};
             copyVOI(data, new_img_dims, new_img_offset, new_img_count,
                     view3DWidget->getiDrawExternalParameter()->image4d->getRawData(), img_dims, img_offset);
             qint64 elapsedTime = timer.elapsed();
@@ -537,6 +550,7 @@ void CExplorerWindow::loadingDone(uint8 *data, RuntimeException *ex, void* sourc
                 delete[] data;
 
             //updating image data
+            /**/itm::debug(itm::LEV1, strprintf("title = %s: updating image data", titleShort.c_str()).c_str(), __itm__current__function__);
             /**/ updateGraphicsInProgress.lock();
             timer.restart();
             view3DWidget->updateImageData();
@@ -547,6 +561,7 @@ void CExplorerWindow::loadingDone(uint8 *data, RuntimeException *ex, void* sourc
                     cVolume->getVoiT0(), cVolume->getVoiT1(), title.c_str());
             PLog::getInstance()->appendGPU(timer.elapsed(), message);
             /**/ updateGraphicsInProgress.unlock();
+            /**/itm::debug(itm::LEV1, strprintf("title = %s: image updated successfully", titleShort.c_str()).c_str(), __itm__current__function__);
 
             //operations to be performed when all image data have been loaded
             if(cVolume->hasFinished())
@@ -560,6 +575,7 @@ void CExplorerWindow::loadingDone(uint8 *data, RuntimeException *ex, void* sourc
                 //---- Alessandro 2014-01-26 fixed: processEvents() is no longer needed, since the trasl* button slots have been made safer and do not
                 //                                  trigger any action when the the current window is not active (or has to be closed)
                 //QApplication::processEvents();
+                /**/itm::debug(itm::LEV3, strprintf("title = %s: reactivating directional shifts", titleShort.c_str()).c_str(), __itm__current__function__);
                 PMain::getInstance()->traslXneg->setActive(true);
                 PMain::getInstance()->traslXpos->setActive(true);
                 PMain::getInstance()->traslYneg->setActive(true);
@@ -568,15 +584,18 @@ void CExplorerWindow::loadingDone(uint8 *data, RuntimeException *ex, void* sourc
                 PMain::getInstance()->traslZpos->setActive(true);
                 PMain::getInstance()->traslTneg->setActive(true);
                 PMain::getInstance()->traslTpos->setActive(true);
-
-//                PMain::getInstance()->setEnabledDirectionalShifts(true);
+                /**/itm::debug(itm::LEV3, strprintf("title = %s: directional shifts successfully reactivated", titleShort.c_str()).c_str(), __itm__current__function__);
 
                 //current window is now ready for user input
                 isReady = true;
 
                 //saving elapsed time to log
-                sprintf(message, "Successfully generated view %s", title.c_str());
-                PLog::getInstance()->appendActual(prev->zoomInTimer.elapsed(), message);
+                if(prev)
+                {
+                    /**/itm::debug(itm::LEV3, strprintf("title = %s: saving elapsed time to log", titleShort.c_str()).c_str(), __itm__current__function__);
+                    sprintf(message, "Successfully generated view %s", title.c_str());
+                    PLog::getInstance()->appendActual(prev->zoomInTimer.elapsed(), message);
+                }
             }
         }
         catch(RuntimeException &ex)
@@ -721,6 +740,7 @@ CExplorerWindow::newView(
         disconnect(view3DWidget, SIGNAL(changeYCut1(int)), this, SLOT(Vaa3D_changeYCut1(int)));
         disconnect(view3DWidget, SIGNAL(changeZCut0(int)), this, SLOT(Vaa3D_changeZCut0(int)));
         disconnect(view3DWidget, SIGNAL(changeZCut1(int)), this, SLOT(Vaa3D_changeZCut1(int)));
+        disconnect(window3D->timeSlider, SIGNAL(valueChanged(int)), this, SLOT(Vaa3D_changeTSlider(int)));
         //disconnect(view3DWidget, SIGNAL(xRotationChanged(int)), this, SLOT(Vaa3D_rotationchanged(int)));
         //disconnect(view3DWidget, SIGNAL(yRotationChanged(int)), this, SLOT(Vaa3D_rotationchanged(int)));
         //disconnect(view3DWidget, SIGNAL(zRotationChanged(int)), this, SLOT(Vaa3D_rotationchanged(int)));
@@ -744,19 +764,19 @@ CExplorerWindow::newView(
         int rVoiV1 = CVolume::scaleVCoord(cVolume->getVoiV1(), resolution, volResIndex);
         int rVoiD0 = CVolume::scaleDCoord(cVolume->getVoiD0(), resolution, volResIndex);
         int rVoiD1 = CVolume::scaleDCoord(cVolume->getVoiD1(), resolution, volResIndex);
-        uint8* lowresData = getVOI(rVoiH0, rVoiH1, rVoiV0, rVoiV1, rVoiD0, rVoiD1,
+        uint8* lowresData = getVOI(rVoiH0, rVoiH1, rVoiV0, rVoiV1, rVoiD0, rVoiD1, cVolume->getVoiT0(), cVolume->getVoiT1(),
                                    cVolume->getVoiH1()-cVolume->getVoiH0(),
                                    cVolume->getVoiV1()-cVolume->getVoiV0(),
                                    cVolume->getVoiD1()-cVolume->getVoiD0());
         char message[1000];
         sprintf(message, "Block X=[%d, %d) Y=[%d, %d) Z=[%d, %d) T[%d, %d] loaded from view %s",
-                rVoiH0, rVoiH1, rVoiV0, rVoiV1, rVoiD0, rVoiD1, t0, t1, title.c_str());
+                rVoiH0, rVoiH1, rVoiV0, rVoiV1, rVoiD0, rVoiD1, cVolume->getVoiT0(), cVolume->getVoiT1(), title.c_str());
         PLog::getInstance()->appendCPU(timer.elapsed(), message);
 
         //creating a new window
         this->next = new CExplorerWindow(V3D_env, resolution, lowresData,
                                          cVolume->getVoiV0(), cVolume->getVoiV1(), cVolume->getVoiH0(), cVolume->getVoiH1(), cVolume->getVoiD0(), cVolume->getVoiD1(),
-                                         t0, t1, nchannels, this);
+                                         cVolume->getVoiT0(), cVolume->getVoiT1(), nchannels, this);
 
         //loading new data in a separate thread. When done, the "loadingDone" method of the new window will be called
         pMain.statusBar->showMessage("Loading image data...");
@@ -774,9 +794,15 @@ CExplorerWindow::newView(
         {
             /**/itm::debug(itm::LEV_MAX, strprintf("object \"%s\" is going to be destroyed", titleShort.c_str()).c_str(), __itm__current__function__);
 
-            prev->zoomInTimer = zoomInTimer;
-            prev->next = next;
-            next->prev = prev;
+            if(prev)
+            {
+                prev->zoomInTimer = zoomInTimer;
+                prev->next = next;
+                next->prev = prev;
+            }
+            else
+                next->prev = 0;
+
             this->toBeClosed = true;
             delete this;
         }
@@ -792,14 +818,14 @@ CExplorerWindow::newView(
 * Resizes  the  given image subvolume in a  newly allocated array using the fastest
 * achievable scaling method. The image currently shown is used as data source.
 ***********************************************************************************/
-uint8* CExplorerWindow::getVOI(int x0, int x1, int y0, int y1, int z0, int z1,
+uint8* CExplorerWindow::getVOI(int x0, int x1, int y0, int y1, int z0, int z1, int t0, int t1,
                                int xDimInterp, int yDimInterp, int zDimInterp) throw (RuntimeException)
 {
-    /**/itm::debug(itm::LEV1, strprintf("title = %s, x0 = %d, x1 = %d, y0 = %d, y1 = %d, z0 = %d, z1 = %d, xDim = %d, yDim = %d, zDim = %d",
-                                        titleShort.c_str(), x0, x1, y0, y1, z0, z1, xDimInterp, yDimInterp, zDimInterp).c_str(), __itm__current__function__);
+    /**/itm::debug(itm::LEV1, strprintf("title = %s, x0 = %d, x1 = %d, y0 = %d, y1 = %d, z0 = %d, z1 = %d, t0 = %d, t1 = %d, xDim = %d, yDim = %d, zDim = %d",
+                                        titleShort.c_str(), x0, x1, y0, y1, z0, z1, t0, t1, xDimInterp, yDimInterp, zDimInterp).c_str(), __itm__current__function__);
 
     //alloating image data and initializing to zero (black)
-    size_t img_dim = static_cast<size_t>(xDimInterp) * yDimInterp * zDimInterp * nchannels * (volT1-volT0+1);
+    size_t img_dim = static_cast<size_t>(xDimInterp) * yDimInterp * zDimInterp * nchannels * (t1-t0+1);
     uint8* img = new uint8[img_dim];
     for(uint8* img_p = img; img_p-img < img_dim; img_p++)
         *img_p=0;
@@ -808,21 +834,25 @@ uint8* CExplorerWindow::getVOI(int x0, int x1, int y0, int y1, int z0, int z1,
     QRect XRectDisplayed(QPoint(volH0, 0), QPoint(volH1, 1));
     QRect YRectDisplayed(QPoint(volV0, 0), QPoint(volV1, 1));
     QRect ZRectDisplayed(QPoint(volD0, 0), QPoint(volD1, 1));
+    QRect TRectDisplayed(QPoint(volT0, 0), QPoint(volT1, 1));
     QRect XRectVOI(QPoint(x0, 0), QPoint(x1, 1));
     QRect YRectVOI(QPoint(y0, 0), QPoint(y1, 1));
     QRect ZRectVOI(QPoint(z0, 0), QPoint(z1, 1));
+    QRect TRectVOI(QPoint(t0, 0), QPoint(t1, 1));
     int x0a = XRectDisplayed.intersected(XRectVOI).left();
     int x1a = XRectDisplayed.intersected(XRectVOI).right();
     int y0a = YRectDisplayed.intersected(YRectVOI).left();
     int y1a = YRectDisplayed.intersected(YRectVOI).right();
     int z0a = ZRectDisplayed.intersected(ZRectVOI).left();
     int z1a = ZRectDisplayed.intersected(ZRectVOI).right();
+    int t0a = TRectDisplayed.intersected(TRectVOI).left();
+    int t1a = TRectDisplayed.intersected(TRectVOI).right();
 
-    /**/itm::debug(itm::LEV_MAX, strprintf("title = %s, available voi is x0a = %d, x1a = %d, y0a = %d, y1a = %d, z0a = %d, z1a = %d",
-                                        titleShort.c_str(), x0a, x1a, y0a, y1a, z0a, z1a).c_str(), __itm__current__function__);
+    /**/itm::debug(itm::LEV_MAX, strprintf("title = %s, available voi is x0a = %d, x1a = %d, y0a = %d, y1a = %d, z0a = %d, z1a = %d, t0a = %d, t1a = %d",
+                                        titleShort.c_str(), x0a, x1a, y0a, y1a, z0a, z1a, t0a, t1a).c_str(), __itm__current__function__);
 
     //if copyable VOI is empty, returning the black-initialized image
-    if(x1a - x0a <= 0 || y1a - y0a <= 0 || z1a - z0a <= 0)
+    if(x1a - x0a <= 0 || y1a - y0a <= 0 || z1a - z0a <= 0 || t1a - t0a < 0)    // Alessandro: shouldn't be '< 0' for time dimension?
         return img;
 
     //otherwise COPYING + SCALING
@@ -840,10 +870,10 @@ uint8* CExplorerWindow::getVOI(int x0, int x1, int y0, int y1, int z0, int z1,
             QMessageBox::critical(this, "Error", QString("Fast nonuniform scaling not supported: requested scaling along X,Y,Z is") + QString::number(scalx) + "," + QString::number(scaly) + "," + QString::number(scalz),QObject::tr("Ok"));
 
         uint32 buf_data_dims[5]   = {volH1-volH0, volV1-volV0, volD1-volD0, nchannels, volT1-volT0+1};
-        uint32 img_dims[5]        = {xDimInterp,  yDimInterp,  zDimInterp,  nchannels, volT1-volT0+1};
-        uint32 buf_data_offset[3] = {x0a-volH0,   y0a-volV0,   z0a-volD0};
-        uint32 img_offset[3]      = {x0a-x0,      y0a-y0,      z0a-z0};
-        uint32 buf_data_count[3]  = {x1a-x0a,     y1a-y0a,     z1a-z0a};
+        uint32 img_dims[5]        = {xDimInterp,  yDimInterp,  zDimInterp,  nchannels, t1-t0+1};
+        uint32 buf_data_offset[5] = {x0a-volH0,   y0a-volV0,   z0a-volD0,   0,         t0a-volT0};
+        uint32 img_offset[5]      = {x0a-x0,      y0a-y0,      z0a-z0,      0,         t0a-t0};
+        uint32 buf_data_count[5]  = {x1a-x0a,     y1a-y0a,     z1a-z0a,     0,         t1a-t0a};
 
         copyVOI(view3DWidget->getiDrawExternalParameter()->image4d->getRawData(), buf_data_dims, buf_data_offset, buf_data_count, img, img_dims, img_offset, scalx);
     }
@@ -864,17 +894,17 @@ void
     CExplorerWindow::copyVOI(
         uint8 const * src,          //pointer to const data source
         uint src_dims[5],           //dimensions of "src" along X, Y, Z, channels and T
-        uint src_offset[3],         //VOI's offset along X, Y, Z
-        uint src_count[3],          //VOI's dimensions along X, Y, Z
+        uint src_offset[5],         //VOI's offset along X, Y, Z, <empty> and T
+        uint src_count[5],          //VOI's dimensions along X, Y, Z, <empty> and T
         uint8* dst,                 //pointer to data destination
         uint dst_dims[5],           //dimensions of "dst" along X, Y, Z, channels and T
-        uint dst_offset[3],         //offset of "dst" along X, Y, Z
+        uint dst_offset[5],         //offset of "dst" along X, Y, Z, <empty> and T
         uint scaling /*= 1 */)      //scaling factor (integer only)
 throw (RuntimeException)
 {
-    /**/itm::debug(itm::LEV1, strprintf("src_dims = (%d x %d x %d x %d x %d), src_offset = (%d, %d, %d), src_count = (%d, %d, %d), dst_dims = (%d x %d x %d x %d x %d), dst_offset = (%d, %d, %d), scaling = %d",
-                                        src_dims[0], src_dims[1],src_dims[2],src_dims[3],src_dims[4], src_offset[0],src_offset[1],src_offset[2], src_count[0],src_count[1],src_count[2],
-                                        dst_dims[0], dst_dims[1],dst_dims[2],dst_dims[3],dst_dims[4], dst_offset[0],dst_offset[1],dst_offset[2], scaling).c_str(), __itm__current__function__);
+    /**/itm::debug(itm::LEV1, strprintf("src_dims = (%d x %d x %d x %d x %d), src_offset = (%d, %d, %d, %d), src_count = (%d, %d, %d, %d), dst_dims = (%d x %d x %d x %d x %d), dst_offset = (%d, %d, %d, %d), scaling = %d",
+                                        src_dims[0], src_dims[1],src_dims[2],src_dims[3],src_dims[4], src_offset[0],src_offset[1],src_offset[2],src_offset[4],src_count[0],src_count[1],src_count[2],src_count[4],
+                                        dst_dims[0], dst_dims[1],dst_dims[2],dst_dims[3],dst_dims[4], dst_offset[0],dst_offset[1],dst_offset[2],dst_offset[4],scaling).c_str(), __itm__current__function__);
 
     //if source and destination are the same thing, returning without doing anything
     if(src == dst)
@@ -883,8 +913,6 @@ throw (RuntimeException)
     //cheking preconditions
     if(src_dims[3] != dst_dims[3])
         QMessageBox::critical(0, "Error", "Can't copy VOI to destination image: different number of channels",QObject::tr("Ok"));
-    if(src_dims[4] != dst_dims[4])
-        QMessageBox::critical(0, "Error", "Can't copy VOI to destination image: different number of time frames",QObject::tr("Ok"));
     for(int d=0; d<3; d++)
     {
         if(src_offset[d] + src_count[d] > src_dims[d])
@@ -901,28 +929,36 @@ throw (RuntimeException)
             //QMessageBox::critical(0, "Error", QString("Can't copy VOI to destination image: VOI exceeded destination dimension along axis ").append(QString::number(d)),QObject::tr("Ok"));
         }
     }
+    if(src_offset[4] + src_count[4] > src_dims[4])
+        QMessageBox::critical(0, "Error", "Can't copy VOI to destination image: VOI exceeded source dimension along T axis",QObject::tr("Ok"));
+    if(dst_offset[4] + src_count[4] > dst_dims[4])
+        QMessageBox::critical(0, "Error", "Can't copy VOI to destination image: VOI exceeded destination dimension along T axis",QObject::tr("Ok"));
+
 
     //quick version (with precomputed offsets, strides and counts: "1" for "dst", "2" for "src")
-    uint64 stride_c1       =                 dst_dims [2] * dst_dims[1]   * dst_dims[0];
-    uint64 stride_c2       =                 src_dims [2] * src_dims[1]   * src_dims[0];
-    uint64 stride_t1       =  dst_dims [3] * stride_c1;
-    uint64 stride_t2       =  src_dims [3] * stride_c2;
-    const uint64 count_c1  =  dst_dims [3] * dst_dims [2] * dst_dims[1]   * dst_dims[0];
-    const uint64 stride_k1 =                                dst_dims[1]   * dst_dims[0] * scaling;
-    const uint64 count_k1  =                 src_count[2] * dst_dims[1]   * dst_dims[0] * scaling;
-    const uint64 offset_k2 =                 src_offset[2]* src_dims[1]   * src_dims[0];
-    const uint64 stride_k2 =                                src_dims[1]   * src_dims[0];
-    //const uint64 count_k2=                 src_count[2] * src_dims[1]   * src_dims[0];            //not used in the OR so as to speed up the inner loops
-    const uint64 stride_i1 =                                                dst_dims[0] * scaling;
-    const uint64 count_i1  =                                src_count[1]  * dst_dims[0] * scaling;
-    const uint64 offset_i2 =                                src_offset[1] * src_dims[0];
-    const uint64 stride_i2 =                                                src_dims[0];
-    //const uint64 count_i2  =                              src_count[1]  * src_dims[0];            //not used in the OR so as to speed up the inner loops
-    const uint64 stride_j1 =                                                              scaling;
-    const uint64 count_j1  =                                                src_count[0]* scaling;
-    const uint64 offset_j2 =                                                src_offset[0];
-    //const uint64 count_j2  =                                              src_count[0];           //not used in the OR so as to speed up the inner loops
-    const uint64 dst_dim = static_cast<uint64>(dst_dims [4]) * dst_dims [3] * dst_dims [2] * dst_dims [1] * dst_dims [0];
+    const uint64 stride_t1 =                dst_dims [3] * dst_dims [2] * dst_dims[1]   * dst_dims[0]  * (uint64)1;
+    const uint64 offset_t1 =  dst_offset[4]*dst_dims [3] * dst_dims [2] * dst_dims[1]   * dst_dims[0]  * (uint64)1;
+    const uint64 count_t1  =  src_count[4] *dst_dims [3] * dst_dims [2] * dst_dims[1]   * dst_dims[0]  * (uint64)1;
+    const uint64 stride_t2 =                src_dims [3] * src_dims [2] * src_dims[1]   * src_dims[0]  * (uint64)1;
+    const uint64 offset_t2 =  src_offset[4]*src_dims [3] * src_dims [2] * src_dims[1]   * src_dims[0]  * (uint64)1;
+    const uint64 stride_c1 =                               dst_dims [2] * dst_dims[1]   * dst_dims[0]  * (uint64)1;
+    const uint64 stride_c2 =                               src_dims [2] * src_dims[1]   * src_dims[0]  * (uint64)1;
+    const uint64 count_c1  =                dst_dims [3] * dst_dims [2] * dst_dims[1]   * dst_dims[0]  * (uint64)1;
+    const uint64 stride_k1 =                                              dst_dims[1]   * dst_dims[0]  * (uint64) scaling;
+    const uint64 count_k1  =                               src_count[2] * dst_dims[1]   * dst_dims[0]  * (uint64) scaling;
+    const uint64 offset_k2 =                               src_offset[2]* src_dims[1]   * src_dims[0]  * (uint64)1;
+    const uint64 stride_k2 =                                              src_dims[1]   * src_dims[0]  * (uint64)1;
+    //const uint64 count_k2=                               src_count[2] * src_dims[1]   * src_dims[0];            //not used in the OR so as to speed up the inner loops
+    const uint64 stride_i1 =                                                              dst_dims[0]  * (uint64) scaling;
+    const uint64 count_i1  =                                              src_count[1]  * dst_dims[0]  * (uint64) scaling;
+    const uint64 offset_i2 =                                              src_offset[1] * src_dims[0]  * (uint64)1;
+    const uint64 stride_i2 =                                                              src_dims[0]  * (uint64)1;
+    //const uint64 count_i2  =                                            src_count[1]  * src_dims[0];            //not used in the OR so as to speed up the inner loops
+    const uint64 stride_j1 =                                                                             (uint64) scaling;
+    const uint64 count_j1  =                                                              src_count[0] * (uint64) scaling;
+    const uint64 offset_j2 =                                                              src_offset[0]* (uint64)1;
+    //const uint64 count_j2  =                                                            src_count[0];           //not used in the OR so as to speed up the inner loops
+//    const uint64 dst_dim =    dst_dims [4]* dst_dims [3] * dst_dims [2] * dst_dims [1] *  dst_dims [0] * (uint64)1;;
 
     for(int sk = 0; sk < scaling; sk++)
         for(int si = 0; si < scaling; si++)
@@ -932,7 +968,10 @@ throw (RuntimeException)
                 const uint64 offset_i1 =                 dst_offset[1]  * dst_dims[0]   * scaling + si * dst_dims[0];
                 const uint64 offset_j1 =                                  dst_offset[0] * scaling + sj;
 
-                for(uint8 *img_t1 = dst, *img_t2 = const_cast<uint8*>(src); img_t1 - dst < dst_dim; img_t1 += stride_t1, img_t2 += stride_t2)
+//                for(uint8 *img_t1 = dst, *img_t2 = const_cast<uint8*>(src); img_t1 - dst < dst_dim; img_t1 += stride_t1, img_t2 += stride_t2)
+                uint8* const start_t1 = dst + offset_t1;
+                uint8* const start_t2 = const_cast<uint8*>(src) + offset_t2;
+                for(uint8 *img_t1 = start_t1, *img_t2 = start_t2; img_t1 - start_t1 < count_t1; img_t1 += stride_t1, img_t2 += stride_t2)
                 {
                     for(uint8 *img_c1 = img_t1, *img_c2 = img_t2; img_c1 - img_t1 < count_c1; img_c1 += stride_c1, img_c2 += stride_c2)
                     {
@@ -1270,6 +1309,8 @@ void CExplorerWindow::restoreViewFrom(CExplorerWindow* source) throw (RuntimeExc
         pMain->traslXpos->setEnabled(volH1 < CImport::instance()->getVolume(volResIndex)->getDIM_H());
         pMain->traslZneg->setEnabled(volD0 > 0);
         pMain->traslZpos->setEnabled(volD1 < CImport::instance()->getVolume(volResIndex)->getDIM_D());
+        pMain->traslTneg->setEnabled(volT0 > 0);
+        pMain->traslTpos->setEnabled(volT1 < CImport::instance()->getVolume(volResIndex)->getDIM_T()-1);
 
         //signal connections
         connect(CVolume::instance(), SIGNAL(sendOperationOutcome(itm::uint8*, itm::RuntimeException*,void*,qint64, QString, int)), this, SLOT(loadingDone(itm::uint8*, itm::RuntimeException*,void*,qint64, QString, int)), Qt::BlockingQueuedConnection);
@@ -1279,6 +1320,7 @@ void CExplorerWindow::restoreViewFrom(CExplorerWindow* source) throw (RuntimeExc
         connect(view3DWidget, SIGNAL(changeYCut1(int)), this, SLOT(Vaa3D_changeYCut1(int)));
         connect(view3DWidget, SIGNAL(changeZCut0(int)), this, SLOT(Vaa3D_changeZCut0(int)));
         connect(view3DWidget, SIGNAL(changeZCut1(int)), this, SLOT(Vaa3D_changeZCut1(int)));
+        connect(window3D->timeSlider, SIGNAL(valueChanged(int)), this, SLOT(Vaa3D_changeTSlider(int)));
         //connect(view3DWidget, SIGNAL(xRotationChanged(int)), this, SLOT(Vaa3D_rotationchanged(int)));
         //connect(view3DWidget, SIGNAL(yRotationChanged(int)), this, SLOT(Vaa3D_rotationchanged(int)));
         //connect(view3DWidget, SIGNAL(zRotationChanged(int)), this, SLOT(Vaa3D_rotationchanged(int)));
@@ -1299,7 +1341,12 @@ void CExplorerWindow::restoreViewFrom(CExplorerWindow* source) throw (RuntimeExc
         // select the same time frame (if available)
         int t_source = source->volT0 + source->window3D->timeSlider->value();
         if( t_source >= volT0 && t_source <= volT1 )
+        {
             window3D->timeSlider->setValue(t_source - volT0);
+            pMain->frameCoord->setText(strprintf("t = %d/%d", t_source, CImport::instance()->getVolume(0)->getDIM_T()-1).c_str());
+        }
+        else
+            pMain->frameCoord->setText(strprintf("t = %d/%d", volT0, CImport::instance()->getVolume(0)->getDIM_T()-1).c_str());
 
         //sync widgets
         syncWindows(source->window3D, window3D);
@@ -1830,6 +1877,13 @@ void CExplorerWindow::Vaa3D_changeZCut1(int s)
     disconnect(PMain::getInstance()->D1_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeD1sbox(int)));
     PMain::getInstance()->D1_sbox->setValue(getGlobalDCoord(s, -1, true, false, __itm__current__function__)+1);
     connect(PMain::getInstance()->D1_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeD1sbox(int)));
+}
+
+void CExplorerWindow::Vaa3D_changeTSlider(int s)
+{
+    /**/itm::debug(itm::LEV_MAX, strprintf("title = %s, s = %d", title.c_str(), s).c_str(), __itm__current__function__);
+
+    PMain::getInstance()->frameCoord->setText(strprintf("t = %d/%d", volT0+s, CImport::instance()->getVolume(0)->getDIM_T()-1).c_str());
 }
 
 /**********************************************************************************

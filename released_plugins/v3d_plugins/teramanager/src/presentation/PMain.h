@@ -82,6 +82,21 @@ class teramanager::PMain : public QWidget
         QMenu* curveAspectMenu;         //"Curve aspect" menu level 4
         QAction* curveAspectTube;       //"Tube" action
         QAction* curveAspectSkeleton;   //"Skeleton" action
+
+        QMenu* DirectionalShiftsMenu;   //"Directional shifts" menu level 2
+        QMenu* xShiftMenu;              // x-shift entry
+        QWidgetAction* xShiftWidget;    // x-shift action
+        QSpinBox *xShiftSBox;           // x-shift widget (a spinbox)
+        QMenu* yShiftMenu;              // y-shift entry
+        QWidgetAction* yShiftWidget;    // y-shift action
+        QSpinBox *yShiftSBox;           // y-shift widget (a spinbox)
+        QMenu* zShiftMenu;              // z-shift entry
+        QWidgetAction* zShiftWidget;    // z-shift action
+        QSpinBox *zShiftSBox;           // z-shift widget (a spinbox)
+        QMenu* tShiftMenu;              // t-shift entry
+        QWidgetAction* tShiftWidget;    // t-shift action
+        QSpinBox *tShiftSBox;           // t-shift widget (a spinbox)
+
         QMenu* helpMenu;                //"Help" menu
         QAction* aboutAction;           //"About" menu action
         QMenu *recentVolumesMenu;
@@ -177,7 +192,6 @@ class teramanager::PMain : public QWidget
         QSlider* cacheSens;
         QSlider* zoomInSens;
         QSlider* zoomOutSens;
-        QLineTree* controlsLineTree;
         QPushButton* controlsResetButton;
         QComboBox* zoomInMethod;
         /* ------- global coord panel widgets ------- */
@@ -207,12 +221,13 @@ class teramanager::PMain : public QWidget
         QLabel* to_label_2;
         QLabel* to_label_3;
         QLabel* to_label_4;
+        QGLRefSys* refSys;              //interactive 3D-based reference system
+        QLineEdit* frameCoord;
 
         //other widgets
         QHelpBox* helpBox;              //help box
         QProgressBar* progressBar;      //progress bar
         QStatusBar* statusBar;          //status bar
-        QGLRefSys* refSys;              //interactive 3D-based reference system
 
         //layout
         int marginLeft;                 //width of first column containing labels only

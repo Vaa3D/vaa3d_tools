@@ -61,6 +61,7 @@ class teramanager::CSettings
         int traslX;             //traslation percentage with respect to the actual VOI along X axis
         int traslY;             //traslation percentage with respect to the actual VOI along Y axis
         int traslZ;             //traslation percentage with respect to the actual VOI along Z axis
+        int traslT;             //traslation percentage with respect to the actual VOI along T axis
 
         //TeraConverter members
         string volumeConverterInputPathLRU;
@@ -98,6 +99,7 @@ class teramanager::CSettings
         int getTraslX(){return traslX;}
         int getTraslY(){return traslY;}
         int getTraslZ(){return traslZ;}
+        int getTraslT(){return traslT;}
         void setVolumePathLRU(string _volumePathLRU){volumePathLRU = _volumePathLRU;}
         void addVolumePathToHistory(string _volumePath){
             if(volumePathHistory.size() > 10)
@@ -119,6 +121,7 @@ class teramanager::CSettings
         void setTraslX(int _traslX){traslX = _traslX;}
         void setTraslY(int _traslY){traslY = _traslY;}
         void setTraslZ(int _traslZ){traslZ = _traslZ;}
+        void setTraslT(int _traslT){traslT = _traslT;}
 
         //GET and SET methods for TeraConverter
         string getVCInputPath(){return volumeConverterInputPathLRU;}

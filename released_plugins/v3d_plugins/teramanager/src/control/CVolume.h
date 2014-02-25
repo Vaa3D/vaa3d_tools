@@ -60,7 +60,6 @@ class teramanager::CVolume : public QThread
         //I suspect the "int" below might be problematic in the long run, but I leave them as is at this moment. I would use V3D_LONG instead.  by PHC 20131029
         int voiResIndex;                                            //volume of interest resolution index
         int voiV0,voiV1,voiH0,voiH1,voiD0,voiD1, voiT0, voiT1;      //volume of interest coordinates
-        int nchannels;                                              //volume of interest channel's number
         QWidget* source;                                            //the object that requested the VOI
         int streamingSteps;                         //
 
@@ -104,7 +103,7 @@ class teramanager::CVolume : public QThread
 
             voiResIndex = -1;
             buffer = 0;
-            voiV0 = voiV1 = voiH0 = voiH1 = voiD0 = voiD1 = voiT0 = voiT1 = nchannels = -1;
+            voiV0 = voiV1 = voiH0 = voiH1 = voiD0 = voiD1 = voiT0 = voiT1 = -1;
             source = 0;
             streamingSteps = 1;
             finished = false;
@@ -117,7 +116,6 @@ class teramanager::CVolume : public QThread
         int getVoiD1(){return voiD1;}
         int getVoiT0(){return voiT0;}
         int getVoiT1(){return voiT1;}
-        int getNChannels(){return nchannels;}
         int getVoiResIndex(){return voiResIndex;}
         static int scaleVCoord(int coord, int srcRes, int dstRes) throw (RuntimeException);
         static int scaleHCoord(int coord, int srcRes, int dstRes) throw (RuntimeException);
@@ -148,8 +146,6 @@ class teramanager::CVolume : public QThread
             //---- Alessandro 2013-09-03: added check to detect invalid VOI
             if(voiV1 - voiV0 <= 0 || voiH1 - voiH0 <= 0 || voiD1 - voiD0 <= 0 || voiT1 - voiT0 < 0)
                 throw RuntimeException("Invalid VOI selected");
-
-            nchannels = -1;
         }
         void setSource(QWidget* _sourceObject){source =_sourceObject;}
 

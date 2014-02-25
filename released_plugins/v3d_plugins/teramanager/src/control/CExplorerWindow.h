@@ -72,12 +72,14 @@ class teramanager::CExplorerWindow : public QWidget
         int D1_sbox_max, D1_sbox_val;   //to save the state of subvolume spinboxes when the current window is hidden
         int T0_sbox_min, T0_sbox_val;   //to save the state of subvolume spinboxes when the current window is hidden
         int T1_sbox_max, T1_sbox_val;   //to save the state of subvolume spinboxes when the current window is hidden
+        int ID;
 
         //CLASS members
         static CExplorerWindow *first;  //pointer to the first window of the multiresolution explorer windows chain
         static CExplorerWindow *last;   //pointer to the last window of the multiresolution explorer windows chain
         static CExplorerWindow *current;//pointer to the current window of the multiresolution explorer windows chain
         static int nInstances;          //number of instantiated objects
+        static int nTotalInstances;
 
         //MUTEX
         QMutex updateGraphicsInProgress;
@@ -190,7 +192,7 @@ class teramanager::CExplorerWindow : public QWidget
         * Resizes  the  given image subvolume in a  newly allocated array using the fastest
         * achievable interpolation method. The image currently shown is used as data source.
         ***********************************************************************************/
-        itm::uint8* getVOI(int x0, int x1, int y0, int y1, int z0, int z1,
+        itm::uint8* getVOI(int x0, int x1, int y0, int y1, int z0, int z1, int t0, int t1,
                       int xDimInterp, int yDimInterp, int zDimInterp) throw (RuntimeException);
 
         /**********************************************************************************
@@ -199,11 +201,11 @@ class teramanager::CExplorerWindow : public QWidget
         static void
             copyVOI(itm::uint8 const * src, //pointer to const data source
                 uint src_dims[5],           //dimensions of "src" along X, Y, Z, channels and T
-                uint src_offset[3],         //VOI's offset along X, Y, Z
-                uint src_count[3],          //VOI's dimensions along X, Y, Z
+                uint src_offset[5],         //VOI's offset along X, Y, Z, <empty> and T
+                uint src_count[5],          //VOI's dimensions along X, Y, Z, <empty> and T
                 itm::uint8* dst,            //pointer to data destination
                 uint dst_dims[5],           //dimensions of "dst" along X, Y, Z, channels and T
-                uint dst_offset[3],         //offset of "dst" along X, Y, Z
+                uint dst_offset[5],         //offset of "dst" along X, Y, Z, <empty> and T
                 uint scaling = 1)           //scaling factor (integer only)
         throw (RuntimeException);
 
@@ -321,6 +323,7 @@ class teramanager::CExplorerWindow : public QWidget
         void Vaa3D_changeYCut1(int s);
         void Vaa3D_changeZCut0(int s);
         void Vaa3D_changeZCut1(int s);
+        void Vaa3D_changeTSlider(int s);
 
         /**********************************************************************************
         * Linked to PMain GUI VOI's widgets.

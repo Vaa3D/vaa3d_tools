@@ -106,7 +106,7 @@ PConverter::PConverter(V3DPluginCallback *callback, QWidget *parent) : QWidget(p
     inPathField    = new QLineEdit(QString(CSettings::instance()->getVCInputPath().c_str()));
     inDirButton = new QPushButton("Browse for dir...");
     inFileButton = new QPushButton("Browse for file...");
-    timeSeriesCheckBox = new QCheckBox("Time series (5D)");
+    timeSeriesCheckBox = new QCheckBox("Time series of");
 
     //import form layout
     inButtonLayout = new QStackedLayout();
@@ -122,8 +122,8 @@ PConverter::PConverter(V3DPluginCallback *callback, QWidget *parent) : QWidget(p
     importFormRow2Layout->addWidget(timeSeriesCheckBox, 0);
     importFormRow2Layout->addStretch(1);
     QVBoxLayout* importFormLayout = new QVBoxLayout();
-    importFormLayout->addLayout(importFormRow1Layout);
     importFormLayout->addLayout(importFormRow2Layout);
+    importFormLayout->addLayout(importFormRow1Layout);
     import_panel->setLayout(importFormLayout);
 
     //conversion form widget

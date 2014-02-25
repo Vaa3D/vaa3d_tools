@@ -229,6 +229,52 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     connect(curveAspectTube, SIGNAL(changed()), this, SLOT(curveAspectChanged()));
     connect(curveAspectSkeleton, SIGNAL(changed()), this, SLOT(curveAspectChanged()));
     connect(curveDimsSpinBox, SIGNAL(valueChanged(int)), this, SLOT(curveDimsChanged(int)));
+    /* ------------------------- "Options" menu: directional shift ---------------- */
+    DirectionalShiftsMenu = optionsMenu->addMenu("Directional shift");
+    /* ------------------------------ x-shift ------------------------------------- */
+    xShiftMenu = new QMenu("X-shift overlap");
+    xShiftWidget = new QWidgetAction(this);
+    xShiftSBox = new QSpinBox();
+    xShiftSBox->setSuffix("\%");
+    xShiftSBox->setMinimum(1);
+    xShiftSBox->setMaximum(99);
+    xShiftSBox->setValue(CSettings::instance()->getTraslX());
+    xShiftWidget->setDefaultWidget(xShiftSBox);
+    xShiftMenu->addAction(xShiftWidget);
+    DirectionalShiftsMenu->addMenu(xShiftMenu);
+    /* ------------------------------ y-shift ------------------------------------- */
+    yShiftMenu = new QMenu("Y-shift overlap");
+    yShiftWidget = new QWidgetAction(this);
+    yShiftSBox = new QSpinBox();
+    yShiftSBox->setSuffix("\%");
+    yShiftSBox->setMinimum(1);
+    yShiftSBox->setMaximum(99);
+    yShiftSBox->setValue(CSettings::instance()->getTraslY());
+    yShiftWidget->setDefaultWidget(yShiftSBox);
+    yShiftMenu->addAction(yShiftWidget);
+    DirectionalShiftsMenu->addMenu(yShiftMenu);
+    /* ------------------------------ z-shift ------------------------------------- */
+    zShiftMenu = new QMenu("Z-shift overlap");
+    zShiftWidget = new QWidgetAction(this);
+    zShiftSBox = new QSpinBox();
+    zShiftSBox->setSuffix("\%");
+    zShiftSBox->setMinimum(1);
+    zShiftSBox->setMaximum(99);
+    zShiftSBox->setValue(CSettings::instance()->getTraslZ());
+    zShiftWidget->setDefaultWidget(zShiftSBox);
+    zShiftMenu->addAction(zShiftWidget);
+    DirectionalShiftsMenu->addMenu(zShiftMenu);
+    /* ------------------------------ t-shift ------------------------------------- */
+    tShiftMenu = new QMenu("T-shift overlap");
+    tShiftWidget = new QWidgetAction(this);
+    tShiftSBox = new QSpinBox();
+    tShiftSBox->setSuffix("\%");
+    tShiftSBox->setMinimum(1);
+    tShiftSBox->setMaximum(99);
+    tShiftSBox->setValue(CSettings::instance()->getTraslT());
+    tShiftWidget->setDefaultWidget(tShiftSBox);
+    tShiftMenu->addAction(tShiftWidget);
+    DirectionalShiftsMenu->addMenu(tShiftMenu);
 
     // "Debug" menu
     debugMenu = menuBar->addMenu("Debug");
@@ -498,7 +544,6 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     cacheSens->installEventFilter(this);
     controlsResetButton = new QPushButton(this);
     controlsResetButton->setIcon(QIcon(":/icons/reset.png"));
-    controlsLineTree = new QLineTree(this, Qt::gray, 0.5, 3, 11);
     zoomInMethod = new QComboBox(this);
     zoomInMethod->addItem("WYSIWYG (5 markers)");
     zoomInMethod->addItem("Foreground (20 markers + mean-shift)");
@@ -571,6 +616,9 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     to_label_4->setAlignment(Qt::AlignCenter);
     refSys = new QGLRefSys(tabs);
     refSys->installEventFilter(this);
+    frameCoord = new QLineEdit();
+    frameCoord->setReadOnly(true);
+    frameCoord->setAlignment(Qt::AlignCenter);
 
     //other widgets
     helpBox = new QHelpBox(this);
@@ -660,6 +708,7 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     // "Global coordinates" panel layout
     QHBoxLayout* global_coordinates_layout = new QHBoxLayout();
     /* ------------- left block ---------------- */
+    QVBoxLayout* leftBlockLayout = new QVBoxLayout();
     QWidget* refSysContainer = new QWidget();
     refSysContainer->setFixedWidth(marginLeft);
     refSysContainer->setStyleSheet(" border-style: solid; border-width: 1px; border-color: rgb(150,150,150);");
@@ -667,6 +716,10 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     refSysContainerLayout->setContentsMargins(1,1,1,1);
     refSysContainerLayout->addWidget(refSys, 1);
     refSysContainer->setLayout(refSysContainerLayout);
+    frameCoord->setFixedWidth(marginLeft);
+    leftBlockLayout->addWidget(refSysContainer, 0);
+    leftBlockLayout->addWidget(frameCoord, 0);
+    leftBlockLayout->setContentsMargins(0,0,0,0);
     /* ----------- central block --------------- */
     QHBoxLayout *xShiftLayout = new QHBoxLayout();
     xShiftLayout->setContentsMargins(0,0,0,0);
@@ -755,7 +808,7 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     rightBlockLayout->addLayout(zGlobalCoordLayout, 0);
     rightBlockLayout->addLayout(tGlobalCoordLayout, 0);
     /* ------------- FINALIZATION -------------- */
-    global_coordinates_layout->addWidget(refSysContainer, 0);
+    global_coordinates_layout->addLayout(leftBlockLayout, 0);
     global_coordinates_layout->addLayout(centralBlockLayout, 0);
     global_coordinates_layout->addLayout(rightBlockLayout, 1);
     globalCoord_panel->setLayout(global_coordinates_layout);
@@ -840,7 +893,6 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     /* -------------------- second row: FINALIZATION -------- */
     zoomControls_layout->addLayout(zoomControls_col1_layout, 0);
     zoomControls_layout->addLayout(zoomControls_col2_layout, 1);
-    zoomControls_layout->addWidget(controlsLineTree, 0);
     zoomControls_layout->addWidget(controlsResetButton, 0);
     /* -------------------- FINALIZATION -------------------- */
     zoomOptions_panel_layout->addLayout(zoomInMethod_layout, 0);
@@ -894,6 +946,10 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     /**/itm::debug(itm::LEV3, "Signals and slots", __itm__current__function__);
     connect(CImport::instance(), SIGNAL(sendOperationOutcome(itm::RuntimeException*, qint64)), this, SLOT(importDone(itm::RuntimeException*, qint64)), Qt::QueuedConnection);
     connect(volMapSizeSBox, SIGNAL(valueChanged(int)), this, SLOT(settingsChanged(int)));
+    connect(xShiftSBox, SIGNAL(valueChanged(int)), this, SLOT(settingsChanged(int)));
+    connect(yShiftSBox, SIGNAL(valueChanged(int)), this, SLOT(settingsChanged(int)));
+    connect(zShiftSBox, SIGNAL(valueChanged(int)), this, SLOT(settingsChanged(int)));
+    connect(tShiftSBox, SIGNAL(valueChanged(int)), this, SLOT(settingsChanged(int)));
     connect(Vdim_sbox, SIGNAL(valueChanged(int)), this, SLOT(settingsChanged(int)));
     connect(Hdim_sbox, SIGNAL(valueChanged(int)), this, SLOT(settingsChanged(int)));
     connect(Ddim_sbox, SIGNAL(valueChanged(int)), this, SLOT(settingsChanged(int)));
@@ -1012,6 +1068,7 @@ void PMain::reset()
     D1_sbox->setValue(0);
     T0_sbox->setValue(0);
     T1_sbox->setValue(0);
+    frameCoord->setText("");
     refSys->setXRotation(200);
     refSys->setYRotation(50);
     refSys->setZRotation(0);
@@ -1466,12 +1523,13 @@ void PMain::importDone(RuntimeException *ex, qint64 elapsed_time)
         D1_sbox->setMinimum(1);
         D1_sbox->setMaximum(volume->getDIM_D());
         D1_sbox->setValue(volume->getDIM_D());        
-        T0_sbox->setMinimum(1);
-        T0_sbox->setMaximum(CImport::instance()->getVMapTDim());
-        T0_sbox->setValue(1);
-        T1_sbox->setMinimum(1);
-        T1_sbox->setMaximum(CImport::instance()->getVMapTDim());
-        T1_sbox->setValue(CImport::instance()->getVMapTDim());
+        T0_sbox->setMinimum(0);
+        T0_sbox->setMaximum(CImport::instance()->getVMapTDim()-1);
+        T0_sbox->setValue(0);
+        T1_sbox->setMinimum(0);
+        T1_sbox->setMaximum(CImport::instance()->getVMapTDim()-1);
+        T1_sbox->setValue(CImport::instance()->getVMapTDim()-1);
+        frameCoord->setText(strprintf("t = %d/%d", 0, volume->getDIM_T()-1).c_str());
         globalCoord_panel->setEnabled(true);
 
         //updating menu items
@@ -1584,6 +1642,10 @@ void PMain::settingsChanged(int)
     CSettings::instance()->setVOIdimH(Hdim_sbox->value());
     CSettings::instance()->setVOIdimD(Ddim_sbox->value());
     CSettings::instance()->setVOIdimT(Tdim_sbox->value());
+    CSettings::instance()->setTraslX(xShiftSBox->value());
+    CSettings::instance()->setTraslY(yShiftSBox->value());
+    CSettings::instance()->setTraslZ(zShiftSBox->value());
+    CSettings::instance()->setTraslT(tShiftSBox->value());
     CSettings::instance()->writeSettings();
 }
 
@@ -1663,7 +1725,7 @@ void PMain::traslXposClicked()
     CExplorerWindow* expl = CExplorerWindow::getCurrent();
     if(expl && expl->isActive && !expl->toBeClosed)
     {
-        expl->newView((expl->volH1-expl->volH0)/2 + (expl->volH1-expl->volH0)*CSettings::instance()->getTraslX()/100.0f,
+        expl->newView((expl->volH1-expl->volH0)/2 + (expl->volH1-expl->volH0)*(100-CSettings::instance()->getTraslX())/100.0f,
                       (expl->volV1-expl->volV0)/2,
                       (expl->volD1-expl->volD0)/2, expl->volResIndex, expl->volT0, expl->volT1, false);
     }
@@ -1675,7 +1737,7 @@ void PMain::traslXnegClicked()
     CExplorerWindow* expl = CExplorerWindow::getCurrent();
     if(expl && expl->isActive && !expl->toBeClosed)
     {
-        expl->newView((expl->volH1-expl->volH0)/2 - (expl->volH1-expl->volH0)*CSettings::instance()->getTraslX()/100.0f,
+        expl->newView((expl->volH1-expl->volH0)/2 - (expl->volH1-expl->volH0)*(100-CSettings::instance()->getTraslX())/100.0f,
                       (expl->volV1-expl->volV0)/2,
                       (expl->volD1-expl->volD0)/2, expl->volResIndex, expl->volT0, expl->volT1, false);
     }
@@ -1688,7 +1750,7 @@ void PMain::traslYposClicked()
     if(expl && expl->isActive && !expl->toBeClosed)
     {
         expl->newView((expl->volH1-expl->volH0)/2,
-                      (expl->volV1-expl->volV0)/2 + (expl->volV1-expl->volV0)*CSettings::instance()->getTraslY()/100.0f,
+                      (expl->volV1-expl->volV0)/2 + (expl->volV1-expl->volV0)*(100-CSettings::instance()->getTraslY())/100.0f,
                       (expl->volD1-expl->volD0)/2, expl->volResIndex, expl->volT0, expl->volT1, false);
     }
 }
@@ -1700,7 +1762,7 @@ void PMain::traslYnegClicked()
     if(expl && expl->isActive && !expl->toBeClosed)
     {
         expl->newView((expl->volH1-expl->volH0)/2,
-                      (expl->volV1-expl->volV0)/2 - (expl->volV1-expl->volV0)*CSettings::instance()->getTraslY()/100.0f,
+                      (expl->volV1-expl->volV0)/2 - (expl->volV1-expl->volV0)*(100-CSettings::instance()->getTraslY())/100.0f,
                       (expl->volD1-expl->volD0)/2, expl->volResIndex, expl->volT0, expl->volT1, false);
     }
 }
@@ -1713,7 +1775,7 @@ void PMain::traslZposClicked()
     {
         expl->newView((expl->volH1-expl->volH0)/2,
                       (expl->volV1-expl->volV0)/2,
-                      (expl->volD1-expl->volD0)/2 + (expl->volD1-expl->volD0)*CSettings::instance()->getTraslZ()/100.0f, expl->volResIndex, expl->volT0, expl->volT1, false);
+                      (expl->volD1-expl->volD0)/2 + (expl->volD1-expl->volD0)*(100-CSettings::instance()->getTraslZ())/100.0f, expl->volResIndex, expl->volT0, expl->volT1, false);
     }
 }
 void PMain::traslZnegClicked()
@@ -1725,7 +1787,7 @@ void PMain::traslZnegClicked()
     {
         expl->newView((expl->volH1-expl->volH0)/2,
                       (expl->volV1-expl->volV0)/2,
-                      (expl->volD1-expl->volD0)/2 - (expl->volD1-expl->volD0)*CSettings::instance()->getTraslZ()/100.0f, expl->volResIndex, expl->volT0, expl->volT1, false);
+                      (expl->volD1-expl->volD0)/2 - (expl->volD1-expl->volD0)*(100-CSettings::instance()->getTraslZ())/100.0f, expl->volResIndex, expl->volT0, expl->volT1, false);
     }
 }
 void PMain::traslTposClicked()
@@ -1735,7 +1797,12 @@ void PMain::traslTposClicked()
     CExplorerWindow* expl = CExplorerWindow::getCurrent();
     if(expl && expl->isActive && !expl->toBeClosed)
     {
-        QMessageBox::information(this, "To be implemented", "The 5D feature is currently under development. Please stay tuned!");
+        expl->newView((expl->volH1-expl->volH0)/2,
+                      (expl->volV1-expl->volV0)/2,
+                      (expl->volD1-expl->volD0)/2,
+                      expl->volResIndex,
+                      expl->volT0 + (expl->volT1-expl->volT0)*(100-CSettings::instance()->getTraslT())/100.0f,
+                      expl->volT1 + (expl->volT1-expl->volT0)*(100-CSettings::instance()->getTraslT())/100.0f, false);
     }
 }
 void PMain::traslTnegClicked()
@@ -1745,7 +1812,12 @@ void PMain::traslTnegClicked()
     CExplorerWindow* expl = CExplorerWindow::getCurrent();
     if(expl && expl->isActive && !expl->toBeClosed)
     {
-        QMessageBox::information(this, "To be implemented", "The 5D feature is currently under development. Please stay tuned!");
+        expl->newView((expl->volH1-expl->volH0)/2,
+                      (expl->volV1-expl->volV0)/2,
+                      (expl->volD1-expl->volD0)/2,
+                      expl->volResIndex,
+                      expl->volT0 - (expl->volT1-expl->volT0)*(100-CSettings::instance()->getTraslT())/100.0f,
+                      expl->volT1 - (expl->volT1-expl->volT0)*(100-CSettings::instance()->getTraslT())/100.0f, false);
     }
 }
 
@@ -1963,69 +2035,69 @@ void PMain::debugAction1Triggered()
 //    }
 //    #endif
 
-    CExplorerWindow* cur_win = CExplorerWindow::getCurrent();
-    if(cur_win)
-    {
-        printf("Retrieve Image4DSimple\n");
-        Image4DSimple *image4D = V3D_env->getImage(cur_win->window);
-        if(!image4D)
-            printf("ERROR!\n");
+//    CExplorerWindow* cur_win = CExplorerWindow::getCurrent();
+//    if(cur_win)
+//    {
+//        printf("Retrieve Image4DSimple\n");
+//        Image4DSimple *image4D = V3D_env->getImage(cur_win->window);
+//        if(!image4D)
+//            printf("ERROR!\n");
 
-        // generate time series from the currently displayed image
-        V3DLONG xDim = cur_win->volH1 - cur_win->volH0;
-        V3DLONG yDim = cur_win->volV1 - cur_win->volV0;
-        V3DLONG zDim = cur_win->volD1 - cur_win->volD0;
-        V3DLONG cDim = cur_win->nchannels;
-        V3DLONG tDim = QInputDialog::getInt(this, "Generation of 5D data", "Number of time frames", 10, 2, 1000);
-        V3DLONG size = xDim*yDim*zDim*cDim*tDim;
+//        // generate time series from the currently displayed image
+//        V3DLONG xDim = cur_win->volH1 - cur_win->volH0;
+//        V3DLONG yDim = cur_win->volV1 - cur_win->volV0;
+//        V3DLONG zDim = cur_win->volD1 - cur_win->volD0;
+//        V3DLONG cDim = cur_win->nchannels;
+//        V3DLONG tDim = QInputDialog::getInt(this, "Generation of 5D data", "Number of time frames", 10, 2, 1000);
+//        V3DLONG size = xDim*yDim*zDim*cDim*tDim;
 
-        printf("Allocate memory \n");
-        uint8 *data5D = new uint8[size];
-        uint8 *data4D = image4D->getRawData();
-        printf("Generate 5D series\n");
-        for(int t=0; t<tDim; t++)
-        {
-            float w = static_cast<float>(t)/(tDim-1);
-            V3DLONG st = t*xDim*yDim*zDim*cDim;
-            for(int c=0; c<cDim; c++)
-            {
-                V3DLONG sc = c*xDim*yDim*zDim;
-                for(int z=0; z<zDim; z++)
-                {
-                    V3DLONG sz = z*xDim*yDim;
-                    for(int y=0; y<yDim; y++)
-                    {
-                        V3DLONG sy = y*xDim;
-                        for(int x=0; x<xDim; x++)
-                        {
-                            /*if(t != 0 &&
-                               (z % (tDim-t) == 0 ||
-                               y % (tDim-t) == 0 ||
-                               x % (tDim-t) == 0))
-                                data5D[st+sc+sz+sy+x] = 0;
-                            else
-                                data5D[st+sc+sz+sy+x] = data4D[sc+sz+sy+x];*/
-                            //data5D[st+sc+sz+sy+x] = data4D[sc+sz+sy+x] + rand()%50;
-                            data5D[st+sc+sz+sy+x] = static_cast<uint8>((1-w)*data4D[sc+sz+sy+x] + w*(rand()%256) +0.5f);
-                        }
-                    }
-                }
-            }
-        }
+//        printf("Allocate memory \n");
+//        uint8 *data5D = new uint8[size];
+//        uint8 *data4D = image4D->getRawData();
+//        printf("Generate 5D series\n");
+//        for(int t=0; t<tDim; t++)
+//        {
+//            float w = static_cast<float>(t)/(tDim-1);
+//            V3DLONG st = t*xDim*yDim*zDim*cDim;
+//            for(int c=0; c<cDim; c++)
+//            {
+//                V3DLONG sc = c*xDim*yDim*zDim;
+//                for(int z=0; z<zDim; z++)
+//                {
+//                    V3DLONG sz = z*xDim*yDim;
+//                    for(int y=0; y<yDim; y++)
+//                    {
+//                        V3DLONG sy = y*xDim;
+//                        for(int x=0; x<xDim; x++)
+//                        {
+//                            /*if(t != 0 &&
+//                               (z % (tDim-t) == 0 ||
+//                               y % (tDim-t) == 0 ||
+//                               x % (tDim-t) == 0))
+//                                data5D[st+sc+sz+sy+x] = 0;
+//                            else
+//                                data5D[st+sc+sz+sy+x] = data4D[sc+sz+sy+x];*/
+//                            //data5D[st+sc+sz+sy+x] = data4D[sc+sz+sy+x] + rand()%50;
+//                            data5D[st+sc+sz+sy+x] = static_cast<uint8>((1-w)*data4D[sc+sz+sy+x] + w*(rand()%256) +0.5f);
+//                        }
+//                    }
+//                }
+//            }
+//        }
 
-        printf("Create new Image4DSimple, dimensions are x(%d), y(%d), z(%d), c(%d), t(%d)\n", xDim, yDim, zDim, cDim, tDim);
-        Image4DSimple* image5D = new Image4DSimple();
-        image5D->setFileName("5D Image");
-        image5D->setData(data5D, xDim, yDim, zDim, cDim*tDim, V3D_UINT8);
-        image5D->setTDim(tDim);
-        image5D->setTimePackType(TIME_PACK_C);
+//        printf("Create new Image4DSimple, dimensions are x(%d), y(%d), z(%d), c(%d), t(%d)\n", xDim, yDim, zDim, cDim, tDim);
+//        Image4DSimple* image5D = new Image4DSimple();
+//        image5D->setFileName("5D Image");
+//        image5D->setData(data5D, xDim, yDim, zDim, cDim*tDim, V3D_UINT8);
+//        image5D->setTDim(tDim);
+//        image5D->setTimePackType(TIME_PACK_C);
 
-        printf("Display 5D Image in a new window\n");
-        v3dhandle window5D= V3D_env->newImageWindow("5D Image");
-        XFormWidget* treeview = (XFormWidget*)window5D;
-        treeview->setWindowState(Qt::WindowMinimized);
-        V3D_env->setImage(window5D, image5D);
-        V3D_env->open3DWindow(window5D);
+//        printf("Display 5D Image in a new window\n");
+//        v3dhandle window5D= V3D_env->newImageWindow("5D Image");
+//        XFormWidget* treeview = (XFormWidget*)window5D;
+//        treeview->setWindowState(Qt::WindowMinimized);
+//        V3D_env->setImage(window5D, image5D);
+//        V3D_env->open3DWindow(window5D);
 
 //        image4D->setData(data5D, xDim, yDim, zDim, cDim*tDim, V3D_UINT8);
 //        image4D->setTDim(tDim);
@@ -2034,7 +2106,7 @@ void PMain::debugAction1Triggered()
 //        //V3D_env->pushTimepointIn3DWindow(cur_win->window, 9);
 //        cur_win->view3DWidget->updateGL();
 //        //cur_win->view3DWidget->updateImageData();
-    }
+//    }
 
 }
 
