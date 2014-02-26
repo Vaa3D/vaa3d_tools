@@ -1156,6 +1156,8 @@ void PMain::openVolume(string path /* = "" */)
                                                                     );
             #endif
 
+            /**/itm::debug(itm::LEV3, strprintf("import_path = %s", qPrintable(import_path)).c_str(), __itm__current__function__);
+
             if (import_path.isEmpty())
                 return;
         }
