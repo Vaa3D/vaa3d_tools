@@ -922,7 +922,8 @@ throw (RuntimeException)
         z1m = z1;       // not yet supported (@TODO)
 
         // check for intersection contained in the VOI (if it does, optimized VOI loading is disabled)
-        if(t0 == t1)
+        if(t0 == t0a &&
+           t1 == t1a)        // missing piece is along X,Y,Z
         {
             t0m = t0;
             t1m = t1;
