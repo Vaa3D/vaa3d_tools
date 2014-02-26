@@ -921,30 +921,41 @@ throw (RuntimeException)
         z0m = z0;       // not yet supported (@TODO)
         z1m = z1;       // not yet supported (@TODO)
 
-        // check for intersection contained in the VOI (if it does, optimized VOI loading is disabled)
-        if(t0 == t0a &&
-           t1 == t1a)        // missing piece is along X,Y,Z
+        // if all data is available along XYZ, trying to speed up loading along T by requesting only the missing frames
+        if( x0 == x0a && x1 == x1a &&
+            y0 == y0a && y1 == y1a &&
+            z0 == z0a && z1 == z1a)
         {
-            t0m = t0;
-            t1m = t1;
-        }
-        else if(volT1 == t1a)
-        {
-            t0m = t1a+1;
-            t1m = t1;
-            itm::debug(LEV3, strprintf("missing piece along T is [%d,%d]", t0m, t1m).c_str(), __itm__current__function__);
-        }
-        else if(volT0 == t0a)
-        {
-            t0m = t0;
-            t1m = t0a-1;
-            itm::debug(LEV3, strprintf("missing piece along T is [%d,%d]", t0m, t1m).c_str(), __itm__current__function__);
+            // check for intersection contained in the VOI (if it does, optimized VOI loading is disabled)
+            if(t0 == t0a &&
+               t1 == t1a)        // missing piece is along X,Y,Z
+            {
+                t0m = t0;
+                t1m = t1;
+            }
+            else if(volT1 == t1a)
+            {
+                t0m = t1a+1;
+                t1m = t1;
+                itm::debug(LEV3, strprintf("missing piece along T is [%d,%d]", t0m, t1m).c_str(), __itm__current__function__);
+            }
+            else if(volT0 == t0a)
+            {
+                t0m = t0;
+                t1m = t0a-1;
+                itm::debug(LEV3, strprintf("missing piece along T is [%d,%d]", t0m, t1m).c_str(), __itm__current__function__);
+            }
+            else
+            {
+                t0m = t1a;
+                t1m = t1;
+                itm::warning(strprintf("internal intersection detected, [%d,%d] is within [%d,%d], disabling optimized VOI loading", t0a, t1a, volT0, volT1).c_str(), __itm__current__function__);
+            }
         }
         else
         {
-            t0m = t1a;
+            t0m = t0;
             t1m = t1;
-            itm::warning(strprintf("internal intersection detected, [%d,%d] is within [%d,%d], disabling optimized VOI loading", t0a, t1a, volT0, volT1).c_str(), __itm__current__function__);
         }
     }
 
@@ -997,9 +1008,9 @@ void
         uint scaling /*= 1 */)      //scaling factor (integer only)
 throw (RuntimeException)
 {
-    /**/itm::debug(itm::LEV1, strprintf("src_dims = (%d x %d x %d x %d x %d), src_offset = (%d, %d, %d, %d), src_count = (%d, %d, %d, %d), dst_dims = (%d x %d x %d x %d x %d), dst_offset = (%d, %d, %d, %d), scaling = %d",
-                                        src_dims[0], src_dims[1],src_dims[2],src_dims[3],src_dims[4], src_offset[0],src_offset[1],src_offset[2],src_offset[4],src_count[0],src_count[1],src_count[2],src_count[4],
-                                        dst_dims[0], dst_dims[1],dst_dims[2],dst_dims[3],dst_dims[4], dst_offset[0],dst_offset[1],dst_offset[2],dst_offset[4],scaling).c_str(), __itm__current__function__);
+    /**/itm::debug(itm::LEV1, strprintf("src_dims = (%d x %d x %d x %d x %d), src_offset = (%d, %d, %d, %d, %d), src_count = (%d, %d, %d, %d, %d), dst_dims = (%d x %d x %d x %d x %d), dst_offset = (%d, %d, %d, %d, %d), scaling = %d",
+                                        src_dims[0], src_dims[1],src_dims[2],src_dims[3],src_dims[4], src_offset[0],src_offset[1],src_offset[2],src_offset[3], src_offset[4],src_count[0],src_count[1],src_count[2],src_count[3], src_count[4],
+                                        dst_dims[0], dst_dims[1],dst_dims[2],dst_dims[3],dst_dims[4], dst_offset[0],dst_offset[1],dst_offset[2],dst_offset[3], dst_offset[4],scaling).c_str(), __itm__current__function__);
 
     //if source and destination are the same thing, returning without doing anything
     if(src == dst)
