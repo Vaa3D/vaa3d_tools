@@ -922,7 +922,12 @@ throw (RuntimeException)
         z1m = z1;       // not yet supported (@TODO)
 
         // check for intersection contained in the VOI (if it does, optimized VOI loading is disabled)
-        if(volT1 == t1a)
+        if(t0 == t1)
+        {
+            t0m = t0;
+            t1m = t1;
+        }
+        else if(volT1 == t1a)
         {
             t0m = t1a+1;
             t1m = t1;

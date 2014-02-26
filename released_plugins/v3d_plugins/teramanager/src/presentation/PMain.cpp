@@ -1529,7 +1529,8 @@ void PMain::importDone(RuntimeException *ex, qint64 elapsed_time)
         T1_sbox->setMinimum(0);
         T1_sbox->setMaximum(CImport::instance()->getVMapTDim()-1);
         T1_sbox->setValue(CImport::instance()->getVMapTDim()-1);
-        frameCoord->setText(strprintf("t = %d/%d", 0, volume->getDIM_T()-1).c_str());
+        if(volume->getDIM_T() > 1)
+            frameCoord->setText(strprintf("t = %d/%d", 0, volume->getDIM_T()-1).c_str());
         globalCoord_panel->setEnabled(true);
 
         //updating menu items
@@ -1576,6 +1577,15 @@ void PMain::importDone(RuntimeException *ex, qint64 elapsed_time)
         traslYlabel->setText("<font size=\"4\" color=\"green\"><b>Y</b></font>");
         traslZlabel->setText("<font size=\"4\" color=\"blue\"><b>Z</b></font>");
         traslTlabel->setText("<font size=\"4\" color=\"gray\"><b>t</b></font>");
+
+        //disabling useless time-related widgets if data is < 5D
+        to_label_4->setEnabled(volume->getDIM_T() > 1);
+        frameCoord->setEnabled(volume->getDIM_T() > 1);
+        traslTpos->setEnabled(volume->getDIM_T() > 1);
+        traslTlabel->setEnabled(volume->getDIM_T() > 1);
+        traslTneg->setEnabled(volume->getDIM_T() > 1);
+        T0_sbox->setEnabled(volume->getDIM_T() > 1);
+        T1_sbox->setEnabled(volume->getDIM_T() > 1);
 
 
         //instantiating CAnnotations

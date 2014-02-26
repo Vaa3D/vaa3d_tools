@@ -11,6 +11,15 @@ ties names are:
 - Rem: a feature no longer available
 
 ============================================================================================
+Version 0.9.53
+February 26th, 2014
+--------------------------------------------------------------------------------------------
+- Opt: small improvement in TeraFly's GUI when non-5D  data is imported.  In particular, the
+       widgets related to 5D data are disabled.
+- Fix: fixed bug which caused "Invalid VOI selected along T" error on non-5D data.
+--------------------------------------------------------------------------------------------
+
+
 Version 0.9.52
 February 26th, 2014
 --------------------------------------------------------------------------------------------

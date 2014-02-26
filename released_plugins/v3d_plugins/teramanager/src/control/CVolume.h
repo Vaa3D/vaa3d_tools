@@ -156,7 +156,7 @@ class teramanager::CVolume : public QThread
             voiT0 = (_T0 >=0)                   ? _T0 : 0;
             voiT1 = (_T1 <  volume->getDIM_T()) ? _T1 : volume->getDIM_T()-1;
             if(voiT1 - voiT0 < 0)
-                throw itm::RuntimeException("Invalid VOI selected along T");
+                throw itm::RuntimeException(itm::strprintf("Invalid VOI selected along T: [%d,%d]", voiT0, voiT1).c_str());
         }
 
         friend class CExplorerWindow;
