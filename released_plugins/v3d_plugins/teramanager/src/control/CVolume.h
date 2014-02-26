@@ -123,7 +123,7 @@ class teramanager::CVolume : public QThread
         static float scaleVCoord(float coord, int srcRes, int dstRes) throw (RuntimeException);
         static float scaleHCoord(float coord, int srcRes, int dstRes) throw (RuntimeException);
         static float scaleDCoord(float coord, int srcRes, int dstRes) throw (RuntimeException);
-        void setVoi(QWidget* _sourceObject, int _voiResIndex, int _V0, int _V1, int _H0, int _H1, int _D0, int _D1, int _T0, int _T1) throw (RuntimeException)
+        void setVoi(QWidget* _sourceObject, int _voiResIndex, int _V0, int _V1, int _H0, int _H1, int _D0, int _D1, int _T0, int _T1) throw (itm::RuntimeException)
         {
             /**/itm::debug(itm::LEV1, strprintf("_voiResIndex = %d, _V0 = %d, _V1=%d, _H0 = %d, _H1=%d, _D0 = %d, _D1=%d, _T0 = %d, _T1=%d",
                                                 _voiResIndex, _V0, _V1, _H0, _H1, _D0, _D1, _T0, _T1).c_str(), __itm__current__function__);
@@ -145,9 +145,19 @@ class teramanager::CVolume : public QThread
 
             //---- Alessandro 2013-09-03: added check to detect invalid VOI
             if(voiV1 - voiV0 <= 0 || voiH1 - voiH0 <= 0 || voiD1 - voiD0 <= 0 || voiT1 - voiT0 < 0)
-                throw RuntimeException("Invalid VOI selected");
+                throw itm::RuntimeException("Invalid VOI selected");
         }
         void setSource(QWidget* _sourceObject){source =_sourceObject;}
+
+        void setVOI_T(int _T0, int _T1) throw (itm::RuntimeException)
+        {
+            /**/itm::debug(itm::LEV1, strprintf("_T0 = %d, _T1=%d",_T0, _T1).c_str(), __itm__current__function__);
+            VirtualVolume* volume = CImport::instance()->getVolume(voiResIndex);
+            voiT0 = (_T0 >=0)                   ? _T0 : 0;
+            voiT1 = (_T1 <  volume->getDIM_T()) ? _T1 : volume->getDIM_T()-1;
+            if(voiT1 - voiT0 < 0)
+                throw itm::RuntimeException("Invalid VOI selected along T");
+        }
 
         friend class CExplorerWindow;
 

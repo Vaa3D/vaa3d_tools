@@ -594,7 +594,7 @@ void CExplorerWindow::loadingDone(uint8 *data, RuntimeException *ex, void* sourc
                 {
                     /**/itm::debug(itm::LEV3, strprintf("title = %s: saving elapsed time to log", titleShort.c_str()).c_str(), __itm__current__function__);
                     sprintf(message, "Successfully generated view %s", title.c_str());
-                    PLog::getInstance()->appendActual(prev->zoomInTimer.elapsed(), message);
+                    PLog::getInstance()->appendActual(prev->newViewTimer.elapsed(), message);
                 }
             }
         }
@@ -618,99 +618,115 @@ CExplorerWindow::newView(
     int resolution,                                 //resolution index of the view requested
     int t0, int t1,                                 //time frames selection
     bool fromVaa3Dcoordinates /*= false*/,          //if coordinates were obtained from Vaa3D
-    int dx/*=-1*/, int dy/*=-1*/, int dz/*=-1*/,    //VOI [x-dx,x+dx), [y-dy,y+dy), [z-dz,z+dz)
-    int x0/*=-1*/, int y0/*=-1*/, int z0/*=-1*/)    //VOI [x0, x), [y0, y), [z0, z)
+    int dx/*=-1*/, int dy/*=-1*/, int dz/*=-1*/,    //VOI [x-dx,x+dx), [y-dy,y+dy), [z-dz,z+dz), [t0, t1]
+    int x0/*=-1*/, int y0/*=-1*/, int z0/*=-1*/)    //VOI [x0, x), [y0, y), [z0, z), [t0, t1]
 {
     /**/itm::debug(itm::LEV1, strprintf("title = %s, x = %d, y = %d, z = %d, res = %d, dx = %d, dy = %d, dz = %d, x0 = %d, y0 = %d, z0 = %d, t0 = %d, t1 = %d",
                                         titleShort.c_str(),  x, y, z, resolution, dx, dy, dz, x0, y0, z0, t0, t1).c_str(), __itm__current__function__);
 
-    //checking preconditions
+    // check precondition #1: active window
     if(!isActive || toBeClosed)
     {
         QMessageBox::warning(0, "Unexpected behaviour", "Precondition check \"!isActive || toBeClosed\" failed. Please contact the developers");
         return;
     }
-
-    //deactivating current window and processing all pending events
-    setActive(false);
-    QApplication::processEvents();
-
-    //after processEvents(), it might be that this windows is no longer valid
-    if(toBeClosed)
-        return;
-
-    //checking preconditions with automatic correction, where possible
+    // check precondition #2: valid resolution
     if(resolution >= CImport::instance()->getResolutions())
         resolution = volResIndex;
 
-    zoomInTimer.restart();
+
+    // deactivate current window and processing all pending events
+    setActive(false);
+    QApplication::processEvents();
+
+    // after processEvents(), it might be that this windows is no longer valid, then terminating
+    if(toBeClosed)
+        return;
+
+    // restart timer (measures the time needed to switch to a new view)
+    newViewTimer.restart();
+
 
     try
     {
-        //putting GUI in waiting state
+        // set GUI to waiting state
         view3DWidget->setCursor(Qt::WaitCursor);
         PMain& pMain = *(PMain::getInstance());
         pMain.progressBar->setEnabled(true);
         pMain.progressBar->setMinimum(0);
         pMain.progressBar->setMaximum(0);
-        pMain.statusBar->showMessage("Changing resolution...");
+        pMain.statusBar->showMessage("Loading image data...");
 
-        //scaling VOI to the given resolution
-        float ratio = static_cast<float>(CImport::instance()->getVolume(resolution)->getDIM_D())/CImport::instance()->getVolume(volResIndex)->getDIM_D();
+
+
+        // scale VOI coordinates to the reference system of the target resolution
+        float ratioX = static_cast<float>(CImport::instance()->getVolume(resolution)->getDIM_H())/CImport::instance()->getVolume(volResIndex)->getDIM_H();
+        float ratioY = static_cast<float>(CImport::instance()->getVolume(resolution)->getDIM_V())/CImport::instance()->getVolume(volResIndex)->getDIM_V();
+        float ratioZ = static_cast<float>(CImport::instance()->getVolume(resolution)->getDIM_D())/CImport::instance()->getVolume(volResIndex)->getDIM_D();
         x = getGlobalHCoord(x, resolution, fromVaa3Dcoordinates, false, __itm__current__function__);
         y = getGlobalVCoord(y, resolution, fromVaa3Dcoordinates, false, __itm__current__function__);
         z = getGlobalDCoord(z, resolution, fromVaa3Dcoordinates, false, __itm__current__function__);
         if(x0 != -1)
             x0 = getGlobalHCoord(x0, resolution, fromVaa3Dcoordinates, false, __itm__current__function__);
         else
-            dx = dx == -1 ? int_inf : static_cast<int>(dx*ratio+0.5f);
+            dx = dx == -1 ? int_inf : static_cast<int>(dx*ratioX+0.5f);
         if(y0 != -1)
             y0 = getGlobalVCoord(y0, resolution, fromVaa3Dcoordinates, false, __itm__current__function__);
         else
-            dy = dy == -1 ? int_inf : static_cast<int>(dy*ratio+0.5f);
+            dy = dy == -1 ? int_inf : static_cast<int>(dy*ratioY+0.5f);
         if(z0 != -1)
             z0 = getGlobalDCoord(z0, resolution, fromVaa3Dcoordinates, false, __itm__current__function__);
         else
-            dz = dz == -1 ? int_inf : static_cast<int>(dz*ratio+0.5f);
+            dz = dz == -1 ? int_inf : static_cast<int>(dz*ratioZ+0.5f);
 
-        //cropping bounding box if its larger than the maximum allowed
+
+
+        // crop VOI if its larger than the maximum allowed
+        // modality #1: VOI = [x-dx,x+dx), [y-dy,y+dy), [z-dz,z+dz), [t0, t1]
         if(dx != -1 && dy != -1 && dz != -1)
         {
-            /**/itm::debug(itm::LEV_MAX, strprintf("title = %s, cropping bbox dims from (%d,%d,%d) to...", titleShort.c_str(),  dx, dy, dz).c_str(), __itm__current__function__);
-
-            dx = std::min(dx, static_cast<int>(pMain.Hdim_sbox->value()/2.0f+0.5f));
-            dy = std::min(dy, static_cast<int>(pMain.Vdim_sbox->value()/2.0f+0.5f));
-            dz = std::min(dz, static_cast<int>(pMain.Ddim_sbox->value()/2.0f+0.5f));
-
+            /**/itm::debug(itm::LEV_MAX, strprintf("title = %s, cropping bbox dims from (%d,%d,%d) t[%d,%d] to...", titleShort.c_str(),  dx, dy, dz, t0, t1).c_str(), __itm__current__function__);
+            dx = std::min(dx, round(pMain.Hdim_sbox->value()/2.0f));
+            dy = std::min(dy, round(pMain.Vdim_sbox->value()/2.0f));
+            dz = std::min(dz, round(pMain.Ddim_sbox->value()/2.0f));
+            t0 = std::max(0, std::min(t0,CImport::instance()->getVolume(volResIndex)->getDIM_T()-1));
+            t1 = std::max(0, std::min(t1,CImport::instance()->getVolume(volResIndex)->getDIM_T()-1));
+            if(t1-t0+1 > pMain.Tdim_sbox->value())
+                t1 = t0 + pMain.Tdim_sbox->value();
             /**/itm::debug(itm::LEV_MAX, strprintf("title = %s, ...to (%d,%d,%d)", titleShort.c_str(),  dx, dy, dz).c_str(), __itm__current__function__);
         }
+        // modality #2: VOI = [x0, x), [y0, y), [z0, z), [t0, t1]
         else
         {
-            /**/itm::debug(itm::LEV_MAX, strprintf("title = %s, cropping bbox dims from [%d,%d) [%d,%d) [%d,%d) to...", titleShort.c_str(),  x0, x, y0, y, z0, z).c_str(), __itm__current__function__);
-
+            /**/itm::debug(itm::LEV_MAX, strprintf("title = %s, cropping bbox dims from [%d,%d) [%d,%d) [%d,%d) [%d,%d] to...", titleShort.c_str(),  x0, x, y0, y, z0, z, t0, t1).c_str(), __itm__current__function__);
             if(x - x0 > pMain.Hdim_sbox->value())
             {
                 float margin = ( (x - x0) - pMain.Hdim_sbox->value() )/2.0f ;
-                x  = static_cast<int>(round(x  - margin));
-                x0 = static_cast<int>(round(x0 + margin));
+                x  = round(x  - margin);
+                x0 = round(x0 + margin);
             }
             if(y - y0 > pMain.Vdim_sbox->value())
             {
                 float margin = ( (y - y0) - pMain.Vdim_sbox->value() )/2.0f ;
-                y  = static_cast<int>(round(y  - margin));
-                y0 = static_cast<int>(round(y0 + margin));
+                y  = round(y  - margin);
+                y0 = round(y0 + margin);
             }
             if(z - z0 > pMain.Ddim_sbox->value())
             {
                 float margin = ( (z - z0) - pMain.Ddim_sbox->value() )/2.0f ;
-                z  = static_cast<int>(round(z  - margin));
-                z0 = static_cast<int>(round(z0 + margin));
+                z  = round(z  - margin);
+                z0 = round(z0 + margin);
             }
-
-            /**/itm::debug(itm::LEV_MAX, strprintf("title = %s, ...to [%d,%d) [%d,%d) [%d,%d)", titleShort.c_str(),  x0, x, y0, y, z0, z).c_str(), __itm__current__function__);
+            t0 = std::max(0, std::min(t0,CImport::instance()->getVolume(volResIndex)->getDIM_T()-1));
+            t1 = std::max(0, std::min(t1,CImport::instance()->getVolume(volResIndex)->getDIM_T()-1));
+            if(t1-t0+1 > pMain.Tdim_sbox->value())
+                t1 = t0 + pMain.Tdim_sbox->value();
+            /**/itm::debug(itm::LEV_MAX, strprintf("title = %s, ...to [%d,%d) [%d,%d) [%d,%d) [%d,%d]", titleShort.c_str(),  x0, x, y0, y, z0, z, t0, t1).c_str(), __itm__current__function__);
         }
 
-        //preparing VOI for loading (the actual VOI that can be loaded may differ from the one selected, e.g. along volume's borders)
+
+
+        // ask CVolume to check (and correct) for a valid VOI
         CVolume* cVolume = CVolume::instance();
         try
         {
@@ -729,10 +745,12 @@ CExplorerWindow::newView(
             return;
         }
 
-        //saving min, max and values of PMain GUI VOI's widgets
+
+        // save the state of PMain GUI VOI's widgets
         saveSubvolSpinboxState();
 
-        //disconnecting current window from GUI's listeners and event filters
+
+        // disconnect current window from GUI's listeners and event filters
         disconnect(CVolume::instance(), SIGNAL(sendOperationOutcome(itm::uint8*, itm::RuntimeException*,void*,qint64, QString, int)), this, SLOT(loadingDone(itm::uint8*, itm::RuntimeException*,void*,qint64, QString, int)));
         disconnect(view3DWidget, SIGNAL(changeXCut0(int)), this, SLOT(Vaa3D_changeXCut0(int)));
         disconnect(view3DWidget, SIGNAL(changeXCut1(int)), this, SLOT(Vaa3D_changeXCut1(int)));
@@ -755,9 +773,11 @@ CExplorerWindow::newView(
         window3D->removeEventFilter(this);
 
 
+
         //obtaining low res data from current window to be displayed in a new window while the user waits for the new high res data
         QElapsedTimer timer;
         timer.start();
+        int voiH0m=0, voiH1m=0, voiV0m=0, voiV1m=0,voiD0m=0, voiD1m=0, voiT0m=0, voiT1m=0;
         int rVoiH0 = CVolume::scaleHCoord(cVolume->getVoiH0(), resolution, volResIndex);
         int rVoiH1 = CVolume::scaleHCoord(cVolume->getVoiH1(), resolution, volResIndex);
         int rVoiV0 = CVolume::scaleVCoord(cVolume->getVoiV0(), resolution, volResIndex);
@@ -767,16 +787,22 @@ CExplorerWindow::newView(
         uint8* lowresData = getVOI(rVoiH0, rVoiH1, rVoiV0, rVoiV1, rVoiD0, rVoiD1, cVolume->getVoiT0(), cVolume->getVoiT1(),
                                    cVolume->getVoiH1()-cVolume->getVoiH0(),
                                    cVolume->getVoiV1()-cVolume->getVoiV0(),
-                                   cVolume->getVoiD1()-cVolume->getVoiD0());
+                                   cVolume->getVoiD1()-cVolume->getVoiD0(),
+                                   voiH0m, voiH1m, voiV0m, voiV1m,voiD0m, voiD1m, voiT0m, voiT1m);
         char message[1000];
-        sprintf(message, "Block X=[%d, %d) Y=[%d, %d) Z=[%d, %d) T[%d, %d] loaded from view %s",
-                rVoiH0, rVoiH1, rVoiV0, rVoiV1, rVoiD0, rVoiD1, cVolume->getVoiT0(), cVolume->getVoiT1(), title.c_str());
+        sprintf(message, "Block X=[%d, %d) Y=[%d, %d) Z=[%d, %d) T[%d, %d] loaded from view %s, black-filled region is "
+                               "X=[%d, %d) Y=[%d, %d) Z=[%d, %d) T[%d, %d]",
+                rVoiH0, rVoiH1, rVoiV0, rVoiV1, rVoiD0, rVoiD1, cVolume->getVoiT0(), cVolume->getVoiT1(), title.c_str(),
+                voiH0m, voiH1m, voiV0m, voiV1m,voiD0m, voiD1m, voiT0m, voiT1m);
         PLog::getInstance()->appendCPU(timer.elapsed(), message);
 
         //creating a new window
         this->next = new CExplorerWindow(V3D_env, resolution, lowresData,
                                          cVolume->getVoiV0(), cVolume->getVoiV1(), cVolume->getVoiH0(), cVolume->getVoiH1(), cVolume->getVoiD0(), cVolume->getVoiD1(),
                                          cVolume->getVoiT0(), cVolume->getVoiT1(), nchannels, this);
+
+        // update CVolume with the request of the actual missing VOI along t
+        cVolume->setVOI_T(voiT0m, voiT1m);
 
         //loading new data in a separate thread. When done, the "loadingDone" method of the new window will be called
         pMain.statusBar->showMessage("Loading image data...");
@@ -796,12 +822,15 @@ CExplorerWindow::newView(
 
             if(prev)
             {
-                prev->zoomInTimer = zoomInTimer;
+                prev->newViewTimer = newViewTimer;
                 prev->next = next;
                 next->prev = prev;
             }
             else
+            {
                 next->prev = 0;
+                CExplorerWindow::first = next;
+            }
 
             this->toBeClosed = true;
             delete this;
@@ -818,19 +847,33 @@ CExplorerWindow::newView(
 * Resizes  the  given image subvolume in a  newly allocated array using the fastest
 * achievable scaling method. The image currently shown is used as data source.
 ***********************************************************************************/
-uint8* CExplorerWindow::getVOI(int x0, int x1, int y0, int y1, int z0, int z1, int t0, int t1,
-                               int xDimInterp, int yDimInterp, int zDimInterp) throw (RuntimeException)
+uint8* CExplorerWindow::getVOI(int x0, int x1,              // VOI [x0, x1) in the local reference sys
+                               int y0, int y1,              // VOI [y0, y1) in the local reference sys
+                               int z0, int z1,              // VOI [z0, z1) in the local reference sys
+                               int t0, int t1,              // VOI [t0, t1] in the local reference sys
+                               int xDimInterp,              // interpolated VOI dimension along X
+                               int yDimInterp,              // interpolated VOI dimension along Y
+                               int zDimInterp,              // interpolated VOI dimension along Z
+                               int& x0m, int& x1m,          // black-filled VOI [x0m, x1m) in the local rfsys
+                               int& y0m, int& y1m,          // black-filled VOI [y0m, y1m) in the local rfsys
+                               int& z0m, int& z1m,          // black-filled VOI [z0m, z1m) in the local rfsys
+                               int& t0m, int& t1m)          // black-filled VOI [t0m, t1m] in the local rfsys
+throw (RuntimeException)
 {
     /**/itm::debug(itm::LEV1, strprintf("title = %s, x0 = %d, x1 = %d, y0 = %d, y1 = %d, z0 = %d, z1 = %d, t0 = %d, t1 = %d, xDim = %d, yDim = %d, zDim = %d",
                                         titleShort.c_str(), x0, x1, y0, y1, z0, z1, t0, t1, xDimInterp, yDimInterp, zDimInterp).c_str(), __itm__current__function__);
 
-    //alloating image data and initializing to zero (black)
+    // allocate image data and initializing to zero (black)
+    /**/itm::debug(itm::LEV3, "Allocate image data", __itm__current__function__);
     size_t img_dim = static_cast<size_t>(xDimInterp) * yDimInterp * zDimInterp * nchannels * (t1-t0+1);
     uint8* img = new uint8[img_dim];
     for(uint8* img_p = img; img_p-img < img_dim; img_p++)
         *img_p=0;
 
-    //computing actual VOI that can be copied, i.e. that intersects with the image currently displayed
+
+
+    // compute actual VOI that can be copied, i.e. that intersects with the image currently displayed
+    /**/itm::debug(itm::LEV3, "Compute intersection VOI", __itm__current__function__);
     QRect XRectDisplayed(QPoint(volH0, 0), QPoint(volH1, 1));
     QRect YRectDisplayed(QPoint(volV0, 0), QPoint(volV1, 1));
     QRect ZRectDisplayed(QPoint(volD0, 0), QPoint(volD1, 1));
@@ -839,21 +882,67 @@ uint8* CExplorerWindow::getVOI(int x0, int x1, int y0, int y1, int z0, int z1, i
     QRect YRectVOI(QPoint(y0, 0), QPoint(y1, 1));
     QRect ZRectVOI(QPoint(z0, 0), QPoint(z1, 1));
     QRect TRectVOI(QPoint(t0, 0), QPoint(t1, 1));
-    int x0a = XRectDisplayed.intersected(XRectVOI).left();
-    int x1a = XRectDisplayed.intersected(XRectVOI).right();
-    int y0a = YRectDisplayed.intersected(YRectVOI).left();
-    int y1a = YRectDisplayed.intersected(YRectVOI).right();
-    int z0a = ZRectDisplayed.intersected(ZRectVOI).left();
-    int z1a = ZRectDisplayed.intersected(ZRectVOI).right();
-    int t0a = TRectDisplayed.intersected(TRectVOI).left();
-    int t1a = TRectDisplayed.intersected(TRectVOI).right();
-
-    /**/itm::debug(itm::LEV_MAX, strprintf("title = %s, available voi is x0a = %d, x1a = %d, y0a = %d, y1a = %d, z0a = %d, z1a = %d, t0a = %d, t1a = %d",
+    QRect XRectIntersect = XRectDisplayed.intersected(XRectVOI);
+    QRect YRectIntersect = YRectDisplayed.intersected(YRectVOI);
+    QRect ZRectIntersect = ZRectDisplayed.intersected(ZRectVOI);
+    QRect TRectIntersect = TRectDisplayed.intersected(TRectVOI);
+    int x0a = XRectIntersect.left();
+    int x1a = XRectIntersect.right();
+    int y0a = YRectIntersect.left();
+    int y1a = YRectIntersect.right();
+    int z0a = ZRectIntersect.left();
+    int z1a = ZRectIntersect.right();
+    int t0a = TRectIntersect.left();
+    int t1a = TRectIntersect.right();
+    /**/itm::debug(itm::LEV_MAX, strprintf("title = %s, available voi is [%d, %d) [%d, %d) [%d, %d) [%d, %d]",
                                         titleShort.c_str(), x0a, x1a, y0a, y1a, z0a, z1a, t0a, t1a).c_str(), __itm__current__function__);
 
-    //if copyable VOI is empty, returning the black-initialized image
-    if(x1a - x0a <= 0 || y1a - y0a <= 0 || z1a - z0a <= 0 || t1a - t0a < 0)    // Alessandro: shouldn't be '< 0' for time dimension?
+
+
+    // compute missing VOI. If copyable VOI is empty, returning the black-initialized image
+    if(x1a - x0a <= 0 || y1a - y0a <= 0 || z1a - z0a <= 0 || t1a - t0a < 0)
+    {
+        x0m = x0;
+        x1m = x1;
+        y0m = y0;
+        y1m = y1;
+        z0m = z0;
+        z1m = z1;
+        t0m = t0;
+        t1m = t1;
         return img;
+    }
+    else
+    {
+        x0m = x0;       // not yet supported (@TODO)
+        x1m = x1;       // not yet supported (@TODO)
+        y0m = y0;       // not yet supported (@TODO)
+        y1m = y1;       // not yet supported (@TODO)
+        z0m = z0;       // not yet supported (@TODO)
+        z1m = z1;       // not yet supported (@TODO)
+
+        // check for intersection contained in the VOI (if it does, optimized VOI loading is disabled)
+        if(volT1 == t1a)
+        {
+            t0m = t1a+1;
+            t1m = t1;
+            itm::debug(LEV3, strprintf("missing piece along T is [%d,%d]", t0m, t1m).c_str(), __itm__current__function__);
+        }
+        else if(volT0 == t0a)
+        {
+            t0m = t0;
+            t1m = t0a-1;
+            itm::debug(LEV3, strprintf("missing piece along T is [%d,%d]", t0m, t1m).c_str(), __itm__current__function__);
+        }
+        else
+        {
+            t0m = t1a;
+            t1m = t1;
+            itm::warning(strprintf("internal intersection detected, [%d,%d] is within [%d,%d], disabling optimized VOI loading", t0a, t1a, volT0, volT1).c_str(), __itm__current__function__);
+        }
+    }
+
+
 
     //otherwise COPYING + SCALING
     //fast scaling by pixel replication
@@ -873,7 +962,7 @@ uint8* CExplorerWindow::getVOI(int x0, int x1, int y0, int y1, int z0, int z1, i
         uint32 img_dims[5]        = {xDimInterp,  yDimInterp,  zDimInterp,  nchannels, t1-t0+1};
         uint32 buf_data_offset[5] = {x0a-volH0,   y0a-volV0,   z0a-volD0,   0,         t0a-volT0};
         uint32 img_offset[5]      = {x0a-x0,      y0a-y0,      z0a-z0,      0,         t0a-t0};
-        uint32 buf_data_count[5]  = {x1a-x0a,     y1a-y0a,     z1a-z0a,     0,         t1a-t0a};
+        uint32 buf_data_count[5]  = {x1a-x0a,     y1a-y0a,     z1a-z0a,     0,         t1a-t0a+1};
 
         copyVOI(view3DWidget->getiDrawExternalParameter()->image4d->getRawData(), buf_data_dims, buf_data_offset, buf_data_count, img, img_dims, img_offset, scalx);
     }

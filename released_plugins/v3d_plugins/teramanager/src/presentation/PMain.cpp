@@ -269,7 +269,7 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     tShiftWidget = new QWidgetAction(this);
     tShiftSBox = new QSpinBox();
     tShiftSBox->setSuffix("\%");
-    tShiftSBox->setMinimum(1);
+    tShiftSBox->setMinimum(0);
     tShiftSBox->setMaximum(99);
     tShiftSBox->setValue(CSettings::instance()->getTraslT());
     tShiftWidget->setDefaultWidget(tShiftSBox);
@@ -1986,6 +1986,16 @@ void PMain::addGaussianNoiseTriggered()
 void PMain::debugAction1Triggered()
 {
     /**/itm::debug(itm::LEV1, 0, __itm__current__function__);
+
+    QRect XRectDisplayed(QPoint(10, 0), QPoint(12, 1));
+    QRect XRectVOI(QPoint(12, 0), QPoint(14, 1));
+    QRect intersect = XRectDisplayed.intersected(XRectVOI);
+    int x0a = intersect.left();
+    int x1a = intersect.right();
+    if(intersect.isEmpty())
+        printf("empty intersection\n");
+    else
+        printf("intersection is [%d, %d]\n", x0a, x1a);
 
 //    #ifdef USE_EXPERIMENTAL_FEATURES
 //    CExplorerWindow* cur_win = CExplorerWindow::getCurrent();

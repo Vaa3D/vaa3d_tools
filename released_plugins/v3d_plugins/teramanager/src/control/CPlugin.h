@@ -129,6 +129,9 @@ namespace teramanager
      *   Cross-platform UTILITY functions	    *
      ********************************************
     ---------------------------------------------------------------------------------------------------------------------------*/
+    // round functions
+    inline int round(float  x) { return static_cast<int>(x > 0.0f ? x + 0.5f : x - 0.5f);}
+    inline int round(double x) { return static_cast<int>(x > 0.0  ? x + 0.5  : x - 0.5 );}
 
     //string-based sprintf function
     inline std::string strprintf(const std::string fmt, ...){

@@ -11,6 +11,16 @@ ties names are:
 - Rem: a feature no longer available
 
 ============================================================================================
+Version 0.9.52
+February 26th, 2014
+--------------------------------------------------------------------------------------------
+- Opt: improved time shift in terms of loading time and precision.
+- Fix: fixed bug which caused TeraFly to crash when substituting the first view with another
+       one (e.g. as a result of a directional shift along t). This bug was not totally fixed
+       in version 0.9.51.
+--------------------------------------------------------------------------------------------
+
+
 Version 0.9.51
 February 25th, 2014
 --------------------------------------------------------------------------------------------

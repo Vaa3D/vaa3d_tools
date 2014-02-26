@@ -85,7 +85,7 @@ class teramanager::CExplorerWindow : public QWidget
         QMutex updateGraphicsInProgress;
 
         //TIMER
-        QElapsedTimer zoomInTimer;
+        QElapsedTimer newViewTimer;
 
         //inhibiting default constructor
         CExplorerWindow();
@@ -121,7 +121,7 @@ class teramanager::CExplorerWindow : public QWidget
         * renderer at the given location.
         * This is based on the Vaa3D 3D point selection with one mouse click.
         ***********************************************************************************/
-        XYZ getRenderer3DPoint(int x, int y) throw (RuntimeException);
+        XYZ getRenderer3DPoint(int x, int y) throw (itm::RuntimeException);
 
         /**********************************************************************************
         * Syncronizes widgets from <src> to <dst>
@@ -170,7 +170,7 @@ class teramanager::CExplorerWindow : public QWidget
         * Called by the next(prev) <CExplorerWindow>  when the user  zooms out(in) and  the
         * lower(higher) resoolution has to be reestabilished.
         ***********************************************************************************/
-        void restoreViewFrom(CExplorerWindow* source) throw (RuntimeException);
+        void restoreViewFrom(CExplorerWindow* source) throw (itm::RuntimeException);
 
         /**********************************************************************************
         * Generates a new view using the given coordinates.
@@ -191,9 +191,21 @@ class teramanager::CExplorerWindow : public QWidget
         /**********************************************************************************
         * Resizes  the  given image subvolume in a  newly allocated array using the fastest
         * achievable interpolation method. The image currently shown is used as data source.
+        * Missing pieces of data are filled with black and returned to the caller.
         ***********************************************************************************/
-        itm::uint8* getVOI(int x0, int x1, int y0, int y1, int z0, int z1, int t0, int t1,
-                      int xDimInterp, int yDimInterp, int zDimInterp) throw (RuntimeException);
+        itm::uint8*
+            getVOI(int x0, int x1,              // VOI [x0, x1) in the local reference sys
+                   int y0, int y1,              // VOI [y0, y1) in the local reference sys
+                   int z0, int z1,              // VOI [z0, z1) in the local reference sys
+                   int t0, int t1,              // VOI [t0, t1] in the local reference sys
+                   int xDimInterp,              // interpolated VOI dimension along X
+                   int yDimInterp,              // interpolated VOI dimension along Y
+                   int zDimInterp,              // interpolated VOI dimension along Z
+                   int& x0m, int& x1m,          // black-filled VOI [x0m, x1m) in the local rfsys
+                   int& y0m, int& y1m,          // black-filled VOI [y0m, y1m) in the local rfsys
+                   int& z0m, int& z1m,          // black-filled VOI [z0m, z1m) in the local rfsys
+                   int& t0m, int& t1m)          // black-filled VOI [t0m, t1m] in the local rfsys
+        throw (itm::RuntimeException);
 
         /**********************************************************************************
         * Copies the given VOI from "src" to "dst". Offsets and scaling are supported.
@@ -207,19 +219,19 @@ class teramanager::CExplorerWindow : public QWidget
                 uint dst_dims[5],           //dimensions of "dst" along X, Y, Z, channels and T
                 uint dst_offset[5],         //offset of "dst" along X, Y, Z, <empty> and T
                 uint scaling = 1)           //scaling factor (integer only)
-        throw (RuntimeException);
+        throw (itm::RuntimeException);
 
         /**********************************************************************************
         * Makes the current view the last one by  deleting (and deallocting) its subsequent
         * views.
         ***********************************************************************************/
-        void makeLastView() throw (RuntimeException);
+        void makeLastView() throw (itm::RuntimeException);
 
         /**********************************************************************************
         * Annotations are stored/loaded) to/from the <CAnnotations> object
         ***********************************************************************************/
-        void storeAnnotations() throw (RuntimeException);
-        void loadAnnotations() throw (RuntimeException);
+        void storeAnnotations() throw (itm::RuntimeException);
+        void loadAnnotations() throw (itm::RuntimeException);
 
         /**********************************************************************************
         * Saves/restores the state of PMain spinboxes for subvolume selection
@@ -290,13 +302,6 @@ class teramanager::CExplorerWindow : public QWidget
                 for(int i=0; i<ZOOM_HISTORY_SIZE-1; i++)
                     zoomHistory[i] = zoomHistory[i+1];
             zoomHistory[ZOOM_HISTORY_SIZE-1] = zoom;
-        }
-
-        static inline double round(double val){
-            return floor(val + 0.5);
-        }
-        static inline double round(float val){
-            return floor(val + 0.5f);
         }
 
         //PMain instance is allowed to access class private members
