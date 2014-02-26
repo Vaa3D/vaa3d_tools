@@ -85,6 +85,7 @@ void SimpleVolume::init()
 		sprintf(msg,"in SimpleVolume::init(...): Unable to open directory \"%s\"", root_dir);
         throw IOException(msg);
 	}
+    closedir(cur_dir_lev1);
 
 	// Simple format has only one stack
 	N_ROWS = 1;

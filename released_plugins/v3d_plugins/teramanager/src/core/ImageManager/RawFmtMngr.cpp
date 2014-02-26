@@ -503,7 +503,7 @@ char *loadRaw2Metadata ( char * filename, V3DLONG * &sz, int &datatype, int &b_s
 	if (keyread) {delete [] keyread; keyread = 0;}
 
 	fhandle = fid;
-	header_len = (int)ftell(fid);
+    header_len = (int)ftell(fid);
 
 	return ((char *) 0);
 }
