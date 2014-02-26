@@ -37,7 +37,7 @@
 #include "v3dr_colormapDialog.h"
 #include "V3Dsubclasses.h"
 
-using namespace teramanager;
+using namespace itm;
 
 CExplorerWindow* CExplorerWindow::first = 0;
 CExplorerWindow* CExplorerWindow::last = 0;
@@ -270,7 +270,7 @@ void CExplorerWindow::show()
     /**/ updateGraphicsInProgress.unlock();
 }
 
-CExplorerWindow::CExplorerWindow(V3DPluginCallback2 *_V3D_env, int _resIndex, uint8 *_imgData, int _volV0, int _volV1,
+CExplorerWindow::CExplorerWindow(V3DPluginCallback2 *_V3D_env, int _resIndex, itm::uint8 *_imgData, int _volV0, int _volV1,
                                  int _volH0, int _volH1, int _volD0, int _volD1, int _volT0, int _volT1, int _nchannels, CExplorerWindow *_prev): QWidget()
 {
     /**/itm::debug(itm::LEV1, strprintf("_resIndex = %d, _V0 = %d, _V1 = %d, _H0 = %d, _H1 = %d, _D0 = %d, _D1 = %d, _T0 = %d, _T1 = %d, _nchannels = %d",
@@ -507,7 +507,7 @@ bool CExplorerWindow::eventFilter(QObject *object, QEvent *event)
 * performed. If an exception has occurred in the <CVolume> thread, it is propagated
 * and managed in the current thread (ex != 0).
 ***********************************************************************************/
-void CExplorerWindow::loadingDone(uint8 *data, RuntimeException *ex, void* sourceObject, qint64 elapsed_time, QString op_dsc, int step)
+void CExplorerWindow::loadingDone(itm::uint8 *data, RuntimeException *ex, void* sourceObject, qint64 elapsed_time, QString op_dsc, int step)
 {
     /**/itm::debug(itm::LEV1, strprintf("title = %s, ex = ", titleShort.c_str(),  (ex? "error" : "0")).c_str(), __itm__current__function__);
 
@@ -847,7 +847,7 @@ CExplorerWindow::newView(
 * Resizes  the  given image subvolume in a  newly allocated array using the fastest
 * achievable scaling method. The image currently shown is used as data source.
 ***********************************************************************************/
-uint8* CExplorerWindow::getVOI(int x0, int x1,              // VOI [x0, x1) in the local reference sys
+itm::uint8* CExplorerWindow::getVOI(int x0, int x1,              // VOI [x0, x1) in the local reference sys
                                int y0, int y1,              // VOI [y0, y1) in the local reference sys
                                int z0, int z1,              // VOI [z0, z1) in the local reference sys
                                int t0, int t1,              // VOI [t0, t1] in the local reference sys
@@ -998,11 +998,11 @@ throw (RuntimeException)
 ***********************************************************************************/
 void
     CExplorerWindow::copyVOI(
-        uint8 const * src,          //pointer to const data source
+        itm::uint8 const * src,     //pointer to const data source
         uint src_dims[5],           //dimensions of "src" along X, Y, Z, channels and T
         uint src_offset[5],         //VOI's offset along X, Y, Z, <empty> and T
         uint src_count[5],          //VOI's dimensions along X, Y, Z, <empty> and T
-        uint8* dst,                 //pointer to data destination
+        itm::uint8* dst,            //pointer to data destination
         uint dst_dims[5],           //dimensions of "dst" along X, Y, Z, channels and T
         uint dst_offset[5],         //offset of "dst" along X, Y, Z, <empty> and T
         uint scaling /*= 1 */)      //scaling factor (integer only)

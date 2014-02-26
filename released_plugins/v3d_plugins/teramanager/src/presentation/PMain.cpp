@@ -528,7 +528,7 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     zoomOutSens->setSingleStep(10);
     zoomOutSens->setPageStep(20);
     zoomOutSens->installEventFilter(this);
-    zoomInSens = new QSlider(Qt::Horizontal, this);
+    zoomInSens = new QSlider(Qt::Horizontal);
     zoomInSens->setTickPosition(QSlider::TicksBelow);
     zoomInSens->setMinimum(0);
     zoomInSens->setMaximum(100);
@@ -544,14 +544,14 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     cacheSens->installEventFilter(this);
     controlsResetButton = new QPushButton(this);
     controlsResetButton->setIcon(QIcon(":/icons/reset.png"));
-    zoomInMethod = new QComboBox(this);
+    zoomInMethod = new QComboBox();
     zoomInMethod->addItem("WYSIWYG (5 markers)");
     zoomInMethod->addItem("Foreground (20 markers + mean-shift)");
     zoomInMethod->addItem("Foreground (1 marker)");
     zoomInMethod->installEventFilter(this);
     #ifndef USE_EXPERIMENTAL_FEATURES
     zoomInMethod->setCurrentIndex(0);
-    zoomInMethod->setEnabled(false);    
+    zoomInMethod->setEnabled(false);
     zoomInSens->setEnabled(false);
     #else
     zoomInMethod->setCurrentIndex(1);

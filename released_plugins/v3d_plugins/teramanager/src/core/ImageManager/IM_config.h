@@ -45,6 +45,13 @@
 #include <stdio.h>
 #endif
 
+#ifdef max
+#undef max
+#endif
+#ifdef min
+#undef min
+#endif
+
 //#ifdef __MACH__
 //#include <mach/clock.h>
 //#include <mach/mach.h>

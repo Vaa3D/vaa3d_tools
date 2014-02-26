@@ -238,9 +238,13 @@ public:
                                    float VXL_1=0.0f, float VXL_2=0.0f, float VXL_3=0.0f) throw (iim::IOException);
 
     // checks whether the volume stored in "path" can be imported directly (i.e., w/o additional metadata provided by the user)
-    static bool isDirectlyImportable(const char* path){
+    static bool isDirectlyImportable(const char* path)
+    {
+        /**/iim::debug(iim::LEV3, iim::strprintf("path = \"%s\"", path).c_str(), __iim__current__function__);
+
         VirtualVolume* vol = 0;
         try{vol = instance(path);}
+        catch(iim::IOException &ex){/**/iim::debug(iim::LEV3, iim::strprintf("error = %s", ex.what()).c_str(), __iim__current__function__);}
         catch(...){}
         bool result = vol != 0;
         delete vol;
