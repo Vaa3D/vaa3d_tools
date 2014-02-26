@@ -1186,6 +1186,13 @@ void PMain::openVolume(string path /* = "" */)
             throw RuntimeException("A volume has been already imported! Please close the current volume first.");
 
 
+        // check that folder name matches with the used convention
+        QDir dir(import_path);
+        if( dir.dirName().toStdString().substr(0,3).compare(itm::RESOLUTION_PREFIX) != 0)
+            throw RuntimeException(strprintf("\"%s\" is not a valid resolution: the name of the folder does not start with \"%s\"",
+                                             qPrintable(import_path), itm::RESOLUTION_PREFIX.c_str() ).c_str());
+
+
         //storing the path into CSettings
         CSettings::instance()->setVolumePathLRU(qPrintable(import_path));
         CSettings::instance()->addVolumePathToHistory(qPrintable(import_path));

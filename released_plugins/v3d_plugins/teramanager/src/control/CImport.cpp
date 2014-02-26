@@ -136,6 +136,13 @@ void CImport::run()
         reimport = false ==> the volume is directly importable
         *************************************************************************/
         /**/itm::debug(itm::LEV_MAX, strprintf("importing current volume at \"%s\"", path.c_str()).c_str(), __itm__current__function__);
+
+        // skip nonmatching entries
+        QDir dir(path.c_str());
+        if( dir.dirName().toStdString().substr(0,3).compare(itm::RESOLUTION_PREFIX) != 0)
+            throw RuntimeException(strprintf("\"%s\" is not a valid resolution: the name of the folder does not start with \"%s\"",
+                                             path.c_str(), itm::RESOLUTION_PREFIX.c_str() ).c_str());
+
         if(reimport)
             volumes.push_back(VirtualVolume::instance(path.c_str(), format, AXS_1, AXS_2, AXS_3, VXL_1, VXL_2, VXL_3));
         else
@@ -157,10 +164,15 @@ void CImport::run()
         QStringList otherDirs = curParentDir.entryList(QDir::AllDirs | QDir::NoDotAndDotDot);
         for(int k=0; k<otherDirs.size(); k++)
         {
-            string path_i = curParentDir.absolutePath().append("/").append(otherDirs.at(k).toLocal8Bit().constData()).toStdString();
+            string path_i = curParentDir.absolutePath().append("/").append(otherDirs.at(k).toLocal8Bit().constData()).toStdString();            
+            QDir dir_i(path_i.c_str());
 
             // skip volumes[0]
-            if(path_i.compare(path) == 0)
+            if(dir.dirName() == dir_i.dirName())
+                continue;
+
+            // skip nonmatching entries
+            if(dir_i.dirName().toStdString().substr(0,3).compare(itm::RESOLUTION_PREFIX) != 0)
                 continue;
 
             /**/itm::debug(itm::LEV_MAX, strprintf("Checking for loadable volume at \"%s\"", path_i.c_str()).c_str(), __itm__current__function__);
@@ -194,7 +206,8 @@ void CImport::run()
         std::sort(volumes.begin(), volumes.end(), sortVolumesAscendingSize);
         /* ---------------------- check imported volumes -----------------------*/
         if(volumes.size() < 2)
-            throw RuntimeException("One resolution found only: at least two resolutions are needed for the multiresolution mode.");
+            throw RuntimeException(strprintf("%d resolution found at %s: at least two resolutions are needed for the multiresolution mode",
+                                             volumes.size(), qPrintable(curParentDir.path()) ).c_str());
         for(int k=0; k<volumes.size()-1; k++)
         {
             if(volumes[k]->getPrintableFormat().compare( volumes[k+1]->getPrintableFormat() ) != 0)
