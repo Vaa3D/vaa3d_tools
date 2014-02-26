@@ -9,9 +9,9 @@ CONFIG += use_static_libs
 CONFIG += use_experimental_features
 #DEFINES += _USE_QT_DIALOGS
 
-QMAKE_CXXFLAGS += -Wall
-QMAKE_CXXFLAGS += -pedantic
-QMAKE_CXXFLAGS += -Werror
+#QMAKE_CXXFLAGS += -Wall
+#QMAKE_CXXFLAGS += -pedantic
+#QMAKE_CXXFLAGS += -Werror
 
 
 #set up Vaa3D and Qt source path

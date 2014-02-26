@@ -170,12 +170,8 @@ void Stack::unBinarizeFrom(FILE* file) throw (IOException)
         fclose(file);
         throw IOException("in Stack::unBinarizeFrom(...): error while reading binary metadata file");
     }
-	DIR_NAME = new char[str_size];
-	if(fread_return_val != 1)
-    {
-        fclose(file);
-        throw IOException("in Stack::unBinarizeFrom(...): error while reading binary metadata file");
-    }
+
+    DIR_NAME = new char[str_size];
 	fread_return_val = fread(DIR_NAME, str_size, 1, file);
     if(fread_return_val != 1)
     {

@@ -61,8 +61,8 @@ class StackRaw
 
 	public:
 
-		StackRaw(VirtualVolume* _CONTAINER, int _ROW_INDEX, int _COL_INDEX, FILE* bin_file);
-		StackRaw(VirtualVolume* _CONTAINER, int _ROW_INDEX, int _COL_INDEX, char* _DIR_NAME);
+        StackRaw(VirtualVolume* _CONTAINER, int _ROW_INDEX, int _COL_INDEX, FILE* bin_file) throw (iim::IOException);
+        StackRaw(VirtualVolume* _CONTAINER, int _ROW_INDEX, int _COL_INDEX, char* _DIR_NAME) throw (iim::IOException);
 		~StackRaw(void);
 
 		//GET methods
@@ -88,7 +88,7 @@ class StackRaw
 
 		//binarizing-unbinarizing methods
 		void binarizeInto(FILE* file);
-		void unBinarizeFrom(FILE* file);
+        void unBinarizeFrom(FILE* file) throw (iim::IOException);
 
 		//loads/releases images of current stack (from 'first_file' to 'last_file' extremes included, if not specified loads entire stack)
 		void loadStack   (int first_file=-1, int last_file=-1);
