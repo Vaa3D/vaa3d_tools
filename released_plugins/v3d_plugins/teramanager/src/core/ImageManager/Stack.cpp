@@ -38,7 +38,7 @@
 using namespace std;
 using namespace iim;
 
-Stack::Stack(VirtualVolume* _CONTAINER, int _ROW_INDEX, int _COL_INDEX, char* _DIR_NAME)
+Stack::Stack(VirtualVolume* _CONTAINER, int _ROW_INDEX, int _COL_INDEX, char* _DIR_NAME) throw (IOException)
 {
     /**/iim::debug(iim::LEV3, strprintf("_ROW_INDEX=%d, _COL_INDEX=%d, _DIR_NAME=%s", _ROW_INDEX, _COL_INDEX, _DIR_NAME).c_str(), __iim__current__function__);
 
@@ -58,7 +58,7 @@ Stack::Stack(VirtualVolume* _CONTAINER, int _ROW_INDEX, int _COL_INDEX, char* _D
 	init();
 }
 
-Stack::Stack(VirtualVolume* _CONTAINER, int _ROW_INDEX, int _COL_INDEX, FILE* bin_file)
+Stack::Stack(VirtualVolume* _CONTAINER, int _ROW_INDEX, int _COL_INDEX, FILE* bin_file) throw (IOException)
 {
     /**/iim::debug(iim::LEV3, strprintf("_ROW_INDEX=%d, _COL_INDEX=%d", _ROW_INDEX, _COL_INDEX).c_str(), __iim__current__function__);
 
@@ -66,9 +66,9 @@ Stack::Stack(VirtualVolume* _CONTAINER, int _ROW_INDEX, int _COL_INDEX, FILE* bi
 	ROW_INDEX = _ROW_INDEX;
 	COL_INDEX = _COL_INDEX;
 
-	DIR_NAME = NULL;
-	STACKED_IMAGE = NULL;
-	FILENAMES = NULL;
+    DIR_NAME = 0;
+    STACKED_IMAGE = 0;
+    FILENAMES = 0;
 	HEIGHT = WIDTH = DEPTH = 0;
 	ABS_V = ABS_H = 0;
 
@@ -77,7 +77,7 @@ Stack::Stack(VirtualVolume* _CONTAINER, int _ROW_INDEX, int _COL_INDEX, FILE* bi
 	//initializing STACKED_IMAGE array
 	this->STACKED_IMAGE = new CvMat*[DEPTH];
 	for(uint32 z=0; z<DEPTH; z++)
-		this->STACKED_IMAGE[z] = NULL;
+        this->STACKED_IMAGE[z] = 0;
 }
 
 Stack::~Stack(void)
@@ -119,13 +119,13 @@ void Stack::binarizeInto(FILE* file)
 	fwrite(DIR_NAME, str_size, 1, file);
 	for(i = 0; i < DEPTH; i++)
 	{
-            str_size = (uint16)(strlen(FILENAMES[i]) + 1);
-            fwrite(&str_size, sizeof(uint16), 1, file);
-            fwrite(FILENAMES[i], str_size, 1, file);
+        str_size = (uint16)(strlen(FILENAMES[i]) + 1);
+        fwrite(&str_size, sizeof(uint16), 1, file);
+        fwrite(FILENAMES[i], str_size, 1, file);
 	}
 }
 
-void Stack::unBinarizeFrom(FILE* file)
+void Stack::unBinarizeFrom(FILE* file) throw (IOException)
 {
     /**/iim::debug(iim::LEV3, strprintf("_ROW_INDEX=%d, _COL_INDEX=%d", ROW_INDEX, COL_INDEX).c_str(), __iim__current__function__);
 
@@ -136,43 +136,75 @@ void Stack::unBinarizeFrom(FILE* file)
 
 	fread_return_val = fread(&HEIGHT, sizeof(int), 1, file);
 	if(fread_return_val != 1)
+    {
+        fclose(file);
         throw IOException("in Stack::unBinarizeFrom(...): error while reading binary metadata file");
+    }
 	fread_return_val = fread(&WIDTH, sizeof(int), 1, file);
 	if(fread_return_val != 1)
+    {
+        fclose(file);
         throw IOException("in Stack::unBinarizeFrom(...): error while reading binary metadata file");
+    }
 	fread_return_val = fread(&DEPTH, sizeof(int), 1, file);
 	if(fread_return_val != 1)
+    {
+        fclose(file);
         throw IOException("in Stack::unBinarizeFrom(...): error while reading binary metadata file");
+    }
 	fread_return_val = fread(&ABS_V, sizeof(int), 1, file);
 	if(fread_return_val != 1)
+    {
+        fclose(file);
         throw IOException("in Stack::unBinarizeFrom(...): error while reading binary metadata file");
+    }
 	fread_return_val = fread(&ABS_H, sizeof(int), 1, file);
 	if(fread_return_val != 1)
+    {
+        fclose(file);
         throw IOException("in Stack::unBinarizeFrom(...): error while reading binary metadata file");
+    }
 	fread_return_val = fread(&str_size, sizeof(uint16), 1, file);
 	if(fread_return_val != 1)
+    {
+        fclose(file);
         throw IOException("in Stack::unBinarizeFrom(...): error while reading binary metadata file");
+    }
 	DIR_NAME = new char[str_size];
 	if(fread_return_val != 1)
+    {
+        fclose(file);
         throw IOException("in Stack::unBinarizeFrom(...): error while reading binary metadata file");
+    }
 	fread_return_val = fread(DIR_NAME, str_size, 1, file);
+    if(fread_return_val != 1)
+    {
+        fclose(file);
+        throw IOException("in Stack::unBinarizeFrom(...): error while reading binary metadata file");
+    }
 	FILENAMES = new char*[DEPTH];
 	for(i = 0; i < DEPTH; i++)
 	{
 		fread_return_val = fread(&str_size, sizeof(uint16), 1, file);
 		if(fread_return_val != 1)
+        {
+            fclose(file);
             throw IOException("in Stack::unBinarizeFrom(...): error while reading binary metadata file");
+        }
 
 		FILENAMES[i] = new char[str_size];
 		fread_return_val = fread(FILENAMES[i], str_size, 1, file);
 		if(fread_return_val != 1)
+        {
+            fclose(file);
             throw IOException("in Stack::unBinarizeFrom(...): error while reading binary metadata file");
+        }
 	
 	}
 }
 
 //Initializes all object's members given DIR_NAME
-void Stack::init()
+void Stack::init() throw (IOException)
 {
     /**/iim::debug(iim::LEV3, strprintf("_ROW_INDEX=%d, _COL_INDEX=%d", ROW_INDEX, COL_INDEX).c_str(), __iim__current__function__);
 

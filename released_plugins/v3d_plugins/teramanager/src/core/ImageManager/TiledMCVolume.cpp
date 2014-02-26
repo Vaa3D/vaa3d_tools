@@ -227,7 +227,7 @@ void TiledMCVolume::load(char* metadata_filepath) throw (IOException)
     {
         // --- Alessandro 2013-01-06: instead of throwing an exception, it is better to mantain compatibility
 //            char errMsg[STATIC_STRINGS_SIZE];
-//            sprintf(errMsg, "in Block::unBinarizeFrom(...): metadata file version (%.2f) is different from the supported one (%.2f). "
+//            sprintf(errMsg, "in TiledMCVolume::unBinarizeFrom(...): metadata file version (%.2f) is different from the supported one (%.2f). "
 //                    "Please re-import the current volume.", mdata_version_read, mdata_version);
 //            throw MyException(errMsg);
 
@@ -236,82 +236,144 @@ void TiledMCVolume::load(char* metadata_filepath) throw (IOException)
         uint16 str_size;
         fread_return_val = fread(&str_size, sizeof(uint16), 1, file);
         if(fread_return_val != 1)
-                throw IOException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
+        {
+            fclose(file);
+            throw IOException("in TiledMCVolume::unBinarizeFrom(...): error while reading binary metadata file");
+        }
         char stored_root_dir[STATIC_STRINGS_SIZE];
         fread_return_val = fread(stored_root_dir, str_size, 1, file);
         if(fread_return_val != 1)
-                throw IOException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
+        {
+            fclose(file);
+            throw IOException("in TiledMCVolume::unBinarizeFrom(...): error while reading binary metadata file");
+        }
     }
 
     fread_return_val = fread(&reference_system.first, sizeof(axis), 1, file);
     if(fread_return_val != 1)
-            throw IOException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
+    {
+        fclose(file);
+        throw IOException("in TiledMCVolume::unBinarizeFrom(...): error while reading binary metadata file");
+    }
 
     fread_return_val = fread(&reference_system.second, sizeof(axis), 1, file);
     if(fread_return_val != 1)
-            throw IOException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
+    {
+        fclose(file);
+        throw IOException("in TiledMCVolume::unBinarizeFrom(...): error while reading binary metadata file");
+    }
 
     fread_return_val = fread(&reference_system.third, sizeof(axis), 1, file);
+    if(fread_return_val != 1)
+    {
+        fclose(file);
+        throw IOException("in TiledMCVolume::unBinarizeFrom(...): error while reading binary metadata file");
+    }
 
     fread_return_val = fread(&VXL_1, sizeof(float), 1, file);
     if(fread_return_val != 1)
-            throw IOException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
+    {
+        fclose(file);
+        throw IOException("in TiledMCVolume::unBinarizeFrom(...): error while reading binary metadata file");
+    }
 
     fread_return_val = fread(&VXL_2, sizeof(float), 1, file);
     if(fread_return_val != 1)
-            throw IOException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
+    {
+        fclose(file);
+         throw IOException("in TiledMCVolume::unBinarizeFrom(...): error while reading binary metadata file");
+    }
 
     fread_return_val = fread(&VXL_3, sizeof(float), 1, file);
     if(fread_return_val != 1)
-            throw IOException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
+    {
+        fclose(file);
+        throw IOException("in TiledMCVolume::unBinarizeFrom(...): error while reading binary metadata file");
+    }
 
 	fread_return_val = fread(&VXL_V, sizeof(float), 1, file);
 	if(fread_return_val != 1)
-        throw IOException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
+    {
+        fclose(file);
+        throw IOException("in TiledMCVolume::unBinarizeFrom(...): error while reading binary metadata file");
+    }
 
 	fread_return_val = fread(&VXL_H, sizeof(float), 1, file);
 	if(fread_return_val != 1)
-        throw IOException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
+    {
+        fclose(file);
+        throw IOException("in TiledMCVolume::unBinarizeFrom(...): error while reading binary metadata file");
+    }
 
 	fread_return_val = fread(&VXL_D, sizeof(float), 1, file);
 	if(fread_return_val != 1)
-        throw IOException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
+    {
+        fclose(file);
+        throw IOException("in TiledMCVolume::unBinarizeFrom(...): error while reading binary metadata file");
+    }
 
 	fread_return_val = fread(&ORG_V, sizeof(float), 1, file);
 	if(fread_return_val != 1)
-        throw IOException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
+    {
+        fclose(file);
+        throw IOException("in TiledMCVolume::unBinarizeFrom(...): error while reading binary metadata file");
+    }
 
 	fread_return_val = fread(&ORG_H, sizeof(float), 1, file);
 	if(fread_return_val != 1)
-        throw IOException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
+    {
+        fclose(file);
+        throw IOException("in TiledMCVolume::unBinarizeFrom(...): error while reading binary metadata file");
+    }
 
 	fread_return_val = fread(&ORG_D, sizeof(float), 1, file);
 	if(fread_return_val != 1)
-        throw IOException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
+    {
+        fclose(file);
+        throw IOException("in TiledMCVolume::unBinarizeFrom(...): error while reading binary metadata file");
+    }
 
 	fread_return_val = fread(&DIM_V, sizeof(uint32), 1, file);
 	if(fread_return_val != 1)
-        throw IOException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
+    {
+        fclose(file);
+        throw IOException("in TiledMCVolume::unBinarizeFrom(...): error while reading binary metadata file");
+    }
 
 	fread_return_val = fread(&DIM_H, sizeof(uint32), 1, file);
 	if(fread_return_val != 1)
-        throw IOException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
+    {
+        fclose(file);
+        throw IOException("in TiledMCVolume::unBinarizeFrom(...): error while reading binary metadata file");
+    }
 
 	fread_return_val = fread(&DIM_D, sizeof(uint32), 1, file);
 	if(fread_return_val != 1)
-        throw IOException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
+    {
+        fclose(file);
+        throw IOException("in TiledMCVolume::unBinarizeFrom(...): error while reading binary metadata file");
+    }
 
 	fread_return_val = fread(&N_ROWS, sizeof(uint16), 1, file);
 	if(fread_return_val != 1)
-        throw IOException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
+    {
+        fclose(file);
+        throw IOException("in TiledMCVolume::unBinarizeFrom(...): error while reading binary metadata file");
+    }
 
 	fread_return_val = fread(&N_COLS, sizeof(uint16), 1, file);
 	if(fread_return_val != 1)
-        throw IOException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
+    {
+        fclose(file);
+        throw IOException("in TiledMCVolume::unBinarizeFrom(...): error while reading binary metadata file");
+    }
 
 	fread_return_val = fread(&DIM_C, sizeof(int), 1, file);
 	if(fread_return_val != 1)
-        throw IOException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
+    {
+        fclose(file);
+        throw IOException("in TiledMCVolume::unBinarizeFrom(...): error while reading binary metadata file");
+    }
 
 	n_active = DIM_C;
 	active = new uint32[n_active];
@@ -325,12 +387,18 @@ void TiledMCVolume::load(char* metadata_filepath) throw (IOException)
 	{
 		fread_return_val = fread(&str_size, sizeof(uint16), 1, file);
 		if(fread_return_val != 1)
-            throw IOException("in Stack::unBinarizeFrom(...): error while reading binary metadata file");
+        {
+            fclose(file);
+            throw IOException("in TiledMCVolume::unBinarizeFrom(...): error while reading binary metadata file");
+        }
 
 		CHDIRNAMES[c] = new char[str_size];
 		fread_return_val = fread(CHDIRNAMES[c], str_size, 1, file);
 		if(fread_return_val != 1)
-            throw IOException("in Stack::unBinarizeFrom(...): error while reading binary metadata file");
+        {
+            fclose(file);
+            throw IOException("in TiledMCVolume::unBinarizeFrom(...): error while reading binary metadata file");
+        }
 
 		sprintf(channel_c_path,"%s/%s",root_dir,CHDIRNAMES[c]);
 		vol_ch[c] = new TiledVolume(channel_c_path);
@@ -338,7 +406,10 @@ void TiledMCVolume::load(char* metadata_filepath) throw (IOException)
 
 	fread_return_val = fread(&BYTESxCHAN, sizeof(int), 1, file);
 	if(fread_return_val != 1)
-        throw IOException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
+    {
+        fclose(file);
+        throw IOException("in TiledMCVolume::unBinarizeFrom(...): error while reading binary metadata file");
+    }
 
 	fclose(file);
 }

@@ -190,105 +190,164 @@ void StackedVolume::load(char* metadata_filepath) throw (IOException)
 
 	file = fopen(metadata_filepath, "rb");
 
-        // --- Alessandro 2013-04-23: added exception when file can't be opened in read mode
-        if(!file)
-        {
-            char errMsg[STATIC_STRINGS_SIZE];
-            sprintf(errMsg, "in StackedVolume::load(): cannot read metadata binary file at \"%s\".\n\nPlease check read permissions on this storage.", metadata_filepath);
-            throw IOException(errMsg);
-        }
+    // --- Alessandro 2013-04-23: added exception when file can't be opened in read mode
+    if(!file)
+    {
+        char errMsg[STATIC_STRINGS_SIZE];
+        sprintf(errMsg, "in StackedVolume::load(): cannot read metadata binary file at \"%s\".\n\nPlease check read permissions on this storage.", metadata_filepath);
+        throw IOException(errMsg);
+    }
 
-        // --- Alessandro 2012-12-31: added field for metadata file version
-        float mdata_version_read = 0;
-        float mdata_version = static_cast<float>(iim::MDATA_BIN_FILE_VERSION);
-        fread_return_val = fread(&mdata_version_read, sizeof(float), 1, file);
-        if(fread_return_val != 1 || mdata_version_read != mdata_version)
-        {
-            // --- Alessandro 2013-01-06: instead of throwing an exception, it is better to mantain compatibility
+    // --- Alessandro 2012-12-31: added field for metadata file version
+    float mdata_version_read = 0;
+    float mdata_version = static_cast<float>(iim::MDATA_BIN_FILE_VERSION);
+    fread_return_val = fread(&mdata_version_read, sizeof(float), 1, file);
+    if(fread_return_val != 1 || mdata_version_read != mdata_version)
+    {
+        // --- Alessandro 2013-01-06: instead of throwing an exception, it is better to mantain compatibility
 //            char errMsg[STATIC_STRINGS_SIZE];
-//            sprintf(errMsg, "in Stack::unBinarizeFrom(...): metadata file version (%.2f) is different from the supported one (%.2f). "
+//            sprintf(errMsg, "in StackedVolume::unBinarizeFrom(...): metadata file version (%.2f) is different from the supported one (%.2f). "
 //                    "Please re-import the current volume.", mdata_version_read, mdata_version);
 //            throw MyException(errMsg);
 
+        fclose(file);
+        file = fopen(metadata_filepath, "rb");
+        uint16 str_size;
+        fread_return_val = fread(&str_size, sizeof(uint16), 1, file);
+        if(fread_return_val != 1)
+        {
             fclose(file);
-            file = fopen(metadata_filepath, "rb");
-            uint16 str_size;
-            fread_return_val = fread(&str_size, sizeof(uint16), 1, file);
-            if(fread_return_val != 1)
-                    throw IOException("in Stack::unBinarizeFrom(...): error while reading binary metadata file");
-            char stored_root_dir[STATIC_STRINGS_SIZE];
-            fread_return_val = fread(stored_root_dir, str_size, 1, file);
-            if(fread_return_val != 1)
-                    throw IOException("in Stack::unBinarizeFrom(...): error while reading binary metadata file");
+            throw IOException("in StackedVolume::unBinarizeFrom(...): error while reading binary metadata file");
         }
-
-
-
-        fread_return_val = fread(&reference_system.first, sizeof(axis), 1, file);
+        char stored_root_dir[STATIC_STRINGS_SIZE];
+        fread_return_val = fread(stored_root_dir, str_size, 1, file);
         if(fread_return_val != 1)
-                throw IOException("in Stack::unBinarizeFrom(...): error while reading binary metadata file");
+        {
+            fclose(file);
+            throw IOException("in StackedVolume::unBinarizeFrom(...): error while reading binary metadata file");
+        }
+    }
 
-        fread_return_val = fread(&reference_system.second, sizeof(axis), 1, file);
-        if(fread_return_val != 1)
-                throw IOException("in Stack::unBinarizeFrom(...): error while reading binary metadata file");
 
-        fread_return_val = fread(&reference_system.third, sizeof(axis), 1, file);
 
-        fread_return_val = fread(&VXL_1, sizeof(float), 1, file);
-        if(fread_return_val != 1)
-                throw IOException("in Stack::unBinarizeFrom(...): error while reading binary metadata file");
+    fread_return_val = fread(&reference_system.first, sizeof(axis), 1, file);
+    if(fread_return_val != 1)
+    {
+        fclose(file);
+        throw IOException("in StackedVolume::unBinarizeFrom(...): error while reading binary metadata file");
+    }
 
-        fread_return_val = fread(&VXL_2, sizeof(float), 1, file);
-        if(fread_return_val != 1)
-                throw IOException("in Stack::unBinarizeFrom(...): error while reading binary metadata file");
+    fread_return_val = fread(&reference_system.second, sizeof(axis), 1, file);
+    if(fread_return_val != 1)
+    {
+        fclose(file);
+        throw IOException("in StackedVolume::unBinarizeFrom(...): error while reading binary metadata file");
+    }
 
-        fread_return_val = fread(&VXL_3, sizeof(float), 1, file);
-        if(fread_return_val != 1)
-                throw IOException("in Stack::unBinarizeFrom(...): error while reading binary metadata file");
+    fread_return_val = fread(&reference_system.third, sizeof(axis), 1, file);
+    if(fread_return_val != 1)
+    {
+        fclose(file);
+        throw IOException("in StackedVolume::unBinarizeFrom(...): error while reading binary metadata file");
+    }
+
+    fread_return_val = fread(&VXL_1, sizeof(float), 1, file);
+    if(fread_return_val != 1)
+    {
+        fclose(file);
+        throw IOException("in StackedVolume::unBinarizeFrom(...): error while reading binary metadata file");
+    }
+
+    fread_return_val = fread(&VXL_2, sizeof(float), 1, file);
+    if(fread_return_val != 1)
+    {
+        fclose(file);
+        throw IOException("in StackedVolume::unBinarizeFrom(...): error while reading binary metadata file");
+    }
+
+    fread_return_val = fread(&VXL_3, sizeof(float), 1, file);
+    if(fread_return_val != 1)
+    {
+        fclose(file);
+        throw IOException("in StackedVolume::unBinarizeFrom(...): error while reading binary metadata file");
+    }
 
 	fread_return_val = fread(&VXL_V, sizeof(float), 1, file);
 	if(fread_return_val != 1)
-        throw IOException("in Stack::unBinarizeFrom(...): error while reading binary metadata file");
+    {
+        fclose(file);
+        throw IOException("in StackedVolume::unBinarizeFrom(...): error while reading binary metadata file");
+    }
 
 	fread_return_val = fread(&VXL_H, sizeof(float), 1, file);
 	if(fread_return_val != 1)
-        throw IOException("in Stack::unBinarizeFrom(...): error while reading binary metadata file");
+    {
+        fclose(file);
+        throw IOException("in StackedVolume::unBinarizeFrom(...): error while reading binary metadata file");
+    }
 
 	fread_return_val = fread(&VXL_D, sizeof(float), 1, file);
 	if(fread_return_val != 1)
-        throw IOException("in Stack::unBinarizeFrom(...): error while reading binary metadata file");
+    {
+        fclose(file);
+        throw IOException("in StackedVolume::unBinarizeFrom(...): error while reading binary metadata file");
+    }
 
 	fread_return_val = fread(&ORG_V, sizeof(float), 1, file);
 	if(fread_return_val != 1)
-        throw IOException("in Stack::unBinarizeFrom(...): error while reading binary metadata file");
+    {
+        fclose(file);
+        throw IOException("in StackedVolume::unBinarizeFrom(...): error while reading binary metadata file");
+    }
 
 	fread_return_val = fread(&ORG_H, sizeof(float), 1, file);
 	if(fread_return_val != 1)
-        throw IOException("in Stack::unBinarizeFrom(...): error while reading binary metadata file");
+    {
+        fclose(file);
+        throw IOException("in StackedVolume::unBinarizeFrom(...): error while reading binary metadata file");
+    }
 
 	fread_return_val = fread(&ORG_D, sizeof(float), 1, file);
 	if(fread_return_val != 1)
-        throw IOException("in Stack::unBinarizeFrom(...): error while reading binary metadata file");
+    {
+        fclose(file);
+        throw IOException("in StackedVolume::unBinarizeFrom(...): error while reading binary metadata file");
+    }
 
 	fread_return_val = fread(&DIM_V, sizeof(uint32), 1, file);
 	if(fread_return_val != 1)
-        throw IOException("in Stack::unBinarizeFrom(...): error while reading binary metadata file");
+    {
+        fclose(file);
+        throw IOException("in StackedVolume::unBinarizeFrom(...): error while reading binary metadata file");
+    }
 
 	fread_return_val = fread(&DIM_H, sizeof(uint32), 1, file);
 	if(fread_return_val != 1)
-        throw IOException("in Stack::unBinarizeFrom(...): error while reading binary metadata file");
+    {
+        fclose(file);
+        throw IOException("in StackedVolume::unBinarizeFrom(...): error while reading binary metadata file");
+    }
 
 	fread_return_val = fread(&DIM_D, sizeof(uint32), 1, file);
 	if(fread_return_val != 1)
-        throw IOException("in Stack::unBinarizeFrom(...): error while reading binary metadata file");
+    {
+        fclose(file);
+        throw IOException("in StackedVolume::unBinarizeFrom(...): error while reading binary metadata file");
+    }
 
 	fread_return_val = fread(&N_ROWS, sizeof(uint16), 1, file);
 	if(fread_return_val != 1)
-        throw IOException("in Stack::unBinarizeFrom(...): error while reading binary metadata file");
+    {
+        fclose(file);
+        throw IOException("in StackedVolume::unBinarizeFrom(...): error while reading binary metadata file");
+    }
 
 	fread_return_val = fread(&N_COLS, sizeof(uint16), 1, file);
 	if(fread_return_val != 1)
-        throw IOException("in Stack::unBinarizeFrom(...): error while reading binary metadata file");
+    {
+        fclose(file);
+        throw IOException("in StackedVolume::unBinarizeFrom(...): error while reading binary metadata file");
+    }
 
 
 	STACKS = new Stack **[N_ROWS];
@@ -353,14 +412,14 @@ void StackedVolume::init()
 		tmp_path.append(*entry_i);
 		cur_dir_lev2 = opendir(tmp_path.c_str());
 		if (!cur_dir_lev2)
-                    throw IOException("in StackedVolume::init(...): A problem occurred during scanning of subdirectories");
+            throw IOException("in StackedVolume::init(...): A problem occurred during scanning of subdirectories");
 
 		//scanning second level of hierarchy which entries need to be ordered alphabetically. This is done using STL.
 		while ((entry_lev2=readdir(cur_dir_lev2)))
 		{
-                    tmp=entry_lev2->d_name;
-                    if(tmp.find(".") == string::npos && tmp.find(" ") == string::npos)
-                        entries_lev2.push_back(entry_lev2->d_name);
+            tmp=entry_lev2->d_name;
+            if(tmp.find(".") == string::npos && tmp.find(" ") == string::npos)
+                entries_lev2.push_back(entry_lev2->d_name);
 		}
 		closedir(cur_dir_lev2);
 		entries_lev2.sort();
@@ -368,29 +427,29 @@ void StackedVolume::init()
 		//for each entry of the second level, allocating a new Stack
 		for(entry_j = entries_lev2.begin(), j=0; entry_j!= entries_lev2.end(); entry_j++, j++)
 		{
-                    //allocating new stack
-                    sprintf(stack_i_j_path,"%s/%s",(*entry_i).c_str(), (*entry_j).c_str());
-                    Stack *new_stk = new Stack(this,i,j,stack_i_j_path);
-                    stacks_list.push_back(new_stk);
+            //allocating new stack
+            sprintf(stack_i_j_path,"%s/%s",(*entry_i).c_str(), (*entry_j).c_str());
+            Stack *new_stk = new Stack(this,i,j,stack_i_j_path);
+            stacks_list.push_back(new_stk);
 		}
 		entries_lev2.clear();
 		if(N_COLS == 0)
-                    N_COLS = j;
+            N_COLS = j;
 		else if(j != N_COLS)
-                    throw IOException("in StackedVolume::init(...): Number of second-level directories is not the same for all first-level directories!");
+            throw IOException("in StackedVolume::init(...): Number of second-level directories is not the same for all first-level directories!");
 	}
 	entries_lev1.clear();
 
 	//intermediate check
 	if(N_ROWS == 0 || N_COLS == 0)
-            throw IOException("in StackedVolume::init(...): Unable to find stacks in the given directory");
+        throw IOException("in StackedVolume::init(...): Unable to find stacks in the given directory");
 
 	//converting stacks_list (STL list of Stack*) into STACKS (2-D array of Stack*)
 	STACKS = new Stack**[N_ROWS];
 	for(int row=0; row < N_ROWS; row++)
-            STACKS[row] = new Stack*[N_COLS];
+        STACKS[row] = new Stack*[N_COLS];
 	for(list<Stack*>::iterator i = stacks_list.begin(); i != stacks_list.end(); i++)
-            STACKS[(*i)->getROW_INDEX()][(*i)->getCOL_INDEX()] = (*i);
+        STACKS[(*i)->getROW_INDEX()][(*i)->getCOL_INDEX()] = (*i);
 
 	/******************* 2) SETTING THE REFERENCE SYSTEM ********************
 	The entire application uses a vertical-horizontal reference system, so
