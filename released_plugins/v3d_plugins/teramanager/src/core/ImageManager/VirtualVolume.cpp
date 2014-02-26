@@ -708,44 +708,53 @@ VirtualVolume* VirtualVolume::instance(const char* path) throw (IOException)
         {
             volume = new TiledMCVolume(path);
         }
-        catch(...)
+        catch(IOException &ex)
         {
+            debug(LEV3, strprintf("Cannot import <TiledMCVolume> at \"%s\": %s", path, ex.what()).c_str(),__iim__current__function__);
             try
             {
                 volume = new StackedVolume(path);
             }
-            catch(...)
+            catch(IOException &ex)
             {
+                debug(LEV3, strprintf("Cannot import <StackedVolume> at \"%s\": %s", path, ex.what()).c_str(),__iim__current__function__);
                 try
                 {
                     volume = new TiledVolume(path);
                 }
-                catch(...)
+                catch(IOException &ex)
                 {
+                    debug(LEV3, strprintf("Cannot import <TiledVolume> at \"%s\": %s", path, ex.what()).c_str(),__iim__current__function__);
                     try
                     {
                         volume = new SimpleVolume(path);
                     }
-                    catch(...)
+                    catch(IOException &ex)
                     {
+                        debug(LEV3, strprintf("Cannot import <SimpleVolume> at \"%s\": %s", path, ex.what()).c_str(),__iim__current__function__);
                         try
                         {
                             volume = new SimpleVolumeRaw(path);
                         }
-                        catch(...)
+                        catch(IOException &ex)
                         {
+                            debug(LEV3, strprintf("Cannot import <SimpleVolumeRaw> at \"%s\": %s", path, ex.what()).c_str(),__iim__current__function__);
                             try
                             {
                                 volume = new TimeSeries(path);
                             }
-                            catch(...)
+                            catch(IOException &ex)
                             {
-                                ;
+                                debug(LEV3, strprintf("Cannot import <TimeSeries> at \"%s\": %s", path, ex.what()).c_str(),__iim__current__function__);
                             }
                         }
                     }
                 }
             }
+        }
+        catch(...)
+        {
+            debug(LEV3, strprintf("generic error occurred when importing volume at \"%s\"", path).c_str(),__iim__current__function__);
         }
     }
     // try all file formats
@@ -755,9 +764,13 @@ VirtualVolume* VirtualVolume::instance(const char* path) throw (IOException)
         {
             volume = new RawVolume(path);
         }
+        catch(IOException &ex)
+        {
+            debug(LEV3, strprintf("Cannot import <RawVolume> at \"%s\": %s", path, ex.what()).c_str(),__iim__current__function__);
+        }
         catch(...)
         {
-            ;
+            debug(LEV3, strprintf("generic error occurred when importing volume at \"%s\"", path).c_str(),__iim__current__function__);
         }
     }
     else

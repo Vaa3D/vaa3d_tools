@@ -13,7 +13,7 @@ using namespace iim;
 
 TimeSeries::TimeSeries(const char *rootDir, string frames_format /* = "" */) throw (IOException) : VirtualVolume(rootDir)
 {
-    /**/iim::debug(iim::LEV2, strprintf("rootDir = %s", root_dir).c_str(), __iim__current__function__);
+    /**/iim::debug(iim::LEV2, strprintf("rootDir = %s, frames_format = \"%s\"", root_dir, frames_format.c_str()).c_str(), __iim__current__function__);
 
     // check condition #1: valid folder
     if(!isDirectory(root_dir))
@@ -49,7 +49,10 @@ TimeSeries::TimeSeries(const char *rootDir, string frames_format /* = "" */) thr
             string path = root_dir;
             path += "/";
             path += *it;
-            VirtualVolume* volume = VirtualVolume::instance(path.c_str());
+            VirtualVolume* volume = 0;
+            try{volume = VirtualVolume::instance(path.c_str());}
+            catch(IOException &ex){warning(strprintf("Cannot import tiled time frame at \"%s\": %s", path.c_str(), ex.what()).c_str(),__iim__current__function__);}
+            catch(...){warning(strprintf("Cannot import tiled time frame at \"%s\"", path.c_str()).c_str(),__iim__current__function__);}
             if(!volume)
                 throw IOException(strprintf("in TimeSeries::TimeSeries(): cannot import frame \"%s\" in folder \"%s\": invalid or unsupported format", it->c_str(), root_dir).c_str());
             frames.push_back(volume);
