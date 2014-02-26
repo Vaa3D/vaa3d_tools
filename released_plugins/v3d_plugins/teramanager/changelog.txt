@@ -11,6 +11,14 @@ ties names are:
 - Rem: a feature no longer available
 
 ============================================================================================
+Version 0.9.56
+February 26th, 2014
+--------------------------------------------------------------------------------------------
+- Fix: fixed many missing "fclose" and "closedir" which may cause TeraFly not to be able to
+       open a file/folder once the maximum limit (platform-dependent) has been reached.
+--------------------------------------------------------------------------------------------
+
+
 Version 0.9.55
 February 26th, 2014
 --------------------------------------------------------------------------------------------
