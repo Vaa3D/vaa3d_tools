@@ -215,8 +215,8 @@ class teramanager::PMain : public QWidget
         QSpinBox* H1_sbox;
         QSpinBox* D0_sbox;
         QSpinBox* D1_sbox;
-        QSpinBox* T0_sbox;
-        QSpinBox* T1_sbox;
+        QLineEdit* T0_sbox;
+        QLineEdit* T1_sbox;
         QLabel* to_label_1;
         QLabel* to_label_2;
         QLabel* to_label_3;

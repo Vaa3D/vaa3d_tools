@@ -65,7 +65,8 @@ void CSettings::loadDefaultSettings()
     VOIdimV = VOIdimH = 256;
     VOIdimD = 128;
     VOIdimT = 20;
-    traslX = traslY = traslZ = traslT = 50;  //percentage value
+    traslX = traslY = traslZ = 50;  //percentage value
+    traslT = 0;
 
     //TeraConverter settings
     volumeConverterInputPathLRU = "";

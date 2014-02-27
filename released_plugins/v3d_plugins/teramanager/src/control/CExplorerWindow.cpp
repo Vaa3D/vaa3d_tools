@@ -204,10 +204,12 @@ void CExplorerWindow::show()
         pMain->D1_sbox->setMaximum(getGlobalDCoord(view3DWidget->zCut1(), -1, true, false, __itm__current__function__)+1);
         pMain->D1_sbox->setValue(pMain->D1_sbox->maximum());
 
-        pMain->T0_sbox->setMinimum(volT0);
-        pMain->T0_sbox->setValue(pMain->T0_sbox->minimum());
-        pMain->T1_sbox->setMaximum(volT1);
-        pMain->T1_sbox->setValue(pMain->T1_sbox->maximum());
+        pMain->T0_sbox->setText(QString::number(volT0));
+        pMain->T1_sbox->setText(QString::number(volT1));
+//        pMain->T0_sbox->setMinimum(volT0);
+//        pMain->T0_sbox->setValue(pMain->T0_sbox->minimum());
+//        pMain->T1_sbox->setMaximum(volT1);
+//        pMain->T1_sbox->setValue(pMain->T1_sbox->maximum());
 
         //signal connections
         connect(CVolume::instance(), SIGNAL(sendOperationOutcome(itm::uint8*,itm::RuntimeException*,void*,qint64,QString,int)), this,  SLOT(loadingDone(itm::uint8*,itm::RuntimeException*,void*,qint64,QString,int)), Qt::BlockingQueuedConnection);
@@ -679,6 +681,12 @@ CExplorerWindow::newView(
         else
             dz = dz == -1 ? int_inf : static_cast<int>(dz*ratioZ+0.5f);
 
+        // adjust time size so as to use all the available frames set by the user
+        if(t1 - t0 +1 != pMain.Tdim_sbox->value())
+        {
+            t1 = t0 + (pMain.Tdim_sbox->value()-1);
+            /**/itm::debug(itm::NO_DEBUG, strprintf("mismatch between |[t0,t1]| and max T dims, adjusting it to [%d,%d]", t0, t1).c_str(), __itm__current__function__);
+        }
 
 
         // crop VOI if its larger than the maximum allowed
@@ -1136,16 +1144,16 @@ void CExplorerWindow::saveSubvolSpinboxState()
     H1_sbox_max = pMain.H1_sbox->maximum();
     D0_sbox_min = pMain.D0_sbox->minimum();
     D1_sbox_max = pMain.D1_sbox->maximum();
-    T0_sbox_min = pMain.T0_sbox->minimum();
-    T1_sbox_max = pMain.T1_sbox->maximum();
+//    T0_sbox_min = pMain.T0_sbox->minimum();
+//    T1_sbox_max = pMain.T1_sbox->maximum();
     V0_sbox_val = pMain.V0_sbox->value();
     V1_sbox_val = pMain.V1_sbox->value();
     H0_sbox_val = pMain.H0_sbox->value();
     H1_sbox_val = pMain.H1_sbox->value();
     D0_sbox_val = pMain.D0_sbox->value();
     D1_sbox_val = pMain.D1_sbox->value();
-    T0_sbox_val = pMain.T0_sbox->value();
-    T1_sbox_val = pMain.T1_sbox->value();
+    T0_sbox_val = pMain.T0_sbox->text().toInt();
+    T1_sbox_val = pMain.T1_sbox->text().toInt();
 }
 void CExplorerWindow::restoreSubvolSpinboxState()
 {  
@@ -1158,16 +1166,16 @@ void CExplorerWindow::restoreSubvolSpinboxState()
     pMain.H1_sbox->setMaximum(H1_sbox_max);
     pMain.D0_sbox->setMinimum(D0_sbox_min);
     pMain.D1_sbox->setMaximum(D1_sbox_max);
-    pMain.T0_sbox->setMinimum(T0_sbox_min);
-    pMain.T1_sbox->setMaximum(T1_sbox_max);
+//    pMain.T0_sbox->setMinimum(T0_sbox_min);
+//    pMain.T1_sbox->setMaximum(T1_sbox_max);
     pMain.V0_sbox->setValue(V0_sbox_val);
     pMain.V1_sbox->setValue(V1_sbox_val);
     pMain.H0_sbox->setValue(H0_sbox_val);
     pMain.H1_sbox->setValue(H1_sbox_val);
     pMain.D0_sbox->setValue(D0_sbox_val);
     pMain.D1_sbox->setValue(D1_sbox_val);
-    pMain.T0_sbox->setValue(T0_sbox_val);
-    pMain.T1_sbox->setValue(T1_sbox_val);
+    pMain.T0_sbox->setText(QString::number(T0_sbox_val));
+    pMain.T1_sbox->setText(QString::number(T1_sbox_val));
 }
 
 /**********************************************************************************

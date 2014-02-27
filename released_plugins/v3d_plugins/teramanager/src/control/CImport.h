@@ -110,6 +110,12 @@ class teramanager::CImport : public QThread
         itm::uint32 getVMapZDim(){return vmapZDim;}
         itm::uint32 getVMapCDim(){return vmapCDim;}
         itm::uint32 getVMapTDim(){return vmapTDim;}
+        itm::uint32 getVolumeTDim(){
+            if(!volumes.empty())
+                return volumes[0]->getDIM_T();
+            else
+                return 0;
+        }
         int getVMapResIndex()
         {
             for(size_t k=0; k<volumes.size(); k++)
@@ -165,8 +171,14 @@ class teramanager::CImport : public QThread
             vmapCDimMax = 3;
         }
 
-        // returns true if the volume map exists and is compatible with the current version
-        static bool checkVolumeMap(std::string vmapFilepath, std::string min_required_version) throw (itm::RuntimeException);
+        // returns true if
+        // 1) the volume map does not exist OR
+        // 2) it is not compatible with the current version OR
+        // 3) contains a number of 'T' frames with T < maxDim && T < TDim
+        static bool hasVolumeMapToBeRegenerated(std::string vmapFilepath,
+                                                std::string min_required_version,
+                                                int maxTDim, int TDim) throw (itm::RuntimeException);
+
 
     signals:
 

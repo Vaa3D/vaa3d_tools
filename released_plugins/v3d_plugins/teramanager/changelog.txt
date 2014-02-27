@@ -11,6 +11,21 @@ ties names are:
 - Rem: a feature no longer available
 
 ============================================================================================
+Version 0.9.57
+February 27th, 2014
+--------------------------------------------------------------------------------------------
+- Opt: improved user control of 5D functionality:
+       - the number  of time  frames loaded  when the volume is opened  is controlled by the
+         max dims (t) spinbox.
+       - the extent of the time segment is equal to max dims (t).If max dims(t) changes, the
+         next loaded time segment will take into account that.
+       - substituted confunding time spinboxes  in the "Global coordinates"  panel with less
+         ambiguous widgets.
+       - default overlap for the time shifts is now 0%. This way, the user can quickly shift
+         to the adjacent segment.
+--------------------------------------------------------------------------------------------
+
+
 Version 0.9.56
 February 26th, 2014
 --------------------------------------------------------------------------------------------

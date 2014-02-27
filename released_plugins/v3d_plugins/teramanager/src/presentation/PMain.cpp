@@ -592,10 +592,10 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     D0_sbox->setAlignment(Qt::AlignCenter);
     D1_sbox = new QSpinBox();
     D1_sbox->setAlignment(Qt::AlignCenter);
-    T0_sbox = new QSpinBox();
+    T0_sbox = new QLineEdit();
     T0_sbox->setAlignment(Qt::AlignCenter);
     T0_sbox->setReadOnly(true);
-    T1_sbox = new QSpinBox();
+    T1_sbox = new QLineEdit();
     T1_sbox->setAlignment(Qt::AlignCenter);
     T1_sbox->setReadOnly(true);
     V0_sbox->installEventFilter(this);
@@ -1066,8 +1066,10 @@ void PMain::reset()
     H1_sbox->setValue(0);
     D0_sbox->setValue(0);
     D1_sbox->setValue(0);
-    T0_sbox->setValue(0);
-    T1_sbox->setValue(0);
+    T0_sbox->setText("");
+    T1_sbox->setText("");
+//    T0_sbox->setValue(0);
+//    T1_sbox->setValue(0);
     frameCoord->setText("");
     refSys->setXRotation(200);
     refSys->setYRotation(50);
@@ -1532,12 +1534,12 @@ void PMain::importDone(RuntimeException *ex, qint64 elapsed_time)
         D1_sbox->setMinimum(1);
         D1_sbox->setMaximum(volume->getDIM_D());
         D1_sbox->setValue(volume->getDIM_D());        
-        T0_sbox->setMinimum(0);
-        T0_sbox->setMaximum(CImport::instance()->getVMapTDim()-1);
-        T0_sbox->setValue(0);
-        T1_sbox->setMinimum(0);
-        T1_sbox->setMaximum(CImport::instance()->getVMapTDim()-1);
-        T1_sbox->setValue(CImport::instance()->getVMapTDim()-1);
+//        T0_sbox->setMinimum(0);
+//        T0_sbox->setMaximum(CImport::instance()->getVMapTDim()-1);
+        T0_sbox->setText("0");
+//        T1_sbox->setMinimum(0);
+//        T1_sbox->setMaximum(CImport::instance()->getVMapTDim()-1);
+        T1_sbox->setText(QString::number(CImport::instance()->getVMapTDim()-1));
         if(volume->getDIM_T() > 1)
             frameCoord->setText(strprintf("t = %d/%d", 0, volume->getDIM_T()-1).c_str());
         globalCoord_panel->setEnabled(true);
@@ -1691,7 +1693,7 @@ void PMain::resolutionIndexChanged(int i)
             if(QMessageBox::Yes == QMessageBox::question(this, "Confirm", QString("The volume to be loaded is ").append(QString::number(MVoxels, 'f', 1)).append(" MVoxels big.\n\nDo you confirm?"), QMessageBox::No | QMessageBox::Yes, QMessageBox::Yes))
             {
                 //voi set
-                CVolume::instance()->setVoi(CExplorerWindow::getCurrent(), i, voiV0, voiV1+1, voiH0, voiH1+1, voiD0, voiD1+1, T0_sbox->value(), T1_sbox->value());
+                CVolume::instance()->setVoi(CExplorerWindow::getCurrent(), i, voiV0, voiV1+1, voiH0, voiH1+1, voiD0, voiD1+1, T0_sbox->text().toInt(), T1_sbox->text().toInt());
 
                 //disabling import form and enabling progress bar animation and tab wait animation
                 progressBar->setEnabled(true);
@@ -1816,12 +1818,21 @@ void PMain::traslTposClicked()
     CExplorerWindow* expl = CExplorerWindow::getCurrent();
     if(expl && expl->isActive && !expl->toBeClosed)
     {
+        int newT0 = expl->volT0 + (expl->volT1-expl->volT0)*(100-CSettings::instance()->getTraslT())/100.0f;
+        int newT1 = newT0 + (Tdim_sbox->value()-1);
+        if(newT1 >= CImport::instance()->getVolumeTDim())
+        {
+            newT1 = CImport::instance()->getVolumeTDim() - 1;
+            newT0 = newT1 - (Tdim_sbox->value()-1);
+        }
         expl->newView((expl->volH1-expl->volH0)/2,
                       (expl->volV1-expl->volV0)/2,
                       (expl->volD1-expl->volD0)/2,
                       expl->volResIndex,
-                      expl->volT0 + (expl->volT1-expl->volT0)*(100-CSettings::instance()->getTraslT())/100.0f,
-                      expl->volT1 + (expl->volT1-expl->volT0)*(100-CSettings::instance()->getTraslT())/100.0f, false);
+                      newT0,
+                      newT1, false);
+//                      expl->volT0 + (expl->volT1-expl->volT0)*(100-CSettings::instance()->getTraslT())/100.0f,
+//                      expl->volT1 + (expl->volT1-expl->volT0)*(100-CSettings::instance()->getTraslT())/100.0f, false);
     }
 }
 void PMain::traslTnegClicked()
@@ -1831,12 +1842,21 @@ void PMain::traslTnegClicked()
     CExplorerWindow* expl = CExplorerWindow::getCurrent();
     if(expl && expl->isActive && !expl->toBeClosed)
     {
+        int newT1 = expl->volT1 - (expl->volT1-expl->volT0)*(100-CSettings::instance()->getTraslT())/100.0f;
+        int newT0 = newT1 - (Tdim_sbox->value()-1);
+        if(newT0 < 0)
+        {
+            newT0 = 0;
+            newT1 = newT0 + (Tdim_sbox->value()-1);
+        }
         expl->newView((expl->volH1-expl->volH0)/2,
                       (expl->volV1-expl->volV0)/2,
                       (expl->volD1-expl->volD0)/2,
                       expl->volResIndex,
-                      expl->volT0 - (expl->volT1-expl->volT0)*(100-CSettings::instance()->getTraslT())/100.0f,
-                      expl->volT1 - (expl->volT1-expl->volT0)*(100-CSettings::instance()->getTraslT())/100.0f, false);
+                      newT0,
+                      newT1, false);
+//                      expl->volT0 - (expl->volT1-expl->volT0)*(100-CSettings::instance()->getTraslT())/100.0f,
+//                      expl->volT1 - (expl->volT1-expl->volT0)*(100-CSettings::instance()->getTraslT())/100.0f, false);
     }
 }
 

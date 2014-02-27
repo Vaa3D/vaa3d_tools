@@ -222,7 +222,7 @@ void CImport::run()
         We generate once for all a volume map from lowest-resolution volume.
         *************************************************************************/
         string volMapPath = curParentDir.path().toStdString() + "/" + VMAP_BIN_FILE_NAME;
-        if(!checkVolumeMap(volMapPath.c_str(), "0.9.42") || reimport || regenerateVMap)
+        if(hasVolumeMapToBeRegenerated(volMapPath.c_str(), "0.9.42", vmapTDimMax, volumes[0]->getDIM_T()) || reimport || regenerateVMap)
         {
             /**/itm::debug(itm::LEV_MAX, "Entering volume's map generation section", __itm__current__function__);
 
@@ -314,23 +314,57 @@ void CImport::run()
     catch(...)                           {reset(); emit sendOperationOutcome(new RuntimeException("Unknown error occurred"));}
 }
 
-// returns true if the volume map exists and is compatible with the current version
-bool CImport::checkVolumeMap(std::string vmapFilepath, std::string min_required_version) throw (RuntimeException)
+// returns true if
+// 1) the volume map does not exist OR
+// 2) it is not compatible with the current version OR
+// 3) contains a number of 'T' frames with T < maxDim && T < TDim
+bool CImport::hasVolumeMapToBeRegenerated(std::string vmapFilepath,
+                                          std::string min_required_version,
+                                          int maxTDim, int TDim) throw (RuntimeException)
 {
+    /**/itm::debug(itm::LEV1, strprintf("vmapFilepath = \"%s\", min_required_version = \"%s\", maxTDim = %d, TDim = %d",
+                                        vmapFilepath.c_str(), min_required_version.c_str(), maxTDim, TDim).c_str(), __itm__current__function__);
+
     // open volume map
     FILE* vmapFile = fopen(vmapFilepath.c_str(), "rb");
     if(!vmapFile)
-        return false;
+        return true;
 
     // read version
     uint16 verstr_size;
     if(!fread(&verstr_size, sizeof(uint16), 1, vmapFile))
-        return false;
+    {
+        fclose(vmapFile);
+        return true;
+    }
     char ver[1024];
     if(!fread(ver, verstr_size, 1, vmapFile))
-        return false;
+    {
+        fclose(vmapFile);
+        return true;
+    }
+    int T = 0;
+    if(!fread(&T, sizeof(int), 1, vmapFile))
+    {
+        fclose(vmapFile);
+        return true;
+    }
     fclose(vmapFile);
 
+
     // check version
-    return CPlugin::checkPluginVersion(ver, min_required_version);
+    if(!CPlugin::checkPluginVersion(ver, min_required_version))
+        return true;
+
+    // check time size: can we load more frames?
+    if(T < maxTDim &&  // we can load more frames
+       T < TDim)       // there are more frames that can be loaded
+        return true;
+
+    // check time size: should we load less frames?
+    if(T > maxTDim)
+        return true;
+
+    // all checks passed: no need to regenerate volume map
+    return false;
 }
