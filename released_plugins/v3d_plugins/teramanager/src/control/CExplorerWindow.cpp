@@ -136,6 +136,7 @@ void CExplorerWindow::show()
 
             //storing annotations done in the previous view and loading annotations of the current view
             prev->storeAnnotations();
+            prev->clearAnnotations();
             this->loadAnnotations();
         }
         //otherwise this is the lowest resolution window
@@ -1237,6 +1238,23 @@ void CExplorerWindow::storeAnnotations() throw (RuntimeException)
     PLog::getInstance()->appendCPU(timer.elapsed(), QString("Stored 3D annotations from view ").append(title.c_str()).toStdString());
 }
 
+void CExplorerWindow::clearAnnotations() throw (RuntimeException)
+{
+    /**/itm::debug(itm::LEV1, strprintf("title = %s", titleShort.c_str()).c_str(), __itm__current__function__);
+
+    //clearing previous annotations (useful when this view has been already visited)
+    loaded_markers.clear();
+    loaded_curves.clear();
+    V3D_env->getHandleNeuronTrees_Any3DViewer(window3D)->clear();
+
+    QList<LocationSimple> vaa3dMarkers;
+    V3D_env->setLandmark(window, vaa3dMarkers);
+//    V3D_env->setSWC(window, vaa3dCurves);
+    V3D_env->pushObjectIn3DWindow(window);
+    view3DWidget->enableMarkerLabel(false);
+    view3DWidget->getRenderer()->endSelectMode();
+}
+
 void CExplorerWindow::loadAnnotations() throw (RuntimeException)
 {
     /**/itm::debug(itm::LEV1, strprintf("title = %s", titleShort.c_str()).c_str(), __itm__current__function__);
@@ -1388,6 +1406,7 @@ void CExplorerWindow::restoreViewFrom(CExplorerWindow* source) throw (RuntimeExc
 
         //storing annotations done in the source view
         source->storeAnnotations();
+        source->clearAnnotations();
 
         //registrating the current window as the current window of the multiresolution explorer windows chain
         CExplorerWindow::current = this;

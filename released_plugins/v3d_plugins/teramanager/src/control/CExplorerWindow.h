@@ -228,10 +228,11 @@ class teramanager::CExplorerWindow : public QWidget
         void makeLastView() throw (itm::RuntimeException);
 
         /**********************************************************************************
-        * Annotations are stored/loaded) to/from the <CAnnotations> object
+        * Annotations are stored/loaded to/from the <CAnnotations> object
         ***********************************************************************************/
         void storeAnnotations() throw (itm::RuntimeException);
         void loadAnnotations() throw (itm::RuntimeException);
+        void clearAnnotations() throw (itm::RuntimeException);
 
         /**********************************************************************************
         * Saves/restores the state of PMain spinboxes for subvolume selection

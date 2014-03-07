@@ -12,6 +12,15 @@ ties names are:
 
 ============================================================================================
 Version 0.9.57
+March 7th, 2014
+--------------------------------------------------------------------------------------------
+- Opt: faster navigation throughout the resolutions in the case there are thousands of anno-
+       tations that may slow down the graphic card as they tend to accumulate in the memory.
+--------------------------------------------------------------------------------------------
+
+
+
+Version 0.9.57
 February 27th, 2014
 --------------------------------------------------------------------------------------------
 - Opt: improved user control of 5D functionality:
