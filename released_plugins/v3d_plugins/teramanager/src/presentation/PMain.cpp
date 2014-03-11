@@ -1688,24 +1688,40 @@ void PMain::resolutionIndexChanged(int i)
             int voiH1 = CVolume::scaleHCoord(H1_sbox->value()-1, CImport::instance()->getResolutions()-1, i);
             int voiD0 = CVolume::scaleDCoord(D0_sbox->value()-1, CImport::instance()->getResolutions()-1, i);
             int voiD1 = CVolume::scaleDCoord(D1_sbox->value()-1, CImport::instance()->getResolutions()-1, i);
+
             int voiTDim = std::min(static_cast<int>(CImport::instance()->getVMapTDim()), Tdim_sbox->value());
             float MVoxels = ((voiV1-voiV0+1)/1024.0f)*((voiH1-voiH0+1)/1024.0f)*(voiD1-voiD0+1)*voiTDim;
             if(QMessageBox::Yes == QMessageBox::question(this, "Confirm", QString("The volume to be loaded is ").append(QString::number(MVoxels, 'f', 1)).append(" MVoxels big.\n\nDo you confirm?"), QMessageBox::No | QMessageBox::Yes, QMessageBox::Yes))
             {
+                int currentRes = CExplorerWindow::getCurrent()->getResIndex();
+                int x0 = CVolume::scaleHCoord(H0_sbox->value()-1, CImport::instance()->getResolutions()-1, currentRes);
+                int x1 = CVolume::scaleHCoord(H1_sbox->value()-1, CImport::instance()->getResolutions()-1, currentRes);
+                int y0 = CVolume::scaleVCoord(V0_sbox->value()-1, CImport::instance()->getResolutions()-1, currentRes);
+                int y1 = CVolume::scaleVCoord(V1_sbox->value()-1, CImport::instance()->getResolutions()-1, currentRes);
+                int z0 = CVolume::scaleDCoord(D0_sbox->value()-1, CImport::instance()->getResolutions()-1, currentRes);
+                int z1 = CVolume::scaleDCoord(D1_sbox->value()-1, CImport::instance()->getResolutions()-1, currentRes);
+                int t0 = CExplorerWindow::getCurrent()->volT0;
+                int t1 = CExplorerWindow::getCurrent()->volT1;
+                /**/itm::debug(itm::LEV_MAX, strprintf("global VOI [%d,%d) [%d,%d) [%d,%d) rescaled to [%d,%d) [%d,%d) [%d,%d) at currentRes = %d",
+                                                       H0_sbox->value()-1, H1_sbox->value()-1,
+                                                       V0_sbox->value()-1, V1_sbox->value()-1,
+                                                       D0_sbox->value()-1, D1_sbox->value()-1,
+                                                       x0, x1, y0, y1, z0, z1, currentRes).c_str(), __itm__current__function__);
+                CExplorerWindow::getCurrent()->newView(x1, y1, z1, i, t0, t1, false, -1, -1, -1, x0, y0, z0, false);
                 //voi set
-                CVolume::instance()->setVoi(CExplorerWindow::getCurrent(), i, voiV0, voiV1+1, voiH0, voiH1+1, voiD0, voiD1+1, T0_sbox->text().toInt(), T1_sbox->text().toInt());
+//                CVolume::instance()->setVoi(CExplorerWindow::getCurrent(), i, voiV0, voiV1+1, voiH0, voiH1+1, voiD0, voiD1+1, CExplorerWindow::getCurrent()->volT0, CExplorerWindow::getCurrent()->volT1);
 
-                //disabling import form and enabling progress bar animation and tab wait animation
-                progressBar->setEnabled(true);
-                progressBar->setMinimum(0);
-                progressBar->setMaximum(0);
-                globalCoord_panel->setEnabled(false);
-                statusBar->showMessage("Loading selected subvolume...");
+//                //disabling import form and enabling progress bar animation and tab wait animation
+//                progressBar->setEnabled(true);
+//                progressBar->setMinimum(0);
+//                progressBar->setMaximum(0);
+//                globalCoord_panel->setEnabled(false);
+//                statusBar->showMessage("Loading selected subvolume...");
 
-                //saving state of subvol spinboxes
-                CExplorerWindow::getCurrent()->saveSubvolSpinboxState();
+//                //saving state of subvol spinboxes
+//                CExplorerWindow::getCurrent()->saveSubvolSpinboxState();
 
-                //launch operation
+//                //launch operation
                 CVolume::instance()->start();
             }
             else

@@ -616,16 +616,16 @@ void CExplorerWindow::loadingDone(itm::uint8 *data, RuntimeException *ex, void* 
 * lution has to be loaded.
 ***********************************************************************************/
 void
-CExplorerWindow::newView(
-    int x, int y, int z,                            //can be either the VOI's center (default) or the VOI's ending point (see x0,y0,z0)
+CExplorerWindow::newView(int x, int y, int z,                            //can be either the VOI's center (default) or the VOI's ending point (see x0,y0,z0)
     int resolution,                                 //resolution index of the view requested
     int t0, int t1,                                 //time frames selection
     bool fromVaa3Dcoordinates /*= false*/,          //if coordinates were obtained from Vaa3D
     int dx/*=-1*/, int dy/*=-1*/, int dz/*=-1*/,    //VOI [x-dx,x+dx), [y-dy,y+dy), [z-dz,z+dz), [t0, t1]
-    int x0/*=-1*/, int y0/*=-1*/, int z0/*=-1*/)    //VOI [x0, x), [y0, y), [z0, z), [t0, t1]
+    int x0/*=-1*/, int y0/*=-1*/, int z0/*=-1*/,    //VOI [x0, x), [y0, y), [z0, z), [t0, t1]
+    bool auto_crop /* = true */)                    //whether to crop the VOI to the max dims
 {
-    /**/itm::debug(itm::LEV1, strprintf("title = %s, x = %d, y = %d, z = %d, res = %d, dx = %d, dy = %d, dz = %d, x0 = %d, y0 = %d, z0 = %d, t0 = %d, t1 = %d",
-                                        titleShort.c_str(),  x, y, z, resolution, dx, dy, dz, x0, y0, z0, t0, t1).c_str(), __itm__current__function__);
+    /**/itm::debug(itm::LEV1, strprintf("title = %s, x = %d, y = %d, z = %d, res = %d, dx = %d, dy = %d, dz = %d, x0 = %d, y0 = %d, z0 = %d, t0 = %d, t1 = %d, auto_crop = %s",
+                                        titleShort.c_str(),  x, y, z, resolution, dx, dy, dz, x0, y0, z0, t0, t1, auto_crop ? "true" : "false").c_str(), __itm__current__function__);
 
     // check precondition #1: active window
     if(!isActive || toBeClosed)
@@ -691,46 +691,49 @@ CExplorerWindow::newView(
 
 
         // crop VOI if its larger than the maximum allowed
-        // modality #1: VOI = [x-dx,x+dx), [y-dy,y+dy), [z-dz,z+dz), [t0, t1]
-        if(dx != -1 && dy != -1 && dz != -1)
+        if(auto_crop)
         {
-            /**/itm::debug(itm::LEV_MAX, strprintf("title = %s, cropping bbox dims from (%d,%d,%d) t[%d,%d] to...", titleShort.c_str(),  dx, dy, dz, t0, t1).c_str(), __itm__current__function__);
-            dx = std::min(dx, round(pMain.Hdim_sbox->value()/2.0f));
-            dy = std::min(dy, round(pMain.Vdim_sbox->value()/2.0f));
-            dz = std::min(dz, round(pMain.Ddim_sbox->value()/2.0f));
-            t0 = std::max(0, std::min(t0,CImport::instance()->getVolume(volResIndex)->getDIM_T()-1));
-            t1 = std::max(0, std::min(t1,CImport::instance()->getVolume(volResIndex)->getDIM_T()-1));
-            if(t1-t0+1 > pMain.Tdim_sbox->value())
-                t1 = t0 + pMain.Tdim_sbox->value();
-            /**/itm::debug(itm::LEV_MAX, strprintf("title = %s, ...to (%d,%d,%d)", titleShort.c_str(),  dx, dy, dz).c_str(), __itm__current__function__);
-        }
-        // modality #2: VOI = [x0, x), [y0, y), [z0, z), [t0, t1]
-        else
-        {
-            /**/itm::debug(itm::LEV_MAX, strprintf("title = %s, cropping bbox dims from [%d,%d) [%d,%d) [%d,%d) [%d,%d] to...", titleShort.c_str(),  x0, x, y0, y, z0, z, t0, t1).c_str(), __itm__current__function__);
-            if(x - x0 > pMain.Hdim_sbox->value())
+            // modality #1: VOI = [x-dx,x+dx), [y-dy,y+dy), [z-dz,z+dz), [t0, t1]
+            if(dx != -1 && dy != -1 && dz != -1)
             {
-                float margin = ( (x - x0) - pMain.Hdim_sbox->value() )/2.0f ;
-                x  = round(x  - margin);
-                x0 = round(x0 + margin);
+                /**/itm::debug(itm::LEV_MAX, strprintf("title = %s, cropping bbox dims from (%d,%d,%d) t[%d,%d] to...", titleShort.c_str(),  dx, dy, dz, t0, t1).c_str(), __itm__current__function__);
+                dx = std::min(dx, round(pMain.Hdim_sbox->value()/2.0f));
+                dy = std::min(dy, round(pMain.Vdim_sbox->value()/2.0f));
+                dz = std::min(dz, round(pMain.Ddim_sbox->value()/2.0f));
+                t0 = std::max(0, std::min(t0,CImport::instance()->getVolume(volResIndex)->getDIM_T()-1));
+                t1 = std::max(0, std::min(t1,CImport::instance()->getVolume(volResIndex)->getDIM_T()-1));
+                if(t1-t0+1 > pMain.Tdim_sbox->value())
+                    t1 = t0 + pMain.Tdim_sbox->value();
+                /**/itm::debug(itm::LEV_MAX, strprintf("title = %s, ...to (%d,%d,%d)", titleShort.c_str(),  dx, dy, dz).c_str(), __itm__current__function__);
             }
-            if(y - y0 > pMain.Vdim_sbox->value())
+            // modality #2: VOI = [x0, x), [y0, y), [z0, z), [t0, t1]
+            else
             {
-                float margin = ( (y - y0) - pMain.Vdim_sbox->value() )/2.0f ;
-                y  = round(y  - margin);
-                y0 = round(y0 + margin);
+                /**/itm::debug(itm::LEV_MAX, strprintf("title = %s, cropping bbox dims from [%d,%d) [%d,%d) [%d,%d) [%d,%d] to...", titleShort.c_str(),  x0, x, y0, y, z0, z, t0, t1).c_str(), __itm__current__function__);
+                if(x - x0 > pMain.Hdim_sbox->value())
+                {
+                    float margin = ( (x - x0) - pMain.Hdim_sbox->value() )/2.0f ;
+                    x  = round(x  - margin);
+                    x0 = round(x0 + margin);
+                }
+                if(y - y0 > pMain.Vdim_sbox->value())
+                {
+                    float margin = ( (y - y0) - pMain.Vdim_sbox->value() )/2.0f ;
+                    y  = round(y  - margin);
+                    y0 = round(y0 + margin);
+                }
+                if(z - z0 > pMain.Ddim_sbox->value())
+                {
+                    float margin = ( (z - z0) - pMain.Ddim_sbox->value() )/2.0f ;
+                    z  = round(z  - margin);
+                    z0 = round(z0 + margin);
+                }
+                t0 = std::max(0, std::min(t0,CImport::instance()->getVolume(volResIndex)->getDIM_T()-1));
+                t1 = std::max(0, std::min(t1,CImport::instance()->getVolume(volResIndex)->getDIM_T()-1));
+                if(t1-t0+1 > pMain.Tdim_sbox->value())
+                    t1 = t0 + pMain.Tdim_sbox->value();
+                /**/itm::debug(itm::LEV_MAX, strprintf("title = %s, ...to [%d,%d) [%d,%d) [%d,%d) [%d,%d]", titleShort.c_str(),  x0, x, y0, y, z0, z, t0, t1).c_str(), __itm__current__function__);
             }
-            if(z - z0 > pMain.Ddim_sbox->value())
-            {
-                float margin = ( (z - z0) - pMain.Ddim_sbox->value() )/2.0f ;
-                z  = round(z  - margin);
-                z0 = round(z0 + margin);
-            }
-            t0 = std::max(0, std::min(t0,CImport::instance()->getVolume(volResIndex)->getDIM_T()-1));
-            t1 = std::max(0, std::min(t1,CImport::instance()->getVolume(volResIndex)->getDIM_T()-1));
-            if(t1-t0+1 > pMain.Tdim_sbox->value())
-                t1 = t0 + pMain.Tdim_sbox->value();
-            /**/itm::debug(itm::LEV_MAX, strprintf("title = %s, ...to [%d,%d) [%d,%d) [%d,%d) [%d,%d]", titleShort.c_str(),  x0, x, y0, y, z0, z, t0, t1).c_str(), __itm__current__function__);
         }
 
 

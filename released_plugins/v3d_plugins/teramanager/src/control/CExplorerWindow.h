@@ -185,7 +185,8 @@ class teramanager::CExplorerWindow : public QWidget
             int t0, int t1,                     //time frames selection
             bool fromVaa3Dcoordinates = false,  //if coordinates were obtained from Vaa3D
             int dx=-1, int dy=-1, int dz=-1,    //VOI [x-dx,x+dx), [y-dy,y+dy), [z-dz,z+dz)
-            int x0=-1, int y0=-1, int z0=-1     //VOI [x0, x), [y0, y), [z0, z)
+            int x0=-1, int y0=-1, int z0=-1,    //VOI [x0, x), [y0, y), [z0, z)
+            bool auto_crop = true               //whether to crop the VOI to the max dims
         );
 
         /**********************************************************************************
