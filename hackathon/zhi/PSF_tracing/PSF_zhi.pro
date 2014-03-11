@@ -4,7 +4,7 @@ CONFIG	+= qt plugin warn_off
 #CONFIG	+= x86_64
 VAA3DPATH = ../../../../v3d_external/v3d_main
 INCLUDEPATH	+= $$VAA3DPATH/v3d $$VAA3DPATH/basic_c_fun $$VAA3DPATH/common_lib/include
-INCLUDEPATH     += /local1/Software/MATLAB/R2013a/extern/include
+#INCLUDEPATH     += /local1/Software/MATLAB/R2013a/extern/include
 INCLUDEPATH     += functions
 
 #LIBS += -L/local1/Software/MATLAB/R2013a/bin/glnxa64/ -lmat
@@ -22,7 +22,8 @@ SOURCES += functions/EigenDec_3D.cpp
 SOURCES += functions/Gamma.cpp
 SOURCES += functions/MatrixMultiplication.cpp
 SOURCES += functions/KernelDensityEstimation.cpp
-SOURCES += functions//ML_Divide.cpp
+SOURCES += functions/ML_Divide.cpp
+SOURCES += functions/EigenDec_2D.cpp
 
 TARGET	= $$qtLibraryTarget(PSF_zhi)
 DESTDIR	= ../../../../v3d_external/bin/plugins/PSF_zhi/

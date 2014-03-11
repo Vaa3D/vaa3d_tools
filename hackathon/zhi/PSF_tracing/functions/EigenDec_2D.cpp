@@ -16,8 +16,8 @@ of Principal Curve Tracing algorithm into C++. This code is meant to run on
 the Windows platform
 */
 
-#include <mex.h>
-#include <matrix.h>
+//#include <mex.h>
+//#include <matrix.h>
 #include <math.h>
 
 #include "EigenDec_2D.h"
