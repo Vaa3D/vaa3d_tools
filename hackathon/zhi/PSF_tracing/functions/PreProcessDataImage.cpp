@@ -78,7 +78,7 @@ typedef struct
     double *pdUpTriag_of_Cov_of_InputImage;
 } ANISO_THREAD_ARGS;
 
-void *Anisotropic_PreProcess (ANISO_THREAD_ARGS *pstAniso_Thread_Args);
+void *Anisotropic_PreProcess (void  *pstAniso_Thread_Args);
 
 
 void PreProcessDataImage(double *pdInputImage, int iNum_of_Dims_of_Input_Image, V3DLONG *piDims_InputImage, int iNum_of_pixels_InputImage,
@@ -107,6 +107,12 @@ void PreProcessDataImage(double *pdInputImage, int iNum_of_Dims_of_Input_Image, 
     double *pdUpTriag_of_Cov_of_InputImage; // C
     int iNum_Elems_of_C; // to store length of C
 
+    //pthread declarations
+    pthread_t ptThreads[NUM_OF_PREPROCESS_THREADS_TO_CREATE];
+    int iThreadNumber;
+    int iRet_Val_Pthread_Create;
+    bool bAll_Threads_Completed_Successfully = TRUE;
+
     double *adEigVec1x_Cov, *adEigVec1y_Cov, *adEigVec2x_Cov, *adEigVec2y_Cov, *adEigVal1_Cov, *adEigVal2_Cov; // Used for both 2d and 3d.
     double *adEigVec1z_Cov, *adEigVec2z_Cov, *adEigVec3x_Cov, *adEigVec3y_Cov, *adEigVec3z_Cov, *adEigVal3_Cov; // Used Only for 3d.
 
@@ -114,7 +120,8 @@ void PreProcessDataImage(double *pdInputImage, int iNum_of_Dims_of_Input_Image, 
     double dGamma_of_ndims_by_2; // for storing: gamma(d/2)
     double eps = 2.2204e-16;
 
-    ANISO_THREAD_ARGS astAniso_Thread_Args;
+    ANISO_THREAD_ARGS astAniso_Thread_Args[NUM_OF_PREPROCESS_THREADS_TO_CREATE];
+
 
 
     // Files generated to store test results.
@@ -207,113 +214,41 @@ void PreProcessDataImage(double *pdInputImage, int iNum_of_Dims_of_Input_Image, 
         iNum_Elems_of_C = (iNum_of_pixels_InputImage * iLen_UpTriang_of_Cov); // length(C) = N*dData*(dData+1)/2
         pdUpTriag_of_Cov_of_InputImage = (double*) malloc (iNum_Elems_of_C * sizeof(double));
 
-        int *aiNeig_of_MeshGridData; //D
-        int *aiNeig_Midpoint;
-        double *adTemp, *adTemp_Transpose;
-        double *adDiag_of_Neig_Weights;
-        double *adCov_Curr_Pix_Interim, *adCov_Curr_Pix;
-
-        aiNeig_of_MeshGridData = (int*) malloc ((iLenLookupTable*iNum_of_Dims_of_Input_Image) * sizeof(int)); // For storing D = data(:,i+LookUpTable) [iLen  dData]
-        adTemp = (double*) malloc ((iNum_of_Dims_of_Input_Image*iLenLookupTable) * sizeof(double)); // For storing: temp [dData x iLen]
-        adDiag_of_Neig_Weights = (double*) malloc (iLenLookupTable*iLenLookupTable*sizeof(double)); // For storing: diag(weights(i+LookUpTable)) [iLen x iLen]
-        adCov_Curr_Pix_Interim = (double *) malloc (iNum_of_Dims_of_Input_Image*iLenLookupTable*sizeof(double)); // For: temp*diag(weights(i+LookUpTable)) [dData x iLen]
-        adTemp_Transpose = (double *) malloc (iLenLookupTable*iNum_of_Dims_of_Input_Image*sizeof(double)); // For storing: temp' [iLen x dData]
-        adCov_Curr_Pix = (double *) malloc (iNum_of_Dims_of_Input_Image*iNum_of_Dims_of_Input_Image*sizeof(double)); // For storing: cov_i = temp*diag(weights(i+LookUpTable))*temp'/(k-1) [dData x dData]
-
-        int iPixelIter, iLookupIter;
-        int iRowIter, iColIter, iIter, iUpper_Triang_Iter;
-        int iNeig_Pix_Idx;
-
-        int iImagePixel_Start = 0;
-        int iImagePixel_End = iNum_of_pixels_InputImage;
-        for (iPixelIter = iImagePixel_Start; iPixelIter < iImagePixel_End; iPixelIter++)
+        for (iIter = 0; iIter < iNum_Elems_of_C; iIter++)
         {
-
-            if((iPixelIter < (-iMinLookupTable)) ||
-                    (iPixelIter > (iNum_of_pixels_InputImage - iMaxLookupTable - 1))||
-                    (pdWeights_InputImage[iPixelIter] < W_THRESHOLD))
-            {
-                continue;
-            }
-
-            for (iLookupIter = 0 ; iLookupIter < iLenLookupTable; iLookupIter++)
-            {
-                iColIter = piLookUpTable[iLookupIter] + iPixelIter;
-                for (iRowIter = 0; iRowIter < iNum_of_Dims_of_Input_Image ; iRowIter++)
-                {
-                    aiNeig_of_MeshGridData[ROWCOL(iRowIter, iLookupIter,iNum_of_Dims_of_Input_Image)]  =
-                            piMeshGridData_InputImage[ROWCOL(iRowIter, iColIter, iNum_of_Dims_of_Input_Image)];
-                }
-            }
-
-            aiNeig_Midpoint = &aiNeig_of_MeshGridData[iNum_of_Dims_of_Input_Image*(iLenLookupTable/2)];// D(:,(lenL+1)/2))
-            for (iColIter = 0 ; iColIter < iLenLookupTable; iColIter++)
-            {
-                for (iRowIter = 0; iRowIter < iNum_of_Dims_of_Input_Image ; iRowIter++)
-                {
-                    adTemp [ROWCOL(iRowIter, iColIter, iNum_of_Dims_of_Input_Image)] = (double)(aiNeig_Midpoint[iRowIter] -
-                            aiNeig_of_MeshGridData[ROWCOL(iRowIter, iColIter, iNum_of_Dims_of_Input_Image)]); // temp [dData x lenL]
-                }
-            }
-
-            Double_Compute_Transpose(adTemp, adTemp_Transpose, iNum_of_Dims_of_Input_Image, iLenLookupTable); // temp' [lenL x dData]
-
-    #if 0
-    for (iColIter = 0 ; iColIter < iLenLookupTable; iColIter++)
-    {
-        iNeig_Pix_Idx = piLookUpTable[iColIter] + iPixelIter;
-        for (iRowIter = 0; iRowIter < iNum_of_Dims_of_Input_Image ; iRowIter++)
-        {
-            adTemp [ROWCOL(iRowIter, iColIter, iNum_of_Dims_of_Input_Image)] =
-                    adTemp [ROWCOL(iRowIter, iColIter, iNum_of_Dims_of_Input_Image)]*pdWeights_InputImage[iNeig_Pix_Idx]*pdWeights_InputImage[iNeig_Pix_Idx]/
-                    exp(-pow((pdDistTable[iColIter]/(scale)),0))/(K-1); // temp [dData x lenL]
+            pdUpTriag_of_Cov_of_InputImage[iIter] = 0;
         }
-    }
-    #else
-    for (iColIter = 0 ; iColIter < iLenLookupTable; iColIter++)
-    {
-        iNeig_Pix_Idx = piLookUpTable[iColIter] + iPixelIter;
-        for (iRowIter = 0; iRowIter < iNum_of_Dims_of_Input_Image ; iRowIter++)
+
+        // MULTITHREADING
+        for(iThreadNumber = 0; iThreadNumber < NUM_OF_PREPROCESS_THREADS_TO_CREATE; iThreadNumber++)
         {
-            adTemp [ROWCOL(iRowIter, iColIter, iNum_of_Dims_of_Input_Image)] =
-                    adTemp [ROWCOL(iRowIter, iColIter, iNum_of_Dims_of_Input_Image)]*pdWeights_InputImage[iNeig_Pix_Idx]/(K-1); // temp [dData x lenL]
+            // Populate input args for the each thread.
+            astAniso_Thread_Args[iThreadNumber].iThreadNumber = iThreadNumber; // Passes the current thread number.
+            astAniso_Thread_Args[iThreadNumber].pdWeights_InputImage = pdWeights_InputImage;
+            astAniso_Thread_Args[iThreadNumber].piMeshGridData_InputImage = piMeshGridData_InputImage;
+            astAniso_Thread_Args[iThreadNumber].iNum_of_pixels_InputImage = iNum_of_pixels_InputImage;
+            astAniso_Thread_Args[iThreadNumber].iNum_of_Dims_of_Input_Image = iNum_of_Dims_of_Input_Image;
+            astAniso_Thread_Args[iThreadNumber].piLookUpTable = piLookUpTable;
+            astAniso_Thread_Args[iThreadNumber].pdDistTable = pdDistTable;
+            astAniso_Thread_Args[iThreadNumber].iMinLookupTable = iMinLookupTable;
+            astAniso_Thread_Args[iThreadNumber].iMaxLookupTable = iMaxLookupTable;
+            astAniso_Thread_Args[iThreadNumber].iLenLookupTable = iLenLookupTable;
+            astAniso_Thread_Args[iThreadNumber].iLen_UpTriang_of_Cov = iLen_UpTriang_of_Cov;
+            astAniso_Thread_Args[iThreadNumber].piIndexes_of_UpTriang_of_Cov = piIndexes_of_UpTriang_of_Cov;
+            astAniso_Thread_Args[iThreadNumber].pdUpTriag_of_Cov_of_InputImage = pdUpTriag_of_Cov_of_InputImage;
+            astAniso_Thread_Args[iThreadNumber].K = K;
+
+            iRet_Val_Pthread_Create = pthread_create(&ptThreads[iThreadNumber], NULL, Anisotropic_PreProcess, &astAniso_Thread_Args[iThreadNumber]);
         }
-    }
-    #endif
 
-    Double_Mat_Multiply(adTemp, adTemp_Transpose,  iNum_of_Dims_of_Input_Image, iLenLookupTable,
-            iLenLookupTable, iNum_of_Dims_of_Input_Image, adCov_Curr_Pix);
-    for (iUpper_Triang_Iter = 0 ; iUpper_Triang_Iter < iLen_UpTriang_of_Cov ; iUpper_Triang_Iter ++)
-    {
-        pdUpTriag_of_Cov_of_InputImage[ROWCOL(iPixelIter, iUpper_Triang_Iter, iNum_of_pixels_InputImage)] = adCov_Curr_Pix[piIndexes_of_UpTriang_of_Cov[iUpper_Triang_Iter]];
-    }
 
-    #if OUTPUT_COV == TRUE // Output Cov to a file in this form: [N x dData*(dData+1)/2]
-    for (iUpper_Triang_Iter = 0 ; iUpper_Triang_Iter < iLen_UpTriang_of_Cov ; iUpper_Triang_Iter ++)
-    {
-        fprintf (fp_cov, "%g ", pdUpTriag_of_Cov_of_InputImage[ROWCOL(iPixelIter, iUpper_Triang_Iter, iNum_of_pixels_InputImage)]);
-    }
-    fprintf (fp_cov, "\n");
-    #endif
+        for(iThreadNumber = 0; iThreadNumber < NUM_OF_PREPROCESS_THREADS_TO_CREATE; iThreadNumber++)
+        {
+            pthread_join(ptThreads[iThreadNumber], NULL);
+           // printf("Thread %d returns  %d\n", iThreadNumber, iRet_Val_Pthread_Create);
+        }
 
-        } // end of for loop.
-
-        free (adCov_Curr_Pix_Interim); free (adTemp_Transpose); // Since they are no longer needed for any further processing.
-        free (adCov_Curr_Pix); free (aiNeig_of_MeshGridData); free (adTemp); free (adDiag_of_Neig_Weights );
-
-        // If files were created for saving temp, temp', diag_weights, cov_i or cov, close them.
-        #if OUTPUT_TEMP == TRUE
-                fclose (fp_temp);
-        #endif
-                #if OUTPUT_TEMP_TRANSPOSE == TRUE
-                fclose (fp_temp_tr);
-        #endif
-                #if OUTPUT_DIAG_OF_WEIGHTS == TRUE
-                fclose (fp_diag_weights);
-        #endif
-                #if OUTPUT_COV_I == TRUE
-                fclose (fp_cov_i);
-        #endif
+        //pthread_exit(NULL);
 
 
         bool bAll_Threads_Completed_Successfully = TRUE;
@@ -531,8 +466,190 @@ void PreProcessDataImage(double *pdInputImage, int iNum_of_Dims_of_Input_Image, 
     }
     fclose (fp_final_normP);
     #endif
-
+    return;
 
 }
 
+void *Anisotropic_PreProcess(void *vptrAniso_Thread_Args)
+// parfor i=1:N //
+{
+    ANISO_THREAD_ARGS *pstAniso_Thread_Args;
 
+    int iThreadNumber;
+    int iImagePixel_Start, iImagePixel_End;
+    double *pdWeights_InputImage;
+    int *piMeshGridData_InputImage;
+    int iNum_of_pixels_InputImage;
+    int iNum_of_Dims_of_Input_Image;
+
+    int *piLookUpTable;
+    double *pdDistTable;
+    int iMinLookupTable;
+    int iMaxLookupTable;
+    int iLenLookupTable;
+
+    int iPixelIter, iLookupIter;
+    int iRowIter, iColIter, iIter, iUpper_Triang_Iter;
+    int iNeig_Pix_Idx;
+
+    int iLen_UpTriang_of_Cov;
+    int *piIndexes_of_UpTriang_of_Cov;
+    int *aiNeig_of_MeshGridData; //D
+    double K;
+    int *aiNeig_Midpoint;
+    double *adTemp, *adTemp_Transpose;
+    double *adDiag_of_Neig_Weights;
+    double *adCov_Curr_Pix_Interim, *adCov_Curr_Pix;
+    double *pdUpTriag_of_Cov_of_InputImage;
+
+    double scale = 4;//double(LOOKUP_TABLE_WIDTH)/(4*sqrt(2*log(2)));
+
+    pstAniso_Thread_Args = (ANISO_THREAD_ARGS *) vptrAniso_Thread_Args;
+
+    iThreadNumber = pstAniso_Thread_Args->iThreadNumber;
+    iNum_of_pixels_InputImage = pstAniso_Thread_Args->iNum_of_pixels_InputImage;
+    pdWeights_InputImage = pstAniso_Thread_Args->pdWeights_InputImage;
+    piMeshGridData_InputImage = pstAniso_Thread_Args->piMeshGridData_InputImage;
+    iNum_of_Dims_of_Input_Image = pstAniso_Thread_Args->iNum_of_Dims_of_Input_Image;
+    piLookUpTable = pstAniso_Thread_Args->piLookUpTable ;
+    pdDistTable = pstAniso_Thread_Args->pdDistTable ;
+    iMinLookupTable = pstAniso_Thread_Args->iMinLookupTable ;
+    iMaxLookupTable = pstAniso_Thread_Args->iMaxLookupTable ;
+    iLenLookupTable = pstAniso_Thread_Args->iLenLookupTable ;
+    iLen_UpTriang_of_Cov = pstAniso_Thread_Args->iLen_UpTriang_of_Cov;
+    piIndexes_of_UpTriang_of_Cov = pstAniso_Thread_Args->piIndexes_of_UpTriang_of_Cov;
+    K = pstAniso_Thread_Args->K;
+    pdUpTriag_of_Cov_of_InputImage = pstAniso_Thread_Args->pdUpTriag_of_Cov_of_InputImage ;
+
+    iImagePixel_Start = iThreadNumber*(iNum_of_pixels_InputImage/NUM_OF_PREPROCESS_THREADS_TO_CREATE);
+    if (iThreadNumber == (NUM_OF_PREPROCESS_THREADS_TO_CREATE-1)) // Last part of the image processed by this thread.
+    {
+        iImagePixel_End = iNum_of_pixels_InputImage-1 ;
+    }
+    else
+    {
+        iImagePixel_End = iImagePixel_Start + (iNum_of_pixels_InputImage/NUM_OF_PREPROCESS_THREADS_TO_CREATE) - 1;
+    }
+    printf ("\nPreprocess Thread %d, processing pixels %d to %d.", iThreadNumber, iImagePixel_Start, iImagePixel_End);
+
+    aiNeig_of_MeshGridData = (int*) malloc ((iLenLookupTable*iNum_of_Dims_of_Input_Image) * sizeof(int)); // For storing D = data(:,i+LookUpTable) [iLen  dData]
+    adTemp = (double*) malloc ((iNum_of_Dims_of_Input_Image*iLenLookupTable) * sizeof(double)); // For storing: temp [dData x iLen]
+    adDiag_of_Neig_Weights = (double*) malloc (iLenLookupTable*iLenLookupTable*sizeof(double)); // For storing: diag(weights(i+LookUpTable)) [iLen x iLen]
+    adCov_Curr_Pix_Interim = (double *) malloc (iNum_of_Dims_of_Input_Image*iLenLookupTable*sizeof(double)); // For: temp*diag(weights(i+LookUpTable)) [dData x iLen]
+    adTemp_Transpose = (double *) malloc (iLenLookupTable*iNum_of_Dims_of_Input_Image*sizeof(double)); // For storing: temp' [iLen x dData]
+    adCov_Curr_Pix = (double *) malloc (iNum_of_Dims_of_Input_Image*iNum_of_Dims_of_Input_Image*sizeof(double)); // For storing: cov_i = temp*diag(weights(i+LookUpTable))*temp'/(k-1) [dData x dData]
+
+    for (iPixelIter = iImagePixel_Start; iPixelIter <= iImagePixel_End; iPixelIter++)
+        //for (iPixelIter = 17342; iPixelIter < 17343; iPixelIter++)
+    {
+        /*
+         * if i<-minL+1 | i>N-maxL
+         * continue;
+         * end
+         */
+        if((iPixelIter < (-iMinLookupTable)) ||
+                (iPixelIter > (iNum_of_pixels_InputImage - iMaxLookupTable - 1))||
+                (pdWeights_InputImage[iPixelIter] < W_THRESHOLD))
+        {
+            continue;
+        }
+
+        //D = data(:,i+LookUpTable);
+        for (iLookupIter = 0 ; iLookupIter < iLenLookupTable; iLookupIter++)
+        {
+            iColIter = piLookUpTable[iLookupIter] + iPixelIter;
+            for (iRowIter = 0; iRowIter < iNum_of_Dims_of_Input_Image ; iRowIter++)
+            {
+                aiNeig_of_MeshGridData[ROWCOL(iRowIter, iLookupIter,iNum_of_Dims_of_Input_Image)]  =
+                        piMeshGridData_InputImage[ROWCOL(iRowIter, iColIter, iNum_of_Dims_of_Input_Image)];
+            }
+        }
+
+        // temp = repmat(D(:,(lenL+1)/2)),1,lenL)-D;
+        aiNeig_Midpoint = &aiNeig_of_MeshGridData[iNum_of_Dims_of_Input_Image*(iLenLookupTable/2)];// D(:,(lenL+1)/2))
+        for (iColIter = 0 ; iColIter < iLenLookupTable; iColIter++)
+        {
+            for (iRowIter = 0; iRowIter < iNum_of_Dims_of_Input_Image ; iRowIter++)
+            {
+                adTemp [ROWCOL(iRowIter, iColIter, iNum_of_Dims_of_Input_Image)] = (double)(aiNeig_Midpoint[iRowIter] -
+                        aiNeig_of_MeshGridData[ROWCOL(iRowIter, iColIter, iNum_of_Dims_of_Input_Image)]); // temp [dData x lenL]
+            }
+        }
+
+        Double_Compute_Transpose(adTemp, adTemp_Transpose, iNum_of_Dims_of_Input_Image, iLenLookupTable); // temp' [lenL x dData]
+
+#if 0
+for (iColIter = 0 ; iColIter < iLenLookupTable; iColIter++)
+{
+    iNeig_Pix_Idx = piLookUpTable[iColIter] + iPixelIter;
+    for (iRowIter = 0; iRowIter < iNum_of_Dims_of_Input_Image ; iRowIter++)
+    {
+        adTemp [ROWCOL(iRowIter, iColIter, iNum_of_Dims_of_Input_Image)] =
+                adTemp [ROWCOL(iRowIter, iColIter, iNum_of_Dims_of_Input_Image)]*pdWeights_InputImage[iNeig_Pix_Idx]*pdWeights_InputImage[iNeig_Pix_Idx]/
+                exp(-pow((pdDistTable[iColIter]/(scale)),0))/(K-1); // temp [dData x lenL]
+    }
+}
+#else
+for (iColIter = 0 ; iColIter < iLenLookupTable; iColIter++)
+{
+    iNeig_Pix_Idx = piLookUpTable[iColIter] + iPixelIter;
+    for (iRowIter = 0; iRowIter < iNum_of_Dims_of_Input_Image ; iRowIter++)
+    {
+        adTemp [ROWCOL(iRowIter, iColIter, iNum_of_Dims_of_Input_Image)] =
+                adTemp [ROWCOL(iRowIter, iColIter, iNum_of_Dims_of_Input_Image)]*pdWeights_InputImage[iNeig_Pix_Idx]/(K-1); // temp [dData x lenL]
+    }
+}
+#endif
+
+// cov_i = temp*diag(weights(i+LookUpTable))*temp'/(k-1);
+// 		Double_Mat_Multiply(adTemp, adDiag_of_Neig_Weights, iNum_of_Dims_of_Input_Image, iLenLookupTable,
+// 										iLenLookupTable, iLenLookupTable, adCov_Curr_Pix_Interim);
+
+Double_Mat_Multiply(adTemp, adTemp_Transpose,  iNum_of_Dims_of_Input_Image, iLenLookupTable,
+        iLenLookupTable, iNum_of_Dims_of_Input_Image, adCov_Curr_Pix);
+
+// I added this part to above loop, so we dont need this anymore
+// 		for (iIter = 0 ; iIter < iNum_of_Dims_of_Input_Image*iNum_of_Dims_of_Input_Image ; iIter++)
+// 		{
+// 			adCov_Curr_Pix[iIter] = adCov_Curr_Pix[iIter]/(K-1);
+// 		}
+
+
+// C(i,:) = cov_i(uptiu);
+/*
+ * | cov_1(1) cov_1(3) cov_1(4) |
+ *
+ *
+ * | cov_N(1) cov_N(3) cov_N(4) | //N rows * 3 Cols*/
+for (iUpper_Triang_Iter = 0 ; iUpper_Triang_Iter < iLen_UpTriang_of_Cov ; iUpper_Triang_Iter ++)
+{
+    pdUpTriag_of_Cov_of_InputImage[ROWCOL(iPixelIter, iUpper_Triang_Iter, iNum_of_pixels_InputImage)] = adCov_Curr_Pix[piIndexes_of_UpTriang_of_Cov[iUpper_Triang_Iter]];
+}
+
+#if OUTPUT_COV == TRUE // Output Cov to a file in this form: [N x dData*(dData+1)/2]
+for (iUpper_Triang_Iter = 0 ; iUpper_Triang_Iter < iLen_UpTriang_of_Cov ; iUpper_Triang_Iter ++)
+{
+    fprintf (fp_cov, "%g ", pdUpTriag_of_Cov_of_InputImage[ROWCOL(iPixelIter, iUpper_Triang_Iter, iNum_of_pixels_InputImage)]);
+}
+fprintf (fp_cov, "\n");
+#endif
+    } // end of for loop.
+
+    free (adCov_Curr_Pix_Interim); free (adTemp_Transpose); // Since they are no longer needed for any further processing.
+    free (adCov_Curr_Pix); free (aiNeig_of_MeshGridData); free (adTemp); free (adDiag_of_Neig_Weights );
+
+    // If files were created for saving temp, temp', diag_weights, cov_i or cov, close them.
+    #if OUTPUT_TEMP == TRUE
+            fclose (fp_temp);
+    #endif
+            #if OUTPUT_TEMP_TRANSPOSE == TRUE
+            fclose (fp_temp_tr);
+    #endif
+            #if OUTPUT_DIAG_OF_WEIGHTS == TRUE
+            fclose (fp_diag_weights);
+    #endif
+            #if OUTPUT_COV_I == TRUE
+            fclose (fp_cov_i);
+    #endif
+
+}
