@@ -23,7 +23,6 @@ struct root_node
     V3DLONG parent;
     struct root_node* next;
 
-
 };
 
 template <class T> void app2_block(V3DPluginCallback2 &callback,MyMarker root_entire,MyMarker root, T * somald,  V3DLONG *soma_sz,T * indata1d,V3DLONG *in_sz, PARA_APP2 &p,double dfactor_xy, double dfactor_z,V3DLONG *boundary,struct root_node *head,V3DLONG root_parent)
@@ -147,7 +146,7 @@ template <class T> void app2_block(V3DPluginCallback2 &callback,MyMarker root_en
                   V3DLONG dz = inswc[d]->z;
                   V3DLONG dy = inswc[d]->y + yb;
                   V3DLONG dx = inswc[d]->x + xb;
-                  if( dx < xe-3 && dy < ye-3 && dx >= xb+2 && dy >= yb+2)
+                  if( dx < xe-10 && dy < ye-10 && dx >= xb+10 && dy >= yb+10)
                   {
                      indata1d[dz*in_sz[0]*in_sz[1] + dy*in_sz[0] + dx] = 0;
                   }
@@ -245,7 +244,7 @@ template <class T> void app2_block(V3DPluginCallback2 &callback,MyMarker root_en
              for(V3DLONG d = 0; d < temp_out_swc.size(); d++)
              {
 
-               if((xe < in_sz[0]-1 && temp_out_swc[d]->x >= xe-3)|| (ye < in_sz[1]-1 && temp_out_swc[d]->y >= ye-3)|| (xb >0 && temp_out_swc[d]->x <= xb+2) || (yb > 0 && temp_out_swc[d]->y <= yb+2))
+               if((xe < in_sz[0]-1 && temp_out_swc[d]->x >= xe-5)|| (ye < in_sz[1]-1 && temp_out_swc[d]->y >= ye-5)|| (xb >0 && temp_out_swc[d]->x <= xb+4) || (yb > 0 && temp_out_swc[d]->y <= yb+4))
                {
                                newNode =  new root_node[1];
                                newNode->root_x = temp_out_swc[d]->x;
@@ -567,21 +566,19 @@ bool proc_app2(V3DPluginCallback2 &callback, PARA_APP2 &p, const QString & versi
     head->parent = 0;
     head->next = NULL;
     walker = head;
-
+    V3DLONG ws = 1024;
 
     V3DLONG N = in_sz[0];
     V3DLONG M = in_sz[1];
     V3DLONG P = in_sz[2];
 
-    qint64 etime2 = timer2.elapsed();
-    qDebug() << " **** neuron tracing procedure takes [" << etime2 << " milliseconds]";
 
     while(walker != NULL)
     {
-            V3DLONG ixb = walker->root_x - 512; if(ixb<0) ixb = 0;
-            V3DLONG ixe = walker->root_x  + 512; if(ixe>=N-1) ixe = N-1;
-            V3DLONG iyb = walker->root_y  - 512; if(iyb<0) iyb = 0;
-            V3DLONG iye = walker->root_y  + 512; if(iye>=M-1) iye = M-1;
+            V3DLONG ixb = walker->root_x - ws; if(ixb<0) ixb = 0;
+            V3DLONG ixe = walker->root_x  + ws; if(ixe>=N-1) ixe = N-1;
+            V3DLONG iyb = walker->root_y  - ws; if(iyb<0) iyb = 0;
+            V3DLONG iye = walker->root_y  + ws; if(iye>=M-1) iye = M-1;
 
             V3DLONG blocksz = (ixe-ixb)*(iye-iyb)*P;
             unsigned char *blockld = 0;
@@ -625,6 +622,10 @@ bool proc_app2(V3DPluginCallback2 &callback, PARA_APP2 &p, const QString & versi
 
             if (blockld) {delete blockld; blockld=NULL;}
     }
+
+
+    qint64 etime2 = timer2.elapsed();
+    qDebug() << " **** neuron tracing procedure takes [" << etime2 << " milliseconds]";
 
     tmpstr =  qPrintable( qtstr.setNum(etime1).prepend("#neuron preprocessing time (milliseconds) = ") ); infostring.push_back(tmpstr);
     tmpstr =  qPrintable( qtstr.setNum(etime2).prepend("#neuron tracing time (milliseconds) = ") ); infostring.push_back(tmpstr);

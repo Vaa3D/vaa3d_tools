@@ -48,6 +48,6 @@ SOURCES += $$V3DMAINPATH/worm_straighten_c/bdb_minus.cpp \
     #$$V3DMAINPATH/neuron_editing/neuron_xforms.cpp \
 
 TARGET	= $$qtLibraryTarget(vn2)
-DESTDIR = ../../../../v3d_external/bin/plugins/Vaa3D_Neuron_APP2_zhi/
+DESTDIR = ../../../bin/plugins/Vaa3D_Neuron_APP2_zhi/
 #DESTDIR	= $$V3DMAINPATH/../bin/plugins/neuron_tracing/Vaa3D_Neuron2
 
