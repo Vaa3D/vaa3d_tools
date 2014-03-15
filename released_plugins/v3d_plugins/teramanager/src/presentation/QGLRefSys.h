@@ -16,7 +16,15 @@ class teramanager::QGLRefSys : public QGLWidget
         float xDim;             //x dimension (between 0.0 and 1.0)
         float yDim;             //y dimension (between 0.0 and 1.0)
         float zDim;             //z dimension (between 0.0 and 1.0)
+        float ROIxDim;          //ROI x dimension (between 0.0 and 1.0)
+        float ROIyDim;          //ROI y dimension (between 0.0 and 1.0)
+        float ROIzDim;          //ROI z dimension (between 0.0 and 1.0)
+        float ROIxShift;        //ROI x shift (between 0.0 and 1.0)
+        float ROIyShift;        //ROI y shift (between 0.0 and 1.0)
+        float ROIzShift;        //ROI z shift (between 0.0 and 1.0)
         QPoint lastPos;         //previous location of the mouse cursor to determine how much the object in the scene should be rotated, and in which direction
+        double zoom;
+        bool filled;            //equivalent to draw parallelepipedon faces (=true) or lines only (=false)
 
     public:
 
@@ -28,7 +36,11 @@ class teramanager::QGLRefSys : public QGLWidget
         int getXRot(){return xRot;}
         int getYRot(){return yRot;}
         int getZRot(){return zRot;}
-        void setDims(int dimX, int dimY, int dimZ);
+        void setDims(int dimX, int dimY, int dimZ, int _ROIxDim=0, int _ROIyDim=0, int _ROIzDim=0, int _ROIxShift=0, int _ROIyShift=0, int _ROIzShift=0);
+        void setFilled(bool _filled){filled = _filled; updateGL();}
+        void setZoom(double _zoom){zoom = _zoom;}
+        void resetZoom(){zoom = -15.0; updateGL();}
+
 
     public slots:
 
@@ -53,10 +65,11 @@ class teramanager::QGLRefSys : public QGLWidget
         void paintGL();
         void resizeGL(int width, int height);
 
-        // Qt mouse event handlers to control rotation with the mouse
+        // Qt mouse event handlers to control rotation and zoom-in/out with the mouse
         void mousePressEvent(QMouseEvent *event);
         void mouseMoveEvent(QMouseEvent *event);
         void mouseReleaseEvent(QMouseEvent *event);
+        void wheelEvent(QWheelEvent *event);
 
         int heightForWidth( int w ) { return w; }
 };

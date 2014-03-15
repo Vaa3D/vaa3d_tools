@@ -11,14 +11,29 @@ ties names are:
 - Rem: a feature no longer available
 
 ============================================================================================
-Version 0.9.58
+Version 0.9.6
+March 15th, 2014
+--------------------------------------------------------------------------------------------
+- New: added "Exhaustive scan" mode. This new modality can be helpful to proofedit an entire
+       volume w/o worrying that all the regions of the image  have been explored. By  simply 
+       indicating the local viewer dimensions and the amount of overlap, TeraFly will parti-
+       tion the volume at the current resolution into (non)overlapping blocks and will start
+       a guided scan of the entire volume. To help the user in this task, a spinbox indicat-
+       ing the current block number has been added. In addition, the reference system rende-
+       rer also will visually highlight the block currently shown.
+- New: added ROI selection feature to the reference system renderer.
+- New: added mouse scrool zoom-in/out feature to the reference system renderer.
+--------------------------------------------------------------------------------------------
+
+
+Version 0.9.59
 March 11th, 2014
 --------------------------------------------------------------------------------------------
 - Fix: fixed bug which caused the "Jump to resolution" functionality not to work properly.
 --------------------------------------------------------------------------------------------
 
 
-Version 0.9.57
+Version 0.9.58
 March 7th, 2014
 --------------------------------------------------------------------------------------------
 - Opt: faster navigation throughout the resolutions in the case there are thousands of anno-

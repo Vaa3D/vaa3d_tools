@@ -123,6 +123,14 @@ namespace teramanager
         interval_t(void) : start(-1), end(-1)  {}
         interval_t(int _start, int _end) : start(_start), end(_end){}
     };
+
+    //block type
+    struct block_t
+    {
+        interval_t xInt, yInt, zInt;
+        block_t(interval_t _xInt, interval_t _yInt, interval_t _zInt) : xInt(_xInt), yInt(_yInt), zInt(_zInt){}
+    };
+
     /*-------------------------------------------------------------------------------------------------------------------------*/
 
 

@@ -81,13 +81,13 @@ PMain* PMain::instance(V3DPluginCallback2 *callback, QWidget *parent)
         uniqueInstance->raise();
         uniqueInstance->activateWindow();
         uniqueInstance->show();
-        if(CExplorerWindow::current)
+        if(CExplorerWindow::getCurrent())
         {
-            CExplorerWindow::current->window3D->setWindowState(Qt::WindowNoState);
-            CExplorerWindow::current->window3D->raise();
-            CExplorerWindow::current->window3D->activateWindow();
-            CExplorerWindow::current->window3D->show();
-            CExplorerWindow::current->alignToLeft(uniqueInstance);
+            CExplorerWindow::getCurrent()->window3D->setWindowState(Qt::WindowNoState);
+            CExplorerWindow::getCurrent()->window3D->raise();
+            CExplorerWindow::getCurrent()->window3D->activateWindow();
+            CExplorerWindow::getCurrent()->window3D->show();
+            CExplorerWindow::getCurrent()->alignToLeft(uniqueInstance);
         }
         return uniqueInstance;
     }
@@ -275,6 +275,7 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     tShiftWidget->setDefaultWidget(tShiftSBox);
     tShiftMenu->addAction(tShiftWidget);
     DirectionalShiftsMenu->addMenu(tShiftMenu);
+
 
     // "Debug" menu
     debugMenu = menuBar->addMenu("Debug");
@@ -620,6 +621,25 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     frameCoord->setReadOnly(true);
     frameCoord->setAlignment(Qt::AlignCenter);
 
+    /* ------- global coord panel widgets ------- */
+    ESPanel = new QGroupBox("Exhaustive scan");
+    ESbutton = new QPushButton("click me");
+    ESblockSpbox = new QSpinBox();
+    ESblockSpbox->setAlignment(Qt::AlignCenter);
+    ESoverlapSpbox = new QSpinBox();
+    ESoverlapSpbox->setAlignment(Qt::AlignCenter);
+    ESoverlapSpbox->setSuffix("\%");
+    ESoverlapSpbox->setPrefix("overlap ");
+    ESoverlapSpbox->setValue(20);
+    ESoverlapSpbox->setMinimum(0);
+    ESoverlapSpbox->setMaximum(50);
+    ESmethodCbox = new QComboBox();
+    ESmethodCbox->addItem("XYZ");
+    ESmethodCbox->setEditable(true);
+    ESmethodCbox->lineEdit()->setAlignment(Qt::AlignHCenter);
+    for (int i = 0; i < ESmethodCbox->count(); ++i)
+        ESmethodCbox->setItemData(i, Qt::AlignHCenter, Qt::TextAlignmentRole);
+
     //other widgets
     helpBox = new QHelpBox(this);
     progressBar = new QProgressBar(this);
@@ -816,6 +836,20 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     globalCoord_panel->setStyle(new QWindowsStyle());
     #endif
 
+    // "Exhaustive scan" panel layout
+    QHBoxLayout* esPanelLayout = new QHBoxLayout();
+    ESbutton->setFixedWidth(marginLeft);
+    esPanelLayout->addWidget(ESbutton, 0);
+//    ESbutton->setFixedWidth(fixedArrowWidth);
+    esPanelLayout->addWidget(ESblockSpbox, 1);
+//    esPanelLayout->addStretch(1);
+    esPanelLayout->addWidget(ESmethodCbox, 1);
+    esPanelLayout->addWidget(ESoverlapSpbox, 1);
+    ESPanel->setLayout(esPanelLayout);
+    #ifndef _USE_NATIVE_FONTS
+    ESPanel->setStyle(new QWindowsStyle());
+    #endif
+
     //local viewer panel
     QVBoxLayout* localviewer_panel_layout= new QVBoxLayout();
     /* --------------------- first row ---------------------- */
@@ -907,6 +941,7 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     controlsLayout->addWidget(localViewer_panel, 0);
     controlsLayout->addWidget(zoom_panel, 0);
     controlsLayout->addWidget(globalCoord_panel, 0);
+    controlsLayout->addWidget(ESPanel, 0);
     controlsLayout->addStretch(1);
     controls_page->setLayout(controlsLayout);
 
@@ -964,6 +999,8 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     connect(traslTpos, SIGNAL(clicked()), this, SLOT(traslTposClicked()));
     connect(traslTneg, SIGNAL(clicked()), this, SLOT(traslTnegClicked()));
     connect(controlsResetButton, SIGNAL(clicked()), this, SLOT(resetMultiresControls()));
+    connect(ESbutton, SIGNAL(clicked()), this, SLOT(ESbuttonClicked()));
+    connect(ESblockSpbox, SIGNAL(valueChanged(int)), this, SLOT(ESblockSpboxChanged(int)));
 
     //reset widgets
     reset();
@@ -1035,16 +1072,16 @@ void PMain::reset()
     while(resolution_cbox->count())
         resolution_cbox->removeItem(0);
     traslXlabel->setAlignment(Qt::AlignCenter);
-    traslXlabel->setTextFormat(Qt::RichText);
+//    traslXlabel->setTextFormat(Qt::RichText);
     traslXlabel->setText("<font size=\"4\">X</font>");
     traslYlabel->setAlignment(Qt::AlignCenter);
-    traslYlabel->setTextFormat(Qt::RichText);
+//    traslYlabel->setTextFormat(Qt::RichText);
     traslYlabel->setText("<font size=\"4\">Y</font>");
     traslZlabel->setAlignment(Qt::AlignCenter);
-    traslZlabel->setTextFormat(Qt::RichText);
+//    traslZlabel->setTextFormat(Qt::RichText);
     traslZlabel->setText("<font size=\"4\">Z</font>");
     traslTlabel->setAlignment(Qt::AlignCenter);
-    traslTlabel->setTextFormat(Qt::RichText);
+//    traslTlabel->setTextFormat(Qt::RichText);
     traslTlabel->setText("<font size=\"4\">t</font>");
     traslXpos->setEnabled(false);
     traslXneg->setEnabled(false);
@@ -1057,9 +1094,11 @@ void PMain::reset()
     gradientBar->setEnabled(false);
     gradientBar->setNSteps(-1);
     gradientBar->setStep(0);
+    resetMultiresControls();
 
     //resetting subvol panel widgets
     globalCoord_panel->setEnabled(false);
+    ESPanel->setEnabled(false);
     V0_sbox->setValue(0);
     V1_sbox->setValue(0);
     H0_sbox->setValue(0);
@@ -1075,6 +1114,19 @@ void PMain::reset()
     refSys->setYRotation(50);
     refSys->setZRotation(0);
     refSys->setDims(1,1,1);
+    refSys->setFilled(true);
+    refSys->resetZoom();
+
+    //reseting ES panel widgets
+    //ESPanel->setEnabled(false);
+    ESbutton->setIcon(QIcon(":/icons/start.png"));
+    ESbutton->setText("Start");
+    ESblockSpbox->setPrefix("Block ");
+    ESblockSpbox->setSuffix("/0");
+    ESblockSpbox->setMaximum(0);
+    ESblockSpbox->setMinimum(0);
+    ESblockSpbox->setValue(0);
+    ESblockSpbox->setEnabled(false);
 
     //resetting progress bar and text
     progressBar->setEnabled(false);
@@ -1536,13 +1588,18 @@ void PMain::importDone(RuntimeException *ex, qint64 elapsed_time)
         D1_sbox->setValue(volume->getDIM_D());        
 //        T0_sbox->setMinimum(0);
 //        T0_sbox->setMaximum(CImport::instance()->getVMapTDim()-1);
-        T0_sbox->setText("0");
+        if(volume->getDIM_T() > 1)
+        {
+            T0_sbox->setText("0");
+            T1_sbox->setText(QString::number(CImport::instance()->getVMapTDim()-1));
+            frameCoord->setText(strprintf("t = %d/%d", 0, volume->getDIM_T()-1).c_str());
+        }
 //        T1_sbox->setMinimum(0);
 //        T1_sbox->setMaximum(CImport::instance()->getVMapTDim()-1);
-        T1_sbox->setText(QString::number(CImport::instance()->getVMapTDim()-1));
-        if(volume->getDIM_T() > 1)
-            frameCoord->setText(strprintf("t = %d/%d", 0, volume->getDIM_T()-1).c_str());
         globalCoord_panel->setEnabled(true);
+        ESPanel->setEnabled(true);
+        ESmethodCbox->setEnabled(true);
+        ESoverlapSpbox->setEnabled(true);
 
         //updating menu items
         /**/itm::debug(itm::LEV_MAX, "updating menu items", __itm__current__function__);
@@ -1708,21 +1765,6 @@ void PMain::resolutionIndexChanged(int i)
                                                        D0_sbox->value()-1, D1_sbox->value()-1,
                                                        x0, x1, y0, y1, z0, z1, currentRes).c_str(), __itm__current__function__);
                 CExplorerWindow::getCurrent()->newView(x1, y1, z1, i, t0, t1, false, -1, -1, -1, x0, y0, z0, false);
-                //voi set
-//                CVolume::instance()->setVoi(CExplorerWindow::getCurrent(), i, voiV0, voiV1+1, voiH0, voiH1+1, voiD0, voiD1+1, CExplorerWindow::getCurrent()->volT0, CExplorerWindow::getCurrent()->volT1);
-
-//                //disabling import form and enabling progress bar animation and tab wait animation
-//                progressBar->setEnabled(true);
-//                progressBar->setMinimum(0);
-//                progressBar->setMaximum(0);
-//                globalCoord_panel->setEnabled(false);
-//                statusBar->showMessage("Loading selected subvolume...");
-
-//                //saving state of subvol spinboxes
-//                CExplorerWindow::getCurrent()->saveSubvolSpinboxState();
-
-//                //launch operation
-                CVolume::instance()->start();
             }
             else
                 resolution_cbox->setCurrentIndex(CExplorerWindow::getCurrent()->getResIndex());
@@ -2189,11 +2231,11 @@ void PMain::curveDimsChanged(int dim)
 {
     /**/itm::debug(itm::LEV2, 0, __itm__current__function__);
 
-    if(CExplorerWindow::current)
+    if(CExplorerWindow::getCurrent())
     {
-        CExplorerWindow::current->view3DWidget->getRenderer()->lineWidth = dim;
-        CExplorerWindow::current->view3DWidget->updateTool();
-        CExplorerWindow::current->view3DWidget->update();
+        CExplorerWindow::getCurrent()->view3DWidget->getRenderer()->lineWidth = dim;
+        CExplorerWindow::getCurrent()->view3DWidget->updateTool();
+        CExplorerWindow::getCurrent()->view3DWidget->update();
     }
 }
 
@@ -2201,20 +2243,112 @@ void PMain::curveAspectChanged()
 {
     /**/itm::debug(itm::LEV2, 0, __itm__current__function__);
 
-    if(CExplorerWindow::current)
+    if(CExplorerWindow::getCurrent())
     {
         if(curveAspectTube->isChecked())
         {
-            CExplorerWindow::current->view3DWidget->getRenderer()->lineType = 0;
-            CExplorerWindow::current->view3DWidget->updateTool();
-            CExplorerWindow::current->view3DWidget->update();
+            CExplorerWindow::getCurrent()->view3DWidget->getRenderer()->lineType = 0;
+            CExplorerWindow::getCurrent()->view3DWidget->updateTool();
+            CExplorerWindow::getCurrent()->view3DWidget->update();
         }
         else if(curveAspectSkeleton->isChecked())
         {
-            CExplorerWindow::current->view3DWidget->getRenderer()->lineType = 1;
-            CExplorerWindow::current->view3DWidget->updateTool();
-            CExplorerWindow::current->view3DWidget->update();
+            CExplorerWindow::getCurrent()->view3DWidget->getRenderer()->lineType = 1;
+            CExplorerWindow::getCurrent()->view3DWidget->updateTool();
+            CExplorerWindow::getCurrent()->view3DWidget->update();
         }
+    }
+}
+
+//generate blocks for exhaustive scan
+void PMain::generateESblocks() throw (itm::RuntimeException)
+{
+    /**/itm::debug(itm::LEV3, 0, __itm__current__function__);
+
+    CExplorerWindow* curWin = CExplorerWindow::getCurrent();
+    if(curWin)
+    {
+        int dimX   = CImport::instance()->getVolume(curWin->volResIndex)->getDIM_H();
+        int dimY   = CImport::instance()->getVolume(curWin->volResIndex)->getDIM_V();
+        int dimZ   = CImport::instance()->getVolume(curWin->volResIndex)->getDIM_D();
+        int blockX = Hdim_sbox->value();
+        int blockY = Vdim_sbox->value();
+        int blockZ = Ddim_sbox->value();
+        int ovlX  = ( ESoverlapSpbox->value()/100.0f )*Hdim_sbox->value();
+        int ovlY  = ( ESoverlapSpbox->value()/100.0f )*Vdim_sbox->value();
+        int ovlZ  = ( ESoverlapSpbox->value()/100.0f )*Ddim_sbox->value();
+        int tolerance = 30;
+
+        // generate X intervals
+        vector<itm::interval_t> xInts;
+        int count = 0;
+        while(xInts.empty() || xInts.back().end < dimX)
+        {
+            xInts.push_back(interval_t(count, count+blockX));
+            count += blockX-ovlX;
+        }
+        xInts.back().end = dimX;
+        xInts.back().start = std::max(0,dimX-blockX);
+        if(xInts.size() > 1 &&                                                  // more than one segment
+           xInts[xInts.size()-1].end - xInts[xInts.size()-2].end < tolerance)   // last two segments difference is below tolerance
+        {
+            xInts.pop_back();           // remove last segment
+            xInts.back().end = dimX;    // extend last segment up to the end
+        }
+
+        // generate Y intervals
+        vector<itm::interval_t> yInts;
+        count = 0;
+        while(yInts.empty() || yInts.back().end < dimY)
+        {
+            yInts.push_back(interval_t(count, count+blockY));
+            count += blockY-ovlY;
+        }
+        yInts.back().end = dimY;
+        yInts.back().start = std::max(0,dimY-blockY);
+        if(yInts.size() > 1 &&                                                  // more than one segment
+           yInts[yInts.size()-1].end - yInts[yInts.size()-2].end < tolerance)   // last two segments difference is below tolerance
+        {
+            yInts.pop_back();           // remove last segment
+            yInts.back().end = dimY;    // extend last segment up to the end
+        }
+
+        // generate Z intervals
+        vector<itm::interval_t> zInts;
+        count = 0;
+        while(zInts.empty() || zInts.back().end < dimZ)
+        {
+            zInts.push_back(interval_t(count, count+blockZ));
+            count += blockZ-ovlZ;
+        }
+        zInts.back().end = dimZ;
+        zInts.back().start = std::max(0,dimZ-blockZ);
+        if(zInts.size() > 1 &&                                                  // more than one segment
+           zInts[zInts.size()-1].end - zInts[zInts.size()-2].end < tolerance)   // last two segments difference is below tolerance
+        {
+            zInts.pop_back();           // remove last segment
+            zInts.back().end = dimZ;    // extend last segment up to the end
+        }
+
+        // generate 3D blocks
+        for(int z=0; z<zInts.size(); z++)
+            for(int y=0; y<yInts.size(); y++)
+                for(int x=0; x<xInts.size(); x++)
+                    ESblocks.push_back(block_t(xInts[x], yInts[y], zInts[z]));
+
+//        printf("xInts:\n");
+//        for(int i=0; i<xInts.size(); i++)
+//            printf("[%d,%d)  ", xInts[i].start, xInts[i].end);
+//        printf("\n");
+//        printf("yInts:\n");
+//        for(int i=0; i<yInts.size(); i++)
+//            printf("[%d,%d)  ", yInts[i].start, yInts[i].end);
+//        printf("\n");
+//        printf("zInts:\n");
+//        for(int i=0; i<zInts.size(); i++)
+//            printf("[%d,%d)  ", zInts[i].start, zInts[i].end);
+//        printf("\n");
+
     }
 }
 
@@ -2228,4 +2362,161 @@ void PMain::verbosityChanged(int i)
     itm::DEBUG = i;
     iim::DEBUG = i;
     CSettings::instance()->writeSettings();
+}
+
+void PMain::ESbuttonClicked()
+{
+    /**/itm::debug(itm::LEV3, 0, __itm__current__function__);
+
+    // check precondition: 3D visualization is active
+    CExplorerWindow* curWin = CExplorerWindow::getCurrent();
+    if(!curWin)
+        return;
+
+
+    // check precondition: valid volume at the currently displayed resolution
+    VirtualVolume* vol = CImport::instance()->getVolume(curWin->volResIndex);
+    if(!vol)
+        return;
+
+
+    // determine start condition
+    bool start = !isESactive();
+
+
+    // generate blocks and ask to confirm
+    ESblocks.clear();
+    if(start)
+    {
+        // generate blocks
+        generateESblocks();
+
+        // interrupt if trying to start ES mode at the lowest resolution
+        if(curWin->volResIndex == 0)
+        {
+            QMessageBox::warning(this, "Warning", "Cannot start the \"Exhaustive scan\" mode at the lowest resolution. Please first zoom-in to a higher res.");
+            ESblocks.clear();
+            return;
+        }
+
+        // interrupt if ES mode has to be started with just 1 block
+        else if(ESblocks.size() < 2)
+        {
+            QMessageBox::warning(this, "Warning", "Cannot start the \"Exhaustive scan\" mode. At least 2 blocks are needed. Please change volume resolution (too low) "
+                                 "or your local viewer maximum dimensions (too big)");
+            ESblocks.clear();
+            return;
+        }
+
+        // ask to confirm before proceed
+        else if(QMessageBox::Yes != QMessageBox::question(this, "Confirm", strprintf("The whole volume at resolution (%d x %d x %d) has been subdivided into %d %soverlapping 3D blocks, "
+                                                        "each sized %d x %d x %d at most.\n\nThroughout the guided scan, all TeraFly's 3D navigation features "
+                                                        "will be temporarily disabled.\n\nContinue?", vol->getDIM_H(), vol->getDIM_V(), vol->getDIM_D(), ESblocks.size(),
+                                                        ESoverlapSpbox->value() == 0 ? "non" : "", Hdim_sbox->value(), Vdim_sbox->value(), Ddim_sbox->value()).c_str(),
+                                                        QMessageBox::No | QMessageBox::Yes, QMessageBox::Yes))
+        {
+            ESblocks.clear();
+            return;
+        }
+    }
+
+
+    // "Local viewer" panel widgets
+    resolution_cbox->setEnabled(!start);
+    Vdim_sbox->setEnabled(!start);
+    Hdim_sbox->setEnabled(!start);
+    Ddim_sbox->setEnabled(!start);
+    Tdim_sbox->setEnabled(!start);
+
+
+    // "Zoom in/out" panel widgets
+    zoom_panel->setEnabled(!start);
+    if(start)
+    {
+        zoomInSens->setValue(zoomInSens->maximum());
+        zoomOutSens->setValue(zoomOutSens->minimum());
+    }
+    else
+        resetMultiresControls();
+
+
+    // "Global coordinates" panel widgets
+    V0_sbox->setEnabled(!start);
+    V1_sbox->setEnabled(!start);
+    H0_sbox->setEnabled(!start);
+    H1_sbox->setEnabled(!start);
+    D0_sbox->setEnabled(!start);
+    D1_sbox->setEnabled(!start);
+    to_label_1->setEnabled(!start);
+    to_label_2->setEnabled(!start);
+    to_label_3->setEnabled(!start);
+    if(frameCoord->isEnabled())
+    {
+        T0_sbox->setEnabled(!start);
+        T1_sbox->setEnabled(!start);
+        to_label_4->setEnabled(!start);
+    }
+    traslXlabel->setText(start ? "<font size=\"4\" color=\"gray\">X</font>" : "<font size=\"4\" color=\"red\"><b>X</b></font>");
+    traslYlabel->setText(start ? "<font size=\"4\" color=\"gray\">Y</font>" : "<font size=\"4\" color=\"green\"><b>Y</b></font>");
+    traslZlabel->setText(start ? "<font size=\"4\" color=\"gray\">Z</font>" : "<font size=\"4\" color=\"blue\"><b>Z</b></font>");
+    traslTlabel->setText(start ? "<font size=\"4\" color=\"gray\">t</font>" : "<font size=\"4\" color=\"gray\"><b>t</b></font>");
+    traslYneg->setEnabled(!start && curWin->volV0 > 0);
+    traslYpos->setEnabled(!start && curWin->volV1 < CImport::instance()->getVolume(curWin->volResIndex)->getDIM_V());
+    traslXneg->setEnabled(!start && curWin->volH0 > 0);
+    traslXpos->setEnabled(!start && curWin->volH1 < CImport::instance()->getVolume(curWin->volResIndex)->getDIM_H());
+    traslZneg->setEnabled(!start && curWin->volD0 > 0);
+    traslZpos->setEnabled(!start && curWin->volD1 < CImport::instance()->getVolume(curWin->volResIndex)->getDIM_D());
+    traslTneg->setEnabled(!start && curWin->volT0 > 0);
+    traslTpos->setEnabled(!start && curWin->volT1 < CImport::instance()->getVolume(curWin->volResIndex)->getDIM_T()-1);
+    refSys->setFilled(!start);
+    if(start)
+        refSys->setZoom(-8.0);
+    else
+    {
+        refSys->setDims(curWin->volH1-curWin->volH0+1, curWin->volV1-curWin->volV0+1, curWin->volD1-curWin->volD0+1);
+        refSys->resetZoom();
+    }
+
+
+    // "Exhaustive scan" panel
+    ESbutton->setText(start ? "Stop" : "Start");
+    ESbutton->setIcon(start ? QIcon(":/icons/stop.png") : QIcon(":/icons/start.png"));
+    ESoverlapSpbox->setEnabled(!start);
+    ESmethodCbox->setEnabled(!start);
+    ESblockSpbox->setEnabled(start);
+    ESblockSpbox->setSuffix(start ? "/" + QString::number(ESblocks.size()) : "/0");
+    ESblockSpbox->setMaximum(start ? ESblocks.size(): 0);
+    ESblockSpbox->setMinimum(start ? 1: 0);
+    ESblockSpbox->setValue(start ? 1: 0);
+}
+
+/**********************************************************************************
+* Called when the correspont spin box has changed
+***********************************************************************************/
+void PMain::ESblockSpboxChanged(int b)
+{
+    if(b == 0 || !ESblockSpbox->isEnabled())
+        return;
+
+    /**/itm::debug(itm::LEV3, 0, __itm__current__function__);
+
+    CExplorerWindow* curWin = CExplorerWindow::getCurrent();
+    if(curWin)
+    {
+        // update reference system
+        int ROIxS   = ESblocks[b-1].xInt.start;
+        int ROIxDim = ESblocks[b-1].xInt.end   - ROIxS;
+        int ROIyS   = ESblocks[b-1].yInt.start;
+        int ROIyDim = ESblocks[b-1].yInt.end   - ROIyS;
+        int ROIzS   = ESblocks[b-1].zInt.start;
+        int ROIzDim = ESblocks[b-1].zInt.end   - ROIzS;
+        int dimX   = CImport::instance()->getVolume(curWin->volResIndex)->getDIM_H();
+        int dimY   = CImport::instance()->getVolume(curWin->volResIndex)->getDIM_V();
+        int dimZ   = CImport::instance()->getVolume(curWin->volResIndex)->getDIM_D();
+        refSys->setDims(dimX, dimY, dimZ, ROIxDim, ROIyDim, ROIzDim, ROIxS, ROIyS, ROIzS);
+
+        // invoke new view
+        curWin->newView(ESblocks[b-1].xInt.end, ESblocks[b-1].yInt.end, ESblocks[b-1].zInt.end, curWin->volResIndex,
+                curWin->volT0, curWin->volT1, false, -1, -1, -1, ESblocks[b-1].xInt.start, ESblocks[b-1].yInt.start, ESblocks[b-1].zInt.start, true, false);
+    }
 }

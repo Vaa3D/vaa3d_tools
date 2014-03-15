@@ -125,9 +125,10 @@ void CExplorerWindow::show()
             if( t_prev >= volT0 && t_prev <= volT1 )
             {
                 window3D->timeSlider->setValue(t_prev - volT0);
-                pMain->frameCoord->setText(strprintf("t = %d/%d", t_prev, CImport::instance()->getVolume(0)->getDIM_T()-1).c_str());
+                if(pMain->frameCoord->isEnabled())
+                    pMain->frameCoord->setText(strprintf("t = %d/%d", t_prev, CImport::instance()->getVolume(0)->getDIM_T()-1).c_str());
             }
-            else
+            else if(pMain->frameCoord->isEnabled())
                 pMain->frameCoord->setText(strprintf("t = %d/%d", volT0, CImport::instance()->getVolume(0)->getDIM_T()-1).c_str());
 
             //sync widgets
@@ -182,14 +183,17 @@ void CExplorerWindow::show()
         pMain->gradientBar->update();
 
         //disabling translate buttons if needed
-        pMain->traslYneg->setEnabled(volV0 > 0);
-        pMain->traslYpos->setEnabled(volV1 < CImport::instance()->getVolume(volResIndex)->getDIM_V());
-        pMain->traslXneg->setEnabled(volH0 > 0);
-        pMain->traslXpos->setEnabled(volH1 < CImport::instance()->getVolume(volResIndex)->getDIM_H());
-        pMain->traslZneg->setEnabled(volD0 > 0);
-        pMain->traslZpos->setEnabled(volD1 < CImport::instance()->getVolume(volResIndex)->getDIM_D());
-        pMain->traslTneg->setEnabled(volT0 > 0);
-        pMain->traslTpos->setEnabled(volT1 < CImport::instance()->getVolume(volResIndex)->getDIM_T()-1);
+        if(!pMain->isESactive())
+        {
+            pMain->traslYneg->setEnabled(volV0 > 0);
+            pMain->traslYpos->setEnabled(volV1 < CImport::instance()->getVolume(volResIndex)->getDIM_V());
+            pMain->traslXneg->setEnabled(volH0 > 0);
+            pMain->traslXpos->setEnabled(volH1 < CImport::instance()->getVolume(volResIndex)->getDIM_H());
+            pMain->traslZneg->setEnabled(volD0 > 0);
+            pMain->traslZpos->setEnabled(volD1 < CImport::instance()->getVolume(volResIndex)->getDIM_D());
+            pMain->traslTneg->setEnabled(volT0 > 0);
+            pMain->traslTpos->setEnabled(volT1 < CImport::instance()->getVolume(volResIndex)->getDIM_T()-1);
+        }
 
         //setting min, max and value of PMain GUI VOI's widgets
         pMain->V0_sbox->setMinimum(getGlobalVCoord(view3DWidget->yCut0(), -1, true, false, __itm__current__function__)+1);
@@ -205,8 +209,11 @@ void CExplorerWindow::show()
         pMain->D1_sbox->setMaximum(getGlobalDCoord(view3DWidget->zCut1(), -1, true, false, __itm__current__function__)+1);
         pMain->D1_sbox->setValue(pMain->D1_sbox->maximum());
 
-        pMain->T0_sbox->setText(QString::number(volT0));
-        pMain->T1_sbox->setText(QString::number(volT1));
+        if(pMain->frameCoord->isEnabled())
+        {
+            pMain->T0_sbox->setText(QString::number(volT0));
+            pMain->T1_sbox->setText(QString::number(volT1));
+        }
 //        pMain->T0_sbox->setMinimum(volT0);
 //        pMain->T0_sbox->setValue(pMain->T0_sbox->minimum());
 //        pMain->T1_sbox->setMaximum(volT1);
@@ -247,7 +254,8 @@ void CExplorerWindow::show()
         this->window3D->show();
 
         // updating reference system
-        PMain::getInstance()->refSys->setDims(volH1-volH0+1, volV1-volV0+1, volD1-volD0+1);
+        if(!PMain::getInstance()->isESactive())
+            PMain::getInstance()->refSys->setDims(volH1-volH0+1, volV1-volV0+1, volD1-volD0+1);
         this->view3DWidget->updateGL();     // if omitted, Vaa3D_rotationchanged somehow resets rotation to 0,0,0
         Vaa3D_rotationchanged(0);
 
@@ -448,6 +456,13 @@ bool CExplorerWindow::eventFilter(QObject *object, QEvent *event)
         ***************************************************************************/
         if (object == view3DWidget && event->type() == QEvent::MouseButtonDblClick)
         {
+            if(PMain::getInstance()->isESactive())
+            {
+                QMessageBox::information(this->window3D, "Warning", "TeraFly is running in \"Exhaustive scan\" mode. All TeraFly's' navigation features are disabled. "
+                                         "Please terminate the \"Exhaustive scan\" mode and try again.");
+                return true;
+            }
+
             QMouseEvent* mouseEvt = (QMouseEvent*)event;
             XYZ point = getRenderer3DPoint(mouseEvt->x(), mouseEvt->y());
             newView(point.x, point.y, point.z, volResIndex+1, volT0, volT1);
@@ -622,10 +637,12 @@ CExplorerWindow::newView(int x, int y, int z,                            //can b
     bool fromVaa3Dcoordinates /*= false*/,          //if coordinates were obtained from Vaa3D
     int dx/*=-1*/, int dy/*=-1*/, int dz/*=-1*/,    //VOI [x-dx,x+dx), [y-dy,y+dy), [z-dz,z+dz), [t0, t1]
     int x0/*=-1*/, int y0/*=-1*/, int z0/*=-1*/,    //VOI [x0, x), [y0, y), [z0, z), [t0, t1]
-    bool auto_crop /* = true */)                    //whether to crop the VOI to the max dims
+    bool auto_crop /* = true */,                    //whether to crop the VOI to the max dims
+    bool scale_coords /* = true */)                 //whether to scale VOI coords to the target res
+
 {
-    /**/itm::debug(itm::LEV1, strprintf("title = %s, x = %d, y = %d, z = %d, res = %d, dx = %d, dy = %d, dz = %d, x0 = %d, y0 = %d, z0 = %d, t0 = %d, t1 = %d, auto_crop = %s",
-                                        titleShort.c_str(),  x, y, z, resolution, dx, dy, dz, x0, y0, z0, t0, t1, auto_crop ? "true" : "false").c_str(), __itm__current__function__);
+    /**/itm::debug(itm::LEV1, strprintf("title = %s, x = %d, y = %d, z = %d, res = %d, dx = %d, dy = %d, dz = %d, x0 = %d, y0 = %d, z0 = %d, t0 = %d, t1 = %d, auto_crop = %s, scale_coords = %s",
+                                        titleShort.c_str(),  x, y, z, resolution, dx, dy, dz, x0, y0, z0, t0, t1, auto_crop ? "true" : "false", scale_coords ? "true" : "false").c_str(), __itm__current__function__);
 
     // check precondition #1: active window
     if(!isActive || toBeClosed)
@@ -663,24 +680,27 @@ CExplorerWindow::newView(int x, int y, int z,                            //can b
 
 
         // scale VOI coordinates to the reference system of the target resolution
-        float ratioX = static_cast<float>(CImport::instance()->getVolume(resolution)->getDIM_H())/CImport::instance()->getVolume(volResIndex)->getDIM_H();
-        float ratioY = static_cast<float>(CImport::instance()->getVolume(resolution)->getDIM_V())/CImport::instance()->getVolume(volResIndex)->getDIM_V();
-        float ratioZ = static_cast<float>(CImport::instance()->getVolume(resolution)->getDIM_D())/CImport::instance()->getVolume(volResIndex)->getDIM_D();
-        x = getGlobalHCoord(x, resolution, fromVaa3Dcoordinates, false, __itm__current__function__);
-        y = getGlobalVCoord(y, resolution, fromVaa3Dcoordinates, false, __itm__current__function__);
-        z = getGlobalDCoord(z, resolution, fromVaa3Dcoordinates, false, __itm__current__function__);
-        if(x0 != -1)
-            x0 = getGlobalHCoord(x0, resolution, fromVaa3Dcoordinates, false, __itm__current__function__);
-        else
-            dx = dx == -1 ? int_inf : static_cast<int>(dx*ratioX+0.5f);
-        if(y0 != -1)
-            y0 = getGlobalVCoord(y0, resolution, fromVaa3Dcoordinates, false, __itm__current__function__);
-        else
-            dy = dy == -1 ? int_inf : static_cast<int>(dy*ratioY+0.5f);
-        if(z0 != -1)
-            z0 = getGlobalDCoord(z0, resolution, fromVaa3Dcoordinates, false, __itm__current__function__);
-        else
-            dz = dz == -1 ? int_inf : static_cast<int>(dz*ratioZ+0.5f);
+        if(scale_coords)
+        {
+            float ratioX = static_cast<float>(CImport::instance()->getVolume(resolution)->getDIM_H())/CImport::instance()->getVolume(volResIndex)->getDIM_H();
+            float ratioY = static_cast<float>(CImport::instance()->getVolume(resolution)->getDIM_V())/CImport::instance()->getVolume(volResIndex)->getDIM_V();
+            float ratioZ = static_cast<float>(CImport::instance()->getVolume(resolution)->getDIM_D())/CImport::instance()->getVolume(volResIndex)->getDIM_D();
+            x = getGlobalHCoord(x, resolution, fromVaa3Dcoordinates, false, __itm__current__function__);
+            y = getGlobalVCoord(y, resolution, fromVaa3Dcoordinates, false, __itm__current__function__);
+            z = getGlobalDCoord(z, resolution, fromVaa3Dcoordinates, false, __itm__current__function__);
+            if(x0 != -1)
+                x0 = getGlobalHCoord(x0, resolution, fromVaa3Dcoordinates, false, __itm__current__function__);
+            else
+                dx = dx == -1 ? int_inf : static_cast<int>(dx*ratioX+0.5f);
+            if(y0 != -1)
+                y0 = getGlobalVCoord(y0, resolution, fromVaa3Dcoordinates, false, __itm__current__function__);
+            else
+                dy = dy == -1 ? int_inf : static_cast<int>(dy*ratioY+0.5f);
+            if(z0 != -1)
+                z0 = getGlobalDCoord(z0, resolution, fromVaa3Dcoordinates, false, __itm__current__function__);
+            else
+                dz = dz == -1 ? int_inf : static_cast<int>(dz*ratioZ+0.5f);
+        }
 
         // adjust time size so as to use all the available frames set by the user
         if(t1 - t0 +1 != pMain.Tdim_sbox->value())
@@ -1156,8 +1176,11 @@ void CExplorerWindow::saveSubvolSpinboxState()
     H1_sbox_val = pMain.H1_sbox->value();
     D0_sbox_val = pMain.D0_sbox->value();
     D1_sbox_val = pMain.D1_sbox->value();
-    T0_sbox_val = pMain.T0_sbox->text().toInt();
-    T1_sbox_val = pMain.T1_sbox->text().toInt();
+    if(pMain.frameCoord->isEnabled())
+    {
+        T0_sbox_val = pMain.T0_sbox->text().toInt();
+        T1_sbox_val = pMain.T1_sbox->text().toInt();
+    }
 }
 void CExplorerWindow::restoreSubvolSpinboxState()
 {  
@@ -1178,8 +1201,11 @@ void CExplorerWindow::restoreSubvolSpinboxState()
     pMain.H1_sbox->setValue(H1_sbox_val);
     pMain.D0_sbox->setValue(D0_sbox_val);
     pMain.D1_sbox->setValue(D1_sbox_val);
-    pMain.T0_sbox->setText(QString::number(T0_sbox_val));
-    pMain.T1_sbox->setText(QString::number(T1_sbox_val));
+    if(pMain.frameCoord->isEnabled())
+    {
+        pMain.T0_sbox->setText(QString::number(T0_sbox_val));
+        pMain.T1_sbox->setText(QString::number(T1_sbox_val));
+    }
 }
 
 /**********************************************************************************
@@ -1479,9 +1505,10 @@ void CExplorerWindow::restoreViewFrom(CExplorerWindow* source) throw (RuntimeExc
         if( t_source >= volT0 && t_source <= volT1 )
         {
             window3D->timeSlider->setValue(t_source - volT0);
-            pMain->frameCoord->setText(strprintf("t = %d/%d", t_source, CImport::instance()->getVolume(0)->getDIM_T()-1).c_str());
+            if(pMain->frameCoord->isEnabled())
+                pMain->frameCoord->setText(strprintf("t = %d/%d", t_source, CImport::instance()->getVolume(0)->getDIM_T()-1).c_str());
         }
-        else
+        else if(pMain->frameCoord->isEnabled())
             pMain->frameCoord->setText(strprintf("t = %d/%d", volT0, CImport::instance()->getVolume(0)->getDIM_T()-1).c_str());
 
         //sync widgets
@@ -1493,7 +1520,8 @@ void CExplorerWindow::restoreViewFrom(CExplorerWindow* source) throw (RuntimeExc
         this->window3D->show();
 
         // update reference system dimension
-        PMain::getInstance()->refSys->setDims(volH1-volH0+1, volV1-volV0+1, volD1-volD0+1);
+        if(!PMain::getInstance()->isESactive())
+            PMain::getInstance()->refSys->setDims(volH1-volH0+1, volV1-volV0+1, volD1-volD0+1);
 
         //current windows not gets ready to user input
         isReady = true;
@@ -1523,6 +1551,13 @@ void CExplorerWindow::invokedFromVaa3D(v3d_imaging_paras* params /* = 0 */)
 {
     if(!isActive || toBeClosed)
         return;
+
+    if(PMain::getInstance()->isESactive())
+    {
+        QMessageBox::information(this->window3D, "Warning", "TeraFly is running in \"Exhaustive scan\" mode. All TeraFly's' navigation features are disabled. "
+                                 "Please terminate the \"Exhaustive scan\" mode and try again.");
+        return;
+    }
 
     if(params)
         /**/itm::debug(itm::LEV1, strprintf("title = %s, params = [%d-%d] x [%d-%d] x [%d-%d]", titleShort.c_str(), params->xs, params->xe, params->ys, params->ye, params->zs, params->ze).c_str(), __itm__current__function__);
@@ -2019,7 +2054,8 @@ void CExplorerWindow::Vaa3D_changeTSlider(int s)
 {
     /**/itm::debug(itm::LEV_MAX, strprintf("title = %s, s = %d", title.c_str(), s).c_str(), __itm__current__function__);
 
-    PMain::getInstance()->frameCoord->setText(strprintf("t = %d/%d", volT0+s, CImport::instance()->getVolume(0)->getDIM_T()-1).c_str());
+    if(PMain::getInstance()->frameCoord->isEnabled())
+        PMain::getInstance()->frameCoord->setText(strprintf("t = %d/%d", volT0+s, CImport::instance()->getVolume(0)->getDIM_T()-1).c_str());
 }
 
 /**********************************************************************************
