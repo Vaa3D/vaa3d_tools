@@ -11,6 +11,18 @@ ties names are:
 - Rem: a feature no longer available
 
 ============================================================================================
+Version 0.9.61
+March 16th, 2014
+--------------------------------------------------------------------------------------------
+- New: added  "virtual time slider"  functionality. Once  a 5D volume is opened,  the entire
+       time range is accessible  through the time slider. The actual  displayed time segment
+       is specified  in the "Global coordinates" panel. The dimension of  the segment can be
+       modified in the "Local viewer" panel.
+       @TODO: bug fixes and quicker change of the time segment.
+--------------------------------------------------------------------------------------------
+
+
+
 Version 0.9.6
 March 15th, 2014
 --------------------------------------------------------------------------------------------

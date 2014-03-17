@@ -1116,6 +1116,7 @@ void PMain::reset()
     refSys->setDims(1,1,1);
     refSys->setFilled(true);
     refSys->resetZoom();
+    frameCoord->setPalette(globalCoord_panel->palette());
 
     //reseting ES panel widgets
     //ESPanel->setEnabled(false);

@@ -55,7 +55,7 @@ void CExplorerWindow::show()
 
     try
     {
-        //opening tri-view window (and hiding it asap)
+        // open tri-view window (and hiding it asap)
         QElapsedTimer timer;
         timer.start();
         this->window = V3D_env->newImageWindow(QString(title.c_str()));
@@ -68,7 +68,7 @@ void CExplorerWindow::show()
         image->setTimePackType(TIME_PACK_C);
         V3D_env->setImage(window, image);
 
-        //opening 3D view window
+        // open 3D view window
         V3D_env->open3DWindow(window);
         view3DWidget = (V3dR_GLWidget*)(V3D_env->getView3DControl(window));
         if(!view3DWidget->getiDrawExternalParameter())
@@ -77,14 +77,21 @@ void CExplorerWindow::show()
         PLog::getInstance()->appendGPU(timer.elapsed(), QString("Opened view ").append(title.c_str()).toStdString());
 
 
-        //installing the event filter on the 3D renderer and on the 3D window
+        // install the event filter on the 3D renderer and on the 3D window
         view3DWidget->installEventFilter(this);
         window3D->installEventFilter(this);
+        window3D->timeSlider->installEventFilter(this);
 
-        //if the previous explorer window exists
+        // time slider: disconnect Vaa3D event handlers and set the complete (virtual) time range
+        disconnect(view3DWidget, SIGNAL(changeVolumeTimePoint(int)), window3D->timeSlider, SLOT(setValue(int)));
+        disconnect(window3D->timeSlider, SIGNAL(valueChanged(int)), view3DWidget, SLOT(setVolumeTimePoint(int)));
+        window3D->timeSlider->setMinimum(0);
+        window3D->timeSlider->setMaximum(CImport::instance()->getVolumeTDim()-1);
+
+        // if the previous explorer window exists
         if(prev)
         {           
-            //applying the same color map only if it differs from the previous one
+            // apply the same color map only if it differs from the previous one
             Renderer_gl2* prev_renderer = (Renderer_gl2*)(prev->view3DWidget->getRenderer());
             Renderer_gl2* curr_renderer = (Renderer_gl2*)(view3DWidget->getRenderer());
             bool changed_cmap = false;
@@ -121,15 +128,8 @@ void CExplorerWindow::show()
             view3DWidget->doAbsoluteRot(prev->view3DWidget->xRot(), prev->view3DWidget->yRot(), prev->view3DWidget->zRot());
 
             // select the same time frame (if available)
-            int t_prev = prev->volT0 + prev->window3D->timeSlider->value();
-            if( t_prev >= volT0 && t_prev <= volT1 )
-            {
-                window3D->timeSlider->setValue(t_prev - volT0);
-                if(pMain->frameCoord->isEnabled())
-                    pMain->frameCoord->setText(strprintf("t = %d/%d", t_prev, CImport::instance()->getVolume(0)->getDIM_T()-1).c_str());
-            }
-            else if(pMain->frameCoord->isEnabled())
-                pMain->frameCoord->setText(strprintf("t = %d/%d", volT0, CImport::instance()->getVolume(0)->getDIM_T()-1).c_str());
+            window3D->timeSlider->setValue(prev->window3D->timeSlider->value());
+            Vaa3D_changeTSlider(window3D->timeSlider->value());
 
             //sync widgets
             syncWindows(prev->window3D, window3D);
@@ -341,6 +341,7 @@ CExplorerWindow::CExplorerWindow(V3DPluginCallback2 *_V3D_env, int _resIndex, it
         {
             prev->view3DWidget->removeEventFilter(prev);
             prev->window3D->removeEventFilter(prev);
+            prev->window3D->timeSlider->removeEventFilter(this);
             prev->resetZoomHistory();
             prev->setActive(false);
         }
@@ -373,9 +374,13 @@ CExplorerWindow::~CExplorerWindow()
     isActive = false;
     view3DWidget->removeEventFilter(this);
     window3D->removeEventFilter(this);
+    window3D->timeSlider->removeEventFilter(this);
 
     //just closing windows
-    V3D_env->close3DWindow(window); //--- Alessandro 24/08/2013: this causes crash at the deepest resolution when the plugin is invoked by Vaa3D
+    //    V3D_env->close3DWindow(window); //--- Alessandro 16/03/2014: this causes crash in some occasions, hence it has been substituted by:
+    view3DWidget->close();
+    window3D->close();
+
     triViewWidget->close();
 
     //decreasing the number of instantiated objects
@@ -431,7 +436,6 @@ bool CExplorerWindow::eventFilter(QObject *object, QEvent *event)
                     isZoomDerivativeNeg()                                                   &&  //zoom derivative is negative
                     view3DWidget->zoom() < PMain::getInstance()->zoomOutSens->value())          //zoom-out threshold reached
             {
-                //printf("Switching to the prev view zoom={%d, %d, %d, %d}\n", zoomHistory[0], zoomHistory[1], zoomHistory[2], zoomHistory[3]);
                 setActive(false);
                 resetZoomHistory();
                 prev->restoreViewFrom(this);
@@ -470,11 +474,22 @@ bool CExplorerWindow::eventFilter(QObject *object, QEvent *event)
         }
 
         /****************** INTERCEPTING MOUSE RELEASE EVENTS **********************
-        Double click events are intercepted to switch to the higher resolution.
+        Mouse release events are intercepted syncronize change of rotation
         ***************************************************************************/
         if (object == view3DWidget && event->type() == QEvent::MouseButtonRelease)
         {
             this->Vaa3D_rotationchanged(0);
+            return false;
+        }
+
+        /****************** INTERCEPTING TIME SLIDER EVENTS ************************
+        Time slider events are intercepted to navigate through the entire time range
+        ***************************************************************************/
+        if (object == window3D->timeSlider &&                       // event from Vaa3D time slider
+                ( event->type() == QEvent::MouseButtonRelease ||    // mouse release event
+                  event->type() == QEvent::Wheel))                  // mouse scroll event
+        {
+            Vaa3D_changeTSlider(window3D->timeSlider->value(), true);
             return false;
         }
 
@@ -803,6 +818,7 @@ CExplorerWindow::newView(int x, int y, int z,                            //can b
         disconnect(PMain::getInstance()->D1_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeD1sbox(int)));
         view3DWidget->removeEventFilter(this);
         window3D->removeEventFilter(this);
+        window3D->timeSlider->removeEventFilter(this);
 
 
 
@@ -1362,6 +1378,7 @@ void CExplorerWindow::restoreViewFrom(CExplorerWindow* source) throw (RuntimeExc
         source->disconnect(source->view3DWidget, SIGNAL(changeYCut1(int)), source, SLOT(Vaa3D_changeYCut1(int)));
         source->disconnect(source->view3DWidget, SIGNAL(changeZCut0(int)), source, SLOT(Vaa3D_changeZCut0(int)));
         source->disconnect(source->view3DWidget, SIGNAL(changeZCut1(int)), source, SLOT(Vaa3D_changeZCut1(int)));
+        source->connect(source->window3D->timeSlider, SIGNAL(valueChanged(int)), source, SLOT(Vaa3D_changeTSlider(int)));
         //source->disconnect(source->view3DWidget, SIGNAL(xRotationChanged(int)), source, SLOT(Vaa3D_rotationchanged(int)));
         //source->disconnect(source->view3DWidget, SIGNAL(yRotationChanged(int)), source, SLOT(Vaa3D_rotationchanged(int)));
         //source->disconnect(source->view3DWidget, SIGNAL(zRotationChanged(int)), source, SLOT(Vaa3D_rotationchanged(int)));
@@ -1375,6 +1392,7 @@ void CExplorerWindow::restoreViewFrom(CExplorerWindow* source) throw (RuntimeExc
 
         source->view3DWidget->removeEventFilter(source);
         source->window3D->removeEventFilter(source);
+        window3D->timeSlider->removeEventFilter(source);
 
         //saving source spinbox state
         source->saveSubvolSpinboxState();
@@ -1496,20 +1514,14 @@ void CExplorerWindow::restoreViewFrom(CExplorerWindow* source) throw (RuntimeExc
 
         view3DWidget->installEventFilter(this);
         window3D->installEventFilter(this);
+        window3D->timeSlider->installEventFilter(this);
 
         //loading annotations of the current view
         this->loadAnnotations();
 
         // select the same time frame (if available)
-        int t_source = source->volT0 + source->window3D->timeSlider->value();
-        if( t_source >= volT0 && t_source <= volT1 )
-        {
-            window3D->timeSlider->setValue(t_source - volT0);
-            if(pMain->frameCoord->isEnabled())
-                pMain->frameCoord->setText(strprintf("t = %d/%d", t_source, CImport::instance()->getVolume(0)->getDIM_T()-1).c_str());
-        }
-        else if(pMain->frameCoord->isEnabled())
-            pMain->frameCoord->setText(strprintf("t = %d/%d", volT0, CImport::instance()->getVolume(0)->getDIM_T()-1).c_str());
+        window3D->timeSlider->setValue(source->window3D->timeSlider->value());
+//        Vaa3D_changeTSlider(window3D->timeSlider->value());
 
         //sync widgets
         syncWindows(source->window3D, window3D);
@@ -2050,12 +2062,38 @@ void CExplorerWindow::Vaa3D_changeZCut1(int s)
     connect(PMain::getInstance()->D1_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeD1sbox(int)));
 }
 
-void CExplorerWindow::Vaa3D_changeTSlider(int s)
+void CExplorerWindow::Vaa3D_changeTSlider(int s, bool editingFinished /* = false */)
 {
     /**/itm::debug(itm::LEV_MAX, strprintf("title = %s, s = %d", title.c_str(), s).c_str(), __itm__current__function__);
 
-    if(PMain::getInstance()->frameCoord->isEnabled())
-        PMain::getInstance()->frameCoord->setText(strprintf("t = %d/%d", volT0+s, CImport::instance()->getVolume(0)->getDIM_T()-1).c_str());
+    if(isActive && !toBeClosed && view3DWidget && PMain::getInstance()->frameCoord->isEnabled())
+    {
+        // change current frame coordinate
+        PMain::getInstance()->frameCoord->setText(strprintf("t = %d/%d", s, CImport::instance()->getVolumeTDim()-1).c_str());
+
+        // frame out of displayed range
+        if(s < volT0 || s > volT1)
+        {
+            // set red background to current frame coordinate widget
+            QPalette palette = PMain::getInstance()->frameCoord->palette();
+            palette.setColor(QPalette::Base, QColor(255, 184, 184));
+            PMain::getInstance()->frameCoord->setPalette(palette);
+
+            if(editingFinished)
+            {
+                newView( (volH1-volH0)/2, (volV1-volV0)/2, (volD1-volD0)/2, volResIndex, s, s+PMain::getInstance()->Tdim_sbox->value()-1, false);
+            }
+        }
+        // frame within displayed range
+        else
+        {
+            // reset background of current frame coordinate widget
+            PMain::getInstance()->frameCoord->setPalette(QApplication::palette( PMain::getInstance()->frameCoord ));
+
+            // display selected frame
+            view3DWidget->setVolumeTimePoint(s-volT0);
+        }
+    }
 }
 
 /**********************************************************************************
