@@ -739,6 +739,10 @@ CExplorerWindow::newView(int x, int y, int z,                            //can b
                 t1 = std::max(0, std::min(t1,CImport::instance()->getVolume(volResIndex)->getDIM_T()-1));
                 if(t1-t0+1 > pMain.Tdim_sbox->value())
                     t1 = t0 + pMain.Tdim_sbox->value();
+                if(t1 >= CImport::instance()->getVolumeTDim()-1)
+                    t0 = t1 - (pMain.Tdim_sbox->value()-1);
+                if(t0 == 0)
+                    t1 = pMain.Tdim_sbox->value()-1;
                 /**/itm::debug(itm::LEV_MAX, strprintf("title = %s, ...to (%d,%d,%d)", titleShort.c_str(),  dx, dy, dz).c_str(), __itm__current__function__);
             }
             // modality #2: VOI = [x0, x), [y0, y), [z0, z), [t0, t1]
@@ -767,6 +771,10 @@ CExplorerWindow::newView(int x, int y, int z,                            //can b
                 t1 = std::max(0, std::min(t1,CImport::instance()->getVolume(volResIndex)->getDIM_T()-1));
                 if(t1-t0+1 > pMain.Tdim_sbox->value())
                     t1 = t0 + pMain.Tdim_sbox->value();
+                if(t1 >= CImport::instance()->getVolumeTDim()-1)
+                    t0 = t1 - (pMain.Tdim_sbox->value()-1);
+                if(t0 == 0)
+                    t1 = pMain.Tdim_sbox->value()-1;
                 /**/itm::debug(itm::LEV_MAX, strprintf("title = %s, ...to [%d,%d) [%d,%d) [%d,%d) [%d,%d]", titleShort.c_str(),  x0, x, y0, y, z0, z, t0, t1).c_str(), __itm__current__function__);
             }
         }
@@ -2080,9 +2088,7 @@ void CExplorerWindow::Vaa3D_changeTSlider(int s, bool editingFinished /* = false
             PMain::getInstance()->frameCoord->setPalette(palette);
 
             if(editingFinished)
-            {
-                newView( (volH1-volH0)/2, (volV1-volV0)/2, (volD1-volD0)/2, volResIndex, s, s+PMain::getInstance()->Tdim_sbox->value()-1, false);
-            }
+                newView( (volH1-volH0)/2, (volV1-volV0)/2, (volD1-volD0)/2, volResIndex, s-PMain::getInstance()->Tdim_sbox->value()/2, s+PMain::getInstance()->Tdim_sbox->value()/2, false);
         }
         // frame within displayed range
         else

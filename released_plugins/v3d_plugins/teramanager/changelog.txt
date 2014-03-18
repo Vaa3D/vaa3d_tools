@@ -11,6 +11,16 @@ ties names are:
 - Rem: a feature no longer available
 
 ============================================================================================
+Version 0.9.62
+March 18th, 2014
+--------------------------------------------------------------------------------------------
+- Opt: when the  user selects  a frame through  the time  slider, the time segment loaded is
+       centered on that frame. 
+- Fix: fixed a bug which caused an invalid time segment selection when using the time slider
+       to move along the time axis.
+--------------------------------------------------------------------------------------------
+
+
 Version 0.9.61
 March 16th, 2014
 --------------------------------------------------------------------------------------------

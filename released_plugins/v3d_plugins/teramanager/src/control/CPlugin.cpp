@@ -36,7 +36,7 @@
 using namespace teramanager;
 
 /*******************************************************************************************************************************
- *   Interfaces, types, parameters and constants   													       *
+ *   Interfaces, types, parameters and constants                                                                               *
  *******************************************************************************************************************************/
 namespace teramanager
 {
@@ -44,9 +44,9 @@ namespace teramanager
     *    PARAMETERS    *
     ********************
     ---------------------------------------------------------------------------------------------------------------------------*/
-    std::string version = "0.9.61";     //software version
-    int DEBUG = LEV_MAX;               //debug level
-    bool DEBUG_TO_FILE = false;        //whether debug messages should be printed on the screen or to a file (default: screen)
+    std::string version = "0.9.62";     //software version
+    int DEBUG = LEV_MAX;                //debug level
+    bool DEBUG_TO_FILE = false;         //whether debug messages should be printed on the screen or to a file (default: screen)
     std::string DEBUG_FILE_PATH = "/home/alex/Scrivania/terafly_debug.log";   //filepath where to save debug information
     /*-------------------------------------------------------------------------------------------------------------------------*/
 }
