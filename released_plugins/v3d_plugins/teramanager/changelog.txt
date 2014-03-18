@@ -11,6 +11,16 @@ ties names are:
 - Rem: a feature no longer available
 
 ============================================================================================
+Version 0.9.63
+March 18th, 2014
+--------------------------------------------------------------------------------------------
+- Opt: when the time slider is dragged  outside the displayed range,  both Vaa3D and TeraFly
+       signal this to user by changing the background color to yellow.
+- Dev: added "Debug" -> "Redirect stdout to file at". Depending on the verbosity level,  all
+       the debug prints will be redirected to the specified file.
+--------------------------------------------------------------------------------------------
+
+
 Version 0.9.62
 March 18th, 2014
 --------------------------------------------------------------------------------------------

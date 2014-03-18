@@ -112,6 +112,9 @@ class teramanager::PMain : public QWidget
         QMenu* debugVerbosityMenu;                         // verbosity entry
         QWidgetAction* debugVerbosityActionWidget;         // verbosity action
         QComboBox *debugVerbosityCBox;                     // verbosity widget (a combobox)
+        QMenu* debugRedirectSTDoutMenu;                    // redirect stdout entry
+        QWidgetAction* debugRedirectSTDoutActionWidget;    // redirect stdout action
+        QLineEdit *debugRedirectSTDoutPath;                // redirect stdout widget (a line edit)
         QAction* addGaussianNoiseToTimeSeries;             // add gaussian noise to time series action
 
         //toolbar widgets
@@ -380,7 +383,7 @@ class teramanager::PMain : public QWidget
         void resolutionIndexChanged(int i);
 
         /**********************************************************************************
-        * Called when the correspont buttons are clicked
+        * Called when the corresponding buttons are clicked
         ***********************************************************************************/
         void traslXposClicked();
         void traslXnegClicked();
@@ -392,14 +395,14 @@ class teramanager::PMain : public QWidget
         void traslTnegClicked();
 
         /**********************************************************************************
-        * Called when the correspondent debug actions are triggered
+        * Called when the corresponding debug actions are triggered
         ***********************************************************************************/
         void debugAction1Triggered();
         void addGaussianNoiseTriggered();
         void showLogTriggered();
 
         /**********************************************************************************
-        * Called when the correspondent Options->3D->Curve actions are triggered
+        * Called when the corresponding Options->3D->Curve actions are triggered
         ***********************************************************************************/
         void curveDimsChanged(int dim);
         void curveAspectChanged();
@@ -413,14 +416,19 @@ class teramanager::PMain : public QWidget
         static void setEnabledComboBoxItem(QComboBox* cbox, int _index, bool enabled);
 
         /**********************************************************************************
-        * Called when the correspont buttons are clicked
+        * Called when the corresponding buttons are clicked
         ***********************************************************************************/
         void ESbuttonClicked();
 
         /**********************************************************************************
-        * Called when the correspont spin box has changed
+        * Called when the corresponding spin box has changed
         ***********************************************************************************/
         void ESblockSpboxChanged(int b);
+
+        /**********************************************************************************
+        * Called when the corresponding QLineEdit has been edited
+        ***********************************************************************************/
+        void debugRedirectSTDoutPathEdited(QString s);
 
 
 };

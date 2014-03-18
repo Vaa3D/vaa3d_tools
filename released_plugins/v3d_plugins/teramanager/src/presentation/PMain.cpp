@@ -307,6 +307,14 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     debugVerbosityMenu->addAction(debugVerbosityActionWidget);
     connect(debugVerbosityCBox, SIGNAL(currentIndexChanged(int)), this, SLOT(verbosityChanged(int)));
     debugMenu->addMenu(debugVerbosityMenu);    
+    /* ---------------------------- redirect to stdout ---------------------------- */
+    debugRedirectSTDoutMenu = new QMenu("Redirect stdout to file at");
+    debugRedirectSTDoutActionWidget = new QWidgetAction(this);
+    debugRedirectSTDoutPath = new QLineEdit();
+    debugRedirectSTDoutActionWidget->setDefaultWidget(debugRedirectSTDoutPath);
+    debugRedirectSTDoutMenu->addAction(debugRedirectSTDoutActionWidget);
+    connect(debugRedirectSTDoutPath, SIGNAL(textEdited(QString)), this, SLOT(debugRedirectSTDoutPathEdited(QString)));
+    debugMenu->addMenu(debugRedirectSTDoutMenu);
     /* ------------------------------ debug action 1 ------------------------------ */
     debugAction1 = new QAction("Debug action", debugMenu);
     connect(debugAction1, SIGNAL(triggered()), this, SLOT(debugAction1Triggered()));
@@ -2519,5 +2527,19 @@ void PMain::ESblockSpboxChanged(int b)
         // invoke new view
         curWin->newView(ESblocks[b-1].xInt.end, ESblocks[b-1].yInt.end, ESblocks[b-1].zInt.end, curWin->volResIndex,
                 curWin->volT0, curWin->volT1, false, -1, -1, -1, ESblocks[b-1].xInt.start, ESblocks[b-1].yInt.start, ESblocks[b-1].zInt.start, true, false);
+    }
+}
+
+/**********************************************************************************
+* Called when the corresponding QLineEdit has been edited
+***********************************************************************************/
+void PMain::debugRedirectSTDoutPathEdited(QString s)
+{
+    if(s.isEmpty())
+        itm::DEBUG_TO_FILE = false;
+    else
+    {
+        itm::DEBUG_TO_FILE = true;
+        itm::DEBUG_FILE_PATH = s.toStdString();
     }
 }

@@ -83,8 +83,13 @@ class teramanager::CVolume : public QThread
         ~CVolume();
 
         //GET and SET methods
-        void initBuffer(itm::uint8* data, int size)
+        void initBuffer(itm::uint8* data, int xDim, int yDim, int zDim, int cDim=1, int tDim=1)
         {
+            itm::uint64 size = xDim;
+            size *= yDim;
+            size *= zDim;
+            size *= cDim;
+            size *= tDim;
             if(buffer)
                 delete[] buffer;
             buffer = new itm::uint8[size];

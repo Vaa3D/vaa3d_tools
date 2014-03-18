@@ -865,7 +865,10 @@ CExplorerWindow::newView(int x, int y, int z,                            //can b
         cVolume->setSource(this->next);
         cVolume->setStreamingSteps(PMain::getInstance()->debugStreamingStepsSBox->value());
         if(PMain::getInstance()->debugStreamingStepsSBox->value() > 1)
-            cVolume->initBuffer(lowresData, (cVolume->getVoiH1()-cVolume->getVoiH0())*(cVolume->getVoiV1()-cVolume->getVoiV0())*(cVolume->getVoiD1()-cVolume->getVoiD0())*nchannels);
+            cVolume->initBuffer(lowresData, cVolume->getVoiH1()-cVolume->getVoiH0(),
+                                cVolume->getVoiV1()-cVolume->getVoiV0(),
+                                cVolume->getVoiD1()-cVolume->getVoiD0(),
+                                nchannels, cVolume->getVoiT1()-cVolume->getVoiT0() );
         cVolume->start();
 
         //meanwhile, showing the new window
@@ -2084,8 +2087,10 @@ void CExplorerWindow::Vaa3D_changeTSlider(int s, bool editingFinished /* = false
         {
             // set red background to current frame coordinate widget
             QPalette palette = PMain::getInstance()->frameCoord->palette();
-            palette.setColor(QPalette::Base, QColor(255, 184, 184));
+            palette.setColor(QPalette::Base, QColor(255, 255, 181));
+            palette.setColor(QPalette::Background, QColor(255, 255, 181));
             PMain::getInstance()->frameCoord->setPalette(palette);
+            window3D->setPalette(palette);
 
             if(editingFinished)
                 newView( (volH1-volH0)/2, (volV1-volV0)/2, (volD1-volD0)/2, volResIndex, s-PMain::getInstance()->Tdim_sbox->value()/2, s+PMain::getInstance()->Tdim_sbox->value()/2, false);
@@ -2095,6 +2100,7 @@ void CExplorerWindow::Vaa3D_changeTSlider(int s, bool editingFinished /* = false
         {
             // reset background of current frame coordinate widget
             PMain::getInstance()->frameCoord->setPalette(QApplication::palette( PMain::getInstance()->frameCoord ));
+            window3D->setPalette(QApplication::palette( window3D ));
 
             // display selected frame
             view3DWidget->setVolumeTimePoint(s-volT0);

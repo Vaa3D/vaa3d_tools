@@ -242,52 +242,104 @@ void CVolume::run()
             }
             else
             {
-                //checking preconditions
-                TiledVolume* vaa3D_volume_RGB = dynamic_cast<TiledVolume*>(volume);
-                TiledMCVolume* vaa3D_volume_4D= dynamic_cast<TiledMCVolume*>(volume);
-                if(!vaa3D_volume_RGB && !vaa3D_volume_4D)
-                    throw RuntimeException("Streaming not yet supported for the current format. Please restart the plugin.");
-                if(!buffer)
-                    throw RuntimeException("Buffer not initialized");
-                CExplorerWindow* destination = dynamic_cast<CExplorerWindow*>(source);
-                if(!destination)
-                    throw RuntimeException("Streaming not yet supported for this type of destination");
-
-                //reading/writing from/to the same buffer with MUTEX (see Producer-Consumer problem)
-                void *stream_descr = 0;
-                if(vaa3D_volume_RGB)
-                    stream_descr = vaa3D_volume_RGB->streamedLoadSubvolume_open(streamingSteps, buffer, voiV0, voiV1, voiH0, voiH1, voiD0, voiD1);
-                else
-                    stream_descr = vaa3D_volume_4D->streamedLoadSubvolume_open(streamingSteps, buffer, voiV0, voiV1, voiH0, voiH1, voiD0, voiD1);
-                for (int currentStep = 1; currentStep <= streamingSteps; currentStep++)
+                // 5D data: streaming along t axis
+                if(voiT0 != voiT1)
                 {
+                    // check buffer
+                    if(!buffer)
+                        throw RuntimeException("Buffer not initialized");
+
+                    CExplorerWindow* destination = dynamic_cast<CExplorerWindow*>(source);
+                    if(!destination)
+                        throw RuntimeException("Streaming not yet supported for this type of destination");
+
                     /**/ bufferMutex.lock();
                     QElapsedTimer timerIO;
                     timerIO.start();
-                    if(vaa3D_volume_RGB)
-                        buffer = vaa3D_volume_RGB->streamedLoadSubvolume_dostep(stream_descr);
-                    else if(vaa3D_volume_4D)
-                        buffer = vaa3D_volume_4D->streamedLoadSubvolume_dostep(stream_descr);
+                    volume->setActiveFrames(voiT0, voiT1/2);
+                    buffer = volume->loadSubvolume_to_UINT8(voiV0, voiV1, voiH0, voiH1, voiD0, voiD1);
                     qint64 elapsedTime = timerIO.elapsed();
                     /**/ bufferMutex.unlock();
 
                     sprintf(msg, "Streaming %d/%d: Block X=[%d, %d) Y=[%d, %d) Z=[%d, %d) loaded from res %d",
-                            currentStep, streamingSteps, voiH0, voiH1, voiV0, voiV1, voiD0, voiD1, voiResIndex);
+                            1, 2, voiH0, voiH1, voiV0, voiV1, voiD0, voiD1, voiResIndex);
 
                     /**/ destination->updateGraphicsInProgress.lock();
                     /**/ destination->updateGraphicsInProgress.unlock();
+                    finished = false;
+                    emit sendOperationOutcome(buffer, 0, destination, elapsedTime, msg, 1);
 
 
-                    finished = currentStep == streamingSteps;
 
-                    emit sendOperationOutcome(buffer, 0, destination, elapsedTime, msg, currentStep);
+
+                    /**/ bufferMutex.lock();
+                    timerIO.start();
+                    volume->setActiveFrames(voiT1/2, voiT1);
+                    buffer = volume->loadSubvolume_to_UINT8(voiV0, voiV1, voiH0, voiH1, voiD0, voiD1);
+                    elapsedTime = timerIO.elapsed();
+                    /**/ bufferMutex.unlock();
+
+                    sprintf(msg, "Streaming %d/%d: Block X=[%d, %d) Y=[%d, %d) Z=[%d, %d) loaded from res %d",
+                            2, 2, voiH0, voiH1, voiV0, voiV1, voiD0, voiD1, voiResIndex);
+
+                    /**/ destination->updateGraphicsInProgress.lock();
+                    /**/ destination->updateGraphicsInProgress.unlock();
+                    finished = true;
+                    emit sendOperationOutcome(buffer, 0, destination, elapsedTime, msg, 2);
+
+                    delete[] buffer;
+                    buffer = 0;
                 }
-                if(vaa3D_volume_RGB)
-                    buffer = vaa3D_volume_RGB->streamedLoadSubvolume_close(stream_descr);
-                else if(vaa3D_volume_4D)
-                    buffer = vaa3D_volume_4D->streamedLoadSubvolume_close(stream_descr);
-                delete[] buffer;
-                buffer = 0;
+                // 4D data: streaming along Y
+                else
+                {
+                    //checking preconditions
+                    TiledVolume* vaa3D_volume_RGB = dynamic_cast<TiledVolume*>(volume);
+                    TiledMCVolume* vaa3D_volume_4D= dynamic_cast<TiledMCVolume*>(volume);
+                    if(!vaa3D_volume_RGB && !vaa3D_volume_4D)
+                        throw RuntimeException("Streaming not yet supported for the current format. Please restart the plugin.");
+                    if(!buffer)
+                        throw RuntimeException("Buffer not initialized");
+                    CExplorerWindow* destination = dynamic_cast<CExplorerWindow*>(source);
+                    if(!destination)
+                        throw RuntimeException("Streaming not yet supported for this type of destination");
+
+                    //reading/writing from/to the same buffer with MUTEX (see Producer-Consumer problem)
+                    void *stream_descr = 0;
+                    if(vaa3D_volume_RGB)
+                        stream_descr = vaa3D_volume_RGB->streamedLoadSubvolume_open(streamingSteps, buffer, voiV0, voiV1, voiH0, voiH1, voiD0, voiD1);
+                    else
+                        stream_descr = vaa3D_volume_4D->streamedLoadSubvolume_open(streamingSteps, buffer, voiV0, voiV1, voiH0, voiH1, voiD0, voiD1);
+                    for (int currentStep = 1; currentStep <= streamingSteps; currentStep++)
+                    {
+                        /**/ bufferMutex.lock();
+                        QElapsedTimer timerIO;
+                        timerIO.start();
+                        if(vaa3D_volume_RGB)
+                            buffer = vaa3D_volume_RGB->streamedLoadSubvolume_dostep(stream_descr);
+                        else if(vaa3D_volume_4D)
+                            buffer = vaa3D_volume_4D->streamedLoadSubvolume_dostep(stream_descr);
+                        qint64 elapsedTime = timerIO.elapsed();
+                        /**/ bufferMutex.unlock();
+
+                        sprintf(msg, "Streaming %d/%d: Block X=[%d, %d) Y=[%d, %d) Z=[%d, %d) loaded from res %d",
+                                currentStep, streamingSteps, voiH0, voiH1, voiV0, voiV1, voiD0, voiD1, voiResIndex);
+
+                        /**/ destination->updateGraphicsInProgress.lock();
+                        /**/ destination->updateGraphicsInProgress.unlock();
+
+
+                        finished = currentStep == streamingSteps;
+
+                        emit sendOperationOutcome(buffer, 0, destination, elapsedTime, msg, currentStep);
+                    }
+                    if(vaa3D_volume_RGB)
+                        buffer = vaa3D_volume_RGB->streamedLoadSubvolume_close(stream_descr);
+                    else if(vaa3D_volume_4D)
+                        buffer = vaa3D_volume_4D->streamedLoadSubvolume_close(stream_descr);
+                    delete[] buffer;
+                    buffer = 0;
+                }
             }
         }
         else
