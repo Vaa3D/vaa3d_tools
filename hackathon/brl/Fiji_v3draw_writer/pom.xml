@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+		http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<parent>
+		<groupId>org.scijava</groupId>
+		<artifactId>pom-scijava</artifactId>
+		<version>1.135</version>
+		<relativePath />
+	</parent>
+
+	<groupId>sc.fiji</groupId>
+	<artifactId>Vaa3d_Writer</artifactId>
+	<version>1.0.0</version>
+
+	<name>plugins/Vaa3d_Writer.jar</name>
+	<description>Plugin to write .v3draw files readable by Vaa3d </description>
+
+	<dependencies>
+		<dependency>
+			<groupId>net.imagej</groupId>
+			<artifactId>ij</artifactId>
+			<version>${imagej1.version}</version>
+		</dependency>
+	</dependencies>
+
+	<build>
+		<resources>
+			<resource>
+				<directory>${basedir}/src/main/resources</directory>
+			</resource>
+			<resource>
+				<directory>${project.build.sourceDirectory}</directory>
+			</resource>
+		</resources>
+		<testResources>
+			<testResource>
+				<directory>${basedir}/src/test/resources</directory>
+			</testResource>
+			<testResource>
+				<directory>${project.build.testSourceDirectory}</directory>
+			</testResource>
+		</testResources>
+		<plugins>
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>exec-maven-plugin</artifactId>
+				<executions>
+					<execution>
+						<goals>
+							<goal>java</goal>
+						</goals>
+					</execution>
+				</executions>
+				<configuration>
+					<mainClass>Vaa3d_Writer</mainClass>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
+
+	<developers>
+		<developer>
+			<id>brianl</id>
+			<name>Brian Long</name>
+			<email>brianl@alleninstititue.org</email>
+			<organization>Allen Institute for Brain Science</organization>
+			<organizationUrl>http://alleninstitute.org</organizationUrl>
+			<roles>
+				<role>scientist</role>
+			</roles>
+			<timezone>-8</timezone>
+		</developer>
+	</developers>
+
+	<repositories>
+		<!-- NB: for project parent -->
+		<repository>
+			<id>imagej.public</id>
+			<url>http://maven.imagej.net/content/groups/public</url>
+		</repository>
+	</repositories>
+
+	<scm>
+		<connection>scm:git:git://github.com/berl/Vaa3d_Writer</connection>
+		<developerConnection>scm:git:git@github.com:berl/Vaa3d_Writer</developerConnection>
+		<tag>HEAD</tag>
+		<url>https://github.com/berl/Vaa3d_Writer</url>
+	</scm>
+
+</project>
