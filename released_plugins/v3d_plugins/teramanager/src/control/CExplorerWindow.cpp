@@ -128,7 +128,11 @@ void CExplorerWindow::show()
             view3DWidget->doAbsoluteRot(prev->view3DWidget->xRot(), prev->view3DWidget->yRot(), prev->view3DWidget->zRot());
 
             // select the same time frame (if available)
-            window3D->timeSlider->setValue(prev->window3D->timeSlider->value());
+            int prev_s = prev->window3D->timeSlider->value();
+            if(prev_s < volT0 || prev_s > volT1)
+                window3D->timeSlider->setValue(volT0);
+            else
+                window3D->timeSlider->setValue(prev_s);
             Vaa3D_changeTSlider(window3D->timeSlider->value());
 
             //sync widgets
@@ -220,7 +224,7 @@ void CExplorerWindow::show()
 //        pMain->T1_sbox->setValue(pMain->T1_sbox->maximum());
 
         //signal connections
-        connect(CVolume::instance(), SIGNAL(sendOperationOutcome(itm::uint8*,itm::RuntimeException*,void*,qint64,QString,int)), this,  SLOT(loadingDone(itm::uint8*,itm::RuntimeException*,void*,qint64,QString,int)), Qt::BlockingQueuedConnection);
+        connect(CVolume::instance(), SIGNAL(sendData(itm::uint8*,int*,int*,void*,bool,itm::RuntimeException*,qint64,QString,int)), this, SLOT(receiveData(itm::uint8*,int*,int*,void*,bool,itm::RuntimeException*,qint64,QString,int)), Qt::BlockingQueuedConnection);
         connect(view3DWidget, SIGNAL(changeXCut0(int)), this, SLOT(Vaa3D_changeXCut0(int)));
         connect(view3DWidget, SIGNAL(changeXCut1(int)), this, SLOT(Vaa3D_changeXCut1(int)));
         connect(view3DWidget, SIGNAL(changeYCut0(int)), this, SLOT(Vaa3D_changeYCut0(int)));
@@ -535,14 +539,24 @@ bool CExplorerWindow::eventFilter(QObject *object, QEvent *event)
     }
 }
 
-/**********************************************************************************
-* Called by the signal emitted by <CVolume> when the associated  operation has been
-* performed. If an exception has occurred in the <CVolume> thread, it is propagated
-* and managed in the current thread (ex != 0).
-***********************************************************************************/
-void CExplorerWindow::loadingDone(itm::uint8 *data, RuntimeException *ex, void* sourceObject, qint64 elapsed_time, QString op_dsc, int step)
+/*********************************************************************************
+* Receive data (and metadata) from <CVolume> throughout the loading process
+**********************************************************************************/
+void CExplorerWindow::receiveData(itm::uint8* data,                   // data (any dimension)
+        int *data_s,                        // data start coordinates along X, Y, Z, C, t
+        int *data_c,                        // data count along X, Y, Z, C, t
+        void* dest,                         // address of the listener
+        bool finished,                      // whether the loading operation is terminated
+        itm::RuntimeException* ex /* = 0*/, // exception (optional)
+        qint64 elapsed_time       /* = 0 */, // elapsed time (optional)
+        QString op_dsc            /* = ""*/, // operation descriptor (optional)
+        int step                  /* = 0 */)// step number (optional)
 {
-    /**/itm::debug(itm::LEV1, strprintf("title = %s, ex = ", titleShort.c_str(),  (ex? "error" : "0")).c_str(), __itm__current__function__);
+    /**/itm::debug(itm::LEV1, strprintf("title = %s, data_s = {%s}, data_c = {%s}, finished = %s",
+                                        titleShort.c_str(),
+                                        data_s ? strprintf("%d,%d,%d,%d,%d", data_s[0], data_s[1], data_s[2], data_s[3], data_s[4]).c_str() : "",
+                                        data_c ? strprintf("%d,%d,%d,%d,%d", data_c[0], data_c[1], data_c[2], data_c[3], data_c[4]).c_str() : "",
+                                        finished ? "true" : "false").c_str(), __itm__current__function__);
 
     char message[1000];
     CVolume* cVolume = CVolume::instance();
@@ -550,7 +564,7 @@ void CExplorerWindow::loadingDone(itm::uint8 *data, RuntimeException *ex, void* 
     //if an exception has occurred, showing a message error
     if(ex)
         QMessageBox::critical(this,QObject::tr("Error"), QObject::tr(ex->what()),QObject::tr("Ok"));
-    else if(sourceObject == this)
+    else if(dest == this)
     {
         try
         {
@@ -558,19 +572,21 @@ void CExplorerWindow::loadingDone(itm::uint8 *data, RuntimeException *ex, void* 
             PLog::getInstance()->appendIO(elapsed_time, op_dsc.toStdString());
 
             //copying loaded data
+            /**/itm::debug(itm::LEV3, "waiting for buffer mutex", __itm__current__function__);
             /**/ CVolume::instance()->bufferMutex.lock();
+            /**/itm::debug(itm::LEV3, "access granted for buffer mutex", __itm__current__function__);
             QElapsedTimer timer;
             timer.start();
-            uint32 img_dims[5]       = {volH1-volH0, volV1-volV0, volD1-volD0, nchannels, volT1-volT0+1};
-            uint32 img_offset[5]     = {cVolume->getVoiH0()-volH0, cVolume->getVoiV0()-volV0, cVolume->getVoiD0()-volD0, 0, cVolume->getVoiT0()-volT0};
-            uint32 new_img_dims[5]   = {cVolume->getVoiH1()-cVolume->getVoiH0(),  cVolume->getVoiV1()-cVolume->getVoiV0(),
-                                        cVolume->getVoiD1()-cVolume->getVoiD0(),  nchannels, cVolume->getVoiT1()-cVolume->getVoiT0()+1};
-            uint32 new_img_offset[5] = {0, 0, 0, 0, 0};
-            uint32 new_img_count[5]  = {new_img_dims[0], new_img_dims[1], new_img_dims[2], new_img_dims[3], new_img_dims[4]};
+            uint32 img_dims[5]       = {volH1-volH0,        volV1-volV0,        volD1-volD0,        nchannels,  volT1-volT0+1};
+            uint32 img_offset[5]     = {data_s[0]-volH0,    data_s[1]-volV0,    data_s[2]-volD0,    0,          data_s[4]-volT0 };
+            uint32 new_img_dims[5]   = {data_c[0],          data_c[1],          data_c[2],          data_c[3],  data_c[4]       };
+            uint32 new_img_offset[5] = {0,                  0,                  0,                  0,          0               };
+            uint32 new_img_count[5]  = {data_c[0],          data_c[1],          data_c[2],          data_c[3],  data_c[4]       };
             copyVOI(data, new_img_dims, new_img_offset, new_img_count,
                     view3DWidget->getiDrawExternalParameter()->image4d->getRawData(), img_dims, img_offset);
             qint64 elapsedTime = timer.elapsed();
             /**/ CVolume::instance()->bufferMutex.unlock();
+            /**/itm::debug(itm::LEV3, "unlocked buffer mutex", __itm__current__function__);
 
             //updating log
             sprintf(message, "Streaming %d/%d: Copied block X=[%d, %d) Y=[%d, %d) Z=[%d, %d) T=[%d, %d]  to resolution %d",
@@ -597,8 +613,11 @@ void CExplorerWindow::loadingDone(itm::uint8 *data, RuntimeException *ex, void* 
             /**/itm::debug(itm::LEV1, strprintf("title = %s: image updated successfully", titleShort.c_str()).c_str(), __itm__current__function__);
 
             //operations to be performed when all image data have been loaded
-            if(cVolume->hasFinished())
+            if(finished)
             {
+                // reset cVolume buffer
+                cVolume->resetBuffer();
+
                 //resetting TeraFly's GUI
                 PMain::getInstance()->resetGUI();
 
@@ -806,7 +825,7 @@ CExplorerWindow::newView(int x, int y, int z,                            //can b
 
 
         // disconnect current window from GUI's listeners and event filters
-        disconnect(CVolume::instance(), SIGNAL(sendOperationOutcome(itm::uint8*, itm::RuntimeException*,void*,qint64, QString, int)), this, SLOT(loadingDone(itm::uint8*, itm::RuntimeException*,void*,qint64, QString, int)));
+        disconnect(CVolume::instance(), SIGNAL(sendData(itm::uint8*,int*,int*,void*,bool,itm::RuntimeException*,qint64,QString,int)), this, SLOT(receiveData(itm::uint8*,int*,int*,void*,bool,itm::RuntimeException*,qint64,QString,int)));
         disconnect(view3DWidget, SIGNAL(changeXCut0(int)), this, SLOT(Vaa3D_changeXCut0(int)));
         disconnect(view3DWidget, SIGNAL(changeXCut1(int)), this, SLOT(Vaa3D_changeXCut1(int)));
         disconnect(view3DWidget, SIGNAL(changeYCut0(int)), this, SLOT(Vaa3D_changeYCut0(int)));
@@ -857,8 +876,8 @@ CExplorerWindow::newView(int x, int y, int z,                            //can b
                                          cVolume->getVoiV0(), cVolume->getVoiV1(), cVolume->getVoiH0(), cVolume->getVoiH1(), cVolume->getVoiD0(), cVolume->getVoiD1(),
                                          cVolume->getVoiT0(), cVolume->getVoiT1(), nchannels, this);
 
-        // update CVolume with the request of the actual missing VOI along t
-        cVolume->setVOI_T(voiT0m, voiT1m);
+        // update CVolume with the request of the actual missing VOI along t and the current selected frame
+        cVolume->setVoiT(voiT0m, voiT1m, window3D->timeSlider->value());
 
         //loading new data in a separate thread. When done, the "loadingDone" method of the new window will be called
         pMain.statusBar->showMessage("Loading image data...");
@@ -868,7 +887,7 @@ CExplorerWindow::newView(int x, int y, int z,                            //can b
             cVolume->initBuffer(lowresData, cVolume->getVoiH1()-cVolume->getVoiH0(),
                                 cVolume->getVoiV1()-cVolume->getVoiV0(),
                                 cVolume->getVoiD1()-cVolume->getVoiD0(),
-                                nchannels, cVolume->getVoiT1()-cVolume->getVoiT0() );
+                                nchannels, cVolume->getVoiT1()-cVolume->getVoiT0()+1);
         cVolume->start();
 
         //meanwhile, showing the new window
@@ -1077,7 +1096,7 @@ throw (RuntimeException)
 
     //cheking preconditions
     if(src_dims[3] != dst_dims[3])
-        QMessageBox::critical(0, "Error", "Can't copy VOI to destination image: different number of channels",QObject::tr("Ok"));
+        QMessageBox::critical(0, "Error", strprintf("Can't copy VOI to destination image: different number of channels (from %d to %d)", src_dims[3], dst_dims[3]).c_str(),QObject::tr("Ok"));
     for(int d=0; d<3; d++)
     {
         if(src_offset[d] + src_count[d] > src_dims[d])
@@ -1133,7 +1152,6 @@ throw (RuntimeException)
                 const uint64 offset_i1 =                 dst_offset[1]  * dst_dims[0]   * scaling + si * dst_dims[0];
                 const uint64 offset_j1 =                                  dst_offset[0] * scaling + sj;
 
-//                for(uint8 *img_t1 = dst, *img_t2 = const_cast<uint8*>(src); img_t1 - dst < dst_dim; img_t1 += stride_t1, img_t2 += stride_t2)
                 uint8* const start_t1 = dst + offset_t1;
                 uint8* const start_t2 = const_cast<uint8*>(src) + offset_t2;
                 for(uint8 *img_t1 = start_t1, *img_t2 = start_t2; img_t1 - start_t1 < count_t1; img_t1 += stride_t1, img_t2 += stride_t2)
@@ -1382,7 +1400,7 @@ void CExplorerWindow::restoreViewFrom(CExplorerWindow* source) throw (RuntimeExc
     if(source)
     {
         //signal disconnections
-        source->disconnect(CVolume::instance(), SIGNAL(sendOperationOutcome(itm::uint8*, itm::RuntimeException*,void*,qint64, QString, int)), source, SLOT(loadingDone(itm::uint8*, itm::RuntimeException*,void*,qint64, QString, int)));
+        source->disconnect(CVolume::instance(), SIGNAL(sendData(itm::uint8*,int*,int*,void*,bool,itm::RuntimeException*,qint64,QString,int)), source, SLOT(receiveData(itm::uint8*,int*,int*,void*,bool,itm::RuntimeException*,qint64,QString,int)));
         source->disconnect(source->view3DWidget, SIGNAL(changeXCut0(int)), source, SLOT(Vaa3D_changeXCut0(int)));
         source->disconnect(source->view3DWidget, SIGNAL(changeXCut1(int)), source, SLOT(Vaa3D_changeXCut1(int)));
         source->disconnect(source->view3DWidget, SIGNAL(changeYCut0(int)), source, SLOT(Vaa3D_changeYCut0(int)));
@@ -1504,7 +1522,7 @@ void CExplorerWindow::restoreViewFrom(CExplorerWindow* source) throw (RuntimeExc
         pMain->traslTpos->setEnabled(volT1 < CImport::instance()->getVolume(volResIndex)->getDIM_T()-1);
 
         //signal connections
-        connect(CVolume::instance(), SIGNAL(sendOperationOutcome(itm::uint8*, itm::RuntimeException*,void*,qint64, QString, int)), this, SLOT(loadingDone(itm::uint8*, itm::RuntimeException*,void*,qint64, QString, int)), Qt::BlockingQueuedConnection);
+        connect(CVolume::instance(), SIGNAL(sendData(itm::uint8*,int*,int*,void*,bool,itm::RuntimeException*,qint64,QString,int)), this, SLOT(receiveData(itm::uint8*,int*,int*,void*,bool,itm::RuntimeException*,qint64,QString,int)), Qt::BlockingQueuedConnection);
         connect(view3DWidget, SIGNAL(changeXCut0(int)), this, SLOT(Vaa3D_changeXCut0(int)));
         connect(view3DWidget, SIGNAL(changeXCut1(int)), this, SLOT(Vaa3D_changeXCut1(int)));
         connect(view3DWidget, SIGNAL(changeYCut0(int)), this, SLOT(Vaa3D_changeYCut0(int)));
@@ -1531,8 +1549,12 @@ void CExplorerWindow::restoreViewFrom(CExplorerWindow* source) throw (RuntimeExc
         this->loadAnnotations();
 
         // select the same time frame (if available)
-        window3D->timeSlider->setValue(source->window3D->timeSlider->value());
-//        Vaa3D_changeTSlider(window3D->timeSlider->value());
+        int source_s = source->window3D->timeSlider->value();
+        if(source_s < volT0 || source_s > volT1)
+            window3D->timeSlider->setValue(volT0);
+        else
+            window3D->timeSlider->setValue(source_s);
+        Vaa3D_changeTSlider(window3D->timeSlider->value());
 
         //sync widgets
         syncWindows(source->window3D, window3D);

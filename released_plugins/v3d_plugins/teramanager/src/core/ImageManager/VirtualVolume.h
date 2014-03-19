@@ -46,7 +46,7 @@ protected:
     int           n_active;         // number of active channels (@MOVED from "TiledMCVolume" by Alessandro on 2014-02-20)
 
     int    DIM_T;					// number of time frames         (@ADDED by Alessandro on 2014-02-20)
-    iim::uint32 t0, t1;             // active frames are in [t0, t1] (@ADDED by Alessandro on 2014-02-20)
+    int t0, t1;                     // active frames are in [t0, t1] (@ADDED by Alessandro on 2014-02-20)
 
 public:
 	//CONSTRUCTORS-DECONSTRUCTOR
@@ -105,9 +105,9 @@ public:
     int     getBYTESxCHAN() {return BYTESxCHAN;}
     char*   getROOT_DIR() {return this->root_dir;}
     virtual float   getMVoxels(){return (DIM_V/1024.0f)*(DIM_H/1024.0f)*DIM_D*DIM_T;} // can be overriden
-    iim::uint32 getNActiveFrames(){return t1 -t0 +1;}
-    int getNACtiveChannels(){return n_active;}
-    iim::uint32* getActiveChannels(){return active;}
+    int getNActiveFrames(){return t1 -t0 +1;}
+    virtual int getNACtiveChannels() {return n_active;}
+    virtual iim::uint32* getActiveChannels(){return active;}
 
     // @ADDED by Alessandro on 2014-02-18: returns a unique ID that identifies the volume format
     virtual std::string getPrintableFormat() = 0;
@@ -121,12 +121,14 @@ public:
     virtual iim::axis getAXS_3() = 0;
 
     // set active channels (@MOVED from TileMCVolume.h by Alessandro on 2014-02-20)
-    void setActiveChannels ( iim::uint32 *_active, int _n_active );
+    virtual void setActiveChannels ( iim::uint32 *_active, int _n_active );
 
     // set methods (@MOVED from TimeSeries.h by Alessandro on 2014-02-20)
-    void setActiveFrames(int _t0, int _t1){
+    void setActiveFrames(int _t0, int _t1)
+    {
         t0 = std::max(0, std::min(_t0,DIM_T-1));
         t1 = std::max(0, std::min(_t1,DIM_T-1));
+        iim::debug(iim::LEV_MAX, iim::strprintf("asked to set [%d, %d], but set [%d, %d]", _t0, _t1, t0, t1).c_str(), __iim__current__function__);
     }
 
 	/*************************************************************************************************************

@@ -314,12 +314,20 @@ class teramanager::CExplorerWindow : public QWidget
 
     public slots:
 
-        /**********************************************************************************
-        * Called by the signal emitted by <CVolume> when the associated  operation has been
-        * performed. If an exception has occurred in the <CVolume> thread, it is propagated
-        * and managed in the current thread (ex != 0).
-        ***********************************************************************************/
-        void loadingDone(itm::uint8* data, itm::RuntimeException *ex, void* sourceObject, qint64 elapsed_time, QString op_dsc, int step);
+        /*********************************************************************************
+        * Receive data (and metadata) from <CVolume> throughout the loading process
+        **********************************************************************************/
+        void receiveData(
+                itm::uint8* data,                   // data (any dimension)
+                int *data_s,                        // data start coordinates along X, Y, Z, C, t
+                int *data_c,                        // data count along X, Y, Z, C, t
+                void* dest,                         // address of the listener
+                bool finished,                      // whether the loading operation is terminated
+                itm::RuntimeException* ex = 0,      // exception (optional)
+                qint64 elapsed_time = 0,            // elapsed time (optional)
+                QString op_dsc="",                  // operation descriptor (optional)
+                int step=0);                        // step number (optional)
+
 
         /**********************************************************************************
         * Linked to volume cut scrollbars of Vaa3D widget containing the 3D renderer.

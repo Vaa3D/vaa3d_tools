@@ -221,7 +221,7 @@ real32 * TimeSeries::loadSubvolume_to_real32(int V0,int V1, int H0, int H1, int 
 
 uint8 * TimeSeries::loadSubvolume_to_UINT8(int V0,int V1, int H0, int H1, int D0, int D1, int *channels /*=0*/, int ret_type /*=iim::DEF_IMG_DEPTH*/) throw (IOException)
 {
-    /**/iim::debug(iim::LEV3, strprintf("V0=%d, V1=%d, H0=%d, H1=%d, D0=%d, D1=%d, *channels=%d, ret_type=%d", V0, V1, H0, H1, D0, D1, channels ? *channels : -1, ret_type).c_str(), __iim__current__function__);
+    /**/iim::debug(iim::LEV3, strprintf("V0=%d, V1=%d, H0=%d, H1=%d, D0=%d, D1=%d, *channels=%d, ret_type=%d, t0 = %d, t1 = %d", V0, V1, H0, H1, D0, D1, channels ? *channels : -1, ret_type, t0, t1).c_str(), __iim__current__function__);
 
     // initializations
     V0 = V0 < 0 ? 0 : V0;
@@ -242,6 +242,8 @@ uint8 * TimeSeries::loadSubvolume_to_UINT8(int V0,int V1, int H0, int H1, int D0
         throw IOException("in TimeSeries::loadSubvolume_to_UINT8(): invalid time frames selection");
     if(t1 < 0 || t1 >= frames.size())
         throw IOException("in TimeSeries::loadSubvolume_to_UINT8(): invalid time frames selection");
+    if(t1 - t0 < 0)
+        throw IOException(strprintf("in TimeSeries::loadSubvolume_to_UINT8(): invalid time frames selection: [%d, %d]", t0, t1).c_str());
 
     // check for valid channel selection
     for(int k=0; k<frames.size()-1; k++)

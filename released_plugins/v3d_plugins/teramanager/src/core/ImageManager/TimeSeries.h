@@ -40,6 +40,10 @@ class TimeSeries : public VirtualVolume
         iim::axis getAXS_2() {return frames.empty() ? iim::axis_invalid : frames[0]->getAXS_2();}
         iim::axis getAXS_3() {return frames.empty() ? iim::axis_invalid : frames[0]->getAXS_3();}
 
+        // @OVERRIDE
+        iim::uint32* getActiveChannels(){ if(!frames.empty()) return frames[0]->getActiveChannels(); else return 0;}
+        int getNACtiveChannels() { if(!frames.empty()) return frames[0]->getNACtiveChannels(); else return 0;}
+
         // set active channels (@OVERRIDES VirtualVolume.h by Alessandro on 2014-02-23)
         void setActiveChannels ( iim::uint32 *_active, int _n_active );
 

@@ -11,6 +11,18 @@ ties names are:
 - Rem: a feature no longer available
 
 ============================================================================================
+Version 0.9.7
+March 19th, 2014
+--------------------------------------------------------------------------------------------
+- New: instant 5D data visualization. When a new time segment is loaded, the current select-
+       ed frame is instantly loaded and shown while the rest of the data are loaded in back-
+       ground.
+- Dev: redesigned the code to deliver data from the IO thread to the GUI thread.
+- Fix: fixed bug in the I/O module which caused invalid time ranges not to be detected.
+- Fix: fixed improper delivering of errors from the IO thread to the GUI thread.
+--------------------------------------------------------------------------------------------
+
+
 Version 0.9.63
 March 18th, 2014
 --------------------------------------------------------------------------------------------

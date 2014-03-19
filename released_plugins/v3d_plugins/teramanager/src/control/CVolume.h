@@ -61,11 +61,11 @@ class teramanager::CVolume : public QThread
         int voiResIndex;                                            //volume of interest resolution index
         int voiV0,voiV1,voiH0,voiH1,voiD0,voiD1, voiT0, voiT1;      //volume of interest coordinates
         QWidget* source;                                            //the object that requested the VOI
-        int streamingSteps;                         //
+        int streamingSteps;                                         //
+        int cur_t;                                                  // current time frame selected (it is loaded and shown before the other frames)
 
         QMutex bufferMutex;
         itm::uint8* buffer;                                         //volume of interest prebuffered data
-        bool finished;
 
     public:
 
@@ -83,8 +83,11 @@ class teramanager::CVolume : public QThread
         ~CVolume();
 
         //GET and SET methods
-        void initBuffer(itm::uint8* data, int xDim, int yDim, int zDim, int cDim=1, int tDim=1)
+        void initBuffer(itm::uint8* data, int xDim, int yDim, int zDim, int cDim=1, int tDim=1) throw (itm::RuntimeException)
         {
+            /**/itm::debug(itm::LEV1, strprintf("xDim = %d, yDim=%d, zDim = %d, cDim=%d, tDim = %d",
+                                                xDim,       yDim,    zDim,      cDim,    tDim).c_str(), __itm__current__function__);
+
             itm::uint64 size = xDim;
             size *= yDim;
             size *= zDim;
@@ -92,7 +95,9 @@ class teramanager::CVolume : public QThread
             size *= tDim;
             if(buffer)
                 delete[] buffer;
-            buffer = new itm::uint8[size];
+
+            try{ buffer = new itm::uint8[size]; }
+            catch(...){ throw itm::RuntimeException("in CVolume::initBuffer(): cannot allocate memory");}
 
             for(itm::uint8 *buf_p = buffer, *data_p = data; buf_p - buffer < size; buf_p++, data_p++)
                 *buf_p = *data_p;
@@ -101,7 +106,6 @@ class teramanager::CVolume : public QThread
 
         void setStreamingSteps(int nsteps){streamingSteps = nsteps;}
         int getStreamingSteps(){return streamingSteps;}
-        bool hasFinished(){return finished;}
         void reset()
         {
             /**/itm::debug(itm::LEV1, 0, __itm__current__function__);
@@ -111,7 +115,7 @@ class teramanager::CVolume : public QThread
             voiV0 = voiV1 = voiH0 = voiH1 = voiD0 = voiD1 = voiT0 = voiT1 = -1;
             source = 0;
             streamingSteps = 1;
-            finished = false;
+            cur_t = -1;
         }
         int getVoiV0(){return voiV0;}
         int getVoiV1(){return voiV1;}
@@ -154,14 +158,36 @@ class teramanager::CVolume : public QThread
         }
         void setSource(QWidget* _sourceObject){source =_sourceObject;}
 
-        void setVOI_T(int _T0, int _T1) throw (itm::RuntimeException)
+        void setVoiT(int _T0, int _T1, int _cur_t = -1) throw (itm::RuntimeException)
         {
-            /**/itm::debug(itm::LEV1, strprintf("_T0 = %d, _T1=%d",_T0, _T1).c_str(), __itm__current__function__);
+            /**/itm::debug(itm::LEV1, strprintf("asked to set [%d, %d] and _cur_t = %d",_T0, _T1, _cur_t).c_str(), __itm__current__function__);
             VirtualVolume* volume = CImport::instance()->getVolume(voiResIndex);
+
+            // correct [voiT0, voiT1]
             voiT0 = (_T0 >=0)                   ? _T0 : 0;
             voiT1 = (_T1 <  volume->getDIM_T()) ? _T1 : volume->getDIM_T()-1;
+
+            // invalidate cur_t if out of range
+            if(_cur_t < voiT0 || _cur_t > voiT1)
+                cur_t = -1;
+            else
+                cur_t = _cur_t;
+
+            /**/itm::debug(itm::LEV1, strprintf("but set [%d, %d] and cur_t = %d", voiT0, voiT1, cur_t).c_str(), __itm__current__function__);
+
             if(voiT1 - voiT0 < 0)
                 throw itm::RuntimeException(itm::strprintf("Invalid VOI selected along T: [%d,%d]", voiT0, voiT1).c_str());
+        }
+
+        void resetBuffer() throw (itm::RuntimeException)
+        {
+            /**/itm::debug(itm::LEV1, 0, __itm__current__function__);
+
+            if(buffer)
+            {
+                delete[] buffer;
+                buffer = 0;
+            }
         }
 
         friend class CExplorerWindow;
@@ -169,10 +195,18 @@ class teramanager::CVolume : public QThread
     signals:
 
         /*********************************************************************************
-        * Carries the outcome of the operation associated  to this thread  as well as the
-        * the object that requested the operation
+        * Send data (and metadata) to the listener throughout the loading process
         **********************************************************************************/
-        void sendOperationOutcome(itm::uint8* data, itm::RuntimeException* ex, void* sourceObj, qint64 elapsed_time = 0, QString op_dsc="", int step=0);
+        void sendData(
+                itm::uint8* data,                   // data (any dimension)
+                int *data_s,                        // data start coordinates along X, Y, Z, C, t
+                int *data_c,                        // data count along X, Y, Z, C, t
+                void* dest,                         // address of the listener
+                bool finished,                      // whether the loading operation is terminated
+                itm::RuntimeException* ex = 0,      // exception (optional)
+                qint64 elapsed_time = 0,            // elapsed time (optional)
+                QString op_dsc="",                  // operation descriptor (optional)
+                int step=0);                        // step number (optional)
 };
 
 #endif // CLOADSUBVOLUME_H
