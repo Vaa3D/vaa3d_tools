@@ -9,8 +9,8 @@
 
 #include "basic_surf_objs.h"
 #include <iostream>
-#include "../../../released_plugins/v3d_plugins/istitch/y_imglib.h"
-#include "../APP2_zhi/app2/my_surf_objs.h"
+#include "y_imglib.h"
+#include "my_surf_objs.h"
 
 using namespace std;
 Q_EXPORT_PLUGIN2(retype_swc, retype_swc);
@@ -79,17 +79,21 @@ void retype_swc::domenu(const QString &menu_name, V3DPluginCallback2 &callback, 
                     ));
         if(fileOpenName.isEmpty())
             return;
+        int type = 2;
         NeuronTree nt;
         if (fileOpenName.toUpper().endsWith(".SWC") || fileOpenName.toUpper().endsWith(".ESWC"))
         {
-
+             bool ok;
              nt = readSWC_file(fileOpenName);
+             type = QInputDialog::getInteger(parent, "Please specify the node type","type:",1,0,256,1,&ok);
+             if (!ok)
+                 return;
             for(V3DLONG i = 0; i < nt.listNeuron.size(); i++)
             {
                 if(i == 0)
                     nt.listNeuron[i].type = 1;
                 else
-                    nt.listNeuron[i].type = 3;
+                    nt.listNeuron[i].type = type;
 
             }
             QString fileDefaultName = fileOpenName+QString("_retype.swc");
