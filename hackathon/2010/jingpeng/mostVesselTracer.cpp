@@ -181,6 +181,15 @@ void set_dialog(V3DPluginCallback2 &v3d, QWidget *parent)
         seed_size_all = dialog.size->value();
         sslip = dialog.slipsize->value();
         swcfile = dialog.ds->text();
+
+
+        QFile file(swcfile);
+        if (!file.open(QIODevice::WriteOnly|QIODevice::Text))
+        {
+            v3d_msg("Cannot create the swc file to write, please try it again! ");
+            return;
+        }
+
         if(dialog.x_select->isChecked())
         {
             x_flag =1;
@@ -212,7 +221,7 @@ void set_dialog(V3DPluginCallback2 &v3d, QWidget *parent)
 
     }
 
-
+    return;
 
 }
 
@@ -234,10 +243,27 @@ void startVesselTracing(V3DPluginCallback2 &v3d,int xflag,int yflag,int zflag,in
 
 
     Image4DSimple* oldimg = v3d.getImage(curwin);
+    unsigned char* data1d = oldimg->getRawData();
+
+    ImagePixelType pixeltype = oldimg->getDatatype();
+    V3DLONG pagesz = oldimg->getTotalUnitNumberPerChannel();
+    unsigned char *output_image=0;
+    switch (pixeltype)
+    {
+    case V3D_UINT8:
+        try {output_image = new unsigned char [pagesz];}
+        catch(...)  {v3d_msg("cannot allocate memory for output_image."); return;}
+
+        for(V3DLONG i = 0; i<pagesz; i++)
+            output_image[i] = data1d[i];
+
+        break;
+        default: v3d_msg("Invalid data type. Do nothing."); return;
+    }
 
     MOSTImage img;
     // set data
-    img.setData( (unsigned char*)oldimg->getRawData(), oldimg->getXDim(),oldimg->getYDim(),oldimg->getZDim(),oldimg->getCDim(),oldimg->getDatatype());
+    img.setData( (unsigned char*)output_image, oldimg->getXDim(),oldimg->getYDim(),oldimg->getZDim(),oldimg->getCDim(),oldimg->getDatatype());
 
 
     if ( seedList.isEmpty() )
@@ -291,9 +317,10 @@ void startVesselTracing(V3DPluginCallback2 &v3d,int xflag,int yflag,int zflag,in
 //    NeuronTree vt_old = v3d.getSWC(curwin);
 
     // visualization
-    v3d.setLandmark(curwin, seedList);
+  //  v3d.setLandmark(curwin, seedList);
    // v3d.setSWC(curwin,vt);
   //  v3d.pushObjectIn3DWindow(curwin);
-    v3d.updateImageWindow(curwin);
+  //  v3d.updateImageWindow(curwin);
     //img.~MOSTImage();
 }
+

@@ -108,7 +108,6 @@ public:
 
         QLineEdit* ds;
 
-
         V3DLONG Dn;
         V3DLONG Dh;
 
@@ -157,10 +156,6 @@ public:
 
             ds = new QLineEdit();
 
-
-
-
-
             threshould_value->setMaximum(255); threshould_value->setMinimum(1);threshould_value->setValue(20);
 
             size->setMaximum(5000);size->setMinimum(1);size->setValue(6);
@@ -182,8 +177,7 @@ public:
             y_select->setText("y");y_select->setChecked(1);
             z_select->setText("z");z_select->setChecked(1);
             pruning->setText("segmentPruning or not");pruning->setChecked(0);
-            ds->setText("/home/most/jieguo/");
-
+            ds->setText("/tmp/result.swc");
 
 
             ok     = new QPushButton("OK");

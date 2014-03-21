@@ -731,29 +731,26 @@ NeuronTree MOSTImage::trace_seed_list(const LandmarkList &seedList, std::vector<
       // QString curFile = "/home/most/jieguo/auto_v1_.swc";
      //   QString curFile = QFileDialog::getSaveFileName( 0, "Save as SWC", "auto.swc", "*.swc" );
 //
-               FILE * fp = fopen(swcfile.toAscii(), "wt");
-
                V_NeuronSWC merged_neuron = merge_V_NeuronSWC_list(swcList);
                if(pruning_flag)
                {
                     merged_neuron = segmentPruning(merged_neuron);
                }
 
+               FILE * fp = fopen(swcfile.toAscii(), "wt");
                for (int i=0;i<merged_neuron.row.size(); i++)
                {
-                       fprintf(fp, "%ld %ld %5.3f %5.3f %5.3f %5.3f %ld\n",
-                                       V3DLONG(merged_neuron.row[i].data[0]), V3DLONG(merged_neuron.row[i].data[1]), merged_neuron.row[i].data[2], merged_neuron.row[i].data[3], merged_neuron.row[i].data[4], merged_neuron.row[i].data[5], V3DLONG(merged_neuron.row[i].data[6]));
+                    fprintf(fp, "%ld %ld %5.3f %5.3f %5.3f %5.3f %ld\n",
+                                           V3DLONG(merged_neuron.row[i].data[0]), V3DLONG(merged_neuron.row[i].data[1]), merged_neuron.row[i].data[2], merged_neuron.row[i].data[3], merged_neuron.row[i].data[4], merged_neuron.row[i].data[5], V3DLONG(merged_neuron.row[i].data[6]));
                }
-
                fclose(fp);
-
-
-
 
                 qDebug("write111    OK!!!!!!!!!!!!!!!");
 
     // converte the formate
+
     NeuronTree vt;
+
     vt = V_NeuronSWC_list__2__NeuronTree(swcList);
 
     // verify coordinate for visualization, it seems to be 1-based
