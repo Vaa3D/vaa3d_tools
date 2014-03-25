@@ -239,6 +239,52 @@ void autotrace_PSF(V3DPluginCallback2 &callback, QWidget *parent)
         }
     }
 
+    for(V3DLONG iz = 0; iz < hmirror; iz++)
+    {
+        V3DLONG offsetk = iz*M_new*N_new;
+        V3DLONG offsetk2 = (2*hmirror - iz -1)*M_new*N_new;
+        for(V3DLONG iy = hmirror; iy < M_new - hmirror; iy++)
+        {
+            V3DLONG offsetj = iy*N_new;
+            for(V3DLONG ix = hmirror; ix < N_new-hmirror; ix++)
+            {
+                gpdInputImage[offsetk + offsetj + ix] = gpdInputImage[offsetk2 + offsetj + ix];
+                i++;
+            }
+        }
+    }
+
+    for(V3DLONG iz = hmirror; iz < P_new - hmirror; iz++)
+    {
+        V3DLONG offsetk = iz*M_new*N_new;
+        for(V3DLONG iy = 0; iy < hmirror; iy++)
+        {
+            V3DLONG offsetj = iy*N_new;
+            V3DLONG offsetj2 = (2*hmirror - iy -1)*N_new;
+            for(V3DLONG ix = hmirror; ix < N_new-hmirror; ix++)
+            {
+               // gpdInputImage[offsetk + offsetj + ix] = (double)data1d[i]/255.0;
+                gpdInputImage[offsetk + offsetj + ix] = gpdInputImage[offsetk + offsetj2 + ix];
+                i++;
+            }
+        }
+    }
+
+    for(V3DLONG iz = hmirror; iz < P_new - hmirror; iz++)
+    {
+        V3DLONG offsetk = iz*M_new*N_new;
+        for(V3DLONG iy = hmirror; iy < M_new - hmirror; iy++)
+        {
+            V3DLONG offsetj = iy*N_new;
+            for(V3DLONG ix = 0; ix < hmirror; ix++)
+            {
+               // gpdInputImage[offsetk + offsetj + ix] = (double)data1d[i]/255.0;
+                gpdInputImage[offsetk + offsetj + ix] = gpdInputImage[offsetk + offsetj + 2*hmirror - ix -1 ];
+                i++;
+            }
+        }
+    }
+
 
    /* giNum_of_Dims_of_Input_Image = 3;
     gpiDims_InputImage[0] = N_new; gpiDims_InputImage[1] = M_new; gpiDims_InputImage[2] = P_new;
