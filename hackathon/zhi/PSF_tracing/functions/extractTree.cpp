@@ -3,12 +3,12 @@
 #include "extractTree.h"
 #include "FunctionsForMainCode.h"
 #include "basic_surf_objs.h"
-
+#include <queue>
 
 int minDistance_path(double dist[], bool sptSet[], int V);
 void dijkstra_path(double *graph, int num, int src, int des, int* path, int &index);
 int graph_shortest_paths(double *, int, int, int, int*);
-
+int graph_conn_comp(double *,int *,int);
 
 
 void extractTree (double *D_euc, double *DX,double *Xnew,int indori)
@@ -27,9 +27,14 @@ void extractTree (double *D_euc, double *DX,double *Xnew,int indori)
         path[0] = -1;
     int length = graph_shortest_paths(conn,indori-1,0,indori,path);
 
+    int *ctrs = new int[indori];
+    int group_index = graph_conn_comp(conn,ctrs,indori);
+
+    for(V3DLONG i = 0; i<indori; i++)
+         printf("%d ",ctrs[i]);
 
     //NeutronTree structure
-    NeuronTree PSF_swc;
+  /*  NeuronTree PSF_swc;
     QList <NeuronSWC> listNeuron;
     QHash <int, int>  hashNeuron;
     listNeuron.clear();
@@ -67,7 +72,7 @@ void extractTree (double *D_euc, double *DX,double *Xnew,int indori)
     PSF_swc.listNeuron = listNeuron;
     PSF_swc.hashNeuron = hashNeuron;
 
-    writeSWC_file("/home/zhi/Desktop/tmp/first.swc",PSF_swc);
+    writeSWC_file("/home/zhi/Desktop/tmp/first.swc",PSF_swc);*/
 
 
      return;
@@ -153,4 +158,38 @@ int minDistance_path(double dist[], bool sptSet[],int V)
          min = dist[v], min_index = v;
 
    return min_index;
+}
+
+int graph_conn_comp(double *conn,int *ctrs,int indori)
+{
+    std::queue<int> myqueue;
+    for(V3DLONG i = 0; i<indori; i++)
+          ctrs[i] = -1;
+    int group = 1;
+    for(V3DLONG i = 0; i<indori; i++)
+    {
+         if(ctrs[i] == -1)
+         {
+            ctrs[i] = group;
+            myqueue.push(i);
+            do
+            {
+                int current = myqueue.front();
+                myqueue.pop();
+                for(V3DLONG j = 0; j<indori; j++)
+                {
+                    if(ctrs[j] == -1 && conn[current*indori+j]!=0)
+                    {
+                        ctrs[j] = group;
+                        myqueue.push(j);
+                     }
+                }
+             }while(!myqueue.empty());
+             group++;
+         }
+         else
+            continue;
+    }
+    return group-1;
+
 }

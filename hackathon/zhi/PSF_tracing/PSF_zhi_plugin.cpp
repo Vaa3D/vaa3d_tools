@@ -609,7 +609,7 @@ void autotrace_PSF(V3DPluginCallback2 &callback, QWidget *parent)
     if(idx) {delete []idx; idx = 0;}
 
 
-    int indmin = 30; //root index
+    int indmin = 59; //root index
     double x1,y1,z1,x2,y2,z2;
 
     double *Xnew = new double[(number_points+1) * giNum_of_Dims_of_Input_Image];
