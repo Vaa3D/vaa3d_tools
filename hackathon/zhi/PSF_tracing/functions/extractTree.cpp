@@ -39,8 +39,8 @@ void extractTree (double *D_euc, double *DX,double *Xnew,int indori)
 
     S.n 	= 1;
     S.type 	= 3;
-    S.x 	= Xnew[path[length]*3+1];
-    S.y 	= Xnew[path[length]*3+0];
+    S.x 	= Xnew[path[length]*3+0];
+    S.y 	= Xnew[path[length]*3+1];
     S.z 	= Xnew[path[length]*3+2];
     S.r 	= 1;
     S.pn = -1;
@@ -67,7 +67,7 @@ void extractTree (double *D_euc, double *DX,double *Xnew,int indori)
     PSF_swc.listNeuron = listNeuron;
     PSF_swc.hashNeuron = hashNeuron;
 
-    writeSWC_file("/opt/zhi/Desktop/tmp/first.swc",PSF_swc);
+    writeSWC_file("/home/zhi/Desktop/tmp/first.swc",PSF_swc);
 
 
      return;

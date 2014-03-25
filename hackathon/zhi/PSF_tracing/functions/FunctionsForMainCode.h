@@ -18,8 +18,8 @@
 #define INTRINSIC_DIM 1
 
 
-#define NUM_OF_PREPROCESS_THREADS_TO_CREATE		16
-#define NUM_OF_THREADS_TO_CREATE			16
+#define NUM_OF_PREPROCESS_THREADS_TO_CREATE		6
+#define NUM_OF_THREADS_TO_CREATE			6
 #define THREAD_EXIT_SUCCESS 0
 
 #define ROWCOL(row,col,tot_rows) (row + col*tot_rows)
