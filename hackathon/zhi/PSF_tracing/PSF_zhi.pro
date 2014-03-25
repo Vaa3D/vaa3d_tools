@@ -13,6 +13,8 @@ INCLUDEPATH     += functions
 HEADERS	+= PSF_zhi_plugin.h
 SOURCES	+= PSF_zhi_plugin.cpp
 SOURCES	+= $$VAA3DPATH/basic_c_fun/v3d_message.cpp
+SOURCES += $$VAA3DPATH/basic_c_fun/basic_surf_objs.cpp
+
 
 SOURCES	+= functions/PreProcessDataImage.cpp
 SOURCES	+= functions/Create3DLookUpTable.cpp
@@ -24,6 +26,7 @@ SOURCES += functions/MatrixMultiplication.cpp
 SOURCES += functions/KernelDensityEstimation.cpp
 SOURCES += functions/ML_Divide.cpp
 SOURCES += functions/EigenDec_2D.cpp
+SOURCES += functions/extractTree.cpp
 
 TARGET	= $$qtLibraryTarget(PSF_zhi)
 DESTDIR	= ../../../../v3d_external/bin/plugins/PSF_zhi/

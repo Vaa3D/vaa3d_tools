@@ -24,6 +24,8 @@
 #include "MatrixMultiplication.h"
 #include "ML_Divide.h"
 
+#include "extractTree.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <queue>
@@ -36,7 +38,8 @@
 
 V3DLONG gpiDims_InputImage[3];
 int giNum_of_pixels, giNum_of_Dims_of_Input_Image;
-double *gpdInputImage;
+int *gpdInputImage;
+int *gpdOriginalImage;
 
 int *gpiData;
 double *gpdWeights_InputImage;
@@ -61,6 +64,10 @@ double *gpdInputTangDir;
 int giNum_of_locations;
 
 using namespace std;
+double eps =  2.2204e-16;
+int hmirror = 7;
+
+
 Q_EXPORT_PLUGIN2(PSF_zhi, PSF_zhi);
 
 void *Thread_ProcessImage (void *); // for Pthreads
@@ -72,6 +79,9 @@ void PreProcessDataImage(double *, int , V3DLONG *, int , double *,
 void ProcessImage(double *, double *, double *,int,int);
 void ProcessImage_score(double *, double *, double*, int, int, int);
 void preIntegral(double *, double *, int, int, int,int, double *, double *,double *, int *);
+void graph_all_shortest_paths(double *, double*, int);
+int minDistance(double dist[], bool sptSet[], int V);
+void dijkstra(double *graph, int num, int src, double* dist);
  
 QStringList PSF_zhi::menulist() const
 {
@@ -187,7 +197,7 @@ void autotrace_PSF(V3DPluginCallback2 &callback, QWidget *parent)
     if(!ok1)
         return;
 
-    gpdInputImage = new double[pagesz];
+    gpdOriginalImage = new int[pagesz];
     V3DLONG i = 0;
 
     for(V3DLONG iz = 0; iz < P; iz++)
@@ -198,15 +208,39 @@ void autotrace_PSF(V3DPluginCallback2 &callback, QWidget *parent)
             V3DLONG offsetj = iy*N;
             for(V3DLONG ix = 0; ix < N; ix++)
             {
-                gpdInputImage[i] = (double)data1d[offsetk + offsetj + ix]/255.0;
+                gpdOriginalImage[i] = data1d[i];
                 i++;
             }
         }
     }
 
-    giNum_of_Dims_of_Input_Image = 3;
-    gpiDims_InputImage[0] = N; gpiDims_InputImage[1] = M; gpiDims_InputImage[2] = P;
-    giNum_of_pixels = pagesz;
+   /* V3DLONG N_new = N+2*hmirror;
+    V3DLONG M_new = M+2*hmirror;
+    V3DLONG P_new = P+2*hmirror;
+    V3DLONG pagesz_new = N_new*M_new*P_new;
+
+    //double *gpdInputImage = new double[pagesz_new];
+    gpdInputImage = new int[pagesz_new];
+    V3DLONG i = 0;
+    for(V3DLONG iz = hmirror; iz < P_new - hmirror-1; iz++)
+    {
+        V3DLONG offsetk = iz*M_new*N_new;
+        for(V3DLONG iy = hmirror; iy < M_new - hmirror-1; iy++)
+        {
+            V3DLONG offsetj = iy*N_new;
+            for(V3DLONG ix = hmirror; ix < N_new-hmirror-1; ix++)
+            {
+               // gpdInputImage[offsetk + offsetj + ix] = (double)data1d[offsetk + offsetj + ix]/255.0;
+                gpdInputImage[offsetk + offsetj + ix] = data1d[i];
+                i++;
+            }
+        }
+    }*/
+
+
+   /* giNum_of_Dims_of_Input_Image = 3;
+    gpiDims_InputImage[0] = N_new; gpiDims_InputImage[1] = M_new; gpiDims_InputImage[2] = P_new;
+    giNum_of_pixels = pagesz_new;
 
     // Allocate memory for all outputs generated in Pre-processing Step.
 
@@ -219,11 +253,21 @@ void autotrace_PSF(V3DPluginCallback2 &callback, QWidget *parent)
     prepLookUpTableWidth = 11;
     PreProcessDataImage(gpdInputImage, giNum_of_Dims_of_Input_Image, gpiDims_InputImage, giNum_of_pixels,
              gpdWeights_InputImage, gpdEigVec_Cov_InputImage, gpdEigVal_Cov_InputImage,
-            gpdNormP_EigVal,gpiData, "/opt/zhi/Desktop/tmp/", sigma, prepLookUpTableWidth);
+            gpdNormP_EigVal,gpiData, "/opt/zhi/Desktop/tmp/", sigma, prepLookUpTableWidth);*/
+
+
+
+           Image4DSimple * new4DImage = new Image4DSimple();
+           new4DImage->setData((unsigned char *)gpdOriginalImage, N, M, P, 1, V3D_UINT8);
+           v3dhandle newwin = callback.newImageWindow();
+           callback.setImage(newwin, new4DImage);
+           callback.setImageName(newwin, "3D adaptive enhancement result");
+           callback.updateImageWindow(newwin);
+    return;
 
     printf ("\nBack to maincode.\n");
 
-    gaiWindowDims[0] = LOOKUP_TABLE_WIDTH;
+  /*  gaiWindowDims[0] = LOOKUP_TABLE_WIDTH;
     gaiWindowDims[1] = LOOKUP_TABLE_WIDTH;
     gaiWindowDims[2] = LOOKUP_TABLE_WIDTH;
     iVolHeight = gpiDims_InputImage[0];
@@ -258,8 +302,7 @@ void autotrace_PSF(V3DPluginCallback2 &callback, QWidget *parent)
         pthread_join(ptThreads[iThreadNumber], NULL);
     }*/
 
-
-    ifstream ifs("/opt/zhi/Desktop/tmp/mex_final_Proj.txt");
+/*  ifstream ifs("/opt/zhi/Desktop/tmp/mex_final_Proj.txt");
     i = 0;
     if(ifs.fail())
     {
@@ -288,7 +331,6 @@ void autotrace_PSF(V3DPluginCallback2 &callback, QWidget *parent)
     int imsize[3] = {61,48,45};
 
     //tidyvaribales
-    int hmirror = 7;
     double prjs;
     int number_points = 0;
     int index_points[giNum_of_pixels];
@@ -421,7 +463,7 @@ void autotrace_PSF(V3DPluginCallback2 &callback, QWidget *parent)
     }
     tfile.close();*/
 
-    giNum_of_locations = number_points*k1*N1;
+  /*  giNum_of_locations = number_points*k1*N1;
     gpdScores = new double[giNum_of_locations];
     for(iIndex = 0; iIndex < giNum_of_locations; iIndex++)
     {
@@ -464,20 +506,6 @@ void autotrace_PSF(V3DPluginCallback2 &callback, QWidget *parent)
 
     if(gpdScores_w) {delete []gpdScores_w; gpdScores_w = 0;}
 
-    /*double *D = new double[number_points*k1];
-     ifstream xfile;
-     xfile.open("/opt/zhi/Desktop/tmp/mex_final_D.txt");
-     if (xfile.is_open())
-     {
-         for(V3DLONG i = 0; i<number_points*k1; i++)
-         {
-            xfile >> D[i];
-         }
-     }
-
-     xfile.close();
-     v3d_msg("check");*/
-
     double *DScore = new double[number_points*number_points];
     for(V3DLONG i = 0; i <number_points*number_points; i++ )
         DScore[i] = INFINITY;
@@ -488,28 +516,157 @@ void autotrace_PSF(V3DPluginCallback2 &callback, QWidget *parent)
         {
             int knn_index = idx[ix*k1 + iy];
             DScore[ix + knn_index*number_points] = D[ix*k1 + iy];
-            printf("index is %d, %.2f\n",ix + knn_index*number_points,D[ix*k1 + iy]);
-           // v3d_msg("check");
         }
     }
-    char saveName[80];
+
+    if(idx) {delete []idx; idx = 0;}
+
+
+    int indmin = 59;
+    double x1,y1,z1,x2,y2,z2;
+
+    double *Xnew = new double[(number_points+1) * giNum_of_Dims_of_Input_Image];
+    for(int i = 0; i < number_points+1;i++)
+    {
+        if(i == number_points)
+        {
+             x1 = gpdProjected_Points_updated[(ROWCOL(0, indmin, giNum_of_Dims_of_Input_Image))];
+             y1 = gpdProjected_Points_updated[(ROWCOL(1, indmin, giNum_of_Dims_of_Input_Image))];
+             z1 = gpdProjected_Points_updated[(ROWCOL(2, indmin, giNum_of_Dims_of_Input_Image))];
+
+        }
+        else
+        {
+             x1 = gpdProjected_Points_updated[(ROWCOL(0, i, giNum_of_Dims_of_Input_Image))];
+             y1 = gpdProjected_Points_updated[(ROWCOL(1, i, giNum_of_Dims_of_Input_Image))];
+             z1 = gpdProjected_Points_updated[(ROWCOL(2, i, giNum_of_Dims_of_Input_Image))];
+        }
+
+        Xnew[i*giNum_of_Dims_of_Input_Image+0] = x1;
+        Xnew[i*giNum_of_Dims_of_Input_Image+1] = y1;
+        Xnew[i*giNum_of_Dims_of_Input_Image+2] = z1;
+
+    }
+    double *DScore_wRoot = new double[(number_points+1)*(number_points+1)];
+     for(V3DLONG i = 0; i < (number_points+1)*(number_points+1); i++)
+     {
+         DScore_wRoot[i] = INFINITY;
+     }
+
+    for(V3DLONG i = 0; i < number_points; i++)
+    {
+        for(V3DLONG j = 0; j < number_points; j++)
+        {
+            DScore_wRoot[i*(number_points+1) + j] = DScore[i*number_points + j];
+        }
+    }
+
+    if(DScore) {delete []DScore; DScore = 0;}
+    DScore_wRoot[number_points*(number_points+1) + number_points] = eps;
+    DScore_wRoot[number_points*(number_points+1) + indmin] = eps;
+    DScore_wRoot[indmin*(number_points+1) + number_points] = eps;
+
+    double *Dsp_wRoot = new double[(number_points+1)*(number_points+1)];
+
+    for(V3DLONG i = 0; i < number_points+1; i++)
+    {
+        for(V3DLONG j = i; j < number_points+1; j++)
+        {
+            double score1 = DScore_wRoot[i*(number_points+1) + j];
+            double score2 = DScore_wRoot[j*(number_points+1) + i];
+            if(score1 > score2)
+            {
+                Dsp_wRoot[i*(number_points+1) + j] = score1;
+                Dsp_wRoot[j*(number_points+1) + i] = score1;
+            }
+            else
+            {
+                Dsp_wRoot[i*(number_points+1) + j] = score2;
+                Dsp_wRoot[j*(number_points+1) + i] = score2;
+            }
+
+        }
+    }
+
+    double *DX = new double[(number_points+1)*(number_points+1)];
+    for(int i = 0; i < number_points+1;i++)
+    {
+        if(i == number_points)
+        {
+             x1 = gpdProjected_Points_updated[(ROWCOL(0, indmin, giNum_of_Dims_of_Input_Image))];
+             y1 = gpdProjected_Points_updated[(ROWCOL(1, indmin, giNum_of_Dims_of_Input_Image))];
+             z1 = gpdProjected_Points_updated[(ROWCOL(2, indmin, giNum_of_Dims_of_Input_Image))];
+
+        }
+        else
+        {
+             x1 = gpdProjected_Points_updated[(ROWCOL(0, i, giNum_of_Dims_of_Input_Image))];
+             y1 = gpdProjected_Points_updated[(ROWCOL(1, i, giNum_of_Dims_of_Input_Image))];
+             z1 = gpdProjected_Points_updated[(ROWCOL(2, i, giNum_of_Dims_of_Input_Image))];
+        }
+        for(int j = 0; j < number_points+1; j++)
+        {
+            if(j == number_points)
+            {
+                 x2 = gpdProjected_Points_updated[(ROWCOL(0, indmin, giNum_of_Dims_of_Input_Image))];
+                 y2 = gpdProjected_Points_updated[(ROWCOL(1, indmin, giNum_of_Dims_of_Input_Image))];
+                 z2 = gpdProjected_Points_updated[(ROWCOL(2, indmin, giNum_of_Dims_of_Input_Image))];
+            }
+            else
+            {
+                 x2 = gpdProjected_Points_updated[(ROWCOL(0, j, giNum_of_Dims_of_Input_Image))];
+                 y2 = gpdProjected_Points_updated[(ROWCOL(1, j, giNum_of_Dims_of_Input_Image))];
+                 z2 = gpdProjected_Points_updated[(ROWCOL(2, j, giNum_of_Dims_of_Input_Image))];
+            }
+            double dist_1D = sqrt(pow(x1-x2,2.0)+pow(y1-y2,2.0) + pow (z1-z2,2.0));
+            DX[i*(number_points+1) + j] = dist_1D;
+            DX[j*(number_points+1) + i] = dist_1D;
+        }
+    }
+
+    double *Dsp_w = new double[(number_points+1)*(number_points+1)];
+    double *DX_T_man = new double[(number_points+1)*(number_points+1)];
+    for(V3DLONG i = 0; i<(number_points+1)*(number_points+1) ;i++)
+    {
+        if(Dsp_wRoot[i] < 1.0)
+        {
+            Dsp_w[i] = DX[i];
+            DX_T_man[i] = Dsp_wRoot[i];
+        }
+        else
+        {
+           Dsp_w[i] = 0;
+           DX_T_man[i] = INFINITY;
+        }
+    }
+
+    if(DX) {delete []DX; DX = 0;}
+    if(Dsp_wRoot) {delete []Dsp_wRoot; Dsp_wRoot = 0;}
+    double *D_euc = new double[(number_points+1)*(number_points+1)];
+    graph_all_shortest_paths(Dsp_w, D_euc,number_points+1);
+
+    if(Dsp_w) {delete []Dsp_w; Dsp_w = 0;}
+
+    extractTree(D_euc,DX_T_man,Xnew,number_points+1);
+
+   /* char saveName[80];
     char *outputDir = "/opt/zhi/Desktop/tmp/";
     FILE *fp_final_score;
 
     strcpy(saveName,outputDir);
-    strcat(saveName,"mex_final_DSCORE.txt");
+    strcat(saveName,"mex_final_DX_T_man.txt");
     fp_final_score = fopen (saveName, "w");
     if (fp_final_score == NULL)
     {
         printf ("\nCannot create file: mex_final_Score.txt\n");
     }
-    for (int iColIter = 0; iColIter < number_points*number_points ; iColIter ++)
+    for (int iColIter = 0; iColIter < (number_points+1)*(number_points+1) ; iColIter ++)
     {
 
-        fprintf (fp_final_score, "%g ", DScore[iColIter]);
+        fprintf (fp_final_score, "%g ", DX_T_man[iColIter]);
         fprintf (fp_final_score, "\n");
     }
-    fclose (fp_final_score);
+    fclose (fp_final_score);*/
 
     //process the image
     //ProcessImage(gpdProjected_Points,gpdTangential_Space,gpdEigenVals,giNum_of_Dims_of_Input_Image,giLenLookupTable);
@@ -586,7 +743,7 @@ void *Thread_ProcessImage_score (void *ptriThreadNumber) // for pthreads
 
     double dProbs;
     double dProbInf = INFINITY;
-    double eps =  2.2204e-16;
+
 
     double dNumerator, dDenominator, dNorm_of_Grads;
     bool bAllEqual = TRUE;
@@ -1217,9 +1374,9 @@ void preIntegral(double *gpdProjected_Points_updated,double *tangentialSpace_upd
         }
 
     }
-
+   return;
   //  if(idx) {delete []idx; idx = 0;}
-    return;
+
  /*   char saveName[80];
     char *outputDir = "/opt/zhi/Desktop/tmp/";
     FILE *fp_final_proj, *fp_final_Tangential;
@@ -1255,4 +1412,74 @@ void preIntegral(double *gpdProjected_Points_updated,double *tangentialSpace_upd
     }
     fclose (fp_final_Tangential);*/
 
+}
+
+void  graph_all_shortest_paths(double *inputMatrix, double *disMatrix, int n)
+{
+
+    double dist[n];
+
+    for(int i = 0; i < n; i++)
+    {
+
+       dijkstra(inputMatrix,n,i,dist);
+       for(int j = 0; j < n; j++)
+           disMatrix[j + n*i] = dist[j];
+    }
+
+    return;
+
+}
+
+void dijkstra(double *graph, int V, int src, double *dist)
+{
+//     double dist[V];     // The output array.  dist[i] will hold the shortest
+                      // distance from src to i
+
+     bool sptSet[V]; // sptSet[i] will true if vertex i is included in shortest
+                     // path tree or shortest distance from src to i is finalized
+
+     // Initialize all distances as INFINITE and stpSet[] as false
+     for (int i = 0; i < V; i++)
+        dist[i] = INT_MAX, sptSet[i] = false;
+
+     // Distance of source vertex from itself is always 0
+     dist[src] = 0;
+
+     // Find shortest path for all vertices
+     for (int count = 0; count < V-1; count++)
+     {
+       // Pick the minimum distance vertex from the set of vertices not
+       // yet processed. u is always equal to src in first iteration.
+       int u = minDistance(dist, sptSet,V);
+
+       // Mark the picked vertex as processed
+       sptSet[u] = true;
+
+       // Update dist value of the adjacent vertices of the picked vertex.
+       for (int v = 0; v < V; v++)
+       {
+
+         // Update dist[v] only if is not in sptSet, there is an edge from
+         // u to v, and total weight of path from src to  v through u is
+         // smaller than current value of dist[v]
+         if (!sptSet[v] && graph[v*V+u] && dist[u] != INT_MAX
+                                       && dist[u]+graph[v*V+u] < dist[v])
+            dist[v] = dist[u] + graph[v*V+u];
+       }
+     }
+
+     // print the constructed distance array
+}
+int minDistance(double dist[], bool sptSet[],int V)
+{
+   // Initialize min value
+   double min = INT_MAX;
+   int min_index;
+
+   for (int v = 0; v < V; v++)
+     if (sptSet[v] == false && dist[v] <= min)
+         min = dist[v], min_index = v;
+
+   return min_index;
 }
