@@ -38,8 +38,8 @@
 
 V3DLONG gpiDims_InputImage[3];
 int giNum_of_pixels, giNum_of_Dims_of_Input_Image;
-int *gpdInputImage;
-int *gpdOriginalImage;
+unsigned char *gpdInputImage;
+unsigned char *gpdOriginalImage;
 
 int *gpiData;
 double *gpdWeights_InputImage;
@@ -197,10 +197,10 @@ void autotrace_PSF(V3DPluginCallback2 &callback, QWidget *parent)
     if(!ok1)
         return;
 
-    gpdOriginalImage = new int[pagesz];
+    gpdOriginalImage = new unsigned char[pagesz];
     V3DLONG i = 0;
 
-    for(V3DLONG iz = 0; iz < P; iz++)
+   /* for(V3DLONG iz = 0; iz < P; iz++)
     {
         V3DLONG offsetk = iz*M*N;
         for(V3DLONG iy = 0; iy < M; iy++)
@@ -208,34 +208,36 @@ void autotrace_PSF(V3DPluginCallback2 &callback, QWidget *parent)
             V3DLONG offsetj = iy*N;
             for(V3DLONG ix = 0; ix < N; ix++)
             {
-                gpdOriginalImage[i] = data1d[i];
+                gpdOriginalImage[offsetk + offsetj + ix]= data1d[i];
                 i++;
             }
         }
-    }
+    }*/
 
-   /* V3DLONG N_new = N+2*hmirror;
+    V3DLONG N_new = N+2*hmirror;
     V3DLONG M_new = M+2*hmirror;
     V3DLONG P_new = P+2*hmirror;
     V3DLONG pagesz_new = N_new*M_new*P_new;
 
     //double *gpdInputImage = new double[pagesz_new];
-    gpdInputImage = new int[pagesz_new];
-    V3DLONG i = 0;
-    for(V3DLONG iz = hmirror; iz < P_new - hmirror-1; iz++)
+    gpdInputImage = new unsigned char[pagesz_new];
+    for(int i = 0; i <pagesz_new ;i++ )
+        gpdInputImage[i] = 0;
+
+    for(V3DLONG iz = hmirror; iz < P_new - hmirror; iz++)
     {
         V3DLONG offsetk = iz*M_new*N_new;
-        for(V3DLONG iy = hmirror; iy < M_new - hmirror-1; iy++)
+        for(V3DLONG iy = hmirror; iy < M_new - hmirror; iy++)
         {
             V3DLONG offsetj = iy*N_new;
-            for(V3DLONG ix = hmirror; ix < N_new-hmirror-1; ix++)
+            for(V3DLONG ix = hmirror; ix < N_new-hmirror; ix++)
             {
-               // gpdInputImage[offsetk + offsetj + ix] = (double)data1d[offsetk + offsetj + ix]/255.0;
+               // gpdInputImage[offsetk + offsetj + ix] = (double)data1d[i]/255.0;
                 gpdInputImage[offsetk + offsetj + ix] = data1d[i];
                 i++;
             }
         }
-    }*/
+    }
 
 
    /* giNum_of_Dims_of_Input_Image = 3;
@@ -258,7 +260,7 @@ void autotrace_PSF(V3DPluginCallback2 &callback, QWidget *parent)
 
 
            Image4DSimple * new4DImage = new Image4DSimple();
-           new4DImage->setData((unsigned char *)gpdOriginalImage, N, M, P, 1, V3D_UINT8);
+           new4DImage->setData((unsigned char *)gpdInputImage, N_new, M_new, P_new, 1, V3D_UINT8);
            v3dhandle newwin = callback.newImageWindow();
            callback.setImage(newwin, new4DImage);
            callback.setImageName(newwin, "3D adaptive enhancement result");
