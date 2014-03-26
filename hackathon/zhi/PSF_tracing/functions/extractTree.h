@@ -3,4 +3,4 @@
 #include <v3d_interface.h>
 
 
-void extractTree(double *, double *, double *,int);
+void extractTree(double *, double *, double *,int, QString);

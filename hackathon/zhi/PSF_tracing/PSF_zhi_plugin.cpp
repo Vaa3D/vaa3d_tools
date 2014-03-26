@@ -348,7 +348,7 @@ void autotrace_PSF(V3DPluginCallback2 &callback, QWidget *parent)
     prepLookUpTableWidth = 11;
     PreProcessDataImage(gpdInputImage, giNum_of_Dims_of_Input_Image, gpiDims_InputImage, giNum_of_pixels,
              gpdWeights_InputImage, gpdEigVec_Cov_InputImage, gpdEigVal_Cov_InputImage,
-            gpdNormP_EigVal,gpiData, "/home/zhi/Desktop/tmp/", sigma, prepLookUpTableWidth);
+            gpdNormP_EigVal,gpiData, "/opt/zhi/Desktop/tmp/", sigma, prepLookUpTableWidth);
 
     printf ("\nBack to maincode.\n");
 
@@ -378,7 +378,7 @@ void autotrace_PSF(V3DPluginCallback2 &callback, QWidget *parent)
     }
 
 
-   /* for(iThreadNumber = 0; iThreadNumber < NUM_OF_THREADS_TO_CREATE; iThreadNumber++)
+    for(iThreadNumber = 0; iThreadNumber < NUM_OF_THREADS_TO_CREATE; iThreadNumber++)
     {
         iRet_Val_Pthread_Create = pthread_create(&ptThreads[iThreadNumber], NULL, Thread_ProcessImage, (void*)iThreadNumber);
     }
@@ -386,9 +386,9 @@ void autotrace_PSF(V3DPluginCallback2 &callback, QWidget *parent)
     for(iThreadNumber = 0; iThreadNumber < NUM_OF_THREADS_TO_CREATE; iThreadNumber++)
     {
         pthread_join(ptThreads[iThreadNumber], NULL);
-    }*/
+    }
 
-    ifstream ifs("/home/zhi/Desktop/tmp/mex_final_Proj.txt");
+    /*ifstream ifs("/opt/zhi/Desktop/tmp/mex_final_Proj.txt");
     i = 0;
     if(ifs.fail())
     {
@@ -401,7 +401,7 @@ void autotrace_PSF(V3DPluginCallback2 &callback, QWidget *parent)
     }
     ifs.close();
 
-    ifstream ifs2("/home/zhi/Desktop/tmp/mex_final_Tangential.txt");
+    ifstream ifs2("/opt/zhi/Desktop/tmp/mex_final_Tangential.txt");
     i = 0;
     if(ifs2.fail())
     {
@@ -412,11 +412,11 @@ void autotrace_PSF(V3DPluginCallback2 &callback, QWidget *parent)
         ifs2>> gpdTangential_Space[i];
         i++;
     }
-    ifs2.close();
+    ifs2.close();*/
 
 
     int imsize[3] = {N,M,P};
-    hmirror = 7;
+
     //tidyvaribales
     double prjs;
     int number_points = 0;
@@ -734,7 +734,8 @@ void autotrace_PSF(V3DPluginCallback2 &callback, QWidget *parent)
 
     if(Dsp_w) {delete []Dsp_w; Dsp_w = 0;}
 
-    extractTree(D_euc,DX_T_man,Xnew,number_points+1);
+    QString outswc_file = QString(p4DImage->getFileName()) + "_PSF.swc";
+    extractTree(D_euc,DX_T_man,Xnew,number_points+1,outswc_file);
 
    /* char saveName[80];
     char *outputDir = "/opt/zhi/Desktop/tmp/";
@@ -763,6 +764,9 @@ void autotrace_PSF(V3DPluginCallback2 &callback, QWidget *parent)
     free (gpdEigVal_Cov_InputImage);
     free (gpdNormP_EigVal);
     free (gpiData);
+
+    v3d_msg(QString("Now you can drag and drop the generated swc fle [%1] into Vaa3D.").arg(outswc_file));
+    return;
 
 }
 
