@@ -23,10 +23,10 @@ INCLUDEPATH += $$SRCNEUTUBEPATH/neurolabi/c/include $$SRCNEUTUBEPATH/neurolabi/g
 #    -framework OpenGL -framework ApplicationServices -framework CoreFoundation
 
 
-LIBS += -L../../../released_plugins/v3d_plugins/neutube/src_neutube/neurolabi/lib/fftw3/lib -lfftw3f
-LIBS += -L../../../released_plugins/v3d_plugins/neutube/src_neutube/neurolabi/lib/fftw3/lib -lfftw3
-LIBS += -L../../../released_plugins/v3d_plugins/neutube/src_neutube/neurolabi/c/lib -lneurolabi
-LIBS += -L../../../released_plugins/v3d_plugins/neutube/src_neutube/neurolabi/lib/xml/lib -lxml2
+LIBS += -L$$SRCNEUTUBEPATH/neurolabi/lib/fftw3/lib -lfftw3f
+LIBS += -L$$SRCNEUTUBEPATH/neurolabi/lib/fftw3/lib -lfftw3
+LIBS += -L$$SRCNEUTUBEPATH/neurolabi/c/lib -lneurolabi
+LIBS += -L$$SRCNEUTUBEPATH/neurolabi/lib/xml/lib -lxml2
 
 DEFINES += HAVE_LIBFFTW3
 
@@ -104,4 +104,4 @@ SOURCES +=  $$SRCNEUTUBEPATH/neurolabi/c/tz_fimage_lib.c
 
 
 TARGET	= $$qtLibraryTarget(neuTube_zhi)
-DESTDIR	= ../../../../v3d_external/bin/plugins/neuTube_zhi/
+DESTDIR	= $$VAA3DPATH/../bin/plugins/neuron_tracing/neuTube_zhi/
