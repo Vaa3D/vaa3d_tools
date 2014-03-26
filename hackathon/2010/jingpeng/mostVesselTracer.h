@@ -306,7 +306,7 @@ public:
         ~AdaTDialog(){}
 
         public slots:
-        void update();
+        //void update();
 };
 
 

@@ -1,8 +1,8 @@
 /****************************************************************************
 ** Meta object code from reading C++ file 'mostVesselTracer.h'
 **
-** Created: Thu Mar 20 15:08:31 2014
-**      by: The Qt Meta Object Compiler version 62 (Qt 4.7.3)
+** Created: Wed Mar 26 11:49:04 2014
+**      by: The Qt Meta Object Compiler version 62 (Qt 4.7.1)
 **
 ** WARNING! All changes made in this file will be lost!
 *****************************************************************************/
@@ -11,7 +11,7 @@
 #if !defined(Q_MOC_OUTPUT_REVISION)
 #error "The header file 'mostVesselTracer.h' doesn't include <QObject>."
 #elif Q_MOC_OUTPUT_REVISION != 62
-#error "This file was generated using the moc from 4.7.3. It"
+#error "This file was generated using the moc from 4.7.1. It"
 #error "cannot be used with the include files from this version of Qt."
 #error "(The moc has changed too much.)"
 #endif
@@ -76,21 +76,18 @@ static const uint qt_meta_data_AdaTDialog[] = {
        5,       // revision
        0,       // classname
        0,    0, // classinfo
-       1,   14, // methods
+       0,    0, // methods
        0,    0, // properties
        0,    0, // enums/sets
        0,    0, // constructors
        0,       // flags
        0,       // signalCount
 
- // slots: signature, parameters, type, tag, flags
-      12,   11,   11,   11, 0x0a,
-
        0        // eod
 };
 
 static const char qt_meta_stringdata_AdaTDialog[] = {
-    "AdaTDialog\0\0update()\0"
+    "AdaTDialog\0"
 };
 
 const QMetaObject AdaTDialog::staticMetaObject = {
@@ -120,13 +117,6 @@ int AdaTDialog::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
     _id = QDialog::qt_metacall(_c, _id, _a);
     if (_id < 0)
         return _id;
-    if (_c == QMetaObject::InvokeMetaMethod) {
-        switch (_id) {
-        case 0: update(); break;
-        default: ;
-        }
-        _id -= 1;
-    }
     return _id;
 }
 QT_END_MOC_NAMESPACE
