@@ -16,6 +16,8 @@
         <file>icons/undo.png</file>
         <file>icons/reset.png</file>
         <file>icons/terafly.png</file>
+        <file>icons/start.png</file>
+        <file>icons/stop.png</file>
         <file>changelog.txt</file>
     </qresource>
 </RCC>

@@ -40,8 +40,8 @@ void QArrowButton::paintEvent(QPaintEvent * evt)
     }
     else
     {
-        painter.setBrush(Qt::gray);
-        painter.setPen(Qt::gray);
+        painter.setBrush(QColor(200,200,200));
+        painter.setPen(QColor(200,200,200));
         painter.setOpacity(0.5);
     }
 

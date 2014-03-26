@@ -86,7 +86,7 @@ void CExplorerWindow::show()
         disconnect(view3DWidget, SIGNAL(changeVolumeTimePoint(int)), window3D->timeSlider, SLOT(setValue(int)));
         disconnect(window3D->timeSlider, SIGNAL(valueChanged(int)), view3DWidget, SLOT(setVolumeTimePoint(int)));
         window3D->timeSlider->setMinimum(0);
-        window3D->timeSlider->setMaximum(CImport::instance()->getVolumeTDim()-1);
+        window3D->timeSlider->setMaximum(CImport::instance()->getTDim()-1);
 
         // if the previous explorer window exists
         if(prev)
@@ -127,13 +127,16 @@ void CExplorerWindow::show()
             prev->view3DWidget->absoluteRotPose();
             view3DWidget->doAbsoluteRot(prev->view3DWidget->xRot(), prev->view3DWidget->yRot(), prev->view3DWidget->zRot());
 
-            // select the same time frame (if available)
-            int prev_s = prev->window3D->timeSlider->value();
-            if(prev_s < volT0 || prev_s > volT1)
-                window3D->timeSlider->setValue(volT0);
-            else
-                window3D->timeSlider->setValue(prev_s);
-            Vaa3D_changeTSlider(window3D->timeSlider->value());
+            // 5D data: select the same time frame (if available)
+            if(CImport::instance()->is5D())
+            {
+                int prev_s = prev->window3D->timeSlider->value();
+                if(prev_s < volT0 || prev_s > volT1)
+                    window3D->timeSlider->setValue(volT0);
+                else
+                    window3D->timeSlider->setValue(prev_s);
+                view3DWidget->setVolumeTimePoint(window3D->timeSlider->value()-volT0);
+            }
 
             //sync widgets
             syncWindows(prev->window3D, window3D);
@@ -218,10 +221,6 @@ void CExplorerWindow::show()
             pMain->T0_sbox->setText(QString::number(volT0));
             pMain->T1_sbox->setText(QString::number(volT1));
         }
-//        pMain->T0_sbox->setMinimum(volT0);
-//        pMain->T0_sbox->setValue(pMain->T0_sbox->minimum());
-//        pMain->T1_sbox->setMaximum(volT1);
-//        pMain->T1_sbox->setValue(pMain->T1_sbox->maximum());
 
         //signal connections
         connect(CVolume::instance(), SIGNAL(sendData(itm::uint8*,int*,int*,void*,bool,itm::RuntimeException*,qint64,QString,int)), this, SLOT(receiveData(itm::uint8*,int*,int*,void*,bool,itm::RuntimeException*,qint64,QString,int)), Qt::BlockingQueuedConnection);
@@ -311,6 +310,7 @@ CExplorerWindow::CExplorerWindow(V3DPluginCallback2 *_V3D_env, int _resIndex, it
     this->toBeClosed = false;
     this->imgData = _imgData;
     this->isReady = false;
+    this->waitingFor5D = false;
     char ctitle[1024];
     sprintf(ctitle, "ID(%d), Res(%d x %d x %d),Volume X=[%d,%d], Y=[%d,%d], Z=[%d,%d], T=[%d,%d], %d channels", ID, CImport::instance()->getVolume(volResIndex)->getDIM_H(),
             CImport::instance()->getVolume(volResIndex)->getDIM_V(), CImport::instance()->getVolume(volResIndex)->getDIM_D(),
@@ -435,15 +435,24 @@ bool CExplorerWindow::eventFilter(QObject *object, QEvent *event)
 //                return true;
 //            }
 //            else
-            if(prev                                                                         &&  //the previous resolution exists
-                    !toBeClosed                                                             &&  //the current resolution does not have to be closed
-                    isZoomDerivativeNeg()                                                   &&  //zoom derivative is negative
-                    view3DWidget->zoom() < PMain::getInstance()->zoomOutSens->value())          //zoom-out threshold reached
+            if(prev                                                                    &&  //the previous resolution exists
+               !toBeClosed                                                             &&  //the current resolution does not have to be closed
+               isZoomDerivativeNeg()                                                   &&  //zoom derivative is negative
+               view3DWidget->zoom() < PMain::getInstance()->zoomOutSens->value())          //zoom-out threshold reached
             {
-                setActive(false);
-                resetZoomHistory();
-                prev->restoreViewFrom(this);
-                return true;
+                // if window is not ready for "switch view" events, reset zoom-out and ignore this event
+                if(!isReady)
+                {
+                    resetZoomHistory();
+                    return false;
+                }
+                else
+                {
+                    setActive(false);
+                    resetZoomHistory();
+                    prev->restoreViewFrom(this);
+                    return true;
+                }
             }
         }
 
@@ -530,6 +539,7 @@ bool CExplorerWindow::eventFilter(QObject *object, QEvent *event)
             alignToLeft(PMain::getInstance());
             return true;
         }
+
         return false;
     }
     catch(RuntimeException &ex)
@@ -588,6 +598,10 @@ void CExplorerWindow::receiveData(itm::uint8* data,                   // data (a
             /**/ CVolume::instance()->bufferMutex.unlock();
             /**/itm::debug(itm::LEV3, "unlocked buffer mutex", __itm__current__function__);
 
+            // if 5D data, update selected time frame
+            if(CImport::instance()->is5D())
+                view3DWidget->setVolumeTimePoint(window3D->timeSlider->value()-volT0);
+
             //updating log
             sprintf(message, "Streaming %d/%d: Copied block X=[%d, %d) Y=[%d, %d) Z=[%d, %d) T=[%d, %d]  to resolution %d",
                               step, cVolume->getStreamingSteps(), cVolume->getVoiH0(), cVolume->getVoiH1(), cVolume->getVoiV0(), cVolume->getVoiV1(),
@@ -618,8 +632,15 @@ void CExplorerWindow::receiveData(itm::uint8* data,                   // data (a
                 // reset cVolume buffer
                 cVolume->resetBuffer();
 
-                //resetting TeraFly's GUI
+                // reset TeraFly's GUI
                 PMain::getInstance()->resetGUI();
+
+                // exit from "waiting for 5D data" state, if previously set
+                this->setWaitingFor5D(false);
+
+                // reset the cursor
+                window3D->setCursor(Qt::ArrowCursor);
+                view3DWidget->setCursor(Qt::ArrowCursor);
 
 
                 //---- Alessandro 2013-09-28 fixed: processing pending events related trasl* buttons (previously deactivated) prevents the user from
@@ -684,9 +705,17 @@ CExplorerWindow::newView(int x, int y, int z,                            //can b
         QMessageBox::warning(0, "Unexpected behaviour", "Precondition check \"!isActive || toBeClosed\" failed. Please contact the developers");
         return;
     }
+
     // check precondition #2: valid resolution
     if(resolution >= CImport::instance()->getResolutions())
         resolution = volResIndex;
+
+    // check precondition #3: window ready for "newView" events
+    if( !isReady )
+    {
+        itm::warning("precondition (!isReady) not met. Aborting newView", __itm__current__function__);
+        return;
+    }
 
 
     // deactivate current window and processing all pending events
@@ -704,14 +733,14 @@ CExplorerWindow::newView(int x, int y, int z,                            //can b
     try
     {
         // set GUI to waiting state
-        view3DWidget->setCursor(Qt::WaitCursor);
         PMain& pMain = *(PMain::getInstance());
         pMain.progressBar->setEnabled(true);
         pMain.progressBar->setMinimum(0);
         pMain.progressBar->setMaximum(0);
-        pMain.statusBar->showMessage("Loading image data...");
-
-
+        pMain.statusBar->showMessage("Switching view...");
+        view3DWidget->setCursor(Qt::BusyCursor);
+        window3D->setCursor(Qt::BusyCursor);
+        pMain.setCursor(Qt::BusyCursor);
 
         // scale VOI coordinates to the reference system of the target resolution
         if(scale_coords)
@@ -758,7 +787,7 @@ CExplorerWindow::newView(int x, int y, int z,                            //can b
                 t1 = std::max(0, std::min(t1,CImport::instance()->getVolume(volResIndex)->getDIM_T()-1));
                 if(t1-t0+1 > pMain.Tdim_sbox->value())
                     t1 = t0 + pMain.Tdim_sbox->value();
-                if(t1 >= CImport::instance()->getVolumeTDim()-1)
+                if(t1 >= CImport::instance()->getTDim()-1)
                     t0 = t1 - (pMain.Tdim_sbox->value()-1);
                 if(t0 == 0)
                     t1 = pMain.Tdim_sbox->value()-1;
@@ -790,7 +819,7 @@ CExplorerWindow::newView(int x, int y, int z,                            //can b
                 t1 = std::max(0, std::min(t1,CImport::instance()->getVolume(volResIndex)->getDIM_T()-1));
                 if(t1-t0+1 > pMain.Tdim_sbox->value())
                     t1 = t0 + pMain.Tdim_sbox->value();
-                if(t1 >= CImport::instance()->getVolumeTDim()-1)
+                if(t1 >= CImport::instance()->getTDim()-1)
                     t0 = t1 - (pMain.Tdim_sbox->value()-1);
                 if(t0 == 0)
                     t1 = pMain.Tdim_sbox->value()-1;
@@ -815,6 +844,7 @@ CExplorerWindow::newView(int x, int y, int z,                            //can b
 
             setActive(true);
             view3DWidget->setCursor(Qt::ArrowCursor);
+            window3D->setCursor(Qt::ArrowCursor);
             PMain::getInstance()->resetGUI();
             return;
         }
@@ -879,7 +909,7 @@ CExplorerWindow::newView(int x, int y, int z,                            //can b
         // update CVolume with the request of the actual missing VOI along t and the current selected frame
         cVolume->setVoiT(voiT0m, voiT1m, window3D->timeSlider->value());
 
-        //loading new data in a separate thread. When done, the "loadingDone" method of the new window will be called
+        // loading new data in a separate thread. When done, the "receiveData" method of the new window will be called
         pMain.statusBar->showMessage("Loading image data...");
         cVolume->setSource(this->next);
         cVolume->setStreamingSteps(PMain::getInstance()->debugStreamingStepsSBox->value());
@@ -890,8 +920,11 @@ CExplorerWindow::newView(int x, int y, int z,                            //can b
                                 nchannels, cVolume->getVoiT1()-cVolume->getVoiT0()+1);
         cVolume->start();
 
-        //meanwhile, showing the new window
+        // meanwhile, showing the new window
         next->show();
+
+        // enter "waiting for 5D data" state, if possible
+        next->setWaitingFor5D(true);
 
         //if the resolution of the loaded voi is the same of the current one, this window will be closed
         if(resolution == volResIndex)
@@ -1548,13 +1581,16 @@ void CExplorerWindow::restoreViewFrom(CExplorerWindow* source) throw (RuntimeExc
         //loading annotations of the current view
         this->loadAnnotations();
 
-        // select the same time frame (if available)
-        int source_s = source->window3D->timeSlider->value();
-        if(source_s < volT0 || source_s > volT1)
-            window3D->timeSlider->setValue(volT0);
-        else
-            window3D->timeSlider->setValue(source_s);
-        Vaa3D_changeTSlider(window3D->timeSlider->value());
+        // 5D data: select the same time frame (if available)
+        if(CImport::instance()->is5D())
+        {
+            int source_s = source->window3D->timeSlider->value();
+            if(source_s < volT0 || source_s > volT1)
+                window3D->timeSlider->setValue(volT0);
+            else
+                window3D->timeSlider->setValue(source_s);
+            view3DWidget->setVolumeTimePoint(window3D->timeSlider->value()-volT0);
+        }
 
         //sync widgets
         syncWindows(source->window3D, window3D);
@@ -1568,7 +1604,7 @@ void CExplorerWindow::restoreViewFrom(CExplorerWindow* source) throw (RuntimeExc
         if(!PMain::getInstance()->isESactive())
             PMain::getInstance()->refSys->setDims(volH1-volH0+1, volV1-volV0+1, volD1-volD0+1);
 
-        //current windows not gets ready to user input
+        //current windows now gets ready to user input
         isReady = true;
     }
 }
@@ -1731,7 +1767,7 @@ void CExplorerWindow::invokedFromVaa3D(v3d_imaging_paras* params /* = 0 */)
                                                        intersectionX, intersectionY, intersectionZ, coverageFactor).c_str(), __itm__current__function__);
 
                 //if Vaa3D VOI is covered for the selected percentage by the existing cached volume, just restoring its view
-                if(coverageFactor >= PMain::getInstance()->cacheSens->value()/100.0f)
+                if((coverageFactor >= PMain::getInstance()->cacheSens->value()/100.0f) && isReady)
                 {
                     setActive(false);
                     resetZoomHistory();
@@ -2099,30 +2135,36 @@ void CExplorerWindow::Vaa3D_changeTSlider(int s, bool editingFinished /* = false
 {
     /**/itm::debug(itm::LEV_MAX, strprintf("title = %s, s = %d", title.c_str(), s).c_str(), __itm__current__function__);
 
-    if(isActive && !toBeClosed && view3DWidget && PMain::getInstance()->frameCoord->isEnabled())
+    if(isActive     &&              // window is visible
+       isReady      &&              // window is ready for user input
+       !toBeClosed  &&              // window is not going to be destroyed
+       view3DWidget &&              // Vaa3D renderer has been instantiated
+       CImport::instance()->is5D()) // data is 5D type
     {
         // change current frame coordinate
-        PMain::getInstance()->frameCoord->setText(strprintf("t = %d/%d", s, CImport::instance()->getVolumeTDim()-1).c_str());
+        PMain::getInstance()->frameCoord->setText(strprintf("t = %d/%d", s, CImport::instance()->getTDim()-1).c_str());
 
-        // frame out of displayed range
+        // if frame is out of the displayed range
         if(s < volT0 || s > volT1)
         {
-            // set red background to current frame coordinate widget
-            QPalette palette = PMain::getInstance()->frameCoord->palette();
-            palette.setColor(QPalette::Base, QColor(255, 255, 181));
-            palette.setColor(QPalette::Background, QColor(255, 255, 181));
-            PMain::getInstance()->frameCoord->setPalette(palette);
-            window3D->setPalette(palette);
+            // enter "waiting for 5D data" state
+            setWaitingFor5D(true, true);
 
+            // display message informing the user that something will happen if he/she confirms the operation
+            PMain::getInstance()->statusBar->showMessage(strprintf("Ready to jump at time frame %d/%d", s, CImport::instance()->getTDim()-1).c_str());
+
+            // if user operation is confirmed, then switching view
             if(editingFinished)
                 newView( (volH1-volH0)/2, (volV1-volV0)/2, (volD1-volD0)/2, volResIndex, s-PMain::getInstance()->Tdim_sbox->value()/2, s+PMain::getInstance()->Tdim_sbox->value()/2, false);
         }
-        // frame within displayed range
+        // if frame is within the displayed range
         else
         {
-            // reset background of current frame coordinate widget
-            PMain::getInstance()->frameCoord->setPalette(QApplication::palette( PMain::getInstance()->frameCoord ));
-            window3D->setPalette(QApplication::palette( window3D ));
+            // exit from "waiting for 5D data" state (if previously set)
+            setWaitingFor5D(false, true);
+
+            // display default message
+            PMain::getInstance()->statusBar->showMessage("Ready.");
 
             // display selected frame
             view3DWidget->setVolumeTimePoint(s-volT0);
@@ -2303,5 +2345,45 @@ void CExplorerWindow::syncWindows(V3dR_MainWindow* src, V3dR_MainWindow* dst)
     //propagating skeleton mode and line width
     dst->getGLWidget()->getRenderer()->lineType = src->getGLWidget()->getRenderer()->lineType;
     dst->getGLWidget()->getRenderer()->lineWidth = src->getGLWidget()->getRenderer()->lineWidth;
+}
+
+/**********************************************************************************
+* Change to "waiting for 5D" state (i.e., when 5D data are to be loaded or are loading)
+***********************************************************************************/
+void CExplorerWindow::setWaitingFor5D(bool wait, bool pre_wait /* = false */)
+{
+    /**/itm::debug(itm::LEV_MAX, strprintf("title = %s, wait = %s, pre_wait = %s, this->waitingFor5D = %s",
+                                           title.c_str(), wait ? "true" : "false", pre_wait ? "true" : "false", waitingFor5D ? "true" : "false").c_str(), __itm__current__function__);
+
+    if(CImport::instance()->getTDim() > 1 && wait != this->waitingFor5D)
+    {
+        PMain& pMain = *(PMain::getInstance());
+        this->waitingFor5D = wait;
+        if(waitingFor5D)
+        {
+            // change GUI appearance
+            QPalette palette = pMain.frameCoord->palette();
+            palette.setColor(QPalette::Base, QColor(255, 255, 181));
+            palette.setColor(QPalette::Background, QColor(255, 255, 181));
+            pMain.frameCoord->setPalette(palette);
+            pMain.setPalette(palette);
+            window3D->setPalette(palette);
+
+            // disable time bar
+            if(!pre_wait)
+                window3D->timeSlider->setEnabled(false);
+        }
+        else
+        {
+            // change GUI appearance
+            pMain.frameCoord->setPalette(QApplication::palette( PMain::getInstance()->frameCoord ));
+            pMain.setPalette(QApplication::palette( PMain::getInstance() ));
+            window3D->setPalette(QApplication::palette( window3D ));
+
+            // re-enable the time bar
+            if(!pre_wait)
+                window3D->timeSlider->setEnabled(true);
+        }
+    }
 }
 

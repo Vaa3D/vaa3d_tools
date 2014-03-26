@@ -40,7 +40,6 @@
 #include "QArrowButton.h"
 #include "QHelpBox.h"
 #include "QGradientBar.h"
-#include "QLineTree.h"
 #include "QGLRefSys.h"
 
 class teramanager::PMain : public QWidget

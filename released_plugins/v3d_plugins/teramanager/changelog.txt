@@ -11,6 +11,23 @@ ties names are:
 - Rem: a feature no longer available
 
 ============================================================================================
+Version 0.9.71
+March 26th, 2014
+--------------------------------------------------------------------------------------------
+- Opt: improved TeraFly's GUI appearance under Windows.
+- Dev: deleted deprecated Qt-customized class "QLineTree".
+- Opt: changed the name of TeraFly's control panels:
+       - "Local viewer" to "Viewer"
+	   - "Global coordinates" to "VOI's coordinates"
+	   - "Exhaustive scan" to "Sliding viewer"
+- Fix: "switch view" events are silently ignored while loading of data is in  progress. This
+       makes the tool more robust to unpredictable sequences of user operations.
+- Fix: user operations on 5D data are now  more robust with respect to "switch view" events. 
+       A "waiting for 5D data"  state has been introduced  that ignores "switch view" events
+       while 5D data are loading. Also the GUI's appearance (of both Vaa3D and TeraFly) sig-
+	   gnals to the user this temporarily state through a yellow background.
+--------------------------------------------------------------------------------------------
+
 Version 0.9.7
 March 19th, 2014
 --------------------------------------------------------------------------------------------

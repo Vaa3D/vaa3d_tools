@@ -73,6 +73,7 @@ class teramanager::CExplorerWindow : public QWidget
         int T0_sbox_min, T0_sbox_val;   //to save the state of subvolume spinboxes when the current window is hidden
         int T1_sbox_max, T1_sbox_val;   //to save the state of subvolume spinboxes when the current window is hidden
         int ID;
+        bool waitingFor5D;              //"waiting for 5D data" state flag
 
         //CLASS members
         static CExplorerWindow *first;  //pointer to the first window of the multiresolution explorer windows chain
@@ -280,6 +281,11 @@ class teramanager::CExplorerWindow : public QWidget
             if(!isActive)
                 isReady = false;
         }
+
+        /**********************************************************************************
+        * Change to "waiting for 5D" state (i.e., when 5D data are to be loaded or are loading)
+        ***********************************************************************************/
+        void setWaitingFor5D(bool wait, bool pre_wait=false);
 
         /**********************************************************************************
         * Zoom history methods (inline because the are called frequently)

@@ -53,7 +53,7 @@ string PMain::HTvoiDim =  "Set the <b>dimensions</b> (in voxels) of the volume o
                           "Please be careful not to set a too big region or you will soon use up your <b>graphic card's memory</b>. ";
 string PMain::HTjumpToRes = "Choose from pull-down menu the <b>resolution</b> you want to jump to and the displayed image will be loaded at the resolution selected. "
                             "To load only a volume of interest (<b>VOI</b>) at the selected resolution, you may use the Vaa3D <i>Volume Cut</i> scrollbars "
-                            "or the <i>Global coordinates</i> spinboxes embedded in this plugin.";
+                            "or the <i>VOI's coordinates</i> spinboxes embedded in this plugin.";
 string PMain::HTzoomOutThres = "Select the <b>zoom</b> factor threshold to restore the lower resolution when zooming-out with <i>mouse scroll down</i>. The default is set to 0. "
                            "Set it to -100 to disable this feature.";
 string PMain::HTzoomInThres = "Select the <b>zoom</b> factor threshold to trigger the higher resolution when zooming-in with <i>mouse scroll up</i>. The default is set to 50. "
@@ -302,7 +302,6 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     debugVerbosityCBox->addItem("Level 3");
     debugVerbosityCBox->addItem("Verbose");
     CSettings::instance()->readSettings();
-    debugVerbosityCBox->setCurrentIndex(itm::DEBUG);
     debugVerbosityActionWidget->setDefaultWidget(debugVerbosityCBox);
     debugVerbosityMenu->addAction(debugVerbosityActionWidget);
     connect(debugVerbosityCBox, SIGNAL(currentIndexChanged(int)), this, SLOT(verbosityChanged(int)));
@@ -374,7 +373,7 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     toolBar->addAction(aboutAction);
     toolBar->setIconSize(QSize(30,30));
     toolBar->setStyleSheet("QToolBar{background:qlineargradient(x1: 0, y1: 0, x2: 1, y2: 0,"
-                           "stop: 0 rgb(150,150,150), stop: 1 rgb(190,190,190));}");
+                           "stop: 0 rgb(150,150,150), stop: 1 rgb(190,190,190)); border: none}");
 
     // TAB widget: where to store pages
     tabs = new QTabWidget(this);
@@ -496,7 +495,7 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     /**/itm::debug(itm::LEV3, "Page \"Controls\"", __itm__current__function__);
     /* ------- local viewer panel widgets ------- */
     controls_page = new QWidget();
-    localViewer_panel = new QGroupBox("Local viewer");
+    localViewer_panel = new QGroupBox("Viewer");
     gradientBar = new QGradientBar(this);
     gradientBar->installEventFilter(this);
     Vdim_sbox = new QSpinBox();
@@ -567,8 +566,8 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     #endif
 
     //"Global coordinates" widgets
-    /**/itm::debug(itm::LEV3, "\"Global coordinates\" panel", __itm__current__function__);
-    globalCoord_panel = new QGroupBox("Global coordinates");
+    /**/itm::debug(itm::LEV3, "\"VOI's coordinates\" panel", __itm__current__function__);
+    globalCoord_panel = new QGroupBox("VOI's coordinates");
     traslXpos = new QArrowButton(this, QColor(255,0,0), 15, 6, 0, Qt::LeftToRight, true);
     traslXneg = new QArrowButton(this, QColor(255,0,0), 15, 6, 0, Qt::RightToLeft, true);
     traslXlabel = new QLabel("");
@@ -630,7 +629,7 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     frameCoord->setAlignment(Qt::AlignCenter);
 
     /* ------- global coord panel widgets ------- */
-    ESPanel = new QGroupBox("Exhaustive scan");
+    ESPanel = new QGroupBox("Sliding viewer");
     ESbutton = new QPushButton("click me");
     ESblockSpbox = new QSpinBox();
     ESblockSpbox->setAlignment(Qt::AlignCenter);
@@ -734,9 +733,9 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     #endif
 
     // "Global coordinates" panel layout
-    QHBoxLayout* global_coordinates_layout = new QHBoxLayout();
-    /* ------------- left block ---------------- */
-    QVBoxLayout* leftBlockLayout = new QVBoxLayout();
+    QGridLayout* global_coordinates_layout = new QGridLayout();
+    global_coordinates_layout->setVerticalSpacing(2);
+    /* ------------- fix left block elements size ---------------- */
     QWidget* refSysContainer = new QWidget();
     refSysContainer->setFixedWidth(marginLeft);
     refSysContainer->setStyleSheet(" border-style: solid; border-width: 1px; border-color: rgb(150,150,150);");
@@ -745,10 +744,7 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     refSysContainerLayout->addWidget(refSys, 1);
     refSysContainer->setLayout(refSysContainerLayout);
     frameCoord->setFixedWidth(marginLeft);
-    leftBlockLayout->addWidget(refSysContainer, 0);
-    leftBlockLayout->addWidget(frameCoord, 0);
-    leftBlockLayout->setContentsMargins(0,0,0,0);
-    /* ----------- central block --------------- */
+    /* ------------ fix central block elements size -------------- */
     QHBoxLayout *xShiftLayout = new QHBoxLayout();
     xShiftLayout->setContentsMargins(0,0,0,0);
     int fixedArrowWidth = 25;
@@ -802,29 +798,27 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     QWidget* tShiftWidget = new QWidget();
     tShiftWidget->setFixedWidth(marginLeft);
     tShiftWidget->setLayout(tShiftLayout);
-    QVBoxLayout *centralBlockLayout = new QVBoxLayout();
-    centralBlockLayout->setContentsMargins(0,0,0,0);
-    centralBlockLayout->addWidget(xShiftWidget, 0);
-    centralBlockLayout->addWidget(yShiftWidget, 0);
-    centralBlockLayout->addWidget(zShiftWidget, 0);
-    centralBlockLayout->addWidget(tShiftWidget, 0);
-    /* ------------- right block --------------- */
+    /* ------------- fix right block elements size --------------- */
     QHBoxLayout *xGlobalCoordLayout = new QHBoxLayout();
+    xGlobalCoordLayout->setSpacing(5);
     xGlobalCoordLayout->setContentsMargins(0,0,0,0);
     xGlobalCoordLayout->addWidget(H0_sbox, 1);
     xGlobalCoordLayout->addWidget(to_label_1, 0);
     xGlobalCoordLayout->addWidget(H1_sbox, 1);
     QHBoxLayout *yGlobalCoordLayout = new QHBoxLayout();
+    yGlobalCoordLayout->setSpacing(5);
     yGlobalCoordLayout->setContentsMargins(0,0,0,0);
     yGlobalCoordLayout->addWidget(V0_sbox, 1);
     yGlobalCoordLayout->addWidget(to_label_2, 0);
     yGlobalCoordLayout->addWidget(V1_sbox, 1);
     QHBoxLayout *zGlobalCoordLayout = new QHBoxLayout();
+    zGlobalCoordLayout->setSpacing(5);
     zGlobalCoordLayout->setContentsMargins(0,0,0,0);
     zGlobalCoordLayout->addWidget(D0_sbox, 1);
     zGlobalCoordLayout->addWidget(to_label_3, 0);
     zGlobalCoordLayout->addWidget(D1_sbox, 1);
     QHBoxLayout *tGlobalCoordLayout = new QHBoxLayout();
+    tGlobalCoordLayout->setSpacing(5);
     tGlobalCoordLayout->setContentsMargins(0,0,0,0);
     tGlobalCoordLayout->addWidget(T0_sbox, 1);
     tGlobalCoordLayout->addWidget(to_label_4, 0);
@@ -835,16 +829,129 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     rightBlockLayout->addLayout(yGlobalCoordLayout, 0);
     rightBlockLayout->addLayout(zGlobalCoordLayout, 0);
     rightBlockLayout->addLayout(tGlobalCoordLayout, 0);
-    /* ------------- FINALIZATION -------------- */
-    global_coordinates_layout->addLayout(leftBlockLayout, 0);
-    global_coordinates_layout->addLayout(centralBlockLayout, 0);
-    global_coordinates_layout->addLayout(rightBlockLayout, 1);
+    /* -------------- put elements into 4x4 grid ----------------- */
+    global_coordinates_layout->addWidget(refSysContainer,   0, 0, 3, 1);
+    global_coordinates_layout->addWidget(frameCoord,        3, 0, 1, 1);
+    global_coordinates_layout->addWidget(xShiftWidget,      0, 1, 1, 1);
+    global_coordinates_layout->addWidget(yShiftWidget,      1, 1, 1, 1);
+    global_coordinates_layout->addWidget(zShiftWidget,      2, 1, 1, 1);
+    global_coordinates_layout->addWidget(tShiftWidget,      3, 1, 1, 1);
+    global_coordinates_layout->addLayout(xGlobalCoordLayout,0, 2, 1, 2);
+    global_coordinates_layout->addLayout(yGlobalCoordLayout,1, 2, 1, 2);
+    global_coordinates_layout->addLayout(zGlobalCoordLayout,2, 2, 1, 2);
+    global_coordinates_layout->addLayout(tGlobalCoordLayout,3, 2, 1, 2);
+
+//    QHBoxLayout* global_coordinates_layout = new QHBoxLayout();
+//    /* ------------- left block ---------------- */
+//    QVBoxLayout* leftBlockLayout = new QVBoxLayout();
+//    QWidget* refSysContainer = new QWidget();
+//    refSysContainer->setFixedWidth(marginLeft);
+//    refSysContainer->setStyleSheet(" border-style: solid; border-width: 1px; border-color: rgb(150,150,150);");
+//    QHBoxLayout* refSysContainerLayout = new QHBoxLayout();
+//    refSysContainerLayout->setContentsMargins(1,1,1,1);
+//    refSysContainerLayout->addWidget(refSys, 1);
+//    refSysContainer->setLayout(refSysContainerLayout);
+//    frameCoord->setFixedWidth(marginLeft);
+//    leftBlockLayout->addWidget(refSysContainer, 0);
+//    leftBlockLayout->addWidget(frameCoord, 0);
+//    leftBlockLayout->setContentsMargins(0,0,0,0);
+//    /* ----------- central block --------------- */
+//    QHBoxLayout *xShiftLayout = new QHBoxLayout();
+//    xShiftLayout->setContentsMargins(0,0,0,0);
+//    int fixedArrowWidth = 25;
+//    traslXneg->setFixedWidth(fixedArrowWidth);
+//    traslXpos->setFixedWidth(fixedArrowWidth);
+//    xShiftLayout->addStretch();
+//    xShiftLayout->addWidget(traslXneg, 0);
+//    xShiftLayout->addWidget(traslXlabel, 0);
+//    xShiftLayout->addWidget(traslXpos, 0);
+//    xShiftLayout->addStretch();
+//    xShiftLayout->setSpacing(5);
+//    QWidget* xShiftWidget = new QWidget();
+//    xShiftWidget->setFixedWidth(marginLeft);
+//    xShiftWidget->setLayout(xShiftLayout);
+//    QHBoxLayout *yShiftLayout = new QHBoxLayout();
+//    yShiftLayout->setContentsMargins(0,0,0,0);
+//    traslYneg->setFixedWidth(fixedArrowWidth);
+//    traslYpos->setFixedWidth(fixedArrowWidth);
+//    yShiftLayout->addStretch();
+//    yShiftLayout->addWidget(traslYneg, 0);
+//    yShiftLayout->addWidget(traslYlabel, 0);
+//    yShiftLayout->addWidget(traslYpos, 0);
+//    yShiftLayout->addStretch();
+//    yShiftLayout->setSpacing(5);
+//    QWidget* yShiftWidget = new QWidget();
+//    yShiftWidget->setFixedWidth(marginLeft);
+//    yShiftWidget->setLayout(yShiftLayout);
+//    QHBoxLayout *zShiftLayout = new QHBoxLayout();
+//    zShiftLayout->setContentsMargins(0,0,0,0);
+//    traslZneg->setFixedWidth(fixedArrowWidth);
+//    traslZpos->setFixedWidth(fixedArrowWidth);
+//    zShiftLayout->addStretch();
+//    zShiftLayout->addWidget(traslZneg, 0);
+//    zShiftLayout->addWidget(traslZlabel, 0);
+//    zShiftLayout->addWidget(traslZpos, 0);
+//    zShiftLayout->addStretch();
+//    zShiftLayout->setSpacing(5);
+//    QWidget* zShiftWidget = new QWidget();
+//    zShiftWidget->setFixedWidth(marginLeft);
+//    zShiftWidget->setLayout(zShiftLayout);
+//    QHBoxLayout *tShiftLayout = new QHBoxLayout();
+//    tShiftLayout->setContentsMargins(0,0,0,0);
+//    traslTneg->setFixedWidth(fixedArrowWidth);
+//    traslTpos->setFixedWidth(fixedArrowWidth);
+//    tShiftLayout->addStretch();
+//    tShiftLayout->addWidget(traslTneg, 0);
+//    tShiftLayout->addWidget(traslTlabel, 0);
+//    tShiftLayout->addWidget(traslTpos, 0);
+//    tShiftLayout->addStretch();
+//    tShiftLayout->setSpacing(5);
+//    QWidget* tShiftWidget = new QWidget();
+//    tShiftWidget->setFixedWidth(marginLeft);
+//    tShiftWidget->setLayout(tShiftLayout);
+//    QVBoxLayout *centralBlockLayout = new QVBoxLayout();
+//    centralBlockLayout->setContentsMargins(0,0,0,0);
+//    centralBlockLayout->addWidget(xShiftWidget, 0);
+//    centralBlockLayout->addWidget(yShiftWidget, 0);
+//    centralBlockLayout->addWidget(zShiftWidget, 0);
+//    centralBlockLayout->addWidget(tShiftWidget, 0);
+//    /* ------------- right block --------------- */
+//    QHBoxLayout *xGlobalCoordLayout = new QHBoxLayout();
+//    xGlobalCoordLayout->setContentsMargins(0,0,0,0);
+//    xGlobalCoordLayout->addWidget(H0_sbox, 1);
+//    xGlobalCoordLayout->addWidget(to_label_1, 0);
+//    xGlobalCoordLayout->addWidget(H1_sbox, 1);
+//    QHBoxLayout *yGlobalCoordLayout = new QHBoxLayout();
+//    yGlobalCoordLayout->setContentsMargins(0,0,0,0);
+//    yGlobalCoordLayout->addWidget(V0_sbox, 1);
+//    yGlobalCoordLayout->addWidget(to_label_2, 0);
+//    yGlobalCoordLayout->addWidget(V1_sbox, 1);
+//    QHBoxLayout *zGlobalCoordLayout = new QHBoxLayout();
+//    zGlobalCoordLayout->setContentsMargins(0,0,0,0);
+//    zGlobalCoordLayout->addWidget(D0_sbox, 1);
+//    zGlobalCoordLayout->addWidget(to_label_3, 0);
+//    zGlobalCoordLayout->addWidget(D1_sbox, 1);
+//    QHBoxLayout *tGlobalCoordLayout = new QHBoxLayout();
+//    tGlobalCoordLayout->setContentsMargins(0,0,0,0);
+//    tGlobalCoordLayout->addWidget(T0_sbox, 1);
+//    tGlobalCoordLayout->addWidget(to_label_4, 0);
+//    tGlobalCoordLayout->addWidget(T1_sbox, 1);
+//    QVBoxLayout *rightBlockLayout = new QVBoxLayout();
+//    rightBlockLayout->setContentsMargins(0,0,0,0);
+//    rightBlockLayout->addLayout(xGlobalCoordLayout, 0);
+//    rightBlockLayout->addLayout(yGlobalCoordLayout, 0);
+//    rightBlockLayout->addLayout(zGlobalCoordLayout, 0);
+//    rightBlockLayout->addLayout(tGlobalCoordLayout, 0);
+//    /* ------------- FINALIZATION -------------- */
+//    global_coordinates_layout->addLayout(leftBlockLayout, 0);
+//    global_coordinates_layout->addLayout(centralBlockLayout, 0);
+//    global_coordinates_layout->addLayout(rightBlockLayout, 1);
     globalCoord_panel->setLayout(global_coordinates_layout);
     #ifndef _USE_NATIVE_FONTS
     globalCoord_panel->setStyle(new QWindowsStyle());
     #endif
 
-    // "Exhaustive scan" panel layout
+    // "Sliding viewer" panel layout
     QHBoxLayout* esPanelLayout = new QHBoxLayout();
     ESbutton->setFixedWidth(marginLeft);
     esPanelLayout->addWidget(ESbutton, 0);
@@ -1155,6 +1262,7 @@ void PMain::resetGUI()
     progressBar->setMaximum(1);         //needed to stop animation on some operating systems
     statusBar->clearMessage();
     statusBar->showMessage("Ready.");
+    this->setCursor(QCursor(Qt::ArrowCursor));
 }
 
 
@@ -1680,6 +1788,7 @@ void PMain::importDone(RuntimeException *ex, qint64 elapsed_time)
                             0, CImport::instance()->getVMapZDim(), 0, CImport::instance()->getVMapTDim()-1, CImport::instance()->getVMapCDim(), 0);
         /**/itm::debug(itm::LEV_MAX, "showing CExplorerWindow", __itm__current__function__);
         new_win->show();
+        new_win->isReady = true;
 
         helpBox->setText(HTbase);
 
@@ -1887,9 +1996,9 @@ void PMain::traslTposClicked()
     {
         int newT0 = expl->volT0 + (expl->volT1-expl->volT0)*(100-CSettings::instance()->getTraslT())/100.0f;
         int newT1 = newT0 + (Tdim_sbox->value()-1);
-        if(newT1 >= CImport::instance()->getVolumeTDim())
+        if(newT1 >= CImport::instance()->getTDim())
         {
-            newT1 = CImport::instance()->getVolumeTDim() - 1;
+            newT1 = CImport::instance()->getTDim() - 1;
             newT0 = newT1 - (Tdim_sbox->value()-1);
         }
         expl->newView((expl->volH1-expl->volH0)/2,
@@ -2093,15 +2202,22 @@ void PMain::debugAction1Triggered()
 {
     /**/itm::debug(itm::LEV1, 0, __itm__current__function__);
 
-    QRect XRectDisplayed(QPoint(10, 0), QPoint(12, 1));
-    QRect XRectVOI(QPoint(12, 0), QPoint(14, 1));
-    QRect intersect = XRectDisplayed.intersected(XRectVOI);
-    int x0a = intersect.left();
-    int x1a = intersect.right();
-    if(intersect.isEmpty())
-        printf("empty intersection\n");
-    else
-        printf("intersection is [%d, %d]\n", x0a, x1a);
+    CExplorerWindow* cur_win = CExplorerWindow::getCurrent();
+
+    // invoke HighRez ROI zoom-in
+    /*cur_win->view3DWidget->getRenderer()->selectMode = Renderer::smCurveCreate1;
+    static_cast<Renderer_gl1*>(cur_win->view3DWidget->getRenderer())->b_addthiscurve = false;
+    static_cast<Renderer_gl1*>(cur_win->view3DWidget->getRenderer())->b_imaging = false;
+    static_cast<Renderer_gl1*>(cur_win->view3DWidget->getRenderer())->b_grabhighrez = true;
+    cur_win->window3D->setCursor(QCursor(Qt::PointingHandCursor));*/
+
+    // marker create
+    cur_win->view3DWidget->getRenderer()->selectMode = Renderer::smMarkerCreate1;
+    static_cast<Renderer_gl1*>(cur_win->view3DWidget->getRenderer())->b_addthismarker = true;
+    cur_win->window3D->setCursor(QCursor(Qt::PointingHandCursor));
+
+    //cur_win->view3DWidget->getRenderer()->endSelectMode();
+
 
 //    #ifdef USE_EXPERIMENTAL_FEATURES
 //    CExplorerWindow* cur_win = CExplorerWindow::getCurrent();
@@ -2269,7 +2385,7 @@ void PMain::curveAspectChanged()
     }
 }
 
-//generate blocks for exhaustive scan
+//generate blocks for sliding viewer
 void PMain::generateESblocks() throw (itm::RuntimeException)
 {
     /**/itm::debug(itm::LEV3, 0, __itm__current__function__);
@@ -2370,7 +2486,7 @@ void PMain::verbosityChanged(int i)
 
     itm::DEBUG = i;
     iim::DEBUG = i;
-    CSettings::instance()->writeSettings();
+//    CSettings::instance()->writeSettings();
 }
 
 void PMain::ESbuttonClicked()
@@ -2403,7 +2519,7 @@ void PMain::ESbuttonClicked()
         // interrupt if trying to start ES mode at the lowest resolution
         if(curWin->volResIndex == 0)
         {
-            QMessageBox::warning(this, "Warning", "Cannot start the \"Exhaustive scan\" mode at the lowest resolution. Please first zoom-in to a higher res.");
+            QMessageBox::warning(this, "Warning", "Cannot start the \"Sliding viewer\" mode at the lowest resolution. Please first zoom-in to a higher res.");
             ESblocks.clear();
             return;
         }
@@ -2411,8 +2527,8 @@ void PMain::ESbuttonClicked()
         // interrupt if ES mode has to be started with just 1 block
         else if(ESblocks.size() < 2)
         {
-            QMessageBox::warning(this, "Warning", "Cannot start the \"Exhaustive scan\" mode. At least 2 blocks are needed. Please change volume resolution (too low) "
-                                 "or your local viewer maximum dimensions (too big)");
+            QMessageBox::warning(this, "Warning", "Cannot start the \"Sliding viewer\" mode. At least 2 blocks are needed. Please change volume resolution (too low) "
+                                 "or your viewer maximum dimensions (too big)");
             ESblocks.clear();
             return;
         }
@@ -2487,7 +2603,7 @@ void PMain::ESbuttonClicked()
     }
 
 
-    // "Exhaustive scan" panel
+    // "Sliding viewer" panel
     ESbutton->setText(start ? "Stop" : "Start");
     ESbutton->setIcon(start ? QIcon(":/icons/stop.png") : QIcon(":/icons/start.png"));
     ESoverlapSpbox->setEnabled(!start);
@@ -2536,10 +2652,15 @@ void PMain::ESblockSpboxChanged(int b)
 void PMain::debugRedirectSTDoutPathEdited(QString s)
 {
     if(s.isEmpty())
+    {
         itm::DEBUG_TO_FILE = false;
+        iim::DEBUG_TO_FILE = false;
+    }
     else
     {
         itm::DEBUG_TO_FILE = true;
         itm::DEBUG_FILE_PATH = s.toStdString();
+        iim::DEBUG_TO_FILE = true;
+        iim::DEBUG_FILE_PATH = s.toStdString();
     }
 }

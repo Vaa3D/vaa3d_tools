@@ -110,12 +110,13 @@ class teramanager::CImport : public QThread
         itm::uint32 getVMapZDim(){return vmapZDim;}
         itm::uint32 getVMapCDim(){return vmapCDim;}
         itm::uint32 getVMapTDim(){return vmapTDim;}
-        itm::uint32 getVolumeTDim(){
+        itm::uint32 getTDim(){
             if(!volumes.empty())
                 return volumes[0]->getDIM_T();
             else
                 return 0;
         }
+        bool is5D(){return getTDim() > 1;}
         int getVMapResIndex()
         {
             for(size_t k=0; k<volumes.size(); k++)
