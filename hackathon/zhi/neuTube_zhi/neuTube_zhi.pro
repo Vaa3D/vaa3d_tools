@@ -5,7 +5,7 @@ CONFIG	+= qt plugin warn_off
 CONFIG	+= x86_64
 VAA3DPATH = ../../../../v3d_external/v3d_main
 INCLUDEPATH	+= $$VAA3DPATH/basic_c_fun
-SRCNEUTUBEPATH = ../../../released_plugins/v3d_plugins/neutube/src_neutube
+SRCNEUTUBEPATH = ../../../released_plugins/v3d_plugins/neurontracing_neutube/src_neutube
 
 INCLUDEPATH += $$SRCNEUTUBEPATH/neurolabi/lib/libpng-1.6.7 $$SRCNEUTUBEPATH/neurolabi/lib/jansson/include
 INCLUDEPATH += $$SRCNEUTUBEPATH/neurolabi/lib/fftw3/include
