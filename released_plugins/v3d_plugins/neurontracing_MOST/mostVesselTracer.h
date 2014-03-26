@@ -47,7 +47,7 @@ public:
 				 V3DPluginCallback2 & v3d,  QWidget * parent) {return true;}
 
         // plugin interface version 2.1 requires plugin version
-        float getPluginVersion() const {return 1.1f;}
+        float getPluginVersion() const {return 1.2f;}
 
 
 };
@@ -114,8 +114,6 @@ public:
 public:
         AdaTDialog()
         {
-
-
             labelx = new QLabel(QObject::tr("x"));
             labely = new QLabel(QObject::tr("y"));
             labelz = new QLabel(QObject::tr("z"));
@@ -161,9 +159,9 @@ public:
             size->setMaximum(5000);size->setMinimum(1);size->setValue(6);
             slipsize->setMaximum(5000);slipsize->setMinimum(1);slipsize->setValue(20);
 
-            resx->setMaximum(100);resx->setMinimum(0.001);resx->setValue(0.35);
-            resy->setMaximum(100);resy->setMinimum(0.001);resy->setValue(0.35);
-            resz->setMaximum(100);resz->setMinimum(0.001);resz->setValue(0.35);
+            resx->setMaximum(100);resx->setMinimum(0.001);resx->setValue(1);
+            resy->setMaximum(100);resy->setMinimum(0.001);resy->setValue(1);
+            resz->setMaximum(100);resz->setMinimum(0.001);resz->setValue(1);
             beginx->setMaximum(10000);beginx->setMinimum(0);beginx->setValue(1);
             beginy->setMaximum(10000);beginy->setMinimum(0);beginy->setValue(1);
             beginz->setMaximum(10000);beginz->setMinimum(0);beginz->setValue(1);
@@ -248,14 +246,10 @@ public:
             down_layout->addLayout(end_layout);
             down_layout->addLayout(distance_layout);
 
-
-
-
             QHBoxLayout *button_layout = new QHBoxLayout;
             button_layout->addStretch();
             button_layout->addWidget(cancel);
             button_layout->addWidget(ok);
-
 
             QVBoxLayout *main_layout = new QVBoxLayout;
             main_layout->addLayout(top_layout);
@@ -281,26 +275,8 @@ public:
             connect(z_select,SIGNAL(clicked(bool)),distancez,SLOT(setEnabled(bool)));
            // connect(ok,SIGNAL(clicked()), this, SLOT(accept()));)
 
-
-
-
-
-
-
-
-
-
-
-
                 //create a dialog
-
-
-
                 setWindowTitle(QString("Change parameters"));
-
-
-
-
         }
 
         ~AdaTDialog(){}
