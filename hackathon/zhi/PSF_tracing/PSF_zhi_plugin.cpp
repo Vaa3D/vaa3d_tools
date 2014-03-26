@@ -39,7 +39,6 @@
 V3DLONG gpiDims_InputImage[3];
 int giNum_of_pixels, giNum_of_Dims_of_Input_Image;
 double *gpdInputImage;
-unsigned char *gpdOriginalImage;
 
 int *gpiData;
 double *gpdWeights_InputImage;
@@ -142,9 +141,6 @@ bool PSF_zhi::dofunc(const QString & func_name, const V3DPluginArgList & input, 
 void autotrace_PSF(V3DPluginCallback2 &callback, QWidget *parent)
 {
 
-    char *strFilename;
-    char *strOutname;
-    char *strUpdateAllKDEInputs;
     int iVolWidth, iVolHeight;
     int iNumber_Of_Elements_in_ProjectedPoints;
     int iIndex;
@@ -154,7 +150,6 @@ void autotrace_PSF(V3DPluginCallback2 &callback, QWidget *parent)
     pthread_t ptThreads[NUM_OF_THREADS_TO_CREATE];
     int iThreadNumber;
     int iRet_Val_Pthread_Create;
-    bool bAll_Threads_Completed_Successfully = TRUE;
 
     v3dhandle curwin = callback.currentImageWindow();
     if (!curwin)
@@ -197,21 +192,6 @@ void autotrace_PSF(V3DPluginCallback2 &callback, QWidget *parent)
     if(!ok1)
         return;
 
-    //gpdOriginalImage = new unsigned char[pagesz];
-
-   /* for(V3DLONG iz = 0; iz < P; iz++)
-    {
-        V3DLONG offsetk = iz*M*N;
-        for(V3DLONG iy = 0; iy < M; iy++)
-        {
-            V3DLONG offsetj = iy*N;
-            for(V3DLONG ix = 0; ix < N; ix++)
-            {
-                gpdOriginalImage[offsetk + offsetj + ix]= data1d[i];
-                i++;
-            }
-        }
-    }*/
     hmirror = 7;
     V3DLONG N_new = N+2*hmirror;
     V3DLONG M_new = M+2*hmirror;
@@ -220,7 +200,6 @@ void autotrace_PSF(V3DPluginCallback2 &callback, QWidget *parent)
 
     V3DLONG i = 0;
 
-    //double *gpdInputImage = new double[pagesz_new];
     gpdInputImage = new double[pagesz_new];
     for(int i = 0; i <pagesz_new ;i++ )
         gpdInputImage[i] = 0;
@@ -234,7 +213,6 @@ void autotrace_PSF(V3DPluginCallback2 &callback, QWidget *parent)
             for(V3DLONG ix = hmirror; ix < N_new-hmirror; ix++)
             {
                 gpdInputImage[offsetk + offsetj + ix] = (double)data1d[i]/255.0;
-                //gpdInputImage[offsetk + offsetj + ix] = data1d[i];
                 i++;
             }
         }
@@ -350,6 +328,8 @@ void autotrace_PSF(V3DPluginCallback2 &callback, QWidget *parent)
              gpdWeights_InputImage, gpdEigVec_Cov_InputImage, gpdEigVal_Cov_InputImage,
             gpdNormP_EigVal,gpiData, "/opt/zhi/Desktop/tmp/", sigma, prepLookUpTableWidth);
 
+    if(gpdInputImage) {delete []gpdInputImage; gpdInputImage = 0;}
+
     printf ("\nBack to maincode.\n");
 
     gaiWindowDims[0] = LOOKUP_TABLE_WIDTH;
@@ -388,33 +368,7 @@ void autotrace_PSF(V3DPluginCallback2 &callback, QWidget *parent)
         pthread_join(ptThreads[iThreadNumber], NULL);
     }
 
-    /*ifstream ifs("/opt/zhi/Desktop/tmp/mex_final_Proj.txt");
-    i = 0;
-    if(ifs.fail())
-    {
-        cout<<"error"<<endl;
-    }
-    while(ifs.good())
-    {
-        ifs>> gpdProjected_Points[i];
-        i++;
-    }
-    ifs.close();
-
-    ifstream ifs2("/opt/zhi/Desktop/tmp/mex_final_Tangential.txt");
-    i = 0;
-    if(ifs2.fail())
-    {
-        cout<<"error"<<endl;
-    }
-    while(ifs2.good())
-    {
-        ifs2>> gpdTangential_Space[i];
-        i++;
-    }
-    ifs2.close();*/
-
-
+    if(gpdEigenVals) {delete []gpdEigenVals; gpdEigenVals = 0;}
     int imsize[3] = {N,M,P};
 
     //tidyvaribales
@@ -467,89 +421,6 @@ void autotrace_PSF(V3DPluginCallback2 &callback, QWidget *parent)
 
     preIntegral(gpdProjected_Points_updated,tangentialSpace_updated,N1,k1,number_points,giNum_of_Dims_of_Input_Image,gpdInputTangDir,gpdInputLocations,W,idx);
 
-
-   /* char saveName[80];
-    char *outputDir = "/opt/zhi/Desktop/tmp/";
-
-    FILE *fp_final_proj, *fp_final_Tangential, *fp_final_EigenVals;
-
-    strcpy(saveName,outputDir);
-    strcat(saveName,"mex_final_Proj2.txt");
-    fp_final_proj = fopen (saveName, "w");
-    if (fp_final_proj == NULL)
-    {
-        printf ("\nCannot create file: mex_final_Proj.txt\n");
-    }
-    for (int iColIter = 0; iColIter < number_points ; iColIter ++)
-    {
-        for (int iRowIter = 0; iRowIter < giNum_of_Dims_of_Input_Image ; iRowIter ++)
-        {
-            fprintf (fp_final_proj, "%g ", gpdProjected_Points_updated[ROWCOL(iRowIter, iColIter, giNum_of_Dims_of_Input_Image)]);
-        }
-        fprintf (fp_final_proj, "\n");
-    }
-    fclose (fp_final_proj);
-
-    strcpy(saveName,outputDir);
-    strcat(saveName,"mex_final_Tangential2.txt");
-    fp_final_Tangential = fopen (saveName, "w");
-    if (fp_final_Tangential == NULL)
-    {
-        printf ("\nCannot create file: mex_final_Tangential.txt\n");
-    }
-    for (int iColIter = 0; iColIter < number_points ; iColIter ++)
-    {
-        for (int iRowIter = 0; iRowIter < giNum_of_Dims_of_Input_Image ; iRowIter ++)
-        {
-            fprintf (fp_final_Tangential, "%g ", tangentialSpace_updated[ROWCOL(iRowIter, iColIter, giNum_of_Dims_of_Input_Image)]);
-        }
-        fprintf (fp_final_Tangential, "\n");
-    }
-    fclose (fp_final_Tangential);
-
-    strcpy(saveName,outputDir);
-    strcat(saveName,"mex_final_EigenVals.txt");
-    fp_final_EigenVals = fopen (saveName, "w");
-    if (fp_final_EigenVals == NULL)
-    {
-        printf ("\nCannot create file: mex_final_EigenVals.txt\n");
-    }
-    for (int iColIter = 0; iColIter < giNum_of_pixels ; iColIter ++)
-    {
-        for (int iRowIter = 0; iRowIter < giNum_of_Dims_of_Input_Image ; iRowIter ++)
-        {
-            fprintf (fp_final_EigenVals, "%g ", gpdEigenVals[ROWCOL(iRowIter, iColIter, giNum_of_Dims_of_Input_Image)]);
-        }
-        fprintf (fp_final_EigenVals, "\n");
-    }
-    fclose (fp_final_EigenVals);*/
-
-
-   /* ifstream xfile;
-    xfile.open("/opt/zhi/Desktop/tmp/X.out");
-    gpdInputLocations = new double[3*161880];
-    if (xfile.is_open())
-    {
-        for(V3DLONG i = 0; i<3*161880; i++)
-        {
-           xfile >> gpdInputLocations[i];
-        }
-    }
-    xfile.close();
-
-
-    ifstream tfile;
-    tfile.open("/opt/zhi/Desktop/tmp/T.out");
-    gpdInputTangDir = new double[3*161880];
-    if (tfile.is_open())
-    {
-        for(V3DLONG i = 0; i<3*161880; i++)
-        {
-           tfile >> gpdInputTangDir[i];
-        }
-    }
-    tfile.close();*/
-
     giNum_of_locations = number_points*k1*N1;
     gpdScores = new double[giNum_of_locations];
     for(iIndex = 0; iIndex < giNum_of_locations; iIndex++)
@@ -557,8 +428,6 @@ void autotrace_PSF(V3DPluginCallback2 &callback, QWidget *parent)
         gpdScores[iIndex] = 0;
     }
 
-
-    int dummy =NUM_OF_THREADS_TO_CREATE;
     for(iThreadNumber = 0; iThreadNumber < NUM_OF_THREADS_TO_CREATE; iThreadNumber++)
     {
         iRet_Val_Pthread_Create = pthread_create(&ptThreads[iThreadNumber], NULL, Thread_ProcessImage_score, (void*)iThreadNumber);
@@ -569,14 +438,14 @@ void autotrace_PSF(V3DPluginCallback2 &callback, QWidget *parent)
         pthread_join(ptThreads[iThreadNumber], NULL);
     }
 
+    if(gpdInputTangDir) {delete []gpdInputTangDir; gpdInputTangDir = 0;}
+    if(gpdInputLocations) {delete []gpdInputLocations; gpdInputLocations = 0;}
 
     double *gpdScores_w = new double[giNum_of_locations];
     for(V3DLONG i = 0; i<number_points*k1*N1; i++)
     {
           gpdScores_w[i] = gpdScores[i]*W[i];
      }
-
-    if(gpdScores) {delete []gpdScores; gpdScores = 0;}
 
     double *D = new double[number_points*k1];
     double sum_w;
@@ -591,7 +460,6 @@ void autotrace_PSF(V3DPluginCallback2 &callback, QWidget *parent)
         D[i] = sum_w;
     }
 
-    if(gpdScores_w) {delete []gpdScores_w; gpdScores_w = 0;}
 
     double *DScore = new double[number_points*number_points];
     for(V3DLONG i = 0; i <number_points*number_points; i++ )
@@ -634,6 +502,7 @@ void autotrace_PSF(V3DPluginCallback2 &callback, QWidget *parent)
         Xnew[i*giNum_of_Dims_of_Input_Image+2] = z1;
 
     }
+
     double *DScore_wRoot = new double[(number_points+1)*(number_points+1)];
      for(V3DLONG i = 0; i < (number_points+1)*(number_points+1); i++)
      {
@@ -648,7 +517,7 @@ void autotrace_PSF(V3DPluginCallback2 &callback, QWidget *parent)
         }
     }
 
-    if(DScore) {delete []DScore; DScore = 0;}
+
     DScore_wRoot[number_points*(number_points+1) + number_points] = eps;
     DScore_wRoot[number_points*(number_points+1) + indmin] = eps;
     DScore_wRoot[indmin*(number_points+1) + number_points] = eps;
@@ -727,37 +596,30 @@ void autotrace_PSF(V3DPluginCallback2 &callback, QWidget *parent)
         }
     }
 
-    if(DX) {delete []DX; DX = 0;}
-    if(Dsp_wRoot) {delete []Dsp_wRoot; Dsp_wRoot = 0;}
+
     double *D_euc = new double[(number_points+1)*(number_points+1)];
+
     graph_all_shortest_paths(Dsp_w, D_euc,number_points+1);
 
+    if(gpdScores) {delete []gpdScores; gpdScores = 0;}
+    if(W) {delete []W; W = 0;}
     if(Dsp_w) {delete []Dsp_w; Dsp_w = 0;}
+    if(D) {delete []D; D = 0;}
+    if(DX) {delete []DX; DX = 0;}
+    if(Dsp_wRoot) {delete []Dsp_wRoot; Dsp_wRoot = 0;}
+    if(DScore_wRoot) {delete []DScore_wRoot; DScore_wRoot = 0;}
+    if(DScore) {delete []DScore; DScore = 0;}
+    if(gpdScores_w) {delete []gpdScores_w; gpdScores_w = 0;}
+    if(gpdProjected_Points_updated) {delete []gpdProjected_Points_updated; gpdProjected_Points_updated=0;}
 
     QString outswc_file = QString(p4DImage->getFileName()) + "_PSF.swc";
     extractTree(D_euc,DX_T_man,Xnew,number_points+1,outswc_file);
 
-   /* char saveName[80];
-    char *outputDir = "/opt/zhi/Desktop/tmp/";
-    FILE *fp_final_score;
 
-    strcpy(saveName,outputDir);
-    strcat(saveName,"mex_final_DX_T_man.txt");
-    fp_final_score = fopen (saveName, "w");
-    if (fp_final_score == NULL)
-    {
-        printf ("\nCannot create file: mex_final_Score.txt\n");
-    }
-    for (int iColIter = 0; iColIter < (number_points+1)*(number_points+1) ; iColIter ++)
-    {
+    if(D_euc) {delete []D_euc; D_euc = 0;}
+    if(DX_T_man) {delete []DX_T_man; DX_T_man = 0;}
+    if(Xnew) {delete []Xnew; Xnew = 0;}
 
-        fprintf (fp_final_score, "%g ", DX_T_man[iColIter]);
-        fprintf (fp_final_score, "\n");
-    }
-    fclose (fp_final_score);*/
-
-    //process the image
-    //ProcessImage(gpdProjected_Points,gpdTangential_Space,gpdEigenVals,giNum_of_Dims_of_Input_Image,giLenLookupTable);
 
     free (gpdWeights_InputImage);
     free (gpdEigVec_Cov_InputImage);
@@ -770,7 +632,6 @@ void autotrace_PSF(V3DPluginCallback2 &callback, QWidget *parent)
 
 }
 
-//void ProcessImage_score(double *gpdScores, double *gpdInputLocations, double *gpdInputTangDir,int giNum_of_locations,int giNum_of_Dims_of_Input_Image, int giLenLookupTable)
 void *Thread_ProcessImage_score (void *ptriThreadNumber) // for pthreads
 {
 
@@ -1399,10 +1260,6 @@ void *Thread_ProcessImage (void *ptriThreadNumber) // for pthreads
 
 void preIntegral(double *gpdProjected_Points_updated,double *tangentialSpace_updated,int N,int k,int number_points,int giNum_of_Dims_of_Input_Image, double *T, double *Y, double *W, int *idx)
 {
-   // double *T = new double[giNum_of_Dims_of_Input_Image*number_points*k*N];
-   // double *Y = new double[giNum_of_Dims_of_Input_Image*number_points*k*N];
-   // double *W = new double[1*number_points*k*N];
-   // int *idx = new int[number_points*k];
     double w[19] = {0.0139,0.0694,0.0694,0.0278,0.0694,0.0694,0.0278,0.0694,0.0694,0.0278,0.0694,0.0694,0.0278,0.0694,0.0694,0.0278,0.0694,0.0694,0.0139};
     double x[19] = {0,0.0461,0.1206,0.1667,0.2127,0.2873,0.3333,0.3794,0.4539,0.5000,0.5461,0.6206,0.6667,0.7127,0.7873,0.8333,0.8794,0.9539,1.0000};
 
@@ -1466,42 +1323,6 @@ void preIntegral(double *gpdProjected_Points_updated,double *tangentialSpace_upd
 
     }
    return;
-  //  if(idx) {delete []idx; idx = 0;}
-
- /*   char saveName[80];
-    char *outputDir = "/opt/zhi/Desktop/tmp/";
-    FILE *fp_final_proj, *fp_final_Tangential;
-
-    strcpy(saveName,outputDir);
-    strcat(saveName,"mex_final_X.txt");
-    fp_final_proj = fopen (saveName, "w");
-    if (fp_final_proj == NULL)
-    {
-        printf ("\nCannot create file: mex_final_Proj.txt\n");
-    }
-    for (int iColIter = 0; iColIter < number_points*k*N ; iColIter ++)
-    {
-        for (int iRowIter = 0; iRowIter < giNum_of_Dims_of_Input_Image ; iRowIter ++)
-        {
-            fprintf (fp_final_proj, "%g ", Y[ROWCOL(iRowIter, iColIter, giNum_of_Dims_of_Input_Image)]);
-        }
-        fprintf (fp_final_proj, "\n");
-    }
-    fclose (fp_final_proj);
-
-    strcpy(saveName,outputDir);
-    strcat(saveName,"mex_final_W.txt");
-    fp_final_Tangential = fopen (saveName, "w");
-    if (fp_final_Tangential == NULL)
-    {
-        printf ("\nCannot create file: mex_final_Tangential.txt\n");
-    }
-    for (int iColIter = 0; iColIter < number_points*k*N ; iColIter ++)
-    {
-        fprintf (fp_final_Tangential, "%g ", W[iColIter]);
-        fprintf (fp_final_Tangential, "\n");
-    }
-    fclose (fp_final_Tangential);*/
 
 }
 

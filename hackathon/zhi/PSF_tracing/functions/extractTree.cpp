@@ -173,6 +173,7 @@ void extractTree (double *D_euc, double *DX,double *Xnew,int indori, QString out
 
 
                 }
+
                 else
                 {
                     int traced_length_all_old = traced_length_all;
@@ -203,6 +204,10 @@ void extractTree (double *D_euc, double *DX,double *Xnew,int indori, QString out
                 for(V3DLONG i = 0; i < traced_length_all*3; i++)
                     clu_traced[i] = clu_traced_updated[i];
                 if(clu_traced_updated) {delete []clu_traced_updated; clu_traced_updated = 0 ;}
+
+                if(Dbr2br) {delete []Dbr2br; Dbr2br = 0;}
+                if(Mbr2br) {delete []Mbr2br; Mbr2br = 0;}
+                if(curr_trace) {delete []curr_trace; curr_trace = 0;}
 
             }
             else
@@ -254,37 +259,21 @@ void extractTree (double *D_euc, double *DX,double *Xnew,int indori, QString out
                         j++;
                     }
                 }
+                if(D) {delete []D; D = 0;}
              }
             else
-               break;
+            {
+              if(D) {delete []D; D = 0;}
+              break;
+            }
         }
         else
             break;
     }
 
-
-  /*  char saveName[80];
-    char *outputDir = "/opt/zhi/Desktop/tmp/";
-
-    FILE *fp_final_proj;
-
-    strcpy(saveName,outputDir);
-    strcat(saveName,"clu_traced.txt");
-    fp_final_proj = fopen (saveName, "w");
-    if (fp_final_proj == NULL)
-    {
-        printf ("\nCannot create file: mex_final_Proj.txt\n");
-    }
-    for (int iColIter = 0; iColIter < traced_length_all ; iColIter ++)
-    {
-        for (int iRowIter = 0; iRowIter < 3 ; iRowIter ++)
-        {
-            fprintf (fp_final_proj, "%g ", clu_traced[iColIter*3 + iRowIter]);
-        }
-        fprintf (fp_final_proj, "\n");
-    }
-    fclose (fp_final_proj);*/
-
+    if(clu_indCi) {delete []clu_indCi; clu_indCi=0;}
+    if(clu_traced_updated) {delete []clu_traced_updated; clu_traced_updated=0;}
+    if(clu_current) {delete []clu_current; clu_current = 0;}
       //NeutronTree structure
 
     NeuronTree PSF_swc;
@@ -338,6 +327,7 @@ void extractTree (double *D_euc, double *DX,double *Xnew,int indori, QString out
 
     writeSWC_file(output_name.toStdString().c_str(),PSF_swc);
 
+    if(clu_traced) {delete []clu_traced; clu_traced=0;}
 
      return;
 }
