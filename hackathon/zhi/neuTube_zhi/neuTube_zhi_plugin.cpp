@@ -856,31 +856,53 @@ bool autotrace(const V3DPluginArgList & input, V3DPluginArgList & output,V3DPlug
 
     QString outswc_file = QString(inimg_file) + "_neutube.swc";
 
+    FILE *tube_fp = fopen(outswc_file.toStdString().c_str(), "w");
+    int start_id = 1;
+    for (i = 0; i < nchain; i++)
+    {
+        if (chain[i] != NULL && Locseg_Chain_Length(chain[i]) > 0)
+        {
+            if(confidence(chain[i],stack) > 0.5)
+            {
+                  int n = Locseg_Chain_Swc_Fprint_T(tube_fp,chain[i],2, start_id,-1, DL_FORWARD, 1.0, NULL);
+                  start_id += n;
+            }
+        }
+    }
+    fclose(tube_fp);
+
     if(p)
     {
-            Swc_Tree *rawTree = swcReconstruction(chain,nchain,stack);
-            if (rawTree != NULL)
+            Swc_Tree *tree =  Read_Swc_Tree(outswc_file.toStdString().c_str());
+            if(tree != NULL)
             {
-              Write_Swc_Tree(outswc_file.toStdString().c_str(), rawTree);
-              Kill_Swc_Tree(rawTree);
-            }
-        }
-    else
-    {
-        FILE *tube_fp = fopen(outswc_file.toStdString().c_str(), "w");
-        int start_id = 1;
-        for (i = 0; i < nchain; i++)
-        {
-            if (chain[i] != NULL && Locseg_Chain_Length(chain[i]) > 0)
-            {
-                if(confidence(chain[i],stack) > 0.5)
-                {
-                      int n = Locseg_Chain_Swc_Fprint_T(tube_fp,chain[i],2, start_id,-1, DL_FORWARD, 1.0, NULL);
-                      start_id += n;
+                Swc_Tree_Node *tn = NULL;
+                Swc_Tree_Node *tmp_tn = NULL;
+
+                Swc_Tree_Iterator_Start(tree, 2, FALSE);
+                tn = Swc_Tree_Next(tree);
+                while ((tmp_tn = Swc_Tree_Next(tree)) != NULL) {
+                  if (Swc_Tree_Node_Data(tmp_tn)->d > Swc_Tree_Node_Data(tn)->d) {
+                    tn = tmp_tn;
+                  }
                 }
+
+                if (tn != NULL) {
+                  Swc_Tree_Node_Set_Root(tn);
+                }
+                Swc_Tree_Remove_Zigzag(tree);
+                Swc_Tree_Tune_Branch(tree);
+                Swc_Tree_Remove_Spur(tree);
+                Swc_Tree_Merge_Close_Node(tree, 0.01);
+
+                Swc_Tree_Remove_Overshoot(tree);
+                Swc_Tree_Resort_Id(tree);
+
+                Swc_Tree_Reconnect(tree, 1.0, 20.0);
+                Write_Swc_Tree(outswc_file.toStdString().c_str(),tree);
+                Kill_Swc_Tree(tree);
+
             }
-        }
-        fclose(tube_fp);
     }
 
 
