@@ -1,6 +1,7 @@
 /* eswc_converter_func.cpp
  * This is a plugin to convert between swc and eswc.
  * 2012-02-16 : by Yinan Wan
+ * 2014-03-27 : added comments for ESWC in help doc
  */
 
 #include <v3d_interface.h>
@@ -466,7 +467,9 @@ int check_eswc_toolbox(const V3DPluginArgList & input)
 
 void printHelp()
 {
-	cout<<"\nEnhanced SWC Format Converter: convert file format between .swc and .eswc  12-05-04 by Yinan Wan"<<endl;
+	cout<<"\nEnhanced SWC Format Converter: convert file format between .swc and .eswc"<<endl;
+	cout<<"ESWC is an SWC format with 3 extended colums: segment_id, level and customized feature_values in addition to the 7 column swc files"<<endl;
+	cout<<"12-05-04 by Yinan Wan"<<endl;
 	cout<<"Usage: v3d -x eswc_converter -f <function_name> -i <input_file> -o <output_file>"<<endl;
 	cout<<"Parameters:"<<endl;
 	cout<<"\t-f <function_name> option 1-swc_to_eswc: convert swc to eswc"<<endl;

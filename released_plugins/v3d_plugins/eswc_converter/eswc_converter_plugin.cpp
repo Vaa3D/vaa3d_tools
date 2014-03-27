@@ -43,7 +43,7 @@ void ESWCPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, 
 	}
 	else
 	{
-		v3d_msg(tr("This is a plugin to convert between swc and eswc. "
+		v3d_msg(tr("This is a plugin to convert between swc and eswc. ESWC is an extended format of swc with 3 added colums (segment_id, level and customized feature_value) to the original 7-column swc file"
 			"Developed by Yinan Wan, 2012-02-16"));
 	}
 }
