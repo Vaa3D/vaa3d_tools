@@ -220,5 +220,5 @@ SOURCES += ./src/core/VolumeConverter/resumer.cpp
 
 #set up your own target
 TARGET	= $$qtLibraryTarget(teramanagerplugin)
-#DESTDIR	= $$V3DBUILDPATH/../v3d/Windows_MSVC_64_release/plugins/teramanager
+#DESTDIR = $$V3DBUILDPATH/../v3d/Windows_MSVC_64_release/plugins/teramanager
 DESTDIR	= ../../../bin/plugins/teramanager

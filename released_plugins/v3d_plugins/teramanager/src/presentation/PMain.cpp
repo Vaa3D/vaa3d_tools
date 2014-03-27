@@ -30,6 +30,7 @@
 #include "PDialogImport.h"
 #include "PAbout.h"
 #include "PLog.h"
+#include "PAnoToolBar.h"
 #include "../control/CImport.h"
 #include "../control/CVolume.h"
 #include "../control/CSettings.h"
@@ -112,6 +113,7 @@ void PMain::uninstance()
     CSettings::uninstance();
     CAnnotations::uninstance();
     PLog::uninstance();
+    PAnoToolBar::uninstance();
     if(uniqueInstance)
         delete uniqueInstance;
     uniqueInstance = 0;
@@ -2202,6 +2204,8 @@ void PMain::debugAction1Triggered()
 {
     /**/itm::debug(itm::LEV1, 0, __itm__current__function__);
 
+    PAnoToolBar::instance(this)->show();
+
     CExplorerWindow* cur_win = CExplorerWindow::getCurrent();
 
     // invoke HighRez ROI zoom-in
@@ -2212,9 +2216,9 @@ void PMain::debugAction1Triggered()
     cur_win->window3D->setCursor(QCursor(Qt::PointingHandCursor));*/
 
     // marker create
-    cur_win->view3DWidget->getRenderer()->selectMode = Renderer::smMarkerCreate1;
-    static_cast<Renderer_gl1*>(cur_win->view3DWidget->getRenderer())->b_addthismarker = true;
-    cur_win->window3D->setCursor(QCursor(Qt::PointingHandCursor));
+//    cur_win->view3DWidget->getRenderer()->selectMode = Renderer::smMarkerCreate1;
+//    static_cast<Renderer_gl1*>(cur_win->view3DWidget->getRenderer())->b_addthismarker = true;
+//    cur_win->window3D->setCursor(QCursor(Qt::PointingHandCursor));
 
     //cur_win->view3DWidget->getRenderer()->endSelectMode();
 
