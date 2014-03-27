@@ -368,7 +368,7 @@ void autotrace_PSF(V3DPluginCallback2 &callback, QWidget *parent)
         pthread_join(ptThreads[iThreadNumber], NULL);
     }
 
-    int iColIter,iRowIter;
+   /* int iColIter,iRowIter;
     FILE  *fp_final_vectors, *fp_final_lambda;
     char saveName[80];
     strcpy(saveName,"/opt/zhi/Desktop/tmp/");
@@ -404,7 +404,7 @@ void autotrace_PSF(V3DPluginCallback2 &callback, QWidget *parent)
         }
         fprintf (fp_final_vectors, "\n");
     }
-    fclose (fp_final_vectors);
+    fclose (fp_final_vectors);*/
 
 
     printf("Projections is done!\n\n");
