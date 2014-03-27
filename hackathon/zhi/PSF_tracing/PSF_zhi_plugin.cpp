@@ -141,9 +141,9 @@ bool PSF_zhi::dofunc(const QString & func_name, const V3DPluginArgList & input, 
 void autotrace_PSF(V3DPluginCallback2 &callback, QWidget *parent)
 {
 
-    int iVolWidth, iVolHeight;
-    int iNumber_Of_Elements_in_ProjectedPoints;
-    int iIndex;
+    V3DLONG iVolWidth, iVolHeight;
+    V3DLONG iNumber_Of_Elements_in_ProjectedPoints;
+    V3DLONG iIndex;
     double sigma = 3;
     int prepLookUpTableWidth;
 
@@ -368,20 +368,64 @@ void autotrace_PSF(V3DPluginCallback2 &callback, QWidget *parent)
         pthread_join(ptThreads[iThreadNumber], NULL);
     }
 
+    int iColIter,iRowIter;
+    FILE  *fp_final_vectors, *fp_final_lambda;
+    char saveName[80];
+    strcpy(saveName,"/opt/zhi/Desktop/tmp/");
+    strcat(saveName,"mex_final_gpdProjected.txt");
+    fp_final_lambda = fopen (saveName, "w");
+    if (fp_final_lambda == NULL)
+    {
+        printf ("\nCannot create file: mex_final_lambda.txt\n");
+    }
+    for (iColIter = 0; iColIter < giNum_of_pixels ; iColIter ++)
+    {
+        for (iRowIter = 0; iRowIter < giNum_of_Dims_of_Input_Image ; iRowIter ++)
+        {
+            fprintf (fp_final_lambda, "%g ", gpdProjected_Points[ROWCOL(iRowIter, iColIter, giNum_of_Dims_of_Input_Image)]);
+        }
+        fprintf (fp_final_lambda, "\n");
+    }
+    fclose (fp_final_lambda);
+
+
+    strcpy(saveName,"/opt/zhi/Desktop/tmp/");
+    strcat(saveName,"mex_final_gpdTangential.txt");
+    fp_final_vectors = fopen (saveName, "w");
+    if (fp_final_vectors == NULL)
+    {
+        printf ("\nCannot create file: mex_final_vectors.txt\n");
+    }
+    for (iColIter = 0; iColIter < giNum_of_pixels ; iColIter ++)
+    {
+        for (iRowIter = 0; iRowIter < giNum_of_Dims_of_Input_Image ; iRowIter ++)
+        {
+             fprintf (fp_final_lambda, "%g ", gpdTangential_Space[ROWCOL(iRowIter, iColIter, giNum_of_Dims_of_Input_Image)]);
+        }
+        fprintf (fp_final_vectors, "\n");
+    }
+    fclose (fp_final_vectors);
+
+
+    printf("Projections is done!\n\n");
+
     if(gpdEigenVals) {delete []gpdEigenVals; gpdEigenVals = 0;}
     int imsize[3] = {N,M,P};
 
     //tidyvaribales
     double prjs;
     int number_points = 0;
-    int index_points[giNum_of_pixels];
+    int *index_points;
+    index_points = new int[giNum_of_pixels];
+    for(int i = 0; i < giNum_of_pixels; i++)
+        index_points[i] = 0;
     int flag;
     for (int iColIter = 0; iColIter < giNum_of_pixels ; iColIter ++)
     {
         flag = 0;
         for (int iRowIter = 0; iRowIter < giNum_of_Dims_of_Input_Image ; iRowIter ++)
         {
-           prjs = gpdProjected_Points[ROWCOL(iRowIter, iColIter, giNum_of_Dims_of_Input_Image)]-hmirror;
+           prjs = gpdProjected_Points[ROWCOL(iRowIter, iColIter, giNum_of_Dims_of_Input_Image)]-(double)hmirror;
            if(prjs > 0.5 && (prjs + 0.5) < imsize[iRowIter])
            {
                flag ++;
@@ -402,7 +446,7 @@ void autotrace_PSF(V3DPluginCallback2 &callback, QWidget *parent)
         int iColIter = index_points[index];
         for (int iRowIter = 0; iRowIter < giNum_of_Dims_of_Input_Image ; iRowIter ++)
         {
-            gpdProjected_Points_updated[i] = gpdProjected_Points[ROWCOL(iRowIter, iColIter, giNum_of_Dims_of_Input_Image)]-hmirror;
+            gpdProjected_Points_updated[i] = gpdProjected_Points[ROWCOL(iRowIter, iColIter, giNum_of_Dims_of_Input_Image)]-(double)hmirror;
             tangentialSpace_updated[i] = gpdTangential_Space[ROWCOL(iRowIter, iColIter, giNum_of_Dims_of_Input_Image)];
             i++;
         }
@@ -611,6 +655,7 @@ void autotrace_PSF(V3DPluginCallback2 &callback, QWidget *parent)
     if(DScore) {delete []DScore; DScore = 0;}
     if(gpdScores_w) {delete []gpdScores_w; gpdScores_w = 0;}
     if(gpdProjected_Points_updated) {delete []gpdProjected_Points_updated; gpdProjected_Points_updated=0;}
+    if(index_points) {delete []index_points; index_points = 0;}
 
     QString outswc_file = QString(p4DImage->getFileName()) + "_PSF.swc";
     extractTree(D_euc,DX_T_man,Xnew,number_points+1,outswc_file);
@@ -1003,7 +1048,7 @@ void *Thread_ProcessImage (void *ptriThreadNumber) // for pthreads
             {
                 continue;
             }
-             printf("current wieght is %f\n",dImagePixelWeight);
+           //  printf("current weight is %f\n",dImagePixelWeight);
             iUpdatedImagePixelIterator = iImagePixelIterator;
             //-------------------------------------------------------------------------------------------------------------------------------------------------
             dImagePixelWeight = gpdWeights_InputImage[iImagePixelIterator]; // weights(jj)
@@ -1263,9 +1308,16 @@ void preIntegral(double *gpdProjected_Points_updated,double *tangentialSpace_upd
     double w[19] = {0.0139,0.0694,0.0694,0.0278,0.0694,0.0694,0.0278,0.0694,0.0694,0.0278,0.0694,0.0694,0.0278,0.0694,0.0694,0.0278,0.0694,0.0694,0.0139};
     double x[19] = {0,0.0461,0.1206,0.1667,0.2127,0.2873,0.3333,0.3794,0.4539,0.5000,0.5461,0.6206,0.6667,0.7127,0.7873,0.8333,0.8794,0.9539,1.0000};
 
-    double dist_1D[number_points];
-    int index_ID[number_points];
-    int hmirror = 7;
+    double *dist_1D  = new double[number_points];
+    for(int i = 0; i <number_points; i++)
+        dist_1D[i] = 0;
+
+
+    int *index_ID = new int[number_points];
+    for(int i = 0; i <number_points; i++)
+        index_ID[i] = 0;
+
+    double hmirror = 7.0;
     for(int i = 0; i < number_points;i++)
     {
         double x1 = gpdProjected_Points_updated[(ROWCOL(0, i, giNum_of_Dims_of_Input_Image))];
@@ -1322,6 +1374,9 @@ void preIntegral(double *gpdProjected_Points_updated,double *tangentialSpace_upd
         }
 
     }
+
+    if(dist_1D) {delete []dist_1D; dist_1D = 0;}
+    if(index_ID) {delete []index_ID; index_ID = 0;}
    return;
 
 }
@@ -1329,7 +1384,7 @@ void preIntegral(double *gpdProjected_Points_updated,double *tangentialSpace_upd
 void  graph_all_shortest_paths(double *inputMatrix, double *disMatrix, int n)
 {
 
-    double dist[n];
+    double *dist = new double[n];
 
     for(int i = 0; i < n; i++)
     {
@@ -1338,7 +1393,7 @@ void  graph_all_shortest_paths(double *inputMatrix, double *disMatrix, int n)
        for(int j = 0; j < n; j++)
            disMatrix[j + n*i] = dist[j];
     }
-
+    if(dist) {delete []dist; dist = 0;}
     return;
 
 }
@@ -1348,7 +1403,7 @@ void dijkstra(double *graph, int V, int src, double *dist)
 //     double dist[V];     // The output array.  dist[i] will hold the shortest
                       // distance from src to i
 
-     bool sptSet[V]; // sptSet[i] will true if vertex i is included in shortest
+     bool *sptSet = new bool[V]; // sptSet[i] will true if vertex i is included in shortest
                      // path tree or shortest distance from src to i is finalized
 
      // Initialize all distances as INFINITE and stpSet[] as false
@@ -1380,6 +1435,9 @@ void dijkstra(double *graph, int V, int src, double *dist)
             dist[v] = dist[u] + graph[v*V+u];
        }
      }
+
+     if(sptSet) {delete []sptSet; sptSet = 0;}
+     return;
 
      // print the constructed distance array
 }

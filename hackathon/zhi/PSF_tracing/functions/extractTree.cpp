@@ -57,7 +57,7 @@ void extractTree (double *D_euc, double *DX,double *Xnew,int indori, QString out
         if(leafCi !=-1)
         {
             printf("t is %d, src is %d, des is %d\n", t,indori-1,leafCi);
-            int path[indori];
+            int *path = new int[indori];
             for(int i = 0; i <indori; i++)
                  path[0] = -1;
                 traced_length = graph_shortest_paths(conn,indori-1,leafCi,indori,path);
@@ -224,7 +224,7 @@ void extractTree (double *D_euc, double *DX,double *Xnew,int indori, QString out
 
 
             }
-
+            if(path) {delete []path; path =0;}
             printf("traced length is %d\n",traced_length_all);
             printf("indCi_length is %d\n",indCi_length);
 
@@ -344,10 +344,10 @@ int graph_shortest_paths(double *conn, int src, int des, int n, int *path)
 
 void dijkstra_path(double *graph, int V, int src, int des, int *path, int &index)
 {
-     double dist[V];     // The output array.  dist[i] will hold the shortest
+     double *dist = new double[V];     // The output array.  dist[i] will hold the shortest
                       // distance from src to i
-     int P[V];
-     bool sptSet[V]; // sptSet[i] will true if vertex i is included in shortest
+     int *P = new int[V];
+     bool *sptSet = new bool[V]; // sptSet[i] will true if vertex i is included in shortest
                      // path tree or shortest distance from src to i is finalized
 
      // Initialize all distances as INFINITE and stpSet[] as false
@@ -398,7 +398,10 @@ void dijkstra_path(double *graph, int V, int src, int des, int *path, int &index
     // printf("index is : %d\n",index);
      path[index] = des;
 
-
+    if(dist) {delete []dist; dist = 0;}
+    if(P) {delete []P; P = 0;}
+    if(sptSet) {delete []sptSet; sptSet = 0;}
+    return;
      // print the constructed distance array
 }
 int minDistance_path(double dist[], bool sptSet[],int V)
