@@ -27,8 +27,15 @@ PAnoToolBar::PAnoToolBar(QWidget *parent) : QWidget(parent)
     layout->addWidget(toolBar);
     layout->setContentsMargins(0,0,0,0);
     toolBar->setStyleSheet("QToolBar{background:qlineargradient(x1: 0, y1: 0, x2: 1, y2: 0,"
-                           "stop: 0 rgb(150,150,150), stop: 1 rgb(190,190,190)); border: 1px solid black}");
+                           "stop: 0 rgb(150,179,214), stop: 1 rgb(199,218,241));"
+                           "border-style: outset;"
+                           "border-width: 2px;"
+                           "border-radius: 5px;"
+                           "border-color: rgb(56,93,138);}");
     setLayout(layout);
+
+//    setStyleSheet("background:transparent;");
+    setAttribute(Qt::WA_TranslucentBackground);
 
     this->setContentsMargins(0,0,0,0);
 

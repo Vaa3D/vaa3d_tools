@@ -47,7 +47,7 @@ class teramanager::PAnoToolBar : public QWidget
 
     protected:
 
-        void PAnoToolBar::mousePressEvent(QMouseEvent *event)
+        void mousePressEvent(QMouseEvent *event)
         {
             if (event->button() == Qt::LeftButton) {
                 dragPosition = event->globalPos() - frameGeometry().topLeft();
@@ -55,7 +55,7 @@ class teramanager::PAnoToolBar : public QWidget
             }
         }
 
-        void PAnoToolBar::mouseMoveEvent(QMouseEvent *event)
+        void mouseMoveEvent(QMouseEvent *event)
         {
             if (event->buttons() & Qt::LeftButton) {
                 move(event->globalPos() - dragPosition);
