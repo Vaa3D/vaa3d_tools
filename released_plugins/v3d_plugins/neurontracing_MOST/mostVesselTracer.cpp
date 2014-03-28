@@ -81,6 +81,7 @@ void set_dialog(V3DPluginCallback2 &v3d, QWidget *parent)
     int z_end;
     int z_distance;
     int pruning_flag;
+    int c;
     QString swcfile;
     int sslip;
     x_flag = 0;
@@ -108,7 +109,7 @@ void set_dialog(V3DPluginCallback2 &v3d, QWidget *parent)
 
     dialog.ds->setText(QString(img->getFileName()) + "_most.swc");
 
-    //need to add channel
+    dialog.channel->setMaximum(img->getCDim()); dialog.channel->setMinimum(1);dialog.channel->setValue(1);
 
     if (dialog.exec()!=QDialog::Accepted)
     return;
@@ -121,7 +122,7 @@ void set_dialog(V3DPluginCallback2 &v3d, QWidget *parent)
         seed_size_all = dialog.size->value();
         sslip = dialog.slipsize->value();
         swcfile = dialog.ds->text();
-
+        c = dialog.channel->value();
 
         QFile file(swcfile);
         if (!file.open(QIODevice::WriteOnly|QIODevice::Text))
@@ -156,7 +157,7 @@ void set_dialog(V3DPluginCallback2 &v3d, QWidget *parent)
         {
             pruning_flag =1;
         }
-        startVesselTracing(v3d,x_flag,y_flag,z_flag,x_begin,x_end,x_distance,y_begin,y_end,y_distance,z_begin,z_end,z_distance,swcfile,sslip,pruning_flag);
+        startVesselTracing(v3d,x_flag,y_flag,z_flag,x_begin,x_end,x_distance,y_begin,y_end,y_distance,z_begin,z_end,z_distance,swcfile,sslip,pruning_flag,c);
 
 
     }
@@ -166,7 +167,7 @@ void set_dialog(V3DPluginCallback2 &v3d, QWidget *parent)
 }
 
 //void startVesselTracing ( V3DPluginCallback2 &v3d, QWidget *parent )
-void startVesselTracing(V3DPluginCallback2 &v3d,int xflag,int yflag,int zflag,int xbegin, int xend,int xdis,int ybegin,int yend,int ydis,int zbegin,int zend,int zdis,QString swcfile,int slipsize,int pruning_flag)
+void startVesselTracing(V3DPluginCallback2 &v3d,int xflag,int yflag,int zflag,int xbegin, int xend,int xdis,int ybegin,int yend,int ydis,int zbegin,int zend,int zdis,QString swcfile,int slipsize,int pruning_flag,int c)
 {
     v3dhandle curwin = v3d.currentImageWindow();
     if (!curwin)
@@ -182,7 +183,7 @@ void startVesselTracing(V3DPluginCallback2 &v3d,int xflag,int yflag,int zflag,in
     LandmarkList seedList = v3d.getLandmark(curwin);
 
     Image4DSimple* oldimg = v3d.getImage(curwin);
-    unsigned char* data1d = oldimg->getRawData();
+    unsigned char* data1d = oldimg->getRawDataAtChannel(c-1);
 
     ImagePixelType pixeltype = oldimg->getDatatype();
     V3DLONG pagesz = oldimg->getTotalUnitNumberPerChannel();
@@ -207,10 +208,6 @@ void startVesselTracing(V3DPluginCallback2 &v3d,int xflag,int yflag,int zflag,in
 
     if ( seedList.isEmpty() )
             {
-
-
-
-
                QTime qtime_seed;
                qtime_seed.start();
                //img.auto_detect_seedz(seedList,img.getZDim()/2);
@@ -253,6 +250,10 @@ void startVesselTracing(V3DPluginCallback2 &v3d,int xflag,int yflag,int zflag,in
      qtime.start();
      vt = img.trace_seed_list(seedList, visited,InitThreshold,res_x_all,res_y_all,res_z_all,swcfile,slipsize,pruning_flag);
      qDebug("  cost time totol= %g sec", qtime.elapsed()*0.001);
+
+     v3d_msg(QString("Now you can drag and drop the generated swc fle [%1] into Vaa3D.").arg(swcfile),1);
+
+
 //    NeuronTree vt_old = v3d.getSWC(curwin);
 
     // visualization

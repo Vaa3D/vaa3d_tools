@@ -76,10 +76,12 @@ public:
         QLabel *detect_seed_seting;
         QLabel *kongge;
         QLabel *save_as;
+        QLabel *label_channel;
 
         QSpinBox *threshould_value;
         QSpinBox *size;
         QSpinBox *slipsize;
+        QSpinBox *channel;
 
         QDoubleSpinBox* resx;
         QDoubleSpinBox* resy;
@@ -130,6 +132,7 @@ public:
             detect_seed_seting = new QLabel(QObject::tr("------------Detect_seed_seting------------"));
             save_as = new QLabel(QObject::tr("save the swc result as:"));
             kongge = new QLabel(QObject::tr("      "));
+            label_channel = new QLabel(QObject::tr("Channel"));
 
             threshould_value = new QSpinBox();
             size = new QSpinBox();
@@ -143,6 +146,8 @@ public:
             distancex = new QSpinBox();
             distancey = new QSpinBox();
             distancez = new QSpinBox();
+
+            channel = new QSpinBox();
 
             resx = new QDoubleSpinBox();
             resy = new QDoubleSpinBox();
@@ -176,6 +181,7 @@ public:
             z_select->setText("z");z_select->setChecked(1);
             pruning->setText("segmentPruning or not");pruning->setChecked(0);
             ds->setText("/tmp/result.swc");
+            channel->setMaximum(3); channel->setMinimum(1);channel->setValue(1);
 
 
             ok     = new QPushButton("OK");
@@ -190,6 +196,9 @@ public:
             QVBoxLayout *slipsize_layout = new QVBoxLayout;
             slipsize_layout->addWidget(slip_size);
             slipsize_layout->addWidget(slipsize);
+            QVBoxLayout *channel_layout = new QVBoxLayout;
+            channel_layout->addWidget(label_channel);
+            channel_layout->addWidget(channel);
 
             QVBoxLayout *res_lab_layout = new QVBoxLayout;
             res_lab_layout->addStretch();
@@ -213,6 +222,7 @@ public:
             top_layout ->addLayout(thred_layout);
             top_layout ->addLayout(size_layout);
             top_layout ->addLayout(slipsize_layout);
+            top_layout ->addLayout(channel_layout);
             top_layout ->addLayout(res_lab_layout);
             top_layout ->addLayout(resx_layout);
             top_layout ->addLayout(resy_layout);
@@ -287,7 +297,7 @@ public:
 
 
 void setSeeds(V3DPluginCallback2 &v3d, QWidget *parent);
-void startVesselTracing(V3DPluginCallback2 &v3d,int xflag,int yflag,int zflag,int xbegin, int xend,int xdis,int ybegin,int yend,int ydis,int zbegin,int zend,int zdis,QString swcfile,int slipsize,int pruning_flag);
+void startVesselTracing(V3DPluginCallback2 &v3d,int xflag,int yflag,int zflag,int xbegin, int xend,int xdis,int ybegin,int yend,int ydis,int zbegin,int zend,int zdis,QString swcfile,int slipsize,int pruning_flag, int c);
 void set_dialog(V3DPluginCallback2 &v3d, QWidget *parent);
 
 
