@@ -122,6 +122,8 @@ use_experimental_features{
     SOURCES += $$V3DMAINPATH/jba/newmat11/newmat8.cpp
     SOURCES += $$V3DMAINPATH/jba/newmat11/newmat9.cpp
     SOURCES += $$V3DMAINPATH/jba/newmat11/newmatex.cpp
+    SOURCES += $$V3DMAINPATH/jba/newmat11/bandmat.cpp       # @ADDED by Alessandro on 2014-03-29: fixed "Failed instantiation" error on Ubuntu 13.10
+    SOURCES += $$V3DMAINPATH/jba/newmat11/myexcept.cpp      # @ADDED by Alessandro on 2014-03-29: fixed "Failed instantiation" error on Ubuntu 13.10
     SOURCES += $$V3DMAINPATH/3drenderer/v3dr_glwidget.cpp
 
     #WARNING! win32 moc*.cxx files locations might be different on your machine!
