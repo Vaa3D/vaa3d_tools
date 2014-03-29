@@ -80,6 +80,9 @@ void RawVolume::init ( ) throw (IOException)
         throw IOException(err_msg);
 	}
 	// fhandle must remain opened since it is a private member of RawVolume 
+    // @FIXED by Alessandro on 2014-03-29: fhandle MUST BE CLOSED, otherwise it is not possible to open more than 1000 files
+    closeRawFile(fhandle);
+    fhandle = 0;
 
 	DIM_V = (uint32) sz[1]; // in raw format first dimension is horizontal
 	DIM_H = (uint32) sz[0];
@@ -178,12 +181,20 @@ uint8 *RawVolume::loadSubvolume_to_UINT8(int V0,int V1, int H0, int H1, int D0, 
 	uint8 *subvol = new uint8[total_buf_size];
 	memset(subvol,0,sizeof(uint8)*total_buf_size);
 
-	char *internal_msg;
+    // @ADDED by Alessandro on 2014-03-29: re-opening the file if needed
+    if(fhandle == 0)
+        fhandle = static_cast<void*>(fopen(file_name, "rb"));
+
+    char *internal_msg=0;
 	if ( (internal_msg = loadRaw2SubStack(fhandle,subvol,sz,H0,V0,D0,H1,V1,D1,datatype,b_swap,header_len)) ) {
 		char err_msg[STATIC_STRINGS_SIZE];
 		sprintf(err_msg,"RawVolume::init: error in loading metadata - %s",internal_msg);
         throw IOException(err_msg);
 	}
+
+    // @FIXED by Alessandro on 2014-03-29: the file MUST be closed, otherwise the maximum number of opened files will be reached
+    closeRawFile(fhandle);
+    fhandle = 0;
 
 	return subvol;
 }
