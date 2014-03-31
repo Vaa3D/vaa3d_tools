@@ -204,8 +204,8 @@ bool SortSWC(QList<NeuronSWC> & neurons, QList<NeuronSWC> & result, V3DLONG newr
 		}
 		(*group)--;
 	}
-    v3d_msg("test!");
-	id[0] = 0;
+
+    id[0] = 0;
 	for (int i=0;i<siz;i++)
 	{
 		numbered[i] = 0;
