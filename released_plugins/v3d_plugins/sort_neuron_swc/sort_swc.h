@@ -204,7 +204,7 @@ bool SortSWC(QList<NeuronSWC> & neurons, QList<NeuronSWC> & result, V3DLONG newr
 		}
 		(*group)--;
 	}
-
+    v3d_msg("test!");
 	id[0] = 0;
 	for (int i=0;i<siz;i++)
 	{
@@ -216,6 +216,7 @@ bool SortSWC(QList<NeuronSWC> & neurons, QList<NeuronSWC> & result, V3DLONG newr
 
 	V3DLONG new_root=root;
 	V3DLONG offset=0;
+    V3DLONG last_id = 0;
 	while (*id<siz)
 	{
 		V3DLONG cnt = 0;
@@ -231,6 +232,7 @@ bool SortSWC(QList<NeuronSWC> & neurons, QList<NeuronSWC> & result, V3DLONG newr
 		S.r = neurons.at(oripos).r;
 		S.type = neurons.at(oripos).type;
 		result.append(S);
+        last_id = S.n;
 		cnt++;
 
 		for (V3DLONG ii=offset+1;ii<(*id);ii++)
@@ -239,17 +241,21 @@ bool SortSWC(QList<NeuronSWC> & neurons, QList<NeuronSWC> & result, V3DLONG newr
 			{
 				if (neworder[ii]!=VOID && neworder[jj]!=VOID && matrix[neworder[ii]][neworder[jj]] ) 
 				{
-					NeuronSWC S;
-					S.n = ii+1;
-					S.pn = jj+1;
-					V3DLONG oripos = idlist.at(neworder[ii]);
-					S.x = neurons.at(oripos).x;
-					S.y = neurons.at(oripos).y;
-					S.z = neurons.at(oripos).z;
-					S.r = neurons.at(oripos).r;
-					S.type = neurons.at(oripos).type;
-					result.append(S);
-					cnt++;
+                    if(last_id != ii+1)
+                    {
+                        NeuronSWC S;
+                        S.n = ii+1;
+                        S.pn = jj+1;
+                        V3DLONG oripos = idlist.at(neworder[ii]);
+                        S.x = neurons.at(oripos).x;
+                        S.y = neurons.at(oripos).y;
+                        S.z = neurons.at(oripos).z;
+                        S.r = neurons.at(oripos).r;
+                        S.type = neurons.at(oripos).type;
+                        result.append(S);
+                        last_id = ii+1;
+                        cnt++;
+                    }
 				}
 			}
 		}
