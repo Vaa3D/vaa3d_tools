@@ -842,112 +842,7 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     global_coordinates_layout->addLayout(yGlobalCoordLayout,1, 2, 1, 2);
     global_coordinates_layout->addLayout(zGlobalCoordLayout,2, 2, 1, 2);
     global_coordinates_layout->addLayout(tGlobalCoordLayout,3, 2, 1, 2);
-
-//    QHBoxLayout* global_coordinates_layout = new QHBoxLayout();
-//    /* ------------- left block ---------------- */
-//    QVBoxLayout* leftBlockLayout = new QVBoxLayout();
-//    QWidget* refSysContainer = new QWidget();
-//    refSysContainer->setFixedWidth(marginLeft);
-//    refSysContainer->setStyleSheet(" border-style: solid; border-width: 1px; border-color: rgb(150,150,150);");
-//    QHBoxLayout* refSysContainerLayout = new QHBoxLayout();
-//    refSysContainerLayout->setContentsMargins(1,1,1,1);
-//    refSysContainerLayout->addWidget(refSys, 1);
-//    refSysContainer->setLayout(refSysContainerLayout);
-//    frameCoord->setFixedWidth(marginLeft);
-//    leftBlockLayout->addWidget(refSysContainer, 0);
-//    leftBlockLayout->addWidget(frameCoord, 0);
-//    leftBlockLayout->setContentsMargins(0,0,0,0);
-//    /* ----------- central block --------------- */
-//    QHBoxLayout *xShiftLayout = new QHBoxLayout();
-//    xShiftLayout->setContentsMargins(0,0,0,0);
-//    int fixedArrowWidth = 25;
-//    traslXneg->setFixedWidth(fixedArrowWidth);
-//    traslXpos->setFixedWidth(fixedArrowWidth);
-//    xShiftLayout->addStretch();
-//    xShiftLayout->addWidget(traslXneg, 0);
-//    xShiftLayout->addWidget(traslXlabel, 0);
-//    xShiftLayout->addWidget(traslXpos, 0);
-//    xShiftLayout->addStretch();
-//    xShiftLayout->setSpacing(5);
-//    QWidget* xShiftWidget = new QWidget();
-//    xShiftWidget->setFixedWidth(marginLeft);
-//    xShiftWidget->setLayout(xShiftLayout);
-//    QHBoxLayout *yShiftLayout = new QHBoxLayout();
-//    yShiftLayout->setContentsMargins(0,0,0,0);
-//    traslYneg->setFixedWidth(fixedArrowWidth);
-//    traslYpos->setFixedWidth(fixedArrowWidth);
-//    yShiftLayout->addStretch();
-//    yShiftLayout->addWidget(traslYneg, 0);
-//    yShiftLayout->addWidget(traslYlabel, 0);
-//    yShiftLayout->addWidget(traslYpos, 0);
-//    yShiftLayout->addStretch();
-//    yShiftLayout->setSpacing(5);
-//    QWidget* yShiftWidget = new QWidget();
-//    yShiftWidget->setFixedWidth(marginLeft);
-//    yShiftWidget->setLayout(yShiftLayout);
-//    QHBoxLayout *zShiftLayout = new QHBoxLayout();
-//    zShiftLayout->setContentsMargins(0,0,0,0);
-//    traslZneg->setFixedWidth(fixedArrowWidth);
-//    traslZpos->setFixedWidth(fixedArrowWidth);
-//    zShiftLayout->addStretch();
-//    zShiftLayout->addWidget(traslZneg, 0);
-//    zShiftLayout->addWidget(traslZlabel, 0);
-//    zShiftLayout->addWidget(traslZpos, 0);
-//    zShiftLayout->addStretch();
-//    zShiftLayout->setSpacing(5);
-//    QWidget* zShiftWidget = new QWidget();
-//    zShiftWidget->setFixedWidth(marginLeft);
-//    zShiftWidget->setLayout(zShiftLayout);
-//    QHBoxLayout *tShiftLayout = new QHBoxLayout();
-//    tShiftLayout->setContentsMargins(0,0,0,0);
-//    traslTneg->setFixedWidth(fixedArrowWidth);
-//    traslTpos->setFixedWidth(fixedArrowWidth);
-//    tShiftLayout->addStretch();
-//    tShiftLayout->addWidget(traslTneg, 0);
-//    tShiftLayout->addWidget(traslTlabel, 0);
-//    tShiftLayout->addWidget(traslTpos, 0);
-//    tShiftLayout->addStretch();
-//    tShiftLayout->setSpacing(5);
-//    QWidget* tShiftWidget = new QWidget();
-//    tShiftWidget->setFixedWidth(marginLeft);
-//    tShiftWidget->setLayout(tShiftLayout);
-//    QVBoxLayout *centralBlockLayout = new QVBoxLayout();
-//    centralBlockLayout->setContentsMargins(0,0,0,0);
-//    centralBlockLayout->addWidget(xShiftWidget, 0);
-//    centralBlockLayout->addWidget(yShiftWidget, 0);
-//    centralBlockLayout->addWidget(zShiftWidget, 0);
-//    centralBlockLayout->addWidget(tShiftWidget, 0);
-//    /* ------------- right block --------------- */
-//    QHBoxLayout *xGlobalCoordLayout = new QHBoxLayout();
-//    xGlobalCoordLayout->setContentsMargins(0,0,0,0);
-//    xGlobalCoordLayout->addWidget(H0_sbox, 1);
-//    xGlobalCoordLayout->addWidget(to_label_1, 0);
-//    xGlobalCoordLayout->addWidget(H1_sbox, 1);
-//    QHBoxLayout *yGlobalCoordLayout = new QHBoxLayout();
-//    yGlobalCoordLayout->setContentsMargins(0,0,0,0);
-//    yGlobalCoordLayout->addWidget(V0_sbox, 1);
-//    yGlobalCoordLayout->addWidget(to_label_2, 0);
-//    yGlobalCoordLayout->addWidget(V1_sbox, 1);
-//    QHBoxLayout *zGlobalCoordLayout = new QHBoxLayout();
-//    zGlobalCoordLayout->setContentsMargins(0,0,0,0);
-//    zGlobalCoordLayout->addWidget(D0_sbox, 1);
-//    zGlobalCoordLayout->addWidget(to_label_3, 0);
-//    zGlobalCoordLayout->addWidget(D1_sbox, 1);
-//    QHBoxLayout *tGlobalCoordLayout = new QHBoxLayout();
-//    tGlobalCoordLayout->setContentsMargins(0,0,0,0);
-//    tGlobalCoordLayout->addWidget(T0_sbox, 1);
-//    tGlobalCoordLayout->addWidget(to_label_4, 0);
-//    tGlobalCoordLayout->addWidget(T1_sbox, 1);
-//    QVBoxLayout *rightBlockLayout = new QVBoxLayout();
-//    rightBlockLayout->setContentsMargins(0,0,0,0);
-//    rightBlockLayout->addLayout(xGlobalCoordLayout, 0);
-//    rightBlockLayout->addLayout(yGlobalCoordLayout, 0);
-//    rightBlockLayout->addLayout(zGlobalCoordLayout, 0);
-//    rightBlockLayout->addLayout(tGlobalCoordLayout, 0);
-//    /* ------------- FINALIZATION -------------- */
-//    global_coordinates_layout->addLayout(leftBlockLayout, 0);
-//    global_coordinates_layout->addLayout(centralBlockLayout, 0);
-//    global_coordinates_layout->addLayout(rightBlockLayout, 1);
+    /* ------------- FINALIZATION -------------- */
     globalCoord_panel->setLayout(global_coordinates_layout);
     #ifndef _USE_NATIVE_FONTS
     globalCoord_panel->setStyle(new QWindowsStyle());
@@ -957,9 +852,7 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     QHBoxLayout* esPanelLayout = new QHBoxLayout();
     ESbutton->setFixedWidth(marginLeft);
     esPanelLayout->addWidget(ESbutton, 0);
-//    ESbutton->setFixedWidth(fixedArrowWidth);
     esPanelLayout->addWidget(ESblockSpbox, 1);
-//    esPanelLayout->addStretch(1);
     esPanelLayout->addWidget(ESmethodCbox, 1);
     esPanelLayout->addWidget(ESoverlapSpbox, 1);
     ESPanel->setLayout(esPanelLayout);
@@ -1118,6 +1011,7 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     connect(controlsResetButton, SIGNAL(clicked()), this, SLOT(resetMultiresControls()));
     connect(ESbutton, SIGNAL(clicked()), this, SLOT(ESbuttonClicked()));
     connect(ESblockSpbox, SIGNAL(valueChanged(int)), this, SLOT(ESblockSpboxChanged(int)));
+    connect(this, SIGNAL(sendProgressBarChanged(int, int, int, const char*)), this, SLOT(progressBarChanged(int, int, int, const char*)), Qt::QueuedConnection);
 
     //reset widgets
     reset();
@@ -2667,4 +2561,27 @@ void PMain::debugRedirectSTDoutPathEdited(QString s)
         iim::DEBUG_TO_FILE = true;
         iim::DEBUG_FILE_PATH = s.toStdString();
     }
+}
+
+
+/**********************************************************************************
+* <sendProgressBarChanged> event handler
+***********************************************************************************/
+void PMain::progressBarChanged(int val, int minutes, int seconds, const char* message)
+{
+    /**/itm::debug(itm::NO_DEBUG, strprintf("val = %d, minutes = %d, seconds = %d, message = %s", val, minutes, seconds, message).c_str(), __itm__current__function__);
+
+    progressBar->setMinimum(0);
+    progressBar->setMaximum(100);
+    progressBar->setValue(val);
+    QString remaining_time = QString::number(minutes);
+    remaining_time.append(" minutes and ");
+    remaining_time.append(QString::number(seconds));
+    remaining_time.append(" seconds remaining");
+    if(message && strlen(message) != 0)
+    {
+        statusBar->showMessage(message + QString(": ") + remaining_time);
+    }
+    else
+        statusBar->showMessage(remaining_time);
 }

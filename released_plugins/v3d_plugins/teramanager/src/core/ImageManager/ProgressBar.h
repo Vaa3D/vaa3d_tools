@@ -69,7 +69,7 @@ class ProgressBar
 		void update(float new_progress_value, const char* new_progress_info);
 		void updateInfo(const char* new_progress_info);
         void setMessage(int level, const char* message);
-		void show();
+        void show(bool toConverter = true);
         void reset();
 };
 

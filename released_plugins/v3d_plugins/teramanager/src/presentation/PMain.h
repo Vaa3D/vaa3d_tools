@@ -284,6 +284,13 @@ class teramanager::PMain : public QWidget
         ***********************************************************************************/
         static void displayToolTip(QWidget* widget, QEvent* event, string msg);
 
+        /**********************************************************************************
+        * Called by algorithms running from different threads.
+        * Emits <sendProgressBarChanged> signal
+        ***********************************************************************************/
+        void emitProgressBarChanged(int val, int minutes, int seconds, const char* message = 0)
+        {emit sendProgressBarChanged(val, minutes, seconds, message);}
+
         //<CExplorerWindow> instances need to access to all members of the current class
         friend class CExplorerWindow;
         friend class myV3dR_GLWidget;
@@ -428,6 +435,19 @@ class teramanager::PMain : public QWidget
         * Called when the corresponding QLineEdit has been edited
         ***********************************************************************************/
         void debugRedirectSTDoutPathEdited(QString s);
+
+        /**********************************************************************************
+        * <sendProgressBarChanged> event handler
+        ***********************************************************************************/
+        void progressBarChanged(int val, int minutes, int seconds, const char* message);
+
+
+    signals:
+
+        /*********************************************************************************
+        * Carries progress bar informations (progress percentage and remaining minutes).
+        **********************************************************************************/
+        void sendProgressBarChanged(int val, int minutes, int seconds, const char* message);
 
 
 };

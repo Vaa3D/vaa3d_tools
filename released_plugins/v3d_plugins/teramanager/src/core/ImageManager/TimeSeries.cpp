@@ -7,6 +7,7 @@
 #include <list>
 #include <typeinfo>
 #include "TimeSeries.h"
+#include "ProgressBar.h"
 
 using namespace std;
 using namespace iim;
@@ -259,6 +260,13 @@ uint8 * TimeSeries::loadSubvolume_to_UINT8(int V0,int V1, int H0, int H1, int D0
                 throw IOException("in TimeSeries::loadSubvolume_to_UINT8(): not all frames have the same active channels");
     }
 
+    // initialize progress bar
+    if(t1 - t0 > 0)
+    {
+        ProgressBar::getInstance()->start("5D data loading from disk");
+        ProgressBar::getInstance()->update(0,"Initializing...");
+        ProgressBar::getInstance()->show();
+    }
 
     // compute subvol dimension
     size_t subvol_frame_size = static_cast<size_t>(H1-H0) * (V1-V0) * (D1-D0) * (frames[0]->getNACtiveChannels());
@@ -272,10 +280,16 @@ uint8 * TimeSeries::loadSubvolume_to_UINT8(int V0,int V1, int H0, int H1, int D0
     catch(...) {  throw IOException("in TimeSeries::loadSubvolume_to_UINT8(): failed to allocate memory for image data"); }
 
     // load data
-    for ( int t=0; t<=t1-t0; t++ ) {
-//        /**/iim::debug(iim::LEV3, strprintf("loading frame %d", t+t0).c_str(), __iim__current__function__);
+    for ( int t=0; t<=t1-t0; t++ )
+    {
+        if(t1 - t0 > 0)
+        {
+            ProgressBar::getInstance()->update( (static_cast<float>(t) / (t1-t0))*100, strprintf("Loading time frame %d/%d", t, t1-t0).c_str());
+            ProgressBar::getInstance()->setMessage(1, strprintf("Loading time frame %d/%d", t, t1-t0).c_str());
+            ProgressBar::getInstance()->show(false);
+        }
+
         uint8* temp_data = frames[t+t0]->loadSubvolume_to_UINT8(V0, V1, H0, H1, D0, D1);
-//        /**/iim::debug(iim::LEV3, strprintf("successfully loaded frame %d", t+t0).c_str(), __iim__current__function__);
         memcpy(subvol_data + t*subvol_frame_size, temp_data, subvol_frame_size*sizeof(uint8));
         delete[] temp_data;
     }

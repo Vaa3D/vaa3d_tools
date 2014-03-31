@@ -32,6 +32,7 @@ using namespace std;
 
 #ifdef _VAA3D_PLUGIN_MODE
 #include "../../presentation/PConverter.h"
+#include "../../presentation/PMain.h"
 #endif
 
 
@@ -99,11 +100,14 @@ void ProgressBar::updateInfo(const char* new_progress_info)
     strcpy(message_level_3,new_progress_info);
 }
 
-void ProgressBar::show()
+void ProgressBar::show(bool toConverter /* = true */)
 {
     #ifdef _VAA3D_PLUGIN_MODE
     int progress_value_int = (int) (progress_value+0.5f);
-    teramanager::PConverter::instance()->emitProgressBarChanged(progress_value_int, minutes_remaining, seconds_remaining%60, message_level_1);
+    if(toConverter)
+        teramanager::PConverter::instance()->emitProgressBarChanged(progress_value_int, minutes_remaining, seconds_remaining%60, message_level_1);
+    else
+        teramanager::PMain::getInstance()->emitProgressBarChanged(progress_value_int, minutes_remaining, seconds_remaining%60, message_level_1);
     #else
     system_CLEAR();
     printf("OPERATION:\t%s\n",this->operation_desc);
