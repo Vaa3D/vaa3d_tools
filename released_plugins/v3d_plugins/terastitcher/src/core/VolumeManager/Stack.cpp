@@ -408,7 +408,7 @@ real_t* Stack::loadImageStack(int first_file, int last_file)
 
 	char base_path[2000];
 	sprintf(base_path, "%s/%s", CONTAINER->getSTACKS_DIR(), DIR_NAME);
-	STACKED_IMAGE=IOManager::loadImageStack(FILENAMES, depth, base_path,first_file, last_file);
+	STACKED_IMAGE=IOManager::loadImageStack(this->FILENAMES, this->DEPTH, base_path,first_file, last_file);
 	return STACKED_IMAGE;
 }
 

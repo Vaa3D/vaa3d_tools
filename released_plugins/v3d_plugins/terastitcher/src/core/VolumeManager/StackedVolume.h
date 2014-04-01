@@ -33,6 +33,11 @@
 #include <sstream>
 #include "MyException.h"
 #include "IOManager.h"
+#include <cstdarg>
+#include <vector>
+#include <sstream>
+#include <limits>
+#include <cstring>
 
 //FORWARD-DECLARATIONS
 struct VHD_triple;
@@ -79,8 +84,8 @@ class StackedVolume
 	public:
 
 		//CONSTRUCTORS-DECONSTRUCTOR
-        StackedVolume(const char* _stacks_dir, ref_sys reference_system, float VXL_1=0, float VXL_2=0, float VXL_3=0, bool overwrite_mdata=false) throw (MyException);
-		StackedVolume(const char *xml_filepath) throw (MyException);
+        StackedVolume(const char* _stacks_dir, ref_sys reference_system, float VXL_1=0, float VXL_2=0, float VXL_3=0, bool overwrite_mdata=false, bool make_n_slices_equal = false) throw (MyException);
+		StackedVolume(const char *xml_filepath, bool make_n_slices_equal = false) throw (MyException);
 		~StackedVolume();
 
 		// ******GET METHODS******
@@ -137,6 +142,32 @@ class StackedVolume
 
 		//returns true if file exists at the given filepath
 		static bool fileExists(const char *filepath)  throw (MyException);
+
+		// print mdata.bin content to stdout
+		static void dumpMData(const char* volumePath) throw (MyException);
+
+		// utility functions
+		// string-based sprintf function
+		inline static std::string strprintf(const std::string fmt, ...){
+			int size = 100;
+			std::string str;
+			va_list ap;
+			while (1) {
+				str.resize(size);
+				va_start(ap, fmt);
+				int n = vsnprintf((char *)str.c_str(), size, fmt.c_str(), ap);
+				va_end(ap);
+				if (n > -1 && n < size) {
+					str.resize(n);
+					return str;
+				}
+				if (n > -1)
+					size = n + 1;
+				else
+					size *= 2;
+			}
+			return str;
+		}
 };
 
 //******* ABSTRACT TYPES DEFINITIONS *******

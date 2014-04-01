@@ -56,7 +56,7 @@ const char* axis_to_str(axis ax)
     else                         return "unknown";
 }
 
-StackedVolume::StackedVolume(const char* _stacks_dir, ref_sys reference_system, float VXL_1, float VXL_2, float VXL_3, bool overwrite_mdata) throw (MyException)
+StackedVolume::StackedVolume(const char* _stacks_dir, ref_sys reference_system, float VXL_1, float VXL_2, float VXL_3, bool overwrite_mdata, bool make_n_slices_equal /*= false*/) throw (MyException)
 {
 	#if VM_VERBOSE > 3
 	printf("\t\t\t\tin StackedVolume::StackedVolume(_stacks_dir=%s, reference_system = {%d,%d,%d}, VXL_1 = %.2f, VXL_2 = %.2f, VXL_3 = %.2f)\n", 
@@ -70,7 +70,7 @@ StackedVolume::StackedVolume(const char* _stacks_dir, ref_sys reference_system, 
     char mdata_filepath[VM_STATIC_STRINGS_SIZE];
     sprintf(mdata_filepath, "%s/%s", stacks_dir, VM_BIN_METADATA_FILE_NAME);
     if(fileExists(mdata_filepath) && !overwrite_mdata)
-            loadBinaryMetadata(mdata_filepath);
+        loadBinaryMetadata(mdata_filepath);
     else
 	{
 		if(reference_system.first == axis_invalid ||  reference_system.second == axis_invalid ||
@@ -80,9 +80,23 @@ StackedVolume::StackedVolume(const char* _stacks_dir, ref_sys reference_system, 
 		applyReferenceSystem(reference_system, VXL_1, VXL_2, VXL_3);
 		saveBinaryMetadata(mdata_filepath);
 	}
+
+	// check all stacks have the same number of slices (@ADDED by Alessandro on 2014-03-06)
+	for(int i=0; i<N_ROWS; i++)
+		for(int j=0; j<N_COLS; j++)
+		{
+			if(STACKS[i][j]->getDEPTH() != N_SLICES)
+			{
+				if(make_n_slices_equal)
+					N_SLICES = min(N_SLICES, STACKS[i][j]->getDEPTH());
+				else
+					throw MyException(strprintf("in StackedVolume::StackedVolume(): unequal number of slices detected. Stack \"%s\" has %d, stack \"%s\" has %d",
+				                      STACKS[0][0]->getDIR_NAME(), STACKS[0][0]->getDEPTH(), STACKS[i][j]->getDIR_NAME(), STACKS[i][j]->getDEPTH()).c_str());
+			}
+		}
 }
 
-StackedVolume::StackedVolume(const char *xml_filepath) throw (MyException)
+StackedVolume::StackedVolume(const char *xml_filepath, bool make_n_slices_equal /*= false*/) throw (MyException)
 {
 	#if VM_VERBOSE > 3
 	printf("\t\t\t\tin StackedVolume::StackedVolume(xml_filepath=%s)\n", xml_filepath);
@@ -116,6 +130,20 @@ StackedVolume::StackedVolume(const char *xml_filepath) throw (MyException)
 		initFromXML(xml_filepath);
 		saveBinaryMetadata(mdata_filepath);
 	}
+
+	// check all stacks have the same number of slices (@ADDED by Alessandro on 2014-03-06)
+	for(int i=0; i<N_ROWS; i++)
+		for(int j=0; j<N_COLS; j++)
+		{
+			if(STACKS[i][j]->getDEPTH() != N_SLICES)
+			{
+				if(make_n_slices_equal)
+					N_SLICES = min(N_SLICES, STACKS[i][j]->getDEPTH());
+				else
+					throw MyException(strprintf("in StackedVolume::StackedVolume(): unequal number of slices detected. Stack \"%s\" has %d, stack \"%s\" has %d",
+				                      STACKS[0][0]->getDIR_NAME(), STACKS[0][0]->getDEPTH(), STACKS[i][j]->getDIR_NAME(), STACKS[i][j]->getDEPTH()).c_str());
+			}
+		}
 }
 
 StackedVolume::~StackedVolume()
@@ -1097,4 +1125,267 @@ int StackedVolume::countStitchableStacks(float threshold)
             stitchables += stitchable;
         }
     return stitchables;
+}
+
+// print mdata.bin content to stdout
+void StackedVolume::dumpMData(const char* volumePath) throw (MyException)
+{
+	char mdata_filepath[VM_STATIC_STRINGS_SIZE];
+	sprintf(mdata_filepath, "%s/%s", volumePath, VM_BIN_METADATA_FILE_NAME);
+	
+	FILE* f = fopen(mdata_filepath, "rb");
+	if(!f)
+		throw MyException(strprintf("in StackedVolume::dumpMData(): cannot open metadata binary file at \"%s\"", mdata_filepath).c_str());
+
+	// <str_size> field
+	uint16 str_size = 0;
+	if(fread(&str_size, sizeof(uint16), 1, f) != 1)
+	{
+		fclose(f);
+		throw MyException("in StackedVolume::dumpMData(...): cannot read field <str_size>");
+	}
+	else
+		printf("<str_size> = %d\n", str_size);
+
+	// <stacks_dir>
+	char buffer[VM_STATIC_STRINGS_SIZE];
+	if(fread(buffer, str_size, 1, f) != 1)
+	{
+		fclose(f);
+		throw MyException("in StackedVolume::dumpMData(...): cannot read field <stacks_dir>");
+	}
+	else
+		printf("<stacks_dir> = %s\n", buffer);
+
+	// <VXL_V>
+	float fn = 0.0f;
+	if(fread(&fn, sizeof(float), 1, f) != 1)
+	{
+		fclose(f);
+		throw MyException("in StackedVolume::dumpMData(...): cannot read field <VXL_V>");
+	}
+	else
+		printf("<VXL_V> = %.4f\n", fn);
+
+
+	// <VXL_H>
+	if(fread(&fn, sizeof(float), 1, f) != 1)
+	{
+		fclose(f);
+		throw MyException("in StackedVolume::dumpMData(...): cannot read field <VXL_H>");
+	}
+	else
+		printf("<VXL_H> = %.4f\n", fn);
+
+
+	// <VXL_D>
+	if(fread(&fn, sizeof(float), 1, f) != 1)
+	{
+		fclose(f);
+		throw MyException("in StackedVolume::dumpMData(...): cannot read field <VXL_D>");
+	}
+	else
+		printf("<VXL_D> = %.4f\n", fn);
+
+
+	// <ORG_V>
+	if(fread(&fn, sizeof(float), 1, f) != 1)
+	{
+		fclose(f);
+		throw MyException("in StackedVolume::dumpMData(...): cannot read field <ORG_V>");
+	}
+	else
+		printf("<ORG_V> = %.6f\n", fn);
+
+
+	// <ORG_H>
+	if(fread(&fn, sizeof(float), 1, f) != 1)
+	{
+		fclose(f);
+		throw MyException("in StackedVolume::dumpMData(...): cannot read field <ORG_H>");
+	}
+	else
+		printf("<ORG_H> = %.6f\n", fn);
+
+
+	// <ORG_D>
+	if(fread(&fn, sizeof(float), 1, f) != 1)
+	{
+		fclose(f);
+		throw MyException("in StackedVolume::dumpMData(...): cannot read field <ORG_D>");
+	}
+	else
+		printf("<ORG_D> = %.6f\n", fn);
+
+
+	// <MEC_V>
+	if(fread(&fn, sizeof(float), 1, f) != 1)
+	{
+		fclose(f);
+		throw MyException("in StackedVolume::dumpMData(...): cannot read field <MEC_V>");
+	}
+	else
+		printf("<MEC_V> = %.6f\n", fn);
+
+
+	// <MEC_H>
+	if(fread(&fn, sizeof(float), 1, f) != 1)
+	{
+		fclose(f);
+		throw MyException("in StackedVolume::dumpMData(...): cannot read field <MEC_H>");
+	}
+	else
+		printf("<MEC_H> = %.6f\n", fn);
+
+
+
+	// <N_ROWS>
+	uint16 nrows = 0;
+	if(fread(&nrows, sizeof(uint16), 1, f) != 1)
+	{
+		fclose(f);
+		throw MyException("in StackedVolume::dumpMData(...): cannot read field <N_ROWS>");
+	}
+	else
+		printf("<N_ROWS> = %d\n", nrows);
+
+
+	// <N_COLS>
+	uint16 ncols = 0;
+	if(fread(&ncols, sizeof(uint16), 1, f) != 1)
+	{
+		fclose(f);
+		throw MyException("in StackedVolume::dumpMData(...): cannot read field <N_COLS>");
+	}
+	else
+		printf("<N_COLS> = %d\n", ncols);
+
+
+	// <N_SLICES>
+	uint16 nslices = 0;
+	if(fread(&nslices, sizeof(uint16), 1, f) != 1)
+	{
+		fclose(f);
+		throw MyException("in StackedVolume::dumpMData(...): cannot read field <N_SLICES>");
+	}
+	else
+		printf("<N_SLICES> = %d\n", nslices);
+
+
+	// read stack fields
+	printf("\n");
+	for(int i = 0; i < nrows; i++)
+	{
+		for(int j = 0; j < ncols; j++)
+		{
+			printf("\t----begin Stack (%d,%d)\n", i, j);
+
+			// <HEIGHT>
+			int intn = 0;
+			if(fread(&intn, sizeof(int), 1, f) != 1)
+			{
+				fclose(f);
+				throw MyException("in StackedVolume::dumpMData(...): cannot read field <HEIGHT>");
+			}
+			else
+				printf("\t<HEIGHT> = %d\n", intn);
+
+			// <WIDTH>
+			if(fread(&intn, sizeof(int), 1, f) != 1)
+			{
+				fclose(f);
+				throw MyException("in StackedVolume::dumpMData(...): cannot read field <WIDTH>");
+			}
+			else
+				printf("\t<WIDTH> = %d\n", intn);
+
+			// <DEPTH>
+			int depth = 0;
+			if(fread(&depth, sizeof(int), 1, f) != 1)
+			{
+				fclose(f);
+				throw MyException("in StackedVolume::dumpMData(...): cannot read field <DEPTH>");
+			}
+			else
+				printf("\t<DEPTH> = %d\n", depth);
+
+			// <ABS_V>
+			if(fread(&intn, sizeof(int), 1, f) != 1)
+			{
+				fclose(f);
+				throw MyException("in StackedVolume::dumpMData(...): cannot read field <ABS_V>");
+			}
+			else
+				printf("\t<ABS_V> = %d\n", intn);
+
+			// <ABS_H>
+			if(fread(&intn, sizeof(int), 1, f) != 1)
+			{
+				fclose(f);
+				throw MyException("in StackedVolume::dumpMData(...): cannot read field <ABS_H>");
+			}
+			else
+				printf("\t<ABS_H> = %d\n", intn);
+
+			// <ABS_D>
+			if(fread(&intn, sizeof(int), 1, f) != 1)
+			{
+				fclose(f);
+				throw MyException("in StackedVolume::dumpMData(...): cannot read field <ABS_D>");
+			}
+			else
+				printf("\t<ABS_D> = %d\n", intn);
+
+
+			// <str_size> field
+			if(fread(&str_size, sizeof(uint16), 1, f) != 1)
+			{
+				fclose(f);
+				throw MyException("in StackedVolume::dumpMData(...): cannot read field <str_size>");
+			}
+			else
+				printf("\t<str_size> = %d\n", str_size);
+
+			// <DIR_NAME>
+			if(fread(buffer, str_size, 1, f) != 1)
+			{
+				fclose(f);
+				throw MyException("in StackedVolume::dumpMData(...): cannot read field <DIR_NAME>");
+			}
+			else
+				printf("\t<DIR_NAME> = %s\n\n", buffer);
+
+
+			for(int i = 0; i < depth; i++)
+			{
+				printf("\t\tSlice %d/%d\n", i+1, depth);
+
+				// <str_size> field
+				if(fread(&str_size, sizeof(uint16), 1, f) != 1)
+				{
+					fclose(f);
+					throw MyException("in StackedVolume::dumpMData(...): cannot read field <str_size>");
+				}
+				else
+					printf("\t\t<str_size> = %d\n", str_size);
+
+				// <FILENAME>
+				if(fread(buffer, str_size, 1, f) != 1)
+				{
+					fclose(f);
+					throw MyException("in StackedVolume::dumpMData(...): cannot read field <FILENAME>");
+				}
+				else
+					printf("\t\t<FILENAME> = %s\n", buffer);
+
+				printf("\n");
+			}
+
+
+			printf("\t----end Stack (%d,%d)\n\n", i, j);
+		}
+	}
+
+	fclose(f);
+
 }

@@ -13,8 +13,7 @@
 *       g.iannello@unicampus.it for further details.
 *    2. You agree to appropriately cite this work in your related studies and publications.
 *
-*       Bria, A., et al., (2012) "Stitching Terabyte-sized 3D Images Acquired in Confocal Ultramicroscopy", Proceedings of the 9th IEEE International Symposium on Biomedical Imaging.
-*       Bria, A., Iannello, G., "TeraStitcher - A Tool for Fast 3D Automatic Stitching of Teravoxel-sized Microscopy Images", submitted for publication, 2012.
+*       Bria, A., Iannello, G., "TeraStitcher - A Tool for Fast 3D Automatic Stitching of Teravoxel-sized Microscopy Images", (2012) BMC Bioinformatics, 13 (1), art. no. 316.
 *
 *    3. This material is provided by  the copyright holders (Alessandro Bria  and  Giulio Iannello),  University Campus Bio-Medico and contributors "as is" and any express or implied war-
 *       ranties, including, but  not limited to,  any implied warranties  of merchantability,  non-infringement, or fitness for a particular purpose are  disclaimed. In no event shall the
@@ -35,7 +34,6 @@
 #include <cv.h>
 #include <highgui.h>
 #include <exception>
-#include <stdio.h>
 
 double IOManager::time_IO = 0;
 double IOManager::time_IO_conversions = 0;
@@ -159,7 +157,7 @@ real_t* IOManager::loadImageStack(char **image_filenames,	     int image_filepat
 												 int first_file, int last_file)			   throw (MyException)
 {
 	#if IO_M_VERBOSE > 4
-	printf("\t\t\t\tin IOManager::loadImageStack(..., first_file=%d, last_file=%d)\n",first_file, last_file);
+	printf("\t\t\t\tin IOManager::loadImageStack(..., image_filepaths_size = %d, base_path = %s, first_file=%d, last_file=%d)\n", image_filepaths_size, base_path ? base_path : "null", first_file, last_file);
 	#endif
 
 	//LOCAL VARIABLES
@@ -177,6 +175,9 @@ real_t* IOManager::loadImageStack(char **image_filenames,	     int image_filepat
 	//initializations
 	first_file = (first_file == -1 ? 0						  : first_file);
 	last_file  = (last_file  == -1 ? image_filepaths_size - 1 : last_file );
+	first_file = std::min(first_file, image_filepaths_size-1);
+	last_file = std::min(last_file, image_filepaths_size-1);
+	//printf("[%d, %d]\n", first_file, last_file);
 	scale_factor_16b = 65535.0F;
 	scale_factor_8b  = 255.0F;
 	
