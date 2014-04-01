@@ -65,7 +65,7 @@ class ProgressBar
         ~ProgressBar(){}
 
 
-        void start(const char* new_operation_desc);
+        void start(const char* new_operation_desc, bool toConverter = true);
 		void update(float new_progress_value, const char* new_progress_info);
 		void updateInfo(const char* new_progress_info);
         void setMessage(int level, const char* message);

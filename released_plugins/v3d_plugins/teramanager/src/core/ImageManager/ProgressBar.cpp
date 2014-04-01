@@ -67,7 +67,7 @@ void ProgressBar::reset()
 }
 
 
-void ProgressBar::start(const char *new_operation_desc)
+void ProgressBar::start(const char *new_operation_desc, bool toConverter /* = true */)
 {
     strcpy(this->message_level_2, new_operation_desc);
     this->progress_value=0;
@@ -78,7 +78,10 @@ void ProgressBar::start(const char *new_operation_desc)
 
     #ifdef _VAA3D_PLUGIN_MODE
     int progress_value_int = (int) progress_value;
-    teramanager::PConverter::instance()->emitProgressBarChanged(progress_value_int, 0, 0, new_operation_desc);
+    if(toConverter)
+        teramanager::PConverter::instance()->emitProgressBarChanged(progress_value_int, 0, 0, new_operation_desc);
+    else
+        teramanager::PMain::getInstance()->emitProgressBarChanged(progress_value_int, 0, 0, message_level_1);
     #endif
 }
 

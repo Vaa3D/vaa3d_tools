@@ -263,9 +263,9 @@ uint8 * TimeSeries::loadSubvolume_to_UINT8(int V0,int V1, int H0, int H1, int D0
     // initialize progress bar
     if(t1 - t0 > 0)
     {
-        ProgressBar::getInstance()->start("5D data loading from disk");
+        ProgressBar::getInstance()->start("5D data loading from disk", false);
         ProgressBar::getInstance()->update(0,"Initializing...");
-        ProgressBar::getInstance()->show();
+        ProgressBar::getInstance()->show(false);
     }
 
     // compute subvol dimension

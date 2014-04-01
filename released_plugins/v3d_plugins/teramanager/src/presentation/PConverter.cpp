@@ -37,7 +37,7 @@ using namespace teramanager;
 PConverter* PConverter::uniqueInstance = NULL;
 PConverter* PConverter::instance(V3DPluginCallback *callback, QWidget *parent)
 {
-    if (uniqueInstance == NULL)
+    if (uniqueInstance == 0)
         uniqueInstance = new PConverter(callback, parent);
     return uniqueInstance;
 }

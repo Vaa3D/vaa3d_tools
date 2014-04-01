@@ -98,7 +98,10 @@ PMain* PMain::getInstance()
     if(uniqueInstance)
         return uniqueInstance;
     else
+    {
+        itm::warning("TeraFly not yet instantiated", __itm__current__function__);
         QMessageBox::critical(0,QObject::tr("Error"), QObject::tr("TeraFly not yet instantiated"),QObject::tr("Ok"));
+    }
 }
 
 void PMain::uninstance()
@@ -2569,7 +2572,7 @@ void PMain::debugRedirectSTDoutPathEdited(QString s)
 ***********************************************************************************/
 void PMain::progressBarChanged(int val, int minutes, int seconds, const char* message)
 {
-    /**/itm::debug(itm::NO_DEBUG, strprintf("val = %d, minutes = %d, seconds = %d, message = %s", val, minutes, seconds, message).c_str(), __itm__current__function__);
+    /**/itm::debug(itm::LEV3, strprintf("val = %d, minutes = %d, seconds = %d, message = %s", val, minutes, seconds, message).c_str(), __itm__current__function__);
 
     progressBar->setMinimum(0);
     progressBar->setMaximum(100);
