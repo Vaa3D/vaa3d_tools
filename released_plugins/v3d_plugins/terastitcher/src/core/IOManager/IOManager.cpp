@@ -34,6 +34,7 @@
 #include <cv.h>
 #include <highgui.h>
 #include <exception>
+#include <stdio.h>
 
 double IOManager::time_IO = 0;
 double IOManager::time_IO_conversions = 0;

@@ -88,7 +88,7 @@ StackedVolume::StackedVolume(const char* _stacks_dir, ref_sys reference_system, 
 			if(STACKS[i][j]->getDEPTH() != N_SLICES)
 			{
 				if(make_n_slices_equal)
-					N_SLICES = min(N_SLICES, STACKS[i][j]->getDEPTH());
+                    N_SLICES = std::min(N_SLICES, static_cast<uint16>(STACKS[i][j]->getDEPTH()));
 				else
 					throw MyException(strprintf("in StackedVolume::StackedVolume(): unequal number of slices detected. Stack \"%s\" has %d, stack \"%s\" has %d",
 				                      STACKS[0][0]->getDIR_NAME(), STACKS[0][0]->getDEPTH(), STACKS[i][j]->getDIR_NAME(), STACKS[i][j]->getDEPTH()).c_str());
@@ -138,7 +138,7 @@ StackedVolume::StackedVolume(const char *xml_filepath, bool make_n_slices_equal 
 			if(STACKS[i][j]->getDEPTH() != N_SLICES)
 			{
 				if(make_n_slices_equal)
-					N_SLICES = min(N_SLICES, STACKS[i][j]->getDEPTH());
+                    N_SLICES = std::min(N_SLICES, static_cast<uint16>(STACKS[i][j]->getDEPTH()));
 				else
 					throw MyException(strprintf("in StackedVolume::StackedVolume(): unequal number of slices detected. Stack \"%s\" has %d, stack \"%s\" has %d",
 				                      STACKS[0][0]->getDIR_NAME(), STACKS[0][0]->getDEPTH(), STACKS[i][j]->getDIR_NAME(), STACKS[i][j]->getDEPTH()).c_str());
