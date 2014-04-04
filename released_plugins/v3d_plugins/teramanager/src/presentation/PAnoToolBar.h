@@ -13,6 +13,7 @@ class teramanager::PAnoToolBar : public QWidget
         QToolBar* toolBar;                  //tool bar with buttons
         QToolButton *button1;               //button1
         QToolButton *button2;               //button2
+        QToolButton *button3;               //button3
         QPoint dragPosition;
 
         /*********************************************************************************
