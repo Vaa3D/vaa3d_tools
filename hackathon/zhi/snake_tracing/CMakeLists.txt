@@ -8,8 +8,8 @@ project(snake_tracing)
 find_package(Qt4 REQUIRED)
 include( ${QT_USE_FILE} )
 
-find_package(Boost)
-include_directories ( ${Boost_INCLUDE_DIRS})
+#find_package(Boost)
+#include_directories ( ${Boost_INCLUDE_DIRS})
 
 include(CTest)
 
@@ -28,10 +28,10 @@ if(NOT V3D_BINARY_DIR)
 endif()
 
 
-set (LIBRARY_OUTPUT_PATH /local1/work/v3d_external/bin/plugins/snake_tracing
+set (LIBRARY_OUTPUT_PATH ${V3D_BINARY_DIR}/bin/plugins/snake_tracing
     CACHE INTERNAL "Output directory for the shared libraries.")
 
-set (EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin
+set (EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin/plugins/snake_tracing
     CACHE INTERNAL "Output directory for the executables.")
 
 
@@ -62,7 +62,7 @@ set(PLUGIN_SOURCES snake_tracing_plugin.cpp
 		   TracingCore/ImageOperation.cpp
     			TracingCore/PointOperation.cpp	
     			TracingCore/SnakeOperation.cpp
-			TracingCore/OpenSnakeTracer.cpp
+			OpenSnakeTracer.cpp
 			#ParametersGroup.cpp
 		  ${V3D_BASIC_C_FUN_SOURCE_DIR}/v3d_message.cpp)
 
@@ -71,7 +71,7 @@ Set(PLUGIN_HEADERS	snake_tracing_plugin.h
 		        Rendering/ImageActors.h
     			TracingCore/ImageOperation.h
     			TracingCore/SnakeOperation.h
-			TracingCore/OpenSnakeTracer.h)
+			OpenSnakeTracer.h)
 set(PLUGIN_DIRECTORY_NAME snake_tracing)
 link_libraries( ${ITK_LIBRARIES})
 #set( LIB_DIR /local2/neuron_tracing_comparision/farsight_bin/libs)

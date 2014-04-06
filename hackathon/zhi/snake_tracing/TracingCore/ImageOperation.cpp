@@ -1982,7 +1982,7 @@ void ImageOperation::computeGVF(int noise_level, int num_iteration, int smoothin
         rescale->Update();
         
 		clock.Stop();
-		std::cout << "Rescale Total: " << clock.GetTotal() << std::endl;
+        //std::cout << "Rescale Total: " << clock.GetTotal() << std::endl;
 
 		clock.Start();
         gradientFilter->SetInput(rescale->GetOutput());
@@ -1992,7 +1992,7 @@ void ImageOperation::computeGVF(int noise_level, int num_iteration, int smoothin
         {
             gradientFilter->Update();
 			clock.Stop();
-			std::cout << "Gradient Total: " << clock.GetTotal() << std::endl;
+        //	std::cout << "Gradient Total: " << clock.GetTotal() << std::endl;
         }
         catch( itk::ExceptionObject & err )
         {
@@ -2018,7 +2018,7 @@ void ImageOperation::computeGVF(int noise_level, int num_iteration, int smoothin
             {
                 GVFFilter->Update();
 				clock.Stop();
-				std::cout << "Gradient Vector Flow Total: " << clock.GetTotal() << std::endl;
+            //	std::cout << "Gradient Vector Flow Total: " << clock.GetTotal() << std::endl;
             }
             catch( itk::ExceptionObject & err )
             {

@@ -121,7 +121,7 @@ void SnakeClass::Branch_Adjustment()
 
 void SnakeClass::Expand_Seed_Point(int expand_distance)
 {
-  
+
   Point3D P1, P2;
   Point3D temp_p1, temp_p2;
 
@@ -1000,9 +1000,9 @@ bool SnakeClass::Compute_Seed_Force(int head_tail, int distance)
 void SnakeClass::OpenSnake_Init_4D(float alpha, int ITER, float beta, float kappa, float gamma, int pt_distance)
 {
   //deform the 3 starting point and roughly estimate the radii
+
   float pi = 3.1415926;
   int m = 8;
-  printf("this is zhi!");
    typedef itk::NearestNeighborInterpolateImageFunction< 
                        ImageType, float>  InterpolatorType1;
 
@@ -1012,19 +1012,24 @@ void SnakeClass::OpenSnake_Init_4D(float alpha, int ITER, float beta, float kapp
    int SM = IM->SM;
    int SN = IM->SN;
    int SZ = IM->SZ;
-  
+
    int N = Cu.GetSize();
    vnl_matrix<float> A = makeOpenA(alpha, beta, N);
    vnl_matrix<float> I(N,N);
    I.set_identity();
    vnl_matrix<float> invAI = vnl_matrix_inverse<float>( A + I * gamma);
+   std::cout<<"this is zhi3"<<std::endl;
 
    vnl_vector<float> vnl_Ru(N);
    vnl_Ru.fill(0);
+
+
    for( int j = 0; j < N; j++ )
    {
      vnl_Ru(j) = Ru[j];
    }
+
+   std::cout<<"this is zhi"<<std::endl;
 
   for( int iter = 0; iter < ITER; iter++ )
   {
@@ -1156,7 +1161,7 @@ void SnakeClass::OpenSnake_Init_4D(float alpha, int ITER, float beta, float kapp
 		Cu.Pt[k].check_out_of_range_3D(SM,SN,SZ);
 	}
   }
-   
+
   //resampling
    vnl_Ru = Cu.curveinterp_4D((float)pt_distance, vnl_Ru);
    Ru.clear();
@@ -1961,7 +1966,6 @@ void SnakeClass::OpenSnakeStretch_4D(float alpha, int ITER, int pt_distance, flo
      vnl_Ru(j) = Ru[j];
    }
    
-
    //evolve 4D snake
    for( int iter = 0; iter < ITER; iter++ )
    {
