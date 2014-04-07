@@ -49,13 +49,13 @@ find_package(ITK REQUIRED)
 include( ${ITK_USE_FILE} )
 
 #Find VTK
-find_package(VTK REQUIRED)
-include( ${VTK_USE_FILE} )
+#find_package(VTK REQUIRED)
+#include( ${VTK_USE_FILE} )
 
 #Find VXL
-find_package(VXL REQUIRED)
-set(VXL_PROVIDE_STANDARD_optionS 1)
-include(${VXL_CMAKE_DIR}/UseVXL.cmake)
+#find_package(VXL REQUIRED)
+#set(VXL_PROVIDE_STANDARD_optionS 1)
+#include(${VXL_CMAKE_DIR}/UseVXL.cmake)
  
 
 set(PLUGIN_SOURCES snake_tracing_plugin.cpp

@@ -4,14 +4,14 @@
 
 
 # Configuration directories and files
-SourceDirectory: /home/zhi/work/vaa3d_tools/hackathon/zhi/snake_tracing
-BuildDirectory: /home/zhi/work/vaa3d_tools/hackathon/zhi/snake_tracing
+SourceDirectory: /local1/work/mywork/snake_tracing
+BuildDirectory: /local1/work/mywork/snake_tracing
 
 # Where to place the cost data store
 CostDataFile: 
 
 # Site is something like machine.domain, i.e. pragmatic.crd
-Site: zhi-XPS-8500
+Site: ibs-zhiz-ux1.corp.alleninstitute.org
 
 # Build name is osname-revision-compiler, i.e. Linux-2.4.2-2smp-c++
 BuildName: Linux-c++
@@ -33,17 +33,18 @@ ScpCommand: /usr/bin/scp
 NightlyStartTime: 00:00:00 EDT
 
 # Commands for the build/test/submit cycle
-ConfigureCommand: "/usr/bin/cmake" "/home/zhi/work/vaa3d_tools/hackathon/zhi/snake_tracing"
-MakeCommand: /usr/bin/make -i
+ConfigureCommand: "/usr/local/bin/cmake" "/local1/work/mywork/snake_tracing"
+MakeCommand: /usr/bin/gmake -i
 DefaultCTestConfigurationType: Release
 
 # CVS options
 # Default is "-d -P -A"
-CVSCommand: CVSCOMMAND-NOTFOUND
+CVSCommand: /usr/bin/cvs
 CVSUpdateOptions: -d -A -P
 
 # Subversion options
 SVNCommand: /usr/bin/svn
+SVNOptions: 
 SVNUpdateOptions: 
 
 # Git options
