@@ -156,7 +156,7 @@ real_t* IOManager::loadImageStack(char **image_filenames,	     int image_filepat
 	char slice_fullpath[1000];
 	real_t *image_stack = NULL;
 	int image_stack_width, image_stack_height;
-	int file_i, i, j, k;
+	int file_i, k;
 
 	//initializations
 	first_file = (first_file == -1 ? 0						  : first_file);
@@ -184,7 +184,7 @@ real_t* IOManager::loadImageStack(char **image_filenames,	     int image_filepat
             throw MyException(strprintf("in IOManager::loadImageStack(...): unable to open image \"%s\". Possible unsupported format or it isn't an image.\nSupported formats are BMP, DIB, JPEG, JPG, JPE, PNG, PBM, PGM, PPM, SR, RAS, TIFF, TIF", slice_fullpath).c_str());
 
         // select channel (if requested)
-        if(CHANNEL_SELECTION != ALL)
+        if(image.channels() == 3 && CHANNEL_SELECTION != ALL)
         {
             cv::Mat imageChannels[3];
             cv::split(image, imageChannels);

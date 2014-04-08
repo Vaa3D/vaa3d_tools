@@ -1364,9 +1364,9 @@ void StackedVolume::dumpMData(const char* volumePath) throw (MyException)
 				printf("\t<DIR_NAME> = %s\n\n", buffer);
 
 
-			for(int i = 0; i < depth; i++)
+			for(int k = 0; k < depth; k++)
 			{
-				printf("\t\tSlice %d/%d\n", i+1, depth);
+				printf("\t\tSlice %d/%d\n", k+1, depth);
 
 				// <str_size> field
 				if(fread(&str_size, sizeof(uint16), 1, f) != 1)
