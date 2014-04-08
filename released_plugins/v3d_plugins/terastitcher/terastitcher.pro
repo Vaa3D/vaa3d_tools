@@ -99,6 +99,7 @@ SOURCES += $$V3DMAINPATH/basic_c_fun/basic_surf_objs.cpp
 #set up TeraStitcher tool
 RESOURCES += icons.qrc
 DEFINES += _VAA3D_PLUGIN_MODE
+INCLUDEPATH += ./include
 INCLUDEPATH += ./src/core/IOManager
 INCLUDEPATH += ./src/core/TinyXML
 INCLUDEPATH += ./src/core/CrossMIPs
@@ -178,6 +179,7 @@ SOURCES += ./src/presentation/QPrefixSuffixLineEdit.cpp
 
 #set up target
 TARGET	= $$qtLibraryTarget(terastitcherplugin)
-DESTDIR = ../../v3d/plugins/image_stitching/terastitcher
+DESTDIR	= ../../../bin/plugins/image_stitching/terastitcher
+#DESTDIR = ../../v3d/plugins/image_stitching/terastitcher
 
 

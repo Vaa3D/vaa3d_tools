@@ -32,6 +32,8 @@
 #include <cstdarg>
 #include <vector>
 #include <sstream>
+#include <stdlib.h>
+#include <stdio.h>
 
 /*******************
 *    TYPES         *
