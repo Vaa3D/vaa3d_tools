@@ -141,6 +141,8 @@ PTabImport::PTabImport(QMyTabWidget* _container, int _tab_index) : QWidget(), co
     regex_field = new QLineEdit();
     regex_field->setVisible(false);
     regex_label->setVisible(false);
+    regex_label->setFont(QFont("", 8));
+    regex_field->setFont(QFont("", 8));
     connect(regex_field, SIGNAL(textChanged(QString)), this, SLOT(regexFieldChanged()));
 
     //info panel widgets

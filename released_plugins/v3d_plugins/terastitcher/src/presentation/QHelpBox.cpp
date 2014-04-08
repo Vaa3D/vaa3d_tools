@@ -16,6 +16,10 @@ QHelpBox::QHelpBox(QWidget *_parent) : QWidget(_parent)
     QFont tinyFont = QApplication::font();
     tinyFont.setPointSize(8);
     helpBox->setFont(tinyFont);
+    #else
+    QFont tinyFont = QApplication::font();
+    tinyFont.setPointSize(9);
+    helpBox->setFont(tinyFont);
     #endif
 
     QPixmap pixmap(":/icons/help.png");
