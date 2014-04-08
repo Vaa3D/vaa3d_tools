@@ -159,10 +159,26 @@ void CMergeTiles::run()
         //everything went OK
         emit sendOperationOutcome(0, img);
     }
-    catch( MyException& exception)  {emit sendOperationOutcome(&exception);}
-    catch(const char* error)        {emit sendOperationOutcome(new MyException(error));}
-    catch(std::bad_alloc& ba)       {emit sendOperationOutcome(new MyException(ba.what()));}
-    //catch(...)                    {emit sendOperationOutcome(new MyException("Unkwnown error has occurred"));}
+    catch( MyException& exception)
+    {
+        /**/tsp::warning(strprintf("exception thrown in CMergeTiles::run(): \"%s\"", exception.what()).c_str());
+        emit sendOperationOutcome(new MyException(exception.what()), 0);
+    }
+    catch(const char* error)
+    {
+        /**/tsp::warning(strprintf("exception thrown in CMergeTiles::run(): \"%s\"", error).c_str());
+        emit sendOperationOutcome(new MyException(error), 0);
+    }
+    catch(std::bad_alloc& ba)
+    {
+        /**/tsp::warning(strprintf("exception thrown in CMergeTiles::run(): \"%s\"", ba.what()).c_str());
+        emit sendOperationOutcome(new MyException(ba.what()), 0);
+    }
+    catch(...)
+    {
+        /**/tsp::warning(strprintf("exception thrown in CMergeTiles::run(): \"%s\"", "Generic error").c_str());
+        emit sendOperationOutcome(new MyException("Unable to determine error's type"), 0);
+    }
 }
 
 //reset method

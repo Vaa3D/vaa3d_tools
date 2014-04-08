@@ -91,7 +91,7 @@ class terastitcher::CMergeTiles : public QThread
         /*********************************************************************************
         * Carries the outcome of the operation associated to this thread.
         **********************************************************************************/
-        void sendOperationOutcome(MyException* ex, Image4DSimple* img=0);
+        void sendOperationOutcome(MyException* ex, Image4DSimple* img);
 };
 
 #endif // CMERGETILES_H

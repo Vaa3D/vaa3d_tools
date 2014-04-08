@@ -142,6 +142,7 @@ void PTabPlaceTiles::start()
 
         //asking confirmation to continue when overwriting existing XML file
         if( StackedVolume::fileExists(saveproj_field->text().toStdString().c_str()) &&
+            PMain::instance()->modeAdvancedAction->isChecked() &&
               QMessageBox::information(this, "Warning", "An XML file with the same name was found and it will be overwritten.", "Continue", "Cancel"))
         {
             PMain::instance()->setToReady();
@@ -167,17 +168,19 @@ void PTabPlaceTiles::start()
         volume->saveXML(0, saveproj_field->text().toStdString().c_str());
 
         //showing operation successful message
-        QMessageBox::information(this, "Operation successful", "Step successfully performed!", QMessageBox::Ok);
+        if(PMain::instance()->modeAdvancedAction->isChecked())
+            QMessageBox::information(this, "Operation successful", "Placing step successfully performed!", QMessageBox::Ok);
+
+        //stop animation and reset some widgets
+        stop();
 
         //enabling (and updating) other tabs
         PTabMergeTiles::getInstance()->setEnabled(true);
-
-        stop();
     }
     catch(MyException &ex)
     {
         QMessageBox::critical(this,QObject::tr("Error"), QObject::tr(ex.what()),QObject::tr("Ok"));
-        PMain::instance()->setToReady();
+        stop();
     }
 }
 
@@ -200,9 +203,7 @@ void PTabPlaceTiles::stop()
 ***********************************************************************************/
 void PTabPlaceTiles::setEnabled(bool enabled)
 {
-    #ifdef TSP_DEBUG
-    printf("TeraStitcher plugin [thread %d] >> PTabPlaceTiles setEnabled(%d) called\n", this->thread()->currentThreadId(), enabled);
-    #endif
+    /**/tsp::debug(tsp::LEV_MAX, strprintf("enabled = %s", enabled ? "true" : "false").c_str(), __tsp__current__function__);
 
     //first calling super-class implementation
     QWidget::setEnabled(enabled);

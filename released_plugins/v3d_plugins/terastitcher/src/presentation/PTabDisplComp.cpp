@@ -80,6 +80,18 @@ PTabDisplComp::PTabDisplComp(QMyTabWidget* _container, int _tab_index) : QWidget
     memocc_field = new QLineEdit();
     memocc_field->setReadOnly(true);
     memocc_field->setAlignment(Qt::AlignCenter);
+    channel_selection = new QComboBox();
+    channel_selection->addItem("all channels");
+    channel_selection->addItem("R");
+    channel_selection->addItem("G");
+    channel_selection->addItem("B");
+    channel_selection->setEditable(true);
+    channel_selection->lineEdit()->setReadOnly(true);
+    channel_selection->lineEdit()->setAlignment(Qt::AlignCenter);
+    for(int i = 0; i < channel_selection->count(); i++)
+        channel_selection->setItemData(i, Qt::AlignCenter, Qt::TextAlignmentRole);
+    connect(channel_selection, SIGNAL(currentIndexChanged(int)),this, SLOT(channelSelectedChanged(int)));
+
     showAdvancedButton = new QPushButton(QString("Advanced options ").append(QChar(0x00BB)), this);
     showAdvancedButton->setCheckable(true);
 
@@ -144,11 +156,16 @@ PTabDisplComp::PTabDisplComp(QMyTabWidget* _container, int _tab_index) : QWidget
     basicpanel_layout->addLayout(tmp,                0,1,1,11);
     basicpanel_layout->addWidget(algorithm_label,    1,0,1,1);
     algorithm_cbox->setFixedWidth(150);
+    channel_selection->setFixedWidth(150);
     basicpanel_layout->addWidget(algorithm_cbox,     1,1,1,2);
     basicpanel_layout->addWidget(subvoldims_label,   2,0,1,1);
     basicpanel_layout->addWidget(subvoldims_sbox,    2,1,1,2);
-    basicpanel_layout->addWidget(memocc_label,       3,0,1,1);
-    basicpanel_layout->addWidget(memocc_field,       3,1,1,2);
+    QLabel* channel_label = new QLabel("Channel selection:");
+    channel_label->setFixedWidth(200);
+    basicpanel_layout->addWidget(channel_label,       3,0,1,1);
+    basicpanel_layout->addWidget(channel_selection,   3,1,1,2);
+    basicpanel_layout->addWidget(memocc_label,       4,0,1,1);
+    basicpanel_layout->addWidget(memocc_field,       4,1,1,2);
     QWidget* emptyspace3 = new QWidget();
     emptyspace3->setFixedHeight(5);
     QWidget* emptyspace4 = new QWidget();
@@ -347,6 +364,8 @@ void PTabDisplComp::stop()
 ***********************************************************************************/
 void PTabDisplComp::setEnabled(bool enabled)
 {
+    /**/tsp::debug(tsp::LEV_MAX, strprintf("enabled = %s", enabled ? "true" : "false").c_str(), __tsp__current__function__);
+
     //first calling super-class implementation
     QWidget::setEnabled(enabled);
 
@@ -437,11 +456,19 @@ void PTabDisplComp::displcomp_done(MyException *ex)
     else
     {
         //showing operation successful message
-        QMessageBox::information(this, "Operation successful", "Step successfully performed!", QMessageBox::Ok);
+        QMessageBox::information(this, "Operation successful", "Aligning step successfully performed!", QMessageBox::Ok);
 
-        //otherwise updating other tabs
         PTabDisplProj::getInstance()->setEnabled(true);
         PTabDisplThresh::getInstance()->setEnabled(true);
+
+        // basic mode: automatically performing "Projecting", "Thresholding" and "Placing" steps
+        if(PMain::instance()->modeBasicAction->isChecked())
+        {
+            PTabDisplProj::getInstance()->start();
+            PTabDisplThresh::getInstance()->start();
+            PTabPlaceTiles::getInstance()->setEnabled(true);
+            PTabPlaceTiles::getInstance()->start();
+        }
     }
 
     //resetting some widgets
@@ -463,4 +490,12 @@ void PTabDisplComp::showAdvancedChanged(bool status)
     #endif
 
     advanced_panel->setVisible(status);
+}
+
+/**********************************************************************************
+* Called when "channel_selection" state has changed.
+***********************************************************************************/
+void PTabDisplComp::channelSelectedChanged(int c)
+{
+    iom::CHANNEL_SELECTION = c;
 }

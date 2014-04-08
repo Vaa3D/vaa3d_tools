@@ -58,7 +58,7 @@ class StackedVolume
 		float  VXL_V, VXL_H, VXL_D;			//[microns]: voxel dimensions (in microns) along V(Vertical), H(horizontal) and D(Depth) axes
 		float  ORG_V, ORG_H, ORG_D;			//[millimeters]: origin spatial coordinates (in millimeters) along VHD axes
 		float  MEC_V, MEC_H;				//[microns]: mechanical displacements of the microscope between two adjacent stacks
-		uint16 N_ROWS, N_COLS, N_SLICES;	//dimensions (in stacks) of stacks matrix along VH axes
+        uint16 N_ROWS, N_COLS, N_SLICES;    //dimensions (in stacks) of stacks matrix along VH axes
 		Stack ***STACKS;					//2-D array of <Stack*>	
 
 		//***OBJECT PRIVATE METHODS****

@@ -28,88 +28,182 @@
 
 #ifndef VM_CONFIG_H
 #define VM_CONFIG_H
+
+#include <string>
+#include <cstdarg>
+#include <vector>
+#include <sstream>
+#include <limits>
+#include <cstring>
 #include <math.h>
-
-//*** GLOBAL DEFINITIONS ****
-#define PI 3.14159265					//pi
-#define VM_VERBOSE 0					//verbosity level of current module
-#define VM_BIN_METADATA_FILE_NAME "mdata.bin"
-#define VM_STATIC_STRINGS_SIZE 5000
-#define S_TIME_CALC						//if enabled, single-phase processing time will be computed
-
-
-//*** FUNCTIONS DEFINITIONS ****
-
-//time computation
-#ifdef TIME_CALC
-#include <ctime>
-#ifdef _WIN32
-#define TIME( arg ) (((double) clock()) / CLOCKS_PER_SEC)
-#else
-#define TIME( arg ) (time( arg ))
-#endif
-#endif
-
-//directory creation
-#ifdef _WIN32
-#include <direct.h>
-#include <errno.h>
-static bool make_dir(const char* arg)
-{
-	printf("Creating directory \"%s\" ...", arg);
-	bool done = _mkdir(arg) == 0;
-	bool result = done || errno != ENOENT;
-	printf("%s\n", result? "DONE!" : "ERROR!");
-	return result;
-}
-#else
 #include <sys/stat.h>
+#ifdef _WIN32
+#include <ctime>
+#include <direct.h>
+#else
+#include <time.h>
 #include <sys/types.h>
 #include <stdlib.h>
 #include <errno.h>
 #include <stdio.h>
-static bool make_dir(const char* arg)
+#endif
+
+namespace volumemanager
 {
-	printf("Creating directory \"%s\" ...", arg);
-	bool done = mkdir(arg,S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) == 0;
-	bool result = done || errno == EEXIST;
-	printf("%s\n", result? "DONE!" : "ERROR!");
-	return result;
+
+    /*******************
+    *    CONSTANTS     *
+    ********************
+    ---------------------------------------------------------------------------------------------------------------------------*/
+    const double PI = 3.14159265;
+    /*-------------------------------------------------------------------------------------------------------------------------*/
+
+
+    /*******************
+    *    MACROS        *
+    ********************
+    @warning: macros are not namespaced
+    ---------------------------------------------------------------------------------------------------------------------------*/
+    #define VM_VERBOSE 0					//verbosity level of current module
+    #define VM_BIN_METADATA_FILE_NAME "mdata.bin"
+    #define VM_STATIC_STRINGS_SIZE 5000
+    #define S_TIME_CALC						//if enabled, single-phase processing time will be computed
+
+
+    /*******************
+    *    PARAMETERS    *
+    ********************
+    ---------------------------------------------------------------------------------------------------------------------------*/
+    extern std::string IMG_FILTER_REGEX;    // regular expression used to filter image filenames when the volume is imported
+    /*-------------------------------------------------------------------------------------------------------------------------*/
+
+
+    /********************************************
+     * Cross-platform UTILITY inline functions	*
+     ********************************************
+    ---------------------------------------------------------------------------------------------------------------------------*/
+    // string-based sprintf function
+    inline std::string strprintf(const std::string fmt, ...){
+        int size = 100;
+        std::string str;
+        va_list ap;
+        while (1) {
+            str.resize(size);
+            va_start(ap, fmt);
+            int n = vsnprintf((char *)str.c_str(), size, fmt.c_str(), ap);
+            va_end(ap);
+            if (n > -1 && n < size) {
+                str.resize(n);
+                return str;
+            }
+            if (n > -1)
+                size = n + 1;
+            else
+                size *= 2;
+        }
+        return str;
+    }
+
+    //returns true if the given path is a directory
+    inline bool isDirectory(std::string path){
+        struct stat s;
+        if( stat(path.c_str(),&s) == 0 )
+        {
+            if( s.st_mode & S_IFDIR )
+                return true;
+            else if( s.st_mode & S_IFREG )
+                return false;
+            else return false;
+        }
+        else return false;
+    }
+
+    //returns true if the given path is a file
+    inline bool isFile(std::string path){
+        struct stat s;
+        if( stat(path.c_str(),&s) == 0 )
+        {
+            if( s.st_mode & S_IFDIR )
+                return false;
+            else if( s.st_mode & S_IFREG )
+                return true;
+            else return false;
+        }
+        else return false;
+    }
+
+    //make dir
+    #ifdef _WIN32
+    #include <errno.h>
+    inline bool make_dir(const char* arg){
+        bool done = _mkdir(arg) == 0;
+        bool result = done || errno != ENOENT;
+        return result;
+    }
+    #else
+    inline bool make_dir(const char* arg){
+        bool done = mkdir(arg, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) == 0;
+        bool result = done || errno == EEXIST;
+        return result;
+    }
+    #endif
+
+    // check-and-makedir
+    inline bool check_and_make_dir(const char *dirname){
+        if(isDirectory(dirname))
+            return true;
+        else
+            return make_dir(dirname);
+    }
+
+
+
+    //file deleting
+    #ifdef _WIN32
+    inline void delete_file( const char* arg ){
+        if(system(strprintf("del /F /Q /S \"%s\"", arg).c_str())!=0)
+            fprintf(stderr,"Can't delete file \"%s\"\n", arg);
+    }
+    #else
+    inline void delete_file( const char* arg ){
+        if(system(strprintf("rm -f \"%s\"", arg).c_str())!=0)
+            fprintf(stderr,"Can't delete file \"%s\"\n", arg);
+    }
+    #endif
+
+    //time computation
+    #ifdef TIME_CALC
+    #ifdef _WIN32
+    #define TIME( arg ) (((double) clock()) / CLOCKS_PER_SEC)
+    #else
+    #define TIME( arg ) (time( arg ))
+    #endif
+    #endif
+
+
+    //MAX
+    #define ISR_MAX(a,b)       ( (a>b) ? (a) : (b) )
+
+    //MAX
+    #define ISR_MIN(a,b)       ( (a<b) ? (a) : (b) )
+
+    //SIGN
+    #define SIGN( arg )	   ( arg < 0 ? -1 : 1 )
+
+    //ROUND
+    #define ROUND( arg )   ( SIGN(arg) == 1 ? arg + 0.5 : arg - 0.5)
+
+    //ALMOST EQUAL
+    #define ALMOST_EQUAL(a,b) ( ( abs((a)-(b)) < 0.001 ) ? true : false )
+
+    //INTEGER POW
+    #define POW_INT(base,exp) ( (   (int) pow( (float)(base), exp)   ) )
+
+    //SAFE DIVISION: when dividing by zero, <infinite> instead of +inf is returned
+    #define SAFE_DIVIDE(dividend, divisor, infinite) ( (divisor)==0 ? (infinite) : ((dividend)/(divisor)) );    
+    /*-------------------------------------------------------------------------------------------------------------------------*/
 }
-#endif
 
-//file deleting
-#ifdef _WIN32
-#define RM_FILE( arg ) \
-	char sys_cmd[500]; \
-	sprintf(sys_cmd, "del /F /Q %s", arg); \
-	system(sys_cmd);
-#else
-#define RM_FILE( arg ) \
-	char sys_cmd[500]; \
-	sprintf(sys_cmd, "rm -f %s", arg); \
-	system(sys_cmd);
-#endif
-
-//MAX
-#define ISR_MAX(a,b)       ( (a>b) ? (a) : (b) )
-
-//MAX
-#define ISR_MIN(a,b)       ( (a<b) ? (a) : (b) )
-
-//SIGN
-#define SIGN( arg )	   ( arg < 0 ? -1 : 1 )
-
-//ROUND
-#define ROUND( arg )   ( SIGN(arg) == 1 ? arg + 0.5 : arg - 0.5)
-
-//ALMOST EQUAL
-#define ALMOST_EQUAL(a,b) ( ( abs((a)-(b)) < 0.001 ) ? true : false )
-
-//INTEGER POW
-#define POW_INT(base,exp) ( (   (int) pow( (float)(base), exp)   ) )
-
-//SAFE DIVISION: when dividing by zero, <infinite> instead of +inf is returned
-#define SAFE_DIVIDE(dividend, divisor, infinite) ( (divisor)==0 ? (infinite) : ((dividend)/(divisor)) );
+namespace vm = volumemanager;
 
 #endif

@@ -37,6 +37,7 @@
 #include "PTabDisplThresh.h"
 #include "PTabMergeTiles.h"
 #include "PTabPlaceTiles.h"
+#include "IOManager_defs.h"
 
 using namespace terastitcher;
 
@@ -77,7 +78,6 @@ PTabImport::PTabImport(QMyTabWidget* _container, int _tab_index) : QWidget(), co
     axes_label->setFont(QFont("", 8));
     voxels_dims_label = new QLabel(QString("Voxel's dims (").append(QChar(0x03BC)).append("m):"));
     voxels_dims_label->setFont(QFont("", 8));
-    QRegExp vxl_regexp("^[0-9]+\\.?[0-9]*$");
     axs1_field = new QComboBox();
     axs1_field->addItem("X");
     axs1_field->addItem("-X");
@@ -126,7 +126,6 @@ PTabImport::PTabImport(QMyTabWidget* _container, int _tab_index) : QWidget(), co
     vxl3_field = new QDoubleSpinBox();
     vxl3_field->setAlignment(Qt::AlignCenter);
     vxl3_field->setFont(QFont("", 8));
-
     first_direction_label->setVisible(false);
     second_direction_label->setVisible(false);
     third_direction_label->setVisible(false);
@@ -138,6 +137,11 @@ PTabImport::PTabImport(QMyTabWidget* _container, int _tab_index) : QWidget(), co
     vxl1_field->setVisible(false);
     vxl2_field->setVisible(false);
     vxl3_field->setVisible(false);
+    regex_label = new QLabel("Image filename regex");
+    regex_field = new QLineEdit();
+    regex_field->setVisible(false);
+    regex_label->setVisible(false);
+    connect(regex_field, SIGNAL(textChanged(QString)), this, SLOT(regexFieldChanged()));
 
     //info panel widgets
     info_panel = new QGroupBox("Volume's informations");
@@ -206,6 +210,17 @@ PTabImport::PTabImport(QMyTabWidget* _container, int _tab_index) : QWidget(), co
     slice_spinbox = new QSpinBox();
     slice_spinbox->setPrefix("Slice ");
     slice_spinbox->setAlignment(Qt::AlignCenter);
+    channel_selection = new QComboBox();
+    channel_selection->addItem("all channels");
+    channel_selection->addItem("R");
+    channel_selection->addItem("G");
+    channel_selection->addItem("B");
+    channel_selection->setEditable(true);
+    channel_selection->lineEdit()->setReadOnly(true);
+    channel_selection->lineEdit()->setAlignment(Qt::AlignCenter);
+    for(int i = 0; i < channel_selection->count(); i++)
+        channel_selection->setItemData(i, Qt::AlignCenter, Qt::TextAlignmentRole);
+    connect(channel_selection, SIGNAL(currentIndexChanged(int)),this, SLOT(channelSelectedChanged(int)));
     preview_button = new QPushButton(this);
     preview_button->setIcon(QIcon(":/icons/preview.png"));
     preview_button->setIconSize(QSize(20,20));
@@ -228,12 +243,14 @@ PTabImport::PTabImport(QMyTabWidget* _container, int _tab_index) : QWidget(), co
     container_tmp2_layout->addWidget(third_direction_label, 0, 9, 1, 3, Qt::AlignHCenter);
     container_tmp2_layout->addWidget(axes_label, 1, 0, 1, 1);
     axes_label->setFixedWidth(200);
-    axs1_field->setFixedWidth(100);
-    axs2_field->setFixedWidth(100);
-    axs3_field->setFixedWidth(100);
-    vxl1_field->setFixedWidth(100);
-    vxl2_field->setFixedWidth(100);
-    vxl3_field->setFixedWidth(100);
+    regex_label->setFixedWidth(200);
+    axs1_field->setFixedWidth(150);
+    axs2_field->setFixedWidth(150);
+    axs3_field->setFixedWidth(150);
+    vxl1_field->setFixedWidth(150);
+    vxl2_field->setFixedWidth(150);
+    vxl3_field->setFixedWidth(150);
+    regex_field->setFixedWidth(150);
     container_tmp2_layout->addWidget(axs1_field, 1, 1, 1, 3, Qt::AlignHCenter);
     container_tmp2_layout->addWidget(axs2_field, 1, 5, 1, 3, Qt::AlignHCenter);
     container_tmp2_layout->addWidget(axs3_field, 1, 9, 1, 3, Qt::AlignHCenter);
@@ -241,6 +258,8 @@ PTabImport::PTabImport(QMyTabWidget* _container, int _tab_index) : QWidget(), co
     container_tmp2_layout->addWidget(vxl1_field, 2, 1, 1, 3, Qt::AlignHCenter);
     container_tmp2_layout->addWidget(vxl2_field, 2, 5, 1, 3, Qt::AlignHCenter);
     container_tmp2_layout->addWidget(vxl3_field, 2, 9, 1, 3, Qt::AlignHCenter);
+    container_tmp2_layout->addWidget(regex_label, 3, 0, 1, 1);
+    container_tmp2_layout->addWidget(regex_field, 3, 1, 1, 3, Qt::AlignHCenter);
     container_tmp2_layout->setContentsMargins(0,0,0,0);
     container_tmp2_layout->setSpacing(0);
     container_tmp2->setLayout(container_tmp2_layout);
@@ -283,8 +302,9 @@ PTabImport::PTabImport(QMyTabWidget* _container, int _tab_index) : QWidget(), co
     info_panel_layout->addWidget(by_label_6,            5,4,1,1);
     info_panel_layout->addWidget(ovp_Y_field,           5,5,1,3);
     info_panel_layout->addWidget(new QLabel("Stitch test:"),6,0,1,1);
-    info_panel_layout->addWidget(slice_spinbox,          6,1,1,3);
-    info_panel_layout->addWidget(preview_button,        6,5,1,3);
+    info_panel_layout->addWidget(slice_spinbox,         6,1,1,3);
+    info_panel_layout->addWidget(channel_selection,     6,5,1,3);
+    info_panel_layout->addWidget(preview_button,        6,9,1,3);
     info_panel_layout->setVerticalSpacing(2);
     info_panel->setLayout(info_panel_layout);
     info_panel->setStyle(new QWindowsStyle());
@@ -538,19 +558,20 @@ void PTabImport::stop()
 **********************************************************************************/
 void PTabImport::import_done(MyException *ex)
 {
-    #ifdef TSP_DEBUG
-    printf("TeraStitcher plugin [thread %d] >> PTabImport import_done(%s) launched\n", this->thread()->currentThreadId(), (ex? "ex" : "NULL"));
-    #endif
+    /**/tsp::debug(tsp::LEV1, strprintf("ex = \"%s\"", ex ? ex->what() : "none").c_str(), __tsp__current__function__);
 
     //if an exception has occurred, showing a message error and re-enabling import form
     if(ex)
     {
         QMessageBox::critical(this,QObject::tr("Error"), QObject::tr(ex->what()),QObject::tr("Ok"));
         import_form->setEnabled(true);
+        PMain::instance()->setToReady();
+        container->getTabBar()->setTabButton(tab_index, QTabBar::LeftSide, 0);
     }
     else
     {
         //otherwise inserting volume's informations...
+        /**/tsp::debug(tsp::LEV_MAX, strprintf("insert volume's info").c_str(), __tsp__current__function__);
         info_panel->setEnabled(true);
         volumedir_field->setText(CImport::instance()->getVolume()->getSTACKS_DIR());
         nrows_field->setText(QString::number(CImport::instance()->getVolume()->getN_ROWS()).append(" (rows)"));
@@ -571,18 +592,22 @@ void PTabImport::import_done(MyException *ex)
         slice_spinbox->setValue(slice_spinbox->maximum()/2);
         slice_spinbox->setSuffix(QString("/").append(QString::number(CImport::instance()->getVolume()->getN_SLICES())));
 
+        PMain::instance()->setToReady();
+
         //...and enabling (ed updating) all other tabs
+        /**/tsp::debug(tsp::LEV_MAX, strprintf("enable all other tabs").c_str(), __tsp__current__function__);
         PTabDisplComp::getInstance()->setEnabled(true);
         PTabDisplProj::getInstance()->setEnabled(true);
         PTabDisplThresh::getInstance()->setEnabled(true);
         PTabPlaceTiles::getInstance()->setEnabled(true);
         PTabMergeTiles::getInstance()->setEnabled(true);
 
+        /**/tsp::debug(tsp::LEV_MAX, strprintf("enable closeVolume button").c_str(), __tsp__current__function__);
         PMain::instance()->closeVolumeAction->setEnabled(true);
     }
 
     //resetting some widgets
-    PMain::instance()->setToReady();
+    /**/tsp::debug(tsp::LEV_MAX, strprintf("reset widgets").c_str(), __tsp__current__function__);
     wait_movie->stop();
     container->getTabBar()->setTabButton(tab_index, QTabBar::LeftSide, 0);
 }
@@ -595,9 +620,7 @@ void PTabImport::import_done(MyException *ex)
 ***********************************************************************************/
 void PTabImport::preview_done(MyException *ex, Image4DSimple* img)
 {
-    #ifdef TSP_DEBUG
-    printf("TeraStitcher plugin [thread %d] >> PTabImport preview_done(%s) launched\n", this->thread()->currentThreadId(), (ex? "ex" : "NULL"));
-    #endif
+    /**/tsp::debug(tsp::LEV1, strprintf("ex = \"%s\"", ex ? ex->what() : "none").c_str(), __tsp__current__function__);
 
     //resetting some widgets
     PMain::instance()->setToReady();
@@ -607,14 +630,15 @@ void PTabImport::preview_done(MyException *ex, Image4DSimple* img)
 
     //if an exception has occurred, showing a message error. Otherwise showing the computed preview
     if(ex)
-        QMessageBox::critical(this,QObject::tr("Error"), QObject::tr(ex->what()),QObject::tr("Ok"));    
+    {
+        /**/tsp::debug(tsp::LEV_MAX, "display message error", __tsp__current__function__);
+        QMessageBox::critical(this, "Error", ex->what());
+        //QMessageBox::critical(this, "Error", "An error occurred while generating the selected slice");
+    }
     else
     {
+        /**/tsp::debug(tsp::LEV_MAX, "display image", __tsp__current__function__);
         v3dhandle new_win = PMain::instance()->getV3D_env()->newImageWindow(QString("Slice ").append(slice_spinbox->text()));
-        //Image4DSimple* img = new Image4DSimple();
-        //char path[VM_STATIC_STRINGS_SIZE];
-        //sprintf(path, "%s/test_middle_slice.tif", CImport::instance()->getVolume()->getSTACKS_DIR());
-        //img->loadImage(path);
         PMain::instance()->getV3D_env()->setImage(new_win, img);
     }
 }
@@ -642,6 +666,8 @@ void PTabImport::volumePathChanged(QString path)
     vxl1_field->setVisible(furtherInfoRequired);
     vxl2_field->setVisible(furtherInfoRequired);
     vxl3_field->setVisible(furtherInfoRequired);
+    regex_field->setVisible(furtherInfoRequired);
+    regex_label->setVisible(furtherInfoRequired);
 }
 
 /**********************************************************************************
@@ -650,4 +676,20 @@ void PTabImport::volumePathChanged(QString path)
 void PTabImport::reimportCheckboxChanged(int)
 {
     volumePathChanged(path_field->text());
+}
+
+/**********************************************************************************
+* Called when "channel_selection" state has changed.
+***********************************************************************************/
+void PTabImport::channelSelectedChanged(int c)
+{
+    iom::CHANNEL_SELECTION = c;
+}
+
+/**********************************************************************************
+* Called when "regex_field" state has changed.
+***********************************************************************************/
+void PTabImport::regexFieldChanged()
+{
+    volumemanager::IMG_FILTER_REGEX = regex_field->text().toStdString();
 }

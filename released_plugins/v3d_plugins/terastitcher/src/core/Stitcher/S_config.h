@@ -28,7 +28,7 @@
 #ifndef S_CONFIG_H
 #define S_CONFIG_H
 
-#define S_VERBOSE 1
+#define S_VERBOSE 0
 #define S_PI 3.14159265
 #define S_STATIC_STRINGS_SIZE 3000
 

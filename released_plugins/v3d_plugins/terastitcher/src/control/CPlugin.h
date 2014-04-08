@@ -54,15 +54,86 @@ namespace terastitcher
     class QHelpBox;             //customized Qt label
     class QPrefixSuffixValidator;
     class QPrefixSuffixLineEdit;
+    enum  debug_level { NO_DEBUG, LEV1, LEV2, LEV3, LEV_MAX };  //debug levels
 
     /*******************
     *    PARAMETERS    *
     ********************
     ---------------------------------------------------------------------------------------------------------------------------*/
     extern std::string version;
+    extern int DEBUG;							//debug level of current module
     /*-------------------------------------------------------------------------------------------------------------------------*/
 
+    /********************************************
+     *   Cross-platform UTILITY functions	    *
+     ********************************************
+    ---------------------------------------------------------------------------------------------------------------------------*/
+
+    //string-based sprintf function
+    inline std::string strprintf(const std::string fmt, ...){
+        int size = 100;
+        std::string str;
+        va_list ap;
+        while (1) {
+            str.resize(size);
+            va_start(ap, fmt);
+            int n = vsnprintf((char *)str.c_str(), size, fmt.c_str(), ap);
+            va_end(ap);
+            if (n > -1 && n < size) {
+                str.resize(n);
+                return str;
+            }
+            if (n > -1)
+                size = n + 1;
+            else
+                size *= 2;
+        }
+        return str;
+    }
+
+    //cross-platform current function macro
+    #if defined(__GNUC__) || (defined(__MWERKS__) && (__MWERKS__ >= 0x3000)) || (defined(__ICC) && (__ICC >= 600))
+    # define __tsp__current__function__ __PRETTY_FUNCTION__
+    #elif defined(__DMC__) && (__DMC__ >= 0x810)
+    # define __tsp__current__function__ __PRETTY_FUNCTION__
+    #elif defined(__FUNCSIG__)
+    # define __tsp__current__function__ __FUNCSIG__
+    #elif (defined(__INTEL_COMPILER) && (__INTEL_COMPILER >= 600)) || (defined(__IBMCPP__) && (__IBMCPP__ >= 500))
+    # define __tsp__current__function__ __FUNCTION__
+    #elif defined(__BORLANDC__) && (__BORLANDC__ >= 0x550)
+    # define __tsp__current__function__ __FUNC__
+    #elif defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 199901)
+    # define __tsp__current__function__ __func__
+    #else
+    # define __tsp__current__function__ "(unknown)"
+    #endif
+
+    /***********************************************
+    *    DEBUG, WARNING and EXCEPTION FUNCTIONS    *
+    ************************************************
+    ---------------------------------------------------------------------------------------------------------------------------*/
+   inline void warning(const char* message, const char* source = 0){
+           if(source)
+               printf("\n**** WARNING (source: \"%s\") ****\n"
+               "    |=> \"%s\"\n\n", source, message);
+           else
+               printf("\n**** WARNING ****: %s\n", message);
+   }
+
+   inline void debug(debug_level dbg_level, const char* message=0, const char* source=0){
+       if(DEBUG >= dbg_level){
+               if(message && source)
+                   printf("\n--------------------- teramanager plugin: DEBUG (level %d) ----: in \"%s\") ----\n"
+                            "                      message: %s\n\n", dbg_level, source, message);
+               else if(message)
+                   printf("\n--------------------- teramanager plugin: DEBUG (level %d) ----: %s\n", dbg_level, message);
+               else if(source)
+                   printf("\n--------------------- teramanager plugin: DEBUG (level %d) ----: in \"%s\"\n", dbg_level, source);
+           }
+       }
 }
+
+namespace tsp = terastitcher;	//a short alias for the current namespace
 
 class terastitcher::CPlugin : public QObject, public V3DPluginInterface2_1
 {

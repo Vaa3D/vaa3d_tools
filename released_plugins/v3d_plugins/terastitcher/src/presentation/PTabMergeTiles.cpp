@@ -41,7 +41,7 @@ using namespace terastitcher;
 * Singleton design pattern: this class can have one instance only,  which must be
 * instantiated by calling static method "istance(...)"
 **********************************************************************************/
-PTabMergeTiles* PTabMergeTiles::uniqueInstance = NULL;
+PTabMergeTiles* PTabMergeTiles::uniqueInstance = 0;
 void PTabMergeTiles::uninstance()
 {
     if(uniqueInstance)
@@ -149,11 +149,13 @@ PTabMergeTiles::PTabMergeTiles(QMyTabWidget* _container, int _tab_index) : QWidg
     slice0_field = new QSpinBox();
     slice0_field->setAlignment(Qt::AlignCenter);
     slice0_field->setMinimum(-1);
+    slice0_field->setMaximum(-1);
     slice0_field->setValue(-1);
     slice0_field->setFont(QFont("", 9));
     slice1_field = new QSpinBox();
     slice1_field->setAlignment(Qt::AlignCenter);
     slice1_field->setMinimum(-1);
+    slice1_field->setMaximum(-1);
     slice1_field->setValue(-1);
     slice1_field->setFont(QFont("", 9));
     excludenonstitchables_cbox = new QCheckBox();
@@ -191,6 +193,18 @@ PTabMergeTiles::PTabMergeTiles(QMyTabWidget* _container, int _tab_index) : QWidg
     imgdepth_cbox->setFont(QFont("", 9));
     imgdepth_cbox->insertItem(0, "8");
     imgdepth_cbox->insertItem(1, "16");
+    channel_selection = new QComboBox();
+    channel_selection->addItem("all channels");
+    channel_selection->addItem("R");
+    channel_selection->addItem("G");
+    channel_selection->addItem("B");
+    channel_selection->setEditable(true);
+    channel_selection->lineEdit()->setReadOnly(true);
+    channel_selection->lineEdit()->setAlignment(Qt::AlignCenter);
+    for(int i = 0; i < channel_selection->count(); i++)
+        channel_selection->setItemData(i, Qt::AlignCenter, Qt::TextAlignmentRole);
+    connect(channel_selection, SIGNAL(currentIndexChanged(int)),this, SLOT(channelSelectedChanged(int)));
+
 
 
     /*** LAYOUT SECTIONS ***/
@@ -292,6 +306,8 @@ PTabMergeTiles::PTabMergeTiles(QMyTabWidget* _container, int _tab_index) : QWidg
     advancedpanel_layout->addWidget(imgformat_cbox, 4, 1, 1, 1);
     advancedpanel_layout->addWidget(imgdepth_label, 4, 2, 1, 1);
     advancedpanel_layout->addWidget(imgdepth_cbox, 4, 3, 1, 1);
+    advancedpanel_layout->addWidget(new QLabel("chan:"), 4, 4, 1, 1);
+    advancedpanel_layout->addWidget(channel_selection, 4, 5, 1, 2);
     advancedpanel_layout->setVerticalSpacing(2);
     advancedpanel_layout->setContentsMargins(10,0,10,0);
     advanced_panel->setLayout(advancedpanel_layout);
@@ -371,30 +387,32 @@ void PTabMergeTiles::reset()
     memocc_field->setText("");
     excludenonstitchables_cbox->setChecked(false);
 
-    row0_field->setMinimum(0);
-    row0_field->setValue(0);
-    row1_field->setMinimum(0);
-    row1_field->setValue(0);
-    col0_field->setMinimum(0);
-    col0_field->setValue(0);
-    col1_field->setMinimum(0);
-    col1_field->setValue(0);
-    slice0_field->setMinimum(0);
-    slice0_field->setValue(0);
-    slice1_field->setMinimum(0);
-    slice1_field->setValue(0);
-    row0_field->setMinimum(0);
-    row0_field->setMaximum(0);
-    row0_field->setValue(0);
-    row1_field->setMinimum(0);
-    row1_field->setMaximum(0);
-    row1_field->setValue(0);
-    col0_field->setMinimum(0);
-    col0_field->setMaximum(0);
-    col0_field->setValue(0);
-    col1_field->setMinimum(0);
-    col1_field->setMaximum(0);
-    col1_field->setValue(0);
+    row0_field->setMinimum(-1);
+    row0_field->setValue(-1);
+    row1_field->setMinimum(-1);
+    row1_field->setValue(-1);
+    col0_field->setMinimum(-1);
+    col0_field->setValue(-1);
+    col1_field->setMinimum(-1);
+    col1_field->setValue(-1);
+    slice0_field->setMinimum(-1);
+    slice0_field->setMaximum(-1);
+    slice0_field->setValue(-1);
+    slice1_field->setMinimum(-1);
+    slice1_field->setMaximum(-1);
+    slice1_field->setValue(-1);
+    row0_field->setMinimum(-1);
+    row0_field->setMaximum(-1);
+    row0_field->setValue(-1);
+    row1_field->setMinimum(-1);
+    row1_field->setMaximum(-1);
+    row1_field->setValue(-1);
+    col0_field->setMinimum(-1);
+    col0_field->setMaximum(-1);
+    col0_field->setValue(-1);
+    col1_field->setMinimum(-1);
+    col1_field->setMaximum(-1);
+    col1_field->setValue(-1);
     multistack_cbox->setChecked(true);
 
     showAdvancedButton->setChecked(false);
@@ -434,32 +452,32 @@ void PTabMergeTiles::start()
         }
 
         //if basic mode is active, automatically performing the hidden steps (Projecting, Thresholding, Placing) if necessary
-        if(PMain::instance()->modeBasicAction->isChecked())
-        {
-            //asking confirmation to continue if no displacements were found
-            if(PMain::instance()->tabDisplProj->total_displ_number_field->text().toInt() == 0 &&
-               QMessageBox::information(this, "Warning", "No computed displacements found. \n\nDisplacements will be generated using nominal stage coordinates.", "Continue", "Cancel"))
-            {
-                PMain::instance()->setToReady();
-                return;
-            }
+//        if(PMain::instance()->modeBasicAction->isChecked())
+//        {
+//            //asking confirmation to continue if no displacements were found
+//            if(PMain::instance()->tabDisplProj->total_displ_number_field->text().toInt() == 0 &&
+//               QMessageBox::information(this, "Warning", "No computed displacements found. \n\nDisplacements will be generated using nominal stage coordinates.", "Continue", "Cancel"))
+//            {
+//                PMain::instance()->setToReady();
+//                return;
+//            }
 
-            //performing operation
-            StackedVolume* volume = CImport::instance()->getVolume();
-            if(!volume)
-                throw MyException("Unable to start this step. A volume must be properly imported first.");
-            //Alessandro 2013-07-08: this causes crash and it is not needed (nominal stage coordinates are already ready for merging)
-//            StackStitcher stitcher(volume);
-//            stitcher.projectDisplacements();
-//            stitcher.thresholdDisplacements(PMain::instance()->tabDisplThres->threshold_field->value());
-//            stitcher.computeTilesPlacement(PMain::instance()->tabPlaceTiles->algo_cbox->currentIndex());
+//            //performing operation
+//            StackedVolume* volume = CImport::instance()->getVolume();
+//            if(!volume)
+//                throw MyException("Unable to start this step. A volume must be properly imported first.");
+//            //Alessandro 2013-07-08: this causes crash and it is not needed (nominal stage coordinates are already ready for merging)
+////            StackStitcher stitcher(volume);
+////            stitcher.projectDisplacements();
+////            stitcher.thresholdDisplacements(PMain::instance()->tabDisplThres->threshold_field->value());
+////            stitcher.computeTilesPlacement(PMain::instance()->tabPlaceTiles->algo_cbox->currentIndex());
 
-            //enabling (and updating) other tabs
-            PTabDisplProj::getInstance()->setEnabled(true);
-            PTabDisplThresh::getInstance()->setEnabled(true);
-            PTabPlaceTiles::getInstance()->setEnabled(true);
-            PTabMergeTiles::getInstance()->setEnabled(true);
-        }
+//            //enabling (and updating) other tabs
+//            PTabDisplProj::getInstance()->setEnabled(true);
+//            PTabDisplThresh::getInstance()->setEnabled(true);
+//            PTabPlaceTiles::getInstance()->setEnabled(true);
+//            PTabMergeTiles::getInstance()->setEnabled(true);
+//        }
 
         //disabling import form and enabling progress bar animation and tab wait animation
         PMain::instance()->getProgressBar()->setEnabled(true);
@@ -530,12 +548,7 @@ void PTabMergeTiles::stop()
 ***********************************************************************************/
 void PTabMergeTiles::setEnabled(bool enabled)
 {
-    #ifdef TSP_DEBUG
-    printf("TeraStitcher plugin [thread %d] >> PTabMergeTiles setEnabled(%d) called\n", this->thread()->currentThreadId(), enabled);
-    #endif
-
-    //first calling super-class implementation
-    QWidget::setEnabled(enabled);
+    /**/tsp::debug(tsp::LEV_MAX, 0, __tsp__current__function__);
 
     //then filling widget fields
     if(enabled && CImport::instance()->getVolume())
@@ -543,6 +556,7 @@ void PTabMergeTiles::setEnabled(bool enabled)
         StackedVolume* volume = CImport::instance()->getVolume();
 
         //inserting volume dimensions
+        QWidget::setEnabled(false);
         row0_field->setMinimum(0);
         row0_field->setMaximum(volume->getN_ROWS()-1);
         row0_field->setValue(0);
@@ -555,11 +569,20 @@ void PTabMergeTiles::setEnabled(bool enabled)
         col1_field->setMinimum(0);
         col1_field->setMaximum(volume->getN_COLS()-1);
         col1_field->setValue(volume->getN_COLS()-1);
+        slice0_field->setMaximum(volume->getN_SLICES()-1);
+        slice0_field->setMinimum(0);
+        slice0_field->setValue(0);
+        slice1_field->setMaximum(volume->getN_SLICES()-1);
+        slice1_field->setMinimum(0);
+        slice1_field->setValue(volume->getN_SLICES()-1);
         volumeformat_changed();
+        QWidget::setEnabled(true);
 
         //updating content
         updateContent();
     }
+    else
+        QWidget::setEnabled(enabled);
 }
 
 /**********************************************************************************
@@ -605,35 +628,8 @@ void PTabMergeTiles::excludenonstitchables_changed()
 {
     try
     {
-        if(CImport::instance()->getVolume())
-        {
-            StackedVolume* volume = CImport::instance()->getVolume();
-
-            StackStitcher stitcher(volume);
-            stitcher.computeVolumeDims(excludenonstitchables_cbox->isChecked());
-            row0_field->setMinimum(stitcher.getROW0());
-            row0_field->setMaximum(stitcher.getROW1());
-            row0_field->setValue(stitcher.getROW0());
-            row1_field->setMinimum(stitcher.getROW0());
-            row1_field->setMaximum(stitcher.getROW1());
-            row1_field->setValue(stitcher.getROW1());
-            col0_field->setMinimum(stitcher.getCOL0());
-            col0_field->setMaximum(stitcher.getCOL1());
-            col0_field->setValue(stitcher.getCOL0());
-            col1_field->setMinimum(stitcher.getCOL0());
-            col1_field->setMaximum(stitcher.getCOL1());
-            col1_field->setValue(stitcher.getCOL1());
-            slice0_field->setMinimum(stitcher.getD0());
-            slice0_field->setMaximum(stitcher.getD1());
-            slice0_field->setValue(stitcher.getD0());
-            slice1_field->setMinimum(stitcher.getD0());
-            slice1_field->setMaximum(stitcher.getD1());
-            slice1_field->setValue(stitcher.getD1());
-
-            //updating content
+        if(this->isEnabled() && CImport::instance()->getVolume())
             updateContent();
-
-        }
     }
     catch(MyException &ex)
     {
@@ -650,25 +646,8 @@ void PTabMergeTiles::stacksinterval_changed()
 {
     try
     {
-        if(CImport::instance()->getVolume())
-        {
-            StackedVolume* volume = CImport::instance()->getVolume();
-
-            StackStitcher stitcher(volume);
-            stitcher.computeVolumeDims(excludenonstitchables_cbox->isChecked(), row0_field->value(), row1_field->value(),
-                                       col0_field->value(), col1_field->value());
-
-            slice0_field->setMinimum(stitcher.getD0());
-            slice0_field->setMaximum(stitcher.getD1());
-            slice0_field->setValue(stitcher.getD0());
-            slice1_field->setMinimum(stitcher.getD0());
-            slice1_field->setMaximum(stitcher.getD1());
-            slice1_field->setValue(stitcher.getD1());
-
-            //updating content
+        if(this->isEnabled() && CImport::instance()->getVolume())
             updateContent();
-
-        }
     }
     catch(MyException &ex)
     {
@@ -681,15 +660,17 @@ void PTabMergeTiles::stacksinterval_changed()
 ***********************************************************************************/
 void PTabMergeTiles::updateContent()
 {
+    /**/tsp::debug(tsp::LEV_MAX, 0, __tsp__current__function__);
+
     try
     {
-        if(CImport::instance()->getVolume())
+        if(this->isEnabled() && CImport::instance()->getVolume())
         {
             StackedVolume* volume = CImport::instance()->getVolume();
 
             StackStitcher stitcher(volume);
             stitcher.computeVolumeDims(excludenonstitchables_cbox->isChecked(), row0_field->value(), row1_field->value(),
-                                       col0_field->value(), col1_field->value(), slice0_field->value(), slice1_field->value());
+                                       col0_field->value(), col1_field->value(), slice0_field->value(), slice1_field->value()+1);
 
             int max_res = 0;
             for(int i=0; i<S_MAX_MULTIRES; i++)
@@ -710,11 +691,20 @@ void PTabMergeTiles::updateContent()
             int layer_depth = pow(2.0f, max_res);
             float MBytes = (layer_height/1024.0f)*(layer_width/1024.0f)*layer_depth*4;
             memocc_field->setText(QString::number(MBytes, 'f', 0).append(" MB"));
+
+            // update ranges
+            slice0_field->setValue(stitcher.getD0());
+            slice1_field->setValue(stitcher.getD1()-1);
+            row0_field->setValue(stitcher.getROW0());
+            row1_field->setValue(stitcher.getROW1());
+            col0_field->setValue(stitcher.getCOL0());
+            col1_field->setValue(stitcher.getCOL1());
         }
     }
     catch(MyException &ex)
     {
-        QMessageBox::critical(this,QObject::tr("Error"), QObject::tr(ex.what()),QObject::tr("Ok"));
+        QMessageBox::critical(this,QObject::tr("Error"), strprintf("An error occurred while preparing the stitcher for the Merging step: \n\n\"%s\"\n\nPlease check the previous steps before you can perform the Merging step.", ex.what()).c_str(),QObject::tr("Ok"));
+        this->setEnabled(false);
     }
 }
 
@@ -822,4 +812,12 @@ void PTabMergeTiles::showAdvancedChanged(bool status)
     #endif
 
     advanced_panel->setVisible(status);
+}
+
+/**********************************************************************************
+* Called when "channel_selection" state has changed.
+***********************************************************************************/
+void PTabMergeTiles::channelSelectedChanged(int c)
+{
+    iom::CHANNEL_SELECTION = c;
 }

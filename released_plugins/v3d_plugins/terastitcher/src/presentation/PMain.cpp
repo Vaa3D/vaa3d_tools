@@ -185,14 +185,13 @@ PMain::PMain(V3DPluginCallback *callback, QWidget *parent) : QWidget(parent)
     tabImport->preview_button->installEventFilter(this);
 
     //window attributes
-    setWindowTitle(tr("TeraStitcher plugin"));
+    setWindowTitle(tr("TeraStitcher plugin v") + terastitcher::version.c_str());
     setWindowFlags(Qt::WindowStaysOnTopHint);
     setFixedSize(800, 600);
     show();
     move(QApplication::desktop()->screen()->rect().center() - rect().center());
 
     reset();
-
 }
 
 PMain::~PMain()

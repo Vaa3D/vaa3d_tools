@@ -28,8 +28,11 @@
 #ifndef STACK_H_
 #define STACK_H_
 
+#include "VM_config.h"
 #include "IOManager.h"
 #include "tinyxml.h"
+
+using namespace volumemanager;
 
 class StackedVolume;
 class Displacement;
@@ -53,13 +56,13 @@ class Stack
 	
 		
 		//******** OBJECT PRIVATE METHODS *********
-		Stack(void){};
+        Stack(void){}
 
 		//Initializes all object's members
-		void init();
+        void init() throw (MyException);
 				
 		//binarizing-unbinarizing methods
-		void binarizeInto(FILE* file);
+        void binarizeInto(FILE* file) throw (MyException);
 		void unBinarizeFrom(FILE* file) throw (MyException);
 
 		//******** FRIEND CLASS DECLARATION *********
@@ -69,8 +72,8 @@ class Stack
 	public:
 
 		//CONSTRUCTORS
-		Stack(StackedVolume* _CONTAINER, int _ROW_INDEX, int _COL_INDEX, const char* _DIR_NAME);
-		Stack(StackedVolume* _CONTAINER, int _ROW_INDEX, int _COL_INDEX, FILE* bin_file);
+        Stack(StackedVolume* _CONTAINER, int _ROW_INDEX, int _COL_INDEX, const char* _DIR_NAME) throw (MyException);
+        Stack(StackedVolume* _CONTAINER, int _ROW_INDEX, int _COL_INDEX, FILE* bin_file) throw (MyException);
 		~Stack(void);
 
 		//GET methods
@@ -104,7 +107,7 @@ class Stack
 		void setStitchable(bool _stitchable){this->stitchable = _stitchable;}
 
 		//LOAD and RELEASE methods
-		real_t* loadImageStack(int first_file=-1, int last_file=-1);
+        real_t* loadImageStack(int first_file=-1, int last_file=-1) throw (MyException);
 		void releaseImageStack();
 
 		//XML methods

@@ -149,7 +149,19 @@ void CImport::run()
         //everything went OK
         emit sendOperationOutcome(0);
     }
-    catch( MyException& exception)  {emit sendOperationOutcome(&exception);}
-    catch(const char* error)        {emit sendOperationOutcome(new MyException(error));}
-    //catch(...)                      {emit sendOperationOutcome(new MyException("Unable to determine error's type"));}
+    catch( MyException& exception)
+    {
+        /**/tsp::warning(strprintf("exception thrown in CImport::run(): \"%s\"", exception.what()).c_str());
+        emit sendOperationOutcome(new MyException(exception.what()));
+    }
+    catch(const char* error)
+    {
+        /**/tsp::warning(strprintf("exception thrown in CImport::run(): \"%s\"", error).c_str());
+        emit sendOperationOutcome(new MyException(error));
+    }
+    catch(...)
+    {
+        /**/tsp::warning(strprintf("exception thrown in CImport::run(): \"%s\"", "Generic error").c_str());
+        emit sendOperationOutcome(new MyException("Unable to determine error's type"));
+    }
 }

@@ -11,6 +11,42 @@ ties names are:
 - Rem: a feature no longer available
 
 ============================================================================================
+Version 1.4.0
+April 8th, 2014
+--------------------------------------------------------------------------------------------
+- New: added regular expression filter for image filenames in the "Import" step.
+- New: added channel selection in "Test", "Aligning" and "Merging" steps.
+- New: added support for images bigger than 2 GB (both read / write).
+- Fix: fixed bug which might cause exceptions not to be caught correctly  in TeraStitcher if
+       compiled with MSVC.
+- Fix: fixed bug in Vaa3D-TeraStitcher  which caused  the "Portion to be stitched" ranges in
+       the "Merging" step not to be properly updated on user input.
+- Fix: fixed bug in Vaa3D-TeraStitcher which caused the Merging step not to take into account
+       the computed displacements when running in "Basic" mode.
+- Fix: fixed bug which caused Vaa3D-TeraStitcher not to properly determine  the volume range
+       to be stitched in the Merging step.
+- Fix: fixed bug which caused Vaa3D-TeraStitcher to crash when verbosity was set to the max-
+       imum level.
+- Fix: fixed Vaa3D-TeraStitcher compilation issues on MSVC compilers.
+--------------------------------------------------------------------------------------------
+
+
+Version 1.3.2
+April 1st, 2014
+--------------------------------------------------------------------------------------------
+- New: added a more robust check of the input file format. Stacks with uneven number of sli-
+       ces and/or uneven number of  stack rows/columns are now detected  and signaled to the
+	   user.
+--------------------------------------------------------------------------------------------
+
+
+Version 1.3.1
+March 6th, 2014
+--------------------------------------------------------------------------------------------
+- New: added "dump" function to print mdata.bin content
+--------------------------------------------------------------------------------------------
+
+
 Version 1.3
 December 17th, 2013
 --------------------------------------------------------------------------------------------

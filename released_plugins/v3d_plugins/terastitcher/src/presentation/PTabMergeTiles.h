@@ -90,6 +90,7 @@ class terastitcher::PTabMergeTiles : public QWidget
     QComboBox* imgformat_cbox;
     QLabel* imgdepth_label;
     QComboBox* imgdepth_cbox;
+    QComboBox* channel_selection;
 
 
     //other widgets
@@ -119,6 +120,9 @@ public:
     void start();
     void stop();
 
+    //reset method
+    void reset();
+
     /**********************************************************************************
     * Overrides QWidget's setEnabled(bool).
     * If the widget is enabled, its fields are filled with the informations provided by
@@ -126,14 +130,13 @@ public:
     ***********************************************************************************/
     void setEnabled(bool enabled);
 
-    //reset method
-    void reset();
-
     //gives PMain and CMergeTiles instances public access to this class members
     friend class PMain;
     friend class terastitcher::CMergeTiles;
 
 public slots:
+
+
 
     /**********************************************************************************
     * Opens the dialog to select the directory where the stitched volume has to be saved.
@@ -196,6 +199,11 @@ public slots:
     * it is shown in Vaa3D.
     ***********************************************************************************/
     void merging_done(MyException *ex, Image4DSimple* img);
+
+    /**********************************************************************************
+    * Called when "channel_selection" state has changed.
+    ***********************************************************************************/
+    void channelSelectedChanged(int);
 
 };
 

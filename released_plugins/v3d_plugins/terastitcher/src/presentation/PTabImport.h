@@ -71,6 +71,8 @@ class terastitcher::PTabImport : public QWidget
         QDoubleSpinBox *vxl1_field;     //field for voxel dimension along first direction
         QDoubleSpinBox *vxl2_field;     //field for voxel dimension along second direction
         QDoubleSpinBox *vxl3_field;     //field for voxel dimension along third direction
+        QLineEdit *regex_field;         //field for image filter regex
+        QLabel *regex_label;
 
         //info panel widgets, contain informations of the loaded volume
         QGroupBox* info_panel;
@@ -101,6 +103,7 @@ class terastitcher::PTabImport : public QWidget
         QLineEdit* ovp_X_field;
         QSpinBox* slice_spinbox;
         QPushButton* preview_button;
+        QComboBox* channel_selection;
 
         //other widgets
         QMovie *wait_movie;             //animated wait GIF icon
@@ -181,6 +184,16 @@ class terastitcher::PTabImport : public QWidget
         * Called when "reimport_chheckbox" state has changed.
         ***********************************************************************************/
         void reimportCheckboxChanged(int);
+
+        /**********************************************************************************
+        * Called when "channel_selection" state has changed.
+        ***********************************************************************************/
+        void channelSelectedChanged(int);
+
+        /**********************************************************************************
+        * Called when "regex_field" state has changed.
+        ***********************************************************************************/
+        void regexFieldChanged();
 
 };
 

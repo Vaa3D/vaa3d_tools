@@ -28,38 +28,150 @@
 #ifndef _IO_MANAGER_DEFS_H
 #define _IO_MANAGER_DEFS_H
 
-/**************************************************************************************************************************
- *   GLOBAL definitions					   																			      *
- **************************************************************************************************************************/
-#define IO_M_VERBOSE 0					//verbosity level of the IOManager module
-#define IO_TIME_CALC					//if defined, I/O time measurements are enabled
-#define IO_DEF_IMG_FORMAT "tif"			//default format of saved images
-#define IO_DEF_IMG_DEPTH 8				//default bit depth of saved images
-#define IO_STATIC_STRINGS_SIZE 5000		//size of static C-strings used for paths, messages, etc.
-typedef float          real_t;			//real type definition (float for single precision, double for double precision)
-typedef unsigned char  uint8;			//8-bit  unsigned integer data type
-typedef unsigned short uint16;			//16-bit unsigned integer data type
-typedef unsigned int   uint32;			//32-bit unsigned integer data type
-typedef int			   sint32;			//32-bit signed integer data type
-typedef long long	   sint64;			//64-bit signed integer data type
-
-/**************************************************************************************************************************
- *	 UTILITY FUNCTIONS (compatible with both WIN/UNIX systems)															  *
- **************************************************************************************************************************/
 #include <ctime>
-#ifdef _WIN32
-#define TIME( arg ) (((double) clock()) / CLOCKS_PER_SEC)
-#define system_PAUSE() 		\
-	system("PAUSE"); 		\
-	cout<<endl;
-#define system_CLEAR() system("cls");
-#else
-#define TIME( arg ) (time( arg ))
-#define system_CLEAR() system("clear");
-#define system_PAUSE()									\
-	cout<<"\n\nPress RETURN key to continue..."<<endl<<endl;	\
-	cin.clear();										\
-	cin.ignore();										\
-	cin.get();
-#endif
+#include <cstdarg>
+#include <vector>
+#include <sstream>
+
+/*******************
+*    TYPES         *
+********************
+---------------------------------------------------------------------------------------------------------------------------*/
+typedef float          real_t;			// real type definition (float for single precision, double for double precision)
+typedef unsigned char  uint8;			// 8-bit  unsigned integer data type
+typedef unsigned short uint16;			// 16-bit unsigned integer data type
+typedef unsigned int   uint32;			// 32-bit unsigned integer data type
+typedef int			   sint32;			// 32-bit signed integer data type
+typedef long long	   sint64;			// 64-bit signed integer data type
+/*-------------------------------------------------------------------------------------------------------------------------*/
+
+
+/******************************************************************************************************************************
+ *   Interfaces, constants, enums, parameters, and cross-platform utility functions	                                          *
+ ******************************************************************************************************************************/
+namespace iomanager
+{
+    /*******************
+    *    INTERFACES    *
+    ********************
+    ---------------------------------------------------------------------------------------------------------------------------*/
+    class IOManager;                        // contains I/O static methods
+    /*-------------------------------------------------------------------------------------------------------------------------*/
+
+
+    /*******************
+    *    CONSTANTS     *
+    ********************
+    ---------------------------------------------------------------------------------------------------------------------------*/
+    const std::string VERSION = "1.0.0";        // version of current module
+    const std::string DEF_IMG_FORMAT = "tif";   // default image format
+    const int DEF_IMG_DEPTH = 8;                // default image depth
+    /*-------------------------------------------------------------------------------------------------------------------------*/
+
+
+    /*******************
+    *       ENUMS      *
+    ********************
+    ---------------------------------------------------------------------------------------------------------------------------*/
+    enum debug_level { NO_DEBUG, LEV1, LEV2, LEV3, LEV_MAX };
+    enum channel { ALL, R, G, B };
+    /*-------------------------------------------------------------------------------------------------------------------------*/
+
+
+    /*******************
+    *    PARAMETERS    *
+    ********************
+    ---------------------------------------------------------------------------------------------------------------------------*/
+    extern int DEBUG;                       // debug level of current module
+    extern bool TIME_CALC;                  // whether to enable time measurements
+    extern int CHANNEL_SELECTION;           // channel to be loaded (default is ALL)
+    /*-------------------------------------------------------------------------------------------------------------------------*/
+
+
+    /********************************************
+     *   Cross-platform UTILITY functions	    *
+     ********************************************
+    ---------------------------------------------------------------------------------------------------------------------------*/
+
+    //string-based sprintf function
+    inline std::string strprintf(const std::string fmt, ...){
+        int size = 100;
+        std::string str;
+        va_list ap;
+        while (1) {
+            str.resize(size);
+            va_start(ap, fmt);
+            int n = vsnprintf((char *)str.c_str(), size, fmt.c_str(), ap);
+            va_end(ap);
+            if (n > -1 && n < size) {
+                str.resize(n);
+                return str;
+            }
+            if (n > -1)
+                size = n + 1;
+            else
+                size *= 2;
+        }
+        return str;
+    }
+
+    //cross-platform current function macros (@WARNING: as they are macros, they are NOT namespaced)
+    #if defined(__GNUC__) || (defined(__MWERKS__) && (__MWERKS__ >= 0x3000)) || (defined(__ICC) && (__ICC >= 600))
+    # define __iom__current__function__ __PRETTY_FUNCTION__
+    #elif defined(__DMC__) && (__DMC__ >= 0x810)
+    # define __iom__current__function__ __PRETTY_FUNCTION__
+    #elif defined(__FUNCSIG__)
+    # define __iom__current__function__ __FUNCSIG__
+    #elif (defined(__INTEL_COMPILER) && (__INTEL_COMPILER >= 600)) || (defined(__IBMCPP__) && (__IBMCPP__ >= 500))
+    # define __iom__current__function__ __FUNCTION__
+    #elif defined(__BORLANDC__) && (__BORLANDC__ >= 0x550)
+    # define __iom__current__function__ __FUNC__
+    #elif defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 199901)
+    # define __iom__current__function__ __func__
+    #else
+    # define __iom__current__function__ "(unknown)"
+    #endif
+
+    //time macros (@WARNING: as they are macros, they are NOT namespaced)
+    #ifdef _WIN32
+        #define TIME( arg ) (((double) clock()) / CLOCKS_PER_SEC)
+    #else
+        #define TIME( arg ) (time( arg ))
+    #endif
+
+
+
+    /***********************************************
+    *    DEBUG, WARNING and EXCEPTION FUNCTIONS    *
+    ************************************************
+    ---------------------------------------------------------------------------------------------------------------------------*/
+    inline void warning(const char* message, const char* source = 0)
+    {
+        if(source)
+           printf("\n**** WARNING (source: \"%s\") ****\n"
+           "    |=> \"%s\"\n\n", source, message);
+        else
+           printf("\n**** WARNING ****: %s\n", message);
+    }
+
+    inline void debug(debug_level dbg_level, const char* message=0, const char* source=0)
+    {
+        if(iomanager::DEBUG >= dbg_level)
+        {
+           if(message && source)
+               printf("\n----------------------- iomanager module: DEBUG (level %d) ----: in \"%s\") ----\n"
+                        "                        message: %s\n\n", dbg_level, source, message);
+           else if(message)
+               printf("\n----------------------- iomanager module: DEBUG (level %d) ----: %s\n", dbg_level, message);
+           else if(source)
+               printf("\n----------------------- iomanager module: DEBUG (level %d) ----: in \"%s\"\n", dbg_level, source);
+        }
+    }
+
+
+
+}
+
+namespace iom = iomanager;
+
 #endif /* _IO_MANAGER_DEFS_H */

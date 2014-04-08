@@ -47,13 +47,13 @@ class StackStitcher
 	private:
 
 		/******OBJECT MEMBERS******/
-                StackedVolume *volume;					//pointer to the <StackedVolume> object to be stitched
-                int V0, V1, H0, H1, D0, D1;				//voxel intervals that identify the final stitched volume
-                int ROW_START, COL_START, ROW_END, COL_END;             //stack indexes that identify the stacks involved in stitching
+        StackedVolume *volume;                      //pointer to the <StackedVolume> object to be stitched
+        int V0, V1, H0, H1, D0, D1;                 //voxel intervals that identify the final stitched volume
+        int ROW_START, COL_START, ROW_END, COL_END; //stack indexes that identify the stacks involved in stitching
 
 		/******CLASS MEMBERS******/
 		static double time_displ_comp;				//time employed for pairwise displacements computation
-                static double time_merging;				//time employed to merge stacks
+        static double time_merging;                 //time employed to merge stacks
 		static double time_stack_desc;				//time employed to compute stacks descriptions
 		static double time_stack_restore;			//time employed to restore stacks
 		static double time_multiresolution;			//time employed to obtain stitched volume at different resolutions
@@ -62,16 +62,16 @@ class StackStitcher
 		/***OBJECT PRIVATE METHODS****/
 
 		//default constructor will not be accessible
-		StackStitcher(void){};
+        StackStitcher(void){}
 
 
 		/*************************************************************************************************************
 		* Merges all slices of the given row at the given depth index, so obtaining the stripe that is returned.
 		* Uses [...]_blending() functions to blend pixels in  overlapping zones.  The appropriate blending function is
 		* selected by the [blending_algo] parameter. If a  <StackRestorer>  object has been passed,  each slice is re-
-		* stored before it is combined into the final stripe.
+        * stored before it is combined into the final stripe.
 		**************************************************************************************************************/
-		real_t* getStripe(short row_index, short d_index, int restore_direction=-1, StackRestorer* stk_rst=NULL,
+        real_t* getStripe(short row_index, short d_index, int restore_direction=-1, StackRestorer* stk_rst=NULL,
 						  int blending_algo=S_SINUSOIDAL_BLENDING)    							   throw (MyException);
 
 		/*************************************************************************************************************
@@ -130,7 +130,7 @@ class StackStitcher
 
 	public:
 
-                StackStitcher(StackedVolume* _volume);
+        StackStitcher(StackedVolume* _volume);
 
 		/*************************************************************************************************************
 		* Method to be called for displacement computation. <> parameters are mandatory, while [] are optional.
@@ -225,7 +225,7 @@ class StackStitcher
 						bool exclude_nonstitchable_stacks =true, int _ROW_START=-1, int _ROW_END=-1, int _COL_START=-1,
 						int _COL_END=-1, int _D0=-1, int _D1=-1,	bool restoreSPIM=false,	  int restore_direction=-1,
 						int blending_algo=S_SINUSOIDAL_BLENDING,	bool test_mode=false, bool show_progress_bar= true,
-						const char* saved_img_format=IO_DEF_IMG_FORMAT, int saved_img_depth=IO_DEF_IMG_DEPTH) throw (MyException);
+                        const char* saved_img_format=iom::DEF_IMG_FORMAT.c_str(), int saved_img_depth=iom::DEF_IMG_DEPTH) throw (MyException);
 		
 
 		/*************************************************************************************************************

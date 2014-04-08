@@ -39,8 +39,8 @@ class PDAlgo
 
 	public:
 
-		PDAlgo(void){};
-		~PDAlgo(void){};
+        PDAlgo(void){}
+        ~PDAlgo(void){}
 
 		/*************************************************************************************************************
 		* Abstract method that all derived classes must implement.

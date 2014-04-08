@@ -81,7 +81,7 @@ void TPAlgoMST::execute() throw (MyException)
 				src_col = col;
 				min_distance = sqrt((float)(row*row+col*col));
 			}
-	#if S_VERBOSE > 3
+    #if S_VERBOSE > 4
 	printf("....in TPAlgoMST::execute(): SOURCE is [%d,%d]\n",src_row,src_col);
 	#endif
 
@@ -146,7 +146,7 @@ void TPAlgoMST::execute() throw (MyException)
 					}
 				}
 
-	#if S_VERBOSE > 3
+    #if S_VERBOSE > 4
 	for(int k=0; k<3; k++)
 	{
 		printf("\n\n....in TPAlgoMST::execute(): %d DIRECTION:\n",  k);
@@ -200,7 +200,7 @@ void TPAlgoMST::execute() throw (MyException)
 					dest   = volume->getSTACKS()[row][col];
 					v      = dest;
 
-					#if S_VERBOSE > 2
+                    #if S_VERBOSE > 4
 					printf("S[%d,%d] [%d]_path:\n", k, row, col);
 					#endif
 					while (v != source)
@@ -214,7 +214,7 @@ void TPAlgoMST::execute() throw (MyException)
 							throw MyException("...in TPAlgoMST::execute(): error in the predecessor matrix");
 						u = volume->getSTACKS()[u_row][u_col ];
 
-						#if S_VERBOSE > 2
+                        #if S_VERBOSE > 4
 						printf("\t[%d,%d] (ABS_[%d] = %d %+d)\n",u->getROW_INDEX(), u->getCOL_INDEX(), k, dest->getABS(k), u->getDisplacement(v)->getDisplacement(direction(k)));
 						#endif
 						dest->setABS(dest->getABS(k) + u->getDisplacement(v)->getDisplacement(direction(k)), k);
@@ -223,11 +223,11 @@ void TPAlgoMST::execute() throw (MyException)
 						if(dest->isStitchable() && !(v->isStitchable()))
 							printf("\nWARNING! in TPAlgoMST::execute(): direction %d: Stack [%d,%d] is passing through Stack [%d,%d], that is NOT STITCHABLE\n", k, row, col, v->getROW_INDEX(), v->getCOL_INDEX());
 					}
-					#if S_VERBOSE > 2
+                    #if S_VERBOSE > 4
 					printf("\n");
 					#endif
 				}
-				#if S_VERBOSE > 2
+                #if S_VERBOSE > 4
 				system("PAUSE");
 				#endif
 			}

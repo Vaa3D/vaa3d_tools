@@ -42,6 +42,14 @@
 #include "Stack.h"
 #include "Displacement.h"
 
+#ifdef min
+#undef min
+#endif
+
+#ifdef max
+#undef max
+#endif
+
 using namespace std;
 
 const char* axis_to_str(axis ax)
@@ -489,8 +497,8 @@ void StackedVolume::loadXML(const char *xml_filepath)
 void StackedVolume::initFromXML(const char *xml_filepath)
 {
 	#if VM_VERBOSE > 3
-	printf("\t\t\t\tin StackedVolume::initFromXML(char *xml_filename = %s)\n", xml_filename);
-		#endif
+    printf("\t\t\t\tin StackedVolume::initFromXML(char *xml_filename = %s)\n", xml_filepath);
+    #endif
 
 	TiXmlDocument xml;
 	if(!xml.LoadFile(xml_filepath))
@@ -568,7 +576,7 @@ void StackedVolume::saveXML(const char *xml_filename, const char *xml_filepath) 
 	//loading previously initialized XML file 
         if(!xml.LoadFile(xml_abs_path))
 	{
-		char errMsg[IO_STATIC_STRINGS_SIZE];
+        char errMsg[5000];
                 sprintf(errMsg, "in StackedVolume::saveToXML(...) : unable to load xml file at \"%s\"", xml_abs_path);
 		throw MyException(errMsg);
 	}

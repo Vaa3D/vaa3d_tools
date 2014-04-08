@@ -34,12 +34,12 @@ class MyException
 {
 	private:
 
-		char message[5000];	
-		MyException(void){};	
+        char message[5000];
 
 	public:
+        MyException(void){}
 		MyException(const char* new_message){strcpy(message, new_message);}
-		~MyException(void){};
+        ~MyException(void){}
 		const char* what() const{return message;}
 };
 

@@ -35,12 +35,12 @@
 #include "MyException.h"
 
 //STATIC class
-class IOManager
+class iomanager::IOManager
 {
 	private:
 
-		IOManager(void){};
-		~IOManager(void){};
+        IOManager(void){}
+        ~IOManager(void){}
 
 	public:
 
@@ -56,9 +56,9 @@ class IOManager
 		* <raw_img_height/width>	: dimensions of raw_img.
 		* [start/end_height/width]	: optional ROI (region of interest) to be set on the given image.
 		**************************************************************************************************************/
-		static void saveImage(std::string img_path,   real_t* raw_img,       int raw_img_height,   int   raw_img_width, 
+        static void saveImage(std::string img_path,   real_t* raw_img,       int raw_img_height,   int   raw_img_width,
 							  int start_height = 0,   int end_height = - 1,  int start_width = 0,  int end_width = - 1,
-							  const char* img_format = IO_DEF_IMG_FORMAT,	 int img_depth = IO_DEF_IMG_DEPTH		 )  
+                              const char* img_format = iom::DEF_IMG_FORMAT.c_str(),	 int img_depth = iom::DEF_IMG_DEPTH)
 																								   throw (MyException);
 
 		/*************************************************************************************************************
@@ -69,7 +69,7 @@ class IOManager
 		*							  the absolute path of each image.
 		* [first/last_file]			: if given, only images in the range [first_file,last_file] will be loaded.
 		**************************************************************************************************************/
-		static real_t* loadImageStack(char **image_filenames,	int image_filepaths_size,	   char *base_path = NULL, 
+        static real_t* loadImageStack(char **image_filenames,	int image_filepaths_size, char *base_path = NULL,
 									  int first_file = -1, int last_file = -1)				   throw    (MyException);
 };
 

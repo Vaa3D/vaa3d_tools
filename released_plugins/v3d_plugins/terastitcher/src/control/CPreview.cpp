@@ -57,32 +57,43 @@ CPreview::~CPreview()
 //automatically called when current thread is started
 void CPreview::run()
 {
-    #ifdef TSP_DEBUG
-    printf("TeraStitcher plugin [thread %d] >> CPreview::run() launched\n", this->thread()->currentThreadId());
-    #endif
+    /**/tsp::debug(tsp::LEV1, 0, __tsp__current__function__);
 
     try
     {
-        //obtaining desired slice
+        // check precondition #1: valid volume handle
+        if(!volume)
+            throw MyException("Invalid volume handle");
+
+        // initialize stitcher
+        /**/tsp::debug(tsp::LEV_MAX, "Initialize stitcher", __tsp__current__function__);
         StackStitcher stitcher(volume);
-        stitcher.mergeTiles("", -1, -1, NULL, false, -1, -1, -1, -1, slice_index, slice_index+1,
+
+        // stitch selected slice
+        /**/tsp::debug(tsp::LEV_MAX, strprintf("stitch slice %d", slice_index).c_str(), __tsp__current__function__);
+        stitcher.mergeTiles("", -1, -1, 0, false, -1, -1, -1, -1, slice_index, slice_index+1,
                             false, false, S_SHOW_STACK_MARGIN, true, false, "tif", 8);
 
-        //allocation of image data
-        printf("allocation of image data\n");
+        // allocate Image4DSimple object
+        /**/tsp::debug(tsp::LEV_MAX, "allocate Image4DSimple object", __tsp__current__function__);
         Image4DSimple* img = new Image4DSimple();
+
+        // load slice with OpenCV
+        /**/tsp::debug(tsp::LEV_MAX, "load slice with OpenCV", __tsp__current__function__);
         char path[VM_STATIC_STRINGS_SIZE];
         sprintf(path, "%s/test_middle_slice.tif", CImport::instance()->getVolume()->getSTACKS_DIR());
-
-        //loading slice using OpenCV
-        printf("allocation of image data\n");
         IplImage* slice_img = cvLoadImage(path, CV_LOAD_IMAGE_GRAYSCALE);
         if(!slice_img)
             throw MyException(QString("Unable to load slice \"").append(path).append("\" to be shown into Vaa3D").toStdString().c_str());
         int width = slice_img->width;
         int height = slice_img->height;
 
+        // allocate Vaa3D image data
+        /**/tsp::debug(tsp::LEV_MAX, "allocate Vaa3D image data", __tsp__current__function__);
         uint8* img_data = new uint8[width*height];
+
+        // copy data into Vaa3D image
+        /**/tsp::debug(tsp::LEV_MAX, "copy data into Vaa3D image", __tsp__current__function__);
         int slice_img_step = slice_img->widthStep/sizeof(uchar);
         for(int i=0; i<height; i++)
         {
@@ -91,15 +102,31 @@ void CPreview::run()
                 img_data[i*width +j] = slice_img_data[j];
         }
 
-        //releasing memory and setting image data
-        printf("releasing memory and setting image data\n");
+        // release memory allocated by OpenCV
+        /**/tsp::debug(tsp::LEV_MAX, "release memory allocated by OpenCV", __tsp__current__function__);
         cvReleaseImage(&slice_img);
+
+        // set Vaa3D image data
+        /**/tsp::debug(tsp::LEV_MAX, "set Vaa3D image data", __tsp__current__function__);
         img->setData(img_data, width, height, 1, 1, V3D_UINT8);
         img->setFileName(path);
 
         //everything went OK
         emit sendOperationOutcome(0, img);
     }
-    catch(MyException& exception)   {emit sendOperationOutcome(&exception);}
-    catch(const char* error)        {emit sendOperationOutcome(new MyException(error));}
+    catch(MyException& exception)
+    {
+        /**/tsp::warning(strprintf("exception thrown in CPreview::run(): \"%s\"", exception.what()).c_str());
+        emit sendOperationOutcome(new MyException(exception.what()), 0);
+    }
+    catch(const char* error)
+    {
+        /**/tsp::warning(strprintf("exception thrown in CPreview::run(): \"%s\"", error).c_str());
+        emit sendOperationOutcome(new MyException(std::string(error).c_str()), 0);
+    }
+    catch(...)
+    {
+        /**/tsp::warning(strprintf("exception thrown in CPreview::run(): \"%s\"", "generic error").c_str());
+        emit sendOperationOutcome(new MyException("Generic error occurred"), 0);
+    }
 }

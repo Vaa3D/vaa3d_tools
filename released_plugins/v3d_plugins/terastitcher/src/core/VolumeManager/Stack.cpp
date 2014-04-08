@@ -48,12 +48,25 @@
 #include <list>
 #include <string>
 #include <cv.h>
+#include <boost/xpressive/xpressive.hpp>
 #include "Displacement.h"
 
 using namespace std;
+using namespace volumemanager;
+
+// assign default values to namespace parameters
+namespace volumemanager
+{
+    /*******************
+    *    PARAMETERS    *
+    ********************
+    ---------------------------------------------------------------------------------------------------------------------------*/
+    string IMG_FILTER_REGEX="";    // regular expression used to filter image filenames when the volume is imported
+    /*-------------------------------------------------------------------------------------------------------------------------*/
+}
 
 //CONSTRUCTOR WITH ARGUMENTS
-Stack::Stack(StackedVolume* _CONTAINER, int _ROW_INDEX, int _COL_INDEX, const char* _DIR_NAME)
+Stack::Stack(StackedVolume* _CONTAINER, int _ROW_INDEX, int _COL_INDEX, const char* _DIR_NAME) throw (MyException)
 {
 	#if VM_VERBOSE > 3
 	printf("\t\t\t\tin Stack::Stack(StackedVolume* _CONTAINER, int _ROW_INDEX=%d, int _COL_INDEX=%d, char* _DIR_NAME=%s)\n",
@@ -74,7 +87,7 @@ Stack::Stack(StackedVolume* _CONTAINER, int _ROW_INDEX, int _COL_INDEX, const ch
 	init();
 }
 
-Stack::Stack(StackedVolume* _CONTAINER, int _ROW_INDEX, int _COL_INDEX, FILE* bin_file)
+Stack::Stack(StackedVolume* _CONTAINER, int _ROW_INDEX, int _COL_INDEX, FILE* bin_file) throw (MyException)
 {
 	#if VM_VERBOSE > 3
 	printf("\t\t\t\tin Stack::Stack(StackedVolume* _CONTAINER, int _ROW_INDEX=%d, int _COL_INDEX=%d, FILE* bin_file)\n",
@@ -95,7 +108,7 @@ Stack::Stack(StackedVolume* _CONTAINER, int _ROW_INDEX, int _COL_INDEX, FILE* bi
 	unBinarizeFrom(bin_file);
 }
 
-void Stack::init()
+void Stack::init() throw (MyException)
 {
 	#if VM_VERBOSE > 3
 	printf("\t\t\t\tin Stack[%d,%d]::init()\n",ROW_INDEX, COL_INDEX);
@@ -124,8 +137,20 @@ void Stack::init()
 	while ((entry_lev3=readdir(cur_dir_lev3)))
 	{
 		tmp = entry_lev3->d_name;
-		if(tmp.compare(".") != 0 && tmp.compare("..") != 0 && tmp.find(".") != string::npos)
-			entries_lev3.push_back(tmp);
+
+        if(IMG_FILTER_REGEX.empty())
+        {
+            if(tmp.compare(".") != 0 && tmp.compare("..") != 0 && tmp.find(".") != string::npos)
+                entries_lev3.push_back(tmp);
+        }
+        else
+        {
+            boost::xpressive::sregex rex = boost::xpressive::sregex::compile(IMG_FILTER_REGEX.c_str());
+            boost::xpressive::smatch what;
+            if(boost::xpressive::regex_match(tmp, what, rex))
+               entries_lev3.push_back(tmp);
+        }
+
 	}
 	entries_lev3.sort();
 	DEPTH = (int)entries_lev3.size();
@@ -137,7 +162,10 @@ void Stack::init()
 	if(DEPTH == 0)
 	{
 		char msg[1000];
-		sprintf(msg,"in Stack[%d,%d]::init(): stack is empty", ROW_INDEX, COL_INDEX);
+        if(IMG_FILTER_REGEX.empty())
+            sprintf(msg,"in Stack[%d,%d]::init(): stack is empty", ROW_INDEX, COL_INDEX);
+        else
+            sprintf(msg,"in Stack[%d,%d]::init(): no files found that match regular expression \"%s\"", ROW_INDEX, COL_INDEX, IMG_FILTER_REGEX.c_str());
 		throw MyException(msg);
 	}
 
@@ -179,13 +207,16 @@ Stack::~Stack()
 	SOUTH.clear();
 	WEST.clear();
 
-	for(int z=0; z<DEPTH; z++)
-		if(FILENAMES[z])
-			delete[] FILENAMES[z];
+    if(FILENAMES)
+    {
+        for(int z=0; z<DEPTH; z++)
+            if(FILENAMES[z])
+                delete[] FILENAMES[z];
+
+        delete[] FILENAMES;
+    }
 	if(STACKED_IMAGE)
 		delete[] STACKED_IMAGE;
-	if(FILENAMES)
-		delete[] FILENAMES;
 	if(DIR_NAME)
 		delete[] DIR_NAME;
 }
@@ -200,7 +231,7 @@ void Stack::print()
 }
 
 //binarizing-unbinarizing methods
-void Stack::binarizeInto(FILE* file)
+void Stack::binarizeInto(FILE* file) throw (MyException)
 {
 	#if VM_VERBOSE > 3
 	printf("\t\t\t\tin Stack[%d,%d]::binarizeInto(...)\n",ROW_INDEX, COL_INDEX);
@@ -240,25 +271,46 @@ void Stack::unBinarizeFrom(FILE* file) throw (MyException)
 
 	fread_return_val = fread(&HEIGHT, sizeof(int), 1, file);
 	if(fread_return_val != 1)
+    {
 		throw MyException("in Stack::unBinarizeFrom(...): error while reading binary metadata file");
+        fclose(file);
+    }
 	fread_return_val = fread(&WIDTH, sizeof(int), 1, file);
 	if(fread_return_val != 1)
+    {
 		throw MyException("in Stack::unBinarizeFrom(...): error while reading binary metadata file");
+        fclose(file);
+    }
 	fread_return_val = fread(&DEPTH, sizeof(int), 1, file);
 	if(fread_return_val != 1)
+    {
 		throw MyException("in Stack::unBinarizeFrom(...): error while reading binary metadata file");
+        fclose(file);
+    }
 	fread_return_val = fread(&ABS_V, sizeof(int), 1, file);
 	if(fread_return_val != 1)
+    {
 		throw MyException("in Stack::unBinarizeFrom(...): error while reading binary metadata file");
+        fclose(file);
+    }
 	fread_return_val = fread(&ABS_H, sizeof(int), 1, file);
 	if(fread_return_val != 1)
+    {
 		throw MyException("in Stack::unBinarizeFrom(...): error while reading binary metadata file");
+        fclose(file);
+    }
 	fread_return_val = fread(&ABS_D, sizeof(int), 1, file);
 	if(fread_return_val != 1)
+    {
 		throw MyException("in Stack::unBinarizeFrom(...): error while reading binary metadata file");
+        fclose(file);
+    }
 	fread_return_val = fread(&str_size, sizeof(uint16), 1, file);
 	if(fread_return_val != 1)
+    {
 		throw MyException("in Stack::unBinarizeFrom(...): error while reading binary metadata file");
+        fclose(file);
+    }
 	DIR_NAME = new char[str_size];
 	fread_return_val = fread(DIR_NAME, str_size, 1, file);
 	FILENAMES = new char*[DEPTH];
@@ -266,11 +318,18 @@ void Stack::unBinarizeFrom(FILE* file) throw (MyException)
 	{
 		fread_return_val = fread(&str_size, sizeof(uint16), 1, file);
 		if(fread_return_val != 1)
+        {
 			throw MyException("in Stack::unBinarizeFrom(...): error while reading binary metadata file");
+            fclose(file);
+        }
+
 		FILENAMES[i] = new char[str_size];
 		fread_return_val = fread(FILENAMES[i], str_size, 1, file);
 		if(fread_return_val != 1)
+        {
 			throw MyException("in Stack::unBinarizeFrom(...): error while reading binary metadata file");
+            fclose(file);
+        }
 	}
 }
 
@@ -400,7 +459,7 @@ void Stack::loadXML(TiXmlElement *stack_node) throw (MyException)
 
 
 //loads image stack from <first_file> to <last_file> extremes included, if not specified loads entire Stack
-real_t* Stack::loadImageStack(int first_file, int last_file)
+real_t* Stack::loadImageStack(int first_file, int last_file) throw (MyException)
 {
 	#if VM_VERBOSE > 3
 	printf("\t\t\t\tin Stack[%d,%d]::loadImageStack(first_file = %d, last_file = %d)\n",ROW_INDEX, COL_INDEX, first_file, last_file);
@@ -408,7 +467,7 @@ real_t* Stack::loadImageStack(int first_file, int last_file)
 
 	char base_path[2000];
 	sprintf(base_path, "%s/%s", CONTAINER->getSTACKS_DIR(), DIR_NAME);
-	STACKED_IMAGE=IOManager::loadImageStack(this->FILENAMES, this->DEPTH, base_path,first_file, last_file);
+    STACKED_IMAGE=iom::IOManager::loadImageStack(this->FILENAMES, this->DEPTH, base_path,first_file, last_file);
 	return STACKED_IMAGE;
 }
 

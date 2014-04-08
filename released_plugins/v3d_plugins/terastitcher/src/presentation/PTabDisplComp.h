@@ -63,6 +63,7 @@ class terastitcher::PTabDisplComp : public QWidget
         QLabel* memocc_label;
         QLineEdit* memocc_field;
         QPushButton* showAdvancedButton;
+        QComboBox* channel_selection;
 
         //advanced panel widgets
         QWidget* advanced_panel;
@@ -153,6 +154,11 @@ class terastitcher::PTabDisplComp : public QWidget
         * Called when <showAdvancedButton> status changed
         ***********************************************************************************/
         void showAdvancedChanged(bool status);
+
+        /**********************************************************************************
+        * Called when "channel_selection" state has changed.
+        ***********************************************************************************/
+        void channelSelectedChanged(int);
 
 };
 
