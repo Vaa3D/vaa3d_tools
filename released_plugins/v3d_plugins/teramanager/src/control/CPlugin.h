@@ -116,6 +116,7 @@ namespace teramanager
     typedef unsigned long long uint64;			//64-bit unsigned integers (0 -> +18,446,744,073,709,551,615
     typedef float real32;						//real single precision
     typedef double real64;						//real double precision
+    typedef std::vector<int> integer_array;     //need to typedef this so as to register with qRegisterMetaType
 
     //interval type
     struct interval_t
@@ -182,6 +183,22 @@ namespace teramanager
                 ?  std::string::npos  :  end + delim.size());
         }
     }
+
+    // emulate initializer list for STL vector
+    template <typename T>
+    class make_vector {
+        public:
+          typedef make_vector<T> my_type;
+          my_type& operator<< (const T& val) {
+            data_.push_back(val);
+            return *this;
+          }
+          operator std::vector<T>() const {
+            return data_;
+          }
+        private:
+          std::vector<T> data_;
+    };
 
     //cross-platform current function macro
     #if defined(__GNUC__) || (defined(__MWERKS__) && (__MWERKS__ >= 0x3000)) || (defined(__ICC) && (__ICC >= 600))

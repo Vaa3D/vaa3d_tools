@@ -78,6 +78,9 @@ void CPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWi
     //overriding the current locale with the standard POSIX locale
     setlocale(LC_ALL, "POSIX");
 
+    //register custom types
+    qRegisterMetaType<itm::integer_array>("itm::integer_array");
+
     if (menu_name == tr("TeraFly"))
     {
         //launching plugin's GUI

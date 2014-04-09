@@ -244,8 +244,8 @@ void CVolume::run()
 
 
                     // send data
-                    int data_s[5] = {voiH0,         voiV0,          voiD0,          0,                              cur_t};
-                    int data_c[5] = {voiH1-voiH0,   voiV1-voiV0,    voiD1-voiD0,    volume->getNACtiveChannels(),   1};
+                    integer_array data_s = make_vector<int>() << voiH0        << voiV0        << voiD0        << 0                            << cur_t;
+                    integer_array data_c = make_vector<int>() << voiH1-voiH0  << voiV1-voiV0  << voiD1-voiD0  << volume->getNACtiveChannels() << 1;
                     emit sendData(voiData, data_s, data_c, source, false, 0, elapsedTime,
                                 strprintf("Block X=[%d, %d) Y=[%d, %d) Z=[%d, %d), T=[%d, %d] loaded from res %d",
                                 voiH0, voiH1, voiV0, voiV1, voiD0, voiD1, cur_t, cur_t, voiResIndex).c_str());
@@ -268,8 +268,8 @@ void CVolume::run()
 
 
                     // send data
-                    int data_s[5] = {voiH0,         voiV0,          voiD0,          0,                              voiT0};
-                    int data_c[5] = {voiH1-voiH0,   voiV1-voiV0,    voiD1-voiD0,    volume->getNACtiveChannels(),   voiT1-voiT0+1};
+                    integer_array data_s = make_vector<int>() << voiH0        << voiV0        << voiD0        << 0                            << voiT0;
+                    integer_array data_c = make_vector<int>() << voiH1-voiH0  << voiV1-voiV0  << voiD1-voiD0  << volume->getNACtiveChannels() << voiT1-voiT0+1;
                     emit sendData(voiData, data_s, data_c, source, true, 0, elapsedTime,
                                 strprintf("Block X=[%d, %d) Y=[%d, %d) Z=[%d, %d), T=[%d, %d] loaded from res %d",
                                 voiH0, voiH1, voiV0, voiV1, voiD0, voiD1, voiT0, voiT1, voiResIndex).c_str());
@@ -440,7 +440,7 @@ void CVolume::run()
         itm::warning(exception.what(), "CVolume");
         /**/ dest->updateGraphicsInProgress.unlock();
 
-        emit sendData(0, 0, 0, dest, true, new RuntimeException(exception.what()), 0, "");
+        emit sendData(0, make_vector<int>(), make_vector<int>(), dest, true, new RuntimeException(exception.what()), 0, "");
     }
     catch( RuntimeException& exception)
     {
@@ -452,7 +452,7 @@ void CVolume::run()
         itm::warning(exception.what(), "CVolume");
         /**/ dest->updateGraphicsInProgress.unlock();
 
-        emit sendData(0, 0, 0, dest, true, new RuntimeException(exception.what()), 0, "");
+        emit sendData(0, make_vector<int>(), make_vector<int>(), dest, true, new RuntimeException(exception.what()), 0, "");
     }
     catch(const char* error)
     {
@@ -464,7 +464,7 @@ void CVolume::run()
         itm::warning(error, "CVolume");
         /**/ dest->updateGraphicsInProgress.unlock();
 
-        emit sendData(0, 0, 0, dest, true, new RuntimeException(error), 0, "");
+        emit sendData(0, make_vector<int>(), make_vector<int>(), dest, true, new RuntimeException(error), 0, "");
     }
     catch(...)
     {
@@ -476,7 +476,7 @@ void CVolume::run()
         itm::warning("Unknown error occurred", "CVolume");
         /**/ dest->updateGraphicsInProgress.unlock();
 
-        emit sendData(0, 0, 0, dest, true, new RuntimeException("Unknown error occurred"), 0, "");
+        emit sendData(0, make_vector<int>(), make_vector<int>(), dest, true, new RuntimeException("Unknown error occurred"), 0, "");
     }
 }
 

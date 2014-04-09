@@ -223,7 +223,7 @@ void CExplorerWindow::show()
         }
 
         //signal connections
-        connect(CVolume::instance(), SIGNAL(sendData(itm::uint8*,int*,int*,void*,bool,itm::RuntimeException*,qint64,QString,int)), this, SLOT(receiveData(itm::uint8*,int*,int*,void*,bool,itm::RuntimeException*,qint64,QString,int)), Qt::BlockingQueuedConnection);
+        connect(CVolume::instance(), SIGNAL(sendData(itm::uint8*,itm::integer_array,itm::integer_array,QWidget*,bool,itm::RuntimeException*,qint64,QString,int)), this, SLOT(receiveData(itm::uint8*,itm::integer_array,itm::integer_array,QWidget*,bool,itm::RuntimeException*,qint64,QString,int)), Qt::BlockingQueuedConnection);
         connect(view3DWidget, SIGNAL(changeXCut0(int)), this, SLOT(Vaa3D_changeXCut0(int)));
         connect(view3DWidget, SIGNAL(changeXCut1(int)), this, SLOT(Vaa3D_changeXCut1(int)));
         connect(view3DWidget, SIGNAL(changeYCut0(int)), this, SLOT(Vaa3D_changeYCut0(int)));
@@ -552,20 +552,21 @@ bool CExplorerWindow::eventFilter(QObject *object, QEvent *event)
 /*********************************************************************************
 * Receive data (and metadata) from <CVolume> throughout the loading process
 **********************************************************************************/
-void CExplorerWindow::receiveData(itm::uint8* data,                   // data (any dimension)
-        int *data_s,                        // data start coordinates along X, Y, Z, C, t
-        int *data_c,                        // data count along X, Y, Z, C, t
-        void* dest,                         // address of the listener
-        bool finished,                      // whether the loading operation is terminated
-        itm::RuntimeException* ex /* = 0*/, // exception (optional)
-        qint64 elapsed_time       /* = 0 */, // elapsed time (optional)
-        QString op_dsc            /* = ""*/, // operation descriptor (optional)
-        int step                  /* = 0 */)// step number (optional)
+void CExplorerWindow::receiveData(
+        itm::uint8* data,                               // data (any dimension)
+        integer_array data_s,                           // data start coordinates along X, Y, Z, C, t
+        integer_array data_c,                           // data count along X, Y, Z, C, t
+        QWidget *dest,                                  // address of the listener
+        bool finished,                                  // whether the loading operation is terminated
+        itm::RuntimeException* ex /* = 0*/,             // exception (optional)
+        qint64 elapsed_time       /* = 0 */,            // elapsed time (optional)
+        QString op_dsc            /* = ""*/,            // operation descriptor (optional)
+        int step                  /* = 0 */)            // step number (optional)
 {
     /**/itm::debug(itm::LEV1, strprintf("title = %s, data_s = {%s}, data_c = {%s}, finished = %s",
                                         titleShort.c_str(),
-                                        data_s ? strprintf("%d,%d,%d,%d,%d", data_s[0], data_s[1], data_s[2], data_s[3], data_s[4]).c_str() : "",
-                                        data_c ? strprintf("%d,%d,%d,%d,%d", data_c[0], data_c[1], data_c[2], data_c[3], data_c[4]).c_str() : "",
+                                        !data_s.empty() ? strprintf("%d,%d,%d,%d,%d", data_s[0], data_s[1], data_s[2], data_s[3], data_s[4]).c_str() : "",
+                                        !data_c.empty() ? strprintf("%d,%d,%d,%d,%d", data_c[0], data_c[1], data_c[2], data_c[3], data_c[4]).c_str() : "",
                                         finished ? "true" : "false").c_str(), __itm__current__function__);
 
     char message[1000];
@@ -678,6 +679,8 @@ void CExplorerWindow::receiveData(itm::uint8* data,                   // data (a
             isReady = true;
         }
     }
+    /**/itm::debug(itm::LEV3, "method terminated", __itm__current__function__);
+//    QMessageBox::information(0, "TEst", "Data received");
 }
 
 /**********************************************************************************
@@ -855,7 +858,7 @@ CExplorerWindow::newView(int x, int y, int z,                            //can b
 
 
         // disconnect current window from GUI's listeners and event filters
-        disconnect(CVolume::instance(), SIGNAL(sendData(itm::uint8*,int*,int*,void*,bool,itm::RuntimeException*,qint64,QString,int)), this, SLOT(receiveData(itm::uint8*,int*,int*,void*,bool,itm::RuntimeException*,qint64,QString,int)));
+        disconnect(CVolume::instance(), SIGNAL(sendData(itm::uint8*,itm::integer_array,itm::integer_array,QWidget*,bool,itm::RuntimeException*,qint64,QString,int)), this, SLOT(receiveData(itm::uint8*,itm::integer_array,itm::integer_array,QWidget*,bool,itm::RuntimeException*,qint64,QString,int)));
         disconnect(view3DWidget, SIGNAL(changeXCut0(int)), this, SLOT(Vaa3D_changeXCut0(int)));
         disconnect(view3DWidget, SIGNAL(changeXCut1(int)), this, SLOT(Vaa3D_changeXCut1(int)));
         disconnect(view3DWidget, SIGNAL(changeYCut0(int)), this, SLOT(Vaa3D_changeYCut0(int)));
@@ -1071,8 +1074,6 @@ throw (RuntimeException)
     }
 
 
-
-    //otherwise COPYING + SCALING
     //fast scaling by pixel replication
     // - NOTE: interpolated image is allowed to be slightly larger (or even smaller) than the source image resulting after scaling.
     if( ( (xDimInterp % (x1-x0) <= 1) || (xDimInterp % (x1-x0+1) <= 1) || (xDimInterp % (x1-x0-1) <= 1)) &&
@@ -1433,7 +1434,7 @@ void CExplorerWindow::restoreViewFrom(CExplorerWindow* source) throw (RuntimeExc
     if(source)
     {
         //signal disconnections
-        source->disconnect(CVolume::instance(), SIGNAL(sendData(itm::uint8*,int*,int*,void*,bool,itm::RuntimeException*,qint64,QString,int)), source, SLOT(receiveData(itm::uint8*,int*,int*,void*,bool,itm::RuntimeException*,qint64,QString,int)));
+        source->disconnect(CVolume::instance(), SIGNAL(sendData(itm::uint8*,itm::integer_array,itm::integer_array,QWidget*,bool,itm::RuntimeException*,qint64,QString,int)), source, SLOT(receiveData(itm::uint8*,itm::integer_array,itm::integer_array,QWidget*,bool,itm::RuntimeException*,qint64,QString,int)));
         source->disconnect(source->view3DWidget, SIGNAL(changeXCut0(int)), source, SLOT(Vaa3D_changeXCut0(int)));
         source->disconnect(source->view3DWidget, SIGNAL(changeXCut1(int)), source, SLOT(Vaa3D_changeXCut1(int)));
         source->disconnect(source->view3DWidget, SIGNAL(changeYCut0(int)), source, SLOT(Vaa3D_changeYCut0(int)));
@@ -1555,7 +1556,7 @@ void CExplorerWindow::restoreViewFrom(CExplorerWindow* source) throw (RuntimeExc
         pMain->traslTpos->setEnabled(volT1 < CImport::instance()->getVolume(volResIndex)->getDIM_T()-1);
 
         //signal connections
-        connect(CVolume::instance(), SIGNAL(sendData(itm::uint8*,int*,int*,void*,bool,itm::RuntimeException*,qint64,QString,int)), this, SLOT(receiveData(itm::uint8*,int*,int*,void*,bool,itm::RuntimeException*,qint64,QString,int)), Qt::BlockingQueuedConnection);
+        connect(CVolume::instance(), SIGNAL(sendData(itm::uint8*,itm::integer_array,itm::integer_array,QWidget*,bool,itm::RuntimeException*,qint64,QString,int)), this, SLOT(receiveData(itm::uint8*,itm::integer_array,itm::integer_array,QWidget*,bool,itm::RuntimeException*,qint64,QString,int)), Qt::BlockingQueuedConnection);
         connect(view3DWidget, SIGNAL(changeXCut0(int)), this, SLOT(Vaa3D_changeXCut0(int)));
         connect(view3DWidget, SIGNAL(changeXCut1(int)), this, SLOT(Vaa3D_changeXCut1(int)));
         connect(view3DWidget, SIGNAL(changeYCut0(int)), this, SLOT(Vaa3D_changeYCut0(int)));

@@ -325,9 +325,9 @@ class teramanager::CExplorerWindow : public QWidget
         **********************************************************************************/
         void receiveData(
                 itm::uint8* data,                   // data (any dimension)
-                int *data_s,                        // data start coordinates along X, Y, Z, C, t
-                int *data_c,                        // data count along X, Y, Z, C, t
-                void* dest,                         // address of the listener
+                itm::integer_array data_s,          // data start coordinates along X, Y, Z, C, t
+                itm::integer_array data_c,          // data count along X, Y, Z, C, t
+                QWidget* dest,                         // address of the listener
                 bool finished,                      // whether the loading operation is terminated
                 itm::RuntimeException* ex = 0,      // exception (optional)
                 qint64 elapsed_time = 0,            // elapsed time (optional)
