@@ -46,9 +46,7 @@ int CExplorerWindow::nInstances = 0;
 int CExplorerWindow::nTotalInstances = 0;
 
 void CExplorerWindow::show()
-{
-    /**/ updateGraphicsInProgress.lock();
-
+{ 
     /**/itm::debug(itm::LEV1, 0, __itm__current__function__);
 
     PMain* pMain = PMain::getInstance();
@@ -223,7 +221,6 @@ void CExplorerWindow::show()
         }
 
         //signal connections
-        connect(CVolume::instance(), SIGNAL(sendData(itm::uint8*,itm::integer_array,itm::integer_array,QWidget*,bool,itm::RuntimeException*,qint64,QString,int)), this, SLOT(receiveData(itm::uint8*,itm::integer_array,itm::integer_array,QWidget*,bool,itm::RuntimeException*,qint64,QString,int)), Qt::BlockingQueuedConnection);
         connect(view3DWidget, SIGNAL(changeXCut0(int)), this, SLOT(Vaa3D_changeXCut0(int)));
         connect(view3DWidget, SIGNAL(changeXCut1(int)), this, SLOT(Vaa3D_changeXCut1(int)));
         connect(view3DWidget, SIGNAL(changeYCut0(int)), this, SLOT(Vaa3D_changeYCut0(int)));
@@ -280,8 +277,6 @@ void CExplorerWindow::show()
         QMessageBox::critical(PMain::getInstance(),QObject::tr("Error"), QObject::tr("Unknown error occurred"),QObject::tr("Ok"));
         PMain::getInstance()->closeVolume();
     }
-
-    /**/ updateGraphicsInProgress.unlock();
 }
 
 CExplorerWindow::CExplorerWindow(V3DPluginCallback2 *_V3D_env, int _resIndex, itm::uint8 *_imgData, int _volV0, int _volV1,
@@ -374,17 +369,24 @@ CExplorerWindow::~CExplorerWindow()
 {
     /**/itm::debug(itm::LEV1, strprintf("title = %s", titleShort.c_str()).c_str(), __itm__current__function__);
 
-    //removing the event filter from the 3D renderer and from the 3D window
+    // remove the event filter from the 3D renderer and from the 3D window
     isActive = false;
     view3DWidget->removeEventFilter(this);
     window3D->removeEventFilter(this);
     window3D->timeSlider->removeEventFilter(this);
 
-    //just closing windows
-    //    V3D_env->close3DWindow(window); //--- Alessandro 16/03/2014: this causes crash in some occasions, hence it has been substituted by:
-    view3DWidget->close();
-    window3D->close();
+    // CLOSE 3D window (solution #1)
+    // V3D_env->close3DWindow(window); //this causes crash on 5D data when scrolling time slider
 
+    // CLOSE 3D window (solution #2)
+    // view3DWidget->close();          //this causes crash when makeLastView is called on a very long chain of opened windows
+    // window3D->postClose();
+
+    // CLOSE 3D window (solution #2)
+    // @fixed by Alessandro on 2014-04-11: this seems the only way to close the 3D window w/o (randomly) causing TeraFly to crash
+    POST_EVENT(window3D, QEvent::Close); // this OK
+
+    //close 2D window
     triViewWidget->close();
 
     //decreasing the number of instantiated objects
@@ -583,9 +585,6 @@ void CExplorerWindow::receiveData(
             PLog::getInstance()->appendIO(elapsed_time, op_dsc.toStdString());
 
             //copying loaded data
-            /**/itm::debug(itm::LEV3, "waiting for buffer mutex", __itm__current__function__);
-            /**/ CVolume::instance()->bufferMutex.lock();
-            /**/itm::debug(itm::LEV3, "access granted for buffer mutex", __itm__current__function__);
             QElapsedTimer timer;
             timer.start();
             uint32 img_dims[5]       = {volH1-volH0,        volV1-volV0,        volD1-volD0,        nchannels,  volT1-volT0+1};
@@ -596,8 +595,6 @@ void CExplorerWindow::receiveData(
             copyVOI(data, new_img_dims, new_img_offset, new_img_count,
                     view3DWidget->getiDrawExternalParameter()->image4d->getRawData(), img_dims, img_offset);
             qint64 elapsedTime = timer.elapsed();
-            /**/ CVolume::instance()->bufferMutex.unlock();
-            /**/itm::debug(itm::LEV3, "unlocked buffer mutex", __itm__current__function__);
 
             // if 5D data, update selected time frame
             if(CImport::instance()->is5D())
@@ -614,8 +611,10 @@ void CExplorerWindow::receiveData(
                 delete[] data;
 
             //updating image data
-            /**/itm::debug(itm::LEV1, strprintf("title = %s: updating image data", titleShort.c_str()).c_str(), __itm__current__function__);
-            /**/ updateGraphicsInProgress.lock();
+            /**/itm::debug(itm::LEV1, strprintf("title = %s: update image data", titleShort.c_str()).c_str(), __itm__current__function__);
+//            /**/itm::debug(itm::LEV3, "Waiting for updateGraphicsInProgress mutex", __itm__current__function__);
+//            /**/ updateGraphicsInProgress.lock();
+//            /**/itm::debug(itm::LEV3, "Access granted from updateGraphicsInProgress mutex", __itm__current__function__);
             timer.restart();
             view3DWidget->updateImageData();
             sprintf(message, "Streaming %d/%d: Block X=[%d, %d) Y=[%d, %d) Z=[%d, %d) T=[%d, %d] rendered into view %s",
@@ -624,14 +623,15 @@ void CExplorerWindow::receiveData(
                     cVolume->getVoiD0(), cVolume->getVoiD1(),
                     cVolume->getVoiT0(), cVolume->getVoiT1(), title.c_str());
             PLog::getInstance()->appendGPU(timer.elapsed(), message);
-            /**/ updateGraphicsInProgress.unlock();
-            /**/itm::debug(itm::LEV1, strprintf("title = %s: image updated successfully", titleShort.c_str()).c_str(), __itm__current__function__);
+//            /**/itm::debug(itm::LEV3, strprintf("updateGraphicsInProgress.unlock()").c_str(), __itm__current__function__);
+//            /**/ updateGraphicsInProgress.unlock();
+//            /**/itm::debug(itm::LEV1, strprintf("title = %s: image updated successfully", titleShort.c_str()).c_str(), __itm__current__function__);
 
             //operations to be performed when all image data have been loaded
             if(finished)
             {
-                // reset cVolume buffer
-                cVolume->resetBuffer();
+                // disconnect from data producer
+                disconnect(CVolume::instance(), SIGNAL(sendData(itm::uint8*,itm::integer_array,itm::integer_array,QWidget*,bool,itm::RuntimeException*,qint64,QString,int)), this, SLOT(receiveData(itm::uint8*,itm::integer_array,itm::integer_array,QWidget*,bool,itm::RuntimeException*,qint64,QString,int)));
 
                 // reset TeraFly's GUI
                 PMain::getInstance()->resetGUI();
@@ -680,7 +680,6 @@ void CExplorerWindow::receiveData(
         }
     }
     /**/itm::debug(itm::LEV3, "method terminated", __itm__current__function__);
-//    QMessageBox::information(0, "TEst", "Data received");
 }
 
 /**********************************************************************************
@@ -858,7 +857,6 @@ CExplorerWindow::newView(int x, int y, int z,                            //can b
 
 
         // disconnect current window from GUI's listeners and event filters
-        disconnect(CVolume::instance(), SIGNAL(sendData(itm::uint8*,itm::integer_array,itm::integer_array,QWidget*,bool,itm::RuntimeException*,qint64,QString,int)), this, SLOT(receiveData(itm::uint8*,itm::integer_array,itm::integer_array,QWidget*,bool,itm::RuntimeException*,qint64,QString,int)));
         disconnect(view3DWidget, SIGNAL(changeXCut0(int)), this, SLOT(Vaa3D_changeXCut0(int)));
         disconnect(view3DWidget, SIGNAL(changeXCut1(int)), this, SLOT(Vaa3D_changeXCut1(int)));
         disconnect(view3DWidget, SIGNAL(changeYCut0(int)), this, SLOT(Vaa3D_changeYCut0(int)));
@@ -909,21 +907,27 @@ CExplorerWindow::newView(int x, int y, int z,                            //can b
                                          cVolume->getVoiV0(), cVolume->getVoiV1(), cVolume->getVoiH0(), cVolume->getVoiH1(), cVolume->getVoiD0(), cVolume->getVoiD1(),
                                          cVolume->getVoiT0(), cVolume->getVoiT1(), nchannels, this);
 
+        // connect new window to data producer
+        connect(CVolume::instance(), SIGNAL(sendData(itm::uint8*,itm::integer_array,itm::integer_array,QWidget*,bool,itm::RuntimeException*,qint64,QString,int)), next, SLOT(receiveData(itm::uint8*,itm::integer_array,itm::integer_array,QWidget*,bool,itm::RuntimeException*,qint64,QString,int)), Qt::QueuedConnection);
+
         // update CVolume with the request of the actual missing VOI along t and the current selected frame
         cVolume->setVoiT(voiT0m, voiT1m, window3D->timeSlider->value());
-
-        // loading new data in a separate thread. When done, the "receiveData" method of the new window will be called
-        pMain.statusBar->showMessage("Loading image data...");
-        cVolume->setSource(this->next);
+        cVolume->setSource(next);
         cVolume->setStreamingSteps(PMain::getInstance()->debugStreamingStepsSBox->value());
-        if(PMain::getInstance()->debugStreamingStepsSBox->value() > 1)
-            cVolume->initBuffer(lowresData, cVolume->getVoiH1()-cVolume->getVoiH0(),
-                                cVolume->getVoiV1()-cVolume->getVoiV0(),
-                                cVolume->getVoiD1()-cVolume->getVoiD0(),
-                                nchannels, cVolume->getVoiT1()-cVolume->getVoiT0()+1);
+
+
+// lock updateGraphicsInProgress mutex on this thread (i.e. the GUI thread or main queue event thread)
+/**/itm::debug(itm::LEV3, strprintf("Waiting for updateGraphicsInProgress mutex").c_str(), __itm__current__function__);
+/**/ updateGraphicsInProgress.lock();
+/**/itm::debug(itm::LEV3, strprintf("Access granted from updateGraphicsInProgress mutex").c_str(), __itm__current__function__);
+
+        // update status bar message
+        pMain.statusBar->showMessage("Loading image data...");
+
+        // load new data in a separate thread. When done, the "receiveData" method of the new window will be called
         cVolume->start();
 
-        // meanwhile, showing the new window
+        // meanwhile, show the new window with preview data
         next->show();
 
         // enter "waiting for 5D data" state, if possible
@@ -949,6 +953,11 @@ CExplorerWindow::newView(int x, int y, int z,                            //can b
             this->toBeClosed = true;
             delete this;
         }
+
+// unlock updateGraphicsInProgress mutex
+/**/itm::debug(itm::LEV3, strprintf("updateGraphicsInProgress.unlock()").c_str(), __itm__current__function__);
+/**/ updateGraphicsInProgress.unlock();
+
     }
     catch(RuntimeException &ex)
     {
@@ -1085,7 +1094,11 @@ throw (RuntimeException)
         uint scaly = static_cast<uint>(static_cast<float>(yDimInterp) / (y1-y0) +0.5f);
         uint scalz = static_cast<uint>(static_cast<float>(zDimInterp) / (z1-z0) +0.5f);
         if(scalx != scaly || scaly != scalz || scalx != scalz)
-            QMessageBox::critical(this, "Error", QString("Fast nonuniform scaling not supported: requested scaling along X,Y,Z is") + QString::number(scalx) + "," + QString::number(scaly) + "," + QString::number(scalz),QObject::tr("Ok"));
+        {
+            uint scaling = std::min(std::min(scalx, scaly), scalz);
+            itm::warning(strprintf("Fast nonuniform scaling not supported: requested scaling along X,Y,Z is {%d, %d, %d}, but will perform %d", scalx, scaly, scalz, scaling).c_str());
+            scalx = scaly = scalz = scaling;
+        }
 
         uint32 buf_data_dims[5]   = {volH1-volH0, volV1-volV0, volD1-volD0, nchannels, volT1-volT0+1};
         uint32 img_dims[5]        = {xDimInterp,  yDimInterp,  zDimInterp,  nchannels, t1-t0+1};
@@ -1434,7 +1447,6 @@ void CExplorerWindow::restoreViewFrom(CExplorerWindow* source) throw (RuntimeExc
     if(source)
     {
         //signal disconnections
-        source->disconnect(CVolume::instance(), SIGNAL(sendData(itm::uint8*,itm::integer_array,itm::integer_array,QWidget*,bool,itm::RuntimeException*,qint64,QString,int)), source, SLOT(receiveData(itm::uint8*,itm::integer_array,itm::integer_array,QWidget*,bool,itm::RuntimeException*,qint64,QString,int)));
         source->disconnect(source->view3DWidget, SIGNAL(changeXCut0(int)), source, SLOT(Vaa3D_changeXCut0(int)));
         source->disconnect(source->view3DWidget, SIGNAL(changeXCut1(int)), source, SLOT(Vaa3D_changeXCut1(int)));
         source->disconnect(source->view3DWidget, SIGNAL(changeYCut0(int)), source, SLOT(Vaa3D_changeYCut0(int)));
@@ -1556,7 +1568,6 @@ void CExplorerWindow::restoreViewFrom(CExplorerWindow* source) throw (RuntimeExc
         pMain->traslTpos->setEnabled(volT1 < CImport::instance()->getVolume(volResIndex)->getDIM_T()-1);
 
         //signal connections
-        connect(CVolume::instance(), SIGNAL(sendData(itm::uint8*,itm::integer_array,itm::integer_array,QWidget*,bool,itm::RuntimeException*,qint64,QString,int)), this, SLOT(receiveData(itm::uint8*,itm::integer_array,itm::integer_array,QWidget*,bool,itm::RuntimeException*,qint64,QString,int)), Qt::BlockingQueuedConnection);
         connect(view3DWidget, SIGNAL(changeXCut0(int)), this, SLOT(Vaa3D_changeXCut0(int)));
         connect(view3DWidget, SIGNAL(changeXCut1(int)), this, SLOT(Vaa3D_changeXCut1(int)));
         connect(view3DWidget, SIGNAL(changeYCut0(int)), this, SLOT(Vaa3D_changeYCut0(int)));

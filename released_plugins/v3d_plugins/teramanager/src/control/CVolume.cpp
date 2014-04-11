@@ -238,8 +238,7 @@ void CVolume::run()
 
                     // wait for GUI thread to update graphics
                     /**/itm::debug(itm::LEV3, "Waiting for updateGraphicsInProgress mutex", __itm__current__function__);
-                    /**/ destination->updateGraphicsInProgress.lock();
-                    /**/ destination->updateGraphicsInProgress.unlock();
+                    /**/ updateGraphicsInProgress.lock();
                     /**/itm::debug(itm::LEV3, "Access granted from updateGraphicsInProgress mutex", __itm__current__function__);
 
 
@@ -249,6 +248,10 @@ void CVolume::run()
                     emit sendData(voiData, data_s, data_c, source, false, 0, elapsedTime,
                                 strprintf("Block X=[%d, %d) Y=[%d, %d) Z=[%d, %d), T=[%d, %d] loaded from res %d",
                                 voiH0, voiH1, voiV0, voiV1, voiD0, voiD1, cur_t, cur_t, voiResIndex).c_str());
+
+                    // unlock updateGraphicsInProgress mutex
+                    /**/itm::debug(itm::LEV3, strprintf("updateGraphicsInProgress.unlock()").c_str(), __itm__current__function__);
+                    /**/ updateGraphicsInProgress.unlock();
                 }
                 {
                     // load data
@@ -262,8 +265,7 @@ void CVolume::run()
 
                     // wait for GUI thread to update graphics
                     /**/itm::debug(itm::LEV3, "Waiting for updateGraphicsInProgress mutex", __itm__current__function__);
-                    /**/ destination->updateGraphicsInProgress.lock();
-                    /**/ destination->updateGraphicsInProgress.unlock();
+                    /**/ updateGraphicsInProgress.lock();
                     /**/itm::debug(itm::LEV3, "Access granted from updateGraphicsInProgress mutex", __itm__current__function__);
 
 
@@ -273,6 +275,11 @@ void CVolume::run()
                     emit sendData(voiData, data_s, data_c, source, true, 0, elapsedTime,
                                 strprintf("Block X=[%d, %d) Y=[%d, %d) Z=[%d, %d), T=[%d, %d] loaded from res %d",
                                 voiH0, voiH1, voiV0, voiV1, voiD0, voiD1, voiT0, voiT1, voiResIndex).c_str());
+                    /**/itm::debug(itm::LEV3, "sendData signal emitted", __itm__current__function__);
+
+                    // unlock updateGraphicsInProgress mutex
+                    /**/itm::debug(itm::LEV3, strprintf("updateGraphicsInProgress.unlock()").c_str(), __itm__current__function__);
+                    /**/ updateGraphicsInProgress.unlock();
                 }
             }
             else
@@ -434,11 +441,11 @@ void CVolume::run()
     {
         // before emit signal, it is necessary to wait for updateGraphicsInProgress mutex
         CExplorerWindow* dest = dynamic_cast<CExplorerWindow*>(source);
-        /**/ dest->updateGraphicsInProgress.lock();
+        /**/ updateGraphicsInProgress.lock();
         reset();
-        bufferMutex.unlock();
+        //bufferMutex.unlock();
         itm::warning(exception.what(), "CVolume");
-        /**/ dest->updateGraphicsInProgress.unlock();
+        /**/ updateGraphicsInProgress.unlock();
 
         emit sendData(0, make_vector<int>(), make_vector<int>(), dest, true, new RuntimeException(exception.what()), 0, "");
     }
@@ -446,11 +453,11 @@ void CVolume::run()
     {
         // before emit signal, it is necessary to wait for updateGraphicsInProgress mutex
         CExplorerWindow* dest = dynamic_cast<CExplorerWindow*>(source);
-        /**/ dest->updateGraphicsInProgress.lock();
+        /**/ updateGraphicsInProgress.lock();
         reset();
-        bufferMutex.unlock();
+        //bufferMutex.unlock();
         itm::warning(exception.what(), "CVolume");
-        /**/ dest->updateGraphicsInProgress.unlock();
+        /**/ updateGraphicsInProgress.unlock();
 
         emit sendData(0, make_vector<int>(), make_vector<int>(), dest, true, new RuntimeException(exception.what()), 0, "");
     }
@@ -458,11 +465,11 @@ void CVolume::run()
     {
         // before emit signal, it is necessary to wait for updateGraphicsInProgress mutex
         CExplorerWindow* dest = dynamic_cast<CExplorerWindow*>(source);
-        /**/ dest->updateGraphicsInProgress.lock();
+        /**/ updateGraphicsInProgress.lock();
         reset();
-        bufferMutex.unlock();
+        //bufferMutex.unlock();
         itm::warning(error, "CVolume");
-        /**/ dest->updateGraphicsInProgress.unlock();
+        /**/ updateGraphicsInProgress.unlock();
 
         emit sendData(0, make_vector<int>(), make_vector<int>(), dest, true, new RuntimeException(error), 0, "");
     }
@@ -470,11 +477,11 @@ void CVolume::run()
     {
         // before emit signal, it is necessary to wait for updateGraphicsInProgress mutex
         CExplorerWindow* dest = dynamic_cast<CExplorerWindow*>(source);
-        /**/ dest->updateGraphicsInProgress.lock();
+        /**/ updateGraphicsInProgress.lock();
         reset();
-        bufferMutex.unlock();
+        //bufferMutex.unlock();
         itm::warning("Unknown error occurred", "CVolume");
-        /**/ dest->updateGraphicsInProgress.unlock();
+        /**/ updateGraphicsInProgress.unlock();
 
         emit sendData(0, make_vector<int>(), make_vector<int>(), dest, true, new RuntimeException("Unknown error occurred"), 0, "");
     }

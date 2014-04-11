@@ -11,6 +11,18 @@ ties names are:
 - Rem: a feature no longer available
 
 ============================================================================================
+
+Version 0.9.76
+April 11st, 2014
+--------------------------------------------------------------------------------------------
+- Fix: fixed bug that (apparently) randomly caused TeraFly  to crash throughout 3D explorat-
+       ion. The bug was triggered when zooming-out from a very high resolution up to the lo-
+       west one and then zooming-in in a new region.
+- Fix: fixed "Fast nonuniform scaling not supported" warning when dealing with 2-slices res-
+       olutions.
+--------------------------------------------------------------------------------------------
+
+
 Version 0.9.75
 April 9st, 2014
 --------------------------------------------------------------------------------------------

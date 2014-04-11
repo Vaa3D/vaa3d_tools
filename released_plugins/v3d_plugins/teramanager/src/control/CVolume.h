@@ -64,9 +64,6 @@ class teramanager::CVolume : public QThread
         int streamingSteps;                                         //
         int cur_t;                                                  // current time frame selected (it is loaded and shown before the other frames)
 
-        QMutex bufferMutex;
-        itm::uint8* buffer;                                         //volume of interest prebuffered data
-
     public:
 
         /*********************************************************************************
@@ -83,26 +80,26 @@ class teramanager::CVolume : public QThread
         ~CVolume();
 
         //GET and SET methods
-        void initBuffer(itm::uint8* data, int xDim, int yDim, int zDim, int cDim=1, int tDim=1) throw (itm::RuntimeException)
-        {
-            /**/itm::debug(itm::LEV1, strprintf("xDim = %d, yDim=%d, zDim = %d, cDim=%d, tDim = %d",
-                                                xDim,       yDim,    zDim,      cDim,    tDim).c_str(), __itm__current__function__);
+//        void initBuffer(itm::uint8* data, int xDim, int yDim, int zDim, int cDim=1, int tDim=1) throw (itm::RuntimeException)
+//        {
+//            /**/itm::debug(itm::LEV1, strprintf("xDim = %d, yDim=%d, zDim = %d, cDim=%d, tDim = %d",
+//                                                xDim,       yDim,    zDim,      cDim,    tDim).c_str(), __itm__current__function__);
 
-            itm::uint64 size = xDim;
-            size *= yDim;
-            size *= zDim;
-            size *= cDim;
-            size *= tDim;
-            if(buffer)
-                delete[] buffer;
+//            itm::uint64 size = xDim;
+//            size *= yDim;
+//            size *= zDim;
+//            size *= cDim;
+//            size *= tDim;
+//            if(buffer)
+//                delete[] buffer;
 
-            try{ buffer = new itm::uint8[size]; }
-            catch(...){ throw itm::RuntimeException("in CVolume::initBuffer(): cannot allocate memory");}
+//            try{ buffer = new itm::uint8[size]; }
+//            catch(...){ throw itm::RuntimeException("in CVolume::initBuffer(): cannot allocate memory");}
 
-            for(itm::uint8 *buf_p = buffer, *data_p = data; buf_p - buffer < size; buf_p++, data_p++)
-                *buf_p = *data_p;
-        }
-        itm::uint8* getBuffer(){return buffer;}
+//            for(itm::uint8 *buf_p = buffer, *data_p = data; buf_p - buffer < size; buf_p++, data_p++)
+//                *buf_p = *data_p;
+//        }
+//        itm::uint8* getBuffer(){return buffer;}
 
         void setStreamingSteps(int nsteps){streamingSteps = nsteps;}
         int getStreamingSteps(){return streamingSteps;}
@@ -111,7 +108,7 @@ class teramanager::CVolume : public QThread
             /**/itm::debug(itm::LEV1, 0, __itm__current__function__);
 
             voiResIndex = -1;
-            buffer = 0;
+            //buffer = 0;
             voiV0 = voiV1 = voiH0 = voiH1 = voiD0 = voiD1 = voiT0 = voiT1 = -1;
             source = 0;
             streamingSteps = 1;
@@ -179,16 +176,16 @@ class teramanager::CVolume : public QThread
                 throw itm::RuntimeException(itm::strprintf("Invalid VOI selected along T: [%d,%d]", voiT0, voiT1).c_str());
         }
 
-        void resetBuffer() throw (itm::RuntimeException)
-        {
-            /**/itm::debug(itm::LEV1, 0, __itm__current__function__);
+//        void resetBuffer() throw (itm::RuntimeException)
+//        {
+//            /**/itm::debug(itm::LEV1, 0, __itm__current__function__);
 
-            if(buffer)
-            {
-                delete[] buffer;
-                buffer = 0;
-            }
-        }
+//            if(buffer)
+//            {
+//                delete[] buffer;
+//                buffer = 0;
+//            }
+//        }
 
         friend class CExplorerWindow;
 

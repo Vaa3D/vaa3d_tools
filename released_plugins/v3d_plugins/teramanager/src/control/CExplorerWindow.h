@@ -83,7 +83,7 @@ class teramanager::CExplorerWindow : public QWidget
         static int nTotalInstances;
 
         //MUTEX
-        QMutex updateGraphicsInProgress;
+        //QMutex updateGraphicsInProgress;
 
         //TIMER
         QElapsedTimer newViewTimer;
