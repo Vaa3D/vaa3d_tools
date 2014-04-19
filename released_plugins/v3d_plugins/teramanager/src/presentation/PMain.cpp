@@ -2107,7 +2107,7 @@ void PMain::debugAction1Triggered()
 
     QPixmap cur_img(":/icons/cursor_marker_add.png");
     cur_img = cur_img.scaled(32,32,Qt::KeepAspectRatio, Qt::SmoothTransformation);
-    setCursor(QCursor::QCursor(cur_img));
+    setCursor(QCursor(cur_img));
 
     // invoke HighRez ROI zoom-in
     /*cur_win->view3DWidget->getRenderer()->selectMode = Renderer::smCurveCreate1;
