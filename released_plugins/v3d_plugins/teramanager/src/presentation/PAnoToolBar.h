@@ -10,10 +10,13 @@ class teramanager::PAnoToolBar : public QWidget
 
     private:
 
-        QToolBar* toolBar;                  //tool bar with buttons
-        QToolButton *button1;               //button1
-        QToolButton *button2;               //button2
-        QToolButton *button3;               //button3
+        QToolBar* toolBar;                      //tool bar with buttons
+//        QButtonGroup *buttonGroup;              //exclusive button group
+        QToolButton *buttonMarkerCreate;        //button1
+        QToolButton *buttonMarkerDelete;        //button2
+        QToolButton *buttonMarkerRoiDelete;     //button3
+        QToolButton *buttonMarkerRoiView;       //button4
+//        QToolButton *buttonInvisible;           //invisible button
         QPoint dragPosition;
 
         /*********************************************************************************
@@ -67,6 +70,8 @@ class teramanager::PAnoToolBar : public QWidget
     signals:
     
     public slots:
+
+        void buttonChecked(bool checked);
     
 };
 

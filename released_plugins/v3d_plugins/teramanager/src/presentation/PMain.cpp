@@ -2105,6 +2105,10 @@ void PMain::debugAction1Triggered()
 
     CExplorerWindow* cur_win = CExplorerWindow::getCurrent();
 
+    QPixmap cur_img(":/icons/cursor_marker_add.png");
+    cur_img = cur_img.scaled(32,32,Qt::KeepAspectRatio, Qt::SmoothTransformation);
+    setCursor(QCursor::QCursor(cur_img));
+
     // invoke HighRez ROI zoom-in
     /*cur_win->view3DWidget->getRenderer()->selectMode = Renderer::smCurveCreate1;
     static_cast<Renderer_gl1*>(cur_win->view3DWidget->getRenderer())->b_addthiscurve = false;
