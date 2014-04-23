@@ -21,10 +21,16 @@
 
 
 #include "mostVesselTracer.h"
+#include <fstream>
+#include <iostream>
+
 
 //Q_EXPORT_PLUGIN2 ( PluginName, ClassName )
 //The value of PluginName should correspond to the TARGET specified in the plugin's project file.
 Q_EXPORT_PLUGIN2(mostVesselTracer, mostVesselTracerPlugin);
+
+bool autotrace(const V3DPluginArgList & input, V3DPluginArgList & output,V3DPluginCallback2 &callback);
+
 
 //plugin funcs
 const QString title = "Trace vessels of MOST volume!";
@@ -53,6 +59,32 @@ void mostVesselTracerPlugin::domenu(const QString & menu_name, V3DPluginCallback
                       .arg(getPluginVersion(), 1, 'f', 1);
         QMessageBox::information(parent, "Version info", msg);
     }
+}
+
+bool mostVesselTracerPlugin::dofunc(const QString & func_name, const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback,  QWidget * parent)
+{
+    vector<char*> infiles, inparas, outfiles;
+    if(input.size() >= 1) infiles = *((vector<char*> *)input.at(0).p);
+    if(input.size() >= 2) inparas = *((vector<char*> *)input.at(1).p);
+    if(output.size() >= 1) outfiles = *((vector<char*> *)output.at(0).p);
+
+    if (func_name == tr("MOST_trace"))
+    {
+        return autotrace(input, output,callback);
+    }
+    else if (func_name == tr("help"))
+    {
+        cout<<"Usage : v3d -x dllname -f MOST_trace -i <inimg_file> -p <ch> <th>"<<endl;
+        cout<<endl;
+        cout<<"ch           the input channel value, start from 1, default 1"<<endl;
+        cout<<"th           the threshold value, default 20"<<endl;
+        cout<<"The output swc file will be named automatically based on the input image file nmae"<<endl;
+        cout<<endl;
+        cout<<endl;
+    }
+    else return false;
+
+    return true;
 }
 
 
@@ -107,7 +139,7 @@ void set_dialog(V3DPluginCallback2 &v3d, QWidget *parent)
     dialog.endy->setMaximum(img->getYDim()); dialog.endy->setMinimum(1); dialog.endy->setValue(img->getYDim());
     dialog.endz->setMaximum(img->getZDim()); dialog.endz->setMinimum(1); dialog.endz->setValue(img->getZDim());
 
-    dialog.ds->setText(QString(img->getFileName()) + "_most.swc");
+    dialog.ds->setText(QString(img->getFileName()) + "_MOST.swc");
 
     dialog.channel->setMaximum(img->getCDim()); dialog.channel->setMinimum(1);dialog.channel->setValue(1);
 
@@ -159,12 +191,118 @@ void set_dialog(V3DPluginCallback2 &v3d, QWidget *parent)
         }
         startVesselTracing(v3d,x_flag,y_flag,z_flag,x_begin,x_end,x_distance,y_begin,y_end,y_distance,z_begin,z_end,z_distance,swcfile,sslip,pruning_flag,c);
 
-
     }
 
     return;
 
 }
+
+bool autotrace(const V3DPluginArgList & input, V3DPluginArgList & output,V3DPluginCallback2 &callback)
+{
+    cout<<"Welcome to MOST tracing"<<endl;
+    unsigned int c=1;
+    int InitThreshold = 20;
+
+    if (input.size()>=2)
+    {
+        vector<char*> paras = (*(vector<char*> *)(input.at(1).p));
+        cout<<paras.size()<<endl;
+        if(paras.size() >= 1) c = atoi(paras.at(0));
+        if(paras.size() >= 2) InitThreshold = atoi(paras.at(1));
+    }
+
+    char * inimg_file = ((vector<char*> *)(input.at(0).p))->at(0);
+
+    cout<<"ch = "<<c<<endl;
+    cout<<"threshold = "<<InitThreshold<<endl;
+    cout<<"inimg_file = "<<inimg_file<<endl;
+
+    Image4DSimple *subject = callback.loadImage(inimg_file);
+    if(!subject || !subject->valid())
+    {
+         v3d_msg("Fail to load the input image.",0);
+         if (subject) {delete subject; subject=0;}
+         return false;
+    }
+
+    if( c < 1 || c > subject->getCDim())
+    {
+         v3d_msg("Invalid channel input.",0);
+         if (subject) {delete subject; subject=0;}
+         return false;
+    }
+
+    V3DLONG N = subject->getXDim();
+    V3DLONG M = subject->getYDim();
+    V3DLONG P = subject->getZDim();
+
+    V3DLONG pagesz = N*M*P;
+    int datatype = subject->getDatatype();
+    unsigned char *data1d = subject->getRawDataAtChannel(c-1);
+
+    unsigned char *output_image=0;
+    switch (datatype)
+    {
+    case V3D_UINT8:
+        try {output_image = new unsigned char [pagesz];}
+        catch(...)  {v3d_msg("cannot allocate memory for output_image.",0); return false;}
+        for(V3DLONG i = 0; i<pagesz; i++)
+            output_image[i] = data1d[i];
+
+
+        break;
+        default: v3d_msg("Invalid data type. Do nothing.",0); return false;
+    }
+
+
+    MOSTImage img;
+    img.setData( (unsigned char*)output_image, subject->getXDim(),subject->getYDim(),subject->getZDim(),subject->getCDim(),subject->getDatatype());
+    QString swcfile = QString(inimg_file) + "_MOST.swc";
+
+    LandmarkList seedList;
+    QTime qtime_seed;
+    seed_size_all = 6;
+    qtime_seed.start();
+    if(1)
+    {
+        for(int i =1;i<=N;i+=20)
+        img.auto_detect_seedx(seedList,i,InitThreshold,seed_size_all);
+    }
+    if(1)
+    {
+        for(int i =1;i<=M;i+=20)
+        img.auto_detect_seedy(seedList,i,InitThreshold,seed_size_all);
+    }
+    if(1)
+    {
+        for(int i =1;i<=P;i+=20)
+        img.auto_detect_seedz(seedList,i,InitThreshold,seed_size_all);
+    }
+
+    qDebug("  cost time seed = %g sec", qtime_seed.elapsed()*0.001);
+    static long init_flag = 0;
+
+    for(init_flag = 0;init_flag<subject->getTotalUnitNumberPerChannel();init_flag++)
+    {
+        visited.push_back(false);
+    }
+
+    // converte the formate
+    NeuronTree vt;
+    QTime qtime;
+    qtime.start();
+    vt = img.trace_seed_list(seedList, visited,InitThreshold,1.0,1.0,1.0,swcfile,20.0,0);
+    qDebug("  cost time totol= %g sec", qtime.elapsed()*0.001);
+
+    v3d_msg(QString("\nNow you can drag and drop the generated swc fle [%1] into Vaa3D.").arg(swcfile),0);
+    if (subject) {delete subject; subject=0;}
+    return true;
+
+
+}
+
+
+
 
 //void startVesselTracing ( V3DPluginCallback2 &v3d, QWidget *parent )
 void startVesselTracing(V3DPluginCallback2 &v3d,int xflag,int yflag,int zflag,int xbegin, int xend,int xdis,int ybegin,int yend,int ydis,int zbegin,int zend,int zdis,QString swcfile,int slipsize,int pruning_flag,int c)
@@ -200,6 +338,12 @@ void startVesselTracing(V3DPluginCallback2 &v3d,int xflag,int yflag,int zflag,in
         break;
         default: v3d_msg("Invalid data type. Do nothing."); return;
     }
+
+    V3DLONG in_sz[4];
+    in_sz[0] =  oldimg->getXDim(); in_sz[1] =  oldimg->getYDim(); in_sz[2] =  oldimg->getZDim();in_sz[3] = 1;
+
+    simple_saveimage_wrapper(v3d, "temp.v3draw",  (unsigned char *)output_image, in_sz, pixeltype);
+
 
     MOSTImage img;
     // set data

@@ -44,10 +44,10 @@ public:
 
 	QStringList funclist() const {return QStringList();}
 	bool dofunc(const QString & func_name, const V3DPluginArgList & input, V3DPluginArgList & output,
-				 V3DPluginCallback2 & v3d,  QWidget * parent) {return true;}
+                 V3DPluginCallback2 & v3d,  QWidget * parent);
 
         // plugin interface version 2.1 requires plugin version
-        float getPluginVersion() const {return 1.2f;}
+        float getPluginVersion() const {return 1.3f;}
 
 
 };
