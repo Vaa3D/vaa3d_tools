@@ -395,8 +395,8 @@ void autotrace(V3DPluginCallback2 &callback, QWidget *parent)
 
     /* trace all seeds */
 
-   // m_traceWorkspace->min_chain_length = 20;
-   // m_traceWorkspace->min_score = 0.35;
+    m_traceWorkspace->min_chain_length = 40;
+    m_traceWorkspace->min_score = 0.1;
      int nchain;
      Locseg_Chain **chain =
      Trace_Locseg_S(stack, 1.0, locseg, values, seed_field->size,
@@ -560,6 +560,14 @@ bool autotrace(const V3DPluginArgList & input, V3DPluginArgList & output,V3DPlug
          if (subject) {delete subject; subject=0;}
          return false;
     }
+
+    if( c <1 || c > subject->getCDim())
+    {
+         v3d_msg("Invalid channel input.",0);
+         if (subject) {delete subject; subject=0;}
+         return false;
+    }
+
 
     V3DLONG N = subject->getXDim();
     V3DLONG M = subject->getYDim();
