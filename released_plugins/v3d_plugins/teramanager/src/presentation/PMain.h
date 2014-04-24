@@ -119,6 +119,7 @@ class teramanager::PMain : public QWidget
         //toolbar widgets
         QToolBar* toolBar;                                  //tool bar with buttons
         QToolButton *openVolumeToolButton;                  //tool button for volume opening
+        QToolButton *showToolbarButton;                     //show/hide toolbar
 
         //import form widgets
         QAction *regenMData_cAction;                        // if active, metadata will be regenerated
@@ -293,6 +294,7 @@ class teramanager::PMain : public QWidget
 
         //<CExplorerWindow> instances need to access to all members of the current class
         friend class CExplorerWindow;
+        friend class PAnoToolBar;
         friend class myV3dR_GLWidget;
 
         //help texts
@@ -440,6 +442,11 @@ class teramanager::PMain : public QWidget
         * <sendProgressBarChanged> event handler
         ***********************************************************************************/
         void progressBarChanged(int val, int minutes, int seconds, const char* message);
+
+        /**********************************************************************************
+        * Called when showToolbarButton state has changed
+        ***********************************************************************************/
+        void showToolbarButtonChanged(bool changed);
 
 
     signals:

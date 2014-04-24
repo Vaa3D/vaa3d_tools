@@ -371,12 +371,20 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     toolBar->insertWidget(0, openVolumeToolButton);
 
     toolBar->insertAction(0, closeVolumeAction);
-    toolBar->addAction(loadAnnotationsAction);
-    toolBar->addAction(saveAnnotationsAction);
-    toolBar->addAction(saveAnnotationsAsAction);
-    toolBar->addAction(clearAnnotationsAction);
+//    toolBar->addAction(loadAnnotationsAction);
+//    toolBar->addAction(saveAnnotationsAction);
+//    toolBar->addAction(saveAnnotationsAsAction);
+//    toolBar->addAction(clearAnnotationsAction);
+
+    showToolbarButton = new QToolButton();
+    showToolbarButton->setCheckable(true);
+    showToolbarButton->setIcon(QIcon(":/icons/toolbar.png"));
+    showToolbarButton->setToolTip("Display annotation toolbar");
+    connect(showToolbarButton, SIGNAL(toggled(bool)), this, SLOT(showToolbarButtonChanged(bool)));
+    toolBar->insertWidget(0, showToolbarButton);
+
     toolBar->addAction(aboutAction);
-    toolBar->setIconSize(QSize(30,30));
+    toolBar->setIconSize(QSize(32,32));
     toolBar->setStyleSheet("QToolBar{background:qlineargradient(x1: 0, y1: 0, x2: 1, y2: 0,"
                            "stop: 0 rgb(150,150,150), stop: 1 rgb(190,190,190)); border: none}");
 
@@ -1016,10 +1024,6 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     connect(ESblockSpbox, SIGNAL(valueChanged(int)), this, SLOT(ESblockSpboxChanged(int)));
     connect(this, SIGNAL(sendProgressBarChanged(int, int, int, const char*)), this, SLOT(progressBarChanged(int, int, int, const char*)), Qt::QueuedConnection);
 
-    //reset widgets
-    reset();
-    resetMultiresControls();
-
     //set always on top
     setWindowFlags(Qt::WindowStaysOnTopHint);
     setMaximumSize(this->minimumWidth(), this->minimumHeight());
@@ -1047,6 +1051,9 @@ void PMain::reset()
     saveAnnotationsAction->setEnabled(false);
     saveAnnotationsAsAction->setEnabled(false);
     clearAnnotationsAction->setEnabled(false);
+    PAnoToolBar::instance()->setEnabled(false);
+    showToolbarButton->setChecked(false);
+    showToolbarButton->setEnabled(false);
 
     //reseting info panel widgets
     info_page->setEnabled(false);
@@ -1326,6 +1333,8 @@ void PMain::openVolume(string path /* = "" */)
 void PMain::closeVolume()
 {
     /**/itm::debug(itm::LEV1, 0, __itm__current__function__);
+
+    PAnoToolBar::instance()->releaseTools();
 
     CImport::instance()->reset();
     CVolume::instance()->reset();
@@ -1625,6 +1634,8 @@ void PMain::importDone(RuntimeException *ex, qint64 elapsed_time)
         importOptionsMenu->setEnabled(false);
         closeVolumeAction->setEnabled(true);
         clearAnnotationsAction->setEnabled(true);
+        showToolbarButton->setEnabled(true);
+        PAnoToolBar::instance()->setEnabled(true);
 
         //enabling multiresolution panel and hiding volume map options        
         gradientBar->setEnabled(true);
@@ -1696,6 +1707,9 @@ void PMain::importDone(RuntimeException *ex, qint64 elapsed_time)
 
         //updating actual time
         PLog::getInstance()->appendActual(CImport::instance()->timerIO.elapsed(), "TeraFly 3D exploration started");
+
+        //activate annotation toolbar
+        showToolbarButton->setChecked(true);
     }
 
     //resetting some widgets
@@ -2101,150 +2115,25 @@ void PMain::debugAction1Triggered()
 {
     /**/itm::debug(itm::LEV1, 0, __itm__current__function__);
 
-    PAnoToolBar::instance(this)->show();
-
     CExplorerWindow* cur_win = CExplorerWindow::getCurrent();
 
-    QPixmap cur_img(":/icons/cursor_marker_add.png");
-    cur_img = cur_img.scaled(32,32,Qt::KeepAspectRatio, Qt::SmoothTransformation);
-    setCursor(QCursor(cur_img));
+    QList <ImageMarker> listMarker = static_cast<Renderer_gl1*>(cur_win->view3DWidget->getRenderer())->listMarker;
 
-    // invoke HighRez ROI zoom-in
-    /*cur_win->view3DWidget->getRenderer()->selectMode = Renderer::smCurveCreate1;
-    static_cast<Renderer_gl1*>(cur_win->view3DWidget->getRenderer())->b_addthiscurve = false;
-    static_cast<Renderer_gl1*>(cur_win->view3DWidget->getRenderer())->b_imaging = false;
-    static_cast<Renderer_gl1*>(cur_win->view3DWidget->getRenderer())->b_grabhighrez = true;
-    cur_win->window3D->setCursor(QCursor(Qt::PointingHandCursor));*/
+    // get vaa3d markers
+    //QList<LocationSimple> vaa3dMarkers = V3D_env->getLandmark(cur_win->window);
+    for(int i=0; i<listMarker.size(); i++)
+    {
+        printf("(%.0f, %.0f, %.0f): selected = %s\n",
+               listMarker[i].x,
+               listMarker[i].y,
+               listMarker[i].z,
+               listMarker[i].selected ? "yes" : "no");
+    }
 
-    // marker create
-//    cur_win->view3DWidget->getRenderer()->selectMode = Renderer::smMarkerCreate1;
-//    static_cast<Renderer_gl1*>(cur_win->view3DWidget->getRenderer())->b_addthismarker = true;
-//    cur_win->window3D->setCursor(QCursor(Qt::PointingHandCursor));
+//    vaa3dMarkers.pop_back();
 
-    //cur_win->view3DWidget->getRenderer()->endSelectMode();
-
-
-//    #ifdef USE_EXPERIMENTAL_FEATURES
-//    CExplorerWindow* cur_win = CExplorerWindow::getCurrent();
-//    if(cur_win)
-//    {
-//        int dimx = cur_win->volH1 - cur_win->volH0;
-//        int dimy = cur_win->volV1 - cur_win->volV0;
-//        int dimz = cur_win->volD1 - cur_win->volD0;
-//        int cx = (dimx)/2;
-//        int cy = (dimy)/2;
-//        int cz = (dimz)/2;
-//        int r = 50;
-//        int side = 2*r;
-//        float vol = pow(2.0f*r, 3);
-//        int count = 0;
-
-//        static bool first_time = true;
-//        static bool restore_data = false;
-//        static uint8* data_saved = new uint8[static_cast<int>(vol)];
-//        uint8* data = cur_win->view3DWidget->getiDrawExternalParameter()->image4d->getRawData();
-//        if(first_time)
-//        {
-//            first_time = false;
-//            for(int k = cz - r; k < cz + r; k++)
-//                for(int i = cy - r; i < cy + r; i++)
-//                    for(int j = cx - r; j < cx + r; j++, count++)
-//                        data_saved[(k-cz+r)*side*side +(i-cy+r)*side + (j-cx+r)] = data[k*dimy*dimx + i*dimx + j];
-//        }
-
-//        if(restore_data)
-//        {
-//            for(int k = cz - r; k < cz + r; k++)
-//                for(int i = cy - r; i < cy + r; i++)
-//                    for(int j = cx - r; j < cx + r; j++, count++)
-//                        data[k*dimy*dimx + i*dimx + j] = data_saved[(k-cz+r)*side*side +(i-cy+r)*side + (j-cx+r)];
-//        }
-//        else
-//        {
-//            for(int k = cz - r; k < cz + r; k++)
-//                for(int i = cy - r; i < cy + r; i++)
-//                    for(int j = cx - r; j < cx + r; j++, count++)
-//                        data[k*dimy*dimx + i*dimx + j] = (count / vol) *255;
-//        }
-//        restore_data = !restore_data;
-
-//        myV3dR_GLWidget::cast(cur_win->view3DWidget)->updateImageDataFast();
-//    }
-//    #endif
-
-//    CExplorerWindow* cur_win = CExplorerWindow::getCurrent();
-//    if(cur_win)
-//    {
-//        printf("Retrieve Image4DSimple\n");
-//        Image4DSimple *image4D = V3D_env->getImage(cur_win->window);
-//        if(!image4D)
-//            printf("ERROR!\n");
-
-//        // generate time series from the currently displayed image
-//        V3DLONG xDim = cur_win->volH1 - cur_win->volH0;
-//        V3DLONG yDim = cur_win->volV1 - cur_win->volV0;
-//        V3DLONG zDim = cur_win->volD1 - cur_win->volD0;
-//        V3DLONG cDim = cur_win->nchannels;
-//        V3DLONG tDim = QInputDialog::getInt(this, "Generation of 5D data", "Number of time frames", 10, 2, 1000);
-//        V3DLONG size = xDim*yDim*zDim*cDim*tDim;
-
-//        printf("Allocate memory \n");
-//        uint8 *data5D = new uint8[size];
-//        uint8 *data4D = image4D->getRawData();
-//        printf("Generate 5D series\n");
-//        for(int t=0; t<tDim; t++)
-//        {
-//            float w = static_cast<float>(t)/(tDim-1);
-//            V3DLONG st = t*xDim*yDim*zDim*cDim;
-//            for(int c=0; c<cDim; c++)
-//            {
-//                V3DLONG sc = c*xDim*yDim*zDim;
-//                for(int z=0; z<zDim; z++)
-//                {
-//                    V3DLONG sz = z*xDim*yDim;
-//                    for(int y=0; y<yDim; y++)
-//                    {
-//                        V3DLONG sy = y*xDim;
-//                        for(int x=0; x<xDim; x++)
-//                        {
-//                            /*if(t != 0 &&
-//                               (z % (tDim-t) == 0 ||
-//                               y % (tDim-t) == 0 ||
-//                               x % (tDim-t) == 0))
-//                                data5D[st+sc+sz+sy+x] = 0;
-//                            else
-//                                data5D[st+sc+sz+sy+x] = data4D[sc+sz+sy+x];*/
-//                            //data5D[st+sc+sz+sy+x] = data4D[sc+sz+sy+x] + rand()%50;
-//                            data5D[st+sc+sz+sy+x] = static_cast<uint8>((1-w)*data4D[sc+sz+sy+x] + w*(rand()%256) +0.5f);
-//                        }
-//                    }
-//                }
-//            }
-//        }
-
-//        printf("Create new Image4DSimple, dimensions are x(%d), y(%d), z(%d), c(%d), t(%d)\n", xDim, yDim, zDim, cDim, tDim);
-//        Image4DSimple* image5D = new Image4DSimple();
-//        image5D->setFileName("5D Image");
-//        image5D->setData(data5D, xDim, yDim, zDim, cDim*tDim, V3D_UINT8);
-//        image5D->setTDim(tDim);
-//        image5D->setTimePackType(TIME_PACK_C);
-
-//        printf("Display 5D Image in a new window\n");
-//        v3dhandle window5D= V3D_env->newImageWindow("5D Image");
-//        XFormWidget* treeview = (XFormWidget*)window5D;
-//        treeview->setWindowState(Qt::WindowMinimized);
-//        V3D_env->setImage(window5D, image5D);
-//        V3D_env->open3DWindow(window5D);
-
-//        image4D->setData(data5D, xDim, yDim, zDim, cDim*tDim, V3D_UINT8);
-//        image4D->setTDim(tDim);
-//        image4D->setTimePackType(TIME_PACK_C);
-//        V3D_env->pushImageIn3DWindow(cur_win->window);
-//        //V3D_env->pushTimepointIn3DWindow(cur_win->window, 9);
-//        cur_win->view3DWidget->updateGL();
-//        //cur_win->view3DWidget->updateImageData();
-//    }
-
+//    V3D_env->setLandmark(cur_win->window, vaa3dMarkers);
+//    V3D_env->pushObjectIn3DWindow(cur_win->window);
 }
 
 void PMain::showLogTriggered()
@@ -2591,4 +2480,21 @@ void PMain::progressBarChanged(int val, int minutes, int seconds, const char* me
     }
     else
         statusBar->showMessage(remaining_time);
+}
+
+/**********************************************************************************
+* Called when showToolbarButton state has changed
+***********************************************************************************/
+void PMain::showToolbarButtonChanged(bool changed)
+{
+    /**/itm::debug(itm::LEV3, 0, __itm__current__function__);
+
+    if(changed)
+    {
+        PAnoToolBar::instance(this)->show();
+        if(CExplorerWindow::current)
+            PAnoToolBar::instance()->alignToLeft(CExplorerWindow::current->window3D->glWidgetArea);
+    }
+    else
+        PAnoToolBar::instance(this)->hide();
 }

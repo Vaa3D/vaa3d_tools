@@ -11,6 +11,21 @@ ties names are:
 - Rem: a feature no longer available
 
 ============================================================================================
+Version 0.9.80
+April 23rd, 2014
+--------------------------------------------------------------------------------------------
+- New: added annotation toolbar. Existing annotation tools  have been moved  to the toolbar,
+       that is automatically displayed on the top-left of the Vaa3D renderer. New tools are:
+       - "1-right click to define a marker"  that simply  mimics the already  existing Vaa3D
+          feature.
+       - "1-right click to delete a marker" that delete  an already existing (and displayed)
+	      marker by right-clicking on it.
+	   - "1-right stroke to delete a group of markers" (experimental)
+	   - "Show / hide markers around ROI" (not yet implemented)
+- Fix: fixed "Vaa3D-invoked actions at the highest resolution have been temporarily removed"
+       warning as this does not cause crashes anymore thanks to the recent bug fixes.
+--------------------------------------------------------------------------------------------
+
 
 Version 0.9.76
 April 11st, 2014

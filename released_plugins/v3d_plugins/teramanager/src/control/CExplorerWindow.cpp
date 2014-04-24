@@ -32,6 +32,7 @@
 #include "CAnnotations.h"
 #include "../presentation/PMain.h"
 #include "../presentation/PLog.h"
+#include "../presentation/PAnoToolBar.h"
 #include "renderer.h"
 #include "renderer_gl1.h"
 #include "v3dr_colormapDialog.h"
@@ -261,6 +262,9 @@ void CExplorerWindow::show()
 
         //saving subvol spinboxes state ---- Alessandro 2013-04-23: not sure if this is really needed
         saveSubvolSpinboxState();
+
+        // refresh annotation toolbar
+        PAnoToolBar::instance()->refreshTools();
     }
     catch(RuntimeException &ex)
     {
@@ -470,6 +474,26 @@ bool CExplorerWindow::eventFilter(QObject *object, QEvent *event)
         }
         #endif
 
+        /****************** INTERCEPTING SINGLE CLICK EVENTS ***********************
+        Single click events are intercepted for handling annotations tools
+        ***************************************************************************/
+        if (object == view3DWidget && event->type() == QEvent::MouseButtonPress)
+        {
+            QMouseEvent* mouseEvt = (QMouseEvent*)event;
+            if(mouseEvt->button() == Qt::RightButton && PAnoToolBar::instance()->buttonMarkerDelete->isChecked())
+            {
+                deleteMarkerAt(mouseEvt->x(), mouseEvt->y());
+                return true;
+            }
+//            else if(mouseEvt->button() == Qt::LeftButton && PAnoToolBar::instance()->buttonMarkerCreate->isChecked())
+//            {
+//                view3DWidget->getRenderer()->hitPen(mouseEvt->x(), mouseEvt->y());
+//                return true;
+//            }
+
+            return false;
+        }
+
         /****************** INTERCEPTING DOUBLE CLICK EVENTS ***********************
         Double click events are intercepted to switch to the higher resolution.
         ***************************************************************************/
@@ -529,6 +553,7 @@ bool CExplorerWindow::eventFilter(QObject *object, QEvent *event)
         else if(object == window3D && (event->type() == QEvent::Move || event->type() == QEvent::Resize))
         {
            alignToLeft(PMain::getInstance());
+           PAnoToolBar::instance()->alignToLeft(window3D->glWidgetArea);
            return true;
         }
 
@@ -539,6 +564,7 @@ bool CExplorerWindow::eventFilter(QObject *object, QEvent *event)
         else if(object == window3D && event->type() == QEvent::WindowStateChange)
         {
             alignToLeft(PMain::getInstance());
+            PAnoToolBar::instance()->alignToLeft(window3D->glWidgetArea);
             return true;
         }
 
@@ -670,6 +696,9 @@ void CExplorerWindow::receiveData(
                     sprintf(message, "Successfully generated view %s", title.c_str());
                     PLog::getInstance()->appendActual(prev->newViewTimer.elapsed(), message);
                 }
+
+                // refresh annotation toolbar
+                PAnoToolBar::instance()->refreshTools();
             }
         }
         catch(RuntimeException &ex)
@@ -1376,6 +1405,74 @@ void CExplorerWindow::clearAnnotations() throw (RuntimeException)
     view3DWidget->getRenderer()->endSelectMode();
 }
 
+void CExplorerWindow::deleteAnnotationsROI(
+        V3DLONG xs, V3DLONG ys, V3DLONG zs,  //starting coordinates (in pixel space)
+        V3DLONG xe, V3DLONG ye, V3DLONG ze)  //ending coordinates (in pixel space)
+throw (RuntimeException)
+{
+    /**/itm::debug(itm::LEV1, strprintf("title = %s, ROI = X[%d, %d], Y[%d, %d], Z[%d, %d]", titleShort.c_str(), xs, xe, ys, ye, zs, ze).c_str(), __itm__current__function__);
+
+    // get vaa3d markers
+    QList<LocationSimple> vaa3dMarkers = V3D_env->getLandmark(window);
+
+    // delete markers within roi
+    vector<int> vaa3dMarkers_tbd;
+    for(int i=0; i<vaa3dMarkers.size(); i++)
+    {
+        float x = vaa3dMarkers[i].x;
+        float y = vaa3dMarkers[i].y;
+        float z = vaa3dMarkers[i].z;
+        printf("(%.0f, %.0f, %.0f) ", x, y, z);
+
+        if(x >= (float)xs && x <= (float)xe &&
+           y >= (float)ys && y <= (float)ye &&
+           z >= (float)zs && z <= (float)ze)
+            vaa3dMarkers_tbd.push_back(i);
+    }
+    printf("\n");
+    for(int i=0; i<vaa3dMarkers_tbd.size(); i++)
+        vaa3dMarkers.removeAt(vaa3dMarkers_tbd[i]);
+
+    // set new markers
+    V3D_env->setLandmark(window, vaa3dMarkers);
+    V3D_env->pushObjectIn3DWindow(window);
+}
+
+void CExplorerWindow::deleteMarkerAt(int x, int y) throw (itm::RuntimeException)
+{
+    /**/itm::debug(itm::LEV1, strprintf("title = %s, point = (%x, %y)", titleShort.c_str(), x, y).c_str(), __itm__current__function__);
+
+    // select marker (if any) at the clicked location
+    view3DWidget->getRenderer()->selectObj(x,y, false);
+
+    // search for the selected markers
+    vector<int> vaa3dMarkers_tbd;
+    QList<LocationSimple> vaa3dMarkers = V3D_env->getLandmark(window);
+    QList <ImageMarker> imageMarkers = static_cast<Renderer_gl1*>(view3DWidget->getRenderer())->listMarker;
+    for(int i=0; i<imageMarkers.size(); i++)
+    {
+        if(imageMarkers[i].selected)
+        {
+            for(int j=0; j<vaa3dMarkers.size(); j++)
+                if(vaa3dMarkers[j].x == imageMarkers[i].x &&
+                   vaa3dMarkers[j].y == imageMarkers[i].y &&
+                   vaa3dMarkers[j].z == imageMarkers[i].z)
+                    vaa3dMarkers_tbd.push_back(j);
+        }
+    }
+
+    // remove selected markers
+    for(int i=0; i<vaa3dMarkers_tbd.size(); i++)
+        vaa3dMarkers.removeAt(vaa3dMarkers_tbd[i]);
+
+    // set new markers
+    V3D_env->setLandmark(window, vaa3dMarkers);
+    V3D_env->pushObjectIn3DWindow(window);
+
+    // end select mode
+    view3DWidget->getRenderer()->endSelectMode();
+}
+
 void CExplorerWindow::loadAnnotations() throw (RuntimeException)
 {
     /**/itm::debug(itm::LEV1, strprintf("title = %s", titleShort.c_str()).c_str(), __itm__current__function__);
@@ -1616,6 +1713,9 @@ void CExplorerWindow::restoreViewFrom(CExplorerWindow* source) throw (RuntimeExc
         if(!PMain::getInstance()->isESactive())
             PMain::getInstance()->refSys->setDims(volH1-volH0+1, volV1-volV0+1, volD1-volD0+1);
 
+        // refresh annotation toolbar
+        PAnoToolBar::instance()->refreshTools();
+
         //current windows now gets ready to user input
         isReady = true;
     }
@@ -1630,11 +1730,21 @@ XYZ CExplorerWindow::getRenderer3DPoint(int x, int y)  throw (RuntimeException)
 {
     /**/itm::debug(itm::LEV1, strprintf("title = %s, x = %d, y = %d", titleShort.c_str(), x, y).c_str(), __itm__current__function__);
 
+
+    //view3DWidget->getRenderer()->selectObj(x,y, false);
+
     #ifdef USE_EXPERIMENTAL_FEATURES
     return myRenderer_gl1::cast(static_cast<Renderer_gl1*>(view3DWidget->getRenderer()))->get3DPoint(x, y);
     #else
     throw RuntimeException("Double click zoom-in feature is disabled in the current version");
     #endif
+
+
+//    Renderer_gl1* rend = static_cast<Renderer_gl1*>(view3DWidget->getRenderer());
+
+//    XYZ p =  rend->selectPosition(x, y);
+//    printf("\n\npoint = (%.0f, %.0f, %.0f)\n\n", p.x, p.y, p.z);
+//    return p;
 }
 
 /**********************************************************************************
@@ -1690,21 +1800,31 @@ void CExplorerWindow::invokedFromVaa3D(v3d_imaging_paras* params /* = 0 */)
         /**/itm::debug(itm::LEV_MAX, strprintf("title = %s, Vaa3D ROI is [%d-%d] x [%d-%d] x [%d-%d]", titleShort.c_str(), roi->xs, roi->xe, roi->ys, roi->ye, roi->zs, roi->ze).c_str(), __itm__current__function__);
 
 
+    //--- Alessandro 23/04/2014: after several bug fixes, it seems this bug does not occur anymore
     //--- Alessandro 24/08/2013: to prevent the plugin to crash at the deepest resolution when the plugin is invoked by Vaa3D
-    if(volResIndex == CImport::instance()->getResolutions()-1)
-    {
-        QMessageBox::warning(this, "Warning", "Vaa3D-invoked actions at the highest resolution have been temporarily removed. "
-                             "Please use different operations such as \"Double-click zoom-in\" or \"Traslate\".");
-        return;
-    }
+    //    if(volResIndex == CImport::instance()->getResolutions()-1)
+//    {
+//        QMessageBox::warning(this, "Warning", "Vaa3D-invoked actions at the highest resolution have been temporarily removed. "
+//                             "Please use different operations such as \"Double-click zoom-in\" or \"Traslate\".");
+//        return;
+//    }
 
     //retrieving ROI infos propagated by Vaa3D
     int roiCenterX = roi->xe-(roi->xe-roi->xs)/2;
     int roiCenterY = roi->ye-(roi->ye-roi->ys)/2;
     int roiCenterZ = roi->ze-(roi->ze-roi->zs)/2;
 
+    // Vaa3D's ROI mode triggers deleteAnnotationsROI when TeraFly's "buttonMarkerRoiDelete" mode is active
+    if(roi->ops_type == 1 && PAnoToolBar::instance()->buttonMarkerRoiDelete->isChecked())
+    {
+        deleteAnnotationsROI(roi->xs, roi->ys, roi->zs, roi->xe, roi->ye, roi->ze);
+
+        // need to refresh annotation tools as this Vaa3D's action resets the Vaa3D annotation mode
+        PAnoToolBar::instance()->refreshTools();
+    }
+
     //zoom-in around marker or ROI triggers a new window
-    if(roi->ops_type == 1)
+    else if(roi->ops_type == 1)
         newView(roi->xe, roi->ye, roi->ze, volResIndex+1, volT0, volT1, false, -1, -1, -1, roi->xs, roi->ys, roi->zs);
 
     //zoom-in with mouse scroll up may trigger a new window if caching is not possible
@@ -2396,6 +2516,21 @@ void CExplorerWindow::setWaitingFor5D(bool wait, bool pre_wait /* = false */)
             if(!pre_wait)
                 window3D->timeSlider->setEnabled(true);
         }
+    }
+}
+
+/**********************************************************************************
+* Change current Vaa3D's rendered cursor
+***********************************************************************************/
+void CExplorerWindow::setCursor(const QCursor& cur, bool renderer_only /* = false */)
+{
+    /**/itm::debug(itm::LEV_MAX, 0, __itm__current__function__);
+
+    if(CExplorerWindow::current)
+    {
+        if(!renderer_only)
+            CExplorerWindow::current->window3D->setCursor(cur);
+        CExplorerWindow::current->view3DWidget->setCursor(cur);
     }
 }
 

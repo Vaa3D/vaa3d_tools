@@ -23,6 +23,9 @@
         <file>icons/marker_delete_roi.png</file>
         <file>icons/marker_roi_view.png</file>
         <file>icons/cursor_marker_add.png</file>
+        <file>icons/cursor_marker_delete.png</file>
+        <file>icons/cursor_marker_delete_roi.png</file>
+        <file>icons/toolbar.png</file>
         <file>changelog.txt</file>
     </qresource>
 </RCC>

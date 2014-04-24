@@ -44,7 +44,7 @@ namespace teramanager
     *    PARAMETERS    *
     ********************
     ---------------------------------------------------------------------------------------------------------------------------*/
-    std::string version = "0.9.75";         //software version
+    std::string version = "0.9.80";         //software version
     int DEBUG = LEV_MAX;                    //debug level
     bool DEBUG_TO_FILE = false;             //whether debug messages should be printed on the screen or to a file (default: screen)
     std::string DEBUG_FILE_PATH = "/home/alex/Scrivania/terafly_debug.log";   //filepath where to save debug information
@@ -90,12 +90,16 @@ void CPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWi
 
     if (menu_name == tr("TeraFly"))
     {
-        //launching plugin's GUI
+        // launch plugin's GUI
         PMain::instance(&callback, 0);
+
+        // reset widgets to default state
+        PMain::getInstance()->reset();
+        PMain::getInstance()->resetMultiresControls();
     }    
     else if(menu_name == tr("TeraConverter"))
     {
-        //launching PConverter's GUI
+        // launch PConverter's GUI
         PConverter::instance(&callback, parent);
         PConverter::instance()->show();
         PConverter::instance()->move(QApplication::desktop()->screen()->rect().center() - PConverter::instance()->rect().center());

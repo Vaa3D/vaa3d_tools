@@ -236,6 +236,11 @@ class teramanager::CExplorerWindow : public QWidget
         void storeAnnotations() throw (itm::RuntimeException);
         void loadAnnotations() throw (itm::RuntimeException);
         void clearAnnotations() throw (itm::RuntimeException);
+        void deleteAnnotationsROI(
+                V3DLONG xs, V3DLONG ys, V3DLONG zs,  //starting coordinates (in pixel space)
+                V3DLONG xe, V3DLONG ye, V3DLONG ze)  //ending coordinates (in pixel space)
+        throw (itm::RuntimeException);
+        void deleteMarkerAt(int x, int y) throw (itm::RuntimeException);
 
         /**********************************************************************************
         * Saves/restores the state of PMain spinboxes for subvolume selection
@@ -313,8 +318,14 @@ class teramanager::CExplorerWindow : public QWidget
             zoomHistory[ZOOM_HISTORY_SIZE-1] = zoom;
         }
 
+        /**********************************************************************************
+        * Change current Vaa3D's rendered cursor
+        ***********************************************************************************/
+        static void setCursor(const QCursor& cur, bool renderer_only = false);
+
         //PMain instance is allowed to access class private members
         friend class PMain;
+        friend class PAnoToolBar;
         friend class CVolume;
 
 

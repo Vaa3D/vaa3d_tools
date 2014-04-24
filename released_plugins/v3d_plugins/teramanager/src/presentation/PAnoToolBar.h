@@ -11,12 +11,11 @@ class teramanager::PAnoToolBar : public QWidget
     private:
 
         QToolBar* toolBar;                      //tool bar with buttons
-//        QButtonGroup *buttonGroup;              //exclusive button group
         QToolButton *buttonMarkerCreate;        //button1
         QToolButton *buttonMarkerDelete;        //button2
         QToolButton *buttonMarkerRoiDelete;     //button3
         QToolButton *buttonMarkerRoiView;       //button4
-//        QToolButton *buttonInvisible;           //invisible button
+
         QPoint dragPosition;
 
         /*********************************************************************************
@@ -49,6 +48,29 @@ class teramanager::PAnoToolBar : public QWidget
         }
         PAnoToolBar(QWidget *parent = 0);
 
+        /**********************************************************************************
+        * Intercepts global key pressed events
+        ***********************************************************************************/
+        bool eventFilter(QObject *object, QEvent *event);
+
+        /**********************************************************************************
+        * Release currently activated tools, if any
+        ***********************************************************************************/
+        void releaseTools();
+
+        /**********************************************************************************
+        * Refresh currently activated tools, if any
+        ***********************************************************************************/
+        void refreshTools();
+
+        /**********************************************************************************
+        * Align the current widget to the left of the given widget
+        ***********************************************************************************/
+        void alignToLeft(QWidget* widget);
+
+        friend class PMain;
+        friend class CExplorerWindow;
+
     protected:
 
         void mousePressEvent(QMouseEvent *event)
@@ -71,7 +93,10 @@ class teramanager::PAnoToolBar : public QWidget
     
     public slots:
 
-        void buttonChecked(bool checked);
+        void buttonMarkerCreateChecked(bool checked);
+        void buttonMarkerDeleteChecked(bool checked);
+        void buttonMarkerRoiDeleteChecked(bool checked);
+        void buttonMarkerRoiViewChecked(bool checked);
     
 };
 
