@@ -241,7 +241,7 @@ void PAnoToolBar::buttonMarkerRoiViewChecked(bool checked)
 ***********************************************************************************/
 bool PAnoToolBar::eventFilter(QObject *object, QEvent *event)
 {
-    if(event->type() == QEvent::KeyPress)
+    if(event->type() == 6)
     {
         QKeyEvent *KeyEvent = (QKeyEvent*)event;
         if(KeyEvent->key() == Qt::Key_Escape)
