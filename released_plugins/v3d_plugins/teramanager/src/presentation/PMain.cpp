@@ -1709,7 +1709,7 @@ void PMain::importDone(RuntimeException *ex, qint64 elapsed_time)
         PLog::getInstance()->appendActual(CImport::instance()->timerIO.elapsed(), "TeraFly 3D exploration started");
 
         //activate annotation toolbar
-        showToolbarButton->setChecked(true);
+        //showToolbarButton->setChecked(true);
     }
 
     //resetting some widgets

@@ -221,6 +221,12 @@ void PAnoToolBar::buttonMarkerRoiViewChecked(bool checked)
 
     if(checked)
     {
+        QMessageBox::information(this, "Warning", "Not yet implemented");
+        buttonMarkerRoiView->setChecked(false);
+    }
+
+    if(checked)
+    {
 //        // uncheck other buttons but the current one
 //        if(buttonMarkerCreate->isChecked())
 //            buttonMarkerCreate->setChecked(false);
