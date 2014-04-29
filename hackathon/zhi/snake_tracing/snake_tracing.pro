@@ -6,6 +6,11 @@ mac{
     QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.9
     ITKLIBPATH = ITKlibs_MAC
 }
+else{
+    ITKLIBPATH = ITKlibs_Linux
+    SOURCES = ITK_include/itkLightProcessObject.cxx
+
+}
 
 VAA3DPATH = ../../../../v3d_external/v3d_main
 INCLUDEPATH	+= $$VAA3DPATH/v3d $$VAA3DPATH/basic_c_fun $$VAA3DPATH/common_lib/include
