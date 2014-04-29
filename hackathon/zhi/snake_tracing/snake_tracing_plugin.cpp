@@ -176,9 +176,6 @@ void autotrace(V3DPluginCallback2 &callback, QWidget *parent)
     Tracer->setParas(pt_distance,gamma,stretchingRatio,minimum_length,collision_dist,5,5,automatic_merging,max_angle,
                      freeze_body,s_force,tracing_model,false,coding_method,sigma_ratio,border);
     IM->SetCodingMethod(0);
-
-    Tracer->Open_Curve_Snake_Tracing();
-    Tracer->RemoveSeeds();
             //tracing finished
     while( IM->SeedPt.GetSize() != IM->visit_label.sum() )
     {
