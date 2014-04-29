@@ -28,4 +28,4 @@ SOURCES += TracingCore/ImageOperation.cpp\
            ITK4.5/vcl_deprecated.cxx
 
 TARGET	= $$qtLibraryTarget(snake_tracing)
-DESTDIR	= $$VAA3DPATH/../bin/plugins/snake_tracing/
+DESTDIR	= $$VAA3DPATH/../bin/plugins/neuron_tracing/snake_tracing/

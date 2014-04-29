@@ -1,6 +1,6 @@
 /* snake_tracing_plugin.cpp
  * This is a test plugin, you can use it as a demo.
- * 2015-04-01 : by Zhi Zhou
+ * 2014-04-01 : by Zhi Zhou
  */
  
 #include "v3d_message.h"
