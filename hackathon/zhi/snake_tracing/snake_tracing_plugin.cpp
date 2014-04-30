@@ -17,6 +17,8 @@ ImageOperation *IM;
 OpenSnakeTracer *Tracer;
 
 void autotrace(V3DPluginCallback2 &callback, QWidget *parent);
+bool autotrace(const V3DPluginArgList & input, V3DPluginArgList & output,V3DPluginCallback2 &callback);
+
 void findBranch_Raw(int snake_label, int root_label, Point3D root_point, vnl_vector<int>*snake_visit_label, int *point_id, QTextStream *out_txt, PointList3D *wrote_pt, PointList3D *all_pt, std::vector<int> *branch_label);
 
 
@@ -50,8 +52,8 @@ void snake_tracing::domenu(const QString &menu_name, V3DPluginCallback2 &callbac
 	}
 	else
 	{
-		v3d_msg(tr("This is a test plugin, you can use it as a demo.. "
-            "Developed by Zhi Zhou, 2014-04-01"));
+        v3d_msg(tr("Snake tracing plugin "
+            "Imported by Zhi Zhou, 2014-04-01"));
 	}
 }
 
@@ -62,18 +64,19 @@ bool snake_tracing::dofunc(const QString & func_name, const V3DPluginArgList & i
 	if(input.size() >= 2) inparas = *((vector<char*> *)input.at(1).p);
 	if(output.size() >= 1) outfiles = *((vector<char*> *)output.at(0).p);
 
-	if (func_name == tr("func1"))
-	{
-		v3d_msg("To be implemented.");
-	}
-	else if (func_name == tr("func2"))
+    if (func_name == tr("snake_trace"))
     {
-		v3d_msg("To be implemented.");
-	}
-	else if (func_name == tr("help"))
-	{
-		v3d_msg("To be implemented.");
-	}
+        return autotrace(input, output,callback);
+    }
+    else if (func_name == tr("help"))
+    {
+        cout<<"Usage : v3d -x dllname -f snake_trace -i <inimg_file> -p <ch> "<<endl;
+        cout<<endl;
+        cout<<"ch           the input channel value, start from 1, default 1"<<endl;
+        cout<<"The output swc file will be named automatically based on the input image file nmae"<<endl;
+        cout<<endl;
+        cout<<endl;
+    }
 	else return false;
 
 	return true;
@@ -224,6 +227,152 @@ void autotrace(V3DPluginCallback2 &callback, QWidget *parent)
 
     v3d_msg(QString("Now you can drag and drop the generated swc fle [%1] into Vaa3D.").arg(fileName));
     return;
+
+}
+
+
+
+bool autotrace(const V3DPluginArgList & input, V3DPluginArgList & output,V3DPluginCallback2 &callback)
+{
+    cout<<"Welcome to snake tracing"<<endl;
+    unsigned int c=1;
+
+    if (input.size()>=2)
+    {
+        vector<char*> paras = (*(vector<char*> *)(input.at(1).p));
+        cout<<paras.size()<<endl;
+        if(paras.size() >= 1) c = atoi(paras.at(0));
+    }
+
+    char * inimg_file = ((vector<char*> *)(input.at(0).p))->at(0);
+
+    cout<<"ch = "<<c<<endl;
+    cout<<"inimg_file = "<<inimg_file<<endl;
+
+    Image4DSimple *subject = callback.loadImage(inimg_file);
+    if(!subject || !subject->valid())
+    {
+         v3d_msg("Fail to load the input image.",0);
+         if (subject) {delete subject; subject=0;}
+         return false;
+    }
+
+    if( c < 1 || c > subject->getCDim())
+    {
+         v3d_msg("Invalid channel input.",0);
+         if (subject) {delete subject; subject=0;}
+         return false;
+    }
+
+    V3DLONG N = subject->getXDim();
+    V3DLONG M = subject->getYDim();
+    V3DLONG P = subject->getZDim();
+
+    int in_sz[3];
+    in_sz[0] = N;
+    in_sz[1] = M;
+    in_sz[2] = P;
+
+    unsigned char *data1d = subject->getRawDataAtChannel(c-1);
+
+    IM = new ImageOperation;
+    Tracer = new OpenSnakeTracer;
+
+    IM->Imcreate(data1d,in_sz);
+    //preprocessing
+    std::cout<<"Compute Gradient Vector Flow..."<<std::endl;
+    IM->computeGVF(1000,5,1);
+    std::cout<<"Compute Vesselness (CPU)..."<<std::endl;
+    IM->ComputeGVFVesselness();
+    std::cout<<"Detect Seed Points..."<<std::endl;
+    IM->SeedDetection(IM->v_threshold,0,0);
+    std::cout<<"Adjust Seed Points..."<<std::endl;
+    IM->SeedAdjustment(10);
+    std::cout<<"Preprocessing Finished..."<<std::endl;
+
+    IM->ImComputeInitBackgroundModel(IM->v_threshold);
+    IM->ImComputeInitForegroundModel();
+
+    //tracing
+    std::cout<<"--------------Tracing--------------"<<std::endl;
+    IM->ImRefresh_LabelImage();
+    Tracer->SetImage(IM);
+    Tracer->Init();
+
+
+    float alpha = 0;
+    int iter_num = 50;
+    int ITER = 5;
+
+    int pt_distance = 2;
+
+    float beta = 0.05;
+    float kappa = 1;
+    float gamma = 1;
+    float stretchingRatio = 3;
+
+    int collision_dist = 1;
+    int minimum_length = 5;
+    bool automatic_merging = true;
+    int max_angle = 99;
+    bool freeze_body = true;
+    int s_force = 1;
+    int tracing_model = 0;
+    int coding_method = 0;
+    float sigma_ratio = 1;
+    int border = 0;
+    Tracer->setParas(pt_distance,gamma,stretchingRatio,minimum_length,collision_dist,5,5,automatic_merging,max_angle,
+                     freeze_body,s_force,tracing_model,false,coding_method,sigma_ratio,border);
+    IM->SetCodingMethod(0);
+
+    while( IM->SeedPt.GetSize() != IM->visit_label.sum() )
+    {
+       Tracer->Open_Curve_Snake_Tracing();
+       Tracer->RemoveSeeds();
+    }
+
+    std::cout<<std::endl;
+    std::cout<<"--------------Processing Finished--------------"<<std::endl;
+
+    QString fileName =  QString(inimg_file) + "_snake.swc";
+    QFile swc_file(fileName);
+
+    PointList3D wrote_pt, All_Pt;
+    if (swc_file.open(QFile::WriteOnly | QFile::Truncate))
+    {
+        QTextStream *out_txt;
+        out_txt = new QTextStream(&swc_file);
+
+        vnl_vector<int> *snake_visit_label;
+        snake_visit_label = new vnl_vector<int>(Tracer->SnakeList.NSnakes);
+        snake_visit_label->fill(0);
+        int *point_id;
+        point_id = new int[1];
+        point_id[0] = 1;
+
+
+        All_Pt.RemoveAllPts();
+
+        std::vector<int> *branch_label;
+        branch_label = new std::vector<int>[1];
+
+        for( int i = 0; i < Tracer->SnakeList.NSnakes; i++ )
+        {
+            if( snake_visit_label[0](i) == 1 )
+                continue;
+            if( Tracer->SnakeList.valid_list[i] == 0 )
+                continue;
+
+            wrote_pt.RemoveAllPts();
+            int snake_id = i;
+            findBranch_Raw( snake_id, -1, Tracer->SnakeList.Snakes[i].Cu.GetFirstPt(), snake_visit_label, point_id, out_txt, &wrote_pt, &All_Pt, branch_label );
+
+        }
+    }
+
+    v3d_msg(QString("Now you can drag and drop the generated swc fle [%1] into Vaa3D.").arg(fileName),0);
+    if (subject) {delete subject; subject=0;}
+    return true;
 
 }
 
