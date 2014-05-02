@@ -1,15 +1,15 @@
-/* prunning_swc_plugin.h
+/* pruning_swc_plugin.h
  * This is a test plugin, you can use it as a demo.
  * 2014-05-02 : by Zhi Zhou
  */
  
-#ifndef __PRUNNING_SWC_PLUGIN_H__
-#define __PRUNNING_SWC_PLUGIN_H__
+#ifndef __pruning_SWC_PLUGIN_H__
+#define __pruning_SWC_PLUGIN_H__
 
 #include <QtGui>
 #include <v3d_interface.h>
 
-class prunning_swc : public QObject, public V3DPluginInterface2_1
+class pruning_swc : public QObject, public V3DPluginInterface2_1
 {
 	Q_OBJECT
 	Q_INTERFACES(V3DPluginInterface2_1);
