@@ -10,7 +10,6 @@
 
 #include "basic_surf_objs.h"
 #include <iostream>
-#include "y_imglib.h"
 #include "my_surf_objs.h"
 
 
