@@ -97,7 +97,6 @@ bool consensus_skeleton(vector<NeuronTree> & nt_list, QList<NeuronSWC> & merge_r
 		return false;
 	}
 
-	 
 	vector<V3DLONG> clusterSize(n_sampling, 0);
 	for (int i=0;i<neuronNum;i++)
 	{
@@ -115,19 +114,20 @@ bool consensus_skeleton(vector<NeuronTree> & nt_list, QList<NeuronSWC> & merge_r
 		}
 	}
 
-	for (V3DLONG i=0;i<n_sampling;i++)
-		for (V3DLONG j=i+1;j<n_sampling;j++)
-		{
-			if (adjMatrix[i*n_sampling+j]>neuronNum)
-			{
-				adjMatrix[i*n_sampling+j] = 1;
-				adjMatrix[j*n_sampling+i] = 1;
-			}
-			else {
-				adjMatrix[i*n_sampling+j] = adjMatrix[i*n_sampling+j]/neuronNum;
-				adjMatrix[j*n_sampling+i] = adjMatrix[j*n_sampling+i]/neuronNum;
-			}
-		}
+//	for (V3DLONG i=0;i<n_sampling;i++)
+//		for (V3DLONG j=i+1;j<n_sampling;j++)
+//		{
+//			if (adjMatrix[i*n_sampling+j]>neuronNum)
+//			{
+//				adjMatrix[i*n_sampling+j] = 1;
+//				adjMatrix[j*n_sampling+i] = 1;
+//			}
+//			else {
+//				adjMatrix[i*n_sampling+j] = adjMatrix[i*n_sampling+j]/neuronNum;
+//				adjMatrix[j*n_sampling+i] = adjMatrix[j*n_sampling+i]/neuronNum;
+//			}
+//		}
+	
 	
 	printf("(3). computing minimum-spanning tree.\n");
 	if (method_code==0)

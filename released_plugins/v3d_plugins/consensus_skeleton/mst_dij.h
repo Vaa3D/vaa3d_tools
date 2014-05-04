@@ -29,6 +29,7 @@ bool mst_dij(double* adj_matrix, V3DLONG n_node, V3DLONG* plist, V3DLONG rootnod
 		visited[i] = false;
 		plist[i] = -1;
 	}
+
 	
 	//begin computation
 	V3DLONG cur = rootnode;
@@ -66,6 +67,7 @@ bool mst_dij(double* adj_matrix, V3DLONG n_node, V3DLONG* plist, V3DLONG rootnod
 		{
 			fprintf(stderr,"The graph is not connected.\n");
 			return false;
+			//printf("%d does not have parent\n", i);
 		}
 	}
 

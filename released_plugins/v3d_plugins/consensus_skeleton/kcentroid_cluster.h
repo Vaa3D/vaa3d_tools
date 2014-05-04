@@ -5,7 +5,7 @@
 #include <stdio.h>
 using namespace std;
 
-#define INF 100000000
+#include <climits>
 
 //K-centroid clustering
 //by Y. Wan
@@ -91,14 +91,16 @@ bool kcentroid_cluster(vector<vector<double> > & feature, V3DLONG clusterNum, ve
 		clusterCen[i] = i;
 
 	//begin loop
-	double clusterChange = INF;
+	double clusterChange = 1;
 	V3DLONG iter = 0;
+	bool validClusters;
 	while (clusterChange>1e-6 && iter<INF)
 	{
 		iter++;
+		validClusters = true;
 		//printf("iter=%d\n",(int)iter);
 		clusterChange = 0;
-		vector<V3DLONG> newCen(clusterNum,0);
+		vector<V3DLONG> newCen(clusterNum, -1);
 		vector<vector<V3DLONG> > clusters(clusterNum,vector<V3DLONG>());
 		for (V3DLONG i=0;i<pntNum;i++)
 		{
@@ -118,7 +120,7 @@ bool kcentroid_cluster(vector<vector<double> > & feature, V3DLONG clusterNum, ve
 		for (V3DLONG i=0;i<clusterNum;i++)
 		{
 			//printf("cluster:%d\t",(int)i);
-			double minDev = INF;
+			double minDev = LONG_MAX;
 			for (V3DLONG j=0;j<clusters[i].size();j++)
 			{
 				//printf("%d\t",(int)clusters[i][j]);
@@ -126,7 +128,7 @@ bool kcentroid_cluster(vector<vector<double> > & feature, V3DLONG clusterNum, ve
 				for (V3DLONG k=0;k<clusters[i].size();k++)
 					sum += computeDist2(feature[clusters[i][j]],feature[clusters[i][k]]);
 
-				if (sum<minDev)
+				if (sum<=minDev)
 				{
 					minDev = sum;
 					newCen[i] = clusters[i][j];
@@ -134,11 +136,44 @@ bool kcentroid_cluster(vector<vector<double> > & feature, V3DLONG clusterNum, ve
 			}
 			//printf("center:%d\n",(int)newCen[i]);
 		}
+		
+		//if empty clusters are observed, replace the centroid with a point that is furthest to its current centroid
+		vector<bool> replaceTag(clusterNum, false);
+		for (V3DLONG i=0;i<clusterNum;i++)
+		{
+			if (clusters[i].size()==0)
+			{
+				validClusters = false;
+				double maxDist = 0;
+				V3DLONG replaceEmpty = -1;
+				V3DLONG oldCluster = -1;
+				for (V3DLONG j=0;j<clusterNum;j++)
+				{
+					if (replaceTag[j]) continue;
+					for (V3DLONG k=0;k<clusters[j].size();k++)
+					{
+						double singleLength = computeDist2(feature[newCen[j]], feature[clusters[j][k]]);
+						if (maxDist<=singleLength)
+						{
+							maxDist = singleLength;
+							replaceEmpty = clusters[j][k];
+							oldCluster = j;
+						}
+					}
+				}
+				
+				replaceTag[oldCluster] = true;
+				newCen[i] = replaceEmpty;
+			}
+		}
 
 		for (V3DLONG i=0;i<clusterNum;i++)
 			clusterChange += computeDist2(feature[newCen[i]],feature[clusterCen[i]]);
 
 		clusterCen = newCen;
+
+		if (!validClusters) //there are empty clusters in the result, do another round
+			clusterChange = 1;
 	}
 	return true;
 };
