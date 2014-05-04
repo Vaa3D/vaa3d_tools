@@ -47,8 +47,12 @@ int consensus_skeleton_io(V3DPluginCallback2 &callback, QWidget *parent)
 	}
 	avg_node_num /= neuronNum;
 
-
-	V3DLONG n_sampling = QInputDialog::getInt(parent, "sample number", "Please specify the node number of your merged skeleton:", avg_node_num, max_node_num, 1, 0);
+	bool ok;
+	V3DLONG n_sampling = QInputDialog::getInt(parent, "sample number", "Please specify the node number of your merged skeleton:", avg_node_num, 1, max_node_num, 1, &ok);
+	
+	if (!ok)
+		return 0;
+	
 
 	QList<NeuronSWC> result_lN;
 	if (!consensus_skeleton(nt_list, result_lN, n_sampling, 0))
