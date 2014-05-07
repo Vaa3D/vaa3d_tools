@@ -101,8 +101,6 @@ Peng, H, Ruan, Z., Atasoy, D., and Sternson, S. (2010) “Automatic reconstructi
 
 //#include "v3d_basicdatatype.h"
 
-#define VAA3D_SUFFIX   "raw"
-
 #if defined(WIN32) || (defined(_MSC_VER) && defined(_WIN64))
 //#if defined(_MSC_VER) && defined(_WIN64) //correct?
 

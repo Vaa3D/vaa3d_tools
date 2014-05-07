@@ -22,26 +22,25 @@
 *       specific prior written permission.
 ********************************************************************************************************************************************************************************************/
 
-#ifndef _IIM_BLOCK_H
-#define _IIM_BLOCK_H
+#ifndef _BLOCK_H
+#define _BLOCK_H
 
 #include <stdio.h>
 #include "IM_config.h"
-#include "VirtualVolume.h"
 
 //FORWARD-DECLARATIONS
-//class iim::VirtualVolume;
+class  VirtualVolume;
 
 //TYPE DEFINITIONS
-//typedef struct {int V0, V1, H0, H1;} Rect_t;
+typedef struct {int V0, V1, H0, H1;} Rect_t;
 typedef struct {int D0, D1, ind0, ind1;} Segm_t;
 
-class iim::Block
+class Block
 {
 	private:
 
 		//*********** OBJECT ATTRIBUTES ***********
-		iim::VirtualVolume*	CONTAINER;					//pointer to <VirtualVolume> object that contains the current object
+		VirtualVolume*	CONTAINER;					//pointer to <VirtualVolume> object that contains the current object
 		char**			FILENAMES;					//1-D dinamic array of <char>  pointers to blocks filanames
         iim::uint32		HEIGHT, WIDTH, DEPTH;		//VHD (Vertical, Horizontal, Depth) dimensions of current stack
         iim::uint32     N_BLOCKS;                   //number of blocks along z
@@ -61,8 +60,8 @@ class iim::Block
 
 	public:
 
-        Block(iim::VirtualVolume* _CONTAINER, int _ROW_INDEX, int _COL_INDEX, FILE* bin_file) throw (iim::IOException);
-		Block(iim::VirtualVolume* _CONTAINER, int _ROW_INDEX, int _COL_INDEX, char* _DIR_NAME);
+        Block(VirtualVolume* _CONTAINER, int _ROW_INDEX, int _COL_INDEX, FILE* bin_file) throw (iim::IOException);
+		Block(VirtualVolume* _CONTAINER, int _ROW_INDEX, int _COL_INDEX, char* _DIR_NAME);
 		~Block(void);
 
 		//GET methods

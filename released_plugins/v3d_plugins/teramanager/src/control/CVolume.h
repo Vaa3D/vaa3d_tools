@@ -136,7 +136,7 @@ class teramanager::CVolume : public QThread
 
             source = _sourceObject;
             voiResIndex = _voiResIndex;
-            iim::VirtualVolume* volume = CImport::instance()->getVolume(voiResIndex);
+            VirtualVolume* volume = CImport::instance()->getVolume(voiResIndex);
 
             //---- Alessandro 2013-08-06: reestabilished automatic VOI adjustement. This way, get methods return the actual VOI instead of the virtual one.
             //add () by PHC, 20131029
@@ -158,7 +158,7 @@ class teramanager::CVolume : public QThread
         void setVoiT(int _T0, int _T1, int _cur_t = -1) throw (itm::RuntimeException)
         {
             /**/itm::debug(itm::LEV1, strprintf("asked to set [%d, %d] and _cur_t = %d",_T0, _T1, _cur_t).c_str(), __itm__current__function__);
-            iim::VirtualVolume* volume = CImport::instance()->getVolume(voiResIndex);
+            VirtualVolume* volume = CImport::instance()->getVolume(voiResIndex);
 
             // correct [voiT0, voiT1]
             voiT0 = (_T0 >=0)                   ? _T0 : 0;

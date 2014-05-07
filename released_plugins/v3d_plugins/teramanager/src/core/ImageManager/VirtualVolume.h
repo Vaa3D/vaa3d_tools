@@ -22,8 +22,8 @@
 *       specific prior written permission.
 ********************************************************************************************************************************************************************************************/
 
-#ifndef _IIM_VIRTUAL_VOLUME_H
-#define _IIM_VIRTUAL_VOLUME_H
+#ifndef _VIRTUAL_VOLUME_H
+#define _VIRTUAL_VOLUME_H
 
 # define HALVE_BY_MEAN 1
 # define HALVE_BY_MAX  2
@@ -32,7 +32,7 @@
 
 #include "IM_config.h"
 
-class iim::VirtualVolume {
+class VirtualVolume {
 
 protected:
 	//******OBJECT ATTRIBUTES******

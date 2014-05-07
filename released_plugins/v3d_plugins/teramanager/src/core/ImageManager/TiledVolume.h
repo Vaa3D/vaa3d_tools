@@ -28,18 +28,17 @@
 #include "VirtualVolume.h" // ADDED
 #include <list>
 #include <string>
-#include "Block.h"
 
 //FORWARD-DECLARATIONS
-//class  Block;
+class  Block;
 
 //every object of this class has the default (1,2,3) reference system
-class TiledVolume : public iim::VirtualVolume
+class TiledVolume : public VirtualVolume
 {
 	private:	
 		//******OBJECT ATTRIBUTES******
         iim::uint16 N_ROWS, N_COLS;			//dimensions (in stacks) of stacks matrix along VH axes
-        iim::Block ***BLOCKS;                    //2-D array of <Block*>
+        Block ***BLOCKS;                    //2-D array of <Block*>
         iim::ref_sys reference_system;       //reference system of the stored volume
         float  VXL_1, VXL_2, VXL_3;         //voxel dimensions of the stored volume
 
@@ -56,7 +55,7 @@ class TiledVolume : public iim::VirtualVolume
         void mirror(iim::axis mrr_axis);
 
 		//extract spatial coordinates (in millimeters) of given Stack object reading directory and filenames as spatial coordinates
-        void extractCoordinates(iim::Block* stk, int z, int* crd_1, int* crd_2, int* crd_3);
+        void extractCoordinates(Block* stk, int z, int* crd_1, int* crd_2, int* crd_3);
 
 		// iannello returns the number of channels of images composing the volume
         void initChannels ( ) throw (iim::IOException);
@@ -71,7 +70,7 @@ class TiledVolume : public iim::VirtualVolume
 		~TiledVolume(void);
 
 		//GET methods
-		iim::Block*** getBLOCKS(){return BLOCKS;}
+		Block*** getBLOCKS(){return BLOCKS;}
         iim::uint16 getN_ROWS(){return N_ROWS;}
         iim::uint16 getN_COLS(){return N_COLS;}
         int    getStacksHeight();
@@ -101,7 +100,7 @@ class TiledVolume : public iim::VirtualVolume
 
         //loads given subvolume in a 1-D array and puts used Stacks into 'involved_stacks' iff not null
         iim::real32 *loadSubvolume(int V0=-1,int V1=-1, int H0=-1, int H1=-1, int D0=-1, int D1=-1,
-                                                                  std::list<iim::Block*> *involved_blocks = 0, bool release_blocks = false)  throw (iim::IOException);
+                                                                  std::list<Block*> *involved_blocks = 0, bool release_blocks = false)  throw (iim::IOException);
 
         //loads given subvolume in a 1-D array of iim::uint8 while releasing stacks slices memory when they are no longer needed
         iim::uint8 *loadSubvolume_to_UINT8(int V0=-1,int V1=-1, int H0=-1, int H1=-1, int D0=-1, int D1=-1,

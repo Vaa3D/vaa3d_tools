@@ -77,7 +77,7 @@ class teramanager::CImport : public QThread
         int vmapYDimMax, vmapXDimMax, vmapZDimMax, vmapCDimMax, vmapTDimMax; //volume map maximum dimensions
 
         // output members
-        vector<iim::VirtualVolume*> volumes;        // stores the volumes at the different resolutions
+        vector<VirtualVolume*> volumes;        // stores the volumes at the different resolutions
         itm::uint8* vmapData;                       //volume map data
         itm::uint32 vmapYDim, vmapXDim, vmapZDim, vmapCDim, vmapTDim; //volume map actualdimensions
 
@@ -125,8 +125,8 @@ class teramanager::CImport : public QThread
             return -1;
         }
         bool isEmpty(){return volumes.size() == 0;}
-        iim::VirtualVolume* getHighestResVolume(){if(!volumes.empty()) return volumes.back(); else return 0;}
-        iim::VirtualVolume* getVolume(int resolutionIdx)
+        VirtualVolume* getHighestResVolume(){if(!volumes.empty()) return volumes.back(); else return 0;}
+        VirtualVolume* getVolume(int resolutionIdx)
         {
             if(resolutionIdx < static_cast<int>(volumes.size())) return volumes[resolutionIdx];
             else return 0;

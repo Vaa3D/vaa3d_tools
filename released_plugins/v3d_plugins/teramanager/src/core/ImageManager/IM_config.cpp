@@ -38,4 +38,3 @@ namespace IconImageManager
     bool ADD_NOISE_TO_TIME_SERIES = false;                       // whether to mark individual frames of a time series with increasing gaussian noise
     /*-------------------------------------------------------------------------------------------------------------------------*/
 }
-

@@ -27,12 +27,10 @@
 
 #include <stdio.h>
 #include "IM_config.h"
-#include "VirtualVolume.h"
 
 //FORWARD-DECLARATIONS
 struct CvMat;
-
-//class  iim::VirtualVolume;
+class  VirtualVolume;
 /* modified (iannello)
  * abstract class VirtualVolume has been substituted to derived class StackedVolume
  * since class Stack can be used to manage also volumes stored simply as a sequence of images 
@@ -40,14 +38,14 @@ struct CvMat;
  */
 
 //TYPE DEFINITIONS
-//typedef struct {int V0, V1, H0, H1;} Rect_t;
+typedef struct {int V0, V1, H0, H1;} Rect_t;
 
 class StackRaw
 {
 	private:
 
 		//*********** OBJECT ATTRIBUTES ***********
-		iim::VirtualVolume*	CONTAINER;					//pointer to <VirtualVolume> object that contains the current object
+		VirtualVolume*	CONTAINER;					//pointer to <VirtualVolume> object that contains the current object
 		CvMat**			STACKED_IMAGE;				//1-D dinamic array of <CvMat> pointers. Every <CvMat> stores a single 2-D image
 		char**			FILENAMES;					//1-D dinamic array of <char>  pointers to images filanames
         iim::uint32			HEIGHT, WIDTH, DEPTH;		//VHD (Vertical, Horizontal, Depth) dimensions of current stack
@@ -63,8 +61,8 @@ class StackRaw
 
 	public:
 
-        StackRaw(iim::VirtualVolume* _CONTAINER, int _ROW_INDEX, int _COL_INDEX, FILE* bin_file) throw (iim::IOException);
-        StackRaw(iim::VirtualVolume* _CONTAINER, int _ROW_INDEX, int _COL_INDEX, char* _DIR_NAME) throw (iim::IOException);
+        StackRaw(VirtualVolume* _CONTAINER, int _ROW_INDEX, int _COL_INDEX, FILE* bin_file) throw (iim::IOException);
+        StackRaw(VirtualVolume* _CONTAINER, int _ROW_INDEX, int _COL_INDEX, char* _DIR_NAME) throw (iim::IOException);
 		~StackRaw(void);
 
 		//GET methods
