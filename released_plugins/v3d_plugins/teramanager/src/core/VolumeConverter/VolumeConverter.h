@@ -84,7 +84,7 @@ class VolumeConverter
 	private:
 
 		/******OBJECT MEMBERS******/
-		VirtualVolume *volume;					//pointer to the <EmptyVolume> object to be stitched
+        iim::VirtualVolume *volume;           //pointer to the <EmptyVolume> object to be stitched
 		int V0, V1, H0, H1, D0, D1;				//voxel intervals that identify the final stitched volume
         int ROW_START, COL_START, ROW_END, COL_END;             //stack indexes that identify the stacks involved in stitching
 
@@ -193,7 +193,7 @@ class VolumeConverter
         int getROW1(){return ROW_END;}
         int getCOL0(){return COL_START;}
         int getCOL1(){return COL_END;}
-		VirtualVolume *getVolume() {return volume;}
+        iim::VirtualVolume *getVolume() {return volume;}
 
         /*************************************************************************************************************
         * Functions used to obtain absolute coordinates at different resolutions from relative coordinates

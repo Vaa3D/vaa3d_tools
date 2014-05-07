@@ -34,7 +34,7 @@ typedef int BIT32_UNIT;
 typedef V3DLONG BIT64_UNIT;
 
 
-class RawVolume : public VirtualVolume
+class RawVolume : public iim::VirtualVolume
 {
     private:
 

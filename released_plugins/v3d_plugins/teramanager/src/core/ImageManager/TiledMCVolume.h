@@ -31,7 +31,7 @@
 #include <string>
 
 //every object of this class has the default (1,2,3) reference system
-class TiledMCVolume : public VirtualVolume
+class TiledMCVolume : public iim::VirtualVolume
 {
 	private:	
 		//******OBJECT ATTRIBUTES******
@@ -97,7 +97,7 @@ class TiledMCVolume : public VirtualVolume
 
         //loads given subvolume in a 1-D array and puts used Stacks into 'involved_stacks' iff not null
         iim::real32 *loadSubvolume(int V0=-1,int V1=-1, int H0=-1, int H1=-1, int D0=-1, int D1=-1,
-                                                                  std::list<Block*> *involved_blocks = 0, bool release_blocks = false)  throw (iim::IOException);
+                                                                  std::list<iim::Block*> *involved_blocks = 0, bool release_blocks = false)  throw (iim::IOException);
 
         //loads given subvolume in a 1-D array of iim::uint8 while releasing stacks slices memory when they are no longer needed
         iim::uint8 *loadSubvolume_to_UINT8(int V0=-1,int V1=-1, int H0=-1, int H1=-1, int D0=-1, int D1=-1,

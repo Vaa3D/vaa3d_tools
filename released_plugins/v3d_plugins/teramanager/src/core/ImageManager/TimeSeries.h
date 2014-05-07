@@ -5,7 +5,7 @@
 #include "VirtualVolume.h"
 
 
-class TimeSeries : public VirtualVolume
+class TimeSeries : public iim::VirtualVolume
 {
     protected:
 

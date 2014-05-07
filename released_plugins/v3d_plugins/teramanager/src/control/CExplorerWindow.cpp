@@ -1481,11 +1481,13 @@ void CExplorerWindow::loadAnnotations() throw (RuntimeException)
     timer.start();
 
     //clearing previous annotations (useful when this view has been already visited)
+    /**/itm::debug(itm::LEV_MAX, strprintf("clearing previous annotations").c_str(), __itm__current__function__);
     loaded_markers.clear();
     loaded_curves.clear();
     V3D_env->getHandleNeuronTrees_Any3DViewer(window3D)->clear();
 
     //computing the current volume range in the highest resolution image space
+    /**/itm::debug(itm::LEV_MAX, strprintf("computing the current volume range in the highest resolution image space").c_str(), __itm__current__function__);
     int highestResIndex = CImport::instance()->getResolutions()-1;
     int voiV0 = CVolume::scaleVCoord(volV0, volResIndex, highestResIndex);
     int voiV1 = CVolume::scaleVCoord(volV1, volResIndex, highestResIndex);
@@ -1498,10 +1500,12 @@ void CExplorerWindow::loadAnnotations() throw (RuntimeException)
     interval_t z_range(voiD0, voiD1);
 
     //obtaining the annotations within the current window
+    /**/itm::debug(itm::LEV_MAX, strprintf("obtaining the annotations within the current window").c_str(), __itm__current__function__);
     CAnnotations::getInstance()->findLandmarks(x_range, y_range, z_range, loaded_markers);
     CAnnotations::getInstance()->findCurves(x_range, y_range, z_range, loaded_curves);
 
     //converting global coordinates to local coordinates
+    /**/itm::debug(itm::LEV_MAX, strprintf("converting global coordinates to local coordinates").c_str(), __itm__current__function__);
     QList<LocationSimple> vaa3dMarkers;
     for(std::list<LocationSimple>::iterator i = loaded_markers.begin(); i != loaded_markers.end(); i++)
     {
@@ -1520,9 +1524,13 @@ void CExplorerWindow::loadAnnotations() throw (RuntimeException)
     }
     vaa3dCurves.editable=false;
 
+
+    //update cpu time
+    /**/itm::debug(itm::LEV_MAX, strprintf("update CPU time").c_str(), __itm__current__function__);
     PLog::getInstance()->appendCPU(timer.elapsed(), QString("Loaded 3D annotations into view ").append(title.c_str()).toStdString());
 
     //assigning annotations
+    /**/itm::debug(itm::LEV_MAX, strprintf("assigning annotations").c_str(), __itm__current__function__);
     timer.restart();
     V3D_env->setLandmark(window, vaa3dMarkers);
     V3D_env->setSWC(window, vaa3dCurves);

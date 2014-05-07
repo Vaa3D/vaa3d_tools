@@ -33,6 +33,16 @@
 #endif
 #include <list>
 #include <string>
+
+// 140427_IANNELLO
+#ifdef min
+#undef min
+#endif
+
+#ifdef max
+#undef max
+#endif
+
 #include <cv.h>
 
 using namespace std;

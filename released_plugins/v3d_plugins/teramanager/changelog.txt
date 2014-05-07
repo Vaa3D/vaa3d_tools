@@ -11,6 +11,16 @@ ties names are:
 - Rem: a feature no longer available
 
 ============================================================================================
+Version 0.9.81
+May 7th, 2014
+--------------------------------------------------------------------------------------------
+- Bug: added more prints trying to fix  the bug  "Crash when zooming-in  a huge image  after
+       loading a swc file".
+- Rem: temporarily disabled feature "Delete markers in a ROI". A better one is coming!
+- Dev: updated namespaces in the ImageManager module.
+--------------------------------------------------------------------------------------------
+
+
 Version 0.9.80
 April 23rd, 2014
 --------------------------------------------------------------------------------------------

@@ -294,22 +294,23 @@ void VirtualVolume::saveImage_to_Vaa3DRaw(int slice, std::string img_path, real3
     /**/iim::debug(iim::LEV3, strprintf("img_path=%s, raw_img_height=%d, raw_img_width=%d, start_height=%d, end_height=%d, start_width=%d, end_width=%d", img_path.c_str(), raw_img_height, raw_img_width, start_height, end_height, start_width, end_width).c_str(), __iim__current__function__);
 
     //checking for non implemented features
-	char msg[STATIC_STRINGS_SIZE];
-	sprintf(msg,"in VirtualVolume::saveImage_to_Vaa3DRaw: not implemented yet");
-    throw IOException(msg);
+	//char msg[STATIC_STRINGS_SIZE];
+	//sprintf(msg,"in VirtualVolume::saveImage_to_Vaa3DRaw: not implemented yet");
+	//throw IOException(msg);
 
+	// WARNING: currently supported only 8 bits depth by VirtualVolume::saveImage_from_UINT8_to_Vaa3DRaw
 	if( img_depth != 8 ) {
 		char err_msg[STATIC_STRINGS_SIZE];
 		sprintf(err_msg,"SimpleVolume::loadSubvolume_to_UINT8: invalid number of bits per channel (%d)",img_depth); 
         throw IOException(err_msg);
 	}
 
-	//uint8  *row_data_8bit;
-	//uint16 *row_data_16bit;
+	uint8  *row_data_8bit;
+	uint16 *row_data_16bit;
 	//uint32 img_data_step;
-	//float scale_factor_16b, scale_factor_8b;
+	float scale_factor_16b, scale_factor_8b;
 	int img_height, img_width;
-	//int i, j;
+	int i, j, k;
 	char img_filepath[5000];
 
 	//setting some default parameters and image dimensions
@@ -334,11 +335,35 @@ void VirtualVolume::saveImage_to_Vaa3DRaw(int slice, std::string img_path, real3
 	}
 
 	//generating complete path for image to be saved
-	sprintf(img_filepath, "%s.%s", img_path.c_str(), img_format);
+	sprintf(img_filepath, "%s.%s", img_path.c_str(), VAA3D_SUFFIX);
 
 	//converting raw data in image data
-	//scale_factor_16b = 65535.0F;
-	//scale_factor_8b  = 255.0F;
+	scale_factor_16b = 65535.0F;
+	scale_factor_8b  = 255.0F;
+	if(img_depth == 8)
+	{
+		row_data_8bit = new uint8[img_height * img_width];
+		for(i = 0, k = 0; i <img_height; i++)
+		{
+			for(j = 0; j < img_width; j++, k++)
+				row_data_8bit[k] = (uint8) (raw_img[(i+start_height)*raw_img_width+j+start_width] * scale_factor_8b);
+		}
+	}
+	else // img_depth = 16 (because of the check above)
+	{
+		row_data_16bit = new uint16[img_height * img_width];
+		for(i = 0, k = 0; i <img_height; i++)
+		{
+			for(j = 0; j < img_width; j++, k++)
+				row_data_16bit[k] = (uint16) (raw_img[(i+start_height)*raw_img_width+j+start_width] * scale_factor_16b);
+		}
+	}
+
+	VirtualVolume::saveImage_from_UINT8_to_Vaa3DRaw (slice,img_path, &row_data_8bit, 1, 0, 
+								raw_img_height, raw_img_width, start_height, end_height, start_width, end_width, img_format, img_depth);
+
+	delete row_data_8bit;
+
 	//if(img->depth == IPL_DEPTH_8U)
 	//{
 	//	img_data_step = img->widthStep / sizeof(uint8);
@@ -361,7 +386,7 @@ void VirtualVolume::saveImage_to_Vaa3DRaw(int slice, std::string img_path, real3
 	//}
 	
 	// dummy assignment: just to avoid warnings
-	raw_img[slice] = 0.0;
+	//raw_img[slice] = 0.0;
 }
 
 
@@ -444,7 +469,7 @@ void VirtualVolume::saveImage_from_UINT8_to_Vaa3DRaw (int slice, std::string img
 	}
 
     //generating complete path for image to be saved
-    sprintf(buffer, "%s.%s", img_path.c_str(), img_format);
+    sprintf(buffer, "%s.%s", img_path.c_str(), VAA3D_SUFFIX);
 
 	char *err_rawfmt;
 	if ( (err_rawfmt = writeSlice2RawFile (buffer,slice,(unsigned char *)imageData,(int)img_height,(int)img_width)) != 0 ) {

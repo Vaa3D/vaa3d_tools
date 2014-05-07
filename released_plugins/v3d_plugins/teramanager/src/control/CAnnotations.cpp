@@ -527,6 +527,7 @@ void CAnnotations::Octree::print()
 //search for neurons in the given 3D volume and puts found neurons into 'neurons'
 void CAnnotations::Octree::find(interval_t V_int, interval_t H_int, interval_t D_int, std::list<annotation*>& neurons) throw(RuntimeException)
 {
+    /**/itm::debug(itm::LEV1, strprintf("dims = %d x %d x %d", DIM_H, DIM_V, DIM_D).c_str(), __itm__current__function__);
     _rec_search(root, V_int, H_int, D_int, neurons);
 }
 
@@ -739,6 +740,7 @@ void CAnnotations::findCurves(interval_t X_range, interval_t Y_range, interval_t
     octree->find(Y_range, X_range, Z_range, nodes);
 
     //finding curve sources (i.e. starting points)
+    /**/itm::debug(itm::LEV_MAX, "find curve starting points (stage 1)", __itm__current__function__);
     std::vector<annotation*> sources;
     for(std::list<annotation*>::iterator i = nodes.begin(); i != nodes.end(); i++)
     {
@@ -752,6 +754,7 @@ void CAnnotations::findCurves(interval_t X_range, interval_t Y_range, interval_t
                 sources.push_back(source);
         }
     }
+    /**/itm::debug(itm::LEV_MAX, "find curve starting points (stage 2)", __itm__current__function__);
     for(size_t i=0; i<sources.size(); i++)
     {
         annotation* annP = sources[i];

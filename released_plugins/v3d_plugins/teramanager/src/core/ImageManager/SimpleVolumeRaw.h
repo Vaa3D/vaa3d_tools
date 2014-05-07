@@ -30,7 +30,7 @@
 //FORWARD-DECLARATIONS
 class  StackRaw;
 
-class SimpleVolumeRaw : public VirtualVolume
+class SimpleVolumeRaw : public iim::VirtualVolume
 {
     private:
 

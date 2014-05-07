@@ -927,7 +927,8 @@ char *initRawFile(char *filename, const V3DLONG *sz, int datatype) {
 	int i;
 	char *completeFilename = new char[strlen(filename)+4+1];
 	strcpy(completeFilename,filename);
-	strcat(completeFilename,".raw");
+	strcat(completeFilename,".");
+	strcat(completeFilename,VAA3D_SUFFIX);
 
 	FILE * fid = fopen(completeFilename, "wb");
 	if (!fid)

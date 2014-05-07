@@ -36,6 +36,7 @@
 #include "../core/VolumeConverter/VolumeConverter.h"
 
 using namespace teramanager;
+using namespace iim;
 
 CConverter* CConverter::uniqueInstance = 0;
 

@@ -34,6 +34,7 @@
 #include "../core/ImageManager/TiledMCVolume.h"
 
 using namespace teramanager;
+using namespace iim;
 
 CVolume* CVolume::uniqueInstance = 0;
 

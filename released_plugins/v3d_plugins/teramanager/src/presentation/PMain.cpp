@@ -43,6 +43,7 @@
 #include "../core/ImageManager/TimeSeries.h"
 
 using namespace teramanager;
+using namespace iim;
 
 string PMain::HTwelcome = "Go to <i>File->Open volume</i> and select the directory of any resolution. To change volume import options, go to <i>Options->Import</i>.";
 //string PMain::HTbase =    "<u>Navigate through different resolutions by</u>:<br><br>"
@@ -2115,20 +2116,28 @@ void PMain::debugAction1Triggered()
 {
     /**/itm::debug(itm::LEV1, 0, __itm__current__function__);
 
-    CExplorerWindow* cur_win = CExplorerWindow::getCurrent();
+//    std::list<NeuronSWC> neu;
+//    std::list<LocationSimple> markers;
+//    CAnnotations *cano = CAnnotations::instance(14000, 14000, 14000);
+//    cano->load("/media/Elements/allen.unknown.ano/prova.ano");
+//    cano->findLandmarks(interval_t(1872, 13102), interval_t(0, 8386), interval_t(0, 292), markers);
+//    cano->findCurves(interval_t(1872, 13102), interval_t(0, 8386), interval_t(0, 292), neu);
 
-    QList <ImageMarker> listMarker = static_cast<Renderer_gl1*>(cur_win->view3DWidget->getRenderer())->listMarker;
 
-    // get vaa3d markers
-    //QList<LocationSimple> vaa3dMarkers = V3D_env->getLandmark(cur_win->window);
-    for(int i=0; i<listMarker.size(); i++)
-    {
-        printf("(%.0f, %.0f, %.0f): selected = %s\n",
-               listMarker[i].x,
-               listMarker[i].y,
-               listMarker[i].z,
-               listMarker[i].selected ? "yes" : "no");
-    }
+//    CExplorerWindow* cur_win = CExplorerWindow::getCurrent();
+
+//    QList <ImageMarker> listMarker = static_cast<Renderer_gl1*>(cur_win->view3DWidget->getRenderer())->listMarker;
+
+//    // get vaa3d markers
+//    //QList<LocationSimple> vaa3dMarkers = V3D_env->getLandmark(cur_win->window);
+//    for(int i=0; i<listMarker.size(); i++)
+//    {
+//        printf("(%.0f, %.0f, %.0f): selected = %s\n",
+//               listMarker[i].x,
+//               listMarker[i].y,
+//               listMarker[i].z,
+//               listMarker[i].selected ? "yes" : "no");
+//    }
 
 //    vaa3dMarkers.pop_back();
 

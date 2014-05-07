@@ -30,12 +30,12 @@
 //FORWARD-DECLARATIONS
 class  Stack;
 
-class SimpleVolume : public VirtualVolume
+class SimpleVolume : public iim::VirtualVolume
 {
     private:
 
         iim::uint16 N_ROWS, N_COLS;		//dimensions (in stacks) of stacks matrix along VH axes
-        Stack ***STACKS;			//2-D array of <Stack*>
+        iim::Stack ***STACKS;			//2-D array of <Stack*>
 
         void init ( );
 
