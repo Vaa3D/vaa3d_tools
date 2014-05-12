@@ -73,6 +73,9 @@ void *Thread_ProcessImage (void *); // for Pthreads
 void *Thread_ProcessImage_score (void *); // for Pthreads
 
 void autotrace_PSF(V3DPluginCallback2 &callback, QWidget *parent);
+bool autotrace_PSF(const V3DPluginArgList & input, V3DPluginArgList & output,V3DPluginCallback2 &callback);
+
+
 void PreProcessDataImage(double *, int , V3DLONG *, int , double *,
         double *, double *, double *, int *, char *, double, int);
 void ProcessImage(double *, double *, double *,int,int);
@@ -103,14 +106,10 @@ void PSF_zhi::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWi
 	{
         autotrace_PSF(callback,parent);
 	}
-	else if (menu_name == tr("help"))
-	{
-		v3d_msg("To be implemented.");
-	}
 	else
 	{
-		v3d_msg(tr("This is a test plugin, you can use it as a demo.. "
-			"Developed by Zhi Zhou, 2013-03-07"));
+        v3d_msg(tr("PSF tracing plugin. "
+            "Imported by Zhi Zhou, 2013-03-07"));
 	}
 }
 
@@ -121,18 +120,19 @@ bool PSF_zhi::dofunc(const QString & func_name, const V3DPluginArgList & input, 
 	if(input.size() >= 2) inparas = *((vector<char*> *)input.at(1).p);
 	if(output.size() >= 1) outfiles = *((vector<char*> *)output.at(0).p);
 
-	if (func_name == tr("func1"))
-	{
-		v3d_msg("To be implemented.");
-	}
-	else if (func_name == tr("func2"))
-	{
-		v3d_msg("To be implemented.");
-	}
-	else if (func_name == tr("help"))
-	{
-		v3d_msg("To be implemented.");
-	}
+    if (func_name == tr("PSF_trace"))
+    {
+        return autotrace_PSF(input, output,callback);
+    }
+    else if (func_name == tr("help"))
+    {
+        cout<<"Usage : v3d -x dllname -f PSF_trace -i <inimg_file> -p <ch> "<<endl;
+        cout<<endl;
+        cout<<"ch           the input channel value, start from 1, default 1"<<endl;
+        cout<<"The output swc file will be named automatically based on the input image file nmae"<<endl;
+        cout<<endl;
+        cout<<endl;
+    }
 	else return false;
 
 	return true;
@@ -676,6 +676,511 @@ void autotrace_PSF(V3DPluginCallback2 &callback, QWidget *parent)
     return;
 
 }
+
+bool autotrace_PSF(const V3DPluginArgList & input, V3DPluginArgList & output,V3DPluginCallback2 &callback)
+{
+
+    cout<<"Welcome to PSF tracing"<<endl;
+    unsigned int c=1;
+
+    if (input.size()>=2)
+    {
+        vector<char*> paras = (*(vector<char*> *)(input.at(1).p));
+        cout<<paras.size()<<endl;
+        if(paras.size() >= 1) c = atoi(paras.at(0));
+    }
+
+    char * inimg_file = ((vector<char*> *)(input.at(0).p))->at(0);
+
+    cout<<"ch = "<<c<<endl;
+    cout<<"inimg_file = "<<inimg_file<<endl;
+
+    Image4DSimple *subject = callback.loadImage(inimg_file);
+    if(!subject || !subject->valid())
+    {
+         v3d_msg("Fail to load the input image.",0);
+         if (subject) {delete subject; subject=0;}
+         return false;
+    }
+
+    if( c < 1 || c > subject->getCDim())
+    {
+         v3d_msg("Invalid channel input.",0);
+         if (subject) {delete subject; subject=0;}
+         return false;
+    }
+
+    V3DLONG N = subject->getXDim();
+    V3DLONG M = subject->getYDim();
+    V3DLONG P = subject->getZDim();
+
+    int in_sz[3];
+    in_sz[0] = N;
+    in_sz[1] = M;
+    in_sz[2] = P;
+
+    unsigned char *data1d = subject->getRawDataAtChannel(c-1);
+
+    V3DLONG iVolWidth, iVolHeight;
+    V3DLONG iNumber_Of_Elements_in_ProjectedPoints;
+    V3DLONG iIndex;
+    double sigma = 3;
+    int prepLookUpTableWidth;
+
+    pthread_t ptThreads[NUM_OF_THREADS_TO_CREATE];
+    int iThreadNumber;
+    int iRet_Val_Pthread_Create;
+
+
+    hmirror = 7;
+    V3DLONG N_new = N+2*hmirror;
+    V3DLONG M_new = M+2*hmirror;
+    V3DLONG P_new = P+2*hmirror;
+    V3DLONG pagesz_new = N_new*M_new*P_new;
+
+    V3DLONG i = 0;
+
+    gpdInputImage = new double[pagesz_new];
+    for(int i = 0; i <pagesz_new ;i++ )
+        gpdInputImage[i] = 0;
+
+    for(V3DLONG iz = hmirror; iz < P_new - hmirror; iz++)
+    {
+        V3DLONG offsetk = iz*M_new*N_new;
+        for(V3DLONG iy = hmirror; iy < M_new - hmirror; iy++)
+        {
+            V3DLONG offsetj = iy*N_new;
+            for(V3DLONG ix = hmirror; ix < N_new-hmirror; ix++)
+            {
+                gpdInputImage[offsetk + offsetj + ix] = (double)data1d[i]/255.0;
+                i++;
+            }
+        }
+    }
+
+    for(V3DLONG iz = 0; iz < hmirror; iz++)
+    {
+        V3DLONG offsetk = iz*M_new*N_new;
+        V3DLONG offsetk2 = (2*hmirror - iz)*M_new*N_new;
+        for(V3DLONG iy = hmirror; iy < M_new - hmirror; iy++)
+        {
+            V3DLONG offsetj = iy*N_new;
+            for(V3DLONG ix = hmirror; ix < N_new-hmirror; ix++)
+            {
+                gpdInputImage[offsetk + offsetj + ix] = gpdInputImage[offsetk2 + offsetj + ix];
+                i++;
+            }
+        }
+    }
+
+    for(V3DLONG iz = P_new-hmirror; iz < P_new; iz++)
+    {
+        V3DLONG offsetk = iz*M_new*N_new;
+        V3DLONG offsetk2 = (2*P_new-2*hmirror-2-iz)*M_new*N_new;
+        for(V3DLONG iy = hmirror; iy < M_new - hmirror; iy++)
+        {
+            V3DLONG offsetj = iy*N_new;
+            for(V3DLONG ix = hmirror; ix < N_new-hmirror; ix++)
+            {
+                gpdInputImage[offsetk + offsetj + ix] = gpdInputImage[offsetk2 + offsetj + ix];
+                i++;
+            }
+        }
+    }
+
+
+
+    for(V3DLONG iz = hmirror; iz < P_new - hmirror; iz++)
+    {
+        V3DLONG offsetk = iz*M_new*N_new;
+        for(V3DLONG iy = 0; iy < hmirror; iy++)
+        {
+            V3DLONG offsetj = iy*N_new;
+            V3DLONG offsetj2 = (2*hmirror - iy)*N_new;
+            for(V3DLONG ix = hmirror; ix < N_new-hmirror; ix++)
+            {
+                gpdInputImage[offsetk + offsetj + ix] = gpdInputImage[offsetk + offsetj2 + ix];
+                i++;
+            }
+        }
+    }
+
+
+    for(V3DLONG iz = hmirror; iz < P_new - hmirror; iz++)
+    {
+        V3DLONG offsetk = iz*M_new*N_new;
+        for(V3DLONG iy = M_new-hmirror; iy < M_new; iy++)
+        {
+            V3DLONG offsetj = iy*N_new;
+            V3DLONG offsetj2 = (2*M_new-2*hmirror-2-iy)*N_new;
+            for(V3DLONG ix = hmirror; ix < N_new-hmirror; ix++)
+            {
+                gpdInputImage[offsetk + offsetj + ix] = gpdInputImage[offsetk + offsetj2 + ix];
+                i++;
+            }
+        }
+    }
+
+
+    for(V3DLONG iz = hmirror; iz < P_new - hmirror; iz++)
+    {
+        V3DLONG offsetk = iz*M_new*N_new;
+        for(V3DLONG iy = hmirror; iy < M_new - hmirror; iy++)
+        {
+            V3DLONG offsetj = iy*N_new;
+            for(V3DLONG ix = 0; ix < hmirror; ix++)
+            {
+                gpdInputImage[offsetk + offsetj + ix] = gpdInputImage[offsetk + offsetj + 2*hmirror - ix];
+                i++;
+            }
+        }
+    }
+
+    for(V3DLONG iz = hmirror; iz < P_new - hmirror; iz++)
+    {
+        V3DLONG offsetk = iz*M_new*N_new;
+        for(V3DLONG iy = hmirror; iy < M_new - hmirror; iy++)
+        {
+            V3DLONG offsetj = iy*N_new;
+            for(V3DLONG ix = N_new - hmirror; ix < N_new; ix++)
+            {
+                gpdInputImage[offsetk + offsetj + ix] = gpdInputImage[offsetk + offsetj + 2*N_new-2*hmirror-2-ix];
+                i++;
+            }
+        }
+    }
+
+
+    giNum_of_Dims_of_Input_Image = 3;
+    gpiDims_InputImage[0] = N_new; gpiDims_InputImage[1] = M_new; gpiDims_InputImage[2] = P_new;
+    giNum_of_pixels = pagesz_new;
+
+    // Allocate memory for all outputs generated in Pre-processing Step.
+
+    gpdWeights_InputImage = new double[giNum_of_pixels];//weights [row vector, 1 x N]
+    gpdEigVec_Cov_InputImage = new double[giNum_of_Dims_of_Input_Image*giNum_of_Dims_of_Input_Image*giNum_of_pixels];// Vectors [dData x dData * N]
+    gpdEigVal_Cov_InputImage = new double[giNum_of_Dims_of_Input_Image*giNum_of_pixels]; // Lambda [dData x N]
+    gpdNormP_EigVal = new double[giNum_of_pixels];
+    gpiData = new int[giNum_of_Dims_of_Input_Image*giNum_of_pixels];
+
+    prepLookUpTableWidth = 11;
+    PreProcessDataImage(gpdInputImage, giNum_of_Dims_of_Input_Image, gpiDims_InputImage, giNum_of_pixels,
+             gpdWeights_InputImage, gpdEigVec_Cov_InputImage, gpdEigVal_Cov_InputImage,
+            gpdNormP_EigVal,gpiData, "/opt/zhi/Desktop/tmp/", sigma, prepLookUpTableWidth);
+
+    if(gpdInputImage) {delete []gpdInputImage; gpdInputImage = 0;}
+
+    printf ("\nBack to maincode.\n");
+
+    gaiWindowDims[0] = LOOKUP_TABLE_WIDTH;
+    gaiWindowDims[1] = LOOKUP_TABLE_WIDTH;
+    gaiWindowDims[2] = LOOKUP_TABLE_WIDTH;
+    iVolHeight = gpiDims_InputImage[0];
+    iVolWidth = gpiDims_InputImage[1];
+
+    create3DLookupTable(gaiWindowDims, 3, iVolHeight, iVolWidth, &gpiLookUpTable, &gpdDistTable);
+
+    giMinLookupTable = Compute_3D_Min(gpiLookUpTable, gaiWindowDims[0], gaiWindowDims[1], gaiWindowDims[2]);
+    giMaxLookupTable = Compute_3D_Max(gpiLookUpTable, gaiWindowDims[0], gaiWindowDims[1], gaiWindowDims[2]);
+    giLenLookupTable = Compute_3D_Len(gpiLookUpTable, gaiWindowDims[0], gaiWindowDims[1], gaiWindowDims[2]);
+
+    printf ("\nLookup Min: %d \nLookup Max: %d \nLookup Len: %d\n", giMinLookupTable , giMaxLookupTable , giLenLookupTable );
+
+    iNumber_Of_Elements_in_ProjectedPoints = giNum_of_Dims_of_Input_Image * giNum_of_pixels;
+    gpdProjected_Points = new double[iNumber_Of_Elements_in_ProjectedPoints];
+    gpdTangential_Space = new double[iNumber_Of_Elements_in_ProjectedPoints];
+    gpdEigenVals = new double[iNumber_Of_Elements_in_ProjectedPoints];
+
+    for(iIndex = 0; iIndex < iNumber_Of_Elements_in_ProjectedPoints; iIndex++)
+    {
+        gpdProjected_Points[iIndex] = 0;
+        gpdTangential_Space[iIndex] = 0;
+    }
+
+
+    for(iThreadNumber = 0; iThreadNumber < NUM_OF_THREADS_TO_CREATE; iThreadNumber++)
+    {
+        iRet_Val_Pthread_Create = pthread_create(&ptThreads[iThreadNumber], NULL, Thread_ProcessImage, (void*)iThreadNumber);
+    }
+
+    for(iThreadNumber = 0; iThreadNumber < NUM_OF_THREADS_TO_CREATE; iThreadNumber++)
+    {
+        pthread_join(ptThreads[iThreadNumber], NULL);
+    }
+
+    printf("Projections is done!\n\n");
+
+    if(gpdEigenVals) {delete []gpdEigenVals; gpdEigenVals = 0;}
+    int imsize[3] = {N,M,P};
+
+    //tidyvaribales
+    double prjs;
+    int number_points = 0;
+    int *index_points;
+    index_points = new int[giNum_of_pixels];
+    for(int i = 0; i < giNum_of_pixels; i++)
+        index_points[i] = 0;
+    int flag;
+    for (int iColIter = 0; iColIter < giNum_of_pixels ; iColIter ++)
+    {
+        flag = 0;
+        for (int iRowIter = 0; iRowIter < giNum_of_Dims_of_Input_Image ; iRowIter ++)
+        {
+           prjs = gpdProjected_Points[ROWCOL(iRowIter, iColIter, giNum_of_Dims_of_Input_Image)]-(double)hmirror;
+           if(prjs > 0.5 && (prjs + 0.5) < imsize[iRowIter])
+           {
+               flag ++;
+           }
+        }
+        if(flag ==3)
+        {
+            index_points[number_points] = iColIter;
+            number_points++;
+        }
+    }
+
+    double *gpdProjected_Points_updated = new double[number_points * giNum_of_Dims_of_Input_Image];
+    double *tangentialSpace_updated = new double[number_points * giNum_of_Dims_of_Input_Image];
+    i = 0;
+    for (int index = 0; index < number_points ; index ++)
+    {
+        int iColIter = index_points[index];
+        for (int iRowIter = 0; iRowIter < giNum_of_Dims_of_Input_Image ; iRowIter ++)
+        {
+            gpdProjected_Points_updated[i] = gpdProjected_Points[ROWCOL(iRowIter, iColIter, giNum_of_Dims_of_Input_Image)]-(double)hmirror;
+            tangentialSpace_updated[i] = gpdTangential_Space[ROWCOL(iRowIter, iColIter, giNum_of_Dims_of_Input_Image)];
+            i++;
+        }
+    }
+    printf("total number of useful points is %d, %d\n",number_points,iNumber_Of_Elements_in_ProjectedPoints);
+
+    if(gpdTangential_Space) {delete []gpdTangential_Space; gpdTangential_Space=0;}
+    if(gpdProjected_Points) {delete []gpdProjected_Points; gpdProjected_Points=0;}
+
+    int k1 = 30;
+    int N1 = 19;
+    gpdInputTangDir = new double[giNum_of_Dims_of_Input_Image*number_points*k1*N1];
+    gpdInputLocations = new double[giNum_of_Dims_of_Input_Image*number_points*k1*N1];
+    double *W = new double[1*number_points*k1*N1];
+    int *idx = new int[number_points*k1];
+
+    preIntegral(gpdProjected_Points_updated,tangentialSpace_updated,N1,k1,number_points,giNum_of_Dims_of_Input_Image,gpdInputTangDir,gpdInputLocations,W,idx);
+
+    giNum_of_locations = number_points*k1*N1;
+    gpdScores = new double[giNum_of_locations];
+    for(iIndex = 0; iIndex < giNum_of_locations; iIndex++)
+    {
+        gpdScores[iIndex] = 0;
+    }
+
+    for(iThreadNumber = 0; iThreadNumber < NUM_OF_THREADS_TO_CREATE; iThreadNumber++)
+    {
+        iRet_Val_Pthread_Create = pthread_create(&ptThreads[iThreadNumber], NULL, Thread_ProcessImage_score, (void*)iThreadNumber);
+    }
+
+    for(iThreadNumber = 0; iThreadNumber < NUM_OF_THREADS_TO_CREATE; iThreadNumber++)
+    {
+        pthread_join(ptThreads[iThreadNumber], NULL);
+    }
+
+    if(gpdInputTangDir) {delete []gpdInputTangDir; gpdInputTangDir = 0;}
+    if(gpdInputLocations) {delete []gpdInputLocations; gpdInputLocations = 0;}
+
+    double *gpdScores_w = new double[giNum_of_locations];
+    for(V3DLONG i = 0; i<number_points*k1*N1; i++)
+    {
+          gpdScores_w[i] = gpdScores[i]*W[i];
+     }
+
+    double *D = new double[number_points*k1];
+    double sum_w;
+    for(V3DLONG i = 0; i < number_points*k1; i++)
+    {
+        sum_w = 0;
+        for(int j = 0; j < N1; j++)
+        {
+            sum_w = sum_w + gpdScores_w[i*N1+j];
+        }
+
+        D[i] = sum_w;
+    }
+
+
+    double *DScore = new double[number_points*number_points];
+    for(V3DLONG i = 0; i <number_points*number_points; i++ )
+        DScore[i] = INFINITY;
+
+    for(int ix = 0 ; ix < number_points; ix++ )
+    {
+        for(int iy = 0; iy < k1; iy ++)
+        {
+            int knn_index = idx[ix*k1 + iy];
+            DScore[ix + knn_index*number_points] = D[ix*k1 + iy];
+        }
+    }
+
+    if(idx) {delete []idx; idx = 0;}
+
+
+    int indmin = 59; //root index
+    double x1,y1,z1,x2,y2,z2;
+
+    double *Xnew = new double[(number_points+1) * giNum_of_Dims_of_Input_Image];
+    for(int i = 0; i < number_points+1;i++)
+    {
+        if(i == number_points)
+        {
+             x1 = gpdProjected_Points_updated[(ROWCOL(0, indmin, giNum_of_Dims_of_Input_Image))];
+             y1 = gpdProjected_Points_updated[(ROWCOL(1, indmin, giNum_of_Dims_of_Input_Image))];
+             z1 = gpdProjected_Points_updated[(ROWCOL(2, indmin, giNum_of_Dims_of_Input_Image))];
+
+        }
+        else
+        {
+             x1 = gpdProjected_Points_updated[(ROWCOL(0, i, giNum_of_Dims_of_Input_Image))];
+             y1 = gpdProjected_Points_updated[(ROWCOL(1, i, giNum_of_Dims_of_Input_Image))];
+             z1 = gpdProjected_Points_updated[(ROWCOL(2, i, giNum_of_Dims_of_Input_Image))];
+        }
+
+        Xnew[i*giNum_of_Dims_of_Input_Image+0] = x1;
+        Xnew[i*giNum_of_Dims_of_Input_Image+1] = y1;
+        Xnew[i*giNum_of_Dims_of_Input_Image+2] = z1;
+
+    }
+
+    double *DScore_wRoot = new double[(number_points+1)*(number_points+1)];
+     for(V3DLONG i = 0; i < (number_points+1)*(number_points+1); i++)
+     {
+         DScore_wRoot[i] = INFINITY;
+     }
+
+    for(V3DLONG i = 0; i < number_points; i++)
+    {
+        for(V3DLONG j = 0; j < number_points; j++)
+        {
+            DScore_wRoot[i*(number_points+1) + j] = DScore[i*number_points + j];
+        }
+    }
+
+
+    DScore_wRoot[number_points*(number_points+1) + number_points] = eps;
+    DScore_wRoot[number_points*(number_points+1) + indmin] = eps;
+    DScore_wRoot[indmin*(number_points+1) + number_points] = eps;
+
+    double *Dsp_wRoot = new double[(number_points+1)*(number_points+1)];
+
+    for(V3DLONG i = 0; i < number_points+1; i++)
+    {
+        for(V3DLONG j = i; j < number_points+1; j++)
+        {
+            double score1 = DScore_wRoot[i*(number_points+1) + j];
+            double score2 = DScore_wRoot[j*(number_points+1) + i];
+            if(score1 > score2)
+            {
+                Dsp_wRoot[i*(number_points+1) + j] = score1;
+                Dsp_wRoot[j*(number_points+1) + i] = score1;
+            }
+            else
+            {
+                Dsp_wRoot[i*(number_points+1) + j] = score2;
+                Dsp_wRoot[j*(number_points+1) + i] = score2;
+            }
+
+        }
+    }
+
+    double *DX = new double[(number_points+1)*(number_points+1)];
+    for(int i = 0; i < number_points+1;i++)
+    {
+        if(i == number_points)
+        {
+             x1 = gpdProjected_Points_updated[(ROWCOL(0, indmin, giNum_of_Dims_of_Input_Image))];
+             y1 = gpdProjected_Points_updated[(ROWCOL(1, indmin, giNum_of_Dims_of_Input_Image))];
+             z1 = gpdProjected_Points_updated[(ROWCOL(2, indmin, giNum_of_Dims_of_Input_Image))];
+
+        }
+        else
+        {
+             x1 = gpdProjected_Points_updated[(ROWCOL(0, i, giNum_of_Dims_of_Input_Image))];
+             y1 = gpdProjected_Points_updated[(ROWCOL(1, i, giNum_of_Dims_of_Input_Image))];
+             z1 = gpdProjected_Points_updated[(ROWCOL(2, i, giNum_of_Dims_of_Input_Image))];
+        }
+        for(int j = 0; j < number_points+1; j++)
+        {
+            if(j == number_points)
+            {
+                 x2 = gpdProjected_Points_updated[(ROWCOL(0, indmin, giNum_of_Dims_of_Input_Image))];
+                 y2 = gpdProjected_Points_updated[(ROWCOL(1, indmin, giNum_of_Dims_of_Input_Image))];
+                 z2 = gpdProjected_Points_updated[(ROWCOL(2, indmin, giNum_of_Dims_of_Input_Image))];
+            }
+            else
+            {
+                 x2 = gpdProjected_Points_updated[(ROWCOL(0, j, giNum_of_Dims_of_Input_Image))];
+                 y2 = gpdProjected_Points_updated[(ROWCOL(1, j, giNum_of_Dims_of_Input_Image))];
+                 z2 = gpdProjected_Points_updated[(ROWCOL(2, j, giNum_of_Dims_of_Input_Image))];
+            }
+            double dist_1D = sqrt(pow(x1-x2,2.0)+pow(y1-y2,2.0) + pow (z1-z2,2.0));
+            DX[i*(number_points+1) + j] = dist_1D;
+            DX[j*(number_points+1) + i] = dist_1D;
+        }
+    }
+
+    double *Dsp_w = new double[(number_points+1)*(number_points+1)];
+    double *DX_T_man = new double[(number_points+1)*(number_points+1)];
+    for(V3DLONG i = 0; i<(number_points+1)*(number_points+1) ;i++)
+    {
+        if(Dsp_wRoot[i] < 1.0)
+        {
+            Dsp_w[i] = DX[i];
+            DX_T_man[i] = Dsp_wRoot[i];
+        }
+        else
+        {
+           Dsp_w[i] = 0;
+           DX_T_man[i] = INFINITY;
+        }
+    }
+
+
+    double *D_euc = new double[(number_points+1)*(number_points+1)];
+
+    graph_all_shortest_paths(Dsp_w, D_euc,number_points+1);
+
+    if(gpdScores) {delete []gpdScores; gpdScores = 0;}
+    if(W) {delete []W; W = 0;}
+    if(Dsp_w) {delete []Dsp_w; Dsp_w = 0;}
+    if(D) {delete []D; D = 0;}
+    if(DX) {delete []DX; DX = 0;}
+    if(Dsp_wRoot) {delete []Dsp_wRoot; Dsp_wRoot = 0;}
+    if(DScore_wRoot) {delete []DScore_wRoot; DScore_wRoot = 0;}
+    if(DScore) {delete []DScore; DScore = 0;}
+    if(gpdScores_w) {delete []gpdScores_w; gpdScores_w = 0;}
+    if(gpdProjected_Points_updated) {delete []gpdProjected_Points_updated; gpdProjected_Points_updated=0;}
+    if(index_points) {delete []index_points; index_points = 0;}
+
+    QString outswc_file = QString(inimg_file) + "_PSF.swc";
+    extractTree(D_euc,DX_T_man,Xnew,number_points+1,outswc_file);
+
+
+    if(D_euc) {delete []D_euc; D_euc = 0;}
+    if(DX_T_man) {delete []DX_T_man; DX_T_man = 0;}
+    if(Xnew) {delete []Xnew; Xnew = 0;}
+
+
+    free (gpdWeights_InputImage);
+    free (gpdEigVec_Cov_InputImage);
+    free (gpdEigVal_Cov_InputImage);
+    free (gpdNormP_EigVal);
+    free (gpiData);
+
+    if (subject) {delete subject; subject=0;}
+
+    v3d_msg(QString("Now you can drag and drop the generated swc fle [%1] into Vaa3D.").arg(outswc_file),0);
+
+    return true;
+
+}
+
 
 void *Thread_ProcessImage_score (void *ptriThreadNumber) // for pthreads
 {

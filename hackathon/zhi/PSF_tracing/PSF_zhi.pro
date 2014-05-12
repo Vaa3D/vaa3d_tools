@@ -4,10 +4,7 @@ CONFIG	+= qt plugin warn_off
 #CONFIG	+= x86_64
 VAA3DPATH = ../../../../v3d_external/v3d_main
 INCLUDEPATH	+= $$VAA3DPATH/v3d $$VAA3DPATH/basic_c_fun $$VAA3DPATH/common_lib/include
-#INCLUDEPATH     += /local1/Software/MATLAB/R2013a/extern/include
 INCLUDEPATH     += functions
-
-#LIBS += -L/local1/Software/MATLAB/R2013a/bin/glnxa64/ -lmat
 
 
 HEADERS	+= PSF_zhi_plugin.h
@@ -29,4 +26,4 @@ SOURCES += functions/EigenDec_2D.cpp
 SOURCES += functions/extractTree.cpp
 
 TARGET	= $$qtLibraryTarget(PSF_zhi)
-DESTDIR	= ../../../../v3d_external/bin/plugins/PSF_zhi/
+DESTDIR	= $$VAA3DPATH/../bin/plugins/neuron_tracing/PSF_tracing/
