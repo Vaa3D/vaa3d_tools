@@ -184,7 +184,7 @@ void autotrace_largeScale(V3DPluginCallback2 &callback, QWidget *parent)
         marklist.append(S);
         writeMarker_file("root.marker",marklist);
         #if  defined(Q_OS_LINUX)
-            QString cmd_APP2 = QString("%1/vaa3d -x Vaa3D_Neuron2 -f app2 -i %2 -p 'root.marker' 0 40 0 0 0 20").arg(getAppPath().toStdString().c_str()).arg(walker->tilename.toStdString().c_str());
+            QString cmd_APP2 = QString("%1/vaa3d -x Vaa3D_Neuron2 -f app2 -i %2 -p 'root.marker' 0 40 0 1 0 0 20").arg(getAppPath().toStdString().c_str()).arg(walker->tilename.toStdString().c_str());
             system(qPrintable(cmd_APP2));
         #else
                  v3d_msg("The OS is not Linux. Do nothing.");
