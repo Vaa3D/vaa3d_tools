@@ -12,6 +12,7 @@
 
 using namespace std;
 Q_EXPORT_PLUGIN2(APP2_large_scale, APP2_large_scale);
+#define getParent(n,nt) ((nt).listNeuron.at(n).pn<0)?(1000000000):((nt).hashNeuron.value((nt).listNeuron.at(n).pn))
 
 struct root_node
 {
@@ -22,8 +23,10 @@ struct root_node
     V3DLONG offset_y;
     V3DLONG offset_z;
     V3DLONG tc_index;
-    int     direction; //0 for all, 1 for left, 2 for right, 3 for up, 4 for down
+    V3DLONG ref_index;
+  //  int     direction; //0 for all, 1 for left, 2 for right, 3 for up, 4 for down
     QString tilename;
+    QString refSWCname;
 
     struct root_node* next;
 
@@ -165,7 +168,8 @@ void autotrace_largeScale(V3DPluginCallback2 &callback, QWidget *parent)
 
     head->tc_index = some_index;
     head->tilename = fileOpenName;
-    head->direction = 0;
+    //head->direction = 0;
+    head->ref_index = -1;
 
     head->next = NULL;
     walker = head;
@@ -190,7 +194,8 @@ void autotrace_largeScale(V3DPluginCallback2 &callback, QWidget *parent)
                  v3d_msg("The OS is not Linux. Do nothing.");
                  return;
         #endif
-;
+
+        if(S.z < 1) S.z = 1;
 
         QString swcfilename = walker->tilename.append("_x%1_y%2_z%3_app2.swc").arg(S.x-1).arg(S.y-1).arg(S.z-1);
         NeuronTree nt = readSWC_file(swcfilename);
@@ -254,11 +259,43 @@ void autotrace_largeScale(V3DPluginCallback2 &callback, QWidget *parent)
 
         for (int i=0;i<list.size();i++)
         {
-            NeuronSWC curr = list.at(i);
+
             if (childs[i].size()==0)
             {
+                int pa_tip = getParent(i,nt);
+                NeuronSWC curr = list.at(getParent(pa_tip,nt));
+
                 if( curr.x < 20 || curr.x > 1004 || curr.y < 20 || curr.y > 1004)
                 {
+
+                    int flag = 0;
+                    if(walker->ref_index != -1)
+                    {
+                        int x_shift_ref = vim.lut[walker->ref_index].start_pos[0] - vim.lut[ walker->tc_index].start_pos[0];
+                        int y_shift_ref = vim.lut[walker->ref_index].start_pos[1] - vim.lut[ walker->tc_index].start_pos[1];
+                        int z_shift_ref = vim.lut[walker->ref_index].start_pos[2] - vim.lut[ walker->tc_index].start_pos[2];
+
+                        NeuronTree ref_nt = readSWC_file(walker->refSWCname);
+                        for(int d = 0; d < ref_nt.listNeuron.size();d++)
+                        {
+
+                            NeuronSWC ref_curr = ref_nt.listNeuron.at(d);
+                            int ref_x = ref_curr.x + x_shift_ref;
+                            int ref_y = ref_curr.y + y_shift_ref;
+                            int ref_z = ref_curr.z + z_shift_ref;
+
+                            double dis = sqrt(pow((ref_x - curr.x),2.0) + pow((ref_y - curr.y),2.0) + pow((ref_z - curr.z),2.0));
+                            if(dis < 15.0)
+                            {
+                                flag = 1;
+                                break;
+                            }
+
+                        }
+                    }
+
+                    if(flag == 1)
+                        continue;
 
                     for(V3DLONG ii=0; ii<vim.number_tiles; ii++)
                     {
@@ -268,7 +305,7 @@ void autotrace_largeScale(V3DPluginCallback2 &callback, QWidget *parent)
                         QString curPath = QFileInfo(tcfile).path();;
                         QString curtilename = curPath.append("/").append(QString(vim.lut[ii].fn_img.c_str()));
 
-                        if(x_shift > -1024 && x_shift < -800 && abs(y_shift) < 20 &&  ii !=walker->tc_index && curr.x < 20 && (walker->direction == 0 || walker->direction !=2))
+                        if(x_shift > -1024 && x_shift < -800 && abs(y_shift) < 20 &&  ii !=walker->tc_index && curr.x < 20)
                         {
 
                             newNode =  new root_node[1];
@@ -282,13 +319,14 @@ void autotrace_largeScale(V3DPluginCallback2 &callback, QWidget *parent)
 
                             newNode->tilename = curtilename;
                             newNode->tc_index = ii;
-                            newNode->direction = 1;
+                            newNode->refSWCname = swcfilename;
+                            newNode->ref_index = walker->tc_index;
 
                             newNode->next = NULL;
                             walker_inside->next = newNode;
                             walker_inside = walker_inside->next;
                          }
-                        else if(x_shift < 1024 && x_shift > 800 && abs(y_shift) < 20 &&  ii !=walker->tc_index && curr.x > 1004 && (walker->direction == 0 || walker->direction !=1))
+                        else if(x_shift < 1024 && x_shift > 800 && abs(y_shift) < 20 &&  ii !=walker->tc_index && curr.x > 1004)
                         {
 
                             newNode =  new root_node[1];
@@ -303,14 +341,16 @@ void autotrace_largeScale(V3DPluginCallback2 &callback, QWidget *parent)
 
                             newNode->tilename = curtilename;
                             newNode->tc_index = ii;
-                            newNode->direction = 2;
+                            newNode->refSWCname = swcfilename;
+                            newNode->ref_index = walker->tc_index;
+
 
                             newNode->next = NULL;
                             walker_inside->next = newNode;
                             walker_inside = walker_inside->next;
 
                         }
-                        else if(y_shift > -1024 && y_shift < -800 && abs(x_shift) < 20 &&  ii !=walker->tc_index && curr.y < 20 && (walker->direction == 0 || walker->direction !=4))
+                        else if(y_shift > -1024 && y_shift < -800 && abs(x_shift) < 20 &&  ii !=walker->tc_index && curr.y < 20)
                         {
 
                             newNode =  new root_node[1];
@@ -325,14 +365,17 @@ void autotrace_largeScale(V3DPluginCallback2 &callback, QWidget *parent)
 
                             newNode->tilename = curtilename;
                             newNode->tc_index = ii;
-                            newNode->direction = 3;
+                            newNode->refSWCname = swcfilename;
+                            newNode->ref_index = walker->tc_index;
+
+
 
                             newNode->next = NULL;
                             walker_inside->next = newNode;
                             walker_inside = walker_inside->next;
 
                         }
-                        else if(y_shift < 1024 && y_shift > 800 && abs(x_shift) < 20 &&  ii !=walker->tc_index && curr.y >1004 && (walker->direction == 0 || walker->direction !=3))
+                        else if(y_shift < 1024 && y_shift > 800 && abs(x_shift) < 20 &&  ii !=walker->tc_index && curr.y >1004)
                         {
                             newNode =  new root_node[1];
                             newNode->root_x =  curr.x - x_shift;
@@ -345,7 +388,10 @@ void autotrace_largeScale(V3DPluginCallback2 &callback, QWidget *parent)
 
                             newNode->tilename = curtilename;
                             newNode->tc_index = ii;
-                            newNode->direction = 4;
+                            newNode->refSWCname = swcfilename;
+                            newNode->ref_index = walker->tc_index;
+
+
 
                             newNode->next = NULL;
                             walker_inside->next = newNode;
