@@ -423,6 +423,14 @@ bool proc_app2(V3DPluginCallback2 &callback, PARA_APP2 &p, const QString & versi
     qDebug() << " **** neuron tracing procedure takes [" << etime2 << " milliseconds]";
     
     if (p4dImageNew) {delete p4dImageNew; p4dImageNew=0;} //free buffer
+
+    if(p.b_256cube)
+    {
+        inmarkers[0].x *= dfactor_xy;
+        inmarkers[0].y *= dfactor_xy;
+        inmarkers[0].z *= dfactor_z;
+
+    }
     
     if(1)
     {
