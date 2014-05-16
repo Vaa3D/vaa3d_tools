@@ -49,6 +49,13 @@ class APP2largeScaleDialog : public QDialog
                 return;
             }
 
+            listLandmarks = cb.getLandmark(curwin);
+            if(listLandmarks.count() ==0)
+            {
+                v3d_msg("No markers in the current image, please select a marker.");
+                return;
+            }
+
 
             QGridLayout * layout = new QGridLayout();
 
@@ -71,6 +78,11 @@ class APP2largeScaleDialog : public QDialog
             b256_checker->setChecked(true);
             b_radius2Dchecker = new QCheckBox();
             b_radius2Dchecker->setChecked(true);
+
+            tc_filepath = new QLineEdit();
+            openTcFile = new QPushButton(QObject::tr("..."));
+
+
 
             layout->addWidget(new QLabel("color channel"),0,0);
             layout->addWidget(channel_spinbox, 0,1,1,5);
@@ -96,6 +108,10 @@ class APP2largeScaleDialog : public QDialog
             layout->addWidget(new QLabel("SR_ratio"),5,0);
             layout->addWidget(srratio_editor, 5,1,1,5);
 
+            layout->addWidget(new QLabel(QObject::tr("tc file path:")),6,0);
+            layout->addWidget(tc_filepath,6,1,1,4);
+            layout->addWidget(openTcFile,6,5,1,1);
+
             QHBoxLayout * hbox2 = new QHBoxLayout();
             QPushButton * ok = new QPushButton(" ok ");
             ok->setDefault(true);
@@ -103,7 +119,7 @@ class APP2largeScaleDialog : public QDialog
             hbox2->addWidget(cancel);
             hbox2->addWidget(ok);
 
-            layout->addLayout(hbox2,6,0,1,6);
+            layout->addLayout(hbox2,7,0,7,6);
             setLayout(layout);
             setWindowTitle(QString("Vaa3D-Neuron2 Large Scale Image Auto_tracing Based on APP2"));
 
@@ -122,8 +138,10 @@ class APP2largeScaleDialog : public QDialog
             connect(iswb_checker, SIGNAL(stateChanged(int)), this, SLOT(update()));
             connect(b256_checker, SIGNAL(stateChanged(int)), this, SLOT(update()));
             connect(b_radius2Dchecker, SIGNAL(stateChanged(int)), this, SLOT(update()));
+            connect(openTcFile, SIGNAL(clicked()), this, SLOT(_slots_openTcFile()));
             update();
         }
+
         ~APP2largeScaleDialog(){}
 
         public slots:
@@ -141,6 +159,23 @@ class APP2largeScaleDialog : public QDialog
             b256_checker->isChecked()? b_256cube = 1 : b_256cube = 0;
             b_radius2Dchecker->isChecked() ? b_RadiusFrom2D = 1 : b_RadiusFrom2D = 0;
 
+            tcfilename = tc_filepath->text();
+        }
+
+        void _slots_openTcFile()
+        {
+            QFileDialog d(this);
+            QString fileOpenName;
+            fileOpenName = QFileDialog::getOpenFileName(0, QObject::tr("Open TC File"),
+                                                        "",
+                                                        QObject::tr("Supported file (*.tc)"
+                                                            ));
+            if(!fileOpenName.isEmpty())
+            {
+                tc_filepath->setText(fileOpenName);
+            }
+            update();
+
         }
     public:
 
@@ -154,7 +189,11 @@ class APP2largeScaleDialog : public QDialog
         QCheckBox * b256_checker;
         QCheckBox * b_radius2Dchecker;
 
+        QLineEdit * tc_filepath;
+        QPushButton *openTcFile;
+
         Image4DSimple* image;
+        LandmarkList listLandmarks;
         int is_gsdt;
         int is_break_accept;
         int  bkg_thresh;
@@ -165,6 +204,11 @@ class APP2largeScaleDialog : public QDialog
         int  b_256cube;
         int b_RadiusFrom2D;
 
+        QString tcfilename;
+
     };
+
+
+
 
 #endif

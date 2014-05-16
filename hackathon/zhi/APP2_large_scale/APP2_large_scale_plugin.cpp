@@ -94,35 +94,30 @@ void autotrace_largeScale(V3DPluginCallback2 &callback, QWidget *parent)
     if (!dialog.image)
         return;
 
+    if(dialog.listLandmarks.count() ==0)
+        return;
+
     if (dialog.exec()!=QDialog::Accepted)
         return;
 
- //   printf("%d,%d,%d,%d,%d,%d,%d\n\n",dialog.is_gsdt,dialog.is_break_accept,dialog.b_256cube,dialog.b_RadiusFrom2D,dialog.channel,dialog.cnn_type,dialog.bkg_thresh);
-
     QString fileOpenName = dialog.image->getFileName();
 
-    v3dhandle curwin = callback.currentImageWindow();
-    LandmarkList listLandmarks = callback.getLandmark(curwin);
-    if(listLandmarks.count() ==0)
+    QString tcfile = dialog.tcfilename;
+    if(tcfile.isEmpty())
     {
-        v3d_msg("No markers in the current image, please select a marker.");
+        v3d_msg("Please select the tc file.");
         return;
     }
 
 
+
     int tmpx,tmpy,tmpz;
     LocationSimple tmpLocation(0,0,0);
-    tmpLocation = listLandmarks.at(0);
+    tmpLocation = dialog.listLandmarks.at(0);
     tmpLocation.getCoord(tmpx,tmpy,tmpz);
 
 
-    QString tcfile;
-    tcfile = QFileDialog::getOpenFileName(0, QObject::tr("Open TC File"),
-            "",
-            QObject::tr("Supported file (*.tc)"
-                ));
-    if(tcfile.isEmpty())
-        return;
+
 
     Y_VIM<REAL, V3DLONG, indexed_t<V3DLONG, REAL>, LUT<V3DLONG> > vim;
 
