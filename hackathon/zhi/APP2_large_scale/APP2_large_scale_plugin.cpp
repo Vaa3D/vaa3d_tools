@@ -24,7 +24,6 @@ struct root_node
     V3DLONG offset_z;
     V3DLONG tc_index;
     V3DLONG ref_index;
-  //  int     direction; //0 for all, 1 for left, 2 for right, 3 for up, 4 for down
     QString tilename;
     QString refSWCname;
 
@@ -90,28 +89,26 @@ bool APP2_large_scale::dofunc(const QString & func_name, const V3DPluginArgList 
 void autotrace_largeScale(V3DPluginCallback2 &callback, QWidget *parent)
 {
 
+    APP2largeScaleDialog dialog(callback, parent);
+
+    if (!dialog.image)
+        return;
+
+    if (dialog.exec()!=QDialog::Accepted)
+        return;
+
+ //   printf("%d,%d,%d,%d,%d,%d,%d\n\n",dialog.is_gsdt,dialog.is_break_accept,dialog.b_256cube,dialog.b_RadiusFrom2D,dialog.channel,dialog.cnn_type,dialog.bkg_thresh);
+
+    QString fileOpenName = dialog.image->getFileName();
+
     v3dhandle curwin = callback.currentImageWindow();
-    if (!curwin)
-    {
-        v3d_msg("You don't have any image open in the main window.");
-        return;
-    }
-
-    Image4DSimple* p4DImage = callback.getImage(curwin);
-    QString fileOpenName = callback.getImageName(curwin);
-
-    if (!p4DImage)
-    {
-        v3d_msg("The image pointer is invalid. Ensure your data is valid and try again!");
-        return;
-    }
-
     LandmarkList listLandmarks = callback.getLandmark(curwin);
     if(listLandmarks.count() ==0)
     {
-        v3d_msg("No markers in the current image, please double check.");
+        v3d_msg("No markers in the current image, please select a marker.");
         return;
     }
+
 
     int tmpx,tmpy,tmpz;
     LocationSimple tmpLocation(0,0,0);
@@ -168,7 +165,6 @@ void autotrace_largeScale(V3DPluginCallback2 &callback, QWidget *parent)
 
     head->tc_index = some_index;
     head->tilename = fileOpenName;
-    //head->direction = 0;
     head->ref_index = -1;
 
     head->next = NULL;
@@ -188,7 +184,8 @@ void autotrace_largeScale(V3DPluginCallback2 &callback, QWidget *parent)
         marklist.append(S);
         writeMarker_file("root.marker",marklist);
         #if  defined(Q_OS_LINUX)
-            QString cmd_APP2 = QString("%1/vaa3d -x Vaa3D_Neuron2 -f app2 -i %2 -p 'root.marker' 0 40 0 1 0 0 20").arg(getAppPath().toStdString().c_str()).arg(walker->tilename.toStdString().c_str());
+            QString cmd_APP2 = QString("%1/vaa3d -x Vaa3D_Neuron2 -f app2 -i %2 -p 'root.marker' %3 %4 %5 %6 %7 %8 %9").arg(getAppPath().toStdString().c_str()).arg(walker->tilename.toStdString().c_str())
+                    .arg(dialog.channel-1).arg(dialog.bkg_thresh).arg(dialog.b_256cube).arg(dialog.b_RadiusFrom2D).arg(dialog.is_gsdt).arg(dialog.is_break_accept).arg(dialog.length_thresh);
             system(qPrintable(cmd_APP2));
         #else
                  v3d_msg("The OS is not Linux. Do nothing.");
@@ -255,8 +252,6 @@ void autotrace_largeScale(V3DPluginCallback2 &callback, QWidget *parent)
              walker_inside = walker_inside->next;
         }
 
-
-
         for (int i=0;i<list.size();i++)
         {
 
@@ -265,7 +260,7 @@ void autotrace_largeScale(V3DPluginCallback2 &callback, QWidget *parent)
                 int pa_tip = getParent(i,nt);
                 NeuronSWC curr = list.at(getParent(pa_tip,nt));
 
-                if( curr.x < 20 || curr.x > 1004 || curr.y < 20 || curr.y > 1004)
+                if( curr.x < 0.02* dialog.image->getXDim() || curr.x > 0.98 * dialog.image->getXDim() || curr.y < 0.02 * dialog.image->getYDim() || curr.y > 0.98*dialog.image->getYDim())
                 {
 
                     int flag = 0;
@@ -305,7 +300,7 @@ void autotrace_largeScale(V3DPluginCallback2 &callback, QWidget *parent)
                         QString curPath = QFileInfo(tcfile).path();;
                         QString curtilename = curPath.append("/").append(QString(vim.lut[ii].fn_img.c_str()));
 
-                        if(x_shift > -1024 && x_shift < -800 && abs(y_shift) < 20 &&  ii !=walker->tc_index && curr.x < 20)
+                        if(x_shift > -dialog.image->getXDim() && x_shift < -0.8*dialog.image->getXDim() && abs(y_shift) < 0.15 * dialog.image->getYDim() &&  ii !=walker->tc_index && curr.x < 0.02* dialog.image->getXDim())
                         {
 
                             newNode =  new root_node[1];
@@ -326,7 +321,7 @@ void autotrace_largeScale(V3DPluginCallback2 &callback, QWidget *parent)
                             walker_inside->next = newNode;
                             walker_inside = walker_inside->next;
                          }
-                        else if(x_shift < 1024 && x_shift > 800 && abs(y_shift) < 20 &&  ii !=walker->tc_index && curr.x > 1004)
+                        else if(x_shift < dialog.image->getXDim() && x_shift > 0.8*dialog.image->getXDim() && abs(y_shift) < 0.15 * dialog.image->getYDim() &&  ii !=walker->tc_index && curr.x > 0.98* dialog.image->getXDim())
                         {
 
                             newNode =  new root_node[1];
@@ -350,7 +345,7 @@ void autotrace_largeScale(V3DPluginCallback2 &callback, QWidget *parent)
                             walker_inside = walker_inside->next;
 
                         }
-                        else if(y_shift > -1024 && y_shift < -800 && abs(x_shift) < 20 &&  ii !=walker->tc_index && curr.y < 20)
+                        else if(y_shift > -dialog.image->getYDim() && y_shift < -0.8*dialog.image->getYDim() && abs(x_shift) < 0.15 * dialog.image->getXDim() &&  ii !=walker->tc_index && curr.y < 0.02* dialog.image->getYDim())
                         {
 
                             newNode =  new root_node[1];
@@ -375,7 +370,7 @@ void autotrace_largeScale(V3DPluginCallback2 &callback, QWidget *parent)
                             walker_inside = walker_inside->next;
 
                         }
-                        else if(y_shift < 1024 && y_shift > 800 && abs(x_shift) < 20 &&  ii !=walker->tc_index && curr.y >1004)
+                        else if(y_shift < dialog.image->getYDim() && y_shift > 0.8*dialog.image->getXDim() && abs(x_shift) < 0.15 * dialog.image->getXDim() &&  ii !=walker->tc_index && curr.y >0.98* dialog.image->getYDim())
                         {
                             newNode =  new root_node[1];
                             newNode->root_x =  curr.x - x_shift;
