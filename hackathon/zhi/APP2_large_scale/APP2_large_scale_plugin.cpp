@@ -109,15 +109,10 @@ void autotrace_largeScale(V3DPluginCallback2 &callback, QWidget *parent)
         return;
     }
 
-
-
     int tmpx,tmpy,tmpz;
     LocationSimple tmpLocation(0,0,0);
     tmpLocation = dialog.listLandmarks.at(0);
     tmpLocation.getCoord(tmpx,tmpy,tmpz);
-
-
-
 
     Y_VIM<REAL, V3DLONG, indexed_t<V3DLONG, REAL>, LUT<V3DLONG> > vim;
 
@@ -167,6 +162,8 @@ void autotrace_largeScale(V3DPluginCallback2 &callback, QWidget *parent)
 
     QString finalswcfilename = fileOpenName.append("_final.swc");
 
+    QElapsedTimer timer1;
+    timer1.start();
 
     while(walker != NULL)
     {
@@ -199,32 +196,6 @@ void autotrace_largeScale(V3DPluginCallback2 &callback, QWidget *parent)
             walker = walker->next;
             continue;
         }
-
-
-        vector<MyMarker*> temp_out_swc = readSWC_file(swcfilename.toStdString());
-        ifstream ifs(finalswcfilename.toStdString().c_str());
-
-        if(!ifs)
-           saveSWC_file(finalswcfilename.toStdString(), temp_out_swc);
-        else
-        {
-            vector<MyMarker*> final_out_swc = readSWC_file(finalswcfilename.toStdString());
-            vector<MyMarker*> temp_out_swc = readSWC_file(swcfilename.toStdString());
-
-            for(int j = 0; j < temp_out_swc.size(); j++)
-            {
-                temp_out_swc[j]->x = temp_out_swc[j]->x + walker->offset_x;
-                temp_out_swc[j]->y = temp_out_swc[j]->y + walker->offset_y;
-                temp_out_swc[j]->z = temp_out_swc[j]->z + walker->offset_z;
-                final_out_swc.push_back(temp_out_swc[j]);
-            }
-           saveSWC_file(finalswcfilename.toStdString(), final_out_swc);
-
-        }
-
-
-
-        v3d_msg(swcfilename,0);
 
         QVector<QVector<V3DLONG> > childs;
         V3DLONG neuronNum = nt.listNeuron.size();
@@ -261,21 +232,27 @@ void autotrace_largeScale(V3DPluginCallback2 &callback, QWidget *parent)
                     int flag = 0;
                     if(walker->ref_index != -1)
                     {
-                        int x_shift_ref = vim.lut[walker->ref_index].start_pos[0] - vim.lut[ walker->tc_index].start_pos[0];
-                        int y_shift_ref = vim.lut[walker->ref_index].start_pos[1] - vim.lut[ walker->tc_index].start_pos[1];
-                        int z_shift_ref = vim.lut[walker->ref_index].start_pos[2] - vim.lut[ walker->tc_index].start_pos[2];
+                      //  int x_shift_ref = vim.lut[walker->ref_index].start_pos[0] - vim.lut[ walker->tc_index].start_pos[0];
+                      //  int y_shift_ref = vim.lut[walker->ref_index].start_pos[1] - vim.lut[ walker->tc_index].start_pos[1];
+                     //   int z_shift_ref = vim.lut[walker->ref_index].start_pos[2] - vim.lut[ walker->tc_index].start_pos[2];
 
-                        NeuronTree ref_nt = readSWC_file(walker->refSWCname);
+                       // NeuronTree ref_nt = readSWC_file(walker->refSWCname);
+                        NeuronTree ref_nt = readSWC_file(finalswcfilename);
                         for(int d = 0; d < ref_nt.listNeuron.size();d++)
                         {
 
                             NeuronSWC ref_curr = ref_nt.listNeuron.at(d);
-                            int ref_x = ref_curr.x + x_shift_ref;
-                            int ref_y = ref_curr.y + y_shift_ref;
-                            int ref_z = ref_curr.z + z_shift_ref;
+                          //  int ref_x = ref_curr.x + x_shift_ref;
+                          //  int ref_y = ref_curr.y + y_shift_ref;
+                          //  int ref_z = ref_curr.z + z_shift_ref;
+
+                            int ref_x = ref_curr.x - walker->offset_x;
+                            int ref_y = ref_curr.y - walker->offset_y;
+                            int ref_z = ref_curr.z - walker->offset_z;
+
 
                             double dis = sqrt(pow((ref_x - curr.x),2.0) + pow((ref_y - curr.y),2.0) + pow((ref_z - curr.z),2.0));
-                            if(dis < 15.0)
+                            if(dis < 20.0)
                             {
                                 flag = 1;
                                 break;
@@ -394,10 +371,37 @@ void autotrace_largeScale(V3DPluginCallback2 &callback, QWidget *parent)
             }
         }
 
+
+        vector<MyMarker*> temp_out_swc = readSWC_file(swcfilename.toStdString());
+        ifstream ifs(finalswcfilename.toStdString().c_str());
+
+        if(!ifs)
+           saveSWC_file(finalswcfilename.toStdString(), temp_out_swc);
+        else
+        {
+            vector<MyMarker*> final_out_swc = readSWC_file(finalswcfilename.toStdString());
+            vector<MyMarker*> temp_out_swc = readSWC_file(swcfilename.toStdString());
+
+            for(int j = 0; j < temp_out_swc.size(); j++)
+            {
+                temp_out_swc[j]->x = temp_out_swc[j]->x + walker->offset_x;
+                temp_out_swc[j]->y = temp_out_swc[j]->y + walker->offset_y;
+                temp_out_swc[j]->z = temp_out_swc[j]->z + walker->offset_z;
+                final_out_swc.push_back(temp_out_swc[j]);
+            }
+           saveSWC_file(finalswcfilename.toStdString(), final_out_swc);
+
+        }
+
+
+
+        v3d_msg(swcfilename,0);
+
         walker = walker->next;
     }
+    qint64 etime1 = timer1.elapsed();
 
-    v3d_msg(QString("Now you can drag and drop the generated swc fle [%1] into Vaa3D.").arg(finalswcfilename));
+    v3d_msg(QString("The tracing uses %1 ms. Now you can drag and drop the generated swc fle [%2] into Vaa3D.").arg(etime1).arg(finalswcfilename));
       return;
 }
 
