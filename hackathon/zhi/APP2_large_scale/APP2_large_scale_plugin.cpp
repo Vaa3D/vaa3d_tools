@@ -2,7 +2,7 @@
  * This is a test plugin, you can use it as a demo.
  * 2014-05-12 : by Zhi Zhou
  */
- 
+
 #include "v3d_message.h"
 #include <vector>
 #include "APP2_large_scale_plugin.h"
@@ -25,7 +25,6 @@ struct root_node
     V3DLONG tc_index;
     V3DLONG ref_index;
     QString tilename;
-    QString refSWCname;
 
     struct root_node* next;
 
@@ -33,57 +32,57 @@ struct root_node
 
 void autotrace_largeScale(V3DPluginCallback2 &callback, QWidget *parent);
 QString getAppPath();
- 
+
 QStringList APP2_large_scale::menulist() const
 {
-	return QStringList() 
-		<<tr("trace")
-		<<tr("about");
+    return QStringList()
+        <<tr("trace")
+        <<tr("about");
 }
 
 QStringList APP2_large_scale::funclist() const
 {
-	return QStringList()
-		<<tr("func1")
-		<<tr("func2")
-		<<tr("help");
+    return QStringList()
+        <<tr("func1")
+        <<tr("func2")
+        <<tr("help");
 }
 
 void APP2_large_scale::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
 {
-	if (menu_name == tr("trace"))
-	{
+    if (menu_name == tr("trace"))
+    {
         autotrace_largeScale(callback,parent);
-	}
-	else
-	{
-		v3d_msg(tr("This is a test plugin, you can use it as a demo.. "
-			"Developed by Zhi Zhou, 2014-05-12"));
-	}
+    }
+    else
+    {
+        v3d_msg(tr("This is a test plugin, you can use it as a demo.. "
+            "Developed by Zhi Zhou, 2014-05-12"));
+    }
 }
 
 bool APP2_large_scale::dofunc(const QString & func_name, const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback,  QWidget * parent)
 {
-	vector<char*> infiles, inparas, outfiles;
-	if(input.size() >= 1) infiles = *((vector<char*> *)input.at(0).p);
-	if(input.size() >= 2) inparas = *((vector<char*> *)input.at(1).p);
-	if(output.size() >= 1) outfiles = *((vector<char*> *)output.at(0).p);
+    vector<char*> infiles, inparas, outfiles;
+    if(input.size() >= 1) infiles = *((vector<char*> *)input.at(0).p);
+    if(input.size() >= 2) inparas = *((vector<char*> *)input.at(1).p);
+    if(output.size() >= 1) outfiles = *((vector<char*> *)output.at(0).p);
 
-	if (func_name == tr("func1"))
-	{
-		v3d_msg("To be implemented.");
-	}
-	else if (func_name == tr("func2"))
-	{
-		v3d_msg("To be implemented.");
-	}
-	else if (func_name == tr("help"))
-	{
-		v3d_msg("To be implemented.");
-	}
-	else return false;
+    if (func_name == tr("func1"))
+    {
+        v3d_msg("To be implemented.");
+    }
+    else if (func_name == tr("func2"))
+    {
+        v3d_msg("To be implemented.");
+    }
+    else if (func_name == tr("help"))
+    {
+        v3d_msg("To be implemented.");
+    }
+    else return false;
 
-	return true;
+    return true;
 }
 
 void autotrace_largeScale(V3DPluginCallback2 &callback, QWidget *parent)
@@ -93,6 +92,7 @@ void autotrace_largeScale(V3DPluginCallback2 &callback, QWidget *parent)
 
     if (!dialog.image)
         return;
+
 
     if(dialog.listLandmarks.count() ==0)
         return;
@@ -108,6 +108,7 @@ void autotrace_largeScale(V3DPluginCallback2 &callback, QWidget *parent)
         v3d_msg("Please select the tc file.");
         return;
     }
+
 
     int tmpx,tmpy,tmpz;
     LocationSimple tmpLocation(0,0,0);
@@ -144,7 +145,6 @@ void autotrace_largeScale(V3DPluginCallback2 &callback, QWidget *parent)
 
     struct root_node *head = new root_node[1];
     struct root_node *walker;
-    //struct root_node *temp;
 
     head->root_x = tmpx;
     head->root_y = tmpy;
@@ -160,10 +160,11 @@ void autotrace_largeScale(V3DPluginCallback2 &callback, QWidget *parent)
     head->next = NULL;
     walker = head;
 
-    QString finalswcfilename = fileOpenName.append("_final.swc");
-
     QElapsedTimer timer1;
     timer1.start();
+
+    QString finalswcfilename = fileOpenName.append("_final.swc");
+
 
     while(walker != NULL)
     {
@@ -172,6 +173,31 @@ void autotrace_largeScale(V3DPluginCallback2 &callback, QWidget *parent)
         S.x = walker->root_x;
         S.y = walker->root_y;
         S.z = walker->root_z;
+
+        QString eachtileswcfilename = QFileInfo(tcfile).path().append("/").append(QString(vim.lut[walker->tc_index].fn_img.c_str())).append(".swc");
+        ifstream ifs_tile(eachtileswcfilename.toStdString().c_str());
+        int flag1 = 0;
+        if(ifs_tile)
+        {
+            vector<MyMarker*> tile_out_swc = readSWC_file(eachtileswcfilename.toStdString());
+            for(int j = 0; j < tile_out_swc.size(); j++)
+            {
+                double dis = sqrt(pow((S.x - tile_out_swc[j]->x),2.0) + pow((S.y - tile_out_swc[j]->y),2.0) + pow((S.z - tile_out_swc[j]->z),2.0));
+                if(dis < 100)
+                {
+                    flag1 = 1;
+                    break;
+                }
+
+            }
+
+        }
+
+        if(flag1)
+        {
+            walker = walker->next;
+            continue;
+        }
 
         marklist.append(S);
         writeMarker_file("root.marker",marklist);
@@ -193,7 +219,10 @@ void autotrace_largeScale(V3DPluginCallback2 &callback, QWidget *parent)
 
         if(nt.listNeuron.empty())
         {
+            remove(swcfilename.toStdString().c_str());
+            remove(QFileInfo(tcfile).path().append("/").append(QString(vim.lut[walker->tc_index].fn_img.c_str())).append("_ini.swc").toStdString().c_str());
             walker = walker->next;
+
             continue;
         }
 
@@ -232,27 +261,18 @@ void autotrace_largeScale(V3DPluginCallback2 &callback, QWidget *parent)
                     int flag = 0;
                     if(walker->ref_index != -1)
                     {
-                      //  int x_shift_ref = vim.lut[walker->ref_index].start_pos[0] - vim.lut[ walker->tc_index].start_pos[0];
-                      //  int y_shift_ref = vim.lut[walker->ref_index].start_pos[1] - vim.lut[ walker->tc_index].start_pos[1];
-                     //   int z_shift_ref = vim.lut[walker->ref_index].start_pos[2] - vim.lut[ walker->tc_index].start_pos[2];
-
-                       // NeuronTree ref_nt = readSWC_file(walker->refSWCname);
                         NeuronTree ref_nt = readSWC_file(finalswcfilename);
                         for(int d = 0; d < ref_nt.listNeuron.size();d++)
                         {
 
                             NeuronSWC ref_curr = ref_nt.listNeuron.at(d);
-                          //  int ref_x = ref_curr.x + x_shift_ref;
-                          //  int ref_y = ref_curr.y + y_shift_ref;
-                          //  int ref_z = ref_curr.z + z_shift_ref;
-
                             int ref_x = ref_curr.x - walker->offset_x;
                             int ref_y = ref_curr.y - walker->offset_y;
                             int ref_z = ref_curr.z - walker->offset_z;
 
 
                             double dis = sqrt(pow((ref_x - curr.x),2.0) + pow((ref_y - curr.y),2.0) + pow((ref_z - curr.z),2.0));
-                            if(dis < 20.0)
+                            if(dis < 30.0)
                             {
                                 flag = 1;
                                 break;
@@ -269,7 +289,7 @@ void autotrace_largeScale(V3DPluginCallback2 &callback, QWidget *parent)
                         x_shift = vim.lut[ii].start_pos[0] - vim.lut[ walker->tc_index].start_pos[0];
                         y_shift = vim.lut[ii].start_pos[1] - vim.lut[ walker->tc_index].start_pos[1];
                         z_shift = vim.lut[ii].start_pos[2] - vim.lut[ walker->tc_index].start_pos[2];
-                        QString curPath = QFileInfo(tcfile).path();;
+                        QString curPath = QFileInfo(tcfile).path();
                         QString curtilename = curPath.append("/").append(QString(vim.lut[ii].fn_img.c_str()));
 
                         if(x_shift > -dialog.image->getXDim() && x_shift < -0.8*dialog.image->getXDim() && abs(y_shift) < 0.15 * dialog.image->getYDim() &&  ii !=walker->tc_index && curr.x < 0.02* dialog.image->getXDim())
@@ -286,7 +306,6 @@ void autotrace_largeScale(V3DPluginCallback2 &callback, QWidget *parent)
 
                             newNode->tilename = curtilename;
                             newNode->tc_index = ii;
-                            newNode->refSWCname = swcfilename;
                             newNode->ref_index = walker->tc_index;
 
                             newNode->next = NULL;
@@ -308,7 +327,6 @@ void autotrace_largeScale(V3DPluginCallback2 &callback, QWidget *parent)
 
                             newNode->tilename = curtilename;
                             newNode->tc_index = ii;
-                            newNode->refSWCname = swcfilename;
                             newNode->ref_index = walker->tc_index;
 
 
@@ -332,7 +350,6 @@ void autotrace_largeScale(V3DPluginCallback2 &callback, QWidget *parent)
 
                             newNode->tilename = curtilename;
                             newNode->tc_index = ii;
-                            newNode->refSWCname = swcfilename;
                             newNode->ref_index = walker->tc_index;
 
 
@@ -355,7 +372,6 @@ void autotrace_largeScale(V3DPluginCallback2 &callback, QWidget *parent)
 
                             newNode->tilename = curtilename;
                             newNode->tc_index = ii;
-                            newNode->refSWCname = swcfilename;
                             newNode->ref_index = walker->tc_index;
 
 
@@ -373,15 +389,30 @@ void autotrace_largeScale(V3DPluginCallback2 &callback, QWidget *parent)
 
 
         vector<MyMarker*> temp_out_swc = readSWC_file(swcfilename.toStdString());
-        ifstream ifs(finalswcfilename.toStdString().c_str());
+      //  QString eachtileswcfilename = QFileInfo(tcfile).path().append("/").append(QString(vim.lut[walker->tc_index].fn_img.c_str())).append(".swc");
+      //  ifstream ifs_tile(eachtileswcfilename.toStdString().c_str());
+        if(!ifs_tile)
+            saveSWC_file(eachtileswcfilename.toStdString(), temp_out_swc);
+        else
+        {
+            vector<MyMarker*> tile_out_swc = readSWC_file(eachtileswcfilename.toStdString());
+            for(int j = 0; j < temp_out_swc.size(); j++)
+            {
+                temp_out_swc[j]->x = temp_out_swc[j]->x;
+                temp_out_swc[j]->y = temp_out_swc[j]->y;
+                temp_out_swc[j]->z = temp_out_swc[j]->z;
+                tile_out_swc.push_back(temp_out_swc[j]);
+            }
+             saveSWC_file(eachtileswcfilename.toStdString(), tile_out_swc);
+        }
 
+
+        ifstream ifs(finalswcfilename.toStdString().c_str());
         if(!ifs)
            saveSWC_file(finalswcfilename.toStdString(), temp_out_swc);
         else
         {
             vector<MyMarker*> final_out_swc = readSWC_file(finalswcfilename.toStdString());
-            vector<MyMarker*> temp_out_swc = readSWC_file(swcfilename.toStdString());
-
             for(int j = 0; j < temp_out_swc.size(); j++)
             {
                 temp_out_swc[j]->x = temp_out_swc[j]->x + walker->offset_x;
@@ -390,12 +421,10 @@ void autotrace_largeScale(V3DPluginCallback2 &callback, QWidget *parent)
                 final_out_swc.push_back(temp_out_swc[j]);
             }
            saveSWC_file(finalswcfilename.toStdString(), final_out_swc);
-
         }
 
-
-
-        v3d_msg(swcfilename,0);
+        remove(swcfilename.toStdString().c_str());
+        remove(QFileInfo(tcfile).path().append("/").append(QString(vim.lut[walker->tc_index].fn_img.c_str())).append("_ini.swc").toStdString().c_str());
 
         walker = walker->next;
     }
