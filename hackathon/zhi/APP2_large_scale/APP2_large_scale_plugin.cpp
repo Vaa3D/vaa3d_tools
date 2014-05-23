@@ -298,7 +298,7 @@ void autotrace_largeScale(V3DPluginCallback2 &callback, QWidget *parent)
                             newNode =  new root_node[1];
                             newNode->root_x =  curr.x - x_shift;
                             newNode->root_y = curr.y - y_shift;
-                            newNode->root_z = curr.z - z_shift ;
+                            newNode->root_z = curr.z - z_shift;
 
                             newNode->offset_x  = walker->offset_x + x_shift;
                             newNode->offset_y  = walker->offset_y + y_shift;
@@ -323,7 +323,7 @@ void autotrace_largeScale(V3DPluginCallback2 &callback, QWidget *parent)
 
                             newNode->offset_x  = walker->offset_x + x_shift;
                             newNode->offset_y  = walker->offset_y + y_shift;
-                            newNode->offset_z  = walker->offset_z + z_shift;;
+                            newNode->offset_z  = walker->offset_z + z_shift;
 
                             newNode->tilename = curtilename;
                             newNode->tc_index = ii;
@@ -389,8 +389,6 @@ void autotrace_largeScale(V3DPluginCallback2 &callback, QWidget *parent)
 
 
         vector<MyMarker*> temp_out_swc = readSWC_file(swcfilename.toStdString());
-      //  QString eachtileswcfilename = QFileInfo(tcfile).path().append("/").append(QString(vim.lut[walker->tc_index].fn_img.c_str())).append(".swc");
-      //  ifstream ifs_tile(eachtileswcfilename.toStdString().c_str());
         if(!ifs_tile)
             saveSWC_file(eachtileswcfilename.toStdString(), temp_out_swc);
         else
@@ -413,14 +411,29 @@ void autotrace_largeScale(V3DPluginCallback2 &callback, QWidget *parent)
         else
         {
             vector<MyMarker*> final_out_swc = readSWC_file(finalswcfilename.toStdString());
+            vector<MyMarker*> final_out_swc_updated =  final_out_swc;
             for(int j = 0; j < temp_out_swc.size(); j++)
             {
                 temp_out_swc[j]->x = temp_out_swc[j]->x + walker->offset_x;
                 temp_out_swc[j]->y = temp_out_swc[j]->y + walker->offset_y;
                 temp_out_swc[j]->z = temp_out_swc[j]->z + walker->offset_z;
-                final_out_swc.push_back(temp_out_swc[j]);
+                int flag_prun = 0;
+                for(int jj = 0; jj < final_out_swc.size();jj++)
+                {
+                    int dis_prun = sqrt(pow((temp_out_swc[j]->x - final_out_swc[jj]->x),2.0) + pow((temp_out_swc[j]->y - final_out_swc[jj]->y),2.0) + pow((temp_out_swc[j]->z - final_out_swc[jj]->z),2.0));
+                    if( (temp_out_swc[j]->radius + final_out_swc[jj]->radius - dis_prun)/dis_prun > 0.5)
+                    {
+                        flag_prun = 1;
+                        break;
+                    }
+
+                }
+                if(flag_prun == 0)
+                {
+                   final_out_swc_updated.push_back(temp_out_swc[j]);
+                }
             }
-           saveSWC_file(finalswcfilename.toStdString(), final_out_swc);
+           saveSWC_file(finalswcfilename.toStdString(), final_out_swc_updated);
         }
 
         remove(swcfilename.toStdString().c_str());
@@ -428,7 +441,12 @@ void autotrace_largeScale(V3DPluginCallback2 &callback, QWidget *parent)
 
         walker = walker->next;
     }
+
+    //post-processing
+
     qint64 etime1 = timer1.elapsed();
+
+
 
     v3d_msg(QString("The tracing uses %1 ms. Now you can drag and drop the generated swc fle [%2] into Vaa3D.").arg(etime1).arg(finalswcfilename));
       return;

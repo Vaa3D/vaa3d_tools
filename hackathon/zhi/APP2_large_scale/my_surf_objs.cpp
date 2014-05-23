@@ -256,6 +256,7 @@ bool saveSWC_file(string swc_file, vector<MyMarker*> & outmarkers, list<string> 
 		int parent_id;
 		if(marker->parent == 0) parent_id = -1;
 		else parent_id = ind[marker->parent];
+        if(parent_id == 0)  parent_id = -1;
 		ofs<<i+1<<" "<<marker->type<<" "<<marker->x<<" "<<marker->y<<" "<<marker->z<<" "<<marker->radius<<" "<<parent_id<<endl;
 	}
 	ofs.close();
