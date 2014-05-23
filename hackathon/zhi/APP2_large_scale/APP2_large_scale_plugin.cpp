@@ -14,6 +14,11 @@ using namespace std;
 Q_EXPORT_PLUGIN2(APP2_large_scale, APP2_large_scale);
 #define getParent(n,nt) ((nt).listNeuron.at(n).pn<0)?(1000000000):((nt).hashNeuron.value((nt).listNeuron.at(n).pn))
 
+template <class T> T pow2(T a)
+{
+    return a*a;
+
+}
 struct root_node
 {
     V3DLONG root_x;
@@ -87,7 +92,7 @@ bool APP2_large_scale::dofunc(const QString & func_name, const V3DPluginArgList 
 
 void autotrace_largeScale(V3DPluginCallback2 &callback, QWidget *parent)
 {
-
+    v3d_msg(getAppPath());
     APP2largeScaleDialog dialog(callback, parent);
 
     if (!dialog.image)
@@ -182,7 +187,7 @@ void autotrace_largeScale(V3DPluginCallback2 &callback, QWidget *parent)
             vector<MyMarker*> tile_out_swc = readSWC_file(eachtileswcfilename.toStdString());
             for(int j = 0; j < tile_out_swc.size(); j++)
             {
-                double dis = sqrt(pow((S.x - tile_out_swc[j]->x),2.0) + pow((S.y - tile_out_swc[j]->y),2.0) + pow((S.z - tile_out_swc[j]->z),2.0));
+                double dis = sqrt(pow2(S.x - tile_out_swc[j]->x) + pow2(S.y - tile_out_swc[j]->y) + pow2(S.z - tile_out_swc[j]->z));
                 if(dis < 100)
                 {
                     flag1 = 1;
@@ -205,8 +210,12 @@ void autotrace_largeScale(V3DPluginCallback2 &callback, QWidget *parent)
             QString cmd_APP2 = QString("%1/vaa3d -x Vaa3D_Neuron2 -f app2 -i %2 -p 'root.marker' %3 %4 %5 %6 %7 %8 %9").arg(getAppPath().toStdString().c_str()).arg(walker->tilename.toStdString().c_str())
                     .arg(dialog.channel-1).arg(dialog.bkg_thresh).arg(dialog.b_256cube).arg(dialog.b_RadiusFrom2D).arg(dialog.is_gsdt).arg(dialog.is_break_accept).arg(dialog.length_thresh);
             system(qPrintable(cmd_APP2));
+        #elif defined(Q_OS_MAC)
+            QString cmd_APP2 = QString("%1/vaa3d64.app/Contents/MacOS/vaa3d64 -x Vaa3D_Neuron2 -f app2 -i %2 -p 'root.marker' %3 %4 %5 %6 %7 %8 %9").arg(getAppPath().toStdString().c_str()).arg(walker->tilename.toStdString().c_str())
+                    .arg(dialog.channel-1).arg(dialog.bkg_thresh).arg(dialog.b_256cube).arg(dialog.b_RadiusFrom2D).arg(dialog.is_gsdt).arg(dialog.is_break_accept).arg(dialog.length_thresh);
+            system(qPrintable(cmd_APP2));
         #else
-                 v3d_msg("The OS is not Linux. Do nothing.");
+                 v3d_msg("The OS is not Linux or Mac. Do nothing.");
                  return;
         #endif
 
@@ -271,7 +280,7 @@ void autotrace_largeScale(V3DPluginCallback2 &callback, QWidget *parent)
                             int ref_z = ref_curr.z - walker->offset_z;
 
 
-                            double dis = sqrt(pow((ref_x - curr.x),2.0) + pow((ref_y - curr.y),2.0) + pow((ref_z - curr.z),2.0));
+                            double dis = sqrt(pow2(ref_x - curr.x) + pow2(ref_y - curr.y) + pow2(ref_z - curr.z));
                             if(dis < 30.0)
                             {
                                 flag = 1;
@@ -420,7 +429,7 @@ void autotrace_largeScale(V3DPluginCallback2 &callback, QWidget *parent)
                 int flag_prun = 0;
                 for(int jj = 0; jj < final_out_swc.size();jj++)
                 {
-                    int dis_prun = sqrt(pow((temp_out_swc[j]->x - final_out_swc[jj]->x),2.0) + pow((temp_out_swc[j]->y - final_out_swc[jj]->y),2.0) + pow((temp_out_swc[j]->z - final_out_swc[jj]->z),2.0));
+                    int dis_prun = sqrt(pow2(temp_out_swc[j]->x - final_out_swc[jj]->x) + pow2(temp_out_swc[j]->y - final_out_swc[jj]->y) + pow2(temp_out_swc[j]->z - final_out_swc[jj]->z));
                     if( (temp_out_swc[j]->radius + final_out_swc[jj]->radius - dis_prun)/dis_prun > 0.5)
                     {
                         flag_prun = 1;
