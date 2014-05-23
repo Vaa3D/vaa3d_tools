@@ -92,7 +92,6 @@ bool APP2_large_scale::dofunc(const QString & func_name, const V3DPluginArgList 
 
 void autotrace_largeScale(V3DPluginCallback2 &callback, QWidget *parent)
 {
-    v3d_msg(getAppPath());
     APP2largeScaleDialog dialog(callback, parent);
 
     if (!dialog.image)
