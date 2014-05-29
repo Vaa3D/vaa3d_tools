@@ -79,6 +79,10 @@ class APP2largeScaleDialog : public QDialog
             b_radius2Dchecker = new QCheckBox();
             b_radius2Dchecker->setChecked(true);
 
+            block_spinbox = new QSpinBox();
+            block_spinbox->setRange(1,1536);
+            block_spinbox->setValue(1024);
+
             tc_filepath = new QLineEdit();
             openTcFile = new QPushButton(QObject::tr("..."));
 
@@ -107,10 +111,12 @@ class APP2largeScaleDialog : public QDialog
             layout->addWidget(lenthresh_editor, 4,1,1,5);
             layout->addWidget(new QLabel("SR_ratio"),5,0);
             layout->addWidget(srratio_editor, 5,1,1,5);
+            layout->addWidget(new QLabel("block_size"),6,0);
+            layout->addWidget(block_spinbox, 6,1,1,5);
 
-            layout->addWidget(new QLabel(QObject::tr("tc file path:")),6,0);
-            layout->addWidget(tc_filepath,6,1,1,4);
-            layout->addWidget(openTcFile,6,5,1,1);
+            layout->addWidget(new QLabel(QObject::tr("tc file path:")),7,0);
+            layout->addWidget(tc_filepath,7,1,1,4);
+            layout->addWidget(openTcFile,7,5,1,1);
 
             QHBoxLayout * hbox2 = new QHBoxLayout();
             QPushButton * ok = new QPushButton(" ok ");
@@ -119,7 +125,7 @@ class APP2largeScaleDialog : public QDialog
             hbox2->addWidget(cancel);
             hbox2->addWidget(ok);
 
-            layout->addLayout(hbox2,7,0,7,6);
+            layout->addLayout(hbox2,8,0,8,6);
             setLayout(layout);
             setWindowTitle(QString("Vaa3D-Neuron2 Large Scale Image Auto_tracing Based on APP2"));
 
@@ -159,6 +165,7 @@ class APP2largeScaleDialog : public QDialog
             b256_checker->isChecked()? b_256cube = 1 : b_256cube = 0;
             b_radius2Dchecker->isChecked() ? b_RadiusFrom2D = 1 : b_RadiusFrom2D = 0;
 
+            block_size = block_spinbox->value();
             tcfilename = tc_filepath->text();
         }
 
@@ -189,6 +196,9 @@ class APP2largeScaleDialog : public QDialog
         QCheckBox * b256_checker;
         QCheckBox * b_radius2Dchecker;
 
+        QSpinBox * block_spinbox;
+
+
         QLineEdit * tc_filepath;
         QPushButton *openTcFile;
 
@@ -203,6 +213,7 @@ class APP2largeScaleDialog : public QDialog
         double SR_ratio;
         int  b_256cube;
         int b_RadiusFrom2D;
+        int block_size;
 
         QString tcfilename;
 
