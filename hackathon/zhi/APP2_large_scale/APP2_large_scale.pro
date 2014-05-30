@@ -8,11 +8,15 @@ INCLUDEPATH  += $$VAA3DPATH/common_lib/include
 
 
 HEADERS	+= APP2_large_scale_plugin.h
+HEADERS      +=	$$VAA3DPATH/basic_c_fun/stackutil.h
+
 SOURCES	+= APP2_large_scale_plugin.cpp
 SOURCES	+= $$VAA3DPATH/basic_c_fun/v3d_message.cpp
 SOURCES += $$VAA3DPATH/basic_c_fun/basic_surf_objs.cpp
 SOURCES += my_surf_objs.cpp
 SOURCES += $$VAA3DPATH/basic_c_fun/stackutil.cpp
+SOURCES      +=	$$VAA3DPATH/basic_c_fun/mg_utilities.cpp
+SOURCES      +=	$$VAA3DPATH/basic_c_fun/mg_image_lib.cpp
 
 
 LIBS         += -lm -L$$VAA3DPATH/common_lib/lib -lv3dtiff
