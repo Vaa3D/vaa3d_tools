@@ -798,12 +798,6 @@ void save_region(V3DPluginCallback2 &callback, V3DLONG *start, V3DLONG *end, QSt
 
             qDebug()<<"testing..."<<curFilePath<< fn.c_str();
 
-            if (loadImage(const_cast<char *>(fn.c_str()), relative1d, sz_relative, datatype_relative)!=true)
-            {
-                fprintf (stderr, "Error happens in reading the subject file [%s]. Exit. \n",vim.tilesList.at(ii).fn_image.c_str());
-                return;
-            }
-            V3DLONG rx=sz_relative[0], ry=sz_relative[1], rz=sz_relative[2], rc=sz_relative[3];
 
             if(flag_init)
             {
@@ -823,6 +817,14 @@ void save_region(V3DPluginCallback2 &callback, V3DLONG *start, V3DLONG *end, QSt
                     flag_init = false;
 
             }
+
+            if (loadImage(const_cast<char *>(fn.c_str()), relative1d, sz_relative, datatype_relative)!=true)
+            {
+                fprintf (stderr, "Error happens in reading the subject file [%s]. Exit. \n",vim.tilesList.at(ii).fn_image.c_str());
+                continue;
+            }
+            V3DLONG rx=sz_relative[0], ry=sz_relative[1], rz=sz_relative[2], rc=sz_relative[3];
+
 
             //
             V3DLONG tile2vi_xs = vim.lut[ii].start_pos[0]-vim.min_vim[0];
