@@ -806,7 +806,7 @@ NeuronTree swc_pruning(NeuronTree nt, double length)
                 parent_tip = getParent(parent_tip,nt);
                 index_tip++;
             }
-            if(index_tip < length)
+            if(index_tip < length && nt.listNeuron[i].type !=  nt.listNeuron[parent_tip].type)
             {
                 flag[i] = -1;
 
