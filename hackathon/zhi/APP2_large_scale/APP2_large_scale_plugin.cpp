@@ -255,7 +255,7 @@ void autotrace_largeScale(V3DPluginCallback2 &callback, QWidget *parent)
 
     QString finalswcfilename = QFileInfo(tcfile).path().append("/").append("APP2_largescale.swc");
 
-
+    int swc_type = 1;
     while(walker != NULL)
     {
         ImageMarker S;
@@ -337,8 +337,6 @@ void autotrace_largeScale(V3DPluginCallback2 &callback, QWidget *parent)
         }
 
         QList<NeuronSWC> list = nt.listNeuron;
-        int x_shift, y_shift, z_shift;
-
         struct root_node *walker_inside;
         struct root_node *newNode;
         walker_inside = head;
@@ -353,7 +351,7 @@ void autotrace_largeScale(V3DPluginCallback2 &callback, QWidget *parent)
             if (childs[i].size()==0)
             {
                 int pa_tip = getParent(i,nt);
-                NeuronSWC curr = list.at(getParent(pa_tip,nt));
+                NeuronSWC curr = list.at(pa_tip);
 
                 if( curr.x < 0.02* dialog.block_size || curr.x > 0.98 * dialog.block_size || curr.y < 0.02 * dialog.block_size || curr.y > 0.98*dialog.block_size)
                 {
@@ -489,105 +487,6 @@ void autotrace_largeScale(V3DPluginCallback2 &callback, QWidget *parent)
                         walker_inside->next = newNode;
                         walker_inside = walker_inside->next;
                     }
-
-                  /*  for(V3DLONG ii=0; ii<vim.number_tiles; ii++)
-                    {
-                        x_shift = vim.lut[ii].start_pos[0] - vim.lut[ walker->tc_index].start_pos[0];
-                        y_shift = vim.lut[ii].start_pos[1] - vim.lut[ walker->tc_index].start_pos[1];
-                        z_shift = vim.lut[ii].start_pos[2] - vim.lut[ walker->tc_index].start_pos[2];
-                        QString curPath = QFileInfo(tcfile).path();
-                        QString curtilename = curPath.append("/").append(QString(vim.lut[ii].fn_img.c_str()));
-
-                        if(x_shift > -dialog.block_size && x_shift < -0.8*dialog.block_size && abs(y_shift) < 0.15 * dialog.block_size &&  ii !=walker->tc_index && curr.x < 0.02* dialog.block_size)
-                        {
-
-                            newNode =  new root_node[1];
-                            newNode->root_x =  curr.x - x_shift;
-                            newNode->root_y = curr.y - y_shift;
-                            newNode->root_z = curr.z - z_shift;
-
-                            newNode->offset_x  = walker->offset_x + x_shift;
-                            newNode->offset_y  = walker->offset_y + y_shift;
-                            newNode->offset_z  = walker->offset_z + z_shift;
-
-                            newNode->tilename = curtilename;
-                            newNode->tc_index = ii;
-                            newNode->ref_index = walker->tc_index;
-
-                            newNode->next = NULL;
-                            walker_inside->next = newNode;
-                            walker_inside = walker_inside->next;
-                         }
-                        else if(x_shift < dialog.block_size && x_shift > 0.8*dialog.block_size && abs(y_shift) < 0.15 * dialog.block_size &&  ii !=walker->tc_index && curr.x > 0.98* dialog.block_size)
-                        {
-
-                            newNode =  new root_node[1];
-                            newNode->root_x =  curr.x - x_shift;
-                            newNode->root_y = curr.y - y_shift;
-                            newNode->root_z = curr.z - z_shift ;
-
-
-                            newNode->offset_x  = walker->offset_x + x_shift;
-                            newNode->offset_y  = walker->offset_y + y_shift;
-                            newNode->offset_z  = walker->offset_z + z_shift;
-
-                            newNode->tilename = curtilename;
-                            newNode->tc_index = ii;
-                            newNode->ref_index = walker->tc_index;
-
-
-                            newNode->next = NULL;
-                            walker_inside->next = newNode;
-                            walker_inside = walker_inside->next;
-
-                        }
-                        else if(y_shift > -dialog.block_size && y_shift < -0.8*dialog.block_size && abs(x_shift) < 0.15 * dialog.block_size &&  ii !=walker->tc_index && curr.y < 0.02* dialog.block_size)
-                        {
-
-                            newNode =  new root_node[1];
-                            newNode->root_x =  curr.x - x_shift;
-                            newNode->root_y = curr.y - y_shift;
-                            newNode->root_z = curr.z - z_shift ;
-
-
-                            newNode->offset_x  = walker->offset_x + x_shift;
-                            newNode->offset_y  = walker->offset_y + y_shift;
-                            newNode->offset_z  = walker->offset_z + z_shift;
-
-                            newNode->tilename = curtilename;
-                            newNode->tc_index = ii;
-                            newNode->ref_index = walker->tc_index;
-
-
-
-                            newNode->next = NULL;
-                            walker_inside->next = newNode;
-                            walker_inside = walker_inside->next;
-
-                        }
-                        else if(y_shift < dialog.block_size && y_shift > 0.8*dialog.block_size && abs(x_shift) < 0.15 * dialog.block_size &&  ii !=walker->tc_index && curr.y >0.98* dialog.block_size)
-                        {
-                            newNode =  new root_node[1];
-                            newNode->root_x =  curr.x - x_shift;
-                            newNode->root_y = curr.y - y_shift;
-                            newNode->root_z = curr.z - z_shift ;
-
-                            newNode->offset_x  = walker->offset_x + x_shift;
-                            newNode->offset_y  = walker->offset_y + y_shift;
-                            newNode->offset_z  = walker->offset_z + z_shift;
-
-                            newNode->tilename = curtilename;
-                            newNode->tc_index = ii;
-                            newNode->ref_index = walker->tc_index;
-
-
-
-                            newNode->next = NULL;
-                            walker_inside->next = newNode;
-                            walker_inside = walker_inside->next;
-                        }
-
-                    }*/
                }
 
             }
@@ -612,13 +511,16 @@ void autotrace_largeScale(V3DPluginCallback2 &callback, QWidget *parent)
 
 
         ifstream ifs(finalswcfilename.toStdString().c_str());
-        if(!ifs)
+        if(walker->ref_index == -1)
         {
+            if(ifs)
+               remove(finalswcfilename.toStdString().c_str());
             for(int j = 0; j < temp_out_swc.size(); j++)
             {
                 temp_out_swc[j]->x = temp_out_swc[j]->x + walker->start[0];
                 temp_out_swc[j]->y = temp_out_swc[j]->y + walker->start[1];
                 temp_out_swc[j]->z = temp_out_swc[j]->z + walker->start[2];
+                temp_out_swc[j]->type = swc_type;
             }
 
            saveSWC_file(finalswcfilename.toStdString(), temp_out_swc);
@@ -632,6 +534,7 @@ void autotrace_largeScale(V3DPluginCallback2 &callback, QWidget *parent)
                 temp_out_swc[j]->x = temp_out_swc[j]->x + walker->start[0];
                 temp_out_swc[j]->y = temp_out_swc[j]->y + walker->start[1];
                 temp_out_swc[j]->z = temp_out_swc[j]->z + walker->start[2];
+                temp_out_swc[j]->type = swc_type;
                 int flag_prun = 0;
                 for(int jj = 0; jj < final_out_swc.size();jj++)
                 {
@@ -655,6 +558,7 @@ void autotrace_largeScale(V3DPluginCallback2 &callback, QWidget *parent)
          remove(walker->tilename.append("_ini.swc").toStdString().c_str());
 
         walker = walker->next;
+        swc_type++;
     }
 
     //post-processing
