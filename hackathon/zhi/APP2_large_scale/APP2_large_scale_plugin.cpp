@@ -288,7 +288,7 @@ void autotrace_largeScale(V3DPluginCallback2 &callback, QWidget *parent)
             for(int j = 0; j < tile_out_swc.size(); j++)
             {
                 double dis = sqrt(pow2(S.x - tile_out_swc[j]->x) + pow2(S.y - tile_out_swc[j]->y) + pow2(S.z - tile_out_swc[j]->z));
-                if(dis < 10)
+                if(dis < 20)
                 {
                     flag1 = 1;
                     break;
@@ -377,7 +377,7 @@ void autotrace_largeScale(V3DPluginCallback2 &callback, QWidget *parent)
 
                             NeuronSWC ref_curr = ref_nt.listNeuron.at(d);
                             double dis = sqrt(pow2(ref_curr.x - shift_x) + pow2(ref_curr.y - shift_y) + pow2(ref_curr.z - shift_z));
-                            if(dis < 10.0)
+                            if(dis < 20.0)
                             {
                                 flag = 1;
                                 break;
