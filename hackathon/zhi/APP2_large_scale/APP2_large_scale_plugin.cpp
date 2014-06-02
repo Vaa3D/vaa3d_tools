@@ -288,7 +288,7 @@ void autotrace_largeScale(V3DPluginCallback2 &callback, QWidget *parent)
             for(int j = 0; j < tile_out_swc.size(); j++)
             {
                 double dis = sqrt(pow2(S.x - tile_out_swc[j]->x) + pow2(S.y - tile_out_swc[j]->y) + pow2(S.z - tile_out_swc[j]->z));
-                if(dis < 30)
+                if(dis < 10)
                 {
                     flag1 = 1;
                     break;
@@ -377,7 +377,7 @@ void autotrace_largeScale(V3DPluginCallback2 &callback, QWidget *parent)
 
                             NeuronSWC ref_curr = ref_nt.listNeuron.at(d);
                             double dis = sqrt(pow2(ref_curr.x - shift_x) + pow2(ref_curr.y - shift_y) + pow2(ref_curr.z - shift_z));
-                            if(dis < 30.0)
+                            if(dis < 10.0)
                             {
                                 flag = 1;
                                 break;
@@ -569,7 +569,7 @@ void autotrace_largeScale(V3DPluginCallback2 &callback, QWidget *parent)
         swc_type++;
     }
 
-    system(qPrintable(QString("rm -r %1").arg(tmpfolder.toStdString().c_str())));
+     system(qPrintable(QString("rm -r %1").arg(tmpfolder.toStdString().c_str())));
 
 
     //post-processing
@@ -607,7 +607,7 @@ void autotrace_largeScale(V3DPluginCallback2 &callback, QWidget *parent)
      callback.callPluginFunc(full_plugin_name_sort,func_name_sort, input_sort,output);
 
      NeuronTree nt_sort = readSWC_file(finalswcfilename);
-     NeuronTree nt_pruned = swc_pruning(nt_sort,5.0);
+     NeuronTree nt_pruned = swc_pruning(nt_sort,10.0);
 
      export_list2file(nt_pruned.listNeuron, finalswcfilename, infostring);
 
