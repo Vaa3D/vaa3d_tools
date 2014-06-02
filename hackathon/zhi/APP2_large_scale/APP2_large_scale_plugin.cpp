@@ -11,7 +11,6 @@
 #include "stackutil.h"
 
 
-
 using namespace std;
 Q_EXPORT_PLUGIN2(APP2_large_scale, APP2_large_scale);
 #define getParent(n,nt) ((nt).listNeuron.at(n).pn<0)?(1000000000):((nt).hashNeuron.value((nt).listNeuron.at(n).pn))
@@ -236,7 +235,7 @@ void autotrace_largeScale(V3DPluginCallback2 &callback, QWidget *parent)
     head->root_z = vim.lut[soma_index].start_pos[2] - vim.min_vim[2] + tmpz ;
 
     head->tc_index = soma_index;
-    head->tilename = QFileInfo(tcfile).path().append("/").append(QString(region_name));
+    head->tilename = QFileInfo(tcfile).path().append("/tmp/").append(QString(region_name));
     head->ref_index = -1;
 
     head->start[0] = start[0];
@@ -254,8 +253,17 @@ void autotrace_largeScale(V3DPluginCallback2 &callback, QWidget *parent)
     timer1.start();
 
     QString finalswcfilename = QFileInfo(tcfile).path().append("/").append("APP2_largescale.swc");
+    QString tmpfolder = QFileInfo(tcfile).path()+("/tmp");
+    system(qPrintable(QString("mkdir %1").arg(tmpfolder.toStdString().c_str())));
+    if(tmpfolder.isEmpty())
+    {
 
-    int swc_type = 1;
+        printf("Can not create a tmp folder!\n");
+        return;
+    }
+
+
+    int swc_type = 2;
     while(walker != NULL)
     {
         ImageMarker S;
@@ -401,7 +409,7 @@ void autotrace_largeScale(V3DPluginCallback2 &callback, QWidget *parent)
                         tmps.setNum(newNode->start[1]).prepend("_y"); startingpos += tmps;
                         QString region_name = startingpos + ".raw";
 
-                        newNode->tilename = QFileInfo(tcfile).path().append("/").append(QString(region_name));
+                        newNode->tilename = QFileInfo(tcfile).path().append("/tmp/").append(QString(region_name));
                         newNode->ref_index = walker->tc_index;
 
                         newNode->next = NULL;
@@ -427,7 +435,7 @@ void autotrace_largeScale(V3DPluginCallback2 &callback, QWidget *parent)
                         tmps.setNum(newNode->start[1]).prepend("_y"); startingpos += tmps;
                         QString region_name = startingpos + ".raw";
 
-                        newNode->tilename = QFileInfo(tcfile).path().append("/").append(QString(region_name));
+                        newNode->tilename = QFileInfo(tcfile).path().append("/tmp/").append(QString(region_name));
                         newNode->ref_index = walker->tc_index;
 
                         newNode->next = NULL;
@@ -454,7 +462,7 @@ void autotrace_largeScale(V3DPluginCallback2 &callback, QWidget *parent)
                         tmps.setNum(newNode->start[1]).prepend("_y"); startingpos += tmps;
                         QString region_name = startingpos + ".raw";
 
-                        newNode->tilename = QFileInfo(tcfile).path().append("/").append(QString(region_name));
+                        newNode->tilename = QFileInfo(tcfile).path().append("/tmp/").append(QString(region_name));
                         newNode->ref_index = walker->tc_index;
 
                         newNode->next = NULL;
@@ -480,7 +488,7 @@ void autotrace_largeScale(V3DPluginCallback2 &callback, QWidget *parent)
                         tmps.setNum(newNode->start[1]).prepend("_y"); startingpos += tmps;
                         QString region_name = startingpos + ".raw";
 
-                        newNode->tilename = QFileInfo(tcfile).path().append("/").append(QString(region_name));
+                        newNode->tilename = QFileInfo(tcfile).path().append("/tmp/").append(QString(region_name));
                         newNode->ref_index = walker->tc_index;
 
                         newNode->next = NULL;
@@ -560,6 +568,9 @@ void autotrace_largeScale(V3DPluginCallback2 &callback, QWidget *parent)
         walker = walker->next;
         swc_type++;
     }
+
+    system(qPrintable(QString("rm -r %1").arg(tmpfolder.toStdString().c_str())));
+
 
     //post-processing
 
