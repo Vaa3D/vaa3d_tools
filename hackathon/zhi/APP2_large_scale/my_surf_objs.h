@@ -140,6 +140,8 @@ vector<MyMarker*> readSWC_file(string swc_file);
 bool readSWC_file(string swc_file, vector<MyMarker> & outmarkers);
 bool saveSWC_file(string swc_file, vector<MyMarker*> & out_markers);
 bool saveSWC_file(string marker_file, vector<MyMarker*> & outmarkers, list<string> & infostring);
+bool saveSWC_file_pn(string swc_file, vector<MyMarker*> & out_markers,int pn);
+
     
 class NeuronSWC; //from vaa3d's basic_surf_objs.h // added by PHC, 2013-01-03
 bool saveSWC_file(string marker_file, vector<NeuronSWC*> & outmarkers, list<string> & infostring);

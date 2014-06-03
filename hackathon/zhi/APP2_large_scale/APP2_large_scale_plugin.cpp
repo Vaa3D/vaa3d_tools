@@ -30,7 +30,7 @@ struct root_node
 
     V3DLONG start[3];
     V3DLONG end[3];
-
+    V3DLONG parent;
     QString tilename;
 
     struct root_node* next;
@@ -245,7 +245,7 @@ void autotrace_largeScale(V3DPluginCallback2 &callback, QWidget *parent)
     head->end[1] = end[1];
     head->end[2] = end[2];
 
-
+    head->parent = -1;
     head->next = NULL;
     walker = head;
 
@@ -353,6 +353,7 @@ void autotrace_largeScale(V3DPluginCallback2 &callback, QWidget *parent)
              walker_inside = walker_inside->next;
         }
 
+        int tip_num = 0;
         for (int i=0;i<list.size();i++)
         {
 
@@ -363,141 +364,206 @@ void autotrace_largeScale(V3DPluginCallback2 &callback, QWidget *parent)
 
                 if( curr.x < 0.02* dialog.block_size || curr.x > 0.98 * dialog.block_size || curr.y < 0.02 * dialog.block_size || curr.y > 0.98*dialog.block_size)
                 {
-
-                    int flag = 0;
-                    if(walker->ref_index != -1)
-                    {
-                        NeuronTree ref_nt = readSWC_file(finalswcfilename);
-                        int shift_x = curr.x + walker->start[0];;
-                        int shift_y = curr.y + walker->start[1];;
-                        int shift_z = curr.z + walker->start[2];
-
-                        for(int d = 0; d < ref_nt.listNeuron.size();d++)
-                        {
-
-                            NeuronSWC ref_curr = ref_nt.listNeuron.at(d);
-                            double dis = sqrt(pow2(ref_curr.x - shift_x) + pow2(ref_curr.y - shift_y) + pow2(ref_curr.z - shift_z));
-                            if(dis < 20.0)
-                            {
-                                flag = 1;
-                                break;
-                            }
-
-                        }
-                    }
-
-                    if(flag == 1)
-                        continue;
-
-                    if(curr.x < 0.02* dialog.block_size)
-                    {
-
-                        newNode =  new root_node[1];
-                        newNode->root_x =  dialog.block_size * 0.9 + curr.x;
-                        newNode->root_y = curr.y;
-                        newNode->root_z = curr.z;
-
-                        newNode->start[0] = walker->start[0] - dialog.block_size * 0.9;
-                        newNode->start[1] = walker->start[1];
-                        newNode->start[2] = walker->start[2];
-                        newNode->end[0] = newNode->start[0] + dialog.block_size - 1;;
-                        newNode->end[1] = walker->end[1];
-                        newNode->end[2] = walker->end[2];
-
-                        QString startingpos="", tmps;
-                        tmps.setNum(newNode->start[0]).prepend("x"); startingpos += tmps;
-                        tmps.setNum(newNode->start[1]).prepend("_y"); startingpos += tmps;
-                        QString region_name = startingpos + ".raw";
-
-                        newNode->tilename = QFileInfo(tcfile).path().append("/tmp/").append(QString(region_name));
-                        newNode->ref_index = walker->tc_index;
-
-                        newNode->next = NULL;
-                        walker_inside->next = newNode;
-                        walker_inside = walker_inside->next;
-                    }
-                    else if(curr.x > 0.98 * dialog.block_size)
-                    {
-                        newNode =  new root_node[1];
-                        newNode->root_x =  curr.x - dialog.block_size * 0.9;
-                        newNode->root_y = curr.y;
-                        newNode->root_z = curr.z;
-
-                        newNode->start[0] = walker->start[0] + dialog.block_size * 0.9 + 1;
-                        newNode->start[1] = walker->start[1];
-                        newNode->start[2] = walker->start[2];
-                        newNode->end[0] = newNode->start[0] + dialog.block_size - 1;;
-                        newNode->end[1] = walker->end[1];
-                        newNode->end[2] = walker->end[2];
-
-                        QString startingpos="", tmps;
-                        tmps.setNum(newNode->start[0]).prepend("x"); startingpos += tmps;
-                        tmps.setNum(newNode->start[1]).prepend("_y"); startingpos += tmps;
-                        QString region_name = startingpos + ".raw";
-
-                        newNode->tilename = QFileInfo(tcfile).path().append("/tmp/").append(QString(region_name));
-                        newNode->ref_index = walker->tc_index;
-
-                        newNode->next = NULL;
-                        walker_inside->next = newNode;
-                        walker_inside = walker_inside->next;
-                    }
-                    else if(curr.y < 0.02* dialog.block_size)
-                    {
-
-                        newNode =  new root_node[1];
-                        newNode->root_x = curr.x;
-                        newNode->root_y = dialog.block_size * 0.9 + curr.y;
-                        newNode->root_z = curr.z;
-
-                        newNode->start[0] = walker->start[0];
-                        newNode->start[1] = walker->start[1] - dialog.block_size * 0.9;
-                        newNode->start[2] = walker->start[2];
-                        newNode->end[0] = walker->end[0];
-                        newNode->end[1] = newNode->start[1]+ dialog.block_size - 1;
-                        newNode->end[2] = walker->end[2];
-
-                        QString startingpos="", tmps;
-                        tmps.setNum(newNode->start[0]).prepend("x"); startingpos += tmps;
-                        tmps.setNum(newNode->start[1]).prepend("_y"); startingpos += tmps;
-                        QString region_name = startingpos + ".raw";
-
-                        newNode->tilename = QFileInfo(tcfile).path().append("/tmp/").append(QString(region_name));
-                        newNode->ref_index = walker->tc_index;
-
-                        newNode->next = NULL;
-                        walker_inside->next = newNode;
-                        walker_inside = walker_inside->next;
-                    }
-                    else if(curr.y > 0.98 * dialog.block_size)
-                    {
-                        newNode =  new root_node[1];
-                        newNode->root_x =  curr.x;
-                        newNode->root_y = curr.y - dialog.block_size * 0.9;
-                        newNode->root_z = curr.z;
-
-                        newNode->start[0] = walker->start[0];
-                        newNode->start[1] = walker->start[1]  + dialog.block_size * 0.9 + 1;
-                        newNode->start[2] = walker->start[2];
-                        newNode->end[0] = walker->end[0];
-                        newNode->end[1] = newNode->start[1] + dialog.block_size - 1;
-                        newNode->end[2] = walker->end[2];
-
-                        QString startingpos="", tmps;
-                        tmps.setNum(newNode->start[0]).prepend("x"); startingpos += tmps;
-                        tmps.setNum(newNode->start[1]).prepend("_y"); startingpos += tmps;
-                        QString region_name = startingpos + ".raw";
-
-                        newNode->tilename = QFileInfo(tcfile).path().append("/tmp/").append(QString(region_name));
-                        newNode->ref_index = walker->tc_index;
-
-                        newNode->next = NULL;
-                        walker_inside->next = newNode;
-                        walker_inside = walker_inside->next;
-                    }
-               }
-
+                    tip_num++;
+                }
             }
+        }
+
+
+        int *tip_index = new int[tip_num];
+        double *tip_radius = new double[tip_num];
+
+        int d = 0;
+        for (int i=0;i<list.size();i++)
+        {
+
+            if (childs[i].size()==0)
+            {
+                int pa_tip = getParent(i,nt);
+                NeuronSWC curr = list.at(pa_tip);
+
+                if( curr.x < 0.02* dialog.block_size || curr.x > 0.98 * dialog.block_size || curr.y < 0.02 * dialog.block_size || curr.y > 0.98*dialog.block_size)
+                {
+                    tip_index[d] = pa_tip;
+                    for(int j = 0; j < 4; j++)
+                    {
+                        pa_tip = getParent(pa_tip,nt);
+                        if( list.at(pa_tip).pn < 0)
+                            break;
+                    }
+                    tip_radius[d] = list.at(pa_tip).radius;
+                    d++;
+                }
+            }
+        }
+
+        if(tip_num > 1)
+        {
+            bool bDone = false;
+            while (!bDone)
+             {
+                 bDone = true;
+
+                 for (int i = 0; i != tip_num - 1; ++i)
+                 {
+                     if ( tip_radius[i] < tip_radius[i + 1] )
+                     {
+                         double tmp_radius = tip_radius[i];
+                         tip_radius[i] = tip_radius[i+1];
+                         tip_radius[i+1] = tmp_radius;
+
+                         int tmp_index = tip_index[i];
+                         tip_index[i] = tip_index[i+1];
+                         tip_index[i+1] = tmp_index;
+
+                         bDone = false;
+                     }
+                 }
+             }
+        }
+
+        for (int i=0;i< tip_num;i++)
+        {
+
+            NeuronSWC curr = list.at(tip_index[i]);
+            int flag = 0;
+            if(walker->ref_index != -1)
+            {
+                NeuronTree ref_nt = readSWC_file(finalswcfilename);
+                int shift_x = curr.x + walker->start[0];;
+                int shift_y = curr.y + walker->start[1];;
+                int shift_z = curr.z + walker->start[2];
+
+                for(int d = 0; d < ref_nt.listNeuron.size();d++)
+                {
+
+                    NeuronSWC ref_curr = ref_nt.listNeuron.at(d);
+                    double dis = sqrt(pow2(ref_curr.x - shift_x) + pow2(ref_curr.y - shift_y) + pow2(ref_curr.z - shift_z));
+                    if(dis < 20.0)
+                    {
+                        flag = 1;
+                        break;
+                    }
+
+                }
+            }
+
+            if(flag == 1)
+                continue;
+
+            ifstream ifs_out(finalswcfilename.toStdString().c_str());
+
+            newNode =  new root_node[1];
+            if(ifs_out)
+            {
+                vector<MyMarker*> out_swc = readSWC_file(finalswcfilename.toStdString());
+                newNode->parent = out_swc.size() + tip_index[i];
+            }
+            else
+                newNode->parent = tip_index[i];
+            if(curr.x < 0.02* dialog.block_size)
+            {
+
+                newNode->root_x =  dialog.block_size * 0.9 + curr.x;
+                newNode->root_y = curr.y;
+                newNode->root_z = curr.z;
+
+                newNode->start[0] = walker->start[0] - dialog.block_size * 0.9;
+                newNode->start[1] = walker->start[1];
+                newNode->start[2] = walker->start[2];
+                newNode->end[0] = newNode->start[0] + dialog.block_size - 1;;
+                newNode->end[1] = walker->end[1];
+                newNode->end[2] = walker->end[2];
+
+                QString startingpos="", tmps;
+                tmps.setNum(newNode->start[0]).prepend("x"); startingpos += tmps;
+                tmps.setNum(newNode->start[1]).prepend("_y"); startingpos += tmps;
+                QString region_name = startingpos + ".raw";
+
+                newNode->tilename = QFileInfo(tcfile).path().append("/tmp/").append(QString(region_name));
+                newNode->ref_index = walker->tc_index;
+
+                newNode->next = NULL;
+                walker_inside->next = newNode;
+                walker_inside = walker_inside->next;
+            }
+            else if(curr.x > 0.98 * dialog.block_size)
+            {
+                newNode->root_x =  curr.x - dialog.block_size * 0.9;
+                newNode->root_y = curr.y;
+                newNode->root_z = curr.z;
+
+                newNode->start[0] = walker->start[0] + dialog.block_size * 0.9 + 1;
+                newNode->start[1] = walker->start[1];
+                newNode->start[2] = walker->start[2];
+                newNode->end[0] = newNode->start[0] + dialog.block_size - 1;;
+                newNode->end[1] = walker->end[1];
+                newNode->end[2] = walker->end[2];
+
+                QString startingpos="", tmps;
+                tmps.setNum(newNode->start[0]).prepend("x"); startingpos += tmps;
+                tmps.setNum(newNode->start[1]).prepend("_y"); startingpos += tmps;
+                QString region_name = startingpos + ".raw";
+
+                newNode->tilename = QFileInfo(tcfile).path().append("/tmp/").append(QString(region_name));
+                newNode->ref_index = walker->tc_index;
+
+                newNode->next = NULL;
+                walker_inside->next = newNode;
+                walker_inside = walker_inside->next;
+            }
+            else if(curr.y < 0.02* dialog.block_size)
+            {
+
+                newNode->root_x = curr.x;
+                newNode->root_y = dialog.block_size * 0.9 + curr.y;
+                newNode->root_z = curr.z;
+
+                newNode->start[0] = walker->start[0];
+                newNode->start[1] = walker->start[1] - dialog.block_size * 0.9;
+                newNode->start[2] = walker->start[2];
+                newNode->end[0] = walker->end[0];
+                newNode->end[1] = newNode->start[1]+ dialog.block_size - 1;
+                newNode->end[2] = walker->end[2];
+
+                QString startingpos="", tmps;
+                tmps.setNum(newNode->start[0]).prepend("x"); startingpos += tmps;
+                tmps.setNum(newNode->start[1]).prepend("_y"); startingpos += tmps;
+                QString region_name = startingpos + ".raw";
+
+                newNode->tilename = QFileInfo(tcfile).path().append("/tmp/").append(QString(region_name));
+                newNode->ref_index = walker->tc_index;
+
+                newNode->next = NULL;
+                walker_inside->next = newNode;
+                walker_inside = walker_inside->next;
+            }
+            else if(curr.y > 0.98 * dialog.block_size)
+            {
+                newNode->root_x =  curr.x;
+                newNode->root_y = curr.y - dialog.block_size * 0.9;
+                newNode->root_z = curr.z;
+
+                newNode->start[0] = walker->start[0];
+                newNode->start[1] = walker->start[1]  + dialog.block_size * 0.9 + 1;
+                newNode->start[2] = walker->start[2];
+                newNode->end[0] = walker->end[0];
+                newNode->end[1] = newNode->start[1] + dialog.block_size - 1;
+                newNode->end[2] = walker->end[2];
+
+                QString startingpos="", tmps;
+                tmps.setNum(newNode->start[0]).prepend("x"); startingpos += tmps;
+                tmps.setNum(newNode->start[1]).prepend("_y"); startingpos += tmps;
+                QString region_name = startingpos + ".raw";
+
+                newNode->tilename = QFileInfo(tcfile).path().append("/tmp/").append(QString(region_name));
+                newNode->ref_index = walker->tc_index;
+
+                newNode->next = NULL;
+                walker_inside->next = newNode;
+                walker_inside = walker_inside->next;
+            }
+
         }
 
 
@@ -537,6 +603,7 @@ void autotrace_largeScale(V3DPluginCallback2 &callback, QWidget *parent)
         {
             vector<MyMarker*> final_out_swc = readSWC_file(finalswcfilename.toStdString());
             vector<MyMarker*> final_out_swc_updated =  final_out_swc;
+
             for(int j = 0; j < temp_out_swc.size(); j++)
             {
                 temp_out_swc[j]->x = temp_out_swc[j]->x + walker->start[0];

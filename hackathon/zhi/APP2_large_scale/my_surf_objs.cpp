@@ -263,6 +263,43 @@ bool saveSWC_file(string swc_file, vector<MyMarker*> & outmarkers, list<string> 
 	return true;
 }
 
+bool saveSWC_file_pn(string swc_file, vector<MyMarker*> & outmarkers, int pn)
+{
+    if(swc_file.find_last_of(".dot") == swc_file.size() - 1) return saveDot_file(swc_file, outmarkers);
+
+    cout<<"marker num = "<<outmarkers.size()<<", save swc file to "<<swc_file<<endl;
+    map<MyMarker*, int> ind;
+    ofstream ofs(swc_file.c_str());
+
+    if(ofs.fail())
+    {
+        cout<<"open swc file error"<<endl;
+        return false;
+    }
+    ofs<<"#name "<<swc_file<<endl;
+    ofs<<"#comment "<<endl;
+
+    list<string>  nullinfostr;
+    list<string>::iterator it;
+    for (it=nullinfostr.begin();it!=nullinfostr.end(); it++)
+        ofs<< *it <<endl;
+
+    ofs<<"##n,type,x,y,z,radius,parent"<<endl;
+    for(int i = 0; i < outmarkers.size(); i++) ind[outmarkers[i]] = i+1;
+
+    for(int i = 0; i < outmarkers.size(); i++)
+    {
+        MyMarker * marker = outmarkers[i];
+        int parent_id;
+        if(marker->parent == 0) parent_id = -1;
+        else parent_id = ind[marker->parent];
+        if(parent_id <= 0 && marker->type != 2)  parent_id = pn;
+        ofs<<i+1<<" "<<marker->type<<" "<<marker->x<<" "<<marker->y<<" "<<marker->z<<" "<<marker->radius<<" "<<parent_id<<endl;
+    }
+    ofs.close();
+    return true;
+}
+
 bool saveSWC_file(string swc_file, vector<NeuronSWC*> & outmarkers, list<string> & infostring)
 {
 	cout<<"marker num = "<<outmarkers.size()<<", save swc file to "<<swc_file<<endl;
