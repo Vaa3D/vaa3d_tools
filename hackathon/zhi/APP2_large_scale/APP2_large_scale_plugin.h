@@ -144,6 +144,8 @@ class APP2largeScaleDialog : public QDialog
             connect(iswb_checker, SIGNAL(stateChanged(int)), this, SLOT(update()));
             connect(b256_checker, SIGNAL(stateChanged(int)), this, SLOT(update()));
             connect(b_radius2Dchecker, SIGNAL(stateChanged(int)), this, SLOT(update()));
+
+            connect(block_spinbox, SIGNAL(valueChanged(int)), this, SLOT(update()));
             connect(openTcFile, SIGNAL(clicked()), this, SLOT(_slots_openTcFile()));
             update();
         }
