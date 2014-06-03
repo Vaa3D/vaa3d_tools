@@ -22,18 +22,19 @@
 *       specific prior written permission.
 ********************************************************************************************************************************************************************************************/
 
-#ifndef _STACKED_VOLUME_H
-#define _STACKED_VOLUME_H
+#ifndef _IIM_STACKED_VOLUME_H
+#define _IIM_STACKED_VOLUME_H
 
 #include "VirtualVolume.h" // ADDED
 #include <list>
 #include <string>
+#include "Stack.h"
 
 //FORWARD-DECLARATIONS
-class  Stack;
+//class  Stack;
 
 //every object of this class has the default (1,2,3) reference system
-class StackedVolume : public VirtualVolume
+class iim::StackedVolume : public iim::VirtualVolume
 {
 	private:
 		

@@ -22,8 +22,8 @@
 *       specific prior written permission.
 ********************************************************************************************************************************************************************************************/
 
-#ifndef _VIRTUAL_VOLUME_H
-#define _VIRTUAL_VOLUME_H
+#ifndef _IIM_VIRTUAL_VOLUME_H
+#define _IIM_VIRTUAL_VOLUME_H
 
 # define HALVE_BY_MEAN 1
 # define HALVE_BY_MAX  2
@@ -32,7 +32,7 @@
 
 #include "IM_config.h"
 
-class VirtualVolume {
+class iim::VirtualVolume {
 
 protected:
 	//******OBJECT ATTRIBUTES******
@@ -208,6 +208,28 @@ public:
                                       const char* img_format = iim::DEF_IMG_FORMAT.c_str(), int img_depth = iim::DEF_IMG_DEPTH ) throw (iim::IOException);
 
 
+
+	/*************************************************************************************************************
+    * Save image method from iim::uint8 raw data to Tiff 3D (multipage) format. <> parameters are mandatory, while [] are optional.
+    * <img_path>                : absolute path of image to be saved. It DOES NOT include its extension, which is
+    *                             provided by the [img_format] parameter.
+    * <raw_ch>                  : array of pointers to raw data of the channels with values in [0,255].
+    *                             For grayscale images raw_ch[0] is the pointer to the raw image data.
+    *                             For colour images raw_ch[0] is the pointer to the raw image data of the RED channel.
+    * <n_chans>                 : number of channels (length of raw_ch).
+	* <offset>                  : offset to be added to raw_ch[i] to get actual data
+    * <raw_img_height/width>    : dimensions of raw_img.        
+    * [start/end_height/width]  : optional ROI (region of interest) to be set on the given image.
+    * [img_format]              : image format extension to be used (e.g. "tif", "png", etc.)
+    * [img_depth]               : image bitdepth to be used (8 or 16)
+    **************************************************************************************************************/
+	// WARNING: current implementation could not work if the slice is not appended after the last one
+	//          in other words the multipage file should have exactly (slice-1) pages
+    static void saveImage_from_UINT8_to_Tiff3D (int slice, std::string img_path, 
+                                      iim::uint8** raw_ch, int n_chans, iim::sint64 offset,
+									  int raw_img_height, int raw_img_width,
+                                      int start_height=0, int end_height =-1, int start_width=0, int end_width=-1,
+                                      const char* img_format = iim::DEF_IMG_FORMAT.c_str(), int img_depth = iim::DEF_IMG_DEPTH ) throw (iim::IOException);
 
 	/*************************************************************************************************************
 	* Performs downsampling at a halved frequency on the given 3D image.  The given image is overwritten in order

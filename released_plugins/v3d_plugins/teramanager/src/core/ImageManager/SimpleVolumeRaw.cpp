@@ -313,7 +313,7 @@ uint8 *SimpleVolumeRaw::loadSubvolume_to_UINT8(int V0,int V1, int H0, int H1, in
 					{
 						if ( sz ) delete[] sz;
 						char msg[STATIC_STRINGS_SIZE];
-						sprintf(msg,"in SimpleVolumeRaw::loadSubvolume_to_UINT8: raw image contains more than one slice", 
+						sprintf(msg,"in SimpleVolumeRaw::loadSubvolume_to_UINT8: raw image contains more than one slice (%s)", 
 							slice_fullpath);
                         throw IOException(msg);
 					}		

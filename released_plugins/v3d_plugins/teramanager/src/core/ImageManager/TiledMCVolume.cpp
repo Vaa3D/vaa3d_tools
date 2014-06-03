@@ -463,7 +463,7 @@ void TiledMCVolume::init()
 		tmp_path.append("/");
 		tmp_path.append(*entry_i);
 
-		vol_ch[c] = new TiledVolume(tmp_path.c_str());
+		vol_ch[c] = new TiledVolume(tmp_path.c_str(),reference_system,VXL_1,VXL_2,VXL_3); // creates the metadata file if it does not exist
 
 		if (N_ROWS == 0)
 			N_ROWS = vol_ch[c]->getN_ROWS();

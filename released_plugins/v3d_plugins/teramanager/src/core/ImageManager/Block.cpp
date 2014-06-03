@@ -34,6 +34,16 @@
 #endif
 #include <list>
 #include <string>
+
+// 140427_IANNELLO
+#ifdef min
+#undef min
+#endif
+
+#ifdef max
+#undef max
+#endif
+
 #include <cv.h>
 
 using namespace std;
@@ -426,7 +436,7 @@ Segm_t* Block::Intersects(int D0, int D1) {
 	found1 = false;
 	i1     = (int)(N_BLOCKS-1);
 	while ( i1>0 && !found1 )
-		if ( D1 > BLOCK_ABS_D[i1] )
+		if ( D1 >= BLOCK_ABS_D[i1] ) // GI_140507: added '='
 			found1 = true;
 		else
 			i1--;

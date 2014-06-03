@@ -75,7 +75,7 @@ void SimpleVolume::init()
 	//LOCAL VARIABLES
 	DIR *cur_dir_lev1;				//pointer to DIR, the data structure that represents a DIRECTORY (level 1 of hierarchical structure)
 	int i=0,j=0;					//for counting of N_ROWS, N_COLS
-    list<Stack*> stacks_list;                       //each stack found in the hierarchy is pushed into this list
+    list<iim::Stack*> stacks_list;                       //each stack found in the hierarchy is pushed into this list
 	char stack_i_j_path[STATIC_STRINGS_SIZE];
 
 	//obtaining DIR pointer to root_dir (=NULL if directory doesn't exist)
@@ -93,14 +93,14 @@ void SimpleVolume::init()
 
 	//allocating the only stack
 	sprintf(stack_i_j_path,"%s",""); 
-	Stack *new_stk = new Stack(this,i,j,stack_i_j_path);
+	iim::Stack *new_stk = new iim::Stack(this,i,j,stack_i_j_path);
 	stacks_list.push_back(new_stk);
 
 	//converting stacks_list (STL list of Stack*) into STACKS (2-D array of Stack*)
-	STACKS = new Stack**[N_ROWS];
+	STACKS = new iim::Stack**[N_ROWS];
 	for(int row=0; row < N_ROWS; row++)
-		STACKS[row] = new Stack*[N_COLS];
-	for(list<Stack*>::iterator i = stacks_list.begin(); i != stacks_list.end(); i++)
+		STACKS[row] = new iim::Stack*[N_COLS];
+	for(list<iim::Stack*>::iterator i = stacks_list.begin(); i != stacks_list.end(); i++)
 		STACKS[(*i)->getROW_INDEX()][(*i)->getCOL_INDEX()] = (*i);
 
 	/******************** 3) COMPUTING VOLUME DIMENSIONS ********************  

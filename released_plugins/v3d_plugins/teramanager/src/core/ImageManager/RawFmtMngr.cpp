@@ -927,7 +927,8 @@ char *initRawFile(char *filename, const V3DLONG *sz, int datatype) {
 	int i;
 	char *completeFilename = new char[strlen(filename)+4+1];
 	strcpy(completeFilename,filename);
-	strcat(completeFilename,".raw");
+	strcat(completeFilename,".");
+	strcat(completeFilename,VAA3D_SUFFIX);
 
 	FILE * fid = fopen(completeFilename, "wb");
 	if (!fid)
@@ -1453,7 +1454,7 @@ char *convert2depth8bits ( int red_factor, sint64 totalBlockSize, sint64 sbv_cha
 		j = 0;              // MSB is the first
 	}
 	else {
-		return "unknown machine endianess"; 
+		return ((char *) "unknown machine endianess"); 
 	}
 
 	// look for maximum values in each channel and rescale each channel separately
@@ -1472,7 +1473,7 @@ char *convert2depth8bits ( int red_factor, sint64 totalBlockSize, sint64 sbv_cha
 				count++;
             temp[i] <<= p;
 		}
-		printf("\t\t\t\tin RawFmtMngr - convert2depth8bits: c=%d, maxVal=%d, p=%d, count=%ld\n\n",c,maxVal,p,count);
+		printf("\t\t\t\tin RawFmtMngr - convert2depth8bits: c=%d, maxVal=%d, p=%d, count=%lld\n\n",c,maxVal,p,count);
 	}
 	
 	uint8 *temp_buf = new uint8[totalUnits];

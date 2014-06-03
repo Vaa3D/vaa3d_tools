@@ -30,6 +30,7 @@
 #include "TiledMCVolume.h"
 #include "StackedVolume.h"
 #include "RawFmtMngr.h"
+#include "Tiff3DMngr.h"
 #include "TimeSeries.h"
 
 #include <cxcore.h>
@@ -294,23 +295,27 @@ void VirtualVolume::saveImage_to_Vaa3DRaw(int slice, std::string img_path, real3
     /**/iim::debug(iim::LEV3, strprintf("img_path=%s, raw_img_height=%d, raw_img_width=%d, start_height=%d, end_height=%d, start_width=%d, end_width=%d", img_path.c_str(), raw_img_height, raw_img_width, start_height, end_height, start_width, end_width).c_str(), __iim__current__function__);
 
     //checking for non implemented features
-	char msg[STATIC_STRINGS_SIZE];
-	sprintf(msg,"in VirtualVolume::saveImage_to_Vaa3DRaw: not implemented yet");
-    throw IOException(msg);
-
-	if( img_depth != 8 ) {
-		char err_msg[STATIC_STRINGS_SIZE];
-		sprintf(err_msg,"SimpleVolume::loadSubvolume_to_UINT8: invalid number of bits per channel (%d)",img_depth); 
-        throw IOException(err_msg);
+	if ( strcmp(img_format,"Vaa3DRaw")!=0 && strcmp(img_format,"Tiff3D")!=0 ) { // WARNING: there is not a well defined convention yet for specify image format
+		char msg[STATIC_STRINGS_SIZE];
+		sprintf(msg,"in VirtualVolume::saveImage_to_Vaa3DRaw: format \"%s\" not implemented yet",img_format);
+		throw IOException(msg);
 	}
 
-	//uint8  *row_data_8bit;
-	//uint16 *row_data_16bit;
+	uint8  *row_data_8bit;
+	uint16 *row_data_16bit;
 	//uint32 img_data_step;
-	//float scale_factor_16b, scale_factor_8b;
+	float scale_factor_16b, scale_factor_8b;
 	int img_height, img_width;
-	//int i, j;
+	int i, j, k;
 	char img_filepath[5000];
+
+	// WARNING: currently supported only 8/16 bits depth by VirtualVolume::saveImage_from_UINT8_to_Vaa3DRaw
+	if(img_depth != 8 && img_depth != 16)
+	{
+		char err_msg[STATIC_STRINGS_SIZE];		
+		sprintf(err_msg,"in saveImage_to_Vaa3DRaw(..., img_depth=%d, ...): unsupported bit depth\n",img_depth);
+        throw IOException(err_msg);
+	}
 
 	//setting some default parameters and image dimensions
 	end_height = (end_height == -1 ? raw_img_height - 1 : end_height);
@@ -322,46 +327,52 @@ void VirtualVolume::saveImage_to_Vaa3DRaw(int slice, std::string img_path, real3
 	if(!(start_height>=0 && end_height>start_height && end_height<raw_img_height && start_width>=0 && end_width>start_width && end_width<raw_img_width))
 	{
 		char err_msg[STATIC_STRINGS_SIZE];
-		sprintf(err_msg,"in saveImage(..., raw_img_height=%d, raw_img_width=%d, start_height=%d, end_height%d, start_width=%d, end_width=%d): invalid image portion\n",
+		sprintf(err_msg,"in saveImage_to_Vaa3DRaw(..., raw_img_height=%d, raw_img_width=%d, start_height=%d, end_height%d, start_width=%d, end_width=%d): invalid image portion\n",
 			raw_img_height, raw_img_width, start_height, end_height, start_width, end_width);
         throw IOException(err_msg);
 	}
-	if(img_depth != 8 && img_depth != 16)
-	{
-		char err_msg[STATIC_STRINGS_SIZE];		
-		sprintf(err_msg,"in saveImage(..., img_depth=%d, ...): unsupported bit depth\n",img_depth);
-        throw IOException(err_msg);
+
+	if ( strcmp(img_format,"Vaa3DRaw")==0 ) {
+		//generating complete path for image to be saved
+		sprintf(img_filepath, "%s.%s", img_path.c_str(), VAA3D_SUFFIX);
+	}
+	else if ( strcmp(img_format,"Tiff3D")==0 ) {
+		sprintf(img_filepath, "%s.%s", img_path.c_str(), "tif");
 	}
 
-	//generating complete path for image to be saved
-	sprintf(img_filepath, "%s.%s", img_path.c_str(), img_format);
-
 	//converting raw data in image data
-	//scale_factor_16b = 65535.0F;
-	//scale_factor_8b  = 255.0F;
-	//if(img->depth == IPL_DEPTH_8U)
-	//{
-	//	img_data_step = img->widthStep / sizeof(uint8);
-	//	for(i = 0; i <img_height; i++)
-	//	{
-	//		row_data_8bit = ((uint8*)(img->imageData)) + i*img_data_step;
-	//		for(j = 0; j < img_width; j++)
-	//			row_data_8bit[j] = (uint8) (raw_img[(i+start_height)*raw_img_width+j+start_width] * scale_factor_8b);
-	//	}
-	//}
-	//else
-	//{
-	//	img_data_step = img->widthStep / sizeof(uint16);
-	//	for(i = 0; i <img_height; i++)
-	//	{
-	//		row_data_16bit = ((uint16*)(img->imageData)) + i*img_data_step;
-	//		for(j = 0; j < img_width; j++)
-	//			row_data_16bit[j] = (uint16) (raw_img[(i+start_height)*raw_img_width+j+start_width] * scale_factor_16b);
-	//	}
-	//}
-	
-	// dummy assignment: just to avoid warnings
-	raw_img[slice] = 0.0;
+	scale_factor_16b = 65535.0F;
+	scale_factor_8b  = 255.0F;
+	if(img_depth == 8)
+	{
+		row_data_8bit = new uint8[img_height * img_width];
+		for(i = 0, k = 0; i <img_height; i++)
+		{
+			for(j = 0; j < img_width; j++, k++)
+				row_data_8bit[k] = (uint8) (raw_img[(i+start_height)*raw_img_width+j+start_width] * scale_factor_8b);
+		}
+	}
+	else // img_depth = 16 (because of the check above)
+	{
+		row_data_16bit = new uint16[img_height * img_width];
+		for(i = 0, k = 0; i <img_height; i++)
+		{
+			for(j = 0; j < img_width; j++, k++)
+				row_data_16bit[k] = (uint16) (raw_img[(i+start_height)*raw_img_width+j+start_width] * scale_factor_16b);
+		}
+		row_data_8bit = (uint8 *) row_data_16bit;
+	}
+
+	if ( strcmp(img_format,"Vaa3DRaw")==0 ) {
+		VirtualVolume::saveImage_from_UINT8_to_Vaa3DRaw (slice,img_path, &row_data_8bit, 1, 0, 
+								raw_img_height, raw_img_width, 0, -1, 0, -1, img_format, img_depth); // the ROI coincides with the whole buffer (row_data8bit) 
+	}
+	else if ( strcmp(img_format,"Tiff3D")==0 ) {
+		VirtualVolume::saveImage_from_UINT8_to_Tiff3D (slice,img_path, &row_data_8bit, 1, 0, 
+								raw_img_height, raw_img_width, 0, -1, 0, -1, img_format, img_depth); // the ROI coincides with the whole buffer (row_data8bit) 
+	}
+
+	delete row_data_8bit;
 }
 
 
@@ -444,12 +455,95 @@ void VirtualVolume::saveImage_from_UINT8_to_Vaa3DRaw (int slice, std::string img
 	}
 
     //generating complete path for image to be saved
-    sprintf(buffer, "%s.%s", img_path.c_str(), img_format);
+    sprintf(buffer, "%s.%s", img_path.c_str(), VAA3D_SUFFIX);
 
 	char *err_rawfmt;
 	if ( (err_rawfmt = writeSlice2RawFile (buffer,slice,(unsigned char *)imageData,(int)img_height,(int)img_width)) != 0 ) {
 		char err_msg[STATIC_STRINGS_SIZE];
-		sprintf(err_msg,"VirtualVolume::saveImage_from_UINT8_to_Vaa3DRaw: error in saving slice %d (%d x %d) in file %s (writeSlice2RawFile: %s)", slice,img_height,img_width,buffer,err_rawfmt);
+		sprintf(err_msg,"VirtualVolume::saveImage_from_UINT8_to_Vaa3DRaw: error in saving slice %d (%lld x %lld) in file %s (writeSlice2RawFile: %s)", slice,img_height,img_width,buffer,err_rawfmt);
+        throw IOException(err_msg);
+	};
+
+	delete imageData;
+}
+
+/*************************************************************************************************************
+* Save image method from uint8 raw data to Tiff 3D (multiPAGE) format. <> parameters are mandatory, while [] are optional.
+* <img_path>                : absolute path of image to be saved. It DOES NOT include its extension, which is
+*                             provided by the [img_format] parameter.
+* <raw_ch>                  : array of pointers to raw data of the channels with values in [0,255].
+*                             For grayscale images raw_ch[0] is the pointer to the raw image data.
+*                             For colour images raw_ch[0] is the pointer to the raw image data of the RED channel.
+*                             WARNING: raw_ch elements should not be overwritten
+* <n_chans>                 : number of channels (length of raw_ch).
+* <offset>                  : offset to be added to raw_ch[i] to get actual data
+* <raw_img_height/width>    : dimensions of raw_img.        
+* [start/end_height/width]  : optional ROI (region of interest) to be set on the given image.
+* [img_format]              : image format extension to be used (e.g. "tif", "png", etc.)
+* [img_depth]               : image bitdepth to be used (8 or 16)
+**************************************************************************************************************/
+void VirtualVolume::saveImage_from_UINT8_to_Tiff3D (int slice, std::string img_path, uint8** raw_ch, int n_chans, sint64 offset, 
+                       int raw_img_height, int raw_img_width, int start_height, int end_height, int start_width,
+                       int end_width, const char* img_format, int img_depth ) throw (IOException)
+{
+    /**/iim::debug(iim::LEV3, strprintf("img_path=%s, raw_img_height=%d, raw_img_width=%d, start_height=%d, end_height=%d, start_width=%d, end_width=%d", img_path.c_str(), raw_img_height, raw_img_width, start_height, end_height, start_width, end_width).c_str(), __iim__current__function__);
+
+    //LOCAL VARIABLES
+    char buffer[STATIC_STRINGS_SIZE];
+    sint64 img_height, img_width;
+	sint64 img_width_b; // image width in bytes
+	int img_bytes_per_chan;
+
+	//add offset to raw_ch
+	//for each channel adds to raw_ch the offset of current slice from the beginning of buffer 
+	uint8** raw_ch_temp = new uint8 *[n_chans];
+	for (int i=0; i<n_chans; i++)
+		raw_ch_temp[i] = raw_ch[i] + offset;
+
+    //setting some default parameters and image dimensions
+    end_height = (end_height == -1 ? raw_img_height - 1 : end_height);
+    end_width  = (end_width  == -1 ? raw_img_width  - 1 : end_width );
+    img_height = end_height - start_height + 1;
+    img_width  = end_width  - start_width  + 1;
+
+    //checking parameters correctness
+    if(!(start_height>=0 && end_height>start_height && end_height<raw_img_height && start_width>=0 && end_width>start_width && end_width<raw_img_width))
+    {
+        sprintf(buffer,"in saveImage_from_UINT8(..., raw_img_height=%d, raw_img_width=%d, start_height=%d, end_height%d, start_width=%d, end_width=%d): invalid image portion\n",
+                raw_img_height, raw_img_width, start_height, end_height, start_width, end_width);
+        throw IOException(buffer);
+    }
+
+	if(img_depth != 8 && img_depth != 16 && n_chans == 1)
+	{
+		sprintf(buffer,"in saveImage_from_UINT8(..., img_depth=%d, ...): unsupported bit depth\n",img_depth);
+        throw IOException(buffer);
+	}
+	img_bytes_per_chan = (img_depth == 8) ? 1 : 2;
+	// all width parameters have to be multiplied by the number of bytes per channel
+	img_width_b    = img_width * img_bytes_per_chan; 
+	raw_img_width *= img_bytes_per_chan;
+	start_width   *= img_bytes_per_chan;
+
+	uint8 *imageData = new uint8[img_height * img_width_b * n_chans];
+	for(sint64 i=0; i<img_height; i++)
+	{
+		uint8* row_data_8bit = imageData + i*img_width_b*n_chans;
+		for(sint64 j=0; j<img_width_b; j++) {
+			for ( int c=0; c<n_chans; c++ ) {
+				row_data_8bit[j*n_chans + c] = raw_ch_temp[c][(i+start_height)*raw_img_width + (j+start_width)];
+            }
+		}
+	}
+
+    //generating complete path for image to be saved
+    sprintf(buffer, "%s.%s", img_path.c_str(), TIFF3D_SUFFIX);
+
+	char *err_tiff_fmt;
+	if ( (err_tiff_fmt = appendSlice2Tiff3DFile(buffer,slice,(unsigned char *)imageData,(int)img_height,(int)img_width)) != 0 ) {
+	//if ( (err_rawfmt = writeSlice2RawFile (buffer,slice,(unsigned char *)imageData,(int)img_height,(int)img_width)) != 0 ) {
+		char err_msg[STATIC_STRINGS_SIZE];
+		sprintf(err_msg,"VirtualVolume::saveImage_from_UINT8_to_Tiff3D: error in saving slice %d (%lld x %lld) in file %s (appendSlice2Tiff3DFile: %s)", slice,img_height,img_width,buffer,err_tiff_fmt);
         throw IOException(err_msg);
 	};
 

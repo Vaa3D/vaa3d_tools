@@ -57,10 +57,24 @@
 //#include <mach/mach.h>
 //#endif
 
+typedef struct {int V0, V1, H0, H1;} Rect_t; // used by iim::Stack and iim::Block
+
 namespace IconImageManager
 {
 
     /*******************
+    *    INTEFRACES    *
+    ********************
+    ---------------------------------------------------------------------------------------------------------------------------*/
+	class ProgressBar;
+	class Stack;
+	class Block;
+	class VirtualVolume;
+	class StackedVolume;
+    /*-------------------------------------------------------------------------------------------------------------------------*/
+
+	
+	/*******************
     *       TYPES      *
     ********************
     ---------------------------------------------------------------------------------------------------------------------------*/
@@ -105,6 +119,7 @@ namespace IconImageManager
     const double      PI = 3.14159265;                          // pi
     const int         TMITREE_MAX_HEIGHT  = 10;                 // maximum depth of the TMITREE
     const int         TMITREE_MIN_BLOCK_DIM = 250;              // minimum dimension of TMITREE block along X/Y/Z
+
     /*-------------------------------------------------------------------------------------------------------------------------*/
 
 

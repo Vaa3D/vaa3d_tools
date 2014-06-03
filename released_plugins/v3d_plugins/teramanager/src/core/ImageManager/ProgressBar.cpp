@@ -29,6 +29,7 @@
 #include <cstdlib>
 
 using namespace std;
+using namespace iim;
 
 #ifdef _VAA3D_PLUGIN_MODE
 #include "../../presentation/PConverter.h"
@@ -113,13 +114,13 @@ void ProgressBar::show(bool toConverter /* = true */)
         teramanager::PMain::getInstance()->emitProgressBarChanged(progress_value_int, minutes_remaining, seconds_remaining%60, message_level_1);
     #else
     system_CLEAR();
-    printf("OPERATION:\t%s\n",this->operation_desc);
-    printf("PHASE:\t\t%s\n",this->progress_info);
+    printf("OPERATION:\t%s\n",this->message_level_1); // 140427_IANNELLO
+    printf("PHASE:\t\t%s\n",this->message_level_2); // 140427_IANNELLO
     printf("TIME REMAINING:\t%d minutes and %d seconds\n", minutes_remaining, seconds_remaining%60);
     printf("PROGRESS:\t");
     printf("%d%%\t",(int)(progress_value));
     for(int i=1; i<=progress_value; i++)
-            printf("Û");
+            printf("*");
     for(int i=progress_value; i<100; i++)
             printf(":");
     printf("\n\n");

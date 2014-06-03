@@ -22,14 +22,14 @@
 *       specific prior written permission.
 ********************************************************************************************************************************************************************************************/
 
-#ifndef _PROGRESS_BAR_H
-#define _PROGRESS_BAR_H
+#ifndef _IIM_PROGRESS_BAR_H
+#define _IIM_PROGRESS_BAR_H
 
 #include <iostream>
 #include <string.h>
 #include "IM_config.h"
 
-class ProgressBar
+class iim::ProgressBar
 {
 	private:
 

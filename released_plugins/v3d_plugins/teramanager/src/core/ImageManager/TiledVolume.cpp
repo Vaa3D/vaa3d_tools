@@ -1049,7 +1049,7 @@ uint8* TiledVolume::loadSubvolume_to_UINT8(int V0,int V1, int H0, int H1, int D0
 
 	if ( red_factor > 1 ) { // the buffer has to be reduced
 
-		if ( err_rawfmt = convert2depth8bits(red_factor,(sbv_height*sbv_width*sbv_depth),sbv_channels,subvol) ) {
+		if ( (err_rawfmt = convert2depth8bits(red_factor,(sbv_height*sbv_width*sbv_depth),sbv_channels,subvol)) ) {
             char err_msg[STATIC_STRINGS_SIZE];
 			sprintf(err_msg,"TiledVolume::loadSubvolume_to_UINT8: %s", err_rawfmt);
             throw IOException(err_msg);

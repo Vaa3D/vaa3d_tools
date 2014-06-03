@@ -324,11 +324,12 @@ void VolumeConverter::generateTiles(std::string output_path, bool* resolutions,
 			sint64 z_size = (z_parts<=z_ratio) ? z_max_res : (depth%z_max_res);
 
 			//halvesampling resolution if current resolution is not the deepest one
-			if(i!=0)	
-				if ( internal_rep == REAL_INTERNAL_REP )
+			if(i!=0) {	
+				if ( internal_rep == REAL_INTERNAL_REP ) 
                     VirtualVolume::halveSample(rbuffer,(int)height/(powInt(2,i-1)),(int)width/(powInt(2,i-1)),(int)z_size/(powInt(2,i-1)),method);
 				else // internal_rep == UINT8_INTERNAL_REP
                     VirtualVolume::halveSample_UINT8(ubuffer,(int)height/(powInt(2,i-1)),(int)width/(powInt(2,i-1)),(int)z_size/(powInt(2,i-1)),channels,method,bytes_chan);
+			}
 
 			//saving at current resolution if it has been selected and iff buffer is at least 1 voxel (Z) deep
             if(resolutions[i] && (z_size/(powInt(2,i))) > 0)
@@ -762,12 +763,13 @@ void VolumeConverter::generateTilesVaa3DRaw(std::string output_path, bool* resol
 			sint64 z_size = (z_parts<=z_ratio) ? z_max_res : (depth%z_max_res);
 
 			//halvesampling resolution if current resolution is not the deepest one
-			if(i!=0)	
-				if ( internal_rep == REAL_INTERNAL_REP )
+			if(i!=0) {
+				if ( internal_rep == REAL_INTERNAL_REP ) 
                     VirtualVolume::halveSample(rbuffer,(int)height/(powInt(2,i-1)),(int)width/(powInt(2,i-1)),(int)z_size/(powInt(2,i-1)),method);
-				else // internal_rep == UINT8_INTERNAL_REP
+				else  // internal_rep == UINT8_INTERNAL_REP
                     VirtualVolume::halveSample_UINT8(ubuffer,(int)height/(powInt(2,i-1)),(int)width/(powInt(2,i-1)),(int)z_size/(powInt(2,i-1)),channels,method,bytes_chan);
-
+			}
+				
 			//saving at current resolution if it has been selected and iff buffer is at least 1 voxel (Z) deep
             if(resolutions[i] && (z_size/(powInt(2,i))) > 0)
 			{
@@ -1341,12 +1343,13 @@ void VolumeConverter::generateTilesVaa3DRawMC ( std::string output_path, bool* r
 			sint64 z_size = (z_parts<=z_ratio) ? z_max_res : (depth%z_max_res);
 
 			//halvesampling resolution if current resolution is not the deepest one
-			if(i!=0)	
+			if(i!=0) {	
 				if ( internal_rep == REAL_INTERNAL_REP )
 					VirtualVolume::halveSample(rbuffer,(int)height/(POW_INT(2,i-1)),(int)width/(POW_INT(2,i-1)),(int)z_size/(POW_INT(2,i-1)),method);
 				else // internal_rep == UINT8_INTERNAL_REP
 					VirtualVolume::halveSample_UINT8(ubuffer,(int)height/(POW_INT(2,i-1)),(int)width/(POW_INT(2,i-1)),(int)z_size/(POW_INT(2,i-1)),channels,method,bytes_chan);
-
+			}
+			
 			//saving at current resolution if it has been selected and iff buffer is at least 1 voxel (Z) deep
 			if(resolutions[i] && (z_size/(POW_INT(2,i))) > 0)
 			{
@@ -1851,12 +1854,13 @@ void VolumeConverter::generateTilesVaa3DRawMC ( std::string output_path, bool* r
 			sint64 z_size = (z_parts<=z_ratio) ? z_max_res : (depth%z_max_res);
 
 			//halvesampling resolution if current resolution is not the deepest one
-			if(i!=0)	
+			if(i!=0) {
 				if ( internal_rep == REAL_INTERNAL_REP )
                     VirtualVolume::halveSample(rbuffer,(int)height/(powInt(2,i-1)),(int)width/(powInt(2,i-1)),(int)z_size/(powInt(2,i-1)),method);
 				else // internal_rep == UINT8_INTERNAL_REP
                     VirtualVolume::halveSample_UINT8(ubuffer,(int)height/(powInt(2,i-1)),(int)width/(powInt(2,i-1)),(int)z_size/(powInt(2,i-1)),channels,method,bytes_chan);
-
+			}
+			
 			//saving at current resolution if it has been selected and iff buffer is at least 1 voxel (Z) deep
             if(resolutions[i] && (z_size/(powInt(2,i))) > 0)
 			{

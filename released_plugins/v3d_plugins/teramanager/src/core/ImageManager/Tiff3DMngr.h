@@ -22,48 +22,37 @@
 *       specific prior written permission.
 ********************************************************************************************************************************************************************************************/
 
-# ifndef _SIMPLE_VOLUME_H
-# define _SIMPLE_VOLUME_H
+#define TIFF3D_SUFFIX   "tif"
 
-# include "VirtualVolume.h" 
 
-//FORWARD-DECLARATIONS
-class  Stack;
+char *initTiff3DFile ( char *filename, unsigned int sz0, unsigned int  sz1, unsigned int  sz2, unsigned int  sz3, int datatype );
+/* creates a file containing an empty 3D, multi-channel image 
+ *
+ * filename: complete path of the file to be initialized
+ * sz:       4-element array containing width, height, depth and the number of channels 
+ * datatype: pixel size in bytes
+ */
 
-class SimpleVolume : public iim::VirtualVolume
-{
-    private:
+char *appendSlice2Tiff3DFile ( char *filename, int slice, unsigned char *img, unsigned int  img_width, unsigned int  img_height );
+/* writes one slice to a file containing a 3D image
+ * 
+ * filename:   complete path of the file to be modified
+ * img:        pointer to slice (2D buffer)
+ * img_width:  width of the slice
+ * img_height: height of the slice
+ */
 
-        iim::uint16 N_ROWS, N_COLS;		//dimensions (in stacks) of stacks matrix along VH axes
-        iim::Stack ***STACKS;			//2-D array of <Stack*>
-
-        void init ( );
-
-        // iannello returns the number of channels of images composing the volume
-        void initChannels ( ) throw (iim::IOException);
-
-    public:
-
-        SimpleVolume(const char* _root_dir)  throw (iim::IOException);
-
-        ~SimpleVolume(void);
-
-        // returns a unique ID that identifies the volume format
-        std::string getPrintableFormat(){return iim::SIMPLE_FORMAT;}
-
-        // added by Alessandro on 2014-02-18: additional info on the reference system (where available)
-        float getVXL_1() {return VXL_H;}
-        float getVXL_2() {return VXL_V;}
-        float getVXL_3() {return VXL_D;}
-        iim::axis getAXS_1() {return iim::horizontal;}
-        iim::axis getAXS_2() {return iim::vertical;}
-        iim::axis getAXS_3() {return iim::depth;}
-
-        iim::real32 *loadSubvolume_to_real32(int V0=-1,int V1=-1, int H0=-1, int H1=-1, int D0=-1, int D1=-1)  throw (iim::IOException);
-
-        iim::uint8 *loadSubvolume_to_UINT8(int V0=-1,int V1=-1, int H0=-1, int H1=-1, int D0=-1, int D1=-1,
-                                                   int *channels=0, int ret_type=iim::DEF_IMG_DEPTH) throw (iim::IOException);
-};
-
-# endif // _SIMPLE_VOLUME
+char *readTiff3DFile2Buffer ( char *filename, unsigned char *img, unsigned int img_width, unsigned int img_height, unsigned int first, unsigned int last );
+/* writes one slice to a file containing a 3D image
+ * 
+ * filename:   complete path of the file to be modified
+ * img:        pointer to slice (3D buffer)
+ * img_width:  width of the slice
+ * img_height: height of the slice
+ * first:      index of first slice
+ * last:       index of last slice
+ *
+ * PRE: img points to a buffer of img_height * img_width * (last-first+1) * bps * spp
+ * where bps and spp are the bit-per-sample and sample-per-pixel tags of the multipage tiff file
+ */
 

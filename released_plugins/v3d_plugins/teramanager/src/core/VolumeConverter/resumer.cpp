@@ -99,7 +99,7 @@ bool initResumer ( const char *out_fmt, const char *output_path, int resolutions
 				 block_height!=_block_height || block_width!=_block_width || block_depth!=_block_depth ||
 				 strcmp(saved_img_format,_saved_img_format) || saved_img_depth!=_saved_img_depth ) {
 				fclose(fhandle);
-				sprintf(err_msg, "in initResumer: saved parameters differ from current parameters", 
+				sprintf(err_msg, "in initResumer: saved parameters differ from current parameters (%s vs. %s)", 
 					_out_fmt,out_fmt);
                 throw IOException(err_msg);
 			}
@@ -113,7 +113,7 @@ bool initResumer ( const char *out_fmt, const char *output_path, int resolutions
 
 			if ( res_err ) {
 				fclose(fhandle);
-				sprintf(err_msg, "in initResumer: saved resolutions differ from requested resoolutions", 
+				sprintf(err_msg, "in initResumer: saved resolutions differ from requested resoolutions (%s vs. %s)", 
 					_out_fmt,out_fmt);
                 throw IOException(err_msg);
 			}
