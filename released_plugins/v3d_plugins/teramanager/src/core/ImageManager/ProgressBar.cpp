@@ -28,9 +28,6 @@
 #include <stdio.h>
 #include <cstdlib>
 
-using namespace std;
-using namespace iim;
-
 #ifdef _VAA3D_PLUGIN_MODE
 #include "../../presentation/PConverter.h"
 #include "../../presentation/PMain.h"
@@ -41,8 +38,8 @@ using namespace iim;
 * Singleton design pattern: this class can have one instance only,  which must be
 * instantiated by calling static method "istance(...)"
 ***********************************************************************************/
-ProgressBar* ProgressBar::uniqueInstance = NULL;
-ProgressBar* ProgressBar::instance()
+iim::ProgressBar* iim::ProgressBar::uniqueInstance = 0;
+iim::ProgressBar* iim::ProgressBar::instance()
 {
     if (uniqueInstance == 0)
         uniqueInstance = new ProgressBar();
@@ -50,13 +47,13 @@ ProgressBar* ProgressBar::instance()
     return uniqueInstance;
 }
 
-ProgressBar::ProgressBar()
+iim::ProgressBar::ProgressBar()
 {
     reset();
 }
 
 
-void ProgressBar::reset()
+void iim::ProgressBar::reset()
 {
     strcpy(this->message_level_1, "");
     strcpy(this->message_level_2, "");
@@ -68,7 +65,7 @@ void ProgressBar::reset()
 }
 
 
-void ProgressBar::start(const char *new_operation_desc, bool toConverter /* = true */)
+void iim::ProgressBar::start(const char *new_operation_desc, bool toConverter /* = true */)
 {
     strcpy(this->message_level_2, new_operation_desc);
     this->progress_value=0;
@@ -86,7 +83,7 @@ void ProgressBar::start(const char *new_operation_desc, bool toConverter /* = tr
     #endif
 }
 
-void ProgressBar::update(float new_progress_value, const char* new_progress_info)
+void iim::ProgressBar::update(float new_progress_value, const char* new_progress_info)
 {
     progress_value=new_progress_value;
     strcpy(message_level_3,new_progress_info);
@@ -99,12 +96,12 @@ void ProgressBar::update(float new_progress_value, const char* new_progress_info
 }
 
 
-void ProgressBar::updateInfo(const char* new_progress_info)
+void iim::ProgressBar::updateInfo(const char* new_progress_info)
 {
     strcpy(message_level_3,new_progress_info);
 }
 
-void ProgressBar::show(bool toConverter /* = true */)
+void iim::ProgressBar::show(bool toConverter /* = true */)
 {
     #ifdef _VAA3D_PLUGIN_MODE
     int progress_value_int = (int) (progress_value+0.5f);
@@ -128,7 +125,7 @@ void ProgressBar::show(bool toConverter /* = true */)
 }
 
 
-void ProgressBar::setMessage(int level, const char* message)
+void iim::ProgressBar::setMessage(int level, const char* message)
 {
     if(level == 1)
         strcpy(message_level_1,message);
