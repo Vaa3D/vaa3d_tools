@@ -39,8 +39,8 @@ distribution.
 #include <assert.h>
 
 // Help out windows:
-#if defined( _DEBUG ) && !defined( DEBUG )
-#define DEBUG
+#if defined( _DEBUG ) && !defined( TIXML_DEBUG )
+#define TIXML_DEBUG
 #endif
 
 #ifdef TIXML_USE_STL

@@ -35,6 +35,7 @@
 #include <highgui.h>
 #include <exception>
 #include <stdio.h>
+#include "Tiff3DMngr.h"
 
 using namespace std;
 using namespace iomanager;
@@ -239,4 +240,14 @@ real_t* IOManager::loadImageStack(char **image_filenames,	     int image_filepat
 	}
 
 	return image_stack;
+}
+
+
+int IOManager::readTiffMultipage(char *finName, int XSIZE, int YSIZE, unsigned char *data, int first, int last) throw (MyException)
+{
+	char *err_Tiff3Dfmt;
+	if ( (err_Tiff3Dfmt = readTiff3DFile2Buffer(finName,data,XSIZE,YSIZE,first,last)) != 0 ) {
+            throw MyException(strprintf("in IOManager::readTiffMultipage(...): unable to read tiff file (%s)",err_Tiff3Dfmt).c_str());
+	}
+	return 0;
 }

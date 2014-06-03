@@ -30,7 +30,7 @@
 #include "PTabDisplProj.h"
 #include "PTabDisplThresh.h"
 #include "MyException.h"
-#include "StackedVolume.h"
+#include "vmStackedVolume.h"
 #include "PMain.h"
 #include "src/control/CImport.h"
 #include "src/control/CDisplComp.h"

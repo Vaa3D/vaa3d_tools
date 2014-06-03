@@ -28,7 +28,7 @@
 
 #include "PTabImport.h"
 #include "MyException.h"
-#include "StackedVolume.h"
+#include "vmStackedVolume.h"
 #include "PMain.h"
 #include "src/control/CImport.h"
 #include "src/control/CPreview.h"

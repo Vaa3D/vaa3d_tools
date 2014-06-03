@@ -109,7 +109,7 @@ void ProgressBar::show()
     printf("PROGRESS:\t");
     printf("%d%%\t",(int)(progress_value));
     for(int i=1; i<=progress_value; i++)
-            printf("Û");
+            printf("*");
     for(int i=progress_value; i<100; i++)
             printf(":");
     printf("\n\n");

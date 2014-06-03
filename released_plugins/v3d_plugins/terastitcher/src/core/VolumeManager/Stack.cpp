@@ -39,15 +39,13 @@
 #else
 	#include <dirent.h>
 #endif
-#ifdef min
-#undef min
-#endif
-#ifdef max
-#undef max
-#endif
-#include <list>
-#include <string>
-#include <cv.h>
+//#ifdef min
+//#undef min
+//#endif
+//#ifdef max
+//#undef max
+//#endif
+//#include <cv.h>
 #include <boost/xpressive/xpressive.hpp>
 #include "Displacement.h"
 
@@ -67,6 +65,7 @@ namespace volumemanager
 
 //CONSTRUCTOR WITH ARGUMENTS
 Stack::Stack(StackedVolume* _CONTAINER, int _ROW_INDEX, int _COL_INDEX, const char* _DIR_NAME) throw (MyException)
+	: VirtualStack()
 {
 	#if VM_VERBOSE > 3
 	printf("\t\t\t\tin Stack::Stack(StackedVolume* _CONTAINER, int _ROW_INDEX=%d, int _COL_INDEX=%d, char* _DIR_NAME=%s)\n",
@@ -88,6 +87,7 @@ Stack::Stack(StackedVolume* _CONTAINER, int _ROW_INDEX, int _COL_INDEX, const ch
 }
 
 Stack::Stack(StackedVolume* _CONTAINER, int _ROW_INDEX, int _COL_INDEX, FILE* bin_file) throw (MyException)
+	: VirtualStack()
 {
 	#if VM_VERBOSE > 3
 	printf("\t\t\t\tin Stack::Stack(StackedVolume* _CONTAINER, int _ROW_INDEX=%d, int _COL_INDEX=%d, FILE* bin_file)\n",
@@ -137,11 +137,10 @@ void Stack::init() throw (MyException)
 	while ((entry_lev3=readdir(cur_dir_lev3)))
 	{
 		tmp = entry_lev3->d_name;
-
         if(IMG_FILTER_REGEX.empty())
         {
-            if(tmp.compare(".") != 0 && tmp.compare("..") != 0 && tmp.find(".") != string::npos)
-                entries_lev3.push_back(tmp);
+			if(tmp.compare(".") != 0 && tmp.compare("..") != 0 && tmp.find(".") != string::npos)
+				entries_lev3.push_back(tmp);
         }
         else
         {
@@ -150,7 +149,6 @@ void Stack::init() throw (MyException)
             if(boost::xpressive::regex_match(tmp, what, rex))
                entries_lev3.push_back(tmp);
         }
-
 	}
 	entries_lev3.sort();
 	DEPTH = (int)entries_lev3.size();
@@ -209,12 +207,11 @@ Stack::~Stack()
 
     if(FILENAMES)
     {
-        for(int z=0; z<DEPTH; z++)
-            if(FILENAMES[z])
-                delete[] FILENAMES[z];
-
-        delete[] FILENAMES;
-    }
+		for(int z=0; z<DEPTH; z++)
+			if(FILENAMES[z])
+				delete[] FILENAMES[z];
+		delete[] FILENAMES;
+	}
 	if(STACKED_IMAGE)
 		delete[] STACKED_IMAGE;
 	if(DIR_NAME)
@@ -270,125 +267,99 @@ void Stack::unBinarizeFrom(FILE* file) throw (MyException)
 	size_t fread_return_val;
 
 	fread_return_val = fread(&HEIGHT, sizeof(int), 1, file);
-	if(fread_return_val != 1)
-    {
+	if(fread_return_val != 1) {
+		fclose(file);
 		throw MyException("in Stack::unBinarizeFrom(...): error while reading binary metadata file");
-        fclose(file);
-    }
+	}
 	fread_return_val = fread(&WIDTH, sizeof(int), 1, file);
-	if(fread_return_val != 1)
-    {
+	if(fread_return_val != 1) {
+		fclose(file);
 		throw MyException("in Stack::unBinarizeFrom(...): error while reading binary metadata file");
-        fclose(file);
-    }
+	}
 	fread_return_val = fread(&DEPTH, sizeof(int), 1, file);
-	if(fread_return_val != 1)
-    {
+	if(fread_return_val != 1) {
+		fclose(file);
 		throw MyException("in Stack::unBinarizeFrom(...): error while reading binary metadata file");
-        fclose(file);
-    }
+	}
 	fread_return_val = fread(&ABS_V, sizeof(int), 1, file);
-	if(fread_return_val != 1)
-    {
+	if(fread_return_val != 1) {
+		fclose(file);
 		throw MyException("in Stack::unBinarizeFrom(...): error while reading binary metadata file");
-        fclose(file);
-    }
+	}
 	fread_return_val = fread(&ABS_H, sizeof(int), 1, file);
-	if(fread_return_val != 1)
-    {
+	if(fread_return_val != 1) {
+		fclose(file);
 		throw MyException("in Stack::unBinarizeFrom(...): error while reading binary metadata file");
-        fclose(file);
-    }
+	}
 	fread_return_val = fread(&ABS_D, sizeof(int), 1, file);
-	if(fread_return_val != 1)
-    {
+	if(fread_return_val != 1) {
+		fclose(file);
 		throw MyException("in Stack::unBinarizeFrom(...): error while reading binary metadata file");
-        fclose(file);
-    }
+	}
 	fread_return_val = fread(&str_size, sizeof(uint16), 1, file);
-	if(fread_return_val != 1)
-    {
+	if(fread_return_val != 1) {
+		fclose(file);
 		throw MyException("in Stack::unBinarizeFrom(...): error while reading binary metadata file");
-        fclose(file);
-    }
+	}
 	DIR_NAME = new char[str_size];
 	fread_return_val = fread(DIR_NAME, str_size, 1, file);
 	FILENAMES = new char*[DEPTH];
 	for(i = 0; i < DEPTH; i++)
 	{
 		fread_return_val = fread(&str_size, sizeof(uint16), 1, file);
-		if(fread_return_val != 1)
-        {
+		if(fread_return_val != 1) {
+			fclose(file);
 			throw MyException("in Stack::unBinarizeFrom(...): error while reading binary metadata file");
-            fclose(file);
-        }
-
+		}
 		FILENAMES[i] = new char[str_size];
 		fread_return_val = fread(FILENAMES[i], str_size, 1, file);
-		if(fread_return_val != 1)
-        {
+		if(fread_return_val != 1) {
+			fclose(file);
 			throw MyException("in Stack::unBinarizeFrom(...): error while reading binary metadata file");
-            fclose(file);
-        }
+		}
 	}
 }
 
 //GET methods
-Displacement* Stack::getDisplacement(Stack* neighbour) throw (MyException)
-{
-	#if VM_VERBOSE > 4
-	printf("........in Stack[%d,%d]::getDisplacement(Stack* neighbour[%d,%d])\n",ROW_INDEX, COL_INDEX, neighbour->ROW_INDEX, neighbour->COL_INDEX);
-	#endif
+//Displacement* Stack::getDisplacement(VirtualStack* neighbour) throw (MyException)
+//{
+//	#if VM_VERBOSE > 4
+//	printf("........in Stack[%d,%d]::getDisplacement(Stack* neighbour[%d,%d])\n",ROW_INDEX, COL_INDEX, neighbour->ROW_INDEX, neighbour->COL_INDEX);
+//	#endif
+//
+//	if(neighbour == NULL)
+//		throw MyException("...in Stack::getDisplacement(Stack* neighbour = NULL): invalid neighbour stack");
+//	else if(neighbour->getROW_INDEX() == (ROW_INDEX -1) && neighbour->getCOL_INDEX() == COL_INDEX)
+//		if(NORTH.size() == 1) return NORTH[0];
+//		else throw MyException("...in Stack::getDisplacement(Stack* neighbour): stack MUST contain one displacement only at NORTH");
+//	else if(neighbour->getROW_INDEX() == ROW_INDEX    && neighbour->getCOL_INDEX() == COL_INDEX -1)
+//		if(WEST.size() == 1) return WEST[0];
+//		else throw MyException("...in Stack::getDisplacement(Stack* neighbour): stack MUST contain one displacement only at WEST");
+//	else if(neighbour->getROW_INDEX() == ROW_INDEX +1 && neighbour->getCOL_INDEX() == COL_INDEX)
+//		if(SOUTH.size() == 1) return SOUTH[0];
+//		else throw MyException("...in Stack::getDisplacement(Stack* neighbour): stack MUST contain one displacement only at SOUTH");
+//	else if(neighbour->getROW_INDEX() == ROW_INDEX    && neighbour->getCOL_INDEX() == COL_INDEX +1)
+//		if(EAST.size() == 1) return EAST[0];
+//		else throw MyException("...in Stack::getDisplacement(Stack* neighbour): stack MUST contain one displacement only at EAST");
+//	else
+//		throw MyException("...in Stack::getDisplacement(Stack* neighbour): neighbour is not a neighbour!!!");
+//}
+//int Stack::getABS(int direction) throw (MyException)
+//{
+//	#if VM_VERBOSE > 4
+//	printf("........in Stack[%d,%d]::getABS(direction = %d)\n",ROW_INDEX, COL_INDEX, direction);
+//	#endif
+//
+//	if	   (direction == dir_vertical)
+//		return getABS_V();
+//	else if(direction == dir_horizontal)
+//		return getABS_H();
+//	else if(direction == dir_depth)
+//		return getABS_D();
+//	else
+//		throw MyException("in Stack::setABS(int _ABS, int direction): wrong direction inserted");
+//}
 
-	if(neighbour == NULL)
-		throw MyException("...in Stack::getDisplacement(Stack* neighbour = NULL): invalid neighbour stack");
-	else if(neighbour->ROW_INDEX == (ROW_INDEX -1) && neighbour->COL_INDEX == COL_INDEX)
-		if(NORTH.size() == 1) return NORTH[0];
-		else throw MyException("...in Stack::getDisplacement(Stack* neighbour): stack MUST contain one displacement only at NORTH");
-	else if(neighbour->getROW_INDEX() == ROW_INDEX    && neighbour->getCOL_INDEX() == COL_INDEX -1)
-		if(WEST.size() == 1) return WEST[0];
-		else throw MyException("...in Stack::getDisplacement(Stack* neighbour): stack MUST contain one displacement only at WEST");
-	else if(neighbour->getROW_INDEX() == ROW_INDEX +1 && neighbour->getCOL_INDEX() == COL_INDEX)
-		if(SOUTH.size() == 1) return SOUTH[0];
-		else throw MyException("...in Stack::getDisplacement(Stack* neighbour): stack MUST contain one displacement only at SOUTH");
-	else if(neighbour->getROW_INDEX() == ROW_INDEX    && neighbour->getCOL_INDEX() == COL_INDEX +1)
-		if(EAST.size() == 1) return EAST[0];
-		else throw MyException("...in Stack::getDisplacement(Stack* neighbour): stack MUST contain one displacement only at EAST");
-	else
-		throw MyException("...in Stack::getDisplacement(Stack* neighbour): neighbour is not a neighbour!!!");
-}
-int Stack::getABS(int direction) throw (MyException)
-{
-	#if VM_VERBOSE > 4
-	printf("........in Stack[%d,%d]::getABS(direction = %d)\n",ROW_INDEX, COL_INDEX, direction);
-	#endif
-
-	if	   (direction == dir_vertical)
-		return getABS_V();
-	else if(direction == dir_horizontal)
-		return getABS_H();
-	else if(direction == dir_depth)
-		return getABS_D();
-	else
-		throw MyException("in Stack::setABS(int _ABS, int direction): wrong direction inserted");
-}
-
-//SET methods
-void Stack::setABS(int _ABS, int direction)  throw (MyException)
-{
-	#if VM_VERBOSE > 4
-	printf("........in Stack[%d,%d]::setABS(_ABS = %d, direction = %d)\n",ROW_INDEX, COL_INDEX, _ABS, direction);
-	#endif
-
-	if	   (direction == dir_vertical)
-		setABS_V(_ABS);
-	else if(direction == dir_horizontal)
-		setABS_H(_ABS);
-	else if(direction == dir_depth)
-		setABS_D(_ABS);
-	else
-		throw MyException("in Stack::setABS(int _ABS, int direction): wrong direction inserted");
-}
 
 //XML methods
 TiXmlElement* Stack::getXML()
@@ -481,46 +452,46 @@ void Stack::releaseImageStack()
 }
 
 //show the selected slice with a simple GUI
-void Stack::show(int D_index, int window_HEIGHT, int window_WIDTH)
-{
-	#if VM_VERBOSE > 2
-	printf("\t\t\tin Stack::show(D_index=%d, win_height=%d, win_width=%d)\n", D_index, window_HEIGHT, window_WIDTH);
-	#endif
-
-	//converting selected slice of vol (1-D array of REAL_T) into a CvMat
-	CvMat *slice = cvCreateMat(HEIGHT, WIDTH, CV_32FC1);
-	for(int i=0; i<slice->rows; i++)
-	{
-		float *row_ptr = (float*)(slice->data.ptr+slice->step*i);
-		for(int j=0; j<slice->cols; j++)
-			row_ptr[j] = STACKED_IMAGE[D_index*HEIGHT*WIDTH + i*WIDTH +j];
-	}
-
-	//showing slice
-	CvSize window_dims;
-	window_dims.height = window_HEIGHT ? window_HEIGHT : HEIGHT;
-	window_dims.width  = window_WIDTH  ? window_WIDTH  : WIDTH;
-	char buffer[200];
-	CvMat* mat_rescaled = cvCreateMat(HEIGHT, WIDTH, CV_16UC1);
-	IplImage* image_resized = cvCreateImage(window_dims, IPL_DEPTH_16U, 1);
-	IplImage* img_buffer = cvCreateImageHeader(window_dims, IPL_DEPTH_16U, 1);
-
-	cvConvertScale(slice,mat_rescaled, 65535);
-	cvResize(cvGetImage(mat_rescaled,img_buffer), image_resized, CV_INTER_CUBIC);
-
-	sprintf(buffer,"SLICE %d of volume %d x %d",D_index, HEIGHT, WIDTH);
-	cvNamedWindow(buffer,1);
-	cvShowImage(buffer,image_resized);
-	cvMoveWindow(buffer, 10,10);
-	while(1)
-	{
-		if(cvWaitKey(100)==27) break;
-	}
-
-	cvDestroyWindow(buffer);
-
-	cvReleaseMat(&slice);
-	cvReleaseMat(&mat_rescaled);
-	cvReleaseImage(&image_resized);
-	cvReleaseImageHeader(&img_buffer);
-}
+//void Stack::show(int D_index, int window_HEIGHT, int window_WIDTH)
+//{
+//	#if VM_VERBOSE > 2
+//	printf("\t\t\tin Stack::show(D_index=%d, win_height=%d, win_width=%d)\n", D_index, window_HEIGHT, window_WIDTH);
+//	#endif
+//
+//	//converting selected slice of vol (1-D array of REAL_T) into a CvMat
+//	CvMat *slice = cvCreateMat(HEIGHT, WIDTH, CV_32FC1);
+//	for(int i=0; i<slice->rows; i++)
+//	{
+//		float *row_ptr = (float*)(slice->data.ptr+slice->step*i);
+//		for(int j=0; j<slice->cols; j++)
+//			row_ptr[j] = STACKED_IMAGE[D_index*HEIGHT*WIDTH + i*WIDTH +j];
+//	}
+//
+//	//showing slice
+//	CvSize window_dims;
+//	window_dims.height = window_HEIGHT ? window_HEIGHT : HEIGHT;
+//	window_dims.width  = window_WIDTH  ? window_WIDTH  : WIDTH;
+//	char buffer[200];
+//	CvMat* mat_rescaled = cvCreateMat(HEIGHT, WIDTH, CV_16UC1);
+//	IplImage* image_resized = cvCreateImage(window_dims, IPL_DEPTH_16U, 1);
+//	IplImage* img_buffer = cvCreateImageHeader(window_dims, IPL_DEPTH_16U, 1);
+//
+//	cvConvertScale(slice,mat_rescaled, 65535);
+//	cvResize(cvGetImage(mat_rescaled,img_buffer), image_resized, CV_INTER_CUBIC);
+//
+//	sprintf(buffer,"SLICE %d of volume %d x %d",D_index, HEIGHT, WIDTH);
+//	cvNamedWindow(buffer,1);
+//	cvShowImage(buffer,image_resized);
+//	cvMoveWindow(buffer, 10,10);
+//	while(1)
+//	{
+//		if(cvWaitKey(100)==27) break;
+//	}
+//
+//	cvDestroyWindow(buffer);
+//
+//	cvReleaseMat(&slice);
+//	cvReleaseMat(&mat_rescaled);
+//	cvReleaseImage(&image_resized);
+//	cvReleaseImageHeader(&img_buffer);
+//}

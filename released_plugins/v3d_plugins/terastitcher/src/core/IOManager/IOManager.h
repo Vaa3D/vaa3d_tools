@@ -34,6 +34,8 @@
 #include "IOManager_defs.h"
 #include "MyException.h"
 
+#define STACK_ 1
+#define BLOCK_ 2
 //STATIC class
 class iomanager::IOManager
 {
@@ -69,8 +71,20 @@ class iomanager::IOManager
 		*							  the absolute path of each image.
 		* [first/last_file]			: if given, only images in the range [first_file,last_file] will be loaded.
 		**************************************************************************************************************/
-        static real_t* loadImageStack(char **image_filenames,	int image_filepaths_size, char *base_path = NULL,
+		static real_t* loadImageStack(char **image_filenames,	int image_filepaths_size,	   char *base_path = NULL, 
 									  int first_file = -1, int last_file = -1)				   throw    (MyException);
+
+
+
+		/*************************************************************************************************************
+		* Load image stack method.	  <> parameters are mandatory, while [] are optional.
+		* <image_filenames>			: array of C-string storing image filenames
+		* <image_filepaths_size>	: size of <image_filenames>
+		* [base_path]				: if given, it is concatenated to obtain [base_path]/<image_filenames>[i] which is
+		*							  the absolute path of each image.
+		* [first/last_file]			: if given, only images in the range [first_file,last_file] will be loaded.
+		**************************************************************************************************************/
+		static int readTiffMultipage(char *finName,int XSIZE, int YSIZE, unsigned char *data, int first, int last) throw (MyException);			
 };
 
 #endif

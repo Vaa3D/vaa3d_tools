@@ -39,7 +39,7 @@
 #include "PTabDisplThresh.h"
 #include "PTabPlaceTiles.h"
 #include "PTabMergeTiles.h"
-#include "StackedVolume.h"
+#include "vmStackedVolume.h"
 #include "QHelpBox.h"
 
 class terastitcher::PMain : public QWidget

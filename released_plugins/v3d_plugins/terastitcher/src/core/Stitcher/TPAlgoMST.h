@@ -43,7 +43,7 @@ class TPAlgoMST : public TPAlgo
 
 	public:
 
-		TPAlgoMST(StackedVolume * _volume);
+		TPAlgoMST(volumemanager::VirtualVolume * _volume);
 		~TPAlgoMST(void){};
 
 		/*************************************************************************************************************

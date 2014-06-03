@@ -32,7 +32,7 @@
 #include "PTabPlaceTiles.h"
 #include "src/control/CImport.h"
 #include "MyException.h"
-#include "StackedVolume.h"
+#include "vmStackedVolume.h"
 #include "PMain.h"
 #include "StackStitcher.h"
 

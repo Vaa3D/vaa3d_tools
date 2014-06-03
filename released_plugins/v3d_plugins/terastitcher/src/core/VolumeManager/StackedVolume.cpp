@@ -26,7 +26,7 @@
 ********************************************************************************************************************************************************************************************/
 
 #include <iostream>
-#include <string>
+//#include <string>
 #include "StackedVolume.h"
 #include "S_config.h"
 #include "tinyxml.h"
@@ -41,6 +41,7 @@
 #include <list>
 #include "Stack.h"
 #include "Displacement.h"
+//#include "VirtualVolume.h" 
 
 #ifdef min
 #undef min
@@ -52,19 +53,8 @@
 
 using namespace std;
 
-const char* axis_to_str(axis ax)
-{
-    if(ax==axis_invalid)         return "axis_invalid";
-    else if(ax==vertical)        return "vertical";
-    else if(ax==inv_vertical)    return "inv_vertical";
-    else if(ax==horizontal)      return "horizontal";
-    else if(ax==inv_horizontal)  return "inv_horizontal";
-    else if(ax==depth)           return "depth";
-    else if(ax==inv_depth)       return "inv_depth";
-    else                         return "unknown";
-}
-
-StackedVolume::StackedVolume(const char* _stacks_dir, ref_sys reference_system, float VXL_1, float VXL_2, float VXL_3, bool overwrite_mdata, bool make_n_slices_equal /*= false*/) throw (MyException)
+StackedVolume::StackedVolume(const char* _stacks_dir, ref_sys _reference_system, float VXL_1, float VXL_2, float VXL_3, bool overwrite_mdata, bool make_n_slices_equal /*= false*/) throw (MyException)
+	: VirtualVolume(VXL_1, VXL_2, VXL_3)
 {
 	#if VM_VERBOSE > 3
 	printf("\t\t\t\tin StackedVolume::StackedVolume(_stacks_dir=%s, reference_system = {%d,%d,%d}, VXL_1 = %.2f, VXL_2 = %.2f, VXL_3 = %.2f)\n", 
@@ -78,17 +68,18 @@ StackedVolume::StackedVolume(const char* _stacks_dir, ref_sys reference_system, 
     char mdata_filepath[VM_STATIC_STRINGS_SIZE];
     sprintf(mdata_filepath, "%s/%s", stacks_dir, VM_BIN_METADATA_FILE_NAME);
     if(fileExists(mdata_filepath) && !overwrite_mdata)
-        loadBinaryMetadata(mdata_filepath);
+            loadBinaryMetadata(mdata_filepath);
     else
 	{
-		if(reference_system.first == axis_invalid ||  reference_system.second == axis_invalid ||
-			reference_system.third == axis_invalid || VXL_1 == 0 || VXL_2 == 0 || VXL_3 == 0)
+		if(_reference_system.first == axis_invalid ||  _reference_system.second == axis_invalid ||
+			_reference_system.third == axis_invalid || VXL_1 == 0 || VXL_2 == 0 || VXL_3 == 0)
 			throw MyException("in StackedVolume::StackedVolume(...): invalid importing parameters");
+		reference_system = _reference_system; // GI_140501: stores the refrence system to generate the mdata.bin file for the output volumes
 		init();
 		applyReferenceSystem(reference_system, VXL_1, VXL_2, VXL_3);
 		saveBinaryMetadata(mdata_filepath);
 	}
-
+	
 	// check all stacks have the same number of slices (@ADDED by Alessandro on 2014-03-06)
 	for(int i=0; i<N_ROWS; i++)
 		for(int j=0; j<N_COLS; j++)
@@ -105,6 +96,7 @@ StackedVolume::StackedVolume(const char* _stacks_dir, ref_sys reference_system, 
 }
 
 StackedVolume::StackedVolume(const char *xml_filepath, bool make_n_slices_equal /*= false*/) throw (MyException)
+	: VirtualVolume()
 {
 	#if VM_VERBOSE > 3
 	printf("\t\t\t\tin StackedVolume::StackedVolume(xml_filepath=%s)\n", xml_filepath);
@@ -122,6 +114,7 @@ StackedVolume::StackedVolume(const char *xml_filepath, bool make_n_slices_equal 
     TiXmlElement * pelem = hRoot.FirstChildElement("stacks_dir").Element();
     this->stacks_dir = new char[strlen(pelem->Attribute("value"))+1];
     strcpy(this->stacks_dir, pelem->Attribute("value"));
+	xml.Clear();
 
 	//trying to unserialize an already existing metadata file, if it doesn't exist the full initialization procedure is performed and metadata is saved
 	char mdata_filepath[2000];
@@ -148,8 +141,8 @@ StackedVolume::StackedVolume(const char *xml_filepath, bool make_n_slices_equal 
 				if(make_n_slices_equal)
                     N_SLICES = std::min(N_SLICES, static_cast<uint16>(STACKS[i][j]->getDEPTH()));
 				else
-					throw MyException(strprintf("in StackedVolume::StackedVolume(): unequal number of slices detected. Stack \"%s\" has %d, stack \"%s\" has %d",
-				                      STACKS[0][0]->getDIR_NAME(), STACKS[0][0]->getDEPTH(), STACKS[i][j]->getDIR_NAME(), STACKS[i][j]->getDEPTH()).c_str());
+					throw MyException(strprintf("in StackedVolume::StackedVolume(): unequal number of slices detected. N_SLICES = %d, but stack \"%s\" has %d",
+				                      N_SLICES, STACKS[i][j]->getDIR_NAME(), STACKS[i][j]->getDEPTH()).c_str());
 			}
 		}
 }
@@ -176,29 +169,29 @@ StackedVolume::~StackedVolume()
 }
 
 //GET METHODS
-float	StackedVolume::getORG_V()					{return ORG_V;}
-float	StackedVolume::getORG_H()					{return ORG_H;}
-float	StackedVolume::getORG_D()					{return ORG_D;}
-float	StackedVolume::getABS_V(int ABS_PIXEL_V)	{return ORG_V * 1000 + ABS_PIXEL_V*this->getVXL_V();}	//Alessandro - 23/03/2013: removed conversion from int to float
-float	StackedVolume::getABS_H(int ABS_PIXEL_H)	{return ORG_H * 1000 + ABS_PIXEL_H*this->getVXL_H();}	//Alessandro - 23/03/2013: removed conversion from int to float
-float	StackedVolume::getABS_D(int ABS_PIXEL_D)	{return ORG_D * 1000 + ABS_PIXEL_D*this->getVXL_D();}	//Alessandro - 23/03/2013: removed conversion from int to float
-float	StackedVolume::getVXL_V()					{return VXL_V;}
-float	StackedVolume::getVXL_H()					{return VXL_H;}
-float	StackedVolume::getVXL_D()					{return VXL_D;}
-float	StackedVolume::getMEC_V()					{return MEC_V;}
-float	StackedVolume::getMEC_H()					{return MEC_H;}
+//float	StackedVolume::getORG_V()					{return ORG_V;}
+//float	StackedVolume::getORG_H()					{return ORG_H;}
+//float	StackedVolume::getORG_D()					{return ORG_D;}
+//float	StackedVolume::getABS_V(int ABS_PIXEL_V)	{return ORG_V * 1000 + ABS_PIXEL_V*this->getVXL_V();}	//Alessandro - 23/03/2013: removed conversion from int to float
+//float	StackedVolume::getABS_H(int ABS_PIXEL_H)	{return ORG_H * 1000 + ABS_PIXEL_H*this->getVXL_H();}	//Alessandro - 23/03/2013: removed conversion from int to float
+//float	StackedVolume::getABS_D(int ABS_PIXEL_D)	{return ORG_D * 1000 + ABS_PIXEL_D*this->getVXL_D();}	//Alessandro - 23/03/2013: removed conversion from int to float
+//float	StackedVolume::getVXL_V()					{return VXL_V;}
+//float	StackedVolume::getVXL_H()					{return VXL_H;}
+//float	StackedVolume::getVXL_D()					{return VXL_D;}
+//float	StackedVolume::getMEC_V()					{return MEC_V;}
+//float	StackedVolume::getMEC_H()					{return MEC_H;}
 int		StackedVolume::getStacksHeight()			{return STACKS[0][0]->getHEIGHT();}
 int		StackedVolume::getStacksWidth()				{return STACKS[0][0]->getWIDTH();}
-int		StackedVolume::getN_ROWS()					{return this->N_ROWS;}
-int		StackedVolume::getN_COLS()					{return this->N_COLS;}
-int		StackedVolume::getN_SLICES()				{return this->N_SLICES;}
-Stack***StackedVolume::getSTACKS()					{return this->STACKS;}
-char*   StackedVolume::getSTACKS_DIR()				{return this->stacks_dir;}
-int		StackedVolume::getOVERLAP_V()				{return (int)(getStacksHeight() - MEC_V/VXL_V);}
-int		StackedVolume::getOVERLAP_H()				{return (int)(getStacksWidth() -  MEC_H/VXL_H);}
-int		StackedVolume::getDEFAULT_DISPLACEMENT_V()	{return (int)(fabs(MEC_V/VXL_V));}
-int		StackedVolume::getDEFAULT_DISPLACEMENT_H()	{return (int)(fabs(MEC_H/VXL_H));}
-int		StackedVolume::getDEFAULT_DISPLACEMENT_D()	{return 0;}
+//int		StackedVolume::getN_ROWS()					{return this->N_ROWS;}
+//int		StackedVolume::getN_COLS()					{return this->N_COLS;}
+//int		StackedVolume::getN_SLICES()				{return this->N_SLICES;}
+VirtualStack***StackedVolume::getSTACKS()					{return (VirtualStack***)this->STACKS;}
+//char*   StackedVolume::getSTACKS_DIR()				{return this->stacks_dir;}
+//int		StackedVolume::getOVERLAP_V()				{return (int)(getStacksHeight() - MEC_V/VXL_V);}
+//int		StackedVolume::getOVERLAP_H()				{return (int)(getStacksWidth() -  MEC_H/VXL_H);}
+//int		StackedVolume::getDEFAULT_DISPLACEMENT_V()	{return (int)(fabs(MEC_V/VXL_V));}
+//int		StackedVolume::getDEFAULT_DISPLACEMENT_H()	{return (int)(fabs(MEC_H/VXL_H));}
+//int		StackedVolume::getDEFAULT_DISPLACEMENT_D()	{return 0;}
 
 void StackedVolume::init() throw (MyException)
 {
@@ -418,7 +411,7 @@ void StackedVolume::applyReferenceSystem(ref_sys reference_system, float VXL_1, 
 		}
 }
 
-void StackedVolume::loadXML(const char *xml_filepath)
+void StackedVolume::loadXML(const char *xml_filepath) throw (MyException)
 {
 	#if VM_VERBOSE > 3
 	printf("\t\t\t\tin StackedVolume::loadXML(char *xml_filepath = %s)\n", xml_filepath);
@@ -438,11 +431,7 @@ void StackedVolume::loadXML(const char *xml_filepath)
 	//reading fields and checking coherence with metadata previously read from VM_BIN_METADATA_FILE_NAME
 	TiXmlElement * pelem = hRoot.FirstChildElement("stacks_dir").Element();
 	if(strcmp(pelem->Attribute("value"), stacks_dir) != 0)
-	{
-		char errMsg[2000];
-		sprintf(errMsg, "in StackedVolume::loadXML(...): Mismatch in <stacks_dir> field between xml file (=\"%s\") and %s (=\"%s\").", pelem->Attribute("value"), VM_BIN_METADATA_FILE_NAME, stacks_dir);
-		throw MyException(errMsg);
-	}
+		throw MyException(strprintf("in StackedVolume::loadXML(...): Mismatch in <stacks_dir> field between xml file (=\"%s\") and %s (=\"%s\").", pelem->Attribute("value"), VM_BIN_METADATA_FILE_NAME, stacks_dir).c_str());
 	pelem = hRoot.FirstChildElement("voxel_dims").Element();
 	float VXL_V_read=0.0f, VXL_H_read=0.0f, VXL_D_read=0.0f;
 	pelem->QueryFloatAttribute("V", &VXL_V_read);
@@ -483,7 +472,7 @@ void StackedVolume::loadXML(const char *xml_filepath)
 	if(N_ROWS_read != N_ROWS || N_COLS_read != N_COLS || N_SLICES_read != N_SLICES)
 	{
 		char errMsg[2000];
-		sprintf(errMsg, "in StackedVolume::loadXML(...): Mismatch between in <dimensions> field xml file (= %d x %d ) and %s (= %d x %d ).", N_ROWS_read, N_COLS_read, VM_BIN_METADATA_FILE_NAME, N_ROWS, N_COLS);
+		sprintf(errMsg, "in StackedVolume::loadXML(...): Mismatch between in <dimensions> field xml file (= %d x %d x %d), %s (= %d x %d x %d).", N_ROWS_read, N_COLS_read, N_SLICES_read, VM_BIN_METADATA_FILE_NAME, N_ROWS, N_COLS, N_SLICES);
 		throw MyException(errMsg);
 	}
 
@@ -494,11 +483,11 @@ void StackedVolume::loadXML(const char *xml_filepath)
 			STACKS[i][j]->loadXML(pelem);
 }
 
-void StackedVolume::initFromXML(const char *xml_filepath)
+void StackedVolume::initFromXML(const char *xml_filepath) throw (MyException)
 {
 	#if VM_VERBOSE > 3
     printf("\t\t\t\tin StackedVolume::initFromXML(char *xml_filename = %s)\n", xml_filepath);
-    #endif
+	#endif
 
 	TiXmlDocument xml;
 	if(!xml.LoadFile(xml_filepath))
@@ -576,7 +565,7 @@ void StackedVolume::saveXML(const char *xml_filename, const char *xml_filepath) 
 	//loading previously initialized XML file 
         if(!xml.LoadFile(xml_abs_path))
 	{
-        char errMsg[5000];
+		char errMsg[5000];
                 sprintf(errMsg, "in StackedVolume::saveToXML(...) : unable to load xml file at \"%s\"", xml_abs_path);
 		throw MyException(errMsg);
 	}
@@ -633,6 +622,9 @@ void StackedVolume::saveBinaryMetadata(char *metadata_filepath) throw (MyExcepti
 	str_size = (uint16) strlen(stacks_dir) + 1;
 	fwrite(&str_size, sizeof(uint16), 1, file);
 	fwrite(stacks_dir, str_size, 1, file);
+    fwrite(&reference_system.first, sizeof(axis), 1, file);  // GI_140501
+    fwrite(&reference_system.second, sizeof(axis), 1, file); // GI_140501
+    fwrite(&reference_system.third, sizeof(axis), 1, file);  // GI_140501
 	fwrite(&VXL_V, sizeof(float), 1, file);
 	fwrite(&VXL_H, sizeof(float), 1, file);
 	fwrite(&VXL_D, sizeof(float), 1, file);
@@ -660,52 +652,112 @@ void StackedVolume::loadBinaryMetadata(char *metadata_filepath) throw (MyExcepti
 
 	//LOCAL VARIABLES
 	uint16 str_size;
+	char *temp; // GI_140425
 	FILE *file;
 	int i,j;
 	size_t fread_return_val;
 
 	if(!(file = fopen(metadata_filepath, "rb")))
 		throw MyException("in StackedVolume::loadBinaryMetadata(...): unable to load binary metadata file");
-	str_size = (uint16) strlen(stacks_dir) + 1;
+	// str_size = (uint16) strlen(stacks_dir) + 1; // GI_140425 remodev because has with no effect
 	fread_return_val = fread(&str_size, sizeof(uint16), 1, file);
-	if(fread_return_val != 1)
+	if(fread_return_val != 1) {
+		fclose(file);
 		throw MyException("in StackedVolume::loadBinaryMetadata(...) error while reading binary metadata file");
-	fread_return_val = fread(stacks_dir, str_size, 1, file);
-	if(fread_return_val != 1)
-		throw MyException("in StackedVolume::loadBinaryMetadata(...) error while reading binary metadata file");
+	}
+	// GI_140425 a check has been introduced to avoid that an out-of-date mdata.bin contains a wrong rood directory
+	temp = new char[str_size];
+	fread_return_val = fread(temp, str_size, 1, file);
+	if(fread_return_val != 1) {
+		fclose(file);
+		throw MyException("in BlockVolume::loadBinaryMetadata(...) error while reading binary metadata file");
+	}
+	if ( !strcmp(temp,stacks_dir) ) // the two strings are equal
+		delete []temp;
+	else {
+		fclose(file);
+		throw MyException("in BlockVolume::loadBinaryMetadata(...): binary metadata file is out-of-date");
+	}
+
+	// GI_140501
+    fread_return_val = fread(&reference_system.first, sizeof(axis), 1, file);
+    if(fread_return_val != 1)
+    {
+        fclose(file);
+        throw MyException("in StackedVolume::unBinarizeFrom(...): error while reading binary metadata file");
+    }
+
+	// GI_140501
+    fread_return_val = fread(&reference_system.second, sizeof(axis), 1, file);
+    if(fread_return_val != 1)
+    {
+        fclose(file);
+        throw MyException("in StackedVolume::unBinarizeFrom(...): error while reading binary metadata file");
+    }
+
+ 	// GI_140501
+   fread_return_val = fread(&reference_system.third, sizeof(axis), 1, file);
+    if(fread_return_val != 1)
+    {
+        fclose(file);
+        throw MyException("in StackedVolume::unBinarizeFrom(...): error while reading binary metadata file");
+    }
+
 	fread_return_val = fread(&VXL_V, sizeof(float), 1, file);
-	if(fread_return_val != 1)
+	if(fread_return_val != 1) {
+		fclose(file);
 		throw MyException("in StackedVolume::loadBinaryMetadata(...) error while reading binary metadata file");
+	}
 	fread_return_val = fread(&VXL_H, sizeof(float), 1, file);
-	if(fread_return_val != 1)
+	if(fread_return_val != 1) {
+		fclose(file); 
 		throw MyException("in StackedVolume::loadBinaryMetadata(...) error while reading binary metadata file");
+	}
 	fread_return_val = fread(&VXL_D, sizeof(float), 1, file);
-	if(fread_return_val != 1)
+	if(fread_return_val != 1) {
+		fclose(file);
 		throw MyException("in StackedVolume::loadBinaryMetadata(...) error while reading binary metadata file");
+	}
 	fread_return_val = fread(&ORG_V, sizeof(float), 1, file);
-	if(fread_return_val != 1)
+	if(fread_return_val != 1) {
+		fclose(file);
 		throw MyException("in StackedVolume::loadBinaryMetadata(...) error while reading binary metadata file");
+	}
 	fread_return_val = fread(&ORG_H, sizeof(float), 1, file);
-	if(fread_return_val != 1)
+	if(fread_return_val != 1) {
+		fclose(file);
 		throw MyException("in StackedVolume::loadBinaryMetadata(...) error while reading binary metadata file");
+	}
 	fread_return_val = fread(&ORG_D, sizeof(float), 1, file);
-	if(fread_return_val != 1)
+	if(fread_return_val != 1) {
+		fclose(file);
 		throw MyException("in StackedVolume::loadBinaryMetadata(...) error while reading binary metadata file");
+	}
 	fread_return_val = fread(&MEC_V, sizeof(float), 1, file);
-	if(fread_return_val != 1)
+	if(fread_return_val != 1) {
+		fclose(file);
 		throw MyException("in StackedVolume::loadBinaryMetadata(...) error while reading binary metadata file");
+	}
 	fread_return_val = fread(&MEC_H, sizeof(float), 1, file);
-	if(fread_return_val != 1)
+	if(fread_return_val != 1) {
+		fclose(file);
 		throw MyException("in StackedVolume::loadBinaryMetadata(...) error while reading binary metadata file");
+	}
 	fread_return_val = fread(&N_ROWS, sizeof(uint16), 1, file);
-	if(fread_return_val != 1)
+	if(fread_return_val != 1) {
+		fclose(file);
 		throw MyException("in StackedVolume::loadBinaryMetadata(...) error while reading binary metadata file");
+	}
 	fread_return_val = fread(&N_COLS, sizeof(uint16), 1, file);
-	if(fread_return_val != 1)
+	if(fread_return_val != 1) {
+		fclose(file);
 		throw MyException("in StackedVolume::loadBinaryMetadata(...) error while reading binary metadata file");
+	}
 	fread_return_val = fread(&N_SLICES, sizeof(uint16), 1, file);
-	if(fread_return_val != 1)
+	if(fread_return_val != 1) {
+		fclose(file);
 		throw MyException("in StackedVolume::loadBinaryMetadata(...) error while reading binary metadata file");
+	}
 
 	STACKS = new Stack **[N_ROWS];
 	for(i = 0; i < N_ROWS; i++)
@@ -802,7 +854,7 @@ void StackedVolume::rotate(int theta)
 }
 
 //mirror stacks matrix along mrr_axis (accepted values are mrr_axis=1,2,3)
-void StackedVolume::mirror(axis mrr_axis)
+void StackedVolume::mirror(axis mrr_axis) throw (MyException)
 {
 	#if VM_VERBOSE > 3
 	printf("\t\t\t\tin StackedVolume::mirror(mrr_axis = %d)\n", mrr_axis);
@@ -862,76 +914,6 @@ void StackedVolume::mirror(axis mrr_axis)
 	STACKS = new_STACK_2D_ARRAY;
 }
 
-//extract spatial coordinates (in millimeters) of given Stack object
-void StackedVolume::extractCoordinates(Stack* stk, int z, int* crd_1, int* crd_2, int* crd_3)
-{
-    #if VM_VERBOSE > 3
-    printf("\t\t\t\tin StackedVolume::extractCoordinates(stk=\"%s\", z = %d)\n", stk->getDIR_NAME(), z);
-    #endif
-
-	bool found_ABS_X=false;
-	bool found_ABS_Y=false;
-
-	//loading estimations for absolute X and Y stack positions
-	char * pch;
-	char buffer[100];
-	strcpy(buffer,&(stk->getDIR_NAME()[0]));
-	pch = strtok (buffer,"/_");
-	pch = strtok (NULL, "/_");
-
-	while (pch != NULL)
-	{
-		if(!found_ABS_X)
-		{
-			if(sscanf(pch, "%d", crd_1) == 1)
-				found_ABS_X=true;
-		}
-		else if(!found_ABS_Y)
-		{
-			if(sscanf(pch, "%d", crd_2) == 1)
-				found_ABS_Y=true;
-		}
-		else
-			break;
-
-		pch = strtok (NULL, "/_");
-	}
-
-	if(!found_ABS_X || !found_ABS_Y)
-	{
-		char msg[200];
-		sprintf(msg,"in StackedVolume::extractCoordinates(directory_name=\"%s\"): format 000000_000000 or X_000000_X_000000 not found", stk->getDIR_NAME());
-        throw MyException(msg);
-	}
-
-	//loading estimation for absolute Z stack position
-	if(crd_3!= NULL)
-	{
-		char* first_file_name = stk->getFILENAMES()[z];
-
-		char * pch;
-		char lastTokenized[100];
-		char buffer[500];
-		strcpy(buffer,&(first_file_name[0]));
-
-		pch = strtok (buffer,"_");
-		while (pch != NULL)
-		{
-			strcpy(lastTokenized,pch);
-			pch = strtok (NULL, "_");
-		}
-
-		pch = strtok (lastTokenized,".");
-		strcpy(lastTokenized,pch);
-
-		if(sscanf(lastTokenized, "%d", crd_3) != 1)
-		{
-			char msg[200];
-			sprintf(msg,"in StackedVolume::extractCoordinates(...): unable to extract Z position from filename %s", first_file_name);
-            throw MyException(msg);
-		}
-	}
-}
 
 //print all informations contained in this data structure
 void StackedVolume::print()
@@ -950,115 +932,7 @@ void StackedVolume::print()
 	printf("\n*** END printing StakedVolume object...\n\n");
 }
 
-//inserts the given displacements in the given stacks
-void StackedVolume::insertDisplacement(Stack *stk_A, Stack *stk_B, Displacement *displacement)  throw (MyException)
-{
-	int stk_A_row = stk_A->getROW_INDEX();
-	int stk_A_col = stk_A->getCOL_INDEX();
-	int stk_B_row = stk_B->getROW_INDEX();
-	int stk_B_col = stk_B->getCOL_INDEX();
-	displacement->evalReliability(dir_vertical);
-	displacement->evalReliability(dir_horizontal);
-	displacement->evalReliability(dir_depth);
-	if(stk_B_row == stk_A_row && stk_B_col == stk_A_col+1)
-	{
-		displacement->setDefaultV(0);	//we assume that adjacent tiles are aligned with respect to motorized stages coordinates
-		displacement->setDefaultH(getDEFAULT_DISPLACEMENT_H());
-		displacement->setDefaultD(getDEFAULT_DISPLACEMENT_D());
-		stk_A->getEAST().push_back(displacement);
-		stk_B->getWEST().push_back(displacement->getMirrored(dir_horizontal));
-	}
-	else if(stk_B_row == stk_A_row +1 && stk_B_col == stk_A_col)
-	{
-		displacement->setDefaultV(getDEFAULT_DISPLACEMENT_V());
-		displacement->setDefaultH(0);	//we assume that adjacent tiles are aligned with respect to motorized stages coordinates					
-		displacement->setDefaultD(getDEFAULT_DISPLACEMENT_D());
-		stk_A->getSOUTH().push_back(displacement);
-		stk_B->getNORTH().push_back(displacement->getMirrored(dir_vertical));
-	}
-	else
-	{
-		char errMsg[1000];
-		sprintf(errMsg, "in StackedVolume::insertDisplacement(stk_A[%d,%d], stk_B[%d,%d], displacement): stacks are not adjacent", 
-			    stk_A->getROW_INDEX(), stk_A->getCOL_INDEX(), stk_B->getROW_INDEX(), stk_B->getCOL_INDEX());
-		throw MyException(errMsg);
-	}
-}
 
-//extract absolute path from file path(i.e. "C:/Users/Alex/Desktop/" from "C:/Users/Alex/Desktop/text.xml")
-std::string StackedVolume::extractPathFromFilePath(const char* file_path)
-{
-	//PRECONDITIONS: file_path contains an absolute file path (i.e. "C:/Users/Alex/Desktop/text.xml") with both separators "/" OR "\"
-	//POSTCONDITIONS: the path of the directory that contains the file is returned (i.e. "C:/Users/Alex/Desktop/" from "C:/Users/Alex/Desktop/text.xml")
-
-
-	//LOCAL VARIABLES
-	string file_path_string =file_path;
-	string file_name;
-	string ris;
-
-	//loading file name from 'file_path_string' into 'file_name' by strtoking with "/" OR "\" character
-	char * tmp;
-	tmp = strtok (&file_path_string[0],"/\\");
-	while (tmp != NULL)
-	{
-		file_name = tmp;
-		tmp = strtok (NULL, "/\\");
-	}
-
-	//restoring content of file_path_string due to possible alterations done by strtok
-	file_path_string =file_path;
-
-	//loading file name substring index in 'file_path_string'
-	int index_of_filename= (int) file_path_string.find(file_name);
-
-	//extract substring that contains absolute path but the filename
-	ris=file_path_string.substr(0,index_of_filename);
-	return ris;
-}
-
-
-//returns true if file exists at the given filepath
-bool StackedVolume::fileExists(const char *filepath)  throw (MyException)
-{
-	//LOCAL VARIABLES
-	string file_path_string =filepath;
-	string file_name;
-	string dir_path;
-	bool file_exists = false;
-	DIR* directory;
-	dirent* dir_entry;
-
-	//extracting dir_path and file_name from file_path
-	char * tmp;
-	tmp = strtok (&file_path_string[0],"/\\");
-	while (tmp != NULL)
-	{
-		file_name = tmp;
-		tmp = strtok (NULL, "/\\");
-	}
-	file_path_string =filepath;
-	dir_path=file_path_string.substr(0,file_path_string.find(file_name));
-
-	//obtaining DIR pointer to directory (=NULL if directory doesn't exist)
-	if (!(directory=opendir(&(dir_path[0]))))
-	{
-		char msg[1000];
-		sprintf(msg,"in fileExists(filepath=%s): Unable to open directory \"%s\"", filepath, &dir_path[0]);
-		throw MyException(msg);
-	}
-
-	//scanning for given file
-	while (!file_exists && (dir_entry=readdir(directory)))
-	{
-		//storing in tmp i-th entry and checking that it not contains '.', so that I can exclude '..', '.' and files entries
-		if(!strcmp(&(file_name[0]), dir_entry->d_name))
-			file_exists = true;
-	}
-	closedir(directory);
-
-	return file_exists;
-}
 
 //counts the total number of displacements and the number of displacements per stack
 void StackedVolume::countDisplacements(int& total, float& per_stack_pair)

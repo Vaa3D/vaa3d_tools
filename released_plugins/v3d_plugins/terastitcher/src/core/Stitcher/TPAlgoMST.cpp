@@ -29,10 +29,11 @@
 #include "TPAlgoMST.h"
 #include "S_config.h"
 #include "VM_config.h"
-#include "StackedVolume.h"
-#include "Stack.h"
+#include "vmStackedVolume.h"
+#include "vmVirtualStack.h"
 #include "Displacement.h"
 
+using namespace volumemanager;
 
 //triplet data type definition
 typedef struct 							
@@ -42,10 +43,10 @@ typedef struct
 	float D;
 }triplet;
 
-TPAlgoMST::TPAlgoMST(StackedVolume * _volume) : TPAlgo(S_FATPM_SP_TREE, _volume)
+TPAlgoMST::TPAlgoMST(VirtualVolume * _volume) : TPAlgo(S_FATPM_SP_TREE, _volume)
 {
 	#if S_VERBOSE>4
-	printf("........in TPAlgoMST::TPAlgoMST(StackedVolume * _volume)");
+	printf("........in TPAlgoMST::TPAlgoMST(VirtualVolume * _volume)");
 	#endif
 }
 
@@ -71,7 +72,7 @@ void TPAlgoMST::execute() throw (MyException)
 	std::pair<int*,int*> **predecessors;	//predecessor matrix for VHD directions
 	int src_row=0, src_col=0;						//source vertex
 
-	//0) fixing the source as the stitchable Stack nearest to the top-left corner
+	//0) fixing the source as the stitchable VirtualStack nearest to the top-left corner
 	int min_distance = std::numeric_limits<int>::max();
 	for(int row=0; row<volume->getN_ROWS(); row++)
 		for(int col=0; col<volume->getN_COLS(); col++)
@@ -81,7 +82,7 @@ void TPAlgoMST::execute() throw (MyException)
 				src_col = col;
 				min_distance = sqrt((float)(row*row+col*col));
 			}
-    #if S_VERBOSE > 4
+	#if S_VERBOSE > 4
 	printf("....in TPAlgoMST::execute(): SOURCE is [%d,%d]\n",src_row,src_col);
 	#endif
 
@@ -146,7 +147,7 @@ void TPAlgoMST::execute() throw (MyException)
 					}
 				}
 
-    #if S_VERBOSE > 4
+	#if S_VERBOSE > 4
 	for(int k=0; k<3; k++)
 	{
 		printf("\n\n....in TPAlgoMST::execute(): %d DIRECTION:\n",  k);
@@ -195,12 +196,12 @@ void TPAlgoMST::execute() throw (MyException)
 			{
 				for(int k=0; k<3; k++)
 				{
-					Stack *source, *dest, *v, *u;
+					VirtualStack *source, *dest, *v, *u;
 					source = volume->getSTACKS()[src_row][src_col];
 					dest   = volume->getSTACKS()[row][col];
 					v      = dest;
 
-                    #if S_VERBOSE > 4
+					#if S_VERBOSE > 4
 					printf("S[%d,%d] [%d]_path:\n", k, row, col);
 					#endif
 					while (v != source)
@@ -214,27 +215,27 @@ void TPAlgoMST::execute() throw (MyException)
 							throw MyException("...in TPAlgoMST::execute(): error in the predecessor matrix");
 						u = volume->getSTACKS()[u_row][u_col ];
 
-                        #if S_VERBOSE > 4
+						#if S_VERBOSE > 4
 						printf("\t[%d,%d] (ABS_[%d] = %d %+d)\n",u->getROW_INDEX(), u->getCOL_INDEX(), k, dest->getABS(k), u->getDisplacement(v)->getDisplacement(direction(k)));
 						#endif
 						dest->setABS(dest->getABS(k) + u->getDisplacement(v)->getDisplacement(direction(k)), k);
 						v = u;
 
 						if(dest->isStitchable() && !(v->isStitchable()))
-							printf("\nWARNING! in TPAlgoMST::execute(): direction %d: Stack [%d,%d] is passing through Stack [%d,%d], that is NOT STITCHABLE\n", k, row, col, v->getROW_INDEX(), v->getCOL_INDEX());
+							printf("\nWARNING! in TPAlgoMST::execute(): direction %d: VirtualStack [%d,%d] is passing through VirtualStack [%d,%d], that is NOT STITCHABLE\n", k, row, col, v->getROW_INDEX(), v->getCOL_INDEX());
 					}
-                    #if S_VERBOSE > 4
+					#if S_VERBOSE > 4
 					printf("\n");
 					#endif
 				}
-                #if S_VERBOSE > 4
+				#if S_VERBOSE > 4
 				system("PAUSE");
 				#endif
 			}
 		}
 	}
 
-	//5) translating stacks absolute coordinates by choosing Stack[0][0] as the new source
+	//5) translating stacks absolute coordinates by choosing VirtualStack[0][0] as the new source
 	int trasl_X = volume->getSTACKS()[0][0]->getABS_V();
 	int trasl_Y = volume->getSTACKS()[0][0]->getABS_H();
 	int trasl_Z = volume->getSTACKS()[0][0]->getABS_D();

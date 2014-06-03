@@ -31,7 +31,7 @@
 
 #include <QThread>
 #include <string>
-#include "StackedVolume.h"
+#include "vmStackedVolume.h"
 #include "CPlugin.h"
 
 class terastitcher::CPreview : public QThread

@@ -31,7 +31,8 @@
 
 #include <QThread>
 #include <string>
-#include "StackedVolume.h"
+#include "vmVirtualVolume.h"
+#include "vmStackedVolume.h"
 #include "CPlugin.h"
 
 class terastitcher::CImport : public QThread

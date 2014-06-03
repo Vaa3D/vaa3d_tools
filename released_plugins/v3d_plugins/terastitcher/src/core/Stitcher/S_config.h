@@ -69,8 +69,8 @@
 #define S_SHOW_STACK_MARGIN 2
 #define S_SHOW_STACK_MARGIN_NAME "STACKMARGIN"
 #define S_SAVED_TIFF_BIT_DEPTH 8		//bit depth of saved images
-#define S_MAX_MULTIRES 5				//in multiresolution mode, images will be downsampled up to 2^(S_MAX_MULTIRES)
-#define S_MIN_SLICE_DIM 250
+#define S_MAX_MULTIRES 8				//in multiresolution mode, images will be downsampled up to 2^(S_MAX_MULTIRES)
+#define S_MIN_SLICE_DIM 100
 
 //*** RESTORING PHASE***
 #define S_RESTORE_V_DIRECTION 1			//association of IDs to restoring directions

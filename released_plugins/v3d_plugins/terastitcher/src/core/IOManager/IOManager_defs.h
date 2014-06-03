@@ -141,8 +141,23 @@ namespace iomanager
         #define TIME( arg ) (time( arg ))
     #endif
 
+	//pause/clear macros (@WARNING: as they are macros, they are NOT namespaced)
+	#ifdef _WIN32
+	#define system_PAUSE() 		\
+		system("PAUSE"); 		\
+		cout<<endl;
+	#define system_CLEAR() system("cls");
+	#else
+	#define system_CLEAR() system("clear");
+	#define system_PAUSE()									\
+		cout<<"\n\nPress RETURN key to continue..."<<endl<<endl;	\
+		cin.clear();										\
+		cin.ignore();										\
+		cin.get();
+	#endif
 
 
+	
     /***********************************************
     *    DEBUG, WARNING and EXCEPTION FUNCTIONS    *
     ************************************************
@@ -150,15 +165,14 @@ namespace iomanager
     inline void warning(const char* message, const char* source = 0)
     {
         if(source)
-           printf("\n**** WARNING (source: \"%s\") ****\n"
-           "    |=> \"%s\"\n\n", source, message);
+           printf("\n**** WARNING (source: \"%s\") ****\n    |=> \"%s\"\n\n", source, message);
         else
            printf("\n**** WARNING ****: %s\n", message);
     }
 
     inline void debug(debug_level dbg_level, const char* message=0, const char* source=0)
     {
-        if(iomanager::DEBUG >= dbg_level)
+        if(DEBUG >= dbg_level)
         {
            if(message && source)
                printf("\n----------------------- iomanager module: DEBUG (level %d) ----: in \"%s\") ----\n"

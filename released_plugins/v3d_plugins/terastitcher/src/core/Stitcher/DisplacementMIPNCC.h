@@ -29,8 +29,9 @@
 #define DISPLACEMENT_MIP_NCC_H
 
 #include "Displacement.h"
-#include "VM_config.h"
+//#include "VM_config.h"
 #include "CrossMIPs.h"
+#include <math.h>
 
 class DisplacementMIPNCC : Displacement
 {

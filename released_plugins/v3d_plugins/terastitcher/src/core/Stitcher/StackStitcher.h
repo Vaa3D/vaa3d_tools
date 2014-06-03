@@ -30,30 +30,36 @@
 
 #include <math.h>
 #include "S_config.h"
+//#include "../VolumeManager/VM_config.h"
 #include "IOManager_defs.h"
 #include "MyException.h"
 
 
 class StackRestorer;
-#ifndef STACKED_VOLUME_H
-class StackedVolume;
-#endif
-#ifndef STACK_H_
-class Stack;
-#endif
+
+// #ifndef _VIRTUAL_VOLUME_H
+// class volumemanager::VirtualVolume;
+// #endif
+// #ifndef STACK_H_
+// class VirtualStack;
+// #endif
+
+#include "../VolumeManager/vmVirtualStack.h"
+#include "../VolumeManager/vmVirtualVolume.h"
 
 class StackStitcher
 {
 	private:
 
 		/******OBJECT MEMBERS******/
-        StackedVolume *volume;                      //pointer to the <StackedVolume> object to be stitched
-        int V0, V1, H0, H1, D0, D1;                 //voxel intervals that identify the final stitched volume
-        int ROW_START, COL_START, ROW_END, COL_END; //stack indexes that identify the stacks involved in stitching
+                //StackedVolume *volume;					//pointer to the <StackedVolume> object to be stitched
+				volumemanager::VirtualVolume *volume;					//pointer to the <VirtualVolume> object to be stitched
+                int V0, V1, H0, H1, D0, D1;				//voxel intervals that identify the final stitched volume
+                int ROW_START, COL_START, ROW_END, COL_END;             //stack indexes that identify the stacks involved in stitching
 
 		/******CLASS MEMBERS******/
 		static double time_displ_comp;				//time employed for pairwise displacements computation
-        static double time_merging;                 //time employed to merge stacks
+                static double time_merging;				//time employed to merge stacks
 		static double time_stack_desc;				//time employed to compute stacks descriptions
 		static double time_stack_restore;			//time employed to restore stacks
 		static double time_multiresolution;			//time employed to obtain stitched volume at different resolutions
@@ -62,16 +68,16 @@ class StackStitcher
 		/***OBJECT PRIVATE METHODS****/
 
 		//default constructor will not be accessible
-        StackStitcher(void){}
+		StackStitcher(void){}
 
 
 		/*************************************************************************************************************
 		* Merges all slices of the given row at the given depth index, so obtaining the stripe that is returned.
 		* Uses [...]_blending() functions to blend pixels in  overlapping zones.  The appropriate blending function is
 		* selected by the [blending_algo] parameter. If a  <StackRestorer>  object has been passed,  each slice is re-
-        * stored before it is combined into the final stripe.
+		* stored before it is combined into the final stripe.
 		**************************************************************************************************************/
-        real_t* getStripe(short row_index, short d_index, int restore_direction=-1, StackRestorer* stk_rst=NULL,
+		real_t* getStripe(short row_index, short d_index, int restore_direction=-1, StackRestorer* stk_rst=NULL,
 						  int blending_algo=S_SINUSOIDAL_BLENDING)    							   throw (MyException);
 
 		/*************************************************************************************************************
@@ -130,7 +136,7 @@ class StackStitcher
 
 	public:
 
-        StackStitcher(StackedVolume* _volume);
+                StackStitcher(volumemanager::VirtualVolume* _volume);
 
 		/*************************************************************************************************************
 		* Method to be called for displacement computation. <> parameters are mandatory, while [] are optional.
@@ -225,13 +231,13 @@ class StackStitcher
 						bool exclude_nonstitchable_stacks =true, int _ROW_START=-1, int _ROW_END=-1, int _COL_START=-1,
 						int _COL_END=-1, int _D0=-1, int _D1=-1,	bool restoreSPIM=false,	  int restore_direction=-1,
 						int blending_algo=S_SINUSOIDAL_BLENDING,	bool test_mode=false, bool show_progress_bar= true,
-                        const char* saved_img_format=iom::DEF_IMG_FORMAT.c_str(), int saved_img_depth=iom::DEF_IMG_DEPTH) throw (MyException);
+						const char* saved_img_format=iom::DEF_IMG_FORMAT.c_str(), int saved_img_depth=iom::DEF_IMG_DEPTH) throw (MyException);
 		
 
 		/*************************************************************************************************************
 		* Functions used to save single phase time performances
 		**************************************************************************************************************/
-		static void saveComputationTimes(const char *filename, StackedVolume &stk_org, double total_time=-1);
+		static void saveComputationTimes(const char *filename, volumemanager::VirtualVolume &stk_org, double total_time=-1);
 		static void resetComputationTimes();
 
                 /*************************************************************************************************************
@@ -257,6 +263,41 @@ class StackStitcher
                 std::string getMultiresABS_H_string(int res, int REL_H);
                 int getMultiresABS_D(int res, int REL_D);
                 std::string getMultiresABS_D_string(int res, int REL_D);
+
+/*************************************************************************************************************
+* Method to be called for tile merging. <> parameters are mandatory, while [] are optional.
+* <output_path>			: absolute directory path where merged tiles have to be stored.
+* [block_height/width/depth]: desired dimensions of tiles  slices after merging.  It is actually an upper-bound of
+*						  the actual slice dimensions, which will be computed in such a way that all tiles di-
+*						  mensions can differ by 1 pixel only along both directions. If not given, the maximum
+*						  allowed dimensions will be set, which will result in a volume composed by  one large 
+*						  tile only.
+* [resolutions]			: pointer to an array of S_MAX_MULTIRES  size which boolean entries identify the acti-
+*						  vaction/deactivation of the i-th resolution.  If not given, all resolutions will  be
+*						  activated.
+* [exclude_nonstitc...] 
+* [_...START/END]		
+* [_D0/_D1]				: identify the possible VOI (Volume Of Interest). If these are not used, the whole vo-
+*						  lume is  considered and the parameter <exclude_nonstitchable_stacks> is used to dis-
+*						  card rows or columns with no stitchable stacks.
+* [restoreSPIM]			: enables SPIM artifacts removal (zebrated patterns) along the given direction.
+* [restore_direction]	: direction of SPIM zebrated patterns to be removed.
+* [blending_algo]		: ID of the blending algorithm to be used in the overlapping regions.
+* [test_mode]			: if enabled, the middle slice of the whole volume will be stitched and and  saved lo-
+*						  cally. Stage coordinates will be used, s o this can be used to test  their precision
+*						  as well as the selected reference system.
+* [show_progress_bar]	: enables/disables progress bar with estimated time remaining.
+* [saved_img_format]	: determines saved images format ("png","tif","jpeg", etc.).
+* [saved_img_depth]		: determines saved images bitdepth (16 or 8).
+**************************************************************************************************************/
+
+void mergeTilesVaa3DRaw(std::string output_path, int block_height = -1, int block_width = -1, int block_depth = -1, bool* resolutions = NULL, 
+						bool exclude_nonstitchable_stacks =true, int _ROW_START=-1, int _ROW_END=-1, int _COL_START=-1,
+						int _COL_END=-1, int _D0=-1, int _D1=-1,	bool restoreSPIM=false,	  int restore_direction=-1,
+						int blending_algo=S_SINUSOIDAL_BLENDING,	bool test_mode=false, bool show_progress_bar= true,
+						const char* saved_img_format=iom::DEF_IMG_FORMAT.c_str(), int saved_img_depth=iom::DEF_IMG_DEPTH) throw (MyException);
+
+
 };
 
 #endif

@@ -31,38 +31,39 @@
 #include "VM_config.h"
 #include "IOManager.h"
 #include "tinyxml.h"
+#include "VirtualStack.h" 
 
 using namespace volumemanager;
 
 class StackedVolume;
 class Displacement;
-class Stack
+class Stack : public VirtualStack
 {
 	private:
 
 		//*********** OBJECT ATTRIBUTES ***********
 		StackedVolume*	CONTAINER;				//pointer to <StackedVolume> object that contains the current object
-		char**			FILENAMES;				//1D dynamic array of <char>  pointers to images filenames
-		int				HEIGHT, WIDTH, DEPTH;	//VHD (Vertical, Horizontal, Depth) dimensions of current stack
-		int				ROW_INDEX,  COL_INDEX;	//row and col index relative to stack matrix
-		char*			DIR_NAME;				//string containing current stack directory
-		bool			stitchable;				//true if current Stack is stitchable with adjacent ones		
-		int ABS_V, ABS_H, ABS_D;				//absolute VHD voxel coordinates of current stack
-		real_t* STACKED_IMAGE;					//pointer to 1-D array of REAL_T that stores Stack image data
-		std::vector<Displacement*> NORTH;		//vector of displacements along D direction between this and northern Stack
-		std::vector<Displacement*> EAST;		//vector of displacements along D direction between this and eastern  Stack
-		std::vector<Displacement*> SOUTH;		//vector of displacements along D direction between this and southern Stack
-		std::vector<Displacement*> WEST;		//vector of displacements along D direction between this and western  Stack
+		//Onofri char**			FILENAMES;				//1D dynamic array of <char>  pointers to images filenames
+		//Onofri int				HEIGHT, WIDTH, DEPTH;	//VHD (Vertical, Horizontal, Depth) dimensions of current stack
+		//Onofri int				ROW_INDEX,  COL_INDEX;	//row and col index relative to stack matrix
+		//Onofri char*			DIR_NAME;				//string containing current stack directory
+		//Onofri bool			stitchable;				//true if current Stack is stitchable with adjacent ones		
+		//Onofri int ABS_V, ABS_H, ABS_D;				//absolute VHD voxel coordinates of current stack
+		//Onofri real_t* STACKED_IMAGE;					//pointer to 1-D array of REAL_T that stores Stack image data
+		//Onofri std::vector<Displacement*> NORTH;		//vector of displacements along D direction between this and northern Stack
+		//Onofri std::vector<Displacement*> EAST;		//vector of displacements along D direction between this and eastern  Stack
+		//Onofri std::vector<Displacement*> SOUTH;		//vector of displacements along D direction between this and southern Stack
+		//Onofri std::vector<Displacement*> WEST;		//vector of displacements along D direction between this and western  Stack
 	
 		
 		//******** OBJECT PRIVATE METHODS *********
-        Stack(void){}
+		Stack(void){}
 
 		//Initializes all object's members
         void init() throw (MyException);
 				
 		//binarizing-unbinarizing methods
-        void binarizeInto(FILE* file) throw (MyException);
+		void binarizeInto(FILE* file) throw (MyException);
 		void unBinarizeFrom(FILE* file) throw (MyException);
 
 		//******** FRIEND CLASS DECLARATION *********
@@ -72,47 +73,22 @@ class Stack
 	public:
 
 		//CONSTRUCTORS
-        Stack(StackedVolume* _CONTAINER, int _ROW_INDEX, int _COL_INDEX, const char* _DIR_NAME) throw (MyException);
+		Stack(StackedVolume* _CONTAINER, int _ROW_INDEX, int _COL_INDEX, const char* _DIR_NAME) throw (MyException);
         Stack(StackedVolume* _CONTAINER, int _ROW_INDEX, int _COL_INDEX, FILE* bin_file) throw (MyException);
 		~Stack(void);
 
 		//GET methods
-		char* getDIR_NAME()			{return DIR_NAME;}
-		int getROW_INDEX()			{return ROW_INDEX;}
-		int getCOL_INDEX()			{return COL_INDEX;}
-		int getHEIGHT()				{return HEIGHT;}
-		int getWIDTH()				{return WIDTH;}
-		int getDEPTH()				{return DEPTH;}
-		char** getFILENAMES()		{return FILENAMES;}		
-		int getABS_V()				{return ABS_V;}
-		int getABS_H()				{return ABS_H;}
-		int getABS_D()				{return ABS_D;}
-		int getABS(int direction) throw (MyException);
-		real_t* getSTACKED_IMAGE()	{return STACKED_IMAGE;}
-		void *getCONTAINER();
-		std::vector<Displacement*>& getNORTH(){return NORTH;}
-		std::vector<Displacement*>& getEAST(){return  EAST;}
-		std::vector<Displacement*>& getSOUTH(){return SOUTH;}
-		std::vector<Displacement*>& getWEST(){return  WEST;}
-		bool isStitchable(){return this->stitchable;}
-		Displacement* getDisplacement(Stack* neighbour) throw (MyException);
+		void *getCONTAINER() {return CONTAINER;};
 
-		//SET methods
-		void setROW_INDEX(int _ROW_INDEX){ROW_INDEX = _ROW_INDEX;}
-		void setCOL_INDEX(int _COL_INDEX){COL_INDEX = _COL_INDEX;}
-		void setABS_V    (int _ABS_V)    {ABS_V     = _ABS_V;    }
-		void setABS_H    (int _ABS_H)    {ABS_H     = _ABS_H;    }
-		void setABS_D    (int _ABS_D)    {ABS_D     = _ABS_D;    }
-		void setABS		 (int _ABS, int direction)  throw (MyException);
-		void setStitchable(bool _stitchable){this->stitchable = _stitchable;}
+
 
 		//LOAD and RELEASE methods
-        real_t* loadImageStack(int first_file=-1, int last_file=-1) throw (MyException);
+		real_t* loadImageStack(int first_file=-1, int last_file=-1) throw (MyException);
 		void releaseImageStack();
 
 		//XML methods
 		TiXmlElement* getXML();
-		void		  loadXML(TiXmlElement *stack_node) throw (MyException);
+		void loadXML(TiXmlElement *stack_node) throw (MyException);
 
 		//PRINT and SHOW methods
 		void print();
