@@ -24,7 +24,8 @@
 
 #include "Block.h"
 #include "VirtualVolume.h"
-#include "RawFmtMngr.h"
+#include "VirtualFmtMngr.h"
+//#include "RawFmtMngr.h"
 #include <cxcore.h>
 #include <highgui.h>
 #ifdef _WIN32
@@ -318,15 +319,23 @@ void Block::init()
 	}
 	entries_lev3.clear();
 
-	//initializing STACKED_IMAGE array
-	//this->STACKED_IMAGE = new CvMat*[DEPTH];
-	//for(uint32 z=0; z<DEPTH; z++)
-	//	this->STACKED_IMAGE[z] = NULL;
+	// get the file format of the blocks
+	VirtualFmtMngr *fmtMngr;
+	string ffmt = getFMT();
+	if ( ffmt == "Tiff3D" )
+		fmtMngr = new Tiff3DFmtMngr();
+	else if ( ffmt == "Vaa3DRaw" )
+		fmtMngr = new Vaa3DRawFmtMngr();
+	else {
+        char msg[STATIC_STRINGS_SIZE];
+        sprintf(msg,"in Block::init(...): Unknown file format \"%s\"", ffmt.c_str());
+        throw IOException(msg);
+	}
 
-	// declarations needed by RawFmtMngr routines
+	// declarations needed by FmtMngr methods
 	char *err_rawfmt;
 	void *dummy;
-	V3DLONG *sz = 0;
+	sint64 *sz = 0;
 	int datatype;
 	int b_swap;
 	int header_len;
@@ -335,14 +344,17 @@ void Block::init()
 	char slice_fullpath[STATIC_STRINGS_SIZE];
 	sprintf(slice_fullpath, "%s/%s/%s", CONTAINER->getROOT_DIR(), DIR_NAME, FILENAMES[0]);
 
-	if ( (err_rawfmt = loadRaw2Metadata(slice_fullpath,sz,datatype,b_swap,dummy,header_len)) != 0 ) {
+	//if ( (err_rawfmt = loadRaw2Metadata(slice_fullpath,sz,datatype,b_swap,dummy,header_len)) != 0 ) {
+	if ( (err_rawfmt = fmtMngr->loadMetadata(slice_fullpath,sz,datatype,b_swap,dummy,header_len)) != 0 ) {
 		if ( sz ) delete[] sz;
 		char msg[STATIC_STRINGS_SIZE];
 		sprintf(msg,"in Block[%d,%d]::init(): unable to open block \"%s\". Wrong path or format (%s)", 
 			ROW_INDEX, COL_INDEX, slice_fullpath,err_rawfmt);
         throw IOException(msg);
 	}
-	closeRawFile((FILE *)dummy);
+	fmtMngr->closeFile(dummy);
+
+	delete fmtMngr;
 
 	HEIGHT       = (uint32)sz[1];
 	WIDTH        = (uint32)sz[0];
@@ -357,14 +369,14 @@ void Block::init()
 	DEPTH = BLOCK_SIZE[0] = (uint32)sz[2];
 	for ( int ib=1; ib<(int)N_BLOCKS; ib++ ) {
 		sprintf(slice_fullpath, "%s/%s/%s", CONTAINER->getROOT_DIR(), DIR_NAME, FILENAMES[ib]);
-		if ( (err_rawfmt = loadRaw2Metadata(slice_fullpath,sz,datatype,b_swap,dummy,header_len)) != 0 ) {
+		if ( (err_rawfmt = fmtMngr->loadMetadata(slice_fullpath,sz,datatype,b_swap,dummy,header_len)) != 0 ) {
 			if ( sz ) delete[] sz;
 			char msg[STATIC_STRINGS_SIZE];
 			sprintf(msg,"in Block[%d,%d]::init(): unable to open block \"%s\". Wrong path or format (%s)", 
 				ROW_INDEX, COL_INDEX, slice_fullpath,err_rawfmt);
             throw IOException(msg);
 		}
-		closeRawFile((FILE *)dummy);
+		fmtMngr->closeFile((FILE *)dummy);
 
 		BLOCK_SIZE[ib] = (uint32)sz[2];
 		BLOCK_ABS_D[ib] = DEPTH;
@@ -372,6 +384,22 @@ void Block::init()
 	}
 
 	delete[] sz;
+}
+
+string Block::getFMT ( ) {
+	string ffmt;
+	char *temp = FILENAMES[0]+strlen(FILENAMES[0])-3;
+	if ( strcmp(temp,"tif")==0 )
+		ffmt = "Tiff3D";
+	else if ( strcmp(temp,"raw")==0 )
+		ffmt = "Vaa3DRaw";
+	else {
+        char msg[STATIC_STRINGS_SIZE];
+        sprintf(msg,"in Block::getFMT(...): Unknown file format \"%s\"", temp);
+        throw IOException(msg);
+	}
+
+	return ffmt;
 }
 
 //PRINT method

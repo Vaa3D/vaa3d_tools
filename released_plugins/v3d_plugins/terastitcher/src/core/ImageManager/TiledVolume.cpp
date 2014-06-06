@@ -26,6 +26,8 @@
 #include <string>
 #include "TiledVolume.h"
 #include "Block.h"
+#include "VirtualFmtMngr.h"
+#include "Tiff3DMngr.h"
 #include "RawFmtMngr.h"
 
 #ifdef _WIN32
@@ -59,6 +61,9 @@ TiledVolume::TiledVolume(const char* _root_dir)  throw (IOException)
 	reference_system.first = reference_system.second = reference_system.third = axis_invalid;
 	VXL_1 = VXL_2 = VXL_3 = 0;
 
+	ffmt = "";
+	fmtMngr = 0;
+
 	//without any configuration parameter, volume import must be done from the metadata file stored in the root directory, if it exists
     char mdata_filepath[STATIC_STRINGS_SIZE];
     sprintf(mdata_filepath, "%s/%s", root_dir, iim::MDATA_BIN_FILE_NAME.c_str());
@@ -91,14 +96,14 @@ TiledVolume::TiledVolume(const char* _root_dir, ref_sys _reference_system, float
 	reference_system.first = reference_system.second = reference_system.third = axis_invalid;
 	VXL_1 = VXL_2 = VXL_3 = 0;
 
+	ffmt = "";
+	fmtMngr = 0;
+
 	//trying to unserialize an already existing metadata file, if it doesn't exist the full initialization procedure is performed and metadata is saved
     char mdata_filepath[STATIC_STRINGS_SIZE];
     sprintf(mdata_filepath, "%s/%s", root_dir, iim::MDATA_BIN_FILE_NAME.c_str());
     if(iim::isFile(mdata_filepath) && !overwrite_mdata)
-	{
 		load(mdata_filepath);
-		initChannels();
-	}
 	else
 	{
         if(_reference_system.first == axis_invalid ||  _reference_system.second == axis_invalid ||
@@ -135,6 +140,9 @@ TiledVolume::~TiledVolume(void)
 		}
 		delete[] BLOCKS;
 	}
+
+	if ( fmtMngr )
+		delete fmtMngr;
 }
 
 
@@ -363,6 +371,18 @@ void TiledVolume::load(char* metadata_filepath) throw (IOException)
 			BLOCKS[i][j] = new Block(this, i, j, file);
 	}
 
+	// get the file format of the blocks
+	ffmt = BLOCKS[0][0]->getFMT();
+	if ( ffmt == "Tiff3D" )
+		fmtMngr = new Tiff3DFmtMngr();
+	else if ( ffmt == "Vaa3DRaw" )
+		fmtMngr = new Vaa3DRawFmtMngr();
+	else {
+        char msg[STATIC_STRINGS_SIZE];
+        sprintf(msg,"in TiledVolume::unBinarizeFrom(...): Unknown file format \"%s\"", ffmt.c_str());
+        throw IOException(msg);
+	}
+
 	fclose(file);
 }
 
@@ -455,6 +475,19 @@ void TiledVolume::init()
             BLOCKS[row] = new Block*[N_COLS];
 	for(list<Block*>::iterator i = blocks_list.begin(); i != blocks_list.end(); i++)
             BLOCKS[(*i)->getROW_INDEX()][(*i)->getCOL_INDEX()] = (*i);
+
+	// get the file format of the blocks
+	ffmt = BLOCKS[0][0]->getFMT();
+	if ( ffmt == "Tiff3D" )
+		fmtMngr = new Tiff3DFmtMngr();
+	else if ( ffmt == "Vaa3DRaw" )
+		fmtMngr = new Vaa3DRawFmtMngr();
+	else {
+        char msg[STATIC_STRINGS_SIZE];
+        sprintf(msg,"in TiledVolume::init(...): Unknown file format \"%s\"", ffmt.c_str());
+        throw IOException(msg);
+	}
+
 
 	/******************* 2) SETTING THE REFERENCE SYSTEM ********************
 	The entire application uses a vertical-horizontal reference system, so
@@ -1017,7 +1050,7 @@ uint8* TiledVolume::loadSubvolume_to_UINT8(int V0,int V1, int H0, int H1, int D0
 						int bD0 = (D0>BLOCKS[row][col]->getBLOCK_ABS_D()[k]) ? 0 : (BLOCKS[row][col]->getBLOCK_ABS_D()[k] - D0);
 						//int bD1 = (D1<(int)(BLOCKS[row][col]->getBLOCK_ABS_D()[k]+BLOCKS[row][col]->getBLOCK_SIZE()[k])) ? (int)sbv_depth : (BLOCKS[row][col]->getBLOCK_ABS_D()[k]+BLOCKS[row][col]->getBLOCK_SIZE()[k] - D0); // unused
 
-						if ( (err_rawfmt = copyRawFileBlock2Buffer(
+						if ( (err_rawfmt = fmtMngr->copyFileBlock2Buffer(
 								slice_fullpath,
 								sV0,sV1,sH0,sH1,sD0,sD1,
 								(unsigned char *)subvol,

@@ -43,6 +43,9 @@ class TiledVolume : public iim::VirtualVolume
         iim::ref_sys reference_system;       //reference system of the stored volume
         float  VXL_1, VXL_2, VXL_3;         //voxel dimensions of the stored volume
 
+		std::string ffmt;
+		iim::VirtualFmtMngr *fmtMngr;
+
 		//***OBJECT PRIVATE METHODS****
 		TiledVolume(void);
 
@@ -85,7 +88,8 @@ class TiledVolume : public iim::VirtualVolume
 
         // returns a unique ID that identifies the volume format
         std::string getPrintableFormat(){return iim::TILED_FORMAT;}
-
+        
+        iim::VirtualFmtMngr *getFMT_MNGR(){return fmtMngr;}
 
 		//PRINT method
 		void print();

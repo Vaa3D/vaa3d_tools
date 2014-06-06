@@ -904,7 +904,7 @@ VirtualVolume* VirtualVolume::instance(const char* path, std::string format,
                 throw IOException(strprintf("Invalid parameters AXS_1(%s), AXS_2(%s), AXS_3(%s), VXL_1(%.2f), VXL_2(%.2f), VXL_3(%.2f)",
                                             axis_to_str(AXS_1), axis_to_str(AXS_2), axis_to_str(AXS_3), VXL_1, VXL_2, VXL_3).c_str());
         }
-        else if(format.compare(TILED_FORMAT) == 0)
+        else if((format.compare(TILED_FORMAT) == 0) || (format.compare(TILED_TIF3D_FORMAT) == 0))
         {
             if(AXS_1 != axis_invalid && AXS_2 != axis_invalid && AXS_3 != axis_invalid && VXL_1 != 0 && VXL_2 != 0 && VXL_3 != 0)
                 volume = new TiledVolume(path, ref_sys(AXS_1,AXS_2,AXS_3), VXL_1, VXL_2, VXL_3, true, true);

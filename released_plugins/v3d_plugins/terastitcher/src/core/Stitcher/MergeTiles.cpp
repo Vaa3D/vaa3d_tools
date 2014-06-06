@@ -614,7 +614,7 @@ void StackStitcher::mergeTilesVaa3DRaw(std::string output_path, int block_height
 								img_path << volume->getSTACKS_DIR() << "/test_middle_slice";
 							}
 
-							iim::VirtualVolume::saveImage_to_Vaa3DRaw(//TIFF__
+							iim::VirtualVolume::saveImage_to_Vaa3DRaw(
 								slice_ind,
 								img_path.str(), 
                     	        buffer + buffer_z*(height/POW_INT(2,i))*(width/POW_INT(2,i)), // adds the stride

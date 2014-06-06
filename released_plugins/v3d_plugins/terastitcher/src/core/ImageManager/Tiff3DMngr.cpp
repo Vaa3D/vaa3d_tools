@@ -28,60 +28,83 @@
 #include "tiffio.h"
 
 
-//char *initTiff3DFile ( char *filename, unsigned int sz0, unsigned int sz1, unsigned int sz2, unsigned int sz3, int datatype ) {
-//
-//    uint32 image_width, image_height;
-//    float xres, yres;
-//    uint16 spp, bpp, photo, res_unit;
-//	uint32 rps;
-//    uint16 comp, planar_config;
-//    TIFF *out;
-//    int check, StripsPerImage,LastStripSize;
-//	char img_filepath[5000];
-//
-//	sprintf(img_filepath, "%s.%s", filename, "tif");
-//
-//	out=TIFFOpen(img_filepath,"w");
-//	if (!out)
-//    {
-//            return "Can't create tiff multipage file.";
-//    }
-//
-//    image_width = sz0;
-//    image_height = sz1;
-//    spp = sz3; // Samples per pixel 
-//    bpp = 8 * datatype; // Bits per sample 
-//	// WARNING: the number of pages (sz[2]) should be also stored
-//
-//    photo = PHOTOMETRIC_MINISBLACK;
-//
-//	TIFFSetField(out, TIFFTAG_IMAGEWIDTH, image_width / spp);
-//    TIFFSetField(out, TIFFTAG_IMAGELENGTH, image_height);
-//    TIFFSetField(out, TIFFTAG_BITSPERSAMPLE, bpp);
-//    TIFFSetField(out, TIFFTAG_SAMPLESPERPIXEL, spp);
-//    TIFFSetField(out, TIFFTAG_PLANARCONFIG, PLANARCONFIG_CONTIG);
-//    TIFFSetField(out, TIFFTAG_PHOTOMETRIC, photo);
-//    TIFFSetField(out, TIFFTAG_ORIENTATION, ORIENTATION_BOTLEFT);
-//
-//    // It is good to set resolutions too (but it is not nesessary) 
-//    //xres = yres = 10;
-//    //res_unit = RESUNIT_INCH;
-//    //TIFFSetField(out, TIFFTAG_XRESOLUTION, xres);
-//    //TIFFSetField(out, TIFFTAG_YRESOLUTION, yres);
-//    //TIFFSetField(out, TIFFTAG_RESOLUTIONUNIT, res_unit);
-//
-//    // We are writing single page of the multipage file 
-//    TIFFSetField(out, TIFFTAG_SUBFILETYPE, FILETYPE_PAGE);
-//
-//    // Set the page number 
-//    TIFFSetField(out, TIFFTAG_PAGENUMBER, 0, sz2); 
-//
-//    TIFFWriteDirectory(out);
-//
-//	TIFFClose(out);
-//
-//	return 0;
-//}
+char *loadTiff3D2Metadata ( char * filename, unsigned int &sz0, unsigned int  &sz1, unsigned int  &sz2, unsigned int  &sz3, int &datatype, int &b_swap, void * &fhandle, int &header_len ) {
+
+	uint32 XSIZE;
+	uint32 YSIZE;
+	uint16 bpp;
+	uint16 spp;
+	uint16 Npages;
+    TIFF *input;
+    int check;
+
+	input=TIFFOpen(filename,"r");
+	if (!input)
+    {
+		//throw MyException(strprintf("in IOManager::readTiffMultipage(...): Cannot open the file %s",finName).c_str());
+		return ((char *) "Cannot open the file.");
+    }
+
+	check=TIFFGetField(input, TIFFTAG_IMAGEWIDTH, &XSIZE);
+	if (!check)
+	{
+		TIFFClose(input);
+		//throw MyException(strprintf("in IOManager::readTiffMultipage(...): Image length of %s undefined\n", finName).c_str());
+		return ((char *) "Image width of undefined.");
+	}		
+    
+	check=TIFFGetField(input, TIFFTAG_IMAGELENGTH, &YSIZE);
+	if (!check)
+	{
+		TIFFClose(input);
+		//throw MyException(strprintf("in IOManager::readTiffMultipage(...): Image length of %s undefined\n", finName).c_str());
+		return ((char *) "Image length of undefined.");
+	}		
+    
+	check=TIFFGetField(input, TIFFTAG_BITSPERSAMPLE, &bpp); 
+	if (!check)
+	{
+		TIFFClose(input);
+		//throw MyException(strprintf("in IOManager::readTiffMultipage(...): Undefined bits per sample in %s \n", finName).c_str());
+		return ((char *) "Undefined bits per sample.");
+	}
+
+	check=TIFFGetField(input, TIFFTAG_SAMPLESPERPIXEL, &spp);
+	if (!check)
+	{
+		TIFFClose(input);
+		//throw MyException(strprintf("in IOManager::readTiffMultipage(...): Undefined bits per sample in %s \n", finName).c_str());
+		return ((char *) "Undefined samples per pixel.");
+	}
+
+	//check=TIFFGetField(input, TIFFTAG_PAGENUMBER, &Npages);
+	//if (!check)
+	//{
+	//	TIFFClose(input);
+	//	//throw MyException(strprintf("in IOManager::readTiffMultipage(...): Undefined bits per sample in %s \n", finName).c_str());
+	//	return ((char *) "Undefined samples per pixel.");
+	//}
+
+	Npages = 0;
+	do {
+		Npages++;
+	} while ( TIFFReadDirectory(input) );
+
+	sz0 = XSIZE;
+	sz1 = YSIZE;
+	sz2 = Npages;
+	sz3 = spp;
+	datatype = bpp/8;
+	b_swap = 0;
+	fhandle = (void *) input;
+	header_len = -1;
+
+	return ((char *) 0);
+}
+
+void closeTiff3DFile ( void *fhandle ) {
+	TIFFClose((TIFF *) fhandle);
+}
 
 char *initTiff3DFile ( char *filename, unsigned int sz0, unsigned int sz1, unsigned int sz2, unsigned int sz3, int datatype ) {
 //int initTiff3DFile ( char *filename, uint32 XSIZE, uint32 YSIZE, uint16 spp, uint16 Npages, int datatype){
@@ -144,13 +167,15 @@ char *appendSlice2Tiff3DFile ( char *filename, int slice, unsigned char *img, un
 	TIFFSetField(output, TIFFTAG_SAMPLESPERPIXEL, spp);
 	TIFFSetField(output, TIFFTAG_ROWSPERSTRIP, img_height);
 	TIFFSetField(output, TIFFTAG_COMPRESSION, COMPRESSION_LZW);
+	//TIFFSetField(output, TIFFTAG_COMPRESSION, COMPRESSION_NONE);
 	TIFFSetField(output, TIFFTAG_PLANARCONFIG,PLANARCONFIG_CONTIG);
 	TIFFSetField(output, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_MINISBLACK);	
+	//TIFFSetField(output, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_RGB);	
 	// We are writing single page of the multipage file 
 	TIFFSetField(output, TIFFTAG_SUBFILETYPE, FILETYPE_PAGE);
 	TIFFSetField(output, TIFFTAG_PAGENUMBER, (uint16)slice, NPages); 
 
-	TIFFWriteEncodedStrip(output, 0, img, img_width * img_height);
+	TIFFWriteEncodedStrip(output, 0, img, img_width * img_height * spp * (bpp/8));
 	//img +=  img_width * img_height;
 
 	TIFFWriteDirectory(output);
@@ -172,100 +197,54 @@ char *readTiff3DFile2Buffer ( char *filename, unsigned char *img, unsigned int i
 		//throw MyException(strprintf("in IOManager::readTiffMultipage(...): Cannot open the file %s",finName).c_str());
 		return ((char *) "Cannot open the file.");
     }
+    
+	char *err_msg = readTiff3DFile2Buffer(input,img,img_width,img_height,first,last);
 
-	//if (!check)
-	//{
-	//	NPAGES=0;
-	//	do {
-	//		NPAGES++;
-	//	} while (TIFFReadDirectory(input));
-	//	/*return to first directory*/
-	//	check=TIFFSetDirectory(input, 0);
-	//}
+	TIFFClose(input);
 
-	//check=TIFFGetField(input, TIFFTAG_SUBFILETYPE, &subType);
-	//if (!check)
-	//{
-	//	fprintf (stderr, "Cannot determine subfile data descriptor of %s \n", finName);
-	//	//return 1;
-	//}
-	
-	//check=TIFFGetField(input, TIFFTAG_XRESOLUTION, &xres);
-	//if (!check)
-	//{
-	//	fprintf (stderr, "Cannot determine x resolution of %s \n", finName);
-	//}
-	//
-	//check=TIFFGetField(input, TIFFTAG_YRESOLUTION, &yres);
-	//if (!check)
-	//{
-	//	fprintf (stderr, "Cannot determine y resolution of %s \n", finName);
-	//}
-	//
-	//check=TIFFGetField(input, TIFFTAG_RESOLUTIONUNIT, &res_unit);
-	//if (!check)
-	//{
-	//	fprintf (stderr, "Cannot determine units of resolutions of %s \n", finName);
-	//}
+	return err_msg;
+}
 
-	//!!!!!!!!!!!!!!!!!!!!!usare come  controllo!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-	//check=TIFFGetField(input, TIFFTAG_IMAGEWIDTH, &XSIZE);
-	//if (!check)
-	//{
-	//	fprintf (stderr, "Image width of %s undefined\n", finName);
-	//}
+char *readTiff3DFile2Buffer ( void *fhandler, unsigned char *img, unsigned int img_width, unsigned int img_height, unsigned int first, unsigned int last ) {
+	uint32 rps;
+    uint16 spp, bpp, photo, comp, planar_config;
+    int check, StripsPerImage,LastStripSize;
 
-	//check=TIFFGetField(input, TIFFTAG_IMAGELENGTH, &YSIZE);
-	//if (!check)
-	//{
-	//	fprintf (stderr, "Image length of %s undefined\n", finName);
-	//}
+    TIFF *input = (TIFF *) fhandler;
 
 	check=TIFFGetField(input, TIFFTAG_ROWSPERSTRIP, &rps);
 	if (!check)
 	{
-		TIFFClose(input);
-		//throw MyException(strprintf("in IOManager::readTiffMultipage(...): Image length of %s undefined\n", finName).c_str());
 		return ((char *) "Image length of undefined.");
 	}		
     
 	check=TIFFGetField(input, TIFFTAG_BITSPERSAMPLE, &bpp); 
 	if (!check)
 	{
-		TIFFClose(input);
-		//throw MyException(strprintf("in IOManager::readTiffMultipage(...): Undefined bits per sample in %s \n", finName).c_str());
 		return ((char *) "Undefined bits per sample.");
 	}
 
 	check=TIFFGetField(input, TIFFTAG_SAMPLESPERPIXEL, &spp);
 	if (!check)
 	{
-		TIFFClose(input);
-		//throw MyException(strprintf("in IOManager::readTiffMultipage(...): Undefined bits per sample in %s \n", finName).c_str());
 		return ((char *) "Undefined samples per pixel.");
 	}
 
 	check=TIFFGetField(input, TIFFTAG_PHOTOMETRIC, &photo);
 	if (!check)
 	{
-		TIFFClose(input);
-		//throw MyException(strprintf("in IOManager::readTiffMultipage(...): Cannot determine photometric interpretation of %s \n", finName).c_str());
 		return ((char *) "Cannot determine photometric interpretation.");
 	}
 
 	check=TIFFGetField(input, TIFFTAG_COMPRESSION, &comp);
 	if (!check)
 	{
-		TIFFClose(input);
-		//throw MyException(strprintf("in IOManager::readTiffMultipage(...): Cannot determine compression technique of %s \n", finName).c_str());
 		return ((char *) "Cannot determine compression technique.");
 	}
 
 	check=TIFFGetField(input, TIFFTAG_PLANARCONFIG, &planar_config);
 	if (!check)
 	{
-		TIFFClose(input);
-		//throw MyException(strprintf("in IOManager::readTiffMultipage(...): Cannot determine planar configuration of %s \n", finName).c_str());
 		return ((char *) "Cannot determine planar configuration.");
 	}
 
@@ -278,8 +257,6 @@ char *readTiff3DFile2Buffer ( char *filename, unsigned char *img, unsigned int i
 	check=TIFFSetDirectory(input, first);
 	if (!check)
 	{
-		//fprintf (stderr, "Cannot open the requested first strip from %s", finName);
-		TIFFClose(input);
 		return ((char *) "Cannot open the requested first strip.");
 	}
 
@@ -310,7 +287,7 @@ char *readTiff3DFile2Buffer ( char *filename, unsigned char *img, unsigned int i
 	
 	}while ( page < (last-first+1) && TIFFReadDirectory(input));//while (TIFFReadDirectory(input));
 
-	TIFFClose(input);
+	//TIFFClose(input);
 
 	if ( page < (last-first+1) ){
 		return ((char *) "Cannot read all the pages.");
