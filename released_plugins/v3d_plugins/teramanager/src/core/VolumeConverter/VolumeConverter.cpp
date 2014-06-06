@@ -23,6 +23,7 @@
 ********************************************************************************************************************************************************************************************/
 
 #include "VolumeConverter.h"
+#include "../ImageManager/IM_config.h"
 #include "../ImageManager/ProgressBar.h"
 #include <math.h>
 #include <string>
@@ -42,6 +43,8 @@
 #include "../ImageManager/StackedVolume.h"
 #include "../ImageManager/TimeSeries.h"
 /******************************************************************************************************/
+
+#include "../ImageManager/Tiff3DMngr.h"
 
 #include <limits>
 #include <list>
@@ -871,7 +874,10 @@ void VolumeConverter::generateTilesVaa3DRaw(std::string output_path, bool* resol
 												  << this->getMultiresABS_H_string(i,start_width) << "_"
 												  << abs_pos_z_temp.str();
 
-									if ( (err_rawfmt = initRawFile((char *)img_path_temp.str().c_str(),sz,datatype)) != 0 ) {
+									//if ( (err_rawfmt = initRawFile((char *)img_path_temp.str().c_str(),sz,datatype)) != 0 ) {
+									if ( ( !strcmp(saved_img_format,"Tiff3D") ? // format can be only "Tiff3D" or "Vaa3DRaw"
+												( (err_rawfmt = initTiff3DFile((char *)img_path_temp.str().c_str(),sz[0],sz[1],sz[2],sz[3],datatype)) != 0 ) : 
+												( (err_rawfmt = initRawFile((char *)img_path_temp.str().c_str(),sz,datatype)) != 0 ) ) ) {
 										char err_msg[STATIC_STRINGS_SIZE];
 										sprintf(err_msg,"VolumeConverter::generateTilesVaa3DRaw: error in initializing block file - %s", err_rawfmt);
                                         throw IOException(err_msg);
@@ -915,15 +921,28 @@ void VolumeConverter::generateTilesVaa3DRaw(std::string output_path, bool* resol
 									saved_img_format, saved_img_depth
 								);
 							else // internal_rep == UINT8_INTERNAL_REP
-								VirtualVolume::saveImage_from_UINT8_to_Vaa3DRaw(
-									slice_ind,
-									img_path.str(), 
-									ubuffer,
-									channels,
-                                    buffer_z*(height/powInt(2,i))*(width/powInt(2,i))*bytes_chan,  // stride to be added for slice buffer_z
-                                    (int)height/(powInt(2,i)),(int)width/(powInt(2,i)),
-									start_height,end_height,start_width,end_width, 
-									saved_img_format, saved_img_depth);
+								if ( strcmp(saved_img_format,"Tiff3D")==0 ) {
+									VirtualVolume::saveImage_from_UINT8_to_Tiff3D(
+										slice_ind,
+										img_path.str(), 
+										ubuffer,
+										channels,
+										buffer_z*(height/powInt(2,i))*(width/powInt(2,i))*bytes_chan,  // stride to be added for slice buffer_z
+										(int)height/(powInt(2,i)),(int)width/(powInt(2,i)),
+										start_height,end_height,start_width,end_width, 
+										saved_img_format, saved_img_depth);
+								}
+								else { // can be only Vaa3DRaw
+									VirtualVolume::saveImage_from_UINT8_to_Vaa3DRaw(
+										slice_ind,
+										img_path.str(), 
+										ubuffer,
+										channels,
+										buffer_z*(height/powInt(2,i))*(width/powInt(2,i))*bytes_chan,  // stride to be added for slice buffer_z
+										(int)height/(powInt(2,i)),(int)width/(powInt(2,i)),
+										start_height,end_height,start_width,end_width, 
+										saved_img_format, saved_img_depth);
+								}
 					}
 						start_width  += stacks_width [i][stack_row][stack_column][0]; // WARNING TO BE CHECKED FOR CORRECTNESS
 					}
@@ -1441,7 +1460,10 @@ void VolumeConverter::generateTilesVaa3DRawMC ( std::string output_path, bool* r
 													  << this->getMultiresABS_H_string(i,start_width) << "_"
 													  << abs_pos_z_temp.str();
 
-										if ( (err_rawfmt = initRawFile((char *)img_path_temp.str().c_str(),sz,datatype)) != 0 ) {
+										//if ( (err_rawfmt = initRawFile((char *)img_path_temp.str().c_str(),sz,datatype)) != 0 ) {
+										if ( ( !strcmp(saved_img_format,"Tiff3D") ? // format can be only "Tiff3D" or "Vaa3DRaw"
+												( (err_rawfmt = initTiff3DFile((char *)img_path_temp.str().c_str(),sz[0],sz[1],sz[2],sz[3],datatype)) != 0 ) : 
+												( (err_rawfmt = initRawFile((char *)img_path_temp.str().c_str(),sz,datatype)) != 0 ) ) ) {
 											char err_msg[STATIC_STRINGS_SIZE];
 											sprintf(err_msg,"VolumeConverter::generateTilesVaa3DRawMC: error in initializing block file - %s", err_rawfmt);
 											throw MyException(err_msg);
@@ -1484,16 +1506,30 @@ void VolumeConverter::generateTilesVaa3DRawMC ( std::string output_path, bool* r
 										start_height,end_height,start_width,end_width, 
 										saved_img_format, saved_img_depth
 									);
-								else // internal_rep == UINT8_INTERNAL_REP
-									VirtualVolume::saveImage_from_UINT8_to_Vaa3DRaw(
-										slice_ind,
-										img_path.str(), 
-										ubuffer + c,
-										1,
-										buffer_z*(height/POW_INT(2,i))*(width/POW_INT(2,i))*bytes_chan,  // stride to be added for slice buffer_z
-										(int)height/(POW_INT(2,i)),(int)width/(POW_INT(2,i)),
-										start_height,end_height,start_width,end_width, 
-										saved_img_format, saved_img_depth);
+								else {// internal_rep == UINT8_INTERNAL_REP
+									if ( strcmp(saved_img_format,"Tiff3D")==0 ) {
+										VirtualVolume::saveImage_from_UINT8_to_Tiff3D(
+											slice_ind,
+											img_path.str(), 
+											ubuffer,
+											channels,
+											buffer_z*(height/powInt(2,i))*(width/powInt(2,i))*bytes_chan,  // stride to be added for slice buffer_z
+											(int)height/(powInt(2,i)),(int)width/(powInt(2,i)),
+											start_height,end_height,start_width,end_width, 
+											saved_img_format, saved_img_depth);
+									}
+									else { // can be only Vaa3DRaw
+										VirtualVolume::saveImage_from_UINT8_to_Vaa3DRaw(
+											slice_ind,
+											img_path.str(), 
+											ubuffer,
+											channels,
+											buffer_z*(height/powInt(2,i))*(width/powInt(2,i))*bytes_chan,  // stride to be added for slice buffer_z
+											(int)height/(powInt(2,i)),(int)width/(powInt(2,i)),
+											start_height,end_height,start_width,end_width, 
+											saved_img_format, saved_img_depth);
+									}
+								}
 							}
 							start_width  += stacks_width [i][stack_row][stack_column][0]; // WARNING TO BE CHECKED FOR CORRECTNESS
 						}
@@ -1952,7 +1988,10 @@ void VolumeConverter::generateTilesVaa3DRawMC ( std::string output_path, bool* r
 													  << this->getMultiresABS_H_string(i,start_width) << "_"
 													  << abs_pos_z_temp.str();
 
-										if ( (err_rawfmt = initRawFile((char *)img_path_temp.str().c_str(),sz,datatype)) != 0 ) {
+										//if ( (err_rawfmt = initRawFile((char *)img_path_temp.str().c_str(),sz,datatype)) != 0 ) {
+										if ( ( !strcmp(saved_img_format,"Tiff3D") ? // format can be only "Tiff3D" or "Vaa3DRaw"
+												( (err_rawfmt = initTiff3DFile((char *)img_path_temp.str().c_str(),sz[0],sz[1],sz[2],sz[3],datatype)) != 0 ) : 
+												( (err_rawfmt = initRawFile((char *)img_path_temp.str().c_str(),sz,datatype)) != 0 ) ) ) {
 											char err_msg[STATIC_STRINGS_SIZE];
 											sprintf(err_msg,"VolumeConverter::generateTilesVaa3DRawMC: error in initializing block file - %s", err_rawfmt);
                                             throw IOException(err_msg);
@@ -1995,16 +2034,30 @@ void VolumeConverter::generateTilesVaa3DRawMC ( std::string output_path, bool* r
 										start_height,end_height,start_width,end_width, 
 										saved_img_format, saved_img_depth
 									);
-								else // internal_rep == UINT8_INTERNAL_REP
-									VirtualVolume::saveImage_from_UINT8_to_Vaa3DRaw(
-										slice_ind,
-										img_path.str(), 
-										ubuffer + c,
-										1,
-                                        buffer_z*(height/powInt(2,i))*(width/powInt(2,i))*bytes_chan,  // stride to be added for slice buffer_z
-                                        (int)height/(powInt(2,i)),(int)width/(powInt(2,i)),
-										start_height,end_height,start_width,end_width, 
-										saved_img_format, saved_img_depth);
+								else {// internal_rep == UINT8_INTERNAL_REP
+									if ( strcmp(saved_img_format,"Tiff3D")==0 ) {
+										VirtualVolume::saveImage_from_UINT8_to_Tiff3D(
+											slice_ind,
+											img_path.str(), 
+											ubuffer,
+											channels,
+											buffer_z*(height/powInt(2,i))*(width/powInt(2,i))*bytes_chan,  // stride to be added for slice buffer_z
+											(int)height/(powInt(2,i)),(int)width/(powInt(2,i)),
+											start_height,end_height,start_width,end_width, 
+											saved_img_format, saved_img_depth);
+									}
+									else { // can be only Vaa3DRaw
+										VirtualVolume::saveImage_from_UINT8_to_Vaa3DRaw(
+											slice_ind,
+											img_path.str(), 
+											ubuffer,
+											channels,
+											buffer_z*(height/powInt(2,i))*(width/powInt(2,i))*bytes_chan,  // stride to be added for slice buffer_z
+											(int)height/(powInt(2,i)),(int)width/(powInt(2,i)),
+											start_height,end_height,start_width,end_width, 
+											saved_img_format, saved_img_depth);
+									}
+								}
 							}
 							start_width  += stacks_width [i][stack_row][stack_column][0]; // WARNING TO BE CHECKED FOR CORRECTNESS
 						}

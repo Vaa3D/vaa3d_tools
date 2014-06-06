@@ -22,8 +22,29 @@
 *       specific prior written permission.
 ********************************************************************************************************************************************************************************************/
 
+#ifndef TIFF3D_MNGR_H
+#define TIFF3D_MNGR_H
+
 #define TIFF3D_SUFFIX   "tif"
 
+
+char *loadTiff3D2Metadata ( char * filename, unsigned int &sz0, unsigned int  &sz1, unsigned int  &sz2, unsigned int  &sz3, int &datatype, int &b_swap, void * &fhandle, int &header_len );
+/* opens the file filename in raw format containing a 4D image and returns in parameters:
+ *    szX:      a four values representing image dimensions along horizontal (x), 
+ *              vertical (y), depth (z) directions, and the number of channels
+ *    datatype: the number of bytes per pixel
+ *    b_swap:   a 0/1 value that indicates if endianness of the file is the same (0) or 
+ *              is different (1) from the one of the current machine
+ *    fhandle:  a pointer to a FILE structure associated to the file which is left opened
+ *
+ * the file is not closed
+ *
+ * if some exception occurs, returns a string describing the exception; returns a NULL pointer
+ * if there are no exceptions
+ */
+
+void closeTiff3DFile ( void *fhandle );
+/* closes the file associated to fhandle which is a pointer to e FILE structure */
 
 char *initTiff3DFile ( char *filename, unsigned int sz0, unsigned int  sz1, unsigned int  sz2, unsigned int  sz3, int datatype );
 /* creates a file containing an empty 3D, multi-channel image 
@@ -43,7 +64,7 @@ char *appendSlice2Tiff3DFile ( char *filename, int slice, unsigned char *img, un
  */
 
 char *readTiff3DFile2Buffer ( char *filename, unsigned char *img, unsigned int img_width, unsigned int img_height, unsigned int first, unsigned int last );
-/* writes one slice to a file containing a 3D image
+/* reads a substack from a file containing a 3D image
  * 
  * filename:   complete path of the file to be modified
  * img:        pointer to slice (3D buffer)
@@ -56,3 +77,18 @@ char *readTiff3DFile2Buffer ( char *filename, unsigned char *img, unsigned int i
  * where bps and spp are the bit-per-sample and sample-per-pixel tags of the multipage tiff file
  */
 
+char *readTiff3DFile2Buffer ( void *fhandler, unsigned char *img, unsigned int img_width, unsigned int img_height, unsigned int first, unsigned int last );
+/* reads a substack from a file containing a 3D image
+ * 
+ * input:      handler of the file to be modified
+ * img:        pointer to slice (3D buffer)
+ * img_width:  width of the slice
+ * img_height: height of the slice
+ * first:      index of first slice
+ * last:       index of last slice
+ *
+ * PRE: img points to a buffer of img_height * img_width * (last-first+1) * bps * spp
+ * where bps and spp are the bit-per-sample and sample-per-pixel tags of the multipage tiff file
+ */
+
+ #endif

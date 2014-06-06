@@ -26,6 +26,7 @@
 #define _IIM_BLOCK_H
 
 #include <stdio.h>
+#include <string>
 #include "IM_config.h"
 #include "VirtualVolume.h"
 
@@ -80,6 +81,7 @@ class iim::Block
         iim::uint32 *getBLOCK_SIZE()     {return BLOCK_SIZE;}
 		int    *getBLOCK_ABS_D()    {return BLOCK_ABS_D;}
 		char** getFILENAMES()		{return FILENAMES;}
+		std::string getFMT();
 
 		//SET methods
 		void setROW_INDEX(int _ROW_INDEX){ROW_INDEX = _ROW_INDEX;}
