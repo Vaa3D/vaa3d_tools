@@ -29,7 +29,7 @@
 #include <string.h>
 #include "IM_config.h"
 
-class iim::ProgressBar
+class iim::imProgressBar
 {
 	private:
 
@@ -37,8 +37,8 @@ class iim::ProgressBar
         * Singleton design pattern: this class can have one instance only,  which must be
         * instantiated by calling static method "istance(...)"
         **********************************************************************************/
-        static ProgressBar* uniqueInstance;
-        ProgressBar();
+        static imProgressBar* uniqueInstance;
+        imProgressBar();
 
         char message_level_1[1000];     // main operation
         char message_level_2[1000];     // sub-operation
@@ -54,15 +54,15 @@ class iim::ProgressBar
         * Singleton design pattern: this class can have one instance only,  which must be
         * instantiated by calling static method "instance(...)"
         ***********************************************************************************/
-        static ProgressBar* instance();
-        static ProgressBar* getInstance()
+        static imProgressBar* instance();
+        static imProgressBar* getInstance()
         {
             if(uniqueInstance)
                 return uniqueInstance;
             else
                 return instance();
         }
-        ~ProgressBar(){}
+        ~imProgressBar(){}
 
 
         void start(const char* new_operation_desc, bool toConverter = true);

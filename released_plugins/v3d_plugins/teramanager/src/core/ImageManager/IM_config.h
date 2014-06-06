@@ -66,7 +66,7 @@ namespace IconImageManager
     *    INTEFRACES    *
     ********************
     ---------------------------------------------------------------------------------------------------------------------------*/
-	class ProgressBar;
+    class imProgressBar;
 	class Stack;
 	class Block;
 	class VirtualVolume;
