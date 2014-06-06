@@ -37,6 +37,24 @@ struct root_node
 
 };
 
+struct APP2_LS_PARA
+{
+    int is_gsdt;
+    int is_break_accept;
+    int  bkg_thresh;
+    double length_thresh;
+    int  cnn_type;
+    int  channel;
+    double SR_ratio;
+    int  b_256cube;
+    int b_RadiusFrom2D;
+    int block_size;
+
+    int root_1st[3];
+
+    QString tcfilename,inimg_file;
+};
+
 // group images blending function
 template <class SDATATYPE>
 int region_groupfusing(SDATATYPE *pVImg, Y_VIM<REAL, V3DLONG, indexed_t<V3DLONG, REAL>, LUT<V3DLONG> > vim, unsigned char *relative1d,
@@ -94,7 +112,7 @@ int region_groupfusing(SDATATYPE *pVImg, Y_VIM<REAL, V3DLONG, indexed_t<V3DLONG,
 }
 
 
-void autotrace_largeScale(V3DPluginCallback2 &callback, QWidget *parent);
+bool autotrace_largeScale(V3DPluginCallback2 &callback, QWidget *parent,APP2_LS_PARA &p,bool bmenu);
 void save_region(V3DPluginCallback2 &callback, V3DLONG *start, V3DLONG *end, QString &tcfile,QString &region_name,
                  Y_VIM<REAL, V3DLONG, indexed_t<V3DLONG, REAL>, LUT<V3DLONG> > vim);
 NeuronTree swc_pruning(NeuronTree nt, double length);
@@ -122,7 +140,42 @@ void APP2_large_scale::domenu(const QString &menu_name, V3DPluginCallback2 &call
 {
     if (menu_name == tr("trace"))
     {
-        autotrace_largeScale(callback,parent);
+        APP2_LS_PARA P;
+        bool bmenu = true;
+
+        APP2largeScaleDialog dialog(callback, parent);
+        if (!dialog.image)
+            return;
+        if(dialog.listLandmarks.count() ==0)
+            return;
+
+        LocationSimple tmpLocation(0,0,0);
+        tmpLocation = dialog.listLandmarks.at(0);
+        tmpLocation.getCoord(P.root_1st[0],P.root_1st[1],P.root_1st[2]);
+
+        if (dialog.exec()!=QDialog::Accepted)
+            return;
+        P.inimg_file = dialog.image->getFileName();
+        P.tcfilename = dialog.tcfilename;
+
+        if(P.tcfilename.isEmpty())
+        {
+            v3d_msg("Please select the tc file.");
+            return;
+        }
+
+        P.is_gsdt = dialog.is_gsdt;
+        P.is_break_accept = dialog.is_break_accept;
+        P.bkg_thresh = dialog.bkg_thresh;
+        P.length_thresh = dialog.length_thresh;
+        P.cnn_type = dialog.cnn_type;
+        P.channel = dialog.channel;
+        P.SR_ratio = dialog.SR_ratio;
+        P.b_256cube = dialog.b_256cube;
+        P.b_RadiusFrom2D = dialog.b_RadiusFrom2D;
+        P.block_size = dialog.block_size;
+
+        autotrace_largeScale(callback,parent,P,bmenu);
     }
     else
     {
@@ -133,63 +186,98 @@ void APP2_large_scale::domenu(const QString &menu_name, V3DPluginCallback2 &call
 
 bool APP2_large_scale::dofunc(const QString & func_name, const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback,  QWidget * parent)
 {
-    vector<char*> infiles, inparas, outfiles;
-    if(input.size() >= 1) infiles = *((vector<char*> *)input.at(0).p);
-    if(input.size() >= 2) inparas = *((vector<char*> *)input.at(1).p);
-    if(output.size() >= 1) outfiles = *((vector<char*> *)output.at(0).p);
 
-    if (func_name == tr("func1"))
+    if (func_name == tr("trace"))
     {
-        v3d_msg("To be implemented.");
-    }
-    else if (func_name == tr("func2"))
-    {
-        v3d_msg("To be implemented.");
+        APP2_LS_PARA P;
+        bool bmenu = false;
+
+        vector<char*> * pinfiles = (input.size() >= 1) ? (vector<char*> *) input[0].p : 0;
+        vector<char*> * pparas = (input.size() >= 2) ? (vector<char*> *) input[1].p : 0;
+        vector<char*> infiles = (pinfiles != 0) ? * pinfiles : vector<char*>();
+        vector<char*> paras = (pparas != 0) ? * pparas : vector<char*>();
+
+        if(infiles.empty())
+        {
+            cerr<<"Need input image"<<endl;
+            return false;
+        }
+
+        P.inimg_file = infiles[0];
+        int k=0;
+        QString inmarker_file = paras.empty() ? "" : paras[k]; if(inmarker_file == "NULL") inmarker_file = ""; k++;
+        if(inmarker_file.isEmpty())
+        {
+            cerr<<"Need a marker file"<<endl;
+            return false;
+        }
+        else
+        {
+            vector<MyMarker> file_inmarkers;
+            file_inmarkers = readMarker_file(string(qPrintable(inmarker_file)));
+            P.root_1st[0] = file_inmarkers[0].x;
+            P.root_1st[1] = file_inmarkers[0].y;
+            P.root_1st[2] = file_inmarkers[0].z;
+        }
+
+
+        P.tcfilename  = paras.empty() ? "" : paras[k]; k++;
+
+         //try to use as much as the default value in the PARA_APP2 constructor as possible
+        P.channel = (paras.size() >= k+1) ? atoi(paras[k]) : 1;  k++;
+        P.bkg_thresh = (paras.size() >= k+1) ? atoi(paras[k]) : 30; k++;
+        P.b_256cube = (paras.size() >= k+1) ? atoi(paras[k]) : 1; k++;
+        P.b_RadiusFrom2D = (paras.size() >= k+1) ? atoi(paras[k]) : 1; k++;
+        P.is_gsdt = (paras.size() >= k+1) ? atoi(paras[k]) : 0; k++;
+        P.is_break_accept = (paras.size() >= k+1) ? atoi(paras[k]) : 0; k++;
+        P.length_thresh = (paras.size() >= k+1) ? atof(paras[k]) : 5; k++;
+        P.block_size = (paras.size() >= k+1) ? atof(paras[k]) : 1024; k++;
+
+        P.cnn_type = 2;
+        P.SR_ratio = 3.0/9.0;
+
+        autotrace_largeScale(callback,parent,P,bmenu);
+
     }
     else if (func_name == tr("help"))
     {
-        v3d_msg("To be implemented.");
+        printf("\n**** Usage of APP2 for Large Scale Images ****\n");
+        printf("vaa3d -x plugin_name -f trace -i <inimg_file> -p <inmarker_file> <tc_file> <channel> <bkg_thresh> <b_256cube> <b_RadiusFrom2D> <is_gsdt> <is_gap> <length_thresh> <block size>\n");
+        printf("inimg_file       Should be 8/16/32bit image\n");
+        printf("inmarker_file    Please specify the path of the marker file\n");
+        printf("tc_file          Please specify the path of the tc file\n");
+
+        printf("channel          Data channel for tracing. Start from 1 (default 1).\n");
+        printf("bkg_thresh       Default 10 (is specified as -1 then auto-thresolding)\n");
+
+        printf("b_256cube        If trace in a auto-downsampled volume (1 for yes, and 0 for no. Default 1.)\n");
+        printf("b_RadiusFrom2D   If estimate the radius of each reconstruction node from 2D plane only (1 for yes as many times the data is anisotropic, and 0 for no. Default 1 which which uses 3D estimation.)\n");
+        printf("is_gsdt          If use gray-scale distance transform (1 for yes and 0 for no. Default 0.)\n");
+        printf("is_gap           If allow gap (1 for yes and 0 for no. Default 0.)\n");
+
+        printf("length_thresh    Default 5\n");
+        printf("block size       Default 1024\n");
+
+        printf("outswc_file      Will be named automatically based on the input image file name, so you don't have to specify it.\n");
+
     }
     else return false;
 
     return true;
 }
 
-void autotrace_largeScale(V3DPluginCallback2 &callback, QWidget *parent)
+bool  autotrace_largeScale(V3DPluginCallback2 &callback, QWidget *parent,APP2_LS_PARA &P,bool bmenu)
 {
-    APP2largeScaleDialog dialog(callback, parent);
 
-    if (!dialog.image)
-        return;
-
-
-    if(dialog.listLandmarks.count() ==0)
-        return;
-
-    if (dialog.exec()!=QDialog::Accepted)
-        return;
-
-    QString fileOpenName = dialog.image->getFileName();
-
-    QString tcfile = dialog.tcfilename;
-    if(tcfile.isEmpty())
-    {
-        v3d_msg("Please select the tc file.");
-        return;
-    }
-
-
-    int tmpx,tmpy,tmpz;
-    LocationSimple tmpLocation(0,0,0);
-    tmpLocation = dialog.listLandmarks.at(0);
-    tmpLocation.getCoord(tmpx,tmpy,tmpz);
+    QString tcfile = P.tcfilename;
+    QString fileOpenName = P.inimg_file;
 
     Y_VIM<REAL, V3DLONG, indexed_t<V3DLONG, REAL>, LUT<V3DLONG> > vim;
 
     if( !vim.y_load(tcfile.toStdString()) )
     {
         printf("Wrong stitching configuration file to be load!\n");
-        return;
+        return false;
     }
 
 
@@ -208,17 +296,17 @@ void autotrace_largeScale(V3DPluginCallback2 &callback, QWidget *parent)
     if(soma_index == -1 )
     {
         printf("Can not find the selected image in the tc file!\n");
-        return;
+        return false;
     }
 
     V3DLONG start[3], end[3];
 
-    start[0] = vim.lut[soma_index].start_pos[0] - vim.min_vim[0] + tmpx - int(dialog.block_size/2);
-    start[1] = vim.lut[soma_index].start_pos[1] - vim.min_vim[1] + tmpy - int(dialog.block_size/2);
+    start[0] = vim.lut[soma_index].start_pos[0] - vim.min_vim[0] + P.root_1st[0] - int(P.block_size/2);
+    start[1] = vim.lut[soma_index].start_pos[1] - vim.min_vim[1] + P.root_1st[1] - int(P.block_size/2);
     start[2] = 0;
 
-    end[0] = start[0] + dialog.block_size - 1;
-    end[1] = start[1] + dialog.block_size - 1;
+    end[0] = start[0] + P.block_size - 1;
+    end[1] = start[1] + P.block_size - 1;
     end[2] = vim.sz[2];
 
 
@@ -230,9 +318,9 @@ void autotrace_largeScale(V3DPluginCallback2 &callback, QWidget *parent)
     tmps.setNum(start[1]).prepend("_y"); startingpos += tmps;
     QString region_name = startingpos + ".raw";
 
-    head->root_x = int(dialog.block_size/2);
-    head->root_y = int(dialog.block_size/2);
-    head->root_z = vim.lut[soma_index].start_pos[2] - vim.min_vim[2] + tmpz ;
+    head->root_x = int(P.block_size/2);
+    head->root_y = int(P.block_size/2);
+    head->root_z = vim.lut[soma_index].start_pos[2] - vim.min_vim[2] + P.root_1st[2] ;
 
     head->tc_index = soma_index;
     head->tilename = QFileInfo(tcfile).path().append("/tmp/").append(QString(region_name));
@@ -259,7 +347,7 @@ void autotrace_largeScale(V3DPluginCallback2 &callback, QWidget *parent)
     {
 
         printf("Can not create a tmp folder!\n");
-        return;
+        return false;
     }
 
 
@@ -273,7 +361,8 @@ void autotrace_largeScale(V3DPluginCallback2 &callback, QWidget *parent)
         S.z = walker->root_z;
 
         marklist.append(S);
-        writeMarker_file("root.marker",marklist);
+        QString markerpath = QFileInfo(tcfile).path()+("/tmp/root.marker");
+        writeMarker_file(markerpath.toStdString().c_str(),marklist);
 
         ifstream ifs_image(walker->tilename.toStdString().c_str());
         if(!ifs_image)
@@ -306,16 +395,16 @@ void autotrace_largeScale(V3DPluginCallback2 &callback, QWidget *parent)
 
 
         #if  defined(Q_OS_LINUX)
-            QString cmd_APP2 = QString("%1/vaa3d -x Vaa3D_Neuron2 -f app2 -i %2 -p 'root.marker' %3 %4 %5 %6 %7 %8 %9").arg(getAppPath().toStdString().c_str()).arg(walker->tilename.toStdString().c_str())
-                    .arg(dialog.channel-1).arg(dialog.bkg_thresh).arg(dialog.b_256cube).arg(dialog.b_RadiusFrom2D).arg(dialog.is_gsdt).arg(dialog.is_break_accept).arg(dialog.length_thresh);
+            QString cmd_APP2 = QString("%1/vaa3d -x Vaa3D_Neuron2 -f app2 -i %2 -p %3 %4 %5 %6 %7 %8 %9 %10").arg(getAppPath().toStdString().c_str()).arg(walker->tilename.toStdString().c_str())
+                    .arg(P.channel-1).arg(P.bkg_thresh).arg(P.b_256cube).arg(P.b_RadiusFrom2D).arg(P.is_gsdt).arg(P.is_break_accept).arg(P.length_thresh);
             system(qPrintable(cmd_APP2));
         #elif defined(Q_OS_MAC)
-            QString cmd_APP2 = QString("%1/vaa3d64.app/Contents/MacOS/vaa3d64 -x Vaa3D_Neuron2 -f app2 -i %2 -p 'root.marker' %3 %4 %5 %6 %7 %8 %9").arg(getAppPath().toStdString().c_str()).arg(walker->tilename.toStdString().c_str())
-                    .arg(dialog.channel-1).arg(dialog.bkg_thresh).arg(dialog.b_256cube).arg(dialog.b_RadiusFrom2D).arg(dialog.is_gsdt).arg(dialog.is_break_accept).arg(dialog.length_thresh);
+            QString cmd_APP2 = QString("%1/vaa3d64.app/Contents/MacOS/vaa3d64 -x Vaa3D_Neuron2 -f app2 -i %2 -p %3 %4 %5 %6 %7 %8 %9 %10").arg(markerpath.toStdString().c_str()).arg(getAppPath().toStdString().c_str()).arg(walker->tilename.toStdString().c_str())
+                    .arg(P.channel-1).arg(P.bkg_thresh).arg(P.b_256cube).arg(P.b_RadiusFrom2D).arg(P.is_gsdt).arg(P.is_break_accept).arg(P.length_thresh);
             system(qPrintable(cmd_APP2));
         #else
-                 v3d_msg("The OS is not Linux or Mac. Do nothing.");
-                 return;
+                 v3d_msg("The OS is not Linux or Mac. Do nothing.",bmenu);
+                 return false;
         #endif
 
         if(S.z < 1) S.z = 1;
@@ -323,7 +412,7 @@ void autotrace_largeScale(V3DPluginCallback2 &callback, QWidget *parent)
         QString swcfilename = walker->tilename + QString("_x%1_y%2_z%3_app2.swc").arg(S.x-1).arg(S.y-1).arg(S.z-1);
         NeuronTree nt = readSWC_file(swcfilename);
         //v3d_msg(swcfilename,0);
-        remove("root.marker");
+        remove(markerpath.toStdString().c_str());
 
         if(nt.listNeuron.empty())
         {
@@ -362,7 +451,7 @@ void autotrace_largeScale(V3DPluginCallback2 &callback, QWidget *parent)
                 int pa_tip = getParent(i,nt);
                 NeuronSWC curr = list.at(pa_tip);
 
-                if( curr.x < 0.02* dialog.block_size || curr.x > 0.98 * dialog.block_size || curr.y < 0.02 * dialog.block_size || curr.y > 0.98*dialog.block_size)
+                if( curr.x < 0.02* P.block_size || curr.x > 0.98 * P.block_size || curr.y < 0.02 * P.block_size || curr.y > 0.98*P.block_size)
                 {
                     tip_num++;
                 }
@@ -382,7 +471,7 @@ void autotrace_largeScale(V3DPluginCallback2 &callback, QWidget *parent)
                 int pa_tip = getParent(i,nt);
                 NeuronSWC curr = list.at(pa_tip);
 
-                if( curr.x < 0.02* dialog.block_size || curr.x > 0.98 * dialog.block_size || curr.y < 0.02 * dialog.block_size || curr.y > 0.98*dialog.block_size)
+                if( curr.x < 0.02* P.block_size || curr.x > 0.98 * P.block_size || curr.y < 0.02 * P.block_size || curr.y > 0.98*P.block_size)
                 {
                     tip_index[d] = pa_tip;
                     for(int j = 0; j < 4; j++)
@@ -461,17 +550,17 @@ void autotrace_largeScale(V3DPluginCallback2 &callback, QWidget *parent)
             }
             else
                 newNode->parent = tip_index[i];
-            if(curr.x < 0.02* dialog.block_size)
+            if(curr.x < 0.02* P.block_size)
             {
 
-                newNode->root_x =  dialog.block_size * 0.9 + curr.x;
+                newNode->root_x =  P.block_size * 0.9 + curr.x;
                 newNode->root_y = curr.y;
                 newNode->root_z = curr.z;
 
-                newNode->start[0] = walker->start[0] - dialog.block_size * 0.9;
+                newNode->start[0] = walker->start[0] - P.block_size * 0.9;
                 newNode->start[1] = walker->start[1];
                 newNode->start[2] = walker->start[2];
-                newNode->end[0] = newNode->start[0] + dialog.block_size - 1;;
+                newNode->end[0] = newNode->start[0] + P.block_size - 1;;
                 newNode->end[1] = walker->end[1];
                 newNode->end[2] = walker->end[2];
 
@@ -487,16 +576,16 @@ void autotrace_largeScale(V3DPluginCallback2 &callback, QWidget *parent)
                 walker_inside->next = newNode;
                 walker_inside = walker_inside->next;
             }
-            else if(curr.x > 0.98 * dialog.block_size)
+            else if(curr.x > 0.98 * P.block_size)
             {
-                newNode->root_x =  curr.x - dialog.block_size * 0.9;
+                newNode->root_x =  curr.x - P.block_size * 0.9;
                 newNode->root_y = curr.y;
                 newNode->root_z = curr.z;
 
-                newNode->start[0] = walker->start[0] + dialog.block_size * 0.9 + 1;
+                newNode->start[0] = walker->start[0] + P.block_size * 0.9 + 1;
                 newNode->start[1] = walker->start[1];
                 newNode->start[2] = walker->start[2];
-                newNode->end[0] = newNode->start[0] + dialog.block_size - 1;;
+                newNode->end[0] = newNode->start[0] + P.block_size - 1;;
                 newNode->end[1] = walker->end[1];
                 newNode->end[2] = walker->end[2];
 
@@ -512,18 +601,18 @@ void autotrace_largeScale(V3DPluginCallback2 &callback, QWidget *parent)
                 walker_inside->next = newNode;
                 walker_inside = walker_inside->next;
             }
-            else if(curr.y < 0.02* dialog.block_size)
+            else if(curr.y < 0.02* P.block_size)
             {
 
                 newNode->root_x = curr.x;
-                newNode->root_y = dialog.block_size * 0.9 + curr.y;
+                newNode->root_y = P.block_size * 0.9 + curr.y;
                 newNode->root_z = curr.z;
 
                 newNode->start[0] = walker->start[0];
-                newNode->start[1] = walker->start[1] - dialog.block_size * 0.9;
+                newNode->start[1] = walker->start[1] - P.block_size * 0.9;
                 newNode->start[2] = walker->start[2];
                 newNode->end[0] = walker->end[0];
-                newNode->end[1] = newNode->start[1]+ dialog.block_size - 1;
+                newNode->end[1] = newNode->start[1]+ P.block_size - 1;
                 newNode->end[2] = walker->end[2];
 
                 QString startingpos="", tmps;
@@ -538,17 +627,17 @@ void autotrace_largeScale(V3DPluginCallback2 &callback, QWidget *parent)
                 walker_inside->next = newNode;
                 walker_inside = walker_inside->next;
             }
-            else if(curr.y > 0.98 * dialog.block_size)
+            else if(curr.y > 0.98 * P.block_size)
             {
                 newNode->root_x =  curr.x;
-                newNode->root_y = curr.y - dialog.block_size * 0.9;
+                newNode->root_y = curr.y - P.block_size * 0.9;
                 newNode->root_z = curr.z;
 
                 newNode->start[0] = walker->start[0];
-                newNode->start[1] = walker->start[1]  + dialog.block_size * 0.9 + 1;
+                newNode->start[1] = walker->start[1]  + P.block_size * 0.9 + 1;
                 newNode->start[2] = walker->start[2];
                 newNode->end[0] = walker->end[0];
-                newNode->end[1] = newNode->start[1] + dialog.block_size - 1;
+                newNode->end[1] = newNode->start[1] + P.block_size - 1;
                 newNode->end[2] = walker->end[2];
 
                 QString startingpos="", tmps;
@@ -646,17 +735,17 @@ void autotrace_largeScale(V3DPluginCallback2 &callback, QWidget *parent)
      list<string> infostring;
      string tmpstr; QString qtstr;
      tmpstr =  qPrintable( qtstr.prepend("##Vaa3D-Neuron-APP2 for Large-scale ")); infostring.push_back(tmpstr);
-     tmpstr =  qPrintable( qtstr.setNum(dialog.channel).prepend("#channel = ") ); infostring.push_back(tmpstr);
-     tmpstr =  qPrintable( qtstr.setNum(dialog.bkg_thresh).prepend("#bkg_thresh = ") ); infostring.push_back(tmpstr);
+     tmpstr =  qPrintable( qtstr.setNum(P.channel).prepend("#channel = ") ); infostring.push_back(tmpstr);
+     tmpstr =  qPrintable( qtstr.setNum(P.bkg_thresh).prepend("#bkg_thresh = ") ); infostring.push_back(tmpstr);
 
-     tmpstr =  qPrintable( qtstr.setNum(dialog.length_thresh).prepend("#length_thresh = ") ); infostring.push_back(tmpstr);
-     tmpstr =  qPrintable( qtstr.setNum(dialog.SR_ratio).prepend("#SR_ratio = ") ); infostring.push_back(tmpstr);
-     tmpstr =  qPrintable( qtstr.setNum(dialog.is_gsdt).prepend("#is_gsdt = ") ); infostring.push_back(tmpstr);
-     tmpstr =  qPrintable( qtstr.setNum(dialog.is_break_accept).prepend("#is_gap = ") ); infostring.push_back(tmpstr);
-     tmpstr =  qPrintable( qtstr.setNum(dialog.cnn_type).prepend("#cnn_type = ") ); infostring.push_back(tmpstr);
-     tmpstr =  qPrintable( qtstr.setNum(dialog.b_256cube).prepend("#b_256cube = ") ); infostring.push_back(tmpstr);
-     tmpstr =  qPrintable( qtstr.setNum(dialog.b_RadiusFrom2D).prepend("#b_radiusFrom2D = ") ); infostring.push_back(tmpstr);
-     tmpstr =  qPrintable( qtstr.setNum(dialog.block_size).prepend("#block_size = ") ); infostring.push_back(tmpstr);
+     tmpstr =  qPrintable( qtstr.setNum(P.length_thresh).prepend("#length_thresh = ") ); infostring.push_back(tmpstr);
+     tmpstr =  qPrintable( qtstr.setNum(P.SR_ratio).prepend("#SR_ratio = ") ); infostring.push_back(tmpstr);
+     tmpstr =  qPrintable( qtstr.setNum(P.is_gsdt).prepend("#is_gsdt = ") ); infostring.push_back(tmpstr);
+     tmpstr =  qPrintable( qtstr.setNum(P.is_break_accept).prepend("#is_gap = ") ); infostring.push_back(tmpstr);
+     tmpstr =  qPrintable( qtstr.setNum(P.cnn_type).prepend("#cnn_type = ") ); infostring.push_back(tmpstr);
+     tmpstr =  qPrintable( qtstr.setNum(P.b_256cube).prepend("#b_256cube = ") ); infostring.push_back(tmpstr);
+     tmpstr =  qPrintable( qtstr.setNum(P.b_RadiusFrom2D).prepend("#b_radiusFrom2D = ") ); infostring.push_back(tmpstr);
+     tmpstr =  qPrintable( qtstr.setNum(P.block_size).prepend("#block_size = ") ); infostring.push_back(tmpstr);
      tmpstr =  qPrintable( qtstr.setNum(etime1).prepend("#neuron preprocessing time (milliseconds) = ") ); infostring.push_back(tmpstr);
 
      V3DPluginArgItem arg;
@@ -678,9 +767,9 @@ void autotrace_largeScale(V3DPluginCallback2 &callback, QWidget *parent)
 
      export_list2file(nt_pruned.listNeuron, finalswcfilename, infostring);
 
-     v3d_msg(QString("The tracing uses %1 ms. Now you can drag and drop the generated swc fle [%2] into Vaa3D.").arg(etime1).arg(finalswcfilename));
+     v3d_msg(QString("The tracing uses %1 ms. Now you can drag and drop the generated swc fle [%2] into Vaa3D.").arg(etime1).arg(finalswcfilename),bmenu);
 
-    return;
+    return true;
 }
 
 QString getAppPath()
