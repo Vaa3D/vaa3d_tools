@@ -395,11 +395,11 @@ bool  autotrace_largeScale(V3DPluginCallback2 &callback, QWidget *parent,APP2_LS
 
 
         #if  defined(Q_OS_LINUX)
-            QString cmd_APP2 = QString("%1/vaa3d -x Vaa3D_Neuron2 -f app2 -i %2 -p %3 %4 %5 %6 %7 %8 %9 %10").arg(getAppPath().toStdString().c_str()).arg(walker->tilename.toStdString().c_str())
+        QString cmd_APP2 = QString("%1/vaa3d -x Vaa3D_Neuron2 -f app2 -i %2 -p %3 %4 %5 %6 %7 %8 %9 %10").arg(getAppPath().toStdString().c_str()).arg(walker->tilename.toStdString().c_str()).arg(markerpath.toStdString().c_str())
                     .arg(P.channel-1).arg(P.bkg_thresh).arg(P.b_256cube).arg(P.b_RadiusFrom2D).arg(P.is_gsdt).arg(P.is_break_accept).arg(P.length_thresh);
             system(qPrintable(cmd_APP2));
         #elif defined(Q_OS_MAC)
-            QString cmd_APP2 = QString("%1/vaa3d64.app/Contents/MacOS/vaa3d64 -x Vaa3D_Neuron2 -f app2 -i %2 -p %3 %4 %5 %6 %7 %8 %9 %10").arg(markerpath.toStdString().c_str()).arg(getAppPath().toStdString().c_str()).arg(walker->tilename.toStdString().c_str())
+            QString cmd_APP2 = QString("%1/vaa3d64.app/Contents/MacOS/vaa3d64 -x Vaa3D_Neuron2 -f app2 -i %2 -p %3 %4 %5 %6 %7 %8 %9 %10").arg(getAppPath().toStdString().c_str()).arg(walker->tilename.toStdString().c_str()).arg(markerpath.toStdString().c_str())
                     .arg(P.channel-1).arg(P.bkg_thresh).arg(P.b_256cube).arg(P.b_RadiusFrom2D).arg(P.is_gsdt).arg(P.is_break_accept).arg(P.length_thresh);
             system(qPrintable(cmd_APP2));
         #else
