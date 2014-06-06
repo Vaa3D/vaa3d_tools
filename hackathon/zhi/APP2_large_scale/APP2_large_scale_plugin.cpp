@@ -692,6 +692,7 @@ bool  autotrace_largeScale(V3DPluginCallback2 &callback, QWidget *parent,APP2_LS
         {
             vector<MyMarker*> final_out_swc = readSWC_file(finalswcfilename.toStdString());
             vector<MyMarker*> final_out_swc_updated =  final_out_swc;
+           // temp_out_swc[0]->parent = final_out_swc[walker->parent];
 
             for(int j = 0; j < temp_out_swc.size(); j++)
             {
@@ -705,6 +706,8 @@ bool  autotrace_largeScale(V3DPluginCallback2 &callback, QWidget *parent,APP2_LS
                     int dis_prun = sqrt(pow2(temp_out_swc[j]->x - final_out_swc[jj]->x) + pow2(temp_out_swc[j]->y - final_out_swc[jj]->y) + pow2(temp_out_swc[j]->z - final_out_swc[jj]->z));
                     if( (temp_out_swc[j]->radius + final_out_swc[jj]->radius - dis_prun)/dis_prun > 0.5)
                     {
+                        if(childs[j].size() > 0) temp_out_swc[childs[j].at(0)]->parent = final_out_swc[jj];
+                      //  if(temp_out_swc[i]-> parent >0) temp_out_swc[getParent(i,nt)]
                         flag_prun = 1;
                         break;
                     }
@@ -716,6 +719,7 @@ bool  autotrace_largeScale(V3DPluginCallback2 &callback, QWidget *parent,APP2_LS
                 }
             }
            saveSWC_file(finalswcfilename.toStdString(), final_out_swc_updated);
+
         }
 
          remove(swcfilename.toStdString().c_str());
