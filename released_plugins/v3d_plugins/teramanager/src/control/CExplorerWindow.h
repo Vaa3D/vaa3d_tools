@@ -30,7 +30,6 @@
 #define CEXPLORERWINDOW_H
 
 #include "CPlugin.h"
-#include "v3dr_glwidget.h"
 #include "v3dr_mainwindow.h"
 #include "renderer_gl2.h"
 #include "CImport.h"

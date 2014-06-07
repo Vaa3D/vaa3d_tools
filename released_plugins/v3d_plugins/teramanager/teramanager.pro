@@ -148,7 +148,7 @@ use_experimental_features{
 
 
 #set up plugin
-DEFINES += _VAA3D_PLUGIN_MODE
+DEFINES += _VAA3D_TERAFLY_PLUGIN_MODE
 RESOURCES += icons.qrc
 HEADERS += ./src/control/V3Dsubclasses.h
 HEADERS += ./src/control/CAnnotations.h
@@ -210,7 +210,7 @@ SOURCES += ./src/presentation/QHelpBox.cpp
 SOURCES += ./src/presentation/QGLRefSys.cpp
 SOURCES += ./src/core/ImageManager/Block.cpp
 SOURCES += ./src/core/ImageManager/IM_config.cpp
-SOURCES += ./src/core/ImageManager/ProgressBar.cpp
+SOURCES += ./src/core/ImageManager/imProgressBar.cpp
 SOURCES += ./src/core/ImageManager/RawFmtMngr.cpp
 SOURCES += ./src/core/ImageManager/RawVolume.cpp
 SOURCES += ./src/core/ImageManager/SimpleVolume.cpp
