@@ -35,7 +35,7 @@ class iim::VirtualFmtMngr {
 public:
 
     VirtualFmtMngr(){}
-    virtual ~VirtualFmtMngr() = 0;
+    virtual ~VirtualFmtMngr(){}
 
 	virtual char *loadMetadata ( char * filename, iim::sint64 * &sz, int &datatype, int &b_swap, void * &fhandle, int &header_len ) = 0;
 	/* opens the file filename in raw format containing a 4D image and returns in parameters:
@@ -154,7 +154,6 @@ class iim::Tiff3DFmtMngr : public iim::VirtualFmtMngr {
 public:
 
     Tiff3DFmtMngr(){}
-    ~Tiff3DFmtMngr() {}
 
 	char *loadMetadata ( char * filename, iim::sint64 * &sz, int &datatype, int &b_swap, void * &fhandle, int &header_len );
 
@@ -179,7 +178,6 @@ class iim::Vaa3DRawFmtMngr : public iim::VirtualFmtMngr {
 public:
 
     Vaa3DRawFmtMngr(){}
-    ~Vaa3DRawFmtMngr() {}
 
 	char *loadMetadata ( char * filename, iim::sint64 * &sz, int &datatype, int &b_swap, void * &fhandle, int &header_len );
 
