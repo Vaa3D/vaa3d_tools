@@ -7,6 +7,11 @@ CONFIG	+= qt plugin warn_off
 CONFIG += use_static_libs
 
 
+QMAKE_CXXFLAGS += -Wall
+QMAKE_CXXFLAGS += -pedantic
+QMAKE_CXXFLAGS += -Werror
+
+
 #set up Vaa3D and Qt source path
 win32{
     V3DMAINPATH =  ../../../../v3d_external/v3d_main
@@ -132,20 +137,25 @@ HEADERS += ./src/core/VolumeManager/vmStackedVolume.h
 HEADERS += ./src/core/VolumeManager/vmVirtualStack.h
 HEADERS += ./src/core/VolumeManager/vmVirtualVolume.h
 HEADERS += ./src/core/VolumeManager/VM_config.h
-HEADERS += ../teramanager/src/core/ImageManager/IM_config.h
+
 HEADERS += ../teramanager/src/core/ImageManager/Block.h
-HEADERS += ../teramanager/src/core/ImageManager/Stack.h
+HEADERS += ../teramanager/src/core/ImageManager/dirent_win.h
+HEADERS += ../teramanager/src/core/ImageManager/IM_config.h
+HEADERS += ../teramanager/src/core/ImageManager/ProgressBar.h
 HEADERS += ../teramanager/src/core/ImageManager/RawFmtMngr.h
-HEADERS += ../teramanager/src/core/ImageManager/Tiff3DMngr.h
+HEADERS += ../teramanager/src/core/ImageManager/RawVolume.h
 HEADERS += ../teramanager/src/core/ImageManager/SimpleVolume.h
 HEADERS += ../teramanager/src/core/ImageManager/SimpleVolumeRaw.h
-HEADERS += ../teramanager/src/core/ImageManager/RawVolume.h
+HEADERS += ../teramanager/src/core/ImageManager/Stack.h
+HEADERS += ../teramanager/src/core/ImageManager/StackRaw.h
 HEADERS += ../teramanager/src/core/ImageManager/StackedVolume.h
-HEADERS += ../teramanager/src/core/ImageManager/TiledVolume.h
+HEADERS += ../teramanager/src/core/ImageManager/Tiff3DMngr.h
 HEADERS += ../teramanager/src/core/ImageManager/TiledMCVolume.h
-HEADERS += ../teramanager/src/core/ImageManager/VirtualVolume.h
+HEADERS += ../teramanager/src/core/ImageManager/TiledVolume.h
 HEADERS += ../teramanager/src/core/ImageManager/TimeSeries.h
 HEADERS += ../teramanager/src/core/ImageManager/VirtualFmtMngr.h
+HEADERS += ../teramanager/src/core/ImageManager/VirtualVolume.h
+
 HEADERS += ./src/control/CPlugin.h
 HEADERS += ./src/control/CImport.h
 HEADERS += ./src/control/CMergeTiles.h
@@ -184,22 +194,24 @@ SOURCES += ./src/core/VolumeManager/vmStack.cpp
 SOURCES += ./src/core/VolumeManager/vmStackedVolume.cpp
 SOURCES += ./src/core/VolumeManager/vmVirtualStack.cpp
 SOURCES += ./src/core/VolumeManager/vmVirtualVolume.cpp
-SOURCES += ../teramanager/src/core/ImageManager/IM_config.cpp
+
 SOURCES += ../teramanager/src/core/ImageManager/Block.cpp
-SOURCES += ../teramanager/src/core/ImageManager/Stack.cpp
-SOURCES += ../teramanager/src/core/ImageManager/RawFmtMngr.cpp
-SOURCES += ../teramanager/src/core/ImageManager/Tiff3DMngr.cpp
-SOURCES += ../teramanager/src/core/ImageManager/StackedVolume.cpp
-SOURCES += ../teramanager/src/core/ImageManager/TiledVolume.cpp
-SOURCES += ../teramanager/src/core/ImageManager/VirtualVolume.cpp
-SOURCES += ../teramanager/src/core/ImageManager/TimeSeries.cpp
-SOURCES += ../teramanager/src/core/ImageManager/SimpleVolumeRaw.cpp
-SOURCES += ../teramanager/src/core/ImageManager/SimpleVolume.cpp
-SOURCES += ../teramanager/src/core/ImageManager/RawVolume.cpp
-SOURCES += ../teramanager/src/core/ImageManager/TiledMCVolume.cpp
-SOURCES += ../teramanager/src/core/ImageManager/StackRaw.cpp
+SOURCES += ../teramanager/src/core/ImageManager/IM_config.cpp
 SOURCES += ../teramanager/src/core/ImageManager/imProgressBar.cpp
+SOURCES += ../teramanager/src/core/ImageManager/RawFmtMngr.cpp
+SOURCES += ../teramanager/src/core/ImageManager/RawVolume.cpp
+SOURCES += ../teramanager/src/core/ImageManager/SimpleVolume.cpp
+SOURCES += ../teramanager/src/core/ImageManager/SimpleVolumeRaw.cpp
+SOURCES += ../teramanager/src/core/ImageManager/Stack.cpp
+SOURCES += ../teramanager/src/core/ImageManager/StackRaw.cpp
+SOURCES += ../teramanager/src/core/ImageManager/StackedVolume.cpp
+SOURCES += ../teramanager/src/core/ImageManager/Tiff3DMngr.cpp
+SOURCES += ../teramanager/src/core/ImageManager/TiledMCVolume.cpp
+SOURCES += ../teramanager/src/core/ImageManager/TiledVolume.cpp
+SOURCES += ../teramanager/src/core/ImageManager/TimeSeries.cpp
 SOURCES += ../teramanager/src/core/ImageManager/VirtualFmtMngr.cpp
+SOURCES += ../teramanager/src/core/ImageManager/VirtualVolume.cpp
+
 SOURCES += ./src/control/CPlugin.cpp
 SOURCES += ./src/control/CImport.cpp
 SOURCES += ./src/control/CMergeTiles.cpp
@@ -218,7 +230,7 @@ SOURCES += ./src/presentation/QPrefixSuffixLineEdit.cpp
 
 #set up target
 TARGET	= $$qtLibraryTarget(terastitcherplugin)
-DESTDIR = ../../v3d/plugins/image_stitching/terastitcher
+DESTDIR	= ../../../bin/plugins/image_stitching/terastitcher
 #DESTDIR	= $$V3DBUILDPATH/../v3d/Windows_MSVC_64/plugins/image_stitching/terastitcher
 
 
