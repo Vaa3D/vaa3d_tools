@@ -7,9 +7,9 @@ CONFIG	+= qt plugin warn_off
 CONFIG += use_static_libs
 
 
-QMAKE_CXXFLAGS += -Wall
-QMAKE_CXXFLAGS += -pedantic
-QMAKE_CXXFLAGS += -Werror
+#QMAKE_CXXFLAGS += -Wall
+#QMAKE_CXXFLAGS += -pedantic
+#QMAKE_CXXFLAGS += -Werror
 
 
 #set up Vaa3D and Qt source path
