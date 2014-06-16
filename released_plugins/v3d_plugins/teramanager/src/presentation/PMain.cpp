@@ -2116,6 +2116,32 @@ void PMain::debugAction1Triggered()
 {
     /**/itm::debug(itm::LEV1, 0, __itm__current__function__);
 
+//    NeuronTree nt = readSWC_file("/media/Elements/allen.unknown.raw.tiled.RGB/test.ano.swc");
+
+//    printf("\n\ngoing to check Vaa3D LOADED curve points: ");
+//    for(int i=0; i<nt.listNeuron.size(); i++)
+//        printf("%d(%d) ", nt.listNeuron[i].n, nt.listNeuron[i].pn);
+//    printf("\n\n");
+
+//    printf("\n\nVaa3D LOADED hashNeuron is: \n");
+//    QHashIterator<int, int> i(nt.hashNeuron);
+//    while (i.hasNext()) {
+//        i.next();
+//        std::cout << i.key() << ": " << i.value() << endl;
+//    }
+//    printf("\n\n");
+
+//    nt.editable = false;
+//    V3D_env->setSWC(CExplorerWindow::getCurrent()->window, nt);
+//    V3D_env->pushObjectIn3DWindow(CExplorerWindow::getCurrent()->window);
+//    CExplorerWindow::getCurrent()->view3DWidget->getRenderer()->endSelectMode();
+
+    NeuronTree dbg_tree = V3D_env->getSWC(CExplorerWindow::getCurrent()->window);
+    printf("\n\ngoing to check Vaa3D curve points: ");
+    for(int i=0; i<dbg_tree.listNeuron.size(); i++)
+        printf("%d(%d) ", dbg_tree.listNeuron[i].n, dbg_tree.listNeuron[i].pn);
+    printf("\n\n");
+
 //    std::list<NeuronSWC> neu;
 //    std::list<LocationSimple> markers;
 //    CAnnotations *cano = CAnnotations::instance(14000, 14000, 14000);

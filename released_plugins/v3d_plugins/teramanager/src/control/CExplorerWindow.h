@@ -61,8 +61,6 @@ class teramanager::CExplorerWindow : public QWidget
         bool isActive;                  //false when the current window is set as not active (e.g. when after zooming-in/out)
         bool isReady;                   //true when current window is ready for receiving user inputs (i.e. all image data have been loaded)
         int zoomHistory[ZOOM_HISTORY_SIZE];//last 4 zoom values
-        std::list<LocationSimple> loaded_markers; //list of markers loaded from <CAnnotations> when the current view is created
-        std::list<NeuronSWC> loaded_curves;       //list of curve points loaded from <CAnnotations> when the current view is created
         int V0_sbox_min, V0_sbox_val;   //to save the state of subvolume spinboxes when the current window is hidden
         int V1_sbox_max, V1_sbox_val;   //to save the state of subvolume spinboxes when the current window is hidden
         int H0_sbox_min, H0_sbox_val;   //to save the state of subvolume spinboxes when the current window is hidden

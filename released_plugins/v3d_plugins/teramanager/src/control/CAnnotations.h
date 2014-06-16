@@ -1,54 +1,36 @@
 #ifndef CANNOTATIONS_H
 #define CANNOTATIONS_H
 
+#include <set>
+
 #include "CPlugin.h"
 #include "math.h"
 
 //annotation structure
 struct teramanager::annotation
 {
-    int ID;                     //unique identifier
-    int type;			//-1 = undefined, 0 = LocationSimple, 1 = NeuronSWC
-    int subtype;                //see Vaa3D LocationSimple and NeuronSWC types
-    float x, y, z;		//point coordinates
-    float r;			//radius
-    std::string name;           //name
-    std::string comment;        //comment
-    RGBA8 color;                //color
-    annotation* prev;           //previous annotation handle (used in case of linked structures)
-    annotation* next;           //next annotation handle (used in case of linked structures)
-    void* container;            //address of the container object
+    int ID;                         //unique identifier
+    int type;                       //-1 = undefined, 0 = LocationSimple, 1 = NeuronSWC
+    int subtype;                    //see Vaa3D LocationSimple and NeuronSWC types
+    float x, y, z;                  //point coordinates
+    float r;                        //radius
+    std::string name;               //name
+    std::string comment;            //comment
+    RGBA8 color;                    //color
+    annotation* parent;             //parent node pointer (used in case of linked structures)
+    std::set<annotation*> children; //children nodes pointers (used in case of linked structures)
+    void* container;                //address of the container object
+    int vaa3d_n;                    //Vaa3D's swc/apo index
+    bool smart_delete;              // = true by default, enables "smart" deletion (see decontructor code)
 
-    annotation() throw (RuntimeException){
-        type = subtype  = teramanager::undefined_int32;
-        r = x = y = z = teramanager::undefined_real32;
-        prev = next = 0;
-        name = comment = "";
-        color.r = color.g = color.b = color.a = 0;
-        container = 0;
-        if(!recyclableIDs.empty())
-        {
-            ID = recyclableIDs.front();
-            recyclableIDs.pop_front();
-        }
-        else if(!availableIDs.empty())
-        {
-            ID = availableIDs.front();
-            availableIDs.pop_front();
-        }
-        else
-        {
-            char errMsg[STATIC_STRING_SIZE];
-            sprintf(errMsg, "in annotation(): no more IDs available. Possible reasons are too many annotations inseted (maximum is %d) or a memory leak."
-                    "\n\nPlease signal this bug to the developers.", MAX_ANNOTATIONS_NUMBER);
-            throw RuntimeException(errMsg);
-        }
-    }
-    ~annotation(){
-        recyclableIDs.push_back(ID);
-    }
+    // constructor and deconstructor
+    annotation() throw (itm::RuntimeException);
+    ~annotation();
 
-    static std::list<int> availableIDs;     //list of available IDs, i.e. IDs that can be assigned and that were never assigned before
+    void ricInsertIntoTree(annotation* node, QList<NeuronSWC> &tree);
+    void insertIntoTree(QList<NeuronSWC> &tree);
+
+    static std::list<int> availableIDs;     //list of available IDs,  i.e. IDs that can be assigned and that were never assigned before
     static std::list<int> recyclableIDs;    //list of recyclable IDs, i.e. IDs that can be assigned after their owner has been destroyed
 };
 
@@ -72,7 +54,7 @@ class teramanager::CAnnotations
                     //number of neurons in the octant
                     itm::uint32 n_annotations;
 
-                    //annotations
+                    //annotations stored in the octant (only in a leaf)
                     std::list<teramanager::annotation*> annotations;
 
                     //pointers to children octants
@@ -85,16 +67,20 @@ class teramanager::CAnnotations
                     octant *child7;	//[V_start+V_dim/2, V_start+V_dim  ),[H_start+H_dim/2,	H_start+H_dim  ),[D_start,		D_start+D_dim/2)
                     octant *child8;	//[V_start+V_dim/2, V_start+V_dim  ),[H_start+H_dim/2,	H_start+H_dim  ),[D_start+D_dim/2,	D_start+D_dim  )
 
-                    octant(itm::uint32 _V_start, itm::uint32 _V_dim, itm::uint32 _H_start, itm::uint32 _H_dim, itm::uint32 _D_start, itm::uint32 _D_dim)
+                    //octree container handle
+                    Octree* container;
+
+                    octant(itm::uint32 _V_start, itm::uint32 _V_dim, itm::uint32 _H_start, itm::uint32 _H_dim, itm::uint32 _D_start, itm::uint32 _D_dim, Octree* _container)
                     {
-                            child1  = child2 = child3 = child4 = child5 = child6 = child7 = child8 = NULL;
-                            V_start = _V_start;
-                            V_dim   = _V_dim;
-                            H_start = _H_start;
-                            H_dim   = _H_dim;
-                            D_start = _D_start;
-                            D_dim   = _D_dim;
-                            n_annotations = 0;
+                        child1  = child2 = child3 = child4 = child5 = child6 = child7 = child8 = 0;
+                        V_start = _V_start;
+                        V_dim   = _V_dim;
+                        H_start = _H_start;
+                        H_dim   = _H_dim;
+                        D_start = _D_start;
+                        D_dim   = _D_dim;
+                        n_annotations = 0;
+                        container = _container;
                     }
                 };
                 typedef octant* Poctant;
@@ -106,22 +92,23 @@ class teramanager::CAnnotations
                 /*** SUPPORT methods ***/
 
                 //recursive support methods
-                void     _rec_clear(const Poctant& p_octant) throw(RuntimeException);
-                void     _rec_insert(const Poctant& p_octant, annotation& neuron) throw(RuntimeException);
-                itm::uint32   _rec_deep_count(const Poctant& p_octant) throw(RuntimeException);
-                itm::uint32   _rec_height(const Poctant& p_octant) throw(RuntimeException);
-                void     _rec_print(const Poctant& p_octant);
-                void     _rec_search(const Poctant& p_octant, const interval_t& V_int, const interval_t& H_int, const interval_t& D_int, std::list<annotation*>& neurons) throw(RuntimeException);
-                Poctant  _rec_find(const Poctant& p_octant, const interval_t& V_int, const interval_t& H_int, const interval_t& D_int) throw(RuntimeException);
-                itm::uint32   _rec_count(const Poctant& p_octant, const interval_t& V_int, const interval_t& H_int, const interval_t& D_int) throw(RuntimeException);
+                void        _rec_clear(const Poctant& p_octant) throw(itm::RuntimeException);
+                void        _rec_insert(const Poctant& p_octant, annotation& neuron) throw(itm::RuntimeException);
+                void        _rec_remove(const Poctant& p_octant, annotation* neuron) throw(itm::RuntimeException);
+                itm::uint32 _rec_deep_count(const Poctant& p_octant) throw(itm::RuntimeException);
+                itm::uint32 _rec_height(const Poctant& p_octant) throw(itm::RuntimeException);
+                void        _rec_print(const Poctant& p_octant);
+                void        _rec_search(const Poctant& p_octant, const interval_t& V_int, const interval_t& H_int, const interval_t& D_int, std::list<annotation*>& neurons) throw(itm::RuntimeException);
+                Poctant     _rec_find(const Poctant& p_octant, const interval_t& V_int, const interval_t& H_int, const interval_t& D_int) throw(itm::RuntimeException);
+                itm::uint32 _rec_count(const Poctant& p_octant, const interval_t& V_int, const interval_t& H_int, const interval_t& D_int) throw(itm::RuntimeException);
 
                 //returns true if two given volumes intersect each other
                 bool inline intersects(const interval_t& V1_int,const interval_t& H1_int,const interval_t& D1_int,
-                                       itm::uint32& V2_start, itm::uint32& V2_dim, itm::uint32& H2_start, itm::uint32& H2_dim, itm::uint32& D2_start, itm::uint32& D2_dim)  throw(RuntimeException);
+                                       itm::uint32& V2_start, itm::uint32& V2_dim, itm::uint32& H2_start, itm::uint32& H2_dim, itm::uint32& D2_start, itm::uint32& D2_dim)  throw(itm::RuntimeException);
 
                 //returns true if first volume contains second volume
                 bool inline contains  (const interval_t& V1_int, const interval_t& H1_int, const interval_t& D1_int,
-                                       itm::uint32& V2_start, itm::uint32& V2_dim, itm::uint32& H2_start, itm::uint32& H2_dim, itm::uint32& D2_start, itm::uint32& D2_dim)  throw(RuntimeException);
+                                       itm::uint32& V2_start, itm::uint32& V2_dim, itm::uint32& H2_start, itm::uint32& H2_dim, itm::uint32& D2_start, itm::uint32& D2_dim)  throw(itm::RuntimeException);
 
             public:
 
@@ -130,30 +117,34 @@ class teramanager::CAnnotations
                 ~Octree(void);
 
                 //clears octree content and deallocates used memory
-                void clear() throw(RuntimeException);
+                void clear() throw(itm::RuntimeException);
 
                 //insert given neuron in the octree
-                void insert(annotation& neuron) throw(RuntimeException);
+                void insert(annotation& neuron) throw(itm::RuntimeException);
+
+                //remove given neuron from the octree (returns 1 if succeeds)
+                bool remove(annotation* neuron) throw(itm::RuntimeException);
 
                 //search for neurons in the given 3D volume and puts found neurons into 'neurons'
-                void find(interval_t V_int, interval_t H_int, interval_t D_int, std::list<annotation*>& neurons) throw(RuntimeException);
+                void find(interval_t V_int, interval_t H_int, interval_t D_int, std::list<annotation*>& neurons) throw(itm::RuntimeException);
 
                 //search for the annotations at the given coordinate. If found, returns the address of the annotations list
-                std::list<annotation*>* find(float x, float y, float z) throw(RuntimeException);
+                std::list<annotation*>* find(float x, float y, float z) throw(itm::RuntimeException);
 
                 //returns the number of neurons (=leafs) in the given volume without exploring the entire data structure
-                itm::uint32 count(interval_t V_int = interval_t(-1,-1), interval_t H_int = interval_t(-1,-1), interval_t D_int = interval_t(-1,-1))  throw(RuntimeException);
+                itm::uint32 count(interval_t V_int = interval_t(-1,-1), interval_t H_int = interval_t(-1,-1), interval_t D_int = interval_t(-1,-1))  throw(itm::RuntimeException);
 
                 //returns the number of neurons (=leafs) in the octree by exploring the entire data structure
-                itm::uint32 deep_count()  throw(RuntimeException);
+                itm::uint32 deep_count()  throw(itm::RuntimeException);
 
                 //returns the octree height
-                itm::uint32 height()  throw(RuntimeException);
+                itm::uint32 height()  throw(itm::RuntimeException);
 
                 //print the octree content
                 void print();
 
                 friend class CAnnotations;
+                friend class annotation;
 
                 static inline double round(double val){
                     return floor(val + 0.5);
@@ -212,18 +203,18 @@ class teramanager::CAnnotations
         ~CAnnotations();
 
         /*********************************************************************************
-        * Adds/removes the given annotation(s)
+        * Find/Add/Clear annotation(s)
         **********************************************************************************/
-        void addLandmarks(LandmarkList* markers) throw (RuntimeException);
-        void removeLandmarks(std::list<LocationSimple> &markers) throw (RuntimeException);
-        void addCurves(NeuronTree* curves) throw (RuntimeException);
-        void removeCurves(std::list<NeuronSWC> &curves) throw (RuntimeException);
+        void findLandmarks (itm::interval_t X_range, itm::interval_t Y_range, itm::interval_t Z_range, QList<LocationSimple> &markers) throw (itm::RuntimeException);
+        void addLandmarks  (itm::interval_t X_range, itm::interval_t Y_range, itm::interval_t Z_range, LandmarkList& markers) throw (itm::RuntimeException);
+        void clearLandmarks(itm::interval_t X_range, itm::interval_t Y_range, itm::interval_t Z_range) throw (itm::RuntimeException);
 
-        /*********************************************************************************
-        * Retrieves the annotation(s) in the given volume space
-        **********************************************************************************/
-        void findLandmarks(interval_t X_range, interval_t Y_range, interval_t Z_range, std::list<LocationSimple> &markers) throw (RuntimeException);
-        void findCurves(interval_t X_range, interval_t Y_range, interval_t Z_range, std::list<NeuronSWC> &curves) throw (RuntimeException);
+        void findCurves (itm::interval_t X_range, itm::interval_t Y_range, itm::interval_t Z_range, QList<NeuronSWC> &curves) throw (itm::RuntimeException);
+        void addCurves  (itm::interval_t X_range, itm::interval_t Y_range, itm::interval_t Z_range, NeuronTree& nt) throw (itm::RuntimeException);
+        void clearCurves(itm::interval_t X_range, itm::interval_t Y_range, itm::interval_t Z_range) throw (itm::RuntimeException);
+
+        // @obsolete void removeCurves(std::list<NeuronSWC> &curves) throw (RuntimeException);
+        // @obsolote void removeLandmarks(std::list<LocationSimple> &markers) throw (RuntimeException);
 
         /*********************************************************************************
         * Save/load method
@@ -242,7 +233,7 @@ class teramanager::CAnnotations
             octree = new Octree(octreeDimY, octreeDimX, octreeDimZ);
         }
 
-
+        friend class annotation;
 };
 
 #endif // CANNOTATIONS_H

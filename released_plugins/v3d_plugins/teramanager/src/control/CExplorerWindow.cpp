@@ -1339,50 +1339,60 @@ void CExplorerWindow::storeAnnotations() throw (RuntimeException)
     QElapsedTimer timer;
     timer.start();
 
+    //computing the current volume range in the highest resolution image space
+    /**/itm::debug(itm::LEV_MAX, strprintf("computing the current volume range in the highest resolution image space").c_str(), __itm__current__function__);
+    int highestResIndex = CImport::instance()->getResolutions()-1;
+    int voiV0 = CVolume::scaleVCoord(volV0, volResIndex, highestResIndex);
+    int voiV1 = CVolume::scaleVCoord(volV1, volResIndex, highestResIndex);
+    int voiH0 = CVolume::scaleHCoord(volH0, volResIndex, highestResIndex);
+    int voiH1 = CVolume::scaleHCoord(volH1, volResIndex, highestResIndex);
+    int voiD0 = CVolume::scaleDCoord(volD0, volResIndex, highestResIndex);
+    int voiD1 = CVolume::scaleDCoord(volD1, volResIndex, highestResIndex);
+    interval_t x_range(voiH0, voiH1);
+    interval_t y_range(voiV0, voiV1);
+    interval_t z_range(voiD0, voiD1);
+
     /**********************************************************************************
     * MARKERS
     ***********************************************************************************/
-    //removing original markers
-    if(!loaded_markers.empty())
-        CAnnotations::getInstance()->removeLandmarks(loaded_markers);
-
     //storing edited markers
-    QList<LocationSimple> editedMarkers = triViewWidget->getImageData()->listLandmarks;
-    if(!editedMarkers.empty())
+    QList<LocationSimple> markers = triViewWidget->getImageData()->listLandmarks;
+    if(!markers.empty())
     {
         //converting local coordinates into global coordinates
-        for(int i=0; i<editedMarkers.size(); i++)
+        for(int i=0; i<markers.size(); i++)
         {
-            editedMarkers[i].x = getGlobalHCoord(editedMarkers[i].x, -1, false, false, __itm__current__function__);
-            editedMarkers[i].y = getGlobalVCoord(editedMarkers[i].y, -1, false, false, __itm__current__function__);
-            editedMarkers[i].z = getGlobalDCoord(editedMarkers[i].z, -1, false, false, __itm__current__function__);
+            markers[i].x = getGlobalHCoord(markers[i].x, -1, false, false, __itm__current__function__);
+            markers[i].y = getGlobalVCoord(markers[i].y, -1, false, false, __itm__current__function__);
+            markers[i].z = getGlobalDCoord(markers[i].z, -1, false, false, __itm__current__function__);
         }
 
         //storing markers
-        CAnnotations::getInstance()->addLandmarks(&editedMarkers);
+        CAnnotations::getInstance()->addLandmarks(x_range, y_range, z_range, markers);
     }
 
     /**********************************************************************************
     * CURVES
     ***********************************************************************************/
-    //removing original curves
-    if(!loaded_curves.empty())
-        CAnnotations::getInstance()->removeCurves(loaded_curves);
-
     //storing edited curves
-    NeuronTree editedCurves = this->V3D_env->getSWC(this->window);
-    if(!editedCurves.listNeuron.empty())
+    NeuronTree nt = this->V3D_env->getSWC(this->window);
+    if(!nt.listNeuron.empty())
     {
+        /* @debug */ //printf("\ngoing to store in TeraFly the curve points ");
+
         //converting local coordinates into global coordinates
-        for(int i=0; i<editedCurves.listNeuron.size(); i++)
+        for(int i=0; i<nt.listNeuron.size(); i++)
         {
-            editedCurves.listNeuron[i].x = getGlobalHCoord(editedCurves.listNeuron[i].x, -1, false, false, __itm__current__function__);
-            editedCurves.listNeuron[i].y = getGlobalVCoord(editedCurves.listNeuron[i].y, -1, false, false, __itm__current__function__);
-            editedCurves.listNeuron[i].z = getGlobalDCoord(editedCurves.listNeuron[i].z, -1, false, false, __itm__current__function__);
+            /* @debug */ //printf("%d(%d) [(%.0f,%.0f,%.0f) ->", nt.listNeuron[i].n, nt.listNeuron[i].pn, nt.listNeuron[i].x, nt.listNeuron[i].y, nt.listNeuron[i].z);
+            nt.listNeuron[i].x = getGlobalHCoord(nt.listNeuron[i].x, -1, false, false, __itm__current__function__);
+            nt.listNeuron[i].y = getGlobalVCoord(nt.listNeuron[i].y, -1, false, false, __itm__current__function__);
+            nt.listNeuron[i].z = getGlobalDCoord(nt.listNeuron[i].z, -1, false, false, __itm__current__function__);
+            /* @debug */ //printf("(%.0f,%.0f,%.0f)]  ", nt.listNeuron[i].x, nt.listNeuron[i].y, nt.listNeuron[i].z);
         }
+        /* @debug */ //printf("\n");
 
         //storing markers
-        CAnnotations::getInstance()->addCurves(&editedCurves);
+        CAnnotations::getInstance()->addCurves(x_range, y_range, z_range, nt);
     }
 
     PLog::getInstance()->appendCPU(timer.elapsed(), QString("Stored 3D annotations from view ").append(title.c_str()).toStdString());
@@ -1393,8 +1403,6 @@ void CExplorerWindow::clearAnnotations() throw (RuntimeException)
     /**/itm::debug(itm::LEV1, strprintf("title = %s", titleShort.c_str()).c_str(), __itm__current__function__);
 
     //clearing previous annotations (useful when this view has been already visited)
-    loaded_markers.clear();
-    loaded_curves.clear();
     V3D_env->getHandleNeuronTrees_Any3DViewer(window3D)->clear();
 
     QList<LocationSimple> vaa3dMarkers;
@@ -1477,13 +1485,15 @@ void CExplorerWindow::loadAnnotations() throw (RuntimeException)
 {
     /**/itm::debug(itm::LEV1, strprintf("title = %s", titleShort.c_str()).c_str(), __itm__current__function__);
 
+    // where to put vaa3d annotations
+    QList<LocationSimple> vaa3dMarkers;
+    NeuronTree vaa3dCurves;
+
     QElapsedTimer timer;
     timer.start();
 
     //clearing previous annotations (useful when this view has been already visited)
     /**/itm::debug(itm::LEV_MAX, strprintf("clearing previous annotations").c_str(), __itm__current__function__);
-    loaded_markers.clear();
-    loaded_curves.clear();
     V3D_env->getHandleNeuronTrees_Any3DViewer(window3D)->clear();
 
     //computing the current volume range in the highest resolution image space
@@ -1501,28 +1511,27 @@ void CExplorerWindow::loadAnnotations() throw (RuntimeException)
 
     //obtaining the annotations within the current window
     /**/itm::debug(itm::LEV_MAX, strprintf("obtaining the annotations within the current window").c_str(), __itm__current__function__);
-    CAnnotations::getInstance()->findLandmarks(x_range, y_range, z_range, loaded_markers);
-    CAnnotations::getInstance()->findCurves(x_range, y_range, z_range, loaded_curves);
+    CAnnotations::getInstance()->findLandmarks(x_range, y_range, z_range, vaa3dMarkers);
+    CAnnotations::getInstance()->findCurves(x_range, y_range, z_range, vaa3dCurves.listNeuron);
 
     //converting global coordinates to local coordinates
     /**/itm::debug(itm::LEV_MAX, strprintf("converting global coordinates to local coordinates").c_str(), __itm__current__function__);
-    QList<LocationSimple> vaa3dMarkers;
-    for(std::list<LocationSimple>::iterator i = loaded_markers.begin(); i != loaded_markers.end(); i++)
+    for(int i=0; i<vaa3dMarkers.size(); i++)
     {
-        vaa3dMarkers.push_back(*i);
-        vaa3dMarkers.back().x = getLocalHCoord(vaa3dMarkers.back().x);
-        vaa3dMarkers.back().y = getLocalVCoord(vaa3dMarkers.back().y);
-        vaa3dMarkers.back().z = getLocalDCoord(vaa3dMarkers.back().z);
+        vaa3dMarkers[i].x = getLocalHCoord(vaa3dMarkers[i].x);
+        vaa3dMarkers[i].y = getLocalVCoord(vaa3dMarkers[i].y);
+        vaa3dMarkers[i].z = getLocalDCoord(vaa3dMarkers[i].z);
     }
-    NeuronTree vaa3dCurves;
-    for(std::list<NeuronSWC>::iterator i = loaded_curves.begin(); i != loaded_curves.end(); i++)
+    /* @debug */ //printf("\n\ngoing to insert in Vaa3D the curve points ");
+    for(int i=0; i<vaa3dCurves.listNeuron.size(); i++)
     {
-        vaa3dCurves.listNeuron.push_back(*i);
-        vaa3dCurves.listNeuron.back().x = getLocalHCoord(vaa3dCurves.listNeuron.back().x);
-        vaa3dCurves.listNeuron.back().y = getLocalVCoord(vaa3dCurves.listNeuron.back().y);
-        vaa3dCurves.listNeuron.back().z = getLocalDCoord(vaa3dCurves.listNeuron.back().z);
+        /* @debug */ //printf("%d(%d) [(%.0f,%.0f,%.0f) ->", vaa3dCurves.listNeuron[i].n, vaa3dCurves.listNeuron[i].pn, vaa3dCurves.listNeuron[i].x, vaa3dCurves.listNeuron[i].y, vaa3dCurves.listNeuron[i].z);
+        vaa3dCurves.listNeuron[i].x = getLocalHCoord(vaa3dCurves.listNeuron[i].x);
+        vaa3dCurves.listNeuron[i].y = getLocalVCoord(vaa3dCurves.listNeuron[i].y);
+        vaa3dCurves.listNeuron[i].z = getLocalDCoord(vaa3dCurves.listNeuron[i].z);
+        /* @debug */ //printf("(%.0f,%.0f,%.0f)]  ", vaa3dCurves.listNeuron[i].x, vaa3dCurves.listNeuron[i].y, vaa3dCurves.listNeuron[i].z);
     }
-    vaa3dCurves.editable=false;
+    /* @debug */ //printf("\n\n");
 
 
     //update cpu time
@@ -1537,6 +1546,13 @@ void CExplorerWindow::loadAnnotations() throw (RuntimeException)
     V3D_env->pushObjectIn3DWindow(window);
     view3DWidget->enableMarkerLabel(false);
     view3DWidget->getRenderer()->endSelectMode();
+
+    //end curve editing mode
+    QList<NeuronTree>* listNeuronTree = static_cast<Renderer_gl1*>(view3DWidget->getRenderer())->getHandleNeuronTrees();
+    for (int i=0; i<listNeuronTree->size(); i++)
+        (*listNeuronTree)[i].editable = false; //090928
+    view3DWidget->updateTool();
+
     PLog::getInstance()->appendGPU(timer.elapsed(), QString("Loaded 3D annotations into view ").append(title.c_str()).toStdString());
 }
 

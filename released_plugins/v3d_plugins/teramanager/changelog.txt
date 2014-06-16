@@ -11,6 +11,16 @@ ties names are:
 - Rem: a feature no longer available
 
 ============================================================================================
+Version 0.9.9
+June 16th, 2014
+--------------------------------------------------------------------------------------------
+- Fix: fixed bug which prevented TeraFly to correctly display branched structures.
+- Fix: fixed (minor) memory leak in TeraFly's 3D annotation octree.
+- Dev: TeraFly's 3D structures storage/visualization system has been redesigned to deal with
+       branched structures and node duplicates.
+--------------------------------------------------------------------------------------------
+
+
 Version 0.9.83
 June 3rd, 2014
 --------------------------------------------------------------------------------------------
