@@ -7,6 +7,8 @@
 #include <vector>
 #include "neurontracing_mip_plugin.h"
 #include "my_surf_objs.h"
+#include "smooth_curve.h"
+
 
 #include "fastmarching_linker.h"
 
@@ -138,7 +140,7 @@ void autotrace_largeScale_mip(V3DPluginCallback2 &callback, QWidget *parent)
 
     th = QInputDialog::getInteger(parent, "Background threshold",
                                   "Enter the background threshold:",
-                                  1, 1, 255, 1, &ok1);
+                                  55, 1, 255, 1, &ok1);
     if(!ok1)
         return;
 
@@ -399,6 +401,9 @@ void autotrace_largeScale_mip(V3DPluginCallback2 &callback, QWidget *parent)
                farpos_vec.push_back(MyMarker(loc1.x, loc1.y, loc1.z));
            }
            fastmarching_drawing_dynamic(nearpos_vec, farpos_vec, (unsigned char*)data1d, outswc, N,M,P, 1, 5);
+           smooth_curve(outswc,5);
+
+
            for(V3DLONG d = 0; d <outswc.size(); d++)
            {
                outswc_final.push_back(outswc[d]);
@@ -409,6 +414,7 @@ void autotrace_largeScale_mip(V3DPluginCallback2 &callback, QWidget *parent)
 
 
    }
+
 
    system(qPrintable(QString("rm -r %1").arg(tmpfolder.toStdString().c_str())));
 
