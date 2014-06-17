@@ -325,7 +325,7 @@ void autotrace_largeScale_mip(V3DPluginCallback2 &callback, QWidget *parent)
                 .arg(Para.channel-1).arg(Para.bkg_thresh).arg(Para.b_256cube).arg(Para.b_RadiusFrom2D).arg(Para.is_gsdt).arg(Para.is_break_accept).arg(Para.length_thresh);
         system(qPrintable(cmd_APP2));
     #elif defined(Q_OS_MAC)
-        QString cmd_APP2 = QString("%1/vaa3d64.app/Contents/MacOS/vaa3d64 -x Vaa3D_Neuron2 -f app2 -i %2 -p %3 %4 %5 %6 %7 %8 %9 %10").arg(getAppPath().toStdString().c_str()).arg(input_image_name.toStdString().c_str()).arg(markerpath.toStdString().c_str())
+        QString cmd_APP2 = QString("%1/vaa3d64.app/Contents/MacOS/vaa3d64 -x Vaa3D_Neuron2 -f app2 -i %2 -p %3 %4 %5 %6 %7 %8 %9 %10").arg(getAppPath().toStdString().c_str()).arg(APP2_image_name.toStdString().c_str()).arg(markerpath.toStdString().c_str())
                 .arg(Para.channel-1).arg(Para.bkg_thresh).arg(Para.b_256cube).arg(Para.b_RadiusFrom2D).arg(Para.is_gsdt).arg(Para.is_break_accept).arg(Para.length_thresh);
         system(qPrintable(cmd_APP2));
     #else
