@@ -233,6 +233,17 @@ class teramanager::CAnnotations
             octree = new Octree(octreeDimY, octreeDimX, octreeDimZ);
         }
 
+        /*********************************************************************************
+        * Checks whether the octree is empty
+        **********************************************************************************/
+        bool isEmpty()
+        {
+            if(octree)
+                return octree->deep_count() == 0;
+            else
+                return true;
+        }
+
         friend class annotation;
 };
 

@@ -67,6 +67,7 @@ void CSettings::loadDefaultSettings()
     VOIdimT = 20;
     traslX = traslY = traslZ = 50;  //percentage value
     traslT = 0;
+    annotationSpaceUnlimited = false;
 
     //TeraConverter settings
     volumeConverterInputPathLRU = "";
@@ -106,6 +107,7 @@ void CSettings::writeSettings()
     settings.setValue("traslY", traslY);
     settings.setValue("traslZ", traslZ);
     settings.setValue("traslT", traslT);
+    settings.setValue("annotationSpaceUnlimited", annotationSpaceUnlimited);
 
     settings.setValue("volumeConverterInputPathLRU", QString(volumeConverterInputPathLRU.c_str()));
     settings.setValue("volumeConverterOutputPathLRU", QString(volumeConverterOutputPathLRU.c_str()));
@@ -150,6 +152,8 @@ void CSettings::readSettings()
         traslZ = settings.value("traslZ").toInt();
     if(settings.contains("traslT"))
         traslT = settings.value("traslT").toInt();
+    if(settings.contains("annotationSpaceUnlimited"))
+        annotationSpaceUnlimited = settings.value("annotationSpaceUnlimited").toBool();
     int size = settings.beginReadArray("volumePathHistory");
     volumePathHistory.clear();
     for (int i = 0; i < size; ++i)

@@ -37,6 +37,7 @@
 #include "../control/CExplorerWindow.h"
 #include "../control/CAnnotations.h"
 #include "../control/V3Dsubclasses.h"
+#include "../control/CAnnotations.h"
 #include "renderer_gl1.h"
 #include "v3dr_mainwindow.h"
 #include <typeinfo>
@@ -209,7 +210,7 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     volMapSizeMenu->addAction(volMapSizeWidget);
     importOptionsMenu->addMenu(volMapSizeMenu);
     /* ------------------------- "Options" menu: 3D ---------------------- */
-    threeDMenu = optionsMenu->addMenu("3D");
+    threeDMenu = optionsMenu->addMenu("3D annotation");
     curvesMenu = threeDMenu->addMenu("Curves");
     curveAspectMenu = curvesMenu->addMenu("Aspect");
     curveDimsMenu = curvesMenu->addMenu("Skeleton width");
@@ -235,6 +236,21 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     connect(curveAspectTube, SIGNAL(changed()), this, SLOT(curveAspectChanged()));
     connect(curveAspectSkeleton, SIGNAL(changed()), this, SLOT(curveAspectChanged()));
     connect(curveDimsSpinBox, SIGNAL(valueChanged(int)), this, SLOT(curveDimsChanged(int)));
+    virtualSpaceSizeMenu = threeDMenu->addMenu("Virtual space size");
+    spaceSizeAuto = new QAction("Auto", this);
+    spaceSizeUnlimited = new QAction("Unlimited", this);
+    spaceSizeAuto->setCheckable(true);
+    spaceSizeUnlimited->setCheckable(true);
+    QActionGroup* virtualSpaceSizeMutex = new QActionGroup(this);
+    virtualSpaceSizeMutex->addAction(spaceSizeAuto);
+    virtualSpaceSizeMutex->addAction(spaceSizeUnlimited);
+    virtualSpaceSizeMutex->setExclusive(true);
+    virtualSpaceSizeMenu->addAction(spaceSizeAuto);
+    virtualSpaceSizeMenu->addAction(spaceSizeUnlimited);
+    spaceSizeUnlimited->setChecked(CSettings::instance()->getAnnotationSpaceUnlimited());
+    spaceSizeAuto->setChecked(!spaceSizeUnlimited->isChecked());
+    connect(spaceSizeAuto, SIGNAL(changed()), this, SLOT(virtualSpaceSizeChanged()));
+    //connect(spaceSizeUnlimited, SIGNAL(changed()), this, SLOT(virtualSpaceSizeChanged()));
     /* ------------------------- "Options" menu: directional shift ---------------- */
     DirectionalShiftsMenu = optionsMenu->addMenu("Directional shift");
     /* ------------------------------ x-shift ------------------------------------- */
@@ -1052,6 +1068,7 @@ void PMain::reset()
     saveAnnotationsAction->setEnabled(false);
     saveAnnotationsAsAction->setEnabled(false);
     clearAnnotationsAction->setEnabled(false);
+    virtualSpaceSizeMenu->setEnabled(true);
     PAnoToolBar::instance()->setEnabled(false);
     showToolbarButton->setChecked(false);
     showToolbarButton->setEnabled(false);
@@ -1384,7 +1401,8 @@ void PMain::loadAnnotations()
                 annotationsPathLRU = path.toStdString();
                 CAnnotations::getInstance()->load(annotationsPathLRU.c_str());
                 CExplorerWindow::getCurrent()->loadAnnotations();
-                saveAnnotationsAction->setEnabled(true);
+                saveAnnotationsAction->setEnabled(true);                
+                virtualSpaceSizeMenu->setEnabled(false);
             }
             else
                 return;
@@ -1392,6 +1410,7 @@ void PMain::loadAnnotations()
     }
     catch(RuntimeException &ex)
     {
+        CAnnotations::getInstance()->clear();
         QMessageBox::critical(this,QObject::tr("Error"), QObject::tr(ex.what()),QObject::tr("Ok"));
     }
 }
@@ -1485,6 +1504,7 @@ void PMain::clearAnnotations()
             CAnnotations::getInstance()->clear();
             CExplorerWindow::getCurrent()->loadAnnotations();
         }
+        virtualSpaceSizeMenu->setEnabled(true);
     }
     catch(RuntimeException &ex)
     {
@@ -2212,6 +2232,16 @@ void PMain::curveAspectChanged()
             CExplorerWindow::getCurrent()->view3DWidget->update();
         }
     }
+}
+
+/**********************************************************************************
+* Called when the corresponding Options->3D annotation->Virtual space size actions are triggered
+***********************************************************************************/
+void PMain::virtualSpaceSizeChanged()
+{
+    /**/itm::debug(itm::LEV2, 0, __itm__current__function__);
+
+    CSettings::instance()->setAnnotationSpaceUnlimited(spaceSizeUnlimited->isChecked());
 }
 
 //generate blocks for sliding viewer

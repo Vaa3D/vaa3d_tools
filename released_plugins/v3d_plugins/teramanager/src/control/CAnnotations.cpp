@@ -1,12 +1,13 @@
 #include <algorithm>
 #include <vector>
 #include <list>
-#include "CAnnotations.h"
 #include "locale.h"
 #include <math.h>
 #include <set>
 #include <iostream>
 #include <algorithm>
+#include "CAnnotations.h"
+#include "CSettings.h"
 
 using namespace teramanager;
 using namespace std;
@@ -261,7 +262,9 @@ void CAnnotations::Octree::_rec_insert(const Poctant& p_octant, annotation& neur
             _rec_insert(p_octant->child8, neuron);
         }
         else
-            throw RuntimeException(strprintf("in CAnnotations::Octree::insert(...): Cannot find the proper region wherein to insert given neuron [%.0f,%.0f,%.0f] (vaa3d n = %d)", neuron.y, neuron.x, neuron.z, neuron.vaa3d_n));
+            throw RuntimeException(strprintf("in CAnnotations::Octree::insert(...): Out of bounds neuron [%.0f,%.0f,%.0f] (vaa3d n = %d).\n\n"
+                                             "To activate out of bounds neuron visualization\, please go to \"Options\"->\"3D annotation\"->\"Virtual space size\" and select the option \"Unlimited\".",
+                                             neuron.x, neuron.y, neuron.z, neuron.vaa3d_n));
     }
     else
     {
@@ -648,9 +651,20 @@ CAnnotations::Octree::Octree(uint32 _DIM_V, uint32 _DIM_H, uint32 _DIM_D)
 {
     /**/itm::debug(itm::LEV1, strprintf("dimV = %d, dimH = %d, dimD = %d", _DIM_V, _DIM_H, _DIM_D).c_str(), __itm__current__function__);
 
-    DIM_V = _DIM_V;
-    DIM_H = _DIM_H;
-    DIM_D = _DIM_D;
+    if(CSettings::instance()->getAnnotationSpaceUnlimited())
+    {
+        DIM_V = std::numeric_limits<uint32>::max();
+        DIM_H = std::numeric_limits<uint32>::max();
+        DIM_D = std::numeric_limits<uint32>::max();
+
+        /**/itm::debug(itm::LEV1, strprintf("unbounded annotation space activated", _DIM_V, _DIM_H, _DIM_D).c_str(), __itm__current__function__);
+    }
+    else
+    {
+        DIM_V = _DIM_V;
+        DIM_H = _DIM_H;
+        DIM_D = _DIM_D;
+    }
     root = new octant(0,DIM_V,0,DIM_H,0,DIM_D, this);
 }
 
@@ -1059,10 +1073,9 @@ void CAnnotations::load(const char* filepath) throw (RuntimeException)
     this->clear();
 
     //opening ANO file in read mode
-    char errMsg[STATIC_STRING_SIZE];
     FILE* f = fopen(filepath, "r");
     if(!f)
-        throw RuntimeException(strprintf(errMsg, "in CAnnotations::save(): cannot load file \"%s\"", filepath));
+        throw RuntimeException(strprintf("in CAnnotations::save(): cannot load file \"%s\"", filepath));
 
     //reading ANO file line by line
     char lineBuf[FILE_LINE_BUFFER_SIZE];
@@ -1072,7 +1085,7 @@ void CAnnotations::load(const char* filepath) throw (RuntimeException)
         char filetype[STATIC_STRING_SIZE];
         char filename[STATIC_STRING_SIZE];
         if(sscanf(lineBuf, "%s", tokenizer) != 1)
-            throw RuntimeException(strprintf(errMsg, "in CAnnotations::load(const char* filepath = \"%s\"): expected line \"%s\", found \"%s\"",
+            throw RuntimeException(strprintf("in CAnnotations::load(const char* filepath = \"%s\"): expected line \"%s\", found \"%s\"",
                                            filepath, "<filetype>=<filename>", lineBuf));
         char * pch;
         pch = strtok (tokenizer,"=");
@@ -1134,7 +1147,7 @@ void CAnnotations::load(const char* filepath) throw (RuntimeException)
             }
         }
         else
-            throw RuntimeException(strprintf(errMsg, "in CAnnotations::load(const char* filepath = \"%s\"): unable to recognize file type \"%s\"", filepath, filetype));
+            throw RuntimeException(strprintf("in CAnnotations::load(const char* filepath = \"%s\"): unable to recognize file type \"%s\"", filepath, filetype));
     }
     fclose(f);
 }

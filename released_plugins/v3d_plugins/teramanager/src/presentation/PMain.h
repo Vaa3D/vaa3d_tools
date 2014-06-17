@@ -73,14 +73,17 @@ class teramanager::PMain : public QWidget
         QAction* exitAction;            //"Exit" menu action
         QMenu* optionsMenu;             //"Options" menu
         QMenu* importOptionsMenu;       //"Import" menu level 2
-        QMenu* threeDMenu;              //"3D" menu level 2
+        QMenu* threeDMenu;              //"3D annotation" menu level 2
         QMenu* curvesMenu;              //"Curves" menu level 3
         QMenu* curveDimsMenu;           //"Curve dims" menu level 4
         QWidgetAction* curveDimsWidget; //"Curve dims" menu action widget
         QSpinBox* curveDimsSpinBox;     //"Curve dims" spinbox
         QMenu* curveAspectMenu;         //"Curve aspect" menu level 4
         QAction* curveAspectTube;       //"Tube" action
-        QAction* curveAspectSkeleton;   //"Skeleton" action
+        QAction* curveAspectSkeleton;   //"Skeleton" action        
+        QMenu* virtualSpaceSizeMenu;    //"Virtual space size" menu level 3
+        QAction* spaceSizeAuto;         //"Auto" action
+        QAction* spaceSizeUnlimited;    //"Unlimited" action
 
         QMenu* DirectionalShiftsMenu;   //"Directional shifts" menu level 2
         QMenu* xShiftMenu;              // x-shift entry
@@ -410,10 +413,15 @@ class teramanager::PMain : public QWidget
         void showLogTriggered();
 
         /**********************************************************************************
-        * Called when the corresponding Options->3D->Curve actions are triggered
+        * Called when the corresponding Options->3D annotation->Curve actions are triggered
         ***********************************************************************************/
         void curveDimsChanged(int dim);
         void curveAspectChanged();
+
+        /**********************************************************************************
+        * Called when the corresponding Options->3D annotation->Virtual space size actions are triggered
+        ***********************************************************************************/
+        void virtualSpaceSizeChanged();
 
         /**********************************************************************************
         * Linked to verbosity combobox

@@ -1352,6 +1352,13 @@ void CExplorerWindow::storeAnnotations() throw (RuntimeException)
     interval_t y_range(voiV0, voiV1);
     interval_t z_range(voiD0, voiD1);
 
+    //set volume range to infinite if unlimited space annotation option is active
+    if(PMain::getInstance()->spaceSizeUnlimited->isChecked() && this == CExplorerWindow::first)
+    {
+        x_range.start = y_range.start = z_range.start = 0;
+        x_range.end = y_range.end = z_range.end = std::numeric_limits<itm::uint32>::max();
+    }
+
     /**********************************************************************************
     * MARKERS
     ***********************************************************************************/
@@ -1508,6 +1515,13 @@ void CExplorerWindow::loadAnnotations() throw (RuntimeException)
     interval_t x_range(voiH0, voiH1);
     interval_t y_range(voiV0, voiV1);
     interval_t z_range(voiD0, voiD1);
+
+    //set volume range to infinite if unlimited space annotation option is active
+    if(PMain::getInstance()->spaceSizeUnlimited->isChecked() && this == CExplorerWindow::first)
+    {
+        x_range.start = y_range.start = z_range.start = 0;
+        x_range.end = y_range.end = z_range.end = std::numeric_limits<itm::uint32>::max();
+    }
 
     //obtaining the annotations within the current window
     /**/itm::debug(itm::LEV_MAX, strprintf("obtaining the annotations within the current window").c_str(), __itm__current__function__);

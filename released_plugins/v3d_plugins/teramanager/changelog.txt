@@ -11,6 +11,14 @@ ties names are:
 - Rem: a feature no longer available
 
 ============================================================================================
+Version 0.9.91
+June 17th, 2014
+--------------------------------------------------------------------------------------------
+- New: TeraFly can now visualize out-of-bounds neuron annotations by activating the corresp-
+       onding option from "Options"->"3D annotation"->"Virtual space size"->"Unlimited".
+--------------------------------------------------------------------------------------------
+
+
 Version 0.9.9
 June 16th, 2014
 --------------------------------------------------------------------------------------------

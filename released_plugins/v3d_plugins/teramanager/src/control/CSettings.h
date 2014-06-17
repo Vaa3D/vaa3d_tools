@@ -62,6 +62,7 @@ class teramanager::CSettings
         int traslY;             //traslation percentage with respect to the actual VOI along Y axis
         int traslZ;             //traslation percentage with respect to the actual VOI along Z axis
         int traslT;             //traslation percentage with respect to the actual VOI along T axis
+        bool annotationSpaceUnlimited;
 
         //TeraConverter members
         string volumeConverterInputPathLRU;
@@ -80,7 +81,7 @@ class teramanager::CSettings
         **********************************************************************************/
         static CSettings* instance()
         {
-            if (uniqueInstance == NULL)
+            if (uniqueInstance == 0)
                 uniqueInstance = new CSettings();
             return uniqueInstance;
         }
@@ -100,6 +101,7 @@ class teramanager::CSettings
         int getTraslY(){return traslY;}
         int getTraslZ(){return traslZ;}
         int getTraslT(){return traslT;}
+        bool getAnnotationSpaceUnlimited(){return annotationSpaceUnlimited;}
         void setVolumePathLRU(string _volumePathLRU){volumePathLRU = _volumePathLRU;}
         void addVolumePathToHistory(string _volumePath){
             if(volumePathHistory.size() > 10)
@@ -122,6 +124,7 @@ class teramanager::CSettings
         void setTraslY(int _traslY){traslY = _traslY;}
         void setTraslZ(int _traslZ){traslZ = _traslZ;}
         void setTraslT(int _traslT){traslT = _traslT;}
+        void setAnnotationSpaceUnlimited(bool _unl){annotationSpaceUnlimited = _unl;}
 
         //GET and SET methods for TeraConverter
         string getVCInputPath(){return volumeConverterInputPathLRU;}
