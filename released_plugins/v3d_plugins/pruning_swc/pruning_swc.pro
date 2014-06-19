@@ -15,4 +15,4 @@ SOURCES	+= my_surf_objs.cpp
 
 
 TARGET	= $$qtLibraryTarget(pruning_swc)
-DESTDIR	= $$VAA3DPATH/../bin/plugins/neuron_utilities/pruning_swc/
+DESTDIR	= $$VAA3DPATH/../bin/plugins/neuron_utilities/pruning_swc_simple/
