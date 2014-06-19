@@ -11,6 +11,14 @@ ties names are:
 - Rem: a feature no longer available
 
 ============================================================================================
+Version 0.9.92
+June 19th, 2014
+--------------------------------------------------------------------------------------------
+- New: added feature "Delete markers in a ROI"  in the TeraFly's annotation toolbar. All the
+       markers that fall within the free-hand drawn ROI  curve are deleted.
+--------------------------------------------------------------------------------------------
+
+
 Version 0.9.91
 June 17th, 2014
 --------------------------------------------------------------------------------------------
@@ -63,8 +71,8 @@ April 23rd, 2014
           feature.
        - "1-right click to delete a marker" that delete  an already existing (and displayed)
 	      marker by right-clicking on it.
-	   - "1-right stroke to delete a group of markers" (experimental)
-	   - "Show / hide markers around ROI" (not yet implemented)
+	  - "1-right stroke to delete a group of markers" (experimental)
+	  - "Show / hide markers around ROI" (not yet implemented)
 - Fix: fixed "Vaa3D-invoked actions at the highest resolution have been temporarily removed"
        warning as this does not cause crashes anymore thanks to the recent bug fixes.
 --------------------------------------------------------------------------------------------

@@ -71,6 +71,8 @@ class teramanager::CExplorerWindow : public QWidget
         int T1_sbox_max, T1_sbox_val;   //to save the state of subvolume spinboxes when the current window is hidden
         int ID;
         bool waitingFor5D;              //"waiting for 5D data" state flag
+        bool scribbling;                //"scribbling on the 3D renderer with right-button mouse" state flag
+        QVector<QPoint> scribbling_points;
 
         //CLASS members
         static CExplorerWindow *first;  //pointer to the first window of the multiresolution explorer windows chain
@@ -233,10 +235,7 @@ class teramanager::CExplorerWindow : public QWidget
         void storeAnnotations() throw (itm::RuntimeException);
         void loadAnnotations() throw (itm::RuntimeException);
         void clearAnnotations() throw (itm::RuntimeException);
-        void deleteAnnotationsROI(
-                V3DLONG xs, V3DLONG ys, V3DLONG zs,  //starting coordinates (in pixel space)
-                V3DLONG xe, V3DLONG ye, V3DLONG ze)  //ending coordinates (in pixel space)
-        throw (itm::RuntimeException);
+        void deleteAnnotationsROI(QVector<QPoint> ROI_contour) throw (itm::RuntimeException);
         void deleteMarkerAt(int x, int y) throw (itm::RuntimeException);
 
         /**********************************************************************************

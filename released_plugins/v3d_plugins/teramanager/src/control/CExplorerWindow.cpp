@@ -310,6 +310,7 @@ CExplorerWindow::CExplorerWindow(V3DPluginCallback2 *_V3D_env, int _resIndex, it
     this->imgData = _imgData;
     this->isReady = false;
     this->waitingFor5D = false;
+    this->scribbling = false;
     char ctitle[1024];
     sprintf(ctitle, "ID(%d), Res(%d x %d x %d),Volume X=[%d,%d], Y=[%d,%d], Z=[%d,%d], T=[%d,%d], %d channels", ID, CImport::instance()->getVolume(volResIndex)->getDIM_H(),
             CImport::instance()->getVolume(volResIndex)->getDIM_V(), CImport::instance()->getVolume(volResIndex)->getDIM_D(),
@@ -474,8 +475,8 @@ bool CExplorerWindow::eventFilter(QObject *object, QEvent *event)
         }
         #endif
 
-        /****************** INTERCEPTING SINGLE CLICK EVENTS ***********************
-        Single click events are intercepted for handling annotations tools
+        /****************** INTERCEPTING MOUSE CLICK EVENTS ***********************
+        Mouse click events are intercepted for handling annotations tools
         ***************************************************************************/
         if (object == view3DWidget && event->type() == QEvent::MouseButtonPress)
         {
@@ -485,12 +486,43 @@ bool CExplorerWindow::eventFilter(QObject *object, QEvent *event)
                 deleteMarkerAt(mouseEvt->x(), mouseEvt->y());
                 return true;
             }
-//            else if(mouseEvt->button() == Qt::LeftButton && PAnoToolBar::instance()->buttonMarkerCreate->isChecked())
-//            {
-//                view3DWidget->getRenderer()->hitPen(mouseEvt->x(), mouseEvt->y());
-//                return true;
-//            }
+            else if(mouseEvt->button() == Qt::RightButton && PAnoToolBar::instance()->buttonMarkerRoiDelete->isChecked())
+            {
+                scribbling = true;
+                scribbling_points.clear();
+            }
 
+            return false;
+        }
+
+        /******************* INTERCEPTING MOUSE MOVE EVENTS ***********************
+        Mouse move events are intercepted for handling annotation tools
+        ***************************************************************************/
+        if (scribbling &&                                                               // scribbling is active
+            object == view3DWidget &&                                                   // event emitted by 3D renderer
+            event->type() == QEvent::MouseMove &&                                       // MouseMove event
+            PAnoToolBar::instance()->buttonMarkerRoiDelete->isChecked())                // annotation tool "Marker ROI delete" enabled
+        {
+
+            QMouseEvent* mouseEvt = (QMouseEvent*)event;
+            scribbling_points.push_back(mouseEvt->pos());
+
+            return false;
+        }
+
+
+        /****************** INTERCEPTING MOUSE RELEASE EVENTS **********************
+        Mouse release events are intercepted for...
+        ***************************************************************************/
+        if (object == view3DWidget && event->type() == QEvent::MouseButtonRelease)
+        {
+            // ...handling annotation tools...
+            if(scribbling &&
+               PAnoToolBar::instance()->buttonMarkerRoiDelete->isChecked())
+                scribbling = false;
+            // ...and emitting a Vaa3D rotation changed event
+            else
+                this->Vaa3D_rotationchanged(0);
             return false;
         }
 
@@ -512,14 +544,6 @@ bool CExplorerWindow::eventFilter(QObject *object, QEvent *event)
             return true;
         }
 
-        /****************** INTERCEPTING MOUSE RELEASE EVENTS **********************
-        Mouse release events are intercepted syncronize change of rotation
-        ***************************************************************************/
-        if (object == view3DWidget && event->type() == QEvent::MouseButtonRelease)
-        {
-            this->Vaa3D_rotationchanged(0);
-            return false;
-        }
 
         /****************** INTERCEPTING TIME SLIDER EVENTS ************************
         Time slider events are intercepted to navigate through the entire time range
@@ -532,7 +556,7 @@ bool CExplorerWindow::eventFilter(QObject *object, QEvent *event)
             return false;
         }
 
-        /********************* INTERCEPTING CLOSE EVENTS **************************
+        /***************** INTERCEPTING WINDOW CLOSE EVENTS ***********************
         Close events are intercepted to switch to  the lower resolution,  if avail-
         able. Otherwise, the plugin is closed.
         ***************************************************************************/
@@ -546,7 +570,7 @@ bool CExplorerWindow::eventFilter(QObject *object, QEvent *event)
             }
         }
 
-        /**************** INTERCEPTING MOVING/RESIZING EVENTS *********************
+        /************ INTERCEPTING WINDOW MOVING/RESIZING EVENTS ******************
         Window moving and resizing events  are intercepted  to let PMain's position
         be syncronized with the explorer.
         ***************************************************************************/
@@ -557,7 +581,7 @@ bool CExplorerWindow::eventFilter(QObject *object, QEvent *event)
            return true;
         }
 
-        /***************** INTERCEPTING STATE CHANGES EVENTS **********************
+        /************* INTERCEPTING WINDOW STATE CHANGES EVENTS *******************
         Window state changes events are intercepted to let PMain's position be syn-
         cronized with the explorer.
         ***************************************************************************/
@@ -1420,37 +1444,24 @@ void CExplorerWindow::clearAnnotations() throw (RuntimeException)
     view3DWidget->getRenderer()->endSelectMode();
 }
 
-void CExplorerWindow::deleteAnnotationsROI(
-        V3DLONG xs, V3DLONG ys, V3DLONG zs,  //starting coordinates (in pixel space)
-        V3DLONG xe, V3DLONG ye, V3DLONG ze)  //ending coordinates (in pixel space)
-throw (RuntimeException)
+void CExplorerWindow::deleteAnnotationsROI(QVector<QPoint> ROI_contour) throw (RuntimeException)
 {
-    /**/itm::debug(itm::LEV1, strprintf("title = %s, ROI = X[%d, %d], Y[%d, %d], Z[%d, %d]", titleShort.c_str(), xs, xe, ys, ye, zs, ze).c_str(), __itm__current__function__);
+    /**/itm::debug(itm::LEV1, strprintf("title = %s, ROI.size() = %d", titleShort.c_str(), ROI_contour.size()).c_str(), __itm__current__function__);
 
-    // get vaa3d markers
-    QList<LocationSimple> vaa3dMarkers = V3D_env->getLandmark(window);
+    // compute polygon from the given contour
+    QPolygon ROI_poly(ROI_contour);
 
-    // delete markers within roi
-    vector<int> vaa3dMarkers_tbd;
-    for(int i=0; i<vaa3dMarkers.size(); i++)
-    {
-        float x = vaa3dMarkers[i].x;
-        float y = vaa3dMarkers[i].y;
-        float z = vaa3dMarkers[i].z;
-        printf("(%.0f, %.0f, %.0f) ", x, y, z);
+    QCursor cursor = view3DWidget->cursor();
+    view3DWidget->setCursor(Qt::WaitCursor);
 
-        if(x >= (float)xs && x <= (float)xe &&
-           y >= (float)ys && y <= (float)ye &&
-           z >= (float)zs && z <= (float)ze)
-            vaa3dMarkers_tbd.push_back(i);
-    }
-    printf("\n");
-    for(int i=0; i<vaa3dMarkers_tbd.size(); i++)
-        vaa3dMarkers.removeAt(vaa3dMarkers_tbd[i]);
+    // delete marker (if any) at each location inside the polygon
+    QRect bbox = ROI_poly.boundingRect();
+    for(int i=bbox.top(); i<bbox.bottom(); i=i+10)
+        for(int j=bbox.left(); j<bbox.right(); j=j+10)
+            if(ROI_poly.containsPoint(QPoint(j,i), Qt::OddEvenFill))
+                deleteMarkerAt(j,i);
 
-    // set new markers
-    V3D_env->setLandmark(window, vaa3dMarkers);
-    V3D_env->pushObjectIn3DWindow(window);
+    view3DWidget->setCursor(cursor);
 }
 
 void CExplorerWindow::deleteMarkerAt(int x, int y) throw (itm::RuntimeException)
@@ -1855,7 +1866,7 @@ void CExplorerWindow::invokedFromVaa3D(v3d_imaging_paras* params /* = 0 */)
     // Vaa3D's ROI mode triggers deleteAnnotationsROI when TeraFly's "buttonMarkerRoiDelete" mode is active
     if(roi->ops_type == 1 && PAnoToolBar::instance()->buttonMarkerRoiDelete->isChecked())
     {
-        deleteAnnotationsROI(roi->xs, roi->ys, roi->zs, roi->xe, roi->ye, roi->ze);
+        deleteAnnotationsROI(scribbling_points);
 
         // need to refresh annotation tools as this Vaa3D's action resets the Vaa3D annotation mode
         PAnoToolBar::instance()->refreshTools();
