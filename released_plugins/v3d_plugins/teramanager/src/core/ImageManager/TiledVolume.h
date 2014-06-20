@@ -85,10 +85,12 @@ class TiledVolume : public iim::VirtualVolume
         iim::axis   getAXS_1(){return reference_system.first;}
         iim::axis   getAXS_2(){return reference_system.second;}
         iim::axis   getAXS_3(){return reference_system.third;}
+		iim::ref_sys getREF_SYS(){return reference_system;}
 
         // returns a unique ID that identifies the volume format
         std::string getPrintableFormat(){return iim::TILED_FORMAT;}
         
+		std::string getFFMT(){return ffmt;}
         iim::VirtualFmtMngr *getFMT_MNGR(){return fmtMngr;}
 
 		//PRINT method

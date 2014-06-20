@@ -62,6 +62,7 @@ namespace teramanager
     class QGLRefSys;            //Qt-customized OpenGL widget to render the XYZ reference system applied to a 3D cube
     class QUndoMarkerCreate;    //QUndoCommand for marker creation
     class QUndoMarkerDelete;    //QUndoCommand for marker deletion
+    class QUndoMarkerDeleteROI; //QUndoCommand for marker in ROI deletion
     struct annotation;          //base class for annotations
 
     class myRenderer_gl1;       //Vaa3D-customized class

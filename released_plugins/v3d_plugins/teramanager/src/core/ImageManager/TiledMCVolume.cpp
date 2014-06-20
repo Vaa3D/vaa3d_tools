@@ -102,7 +102,6 @@ TiledMCVolume::TiledMCVolume(const char* _root_dir, ref_sys _reference_system, f
     if(iim::isFile(mdata_filepath) && !overwrite_mdata)
 	{
 		load(mdata_filepath);
-		initChannels();
 	}
 	else
 	{
@@ -117,10 +116,10 @@ TiledMCVolume::TiledMCVolume(const char* _root_dir, ref_sys _reference_system, f
         VXL_2 = _VXL_2;
         VXL_3 = _VXL_3;
         init();
-		//initChannels();
         if(save_mdata)
             save(mdata_filepath);
 	}
+	initChannels();
 }
 
 TiledMCVolume::~TiledMCVolume(void)

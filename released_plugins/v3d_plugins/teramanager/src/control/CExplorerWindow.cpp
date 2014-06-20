@@ -1451,13 +1451,14 @@ void CExplorerWindow::clearAnnotations() throw (RuntimeException)
     view3DWidget->getRenderer()->endSelectMode();
 }
 
-void CExplorerWindow::deleteAnnotationsROI(QVector<QPoint> ROI_contour) throw (RuntimeException)
+void CExplorerWindow::deleteMarkerROI(QVector<QPoint> ROI_contour) throw (RuntimeException)
 {
     /**/itm::debug(itm::LEV1, strprintf("title = %s, ROI.size() = %d", titleShort.c_str(), ROI_contour.size()).c_str(), __itm__current__function__);
 
     // compute polygon from the given contour
     QPolygon ROI_poly(ROI_contour);
 
+    // save current cursor and set wait cursor
     QCursor cursor = view3DWidget->cursor();
     view3DWidget->setCursor(Qt::WaitCursor);
 
@@ -1465,9 +1466,10 @@ void CExplorerWindow::deleteAnnotationsROI(QVector<QPoint> ROI_contour) throw (R
     QRect bbox = ROI_poly.boundingRect();
     for(int i=bbox.top(); i<bbox.bottom(); i=i+10)
         for(int j=bbox.left(); j<bbox.right(); j=j+10)
-            if(ROI_poly.containsPoint(QPoint(j,i), Qt::OddEvenFill))
+            if(ROI_poly.containsPoint(QPoint(j,i), Qt::OddEvenFill))    // Ray-crossing algorithm
                 deleteMarkerAt(j,i);
 
+    // reset saved cursor
     view3DWidget->setCursor(cursor);
 }
 
@@ -1508,7 +1510,14 @@ void CExplorerWindow::deleteMarkerAt(int x, int y) throw (itm::RuntimeException)
 
     // remove selected markers
     for(int i=0; i<vaa3dMarkers_tbd.size(); i++)
+    {
+        undoStack.beginMacro("delete marker");
+        undoStack.push(new QUndoMarkerDelete(this, vaa3dMarkers[vaa3dMarkers_tbd[i]]));
+        undoStack.endMacro();
+        PAnoToolBar::instance()->buttonUndo->setEnabled(true);
+
         vaa3dMarkers.removeAt(vaa3dMarkers_tbd[i]);
+    }
 
     // set new markers
     V3D_env->setLandmark(window, vaa3dMarkers);
@@ -1885,7 +1894,7 @@ void CExplorerWindow::invokedFromVaa3D(v3d_imaging_paras* params /* = 0 */)
     // Vaa3D's ROI mode triggers deleteAnnotationsROI when TeraFly's "buttonMarkerRoiDelete" mode is active
     if(roi->ops_type == 1 && PAnoToolBar::instance()->buttonMarkerRoiDelete->isChecked())
     {
-        deleteAnnotationsROI(scribbling_points);
+        deleteMarkerROI(scribbling_points);
 
         // need to refresh annotation tools as this Vaa3D's action resets the Vaa3D annotation mode
         PAnoToolBar::instance()->refreshTools();

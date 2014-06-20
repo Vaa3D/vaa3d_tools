@@ -112,7 +112,14 @@ char *initTiff3DFile ( char *filename, unsigned int sz0, unsigned int sz1, unsig
 	uint32 XSIZE  = sz0;
 	uint32 YSIZE  = sz1;
 	uint16 Npages = sz2;
-	uint16 spp    = sz3; 
+	uint16 spp    = sz3;
+
+	if ( sz3 == 1 )
+		spp = sz3; 
+	else if ( sz3 < 4 )
+		spp = 3;
+	else
+		return ((char *) "More than 3 channels in Tiff files.");
 
 	char *completeFilename = new char[strlen(filename)+4+1];
 	strcpy(completeFilename,filename);

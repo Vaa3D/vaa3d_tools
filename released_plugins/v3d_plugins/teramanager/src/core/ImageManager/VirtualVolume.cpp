@@ -365,11 +365,11 @@ void VirtualVolume::saveImage_to_Vaa3DRaw(int slice, std::string img_path, real3
 
 	if ( strcmp(img_format,"Vaa3DRaw")==0 ) {
 		VirtualVolume::saveImage_from_UINT8_to_Vaa3DRaw (slice,img_path, &row_data_8bit, 1, 0, 
-								raw_img_height, raw_img_width, 0, -1, 0, -1, img_format, img_depth); // the ROI coincides with the whole buffer (row_data8bit) 
+								img_height, img_width, 0, -1, 0, -1, img_format, img_depth); // the ROI coincides with the whole buffer (row_data8bit) 
 	}
 	else if ( strcmp(img_format,"Tiff3D")==0 ) {
 		VirtualVolume::saveImage_from_UINT8_to_Tiff3D (slice,img_path, &row_data_8bit, 1, 0, 
-								raw_img_height, raw_img_width, 0, -1, 0, -1, img_format, img_depth); // the ROI coincides with the whole buffer (row_data8bit) 
+								img_height, img_width, 0, -1, 0, -1, img_format, img_depth); // the ROI coincides with the whole buffer (row_data8bit) 
 	}
 
 	delete row_data_8bit;
@@ -493,6 +493,7 @@ void VirtualVolume::saveImage_from_UINT8_to_Tiff3D (int slice, std::string img_p
     sint64 img_height, img_width;
 	sint64 img_width_b; // image width in bytes
 	int img_bytes_per_chan;
+	int temp_n_chans = n_chans; // save number of channels in the source volume
 
 	//add offset to raw_ch
 	//for each channel adds to raw_ch the offset of current slice from the beginning of buffer 
@@ -519,20 +520,43 @@ void VirtualVolume::saveImage_from_UINT8_to_Tiff3D (int slice, std::string img_p
 		sprintf(buffer,"in saveImage_from_UINT8(..., img_depth=%d, ...): unsupported bit depth\n",img_depth);
         throw IOException(buffer);
 	}
-	img_bytes_per_chan = (img_depth == 8) ? 1 : 2;
-	// all width parameters have to be multiplied by the number of bytes per channel
-	img_width_b    = img_width * img_bytes_per_chan; 
-	raw_img_width *= img_bytes_per_chan;
-	start_width   *= img_bytes_per_chan;
 
-	uint8 *imageData = new uint8[img_height * img_width_b * n_chans];
-	for(sint64 i=0; i<img_height; i++)
-	{
-		uint8* row_data_8bit = imageData + i*img_width_b*n_chans;
-		for(sint64 j=0; j<img_width_b; j++) {
-			for ( int c=0; c<n_chans; c++ ) {
-				row_data_8bit[j*n_chans + c] = raw_ch_temp[c][(i+start_height)*raw_img_width + (j+start_width)];
-            }
+	img_bytes_per_chan = (img_depth == 8) ? 1 : 2;
+	img_width_b    = img_width * img_bytes_per_chan; 
+
+	if ( n_chans == 2 ) // for Tiff files channel must be 1 or 3
+		temp_n_chans++;
+
+	uint8 *imageData = new uint8[img_height * img_width_b * temp_n_chans];
+
+	if ( img_bytes_per_chan == 1 ) {
+		for(sint64 i=0; i<img_height; i++)
+		{
+			uint8* row_data_8bit = imageData + i*img_width_b*temp_n_chans;
+			for(sint64 j=0; j<img_width_b; j++) {
+				for ( int c=0; c<n_chans; c++ ) {
+					row_data_8bit[j*temp_n_chans + c] = raw_ch_temp[c][(i+start_height)*raw_img_width + (j+start_width)];
+				}
+				if ( n_chans < temp_n_chans )
+					row_data_8bit[j*temp_n_chans + n_chans] = (uint8) 0;
+			}
+		}
+	}
+	else {
+		uint16  *imageData16   = (uint16 *) imageData;
+		uint16 **raw_ch_temp16 = (uint16 **) raw_ch_temp;
+
+		// use img_width instead of img_width_b
+		for(sint64 i=0; i<img_height; i++)
+		{
+			uint16* row_data_16bit = imageData16 + i*img_width*temp_n_chans;
+			for(sint64 j=0; j<img_width; j++) { // 
+				for ( int c=0; c<n_chans; c++ ) {
+					row_data_16bit[j*temp_n_chans + c] = raw_ch_temp16[c][(i+start_height)*raw_img_width + (j+start_width)];
+				}
+				if ( n_chans < temp_n_chans )
+					row_data_16bit[j*temp_n_chans + n_chans] = (uint16) 0;
+			}
 		}
 	}
 

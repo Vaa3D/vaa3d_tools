@@ -354,8 +354,6 @@ void Block::init()
 	}
 	fmtMngr->closeFile(dummy);
 
-	delete fmtMngr;
-
 	HEIGHT       = (uint32)sz[1];
 	WIDTH        = (uint32)sz[0];
 	N_CHANS      = (uint32)sz[3];
@@ -382,6 +380,8 @@ void Block::init()
 		BLOCK_ABS_D[ib] = DEPTH;
 		DEPTH += BLOCK_SIZE[ib];
 	}
+
+	delete fmtMngr;
 
 	delete[] sz;
 }

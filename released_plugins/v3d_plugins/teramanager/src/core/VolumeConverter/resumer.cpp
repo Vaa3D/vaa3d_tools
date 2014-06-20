@@ -72,10 +72,11 @@ bool initResumer ( const char *out_fmt, const char *output_path, int resolutions
 			int  _method;
 			char _saved_img_format[STATIC_STRINGS_SIZE];
 			int  _saved_img_depth;
+			int dummy;
 
 			rewind(fhandle);
-			fread(&str_len,sizeof(size_t),1,fhandle);
-			fread(_out_fmt,sizeof(char),str_len,fhandle);
+			dummy = fread(&str_len,sizeof(size_t),1,fhandle);
+			dummy = fread(_out_fmt,sizeof(char),str_len,fhandle);
 			if ( strcmp(out_fmt,_out_fmt) ) {
 				fclose(fhandle);
 				sprintf(err_msg, "in initResumer: saved format of output image (%s) differ from requested format (%s)", 
@@ -83,17 +84,17 @@ bool initResumer ( const char *out_fmt, const char *output_path, int resolutions
                 throw IOException(err_msg);
 			}
 
-			fread(&str_len,sizeof(size_t),1,fhandle);
-			fread(_output_path,sizeof(char),str_len,fhandle);
-			fread(&_resolutions_size,sizeof(int),1,fhandle);
-			fread(&_resolutions,sizeof(bool),_resolutions_size,fhandle);
-			fread(&_block_height,sizeof(int),1,fhandle);
-			fread(&_block_width,sizeof(int),1,fhandle);
-			fread(&_block_depth,sizeof(int),1,fhandle);
-			fread(&_method,sizeof(int),1,fhandle);
-			fread(&str_len,sizeof(size_t),1,fhandle);
-			fread(_saved_img_format,sizeof(char),str_len,fhandle);
-			fread(&_saved_img_depth,sizeof(int),1,fhandle);
+			dummy = fread(&str_len,sizeof(size_t),1,fhandle);
+			dummy = fread(_output_path,sizeof(char),str_len,fhandle);
+			dummy = fread(&_resolutions_size,sizeof(int),1,fhandle);
+			dummy = fread(&_resolutions,sizeof(bool),_resolutions_size,fhandle);
+			dummy = fread(&_block_height,sizeof(int),1,fhandle);
+			dummy = fread(&_block_width,sizeof(int),1,fhandle);
+			dummy = fread(&_block_depth,sizeof(int),1,fhandle);
+			dummy = fread(&_method,sizeof(int),1,fhandle);
+			dummy = fread(&str_len,sizeof(size_t),1,fhandle);
+			dummy = fread(_saved_img_format,sizeof(char),str_len,fhandle);
+			dummy = fread(&_saved_img_depth,sizeof(int),1,fhandle);
 			
 			if ( strcmp(output_path,_output_path) ||
 				 block_height!=_block_height || block_width!=_block_width || block_depth!=_block_depth ||
@@ -157,12 +158,12 @@ bool initResumer ( const char *out_fmt, const char *output_path, int resolutions
 void readResumerState ( FILE *&fhandle, const char *output_path, int &resolutions_size, int *stack_block, int *slice_start, int *slice_end, 
                  sint64 &z, sint64 &z_parts ) throw (IOException)
 {
-	fread(&resolutions_size,sizeof(int),1,fhandle);
-	fread(stack_block,sizeof(int),resolutions_size,fhandle);
-	fread(slice_start,sizeof(int),resolutions_size,fhandle);
-	fread(slice_end,sizeof(int),resolutions_size,fhandle);
-	fread(&z,sizeof(sint64),1,fhandle);
-	fread(&z_parts,sizeof(sint64),1,fhandle);
+	int dummy = fread(&resolutions_size,sizeof(int),1,fhandle);
+	dummy = fread(stack_block,sizeof(int),resolutions_size,fhandle);
+	dummy = fread(slice_start,sizeof(int),resolutions_size,fhandle);
+	dummy = fread(slice_end,sizeof(int),resolutions_size,fhandle);
+	dummy = fread(&z,sizeof(sint64),1,fhandle);
+	dummy = fread(&z_parts,sizeof(sint64),1,fhandle);
 
 	fclose(fhandle);
 

@@ -35,7 +35,9 @@ namespace IconImageManager
     int DEBUG = LEV3;						//debug level
     bool DEBUG_TO_FILE = false;             //whether debug messages should be printed on the screen or to a file (default: screen)
     std::string DEBUG_FILE_PATH = "/home/alex/Scrivania/iim_debug.log";   //filepath where to save debug information
-    bool ADD_NOISE_TO_TIME_SERIES = false;                       // whether to mark individual frames of a time series with increasing gaussian noise
+    bool ADD_NOISE_TO_TIME_SERIES = false;	// whether to mark individual frames of a time series with increasing gaussian noise
+    int CHANNEL_SELECTION = ALL;			// channel to be loaded (default is ALL)
     /*-------------------------------------------------------------------------------------------------------------------------*/
 }
+
 

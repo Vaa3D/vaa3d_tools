@@ -233,7 +233,7 @@ void PAnoToolBar::buttonMarkerRoiDeleteChecked(bool checked)
 
 void PAnoToolBar::buttonMarkerRoiViewChecked(bool checked)
 {
-     /**/itm::debug(itm::LEV3, strprintf("checked = %s", checked ? "true" : "false").c_str(), __itm__current__function__);
+    /**/itm::debug(itm::LEV3, strprintf("checked = %s", checked ? "true" : "false").c_str(), __itm__current__function__);
 
     CExplorerWindow* expl = CExplorerWindow::getCurrent();
 
@@ -263,6 +263,8 @@ void PAnoToolBar::buttonMarkerRoiViewChecked(bool checked)
 
 void PAnoToolBar::buttonUndoClicked()
 {
+    /**/itm::debug(itm::LEV3, 0, __itm__current__function__);
+
     CExplorerWindow* expl = CExplorerWindow::getCurrent();
     if(expl && expl->undoStack.canUndo())
     {
@@ -275,11 +277,13 @@ void PAnoToolBar::buttonUndoClicked()
 
 void PAnoToolBar::buttonRedoClicked()
 {
+    /**/itm::debug(itm::LEV3, 0, __itm__current__function__);
+
     CExplorerWindow* expl = CExplorerWindow::getCurrent();
     if(expl && expl->undoStack.canRedo())
     {
         expl->undoStack.redo();
-        if(expl->undoStack.canRedo())
+        if(!expl->undoStack.canRedo())
             buttonRedo->setEnabled(false);
         buttonUndo->setEnabled(true);
     }

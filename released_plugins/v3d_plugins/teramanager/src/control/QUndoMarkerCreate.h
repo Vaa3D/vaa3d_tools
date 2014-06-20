@@ -10,7 +10,7 @@ class teramanager::QUndoMarkerCreate : public QUndoCommand
 
         itm::CExplorerWindow* source;       //where the command has been applied
         LocationSimple marker;              //the marker being created
-        bool redoFirstTime;                 //
+        bool redoFirstTime;                 //to disable redo's first call
 
     public:
 

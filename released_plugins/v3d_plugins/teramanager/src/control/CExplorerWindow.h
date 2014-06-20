@@ -236,7 +236,7 @@ class teramanager::CExplorerWindow : public QWidget
         void storeAnnotations() throw (itm::RuntimeException);
         void loadAnnotations() throw (itm::RuntimeException);
         void clearAnnotations() throw (itm::RuntimeException);
-        void deleteAnnotationsROI(QVector<QPoint> ROI_contour) throw (itm::RuntimeException);
+        void deleteMarkerROI(QVector<QPoint> ROI_contour) throw (itm::RuntimeException);
         void deleteMarkerAt(int x, int y) throw (itm::RuntimeException);
         void createMarkerAt(int x, int y) throw (itm::RuntimeException);
 
@@ -327,6 +327,7 @@ class teramanager::CExplorerWindow : public QWidget
         friend class CVolume;
         friend class QUndoMarkerCreate;
         friend class QUndoMarkerDelete;
+        friend class QUndoMarkerDeleteROI;
 
 
     public slots:

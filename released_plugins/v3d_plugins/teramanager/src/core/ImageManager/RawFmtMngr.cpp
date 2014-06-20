@@ -266,7 +266,7 @@ char *loadMetadata ( char * filename, V3DLONG * &sz, int &datatype, int &b_swap,
 	}
 
 	char endianCodeData;
-	fread(&endianCodeData, 1, 1, fid);
+	size_t dummy = fread(&endianCodeData, 1, 1, fid);
 	if (endianCodeData!='B' && endianCodeData!='L')
 	{
 		if (keyread) {delete []keyread; keyread=0;}
@@ -284,7 +284,7 @@ char *loadMetadata ( char * filename, V3DLONG * &sz, int &datatype, int &b_swap,
 	b_swap = (endianCodeMachine==endianCodeData)?0:1;
 
 	short int dcode = 0;
-	fread(&dcode, 2, 1, fid); /* because I have already checked the file size to be bigger than the header, no need to check the number of actual bytes read. */
+	dummy = fread(&dcode, 2, 1, fid); /* because I have already checked the file size to be bigger than the header, no need to check the number of actual bytes read. */
 	if (b_swap)
 		swap2bytes((void *)&dcode);
 
@@ -370,29 +370,37 @@ char *loadRaw2Metadata ( char * filename, V3DLONG * &sz, int &datatype, int &b_s
 
 	// for 4 byte integers: datatype has 2 bytes, and sz has 4*4 bytes and endian flag has 1 byte
 	// WARNINIG: this should still be valid even for 2 byte integres assuming that there are at least 8 data bytes
-	if (fileSize<lenkey+2+4*4+1)  
+	if (fileSize<lenkey+2+4*4+1) {
+		fclose(fid);
 		return ((char *)"The size of your input file is too small and is not correct, -- it is too small to contain the legal header");
+	}
 
 	char * keyread = new char [lenkey+1];
-	if (!keyread)
+	if (!keyread) {
+		fclose(fid);
 		return ((char *)"Fail to allocate memory");
+	}
 
 	V3DLONG nread = fread(keyread, 1, lenkey, fid);
-	if (nread!=lenkey)
+	if (nread!=lenkey) {
+		fclose(fid);
 		return ((char *)"File unrecognized or corrupted file");
+	}
 
 	keyread[lenkey] = '\0';
 
 	V3DLONG i;
 	if (strcmp(formatkey, keyread)) { /* is non-zero then the two strings are different */
+		fclose(fid);
 		if (keyread) {delete []keyread; keyread=0;}
 		return ((char *)"Unrecognized file format");
 	}
 
 	char endianCodeData;
-	fread(&endianCodeData, 1, 1, fid);
+	int dummy = fread(&endianCodeData, 1, 1, fid);
 	if (endianCodeData!='B' && endianCodeData!='L')
 	{
+		fclose(fid);
 		if (keyread) {delete []keyread; keyread=0;}
 		return ((char *)"This program only supports big- or little- endian but not other format. Check your data endian");
 	}
@@ -401,6 +409,7 @@ char *loadRaw2Metadata ( char * filename, V3DLONG * &sz, int &datatype, int &b_s
 	endianCodeMachine = checkMachineEndian();
 	if (endianCodeMachine!='B' && endianCodeMachine!='L')
 	{
+		fclose(fid);
 		if (keyread) {delete []keyread; keyread=0;}
 		return ((char *)"This program only supports big- or little- endian but not other format. Check your data endian");
 	}
@@ -408,7 +417,7 @@ char *loadRaw2Metadata ( char * filename, V3DLONG * &sz, int &datatype, int &b_s
 	b_swap = (endianCodeMachine==endianCodeData)?0:1;
 
 	short int dcode = 0;
-	fread(&dcode, 2, 1, fid); /* because I have already checked the file size to be bigger than the header, no need to check the number of actual bytes read. */
+	dummy = fread(&dcode, 2, 1, fid); /* because I have already checked the file size to be bigger than the header, no need to check the number of actual bytes read. */
 	if (b_swap)
 		swap2bytes((void *)&dcode);
 
@@ -427,6 +436,7 @@ char *loadRaw2Metadata ( char * filename, V3DLONG * &sz, int &datatype, int &b_s
 			break;
 
 		default:
+			fclose(fid);
 			if (keyread) {delete []keyread; keyread=0;}
 			return ((char *)"Unrecognized data type code. The file type is incorrect or this code is not supported in this version");
 	}
@@ -444,6 +454,7 @@ char *loadRaw2Metadata ( char * filename, V3DLONG * &sz, int &datatype, int &b_s
 	// try 2 byte integers first
 	int tmpn=(int)fread(sz_2bytes, 2, 4, fid); // because I have already checked the file size to be bigger than the header, no need to check the number of actual bytes read.
 	if (tmpn!=4) {
+		fclose(fid);
 		if (keyread) {delete []keyread; keyread=0;}
 		return ((char *)"This program only reads [4] units");
 	}
@@ -469,6 +480,7 @@ char *loadRaw2Metadata ( char * filename, V3DLONG * &sz, int &datatype, int &b_s
 		// reads four more 2 byte elements 
 		tmpn=(int)fread(mysz+2, 2, 4, fid); // because I have already checked the file size to be bigger than the header, no need to check the number of actual bytes read. 
 		if (tmpn!=4) {
+			fclose(fid);
 			if (keyread) {delete []keyread; keyread=0;}
 			return ((char *)"This program only reads [4] units");
 		}
@@ -481,6 +493,7 @@ char *loadRaw2Metadata ( char * filename, V3DLONG * &sz, int &datatype, int &b_s
 			totalUnit *= mysz[i];
 		}
 		if ((totalUnit*unitSize+4*4+2+1+lenkey) != fileSize) {
+			fclose(fid);
 			if (keyread) {delete []keyread; keyread=0;}
 			return ((char *)"The input file has a size different from what specified in the header");
 		}
@@ -490,6 +503,7 @@ char *loadRaw2Metadata ( char * filename, V3DLONG * &sz, int &datatype, int &b_s
 	sz = new V3DLONG [4]; // reallocate the memory if the input parameter is non-null. Note that this requests the input is also an NULL point, the same to img. 
 	if (!sz)
 	{
+		fclose(fid);
 		if (keyread) {delete []keyread; keyread=0;}
 		return ((char *)"Fail to allocate memory");
 	}
@@ -556,8 +570,8 @@ char *loadRaw2SubStack ( void *fhandle, unsigned char *img, V3DLONG *sz,
 			{
 				rewind(fid);
 				fseek(fid, (long)(head+(c*pgsz1 + k*pgsz2 + j*pgsz3 + startx)*unitSize), SEEK_SET);
-				ftell(fid);	
-				fread(img+(c*cn+(k-startz)*kn + (j-starty)*tmpw)*unitSize,unitSize,tmpw,fid);
+				int dummy = ftell(fid);	
+				dummy = fread(img+(c*cn+(k-startz)*kn + (j-starty)*tmpw)*unitSize,unitSize,tmpw,fid);
 			}
 		}
 	}
@@ -672,7 +686,7 @@ char *loadRaw2WholeStack ( char * filename, unsigned char * & img, V3DLONG * & s
 	}
 
 	char endianCodeData;
-	fread(&endianCodeData, 1, 1, fid);
+	int dummy = fread(&endianCodeData, 1, 1, fid);
 	printf("The data endian code is [%c]\n", endianCodeData);
 	if (endianCodeData!='B' && endianCodeData!='L')
 	{
@@ -697,7 +711,7 @@ char *loadRaw2WholeStack ( char * filename, unsigned char * & img, V3DLONG * & s
 
 
 	short int dcode = 0;
-	fread(&dcode, 2, 1, fid); /* because I have already checked the file size to be bigger than the header, no need to check the number of actual bytes read. */
+	dummy = fread(&dcode, 2, 1, fid); /* because I have already checked the file size to be bigger than the header, no need to check the number of actual bytes read. */
 	if (b_swap)
 		swap2bytes((void *)&dcode);
 
@@ -1139,8 +1153,8 @@ char *copyRawFileBlock2Buffer ( char *filename, int sV0, int sV1, int sH0, int s
 				{
 					rewind(fid);
 					fseek(fid, (long)(head+(c*pgsz1 + k*pgsz2 + j*pgsz3 + startx)*unitSize), SEEK_SET);
-					ftell(fid);	
-					fread(buftmp_j,unitSize,tmpw,fid);
+					int dummy = ftell(fid);	
+					dummy = fread(buftmp_j,unitSize,tmpw,fid);
 
 					// swap the bytes: this code has not be checked yey
 					if (unitSize==2)
@@ -1170,8 +1184,8 @@ char *copyRawFileBlock2Buffer ( char *filename, int sV0, int sV1, int sH0, int s
 				{
 					rewind(fid);
 					fseek(fid, (long)(head+(c*pgsz1 + k*pgsz2 + j*pgsz3 + startx)*unitSize), SEEK_SET);
-					ftell(fid);	
-					fread(buftmp_j,unitSize,tmpw,fid);
+					int dummy = ftell(fid);	
+					dummy = fread(buftmp_j,unitSize,tmpw,fid);
 				}
 			}
 		}
@@ -1273,8 +1287,8 @@ char *streamer_dostep ( Streamer_Descr_t *streamer, unsigned char *buffer2 ) {
 				// copy one stripe
 				rewind(fid);
 				fseek(fid,(long)postmp,SEEK_SET);
-				ftell(fid);	
-				fread(buftmp,unitSize,streamer->bDescr[i].width,fid);
+				int dummy = ftell(fid);	
+				dummy = fread(buftmp,unitSize,streamer->bDescr[i].width,fid);
 
 				// WARNING: code for testing
 				if ( buffer2 ) { 

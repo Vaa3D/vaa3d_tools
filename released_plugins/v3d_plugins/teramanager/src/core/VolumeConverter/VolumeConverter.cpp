@@ -80,7 +80,8 @@ void VolumeConverter::setSrcVolume(const char* _root_dir, const char* _fmt, cons
     if(time_series)
         volume = new TimeSeries(_root_dir, _fmt);
     else
-        volume = VirtualVolume::instance(_root_dir, _fmt, vertical, horizontal, depth, 1.0f, 1.0f, 1.0f);
+        //volume = VirtualVolume::instance(_root_dir, _fmt, vertical, horizontal, depth, 1.0f, 1.0f, 1.0f);
+        volume = VirtualVolume::instance(_root_dir);
 
 	//channels = (volume->getDIM_C()>1) ? 3 : 1; // only 1 or 3 channels supported
 	channels = volume->getDIM_C();
@@ -680,7 +681,7 @@ void VolumeConverter::generateTilesVaa3DRaw(std::string output_path, bool* resol
 
 	//allocated even if not used
 	ubuffer = new uint8 *[channels];
-	memset(ubuffer,0,channels*sizeof(uint8));
+	memset(ubuffer,0,channels*sizeof(uint8 *));
 	org_channels = channels; // save for checks
 
 	FILE *fhandle;
@@ -719,7 +720,7 @@ void VolumeConverter::generateTilesVaa3DRaw(std::string output_path, bool* resol
 			}
 		
 			for (int i=1; i<channels; i++ ) { // WARNING: assume 1-byte pixels
-				// offsets are to be computed taking into account that buffer size along D may be different
+				// offsets have to be computed taking into account that buffer size along D may be different
 				// WARNING: the offset must be of tipe sint64 
 				ubuffer[i] = ubuffer[i-1] + (height * width * ((z_parts<=z_ratio) ? z_max_res : (depth%z_max_res)) * bytes_chan);
 			}
@@ -756,7 +757,8 @@ void VolumeConverter::generateTilesVaa3DRaw(std::string output_path, bool* resol
 			abs_pos_z.width(6);
 			abs_pos_z.fill('0');
 			abs_pos_z << (int)(this->getMultiresABS_D(i) + // all stacks start at the same D position
-                                (powInt(2,i)*slice_start[i]) * volume->getVXL_D());
+ 								- D0 * volume->getVXL_D() * 10 + // WARNING: D0 is counted twice,both in getMultiresABS_D and in slice_start
+                               (powInt(2,i)*slice_start[i]) * volume->getVXL_D());
 
 			//compute the number of slice of previous groups at resolution i
 			//note that z_parts in the number and not an index (starts from 1)
@@ -1315,7 +1317,7 @@ void VolumeConverter::generateTilesVaa3DRawMC ( std::string output_path, bool* r
 			}
 		
 			for (int i=1; i<channels; i++ ) { // WARNING: assume 1-byte pixels
-				// offsets are to be computed taking into account that buffer size along D may be different
+				// offsets have to be computed taking into account that buffer size along D may be different
 				// WARNING: the offset must be of tipe sint64 
 				ubuffer[i] = ubuffer[i-1] + (height * width * ((z_parts<=z_ratio) ? z_max_res : (depth%z_max_res)) * bytes_chan);
 			}
@@ -1352,6 +1354,7 @@ void VolumeConverter::generateTilesVaa3DRawMC ( std::string output_path, bool* r
 			abs_pos_z.width(6);
 			abs_pos_z.fill('0');
 			abs_pos_z << (int)(this->getMultiresABS_D(i) + // all stacks start at the same D position
+								- D0 * volume->getVXL_D() * 10 + // WARNING: D0 is counted twice,both in getMultiresABS_D and in slice_start
 								(POW_INT(2,i)*slice_start[i]) * volume->getVXL_D());
 
 			//compute the number of slice of previous groups at resolution i
@@ -1511,8 +1514,8 @@ void VolumeConverter::generateTilesVaa3DRawMC ( std::string output_path, bool* r
 										VirtualVolume::saveImage_from_UINT8_to_Tiff3D(
 											slice_ind,
 											img_path.str(), 
-											ubuffer,
-											channels,
+											ubuffer + c,
+											1,
 											buffer_z*(height/powInt(2,i))*(width/powInt(2,i))*bytes_chan,  // stride to be added for slice buffer_z
 											(int)height/(powInt(2,i)),(int)width/(powInt(2,i)),
 											start_height,end_height,start_width,end_width, 
@@ -1522,8 +1525,8 @@ void VolumeConverter::generateTilesVaa3DRawMC ( std::string output_path, bool* r
 										VirtualVolume::saveImage_from_UINT8_to_Vaa3DRaw(
 											slice_ind,
 											img_path.str(), 
-											ubuffer,
-											channels,
+											ubuffer + c,
+											1,
 											buffer_z*(height/powInt(2,i))*(width/powInt(2,i))*bytes_chan,  // stride to be added for slice buffer_z
 											(int)height/(powInt(2,i)),(int)width/(powInt(2,i)),
 											start_height,end_height,start_width,end_width, 
@@ -1843,7 +1846,7 @@ void VolumeConverter::generateTilesVaa3DRawMC ( std::string output_path, bool* r
 			}
 		
 			for (int i=1; i<channels; i++ ) { // WARNING: assume 1-byte pixels
-				// offsets are to be computed taking into account that buffer size along D may be different
+				// offsets have to be computed taking into account that buffer size along D may be different
 				// WARNING: the offset must be of tipe sint64 
 				ubuffer[i] = ubuffer[i-1] + (height * width * ((z_parts<=z_ratio) ? z_max_res : (depth%z_max_res)) * bytes_chan);
 			}
@@ -1880,6 +1883,7 @@ void VolumeConverter::generateTilesVaa3DRawMC ( std::string output_path, bool* r
 			abs_pos_z.width(6);
 			abs_pos_z.fill('0');
 			abs_pos_z << (int)(this->getMultiresABS_D(i) + // all stacks start at the same D position
+								- D0 * volume->getVXL_D() * 10 + // WARNING: D0 is counted twice,both in getMultiresABS_D and in slice_start
                                 (powInt(2,i)*slice_start[i]) * volume->getVXL_D());
 
 			//compute the number of slice of previous groups at resolution i
@@ -2039,8 +2043,8 @@ void VolumeConverter::generateTilesVaa3DRawMC ( std::string output_path, bool* r
 										VirtualVolume::saveImage_from_UINT8_to_Tiff3D(
 											slice_ind,
 											img_path.str(), 
-											ubuffer,
-											channels,
+											ubuffer + c,
+											1,
 											buffer_z*(height/powInt(2,i))*(width/powInt(2,i))*bytes_chan,  // stride to be added for slice buffer_z
 											(int)height/(powInt(2,i)),(int)width/(powInt(2,i)),
 											start_height,end_height,start_width,end_width, 
@@ -2050,8 +2054,8 @@ void VolumeConverter::generateTilesVaa3DRawMC ( std::string output_path, bool* r
 										VirtualVolume::saveImage_from_UINT8_to_Vaa3DRaw(
 											slice_ind,
 											img_path.str(), 
-											ubuffer,
-											channels,
+											ubuffer + c,
+											1,
 											buffer_z*(height/powInt(2,i))*(width/powInt(2,i))*bytes_chan,  // stride to be added for slice buffer_z
 											(int)height/(powInt(2,i)),(int)width/(powInt(2,i)),
 											start_height,end_height,start_width,end_width, 

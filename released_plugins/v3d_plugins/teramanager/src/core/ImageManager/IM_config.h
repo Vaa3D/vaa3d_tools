@@ -66,7 +66,7 @@ namespace IconImageManager
     *    INTEFRACES    *
     ********************
     ---------------------------------------------------------------------------------------------------------------------------*/
-    class imProgressBar;
+	class imProgressBar;
 	class Stack;
 	class Block;
 	class VirtualVolume;
@@ -134,7 +134,8 @@ namespace IconImageManager
     extern bool DEBUG_TO_FILE;                                  // whether debug messages should be printed on the screen or to a file (default: screen)
     extern std::string DEBUG_FILE_PATH;                         // filepath where to save debug information
     extern bool ADD_NOISE_TO_TIME_SERIES;                       // whether to mark individual frames of a time series with increasing gaussian noise
-    /*-------------------------------------------------------------------------------------------------------------------------*/
+    extern int CHANNEL_SELECTION;								// channel to be used when image must be converted to an intensity image (default is ALL)
+   /*-------------------------------------------------------------------------------------------------------------------------*/
 
 
     /*******************
@@ -143,6 +144,7 @@ namespace IconImageManager
     ---------------------------------------------------------------------------------------------------------------------------*/
     enum  axis        { vertical=1, inv_vertical=-1, horizontal=2, inv_horizontal=-2, depth=3, inv_depth=-3, axis_invalid=0};
     enum  debug_level { NO_DEBUG, LEV1, LEV2, LEV3, LEV_MAX };
+    enum  channel { ALL, R, G, B };
     /*-------------------------------------------------------------------------------------------------------------------------*/
 
 

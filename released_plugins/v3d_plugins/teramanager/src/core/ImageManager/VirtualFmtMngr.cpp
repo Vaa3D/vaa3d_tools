@@ -56,24 +56,49 @@ void VirtualFmtMngr::copyBlock2SubBuf ( unsigned char *src, unsigned char *dst, 
 void VirtualFmtMngr::copyRGBBlock2Vaa3DRawSubBuf ( unsigned char *src, unsigned char *dst, int dimi, int dimj, int dimk, int typesize,
 	 						   sint64 s_stridej, sint64 s_strideij, sint64 d_stridej, sint64 d_strideij, sint64 d_strideijk ) {
 	 						   
-	unsigned char *s_slice;
-	unsigned char *d_slice;
-	unsigned char *s_stripe;
-	unsigned char *d_stripe;
 	int c, i, j, k;
 	
-	s_stridej  *= typesize;
-	s_strideij *= typesize;
-	d_stridej  *= typesize;
-	d_strideij *= typesize;
+	if ( typesize == 1 ) {
 	
-	for ( c=0; c<3; c++, src++, dst+=d_strideijk ) {
-		s_slice = src;
-		d_slice = dst;
-		for ( k=0; k<dimk; k++, s_slice+=3*s_strideij, d_slice+=d_strideij ) {
-			for ( i=0, s_stripe=s_slice, d_stripe=d_slice; i<dimi; i++, s_stripe+=3*s_stridej, d_stripe+=d_stridej ) {
-				for ( j=0; j<dimj; j++ )
-					d_stripe[j] = s_stripe[3*j];
+		unsigned char *s_slice;
+		unsigned char *d_slice;
+		unsigned char *s_stripe;
+		unsigned char *d_stripe;
+		
+		for ( c=0; c<3; c++, src++, dst+=d_strideijk ) {
+			s_slice = src;
+			d_slice = dst;
+			for ( k=0; k<dimk; k++, s_slice+=3*s_strideij, d_slice+=d_strideij ) {
+				for ( i=0, s_stripe=s_slice, d_stripe=d_slice; i<dimi; i++, s_stripe+=3*s_stridej, d_stripe+=d_stridej ) {
+					for ( j=0; j<dimj; j++ )
+						d_stripe[j] = s_stripe[3*j];
+				}
+			}
+		}
+	}
+	else { // must be guaranteed that typesize ==2
+	
+		iim::uint16 *src16 = (iim::uint16 *) src;
+		iim::uint16 *dst16 = (iim::uint16 *) dst;
+			
+		iim::uint16 *s_slice;
+		iim::uint16 *d_slice;
+		iim::uint16 *s_stripe;
+		iim::uint16 *d_stripe;
+		
+// 		s_stridej  *= typesize;
+// 		s_strideij *= typesize;
+// 		d_stridej  *= typesize;
+// 		d_strideij *= typesize;
+	
+		for ( c=0; c<3; c++, src16++, dst16+=d_strideijk ) {
+			s_slice = src16;
+			d_slice = dst16;
+			for ( k=0; k<dimk; k++, s_slice+=3*s_strideij, d_slice+=d_strideij ) {
+				for ( i=0, s_stripe=s_slice, d_stripe=d_slice; i<dimi; i++, s_stripe+=3*s_stridej, d_stripe+=d_stridej ) {
+					for ( j=0; j<dimj; j++ )
+						d_stripe[j] = s_stripe[3*j];
+				}
 			}
 		}
 	}
@@ -86,7 +111,10 @@ void VirtualFmtMngr::copyRGBBlock2Vaa3DRawSubBuf ( unsigned char *src, unsigned 
 
 char *Tiff3DFmtMngr::loadMetadata ( char * filename, sint64 * &sz, int &datatype, int &b_swap, void * &fhandle, int &header_len ) {
 	unsigned int sz0, sz1, sz2, sz3;
-	char *err_msg = loadTiff3D2Metadata(filename,sz0,sz1,sz2,sz3,datatype,b_swap,fhandle,header_len);
+	char *err_msg;
+	if ( (err_msg = loadTiff3D2Metadata(filename,sz0,sz1,sz2,sz3,datatype,b_swap,fhandle,header_len)) != 0 ) {
+		return err_msg;
+	}
 	sz = new sint64[4];
 	sz[0] = (sint64) sz0;
 	sz[1] = (sint64) sz1;
@@ -191,8 +219,8 @@ char *Tiff3DFmtMngr::copyFileBlock2Buffer ( char *filename, int sV0, int sV1, in
 	
 	if ( sz[3] == 1 ) { // single channeel Tiff
 		VirtualFmtMngr::copyBlock2SubBuf(
-			buf_t + s_stridej*sV0 + sH0,
-			buf + offs,
+			buf_t + pxl_size*(s_stridej*sV0 + sH0),
+			buf + pxl_size*offs,
 			dimi,dimj,dimk,pxl_size,
 	 		s_stridej,s_strideij,d_stridej,d_strideij
 	 	);
@@ -200,8 +228,8 @@ char *Tiff3DFmtMngr::copyFileBlock2Buffer ( char *filename, int sV0, int sV1, in
 	else if ( sz[3] == 3 ) { // RGB Tiff
 		sint64 d_strideijk = stridexyz;
 		VirtualFmtMngr::copyRGBBlock2Vaa3DRawSubBuf(
-			buf_t + s_stridej*sV0 + sH0,
-			buf+offs,
+			buf_t + 3*pxl_size*(s_stridej*sV0 + sH0),
+			buf + pxl_size*offs,
 			dimi,dimj,dimk,pxl_size,
 	 		s_stridej,s_strideij,
 			d_stridej,d_strideij,d_strideijk
@@ -224,7 +252,11 @@ char *Tiff3DFmtMngr::copyFileBlock2Buffer ( char *filename, int sV0, int sV1, in
 
 char *Vaa3DRawFmtMngr::loadMetadata ( char * filename, sint64 * &sz, int &datatype, int &b_swap, void * &fhandle, int &header_len ) {
 	V3DLONG *_sz = 0; // Windows has invalid non-zero pointers
-	char *err_msg = loadRaw2Metadata(filename,_sz,datatype,b_swap,fhandle,header_len);
+	char *err_msg;
+	if ( (err_msg = loadRaw2Metadata(filename,_sz,datatype,b_swap,fhandle,header_len)) != 0 ) {
+		return err_msg;
+	}
+
 	if ( sizeof(sint64) == sizeof(V3DLONG) ) {
 		sz = (sint64 *) _sz;
 	}
@@ -234,7 +266,8 @@ char *Vaa3DRawFmtMngr::loadMetadata ( char * filename, sint64 * &sz, int &dataty
 			sz[i] = (sint64) _sz[i];
 		delete _sz;
 	}
-	return err_msg;
+
+	return ((char *) 0);
 }
 
 char *Vaa3DRawFmtMngr::load2SubStack ( void *fhandle, unsigned char *img,sint64 *sz, sint64 startx, sint64 starty, sint64 startz, 

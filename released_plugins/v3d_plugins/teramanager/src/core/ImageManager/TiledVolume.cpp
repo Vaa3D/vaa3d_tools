@@ -181,11 +181,11 @@ void TiledVolume::save(char* metadata_filepath) throw (IOException)
 	fwrite(&ORG_V, sizeof(float), 1, file);
 	fwrite(&ORG_H, sizeof(float), 1, file);
 	fwrite(&ORG_D, sizeof(float), 1, file);
-	fwrite(&DIM_V, sizeof(uint32), 1, file);
-	fwrite(&DIM_H, sizeof(uint32), 1, file);
-	fwrite(&DIM_D, sizeof(uint32), 1, file);
-	fwrite(&N_ROWS, sizeof(uint16), 1, file);
-	fwrite(&N_COLS, sizeof(uint16), 1, file);
+	fwrite(&DIM_V, sizeof(iim::uint32), 1, file);
+	fwrite(&DIM_H, sizeof(iim::uint32), 1, file);
+	fwrite(&DIM_D, sizeof(iim::uint32), 1, file);
+	fwrite(&N_ROWS, sizeof(iim::uint16), 1, file);
+	fwrite(&N_COLS, sizeof(iim::uint16), 1, file);
 
 	for(i = 0; i < N_ROWS; i++)
 		for(j = 0; j < N_COLS; j++)
@@ -227,8 +227,8 @@ void TiledVolume::load(char* metadata_filepath) throw (IOException)
 
         fclose(file);
         file = fopen(metadata_filepath, "rb");
-        uint16 str_size;
-        fread_return_val = fread(&str_size, sizeof(uint16), 1, file);
+        iim::uint16 str_size;
+        fread_return_val = fread(&str_size, sizeof(iim::uint16), 1, file);
         if(fread_return_val != 1)
         {
             fclose(file);
@@ -327,35 +327,35 @@ void TiledVolume::load(char* metadata_filepath) throw (IOException)
         throw IOException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
     }
 
-	fread_return_val = fread(&DIM_V, sizeof(uint32), 1, file);
+	fread_return_val = fread(&DIM_V, sizeof(iim::uint32), 1, file);
 	if(fread_return_val != 1)
     {
         fclose(file);
         throw IOException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
     }
 
-	fread_return_val = fread(&DIM_H, sizeof(uint32), 1, file);
+	fread_return_val = fread(&DIM_H, sizeof(iim::uint32), 1, file);
 	if(fread_return_val != 1)
     {
         fclose(file);
         throw IOException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
     }
 
-	fread_return_val = fread(&DIM_D, sizeof(uint32), 1, file);
+	fread_return_val = fread(&DIM_D, sizeof(iim::uint32), 1, file);
 	if(fread_return_val != 1)
     {
         fclose(file);
         throw IOException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
     }
 
-	fread_return_val = fread(&N_ROWS, sizeof(uint16), 1, file);
+	fread_return_val = fread(&N_ROWS, sizeof(iim::uint16), 1, file);
 	if(fread_return_val != 1)
     {
         fclose(file);
         throw IOException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
     }
 
-	fread_return_val = fread(&N_COLS, sizeof(uint16), 1, file);
+	fread_return_val = fread(&N_COLS, sizeof(iim::uint16), 1, file);
 	if(fread_return_val != 1)
     {
         fclose(file);
@@ -425,7 +425,7 @@ void TiledVolume::init()
 	}
 	closedir(cur_dir_lev1);
 	entries_lev1.sort();
-	N_ROWS = (uint16) entries_lev1.size();
+	N_ROWS = (iim::uint16) entries_lev1.size();
 	N_COLS = 0;
 
 	//for each entry of first level, scanning second level
@@ -595,7 +595,7 @@ void TiledVolume::initChannels ( ) throw (IOException)
 	BYTESxCHAN = (int)BLOCKS[0][0]->getN_BYTESxCHAN();
 
     n_active = DIM_C;
-    active = new uint32[n_active];
+    active = new iim::uint32[n_active];
     for ( int c=0; c<DIM_C; c++ )
         active[c] = c; // all channels are assumed active
 }
@@ -843,73 +843,84 @@ real32* TiledVolume::loadSubvolume(int V0,int V1, int H0, int H1, int D0, int D1
 {
     /**/iim::debug(iim::LEV3, strprintf("V0=%d, V1=%d, H0=%d, H1=%d, D0=%d, D1=%d, %s", V0, V1, H0, H1, D0, D1, (involved_blocks? ", involved_stacks" : "")).c_str(), __iim__current__function__);
 
-    char msg[STATIC_STRINGS_SIZE];
-	sprintf(msg,"in TiledVolume::loadSubvolume: not completed yet");
-    throw IOException(msg);
+ //   char msg[STATIC_STRINGS_SIZE];
+	//sprintf(msg,"in TiledVolume::loadSubvolume: not completed yet");
+ //   throw IOException(msg);
 
-    //checking for non implemented features
-	if( this->BYTESxCHAN != 1 ) {
-        char err_msg[STATIC_STRINGS_SIZE];
-		sprintf(err_msg,"TiledVolume::loadSubvolume: invalid number of bytes per channel (%d)",this->BYTESxCHAN); 
-        throw IOException(err_msg);
+	int channels;
+	float scale_factor;
+
+    //initializations
+    V0 = V0 < 0 ? 0 : V0;
+    H0 = H0 < 0 ? 0 : H0;
+    D0 = D0 < 0 ? 0 : D0;
+    V1 = (V1 < 0 || V1 > (int)DIM_V) ? DIM_V : V1; // iannello MODIFIED
+    H1 = (H1 < 0 || H1 > (int)DIM_H) ? DIM_H : H1; // iannello MODIFIED
+    D1 = (D1 < 0 || D1 > (int)DIM_D) ? DIM_D : D1; // iannello MODIFIED
+
+	iim::uint8 *data = loadSubvolume_to_UINT8(V0,V1,H0,H1,D0,D1,&channels,BYTESxCHAN*8);
+
+	//conversion from unsigned char to real_t
+
+	if (DIM_C == 2 || DIM_C > 3) // only monocromatic or RGB images are supported
+	{
+		char errMsg[2000];
+		sprintf(errMsg, "in TiledVolume::loadSubvolume(...): %d channels are not supported.", DIM_C);
+		throw IOException(errMsg);
 	}
 
-	//initializations
-	V0 = (V0 == -1 ? 0	     : V0);
-	V1 = (V1 == -1 ? DIM_V   : V1);
-	H0 = (H0 == -1 ? 0	     : H0);
-	H1 = (H1 == -1 ? DIM_H   : H1);
-	D0 = (D0 == -1 ? 0		 : D0);
-	D1 = (D1 == -1 ? DIM_D	 : D1);
+	if ( BYTESxCHAN == 1)
+		scale_factor  = 255.0F;
+	else if (BYTESxCHAN == 2)
+		scale_factor = 65535.0F;
+	else
+	{
+		char errMsg[2000];
+		sprintf(errMsg, "in TiledVolume::loadSubvolume(...): Too many bytes per channel (%d).", BYTESxCHAN);
+		throw IOException(errMsg);
+	}
 
-	//allocation
-	sint64 sbv_height = V1 - V0;
-	sint64 sbv_width  = H1 - H0;
-	sint64 sbv_depth  = D1 - D0;
-    real32 *subvol = new real32[sbv_height * sbv_width * sbv_depth];
+	real32 *subvol = new real32[(V1-V0) * (H1-H0) * (D1-D0)]; // this image is an intensity image (only one channel)
 
-	//scanning of stacks matrix for data loading and storing into subvol
-	Rect_t subvol_area;
-	subvol_area.H0 = H0;
-	subvol_area.V0 = V0;
-	subvol_area.H1 = H1;
-	subvol_area.V1 = V1;
-	for(int row=0; row<N_ROWS; row++)
-		for(int col=0; col<N_COLS; col++)
-		{
-			Rect_t *intersect_area = BLOCKS[row][col]->Intersects(subvol_area);
-			if(intersect_area)
-			{
-                //printf("\t\t\t\tin TiledVolume::loadSubvolume(): using STACK[%d,%d] for area %d-%d(V) x %d-%d(H)\n", row, col, intersect_area->V0-V0, intersect_area->V1-V0, intersect_area->H0-H0, intersect_area->H1-H0);
+	int offset;
 
-				//STACKS[row][col]->loadStack(D0, D1-1);
-				//if(involved_stacks)
-				//	involved_stacks->push_back(STACKS[row][col]);
-
-				//for(int k=0; k<sbv_depth; k++)
-				//{
-				//	CvMat *slice = STACKS[row][col]->getSTACKED_IMAGE()[D0+k];
-				//	int   step  = slice->step/sizeof(float);
-				//	float *data = slice->data.fl;
-				//	int ABS_V_stk = STACKS[row][col]->getABS_V();
-				//	int ABS_H_stk = STACKS[row][col]->getABS_H();
-
-				//	for(int i=intersect_area->V0-V0; i<intersect_area->V1-V0; i++)
-				//		for(int j=intersect_area->H0-H0; j<intersect_area->H1-H0; j++)
-				//			subvol[k*sbv_height*sbv_width + i*sbv_width + j] = (data+(i-ABS_V_stk+V0)*step)[j-ABS_H_stk+H0];
-				//}
-
-				if(release_blocks)
-				//	STACKS[row][col]->releaseStack();
-				;
-			}
+	if ( DIM_C == 1 ) {
+		for(int i = 0; i < ((V1-V0) * (H1-H0) * (D1-D0)); i++)
+			subvol[i] = (real32) data[i]/scale_factor;
+	}
+	else { // conversion to an intensity image
+		if ( iim::CHANNEL_SELECTION == iim::ALL ) {
+			char errMsg[2000];
+			sprintf(errMsg, "in TiledVolume::loadSubvolume(...): conversion from multi-channel to intensity images not supported.");
+			throw IOException(errMsg);
 		}
+		else if ( iim::CHANNEL_SELECTION == iim::R ) {
+			offset = 0;
+		}
+		else if ( iim::CHANNEL_SELECTION == iim::G ) {
+			offset = 1;
+		}
+		else if ( iim::CHANNEL_SELECTION == iim::B ) {
+			offset = 2;
+		}
+		else {
+			char errMsg[2000];
+			sprintf(errMsg, "in TiledVolume::loadSubvolume(...): wrong value for parameter iom::CHANNEL_SELECTION.");
+			throw IOException(errMsg);
+		}
+		for(int i = 0; i < ((V1-V0) * (H1-H0) * (D1-D0)); i++)
+			subvol[i] = (real32) data[3*i + offset]/scale_factor;
+	}
+
+	delete [] data;
+
+
 	return subvol;
 }
 
-//loads given subvolume in a 1-D array of uint8 while releasing stacks slices memory when they are no longer needed
+//loads given subvolume in a 1-D array of iim::uint8 while releasing stacks slices memory when they are no longer needed
 //---03 nov 2011: added color support
-uint8* TiledVolume::loadSubvolume_to_UINT8(int V0,int V1, int H0, int H1, int D0, int D1, int *channels, int ret_type ) throw (IOException)
+iim::uint8* TiledVolume::loadSubvolume_to_UINT8(int V0,int V1, int H0, int H1, int D0, int D1, int *channels, int ret_type ) throw (IOException)
 {
     /**/iim::debug(iim::LEV3, strprintf("V0=%d, V1=%d, H0=%d, H1=%d, D0=%d, D1=%d, *channels=%d, ret_type=%d", V0, V1, H0, H1, D0, D1, channels ? *channels : -1, ret_type).c_str(), __iim__current__function__);
 
@@ -942,20 +953,20 @@ uint8* TiledVolume::loadSubvolume_to_UINT8(int V0,int V1, int H0, int H1, int D0
     V1 = (V1 < 0 || V1 > (int)DIM_V) ? DIM_V : V1; // iannello MODIFIED
     H1 = (H1 < 0 || H1 > (int)DIM_H) ? DIM_H : H1; // iannello MODIFIED
     D1 = (D1 < 0 || D1 > (int)DIM_D) ? DIM_D : D1; // iannello MODIFIED
-    uint8 *subvol = 0;
+    iim::uint8 *subvol = 0;
 
     //checking that the interval is valid
     if(V1-V0 <=0 || H1-H0 <= 0 || D1-D0 <= 0)
         throw IOException("in TiledVolume::loadSubvolume_to_UINT8: invalid subvolume intervals");
 
     //computing dimensions
-    sint64 sbv_height = V1 - V0;
-    sint64 sbv_width  = H1 - H0;
-    sint64 sbv_depth  = D1 - D0;
+    iim::sint64 sbv_height = V1 - V0;
+    iim::sint64 sbv_width  = H1 - H0;
+    iim::sint64 sbv_depth  = D1 - D0;
 
     //initializing the number of channels with an undefined value (it will be detected from the first slice read)
-    sint64 sbv_channels = -1;
-	sint64 sbv_bytes_chan = -1;
+    iim::sint64 sbv_channels = -1;
+	iim::sint64 sbv_bytes_chan = -1;
 
     //scanning of stacks matrix for data loading and storing into subvol
     Rect_t subvol_area;
@@ -991,7 +1002,7 @@ uint8* TiledVolume::loadSubvolume_to_UINT8(int V0,int V1, int H0, int H1, int D0
 
 							try
 					        {
-								subvol = new uint8[sbv_height * sbv_width * sbv_depth * sbv_channels * sbv_bytes_chan];
+								subvol = new iim::uint8[sbv_height * sbv_width * sbv_depth * sbv_channels * sbv_bytes_chan];
 					            //if ( !subvol )
 								//	throw MyException("in TiledVolume::loadSubvolume_to_UINT8: unable to allocate memory");
 					        }
@@ -1054,7 +1065,7 @@ uint8* TiledVolume::loadSubvolume_to_UINT8(int V0,int V1, int H0, int H1, int D0
 								slice_fullpath,
 								sV0,sV1,sH0,sH1,sD0,sD1,
 								(unsigned char *)subvol,
-								sbv_bytes_chan, // this is native rtype, it has substituted sizeof(uint8)
+								sbv_bytes_chan, // this is native rtype, it has substituted sizeof(iim::uint8)
 								bH0+bV0*sbv_width+bD0*sbv_width*sbv_height,
 								sbv_width,
 								sbv_width*sbv_height,
@@ -1089,8 +1100,8 @@ uint8* TiledVolume::loadSubvolume_to_UINT8(int V0,int V1, int H0, int H1, int D0
 		}
 
 		//int c, i, j, p;
-		//sint64 totalUnits = sbv_height * sbv_width * sbv_depth * sbv_channels;
-		//sint64 totalBlockSize = sbv_height * sbv_width * sbv_depth;
+		//iim::sint64 totalUnits = sbv_height * sbv_width * sbv_depth * sbv_channels;
+		//iim::sint64 totalBlockSize = sbv_height * sbv_width * sbv_depth;
 
 		//char endianCodeMachine = checkMachineEndian();
 		//if ( endianCodeMachine == 'L' ) {
@@ -1108,7 +1119,7 @@ uint8* TiledVolume::loadSubvolume_to_UINT8(int V0,int V1, int H0, int H1, int D0
 		//// look for maximum values in each channel and rescale each channel separately
 		//unsigned short maxVal;
 		//unsigned short *temp = (unsigned short *) subvol;
-		//sint64 count;
+		//iim::sint64 count;
 		//for ( c=0; c<sbv_channels; c++, temp+=totalBlockSize ) {
 		//	for ( i=0, maxVal=0; i<totalBlockSize; i++ )
 		//		if ( temp[i] > maxVal )
@@ -1124,7 +1135,7 @@ uint8* TiledVolume::loadSubvolume_to_UINT8(int V0,int V1, int H0, int H1, int D0
 		//	printf("\t\t\t\tin TiledVolume::loadSubvolume_to_UINT8: c=%d, maxVal=%d, p=%d, count=%ld\n\n",c,maxVal,p,count);
 		//}
 		//
-		//uint8 *temp_buf = new uint8[totalUnits];
+		//iim::uint8 *temp_buf = new iim::uint8[totalUnits];
 		//memset(temp_buf,0,totalUnits);
 		//for ( i=0; i<totalUnits; i++, j+=red_factor )
 		//	temp_buf[i] = subvol[j];
@@ -1159,7 +1170,7 @@ void TiledVolume::releaseStacks(int first_file, int last_file)
 
 // OPERATIONS FOR STREAMED SUBVOLUME LOAD 
 
-void *TiledVolume::streamedLoadSubvolume_open ( int steps, uint8 *buf, int V0,int V1, int H0, int H1, int D0, int D1 )
+void *TiledVolume::streamedLoadSubvolume_open ( int steps, iim::uint8 *buf, int V0,int V1, int H0, int H1, int D0, int D1 )
 {
     /**/iim::debug(iim::LEV3, strprintf("steps=%d, V0=%d, V1=%d, H0=%d, H1=%d, D0=%d, D1=%d", steps, V0, V1, H0, H1, D0, D1).c_str(), __iim__current__function__);
 
@@ -1179,9 +1190,9 @@ void *TiledVolume::streamedLoadSubvolume_open ( int steps, uint8 *buf, int V0,in
 
 	char *err_rawfmt;
 
-	sint64 stridex = H1 - H0;
-	sint64 stridexy = stridex * (V1 - V0);
-	sint64 stridexyz = stridexy * (D1 - D0);
+	iim::sint64 stridex = H1 - H0;
+	iim::sint64 stridexy = stridex * (V1 - V0);
+	iim::sint64 stridexyz = stridexy * (D1 - D0);
 	Streamer_Descr_t *stream_descr = new Streamer_Descr_t(buf,sizeof(unsigned char),stridex,stridexy,stridexyz,this->DIM_C,steps);
 	if ( !stream_descr ) {
 		char msg[1000];
@@ -1189,7 +1200,7 @@ void *TiledVolume::streamedLoadSubvolume_open ( int steps, uint8 *buf, int V0,in
         throw IOException(msg);
 	}
 
-    // sint64 sbv_channels = this->CHANS; // unused
+    // iim::sint64 sbv_channels = this->CHANS; // unused
 
     //scanning of stacks matrix for data loading and storing into subvol
     Rect_t subvol_area;
@@ -1255,7 +1266,7 @@ void *TiledVolume::streamedLoadSubvolume_open ( int steps, uint8 *buf, int V0,in
 	return stream_descr;
 }
 
-uint8 *TiledVolume::streamedLoadSubvolume_dostep ( void *stream_descr, unsigned char *buffer2 )
+iim::uint8 *TiledVolume::streamedLoadSubvolume_dostep ( void *stream_descr, unsigned char *buffer2 )
 {
     /**/iim::debug(iim::LEV3, 0, __iim__current__function__);
 
@@ -1283,11 +1294,11 @@ void TiledVolume::streamedLoadSubvolume_cpydata ( void *stream_descr, unsigned c
 	}
 }
 
-uint8 *TiledVolume::streamedLoadSubvolume_close ( void *stream_descr, bool return_buffer )
+iim::uint8 *TiledVolume::streamedLoadSubvolume_close ( void *stream_descr, bool return_buffer )
 {
     /**/iim::debug(iim::LEV3, 0, __iim__current__function__);
 
-	uint8 *temp = ((Streamer_Descr_t *)stream_descr)->buf;
+	iim::uint8 *temp = ((Streamer_Descr_t *)stream_descr)->buf;
 
 	streamer_close((Streamer_Descr_t *)stream_descr);
 

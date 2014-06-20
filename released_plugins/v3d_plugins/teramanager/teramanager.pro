@@ -95,7 +95,8 @@ INCLUDEPATH += $$V3DMAINPATH/basic_c_fun
 INCLUDEPATH += $$V3DMAINPATH/3drenderer
 INCLUDEPATH += $$V3DMAINPATH/common_lib/include
 INCLUDEPATH += $$V3DMAINPATH/basic_c_fun/customary_structs
-SOURCES += $$V3DMAINPATH/basic_c_fun/v3d_message.cpp
+SOURCES += $$V3DMAINPATH/basic_c_fun/v3d_message.cpp \
+    src/control/QUndoMarkerDeleteROI.cpp
 SOURCES += $$V3DMAINPATH/basic_c_fun/stackutil.cpp
 SOURCES += $$V3DMAINPATH/basic_c_fun/mg_utilities.cpp
 SOURCES += $$V3DMAINPATH/basic_c_fun/basic_memory.cpp
@@ -191,6 +192,7 @@ HEADERS += ./src/core/VolumeConverter/VolumeConverter.h
 HEADERS += ./src/core/VolumeConverter/resumer.h
 HEADERS += ./src/control/QUndoMarkerCreate.h
 HEADERS += ./src/control/QUndoMarkerDelete.h
+HEADERS += ./src/control/QUndoMarkerDeleteROI.h
 
 SOURCES += ./src/control/CAnnotations.cpp
 SOURCES += ./src/control/CConverter.cpp
@@ -230,6 +232,7 @@ SOURCES += ./src/core/VolumeConverter/VolumeConverter.cpp
 SOURCES += ./src/core/VolumeConverter/resumer.cpp
 SOURCES += ./src/control/QUndoMarkerCreate.cpp
 SOURCES += ./src/control/QUndoMarkerDelete.cpp
+SOURCES += ./src/control/QUndoMarkerDeleteROI.cpp
 
 #set up your own target
 TARGET	= $$qtLibraryTarget(teramanagerplugin)

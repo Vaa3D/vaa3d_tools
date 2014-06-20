@@ -176,7 +176,7 @@ class VolumeConverter
 		**************************************************************************************************************/
 		void generateTilesVaa3DRaw(std::string output_path, bool* resolutions = NULL, 
 			int block_height = -1, int block_width = -1, int block_depth = -1, int method = HALVE_BY_MEAN, bool show_progress_bar = true, 
-            const char* saved_img_format = "raw", int saved_img_depth = iim::NUL_IMG_DEPTH,
+            const char* saved_img_format = "Vaa3DRaw", int saved_img_depth = iim::NUL_IMG_DEPTH,
             std::string frame_dir = "")	throw (iim::IOException);
 		
 
@@ -226,7 +226,7 @@ class VolumeConverter
 		**************************************************************************************************************/
 		void generateTilesVaa3DRawMC ( std::string output_path, bool* resolutions = NULL, 
 			int block_height = -1, int block_width = -1, int block_depth = -1, int method = HALVE_BY_MEAN, bool show_progress_bar = true, 
-            const char* saved_img_format = "raw", int saved_img_depth = iim::NUL_IMG_DEPTH,
+            const char* saved_img_format = "Vaa3DRaw", int saved_img_depth = iim::NUL_IMG_DEPTH,
             std::string frame_dir = "")	throw (iim::IOException);
 
 };

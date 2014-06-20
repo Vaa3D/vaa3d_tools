@@ -110,7 +110,7 @@ void iim::imProgressBar::show(bool toConverter /* = true */)
     else
         teramanager::PMain::getInstance()->emitProgressBarChanged(progress_value_int, minutes_remaining, seconds_remaining%60, message_level_1);
     #else
-    system_CLEAR();
+    int dummy = system_CLEAR();
     printf("OPERATION:\t%s\n",this->message_level_1); // 140427_IANNELLO
     printf("PHASE:\t\t%s\n",this->message_level_2); // 140427_IANNELLO
     printf("TIME REMAINING:\t%d minutes and %d seconds\n", minutes_remaining, seconds_remaining%60);

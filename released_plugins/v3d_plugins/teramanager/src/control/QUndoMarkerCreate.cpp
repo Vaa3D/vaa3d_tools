@@ -28,13 +28,11 @@ void itm::QUndoMarkerCreate::undo()
 
 void itm::QUndoMarkerCreate::redo()
 {
+    /**/itm::debug(itm::LEV1, itm::strprintf("redoFirstTime = %s", redoFirstTime ? "true" : "false").c_str(), __itm__current__function__);
+
     // first time redo's call is aborted: we don't want it to be called once the command is pushed into the QUndoStack
     if(!redoFirstTime)
     {
-        /**/itm::debug(itm::LEV1, 0, __itm__current__function__);
-
-        redoFirstTime = false;
-
         // get markers from Vaa3D
         QList<LocationSimple> vaa3dMarkers = source->V3D_env->getLandmark(source->window);
 
@@ -45,4 +43,6 @@ void itm::QUndoMarkerCreate::redo()
         source->V3D_env->setLandmark(source->window, vaa3dMarkers);
         source->V3D_env->pushObjectIn3DWindow(source->window);
     }
+    else
+        redoFirstTime = false;
 }
