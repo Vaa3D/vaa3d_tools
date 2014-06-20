@@ -7,14 +7,16 @@
 #include <vector>
 #include "pruning_swc_plugin.h"
 
-
+#include <math.h>
 #include "basic_surf_objs.h"
 #include <iostream>
 #include "my_surf_objs.h"
 
 
 using namespace std;
+#define PI 3.14159265359
 #define getParent(n,nt) ((nt).listNeuron.at(n).pn<0)?(1000000000):((nt).hashNeuron.value((nt).listNeuron.at(n).pn))
+#define angle(a,b,c) (acos((((b).x-(a).x)*((c).x-(a).x)+((b).y-(a).y)*((c).y-(a).y)+((b).z-(a).z)*((c).z-(a).z))/(dist(a,b)*dist(a,c)))*180.0/PI)
 
 
 Q_EXPORT_PLUGIN2(pruning_swc, pruning_swc);
@@ -119,21 +121,48 @@ void pruning_swc::domenu(const QString &menu_name, V3DPluginCallback2 &callback,
                     {
                         int index_tip = 0;
                         int parent_tip = getParent(i,nt);
+                        int last_child_tip = i;
                         while(childs[parent_tip].size()<2)
                         {
-
+                            last_child_tip = parent_tip;
                             parent_tip = getParent(parent_tip,nt);
                             index_tip++;
                         }
+
                         if(index_tip < length)
                         {
-                            flag[i] = -1;
 
-                            int parent_tip = getParent(i,nt);
-                            while(childs[parent_tip].size()<2)
+                            double local_ang = 90.0;
+
+                            if(list.at(parent_tip).pn >=0)
                             {
-                                flag[parent_tip] = -1;
-                                parent_tip = getParent(parent_tip,nt);
+                                MyMarker curr_node, parent_node,child_node;
+
+                                curr_node.x = list.at(parent_tip).x;
+                                curr_node.y = list.at(parent_tip).y;
+                                curr_node.z = list.at(parent_tip).z;
+
+                                parent_node.x = list.at(getParent(parent_tip,nt)).x;
+                                parent_node.y = list.at(getParent(parent_tip,nt)).y;
+                                parent_node.z = list.at(getParent(parent_tip,nt)).z;
+
+                                child_node.x = list.at(last_child_tip).x;
+                                child_node.y = list.at(last_child_tip).y;
+                                child_node.z = list.at(last_child_tip).z;
+
+                                local_ang = angle(curr_node,parent_node,child_node);
+                            }
+
+                            if(local_ang < 170.0)
+                            {
+                                flag[i] = -1;
+
+                                int parent_tip = getParent(i,nt);
+                                while(childs[parent_tip].size()<2)
+                                {
+                                    flag[parent_tip] = -1;
+                                    parent_tip = getParent(parent_tip,nt);
+                                }
                             }
                         }
 
@@ -143,8 +172,6 @@ void pruning_swc::domenu(const QString &menu_name, V3DPluginCallback2 &callback,
 
                vector<MyMarker*> before_prunning_swc = readSWC_file(fileOpenName.toStdString());
                vector<MyMarker*> after_prunning_swc;
-
-               NeuronSWC S;
                for (int i=0;i<before_prunning_swc.size();i++)
                {
                    if(flag[i] == 1)
