@@ -73,6 +73,7 @@ class teramanager::CExplorerWindow : public QWidget
         bool waitingFor5D;              //"waiting for 5D data" state flag
         bool scribbling;                //"scribbling on the 3D renderer with right-button mouse" state flag
         QVector<QPoint> scribbling_points;
+        QUndoStack undoStack;           //stack containing undo command actions
 
         //CLASS members
         static CExplorerWindow *first;  //pointer to the first window of the multiresolution explorer windows chain
@@ -237,6 +238,7 @@ class teramanager::CExplorerWindow : public QWidget
         void clearAnnotations() throw (itm::RuntimeException);
         void deleteAnnotationsROI(QVector<QPoint> ROI_contour) throw (itm::RuntimeException);
         void deleteMarkerAt(int x, int y) throw (itm::RuntimeException);
+        void createMarkerAt(int x, int y) throw (itm::RuntimeException);
 
         /**********************************************************************************
         * Saves/restores the state of PMain spinboxes for subvolume selection
@@ -323,6 +325,8 @@ class teramanager::CExplorerWindow : public QWidget
         friend class PMain;
         friend class PAnoToolBar;
         friend class CVolume;
+        friend class QUndoMarkerCreate;
+        friend class QUndoMarkerDelete;
 
 
     public slots:

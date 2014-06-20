@@ -16,6 +16,9 @@ class teramanager::PAnoToolBar : public QWidget
         QToolButton *buttonMarkerRoiDelete;     //button3
         QToolButton *buttonMarkerRoiView;       //button4
 
+        QToolButton *buttonUndo;                //undo button
+        QToolButton *buttonRedo;                //redo button
+
         QPoint dragPosition;
 
         /*********************************************************************************
@@ -97,6 +100,8 @@ class teramanager::PAnoToolBar : public QWidget
         void buttonMarkerDeleteChecked(bool checked);
         void buttonMarkerRoiDeleteChecked(bool checked);
         void buttonMarkerRoiViewChecked(bool checked);
+        void buttonUndoClicked();
+        void buttonRedoClicked();
     
 };
 

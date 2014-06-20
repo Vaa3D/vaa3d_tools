@@ -60,6 +60,8 @@ namespace teramanager
     class QGradientBar;         //Qt-customized class to model a gradient-colored bar
     class QLineTree;            //Qt-customized class to model a three-lined tree
     class QGLRefSys;            //Qt-customized OpenGL widget to render the XYZ reference system applied to a 3D cube
+    class QUndoMarkerCreate;    //QUndoCommand for marker creation
+    class QUndoMarkerDelete;    //QUndoCommand for marker deletion
     struct annotation;          //base class for annotations
 
     class myRenderer_gl1;       //Vaa3D-customized class

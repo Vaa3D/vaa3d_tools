@@ -37,6 +37,8 @@
 #include "renderer_gl1.h"
 #include "v3dr_colormapDialog.h"
 #include "V3Dsubclasses.h"
+#include "QUndoMarkerCreate.h"
+#include "QUndoMarkerDelete.h"
 
 using namespace itm;
 
@@ -484,6 +486,11 @@ bool CExplorerWindow::eventFilter(QObject *object, QEvent *event)
             if(mouseEvt->button() == Qt::RightButton && PAnoToolBar::instance()->buttonMarkerDelete->isChecked())
             {
                 deleteMarkerAt(mouseEvt->x(), mouseEvt->y());
+                return true;
+            }
+            else if(mouseEvt->button() == Qt::RightButton && PAnoToolBar::instance()->buttonMarkerCreate->isChecked())
+            {
+                createMarkerAt(mouseEvt->x(), mouseEvt->y());
                 return true;
             }
             else if(mouseEvt->button() == Qt::RightButton && PAnoToolBar::instance()->buttonMarkerRoiDelete->isChecked())
@@ -1462,6 +1469,18 @@ void CExplorerWindow::deleteAnnotationsROI(QVector<QPoint> ROI_contour) throw (R
                 deleteMarkerAt(j,i);
 
     view3DWidget->setCursor(cursor);
+}
+
+
+void CExplorerWindow::createMarkerAt(int x, int y) throw (itm::RuntimeException)
+{
+    /**/itm::debug(itm::LEV1, strprintf("title = %s, point = (%x, %y)", titleShort.c_str(), x, y).c_str(), __itm__current__function__);
+    view3DWidget->getRenderer()->hitPen(x, y);
+    QList<LocationSimple> vaa3dMarkers = V3D_env->getLandmark(window);
+    undoStack.beginMacro("create marker");
+    undoStack.push(new QUndoMarkerCreate(this, vaa3dMarkers.back()));
+    undoStack.endMacro();
+    PAnoToolBar::instance()->buttonUndo->setEnabled(true);
 }
 
 void CExplorerWindow::deleteMarkerAt(int x, int y) throw (itm::RuntimeException)

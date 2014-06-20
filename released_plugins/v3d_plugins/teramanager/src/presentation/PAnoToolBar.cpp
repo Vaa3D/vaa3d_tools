@@ -22,6 +22,22 @@ PAnoToolBar::PAnoToolBar(QWidget *parent) : QWidget(parent)
     toolBar->addAction(PMain::getInstance()->clearAnnotationsAction);
     toolBar->addSeparator();
 
+
+    /**/
+    buttonUndo = new QToolButton();
+    buttonUndo->setIcon(QIcon(":/icons/undo.png"));
+    buttonUndo->setToolTip("Undo");
+    buttonUndo->setEnabled(false);
+    connect(buttonUndo, SIGNAL(clicked()), this, SLOT(buttonUndoClicked()));
+    toolBar->insertWidget(0, buttonUndo);
+    buttonRedo = new QToolButton();
+    buttonRedo->setIcon(QIcon(":/icons/redo.png"));
+    buttonRedo->setToolTip("Redo");
+    buttonRedo->setEnabled(false);
+    connect(buttonRedo, SIGNAL(clicked()), this, SLOT(buttonRedoClicked()));
+    toolBar->insertWidget(0, buttonRedo);
+    toolBar->addSeparator();
+
     // add new buttons
     buttonMarkerCreate = new QToolButton();
     buttonMarkerCreate->setIcon(QIcon(":/icons/marker_add.png"));
@@ -241,6 +257,31 @@ void PAnoToolBar::buttonMarkerRoiViewChecked(bool checked)
     {
         // set default cursor
 //        CExplorerWindow::setCursor(Qt::ArrowCursor, true);
+    }
+}
+
+
+void PAnoToolBar::buttonUndoClicked()
+{
+    CExplorerWindow* expl = CExplorerWindow::getCurrent();
+    if(expl && expl->undoStack.canUndo())
+    {
+        expl->undoStack.undo();
+        if(!expl->undoStack.canUndo())
+            buttonUndo->setEnabled(false);
+        buttonRedo->setEnabled(true);
+    }
+}
+
+void PAnoToolBar::buttonRedoClicked()
+{
+    CExplorerWindow* expl = CExplorerWindow::getCurrent();
+    if(expl && !expl->undoStack.canRedo())
+    {
+        expl->undoStack.redo();
+        if(!expl->undoStack.canRedo())
+            buttonRedo->setEnabled(false);
+        buttonUndo->setEnabled(true);
     }
 }
 

@@ -189,6 +189,8 @@ HEADERS += ./src/core/ImageManager/VirtualFmtMngr.h
 HEADERS += ./src/core/ImageManager/VirtualVolume.h
 HEADERS += ./src/core/VolumeConverter/VolumeConverter.h
 HEADERS += ./src/core/VolumeConverter/resumer.h
+HEADERS += ./src/control/QUndoMarkerCreate.h
+HEADERS += ./src/control/QUndoMarkerDelete.h
 
 SOURCES += ./src/control/CAnnotations.cpp
 SOURCES += ./src/control/CConverter.cpp
@@ -226,7 +228,8 @@ SOURCES += ./src/core/ImageManager/VirtualFmtMngr.cpp
 SOURCES += ./src/core/ImageManager/VirtualVolume.cpp
 SOURCES += ./src/core/VolumeConverter/VolumeConverter.cpp
 SOURCES += ./src/core/VolumeConverter/resumer.cpp
-
+SOURCES += ./src/control/QUndoMarkerCreate.cpp
+SOURCES += ./src/control/QUndoMarkerDelete.cpp
 
 #set up your own target
 TARGET	= $$qtLibraryTarget(teramanagerplugin)
