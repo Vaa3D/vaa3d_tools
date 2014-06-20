@@ -444,7 +444,7 @@ real_t* Block::loadImageStack(int first_file, int last_file)
 		temp +=  HEIGHT * WIDTH * (last-first+1) * N_BYTESxCHAN * N_CHANS;
 	}
 
-	//conversione char to real_t
+	//conversion from unsigned char to real_t
 
 	if (N_CHANS == 2 || N_CHANS > 3) // only monocromatic or RGB images are supported
 	{

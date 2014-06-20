@@ -152,7 +152,6 @@ public:
 		//PRINT and SHOW methods
 		void print();
 		void show(int D_index, int window_HEIGHT=0, int window_WIDTH=0);
-
 };
 
 #endif

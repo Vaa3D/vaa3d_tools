@@ -461,6 +461,7 @@ void StackStitcher::mergeTilesVaa3DRaw(std::string output_path, int block_height
 			abs_pos_z.width(6);
 			abs_pos_z.fill('0');
 			abs_pos_z << (int)(this->getMultiresABS_D(i,0) + // all stacks start at the same D position
+								- D0 * volume->getVXL_D() * 10 + // WARNING: D0 is counted twice,both in getMultiresABS_D and in slice_start
                                 (POW_INT(2,i)*slice_start[i]) * volume->getVXL_D() * 10);
 
 			//compute the number of slice of previous groups at resolution i
@@ -634,8 +635,6 @@ void StackStitcher::mergeTilesVaa3DRaw(std::string output_path, int block_height
 
 	int n_err = 0; // used to trigger exception in case the .bin file cannot be generated
 
-	if ( !strcmp(saved_img_format,"Vaa3DRaw") ) { // only format "Vaa3DRaw" supports creation of metadata files
-
 	if ( !test_mode ) {
 		// reloads created volumes to generate .bin file descriptors at all resolutions
 		ref_sys temp = volume->getREF_SYS();  // required by clang compiler
@@ -664,8 +663,6 @@ void StackStitcher::mergeTilesVaa3DRaw(std::string output_path, int block_height
 				}
 			}
 		}
-	}
-
 	}
 
 	// deallocate memory
