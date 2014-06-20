@@ -141,37 +141,18 @@ void pruning_swc::domenu(const QString &menu_name, V3DPluginCallback2 &callback,
 
                 }
 
-               //NeutronTree structure
-               NeuronTree nt_prunned;
-               QList <NeuronSWC> listNeuron;
-               QHash <int, int>  hashNeuron;
-               listNeuron.clear();
-               hashNeuron.clear();
-
-               //set node
+               vector<MyMarker*> before_prunning_swc = readSWC_file(fileOpenName.toStdString());
+               vector<MyMarker*> after_prunning_swc;
 
                NeuronSWC S;
-               for (int i=0;i<list.size();i++)
+               for (int i=0;i<before_prunning_swc.size();i++)
                {
                    if(flag[i] == 1)
                    {
-                        NeuronSWC curr = list.at(i);
-                        S.n 	= curr.n;
-                        S.type 	= curr.type;
-                        S.x 	= curr.x;
-                        S.y 	= curr.y;
-                        S.z 	= curr.z;
-                        S.r 	= curr.r;
-                        S.pn 	= curr.pn;
-                        listNeuron.append(S);
-                        hashNeuron.insert(S.n, listNeuron.size()-1);
+                       after_prunning_swc.push_back(before_prunning_swc[i]);
                    }
 
               }
-               nt_prunned.n = -1;
-               nt_prunned.on = true;
-               nt_prunned.listNeuron = listNeuron;
-               nt_prunned.hashNeuron = hashNeuron;
 
                if(flag) {delete[] flag; flag = 0;}
 
@@ -182,11 +163,15 @@ void pruning_swc::domenu(const QString &menu_name, V3DPluginCallback2 &callback,
                        QObject::tr("Supported file (*.swc)"
                            ";;Neuron structure	(*.swc)"
                            ));
-               if (!export_list2file(nt_prunned.listNeuron,fileSaveName,fileOpenName))
+
+               saveSWC_file(fileSaveName.toStdString(), after_prunning_swc);
+
+
+        /*       if (!export_list2file(nt_prunned.listNeuron,fileSaveName,fileOpenName))
                {
                    v3d_msg("fail to write the output swc file.");
                    return;
-               }
+               }*/
 
 
 	}
