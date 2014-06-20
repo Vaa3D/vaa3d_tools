@@ -276,10 +276,10 @@ void PAnoToolBar::buttonUndoClicked()
 void PAnoToolBar::buttonRedoClicked()
 {
     CExplorerWindow* expl = CExplorerWindow::getCurrent();
-    if(expl && !expl->undoStack.canRedo())
+    if(expl && expl->undoStack.canRedo())
     {
         expl->undoStack.redo();
-        if(!expl->undoStack.canRedo())
+        if(expl->undoStack.canRedo())
             buttonRedo->setEnabled(false);
         buttonUndo->setEnabled(true);
     }

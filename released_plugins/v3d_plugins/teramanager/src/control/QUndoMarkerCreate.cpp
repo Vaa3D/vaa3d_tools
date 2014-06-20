@@ -29,7 +29,7 @@ void itm::QUndoMarkerCreate::undo()
 void itm::QUndoMarkerCreate::redo()
 {
     // first time redo's call is aborted: we don't want it to be called once the command is pushed into the QUndoStack
-//    if(!redoFirstTime)
+    if(!redoFirstTime)
     {
         /**/itm::debug(itm::LEV1, 0, __itm__current__function__);
 
