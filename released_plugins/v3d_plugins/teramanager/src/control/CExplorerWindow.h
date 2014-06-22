@@ -237,7 +237,7 @@ class teramanager::CExplorerWindow : public QWidget
         void loadAnnotations() throw (itm::RuntimeException);
         void clearAnnotations() throw (itm::RuntimeException);
         void deleteMarkerROI(QVector<QPoint> ROI_contour) throw (itm::RuntimeException);
-        void deleteMarkerAt(int x, int y) throw (itm::RuntimeException);
+        void deleteMarkerAt(int x, int y, QList<LocationSimple>* deletedMarkers = 0) throw (itm::RuntimeException);
         void createMarkerAt(int x, int y) throw (itm::RuntimeException);
 
         /**********************************************************************************

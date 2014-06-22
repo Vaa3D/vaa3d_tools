@@ -39,6 +39,7 @@
 #include "V3Dsubclasses.h"
 #include "QUndoMarkerCreate.h"
 #include "QUndoMarkerDelete.h"
+#include "QUndoMarkerDeleteROI.h"
 
 using namespace itm;
 
@@ -1463,11 +1464,17 @@ void CExplorerWindow::deleteMarkerROI(QVector<QPoint> ROI_contour) throw (Runtim
     view3DWidget->setCursor(Qt::WaitCursor);
 
     // delete marker (if any) at each location inside the polygon
+    QList<LocationSimple> deletedMarkers;
     QRect bbox = ROI_poly.boundingRect();
     for(int i=bbox.top(); i<bbox.bottom(); i=i+10)
         for(int j=bbox.left(); j<bbox.right(); j=j+10)
             if(ROI_poly.containsPoint(QPoint(j,i), Qt::OddEvenFill))    // Ray-crossing algorithm
-                deleteMarkerAt(j,i);
+                deleteMarkerAt(j,i, &deletedMarkers);
+
+    undoStack.beginMacro("delete markers");
+    undoStack.push(new QUndoMarkerDeleteROI(this, deletedMarkers));
+    undoStack.endMacro();
+    PAnoToolBar::instance()->buttonUndo->setEnabled(true);
 
     // reset saved cursor
     view3DWidget->setCursor(cursor);
@@ -1485,7 +1492,7 @@ void CExplorerWindow::createMarkerAt(int x, int y) throw (itm::RuntimeException)
     PAnoToolBar::instance()->buttonUndo->setEnabled(true);
 }
 
-void CExplorerWindow::deleteMarkerAt(int x, int y) throw (itm::RuntimeException)
+void CExplorerWindow::deleteMarkerAt(int x, int y, QList<LocationSimple>* deletedMarkers /* = 0 */) throw (itm::RuntimeException)
 {
     /**/itm::debug(itm::LEV1, strprintf("title = %s, point = (%x, %y)", titleShort.c_str(), x, y).c_str(), __itm__current__function__);
 
@@ -1511,10 +1518,15 @@ void CExplorerWindow::deleteMarkerAt(int x, int y) throw (itm::RuntimeException)
     // remove selected markers
     for(int i=0; i<vaa3dMarkers_tbd.size(); i++)
     {
-        undoStack.beginMacro("delete marker");
-        undoStack.push(new QUndoMarkerDelete(this, vaa3dMarkers[vaa3dMarkers_tbd[i]]));
-        undoStack.endMacro();
-        PAnoToolBar::instance()->buttonUndo->setEnabled(true);
+        if(deletedMarkers)
+            deletedMarkers->push_back(vaa3dMarkers[vaa3dMarkers_tbd[i]]);
+        else
+        {
+            undoStack.beginMacro("delete marker");
+            undoStack.push(new QUndoMarkerDelete(this, vaa3dMarkers[vaa3dMarkers_tbd[i]]));
+            undoStack.endMacro();
+            PAnoToolBar::instance()->buttonUndo->setEnabled(true);
+        }
 
         vaa3dMarkers.removeAt(vaa3dMarkers_tbd[i]);
     }

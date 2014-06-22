@@ -26,13 +26,15 @@ PAnoToolBar::PAnoToolBar(QWidget *parent) : QWidget(parent)
     /**/
     buttonUndo = new QToolButton();
     buttonUndo->setIcon(QIcon(":/icons/undo.png"));
-    buttonUndo->setToolTip("Undo");
+    buttonUndo->setToolTip("Undo (Ctrl+Z)");
     buttonUndo->setEnabled(false);
+    buttonUndo->setShortcut(QKeySequence("Ctrl+Z"));
     connect(buttonUndo, SIGNAL(clicked()), this, SLOT(buttonUndoClicked()));
     toolBar->insertWidget(0, buttonUndo);
     buttonRedo = new QToolButton();
     buttonRedo->setIcon(QIcon(":/icons/redo.png"));
-    buttonRedo->setToolTip("Redo");
+    buttonRedo->setToolTip("Redo (Ctrl+Shift+Z)");
+    buttonRedo->setShortcut(QKeySequence("Ctrl+Shift+Z"));
     buttonRedo->setEnabled(false);
     connect(buttonRedo, SIGNAL(clicked()), this, SLOT(buttonRedoClicked()));
     toolBar->insertWidget(0, buttonRedo);
