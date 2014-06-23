@@ -87,9 +87,9 @@ class teramanager::PConverter : public QWidget
         std::vector<QHBoxLayout*> resolutionsRowsLayouts;
 
         QPushButton* addResolutionButton;
-        QSpinBox* stacksWidthField;     //field to select stacks width
-        QSpinBox* stacksHeightField;    //field to select stacks height
-        QSpinBox* stacksDepthField;     //field to select stacks depth (optional)
+        QSpinBox* blockWidthField;      //field to select stacks width
+        QSpinBox* blockHeightField;     //field to select stacks height
+        QSpinBox* blockDepthField;      //field to select stacks depth (optional)
         QLabel* memoryField;            //field for memory usage estimation
         QComboBox* downsamplingCbox;    //downsampling method
 

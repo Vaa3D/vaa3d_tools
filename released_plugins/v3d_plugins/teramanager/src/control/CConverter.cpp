@@ -81,9 +81,11 @@ void CConverter::setMembers(PConverter* pConverter) throw (RuntimeException)
     {
         outVolPath = pConverter->outPathField->text().toStdString();
         outVolFormat = pConverter->outFormatCBox->currentText().toStdString();
-        if(outVolFormat.compare(iim::STACKED_FORMAT)  != 0 &&
-           outVolFormat.compare(iim::TILED_FORMAT)    != 0 &&
-           outVolFormat.compare(iim::TILED_MC_FORMAT) != 0)
+        if(outVolFormat.compare(iim::STACKED_FORMAT)        != 0 &&
+           outVolFormat.compare(iim::TILED_FORMAT)          != 0 &&
+           outVolFormat.compare(iim::TILED_MC_FORMAT)       != 0 &&
+           outVolFormat.compare(iim::TILED_TIF3D_FORMAT)    != 0 &&
+           outVolFormat.compare(iim::TILED_MC_TIF3D_FORMAT) != 0)
         {
             sprintf(errMsg, "Output format \"%s\" not yet supported", outVolFormat.c_str());
             throw RuntimeException(errMsg);
@@ -104,9 +106,9 @@ void CConverter::setMembers(PConverter* pConverter) throw (RuntimeException)
             else
                 resolutions[i] = false;
         }
-        stacksWidth = pConverter->stacksWidthField->value();
-        stacksHeight = pConverter->stacksHeightField->value();
-        stacksDepth = pConverter->stacksDepthField->value();
+        stacksWidth = pConverter->blockWidthField->value();
+        stacksHeight = pConverter->blockHeightField->value();
+        stacksDepth = pConverter->blockDepthField->value();
         downsamplingMethod = pConverter->downsamplingCbox->currentIndex();
         time_series = pConverter->timeSeriesCheckBox->isChecked();
         if(downsamplingMethod == 0)

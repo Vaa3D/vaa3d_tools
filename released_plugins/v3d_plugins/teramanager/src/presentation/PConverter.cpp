@@ -86,14 +86,14 @@ PConverter::PConverter(V3DPluginCallback *callback, QWidget *parent) : QWidget(p
     inFormatCBox = new QComboBox();
     inFormatCBox->insertItem(0, iim::STACKED_FORMAT.c_str());
     inFormatCBox->insertItem(1, iim::SIMPLE_FORMAT.c_str());
-    inFormatCBox->insertItem(2, iim::TILED_TIF3D_FORMAT.c_str());
-    inFormatCBox->insertItem(3, iim::TIF3D_FORMAT.c_str());
-    inFormatCBox->insertItem(4, iim::RAW_FORMAT.c_str());
-    inFormatCBox->insertItem(5, iim::TILED_FORMAT.c_str());
-    inFormatCBox->insertItem(6, iim::TILED_MC_FORMAT.c_str());
-    inFormatCBox->insertItem(7, iim::SIMPLE_RAW_FORMAT.c_str());
+    inFormatCBox->insertItem(2, iim::TIF3D_FORMAT.c_str());
+    inFormatCBox->insertItem(3, iim::TILED_TIF3D_FORMAT.c_str());
+    inFormatCBox->insertItem(4, iim::TILED_MC_TIF3D_FORMAT.c_str());
+    inFormatCBox->insertItem(5, iim::RAW_FORMAT.c_str());
+    inFormatCBox->insertItem(6, iim::TILED_FORMAT.c_str());
+    inFormatCBox->insertItem(7, iim::TILED_MC_FORMAT.c_str());
+    inFormatCBox->insertItem(8, iim::SIMPLE_RAW_FORMAT.c_str());
     PMain::setEnabledComboBoxItem(inFormatCBox, 2, false);
-    PMain::setEnabledComboBoxItem(inFormatCBox, 3, false);
     inFormatCBox->setEditable(true);
     inFormatCBox->lineEdit()->setReadOnly(true);
     inFormatCBox->lineEdit()->setAlignment(Qt::AlignCenter);
@@ -130,17 +130,17 @@ PConverter::PConverter(V3DPluginCallback *callback, QWidget *parent) : QWidget(p
     outFormatCBox = new QComboBox();
     outFormatCBox->insertItem(0, iim::STACKED_FORMAT.c_str());
     outFormatCBox->insertItem(1, iim::SIMPLE_FORMAT.c_str());
-    outFormatCBox->insertItem(2, iim::TILED_TIF3D_FORMAT.c_str());
-    outFormatCBox->insertItem(3, iim::TIF3D_FORMAT.c_str());
-    outFormatCBox->insertItem(4, iim::RAW_FORMAT.c_str());
-    outFormatCBox->insertItem(5, iim::TILED_FORMAT.c_str());
-    outFormatCBox->insertItem(6, iim::TILED_MC_FORMAT.c_str());
-    outFormatCBox->insertItem(7, iim::SIMPLE_RAW_FORMAT.c_str());
+    outFormatCBox->insertItem(2, iim::TIF3D_FORMAT.c_str());
+    outFormatCBox->insertItem(3, iim::TILED_TIF3D_FORMAT.c_str());
+    outFormatCBox->insertItem(4, iim::TILED_MC_TIF3D_FORMAT.c_str());
+    outFormatCBox->insertItem(5, iim::RAW_FORMAT.c_str());
+    outFormatCBox->insertItem(6, iim::TILED_FORMAT.c_str());
+    outFormatCBox->insertItem(7, iim::TILED_MC_FORMAT.c_str());
+    outFormatCBox->insertItem(8, iim::SIMPLE_RAW_FORMAT.c_str());
     PMain::setEnabledComboBoxItem(outFormatCBox, 1, false);
     PMain::setEnabledComboBoxItem(outFormatCBox, 2, false);
-    PMain::setEnabledComboBoxItem(outFormatCBox, 3, false);
-    PMain::setEnabledComboBoxItem(outFormatCBox, 4, false);
-    PMain::setEnabledComboBoxItem(outFormatCBox, 7, false);
+    PMain::setEnabledComboBoxItem(outFormatCBox, 5, false);
+    PMain::setEnabledComboBoxItem(outFormatCBox, 8, false);
     outFormatCBox->setEditable(true);
     outFormatCBox->lineEdit()->setReadOnly(true);
     outFormatCBox->lineEdit()->setAlignment(Qt::AlignCenter);
@@ -155,24 +155,24 @@ PConverter::PConverter(V3DPluginCallback *callback, QWidget *parent) : QWidget(p
     outFileButton = new QPushButton("Browse for file...");
     resolutionsLayout = new QVBoxLayout();
     addResolutionButton = new QPushButton("+");
-    stacksWidthField = new QSpinBox();
-    stacksWidthField->setAlignment(Qt::AlignCenter);
-    stacksWidthField->setMinimum(100);
-    stacksWidthField->setMaximum(10000);
-    stacksWidthField->setValue(CSettings::instance()->getVCStacksWidth());
-    stacksWidthField->setSuffix(" (X)");
-    stacksHeightField = new QSpinBox();
-    stacksHeightField->setAlignment(Qt::AlignCenter);
-    stacksHeightField->setMinimum(100);
-    stacksHeightField->setMaximum(10000);
-    stacksHeightField->setSuffix(" (Y)");
-    stacksHeightField->setValue(CSettings::instance()->getVCStacksHeight());    
-    stacksDepthField = new QSpinBox();
-    stacksDepthField->setAlignment(Qt::AlignCenter);
-    stacksDepthField->setMinimum(100);
-    stacksDepthField->setMaximum(10000);
-    stacksDepthField->setSuffix(" (Z)");
-    stacksDepthField->setValue(CSettings::instance()->getVCStacksDepth());
+    blockWidthField = new QSpinBox();
+    blockWidthField->setAlignment(Qt::AlignCenter);
+    blockWidthField->setMinimum(100);
+    blockWidthField->setMaximum(10000);
+    blockWidthField->setValue(CSettings::instance()->getVCStacksWidth());
+    blockWidthField->setSuffix(" (X)");
+    blockHeightField = new QSpinBox();
+    blockHeightField->setAlignment(Qt::AlignCenter);
+    blockHeightField->setMinimum(100);
+    blockHeightField->setMaximum(10000);
+    blockHeightField->setSuffix(" (Y)");
+    blockHeightField->setValue(CSettings::instance()->getVCStacksHeight());
+    blockDepthField = new QSpinBox();
+    blockDepthField->setAlignment(Qt::AlignCenter);
+    blockDepthField->setMinimum(100);
+    blockDepthField->setMaximum(10000);
+    blockDepthField->setSuffix(" (Z)");
+    blockDepthField->setValue(CSettings::instance()->getVCStacksDepth());
     memoryField = new QLabel();
     memoryField->setAlignment(Qt::AlignLeft);
     downsamplingCbox = new QComboBox(this);
@@ -237,11 +237,11 @@ PConverter::PConverter(V3DPluginCallback *callback, QWidget *parent) : QWidget(p
     QLabel* stacksDimLabel = new QLabel("Block dims:");
     stacksDimLabel->setFixedWidth(220);
     stacksDimLayout->addWidget(stacksDimLabel);
-    stacksDimLayout->addWidget(stacksWidthField, 1);
+    stacksDimLayout->addWidget(blockWidthField, 1);
     stacksDimLayout->addSpacing(15);
-    stacksDimLayout->addWidget(stacksHeightField, 1);
+    stacksDimLayout->addWidget(blockHeightField, 1);
     stacksDimLayout->addSpacing(15);
-    stacksDimLayout->addWidget(stacksDepthField, 1);
+    stacksDimLayout->addWidget(blockDepthField, 1);
     conversionFormLayout->addLayout(stacksDimLayout);
 
     QHBoxLayout* downSampleMethLayout = new QHBoxLayout();
@@ -305,8 +305,8 @@ PConverter::PConverter(V3DPluginCallback *callback, QWidget *parent) : QWidget(p
     connect(inPathField, SIGNAL(editingFinished()), this, SLOT(startButtonClicked()));
     connect(outPathField, SIGNAL(textChanged(QString)), this, SLOT(settingsChanged()));
     connect(inFormatCBox, SIGNAL(currentIndexChanged(int)), this, SLOT(settingsChanged()));
-    connect(stacksWidthField, SIGNAL(valueChanged(int)), this, SLOT(settingsChanged()));
-    connect(stacksHeightField, SIGNAL(valueChanged(int)), this, SLOT(settingsChanged()));
+    connect(blockWidthField, SIGNAL(valueChanged(int)), this, SLOT(settingsChanged()));
+    connect(blockHeightField, SIGNAL(valueChanged(int)), this, SLOT(settingsChanged()));
     connect(addResolutionButton, SIGNAL(clicked()), this, SLOT(addResolution()));
     resetGUI();
 
@@ -525,9 +525,9 @@ void PConverter::settingsChanged()
     CSettings::instance()->setVCOutputPath(outPathField->text().toStdString());
     CSettings::instance()->setVCInputFormat(inFormatCBox->currentText().toStdString());
     CSettings::instance()->setVCOutputFormat(outFormatCBox->currentText().toStdString());
-    CSettings::instance()->setVCStacksWidth(stacksWidthField->value());
-    CSettings::instance()->setVCStacksHeight(stacksHeightField->value());
-    CSettings::instance()->setVCStacksDepth(stacksDepthField->value());
+    CSettings::instance()->setVCStacksWidth(blockWidthField->value());
+    CSettings::instance()->setVCStacksHeight(blockHeightField->value());
+    CSettings::instance()->setVCStacksDepth(blockDepthField->value());
     CSettings::instance()->writeSettings();
 }
 
@@ -558,7 +558,7 @@ void PConverter::volformatChanged (int )
         buttonLayout->setCurrentWidget(dirButton);
 
         if(sender == outFormatCBox)
-            stacksDepthField->setVisible(false);
+            blockDepthField->setVisible(false);
     }
     else if(sender->currentText().compare(iim::SIMPLE_FORMAT.c_str(), Qt::CaseInsensitive) == 0)
     {
@@ -567,7 +567,7 @@ void PConverter::volformatChanged (int )
         buttonLayout->setCurrentWidget(dirButton);
 
         if(sender == outFormatCBox)
-            stacksDepthField->setVisible(false);
+            blockDepthField->setVisible(false);
     }
     else if(sender->currentText().compare(iim::TILED_FORMAT.c_str(), Qt::CaseInsensitive) == 0)
     {
@@ -576,7 +576,7 @@ void PConverter::volformatChanged (int )
         buttonLayout->setCurrentWidget(dirButton);
 
         if(sender == outFormatCBox)
-            stacksDepthField->setVisible(true);
+            blockDepthField->setVisible(true);
     }
     else if(sender->currentText().compare(iim::TILED_MC_FORMAT.c_str(), Qt::CaseInsensitive) == 0)
     {
@@ -585,7 +585,7 @@ void PConverter::volformatChanged (int )
         buttonLayout->setCurrentWidget(dirButton);
 
         if(sender == outFormatCBox)
-            stacksDepthField->setVisible(true);
+            blockDepthField->setVisible(true);
     }
     else if(sender->currentText().compare(iim::RAW_FORMAT.c_str(), Qt::CaseInsensitive) == 0)
     {
@@ -596,7 +596,7 @@ void PConverter::volformatChanged (int )
             buttonLayout->setCurrentWidget(fileButton);
 
         if(sender == outFormatCBox)
-            stacksDepthField->setVisible(false);
+            blockDepthField->setVisible(false);
     }
     else if(sender->currentText().compare(iim::SIMPLE_RAW_FORMAT.c_str(), Qt::CaseInsensitive) == 0)
     {
@@ -604,7 +604,33 @@ void PConverter::volformatChanged (int )
         buttonLayout->setCurrentWidget(dirButton);
 
         if(sender == outFormatCBox)
-            stacksDepthField->setVisible(false);
+            blockDepthField->setVisible(false);
+    }
+    else if(sender->currentText().compare(iim::TILED_TIF3D_FORMAT.c_str(), Qt::CaseInsensitive) == 0)
+    {
+        helpBox->setText("Two-leveled folder structure (see <a href=\"http://code.google.com/p/terastitcher/wiki/SupportedFormats\">here</a>) with each tile composed "
+                                  "by a series of 3D blocks stored into multipage TIFF files containing up to 3 channels (RGB).");
+        buttonLayout->setCurrentWidget(dirButton);
+
+        if(sender == outFormatCBox)
+            blockDepthField->setVisible(true);
+    }
+    else if(sender->currentText().compare(iim::TILED_MC_TIF3D_FORMAT.c_str(), Qt::CaseInsensitive) == 0)
+    {
+        helpBox->setText("Three-leveled folder structure (first level for channels, other two levels for tiling X vs Y) with each tile composed "
+                                  "by a series of 3D blocks stored into multipage TIFF files containing a single channel.");
+        buttonLayout->setCurrentWidget(dirButton);
+
+        if(sender == outFormatCBox)
+            blockDepthField->setVisible(true);
+    }
+    else if(sender->currentText().compare(iim::TIF3D_FORMAT.c_str(), Qt::CaseInsensitive) == 0)
+    {
+        helpBox->setText("Multipage TIFF format (single file)");
+        buttonLayout->setCurrentWidget(fileButton);
+
+        if(sender == outFormatCBox)
+            blockDepthField->setVisible(false);
     }
     else
         helpBox->setText("<html><p style=\"text-align:justify;\"> Format not yet supported. </p></html>");

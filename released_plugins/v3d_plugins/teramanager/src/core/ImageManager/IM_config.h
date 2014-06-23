@@ -109,15 +109,16 @@ namespace IconImageManager
     const int         NATIVE_RTYPE = 0;                         // loadVolume returns 1 byte per channel type
     const std::string DEF_IMG_FORMAT = "tif";                   // default image format
     const int         STATIC_STRINGS_SIZE = 1024;               // size of static C-strings
-    const std::string TILED_MC_FORMAT    = "Vaa3D raw (tiled, 4D)";    // unique ID for the TiledMCVolume class
-    const std::string TILED_FORMAT       = "Vaa3D raw (tiled, RGB)";   // unique ID for the TiledVolume class
-    const std::string STACKED_FORMAT     = "Image series (tiled)";     // unique ID for the StackedVolume class
-    const std::string SIMPLE_FORMAT      = "Image series (nontiled)";  // unique ID for the SimpleVolume class
-    const std::string SIMPLE_RAW_FORMAT  = "Vaa3D raw (series)";       // unique ID for the SimpleVolumeRaw class
-    const std::string RAW_FORMAT         = "Vaa3D raw";                // unique ID for the RawVolume class
-    const std::string TIF3D_FORMAT       = "3D TIFF (nontiled)";       // unique ID for the Tiff3DVolume class
-    const std::string TILED_TIF3D_FORMAT = "3D TIFF (tiled)";          // unique ID for the TiledTiff3DVolume class
-    const std::string TIME_SERIES        = "Time series";              // unique ID for the TimeSeries class
+    const std::string TILED_MC_FORMAT       = "Vaa3D raw (tiled, 4D)";     // unique ID for the TiledMCVolume class
+    const std::string TILED_FORMAT          = "Vaa3D raw (tiled, RGB)";    // unique ID for the TiledVolume class
+    const std::string STACKED_FORMAT        = "Image series (tiled)";      // unique ID for the StackedVolume class
+    const std::string SIMPLE_FORMAT         = "Image series";              // unique ID for the SimpleVolume class
+    const std::string SIMPLE_RAW_FORMAT     = "Vaa3D raw (series)";        // unique ID for the SimpleVolumeRaw class
+    const std::string RAW_FORMAT            = "Vaa3D raw";                 // unique ID for the RawVolume class
+    const std::string TIF3D_FORMAT          = "TIFF multipage (series)";   // unique ID for multipage TIFF format (nontiled)
+    const std::string TILED_TIF3D_FORMAT    = "TIFF multipage (tiled, RGB)";// unique ID for multipage TIFF format (tiled)
+    const std::string TILED_MC_TIF3D_FORMAT = "TIFF multipage (tiled, 4D)";// unique ID for multipage TIFF format (nontiled, 4D)
+    const std::string TIME_SERIES           = "Time series";               // unique ID for the TimeSeries class
 
     const double      PI = 3.14159265;                          // pi
     const int         TMITREE_MAX_HEIGHT  = 10;                 // maximum depth of the TMITREE

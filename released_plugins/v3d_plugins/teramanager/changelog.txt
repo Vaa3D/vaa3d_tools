@@ -11,8 +11,16 @@ ties names are:
 - Rem: a feature no longer available
 
 ============================================================================================
+Version 0.9.94
+June 23rd, 2014
+--------------------------------------------------------------------------------------------
+- New: added support for "TIFF multipage (tiled, RGB)" and "TIFF multipage (tiled, 4D)" file
+       formats to both TeraConverter and TeraFly.
+--------------------------------------------------------------------------------------------
+
+
 Version 0.9.93
-June 23th, 2014
+June 23rd, 2014
 --------------------------------------------------------------------------------------------
 - New: added Undo/Redo features in the TeraFly's annotation toolbar. Only marker-based oper-
        ations (create, delete, delete in a ROI) are currently supported. The number of oper-
