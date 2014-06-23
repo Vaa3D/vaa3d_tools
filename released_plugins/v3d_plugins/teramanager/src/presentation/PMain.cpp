@@ -1499,10 +1499,14 @@ void PMain::clearAnnotations()
 
     try
     {
-        if(CExplorerWindow::getCurrent())
+        CExplorerWindow *cur_win = CExplorerWindow::getCurrent();
+        if(cur_win)
         {
             CAnnotations::getInstance()->clear();
-            CExplorerWindow::getCurrent()->loadAnnotations();
+            cur_win->undoStack.clear();
+            cur_win->loadAnnotations();
+            PAnoToolBar::instance()->buttonUndo->setEnabled(false);
+            PAnoToolBar::instance()->buttonRedo->setEnabled(false);
         }
         virtualSpaceSizeMenu->setEnabled(true);
     }

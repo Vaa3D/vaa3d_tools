@@ -42,9 +42,6 @@ void itm::QUndoMarkerDelete::redo()
         for(int i=0; i<vaa3dMarkers.size(); i++)
             if(vaa3dMarkers[i].x == marker.x && vaa3dMarkers[i].y == marker.y && vaa3dMarkers[i].z == marker.z)
                 vaa3dMarkers.removeAt(i);
-            else if(fabs(vaa3dMarkers[i].x-marker.x)<2 && fabs(vaa3dMarkers[i].y-marker.y)<2 && fabs(vaa3dMarkers[i].z-marker.z)<2)
-                QMessageBox::information(0, "Warning", itm::strprintf("I am not removing vaa3d marker (%.1f, %.1f, %.1f) because is not equal to the searched marker (%.1f, %.1f, %.1f)",
-                       vaa3dMarkers[i].x, vaa3dMarkers[i].y, vaa3dMarkers[i].z, marker.x, marker.y, marker.z).c_str());
 
         // set new markers
         source->V3D_env->setLandmark(source->window, vaa3dMarkers);

@@ -7,6 +7,11 @@ itm::QUndoMarkerDeleteROI::QUndoMarkerDeleteROI(itm::CExplorerWindow* _source, Q
     source = _source;
     markers = _markers;
     redoFirstTime = true;
+
+    printf("QUndoMarkerDeleteROI created with markers ");
+    for(int i=0; i<markers.size(); i++)
+        printf("(%.1f, %.1f, %.1f) ", markers[i].x, markers[i].y, markers[i].z);
+    printf("\n");
 }
 
 // undo and redo methods
@@ -26,6 +31,7 @@ void itm::QUndoMarkerDeleteROI::undo()
     source->V3D_env->pushObjectIn3DWindow(source->window);
 
 
+    //QMessageBox::information(0, "Info", itm::strprintf("QUndoMarkerDeleteROI::undo()\n\nAdded %d markers", markers.size()).c_str());
     // end select mode
     //source->view3DWidget->getRenderer()->endSelectMode();
 }
@@ -41,20 +47,28 @@ void itm::QUndoMarkerDeleteROI::redo()
         QList<LocationSimple> vaa3dMarkers = source->V3D_env->getLandmark(source->window);
 
         // remove again the markers previosly deleted
-        for(int i=0; i<vaa3dMarkers.size(); i++)
-            for(int j=0; j<markers.size(); j++)
+        int count = 0;
+        for(int j=0; j<markers.size(); j++)
+        {
+            bool removed = false;
+            for(int i=0; i<vaa3dMarkers.size() && !removed; i++)
             {
                 if(vaa3dMarkers[i].x == markers[j].x && vaa3dMarkers[i].y == markers[j].y && vaa3dMarkers[i].z == markers[j].z)
+                {
                     vaa3dMarkers.removeAt(i);
-                else if(fabs(vaa3dMarkers[i].x-markers[j].x)<4 && fabs(vaa3dMarkers[i].y-markers[j].y)<4 && fabs(vaa3dMarkers[i].z-markers[j].z)<4)
-                    QMessageBox::information(0, "Warning", itm::strprintf("I am not removing vaa3d marker (%.1f, %.1f, %.1f) because is not equal to the searched marker (%.1f, %.1f, %.1f)",
-                           vaa3dMarkers[i].x, vaa3dMarkers[i].y, vaa3dMarkers[i].z, markers[j].x, markers[j].y, markers[j].z).c_str());
+                    count++;
+                    removed = true;
+                }
             }
+//            if(!removed)
+//                QMessageBox::warning(0, "warning", itm::strprintf("cannot find marker at (%.1f, %.1f, %.1f)", markers[j].x, markers[j].y, markers[j].z).c_str());
+        }
 
         // set new markers
         source->V3D_env->setLandmark(source->window, vaa3dMarkers);
         source->V3D_env->pushObjectIn3DWindow(source->window);
 
+        //QMessageBox::information(0, "Info", itm::strprintf("QUndoMarkerDeleteROI::undo()\n\nRemoved %d markers",count).c_str());
 
         // end select mode
         //source->view3DWidget->getRenderer()->endSelectMode();

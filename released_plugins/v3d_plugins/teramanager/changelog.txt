@@ -11,6 +11,15 @@ ties names are:
 - Rem: a feature no longer available
 
 ============================================================================================
+Version 0.9.93
+June 23th, 2014
+--------------------------------------------------------------------------------------------
+- New: added Undo/Redo features in the TeraFly's annotation toolbar. Only marker-based oper-
+       ations (create, delete, delete in a ROI) are currently supported. The number of oper-
+       ations that can be undone/redone is virtually unlimited.
+--------------------------------------------------------------------------------------------
+
+
 Version 0.9.92
 June 19th, 2014
 --------------------------------------------------------------------------------------------
