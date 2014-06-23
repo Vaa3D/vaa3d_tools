@@ -263,7 +263,7 @@ void CAnnotations::Octree::_rec_insert(const Poctant& p_octant, annotation& neur
         }
         else
             throw RuntimeException(strprintf("in CAnnotations::Octree::insert(...): Out of bounds neuron [%.0f,%.0f,%.0f] (vaa3d n = %d).\n\n"
-                                             "To activate out of bounds neuron visualization\, please go to \"Options\"->\"3D annotation\"->\"Virtual space size\" and select the option \"Unlimited\".",
+                                             "To activate out of bounds neuron visualization, please go to \"Options\"->\"3D annotation\"->\"Virtual space size\" and select the option \"Unlimited\".",
                                              neuron.x, neuron.y, neuron.z, neuron.vaa3d_n));
     }
     else

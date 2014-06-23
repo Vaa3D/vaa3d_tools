@@ -61,7 +61,6 @@ PAnoToolBar::PAnoToolBar(QWidget *parent) : QWidget(parent)
     buttonMarkerRoiDelete->setToolTip("1-right-stroke to delete a group of markers");
     connect(buttonMarkerRoiDelete, SIGNAL(toggled(bool)), this, SLOT(buttonMarkerRoiDeleteChecked(bool)));
     toolBar->insertWidget(0, buttonMarkerRoiDelete);
-    toolBar->addSeparator();
     /**/
     buttonMarkerRoiView = new QToolButton();
     buttonMarkerRoiView->setIcon(QIcon(":/icons/marker_roi_view.png"));
@@ -69,6 +68,15 @@ PAnoToolBar::PAnoToolBar(QWidget *parent) : QWidget(parent)
     buttonMarkerRoiView->setToolTip("Show/hide markers around the displayed ROI");
     connect(buttonMarkerRoiView, SIGNAL(toggled(bool)), this, SLOT(buttonMarkerRoiViewChecked(bool)));
     toolBar->insertWidget(0, buttonMarkerRoiView);
+
+    /**/
+    buttonOptions = new QToolButton();
+    buttonOptions->setIcon(QIcon(":/icons/options.png"));
+    buttonOptions->setMenu(PMain::getInstance()->threeDMenu);
+    buttonOptions->setPopupMode(QToolButton::InstantPopup);
+    buttonOptions->setToolTip("Options");
+    toolBar->addSeparator();
+    toolBar->insertWidget(0, buttonOptions);
 
     // layout
     QVBoxLayout* layout = new QVBoxLayout();
@@ -238,27 +246,33 @@ void PAnoToolBar::buttonMarkerRoiViewChecked(bool checked)
     /**/itm::debug(itm::LEV3, strprintf("checked = %s", checked ? "true" : "false").c_str(), __itm__current__function__);
 
     CExplorerWindow* expl = CExplorerWindow::getCurrent();
+    if(expl)
+    {
+        QList <ImageMarker>& markers = static_cast<Renderer_gl1*>(expl->view3DWidget->getRenderer())->listMarker;
+        int vmPerc = CSettings::instance()->getAnnotationVirtualMargin();
+        int vmX = (expl->volH1-expl->volH0)*(vmPerc/100.0f)/2;
+        int vmY = (expl->volV1-expl->volV0)*(vmPerc/100.0f)/2;
+        int vmZ = (expl->volD1-expl->volD0)*(vmPerc/100.0f)/2;
 
-    if(checked)
-    {
-        QMessageBox::information(this, "Warning", "Not yet implemented. But stay tuned!");
-        buttonMarkerRoiView->setChecked(false);
-    }
+        for(int i=0; i<markers.size(); i++)
+        {
+            if(      (markers[i].x < 0 && markers[i].x >= -vmX) ||
+                     (markers[i].y < 0 && markers[i].y >= -vmY) ||
+                     (markers[i].z < 0 && markers[i].z >= -vmZ) ||
+                     (markers[i].x  >= (expl->volH1-expl->volH0) && markers[i].x <=  (expl->volH1-expl->volH0+vmX)) ||
+                     (markers[i].y  >= (expl->volV1-expl->volV0) && markers[i].y <=  (expl->volV1-expl->volV0+vmY)) ||
+                     (markers[i].z  >= (expl->volD1-expl->volD0) && markers[i].x <=  (expl->volD1-expl->volD0+vmZ)))
+                        markers[i].on = checked;
+            if( (markers[i].x < -vmX) ||
+                     (markers[i].y < -vmY) ||
+                     (markers[i].z < -vmZ) ||
+                     (markers[i].x  >= (expl->volH1-expl->volH0+vmX)) ||
+                     (markers[i].y  >= (expl->volV1-expl->volV0+vmY)) ||
+                     (markers[i].z  >= (expl->volD1-expl->volD0+vmZ)))
+                        markers[i].on = false;
+        }
 
-    if(checked)
-    {
-//        // uncheck other buttons but the current one
-//        if(buttonMarkerCreate->isChecked())
-//            buttonMarkerCreate->setChecked(false);
-//        if(buttonMarkerDelete->isChecked())
-//            buttonMarkerDelete->setChecked(false);
-//        if(buttonMarkerRoiDelete->isChecked())
-//            buttonMarkerRoiDelete->setChecked(false);
-    }
-    else
-    {
-        // set default cursor
-//        CExplorerWindow::setCursor(Qt::ArrowCursor, true);
+        expl->view3DWidget->updateTool();
     }
 }
 

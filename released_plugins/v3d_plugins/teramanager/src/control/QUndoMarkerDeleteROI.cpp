@@ -1,6 +1,7 @@
 #include "QUndoMarkerDeleteROI.h"
 #include "../control/CExplorerWindow.h"
 #include "v3dr_glwidget.h"
+#include "../presentation/PAnoToolBar.h"
 
 itm::QUndoMarkerDeleteROI::QUndoMarkerDeleteROI(itm::CExplorerWindow* _source, QList<LocationSimple> _markers) :  QUndoCommand()
 {
@@ -29,6 +30,9 @@ void itm::QUndoMarkerDeleteROI::undo()
     // set new markers
     source->V3D_env->setLandmark(source->window, vaa3dMarkers);
     source->V3D_env->pushObjectIn3DWindow(source->window);
+
+    //update visible markers
+    PAnoToolBar::instance()->buttonMarkerRoiViewChecked(PAnoToolBar::instance()->buttonMarkerRoiView->isChecked());
 
 
     //QMessageBox::information(0, "Info", itm::strprintf("QUndoMarkerDeleteROI::undo()\n\nAdded %d markers", markers.size()).c_str());
@@ -67,6 +71,9 @@ void itm::QUndoMarkerDeleteROI::redo()
         // set new markers
         source->V3D_env->setLandmark(source->window, vaa3dMarkers);
         source->V3D_env->pushObjectIn3DWindow(source->window);
+
+        //update visible markers
+        PAnoToolBar::instance()->buttonMarkerRoiViewChecked(PAnoToolBar::instance()->buttonMarkerRoiView->isChecked());
 
         //QMessageBox::information(0, "Info", itm::strprintf("QUndoMarkerDeleteROI::undo()\n\nRemoved %d markers",count).c_str());
 

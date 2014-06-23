@@ -19,6 +19,8 @@ class teramanager::PAnoToolBar : public QWidget
         QToolButton *buttonUndo;                //undo button
         QToolButton *buttonRedo;                //redo button
 
+        QToolButton* buttonOptions;             //options button
+
         QPoint dragPosition;
 
         /*********************************************************************************
@@ -73,6 +75,9 @@ class teramanager::PAnoToolBar : public QWidget
 
         friend class PMain;
         friend class CExplorerWindow;
+        friend class QUndoMarkerCreate;
+        friend class QUndoMarkerDelete;
+        friend class QUndoMarkerDeleteROI;
 
     protected:
 

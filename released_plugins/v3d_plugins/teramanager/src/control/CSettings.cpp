@@ -68,6 +68,10 @@ void CSettings::loadDefaultSettings()
     traslX = traslY = traslZ = 50;  //percentage value
     traslT = 0;
     annotationSpaceUnlimited = false;
+    annotationMarkersDeleteROISampling = 10;
+    annotationCurvesDims = 1;
+    annotationCurvesAspectTube = true;
+    annotationVirtualMargin = 20;
 
     //TeraConverter settings
     volumeConverterInputPathLRU = "";
@@ -108,6 +112,10 @@ void CSettings::writeSettings()
     settings.setValue("traslZ", traslZ);
     settings.setValue("traslT", traslT);
     settings.setValue("annotationSpaceUnlimited", annotationSpaceUnlimited);
+    settings.setValue("annotationMarkersDeleteROISampling", annotationMarkersDeleteROISampling);
+    settings.setValue("annotationCurvesDims", annotationCurvesDims);
+    settings.setValue("annotationCurvesAspectTube", annotationCurvesAspectTube);
+    settings.setValue("annotationVirtualMargin", annotationVirtualMargin);
 
     settings.setValue("volumeConverterInputPathLRU", QString(volumeConverterInputPathLRU.c_str()));
     settings.setValue("volumeConverterOutputPathLRU", QString(volumeConverterOutputPathLRU.c_str()));
@@ -154,6 +162,14 @@ void CSettings::readSettings()
         traslT = settings.value("traslT").toInt();
     if(settings.contains("annotationSpaceUnlimited"))
         annotationSpaceUnlimited = settings.value("annotationSpaceUnlimited").toBool();
+    if(settings.contains("annotationMarkersDeleteROISampling"))
+        annotationMarkersDeleteROISampling = settings.value("annotationMarkersDeleteROISampling").toInt();
+    if(settings.contains("annotationCurvesDims"))
+        annotationCurvesDims = settings.value("annotationCurvesDims").toInt();
+    if(settings.contains("annotationCurvesAspectTube"))
+        annotationCurvesAspectTube = settings.value("annotationCurvesAspectTube").toBool();
+    if(settings.contains("annotationVirtualMargin"))
+        annotationVirtualMargin = settings.value("annotationVirtualMargin").toInt();
     int size = settings.beginReadArray("volumePathHistory");
     volumePathHistory.clear();
     for (int i = 0; i < size; ++i)

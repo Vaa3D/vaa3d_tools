@@ -27,6 +27,7 @@
         <file>icons/toolbar.png</file>
         <file>icons/undo.png</file>
         <file>icons/redo.png</file>
+        <file>icons/options.png</file>
         <file>changelog.txt</file>
     </qresource>
 </RCC>

@@ -211,6 +211,7 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     importOptionsMenu->addMenu(volMapSizeMenu);
     /* ------------------------- "Options" menu: 3D ---------------------- */
     threeDMenu = optionsMenu->addMenu("3D annotation");
+    markersMenu = threeDMenu->addMenu("Markers");
     curvesMenu = threeDMenu->addMenu("Curves");
     curveAspectMenu = curvesMenu->addMenu("Aspect");
     curveDimsMenu = curvesMenu->addMenu("Skeleton width");
@@ -225,16 +226,17 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     curveAspectMenu->addAction(curveAspectTube);
     curveAspectMenu->addAction(curveAspectSkeleton);
     curveDimsWidget = new QWidgetAction(this);
-    QSpinBox* curveDimsSpinBox = new QSpinBox();
+    curveDimsSpinBox = new QSpinBox();
     curveDimsSpinBox->setMinimum(1);
     curveDimsSpinBox->setMaximum(10);
     curveDimsSpinBox->setSuffix(" (pixels)");
     curveDimsWidget->setDefaultWidget(curveDimsSpinBox);
     curveDimsMenu->addAction(curveDimsWidget);
-    curveAspectTube->setChecked(true);
-    curveDimsSpinBox->setValue(1);
+    curveAspectTube->setChecked(CSettings::instance()->getAnnotationCurvesAspectTube());
+    curveAspectSkeleton->setChecked(!curveAspectTube->isChecked());
+    curveDimsSpinBox->setValue(CSettings::instance()->getAnnotationCurvesDims());
     connect(curveAspectTube, SIGNAL(changed()), this, SLOT(curveAspectChanged()));
-    connect(curveAspectSkeleton, SIGNAL(changed()), this, SLOT(curveAspectChanged()));
+    //connect(curveAspectSkeleton, SIGNAL(changed()), this, SLOT(curveAspectChanged()));
     connect(curveDimsSpinBox, SIGNAL(valueChanged(int)), this, SLOT(curveDimsChanged(int)));
     virtualSpaceSizeMenu = threeDMenu->addMenu("Virtual space size");
     spaceSizeAuto = new QAction("Auto", this);
@@ -251,6 +253,31 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     spaceSizeAuto->setChecked(!spaceSizeUnlimited->isChecked());
     connect(spaceSizeAuto, SIGNAL(changed()), this, SLOT(virtualSpaceSizeChanged()));
     //connect(spaceSizeUnlimited, SIGNAL(changed()), this, SLOT(virtualSpaceSizeChanged()));
+    /**/
+    markersDeleteROIMenu = markersMenu->addMenu("\"1-right-stroke to delete a group of markers\"");
+    markersDeleteROISamplingMenu = markersDeleteROIMenu->addMenu("Sample every");
+    markersDeleteROISamplingWidget = new QWidgetAction(this);
+    markersDeleteROISamplingSpinBox = new QSpinBox();
+    markersDeleteROISamplingSpinBox->setMinimum(1);
+    markersDeleteROISamplingSpinBox->setMaximum(20);
+    markersDeleteROISamplingSpinBox->setSuffix(" (pixels)");
+    markersDeleteROISamplingWidget->setDefaultWidget(markersDeleteROISamplingSpinBox);
+    markersDeleteROISamplingMenu->addAction(markersDeleteROISamplingWidget);
+    markersDeleteROISamplingSpinBox->setValue(CSettings::instance()->getAnnotationMarkersDeleteROISampling());
+    connect(markersDeleteROISamplingSpinBox, SIGNAL(valueChanged(int)), this, SLOT(markersDeleteROISamplingSpinBoxChanged(int)));
+    /**/
+    markersShowROIMenu = markersMenu->addMenu("\"Show/hide markers around the displayed ROI\"");
+    markersShowROIMarginMenu = markersShowROIMenu->addMenu("Virtual margin size");
+    markersShowROIMarginWidget = new QWidgetAction(this);
+    markersShowROIMarginSpinBox = new QSpinBox();
+    markersShowROIMarginSpinBox->setSuffix(" %");
+    markersShowROIMarginSpinBox->setMaximum(100);
+    markersShowROIMarginSpinBox->setMinimum(1);
+    markersShowROIMarginWidget->setDefaultWidget(markersShowROIMarginSpinBox);
+    markersShowROIMarginMenu->addAction(markersShowROIMarginWidget);
+    markersShowROIMarginSpinBox->setValue(CSettings::instance()->getAnnotationVirtualMargin());
+    connect(markersShowROIMarginSpinBox, SIGNAL(valueChanged(int)), this, SLOT(markersShowROIMarginSpinBoxChanged(int)));
+    /**/
     /* ------------------------- "Options" menu: directional shift ---------------- */
     DirectionalShiftsMenu = optionsMenu->addMenu("Directional shift");
     /* ------------------------------ x-shift ------------------------------------- */
@@ -2140,59 +2167,27 @@ void PMain::debugAction1Triggered()
 {
     /**/itm::debug(itm::LEV1, 0, __itm__current__function__);
 
-//    NeuronTree nt = readSWC_file("/media/Elements/allen.unknown.raw.tiled.RGB/test.ano.swc");
+    QList <ImageMarker> *markers1 = &(static_cast<Renderer_gl1*>(CExplorerWindow::getCurrent()->view3DWidget->getRenderer())->listMarker);
+//    QList<LocationSimple> markers = V3D_env->getLandmark(CExplorerWindow::getCurrent()->window);
 
-//    printf("\n\ngoing to check Vaa3D LOADED curve points: ");
-//    for(int i=0; i<nt.listNeuron.size(); i++)
-//        printf("%d(%d) ", nt.listNeuron[i].n, nt.listNeuron[i].pn);
-//    printf("\n\n");
+    if(markers1)
+    {
+        printf("markers1->size() = %d\n", markers1->size());
+        for(int i=0; i<markers1->size(); i++)
+            printf("\nmarkers1[%d] (%.0f, %.0f, %.0f): %s\n", i, (*markers1)[i].x, (*markers1)[i].y, (*markers1)[i].z, (*markers1)[i].on ? "on" : "off");
+    }
+    else
+        printf("\nmarkers1 = null\n");
 
-//    printf("\n\nVaa3D LOADED hashNeuron is: \n");
-//    QHashIterator<int, int> i(nt.hashNeuron);
-//    while (i.hasNext()) {
-//        i.next();
-//        std::cout << i.key() << ": " << i.value() << endl;
-//    }
-//    printf("\n\n");
-
-//    nt.editable = false;
-//    V3D_env->setSWC(CExplorerWindow::getCurrent()->window, nt);
-//    V3D_env->pushObjectIn3DWindow(CExplorerWindow::getCurrent()->window);
-//    CExplorerWindow::getCurrent()->view3DWidget->getRenderer()->endSelectMode();
-
-    NeuronTree dbg_tree = V3D_env->getSWC(CExplorerWindow::getCurrent()->window);
-    printf("\n\ngoing to check Vaa3D curve points: ");
-    for(int i=0; i<dbg_tree.listNeuron.size(); i++)
-        printf("%d(%d) ", dbg_tree.listNeuron[i].n, dbg_tree.listNeuron[i].pn);
-    printf("\n\n");
-
-//    std::list<NeuronSWC> neu;
-//    std::list<LocationSimple> markers;
-//    CAnnotations *cano = CAnnotations::instance(14000, 14000, 14000);
-//    cano->load("/media/Elements/allen.unknown.ano/prova.ano");
-//    cano->findLandmarks(interval_t(1872, 13102), interval_t(0, 8386), interval_t(0, 292), markers);
-//    cano->findCurves(interval_t(1872, 13102), interval_t(0, 8386), interval_t(0, 292), neu);
-
-
-//    CExplorerWindow* cur_win = CExplorerWindow::getCurrent();
-
-//    QList <ImageMarker> listMarker = static_cast<Renderer_gl1*>(cur_win->view3DWidget->getRenderer())->listMarker;
-
-//    // get vaa3d markers
-//    //QList<LocationSimple> vaa3dMarkers = V3D_env->getLandmark(cur_win->window);
-//    for(int i=0; i<listMarker.size(); i++)
+//    if(markers2)
 //    {
-//        printf("(%.0f, %.0f, %.0f): selected = %s\n",
-//               listMarker[i].x,
-//               listMarker[i].y,
-//               listMarker[i].z,
-//               listMarker[i].selected ? "yes" : "no");
+//        for(int i=0; i<markers2->size(); i++)
+//            printf("markers2[%d] (%.0f, %.0f, %.0f): %s\n", i, (*markers2)[i].x, (*markers2)[i].y, (*markers2)[i].z, (*markers2)[i].on ? "on" : "off");
 //    }
-
-//    vaa3dMarkers.pop_back();
-
-//    V3D_env->setLandmark(cur_win->window, vaa3dMarkers);
-//    V3D_env->pushObjectIn3DWindow(cur_win->window);
+//    else
+//        printf("markers2 = null\n");
+//    V3D_env->setLandmark(CExplorerWindow::getCurrent()->window, markers);
+//    V3D_env->pushObjectIn3DWindow(CExplorerWindow::getCurrent()->window);
 }
 
 void PMain::showLogTriggered()
@@ -2209,11 +2204,16 @@ void PMain::curveDimsChanged(int dim)
 {
     /**/itm::debug(itm::LEV2, 0, __itm__current__function__);
 
-    if(CExplorerWindow::getCurrent())
+    CSettings::instance()->setAnnotationCurvesDims(dim);
+    CSettings::instance()->writeSettings();
+
+    CExplorerWindow *cur_win = CExplorerWindow::getCurrent();
+    if(cur_win)
     {
-        CExplorerWindow::getCurrent()->view3DWidget->getRenderer()->lineWidth = dim;
-        CExplorerWindow::getCurrent()->view3DWidget->updateTool();
-        CExplorerWindow::getCurrent()->view3DWidget->update();
+        /**/itm::debug(itm::LEV3, strprintf("set Vaa3D's renderer <lineWidth> = %d", curveDimsSpinBox->value()).c_str(), __itm__current__function__);
+        cur_win->view3DWidget->getRenderer()->lineWidth = dim;
+        cur_win->view3DWidget->updateTool();
+        cur_win->view3DWidget->update();
     }
 }
 
@@ -2221,20 +2221,17 @@ void PMain::curveAspectChanged()
 {
     /**/itm::debug(itm::LEV2, 0, __itm__current__function__);
 
-    if(CExplorerWindow::getCurrent())
+    CSettings::instance()->setAnnotationCurvesAspectTube(curveAspectTube->isChecked());
+    CSettings::instance()->writeSettings();
+
+    CExplorerWindow *cur_win = CExplorerWindow::getCurrent();
+    if(cur_win)
     {
-        if(curveAspectTube->isChecked())
-        {
-            CExplorerWindow::getCurrent()->view3DWidget->getRenderer()->lineType = 0;
-            CExplorerWindow::getCurrent()->view3DWidget->updateTool();
-            CExplorerWindow::getCurrent()->view3DWidget->update();
-        }
-        else if(curveAspectSkeleton->isChecked())
-        {
-            CExplorerWindow::getCurrent()->view3DWidget->getRenderer()->lineType = 1;
-            CExplorerWindow::getCurrent()->view3DWidget->updateTool();
-            CExplorerWindow::getCurrent()->view3DWidget->update();
-        }
+        /**/itm::debug(itm::LEV3, strprintf("set Vaa3D's renderer <lineWidth> = %d and <lineType> = %s", curveDimsSpinBox->value(), curveAspectTube->isChecked() ? "tube" : "skeleton").c_str(), __itm__current__function__);
+        cur_win->view3DWidget->getRenderer()->lineWidth = curveDimsSpinBox->value();
+        cur_win->view3DWidget->getRenderer()->lineType = !curveAspectTube->isChecked();
+        cur_win->view3DWidget->updateTool();
+        cur_win->view3DWidget->update();
     }
 }
 
@@ -2566,4 +2563,26 @@ void PMain::showToolbarButtonChanged(bool changed)
     }
     else
         PAnoToolBar::instance(this)->hide();
+}
+
+/**********************************************************************************
+* Called when markersDeleteROISamplingSpinBox state has changed
+***********************************************************************************/
+void PMain::markersDeleteROISamplingSpinBoxChanged(int value)
+{
+    /**/itm::debug(itm::LEV2, 0, __itm__current__function__);
+
+    CSettings::instance()->setAnnotationMarkersDeleteROISampling(value);
+    CSettings::instance()->writeSettings();
+}
+
+/**********************************************************************************
+* Called when markersShowROIMarginSpinBox state has changed
+***********************************************************************************/
+void PMain::markersShowROIMarginSpinBoxChanged(int value)
+{
+    /**/itm::debug(itm::LEV2, 0, __itm__current__function__);
+
+    CSettings::instance()->setAnnotationVirtualMargin(value);
+    CSettings::instance()->writeSettings();
 }

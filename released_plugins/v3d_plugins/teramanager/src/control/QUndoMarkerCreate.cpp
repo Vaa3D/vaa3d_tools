@@ -1,6 +1,7 @@
 #include "QUndoMarkerCreate.h"
 #include "../control/CExplorerWindow.h"
 #include "v3dr_glwidget.h"
+#include "../presentation/PAnoToolBar.h"
 
 itm::QUndoMarkerCreate::QUndoMarkerCreate(itm::CExplorerWindow* _source, LocationSimple _marker) : QUndoCommand()
 {
@@ -26,6 +27,9 @@ void itm::QUndoMarkerCreate::undo()
     source->V3D_env->setLandmark(source->window, vaa3dMarkers);
     source->V3D_env->pushObjectIn3DWindow(source->window);
 
+    //update visible markers
+    PAnoToolBar::instance()->buttonMarkerRoiViewChecked(PAnoToolBar::instance()->buttonMarkerRoiView->isChecked());
+
     // end select mode
     //source->view3DWidget->getRenderer()->endSelectMode();
 }
@@ -46,6 +50,9 @@ void itm::QUndoMarkerCreate::redo()
         // set new markers
         source->V3D_env->setLandmark(source->window, vaa3dMarkers);
         source->V3D_env->pushObjectIn3DWindow(source->window);
+
+        //update visible markers
+        PAnoToolBar::instance()->buttonMarkerRoiViewChecked(PAnoToolBar::instance()->buttonMarkerRoiView->isChecked());
 
         // end select mode
         //source->view3DWidget->getRenderer()->endSelectMode();

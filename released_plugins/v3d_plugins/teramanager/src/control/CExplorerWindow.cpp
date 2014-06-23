@@ -263,11 +263,17 @@ void CExplorerWindow::show()
         this->view3DWidget->updateGL();     // if omitted, Vaa3D_rotationchanged somehow resets rotation to 0,0,0
         Vaa3D_rotationchanged(0);
 
-        //saving subvol spinboxes state ---- Alessandro 2013-04-23: not sure if this is really needed
+        // saving subvol spinboxes state ---- Alessandro 2013-04-23: not sure if this is really needed
         saveSubvolSpinboxState();
 
         // refresh annotation toolbar
         PAnoToolBar::instance()->refreshTools();
+
+        // update curve aspect
+        PMain::getInstance()->curveAspectChanged();
+
+        //update visible markers
+        PAnoToolBar::instance()->buttonMarkerRoiViewChecked(PAnoToolBar::instance()->buttonMarkerRoiView->isChecked());
     }
     catch(RuntimeException &ex)
     {
@@ -1463,11 +1469,14 @@ void CExplorerWindow::deleteMarkerROI(QVector<QPoint> ROI_contour) throw (Runtim
     QCursor cursor = view3DWidget->cursor();
     view3DWidget->setCursor(Qt::WaitCursor);
 
+    // pixel sampling step
+    int sampling = CSettings::instance()->getAnnotationMarkersDeleteROISampling();
+
     // delete marker (if any) at each location inside the polygon
     QList<LocationSimple> deletedMarkers;
     QRect bbox = ROI_poly.boundingRect();
-    for(int i=bbox.top(); i<bbox.bottom(); i=i+10)
-        for(int j=bbox.left(); j<bbox.right(); j=j+10)
+    for(int i=bbox.top(); i<bbox.bottom(); i=i+sampling)
+        for(int j=bbox.left(); j<bbox.right(); j=j+sampling)
             if(ROI_poly.containsPoint(QPoint(j,i), Qt::OddEvenFill))    // Ray-crossing algorithm
                 deleteMarkerAt(j,i, &deletedMarkers);
 
@@ -1478,6 +1487,9 @@ void CExplorerWindow::deleteMarkerROI(QVector<QPoint> ROI_contour) throw (Runtim
 
     // reset saved cursor
     view3DWidget->setCursor(cursor);
+
+    //update visible markers
+    PAnoToolBar::instance()->buttonMarkerRoiViewChecked(PAnoToolBar::instance()->buttonMarkerRoiView->isChecked());
 }
 
 
@@ -1490,6 +1502,9 @@ void CExplorerWindow::createMarkerAt(int x, int y) throw (itm::RuntimeException)
     undoStack.push(new QUndoMarkerCreate(this, vaa3dMarkers.back()));
     undoStack.endMacro();
     PAnoToolBar::instance()->buttonUndo->setEnabled(true);
+
+    //update visible markers
+    PAnoToolBar::instance()->buttonMarkerRoiViewChecked(PAnoToolBar::instance()->buttonMarkerRoiView->isChecked());
 }
 
 void CExplorerWindow::deleteMarkerAt(int x, int y, QList<LocationSimple>* deletedMarkers /* = 0 */) throw (itm::RuntimeException)
@@ -1537,6 +1552,9 @@ void CExplorerWindow::deleteMarkerAt(int x, int y, QList<LocationSimple>* delete
 
     // end select mode
     view3DWidget->getRenderer()->endSelectMode();
+
+    //update visible markers
+    PAnoToolBar::instance()->buttonMarkerRoiViewChecked(PAnoToolBar::instance()->buttonMarkerRoiView->isChecked());
 }
 
 void CExplorerWindow::loadAnnotations() throw (RuntimeException)
@@ -1572,6 +1590,19 @@ void CExplorerWindow::loadAnnotations() throw (RuntimeException)
     {
         x_range.start = y_range.start = z_range.start = 0;
         x_range.end = y_range.end = z_range.end = std::numeric_limits<itm::uint32>::max();
+    }
+    else if(this != CExplorerWindow::first)
+    {
+        int vmPerc = 100;
+        int vmX = (x_range.end - x_range.start)*(vmPerc/100.0f)/2;
+        int vmY = (y_range.end - y_range.start)*(vmPerc/100.0f)/2;
+        int vmZ = (z_range.end - z_range.start)*(vmPerc/100.0f)/2;
+        x_range.start  = std::max(0, x_range.start - vmX);
+        x_range.end   += vmX;
+        y_range.start  = std::max(0, y_range.start - vmY);
+        y_range.end   += vmY;
+        z_range.start  = std::max(0, z_range.start - vmZ);
+        z_range.end   += vmZ;
     }
 
     //obtaining the annotations within the current window
@@ -1612,11 +1643,16 @@ void CExplorerWindow::loadAnnotations() throw (RuntimeException)
     view3DWidget->enableMarkerLabel(false);
     view3DWidget->getRenderer()->endSelectMode();
 
+
     //end curve editing mode
     QList<NeuronTree>* listNeuronTree = static_cast<Renderer_gl1*>(view3DWidget->getRenderer())->getHandleNeuronTrees();
     for (int i=0; i<listNeuronTree->size(); i++)
         (*listNeuronTree)[i].editable = false; //090928
     view3DWidget->updateTool();
+
+
+    //update visible markers
+    PAnoToolBar::instance()->buttonMarkerRoiViewChecked(PAnoToolBar::instance()->buttonMarkerRoiView->isChecked());
 
     PLog::getInstance()->appendGPU(timer.elapsed(), QString("Loaded 3D annotations into view ").append(title.c_str()).toStdString());
 }

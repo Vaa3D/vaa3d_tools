@@ -63,6 +63,10 @@ class teramanager::CSettings
         int traslZ;             //traslation percentage with respect to the actual VOI along Z axis
         int traslT;             //traslation percentage with respect to the actual VOI along T axis
         bool annotationSpaceUnlimited;
+        int annotationMarkersDeleteROISampling;
+        int annotationCurvesDims;
+        bool annotationCurvesAspectTube;
+        int annotationVirtualMargin;
 
         //TeraConverter members
         string volumeConverterInputPathLRU;
@@ -102,6 +106,10 @@ class teramanager::CSettings
         int getTraslZ(){return traslZ;}
         int getTraslT(){return traslT;}
         bool getAnnotationSpaceUnlimited(){return annotationSpaceUnlimited;}
+        int getAnnotationMarkersDeleteROISampling(){return annotationMarkersDeleteROISampling;}
+        int getAnnotationCurvesDims(){return annotationCurvesDims;}
+        bool getAnnotationCurvesAspectTube(){return annotationCurvesAspectTube;}
+        int getAnnotationVirtualMargin(){return annotationVirtualMargin;}
         void setVolumePathLRU(string _volumePathLRU){volumePathLRU = _volumePathLRU;}
         void addVolumePathToHistory(string _volumePath){
             if(volumePathHistory.size() > 10)
@@ -125,6 +133,10 @@ class teramanager::CSettings
         void setTraslZ(int _traslZ){traslZ = _traslZ;}
         void setTraslT(int _traslT){traslT = _traslT;}
         void setAnnotationSpaceUnlimited(bool _unl){annotationSpaceUnlimited = _unl;}
+        void setAnnotationMarkersDeleteROISampling(int newval){annotationMarkersDeleteROISampling = newval;}
+        void setAnnotationCurvesDims(int newval){annotationCurvesDims = newval;}
+        void setAnnotationCurvesAspectTube(bool newval){annotationCurvesAspectTube = newval;}
+        void setAnnotationVirtualMargin(int newval){annotationVirtualMargin = newval;}
 
         //GET and SET methods for TeraConverter
         string getVCInputPath(){return volumeConverterInputPathLRU;}

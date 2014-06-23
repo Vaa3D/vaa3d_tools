@@ -74,13 +74,26 @@ class teramanager::PMain : public QWidget
         QMenu* optionsMenu;             //"Options" menu
         QMenu* importOptionsMenu;       //"Import" menu level 2
         QMenu* threeDMenu;              //"3D annotation" menu level 2
+
         QMenu* curvesMenu;              //"Curves" menu level 3
         QMenu* curveDimsMenu;           //"Curve dims" menu level 4
         QWidgetAction* curveDimsWidget; //"Curve dims" menu action widget
         QSpinBox* curveDimsSpinBox;     //"Curve dims" spinbox
         QMenu* curveAspectMenu;         //"Curve aspect" menu level 4
         QAction* curveAspectTube;       //"Tube" action
-        QAction* curveAspectSkeleton;   //"Skeleton" action        
+        QAction* curveAspectSkeleton;   //"Skeleton" action
+
+        QMenu* markersMenu;                             //"Markers" menu level 3
+        QMenu* markersDeleteROIMenu;                    //"1-right-stroke to delete a group of markers" menu level 4
+        QMenu* markersDeleteROISamplingMenu;            //"Sample every" menu level 5
+        QWidgetAction* markersDeleteROISamplingWidget;  //"Sample every" menu action widget
+        QSpinBox* markersDeleteROISamplingSpinBox;      //"Sample every" spinbox
+
+        QMenu* markersShowROIMenu;                      //"Show/hide markers around the displayed ROI" menu level 4
+        QMenu* markersShowROIMarginMenu;                //"Virtual margin size" menu level 5
+        QWidgetAction* markersShowROIMarginWidget;      //"Virtual margin size" menu action widget
+        QSpinBox* markersShowROIMarginSpinBox;          //"Virtual margin size" spinbox
+
         QMenu* virtualSpaceSizeMenu;    //"Virtual space size" menu level 3
         QAction* spaceSizeAuto;         //"Auto" action
         QAction* spaceSizeUnlimited;    //"Unlimited" action
@@ -455,6 +468,16 @@ class teramanager::PMain : public QWidget
         * Called when showToolbarButton state has changed
         ***********************************************************************************/
         void showToolbarButtonChanged(bool changed);
+
+        /**********************************************************************************
+        * Called when markersDeleteROISamplingSpinBox state has changed
+        ***********************************************************************************/
+        void markersDeleteROISamplingSpinBoxChanged(int value);
+
+        /**********************************************************************************
+        * Called when markersShowROIMarginSpinBox state has changed
+        ***********************************************************************************/
+        void markersShowROIMarginSpinBoxChanged(int value);
 
 
     signals:

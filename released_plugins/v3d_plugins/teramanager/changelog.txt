@@ -11,6 +11,21 @@ ties names are:
 - Rem: a feature no longer available
 
 ============================================================================================
+Version 0.9.95
+June 23rd, 2014
+--------------------------------------------------------------------------------------------
+- New: added feature "Show/hide markers around the ROI" in the TeraFly's  annotation toolbar.
+       The user  chan  show/hide the markers  in a X/Y/Z% neighborhood  of the displayed ROI.
+	   X/Y/Z% can be set from the "Option" popup menu.
+	   This feature is intended for helping the user in proof-editing mode. In particular, by
+	   displaying/hiding the markers the user can better identify any false positives / false
+	   negatives close to the border of the displayed ROI.
+- New: added "Options" popup menu in the TeraFly's annotation toolbar. The user can  set all
+       the options related to each annotation feature. Changes are saved permanently.
+- Fix: fixed compilation bug on clang compiler.
+--------------------------------------------------------------------------------------------
+
+
 Version 0.9.94
 June 23rd, 2014
 --------------------------------------------------------------------------------------------
