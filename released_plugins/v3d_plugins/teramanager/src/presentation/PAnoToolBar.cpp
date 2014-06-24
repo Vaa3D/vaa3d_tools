@@ -248,28 +248,37 @@ void PAnoToolBar::buttonMarkerRoiViewChecked(bool checked)
     CExplorerWindow* expl = CExplorerWindow::getCurrent();
     if(expl)
     {
+        // get TRUE markers' handle (others won't work, e.g. LandmarkList)
         QList <ImageMarker>& markers = static_cast<Renderer_gl1*>(expl->view3DWidget->getRenderer())->listMarker;
+
+        // get virtual margin and apply it to each directions separately
         int vmPerc = CSettings::instance()->getAnnotationVirtualMargin();
         int vmX = (expl->volH1-expl->volH0)*(vmPerc/100.0f)/2;
         int vmY = (expl->volV1-expl->volV0)*(vmPerc/100.0f)/2;
         int vmZ = (expl->volD1-expl->volD0)*(vmPerc/100.0f)/2;
 
+        // apply changes to existing markers
         for(int i=0; i<markers.size(); i++)
         {
-            if(      (markers[i].x < 0 && markers[i].x >= -vmX) ||
-                     (markers[i].y < 0 && markers[i].y >= -vmY) ||
-                     (markers[i].z < 0 && markers[i].z >= -vmZ) ||
-                     (markers[i].x  >= (expl->volH1-expl->volH0) && markers[i].x <=  (expl->volH1-expl->volH0+vmX)) ||
-                     (markers[i].y  >= (expl->volV1-expl->volV0) && markers[i].y <=  (expl->volV1-expl->volV0+vmY)) ||
-                     (markers[i].z  >= (expl->volD1-expl->volD0) && markers[i].x <=  (expl->volD1-expl->volD0+vmZ)))
-                        markers[i].on = checked;
-            if( (markers[i].x < -vmX) ||
-                     (markers[i].y < -vmY) ||
-                     (markers[i].z < -vmZ) ||
-                     (markers[i].x  >= (expl->volH1-expl->volH0+vmX)) ||
-                     (markers[i].y  >= (expl->volV1-expl->volV0+vmY)) ||
-                     (markers[i].z  >= (expl->volD1-expl->volD0+vmZ)))
-                        markers[i].on = false;
+            // select markers within margin
+            if(  (markers[i].x < 0 && markers[i].x >= -vmX) ||
+                 (markers[i].y < 0 && markers[i].y >= -vmY) ||
+                 (markers[i].z < 0 && markers[i].z >= -vmZ) ||
+                 (markers[i].x  >= (expl->volH1-expl->volH0) && markers[i].x <=  (expl->volH1-expl->volH0+vmX)) ||
+                 (markers[i].y  >= (expl->volV1-expl->volV0) && markers[i].y <=  (expl->volV1-expl->volV0+vmY)) ||
+                 (markers[i].z  >= (expl->volD1-expl->volD0) && markers[i].x <=  (expl->volD1-expl->volD0+vmZ)))
+            {
+                // activate / deactivate markers
+                markers[i].on = checked;
+
+                // markers within margin are assigned gray color so as to be better distinguishable
+                markers[i].color.r = markers[i].color.g = markers[i].color.b = 220;
+            }
+
+            // always turn off markers outside the visible area
+            if(  (markers[i].x < -vmX) || (markers[i].y < -vmY)   || (markers[i].z < -vmZ) ||
+                 (markers[i].x  >= (expl->volH1-expl->volH0+vmX)) || (markers[i].y  >= (expl->volV1-expl->volV0+vmY)) || (markers[i].z  >= (expl->volD1-expl->volD0+vmZ)))
+                markers[i].on = false;
         }
 
         expl->view3DWidget->updateTool();

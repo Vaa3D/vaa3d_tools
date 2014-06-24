@@ -506,6 +506,29 @@ bool CExplorerWindow::eventFilter(QObject *object, QEvent *event)
                 scribbling_points.clear();
             }
 
+            // ignore Vaa3D-right-click-popup marker create operations
+            else if(mouseEvt->button() == Qt::RightButton)
+            {
+                view3DWidget->getRenderer()->hitPoint(mouseEvt->x(), mouseEvt->y());
+                Renderer::SelectMode mode = view3DWidget->getRenderer()->selectMode;
+                bool addMarker = static_cast<Renderer_gl1*>(view3DWidget->getRenderer())->b_addthismarker;
+
+                if((mode == Renderer::smMarkerCreate1 && addMarker) ||
+                   (mode == Renderer::smMarkerCreate2 && addMarker) ||
+                   (mode == Renderer::smMarkerCreate3 && addMarker) ||
+                    mode == Renderer::smMarkerCreate1Curve)
+                {
+                    QMessageBox::information(0, "This feature has been disabled", "This feature has been disabled by the developers of TeraFly.\n\n"
+                                             "Please use the TeraFly's annotation toolbar to perform this action.");
+                    PAnoToolBar::instance()->buttonMarkerCreateChecked(false);
+                }
+
+
+
+                event->ignore();
+                return true;
+            }
+
             return false;
         }
 

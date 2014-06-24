@@ -11,6 +11,18 @@ ties names are:
 - Rem: a feature no longer available
 
 ============================================================================================
+Version 0.9.96
+June 24th, 2014
+--------------------------------------------------------------------------------------------
+- Opt: Vaa3D marker create operations in the right-click popup menu have been disabled so as
+       to avoid conflict with TeraFly's annotation toolbar.
+- Opt: markers outside the displayed ROI are highlighted with gray color. Currently, changes
+       on these markers are not saved in the TeraFly's annotation octree.
+- Fix: minor fix related to the "Show/hide markers around the ROI" feature. Changing the re-
+       lated options now istantaneously triggers the change in the 3D renderer.
+--------------------------------------------------------------------------------------------
+
+
 Version 0.9.95
 June 23rd, 2014
 --------------------------------------------------------------------------------------------

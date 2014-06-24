@@ -2585,4 +2585,5 @@ void PMain::markersShowROIMarginSpinBoxChanged(int value)
 
     CSettings::instance()->setAnnotationVirtualMargin(value);
     CSettings::instance()->writeSettings();
+    PAnoToolBar::instance()->buttonMarkerRoiViewChecked(PAnoToolBar::instance()->buttonMarkerRoiView->isChecked());
 }
