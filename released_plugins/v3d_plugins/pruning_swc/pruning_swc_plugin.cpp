@@ -16,8 +16,6 @@
 using namespace std;
 #define PI 3.14159265359
 #define getParent(n,nt) ((nt).listNeuron.at(n).pn<0)?(1000000000):((nt).hashNeuron.value((nt).listNeuron.at(n).pn))
-#define angle(a,b,c) (acos((((b).x-(a).x)*((c).x-(a).x)+((b).y-(a).y)*((c).y-(a).y)+((b).z-(a).z)*((c).z-(a).z))/(dist(a,b)*dist(a,c)))*180.0/PI)
-
 
 Q_EXPORT_PLUGIN2(pruning_swc, pruning_swc);
 
@@ -104,11 +102,14 @@ void pruning_swc::domenu(const QString &menu_name, V3DPluginCallback2 &callback,
                 V3DLONG neuronNum = nt.listNeuron.size();
                 childs = QVector< QVector<V3DLONG> >(neuronNum, QVector<V3DLONG>() );
                 V3DLONG *flag = new V3DLONG[neuronNum];
+                double *segment_length = new double[neuronNum];
+                V3DLONG *parent_id = new V3DLONG[neuronNum];
 
                 for (V3DLONG i=0;i<neuronNum;i++)
                 {
                     flag[i] = 1;
-
+                    segment_length[i] = 100000.00;
+                    parent_id[i] = -1;
                     V3DLONG par = nt.listNeuron[i].pn;
                     if (par<0) continue;
                     childs[nt.hashNeuron.value(par)].push_back(i);
@@ -119,62 +120,61 @@ void pruning_swc::domenu(const QString &menu_name, V3DPluginCallback2 &callback,
                 {
                     if (childs[i].size()==0)
                     {
-                        int index_tip = 0;
                         int parent_tip = getParent(i,nt);
-                        int last_child_tip = i;
+                        MyMarker curr_node, parent_node;
+                        curr_node.x = list.at(i).x;
+                        curr_node.y = list.at(i).y;
+                        curr_node.z = list.at(i).z;
+
+                        parent_node.x = list.at(parent_tip).x;
+                        parent_node.y = list.at(parent_tip).y;
+                        parent_node.z = list.at(parent_tip).z;
+                        double index_tip = dist(curr_node,parent_node);
+
                         while(childs[parent_tip].size()<2)
                         {
-                            last_child_tip = parent_tip;
+                            MyMarker curr_node, parent_node;
+
+                            curr_node.x = list.at(parent_tip).x;
+                            curr_node.y = list.at(parent_tip).y;
+                            curr_node.z = list.at(parent_tip).z;
+
+                            parent_node.x = list.at(getParent(parent_tip,nt)).x;
+                            parent_node.y = list.at(getParent(parent_tip,nt)).y;
+                            parent_node.z = list.at(getParent(parent_tip,nt)).z;
+
+                            index_tip += dist(curr_node,parent_node);
+
                             parent_tip = getParent(parent_tip,nt);
-                            index_tip++;
-                        }
+
+                         }
+
+                        int parent_index = parent_tip;
 
                         if(index_tip < length)
                         {
-
-                            double local_ang = 90.0;
-
-                            if(list.at(parent_tip).pn >=0)
+                            flag[i] = -1;
+                            segment_length[i] = index_tip;
+                            parent_id[i] = parent_index;
+                            int parent_tip = getParent(i,nt);
+                            while(childs[parent_tip].size()<2)
                             {
-                                MyMarker curr_node, parent_node,child_node;
-
-                                curr_node.x = list.at(parent_tip).x;
-                                curr_node.y = list.at(parent_tip).y;
-                                curr_node.z = list.at(parent_tip).z;
-
-                                parent_node.x = list.at(getParent(parent_tip,nt)).x;
-                                parent_node.y = list.at(getParent(parent_tip,nt)).y;
-                                parent_node.z = list.at(getParent(parent_tip,nt)).z;
-
-                                child_node.x = list.at(last_child_tip).x;
-                                child_node.y = list.at(last_child_tip).y;
-                                child_node.z = list.at(last_child_tip).z;
-
-                                local_ang = angle(curr_node,parent_node,child_node);
+                                flag[parent_tip] = -1;
+                                segment_length[parent_tip] = index_tip;
+                                parent_id[parent_tip] = parent_index;
+                                parent_tip = getParent(parent_tip,nt);
                             }
-
-                            if(local_ang < 170.0)
-                            {
-                                flag[i] = -1;
-
-                                int parent_tip = getParent(i,nt);
-                                while(childs[parent_tip].size()<2)
-                                {
-                                    flag[parent_tip] = -1;
-                                    parent_tip = getParent(parent_tip,nt);
-                                }
-                            }
+                            if(segment_length[parent_tip] > index_tip)
+                                segment_length[parent_tip]  = index_tip;
                         }
-
                     }
-
                 }
 
                vector<MyMarker*> before_prunning_swc = readSWC_file(fileOpenName.toStdString());
                vector<MyMarker*> after_prunning_swc;
                for (int i=0;i<before_prunning_swc.size();i++)
                {
-                   if(flag[i] == 1)
+                   if(flag[i] == 1 || (flag[i] != 1 && (segment_length[i] > segment_length[parent_id[i]])))
                    {
                        after_prunning_swc.push_back(before_prunning_swc[i]);
                    }
@@ -182,6 +182,9 @@ void pruning_swc::domenu(const QString &menu_name, V3DPluginCallback2 &callback,
               }
 
                if(flag) {delete[] flag; flag = 0;}
+               if(segment_length) {delete[] segment_length; segment_length = 0;}
+               if(parent_id) {delete[] parent_id; parent_id = 0;}
+
 
                QString fileDefaultName = fileOpenName+QString("_prunned.swc");
                //write new SWC to file
