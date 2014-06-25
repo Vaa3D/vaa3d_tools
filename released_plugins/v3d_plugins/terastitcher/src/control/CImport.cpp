@@ -29,17 +29,20 @@
 #include "CImport.h"
 #include "src/presentation/PTabImport.h"
 #include "src/presentation/PMain.h"
+#include "../core/VolumeManager/vmBlockVolume.h"
+#include "../core/VolumeManager/vmStackedVolume.h"
+#include "IM_config.h"
 
 using namespace terastitcher;
 
-CImport* CImport::uniqueInstance = NULL;
+CImport* CImport::uniqueInstance = 0;
 
 void CImport::uninstance()
 {
     if(uniqueInstance)
     {
         delete uniqueInstance;
-        uniqueInstance = NULL;
+        uniqueInstance = 0;
     }
 }
 
@@ -119,6 +122,12 @@ void CImport::run()
 
     try
     {
+        // check for supported input formats
+        if(format.compare(tsp::IMAGE_FORMAT_TILED_2D_ANY) != 0 &&
+           format.compare(tsp::IMAGE_FORMAT_TILED_3D_TIFF)   != 0)
+            throw MyException(tsp::strprintf("in CImport::run(): unsupported input format \"%s\"", format.c_str()).c_str());
+
+
         //if a volume's directory path has been provided, searching for metadata file
         if(path.find(".xml")==std::string::npos && path.find(".XML")==std::string::npos)
         {
@@ -131,23 +140,39 @@ void CImport::run()
             {
                 //checking current members validity
                 if(AXS_1 != axis_invalid && AXS_2 != axis_invalid && AXS_3 != axis_invalid && VXL_1 != 0 && VXL_2 != 0 && VXL_3 != 0)
-                    volume = new StackedVolume(path.c_str(), ref_sys(AXS_1,AXS_2,AXS_3),VXL_1,VXL_2,VXL_3, reimport);
-                else
                 {
-                    char errMsg[VM_STATIC_STRINGS_SIZE];
-                    sprintf(errMsg, "in CImport::run(): invalid parameters AXS_1(%s), AXS_2(%s), AXS_3(%s), VXL_1(%.4f), VXL_2(%.4f), VXL_3(%.4f)",
-                            axis_to_str(AXS_1), axis_to_str(AXS_2), axis_to_str(AXS_3), VXL_1, VXL_2, VXL_3);
-                    throw MyException(errMsg);
+                    if(format.compare(tsp::IMAGE_FORMAT_TILED_2D_ANY)==0)
+                        volume = new StackedVolume(path.c_str(), ref_sys(AXS_1,AXS_2,AXS_3),VXL_1,VXL_2,VXL_3, reimport);
+                    else
+                        volume = new BlockVolume(path.c_str(), ref_sys(AXS_1,AXS_2,AXS_3),VXL_1,VXL_2,VXL_3, reimport);
                 }
+                else
+                    throw MyException(tsp::strprintf("in CImport::run(): invalid parameters AXS_1(%s), AXS_2(%s), AXS_3(%s), VXL_1(%.4f), VXL_2(%.4f), VXL_3(%.4f)",
+                                                     axis_to_str(AXS_1), axis_to_str(AXS_2), axis_to_str(AXS_3), VXL_1, VXL_2, VXL_3).c_str());
             }
             else
-                volume = new StackedVolume(path.c_str(), ref_sys(axis_invalid,axis_invalid,axis_invalid),0,0,0);
+            {
+                if(format.compare(tsp::IMAGE_FORMAT_TILED_2D_ANY)==0)
+                    volume = new StackedVolume(path.c_str(), ref_sys(axis_invalid,axis_invalid,axis_invalid),0,0,0);
+                else
+                    volume = new BlockVolume(path.c_str(), ref_sys(axis_invalid,axis_invalid,axis_invalid),0,0,0);
+            }
         }
         else
-            volume = new StackedVolume(path.c_str());
+        {
+            if(format.compare(tsp::IMAGE_FORMAT_TILED_2D_ANY)==0)
+                volume = new StackedVolume(path.c_str());
+            else
+                volume = new BlockVolume(path.c_str());
+        }
 
         //everything went OK
         emit sendOperationOutcome(0);
+    }
+    catch( iim::IOException& exception)
+    {
+        /**/tsp::warning(strprintf("exception thrown in CMergeTiles::run(): \"%s\"", exception.what()).c_str());
+        emit sendOperationOutcome(new MyException(exception.what()));
     }
     catch( MyException& exception)
     {

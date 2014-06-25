@@ -124,6 +124,9 @@ class terastitcher::PMain : public QWidget
         void emitProgressBarChanged(int val, int minutes, int seconds, const char* message = 0)
         {emit sendProgressBarChanged(val, minutes, seconds, message);}
 
+        //very useful (not included in Qt): disables the given item of the given combobox
+        static void setEnabledComboBoxItem(QComboBox* cbox, int _index, bool enabled);
+
         //friend declarations: allowing tabs to access PMain members
         friend class PTabImport;
         friend class PTabDisplComp;

@@ -57,6 +57,16 @@ namespace terastitcher
     enum  debug_level { NO_DEBUG, LEV1, LEV2, LEV3, LEV_MAX };  //debug levels
 
     /*******************
+    *    CONSTANTS     *
+    ********************
+    ---------------------------------------------------------------------------------------------------------------------------*/
+    const std::string IMAGE_FORMAT_SERIES           = "Series of 2D images";
+    const std::string IMAGE_FORMAT_TILED_2D_ANY     = "Tiles of 2D image stacks";
+    const std::string IMAGE_FORMAT_TILED_3D_ANY     = "Tiles of 3D image stacks";
+    const std::string IMAGE_FORMAT_TILED_3D_TIFF    = "Tiles of multipage TIFF stacks";
+    /*-------------------------------------------------------------------------------------------------------------------------*/
+
+    /*******************
     *    PARAMETERS    *
     ********************
     ---------------------------------------------------------------------------------------------------------------------------*/
@@ -123,12 +133,12 @@ namespace terastitcher
    inline void debug(debug_level dbg_level, const char* message=0, const char* source=0){
        if(DEBUG >= dbg_level){
                if(message && source)
-                   printf("\n--------------------- teramanager plugin: DEBUG (level %d) ----: in \"%s\") ----\n"
+                   printf("\n--------------------- TeraStitcher plugin: DEBUG (level %d) ----: in \"%s\") ----\n"
                             "                      message: %s\n\n", dbg_level, source, message);
                else if(message)
-                   printf("\n--------------------- teramanager plugin: DEBUG (level %d) ----: %s\n", dbg_level, message);
+                   printf("\n--------------------- TeraStitcher plugin: DEBUG (level %d) ----: %s\n", dbg_level, message);
                else if(source)
-                   printf("\n--------------------- teramanager plugin: DEBUG (level %d) ----: in \"%s\"\n", dbg_level, source);
+                   printf("\n--------------------- TeraStitcher plugin: DEBUG (level %d) ----: in \"%s\"\n", dbg_level, source);
            }
        }
 }

@@ -169,7 +169,7 @@ void PTabDisplProj::start()
         container->getTabBar()->setTabButton(tab_index, QTabBar::LeftSide, wait_label);
 
         //performing operation
-        StackedVolume* volume = CImport::instance()->getVolume();
+        vm::VirtualVolume* volume = CImport::instance()->getVolume();
         if(!volume)
             throw MyException("Unable to start this step. A volume must be properly imported first.");
         StackStitcher stitcher(volume);

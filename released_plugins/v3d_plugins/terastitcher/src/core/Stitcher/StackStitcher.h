@@ -295,7 +295,7 @@ void mergeTilesVaa3DRaw(std::string output_path, int block_height = -1, int bloc
 						bool exclude_nonstitchable_stacks =true, int _ROW_START=-1, int _ROW_END=-1, int _COL_START=-1,
 						int _COL_END=-1, int _D0=-1, int _D1=-1,	bool restoreSPIM=false,	  int restore_direction=-1,
 						int blending_algo=S_SINUSOIDAL_BLENDING,	bool test_mode=false, bool show_progress_bar= true,
-						const char* saved_img_format=iom::DEF_IMG_FORMAT.c_str(), int saved_img_depth=iom::DEF_IMG_DEPTH) throw (MyException);
+                        const char* saved_img_format=iom::DEF_IMG_FORMAT.c_str(), int saved_img_depth=iom::DEF_IMG_DEPTH) throw (MyException);
 
 
 };

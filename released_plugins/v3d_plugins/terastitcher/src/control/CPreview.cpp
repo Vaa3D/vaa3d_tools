@@ -33,6 +33,7 @@
 #include "StackStitcher.h"
 #include <cv.h>
 #include <highgui.h>
+#include "IM_config.h"
 
 using namespace terastitcher;
 
@@ -113,6 +114,11 @@ void CPreview::run()
 
         //everything went OK
         emit sendOperationOutcome(0, img);
+    }
+    catch( iim::IOException& exception)
+    {
+        /**/tsp::warning(strprintf("exception thrown in CMergeTiles::run(): \"%s\"", exception.what()).c_str());
+        emit sendOperationOutcome(new MyException(exception.what()), 0);
     }
     catch(MyException& exception)
     {

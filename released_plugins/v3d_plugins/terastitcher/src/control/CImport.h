@@ -46,7 +46,7 @@ class terastitcher::CImport : public QThread
         * instantiated by calling static method "istance(...)"
         **********************************************************************************/
         static CImport* uniqueInstance;
-        CImport() : QThread(), path(""), volume(0), AXS_1(axis(0)), AXS_2(axis(0)), AXS_3(axis(0)), VXL_1(0), VXL_2(0), VXL_3(0), reimport(false)
+        CImport() : QThread(), path(""), format(""), volume(0), AXS_1(axis(0)), AXS_2(axis(0)), AXS_3(axis(0)), VXL_1(0), VXL_2(0), VXL_3(0), reimport(false)
         {
             #ifdef TSP_DEBUG
             printf("TeraStitcher plugin [thread %d] >> CImport created\n", this->thread()->currentThreadId());
@@ -58,10 +58,11 @@ class terastitcher::CImport : public QThread
 
         //members
         std::string path;
+        std::string format;
         axis AXS_1, AXS_2, AXS_3;
         float VXL_1, VXL_2, VXL_3;
         bool reimport;
-        StackedVolume *volume;
+        vm::VirtualVolume *volume;
 
     public:
 
@@ -71,7 +72,7 @@ class terastitcher::CImport : public QThread
         **********************************************************************************/
         static CImport* instance()
         {
-            if (uniqueInstance == NULL)
+            if (uniqueInstance == 0)
                 uniqueInstance = new CImport();
             return uniqueInstance;
         }
@@ -79,16 +80,18 @@ class terastitcher::CImport : public QThread
         ~CImport();
 
         //GET and SET methods
-        StackedVolume* getVolume(){return volume;}
+        vm::VirtualVolume* getVolume(){return volume;}
         void setPath(string new_path){path = new_path;}
         void setAxes(string axs1, string axs2, string axs3);
         void setVoxels(float vxl1, float vxl2, float vxl3);
         void setReimport(bool _reimport){reimport = _reimport;}
+        void setFormat(std::string _format){format = _format;}
 
         //reset method
         void reset()
         {
             path="";
+            format="";
             AXS_1=AXS_2=AXS_3=axis_invalid;
             VXL_1=VXL_2=VXL_3=0;
             reimport=false;

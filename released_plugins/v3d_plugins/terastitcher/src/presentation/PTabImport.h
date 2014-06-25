@@ -60,9 +60,6 @@ class terastitcher::PTabImport : public QWidget
         QPushButton *voldir_button;     //browse for volume's directory button
         QPushButton *projfile_button;   //browse for volume's XML project file button
         QCheckBox *reimport_checkbox;   //checkbox to be used to reimport a volume already imported
-        QLabel* first_direction_label;  //label "First direction"
-        QLabel* second_direction_label; //label "Second direction"
-        QLabel* third_direction_label;  //label "Third direction"
         QLabel* axes_label;             //label "Axes"
         QComboBox *axs1_field;          //field for first direction axis
         QComboBox *axs2_field;          //field for second direction axis
@@ -71,6 +68,8 @@ class terastitcher::PTabImport : public QWidget
         QDoubleSpinBox *vxl1_field;     //field for voxel dimension along first direction
         QDoubleSpinBox *vxl2_field;     //field for voxel dimension along second direction
         QDoubleSpinBox *vxl3_field;     //field for voxel dimension along third direction
+        QLabel* image_format_label;
+        QComboBox* image_format_cbox;
         QLineEdit *regex_field;         //field for image filter regex
         QLabel *regex_label;
 

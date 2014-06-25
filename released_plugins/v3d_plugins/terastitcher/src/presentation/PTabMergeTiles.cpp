@@ -59,7 +59,7 @@ PTabMergeTiles::PTabMergeTiles(QMyTabWidget* _container, int _tab_index) : QWidg
 
     //basic panel widgets
     basic_panel = new QWidget();
-    savedir_label = new QLabel("Save stitched volume to:");
+    savedir_label = new QLabel("Save to:");
     savedir_field = new QLineEdit();
     savedir_field->setFont(QFont("",8));
     browse_button = new QPushButton("...");
@@ -92,34 +92,45 @@ PTabMergeTiles::PTabMergeTiles(QMyTabWidget* _container, int _tab_index) : QWidg
         resolutions_view_cboxs[i] = new QCheckBox("");
         resolutions_view_cboxs[i]->setStyleSheet("::indicator {subcontrol-position: center; subcontrol-origin: padding;}");
     }
-    volumeformat_selection  = new QButtonGroup();
-    volumeformat_label      = new QLabel("Volume's format:");
-    multistack_cbox         = new QCheckBox("multi-stack");
-    multistack_cbox->setFont(QFont("", 9));
-    multistack_cbox->setChecked(true);
-    singlestack_cbox        = new QCheckBox("single-stack");
-    singlestack_cbox->setFont(QFont("", 9));
-    volumeformat_selection->addButton(multistack_cbox);
-    volumeformat_selection->addButton(singlestack_cbox);
-    stackheight_field       = new QSpinBox();
-    stackheight_field->setAlignment(Qt::AlignCenter);
-    stackheight_field->setMinimum(256);
-    stackheight_field->setMaximum(4096);
-    stackheight_field->setValue(512);
-    stackheight_field->setSuffix(" (height)");
-    stackheight_field->setFont(QFont("", 9));
-    stackwidth_field        = new QSpinBox();
-    stackwidth_field->setAlignment(Qt::AlignCenter);
-    stackwidth_field->setMinimum(256);
-    stackwidth_field->setMaximum(4096);
-    stackwidth_field->setValue(512);
-    stackwidth_field->setSuffix(" (width)");
-    stackwidth_field->setFont(QFont("", 9));
-    memocc_label = new QLabel("Estimated memory usage:");
+    volumeformat_label      = new QLabel("Format:");
+    volumeformat_cbox       = new QComboBox();
+    volumeformat_cbox->setFont(QFont("", 9));
+    volumeformat_cbox->addItem(tsp::IMAGE_FORMAT_SERIES.c_str());
+    volumeformat_cbox->addItem(tsp::IMAGE_FORMAT_TILED_2D_ANY.c_str());
+    volumeformat_cbox->addItem(tsp::IMAGE_FORMAT_TILED_3D_ANY.c_str());
+    volumeformat_cbox->setEditable(true);
+    volumeformat_cbox->lineEdit()->setReadOnly(true);
+    volumeformat_cbox->lineEdit()->setAlignment(Qt::AlignCenter);
+    for(int i = 0; i < volumeformat_cbox->count(); i++)
+        volumeformat_cbox->setItemData(i, Qt::AlignCenter, Qt::TextAlignmentRole);
+
+    block_height_field       = new QSpinBox();
+    block_height_field->setAlignment(Qt::AlignCenter);
+    block_height_field->setMinimum(256);
+    block_height_field->setMaximum(4096);
+    block_height_field->setValue(512);
+    block_height_field->setSuffix(" (height)");
+    block_height_field->setFont(QFont("", 9));
+    block_width_field        = new QSpinBox();
+    block_width_field->setAlignment(Qt::AlignCenter);
+    block_width_field->setMinimum(256);
+    block_width_field->setMaximum(4096);
+    block_width_field->setValue(512);
+    block_width_field->setSuffix(" (width)");
+    block_width_field->setFont(QFont("", 9));
+    block_depth_field        = new QSpinBox();
+    block_depth_field->setAlignment(Qt::AlignCenter);
+    block_depth_field->setMinimum(128);
+    block_depth_field->setMaximum(1024);
+    block_depth_field->setValue(256);
+    block_depth_field->setSuffix(" (depth)");
+    block_depth_field->setFont(QFont("", 9));
     memocc_field = new QLineEdit();
     memocc_field->setReadOnly(true);
-    memocc_field->setAlignment(Qt::AlignCenter);
+    memocc_field->setAlignment(Qt::AlignLeft);
     memocc_field->setFont(QFont("", 9));
+    memocc_field->setStyleSheet("background-color: #ACDCA5");
+    memocc_field->setTextMargins(5,0,0,0);
     showAdvancedButton = new QPushButton(QString("Advanced options ").append(QChar(0x00BB)), this);
     showAdvancedButton->setCheckable(true);
 
@@ -131,73 +142,104 @@ PTabMergeTiles::PTabMergeTiles(QMyTabWidget* _container, int _tab_index) : QWidg
     row0_field->setMinimum(-1);
     row0_field->setValue(-1);
     row0_field->setFont(QFont("", 9));
+    row0_field->setPrefix("[");
     row1_field = new QSpinBox();
     row1_field->setAlignment(Qt::AlignCenter);
     row1_field->setMinimum(-1);
     row1_field->setValue(-1);
     row1_field->setFont(QFont("", 9));
+    row1_field->setSuffix("]");
     col0_field = new QSpinBox();
     col0_field->setAlignment(Qt::AlignCenter);
     col0_field->setMinimum(-1);
     col0_field->setValue(-1);
     col0_field->setFont(QFont("", 9));
+    col0_field->setPrefix("[");
     col1_field = new QSpinBox();
     col1_field->setAlignment(Qt::AlignCenter);
     col1_field->setMinimum(-1);
     col1_field->setValue(-1);
     col1_field->setFont(QFont("", 9));
+    col1_field->setSuffix("]");
     slice0_field = new QSpinBox();
     slice0_field->setAlignment(Qt::AlignCenter);
     slice0_field->setMinimum(-1);
     slice0_field->setMaximum(-1);
     slice0_field->setValue(-1);
     slice0_field->setFont(QFont("", 9));
+    slice0_field->setPrefix("[");
     slice1_field = new QSpinBox();
     slice1_field->setAlignment(Qt::AlignCenter);
     slice1_field->setMinimum(-1);
     slice1_field->setMaximum(-1);
     slice1_field->setValue(-1);
     slice1_field->setFont(QFont("", 9));
-    excludenonstitchables_cbox = new QCheckBox();
-    blendingalgo_label = new QLabel("Blending algorithm:");
+    slice1_field->setSuffix("]");
+    excludenonstitchables_cbox = new QCheckBox("stitchables only");
+    excludenonstitchables_cbox->setFont(QFont("", 9));
+    blendingalgo_label = new QLabel("Blending:");
     blendingalbo_cbox = new QComboBox();
     blendingalbo_cbox->insertItem(0, "No Blending");
     blendingalbo_cbox->insertItem(1, "Sinusoidal Blending");
     blendingalbo_cbox->insertItem(2, "No Blending with emphasized stacks borders");
+    blendingalbo_cbox->setEditable(true);
+    blendingalbo_cbox->lineEdit()->setReadOnly(true);
+    blendingalbo_cbox->lineEdit()->setAlignment(Qt::AlignCenter);
+    for(int i = 0; i < blendingalbo_cbox->count(); i++)
+        blendingalbo_cbox->setItemData(i, Qt::AlignCenter, Qt::TextAlignmentRole);
     blendingalbo_cbox->setCurrentIndex(1);
     blendingalbo_cbox->setFont(QFont("", 9));
-    restoreSPIM_label = new QLabel("SPIM artifacts removal:");
+    restoreSPIM_label = new QLabel("remove SPIM artifacts: ");
+    restoreSPIM_label->setFont(QFont("", 9));
     restoreSPIM_cbox = new QComboBox();
     restoreSPIM_cbox->insertItem(0, "None");
-    restoreSPIM_cbox->insertItem(1, "Zebrated pattern along V");
-    restoreSPIM_cbox->insertItem(2, "Zebrated pattern along H");
-    restoreSPIM_cbox->insertItem(3, "Zebrated pattern along D");
+    restoreSPIM_cbox->insertItem(1, "Zebrated pattern (Y)");
+    restoreSPIM_cbox->insertItem(2, "Zebrated pattern (X)");
+    restoreSPIM_cbox->insertItem(3, "Zebrated pattern (Z)");
+    restoreSPIM_cbox->setEditable(true);
+    restoreSPIM_cbox->lineEdit()->setReadOnly(true);
+    restoreSPIM_cbox->lineEdit()->setAlignment(Qt::AlignCenter);
+    for(int i = 0; i < restoreSPIM_cbox->count(); i++)
+        restoreSPIM_cbox->setItemData(i, Qt::AlignCenter, Qt::TextAlignmentRole);
     restoreSPIM_cbox->setFont(QFont("", 9));
-    imgformat_label = new QLabel("Slice image format:");
+    imgformat_label = new QLabel("");
     imgformat_cbox = new QComboBox();
-    imgformat_cbox->setFont(QFont("", 9));
     imgformat_cbox->insertItem(0, "tif");
     imgformat_cbox->insertItem(1, "tiff");
-    imgformat_cbox->insertItem(2, "png");
-    imgformat_cbox->insertItem(3, "bmp");
-    imgformat_cbox->insertItem(4, "jpeg");
-    imgformat_cbox->insertItem(5, "jpg");
-    imgformat_cbox->insertItem(6, "dib");
-    imgformat_cbox->insertItem(7, "pbm");
-    imgformat_cbox->insertItem(8, "pgm");
-    imgformat_cbox->insertItem(9, "ppm");
-    imgformat_cbox->insertItem(10, "sr");
-    imgformat_cbox->insertItem(11, "ras");
+    imgformat_cbox->insertItem(2, "v3draw");
+    imgformat_cbox->insertItem(3, "png");
+    imgformat_cbox->insertItem(4, "bmp");
+    imgformat_cbox->insertItem(5, "jpeg");
+    imgformat_cbox->insertItem(6, "jpg");
+    imgformat_cbox->insertItem(7, "dib");
+    imgformat_cbox->insertItem(8, "pbm");
+    imgformat_cbox->insertItem(9, "pgm");
+    imgformat_cbox->insertItem(10, "ppm");
+    imgformat_cbox->insertItem(11, "sr");
+    imgformat_cbox->insertItem(12, "ras");
+    imgformat_cbox->setFont(QFont("", 9));
+    imgformat_cbox->setEditable(true);
+    imgformat_cbox->lineEdit()->setReadOnly(true);
+    imgformat_cbox->lineEdit()->setAlignment(Qt::AlignCenter);
+    for(int i = 0; i < imgformat_cbox->count(); i++)
+        imgformat_cbox->setItemData(i, Qt::AlignCenter, Qt::TextAlignmentRole);
     imgdepth_label = new QLabel("depth:");
+    imgdepth_label->setFont(QFont("", 9));
     imgdepth_cbox = new QComboBox();
-    imgdepth_cbox->setFont(QFont("", 9));
     imgdepth_cbox->insertItem(0, "8");
     imgdepth_cbox->insertItem(1, "16");
+    imgdepth_cbox->setFont(QFont("", 9));
+    imgdepth_cbox->setEditable(true);
+    imgdepth_cbox->lineEdit()->setReadOnly(true);
+    imgdepth_cbox->lineEdit()->setAlignment(Qt::AlignCenter);
+    for(int i = 0; i < imgdepth_cbox->count(); i++)
+        imgdepth_cbox->setItemData(i, Qt::AlignCenter, Qt::TextAlignmentRole);
     channel_selection = new QComboBox();
     channel_selection->addItem("all channels");
-    channel_selection->addItem("R");
-    channel_selection->addItem("G");
-    channel_selection->addItem("B");
+    channel_selection->addItem("channel R");
+    channel_selection->addItem("channel G");
+    channel_selection->addItem("channel B");
+    channel_selection->setFont(QFont("", 8));
     channel_selection->setEditable(true);
     channel_selection->lineEdit()->setReadOnly(true);
     channel_selection->lineEdit()->setAlignment(Qt::AlignCenter);
@@ -209,107 +251,142 @@ PTabMergeTiles::PTabMergeTiles(QMyTabWidget* _container, int _tab_index) : QWidg
 
     /*** LAYOUT SECTIONS ***/
     //basic settings panel
-    QGridLayout* basicpanel_layout = new QGridLayout();
-    savedir_label->setFixedWidth(200);
+    QVBoxLayout* basicpanel_layout = new QVBoxLayout();
+    basicpanel_layout->setContentsMargins(0,0,0,0);
+    int left_margin = 100;
+    /**/
+    QHBoxLayout* basic_panel_row_1 = new QHBoxLayout();
+    basic_panel_row_1->setContentsMargins(0,0,0,0);
+    basic_panel_row_1->setSpacing(0);
+    savedir_label->setFixedWidth(left_margin);
     browse_button->setFixedWidth(80);
-    basicpanel_layout->addWidget(savedir_label, 0, 0, 1, 1);
-    basicpanel_layout->addWidget(savedir_field, 0, 1, 1, 10);
-    basicpanel_layout->addWidget(browse_button, 0, 11, 1, 1);
-    QWidget* emptyspace = new QWidget();
-    emptyspace->setFixedHeight(15);
-    basicpanel_layout->addWidget(emptyspace, 1, 0, 1, 11);
-    basicpanel_layout->addWidget(resolutions_label, 2, 1, 1, 6);
+    basic_panel_row_1->addWidget(savedir_label);
+    basic_panel_row_1->addWidget(savedir_field,1);
+    basic_panel_row_1->addWidget(browse_button);
+    basicpanel_layout->addLayout(basic_panel_row_1);
+    /**/
+    basicpanel_layout->addSpacing(10);
+    /**/
+    QGridLayout* basic_panel_row_2 = new QGridLayout();
+    basic_panel_row_2->setContentsMargins(0,0,0,0);
+    basic_panel_row_2->setSpacing(0);
+    basic_panel_row_2->setVerticalSpacing(0);
+    basic_panel_row_2->addWidget(resolutions_label,             0,      1,   1,              6);
     resolutions_label->setFixedWidth(200);
-    basicpanel_layout->addWidget(resolutions_size_label, 2, 7, 1, 3);
+    basic_panel_row_2->addWidget(resolutions_size_label,        0,      7,   1,              3);
     resolutions_size_label->setFixedWidth(120);
-    basicpanel_layout->addWidget(resolutions_save_label, 2, 10, 1, 1);
-    basicpanel_layout->addWidget(resolutions_view_label, 2, 11, 1, 1);
-    basicpanel_layout->addWidget(outputs_label, 3, 0, S_MAX_MULTIRES, 1);
+    basic_panel_row_2->addWidget(resolutions_save_label,        0,      10,  1,              1);
+    basic_panel_row_2->addWidget(resolutions_view_label,        0,      11,  1,              1);
+    outputs_label->setFixedWidth(left_margin);
+    basic_panel_row_2->addWidget(outputs_label,                 1,      0,   S_MAX_MULTIRES, 1);
     for(int i=0; i<S_MAX_MULTIRES; i++)
     {
         resolutions_fields[i]->setFont(QFont("", 9));
         resolutions_fields[i]->setFixedWidth(200);
         resolutions_sizes[i]->setFont(QFont("", 9));
         resolutions_sizes[i]->setFixedWidth(120);
-        basicpanel_layout->addWidget(resolutions_fields[i], 3+i, 1, 1, 6);
-        basicpanel_layout->addWidget(resolutions_sizes[i], 3+i, 7, 1, 3);
-        basicpanel_layout->addWidget(resolutions_save_cboxs[i], 3+i, 10, 1, 1);
-        basicpanel_layout->addWidget(resolutions_view_cboxs[i], 3+i, 11, 1, 1);
+        basic_panel_row_2->addWidget(resolutions_fields[i],     1+i,    1,  1, 6);
+        basic_panel_row_2->addWidget(resolutions_sizes[i],      1+i,    7,  1, 3);
+        basic_panel_row_2->addWidget(resolutions_save_cboxs[i], 1+i,    10, 1, 1);
+        basic_panel_row_2->addWidget(resolutions_view_cboxs[i], 1+i,    11, 1, 1);
     }
-    QWidget* emptyspace2 = new QWidget();
-    emptyspace2->setFixedHeight(15);
-    basicpanel_layout->addWidget(emptyspace2, 3+S_MAX_MULTIRES, 0, 1, 11);
-    basicpanel_layout->addWidget(volumeformat_label, 4+S_MAX_MULTIRES, 0, 1, 1);
-    basicpanel_layout->addWidget(singlestack_cbox, 4+S_MAX_MULTIRES, 1, 1, 3);
-    basicpanel_layout->addWidget(multistack_cbox, 4+S_MAX_MULTIRES, 4, 1, 3);
-    QHBoxLayout* stacksDimsLayout = new QHBoxLayout();
-    stacksDimsLayout->addWidget(stackheight_field, 1);
-    byLabel = new QLabel(QChar(0x00D7));
-    byLabel->setAlignment(Qt::AlignCenter);
-    byLabel->setFixedWidth(10);
-    stacksDimsLayout->addWidget(byLabel);
-    stacksDimsLayout->addWidget(stackwidth_field, 1);
-    stacksDimsLayout->setSpacing(5);
-    basicpanel_layout->addLayout(stacksDimsLayout, 4+S_MAX_MULTIRES, 7, 1, 5);
-    basicpanel_layout->addWidget(memocc_label, 5+S_MAX_MULTIRES, 0, 1, 1);
-    basicpanel_layout->addWidget(memocc_field, 5+S_MAX_MULTIRES, 1, 1, 2);
-    QWidget* emptyspace3 = new QWidget();
-    emptyspace3->setFixedHeight(5);
-    QWidget* emptyspace4 = new QWidget();
-    emptyspace4->setFixedHeight(5);
-    basicpanel_layout->addWidget(emptyspace3, 6+S_MAX_MULTIRES, 0, 1, 12);
-    basicpanel_layout->addWidget(showAdvancedButton, 7+S_MAX_MULTIRES, 0, 1, 12);
-    basicpanel_layout->addWidget(emptyspace4, 8+S_MAX_MULTIRES, 0, 1, 12);
-    basicpanel_layout->setVerticalSpacing(0);    
+    basicpanel_layout->addLayout(basic_panel_row_2);
+    /**/
+    basicpanel_layout->addSpacing(10);
+    /**/
+    QHBoxLayout* basic_panel_row_3 = new QHBoxLayout();
+    basic_panel_row_3->setContentsMargins(0,0,0,0);
+    basic_panel_row_3->setSpacing(0);
+    volumeformat_label->setFixedWidth(left_margin);
+    basic_panel_row_3->addWidget(volumeformat_label);
+    volumeformat_cbox->setFixedWidth(220);
+    basic_panel_row_3->addWidget(volumeformat_cbox);
+    block_height_field->setFixedWidth(110);
+    block_width_field->setFixedWidth(110);
+    block_depth_field->setFixedWidth(110);
+    basic_panel_row_3->addSpacing(40);
+    basic_panel_row_3->addWidget(block_height_field);
+    basic_panel_row_3->addSpacing(35);
+    basic_panel_row_3->addWidget(block_width_field);
+    basic_panel_row_3->addStretch(1);
+    basic_panel_row_3->addWidget(block_depth_field);
+    basicpanel_layout->addLayout(basic_panel_row_3);
+    /**/
+    QHBoxLayout* basic_panel_row_4 = new QHBoxLayout();
+    basic_panel_row_4->setContentsMargins(0,0,0,0);
+    basic_panel_row_4->setSpacing(0);
+    imgformat_label->setFixedWidth(left_margin);
+    basic_panel_row_4->addWidget(imgformat_label);
+    imgformat_cbox->setFixedWidth(90);
+    basic_panel_row_4->addWidget(imgformat_cbox);
+    imgdepth_label->setFixedWidth(50);
+    basic_panel_row_4->addSpacing(10);
+    basic_panel_row_4->addWidget(imgdepth_label);
+    imgdepth_cbox->setFixedWidth(60);
+    basic_panel_row_4->addSpacing(10);
+    basic_panel_row_4->addWidget(imgdepth_cbox);
+    basic_panel_row_4->addSpacing(40);
+    channel_selection->setFixedWidth(110);
+    basic_panel_row_4->addWidget(channel_selection);
+    basic_panel_row_4->addSpacing(35);
+    basic_panel_row_4->addWidget(memocc_field, 1);
+    basicpanel_layout->addLayout(basic_panel_row_4);
+    basicpanel_layout->addSpacing(5);
+    /**/
+    basicpanel_layout->addWidget(showAdvancedButton);
+    /**/
     basicpanel_layout->setContentsMargins(10,0,10,0);
     basic_panel->setLayout(basicpanel_layout);
 
     //advanced settings panel
-    QGridLayout* advancedpanel_layout = new QGridLayout();
-    volumeportion_label->setFixedWidth(200);
-    QLabel* to_label1 = new QLabel(" - ");
-    to_label1->setAlignment(Qt::AlignCenter);
-    QLabel* to_label2 = new QLabel(" - ");
-    to_label2->setAlignment(Qt::AlignCenter);
-    QLabel* to_label3 = new QLabel(" - ");
-    to_label3->setAlignment(Qt::AlignCenter);
-    advancedpanel_layout->addWidget(new QLabel("Exclude nonstitchables:"), 0, 0, 1, 1);
-    advancedpanel_layout->addWidget(excludenonstitchables_cbox, 0, 1, 1, 11);
-    advancedpanel_layout->addWidget(volumeportion_label, 1, 0, 1, 1);
-    QHBoxLayout* subvolLayout = new QHBoxLayout();
-    QLabel* rowLabel = new QLabel("rows: ");
+    QVBoxLayout* advancedpanel_layout = new QVBoxLayout();
+    /**/
+    QHBoxLayout* advancedpanel_row1 = new QHBoxLayout();
+    advancedpanel_row1->setSpacing(0);
+    advancedpanel_row1->setContentsMargins(0,0,0,0);
+    QLabel* selection_label = new QLabel("Selection:");
+    selection_label->setFixedWidth(left_margin);
+    advancedpanel_row1->addWidget(selection_label);
+    QLabel* rowLabel = new QLabel(" (rows)");
     rowLabel->setFont(QFont("", 8));
-    subvolLayout->addWidget(rowLabel);
-    subvolLayout->addWidget(row0_field);
-    subvolLayout->addWidget(to_label1);
-    subvolLayout->addWidget(row1_field);
-    subvolLayout->addSpacing(12);
-    QLabel* colLabel = new QLabel("cols: ");
+    QLabel* colLabel = new QLabel(" (cols)");
     colLabel->setFont(QFont("", 8));
-    subvolLayout->addWidget(colLabel);
-    subvolLayout->addWidget(col0_field);
-    subvolLayout->addWidget(to_label2);
-    subvolLayout->addWidget(col1_field);
-    subvolLayout->addSpacing(12);
-    QLabel* sliceLabel = new QLabel("slices: ");
+    QLabel* sliceLabel = new QLabel(" (slices)");
     sliceLabel->setFont(QFont("", 8));
-    subvolLayout->addWidget(sliceLabel);
-    subvolLayout->addWidget(slice0_field,1);
-    subvolLayout->addWidget(to_label3);
-    subvolLayout->addWidget(slice1_field,1);
-    advancedpanel_layout->addLayout(subvolLayout, 1, 1, 1, 11);
-    advancedpanel_layout->addWidget(blendingalgo_label, 2, 0, 1, 1);
-    advancedpanel_layout->addWidget(blendingalbo_cbox, 2, 1, 1, 6);
-    advancedpanel_layout->addWidget(restoreSPIM_label, 3, 0, 1, 1);
-    advancedpanel_layout->addWidget(restoreSPIM_cbox, 3, 1, 1, 6);
-    advancedpanel_layout->addWidget(imgformat_label, 4, 0, 1, 1);
-    advancedpanel_layout->addWidget(imgformat_cbox, 4, 1, 1, 1);
-    advancedpanel_layout->addWidget(imgdepth_label, 4, 2, 1, 1);
-    advancedpanel_layout->addWidget(imgdepth_cbox, 4, 3, 1, 1);
-    advancedpanel_layout->addWidget(new QLabel("chan:"), 4, 4, 1, 1);
-    advancedpanel_layout->addWidget(channel_selection, 4, 5, 1, 2);
-    advancedpanel_layout->setVerticalSpacing(2);
-    advancedpanel_layout->setContentsMargins(10,0,10,0);
+    rowLabel->setFixedWidth(60);
+    colLabel->setFixedWidth(60);
+    sliceLabel->setFixedWidth(60);
+    row0_field->setFixedWidth(50);
+    row1_field->setFixedWidth(50);
+    col0_field->setFixedWidth(50);
+    col1_field->setFixedWidth(50);
+    slice0_field->setFixedWidth(75);
+    slice1_field->setFixedWidth(75);
+    advancedpanel_row1->addWidget(row0_field);
+    advancedpanel_row1->addWidget(row1_field);
+    advancedpanel_row1->addWidget(rowLabel);
+    advancedpanel_row1->addWidget(col0_field);
+    advancedpanel_row1->addWidget(col1_field);
+    advancedpanel_row1->addWidget(colLabel);
+    advancedpanel_row1->addWidget(slice0_field);
+    advancedpanel_row1->addWidget(slice1_field);
+    advancedpanel_row1->addWidget(sliceLabel);
+    advancedpanel_row1->addStretch(1);
+    advancedpanel_row1->addWidget(excludenonstitchables_cbox);
+    advancedpanel_layout->addLayout(advancedpanel_row1);
+    /**/
+    QHBoxLayout* advancedpanel_row2 = new QHBoxLayout();
+    advancedpanel_row2->setSpacing(0);
+    advancedpanel_row2->setContentsMargins(0,0,0,0);
+    blendingalgo_label->setFixedWidth(left_margin);
+    advancedpanel_row2->addWidget(blendingalgo_label);
+    blendingalbo_cbox->setFixedWidth(260);
+    advancedpanel_row2->addWidget(blendingalbo_cbox);
+    advancedpanel_row2->addSpacing(60);
+    advancedpanel_row2->addWidget(restoreSPIM_label);
+    advancedpanel_row2->addWidget(restoreSPIM_cbox);
+    advancedpanel_layout->addLayout(advancedpanel_row2);
+    /**/
     advanced_panel->setLayout(advancedpanel_layout);
 
     //overall
@@ -340,8 +417,7 @@ PTabMergeTiles::PTabMergeTiles(QMyTabWidget* _container, int _tab_index) : QWidg
     connect(slice1_field, SIGNAL(valueChanged(int)), this, SLOT(updateContent()));
     connect(slice1_field, SIGNAL(valueChanged(int)), this, SLOT(slice1_field_changed(int)));
     connect(excludenonstitchables_cbox, SIGNAL(stateChanged(int)),this, SLOT(excludenonstitchables_changed()));
-    connect(multistack_cbox, SIGNAL(stateChanged(int)), this, SLOT(volumeformat_changed()));
-    connect(singlestack_cbox, SIGNAL(stateChanged(int)), this, SLOT(volumeformat_changed()));
+    connect(volumeformat_cbox, SIGNAL(currentIndexChanged(int)), this, SLOT(volumeformat_changed(int)));
     for(int i=0; i<S_MAX_MULTIRES; i++)
     {
         connect(resolutions_save_cboxs[i], SIGNAL(stateChanged(int)), this, SLOT(updateContent()));
@@ -377,14 +453,17 @@ void PTabMergeTiles::reset()
         resolutions_save_cboxs[i]->setChecked(true);
         resolutions_view_cboxs[i]->setChecked(false);
     }
-    multistack_cbox->setChecked(true);
-    stackheight_field->setMinimum(256);
-    stackheight_field->setMaximum(4096);
-    stackheight_field->setValue(512);
-    stackwidth_field->setMinimum(256);
-    stackwidth_field->setMaximum(4096);
-    stackwidth_field->setValue(512);
-    memocc_field->setText("");
+    volumeformat_cbox->setCurrentIndex(1);
+    block_height_field->setMinimum(256);
+    block_height_field->setMaximum(4096);
+    block_height_field->setValue(512);
+    block_width_field->setMinimum(256);
+    block_width_field->setMaximum(4096);
+    block_width_field->setValue(512);
+    block_depth_field->setMinimum(128);
+    block_depth_field->setMaximum(1024);
+    block_depth_field->setValue(256);
+    memocc_field->setText("Memory usage: ");
     excludenonstitchables_cbox->setChecked(false);
 
     row0_field->setMinimum(-1);
@@ -413,7 +492,6 @@ void PTabMergeTiles::reset()
     col1_field->setMinimum(-1);
     col1_field->setMaximum(-1);
     col1_field->setValue(-1);
-    multistack_cbox->setChecked(true);
 
     showAdvancedButton->setChecked(false);
     advanced_panel->setVisible(false);
@@ -491,12 +569,12 @@ void PTabMergeTiles::start()
         else
             container->getTabBar()->setTabButton(tab_index, QTabBar::LeftSide, wait_label);
 
-        //propagating options and paramaters and launching task
+        //propagating options and parameters and launching task
         CMergeTiles::instance()->setPMergeTiles(this);
         for(int i=0; i<S_MAX_MULTIRES; i++)
         {
             CMergeTiles::instance()->setResolution(i, resolutions_save_cboxs[i]->isChecked());
-            if(singlestack_cbox->isChecked() && resolutions_view_cboxs[i]->isChecked())
+            if(volumeformat_cbox->currentIndex()==0 && resolutions_view_cboxs[i]->isChecked())
                 CMergeTiles::instance()->setResolutionToShow(i);
         }
         CMergeTiles::instance()->start();
@@ -553,7 +631,7 @@ void PTabMergeTiles::setEnabled(bool enabled)
     //then filling widget fields
     if(enabled && CImport::instance()->getVolume())
     {
-        StackedVolume* volume = CImport::instance()->getVolume();
+        vm::VirtualVolume* volume = CImport::instance()->getVolume();
 
         //inserting volume dimensions
         QWidget::setEnabled(false);
@@ -575,7 +653,7 @@ void PTabMergeTiles::setEnabled(bool enabled)
         slice1_field->setMaximum(volume->getN_SLICES()-1);
         slice1_field->setMinimum(0);
         slice1_field->setValue(volume->getN_SLICES()-1);
-        volumeformat_changed();
+        volumeformat_changed(volumeformat_cbox->currentIndex());
         QWidget::setEnabled(true);
 
         //updating content
@@ -666,7 +744,7 @@ void PTabMergeTiles::updateContent()
     {
         if(this->isEnabled() && CImport::instance()->getVolume())
         {
-            StackedVolume* volume = CImport::instance()->getVolume();
+            vm::VirtualVolume* volume = CImport::instance()->getVolume();
 
             StackStitcher stitcher(volume);
             stitcher.computeVolumeDims(excludenonstitchables_cbox->isChecked(), row0_field->value(), row1_field->value(),
@@ -690,7 +768,7 @@ void PTabMergeTiles::updateContent()
             int layer_width = stitcher.getH1()-stitcher.getH0();
             int layer_depth = pow(2.0f, max_res);
             float MBytes = (layer_height/1024.0f)*(layer_width/1024.0f)*layer_depth*4;
-            memocc_field->setText(QString::number(MBytes, 'f', 0).append(" MB"));
+            memocc_field->setText(QString("Memory usage: ")+QString::number(MBytes, 'f', 0).append(" MB"));
 
             // update ranges
             slice0_field->setValue(stitcher.getD0());
@@ -722,14 +800,31 @@ void PTabMergeTiles::slice1_field_changed(int val){slice0_field->setMaximum(val)
 /**********************************************************************************
 * Called when <multistack_cbox> or <signlestack_cbox> state changed.
 ***********************************************************************************/
-void PTabMergeTiles::volumeformat_changed()
+void PTabMergeTiles::volumeformat_changed(int i)
 {
-    stackheight_field->setVisible(multistack_cbox->isChecked());
-    stackwidth_field->setVisible(multistack_cbox->isChecked());
-    byLabel->setVisible(multistack_cbox->isChecked());
+    block_height_field->setEnabled(i > 0);
+    block_width_field->setEnabled(i > 0);
+    block_depth_field->setEnabled(i == 2);
+
+    PMain::setEnabledComboBoxItem(imgformat_cbox, 2, i == 2);
+    PMain::setEnabledComboBoxItem(imgformat_cbox, 3, i != 2);
+    PMain::setEnabledComboBoxItem(imgformat_cbox, 4, i != 2);
+    PMain::setEnabledComboBoxItem(imgformat_cbox, 5, i != 2);
+    PMain::setEnabledComboBoxItem(imgformat_cbox, 6, i != 2);
+    PMain::setEnabledComboBoxItem(imgformat_cbox, 7, i != 2);
+    PMain::setEnabledComboBoxItem(imgformat_cbox, 8, i != 2);
+    PMain::setEnabledComboBoxItem(imgformat_cbox, 9, i != 2);
+    PMain::setEnabledComboBoxItem(imgformat_cbox, 10, i != 2);
+    PMain::setEnabledComboBoxItem(imgformat_cbox, 11, i != 2);
+    PMain::setEnabledComboBoxItem(imgformat_cbox, 12, i != 2);
+
+    if(i == 2 && imgformat_cbox->currentIndex() >= 3)
+        imgformat_cbox->setCurrentIndex(0);
+    else if(i < 2 && imgformat_cbox->currentIndex() == 2)
+        imgformat_cbox->setCurrentIndex(0);
 
     for(int i=0; i<S_MAX_MULTIRES; i++)
-        resolutions_view_cboxs[i]->setEnabled(!multistack_cbox->isChecked());
+        resolutions_view_cboxs[i]->setEnabled(i == 0);
 }
 
 /**********************************************************************************

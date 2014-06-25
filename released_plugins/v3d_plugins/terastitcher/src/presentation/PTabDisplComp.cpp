@@ -403,7 +403,7 @@ void PTabDisplComp::setEnabled(bool enabled)
 ***********************************************************************************/
 void PTabDisplComp::updateMemoryOccupancy(int)
 {
-    StackedVolume* vol = CImport::instance()->getVolume();
+    vm::VirtualVolume* vol = CImport::instance()->getVolume();
     if(vol)
     {
         int nstack_at_time = std::min(endrow_sbox->value()-startrow_sbox->value(),endcol_sbox->value()-startcol_sbox->value()) + 2;

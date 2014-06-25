@@ -61,7 +61,7 @@ void StackStitcher::mergeTilesVaa3DRaw(std::string output_path, int block_height
 							   bool exclude_nonstitchable_stacks, int _ROW_START, int _ROW_END, int _COL_START,
 							   int _COL_END, int _D0, int _D1, bool restoreSPIM, int restore_direction,
 							   int blending_algo, bool test_mode, bool show_progress_bar, 
-							   const char* saved_img_format, int saved_img_depth)			throw (MyException)
+                               const char* saved_img_format, int saved_img_depth)			throw (MyException)
 {
 	FILE *tmp_file; // TEMP
 
@@ -615,15 +615,23 @@ void StackStitcher::mergeTilesVaa3DRaw(std::string output_path, int block_height
 								img_path << volume->getSTACKS_DIR() << "/test_middle_slice";
 							}
 
-							iim::VirtualVolume::saveImage_to_Vaa3DRaw(
-								slice_ind,
-								img_path.str(), 
-                    	        buffer + buffer_z*(height/POW_INT(2,i))*(width/POW_INT(2,i)), // adds the stride
-                                (int)height/(POW_INT(2,i)),
-								(int)width/(POW_INT(2,i)),
-								start_height,end_height,start_width,end_width, 
-								saved_img_format, saved_img_depth
-							);
+                            // @FIXED by Alessandro on 2014-06-25: iim::IOException objects must be caught here
+                            try
+                            {
+                                iim::VirtualVolume::saveImage_to_Vaa3DRaw(
+                                    slice_ind,
+                                    img_path.str(),
+                                    buffer + buffer_z*(height/POW_INT(2,i))*(width/POW_INT(2,i)), // adds the stride
+                                    (int)height/(POW_INT(2,i)),
+                                    (int)width/(POW_INT(2,i)),
+                                    start_height,end_height,start_width,end_width,
+                                    saved_img_format, saved_img_depth
+                                );
+                            }
+                            catch( iim::IOException& exception)
+                            {
+                                throw MyException(exception.what());
+                            }
 						}
 						start_width  += stacks_width [i][stack_row][stack_column][0];
 					}

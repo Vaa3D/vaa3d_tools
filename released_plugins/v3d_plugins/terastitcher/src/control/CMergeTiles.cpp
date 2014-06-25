@@ -34,6 +34,7 @@
 #include <highgui.h>
 #include "StackStitcher.h"
 #include "ProgressBar.h"
+#include "IM_config.h"
 
 using namespace terastitcher;
 
@@ -65,19 +66,20 @@ void CMergeTiles::run()
     try
     {
         //pointer to the <Image4DSimple> object which stores the volume to be shown into Vaa3D
-        Image4DSimple* img = NULL;
+        Image4DSimple* img = 0;
 
         //checking that a volume has been imported first
-        StackedVolume* volume = CImport::instance()->getVolume();
+        vm::VirtualVolume* volume = CImport::instance()->getVolume();
         if(!volume)
             throw MyException("Unable to start this step. A volume must be properly imported first.");
 
-        if(pMergeTiles != NULL)
+        if(pMergeTiles != 0)
         {
             //merging
             StackStitcher stitcher(volume);
-            int sliceheight = pMergeTiles->multistack_cbox->isChecked() ? pMergeTiles->stackheight_field->value() : -1;
-            int slicewidth = pMergeTiles->multistack_cbox->isChecked() ? pMergeTiles->stackwidth_field->value() : -1;
+            int sliceheight = pMergeTiles->volumeformat_cbox->currentIndex() != 0 ? pMergeTiles->block_height_field->value() : -1;
+            int slicewidth = pMergeTiles->volumeformat_cbox->currentIndex() != 0  ? pMergeTiles->block_width_field->value() : -1;
+            int slicedepth = pMergeTiles->volumeformat_cbox->currentIndex() == 2 ? pMergeTiles->block_depth_field->value() : -1;
             bool restoreSPIM = pMergeTiles->restoreSPIM_cbox->currentIndex() != 0;
             std::string volumedir = pMergeTiles->savedir_field->text().toStdString();
             bool excludenonstitchables = pMergeTiles->excludenonstitchables_cbox->isChecked();
@@ -91,8 +93,20 @@ void CMergeTiles::run()
             int blending_algo = pMergeTiles->blendingalbo_cbox->currentIndex();
             std::string img_format = pMergeTiles->imgformat_cbox->currentText().toStdString().c_str();
             int img_depth = pMergeTiles->imgdepth_cbox->currentText().toInt();
-            stitcher.mergeTiles(volumedir, sliceheight, slicewidth, resolutions,excludenonstitchables, row0, row1, col0, col1,
-                                slice0, slice1,restoreSPIM,restore_direction, blending_algo, false, true, img_format.c_str(), img_depth );
+
+            if(pMergeTiles->volumeformat_cbox->currentText().toStdString().compare(tsp::IMAGE_FORMAT_TILED_3D_ANY) == 0)
+            {
+                // @FIXED by Alessandro on 2014-06-25: mergeTilesVaa3DRaw needs the generic format instead of file extension
+                if(img_format.compare("tif") == 0 || img_format.compare("tiff") == 0)
+                    img_format = "Tiff3D";
+                else if(img_format.compare("v3draw") == 0)
+                    img_format = "Vaa3DRaw";
+                stitcher.mergeTilesVaa3DRaw(volumedir, sliceheight, slicewidth, slicedepth, resolutions,excludenonstitchables, row0, row1, col0, col1,
+                                    slice0, slice1,restoreSPIM,restore_direction, blending_algo, false, true, img_format.c_str(), img_depth );
+            }
+            else
+                stitcher.mergeTiles(volumedir, sliceheight, slicewidth, resolutions,excludenonstitchables, row0, row1, col0, col1,
+                                    slice0, slice1,restoreSPIM,restore_direction, blending_algo, false, true, img_format.c_str(), img_depth );
 
             //checking that a volume with non-zero dimensions has been produced
             if(stitcher.getV1()-stitcher.getV0() <= 0 || stitcher.getH1()-stitcher.getH0() <= 0 || stitcher.getD1()-stitcher.getD0() <= 0)
@@ -158,6 +172,11 @@ void CMergeTiles::run()
 
         //everything went OK
         emit sendOperationOutcome(0, img);
+    }
+    catch( iim::IOException& exception)
+    {
+        /**/tsp::warning(strprintf("exception thrown in CMergeTiles::run(): \"%s\"", exception.what()).c_str());
+        emit sendOperationOutcome(new MyException(exception.what()), 0);
     }
     catch( MyException& exception)
     {

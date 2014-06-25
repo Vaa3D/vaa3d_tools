@@ -28,6 +28,7 @@
 
 #include "CDisplComp.h"
 #include "CImport.h"
+#include "IM_config.h"
 
 using namespace terastitcher;
 
@@ -59,7 +60,7 @@ void CDisplComp::run()
     try
     {
         //checking that a volume has been imported first
-        StackedVolume* volume = CImport::instance()->getVolume();
+        vm::VirtualVolume* volume = CImport::instance()->getVolume();
         if(!volume)
             throw MyException("Unable to start this step. A volume must be properly imported first.");
 
@@ -72,6 +73,11 @@ void CDisplComp::run()
 
         //everything went OK
         emit sendOperationOutcome(0);
+    }
+    catch( iim::IOException& exception)
+    {
+        /**/tsp::warning(strprintf("exception thrown in CMergeTiles::run(): \"%s\"", exception.what()).c_str());
+        emit sendOperationOutcome(new MyException(exception.what()));
     }
     catch( MyException& exception)
     {

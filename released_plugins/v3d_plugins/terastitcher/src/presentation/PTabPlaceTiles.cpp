@@ -162,7 +162,7 @@ void PTabPlaceTiles::start()
         container->getTabBar()->setTabButton(tab_index, QTabBar::LeftSide, wait_label);
 
         //performing operation
-        StackedVolume* volume = CImport::instance()->getVolume();
+        vm::VirtualVolume* volume = CImport::instance()->getVolume();
         StackStitcher stitcher(volume);
         stitcher.computeTilesPlacement(algo_cbox->currentIndex());
         volume->saveXML(0, saveproj_field->text().toStdString().c_str());

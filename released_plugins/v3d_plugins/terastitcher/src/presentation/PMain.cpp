@@ -188,6 +188,7 @@ PMain::PMain(V3DPluginCallback *callback, QWidget *parent) : QWidget(parent)
     setWindowTitle(tr("TeraStitcher plugin v") + terastitcher::version.c_str());
     setWindowFlags(Qt::WindowStaysOnTopHint);
     setFixedSize(800, 600);
+//    setFixedSize(1024, 768);
     show();
     move(QApplication::desktop()->screen()->rect().center() - rect().center());
 
@@ -519,4 +520,18 @@ bool PMain::eventFilter(QObject *object, QEvent *event)
             helpBox->setText(defaultMsg);
     }
     return false;
+}
+
+//very useful (not included in Qt): disables the given item of the given combobox
+void PMain::setEnabledComboBoxItem(QComboBox* cbox, int _index, bool enabled)
+{
+    // Get the index of the value to disable
+    QModelIndex index = cbox->model()->index(_index,0);
+
+    // These are the effective 'disable/enable' flags
+    QVariant v1(Qt::NoItemFlags);
+    QVariant v2(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
+
+    //the magic
+    cbox->model()->setData( index, enabled ? v2 : v1, Qt::UserRole -1);
 }

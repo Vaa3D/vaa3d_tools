@@ -67,12 +67,10 @@ class terastitcher::PTabMergeTiles : public QWidget
     QCheckBox* resolutions_view_cboxs[S_MAX_MULTIRES];
     QButtonGroup* volumeformat_selection;
     QLabel* volumeformat_label;
-    QCheckBox* multistack_cbox;
-    QCheckBox* singlestack_cbox;
-    QSpinBox* stackheight_field;
-    QSpinBox* stackwidth_field;
-    QLabel* byLabel;
-    QLabel* memocc_label;
+    QComboBox* volumeformat_cbox;
+    QSpinBox* block_height_field;
+    QSpinBox* block_width_field;
+    QSpinBox* block_depth_field;
     QLineEdit* memocc_field;
     QPushButton* showAdvancedButton;
 
@@ -159,7 +157,7 @@ public slots:
     /**********************************************************************************
     * Called when <multistack_cbox> or <multistack_cbox> state changed.
     ***********************************************************************************/
-    void volumeformat_changed();
+    void volumeformat_changed(int i);
 
     /**********************************************************************************
     * Called when <resolutions_view_cboxs[i]> changed

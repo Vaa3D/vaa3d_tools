@@ -11,6 +11,15 @@ ties names are:
 - Rem: a feature no longer available
 
 ============================================================================================
+Version 1.5
+June 25th, 2014
+--------------------------------------------------------------------------------------------
+- New: re-designed "MergeTiles" step graphical interface.
+- New: added support (still experimental) to 3D tiffs (input and output) and Vaa3D raw (out-
+       put only) formats.
+--------------------------------------------------------------------------------------------
+
+
 Version 1.4.1
 June 3rd, 2014
 --------------------------------------------------------------------------------------------

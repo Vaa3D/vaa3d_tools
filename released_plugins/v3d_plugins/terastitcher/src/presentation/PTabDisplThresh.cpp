@@ -191,7 +191,7 @@ void PTabDisplThresh::start()
         container->getTabBar()->setTabButton(tab_index, QTabBar::LeftSide, wait_label);
 
         //performing operation
-        StackedVolume* volume = CImport::instance()->getVolume();
+        vm::VirtualVolume* volume = CImport::instance()->getVolume();
         StackStitcher stitcher(volume);
         stitcher.thresholdDisplacements(threshold_field->value());
         volume->saveXML(0, saveproj_field->text().toStdString().c_str());
@@ -315,7 +315,7 @@ void PTabDisplThresh::updateContent()
 {
     if(CImport::instance()->getVolume())
     {
-        StackedVolume* volume = CImport::instance()->getVolume();
+        vm::VirtualVolume* volume = CImport::instance()->getVolume();
         int total, reliable, stitchables, nstacks=0;
         volume->countReliableSingleDirectionDisplacements(threshold_field->value(), total, reliable);
         stitchables = volume->countStitchableStacks(threshold_field->value());

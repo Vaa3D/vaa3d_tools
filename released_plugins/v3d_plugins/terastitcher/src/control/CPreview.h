@@ -56,7 +56,7 @@ class terastitcher::CPreview : public QThread
         void run();
 
         //members
-        StackedVolume *volume;
+        vm::VirtualVolume *volume;
         int slice_index;
 
     public:
@@ -75,7 +75,7 @@ class terastitcher::CPreview : public QThread
         ~CPreview();
 
         //SET methods
-        void setMembers(StackedVolume* _volume, int _slice_index){volume=_volume; slice_index=_slice_index;}
+        void setMembers(vm::VirtualVolume* _volume, int _slice_index){volume=_volume; slice_index=_slice_index;}
 
         //reset method
         void reset(){volume=0; slice_index=0;}

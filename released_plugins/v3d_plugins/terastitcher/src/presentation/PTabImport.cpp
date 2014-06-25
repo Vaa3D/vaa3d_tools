@@ -68,13 +68,7 @@ PTabImport::PTabImport(QMyTabWidget* _container, int _tab_index) : QWidget(), co
     projfile_button     = new QPushButton("Browse for XML...");
     reimport_checkbox = new QCheckBox("Re-import (check this to re-scan all acquisition files)");
     reimport_checkbox->setFont(QFont("", 8));
-    first_direction_label = new QLabel("First direction");
-    first_direction_label->setFont(QFont("", 8));
-    second_direction_label = new QLabel("Second direction");
-    second_direction_label->setFont(QFont("", 8));
-    third_direction_label = new QLabel("Third direction");
-    third_direction_label->setFont(QFont("", 8));
-    axes_label = new QLabel("Axes");
+    axes_label = new QLabel("Axes (1st, 2nd, 3rd):");
     axes_label->setFont(QFont("", 8));
     voxels_dims_label = new QLabel(QString("Voxel's dims (").append(QChar(0x03BC)).append("m):"));
     voxels_dims_label->setFont(QFont("", 8));
@@ -126,9 +120,6 @@ PTabImport::PTabImport(QMyTabWidget* _container, int _tab_index) : QWidget(), co
     vxl3_field = new QDoubleSpinBox();
     vxl3_field->setAlignment(Qt::AlignCenter);
     vxl3_field->setFont(QFont("", 8));
-    first_direction_label->setVisible(false);
-    second_direction_label->setVisible(false);
-    third_direction_label->setVisible(false);
     axes_label->setVisible(false);
     axs1_field->setVisible(false);
     axs2_field->setVisible(false);
@@ -137,7 +128,20 @@ PTabImport::PTabImport(QMyTabWidget* _container, int _tab_index) : QWidget(), co
     vxl1_field->setVisible(false);
     vxl2_field->setVisible(false);
     vxl3_field->setVisible(false);
-    regex_label = new QLabel("Image filename regex");
+    image_format_label = new QLabel("Image file format:");
+    image_format_label->setFont(QFont("", 8));
+    image_format_cbox = new QComboBox();
+    image_format_cbox->setFont(QFont("", 8));
+    image_format_cbox->addItem(IMAGE_FORMAT_TILED_2D_ANY.c_str());
+    image_format_cbox->addItem(IMAGE_FORMAT_TILED_3D_TIFF.c_str());
+    image_format_cbox->setEditable(true);
+    image_format_cbox->lineEdit()->setReadOnly(true);
+    image_format_cbox->lineEdit()->setAlignment(Qt::AlignCenter);
+    for(int i = 0; i < image_format_cbox->count(); i++)
+        image_format_cbox->setItemData(i, Qt::AlignCenter, Qt::TextAlignmentRole);
+    image_format_cbox->setVisible(false);
+    image_format_label->setVisible(false);
+    regex_label = new QLabel("Image file name regex:");
     regex_field = new QLineEdit();
     regex_field->setVisible(false);
     regex_label->setVisible(false);
@@ -238,37 +242,53 @@ PTabImport::PTabImport(QMyTabWidget* _container, int _tab_index) : QWidget(), co
     container_tmp_layout->addWidget(projfile_button, 1);
     container_tmp_layout->setContentsMargins(0,0,0,0);
     container_tmp->setLayout(container_tmp_layout);
-    QWidget* container_tmp2 = new QWidget();
-    QGridLayout* container_tmp2_layout = new QGridLayout();
-    container_tmp2_layout->addWidget(first_direction_label, 0, 1, 1, 3, Qt::AlignHCenter);
-    container_tmp2_layout->addWidget(second_direction_label, 0, 5, 1, 3, Qt::AlignHCenter);
-    container_tmp2_layout->addWidget(third_direction_label, 0, 9, 1, 3, Qt::AlignHCenter);
-    container_tmp2_layout->addWidget(axes_label, 1, 0, 1, 1);
-    axes_label->setFixedWidth(200);
-    regex_label->setFixedWidth(200);
-    axs1_field->setFixedWidth(150);
-    axs2_field->setFixedWidth(150);
-    axs3_field->setFixedWidth(150);
-    vxl1_field->setFixedWidth(150);
-    vxl2_field->setFixedWidth(150);
-    vxl3_field->setFixedWidth(150);
-    regex_field->setFixedWidth(150);
-    container_tmp2_layout->addWidget(axs1_field, 1, 1, 1, 3, Qt::AlignHCenter);
-    container_tmp2_layout->addWidget(axs2_field, 1, 5, 1, 3, Qt::AlignHCenter);
-    container_tmp2_layout->addWidget(axs3_field, 1, 9, 1, 3, Qt::AlignHCenter);
-    container_tmp2_layout->addWidget(voxels_dims_label, 2, 0, 1, 1);
-    container_tmp2_layout->addWidget(vxl1_field, 2, 1, 1, 3, Qt::AlignHCenter);
-    container_tmp2_layout->addWidget(vxl2_field, 2, 5, 1, 3, Qt::AlignHCenter);
-    container_tmp2_layout->addWidget(vxl3_field, 2, 9, 1, 3, Qt::AlignHCenter);
-    container_tmp2_layout->addWidget(regex_label, 3, 0, 1, 1);
-    container_tmp2_layout->addWidget(regex_field, 3, 1, 1, 3, Qt::AlignHCenter);
-    container_tmp2_layout->setContentsMargins(0,0,0,0);
-    container_tmp2_layout->setSpacing(0);
-    container_tmp2->setLayout(container_tmp2_layout);
+    QWidget* reimport_panel = new QWidget();
+    QVBoxLayout* reimport_panel_layout = new QVBoxLayout();
+    QHBoxLayout* reimport_panel_layout_row1 = new QHBoxLayout();
+    axs1_field->setFixedWidth(70);
+    axs2_field->setFixedWidth(70);
+    axs3_field->setFixedWidth(70);
+    axes_label->setFixedWidth(120);
+    reimport_panel_layout_row1->addWidget(axes_label);
+    reimport_panel_layout_row1->addSpacing(10);
+    reimport_panel_layout_row1->addWidget(axs1_field);
+    reimport_panel_layout_row1->addWidget(axs2_field);
+    reimport_panel_layout_row1->addWidget(axs3_field);
+    reimport_panel_layout_row1->addStretch(1);
+    voxels_dims_label->setFixedWidth(140);
+    reimport_panel_layout_row1->addWidget(voxels_dims_label);
+    vxl1_field->setFixedWidth(80);
+    vxl2_field->setFixedWidth(80);
+    vxl3_field->setFixedWidth(80);
+    reimport_panel_layout_row1->addWidget(vxl1_field);
+    reimport_panel_layout_row1->addWidget(vxl2_field);
+    reimport_panel_layout_row1->addWidget(vxl3_field);
+    reimport_panel_layout_row1->setContentsMargins(0,0,0,0);
+
+
+    QHBoxLayout* reimport_panel_layout_row2 = new QHBoxLayout();
+    image_format_label->setFixedWidth(120);
+    image_format_cbox->setFixedWidth(210);
+    reimport_panel_layout_row2->addWidget(image_format_label);
+    reimport_panel_layout_row2->addSpacing(10);
+    reimport_panel_layout_row2->addWidget(image_format_cbox);
+    reimport_panel_layout_row2->addStretch(1);
+    regex_label->setFixedWidth(140);
+    reimport_panel_layout_row2->addWidget(regex_label);
+    regex_field->setFixedWidth(240);
+    reimport_panel_layout_row2->addWidget(regex_field);
+    reimport_panel_layout_row2->setContentsMargins(0,0,0,0);
+
+    reimport_panel_layout->addLayout(reimport_panel_layout_row1);
+    reimport_panel_layout->addLayout(reimport_panel_layout_row2);
+    reimport_panel_layout->setContentsMargins(0,0,0,0);
+    reimport_panel_layout->setSpacing(0);
+
+    reimport_panel->setLayout(reimport_panel_layout);
     QVBoxLayout* import_form_layout = new QVBoxLayout();
     import_form_layout->addWidget(container_tmp);
     import_form_layout->addWidget(reimport_checkbox);
-    import_form_layout->addWidget(container_tmp2,1);
+    import_form_layout->addWidget(reimport_panel,1);
     import_form->setLayout(import_form_layout);
     import_form->setStyle(new QWindowsStyle());
 
@@ -509,6 +529,7 @@ void PTabImport::start()
             }
         }
         CImport::instance()->setPath(import_path);
+        CImport::instance()->setFormat(image_format_cbox->currentText().toStdString());
 
         //disabling import form and enabling progress bar animation and tab wait animation
         import_form->setEnabled(false);
@@ -656,10 +677,7 @@ void PTabImport::volumePathChanged(QString path)
 
     //checking if further informations are required
     bool furtherInfoRequired = reimport_checkbox->isChecked() || (QDir(path_field->text()).exists() &&
-                               !QFile::exists(path_field->text().toStdString().append("/").append(VM_BIN_METADATA_FILE_NAME).c_str())                                );
-    first_direction_label->setVisible(furtherInfoRequired);
-    second_direction_label->setVisible(furtherInfoRequired);
-    third_direction_label->setVisible(furtherInfoRequired);
+                               !QFile::exists(path_field->text().toStdString().append("/").append(VM_BIN_METADATA_FILE_NAME).c_str()));
     axes_label->setVisible(furtherInfoRequired);
     axs1_field->setVisible(furtherInfoRequired);
     axs2_field->setVisible(furtherInfoRequired);
@@ -670,6 +688,8 @@ void PTabImport::volumePathChanged(QString path)
     vxl3_field->setVisible(furtherInfoRequired);
     regex_field->setVisible(furtherInfoRequired);
     regex_label->setVisible(furtherInfoRequired);
+    image_format_cbox->setVisible(furtherInfoRequired);
+    image_format_label->setVisible(furtherInfoRequired);
 }
 
 /**********************************************************************************

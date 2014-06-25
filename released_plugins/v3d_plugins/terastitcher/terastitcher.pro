@@ -188,6 +188,7 @@ SOURCES += ./src/core/Stitcher/StackRestorer.cpp
 SOURCES += ./src/core/Stitcher/StackStitcher.cpp
 SOURCES += ./src/core/Stitcher/TPAlgo.cpp
 SOURCES += ./src/core/Stitcher/TPAlgoMST.cpp
+SOURCES += ./src/core/Stitcher/MergeTiles.cpp
 SOURCES += ./src/core/VolumeManager/vmBlock.cpp
 SOURCES += ./src/core/VolumeManager/vmBlockVolume.cpp
 SOURCES += ./src/core/VolumeManager/vmStack.cpp
