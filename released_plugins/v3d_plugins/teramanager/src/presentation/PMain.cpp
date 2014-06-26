@@ -254,7 +254,18 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     connect(spaceSizeAuto, SIGNAL(changed()), this, SLOT(virtualSpaceSizeChanged()));
     //connect(spaceSizeUnlimited, SIGNAL(changed()), this, SLOT(virtualSpaceSizeChanged()));
     /**/
-    markersDeleteROIMenu = markersMenu->addMenu("\"1-right-stroke to delete a group of markers\"");
+    markersSizeMenu = markersMenu->addMenu("Size");
+    markersSizeWidget = new QWidgetAction(this);
+    markersSizeSpinBox = new QSpinBox();
+    markersSizeSpinBox->setMinimum(1);
+    markersSizeSpinBox->setMaximum(100);
+    markersSizeSpinBox->setSuffix(" (highrez pixels)");
+    markersSizeSpinBox->setValue(CSettings::instance()->getAnnotationMarkerSize());
+    markersSizeWidget->setDefaultWidget(markersSizeSpinBox);
+    markersSizeMenu->addAction(markersSizeWidget);
+    connect(markersSizeSpinBox, SIGNAL(valueChanged(int)), this, SLOT(markersSizeSpinBoxChanged(int)));
+    /**/
+    markersDeleteROIMenu = markersMenu->addMenu("Action: \"1-right-stroke to delete a group of markers\"");
     markersDeleteROISamplingMenu = markersDeleteROIMenu->addMenu("Sample every");
     markersDeleteROISamplingWidget = new QWidgetAction(this);
     markersDeleteROISamplingSpinBox = new QSpinBox();
@@ -266,7 +277,7 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     markersDeleteROISamplingSpinBox->setValue(CSettings::instance()->getAnnotationMarkersDeleteROISampling());
     connect(markersDeleteROISamplingSpinBox, SIGNAL(valueChanged(int)), this, SLOT(markersDeleteROISamplingSpinBoxChanged(int)));
     /**/
-    markersShowROIMenu = markersMenu->addMenu("\"Show/hide markers around the displayed ROI\"");
+    markersShowROIMenu = markersMenu->addMenu("Action: \"Show/hide markers around the displayed ROI\"");
     markersShowROIMarginMenu = markersShowROIMenu->addMenu("Virtual margin size");
     markersShowROIMarginWidget = new QWidgetAction(this);
     markersShowROIMarginSpinBox = new QSpinBox();
@@ -704,7 +715,17 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     ESoverlapSpbox->setMinimum(0);
     ESoverlapSpbox->setMaximum(50);
     ESmethodCbox = new QComboBox();
-    ESmethodCbox->addItem("XYZ");
+    ESmethodCbox->addItem("X->Y->Z");
+    ESmethodCbox->addItem("Y->X->Z");
+    ESmethodCbox->addItem("X->Z->Y");
+    ESmethodCbox->addItem("Y->Z->X");
+    ESmethodCbox->addItem("Z->Y->X");
+    ESmethodCbox->addItem("Z->X->Y");
+    setEnabledComboBoxItem(ESmethodCbox, 1, false);
+    setEnabledComboBoxItem(ESmethodCbox, 2, false);
+    setEnabledComboBoxItem(ESmethodCbox, 3, false);
+    setEnabledComboBoxItem(ESmethodCbox, 4, false);
+    setEnabledComboBoxItem(ESmethodCbox, 5, false);
     ESmethodCbox->setEditable(true);
     ESmethodCbox->lineEdit()->setAlignment(Qt::AlignHCenter);
     for (int i = 0; i < ESmethodCbox->count(); ++i)
@@ -1071,7 +1092,8 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     connect(traslTneg, SIGNAL(clicked()), this, SLOT(traslTnegClicked()));
     connect(controlsResetButton, SIGNAL(clicked()), this, SLOT(resetMultiresControls()));
     connect(ESbutton, SIGNAL(clicked()), this, SLOT(ESbuttonClicked()));
-    connect(ESblockSpbox, SIGNAL(valueChanged(int)), this, SLOT(ESblockSpboxChanged(int)));
+    //connect(ESblockSpbox, SIGNAL(valueChanged(int)), this, SLOT(ESblockSpboxChanged(int)));
+    connect(ESblockSpbox, SIGNAL(editingFinished()), this, SLOT(ESblockSpboxChanged()));
     connect(this, SIGNAL(sendProgressBarChanged(int, int, int, const char*)), this, SLOT(progressBarChanged(int, int, int, const char*)), Qt::QueuedConnection);
 
     //set always on top
@@ -1828,16 +1850,16 @@ void PMain::resolutionIndexChanged(int i)
     {
         if(resolution_cbox->isEnabled() && CExplorerWindow::getCurrent() && i > CExplorerWindow::getCurrent()->getResIndex())
         {
-            int voiV0 = CVolume::scaleVCoord(V0_sbox->value()-1, CImport::instance()->getResolutions()-1, i);
-            int voiV1 = CVolume::scaleVCoord(V1_sbox->value()-1, CImport::instance()->getResolutions()-1, i);
-            int voiH0 = CVolume::scaleHCoord(H0_sbox->value()-1, CImport::instance()->getResolutions()-1, i);
-            int voiH1 = CVolume::scaleHCoord(H1_sbox->value()-1, CImport::instance()->getResolutions()-1, i);
-            int voiD0 = CVolume::scaleDCoord(D0_sbox->value()-1, CImport::instance()->getResolutions()-1, i);
-            int voiD1 = CVolume::scaleDCoord(D1_sbox->value()-1, CImport::instance()->getResolutions()-1, i);
+//            int voiV0 = CVolume::scaleVCoord(V0_sbox->value()-1, CImport::instance()->getResolutions()-1, i);
+//            int voiV1 = CVolume::scaleVCoord(V1_sbox->value()-1, CImport::instance()->getResolutions()-1, i);
+//            int voiH0 = CVolume::scaleHCoord(H0_sbox->value()-1, CImport::instance()->getResolutions()-1, i);
+//            int voiH1 = CVolume::scaleHCoord(H1_sbox->value()-1, CImport::instance()->getResolutions()-1, i);
+//            int voiD0 = CVolume::scaleDCoord(D0_sbox->value()-1, CImport::instance()->getResolutions()-1, i);
+//            int voiD1 = CVolume::scaleDCoord(D1_sbox->value()-1, CImport::instance()->getResolutions()-1, i);
 
-            int voiTDim = std::min(static_cast<int>(CImport::instance()->getVMapTDim()), Tdim_sbox->value());
-            float MVoxels = ((voiV1-voiV0+1)/1024.0f)*((voiH1-voiH0+1)/1024.0f)*(voiD1-voiD0+1)*voiTDim;
-            if(QMessageBox::Yes == QMessageBox::question(this, "Confirm", QString("The volume to be loaded is ").append(QString::number(MVoxels, 'f', 1)).append(" MVoxels big.\n\nDo you confirm?"), QMessageBox::No | QMessageBox::Yes, QMessageBox::Yes))
+//            int voiTDim = std::min(static_cast<int>(CImport::instance()->getVMapTDim()), Tdim_sbox->value());
+//            float MVoxels = ((voiV1-voiV0+1)/1024.0f)*((voiH1-voiH0+1)/1024.0f)*(voiD1-voiD0+1)*voiTDim;
+//            if(QMessageBox::Yes == QMessageBox::question(this, "Confirm", QString("The volume to be loaded is ").append(QString::number(MVoxels, 'f', 1)).append(" MVoxels big.\n\nDo you confirm?"), QMessageBox::No | QMessageBox::Yes, QMessageBox::Yes))
             {
                 int currentRes = CExplorerWindow::getCurrent()->getResIndex();
                 int x0 = CVolume::scaleHCoord(H0_sbox->value()-1, CImport::instance()->getResolutions()-1, currentRes);
@@ -1853,10 +1875,10 @@ void PMain::resolutionIndexChanged(int i)
                                                        V0_sbox->value()-1, V1_sbox->value()-1,
                                                        D0_sbox->value()-1, D1_sbox->value()-1,
                                                        x0, x1, y0, y1, z0, z1, currentRes).c_str(), __itm__current__function__);
-                CExplorerWindow::getCurrent()->newView(x1, y1, z1, i, t0, t1, false, -1, -1, -1, x0, y0, z0, false);
+                CExplorerWindow::getCurrent()->newView(x1, y1, z1, i, t0, t1, false, -1, -1, -1, x0, y0, z0, true);
             }
-            else
-                resolution_cbox->setCurrentIndex(CExplorerWindow::getCurrent()->getResIndex());
+//            else
+//                resolution_cbox->setCurrentIndex(CExplorerWindow::getCurrent()->getResIndex());
         }
     }
     catch(RuntimeException &ex)
@@ -2171,9 +2193,9 @@ void PMain::addGaussianNoiseTriggered()
 
 void PMain::debugAction1Triggered()
 {
-    /**/itm::debug(itm::LEV1, 0, __itm__current__function__);
+    /**/itm::debug(itm::NO_DEBUG, 0, __itm__current__function__);
 
-    StackedVolume vol("/media/Elements/");
+//    StackedVolume vol("/media/Elements/");
 //    QList<LocationSimple> markers = V3D_env->getLandmark(CExplorerWindow::getCurrent()->window);
 
 //    if(markers1)
@@ -2479,20 +2501,23 @@ void PMain::ESbuttonClicked()
     ESblockSpbox->setMaximum(start ? ESblocks.size(): 0);
     ESblockSpbox->setMinimum(start ? 1: 0);
     ESblockSpbox->setValue(start ? 1: 0);
+    ESblockSpboxChanged();
 }
 
 /**********************************************************************************
-* Called when the correspont spin box has changed
+* Called when the correspondent spin box has changed
 ***********************************************************************************/
-void PMain::ESblockSpboxChanged(int b)
+void PMain::ESblockSpboxChanged()
 {
+    int b = ESblockSpbox->value();
+
     if(b == 0 || !ESblockSpbox->isEnabled())
         return;
 
-    /**/itm::debug(itm::LEV3, 0, __itm__current__function__);
+    /**/itm::debug(itm::NO_DEBUG, 0, __itm__current__function__);
 
     CExplorerWindow* curWin = CExplorerWindow::getCurrent();
-    if(curWin)
+    if(curWin && curWin->isActive && !curWin->toBeClosed)
     {
         // update reference system
         int ROIxS   = ESblocks[b-1].xInt.start;
@@ -2592,6 +2617,24 @@ void PMain::markersShowROIMarginSpinBoxChanged(int value)
     CSettings::instance()->setAnnotationVirtualMargin(value);
     CSettings::instance()->writeSettings();
     PAnoToolBar::instance()->buttonMarkerRoiViewChecked(PAnoToolBar::instance()->buttonMarkerRoiView->isChecked());
+}
+
+/**********************************************************************************
+* Called when markersSizeSpinBox state has changed
+***********************************************************************************/
+void PMain::markersSizeSpinBoxChanged(int value)
+{
+    /**/itm::debug(itm::LEV2, 0, __itm__current__function__);
+    CSettings::instance()->setAnnotationMarkerSize(value);
+    CSettings::instance()->writeSettings();
+
+    CExplorerWindow *cur_win = CExplorerWindow::getCurrent();
+    if(cur_win)
+    {
+        cur_win->view3DWidget->getRenderer()->markerSize = std::max(5, static_cast<int>( value / CImport::instance()->getResRatio(cur_win->volResIndex) + 0.5f));
+        cur_win->view3DWidget->updateTool();
+        cur_win->view3DWidget->update();
+    }
 }
 
 void PMain::showDialogVtk2APO()

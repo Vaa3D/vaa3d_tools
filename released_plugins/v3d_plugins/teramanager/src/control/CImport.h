@@ -132,6 +132,12 @@ class teramanager::CImport : public QThread
             else return 0;
         }
         int getResolutions(){return volumes.size();}
+        float getResRatio(int resIndex)
+        {
+            if(!volumes.empty() && resIndex < volumes.size())
+                return (volumes.back()->getDIM_V()-1.0f)/(volumes[resIndex]->getDIM_V()-1.0f);
+            else return 1.0f;
+        }
 
         // SET methods
         void setPath(string new_path){path = new_path;}

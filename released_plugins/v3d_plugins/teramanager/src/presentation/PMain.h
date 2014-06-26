@@ -89,6 +89,11 @@ class teramanager::PMain : public QWidget
         QWidgetAction* markersDeleteROISamplingWidget;  //"Sample every" menu action widget
         QSpinBox* markersDeleteROISamplingSpinBox;      //"Sample every" spinbox
 
+
+        QMenu* markersSizeMenu;                         //"Size" menu level 4
+        QWidgetAction* markersSizeWidget;               //"Size" menu action widget
+        QSpinBox* markersSizeSpinBox;                   //"Size" spinbox
+
         QMenu* markersShowROIMenu;                      //"Show/hide markers around the displayed ROI" menu level 4
         QMenu* markersShowROIMarginMenu;                //"Virtual margin size" menu level 5
         QWidgetAction* markersShowROIMarginWidget;      //"Virtual margin size" menu action widget
@@ -455,7 +460,7 @@ class teramanager::PMain : public QWidget
         /**********************************************************************************
         * Called when the corresponding spin box has changed
         ***********************************************************************************/
-        void ESblockSpboxChanged(int b);
+        void ESblockSpboxChanged();
 
         /**********************************************************************************
         * Called when the corresponding QLineEdit has been edited
@@ -481,6 +486,11 @@ class teramanager::PMain : public QWidget
         * Called when markersShowROIMarginSpinBox state has changed
         ***********************************************************************************/
         void markersShowROIMarginSpinBoxChanged(int value);
+
+        /**********************************************************************************
+        * Called when markersSizeSpinBox state has changed
+        ***********************************************************************************/
+        void markersSizeSpinBoxChanged(int value);
 
         void showDialogVtk2APO();
 

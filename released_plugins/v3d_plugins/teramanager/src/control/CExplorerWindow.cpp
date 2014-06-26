@@ -74,7 +74,7 @@ void CExplorerWindow::show()
         V3D_env->open3DWindow(window);
         view3DWidget = (V3dR_GLWidget*)(V3D_env->getView3DControl(window));
         if(!view3DWidget->getiDrawExternalParameter())
-            QMessageBox::critical(PMain::getInstance(),QObject::tr("Error"), QObject::tr("Unable to get iDrawExternalParameter from Vaa3D's V3dR_GLWidget"),QObject::tr("Ok"));
+            QMessageBox::critical(pMain,QObject::tr("Error"), QObject::tr("Unable to get iDrawExternalParameter from Vaa3D's V3dR_GLWidget"),QObject::tr("Ok"));
         window3D = view3DWidget->getiDrawExternalParameter()->window3D;
         PLog::getInstance()->appendGPU(timer.elapsed(), QString("Opened view ").append(title.c_str()).toStdString());
 
@@ -156,13 +156,13 @@ void CExplorerWindow::show()
             CExplorerWindow::first = this;
 
             //increasing height if lower than the plugin one's
-            if(window3D->height() < PMain::getInstance()->height())
-                window3D->setMinimumHeight(PMain::getInstance()->height());
+            if(window3D->height() < pMain->height())
+                window3D->setMinimumHeight(pMain->height());
 
             //centering the current 3D window and the plugin's window
             int screen_height = qApp->desktop()->availableGeometry().height();
             int screen_width = qApp->desktop()->availableGeometry().width();
-            int window_x = (screen_width - (window3D->width() + PMain::getInstance()->width()))/2;
+            int window_x = (screen_width - (window3D->width() + pMain->width()))/2;
             int window_y = (screen_height - window3D->height()) / 2;
             window3D->move(window_x, window_y);
         }
@@ -235,13 +235,13 @@ void CExplorerWindow::show()
         //connect(view3DWidget, SIGNAL(xRotationChanged(int)), this, SLOT(Vaa3D_rotationchanged(int)));
         //connect(view3DWidget, SIGNAL(yRotationChanged(int)), this, SLOT(Vaa3D_rotationchanged(int)));
         //connect(view3DWidget, SIGNAL(zRotationChanged(int)), this, SLOT(Vaa3D_rotationchanged(int)));
-        connect(PMain::getInstance()->refSys,  SIGNAL(mouseReleased()),   this, SLOT(PMain_rotationchanged()));
-        connect(PMain::getInstance()->V0_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeV0sbox(int)));
-        connect(PMain::getInstance()->V1_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeV1sbox(int)));
-        connect(PMain::getInstance()->H0_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeH0sbox(int)));
-        connect(PMain::getInstance()->H1_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeH1sbox(int)));
-        connect(PMain::getInstance()->D0_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeD0sbox(int)));
-        connect(PMain::getInstance()->D1_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeD1sbox(int)));
+        connect(pMain->refSys,  SIGNAL(mouseReleased()),   this, SLOT(PMain_rotationchanged()));
+        connect(pMain->V0_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeV0sbox(int)));
+        connect(pMain->V1_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeV1sbox(int)));
+        connect(pMain->H0_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeH0sbox(int)));
+        connect(pMain->H1_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeH1sbox(int)));
+        connect(pMain->D0_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeD0sbox(int)));
+        connect(pMain->D1_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeD1sbox(int)));
 
         #ifdef USE_EXPERIMENTAL_FEATURES
         disconnect(window3D->zoomSlider, SIGNAL(valueChanged(int)), view3DWidget, SLOT(setZoom(int)));
@@ -258,8 +258,8 @@ void CExplorerWindow::show()
         this->window3D->show();
 
         // updating reference system
-        if(!PMain::getInstance()->isESactive())
-            PMain::getInstance()->refSys->setDims(volH1-volH0+1, volV1-volV0+1, volD1-volD0+1);
+        if(!pMain->isESactive())
+            pMain->refSys->setDims(volH1-volH0+1, volV1-volV0+1, volD1-volD0+1);
         this->view3DWidget->updateGL();     // if omitted, Vaa3D_rotationchanged somehow resets rotation to 0,0,0
         Vaa3D_rotationchanged(0);
 
@@ -270,25 +270,28 @@ void CExplorerWindow::show()
         PAnoToolBar::instance()->refreshTools();
 
         // update curve aspect
-        PMain::getInstance()->curveAspectChanged();
+        pMain->curveAspectChanged();
+
+        // update marker size
+        pMain->markersSizeSpinBoxChanged(pMain->markersSizeSpinBox->value());
 
         //update visible markers
         PAnoToolBar::instance()->buttonMarkerRoiViewChecked(PAnoToolBar::instance()->buttonMarkerRoiView->isChecked());
     }
     catch(RuntimeException &ex)
     {
-        QMessageBox::critical(PMain::getInstance(),QObject::tr("Error"), QObject::tr(ex.what()),QObject::tr("Ok"));
-        PMain::getInstance()->closeVolume();
+        QMessageBox::critical(pMain,QObject::tr("Error"), QObject::tr(ex.what()),QObject::tr("Ok"));
+        pMain->closeVolume();
     }
     catch(const char* error)
     {
-        QMessageBox::critical(PMain::getInstance(),QObject::tr("Error"), QObject::tr(error),QObject::tr("Ok"));
-        PMain::getInstance()->closeVolume();
+        QMessageBox::critical(pMain,QObject::tr("Error"), QObject::tr(error),QObject::tr("Ok"));
+        pMain->closeVolume();
     }
     catch(...)
     {
-        QMessageBox::critical(PMain::getInstance(),QObject::tr("Error"), QObject::tr("Unknown error occurred"),QObject::tr("Ok"));
-        PMain::getInstance()->closeVolume();
+        QMessageBox::critical(pMain,QObject::tr("Error"), QObject::tr("Unknown error occurred"),QObject::tr("Ok"));
+        pMain->closeVolume();
     }
 }
 
@@ -576,8 +579,17 @@ bool CExplorerWindow::eventFilter(QObject *object, QEvent *event)
             }
 
             QMouseEvent* mouseEvt = (QMouseEvent*)event;
+
+            #ifdef USE_EXPERIMENTAL_FEATURES
             XYZ point = getRenderer3DPoint(mouseEvt->x(), mouseEvt->y());
             newView(point.x, point.y, point.z, volResIndex+1, volT0, volT1);
+            #else
+            static_cast<Renderer_gl1*>(view3DWidget->getRenderer())->selectMode = Renderer::smMarkerCreate1;
+            static_cast<Renderer_gl1*>(view3DWidget->getRenderer())->b_addthismarker = false;
+            static_cast<Renderer_gl1*>(view3DWidget->getRenderer())->b_imaging = false;
+            static_cast<Renderer_gl1*>(view3DWidget->getRenderer())->b_grabhighrez = true;
+            view3DWidget->getRenderer()->hitPoint(mouseEvt->x(), mouseEvt->y());
+            #endif
             return true;
         }
 
@@ -1548,7 +1560,8 @@ void CExplorerWindow::deleteMarkerAt(int x, int y, QList<LocationSimple>* delete
             for(int j=0; j<vaa3dMarkers.size(); j++)
                 if(vaa3dMarkers[j].x == imageMarkers[i].x &&
                    vaa3dMarkers[j].y == imageMarkers[i].y &&
-                   vaa3dMarkers[j].z == imageMarkers[i].z)
+                   vaa3dMarkers[j].z == imageMarkers[i].z &&
+                   !CAnnotations::isMarkerOutOfRendererBounds(vaa3dMarkers[j]))
                     vaa3dMarkers_tbd.push_back(j);
         }
     }
@@ -1672,6 +1685,7 @@ void CExplorerWindow::loadAnnotations() throw (RuntimeException)
     for (int i=0; i<listNeuronTree->size(); i++)
         (*listNeuronTree)[i].editable = false; //090928
     view3DWidget->updateTool();
+    view3DWidget->update();
 
 
     //update visible markers

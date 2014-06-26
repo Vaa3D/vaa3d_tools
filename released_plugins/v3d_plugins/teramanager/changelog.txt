@@ -11,6 +11,23 @@ ties names are:
 - Rem: a feature no longer available
 
 ============================================================================================
+Version 0.9.97
+June 26th, 2014
+--------------------------------------------------------------------------------------------
+- Opt: easier block change in "Sliding viewer". Change is triggered only when the users con-
+       firms the block edit (by pressing ENTER).
+- New: autocrop enabled when changing the resolution by the "Viewer"->"Resolution" combobox.
+       This enables - for the first time - instant jump to any (higher) resolution.
+- New: deletion  of out-of-bounds  markers  in "Show/hide markers around the ROI" feature is
+       now silently ignored.
+- Opt: faster update of 3D renderer when showing/hiding markers around the displayed ROI.
+- New: marker size proportional to zoom-in level. In addition, the base size can be set from
+       the corresponding option menu in the annotation toolbar.  As in all other cases, this
+	   is a persistent option.
+- New: zoom-in with mouse double-click now works on Windows too!
+--------------------------------------------------------------------------------------------
+
+
 Version 0.9.961
 June 26th, 2014
 --------------------------------------------------------------------------------------------

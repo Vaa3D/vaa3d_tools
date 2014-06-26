@@ -249,6 +249,12 @@ class teramanager::CAnnotations
         **********************************************************************************/
         static void convertVtk2APO(std::string vtkPath, std::string apoPath) throw (itm::RuntimeException);
 
+
+
+        static inline bool isMarkerOutOfRendererBounds(const LocationSimple& marker){
+            return marker.x < 0 || marker.y < 0 || marker.z < 0 ;
+        }
+
         friend class annotation;
 };
 

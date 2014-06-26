@@ -282,6 +282,7 @@ void PAnoToolBar::buttonMarkerRoiViewChecked(bool checked)
         }
 
         expl->view3DWidget->updateTool();
+        expl->view3DWidget->update();
     }
 }
 

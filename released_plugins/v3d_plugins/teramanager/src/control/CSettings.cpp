@@ -72,6 +72,7 @@ void CSettings::loadDefaultSettings()
     annotationCurvesDims = 1;
     annotationCurvesAspectTube = true;
     annotationVirtualMargin = 20;
+    annotationMarkerSize = 10;
 
     //TeraConverter settings
     volumeConverterInputPathLRU = "";
@@ -116,6 +117,7 @@ void CSettings::writeSettings()
     settings.setValue("annotationCurvesDims", annotationCurvesDims);
     settings.setValue("annotationCurvesAspectTube", annotationCurvesAspectTube);
     settings.setValue("annotationVirtualMargin", annotationVirtualMargin);
+    settings.setValue("annotationMarkerSize", annotationMarkerSize);
 
     settings.setValue("volumeConverterInputPathLRU", QString(volumeConverterInputPathLRU.c_str()));
     settings.setValue("volumeConverterOutputPathLRU", QString(volumeConverterOutputPathLRU.c_str()));
@@ -170,6 +172,9 @@ void CSettings::readSettings()
         annotationCurvesAspectTube = settings.value("annotationCurvesAspectTube").toBool();
     if(settings.contains("annotationVirtualMargin"))
         annotationVirtualMargin = settings.value("annotationVirtualMargin").toInt();
+    if(settings.contains("annotationMarkerSize"))
+        annotationMarkerSize = settings.value("annotationMarkerSize").toInt();
+
     int size = settings.beginReadArray("volumePathHistory");
     volumePathHistory.clear();
     for (int i = 0; i < size; ++i)
