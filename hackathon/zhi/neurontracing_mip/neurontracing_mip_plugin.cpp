@@ -35,12 +35,18 @@ struct APP2_LS_PARA
     double SR_ratio;
     int  b_256cube;
     int b_RadiusFrom2D;
+    int root_1st[3];
+    int mip_plane; //0 for XY, 1 for XZ, 2 for YZ
+
+    Image4DSimple * image;
+
+    QString inimg_file;
 };
 
 typedef vector<Point*> Segment;
 typedef vector<Point*> Tree;
 
-void autotrace_largeScale_mip(V3DPluginCallback2 &callback, QWidget *parent);
+void autotrace_largeScale_mip(V3DPluginCallback2 &callback, QWidget *parent,APP2_LS_PARA &p);
 QString getAppPath();
 
  
@@ -63,7 +69,33 @@ void neurontracing_mip::domenu(const QString &menu_name, V3DPluginCallback2 &cal
 {
 	if (menu_name == tr("trace"))
 	{
-        autotrace_largeScale_mip(callback,parent);
+        APP2_LS_PARA P;
+        mipTracingeDialog dialog(callback, parent);
+        if (!dialog.image)
+            return;
+        if(dialog.listLandmarks.count() ==0)
+            return;
+
+        LocationSimple tmpLocation(0,0,0);
+        tmpLocation = dialog.listLandmarks.at(0);
+        tmpLocation.getCoord(P.root_1st[0],P.root_1st[1],P.root_1st[2]);
+
+        if (dialog.exec()!=QDialog::Accepted)
+            return;
+        P.inimg_file = dialog.image->getFileName();
+
+        P.is_gsdt = dialog.is_gsdt;
+        P.is_break_accept = dialog.is_break_accept;
+        P.bkg_thresh = dialog.bkg_thresh;
+        P.length_thresh = dialog.length_thresh;
+        P.cnn_type = dialog.cnn_type;
+        P.channel = dialog.channel;
+        P.SR_ratio = dialog.SR_ratio;
+        P.b_256cube = dialog.b_256cube;
+        P.b_RadiusFrom2D = dialog.b_RadiusFrom2D;
+        P.mip_plane = dialog.mip_plane;
+
+        autotrace_largeScale_mip(callback,parent,P);
     }
 	else
 	{
@@ -96,53 +128,19 @@ bool neurontracing_mip::dofunc(const QString & func_name, const V3DPluginArgList
 	return true;
 }
 
-void autotrace_largeScale_mip(V3DPluginCallback2 &callback, QWidget *parent)
+void autotrace_largeScale_mip(V3DPluginCallback2 &callback, QWidget *parent,APP2_LS_PARA &Para)
 {
     v3dhandle curwin = callback.currentImageWindow();
-    if (!curwin)
-    {
-        v3d_msg("You don't have any image open in the main window.");
-        return;
-    }
-
     Image4DSimple* p4DImage = callback.getImage(curwin);
-
-    if (!p4DImage)
-    {
-        v3d_msg("The image pointer is invalid. Ensure your data is valid and try again!");
-        return;
-    }
-
     unsigned char* data1d = p4DImage->getRawData();
-    V3DLONG pagesz = p4DImage->getTotalUnitNumberPerChannel();
     QString image_name = p4DImage->getFileName();
-    ImagePixelType pixeltype = p4DImage->getDatatype();
 
     V3DLONG N = p4DImage->getXDim();
     V3DLONG M = p4DImage->getYDim();
     V3DLONG P = p4DImage->getZDim();
     V3DLONG C = p4DImage->getCDim();
 
-
-    int tmpx,tmpy,tmpz;
-    LandmarkList listLandmarks = callback.getLandmark(curwin);
-    LocationSimple tmpLocation(0,0,0);
-    int marknum = listLandmarks.count();
-    if(marknum ==0)
-    {
-        v3d_msg("No markers in the current image, please double check.");
-        return;
-    }
-
-
-    bool ok1;
-    unsigned int th = 0;
-
-    th = QInputDialog::getInteger(parent, "Background threshold",
-                                  "Enter the background threshold:",
-                                  55, 1, 255, 1, &ok1);
-    if(!ok1)
-        return;
+    int th = Para.bkg_thresh;
 
     QString tmpfolder = QFileInfo(image_name).path()+("/tmp");
     system(qPrintable(QString("mkdir %1").arg(tmpfolder.toStdString().c_str())));
@@ -153,10 +151,12 @@ void autotrace_largeScale_mip(V3DPluginCallback2 &callback, QWidget *parent)
         return;
     }
 
+    int tmpx,tmpy,tmpz;
+    tmpx = Para.root_1st[0];
+    tmpy = Para.root_1st[1];
+    tmpz = Para.root_1st[2];
 
 
-    tmpLocation = listLandmarks.at(0);
-    tmpLocation.getCoord(tmpx,tmpy,tmpz);
 
     V3DLONG pagesz_mip = N*M;
     unsigned char *image_mip=0;
@@ -297,17 +297,6 @@ void autotrace_largeScale_mip(V3DPluginCallback2 &callback, QWidget *parent)
    if(image_mip) {delete []image_mip; image_mip = 0;}
    if(image_region) {delete []image_region; image_region = 0;}
 
-   APP2_LS_PARA Para;
-   Para.is_gsdt = 1;
-   Para.is_break_accept = 0;
-   Para.bkg_thresh = th-5;
-   Para.length_thresh = 20.0;
-   Para.cnn_type = 2;
-   Para.channel = 1;
-   Para.SR_ratio = 3/9;
-   Para.b_256cube = 0;
-   Para.b_RadiusFrom2D = 1;
-
    ImageMarker S;
    QList <ImageMarker> marklist;
    S.x = tmpx;
@@ -324,7 +313,7 @@ void autotrace_largeScale_mip(V3DPluginCallback2 &callback, QWidget *parent)
 
     #if  defined(Q_OS_LINUX)
     QString cmd_APP2 = QString("%1/vaa3d -x Vaa3D_Neuron2 -f app2 -i %2 -p %3 %4 %5 %6 %7 %8 %9 %10").arg(getAppPath().toStdString().c_str()).arg(APP2_image_name.toStdString().c_str()).arg(markerpath.toStdString().c_str())
-                .arg(Para.channel-1).arg(Para.bkg_thresh).arg(Para.b_256cube).arg(Para.b_RadiusFrom2D).arg(Para.is_gsdt).arg(Para.is_break_accept).arg(Para.length_thresh);
+                .arg(Para.channel-1).arg(Para.bkg_thresh - 5).arg(Para.b_256cube).arg(Para.b_RadiusFrom2D).arg(Para.is_gsdt).arg(Para.is_break_accept).arg(Para.length_thresh);
         system(qPrintable(cmd_APP2));
     #elif defined(Q_OS_MAC)
         QString cmd_APP2 = QString("%1/vaa3d64.app/Contents/MacOS/vaa3d64 -x Vaa3D_Neuron2 -f app2 -i %2 -p %3 %4 %5 %6 %7 %8 %9 %10").arg(getAppPath().toStdString().c_str()).arg(APP2_image_name.toStdString().c_str()).arg(markerpath.toStdString().c_str())
@@ -400,6 +389,50 @@ void autotrace_largeScale_mip(V3DPluginCallback2 &callback, QWidget *parent)
                nearpos_vec.push_back(MyMarker(loc0.x, loc0.y, loc0.z));
                farpos_vec.push_back(MyMarker(loc1.x, loc1.y, loc1.z));
            }
+
+           fastmarching_drawing_dynamic(nearpos_vec, farpos_vec, (unsigned char*)data1d, outswc, N,M,P, 1, 5);
+           smooth_curve(outswc,5);
+
+
+           for(V3DLONG d = 0; d <outswc.size(); d++)
+           {
+               outswc_final.push_back(outswc[d]);
+
+           }
+           outswc.clear();
+
+       }
+       else if(seg_list[i]->size() == 2)
+       {
+           Point* node1 = seg_list[i]->at(0);
+           Point* node2 = seg_list[i]->at(1);
+
+           for (V3DLONG j=0;j<3;j++)
+           {
+               XYZ loc0_t, loc1_t;
+               if(j ==0)
+               {
+                   loc0_t = XYZ(node1->x, node1->y,  node1->z);
+                   loc1_t = XYZ(node1->x, node1->y,  P-1);
+               }
+               else if(j ==1)
+               {
+                   loc0_t = XYZ(0.5*(node1->x + node2->x), 0.5*(node1->y + node2->y),  0.5*(node1->z + node2->z));
+                   loc1_t = XYZ(0.5*(node1->x + node2->x), 0.5*(node1->y + node2->y),  P-1);
+               }
+               else
+               {
+                   loc0_t = XYZ(node2->x, node2->y,  node2->z);
+                   loc1_t = XYZ(node2->x, node2->y,  P-1);
+               }
+
+               XYZ loc0 = loc0_t;
+               XYZ loc1 = loc1_t;
+
+               nearpos_vec.push_back(MyMarker(loc0.x, loc0.y, loc0.z));
+               farpos_vec.push_back(MyMarker(loc1.x, loc1.y, loc1.z));
+           }
+
            fastmarching_drawing_dynamic(nearpos_vec, farpos_vec, (unsigned char*)data1d, outswc, N,M,P, 1, 5);
            smooth_curve(outswc,5);
 
@@ -415,12 +448,13 @@ void autotrace_largeScale_mip(V3DPluginCallback2 &callback, QWidget *parent)
 
    }
 
-
+   QString swc_2D = image_name + "_XY_2D_mip.swc";
+   system(qPrintable(QString("mv %1 %2").arg(APP2_swc.toStdString().c_str()).arg(swc_2D.toStdString().c_str())));
    system(qPrintable(QString("rm -r %1").arg(tmpfolder.toStdString().c_str())));
 
 
 
-   QString final_swc = image_name + "_XY_mip.swc";
+   QString final_swc = image_name + "_XY_3D_mip.swc";
    saveSWC_file(final_swc.toStdString(), outswc_final);
 
 
@@ -443,7 +477,7 @@ void autotrace_largeScale_mip(V3DPluginCallback2 &callback, QWidget *parent)
    arg.type = "random";std::vector<char*> arg_input_sort;
    arg_input_sort.push_back(fileName_string);
    arg.p = (void *) & arg_input_sort; input_sort<< arg;
-   arg.type = "random";std::vector<char*> arg_sort_para; arg_sort_para.push_back("50");arg.p = (void *) & arg_sort_para; input_sort << arg;
+   arg.type = "random";std::vector<char*> arg_sort_para; arg_sort_para.push_back("30");arg.p = (void *) & arg_sort_para; input_sort << arg;
    QString full_plugin_name_sort = "sort_neuron_swc";
    QString func_name_sort = "sort_swc";
    callback.callPluginFunc(full_plugin_name_sort,func_name_sort, input_sort,output);
