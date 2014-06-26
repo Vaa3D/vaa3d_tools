@@ -92,7 +92,7 @@ public:
 		std::vector<Displacement*>& getSOUTH(){return SOUTH;}
 		std::vector<Displacement*>& getWEST(){return  WEST;}
 
-		bool isStitchable(){return this->stitchable;}
+        bool isStitchable(){/*printf("\n[%d,%d] %s stitchable\n", ROW_INDEX, COL_INDEX, stitchable ? "is" : "IS NOT");*/ return this->stitchable;}
 
 		Displacement* getDisplacement(VirtualStack* neighbour) throw (MyException)
 		{
