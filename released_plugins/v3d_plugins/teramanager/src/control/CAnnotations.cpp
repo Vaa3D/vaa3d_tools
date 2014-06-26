@@ -1151,3 +1151,61 @@ void CAnnotations::load(const char* filepath) throw (RuntimeException)
     }
     fclose(f);
 }
+
+/*********************************************************************************
+* Conversion from VTK to APO files
+**********************************************************************************/
+void CAnnotations::convertVtk2APO(std::string vtkPath, std::string apoPath) throw (itm::RuntimeException)
+{
+    /**/itm::debug(itm::LEV1, strprintf("vtkPath = \"%s\", apoPath = \"%s\"", vtkPath.c_str(), apoPath.c_str()).c_str(), __itm__current__function__);
+
+    // open file and check header
+    FILE* f = fopen(vtkPath.c_str(), "r");
+    if(!f)
+        throw itm::RuntimeException(itm::strprintf("in CAnnotations::convertVtk2APO(): cannot open file at \"%s\"", vtkPath.c_str()));
+    char lineBuffer[1024];
+    char stringBuffer[1024];
+    int points_n;
+    if(!fgets(lineBuffer, 1024, f))
+        throw itm::RuntimeException(itm::strprintf("Cannot read 1st line in \"%s\"", vtkPath.c_str()));
+    if(!fgets(lineBuffer, 1024, f))
+        throw itm::RuntimeException(itm::strprintf("Cannot read 2nd line in \"%s\"", vtkPath.c_str()));
+    if(!fgets(lineBuffer, 1024, f))
+        throw itm::RuntimeException(itm::strprintf("Cannot read 3rd line in \"%s\"", vtkPath.c_str()));
+    if(!fgets(lineBuffer, 1024, f))
+        throw itm::RuntimeException(itm::strprintf("Cannot read 4th line in \"%s\"", vtkPath.c_str()));
+    if(!fgets(lineBuffer, 1024, f))
+        throw itm::RuntimeException(itm::strprintf("Cannot read 5th line in \"%s\"", vtkPath.c_str()));
+    if(sscanf(lineBuffer, "%s %d", stringBuffer, &points_n) != 2)
+        throw itm::RuntimeException(itm::strprintf("5th line (\"%s\") is not in the format <string> <number> <string> as expected, in \"%s\"", lineBuffer, vtkPath.c_str()));
+    if(strcmp(stringBuffer, "POINTS") != 0)
+        throw itm::RuntimeException(itm::strprintf("expected \"POINTS\" at 5th line (\"%s\"), in \"%s\"", lineBuffer, vtkPath.c_str()));
+
+    // read cells
+    QList<CellAPO> cells;
+    for(int i=0; i<points_n; i++)
+    {
+        if(!fgets(lineBuffer, 1024, f))
+            throw itm::RuntimeException(itm::strprintf("Cannot read %d-th line in \"%s\"", i, vtkPath.c_str()));
+        float x=0,y=0,z=0;
+        if(sscanf(lineBuffer, "%f %f %f", &x, &y, &z) != 3)
+            throw itm::RuntimeException(itm::strprintf("%d-th line (\"%s\") is not in the format <float> <float> <float> as expected, in \"%s\"", i, lineBuffer, vtkPath.c_str()));
+
+
+        CellAPO cell;
+        cell.n = i;
+        cell.name = "na";
+        cell.comment = "na";
+        cell.x = x;
+        cell.y = y;
+        cell.z = z;
+        cell.volsize = 4*teramanager::pi;
+        cell.color.r = cell.color.g = 0;
+        cell.color.b = 255;
+        cells.push_back(cell);
+    }
+    fclose(f);
+
+    // save to APO file
+    writeAPO_file(apoPath.c_str(), cells);
+}

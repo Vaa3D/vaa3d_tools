@@ -112,6 +112,9 @@ class teramanager::PMain : public QWidget
         QWidgetAction* tShiftWidget;    // t-shift action
         QSpinBox *tShiftSBox;           // t-shift widget (a spinbox)
 
+        QMenu* utilityMenu;
+        QAction* convertVtk2APO;
+
         QMenu* helpMenu;                //"Help" menu
         QAction* aboutAction;           //"About" menu action
         QMenu *recentVolumesMenu;
@@ -478,6 +481,8 @@ class teramanager::PMain : public QWidget
         * Called when markersShowROIMarginSpinBox state has changed
         ***********************************************************************************/
         void markersShowROIMarginSpinBoxChanged(int value);
+
+        void showDialogVtk2APO();
 
 
     signals:

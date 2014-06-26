@@ -231,6 +231,7 @@ void StackedVolume::load(char* metadata_filepath) throw (IOException)
 
 
     fread_return_val = fread(&reference_system.first, sizeof(axis), 1, file);
+    //printf("\nreference_system.first = %d\n", reference_system.first);
     if(fread_return_val != 1)
     {
         fclose(file);
@@ -238,6 +239,7 @@ void StackedVolume::load(char* metadata_filepath) throw (IOException)
     }
 
     fread_return_val = fread(&reference_system.second, sizeof(axis), 1, file);
+    //printf("\nreference_system.first = %d\n", reference_system.second);
     if(fread_return_val != 1)
     {
         fclose(file);
@@ -245,6 +247,7 @@ void StackedVolume::load(char* metadata_filepath) throw (IOException)
     }
 
     fread_return_val = fread(&reference_system.third, sizeof(axis), 1, file);
+    //printf("\nreference_system.first = %d\n", reference_system.third);
     if(fread_return_val != 1)
     {
         fclose(file);
@@ -252,6 +255,8 @@ void StackedVolume::load(char* metadata_filepath) throw (IOException)
     }
 
     fread_return_val = fread(&VXL_1, sizeof(float), 1, file);
+    //printf("\nVXL_1 = %.3f\n", VXL_1);
+
     if(fread_return_val != 1)
     {
         fclose(file);
@@ -259,6 +264,7 @@ void StackedVolume::load(char* metadata_filepath) throw (IOException)
     }
 
     fread_return_val = fread(&VXL_2, sizeof(float), 1, file);
+    //printf("\nVXL_2 = %.3f\n", VXL_2);
     if(fread_return_val != 1)
     {
         fclose(file);
@@ -266,6 +272,7 @@ void StackedVolume::load(char* metadata_filepath) throw (IOException)
     }
 
     fread_return_val = fread(&VXL_3, sizeof(float), 1, file);
+    //printf("\nVXL_3 = %.3f\n", VXL_3);
     if(fread_return_val != 1)
     {
         fclose(file);
@@ -273,6 +280,7 @@ void StackedVolume::load(char* metadata_filepath) throw (IOException)
     }
 
 	fread_return_val = fread(&VXL_V, sizeof(float), 1, file);
+    //printf("\nVXL_V = %.3f\n", VXL_V);
 	if(fread_return_val != 1)
     {
         fclose(file);
@@ -280,6 +288,7 @@ void StackedVolume::load(char* metadata_filepath) throw (IOException)
     }
 
 	fread_return_val = fread(&VXL_H, sizeof(float), 1, file);
+    //printf("\nVXL_H = %.3f\n", VXL_H);
 	if(fread_return_val != 1)
     {
         fclose(file);
@@ -287,6 +296,7 @@ void StackedVolume::load(char* metadata_filepath) throw (IOException)
     }
 
 	fread_return_val = fread(&VXL_D, sizeof(float), 1, file);
+    //printf("\nVXL_D = %.3f\n", VXL_D);
 	if(fread_return_val != 1)
     {
         fclose(file);
@@ -294,6 +304,7 @@ void StackedVolume::load(char* metadata_filepath) throw (IOException)
     }
 
 	fread_return_val = fread(&ORG_V, sizeof(float), 1, file);
+    //printf("\nORG_V = %.3f\n", ORG_V);
 	if(fread_return_val != 1)
     {
         fclose(file);
@@ -301,6 +312,7 @@ void StackedVolume::load(char* metadata_filepath) throw (IOException)
     }
 
 	fread_return_val = fread(&ORG_H, sizeof(float), 1, file);
+    //printf("\nORG_H = %.3f\n", ORG_H);
 	if(fread_return_val != 1)
     {
         fclose(file);
@@ -308,6 +320,7 @@ void StackedVolume::load(char* metadata_filepath) throw (IOException)
     }
 
 	fread_return_val = fread(&ORG_D, sizeof(float), 1, file);
+    //printf("\nORG_D = %.3f\n", ORG_D);
 	if(fread_return_val != 1)
     {
         fclose(file);
@@ -315,6 +328,7 @@ void StackedVolume::load(char* metadata_filepath) throw (IOException)
     }
 
 	fread_return_val = fread(&DIM_V, sizeof(uint32), 1, file);
+    //printf("\nDIM_V = %d\n", DIM_V);
 	if(fread_return_val != 1)
     {
         fclose(file);
@@ -322,6 +336,7 @@ void StackedVolume::load(char* metadata_filepath) throw (IOException)
     }
 
 	fread_return_val = fread(&DIM_H, sizeof(uint32), 1, file);
+    //printf("\nDIM_H = %d\n", DIM_H);
 	if(fread_return_val != 1)
     {
         fclose(file);
@@ -329,6 +344,7 @@ void StackedVolume::load(char* metadata_filepath) throw (IOException)
     }
 
 	fread_return_val = fread(&DIM_D, sizeof(uint32), 1, file);
+    //printf("\nDIM_D = %d\n", DIM_D);
 	if(fread_return_val != 1)
     {
         fclose(file);

@@ -244,6 +244,11 @@ class teramanager::CAnnotations
                 return true;
         }
 
+        /*********************************************************************************
+        * Conversion from VTK to APO files
+        **********************************************************************************/
+        static void convertVtk2APO(std::string vtkPath, std::string apoPath) throw (itm::RuntimeException);
+
         friend class annotation;
 };
 

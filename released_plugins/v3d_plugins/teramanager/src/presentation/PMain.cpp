@@ -383,6 +383,12 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
 //    debugTimeSeriesMenu->addAction(debugTimeSeriesWidget);
 //    debugMenu->addMenu(debugTimeSeriesMenu);
 
+    // "Utility" Menu
+    utilityMenu = menuBar->addMenu("Utility");
+    convertVtk2APO = new QAction("Convert .vtk to .apo (cells only)", this);
+    connect(convertVtk2APO, SIGNAL(triggered()), this, SLOT(showDialogVtk2APO()));
+    utilityMenu->addAction(convertVtk2APO);
+
     helpMenu = menuBar->addMenu("Help");
     aboutAction = new QAction("About", this);
     aboutAction->setIcon(QIcon(":/icons/about.png"));
@@ -2167,17 +2173,17 @@ void PMain::debugAction1Triggered()
 {
     /**/itm::debug(itm::LEV1, 0, __itm__current__function__);
 
-    QList <ImageMarker> *markers1 = &(static_cast<Renderer_gl1*>(CExplorerWindow::getCurrent()->view3DWidget->getRenderer())->listMarker);
+    StackedVolume vol("/media/Elements/");
 //    QList<LocationSimple> markers = V3D_env->getLandmark(CExplorerWindow::getCurrent()->window);
 
-    if(markers1)
-    {
-        printf("markers1->size() = %d\n", markers1->size());
-        for(int i=0; i<markers1->size(); i++)
-            printf("\nmarkers1[%d] (%.0f, %.0f, %.0f): %s\n", i, (*markers1)[i].x, (*markers1)[i].y, (*markers1)[i].z, (*markers1)[i].on ? "on" : "off");
-    }
-    else
-        printf("\nmarkers1 = null\n");
+//    if(markers1)
+//    {
+//        printf("markers1->size() = %d\n", markers1->size());
+//        for(int i=0; i<markers1->size(); i++)
+//            printf("\nmarkers1[%d] (%.0f, %.0f, %.0f): %s\n", i, (*markers1)[i].x, (*markers1)[i].y, (*markers1)[i].z, (*markers1)[i].on ? "on" : "off");
+//    }
+//    else
+//        printf("\nmarkers1 = null\n");
 
 //    if(markers2)
 //    {
@@ -2586,4 +2592,24 @@ void PMain::markersShowROIMarginSpinBoxChanged(int value)
     CSettings::instance()->setAnnotationVirtualMargin(value);
     CSettings::instance()->writeSettings();
     PAnoToolBar::instance()->buttonMarkerRoiViewChecked(PAnoToolBar::instance()->buttonMarkerRoiView->isChecked());
+}
+
+void PMain::showDialogVtk2APO()
+{
+    /**/itm::debug(itm::LEV2, 0, __itm__current__function__);
+
+    try
+    {
+        QString vtkFilePath = QFileDialog::getOpenFileName(this, tr("Select input file"), 0,tr("VTK ascii files (*.vtk)"));
+        if(!vtkFilePath.isEmpty())
+        {
+            QString apoFilePath = QFileDialog::getSaveFileName(this, tr("Save to"), 0,tr("APO files (*.apo)"));
+            if(!apoFilePath.isEmpty())
+                itm::CAnnotations::convertVtk2APO(vtkFilePath.toStdString(), apoFilePath.toStdString());
+        }
+    }
+    catch(itm::RuntimeException &ex)
+    {
+        QMessageBox::critical(this,QObject::tr("Error"), QObject::tr(ex.what()),QObject::tr("Ok"));
+    }
 }

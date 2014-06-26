@@ -7,6 +7,8 @@ CONFIG  += qt plugin warn_off
 QT += opengl
 CONFIG += use_static_libs
 CONFIG += use_experimental_features
+DEFINES += QT_NO_DEBUG_STREAM
+DEFINES += QT_NO_DEBUG_OUTPUT
 #DEFINES += _USE_QT_DIALOGS
 
 #QMAKE_CXXFLAGS += -Wall
