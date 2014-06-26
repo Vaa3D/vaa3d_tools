@@ -309,80 +309,92 @@ void StackStitcher::computeVolumeDims(bool exclude_nonstitchable_stacks, int _RO
     #endif
 
 	char errMsg[2000];
-    bool stitchable_sequence = false;
 
-	//*** First DETERMINING the range of stacks to be stitched ***
+    // @FIXED by Alessandro on 2014-06-26: added ROW_START, ROW_END, COL_START, COL_END initialization
     // @FIXED by Alessandro on 2014-06-25: removed additional increment of ROW_START/ROW_END/COL_START/COL_END when <exclude_nonstitchable_stacks> = true
-    if(_ROW_START == -1 || exclude_nonstitchable_stacks)
-    {
-        for(int row_index=0, stitchable_sequence=false; row_index < volume->getN_ROWS() && !stitchable_sequence && exclude_nonstitchable_stacks; row_index++)
-        {
-            ROW_START = row_index;
-            for(int column_index=0; column_index < volume->getN_COLS() && !stitchable_sequence; column_index++)
-                stitchable_sequence = volume->getSTACKS()[ROW_START][column_index]->isStitchable();
-        }
-    }
-	else if(_ROW_START >= 0 && _ROW_START < volume->getN_ROWS())
+
+
+    // check for valid stack range selection
+    if(_ROW_START == -1)
+        ROW_START = 0;
+    else if(_ROW_START >= 0 && _ROW_START < volume->getN_ROWS())
         ROW_START = _ROW_START;
-	else
-	{
+    else
+    {
         sprintf(errMsg, "in StackStitcher::computeVolumeDims(...): _ROW_START (=%d) out of range [%d,%d]", _ROW_START, 0, volume->getN_ROWS()-1);
         throw MyException(errMsg);
-	}
-
-    if(_COL_START == -1 || exclude_nonstitchable_stacks)
-    {
-        for(int col_index=0, stitchable_sequence = false; col_index < volume->getN_COLS() && !stitchable_sequence && exclude_nonstitchable_stacks; col_index++)
-        {
-            COL_START = col_index;
-            for(int row_index=0; row_index < volume->getN_ROWS() && !stitchable_sequence; row_index++)
-                stitchable_sequence = volume->getSTACKS()[row_index][COL_START]->isStitchable();
-        }
     }
-	else if(_COL_START >= 0 && _COL_START < volume->getN_COLS())
+    /**/
+    if(_COL_START == -1)
+        COL_START = 0;
+    else if(_COL_START >= 0 && _COL_START < volume->getN_COLS())
         COL_START = _COL_START;
-	else
-	{
+    else
+    {
         sprintf(errMsg, "in StackStitcher::computeVolumeDims(...): _COL_START (=%d) out of range [%d,%d]", _COL_START, 0, volume->getN_COLS()-1);
         throw MyException(errMsg);
-	}
-
-    if(_ROW_END == -1 || exclude_nonstitchable_stacks)
-    {
-        for(int row_end=volume->getN_ROWS()-1, stitchable_sequence = false; row_end>=0 && !stitchable_sequence && exclude_nonstitchable_stacks; row_end--)
-        {
-            ROW_END = row_end;
-            for(int column_index=0; column_index < volume->getN_COLS() && !stitchable_sequence; column_index++)
-                stitchable_sequence = volume->getSTACKS()[ROW_END][column_index]->isStitchable();
-        }
     }
-	else if(_ROW_END >= ROW_START && _ROW_END < volume->getN_ROWS())
+    /**/
+    if(_ROW_END == -1)
+        ROW_END = volume->getN_ROWS() -1;
+    else if(_ROW_END >= ROW_START && _ROW_END < volume->getN_ROWS())
         ROW_END = _ROW_END;
-	else
-	{
+    else
+    {
         sprintf(errMsg, "in StackStitcher::computeVolumeDims(...): no stitchable stacks found in the selected interval or _ROW_END (=%d) out of range [%d,%d]", _ROW_END, ROW_START, volume->getN_ROWS()-1);
         throw MyException(errMsg);
-	}
-
-    if(_COL_END == -1 || exclude_nonstitchable_stacks)
-    {
-        for(int col_index=volume->getN_COLS()-1, stitchable_sequence = false; col_index>=0 && !stitchable_sequence && exclude_nonstitchable_stacks; col_index--)
-        {
-            COL_END = col_index;
-            for(int row_index=0; row_index < volume->getN_ROWS() && !stitchable_sequence; row_index++)
-                stitchable_sequence = volume->getSTACKS()[row_index][COL_END]->isStitchable();
-        }
     }
-	else if(_COL_END >= COL_START && _COL_END < volume->getN_COLS())
+    /**/
+    if(_COL_END == -1)
+        COL_END = volume->getN_COLS() -1;
+    else if(_COL_END >= COL_START && _COL_END < volume->getN_COLS())
         COL_END = _COL_END;
-	else
-	{
+    else
+    {
         sprintf(errMsg, "in StackStitcher::computeVolumeDims(...): no stitchable stacks found in the selected interval  or _COL_END (=%d) out of range [%d,%d]", _COL_END, COL_START, volume->getN_COLS()-1);
         throw MyException(errMsg);
-	}
-    //printf("The range of stacks to be stitched is rows[%d,%d] and cols[%d,%d]\n", ROW_START, ROW_END, COL_START, COL_END);
+    }
 
-	//*** COMPUTING volume dimensions using the computed range of stacks ***
+    // if requested, exclude rows and columns that contain nonstitchable stacks only
+    if(exclude_nonstitchable_stacks)
+    {
+        int i=0, j=0;
+        bool stitchable_sequence = false;
+
+        for(i=0, stitchable_sequence = false; i < volume->getN_ROWS() && !stitchable_sequence; i++)
+        {
+            ROW_START = i;
+            for(j=0; j < volume->getN_COLS() && !stitchable_sequence; j++)
+                stitchable_sequence = volume->getSTACKS()[ROW_START][j]->isStitchable();
+        }
+
+
+        for(j=0, stitchable_sequence = false; j < volume->getN_COLS() && !stitchable_sequence; j++)
+        {
+            COL_START = j;
+            for(i=0; i < volume->getN_ROWS() && !stitchable_sequence; i++)
+                stitchable_sequence = volume->getSTACKS()[i][COL_START]->isStitchable();
+        }
+
+
+        for(i=volume->getN_ROWS()-1, stitchable_sequence = false; i>=0 && !stitchable_sequence; i--)
+        {
+            ROW_END = i;
+            for(j=0; j < volume->getN_COLS() && !stitchable_sequence; j++)
+                stitchable_sequence = volume->getSTACKS()[ROW_END][j]->isStitchable();
+        }
+
+
+        for(j=volume->getN_COLS()-1, stitchable_sequence = false; j>=0 && !stitchable_sequence; j--)
+        {
+            COL_END = j;
+            for(int i=0; i < volume->getN_ROWS() && !stitchable_sequence; i++)
+                stitchable_sequence = volume->getSTACKS()[i][COL_END]->isStitchable();
+        }
+    }
+    printf("The range of stacks to be stitched is rows[%d,%d] and cols[%d,%d]\n", ROW_START, ROW_END, COL_START, COL_END);
+
+    // compute volume dimensions using the range of stacks computed so far
 	V0=std::numeric_limits<int>::max();
 	V1=std::numeric_limits<int>::min();
 	H0=std::numeric_limits<int>::max();
@@ -421,7 +433,7 @@ void StackStitcher::computeVolumeDims(bool exclude_nonstitchable_stacks, int _RO
     D1+=volume->getN_SLICES();
     //printf("\t\t\t....in StackStitcher::computeVolumeDims(): volume range (before selection) is V[%d,%d], H[%d,%d], D[%d,%d]\n", V0, V1, H0, H1, D0, D1);
 
-	//*** SELECTING a subvolume along D axis, if optional parameters _D0 and _D1 have been used ***
+    // set a subvolume along D axis, if optional parameters _D0 and _D1 have been used
     if(_D0 != -1 && _D0 >= D0)
         D0 = _D0;
     if(_D1 != -1 && _D1 <= D1)
