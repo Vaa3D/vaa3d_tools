@@ -141,7 +141,6 @@ void autotrace_largeScale_mip(V3DPluginCallback2 &callback, QWidget *parent,APP2
     V3DLONG C = p4DImage->getCDim();
 
     int th = Para.bkg_thresh;
-
     QString tmpfolder = QFileInfo(image_name).path()+("/tmp");
     system(qPrintable(QString("mkdir %1").arg(tmpfolder.toStdString().c_str())));
     if(tmpfolder.isEmpty())
@@ -156,30 +155,84 @@ void autotrace_largeScale_mip(V3DPluginCallback2 &callback, QWidget *parent,APP2
     tmpy = Para.root_1st[1];
     tmpz = Para.root_1st[2];
 
-
-
-    V3DLONG pagesz_mip = N*M;
+    V3DLONG mip_sz[3];
+    mip_sz[0] = N;
+    mip_sz[1] = M;
+    mip_sz[2] = P;
+    switch (Para.mip_plane)
+    {
+        case 0: mip_sz[2] = 1; break;
+        case 1: mip_sz[1] = 1; break;
+        case 2: mip_sz[0] = 1; break;
+        default:
+            return;
+    }
+    V3DLONG pagesz_mip = mip_sz[0]*mip_sz[1]*mip_sz[2];
     unsigned char *image_mip=0;
     try {image_mip = new unsigned char [pagesz_mip];}
     catch(...)  {v3d_msg("cannot allocate memory for image_mip."); return;}
 
-    for(V3DLONG iy = 0; iy < M; iy++)
+    switch (Para.mip_plane)
     {
-        V3DLONG offsetj = iy*N;
-        for(V3DLONG ix = 0; ix < N; ix++)
-        {
-            int max_mip = 0;
-            for(V3DLONG iz = 0; iz < P; iz++)
-            {
-                V3DLONG offsetk = iz*M*N;
-                if(data1d[offsetk + offsetj + ix] > max_mip)
+        case 0:
+                for(V3DLONG iy = 0; iy < M; iy++)
                 {
-                    image_mip[offsetj + ix] = data1d[offsetk + offsetj + ix];
-                    max_mip = data1d[offsetk + offsetj + ix];
+                    V3DLONG offsetj = iy*N;
+                    for(V3DLONG ix = 0; ix < N; ix++)
+                    {
+                        int max_mip = 0;
+                        for(V3DLONG iz = 0; iz < P; iz++)
+                        {
+                            V3DLONG offsetk = iz*M*N;
+                            if(data1d[offsetk + offsetj + ix] > max_mip)
+                            {
+                                image_mip[iy*N + ix] = data1d[offsetk + offsetj + ix];
+                                max_mip = data1d[offsetk + offsetj + ix];
+                            }
+                        }
+                    }
                 }
-
-            }
-        }
+                break;
+        case 1:
+                for(V3DLONG iz = 0; iz < P; iz++)
+                {
+                    V3DLONG offsetk = iz*M*N;
+                    for(V3DLONG ix = 0; ix < N; ix++)
+                    {
+                        int max_mip = 0;
+                        for(V3DLONG iy = 0; iy < M; iy++)
+                        {
+                            V3DLONG offsetj = iy*N;
+                            if(data1d[offsetk + offsetj + ix] > max_mip)
+                            {
+                                image_mip[iz*N + ix] = data1d[offsetk + offsetj + ix];
+                                max_mip = data1d[offsetk + offsetj + ix];
+                            }
+                        }
+                    }
+                }
+                break;
+        case 2:
+                for(V3DLONG iz = 0; iz < P; iz++)
+                {
+                    V3DLONG offsetk = iz*M*N;
+                    for(V3DLONG iy = 0; iy < N; iy++)
+                    {
+                        V3DLONG offsetj = iy*N;
+                        int max_mip = 0;
+                        for(V3DLONG ix = 0; ix < N; ix++)
+                        {
+                            if(data1d[offsetk + offsetj + ix] > max_mip)
+                            {
+                                image_mip[iz*N + iy] = data1d[offsetk + offsetj + ix];
+                                max_mip = data1d[offsetk + offsetj + ix];
+                            }
+                        }
+                    }
+                }
+                break;
+        default:
+            return;
     }
 
     unsigned char *image_binary=0;
@@ -202,29 +255,29 @@ void autotrace_largeScale_mip(V3DPluginCallback2 &callback, QWidget *parent,APP2
     int size = 3*3;
     arr = new int[size];
 
-    for(V3DLONG iz = 0; iz < 1; iz++)
+    for(V3DLONG iz = 0; iz < mip_sz[2]; iz++)
     {
-        V3DLONG offsetk = iz*M*N;
-        for(V3DLONG iy = 0; iy < M; iy++)
+        V3DLONG offsetk = iz*mip_sz[1]*mip_sz[0];
+        for(V3DLONG iy = 0; iy < mip_sz[1]; iy++)
         {
-            V3DLONG offsetj = iy*N;
-            for(V3DLONG ix = 0; ix < N; ix++)
+            V3DLONG offsetj = iy*mip_sz[0];
+            for(V3DLONG ix = 0; ix < mip_sz[0]; ix++)
             {
 
                 V3DLONG xb = ix-1; if(xb<0) xb = 0;
-                V3DLONG xe = ix+1; if(xe>=N-1) xe = N-1;
+                V3DLONG xe = ix+1; if(xe>=mip_sz[0]-1) xe = mip_sz[0]-1;
                 V3DLONG yb = iy-1; if(yb<0) yb = 0;
-                V3DLONG ye = iy+1; if(ye>=M-1) ye = M-1;
+                V3DLONG ye = iy+1; if(ye>=mip_sz[1]-1) ye = mip_sz[1]-1;
                 V3DLONG zb = iz-1; if(zb<0) zb = 0;
-                V3DLONG ze = iz+1; if(ze>=0) ze = 0;
+                V3DLONG ze = iz+1; if(ze>=mip_sz[2]-1) ze = mip_sz[2]-1;
                 ii = 0;
 
                 for(V3DLONG k=zb; k<=ze; k++)
                 {
-                    V3DLONG offsetkl = k*M*N;
+                    V3DLONG offsetkl = k*mip_sz[1]*mip_sz[0];
                     for(V3DLONG j=yb; j<=ye; j++)
                     {
-                        V3DLONG offsetjl = j*N;
+                        V3DLONG offsetjl = j*mip_sz[0];
                         for(V3DLONG i=xb; i<=xe; i++)
                         {
                             int dataval = image_binary[offsetkl + offsetjl + i];
@@ -255,8 +308,16 @@ void autotrace_largeScale_mip(V3DPluginCallback2 &callback, QWidget *parent,APP2
     V3DLONG in_sz[4];
     in_sz[0] = N;
     in_sz[1] = M;
-    in_sz[2] = 1;
+    in_sz[2] = P;
     in_sz[3] = 1;
+    switch (Para.mip_plane)
+    {
+        case 0: in_sz[2] = 1; break;
+        case 1: in_sz[1] = 1; break;
+        case 2: in_sz[0] = 1; break;
+        default:
+            return;
+    }
     QString input_image_name = tmpfolder + "/binary_median.raw";
     simple_saveimage_wrapper(callback, input_image_name.toStdString().c_str(),  (unsigned char *)image_binary_median, in_sz, V3D_UINT8);
 
@@ -285,10 +346,19 @@ void autotrace_largeScale_mip(V3DPluginCallback2 &callback, QWidget *parent,APP2
    }
 
    unsigned char *image_region_one = new unsigned char [pagesz_mip];
-
+   V3DLONG group_type;
+   switch (Para.mip_plane)
+   {
+       case 0: group_type = image_region[tmpy*N + tmpx]; break;
+       case 1: group_type = image_region[tmpz*N + tmpx]; break;
+       case 2: group_type = image_region[tmpz*M + tmpy];break;
+       default:
+           return;
+   }
    for(V3DLONG i = 0; i < pagesz_mip*datatype; i++)
    {
-       if(image_region[i] == image_region[tmpy*N + tmpx])
+
+       if(image_region[i] == group_type)
            image_region_one[int(i/datatype)] = image_mip[int(i/datatype)];
        else
            image_region_one[int(i/datatype)] = 0;
@@ -301,7 +371,15 @@ void autotrace_largeScale_mip(V3DPluginCallback2 &callback, QWidget *parent,APP2
    QList <ImageMarker> marklist;
    S.x = tmpx;
    S.y = tmpy;
-   S.z = 0;
+   S.z = tmpz;
+   switch (Para.mip_plane)
+   {
+       case 0: S.z = 0; break;
+       case 1: S.y = 0; break;
+       case 2: S.x = 0; break;
+       default:
+           return;
+   }
    marklist.append(S);
    QString markerpath = tmpfolder +("/root.marker");
    writeMarker_file(markerpath.toStdString().c_str(),marklist);
@@ -324,7 +402,15 @@ void autotrace_largeScale_mip(V3DPluginCallback2 &callback, QWidget *parent,APP2
              return;
     #endif
 
-   QString APP2_swc = APP2_image_name + QString("_x%1_y%2_z%3_app2.swc").arg(S.x-1).arg(S.y-1).arg(S.z);
+   QString APP2_swc;
+   switch (Para.mip_plane)
+   {
+       case 0: APP2_swc = APP2_image_name + QString("_x%1_y%2_z%3_app2.swc").arg(S.x-1).arg(S.y-1).arg(S.z); break;
+       case 1: APP2_swc = APP2_image_name + QString("_x%1_y%2_z%3_app2.swc").arg(S.x-1).arg(S.y).arg(S.z-1); break;
+       case 2: APP2_swc = APP2_image_name + QString("_x%1_y%2_z%3_app2.swc").arg(S.x).arg(S.y-1).arg(S.z-1); break;
+       default:
+           return;
+   }
    NeuronTree nt = readSWC_file(APP2_swc);
 
    V3DLONG siz = nt.listNeuron.size();
@@ -381,7 +467,14 @@ void autotrace_largeScale_mip(V3DPluginCallback2 &callback, QWidget *parent,APP2
                Point* node = seg_list[i]->at(j);
                XYZ loc0_t, loc1_t;
                loc0_t = XYZ(node->x, node->y,  node->z);
-               loc1_t = XYZ(node->x, node->y,  P-1);
+               switch (Para.mip_plane)
+               {
+                   case 0:  loc1_t = XYZ(node->x, node->y,  P-1); break;
+                   case 1:  loc1_t = XYZ(node->x, M-1,  node->z); break;
+                   case 2:  loc1_t = XYZ(N-1, node->y,  node->z); break;
+                   default:
+                       return;
+               }
 
                XYZ loc0 = loc0_t;
                XYZ loc1 = loc1_t;
@@ -396,6 +489,7 @@ void autotrace_largeScale_mip(V3DPluginCallback2 &callback, QWidget *parent,APP2
 
            for(V3DLONG d = 0; d <outswc.size(); d++)
            {
+               outswc[d]->radius = 2;
                outswc_final.push_back(outswc[d]);
 
            }
@@ -413,25 +507,45 @@ void autotrace_largeScale_mip(V3DPluginCallback2 &callback, QWidget *parent,APP2
                if(j ==0)
                {
                    loc0_t = XYZ(node1->x, node1->y,  node1->z);
-                   loc1_t = XYZ(node1->x, node1->y,  P-1);
+                   switch (Para.mip_plane)
+                   {
+                       case 0:  loc1_t = XYZ(node1->x, node1->y,  P-1); break;
+                       case 1:  loc1_t = XYZ(node1->x, M-1,  node1->z); break;
+                       case 2:  loc1_t = XYZ(N-1, node1->y,  node1->z); break;
+                       default:
+                           return;
+                   }
                }
                else if(j ==1)
                {
                    loc0_t = XYZ(0.5*(node1->x + node2->x), 0.5*(node1->y + node2->y),  0.5*(node1->z + node2->z));
-                   loc1_t = XYZ(0.5*(node1->x + node2->x), 0.5*(node1->y + node2->y),  P-1);
+                   switch (Para.mip_plane)
+                   {
+                       case 0:  loc1_t = XYZ(0.5*(node1->x + node2->x),  0.5*(node1->y + node2->y),  P-1); break;
+                       case 1:  loc1_t = XYZ(0.5*(node1->x + node2->x), M-1,   0.5*(node1->z + node2->z)); break;
+                       case 2:  loc1_t = XYZ(N-1,  0.5*(node1->y + node2->y),   0.5*(node1->z + node2->z)); break;
+                       default:
+                           return;
+                   }
                }
                else
                {
                    loc0_t = XYZ(node2->x, node2->y,  node2->z);
-                   loc1_t = XYZ(node2->x, node2->y,  P-1);
-               }
+                   switch (Para.mip_plane)
+                   {
+                       case 0:  loc1_t = XYZ(node2->x, node2->y,  P-1); break;
+                       case 1:  loc1_t = XYZ(node2->x, M-1,  node2->z); break;
+                       case 2:  loc1_t = XYZ(N-1, node2->y,  node2->z); break;
+                       default:
+                           return;
+                   }               }
 
                XYZ loc0 = loc0_t;
                XYZ loc1 = loc1_t;
 
                nearpos_vec.push_back(MyMarker(loc0.x, loc0.y, loc0.z));
                farpos_vec.push_back(MyMarker(loc1.x, loc1.y, loc1.z));
-           }
+            }
 
            fastmarching_drawing_dynamic(nearpos_vec, farpos_vec, (unsigned char*)data1d, outswc, N,M,P, 1, 5);
            smooth_curve(outswc,5);
@@ -439,6 +553,7 @@ void autotrace_largeScale_mip(V3DPluginCallback2 &callback, QWidget *parent,APP2
 
            for(V3DLONG d = 0; d <outswc.size(); d++)
            {
+               outswc[d]->radius = 2;
                outswc_final.push_back(outswc[d]);
 
            }
@@ -448,13 +563,18 @@ void autotrace_largeScale_mip(V3DPluginCallback2 &callback, QWidget *parent,APP2
 
    }
 
-   QString swc_2D = image_name + "_XY_2D_mip.swc";
+   QString swc_2D,final_swc;
+   switch (Para.mip_plane)
+   {
+       case 0: swc_2D = image_name + "_XY_2D_mip.swc"; final_swc = image_name + "_XY_3D_mip.swc";break;
+       case 1: swc_2D = image_name + "_XZ_2D_mip.swc"; final_swc = image_name + "_XZ_3D_mip.swc"; break;
+       case 2: swc_2D = image_name + "_YZ_2D_mip.swc"; final_swc = image_name + "_YZ_3D_mip.swc"; break;
+       default:
+           return;
+   }
    system(qPrintable(QString("mv %1 %2").arg(APP2_swc.toStdString().c_str()).arg(swc_2D.toStdString().c_str())));
    system(qPrintable(QString("rm -r %1").arg(tmpfolder.toStdString().c_str())));
 
-
-
-   QString final_swc = image_name + "_XY_3D_mip.swc";
    saveSWC_file(final_swc.toStdString(), outswc_final);
 
 

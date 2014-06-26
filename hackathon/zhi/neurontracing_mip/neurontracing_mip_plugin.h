@@ -162,6 +162,8 @@ class mipTracingeDialog : public QDialog
             b256_checker->isChecked()? b_256cube = 1 : b_256cube = 0;
             b_radius2Dchecker->isChecked() ? b_RadiusFrom2D = 1 : b_RadiusFrom2D = 0;
 
+            mip_plane = combo_plane->currentIndex();
+
         }
     public:
 
