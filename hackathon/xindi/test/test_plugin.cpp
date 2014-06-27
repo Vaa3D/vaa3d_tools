@@ -29,7 +29,8 @@ template <class T> LandmarkList count(T* data1d,
                                       int MarkAve, int MarkStDev,
                                       int PointAve, int PointStDev,
                                       int rad, int radAve, int radStDev, int c);
-template <class T> LandmarkList duplicates(T* data1d, LandmarkList fullList, int PointAve, int rad);
+template <class T> LandmarkList duplicates(T* data1d, LandmarkList fullList,
+                                           V3DLONG *dimNum, int PointAve, int rad, int c);
 
 
  
@@ -188,7 +189,7 @@ void markers_singleChannel(V3DPluginCallback2 &callback, QWidget *parent)
         LandmarkList newList = count(data1d,dimNum,curwin,MarkAve,MarkStDev,PointAve,PointStDev,rad,0,0,c);
 
         //now need to delete duplicate markers on same cell
-        LandmarkList smallList = duplicates(data1d,newList,PointAve,rad);
+        LandmarkList smallList = duplicates(data1d,newList,dimNum,PointAve,rad,c);
         LandmarkList& woot = smallList;
         bool draw_le_markers = callback.setLandmark(curwin,woot);
 
@@ -255,10 +256,8 @@ void better_markers_singleChannel(V3DPluginCallback2 &callback, QWidget *parent)
         {
             tmpLocation = mlist.at(i);
             tmpLocation.getCoord(xc,yc,zc);
-
-            pair<int,int> pixAns = pixel(data1d,dimNum,xc,yc,zc,c,rad); //I have no idea why pixelVal isn't working correctly
-            pix = pixAns.second;
-//            v3d_msg(QString("pix value %1").arg(pix));
+            int pix = pixelVal(data1d,dimNum,xc,yc,zc,c);
+//            v3d_msg(QString("pix value %1 %2").arg(pix).arg(pix1));
             PixValArr[i] = pix;
         }
         int max=0,min=255;
@@ -299,9 +298,9 @@ void better_markers_singleChannel(V3DPluginCallback2 &callback, QWidget *parent)
         {
             tempLocation = MarkList.at(i);
             tempLocation.getCoord(xc,yc,zc);
-
-            pair<int,int> pixAns = pixel(data1d,dimNum,xc,yc,zc,c,rad); //I have no idea why pixelVal isn't working correctly
-            int Pix = pixAns.second;
+            int Pix = pixelVal(data1d,dimNum,xc,yc,zc,c);
+            //pair<int,int> pixAns = pixel(data1d,dimNum,xc,yc,zc,c,rad); //I have no idea why pixelVal isn't working correctly
+            //int Pix = pixAns.second;
 
             pair<int,int> dynAns = dynamic_pixel(data1d,dimNum,xc,yc,zc,c,marks,Pix,BGVal);
             ValAveArr[i] = dynAns.first;
@@ -331,8 +330,9 @@ void better_markers_singleChannel(V3DPluginCallback2 &callback, QWidget *parent)
 
             tempLocation = MarkList.at(i);
             tempLocation.getCoord(xc,yc,zc);
-            pair<int,int> pixAns = pixel(data1d,dimNum,xc,yc,zc,c,rad); //I have no idea why pixelVal isn't working correctly
-            int Pix = pixAns.second;
+            //pair<int,int> pixAns = pixel(data1d,dimNum,xc,yc,zc,c,rad); //I have no idea why pixelVal isn't working correctly
+            //int Pix = pixAns.second;
+            int Pix = pixelVal(data1d,dimNum,xc,yc,zc,c);
             int u = pow(Pix-PixVal,2.0);
             stP += u;
 //            v3d_msg(QString("pixel value %1, diff %2, stP %3").arg(Pix).arg(Pix-PixVal).arg(stP));
@@ -352,14 +352,14 @@ void better_markers_singleChannel(V3DPluginCallback2 &callback, QWidget *parent)
 
         LandmarkList newList = count(data1d,dimNum,curwin,ValAve,2*ValStDev,PixVal,PixStDev,0,radAve,5+radStDev,c);
 
-        LandmarkList& woot = newList;
-        bool draw_le_markers = callback.setLandmark(curwin,woot);
+//        LandmarkList& woot = newList;
+//        bool draw_le_markers = callback.setLandmark(curwin,woot);
 //        v3d_msg(QString("newList has %1 markers").arg(newList.count()));
 
 
 //        v3d_msg("new markers have been found");
         //now need to delete duplicate markers on same cell
-        LandmarkList smallList = duplicates(data1d,newList,PixVal,radAve);
+        LandmarkList smallList = duplicates(data1d,newList,dimNum,PixVal,radAve,c);
         LandmarkList& woot2 = smallList;
         bool draw_le_markers2 = callback.setLandmark(curwin,woot2);
     }
@@ -576,7 +576,8 @@ template <class T> LandmarkList count(T* data1d,
 
 
 //detects markers too close together, deletes marker with pixel value farther from PointAve
-template <class T> LandmarkList duplicates(T* data1d, LandmarkList fullList, int PointAve, int rad)
+template <class T> LandmarkList duplicates(T* data1d, LandmarkList fullList,
+                                           V3DLONG *dimNum, int PointAve, int rad, int c)
 {
     int marknum = fullList.count();
     LandmarkList smallList = fullList;
@@ -590,16 +591,16 @@ template <class T> LandmarkList duplicates(T* data1d, LandmarkList fullList, int
         {
             point1 = smallList.at(i);
             point1.getCoord(x1,y1,z1);
+            int pix1 = pixelVal(data1d,dimNum,x1,y1,z1,c);
             point2 = smallList.at(j);
             point2.getCoord(x2,y2,z2);
-            LocationSimple& adr1 = point1;
-            LocationSimple& adr2 = point2;
+            int pix2 = pixelVal(data1d,dimNum,x2,y2,z2,c);
 
             dist = sqrt( pow(x1-x2,2.0) + pow(y1-y2,2.0) + pow(z1-z2,2.0) );
             if (dist<rad)
             {
-                data1 = abs(point1.getPixVal()-PointAve);
-                data2 = abs(point2.getPixVal()-PointAve);
+                data1 = abs(pix1-PointAve);
+                data2 = abs(pix2-PointAve);
 
                 if (data1>data2)
                     smallList.replace(i,zer) ;//replace point1 with 0 to avoid changing length of list and messing up indexes
