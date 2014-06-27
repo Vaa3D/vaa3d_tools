@@ -296,7 +296,7 @@ void CExplorerWindow::show()
 }
 
 CExplorerWindow::CExplorerWindow(V3DPluginCallback2 *_V3D_env, int _resIndex, itm::uint8 *_imgData, int _volV0, int _volV1,
-                                 int _volH0, int _volH1, int _volD0, int _volD1, int _volT0, int _volT1, int _nchannels, CExplorerWindow *_prev): QWidget()
+                                 int _volH0, int _volH1, int _volD0, int _volD1, int _volT0, int _volT1, int _nchannels, CExplorerWindow *_prev, int _slidingViewerBlockID /* = -1 */): QWidget()
 {
     /**/itm::debug(itm::LEV1, strprintf("_resIndex = %d, _V0 = %d, _V1 = %d, _H0 = %d, _H1 = %d, _D0 = %d, _D1 = %d, _T0 = %d, _T1 = %d, _nchannels = %d",
                                         _resIndex, _volV0, _volV1, _volH0, _volH1, _volD0, _volD1, _volT0, _volT1, _nchannels).c_str(), __itm__current__function__);
@@ -334,6 +334,7 @@ CExplorerWindow::CExplorerWindow(V3DPluginCallback2 *_V3D_env, int _resIndex, it
     H0_sbox_min = H0_sbox_val = H1_sbox_max = H1_sbox_val =
     D0_sbox_min = D0_sbox_val = D1_sbox_max = D1_sbox_val =
     T0_sbox_min = T0_sbox_val = T1_sbox_max = T1_sbox_val = -1;
+    slidingViewerBlockID = _slidingViewerBlockID;
 
     try
     {
@@ -625,6 +626,7 @@ bool CExplorerWindow::eventFilter(QObject *object, QEvent *event)
         ***************************************************************************/
         else if(object == window3D && (event->type() == QEvent::Move || event->type() == QEvent::Resize))
         {
+           printf("\nWindow3D moved\n");
            alignToLeft(PMain::getInstance());
            PAnoToolBar::instance()->alignToLeft(window3D->glWidgetArea);
            return true;
@@ -797,11 +799,12 @@ CExplorerWindow::newView(int x, int y, int z,                            //can b
     int dx/*=-1*/, int dy/*=-1*/, int dz/*=-1*/,    //VOI [x-dx,x+dx), [y-dy,y+dy), [z-dz,z+dz), [t0, t1]
     int x0/*=-1*/, int y0/*=-1*/, int z0/*=-1*/,    //VOI [x0, x), [y0, y), [z0, z), [t0, t1]
     bool auto_crop /* = true */,                    //whether to crop the VOI to the max dims
-    bool scale_coords /* = true */)                 //whether to scale VOI coords to the target res
+    bool scale_coords /* = true */,                 //whether to scale VOI coords to the target res
+    int sliding_viewer_block_ID /* = -1 */)         //block ID in "Sliding viewer" mode
 
 {
-    /**/itm::debug(itm::LEV1, strprintf("title = %s, x = %d, y = %d, z = %d, res = %d, dx = %d, dy = %d, dz = %d, x0 = %d, y0 = %d, z0 = %d, t0 = %d, t1 = %d, auto_crop = %s, scale_coords = %s",
-                                        titleShort.c_str(),  x, y, z, resolution, dx, dy, dz, x0, y0, z0, t0, t1, auto_crop ? "true" : "false", scale_coords ? "true" : "false").c_str(), __itm__current__function__);
+    /**/itm::debug(itm::LEV1, strprintf("title = %s, x = %d, y = %d, z = %d, res = %d, dx = %d, dy = %d, dz = %d, x0 = %d, y0 = %d, z0 = %d, t0 = %d, t1 = %d, auto_crop = %s, scale_coords = %s, sliding_viewer_block_ID = %d",
+                                        titleShort.c_str(),  x, y, z, resolution, dx, dy, dz, x0, y0, z0, t0, t1, auto_crop ? "true" : "false", scale_coords ? "true" : "false", sliding_viewer_block_ID).c_str(), __itm__current__function__);
 
     // check precondition #1: active window
     if(!isActive || toBeClosed)
@@ -1007,7 +1010,7 @@ CExplorerWindow::newView(int x, int y, int z,                            //can b
         //creating a new window
         this->next = new CExplorerWindow(V3D_env, resolution, lowresData,
                                          cVolume->getVoiV0(), cVolume->getVoiV1(), cVolume->getVoiH0(), cVolume->getVoiH1(), cVolume->getVoiD0(), cVolume->getVoiD1(),
-                                         cVolume->getVoiT0(), cVolume->getVoiT1(), nchannels, this);
+                                         cVolume->getVoiT0(), cVolume->getVoiT1(), nchannels, this, sliding_viewer_block_ID);
 
         // connect new window to data producer
         connect(CVolume::instance(), SIGNAL(sendData(itm::uint8*,itm::integer_array,itm::integer_array,QWidget*,bool,itm::RuntimeException*,qint64,QString,int)), next, SLOT(receiveData(itm::uint8*,itm::integer_array,itm::integer_array,QWidget*,bool,itm::RuntimeException*,qint64,QString,int)), Qt::QueuedConnection);

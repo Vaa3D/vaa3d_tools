@@ -74,6 +74,7 @@ class teramanager::CExplorerWindow : public QWidget
         bool scribbling;                //"scribbling on the 3D renderer with right-button mouse" state flag
         QVector<QPoint> scribbling_points;
         QUndoStack undoStack;           //stack containing undo command actions
+        int slidingViewerBlockID;
 
         //CLASS members
         static CExplorerWindow *first;  //pointer to the first window of the multiresolution explorer windows chain
@@ -134,7 +135,7 @@ class teramanager::CExplorerWindow : public QWidget
 
         //CONSTRUCTOR, DECONSTRUCTOR
         CExplorerWindow(V3DPluginCallback2* _V3D_env, int _resIndex, itm::uint8* _imgData, int _volV0, int _volV1,
-                        int _volH0, int _volH1, int _volD0, int _volD1, int _volT0, int _volT1, int _nchannels, CExplorerWindow* _prev);
+                        int _volH0, int _volH1, int _volD0, int _volD1, int _volT0, int _volT1, int _nchannels, CExplorerWindow* _prev, int _slidingViewerBlockID = -1);
         ~CExplorerWindow();
         static void uninstance()
         {
@@ -188,7 +189,8 @@ class teramanager::CExplorerWindow : public QWidget
             int dx=-1, int dy=-1, int dz=-1,    //VOI [x-dx,x+dx), [y-dy,y+dy), [z-dz,z+dz)
             int x0=-1, int y0=-1, int z0=-1,    //VOI [x0, x), [y0, y), [z0, z)
             bool auto_crop = true,              //whether to crop the VOI to the max dims
-            bool scale_coords = true            //whether to scale VOI coords to the target res
+            bool scale_coords = true,           //whether to scale VOI coords to the target res
+            int sliding_viewer_block_ID = -1    //block ID in "Sliding viewer" mode
         );
 
         /**********************************************************************************

@@ -1,4 +1,4 @@
-Version history of TeraFly
+Version history of Vaa3D-TeraFly
 ============================================================================================
 
 Below you find a list with the added  features, changes and fixes  for each version. Activi-
@@ -11,6 +11,20 @@ ties names are:
 - Rem: a feature no longer available
 
 ============================================================================================
+Version 0.9.971
+June 27th, 2014
+--------------------------------------------------------------------------------------------
+- New: improved "Sliding viewer" usability by introducing  real-time 3D reference system up-
+       date on any block selection change before edit is confirmed.
+- Opt: changed plugin title from "TeraFly" to "Vaa3D-TeraFly"
+- Opt: decreased TeraFly's GUI font size from 10 to 9 to avoid truncated text.
+- Opt: improved readability of "Sliding viewer" fields.
+- Fix: fixed bug  which might cause  multiple loading of the  same block in "Sliding viewer"
+       mode.  After any edit, if the selected block  is the same  being displayed, no action
+       is taken.
+--------------------------------------------------------------------------------------------
+
+
 Version 0.9.97
 June 26th, 2014
 --------------------------------------------------------------------------------------------

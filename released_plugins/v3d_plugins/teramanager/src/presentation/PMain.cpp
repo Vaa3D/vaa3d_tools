@@ -142,7 +142,7 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     //creating fonts
     QFont tinyFont = QApplication::font();
     #ifndef _USE_NATIVE_FONTS
-    tinyFont.setPointSize(10);
+    tinyFont.setPointSize(9);
     #endif
 
     //initializing menu
@@ -432,10 +432,10 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     toolBar->insertWidget(0, openVolumeToolButton);
 
     toolBar->insertAction(0, closeVolumeAction);
-//    toolBar->addAction(loadAnnotationsAction);
-//    toolBar->addAction(saveAnnotationsAction);
-//    toolBar->addAction(saveAnnotationsAsAction);
-//    toolBar->addAction(clearAnnotationsAction);
+//    toolBar->addAction(loadAnnotationsAction);    @MOVED to the annotation toolbar
+//    toolBar->addAction(saveAnnotationsAction);    @MOVED to the annotation toolbar
+//    toolBar->addAction(saveAnnotationsAsAction);  @MOVED to the annotation toolbar
+//    toolBar->addAction(clearAnnotationsAction);   @MOVED to the annotation toolbar
 
     showToolbarButton = new QToolButton();
     showToolbarButton->setCheckable(true);
@@ -577,6 +577,7 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     Vdim_sbox->setMaximum(1000);
     Vdim_sbox->setValue(CSettings::instance()->getVOIdimV());
     Vdim_sbox->setSuffix(" (Y)");
+    Vdim_sbox->setFont(tinyFont);
     Vdim_sbox->installEventFilter(this);
     Hdim_sbox = new QSpinBox();
     Hdim_sbox->setAlignment(Qt::AlignCenter);
@@ -710,17 +711,17 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     ESoverlapSpbox = new QSpinBox();
     ESoverlapSpbox->setAlignment(Qt::AlignCenter);
     ESoverlapSpbox->setSuffix("\%");
-    ESoverlapSpbox->setPrefix("overlap ");
+    ESoverlapSpbox->setPrefix("ovlap ");
     ESoverlapSpbox->setValue(20);
     ESoverlapSpbox->setMinimum(0);
     ESoverlapSpbox->setMaximum(50);
     ESmethodCbox = new QComboBox();
-    ESmethodCbox->addItem("X->Y->Z");
-    ESmethodCbox->addItem("Y->X->Z");
-    ESmethodCbox->addItem("X->Z->Y");
-    ESmethodCbox->addItem("Y->Z->X");
-    ESmethodCbox->addItem("Z->Y->X");
-    ESmethodCbox->addItem("Z->X->Y");
+    ESmethodCbox->addItem("XYZ");
+    ESmethodCbox->addItem("YXZ");
+    ESmethodCbox->addItem("XZY");
+    ESmethodCbox->addItem("YZX");
+    ESmethodCbox->addItem("ZYX");
+    ESmethodCbox->addItem("ZXY");
     setEnabledComboBoxItem(ESmethodCbox, 1, false);
     setEnabledComboBoxItem(ESmethodCbox, 2, false);
     setEnabledComboBoxItem(ESmethodCbox, 3, false);
@@ -934,9 +935,11 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     QHBoxLayout* esPanelLayout = new QHBoxLayout();
     ESbutton->setFixedWidth(marginLeft);
     esPanelLayout->addWidget(ESbutton, 0);
-    esPanelLayout->addWidget(ESblockSpbox, 1);
-    esPanelLayout->addWidget(ESmethodCbox, 1);
-    esPanelLayout->addWidget(ESoverlapSpbox, 1);
+    ESblockSpbox->setFixedWidth(115);
+    ESmethodCbox->setFixedWidth(65);
+    esPanelLayout->addWidget(ESblockSpbox);
+    esPanelLayout->addWidget(ESoverlapSpbox,1);
+    esPanelLayout->addWidget(ESmethodCbox);
     ESPanel->setLayout(esPanelLayout);
     #ifndef _USE_NATIVE_FONTS
     ESPanel->setStyle(new QWindowsStyle());
@@ -1063,9 +1066,9 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     layout->setSpacing(0);
     setLayout(layout);
     #ifdef USE_EXPERIMENTAL_FEATURES
-    setWindowTitle(QString("TeraFly v").append(teramanager::version.c_str()).append("e"));
+    setWindowTitle(QString("Vaa3D-TeraFly v").append(teramanager::version.c_str()).append("e"));
     #else
-    setWindowTitle(QString("TeraFly v").append(teramanager::version.c_str()));
+    setWindowTitle(QString("Vaa3D-TeraFly v").append(teramanager::version.c_str()));
     #endif
     this->setFont(tinyFont);
 
@@ -1092,8 +1095,8 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     connect(traslTneg, SIGNAL(clicked()), this, SLOT(traslTnegClicked()));
     connect(controlsResetButton, SIGNAL(clicked()), this, SLOT(resetMultiresControls()));
     connect(ESbutton, SIGNAL(clicked()), this, SLOT(ESbuttonClicked()));
-    //connect(ESblockSpbox, SIGNAL(valueChanged(int)), this, SLOT(ESblockSpboxChanged(int)));
-    connect(ESblockSpbox, SIGNAL(editingFinished()), this, SLOT(ESblockSpboxChanged()));
+    connect(ESblockSpbox, SIGNAL(valueChanged(int)), this, SLOT(ESblockSpinboxChanged(int)));
+    connect(ESblockSpbox, SIGNAL(editingFinished()), this, SLOT(ESblockSpinboxEditingFinished()));
     connect(this, SIGNAL(sendProgressBarChanged(int, int, int, const char*)), this, SLOT(progressBarChanged(int, int, int, const char*)), Qt::QueuedConnection);
 
     //set always on top
@@ -1216,7 +1219,7 @@ void PMain::reset()
     //ESPanel->setEnabled(false);
     ESbutton->setIcon(QIcon(":/icons/start.png"));
     ESbutton->setText("Start");
-    ESblockSpbox->setPrefix("Block ");
+//    ESblockSpbox->setPrefix("Block ");
     ESblockSpbox->setSuffix("/0");
     ESblockSpbox->setMaximum(0);
     ESblockSpbox->setMinimum(0);
@@ -1789,7 +1792,7 @@ void PMain::importDone(RuntimeException *ex, qint64 elapsed_time)
         PLog::getInstance()->appendActual(CImport::instance()->timerIO.elapsed(), "TeraFly 3D exploration started");
 
         //activate annotation toolbar
-        //showToolbarButton->setChecked(true);
+        showToolbarButton->setChecked(true);
     }
 
     //resetting some widgets
@@ -2491,6 +2494,7 @@ void PMain::ESbuttonClicked()
     }
 
 
+
     // "Sliding viewer" panel
     ESbutton->setText(start ? "Stop" : "Start");
     ESbutton->setIcon(start ? QIcon(":/icons/stop.png") : QIcon(":/icons/start.png"));
@@ -2501,16 +2505,51 @@ void PMain::ESbuttonClicked()
     ESblockSpbox->setMaximum(start ? ESblocks.size(): 0);
     ESblockSpbox->setMinimum(start ? 1: 0);
     ESblockSpbox->setValue(start ? 1: 0);
-    ESblockSpboxChanged();
+    ESblockSpinboxEditingFinished();
 }
 
 /**********************************************************************************
 * Called when the correspondent spin box has changed
 ***********************************************************************************/
-void PMain::ESblockSpboxChanged()
+void PMain::ESblockSpinboxEditingFinished()
 {
     int b = ESblockSpbox->value();
 
+    if(b == 0 || !ESblockSpbox->isEnabled())
+        return;
+
+    /**/itm::debug(itm::NO_DEBUG, 0, __itm__current__function__);
+
+    CExplorerWindow* curWin = CExplorerWindow::getCurrent();
+    if(curWin && curWin->isActive && !curWin->toBeClosed)
+    {
+        // if the selected block is the one being viewed, exit
+        if(curWin->slidingViewerBlockID == b)
+            return;
+
+        // update reference system
+        int ROIxS   = ESblocks[b-1].xInt.start;
+        int ROIxDim = ESblocks[b-1].xInt.end   - ROIxS;
+        int ROIyS   = ESblocks[b-1].yInt.start;
+        int ROIyDim = ESblocks[b-1].yInt.end   - ROIyS;
+        int ROIzS   = ESblocks[b-1].zInt.start;
+        int ROIzDim = ESblocks[b-1].zInt.end   - ROIzS;
+        int dimX   = CImport::instance()->getVolume(curWin->volResIndex)->getDIM_H();
+        int dimY   = CImport::instance()->getVolume(curWin->volResIndex)->getDIM_V();
+        int dimZ   = CImport::instance()->getVolume(curWin->volResIndex)->getDIM_D();
+        refSys->setDims(dimX, dimY, dimZ, ROIxDim, ROIyDim, ROIzDim, ROIxS, ROIyS, ROIzS);
+
+        // invoke new view
+        curWin->newView(ESblocks[b-1].xInt.end, ESblocks[b-1].yInt.end, ESblocks[b-1].zInt.end, curWin->volResIndex,
+                curWin->volT0, curWin->volT1, false, -1, -1, -1, ESblocks[b-1].xInt.start, ESblocks[b-1].yInt.start, ESblocks[b-1].zInt.start, true, false, b);
+    }
+}
+
+/**********************************************************************************
+* Called when the corresponding spin box has changed
+***********************************************************************************/
+void PMain::ESblockSpinboxChanged(int b)
+{
     if(b == 0 || !ESblockSpbox->isEnabled())
         return;
 
@@ -2530,10 +2569,6 @@ void PMain::ESblockSpboxChanged()
         int dimY   = CImport::instance()->getVolume(curWin->volResIndex)->getDIM_V();
         int dimZ   = CImport::instance()->getVolume(curWin->volResIndex)->getDIM_D();
         refSys->setDims(dimX, dimY, dimZ, ROIxDim, ROIyDim, ROIzDim, ROIxS, ROIyS, ROIzS);
-
-        // invoke new view
-        curWin->newView(ESblocks[b-1].xInt.end, ESblocks[b-1].yInt.end, ESblocks[b-1].zInt.end, curWin->volResIndex,
-                curWin->volT0, curWin->volT1, false, -1, -1, -1, ESblocks[b-1].xInt.start, ESblocks[b-1].yInt.start, ESblocks[b-1].zInt.start, true, false);
     }
 }
 

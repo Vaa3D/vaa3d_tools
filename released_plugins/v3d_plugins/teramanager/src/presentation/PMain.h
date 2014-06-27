@@ -460,7 +460,12 @@ class teramanager::PMain : public QWidget
         /**********************************************************************************
         * Called when the corresponding spin box has changed
         ***********************************************************************************/
-        void ESblockSpboxChanged();
+        void ESblockSpinboxChanged(int b);
+
+        /**********************************************************************************
+        * Called when the corresponding spin box has been edited
+        ***********************************************************************************/
+        void ESblockSpinboxEditingFinished();
 
         /**********************************************************************************
         * Called when the corresponding QLineEdit has been edited

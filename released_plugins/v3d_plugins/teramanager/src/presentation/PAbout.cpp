@@ -11,7 +11,7 @@ PAbout::PAbout(QWidget *parent) : QDialog(parent)
     setWindowTitle("About TeraFly");
 
     desc = new QLabel();
-    desc->setText( QString("<html><h3>TeraFly plugin v. ").append(teramanager::version.c_str()).append("</h3>"
+    desc->setText( QString("<html><h3>Vaa3D-TeraFly v. ").append(teramanager::version.c_str()).append("</h3>"
                          "<p>A tool designed for Teravoxel-sized datasets 3D navigation and Vaa3D-aided analysis.</p>"
                          "<small><u>Developed by:</u><ul style=\"padding-left:5px\">"
                          "<li><b>Alessandro Bria</b> (email: a.bria@unicas.it)<br>"
