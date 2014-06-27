@@ -13,7 +13,8 @@ using namespace std;
 Q_EXPORT_PLUGIN2(test, TestPlugin);
 
 void markers_singleChannel(V3DPluginCallback2 &callback, QWidget *parent);
-void better_markers_singleChannel(V3DPluginCallback2 &callback, QWidget *parent);
+void mark_or_curve_singleChannel(V3DPluginCallback2 &callback, QWidget *parent);
+LandmarkList neuron_2_markList(const NeuronTree & p, LandmarkList & neuronMarkList);
 template <class T> int pixelVal(T* data1d, V3DLONG *dimNum,
                                 int xc, int yc, int zc, int c);
 template <class T> pair<int,int> pixel(T* data1d,
@@ -22,10 +23,9 @@ template <class T> pair<int,int> pixel(T* data1d,
 template <class T> pair<int,int> dynamic_pixel(T* data1d,
                                         V3DLONG *dimNum,
                                         int xc, int yc, int zc,
-                                        int c, int marknum, int PixVal, int BGVal);
+                                        int c, int PixVal, int BGVal);
 template <class T> LandmarkList count(T* data1d,
                                       V3DLONG *dimNum,
-                                      v3dhandle curwin,
                                       int MarkAve, int MarkStDev,
                                       int PointAve, int PointStDev,
                                       int rad, int radAve, int radStDev, int c);
@@ -38,7 +38,7 @@ QStringList TestPlugin::menulist() const
 {
 	return QStringList() 
         <<tr("Single Channel Cell Counting")
-        <<tr("Better Cell Counting?!")
+        <<tr("Better Cell Counting")
 		<<tr("about");
 }
 
@@ -54,13 +54,11 @@ void TestPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, 
 {
     if (menu_name == tr("Single Channel Cell Counting"))
 	{
-        //v3d_msg("To be implemented?");
         markers_singleChannel(callback,parent);
 	}
-    else if (menu_name == tr("Better Cell Counting?!"))
+    else if (menu_name == tr("Better Cell Counting"))
 	{
-        //v3d_msg("YES!!!!! There's just nothing here yet.");
-        better_markers_singleChannel(callback,parent);
+        mark_or_curve_singleChannel(callback,parent);
 	}
 	else
 	{
@@ -95,7 +93,7 @@ bool TestPlugin::dofunc(const QString & func_name, const V3DPluginArgList & inpu
 }
 
 
-
+//this algorithm is much worse than mark_or_curve
 void markers_singleChannel(V3DPluginCallback2 &callback, QWidget *parent)
 {
     v3dhandle curwin = callback.currentImageWindow();
@@ -112,7 +110,6 @@ void markers_singleChannel(V3DPluginCallback2 &callback, QWidget *parent)
 
     unsigned char* data1d = p4DImage->getRawData(); //sets data into 1D array
 
-    V3DLONG pages = p4DImage->getTotalUnitNumberPerChannel();
     //defining the dimensions
     V3DLONG N = p4DImage->getXDim();
     V3DLONG M = p4DImage->getYDim();
@@ -186,7 +183,7 @@ void markers_singleChannel(V3DPluginCallback2 &callback, QWidget *parent)
         //int CellCnt = count(data1d,dimNum,curwin,MarkAve,MarkStDev,rad,c);
         //v3d_msg(QString("There are %1 cells in this channel").arg(CellCnt));
 
-        LandmarkList newList = count(data1d,dimNum,curwin,MarkAve,MarkStDev,PointAve,PointStDev,rad,0,0,c);
+        LandmarkList newList = count(data1d,dimNum,MarkAve,MarkStDev,PointAve,PointStDev,rad,0,0,c);
 
         //now need to delete duplicate markers on same cell
         LandmarkList smallList = duplicates(data1d,newList,dimNum,PointAve,rad,c);
@@ -198,7 +195,13 @@ void markers_singleChannel(V3DPluginCallback2 &callback, QWidget *parent)
 }
 
 
-void better_markers_singleChannel(V3DPluginCallback2 &callback, QWidget *parent)
+//########
+//  current issues with the algorithm
+//  -crashes if 3D curve training path is too long (possibly because too many markers? not actually sure reason)
+//  -very poorly optimized
+//  -have not yet implimented ability to translate newly generated markers into paths if desired
+//########
+void mark_or_curve_singleChannel(V3DPluginCallback2 &callback, QWidget *parent)
 {
     v3dhandle curwin = callback.currentImageWindow();
 
@@ -220,6 +223,49 @@ void better_markers_singleChannel(V3DPluginCallback2 &callback, QWidget *parent)
     V3DLONG M = p4DImage->getYDim();
     V3DLONG P = p4DImage->getZDim();
     V3DLONG sc = p4DImage->getCDim();
+
+    //storing the dimensions
+    V3DLONG dimNum[4];
+    dimNum[0]=N; dimNum[1]=M; dimNum[2]=P; dimNum[3]=sc;
+
+    int xc,yc,zc;
+    LocationSimple tmpLocation(0,0,0);
+    LandmarkList Marklist = callback.getLandmark(curwin);
+    int Marknum = Marklist.count();
+    NeuronTree mTree = callback.getSWC(curwin);
+    int SWCcount = mTree.listNeuron.count();
+
+
+    //input test data type
+    int option;
+    if (Marknum != 0 && SWCcount ==0 ) { option = 1; }
+    else if (Marknum == 0 && SWCcount != 0) { option = 2; }
+    else
+    {
+        QString qtitle = QObject::tr("Choose Test Data Input Type");
+        bool ok;
+        QStringList items;
+        items << "Markers" << "3D Curves";
+        QString item = QInputDialog::getItem(0, qtitle,
+                                            QObject::tr("Which type of testing data are you using"), items, 0, false, &ok);
+        if (! ok) return;
+        int input_type = items.indexOf(item);
+        if (input_type==1) { option = 1; }
+        else { option = 2; }
+    }
+
+    LandmarkList mlist, neuronMarkList;
+    if (option == 1)
+    {
+        mlist = Marklist;
+    }
+    else
+    {
+        neuronMarkList = neuron_2_markList(mTree,neuronMarkList);
+        mlist = neuronMarkList;
+    }
+
+
     //input channel
     unsigned int c=1, rad=10;
     bool ok;
@@ -228,143 +274,132 @@ void better_markers_singleChannel(V3DPluginCallback2 &callback, QWidget *parent)
     else
         c = QInputDialog::getInteger(parent, "Channel", "Enter Channel Number", 1, 1, sc, 1,&ok);
 
-    //storing the dimensions
-    V3DLONG dimNum[4];
-    dimNum[0]=N; dimNum[1]=M; dimNum[2]=P; dimNum[3]=sc;
 
-    //pulling marker info
-    int xc,yc,zc;
-    LocationSimple tmpLocation(0,0,0);
-    LandmarkList mlist = callback.getLandmark(curwin);
-    QString imgname = callback.getImageName(curwin);
+    //sort markers by background/foreground
+    //        v3d_msg("presort ckpt");
+    int pix,num;
     int marknum = mlist.count();
-    if (mlist.isEmpty())
+    int * PixValArr;
+    PixValArr = new int[marknum];
+    LandmarkList MarkList, BGList;
+    //        v3d_msg("sort ckpt 1");
+    for (int i=0; i<marknum; i++)
     {
-        v3d_msg(QString("The marker list of the current image [%1] is empty. Do nothing.").arg(imgname));
-        return;
+        tmpLocation = mlist.at(i);
+        tmpLocation.getCoord(xc,yc,zc);
+        pix = pixelVal(data1d,dimNum,xc,yc,zc,c);
+        //            v3d_msg(QString("pix value %1 %2").arg(pix).arg(pix1));
+        PixValArr[i] = pix;
     }
-    else
+    int max=0,min=255;
+    for (int i=0; i<marknum; i++)
     {
-        //sort markers by background/foreground
-//        v3d_msg("presort ckpt");
-        int pix,num;
-        int * PixValArr;
-        PixValArr = new int[marknum];
-        LandmarkList MarkList, BGList;
-//        v3d_msg("sort ckpt 1");
-        for (int i=0; i<marknum; i++)
-        {
-            tmpLocation = mlist.at(i);
-            tmpLocation.getCoord(xc,yc,zc);
-            int pix = pixelVal(data1d,dimNum,xc,yc,zc,c);
-//            v3d_msg(QString("pix value %1 %2").arg(pix).arg(pix1));
-            PixValArr[i] = pix;
-        }
-        int max=0,min=255;
-        for (int i=0; i<marknum; i++)
-        {
-            num=PixValArr[i];
-            if (num>max) { max=num; }
-            if (num<min) { min=num; }
-        }
-//        v3d_msg(QString("sort ckpt 2, min %1 max %2").arg(min).arg(max));
-        int thresh = (max+min)/2;
-        int PixVal=0, BGVal=0;
-        for (int i=0; i<marknum; i++)
-        {
-            num=PixValArr[i];
-            tmpLocation = mlist.at(i);
-            if (num<thresh) { BGList.append(tmpLocation); BGVal += num; }    //BGList holds bg markers
-            if (num>thresh) { MarkList.append(tmpLocation); PixVal += num; }  //MarkList holds cell markers
-        }
-
-//        v3d_msg(QString("sort ckpt 3, thresh %1").arg(thresh));
-
-        int marks = MarkList.count();
-        PixVal /= marks;            //PixVal now stores average pixel value of all cell markers
-        BGVal /= BGList.count();    //BGVal now stores average pixel value of all background markers
-
-
-//        v3d_msg(QString("marks = %1, bgcount = %2. Marks all sorted").arg(marks).arg(BGList.count())); //crash after this
-
-
-        //scan list of cell markers for ValAve, radAve
-        int xc,yc,zc;
-        int * ValAveArr; int * radAveArr;
-        ValAveArr = new int[marks]; radAveArr = new int[marks];
-        LocationSimple tempLocation(0,0,0);
-        int ValAve=0,radAve=0;
-        for (int i=0; i<marks; i++)
-        {
-            tempLocation = MarkList.at(i);
-            tempLocation.getCoord(xc,yc,zc);
-            int Pix = pixelVal(data1d,dimNum,xc,yc,zc,c);
-            //pair<int,int> pixAns = pixel(data1d,dimNum,xc,yc,zc,c,rad); //I have no idea why pixelVal isn't working correctly
-            //int Pix = pixAns.second;
-
-            pair<int,int> dynAns = dynamic_pixel(data1d,dimNum,xc,yc,zc,c,marks,Pix,BGVal);
-            ValAveArr[i] = dynAns.first;
-            radAveArr[i] = dynAns.second;
-            ValAve += ValAveArr[i];
-            radAve += radAveArr[i];
-
-//            v3d_msg(QString("ValAve %1, radAve %2").arg(ValAve).arg(radAve));
-            //radAve is coming back giant
-        }
-
-//        v3d_msg("scan checkpoint");
-
-        ValAve /= marks;  //average pixel value of each segment
-        radAve /= marks;  //average radius of segment
-
-//        v3d_msg(QString("FINAL ValAve %1, radAve %2").arg(ValAve).arg(radAve));
-
-        int stV=0, stR=0, stP=0;
-        for (int i=0; i<marks; i++)
-        {
-            int s = pow(ValAveArr[i]-ValAve,2.0);
-            stV += s;
-
-            int t = pow(radAveArr[i]-radAve,2.0);
-            stR += t;
-
-            tempLocation = MarkList.at(i);
-            tempLocation.getCoord(xc,yc,zc);
-            //pair<int,int> pixAns = pixel(data1d,dimNum,xc,yc,zc,c,rad); //I have no idea why pixelVal isn't working correctly
-            //int Pix = pixAns.second;
-            int Pix = pixelVal(data1d,dimNum,xc,yc,zc,c);
-            int u = pow(Pix-PixVal,2.0);
-            stP += u;
-//            v3d_msg(QString("pixel value %1, diff %2, stP %3").arg(Pix).arg(Pix-PixVal).arg(stP));
-        }
-        int ValStDev = sqrt(stV/(marks-1.0));
-        int radStDev = sqrt(stR/(marks-1.0));
-        int PixStDev = sqrt(stP/(marks-1.0));
-
-
-//        v3d_msg(QString("markers have been scanned. Pixval %1 and stdev %2. radVal %3 and stdev %4."
-//                        "segVal %5 and stdev %6").arg(PixVal).arg(PixStDev).arg(radAve).arg(radStDev).arg(ValAve).arg(ValStDev));
-
-
-        //and here we need to add the function that will scan the rest of the image for other cells based on MarkAve and MarkStDev
-        //int CellCnt = count(data1d,dimNum,curwin,MarkAve,MarkStDev,rad,c);
-        //v3d_msg(QString("There are %1 cells in this channel").arg(CellCnt));
-
-        LandmarkList newList = count(data1d,dimNum,curwin,ValAve,2*ValStDev,PixVal,PixStDev,0,radAve,5+radStDev,c);
-
-//        LandmarkList& woot = newList;
-//        bool draw_le_markers = callback.setLandmark(curwin,woot);
-//        v3d_msg(QString("newList has %1 markers").arg(newList.count()));
-
-
-//        v3d_msg("new markers have been found");
-        //now need to delete duplicate markers on same cell
-        LandmarkList smallList = duplicates(data1d,newList,dimNum,PixVal,radAve,c);
-        LandmarkList& woot2 = smallList;
-        bool draw_le_markers2 = callback.setLandmark(curwin,woot2);
+        num=PixValArr[i];
+        if (num>max) { max=num; }
+        if (num<min) { min=num; }
     }
+    //        v3d_msg(QString("sort ckpt 2, min %1 max %2").arg(min).arg(max));
+    int thresh = (max+min)/2;
+    int PixVal=0, BGVal=0;
+    for (int i=0; i<marknum; i++)
+    {
+        num=PixValArr[i];
+        tmpLocation = mlist.at(i);
+        if (num<thresh) { BGList.append(tmpLocation); BGVal += num; }    //BGList holds bg markers
+        if (num>thresh) { MarkList.append(tmpLocation); PixVal += num; }  //MarkList holds cell markers
+    }
+
+    //        v3d_msg(QString("sort ckpt 3, thresh %1").arg(thresh));
+
+    int marks = MarkList.count();
+    PixVal /= marks;            //PixVal now stores average pixel value of all cell markers
+    BGVal /= BGList.count();    //BGVal now stores average pixel value of all background markers
+
+
+    //        v3d_msg(QString("marks = %1, bgcount = %2. Marks all sorted").arg(marks).arg(BGList.count())); //crash after this
+
+
+    //scan list of cell markers for ValAve, radAve
+
+    int * ValAveArr; int * radAveArr;
+    ValAveArr = new int[marks]; radAveArr = new int[marks];
+    LocationSimple tempLocation(0,0,0);
+    int ValAve=0,radAve=0;
+    for (int i=0; i<marks; i++)
+    {
+        tempLocation = MarkList.at(i);
+        tempLocation.getCoord(xc,yc,zc);
+        int Pix = pixelVal(data1d,dimNum,xc,yc,zc,c);
+
+        pair<int,int> dynAns = dynamic_pixel(data1d,dimNum,xc,yc,zc,c,Pix,BGVal);
+        ValAveArr[i] = dynAns.first;
+        radAveArr[i] = dynAns.second;
+        ValAve += ValAveArr[i];
+        radAve += radAveArr[i];
+
+        //            v3d_msg(QString("ValAve %1, radAve %2").arg(ValAve).arg(radAve));
+    }
+
+    //        v3d_msg("scan checkpoint");
+
+    ValAve /= marks;  //average pixel value of each segment
+    radAve /= marks;  //average radius of segment
+
+    //        v3d_msg(QString("FINAL ValAve %1, radAve %2").arg(ValAve).arg(radAve));
+
+    int stV=0, stR=0, stP=0;
+    for (int i=0; i<marks; i++)
+    {
+        int s = pow(ValAveArr[i]-ValAve,2.0);
+        stV += s;
+
+        int t = pow(radAveArr[i]-radAve,2.0);
+        stR += t;
+
+        tempLocation = MarkList.at(i);
+        tempLocation.getCoord(xc,yc,zc);
+        int Pix = pixelVal(data1d,dimNum,xc,yc,zc,c);
+        int u = pow(Pix-PixVal,2.0);
+        stP += u;
+        //            v3d_msg(QString("pixel value %1, diff %2, stP %3").arg(Pix).arg(Pix-PixVal).arg(stP));
+    }
+    int ValStDev = sqrt(stV/(marks-1.0));
+    int radStDev = sqrt(stR/(marks-1.0));
+    int PixStDev = sqrt(stP/(marks-1.0));
+
+
+    //        v3d_msg(QString("markers have been scanned. Pixval %1 and stdev %2. radVal %3 and stdev %4."
+    //                        "segVal %5 and stdev %6").arg(PixVal).arg(PixStDev).arg(radAve).arg(radStDev).arg(ValAve).arg(ValStDev));
+
+    //scans image and generates new set of markers based on testing data
+    LandmarkList newList = count(data1d,dimNum,ValAve,2*ValStDev,PixVal,PixStDev,0,radAve,5+radStDev,c);
+
+    //        LandmarkList& woot = newList;
+    //        bool draw_le_markers = callback.setLandmark(curwin,woot);
+    //        v3d_msg(QString("newList has %1 markers").arg(newList.count()));
+
+    //deletes duplicate markers based on their proximity
+    LandmarkList smallList = duplicates(data1d,newList,dimNum,PixVal,radAve,c);
+    LandmarkList& woot2 = smallList;
+    bool draw_le_markers2 = callback.setLandmark(curwin,woot2);
     return;
 }
+
+
+
+LandmarkList neuron_2_markList(const NeuronTree & p, LandmarkList & neuronMarkList)
+{
+    LocationSimple tmpMark(0,0,0);
+    for (int i=0;i<p.listNeuron.size();i++)
+    {
+        tmpMark.x = p.listNeuron.at(i).x;
+        tmpMark.y = p.listNeuron.at(i).y;
+        tmpMark.z = p.listNeuron.at(i).z;
+        neuronMarkList.append(tmpMark);
+    }
+    return neuronMarkList;
+}
+
 
 template <class T> int pixelVal(T* data1d, V3DLONG *dimNum,
                                 int xc, int yc, int zc, int c)
@@ -372,8 +407,6 @@ template <class T> int pixelVal(T* data1d, V3DLONG *dimNum,
     V3DLONG N = dimNum[0];
     V3DLONG M = dimNum[1];
     V3DLONG P = dimNum[2];
-    V3DLONG sc = dimNum[3];
-    //1D data array stores in this order: C Z Y X
     V3DLONG shiftC = (c-1)*P*M*N;
     int pixelVal = data1d[ shiftC + zc*M*N + yc*N + xc ];
     return pixelVal;
@@ -383,55 +416,46 @@ template <class T> int pixelVal(T* data1d, V3DLONG *dimNum,
 template <class T> pair<int,int> dynamic_pixel(T* data1d,
                                         V3DLONG *dimNum,
                                         int xc, int yc, int zc,
-                                        int c, int marknum, int PixVal, int BGVal)
+                                        int c, int PixVal, int BGVal)
 {
     V3DLONG N = dimNum[0];
     V3DLONG M = dimNum[1];
     V3DLONG P = dimNum[2];
-    V3DLONG sc = dimNum[3];
-    //1D data array stores in this order: C Z Y X
     V3DLONG shiftC = (c-1)*P*M*N;
 
-//    int xc,yc,zc;
-//    LocationSimple tempLocation(0,0,0);
-//    for (int t=0; t<MarkList.count(); t++)
-//    {
-//        tempLocation = MarkList.at(t);
-//        tempLocation.getCoord(xc,yc,zc);
-        int rad=1,dataAve;
-        do
-        {
-            //defining limits
-            V3DLONG xLow = xc-rad; if(xLow<0) xLow=0;
-            V3DLONG xHigh = xc+rad; if(xHigh>N-1) xHigh=N-1;
-            V3DLONG yLow = yc-rad; if(yLow<0) yLow=0;
-            V3DLONG yHigh = yc+rad; if(yHigh>M-1) yHigh=M-1;
-            V3DLONG zLow = zc-rad; if(zLow<0) zLow=0;
-            V3DLONG zHigh = zc+rad; if(zHigh>P-1) zHigh=P-1;
+    int rad=1,dataAve;
+    do
+    {
+        //defining limits
+        V3DLONG xLow = xc-rad; if(xLow<0) xLow=0;
+        V3DLONG xHigh = xc+rad; if(xHigh>N-1) xHigh=N-1;
+        V3DLONG yLow = yc-rad; if(yLow<0) yLow=0;
+        V3DLONG yHigh = yc+rad; if(yHigh>M-1) yHigh=M-1;
+        V3DLONG zLow = zc-rad; if(zLow<0) zLow=0;
+        V3DLONG zHigh = zc+rad; if(zHigh>P-1) zHigh=P-1;
 
-            //scanning through the pixels
-            V3DLONG k,j,i;
-            //average data of each segment
-            int datatotal=0,runs=0;
-            for (k = zLow; k < zHigh; k++)
+        //scanning through the pixels
+        V3DLONG k,j,i;
+        //average data of each segment
+        int datatotal=0,runs=0;
+        for (k = zLow; k < zHigh; k++)
+        {
+            V3DLONG shiftZ = k*M*N;
+            for (j = yLow; j < yHigh; j++)
             {
-                 V3DLONG shiftZ = k*M*N;
-                 for (j = yLow; j < yHigh; j++)
-                 {
-                     V3DLONG shiftY = j*N;
-                     for (i = xLow; i < xHigh; i++)
-                     {
-                         int dataval = data1d[ shiftC + shiftZ + shiftY + i ];
-                         datatotal += dataval;
-                         runs++;
-                     }
-                 }
+                V3DLONG shiftY = j*N;
+                for (i = xLow; i < xHigh; i++)
+                {
+                    int dataval = data1d[ shiftC + shiftZ + shiftY + i ];
+                    datatotal += dataval;
+                    runs++;
+                }
             }
-            dataAve = datatotal/runs;
-            rad++;
-        } while ( dataAve > (PixVal+4*BGVal)/5 );
-//        ValAveArr[t]=dataAve; radAveArr[t]=rad;
-//    }
+        }
+        dataAve = datatotal/runs;
+        rad++;
+    } while ( dataAve > (PixVal+4*BGVal)/5 );
+
     return make_pair(dataAve,rad);
 }
 
@@ -444,8 +468,7 @@ template <class T> pair<int,int> pixel(T* data1d,
     V3DLONG N = dimNum[0];
     V3DLONG M = dimNum[1];
     V3DLONG P = dimNum[2];
-    V3DLONG sc = dimNum[3];
-    //1D data array stores in this order: C Z Y X
+
     V3DLONG shiftC = (c-1)*P*M*N;
 
     //defining limits
@@ -481,10 +504,10 @@ template <class T> pair<int,int> pixel(T* data1d,
     return make_pair(dataAve,pointval);
 }
 
+
 //uses test data to scan and mark other cells
 template <class T> LandmarkList count(T* data1d,
                               V3DLONG *dimNum,
-                              v3dhandle curwin,
                               int MarkAve, int MarkStDev,
                               int PointAve, int PointStDev,
                               int rad, int radAve, int radStDev, int c)
@@ -492,7 +515,6 @@ template <class T> LandmarkList count(T* data1d,
     V3DLONG N = dimNum[0];
     V3DLONG M = dimNum[1];
     V3DLONG P = dimNum[2];
-    V3DLONG sc = dimNum[3];
     //1D data array stores in this order: C Z Y X
 
     LocationSimple tmpLocation(0,0,0);
