@@ -14,6 +14,7 @@ Q_EXPORT_PLUGIN2(test, TestPlugin);
 
 void markers_singleChannel(V3DPluginCallback2 &callback, QWidget *parent);
 void mark_or_curve_singleChannel(V3DPluginCallback2 &callback, QWidget *parent);
+template <class T> LandmarkList main_func(T* data1d, V3DLONG *dimNum, int c, LandmarkList & mlist, LandmarkList & bglist);
 LandmarkList neuron_2_markList(const NeuronTree & p, LandmarkList & neuronMarkList);
 template <class T> int pixelVal(T* data1d, V3DLONG *dimNum,
                                 int xc, int yc, int zc, int c);
@@ -228,8 +229,6 @@ void mark_or_curve_singleChannel(V3DPluginCallback2 &callback, QWidget *parent)
     V3DLONG dimNum[4];
     dimNum[0]=N; dimNum[1]=M; dimNum[2]=P; dimNum[3]=sc;
 
-    int xc,yc,zc;
-    LocationSimple tmpLocation(0,0,0);
     LandmarkList Marklist = callback.getLandmark(curwin);
     int Marknum = Marklist.count();
     NeuronTree mTree = callback.getSWC(curwin);
@@ -250,7 +249,7 @@ void mark_or_curve_singleChannel(V3DPluginCallback2 &callback, QWidget *parent)
                                             QObject::tr("Which type of testing data are you using"), items, 0, false, &ok);
         if (! ok) return;
         int input_type = items.indexOf(item);
-        if (input_type==1) { option = 1; }
+        if (input_type==0) { option = 1; }
         else { option = 2; }
     }
 
@@ -265,55 +264,103 @@ void mark_or_curve_singleChannel(V3DPluginCallback2 &callback, QWidget *parent)
         mlist = neuronMarkList;
     }
 
+    bool ok;
 
     //input channel
-    unsigned int c=1, rad=10;
-    bool ok;
+    unsigned int c=1;
     if (sc==1)
         c=1; //if only using 1 channel
     else
         c = QInputDialog::getInteger(parent, "Channel", "Enter Channel Number", 1, 1, sc, 1,&ok);
 
 
-    //sort markers by background/foreground
-    //        v3d_msg("presort ckpt");
-    int pix,num;
-    int marknum = mlist.count();
-    int * PixValArr;
-    PixValArr = new int[marknum];
-    LandmarkList MarkList, BGList;
-    //        v3d_msg("sort ckpt 1");
-    for (int i=0; i<marknum; i++)
+    //input sort method
+    QString qtitle = QObject::tr("Choose Sorting Method");
+    QStringList items;
+    items << "Default (binary color threshold)" << "By Comments";
+    QString item = QInputDialog::getItem(0, qtitle,
+                                         QObject::tr("How should the test data be sorted?"), items, 0, false, &ok);
+    if (! ok) return;
+    int input_type = items.indexOf(item);
+    if (input_type==0) //default
     {
-        tmpLocation = mlist.at(i);
-        tmpLocation.getCoord(xc,yc,zc);
-        pix = pixelVal(data1d,dimNum,xc,yc,zc,c);
-        //            v3d_msg(QString("pix value %1 %2").arg(pix).arg(pix1));
-        PixValArr[i] = pix;
+        LandmarkList bglist; //sending in empty bglist to trigger binary sort
+        LandmarkList smallList = main_func(data1d,dimNum,c,mlist,bglist);
+        LandmarkList& woot2 = smallList;
+        bool draw_le_markers2 = callback.setLandmark(curwin,woot2);
     }
-    int max=0,min=255;
-    for (int i=0; i<marknum; i++)
+    else if (input_type==1) //comments
     {
-        num=PixValArr[i];
-        if (num>max) { max=num; }
-        if (num<min) { min=num; }
+        v3d_msg("to be implemented"); return;
+        QString bg_com = QInputDialog::getText(0,"Define Background","Enter comment string used to indicate background",
+                                               QLineEdit::Normal,"",&ok,Qt::CaseInsensitive);
+        /* general idea is to make dynamic 2D array, each row is a different comment group
+         * then for each row go through its own dynamic radius segmentation to get test values for each comment group
+         * then scan through for each comment group, except this time also writing in the correct comment type_info
+         * still going to return single LandmarkList, but all the landmarks in it will be commented
+         *
+         * basically make some array of LandmarkLists called commentMark (containing all non BG markers, sort comments by row)
+         * some LandmarkList bglist and some LandmarkList whatever
+         * then do a for loop, i=row of commentMark, whatever.append(x) where x=main_func(data1d,dimNum,c,i,bglist)
+         * LandmarkList& woot3 = whatever;
+         * bool draw_le_markers3 = callback.setLandmark(curwin,woot3);
+         *
+         * this would prolly be easier if I could figure out how to change the category int because easier to sort int than string */
     }
-    //        v3d_msg(QString("sort ckpt 2, min %1 max %2").arg(min).arg(max));
-    int thresh = (max+min)/2;
-    int PixVal=0, BGVal=0;
-    for (int i=0; i<marknum; i++)
+    return;
+}
+
+template <class T> LandmarkList main_func(T* data1d, V3DLONG *dimNum, int c, LandmarkList & markerlist, LandmarkList & bglist)
+{
+    LandmarkList mlist, MarkList, BGList;
+    int xc,yc,zc, marks,PixVal,BGVal;
+    if (bglist.isEmpty()) //binary sorting
     {
-        num=PixValArr[i];
-        tmpLocation = mlist.at(i);
-        if (num<thresh) { BGList.append(tmpLocation); BGVal += num; }    //BGList holds bg markers
-        if (num>thresh) { MarkList.append(tmpLocation); PixVal += num; }  //MarkList holds cell markers
+        //sort markers by background/foreground
+        mlist = markerlist;
+        //        v3d_msg("presort ckpt");
+        LocationSimple tmpLocation(0,0,0);
+
+        int pix,num;
+        int marknum = mlist.count();
+        int * PixValArr;
+        PixValArr = new int[marknum];
+        //        v3d_msg("sort ckpt 1");
+        for (int i=0; i<marknum; i++)
+        {
+            tmpLocation = mlist.at(i);
+            tmpLocation.getCoord(xc,yc,zc);
+            pix = pixelVal(data1d,dimNum,xc,yc,zc,c);
+            //            v3d_msg(QString("pix value %1 %2").arg(pix).arg(pix1));
+            PixValArr[i] = pix;
+        }
+        int max=0,min=255;
+        for (int i=0; i<marknum; i++)
+        {
+            num=PixValArr[i];
+            if (num>max) { max=num; }
+            if (num<min) { min=num; }
+        }
+        //        v3d_msg(QString("sort ckpt 2, min %1 max %2").arg(min).arg(max));
+        int thresh = (max+min)/2;
+        PixVal=0, BGVal=0;
+        for (int i=0; i<marknum; i++)
+        {
+            num=PixValArr[i];
+            tmpLocation = mlist.at(i);
+            if (num<thresh) { BGList.append(tmpLocation); BGVal += num; }    //BGList holds bg markers
+            if (num>thresh) { MarkList.append(tmpLocation); PixVal += num; }  //MarkList holds cell markers
+        }
+    }
+    else    //comment sorting
+    {
+        MarkList = markerlist;
+        BGList = bglist;
     }
 
-    //        v3d_msg(QString("sort ckpt 3, thresh %1").arg(thresh));
-
-    int marks = MarkList.count();
-    PixVal /= marks;            //PixVal now stores average pixel value of all cell markers
-    BGVal /= BGList.count();    //BGVal now stores average pixel value of all background markers
+    marks = MarkList.count();
+    PixVal = PixVal/marks;          //PixVal now stores average pixel value of all cell markers
+    BGVal = BGVal/BGList.count();   //BGVal now stores average pixel value of all background markers
 
 
     //        v3d_msg(QString("marks = %1, bgcount = %2. Marks all sorted").arg(marks).arg(BGList.count())); //crash after this
@@ -380,9 +427,7 @@ void mark_or_curve_singleChannel(V3DPluginCallback2 &callback, QWidget *parent)
 
     //deletes duplicate markers based on their proximity
     LandmarkList smallList = duplicates(data1d,newList,dimNum,PixVal,radAve,c);
-    LandmarkList& woot2 = smallList;
-    bool draw_le_markers2 = callback.setLandmark(curwin,woot2);
-    return;
+    return smallList;
 }
 
 
