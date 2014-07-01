@@ -18,6 +18,9 @@ template <class T> LandmarkList main_func(T* data1d, V3DLONG *dimNum, int c, Lan
 LandmarkList neuron_2_markList(const NeuronTree & p, LandmarkList & neuronMarkList);
 template <class T> int pixelVal(T* data1d, V3DLONG *dimNum,
                                 int xc, int yc, int zc, int c);
+template <class T> LocationSimple mass_center(T* data1d,
+                                              V3DLONG *dimNum,
+                                              int xc, int yc, int zc, int rad, int c, int pixVal);
 template <class T> pair<int,int> pixel(T* data1d,
                                         V3DLONG *dimNum,
                                         int xc,int yc,int zc,int c,int rad);
@@ -277,7 +280,7 @@ void mark_or_curve_singleChannel(V3DPluginCallback2 &callback, QWidget *parent)
     //input sort method
     QString qtitle = QObject::tr("Choose Sorting Method");
     QStringList items;
-    items << "Default (binary color threshold)" << "By Comments";
+    items << "Default (binary color threshold)" << "By Type";
     QString item = QInputDialog::getItem(0, qtitle,
                                          QObject::tr("How should the test data be sorted?"), items, 0, false, &ok);
     if (! ok) return;
@@ -289,11 +292,12 @@ void mark_or_curve_singleChannel(V3DPluginCallback2 &callback, QWidget *parent)
         LandmarkList& woot2 = smallList;
         bool draw_le_markers2 = callback.setLandmark(curwin,woot2);
     }
-    else if (input_type==1) //comments
+    else if (input_type==1) //type
     {
         v3d_msg("to be implemented"); return;
-        QString bg_com = QInputDialog::getText(0,"Define Background","Enter comment string used to indicate background",
-                                               QLineEdit::Normal,"",&ok,Qt::CaseInsensitive);
+        //QString bg_com = QInputDialog::getText(0,"Define Background","Enter comment string used to indicate background",
+          //                                     QLineEdit::Normal,"",&ok);
+
         /* general idea is to make dynamic 2D array, each row is a different comment group
          * then for each row go through its own dynamic radius segmentation to get test values for each comment group
          * then scan through for each comment group, except this time also writing in the correct comment type_info
@@ -306,6 +310,55 @@ void mark_or_curve_singleChannel(V3DPluginCallback2 &callback, QWidget *parent)
          * bool draw_le_markers3 = callback.setLandmark(curwin,woot3);
          *
          * this would prolly be easier if I could figure out how to change the category int because easier to sort int than string */
+
+        int catNum = QInputDialog::getInt(0,"Number of Categories","Enter number of categories, if unsure enter 0",0,0,100,1,&ok);
+
+        //counts number of categories if not provided
+
+        int * catList;
+        catList = new int(mlist.count());
+        for (int i=0; i<mlist.count(); i++)
+        {
+            LocationSimple temp = mlist.at(i);
+            catList[i] = temp.category;
+        }
+
+        if (catNum==0)
+        {
+            int ok=0;
+            for (int i=0; i<mlist.count(); i++)
+            {
+                for (int j=0; j<mlist.count(); j++)
+                {
+                    if (catList[i]==j)
+                    {
+                        catNum++;
+                        break;
+                    }
+                }
+            }
+        }
+
+        //creates arrays for each category
+ /*
+        vector <catNum> catArr;
+        do
+        {
+            for (int i=0; i<mlist.count(); i++) //loop through categories
+            {
+                int k=0;
+                for (int j=0; j<mlist.count(); j++) //loop through markers
+                {
+                    if (catList[j]==i) { k++; }
+                }
+                if (k!=0)
+                {
+                    catArr.push_back(k);
+                }
+            }
+        } while (catArr[catNum]==0);
+*/
+
     }
     return;
 }
@@ -365,6 +418,26 @@ template <class T> LandmarkList main_func(T* data1d, V3DLONG *dimNum, int c, Lan
 
     //        v3d_msg(QString("marks = %1, bgcount = %2. Marks all sorted").arg(marks).arg(BGList.count())); //crash after this
 
+
+    //recalibrates marker list by mean shift
+    LandmarkList tempList;
+    LocationSimple temp(0,0,0),newMark(0,0,0);
+    int tempPix;
+    for (int i=0; i<marks; i++)
+    {
+        temp = MarkList.at(i);
+        temp.getCoord(xc,yc,zc);
+        tempPix = pixelVal(data1d,dimNum,xc,yc,zc,c);
+        for (int j=0; j<10; j++)
+        {
+            newMark = mass_center(data1d,dimNum,xc,yc,zc,20,c,tempPix);
+            newMark.getCoord(xc,yc,zc);
+        }
+        tempList.append(newMark);
+    }
+    MarkList = tempList;
+
+    return MarkList;
 
     //scan list of cell markers for ValAve, radAve
 
@@ -432,6 +505,7 @@ template <class T> LandmarkList main_func(T* data1d, V3DLONG *dimNum, int c, Lan
 
 
 
+//obtains list of markers from neuron swc
 LandmarkList neuron_2_markList(const NeuronTree & p, LandmarkList & neuronMarkList)
 {
     LocationSimple tmpMark(0,0,0);
@@ -446,6 +520,7 @@ LandmarkList neuron_2_markList(const NeuronTree & p, LandmarkList & neuronMarkLi
 }
 
 
+//returns pixel value of marker
 template <class T> int pixelVal(T* data1d, V3DLONG *dimNum,
                                 int xc, int yc, int zc, int c)
 {
@@ -458,6 +533,61 @@ template <class T> int pixelVal(T* data1d, V3DLONG *dimNum,
 }
 
 
+//returns new marker that has been recentered
+/*#################
+ * yeah this is still really bad and sometimes sends markers into nothingness :<
+ * ################*/
+template <class T> LocationSimple mass_center(T* data1d,
+                                              V3DLONG *dimNum,
+                                              int xc, int yc, int zc, int rad, int c, int pixVal)
+{
+    V3DLONG N = dimNum[0];
+    V3DLONG M = dimNum[1];
+    V3DLONG P = dimNum[2];
+
+    V3DLONG shiftC = (c-1)*P*M*N;
+
+    //defining limits
+    V3DLONG xLow = xc-rad; if(xLow<0) xLow=0;
+    V3DLONG xHigh = xc+rad; if(xHigh>N-1) xHigh=N-1;
+    V3DLONG yLow = yc-rad; if(yLow<0) yLow=0;
+    V3DLONG yHigh = yc+rad; if(yHigh>M-1) yHigh=M-1;
+    V3DLONG zLow = zc-rad; if(zLow<0) zLow=0;
+    V3DLONG zHigh = zc+rad; if(zHigh>P-1) zHigh=P-1;
+
+    //scanning through the pixels
+    V3DLONG k,j,i;
+    //average data of each segment
+    int xweight=0,yweight=0,zweight=0,kernel=0,ktot=0;
+    for (k = zLow; k < zHigh; k++)
+    {
+         V3DLONG shiftZ = k*M*N;
+         for (j = yLow; j < yHigh; j++)
+         {
+             V3DLONG shiftY = j*N;
+             for (i = xLow; i < xHigh; i++)
+             {
+                 int dataval = data1d[ shiftC + shiftZ + shiftY + i ];
+                 float t = pow(dataval-pixVal,2.0);
+                 kernel = exp(-t);
+                 xweight += kernel*i;
+                 yweight += kernel*j;
+                 zweight += kernel*k;
+                 if (kernel!=0) { ktot += kernel; }
+//                     v3d_msg(QString("k %1,%2,%3").arg(kernel).arg(ktot).arg(xweight));
+             }
+         }
+    }
+    int newX = xweight/ktot;
+    int newY = yweight/ktot;
+    int newZ = zweight/ktot;
+    v3d_msg(QString("old %4,%5,%6, new coords %1,%2,%3").arg(newX).arg(newY).arg(newZ).arg(xc).arg(yc).arg(zc));
+    LocationSimple newMark(newX,newY,newZ);
+    return newMark;
+}
+
+
+//returns average pixel value and radius of cell around a marker
 template <class T> pair<int,int> dynamic_pixel(T* data1d,
                                         V3DLONG *dimNum,
                                         int xc, int yc, int zc,
@@ -505,7 +635,7 @@ template <class T> pair<int,int> dynamic_pixel(T* data1d,
 }
 
 
-//returns average pixel value in box of radius rad on channel c around a given marker
+//returns average pixel value in box of radius rad on channel c around a given marker as well as average cell marker intensity
 template <class T> pair<int,int> pixel(T* data1d,
                               V3DLONG *dimNum,
                               int xc,int yc,int zc,int c,int rad)
