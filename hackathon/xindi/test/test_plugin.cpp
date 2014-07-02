@@ -427,15 +427,13 @@ void mark_or_curve_singleChannel(V3DPluginCallback2 &callback, QWidget *parent)
             marks = &catArr[i+1];
             LandmarkList tempList = main_func(data1d,dimNum,c,*marks,*bgs);
             catSortList.append(tempList);
-            v3d_msg(QString("catSortList append category %1").arg(i+1));
+            v3d_msg(QString("catSortList append category %1").arg(tempList.at(0).category));
             //marks.clear();
         }
-            //failing to return proper marker type (keeps defaulting to 2)
-//######If doesn't crash before the loop, will crash here or when opening object manager, never crashes during loop (idk what bug with marker writing)
+//######Above loop is stable, no bugs except algorithm is bad, not as many markers as binary sorting, tempList pulls out the correct category
+//######However setLandmark below is not writing the correct category, causing crash when attempting to right click markers or open object manager
         LandmarkList& woot3 = catSortList;
         bool draw_le_markers3 = callback.setLandmark(curwin,woot3);
-        //if plugin is allowed to finish, often crashes when opening object manager.
-        //problems with writing the new markers?? Related to incorrect type assignment??
 
     }
     return;
