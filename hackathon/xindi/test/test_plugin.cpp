@@ -236,9 +236,11 @@ void mark_or_curve_singleChannel(V3DPluginCallback2 &callback, QWidget *parent)
 
     LandmarkList Marklist = callback.getLandmark(curwin);
     int Marknum = Marklist.count();
+//    QList<NeuronTree> mTree = *callback.getHandleNeuronTrees_3DGlobalViewer(curwin);
     NeuronTree mTree = callback.getSWC(curwin);
     int SWCcount = mTree.listNeuron.count();
-
+//    v3d_msg(QString ("%1").arg(SWCcount));
+//    return;
 
     //input test data type
     int option;
@@ -317,12 +319,14 @@ void mark_or_curve_singleChannel(V3DPluginCallback2 &callback, QWidget *parent)
 
 
         int * catList;
-        catList = new int(mlist.count());
+        catList = new int[mlist.count()];
         if (mlist.count()==0) {v3d_msg("Please join all neuron segments and try again?"); return;} //need to fix this error
+        LocationSimple tempInd;
         for (int i=0; i<mlist.count(); i++)
         {
-            catList[i] = mlist.at(i).category;
-//            v3d_msg("hi");
+            tempInd = mlist.at(i);
+            catList[i] = tempInd.category;
+//            v3d_msg((QString("hi %1, cat %2").arg(i).arg(catList[i])));
         }
 
         //counts number of categories if not provided
@@ -372,10 +376,14 @@ void mark_or_curve_singleChannel(V3DPluginCallback2 &callback, QWidget *parent)
                 i++;
             }
         }   */
-
+v3d_msg("start indexing");
         map<int,LandmarkList> catArr;
         LandmarkList temp;
-        int i = 0;
+//        int ** catArr;
+//        catArr = new int*[catNum];
+        int row=0;
+//        int * catInd;
+//        catInd = new int[catNum];
         for (int catval=0; catval<mlist.count(); catval++) //loop through category values
         {
             int x=0;
@@ -383,29 +391,42 @@ void mark_or_curve_singleChannel(V3DPluginCallback2 &callback, QWidget *parent)
             {
                 if (catList[index]==catval) { x++; } //establish size of this category's array
             }
+//            v3d_msg(QString("found %1 values for catVal %2").arg(x).arg(catval));
             if (x==0)
                 break;
             else
             {
-//                int y=0;
+//                catInd[row] = x;
+ //               catArr[row] = new int[x];
+//                int column=0;
                 for (int index=0; index<mlist.count(); index++)
                 {
                     if (catList[index]==catval)
                     {
+//                        catArr[row][column]=index;
                         temp.append(mlist.at(index));
 //                        v3d_msg(QString("catArr[%1] append %2").arg(i).arg(temp.at(y).category));
-//                        y++;
+//                        column++;
                     }
                 }
-                catArr.insert(make_pair(i,temp));
+                catArr.insert(make_pair(row,temp));
 //                v3d_msg(QString("catArr index %1").arg(i));
-                i++;
+//                v3d_msg(QString("catArr[%1] has %2 entries").arg(row).arg(column));
+                row++;
                 temp.clear();
             }
         }
         delete [] catList;
+        v3d_msg("indexing complete");
 
-//        v3d_msg("made the array");
+/*        LandmarkList bgL;
+        for (int i=0; i<catInd[0]; i++)
+        {
+            bgL.append(mlist.at(catArr[0][i]));
+        }*/
+
+
+        //        v3d_msg("made the array");
         //note by default category value 0 is background, so bg array should be stored in catArr[0]
         //this is to make sure of that
 //        int x = catArr[0]->at(0).category;
@@ -414,9 +435,8 @@ void mark_or_curve_singleChannel(V3DPluginCallback2 &callback, QWidget *parent)
 //        v3d_msg(QString("catArr[2] cat is %1").arg(catArr[2].at(0).category));
 //        if (catArr[0]->at(0).category!=0) {v3d_msg("yeah we broke it"); return;} //this is returning
 
-//######Often crashes before reaching this point, still issues with dynamic 2D array (memory bug in 2d array)
 
-//v3d_msg("arrays made");
+v3d_msg("arrays made");
         //run script
         LandmarkList catSortList;
         LandmarkList * marks;
@@ -424,14 +444,20 @@ void mark_or_curve_singleChannel(V3DPluginCallback2 &callback, QWidget *parent)
         for (int i=0; i<catNum-1; i++)
         {
             v3d_msg("catSortList made");
+            /*LandmarkList marksL;
+            for (int j=0; i<catInd[i+1]; j++)
+            {
+                marksL.append(mlist.at(catArr[i+1][j]));
+            }
+            marks = &marksL;*/
             marks = &catArr[i+1];
+//            v3d_msg("marksL made");
             LandmarkList tempList = main_func(data1d,dimNum,c,*marks,*bgs);
             catSortList.append(tempList);
             v3d_msg(QString("catSortList append category %1").arg(tempList.at(0).category));
-            //marks.clear();
+//            marksL.clear();
         }
-//######Above loop is stable, no bugs except algorithm is bad, not as many markers as binary sorting, tempList pulls out the correct category
-//######However setLandmark below is not writing the correct category, causing crash when attempting to right click markers or open object manager
+//######However setLandmark below is not writing the correct category, often causing crash when attempting to right click markers or open object manager
         LandmarkList& woot3 = catSortList;
         bool draw_le_markers3 = callback.setLandmark(curwin,woot3);
 
@@ -822,6 +848,9 @@ template <class T> LandmarkList count(T* data1d,
                             tmpLocation.y = iy;
                             tmpLocation.z = iz;
                             tmpLocation.category = cat;
+                            stringstream catStr;
+                            catStr << cat;
+                            tmpLocation.comments = catStr.str();
                             newList.append(tmpLocation);
 
                         }
@@ -859,6 +888,9 @@ template <class T> LandmarkList count(T* data1d,
                                 tmpLocation.y = iy;
                                 tmpLocation.z = iz;                                
                                 tmpLocation.category = cat;
+                                stringstream catStr;
+                                catStr << cat;
+                                tmpLocation.comments = catStr.str();
                                 newList.append(tmpLocation);
                                 continue;
                             }
