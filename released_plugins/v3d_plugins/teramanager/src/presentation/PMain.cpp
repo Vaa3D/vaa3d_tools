@@ -31,6 +31,7 @@
 #include "PAbout.h"
 #include "PLog.h"
 #include "PAnoToolBar.h"
+#include "QPixmapToolTip.h"
 #include "../control/CImport.h"
 #include "../control/CVolume.h"
 #include "../control/CSettings.h"
@@ -119,6 +120,7 @@ void PMain::uninstance()
     CAnnotations::uninstance();
     PLog::uninstance();
     PAnoToolBar::uninstance();
+    QPixmapToolTip::uninstance();
     if(uniqueInstance)
         delete uniqueInstance;
     uniqueInstance = 0;
@@ -2124,6 +2126,21 @@ bool PMain::eventFilter(QObject *object, QEvent *event)
         else if(event->type() == QEvent::Leave)
             helpBox->setText(HTbase);
     }
+    else if(object == ESblockSpbox && ESblockSpbox->isEnabled())
+    {
+        if(event->type() == QEvent::Enter)
+        {
+            QPixmapToolTip* pixmapToolTip = QPixmapToolTip::instance();
+            pixmapToolTip->setFixedWidth(ESblockSpbox->width());
+            pixmapToolTip->setFixedHeight(ESblockSpbox->width());
+            ESblockSpbox->move(ESblockSpbox->mapToGlobal(QPoint(0,0)));
+            ESblockSpbox->show();
+            ESblockSpbox->setVisible(true);
+        }
+        else
+            ESblockSpbox->setVisible(false);
+
+    }
     return false;
 }
 
@@ -2198,27 +2215,6 @@ void PMain::debugAction1Triggered()
 {
     /**/itm::debug(itm::NO_DEBUG, 0, __itm__current__function__);
 
-//    StackedVolume vol("/media/Elements/");
-//    QList<LocationSimple> markers = V3D_env->getLandmark(CExplorerWindow::getCurrent()->window);
-
-//    if(markers1)
-//    {
-//        printf("markers1->size() = %d\n", markers1->size());
-//        for(int i=0; i<markers1->size(); i++)
-//            printf("\nmarkers1[%d] (%.0f, %.0f, %.0f): %s\n", i, (*markers1)[i].x, (*markers1)[i].y, (*markers1)[i].z, (*markers1)[i].on ? "on" : "off");
-//    }
-//    else
-//        printf("\nmarkers1 = null\n");
-
-//    if(markers2)
-//    {
-//        for(int i=0; i<markers2->size(); i++)
-//            printf("markers2[%d] (%.0f, %.0f, %.0f): %s\n", i, (*markers2)[i].x, (*markers2)[i].y, (*markers2)[i].z, (*markers2)[i].on ? "on" : "off");
-//    }
-//    else
-//        printf("markers2 = null\n");
-//    V3D_env->setLandmark(CExplorerWindow::getCurrent()->window, markers);
-//    V3D_env->pushObjectIn3DWindow(CExplorerWindow::getCurrent()->window);
 }
 
 void PMain::showLogTriggered()
