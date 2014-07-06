@@ -139,7 +139,7 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     V3D_env = callback;
     parentWidget = parent;
     annotationsPathLRU = "";
-    marginLeft = 85;
+    marginLeft = 75;
 
     //creating fonts
     QFont tinyFont = QApplication::font();
@@ -410,7 +410,12 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
 
     //toolbar
     toolBar = new QToolBar("ToolBar", this);
-    toolBar->setOrientation(Qt::Vertical);
+    toolBar->setOrientation(Qt::Horizontal);
+    toolBar->setMovable(false);
+    toolBar->setFloatable(false);
+    toolBar->setIconSize(QSize(25,25));
+    toolBar->setStyleSheet("QToolBar{background:qlineargradient(x1: 1, y1: 0, x2: 1, y2: 1,"
+                           "stop: 0 rgb(180,180,180), stop: 1 rgb(220,220,220)); border-left: none; border-right: none; border-bottom: 1px solid rgb(150,150,150);}");
 
     QMenu *openMenu = new QMenu();
     std::list<string> recentVolumes = CSettings::instance()->getVolumePathHistory();
@@ -432,24 +437,14 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     openVolumeToolButton->setPopupMode(QToolButton::InstantPopup);
     openVolumeToolButton->setIcon(QIcon(":/icons/open_volume.png"));
     toolBar->insertWidget(0, openVolumeToolButton);
-
     toolBar->insertAction(0, closeVolumeAction);
-//    toolBar->addAction(loadAnnotationsAction);    @MOVED to the annotation toolbar
-//    toolBar->addAction(saveAnnotationsAction);    @MOVED to the annotation toolbar
-//    toolBar->addAction(saveAnnotationsAsAction);  @MOVED to the annotation toolbar
-//    toolBar->addAction(clearAnnotationsAction);   @MOVED to the annotation toolbar
-
     showToolbarButton = new QToolButton();
     showToolbarButton->setCheckable(true);
     showToolbarButton->setIcon(QIcon(":/icons/toolbar.png"));
     showToolbarButton->setToolTip("Display annotation toolbar");
     connect(showToolbarButton, SIGNAL(toggled(bool)), this, SLOT(showToolbarButtonChanged(bool)));
     toolBar->insertWidget(0, showToolbarButton);
-
     toolBar->addAction(aboutAction);
-    toolBar->setIconSize(QSize(32,32));
-    toolBar->setStyleSheet("QToolBar{background:qlineargradient(x1: 0, y1: 0, x2: 1, y2: 0,"
-                           "stop: 0 rgb(150,150,150), stop: 1 rgb(190,190,190)); border: none}");
 
     // TAB widget: where to store pages
     tabs = new QTabWidget(this);
@@ -706,14 +701,16 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     frameCoord->setAlignment(Qt::AlignCenter);
 
     /* ------- global coord panel widgets ------- */
-    ESPanel = new QGroupBox("Sliding viewer");
+    ESPanel = new QGroupBox("Proofreading");
     ESbutton = new QPushButton("click me");
     ESblockSpbox = new QSpinBox();
     ESblockSpbox->setAlignment(Qt::AlignCenter);
+    ESblockSpbox->installEventFilter(this);
+    ESblockSpbox->setPrefix("Block ");
     ESoverlapSpbox = new QSpinBox();
     ESoverlapSpbox->setAlignment(Qt::AlignCenter);
     ESoverlapSpbox->setSuffix("\%");
-    ESoverlapSpbox->setPrefix("ovlap ");
+    ESoverlapSpbox->setPrefix("overlap ");
     ESoverlapSpbox->setValue(20);
     ESoverlapSpbox->setMinimum(0);
     ESoverlapSpbox->setMaximum(50);
@@ -733,6 +730,7 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     ESmethodCbox->lineEdit()->setAlignment(Qt::AlignHCenter);
     for (int i = 0; i < ESmethodCbox->count(); ++i)
         ESmethodCbox->setItemData(i, Qt::AlignHCenter, Qt::TextAlignmentRole);
+    ESmethodCbox->setVisible(false);
 
     //other widgets
     helpBox = new QHelpBox(this);
@@ -933,11 +931,11 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     globalCoord_panel->setStyle(new QWindowsStyle());
     #endif
 
-    // "Sliding viewer" panel layout
+    // "Proofreading" panel layout
     QHBoxLayout* esPanelLayout = new QHBoxLayout();
     ESbutton->setFixedWidth(marginLeft);
     esPanelLayout->addWidget(ESbutton, 0);
-    ESblockSpbox->setFixedWidth(115);
+    ESblockSpbox->setFixedWidth(167);
     ESmethodCbox->setFixedWidth(65);
     esPanelLayout->addWidget(ESblockSpbox);
     esPanelLayout->addWidget(ESoverlapSpbox,1);
@@ -977,6 +975,7 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     fourSpinboxes_layout->addWidget(Vdim_sbox, 1);
     fourSpinboxes_layout->addWidget(Ddim_sbox, 1);
     fourSpinboxes_layout->addWidget(Tdim_sbox, 1);
+    fourSpinboxes_layout->setSpacing(2);
     fourSpinboxes->setLayout(fourSpinboxes_layout);
     VOImaxsize_layout->addWidget(fourSpinboxes, 1, Qt::AlignLeft);
     /* ------------- FINALIZATION -------------- */
@@ -1051,21 +1050,29 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     QHBoxLayout* centralLayout = new QHBoxLayout();
     QVBoxLayout* innerLayout = new QVBoxLayout();
     QVBoxLayout* bottomLayout = new QVBoxLayout();
+    innerLayout->addWidget(toolBar, 0);
     innerLayout->addWidget(tabs, 0);
     innerLayout->addStretch(1);
-    innerLayout->addWidget(helpBox, 0, Qt::AlignBottom);
-    innerLayout->setContentsMargins(10, 5, 10, 10);
+    QHBoxLayout* helpBoxLayout = new QHBoxLayout();
+    helpBoxLayout->setContentsMargins(10,10,10,10);
+    helpBoxLayout->addWidget(helpBox);
+    //innerLayout->addLayout(helpBoxLayout, 0, Qt::AlignBottom);
+    innerLayout->addLayout(helpBoxLayout, 0);
+    innerLayout->setContentsMargins(0, 0, 0, 0);
+    //innerLayout->setContentsMargins(10, 5, 10, 10);
     innerLayout->setSpacing(5);
-    centralLayout->addWidget(toolBar, 0);
+    //centralLayout->addWidget(toolBar, 0);
     centralLayout->addLayout(innerLayout, 1);
     bottomLayout->addWidget(statusBar);
     bottomLayout->addWidget(progressBar);
-    bottomLayout->setContentsMargins(10,0,10,10);
+    //bottomLayout->setContentsMargins(10,0,10,10);
+    bottomLayout->setContentsMargins(10,10,10,10);
     layout->addWidget(menuBar, 0);
     layout->addLayout(centralLayout, 1);
     layout->addLayout(bottomLayout, 0);
     layout->setContentsMargins(0, 0, 0, 0);
     layout->setSpacing(0);
+    setContentsMargins(0, 0, 0, 0);
     setLayout(layout);
     #ifdef USE_EXPERIMENTAL_FEATURES
     setWindowTitle(QString("Vaa3D-TeraFly v").append(teramanager::version.c_str()).append("e"));
@@ -1098,7 +1105,7 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     connect(controlsResetButton, SIGNAL(clicked()), this, SLOT(resetMultiresControls()));
     connect(ESbutton, SIGNAL(clicked()), this, SLOT(ESbuttonClicked()));
     connect(ESblockSpbox, SIGNAL(valueChanged(int)), this, SLOT(ESblockSpinboxChanged(int)));
-    connect(ESblockSpbox, SIGNAL(editingFinished()), this, SLOT(ESblockSpinboxEditingFinished()));
+//    connect(ESblockSpbox, SIGNAL(editingFinished()), this, SLOT(ESblockSpinboxEditingFinished()));
     connect(this, SIGNAL(sendProgressBarChanged(int, int, int, const char*)), this, SLOT(progressBarChanged(int, int, int, const char*)), Qt::QueuedConnection);
 
     //set always on top
@@ -1107,7 +1114,7 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     show();
     move(QApplication::desktop()->screen()->rect().center() - rect().center());
 
-    setFixedWidth(500);
+    setFixedWidth(400);
 
     /**/itm::debug(itm::LEV1, "object successfully constructed", __itm__current__function__);
 }
@@ -2131,15 +2138,25 @@ bool PMain::eventFilter(QObject *object, QEvent *event)
         if(event->type() == QEvent::Enter)
         {
             QPixmapToolTip* pixmapToolTip = QPixmapToolTip::instance();
-            pixmapToolTip->setFixedWidth(ESblockSpbox->width());
-            pixmapToolTip->setFixedHeight(ESblockSpbox->width());
-            ESblockSpbox->move(ESblockSpbox->mapToGlobal(QPoint(0,0)));
-            ESblockSpbox->show();
-            ESblockSpbox->setVisible(true);
+            int width = ESoverlapSpbox->pos().x()+ESoverlapSpbox->width()-ESblockSpbox->pos().x();
+            pixmapToolTip->setFixedWidth(width);
+            pixmapToolTip->setFixedHeight(width);
+            pixmapToolTip->move(ESblockSpbox->mapToGlobal(QPoint(0,0))-QPoint(0,width+10));
+            pixmapToolTip->show();
         }
-        else
-            ESblockSpbox->setVisible(false);
-
+        else if(event->type() == QEvent::Leave)
+            QPixmapToolTip::instance()->hide();
+        else if(event->type() == 6)
+        {
+            QKeyEvent* key_evt = (QKeyEvent*)event;
+            if(key_evt->key() == Qt::Key_Return)
+            {
+                ESblockSpinboxEditingFinished();
+                return true;
+            }
+            else
+                printf("Pressed key %d\n", key_evt->key());
+        }
     }
     return false;
 }
@@ -2406,7 +2423,7 @@ void PMain::ESbuttonClicked()
         // interrupt if trying to start ES mode at the lowest resolution
         if(curWin->volResIndex == 0)
         {
-            QMessageBox::warning(this, "Warning", "Cannot start the \"Sliding viewer\" mode at the lowest resolution. Please first zoom-in to a higher res.");
+            QMessageBox::warning(this, "Warning", "Cannot start the \"Proofreading\" mode at the lowest resolution. Please first zoom-in to a higher res.");
             ESblocks.clear();
             return;
         }
@@ -2414,7 +2431,7 @@ void PMain::ESbuttonClicked()
         // interrupt if ES mode has to be started with just 1 block
         else if(ESblocks.size() < 2)
         {
-            QMessageBox::warning(this, "Warning", "Cannot start the \"Sliding viewer\" mode. At least 2 blocks are needed. Please change volume resolution (too low) "
+            QMessageBox::warning(this, "Warning", "Cannot start the \"Proofreading\" mode. At least 2 blocks are needed. Please change volume resolution (too low) "
                                  "or your viewer maximum dimensions (too big)");
             ESblocks.clear();
             return;
@@ -2491,7 +2508,7 @@ void PMain::ESbuttonClicked()
 
 
 
-    // "Sliding viewer" panel
+    // "Proofreading" panel
     ESbutton->setText(start ? "Stop" : "Start");
     ESbutton->setIcon(start ? QIcon(":/icons/stop.png") : QIcon(":/icons/start.png"));
     ESoverlapSpbox->setEnabled(!start);
@@ -2514,7 +2531,7 @@ void PMain::ESblockSpinboxEditingFinished()
     if(b == 0 || !ESblockSpbox->isEnabled())
         return;
 
-    /**/itm::debug(itm::NO_DEBUG, 0, __itm__current__function__);
+    /**/itm::debug(itm::LEV1, 0, __itm__current__function__);
 
     CExplorerWindow* curWin = CExplorerWindow::getCurrent();
     if(curWin && curWin->isActive && !curWin->toBeClosed)
@@ -2549,22 +2566,55 @@ void PMain::ESblockSpinboxChanged(int b)
     if(b == 0 || !ESblockSpbox->isEnabled())
         return;
 
-    /**/itm::debug(itm::NO_DEBUG, 0, __itm__current__function__);
+    /**/itm::debug(itm::LEV2, 0, __itm__current__function__);
 
-    CExplorerWindow* curWin = CExplorerWindow::getCurrent();
-    if(curWin && curWin->isActive && !curWin->toBeClosed)
+    try
     {
-        // update reference system
-        int ROIxS   = ESblocks[b-1].xInt.start;
-        int ROIxDim = ESblocks[b-1].xInt.end   - ROIxS;
-        int ROIyS   = ESblocks[b-1].yInt.start;
-        int ROIyDim = ESblocks[b-1].yInt.end   - ROIyS;
-        int ROIzS   = ESblocks[b-1].zInt.start;
-        int ROIzDim = ESblocks[b-1].zInt.end   - ROIzS;
-        int dimX   = CImport::instance()->getVolume(curWin->volResIndex)->getDIM_H();
-        int dimY   = CImport::instance()->getVolume(curWin->volResIndex)->getDIM_V();
-        int dimZ   = CImport::instance()->getVolume(curWin->volResIndex)->getDIM_D();
-        refSys->setDims(dimX, dimY, dimZ, ROIxDim, ROIyDim, ROIzDim, ROIxS, ROIyS, ROIzS);
+        CExplorerWindow* curWin = CExplorerWindow::getCurrent();
+        if(curWin && curWin->isActive && !curWin->toBeClosed)
+        {
+            // update reference system
+            int ROIxS   = ESblocks[b-1].xInt.start;
+            int ROIxDim = ESblocks[b-1].xInt.end   - ROIxS;
+            int ROIyS   = ESblocks[b-1].yInt.start;
+            int ROIyDim = ESblocks[b-1].yInt.end   - ROIyS;
+            int ROIzS   = ESblocks[b-1].zInt.start;
+            int ROIzDim = ESblocks[b-1].zInt.end   - ROIzS;
+            int dimX   = CImport::instance()->getVolume(curWin->volResIndex)->getDIM_H();
+            int dimY   = CImport::instance()->getVolume(curWin->volResIndex)->getDIM_V();
+            int dimZ   = CImport::instance()->getVolume(curWin->volResIndex)->getDIM_D();
+            refSys->setDims(dimX, dimY, dimZ, ROIxDim, ROIyDim, ROIzDim, ROIxS, ROIyS, ROIzS);
+
+            // compute block coordinates in the lowest resolution image space
+            int ROIxs_lr = CVolume::scaleHCoord(ROIxS, curWin->volResIndex, 0);
+            int ROIxe_lr = CVolume::scaleHCoord(ROIxS+ROIxDim, curWin->volResIndex, 0);
+            int ROIys_lr = CVolume::scaleVCoord(ROIyS, curWin->volResIndex, 0);
+            int ROIye_lr = CVolume::scaleVCoord(ROIyS+ROIyDim, curWin->volResIndex, 0);
+            int ROIzs_lr = CVolume::scaleDCoord(ROIzS, curWin->volResIndex, 0);
+            int ROIze_lr = CVolume::scaleDCoord(ROIzS+ROIzDim, curWin->volResIndex, 0);
+
+            // compute block coordinates in the highest resolution image space
+            int ROIxs_hr = CVolume::scaleHCoord(ROIxS, curWin->volResIndex, CImport::instance()->getResolutions()-1);
+            int ROIxe_hr = CVolume::scaleHCoord(ROIxS+ROIxDim, curWin->volResIndex, CImport::instance()->getResolutions()-1);
+            int ROIys_hr = CVolume::scaleVCoord(ROIyS, curWin->volResIndex, CImport::instance()->getResolutions()-1);
+            int ROIye_hr = CVolume::scaleVCoord(ROIyS+ROIyDim, curWin->volResIndex, CImport::instance()->getResolutions()-1);
+            int ROIzs_hr = CVolume::scaleDCoord(ROIzS, curWin->volResIndex, CImport::instance()->getResolutions()-1);
+            int ROIze_hr = CVolume::scaleDCoord(ROIzS+ROIzDim, curWin->volResIndex, CImport::instance()->getResolutions()-1);
+
+            uint8 *mip = CExplorerWindow::first->getMIP(ROIxs_lr, ROIxe_lr, ROIys_lr, ROIye_lr, ROIzs_lr, ROIze_lr, -1, -1, itm::z, true);
+            QImage qmip(mip, ROIxe_lr-ROIxs_lr, ROIye_lr-ROIys_lr, QImage::Format_RGB32);
+            QPixmapToolTip::instance()->setPixmap(QPixmap::fromImage(qmip));
+            QPixmapToolTip::instance()->setText(strprintf("X = [%d, %d), Y = [%d,%d), Z = [%d, %d)",
+                                                          ROIxs_hr, ROIxe_hr, ROIys_hr, ROIye_hr, ROIzs_hr, ROIze_hr ).c_str());
+            QPixmapToolTip::instance()->update();
+            //delete[] mip;
+
+            //printf("mip[0] = %d, X=[%d,%d) Y=[%d,%d) Z=[%d,%d)\n", mip[0], ROIxs_lr, ROIxe_lr, ROIys_lr, ROIye_lr, ROIzs_lr, ROIze_lr);
+        }
+    }
+    catch(itm::RuntimeException &ex)
+    {
+        QMessageBox::critical(this,QObject::tr("Error"), QObject::tr(ex.what()),QObject::tr("Ok"));
     }
 }
 

@@ -11,6 +11,15 @@ ties names are:
 - Rem: a feature no longer available
 
 ============================================================================================
+Version 0.9.98
+July 6th, 2014
+--------------------------------------------------------------------------------------------
+- Dev: "MIP-preview" feature in "Proofreading" mode added (still experimental).
+- Dev: "Sliding viewer" mode changed to "Proofreading" mode
+- New: TeraFly's main GUI redesigned to improve usability.
+--------------------------------------------------------------------------------------------
+
+
 Version 0.9.971
 June 27th, 2014
 --------------------------------------------------------------------------------------------

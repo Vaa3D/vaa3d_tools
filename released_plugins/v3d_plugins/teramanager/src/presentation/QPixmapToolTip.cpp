@@ -8,43 +8,27 @@ QPixmapToolTip::QPixmapToolTip(QWidget *parent) : QWidget(parent)
 {
     /**/itm::debug(itm::LEV1, 0, __itm__current__function__);
 
-    // layout
-//    QVBoxLayout* layout = new QVBoxLayout();
-//    layout->addWidget(toolBar);
-//    layout->setContentsMargins(0,0,0,0);
-//    setLayout(layout);
+    imageLabel = new QLabel();
+    imageLabel->setScaledContents(true);
 
+    textLabel = new QLabel();
+    QFont tinyFont = QApplication::font();
+    tinyFont.setPointSize(7);
+    textLabel->setFont(tinyFont);
+    QPalette pal = textLabel->palette();
+    pal.setColor(QPalette::WindowText, QColor(Qt::white));
+    textLabel->setPalette(pal);
+    textLabel->setAlignment(Qt::AlignBottom);
+    textLabel->setTextFormat(Qt::RichText);
+    textLabel->setContentsMargins(10,10,10,5);
 
-    // make it appear as a true toolbar
-    this->setContentsMargins(0,0,0,0);
+    QStackedLayout* layout = new QStackedLayout();
+    layout->setStackingMode(QStackedLayout::StackAll);
+    layout->addWidget(imageLabel);
+    layout->addWidget(textLabel);
+    this->setLayout(layout);
+
+    // remove frame
+    setContentsMargins(2,2,2,2);
     this->setWindowFlags(Qt::Tool | Qt::FramelessWindowHint | Qt::WindowStaysOnTopHint);
-
-    // install event filter
-    //QCoreApplication::instance()->installEventFilter(this);
-}
-
-void QPixmapToolTip::paintEvent(QPaintEvent *event)
-{
-    QWidget::paintEvent(event);
-    QPainter painter(this);
-
-    if (pix.isNull())
-    {
-        painter.setBrush(QBrush(QColor(255,0,0)));
-        painter.drawRect(event->rect());
-    }
-
-
-    painter.setRenderHint(QPainter::Antialiasing);
-
-    QSize pixSize = pix.size();
-    pixSize.scale(event->rect().size(), Qt::KeepAspectRatio);
-
-    QPixmap scaledPix = pix.scaled(pixSize,
-                                   Qt::KeepAspectRatio,
-                                   Qt::SmoothTransformation
-                                   );
-
-    painter.drawPixmap(QPoint(), scaledPix);
-
 }

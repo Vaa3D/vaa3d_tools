@@ -30,6 +30,7 @@
 #include "v3dr_mainwindow.h"
 #include "CVolume.h"
 #include "CAnnotations.h"
+#include "CImageUtils.h"
 #include "../presentation/PMain.h"
 #include "../presentation/PLog.h"
 #include "../presentation/PAnoToolBar.h"
@@ -574,8 +575,8 @@ bool CExplorerWindow::eventFilter(QObject *object, QEvent *event)
         {
             if(PMain::getInstance()->isESactive())
             {
-                QMessageBox::information(this->window3D, "Warning", "TeraFly is running in \"Exhaustive scan\" mode. All TeraFly's' navigation features are disabled. "
-                                         "Please terminate the \"Exhaustive scan\" mode and try again.");
+                QMessageBox::information(this->window3D, "Warning", "TeraFly is running in \"Proofreading\" mode. All TeraFly's' navigation features are disabled. "
+                                         "Please terminate the \"Proofreading\" mode and try again.");
                 return true;
             }
 
@@ -693,7 +694,7 @@ void CExplorerWindow::receiveData(
             uint32 new_img_dims[5]   = {data_c[0],          data_c[1],          data_c[2],          data_c[3],  data_c[4]       };
             uint32 new_img_offset[5] = {0,                  0,                  0,                  0,          0               };
             uint32 new_img_count[5]  = {data_c[0],          data_c[1],          data_c[2],          data_c[3],  data_c[4]       };
-            copyVOI(data, new_img_dims, new_img_offset, new_img_count,
+            CImageUtils::copyVOI(data, new_img_dims, new_img_offset, new_img_count,
                     view3DWidget->getiDrawExternalParameter()->image4d->getRawData(), img_dims, img_offset);
             qint64 elapsedTime = timer.elapsed();
 
@@ -1211,7 +1212,7 @@ throw (RuntimeException)
         uint32 img_offset[5]      = {x0a-x0,      y0a-y0,      z0a-z0,      0,         t0a-t0};
         uint32 buf_data_count[5]  = {x1a-x0a,     y1a-y0a,     z1a-z0a,     0,         t1a-t0a+1};
 
-        copyVOI(view3DWidget->getiDrawExternalParameter()->image4d->getRawData(), buf_data_dims, buf_data_offset, buf_data_count, img, img_dims, img_offset, scalx);
+        CImageUtils::copyVOI(view3DWidget->getiDrawExternalParameter()->image4d->getRawData(), buf_data_dims, buf_data_offset, buf_data_count, img, img_dims, img_offset, scalx);
     }
 
     //interpolation
@@ -1222,114 +1223,35 @@ throw (RuntimeException)
     return img;
 }
 
-
 /**********************************************************************************
-* Copies the given VOI from "src" to "dst". Offsets and scaling are supported.
+* Returns  the  maximum intensity projection  of the given VOI in a newly allocated
+* array. Data is taken from the currently displayed image.
 ***********************************************************************************/
-void
-    CExplorerWindow::copyVOI(
-        itm::uint8 const * src,     //pointer to const data source
-        uint src_dims[5],           //dimensions of "src" along X, Y, Z, channels and T
-        uint src_offset[5],         //VOI's offset along X, Y, Z, <empty> and T
-        uint src_count[5],          //VOI's dimensions along X, Y, Z, <empty> and T
-        itm::uint8* dst,            //pointer to data destination
-        uint dst_dims[5],           //dimensions of "dst" along X, Y, Z, channels and T
-        uint dst_offset[5],         //offset of "dst" along X, Y, Z, <empty> and T
-        uint scaling /*= 1 */)      //scaling factor (integer only)
-throw (RuntimeException)
+itm::uint8*
+    CExplorerWindow::getMIP(int x0, int x1,                         // VOI [x0, x1) in the local reference sys
+                            int y0, int y1,                         // VOI [y0, y1) in the local reference sys
+                            int z0, int z1,                         // VOI [z0, z1) in the local reference sys
+                            int t0 /* = -1 */, int t1 /* = -1 */,   // VOI [t0, t1] in the local reference sys
+                            itm::direction dir /* = z */,
+                            bool align32 /* = false */)             //true if mip data must be 32-bit aligned
+throw (itm::RuntimeException)
 {
-    /**/itm::debug(itm::LEV1, strprintf("src_dims = (%d x %d x %d x %d x %d), src_offset = (%d, %d, %d, %d, %d), src_count = (%d, %d, %d, %d, %d), dst_dims = (%d x %d x %d x %d x %d), dst_offset = (%d, %d, %d, %d, %d), scaling = %d",
-                                        src_dims[0], src_dims[1],src_dims[2],src_dims[3],src_dims[4], src_offset[0],src_offset[1],src_offset[2],src_offset[3], src_offset[4],src_count[0],src_count[1],src_count[2],src_count[3], src_count[4],
-                                        dst_dims[0], dst_dims[1],dst_dims[2],dst_dims[3],dst_dims[4], dst_offset[0],dst_offset[1],dst_offset[2],dst_offset[3], dst_offset[4],scaling).c_str(), __itm__current__function__);
+    /**/itm::debug(itm::LEV1, strprintf("title = %s, x0 = %d, x1 = %d, y0 = %d, y1 = %d, z0 = %d, z1 = %d, t0 = %d, t1 = %d, dir = %d",
+                                        titleShort.c_str(), x0, x1, y0, y1, z0, z1, t0, t1, dir).c_str(), __itm__current__function__);
 
-    //if source and destination are the same thing, returning without doing anything
-    if(src == dst)
-        return;
+    if(t0 == -1)
+        t0 = volT0;
+    if(t1 == -1)
+        t1 = volT1;
 
-    //cheking preconditions
-    if(src_dims[3] != dst_dims[3])
-        QMessageBox::critical(0, "Error", strprintf("Can't copy VOI to destination image: different number of channels (from %d to %d)", src_dims[3], dst_dims[3]).c_str(),QObject::tr("Ok"));
-    for(int d=0; d<3; d++)
-    {
-        if(src_offset[d] + src_count[d] > src_dims[d])
-            QMessageBox::critical(0, "Error", QString("Can't copy VOI to destination image: VOI exceeded source dimension along axis ").append(QString::number(d)),QObject::tr("Ok"));
-        if(dst_offset[d] + src_count[d]*scaling > dst_dims[d])
-        {
-            //cutting copiable VOI to the largest one that can be stored into the destination image
-            int old = src_count[d];
-            src_count[d] = (dst_dims[d] - dst_offset[d]) / scaling; //it's ok to approximate this calculation to the floor.
+    uint32 img_dims[5]   = {volH1-volH0, volV1-volV0, volD1-volD0, nchannels, volT1-volT0+1};
+    uint32 img_offset[5] = {x0   -volH0, y0   -volV0, z0   -volD0, 0,         t0-volT0};
+    uint32 img_count[5]  = {x1   -x0,    y1   -y0,    z1   -z0,    0,         t1-t0+1};
 
-            printf("--------------------- teramanager plugin [thread *] !! WARNING in copyVOI !! VOI exceeded destination dimension along axis %d, then cutting VOI from %d to %d\n",
-                   d, old, src_count[d]);
-
-            //QMessageBox::critical(0, "Error", QString("Can't copy VOI to destination image: VOI exceeded destination dimension along axis ").append(QString::number(d)),QObject::tr("Ok"));
-        }
-    }
-    if(src_offset[4] + src_count[4] > src_dims[4])
-        QMessageBox::critical(0, "Error", "Can't copy VOI to destination image: VOI exceeded source dimension along T axis",QObject::tr("Ok"));
-    if(dst_offset[4] + src_count[4] > dst_dims[4])
-        QMessageBox::critical(0, "Error", "Can't copy VOI to destination image: VOI exceeded destination dimension along T axis",QObject::tr("Ok"));
-
-
-    //quick version (with precomputed offsets, strides and counts: "1" for "dst", "2" for "src")
-    const uint64 stride_t1 =                dst_dims [3] * dst_dims [2] * dst_dims[1]   * dst_dims[0]  * (uint64)1;
-    const uint64 offset_t1 =  dst_offset[4]*dst_dims [3] * dst_dims [2] * dst_dims[1]   * dst_dims[0]  * (uint64)1;
-    const uint64 count_t1  =  src_count[4] *dst_dims [3] * dst_dims [2] * dst_dims[1]   * dst_dims[0]  * (uint64)1;
-    const uint64 stride_t2 =                src_dims [3] * src_dims [2] * src_dims[1]   * src_dims[0]  * (uint64)1;
-    const uint64 offset_t2 =  src_offset[4]*src_dims [3] * src_dims [2] * src_dims[1]   * src_dims[0]  * (uint64)1;
-    const uint64 stride_c1 =                               dst_dims [2] * dst_dims[1]   * dst_dims[0]  * (uint64)1;
-    const uint64 stride_c2 =                               src_dims [2] * src_dims[1]   * src_dims[0]  * (uint64)1;
-    const uint64 count_c1  =                dst_dims [3] * dst_dims [2] * dst_dims[1]   * dst_dims[0]  * (uint64)1;
-    const uint64 stride_k1 =                                              dst_dims[1]   * dst_dims[0]  * (uint64) scaling;
-    const uint64 count_k1  =                               src_count[2] * dst_dims[1]   * dst_dims[0]  * (uint64) scaling;
-    const uint64 offset_k2 =                               src_offset[2]* src_dims[1]   * src_dims[0]  * (uint64)1;
-    const uint64 stride_k2 =                                              src_dims[1]   * src_dims[0]  * (uint64)1;
-    //const uint64 count_k2=                               src_count[2] * src_dims[1]   * src_dims[0];            //not used in the OR so as to speed up the inner loops
-    const uint64 stride_i1 =                                                              dst_dims[0]  * (uint64) scaling;
-    const uint64 count_i1  =                                              src_count[1]  * dst_dims[0]  * (uint64) scaling;
-    const uint64 offset_i2 =                                              src_offset[1] * src_dims[0]  * (uint64)1;
-    const uint64 stride_i2 =                                                              src_dims[0]  * (uint64)1;
-    //const uint64 count_i2  =                                            src_count[1]  * src_dims[0];            //not used in the OR so as to speed up the inner loops
-    const uint64 stride_j1 =                                                                             (uint64) scaling;
-    const uint64 count_j1  =                                                              src_count[0] * (uint64) scaling;
-    const uint64 offset_j2 =                                                              src_offset[0]* (uint64)1;
-    //const uint64 count_j2  =                                                            src_count[0];           //not used in the OR so as to speed up the inner loops
-//    const uint64 dst_dim =    dst_dims [4]* dst_dims [3] * dst_dims [2] * dst_dims [1] *  dst_dims [0] * (uint64)1;;
-
-    for(int sk = 0; sk < scaling; sk++)
-        for(int si = 0; si < scaling; si++)
-            for(int sj = 0; sj < scaling; sj++)
-            {
-                const uint64 offset_k1 = dst_offset[2] * dst_dims[1]    * dst_dims[0]   * scaling + sk * dst_dims[1] * dst_dims[0] ;
-                const uint64 offset_i1 =                 dst_offset[1]  * dst_dims[0]   * scaling + si * dst_dims[0];
-                const uint64 offset_j1 =                                  dst_offset[0] * scaling + sj;
-
-                uint8* const start_t1 = dst + offset_t1;
-                uint8* const start_t2 = const_cast<uint8*>(src) + offset_t2;
-                for(uint8 *img_t1 = start_t1, *img_t2 = start_t2; img_t1 - start_t1 < count_t1; img_t1 += stride_t1, img_t2 += stride_t2)
-                {
-                    for(uint8 *img_c1 = img_t1, *img_c2 = img_t2; img_c1 - img_t1 < count_c1; img_c1 += stride_c1, img_c2 += stride_c2)
-                    {
-                        uint8* const start_k1 = img_c1 + offset_k1;
-                        uint8* const start_k2 = img_c2 + offset_k2;
-                        for(uint8 *img_k1 = start_k1, *img_k2 = start_k2; img_k1 - start_k1  < count_k1; img_k1 += stride_k1, img_k2 += stride_k2)
-                        {
-                            uint8* const start_i1 = img_k1 + offset_i1;
-                            uint8* const start_i2 = img_k2 + offset_i2;
-                            for(uint8 *img_i1 = start_i1, *img_i2 = start_i2; img_i1 - start_i1  < count_i1; img_i1 += stride_i1, img_i2 += stride_i2)
-                            {
-                                uint8* const start_j1 = img_i1 + offset_j1;
-                                uint8* const start_j2 = img_i2 + offset_j2;
-                                for(uint8 *img_j1 = start_j1, *img_j2 = start_j2; img_j1 - start_j1  < count_j1; img_j1 += stride_j1, img_j2++)
-                                    *img_j1 = *img_j2;
-                            }
-                        }
-                    }
-                }
-             }
-
-    /**/itm::debug(itm::LEV3, "copy VOI finished",  __itm__current__function__);
+    return CImageUtils::mip(view3DWidget->getiDrawExternalParameter()->image4d->getRawData(), img_dims, img_offset, img_count, dir, align32);
 }
+
+
 
 /**********************************************************************************
 * Makes the current view the last one by  deleting (and deallocting) its subsequent
@@ -1379,6 +1301,7 @@ void CExplorerWindow::saveSubvolSpinboxState()
         T1_sbox_val = pMain.T1_sbox->text().toInt();
     }
 }
+
 void CExplorerWindow::restoreSubvolSpinboxState()
 {  
     /**/itm::debug(itm::LEV1, strprintf("title = %s", titleShort.c_str()).c_str(), __itm__current__function__);
@@ -1922,8 +1845,8 @@ void CExplorerWindow::invokedFromVaa3D(v3d_imaging_paras* params /* = 0 */)
 
     if(PMain::getInstance()->isESactive())
     {
-        QMessageBox::information(this->window3D, "Warning", "TeraFly is running in \"Exhaustive scan\" mode. All TeraFly's' navigation features are disabled. "
-                                 "Please terminate the \"Exhaustive scan\" mode and try again.");
+        QMessageBox::information(this->window3D, "Warning", "TeraFly is running in \"Proofreading\" mode. All TeraFly's' navigation features are disabled. "
+                                 "Please terminate the \"Proofreading\" mode and try again.");
         return;
     }
 

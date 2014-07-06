@@ -213,18 +213,18 @@ class teramanager::CExplorerWindow : public QWidget
         throw (itm::RuntimeException);
 
         /**********************************************************************************
-        * Copies the given VOI from "src" to "dst". Offsets and scaling are supported.
+        * Returns  the  maximum intensity projection  of the given VOI in a newly allocated
+        * array. Data is taken from the currently displayed image.
         ***********************************************************************************/
-        static void
-            copyVOI(itm::uint8 const * src, //pointer to const data source
-                uint src_dims[5],           //dimensions of "src" along X, Y, Z, channels and T
-                uint src_offset[5],         //VOI's offset along X, Y, Z, <empty> and T
-                uint src_count[5],          //VOI's dimensions along X, Y, Z, <empty> and T
-                itm::uint8* dst,            //pointer to data destination
-                uint dst_dims[5],           //dimensions of "dst" along X, Y, Z, channels and T
-                uint dst_offset[5],         //offset of "dst" along X, Y, Z, <empty> and T
-                uint scaling = 1)           //scaling factor (integer only)
+        itm::uint8*
+            getMIP(int x0, int x1,              // VOI [x0, x1) in the local reference sys
+                   int y0, int y1,              // VOI [y0, y1) in the local reference sys
+                   int z0, int z1,              // VOI [z0, z1) in the local reference sys
+                   int t0 = -1, int t1 = -1,    // VOI [t0, t1] in the local reference sys
+                   itm::direction dir = itm::z,
+                   bool align32 = false)        //true if mip data must be 32-bit aligned
         throw (itm::RuntimeException);
+
 
         /**********************************************************************************
         * Makes the current view the last one by  deleting (and deallocting) its subsequent

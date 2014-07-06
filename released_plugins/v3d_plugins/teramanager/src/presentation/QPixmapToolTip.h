@@ -10,6 +10,8 @@ class teramanager::QPixmapToolTip : public QWidget
     private:
 
         QPixmap pix;            // image/pixmap to be displayed
+        QLabel* imageLabel;
+        QLabel* textLabel;
 
         /*********************************************************************************
         * Singleton design pattern: this class can have one instance only,  which must be
@@ -17,9 +19,6 @@ class teramanager::QPixmapToolTip : public QWidget
         **********************************************************************************/
         static QPixmapToolTip* uniqueInstance;
 
-    protected:
-
-        void paintEvent(QPaintEvent *);
 
     public:
 
@@ -45,7 +44,8 @@ class teramanager::QPixmapToolTip : public QWidget
         }
         QPixmapToolTip(QWidget *parent = 0);
 
-        void setPixmap(const QPixmap& pixmap){pix = pixmap;}
+        void setPixmap(const QPixmap& pixmap){pix = pixmap; imageLabel->setPixmap(pix); update();}
+        void setText(const QString &text){textLabel->setText(text);}
 };
 
 #endif // QPIXMAP_TOOLTIP_H

@@ -55,6 +55,7 @@ namespace teramanager
     class CExplorerWindow;      //control class used to encapsulate all the informations needed to manage 3D navigation windows
     class CConverter;           //control class used to perform volume conversion operations in a separate non-GUI-blocking thread
     class CAnnotations;         //control class used to manage annotations (markers, curves, etc.) among all the resolutions
+    class CImageUtils;          //control class containing image processing functions
     class QArrowButton;         //Qt-customized class to model arrow buttons
     class QHelpBox;             //Qt-customized class to model help box
     class QGradientBar;         //Qt-customized class to model a gradient-colored bar
@@ -73,6 +74,7 @@ namespace teramanager
     struct point;
 
     enum  debug_level { NO_DEBUG, LEV1, LEV2, LEV3, LEV_MAX };  //debug levels
+    enum  direction {x, y, z};
     class RuntimeException;		//exception thrown by functions in the current module
     /*-------------------------------------------------------------------------------------------------------------------------*/
 
