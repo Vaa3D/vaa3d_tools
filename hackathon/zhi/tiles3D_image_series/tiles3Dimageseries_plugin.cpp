@@ -7,6 +7,8 @@
 #include <vector>
 #include "tiles3Dimageseries_plugin.h"
 #include "../../../released_plugins/v3d_plugins/istitch/y_imglib.h"
+#include <boost/lexical_cast.hpp>
+
 
 using namespace std;
 
@@ -43,12 +45,14 @@ QStringList importSeriesFileList_addnumbersort(const QString & curFilePath)
 Q_EXPORT_PLUGIN2(tiles3Dimageseries, tiles3Dimageseries);
 
 void zsectionsTotiles(V3DPluginCallback2 &callback, QWidget *parent);
+void titlesZectionsTo3Dtiles(V3DPluginCallback2 &callback, QWidget *parent);
 bool zsectionsTotiles(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPluginArgList & output);
 
 QStringList tiles3Dimageseries::menulist() const
 {
 	return QStringList() 
         <<tr("generate 3D tiles and tc file from image series")
+        <<tr("generate 3D tiles from image tile series")
         <<tr("about");
 }
 
@@ -64,6 +68,10 @@ void tiles3Dimageseries::domenu(const QString &menu_name, V3DPluginCallback2 &ca
     if (menu_name == tr("generate 3D tiles and tc file from image series"))
 	{
         zsectionsTotiles(callback,parent);
+    }
+    else if (menu_name == tr("generate 3D tiles from image tile series"))
+    {
+        titlesZectionsTo3Dtiles(callback,parent);
     }
 	else
 	{
@@ -351,6 +359,149 @@ void zsectionsTotiles(V3DPluginCallback2 &callback, QWidget *parent)
     return;
 }
 
+void titlesZectionsTo3Dtiles(V3DPluginCallback2 &callback, QWidget *parent)
+{
+    QString m_InputfolderName = 0;
+    m_InputfolderName = QFileDialog::getExistingDirectory(parent, QObject::tr("Choose the directory including all images "),
+                                          QDir::currentPath(),
+                                          QFileDialog::ShowDirsOnly);
+    if(m_InputfolderName == 0)
+        return;
+    QString m_OutputfolderName = 0;
+    m_OutputfolderName = QFileDialog::getExistingDirectory(parent, QObject::tr("Choose the directory to save all tiles "),
+                                          QDir::currentPath(),
+                                          QFileDialog::ShowDirsOnly);
+    if(m_OutputfolderName == 0)
+        return;
+    QStringList imgList = importSeriesFileList_addnumbersort(m_InputfolderName);
+
+    Y_VIM<REAL, V3DLONG, indexed_t<V3DLONG, REAL>, LUT<V3DLONG> > vim;
+
+    V3DLONG count=0;
+    foreach (QString img_str, imgList)
+    {
+        V3DLONG offset[3];
+        offset[0]=0; offset[1]=0; offset[2]=0;
+
+        indexed_t<V3DLONG, REAL> idx_t(offset);
+
+        idx_t.n = count;
+        idx_t.ref_n = 0; // init with default values
+        idx_t.fn_image = img_str.toStdString();
+        idx_t.score = 0;
+
+        vim.tilesList.push_back(idx_t);
+        count++;
+    }
+
+    int NTILES  = vim.tilesList.size();
+    unsigned char * data1d = 0;
+    V3DLONG in_sz[4];
+    int datatype;
+
+    if (!simple_loadimage_wrapper(callback,const_cast<char *>(vim.tilesList.at(0).fn_image.c_str()), data1d, in_sz, datatype))
+    {
+        fprintf (stderr, "Error happens in reading the subject file [%0]. Exit. \n",vim.tilesList.at(0).fn_image.c_str());
+        return;
+    }
+
+    if(data1d) {delete[]data1d; data1d = 0;}
+    V3DLONG im_length = strlen(vim.tilesList.at(0).fn_image.c_str());
+
+    V3DLONG N = in_sz[0];
+    V3DLONG M = in_sz[1];
+    V3DLONG SC = in_sz[3];
+    V3DLONG pagesz = N*M*1;
+
+    int Znum, c;
+    bool ok1,ok2;
+    Znum = QInputDialog::getInteger(parent, "z sections",
+                                  "Enter the number of z sections:",
+                                  1, 1, 2000, 1, &ok1);
+    if(SC==1)
+    {
+        c=1;
+        ok2=true;
+    }
+    else
+    {
+        if(ok1)
+        {
+            c = QInputDialog::getInteger(parent, "Channel",
+                                         "Enter channel NO:",
+                                         1, 1, SC, 1, &ok2);
+        }
+        else
+            return;
+    }
+
+    if(!ok2)
+        return;
+
+    V3DLONG offsetc = (c-1)*pagesz;
+    QString order_name(m_OutputfolderName);
+    order_name.append("/order.txt");
+
+    ofstream myfile;
+    for(V3DLONG iz = 0; iz < NTILES; iz = iz + Znum)
+    {
+        V3DLONG zb = iz;
+        V3DLONG ze = iz + Znum - 1;
+
+        unsigned char *sub_image=0;
+        V3DLONG sub_image_sz = N*M*Znum;
+        sub_image = new unsigned char [sub_image_sz];
+        for(V3DLONG i = 0; i < sub_image_sz; i++)
+            sub_image[i] = 0;
+
+        V3DLONG j = 0;
+        const char * image_name;
+        for(int ii = zb; ii < ze + 1; ii++)
+        {
+            unsigned char * data1d = 0;
+            V3DLONG in_sz[4];
+            int datatype;
+
+            if (!simple_loadimage_wrapper(callback,const_cast<char *>(vim.tilesList.at(ii).fn_image.c_str()), data1d, in_sz, datatype))
+            {
+                fprintf (stderr, "Error happens in reading the subject file [%0]. Exit. \n",vim.tilesList.at(ii).fn_image.c_str());
+                return;
+            }
+            image_name = vim.tilesList.at(ii).fn_image.c_str();
+            std::string location =  std::string(image_name, im_length -13, 1);
+            std::string z_index;
+            if(location == "-")
+                  z_index = std::string(image_name, im_length-15, 2);
+            else
+                  z_index = std::string(image_name, im_length-15, 3);
+            int   z_index_num = boost::lexical_cast<int>(z_index);
+            V3DLONG offsetz = z_index_num * pagesz;
+            for(V3DLONG i = 0; i < pagesz; i++)
+            {
+                sub_image[offsetz + i] = data1d[offsetc + i];
+            }
+            if(data1d) {delete[]data1d; data1d = 0;}
+         }
+        std::string x_location =  std::string(image_name, im_length -30, 2);
+        std::string y_location =  std::string(image_name, im_length -25, 2);
+        V3DLONG block_sz[4];
+        block_sz[0] = N; block_sz[1] = M; block_sz[2] = Znum; block_sz[3] = 1;
+
+        QString outputTile(m_OutputfolderName);
+        outputTile.append(QString("/X%1_Y%2.raw").arg(x_location.c_str()).arg(y_location.c_str()));
+        simple_saveimage_wrapper(callback, outputTile.toStdString().c_str(), (unsigned char *)sub_image, block_sz, 1);
+        if(sub_image) {delete []sub_image; sub_image=0;}
+
+        myfile.open (order_name.toStdString().c_str(),ios::out | ios::app );
+        QString outputilefull;
+        outputilefull.append(QString("%1 %2 %3").arg(outputTile.toStdString().c_str()).arg(x_location.c_str()).arg(y_location.c_str()));
+        myfile << outputilefull.toStdString();
+        myfile << "\n";
+        myfile.close();
+    }
+
+    return;
+}
 bool zsectionsTotiles(V3DPluginCallback2 &callback, const V3DPluginArgList & input, V3DPluginArgList & output)
 {
     cout<<"Welcome to tile3DImageSeries plugin"<<endl;
