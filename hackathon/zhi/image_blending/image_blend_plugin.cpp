@@ -8,6 +8,11 @@
 #include "image_blend_plugin.h"
 #include <fstream>
 #include <iostream>
+#include <boost/lexical_cast.hpp>
+#include "../../../v3d_main/jba/c++/convert_type2uint8.h"
+#include "../plugin_loader/v3d_plugin_loader.h"
+#include "/local1/work/v3d_external/v3d_main/basic_c_fun/stackutil.h"
+
 
 using namespace std;
 Q_EXPORT_PLUGIN2(image_blend, image_blend);
@@ -22,6 +27,8 @@ QStringList image_blend::funclist() const
 {
 	return QStringList()
 		<<tr("image_blend")
+        <<tr("image_modulate")
+        <<tr("image_align")
 		<<tr("help");
 }
 
@@ -248,7 +255,222 @@ bool image_blend::dofunc(const QString & func_name, const V3DPluginArgList & inp
         if (data_blended) {delete []data_blended; data_blended=0;}
 
 	}
-	else if (func_name == tr("help"))
+    else if (func_name == tr("image_modulate"))
+    {
+        if (output.size() != 1) return false;
+        char * inimg_file = ((vector<char*> *)(input.at(0).p))->at(0);
+       // char * inimg_enhanced = ((vector<char*> *)(input.at(1).p))->at(0);
+        char * outimg_file = ((vector<char*> *)(output.at(0).p))->at(0);
+
+       /* unsigned char * image1 = 0;
+        V3DLONG in_sz1[4];
+        int datatype1;
+        if(!simple_loadimage_wrapper(callback, inimg_file, image1, in_sz1, datatype1))
+        {
+            if (image1) {delete []image1; image1=0;}
+            return false;
+        }*/
+
+        unsigned char * image1 = 0;
+        V3DLONG * in_sz1 = 0;
+
+
+        int datatype1;
+        if(!loadImage(inimg_file, image1, in_sz1, datatype1))
+        {
+            cerr<<"load image "<<inimg_file<<" error!"<<endl;
+            return false;
+        }
+
+
+
+     /*   unsigned char * image2 = 0;
+        V3DLONG in_sz2[4];
+        int datatype2;
+        if(!simple_loadimage_wrapper(callback, inimg_enhanced, image2, in_sz2, datatype2))
+        {
+            if (image2) {delete []image2; image2=0;}
+            return false;
+        }*/
+
+
+
+        V3DLONG in_sz[4];
+        in_sz[0] = in_sz1[0];
+        in_sz[1] = in_sz1[1];
+        in_sz[2] = in_sz1[2];
+        in_sz[3] = 1;
+
+        V3DLONG pagesz = in_sz[0]*in_sz[1]*in_sz1[2];
+
+
+       /* V3DPluginArgItem arg;
+        V3DPluginArgList input;
+        V3DPluginArgList output;
+
+        arg.type = "random";std::vector<char*> args1;
+        args1.push_back(inimg_enhanced); arg.p = (void *) & args1; input<< arg;
+        arg.type = "random";std::vector<char*> args;
+        args.push_back("3");args.push_back("3");args.push_back("3");args.push_back("1"); args.push_back("1"); arg.p = (void *) & args; input << arg;
+        arg.type = "random";std::vector<char*> args2;args2.push_back("gfImage.v3draw"); arg.p = (void *) & args2; output<< arg;
+
+        QString full_plugin_name = "gaussian";
+        QString func_name = "gf";
+
+        callback.callPluginFunc(full_plugin_name,func_name, input,output);
+
+        unsigned char * data1d_Gf = 0;
+        int datatype;
+        V3DLONG in_zz[4];
+
+        simple_loadimage_wrapper(callback, "gfImage.v3draw", data1d_Gf, in_zz, datatype);
+        remove("gfImage.v3draw");
+        unsigned char* image2 = 0;
+        image2 = new unsigned char [pagesz];
+
+        double min,max;
+        rescale_to_0_255_and_copy((float *)data1d_Gf,pagesz,min,max,image2);
+        if(data1d_Gf) {delete []data1d_Gf; data1d_Gf =0;}*/
+
+        unsigned char *data_blended = 0;
+        try {data_blended = new unsigned char [pagesz];}
+        catch(...)  {v3d_msg("cannot allocate memory for data_blended."); return false;}
+        V3DLONG i = 0;
+
+        V3DLONG N = in_sz1[0];
+        V3DLONG M = in_sz1[1];
+        V3DLONG P = in_sz1[2];
+        printf("%d,%d,%d,%d,%d\n\n",N,M,P,in_sz1[3],datatype1);
+
+        V3DLONG offsetc = 1*pagesz;
+        for(V3DLONG iz = 0; iz < P; iz++)
+        {
+            V3DLONG offsetk = iz*M*N;
+            for(V3DLONG iy = 0; iy < M; iy++)
+            {
+                V3DLONG offsetj = iy*N;
+                for(V3DLONG ix = 0; ix < N; ix++)
+                {
+                    data_blended[offsetk + offsetj + ix] = image1[offsetc+offsetk + offsetj + ix];
+                    i++;
+                }
+            }
+        }
+
+
+       /* for(V3DLONG i = 0; i < pagesz; i++)
+        {
+           /* double f = 0;
+            double f1 = 0;
+            double f2 = 0;
+            f1 = image1[i]/255.f;
+            f2 = image2[i]/255.f;
+            f = (f1 + f2) * (f1+f2);
+            f = fabs(f);
+
+            if (f>1) f = 1;
+
+            data_blended[i] = f*255;
+            data_blended[i] = 255 - image1[i];
+
+        }*/
+
+
+
+
+        simple_saveimage_wrapper(callback, outimg_file, (unsigned char *)data_blended, in_sz, datatype1);
+
+        if (image1) {delete []image1; image1=0;}
+     //   if (image2) {delete []image2; image2=0;}
+        if (data_blended) {delete []data_blended; data_blended=0;}
+
+    }
+    else if (func_name == tr("image_align"))
+    {
+
+        if (output.size() != 1) return false;
+        char * inimg_file = ((vector<char*> *)(input.at(0).p))->at(0);
+       // char * inimg_enhanced = ((vector<char*> *)(input.at(1).p))->at(0);
+        char * outimg_file = ((vector<char*> *)(output.at(0).p))->at(0);
+
+        unsigned char * image1 = 0;
+        V3DLONG in_sz1[4];
+        int datatype1;
+        if(!simple_loadimage_wrapper(callback, inimg_file, image1, in_sz1, datatype1))
+        {
+            if (image1) {delete []image1; image1=0;}
+            return false;
+        }
+
+      /*  unsigned char * image2 = 0;
+        V3DLONG in_sz2[4];
+        int datatype2;
+        if(!simple_loadimage_wrapper(callback, inimg_enhanced, image2, in_sz2, datatype2))
+        {
+            if (image2) {delete []image2; image2=0;}
+            return false;
+        }*/
+
+
+
+        V3DLONG in_sz[4];
+        in_sz[0] = 18671;
+        in_sz[1] = 12079;
+        in_sz[2] = 1;
+        in_sz[3] = 1;
+
+        V3DLONG pagesz = in_sz[0]*in_sz[1]*in_sz[2];
+
+        unsigned char *data_blended = 0;
+        try {data_blended = new unsigned char [pagesz];}
+        catch(...)  {v3d_msg("cannot allocate memory for data_blended."); return false;}
+        for(int i = 0; i < pagesz; i++)
+            data_blended[i] = 0;
+        V3DLONG N = in_sz[0];
+        V3DLONG M = in_sz[1];
+        V3DLONG P = in_sz[2];
+        double a11 = 0.989488343532377;
+        double a12 = -0.14461264817971808;
+        double a21 = 0.14461264817971808;
+        double a22 = 0.989488343532377;
+        double xshift = -2747.242615559955;
+        double yshift = -1505.0768840073147;
+
+        double det = a11*a22 - a12*a21;
+
+        for(V3DLONG iz = 0; iz < P; iz++)
+        {
+            V3DLONG offsetk = iz*M*N;
+            for(V3DLONG iy = 0; iy < M; iy++)
+            {
+                V3DLONG offsetj = iy*N;
+                for(V3DLONG ix = 0; ix < N; ix++)
+                {
+
+                    V3DLONG ix_old = int((a22*ix - a21*iy)/det) - xshift;
+                    V3DLONG iy_old = int((-a12*ix + a11*iy)/det) - yshift;
+                    if(ix_old >=0 && ix_old < in_sz1[0] && iy_old >=0 && iy_old < in_sz1[1])
+                    {
+                        V3DLONG offsetj_old = iy_old*in_sz1[0];
+                        data_blended[offsetk + offsetj + ix] = image1[offsetk + offsetj_old + ix_old];
+                    }
+                }
+
+            }
+        }
+
+
+
+        simple_saveimage_wrapper(callback, outimg_file, (unsigned char *)data_blended, in_sz, 1);
+
+        if (image1) {delete []image1; image1=0;}
+      //  if (image2) {delete []image2; image2=0;}
+        if (data_blended) {delete []data_blended; data_blended=0;}
+
+
+
+    }
+    else if (func_name == tr("help"))
 	{
         cout<<"Usage : v3d -x blend_two_image -f image_blend -o <outimg_file> -p \"^i1 <inputimg1_file> ^c1 <inputimg1_channel> ^o1 <inputimg1_output_channel> ^i2 <inputimg2_file> ^c2 <inputimg2_channel> ^o2 <inputimg2_output_channel>\""<<endl;
         cout<<endl;
@@ -263,4 +485,5 @@ bool image_blend::dofunc(const QString & func_name, const V3DPluginArgList & inp
 
 	return true;
 }
+
 
