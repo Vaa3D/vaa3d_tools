@@ -205,7 +205,6 @@ void markers_singleChannel(V3DPluginCallback2 &callback, QWidget *parent)
 //  -crashes if 3D curve training path is too long (possibly because too many markers? not actually sure reason)
 //  -very poorly optimized
 //  -have not yet implimented ability to translate newly generated markers into paths if desired
-//  -ARBITRARILY CRASHES DURING CATEGORY SORTING (memory bug most likely)
 //########
 void mark_or_curve_singleChannel(V3DPluginCallback2 &callback, QWidget *parent)
 {
@@ -223,7 +222,6 @@ void mark_or_curve_singleChannel(V3DPluginCallback2 &callback, QWidget *parent)
 
     unsigned char* data1d = p4DImage->getRawData(); //sets data into 1D array
 
-    V3DLONG pages = p4DImage->getTotalUnitNumberPerChannel();
     //defining the dimensions
     V3DLONG N = p4DImage->getXDim();
     V3DLONG M = p4DImage->getYDim();
@@ -236,11 +234,18 @@ void mark_or_curve_singleChannel(V3DPluginCallback2 &callback, QWidget *parent)
 
     LandmarkList Marklist = callback.getLandmark(curwin);
     int Marknum = Marklist.count();
-//    QList<NeuronTree> mTree = *callback.getHandleNeuronTrees_3DGlobalViewer(curwin);
-    NeuronTree mTree = callback.getSWC(curwin);
-    int SWCcount = mTree.listNeuron.count();
-//    v3d_msg(QString ("%1").arg(SWCcount));
-//    return;
+    QList<NeuronTree> * mTreeList;
+    mTreeList = callback.getHandleNeuronTrees_3DGlobalViewer(curwin);
+    int SWCcount;
+    NeuronTree mTree;
+    if (mTreeList->isEmpty()) { SWCcount = 0; }
+    else
+    {
+        mTree = mTreeList->first();
+        SWCcount = mTree.listNeuron.count();
+    }
+    //NeuronTree mTree = callback.getSWC(curwin);
+    //int SWCcount = mTree.listNeuron.count();
 
     //input test data type
     int option;
@@ -251,13 +256,14 @@ void mark_or_curve_singleChannel(V3DPluginCallback2 &callback, QWidget *parent)
         QString qtitle = QObject::tr("Choose Test Data Input Type");
         bool ok;
         QStringList items;
-        items << "Markers" << "3D Curves";
+        items << "Markers" << "3D Curves" << "Markers and 3D Curves";
         QString item = QInputDialog::getItem(0, qtitle,
                                             QObject::tr("Which type of testing data are you using"), items, 0, false, &ok);
         if (! ok) return;
         int input_type = items.indexOf(item);
         if (input_type==0) { option = 1; }
-        else { option = 2; }
+        else if (input_type==1){ option = 2; }
+        else { option = 3; }
     }
 
     LandmarkList mlist, neuronMarkList;
@@ -265,10 +271,16 @@ void mark_or_curve_singleChannel(V3DPluginCallback2 &callback, QWidget *parent)
     {
         mlist = Marklist;
     }
-    else
+    else if (option == 2 )
     {
         neuronMarkList = neuron_2_mark(mTree,neuronMarkList);
         mlist = neuronMarkList;
+    }
+    else
+    {
+        neuronMarkList = neuron_2_mark(mTree,neuronMarkList);
+        mlist = Marklist;
+        mlist.append(neuronMarkList);
     }
 
     bool ok;
@@ -295,25 +307,26 @@ void mark_or_curve_singleChannel(V3DPluginCallback2 &callback, QWidget *parent)
         LandmarkList smallList = main_func(data1d,dimNum,c,mlist,bglist);
         LandmarkList& woot2 = smallList;
         bool draw_le_markers2 = callback.setLandmark(curwin,woot2);
+
+/*        v3d_msg("now gonna try mean shift");
+        LandmarkList shiftList;
+        LocationSimple temp;
+        int x,y,z;
+        for (int i=0; i<smallList.size(); i++)
+        {
+            temp = smallList.at(i);
+            temp.getCoord(x,y,z);
+            LocationSimple temp2 = mass_center(data1d,dimNum,x,y,z,10,c);
+            shiftList.append(temp2);
+        }
+        LandmarkList& woot3 = shiftList;
+        bool draw = callback.setLandmark(curwin,woot3);*/
     }
     else if (input_type==1) //type
     {
         //v3d_msg("still debugging"); return;
         //QString bg_com = QInputDialog::getText(0,"Define Background","Enter comment string used to indicate background",
           //                                     QLineEdit::Normal,"",&ok);
-
-        /* general idea is to make dynamic 2D array, each row is a different comment group
-         * then for each row go through its own dynamic radius segmentation to get test values for each comment group
-         * then scan through for each comment group, except this time also writing in the correct comment type_info
-         * still going to return single LandmarkList, but all the landmarks in it will be commented
-         *
-         * basically make some array of LandmarkLists called commentMark (containing all non BG markers, sort comments by row)
-         * some LandmarkList bglist and some LandmarkList whatever
-         * then do a for loop, i=row of commentMark, whatever.append(x) where x=main_func(data1d,dimNum,c,i,bglist)
-         * LandmarkList& woot3 = whatever;
-         * bool draw_le_markers3 = callback.setLandmark(curwin,woot3);
-         *
-         * this would prolly be easier if I could figure out how to change the category int because easier to sort int than string */
 
         int catNum = QInputDialog::getInt(0,"Number of Categories","Enter number of categories (background category included), if unsure enter 0",0,0,100,1,&ok);
 
@@ -376,7 +389,7 @@ void mark_or_curve_singleChannel(V3DPluginCallback2 &callback, QWidget *parent)
                 i++;
             }
         }   */
-v3d_msg("start indexing");
+//v3d_msg("start indexing");
         map<int,LandmarkList> catArr;
         LandmarkList temp;
 //        int ** catArr;
@@ -417,7 +430,7 @@ v3d_msg("start indexing");
             }
         }
         delete [] catList;
-        v3d_msg("indexing complete");
+//        v3d_msg("indexing complete");
 
 /*        LandmarkList bgL;
         for (int i=0; i<catInd[0]; i++)
@@ -436,14 +449,14 @@ v3d_msg("start indexing");
 //        if (catArr[0]->at(0).category!=0) {v3d_msg("yeah we broke it"); return;} //this is returning
 
 
-v3d_msg("arrays made");
+//v3d_msg("arrays made");
         //run script
         LandmarkList catSortList;
         LandmarkList * marks;
         LandmarkList * bgs = &catArr[0]; //working with assumption that bg has category value 0;
         for (int i=0; i<catNum-1; i++)
         {
-            v3d_msg("catSortList made");
+//            v3d_msg("catSortList made");
             /*LandmarkList marksL;
             for (int j=0; i<catInd[i+1]; j++)
             {
@@ -454,7 +467,7 @@ v3d_msg("arrays made");
 //            v3d_msg("marksL made");
             LandmarkList tempList = main_func(data1d,dimNum,c,*marks,*bgs);
             catSortList.append(tempList);
-            v3d_msg(QString("catSortList append category %1").arg(tempList.at(0).category));
+//            v3d_msg(QString("catSortList append category %1").arg(tempList.at(0).category));
 //            marksL.clear();
         }
 //######However setLandmark below is not writing the correct category, often causing crash when attempting to right click markers or open object manager
@@ -548,14 +561,14 @@ template <class T> LandmarkList main_func(T* data1d, V3DLONG *dimNum, int c, Lan
         //tempPix = pixelVal(data1d,dimNum,xc,yc,zc,c);
         for (int j=0; j<10; j++)
         {
-            newMark = mass_center(data1d,dimNum,xc,yc,zc,20,c);
+            newMark = mass_center(data1d,dimNum,xc,yc,zc,15,c);
             newMark.getCoord(xc,yc,zc);
         }
         tempList.append(newMark);
     }
     MarkList = tempList;
-
-    //return MarkList;
+//v3d_msg("ckpt 1");
+//    return MarkList;
 
     //scan list of cell markers for ValAve, radAve
 
@@ -585,43 +598,35 @@ template <class T> LandmarkList main_func(T* data1d, V3DLONG *dimNum, int c, Lan
 
 //v3d_msg(QString("FINAL ValAve %1, radAve %2").arg(ValAve).arg(radAve));
 
-    int stV=0, stR=0, stP=0;
+    double stV=0, stR=0, stP=0;
     for (int i=0; i<marks; i++)
     {
-        int s = pow(ValAveArr[i]-ValAve,2.0);
+        double s = (ValAveArr[i]-ValAve)*(ValAveArr[i]-ValAve);
         stV += s;
 
-        int t = pow(radAveArr[i]-radAve,2.0);
+        double t = (radAveArr[i]-radAve)*(radAveArr[i]-radAve);
         stR += t;
 
         tempLocation = MarkList.at(i);
         tempLocation.getCoord(xc,yc,zc);
         int Pix = pixelVal(data1d,dimNum,xc,yc,zc,c);
-        int u = pow(Pix-PixVal,2.0);
+//        v3d_msg(QString("Pix %1 and PixVal %2").arg(Pix).arg(PixVal));
+        double u = (Pix-PixVal)*(Pix-PixVal);
         stP += u;
 //v3d_msg(QString("pixel value %1, diff %2, stP %3").arg(Pix).arg(Pix-PixVal).arg(stP));
     }
-    int ValStDev = sqrt(stV/(marks-1.0));
-    int radStDev = sqrt(stR/(marks-1.0));
-    int PixStDev = sqrt(stP/(marks-1.0));
+    int ValStDev = sqrt(stV/marks);
+    int radStDev = sqrt(stR/marks);
+    int PixStDev = sqrt(stP/marks);
 
 
 //v3d_msg(QString("markers have been scanned. Pixval %1 and stdev %2. radVal %3 and stdev %4."
 //                      "segVal %5 and stdev %6").arg(PixVal).arg(PixStDev).arg(radAve).arg(radStDev).arg(ValAve).arg(ValStDev));
-
+//v3d_msg(QString("category %1").arg(cat));
     //scans image and generates new set of markers based on testing data
     LandmarkList newList = count(data1d,dimNum,ValAve,2*ValStDev,PixVal,PixStDev,0,radAve,5+radStDev,c,cat);
+//v3d_msg("newList made");
 
-    /*//recenters list via mean shift
-    for (int i=0; i<newList.count(); i++)
-    {
-        temp = newList.at(i);
-        temp.getCoord(xc,yc,zc);
-        newMark = mass_center(data1d,dimNum,xc,yc,zc,radAve,c);
-        newMark.getCoord(xc,yc,zc);
-        tempList.append(newMark);
-    }
-    newList = tempList;*/
 
     //        LandmarkList& woot = newList;
     //        bool draw_le_markers = callback.setLandmark(curwin,woot);
@@ -629,6 +634,23 @@ template <class T> LandmarkList main_func(T* data1d, V3DLONG *dimNum, int c, Lan
 
     //deletes duplicate markers based on their proximity
     LandmarkList smallList = duplicates(data1d,newList,dimNum,PixVal,radAve,c);
+//    v3d_msg("start mean shift loop");
+    //recenters list via mean shift
+    LandmarkList tempL2;
+    LocationSimple temp2;
+    for (int i=0; i<smallList.count(); i++)
+    {
+        temp2 = smallList.at(i);
+        temp2.getCoord(xc,yc,zc);
+        for (int j=0; j<10; j++)
+        {
+            newMark = mass_center(data1d,dimNum,xc,yc,zc,radAve,c);
+            newMark.getCoord(xc,yc,zc);
+        }
+        tempL2.append(newMark);
+    }
+//    v3d_msg("ckpt 2");
+    smallList = tempL2;
     return smallList;
 }
 
@@ -660,9 +682,10 @@ template <class T> LocationSimple mass_center(T* data1d,
     V3DLONG M = dimNum[1];
     V3DLONG P = dimNum[2];
 
-    V3DLONG shiftC = (c-1)*P*M*N;
-
-    int min=255,newX=0,newY=0,newZ=0;
+    //int min=255,newX=0,newY=0,newZ=0;
+    //int xweight=0,yweight=0,zweight=0,kernel=0,ktot=0;
+    double pVal, newX=0, newY=0, newZ=0, normX=0, normY=0, normZ=0, norm=0;
+    int kern;
 
     //defining limits
     V3DLONG xLow = xc-rad; if(xLow<0) xLow=0;
@@ -674,8 +697,6 @@ template <class T> LocationSimple mass_center(T* data1d,
 
     //scanning through the pixels
     V3DLONG k,j,i;
-    //average data of each segment
-    //int xweight=0,yweight=0,zweight=0,kernel=0,ktot=0;
     for (k = zLow; k < zHigh; k++)
     {
          //V3DLONG shiftZ = k*M*N;
@@ -685,7 +706,7 @@ template <class T> LocationSimple mass_center(T* data1d,
              for (i = xLow; i < xHigh; i++)
              {
                  //int dataval = data1d[ shiftC + shiftZ + shiftY + i ];
-                 pair<int,int> meanAns = pixel(data1d,dimNum,i,j,k,c,rad/5);
+                 /*pair<int,int> meanAns = pixel(data1d,dimNum,i,j,k,c,rad/5);
                  int mean = meanAns.first;
                  int dist = abs(255-mean);
                  if (dist<min)
@@ -694,7 +715,7 @@ template <class T> LocationSimple mass_center(T* data1d,
                      newX=i;
                      newY=j;
                      newZ=k;
-                 }
+                 }*/
                  /*float t = pow(dataval-pixVal,2.0);
                  kernel = exp(-t);
                  xweight += kernel*i;
@@ -702,13 +723,26 @@ template <class T> LocationSimple mass_center(T* data1d,
                  zweight += kernel*k;
                  if (kernel!=0) { ktot += kernel; }
 //                     v3d_msg(QString("k %1,%2,%3").arg(kernel).arg(ktot).arg(xweight));*/
+                 pVal = pixelVal(data1d,dimNum,i,j,k,c);
+                 if ((255-pVal)<100) { kern=1; }
+                 else { kern=0; }
+                 newX += pVal*i*kern;
+                 newY += pVal*j*kern;
+                 newZ += pVal*k*kern;
+                 normX += i*kern;
+                 normY += k*kern;
+                 normZ += j*kern;
+                 norm += pVal*kern;
              }
          }
     }
-    /*int newX = xweight/ktot;
-    int newY = yweight/ktot;
-    int newZ = zweight/ktot;*/
-//    v3d_msg(QString("old %4,%5,%6, new coords %1,%2,%3").arg(newX).arg(newY).arg(newZ).arg(xc).arg(yc).arg(zc));
+//    v3d_msg(QString("newC %1 %2 %3 and norm %4 %5 %6").arg(newX).arg(newY).arg(newZ).arg(normX).arg(normY).arg(normZ));
+    newX /= norm;
+    newY /= norm;
+    newZ /= norm;
+//    v3d_msg(QString("normX %1 vs expected  from range %2 to %3").arg(normX).arg(xLow).arg(xHigh));
+//    v3d_msg(QString("old x %1, xLow %2, shift %3, new X %4").arg(xc).arg(xLow).arg(newX).arg(xLow+newX));
+//    v3d_msg(QString("old coords %4 %5 %6, new coords %1,%2,%3").arg(newX).arg(newY).arg(newZ).arg(xc).arg(yc).arg(zc));
     LocationSimple newMark(newX,newY,newZ);
     return newMark;
 }
@@ -852,6 +886,7 @@ template <class T> LandmarkList count(T* data1d,
                             catStr << cat;
                             tmpLocation.comments = catStr.str();
                             newList.append(tmpLocation);
+                            continue;
 
                         }
                     }
@@ -864,7 +899,10 @@ template <class T> LandmarkList count(T* data1d,
     else
     {
         seg = radAve/2;
-        for (int i=radAve-radStDev; i<radAve+radStDev; i++)
+        int init;
+        if ((radAve-radStDev) < 0) { init=0;}
+        else { init=radAve-radStDev; }
+        for (int i=init; i<radAve+radStDev; i++)
         {
             for (V3DLONG iz=seg; iz<P; iz+=seg)
             {
