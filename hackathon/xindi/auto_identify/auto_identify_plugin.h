@@ -1,15 +1,15 @@
-/* test_plugin.h
+/* auto_identify_plugin.h
  * This is a test plugin, you can use it as a demo.
  * 2012-01-01 : by YourName
  */
  
-#ifndef __TEST_PLUGIN_H__
-#define __TEST_PLUGIN_H__
+#ifndef __AUTO_IDENTIFY_PLUGIN_H__
+#define __AUTO_IDENTIFY_PLUGIN_H__
 
 #include <QtGui>
 #include <v3d_interface.h>
 
-class TestPlugin : public QObject, public V3DPluginInterface2_1
+class AutoIdentifyPlugin : public QObject, public V3DPluginInterface2_1
 {
 	Q_OBJECT
 	Q_INTERFACES(V3DPluginInterface2_1);

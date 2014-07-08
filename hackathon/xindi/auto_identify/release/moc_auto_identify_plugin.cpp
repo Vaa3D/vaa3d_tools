@@ -1,15 +1,15 @@
 /****************************************************************************
-** Meta object code from reading C++ file 'test_plugin.h'
+** Meta object code from reading C++ file 'auto_identify_plugin.h'
 **
-** Created: Wed Jun 25 11:50:41 2014
+** Created: Tue Jul 8 16:14:12 2014
 **      by: The Qt Meta Object Compiler version 62 (Qt 4.7.4)
 **
 ** WARNING! All changes made in this file will be lost!
 *****************************************************************************/
 
-#include "../test_plugin.h"
+#include "../auto_identify_plugin.h"
 #if !defined(Q_MOC_OUTPUT_REVISION)
-#error "The header file 'test_plugin.h' doesn't include <QObject>."
+#error "The header file 'auto_identify_plugin.h' doesn't include <QObject>."
 #elif Q_MOC_OUTPUT_REVISION != 62
 #error "This file was generated using the moc from 4.7.4. It"
 #error "cannot be used with the include files from this version of Qt."
@@ -17,7 +17,7 @@
 #endif
 
 QT_BEGIN_MOC_NAMESPACE
-static const uint qt_meta_data_TestPlugin[] = {
+static const uint qt_meta_data_AutoIdentifyPlugin[] = {
 
  // content:
        5,       // revision
@@ -33,37 +33,37 @@ static const uint qt_meta_data_TestPlugin[] = {
        0        // eod
 };
 
-static const char qt_meta_stringdata_TestPlugin[] = {
-    "TestPlugin\0"
+static const char qt_meta_stringdata_AutoIdentifyPlugin[] = {
+    "AutoIdentifyPlugin\0"
 };
 
-const QMetaObject TestPlugin::staticMetaObject = {
-    { &QObject::staticMetaObject, qt_meta_stringdata_TestPlugin,
-      qt_meta_data_TestPlugin, 0 }
+const QMetaObject AutoIdentifyPlugin::staticMetaObject = {
+    { &QObject::staticMetaObject, qt_meta_stringdata_AutoIdentifyPlugin,
+      qt_meta_data_AutoIdentifyPlugin, 0 }
 };
 
 #ifdef Q_NO_DATA_RELOCATION
-const QMetaObject &TestPlugin::getStaticMetaObject() { return staticMetaObject; }
+const QMetaObject &AutoIdentifyPlugin::getStaticMetaObject() { return staticMetaObject; }
 #endif //Q_NO_DATA_RELOCATION
 
-const QMetaObject *TestPlugin::metaObject() const
+const QMetaObject *AutoIdentifyPlugin::metaObject() const
 {
     return QObject::d_ptr->metaObject ? QObject::d_ptr->metaObject : &staticMetaObject;
 }
 
-void *TestPlugin::qt_metacast(const char *_clname)
+void *AutoIdentifyPlugin::qt_metacast(const char *_clname)
 {
     if (!_clname) return 0;
-    if (!strcmp(_clname, qt_meta_stringdata_TestPlugin))
-        return static_cast<void*>(const_cast< TestPlugin*>(this));
+    if (!strcmp(_clname, qt_meta_stringdata_AutoIdentifyPlugin))
+        return static_cast<void*>(const_cast< AutoIdentifyPlugin*>(this));
     if (!strcmp(_clname, "V3DPluginInterface2_1"))
-        return static_cast< V3DPluginInterface2_1*>(const_cast< TestPlugin*>(this));
+        return static_cast< V3DPluginInterface2_1*>(const_cast< AutoIdentifyPlugin*>(this));
     if (!strcmp(_clname, "com.janelia.v3d.V3DPluginInterface/2.1"))
-        return static_cast< V3DPluginInterface2_1*>(const_cast< TestPlugin*>(this));
+        return static_cast< V3DPluginInterface2_1*>(const_cast< AutoIdentifyPlugin*>(this));
     return QObject::qt_metacast(_clname);
 }
 
-int TestPlugin::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
+int AutoIdentifyPlugin::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
 {
     _id = QObject::qt_metacall(_c, _id, _a);
     if (_id < 0)
