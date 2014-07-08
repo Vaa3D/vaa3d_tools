@@ -384,7 +384,8 @@ void mark_or_curve_singleChannel(V3DPluginCallback2 &callback, QWidget *parent)
                 temp.clear();
             }
         }
-        delete [] catList;
+        if (catList) {delete [] catList; catList=0;}
+
 //        v3d_msg("indexing complete");
 
 
@@ -500,13 +501,14 @@ template <class T> LandmarkList main_func(T* data1d, V3DLONG *dimNum, int c, Lan
         for (int j=0; j<10; j++)
         {
             newMark = mass_center(data1d,dimNum,xc,yc,zc,15,c);
-            newMark.getCoord(xc,yc,zc);
+//            if (fabs(xc-newMark.x)+fabs(yc-newMark.y)+fabs(zc-newMark.z)<1)
+//                break;
+//            else
+                newMark.getCoord(xc,yc,zc);
         }
         tempList.append(newMark);
     }
     MarkList = tempList;
-//v3d_msg("ckpt 1");
-//    return MarkList;
 
     //scan list of cell markers for ValAve, radAve
 
@@ -603,7 +605,7 @@ template <class T> int pixelVal(T* data1d, V3DLONG *dimNum,
     V3DLONG M = dimNum[1];
     V3DLONG P = dimNum[2];
     V3DLONG shiftC = (c-1)*P*M*N;
-    int pixelVal = data1d[ shiftC + zc*M*N + yc*N + xc ];
+    int pixelVal = data1d[ shiftC + (V3DLONG)zc*M*N + (V3DLONG)yc*N + xc ];
     return pixelVal;
 }
 
@@ -619,7 +621,7 @@ template <class T> LocationSimple mass_center(T* data1d,
 
     //int min=255,newX=0,newY=0,newZ=0;
     //int xweight=0,yweight=0,zweight=0,kernel=0,ktot=0;
-    double pVal, newX=0, newY=0, newZ=0, normX=0, normY=0, normZ=0, norm=0;
+    double pVal;
     int kern;
 
     //defining limits
@@ -631,53 +633,29 @@ template <class T> LocationSimple mass_center(T* data1d,
     V3DLONG zHigh = zc+rad; if(zHigh>P-1) zHigh=P-1;
 
     //scanning through the pixels
+    double newX=0, newY=0, newZ=0, norm=0;
     V3DLONG k,j,i;
-    for (k = zLow; k < zHigh; k++)
+    for (k = zLow; k <= zHigh; k++)
     {
-         //V3DLONG shiftZ = k*M*N;
-         for (j = yLow; j < yHigh; j++)
+         for (j = yLow; j <= yHigh; j++)
          {
-             //V3DLONG shiftY = j*N;
-             for (i = xLow; i < xHigh; i++)
+             for (i = xLow; i <= xHigh; i++)
              {
-                 //int dataval = data1d[ shiftC + shiftZ + shiftY + i ];
-                 /*pair<int,int> meanAns = pixel(data1d,dimNum,i,j,k,c,rad/5);
-                 int mean = meanAns.first;
-                 int dist = abs(255-mean);
-                 if (dist<min)
-                 {
-                     min=dist;
-                     newX=i;
-                     newY=j;
-                     newZ=k;
-                 }*/
-                 /*float t = pow(dataval-pixVal,2.0);
-                 kernel = exp(-t);
-                 xweight += kernel*i;
-                 yweight += kernel*j;
-                 zweight += kernel*k;
-                 if (kernel!=0) { ktot += kernel; }
-//                     v3d_msg(QString("k %1,%2,%3").arg(kernel).arg(ktot).arg(xweight));*/
                  pVal = pixelVal(data1d,dimNum,i,j,k,c);
-                 if ((255-pVal)<100) { kern=1; }
-                 else { kern=0; }
+                 kern=1;
+
                  newX += pVal*i*kern;
                  newY += pVal*j*kern;
                  newZ += pVal*k*kern;
-                 normX += i*kern;
-                 normY += k*kern;
-                 normZ += j*kern;
                  norm += pVal*kern;
              }
          }
     }
-//    v3d_msg(QString("newC %1 %2 %3 and norm %4 %5 %6").arg(newX).arg(newY).arg(newZ).arg(normX).arg(normY).arg(normZ));
+
     newX /= norm;
     newY /= norm;
     newZ /= norm;
-//    v3d_msg(QString("normX %1 vs expected  from range %2 to %3").arg(normX).arg(xLow).arg(xHigh));
-//    v3d_msg(QString("old x %1, xLow %2, shift %3, new X %4").arg(xc).arg(xLow).arg(newX).arg(xLow+newX));
-//    v3d_msg(QString("old coords %4 %5 %6, new coords %1,%2,%3").arg(newX).arg(newY).arg(newZ).arg(xc).arg(yc).arg(zc));
+
     LocationSimple newMark(newX,newY,newZ);
     return newMark;
 }
