@@ -58,7 +58,8 @@ void TestPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, 
 {
     if (menu_name == tr("Single Channel Cell Counting"))
 	{
-        markers_singleChannel(callback,parent);
+        //markers_singleChannel(callback,parent);
+        v3d_msg("Please use the other one, this one is outdated and probably full of bugs.");
 	}
     else if (menu_name == tr("Better Cell Counting"))
 	{
@@ -307,27 +308,9 @@ void mark_or_curve_singleChannel(V3DPluginCallback2 &callback, QWidget *parent)
         LandmarkList smallList = main_func(data1d,dimNum,c,mlist,bglist);
         LandmarkList& woot2 = smallList;
         bool draw_le_markers2 = callback.setLandmark(curwin,woot2);
-
-/*        v3d_msg("now gonna try mean shift");
-        LandmarkList shiftList;
-        LocationSimple temp;
-        int x,y,z;
-        for (int i=0; i<smallList.size(); i++)
-        {
-            temp = smallList.at(i);
-            temp.getCoord(x,y,z);
-            LocationSimple temp2 = mass_center(data1d,dimNum,x,y,z,10,c);
-            shiftList.append(temp2);
-        }
-        LandmarkList& woot3 = shiftList;
-        bool draw = callback.setLandmark(curwin,woot3);*/
     }
     else if (input_type==1) //type
     {
-        //v3d_msg("still debugging"); return;
-        //QString bg_com = QInputDialog::getText(0,"Define Background","Enter comment string used to indicate background",
-          //                                     QLineEdit::Normal,"",&ok);
-
         int catNum = QInputDialog::getInt(0,"Number of Categories","Enter number of categories (background category included), if unsure enter 0",0,0,100,1,&ok);
 
 
@@ -360,35 +343,7 @@ void mark_or_curve_singleChannel(V3DPluginCallback2 &callback, QWidget *parent)
 
 //v3d_msg(QString("final catNum %1").arg(catNum));
 
-/*//creates arrays for each category
-        LandmarkList ** catArr;
-        catArr = new LandmarkList*;
-        int i=0;
-        for (int j=0; j<mlist.count(); j++) //loop through category values
-        {
-            int x=0;
-            for (int k=0; k<mlist.count(); k++) //loop through markers
-            {
-                if (catList[k]==j) { x++; } //establish size of this category's array
-            }
-            if (x==0)
-                break;
-            else
-            {
-                catArr[i] = new LandmarkList;
-                for (int k=0; k<mlist.count(); k++)
-                {
-                    if (catList[k]==j)
-                    {
-                        catArr[i]->append(mlist.at(k));
-                        //tempList.append(mlist.at(k));
-//                        v3d_msg(QString("catList[k] %1").arg(catList[k]));
-                    }
-                }
-//                v3d_msg(QString("catArr index %1").arg(i));
-                i++;
-            }
-        }   */
+
 //v3d_msg("start indexing");
         map<int,LandmarkList> catArr;
         LandmarkList temp;
@@ -432,22 +387,6 @@ void mark_or_curve_singleChannel(V3DPluginCallback2 &callback, QWidget *parent)
         delete [] catList;
 //        v3d_msg("indexing complete");
 
-/*        LandmarkList bgL;
-        for (int i=0; i<catInd[0]; i++)
-        {
-            bgL.append(mlist.at(catArr[0][i]));
-        }*/
-
-
-        //        v3d_msg("made the array");
-        //note by default category value 0 is background, so bg array should be stored in catArr[0]
-        //this is to make sure of that
-//        int x = catArr[0]->at(0).category;
-//        v3d_msg(QString("catArr[0] cat is %1").arg(catArr[0].at(0).category));
-//        v3d_msg(QString("catArr[1] cat is %1").arg(catArr[1].at(0).category));
-//        v3d_msg(QString("catArr[2] cat is %1").arg(catArr[2].at(0).category));
-//        if (catArr[0]->at(0).category!=0) {v3d_msg("yeah we broke it"); return;} //this is returning
-
 
 //v3d_msg("arrays made");
         //run script
@@ -470,7 +409,6 @@ void mark_or_curve_singleChannel(V3DPluginCallback2 &callback, QWidget *parent)
 //            v3d_msg(QString("catSortList append category %1").arg(tempList.at(0).category));
 //            marksL.clear();
         }
-//######However setLandmark below is not writing the correct category, often causing crash when attempting to right click markers or open object manager
         LandmarkList& woot3 = catSortList;
         bool draw_le_markers3 = callback.setLandmark(curwin,woot3);
 
@@ -671,9 +609,6 @@ template <class T> int pixelVal(T* data1d, V3DLONG *dimNum,
 
 
 //returns new marker that has been recentered
-/*#################
- * algorithm is simplistic, looks for highest intensity based on 0-255 rbg value
- * ################*/
 template <class T> LocationSimple mass_center(T* data1d,
                                               V3DLONG *dimNum,
                                               int xc, int yc, int zc, int rad, int c)
