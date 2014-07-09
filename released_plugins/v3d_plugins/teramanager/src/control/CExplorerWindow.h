@@ -222,7 +222,8 @@ class teramanager::CExplorerWindow : public QWidget
                    int z0, int z1,              // VOI [z0, z1) in the local reference sys
                    int t0 = -1, int t1 = -1,    // VOI [t0, t1] in the local reference sys
                    itm::direction dir = itm::z,
-                   bool align32 = false)        //true if mip data must be 32-bit aligned
+                   bool to_BGRA = false,        //true if mip data must be stored into BGRA format
+                   itm::uint8 alpha = 255)      //alpha transparency used if to_BGRA is true
         throw (itm::RuntimeException);
 
 

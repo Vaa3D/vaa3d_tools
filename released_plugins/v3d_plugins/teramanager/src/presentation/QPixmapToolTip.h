@@ -10,6 +10,7 @@ class teramanager::QPixmapToolTip : public QWidget
     private:
 
         QPixmap pix;            // image/pixmap to be displayed
+        uint8 *rawData;
         QLabel* imageLabel;
         QLabel* textLabel;
 
@@ -44,8 +45,10 @@ class teramanager::QPixmapToolTip : public QWidget
         }
         QPixmapToolTip(QWidget *parent = 0);
 
-        void setPixmap(const QPixmap& pixmap){pix = pixmap; imageLabel->setPixmap(pix); update();}
-        void setText(const QString &text){textLabel->setText(text);}
+        void setPixmap(const QPixmap& pixmap, uint8* raw_data=0){pix = pixmap; imageLabel->setPixmap(pix); rawData = raw_data; update();}
+        void setText(const QString &text){textLabel->setText(text);}        
+        QPixmap& pixmap(){return pix;}
+        uint8* raw(){return rawData;}
 };
 
 #endif // QPIXMAP_TOOLTIP_H

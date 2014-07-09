@@ -445,6 +445,7 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     connect(showToolbarButton, SIGNAL(toggled(bool)), this, SLOT(showToolbarButtonChanged(bool)));
     toolBar->insertWidget(0, showToolbarButton);
     toolBar->addAction(aboutAction);
+    toolBar->layout()->setSpacing(5);
 
     // TAB widget: where to store pages
     tabs = new QTabWidget(this);
@@ -706,6 +707,7 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     ESblockSpbox = new QSpinBox();
     ESblockSpbox->setAlignment(Qt::AlignCenter);
     ESblockSpbox->installEventFilter(this);
+    QPixmapToolTip::instance()->installEventFilter(this);
     ESblockSpbox->setPrefix("Block ");
     ESoverlapSpbox = new QSpinBox();
     ESoverlapSpbox->setAlignment(Qt::AlignCenter);
@@ -1081,6 +1083,7 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     #endif
     this->setFont(tinyFont);
 
+
     // signals and slots    
     /**/itm::debug(itm::LEV3, "Signals and slots", __itm__current__function__);
     connect(CImport::instance(), SIGNAL(sendOperationOutcome(itm::RuntimeException*, qint64)), this, SLOT(importDone(itm::RuntimeException*, qint64)), Qt::QueuedConnection);
@@ -1115,6 +1118,8 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     move(QApplication::desktop()->screen()->rect().center() - rect().center());
 
     setFixedWidth(400);
+
+    installEventFilter(this);
 
     /**/itm::debug(itm::LEV1, "object successfully constructed", __itm__current__function__);
 }
@@ -2133,7 +2138,7 @@ bool PMain::eventFilter(QObject *object, QEvent *event)
         else if(event->type() == QEvent::Leave)
             helpBox->setText(HTbase);
     }
-    else if(object == ESblockSpbox && ESblockSpbox->isEnabled())
+    else if((object == ESblockSpbox || object == QPixmapToolTip::instance()) && ESblockSpbox->isEnabled())
     {
         if(event->type() == QEvent::Enter)
         {
@@ -2143,6 +2148,12 @@ bool PMain::eventFilter(QObject *object, QEvent *event)
             pixmapToolTip->setFixedHeight(width);
             pixmapToolTip->move(ESblockSpbox->mapToGlobal(QPoint(0,0))-QPoint(0,width+10));
             pixmapToolTip->show();
+
+            ESblockSpbox->setAttribute(Qt::WA_Hover); // this control the QEvent::ToolTip and QEvent::HoverMove
+            QPoint gpos = ESblockSpbox->mapToGlobal(QPoint(0,10));
+            QToolTip::showText(gpos, "Press Enter to load", ESblockSpbox);
+
+            ESblockSpbox->setFocus(Qt::MouseFocusReason);
         }
         else if(event->type() == QEvent::Leave)
             QPixmapToolTip::instance()->hide();
@@ -2154,8 +2165,6 @@ bool PMain::eventFilter(QObject *object, QEvent *event)
                 ESblockSpinboxEditingFinished();
                 return true;
             }
-            else
-                printf("Pressed key %d\n", key_evt->key());
         }
     }
     return false;
@@ -2601,12 +2610,22 @@ void PMain::ESblockSpinboxChanged(int b)
             int ROIzs_hr = CVolume::scaleDCoord(ROIzS, curWin->volResIndex, CImport::instance()->getResolutions()-1);
             int ROIze_hr = CVolume::scaleDCoord(ROIzS+ROIzDim, curWin->volResIndex, CImport::instance()->getResolutions()-1);
 
-            uint8 *mip = CExplorerWindow::first->getMIP(ROIxs_lr, ROIxe_lr, ROIys_lr, ROIye_lr, ROIzs_lr, ROIze_lr, -1, -1, itm::z, true);
-            QImage qmip(mip, ROIxe_lr-ROIxs_lr, ROIye_lr-ROIys_lr, QImage::Format_RGB32);
-            QPixmapToolTip::instance()->setPixmap(QPixmap::fromImage(qmip));
-            QPixmapToolTip::instance()->setText(strprintf("X = [%d, %d), Y = [%d,%d), Z = [%d, %d)",
-                                                          ROIxs_hr, ROIxe_hr, ROIys_hr, ROIye_hr, ROIzs_hr, ROIze_hr ).c_str());
-            QPixmapToolTip::instance()->update();
+            uint8 *mip = CExplorerWindow::first->getMIP(ROIxs_lr, ROIxe_lr, ROIys_lr, ROIye_lr, ROIzs_lr, ROIze_lr, -1, -1, itm::z, true, 220);
+            QPixmapToolTip *qPixmapToolTip = QPixmapToolTip::instance();
+            QImage qmip(mip, ROIxe_lr-ROIxs_lr, ROIye_lr-ROIys_lr, QImage::Format_ARGB32);
+            if(qPixmapToolTip->raw())
+                delete[] qPixmapToolTip->raw();
+
+            qPixmapToolTip->setPixmap(QPixmap::fromImage(qmip), mip);
+            qPixmapToolTip->setText(strprintf("X = [%d, %d]\nY = [%d,%d]\nZ = [%d, %d]",
+                                                          ROIxs_hr+1, ROIxe_hr, ROIys_hr+1, ROIye_hr, ROIzs_hr+1, ROIze_hr ).c_str());
+            qPixmapToolTip->update();
+
+            ESblockSpbox->setAttribute(Qt::WA_Hover); // this control the QEvent::ToolTip and QEvent::HoverMove
+            QPoint gpos = ESblockSpbox->mapToGlobal(QPoint(0,10));
+            QToolTip::showText(gpos, "Press Enter to load", ESblockSpbox);
+
+            ESblockSpbox->setFocus(Qt::MouseFocusReason);
             //delete[] mip;
 
             //printf("mip[0] = %d, X=[%d,%d) Y=[%d,%d) Z=[%d,%d)\n", mip[0], ROIxs_lr, ROIxe_lr, ROIys_lr, ROIye_lr, ROIzs_lr, ROIze_lr);
@@ -2661,7 +2680,7 @@ void PMain::progressBarChanged(int val, int minutes, int seconds, const char* me
 }
 
 /**********************************************************************************
-* Called when showToolbarButton state has changed
+* Called when showButton state has changed
 ***********************************************************************************/
 void PMain::showToolbarButtonChanged(bool changed)
 {

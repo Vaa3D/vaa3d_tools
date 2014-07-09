@@ -595,6 +595,16 @@ bool CExplorerWindow::eventFilter(QObject *object, QEvent *event)
             return true;
         }
 
+        /******************** INTERCEPTING KEYPRESS EVENTS ************************
+        Double click events are intercepted to switch to the higher resolution.
+        ***************************************************************************/
+        if (object == window3D && event->type() == 6)
+        {
+            QKeyEvent* key_evt = (QKeyEvent*)event;
+            if(key_evt->key() == Qt::Key_Return)
+                PMain::getInstance()->ESblockSpinboxEditingFinished();
+        }
+
 
         /****************** INTERCEPTING TIME SLIDER EVENTS ************************
         Time slider events are intercepted to navigate through the entire time range
@@ -1233,11 +1243,12 @@ itm::uint8*
                             int z0, int z1,                         // VOI [z0, z1) in the local reference sys
                             int t0 /* = -1 */, int t1 /* = -1 */,   // VOI [t0, t1] in the local reference sys
                             itm::direction dir /* = z */,
-                            bool align32 /* = false */)             //true if mip data must be 32-bit aligned
+                            bool to_BGRA /* = false */,             //true if mip data must be stored into BGRA format
+                            itm::uint8 alpha /* = 255 */)           //alpha transparency used if to_BGRA is true
 throw (itm::RuntimeException)
 {
-    /**/itm::debug(itm::LEV1, strprintf("title = %s, x0 = %d, x1 = %d, y0 = %d, y1 = %d, z0 = %d, z1 = %d, t0 = %d, t1 = %d, dir = %d",
-                                        titleShort.c_str(), x0, x1, y0, y1, z0, z1, t0, t1, dir).c_str(), __itm__current__function__);
+    /**/itm::debug(itm::LEV1, strprintf("title = %s, x0 = %d, x1 = %d, y0 = %d, y1 = %d, z0 = %d, z1 = %d, t0 = %d, t1 = %d, dir = %d, to_BGRA = %s, alpha = %d",
+                                        titleShort.c_str(), x0, x1, y0, y1, z0, z1, t0, t1, dir, to_BGRA ? "true" : "false", alpha).c_str(), __itm__current__function__);
 
     if(t0 == -1)
         t0 = volT0;
@@ -1248,7 +1259,7 @@ throw (itm::RuntimeException)
     uint32 img_offset[5] = {x0   -volH0, y0   -volV0, z0   -volD0, 0,         t0-volT0};
     uint32 img_count[5]  = {x1   -x0,    y1   -y0,    z1   -z0,    0,         t1-t0+1};
 
-    return CImageUtils::mip(view3DWidget->getiDrawExternalParameter()->image4d->getRawData(), img_dims, img_offset, img_count, dir, align32);
+    return CImageUtils::mip(view3DWidget->getiDrawExternalParameter()->image4d->getRawData(), img_dims, img_offset, img_count, dir, to_BGRA, alpha);
 }
 
 

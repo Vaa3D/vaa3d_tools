@@ -34,7 +34,8 @@ class teramanager::CImageUtils
                    uint src_offset[5],      //VOI's offset along X, Y, Z, <empty> and T
                    uint src_count[5],       //VOI's dimensions along X, Y, Z, <empty> and T
                    itm::direction dir,      //direction of projection
-                   bool align32 = false)    //true if mip data must be 32-bit aligned
+                   bool to_BGRA = false,    //true if mip data must be stored into BGRA format
+                   itm::uint8 alpha = 255)  //alpha transparency (used if to_BGRA = true)
            throw (itm::RuntimeException);
 };
 

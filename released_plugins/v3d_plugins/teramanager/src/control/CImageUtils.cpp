@@ -118,12 +118,15 @@ itm::uint8*
                         uint src_offset[5],     //VOI's offset along X, Y, Z, <empty> and T
                         uint src_count[5],      //VOI's dimensions along X, Y, Z, <empty> and T
                         itm::direction dir,     //direction of projection
-                        bool align32 /*=false*/)//true if mip data must be 32-bit aligned
+                        bool to_BGRA /*=false*/,//true if mip data must be stored into BGRA format
+                        itm::uint8 alpha /* = 255 */)//alpha transparency (used if to_BGRA = true)
    throw (itm::RuntimeException)
 {
-    /**/itm::debug(itm::LEV1, strprintf("src_dims = (%u x %u x %u x %u x %u), src_offset = (%u, %u, %u, %u, %u), src_count = (%u, %u, %u, %u, %u), direction = %d",
+    /**/itm::debug(itm::LEV1, strprintf("src_dims = (%u x %u x %u x %u x %u), src_offset = (%u, %u, %u, %u, %u), src_count = (%u, %u, %u, %u, %u), "
+                                        "direction = %d, to_BGRA = %s, alpha = %d",
                                         src_dims[0], src_dims[1],src_dims[2],src_dims[3],src_dims[4], src_offset[0],src_offset[1],src_offset[2],src_offset[3],
-                                        src_offset[4],src_count[0],src_count[1],src_count[2],src_count[3], src_count[4], dir).c_str(), __itm__current__function__);
+                                        src_offset[4],src_count[0],src_count[1],src_count[2],src_count[3], src_count[4], dir,
+                                        to_BGRA ? "true" : "false", alpha).c_str(), __itm__current__function__);
 
 
     // precondition checks
@@ -163,7 +166,7 @@ itm::uint8*
     const uint64 stride_i2 =                                                              src_count[0] * (uint64)1;
 
     // mip size
-    uint64 mip_size = align32 ? src_count[1]*src_count[0]*(uint64)4 : count_c2;
+    uint64 mip_size = to_BGRA ? src_count[1]*src_count[0]*4 : count_c2;
 
     // allocation and initialization
     uint8* mip = new uint8[mip_size];
@@ -175,7 +178,7 @@ itm::uint8*
     uint8 *img_c2, *img_i2, *img_j2 = 0;
 
     // mip
-    if(align32)
+    if(to_BGRA)
     {
         for(start_t1 = src + offset_t1, img_t1 = start_t1; img_t1 - start_t1 < count_t1; img_t1 += stride_t1)
         {
@@ -199,15 +202,28 @@ itm::uint8*
             }
         }
 
-        // if grayscale, convert to RGBA
+        // grayscale to BGRA
         if(src_dims[3] == 1)
         {
-            for(int y=0; y<src_count[1]; y++)
-                for(int x=0; x<src_count[0]; x++)
-                {
-                    mip[y*src_count[0]*4 + x*4 + 1] = mip[y*src_count[0]*4 + x*4 + 0];
-                    mip[y*src_count[0]*4 + x*4 + 2] = mip[y*src_count[0]*4 + x*4 + 0];
-                }
+            for(uint8* pmip = mip; pmip - mip < mip_size; pmip += 4)
+            {
+              //*(pmip + 0)                   is in the right place
+                *(pmip + 1) = *pmip;
+                *(pmip + 2) = *pmip;
+                *(pmip + 3) = alpha;
+            }
+        }
+        // RGB to BGRA
+        else
+        {
+            for(uint8* pmip = mip; pmip - mip < mip_size; pmip += 4)
+            {
+                *(pmip + 3) = *(pmip + 0); // temp save R into A
+                *(pmip + 0) = *(pmip + 2); // B
+              //*(pmip + 1)                   G is in the right place
+                *(pmip + 2) = *(pmip + 3); // R
+                *(pmip + 3) = alpha;
+            }
         }
     }
     else
@@ -227,28 +243,6 @@ itm::uint8*
             }
         }
     }
-
-//    else
-//    {
-//        // allocation and initialization
-//        uint64 mip_size = src_count[1]   * src_count[0]  * (uint64)4;
-//        mip = new uint8[mip_size];
-//        for(int i = 0; i < mip_size; i++)
-//            mip[i] = 0;
-
-//        for(int y=0; y<src_count[1]; y++)
-//            for(int x=0; x<src_count[0]; x++)
-//            {
-//                int max = 0;
-//                for(int z=src_offset[2]; z<src_offset[2]+src_count[2]; z++)
-//                    max = std::max(max, src[]);
-
-//                mip[y*src_count[0] + x*4 + 0] = 0;
-//                mip[y*src_count[0] + x*4 + 1] = 0;
-//                mip[y*src_count[0] + x*4 + 2] = 0;
-//                mip[y*src_count[0] + x*4 + 3] = 0;
-//            }
-//    }
 
     return mip;
 }
