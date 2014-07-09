@@ -8,12 +8,14 @@
 #include "auto_identify_plugin.h"
 #include "string"
 #include "sstream"
+#include "../../v3d_main/neuron_editing/v_neuronswc.h"
 
 using namespace std;
 Q_EXPORT_PLUGIN2(auto_identify, AutoIdentifyPlugin);
 
 void markers_singleChannel(V3DPluginCallback2 &callback, QWidget *parent);
-void mark_or_curve_singleChannel(V3DPluginCallback2 &callback, QWidget *parent);
+void count_cells(V3DPluginCallback2 &callback, QWidget *parent);
+void identify_neurons(V3DPluginCallback2 &callback, QWidget *parent);
 template <class T> LandmarkList main_func(T* data1d, V3DLONG *dimNum, int c, LandmarkList & mlist, LandmarkList & bglist);
 LandmarkList neuron_2_mark(const NeuronTree & p, LandmarkList & neuronMarkList);
 template <class T> int pixelVal(T* data1d, V3DLONG *dimNum,
@@ -35,7 +37,8 @@ template <class T> LandmarkList count(T* data1d,
                                       int rad, int radAve, int radStDev, int c, int cat);
 template <class T> LandmarkList duplicates(T* data1d, LandmarkList fullList,
                                            V3DLONG *dimNum, int PointAve, int rad, int c);
-
+V_NeuronSWC get_v_neuron_swc(const NeuronTree *p);
+vector<V_NeuronSWC> get_neuron_segments(const NeuronTree *p);
 
  
 QStringList AutoIdentifyPlugin::menulist() const
@@ -43,6 +46,7 @@ QStringList AutoIdentifyPlugin::menulist() const
 	return QStringList() 
         <<tr("Single Channel Cell Counting")
         <<tr("Better Cell Counting")
+        <<tr("Neurons")
 		<<tr("about");
 }
 
@@ -63,8 +67,13 @@ void AutoIdentifyPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &ca
 	}
     else if (menu_name == tr("Better Cell Counting"))
 	{
-        mark_or_curve_singleChannel(callback,parent);
+        count_cells(callback,parent);
 	}
+    else if (menu_name == tr("Neurons"))
+    {
+        //v3d_msg("To be implemented"); return;
+        identify_neurons(callback,parent);
+    }
 	else
 	{
         v3d_msg(tr("Uses current image's landmarks to find similar objects in image."
@@ -200,14 +209,156 @@ void markers_singleChannel(V3DPluginCallback2 &callback, QWidget *parent)
     return;
 }
 
+void identify_neurons(V3DPluginCallback2 &callback, QWidget *parent)
+{
+    v3dhandle curwin = callback.currentImageWindow();
+
+    //cancels if no image
+    if (!curwin)
+    {
+        v3d_msg("You don't have any image open in the main window.");
+        return;
+    }
+
+    //if image, pulls the data
+    Image4DSimple* p4DImage = callback.getImage(curwin); //the data of the image is in 4D (channel + 3D)
+
+    unsigned char* data1d = p4DImage->getRawData(); //sets data into 1D array
+
+    //defining the dimensions
+    V3DLONG N = p4DImage->getXDim();
+    V3DLONG M = p4DImage->getYDim();
+    V3DLONG P = p4DImage->getZDim();
+    V3DLONG sc = p4DImage->getCDim();
+
+    //storing the dimensions
+    V3DLONG dimNum[4];
+    dimNum[0]=N; dimNum[1]=M; dimNum[2]=P; dimNum[3]=sc;
+
+    QList<NeuronTree> * mTreeList;
+    mTreeList = callback.getHandleNeuronTrees_3DGlobalViewer(curwin);
+    int SWCcount;
+    NeuronTree mTree;
+    if (mTreeList->isEmpty()) { v3d_msg("There are no neuron traces in the current window."); return; }
+    else
+    {
+        mTree = mTreeList->first();
+        SWCcount = mTree.listNeuron.count();
+    }
+    vector<V_NeuronSWC> seg_list;
+    V_NeuronSWC cur_seg = get_v_neuron_swc(&mTree);
+    seg_list = cur_seg.decompose();
+    v3d_msg(QString("%1").arg(seg_list.size()));
+    return;
+}
+V_NeuronSWC get_v_neuron_swc(const NeuronTree *p)
+{
+    V_NeuronSWC cur_seg;	cur_seg.clear();
+    const QList<NeuronSWC> & qlist = p->listNeuron;
+
+    for (V3DLONG i=0;i<qlist.size();i++)
+    {
+        V_NeuronSWC_unit v;
+        v.n		= qlist[i].n;
+        v.type	= qlist[i].type;
+        v.x 	= qlist[i].x;
+        v.y 	= qlist[i].y;
+        v.z 	= qlist[i].z;
+        v.r 	= qlist[i].r;
+        v.parent = qlist[i].pn;
+
+        cur_seg.append(v);
+        //qDebug("%d ", cur_seg.nnodes());
+    }
+//    cur_seg.name = qPrintable(QString("%1").arg(1));
+    cur_seg.b_linegraph=true; //donot forget to do this
+    return cur_seg;
+}
+vector<V_NeuronSWC> get_neuron_segments(const NeuronTree *p)
+{
+    V_NeuronSWC cur_seg = get_v_neuron_swc(p);
+    vector<V_NeuronSWC> seg_list;
+//    seg_list = cur_seg.decompose();
+    return seg_list;
+}
+/*  ##################################
+ * idea for now is to use the below function to set radius of all markers in test neuron segments
+ * then use those to compute the average radius by segment and categorize based on neuron category
+ * then eventually use that average radius to identify and mark the rest of the image's neurons
+ *  ##################################
+*/
+
+/* From v3dimg_proc_neuron.ccp
+ * bool My4DImage::proj_trace_compute_radius_of_last_traced_neuron(CurveTracePara & trace_para, int seg_begin, int seg_end, float myzthickness)
+{
+    v3d_msg("proj_trace_compute_radius_of_last_traced_neuron. \n", 0);
+    CHECK_DATA_trace_deformablepath();
+
+    int chano = trace_para.channo;
+    int smoothing_win_sz = trace_para.sp_smoothing_win_sz;
+
+    for(int iseg=0; iseg<tracedNeuron.seg.size(); iseg++)
+    {
+        if (iseg <seg_begin || iseg >seg_end) continue; //091023
+
+        V_NeuronSWC & cur_seg = (tracedNeuron.seg[iseg]);
+        printf("#seg=%d(%d) ", iseg, cur_seg.row.size());
+
+        std::vector<V_NeuronSWC_unit> & mUnit = cur_seg.row; // do in place
+        {
+
+            fit_radius_and_position(data4d_uint8[chano], getXDim(), getYDim(), getZDim(),
+                        mUnit,
+                        false,       // 090619: do not move points because the deformable model has done it
+                        myzthickness, // 100404: add the zthickness
+                                                V3dApplication::getMainWindow()->global_setting.b_3dcurve_width_from_xyonly); //100415
+
+            smooth_radius(mUnit, smoothing_win_sz, false); // 090602, 090620
+
+        }
+    }
+    printf("\n");
+
+    return true;
+}
+*/
+/*Example of usage from nstroke.cpp
+// update radius of each point
+if (V3dApplication::getMainWindow()->global_setting.b_3dcurve_autowidth)
+{
+     int chno = checkCurChannel();
+     if (chno<0 || chno>dim4-1)   chno = 0; //default first channel
+     CurveTracePara trace_para;
+     {
+          trace_para.channo = (chno<0)?0:chno;
+          if (trace_para.channo>=curImg->getCDim())
+               trace_para.channo=curImg->getCDim()-1;
+          trace_para.landmark_id_start = -1;
+          trace_para.landmark_id_end = -1;
+          trace_para.sp_num_end_nodes = 2;
+          trace_para.nloops = 100;
+          trace_para.b_deformcurve = true;
+          trace_para.sp_smoothing_win_sz = 2;
+     }
+
+     if (chno >=0)
+     {
+          curImg->proj_trace_compute_radius_of_last_traced_neuron(trace_para,
+               last_seg_id, last_seg_id, curImg->trace_z_thickness);
+     }
+}//end updating radius
+*/
 
 //########
 //  current issues with the algorithm
 //  -Radius calculation not robust enough to deal with thin branches, can cause program to crash
+//      -eventually need to make new algorithm for neurons as the current radius calculation is designed for single cells
 //  -have not yet implimented ability to translate newly generated markers into paths if desired
-//  -mass center tends to skew markers towards (0,0,0)
+//      -will likely reserve this for new neuron algorithm
+//  -mass_center tends to skew markers towards (0,0,0), compromises test data calculations
+//  -see comments in count function, dynamic radius section
 //########
-void mark_or_curve_singleChannel(V3DPluginCallback2 &callback, QWidget *parent)
+void count_cells(V3DPluginCallback2 &callback, QWidget *parent)
 {
     v3dhandle curwin = callback.currentImageWindow();
 
@@ -493,7 +644,7 @@ template <class T> LandmarkList main_func(T* data1d, V3DLONG *dimNum, int c, Lan
         tempList.append(newMark);
     }
     MarkList = tempList;
-    //return MarkList;
+//    return MarkList;
 
     //scan list of cell markers for ValAve, radAve
 
@@ -615,7 +766,6 @@ template <class T> LocationSimple mass_center(T* data1d,
     //int min=255,newX=0,newY=0,newZ=0;
     //int xweight=0,yweight=0,zweight=0,kernel=0,ktot=0;
     double pVal;
-    int kern;
     rad=5;
 
     //defining limits
@@ -635,17 +785,15 @@ template <class T> LocationSimple mass_center(T* data1d,
          {
              for (i = xLow; i <= xHigh; i++)
              {
-                 double t = (i-xc)*(i-xc)+(j-yc)*(j-yc)+(k-zc)+(k-zc);
+                 double t = (i-xc)*(i-xc)+(j-yc)*(j-yc)+(k-zc)*(k-zc);
                  double dist = sqrt(t);
-                 if (dist<rad)
+                 if (dist<=rad)
                  {
                      pVal = pixelVal(data1d,dimNum,i,j,k,c);
-                     if ((255-pVal)<100) kern=1;
-                     else kern=1;
-                     newX += pVal*i*kern;
-                     newY += pVal*j*kern;
-                     newZ += pVal*k*kern;
-                     norm += pVal*kern;
+                     newX += pVal*i;
+                     newY += pVal*j;
+                     newZ += pVal*k;
+                     norm += pVal;
                  }
              }
          }
@@ -672,9 +820,10 @@ template <class T> pair<int,int> dynamic_pixel(T* data1d,
     V3DLONG P = dimNum[2];
     V3DLONG shiftC = (c-1)*P*M*N;
 
-    int rad=1,dataAve;
+    int rad=0,dataAve;
     do
     {
+        rad++;
         //defining limits
         V3DLONG xLow = xc-rad; if(xLow<0) xLow=0;
         V3DLONG xHigh = xc+rad; if(xHigh>N-1) xHigh=N-1;
@@ -687,23 +836,27 @@ template <class T> pair<int,int> dynamic_pixel(T* data1d,
         V3DLONG k,j,i;
         //average data of each segment
         int datatotal=0,runs=0;
-        for (k = zLow; k < zHigh; k++)
+        for (k = zLow; k <= zHigh; k++)
         {
             V3DLONG shiftZ = k*M*N;
-            for (j = yLow; j < yHigh; j++)
+            for (j = yLow; j <= yHigh; j++)
             {
                 V3DLONG shiftY = j*N;
-                for (i = xLow; i < xHigh; i++)
+                for (i = xLow; i <= xHigh; i++)
                 {
-                    int dataval = data1d[ shiftC + shiftZ + shiftY + i ];
-                    datatotal += dataval;
-                    runs++;
+                    double t = (i-xc)*(i-xc)+(j-yc)*(j-yc)+(k-zc)*(k-zc);
+                    double dist = sqrt(t);
+                    if (dist<=rad)
+                    {
+                        int dataval = data1d[ shiftC + shiftZ + shiftY + i ];
+                        datatotal += dataval;
+                        runs++;
+                    }
                 }
             }
         }
         dataAve = datatotal/runs;
-        rad++;
-    } while ( dataAve > (PixVal+4*BGVal)/5 );
+    } while ( dataAve > (PixVal+2*BGVal)/3 );
 
     return make_pair(dataAve,rad);
 }
@@ -732,17 +885,24 @@ template <class T> pair<int,int> pixel(T* data1d,
     V3DLONG k,j,i;
     //average data of each segment
     int datatotal=0,runs=0;
-    for (k = zLow; k < zHigh; k++)
+    for (k = zLow; k <= zHigh; k++)
     {
          V3DLONG shiftZ = k*M*N;
-         for (j = yLow; j < yHigh; j++)
+         for (j = yLow; j <= yHigh; j++)
          {
              V3DLONG shiftY = j*N;
-             for (i = xLow; i < xHigh; i++)
+             for (i = xLow; i <= xHigh; i++)
              {
-                 int dataval = data1d[ shiftC + shiftZ + shiftY + i ];
-                 datatotal += dataval;
-                 runs++;
+                 //######The below code changes the check range from a box to a sphere, but slows down the code immensely when called in count function
+                 //double t = (i-xc)*(i-xc)+(j-yc)*(j-yc)+(k-zc)*(k-zc);
+                 //double dist = sqrt(t);
+                 //if (dist<=rad)
+                 {
+                     int dataval = data1d[ shiftC + shiftZ + shiftY + i ];
+                     datatotal += dataval;
+                     runs++;
+                 }
+                 //else continue;
              }
          }
     }
@@ -813,15 +973,15 @@ template <class T> LandmarkList count(T* data1d,
     {
         seg = radAve/2;
         int init;
-        if ((radAve-radStDev) < 0) { init=0;}
+        if ((radAve-radStDev) < 1) { init=1;}
         else { init=radAve-radStDev; }
-        for (int i=init; i<radAve+radStDev; i++)
+        for (int i=init; i<=radAve+radStDev; i++)
         {
-            for (V3DLONG iz=seg; iz<P; iz+=seg)
+            for (V3DLONG iz=seg; iz<=P; iz+=seg)
             {
-                for (V3DLONG iy=seg; iy<M; iy+=seg)
+                for (V3DLONG iy=seg; iy<=M; iy+=seg)
                 {
-                    for (V3DLONG ix=seg; ix<N; ix+=seg)
+                    for (V3DLONG ix=seg; ix<=N; ix+=seg)
                     {
                         //(ix,iy,iz,c) are the coords that we are currently at
                         //checking radius i
@@ -831,21 +991,20 @@ template <class T> LandmarkList count(T* data1d,
                         //we will say for now there is a cell if the test data is within 2 std of the training data
                         int TempDataAve = check.first;
                         int TempPointAve = check.second;
-                        if ( (TempPointAve>=PointAve-2*PointStDev) && (TempPointAve<=PointAve+2*PointStDev))
+//v3d_msg(QString("%1 %2 %3").arg(i).arg(TempDataAve).arg(TempPointAve));
+                        if ( (TempPointAve>=PointAve-2*PointStDev) && (TempPointAve<=PointAve+2*PointStDev) && (TempDataAve>=MarkAve-2*MarkStDev) && (TempDataAve<=MarkAve+2*MarkStDev))
                         {
-                            if ( (TempDataAve>=MarkAve-2*MarkStDev) && (TempDataAve<=MarkAve+2*MarkStDev) )
-                            {
-                                tmpLocation.x = ix;
-                                tmpLocation.y = iy;
-                                tmpLocation.z = iz;                                
-                                tmpLocation.category = cat;
-                                stringstream catStr;
-                                catStr << cat;
-                                tmpLocation.comments = catStr.str();
-                                newList.append(tmpLocation);
-                                continue;
-                            }
+                            tmpLocation.x = ix;
+                            tmpLocation.y = iy;
+                            tmpLocation.z = iz;
+                            tmpLocation.category = cat;
+                            stringstream catStr;
+                            catStr << cat;
+                            tmpLocation.comments = catStr.str();
+                            newList.append(tmpLocation);
+                            continue;
                         }
+                        else continue;
                     }
                 }
             }
