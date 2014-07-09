@@ -9,9 +9,13 @@
 #include "string"
 #include "sstream"
 #include "../../v3d_main/neuron_editing/v_neuronswc.h"
+#include "../../v3d_main/neuron_tracing/neuron_tracing.h"
 
 using namespace std;
 Q_EXPORT_PLUGIN2(auto_identify, AutoIdentifyPlugin);
+
+#define V_NeuronSWC_list vector<V_NeuronSWC>
+
 
 void markers_singleChannel(V3DPluginCallback2 &callback, QWidget *parent);
 void count_cells(V3DPluginCallback2 &callback, QWidget *parent);
@@ -38,7 +42,8 @@ template <class T> LandmarkList count(T* data1d,
 template <class T> LandmarkList duplicates(T* data1d, LandmarkList fullList,
                                            V3DLONG *dimNum, int PointAve, int rad, int c);
 V_NeuronSWC get_v_neuron_swc(const NeuronTree *p);
-vector<V_NeuronSWC> get_neuron_segments(const NeuronTree *p);
+V_NeuronSWC_list get_neuron_segments(const NeuronTree *p);
+bool compute_radius(V_NeuronSWC_list & tracedNeuron, V3DLONG *dimNum, int c, int smoothing_win_sz, float myzthickness);
 
  
 QStringList AutoIdentifyPlugin::menulist() const
@@ -235,6 +240,14 @@ void identify_neurons(V3DPluginCallback2 &callback, QWidget *parent)
     V3DLONG dimNum[4];
     dimNum[0]=N; dimNum[1]=M; dimNum[2]=P; dimNum[3]=sc;
 
+    //input channel
+    unsigned int c=1;
+    bool ok;
+    if (sc==1)
+        c=1; //if only using 1 channel
+    else
+        c = QInputDialog::getInteger(parent, "Channel", "Enter Channel Number", 1, 1, sc, 1,&ok);
+
     QList<NeuronTree> * mTreeList;
     mTreeList = callback.getHandleNeuronTrees_3DGlobalViewer(curwin);
     int SWCcount;
@@ -245,83 +258,27 @@ void identify_neurons(V3DPluginCallback2 &callback, QWidget *parent)
         mTree = mTreeList->first();
         SWCcount = mTree.listNeuron.count();
     }
-    vector<V_NeuronSWC> seg_list;
-    V_NeuronSWC cur_seg = get_v_neuron_swc(&mTree);
-    seg_list = cur_seg.decompose();
-    v3d_msg(QString("%1").arg(seg_list.size()));
+
+    V_NeuronSWC_list seg_list = get_neuron_segments(&mTree);
+    //syntax: list.at(i) is segment, segment.row is vector of units, vector.at(i) is unit, unit.type is category
+    int segNum = seg_list.size();
+    int * segCat;
+    segCat = new int(segNum);
+    for (int i=0; i<segNum; i++)
+    {
+        segCat[i] = seg_list.at(i).row.at(0).type;
+    }
     return;
 }
-V_NeuronSWC get_v_neuron_swc(const NeuronTree *p)
-{
-    V_NeuronSWC cur_seg;	cur_seg.clear();
-    const QList<NeuronSWC> & qlist = p->listNeuron;
 
-    for (V3DLONG i=0;i<qlist.size();i++)
-    {
-        V_NeuronSWC_unit v;
-        v.n		= qlist[i].n;
-        v.type	= qlist[i].type;
-        v.x 	= qlist[i].x;
-        v.y 	= qlist[i].y;
-        v.z 	= qlist[i].z;
-        v.r 	= qlist[i].r;
-        v.parent = qlist[i].pn;
-
-        cur_seg.append(v);
-        //qDebug("%d ", cur_seg.nnodes());
-    }
-//    cur_seg.name = qPrintable(QString("%1").arg(1));
-    cur_seg.b_linegraph=true; //donot forget to do this
-    return cur_seg;
-}
-vector<V_NeuronSWC> get_neuron_segments(const NeuronTree *p)
-{
-    V_NeuronSWC cur_seg = get_v_neuron_swc(p);
-    vector<V_NeuronSWC> seg_list;
-//    seg_list = cur_seg.decompose();
-    return seg_list;
-}
 /*  ##################################
- * idea for now is to use the below function to set radius of all markers in test neuron segments
+ * idea for now is to find v3d's function to automatically set radius of a neuron segment
+ * then use that function to get the radius of test segments
  * then use those to compute the average radius by segment and categorize based on neuron category
  * then eventually use that average radius to identify and mark the rest of the image's neurons
  *  ##################################
 */
 
-/* From v3dimg_proc_neuron.ccp
- * bool My4DImage::proj_trace_compute_radius_of_last_traced_neuron(CurveTracePara & trace_para, int seg_begin, int seg_end, float myzthickness)
-{
-    v3d_msg("proj_trace_compute_radius_of_last_traced_neuron. \n", 0);
-    CHECK_DATA_trace_deformablepath();
-
-    int chano = trace_para.channo;
-    int smoothing_win_sz = trace_para.sp_smoothing_win_sz;
-
-    for(int iseg=0; iseg<tracedNeuron.seg.size(); iseg++)
-    {
-        if (iseg <seg_begin || iseg >seg_end) continue; //091023
-
-        V_NeuronSWC & cur_seg = (tracedNeuron.seg[iseg]);
-        printf("#seg=%d(%d) ", iseg, cur_seg.row.size());
-
-        std::vector<V_NeuronSWC_unit> & mUnit = cur_seg.row; // do in place
-        {
-
-            fit_radius_and_position(data4d_uint8[chano], getXDim(), getYDim(), getZDim(),
-                        mUnit,
-                        false,       // 090619: do not move points because the deformable model has done it
-                        myzthickness, // 100404: add the zthickness
-                                                V3dApplication::getMainWindow()->global_setting.b_3dcurve_width_from_xyonly); //100415
-
-            smooth_radius(mUnit, smoothing_win_sz, false); // 090602, 090620
-
-        }
-    }
-    printf("\n");
-
-    return true;
-}
-*/
 /*Example of usage from nstroke.cpp
 // update radius of each point
 if (V3dApplication::getMainWindow()->global_setting.b_3dcurve_autowidth)
@@ -1069,4 +1026,34 @@ LandmarkList neuron_2_mark(const NeuronTree & p, LandmarkList & neuronMarkList)
         neuronMarkList.append(tmpMark);
     }
     return neuronMarkList;
+}
+V_NeuronSWC get_v_neuron_swc(const NeuronTree *p)
+{
+    V_NeuronSWC cur_seg;	cur_seg.clear();
+    const QList<NeuronSWC> & qlist = p->listNeuron;
+
+    for (V3DLONG i=0;i<qlist.size();i++)
+    {
+        V_NeuronSWC_unit v;
+        v.n		= qlist[i].n;
+        v.type	= qlist[i].type;
+        v.x 	= qlist[i].x;
+        v.y 	= qlist[i].y;
+        v.z 	= qlist[i].z;
+        v.r 	= qlist[i].r;
+        v.parent = qlist[i].pn;
+
+        cur_seg.append(v);
+        //qDebug("%d ", cur_seg.nnodes());
+    }
+    cur_seg.name = qPrintable(QString("%1").arg(1));
+    cur_seg.b_linegraph=true; //donot forget to do this
+    return cur_seg;
+}
+V_NeuronSWC_list get_neuron_segments(const NeuronTree *p)
+{
+    V_NeuronSWC cur_seg = get_v_neuron_swc(p);
+    V_NeuronSWC_list seg_list;
+    seg_list = cur_seg.decompose();
+    return seg_list;
 }

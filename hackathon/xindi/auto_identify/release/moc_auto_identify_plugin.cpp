@@ -1,7 +1,7 @@
 /****************************************************************************
 ** Meta object code from reading C++ file 'auto_identify_plugin.h'
 **
-** Created: Wed Jul 9 15:23:30 2014
+** Created: Wed Jul 9 15:38:15 2014
 **      by: The Qt Meta Object Compiler version 62 (Qt 4.7.4)
 **
 ** WARNING! All changes made in this file will be lost!
