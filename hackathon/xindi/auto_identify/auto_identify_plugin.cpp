@@ -43,7 +43,7 @@ template <class T> LandmarkList duplicates(T* data1d, LandmarkList fullList,
                                            V3DLONG *dimNum, int PointAve, int rad, int c);
 V_NeuronSWC get_v_neuron_swc(const NeuronTree *p);
 V_NeuronSWC_list get_neuron_segments(const NeuronTree *p);
-bool compute_radius(V_NeuronSWC_list & tracedNeuron, V3DLONG *dimNum, int c, int smoothing_win_sz, float myzthickness);
+template <class T> double compute_radius(T* data1d, V3DLONG *dimNum, vector<V_NeuronSWC_unit> segment, int c);
 
  
 QStringList AutoIdentifyPlugin::menulist() const
@@ -250,24 +250,30 @@ void identify_neurons(V3DPluginCallback2 &callback, QWidget *parent)
 
     QList<NeuronTree> * mTreeList;
     mTreeList = callback.getHandleNeuronTrees_3DGlobalViewer(curwin);
-    int SWCcount;
     NeuronTree mTree;
     if (mTreeList->isEmpty()) { v3d_msg("There are no neuron traces in the current window."); return; }
     else
     {
-        mTree = mTreeList->first();
-        SWCcount = mTree.listNeuron.count();
+        vector<int> segCatArr;
+        vector<double> segRadArr;
+        int structNum = mTreeList->count();
+        for (int i=0; i<structNum; i++)
+        {
+            mTree = mTreeList->at(i);
+            V_NeuronSWC_list seg_list = get_neuron_segments(&mTree);
+            //syntax: list.at(i) is segment, segment.row is vector of units, vector.at(i) is unit, unit.type is category
+            int segNum = seg_list.size();
+            v3d_msg(QString("read in segment of length %1").arg(segNum));
+            for (int j=0; j<segNum; j++)
+            {
+                segCatArr.push_back(seg_list.at(j).row.at(0).type);
+                double radAve = compute_radius(data1d,dimNum,seg_list.at(j).row,c);
+                segRadArr.push_back(radAve);
+                v3d_msg(QString("cat %1 rad %2").arg(seg_list.at(j).row.at(0).type).arg(radAve));
+            } //compute_radius fails and stalls program to a standstill if any of the SWCs aren't traced well
+        }
     }
 
-    V_NeuronSWC_list seg_list = get_neuron_segments(&mTree);
-    //syntax: list.at(i) is segment, segment.row is vector of units, vector.at(i) is unit, unit.type is category
-    int segNum = seg_list.size();
-    int * segCat;
-    segCat = new int(segNum);
-    for (int i=0; i<segNum; i++)
-    {
-        segCat[i] = seg_list.at(i).row.at(0).type;
-    }
     return;
 }
 
@@ -1027,6 +1033,7 @@ LandmarkList neuron_2_mark(const NeuronTree & p, LandmarkList & neuronMarkList)
     }
     return neuronMarkList;
 }
+
 V_NeuronSWC get_v_neuron_swc(const NeuronTree *p)
 {
     V_NeuronSWC cur_seg;	cur_seg.clear();
@@ -1056,4 +1063,75 @@ V_NeuronSWC_list get_neuron_segments(const NeuronTree *p)
     V_NeuronSWC_list seg_list;
     seg_list = cur_seg.decompose();
     return seg_list;
+}
+
+
+template <class T> double compute_radius(T* data1d, V3DLONG *dimNum, vector<V_NeuronSWC_unit> segment, int c)
+{
+    V3DLONG N = dimNum[0];
+    V3DLONG M = dimNum[1];
+    V3DLONG P = dimNum[2];
+    double radAve;
+
+    if (segment.size()>2)
+    {
+        double radTot=0;
+        double k,j,i,t,dist,plane;
+        for (int unit=1; unit<segment.size()-1; unit++) //going to omit first and last unit per segment
+        {
+            V_NeuronSWC_unit P1,P2,P0;
+            P0 = segment.at(unit);
+            P1 = segment.at(unit-1);
+            P2 = segment.at(unit+1);
+            double norm[] = {P2.x-P1.x,P2.y-P1.y,P2.z-P1.z};
+            double rad=0;
+            int pVal = pixelVal(data1d,dimNum,P0.x,P0.y,P0.z,c);
+            int pValCircTot=0, runs=0;
+            double check=0;
+            do
+            {
+                rad += 0.2;
+                //defining limits
+                V3DLONG xLow = P0.x-rad; if(xLow<0) xLow=0;
+                V3DLONG xHigh = P0.x+rad; if(xHigh>N-1) xHigh=N-1;
+                V3DLONG yLow = P0.y-rad; if(yLow<0) yLow=0;
+                V3DLONG yHigh = P0.y+rad; if(yHigh>M-1) yHigh=M-1;
+                V3DLONG zLow = P0.z-rad; if(zLow<0) zLow=0;
+                V3DLONG zHigh = P0.z+rad; if(zHigh>P-1) zHigh=P-1;
+
+                //scanning through the pixels
+                for (k = zLow; k <= zHigh; k+=0.2)
+                {
+                    for (j = yLow; j <= yHigh; j+=0.2)
+                    {
+                        for (i = xLow; i <= xHigh; i+=0.2)
+                        {
+                            t = (i-P0.x)*(i-P0.x)+(j-P0.y)*(j-P0.y)+(k-P0.z)*(k-P0.z);
+                            dist = sqrt(t);
+                            plane = (norm[0]*i+norm[1]*j+norm[2]*k-(norm[0]*P0.x+norm[1]*P0.y+norm[2]*P0.z));
+                            //v3d_msg(QString("Dist %1, plane eq %2").arg(dist).arg(plane));
+                            if (dist<=rad+0.2 && dist>=rad-0.2 && plane<=0.2 && plane>=-0.2)
+                            {
+                                int pValCirc = pixelVal(data1d,dimNum,i,j,k,c);
+                                pValCircTot += pValCirc;
+                                runs++;
+                            }
+                        }
+                    }
+                }
+                //v3d_msg(QString("total pVal %1 in %2 runs, rad %3").arg(pValCircTot).arg(runs).arg(rad));
+                if (runs==0) {check=255;}
+                else {check=pValCircTot/runs;}
+            } while (check > pVal*2/3);
+            radTot += rad;
+        }
+        radAve = radTot/(segment.size()-2);
+    }
+
+    else //2-unit segment
+    {
+        v3d_msg("2-unit neuron SWC radius calculation to be implemented");
+    }
+
+    return radAve;
 }
