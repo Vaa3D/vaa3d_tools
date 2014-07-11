@@ -43,7 +43,11 @@ template <class T> LandmarkList duplicates(T* data1d, LandmarkList fullList,
                                            V3DLONG *dimNum, int PointAve, int rad, int c);
 V_NeuronSWC get_v_neuron_swc(const NeuronTree *p);
 V_NeuronSWC_list get_neuron_segments(const NeuronTree *p);
+NeuronTree VSWClist_2_neuron_tree(V_NeuronSWC_list *p);
+NeuronTree VSWC_2_neuron_tree(V_NeuronSWC *p);
+NeuronSWC make_neuron_swc(V_NeuronSWC_unit *p);
 template <class T> double compute_radius(T* data1d, V3DLONG *dimNum, vector<V_NeuronSWC_unit> segment, int c);
+bool export_list2file(QList<NeuronTree> & N2, QString fileSaveName, QString fileOpenName);
 
  
 QStringList AutoIdentifyPlugin::menulist() const
@@ -111,109 +115,21 @@ bool AutoIdentifyPlugin::dofunc(const QString & func_name, const V3DPluginArgLis
 	return true;
 }
 
-
-//this algorithm is much worse than mark_or_curve
-void markers_singleChannel(V3DPluginCallback2 &callback, QWidget *parent)
-{
-    v3dhandle curwin = callback.currentImageWindow();
-
-    //cancels if no image
-    if (!curwin)
-    {
-        v3d_msg("You don't have any image open in the main window.");
-        return;
-    }
-
-    //if image, pulls the data
-    Image4DSimple* p4DImage = callback.getImage(curwin); //the data of the image is in 4D (channel + 3D)
-
-    unsigned char* data1d = p4DImage->getRawData(); //sets data into 1D array
-
-    //defining the dimensions
-    V3DLONG N = p4DImage->getXDim();
-    V3DLONG M = p4DImage->getYDim();
-    V3DLONG P = p4DImage->getZDim();
-    V3DLONG sc = p4DImage->getCDim();
-    //input channel
-    unsigned int c=1, rad=10;
-    bool ok;
-    if (sc==1)
-        c=1; //if only using 1 channel
-    else
-        c = QInputDialog::getInteger(parent, "Channel", "Enter Channel Number", 1, 1, sc, 1,&ok);
-
-    //storing the dimensions
-    V3DLONG dimNum[4];
-    dimNum[0]=N; dimNum[1]=M; dimNum[2]=P; dimNum[3]=sc;
-
-    //pulling marker info
-    int xc,yc,zc;
-    LocationSimple tmpLocation(0,0,0);
-    LandmarkList mlist = callback.getLandmark(curwin);
-    QString imgname = callback.getImageName(curwin);
-    int marknum = mlist.count();
-    if (mlist.isEmpty())
-    {
-        v3d_msg(QString("The marker list of the current image [%1] is empty. Do nothing.").arg(imgname));
-        return;
-    }
-    else
-    {
-        //radius input
-        rad = QInputDialog::getInteger(parent, "Radius", "Enter radius", 1,1,P,1,&ok);
-        int cat = mlist.at(0).category;
-
-        //dynamic array to store average pixel values of all markers
-        int * markAve; int * pointAve;
-        markAve = new int[marknum]; pointAve = new int[marknum];
-        int markSum = 0, pointSum = 0, dataAve, pointval;
-
-        //getting pixel values from each marker
-        for (int i=0; i<marknum; i++)
-        {
-            tmpLocation = mlist.at(i);
-            tmpLocation.getCoord(xc,yc,zc);
-            pair<int,int> pixAns = pixel(data1d,dimNum,xc,yc,zc,c,rad);
-            dataAve = pixAns.first;
-            pointval = pixAns.second;
-            markAve[i] = dataAve;
-            pointAve[i] = pointval;
-            markSum += dataAve;
-            pointSum += pointval;
-        }
-
-        int MarkAve = markSum/marknum; //average pixel value of all markers in this channel
-        int PointAve = pointSum/marknum;
-        //st dev of markAve
-        int stM=0, stP=0;
-        for (int i=0; i<marknum; i++)
-        {
-            int s = pow(markAve[i]-MarkAve,2.0);
-            stM += s;
-
-            int t = pow(pointAve[i]-PointAve,2.0);
-            stP += t;
-        }
-        int MarkStDev = sqrt(stM/(marknum-1.0));
-        int PointStDev = sqrt(stP/(marknum-1.0));
-
-        //v3d_msg(QString("Mean value region: %1. St Dev: %2 MarkSum %3 and markNum %4. Mean value point: %5. St Dev: %6").arg(MarkAve).arg(MarkStDev).arg(markSum).arg(marknum).arg(PointAve).arg(PointStDev));
-
-        //and here we need to add the function that will scan the rest of the image for other cells based on MarkAve and MarkStDev
-        //int CellCnt = count(data1d,dimNum,curwin,MarkAve,MarkStDev,rad,c);
-        //v3d_msg(QString("There are %1 cells in this channel").arg(CellCnt));
-
-        LandmarkList newList = count(data1d,dimNum,MarkAve,MarkStDev,PointAve,PointStDev,rad,0,0,c,cat);
-
-        //now need to delete duplicate markers on same cell
-        LandmarkList smallList = duplicates(data1d,newList,dimNum,PointAve,rad,c);
-        LandmarkList& woot = smallList;
-        bool draw_le_markers = callback.setLandmark(curwin,woot);
-
-    }
-    return;
-}
-
+/*  ##################################
+ * [completed tasks]
+ * test neuron SWC needs to be its own structure marked with the comment "test"
+ * radius calculation of branches works
+ * categorizing non-test data sets based on test data radius works
+ *
+ * [current goals/issues]
+ * updating window to reflect type changes does not work yet
+ *
+ * [future goals]
+ * add in parent node info / branching as potential type identifiers beyond just radius
+ * find way to identify individal segments rather than entire structures as test data
+ * optimize radius calculation algorithm to be more robust
+ *  ##################################
+*/
 void identify_neurons(V3DPluginCallback2 &callback, QWidget *parent)
 {
     v3dhandle curwin = callback.currentImageWindow();
@@ -257,70 +173,94 @@ void identify_neurons(V3DPluginCallback2 &callback, QWidget *parent)
         vector<int> segCatArr;
         vector<double> segRadArr;
         int structNum = mTreeList->count();
+
+        //get radius and type from test data
         for (int i=0; i<structNum; i++)
         {
             mTree = mTreeList->at(i);
+
+            if (mTree.comment != "test") continue; //defining the testing set by comments
+
             V_NeuronSWC_list seg_list = get_neuron_segments(&mTree);
             //syntax: list.at(i) is segment, segment.row is vector of units, vector.at(i) is unit, unit.type is category
             int segNum = seg_list.size();
-            v3d_msg(QString("read in segment of length %1").arg(segNum));
+            //v3d_msg(QString("read in tree with %1 segments").arg(segNum));
             for (int j=0; j<segNum; j++)
             {
                 segCatArr.push_back(seg_list.at(j).row.at(0).type);
                 double radAve = compute_radius(data1d,dimNum,seg_list.at(j).row,c);
                 segRadArr.push_back(radAve);
-                v3d_msg(QString("cat %1 rad %2").arg(seg_list.at(j).row.at(0).type).arg(radAve));
+                //v3d_msg(QString("cat %1 rad %2").arg(seg_list.at(j).row.at(0).type).arg(radAve));
             } //compute_radius fails and stalls program to a standstill if any of the SWCs aren't traced well
         }
+        //v3d_msg(QString("%1 %2 %3 %4").arg(segCatArr.size()).arg(segCatArr.at(0)).arg(segRadArr.size()).arg(segRadArr.at(0)));
+
+        //label remaining neurons using test data
+        NeuronTree newTree;
+        QList<NeuronTree> newTreeList;
+        for (int i=0; i<structNum; i++) //loops through neuron structures as numbered in object manager
+        {
+            mTree = mTreeList->at(i);
+
+            if (mTree.comment == "test") continue; //defining the testing set by comments
+
+            V_NeuronSWC_list seg_list = get_neuron_segments(&mTree);
+            //syntax: list.at(i) is segment, segment.row is vector of units, vector.at(i) is unit, unit.type is category
+            int segNum = seg_list.size();
+            //v3d_msg(QString("read in segment of length %1").arg(segNum));
+            for (int j=0; j<segNum; j++) //loops through segments within one structure
+            {
+                double radAve = compute_radius(data1d,dimNum,seg_list.at(j).row,c);
+                //v3d_msg(QString("radius %1").arg(radAve));
+                double diff,diff_min=255;
+                int cur_type=3;
+                for (int k=0; k<segRadArr.size(); k++)
+                {
+                    diff = abs(radAve-segRadArr.at(k));
+                    //v3d_msg(QString("diff %3 between calculated %1 and test %2").arg(radAve).arg(segRadArr.at(k)).arg(diff));
+                    if (diff<diff_min)
+                    {
+                        cur_type=segCatArr.at(k);
+                        diff_min=diff;
+                    }
+                }
+                //v3d_msg(QString("identified as type %1").arg(cur_type));
+                for (int l=0; l<seg_list.at(j).row.size(); l++)
+                {
+                    seg_list.at(j).row.at(l).type=cur_type; //sets every unit in segment to be new type
+                }
+                //attempting to draw in new updated neuron trees, not working...
+                newTree = VSWC_2_neuron_tree(&seg_list.at(j)); //translates segment into a NeuronTree
+                callback.setSWC(curwin,newTree);
+                //v3d_msg(QString("newTree has %1 nodes").arg(newTree.listNeuron.size()));
+                //mTreeList->replace(i,newTree);
+                newTreeList.append(newTree);
+                //v3d_msg(QString("changed segment %1 of rad %3 to type %2").arg(j).arg(cur_type).arg(radAve));
+            }
+
+        }
+        //need to draw newTreeList into window and remove mTreeList
+        //*mTreeList = newTreeList;
+        //callback.updateImageWindow(curwin);
+        //export_list2file(newTreeList,"saveName","openName"); //not working yet
     }
 
     return;
 }
 
+
 /*  ##################################
- * idea for now is to find v3d's function to automatically set radius of a neuron segment
- * then use that function to get the radius of test segments
- * then use those to compute the average radius by segment and categorize based on neuron category
- * then eventually use that average radius to identify and mark the rest of the image's neurons
+ * [completed tasks]
+ * all main algorithms are functional
+ *
+ * [current goals/issues]
+ * mass_center tends to skew markers towards (0,0,0), compromises test data calculations
+ * pixel function, changing coordinate range from cube to sphere is causing extreme slowdown
+ *
+ * [future goals]
+ * include overload for when test data includes no background markers
  *  ##################################
 */
-
-/*Example of usage from nstroke.cpp
-// update radius of each point
-if (V3dApplication::getMainWindow()->global_setting.b_3dcurve_autowidth)
-{
-     int chno = checkCurChannel();
-     if (chno<0 || chno>dim4-1)   chno = 0; //default first channel
-     CurveTracePara trace_para;
-     {
-          trace_para.channo = (chno<0)?0:chno;
-          if (trace_para.channo>=curImg->getCDim())
-               trace_para.channo=curImg->getCDim()-1;
-          trace_para.landmark_id_start = -1;
-          trace_para.landmark_id_end = -1;
-          trace_para.sp_num_end_nodes = 2;
-          trace_para.nloops = 100;
-          trace_para.b_deformcurve = true;
-          trace_para.sp_smoothing_win_sz = 2;
-     }
-
-     if (chno >=0)
-     {
-          curImg->proj_trace_compute_radius_of_last_traced_neuron(trace_para,
-               last_seg_id, last_seg_id, curImg->trace_z_thickness);
-     }
-}//end updating radius
-*/
-
-//########
-//  current issues with the algorithm
-//  -Radius calculation not robust enough to deal with thin branches, can cause program to crash
-//      -eventually need to make new algorithm for neurons as the current radius calculation is designed for single cells
-//  -have not yet implimented ability to translate newly generated markers into paths if desired
-//      -will likely reserve this for new neuron algorithm
-//  -mass_center tends to skew markers towards (0,0,0), compromises test data calculations
-//  -see comments in count function, dynamic radius section
-//########
 void count_cells(V3DPluginCallback2 &callback, QWidget *parent)
 {
     v3dhandle curwin = callback.currentImageWindow();
@@ -1064,7 +1004,52 @@ V_NeuronSWC_list get_neuron_segments(const NeuronTree *p)
     seg_list = cur_seg.decompose();
     return seg_list;
 }
+NeuronSWC make_neuron_swc(V_NeuronSWC_unit *p)
+{
+    NeuronSWC N;
 
+    N.n     = p->n;
+    N.type  = p->type;
+    N.x     = p->x;
+    N.y     = p->y;
+    N.z     = p->z;
+    N.r     = p->r;
+    N.parent = p->parent;
+
+    return N;
+}
+
+NeuronTree VSWClist_2_neuron_tree(V_NeuronSWC_list *p)
+{
+    QList<NeuronSWC> nTree;
+    for (int i=0; i<p->size(); i++)
+    {
+        V_NeuronSWC v = p->at(i);
+        for (int j=0; j<v.row.size(); j++)
+        {
+            V_NeuronSWC_unit v2 = v.row.at(j);
+            NeuronSWC n = make_neuron_swc(&v2);
+            nTree.append(n);
+        }
+    }
+    NeuronTree newTree;
+    newTree.listNeuron = nTree;
+    return newTree;
+}
+NeuronTree VSWC_2_neuron_tree(V_NeuronSWC *p)
+{
+    QList<NeuronSWC> nTree;
+    for (int j=0; j<p->row.size(); j++)
+    {
+        V_NeuronSWC_unit v = p->row.at(j);
+        NeuronSWC n = make_neuron_swc(&v);
+        nTree.append(n);
+    }
+
+    NeuronTree newTree;
+    newTree.listNeuron = nTree;
+    return newTree;
+}
 
 template <class T> double compute_radius(T* data1d, V3DLONG *dimNum, vector<V_NeuronSWC_unit> segment, int c)
 {
@@ -1086,6 +1071,7 @@ template <class T> double compute_radius(T* data1d, V3DLONG *dimNum, vector<V_Ne
             double norm[] = {P2.x-P1.x,P2.y-P1.y,P2.z-P1.z};
             double rad=0;
             int pVal = pixelVal(data1d,dimNum,P0.x,P0.y,P0.z,c);
+            if (pVal<50) { /*v3d_msg("pVal low, bad neuron, skipping");*/ continue; }
             int pValCircTot=0, runs=0;
             double check=0;
             do
@@ -1135,3 +1121,125 @@ template <class T> double compute_radius(T* data1d, V3DLONG *dimNum, vector<V_Ne
 
     return radAve;
 }
+
+//this algorithm is much worse than mark_or_curve
+void markers_singleChannel(V3DPluginCallback2 &callback, QWidget *parent)
+{
+    v3dhandle curwin = callback.currentImageWindow();
+
+    //cancels if no image
+    if (!curwin)
+    {
+        v3d_msg("You don't have any image open in the main window.");
+        return;
+    }
+
+    //if image, pulls the data
+    Image4DSimple* p4DImage = callback.getImage(curwin); //the data of the image is in 4D (channel + 3D)
+
+    unsigned char* data1d = p4DImage->getRawData(); //sets data into 1D array
+
+    //defining the dimensions
+    V3DLONG N = p4DImage->getXDim();
+    V3DLONG M = p4DImage->getYDim();
+    V3DLONG P = p4DImage->getZDim();
+    V3DLONG sc = p4DImage->getCDim();
+    //input channel
+    unsigned int c=1, rad=10;
+    bool ok;
+    if (sc==1)
+        c=1; //if only using 1 channel
+    else
+        c = QInputDialog::getInteger(parent, "Channel", "Enter Channel Number", 1, 1, sc, 1,&ok);
+
+    //storing the dimensions
+    V3DLONG dimNum[4];
+    dimNum[0]=N; dimNum[1]=M; dimNum[2]=P; dimNum[3]=sc;
+
+    //pulling marker info
+    int xc,yc,zc;
+    LocationSimple tmpLocation(0,0,0);
+    LandmarkList mlist = callback.getLandmark(curwin);
+    QString imgname = callback.getImageName(curwin);
+    int marknum = mlist.count();
+    if (mlist.isEmpty())
+    {
+        v3d_msg(QString("The marker list of the current image [%1] is empty. Do nothing.").arg(imgname));
+        return;
+    }
+    else
+    {
+        //radius input
+        rad = QInputDialog::getInteger(parent, "Radius", "Enter radius", 1,1,P,1,&ok);
+        int cat = mlist.at(0).category;
+
+        //dynamic array to store average pixel values of all markers
+        int * markAve; int * pointAve;
+        markAve = new int[marknum]; pointAve = new int[marknum];
+        int markSum = 0, pointSum = 0, dataAve, pointval;
+
+        //getting pixel values from each marker
+        for (int i=0; i<marknum; i++)
+        {
+            tmpLocation = mlist.at(i);
+            tmpLocation.getCoord(xc,yc,zc);
+            pair<int,int> pixAns = pixel(data1d,dimNum,xc,yc,zc,c,rad);
+            dataAve = pixAns.first;
+            pointval = pixAns.second;
+            markAve[i] = dataAve;
+            pointAve[i] = pointval;
+            markSum += dataAve;
+            pointSum += pointval;
+        }
+
+        int MarkAve = markSum/marknum; //average pixel value of all markers in this channel
+        int PointAve = pointSum/marknum;
+        //st dev of markAve
+        int stM=0, stP=0;
+        for (int i=0; i<marknum; i++)
+        {
+            int s = pow(markAve[i]-MarkAve,2.0);
+            stM += s;
+
+            int t = pow(pointAve[i]-PointAve,2.0);
+            stP += t;
+        }
+        int MarkStDev = sqrt(stM/(marknum-1.0));
+        int PointStDev = sqrt(stP/(marknum-1.0));
+
+        //v3d_msg(QString("Mean value region: %1. St Dev: %2 MarkSum %3 and markNum %4. Mean value point: %5. St Dev: %6").arg(MarkAve).arg(MarkStDev).arg(markSum).arg(marknum).arg(PointAve).arg(PointStDev));
+
+        //and here we need to add the function that will scan the rest of the image for other cells based on MarkAve and MarkStDev
+        //int CellCnt = count(data1d,dimNum,curwin,MarkAve,MarkStDev,rad,c);
+        //v3d_msg(QString("There are %1 cells in this channel").arg(CellCnt));
+
+        LandmarkList newList = count(data1d,dimNum,MarkAve,MarkStDev,PointAve,PointStDev,rad,0,0,c,cat);
+
+        //now need to delete duplicate markers on same cell
+        LandmarkList smallList = duplicates(data1d,newList,dimNum,PointAve,rad,c);
+        LandmarkList& woot = smallList;
+        bool draw_le_markers = callback.setLandmark(curwin,woot);
+
+    }
+    return;
+}
+bool export_list2file(QList<NeuronTree> & N2, QString &fileSaveName, QString &fileOpenName)
+{
+    QFile file(fileSaveName);
+    if (!file.open(QIODevice::WriteOnly|QIODevice::Text))
+        return false;
+    QTextStream myfile(&file);
+    myfile<<"# generated by Vaa3D Plugin resample_swc"<<endl;
+    myfile<<"# source file(s): "<<fileOpenName<<endl;
+    myfile<<"# id,type,x,y,z,r,pid"<<endl;
+    QList<NeuronSWC> N1;
+    for (int j=0; j<N2.count(); j++)
+    {
+        N1 = N2.at(j).listNeuron;
+        for (V3DLONG i=0;i<N1.size();i++)
+            myfile << N1.at(i).n <<" " << N1.at(i).type << " "<< N1.at(i).x <<" "<<N1.at(i).y << " "<< N1.at(i).z << " "<< N1.at(i).r << " " <<N1.at(i).pn << "\n";
+    }
+    file.close();
+    cout<<"swc file "<<fileSaveName.toStdString()<<" has been generated, size: "<<N1.size()<<endl;
+    return true;
+};
