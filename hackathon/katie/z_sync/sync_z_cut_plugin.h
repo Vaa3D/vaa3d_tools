@@ -125,8 +125,8 @@ public:
 
     QString Cut_altTip(int dim_i, int v, int minv, int maxv, int offset);
 
+    //void setZCutLockIcon(bool);
     /**
-    void setZCutLockIcon(bool);
     void initVolumeCutRange();  // called by initControlValue
     void initSurfaceCutRange();
     **/
@@ -152,6 +152,8 @@ public:
     QAbstractSlider *zcminSlider, *zcmaxSlider;
     //QAbstractSlider *zSminSlider, *zSmaxSlider;
 
+    QAbstractButton *zcLock;
+
     //V3dR_GLWidget * glWidget;
 
     //QString Cut_altTip(int dim_i, int v, int minv, int maxv, int offset);
@@ -175,11 +177,18 @@ virtual void setZCutLock(bool); //only for image
 virtual void setZSurfCutLock(bool); //for the surface
 virtual void enableZSlice(bool); //only for image
 **/
+    //void setZCut0(float s);
+    //void setZCut1(float s);
 
 private slots:
     //void _slot_sync_onetime();
     void reject();
-    void change_zed_min(); //obviously does more than that now
+    void change_z_min();
+    void change_z_max();
+    void setZCutLockIcon(bool);
+    void setZCutLock(bool);
+    //void showZCutLock();
+    //void change_zed_min(); //obviously does more than that now
     //void SWC_min_and_max();
     //void showSWC_min_and_max();
 
@@ -211,6 +220,12 @@ float max_num;
 //int zcutmax;
 float dist_MIN;
 float dist_MAX;
+int lockZ;
+int X;
+int Y;
+int dzCut;
+int save_z_min;
+int save_z_max;
 
 void init_members()
 {
@@ -219,6 +234,13 @@ zCut0 = zCut1 = 0;
 zClip0 = zClip1 = 0;
 zcminSlider = 0;
 zcmaxSlider = 0;
+lockZ = 0;
+zcLock = 0;
+X = 0;
+Y = 0;
+dzCut = 0;
+save_z_min = 0;
+save_z_max = 0;
 //zcmaxSlider = zSminSlider = zSmaxSlider = 0;
 //glWidget = 0;
 }

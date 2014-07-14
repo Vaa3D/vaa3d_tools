@@ -103,7 +103,7 @@ void lookPanel::reject()
     finishSyncPanel();
 }
 
-QAbstractSlider *lookPanel::createCutPlaneSlider(int maxval, Qt::Orientation hv) //lookPanel = V3D main window
+QAbstractSlider *lookPanel::createCutPlaneSlider(int maxval, Qt::Orientation hv)
 {
     QScrollBar *slider = new QScrollBar(hv);
     slider->setRange(0, maxval);
@@ -117,7 +117,7 @@ lookPanel::lookPanel(V3DPluginCallback2 &_v3d, QWidget *parent) : //do it here!!
     QDialog(parent), m_v3d(_v3d)
 {
     win_list = m_v3d.getImageWindowList();
-
+    //QObject *test = m_v3d.currentImageWindow();
     v3dhandle curwin = m_v3d.currentImageWindow();
         if (!curwin)
         {
@@ -165,7 +165,7 @@ lookPanel::lookPanel(V3DPluginCallback2 &_v3d, QWidget *parent) : //do it here!!
     combo_master = new QComboBox(); combo_master->addItems(items);
     //new_combo_master = new QComboBox(); new_combo_master->addItems(items);
 
-    label_master = new QLabel(QObject::tr("Master-window: "));
+    label_master = new QLabel(QObject::tr("Display: "));
 
     //check_zed = new QCheckBox(); check_zed->setText(QObject::tr("zcutmin"));check_zed->setChecked(true);
 
@@ -182,11 +182,13 @@ lookPanel::lookPanel(V3DPluginCallback2 &_v3d, QWidget *parent) : //do it here!!
 
     //QPushButton* ok     = new QPushButton("Show zed");
     //QPushButton* cancel = new QPushButton("Close");
-    QPushButton* update = new QPushButton("Update zed");
+    //QPushButton* update = new QPushButton("Update zed");
     //QPushButton* ok2 = new QPushButton("Show surf_dim");
 
     zcminSlider = createCutPlaneSlider(140);
     zcmaxSlider = createCutPlaneSlider(140);
+
+    zcLock = new QToolButton(); zcLock->setCheckable(true); //NEW
 
     //box_ZCut_Min = new QSpinBox();
     //box_ZCut_Max = new QSpinBox();
@@ -203,7 +205,7 @@ lookPanel::lookPanel(V3DPluginCallback2 &_v3d, QWidget *parent) : //do it here!!
     //gridLayout->addWidget(check_zed, 4,2,1,1);
     //gridLayout->addWidget(ok, 5,0); //needed?
     //gridLayout->addWidget(cancel,12,6); //needed?
-    gridLayout->addWidget(update, 12,12);
+    //gridLayout->addWidget(update, 12,12);
     //gridLayout->addWidget(ok2, 17,8);
 
     setLayout(gridLayout);
@@ -215,12 +217,16 @@ lookPanel::lookPanel(V3DPluginCallback2 &_v3d, QWidget *parent) : //do it here!!
 
     gridLayout->addWidget(zcminSlider,15,3,1,6); //15,0,1,6 //maybe add dimensions later
     gridLayout->addWidget(zcmaxSlider,17,3,1,6);
+    gridLayout->addWidget(zcLock, 20, 1, 1, 3); //NEW
+
 
     //connect(ok, SIGNAL(clicked()), this, SLOT(_slot_sync_onetime())); //see zcutmin
     //connect(ok2, SIGNAL(clicked()), this, SLOT(showSWC_min_and_max()));
     //connect(cancel, SIGNAL(clicked()), this, SLOT(reject()));
-    connect(update, SIGNAL(clicked()), this, SLOT(change_zed_min()));
+    //connect(update, SIGNAL(clicked()), this, SLOT(change_zed_min())); //OUT
     //connect(check_zed, SIGNAL(stateChanged(int)), this, SLOT(update()));
+
+    //v3dhandleList win_list = m_v3d.getImageWindowList();
 
     /**
         box_ZCut_Min->setMaximum(140);
@@ -244,28 +250,53 @@ lookPanel::lookPanel(V3DPluginCallback2 &_v3d, QWidget *parent) : //do it here!!
     //connect(box_ZCut_Min, SIGNAL(valueChanged(double)), this, SLOT(update()));
     //connect(box_ZCut_Max, SIGNAL(valueChanged(double)), this, SLOT(update()));
 
+    /**
     if (zcminSlider)
     {
             //connect(glWidget, SIGNAL(changeZCut0(int)), zcminSlider, SLOT(setValue(int)));
             connect(zcminSlider, SIGNAL(valueChanged(int)), this, SLOT(update())); //SLOT(setZCut0(int))
 
     }
+    **/
+
+    if (zcminSlider)
+    {
+            //connect(glWidget, SIGNAL(changeZCut0(int)), zcminSlider, SLOT(setValue(int)));
+            connect(zcminSlider, SIGNAL(valueChanged(int)), this, SLOT(change_z_min())); //SLOT(setZCut0(int))
+            //connect(zcminSlider, SIGNAL(valueChanged(int)), parent, SLOT(setZClip0(float)));
+
+    }
+
 
     if(zcmaxSlider){
+
+        connect(zcmaxSlider, SIGNAL(valueChanged(int)), this, SLOT(change_z_max()));
+        //connect(zcmaxSlider, SIGNAL(valueChanged(int)), parent, SLOT(setZClip1(float)));
+
+    }
+
+    if (zcLock) {
+            connect(zcLock, SIGNAL(toggled(bool)), this, SLOT(setZCutLock(bool))); //3. glWidget
+            //connect(zcLock, SIGNAL(toggled(bool)), this, SLOT(showZCutLock()));
+        //I need to rewrite setZCutLock for sure
+            connect(zcLock, SIGNAL(toggled(bool)), this, SLOT(setZCutLockIcon(bool))); setZCutLockIcon(false);
+        }
+    //right now just setting to false. a blank icon. this is ok.
+    //this isn't actually locking the slider!
+    //still not working...argh
+
+    /**
+    if(zcmaxSlider){
+
         connect(zcmaxSlider, SIGNAL(valueChanged(int)), this, SLOT(update()));
     }
+    **/
 
     //should we check the window close event? // by PHC
 
     m_pTimer = new QTimer(this);
     connect(m_pTimer, SIGNAL(timeout()), this, SLOT(_slot_timerupdate()));
     win_list_past = win_list; //no idea what this is
-
-//list_anchors = new QListWidget(); //NO
-    //gridLayout->addWidget(list_anchors,6,0,5,5); //NO
-
-//list_min_max = new QListWidget();
-    //gridLayout->addWidget(list_min_max,6,0,5,5); //moved to list_anchors position
 
 }
 
@@ -274,9 +305,51 @@ lookPanel::~lookPanel()
     if (m_pTimer) {delete m_pTimer; m_pTimer=0;}
 }
 
-//change zed min updates everything...
-void lookPanel::change_zed_min()
+void lookPanel::setZCutLockIcon(bool b){
+    if (! zcLock)  return;
+        if (b)
+            zcLock->setIcon(QIcon(":/icons/Lockon.png"));
+        else
+            zcLock->setIcon(QIcon(":/icons/Lockoff.png"));
+}
+
+/**
+void lookPanel::setZCutLock(bool b)
 {
+    if (b)	dzCut = _zCut1-_zCut0;
+    else    dzCut = 0;
+    lockZ = b? 1:0;  //110714
+    //1 is result if true, 0 is result if false
+}
+**/
+
+
+void lookPanel::setZCutLock(bool b)
+{
+    //change this first part??
+    if (b) {
+        dzCut = Y - X; //it's not locking because X and Y are changing?
+        //zcmaxSlider->sliderPosition()==(zcminSlider->sliderPosition()+dzCut);
+    //zcmaxSlider->setValue(50); //this works. Sets it to this as soon as I hit the button
+    //zcmaxSlider->setValue(dzCut); //is decreasing the value of the zcmaxSlider by 26 each time clicked, seems to work though
+        //zcmaxSlider->setValue(X+dzCut); //now try this //the problem is it doesn't update until I click the button, then it doesn't stick
+    }
+    else dzCut = 0; //I think I can keep this?
+    lockZ = b? 1:0; //I should keep this
+}
+
+/**
+void lookPanel::showZCutLock()
+{
+    if (lockZ){
+        zcmaxSlider->setValue(X+dzCut);
+        //update();
+        //zcmaxSlider->setValue(50); //this works. Sets it to this as soon as I hit the button
+    }
+}
+**/
+
+void lookPanel::change_z_min(){
     v3dhandleList win_list = m_v3d.getImageWindowList();
     int i1 = combo_master->currentIndex();
 
@@ -296,47 +369,104 @@ void lookPanel::change_zed_min()
                 {
                     view_master->absoluteRotPose();
 
-                    //for the QSpinBox; take this out for now
-                    /**
-                    int  N = box_ZCut_Min->text().toInt(); //this gives z cut info to the viewer
-                    view_master->setZCut0(N);
-
-                    int L = box_ZCut_Max->text().toInt();
-                    view_master->setZCut1(L); //added
-                    **/
-
-                    //for the slider
-                    int X = zcminSlider->sliderPosition();
+                    X = zcminSlider->sliderPosition();
                     view_master->setZCut0(X);
 
-                    int Y = zcmaxSlider->sliderPosition();
+                    dist_MIN = fabs((min_num-((float)X)));
+
+                    if ((float)X>min_num){
+
+                         view_master->setZClip0((dist_MIN/(max_num-min_num))*200);
+                    }
+
+
+                    if((float)X<=min_num){
+                        view_master->setZClip0(0);
+                    }
+
+                    if (lockZ){
+                        zcmaxSlider->setValue(X+dzCut);
+                        //update();
+                        //zcmaxSlider->setValue(50); //this works. Sets it to this as soon as I hit the button
+                        if((zcmaxSlider->value())==(140)){
+                            save_z_min = (140-dzCut)-1;
+                            //zcminSlider->setValue(120); //"jumps" to 120 then ...
+                            zcminSlider->setValue(save_z_min);
+                        }
+                    }
+                }
+           }
+        }
+        else
+        {
+            v3d_msg(warning_msg);
+            QStringList items;
+            for (int i=0; i<win_list.size(); i++)
+                items << m_v3d.getImageName(win_list[i]);
+            combo_master->clear(); combo_master->addItems(items);
+            win_list_past = win_list;
+            return;
+
+        }
+    }
+    else
+    {
+        v3d_msg(warning_msg);
+        QStringList items;
+        for (int i=0; i<win_list.size(); i++)
+            items << m_v3d.getImageName(win_list[i]);
+        combo_master->clear(); combo_master->addItems(items);
+        win_list_past = win_list;
+        return;
+    }
+    return;
+}
+
+void lookPanel::change_z_max(){
+    v3dhandleList win_list = m_v3d.getImageWindowList();
+    int i1 = combo_master->currentIndex();
+
+    if (i1 <  win_list.size() &&
+            i1 < win_list_past.size() )
+    {
+        QString current1 = m_v3d.getImageName(win_list[i1]);
+        QString past1 = m_v3d.getImageName(win_list_past[i1]);
+        if (current1==past1)
+        {
+           if (win_list[i1])//ensure the 3d viewer window is open; if not, then open it (took out  && win_list[i2])
+           {
+                m_v3d.open3DWindow(win_list[i1]);
+                View3DControl *view_master = m_v3d.getView3DControl(win_list[i1]);
+
+                if (view_master)
+                {
+                    view_master->absoluteRotPose();
+
+                    Y = zcmaxSlider->sliderPosition();
                     view_master->setZCut1(Y);
 
-                    dist_MIN = fabs((min_num-((float)X))); //make sure to declare in public: also
-                    dist_MAX = fabs(((float)Y)-max_num); //ditto //fabs()
-
-                    //QString dist_MIN_str = QString::number(dist_MIN); //works but don't use zcutmin, that's stupid.
-                    //v3d_msg(dist_MIN_str); //tester to see if the subtraction works at all...
-
-                    if ((float)X>min_num){ //zcutmin
-                        //show a min z coordinate of min_num + dist_MIN
-                         view_master->setZClip0((dist_MIN/(max_num-min_num))*200); //clearly this isn't working...//dist_MIN
-                         //this is still in the "surface coordinate system, which WILL NOT work.
-                    }
+                    dist_MAX = fabs(((float)Y)-max_num);
 
                     if ((float)Y<max_num){ //zcutmax
                         //show a max z coordinate of max_num - dist_MAX
                          view_master->setZClip1(200-((dist_MAX/(max_num-min_num))*200)); //dist_MAX
                     }
 
-                    if((float)X<=min_num){
-                        view_master->setZClip0(0);
-                    }
-
                     if((float)Y>=max_num){
                         view_master->setZClip1(200);
                     }
 
+                    //In the locked case
+                    if (lockZ){
+                        zcminSlider->setValue(Y-dzCut);
+                        //update();
+                        //zcmaxSlider->setValue(50); //this works. Sets it to this as soon as I hit the button
+
+                        if((zcminSlider->value())==0){
+                            save_z_max = dzCut+1;
+                            zcmaxSlider->setValue(save_z_max);
+                        }
+                    }
 
                 }
            }

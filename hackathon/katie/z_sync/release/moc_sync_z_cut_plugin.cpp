@@ -1,7 +1,7 @@
 /****************************************************************************
 ** Meta object code from reading C++ file 'sync_z_cut_plugin.h'
 **
-** Created: Thu Jul 10 16:21:48 2014
+** Created: Mon Jul 14 15:01:23 2014
 **      by: The Qt Meta Object Compiler version 62 (Qt 4.7.4)
 **
 ** WARNING! All changes made in this file will be lost!
@@ -76,7 +76,7 @@ static const uint qt_meta_data_lookPanel[] = {
        5,       // revision
        0,       // classname
        0,    0, // classinfo
-       2,   14, // methods
+       5,   14, // methods
        0,    0, // properties
        0,    0, // enums/sets
        0,    0, // constructors
@@ -86,12 +86,17 @@ static const uint qt_meta_data_lookPanel[] = {
  // slots: signature, parameters, type, tag, flags
       11,   10,   10,   10, 0x08,
       20,   10,   10,   10, 0x08,
+      35,   10,   10,   10, 0x08,
+      50,   10,   10,   10, 0x08,
+      72,   10,   10,   10, 0x08,
 
        0        // eod
 };
 
 static const char qt_meta_stringdata_lookPanel[] = {
-    "lookPanel\0\0reject()\0change_zed_min()\0"
+    "lookPanel\0\0reject()\0change_z_min()\0"
+    "change_z_max()\0setZCutLockIcon(bool)\0"
+    "setZCutLock(bool)\0"
 };
 
 const QMetaObject lookPanel::staticMetaObject = {
@@ -124,10 +129,13 @@ int lookPanel::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
     if (_c == QMetaObject::InvokeMetaMethod) {
         switch (_id) {
         case 0: reject(); break;
-        case 1: change_zed_min(); break;
+        case 1: change_z_min(); break;
+        case 2: change_z_max(); break;
+        case 3: setZCutLockIcon((*reinterpret_cast< bool(*)>(_a[1]))); break;
+        case 4: setZCutLock((*reinterpret_cast< bool(*)>(_a[1]))); break;
         default: ;
         }
-        _id -= 2;
+        _id -= 5;
     }
     return _id;
 }
