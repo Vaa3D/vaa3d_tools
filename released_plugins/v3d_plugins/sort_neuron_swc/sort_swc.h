@@ -25,21 +25,22 @@ using namespace std;
 QHash<V3DLONG, V3DLONG> ChildParent(QList<NeuronSWC> &neurons, const QList<V3DLONG> & idlist, const QHash<V3DLONG,V3DLONG> & LUT) 
 {
 	QHash<V3DLONG, V3DLONG> cp;
-	for (V3DLONG i=0;i<neurons.size(); i++)
-		if (neurons.at(i).pn==-1) cp.insertMulti(idlist.indexOf(LUT.value(neurons.at(i).n)), -1);
+    for (V3DLONG i=0;i<neurons.size(); i++)
+        if (neurons.at(i).pn==-1) cp.insertMulti(idlist.indexOf(LUT.value(neurons.at(i).n)), -1);
 		else cp.insertMulti(idlist.indexOf(LUT.value(neurons.at(i).n)), idlist.indexOf(LUT.value(neurons.at(i).pn))); 
-	return cp;
+    return cp;
 };
 
 QHash<V3DLONG, V3DLONG> getUniqueLUT(QList<NeuronSWC> &neurons)
 {
 	QHash<V3DLONG,V3DLONG> LUT;
+
 	for (V3DLONG i=0;i<neurons.size();i++)
 	{
 		V3DLONG j;
 		for (j=0;j<i;j++)
 		{
-			if (neurons.at(i).x==neurons.at(j).x && neurons.at(i).y==neurons.at(j).y && neurons.at(i).z==neurons.at(j).z)		break;
+            if (neurons.at(i).x==neurons.at(j).x && neurons.at(i).y==neurons.at(j).y && neurons.at(i).z==neurons.at(j).z)		{break;}
 		}
 		LUT.insertMulti(neurons.at(i).n,j);
 	}
@@ -108,7 +109,6 @@ bool SortSWC(QList<NeuronSWC> & neurons, QList<NeuronSWC> & result, V3DLONG newr
 
 	V3DLONG siz = idlist.size();
 
-
 	bool** matrix = new bool*[siz];
 	for (V3DLONG i = 0;i<siz;i++)
 	{
@@ -121,10 +121,10 @@ bool SortSWC(QList<NeuronSWC> & neurons, QList<NeuronSWC> & result, V3DLONG newr
 	for (V3DLONG i = 0;i<siz;i++)
 	{
 		QList<V3DLONG> parentSet = cp.values(i); //id of the ith node's parents
-		for (V3DLONG j=0;j<parentSet.size();j++)
+        for (V3DLONG j=0;j<parentSet.size();j++)
 		{
 			V3DLONG v2 = (V3DLONG) (parentSet.at(j));
-			if (v2==-1) continue;
+            if (v2==-1 || v2 == 0) continue;
 			matrix[i][v2] = true;
 			matrix[v2][i] = true;
 		}

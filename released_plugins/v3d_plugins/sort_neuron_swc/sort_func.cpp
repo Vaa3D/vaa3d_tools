@@ -30,7 +30,7 @@ void sort_menu(V3DPluginCallback2 &callback, QWidget *parent)
 	NeuronTree nt = openDlg->nt;
 	QList<NeuronSWC> neuron = nt.listNeuron;
 
-	V3DLONG rootid;
+    V3DLONG rootid;
 	V3DLONG thres;
 	bool ok;
 	rootid = QInputDialog::getInteger(0, "Would you like to specify new root number?","New root number:(If you select 'cancel', the first root in file is set as default)",1,1,neuron.size(),1,&ok);
