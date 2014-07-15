@@ -11,6 +11,29 @@ ties names are:
 - Rem: a feature no longer available
 
 ============================================================================================
+Version 0.9.99
+July 15th, 2014
+--------------------------------------------------------------------------------------------
+- Fix: fixed bug which caused random crashes in "Proofreading" mode
+- New: all markers created with the annotation toolbar have blue color
+- Fix: fixed a bug which caused "Delete markers in a ROI" feature to display an error messa-
+       ge in "Proofreading" mode.
+- Fix: fixed a bug which caused annotation toolbar not to be  immediatly shown when zooming-
+       in and out.
+- Fix: fixed a serious bug which might cause  incorrect uint64  calculations when performing
+       image copying operations
+- New: improved "Proofreading" mode:
+       i)   added a dialog to set the trade-off between image resolution and scan duration
+       ii)  added selection of the volume of interest (through Vaa3D volume cut scrollbars)
+       iii) added selection of image resolution
+       iv)  added estimated time
+- New: improved "MIP-preview" feature in "Proofreading" mode:
+       i)   same colormap as the currently displayed 3D image
+       ii)  memory leak free
+       iii) alpha transparency and minor graphical improvements
+--------------------------------------------------------------------------------------------
+
+
 Version 0.9.981
 July 9th, 2014
 --------------------------------------------------------------------------------------------

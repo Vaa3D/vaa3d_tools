@@ -2,6 +2,7 @@
 #define QPIXMAP_TOOLTIP_H
 
 #include "../control/CPlugin.h"
+#include "../control/CImageUtils.h"
 
 class teramanager::QPixmapToolTip : public QWidget
 {
@@ -9,17 +10,15 @@ class teramanager::QPixmapToolTip : public QWidget
 
     private:
 
-        QPixmap pix;            // image/pixmap to be displayed
-        uint8 *rawData;
-        QLabel* imageLabel;
-        QLabel* textLabel;
+        QLabel* imageLabel;         // displays the image / pixmap
+        QLabel* textLabel;          // displays text info
+        uint8* rawData;             // image data buffer
 
         /*********************************************************************************
         * Singleton design pattern: this class can have one instance only,  which must be
         * instantiated by calling static method "istance(...)"
         **********************************************************************************/
         static QPixmapToolTip* uniqueInstance;
-
 
     public:
 
@@ -29,8 +28,6 @@ class teramanager::QPixmapToolTip : public QWidget
         **********************************************************************************/
         static QPixmapToolTip* instance(QWidget *parent=0)
         {
-            /**/itm::debug(itm::LEV_MAX, 0, __itm__current__function__);
-
             if (uniqueInstance == 0)
                 uniqueInstance = new QPixmapToolTip(parent);
             return uniqueInstance;
@@ -45,10 +42,20 @@ class teramanager::QPixmapToolTip : public QWidget
         }
         QPixmapToolTip(QWidget *parent = 0);
 
-        void setPixmap(const QPixmap& pixmap, uint8* raw_data=0){pix = pixmap; imageLabel->setPixmap(pix); rawData = raw_data; update();}
-        void setText(const QString &text){textLabel->setText(text);}        
-        QPixmap& pixmap(){return pix;}
+        // get and set methods
         uint8* raw(){return rawData;}
+        void setImage(const QImage& img, uint8* raw_data=0)
+        {
+            imageLabel->setPixmap( QPixmap::fromImage(img) );
+            rawData = raw_data;
+            update();
+        }
+        void setText(const QString &text)
+        {
+            textLabel->setText(text);
+            update();
+        }
+
 };
 
 #endif // QPIXMAP_TOOLTIP_H

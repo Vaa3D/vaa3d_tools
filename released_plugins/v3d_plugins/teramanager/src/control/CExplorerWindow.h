@@ -154,7 +154,7 @@ class teramanager::CExplorerWindow : public QWidget
         void show();
 
         //GET methods
-        static CExplorerWindow* getCurrent(){/**/itm::debug(itm::LEV_MAX, 0, __itm__current__function__); return current;}
+        static CExplorerWindow* getCurrent(){return current;}
         int getResIndex(){return volResIndex;}
         V3dR_MainWindow* getWindow3D(){return window3D;}
         V3dR_GLWidget* getGLWidget(){return view3DWidget;}

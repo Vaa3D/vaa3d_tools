@@ -72,7 +72,7 @@ class teramanager::PDialogImport : public QDialog
         ***********************************************************************************/
         static PDialogImport* instance(QWidget* parent)
         {
-            if (uniqueInstance == NULL)
+            if (uniqueInstance == 0)
                 uniqueInstance = new PDialogImport(parent);
             return uniqueInstance;
         }

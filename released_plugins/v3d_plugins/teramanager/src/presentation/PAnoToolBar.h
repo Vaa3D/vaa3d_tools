@@ -37,8 +37,6 @@ class teramanager::PAnoToolBar : public QWidget
         **********************************************************************************/
         static PAnoToolBar* instance(QWidget *parent=0)
         {
-            /**/itm::debug(itm::LEV_MAX, 0, __itm__current__function__);
-
             if (uniqueInstance == 0)
                 uniqueInstance = new PAnoToolBar(parent);
             return uniqueInstance;

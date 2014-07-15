@@ -34,6 +34,7 @@
 #include "../presentation/PMain.h"
 #include "../presentation/PLog.h"
 #include "../presentation/PAnoToolBar.h"
+#include "../presentation/PDialogProofreading.h"
 #include "renderer.h"
 #include "renderer_gl1.h"
 #include "v3dr_colormapDialog.h"
@@ -78,7 +79,6 @@ void CExplorerWindow::show()
             QMessageBox::critical(pMain,QObject::tr("Error"), QObject::tr("Unable to get iDrawExternalParameter from Vaa3D's V3dR_GLWidget"),QObject::tr("Ok"));
         window3D = view3DWidget->getiDrawExternalParameter()->window3D;
         PLog::getInstance()->appendGPU(timer.elapsed(), QString("Opened view ").append(title.c_str()).toStdString());
-
 
         // install the event filter on the 3D renderer and on the 3D window
         view3DWidget->installEventFilter(this);
@@ -193,7 +193,7 @@ void CExplorerWindow::show()
         pMain->gradientBar->update();
 
         //disabling translate buttons if needed
-        if(!pMain->isESactive())
+        if(!pMain->isPRactive())
         {
             pMain->traslYneg->setEnabled(volV0 > 0);
             pMain->traslYpos->setEnabled(volV1 < CImport::instance()->getVolume(volResIndex)->getDIM_V());
@@ -259,7 +259,7 @@ void CExplorerWindow::show()
         this->window3D->show();
 
         // updating reference system
-        if(!pMain->isESactive())
+        if(!pMain->isPRactive())
             pMain->refSys->setDims(volH1-volH0+1, volV1-volV0+1, volD1-volD0+1);
         this->view3DWidget->updateGL();     // if omitted, Vaa3D_rotationchanged somehow resets rotation to 0,0,0
         Vaa3D_rotationchanged(0);
@@ -276,7 +276,7 @@ void CExplorerWindow::show()
         // update marker size
         pMain->markersSizeSpinBoxChanged(pMain->markersSizeSpinBox->value());
 
-        //update visible markers
+        // update visible markers
         PAnoToolBar::instance()->buttonMarkerRoiViewChecked(PAnoToolBar::instance()->buttonMarkerRoiView->isChecked());
     }
     catch(RuntimeException &ex)
@@ -349,7 +349,7 @@ CExplorerWindow::CExplorerWindow(V3DPluginCallback2 *_V3D_env, int _resIndex, it
 
         //check that the number of instantiated objects does not exceed the number of available resolutions
         nInstances++;
-        /**/itm::debug(itm::LEV_MAX, strprintf("nInstances++, nInstances = %d", nInstances).c_str(), __itm__current__function__);
+        /**/itm::debug(itm::LEV3, strprintf("nInstances++, nInstances = %d", nInstances).c_str(), __itm__current__function__);
         if(nInstances > CImport::instance()->getResolutions() +1)
             throw RuntimeException(QString("in CExplorerWindow(): exceeded the maximum number of views opened at the same time.\n\nPlease signal this issue to developers.").toStdString().c_str());
 
@@ -395,15 +395,18 @@ CExplorerWindow::~CExplorerWindow()
     window3D->timeSlider->removeEventFilter(this);
 
     // CLOSE 3D window (solution #1)
-    // V3D_env->close3DWindow(window); //this causes crash on 5D data when scrolling time slider
+    if(!CImport::instance()->is5D())
+        V3D_env->close3DWindow(window); //this causes crash on 5D data when scrolling time slider, but is OK in all the other cases
 
     // CLOSE 3D window (solution #2)
     // view3DWidget->close();          //this causes crash when makeLastView is called on a very long chain of opened windows
     // window3D->postClose();
 
-    // CLOSE 3D window (solution #2)
-    // @fixed by Alessandro on 2014-04-11: this seems the only way to close the 3D window w/o (randomly) causing TeraFly to crash
-    POST_EVENT(window3D, QEvent::Close); // this OK
+    // CLOSE 3D window (solution #3)
+    // @fixed  by Alessandro on 2014-04-11: this seems the only way to close the 3D window w/o (randomly) causing TeraFly to crash
+    // @update by Alessandro on 2014-07-15: this causes random crash in "Proofreading" mode, but is ok on 5D data (even in "Proofediting mode"!)
+    else
+        POST_EVENT(window3D, QEvent::Close); // this OK
 
     //close 2D window
     triViewWidget->close();
@@ -573,7 +576,7 @@ bool CExplorerWindow::eventFilter(QObject *object, QEvent *event)
         ***************************************************************************/
         if (object == view3DWidget && event->type() == QEvent::MouseButtonDblClick)
         {
-            if(PMain::getInstance()->isESactive())
+            if(PMain::getInstance()->isPRactive())
             {
                 QMessageBox::information(this->window3D, "Warning", "TeraFly is running in \"Proofreading\" mode. All TeraFly's' navigation features are disabled. "
                                          "Please terminate the \"Proofreading\" mode and try again.");
@@ -602,7 +605,7 @@ bool CExplorerWindow::eventFilter(QObject *object, QEvent *event)
         {
             QKeyEvent* key_evt = (QKeyEvent*)event;
             if(key_evt->key() == Qt::Key_Return)
-                PMain::getInstance()->ESblockSpinboxEditingFinished();
+                PMain::getInstance()->PRblockSpinboxEditingFinished();
         }
 
 
@@ -794,6 +797,7 @@ void CExplorerWindow::receiveData(
             isReady = true;
         }
     }
+//    QMessageBox::information(0, "Stop", "Wait...");
     /**/itm::debug(itm::LEV3, "method terminated", __itm__current__function__);
 }
 
@@ -897,7 +901,7 @@ CExplorerWindow::newView(int x, int y, int z,                            //can b
             // modality #1: VOI = [x-dx,x+dx), [y-dy,y+dy), [z-dz,z+dz), [t0, t1]
             if(dx != -1 && dy != -1 && dz != -1)
             {
-                /**/itm::debug(itm::LEV_MAX, strprintf("title = %s, cropping bbox dims from (%d,%d,%d) t[%d,%d] to...", titleShort.c_str(),  dx, dy, dz, t0, t1).c_str(), __itm__current__function__);
+                /**/itm::debug(itm::LEV3, strprintf("title = %s, cropping bbox dims from (%d,%d,%d) t[%d,%d] to...", titleShort.c_str(),  dx, dy, dz, t0, t1).c_str(), __itm__current__function__);
                 dx = std::min(dx, round(pMain.Hdim_sbox->value()/2.0f));
                 dy = std::min(dy, round(pMain.Vdim_sbox->value()/2.0f));
                 dz = std::min(dz, round(pMain.Ddim_sbox->value()/2.0f));
@@ -909,12 +913,12 @@ CExplorerWindow::newView(int x, int y, int z,                            //can b
                     t0 = t1 - (pMain.Tdim_sbox->value()-1);
                 if(t0 == 0)
                     t1 = pMain.Tdim_sbox->value()-1;
-                /**/itm::debug(itm::LEV_MAX, strprintf("title = %s, ...to (%d,%d,%d)", titleShort.c_str(),  dx, dy, dz).c_str(), __itm__current__function__);
+                /**/itm::debug(itm::LEV3, strprintf("title = %s, ...to (%d,%d,%d)", titleShort.c_str(),  dx, dy, dz).c_str(), __itm__current__function__);
             }
             // modality #2: VOI = [x0, x), [y0, y), [z0, z), [t0, t1]
             else
             {
-                /**/itm::debug(itm::LEV_MAX, strprintf("title = %s, cropping bbox dims from [%d,%d) [%d,%d) [%d,%d) [%d,%d] to...", titleShort.c_str(),  x0, x, y0, y, z0, z, t0, t1).c_str(), __itm__current__function__);
+                /**/itm::debug(itm::LEV3, strprintf("title = %s, cropping bbox dims from [%d,%d) [%d,%d) [%d,%d) [%d,%d] to...", titleShort.c_str(),  x0, x, y0, y, z0, z, t0, t1).c_str(), __itm__current__function__);
                 if(x - x0 > pMain.Hdim_sbox->value())
                 {
                     float margin = ( (x - x0) - pMain.Hdim_sbox->value() )/2.0f ;
@@ -941,7 +945,7 @@ CExplorerWindow::newView(int x, int y, int z,                            //can b
                     t0 = t1 - (pMain.Tdim_sbox->value()-1);
                 if(t0 == 0)
                     t1 = pMain.Tdim_sbox->value()-1;
-                /**/itm::debug(itm::LEV_MAX, strprintf("title = %s, ...to [%d,%d) [%d,%d) [%d,%d) [%d,%d]", titleShort.c_str(),  x0, x, y0, y, z0, z, t0, t1).c_str(), __itm__current__function__);
+                /**/itm::debug(itm::LEV3, strprintf("title = %s, ...to [%d,%d) [%d,%d) [%d,%d) [%d,%d]", titleShort.c_str(),  x0, x, y0, y, z0, z, t0, t1).c_str(), __itm__current__function__);
             }
         }
 
@@ -1052,7 +1056,7 @@ CExplorerWindow::newView(int x, int y, int z,                            //can b
         //if the resolution of the loaded voi is the same of the current one, this window will be closed
         if(resolution == volResIndex)
         {
-            /**/itm::debug(itm::LEV_MAX, strprintf("object \"%s\" is going to be destroyed", titleShort.c_str()).c_str(), __itm__current__function__);
+            /**/itm::debug(itm::LEV3, strprintf("object \"%s\" is going to be destroyed", titleShort.c_str()).c_str(), __itm__current__function__);
 
             if(prev)
             {
@@ -1133,7 +1137,7 @@ throw (RuntimeException)
     int z1a = ZRectIntersect.right();
     int t0a = TRectIntersect.left();
     int t1a = TRectIntersect.right();
-    /**/itm::debug(itm::LEV_MAX, strprintf("title = %s, available voi is [%d, %d) [%d, %d) [%d, %d) [%d, %d]",
+    /**/itm::debug(itm::LEV3, strprintf("title = %s, available voi is [%d, %d) [%d, %d) [%d, %d) [%d, %d]",
                                         titleShort.c_str(), x0a, x1a, y0a, y1a, z0a, z1a, t0a, t1a).c_str(), __itm__current__function__);
 
 
@@ -1350,7 +1354,7 @@ void CExplorerWindow::storeAnnotations() throw (RuntimeException)
     timer.start();
 
     //computing the current volume range in the highest resolution image space
-    /**/itm::debug(itm::LEV_MAX, strprintf("computing the current volume range in the highest resolution image space").c_str(), __itm__current__function__);
+    /**/itm::debug(itm::LEV3, strprintf("computing the current volume range in the highest resolution image space").c_str(), __itm__current__function__);
     int highestResIndex = CImport::instance()->getResolutions()-1;
     int voiV0 = CVolume::scaleVCoord(volV0, volResIndex, highestResIndex);
     int voiV1 = CVolume::scaleVCoord(volV1, volResIndex, highestResIndex);
@@ -1475,6 +1479,11 @@ void CExplorerWindow::createMarkerAt(int x, int y) throw (itm::RuntimeException)
     undoStack.endMacro();
     PAnoToolBar::instance()->buttonUndo->setEnabled(true);
 
+    // all markers have the same color when they are created
+    vaa3dMarkers.back().color = CImageUtils::vaa3D_color(0,0,255);
+    V3D_env->setLandmark(window, vaa3dMarkers);
+    V3D_env->pushObjectIn3DWindow(window);
+
     //update visible markers
     PAnoToolBar::instance()->buttonMarkerRoiViewChecked(PAnoToolBar::instance()->buttonMarkerRoiView->isChecked());
 }
@@ -1542,11 +1551,11 @@ void CExplorerWindow::loadAnnotations() throw (RuntimeException)
     timer.start();
 
     //clearing previous annotations (useful when this view has been already visited)
-    /**/itm::debug(itm::LEV_MAX, strprintf("clearing previous annotations").c_str(), __itm__current__function__);
+    /**/itm::debug(itm::LEV3, strprintf("clearing previous annotations").c_str(), __itm__current__function__);
     V3D_env->getHandleNeuronTrees_Any3DViewer(window3D)->clear();
 
     //computing the current volume range in the highest resolution image space
-    /**/itm::debug(itm::LEV_MAX, strprintf("computing the current volume range in the highest resolution image space").c_str(), __itm__current__function__);
+    /**/itm::debug(itm::LEV3, strprintf("computing the current volume range in the highest resolution image space").c_str(), __itm__current__function__);
     int highestResIndex = CImport::instance()->getResolutions()-1;
     int voiV0 = CVolume::scaleVCoord(volV0, volResIndex, highestResIndex);
     int voiV1 = CVolume::scaleVCoord(volV1, volResIndex, highestResIndex);
@@ -1579,12 +1588,12 @@ void CExplorerWindow::loadAnnotations() throw (RuntimeException)
     }
 
     //obtaining the annotations within the current window
-    /**/itm::debug(itm::LEV_MAX, strprintf("obtaining the annotations within the current window").c_str(), __itm__current__function__);
+    /**/itm::debug(itm::LEV3, strprintf("obtaining the annotations within the current window").c_str(), __itm__current__function__);
     CAnnotations::getInstance()->findLandmarks(x_range, y_range, z_range, vaa3dMarkers);
     CAnnotations::getInstance()->findCurves(x_range, y_range, z_range, vaa3dCurves.listNeuron);
 
     //converting global coordinates to local coordinates
-    /**/itm::debug(itm::LEV_MAX, strprintf("converting global coordinates to local coordinates").c_str(), __itm__current__function__);
+    /**/itm::debug(itm::LEV3, strprintf("converting global coordinates to local coordinates").c_str(), __itm__current__function__);
     for(int i=0; i<vaa3dMarkers.size(); i++)
     {
         vaa3dMarkers[i].x = getLocalHCoord(vaa3dMarkers[i].x);
@@ -1604,11 +1613,11 @@ void CExplorerWindow::loadAnnotations() throw (RuntimeException)
 
 
     //update cpu time
-    /**/itm::debug(itm::LEV_MAX, strprintf("update CPU time").c_str(), __itm__current__function__);
+    /**/itm::debug(itm::LEV3, strprintf("update CPU time").c_str(), __itm__current__function__);
     PLog::getInstance()->appendCPU(timer.elapsed(), QString("Loaded 3D annotations into view ").append(title.c_str()).toStdString());
 
     //assigning annotations
-    /**/itm::debug(itm::LEV_MAX, strprintf("assigning annotations").c_str(), __itm__current__function__);
+    /**/itm::debug(itm::LEV3, strprintf("assigning annotations").c_str(), __itm__current__function__);
     timer.restart();
     V3D_env->setLandmark(window, vaa3dMarkers);
     V3D_env->setSWC(window, vaa3dCurves);
@@ -1809,7 +1818,7 @@ void CExplorerWindow::restoreViewFrom(CExplorerWindow* source) throw (RuntimeExc
         this->window3D->show();
 
         // update reference system dimension
-        if(!PMain::getInstance()->isESactive())
+        if(!PMain::getInstance()->isPRactive())
             PMain::getInstance()->refSys->setDims(volH1-volH0+1, volV1-volV0+1, volD1-volD0+1);
 
         // refresh annotation toolbar
@@ -1854,13 +1863,6 @@ void CExplorerWindow::invokedFromVaa3D(v3d_imaging_paras* params /* = 0 */)
     if(!isActive || toBeClosed)
         return;
 
-    if(PMain::getInstance()->isESactive())
-    {
-        QMessageBox::information(this->window3D, "Warning", "TeraFly is running in \"Proofreading\" mode. All TeraFly's' navigation features are disabled. "
-                                 "Please terminate the \"Proofreading\" mode and try again.");
-        return;
-    }
-
     if(params)
         /**/itm::debug(itm::LEV1, strprintf("title = %s, params = [%d-%d] x [%d-%d] x [%d-%d]", titleShort.c_str(), params->xs, params->xe, params->ys, params->ye, params->zs, params->ze).c_str(), __itm__current__function__);
     else
@@ -1872,23 +1874,11 @@ void CExplorerWindow::invokedFromVaa3D(v3d_imaging_paras* params /* = 0 */)
     v3d_imaging_paras* roi = 0;
     if(params)
         roi = params;
-    else
-    {
-        if(view3DWidget->getiDrawExternalParameter())
-        {
-            if(view3DWidget->getiDrawExternalParameter()->image4d)
-            {
-                if(view3DWidget->getiDrawExternalParameter()->image4d->getCustomStructPointer())
-                    roi = static_cast<v3d_imaging_paras*>(view3DWidget->getiDrawExternalParameter()->image4d->getCustomStructPointer());
-                else
-                    ;//QMessageBox::critical(this,QObject::tr("Error"), QObject::tr("Unable to get customStructPointer from Vaa3D V3dR_GLWidget"),QObject::tr("Ok"));
-            }
-            else
-                ;//QMessageBox::critical(this,QObject::tr("Error"), QObject::tr("Unable to get My4DImage from Vaa3D V3dR_GLWidget"),QObject::tr("Ok"));
-        }
-        else
-            ;//QMessageBox::critical(this,QObject::tr("Error"), QObject::tr("Unable to get iDrawExternalParameter from Vaa3D V3dR_GLWidget"),QObject::tr("Ok"));
-    }
+    else if(view3DWidget->getiDrawExternalParameter()           &&
+            view3DWidget->getiDrawExternalParameter()->image4d  &&
+            view3DWidget->getiDrawExternalParameter()->image4d->getCustomStructPointer() )
+        roi = static_cast<v3d_imaging_paras*>(view3DWidget->getiDrawExternalParameter()->image4d->getCustomStructPointer());
+
     if(!roi)
     {
         /**/itm::warning(strprintf("title = %s, Unable to get customStructPointer from Vaa3D V3dR_GLWidget. Aborting invokedFromVaa3D()", titleShort.c_str()).c_str(), __itm__current__function__);
@@ -1896,7 +1886,7 @@ void CExplorerWindow::invokedFromVaa3D(v3d_imaging_paras* params /* = 0 */)
     }
 
     if(params == 0)
-        /**/itm::debug(itm::LEV_MAX, strprintf("title = %s, Vaa3D ROI is [%d-%d] x [%d-%d] x [%d-%d]", titleShort.c_str(), roi->xs, roi->xe, roi->ys, roi->ye, roi->zs, roi->ze).c_str(), __itm__current__function__);
+        /**/itm::debug(itm::LEV3, strprintf("title = %s, Vaa3D ROI is [%d-%d] x [%d-%d] x [%d-%d]", titleShort.c_str(), roi->xs, roi->xe, roi->ys, roi->ye, roi->zs, roi->ze).c_str(), __itm__current__function__);
 
 
     //--- Alessandro 23/04/2014: after several bug fixes, it seems this bug does not occur anymore
@@ -1922,11 +1912,19 @@ void CExplorerWindow::invokedFromVaa3D(v3d_imaging_paras* params /* = 0 */)
         PAnoToolBar::instance()->refreshTools();
     }
 
-    //zoom-in around marker or ROI triggers a new window
+    // otherwise before continue, check "Proofreading" mode is not active
+    else if(PMain::getInstance()->isPRactive())
+    {
+        QMessageBox::information(this->window3D, "Warning", "TeraFly is running in \"Proofreading\" mode. All TeraFly's' navigation features are disabled. "
+                                 "Please terminate the \"Proofreading\" mode and try again.");
+        return;
+    }
+
+    // zoom-in around marker or ROI triggers a new window
     else if(roi->ops_type == 1)
         newView(roi->xe, roi->ye, roi->ze, volResIndex+1, volT0, volT1, false, -1, -1, -1, roi->xs, roi->ys, roi->zs);
 
-    //zoom-in with mouse scroll up may trigger a new window if caching is not possible
+    // zoom-in with mouse scroll up may trigger a new window if caching is not possible
     else if(roi->ops_type == 2)
     {
         if(volResIndex != CImport::instance()->getResolutions()-1 &&   //do nothing if highest resolution has been reached
@@ -1947,7 +1945,7 @@ void CExplorerWindow::invokedFromVaa3D(v3d_imaging_paras* params /* = 0 */)
                 QRectF gZRect(QPointF(gZS, 0), QPointF(gZE, 1));
 
                 //obtaining the actual requested VOI under the existing constraints (i.e., maximum view dimensions)
-                /**/itm::debug(itm::LEV_MAX, strprintf("title = %s, requested voi is [%.0f, %.0f] x [%.0f, %.0f] x [%.0f, %.0f]...BUT",
+                /**/itm::debug(itm::LEV3, strprintf("title = %s, requested voi is [%.0f, %.0f] x [%.0f, %.0f] x [%.0f, %.0f]...BUT",
                                                        titleShort.c_str(), gXS, gXE, gYS, gYE, gZS, gZE).c_str(), __itm__current__function__);
 
                 if(gXE-gXS > PMain::getInstance()->Hdim_sbox->value())
@@ -1968,7 +1966,7 @@ void CExplorerWindow::invokedFromVaa3D(v3d_imaging_paras* params /* = 0 */)
                     gZS = center - PMain::getInstance()->Ddim_sbox->value()/2;
                     gZE = center + PMain::getInstance()->Ddim_sbox->value()/2;
                 }
-                /**/itm::debug(itm::LEV_MAX, strprintf("title = %s, ...BUT actual requested VOI became [%.0f, %.0f] x [%.0f, %.0f] x [%.0f, %.0f]",
+                /**/itm::debug(itm::LEV3, strprintf("title = %s, ...BUT actual requested VOI became [%.0f, %.0f] x [%.0f, %.0f] x [%.0f, %.0f]",
                                                        titleShort.c_str(), gXS, gXE, gYS, gYE, gZS, gZE).c_str(), __itm__current__function__);
 
                 //obtaining coordinates of the cached resolution
@@ -1991,10 +1989,10 @@ void CExplorerWindow::invokedFromVaa3D(v3d_imaging_paras* params /* = 0 */)
                 float cachedVol = (gXEcached-gXScached)*(gYEcached-gYScached)*(gZEcached-gZScached);
                 float coverageFactor = voiVol != 0 ? intersectionVol/voiVol : 0;
 
-                /**/itm::debug(itm::LEV_MAX, strprintf("title = %s, actual requested voi is [%.0f, %.0f] x [%.0f, %.0f] x [%.0f, %.0f] and cached is [%.0f, %.0f] x [%.0f, %.0f] x [%.0f, %.0f]",
+                /**/itm::debug(itm::LEV3, strprintf("title = %s, actual requested voi is [%.0f, %.0f] x [%.0f, %.0f] x [%.0f, %.0f] and cached is [%.0f, %.0f] x [%.0f, %.0f] x [%.0f, %.0f]",
                                                        titleShort.c_str(), gXS, gXE, gYS, gYE, gZS, gZE, gXScached, gXEcached, gYScached, gYEcached, gZScached, gZEcached).c_str(), __itm__current__function__);
 
-                /**/itm::debug(itm::LEV_MAX, strprintf("title = %s,intersection is %.0f x %.0f x %.0f with coverage factor = %.2f ", titleShort.c_str(),
+                /**/itm::debug(itm::LEV3, strprintf("title = %s,intersection is %.0f x %.0f x %.0f with coverage factor = %.2f ", titleShort.c_str(),
                                                        intersectionX, intersectionY, intersectionZ, coverageFactor).c_str(), __itm__current__function__);
 
                 //if Vaa3D VOI is covered for the selected percentage by the existing cached volume, just restoring its view
@@ -2013,7 +2011,7 @@ void CExplorerWindow::invokedFromVaa3D(v3d_imaging_paras* params /* = 0 */)
                 newView(roiCenterX, roiCenterY, roiCenterZ, volResIndex+1, volT0, volT1, false, static_cast<int>((roi->xe-roi->xs)/2.0f+0.5f), static_cast<int>((roi->ye-roi->ys)/2.0f+0.5f), static_cast<int>((roi->ze-roi->zs)/2.0f+0.5f));
         }
         else
-            /**/itm::debug(itm::LEV_MAX, strprintf("title = %s, ignoring Vaa3D mouse scroll up zoom-in", titleShort.c_str()).c_str(), __itm__current__function__);
+            /**/itm::debug(itm::LEV3, strprintf("title = %s, ignoring Vaa3D mouse scroll up zoom-in", titleShort.c_str()).c_str(), __itm__current__function__);
     }
     else
         QMessageBox::critical(this,QObject::tr("Error"), QObject::tr("in CExplorerWindow::Vaa3D_selectedROI(): unsupported (or unset) operation type"),QObject::tr("Ok"));
@@ -2027,7 +2025,7 @@ void CExplorerWindow::invokedFromVaa3D(v3d_imaging_paras* params /* = 0 */)
 ***********************************************************************************/
 int CExplorerWindow::getGlobalVCoord(int localVCoord, int resIndex /* = -1 */, bool fromVaa3Dcoordinates /* = false */, bool cutOutOfRange /* = false */, const char *src /* =0 */)
 {
-    /**/itm::debug(itm::LEV3, strprintf("title = %s, coord = %d, res = %d, fromVaa3D = %s, cutOutOfRange = %s, src = %s",
+    /**/itm::debug(itm::LEV_MAX, strprintf("title = %s, coord = %d, res = %d, fromVaa3D = %s, cutOutOfRange = %s, src = %s",
                                         titleShort.c_str(), localVCoord, resIndex,  fromVaa3Dcoordinates ? "true" : "false", cutOutOfRange ? "true" : "false", src ? src : "unknown").c_str(), __itm__current__function__);
 
     //setting resIndex if it has not been set
@@ -2051,13 +2049,13 @@ int CExplorerWindow::getGlobalVCoord(int localVCoord, int resIndex /* = -1 */, b
 
     float ratio = (CImport::instance()->getVolume(resIndex)->getDIM_V()-1.0f)/(CImport::instance()->getVolume(volResIndex)->getDIM_V()-1.0f);
 
-    /**/itm::debug(itm::LEV3, strprintf("title = %s, returning %d", titleShort.c_str(), static_cast<int>((volV0+localVCoord)*ratio + 0.5f)).c_str(), __itm__current__function__);
+    /**/itm::debug(itm::LEV_MAX, strprintf("title = %s, returning %d", titleShort.c_str(), static_cast<int>((volV0+localVCoord)*ratio + 0.5f)).c_str(), __itm__current__function__);
 
     return (volV0+localVCoord)*ratio + 0.5f;
 }
 int CExplorerWindow::getGlobalHCoord(int localHCoord, int resIndex /* = -1 */, bool fromVaa3Dcoordinates /* = false */, bool cutOutOfRange /* = false */, const char *src /* =0 */)
 {
-    /**/itm::debug(itm::LEV3, strprintf("title = %s, coord = %d, res = %d, fromVaa3D = %s, cutOutOfRange = %s, src = %s",
+    /**/itm::debug(itm::LEV_MAX, strprintf("title = %s, coord = %d, res = %d, fromVaa3D = %s, cutOutOfRange = %s, src = %s",
                                         titleShort.c_str(), localHCoord, resIndex,  fromVaa3Dcoordinates ? "true" : "false", cutOutOfRange ? "true" : "false", src ? src : "unknown").c_str(), __itm__current__function__);
 
     //setting resIndex if it has not been set
@@ -2081,13 +2079,13 @@ int CExplorerWindow::getGlobalHCoord(int localHCoord, int resIndex /* = -1 */, b
 
     float ratio = (CImport::instance()->getVolume(resIndex)->getDIM_H()-1.0f)/(CImport::instance()->getVolume(volResIndex)->getDIM_H()-1.0f);
 
-    /**/itm::debug(itm::LEV3, strprintf("title = %s, returning %d", titleShort.c_str(), static_cast<int>((volH0+localHCoord)*ratio + 0.5f)).c_str(), __itm__current__function__);
+    /**/itm::debug(itm::LEV_MAX, strprintf("title = %s, returning %d", titleShort.c_str(), static_cast<int>((volH0+localHCoord)*ratio + 0.5f)).c_str(), __itm__current__function__);
 
     return (volH0+localHCoord)*ratio + 0.5f;
 }
 int CExplorerWindow::getGlobalDCoord(int localDCoord, int resIndex /* = -1 */, bool fromVaa3Dcoordinates /* = false */, bool cutOutOfRange /* = false */, const char *src /* =0 */)
 {
-    /**/itm::debug(itm::LEV3, strprintf("title = %s, coord = %d, res = %d, fromVaa3D = %s, cutOutOfRange = %s, src = %s",
+    /**/itm::debug(itm::LEV_MAX, strprintf("title = %s, coord = %d, res = %d, fromVaa3D = %s, cutOutOfRange = %s, src = %s",
                                         titleShort.c_str(), localDCoord, resIndex,  fromVaa3Dcoordinates ? "true" : "false", cutOutOfRange ? "true" : "false", src ? src : "unknown").c_str(), __itm__current__function__);
 
     //setting resIndex if it has not been set
@@ -2111,13 +2109,13 @@ int CExplorerWindow::getGlobalDCoord(int localDCoord, int resIndex /* = -1 */, b
 
     float ratio = (CImport::instance()->getVolume(resIndex)->getDIM_D()-1.0f)/(CImport::instance()->getVolume(volResIndex)->getDIM_D()-1.0f);
 
-    /**/itm::debug(itm::LEV3, strprintf("title = %s, returning %d", titleShort.c_str(), static_cast<int>((volD0+localDCoord)*ratio + 0.5f)).c_str(), __itm__current__function__);
+    /**/itm::debug(itm::LEV_MAX, strprintf("title = %s, returning %d", titleShort.c_str(), static_cast<int>((volD0+localDCoord)*ratio + 0.5f)).c_str(), __itm__current__function__);
 
     return (volD0+localDCoord)*ratio + 0.5f;
 }
 float CExplorerWindow::getGlobalVCoord(float localVCoord, int resIndex /* = -1 */, bool fromVaa3Dcoordinates /* = false */, bool cutOutOfRange /* = false */, const char *src /* =0 */)
 {
-    /**/itm::debug(itm::LEV3, strprintf("title = %s, coord = %.2f, res = %d, fromVaa3D = %s, cutOutOfRange = %s, src = %s",
+    /**/itm::debug(itm::LEV_MAX, strprintf("title = %s, coord = %.2f, res = %d, fromVaa3D = %s, cutOutOfRange = %s, src = %s",
                                         titleShort.c_str(), localVCoord, resIndex,  fromVaa3Dcoordinates ? "true" : "false", cutOutOfRange ? "true" : "false", src ? src : "unknown").c_str(), __itm__current__function__);
 
     //setting resIndex if it has not been set
@@ -2141,14 +2139,14 @@ float CExplorerWindow::getGlobalVCoord(float localVCoord, int resIndex /* = -1 *
 
     float ratio = (CImport::instance()->getVolume(resIndex)->getDIM_V()-1.0f)/(CImport::instance()->getVolume(volResIndex)->getDIM_V()-1.0f);
 
-    /**/itm::debug(itm::LEV3, strprintf("title = %s, returning %.2f", titleShort.c_str(), (volV0+localVCoord)*ratio).c_str(), __itm__current__function__);
+    /**/itm::debug(itm::LEV_MAX, strprintf("title = %s, returning %.2f", titleShort.c_str(), (volV0+localVCoord)*ratio).c_str(), __itm__current__function__);
 
     return (volV0+localVCoord)*ratio;
 }
 float CExplorerWindow::getGlobalHCoord(float localHCoord, int resIndex /* = -1 */, bool fromVaa3Dcoordinates /* = false */, bool cutOutOfRange /* = false */, const char *src /* =0 */)
 {
 
-    /**/itm::debug(itm::LEV3, strprintf("title = %s, coord = %.2f, res = %d, fromVaa3D = %s, cutOutOfRange = %s, src = %s",
+    /**/itm::debug(itm::LEV_MAX, strprintf("title = %s, coord = %.2f, res = %d, fromVaa3D = %s, cutOutOfRange = %s, src = %s",
                                         titleShort.c_str(), localHCoord, resIndex,  fromVaa3Dcoordinates ? "true" : "false", cutOutOfRange ? "true" : "false", src ? src : "unknown").c_str(), __itm__current__function__);
 
     //setting resIndex if it has not been set
@@ -2172,13 +2170,13 @@ float CExplorerWindow::getGlobalHCoord(float localHCoord, int resIndex /* = -1 *
 
     float ratio = (CImport::instance()->getVolume(resIndex)->getDIM_H()-1.0f)/(CImport::instance()->getVolume(volResIndex)->getDIM_H()-1.0f);
 
-    /**/itm::debug(itm::LEV3, strprintf("title = %s, returning %.2f", titleShort.c_str(), (volH0+localHCoord)*ratio).c_str(), __itm__current__function__);
+    /**/itm::debug(itm::LEV_MAX, strprintf("title = %s, returning %.2f", titleShort.c_str(), (volH0+localHCoord)*ratio).c_str(), __itm__current__function__);
 
     return (volH0+localHCoord)*ratio;
 }
 float CExplorerWindow::getGlobalDCoord(float localDCoord, int resIndex /* = -1 */, bool fromVaa3Dcoordinates /* = false */, bool cutOutOfRange /* = false */, const char *src /* =0 */)
 {
-    /**/itm::debug(itm::LEV3, strprintf("title = %s, coord = %.2f, res = %d, fromVaa3D = %s, cutOutOfRange = %s, src = %s",
+    /**/itm::debug(itm::LEV_MAX, strprintf("title = %s, coord = %.2f, res = %d, fromVaa3D = %s, cutOutOfRange = %s, src = %s",
                                         titleShort.c_str(), localDCoord, resIndex,  fromVaa3Dcoordinates ? "true" : "false", cutOutOfRange ? "true" : "false", src ? src : "unknown").c_str(), __itm__current__function__);
 
     //setting resIndex if it has not been set
@@ -2202,7 +2200,7 @@ float CExplorerWindow::getGlobalDCoord(float localDCoord, int resIndex /* = -1 *
 
     float ratio = (CImport::instance()->getVolume(resIndex)->getDIM_D()-1.0f)/(CImport::instance()->getVolume(volResIndex)->getDIM_D()-1.0f);
 
-    /**/itm::debug(itm::LEV3, strprintf("title = %s, returning %.2f", titleShort.c_str(), (volD0+localDCoord)*ratio).c_str(), __itm__current__function__);
+    /**/itm::debug(itm::LEV_MAX, strprintf("title = %s, returning %.2f", titleShort.c_str(), (volD0+localDCoord)*ratio).c_str(), __itm__current__function__);
 
     return (volD0+localDCoord)*ratio;
 }
@@ -2214,7 +2212,7 @@ float CExplorerWindow::getGlobalDCoord(float localDCoord, int resIndex /* = -1 *
 ***********************************************************************************/
 int CExplorerWindow::getLocalVCoord(int highestResGlobalVCoord, bool toVaa3Dcoordinates /* = false */)
 {
-    /**/itm::debug(itm::LEV3, strprintf("title = %s, coord = %d, toVaa3Dcoordinates = %s",
+    /**/itm::debug(itm::LEV_MAX, strprintf("title = %s, coord = %d, toVaa3Dcoordinates = %s",
                                         titleShort.c_str(), highestResGlobalVCoord, toVaa3Dcoordinates ? "true" : "false").c_str(), __itm__current__function__);
 
     float ratio = (CImport::instance()->getHighestResVolume()->getDIM_V()-1.0f)/(CImport::instance()->getVolume(volResIndex)->getDIM_V()-1.0f);
@@ -2224,13 +2222,13 @@ int CExplorerWindow::getLocalVCoord(int highestResGlobalVCoord, bool toVaa3Dcoor
     if(toVaa3Dcoordinates && (volV1-volV0 > LIMIT_VOLY))
         localCoord = static_cast<int>(localCoord* ( static_cast<float>(LIMIT_VOLY-1)/(volV1-volV0-1) ) +0.5f);
 
-    /**/itm::debug(itm::LEV3, strprintf("title = %s, returning %d", titleShort.c_str(), localCoord).c_str(), __itm__current__function__);
+    /**/itm::debug(itm::LEV_MAX, strprintf("title = %s, returning %d", titleShort.c_str(), localCoord).c_str(), __itm__current__function__);
 
     return localCoord;
 }
 int CExplorerWindow::getLocalHCoord(int highestResGlobalHCoord, bool toVaa3Dcoordinates /* = false */)
 {
-    /**/itm::debug(itm::LEV3, strprintf("title = %s, coord = %d, toVaa3Dcoordinates = %s",
+    /**/itm::debug(itm::LEV_MAX, strprintf("title = %s, coord = %d, toVaa3Dcoordinates = %s",
                                         titleShort.c_str(), highestResGlobalHCoord, toVaa3Dcoordinates ? "true" : "false").c_str(), __itm__current__function__);
 
     float ratio = (CImport::instance()->getHighestResVolume()->getDIM_H()-1.0f)/(CImport::instance()->getVolume(volResIndex)->getDIM_H()-1.0f);
@@ -2240,13 +2238,13 @@ int CExplorerWindow::getLocalHCoord(int highestResGlobalHCoord, bool toVaa3Dcoor
     if(toVaa3Dcoordinates && (volH1-volH0 > LIMIT_VOLX))
         localCoord = static_cast<int>(localCoord* ( static_cast<float>(LIMIT_VOLX-1)/(volH1-volH0-1) ) +0.5f);
 
-    /**/itm::debug(itm::LEV3, strprintf("title = %s, returning %d", titleShort.c_str(), localCoord).c_str(), __itm__current__function__);
+    /**/itm::debug(itm::LEV_MAX, strprintf("title = %s, returning %d", titleShort.c_str(), localCoord).c_str(), __itm__current__function__);
 
     return localCoord;
 }
 int CExplorerWindow::getLocalDCoord(int highestResGlobalDCoord, bool toVaa3Dcoordinates /* = false */)
 {
-    /**/itm::debug(itm::LEV3, strprintf("title = %s, coord = %d, toVaa3Dcoordinates = %s",
+    /**/itm::debug(itm::LEV_MAX, strprintf("title = %s, coord = %d, toVaa3Dcoordinates = %s",
                                         titleShort.c_str(), highestResGlobalDCoord, toVaa3Dcoordinates ? "true" : "false").c_str(), __itm__current__function__);
 
     float ratio = (CImport::instance()->getHighestResVolume()->getDIM_D()-1.0f)/(CImport::instance()->getVolume(volResIndex)->getDIM_D()-1.0f);
@@ -2256,13 +2254,13 @@ int CExplorerWindow::getLocalDCoord(int highestResGlobalDCoord, bool toVaa3Dcoor
     if(toVaa3Dcoordinates && (volD1-volD0 > LIMIT_VOLZ))
         localCoord = static_cast<int>(localCoord* ( static_cast<float>(LIMIT_VOLZ-1)/(volD1-volD0-1) ) +0.5f);
 
-    /**/itm::debug(itm::LEV3, strprintf("title = %s, returning %d", titleShort.c_str(), localCoord).c_str(), __itm__current__function__);
+    /**/itm::debug(itm::LEV_MAX, strprintf("title = %s, returning %d", titleShort.c_str(), localCoord).c_str(), __itm__current__function__);
 
     return localCoord;
 }
 float CExplorerWindow::getLocalVCoord(float highestResGlobalVCoord, bool toVaa3Dcoordinates /* = false */)
 {
-    /**/itm::debug(itm::LEV3, strprintf("title = %s, coord = %.2f, toVaa3Dcoordinates = %s",
+    /**/itm::debug(itm::LEV_MAX, strprintf("title = %s, coord = %.2f, toVaa3Dcoordinates = %s",
                                         titleShort.c_str(), highestResGlobalVCoord, toVaa3Dcoordinates ? "true" : "false").c_str(), __itm__current__function__);
 
     float ratio = (CImport::instance()->getHighestResVolume()->getDIM_V()-1.0f)/(CImport::instance()->getVolume(volResIndex)->getDIM_V()-1.0f);
@@ -2272,13 +2270,13 @@ float CExplorerWindow::getLocalVCoord(float highestResGlobalVCoord, bool toVaa3D
     if(toVaa3Dcoordinates && (volV1-volV0 > LIMIT_VOLY))
         localCoord = localCoord* ( static_cast<float>(LIMIT_VOLY-1)/(volV1-volV0-1) );
 
-    /**/itm::debug(itm::LEV3, strprintf("title = %s, returning %.2f", titleShort.c_str(), localCoord).c_str(), __itm__current__function__);
+    /**/itm::debug(itm::LEV_MAX, strprintf("title = %s, returning %.2f", titleShort.c_str(), localCoord).c_str(), __itm__current__function__);
 
     return localCoord;
 }
 float CExplorerWindow::getLocalHCoord(float highestResGlobalHCoord, bool toVaa3Dcoordinates /* = false */)
 {
-    /**/itm::debug(itm::LEV3, strprintf("title = %s, coord = %.2f, toVaa3Dcoordinates = %s",
+    /**/itm::debug(itm::LEV_MAX, strprintf("title = %s, coord = %.2f, toVaa3Dcoordinates = %s",
                                         titleShort.c_str(), highestResGlobalHCoord, toVaa3Dcoordinates ? "true" : "false").c_str(), __itm__current__function__);
 
     float ratio = (CImport::instance()->getHighestResVolume()->getDIM_H()-1.0f)/(CImport::instance()->getVolume(volResIndex)->getDIM_H()-1.0f);
@@ -2288,13 +2286,13 @@ float CExplorerWindow::getLocalHCoord(float highestResGlobalHCoord, bool toVaa3D
     if(toVaa3Dcoordinates && (volH1-volH0 > LIMIT_VOLX))
         localCoord = localCoord* ( static_cast<float>(LIMIT_VOLX-1)/(volH1-volH0-1) );
 
-    /**/itm::debug(itm::LEV3, strprintf("title = %s, returning %.2f", titleShort.c_str(), localCoord).c_str(), __itm__current__function__);
+    /**/itm::debug(itm::LEV_MAX, strprintf("title = %s, returning %.2f", titleShort.c_str(), localCoord).c_str(), __itm__current__function__);
 
     return localCoord;
 }
 float CExplorerWindow::getLocalDCoord(float highestResGlobalDCoord, bool toVaa3Dcoordinates /* = false */)
 {
-    /**/itm::debug(itm::LEV3, strprintf("title = %s, coord = %.2f, toVaa3Dcoordinates = %s",
+    /**/itm::debug(itm::LEV_MAX, strprintf("title = %s, coord = %.2f, toVaa3Dcoordinates = %s",
                                         titleShort.c_str(), highestResGlobalDCoord, toVaa3Dcoordinates ? "true" : "false").c_str(), __itm__current__function__);
 
     float ratio = (CImport::instance()->getHighestResVolume()->getDIM_D()-1.0f)/(CImport::instance()->getVolume(volResIndex)->getDIM_D()-1.0f);
@@ -2304,7 +2302,7 @@ float CExplorerWindow::getLocalDCoord(float highestResGlobalDCoord, bool toVaa3D
     if(toVaa3Dcoordinates && (volD1-volD0 > LIMIT_VOLZ))
         localCoord = localCoord* ( static_cast<float>(LIMIT_VOLZ-1)/(volD1-volD0-1) );
 
-    /**/itm::debug(itm::LEV3, strprintf("title = %s, returning %.2f", titleShort.c_str(), localCoord).c_str(), __itm__current__function__);
+    /**/itm::debug(itm::LEV_MAX, strprintf("title = %s, returning %.2f", titleShort.c_str(), localCoord).c_str(), __itm__current__function__);
 
     return localCoord;
 }
@@ -2319,6 +2317,7 @@ void CExplorerWindow::Vaa3D_changeYCut0(int s)
 
     disconnect(PMain::getInstance()->V0_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeV0sbox(int)));
     PMain::getInstance()->V0_sbox->setValue(getGlobalVCoord(s, -1, true, false, __itm__current__function__)+1);
+    PDialogProofreading::instance()->updateBlocks(0);
     connect(PMain::getInstance()->V0_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeV0sbox(int)));
 }
 void CExplorerWindow::Vaa3D_changeYCut1(int s)
@@ -2327,6 +2326,7 @@ void CExplorerWindow::Vaa3D_changeYCut1(int s)
 
     disconnect(PMain::getInstance()->V1_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeV1sbox(int)));
     PMain::getInstance()->V1_sbox->setValue(getGlobalVCoord(s, -1, true, false, __itm__current__function__)+1);
+    PDialogProofreading::instance()->updateBlocks(0);
     connect(PMain::getInstance()->V1_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeV1sbox(int)));
 }
 void CExplorerWindow::Vaa3D_changeXCut0(int s)
@@ -2335,6 +2335,7 @@ void CExplorerWindow::Vaa3D_changeXCut0(int s)
 
     disconnect(PMain::getInstance()->H0_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeH0sbox(int)));
     PMain::getInstance()->H0_sbox->setValue(getGlobalHCoord(s, -1, true, false, __itm__current__function__)+1);
+    PDialogProofreading::instance()->updateBlocks(0);
     connect(PMain::getInstance()->H0_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeH0sbox(int)));
 }
 void CExplorerWindow::Vaa3D_changeXCut1(int s)
@@ -2343,6 +2344,7 @@ void CExplorerWindow::Vaa3D_changeXCut1(int s)
 
     disconnect(PMain::getInstance()->H1_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeH1sbox(int)));
     PMain::getInstance()->H1_sbox->setValue(getGlobalHCoord(s, -1, true, false, __itm__current__function__)+1);
+    PDialogProofreading::instance()->updateBlocks(0);
     connect(PMain::getInstance()->H1_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeH1sbox(int)));
 }
 void CExplorerWindow::Vaa3D_changeZCut0(int s)
@@ -2351,6 +2353,7 @@ void CExplorerWindow::Vaa3D_changeZCut0(int s)
 
     disconnect(PMain::getInstance()->D0_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeD0sbox(int)));
     PMain::getInstance()->D0_sbox->setValue(getGlobalDCoord(s, -1, true, false, __itm__current__function__)+1);
+    PDialogProofreading::instance()->updateBlocks(0);
     connect(PMain::getInstance()->D0_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeD0sbox(int)));
 }
 void CExplorerWindow::Vaa3D_changeZCut1(int s)
@@ -2359,12 +2362,13 @@ void CExplorerWindow::Vaa3D_changeZCut1(int s)
 
     disconnect(PMain::getInstance()->D1_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeD1sbox(int)));
     PMain::getInstance()->D1_sbox->setValue(getGlobalDCoord(s, -1, true, false, __itm__current__function__)+1);
+    PDialogProofreading::instance()->updateBlocks(0);
     connect(PMain::getInstance()->D1_sbox, SIGNAL(valueChanged(int)), this, SLOT(PMain_changeD1sbox(int)));
 }
 
 void CExplorerWindow::Vaa3D_changeTSlider(int s, bool editingFinished /* = false */)
 {
-    /**/itm::debug(itm::LEV_MAX, strprintf("title = %s, s = %d", title.c_str(), s).c_str(), __itm__current__function__);
+    /**/itm::debug(itm::LEV3, strprintf("title = %s, s = %d", title.c_str(), s).c_str(), __itm__current__function__);
 
     if(isActive     &&              // window is visible
        isReady      &&              // window is ready for user input
@@ -2413,6 +2417,7 @@ void CExplorerWindow::PMain_changeV0sbox(int s)
 
     disconnect(view3DWidget, SIGNAL(changeYCut0(int)), this, SLOT(Vaa3D_changeYCut0(int)));
     view3DWidget->setYCut0(getLocalVCoord(s-1, true)+1);
+    PDialogProofreading::instance()->updateBlocks(0);
     connect(view3DWidget, SIGNAL(changeYCut0(int)), this, SLOT(Vaa3D_changeYCut0(int)));
 }
 void CExplorerWindow::PMain_changeV1sbox(int s)
@@ -2421,6 +2426,7 @@ void CExplorerWindow::PMain_changeV1sbox(int s)
 
     disconnect(view3DWidget, SIGNAL(changeYCut1(int)), this, SLOT(Vaa3D_changeYCut1(int)));
     view3DWidget->setYCut1(getLocalVCoord(s-1, true)+1);
+    PDialogProofreading::instance()->updateBlocks(0);
     connect(view3DWidget, SIGNAL(changeYCut1(int)), this, SLOT(Vaa3D_changeYCut1(int)));
 }
 void CExplorerWindow::PMain_changeH0sbox(int s)
@@ -2429,6 +2435,7 @@ void CExplorerWindow::PMain_changeH0sbox(int s)
 
     disconnect(view3DWidget, SIGNAL(changeXCut0(int)), this, SLOT(Vaa3D_changeXCut0(int)));
     view3DWidget->setXCut0(getLocalHCoord(s-1, true)+1);
+    PDialogProofreading::instance()->updateBlocks(0);
     connect(view3DWidget, SIGNAL(changeXCut0(int)), this, SLOT(Vaa3D_changeXCut0(int)));
 }
 void CExplorerWindow::PMain_changeH1sbox(int s)
@@ -2437,6 +2444,7 @@ void CExplorerWindow::PMain_changeH1sbox(int s)
 
     disconnect(view3DWidget, SIGNAL(changeXCut1(int)), this, SLOT(Vaa3D_changeXCut1(int)));
     view3DWidget->setXCut1(getLocalHCoord(s-1, true)+1);
+    PDialogProofreading::instance()->updateBlocks(0);
     connect(view3DWidget, SIGNAL(changeXCut1(int)), this, SLOT(Vaa3D_changeXCut1(int)));
 }
 void CExplorerWindow::PMain_changeD0sbox(int s)
@@ -2445,6 +2453,7 @@ void CExplorerWindow::PMain_changeD0sbox(int s)
 
     disconnect(view3DWidget, SIGNAL(changeZCut0(int)), this, SLOT(Vaa3D_changeZCut0(int)));
     view3DWidget->setZCut0(getLocalDCoord(s-1, true)+1);
+    PDialogProofreading::instance()->updateBlocks(0);
     connect(view3DWidget, SIGNAL(changeZCut0(int)), this, SLOT(Vaa3D_changeZCut0(int)));
 }
 void CExplorerWindow::PMain_changeD1sbox(int s)
@@ -2453,6 +2462,7 @@ void CExplorerWindow::PMain_changeD1sbox(int s)
 
     disconnect(view3DWidget, SIGNAL(changeZCut1(int)), this, SLOT(Vaa3D_changeZCut1(int)));
     view3DWidget->setZCut1(getLocalDCoord(s-1, true)+1);
+    PDialogProofreading::instance()->updateBlocks(0);
     connect(view3DWidget, SIGNAL(changeZCut1(int)), this, SLOT(Vaa3D_changeZCut1(int)));
 }
 
@@ -2461,7 +2471,7 @@ void CExplorerWindow::PMain_changeD1sbox(int s)
 ***********************************************************************************/
 void CExplorerWindow::alignToLeft(QWidget* widget)
 {
-    /**/itm::debug(itm::LEV1, strprintf("title = %s", titleShort.c_str()).c_str(), __itm__current__function__);
+    /**/itm::debug(itm::LEV3, strprintf("title = %s", titleShort.c_str()).c_str(), __itm__current__function__);
 
     int widget_new_x = window3D->x() + window3D->width() + 3;
     int widget_new_y = window3D->y();
@@ -2477,7 +2487,7 @@ void CExplorerWindow::alignToLeft(QWidget* widget)
 }
 void CExplorerWindow::alignToRight(QWidget* widget)
 {
-    /**/itm::debug(itm::LEV1, strprintf("title = %s", titleShort.c_str()).c_str(), __itm__current__function__);
+    /**/itm::debug(itm::LEV3, strprintf("title = %s", titleShort.c_str()).c_str(), __itm__current__function__);
 
     int widget_new_x = window3D->x() - widget->width() - 3;
     int widget_new_y = window3D->y();
@@ -2541,7 +2551,7 @@ void CExplorerWindow::PMain_rotationchanged()
 ***********************************************************************************/
 void CExplorerWindow::setZoom(int z)
 {
-    /**/itm::debug(itm::LEV_MAX, strprintf("title = %s, zoom = %d", titleShort.c_str(), z).c_str(), __itm__current__function__);
+    /**/itm::debug(itm::LEV3, strprintf("title = %s, zoom = %d", titleShort.c_str(), z).c_str(), __itm__current__function__);
 
     myV3dR_GLWidget::cast(view3DWidget)->setZoomO(z);
 }
@@ -2583,7 +2593,7 @@ void CExplorerWindow::syncWindows(V3dR_MainWindow* src, V3dR_MainWindow* dst)
 ***********************************************************************************/
 void CExplorerWindow::setWaitingFor5D(bool wait, bool pre_wait /* = false */)
 {
-    /**/itm::debug(itm::LEV_MAX, strprintf("title = %s, wait = %s, pre_wait = %s, this->waitingFor5D = %s",
+    /**/itm::debug(itm::LEV3, strprintf("title = %s, wait = %s, pre_wait = %s, this->waitingFor5D = %s",
                                            title.c_str(), wait ? "true" : "false", pre_wait ? "true" : "false", waitingFor5D ? "true" : "false").c_str(), __itm__current__function__);
 
     if(CImport::instance()->getTDim() > 1 && wait != this->waitingFor5D)
@@ -2623,7 +2633,7 @@ void CExplorerWindow::setWaitingFor5D(bool wait, bool pre_wait /* = false */)
 ***********************************************************************************/
 void CExplorerWindow::setCursor(const QCursor& cur, bool renderer_only /* = false */)
 {
-    /**/itm::debug(itm::LEV_MAX, 0, __itm__current__function__);
+    /**/itm::debug(itm::LEV3, 0, __itm__current__function__);
 
     if(CExplorerWindow::current)
     {

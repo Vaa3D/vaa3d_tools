@@ -229,6 +229,8 @@ PDialogImport::~PDialogImport()
 //reset method
 void PDialogImport::reset()
 {
+    /**/itm::debug(itm::LEV1, 0, __itm__current__function__);
+
     axs1_field->setCurrentIndex(0);
     axs2_field->setCurrentIndex(2);
     axs3_field->setCurrentIndex(4);

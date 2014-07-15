@@ -46,6 +46,7 @@ namespace teramanager
     class PMain;                //main presentation class: it contains the main frame
     class PDialogImport;        //presentation class for the import dialog
     class PConverter;           //presentation class for the volume converter dialog
+    class PDialogProofreading;  //presentation class for the proofreading dialog
     class PAbout;               //about window
     class PLog;                 //log window
     class PAnoToolBar;          //annotation toolbar
@@ -213,6 +214,14 @@ namespace teramanager
         private:
           std::vector<T> data_;
     };
+
+    template<class T>
+    inline static const T& kClamp( const T& x, const T& low, const T& high )
+    {
+        if ( x < low )       return low;
+        else if ( high < x ) return high;
+        else                 return x;
+    }
 
     //cross-platform current function macro
     #if defined(__GNUC__) || (defined(__MWERKS__) && (__MWERKS__ >= 0x3000)) || (defined(__ICC) && (__ICC >= 600))

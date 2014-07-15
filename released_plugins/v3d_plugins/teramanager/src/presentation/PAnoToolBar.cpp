@@ -357,6 +357,7 @@ void PAnoToolBar::refreshTools()
         buttonMarkerDeleteChecked(true);
     if(buttonMarkerRoiDelete->isChecked())
         buttonMarkerRoiDeleteChecked(true);
+    update();
 }
 
 /**********************************************************************************
@@ -369,6 +370,7 @@ void PAnoToolBar::alignToLeft(QWidget* widget)
     int new_x = widget->mapToGlobal(QPoint(0,0)).x();
     int new_y = widget->mapToGlobal(QPoint(0,0)).y();
     move(new_x, new_y);
+    update();
 }
 
 

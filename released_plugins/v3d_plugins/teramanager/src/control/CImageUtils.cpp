@@ -50,29 +50,29 @@ throw (RuntimeException)
 
 
     //quick version (with precomputed offsets, strides and counts: "1" for "dst", "2" for "src")
-    const uint64 stride_t1 =                dst_dims [3] * dst_dims [2] * dst_dims[1]   * dst_dims[0]  * (uint64)1;
-    const uint64 offset_t1 =  dst_offset[4]*dst_dims [3] * dst_dims [2] * dst_dims[1]   * dst_dims[0]  * (uint64)1;
-    const uint64 count_t1  =  src_count[4] *dst_dims [3] * dst_dims [2] * dst_dims[1]   * dst_dims[0]  * (uint64)1;
-    const uint64 stride_t2 =                src_dims [3] * src_dims [2] * src_dims[1]   * src_dims[0]  * (uint64)1;
-    const uint64 offset_t2 =  src_offset[4]*src_dims [3] * src_dims [2] * src_dims[1]   * src_dims[0]  * (uint64)1;
-    const uint64 stride_c1 =                               dst_dims [2] * dst_dims[1]   * dst_dims[0]  * (uint64)1;
-    const uint64 stride_c2 =                               src_dims [2] * src_dims[1]   * src_dims[0]  * (uint64)1;
-    const uint64 count_c1  =                dst_dims [3] * dst_dims [2] * dst_dims[1]   * dst_dims[0]  * (uint64)1;
-    const uint64 stride_k1 =                                              dst_dims[1]   * dst_dims[0]  * (uint64) scaling;
-    const uint64 count_k1  =                               src_count[2] * dst_dims[1]   * dst_dims[0]  * (uint64) scaling;
-    const uint64 offset_k2 =                               src_offset[2]* src_dims[1]   * src_dims[0]  * (uint64)1;
-    const uint64 stride_k2 =                                              src_dims[1]   * src_dims[0]  * (uint64)1;
-    //const uint64 count_k2=                               src_count[2] * src_dims[1]   * src_dims[0];            //not used in the OR so as to speed up the inner loops
-    const uint64 stride_i1 =                                                              dst_dims[0]  * (uint64) scaling;
-    const uint64 count_i1  =                                              src_count[1]  * dst_dims[0]  * (uint64) scaling;
-    const uint64 offset_i2 =                                              src_offset[1] * src_dims[0]  * (uint64)1;
-    const uint64 stride_i2 =                                                              src_dims[0]  * (uint64)1;
-    //const uint64 count_i2  =                                            src_count[1]  * src_dims[0];            //not used in the OR so as to speed up the inner loops
-    const uint64 stride_j1 =                                                                             (uint64) scaling;
-    const uint64 count_j1  =                                                              src_count[0] * (uint64) scaling;
-    const uint64 offset_j2 =                                                              src_offset[0]* (uint64)1;
-    //const uint64 count_j2  =                                                            src_count[0];           //not used in the OR so as to speed up the inner loops
-//    const uint64 dst_dim =    dst_dims [4]* dst_dims [3] * dst_dims [2] * dst_dims [1] *  dst_dims [0] * (uint64)1;;
+    const uint64 stride_t1 =  (uint64)1*              dst_dims [3] * dst_dims [2] * dst_dims[1]   * dst_dims[0];
+    const uint64 offset_t1 =  (uint64)1*dst_offset[4]*dst_dims [3] * dst_dims [2] * dst_dims[1]   * dst_dims[0];
+    const uint64 count_t1  =  (uint64)1*src_count[4] *dst_dims [3] * dst_dims [2] * dst_dims[1]   * dst_dims[0];
+    const uint64 stride_t2 =  (uint64)1*              src_dims [3] * src_dims [2] * src_dims[1]   * src_dims[0];
+    const uint64 offset_t2 =  (uint64)1*src_offset[4]*src_dims [3] * src_dims [2] * src_dims[1]   * src_dims[0];
+    const uint64 stride_c1 =  (uint64)1*                             dst_dims [2] * dst_dims[1]   * dst_dims[0];
+    const uint64 stride_c2 =  (uint64)1*                             src_dims [2] * src_dims[1]   * src_dims[0];
+    const uint64 count_c1  =  (uint64)1*              dst_dims [3] * dst_dims [2] * dst_dims[1]   * dst_dims[0];
+    const uint64 stride_k1 =  (uint64)1*                                            dst_dims[1]   * dst_dims[0]  * scaling;
+    const uint64 count_k1  =  (uint64)1*                             src_count[2] * dst_dims[1]   * dst_dims[0]  * scaling;
+    const uint64 offset_k2 =  (uint64)1*                             src_offset[2]* src_dims[1]   * src_dims[0];
+    const uint64 stride_k2 =  (uint64)1*                                            src_dims[1]   * src_dims[0];
+  //const uint64 count_k2  =  (uint64)1*                             src_count[2] * src_dims[1]   * src_dims[0];            //not used in the OR so as to speed up the inner loops
+    const uint64 stride_i1 =  (uint64)1*                                                            dst_dims[0]  * scaling;
+    const uint64 count_i1  =  (uint64)1*                                            src_count[1]  * dst_dims[0]  * scaling;
+    const uint64 offset_i2 =  (uint64)1*                                            src_offset[1] * src_dims[0];
+    const uint64 stride_i2 =  (uint64)1*                                                            src_dims[0];
+  //const uint64 count_i2  =  (uint64)1*                                            src_count[1]  * src_dims[0];            //not used in the OR so as to speed up the inner loops
+    const uint64 stride_j1 =  (uint64)1*                                                                           scaling;
+    const uint64 count_j1  =  (uint64)1*                                                            src_count[0] * scaling;
+    const uint64 offset_j2 =  (uint64)1*                                                            src_offset[0];
+  //const uint64 count_j2  =  (uint64)1*                                                           src_count[0];           //not used in the OR so as to speed up the inner loops
+  //const uint64 dst_dim   =  (uint64)1* dst_dims [4]* dst_dims [3] * dst_dims [2] * dst_dims [1] * dst_dims [0];
 
     for(int sk = 0; sk < scaling; sk++)
         for(int si = 0; si < scaling; si++)
@@ -145,28 +145,28 @@ itm::uint8*
     }
 
     // source strides
-    const uint64 stride_t1 =                src_dims [3] * src_dims [2] * src_dims[1]   * src_dims[0]  * (uint64)1;
-    const uint64 count_t1  =  src_count[4] *src_dims [3] * src_dims [2] * src_dims[1]   * src_dims[0]  * (uint64)1;
-    const uint64 offset_t1 =  src_offset[4]*src_dims [3] * src_dims [2] * src_dims[1]   * src_dims[0]  * (uint64)1;
-    const uint64 stride_c1 =                               src_dims [2] * src_dims[1]   * src_dims[0]  * (uint64)1;
-    const uint64 count_c1  =                src_dims [3] * src_dims [2] * src_dims[1]   * src_dims[0]  * (uint64)1;
-    const uint64 stride_k1 =                                              src_dims[1]   * src_dims[0]  * (uint64)1;
-    const uint64 count_k1  =                               src_count[2] * src_dims[1]   * src_dims[0]  * (uint64)1;
-    const uint64 offset_k1 =                               src_offset[2]* src_dims[1]   * src_dims[0]  * (uint64)1;
-    const uint64 stride_i1 =                                                              src_dims[0]  * (uint64)1;
-    const uint64 count_i1  =                                              src_count[1]  * src_dims[0]  * (uint64)1;
-    const uint64 offset_i1 =                                              src_offset[1] * src_dims[0]  * (uint64)1;
-    const uint64 stride_j1 =                                                                             (uint64)1;
-    const uint64 count_j1  =                                                              src_count[0] * (uint64)1;
-    const uint64 offset_j1 =                                                              src_offset[0]* (uint64)1;
+    const uint64 stride_t1 =  (uint64)1*              src_dims [3] * src_dims [2] * src_dims[1]   * src_dims[0];
+    const uint64 count_t1  =  (uint64)1*src_count[4] *src_dims [3] * src_dims [2] * src_dims[1]   * src_dims[0];
+    const uint64 offset_t1 =  (uint64)1*src_offset[4]*src_dims [3] * src_dims [2] * src_dims[1]   * src_dims[0];
+    const uint64 stride_c1 =  (uint64)1*                             src_dims [2] * src_dims[1]   * src_dims[0];
+    const uint64 count_c1  =  (uint64)1*              src_dims [3] * src_dims [2] * src_dims[1]   * src_dims[0];
+    const uint64 stride_k1 =  (uint64)1*                                            src_dims[1]   * src_dims[0];
+    const uint64 count_k1  =  (uint64)1*                             src_count[2] * src_dims[1]   * src_dims[0];
+    const uint64 offset_k1 =  (uint64)1*                             src_offset[2]* src_dims[1]   * src_dims[0];
+    const uint64 stride_i1 =  (uint64)1*                                                            src_dims[0];
+    const uint64 count_i1  =  (uint64)1*                                            src_count[1]  * src_dims[0];
+    const uint64 offset_i1 =  (uint64)1*                                            src_offset[1] * src_dims[0];
+    const uint64 stride_j1 =  (uint64)1;
+    const uint64 count_j1  =  (uint64)1*                                                            src_count[0];
+    const uint64 offset_j1 =  (uint64)1*                                                            src_offset[0];
 
     // z-mip strides
-    const uint64 stride_c2 =                                              src_count[1]  * src_count[0] * (uint64)1;
-    const uint64 count_c2  =                src_dims [3]                * src_count[1]  * src_count[0] * (uint64)1;
-    const uint64 stride_i2 =                                                              src_count[0] * (uint64)1;
+    const uint64 stride_c2 =  (uint64)1*                                            src_count[1]  * src_count[0];
+    const uint64 count_c2  =  (uint64)1*              src_dims [3]                * src_count[1]  * src_count[0];
+    const uint64 stride_i2 =  (uint64)1*                                                            src_count[0];
 
     // mip size
-    uint64 mip_size = to_BGRA ? src_count[1]*src_count[0]*4 : count_c2;
+    uint64 mip_size = to_BGRA ? (uint64)4 * src_count[1]*src_count[0] : count_c2;
 
     // allocation and initialization
     uint8* mip = new uint8[mip_size];
@@ -245,4 +245,104 @@ itm::uint8*
     }
 
     return mip;
+}
+
+void CImageUtils::applyVaa3DColorMap(QImage& image, RGBA8 cmap[4][256])
+{
+    /**/itm::debug(itm::LEV3, 0, __itm__current__function__);
+
+    if(image.isNull())
+    {
+        itm::warning("image is empty", __itm__current__function__);
+        return;
+    }
+
+    if(image.format() != QImage::Format_ARGB32)
+    {
+        itm::warning("unsupported format, cannot apply the given color map", __itm__current__function__);
+        return;
+    }
+
+    uint8* data = image.bits();
+    uint64 data_size = image.width() * image.height() *(uint64)4;
+    for(uint8* pdata = data; pdata - data < data_size; pdata += 4)
+    {
+        int i1 = *(pdata + 2);
+        int i2 = *(pdata + 1);
+        int i3 = *(pdata + 0);
+        float o1=0,o2=0,o3=0;
+        o1 = (cmap[0][i1].a/255.0)*(cmap[0][i1].r/255.0) + (cmap[1][i2].a/255.0)*(cmap[1][i2].r/255.0) + (cmap[2][i3].a/255.0)*(cmap[2][i3].r/255.0);
+        o2 = (cmap[0][i1].a/255.0)*(cmap[0][i1].g/255.0) + (cmap[1][i2].a/255.0)*(cmap[1][i2].g/255.0) + (cmap[2][i3].a/255.0)*(cmap[2][i3].g/255.0);
+        o3 = (cmap[0][i1].a/255.0)*(cmap[0][i1].b/255.0) + (cmap[1][i2].a/255.0)*(cmap[1][i2].b/255.0) + (cmap[2][i3].a/255.0)*(cmap[2][i3].b/255.0);
+        *(pdata + 0) = std::min(255, static_cast<int>(o3*255));
+        *(pdata + 1) = std::min(255, static_cast<int>(o2*255));
+        *(pdata + 2) = std::min(255, static_cast<int>(o1*255));
+      //*(pdata + 3)   alpha channel unchanged
+    }
+}
+
+
+template< int operation( int, int ) >
+void CImageUtils::changeImage( QImage& image, int value )
+{
+    QImage &im = image;
+    //im.detach();
+    if( im.numColors() == 0 ) /* truecolor */
+    {
+        if( im.format() != QImage::Format_RGB32 ) /* just in case */
+            im = im.convertToFormat( QImage::Format_RGB32 );
+        int table[ 256 ];
+        for( int i = 0; i < 256; ++i )
+            table[ i ] = operation( i, value );
+        if( im.hasAlphaChannel() )
+        {
+            for( int y = 0; y < im.height(); ++y )
+            {
+                QRgb* line = reinterpret_cast< QRgb* >( im.scanLine( y ));
+                for( int x = 0; x < im.width(); ++x )
+                    line[ x ] = qRgba( changeUsingTable( qRed( line[ x ] ), table ),
+                        changeUsingTable( qGreen( line[ x ] ), table ),
+                        changeUsingTable( qBlue( line[ x ] ), table ),
+                        changeUsingTable( qAlpha( line[ x ] ), table ));
+            }
+        }
+        else
+        {
+            for( int y = 0; y < im.height(); ++y )
+            {
+                QRgb* line = reinterpret_cast< QRgb* >( im.scanLine( y ));
+                for( int x = 0; x < im.width(); ++x )
+                    line[ x ] = qRgb( changeUsingTable( qRed( line[ x ] ), table ),
+                        changeUsingTable( qGreen( line[ x ] ), table ),
+                        changeUsingTable( qBlue( line[ x ] ), table ));
+            }
+        }
+    }
+    else
+    {
+        QVector<QRgb> colors = im.colorTable();
+        for( int i = 0; i < im.numColors(); ++i )
+            colors[ i ] = qRgb( operation( qRed( colors[ i ] ), value ),
+                operation( qGreen( colors[ i ] ), value ),
+                operation( qBlue( colors[ i ] ), value ));
+    }
+//    return im;
+}
+
+void CImageUtils::changeBrightness(QImage& image, int brightness )
+{
+    if( brightness != 0 ) // no change
+        changeImage< changeBrightness >( image, brightness );
+}
+
+void CImageUtils::changeContrast(QImage& image, int contrast )
+{
+    if( contrast != 100 ) // no change
+        changeImage< changeContrast >( image, contrast );
+}
+
+void CImageUtils::changeGamma(QImage& image, int gamma )
+{
+    if( gamma == 100 ) // no change
+        changeImage< changeGamma >( image, gamma );
 }
