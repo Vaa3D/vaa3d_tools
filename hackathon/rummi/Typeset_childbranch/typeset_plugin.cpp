@@ -14,6 +14,7 @@ QStringList TypesetPlugin::menulist() const
 {
     return QStringList()
         <<tr("typeset")
+        <<tr("directions")
         <<tr("about");
 }
 
@@ -30,10 +31,16 @@ void TypesetPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callbac
     {
         typeset_swc(callback,parent);
     }
+    else if (menu_name == tr("directions"))
+    {
+        v3d_msg(tr("1. Trace neuron. \n"
+                   "2. Create marker files. Each marker file will set each branch type.\n"
+                   "3. Run plugin and follow directions in opening swc and marker files. "));
+    }
     else
     {
-        v3d_msg(tr("This is a plugin to set segment type\n"
-            "Developed by Surobhi Ganguly, 2014-06-26"));
+        v3d_msg(tr("This is a plugin to set branch type\n"
+            "Developed by Surobhi Ganguly, 2014-07-14"));
     }
 }
 
@@ -50,7 +57,7 @@ bool TypesetPlugin::dofunc(const QString & func_name, const V3DPluginArgList & i
     }
     if (func_name == tr("help"))
     {
-        printf("\n\n(version 1.0) typeset points in a swc file subject to a fixed step length. Developed by Yinan Wan 2012-03-02\n");
+        printf("\n\n(version 1.0) typeset points in a swc file indicate beginning of branch of type to be set. Developed by Surobhi Ganguly 2014-07-14\n");
         printf("usage:\n");
         printf("\t-f <function_name>:     typeset_swc\n");
         printf("\t-i <input_file_name>:   input .swc\n");

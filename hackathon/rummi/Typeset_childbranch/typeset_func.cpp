@@ -7,6 +7,7 @@
 #include "v3d_message.h"
 #include "typeset_func.h"
 #include "typeset.h"
+#include "my_surf_objs.h"
 #include "customary_structs/vaa3d_neurontoolbox_para.h"
 #include <vector>
 #include <iostream>
@@ -33,6 +34,7 @@ bool export_list2file(QList<NeuronSWC> & lN, QString fileSaveName, QString FileS
 
 int typeset_swc(V3DPluginCallback2 &callback, QWidget *parent)
 {
+
     QString FileSWCOpenName;
     QString FileMarkerOpenName;
 
@@ -49,7 +51,6 @@ int typeset_swc(V3DPluginCallback2 &callback, QWidget *parent)
 
     if(FileSWCOpenName.isEmpty() || FileMarkerOpenName.isEmpty())
         return 0;
-    double settype = 0;
 
     NeuronTree nt;
     QList<ImageMarker> tmp_list;
@@ -71,10 +72,47 @@ int typeset_swc(V3DPluginCallback2 &callback, QWidget *parent)
             return 0;
     }
 
+
+    //run sort
+
+
+//    V3DPluginArgItem arg;
+//    //V3DPluginArgList input_resample;
+//    V3DPluginArgList input_sort;
+//    V3DPluginArgList output;
+
+//    arg.type = "random";std::vector<char*> arg_input_sort;
+//    std:: string fileName_Qstring(FileSWCOpenName.toStdString());char* fileName_string =  new char[fileName_Qstring.length() + 1]; strcpy(fileName_string, fileName_Qstring.c_str());
+//    arg_input_sort.push_back(fileName_string);
+//    arg.p = (void *) & arg_input_sort; input_sort<< arg;
+//    arg.type = "random";std::vector<char*> arg_sort_para; arg_sort_para.push_back("1");arg.p = ("100") & arg_sort_para; input_sort << arg;
+//    arg.type = "random";std::vector<char*> arg_output; arg_output.push_back(fileName_string+QString("_sorted")); arg.p = (void *) & arg_output; output<< arg;
+
+//    //QString full_plugin_name_resample = "resample_swc";
+//    //QString func_name_resample = "resample_swc";
+//    //callback.callPluginFunc(full_plugin_name_resample,func_name_resample,input_resample,output);
+
+//    arg.type = "random";std::vector<char*> arg_input_sort;
+//    arg_input_sort.push_back(fileName_string+QString("_sorted"));
+//    arg.p = (void *) & arg_input_sort; input_sort<< arg;
+//    arg.type = "random";std::vector<char*> arg_sort_para; arg_sort_para.push_back("1");arg.p = ("100") & arg_sort_para; input_sort << arg;
+//    arg.type = "random";std::vector<char*> arg_output; arg_output.push_back(fileName_string+QString("_sorted")); arg.p = (void *) & arg_output; output<< arg;
+
+//    QString full_plugin_name_sort = "sort_neuron_swc";
+//    QString func_name_sort = "sort_swc";
+//    callback.callPluginFunc(full_plugin_name_sort,func_name_sort, input_sort, output);
+
+//    vector<MyMarker*> temp_out_swc = readSWC_file(FileSWCOpenName.toStdString());
+//    saveSWC_file(FileSWCOpenName.toStdString(), temp_out_swc); //, infostring);
+
+
+
+    // run typeset
+
+    double settype;
     settype = QInputDialog::getDouble(parent, "Please set child branch type","Type:",0,0,4,1);
 
-
-    NeuronTree result = typeset(nt, tmp_list,settype);
+    NeuronTree result = typeset(nt, tmp_list, settype);
 
     QString fileDefaultName = FileSWCOpenName+QString("_")+FileMarkerOpenName+QString("_typeset.swc");
     //write new SWC to file
