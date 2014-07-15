@@ -75,6 +75,7 @@ class teramanager::CExplorerWindow : public QWidget
         QVector<QPoint> scribbling_points;
         QUndoStack undoStack;           //stack containing undo command actions
         int slidingViewerBlockID;
+        bool forceZoomIn;
 
         //CLASS members
         static CExplorerWindow *first;  //pointer to the first window of the multiresolution explorer windows chain

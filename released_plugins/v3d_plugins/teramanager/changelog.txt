@@ -11,6 +11,14 @@ ties names are:
 - Rem: a feature no longer available
 
 ============================================================================================
+Version 0.9.991
+July 15th, 2014
+--------------------------------------------------------------------------------------------
+- New: changed default zoom-in method on Windows machines to "Foreground(1 marker"
+- Fix: fixed zoom-in issue on Windows machines which caused zoom-in to be triggered to late.
+--------------------------------------------------------------------------------------------
+
+
 Version 0.9.99
 July 15th, 2014
 --------------------------------------------------------------------------------------------

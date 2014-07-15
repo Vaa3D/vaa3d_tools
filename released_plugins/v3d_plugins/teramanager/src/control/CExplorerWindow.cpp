@@ -336,6 +336,7 @@ CExplorerWindow::CExplorerWindow(V3DPluginCallback2 *_V3D_env, int _resIndex, it
     D0_sbox_min = D0_sbox_val = D1_sbox_max = D1_sbox_val =
     T0_sbox_min = T0_sbox_val = T1_sbox_max = T1_sbox_val = -1;
     slidingViewerBlockID = _slidingViewerBlockID;
+    forceZoomIn = false;
 
     try
     {
@@ -490,6 +491,21 @@ bool CExplorerWindow::eventFilter(QObject *object, QEvent *event)
             myV3dR_GLWidget::cast(view3DWidget)->wheelEventO(wheelEvt);
             return true;
         }
+        #else
+        if ((object == view3DWidget || object == window3D) && event->type() == QEvent::Wheel)
+        {
+            QWheelEvent* wheelEvt = (QWheelEvent*)event;
+            int zr = CLAMP(-ZOOM_RANGE, ZOOM_RANGE, view3DWidget->zoom());
+            if(zr > PMain::getInstance()->zoomInSens->value() && !isHighestRes())
+            {
+                static_cast<Renderer_gl1*>(view3DWidget->getRenderer())->selectMode = Renderer::smMarkerCreate1;
+                static_cast<Renderer_gl1*>(view3DWidget->getRenderer())->b_addthismarker = false;
+                static_cast<Renderer_gl1*>(view3DWidget->getRenderer())->b_imaging = false;
+                static_cast<Renderer_gl1*>(view3DWidget->getRenderer())->b_grabhighrez = true;
+                forceZoomIn = true;
+                view3DWidget->getRenderer()->hitPoint(wheelEvt->x(), wheelEvt->y());
+            }
+        }
         #endif
 
         /****************** INTERCEPTING MOUSE CLICK EVENTS ***********************
@@ -593,6 +609,7 @@ bool CExplorerWindow::eventFilter(QObject *object, QEvent *event)
             static_cast<Renderer_gl1*>(view3DWidget->getRenderer())->b_addthismarker = false;
             static_cast<Renderer_gl1*>(view3DWidget->getRenderer())->b_imaging = false;
             static_cast<Renderer_gl1*>(view3DWidget->getRenderer())->b_grabhighrez = true;
+            forceZoomIn = true;
             view3DWidget->getRenderer()->hitPoint(mouseEvt->x(), mouseEvt->y());
             #endif
             return true;
@@ -1921,12 +1938,16 @@ void CExplorerWindow::invokedFromVaa3D(v3d_imaging_paras* params /* = 0 */)
     }
 
     // zoom-in around marker or ROI triggers a new window
-    else if(roi->ops_type == 1)
+    else if(roi->ops_type == 1 && !forceZoomIn)
         newView(roi->xe, roi->ye, roi->ze, volResIndex+1, volT0, volT1, false, -1, -1, -1, roi->xs, roi->ys, roi->zs);
 
     // zoom-in with mouse scroll up may trigger a new window if caching is not possible
-    else if(roi->ops_type == 2)
+    else if(roi->ops_type == 2 || forceZoomIn)
     {
+        // reset forceZoomIn
+        if(forceZoomIn)
+            forceZoomIn = false;
+
         if(volResIndex != CImport::instance()->getResolutions()-1 &&   //do nothing if highest resolution has been reached
            isZoomDerivativePos())                                      //accepting zoom-in only when zoom factor derivative is positive
         {

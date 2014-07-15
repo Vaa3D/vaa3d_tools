@@ -632,9 +632,9 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     zoomInMethod->addItem("Foreground (1 marker)");
     zoomInMethod->installEventFilter(this);
     #ifndef USE_EXPERIMENTAL_FEATURES
-    zoomInMethod->setCurrentIndex(0);
+    zoomInMethod->setCurrentIndex(2);
     zoomInMethod->setEnabled(false);
-    zoomInSens->setEnabled(false);
+//    zoomInSens->setEnabled(false);
     #else
     zoomInMethod->setCurrentIndex(1);
     #endif
