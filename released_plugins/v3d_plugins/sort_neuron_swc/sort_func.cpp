@@ -27,7 +27,7 @@ void sort_menu(V3DPluginCallback2 &callback, QWidget *parent)
 	if (!openDlg->exec())
 		return;
 
-	NeuronTree nt = openDlg->nt;
+    NeuronTree nt = openDlg->nt;
 	QList<NeuronSWC> neuron = nt.listNeuron;
 
     V3DLONG rootid;
