@@ -12,6 +12,7 @@
 #include "../../v3d_main/neuron_editing/v_neuronswc.h"
 #include "../../v3d_main/neuron_tracing/neuron_tracing.h"
 #include <time.h>
+#include <cmath>
 
 using namespace std;
 Q_EXPORT_PLUGIN2(auto_identify, AutoIdentifyPlugin);
@@ -25,22 +26,22 @@ void identify_neurons(V3DPluginCallback2 &callback, QWidget *parent);
 template <class T> LandmarkList main_func(T* data1d, V3DLONG *dimNum, int c, LandmarkList & mlist, LandmarkList & bglist);
 LandmarkList neuron_2_mark(const NeuronTree & p, LandmarkList & neuronMarkList);
 template <class T> int pixelVal(T* data1d, V3DLONG *dimNum,
-                                int xc, int yc, int zc, int c);
+                                double xc, double yc, double zc, int c);
 template <class T> LocationSimple mass_center(T* data1d,
                                               V3DLONG *dimNum,
-                                              int xc, int yc, int zc, int rad, int c);
+                                              double xc, double yc, double zc, double rad, int c);
 template <class T> pair<int,int> pixel(T* data1d,
                                         V3DLONG *dimNum,
-                                        int xc,int yc,int zc,int c,int rad);
+                                        double xc,double yc,double zc,int c,double rad);
 template <class T> pair<int,int> dynamic_pixel(T* data1d,
                                         V3DLONG *dimNum,
-                                        int xc, int yc, int zc,
+                                        double xc, double yc, double zc,
                                         int c, int PixVal, int BGVal);
 template <class T> LandmarkList count(T* data1d,
                                       V3DLONG *dimNum,
                                       int MarkAve, int MarkStDev,
                                       int PointAve, int PointStDev,
-                                      int rad, int radAve, int radStDev, int c, int cat);
+                                      int rad, double radAve, double radStDev, int c, int cat);
 template <class T> LandmarkList duplicates(T* data1d, LandmarkList fullList,
                                            V3DLONG *dimNum, int PointAve, int rad, int c);
 V_NeuronSWC get_v_neuron_swc(const NeuronTree *p);
@@ -192,11 +193,12 @@ void identify_neurons(V3DPluginCallback2 &callback, QWidget *parent)
             V_NeuronSWC_list seg_list = get_neuron_segments(&mTree);
             //syntax: list.at(i) is segment, segment.row is vector of units, vector.at(i) is unit, unit.type is category
             int segNum = seg_list.size();
-            //v3d_msg(QString("read in tree with %1 segments").arg(segNum));
+            v3d_msg(QString("read in test tree with %1 segments").arg(segNum));
             for (int j=0; j<segNum; j++)
             {
                 segCatArr.push_back(seg_list.at(j).row.at(0).type);
                 double radAve = compute_radius(data1d,dimNum,seg_list.at(j).row,c);
+                v3d_msg("got rad");
                 double x,y,z,intensity=0;
                 for (int k=0; k<seg_list.at(j).row.size(); k++)
                 {
@@ -208,10 +210,10 @@ void identify_neurons(V3DPluginCallback2 &callback, QWidget *parent)
                 double intensAve = intensity/seg_list.at(j).row.size();
                 segRadArr.push_back(radAve);
                 segIntensArr.push_back(intensAve);
-                //v3d_msg(QString("cat %1 rad %2").arg(seg_list.at(j).row.at(0).type).arg(radAve));
+                v3d_msg(QString("cat %1 rad %2").arg(seg_list.at(j).row.at(0).type).arg(radAve));
             }
         }
-        //v3d_msg(QString("%1 %2 %3 %4").arg(segCatArr.size()).arg(segCatArr.at(0)).arg(segRadArr.size()).arg(segRadArr.at(0)));
+//        v3d_msg(QString("%1 %2 %3 %4").arg(segCatArr.size()).arg(segCatArr.at(0)).arg(segRadArr.size()).arg(segRadArr.at(0)));
 
         //label remaining neurons using test data
         NeuronTree newTree;
@@ -226,7 +228,7 @@ void identify_neurons(V3DPluginCallback2 &callback, QWidget *parent)
             //syntax: list.at(i) is segment, segment.row is vector of units, vector.at(i) is unit, unit.type is category
             int segNum = seg_list.size();
             int id=1;
-            //v3d_msg(QString("read in segment of length %1").arg(segNum));
+            v3d_msg(QString("read in segment of length %1").arg(segNum));
             for (int j=0; j<segNum; j++) //loops through segments within one structure
             {
                 double radAve = compute_radius(data1d,dimNum,seg_list.at(j).row,c);
@@ -577,6 +579,7 @@ template <class T> LandmarkList main_func(T* data1d, V3DLONG *dimNum, int c, Lan
         tempList.append(newMark);
     }
     MarkList = tempList;
+    //
 //    return MarkList;
 
     //scan list of cell markers for ValAve, radAve
@@ -585,8 +588,7 @@ template <class T> LandmarkList main_func(T* data1d, V3DLONG *dimNum, int c, Lan
     ValAveArr = new int[marks]; radAveArr = new int[marks];
     LocationSimple tempLocation(0,0,0);
     double ValAve=0,radAve=0;
-    clock_t t1;
-    t1 = clock();
+
     for (int i=0; i<marks; i++)
     {
         tempLocation = MarkList.at(i);
@@ -601,8 +603,7 @@ template <class T> LandmarkList main_func(T* data1d, V3DLONG *dimNum, int c, Lan
 
 //v3d_msg(QString("ValAve %1, radAve %2").arg(ValAve).arg(radAve));
     }
-    t1 = clock() - t1;
-    cout<<"dynamic pixel time "<<t1<<endl;
+
 
 //v3d_msg("scan checkpoint");
 
@@ -635,16 +636,13 @@ template <class T> LandmarkList main_func(T* data1d, V3DLONG *dimNum, int c, Lan
 
 //v3d_msg(QString("markers have been scanned. Pixval %1 and stdev %2. radVal %3 and stdev %4."
 //                      "segVal %5 and stdev %6").arg(PixVal).arg(PixStDev).arg(radAve).arg(radStDev).arg(ValAve).arg(ValStDev));
-v3d_msg(QString("category %1").arg(cat));
-    clock_t t;
-    t = clock();
+//v3d_msg(QString("category %1").arg(cat));
+
     //scans image and generates new set of markers based on testing data
-    LandmarkList newList = count(data1d,dimNum,ValAve,2*ValStDev,PixVal,PixStDev,0,radAve,5+radStDev,c,cat);
-    t = clock() - t;
-    cout<<"count time "<<t<<endl;
+    LandmarkList newList = count(data1d,dimNum,ValAve,2*ValStDev,PixVal,PixStDev,0,radAve,radStDev,c,cat);
 
     //recenters list via mean shift
-v3d_msg("recentering");
+//v3d_msg("recentering");
     LandmarkList tempL2;
     LocationSimple temp2;
     for (int i=0; i<newList.count(); i++)
@@ -684,13 +682,13 @@ v3d_msg("recentering");
 
 //returns pixel value of marker
 template <class T> int pixelVal(T* data1d, V3DLONG *dimNum,
-                                int xc, int yc, int zc, int c)
+                                double xc, double yc, double zc, int c)
 {
     V3DLONG N = dimNum[0];
     V3DLONG M = dimNum[1];
     V3DLONG P = dimNum[2];
     V3DLONG shiftC = (c-1)*P*M*N;
-    int pixelVal = data1d[ shiftC + (V3DLONG)zc*M*N + (V3DLONG)yc*N + (V3DLONG)xc ];
+    double pixelVal = data1d[ shiftC + (V3DLONG)zc*M*N + (V3DLONG)yc*N + (V3DLONG)xc ];
     return pixelVal;
 }
 
@@ -698,18 +696,15 @@ template <class T> int pixelVal(T* data1d, V3DLONG *dimNum,
 //returns new marker that has been recentered
 template <class T> LocationSimple mass_center(T* data1d,
                                               V3DLONG *dimNum,
-                                              int xc, int yc, int zc, int rad, int c)
+                                              double xc, double yc, double zc, double rad, int c)
 {
     V3DLONG N = dimNum[0];
     V3DLONG M = dimNum[1];
     V3DLONG P = dimNum[2];
 
-    //int min=255,newX=0,newY=0,newZ=0;
-    //int xweight=0,yweight=0,zweight=0,kernel=0,ktot=0;
-    double pVal;
-    rad=5;
+    double pVal, newX=0, newY=0, newZ=0, norm=0;
 
-    //defining limits
+    /*//defining limits
     V3DLONG xLow = xc-rad; if(xLow<0) xLow=0;
     V3DLONG xHigh = xc+rad; if(xHigh>N-1) xHigh=N-1;
     V3DLONG yLow = yc-rad; if(yLow<0) yLow=0;
@@ -718,7 +713,6 @@ template <class T> LocationSimple mass_center(T* data1d,
     V3DLONG zHigh = zc+rad; if(zHigh>P-1) zHigh=P-1;
 
     //scanning through the pixels
-    double newX=0, newY=0, newZ=0, norm=0;
     V3DLONG k,j,i;
     for (k = zLow; k <= zHigh; k++)
     {
@@ -738,6 +732,31 @@ template <class T> LocationSimple mass_center(T* data1d,
                  }
              }
          }
+    }*/
+
+    double x,y,z,pi=3.14;
+    double r = 10;
+
+    for (double theta=0; theta<2*pi; theta+=(pi/8))
+    {
+        for (double phi=0; phi<pi; phi+=(pi/8))
+        {
+            //cout<<"pixel iteration "<<runs<<endl;
+            //cout<<r<<" "<<theta<<" "<<phi<<endl;
+            x = xc+r*cos(theta)*sin(phi);
+            if (x>N-1) x=N-1; if (x<0) x=0;
+            y = yc+r*sin(theta)*sin(phi);
+            if (y>M-1) y=M-1; if (y<0) y=0;
+            z = zc+r*cos(phi);
+            if (z>P-1) z=P-1; if (z<0) z=0;
+            pVal = pixelVal(data1d,dimNum,x,y,z,c);
+            newX += pVal*x;
+            newY += pVal*y;
+            newZ += pVal*z;
+            norm += pVal;
+            //cout<<dataval<<" "<<datatotal<<" "<<runs<<endl;
+            //cout<<x<<" "<<y<<" "<<z<<" "<<endl<<endl;
+        }
     }
 
     newX /= norm;
@@ -753,7 +772,7 @@ template <class T> LocationSimple mass_center(T* data1d,
 //returns average pixel value and radius of cell around a marker
 template <class T> pair<int,int> dynamic_pixel(T* data1d,
                                         V3DLONG *dimNum,
-                                        int xc, int yc, int zc,
+                                        double xc, double yc, double zc,
                                         int c, int PixVal, int BGVal)
 {
     V3DLONG N = dimNum[0];
@@ -761,11 +780,11 @@ template <class T> pair<int,int> dynamic_pixel(T* data1d,
     V3DLONG P = dimNum[2];
     V3DLONG shiftC = (c-1)*P*M*N;
 
-    int rad=0,dataAve;
+    double rad=0,dataAve;
     do
     {
         rad++;
-        //defining limits
+        /*//defining limits
         V3DLONG xLow = xc-rad; if(xLow<0) xLow=0;
         V3DLONG xHigh = xc+rad; if(xHigh>N-1) xHigh=N-1;
         V3DLONG yLow = yc-rad; if(yLow<0) yLow=0;
@@ -796,6 +815,31 @@ template <class T> pair<int,int> dynamic_pixel(T* data1d,
                 }
             }
         }
+        dataAve = datatotal/runs;*/
+
+        double x,y,z,datatotal=0,pi=3.14;;
+        int runs=0;
+        for (double theta=0; theta<2*pi; theta+=(pi/4))
+        {
+            for (double phi=0; phi<pi; phi+=(pi/4))
+            {
+                //cout<<"pixel iteration "<<runs<<endl;
+                //cout<<r<<" "<<theta<<" "<<phi<<endl<<endl;
+                x = xc+rad*cos(theta)*sin(phi);
+                if (x>N) x=N; if (x<0) x=0;
+                y = yc+rad*sin(theta)*sin(phi);
+                if (y>M) y=M; if (y<0) y=0;
+                z = zc+rad*cos(phi);
+                if (z>P) z=P; if (z<0) z=0;
+                double dataval = pixelVal(data1d,dimNum,x,y,z,c);
+                datatotal += dataval;
+                //cout<<dataval<<" "<<datatotal<<endl;
+                runs++;
+                //cout<<x<<" "<<y<<" "<<z<<" "<<endl;
+            }
+        }
+
+        runs++;
         dataAve = datatotal/runs;
     } while ( dataAve > (PixVal+2*BGVal)/3 );
 
@@ -806,13 +850,13 @@ template <class T> pair<int,int> dynamic_pixel(T* data1d,
 //returns average pixel value in box of radius rad on channel c around a given marker as well as average cell marker intensity
 template <class T> pair<int,int> pixel(T* data1d,
                               V3DLONG *dimNum,
-                              int xc,int yc,int zc,int c,int rad)
+                              double xc, double yc, double zc, int c, double rad)
 {
     V3DLONG N = dimNum[0];
     V3DLONG M = dimNum[1];
     V3DLONG P = dimNum[2];
 
-    V3DLONG shiftC = (c-1)*P*M*N;
+    /*V3DLONG shiftC = (c-1)*P*M*N;
 
     //defining limits
     V3DLONG xLow = xc-rad; if(xLow<0) xLow=0;
@@ -825,7 +869,7 @@ template <class T> pair<int,int> pixel(T* data1d,
     //scanning through the pixels
     V3DLONG k,j,i;
     //average data of each segment
-    int datatotal=0,runs=0;
+    int datatotal1=0,runs1=0;
     double t,dist;
     for (k = zLow; k <= zHigh; k++)
     {
@@ -840,40 +884,50 @@ template <class T> pair<int,int> pixel(T* data1d,
                  if (dist<=rad)
                  {
                      int dataval = data1d[ shiftC + shiftZ + shiftY + i ];
-                     datatotal += dataval;
-                     runs++;
+                     datatotal1 += dataval;
+                     runs1++;
                  }
                  else continue;
              }
          }
     }
 
-    /*double x,y,z,datatotal,pi=3.14;
+    int dataAve1 = datatotal1/runs1;
+    //cout<<endl<<"original coords "<<xc<<" "<<yc<<" "<<zc<<" "<<endl;
+    if (dataAve1>=100) cout<<"first algorithm "<<dataAve1<<endl;*/
+
+    double x,y,z,datatotal=0,pi=3.14;
     int runs=0;
-    if (rad==0); rad=1;
-    double radinterval = rad;
-    radinterval/=5;
-    for (double r=0; r<rad; r+=radinterval) //r isn't increasing
+    double r = rad;
+
+    for (double theta=0; theta<2*pi; theta+=(pi/4))
     {
-        for (double theta=0; theta<2*pi; theta+=(pi/4))
+        for (double phi=0; phi<pi; phi+=(pi/4))
         {
-            for (double phi=0; phi<pi; phi+=(pi/4))
-            {
-                //cout<<"pixel iteration "<<runs<<endl;
-                //cout<<r<<" "<<theta<<" "<<phi<<endl<<endl;
-                x = xc+r*cos(theta)*sin(phi);
-                y = yc+r*sin(theta)*sin(phi);
-                z = zc+r*cos(phi);
-                double dataval = pixelVal(data1d,dimNum,x,y,z,c);
-                datatotal += dataval;
-                runs++;
-            }
+            //cout<<"pixel iteration "<<runs<<endl;
+            //cout<<r<<" "<<theta<<" "<<phi<<endl;
+            x = xc+r*cos(theta)*sin(phi);
+            if (x>N-1) x=N-1; if (x<0) x=0;
+            y = yc+r*sin(theta)*sin(phi);
+            if (y>M-1) y=M-1; if (y<0) y=0;
+            z = zc+r*cos(phi);
+            if (z>P-1) z=P-1; if (z<0) z=0;
+            double dataval = pixelVal(data1d,dimNum,x,y,z,c);
+            datatotal += dataval;
+            runs++;
+            //cout<<dataval<<" "<<datatotal<<" "<<runs<<endl;
+            //cout<<x<<" "<<y<<" "<<z<<" "<<endl<<endl;
         }
-    }*/
-    int dataAve = datatotal/runs;
-    //data of point
+    }
+    //cout<<"done with loop"<<endl;
     int pointval = pixelVal(data1d,dimNum,xc,yc,zc,c);
-    //cout<<dataAve<<endl;
+    //v3d_msg(QString("pointval %1").arg(pointval));
+    //cout<<pointval<<endl;
+    int dataAve;
+    if (runs==0) dataAve=0;
+    else dataAve = datatotal/runs;
+
+    //cout<<"second algorithm "<<dataAve<<endl;
 
     return make_pair(dataAve,pointval);
 }
@@ -884,7 +938,7 @@ template <class T> LandmarkList count(T* data1d,
                               V3DLONG *dimNum,
                               int MarkAve, int MarkStDev,
                               int PointAve, int PointStDev,
-                              int rad, int radAve, int radStDev, int c, int cat)
+                              int rad, double radAve, double radStDev, int c, int cat)
 {
     V3DLONG N = dimNum[0];
     V3DLONG M = dimNum[1];
@@ -893,7 +947,7 @@ template <class T> LandmarkList count(T* data1d,
 
     LocationSimple tmpLocation(0,0,0);
     LandmarkList newList;
-    int seg;
+    double seg;
 
     //this part is for user-entered rad
     if (rad!=0)
@@ -936,19 +990,22 @@ template <class T> LandmarkList count(T* data1d,
     //this part is for dynamically calculated rad
     else
     {
-        cout<<"starting count"<<endl;
+        //cout<<"starting count"<<endl;
         seg = radAve/2;
-        int init;
+        double init;
         if ((radAve-radStDev) < 1) { init=1;}
         else { init=radAve-radStDev; }
-        for (int i=init; i<=radAve+radStDev; i++)
+        //v3d_msg(QString("init %1").arg(init));
+        for (double i=init; i<=radAve+radStDev; i++)
         {
-            for (V3DLONG iz=seg; iz<=P; iz+=seg)
+            for (double iz=seg; iz<=P; iz+=seg)
             {
-                for (V3DLONG iy=seg; iy<=M; iy+=seg)
+                for (double iy=seg; iy<=M; iy+=seg)
                 {
-                    for (V3DLONG ix=seg; ix<=N; ix+=seg)
+                    for (double ix=seg; ix<=N; ix+=seg)
                     {
+                        //v3d_msg(QString("%1 %2 %3").arg(ix).arg(iy).arg(iz));
+                        //cout<<ix<<" "<<iy<<" "<<iz<<" "<<endl;
                         //(ix,iy,iz,c) are the coords that we are currently at
                         //checking radius i
                         //we throw these coords into func pixel to get the pixel value to compare to the training values
@@ -960,6 +1017,7 @@ template <class T> LandmarkList count(T* data1d,
 //v3d_msg(QString("%1 %2 %3").arg(i).arg(TempDataAve).arg(TempPointAve));
                         if ( (TempPointAve>=PointAve-2*PointStDev) && (TempPointAve<=PointAve+2*PointStDev) && (TempDataAve>=MarkAve-2*MarkStDev) && (TempDataAve<=MarkAve+2*MarkStDev))
                         {
+                            //cout<<"found a marker "<<TempDataAve<<" with rad "<<i<<" at coords "<<ix<<" "<<iy<<" "<<iz<<endl;
                             tmpLocation.x = ix;
                             tmpLocation.y = iy;
                             tmpLocation.z = iz;
@@ -973,7 +1031,7 @@ template <class T> LandmarkList count(T* data1d,
                         else continue;
                     }
                 }
-            } cout<<"rad iteration "<<i<<endl;
+            }
         }
 
     }
@@ -1188,6 +1246,7 @@ template <class T> double compute_radius(T* data1d, V3DLONG *dimNum, vector<V_Ne
         double rad,radTot=0;
         for (int unit=1; unit<segment.size()-1; unit++) //going to omit first and last unit per segment
         {
+            cout<<endl<<"unit "<<unit<<endl;
             V_NeuronSWC_unit P1,P2,P0;
             P0 = segment.at(unit);
             P1 = segment.at(unit-1);
@@ -1200,35 +1259,53 @@ template <class T> double compute_radius(T* data1d, V3DLONG *dimNum, vector<V_Ne
             double A[] = {Anum[0]/Anorm,Anum[1]/Anorm,Anum[2]/Anorm}; //perpendicular to V
             double B[] = {A[1]*V[2]-A[2]*V[1],A[2]*V[0]-A[0]*V[2],A[0]*V[1]-A[1]*V[0]}; //perpendicular to A and V
             rad=0;
-            int pVal = pixelVal(data1d,dimNum,P0.x,P0.y,P0.z,c);
-            if (pVal<50) { /*v3d_msg("pVal low, bad neuron, skipping");*/ continue; }
             int pValCircTot=0, runs=0;
-            double check=255, pi=3.14;
-            double x,y,z;
-            do
+            int pVal = pixelVal(data1d,dimNum,P0.x,P0.y,P0.z,c);
+            if (pVal<50)
             {
-                rad += 0.2;
-                for (double theta=0; theta<2*pi; theta+=pi/8)
+                runs++;
+                cout<<unit<<" low pVal"<<endl;
+                continue;
+            }
+            else
+            {
+                double check=255, pi=3.14;
+                float x,y,z;
+                cout<<unit<<" good pVal"<<endl;
+                do
                 {
-                    x = P0.x+rad*cos(theta)*A[0]+rad*sin(theta)*B[0];
-                    y = P0.y+rad*cos(theta)*A[1]+rad*sin(theta)*B[1];
-                    z = P0.z+rad*cos(theta)*A[2]+rad*sin(theta)*B[2];
-                    int pValCirc = pixelVal(data1d,dimNum,x,y,z,c);
-                    pValCircTot += pValCirc;
-                    runs++;
-                }
-                check=pValCircTot/runs;
-            } while (check > pVal*2/3);
-            radTot += rad;
+                    rad += 0.2;
+                    for (double theta=0; theta<2*pi; theta+=pi/8)
+                    {
+                        x = P0.x+rad*cos(theta)*A[0]+rad*sin(theta)*B[0];
+                        if (x>N-1) x=N-1; if (x<0) x=0;
+                        y = P0.y+rad*cos(theta)*A[1]+rad*sin(theta)*B[1];
+                        if (y>M-1) y=M-1; if (y<0) y=0;
+                        z = P0.z+rad*cos(theta)*A[2]+rad*sin(theta)*B[2];
+                        if (z>P-1) z=P-1; if (z<0) z=0;
+                        if (x!=x || y!=y || z!=z) continue; //checking for NaN, not working, some segments are returning -1.#IND
+                        //cout<<x<<" "<<y<<" "<<z<<endl;
+                        double pValCirc = pixelVal(data1d,dimNum,x,y,z,c);
+                        //cout<<pValCirc<<endl;
+                        pValCircTot += pValCirc;
+                        runs++;
+                    }
+                    check=pValCircTot/runs;
+                    cout<<"rad: "<<rad<<". check vs threshold: "<<check<<" vs "<<pVal*2/3<<endl;
+                } while (check > pVal*2/3);
+                cout<<"check passed"<<endl;
+                radTot += rad;
+            }cout<<"RadTot "<<radTot<<endl;
         }
         radAve = radTot/(segment.size()-2);
     }
 
     else //2-unit segment
     {
-        v3d_msg("2-unit neuron SWC radius calculation to be implemented, please remove from test data");
+        //v3d_msg("2-unit neuron SWC radius calculation to be implemented, please remove from test data");
     }
 
+    cout<<"radAve "<<radAve<<endl;
     return radAve;
 }
 
