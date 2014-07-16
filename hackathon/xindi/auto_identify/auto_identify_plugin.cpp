@@ -23,7 +23,9 @@ Q_EXPORT_PLUGIN2(auto_identify, AutoIdentifyPlugin);
 void markers_singleChannel(V3DPluginCallback2 &callback, QWidget *parent);
 void count_cells(V3DPluginCallback2 &callback, QWidget *parent);
 void identify_neurons(V3DPluginCallback2 &callback, QWidget *parent);
-template <class T> LandmarkList main_func(T* data1d, V3DLONG *dimNum, int c, LandmarkList & mlist, LandmarkList & bglist);
+
+template <class T> bool main_func(T* data1d, V3DLONG *dimNum, int c, const LandmarkList & markerlist, LandmarkList & bglist, LandmarkList & outputlist);
+
 LandmarkList neuron_2_mark(const NeuronTree & p, LandmarkList & neuronMarkList);
 template <class T> int pixelVal(T* data1d, V3DLONG *dimNum,
                                 double xc, double yc, double zc, int c);
@@ -321,8 +323,17 @@ void count_cells(V3DPluginCallback2 &callback, QWidget *parent)
 
     LandmarkList Marklist = callback.getLandmark(curwin);
     int Marknum = Marklist.count();
-    QList<NeuronTree> * mTreeList;
+
+    QList<NeuronTree> * mTreeList=0;
     mTreeList = callback.getHandleNeuronTrees_3DGlobalViewer(curwin);
+
+    //check data availability
+    if (Marknum<=0 && !mTreeList)
+    {
+        v3d_msg("you have not specified any marker or swc structure to run this program.");
+        return;
+    }
+
     int SWCcount;
     NeuronTree mTree;
     if (mTreeList->isEmpty()) { SWCcount = 0; }
@@ -390,10 +401,15 @@ void count_cells(V3DPluginCallback2 &callback, QWidget *parent)
     int input_type = items.indexOf(item);
     if (input_type==0) //default
     {
+        if (mlist.count()<=0)    {v3d_msg("There are no neuron traces in the current image"); return;}
+
         LandmarkList bglist; //sending in empty bglist to trigger binary sort
-        LandmarkList smallList = main_func(data1d,dimNum,c,mlist,bglist);
-        LandmarkList& woot2 = smallList;
-        bool draw_le_markers2 = callback.setLandmark(curwin,woot2);
+        LandmarkList smallList;
+        if (main_func(data1d,dimNum,c,mlist,bglist, smallList))
+        {
+            LandmarkList& woot2 = smallList;
+            bool draw_le_markers2 = callback.setLandmark(curwin,woot2);
+        }
     }
     else if (input_type==1) //type
     {
@@ -402,7 +418,7 @@ void count_cells(V3DPluginCallback2 &callback, QWidget *parent)
 
         int * catList;
         catList = new int[mlist.count()];
-        if (mlist.count()==0) {v3d_msg("There are no neuron traces in the current image"); return;}
+        if (mlist.count()<=0)    {v3d_msg("There are no neuron traces in the current image"); return;}
         LocationSimple tempInd;
         for (int i=0; i<mlist.count(); i++)
         {
@@ -475,8 +491,9 @@ void count_cells(V3DPluginCallback2 &callback, QWidget *parent)
             marks = &marksL;*/
             marks = &catArr[i+1];
 //v3d_msg(QString("marks %1").arg(marks->count()));
-            LandmarkList tempList = main_func(data1d,dimNum,c,*marks,*bgs);
-            catSortList.append(tempList);
+            LandmarkList tempList;
+            if (main_func(data1d,dimNum,c,*marks,*bgs, tempList))
+                catSortList.append(tempList);
 //v3d_msg(QString("catSortList append category %1").arg(tempList.at(0).category));
 //            marksL.clear();
         }
@@ -488,8 +505,11 @@ void count_cells(V3DPluginCallback2 &callback, QWidget *parent)
     return;
 }
 
-template <class T> LandmarkList main_func(T* data1d, V3DLONG *dimNum, int c, LandmarkList & markerlist, LandmarkList & bglist)
+template <class T> bool main_func(T* data1d, V3DLONG *dimNum, int c, const LandmarkList & markerlist, LandmarkList & bglist, LandmarkList & outputlist)
 {
+    if (!data1d || !dimNum)
+        return false;
+
     LandmarkList mlist, MarkList, BGList;
     LocationSimple tmpLocation(0,0,0);
     int xc,yc,zc, marks;
@@ -502,7 +522,7 @@ template <class T> LandmarkList main_func(T* data1d, V3DLONG *dimNum, int c, Lan
 
         int pix,num;
         int marknum = mlist.count();
-        int * PixValArr;
+        int * PixValArr=0;
         PixValArr = new int[marknum];
 //v3d_msg("sort ckpt 1");
         for (int i=0; i<marknum; i++)
@@ -521,7 +541,7 @@ template <class T> LandmarkList main_func(T* data1d, V3DLONG *dimNum, int c, Lan
             if (num<min) { min=num; }
         }
 //v3d_msg(QString("sort ckpt 2, min %1 max %2").arg(min).arg(max));
-        int thresh = (max+min)/2;
+        int thresh = (max+min)/2; //this definitely should be changed!!! commented by PHC
         PixVal=0, BGVal=0;
         for (int i=0; i<marknum; i++)
         {
@@ -553,6 +573,13 @@ template <class T> LandmarkList main_func(T* data1d, V3DLONG *dimNum, int c, Lan
     }
 
     marks = MarkList.count();
+
+    if (MarkList.count()<=0 || BGList.count()<=0)
+    {
+        v3d_msg("Either the foreground marker list or the background marker list is empty. Quit.");
+        return false;
+    }
+
     PixVal = PixVal/marks;          //PixVal now stores average pixel value of all cell markers
     BGVal = BGVal/BGList.count();   //BGVal now stores average pixel value of all background markers
     int cat = MarkList.at(0).category;
@@ -671,10 +698,11 @@ template <class T> LandmarkList main_func(T* data1d, V3DLONG *dimNum, int c, Lan
     //        v3d_msg(QString("newList has %1 markers").arg(newList.count()));
 
     //deletes duplicate markers based on their proximity
-    LandmarkList smallList = duplicates(data1d,newList,dimNum,PixVal,radAve,c);
+
+    outputlist = duplicates(data1d,newList,dimNum,PixVal,radAve,c);
 //v3d_msg("duplicates deleted");
 
-    return smallList;
+    return true;
 }
 
 
