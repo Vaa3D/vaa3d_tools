@@ -72,7 +72,7 @@ bool MovieConverter::dofunc(const QString & func_name, const V3DPluginArgList & 
         #endif
 
         QString check_ffmpeg;
-        char * inimg_format = "file_[NUM].bmp";
+        char * inimg_format = "file_[NUM].BMP";
         char * output_fps = "14";
         char * output_Type = "avi";
         unsigned int  c = 1;
@@ -156,7 +156,7 @@ bool MovieConverter::dofunc(const QString & func_name, const V3DPluginArgList & 
         printf("vaa3d -x plugin_name -f convert_frames_to_movie -i <inimg_folder> -p <converter_path> <frame_format> <output_fps> <video_type> <is_compress>\n");
         printf("inimg_folder     the video frame folder path \n");
         printf("converter_path   the movie converter(ffmpeg) path. If do not know, please set this para to NULL and the default path will be the vaa3d main path.\n");
-        printf("frame_format     the format of video frames,e.g. for aaa_1.bmp, please set this para to be aaa_[NUM].bmp\n");
+        printf("frame_format     the format of video frames,e.g. for aaa_1.BMP, please set this para to be aaa_[NUM].BMP\n");
         printf("output_fps       the fps for the output video. Default 14\n");
         printf("video_type       the output video type (avi, mpg, or mp4). Default avi.\n");
         printf("is_compress      if compress the video (1 for yes and 0 for no). Default 1.\n");
@@ -211,7 +211,7 @@ controlPanel::controlPanel(V3DPluginCallback2 &_v3d, QWidget *parent) :
 
     m_pLineEdit_fps = new QLineEdit(QObject::tr("14"));
     m_pLineEdit_filepath = new QLineEdit();
-    m_pLineEdit_filename = new QLineEdit(QObject::tr("a[num].bmp"));
+    m_pLineEdit_filename = new QLineEdit(QObject::tr("a[num].BMP"));
     m_pLineEdit_ffmpegpath = new QLineEdit(exepath);
     QPushButton *pPushButton_start = new QPushButton(QObject::tr("convert"));
     QPushButton *pPushButton_close = new QPushButton(QObject::tr("close"));
@@ -244,7 +244,7 @@ controlPanel::controlPanel(V3DPluginCallback2 &_v3d, QWidget *parent) :
     inputLayout->addWidget(m_pLineEdit_filepath,2,1,1,2);
     inputLayout->addWidget(pPushButton_openFileDlg_output,2,3,1,1);
     inputLayout->addWidget(new QLabel(QObject::tr("Movie-frame file-naming format:\n"
-                                                   "(e.g. aaa[NUM].bmp for aaa1.bmp)")),3,1,1,2);
+                                                   "(e.g. aaa[NUM].BMP for aaa1.BMP)")),3,1,1,2);
     inputLayout->addWidget(m_pLineEdit_filename,3,3);
     input_panel->setLayout(inputLayout);
 
@@ -260,8 +260,8 @@ controlPanel::controlPanel(V3DPluginCallback2 &_v3d, QWidget *parent) :
 
     QWidget* container = new QWidget();
     QGridLayout* bottomBar = new QGridLayout();
-    bottomBar->addWidget(pPushButton_start,1,1);
-    bottomBar->addWidget(pPushButton_close,1,2);
+    bottomBar->addWidget(pPushButton_start,1,2);
+    bottomBar->addWidget(pPushButton_close,1,1);
     container->setLayout(bottomBar);
 
     QGridLayout *pGridLayout = new QGridLayout();
@@ -303,10 +303,16 @@ void controlPanel::_slot_start()
 
           QString selectedFile = 0;
           selectedFile = m_pLineEdit_filepath->text();
+          QDir dir(selectedFile);
           if(selectedFile == 0)
           {
              v3d_msg("Please select an input video frame folder");
              return;
+          }
+          else if (!dir.exists())
+          {
+              dir.cdUp();
+              selectedFile = dir.absolutePath();
           }
 
           QString fps = m_pLineEdit_fps->text();
