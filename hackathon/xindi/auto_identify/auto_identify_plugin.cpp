@@ -51,7 +51,7 @@ V_NeuronSWC_list get_neuron_segments(const NeuronTree *p);
 //NeuronTree VSWClist_2_neuron_tree(V_NeuronSWC_list *p);
 NeuronTree VSWC_2_neuron_tree(V_NeuronSWC *p, int id);
 NeuronSWC make_neuron_swc(V_NeuronSWC_unit *p, int id, bool &start);
-template <class T> double compute_radius(T* data1d, V3DLONG *dimNum, vector<V_NeuronSWC_unit> segment, int c);
+template <class T> bool compute_radius(T* data1d, V3DLONG *dimNum, vector<V_NeuronSWC_unit> segment, int c, double & outputRadAve);
 bool export_list2file(QList<NeuronTree> & N2, QString fileSaveName, QString fileOpenName);
 
  
@@ -130,12 +130,13 @@ bool AutoIdentifyPlugin::dofunc(const QString & func_name, const V3DPluginArgLis
  *
  * [current goals/issues]
  * updating window to reflect type changes does not work yet
- * add in consistency of intensity as potential type identifiers
+ * add in consistency of intensity as potential type identifiers (ie radius st dev)
  *      because the radius calculation is currently skipping dark spots, darker neurons may be classified as brighter than they should be
+ * some coords are returning as indeterminant in the compute_radius function. Right now they are being skipped. Not sure source of bad numbers.
  *
  * [future goals]
  * find way to identify individal segments rather than entire structures as test data. NOT SURE IF EVEN POSSIBLE
- * optimize radius calculation algorithm to be more robust
+ * optimize radius calculation algorithm to be more robust, figure out why it's even capable of returning bad numbers
  *  ##################################
 */
 void identify_neurons(V3DPluginCallback2 &callback, QWidget *parent)
@@ -195,12 +196,13 @@ void identify_neurons(V3DPluginCallback2 &callback, QWidget *parent)
             V_NeuronSWC_list seg_list = get_neuron_segments(&mTree);
             //syntax: list.at(i) is segment, segment.row is vector of units, vector.at(i) is unit, unit.type is category
             int segNum = seg_list.size();
-            v3d_msg(QString("read in test tree with %1 segments").arg(segNum));
+            //v3d_msg(QString("read in test tree with %1 segments").arg(segNum));
             for (int j=0; j<segNum; j++)
             {
                 segCatArr.push_back(seg_list.at(j).row.at(0).type);
-                double radAve = compute_radius(data1d,dimNum,seg_list.at(j).row,c);
-                v3d_msg("got rad");
+                double radAve;
+                compute_radius(data1d,dimNum,seg_list.at(j).row,c,radAve);
+                //v3d_msg("got rad");
                 double x,y,z,intensity=0;
                 for (int k=0; k<seg_list.at(j).row.size(); k++)
                 {
@@ -212,7 +214,7 @@ void identify_neurons(V3DPluginCallback2 &callback, QWidget *parent)
                 double intensAve = intensity/seg_list.at(j).row.size();
                 segRadArr.push_back(radAve);
                 segIntensArr.push_back(intensAve);
-                v3d_msg(QString("cat %1 rad %2").arg(seg_list.at(j).row.at(0).type).arg(radAve));
+                //v3d_msg(QString("cat %1 rad %2").arg(seg_list.at(j).row.at(0).type).arg(radAve));
             }
         }
 //        v3d_msg(QString("%1 %2 %3 %4").arg(segCatArr.size()).arg(segCatArr.at(0)).arg(segRadArr.size()).arg(segRadArr.at(0)));
@@ -230,10 +232,11 @@ void identify_neurons(V3DPluginCallback2 &callback, QWidget *parent)
             //syntax: list.at(i) is segment, segment.row is vector of units, vector.at(i) is unit, unit.type is category
             int segNum = seg_list.size();
             int id=1;
-            v3d_msg(QString("read in segment of length %1").arg(segNum));
+            //v3d_msg(QString("read in segment of length %1").arg(segNum));
             for (int j=0; j<segNum; j++) //loops through segments within one structure
             {
-                double radAve = compute_radius(data1d,dimNum,seg_list.at(j).row,c);
+                double radAve;
+                compute_radius(data1d,dimNum,seg_list.at(j).row,c,radAve);
                 double x,y,z,intensity=0;
                 for (int k=0; k<seg_list.at(j).row.size(); k++)
                 {
@@ -401,7 +404,7 @@ void count_cells(V3DPluginCallback2 &callback, QWidget *parent)
     int input_type = items.indexOf(item);
     if (input_type==0) //default
     {
-        if (mlist.count()<=0)    {v3d_msg("There are no neuron traces in the current image"); return;}
+        if (mlist.count()<=0)    {v3d_msg("There are no markers in the current image"); return;}
 
         LandmarkList bglist; //sending in empty bglist to trigger binary sort
         LandmarkList smallList;
@@ -510,6 +513,10 @@ template <class T> bool main_func(T* data1d, V3DLONG *dimNum, int c, const Landm
     if (!data1d || !dimNum)
         return false;
 
+    V3DLONG N = dimNum[0];
+    V3DLONG M = dimNum[1];
+    V3DLONG P = dimNum[2];
+
     LandmarkList mlist, MarkList, BGList;
     LocationSimple tmpLocation(0,0,0);
     int xc,yc,zc, marks;
@@ -517,7 +524,21 @@ template <class T> bool main_func(T* data1d, V3DLONG *dimNum, int c, const Landm
     if (bglist.isEmpty()) //binary sorting
     {
         //sort markers by background/foreground
+
+        //add corner pixels to list to use as additional bg markers
         mlist = markerlist;
+        for (int i=0; i<=N; i+=N)
+        {
+            for (int j=0; j<=M; j+=M)
+            {
+                for (int k=0; k<=P; k+=P)
+                {
+                    LocationSimple extraBG(i,j,k);
+                    mlist.append(extraBG);
+                }
+            }
+        }
+
 //v3d_msg("presort ckpt");
 
         int pix,num;
@@ -530,9 +551,11 @@ template <class T> bool main_func(T* data1d, V3DLONG *dimNum, int c, const Landm
             tmpLocation = mlist.at(i);
             tmpLocation.getCoord(xc,yc,zc);
             pix = pixelVal(data1d,dimNum,xc,yc,zc,c);
+            if (pix<0 || pix>255) {v3d_msg("pix is wrong"); return false;}
             //      v3d_msg(QString("pix value %1 %2").arg(pix).arg(pix1));
             PixValArr[i] = pix;
         }
+
         int max=0,min=255;
         for (int i=0; i<marknum; i++)
         {
@@ -540,8 +563,63 @@ template <class T> bool main_func(T* data1d, V3DLONG *dimNum, int c, const Landm
             if (num>max) { max=num; }
             if (num<min) { min=num; }
         }
-//v3d_msg(QString("sort ckpt 2, min %1 max %2").arg(min).arg(max));
         int thresh = (max+min)/2; //this definitely should be changed!!! commented by PHC
+//###the below algorith generates a threshold based on histogram of pixel intesity values, which is more accurate
+//###however the rest of the program is way too sensitive when the threshold is too low, aka 50-60ish, and returns back more false positives than true positives
+/*//v3d_msg("starting thresh calc");
+        vector<int> pValHist(52,0); //precise histogram for getting threshold value
+        vector<int> pValHist_smooth(26,0); //smoothed histogram for finding valley
+        for (int i=0; i<=marknum; i++)
+        {
+            int histInd = PixValArr[i]/5;
+            int smoothHistInd = PixValArr[i]/10;
+            if (histInd<0) histInd=0;
+            if (histInd>51) histInd=51;
+            if (smoothHistInd<0) smoothHistInd=0;
+            if (smoothHistInd>25) smoothHistInd=25;
+            num = pValHist[histInd];
+            pValHist[histInd] = num+1;
+            num = pValHist_smooth[smoothHistInd];
+            pValHist_smooth[smoothHistInd] = num+1;
+        }
+//v3d_msg("both hist made");
+        vector<int> localMaxs;
+        if (pValHist_smooth[0]>pValHist_smooth[1]) localMaxs.push_back(0);
+        int num0,num1,num2;
+        for (int i=1; i<=23; i++)
+        {
+            num0=pValHist_smooth[i-1];
+            num1=pValHist_smooth[i];
+            num2=pValHist_smooth[i+1];
+            //cout<<num0<<" "<<num1<<" "<<num2<<endl;
+            if (num1>num0 && num1>num2) {localMaxs.push_back(i);}
+        }
+        if (pValHist_smooth[24]>pValHist_smooth[23]) localMaxs.push_back(24);
+//v3d_msg("localMaxs made");
+        int max=0,valleyPos=0;
+        for (int i=0; i<localMaxs.size()-1; i++)
+        {
+            int diff = localMaxs[i+1]-localMaxs[i];
+            if (diff>max) {valleyPos=i; max=diff;}
+        }
+//v3d_msg("valleyPos found");
+        valleyPos *= 2;
+        int thresh=0;
+        if (valleyPos<=0) valleyPos=1;
+        if (valleyPos>=51) valleyPos=50;
+        if (pValHist[valleyPos-1]==pValHist[valleyPos]==pValHist[valleyPos+1]) thresh=valleyPos*5;
+        int end=valleyPos+10;
+        if (end>50) end=50;
+        for (int i=valleyPos; i<=end; i++)
+        {
+            num0=pValHist[i-1];
+            num1=pValHist[i];
+            num2=pValHist[i+1];
+            if (num1<=num0 && num1<=num2) {thresh=i*5;}
+        }*/
+
+        cout<<"threshold value "<<thresh<<endl<<endl;
+
         PixVal=0, BGVal=0;
         for (int i=0; i<marknum; i++)
         {
@@ -606,7 +684,6 @@ template <class T> bool main_func(T* data1d, V3DLONG *dimNum, int c, const Landm
         tempList.append(newMark);
     }
     MarkList = tempList;
-    //
 //    return MarkList;
 
     //scan list of cell markers for ValAve, radAve
@@ -717,6 +794,8 @@ template <class T> int pixelVal(T* data1d, V3DLONG *dimNum,
     V3DLONG P = dimNum[2];
     V3DLONG shiftC = (c-1)*P*M*N;
     double pixelVal = data1d[ shiftC + (V3DLONG)zc*M*N + (V3DLONG)yc*N + (V3DLONG)xc ];
+    if (pixelVal<0) pixelVal=0;
+    if (pixelVal>255) pixelVal=255;
     return pixelVal;
 }
 
@@ -1205,7 +1284,7 @@ NeuronTree VSWC_2_neuron_tree(V_NeuronSWC *p, int id)
     return newTree;
 }
 
-template <class T> double compute_radius(T* data1d, V3DLONG *dimNum, vector<V_NeuronSWC_unit> segment, int c)
+template <class T> bool compute_radius(T* data1d, V3DLONG *dimNum, vector<V_NeuronSWC_unit> segment, int c, double & outputRadAve)
 {
     V3DLONG N = dimNum[0];
     V3DLONG M = dimNum[1];
@@ -1274,7 +1353,7 @@ template <class T> double compute_radius(T* data1d, V3DLONG *dimNum, vector<V_Ne
         double rad,radTot=0;
         for (int unit=1; unit<segment.size()-1; unit++) //going to omit first and last unit per segment
         {
-            cout<<endl<<"unit "<<unit<<endl;
+            //cout<<endl<<"unit "<<unit<<endl;
             V_NeuronSWC_unit P1,P2,P0;
             P0 = segment.at(unit);
             P1 = segment.at(unit-1);
@@ -1291,15 +1370,13 @@ template <class T> double compute_radius(T* data1d, V3DLONG *dimNum, vector<V_Ne
             int pVal = pixelVal(data1d,dimNum,P0.x,P0.y,P0.z,c);
             if (pVal<50)
             {
-                runs++;
-                cout<<unit<<" low pVal"<<endl;
+                rad+=0.1;
                 continue;
             }
             else
             {
                 double check=255, pi=3.14;
                 float x,y,z;
-                cout<<unit<<" good pVal"<<endl;
                 do
                 {
                     rad += 0.2;
@@ -1311,19 +1388,21 @@ template <class T> double compute_radius(T* data1d, V3DLONG *dimNum, vector<V_Ne
                         if (y>M-1) y=M-1; if (y<0) y=0;
                         z = P0.z+rad*cos(theta)*A[2]+rad*sin(theta)*B[2];
                         if (z>P-1) z=P-1; if (z<0) z=0;
-                        if (x!=x || y!=y || z!=z) continue; //checking for NaN, not working, some segments are returning -1.#IND
+                        if (x!=x || y!=y || z!=z) continue; //checking for NaN, skips segments that return indefinite coords
                         //cout<<x<<" "<<y<<" "<<z<<endl;
                         double pValCirc = pixelVal(data1d,dimNum,x,y,z,c);
                         //cout<<pValCirc<<endl;
                         pValCircTot += pValCirc;
                         runs++;
                     }
-                    check=pValCircTot/runs;
-                    cout<<"rad: "<<rad<<". check vs threshold: "<<check<<" vs "<<pVal*2/3<<endl;
+                    if (runs==0) check=0; //should only happen if entire segment is returning indefinite coords
+                    else check=pValCircTot/runs;
+                    //cout<<"rad: "<<rad<<". check vs threshold: "<<check<<" vs "<<pVal*2/3<<endl;
                 } while (check > pVal*2/3);
-                cout<<"check passed"<<endl;
-                radTot += rad;
-            }cout<<"RadTot "<<radTot<<endl;
+                //cout<<"check passed"<<endl;
+            }
+            radTot += rad;
+            //cout<<"RadTot "<<radTot<<endl;
         }
         radAve = radTot/(segment.size()-2);
     }
@@ -1333,8 +1412,10 @@ template <class T> double compute_radius(T* data1d, V3DLONG *dimNum, vector<V_Ne
         //v3d_msg("2-unit neuron SWC radius calculation to be implemented, please remove from test data");
     }
 
-    cout<<"radAve "<<radAve<<endl;
-    return radAve;
+    //cout<<"radAve "<<radAve<<endl;
+    outputRadAve=radAve;
+    return true;
+
 }
 
 //obsolete function
