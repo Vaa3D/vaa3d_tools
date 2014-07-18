@@ -227,6 +227,7 @@ int dzCut;
 int save_z_min;
 int save_z_max;
 V3DLONG sz2;
+float sz22;
 float X_rescaled;
 float Y_rescaled;
 
@@ -242,6 +243,7 @@ zcLock = 0;
 X = 0;
 Y = 0;
 dzCut = 0;
+sz22 = 0;
 save_z_min = 0;
 save_z_max = 0;
 sz2 = 0;

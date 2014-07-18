@@ -174,8 +174,36 @@ lookPanel::lookPanel(V3DPluginCallback2 &_v3d, QWidget *parent) : //do it here!!
     //QPushButton* update = new QPushButton("Update zed");
     //QPushButton* ok2 = new QPushButton("Show surf_dim");
 
-    zcminSlider = createCutPlaneSlider(255);
-    zcmaxSlider = createCutPlaneSlider(255); //NEW
+    Image4DSimple* subject = _v3d.getImage(curwin);
+    sz2 = subject->getZDim();
+    sz22 = (float)sz2;
+
+
+    stringstream ss (stringstream::in | stringstream::out);
+
+      ss << sz22;
+
+      string test = ss.str();
+
+      v3d_msg(test.c_str());
+
+    if(sz2<256){
+        zcminSlider = createCutPlaneSlider(sz2-1);
+        zcmaxSlider = createCutPlaneSlider(sz2-1);
+        zcmaxSlider->setMinimum(0);
+        zcminSlider->setMinimum(0);
+        zcmaxSlider->setValue(sz2-1);
+        zcminSlider->setValue(0);
+    }
+
+    if(sz2>=256){
+        zcminSlider = createCutPlaneSlider(255);
+        zcmaxSlider = createCutPlaneSlider(255); //NEW
+        zcmaxSlider->setMinimum(0);
+        zcminSlider->setMinimum(0);
+        zcmaxSlider->setValue(255); //this helped...
+        zcminSlider->setValue(0);
+    }
 
     zcLock = new QToolButton(); zcLock->setCheckable(true);
 
@@ -219,11 +247,7 @@ lookPanel::lookPanel(V3DPluginCallback2 &_v3d, QWidget *parent) : //do it here!!
 
 
 
-    zcmaxSlider->setMinimum(0);
-    zcminSlider->setMinimum(0);
-
-    zcmaxSlider->setValue(255); //this helped...
-    zcminSlider->setValue(0); //from 0
+     //from 0
 
     //connect(box_ZCut_Min, SIGNAL(valueChanged(double)), this, SLOT(update()));
     //connect(box_ZCut_Max, SIGNAL(valueChanged(double)), this, SLOT(update()));
@@ -264,17 +288,6 @@ lookPanel::lookPanel(V3DPluginCallback2 &_v3d, QWidget *parent) : //do it here!!
     connect(m_pTimer, SIGNAL(timeout()), this, SLOT(_slot_timerupdate()));
     win_list_past = win_list; //no idea what this is
 
-    Image4DSimple* subject = _v3d.getImage(curwin);
-    sz2 = subject->getZDim();
-
-      stringstream ss (stringstream::in | stringstream::out);
-
-      ss << sz2;
-
-      string test = ss.str();
-
-      v3d_msg(test.c_str());
-
 }
 
 lookPanel::~lookPanel()
@@ -295,6 +308,7 @@ void lookPanel::setZCutLockIcon(bool b){
 void lookPanel::setZCutLock(bool b)
 {
     //change this first part??
+    //seems to work even though I haven't rescaled X or Y.
     if (b) {
 
         //if(sz2<256)
@@ -350,9 +364,10 @@ void lookPanel::change_z_min(){
                     //it is not cutting the image at all!
 
                     //dist_MIN = fabs(((float)X*(560/256))-(min_num*(560/256)));
-                    dist_MIN = fabs(((float)(X*(559.0/255.0)))-(min_num)); //from 256
-                    X_rescaled = X*(559.0/255.0);
 
+                    //X_rescaled = X*(559.0/255.0);
+
+                    /**
                     int x_coord = view_master->zCut0();
 
                     if(x_coord==50||x_coord==100||x_coord==150||x_coord==200||x_coord==250){
@@ -366,25 +381,39 @@ void lookPanel::change_z_min(){
                         v3d_msg(test.c_str());
 
                     }
+                    **/
 
 
-                    //if(sz2<256){
+                    if(sz2<256){
+                        dist_MIN = fabs((min_num-((float)X)));
+
+                        if ((float)X>min_num){
+
+                         view_master->setZClip0((dist_MIN/(max_num-min_num))*200);
+
+                          }
+
+                        if((float)X<=min_num){
+                         view_master->setZClip0(0);
+                         }
+
+                    }
 
                     //the surface cut lags behind the image cut
                     //surf cut stops at 83, should stop at 1001
-                    if (((float)(X*(559.0/255.0)+0.5))>(min_num+0.5)){ //+ =
 
+                    if(sz2>=256){
+                         dist_MIN = fabs(((float)(X*((sz22-1.0)/255.0)))-(min_num)); //from 256
+
+                    if (((float)(X*((sz22-1.0)/255.0)+0.5))>(min_num+0.5)){ //559.0
                          view_master->setZClip0(((dist_MIN+0.5)/((max_num+0.5)-(min_num+0.5)))*200);
                     }
 
 
-                    if(((float)(X*(559.0/255.0)+0.5))<=(min_num+0.5)){ //- =
+                    if(((float)(X*((sz22-1.0)/255.0)+0.5))<=(min_num+0.5)){ //- =
                         view_master->setZClip0(0);
-
-
-
                     }
-
+                    }
 
 
                     if (lockZ){
@@ -450,24 +479,34 @@ void lookPanel::change_z_max(){
                     //view_master->setZCut1((int)(Y*(256/560)));
 
                      //dist_MAX = fabs(((float)Y*(560/256))-(max_num*(560/256)));
-                    dist_MAX = fabs(((float)(Y*(559.0/255.0))-(max_num))); //from 256
+
 
                     //dimensions of the slider are indeed correct. if 560?
 
-                //if(sz2<256){
-                    if (((float)(Y*(559.0/255.0)+0.5))<(max_num+0.5)){ //zcutmax //+ =
+             if(sz2<256){
+                 dist_MAX = fabs((float)Y-max_num);
+
+                 if((float)Y<max_num){
+                    view_master->setZClip1(200-((dist_MAX/(max_num-min_num))*200));
+                 }
+
+                 if((float)Y>=max_num){
+                       view_master->setZClip1(200);
+                 }
+             }
+
+             if(sz2>=256){
+                dist_MAX = fabs(((float)(Y*((sz22-1.0)/255.0))-(max_num))); //from 256
+                    if (((float)(Y*((sz22-1.0)/255.0)+0.5))<(max_num+0.5)){ //zcutmax //+ =
                         //show a max z coordinate of max_num - dist_MAX
                          view_master->setZClip1(200-(((dist_MAX+0.5)/((max_num+0.5)-(min_num+0.5)))*200)); //dist_MAX
                     }
 
-                    if(((float)((Y*(559.0/255.0))+0.5))>=(max_num+0.5)){ //- =
-                        view_master->setZClip1(200); //pull max all the way to the right and it clips at 84
-                        //v3d_msg("Larger than max_num!"); //this has yet to show up...
-
+                    if(((float)((Y*((sz22-1.0)/255.0))+0.5))>=(max_num+0.5)){ //- =
+                        view_master->setZClip1(200);
 
                     }
-                //}
-
+             }
 
                     //In the locked case
                     if (lockZ){
