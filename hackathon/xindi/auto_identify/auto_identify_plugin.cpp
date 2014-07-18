@@ -13,6 +13,7 @@
 #include "../../v3d_main/neuron_tracing/neuron_tracing.h"
 #include <time.h>
 #include <cmath>
+#include <iostream>
 
 using namespace std;
 Q_EXPORT_PLUGIN2(auto_identify, AutoIdentifyPlugin);
@@ -35,10 +36,10 @@ template <class T> LocationSimple mass_center(T* data1d,
 template <class T> pair<int,int> pixel_range(T* data1d,
                                         V3DLONG *dimNum,
                                         double xc,double yc,double zc,int c,double rad);
-template <class T> pair<int,int> dynamic_pixel(T* data1d,
+template <class T> bool dynamic_pixel(T* data1d,
                                         V3DLONG *dimNum,
                                         double xc, double yc, double zc,
-                                        int c, int PixVal, int BGVal);
+                                        int c, int PixVal, int BGVal, double & dataAve, double & rad);
 template <class T> LandmarkList scan_and_count(T* data1d,
                                       V3DLONG *dimNum,
                                       int MarkAve, int MarkStDev,
@@ -51,9 +52,12 @@ V_NeuronSWC_list get_neuron_segments(const NeuronTree *p);
 //NeuronTree VSWClist_2_neuron_tree(V_NeuronSWC_list *p);
 NeuronTree VSWC_2_neuron_tree(V_NeuronSWC *p, int id);
 NeuronSWC make_neuron_swc(V_NeuronSWC_unit *p, int id, bool &start);
-template <class T> bool compute_swc_radius(T* data1d, V3DLONG *dimNum, vector<V_NeuronSWC_unit> segment, int c, double & outputRadAve);
+template <class T> bool compute_swc_radius(T* data1d, V3DLONG *dimNum, vector<V_NeuronSWC_unit> segment,
+                                           int c, double & outputRadAve, double & outputRadStDev);
 bool export_list2file(QList<NeuronTree> & N2, QString fileSaveName, QString fileOpenName);
-template <class T> bool apply_mask(V3DLONG *dimNum, int xc, int yc, int zc, T & maskImg, double rad);
+template <class T> bool apply_mask(unsigned char* data1d, V3DLONG *dimNum,
+                                   int xc, int yc, int zc, int c, double PixVal, double BGVal, T & maskImg);
+bool open_testSWC(NeuronTree & openTree);
 
  
 QStringList AutoIdentifyPlugin::menulist() const
@@ -128,13 +132,12 @@ bool AutoIdentifyPlugin::dofunc(const QString & func_name, const V3DPluginArgLis
  * average intensity of branches works
  * categorizing non-test data sets based on test data works
  * saving newly labeled SWC file works
+ * radius StDev of branches works
+ * can load test data directly from file
  *
  * [current goals/issues]
  * updating window to reflect type changes does not work yet
- * add in consistency of intensity as potential type identifiers (ie radius st dev)
- *      because the radius calculation is currently skipping dark spots, darker neurons may be classified as brighter than they should be
  * some coords are returning as indeterminant in the compute_radius function. Right now they are being skipped. Not sure source of bad numbers.
- * add in ability to load test structure directly from file
  *
  * [future goals]
  * find way to identify individal segments rather than entire structures as test data. NOT SURE IF EVEN POSSIBLE
@@ -183,17 +186,27 @@ void identify_neurons(V3DPluginCallback2 &callback, QWidget *parent)
     if (mTreeList->isEmpty()) { v3d_msg("There are no neuron traces in the current window."); return; }
     else
     {
-        vector<int> segCatArr;
-        vector<double> segRadArr;
-        vector<double> segIntensArr;
+        vector<int> segCatArr(10);
+        vector<double> segRadArr(10);
+        vector<double> segIntensArr(10);
+        vector<double> segRadStDevArr(10);
+
+        //open test example SWC
+        NeuronTree openTree;
+        if (open_testSWC(openTree))
+        {
+            openTree.comment = "test";
+            mTreeList->append(openTree);
+        }
         int structNum = mTreeList->count();
 
-        //get radius and type from test data
+        //get examples from test data
         for (int i=0; i<structNum; i++)
         {
             mTree = mTreeList->at(i);
 
             if (mTree.comment != "test") continue; //defining the testing set by comments
+            //v3d_msg("test data");
 
             V_NeuronSWC_list seg_list = get_neuron_segments(&mTree);
             //syntax: list.at(i) is segment, segment.row is vector of units, vector.at(i) is unit, unit.type is category
@@ -201,9 +214,12 @@ void identify_neurons(V3DPluginCallback2 &callback, QWidget *parent)
             //v3d_msg(QString("read in test tree with %1 segments").arg(segNum));
             for (int j=0; j<segNum; j++)
             {
-                segCatArr.push_back(seg_list.at(j).row.at(0).type);
-                double radAve;
-                compute_swc_radius(data1d,dimNum,seg_list.at(j).row,c,radAve);
+                //segCatArr.push_back(seg_list.at(j).row.at(0).type);
+                int segCat = seg_list.at(j).row.at(0).type;
+                cout<<segCat<<endl;
+                segCatArr[segCat] += 1;
+                double radAve,radStDev;
+                compute_swc_radius(data1d,dimNum,seg_list.at(j).row,c,radAve,radStDev);
                 //v3d_msg("got rad");
                 double x,y,z,intensity=0;
                 for (int k=0; k<seg_list.at(j).row.size(); k++)
@@ -214,9 +230,20 @@ void identify_neurons(V3DPluginCallback2 &callback, QWidget *parent)
                     intensity += pixelVal(data1d,dimNum,x,y,z,c);
                 }
                 double intensAve = intensity/seg_list.at(j).row.size();
-                segRadArr.push_back(radAve);
-                segIntensArr.push_back(intensAve);
+                //segRadArr.push_back(radAve);
+                //segIntensArr.push_back(intensAve);
+                //segRadStDevArr.push_back(radStDev);
+                segRadArr[segCat] += radAve;
+                segIntensArr[segCat] += intensAve;
+                segRadStDevArr[segCat] += radStDev;
                 //v3d_msg(QString("cat %1 rad %2").arg(seg_list.at(j).row.at(0).type).arg(radAve));
+            }
+            for (int k=0; k<segCatArr.size(); k++)
+            {
+                if (segCatArr[k]==0) continue;
+                segRadArr[k] /= segCatArr[k];
+                segIntensArr[k] /= segCatArr[k];
+                segRadStDevArr[k] /= segCatArr[k];
             }
         }
 //        v3d_msg(QString("%1 %2 %3 %4").arg(segCatArr.size()).arg(segCatArr.at(0)).arg(segRadArr.size()).arg(segRadArr.at(0)));
@@ -229,6 +256,7 @@ void identify_neurons(V3DPluginCallback2 &callback, QWidget *parent)
             mTree = mTreeList->at(i);
 
             if (mTree.comment == "test") continue; //defining the testing set by comments
+            //v3d_msg("labeling data");
 
             V_NeuronSWC_list seg_list = get_neuron_segments(&mTree);
             //syntax: list.at(i) is segment, segment.row is vector of units, vector.at(i) is unit, unit.type is category
@@ -237,8 +265,8 @@ void identify_neurons(V3DPluginCallback2 &callback, QWidget *parent)
             //v3d_msg(QString("read in segment of length %1").arg(segNum));
             for (int j=0; j<segNum; j++) //loops through segments within one structure
             {
-                double radAve;
-                compute_swc_radius(data1d,dimNum,seg_list.at(j).row,c,radAve);
+                double radAve,radStDev;
+                compute_swc_radius(data1d,dimNum,seg_list.at(j).row,c,radAve,radStDev);
                 double x,y,z,intensity=0;
                 for (int k=0; k<seg_list.at(j).row.size(); k++)
                 {
@@ -249,17 +277,19 @@ void identify_neurons(V3DPluginCallback2 &callback, QWidget *parent)
                 }
                 double intensAve = intensity/seg_list.at(j).row.size();
                 //v3d_msg(QString("radius %1").arg(radAve));
-                double diffRad,diffInt,diff,diff_min=255;
+                double diffRad,diffInt,diffRadStD,diff,diff_min=255;
                 int cur_type=3;
-                for (int k=0; k<segRadArr.size(); k++)
+                for (int k=0; k<segCatArr.size(); k++)
                 {
+                    if (segCatArr.at(k)==0) continue;
                     diffRad = abs(radAve-segRadArr.at(k));
                     diffInt = abs(intensAve-segIntensArr.at(k));
-                    diff = (diffRad+diffInt)/2; //depending on further testing, may end up weighing this average differently
+                    diffRadStD = abs(radStDev-segRadStDevArr.at(k));
+                    diff = (2*diffRad+diffInt+3*diffRadStD)/6; //depending on further testing, may end up weighing this average differently
                     //v3d_msg(QString("diff %3 between calculated %1 and test %2").arg(radAve).arg(segRadArr.at(k)).arg(diff));
                     if (diff<diff_min)
                     {
-                        cur_type=segCatArr.at(k);
+                        cur_type=k;
                         diff_min=diff;
                     }
                 }
@@ -282,6 +312,19 @@ void identify_neurons(V3DPluginCallback2 &callback, QWidget *parent)
         //*mTreeList = newTreeList;
         //callback.updateImageWindow(curwin);
         export_list2file(newTreeList,curfilename+"_Labeled_SWC.swc",curfilename);
+
+        /*v3dhandle newwin = callback.newImageWindow(curfilename+" Labeled SWC");
+        unsigned char *outputData = 0;
+        outputData = new unsigned char [N*M*P*sc];
+        Image4DSimple outputImage;
+        outputImage.setData((unsigned char*)outputData, N, M, P, sc, V3D_UINT8);
+        callback.setImage(newwin,&outputImage);
+        callback.open3DWindow(newwin);
+        for (int i=0; i<newTreeList.size(); i++)
+        {
+            NeuronTree drawTree = newTreeList.at(i);
+            callback.setSWC(newwin,drawTree);
+        }*/
     }
 
     return;
@@ -294,9 +337,15 @@ void identify_neurons(V3DPluginCallback2 &callback, QWidget *parent)
  * added in use of corner voxels as negative examplers
  * improved threshold algorithm
  * significantly reduced duplicate detection of cells
+ * mass center fixed
  *
  * [current goals/issues]
- * mass_center tends to skew markers towards (0,0,0), compromises test data calculations
+ * still several undetected cells
+ * scan_and_count a little slow
+ * because of variable cell radius, mass_center does not work equally well across all cells
+ *      optimizing to center larger cells would cause clustered cells to be treated as one
+ *      keeping small radius to keep clustered cells separate prevents detection of true center of larger cells
+ * Cannot detect cells if they are too small in the image
  *
  * [future goals]
  *
@@ -553,6 +602,7 @@ template <class T> bool identify_cells(T* data1d, V3DLONG *dimNum, int c, const 
             tmpLocation = mlist.at(i);
             tmpLocation.getCoord(xc,yc,zc);
             pix = pixelVal(data1d,dimNum,xc,yc,zc,c);
+            //cout<<"value "<<pix<<" at coords "<<xc<<" "<<yc<<" "<<zc<<endl;
             if (pix<0 || pix>255) {v3d_msg("pix is wrong"); return false;}
             //      v3d_msg(QString("pix value %1 %2").arg(pix).arg(pix1));
             PixValArr[i] = pix;
@@ -593,15 +643,15 @@ template <class T> bool identify_cells(T* data1d, V3DLONG *dimNum, int c, const 
             num1=pValHist_smooth[i];
             num2=pValHist_smooth[i+1];
             //cout<<num0<<" "<<num1<<" "<<num2<<endl;
-            if (num1>num0 && num1>num2) {localMaxs.push_back(i);}
+            if (num1!=0 && num1>=num0 && num1>=num2) {localMaxs.push_back(i);}
         }
-        if (pValHist_smooth[25]>pValHist_smooth[24]) localMaxs.push_back(24);
+        if (pValHist_smooth[25]>pValHist_smooth[24]) localMaxs.push_back(25);
 //v3d_msg("localMaxs made");
-        int max=0,valleyPos=0;
+        int max=2,valleyPos=0,diff=0;
         for (int i=0; i<localMaxs.size()-1; i++)
         {
-            int diff = localMaxs[i+1]-localMaxs[i];
-            if (diff>max) {valleyPos=i; max=diff;}
+            diff = localMaxs[i+1]-localMaxs[i];
+            if (diff>max) {valleyPos=i; break;}
         }
 //v3d_msg("valleyPos found");
         valleyPos *= 2;
@@ -609,7 +659,7 @@ template <class T> bool identify_cells(T* data1d, V3DLONG *dimNum, int c, const 
         if (valleyPos<=0) valleyPos=1;
         if (valleyPos>=51) valleyPos=50;
         if (pValHist[valleyPos-1]==pValHist[valleyPos]==pValHist[valleyPos+1]) thresh=valleyPos*5;
-        int end=valleyPos+10;
+        int end=valleyPos+diff*2;
         if (end>50) end=50;
         for (int i=valleyPos; i<=end; i++)
         {
@@ -685,14 +735,14 @@ template <class T> bool identify_cells(T* data1d, V3DLONG *dimNum, int c, const 
         tempList.append(newMark);
     }
     MarkList = tempList;
-//    outputlist = tempList; return true;
+    //outputlist = tempList; return true;
 
     //scan list of cell markers for ValAve, radAve
 
     int * ValAveArr; int * radAveArr;
     ValAveArr = new int[marks]; radAveArr = new int[marks];
     LocationSimple tempLocation(0,0,0);
-    double ValAve=0,radAve=0;
+    double ValAve=0,radAve=0,tmpDataAve,tmpRad;
 
     for (int i=0; i<marks; i++)
     {
@@ -700,11 +750,13 @@ template <class T> bool identify_cells(T* data1d, V3DLONG *dimNum, int c, const 
         tempLocation.getCoord(xc,yc,zc);
         int Pix = pixelVal(data1d,dimNum,xc,yc,zc,c);
 
-        pair<int,int> dynAns = dynamic_pixel(data1d,dimNum,xc,yc,zc,c,Pix,BGVal);
-        ValAveArr[i] = dynAns.first;
-        radAveArr[i] = dynAns.second;
-        ValAve += ValAveArr[i];
-        radAve += radAveArr[i];
+        if (dynamic_pixel(data1d,dimNum,xc,yc,zc,c,Pix,BGVal,tmpDataAve,tmpRad))
+        {
+            ValAveArr[i] = tmpDataAve;
+            radAveArr[i] = tmpRad;
+            ValAve += ValAveArr[i];
+            radAve += radAveArr[i];
+        }
 
 //v3d_msg(QString("ValAve %1, radAve %2").arg(ValAve).arg(radAve));
     }
@@ -778,7 +830,7 @@ template <class T> bool identify_cells(T* data1d, V3DLONG *dimNum, int c, const 
     //deletes duplicate markers based on their proximity
 
     outputlist = duplicates(data1d,newList,dimNum,PixVal,radAve,c);
-//    outputlist=newList;
+//    outputlist = newList;
 //v3d_msg("duplicates deleted");
 
     return true;
@@ -795,7 +847,10 @@ template <class T> int pixelVal(T* data1d, V3DLONG *dimNum,
     V3DLONG M = dimNum[1];
     V3DLONG P = dimNum[2];
     V3DLONG shiftC = (c-1)*P*M*N;
-    double pixelVal = data1d[ shiftC + (V3DLONG)zc*M*N + (V3DLONG)yc*N + (V3DLONG)xc ];
+    if (xc<=0) xc=1; if (xc>N) xc=N;
+    if (yc<=0) yc=1; if (yc>M) yc=M;
+    if (zc<=0) zc=1; if (zc>P) zc=P;
+    double pixelVal = data1d[ shiftC + (V3DLONG)(zc-1)*M*N + (V3DLONG)(yc-1)*N + (V3DLONG)(xc-1) ];
     if (pixelVal<0) pixelVal=0;
     if (pixelVal>255) pixelVal=255;
     return pixelVal;
@@ -844,7 +899,7 @@ template <class T> LocationSimple mass_center(T* data1d,
     }*/
 
     double x,y,z,pi=3.14;
-    rad = 10;
+    //rad = 15;
 
     for (double r=rad/5; r<=rad; r+=rad/5)
     {
@@ -882,17 +937,16 @@ template <class T> LocationSimple mass_center(T* data1d,
 
 
 //returns average pixel value and radius of cell around a marker
-template <class T> pair<int,int> dynamic_pixel(T* data1d,
+template <class T> bool dynamic_pixel(T* data1d,
                                         V3DLONG *dimNum,
                                         double xc, double yc, double zc,
-                                        int c, int PixVal, int BGVal)
+                                        int c, int PixVal, int BGVal, double & dataAve, double & rad)
 {
     V3DLONG N = dimNum[0];
     V3DLONG M = dimNum[1];
     V3DLONG P = dimNum[2];
     V3DLONG shiftC = (c-1)*P*M*N;
 
-    double rad=0,dataAve;
     do
     {
         rad++;
@@ -955,7 +1009,7 @@ template <class T> pair<int,int> dynamic_pixel(T* data1d,
         dataAve = datatotal/runs;
     } while ( dataAve > (PixVal+2*BGVal)/3 );
 
-    return make_pair(dataAve,rad);
+    return true;
 }
 
 
@@ -1111,7 +1165,7 @@ template <class T> LandmarkList scan_and_count(T* data1d,
 
 
         cout<<"starting count"<<endl;
-        seg = radAve/2;
+        seg = radAve/4;
         double init=radAve+radStDev;
         double end=radAve-radStDev;
         if (end<1) { end=1;}
@@ -1148,7 +1202,7 @@ template <class T> LandmarkList scan_and_count(T* data1d,
                             tmpLocation.comments = catStr.str();
                             newList.append(tmpLocation);
 
-                            apply_mask(dimNum,ix,iy,iz,maskImg,i);
+                            apply_mask(data1d,dimNum,ix,iy,iz,c,PointAve,0,maskImg);
 
                             continue;
                         }
@@ -1193,8 +1247,11 @@ template <class T> LandmarkList duplicates(T* data1d, LandmarkList fullList,
             {
                 data1 = abs(pix1-PointAve);
                 data2 = abs(pix2-PointAve);
+                /*double pix1,rad1,pix2,rad2;
+                dynamic_pixel(data1d,dimNum,x1,y1,z1,c,PointAve,0,pix1,rad1);
+                dynamic_pixel(data1d,dimNum,x2,y2,z2,c,PointAve,0,pix2,rad2);*/
 
-                if (data1>data2)
+                if (data1>=data2)
                     smallList.replace(i,zer) ;//replace point1 with 0 to avoid changing length of list and messing up indexes
                 else
                     smallList.replace(j,zer) ;//replace point2
@@ -1301,12 +1358,13 @@ NeuronTree VSWC_2_neuron_tree(V_NeuronSWC *p, int id)
     return newTree;
 }
 
-template <class T> bool compute_swc_radius(T* data1d, V3DLONG *dimNum, vector<V_NeuronSWC_unit> segment, int c, double & outputRadAve)
+template <class T> bool compute_swc_radius(T* data1d, V3DLONG *dimNum, vector<V_NeuronSWC_unit> segment,
+                                           int c, double & outputRadAve, double & outputRadStDev)
 {
     V3DLONG N = dimNum[0];
     V3DLONG M = dimNum[1];
     V3DLONG P = dimNum[2];
-    double radAve;
+    double radAve,radStDev;
 
     /*if (segment.size()>2)
     {
@@ -1368,6 +1426,7 @@ template <class T> bool compute_swc_radius(T* data1d, V3DLONG *dimNum, vector<V_
     if (segment.size()>2)
     {
         double rad,radTot=0;
+        vector<double> radArr;
         for (int unit=1; unit<segment.size()-1; unit++) //going to omit first and last unit per segment
         {
             //cout<<endl<<"unit "<<unit<<endl;
@@ -1419,9 +1478,17 @@ template <class T> bool compute_swc_radius(T* data1d, V3DLONG *dimNum, vector<V_
                 //cout<<"check passed"<<endl;
             }
             radTot += rad;
+            radArr.push_back(rad);
             //cout<<"RadTot "<<radTot<<endl;
         }
         radAve = radTot/(segment.size()-2);
+        double stR,t;
+        for (int i=0; i<radArr.size(); i++)
+        {
+            t = (radArr[i]-radAve)*(radArr[i]-radAve);
+            stR += t;
+        }
+        outputRadStDev = sqrt(stR/radArr.size());
     }
 
     else //2-unit segment
@@ -1561,14 +1628,16 @@ bool export_list2file(QList<NeuronTree> & N2, QString fileSaveName, QString file
     return true;
 };
 
-template <class T> bool apply_mask(V3DLONG *dimNum, int xc, int yc, int zc, T & maskImg, double rad)
+template <class T> bool apply_mask(unsigned char* data1d, V3DLONG *dimNum,
+                                   int xc, int yc, int zc, int c, double PixVal, double BGVal, T & maskImg)
 {
     V3DLONG N = dimNum[0];
     V3DLONG M = dimNum[1];
     V3DLONG P = dimNum[2];
     int x,y,z;
-    double pi=3.14;
-    rad *=1.5;
+    double pi=3.14,rad,dataAve;
+
+    dynamic_pixel(data1d,dimNum,xc,yc,zc,c,PixVal,BGVal,dataAve,rad);
 
     //cout<<"applying mask"<<endl;
     *maskImg.at(xc,yc,zc,0) = 255;
@@ -1590,4 +1659,19 @@ template <class T> bool apply_mask(V3DLONG *dimNum, int xc, int yc, int zc, T & 
         }
     }
     return true;
+}
+
+bool open_testSWC(NeuronTree & openTree)
+{
+    QString fileOpenName;
+    fileOpenName = QFileDialog::getOpenFileName(0, QObject::tr("Open Example SWC File"),
+            "",
+            QObject::tr("Supported file (*.swc)"));
+
+    if (!fileOpenName.isEmpty() && fileOpenName.toUpper().endsWith(".SWC"))
+    {
+        openTree = readSWC_file(fileOpenName);
+        return true;
+    }
+    else return false;
 }
