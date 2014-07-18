@@ -37,6 +37,8 @@ public:
 
     float getPluginVersion() const {return 1.1f;}
 
+    //virtual void setZCutLock(bool b)=0;
+
     //virtual QList <NeuronTree> * getHandleNeuronTrees_Any3DViewer(V3dR_MainWindow *w) = 0;
 
 };
@@ -124,8 +126,6 @@ public:
     QAbstractSlider *createCutPlaneSlider(int maxval, Qt::Orientation hv = Qt::Horizontal);
 
     QString Cut_altTip(int dim_i, int v, int minv, int maxv, int offset);
-
-    //void setZCutLockIcon(bool);
     /**
     void initVolumeCutRange();  // called by initControlValue
     void initSurfaceCutRange();
@@ -186,6 +186,8 @@ private slots:
     void change_z_min();
     void change_z_max();
     void setZCutLockIcon(bool);
+
+    //void setZCutLockIcon(bool);
     void setZCutLock(bool);
     //void showZCutLock();
     //void change_zed_min(); //obviously does more than that now
