@@ -30,7 +30,7 @@ typedef vector<Point*> Segment;
 typedef vector<Point*> Tree;
 typedef vector<MPoint*> Markerpts;
 
-void typeset_children(Tree tree, double settype) //sets children as -333. or replace -333
+void typeset_children_marker(Tree tree, double settype) //sets children as -333,then replaces -333 w/ settype
 {
     for (V3DLONG i=0;i<tree.size(); i++) //go through tree list
     {
@@ -51,38 +51,48 @@ void typeset_children(Tree tree, double settype) //sets children as -333. or rep
 
         if (tree.at(i)->type == -333) //as long as parent id is not -1
         {
-            tree.at(i)->type = settype;
+            tree.at(i)->type = settype; //sets type to settype as previously defined
         }
+//        else if (tree.at(i)->type == -1)
+//        {
+//            tree.at(i)->type = 1; //soma = 1?
+//        }
+//        else
+//        {
+//            tree.at(i)->type = 20; //20 would indicate if type is unset. can add section that asks if user wants this.
+//        }
     }
-    v3d_msg("typeset_children done!");
+
+    v3d_msg("typeset_children_marker done!");
 
 }
 
-
-
-void set_child(Tree tree)
+void typeset_children_branch(Tree tree, QWidget *parent) //sets branch as type set by user individually
 {
-    for (V3DLONG i=0;i<tree.size(); i++) //for each node
+    for (V3DLONG i=0;i<tree.size(); i++) //go through tree list
     {
-        if (tree.at(i)->p != -1) //unless node does not have a parent
+        if (tree.at(i)->p != -1) //if node is not soma
         {
-            int parent_id = tree.at(i)-> p-1;
-            vector<int> child_ids_replace = tree.at(parent_id)->child_ids;
+            int parent_loc = tree.at(i)->p - 1; //parent location = parent id - 1
 
-            child_ids_replace.push_back(i+1); //node id is list id+1
-
-            tree.at(parent_id)->childNum = tree.at(parent_id)->childNum +1; //number of children per parent id
-            tree.at(parent_id)->child_ids = child_ids_replace; //adds child id to vector
-
+            if (tree.at(parent_loc)->type == -333)
+            {
+                double current_settype;
+                if (tree.at(parent_loc)->p == 1)
+                {
+                current_settype = QInputDialog::getDouble(parent, "Please set branch type starting at node coordinate: \n"
+                                                  +QString("%1, %2,%3").arg(tree.at(i)->x).arg(tree.at(i)->y).arg(tree.at(i)->z),"Type:",0,0,4,1);
+                }
+                tree.at(parent_loc)->type = current_settype; //set's parent type to settype
+                tree.at(i)->type = -333; //makes it easier to find
+            }
         }
     }
 }
 
-
-NeuronTree typeset(NeuronTree input, QList<ImageMarker> input1, double settype)
+NeuronTree typeset_marker(NeuronTree input, QList<ImageMarker> input1, double settype)
 {
     NeuronTree result;
-    //int typeset;
     V3DLONG siz = input.listNeuron.size();
     V3DLONG siz1 = input1.size();
 
@@ -100,11 +110,9 @@ NeuronTree typeset(NeuronTree input, QList<ImageMarker> input1, double settype)
         pt->r = s.r;
         pt ->type = s.type;
         pt->p = s.parent;
-        pt->childNum = 0;        
+        pt->childNum = 0;
         tree.push_back(pt);
     }
-
-    //set_child(tree); //sets child num and child ids
 
     double xnow,ynow,znow,dx,dy,dz,distance,min;
     double window=20;
@@ -112,10 +120,8 @@ NeuronTree typeset(NeuronTree input, QList<ImageMarker> input1, double settype)
     vector<int> min_place_list;
     vector<int> skipped_marker_list;
 
-
     for (V3DLONG j=0;j<siz1;j++) //sets each marker point node location as -333
     {
-
         xnow = input1[j].x;
         ynow = input1[j].y;
         znow = input1[j].z;
@@ -151,16 +157,9 @@ NeuronTree typeset(NeuronTree input, QList<ImageMarker> input1, double settype)
         }
     }
 
-    typeset_children(tree,settype);
-    //typeset_children(tree); //number of times this is done = largest child number? or just do the lookup table here
+    typeset_children_marker(tree,settype);
 
-
-//parse through, find current node's parent node, then set the parent node's child id as current node
-    //if parent node id = -1, don't do anything
-    //if parent node id already has a child node set, find a way to to set parent node to have 2 child ids -> set as vector<int>
-
-
-    printf("typeset done.\n");
+    v3d_msg("typeset_marker done.");
 
     for (V3DLONG i=0;i<tree.size();i++) // NEED THIS FOR LOOP EVENTUALLY
         {
@@ -182,6 +181,41 @@ NeuronTree typeset(NeuronTree input, QList<ImageMarker> input1, double settype)
         }
 
     return result;
+}
+
+
+NeuronTree typeset_branch(NeuronTree input, QWidget *parent)
+{
+    NeuronTree result;
+    V3DLONG siz = input.listNeuron.size();
+
+    Tree tree;
+
+    for (V3DLONG i=0;i<siz;i++) //gets swc file input
+    {
+        NeuronSWC s = input.listNeuron[i];
+        Point* pt = new Point;
+        pt->n = s.n;
+        pt->x = s.x;
+        pt->y = s.y;
+        pt->z = s.z;
+        pt->r = s.r;
+        pt ->type = s.type;
+        pt->p = s.parent;
+        pt->childNum = 0;
+        tree.push_back(pt);
+    }
+    for (V3DLONG i=0;i<siz;i++)
+    {
+        if (tree.at(i)->p == 1) //id's parent = soma
+        {
+            tree.at(i)->type = -333;
+        }
+    }
+    typeset_children_branch(tree, parent);
+
+    v3d_msg("typeset_branch done.");
+
 }
 
 

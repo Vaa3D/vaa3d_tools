@@ -7,6 +7,8 @@
 #include "v3d_message.h"
 #include "typeset_plugin.h"
 #include "typeset_func.h"
+#include "sort_func.h"
+//#include "sort_func.cpp"
 
 Q_EXPORT_PLUGIN2(typeset_swc, TypesetPlugin)
 
