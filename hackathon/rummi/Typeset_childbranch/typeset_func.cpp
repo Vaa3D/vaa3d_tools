@@ -76,10 +76,12 @@ int typeset_swc(V3DPluginCallback2 &callback, QWidget *parent)
         for (int i=0;i<current_3Dview_markers.size();i++)//translate marker info from landmark list to tmp_list
         {
             LocationSimple t = current_3Dview_markers.at(i);
-            ImageMarker* pt = new ImageMarker;
-            pt->x = t.x;
-            pt->y = t.y;
-            pt->z = t.z;
+            //ImageMarker* pt = new ImageMarker;
+
+            ImageMarker pt;
+            pt.x = t.x;
+            pt.y = t.y;
+            pt.z = t.z;
             tmp_list.push_back(pt);
 
         }
