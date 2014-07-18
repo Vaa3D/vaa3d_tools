@@ -185,10 +185,10 @@ lookPanel::lookPanel(V3DPluginCallback2 &_v3d, QWidget *parent) : //do it here!!
     //QPushButton* update = new QPushButton("Update zed");
     //QPushButton* ok2 = new QPushButton("Show surf_dim");
 
-    zcminSlider = createCutPlaneSlider(140);
-    zcmaxSlider = createCutPlaneSlider(140);
+    zcminSlider = createCutPlaneSlider(255);
+    zcmaxSlider = createCutPlaneSlider(255); //NEW
 
-    zcLock = new QToolButton(); zcLock->setCheckable(true); //NEW
+    zcLock = new QToolButton(); zcLock->setCheckable(true);
 
     //box_ZCut_Min = new QSpinBox();
     //box_ZCut_Max = new QSpinBox();
@@ -215,8 +215,8 @@ lookPanel::lookPanel(V3DPluginCallback2 &_v3d, QWidget *parent) : //do it here!!
     //gridLayout->addWidget(box_ZCut_Max, 13,4,1,2);
     gridLayout->addWidget(SampleNameTwo, 17,0,1,1);
 
-    gridLayout->addWidget(zcminSlider,15,3,1,6); //15,0,1,6 //maybe add dimensions later
-    gridLayout->addWidget(zcmaxSlider,17,3,1,6);
+    gridLayout->addWidget(zcminSlider,15,3,1,16); //15,0,1,6 //maybe add dimensions later
+    gridLayout->addWidget(zcmaxSlider,17,3,1,16);
     gridLayout->addWidget(zcLock, 20, 1, 1, 3); //NEW
 
 
@@ -241,11 +241,15 @@ lookPanel::lookPanel(V3DPluginCallback2 &_v3d, QWidget *parent) : //do it here!!
         //redundant, I think...
         /**
         zcminSlider->setMaximum(100);
-        zcminSlider->setMinimum(0);
+        zcminSlider->setMinimum(1);
         zcminSlider->setValue(0);
         **/
 
-    zcmaxSlider->setValue(140);
+    zcmaxSlider->setMinimum(0);
+    zcminSlider->setMinimum(0);
+
+    zcmaxSlider->setValue(255); //this helped...
+    zcminSlider->setValue(0); //from 0
 
     //connect(box_ZCut_Min, SIGNAL(valueChanged(double)), this, SLOT(update()));
     //connect(box_ZCut_Max, SIGNAL(valueChanged(double)), this, SLOT(update()));
@@ -279,7 +283,7 @@ lookPanel::lookPanel(V3DPluginCallback2 &_v3d, QWidget *parent) : //do it here!!
             connect(zcLock, SIGNAL(toggled(bool)), this, SLOT(setZCutLock(bool))); //3. glWidget
             //connect(zcLock, SIGNAL(toggled(bool)), this, SLOT(showZCutLock()));
         //I need to rewrite setZCutLock for sure
-            connect(zcLock, SIGNAL(toggled(bool)), this, SLOT(setZCutLockIcon(bool))); setZCutLockIcon(false);
+            connect(zcLock, SIGNAL(toggled(bool)), this, SLOT(setZCutLockIcon(bool))); setZCutLockIcon(false); //default
         }
     //right now just setting to false. a blank icon. this is ok.
     //this isn't actually locking the slider!
@@ -298,6 +302,17 @@ lookPanel::lookPanel(V3DPluginCallback2 &_v3d, QWidget *parent) : //do it here!!
     connect(m_pTimer, SIGNAL(timeout()), this, SLOT(_slot_timerupdate()));
     win_list_past = win_list; //no idea what this is
 
+    Image4DSimple* subject = _v3d.getImage(curwin);
+    sz2 = subject->getZDim();
+
+      stringstream ss (stringstream::in | stringstream::out);
+
+      ss << sz2;
+
+      string test = ss.str();
+
+      v3d_msg(test.c_str());
+
 }
 
 lookPanel::~lookPanel()
@@ -305,6 +320,7 @@ lookPanel::~lookPanel()
     if (m_pTimer) {delete m_pTimer; m_pTimer=0;}
 }
 
+//Not working, yet
 void lookPanel::setZCutLockIcon(bool b){
     if (! zcLock)  return;
         if (b)
@@ -328,7 +344,19 @@ void lookPanel::setZCutLock(bool b)
 {
     //change this first part??
     if (b) {
-        dzCut = Y - X; //it's not locking because X and Y are changing?
+
+        //if(sz2<256)
+        //{
+        dzCut = Y - X;
+        //}
+
+        /**
+        if(sz2>=256)
+        {
+            dzCut = Y_rescaled-X_rescaled;
+        }
+        **/
+        //it's not locking because X and Y are changing?
         //zcmaxSlider->sliderPosition()==(zcminSlider->sliderPosition()+dzCut);
     //zcmaxSlider->setValue(50); //this works. Sets it to this as soon as I hit the button
     //zcmaxSlider->setValue(dzCut); //is decreasing the value of the zcmaxSlider by 26 each time clicked, seems to work though
@@ -352,6 +380,7 @@ void lookPanel::showZCutLock()
 void lookPanel::change_z_min(){
     v3dhandleList win_list = m_v3d.getImageWindowList();
     int i1 = combo_master->currentIndex();
+    //V3DPluginCallback2 &_v3d
 
     if (i1 <  win_list.size() &&
             i1 < win_list_past.size() )
@@ -367,29 +396,97 @@ void lookPanel::change_z_min(){
 
                 if (view_master)
                 {
+
                     view_master->absoluteRotPose();
 
+                    //max_num is the "true" coordinate. 553 something. Huh.
+
+
                     X = zcminSlider->sliderPosition();
-                    view_master->setZCut0(X);
+                    view_master->setZCut0(X); //works on scale from 1 - 256
+                    //view_master->setZCut0((int)(X*(560/256)));
+                    //it is not cutting the image at all!
 
-                    dist_MIN = fabs((min_num-((float)X)));
+                    //dist_MIN = fabs(((float)X*(560/256))-(min_num*(560/256)));
+                    dist_MIN = fabs(((float)(X*(559.0/255.0)))-(min_num)); //from 256
+                    X_rescaled = X*(559.0/255.0);
 
-                    if ((float)X>min_num){
+                    int x_coord = view_master->zCut0();
 
-                         view_master->setZClip0((dist_MIN/(max_num-min_num))*200);
+                    if(x_coord==50||x_coord==100||x_coord==150||x_coord==200||x_coord==250){
+
+                        stringstream ss (stringstream::in | stringstream::out);
+
+                        ss << X_rescaled;
+
+                        string test = ss.str();
+
+                        v3d_msg(test.c_str());
+
                     }
 
 
-                    if((float)X<=min_num){
+                    //if(sz2<256){
+
+                    //the surface cut lags behind the image cut
+                    //surf cut stops at 83, should stop at 1001
+                    if (((float)(X*(559.0/255.0)+0.5))>(min_num+0.5)){ //+ =
+
+                         view_master->setZClip0(((dist_MIN+0.5)/((max_num+0.5)-(min_num+0.5)))*200);
+                    }
+
+
+                    if(((float)(X*(559.0/255.0)+0.5))<=(min_num+0.5)){ //- =
                         view_master->setZClip0(0);
+/**
+                        if(((int)X*(560/256))==((int)min_num)){
+                        v3d_msg("Surface cut border! From min. Here is the min_num:");
+
+
+                        stringstream ss (stringstream::in | stringstream::out);
+
+                        ss << min_num;
+
+                        string test = ss.str();
+
+                        v3d_msg(test.c_str());
+
+                        stringstream ss2 (stringstream::in | stringstream::out);
+                        ss2 << X;
+                        string test2 = ss2.str();
+                        v3d_msg("here is the X value");
+                        v3d_msg(test2.c_str());
+                        }**/
+
+
+
+                    }
+                 //}
+//}
+
+
+                    /**
+                    if(sz2>=256){
+                        //v3d_msg("Too big! From min.");
+                        //Oh I need to change X as well, derp
+                            X_rescaled = (float)X*(sz2/256);
+                            dist_MIN = fabs(X_rescaled-min_num);
+
+                        if(X>min_num){ //_rescaled
+                            view_master->setZClip0(200-((dist_MIN/(max_num-min_num))*200));
+                        }
+                        if(X<=min_num){ //_rescaled
+                            view_master->setZClip0(0);
+                        }
                     }
 
+                    **/
                     if (lockZ){
                         zcmaxSlider->setValue(X+dzCut);
                         //update();
                         //zcmaxSlider->setValue(50); //this works. Sets it to this as soon as I hit the button
-                        if((zcmaxSlider->value())==(140)){
-                            save_z_min = (140-dzCut)-1;
+                        if((zcmaxSlider->value())==(zcmaxSlider->maximum())){
+                            save_z_min = ((zcmaxSlider->maximum())-dzCut)-1; //take out the -1?
                             //zcminSlider->setValue(120); //"jumps" to 120 then ...
                             zcminSlider->setValue(save_z_min);
                         }
@@ -444,17 +541,74 @@ void lookPanel::change_z_max(){
 
                     Y = zcmaxSlider->sliderPosition();
                     view_master->setZCut1(Y);
+                    //view_master->setZCut1((int)(Y*(256/560)));
+                    //cuts the whole image as soon as I move the slider even a little bit...makes no sense
 
-                    dist_MAX = fabs(((float)Y)-max_num);
+                    /**
+                    stringstream ss (stringstream::in | stringstream::out);
 
-                    if ((float)Y<max_num){ //zcutmax
+                    ss << Y;
+
+                    string test2 = ss.str();
+
+                    v3d_msg(test2.c_str());
+                    **/
+
+
+                    //dist_MAX = fabs(((float)Y*(560/256))-(max_num*(560/256)));
+                    dist_MAX = fabs(((float)(Y*(559.0/255.0))-(max_num))); //from 256
+
+                    //dimensions of the slider are indeed correct. if 560?
+
+                //if(sz2<256){
+                    if (((float)(Y*(559.0/255.0)+0.5))<(max_num+0.5)){ //zcutmax //+ =
                         //show a max z coordinate of max_num - dist_MAX
-                         view_master->setZClip1(200-((dist_MAX/(max_num-min_num))*200)); //dist_MAX
+                         view_master->setZClip1(200-(((dist_MAX+0.5)/((max_num+0.5)-(min_num+0.5)))*200)); //dist_MAX
                     }
 
-                    if((float)Y>=max_num){
-                        view_master->setZClip1(200);
+                    if(((float)((Y*(559.0/255.0))+0.5))>=(max_num+0.5)){ //- =
+                        view_master->setZClip1(200); //pull max all the way to the right and it clips at 84
+                        //v3d_msg("Larger than max_num!"); //this has yet to show up...
+
+                        /**
+                        if(((int)Y*(560/256))==((int)min_num)){
+                        v3d_msg("Surface cut border! From max. Here is the max_num:");
+
+
+                        stringstream ss (stringstream::in | stringstream::out);
+
+                        ss << max_num;
+
+                        string test = ss.str();
+
+                        v3d_msg(test.c_str());
+
+                        stringstream ss2 (stringstream::in | stringstream::out);
+                        ss2 << Y;
+                        string test2 = ss2.str();
+                        v3d_msg("here is the Y value");
+                        v3d_msg(test2.c_str());
+                        }
+                        **/
                     }
+                //}
+
+                /**
+                if(sz2>=256){
+                    //v3d_msg("Too big!From max.");
+
+                    //Y_rescaled = ((float)Y)*(sz2/256);
+                    //dist_MAX = fabs(Y_rescaled-max_num);
+
+                    if(Y<max_num){ //_rescaled
+                        view_master->setZClip1(200-((dist_MAX/(max_num-min_num))*200));
+                    }
+                    if(Y>=max_num){ //_rescaled
+                        view_master->setZClip1(200);
+
+                    }
+                }
+                **/
 
                     //In the locked case
                     if (lockZ){
@@ -463,7 +617,7 @@ void lookPanel::change_z_max(){
                         //zcmaxSlider->setValue(50); //this works. Sets it to this as soon as I hit the button
 
                         if((zcminSlider->value())==0){
-                            save_z_max = dzCut+1;
+                            save_z_max = dzCut+1; //why +1...I forget
                             zcmaxSlider->setValue(save_z_max);
                         }
                     }

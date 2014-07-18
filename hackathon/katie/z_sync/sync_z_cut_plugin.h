@@ -226,6 +226,9 @@ int Y;
 int dzCut;
 int save_z_min;
 int save_z_max;
+V3DLONG sz2;
+float X_rescaled;
+float Y_rescaled;
 
 void init_members()
 {
@@ -241,6 +244,10 @@ Y = 0;
 dzCut = 0;
 save_z_min = 0;
 save_z_max = 0;
+sz2 = 0;
+X_rescaled = 0;
+Y_rescaled = 0;
+
 //zcmaxSlider = zSminSlider = zSmaxSlider = 0;
 //glWidget = 0;
 }
