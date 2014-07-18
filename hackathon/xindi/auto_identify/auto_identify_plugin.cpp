@@ -345,7 +345,6 @@ void identify_neurons(V3DPluginCallback2 &callback, QWidget *parent)
  * because of variable cell radius, mass_center does not work equally well across all cells
  *      optimizing to center larger cells would cause clustered cells to be treated as one
  *      keeping small radius to keep clustered cells separate prevents detection of true center of larger cells
- * Cannot detect cells if they are too small in the image
  *
  * [future goals]
  *
@@ -1423,78 +1422,89 @@ template <class T> bool compute_swc_radius(T* data1d, V3DLONG *dimNum, vector<V_
     }*/
 
 
-    if (segment.size()>2)
+
+    double rad,radTot=0;
+    vector<double> radArr;
+    int init,end;
+    if (segment.size()>2)       {init=1;end=segment.size()-1;} //going to omit first and last unit per segment
+    else if (segment.size()==2) {init=0;end=1;}
+    else {v3d_msg("Neuron segment with only 1 node, shouldn't be there"); return false;}
+    for (int unit=init; unit<end; unit++)
     {
-        double rad,radTot=0;
-        vector<double> radArr;
-        for (int unit=1; unit<segment.size()-1; unit++) //going to omit first and last unit per segment
+        //cout<<endl<<"unit "<<unit<<endl;
+        V_NeuronSWC_unit P1,P2,P0;
+
+        if (segment.size()>2)
         {
-            //cout<<endl<<"unit "<<unit<<endl;
-            V_NeuronSWC_unit P1,P2,P0;
             P0 = segment.at(unit);
             P1 = segment.at(unit-1);
             P2 = segment.at(unit+1);
-            double Vnum[] = {P2.x-P1.x,P2.y-P1.y,P2.z-P1.z};
-            double Vnorm = sqrt(Vnum[0]*Vnum[0]+Vnum[1]*Vnum[1]+Vnum[2]*Vnum[2]);
-            double V[] = {Vnum[0]/Vnorm,Vnum[1]/Vnorm,Vnum[2]/Vnorm}; //axis of rotation
-            double Anum[] = {-V[1],V[0],(-V[1]*V[0]-V[0]*V[1])/V[2]};
-            double Anorm = sqrt(Anum[0]*Anum[0]+Anum[1]*Anum[1]+Anum[2]*Anum[2]);
-            double A[] = {Anum[0]/Anorm,Anum[1]/Anorm,Anum[2]/Anorm}; //perpendicular to V
-            double B[] = {A[1]*V[2]-A[2]*V[1],A[2]*V[0]-A[0]*V[2],A[0]*V[1]-A[1]*V[0]}; //perpendicular to A and V
-            rad=0;
-            int pValCircTot=0, runs=0;
-            int pVal = pixelVal(data1d,dimNum,P0.x,P0.y,P0.z,c);
-            if (pVal<50)
-            {
-                rad+=0.1;
-                continue;
-            }
-            else
-            {
-                double check=255, pi=3.14;
-                float x,y,z;
-                do
-                {
-                    rad += 0.2;
-                    for (double theta=0; theta<2*pi; theta+=pi/8)
-                    {
-                        x = P0.x+rad*cos(theta)*A[0]+rad*sin(theta)*B[0];
-                        if (x>N-1) x=N-1; if (x<0) x=0;
-                        y = P0.y+rad*cos(theta)*A[1]+rad*sin(theta)*B[1];
-                        if (y>M-1) y=M-1; if (y<0) y=0;
-                        z = P0.z+rad*cos(theta)*A[2]+rad*sin(theta)*B[2];
-                        if (z>P-1) z=P-1; if (z<0) z=0;
-                        if (x!=x || y!=y || z!=z) continue; //checking for NaN, skips segments that return indefinite coords
-                        //cout<<x<<" "<<y<<" "<<z<<endl;
-                        double pValCirc = pixelVal(data1d,dimNum,x,y,z,c);
-                        //cout<<pValCirc<<endl;
-                        pValCircTot += pValCirc;
-                        runs++;
-                    }
-                    if (runs==0) check=0; //should only happen if entire segment is returning indefinite coords
-                    else check=pValCircTot/runs;
-                    //cout<<"rad: "<<rad<<". check vs threshold: "<<check<<" vs "<<pVal*2/3<<endl;
-                } while (check > pVal*2/3);
-                //cout<<"check passed"<<endl;
-            }
-            radTot += rad;
-            radArr.push_back(rad);
-            //cout<<"RadTot "<<radTot<<endl;
         }
-        radAve = radTot/(segment.size()-2);
-        double stR,t;
-        for (int i=0; i<radArr.size(); i++)
+        if (segment.size()==2)
         {
-            t = (radArr[i]-radAve)*(radArr[i]-radAve);
-            stR += t;
+            P1 = segment.at(0);
+            P2 = segment.at(1);
+            P0.x = (P2.x+P1.x)/2;
+            P0.y = (P2.y+P1.y)/2;
+            P0.z = (P2.z+P1.z)/2;
         }
-        outputRadStDev = sqrt(stR/radArr.size());
+
+        double Vnum[] = {P2.x-P1.x,P2.y-P1.y,P2.z-P1.z};
+        double Vnorm = sqrt(Vnum[0]*Vnum[0]+Vnum[1]*Vnum[1]+Vnum[2]*Vnum[2]);
+        double V[] = {Vnum[0]/Vnorm,Vnum[1]/Vnorm,Vnum[2]/Vnorm}; //axis of rotation
+        double Anum[] = {-V[1],V[0],(-V[1]*V[0]-V[0]*V[1])/V[2]};
+        double Anorm = sqrt(Anum[0]*Anum[0]+Anum[1]*Anum[1]+Anum[2]*Anum[2]);
+        double A[] = {Anum[0]/Anorm,Anum[1]/Anorm,Anum[2]/Anorm}; //perpendicular to V
+        double B[] = {A[1]*V[2]-A[2]*V[1],A[2]*V[0]-A[0]*V[2],A[0]*V[1]-A[1]*V[0]}; //perpendicular to A and V
+        rad=0;
+        int pValCircTot=0, runs=0;
+        int pVal = pixelVal(data1d,dimNum,P0.x,P0.y,P0.z,c);
+        if (pVal<50)
+        {
+            rad+=0.1;
+            continue;
+        }
+        else
+        {
+            double check=255, pi=3.14;
+            float x,y,z;
+            do
+            {
+                rad += 0.2;
+                for (double theta=0; theta<2*pi; theta+=pi/8)
+                {
+                    x = P0.x+rad*cos(theta)*A[0]+rad*sin(theta)*B[0];
+                    if (x>N-1) x=N-1; if (x<0) x=0;
+                    y = P0.y+rad*cos(theta)*A[1]+rad*sin(theta)*B[1];
+                    if (y>M-1) y=M-1; if (y<0) y=0;
+                    z = P0.z+rad*cos(theta)*A[2]+rad*sin(theta)*B[2];
+                    if (z>P-1) z=P-1; if (z<0) z=0;
+                    if (x!=x || y!=y || z!=z) continue; //checking for NaN, skips segments that return indefinite coords
+                    //cout<<x<<" "<<y<<" "<<z<<endl;
+                    double pValCirc = pixelVal(data1d,dimNum,x,y,z,c);
+                    //cout<<pValCirc<<endl;
+                    pValCircTot += pValCirc;
+                    runs++;
+                }
+                if (runs==0) check=0; //should only happen if entire segment is returning indefinite coords
+                else check=pValCircTot/runs;
+                //cout<<"rad: "<<rad<<". check vs threshold: "<<check<<" vs "<<pVal*2/3<<endl;
+            } while (check > pVal*2/3);
+            //cout<<"check passed"<<endl;
+        }
+        radTot += rad;
+        radArr.push_back(rad);
+        //cout<<"RadTot "<<radTot<<endl;
     }
 
-    else //2-unit segment
+    radAve = radTot/(segment.size()-2);
+    double stR,t;
+    for (int i=0; i<radArr.size(); i++)
     {
-        //v3d_msg("2-unit neuron SWC radius calculation to be implemented, please remove from test data");
+        t = (radArr[i]-radAve)*(radArr[i]-radAve);
+        stR += t;
     }
+    outputRadStDev = sqrt(stR/radArr.size());
 
     //cout<<"radAve "<<radAve<<endl;
     outputRadAve=radAve;
