@@ -335,10 +335,57 @@ void lookPanel::change_z_min(){
                         zcmaxSlider->setValue(X+dzCut);
 
                         if((zcmaxSlider->value())==(zcmaxSlider->maximum())){
-                            save_z_min = ((zcmaxSlider->maximum())-dzCut)-1; //take out the -1?
-                            zcminSlider->setValue(save_z_min);
+                            if(sz2<256){
+                                if((zcminSlider->value())==0){
+                                    zcmaxSlider->setValue(sz2);
+                                    zcminSlider->setValue(0);
+                                }
+                                else{
+                                save_z_min = ((zcmaxSlider->maximum())-dzCut)-1; //take out the -1?
+                                zcminSlider->setValue(save_z_min);
+                                }
+                            }
+                            if(sz2>=256){
+                                if((zcminSlider->value())==0){
+                                    zcmaxSlider->setValue(255);
+                                    zcminSlider->setValue(0);
+                                }
+                                else{
+                                save_z_min = ((zcmaxSlider->maximum())-dzCut)-1; //take out the -1?
+                                zcminSlider->setValue(save_z_min);
+                                }
+                            }
+
                         }
                     }
+
+                    /**
+                    if (lockZ){
+                        zcminSlider->setValue(Y-dzCut);
+
+                        if((zcminSlider->value())==0){
+                        if(sz2<256){
+
+                            if((zcmaxSlider->value())==sz2){
+                                zcmaxSlider->setValue(sz2);
+                                zcminSlider->setValue(0);
+                            }
+                            save_z_max = dzCut+1; //why +1...I forget
+                            zcmaxSlider->setValue(save_z_max);
+                        }
+
+                        if(sz2>=256){
+                            if((zcmaxSlider->value())==255){
+                                zcmaxSlider->setValue(255);
+                                zcminSlider->setValue(0);
+                            }
+                            save_z_max = dzCut+1; //why +1...I forget
+                            zcmaxSlider->setValue(save_z_max);
+                        }
+
+                        }
+                    }
+                    **/
 
                 }
            }
@@ -419,14 +466,46 @@ void lookPanel::change_z_max(){
 
              }
 
-                    //In the locked case
-
+             /**
                     if (lockZ){
                         zcminSlider->setValue(Y-dzCut);
 
                         if((zcminSlider->value())==0){
                             save_z_max = dzCut+1; //why +1...I forget
                             zcmaxSlider->setValue(save_z_max);
+                        }
+                    }
+
+               **/
+                    //In the locked case
+
+                    if (lockZ){
+                        zcminSlider->setValue(Y-dzCut);
+
+                        if((zcminSlider->value())==0){
+                        if(sz2<256){
+
+                            if((zcmaxSlider->value())==sz2){
+                                zcmaxSlider->setValue(sz2);
+                                zcminSlider->setValue(0);
+                            }
+                            else{
+                            save_z_max = dzCut+1; //why +1...I forget
+                            zcmaxSlider->setValue(save_z_max);
+                            }
+                        }
+
+                        if(sz2>=256){
+                            if((zcmaxSlider->value())==255){
+                                zcmaxSlider->setValue(255);
+                                zcminSlider->setValue(0);
+                            }
+                            else{
+                            save_z_max = dzCut+1; //why +1...I forget
+                            zcmaxSlider->setValue(save_z_max);
+                            }
+                        }
+
                         }
                     }
 
