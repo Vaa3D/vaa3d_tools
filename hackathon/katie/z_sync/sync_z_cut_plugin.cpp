@@ -115,16 +115,66 @@ lookPanel::lookPanel(V3DPluginCallback2 &_v3d, QWidget *parent) : //do it here!!
         }
         m_v3d.open3DWindow(curwin);
 
-    QList<NeuronTree> * nt_list = m_v3d.getHandleNeuronTrees_3DGlobalViewer(curwin);
-    NeuronTree nt1 = nt_list->first(); //this fixed the getting rid of the surface problem
+        /**
+          //go through the QList<NeuronTree> to get all the neuron trees that are loaded
+          //for each NeuronTree, obtain the min_num and max_num
+          //this should get the min_num and max_num for ALL the neuron trees
+          **/
 
-    //need to expand this sometime to account for multiple SWC files?
-    int m = nt1.listNeuron.count();
+    //QList<NeuronTree> * nt_list = m_v3d.getHandleNeuronTrees_3DGlobalViewer(curwin);
+    nt_list = m_v3d.getHandleNeuronTrees_3DGlobalViewer(curwin);
+    //QList<NeuronTree> * nt_list = m_v3d.getHandleNeuronTrees_3DGlobalViewer(curwin);
+    //nt1 = nt_list->first(); //this fixed the getting rid of the surface problem
+    //NeuronTree nt1 = nt_list->first(); //this fixed the getting rid of the surface problem
 
-    //float inf = 1.0/0.0;
+if(nt_list->size()==0){
+        v3d_msg("You have no surface loaded. Cut is only for the image.");
+    }
+
+    //see if nt_list.size() is a problem (it's not)
+
+else{
+    //fixed it, that was really dumb
+
     min_num = 100000000.0;
     max_num = -10000000.0;
 
+      for (int k = 0; k < nt_list->size(); k++){ //changed from 0, idk
+      NeuronTree nt1 = nt_list->at(k); //iterates through the QList, creates a new NeuronTree each time
+            //nt1 = nt_list->first();
+        int m = nt1.listNeuron.count(); //for the current list, creates new value for number of rows in neuron tree
+
+        for(int i = 0; i < m; i++){ //from 0 to the last row in one neuron tree...
+            //get minimum z coordinate, save to a variable
+            float temp = nt1.listNeuron.at(i).z; //iterate through z coordinates from 0 to the last row
+            if(temp<min_num)
+            {
+                min_num = temp;
+            }
+        }
+
+    for(int j = 0; j < m; j++){
+            //get maximum z coordinate, save to a variable
+            float temp2 = nt1.listNeuron.at(j).z;
+            if(temp2>max_num)
+            {
+                max_num = temp2;
+            }
+        }
+
+      }
+
+}//check for surface, end
+    //need to expand this sometime to account for multiple SWC files?
+    //m = nt1.listNeuron.count();
+
+    //float inf = 1.0/0.0;
+    /**
+    min_num = 100000000.0;
+    max_num = -10000000.0;
+    **/
+
+    /**
     for(int i = 0; i < m; i++){
             //get minimum z coordinate, save to a variable
             float temp = nt1.listNeuron.at(i).z;
@@ -142,6 +192,7 @@ lookPanel::lookPanel(V3DPluginCallback2 &_v3d, QWidget *parent) : //do it here!!
                 max_num = temp2;
             }
         }
+        **/
 
     QStringList items;
     for (int i=0; i<win_list.size(); i++)
@@ -300,6 +351,15 @@ void lookPanel::change_z_min(){
                     X = zcminSlider->sliderPosition();
                     view_master->setZCut0(X);
 
+                    /**
+                    if(nt_list->size()==0){
+
+                    }
+
+                    if(nt_list->size()!=0){
+
+                    }
+                    **/
 
                     if(sz2<256){
                         dist_MIN = fabs((min_num-((float)X)));

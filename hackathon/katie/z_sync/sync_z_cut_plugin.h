@@ -146,6 +146,7 @@ public:
     QTimer *m_pTimer;
 
     View3DControl *view_master;
+    QList<NeuronTree> *nt_list;
 
     bool b_autoON;
 
@@ -232,6 +233,10 @@ V3DLONG sz2;
 float sz22;
 float X_rescaled;
 float Y_rescaled;
+//NeuronTree nt1;
+//NeuronTree nt2;
+//int m;
+//int m2;
 
 void init_members()
 {
@@ -251,6 +256,9 @@ save_z_max = 0;
 sz2 = 0;
 X_rescaled = 0;
 Y_rescaled = 0;
+//m = 0;
+//m2 = 0;
+//nt1 = 0;
 
 //zcmaxSlider = zSminSlider = zSmaxSlider = 0;
 //glWidget = 0;
