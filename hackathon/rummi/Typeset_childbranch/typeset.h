@@ -4,8 +4,10 @@
 
 
 #include "basic_surf_objs.h"
+//#include "<QObject>"
 #include <vector>
 #include <math.h>
+#include <v3d_interface.h>
 using namespace std;
 
 #define DISTP(a,b) sqrt(((a)->x-(b)->x)*((a)->x-(b)->x)+((a)->y-(b)->y)*((a)->y-(b)->y)+((a)->z-(b)->z)*((a)->z-(b)->z))

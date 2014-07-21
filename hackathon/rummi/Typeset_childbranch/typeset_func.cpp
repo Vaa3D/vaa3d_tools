@@ -5,16 +5,19 @@
 
 #include <v3d_interface.h>
 #include "v3d_message.h"
-#include "typeset_func.h"
-#include "typeset.h"
 #include "my_surf_objs.h"
+#include "openSWCDialog.h"
 #include "sort_func.h"
+#include "sort_swc.h"
+#include "typeset.h"
+#include "typeset_func.h"
+#include "typeset_plugin.h"
 #include "customary_structs/vaa3d_neurontoolbox_para.h"
 #include <vector>
 #include <iostream>
-using namespace std;
+//using namespace std;
 
-const QString title = QObject::tr("typeset Neuron");
+//const QString title = QObject::tr("typeset Neuron");
 
 bool export_list2file(QList<NeuronSWC> & lN, QString fileSaveName, QString FileSWCOpenName)
 {
@@ -235,4 +238,3 @@ bool typeset_swc_toolbox(const V3DPluginArgList & input)
     return true;
 
 }
-
