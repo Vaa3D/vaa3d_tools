@@ -11,6 +11,21 @@ ties names are:
 - Rem: a feature no longer available
 
 ============================================================================================
+Version 0.9.992
+July 21st, 2014
+--------------------------------------------------------------------------------------------
+- New: wait cursor change on "load"/"save"/"save as" operations in the annotation toolbar.
+- Fix: fixed bug which caused duplicate markers to be generated for each save operation.
+- Fix: fixed "no more IDs available" error occurring with > 1,000,000 markers / node curves.
+- Fix: fixed crash issue in "Proofreading" mode on Windows. Still  has to be tested on other
+       platforms.
+- Dev: increased verbosity level of PLog::instance() and ::getInstance() methods  for better
+       debug logs.
+- Dev: added "destination registered to" debug print to CVolume::run() method.
+- Fix: fixed minor bug in the autocrop code (no issue was caused by this bug).
+--------------------------------------------------------------------------------------------
+
+
 Version 0.9.991
 July 15th, 2014
 --------------------------------------------------------------------------------------------

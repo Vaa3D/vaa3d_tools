@@ -1417,9 +1417,11 @@ void PMain::loadAnnotations()
 {
     /**/itm::debug(itm::LEV1, 0, __itm__current__function__);
 
+    CExplorerWindow *cur_win = CExplorerWindow::getCurrent();
+
     try
     {
-        if(CExplorerWindow::getCurrent())
+        if(cur_win)
         {
             //obtaining current volume's parent folder path
             QDir dir(CImport::instance()->getPath().c_str());
@@ -1446,9 +1448,20 @@ void PMain::loadAnnotations()
             {
                 annotationsPathLRU = path.toStdString();
                 CAnnotations::getInstance()->load(annotationsPathLRU.c_str());
-                CExplorerWindow::getCurrent()->loadAnnotations();
+
+                // save current cursor and set wait cursor
+                QCursor cursor = cur_win->view3DWidget->cursor();
+                PAnoToolBar::instance()->setCursor(Qt::WaitCursor);
+                CExplorerWindow::setCursor(Qt::WaitCursor);
+
+                // load
+                cur_win->loadAnnotations();
                 saveAnnotationsAction->setEnabled(true);                
                 virtualSpaceSizeMenu->setEnabled(false);
+
+                // reset saved cursor
+                CExplorerWindow::setCursor(cursor);
+                PAnoToolBar::instance()->setCursor(cursor);
             }
             else
                 return;
@@ -1469,17 +1482,30 @@ void PMain::saveAnnotations()
 {
     /**/itm::debug(itm::LEV1, 0, __itm__current__function__);
 
+    CExplorerWindow *cur_win = CExplorerWindow::getCurrent();
+
     try
     {
-        if(CExplorerWindow::getCurrent())
+        if(cur_win)
         {
             if(annotationsPathLRU.compare("")==0)
             {
                 saveAnnotationsAs();
                 return;
             }
-            CExplorerWindow::getCurrent()->storeAnnotations();
+
+            // save current cursor and set wait cursor
+            QCursor cursor = cur_win->view3DWidget->cursor();
+            PAnoToolBar::instance()->setCursor(Qt::WaitCursor);
+            CExplorerWindow::setCursor(Qt::WaitCursor);
+
+            // save
+            cur_win->storeAnnotations();
             CAnnotations::getInstance()->save(annotationsPathLRU.c_str());
+
+            // reset saved cursor
+            CExplorerWindow::setCursor(cursor);
+            PAnoToolBar::instance()->setCursor(cursor);
         }
     }
     catch(RuntimeException &ex)
@@ -1491,9 +1517,11 @@ void PMain::saveAnnotationsAs()
 {
     /**/itm::debug(itm::LEV1, 0, __itm__current__function__);
 
+    CExplorerWindow *cur_win = CExplorerWindow::getCurrent();
+
     try
     {
-        if(CExplorerWindow::getCurrent())
+        if(cur_win)
         {
             //obtaining current volume's parent folder path
             QDir dir(CImport::instance()->getPath().c_str());
@@ -1522,9 +1550,20 @@ void PMain::saveAnnotationsAs()
                 annotationsPathLRU = path.toStdString();
                 if(annotationsPathLRU.find(".ano") == string::npos)
                     annotationsPathLRU.append(".ano");
-                CExplorerWindow::getCurrent()->storeAnnotations();
+
+                // save current cursor and set wait cursor
+                QCursor cursor = cur_win->view3DWidget->cursor();
+                PAnoToolBar::instance()->setCursor(Qt::WaitCursor);
+                CExplorerWindow::setCursor(Qt::WaitCursor);
+
+                // save
+                cur_win->storeAnnotations();
                 CAnnotations::getInstance()->save(annotationsPathLRU.c_str());
                 saveAnnotationsAction->setEnabled(true);
+
+                // reset saved cursor
+                CExplorerWindow::setCursor(cursor);
+                PAnoToolBar::instance()->setCursor(cursor);
             }
             else
                 return;
@@ -2215,23 +2254,7 @@ void PMain::debugAction1Triggered()
 {
     /**/itm::debug(itm::NO_DEBUG, 0, __itm__current__function__);
 
-    CExplorerWindow *cur_win = CExplorerWindow::getCurrent();
-    if(cur_win)
-    {
-        Renderer_gl2* curr_renderer = ((Renderer_gl2*)(cur_win->view3DWidget->getRenderer()));
-
-        printf("\n\n----Begin colormap...");
-        for(int k=0; k<3; k++)
-        {
-            RGBA8* cmap = curr_renderer->colormap[k];
-            for(int i=0; i<256; i++)
-            {
-                printf("cmap[%d][%03d] = (%d, %d, %d, %d)\n", k, i, cmap[i].r, cmap[i].g, cmap[i].b, cmap[i].a);
-            }
-        }
-        printf("----End colormap\n\n");
-    }
-
+    QMessageBox::information(0, "The number of annotations is...", QString::number(CAnnotations::getInstance()->count()));
 }
 
 void PMain::showLogTriggered()
@@ -2427,6 +2450,10 @@ void PMain::PRblockSpinboxEditingFinished()
         // invoke new view
         curWin->newView(blocks[b-1].xInt.end, blocks[b-1].yInt.end, blocks[b-1].zInt.end, blocks_res,
                 curWin->volT0, curWin->volT1, false, -1, -1, -1, blocks[b-1].xInt.start, blocks[b-1].yInt.start, blocks[b-1].zInt.start, true, false, b);
+
+//        expl->newView((expl->volH1-expl->volH0)/2,
+//                      (expl->volV1-expl->volV0)/2 - (expl->volV1-expl->volV0)*(100-CSettings::instance()->getTraslY())/100.0f,
+//                      (expl->volD1-expl->volD0)/2, expl->volResIndex, expl->volT0, expl->volT1, false);
     }
 }
 

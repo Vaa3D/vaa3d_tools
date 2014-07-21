@@ -195,7 +195,6 @@ void CVolume::run()
     try
     {
         VirtualVolume* volume = CImport::instance()->getVolume(voiResIndex);
-        char msg[1024];
 
         //---- Alessandro 2013-04-17: if VOI exceeds limits it is automatically adjusted. This is very useful in the cases the user is zooming-in
         //around peripheral regions
@@ -209,16 +208,16 @@ void CVolume::run()
 //        voiT1 = voiT1 <  volume->getDIM_T() ? voiT1 : volume->getDIM_T()-1;
 
         // check subvolume interval
-        if(voiV1 - voiV0 <=0 || voiH1 - voiH0 <=0 || voiD1 - voiD0 <=0 || voiT1 - voiT0 <0)
-        {
-            sprintf(msg, "Invalid subvolume intervals inserted: X=[%d, %d), Y=[%d, %d), Z=[%d, %d), T=[%d, %d]", voiH0, voiH1, voiV0, voiV1, voiD0, voiD1, voiT0, voiT1);
-            throw RuntimeException(msg);
-        }
+        if(voiV1 - voiV0 <=0 || voiH1 - voiH0 <=0 || voiD1 - voiD0 <=0 || voiT1 - voiT0 <0)           
+            throw RuntimeException(strprintf("Invalid subvolume intervals inserted: X=[%d, %d), Y=[%d, %d), Z=[%d, %d), T=[%d, %d]",
+                                             voiH0, voiH1, voiV0, voiV1, voiD0, voiD1, voiT0, voiT1));
 
         // check destination
+        /**/itm::debug(itm::LEV2, "Check destination", __itm__current__function__);
         CExplorerWindow* destination = dynamic_cast<CExplorerWindow*>(source);
         if(!destination)
             throw RuntimeException("Destination type not supported");
+        /**/itm::debug(itm::LEV2, strprintf("destination registered as \"%s\"", destination->title.c_str()).c_str(), __itm__current__function__);
 
         //checking for an imported volume
         if(volume)

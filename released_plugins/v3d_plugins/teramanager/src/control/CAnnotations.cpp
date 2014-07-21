@@ -12,9 +12,8 @@
 using namespace teramanager;
 using namespace std;
 
-CAnnotations* CAnnotations::uniqueInstance = NULL;
-list<int> annotation::availableIDs = list<int>();
-list<int> annotation::recyclableIDs = list<int>();
+CAnnotations* CAnnotations::uniqueInstance = 0;
+long long annotation::last_ID = -1;
 
 bool isMarker (annotation* ano) { return ano->type == 0;}
 
@@ -27,21 +26,13 @@ annotation::annotation() throw (itm::RuntimeException){
     color.r = color.g = color.b = color.a = 0;
     container = 0;
     smart_delete = true;
-    if(!recyclableIDs.empty())
-    {
-        ID = recyclableIDs.front();
-        recyclableIDs.pop_front();
-    }
-    else if(!availableIDs.empty())
-    {
-        ID = availableIDs.front();
-        availableIDs.pop_front();
-    }
-    else
-        throw itm::RuntimeException(itm::strprintf("in annotation(): no more IDs available. Possible reasons are too many annotations inseted (maximum is %d) or a memory leak."
-                                            "\n\nPlease signal this bug to the developers.", MAX_ANNOTATIONS_NUMBER));
 
-    /* @debug */ //printf("%d(%.0f, %.0f, %.0f) born...\n", ID, x, y, z);
+    // assign first usable ID
+    if(last_ID == std::numeric_limits<long long>::max())
+        throw itm::RuntimeException("Reached the maximum number of annotation instances. Please signal this issue to the developer");
+    ID = ++last_ID;
+
+    /* @debug */ //printf("%lld(%.0f, %.0f, %.0f) born...\n", ID, x, y, z);
 }
 
 annotation::~annotation()
@@ -57,9 +48,7 @@ annotation::~annotation()
         // remove annotation from the Octree
         static_cast<CAnnotations::Octree::octant*>(container)->container->remove(this);
     }
-
-    recyclableIDs.push_back(ID);
-    /* @debug */ //printf("%d(%.0f, %.0f, %.0f) DESTROYED...\n", ID, x, y, z);
+    /* @debug */ //printf("%lld(%.0f, %.0f, %.0f) DESTROYED (smart_delete = %s)...\n", ID, x, y, z, smart_delete ? "true" : "false");
 }
 
 void annotation::ricInsertIntoTree(annotation* node, QList<NeuronSWC> &tree)
@@ -96,8 +85,6 @@ void CAnnotations::uninstance()
     {
         delete uniqueInstance;
         uniqueInstance = 0;
-        annotation::availableIDs.clear();
-        annotation::recyclableIDs.clear();
     }
 }
 
@@ -278,7 +265,7 @@ void CAnnotations::Octree::_rec_insert(const Poctant& p_octant, annotation& neur
         neuron.container = static_cast<void*>(p_octant);
         p_octant->annotations.push_back(&neuron);
 
-        /* @debug */ /*printf("\nAdded neuron %d(%d) {%.0f, %.0f, %.0f} to annotations list of octant X[%d,%d] Y[%d,%d] Z[%d,%d]\n\n",
+        /* @debug */ /*printf("\nAdded neuron %lld(%lld) {%.0f, %.0f, %.0f} to annotations list of octant X[%d,%d] Y[%d,%d] Z[%d,%d]\n\n",
                neuron.ID, neuron.parent ? neuron.parent->ID : -1, neuron.x, neuron.y, neuron.z,
                p_octant->H_start, p_octant->H_start+p_octant->H_dim,
                p_octant->V_start, p_octant->V_start+p_octant->V_dim,
@@ -400,7 +387,7 @@ void CAnnotations::Octree::_rec_remove(const Poctant& p_octant, annotation *neur
 
         p_octant->annotations.remove(neuron);
 
-        /* @debug */ /*printf("\nREMOVED neuron %d(%d) {%.0f, %.0f, %.0f} from annotations list of octant X[%d,%d] Y[%d,%d] Z[%d,%d]\n\n",
+        /* @debug */ /*printf("\nREMOVED neuron %lld(%lld) {%.0f, %.0f, %.0f} from annotations list of octant X[%d,%d] Y[%d,%d] Z[%d,%d]\n\n",
                neuron->ID, neuron->parent ? neuron->parent->ID : -1, neuron->x, neuron->y, neuron->z,
                p_octant->H_start, p_octant->H_start+p_octant->H_dim,
                p_octant->V_start, p_octant->V_start+p_octant->V_dim,
@@ -772,9 +759,12 @@ uint32 CAnnotations::Octree::count(interval_t V_int, interval_t H_int, interval_
 **********************************************************************************/
 void CAnnotations::addLandmarks(itm::interval_t X_range, itm::interval_t Y_range, itm::interval_t Z_range, LandmarkList &markers) throw (RuntimeException)
 {
-    /**/itm::debug(itm::LEV1, strprintf("X[%d,%d), Y[%d,%d), Z[%d,%d)", X_range.start, X_range.end, Y_range.start, Y_range.end, Z_range.start, Z_range.end).c_str(), __itm__current__function__);
+    /**/itm::debug(itm::LEV1, strprintf("X[%d,%d), Y[%d,%d), Z[%d,%d), markers.size = %d",
+                                        X_range.start, X_range.end, Y_range.start, Y_range.end, Z_range.start, Z_range.end, markers.size()).c_str(), __itm__current__function__);
 
+    /**/itm::debug(itm::LEV3, strprintf("%d markers before clearLandmarks", count()).c_str(), __itm__current__function__);
     clearLandmarks(X_range, Y_range, Z_range);
+    /**/itm::debug(itm::LEV3, strprintf("%d markers after clearLandmarks", count()).c_str(), __itm__current__function__);
 
     for(int i=0; i<markers.size(); i++)
     {
@@ -791,88 +781,9 @@ void CAnnotations::addLandmarks(itm::interval_t X_range, itm::interval_t Y_range
        node->color = markers[i].color;
        octree->insert(*node);
     }
+
+    /**/itm::debug(itm::LEV3, strprintf("%d markers after insertions", count()).c_str(), __itm__current__function__);
 }
-
-//void CAnnotations::removeLandmarks(std::list<LocationSimple> &markers) throw (RuntimeException)
-//{
-//    /**/itm::debug(itm::LEV1, strprintf("markers->size = %d", markers.size()).c_str(), __itm__current__function__);
-
-//    //if the octree is instantiated
-//    if(octree)
-//    {
-//        //retrieving the list of the annotations to be deleted
-//        std::list<annotation*> tbdList;
-//        for(std::list<LocationSimple>::iterator i = markers.begin(); i != markers.end(); i++)
-//        {
-//            std::list<annotation*>* anoListP = octree->find(i->x, i->y, i->z);
-//            if(anoListP)
-//            {
-//                for(std::list<annotation*>::iterator it = anoListP->begin(); it != anoListP->end(); it++)
-//                {
-//                    //printf("--------------------- teramanager plugin >> checking annotation %d=(%.1f,%.1f,%.1f)\n", (*it)->ID, (*it)->x, (*it)->y, (*it)->z);
-//                    if((*it)->type == 0)
-//                        tbdList.push_back(*it);
-//                }
-//            }
-//            else
-//                /**/itm::warning(strprintf("marker (%.1f, %.1f, %.1f) not found in the Octree!!!", i->x, i->y, i->z).c_str(), __itm__current__function__);
-//        }
-//        tbdList.sort();
-//        tbdList.unique();
-
-//        //removing annotations from the Octree
-//        for(std::list<annotation*>::iterator it = tbdList.begin(); it != tbdList.end(); it++)
-//            static_cast<Octree::octant*>((*it)->container)->annotations.remove((*it));
-
-//        //deallocating annotations
-//        while(!tbdList.empty())
-//        {
-//            annotation* tbd = tbdList.back();
-//            tbdList.pop_back();
-////            printf("--------------------- teramanager plugin [thread ?] >> removing marker %d=(%.1f,%.1f,%.1f)\n",
-////                   tbd->ID, tbd->x, tbd->y, tbd->z);
-//            delete tbd;
-//        }
-//    }
-//}
-
-
-//void CAnnotations::removeCurves(std::list<NeuronSWC> &curves) throw (RuntimeException)
-//{
-//    /**/itm::debug(itm::LEV1, strprintf("curves.size = %d", curves.size()).c_str(), __itm__current__function__);
-
-//    if(octree)
-//    {
-//        // retrieve source points of curves to be removed
-//        std::set<annotation*> sources;
-//        for(std::list<NeuronSWC>::iterator i = curves.begin(); i != curves.end(); i++)
-//        {
-//            // select source points only
-//            if(i->pn == -1)
-//            {
-//                // search for octree-stored points at source's location
-//                std::list<annotation*>* anoListP = octree->find(i->x, i->y, i->z);
-//                if(anoListP)
-//                {
-//                    int sizeStored = sources.size();
-//                    for(std::list<annotation*>::iterator it = anoListP->begin(); it != anoListP->end(); it++)
-//                    {
-//                        if((*it)->type == 1 && (*it)->parent == 0)
-//                            sources.insert(*it);
-//                    }
-//                    if(sources.size()-sizeStored > 1)
-//                        throw RuntimeException("in CAnnotations::removeCurves(): found 2 coincident curves starting points. Curves sharing the same source point are not supported yet.");
-//                }
-//                else
-//                    /**/itm::warning(strprintf("curve point (%.1f, %.1f, %.1f) not found in the Octree!!!", i->x, i->y, i->z).c_str(), __itm__current__function__);
-//            }
-//        }
-
-//        //removing curves by destroying their sources
-//        for(std::set<annotation*>::const_iterator it = sources.begin(); it != sources.end(); it++)
-//            delete *it;
-//    }
-//}
 
 void CAnnotations::clearCurves(itm::interval_t X_range, itm::interval_t Y_range, itm::interval_t Z_range) throw (itm::RuntimeException)
 {
@@ -902,6 +813,7 @@ void CAnnotations::clearLandmarks(itm::interval_t X_range, itm::interval_t Y_ran
     std::list<annotation*> nodes;
     octree->find(Y_range, X_range, Z_range, nodes);
 
+    /**/itm::debug(itm::LEV3, strprintf("found %d nodes", nodes.size()).c_str(), __itm__current__function__);
     for(std::list<annotation*>::const_iterator it = nodes.begin(); it != nodes.end(); it++)
         if((*it)->type == 0)
             delete *it;
@@ -928,7 +840,7 @@ void CAnnotations::addCurves(itm::interval_t X_range, itm::interval_t Y_range, i
         ann->x = nt.listNeuron[i].x;
         ann->y = nt.listNeuron[i].y;
         ann->z = nt.listNeuron[i].z;
-        /* @debug */ //printf("inserting curve point %d(%.1f,%.1f,%.1f), n=(%d), pn(%d)\n", ann->ID, ann->x, ann->y, ann->z, nt.listNeuron[i].n, nt.listNeuron[i].pn);
+        /* @debug */ //printf("inserting curve point %lld(%.1f,%.1f,%.1f), n=(%d), pn(%d)\n", ann->ID, ann->x, ann->y, ann->z, nt.listNeuron[i].n, nt.listNeuron[i].pn);
         octree->insert(*ann);
         annotationsMap[nt.listNeuron[i].n] = ann;
         swcMap[nt.listNeuron[i].n] = &(nt.listNeuron[i]);
@@ -938,7 +850,7 @@ void CAnnotations::addCurves(itm::interval_t X_range, itm::interval_t Y_range, i
         it->second->parent = swcMap[it->first]->pn == -1 ? 0 : annotationsMap[swcMap[it->first]->pn];
         if(it->second->parent)
         {
-            /* @debug */ //printf("Add %d(%.0f, %.0f, %.0f) to %d(%.0f, %.0f, %.0f)'s children list\n", it->second->ID, it->second->x, it->second->y, it->second->z, it->second->parent->ID, it->second->parent->x, it->second->parent->y, it->second->parent->z);
+            /* @debug */ //printf("Add %lld(%.0f, %.0f, %.0f) to %lld(%.0f, %.0f, %.0f)'s children list\n", it->second->ID, it->second->x, it->second->y, it->second->z, it->second->parent->ID, it->second->parent->x, it->second->parent->y, it->second->parent->z);
             it->second->parent->children.insert(it->second);
         }
     }
@@ -959,7 +871,7 @@ void CAnnotations::findLandmarks(interval_t X_range, interval_t Y_range, interva
     octree->find(Y_range, X_range, Z_range, nodes);
 
 
-    /**/itm::debug(itm::LEV3, "selecting markers only", __itm__current__function__);
+    /**/itm::debug(itm::LEV3, "select markers only", __itm__current__function__);
     for(std::list<annotation*>::iterator i = nodes.begin(); i != nodes.end(); i++)
     {
         if((*i)->type == 0) //selecting markers
@@ -1056,7 +968,7 @@ void CAnnotations::save(const char* filepath) throw (RuntimeException)
     fprintf(f, "#n type x y z radius parent\n");
         for(std::list<annotation*>::iterator i = annotations.begin(); i != annotations.end(); i++)
             if((*i)->type == 1) //selecting NeuronSWC
-                fprintf(f, "%d %d %.3f %.3f %.3f %.3f %d\n", (*i)->ID, (*i)->subtype, (*i)->x, (*i)->y, (*i)->z, (*i)->r, (*i)->parent ? (*i)->parent->ID : -1);
+                fprintf(f, "%lld %d %.3f %.3f %.3f %.3f %lld\n", (*i)->ID, (*i)->subtype, (*i)->x, (*i)->y, (*i)->z, (*i)->r, (*i)->parent ? (*i)->parent->ID : -1);
 
     //file closing
     fclose(f);
@@ -1141,7 +1053,7 @@ void CAnnotations::load(const char* filepath) throw (RuntimeException)
                 i->second->parent = swcMap[i->first]->pn == -1 ? 0 : annotationsMap[swcMap[i->first]->pn];
                 if(i->second->parent)
                 {
-                    /* @debug */ //printf("Add %d(%.0f, %.0f, %.0f) to %d(%.0f, %.0f, %.0f)'s children list\n", i->second->ID, i->second->x, i->second->y, i->second->z, i->second->parent->ID, i->second->parent->x, i->second->parent->y, i->second->parent->z);
+                    /* @debug */ //printf("Add %lld(%.0f, %.0f, %.0f) to %lld(%.0f, %.0f, %.0f)'s children list\n", i->second->ID, i->second->x, i->second->y, i->second->z, i->second->parent->ID, i->second->parent->x, i->second->parent->y, i->second->parent->z);
                     i->second->parent->children.insert(i->second);
                 }
             }

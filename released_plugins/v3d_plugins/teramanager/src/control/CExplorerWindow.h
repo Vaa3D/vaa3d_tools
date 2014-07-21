@@ -320,6 +320,14 @@ class teramanager::CExplorerWindow : public QWidget
             zoomHistory[ZOOM_HISTORY_SIZE-1] = zoom;
         }
 
+        template<class T>
+        inline bool is_outside(T x, T y, T z){
+           return
+                   x < 0  || x >= volH1-volH0 ||
+                   y < 0  || y >= volV1-volV0 ||
+                   z < 0  || z >= volD1-volD0;
+        }
+
         /**********************************************************************************
         * Change current Vaa3D's rendered cursor
         ***********************************************************************************/

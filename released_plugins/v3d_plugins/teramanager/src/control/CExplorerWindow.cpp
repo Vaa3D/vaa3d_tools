@@ -396,8 +396,8 @@ CExplorerWindow::~CExplorerWindow()
     window3D->timeSlider->removeEventFilter(this);
 
     // CLOSE 3D window (solution #1)
-    if(!CImport::instance()->is5D())
-        V3D_env->close3DWindow(window); //this causes crash on 5D data when scrolling time slider, but is OK in all the other cases
+//    if(!CImport::instance()->is5D())
+//        V3D_env->close3DWindow(window); //this causes crash on 5D data when scrolling time slider, but is OK in all the other cases
 
     // CLOSE 3D window (solution #2)
     // view3DWidget->close();          //this causes crash when makeLastView is called on a very long chain of opened windows
@@ -406,7 +406,8 @@ CExplorerWindow::~CExplorerWindow()
     // CLOSE 3D window (solution #3)
     // @fixed  by Alessandro on 2014-04-11: this seems the only way to close the 3D window w/o (randomly) causing TeraFly to crash
     // @update by Alessandro on 2014-07-15: this causes random crash in "Proofreading" mode, but is ok on 5D data (even in "Proofediting mode"!)
-    else
+    // @update by Alessandro on 2014-07-21: this ALWAYS works on Windows. Still has to be tested on other platforms.
+//    else
         POST_EVENT(window3D, QEvent::Close); // this OK
 
     //close 2D window
@@ -905,10 +906,10 @@ CExplorerWindow::newView(int x, int y, int z,                            //can b
         }
 
         // adjust time size so as to use all the available frames set by the user
-        if(t1 - t0 +1 != pMain.Tdim_sbox->value())
+        if(CImport::instance()->is5D() && ((t1 - t0 +1) != pMain.Tdim_sbox->value()))
         {
             t1 = t0 + (pMain.Tdim_sbox->value()-1);
-            /**/itm::debug(itm::NO_DEBUG, strprintf("mismatch between |[t0,t1]| and max T dims, adjusting it to [%d,%d]", t0, t1).c_str(), __itm__current__function__);
+            /**/itm::debug(itm::LEV1, strprintf("mismatch between |[t0,t1]| (%d) and max T dims (%d), adjusting it to [%d,%d]", t1-t0+1, pMain.Tdim_sbox->value(), t0, t1).c_str(), __itm__current__function__);
         }
 
 
@@ -924,11 +925,11 @@ CExplorerWindow::newView(int x, int y, int z,                            //can b
                 dz = std::min(dz, round(pMain.Ddim_sbox->value()/2.0f));
                 t0 = std::max(0, std::min(t0,CImport::instance()->getVolume(volResIndex)->getDIM_T()-1));
                 t1 = std::max(0, std::min(t1,CImport::instance()->getVolume(volResIndex)->getDIM_T()-1));
-                if(t1-t0+1 > pMain.Tdim_sbox->value())
+                if(CImport::instance()->is5D() && (t1-t0+1 > pMain.Tdim_sbox->value()))
                     t1 = t0 + pMain.Tdim_sbox->value();
-                if(t1 >= CImport::instance()->getTDim()-1)
+                if(CImport::instance()->is5D() && (t1 >= CImport::instance()->getTDim()-1))
                     t0 = t1 - (pMain.Tdim_sbox->value()-1);
-                if(t0 == 0)
+                if(CImport::instance()->is5D() && (t0 == 0))
                     t1 = pMain.Tdim_sbox->value()-1;
                 /**/itm::debug(itm::LEV3, strprintf("title = %s, ...to (%d,%d,%d)", titleShort.c_str(),  dx, dy, dz).c_str(), __itm__current__function__);
             }
@@ -956,11 +957,11 @@ CExplorerWindow::newView(int x, int y, int z,                            //can b
                 }
                 t0 = std::max(0, std::min(t0,CImport::instance()->getVolume(volResIndex)->getDIM_T()-1));
                 t1 = std::max(0, std::min(t1,CImport::instance()->getVolume(volResIndex)->getDIM_T()-1));
-                if(t1-t0+1 > pMain.Tdim_sbox->value())
+                if(CImport::instance()->is5D() && (t1-t0+1 > pMain.Tdim_sbox->value()))
                     t1 = t0 + pMain.Tdim_sbox->value();
-                if(t1 >= CImport::instance()->getTDim()-1)
+                if(CImport::instance()->is5D() && (t1 >= CImport::instance()->getTDim()-1))
                     t0 = t1 - (pMain.Tdim_sbox->value()-1);
-                if(t0 == 0)
+                if(CImport::instance()->is5D() && (t0 == 0))
                     t1 = pMain.Tdim_sbox->value()-1;
                 /**/itm::debug(itm::LEV3, strprintf("title = %s, ...to [%d,%d) [%d,%d) [%d,%d) [%d,%d]", titleShort.c_str(),  x0, x, y0, y, z0, z, t0, t1).c_str(), __itm__current__function__);
             }
@@ -1361,7 +1362,7 @@ void CExplorerWindow::restoreSubvolSpinboxState()
 }
 
 /**********************************************************************************
-* Annotations are stored/loaded) to/from the <CAnnotations> object
+* Annotations are stored/loaded to/from the <CAnnotations> object
 ***********************************************************************************/
 void CExplorerWindow::storeAnnotations() throw (RuntimeException)
 {
@@ -1396,7 +1397,17 @@ void CExplorerWindow::storeAnnotations() throw (RuntimeException)
     //storing edited markers
     QList<LocationSimple> markers = triViewWidget->getImageData()->listLandmarks;
     if(!markers.empty())
-    {
+    {       
+        // @fixed by Alessandro on 2014-07-21: excluding hidden markers from store operation
+        QList<LocationSimple>::iterator it = markers.begin();
+        while (it != markers.end())
+        {
+            if (is_outside((*it).x, (*it).y, (*it).z))
+                it = markers.erase(it);
+            else
+                ++it;
+        }
+
         //converting local coordinates into global coordinates
         for(int i=0; i<markers.size(); i++)
         {
@@ -1460,7 +1471,7 @@ void CExplorerWindow::deleteMarkerROI(QVector<QPoint> ROI_contour) throw (Runtim
 
     // save current cursor and set wait cursor
     QCursor cursor = view3DWidget->cursor();
-    view3DWidget->setCursor(Qt::WaitCursor);
+    CExplorerWindow::setCursor(Qt::WaitCursor);
 
     // pixel sampling step
     int sampling = CSettings::instance()->getAnnotationMarkersDeleteROISampling();
@@ -1479,7 +1490,7 @@ void CExplorerWindow::deleteMarkerROI(QVector<QPoint> ROI_contour) throw (Runtim
     PAnoToolBar::instance()->buttonUndo->setEnabled(true);
 
     // reset saved cursor
-    view3DWidget->setCursor(cursor);
+    CExplorerWindow::setCursor(cursor);
 
     //update visible markers
     PAnoToolBar::instance()->buttonMarkerRoiViewChecked(PAnoToolBar::instance()->buttonMarkerRoiView->isChecked());

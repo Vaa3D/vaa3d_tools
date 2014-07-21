@@ -91,7 +91,6 @@ namespace teramanager
     const int    STATIC_STRING_SIZE = 2000;
     const int    FILE_LINE_BUFFER_SIZE = 10000;
     const double pi = 3.14159265359;
-    const int    MAX_ANNOTATIONS_NUMBER = 1000000;       //maximum number of annotations objects (markers, curve points, etc.)
     const int    ZOOM_HISTORY_SIZE = 3;
     const std::string VMAP_BIN_FILE_NAME = "vmap.bin";   //name of volume map binary file
     const std::string RESOLUTION_PREFIX = "RES";         // prefix identifying a folder containing data of a certain resolution

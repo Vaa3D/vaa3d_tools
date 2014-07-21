@@ -9,7 +9,7 @@
 //annotation structure
 struct teramanager::annotation
 {
-    int ID;                         //unique identifier
+    long long ID;                   //unique identifier
     int type;                       //-1 = undefined, 0 = LocationSimple, 1 = NeuronSWC
     int subtype;                    //see Vaa3D LocationSimple and NeuronSWC types
     float x, y, z;                  //point coordinates
@@ -30,8 +30,7 @@ struct teramanager::annotation
     void ricInsertIntoTree(annotation* node, QList<NeuronSWC> &tree);
     void insertIntoTree(QList<NeuronSWC> &tree);
 
-    static std::list<int> availableIDs;     //list of available IDs,  i.e. IDs that can be assigned and that were never assigned before
-    static std::list<int> recyclableIDs;    //list of recyclable IDs, i.e. IDs that can be assigned after their owner has been destroyed
+    static long long last_ID;      //last ID assigned
 };
 
 class teramanager::CAnnotations
@@ -185,19 +184,15 @@ class teramanager::CAnnotations
         static CAnnotations* instance(itm::uint32 volHeight, itm::uint32 volWidth, itm::uint32 volDepth)
         {
             if (uniqueInstance == 0)
-            {
-                for(int i=0; i<teramanager::MAX_ANNOTATIONS_NUMBER; i++)
-                    annotation::availableIDs.push_back(i);
                 uniqueInstance = new CAnnotations(volHeight, volWidth, volDepth);
-            }
             return uniqueInstance;
         }
-        static CAnnotations* getInstance() throw (RuntimeException)
+        static CAnnotations* getInstance() throw (itm::RuntimeException)
         {
             if(uniqueInstance)
                 return uniqueInstance;
             else
-                throw RuntimeException("in CAnnotations::getInstance(): no object has been instantiated yet");
+                throw itm::RuntimeException("in CAnnotations::getInstance(): no object has been instantiated yet");
         }
         static void uninstance();
         ~CAnnotations();
@@ -219,13 +214,13 @@ class teramanager::CAnnotations
         /*********************************************************************************
         * Save/load method
         **********************************************************************************/
-        void save(const char* filepath) throw (RuntimeException);
-        void load(const char* filepath) throw (RuntimeException);
+        void save(const char* filepath) throw (itm::RuntimeException);
+        void load(const char* filepath) throw (itm::RuntimeException);
 
         /*********************************************************************************
         * Removes all the annotations from the octree
         **********************************************************************************/
-        void clear()  throw (RuntimeException)
+        void clear()  throw (itm::RuntimeException)
         {
             /**/itm::debug(itm::LEV1, 0, __itm__current__function__);
 
@@ -242,6 +237,17 @@ class teramanager::CAnnotations
                 return octree->deep_count() == 0;
             else
                 return true;
+        }
+
+        /*********************************************************************************
+        * Counts the number of stored annotations
+        **********************************************************************************/
+        itm::uint32 count()
+        {
+            if(octree)
+                return octree->count();
+            else
+                return 0;
         }
 
         /*********************************************************************************
