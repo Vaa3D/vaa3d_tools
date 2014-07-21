@@ -7,9 +7,9 @@
 #include <v3d_interface.h>
 #include "my_surf_objs.h"
 #include "openSWCDialog.h"
-#include "sort_func.h"
-#include "sort_swc.h"
-#include "typeset.h"
+//#include "sort_func.h"
+//#include "sort_swc.h"
+//#include "typeset.h"
 #include "typeset_func.h"
 #include "typeset_plugin.h"
 

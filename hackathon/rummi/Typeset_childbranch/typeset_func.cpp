@@ -8,7 +8,7 @@
 #include "my_surf_objs.h"
 #include "openSWCDialog.h"
 #include "sort_func.h"
-#include "sort_swc.h"
+//#include "sort_swc.h"
 #include "typeset.h"
 #include "typeset_func.h"
 #include "typeset_plugin.h"
@@ -19,7 +19,7 @@
 
 //const QString title = QObject::tr("typeset Neuron");
 
-bool export_list2file(QList<NeuronSWC> & lN, QString fileSaveName, QString FileSWCOpenName)
+bool export_list2file_v2(QList<NeuronSWC> & lN, QString fileSaveName, QString FileSWCOpenName)
 {
     QFile file(fileSaveName);
     if (!file.open(QIODevice::WriteOnly|QIODevice::Text))
@@ -124,7 +124,7 @@ int typeset_swc(V3DPluginCallback2 &callback, QWidget *parent)
                 QObject::tr("Supported file (*.swc)"
                     ";;Neuron structure	(*.swc)"
                     ));
-        if (!export_list2file(result.listNeuron,fileSaveName,FileSWCOpenName))
+        if (!export_list2file_v2(result.listNeuron,fileSaveName,FileSWCOpenName))
         {
             v3d_msg("fail to write the output swc file.");
             return 0;
@@ -195,7 +195,7 @@ bool typeset_swc(const V3DPluginArgList & input, V3DPluginArgList & output)
 
     NeuronTree result = typeset_marker(nt,tmp_list,settype);
 
-    if (!export_list2file(result.listNeuron, fileSaveName, FileSWCOpenName))
+    if (!export_list2file_v2(result.listNeuron, fileSaveName, FileSWCOpenName))
     {
         printf("fail to write the output swc file.\n");
         return false;
@@ -229,7 +229,7 @@ bool typeset_swc_toolbox(const V3DPluginArgList & input)
             QObject::tr("Supported file (*.swc)"
                 ";;Neuron structure	(*.swc)"
                 ));
-    if (!export_list2file(result.listNeuron,fileSaveName,FileSWCOpenName))
+    if (!export_list2file_v2(result.listNeuron,fileSaveName,FileSWCOpenName))
     {
         v3d_msg("fail to write the output swc file.");
         return false;
