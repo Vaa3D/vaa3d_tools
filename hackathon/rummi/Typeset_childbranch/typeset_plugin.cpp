@@ -41,7 +41,7 @@ void TypesetPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callbac
     }
     else
     {
-        v3d_msg(tr("This is a plugin to set branch type\n"
+        v3d_msg(tr("This is a plugin to set branch type of traced neuron \n"
             "Developed by Surobhi Ganguly, 2014-07-14"));
     }
 }
