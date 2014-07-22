@@ -439,7 +439,11 @@ bool proc_app2(V3DPluginCallback2 &callback, PARA_APP2 &p, const QString & versi
         tmps.setNum(int(inmarkers[0].y+0.5)).prepend("_y"); rootposstr += tmps;
         tmps.setNum(int(inmarkers[0].z+0.5)).prepend("_z"); rootposstr += tmps;
         //QString outswc_file = callback.getImageName(curwin) + rootposstr + "_app2.swc";
-        QString outswc_file = QString(p.p4dImage->getFileName()) + rootposstr + "_app2.swc";
+        QString outswc_file;
+        if(!p.outswc_file.isEmpty())
+            outswc_file = p.outswc_file;
+        else
+            outswc_file = QString(p.p4dImage->getFileName()) + rootposstr + "_app2.swc";
               
         
         for(i = 0; i < outswc.size(); i++) //add scaling 121127, PHC //add cutbox offset 121202, PHC
@@ -598,8 +602,8 @@ bool PARA_APP2::fetch_para_commandline(const V3DPluginArgList &input, V3DPluginA
     inimg_file = infiles[0];
     int k=0;
     inmarker_file = paras.empty() ? "" : paras[k]; if(inmarker_file == "NULL") inmarker_file = ""; k++;
-    //outswc_file = outfiles.empty() ? inimg_file + "_app2.swc" : outfiles[0];
-    
+  //  outswc_file = outfiles.empty() ? inimg_file + "_app2.swc" : outfiles[0];
+    if(!outfiles.empty()) outswc_file = outfiles[0];
     //try to use as much as the default value in the PARA_APP2 constructor as possible
     channel = (paras.size() >= k+1) ? atoi(paras[k]) : channel;  k++;//0;
     bkg_thresh = (paras.size() >= k+1) ? atoi(paras[k]) : bkg_thresh; k++;// 30;
