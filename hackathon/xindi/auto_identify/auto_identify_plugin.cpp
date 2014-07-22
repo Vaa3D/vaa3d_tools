@@ -29,11 +29,15 @@ template <class T> bool identify_cells(T* data1d, V3DLONG *dimNum, int c, const 
 LandmarkList neuron_2_mark(const NeuronTree & p, LandmarkList & neuronMarkList);
 template <class T> int pixelVal(T* data1d, V3DLONG *dimNum,
                                 double xc, double yc, double zc, int c);
-template <class T> bool mass_center(T* data1d,
+template <class T> bool mass_center_Lists(T* data1d,
                                     V3DLONG *dimNum,
                                     LandmarkList & originalList, LandmarkList & newList,
                                     double radius, int c, double thresh);
-template <class T> pair<int,int> pixel_range(T* data1d,
+template <class T> bool mass_center_Coords(T* data1d,
+                                    V3DLONG *dimNum,
+                                    double &x, double &y, double &z,
+                                    double radius, int c, double thresh);
+template <class T> pair<double,double> pixel_range(T* data1d,
                                         V3DLONG *dimNum,
                                         double xc,double yc,double zc,int c,double rad);
 template <class T> bool dynamic_pixel(T* data1d,
@@ -45,7 +49,7 @@ template <class T> LandmarkList scan_and_count(T* data1d,
                                       int MarkAve, int MarkStDev,
                                       int PointAve, int PointStDev,
                                       double radAve, double radStDev,
-                                      int c, int cat, double thresh);
+                                      int c, int cat, double thresh, LandmarkList originalList);
 template <class T> LandmarkList duplicates(T* data1d, LandmarkList fullList,
                                            V3DLONG *dimNum, int PointAve, int rad, int c);
 V_NeuronSWC get_v_neuron_swc(const NeuronTree *p);
@@ -133,7 +137,6 @@ bool AutoIdentifyPlugin::dofunc(const QString & func_name, const V3DPluginArgLis
  * some coords are returning as indeterminant in the compute_radius function. Right now they are being skipped. Not sure source of bad numbers.
  *
  * [future goals]
- * find way to identify individal segments rather than entire structures as test data. NOT SURE IF EVEN POSSIBLE
  * optimize radius calculation algorithm to be more robust, figure out why it's even capable of returning bad numbers
  *  ##################################
 */
@@ -194,11 +197,16 @@ void identify_neurons(V3DPluginCallback2 &callback, QWidget *parent)
         int structNum = mTreeList->count();
 
         //get examples from test data
+        int check = 0;
         for (int i=0; i<structNum; i++)
         {
             mTree = mTreeList->at(i);
 
-            if (mTree.comment != "test") continue; //defining the testing set by comments
+            if (mTree.comment != "test") //defining the testing set by comments
+            {
+                check++;
+                continue;
+            }
             //v3d_msg("test data");
 
             V_NeuronSWC_list seg_list = get_neuron_segments(&mTree);
@@ -209,7 +217,7 @@ void identify_neurons(V3DPluginCallback2 &callback, QWidget *parent)
             {
                 //segCatArr.push_back(seg_list.at(j).row.at(0).type);
                 int segCat = seg_list.at(j).row.at(0).type;
-                cout<<segCat<<endl;
+                //cout<<segCat<<endl;
                 segCatArr[segCat] += 1;
                 double radAve,radStDev;
                 compute_swc_radius(data1d,dimNum,seg_list.at(j).row,c,radAve,radStDev);
@@ -238,6 +246,11 @@ void identify_neurons(V3DPluginCallback2 &callback, QWidget *parent)
                 segIntensArr[k] /= segCatArr[k];
                 segRadStDevArr[k] /= segCatArr[k];
             }
+        }
+        if (check==structNum)
+        {
+            v3d_msg("No exampler data found, please specify a set of example data and try again.");
+            return;
         }
 //        v3d_msg(QString("%1 %2 %3 %4").arg(segCatArr.size()).arg(segCatArr.at(0)).arg(segRadArr.size()).arg(segRadArr.at(0)));
 
@@ -315,6 +328,7 @@ void identify_neurons(V3DPluginCallback2 &callback, QWidget *parent)
  * significantly reduced duplicate detection of cells
  * mass center algorithm inaccuracy fixed
  * mass center should be smarter now
+ * fixed apply_mask, broke mass_center...again
  *
  * [current goals/issues]
  * still several undetected cells
@@ -436,10 +450,10 @@ void count_cells(V3DPluginCallback2 &callback, QWidget *parent)
         if (mlist.count()<=0)    {v3d_msg("There are no markers in the current image"); return;}
 
         LandmarkList bglist; //sending in empty bglist to trigger binary sort
-        LandmarkList smallList;
-        if (identify_cells(data1d,dimNum,c,mlist,bglist, smallList))
+        LandmarkList outputList;
+        if (identify_cells(data1d,dimNum,c,mlist,bglist, outputList))
         {
-            callback.setLandmark(curwin,smallList);
+            callback.setLandmark(curwin,outputList);
         }
     }
     else if (input_type==1) //type
@@ -699,7 +713,7 @@ template <class T> bool identify_cells(T* data1d, V3DLONG *dimNum, int c, const 
     LandmarkList CenteredList;
     double blah,checkrad=0;
     dynamic_pixel(data1d,dimNum,xc,yc,zc,c,thresh,blah,checkrad);
-    mass_center(data1d,dimNum,MarkList,CenteredList,checkrad*1.5,c,thresh);
+    mass_center_Lists(data1d,dimNum,MarkList,CenteredList,checkrad*1.5,c,thresh);
     MarkList = CenteredList;
     //outputlist = CenteredList; return true;
 
@@ -762,12 +776,13 @@ template <class T> bool identify_cells(T* data1d, V3DLONG *dimNum, int c, const 
 //v3d_msg(QString("category %1").arg(cat));
 
     //scans image and generates new set of markers based on testing data
-    LandmarkList newList = scan_and_count(data1d,dimNum,ValAve,2*ValStDev,PixVal,PixStDev,radAve,radStDev,c,cat,thresh);
-    cout<<"Cell count "<<newList.count()<<endl;
+    LandmarkList scannedList = scan_and_count(data1d,dimNum,ValAve,2*ValStDev,PixVal,PixStDev,radAve,radStDev,c,cat,thresh,MarkList);
+    //cout<<"Cell count "<<newList.count()<<endl;
+//v3d_msg("newList made");
     //recenters list via mean shift
 //v3d_msg("recentering");
     LandmarkList RecenterList;
-    mass_center(data1d,dimNum,newList,RecenterList,radAve-radStDev,c,thresh);
+    mass_center_Lists(data1d,dimNum,scannedList,RecenterList,radAve+radStDev,c,thresh);
     for (int i=0; i<RecenterList.size();i++)
     {
         LocationSimple tmp(0,0,0);
@@ -778,14 +793,11 @@ template <class T> bool identify_cells(T* data1d, V3DLONG *dimNum, int c, const 
         tmp.comments = catStr.str();
     }
 //v3d_msg("ckpt 2");
-    newList = RecenterList;
-
-//v3d_msg("newList made");
-
-    outputlist = duplicates(data1d,newList,dimNum,PixVal,radAve-radStDev,c);
+    outputlist = duplicates(data1d,RecenterList,dimNum,PixVal,radAve,c);
 //    outputlist = newList;
 //v3d_msg("duplicates deleted");
 
+    cout<<"Cell count "<<outputlist.count()<<endl;
     return true;
 }
 
@@ -810,8 +822,8 @@ template <class T> int pixelVal(T* data1d, V3DLONG *dimNum,
 }
 
 
-//returns new marker that has been recentered
-template <class T> bool mass_center(T* data1d,
+//returns recentered LandmarkList
+template <class T> bool mass_center_Lists(T* data1d,
                                     V3DLONG *dimNum,
                                     LandmarkList & originalList, LandmarkList & newList,
                                     double radius, int c, double thresh)
@@ -842,7 +854,6 @@ template <class T> bool mass_center(T* data1d,
                 {
                     for (double phi=0; phi<pi; phi+=(pi/8))
                     {
-                        //cout<<"pixel iteration "<<runs<<endl;
                         //cout<<r<<" "<<theta<<" "<<phi<<endl;
                         x = xc+r*cos(theta)*sin(phi);
                         if (x>N-1) x=N-1; if (x<0) x=0;
@@ -855,7 +866,6 @@ template <class T> bool mass_center(T* data1d,
                         newY += pVal*y;
                         newZ += pVal*z;
                         norm += pVal;
-                        //cout<<dataval<<" "<<datatotal<<" "<<runs<<endl;
                         //cout<<x<<" "<<y<<" "<<z<<" "<<endl<<endl;
                     }
                 }
@@ -868,14 +878,32 @@ template <class T> bool mass_center(T* data1d,
             xc=newX; yc=newY; zc=newZ;
             //cout<<xc<<" "<<yc<<" "<<zc<<endl;
 
-            //if marker has been placed in background, restart loop with smaller radius
+            //if marker has been placed in background, restart loop with some changes
             pVal = pixelVal(data1d,dimNum,newX,newY,newZ,c);
             if (pVal<=thresh)
             {
                 //cout<<"hit check number "<<check<<" in marker "<<i<<endl;
-                if (check>1) break; //don't let this loop more than twice
-                rad/=2;
-                xc=xo; yc=yo; zc=zo;
+                if (check==0) //first check just reset loop with smaller radius
+                {
+                    xc=xo; yc=yo; zc=zo;
+                    rad/=2;
+                }
+                else if (check==1) //second check shift the original coords
+                {
+                    double shiftX,shiftY,shiftZ;
+                    shiftX = (newX-xo)/2;
+                    shiftY = (newY-yo)/2;
+                    shiftZ = (newZ-zo)/2;
+                    xc=xo-shiftX; yc=yo-shiftY; zc=zo-shiftZ;
+                    if (xc<0) xc=0; if (xc>N-1) xc=N-1;
+                    if (yc<0) yc=0; if (yc>M-1) yc=M-1;
+                    if (zc<0) zc=0; if (zc>P-1) zc=P-1;
+                }
+                else if (check>1) //if still hasn't fixed idk
+                {
+                    //newX=xo; newY=yo; newZ=zo;
+                    break;
+                }
                 j=0;
                 check++;
             }
@@ -883,15 +911,32 @@ template <class T> bool mass_center(T* data1d,
         if (newX<0) newX=0;
         if (newY<0) newY=0;
         if (newZ<0) newZ=0;
-        if (newX>N) newX=N;
-        if (newY>M) newY=M;
-        if (newZ>P) newZ=P;
+        if (newX>N-1) newX=N-1;
+        if (newY>M-1) newY=M-1;
+        if (newZ>P-1) newZ=P-1;
+
         LocationSimple newMark(newX,newY,newZ);
         newList.append(newMark);
     }
     return true;
 }
 
+//returns recentered marker
+template <class T> bool mass_center_Coords(T* data1d,
+                                    V3DLONG *dimNum,
+                                    double &x, double &y, double &z,
+                                    double radius, int c, double thresh)
+{
+    LandmarkList tmpList,recenteredList;
+    LocationSimple tmp(x,y,z),recentered(0,0,0);
+    tmpList.append(tmp);
+    mass_center_Lists(data1d,dimNum,tmpList,recenteredList,radius,c,thresh);
+    recentered = recenteredList.at(0);
+    x = recentered.x;
+    y = recentered.y;
+    z = recentered.z;
+    return true;
+}
 
 //returns average pixel value and radius of cell around a marker
 template <class T> bool dynamic_pixel(T* data1d,
@@ -902,6 +947,7 @@ template <class T> bool dynamic_pixel(T* data1d,
     V3DLONG N = dimNum[0];
     V3DLONG M = dimNum[1];
     V3DLONG P = dimNum[2];
+    rad=0;
 
     do
     {
@@ -937,7 +983,7 @@ template <class T> bool dynamic_pixel(T* data1d,
 
 
 //returns average pixel value in box of radius rad on channel c around a given marker as well as average cell marker intensity
-template <class T> pair<int,int> pixel_range(T* data1d,
+template <class T> pair<double,double> pixel_range(T* data1d,
                               V3DLONG *dimNum,
                               double xc, double yc, double zc, int c, double rad)
 {
@@ -969,10 +1015,10 @@ template <class T> pair<int,int> pixel_range(T* data1d,
         }
     }
     //cout<<"done with loop"<<endl;
-    int pointval = pixelVal(data1d,dimNum,xc,yc,zc,c);
+    double pointval = pixelVal(data1d,dimNum,xc,yc,zc,c);
     //v3d_msg(QString("pointval %1").arg(pointval));
     //cout<<pointval<<endl;
-    int dataAve;
+    double dataAve;
     if (runs==0) dataAve=0;
     else dataAve = datatotal/runs;
 
@@ -988,16 +1034,11 @@ template <class T> LandmarkList scan_and_count(T* data1d,
                               int MarkAve, int MarkStDev,
                               int PointAve, int PointStDev,
                               double radAve, double radStDev,
-                              int c, int cat, double thresh)
+                              int c, int cat, double thresh, LandmarkList originalList)
 {
     V3DLONG N = dimNum[0];
     V3DLONG M = dimNum[1];
     V3DLONG P = dimNum[2];
-    //1D data array stores in this order: C Z Y X
-
-    LocationSimple tmpLocation(0,0,0);
-    LandmarkList newList;
-    double seg;
 
     //set up mask
     unsigned char *maskData = 0;
@@ -1007,8 +1048,28 @@ template <class T> LandmarkList scan_and_count(T* data1d,
     maskImage.setData((unsigned char*)maskData, N, M, P, 1, V3D_UINT8);
     Image4DProxy<Image4DSimple> maskImg(&maskImage);
 
-
+    LandmarkList newList;
     cout<<"starting count"<<endl;
+
+    //set original markers into new list and mask them
+    if (!originalList.empty())
+    {
+        for (int i=0; i<originalList.size(); i++)
+        {
+            LocationSimple tmp(0,0,0);
+            int xc,yc,zc;
+            tmp = originalList.at(i);
+            tmp.getCoord(xc,yc,zc);
+            //cout<<"coords "<<xc<<" "<<yc<<" "<<zc<<endl;
+            apply_mask(data1d,dimNum,xc,yc,zc,c,thresh,maskImg);
+            //cout<<"mask applied for marker "<<i<<endl<<endl;
+        }
+        newList = originalList;
+    }
+    //cout<<"original list appended, listsize currently "<<newList.size()<<endl;
+
+    LocationSimple tmpLocation(0,0,0);
+    double seg;
     seg = radAve/4;
     double init=radAve+radStDev;
     double end=radAve-radStDev;
@@ -1022,41 +1083,36 @@ template <class T> LandmarkList scan_and_count(T* data1d,
             {
                 for (double ix=seg; ix<=N; ix+=seg)
                 {
-                    //cout<<*maskImg.at(ix,iy,iz,0)<<endl;
-                    if (*maskImg.at(ix, iy, iz, 0) == 255) {continue;} //skip masked areas
-                    //v3d_msg(QString("%1 %2 %3").arg(ix).arg(iy).arg(iz));
-                    //cout<<ix<<" "<<iy<<" "<<iz<<" "<<endl;
-                    //(ix,iy,iz,c) are the coords that we are currently at
-                    //checking radius i
-                    //we throw these coords into func pixel to get the pixel value to compare to the training values
-                    //both sets of averages and st devs have to match up
-                    pair<int,int> check = pixel_range(data1d,dimNum,ix,iy,iz,c,i);
-                    int TempDataAve = check.first;
-                    int TempPointAve = check.second;
-                    //v3d_msg(QString("%1 %2 %3").arg(i).arg(TempDataAve).arg(TempPointAve));
-                    if ( (TempPointAve>=PointAve-PointStDev) && (TempPointAve<=PointAve+PointStDev) && (TempDataAve>=MarkAve-MarkStDev) && (TempDataAve<=MarkAve+MarkStDev))
+                    //cout<<"coords "<<x1<<" "<<y1<<" "<<z1<<" have mask "<<*maskImg.at(x1,y1,z1,0)<<endl;
+                    if (*maskImg.at(ix,iy,iz,0) == 0)
                     {
-                        //cout<<"found a marker "<<TempDataAve<<" with rad "<<i<<" at coords "<<ix<<" "<<iy<<" "<<iz<<endl;
-                        tmpLocation.x = ix;
-                        tmpLocation.y = iy;
-                        tmpLocation.z = iz;
-                        tmpLocation.category = cat;
-                        stringstream catStr;
-                        catStr << cat;
-                        tmpLocation.comments = catStr.str();
-                        newList.append(tmpLocation);
+                        pair<double,double> check = pixel_range(data1d,dimNum,ix,iy,iz,c,i);
+                        double TempDataAve = check.first;
+                        double TempPointAve = check.second;
+                        //v3d_msg(QString("%1 %2 %3").arg(i).arg(TempDataAve).arg(TempPointAve));
+                        if ( (TempPointAve>=PointAve-PointStDev) && (TempPointAve<=PointAve+PointStDev) && (TempDataAve>=MarkAve-MarkStDev) && (TempDataAve<=MarkAve+MarkStDev))
+                        {
+                            //cout<<"found a marker "<<TempDataAve<<" with rad "<<i<<" at coords "<<ix<<" "<<iy<<" "<<iz<<endl;
+                            double x,y,z;
+                            x=ix; y=iy; z=iz;
+                            mass_center_Coords(data1d,dimNum,x,y,z,radAve,c,thresh);
+                            if (*maskImg.at(x,y,z,0)!=0) continue;
+                            tmpLocation.x = x;
+                            tmpLocation.y = y;
+                            tmpLocation.z = z;
+                            tmpLocation.category = cat;
+                            stringstream catStr;
+                            catStr << cat;
+                            tmpLocation.comments = catStr.str();
+                            newList.append(tmpLocation);
 
-                        apply_mask(data1d,dimNum,ix,iy,iz,c,thresh,maskImg);
-
-                        continue;
+                            apply_mask(data1d,dimNum,x,y,z,c,thresh,maskImg);
+                        }
                     }
-                    else continue;
                 }
             }
         }
     }
-
-    //note this function does not remember where the test data actually was, so it should find them again
     return newList;
 }
 
@@ -1067,8 +1123,8 @@ template <class T> LandmarkList duplicates(T* data1d, LandmarkList fullList,
 {
     int marknum = fullList.count();
     LandmarkList smallList = fullList;
-    int x1,y1,z1,x2,y2,z2,data1,data2;
-    double t, dist;
+    int x1,y1,z1,x2,y2,z2;
+    double data1,data2,t,dist;
     LocationSimple point1(0,0,0), point2(0,0,0);
     LocationSimple zero(0,0,0);
     LocationSimple& zer = zero;
@@ -1085,7 +1141,7 @@ template <class T> LandmarkList duplicates(T* data1d, LandmarkList fullList,
 
             t = (x1-x2)*(x1-x2)+(y1-y2)*(y1-y2)+(z1-z2)*(z1-z2);
             dist = sqrt(t);
-            if (dist<=rad*1.2)
+            if (dist<=rad)
             {
                 data1 = abs(pix1-PointAve);
                 data2 = abs(pix2-PointAve);
@@ -1216,12 +1272,12 @@ template <class T> bool compute_swc_radius(T* data1d, V3DLONG *dimNum, vector<V_
         }
 
         double Vnum[] = {P2.x-P1.x,P2.y-P1.y,P2.z-P1.z};
-        double Vnorm = sqrt(Vnum[0]*Vnum[0]+Vnum[1]*Vnum[1]+Vnum[2]*Vnum[2]);
-        double V[] = {Vnum[0]/Vnorm,Vnum[1]/Vnorm,Vnum[2]/Vnorm}; //axis of rotation
+        double Vnorm  = sqrt(Vnum[0]*Vnum[0]+Vnum[1]*Vnum[1]+Vnum[2]*Vnum[2]);
+        double V[]    = {Vnum[0]/Vnorm,Vnum[1]/Vnorm,Vnum[2]/Vnorm}; //axis of rotation
         double Anum[] = {-V[1],V[0],(-V[1]*V[0]-V[0]*V[1])/V[2]};
-        double Anorm = sqrt(Anum[0]*Anum[0]+Anum[1]*Anum[1]+Anum[2]*Anum[2]);
-        double A[] = {Anum[0]/Anorm,Anum[1]/Anorm,Anum[2]/Anorm}; //perpendicular to V
-        double B[] = {A[1]*V[2]-A[2]*V[1],A[2]*V[0]-A[0]*V[2],A[0]*V[1]-A[1]*V[0]}; //perpendicular to A and V
+        double Anorm  = sqrt(Anum[0]*Anum[0]+Anum[1]*Anum[1]+Anum[2]*Anum[2]);
+        double A[]    = {Anum[0]/Anorm,Anum[1]/Anorm,Anum[2]/Anorm}; //perpendicular to V
+        double B[]    = {A[1]*V[2]-A[2]*V[1],A[2]*V[0]-A[0]*V[2],A[0]*V[1]-A[1]*V[0]}; //perpendicular to A and V
         rad=0;
         int pValCircTot=0, runs=0;
         int pVal = pixelVal(data1d,dimNum,P0.x,P0.y,P0.z,c);
@@ -1245,7 +1301,7 @@ template <class T> bool compute_swc_radius(T* data1d, V3DLONG *dimNum, vector<V_
                     if (y>M-1) y=M-1; if (y<0) y=0;
                     z = P0.z+rad*cos(theta)*A[2]+rad*sin(theta)*B[2];
                     if (z>P-1) z=P-1; if (z<0) z=0;
-                    if (x!=x || y!=y || z!=z) continue; //checking for NaN, skips segments that return indefinite coords
+                    if (x!=x || y!=y || z!=z) continue; //skips segments that return indefinite coords
                     //cout<<x<<" "<<y<<" "<<z<<endl;
                     double pValCirc = pixelVal(data1d,dimNum,x,y,z,c);
                     //cout<<pValCirc<<endl;
@@ -1284,7 +1340,7 @@ bool export_list2file(QList<NeuronTree> & N2, QString fileSaveName, QString file
     if (!file.open(QIODevice::WriteOnly|QIODevice::Text))
         return false;
     QTextStream myfile(&file);
-    myfile<<"# generated by Vaa3D Plugin auto_identify - neurons"<<endl;
+    myfile<<"# generated by Vaa3D Plugin auto_identify - label neurons"<<endl;
     myfile<<"# source file(s): "<<fileOpenName<<endl;
     myfile<<"# id,type,x,y,z,r,pid"<<endl;
     QList<NeuronSWC> N1;
@@ -1300,7 +1356,7 @@ bool export_list2file(QList<NeuronTree> & N2, QString fileSaveName, QString file
     v3d_msg(QString("SWC file %1 has been generated, size %2").arg(fileSaveName).arg(N1.size()));
     cout<<"swc file "<<fileSaveName.toStdString()<<" has been generated, size: "<<N1.size()<<endl;
     return true;
-};
+}
 
 template <class T> bool apply_mask(unsigned char* data1d, V3DLONG *dimNum,
                                    int xc, int yc, int zc, int c, double threshold, T & maskImg)
@@ -1312,9 +1368,11 @@ template <class T> bool apply_mask(unsigned char* data1d, V3DLONG *dimNum,
     double pi=3.14,rad,dataAve;
 
     dynamic_pixel(data1d,dimNum,xc,yc,zc,c,threshold,dataAve,rad);
+    //cout<<"rad "<<rad<<endl;
 
     //cout<<"applying mask"<<endl;
-    *maskImg.at(xc,yc,zc,0) = 255;
+    *maskImg.at(xc,yc,zc,0) = 1;
+    //cout<<"ck 1 ";
 
     for (double r=0.5; r<=rad; r+=0.5)
     {
@@ -1328,10 +1386,11 @@ template <class T> bool apply_mask(unsigned char* data1d, V3DLONG *dimNum,
                 if (y>M-1) y=M-1; if (y<0) y=0;
                 z = zc+r*cos(phi);
                 if (z>P-1) z=P-1; if (z<0) z=0;
-                *maskImg.at(x,y,z,0) = 255;
+                *maskImg.at(x,y,z,0) = 1;
             }
         }
     }
+    //cout<<"2"<<endl;
     return true;
 }
 
@@ -1347,7 +1406,11 @@ bool open_testSWC(NeuronTree & openTree)
         openTree = readSWC_file(fileOpenName);
         return true;
     }
-    else return false;
+    else
+    {
+        v3d_msg("You did not choose a valid file type, or the file you chose is empty. Will attempt to find exampler set in window.");
+        return false;
+    }
 }
 
 
