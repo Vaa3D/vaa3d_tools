@@ -2255,6 +2255,11 @@ void PMain::debugAction1Triggered()
     /**/itm::debug(itm::NO_DEBUG, 0, __itm__current__function__);
 
     QMessageBox::information(0, "The number of annotations is...", QString::number(CAnnotations::getInstance()->count()));
+
+    CAnnotations::getInstance()->prune();
+
+    QMessageBox::information(0, "after pruning, the number of annotations is...", QString::number(CAnnotations::getInstance()->count()));
+
 }
 
 void PMain::showLogTriggered()

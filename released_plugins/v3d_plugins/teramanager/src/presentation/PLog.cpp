@@ -109,30 +109,46 @@ void PLog::append(string text)
     log->append(QString("@").append(QTime::currentTime().toString()).append(": ").append(text.c_str()));
 }
 
-void PLog::appendIO(int milliseconds, string message)
+void PLog::appendIO(int milliseconds, string message, bool sum)
 {
-    timeIO->setText(QString::number(toFloat(timeIO->text()) + milliseconds / 1000.0f, 'f', 3).append("s"));
     append(QString("IO  operation ( ").append(QString::number(milliseconds/1000.0f, 'f', 3)).append("s ): ").append(message.c_str()).toStdString());
-    updatePercentages();
+
+    if(sum)
+    {
+        timeIO->setText(QString::number(toFloat(timeIO->text()) + milliseconds / 1000.0f, 'f', 3).append("s"));
+        updatePercentages();
+    }
 }
 
-void PLog::appendGPU(int milliseconds, string message)
+void PLog::appendGPU(int milliseconds, string message, bool sum)
 {
-    timeGPU->setText(QString::number(toFloat(timeGPU->text()) + milliseconds / 1000.0f, 'f', 3).append("s"));
     append(QString("GPU operation ( ").append(QString::number(milliseconds/1000.0f, 'f', 3)).append("s ): ").append(message.c_str()).toStdString());
-    updatePercentages();
+
+    if(sum)
+    {
+        timeGPU->setText(QString::number(toFloat(timeGPU->text()) + milliseconds / 1000.0f, 'f', 3).append("s"));
+        updatePercentages();
+    }
 }
-void PLog::appendCPU(int milliseconds, string message)
+void PLog::appendCPU(int milliseconds, string message, bool sum)
 {
-    timeCPU->setText(QString::number(toFloat(timeCPU->text()) + milliseconds / 1000.0f, 'f', 3).append("s"));
     append(QString("CPU operation ( ").append(QString::number(milliseconds/1000.0f, 'f', 3)).append("s ): ").append(message.c_str()).toStdString());
-    updatePercentages();
+
+    if(sum)
+    {
+        timeCPU->setText(QString::number(toFloat(timeCPU->text()) + milliseconds / 1000.0f, 'f', 3).append("s"));
+        updatePercentages();
+    }
 }
-void PLog::appendActual(int milliseconds, string message)
+void PLog::appendActual(int milliseconds, string message, bool sum)
 {
-    timeActual->setText(QString::number(toFloat(timeActual->text()) + milliseconds / 1000.0f, 'f', 3).append("s"));
     append(QString("ACT operation ( ").append(QString::number(milliseconds/1000.0f, 'f', 3)).append("s ): ").append(message.c_str()).toStdString());
-    updatePercentages();
+
+    if(sum)
+    {
+        timeActual->setText(QString::number(toFloat(timeActual->text()) + milliseconds / 1000.0f, 'f', 3).append("s"));
+        updatePercentages();
+    }
 }
 
 

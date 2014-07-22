@@ -55,10 +55,10 @@ class teramanager::PLog : public QDialog
         PLog(QWidget *parent);
 
         void append(string text);
-        void appendIO(int milliseconds, string message);
-        void appendGPU(int milliseconds, string message);
-        void appendCPU(int milliseconds, string message);
-        void appendActual(int milliseconds, string message);
+        void appendIO(int milliseconds, string message, bool sum = true);
+        void appendGPU(int milliseconds, string message, bool sum = true);
+        void appendCPU(int milliseconds, string message, bool sum = true);
+        void appendActual(int milliseconds, string message, bool sum = true);
 
     signals:
 

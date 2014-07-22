@@ -8,6 +8,7 @@
 #include <algorithm>
 #include "CAnnotations.h"
 #include "CSettings.h"
+#include "../presentation/PLog.h"
 
 using namespace teramanager;
 using namespace std;
@@ -403,7 +404,7 @@ void CAnnotations::Octree::_rec_remove(const Poctant& p_octant, annotation *neur
 }
 
 //recursive support method of 'deep_count' method
-uint32 CAnnotations::Octree::_rec_deep_count(const Poctant& p_octant) throw(RuntimeException)
+itm::uint32 CAnnotations::Octree::_rec_deep_count(const Poctant& p_octant) throw(RuntimeException)
 {
     if(p_octant)
         if(p_octant->V_dim == 1 && p_octant->H_dim == 1 && p_octant->D_dim == 1)
@@ -416,7 +417,7 @@ uint32 CAnnotations::Octree::_rec_deep_count(const Poctant& p_octant) throw(Runt
 }
 
 //recursive support method of 'height' method
-uint32 CAnnotations::Octree::_rec_height(const Poctant& p_octant) throw(RuntimeException)
+itm::uint32 CAnnotations::Octree::_rec_height(const Poctant& p_octant) throw(RuntimeException)
 {
     if(p_octant)
     {
@@ -451,6 +452,68 @@ void CAnnotations::Octree::_rec_print(const Poctant& p_octant)
         _rec_print(p_octant->child6);
         _rec_print(p_octant->child7);
         _rec_print(p_octant->child8);
+    }
+}
+
+//recursive support method of 'prune' method
+void CAnnotations::Octree::_rec_prune(const Poctant& p_octant) throw(itm::RuntimeException)
+{
+    if(p_octant)
+    {
+        // prune goes here
+        if(p_octant->V_dim == 1 && p_octant->H_dim == 1 && p_octant->D_dim == 1)
+        {
+            std::list<annotation*>::iterator i = p_octant->annotations.begin();
+            while (i != p_octant->annotations.end() && p_octant->annotations.size() > 1)
+            {
+                annotation &ai  = **i;
+                std::list<annotation*>::iterator j = i;
+                while (j != p_octant->annotations.end() && p_octant->annotations.size() > 1)
+                {
+                    annotation &aj = **j;
+                    if(*i != *j                        &&  // two different nodes
+                       ai.type    == 1 && aj.type == 1 &&  // both have neuron type
+                       ai         ==      aj           &&  // both have same coordinates
+                     *(ai.parent) ==    *(aj.parent))      // both have the same parent's coordinates (otherwise this is a crossroad and MUST not be pruned)
+                    {
+                        // aj is considered as duplicate --> ai takes its place in 4 actions:
+                        printf("found duplicate neuron at (%d, %d, %d)\n", p_octant->H_start, p_octant->V_start, p_octant->D_start);
+
+                        // 1) children of aj are assigned new parent ai
+                        for(std::set<annotation*>::iterator ajc = aj.children.begin(); ajc != aj.children.end(); ajc++)
+                            (*ajc)->parent = &ai;
+
+                        // 2) children of aj become children of ai
+                        ai.children.insert(aj.children.begin(), aj.children.end());
+
+                        // 3) remove aj from it's parent children list
+                        aj.parent->children.erase(&aj);
+
+                        // 4) remove aj from the octree
+                        p_octant->annotations.erase(j);
+
+                        // 5) deallocate memory for aj
+                        aj.smart_delete = false;
+                        delete &aj;
+                    }
+                    else
+                        ++j;
+                }
+                if(i != p_octant->annotations.end())
+                    ++i;
+            }
+        }
+        else
+        {
+            _rec_prune(p_octant->child1);
+            _rec_prune(p_octant->child2);
+            _rec_prune(p_octant->child3);
+            _rec_prune(p_octant->child4);
+            _rec_prune(p_octant->child5);
+            _rec_prune(p_octant->child6);
+            _rec_prune(p_octant->child7);
+            _rec_prune(p_octant->child8);
+        }
     }
 }
 
@@ -571,7 +634,7 @@ CAnnotations::Octree::Poctant CAnnotations::Octree::_rec_find(const Poctant& p_o
 }
 
 //recursive support method of 'count' method
-uint32 CAnnotations::Octree::_rec_count(const Poctant& p_octant, const interval_t& V_int, const interval_t& H_int, const interval_t& D_int) throw(RuntimeException)
+itm::uint32 CAnnotations::Octree::_rec_count(const Poctant& p_octant, const interval_t& V_int, const interval_t& H_int, const interval_t& D_int) throw(RuntimeException)
 {
     if(p_octant)
     {
@@ -619,7 +682,7 @@ uint32 CAnnotations::Octree::_rec_count(const Poctant& p_octant, const interval_
 
 //returns true if two given volumes intersect each other
 bool inline CAnnotations::Octree::intersects(const interval_t& V1_int,		 const interval_t& H1_int,		   const interval_t& D1_int,
-                                                           uint32& V2_start, uint32& V2_dim, uint32& H2_start, uint32& H2_dim, uint32& D2_start, uint32& D2_dim) throw(RuntimeException)
+                                                           itm::uint32& V2_start, itm::uint32& V2_dim, itm::uint32& H2_start, itm::uint32& H2_dim, itm::uint32& D2_start, itm::uint32& D2_dim) throw(RuntimeException)
 {
     return 	( V1_int.start  < (V2_start + V2_dim)	&&
               V1_int.end    >  V2_start             &&
@@ -631,7 +694,7 @@ bool inline CAnnotations::Octree::intersects(const interval_t& V1_int,		 const i
 
 //returns true if first volume contains second volume
 bool inline CAnnotations::Octree::contains  (const interval_t& V1_int,		 const interval_t& H1_int,		   const interval_t& D1_int,
-                                             uint32& V2_start, uint32& V2_dim, uint32& H2_start, uint32& H2_dim, uint32& D2_start, uint32& D2_dim) throw(RuntimeException)
+                                             itm::uint32& V2_start, itm::uint32& V2_dim, itm::uint32& H2_start, itm::uint32& H2_dim, itm::uint32& D2_start, itm::uint32& D2_dim) throw(RuntimeException)
 {
     return (  V1_int.start  <=  V2_start            &&
               V1_int.end    >=  (V2_start+V2_dim)	&&
@@ -641,7 +704,7 @@ bool inline CAnnotations::Octree::contains  (const interval_t& V1_int,		 const i
               D1_int.end    >=  (D2_start+D2_dim));
 }
 
-CAnnotations::Octree::Octree(uint32 _DIM_V, uint32 _DIM_H, uint32 _DIM_D)
+CAnnotations::Octree::Octree(itm::uint32 _DIM_V, itm::uint32 _DIM_H, itm::uint32 _DIM_D)
 {
     /**/itm::debug(itm::LEV1, strprintf("dimV = %d, dimH = %d, dimD = %d", _DIM_V, _DIM_H, _DIM_D).c_str(), __itm__current__function__);
 
@@ -678,6 +741,14 @@ void CAnnotations::Octree::clear() throw(RuntimeException)
 
     _rec_clear(root);
     root = 0;
+}
+
+//prunes the octree by removing all nodes duplicates while maintaining the same branched structure
+void CAnnotations::Octree::prune() throw(itm::RuntimeException)
+{
+    /**/itm::debug(itm::LEV1, 0, __itm__current__function__);
+
+    _rec_prune(root);
 }
 
 //insert given neuron in the octree
@@ -719,13 +790,13 @@ std::list<annotation*>* CAnnotations::Octree::find(float x, float y, float z) th
 }
 
 //returns the number of neurons (=leafs) in the octree by exploring the entire data structure
-uint32 CAnnotations::Octree::deep_count() throw(RuntimeException)
+itm::uint32 CAnnotations::Octree::deep_count() throw(RuntimeException)
 {
     return _rec_deep_count(root);
 }
 
 //returns the octree height
-uint32 CAnnotations::Octree::height() throw(RuntimeException)
+itm::uint32 CAnnotations::Octree::height() throw(RuntimeException)
 {
     return _rec_height(root);
 }
@@ -747,7 +818,7 @@ void CAnnotations::Octree::find(interval_t V_int, interval_t H_int, interval_t D
 }
 
 //returns the number of neurons (=leafs) in the given volume without exploring the entire data structure
-uint32 CAnnotations::Octree::count(interval_t V_int, interval_t H_int, interval_t D_int) throw(RuntimeException)
+itm::uint32 CAnnotations::Octree::count(interval_t V_int, interval_t H_int, interval_t D_int) throw(RuntimeException)
 {
     //adjusting default parameters
     V_int.start = V_int.start == -1 ? 0		: V_int.start;
@@ -836,17 +907,16 @@ void CAnnotations::addCurves(itm::interval_t X_range, itm::interval_t Y_range, i
     /**/itm::debug(itm::LEV1, strprintf("X[%d,%d), Y[%d,%d), Z[%d,%d)", X_range.start, X_range.end, Y_range.start, Y_range.end, Z_range.start, Z_range.end).c_str(), __itm__current__function__);
 
     // first clear curves in the given range
+    QElapsedTimer timer;
+    timer.start();
     itm::uint64 deletions = annotation::destroyed;
     clearCurves(X_range, Y_range, Z_range);
     deletions = annotation::destroyed - deletions;
     /**/itm::debug(itm::LEV3, strprintf("nt.size() = %d, deleted = %llu", nt.listNeuron.size(), deletions).c_str(), __itm__current__function__);
+    PLog::getInstance()->appendCPU(timer.elapsed(), "clearCurves()");
 
-    // remove duplicates
-//    for(int i=0; i<nt.listNeuron.size(); i++)
-//    {
-//        ;
-//    }
-
+    // then allocate and initialize curve nodes
+    timer.restart();
     std::map<int, annotation*> annotationsMap;
     std::map<int, NeuronSWC*> swcMap;
     for(int i=0; i<nt.listNeuron.size(); i++)
@@ -866,6 +936,10 @@ void CAnnotations::addCurves(itm::interval_t X_range, itm::interval_t Y_range, i
         annotationsMap[nt.listNeuron[i].n] = ann;
         swcMap[nt.listNeuron[i].n] = &(nt.listNeuron[i]);
     }
+    PLog::getInstance()->appendCPU(timer.elapsed(), "allocate and initialize curve nodes");
+
+    // finally linking nodes
+    timer.restart();
     for(std::map<int, annotation*>::iterator it = annotationsMap.begin(); it!= annotationsMap.end(); it++)
     {
         it->second->parent = swcMap[it->first]->pn == -1 ? 0 : annotationsMap[swcMap[it->first]->pn];
@@ -877,6 +951,7 @@ void CAnnotations::addCurves(itm::interval_t X_range, itm::interval_t Y_range, i
             it->second->parent->children.insert(it->second);
         }
     }
+    PLog::getInstance()->appendCPU(timer.elapsed(), "link curve nodes");
 //    printf("--------------------- teramanager plugin >> inserted %d curve points\n", annotationsMap.size());
 }
 

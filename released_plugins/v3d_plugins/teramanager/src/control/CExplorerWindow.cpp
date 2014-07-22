@@ -1369,7 +1369,6 @@ void CExplorerWindow::storeAnnotations() throw (RuntimeException)
     /**/itm::debug(itm::LEV1, strprintf("title = %s", titleShort.c_str()).c_str(), __itm__current__function__);
 
     QElapsedTimer timer;
-    timer.start();
 
     //computing the current volume range in the highest resolution image space
     /**/itm::debug(itm::LEV3, strprintf("computing the current volume range in the highest resolution image space").c_str(), __itm__current__function__);
@@ -1399,6 +1398,7 @@ void CExplorerWindow::storeAnnotations() throw (RuntimeException)
     if(!markers.empty())
     {       
         // @fixed by Alessandro on 2014-07-21: excluding hidden markers from store operation
+        timer.start();
         QList<LocationSimple>::iterator it = markers.begin();
         while (it != markers.end())
         {
@@ -1407,17 +1407,22 @@ void CExplorerWindow::storeAnnotations() throw (RuntimeException)
             else
                 ++it;
         }
+        PLog::getInstance()->appendCPU(timer.elapsed(), QString("store annotations: exclude hidden landmarks, view ").append(title.c_str()).toStdString());
 
         //converting local coordinates into global coordinates
+        timer.restart();
         for(int i=0; i<markers.size(); i++)
         {
             markers[i].x = getGlobalHCoord(markers[i].x, -1, false, false, __itm__current__function__);
             markers[i].y = getGlobalVCoord(markers[i].y, -1, false, false, __itm__current__function__);
             markers[i].z = getGlobalDCoord(markers[i].z, -1, false, false, __itm__current__function__);
         }
+        PLog::getInstance()->appendCPU(timer.elapsed(), QString("store annotations: convert landmark coordinates, view ").append(title.c_str()).toStdString());
 
         //storing markers
+        timer.restart();
         CAnnotations::getInstance()->addLandmarks(x_range, y_range, z_range, markers);
+        PLog::getInstance()->appendCPU(timer.elapsed(), QString("store annotations: store landmarks in the octree, view ").append(title.c_str()).toStdString());
     }
 
     /**********************************************************************************
@@ -1430,6 +1435,7 @@ void CExplorerWindow::storeAnnotations() throw (RuntimeException)
         /* @debug */ //printf("\ngoing to store in TeraFly the curve points ");
 
         //converting local coordinates into global coordinates
+        timer.restart();
         for(int i=0; i<nt.listNeuron.size(); i++)
         {
             /* @debug */ //printf("%d(%d) [(%.0f,%.0f,%.0f) ->", nt.listNeuron[i].n, nt.listNeuron[i].pn, nt.listNeuron[i].x, nt.listNeuron[i].y, nt.listNeuron[i].z);
@@ -1438,13 +1444,15 @@ void CExplorerWindow::storeAnnotations() throw (RuntimeException)
             nt.listNeuron[i].z = getGlobalDCoord(nt.listNeuron[i].z, -1, false, false, __itm__current__function__);
             /* @debug */ //printf("(%.0f,%.0f,%.0f)]  ", nt.listNeuron[i].x, nt.listNeuron[i].y, nt.listNeuron[i].z);
         }
+        PLog::getInstance()->appendCPU(timer.elapsed(), QString("store annotations: convert curve nodes coordinates, view ").append(title.c_str()).toStdString());
         /* @debug */ //printf("\n");
 
-        //storing markers
+        //storing curves
+        timer.restart();
         CAnnotations::getInstance()->addCurves(x_range, y_range, z_range, nt);
+        PLog::getInstance()->appendCPU(timer.elapsed(), QString("store annotations: store curves in the octree, view ").append(title.c_str()).toStdString());
     }
 
-    PLog::getInstance()->appendCPU(timer.elapsed(), QString("Stored 3D annotations from view ").append(title.c_str()).toStdString());
 }
 
 void CExplorerWindow::clearAnnotations() throw (RuntimeException)
@@ -1576,7 +1584,7 @@ void CExplorerWindow::loadAnnotations() throw (RuntimeException)
     NeuronTree vaa3dCurves;
 
     QElapsedTimer timer;
-    timer.start();
+
 
     //clearing previous annotations (useful when this view has been already visited)
     /**/itm::debug(itm::LEV3, strprintf("clearing previous annotations").c_str(), __itm__current__function__);
@@ -1617,10 +1625,15 @@ void CExplorerWindow::loadAnnotations() throw (RuntimeException)
 
     //obtaining the annotations within the current window
     /**/itm::debug(itm::LEV3, strprintf("obtaining the annotations within the current window").c_str(), __itm__current__function__);
+    timer.start();
     CAnnotations::getInstance()->findLandmarks(x_range, y_range, z_range, vaa3dMarkers);
+    PLog::getInstance()->appendCPU(timer.elapsed(), QString("load annotations: find landmarks, view ").append(title.c_str()).toStdString());
+    timer.restart();
     CAnnotations::getInstance()->findCurves(x_range, y_range, z_range, vaa3dCurves.listNeuron);
+    PLog::getInstance()->appendCPU(timer.elapsed(), QString("load annotations: find curves, view ").append(title.c_str()).toStdString());
 
     //converting global coordinates to local coordinates
+    timer.restart();
     /**/itm::debug(itm::LEV3, strprintf("converting global coordinates to local coordinates").c_str(), __itm__current__function__);
     for(int i=0; i<vaa3dMarkers.size(); i++)
     {
@@ -1637,12 +1650,12 @@ void CExplorerWindow::loadAnnotations() throw (RuntimeException)
         vaa3dCurves.listNeuron[i].z = getLocalDCoord(vaa3dCurves.listNeuron[i].z);
         /* @debug */ //printf("(%.0f,%.0f,%.0f)]  ", vaa3dCurves.listNeuron[i].x, vaa3dCurves.listNeuron[i].y, vaa3dCurves.listNeuron[i].z);
     }
+    PLog::getInstance()->appendCPU(timer.elapsed(), QString("load annotations: convert coordinates, view ").append(title.c_str()).toStdString());
     /* @debug */ //printf("\n\n");
 
 
     //update cpu time
     /**/itm::debug(itm::LEV3, strprintf("update CPU time").c_str(), __itm__current__function__);
-    PLog::getInstance()->appendCPU(timer.elapsed(), QString("Loaded 3D annotations into view ").append(title.c_str()).toStdString());
 
     //assigning annotations
     /**/itm::debug(itm::LEV3, strprintf("assigning annotations").c_str(), __itm__current__function__);
@@ -1665,7 +1678,7 @@ void CExplorerWindow::loadAnnotations() throw (RuntimeException)
     //update visible markers
     PAnoToolBar::instance()->buttonMarkerRoiViewChecked(PAnoToolBar::instance()->buttonMarkerRoiView->isChecked());
 
-    PLog::getInstance()->appendGPU(timer.elapsed(), QString("Loaded 3D annotations into view ").append(title.c_str()).toStdString());
+    PLog::getInstance()->appendGPU(timer.elapsed(), QString("load annotations: push objects into view ").append(title.c_str()).toStdString());
 }
 
 /**********************************************************************************

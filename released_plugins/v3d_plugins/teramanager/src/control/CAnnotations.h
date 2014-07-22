@@ -27,6 +27,14 @@ struct teramanager::annotation
     annotation() throw (itm::RuntimeException);
     ~annotation();
 
+    inline bool operator==(const annotation& r) const{
+        return  x       == r.x &&
+                y       == r.y &&
+                z       == r.z &&
+                type    == r.type &&
+                subtype == r.subtype;
+    }
+
     void ricInsertIntoTree(annotation* node, QList<NeuronSWC> &tree);
     void insertIntoTree(QList<NeuronSWC> &tree);
 
@@ -102,6 +110,7 @@ class teramanager::CAnnotations
                 void        _rec_search(const Poctant& p_octant, const interval_t& V_int, const interval_t& H_int, const interval_t& D_int, std::list<annotation*>& neurons) throw(itm::RuntimeException);
                 Poctant     _rec_find(const Poctant& p_octant, const interval_t& V_int, const interval_t& H_int, const interval_t& D_int) throw(itm::RuntimeException);
                 itm::uint32 _rec_count(const Poctant& p_octant, const interval_t& V_int, const interval_t& H_int, const interval_t& D_int) throw(itm::RuntimeException);
+                void        _rec_prune(const Poctant& p_octant) throw(itm::RuntimeException);
 
                 //returns true if two given volumes intersect each other
                 bool inline intersects(const interval_t& V1_int,const interval_t& H1_int,const interval_t& D1_int,
@@ -140,6 +149,9 @@ class teramanager::CAnnotations
 
                 //returns the octree height
                 itm::uint32 height()  throw(itm::RuntimeException);
+
+                //prunes the octree by removing all nodes duplicates while maintaining the same branched structure
+                void prune() throw(itm::RuntimeException);
 
                 //print the octree content
                 void print();
@@ -250,6 +262,15 @@ class teramanager::CAnnotations
                 return octree->count();
             else
                 return 0;
+        }
+
+        /*********************************************************************************
+        * Prunes the octree by removing duplicate nodes w/o altering the branching structure
+        **********************************************************************************/
+        void prune() throw (itm::RuntimeException)
+        {
+            if(octree)
+                octree->prune();
         }
 
         /*********************************************************************************
