@@ -265,29 +265,33 @@ namespace teramanager
         }
     }
 
-    inline void debug(debug_level dbg_level, const char* message=0, const char* source=0){
+    inline void debug(debug_level dbg_level, const char* message=0, const char* source=0, bool short_print = false){
         if(DEBUG >= dbg_level){
             if(DEBUG_TO_FILE)
             {
                 FILE* f = fopen(DEBUG_FILE_PATH.c_str(), "a");
-                if(message && source)
+                if(message && source && !short_print)
                     fprintf(f, "\n--------------------- teramanager plugin: DEBUG (level %d) ----: in \"%s\") ----\n"
                              "                      message: %s\n\n", dbg_level, source, message);
-                else if(message)
+                else if(message && !short_print)
                     fprintf(f, "\n--------------------- teramanager plugin: DEBUG (level %d) ----: %s\n", dbg_level, message);
-                else if(source)
+                else if(source && !short_print)
                     fprintf(f, "\n--------------------- teramanager plugin: DEBUG (level %d) ----: in \"%s\"\n", dbg_level, source);
+                else if(short_print && message)
+                    printf(    "\n                      %s\n", message);
                 fclose(f);
             }
             else
             {
-                if(message && source)
+                if(message && source && !short_print)
                     printf("\n--------------------- teramanager plugin: DEBUG (level %d) ----: in \"%s\") ----\n"
                              "                      message: %s\n\n", dbg_level, source, message);
-                else if(message)
+                else if(message && !short_print)
                     printf("\n--------------------- teramanager plugin: DEBUG (level %d) ----: %s\n", dbg_level, message);
-                else if(source)
+                else if(source && !short_print)
                     printf("\n--------------------- teramanager plugin: DEBUG (level %d) ----: in \"%s\"\n", dbg_level, source);
+                else if(short_print && message)
+                    printf("\n                      %s\n", message);
             }
         }
     }

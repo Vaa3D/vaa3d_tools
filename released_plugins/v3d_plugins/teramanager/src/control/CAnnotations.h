@@ -30,7 +30,9 @@ struct teramanager::annotation
     void ricInsertIntoTree(annotation* node, QList<NeuronSWC> &tree);
     void insertIntoTree(QList<NeuronSWC> &tree);
 
-    static long long last_ID;      //last ID assigned
+    static long long last_ID;       //last ID assigned
+    static itm::uint64 instantiated;//statistic "instantiated": counts the number of instantiated objects
+    static itm::uint64 destroyed;   //statistic "destroyed"   : counts the number of destroyed objects
 };
 
 class teramanager::CAnnotations

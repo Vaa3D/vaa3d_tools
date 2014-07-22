@@ -11,6 +11,14 @@ ties names are:
 - Rem: a feature no longer available
 
 ============================================================================================
+Version 0.9.993
+July 22nd, 2014
+--------------------------------------------------------------------------------------------
+- Fix: partially fixed a bug that caused duplicated neurons to be generated for each zoom-in
+       and zoom-out operation, thus severely slowing down the tool.
+--------------------------------------------------------------------------------------------
+
+
 Version 0.9.992
 July 21st, 2014
 --------------------------------------------------------------------------------------------

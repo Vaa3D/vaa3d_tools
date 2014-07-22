@@ -14,6 +14,8 @@ using namespace std;
 
 CAnnotations* CAnnotations::uniqueInstance = 0;
 long long annotation::last_ID = -1;
+itm::uint64 annotation::instantiated = 0;
+itm::uint64 annotation::destroyed = 0;
 
 bool isMarker (annotation* ano) { return ano->type == 0;}
 
@@ -32,7 +34,9 @@ annotation::annotation() throw (itm::RuntimeException){
         throw itm::RuntimeException("Reached the maximum number of annotation instances. Please signal this issue to the developer");
     ID = ++last_ID;
 
-    /* @debug */ //printf("%lld(%.0f, %.0f, %.0f) born...\n", ID, x, y, z);
+    instantiated++;
+
+    itm::debug(itm::LEV_MAX, strprintf("%lld(%.0f, %.0f, %.0f) born", ID, x, y, z).c_str(), 0, true);
 }
 
 annotation::~annotation()
@@ -48,7 +52,10 @@ annotation::~annotation()
         // remove annotation from the Octree
         static_cast<CAnnotations::Octree::octant*>(container)->container->remove(this);
     }
-    /* @debug */ //printf("%lld(%.0f, %.0f, %.0f) DESTROYED (smart_delete = %s)...\n", ID, x, y, z, smart_delete ? "true" : "false");
+
+    destroyed++;
+
+    itm::debug(itm::LEV_MAX, strprintf("%lld(%.0f, %.0f, %.0f) DESTROYED (smart_delete = %s)", ID, x, y, z, smart_delete ? "true" : "false").c_str(), 0, true);
 }
 
 void annotation::ricInsertIntoTree(annotation* node, QList<NeuronSWC> &tree)
@@ -64,7 +71,7 @@ void annotation::ricInsertIntoTree(annotation* node, QList<NeuronSWC> &tree)
     p.pn = node->parent ? node->parent->ID : -1;
 
     // add node to list
-    /* @debug */ //printf("Add node %d(%.0f, %.0f, %.0f) to list\n", p.n, p.x, p.y, p.z);
+    itm::debug(itm::LEV_MAX, strprintf("Add node %lld(%.0f, %.0f, %.0f) to list", p.n, p.x, p.y, p.z).c_str(), 0, true);
     tree.push_back(p);
 
     // recur on children nodes
@@ -265,11 +272,11 @@ void CAnnotations::Octree::_rec_insert(const Poctant& p_octant, annotation& neur
         neuron.container = static_cast<void*>(p_octant);
         p_octant->annotations.push_back(&neuron);
 
-        /* @debug */ /*printf("\nAdded neuron %lld(%lld) {%.0f, %.0f, %.0f} to annotations list of octant X[%d,%d] Y[%d,%d] Z[%d,%d]\n\n",
-               neuron.ID, neuron.parent ? neuron.parent->ID : -1, neuron.x, neuron.y, neuron.z,
-               p_octant->H_start, p_octant->H_start+p_octant->H_dim,
-               p_octant->V_start, p_octant->V_start+p_octant->V_dim,
-               p_octant->D_start, p_octant->D_start+p_octant->D_dim);*/
+        itm::debug(itm::LEV_MAX, strprintf("Added neuron %lld(%lld) {%.0f, %.0f, %.0f} to annotations list of octant X[%d,%d] Y[%d,%d] Z[%d,%d]",
+                                           neuron.ID, neuron.parent ? neuron.parent->ID : -1, neuron.x, neuron.y, neuron.z,
+                                           p_octant->H_start, p_octant->H_start+p_octant->H_dim,
+                                           p_octant->V_start, p_octant->V_start+p_octant->V_dim,
+                                           p_octant->D_start, p_octant->D_start+p_octant->D_dim).c_str(), 0, true);
     }
 }
 
@@ -387,11 +394,11 @@ void CAnnotations::Octree::_rec_remove(const Poctant& p_octant, annotation *neur
 
         p_octant->annotations.remove(neuron);
 
-        /* @debug */ /*printf("\nREMOVED neuron %lld(%lld) {%.0f, %.0f, %.0f} from annotations list of octant X[%d,%d] Y[%d,%d] Z[%d,%d]\n\n",
-               neuron->ID, neuron->parent ? neuron->parent->ID : -1, neuron->x, neuron->y, neuron->z,
-               p_octant->H_start, p_octant->H_start+p_octant->H_dim,
-               p_octant->V_start, p_octant->V_start+p_octant->V_dim,
-               p_octant->D_start, p_octant->D_start+p_octant->D_dim);*/
+        itm::debug(itm::LEV_MAX, strprintf("REMOVED neuron %lld(%lld) {%.0f, %.0f, %.0f} from annotations list of octant X[%d,%d] Y[%d,%d] Z[%d,%d]",
+                                           neuron->ID, neuron->parent ? neuron->parent->ID : -1, neuron->x, neuron->y, neuron->z,
+                                           p_octant->H_start, p_octant->H_start+p_octant->H_dim,
+                                           p_octant->V_start, p_octant->V_start+p_octant->V_dim,
+                                           p_octant->D_start, p_octant->D_start+p_octant->D_dim).c_str(), 0, true);
     }
 }
 
@@ -454,8 +461,8 @@ void CAnnotations::Octree::_rec_search(const Poctant& p_octant, const interval_t
     {
         if(p_octant->V_dim == 1 && p_octant->H_dim == 1 && p_octant->D_dim == 1)
         {
-             for(std::list<teramanager::annotation*>::iterator i = p_octant->annotations.begin(); i!= p_octant->annotations.end(); i++)
-                 neurons.push_back((*i));
+            for(std::list<teramanager::annotation*>::iterator i = p_octant->annotations.begin(); i!= p_octant->annotations.end(); i++)
+                neurons.push_back((*i));
         }
         else
         {
@@ -734,7 +741,7 @@ void CAnnotations::Octree::print()
 //search for neurons in the given 3D volume and puts found neurons into 'neurons'
 void CAnnotations::Octree::find(interval_t V_int, interval_t H_int, interval_t D_int, std::list<annotation*>& neurons) throw(RuntimeException)
 {
-    /**/itm::debug(itm::LEV2, strprintf("dims = %d x %d x %d", DIM_H, DIM_V, DIM_D).c_str(), __itm__current__function__);
+    /**/itm::debug(itm::LEV2, strprintf("interval = [%d,%d](V) x [%d,%d](H) x [%d,%d](D)", V_int.start, V_int.end, H_int.start, H_int.end, D_int.start, D_int.end).c_str(), __itm__current__function__);
     _rec_search(root, V_int, H_int, D_int, neurons);
     /**/itm::debug(itm::LEV2, strprintf("found %d neurons", neurons.size()).c_str(), __itm__current__function__);
 }
@@ -793,12 +800,17 @@ void CAnnotations::clearCurves(itm::interval_t X_range, itm::interval_t Y_range,
     std::set <annotation*> roots;
     octree->find(Y_range, X_range, Z_range, nodes);
 
-    // retrieve root nodes
+    // retrieve root nodes from the nodes founds so far
     for(std::list<annotation*>::const_iterator it = nodes.begin(); it != nodes.end(); it++)
     {
-        if((*it)->type == 1 &&     // is a neuron node
-           (*it)->parent == 0)     // is a root node
-            roots.insert(*it);
+        // is a neuron node (type = 1)
+        if((*it)->type == 1)
+        {
+            annotation *p = *it;
+            while(p->parent != 0)
+                p = p->parent;
+            roots.insert(p);
+        }
     }
 
     // clear all segments starting from the retrieved root nodes
@@ -824,7 +836,16 @@ void CAnnotations::addCurves(itm::interval_t X_range, itm::interval_t Y_range, i
     /**/itm::debug(itm::LEV1, strprintf("X[%d,%d), Y[%d,%d), Z[%d,%d)", X_range.start, X_range.end, Y_range.start, Y_range.end, Z_range.start, Z_range.end).c_str(), __itm__current__function__);
 
     // first clear curves in the given range
+    itm::uint64 deletions = annotation::destroyed;
     clearCurves(X_range, Y_range, Z_range);
+    deletions = annotation::destroyed - deletions;
+    /**/itm::debug(itm::LEV3, strprintf("nt.size() = %d, deleted = %llu", nt.listNeuron.size(), deletions).c_str(), __itm__current__function__);
+
+    // remove duplicates
+//    for(int i=0; i<nt.listNeuron.size(); i++)
+//    {
+//        ;
+//    }
 
     std::map<int, annotation*> annotationsMap;
     std::map<int, NeuronSWC*> swcMap;
@@ -840,7 +861,7 @@ void CAnnotations::addCurves(itm::interval_t X_range, itm::interval_t Y_range, i
         ann->x = nt.listNeuron[i].x;
         ann->y = nt.listNeuron[i].y;
         ann->z = nt.listNeuron[i].z;
-        /* @debug */ //printf("inserting curve point %lld(%.1f,%.1f,%.1f), n=(%d), pn(%d)\n", ann->ID, ann->x, ann->y, ann->z, nt.listNeuron[i].n, nt.listNeuron[i].pn);
+        itm::debug(itm::LEV_MAX, strprintf("inserting curve point %lld(%.1f,%.1f,%.1f), n=(%d), pn(%d)\n", ann->ID, ann->x, ann->y, ann->z, nt.listNeuron[i].n, nt.listNeuron[i].pn).c_str(), 0, true);
         octree->insert(*ann);
         annotationsMap[nt.listNeuron[i].n] = ann;
         swcMap[nt.listNeuron[i].n] = &(nt.listNeuron[i]);
@@ -850,7 +871,9 @@ void CAnnotations::addCurves(itm::interval_t X_range, itm::interval_t Y_range, i
         it->second->parent = swcMap[it->first]->pn == -1 ? 0 : annotationsMap[swcMap[it->first]->pn];
         if(it->second->parent)
         {
-            /* @debug */ //printf("Add %lld(%.0f, %.0f, %.0f) to %lld(%.0f, %.0f, %.0f)'s children list\n", it->second->ID, it->second->x, it->second->y, it->second->z, it->second->parent->ID, it->second->parent->x, it->second->parent->y, it->second->parent->z);
+            itm::debug(itm::LEV_MAX, strprintf("Add %lld(%.0f, %.0f, %.0f) to %lld(%.0f, %.0f, %.0f)'s children list\n",
+                                               it->second->ID, it->second->x, it->second->y, it->second->z, it->second->parent->ID,
+                                               it->second->parent->x, it->second->parent->y, it->second->parent->z).c_str(), 0, true);
             it->second->parent->children.insert(it->second);
         }
     }
@@ -907,12 +930,11 @@ void CAnnotations::findCurves(interval_t X_range, interval_t Y_range, interval_t
     {
         if((*i)->type == 1) //selecting curve points
         {
-            annotation* source = (*i);
-
-            while(source->parent != 0)
-                source = source->parent;
-            if(find(roots.begin(),roots.end(), source) == roots.end())
-                roots.insert(source);
+            annotation* p = (*i);
+            while(p->parent != 0)
+                p = p->parent;
+            //if(find(roots.begin(),roots.end(), source) == roots.end())
+            roots.insert(p);
         }
     }
 
@@ -1053,7 +1075,9 @@ void CAnnotations::load(const char* filepath) throw (RuntimeException)
                 i->second->parent = swcMap[i->first]->pn == -1 ? 0 : annotationsMap[swcMap[i->first]->pn];
                 if(i->second->parent)
                 {
-                    /* @debug */ //printf("Add %lld(%.0f, %.0f, %.0f) to %lld(%.0f, %.0f, %.0f)'s children list\n", i->second->ID, i->second->x, i->second->y, i->second->z, i->second->parent->ID, i->second->parent->x, i->second->parent->y, i->second->parent->z);
+                    itm::debug(itm::LEV_MAX, strprintf("Add %lld(%.0f, %.0f, %.0f) to %lld(%.0f, %.0f, %.0f)'s children list\n",
+                                                       i->second->ID, i->second->x, i->second->y, i->second->z, i->second->parent->ID,
+                                                       i->second->parent->x, i->second->parent->y, i->second->parent->z).c_str(), 0, true);
                     i->second->parent->children.insert(i->second);
                 }
             }
