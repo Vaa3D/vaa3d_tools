@@ -32,6 +32,8 @@ class teramanager::QPixmapToolTip : public QWidget
                 uniqueInstance = new QPixmapToolTip(parent);
             return uniqueInstance;
         }
+        static QPixmapToolTip* getInstance() {return uniqueInstance;}
+
         static void uninstance()
         {
             if(uniqueInstance)

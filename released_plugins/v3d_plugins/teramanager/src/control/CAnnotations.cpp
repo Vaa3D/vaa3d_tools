@@ -37,7 +37,9 @@ annotation::annotation() throw (itm::RuntimeException){
 
     instantiated++;
 
+    #ifdef terafly_enable_debug_max_level
     itm::debug(itm::LEV_MAX, strprintf("%lld(%.0f, %.0f, %.0f) born", ID, x, y, z).c_str(), 0, true);
+    #endif
 }
 
 annotation::~annotation()
@@ -56,7 +58,9 @@ annotation::~annotation()
 
     destroyed++;
 
+    #ifdef terafly_enable_debug_max_level
     itm::debug(itm::LEV_MAX, strprintf("%lld(%.0f, %.0f, %.0f) DESTROYED (smart_delete = %s)", ID, x, y, z, smart_delete ? "true" : "false").c_str(), 0, true);
+    #endif
 }
 
 void annotation::ricInsertIntoTree(annotation* node, QList<NeuronSWC> &tree)
@@ -72,7 +76,9 @@ void annotation::ricInsertIntoTree(annotation* node, QList<NeuronSWC> &tree)
     p.pn = node->parent ? node->parent->ID : -1;
 
     // add node to list
+    #ifdef terafly_enable_debug_max_level
     itm::debug(itm::LEV_MAX, strprintf("Add node %lld(%.0f, %.0f, %.0f) to list", p.n, p.x, p.y, p.z).c_str(), 0, true);
+    #endif
     tree.push_back(p);
 
     // recur on children nodes
@@ -273,11 +279,13 @@ void CAnnotations::Octree::_rec_insert(const Poctant& p_octant, annotation& neur
         neuron.container = static_cast<void*>(p_octant);
         p_octant->annotations.push_back(&neuron);
 
+        #ifdef terafly_enable_debug_max_level
         itm::debug(itm::LEV_MAX, strprintf("Added neuron %lld(%lld) {%.0f, %.0f, %.0f} to annotations list of octant X[%d,%d] Y[%d,%d] Z[%d,%d]",
                                            neuron.ID, neuron.parent ? neuron.parent->ID : -1, neuron.x, neuron.y, neuron.z,
                                            p_octant->H_start, p_octant->H_start+p_octant->H_dim,
                                            p_octant->V_start, p_octant->V_start+p_octant->V_dim,
                                            p_octant->D_start, p_octant->D_start+p_octant->D_dim).c_str(), 0, true);
+        #endif
     }
 }
 
@@ -395,11 +403,13 @@ void CAnnotations::Octree::_rec_remove(const Poctant& p_octant, annotation *neur
 
         p_octant->annotations.remove(neuron);
 
+        #ifdef terafly_enable_debug_max_level
         itm::debug(itm::LEV_MAX, strprintf("REMOVED neuron %lld(%lld) {%.0f, %.0f, %.0f} from annotations list of octant X[%d,%d] Y[%d,%d] Z[%d,%d]",
                                            neuron->ID, neuron->parent ? neuron->parent->ID : -1, neuron->x, neuron->y, neuron->z,
                                            p_octant->H_start, p_octant->H_start+p_octant->H_dim,
                                            p_octant->V_start, p_octant->V_start+p_octant->V_dim,
                                            p_octant->D_start, p_octant->D_start+p_octant->D_dim).c_str(), 0, true);
+        #endif
     }
 }
 
@@ -474,6 +484,7 @@ void CAnnotations::Octree::_rec_prune(const Poctant& p_octant) throw(itm::Runtim
                     if(*i != *j                        &&  // two different nodes
                        ai.type    == 1 && aj.type == 1 &&  // both have neuron type
                        ai         ==      aj           &&  // both have same coordinates
+                       ai.parent  &&      aj.parent    &&  // both have a valid parent
                      *(ai.parent) ==    *(aj.parent))      // both have the same parent's coordinates (otherwise this is a crossroad and MUST not be pruned)
                     {
                         // aj is considered as duplicate --> ai takes its place in 4 actions:
@@ -867,11 +878,15 @@ void CAnnotations::clearCurves(itm::interval_t X_range, itm::interval_t Y_range,
 {
     /**/itm::debug(itm::LEV1, strprintf("X[%d,%d), Y[%d,%d), Z[%d,%d)", X_range.start, X_range.end, Y_range.start, Y_range.end, Z_range.start, Z_range.end).c_str(), __itm__current__function__);
 
+    QElapsedTimer timer;
+    timer.start();
     std::list<annotation*> nodes;
     std::set <annotation*> roots;
     octree->find(Y_range, X_range, Z_range, nodes);
+    PLog::getInstance()->appendCPU(timer.elapsed(), "clear curves: find curve nodes in the given range", false);
 
     // retrieve root nodes from the nodes founds so far
+    timer.restart();
     for(std::list<annotation*>::const_iterator it = nodes.begin(); it != nodes.end(); it++)
     {
         // is a neuron node (type = 1)
@@ -883,23 +898,31 @@ void CAnnotations::clearCurves(itm::interval_t X_range, itm::interval_t Y_range,
             roots.insert(p);
         }
     }
+    PLog::getInstance()->appendCPU(timer.elapsed(), "clear curves: retrieve root nodes from the nodes founds so far", false);
 
     // clear all segments starting from the retrieved root nodes
+    timer.restart();
     for(std::set<annotation*>::const_iterator it = roots.begin(); it != roots.end(); it++)
         delete *it;
+    PLog::getInstance()->appendCPU(timer.elapsed(), "clear curves: clear all segments starting from the retrieved root nodes", false);
 }
 
 void CAnnotations::clearLandmarks(itm::interval_t X_range, itm::interval_t Y_range, itm::interval_t Z_range) throw (itm::RuntimeException)
 {
     /**/itm::debug(itm::LEV1, strprintf("X[%d,%d), Y[%d,%d), Z[%d,%d)", X_range.start, X_range.end, Y_range.start, Y_range.end, Z_range.start, Z_range.end).c_str(), __itm__current__function__);
 
+    QElapsedTimer timer;
+    timer.start();
     std::list<annotation*> nodes;
     octree->find(Y_range, X_range, Z_range, nodes);
+    PLog::getInstance()->appendCPU(timer.elapsed(), "clear landmarks: find landmarks in the given range", false);
 
     /**/itm::debug(itm::LEV3, strprintf("found %d nodes", nodes.size()).c_str(), __itm__current__function__);
+    timer.restart();
     for(std::list<annotation*>::const_iterator it = nodes.begin(); it != nodes.end(); it++)
         if((*it)->type == 0)
             delete *it;
+    PLog::getInstance()->appendCPU(timer.elapsed(), "clear landmarks: remove landmarks", false);
 }
 
 void CAnnotations::addCurves(itm::interval_t X_range, itm::interval_t Y_range, itm::interval_t Z_range, NeuronTree& nt) throw (itm::RuntimeException)
@@ -907,16 +930,14 @@ void CAnnotations::addCurves(itm::interval_t X_range, itm::interval_t Y_range, i
     /**/itm::debug(itm::LEV1, strprintf("X[%d,%d), Y[%d,%d), Z[%d,%d)", X_range.start, X_range.end, Y_range.start, Y_range.end, Z_range.start, Z_range.end).c_str(), __itm__current__function__);
 
     // first clear curves in the given range
-    QElapsedTimer timer;
-    timer.start();
     itm::uint64 deletions = annotation::destroyed;
     clearCurves(X_range, Y_range, Z_range);
     deletions = annotation::destroyed - deletions;
     /**/itm::debug(itm::LEV3, strprintf("nt.size() = %d, deleted = %llu", nt.listNeuron.size(), deletions).c_str(), __itm__current__function__);
-    PLog::getInstance()->appendCPU(timer.elapsed(), "clearCurves()");
 
     // then allocate and initialize curve nodes
-    timer.restart();
+    QElapsedTimer timer;
+    timer.start();
     std::map<int, annotation*> annotationsMap;
     std::map<int, NeuronSWC*> swcMap;
     for(int i=0; i<nt.listNeuron.size(); i++)
@@ -931,12 +952,16 @@ void CAnnotations::addCurves(itm::interval_t X_range, itm::interval_t Y_range, i
         ann->x = nt.listNeuron[i].x;
         ann->y = nt.listNeuron[i].y;
         ann->z = nt.listNeuron[i].z;
+
+        #ifdef terafly_enable_debug_max_level
         itm::debug(itm::LEV_MAX, strprintf("inserting curve point %lld(%.1f,%.1f,%.1f), n=(%d), pn(%d)\n", ann->ID, ann->x, ann->y, ann->z, nt.listNeuron[i].n, nt.listNeuron[i].pn).c_str(), 0, true);
+        #endif
+
         octree->insert(*ann);
         annotationsMap[nt.listNeuron[i].n] = ann;
         swcMap[nt.listNeuron[i].n] = &(nt.listNeuron[i]);
     }
-    PLog::getInstance()->appendCPU(timer.elapsed(), "allocate and initialize curve nodes");
+    PLog::getInstance()->appendCPU(timer.elapsed(), "store annotations: allocate and initialize curve nodes", false);
 
     // finally linking nodes
     timer.restart();
@@ -945,13 +970,16 @@ void CAnnotations::addCurves(itm::interval_t X_range, itm::interval_t Y_range, i
         it->second->parent = swcMap[it->first]->pn == -1 ? 0 : annotationsMap[swcMap[it->first]->pn];
         if(it->second->parent)
         {
+            #ifdef terafly_enable_debug_max_level
             itm::debug(itm::LEV_MAX, strprintf("Add %lld(%.0f, %.0f, %.0f) to %lld(%.0f, %.0f, %.0f)'s children list\n",
                                                it->second->ID, it->second->x, it->second->y, it->second->z, it->second->parent->ID,
                                                it->second->parent->x, it->second->parent->y, it->second->parent->z).c_str(), 0, true);
+            #endif
+
             it->second->parent->children.insert(it->second);
         }
     }
-    PLog::getInstance()->appendCPU(timer.elapsed(), "link curve nodes");
+    PLog::getInstance()->appendCPU(timer.elapsed(), "store annotations: link curve nodes", false);
 //    printf("--------------------- teramanager plugin >> inserted %d curve points\n", annotationsMap.size());
 }
 
@@ -964,12 +992,16 @@ void CAnnotations::findLandmarks(interval_t X_range, interval_t Y_range, interva
                                         X_range.start, X_range.end, Y_range.start, Y_range.end, Z_range.start, Z_range.end).c_str(), __itm__current__function__);
 
     std::list<annotation*> nodes;
+    QElapsedTimer timer;
+    timer.start();
 
     /**/itm::debug(itm::LEV3, "find all nodes in the given range", __itm__current__function__);
     octree->find(Y_range, X_range, Z_range, nodes);
+    PLog::getInstance()->appendCPU(timer.elapsed(), "find landmarks: find all annotations in the given range", false);
 
 
     /**/itm::debug(itm::LEV3, "select markers only", __itm__current__function__);
+    timer.restart();
     for(std::list<annotation*>::iterator i = nodes.begin(); i != nodes.end(); i++)
     {
         if((*i)->type == 0) //selecting markers
@@ -986,6 +1018,7 @@ void CAnnotations::findLandmarks(interval_t X_range, interval_t Y_range, interva
             markers.push_back(marker);
         }
     }
+    PLog::getInstance()->appendCPU(timer.elapsed(), "find landmarks: select landmarks only", false);
 }
 
 void CAnnotations::findCurves(interval_t X_range, interval_t Y_range, interval_t Z_range, QList<NeuronSWC> &curves) throw (RuntimeException)
@@ -994,11 +1027,15 @@ void CAnnotations::findCurves(interval_t X_range, interval_t Y_range, interval_t
                                         X_range.start, X_range.end, Y_range.start, Y_range.end, Z_range.start, Z_range.end).c_str(), __itm__current__function__);
 
     std::list<annotation*> nodes;
+    QElapsedTimer timer;
+    timer.start();
 
     /**/itm::debug(itm::LEV3, "find all nodes in the given range", __itm__current__function__);
     octree->find(Y_range, X_range, Z_range, nodes);
+    PLog::getInstance()->appendCPU(timer.elapsed(), "find curves: find all annotations in the given range", false);
 
     // find roots
+    timer.restart();
     /**/itm::debug(itm::LEV3, "find roots", __itm__current__function__);
     std::set<annotation*> roots;
     for(std::list<annotation*>::iterator i = nodes.begin(); i != nodes.end(); i++)
@@ -1008,14 +1045,16 @@ void CAnnotations::findCurves(interval_t X_range, interval_t Y_range, interval_t
             annotation* p = (*i);
             while(p->parent != 0)
                 p = p->parent;
-            //if(find(roots.begin(),roots.end(), source) == roots.end())
             roots.insert(p);
         }
     }
+    PLog::getInstance()->appendCPU(timer.elapsed(), "find curves: find roots", false);
 
     /**/itm::debug(itm::LEV3, strprintf("%d roots found, now inserting all nodes", roots.size()).c_str(), __itm__current__function__);
+    timer.restart();
     for(std::set<annotation*>::const_iterator it = roots.begin(); it != roots.end(); it++)
         (*it)->insertIntoTree(curves);
+    PLog::getInstance()->appendCPU(timer.elapsed(), "find curves: insert all linked nodes starting from roots", false);
     /**/itm::debug(itm::LEV3, strprintf("%d nodes inserted", curves.size()).c_str(), __itm__current__function__);
 }
 
@@ -1025,6 +1064,10 @@ void CAnnotations::findCurves(interval_t X_range, interval_t Y_range, interval_t
 void CAnnotations::save(const char* filepath) throw (RuntimeException)
 {
     /**/itm::debug(itm::LEV1, strprintf("filepath = \"%s\"", filepath).c_str(), __itm__current__function__);
+
+    //measure elapsed time
+    QElapsedTimer timer;
+    timer.start();
 
     //retrieving annotations
     std::list<annotation*> annotations;
@@ -1069,6 +1112,8 @@ void CAnnotations::save(const char* filepath) throw (RuntimeException)
 
     //file closing
     fclose(f);
+
+    PLog::getInstance()->appendIO(timer.elapsed(), "save annotations: save .ano to disk");
 }
 void CAnnotations::load(const char* filepath) throw (RuntimeException)
 {
@@ -1077,6 +1122,10 @@ void CAnnotations::load(const char* filepath) throw (RuntimeException)
     //precondition checks
     if(!octree)
         throw RuntimeException("CAnnotations::load(): octree not yet initialized");
+
+    //measure elapsed time
+    QElapsedTimer timer;
+    timer.start();
 
     //clearing annotations
     this->clear();
@@ -1150,9 +1199,12 @@ void CAnnotations::load(const char* filepath) throw (RuntimeException)
                 i->second->parent = swcMap[i->first]->pn == -1 ? 0 : annotationsMap[swcMap[i->first]->pn];
                 if(i->second->parent)
                 {
+                    #ifdef terafly_enable_debug_max_level
                     itm::debug(itm::LEV_MAX, strprintf("Add %lld(%.0f, %.0f, %.0f) to %lld(%.0f, %.0f, %.0f)'s children list\n",
                                                        i->second->ID, i->second->x, i->second->y, i->second->z, i->second->parent->ID,
                                                        i->second->parent->x, i->second->parent->y, i->second->parent->z).c_str(), 0, true);
+                    #endif
+
                     i->second->parent->children.insert(i->second);
                 }
             }
@@ -1161,6 +1213,8 @@ void CAnnotations::load(const char* filepath) throw (RuntimeException)
             throw RuntimeException(strprintf("in CAnnotations::load(const char* filepath = \"%s\"): unable to recognize file type \"%s\"", filepath, filetype));
     }
     fclose(f);
+
+    PLog::getInstance()->appendIO(timer.elapsed(), "load annotations: read .ano from disk");
 }
 
 /*********************************************************************************

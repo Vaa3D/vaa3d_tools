@@ -10,6 +10,7 @@ CONFIG += use_experimental_features
 DEFINES += QT_NO_DEBUG_STREAM
 DEFINES += QT_NO_DEBUG_OUTPUT
 #DEFINES += _USE_QT_DIALOGS
+#DEFINES += terafly_enable_debug_max_level
 
 #QMAKE_CXXFLAGS += -Wall
 #QMAKE_CXXFLAGS += -pedantic

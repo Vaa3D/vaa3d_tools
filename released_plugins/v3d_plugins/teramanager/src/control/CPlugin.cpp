@@ -95,7 +95,6 @@ void CPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWi
 
         // reset widgets to default state
         PMain::getInstance()->reset();
-        PMain::getInstance()->resetMultiresControls();
     }    
     else if(menu_name == tr("TeraConverter"))
     {

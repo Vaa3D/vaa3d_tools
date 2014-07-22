@@ -53,7 +53,6 @@ class teramanager::CSettings
         string volumePathLRU;
         std::list<string> volumePathHistory;
         string annotationPathLRU;
-        int volMapSizeLimit;
         int VOIdimV;
         int VOIdimH;
         int VOIdimD;
@@ -97,7 +96,6 @@ class teramanager::CSettings
         string getVolumePathLRU(){return volumePathLRU;}
         std::list<string>& getVolumePathHistory(){return volumePathHistory;}
         string getAnnotationPathLRU(){return annotationPathLRU;}
-        int getVolMapSizeLimit(){return volMapSizeLimit;}
         int getVOIdimV(){return VOIdimV;}
         int getVOIdimH(){return VOIdimH;}
         int getVOIdimD(){return VOIdimD;}
@@ -126,7 +124,6 @@ class teramanager::CSettings
         }
 
         void setAnnotationPathLRU(string _annotationPathLRU){annotationPathLRU = _annotationPathLRU;}
-        void setVolMapSizeLimit(int _volMapSizeLimit){volMapSizeLimit = _volMapSizeLimit;}
         void setVOIdimV(int _VOIdimV){VOIdimV = _VOIdimV;}
         void setVOIdimH(int _VOIdimH){VOIdimH = _VOIdimH;}
         void setVOIdimD(int _VOIdimD){VOIdimD = _VOIdimD;}

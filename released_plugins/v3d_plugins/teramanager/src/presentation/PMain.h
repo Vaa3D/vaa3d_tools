@@ -148,9 +148,6 @@ class teramanager::PMain : public QWidget
         //import form widgets
         QAction *regenMData_cAction;                        // if active, metadata will be regenerated
         QAction *regenVMap_cAction;                         // if active, volume map is regenerated
-        QMenu* volMapSizeMenu;                              // volume map size entry
-        QWidgetAction* volMapSizeWidget;                    // volume map size action
-        QSpinBox *volMapSizeSBox;                           // volume map size widget (a spinbox)
 
         QTabWidget *tabs;               //tab widget
         //Page "Volume's info": contains informations of the loaded volume

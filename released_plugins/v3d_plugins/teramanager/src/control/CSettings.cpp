@@ -61,24 +61,23 @@ void CSettings::loadDefaultSettings()
     //TeraFly settings
     volumePathLRU = "";
     annotationPathLRU = "";
-    volMapSizeLimit = 30;
     VOIdimV = VOIdimH = 256;
     VOIdimD = 128;
-    VOIdimT = 20;
+    VOIdimT = 1;
     traslX = traslY = traslZ = 50;  //percentage value
     traslT = 0;
     annotationSpaceUnlimited = false;
     annotationMarkersDeleteROISampling = 10;
-    annotationCurvesDims = 1;
-    annotationCurvesAspectTube = true;
+    annotationCurvesDims = 2;
+    annotationCurvesAspectTube = false;
     annotationVirtualMargin = 20;
-    annotationMarkerSize = 10;
+    annotationMarkerSize = 20;
 
     //TeraConverter settings
     volumeConverterInputPathLRU = "";
     volumeConverterOutputPathLRU = "";
-    volumeConverterInputFormatLRU = "Vaa3D raw (nontiled)";
-    volumeConverterOutputFormatLRU = "Vaa3D raw (tiled)";
+    volumeConverterInputFormatLRU = iim::SIMPLE_RAW_FORMAT;
+    volumeConverterOutputFormatLRU = iim::TILED_FORMAT;
     volumeConverterStacksWidthLRU = 256;
     volumeConverterStacksHeightLRU = 256;
     volumeConverterStacksDepthLRU = 256;
@@ -103,7 +102,6 @@ void CSettings::writeSettings()
     }
     settings.endArray();
 
-    settings.setValue("volMapSizeLimit", volMapSizeLimit);
     settings.setValue("VOIdimV", VOIdimV);
     settings.setValue("VOIdimH", VOIdimH);
     settings.setValue("VOIdimD", VOIdimD);
@@ -144,8 +142,6 @@ void CSettings::readSettings()
         annotationPathLRU = settings.value("annotationPathLRU").toString().toStdString();
     if(settings.contains("volumePathLRU"))
         volumePathLRU = settings.value("volumePathLRU").toString().toStdString();
-    if(settings.contains("volMapSizeLimit"))
-        volMapSizeLimit = settings.value("volMapSizeLimit").toInt();
     if(settings.contains("VOIdimV"))
         VOIdimV = settings.value("VOIdimV").toInt();
     if(settings.contains("VOIdimH"))
@@ -206,6 +202,6 @@ void CSettings::readSettings()
 //         iim::DEBUG = settings.value("verbosity").toInt();
 //     }
 //     else
-    iim::DEBUG = iim::NO_DEBUG;
-    itm::DEBUG = itm::NO_DEBUG;
+//    iim::DEBUG = iim::NO_DEBUG;
+//    itm::DEBUG = itm::NO_DEBUG;
 }

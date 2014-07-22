@@ -77,6 +77,7 @@ string PMain::HTresolution = "A heat map like bar that indicates the currently d
 PMain* PMain::uniqueInstance = 0;
 PMain* PMain::instance(V3DPluginCallback2 *callback, QWidget *parent)
 {
+    printf("instance\n");
     if (uniqueInstance == 0)
         uniqueInstance = new PMain(callback, parent);
     else
@@ -202,16 +203,6 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     regenVMap_cAction = new QAction("Regenerate volume map", this);
     regenVMap_cAction->setCheckable(true);
     importOptionsMenu-> addAction(regenVMap_cAction);
-    volMapSizeMenu = new QMenu("Maximum volume map size");
-    volMapSizeWidget = new QWidgetAction(this);
-    volMapSizeSBox = new QSpinBox();
-    volMapSizeSBox->setMinimum(1);
-    volMapSizeSBox->setValue(CSettings::instance()->getVolMapSizeLimit());
-    volMapSizeSBox->setMaximum(500);
-    volMapSizeSBox->setSuffix(" MVoxels");
-    volMapSizeWidget->setDefaultWidget(volMapSizeSBox);
-    volMapSizeMenu->addAction(volMapSizeWidget);
-    importOptionsMenu->addMenu(volMapSizeMenu);
     /* ------------------------- "Options" menu: 3D ---------------------- */
     threeDMenu = optionsMenu->addMenu("3D annotation");
     markersMenu = threeDMenu->addMenu("Markers");
@@ -345,7 +336,7 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     /* --------------------------------- show log --------------------------------- */
     debugShowLogAction = new QAction("Show log", debugMenu);
     connect(debugShowLogAction, SIGNAL(triggered()), this, SLOT(showLogTriggered()));
-    debugMenu->addAction(debugShowLogAction);    
+    debugMenu->addAction(debugShowLogAction);
     /* ------------------------------ streaming steps ----------------------------- */
     debugStreamingStepsMenu = new QMenu("Streaming steps");
     debugStreamingStepsActionWidget = new QWidgetAction(this);
@@ -354,7 +345,7 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     debugStreamingStepsSBox->setMaximum(10);
     debugStreamingStepsActionWidget->setDefaultWidget(debugStreamingStepsSBox);
     debugStreamingStepsMenu->addAction(debugStreamingStepsActionWidget);
-    debugMenu->addMenu(debugStreamingStepsMenu);    
+    debugMenu->addMenu(debugStreamingStepsMenu);
     /* --------------------------------- verbosity -------------------------------- */
     debugVerbosityMenu = new QMenu("Verbosity");
     debugVerbosityActionWidget = new QWidgetAction(this);
@@ -368,7 +359,7 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     debugVerbosityActionWidget->setDefaultWidget(debugVerbosityCBox);
     debugVerbosityMenu->addAction(debugVerbosityActionWidget);
     connect(debugVerbosityCBox, SIGNAL(currentIndexChanged(int)), this, SLOT(verbosityChanged(int)));
-    debugMenu->addMenu(debugVerbosityMenu);    
+    debugMenu->addMenu(debugVerbosityMenu);
     /* ---------------------------- redirect to stdout ---------------------------- */
     debugRedirectSTDoutMenu = new QMenu("Redirect stdout to file at");
     debugRedirectSTDoutActionWidget = new QWidgetAction(this);
@@ -451,7 +442,7 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     // TAB widget: where to store pages
     tabs = new QTabWidget(this);
 
-    //Page "Volume's info": contains informations of the loaded volume    
+    //Page "Volume's info": contains informations of the loaded volume
     /**/itm::debug(itm::LEV3, "Page \"Volume's info\"", __itm__current__function__);
     info_page = new QWidget();
     vol_size_voxel_label = new QLabel();
@@ -708,7 +699,6 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     PR_spbox = new QSpinBox();
     PR_spbox->setAlignment(Qt::AlignCenter);
     PR_spbox->installEventFilter(this);
-    QPixmapToolTip::instance()->installEventFilter(this);
     PR_spbox->setPrefix("Block ");
 
     //other widgets
@@ -1057,10 +1047,9 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     this->setFont(tinyFont);
 
 
-    // signals and slots    
+    // signals and slots
     /**/itm::debug(itm::LEV3, "Signals and slots", __itm__current__function__);
     connect(CImport::instance(), SIGNAL(sendOperationOutcome(itm::RuntimeException*, qint64)), this, SLOT(importDone(itm::RuntimeException*, qint64)), Qt::QueuedConnection);
-    connect(volMapSizeSBox, SIGNAL(valueChanged(int)), this, SLOT(settingsChanged(int)));
     connect(xShiftSBox, SIGNAL(valueChanged(int)), this, SLOT(settingsChanged(int)));
     connect(yShiftSBox, SIGNAL(valueChanged(int)), this, SLOT(settingsChanged(int)));
     connect(zShiftSBox, SIGNAL(valueChanged(int)), this, SLOT(settingsChanged(int)));
@@ -1081,7 +1070,6 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     connect(controlsResetButton, SIGNAL(clicked()), this, SLOT(resetMultiresControls()));
     connect(PR_button, SIGNAL(clicked()), this, SLOT(PRbuttonClicked()));
     connect(PR_spbox, SIGNAL(valueChanged(int)), this, SLOT(PRblockSpinboxChanged(int)));
-//    connect(ESblockSpbox, SIGNAL(editingFinished()), this, SLOT(ESblockSpinboxEditingFinished()));
     connect(this, SIGNAL(sendProgressBarChanged(int, int, int, const char*)), this, SLOT(progressBarChanged(int, int, int, const char*)), Qt::QueuedConnection);
 
     //set always on top
@@ -1114,7 +1102,7 @@ void PMain::reset()
     saveAnnotationsAsAction->setEnabled(false);
     clearAnnotationsAction->setEnabled(false);
     virtualSpaceSizeMenu->setEnabled(true);
-    PAnoToolBar::instance()->setEnabled(false);
+//    PAnoToolBar::instance()->setEnabled(false);
     showToolbarButton->setChecked(false);
     showToolbarButton->setEnabled(false);
 
@@ -1202,11 +1190,9 @@ void PMain::reset()
     refSys->resetZoom();
     frameCoord->setPalette(globalCoord_panel->palette());
 
-    //reseting ES panel widgets
-    //ESPanel->setEnabled(false);
+    //reset PR panel widgets
     PR_button->setIcon(QIcon(":/icons/start.png"));
     PR_button->setText("Start");
-//    ESblockSpbox->setPrefix("Block ");
     PR_spbox->setSuffix(" of 0");
     PR_spbox->setMaximum(0);
     PR_spbox->setMinimum(0);
@@ -1217,7 +1203,7 @@ void PMain::reset()
     progressBar->setEnabled(false);
     progressBar->setMaximum(1);         //needed to stop animation on some operating systems
     statusBar->clearMessage();
-    statusBar->showMessage("Ready.");    
+    statusBar->showMessage("Ready.");
     helpBox->setText(HTwelcome);
 }
 
@@ -1813,6 +1799,9 @@ void PMain::importDone(RuntimeException *ex, qint64 elapsed_time)
         //finally storing in application settings the path of the opened volume
         CSettings::instance()->setVolumePathLRU(CImport::instance()->getPath());
 
+        //and installing event filter on pixmap tooltip
+        QPixmapToolTip::instance()->installEventFilter(this);
+
         //updating actual time
         PLog::getInstance()->appendActual(CImport::instance()->timerIO.elapsed(), "TeraFly 3D exploration started");
 
@@ -1854,7 +1843,6 @@ void PMain::settingsChanged(int)
 {
     /**/itm::debug(itm::LEV1, 0, __itm__current__function__);
 
-    CSettings::instance()->setVolMapSizeLimit(volMapSizeSBox->value());
     CSettings::instance()->setVOIdimV(Vdim_sbox->value());
     CSettings::instance()->setVOIdimH(Hdim_sbox->value());
     CSettings::instance()->setVOIdimD(Ddim_sbox->value());
@@ -2150,7 +2138,7 @@ bool PMain::eventFilter(QObject *object, QEvent *event)
         else if(event->type() == QEvent::Leave)
             helpBox->setText(HTbase);
     }
-    else if((object == PR_spbox || object == QPixmapToolTip::instance()) && PR_spbox->isEnabled())
+    else if((object == PR_spbox || object == QPixmapToolTip::getInstance()) && PR_spbox->isEnabled())
     {
         if(event->type() == QEvent::Enter)
         {

@@ -11,6 +11,17 @@ ties names are:
 - Rem: a feature no longer available
 
 ============================================================================================
+Version 0.9.995
+July 22nd, 2014
+--------------------------------------------------------------------------------------------
+- Fix: fixed minor issue in the permanent settings manager  occurring the first time TeraFly
+       is launched on the machine.
+- Dev: removed obsolete "volume map size limit" spinbox from "Options->Import" menu.
+- Dev: added more detailed logs during load/store annotations.
+- Opt: > 100% faster coordinate transformations.
+--------------------------------------------------------------------------------------------
+
+
 Version 0.9.994
 July 22nd, 2014
 --------------------------------------------------------------------------------------------
