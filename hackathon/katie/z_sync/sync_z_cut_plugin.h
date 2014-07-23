@@ -113,6 +113,22 @@ protected:
     }
 };
 
+/**
+class MyComboBox : public QComboBox
+{
+    Q_OBJECT
+
+public:
+    V3DPluginCallback2 * m_v3d;
+    MyComboBox(V3DPluginCallback2 * ini_v3d) {m_v3d = ini_v3d;}
+
+    void enterEvent(QEvent * event);
+
+public slots:
+    void updateList();
+};
+**/
+
 class lookPanel: public QDialog
 {
     Q_OBJECT
@@ -124,6 +140,14 @@ public:
 public:
 
     QAbstractSlider *createCutPlaneSlider(int maxval, Qt::Orientation hv = Qt::Horizontal);
+    //MyComboBox* combo_surface;
+
+    QList <V3dR_MainWindow *> list_3dviewer;
+    V3dR_MainWindow *surface_win;
+    v3dhandleList list_triview;
+    View3DControl *view;
+    v3dhandle curwin;
+
 
     QString Cut_altTip(int dim_i, int v, int minv, int maxv, int offset);
     /**
@@ -135,7 +159,7 @@ public:
     //QSpinBox* box_ZCut_Max;
     //QListWidget *list_anchors;
     //QListWidget *list_min_max;
-    QComboBox* combo_master;
+    QComboBox* combo_master; //a usable drop down menu
     //QComboBox* new_combo_master;
     QLabel* label_master;
     //QCheckBox* check_zed; //take this out later; unnecessary

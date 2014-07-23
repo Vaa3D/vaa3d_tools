@@ -20,6 +20,47 @@ static lookPanel *panel = 0;
 
 void SynTwoImage(V3DPluginCallback2 &v3d, QWidget *parent);
 
+/**
+#define CHECK_WINDOWS \
+{\
+    view=0;curwin=0; \
+    list_triview = m_v3d.getImageWindowList();\
+    list_3dviewer = m_v3d.getListAll3DViewers();\
+    if(!combo_surface || combo_surface->count()<=0) return;\
+    if(combo_surface->currentIndex() < list_triview.size())\
+{\
+    curwin = list_triview[combo_surface->currentIndex()];\
+    if(curwin)\
+{\
+    m_v3d.open3DWindow(curwin);\
+    view = m_v3d.getView3DControl(curwin);\
+    }\
+    else\
+    return;\
+    }\
+    else\
+{\
+    QString curname = combo_surface->itemText(combo_surface->currentIndex());\
+    v3d_msg(QString("current window selected:[%1]").arg(curname), 0);\
+    for (int i=0; i<list_3dviewer.count(); i++)\
+{\
+    if(curname == m_v3d.getImageName(list_3dviewer[i]))\
+{\
+    surface_win = list_3dviewer[i];\
+    if(surface_win)\
+{\
+    view = m_v3d.getView3DControl_Any3DViewer(surface_win);\
+    }\
+    else\
+    return;\
+    break;\
+    }\
+    }\
+    }\
+    if (!view) return;\
+    }
+**/
+
 void finishSyncPanel()
 {
     if (panel)
@@ -62,11 +103,13 @@ void SynTwoImage(V3DPluginCallback2 &v3d, QWidget *parent)
     }
 
 //I added this if bracket
+    /**
     if (win_list.size()>1)
     {
         v3d_msg("Cannot analyze multiple windows. Close all windows but the desired one and try again.");
         return;
     }
+    **/
 
     if (panel)
     {
@@ -106,8 +149,10 @@ lookPanel::lookPanel(V3DPluginCallback2 &_v3d, QWidget *parent) : //do it here!!
     QDialog(parent), m_v3d(_v3d)
 {
     win_list = m_v3d.getImageWindowList();
+
     //QObject *test = m_v3d.currentImageWindow();
-    v3dhandle curwin = m_v3d.currentImageWindow();
+    //v3dhandle curwin = m_v3d.currentImageWindow();
+    curwin = m_v3d.currentImageWindow();
         if (!curwin)
         {
             v3d_msg("You don't have any image open in the main window.");
@@ -165,38 +210,11 @@ else{
       }
 
 }//check for surface, end
-    //need to expand this sometime to account for multiple SWC files?
-    //m = nt1.listNeuron.count();
-
-    //float inf = 1.0/0.0;
-    /**
-    min_num = 100000000.0;
-    max_num = -10000000.0;
-    **/
-
-    /**
-    for(int i = 0; i < m; i++){
-            //get minimum z coordinate, save to a variable
-            float temp = nt1.listNeuron.at(i).z;
-            if(temp<min_num)
-            {
-                min_num = temp;
-            }
-    }
-
-    for(int i = 0; i < m; i++){
-            //get maximum z coordinate, save to a variable
-            float temp2 = nt1.listNeuron.at(i).z;
-            if(temp2>max_num)
-            {
-                max_num = temp2;
-            }
-        }
-        **/
 
     QStringList items;
     for (int i=0; i<win_list.size(); i++)
-        items << m_v3d.getImageName(win_list[i]);
+        items << m_v3d.getImageName(win_list[i]); //this is just the IMAGE name, not the window name
+    //even if I only have local open, it insists on opening up the entire image
 
     combo_master = new QComboBox(); combo_master->addItems(items);
 
@@ -227,6 +245,10 @@ else{
     QLabel* SampleName = new QLabel(QObject::tr("Z Cut Min"));
     QLabel* SampleNameTwo = new QLabel(QObject::tr("Z Cut Max"));
     zcLock = new QToolButton(); zcLock->setCheckable(true);
+
+    //combo_surface = new MyComboBox(&m_v3d);
+    //combo_surface->updateList(); //test crash
+    //gridLayout->addWidget(combo_surface, 4,0,1,5);
 
     b_autoON = false; //no idea what this means
 
@@ -268,6 +290,71 @@ else{
 
 }
 
+/**
+void MyComboBox::enterEvent(QEvent *e)
+{
+    updateList();
+    QComboBox::enterEvent(e);
+}
+
+void MyComboBox::updateList()
+{
+    if (!m_v3d)
+        return;
+
+    //need to add a few more lines to get the current highligh file and then always highlight it unless literally changed
+    QString lastDisplayfile = currentText();
+
+    // now re-check the currently opened windows
+    v3dhandleList cur_list_triview = m_v3d->getImageWindowList();
+    QList <V3dR_MainWindow *> cur_list_3dviewer = m_v3d->getListAll3DViewers();
+
+    QStringList items;
+    int i;
+
+    for (i=0; i<cur_list_triview.size(); i++)
+        items << m_v3d->getImageName(cur_list_triview[i]);
+
+    for (i=0; i<cur_list_3dviewer.count(); i++)
+    {
+        QString curname = m_v3d->getImageName(cur_list_3dviewer[i]).remove("3D View [").remove("]");
+        bool b_found=false;
+        for (int j=0; j<cur_list_triview.size(); j++)
+            if (curname==m_v3d->getImageName(cur_list_triview[j]))
+            {
+                b_found=true;
+                break;
+            }
+
+        if (!b_found)
+            items << m_v3d->getImageName(cur_list_3dviewer[i]);
+    }
+
+    //update the list now
+    clear();
+    addItems(items);
+
+    //search if the lastDisplayfile exists, if yes, then highlight it (set as current),
+    //otherwise do nothing (i.e. in this case the list will highlight the 1st one which is new)
+
+    int curDisplayIndex=-1; //-1 for invalid index
+    for (i=0; i<items.size(); i++)
+        if (items[i]==lastDisplayfile)
+        {
+            curDisplayIndex = i;
+            break;
+        }
+
+    if (curDisplayIndex>=0)
+        setCurrentIndex(curDisplayIndex);
+
+    //
+    update();
+
+    return;
+}
+**/
+
 lookPanel::~lookPanel()
 {
     if (m_pTimer) {delete m_pTimer; m_pTimer=0;}
@@ -275,6 +362,7 @@ lookPanel::~lookPanel()
 
 void lookPanel::setZCutLock(bool b)
 {
+    //CHECK_WINDOWS;
     //change this first part??
     //seems to work even though I haven't rescaled X or Y.
 
@@ -318,6 +406,7 @@ void lookPanel::setZCutLockIcon(bool b){
 
 //this did not make any difference
 void lookPanel::setZCutLockIcon(bool b){
+    //CHECK_WINDOWS;
     //if (! zcLock)  return;
         if (b==1){
             zcLock->setIcon(QIcon(":/pic/Lockon.png"));
@@ -328,7 +417,9 @@ void lookPanel::setZCutLockIcon(bool b){
 }
 
 void lookPanel::change_z_min(){
+    //CHECK_WINDOWS;
     v3dhandleList win_list = m_v3d.getImageWindowList();
+    //win_list = m_v3d.getImageWindowList();
     int i1 = combo_master->currentIndex();
 
     if (i1 <  win_list.size() &&
@@ -476,6 +567,7 @@ void lookPanel::change_z_min(){
 }
 
 void lookPanel::change_z_max(){
+    //CHECK_WINDOWS;
     v3dhandleList win_list = m_v3d.getImageWindowList();
     int i1 = combo_master->currentIndex();
 
