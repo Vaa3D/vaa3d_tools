@@ -8,7 +8,6 @@
 #include "my_surf_objs.h"
 #include "openSWCDialog.h"
 #include "sort_func.h"
-//#include "sort_swc.h"
 #include "typeset.h"
 #include "typeset_func.h"
 #include "typeset_plugin.h"
@@ -67,7 +66,9 @@ int typeset_swc(V3DPluginCallback2 &callback, QWidget *parent)
 
 
     double marker_readlocation = 0;
-    marker_readlocation = QInputDialog::getDouble(parent, "Please set child branch type","Type: \n"
+    //marker_readlocation = QInputDialog::getDouble(parent, "Please set child branch type","Type: \n"
+    marker_readlocation = QInputDialog::getDouble(0, "Please set child branch type","Type: \n"
+
                                                          "1 - read from 3D window \n"
                                                          "2 - read from marker file ",0,0,2,1);
 
@@ -113,7 +114,8 @@ int typeset_swc(V3DPluginCallback2 &callback, QWidget *parent)
     else
     {
         double settype;
-        settype = QInputDialog::getDouble(parent, "Please set child branch type","Type:",0,0,4,1);
+        //settype = QInputDialog::getDouble(parent, "Please set child branch type","Type:",0,0,4,1);
+        settype = QInputDialog::getDouble(0, "Please set child branch type","Type:",0,0,4,1);
 
         result = typeset_marker(nt, tmp_list, settype);
 

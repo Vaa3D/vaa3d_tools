@@ -1,7 +1,7 @@
 /****************************************************************************
 ** Meta object code from reading C++ file 'typeset_plugin.h'
 **
-** Created: Mon Jul 21 15:09:57 2014
+** Created: Wed Jul 23 12:23:17 2014
 **      by: The Qt Meta Object Compiler version 62 (Qt 4.7.4)
 **
 ** WARNING! All changes made in this file will be lost!
@@ -135,18 +135,28 @@ static const uint qt_meta_data_controlPanel[] = {
        5,       // revision
        0,       // classname
        0,    0, // classinfo
-       0,    0, // methods
+       6,   14, // methods
        0,    0, // properties
        0,    0, // enums/sets
        0,    0, // constructors
        0,       // flags
        0,       // signalCount
 
+ // slots: signature, parameters, type, tag, flags
+      14,   13,   13,   13, 0x08,
+      27,   13,   13,   13, 0x08,
+      43,   13,   13,   13, 0x08,
+      59,   13,   13,   13, 0x08,
+      74,   13,   13,   13, 0x08,
+      87,   13,   13,   13, 0x08,
+
        0        // eod
 };
 
 static const char qt_meta_stringdata_controlPanel[] = {
-    "controlPanel\0"
+    "controlPanel\0\0_slot_sort()\0_slot_typeset()\0"
+    "_slot_refresh()\0_slot_delete()\0"
+    "_slot_show()\0_slot_save()\0"
 };
 
 const QMetaObject controlPanel::staticMetaObject = {
@@ -176,6 +186,18 @@ int controlPanel::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
     _id = QDialog::qt_metacall(_c, _id, _a);
     if (_id < 0)
         return _id;
+    if (_c == QMetaObject::InvokeMetaMethod) {
+        switch (_id) {
+        case 0: _slot_sort(); break;
+        case 1: _slot_typeset(); break;
+        case 2: _slot_refresh(); break;
+        case 3: _slot_delete(); break;
+        case 4: _slot_show(); break;
+        case 5: _slot_save(); break;
+        default: ;
+        }
+        _id -= 6;
+    }
     return _id;
 }
 QT_END_MOC_NAMESPACE
