@@ -37,10 +37,9 @@ template <class T> bool mass_center_Coords(T* data1d,
                                     V3DLONG *dimNum,
                                     double &x, double &y, double &z,
                                     double radius, int c, double thresh);
-template <class T> pair<double,double> pixel_range(T* data1d,
-                                        V3DLONG *dimNum,
+template <class T> double compute_ave_cell_val(T* data1d, V3DLONG *dimNum,
                                         double xc,double yc,double zc,int c,double rad);
-template <class T> bool dynamic_pixel(T* data1d,
+template <class T> bool compute_cell_values_rad(T* data1d,
                                         V3DLONG *dimNum,
                                         double xc, double yc, double zc,
                                         int c, double threshold, double & dataAve, double & rad);
@@ -50,7 +49,7 @@ template <class T> LandmarkList scan_and_count(T* data1d,
                                       int PointAve, int PointStDev,
                                       double radAve, double radStDev,
                                       int c, int cat, double thresh, LandmarkList originalList, Image4DSimple &maskImage);
-template <class T> LandmarkList duplicates(T* data1d, LandmarkList fullList,
+template <class T> LandmarkList remove_duplicates(T* data1d, LandmarkList fullList,
                                            V3DLONG *dimNum, int PointAve, int rad, int c);
 V_NeuronSWC get_v_neuron_swc(const NeuronTree *p);
 V_NeuronSWC_list get_neuron_segments(const NeuronTree *p);
@@ -717,7 +716,7 @@ template <class T> bool identify_cells(T* data1d, V3DLONG *dimNum, int c, const 
     //recalibrates marker list by mean shift
     LandmarkList CenteredList;
     double blah,checkrad=0;
-    dynamic_pixel(data1d,dimNum,xc,yc,zc,c,thresh,blah,checkrad);
+    compute_cell_values_rad(data1d,dimNum,xc,yc,zc,c,thresh,blah,checkrad);
     mass_center_Lists(data1d,dimNum,MarkList,CenteredList,checkrad*1.5,c,thresh);
     MarkList = CenteredList;
     //outputlist = CenteredList; return true;
@@ -735,7 +734,7 @@ template <class T> bool identify_cells(T* data1d, V3DLONG *dimNum, int c, const 
         tempLocation.getCoord(xc,yc,zc);
         //int Pix = pixelVal(data1d,dimNum,xc,yc,zc,c);
 
-        if (dynamic_pixel(data1d,dimNum,xc,yc,zc,c,thresh,tmpDataAve,tmpRad))
+        if (compute_cell_values_rad(data1d,dimNum,xc,yc,zc,c,thresh,tmpDataAve,tmpRad))
         {
             ValAveArr[i] = tmpDataAve;
             radAveArr[i] = tmpRad;
@@ -798,7 +797,7 @@ template <class T> bool identify_cells(T* data1d, V3DLONG *dimNum, int c, const 
         tmp.comments = catStr.str();
     }
 //v3d_msg("ckpt 2");
-    outputlist = duplicates(data1d,RecenterList,dimNum,PixVal,radAve,c);
+    outputlist = remove_duplicates(data1d,RecenterList,dimNum,PixVal,radAve,c);
 //    outputlist = RecenterList;
 //v3d_msg("duplicates deleted");
 
@@ -817,10 +816,11 @@ template <class T> int pixelVal(T* data1d, V3DLONG *dimNum,
     V3DLONG M = dimNum[1];
     V3DLONG P = dimNum[2];
     V3DLONG shiftC = (c-1)*P*M*N;
+    //xc+=0.5; yc+=0.5; zc+=0.5; //insures proper rounding
     if (xc<=0) xc=1; if (xc>N) xc=N;
     if (yc<=0) yc=1; if (yc>M) yc=M;
     if (zc<=0) zc=1; if (zc>P) zc=P;
-    double pixelVal = data1d[ shiftC + (V3DLONG)(zc-1)*M*N + (V3DLONG)(yc-1)*N + (V3DLONG)(xc-1) ];
+    int pixelVal = data1d[ shiftC + (V3DLONG)(zc-1)*M*N + (V3DLONG)(yc-1)*N + (V3DLONG)(xc-1) ];
     if (pixelVal<0) pixelVal=0;
     if (pixelVal>255) pixelVal=255;
     return pixelVal;
@@ -847,9 +847,10 @@ template <class T> bool mass_center_Lists(T* data1d,
         tmp = originalList.at(i);
         tmp.getCoord(xc,yc,zc);
         int xo=xc,yo=yc,zo=zc;
-        int check=0;
+        int check=0,runs=0;
+        bool converge=false;
         //cout<<endl<<"looping for marker "<<xo<<" "<<yo<<" "<<zo<<endl;
-        for (int j=0; j<10; j++)
+        do
         {
             //cout<<"loop "<<j<<" using coords "<<xc<<" "<<yc<<" "<<zc<<endl;
             pVal = pixelVal(data1d,dimNum,xc,yc,zc,c);
@@ -876,10 +877,11 @@ template <class T> bool mass_center_Lists(T* data1d,
                     }
                 }
             }
-
             newX /= norm;
             newY /= norm;
             newZ /= norm;
+
+            if (newX==xc && newY==yc && newZ==zc) {converge=true;}
 
             xc=newX; yc=newY; zc=newZ;
             //cout<<xc<<" "<<yc<<" "<<zc<<endl;
@@ -893,6 +895,7 @@ template <class T> bool mass_center_Lists(T* data1d,
                 {
                     xc=xo; yc=yo; zc=zo;
                     rad/=2;
+                    converge=false;
                 }
                 else if (check==1) //second check shift the original coords
                 {
@@ -904,16 +907,18 @@ template <class T> bool mass_center_Lists(T* data1d,
                     if (xc<0) xc=0; if (xc>N-1) xc=N-1;
                     if (yc<0) yc=0; if (yc>M-1) yc=M-1;
                     if (zc<0) zc=0; if (zc>P-1) zc=P-1;
+                    converge=false;
                 }
                 else if (check>1) //if still hasn't fixed idk
                 {
                     newX=xo; newY=yo; newZ=zo;
-                    break;
+                    converge=true;
                 }
-                j=0;
+                runs=0;
                 check++;
             }
-        }
+            runs++;
+        } while (converge==false && runs<10); //if not converged in 10 runs, likely stuck in rounding loop
         if (newX<0) newX=0;
         if (newY<0) newY=0;
         if (newZ<0) newZ=0;
@@ -927,7 +932,7 @@ template <class T> bool mass_center_Lists(T* data1d,
     return true;
 }
 
-//returns recentered coords
+//returns recentered coords x,y,z
 template <class T> bool mass_center_Coords(T* data1d,
                                     V3DLONG *dimNum,
                                     double &x, double &y, double &z,
@@ -945,19 +950,19 @@ template <class T> bool mass_center_Coords(T* data1d,
 }
 
 //returns average pixel value and radius of cell around a marker
-template <class T> bool dynamic_pixel(T* data1d,
+template <class T> bool compute_cell_values_rad(T* data1d,
                                         V3DLONG *dimNum,
                                         double xc, double yc, double zc,
-                                        int c, double threshold, double & dataAve, double & rad)
+                                        int c, double threshold, double & outputdataAve, double & outputrad)
 {
     V3DLONG N = dimNum[0];
     V3DLONG M = dimNum[1];
     V3DLONG P = dimNum[2];
-    rad=0;
+    outputrad=0;
 
     do
     {
-        rad++;
+        outputrad++;
         double x,y,z,datatotal=0,pi=3.14;;
         int runs=0;
         for (double theta=0; theta<2*pi; theta+=(pi/8))
@@ -966,11 +971,11 @@ template <class T> bool dynamic_pixel(T* data1d,
             {
                 //cout<<"pixel iteration "<<runs<<endl;
                 //cout<<r<<" "<<theta<<" "<<phi<<endl<<endl;
-                x = xc+rad*cos(theta)*sin(phi);
+                x = xc+outputrad*cos(theta)*sin(phi);
                 if (x>N) x=N; if (x<0) x=0;
-                y = yc+rad*sin(theta)*sin(phi);
+                y = yc+outputrad*sin(theta)*sin(phi);
                 if (y>M) y=M; if (y<0) y=0;
-                z = zc+rad*cos(phi);
+                z = zc+outputrad*cos(phi);
                 if (z>P) z=P; if (z<0) z=0;
                 double dataval = pixelVal(data1d,dimNum,x,y,z,c);
                 datatotal += dataval;
@@ -981,17 +986,16 @@ template <class T> bool dynamic_pixel(T* data1d,
         }
 
         runs++;
-        dataAve = datatotal/runs;
-    } while ( dataAve > threshold*2/3 );
+        outputdataAve = datatotal/runs;
+    } while ( outputdataAve > threshold*2/3 );
 
     return true;
 }
 
 
-//returns average pixel value in box of radius rad on channel c around a given marker as well as average cell marker intensity
-template <class T> pair<double,double> pixel_range(T* data1d,
-                              V3DLONG *dimNum,
-                              double xc, double yc, double zc, int c, double rad)
+//returns average pixel value in sphere of radius rad on channel c around a given marker
+template <class T> double compute_ave_cell_val(T* data1d, V3DLONG *dimNum,
+                                               double xc, double yc, double zc, int c, double rad)
 {
     V3DLONG N = dimNum[0];
     V3DLONG M = dimNum[1];
@@ -1021,23 +1025,18 @@ template <class T> pair<double,double> pixel_range(T* data1d,
         }
     }
     //cout<<"done with loop"<<endl;
-    double pointval = pixelVal(data1d,dimNum,xc,yc,zc,c);
-    //v3d_msg(QString("pointval %1").arg(pointval));
-    //cout<<pointval<<endl;
     double dataAve;
     if (runs==0) dataAve=0;
     else dataAve = datatotal/runs;
 
-    //cout<<"second algorithm "<<dataAve<<endl;
-
-    return make_pair(dataAve,pointval);
+    return dataAve;
 }
 
 
 //uses test data to scan and mark other cells
 template <class T> LandmarkList scan_and_count(T* data1d,
                               V3DLONG *dimNum,
-                              int MarkAve, int MarkStDev,
+                              int cellAve, int cellStDev,
                               int PointAve, int PointStDev,
                               double radAve, double radStDev,
                               int c, int cat, double thresh, LandmarkList originalList, Image4DSimple &maskImage)
@@ -1092,27 +1091,33 @@ template <class T> LandmarkList scan_and_count(T* data1d,
                     //cout<<"coords "<<x1<<" "<<y1<<" "<<z1<<" have mask "<<*maskImg.at(x1,y1,z1,0)<<endl;
                     if (*maskImg.at(ix,iy,iz,0) == 0)
                     {
-                        pair<double,double> check = pixel_range(data1d,dimNum,ix,iy,iz,c,i);
-                        double TempDataAve = check.first;
-                        double TempPointAve = check.second;
-                        //v3d_msg(QString("%1 %2 %3").arg(i).arg(TempDataAve).arg(TempPointAve));
-                        if ( (TempPointAve>=PointAve-PointStDev) && (TempPointAve<=PointAve+PointStDev) && (TempDataAve>=MarkAve-MarkStDev) && (TempDataAve<=MarkAve+MarkStDev))
+//                        pair<double,double> check = pixel_range(data1d,dimNum,ix,iy,iz,c,i);
+//                        double TempDataAve = check.first;
+//                        double TempPointAve = check.second;
+                          //v3d_msg(QString("%1 %2 %3").arg(i).arg(TempDataAve).arg(TempPointAve));
+                        double TempPointVal = pixelVal(data1d,dimNum,ix,iy,iz,c);
+                        if ((TempPointVal>=PointAve-PointStDev) && (TempPointVal<=PointAve+PointStDev))
                         {
-                            //cout<<"found a marker "<<TempDataAve<<" with rad "<<i<<" at coords "<<ix<<" "<<iy<<" "<<iz<<endl;
                             double x,y,z;
-                            x=ix; y=iy; z=iz;
+                            x=ix; y=iy; z=iz; //mass_center_Coords will rewrite x,y,z so need to keep ix,iy,iz untouched
                             mass_center_Coords(data1d,dimNum,x,y,z,radAve,c,thresh);
                             if (*maskImg.at(x,y,z,0)!=0) continue;
-                            tmpLocation.x = x;
-                            tmpLocation.y = y;
-                            tmpLocation.z = z;
-                            tmpLocation.category = cat;
-                            stringstream catStr;
-                            catStr << cat;
-                            tmpLocation.comments = catStr.str();
-                            newList.append(tmpLocation);
+                            double TempDataAve = compute_ave_cell_val(data1d,dimNum,x,y,z,c,i);
+                            if ( (TempDataAve>=cellAve-cellStDev) && (TempDataAve<=cellAve+cellStDev))
+                            {
+                                //cout<<"found a marker "<<TempDataAve<<" with rad "<<i<<" at coords "<<ix<<" "<<iy<<" "<<iz<<endl;
 
-                            apply_mask(data1d,dimNum,x,y,z,c,thresh,maskImg);
+                                tmpLocation.x = x;
+                                tmpLocation.y = y;
+                                tmpLocation.z = z;
+                                tmpLocation.category = cat;
+                                stringstream catStr;
+                                catStr << cat;
+                                tmpLocation.comments = catStr.str();
+                                newList.append(tmpLocation);
+
+                                apply_mask(data1d,dimNum,x,y,z,c,thresh,maskImg);
+                            }
                         }
                     }
                 }
@@ -1124,7 +1129,7 @@ template <class T> LandmarkList scan_and_count(T* data1d,
 
 
 //detects markers too close together, deletes marker with pixel value farther from PointAve
-template <class T> LandmarkList duplicates(T* data1d, LandmarkList fullList,
+template <class T> LandmarkList remove_duplicates(T* data1d, LandmarkList fullList,
                                            V3DLONG *dimNum, int PointAve, int rad, int c)
 {
     int marknum = fullList.count();
@@ -1245,6 +1250,7 @@ NeuronTree VSWC_2_neuron_tree(V_NeuronSWC *p, int id)
     return newTree;
 }
 
+//compute radius of neuron SWC segment
 template <class T> bool compute_swc_radius(T* data1d, V3DLONG *dimNum, vector<V_NeuronSWC_unit> segment,
                                            int c, double & outputRadAve, double & outputRadStDev)
 {
@@ -1340,6 +1346,7 @@ template <class T> bool compute_swc_radius(T* data1d, V3DLONG *dimNum, vector<V_
 
 }
 
+//write and save QList NeuronTree into file
 bool export_list2file(QList<NeuronTree> & N2, QString fileSaveName, QString fileOpenName)
 {
     QFile file(fileSaveName);
@@ -1373,7 +1380,7 @@ template <class T> bool apply_mask(unsigned char* data1d, V3DLONG *dimNum,
     int x,y,z;
     double pi=3.14,rad,dataAve;
 
-    dynamic_pixel(data1d,dimNum,xc,yc,zc,c,threshold,dataAve,rad);
+    compute_cell_values_rad(data1d,dimNum,xc,yc,zc,c,threshold,dataAve,rad);
     //cout<<"rad "<<rad<<endl;
 
     //cout<<"applying mask"<<endl;
