@@ -332,7 +332,7 @@ void identify_neurons(V3DPluginCallback2 &callback, QWidget *parent)
  *
  * [current goals/issues]
  * still several undetected cells
- * scan_and_count a little slow
+ * scan_and_count is slow
  * because of variable cell radius, mass_center does not work equally well across all cells
  *      optimizing to center larger cells would cause clustered cells to be treated as one
  *      keeping small radius to keep clustered cells separate prevents detection of true center of larger cells
@@ -456,8 +456,8 @@ void count_cells(V3DPluginCallback2 &callback, QWidget *parent)
         {
             callback.setLandmark(curwin,outputList);
 
-            v3dhandle newwin = callback.newImageWindow("mask");
-            callback.setImage(newwin,&maskImage);
+            //v3dhandle newwin = callback.newImageWindow("mask");
+            //callback.setImage(newwin,&maskImage);
         }
     }
     else if (input_type==1) //type
@@ -781,7 +781,7 @@ template <class T> bool identify_cells(T* data1d, V3DLONG *dimNum, int c, const 
 //v3d_msg(QString("category %1").arg(cat));
 
     //scans image and generates new set of markers based on testing data
-    LandmarkList scannedList = scan_and_count(data1d,dimNum,ValAve,2*ValStDev,PixVal,PixStDev,radAve,radStDev,c,cat,thresh,MarkList,maskImage);
+    LandmarkList scannedList = scan_and_count(data1d,dimNum,ValAve,ValStDev,PixVal,PixStDev,radAve,radStDev,c,cat,thresh,MarkList,maskImage);
     //cout<<"Cell count "<<newList.count()<<endl;
 //v3d_msg("newList made");
     //recenters list via mean shift
@@ -799,7 +799,7 @@ template <class T> bool identify_cells(T* data1d, V3DLONG *dimNum, int c, const 
     }
 //v3d_msg("ckpt 2");
     outputlist = duplicates(data1d,RecenterList,dimNum,PixVal,radAve,c);
-//    outputlist = newList;
+//    outputlist = RecenterList;
 //v3d_msg("duplicates deleted");
 
     cout<<"Cell count "<<outputlist.count()<<endl<<endl;
@@ -852,7 +852,8 @@ template <class T> bool mass_center_Lists(T* data1d,
         for (int j=0; j<10; j++)
         {
             //cout<<"loop "<<j<<" using coords "<<xc<<" "<<yc<<" "<<zc<<endl;
-            newX=0, newY=0, newZ=0, norm=0;
+            pVal = pixelVal(data1d,dimNum,xc,yc,zc,c);
+            newX=xc*pVal, newY=yc*pVal, newZ=zc*pVal, norm=pVal;
             for (double r=rad/5; r<=rad; r+=rad/5)
             {
                 for (double theta=0; theta<2*pi; theta+=(pi/8))
@@ -1378,7 +1379,7 @@ template <class T> bool apply_mask(unsigned char* data1d, V3DLONG *dimNum,
     //cout<<"applying mask"<<endl;
     *maskImg.at(xc,yc,zc,0) = 200;
     //cout<<"ck 1 ";
-    double angle = pi/8;
+    double angle = pi/2;
 
     for (double r=0.5; r<=rad; r+=0.5)
     {
@@ -1388,6 +1389,7 @@ template <class T> bool apply_mask(unsigned char* data1d, V3DLONG *dimNum,
             {
                 x = xc+r*cos(theta)*sin(phi);
                 if (x>N-1) x=N-1; if (x<0) x=0;
+
                 y = yc+r*sin(theta)*sin(phi);
                 if (y>M-1) y=M-1; if (y<0) y=0;
                 z = zc+r*cos(phi);
@@ -1395,7 +1397,7 @@ template <class T> bool apply_mask(unsigned char* data1d, V3DLONG *dimNum,
                 *maskImg.at(x,y,z,0) = 200;
             }
         }
-        //angle /= 2;
+        if (angle>=pi/16 && r>=1) angle/=2;
     }
     //cout<<"2"<<endl;
     return true;
