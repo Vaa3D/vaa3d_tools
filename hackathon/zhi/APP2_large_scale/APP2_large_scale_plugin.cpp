@@ -729,7 +729,7 @@ bool  autotrace_largeScale(V3DPluginCallback2 &callback, QWidget *parent,APP2_LS
         swc_type++;
     }
 
-  //  system(qPrintable(QString("rm -r %1").arg(tmpfolder.toStdString().c_str())));
+     system(qPrintable(QString("rm -r %1").arg(tmpfolder.toStdString().c_str())));
 
 
     //post-processing
