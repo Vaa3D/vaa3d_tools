@@ -49,12 +49,12 @@ class mipTracingeDialog : public QDialog
                 return;
             }
 
-            listLandmarks = cb.getLandmark(curwin);
+          /*  listLandmarks = cb.getLandmark(curwin);
             if(listLandmarks.count() ==0)
             {
                 v3d_msg("No markers in the current image, please select a marker.");
                 return;
-            }
+            }*/
 
 
             QGridLayout * layout = new QGridLayout();
@@ -180,7 +180,7 @@ class mipTracingeDialog : public QDialog
 
 
         Image4DSimple* image;
-        LandmarkList listLandmarks;
+       // LandmarkList listLandmarks;
         int is_gsdt;
         int is_break_accept;
         int  bkg_thresh;

@@ -53,7 +53,7 @@ QString getAppPath();
 QStringList neurontracing_mip::menulist() const
 {
 	return QStringList() 
-		<<tr("trace")
+        <<tr("trace_mip")
 		<<tr("about");
 }
 
@@ -73,12 +73,12 @@ void neurontracing_mip::domenu(const QString &menu_name, V3DPluginCallback2 &cal
         mipTracingeDialog dialog(callback, parent);
         if (!dialog.image)
             return;
-        if(dialog.listLandmarks.count() ==0)
-            return;
+      //  if(dialog.listLandmarks.count() ==0)
+      //      return;
 
-        LocationSimple tmpLocation(0,0,0);
-        tmpLocation = dialog.listLandmarks.at(0);
-        tmpLocation.getCoord(P.root_1st[0],P.root_1st[1],P.root_1st[2]);
+      //  LocationSimple tmpLocation(0,0,0);
+      //  tmpLocation = dialog.listLandmarks.at(0);
+      //  tmpLocation.getCoord(P.root_1st[0],P.root_1st[1],P.root_1st[2]);
 
         if (dialog.exec()!=QDialog::Accepted)
             return;
@@ -150,10 +150,10 @@ void autotrace_largeScale_mip(V3DPluginCallback2 &callback, QWidget *parent,APP2
         return;
     }
 
-    int tmpx,tmpy,tmpz;
-    tmpx = Para.root_1st[0];
-    tmpy = Para.root_1st[1];
-    tmpz = Para.root_1st[2];
+    //V3DLONG tmpx,tmpy,tmpz;
+    //tmpx = Para.root_1st[0];
+    //tmpy = Para.root_1st[1];
+    //tmpz = Para.root_1st[2];
 
     V3DLONG mip_sz[3];
     mip_sz[0] = N;
@@ -345,238 +345,304 @@ void autotrace_largeScale_mip(V3DPluginCallback2 &callback, QWidget *parent,APP2
        return;
    }
 
-   unsigned char *image_region_one = new unsigned char [pagesz_mip];
-   V3DLONG group_type;
-   switch (Para.mip_plane)
+   int groupNum = 0;
+   for(V3DLONG i = 0; i < pagesz_mip; i++)
    {
-       case 0: group_type = image_region[tmpy*N + tmpx]; break;
-       case 1: group_type = image_region[tmpz*N + tmpx]; break;
-       case 2: group_type = image_region[tmpz*M + tmpy];break;
-       default:
-           return;
-   }
-   for(V3DLONG i = 0; i < pagesz_mip*datatype; i++)
-   {
-
-       if(image_region[i] == group_type)
-           image_region_one[int(i/datatype)] = image_mip[int(i/datatype)];
-       else
-           image_region_one[int(i/datatype)] = 0;
+       if(image_region[i] > groupNum)
+           groupNum = image_region[i];
    }
 
-   if(image_mip) {delete []image_mip; image_mip = 0;}
-   if(image_region) {delete []image_region; image_region = 0;}
+   int *groupArray = new int[groupNum];
+   int *groupIndex = new int[groupNum];
 
-   ImageMarker S;
-   QList <ImageMarker> marklist;
-   S.x = tmpx;
-   S.y = tmpy;
-   S.z = tmpz;
-   switch (Para.mip_plane)
+   for(int i = 0; i < groupNum; i++)
    {
-       case 0: S.z = 0; break;
-       case 1: S.y = 0; break;
-       case 2: S.x = 0; break;
-       default:
-           return;
+       groupArray[i] = 0;
+       groupIndex[i] = i+1;
    }
-   marklist.append(S);
-   QString markerpath = tmpfolder +("/root.marker");
-   writeMarker_file(markerpath.toStdString().c_str(),marklist);
 
-   QString APP2_image_name = tmpfolder + "/group_one.raw";
-   simple_saveimage_wrapper(callback, APP2_image_name.toStdString().c_str(),  (unsigned char *)image_region_one, in_sz, V3D_UINT8);
-   if(image_region_one) {delete []image_region_one; image_region_one = 0;}
-
-
-    #if  defined(Q_OS_LINUX)
-    QString cmd_APP2 = QString("%1/vaa3d -x Vaa3D_Neuron2 -f app2 -i %2 -p %3 %4 %5 %6 %7 %8 %9 %10").arg(getAppPath().toStdString().c_str()).arg(APP2_image_name.toStdString().c_str()).arg(markerpath.toStdString().c_str())
-                .arg(Para.channel-1).arg(Para.bkg_thresh - 5).arg(Para.b_256cube).arg(Para.b_RadiusFrom2D).arg(Para.is_gsdt).arg(Para.is_break_accept).arg(Para.length_thresh);
-        system(qPrintable(cmd_APP2));
-    #elif defined(Q_OS_MAC)
-        QString cmd_APP2 = QString("%1/vaa3d64.app/Contents/MacOS/vaa3d64 -x Vaa3D_Neuron2 -f app2 -i %2 -p %3 %4 %5 %6 %7 %8 %9 %10").arg(getAppPath().toStdString().c_str()).arg(APP2_image_name.toStdString().c_str()).arg(markerpath.toStdString().c_str())
-                .arg(Para.channel-1).arg(Para.bkg_thresh).arg(Para.b_256cube).arg(Para.b_RadiusFrom2D).arg(Para.is_gsdt).arg(Para.is_break_accept).arg(Para.length_thresh);
-        system(qPrintable(cmd_APP2));
-    #else
-             v3d_msg("The OS is not Linux or Mac. Do nothing.");
-             return;
-    #endif
-
-   QString APP2_swc;
-   switch (Para.mip_plane)
+   for(V3DLONG i = 0; i < pagesz_mip; i++)
    {
-       case 0: APP2_swc = APP2_image_name + QString("_x%1_y%2_z%3_app2.swc").arg(S.x-1).arg(S.y-1).arg(S.z); break;
-       case 1: APP2_swc = APP2_image_name + QString("_x%1_y%2_z%3_app2.swc").arg(S.x-1).arg(S.y).arg(S.z-1); break;
-       case 2: APP2_swc = APP2_image_name + QString("_x%1_y%2_z%3_app2.swc").arg(S.x).arg(S.y-1).arg(S.z-1); break;
-       default:
-           return;
+       if(image_region[i] > 0)
+           groupArray[image_region[i] - 1] += 1;
    }
-   NeuronTree nt = readSWC_file(APP2_swc);
 
-   V3DLONG siz = nt.listNeuron.size();
-   Tree tree;
-   for (V3DLONG i=0;i<siz;i++)
+   int tmp_index;
+   for(V3DLONG i = 0; i < groupNum; i++)
    {
-       NeuronSWC s = nt.listNeuron[i];
-       Point* pt = new Point;
-       pt->x = s.x;
-       pt->y = s.y;
-       pt->z = s.z;
-       pt->r = s.r;
-       pt ->type = s.type;
-       pt->p = NULL;
-       pt->childNum = 0;
-       tree.push_back(pt);
-   }
-   for (V3DLONG i=0;i<siz;i++)
-   {
-       if (nt.listNeuron[i].pn<0) continue;
-       V3DLONG pid = nt.hashNeuron.value(nt.listNeuron[i].pn);
-       tree[i]->p = tree[pid];
-       tree[pid]->childNum++;
-   }
-//	printf("tree constructed.\n");
-   vector<Segment*> seg_list;
-   for (V3DLONG i=0;i<siz;i++)
-   {
-       if (tree[i]->childNum!=1)//tip or branch point
+       if (i > 0)
        {
-           Segment* seg = new Segment;
-           Point* cur = tree[i];
-           do
+           V3DLONG j = i;
+           while(j > 0 && groupArray[j-1]<groupArray[j])
            {
-               seg->push_back(cur);
-               cur = cur->p;
+               tmp = groupArray[j];
+               groupArray[j] = groupArray[j-1];
+               groupArray[j-1] = tmp;
+
+               tmp_index = groupIndex[j];
+               groupIndex[j] = groupIndex[j-1];
+               groupIndex[j-1] = tmp_index;
+
+               j--;
            }
-           while(cur && cur->childNum==1);
-           seg_list.push_back(seg);
        }
    }
 
-   vector<MyMarker*> outswc;
+
+   int groupmax = 5;
+   if(groupNum <= groupmax) groupmax = groupNum;
    vector<MyMarker*> outswc_final;
-   for (V3DLONG i=0;i<seg_list.size();i++)
+
+   for(int dd = 0; dd < groupmax; dd++)
    {
-       vector<MyMarker> nearpos_vec, farpos_vec; // for near/far locs testing
-       nearpos_vec.clear();
-       farpos_vec.clear();
-       if(seg_list[i]->size() > 2)
+       unsigned char *image_region_one = new unsigned char [pagesz_mip];
+       V3DLONG group_type = groupIndex[dd];
+
+
+       for(V3DLONG i = 0; i < pagesz_mip*datatype; i++)
        {
-           for (V3DLONG j=0;j<seg_list[i]->size();j++)
-           {
-               Point* node = seg_list[i]->at(j);
-               XYZ loc0_t, loc1_t;
-               loc0_t = XYZ(node->x, node->y,  node->z);
-               switch (Para.mip_plane)
-               {
-                   case 0:  loc1_t = XYZ(node->x, node->y,  P-1); break;
-                   case 1:  loc1_t = XYZ(node->x, M-1,  node->z); break;
-                   case 2:  loc1_t = XYZ(N-1, node->y,  node->z); break;
-                   default:
-                       return;
-               }
 
-               XYZ loc0 = loc0_t;
-               XYZ loc1 = loc1_t;
-
-               nearpos_vec.push_back(MyMarker(loc0.x, loc0.y, loc0.z));
-               farpos_vec.push_back(MyMarker(loc1.x, loc1.y, loc1.z));
-           }
-
-           fastmarching_drawing_dynamic(nearpos_vec, farpos_vec, (unsigned char*)data1d, outswc, N,M,P, 1, 5);
-           smooth_curve(outswc,5);
-
-
-           for(V3DLONG d = 0; d <outswc.size(); d++)
-           {
-               outswc[d]->radius = 2;
-               outswc_final.push_back(outswc[d]);
-
-           }
-           outswc.clear();
-
+           if(image_region[i] == group_type)
+               image_region_one[int(i/datatype)] = image_mip[int(i/datatype)];
+           else
+               image_region_one[int(i/datatype)] = 0;
        }
-       else if(seg_list[i]->size() == 2)
-       {
-           Point* node1 = seg_list[i]->at(0);
-           Point* node2 = seg_list[i]->at(1);
 
-           for (V3DLONG j=0;j<3;j++)
+       /* switch (Para.mip_plane)
+        {
+            case 0: group_type = image_region[tmpy*N + tmpx]; break;
+            case 1: group_type = image_region[tmpz*N + tmpx]; break;
+            case 2: group_type = image_region[tmpz*M + tmpy];break;
+            default:
+                return;
+        }
+
+
+       tmpx /= groupArray[0];
+       tmpy /= groupArray[0];
+       tmpz = 0;
+
+       v3d_msg(QString("x is %1 and y is %2").arg(tmpx).arg(tmpy));
+       return;
+
+       if(image_mip) {delete []image_mip; image_mip = 0;}
+       if(image_region) {delete []image_region; image_region = 0;}
+
+       ImageMarker S;
+       QList <ImageMarker> marklist;
+       S.x = tmpx;
+       S.y = tmpy;
+       S.z = tmpz;
+       switch (Para.mip_plane)
+       {
+           case 0: S.z = 0; break;
+           case 1: S.y = 0; break;
+           case 2: S.x = 0; break;
+           default:
+               return;
+       }
+
+       marklist.append(S);
+       QString markerpath = tmpfolder +("/root.marker");
+       writeMarker_file(markerpath.toStdString().c_str(),marklist);*/
+
+       QString APP2_image_name = tmpfolder + "/group_one.raw";
+       simple_saveimage_wrapper(callback, APP2_image_name.toStdString().c_str(),  (unsigned char *)image_region_one, in_sz, V3D_UINT8);
+       if(image_region_one) {delete []image_region_one; image_region_one = 0;}
+
+       QString APP2_swc =  APP2_image_name + QString("_group_%1.swc").arg(group_type);
+
+
+        #if  defined(Q_OS_LINUX)
+        QString cmd_APP2 = QString("%1/vaa3d -x Vaa3D_Neuron2 -f app2 -i %2 -o %3 -p NULL %4 %5 %6 %7 %8 %9 %10").arg(getAppPath().toStdString().c_str()).arg(APP2_image_name.toStdString().c_str()).arg(APP2_swc.toStdString().c_str())
+                    .arg(Para.channel-1).arg(Para.bkg_thresh - 5).arg(Para.b_256cube).arg(Para.b_RadiusFrom2D).arg(Para.is_gsdt).arg(Para.is_break_accept).arg(Para.length_thresh);
+            system(qPrintable(cmd_APP2));
+        #elif defined(Q_OS_MAC)
+            QString cmd_APP2 = QString("%1/vaa3d64.app/Contents/MacOS/vaa3d64 -x Vaa3D_Neuron2 -f app2 -i %2 -o %3 -p NULL %4 %5 %6 %7 %8 %9 %10").arg(getAppPath().toStdString().c_str()).arg(APP2_image_name.toStdString().c_str()).arg(APP2_swc.toStdString().c_str())
+                    .arg(Para.channel-1).arg(Para.bkg_thresh - 5).arg(Para.b_256cube).arg(Para.b_RadiusFrom2D).arg(Para.is_gsdt).arg(Para.is_break_accept).arg(Para.length_thresh);
+            system(qPrintable(cmd_APP2));
+        #else
+                 v3d_msg("The OS is not Linux or Mac. Do nothing.");
+                 return;
+        #endif
+
+       /*QString APP2_swc;
+       switch (Para.mip_plane)
+       {
+           case 0: APP2_swc = APP2_image_name + QString("_x%1_y%2_z%3_app2.swc").arg(S.x-1).arg(S.y-1).arg(S.z); break;
+           case 1: APP2_swc = APP2_image_name + QString("_x%1_y%2_z%3_app2.swc").arg(S.x-1).arg(S.y).arg(S.z-1); break;
+           case 2: APP2_swc = APP2_image_name + QString("_x%1_y%2_z%3_app2.swc").arg(S.x).arg(S.y-1).arg(S.z-1); break;
+           default:
+               return;
+       }*/
+
+       NeuronTree nt = readSWC_file(APP2_swc);
+
+       V3DLONG siz = nt.listNeuron.size();
+       Tree tree;
+       for (V3DLONG i=0;i<siz;i++)
+       {
+           NeuronSWC s = nt.listNeuron[i];
+           Point* pt = new Point;
+           pt->x = s.x;
+           pt->y = s.y;
+           pt->z = s.z;
+           pt->r = s.r;
+           pt ->type = s.type;
+           pt->p = NULL;
+           pt->childNum = 0;
+           tree.push_back(pt);
+       }
+       for (V3DLONG i=0;i<siz;i++)
+       {
+           if (nt.listNeuron[i].pn<0) continue;
+           V3DLONG pid = nt.hashNeuron.value(nt.listNeuron[i].pn);
+           tree[i]->p = tree[pid];
+           tree[pid]->childNum++;
+       }
+    //	printf("tree constructed.\n");
+       vector<Segment*> seg_list;
+       for (V3DLONG i=0;i<siz;i++)
+       {
+           if (tree[i]->childNum!=1)//tip or branch point
            {
-               XYZ loc0_t, loc1_t;
-               if(j ==0)
+               Segment* seg = new Segment;
+               Point* cur = tree[i];
+               do
                {
-                   loc0_t = XYZ(node1->x, node1->y,  node1->z);
+                   seg->push_back(cur);
+                   cur = cur->p;
+               }
+               while(cur && cur->childNum==1);
+               seg_list.push_back(seg);
+           }
+       }
+
+       vector<MyMarker*> outswc;
+
+       for (V3DLONG i=0;i<seg_list.size();i++)
+       {
+           vector<MyMarker> nearpos_vec, farpos_vec; // for near/far locs testing
+           nearpos_vec.clear();
+           farpos_vec.clear();
+           if(seg_list[i]->size() > 2)
+           {
+               for (V3DLONG j=0;j<seg_list[i]->size();j++)
+               {
+                   Point* node = seg_list[i]->at(j);
+                   XYZ loc0_t, loc1_t;
+                   loc0_t = XYZ(node->x, node->y,  node->z);
                    switch (Para.mip_plane)
                    {
-                       case 0:  loc1_t = XYZ(node1->x, node1->y,  P-1); break;
-                       case 1:  loc1_t = XYZ(node1->x, M-1,  node1->z); break;
-                       case 2:  loc1_t = XYZ(N-1, node1->y,  node1->z); break;
+                       case 0:  loc1_t = XYZ(node->x, node->y,  P-1); break;
+                       case 1:  loc1_t = XYZ(node->x, M-1,  node->z); break;
+                       case 2:  loc1_t = XYZ(N-1, node->y,  node->z); break;
                        default:
                            return;
                    }
+
+                   XYZ loc0 = loc0_t;
+                   XYZ loc1 = loc1_t;
+
+                   nearpos_vec.push_back(MyMarker(loc0.x, loc0.y, loc0.z));
+                   farpos_vec.push_back(MyMarker(loc1.x, loc1.y, loc1.z));
                }
-               else if(j ==1)
+
+               fastmarching_drawing_dynamic(nearpos_vec, farpos_vec, (unsigned char*)data1d, outswc, N,M,P, 1, 5);
+               smooth_curve(outswc,5);
+
+
+               for(V3DLONG d = 0; d <outswc.size(); d++)
                {
-                   loc0_t = XYZ(0.5*(node1->x + node2->x), 0.5*(node1->y + node2->y),  0.5*(node1->z + node2->z));
-                   switch (Para.mip_plane)
-                   {
-                       case 0:  loc1_t = XYZ(0.5*(node1->x + node2->x),  0.5*(node1->y + node2->y),  P-1); break;
-                       case 1:  loc1_t = XYZ(0.5*(node1->x + node2->x), M-1,   0.5*(node1->z + node2->z)); break;
-                       case 2:  loc1_t = XYZ(N-1,  0.5*(node1->y + node2->y),   0.5*(node1->z + node2->z)); break;
-                       default:
-                           return;
-                   }
+                   outswc[d]->radius = 2;
+                   outswc[d]->type = dd + 2;
+                   outswc_final.push_back(outswc[d]);
+
                }
-               else
-               {
-                   loc0_t = XYZ(node2->x, node2->y,  node2->z);
-                   switch (Para.mip_plane)
-                   {
-                       case 0:  loc1_t = XYZ(node2->x, node2->y,  P-1); break;
-                       case 1:  loc1_t = XYZ(node2->x, M-1,  node2->z); break;
-                       case 2:  loc1_t = XYZ(N-1, node2->y,  node2->z); break;
-                       default:
-                           return;
-                   }               }
-
-               XYZ loc0 = loc0_t;
-               XYZ loc1 = loc1_t;
-
-               nearpos_vec.push_back(MyMarker(loc0.x, loc0.y, loc0.z));
-               farpos_vec.push_back(MyMarker(loc1.x, loc1.y, loc1.z));
-            }
-
-           fastmarching_drawing_dynamic(nearpos_vec, farpos_vec, (unsigned char*)data1d, outswc, N,M,P, 1, 5);
-           smooth_curve(outswc,5);
-
-
-           for(V3DLONG d = 0; d <outswc.size(); d++)
-           {
-               outswc[d]->radius = 2;
-               outswc_final.push_back(outswc[d]);
+               outswc.clear();
 
            }
-           outswc.clear();
+           else if(seg_list[i]->size() == 2)
+           {
+               Point* node1 = seg_list[i]->at(0);
+               Point* node2 = seg_list[i]->at(1);
+
+               for (V3DLONG j=0;j<3;j++)
+               {
+                   XYZ loc0_t, loc1_t;
+                   if(j ==0)
+                   {
+                       loc0_t = XYZ(node1->x, node1->y,  node1->z);
+                       switch (Para.mip_plane)
+                       {
+                           case 0:  loc1_t = XYZ(node1->x, node1->y,  P-1); break;
+                           case 1:  loc1_t = XYZ(node1->x, M-1,  node1->z); break;
+                           case 2:  loc1_t = XYZ(N-1, node1->y,  node1->z); break;
+                           default:
+                               return;
+                       }
+                   }
+                   else if(j ==1)
+                   {
+                       loc0_t = XYZ(0.5*(node1->x + node2->x), 0.5*(node1->y + node2->y),  0.5*(node1->z + node2->z));
+                       switch (Para.mip_plane)
+                       {
+                           case 0:  loc1_t = XYZ(0.5*(node1->x + node2->x),  0.5*(node1->y + node2->y),  P-1); break;
+                           case 1:  loc1_t = XYZ(0.5*(node1->x + node2->x), M-1,   0.5*(node1->z + node2->z)); break;
+                           case 2:  loc1_t = XYZ(N-1,  0.5*(node1->y + node2->y),   0.5*(node1->z + node2->z)); break;
+                           default:
+                               return;
+                       }
+                   }
+                   else
+                   {
+                       loc0_t = XYZ(node2->x, node2->y,  node2->z);
+                       switch (Para.mip_plane)
+                       {
+                           case 0:  loc1_t = XYZ(node2->x, node2->y,  P-1); break;
+                           case 1:  loc1_t = XYZ(node2->x, M-1,  node2->z); break;
+                           case 2:  loc1_t = XYZ(N-1, node2->y,  node2->z); break;
+                           default:
+                               return;
+                       }               }
+
+                   XYZ loc0 = loc0_t;
+                   XYZ loc1 = loc1_t;
+
+                   nearpos_vec.push_back(MyMarker(loc0.x, loc0.y, loc0.z));
+                   farpos_vec.push_back(MyMarker(loc1.x, loc1.y, loc1.z));
+                }
+
+               fastmarching_drawing_dynamic(nearpos_vec, farpos_vec, (unsigned char*)data1d, outswc, N,M,P, 1, 5);
+               smooth_curve(outswc,5);
+
+
+               for(V3DLONG d = 0; d <outswc.size(); d++)
+               {
+                   outswc[d]->radius = 2;
+                   outswc[d]->type = dd + 2;
+                   outswc_final.push_back(outswc[d]);
+
+               }
+               outswc.clear();
+           }
        }
-
-
-   }
+    }
 
    QString swc_2D,final_swc;
    switch (Para.mip_plane)
    {
-       case 0: swc_2D = image_name + "_XY_2D_mip.swc"; final_swc = image_name + "_XY_3D_mip.swc";break;
+       case 0: swc_2D = image_name + "_XY_2D_mip.swc"; final_swc = image_name + "_XY_3D_mip.swc"; break;
        case 1: swc_2D = image_name + "_XZ_2D_mip.swc"; final_swc = image_name + "_XZ_3D_mip.swc"; break;
        case 2: swc_2D = image_name + "_YZ_2D_mip.swc"; final_swc = image_name + "_YZ_3D_mip.swc"; break;
        default:
            return;
    }
-   system(qPrintable(QString("mv %1 %2").arg(APP2_swc.toStdString().c_str()).arg(swc_2D.toStdString().c_str())));
-   system(qPrintable(QString("rm -r %1").arg(tmpfolder.toStdString().c_str())));
 
    saveSWC_file(final_swc.toStdString(), outswc_final);
 
+   // system(qPrintable(QString("mv %1 %2").arg(APP2_swc.toStdString().c_str()).arg(swc_2D.toStdString().c_str())));
+   system(qPrintable(QString("rm -r %1").arg(tmpfolder.toStdString().c_str())));
 
    V3DPluginArgItem arg;
    V3DPluginArgList input_resample;
