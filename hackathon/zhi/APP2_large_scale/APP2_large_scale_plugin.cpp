@@ -307,7 +307,7 @@ bool  autotrace_largeScale(V3DPluginCallback2 &callback, QWidget *parent,APP2_LS
 
     end[0] = start[0] + P.block_size - 1;
     end[1] = start[1] + P.block_size - 1;
-    end[2] = vim.sz[2];
+    end[2] = vim.sz[2] - 1;
 
 
     struct root_node *head = new root_node[1];
@@ -451,7 +451,7 @@ bool  autotrace_largeScale(V3DPluginCallback2 &callback, QWidget *parent,APP2_LS
                 int pa_tip = getParent(i,nt);
                 NeuronSWC curr = list.at(pa_tip);
 
-                if( curr.x < 0.02* P.block_size || curr.x > 0.98 * P.block_size || curr.y < 0.02 * P.block_size || curr.y > 0.98*P.block_size)
+                if( curr.x < 0.05* P.block_size || curr.x > 0.95 * P.block_size || curr.y < 0.05 * P.block_size || curr.y > 0.95*P.block_size)
                 {
                     tip_num++;
                 }
@@ -471,7 +471,7 @@ bool  autotrace_largeScale(V3DPluginCallback2 &callback, QWidget *parent,APP2_LS
                 int pa_tip = getParent(i,nt);
                 NeuronSWC curr = list.at(pa_tip);
 
-                if( curr.x < 0.02* P.block_size || curr.x > 0.98 * P.block_size || curr.y < 0.02 * P.block_size || curr.y > 0.98*P.block_size)
+                if( curr.x < 0.05* P.block_size || curr.x > 0.95 * P.block_size || curr.y < 0.05 * P.block_size || curr.y > 0.95*P.block_size)
                 {
                     tip_index[d] = pa_tip;
                     for(int j = 0; j < 4; j++)
@@ -550,7 +550,7 @@ bool  autotrace_largeScale(V3DPluginCallback2 &callback, QWidget *parent,APP2_LS
             }
             else
                 newNode->parent = tip_index[i];
-            if(curr.x < 0.02* P.block_size)
+            if(curr.x < 0.05* P.block_size)
             {
 
                 newNode->root_x =  P.block_size * 0.9 + curr.x;
@@ -576,7 +576,7 @@ bool  autotrace_largeScale(V3DPluginCallback2 &callback, QWidget *parent,APP2_LS
                 walker_inside->next = newNode;
                 walker_inside = walker_inside->next;
             }
-            else if(curr.x > 0.98 * P.block_size)
+            else if(curr.x > 0.95 * P.block_size)
             {
                 newNode->root_x =  curr.x - P.block_size * 0.9;
                 newNode->root_y = curr.y;
@@ -601,7 +601,7 @@ bool  autotrace_largeScale(V3DPluginCallback2 &callback, QWidget *parent,APP2_LS
                 walker_inside->next = newNode;
                 walker_inside = walker_inside->next;
             }
-            else if(curr.y < 0.02* P.block_size)
+            else if(curr.y < 0.05* P.block_size)
             {
 
                 newNode->root_x = curr.x;
@@ -627,7 +627,7 @@ bool  autotrace_largeScale(V3DPluginCallback2 &callback, QWidget *parent,APP2_LS
                 walker_inside->next = newNode;
                 walker_inside = walker_inside->next;
             }
-            else if(curr.y > 0.98 * P.block_size)
+            else if(curr.y > 0.95 * P.block_size)
             {
                 newNode->root_x =  curr.x;
                 newNode->root_y = curr.y - P.block_size * 0.9;
@@ -729,7 +729,7 @@ bool  autotrace_largeScale(V3DPluginCallback2 &callback, QWidget *parent,APP2_LS
         swc_type++;
     }
 
-    system(qPrintable(QString("rm -r %1").arg(tmpfolder.toStdString().c_str())));
+  //  system(qPrintable(QString("rm -r %1").arg(tmpfolder.toStdString().c_str())));
 
 
     //post-processing
@@ -824,6 +824,7 @@ void save_region(V3DPluginCallback2 &callback, V3DLONG *start, V3DLONG *end, QSt
     V3DLONG x_e = end[0] + vim.min_vim[0];
     V3DLONG y_e = end[1] + vim.min_vim[1];
     V3DLONG z_e = end[2] + vim.min_vim[2];
+    printf("%d, %d, ,%d, %d, %d, %d\n\n\n\n\n",x_s, y_s, z_s, x_e,y_e,z_e);
 
     bool flag_init = true;
     unsigned char *pVImg_UINT8 = NULL;
