@@ -34,7 +34,7 @@
 using namespace teramanager;
 using namespace std;
 
-CSettings* CSettings::uniqueInstance = NULL;
+CSettings* CSettings::uniqueInstance = 0;
 
 void CSettings::uninstance()
 {
@@ -202,6 +202,6 @@ void CSettings::readSettings()
 //         iim::DEBUG = settings.value("verbosity").toInt();
 //     }
 //     else
-//    iim::DEBUG = iim::NO_DEBUG;
-//    itm::DEBUG = itm::NO_DEBUG;
+    iim::DEBUG = iim::NO_DEBUG;
+    itm::DEBUG = itm::NO_DEBUG;
 }
