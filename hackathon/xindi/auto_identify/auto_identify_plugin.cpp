@@ -24,7 +24,7 @@ Q_EXPORT_PLUGIN2(auto_identify, AutoIdentifyPlugin);
 void count_cells(V3DPluginCallback2 &callback, QWidget *parent);
 void identify_neurons(V3DPluginCallback2 &callback, QWidget *parent);
 
-template <class T> bool identify_cells(T* data1d, V3DLONG *dimNum, int c, const LandmarkList & markerlist, LandmarkList & bglist, LandmarkList & outputlist);
+template <class T> bool identify_cells(T* data1d, V3DLONG *dimNum, int c, const LandmarkList & markerlist, LandmarkList & bglist, LandmarkList & outputlist, Image4DSimple &maskImage);
 
 LandmarkList neuron_2_mark(const NeuronTree & p, LandmarkList & neuronMarkList);
 template <class T> int pixelVal(T* data1d, V3DLONG *dimNum,
@@ -49,7 +49,7 @@ template <class T> LandmarkList scan_and_count(T* data1d,
                                       int MarkAve, int MarkStDev,
                                       int PointAve, int PointStDev,
                                       double radAve, double radStDev,
-                                      int c, int cat, double thresh, LandmarkList originalList);
+                                      int c, int cat, double thresh, LandmarkList originalList, Image4DSimple &maskImage);
 template <class T> LandmarkList duplicates(T* data1d, LandmarkList fullList,
                                            V3DLONG *dimNum, int PointAve, int rad, int c);
 V_NeuronSWC get_v_neuron_swc(const NeuronTree *p);
@@ -451,9 +451,13 @@ void count_cells(V3DPluginCallback2 &callback, QWidget *parent)
 
         LandmarkList bglist; //sending in empty bglist to trigger binary sort
         LandmarkList outputList;
-        if (identify_cells(data1d,dimNum,c,mlist,bglist, outputList))
+        Image4DSimple maskImage;
+        if (identify_cells(data1d,dimNum,c,mlist,bglist,outputList,maskImage))
         {
             callback.setLandmark(curwin,outputList);
+
+            v3dhandle newwin = callback.newImageWindow("mask");
+            callback.setImage(newwin,&maskImage);
         }
     }
     else if (input_type==1) //type
@@ -537,7 +541,8 @@ void count_cells(V3DPluginCallback2 &callback, QWidget *parent)
             marks = &catArr[i+1];
 //v3d_msg(QString("marks %1").arg(marks->count()));
             LandmarkList tempList;
-            if (identify_cells(data1d,dimNum,c,*marks,*bgs, tempList))
+            Image4DSimple maskImage;
+            if (identify_cells(data1d,dimNum,c,*marks,*bgs, tempList,maskImage))
                 catSortList.append(tempList);
 //v3d_msg(QString("catSortList append category %1").arg(tempList.at(0).category));
 //            marksL.clear();
@@ -549,7 +554,7 @@ void count_cells(V3DPluginCallback2 &callback, QWidget *parent)
     return;
 }
 
-template <class T> bool identify_cells(T* data1d, V3DLONG *dimNum, int c, const LandmarkList & markerlist, LandmarkList & bglist, LandmarkList & outputlist)
+template <class T> bool identify_cells(T* data1d, V3DLONG *dimNum, int c, const LandmarkList & markerlist, LandmarkList & bglist, LandmarkList & outputlist, Image4DSimple &maskImage)
 {
     if (!data1d || !dimNum)
         return false;
@@ -771,12 +776,12 @@ template <class T> bool identify_cells(T* data1d, V3DLONG *dimNum, int c, const 
     double PixStDev = sqrt(stP/marks);
 
 
-//v3d_msg(QString("markers have been scanned. Pixval %1 and stdev %2. radVal %3 and stdev %4."
-//                      "segVal %5 and stdev %6").arg(PixVal).arg(PixStDev).arg(radAve).arg(radStDev).arg(ValAve).arg(ValStDev));
+//v3d_msg(QString("markers have been scanned. Pixval %1 and stdev %2. radVal %3 and stdev %4. segVal %5 and stdev %6").arg(PixVal).arg(PixStDev).arg(radAve).arg(radStDev).arg(ValAve).arg(ValStDev));
+
 //v3d_msg(QString("category %1").arg(cat));
 
     //scans image and generates new set of markers based on testing data
-    LandmarkList scannedList = scan_and_count(data1d,dimNum,ValAve,2*ValStDev,PixVal,PixStDev,radAve,radStDev,c,cat,thresh,MarkList);
+    LandmarkList scannedList = scan_and_count(data1d,dimNum,ValAve,2*ValStDev,PixVal,PixStDev,radAve,radStDev,c,cat,thresh,MarkList,maskImage);
     //cout<<"Cell count "<<newList.count()<<endl;
 //v3d_msg("newList made");
     //recenters list via mean shift
@@ -797,7 +802,7 @@ template <class T> bool identify_cells(T* data1d, V3DLONG *dimNum, int c, const 
 //    outputlist = newList;
 //v3d_msg("duplicates deleted");
 
-    cout<<"Cell count "<<outputlist.count()<<endl;
+    cout<<"Cell count "<<outputlist.count()<<endl<<endl;
     return true;
 }
 
@@ -901,7 +906,7 @@ template <class T> bool mass_center_Lists(T* data1d,
                 }
                 else if (check>1) //if still hasn't fixed idk
                 {
-                    //newX=xo; newY=yo; newZ=zo;
+                    newX=xo; newY=yo; newZ=zo;
                     break;
                 }
                 j=0;
@@ -921,7 +926,7 @@ template <class T> bool mass_center_Lists(T* data1d,
     return true;
 }
 
-//returns recentered marker
+//returns recentered coords
 template <class T> bool mass_center_Coords(T* data1d,
                                     V3DLONG *dimNum,
                                     double &x, double &y, double &z,
@@ -1034,7 +1039,7 @@ template <class T> LandmarkList scan_and_count(T* data1d,
                               int MarkAve, int MarkStDev,
                               int PointAve, int PointStDev,
                               double radAve, double radStDev,
-                              int c, int cat, double thresh, LandmarkList originalList)
+                              int c, int cat, double thresh, LandmarkList originalList, Image4DSimple &maskImage)
 {
     V3DLONG N = dimNum[0];
     V3DLONG M = dimNum[1];
@@ -1044,7 +1049,7 @@ template <class T> LandmarkList scan_and_count(T* data1d,
     unsigned char *maskData = 0;
     maskData = new unsigned char [N*M*P];
     for (V3DLONG tmpi=0;tmpi<N*M*P;++tmpi) maskData[tmpi] = 0; //preset to be all 0
-    Image4DSimple maskImage;
+    //Image4DSimple maskImage;
     maskImage.setData((unsigned char*)maskData, N, M, P, 1, V3D_UINT8);
     Image4DProxy<Image4DSimple> maskImg(&maskImage);
 
@@ -1077,11 +1082,11 @@ template <class T> LandmarkList scan_and_count(T* data1d,
     //v3d_msg(QString("init %1").arg(init));
     for (double i=init; i>=end; i-=0.5)
     {
-        for (double iz=seg; iz<=P; iz+=seg)
+        for (double iz=seg; iz<P; iz+=seg)
         {
-            for (double iy=seg; iy<=M; iy+=seg)
+            for (double iy=seg; iy<M; iy+=seg)
             {
-                for (double ix=seg; ix<=N; ix+=seg)
+                for (double ix=seg; ix<N; ix+=seg)
                 {
                     //cout<<"coords "<<x1<<" "<<y1<<" "<<z1<<" have mask "<<*maskImg.at(x1,y1,z1,0)<<endl;
                     if (*maskImg.at(ix,iy,iz,0) == 0)
@@ -1371,14 +1376,15 @@ template <class T> bool apply_mask(unsigned char* data1d, V3DLONG *dimNum,
     //cout<<"rad "<<rad<<endl;
 
     //cout<<"applying mask"<<endl;
-    *maskImg.at(xc,yc,zc,0) = 1;
+    *maskImg.at(xc,yc,zc,0) = 200;
     //cout<<"ck 1 ";
+    double angle = pi/8;
 
     for (double r=0.5; r<=rad; r+=0.5)
     {
-        for (double theta=0; theta<2*pi; theta+=(pi/8))
+        for (double theta=0; theta<2*pi; theta+=angle)
         {
-            for (double phi=0; phi<pi; phi+=(pi/8))
+            for (double phi=0; phi<pi; phi+=angle)
             {
                 x = xc+r*cos(theta)*sin(phi);
                 if (x>N-1) x=N-1; if (x<0) x=0;
@@ -1386,9 +1392,10 @@ template <class T> bool apply_mask(unsigned char* data1d, V3DLONG *dimNum,
                 if (y>M-1) y=M-1; if (y<0) y=0;
                 z = zc+r*cos(phi);
                 if (z>P-1) z=P-1; if (z<0) z=0;
-                *maskImg.at(x,y,z,0) = 1;
+                *maskImg.at(x,y,z,0) = 200;
             }
         }
+        //angle /= 2;
     }
     //cout<<"2"<<endl;
     return true;
