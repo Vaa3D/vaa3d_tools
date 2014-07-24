@@ -24,5 +24,30 @@ public:
 	bool dofunc(const QString &func_name, const V3DPluginArgList &input, V3DPluginArgList &output, V3DPluginCallback2 &callback, QWidget *parent);
 };
 
+QString getAppPath();
+
+class controlPanel_SWC: public QDialog
+{
+    Q_OBJECT
+
+public:
+    controlPanel_SWC();
+
+public:
+    QLineEdit *m_pLineEdit_testfilepath;
+    QLineEdit *m_pLineEdit_outputfilepath;
+    QLineEdit *m_pLineEdit_channelno;
+    static controlPanel_SWC *m_pLookPanel_SWC;
+    static QString *infileName;
+    static QString *outfileName;
+    static int *channel;
+
+public slots:
+    void _slot_start();
+    void _slot_close();
+    void _slots_openFileDlg_input();
+    void _slots_openFileDlg_output();
+};
+
 #endif
 

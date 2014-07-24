@@ -20,6 +20,7 @@ Q_EXPORT_PLUGIN2(auto_identify, AutoIdentifyPlugin);
 
 #define V_NeuronSWC_list vector<V_NeuronSWC>
 
+controlPanel_SWC* controlPanel_SWC::m_pLookPanel_SWC = 0;
 
 void count_cells(V3DPluginCallback2 &callback, QWidget *parent);
 void identify_neurons(V3DPluginCallback2 &callback, QWidget *parent);
@@ -60,7 +61,7 @@ template <class T> bool compute_swc_radius(T* data1d, V3DLONG *dimNum, vector<V_
 bool export_list2file(QList<NeuronTree> & N2, QString fileSaveName, QString fileOpenName);
 template <class T> bool apply_mask(unsigned char* data1d, V3DLONG *dimNum,
                                    int xc, int yc, int zc, int c, double threshold, T & maskImg);
-bool open_testSWC(NeuronTree & openTree);
+bool open_testSWC(QString &fileOpenName, NeuronTree & openTree);
  
 QStringList AutoIdentifyPlugin::menulist() const
 {
@@ -83,7 +84,7 @@ void AutoIdentifyPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &ca
     if (menu_name == tr("Cell Counting"))
 	{
         count_cells(callback,parent);
-	}
+    }
     else if (menu_name == tr("Label Neurons"))
     {
         //v3d_msg("To be implemented"); return;
@@ -168,12 +169,12 @@ void identify_neurons(V3DPluginCallback2 &callback, QWidget *parent)
     dimNum[0]=N; dimNum[1]=M; dimNum[2]=P; dimNum[3]=sc;
 
     //input channel
-    unsigned int c=1;
-    bool ok;
-    if (sc==1)
-        c=1; //if only using 1 channel
-    else
-        c = QInputDialog::getInteger(parent, "Channel", "Enter Channel Number", 1, 1, sc, 1,&ok);
+    int c=0;
+    //bool ok;
+    //if (sc==1)
+    //    c=1; //if only using 1 channel
+    //else
+    //    c = QInputDialog::getInteger(parent, "Channel", "Enter Channel Number", 1, 1, sc, 1,&ok);
 
     QList<NeuronTree> * mTreeList;
     mTreeList = callback.getHandleNeuronTrees_3DGlobalViewer(curwin);
@@ -186,13 +187,28 @@ void identify_neurons(V3DPluginCallback2 &callback, QWidget *parent)
         vector<double> segIntensArr(10);
         vector<double> segRadStDevArr(10);
 
-        //open test example SWC
+        //take user inputs
         NeuronTree openTree;
-        if (open_testSWC(openTree))
+        QString outfilename;
+        if (controlPanel_SWC::m_pLookPanel_SWC)
+        {
+            controlPanel_SWC::m_pLookPanel_SWC->show();
+            return;
+        }
+        else
+        {
+            controlPanel_SWC* p = new controlPanel_SWC();
+            if (p)	p->show();
+        }
+        //controlPanel_SWC::controlPanel_SWC(openTree,c,outfilename);
+        QString infileName = *controlPanel_SWC::infileName;
+        if (open_testSWC(infileName,openTree))
         {
             openTree.comment = "test";
             mTreeList->append(openTree);
         }
+        c = *controlPanel_SWC::channel;
+
         int structNum = mTreeList->count();
 
         //get examples from test data
@@ -310,7 +326,12 @@ void identify_neurons(V3DPluginCallback2 &callback, QWidget *parent)
             }
 
         }
-        QString outfilename = curfilename+"_Labeled_SWC.swc";
+        //QString outfilename = curfilename+"_Labeled_SWC.swc";
+        outfilename = *controlPanel_SWC::outfileName;
+        if (!outfilename.toUpper().endsWith(".SWC"))
+        {
+            outfilename.append(curfilename + "_Labeled_SWC.swc");
+        }
         export_list2file(newTreeList,outfilename,curfilename);
         NeuronTree nt = readSWC_file(outfilename);
         callback.setSWC(curwin, nt);
@@ -1091,10 +1112,6 @@ template <class T> LandmarkList scan_and_count(T* data1d,
                     //cout<<"coords "<<x1<<" "<<y1<<" "<<z1<<" have mask "<<*maskImg.at(x1,y1,z1,0)<<endl;
                     if (*maskImg.at(ix,iy,iz,0) == 0)
                     {
-//                        pair<double,double> check = pixel_range(data1d,dimNum,ix,iy,iz,c,i);
-//                        double TempDataAve = check.first;
-//                        double TempPointAve = check.second;
-                          //v3d_msg(QString("%1 %2 %3").arg(i).arg(TempDataAve).arg(TempPointAve));
                         double TempPointVal = pixelVal(data1d,dimNum,ix,iy,iz,c);
                         if ((TempPointVal>=PointAve-PointStDev) && (TempPointVal<=PointAve+PointStDev))
                         {
@@ -1410,12 +1427,12 @@ template <class T> bool apply_mask(unsigned char* data1d, V3DLONG *dimNum,
     return true;
 }
 
-bool open_testSWC(NeuronTree & openTree)
+bool open_testSWC(QString &fileOpenName, NeuronTree & openTree)
 {
-    QString fileOpenName;
-    fileOpenName = QFileDialog::getOpenFileName(0, QObject::tr("Open Example SWC File"),
-            "",
-            QObject::tr("Supported file (*.swc)"));
+//    QString fileOpenName;
+//    fileOpenName = QFileDialog::getOpenFileName(0, QObject::tr("Open Example SWC File"),
+//            "",
+//            QObject::tr("Supported file (*.swc)"));
 
     if (!fileOpenName.isEmpty() && fileOpenName.toUpper().endsWith(".SWC"))
     {
@@ -1430,3 +1447,140 @@ bool open_testSWC(NeuronTree & openTree)
 }
 
 
+//below edited from movieConverter plugin
+QString getAppPath()
+{
+    QDir testPluginsDir = QDir(qApp->applicationDirPath());
+
+#if defined(Q_OS_WIN)
+    if (testPluginsDir.dirName().toLower() == "debug" || testPluginsDir.dirName().toLower() == "release")
+        testPluginsDir.cdUp();
+#elif defined(Q_OS_MAC)
+    // In a Mac app bundle, plugins directory could be either
+    //  a - below the actual executable i.e. v3d.app/Contents/MacOS/plugins/
+    //  b - parallel to v3d.app i.e. foo/v3d.app and foo/plugins/
+    if (testPluginsDir.dirName() == "MacOS") {
+        QDir testUpperPluginsDir = testPluginsDir;
+        testUpperPluginsDir.cdUp();
+        testUpperPluginsDir.cdUp();
+        testUpperPluginsDir.cdUp(); // like foo/plugins next to foo/v3d.app
+        if (testUpperPluginsDir.cd("plugins")) testPluginsDir = testUpperPluginsDir;
+        testPluginsDir.cdUp();
+    }
+#endif
+
+    return testPluginsDir.absolutePath();
+}
+
+controlPanel_SWC::controlPanel_SWC()
+{
+    QString exepath = getAppPath();
+
+    m_pLookPanel_SWC = this;
+
+    m_pLineEdit_testfilepath = new QLineEdit();
+    m_pLineEdit_outputfilepath = new QLineEdit(exepath);
+    m_pLineEdit_channelno = new QLineEdit(QObject::tr("1"));
+    QPushButton *pPushButton_start = new QPushButton(QObject::tr("start labeling"));
+    QPushButton *pPushButton_close = new QPushButton(QObject::tr("close"));
+    QPushButton *pPushButton_openFileDlg_input = new QPushButton(QObject::tr("Browse"));
+    QPushButton *pPushButton_openFileDlg_output = new QPushButton(QObject::tr("Browse"));
+
+    QGroupBox *input_panel = new QGroupBox("Input:");
+    input_panel->setStyle(new QWindowsStyle());
+    QGridLayout *inputLayout = new QGridLayout();
+    input_panel->setStyle(new QWindowsStyle());
+    inputLayout->addWidget(new QLabel(QObject::tr("Labeled Example SWC:")),1,1);
+    inputLayout->addWidget(m_pLineEdit_testfilepath,2,1,1,2);
+    inputLayout->addWidget(pPushButton_openFileDlg_input,2,3,1,1);
+    input_panel->setLayout(inputLayout);
+
+    QGroupBox *output_panel = new QGroupBox("Output:");
+    output_panel->setStyle(new QWindowsStyle());
+    QGridLayout *outputLayout = new QGridLayout();
+    outputLayout->addWidget(new QLabel(QObject::tr("Choose directory to save labeled SWC:")),1,1);
+    outputLayout->addWidget(m_pLineEdit_outputfilepath,2,1,1,2);
+    outputLayout->addWidget(pPushButton_openFileDlg_output,2,3,1,1);
+    output_panel->setLayout(outputLayout);
+
+
+    QGroupBox *channel_panel = new QGroupBox("Channel Number:");
+    channel_panel->setStyle(new QWindowsStyle());
+    QGridLayout *channelLayout = new QGridLayout();
+    channelLayout->addWidget(new QLabel(QObject::tr("Channel:")),4,1);
+    channelLayout->addWidget(m_pLineEdit_channelno,4,2);
+    channel_panel->setLayout(channelLayout);
+
+    QWidget* container = new QWidget();
+    QGridLayout* bottomBar = new QGridLayout();
+    bottomBar->addWidget(pPushButton_start,1,1);
+    bottomBar->addWidget(pPushButton_close,1,2);
+    container->setLayout(bottomBar);
+
+    QGridLayout *pGridLayout = new QGridLayout();
+    pGridLayout->addWidget(input_panel);
+    pGridLayout->addWidget(output_panel);
+    pGridLayout->addWidget(channel_panel);
+    pGridLayout->addWidget(container);
+
+    setLayout(pGridLayout);
+    setWindowTitle(QString("Label currently displayed SWC using example file"));
+
+    connect(pPushButton_start, SIGNAL(clicked()), this, SLOT(_slot_start()));
+    connect(pPushButton_close, SIGNAL(clicked()), this, SLOT(_slot_close()));
+    connect(pPushButton_openFileDlg_input, SIGNAL(clicked()), this, SLOT(_slots_openFileDlg_input()));
+    connect(pPushButton_openFileDlg_output, SIGNAL(clicked()), this, SLOT(_slots_openFileDlg_output()));
+
+}
+
+void controlPanel_SWC::_slot_close()
+{
+    if (m_pLookPanel_SWC)
+    {
+        delete m_pLookPanel_SWC;
+        m_pLookPanel_SWC=0;
+    }
+}
+void controlPanel_SWC::_slot_start()
+{
+          infileName = &m_pLineEdit_testfilepath->text();
+          if (!infileName->toUpper().endsWith(".SWC"))
+          {
+              v3d_msg("You did not choose a valid file type, or the example file you chose is empty. Will attempt to find exampler set in window.");
+              return;
+          }
+
+          QString s = m_pLineEdit_outputfilepath->text();
+          if (!QFile(s).exists())
+          {
+             v3d_msg("Output file path does not exist, ");
+             return;
+          }
+          outfileName = &s;
+
+          QString channelno = m_pLineEdit_channelno->text();
+          int c = channelno.toInt();
+          channel = &c;
+}
+void controlPanel_SWC::_slots_openFileDlg_input()
+{
+    QFileDialog d(this);
+    QString fileOpenName;
+    fileOpenName = QFileDialog::getOpenFileName(0, QObject::tr("Open Example SWC File"),
+            "",
+            QObject::tr("Supported file (*.swc)"));;
+    if(!fileOpenName.isEmpty())
+    {
+        m_pLineEdit_testfilepath->setText(fileOpenName);
+    }
+}
+void controlPanel_SWC::_slots_openFileDlg_output()
+{
+    QFileDialog d(this);
+    QString fileOpenName;
+    fileOpenName = QFileDialog::getOpenFileName(0, QObject::tr("Choose output file dir"));;
+    if(!fileOpenName.isEmpty())
+    {
+        m_pLineEdit_outputfilepath->setText(fileOpenName);
+    }
+}
