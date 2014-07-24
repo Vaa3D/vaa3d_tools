@@ -20,7 +20,7 @@ Q_EXPORT_PLUGIN2(auto_identify, AutoIdentifyPlugin);
 
 #define V_NeuronSWC_list vector<V_NeuronSWC>
 
-controlPanel_SWC* controlPanel_SWC::m_pLookPanel_SWC = 0;
+//controlPanel_SWC* controlPanel_SWC::m_pLookPanel_SWC = 0;
 
 void count_cells(V3DPluginCallback2 &callback, QWidget *parent);
 void identify_neurons(V3DPluginCallback2 &callback, QWidget *parent);
@@ -190,7 +190,7 @@ void identify_neurons(V3DPluginCallback2 &callback, QWidget *parent)
         //take user inputs
         NeuronTree openTree;
         QString outfilename;
-        controlPanel_SWC* p;
+        /*controlPanel_SWC* p;
         if (controlPanel_SWC::m_pLookPanel_SWC)
         {
             controlPanel_SWC::m_pLookPanel_SWC->show();
@@ -200,15 +200,20 @@ void identify_neurons(V3DPluginCallback2 &callback, QWidget *parent)
         {
             p = new controlPanel_SWC();
             if (p)	p->show();
-        }
+        }*/
+
+        Dialog_SWC dialog(callback, parent);
+        if (dialog.exec()!=QDialog::Accepted)
+            return;
+
         //controlPanel_SWC::controlPanel_SWC(openTree,c,outfilename);
-        QString infileName = p->infileName;
+        QString infileName = dialog.infileName;
         if (open_testSWC(infileName,openTree))
         {
             openTree.comment = "test";
             mTreeList->append(openTree);
         }
-        c = p->channel;
+        c = dialog.channel;
         int structNum = mTreeList->count();
 
         //get examples from test data
@@ -327,7 +332,7 @@ void identify_neurons(V3DPluginCallback2 &callback, QWidget *parent)
 
         }
         //QString outfilename = curfilename+"_Labeled_SWC.swc";
-        outfilename = p->outfileName;
+        outfilename = dialog.outfileName;
         if (!outfilename.toUpper().endsWith(".SWC"))
         {
             outfilename.append(curfilename + "_Labeled_SWC.swc");
@@ -1472,7 +1477,7 @@ QString getAppPath()
     return testPluginsDir.absolutePath();
 }
 
-controlPanel_SWC::controlPanel_SWC()
+/*controlPanel_SWC::controlPanel_SWC()
 {
     QString exepath = getAppPath();
 
@@ -1582,4 +1587,4 @@ void controlPanel_SWC::_slots_openFileDlg_output()
     {
         m_pLineEdit_outputfilepath->setText(fileOpenName);
     }
-}
+}*/
