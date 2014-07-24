@@ -29,6 +29,8 @@ static controlPanel *panel = 0;
 
 void TypesetWindow(V3DPluginCallback2 &v3d, QWidget *parent);
 
+static V3DPluginCallback2 v3d_type;
+
 #define MYFLOAT double
 
 void finishSyncPanel()
@@ -61,9 +63,10 @@ void TypesetPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callbac
     {
         //static controlPanel *
         panel = new controlPanel(callback,parent);
-        //TypesetWindow(callback,parent);
+        v3d_type = callback;
+        TypesetWindow(callback,parent);
 
-        typeset_swc(callback,parent); //this is now happens when you press the typeset button in the window
+        //typeset_swc(callback,parent); //this is now happens when you press the typeset button in the window
     }
 //    else if (menu_name == tr("directions"))
 //    {
@@ -264,9 +267,10 @@ controlPanel::controlPanel(V3DPluginCallback2 &_v3d, QWidget *parent) :
     setWindowTitle(QString("Typeset"));
 
     connect(btn_Sort, SIGNAL(clicked()), this, SLOT(_slot_sort())); //deleted the underscore
-    connect(btn_Typeset, SIGNAL(clicked()), this, SLOT(_slot_typeset()));
+    //connect(btn_Typeset, SIGNAL(clicked()), this, SLOT(_slot_typeset()));
 //    connect(btn_Sort, SIGNAL(clicked()), this, SLOT(_slot_sort(v3d, parent))); //deleted the underscore
-//    connect(btn_Typeset, SIGNAL(clicked()), this, SLOT(_slot_typeset(v3d, parent)));
+    connect(btn_Typeset, SIGNAL(clicked()), this, SLOT(_slot_typeset(_v3d, parent)));
+    //connect(btn_Typeset, SIGNAL(clicked()), this, SLOT(typeset_swc_func(v3d, parent)));
 
     connect(btn_Refresh, SIGNAL(clicked()), this, SLOT(_slot_refresh()));
     connect(btn_Delete, SIGNAL(clicked()), this, SLOT(_slot_delete()));
@@ -301,13 +305,13 @@ void controlPanel::_slot_sort()//V3DPluginCallback2 &_v3d, QWidget *parent)
 
 }
 
-void controlPanel::_slot_typeset()//V3DPluginCallback2 &_v3d, QWidget *parent)
-{
-    //create typeset_grab to get the values of v3d and parent from where you defined the window? lemme try smthng 1st
+//void controlPanel::_slot_typeset(V3DPluginCallback2 &_v3d, QWidget *parent)
+//{
+//    //create typeset_grab to get the values of v3d and parent from where you defined the window? lemme try smthng 1st
 
-    //typeset_swc(_v3d,parent);
-    v3d_msg("typeset function was run");
-}
+//    typeset_swc(_v3d,parent);
+//    v3d_msg("typeset function was run");
+//}
 
 
 void controlPanel::_slot_refresh()
