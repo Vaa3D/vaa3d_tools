@@ -113,7 +113,7 @@ protected:
     }
 };
 
-/**
+// /**
 class MyComboBox : public QComboBox
 {
     Q_OBJECT
@@ -123,11 +123,12 @@ public:
     MyComboBox(V3DPluginCallback2 * ini_v3d) {m_v3d = ini_v3d;}
 
     void enterEvent(QEvent * event);
-
+// /**
 public slots:
     void updateList();
+    //**/
 };
-**/
+// **/
 
 class lookPanel: public QDialog
 {
@@ -140,7 +141,7 @@ public:
 public:
 
     QAbstractSlider *createCutPlaneSlider(int maxval, Qt::Orientation hv = Qt::Horizontal);
-    //MyComboBox* combo_surface;
+    MyComboBox* combo_surface;
 
     QList <V3dR_MainWindow *> list_3dviewer;
     V3dR_MainWindow *surface_win;
@@ -169,8 +170,10 @@ public:
     V3DPluginCallback2 & m_v3d;
     QTimer *m_pTimer;
 
-    View3DControl *view_master;
+   // View3DControl *view_master;
     QList<NeuronTree> *nt_list;
+
+    v3dhandleList threeD_list;
 
     bool b_autoON;
 

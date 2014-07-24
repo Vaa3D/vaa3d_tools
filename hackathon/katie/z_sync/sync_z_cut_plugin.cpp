@@ -20,7 +20,9 @@ static lookPanel *panel = 0;
 
 void SynTwoImage(V3DPluginCallback2 &v3d, QWidget *parent);
 
-/**
+//check windows is NOT crashing it
+ // /**
+
 #define CHECK_WINDOWS \
 {\
     view=0;curwin=0; \
@@ -59,7 +61,6 @@ void SynTwoImage(V3DPluginCallback2 &v3d, QWidget *parent);
     }\
     if (!view) return;\
     }
-**/
 
 void finishSyncPanel()
 {
@@ -148,18 +149,59 @@ QAbstractSlider *lookPanel::createCutPlaneSlider(int maxval, Qt::Orientation hv)
 lookPanel::lookPanel(V3DPluginCallback2 &_v3d, QWidget *parent) : //do it here!!
     QDialog(parent), m_v3d(_v3d)
 {
-    win_list = m_v3d.getImageWindowList();
+    //CHECK_WINDOWS;
+    win_list = m_v3d.getImageWindowList(); //this is NOT for the 3D window
 
     //QObject *test = m_v3d.currentImageWindow();
     //v3dhandle curwin = m_v3d.currentImageWindow();
+
     curwin = m_v3d.currentImageWindow();
+
         if (!curwin)
         {
             v3d_msg("You don't have any image open in the main window.");
             return;
         }
-        m_v3d.open3DWindow(curwin);
 
+
+        m_v3d.open3DWindow(curwin);
+        //m_v3d.open3DWindow(surface_win);
+
+
+        /**
+        if(curwin)
+        {
+        m_v3d.open3DWindow(curwin);
+        //view = m_v3d.getView3DControl(curwin);
+        }
+        **/
+
+    /**
+
+        if(surface_win)
+        {
+        //view = m_v3d.getView3DControl_Any3DViewer(surface_win);
+        //v3d_msg("view control successful line 54");
+        m_v3d.open3DWindow(surface_win);
+        }
+**/
+
+        //TO GET THE 3D WINDOWS
+         /**
+        int num = m_v3d.getListAll3DViewers().count();
+
+        if (num==1)
+           {
+               v3d_msg("You have one 3D viewer window.");
+           }
+
+        if (num>1)
+           {
+               v3d_msg("You have two windows."); //Now this works.
+           }
+           **/
+
+        //m_v3d.getListAll3DViewers(); //this is a QList
         /**
           //go through the QList<NeuronTree> to get all the neuron trees that are loaded
           //for each NeuronTree, obtain the min_num and max_num
@@ -167,14 +209,22 @@ lookPanel::lookPanel(V3DPluginCallback2 &_v3d, QWidget *parent) : //do it here!!
           **/
 
     //QList<NeuronTree> * nt_list = m_v3d.getHandleNeuronTrees_3DGlobalViewer(curwin);
-    nt_list = m_v3d.getHandleNeuronTrees_3DGlobalViewer(curwin);
+    nt_list = m_v3d.getHandleNeuronTrees_3DGlobalViewer(curwin); //curwin is only for the main window
+    //nt_list_2 = m_v3d.getHandleNeuronTrees_3DGlobalViewer(surface_win);
+    //QList<NeuronTree> * nt_list_3 = m_v3d.getHandleNeuronTrees_Any3DViewer(surface_win);
+
     //QList<NeuronTree> * nt_list = m_v3d.getHandleNeuronTrees_3DGlobalViewer(curwin);
     //nt1 = nt_list->first(); //this fixed the getting rid of the surface problem
     //NeuronTree nt1 = nt_list->first(); //this fixed the getting rid of the surface problem
 
 if(nt_list->size()==0){
-        v3d_msg("You have no surface loaded. Cut is only for the image.");
+        v3d_msg("You have no surface loaded in the main window. Cut is only for the image.");
     }
+/**
+if(nt_list_2->size()==0){
+        v3d_msg("You have no surface loaded in the ROI. Cut is only for the image.");
+}
+**/
 
     //see if nt_list.size() is a problem (it's not)
 
@@ -212,10 +262,24 @@ else{
 }//check for surface, end
 
     QStringList items;
+    //QStringList items2;
+
     for (int i=0; i<win_list.size(); i++)
         items << m_v3d.getImageName(win_list[i]); //this is just the IMAGE name, not the window name
     //even if I only have local open, it insists on opening up the entire image
 
+
+  /**
+    int threeD_num = m_v3d.getListAll3DViewers().count();
+
+    for(int i = 0; i<threeD_num; i++)
+        items2 << m_v3d.getListAll3DViewers();
+    threeD_master = new QComboBox();
+    //add 3D viewers to the combo box, by window title
+    //create a curwin_3D or some equivalent
+**/
+
+    //m_v3d.getListAll3DViewers()...
     combo_master = new QComboBox(); combo_master->addItems(items);
 
     label_master = new QLabel(QObject::tr("Display: "));
@@ -246,13 +310,16 @@ else{
     QLabel* SampleNameTwo = new QLabel(QObject::tr("Z Cut Max"));
     zcLock = new QToolButton(); zcLock->setCheckable(true);
 
-    //combo_surface = new MyComboBox(&m_v3d);
-    //combo_surface->updateList(); //test crash
-    //gridLayout->addWidget(combo_surface, 4,0,1,5);
+    // /**
+    combo_surface = new MyComboBox(&m_v3d);
+    combo_surface->updateList(); //test crash
+    // **/
 
     b_autoON = false; //no idea what this means
 
     gridLayout = new QGridLayout();
+    gridLayout->addWidget(combo_surface, 4,0,1,5);
+
     gridLayout->addWidget(label_master, 1,0,1,6);
     gridLayout->addWidget(combo_master,1,1,1,6);
 
@@ -290,7 +357,8 @@ else{
 
 }
 
-/**
+//when mouse enters the widget, updateList() happens
+// /**
 void MyComboBox::enterEvent(QEvent *e)
 {
     updateList();
@@ -307,7 +375,7 @@ void MyComboBox::updateList()
 
     // now re-check the currently opened windows
     v3dhandleList cur_list_triview = m_v3d->getImageWindowList();
-    QList <V3dR_MainWindow *> cur_list_3dviewer = m_v3d->getListAll3DViewers();
+    QList <V3dR_MainWindow *> cur_list_3dviewer = m_v3d->getListAll3DViewers(); //this should work...
 
     QStringList items;
     int i;
@@ -353,7 +421,7 @@ void MyComboBox::updateList()
 
     return;
 }
-**/
+// **/
 
 lookPanel::~lookPanel()
 {
@@ -406,7 +474,7 @@ void lookPanel::setZCutLockIcon(bool b){
 
 //this did not make any difference
 void lookPanel::setZCutLockIcon(bool b){
-    //CHECK_WINDOWS;
+    CHECK_WINDOWS;
     //if (! zcLock)  return;
         if (b==1){
             zcLock->setIcon(QIcon(":/pic/Lockon.png"));
@@ -417,52 +485,54 @@ void lookPanel::setZCutLockIcon(bool b){
 }
 
 void lookPanel::change_z_min(){
-    //CHECK_WINDOWS;
-    v3dhandleList win_list = m_v3d.getImageWindowList();
-    //win_list = m_v3d.getImageWindowList();
-    int i1 = combo_master->currentIndex();
+    CHECK_WINDOWS;
 
-    if (i1 <  win_list.size() &&
+
+    //v3dhandleList win_list = m_v3d.getImageWindowList();
+
+    //win_list = m_v3d.getImageWindowList(); //see below
+
+    int i1 = combo_master->currentIndex();
+    //int i1 = combo_surface->currentIndex();
+
+    if (i1 < win_list.size() &&
             i1 < win_list_past.size() )
     {
         QString current1 = m_v3d.getImageName(win_list[i1]);
         QString past1 = m_v3d.getImageName(win_list_past[i1]);
         if (current1==past1)
         {
+
+
+    win_list = m_v3d.getImageWindowList();
+    //int i1 = combo_master->currentIndex();
+
            if (win_list[i1])//ensure the 3d viewer window is open; if not, then open it (took out  && win_list[i2])
            {
-                m_v3d.open3DWindow(win_list[i1]);
-                View3DControl *view_master = m_v3d.getView3DControl(win_list[i1]);
+                m_v3d.open3DWindow(curwin); //- win_list[i1]
 
-                if (view_master)
+                //View3DControl *view_master = m_v3d.getView3DControl(win_list[i1]); //this is definitely wrong
+
+                if (view)
                 {
 
-                    view_master->absoluteRotPose();
+                    view->absoluteRotPose();
 
                     X = zcminSlider->sliderPosition();
-                    view_master->setZCut0(X);
-
-                    /**
-                    if(nt_list->size()==0){
-
-                    }
-
-                    if(nt_list->size()!=0){
-
-                    }
-                    **/
+                    view->setZCut0(X); //this is clearly working...
 
                     if(sz2<256){
                         dist_MIN = fabs((min_num-((float)X)));
 
                         if ((float)X>min_num){
 
-                         view_master->setZClip0((dist_MIN/(max_num-min_num))*200);
+                         view->setZClip0((dist_MIN/(max_num-min_num))*200);
+                         //something dies here
 
                           }
 
                         if((float)X<=min_num){
-                         view_master->setZClip0(0);
+                         view->setZClip0(0); //- view_master
                          }
 
                     }
@@ -471,12 +541,12 @@ void lookPanel::change_z_min(){
                          dist_MIN = fabs(((float)(X*((sz22-1.0)/255.0)))-(min_num)); //from 256
 
                     if (((float)(X*((sz22-1.0)/255.0)+0.5))>(min_num+0.5)){ //559.0
-                         view_master->setZClip0(((dist_MIN+0.5)/((max_num+0.5)-(min_num+0.5)))*200);
+                         view->setZClip0(((dist_MIN+0.5)/((max_num+0.5)-(min_num+0.5)))*200); //- view_master
                     }
 
 
                     if(((float)(X*((sz22-1.0)/255.0)+0.5))<=(min_num+0.5)){ //- =
-                        view_master->setZClip0(0);
+                        view->setZClip0(0); //- view_master
                     }
 
                     }
@@ -539,11 +609,12 @@ void lookPanel::change_z_min(){
                     **/
 
                 }
-           }
+          }
         }
         else
         {
             v3d_msg(warning_msg);
+            v3d_msg("breaks at the first else, min");
             QStringList items;
             for (int i=0; i<win_list.size(); i++)
                 items << m_v3d.getImageName(win_list[i]);
@@ -553,9 +624,11 @@ void lookPanel::change_z_min(){
 
         }
     }
+
     else
     {
         v3d_msg(warning_msg);
+        v3d_msg("breaks at the second else, min");
         QStringList items;
         for (int i=0; i<win_list.size(); i++)
             items << m_v3d.getImageName(win_list[i]);
@@ -563,42 +636,51 @@ void lookPanel::change_z_min(){
         win_list_past = win_list;
         return;
     }
+
     return;
 }
 
 void lookPanel::change_z_max(){
-    //CHECK_WINDOWS;
-    v3dhandleList win_list = m_v3d.getImageWindowList();
-    int i1 = combo_master->currentIndex();
+    CHECK_WINDOWS;
 
-    if (i1 <  win_list.size() &&
+    //v3dhandleList win_list = m_v3d.getImageWindowList();
+    int i1 = combo_master->currentIndex();
+    //int i1 = combo_surface->currentIndex();
+
+    if (i1 < win_list.size() &&
             i1 < win_list_past.size() )
     {
         QString current1 = m_v3d.getImageName(win_list[i1]);
         QString past1 = m_v3d.getImageName(win_list_past[i1]);
         if (current1==past1)
         {
+
+    win_list = m_v3d.getImageWindowList();
+    //int i1 = combo_master->currentIndex();
+
            if (win_list[i1])//ensure the 3d viewer window is open; if not, then open it (took out  && win_list[i2])
            {
-                m_v3d.open3DWindow(win_list[i1]);
-                View3DControl *view_master = m_v3d.getView3DControl(win_list[i1]);
+                m_v3d.open3DWindow(curwin); //-win_list[i1]
 
-                if (view_master)
+                //View3DControl *view_master = m_v3d.getView3DControl(win_list[i1]);
+               // **/
+
+                if (view)
                 {
-                    view_master->absoluteRotPose();
+                    view->absoluteRotPose();
 
                     Y = zcmaxSlider->sliderPosition();
-                    view_master->setZCut1(Y);
+                    view->setZCut1(Y);
 
              if(sz2<256){
                  dist_MAX = fabs((float)Y-max_num);
 
                  if((float)Y<max_num){
-                    view_master->setZClip1(200-((dist_MAX/(max_num-min_num))*200));
+                    view->setZClip1(200-((dist_MAX/(max_num-min_num))*200));
                  }
 
                  if((float)Y>=max_num){
-                       view_master->setZClip1(200);
+                       view->setZClip1(200);
                  }
 
 
@@ -608,11 +690,11 @@ void lookPanel::change_z_max(){
                 dist_MAX = fabs(((float)(Y*((sz22-1.0)/255.0))-(max_num))); //from 256
                     if (((float)(Y*((sz22-1.0)/255.0)+0.5))<(max_num+0.5)){ //zcutmax //+ =
                         //show a max z coordinate of max_num - dist_MAX
-                         view_master->setZClip1(200-(((dist_MAX+0.5)/((max_num+0.5)-(min_num+0.5)))*200)); //dist_MAX
+                         view->setZClip1(200-(((dist_MAX+0.5)/((max_num+0.5)-(min_num+0.5)))*200)); //dist_MAX
                     }
 
                     if(((float)((Y*((sz22-1.0)/255.0))+0.5))>=(max_num+0.5)){ //- =
-                        view_master->setZClip1(200);
+                        view->setZClip1(200);
 
                     }
 
@@ -668,6 +750,7 @@ void lookPanel::change_z_max(){
         else
         {
             v3d_msg(warning_msg);
+            v3d_msg("breaks at the first else, max");
             QStringList items;
             for (int i=0; i<win_list.size(); i++)
                 items << m_v3d.getImageName(win_list[i]);
@@ -677,9 +760,11 @@ void lookPanel::change_z_max(){
 
         }
     }
+
     else
     {
         v3d_msg(warning_msg);
+        v3d_msg("breaks at the second else, max");
         QStringList items;
         for (int i=0; i<win_list.size(); i++)
             items << m_v3d.getImageName(win_list[i]);
@@ -687,5 +772,6 @@ void lookPanel::change_z_max(){
         win_list_past = win_list;
         return;
     }
+
     return;
 }
