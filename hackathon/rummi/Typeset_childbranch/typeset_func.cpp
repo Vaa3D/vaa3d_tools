@@ -34,10 +34,10 @@ bool export_list2file_v2(QList<NeuronSWC> & lN, QString fileSaveName, QString Fi
     return true;
 }
 
-int typeset_swc_func(V3DPluginCallback2 &callback, QWidget *parent)
+int typeset_swc_func(V3DPluginCallback2 &callback)//, QWidget *parent)
 {
 
-    sort_menu(callback,parent); //sort first, then typeset
+    sort_menu(callback); //sort first, then typeset
 
     v3d_msg("Be sure to open the correct (filename)_sort swc file");
 

@@ -17,7 +17,7 @@ using namespace std;
 
 const QString title = QObject::tr("Sort SWC Plugin");
 
-void sort_menu(V3DPluginCallback2 &callback, QWidget *parent)
+void sort_menu(V3DPluginCallback2 &callback)
 {
     //cout<<"callback_sort: "<<(void*)&callback<<endl;
     //callback.getImageWindowList();

@@ -71,8 +71,8 @@ public:
 
 private slots:
     void _slot_sort();//V3DPluginCallback2 &_v3d, QWidget *parent);
-    void _slot_typeset(V3DPluginCallback2 &v3d, QWidget *parent);
-    //void _slot_typeset();
+    //void _slot_typeset(V3DPluginCallback2 &v3d, QWidget *parent);
+    void _slot_typeset();
     void _slot_refresh();
     void _slot_delete();
     void _slot_show();
