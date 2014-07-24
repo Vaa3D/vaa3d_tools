@@ -190,6 +190,7 @@ void identify_neurons(V3DPluginCallback2 &callback, QWidget *parent)
         //take user inputs
         NeuronTree openTree;
         QString outfilename;
+        controlPanel_SWC* p;
         if (controlPanel_SWC::m_pLookPanel_SWC)
         {
             controlPanel_SWC::m_pLookPanel_SWC->show();
@@ -197,18 +198,17 @@ void identify_neurons(V3DPluginCallback2 &callback, QWidget *parent)
         }
         else
         {
-            controlPanel_SWC* p = new controlPanel_SWC();
+            p = new controlPanel_SWC();
             if (p)	p->show();
         }
         //controlPanel_SWC::controlPanel_SWC(openTree,c,outfilename);
-        QString infileName = *controlPanel_SWC::infileName;
+        QString infileName = p->infileName;
         if (open_testSWC(infileName,openTree))
         {
             openTree.comment = "test";
             mTreeList->append(openTree);
         }
-        c = *controlPanel_SWC::channel;
-
+        c = p->channel;
         int structNum = mTreeList->count();
 
         //get examples from test data
@@ -327,7 +327,7 @@ void identify_neurons(V3DPluginCallback2 &callback, QWidget *parent)
 
         }
         //QString outfilename = curfilename+"_Labeled_SWC.swc";
-        outfilename = *controlPanel_SWC::outfileName;
+        outfilename = p->outfileName;
         if (!outfilename.toUpper().endsWith(".SWC"))
         {
             outfilename.append(curfilename + "_Labeled_SWC.swc");
@@ -1543,24 +1543,23 @@ void controlPanel_SWC::_slot_close()
 }
 void controlPanel_SWC::_slot_start()
 {
-          infileName = &m_pLineEdit_testfilepath->text();
-          if (!infileName->toUpper().endsWith(".SWC"))
+          infileName = m_pLineEdit_testfilepath->text();
+          if (!infileName.toUpper().endsWith(".SWC"))
           {
               v3d_msg("You did not choose a valid file type, or the example file you chose is empty. Will attempt to find exampler set in window.");
               return;
           }
 
-          QString s = m_pLineEdit_outputfilepath->text();
-          if (!QFile(s).exists())
+          outfileName= m_pLineEdit_outputfilepath->text();
+          if (!QFile(outfileName).exists())
           {
              v3d_msg("Output file path does not exist, ");
              return;
           }
-          outfileName = &s;
 
           QString channelno = m_pLineEdit_channelno->text();
           int c = channelno.toInt();
-          channel = &c;
+          channel = c;
 }
 void controlPanel_SWC::_slots_openFileDlg_input()
 {

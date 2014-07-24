@@ -38,9 +38,9 @@ public:
     QLineEdit *m_pLineEdit_outputfilepath;
     QLineEdit *m_pLineEdit_channelno;
     static controlPanel_SWC *m_pLookPanel_SWC;
-    static QString *infileName;
-    static QString *outfileName;
-    static int *channel;
+    QString infileName;
+    QString outfileName;
+    int channel;
 
 public slots:
     void _slot_start();
