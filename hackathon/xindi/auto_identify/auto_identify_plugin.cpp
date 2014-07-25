@@ -45,12 +45,12 @@ template <class T> bool compute_cell_values_rad(T* data1d,
                                         V3DLONG *dimNum,
                                         double xc, double yc, double zc,
                                         int c, double threshold, double & dataAve, double & rad);
-template <class T> LandmarkList scan_and_count(T* data1d,
-                                      V3DLONG *dimNum,
-                                      int MarkAve, int MarkStDev,
-                                      int PointAve, int PointStDev,
-                                      double radAve, double radStDev,
-                                      int c, int cat, double thresh, LandmarkList originalList, Image4DSimple &maskImage);
+template <class T> LandmarkList scan_and_count(T* data1d, V3DLONG *dimNum,
+                                               double cellAve, double cellStDev,
+                                               double PointAve, double PointStDev,
+                                               double radAve, double radStDev,
+                                               int c, int cat, double thresh,
+                                               LandmarkList originalList, Image4DSimple &maskImage);
 template <class T> LandmarkList remove_duplicates(T* data1d, LandmarkList fullList,
                                            V3DLONG *dimNum, int PointAve, int rad, int c);
 V_NeuronSWC get_v_neuron_swc(const NeuronTree *p);
@@ -133,6 +133,7 @@ bool AutoIdentifyPlugin::dofunc(const QString & func_name, const V3DPluginArgLis
  * radius StDev of branches works
  * can load test data directly from file
  * newly labeled SWC is now automatically added to 3D window
+ * Better UI implimented
  *
  * [current goals/issues]
  * some coords are returning as indeterminant in the compute_radius function. Right now they are being skipped. Not sure source of bad numbers.
@@ -189,32 +190,17 @@ void identify_neurons(V3DPluginCallback2 &callback, QWidget *parent)
         vector<double> segRadStDevArr(10);
 
         //take user inputs
-        NeuronTree openTree;
-        /*controlPanel_SWC* p;
-
-        if (controlPanel_SWC::m_pLookPanel_SWC)
-        {
-            controlPanel_SWC::m_pLookPanel_SWC->show();
-            //return;
-        }
-        else
-        {
-            p = new controlPanel_SWC();
-            if (p)	p->show();
-        }*/
-
-        Dialog_SWC dialog(callback, parent);
+        Dialog_SWC dialog(callback, parent, sc);
         if (dialog.exec()!=QDialog::Accepted)
         {
-            cout<<"nope"<<endl;
             return;
         }
-        else {cout<<"yup"<<endl;}
 
         int c = dialog.channel;
-        QString infileName = dialog.infileName;
-        cout<<c<<endl;
 
+        QString infileName = dialog.infileName;
+
+        NeuronTree openTree;
         if (open_testSWC(infileName,openTree))
         {
             openTree.comment = "test";
@@ -339,10 +325,12 @@ void identify_neurons(V3DPluginCallback2 &callback, QWidget *parent)
         }
         //QString outfilename = curfilename+"_Labeled_SWC.swc";
         QString outfilename = dialog.outfileName;
-        if (!outfilename.toUpper().endsWith(".SWC"))
-        {
-            outfilename.append("/Labeled_SWC.swc"); //should be made better
-        }
+        string SaveName = curfilename.toStdString();
+        unsigned int a = SaveName.rfind('.');
+        unsigned int b = SaveName.rfind('/');
+        SaveName = SaveName.substr(b+1,a-b-1);
+        SaveName.append("_Labeled_SWC.swc");
+        outfilename.append("/" + QString::fromStdString(SaveName));
         export_list2file(newTreeList,outfilename,curfilename);
         NeuronTree nt = readSWC_file(outfilename);
         callback.setSWC(curwin, nt);
@@ -360,6 +348,7 @@ void identify_neurons(V3DPluginCallback2 &callback, QWidget *parent)
  * mass center algorithm inaccuracy fixed
  * mass center should be smarter now
  * fixed apply_mask, broke mass_center...again
+ * implemented new UI
  *
  * [current goals/issues]
  * still several undetected cells
@@ -426,57 +415,65 @@ void count_cells(V3DPluginCallback2 &callback, QWidget *parent)
     int option;
     if (Marknum != 0 && SWCcount ==0 ) { option = 1; }
     else if (Marknum == 0 && SWCcount != 0) { option = 2; }
-    else
+    else {option == 0;}
+//    {
+//        QString qtitle = QObject::tr("Choose Test Data Input Type");
+//        bool ok;
+//        QStringList items;
+//        items << "Markers" << "SWCs" << "Markers and SWCs";
+//        QString item = QInputDialog::getItem(0, qtitle,
+//                                            QObject::tr("Which type of testing data are you using"), items, 0, false, &ok);
+//        if (! ok) return;
+//        int input_type = items.indexOf(item);
+//        if (input_type==0) { option = 1; }
+//        else if (input_type==1){ option = 2; }
+//        else { option = 3; }
+//    }
+
+//    bool ok;
+
+//    //input channel
+//    unsigned int c=1;
+//    if (sc==1)
+//        c=1; //if only using 1 channel
+//    else
+//        c = QInputDialog::getInteger(parent, "Channel", "Enter Channel Number", 1, 1, sc, 1,&ok);
+
+
+//    //input sort method
+//    QString qtitle = QObject::tr("Choose Sorting Method");
+//    QStringList items;
+//    items << "Default (binary color threshold)" << "By Type";
+//    QString item = QInputDialog::getItem(0, qtitle,
+//                                         QObject::tr("How should the test data be sorted?"), items, 0, false, &ok);
+//    if (! ok) return;
+
+    Dialog_cells dialog(callback, parent,sc,option);
+    if (dialog.exec()!=QDialog::Accepted)
     {
-        QString qtitle = QObject::tr("Choose Test Data Input Type");
-        bool ok;
-        QStringList items;
-        items << "Markers" << "3D Curves" << "Markers and 3D Curves";
-        QString item = QInputDialog::getItem(0, qtitle,
-                                            QObject::tr("Which type of testing data are you using"), items, 0, false, &ok);
-        if (! ok) return;
-        int input_type = items.indexOf(item);
-        if (input_type==0) { option = 1; }
-        else if (input_type==1){ option = 2; }
-        else { option = 3; }
+        return;
     }
 
+    option = dialog.input_type;
     LandmarkList mlist, neuronMarkList;
-    if (option == 1)
+    if (option == 1) //input is markers
     {
         mlist = Marklist;
     }
-    else if (option == 2 )
+    else if (option == 2 ) //input is SWC
     {
         neuronMarkList = neuron_2_mark(mTree,neuronMarkList);
         mlist = neuronMarkList;
     }
-    else
+    else    //input is both markers and SWC
     {
         neuronMarkList = neuron_2_mark(mTree,neuronMarkList);
         mlist = Marklist;
         mlist.append(neuronMarkList);
     }
-
-    bool ok;
-
-    //input channel
-    unsigned int c=1;
-    if (sc==1)
-        c=1; //if only using 1 channel
-    else
-        c = QInputDialog::getInteger(parent, "Channel", "Enter Channel Number", 1, 1, sc, 1,&ok);
-
-
-    //input sort method
-    QString qtitle = QObject::tr("Choose Sorting Method");
-    QStringList items;
-    items << "Default (binary color threshold)" << "By Type";
-    QString item = QInputDialog::getItem(0, qtitle,
-                                         QObject::tr("How should the test data be sorted?"), items, 0, false, &ok);
-    if (! ok) return;
-    int input_type = items.indexOf(item);
-    if (input_type==0) //default
+    int c = dialog.channel;
+    int sort_type = dialog.sort_type;
+    if (sort_type==0) //binary sort
     {
         if (mlist.count()<=0)    {v3d_msg("There are no markers in the current image"); return;}
 
@@ -491,7 +488,7 @@ void count_cells(V3DPluginCallback2 &callback, QWidget *parent)
             //callback.setImage(newwin,&maskImage);
         }
     }
-    else if (input_type==1) //type
+    else if (sort_type==1) //type sort
     {
         //int catNum = QInputDialog::getInt(0,"Number of Categories","Enter number of categories (background category included), if unsure enter 0",0,0,100,1,&ok);
         //Can't think of reason having user inputed cat number would be better than auto counting
@@ -504,7 +501,7 @@ void count_cells(V3DPluginCallback2 &callback, QWidget *parent)
         {
             tempInd = mlist.at(i);
             catList[i] = tempInd.category;
-//            v3d_msg((QString("hi %1, cat %2").arg(i).arg(catList[i])));
+//v3d_msg((QString("hi %1, cat %2").arg(i).arg(catList[i])));
         }
 
         //counts number of categories
@@ -528,7 +525,7 @@ void count_cells(V3DPluginCallback2 &callback, QWidget *parent)
         map<int,LandmarkList> catArr;
         LandmarkList temp;
         int row=0;
-        for (int catval=0; catval<mlist.count(); catval++) //loop through category values
+        for (int catval=0; catval<10; catval++) //loop through category values
         {
             int x=0;
             for (int index=0; index<mlist.count(); index++) //loop through markers
@@ -539,7 +536,7 @@ void count_cells(V3DPluginCallback2 &callback, QWidget *parent)
                     temp.append(mlist.at(index));
                 }
             }
-//            v3d_msg(QString("found %1 values for catVal %2").arg(x).arg(catval));
+//v3d_msg(QString("found %1 values for catVal %2").arg(x).arg(catval));
             if (x==0)
                 continue;
             else
@@ -552,10 +549,7 @@ void count_cells(V3DPluginCallback2 &callback, QWidget *parent)
         }
         if (catList) {delete [] catList; catList=0;}
 
-//        v3d_msg("indexing complete");
-
-
-//v3d_msg("arrays made");
+//v3d_msg("indexing complete, arrays made");
         //run script
         LandmarkList catSortList;
         LandmarkList * marks;
@@ -573,7 +567,7 @@ void count_cells(V3DPluginCallback2 &callback, QWidget *parent)
 //v3d_msg(QString("marks %1").arg(marks->count()));
             LandmarkList tempList;
             Image4DSimple maskImage;
-            if (identify_cells(data1d,dimNum,c,*marks,*bgs, tempList,maskImage))
+            if (identify_cells(data1d,dimNum,c,*marks,*bgs,tempList,maskImage))
                 catSortList.append(tempList);
 //v3d_msg(QString("catSortList append category %1").arg(tempList.at(0).category));
 //            marksL.clear();
@@ -599,8 +593,10 @@ template <class T> bool identify_cells(T* data1d, V3DLONG *dimNum, int c, const 
     int xc,yc,zc, marks;
     double PixVal,BGVal;
     double thresh=0;
+    bool catsorting=false;
     if (bglist.isEmpty()) //binary sorting
     {
+        catsorting=false;
         //sort markers by background/foreground
 
         //add corner pixels to list to use as additional bg markers
@@ -612,6 +608,7 @@ template <class T> bool identify_cells(T* data1d, V3DLONG *dimNum, int c, const 
                 for (int k=0; k<=P; k+=P)
                 {
                     LocationSimple extraBG(i,j,k);
+                    extraBG.category = 0;
                     mlist.append(extraBG);
                 }
             }
@@ -706,9 +703,13 @@ template <class T> bool identify_cells(T* data1d, V3DLONG *dimNum, int c, const 
             if (num<thresh) { BGList.append(tmpLocation); BGVal += num; }    //BGList holds bg markers
             if (num>thresh) { MarkList.append(tmpLocation); PixVal += num; }  //MarkList holds cell markers
         }
+
+        PixVal = PixVal/MarkList.count();   //PixVal now stores average pixel value of all cell markers
+        BGVal = BGVal/BGList.count();       //BGVal now stores average pixel value of all background markers
     }
     else    //comment sorting
     {
+        catsorting=true;
         MarkList = markerlist;
         PixVal=0, BGVal=0;
         for (int i=0; i<MarkList.count(); i++)
@@ -726,6 +727,10 @@ template <class T> bool identify_cells(T* data1d, V3DLONG *dimNum, int c, const 
             int pix = pixelVal(data1d,dimNum,xc,yc,zc,c);
             BGVal += pix;
         }
+
+        PixVal = PixVal/MarkList.count();   //PixVal now stores average pixel value of all cell markers
+        BGVal = BGVal/BGList.count();       //BGVal now stores average pixel value of all background markers
+        thresh = (PixVal+BGVal)/2;
     }
 
     marks = MarkList.count();
@@ -736,22 +741,21 @@ template <class T> bool identify_cells(T* data1d, V3DLONG *dimNum, int c, const 
         return false;
     }
 
-    PixVal = PixVal/marks;          //PixVal now stores average pixel value of all cell markers
-    BGVal = BGVal/BGList.count();   //BGVal now stores average pixel value of all background markers
     int cat = MarkList.at(0).category;
-//    v3d_msg(QString("PixVal %1, pixCount %2, BGVal %3, BGCount %4").arg(PixVal).arg(marks).arg(BGVal).arg(BGList.count()));
+//v3d_msg(QString("PixVal %1, pixCount %2, BGVal %3, BGCount %4").arg(PixVal).arg(marks).arg(BGVal).arg(BGList.count()));
 
 
 //v3d_msg(QString("marks = %1, bgcount = %2. Marks all sorted").arg(marks).arg(BGList.count()));
-
 
     //recalibrates marker list by mean shift
     LandmarkList CenteredList;
     double blah,checkrad=0;
     compute_cell_values_rad(data1d,dimNum,xc,yc,zc,c,thresh,blah,checkrad);
+    if (checkrad<5) {checkrad=5;}
     mass_center_Lists(data1d,dimNum,MarkList,CenteredList,checkrad*1.5,c,thresh);
     MarkList = CenteredList;
     //outputlist = CenteredList; return true;
+//v3d_msg("mean shifted");
 
     //scan list of cell markers for ValAve, radAve
 
@@ -780,8 +784,8 @@ template <class T> bool identify_cells(T* data1d, V3DLONG *dimNum, int c, const 
 
 //v3d_msg("scan checkpoint");
 
-    ValAve /= marks;  //average pixel value of each segment
-    radAve /= marks;  //average radius of segment
+    ValAve /= marks;  //average pixel value of each cell
+    radAve /= marks;  //average radius of cell
 
 //v3d_msg(QString("FINAL ValAve %1, radAve %2").arg(ValAve).arg(radAve));
 
@@ -819,19 +823,26 @@ template <class T> bool identify_cells(T* data1d, V3DLONG *dimNum, int c, const 
 //v3d_msg("recentering");
     LandmarkList RecenterList;
     mass_center_Lists(data1d,dimNum,scannedList,RecenterList,radAve+radStDev,c,thresh);
-    for (int i=0; i<RecenterList.size();i++)
-    {
-        LocationSimple tmp(0,0,0);
-        tmp = RecenterList.at(i);
-        tmp.category = cat;
-        stringstream catStr;
-        catStr << cat;
-        tmp.comments = catStr.str();
-    }
 //v3d_msg("ckpt 2");
     outputlist = remove_duplicates(data1d,RecenterList,dimNum,PixVal,radAve,c);
 //    outputlist = RecenterList;
 //v3d_msg("duplicates deleted");
+    if (catsorting==true) //set same category and color
+    {
+        srand(clock()); //time(NULL));
+        RGBA8 col = random_rgba8(255);
+        for (int i=0; i<outputlist.size();i++)
+        {
+            LocationSimple tmp(0,0,0);
+            tmp = outputlist.at(i);
+            tmp.category = cat;
+            tmp.color = col;
+            stringstream catStr;
+            catStr << cat;
+            tmp.comments = catStr.str();
+            outputlist.replace(i,tmp);
+        }
+    }
 
     cout<<"Cell count "<<outputlist.count()<<endl<<endl;
     return true;
@@ -848,7 +859,6 @@ template <class T> int pixelVal(T* data1d, V3DLONG *dimNum,
     V3DLONG M = dimNum[1];
     V3DLONG P = dimNum[2];
     V3DLONG shiftC = (c-1)*P*M*N;
-    //xc+=0.5; yc+=0.5; zc+=0.5; //insures proper rounding
     if (xc<=0) xc=1; if (xc>N) xc=N;
     if (yc<=0) yc=1; if (yc>M) yc=M;
     if (zc<=0) zc=1; if (zc>P) zc=P;
@@ -981,7 +991,7 @@ template <class T> bool mass_center_Coords(T* data1d,
     return true;
 }
 
-//returns average pixel value and radius of cell around a marker
+//returns average pixel value of shell of computed radius around a marker
 template <class T> bool compute_cell_values_rad(T* data1d,
                                         V3DLONG *dimNum,
                                         double xc, double yc, double zc,
@@ -994,7 +1004,7 @@ template <class T> bool compute_cell_values_rad(T* data1d,
 
     do
     {
-        outputrad++;
+        outputrad+=0.5;
         double x,y,z,datatotal=0,pi=3.14;;
         int runs=0;
         for (double theta=0; theta<2*pi; theta+=(pi/8))
@@ -1025,7 +1035,7 @@ template <class T> bool compute_cell_values_rad(T* data1d,
 }
 
 
-//returns average pixel value in sphere of radius rad on channel c around a given marker
+//returns average pixel value of shell of radius rad on channel c around a given marker
 template <class T> double compute_ave_cell_val(T* data1d, V3DLONG *dimNum,
                                                double xc, double yc, double zc, int c, double rad)
 {
@@ -1035,7 +1045,7 @@ template <class T> double compute_ave_cell_val(T* data1d, V3DLONG *dimNum,
 
     double x,y,z,datatotal=0,pi=3.14;
     int runs=0;
-    double r = rad;
+    double r=rad;
 
     for (double theta=0; theta<2*pi; theta+=(pi/4))
     {
@@ -1066,12 +1076,12 @@ template <class T> double compute_ave_cell_val(T* data1d, V3DLONG *dimNum,
 
 
 //uses test data to scan and mark other cells
-template <class T> LandmarkList scan_and_count(T* data1d,
-                              V3DLONG *dimNum,
-                              int cellAve, int cellStDev,
-                              int PointAve, int PointStDev,
-                              double radAve, double radStDev,
-                              int c, int cat, double thresh, LandmarkList originalList, Image4DSimple &maskImage)
+template <class T> LandmarkList scan_and_count(T* data1d, V3DLONG *dimNum,
+                                               double cellAve, double cellStDev,
+                                               double PointAve, double PointStDev,
+                                               double radAve, double radStDev,
+                                               int c, int cat, double thresh,
+                                               LandmarkList originalList, Image4DSimple &maskImage)
 {
     V3DLONG N = dimNum[0];
     V3DLONG M = dimNum[1];
