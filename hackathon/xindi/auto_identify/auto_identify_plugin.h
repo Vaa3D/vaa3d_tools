@@ -84,7 +84,7 @@ public:
         setWindowTitle(QString("Label currently displayed SWC using example file"));
 
         connect(pPushButton_start, SIGNAL(clicked()), this, SLOT(_slot_start()));
-        connect(pPushButton_close, SIGNAL(clicked()), this, SLOT(_slot_close()));
+        connect(pPushButton_close, SIGNAL(clicked()), this, SLOT(reject()));
         connect(pPushButton_openFileDlg_input, SIGNAL(clicked()), this, SLOT(_slots_openFileDlg_input()));
         connect(pPushButton_openFileDlg_output, SIGNAL(clicked()), this, SLOT(_slots_openFileDlg_output()));
     }
@@ -101,14 +101,56 @@ public:
     int channel;
 
 public slots:
-    void _slot_start()
-    {}
     void _slot_close()
-    {}
+    {
+        if (this)
+        {
+            delete this;
+        }
+    }
+    void _slot_start()
+    {
+        infileName = m_pLineEdit_testfilepath->text();
+        if (!infileName.toUpper().endsWith(".SWC"))
+        {
+            v3d_msg("You did not choose a valid file type, or the example file you chose is empty. Will attempt to find exampler set in window.");
+        }
+
+        outfileName= m_pLineEdit_outputfilepath->text();
+        if (!QFile(outfileName).exists())
+        {
+            v3d_msg("Output file path does not exist, ");
+        }
+
+        QString channelno = m_pLineEdit_channelno->text();
+        int c = channelno.toInt();
+        channel = c;
+
+        accept();
+    }
     void _slots_openFileDlg_input()
-    {}
+    {
+        QFileDialog d(this);
+        QString fileOpenName;
+        fileOpenName = QFileDialog::getOpenFileName(0, QObject::tr("Open Example SWC File"),
+                "",
+                QObject::tr("Supported file (*.swc)"));;
+        if(!fileOpenName.isEmpty())
+        {
+            m_pLineEdit_testfilepath->setText(fileOpenName);
+        }
+    }
     void _slots_openFileDlg_output()
-    {}
+    {
+        QFileDialog d(this);
+        d.setWindowTitle(tr("Choose movie frames dir:"));
+        d.setFileMode(QFileDialog::Directory);
+        if(d.exec())
+        {
+            QString selectedFile=(d.selectedFiles())[0];
+            m_pLineEdit_outputfilepath->setText(selectedFile);
+        }
+    }
 };
 
 #endif

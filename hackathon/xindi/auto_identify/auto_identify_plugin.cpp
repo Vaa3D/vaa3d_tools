@@ -14,6 +14,7 @@
 #include <time.h>
 #include <cmath>
 #include <iostream>
+#include <cstdlib>
 
 using namespace std;
 Q_EXPORT_PLUGIN2(auto_identify, AutoIdentifyPlugin);
@@ -169,7 +170,7 @@ void identify_neurons(V3DPluginCallback2 &callback, QWidget *parent)
     dimNum[0]=N; dimNum[1]=M; dimNum[2]=P; dimNum[3]=sc;
 
     //input channel
-    int c=0;
+    //int c=0;
     //bool ok;
     //if (sc==1)
     //    c=1; //if only using 1 channel
@@ -189,12 +190,12 @@ void identify_neurons(V3DPluginCallback2 &callback, QWidget *parent)
 
         //take user inputs
         NeuronTree openTree;
-        QString outfilename;
         /*controlPanel_SWC* p;
+
         if (controlPanel_SWC::m_pLookPanel_SWC)
         {
             controlPanel_SWC::m_pLookPanel_SWC->show();
-            return;
+            //return;
         }
         else
         {
@@ -204,16 +205,21 @@ void identify_neurons(V3DPluginCallback2 &callback, QWidget *parent)
 
         Dialog_SWC dialog(callback, parent);
         if (dialog.exec()!=QDialog::Accepted)
+        {
+            cout<<"nope"<<endl;
             return;
+        }
+        else {cout<<"yup"<<endl;}
 
-        //controlPanel_SWC::controlPanel_SWC(openTree,c,outfilename);
+        int c = dialog.channel;
         QString infileName = dialog.infileName;
+        cout<<c<<endl;
+
         if (open_testSWC(infileName,openTree))
         {
             openTree.comment = "test";
             mTreeList->append(openTree);
         }
-        c = dialog.channel;
         int structNum = mTreeList->count();
 
         //get examples from test data
@@ -332,10 +338,10 @@ void identify_neurons(V3DPluginCallback2 &callback, QWidget *parent)
 
         }
         //QString outfilename = curfilename+"_Labeled_SWC.swc";
-        outfilename = dialog.outfileName;
+        QString outfilename = dialog.outfileName;
         if (!outfilename.toUpper().endsWith(".SWC"))
         {
-            outfilename.append(curfilename + "_Labeled_SWC.swc");
+            outfilename.append("/Labeled_SWC.swc"); //should be made better
         }
         export_list2file(newTreeList,outfilename,curfilename);
         NeuronTree nt = readSWC_file(outfilename);
@@ -1476,115 +1482,3 @@ QString getAppPath()
 
     return testPluginsDir.absolutePath();
 }
-
-/*controlPanel_SWC::controlPanel_SWC()
-{
-    QString exepath = getAppPath();
-
-    m_pLookPanel_SWC = this;
-
-    m_pLineEdit_testfilepath = new QLineEdit();
-    m_pLineEdit_outputfilepath = new QLineEdit(exepath);
-    m_pLineEdit_channelno = new QLineEdit(QObject::tr("1"));
-    QPushButton *pPushButton_start = new QPushButton(QObject::tr("start labeling"));
-    QPushButton *pPushButton_close = new QPushButton(QObject::tr("close"));
-    QPushButton *pPushButton_openFileDlg_input = new QPushButton(QObject::tr("Browse"));
-    QPushButton *pPushButton_openFileDlg_output = new QPushButton(QObject::tr("Browse"));
-
-    QGroupBox *input_panel = new QGroupBox("Input:");
-    input_panel->setStyle(new QWindowsStyle());
-    QGridLayout *inputLayout = new QGridLayout();
-    input_panel->setStyle(new QWindowsStyle());
-    inputLayout->addWidget(new QLabel(QObject::tr("Labeled Example SWC:")),1,1);
-    inputLayout->addWidget(m_pLineEdit_testfilepath,2,1,1,2);
-    inputLayout->addWidget(pPushButton_openFileDlg_input,2,3,1,1);
-    input_panel->setLayout(inputLayout);
-
-    QGroupBox *output_panel = new QGroupBox("Output:");
-    output_panel->setStyle(new QWindowsStyle());
-    QGridLayout *outputLayout = new QGridLayout();
-    outputLayout->addWidget(new QLabel(QObject::tr("Choose directory to save labeled SWC:")),1,1);
-    outputLayout->addWidget(m_pLineEdit_outputfilepath,2,1,1,2);
-    outputLayout->addWidget(pPushButton_openFileDlg_output,2,3,1,1);
-    output_panel->setLayout(outputLayout);
-
-
-    QGroupBox *channel_panel = new QGroupBox("Channel Number:");
-    channel_panel->setStyle(new QWindowsStyle());
-    QGridLayout *channelLayout = new QGridLayout();
-    channelLayout->addWidget(new QLabel(QObject::tr("Channel:")),4,1);
-    channelLayout->addWidget(m_pLineEdit_channelno,4,2);
-    channel_panel->setLayout(channelLayout);
-
-    QWidget* container = new QWidget();
-    QGridLayout* bottomBar = new QGridLayout();
-    bottomBar->addWidget(pPushButton_start,1,1);
-    bottomBar->addWidget(pPushButton_close,1,2);
-    container->setLayout(bottomBar);
-
-    QGridLayout *pGridLayout = new QGridLayout();
-    pGridLayout->addWidget(input_panel);
-    pGridLayout->addWidget(output_panel);
-    pGridLayout->addWidget(channel_panel);
-    pGridLayout->addWidget(container);
-
-    setLayout(pGridLayout);
-    setWindowTitle(QString("Label currently displayed SWC using example file"));
-
-    connect(pPushButton_start, SIGNAL(clicked()), this, SLOT(_slot_start()));
-    connect(pPushButton_close, SIGNAL(clicked()), this, SLOT(_slot_close()));
-    connect(pPushButton_openFileDlg_input, SIGNAL(clicked()), this, SLOT(_slots_openFileDlg_input()));
-    connect(pPushButton_openFileDlg_output, SIGNAL(clicked()), this, SLOT(_slots_openFileDlg_output()));
-
-}
-
-void controlPanel_SWC::_slot_close()
-{
-    if (m_pLookPanel_SWC)
-    {
-        delete m_pLookPanel_SWC;
-        m_pLookPanel_SWC=0;
-    }
-}
-void controlPanel_SWC::_slot_start()
-{
-          infileName = m_pLineEdit_testfilepath->text();
-          if (!infileName.toUpper().endsWith(".SWC"))
-          {
-              v3d_msg("You did not choose a valid file type, or the example file you chose is empty. Will attempt to find exampler set in window.");
-              return;
-          }
-
-          outfileName= m_pLineEdit_outputfilepath->text();
-          if (!QFile(outfileName).exists())
-          {
-             v3d_msg("Output file path does not exist, ");
-             return;
-          }
-
-          QString channelno = m_pLineEdit_channelno->text();
-          int c = channelno.toInt();
-          channel = c;
-}
-void controlPanel_SWC::_slots_openFileDlg_input()
-{
-    QFileDialog d(this);
-    QString fileOpenName;
-    fileOpenName = QFileDialog::getOpenFileName(0, QObject::tr("Open Example SWC File"),
-            "",
-            QObject::tr("Supported file (*.swc)"));;
-    if(!fileOpenName.isEmpty())
-    {
-        m_pLineEdit_testfilepath->setText(fileOpenName);
-    }
-}
-void controlPanel_SWC::_slots_openFileDlg_output()
-{
-    QFileDialog d(this);
-    QString fileOpenName;
-    fileOpenName = QFileDialog::getOpenFileName(0, QObject::tr("Choose output file dir"));;
-    if(!fileOpenName.isEmpty())
-    {
-        m_pLineEdit_outputfilepath->setText(fileOpenName);
-    }
-}*/
