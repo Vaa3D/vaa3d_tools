@@ -155,6 +155,7 @@ lookPanel::lookPanel(V3DPluginCallback2 &_v3d, QWidget *parent) : //do it here!!
     //QObject *test = m_v3d.currentImageWindow();
     //v3dhandle curwin = m_v3d.currentImageWindow();
 
+    //first check to see if there is an image
     curwin = m_v3d.currentImageWindow();
 
         if (!curwin)
@@ -167,6 +168,52 @@ lookPanel::lookPanel(V3DPluginCallback2 &_v3d, QWidget *parent) : //do it here!!
         m_v3d.open3DWindow(curwin);
         //m_v3d.open3DWindow(surface_win);
 
+        //crashes it
+        //CHECK_WINDOWS;
+
+        /**
+        list_triview = m_v3d.getImageWindowList();
+        list_3dviewer = m_v3d.getListAll3DViewers();
+
+        //if(!combo_surface || combo_surface->count()<=0) {return;}
+
+        if(combo_surface->currentIndex() < list_triview.size())
+    {
+        curwin = list_triview[combo_surface->currentIndex()];
+            if(curwin)
+                {
+                    m_v3d.open3DWindow(curwin);
+                    view = m_v3d.getView3DControl(curwin);
+                }
+            //else
+            //return;
+            //}
+    }
+        else
+    {
+        QString curname = combo_surface->itemText(combo_surface->currentIndex());
+        v3d_msg(QString("current window selected:[%1]").arg(curname), 0);
+                for (int i=0; i<list_3dviewer.count(); i++)
+                  {
+                      if(curname == m_v3d.getImageName(list_3dviewer[i]))
+                      {
+                        surface_win = list_3dviewer[i];
+                            if(surface_win)
+                              {
+                                m_v3d.open3DWindow(surface_win);
+                                view = m_v3d.getView3DControl_Any3DViewer(surface_win);
+                               }
+                       }
+                            //else
+                            //return;
+                           // break;
+                            // }
+                    }
+    }
+            //if (!view) return;
+
+
+         **/
 
         /**
         if(curwin)
@@ -308,14 +355,14 @@ else{
 
     QLabel* SampleName = new QLabel(QObject::tr("Z Cut Min"));
     QLabel* SampleNameTwo = new QLabel(QObject::tr("Z Cut Max"));
-    zcLock = new QToolButton(); zcLock->setCheckable(true);
+    //zcLock = new QToolButton(); zcLock->setCheckable(true);
 
     // /**
     combo_surface = new MyComboBox(&m_v3d);
     combo_surface->updateList(); //test crash
     // **/
 
-    b_autoON = false; //no idea what this means
+    //b_autoON = false; //don't need this
 
     gridLayout = new QGridLayout();
     gridLayout->addWidget(combo_surface, 4,0,1,5);
@@ -330,10 +377,18 @@ else{
 
     gridLayout->addWidget(zcminSlider,15,3,1,16); //15,0,1,6 //maybe add dimensions later
     gridLayout->addWidget(zcmaxSlider,17,3,1,16);
+
+    zcLock = new QToolButton(); zcLock->setCheckable(true);
     gridLayout->addWidget(zcLock, 20, 1, 1, 3); //NEW
 
-    if (zcminSlider)
-    {
+   // if (zcLock) {
+        //setZCutLockIcon(false);
+        //zcLock = false;
+        lockZ = 0; //KEEP THIS
+            connect(zcLock, SIGNAL(toggled(bool)), this, SLOT(setZCutLock(bool))); //setZCutLock(false);//3. glWidget
+            connect(zcLock, SIGNAL(toggled(bool)), this, SLOT(setZCutLockIcon(bool))); setZCutLockIcon(false); //default
+   // }
+    if (zcminSlider){
             connect(zcminSlider, SIGNAL(valueChanged(int)), this, SLOT(change_z_min())); //SLOT(setZCut0(int))
     }
 
@@ -342,10 +397,14 @@ else{
         connect(zcmaxSlider, SIGNAL(valueChanged(int)), this, SLOT(change_z_max()));
     }
 
+        /**
+    zcLock = new QToolButton(); zcLock->setCheckable(true);
+    gridLayout->addWidget(zcLock, 20, 1, 1, 3); //NEW
     if (zcLock) {
             connect(zcLock, SIGNAL(toggled(bool)), this, SLOT(setZCutLock(bool))); //setZCutLock(false);//3. glWidget
             connect(zcLock, SIGNAL(toggled(bool)), this, SLOT(setZCutLockIcon(bool))); setZCutLockIcon(false); //default
-     }
+    }
+    **/
 
 
 
@@ -474,8 +533,8 @@ void lookPanel::setZCutLockIcon(bool b){
 
 //this did not make any difference
 void lookPanel::setZCutLockIcon(bool b){
-    CHECK_WINDOWS;
-    //if (! zcLock)  return;
+    //CHECK_WINDOWS; //took out check windows for icon...that did nothing
+    if (! zcLock)  return;
         if (b==1){
             zcLock->setIcon(QIcon(":/pic/Lockon.png"));
         }
@@ -516,10 +575,11 @@ void lookPanel::change_z_min(){
                 if (view)
                 {
 
-                    view->absoluteRotPose();
-
+                   // view->absoluteRotPose(); //didn't do a whole lot
+                    //if(!lockZ){
                     X = zcminSlider->sliderPosition();
                     view->setZCut0(X); //this is clearly working...
+
 
                     if(sz2<256){
                         dist_MIN = fabs((min_num-((float)X)));
@@ -550,9 +610,11 @@ void lookPanel::change_z_min(){
                     }
 
                     }
+                // }
 
-
-                    if (lockZ){
+                    if (lockZ){ //lockZ
+                        X = zcminSlider->sliderPosition();
+                        view->setZCut0(X);
                         zcmaxSlider->setValue(X+dzCut);
 
                         if((zcmaxSlider->value())==(zcmaxSlider->maximum())){
@@ -667,10 +729,12 @@ void lookPanel::change_z_max(){
 
                 if (view)
                 {
-                    view->absoluteRotPose();
+                    //view->absoluteRotPose();
 
+                   // if(!lockZ){ //!lockZ
                     Y = zcmaxSlider->sliderPosition();
                     view->setZCut1(Y);
+
 
              if(sz2<256){
                  dist_MAX = fabs((float)Y-max_num);
@@ -699,6 +763,7 @@ void lookPanel::change_z_max(){
                     }
 
              }
+                   // }
 
              /**
                     if (lockZ){
@@ -714,6 +779,10 @@ void lookPanel::change_z_max(){
                     //In the locked case
 
                     if (lockZ){
+
+                        Y = zcmaxSlider->sliderPosition();
+                        view->setZCut1(Y);
+
                         zcminSlider->setValue(Y-dzCut);
 
                         if((zcminSlider->value())==0){
