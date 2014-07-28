@@ -163,6 +163,7 @@ public:
     QComboBox* combo_master; //a usable drop down menu
     //QComboBox* new_combo_master;
     QLabel* label_master;
+    QLabel* label_display;
     //QCheckBox* check_zed; //take this out later; unnecessary
     QGridLayout *gridLayout;
     v3dhandleList win_list;

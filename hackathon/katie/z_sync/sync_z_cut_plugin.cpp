@@ -329,7 +329,8 @@ else{
     //m_v3d.getListAll3DViewers()...
     combo_master = new QComboBox(); combo_master->addItems(items);
 
-    label_master = new QLabel(QObject::tr("Display: "));
+    label_master = new QLabel(QObject::tr("File: "));
+    label_display = new QLabel(QObject::tr("Active: "));
 
     Image4DSimple* subject = _v3d.getImage(curwin);
     sz2 = subject->getZDim();
@@ -365,7 +366,8 @@ else{
     //b_autoON = false; //don't need this
 
     gridLayout = new QGridLayout();
-    gridLayout->addWidget(combo_surface, 4,0,1,5);
+    gridLayout->addWidget(label_display,4,0,1,6);
+    gridLayout->addWidget(combo_surface, 4,1,1,6);
 
     gridLayout->addWidget(label_master, 1,0,1,6);
     gridLayout->addWidget(combo_master,1,1,1,6);
