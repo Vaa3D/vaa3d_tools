@@ -26,7 +26,10 @@ Q_EXPORT_PLUGIN2(auto_identify, AutoIdentifyPlugin);
 void count_cells(V3DPluginCallback2 &callback, QWidget *parent);
 void identify_neurons(V3DPluginCallback2 &callback, QWidget *parent);
 
-template <class T> bool identify_cells(T* data1d, V3DLONG *dimNum, int c, const LandmarkList & markerlist, LandmarkList & bglist, LandmarkList & outputlist, Image4DSimple &maskImage);
+template <class T> bool identify_cells(T* data1d, V3DLONG *dimNum, int c,
+                                       const LandmarkList & markerlist, LandmarkList & bglist,
+                                       LandmarkList & outputlist, Image4DSimple &maskImage,
+                                       int &cat, double &rad, double &val);
 
 LandmarkList neuron_2_mark(const NeuronTree & p, LandmarkList & neuronMarkList);
 template <class T> int pixelVal(T* data1d, V3DLONG *dimNum,
@@ -37,7 +40,7 @@ template <class T> bool mass_center_Lists(T* data1d,
                                     double radius, int c, double thresh);
 template <class T> bool mass_center_Coords(T* data1d,
                                     V3DLONG *dimNum,
-                                    double &x, double &y, double &z,
+                                    int &x, int &y, int &z,
                                     double radius, int c, double thresh);
 template <class T> double compute_ave_cell_val(T* data1d, V3DLONG *dimNum,
                                         double xc,double yc,double zc,int c,double rad);
@@ -53,6 +56,9 @@ template <class T> LandmarkList scan_and_count(T* data1d, V3DLONG *dimNum,
                                                LandmarkList originalList, Image4DSimple &maskImage);
 template <class T> LandmarkList remove_duplicates(T* data1d, LandmarkList fullList,
                                            V3DLONG *dimNum, int PointAve, int rad, int c);
+template <class T> LandmarkList type_duplicates(T* data1d, LandmarkList fullList,
+                                                V3DLONG *dimNum, int c,
+                                                vector<double> catArr, vector<double> radArr, vector<double> valArr);
 V_NeuronSWC get_v_neuron_swc(const NeuronTree *p);
 V_NeuronSWC_list get_neuron_segments(const NeuronTree *p);
 NeuronTree VSWC_2_neuron_tree(V_NeuronSWC *p, int id);
@@ -480,7 +486,9 @@ void count_cells(V3DPluginCallback2 &callback, QWidget *parent)
         LandmarkList bglist; //sending in empty bglist to trigger binary sort
         LandmarkList outputList;
         Image4DSimple maskImage;
-        if (identify_cells(data1d,dimNum,c,mlist,bglist,outputList,maskImage))
+        int cat;
+        double rad,val;
+        if (identify_cells(data1d,dimNum,c,mlist,bglist,outputList,maskImage,cat,rad,val))
         {
             callback.setLandmark(curwin,outputList);
 
@@ -554,6 +562,8 @@ void count_cells(V3DPluginCallback2 &callback, QWidget *parent)
         LandmarkList catSortList;
         LandmarkList * marks;
         LandmarkList * bgs = &catArr[0]; //working with assumption that bg has category value 0;
+        vector<double> catArr2,radArr,valArr;
+
         for (int i=0; i<catNum-1; i++)
         {
 //v3d_msg(QString("catSortList start iteration %1").arg(i));
@@ -567,19 +577,28 @@ void count_cells(V3DPluginCallback2 &callback, QWidget *parent)
 //v3d_msg(QString("marks %1").arg(marks->count()));
             LandmarkList tempList;
             Image4DSimple maskImage;
-            if (identify_cells(data1d,dimNum,c,*marks,*bgs,tempList,maskImage))
+            int cat;
+            double rad,val;
+            if (identify_cells(data1d,dimNum,c,*marks,*bgs,tempList,maskImage,cat,rad,val))
                 catSortList.append(tempList);
+            catArr2.push_back(cat);
+            radArr.push_back(rad);
+            valArr.push_back(val);
 //v3d_msg(QString("catSortList append category %1").arg(tempList.at(0).category));
 //            marksL.clear();
         }
+        LandmarkList outputList = type_duplicates(data1d,catSortList,dimNum,c,catArr2,radArr,valArr);
 
-        callback.setLandmark(curwin,catSortList);
+        callback.setLandmark(curwin,outputList);
 
     }
     return;
 }
 
-template <class T> bool identify_cells(T* data1d, V3DLONG *dimNum, int c, const LandmarkList & markerlist, LandmarkList & bglist, LandmarkList & outputlist, Image4DSimple &maskImage)
+template <class T> bool identify_cells(T* data1d, V3DLONG *dimNum, int c,
+                                       const LandmarkList & markerlist, LandmarkList & bglist,
+                                       LandmarkList & outputlist, Image4DSimple &maskImage,
+                                       int &cat, double &rad, double &val)
 {
     if (!data1d || !dimNum)
         return false;
@@ -741,7 +760,7 @@ template <class T> bool identify_cells(T* data1d, V3DLONG *dimNum, int c, const 
         return false;
     }
 
-    int cat = MarkList.at(0).category;
+    cat = MarkList.at(0).category;
 //v3d_msg(QString("PixVal %1, pixCount %2, BGVal %3, BGCount %4").arg(PixVal).arg(marks).arg(BGVal).arg(BGList.count()));
 
 
@@ -749,10 +768,20 @@ template <class T> bool identify_cells(T* data1d, V3DLONG *dimNum, int c, const 
 
     //recalibrates marker list by mean shift
     LandmarkList CenteredList;
-    double blah,checkrad=0;
-    compute_cell_values_rad(data1d,dimNum,xc,yc,zc,c,thresh,blah,checkrad);
-    if (checkrad<5) {checkrad=5;}
-    mass_center_Lists(data1d,dimNum,MarkList,CenteredList,checkrad*1.5,c,thresh);
+    LocationSimple tmpcent(0,0,0);
+    int x,y,z;
+    for (int i=0; i<marks; i++)
+    {
+        double blah,checkrad=0;
+        compute_cell_values_rad(data1d,dimNum,xc,yc,zc,c,thresh,blah,checkrad);
+        if (checkrad<5) {checkrad=5;}
+        tmpcent = MarkList.at(i);
+        tmpcent.getCoord(x,y,z);
+        mass_center_Coords(data1d,dimNum,x,y,z,checkrad*1.5,c,thresh);
+        tmpcent.x=x; tmpcent.y=y; tmpcent.z=z;
+        CenteredList.append(tmpcent);
+    }
+    //mass_center_Lists(data1d,dimNum,MarkList,CenteredList,15,c,thresh);
     MarkList = CenteredList;
     //outputlist = CenteredList; return true;
 //v3d_msg("mean shifted");
@@ -824,7 +853,7 @@ template <class T> bool identify_cells(T* data1d, V3DLONG *dimNum, int c, const 
     LandmarkList RecenterList;
     mass_center_Lists(data1d,dimNum,scannedList,RecenterList,radAve+radStDev,c,thresh);
 //v3d_msg("ckpt 2");
-    outputlist = remove_duplicates(data1d,RecenterList,dimNum,PixVal,radAve,c);
+    outputlist = remove_duplicates(data1d,RecenterList,dimNum,PixVal,radAve-radStDev,c);
 //    outputlist = RecenterList;
 //v3d_msg("duplicates deleted");
     if (catsorting==true) //set same category and color
@@ -843,6 +872,8 @@ template <class T> bool identify_cells(T* data1d, V3DLONG *dimNum, int c, const 
             outputlist.replace(i,tmp);
         }
     }
+    rad = radAve;
+    val = PixVal;
 
     cout<<"Cell count "<<outputlist.count()<<endl<<endl;
     return true;
@@ -911,10 +942,13 @@ template <class T> bool mass_center_Lists(T* data1d,
                         z = zc+r*cos(phi);
                         if (z>P-1) z=P-1; if (z<0) z=0;
                         pVal = pixelVal(data1d,dimNum,x,y,z,c);
-                        newX += pVal*x;
-                        newY += pVal*y;
-                        newZ += pVal*z;
-                        norm += pVal;
+                        if (pVal>=thresh)
+                        {
+                            newX += pVal*x;
+                            newY += pVal*y;
+                            newZ += pVal*z;
+                            norm += pVal;
+                        }
                         //cout<<x<<" "<<y<<" "<<z<<" "<<endl<<endl;
                     }
                 }
@@ -977,7 +1011,7 @@ template <class T> bool mass_center_Lists(T* data1d,
 //returns recentered coords x,y,z
 template <class T> bool mass_center_Coords(T* data1d,
                                     V3DLONG *dimNum,
-                                    double &x, double &y, double &z,
+                                    int &x, int &y, int &z,
                                     double radius, int c, double thresh)
 {
     LandmarkList tmpList,recenteredList;
@@ -1136,9 +1170,9 @@ template <class T> LandmarkList scan_and_count(T* data1d, V3DLONG *dimNum,
                         double TempPointVal = pixelVal(data1d,dimNum,ix,iy,iz,c);
                         if ((TempPointVal>=PointAve-PointStDev) && (TempPointVal<=PointAve+PointStDev))
                         {
-                            double x,y,z;
+                            int x,y,z;
                             x=ix; y=iy; z=iz; //mass_center_Coords will rewrite x,y,z so need to keep ix,iy,iz untouched
-                            mass_center_Coords(data1d,dimNum,x,y,z,radAve,c,thresh);
+                            mass_center_Coords(data1d,dimNum,x,y,z,radAve+radStDev,c,thresh);
                             if (*maskImg.at(x,y,z,0)!=0) continue;
                             double TempDataAve = compute_ave_cell_val(data1d,dimNum,x,y,z,c,i);
                             if ( (TempDataAve>=cellAve-cellStDev) && (TempDataAve<=cellAve+cellStDev))
@@ -1170,6 +1204,7 @@ template <class T> LandmarkList scan_and_count(T* data1d, V3DLONG *dimNum,
 template <class T> LandmarkList remove_duplicates(T* data1d, LandmarkList fullList,
                                            V3DLONG *dimNum, int PointAve, int rad, int c)
 {
+    cout<<"Removing Duplicates"<<endl;
     int marknum = fullList.count();
     LandmarkList smallList = fullList;
     int x1,y1,z1,x2,y2,z2;
@@ -1182,9 +1217,11 @@ template <class T> LandmarkList remove_duplicates(T* data1d, LandmarkList fullLi
         for (int j=i+1; j<marknum; j++)
         {
             point1 = smallList.at(i);
+            if (point1==zer) continue;
             point1.getCoord(x1,y1,z1);
             int pix1 = pixelVal(data1d,dimNum,x1,y1,z1,c);
             point2 = smallList.at(j);
+            if (point2==zer) continue;
             point2.getCoord(x2,y2,z2);
             int pix2 = pixelVal(data1d,dimNum,x2,y2,z2,c);
 
@@ -1194,6 +1231,74 @@ template <class T> LandmarkList remove_duplicates(T* data1d, LandmarkList fullLi
             {
                 data1 = abs(pix1-PointAve);
                 data2 = abs(pix2-PointAve);
+                /*double pix1,rad1,pix2,rad2;
+                dynamic_pixel(data1d,dimNum,x1,y1,z1,c,PointAve,0,pix1,rad1);
+                dynamic_pixel(data1d,dimNum,x2,y2,z2,c,PointAve,0,pix2,rad2);*/
+
+                if (data1>=data2)
+                    smallList.replace(i,zer) ;//replace point1 with 0 to avoid changing length of list and messing up indexes
+                else
+                    smallList.replace(j,zer) ;//replace point2
+            }
+        }
+    }
+    smallList.removeAll(zer);
+    return smallList;
+}
+
+//removes duplicate markers from type overlap
+template <class T> LandmarkList type_duplicates(T* data1d, LandmarkList fullList,
+                                                V3DLONG *dimNum, int c,
+                                                vector<double> catArr, vector<double> radArr, vector<double> valArr)
+{
+    cout<<"Removing Duplicates"<<endl;
+    int marknum = fullList.count();
+    LandmarkList smallList = fullList;
+    int x1,y1,z1,x2,y2,z2;
+    double data1,data2,t,dist;
+    LocationSimple point1(0,0,0), point2(0,0,0);
+    LocationSimple zero(0,0,0);
+    LocationSimple& zer = zero;
+    for (int i=0; i<marknum; i++)
+    {
+        for (int j=i+1; j<marknum; j++)
+        {
+            point1 = smallList.at(i);
+            if (point1==zer) continue;
+            point1.getCoord(x1,y1,z1);
+            int pix1 = pixelVal(data1d,dimNum,x1,y1,z1,c);
+            double blah1,rad1;
+            compute_cell_values_rad(data1d,dimNum,x1,y1,z1,c,pix1/2,blah1,rad1);
+            string catStr1 = point1.comments;
+            stringstream convert1(catStr1);
+            int cat1,pos1;
+            convert1 >> cat1;
+            for (int i=0; i<catArr.size(); i++)
+            {
+                if (catArr[i]==cat1) {pos1=i; break;}
+            }
+
+            point2 = smallList.at(j);
+            if (point2==zer) continue;
+            point2.getCoord(x2,y2,z2);
+            int pix2 = pixelVal(data1d,dimNum,x2,y2,z2,c);
+            double blah2,rad2;
+            compute_cell_values_rad(data1d,dimNum,x2,y2,z2,c,pix1/2,blah2,rad2);
+            string catStr2 = point2.comments;
+            stringstream convert2(catStr2);
+            int cat2,pos2;
+            convert2 >> cat2;
+            for (int i=0; i<catArr.size(); i++)
+            {
+                if (catArr[i]==cat2) {pos2=i; break;}
+            }
+
+            t = (x1-x2)*(x1-x2)+(y1-y2)*(y1-y2)+(z1-z2)*(z1-z2);
+            dist = sqrt(t);
+            if (dist<=radArr[pos1] || dist<=radArr[pos2])
+            {
+                data1 = (abs(pix1-valArr[pos1])+abs(rad1-radArr[pos1]))/2;
+                data2 = (abs(pix2-valArr[pos2])+abs(rad2-radArr[pos2]))/2;
                 /*double pix1,rad1,pix2,rad2;
                 dynamic_pixel(data1d,dimNum,x1,y1,z1,c,PointAve,0,pix1,rad1);
                 dynamic_pixel(data1d,dimNum,x2,y2,z2,c,PointAve,0,pix2,rad2);*/
