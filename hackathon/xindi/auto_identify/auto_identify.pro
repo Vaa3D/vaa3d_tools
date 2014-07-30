@@ -14,4 +14,3 @@ SOURCES += $$VAA3DPATH/v3d_main/basic_c_fun/basic_surf_objs.cpp
 TARGET	= $$qtLibraryTarget(auto_identify)
 DESTDIR	= ../../../../vaa3d_win7_32bit_v2.707/plugins/auto_identify
 #DESTDIR = C:\Users\xindia\Downloads\vaa3d_bin_msvc_64bit_v2868\vaa3d_bin_msvc_64bit_v2868/plugins/auto_identify/
-

@@ -55,10 +55,7 @@ public:
         {
             for (int i=1; i<=sc; i++)
             {
-                std::stringstream chStr;
-                chStr << i;
-                QString qstr = QString::fromStdString(chStr.str());
-                ch_items << qstr;
+                ch_items << QString().setNum(i);
             }
         }
         combo_channelno = new QComboBox(); combo_channelno->addItems(ch_items);
@@ -195,10 +192,7 @@ public:
         {
             for (int i=1; i<=sc; i++)
             {
-                std::stringstream chStr;
-                chStr << i;
-                QString qstr = QString::fromStdString(chStr.str());
-                ch_items << qstr;
+                ch_items << QString().setNum(i);
             }
         }
         combo_channelno = new QComboBox(); combo_channelno->addItems(ch_items);

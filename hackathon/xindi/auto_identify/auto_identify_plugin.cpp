@@ -16,7 +16,414 @@
 #include <iostream>
 #include <cstdlib>
 
+//----------------------------------------------------------------------------------------------------------
+//cut from regiongrow.ccp
+
+#include <stdlib.h>
+#include <ctime>
+
+#include <basic_surf_objs.h>
+#include <volimg_proc.h>
+#include <img_definition.h>
+#include <basic_landmark.h>
+
 using namespace std;
+
+#define INF 1E9
+#define PI 3.14159265
+
+// extension to 3D from Hanchuan's 2D region growing codes
+#define UBYTE unsigned char
+#define BYTE signed char
+
+volatile V3DLONG phcDebugPosNum = 0;
+volatile V3DLONG phcDebugRgnNum = 0;
+
+class POS
+{
+public:
+    V3DLONG pos;
+    V3DLONG order;
+    POS * next;
+    POS()
+    {
+        pos = -1;order=-1;
+        next = 0;
+        phcDebugPosNum++;
+    }
+    ~POS()
+    {
+        phcDebugPosNum--;
+    }
+};
+
+class RGN
+{
+public:
+    V3DLONG layer;
+    V3DLONG no;
+    POS *poslist;
+    V3DLONG poslistlen;
+    RGN * next;
+    RGN()
+    {
+        layer=no=-1;
+        poslistlen=0;poslist=0;
+        next=0;
+        phcDebugRgnNum++;
+    }
+    ~RGN()
+    {
+        layer=no=-1;
+        poslistlen = 0;
+        phcDebugRgnNum--;
+    }
+};
+
+//statistics of count of labeling
+class STCL
+{
+public:
+
+    V3DLONG count;
+    V3DLONG no;
+    V3DLONG *desposlist;
+    STCL *next;
+
+    STCL()
+    {
+        count=no=-1;
+        next=0;
+        phcDebugRgnNum++;
+    }
+    ~STCL()
+    {
+        count=no=-1;
+        phcDebugRgnNum--;
+    }
+};
+
+//function of swap
+template <class T>
+void swap (T& x, T& y)
+{
+    T tmp = x;	x = y; y = tmp;
+}
+
+//function of quickSort
+template <class T>
+void quickSort(T a[], int l, int r)
+{
+    if(l>=r) return;
+    int i = l;
+    int j = r+1;
+
+    T pivot = a[l];
+    while(true)
+    {
+        do{ i = i+1; } while(a[i]>pivot);
+        do{ j = j-1; } while(a[j]<pivot);
+        if(i >= j) break;
+        swap(a[i], a[j]);
+    }
+    a[l] = a[j];
+    a[j] = pivot;
+    quickSort(a, l, j-1);
+    quickSort(a, j+1, r);
+}
+
+//memory management
+template <class T> int newIntImage3dPairMatlabProtocol(T *** & img3d,T * & img1d, V3DLONG imgdep, V3DLONG imghei,V3DLONG imgwid)
+{
+    V3DLONG totalpxlnum = imghei*imgwid*imgdep;
+
+    try
+    {
+        img1d = new T [totalpxlnum];
+        img3d = new T ** [imgdep];
+
+        V3DLONG i,j;
+
+        for (i=0;i<imgdep;i++)
+        {
+            img3d[i] = new T * [imghei];
+            for(j=0; j<imghei; j++)
+                img3d[i][j] = img1d + i*imghei*imgwid + j*imgwid;
+
+        }
+
+        memset(img1d, 0, sizeof(T)*totalpxlnum);
+    }
+    catch(...)
+    {
+        if (img1d) {delete img1d;img1d=0;}
+        if (img3d) {delete img3d;img3d=0;}
+        printf("Fail to allocate mem in newIntImage2dPairMatlabProtocal()!");
+        return 0; //fail
+    }
+
+    return 1; //succeed
+}
+
+template <class T> void deleteIntImage3dPairMatlabProtocol(T *** & img3d,T * & img1d)
+{
+    if (img1d) {delete img1d;img1d=0;}
+    if (img3d) {delete img3d;img3d=0;}
+}
+
+// region growing class
+class RgnGrow3dClass
+{
+public:
+    RgnGrow3dClass()
+    {
+        ImgWid = 0, ImgHei = 0, ImgDep = 0;
+        quantImg1d=0; quantImg3d=0;
+        PHCDONEIMG3d = 0, PHCDONEIMG1d = 0;
+
+        STACKCNT = -1, MAXSTACKSIZE = 16, IFINCREASELABEL=-1, PHCURLABEL=-1;
+        PHCLABELSTACK3d = 0, PHCLABELSTACK1d = 0;
+        PHCLABELSTACKPOS = 0;
+
+        PHCURGNPOS = 0, PHCURGNPOS_head = 0;
+        PHCURGN = 0, PHCURGN_head = 0;
+        TOTALPOSnum = 0, TOTALRGNnum = 0;
+    }
+
+    ~RgnGrow3dClass()
+    {
+        deleteIntImage3dPairMatlabProtocol(quantImg3d,quantImg1d);
+        deleteIntImage3dPairMatlabProtocol(PHCLABELSTACK3d,PHCLABELSTACK1d);
+        deleteIntImage3dPairMatlabProtocol(PHCDONEIMG3d,PHCDONEIMG1d);
+
+        ImgWid = 0, ImgHei = 0, ImgDep = 0;
+
+        STACKCNT = -1, MAXSTACKSIZE = 16, IFINCREASELABEL=-1, PHCURLABEL=-1;
+        PHCLABELSTACKPOS = 0;
+
+        PHCURGN = PHCURGN_head;
+        for(V3DLONG i=0;i<TOTALRGNnum;i++)
+        {
+            RGN * pnextRgn = 0;
+            if (PHCURGN)
+            {
+                pnextRgn = PHCURGN->next;
+                PHCURGNPOS = PHCURGN->poslist;
+                for(V3DLONG j=0;j<PHCURGN->poslistlen;j++)
+                {
+                    POS *pnextPos = 0;
+                    if (PHCURGNPOS)
+                    {
+                        pnextPos = PHCURGNPOS->next;
+                        delete PHCURGNPOS;
+                    }
+                    PHCURGNPOS = pnextPos;
+                }
+                delete PHCURGN;
+            }
+            PHCURGN = pnextRgn;
+        }
+        TOTALPOSnum = 0, TOTALRGNnum = 0;
+    }
+
+public:
+    V3DLONG ImgWid, ImgHei, ImgDep;
+    UBYTE * quantImg1d,  *** quantImg3d;
+    BYTE *** PHCDONEIMG3d, * PHCDONEIMG1d;
+
+    int STACKCNT;
+    int MAXSTACKSIZE;
+    int IFINCREASELABEL;
+    V3DLONG PHCURLABEL;
+    int ***PHCLABELSTACK3d, * PHCLABELSTACK1d;
+    V3DLONG PHCLABELSTACKPOS;
+
+    POS * PHCURGNPOS, * PHCURGNPOS_head;
+    RGN * PHCURGN, * PHCURGN_head;
+
+    V3DLONG TOTALPOSnum, TOTALRGNnum;
+};
+
+//generating an int image for any input image type
+template <class T> void copyvecdata(T * srcdata, V3DLONG len, UBYTE * desdata, int& nstate, UBYTE &minn, UBYTE &maxx)
+{
+    if(!srcdata || !desdata)
+    {
+        printf("NULL pointers in copyvecdata()!\n");
+        return;
+    }
+
+    V3DLONG i;
+
+    //note: originally I added 0.5 before rounding, however seems the negative numbers and
+    //      positive numbers are all rounded towarded 0; hence int(-1+0.5)=0 and int(1+0.5)=1;
+    //      This is unwanted because I need the above to be -1 and 1.
+    // for this reason I just round with 0.5 adjustment for positive and negative differently
+
+    //copy data
+    if (srcdata[0]>0)
+        maxx = minn = int(srcdata[0]+0.5);
+    else
+        maxx = minn = int(srcdata[0]-0.5);
+
+    int tmp;
+    double tmp1;
+    for (i=0;i<len;i++)
+    {
+        tmp1 = double(srcdata[i]);
+        tmp = (tmp1>0)?(int)(tmp1+0.5):(int)(tmp1-0.5);//round to integers
+        minn = (minn<tmp)?minn:tmp;
+        maxx = (maxx>tmp)?maxx:tmp;
+        desdata[i] = (UBYTE)tmp;
+    }
+    maxx = (UBYTE)maxx;
+    minn = (UBYTE)minn;
+
+    //return the #state
+    nstate = (maxx-minn+1);
+
+    return;
+}
+
+//
+void rgnfindsub(int rowi,int colj, int depk, int direction,int stackinc, RgnGrow3dClass * pRgnGrow)
+{
+    if (pRgnGrow->STACKCNT >= pRgnGrow->MAXSTACKSIZE)
+    {
+        if (pRgnGrow->IFINCREASELABEL != 0)
+            pRgnGrow->IFINCREASELABEL = 0;
+        return;
+    }
+
+    BYTE *** flagImg = pRgnGrow->PHCDONEIMG3d;
+    int ImgWid = pRgnGrow->ImgWid;
+    int ImgHei = pRgnGrow->ImgHei;
+    int ImgDep = pRgnGrow->ImgDep;
+
+    if (stackinc==1)
+    {
+        //printf("STACKCNT=%i PHCLABELSTACKPOS=%i\n",STACKCNT,PHCLABELSTACKPOS);
+        pRgnGrow->PHCLABELSTACK3d[0][0][pRgnGrow->PHCLABELSTACKPOS] = depk;
+        pRgnGrow->PHCLABELSTACK3d[0][1][pRgnGrow->PHCLABELSTACKPOS] = colj;
+        pRgnGrow->PHCLABELSTACK3d[0][2][pRgnGrow->PHCLABELSTACKPOS] = rowi;
+
+        pRgnGrow->STACKCNT++;
+        pRgnGrow->PHCLABELSTACKPOS++;
+
+        flagImg[depk][colj][rowi] = -1;//pRgnGrow->PHCDONEIMG2d[coli][rowj] = -1;
+        //PHCLABELIMG[coli][rowj] = PHCURLABEL;
+
+        //set the current pos location and return the
+        if (pRgnGrow->PHCURGNPOS)
+        {
+            pRgnGrow->PHCURGNPOS->pos = (V3DLONG) depk*(pRgnGrow->ImgHei * pRgnGrow->ImgWid) + colj*(pRgnGrow->ImgWid) + rowi; //
+            pRgnGrow->PHCURGNPOS->next = new POS;
+            if (pRgnGrow->PHCURGNPOS->next==0)
+            {printf("Fail to do: pRgnGrow->PHCURGNPOS->next = new POS; -->current phcDebugPosNum=%i.\n",phcDebugPosNum);}
+            pRgnGrow->PHCURGNPOS = pRgnGrow->PHCURGNPOS->next;
+            pRgnGrow->TOTALPOSnum++;
+            //printf("current pixel: row=%i col=%i total_pxl_visted=%i \n",rowj,coli,pRgnGrow->TOTALPOSnum);
+        }
+        else
+        {
+            printf("PHCURGNPOS is null!!\n");
+        }
+    }
+    else //%if stackinc==0,
+    {
+        //pRgnGrow->PHCDONEIMG[coli][rowj] = -2;
+        flagImg[depk][colj][rowi] = -2;
+    }
+
+    // % search 26 direction orders
+
+    // 1
+    if (rowi>0 && flagImg[depk][colj][rowi-1]==1)
+        rgnfindsub(rowi-1,colj,depk,1,1,pRgnGrow);
+    // 2
+    if (rowi<ImgWid-1 && flagImg[depk][colj][rowi+1]==1)
+        rgnfindsub(rowi+1,colj,depk,1,1,pRgnGrow);
+    // 3
+    if (colj>0 && flagImg[depk][colj-1][rowi]==1)
+        rgnfindsub(rowi,colj-1,depk,1,1,pRgnGrow);
+    // 4
+    if (colj<ImgHei-1 && flagImg[depk][colj+1][rowi]==1)
+        rgnfindsub(rowi,colj+1,depk,1,1,pRgnGrow);
+    // 5
+    if (depk>0 && flagImg[depk-1][colj][rowi]==1)
+        rgnfindsub(rowi,colj,depk-1,1,1,pRgnGrow);
+    // 6
+    if (depk<ImgDep-1 && flagImg[depk+1][colj][rowi]==1)
+        rgnfindsub(rowi,colj,depk+1,1,1,pRgnGrow);
+    // 7
+    if (rowi>0 && colj>0 && flagImg[depk][colj-1][rowi-1]==1)
+        rgnfindsub(rowi-1,colj-1,depk,1,1,pRgnGrow);
+    // 8
+    if (rowi<ImgWid-1 && colj>0 && flagImg[depk][colj-1][rowi+1]==1)
+        rgnfindsub(rowi+1,colj-1,depk,1,1,pRgnGrow);
+    // 9
+    if (rowi>0 && colj<ImgHei-1 && flagImg[depk][colj+1][rowi-1]==1)
+        rgnfindsub(rowi-1,colj+1,depk,1,1,pRgnGrow);
+    // 10
+    if (rowi>ImgWid && colj<ImgHei-1 && flagImg[depk][colj+1][rowi+1]==1)
+        rgnfindsub(rowi+1,colj+1,depk,1,1,pRgnGrow);
+    // 11
+    if (rowi>0 && depk>0 && flagImg[depk-1][colj][rowi-1]==1)
+        rgnfindsub(rowi-1,colj,depk-1,1,1,pRgnGrow);
+    // 12
+    if (rowi<ImgWid-1 && depk>0 && flagImg[depk-1][colj][rowi+1]==1)
+        rgnfindsub(rowi+1,colj,depk-1,1,1,pRgnGrow);
+    // 13
+    if (rowi>0 && depk<ImgDep-1 && flagImg[depk+1][colj][rowi-1]==1)
+        rgnfindsub(rowi-1,colj,depk+1,1,1,pRgnGrow);
+    // 14
+    if (rowi<ImgWid-1 && depk<ImgDep-1 && flagImg[depk+1][colj][rowi+1]==1)
+        rgnfindsub(rowi+1,colj,depk+1,1,1,pRgnGrow);
+    // 15
+    if (colj>0 && depk>0 && flagImg[depk-1][colj-1][rowi]==1)
+        rgnfindsub(rowi,colj-1,depk-1,1,1,pRgnGrow);
+    // 16
+    if (colj<ImgHei-1 && depk>0 && flagImg[depk-1][colj+1][rowi]==1)
+        rgnfindsub(rowi,colj+1,depk-1,1,1,pRgnGrow);
+    // 17
+    if (colj>0 && depk<ImgDep-1 && flagImg[depk+1][colj-1][rowi]==1)
+        rgnfindsub(rowi,colj-1,depk+1,1,1,pRgnGrow);
+    // 18
+    if (colj<ImgHei-1 && depk<ImgDep-1 && flagImg[depk+1][colj+1][rowi]==1)
+        rgnfindsub(rowi,colj+1,depk+1,1,1,pRgnGrow);
+    // 19
+    if (rowi>0 && colj>0 && depk>0 && flagImg[depk-1][colj-1][rowi-1]==1)
+        rgnfindsub(rowi-1,colj-1,depk-1,1,1,pRgnGrow);
+    // 20
+    if (rowi<ImgWid-1 && colj>0 && depk>0 && flagImg[depk-1][colj-1][rowi+1]==1)
+        rgnfindsub(rowi+1,colj-1,depk-1,1,1,pRgnGrow);
+    // 21
+    if (rowi>0 && colj<ImgHei-1 && depk>0 && flagImg[depk-1][colj+1][rowi-1]==1)
+        rgnfindsub(rowi-1,colj+1,depk-1,1,1,pRgnGrow);
+    // 22
+    if (rowi>0 && colj>0 && depk<ImgDep-1 && flagImg[depk+1][colj-1][rowi-1]==1)
+        rgnfindsub(rowi-1,colj-1,depk+1,1,1,pRgnGrow);
+    // 23
+    if (rowi<ImgWid-1 && colj<ImgHei-1 && depk>0 && flagImg[depk-1][colj+1][rowi+1]==1)
+        rgnfindsub(rowi+1,colj+1,depk-1,1,1,pRgnGrow);
+    // 24
+    if (rowi<ImgWid-1 && colj>0 && depk<ImgDep-1 && flagImg[depk+1][colj-1][rowi+1]==1)
+        rgnfindsub(rowi+1,colj-1,depk+1,1,1,pRgnGrow);
+    // 25
+    if (rowi>0 && colj<ImgHei-1 && depk<ImgDep-1 && flagImg[depk+1][colj+1][rowi-1]==1)
+        rgnfindsub(rowi-1,colj+1,depk+1,1,1,pRgnGrow);
+    // 26
+    if (rowi<ImgWid-1 && colj<ImgHei-1 && depk<ImgDep-1 && flagImg[depk+1][colj+1][rowi+1]==1)
+        rgnfindsub(rowi+1,colj+1,depk+1,1,1,pRgnGrow);
+
+
+    return;
+}
+
+bool regiongrowing(V3DPluginCallback2 &callback, int c, double thresh, LandmarkList &cmList, vector<int> &volList, Image4DSimple &regionMap);
+//end cut
+//----------------------------------------------------------------------------------------------
+
 Q_EXPORT_PLUGIN2(auto_identify, AutoIdentifyPlugin);
 
 #define V_NeuronSWC_list vector<V_NeuronSWC>
@@ -26,12 +433,12 @@ Q_EXPORT_PLUGIN2(auto_identify, AutoIdentifyPlugin);
 void count_cells(V3DPluginCallback2 &callback, QWidget *parent);
 void identify_neurons(V3DPluginCallback2 &callback, QWidget *parent);
 
-template <class T> bool identify_cells(T* data1d, V3DLONG *dimNum, int c,
+template <class T> bool identify_cells(V3DPluginCallback2 &callback, T* data1d, V3DLONG *dimNum, int c,
                                        const LandmarkList & markerlist, LandmarkList & bglist,
                                        LandmarkList & outputlist, Image4DSimple &maskImage,
                                        int &cat, double &rad, double &val);
 
-LandmarkList neuron_2_mark(const NeuronTree & p, LandmarkList & neuronMarkList);
+bool neuron_2_mark(const NeuronTree & p, LandmarkList & neuronMarkList);
 template <class T> int pixelVal(T* data1d, V3DLONG *dimNum,
                                 double xc, double yc, double zc, int c);
 template <class T> bool mass_center_Lists(T* data1d,
@@ -56,7 +463,7 @@ template <class T> LandmarkList scan_and_count(T* data1d, V3DLONG *dimNum,
                                                LandmarkList originalList, Image4DSimple &maskImage);
 template <class T> LandmarkList remove_duplicates(T* data1d, LandmarkList fullList,
                                            V3DLONG *dimNum, int PointAve, int rad, int c);
-template <class T> LandmarkList type_duplicates(T* data1d, LandmarkList fullList,
+template <class T> bool type_duplicates(T* data1d, LandmarkList &mList,
                                                 V3DLONG *dimNum, int c,
                                                 vector<double> catArr, vector<double> radArr, vector<double> valArr);
 V_NeuronSWC get_v_neuron_swc(const NeuronTree *p);
@@ -69,6 +476,14 @@ bool export_list2file(QList<NeuronTree> & N2, QString fileSaveName, QString file
 template <class T> bool apply_mask(unsigned char* data1d, V3DLONG *dimNum,
                                    int xc, int yc, int zc, int c, double threshold, T & maskImg);
 bool open_testSWC(QString &fileOpenName, NeuronTree & openTree);
+template <class T> bool segment_regions(T* data1d, V3DLONG *dimNum,
+                                        LandmarkList originalList, LandmarkList &newList,
+                                        LandmarkList regionList, vector<int> regionVol,
+                                        double cellAve, double cellStDev,
+                                        double PointAve, double PointStDev,
+                                        double radAve, double radStDev,
+                                        int c, int cat, double thresh,
+                                        Image4DSimple &regionMap);
  
 QStringList AutoIdentifyPlugin::menulist() const
 {
@@ -363,6 +778,9 @@ void identify_neurons(V3DPluginCallback2 &callback, QWidget *parent)
  *      optimizing to center larger cells would cause clustered cells to be treated as one
  *      keeping small radius to keep clustered cells separate prevents detection of true center of larger cells
  *
+ * NEW ALGORITHM WANTED, SEE COMMENTS AROUND LINE 1190
+ * HAVING THE MOST FRUSTRATING ISSUES WITH MOVING AROUND THE IMAGE4DSIMPLE DATA
+ *
  * [future goals]
  *
  *  ##################################
@@ -468,17 +886,18 @@ void count_cells(V3DPluginCallback2 &callback, QWidget *parent)
     }
     else if (option == 2 ) //input is SWC
     {
-        neuronMarkList = neuron_2_mark(mTree,neuronMarkList);
+        neuron_2_mark(mTree,neuronMarkList);
         mlist = neuronMarkList;
     }
     else    //input is both markers and SWC
     {
-        neuronMarkList = neuron_2_mark(mTree,neuronMarkList);
+        neuron_2_mark(mTree,neuronMarkList);
         mlist = Marklist;
         mlist.append(neuronMarkList);
     }
     int c = dialog.channel;
     int sort_type = dialog.sort_type;
+
     if (sort_type==0) //binary sort
     {
         if (mlist.count()<=0)    {v3d_msg("There are no markers in the current image"); return;}
@@ -488,7 +907,7 @@ void count_cells(V3DPluginCallback2 &callback, QWidget *parent)
         Image4DSimple maskImage;
         int cat;
         double rad,val;
-        if (identify_cells(data1d,dimNum,c,mlist,bglist,outputList,maskImage,cat,rad,val))
+        if (identify_cells(callback,data1d,dimNum,c,mlist,bglist,outputList,maskImage,cat,rad,val))
         {
             callback.setLandmark(curwin,outputList);
 
@@ -579,7 +998,7 @@ void count_cells(V3DPluginCallback2 &callback, QWidget *parent)
             Image4DSimple maskImage;
             int cat;
             double rad,val;
-            if (identify_cells(data1d,dimNum,c,*marks,*bgs,tempList,maskImage,cat,rad,val))
+            if (identify_cells(callback,data1d,dimNum,c,*marks,*bgs,tempList,maskImage,cat,rad,val))
                 catSortList.append(tempList);
             catArr2.push_back(cat);
             radArr.push_back(rad);
@@ -587,15 +1006,15 @@ void count_cells(V3DPluginCallback2 &callback, QWidget *parent)
 //v3d_msg(QString("catSortList append category %1").arg(tempList.at(0).category));
 //            marksL.clear();
         }
-        LandmarkList outputList = type_duplicates(data1d,catSortList,dimNum,c,catArr2,radArr,valArr);
+        type_duplicates(data1d,catSortList,dimNum,c,catArr2,radArr,valArr);
 
-        callback.setLandmark(curwin,outputList);
+        callback.setLandmark(curwin,catSortList);
 
     }
     return;
 }
 
-template <class T> bool identify_cells(T* data1d, V3DLONG *dimNum, int c,
+template <class T> bool identify_cells(V3DPluginCallback2 &callback, T* data1d, V3DLONG *dimNum, int c,
                                        const LandmarkList & markerlist, LandmarkList & bglist,
                                        LandmarkList & outputlist, Image4DSimple &maskImage,
                                        int &cat, double &rad, double &val)
@@ -766,6 +1185,30 @@ template <class T> bool identify_cells(T* data1d, V3DLONG *dimNum, int c,
 
 //v3d_msg(QString("marks = %1, bgcount = %2. Marks all sorted").arg(marks).arg(BGList.count()));
 
+
+    LandmarkList regionList;
+    vector<int> regionVol;
+    Image4DSimple regionMap;
+    regiongrowing(callback,c,thresh,regionList,regionVol,regionMap);
+    /*##############################################################
+     * regionList and regionVol should be same size
+     * regionVol contains volumes in pixels of each region
+     * radAve can be converted into a rough volume estimate for each test marker
+     * scan_and_count can be redone to check each region for volume and estimate number of cells in region
+     *      via comparison of that region's volume with radAve volume
+     * need to come up with new segmentation method for regions with more than one cell
+     *      might be able to use Spatial Anisotropy values
+     *      Spatial Anisotropy values good for say...two cells touching at one edge because region will be elongated
+     *          however will be relatively useless for large clusters of cells that end up combining in a round region
+     * regions with on cell keep that regionList marker
+     * regions with more than one cell need new markers placed instead
+     * type/cat sort may need to add intensity to detection criteria
+     * should eliminate need for remove_duplicates
+     *
+     * might want to call in the "labeled objects" image from regiongrowing for clearer boundaries
+     *      note objects in that image may have low intensity, set thresh to 1
+     * ##############################################################*/
+
     //recalibrates marker list by mean shift
     LandmarkList CenteredList;
     LocationSimple tmpcent(0,0,0);
@@ -839,23 +1282,23 @@ template <class T> bool identify_cells(T* data1d, V3DLONG *dimNum, int c,
     double radStDev = sqrt(stR/marks);
     double PixStDev = sqrt(stP/marks);
 
+    double VolAve = (4/3)*PI*pow(radAve,3.0);
+    double VolMax = (4/3)*PI*pow(radAve+radStDev,3.0);
+    double VolMin = (4/3)*PI*pow(radAve-radStDev,3.0);
+    if (radStDev>=radAve) VolMin=1;
+
 
 //v3d_msg(QString("markers have been scanned. Pixval %1 and stdev %2. radVal %3 and stdev %4. segVal %5 and stdev %6").arg(PixVal).arg(PixStDev).arg(radAve).arg(radStDev).arg(ValAve).arg(ValStDev));
 
-//v3d_msg(QString("category %1").arg(cat));
 
     //scans image and generates new set of markers based on testing data
-    LandmarkList scannedList = scan_and_count(data1d,dimNum,ValAve,ValStDev,PixVal,PixStDev,radAve,radStDev,c,cat,thresh,MarkList,maskImage);
-    //cout<<"Cell count "<<newList.count()<<endl;
-//v3d_msg("newList made");
-    //recenters list via mean shift
-//v3d_msg("recentering");
+    //LandmarkList scannedList = scan_and_count(data1d,dimNum,ValAve,ValStDev,PixVal,PixStDev,radAve,radStDev,c,cat,thresh,MarkList,maskImage);
+    LandmarkList scannedList;
+    if (!segment_regions(data1d,dimNum,MarkList,scannedList,regionList,regionVol,ValAve,ValStDev,PixVal,PixStDev,radAve,radStDev,c,cat,thresh,regionMap)) {return false;}
     LandmarkList RecenterList;
     mass_center_Lists(data1d,dimNum,scannedList,RecenterList,radAve+radStDev,c,thresh);
-//v3d_msg("ckpt 2");
     outputlist = remove_duplicates(data1d,RecenterList,dimNum,PixVal,radAve-radStDev,c);
-//    outputlist = RecenterList;
-//v3d_msg("duplicates deleted");
+
     if (catsorting==true) //set same category and color
     {
         srand(clock()); //time(NULL));
@@ -1247,13 +1690,12 @@ template <class T> LandmarkList remove_duplicates(T* data1d, LandmarkList fullLi
 }
 
 //removes duplicate markers from type overlap
-template <class T> LandmarkList type_duplicates(T* data1d, LandmarkList fullList,
+template <class T> bool type_duplicates(T* data1d, LandmarkList &mList,
                                                 V3DLONG *dimNum, int c,
                                                 vector<double> catArr, vector<double> radArr, vector<double> valArr)
 {
     cout<<"Removing Duplicates"<<endl;
-    int marknum = fullList.count();
-    LandmarkList smallList = fullList;
+    int marknum = mList.count();
     int x1,y1,z1,x2,y2,z2;
     double data1,data2,t,dist;
     LocationSimple point1(0,0,0), point2(0,0,0);
@@ -1263,7 +1705,7 @@ template <class T> LandmarkList type_duplicates(T* data1d, LandmarkList fullList
     {
         for (int j=i+1; j<marknum; j++)
         {
-            point1 = smallList.at(i);
+            point1 = mList.at(i);
             if (point1==zer) continue;
             point1.getCoord(x1,y1,z1);
             int pix1 = pixelVal(data1d,dimNum,x1,y1,z1,c);
@@ -1278,7 +1720,7 @@ template <class T> LandmarkList type_duplicates(T* data1d, LandmarkList fullList
                 if (catArr[i]==cat1) {pos1=i; break;}
             }
 
-            point2 = smallList.at(j);
+            point2 = mList.at(j);
             if (point2==zer) continue;
             point2.getCoord(x2,y2,z2);
             int pix2 = pixelVal(data1d,dimNum,x2,y2,z2,c);
@@ -1304,17 +1746,18 @@ template <class T> LandmarkList type_duplicates(T* data1d, LandmarkList fullList
                 dynamic_pixel(data1d,dimNum,x2,y2,z2,c,PointAve,0,pix2,rad2);*/
 
                 if (data1>=data2)
-                    smallList.replace(i,zer) ;//replace point1 with 0 to avoid changing length of list and messing up indexes
+                    mList.replace(i,zer) ;//replace point1 with 0 to avoid changing length of list and messing up indexes
                 else
-                    smallList.replace(j,zer) ;//replace point2
+                    mList.replace(j,zer) ;//replace point2
             }
         }
     }
-    smallList.removeAll(zer);
-    return smallList;
+    mList.removeAll(zer);
+    cout<<endl<<"Final Cell Count: "<<mList.count()<<endl;
+    return true;
 }
 
-LandmarkList neuron_2_mark(const NeuronTree & p, LandmarkList & neuronMarkList)
+bool neuron_2_mark(const NeuronTree & p, LandmarkList & neuronMarkList)
 {
     LocationSimple tmpMark(0,0,0);
     for (int i=0;i<p.listNeuron.size();i++)
@@ -1325,7 +1768,7 @@ LandmarkList neuron_2_mark(const NeuronTree & p, LandmarkList & neuronMarkList)
         tmpMark.category = p.listNeuron.at(i).type;
         neuronMarkList.append(tmpMark);
     }
-    return neuronMarkList;
+    return true;
 }
 
 V_NeuronSWC get_v_neuron_swc(const NeuronTree *p)
@@ -1527,7 +1970,7 @@ template <class T> bool apply_mask(unsigned char* data1d, V3DLONG *dimNum,
     //cout<<"rad "<<rad<<endl;
 
     //cout<<"applying mask"<<endl;
-    *maskImg.at(xc,yc,zc,0) = 200;
+    *maskImg.at(xc,yc,zc,0) = 255;
     //cout<<"ck 1 ";
     double angle = pi/2;
 
@@ -1544,7 +1987,7 @@ template <class T> bool apply_mask(unsigned char* data1d, V3DLONG *dimNum,
                 if (y>M-1) y=M-1; if (y<0) y=0;
                 z = zc+r*cos(phi);
                 if (z>P-1) z=P-1; if (z<0) z=0;
-                *maskImg.at(x,y,z,0) = 200;
+                *maskImg.at(x,y,z,0) = 255;
             }
         }
         if (angle>=pi/16 && r>=1) angle/=2;
@@ -1596,4 +2039,832 @@ QString getAppPath()
 #endif
 
     return testPluginsDir.absolutePath();
+}
+
+
+//below taken from regiongrow plugin
+
+bool regiongrowing(V3DPluginCallback2 &callback, int c, double thresh, LandmarkList &cmList, vector<int> &volList, Image4DSimple &regionMap)
+{
+    Image4DSimple* subject = callback.getImage(callback.currentImageWindow());
+    if (!subject)
+        return false;
+    ROIList pRoiList = callback.getROI(callback.currentImageWindow());
+
+    V3DLONG ch_rgb = c;
+    V3DLONG th_idx = 5;
+    double threshold = thresh;
+
+    V3DLONG volsz = 100;
+
+    //
+    int start_t = clock(); // record time point
+
+    ImagePixelType datatype_subject = subject->getDatatype();
+
+    if(datatype_subject != V3D_UINT8)
+    {
+        v3d_msg("Currently this program only support 8-bit data.");
+        return false;
+    }
+
+    unsigned char* pSub = subject->getRawData();
+
+    V3DLONG sz0 = subject->getXDim();
+    V3DLONG sz1 = subject->getYDim();
+    V3DLONG sz2 = subject->getZDim();
+    V3DLONG sz3 = subject->getCDim();
+
+    V3DLONG pagesz_sub = sz0*sz1*sz2;
+    V3DLONG offset_sub = (ch_rgb-1)*pagesz_sub;
+
+    //---------------------------------------------------------------------------------------------------------------------------------------------------
+    //finding the bounding box of ROI
+    bool vxy=true,vyz=true,vzx=true; // 3 2d-views
+
+    QRect b_xy = pRoiList.at(0).boundingRect();
+    QRect b_yz = pRoiList.at(1).boundingRect();
+    QRect b_zx = pRoiList.at(2).boundingRect();
+
+    if(b_xy.left()==-1 || b_xy.top()==-1 || b_xy.right()==-1 || b_xy.bottom()==-1)
+        vxy=false;
+    if(b_yz.left()==-1 || b_yz.top()==-1 || b_yz.right()==-1 || b_yz.bottom()==-1)
+        vyz=false;
+    if(b_zx.left()==-1 || b_zx.top()==-1 || b_zx.right()==-1 || b_zx.bottom()==-1)
+        vzx=false;
+
+    V3DLONG bpos_x, bpos_y, bpos_z, bpos_c, epos_x, epos_y, epos_z, epos_c;
+
+    // 8 cases
+    if(vxy && vyz && vzx) // all 3 2d-views
+    {
+        bpos_x = qBound(V3DLONG(0), V3DLONG(qMax(b_xy.left(), b_zx.left())), sz0-1);
+        bpos_y = qBound(V3DLONG(0), V3DLONG(qMax(b_xy.top(),  b_yz.top())), sz1-1);
+        bpos_z = qBound(V3DLONG(0), V3DLONG(qMax(b_yz.left(), b_zx.top())), sz2-1);
+
+        epos_x = qBound(V3DLONG(0), V3DLONG(qMin(b_xy.right(), b_zx.right())), sz0-1);
+        epos_y = qBound(V3DLONG(0), V3DLONG(qMin(b_xy.bottom(), b_yz.bottom())), sz1-1);
+        epos_z = qBound(V3DLONG(0), V3DLONG(qMin(b_yz.right(), b_zx.bottom())), sz2-1);
+    }
+    else if(!vxy && vyz && vzx) // 2 of 3
+    {
+        bpos_x = qBound(V3DLONG(0), V3DLONG(qMax(0, b_zx.left())), sz0-1);
+        bpos_y = qBound(V3DLONG(0), V3DLONG(qMax(0,  b_yz.top())), sz1-1);
+        bpos_z = qBound(V3DLONG(0), V3DLONG(qMax(b_yz.left(), b_zx.top())), sz2-1);
+
+        epos_x = qBound(V3DLONG(0), V3DLONG(qMin((V3DLONG)(sz0-1), (V3DLONG)b_zx.right())), sz0-1);
+        epos_y = qBound(V3DLONG(0), V3DLONG(qMin((V3DLONG)(sz1-1), (V3DLONG)b_yz.bottom())), sz1-1);
+        epos_z = qBound(V3DLONG(0), V3DLONG(qMin(b_yz.right(), b_zx.bottom())), sz2-1);
+    }
+    else if(vxy && !vyz && vzx)
+    {
+        bpos_x = qBound(V3DLONG(0), V3DLONG(qMax(b_xy.left(), b_zx.left())), sz0-1);
+        bpos_y = qBound(V3DLONG(0), V3DLONG(qMax(b_xy.top(),  0)), sz1-1);
+        bpos_z = qBound(V3DLONG(0), V3DLONG(qMax(0, b_zx.top())), sz2-1);
+
+        epos_x = qBound(V3DLONG(0), V3DLONG(qMin(b_xy.right(), b_zx.right())), sz0-1);
+        epos_y = qBound(V3DLONG(0), V3DLONG(qMin((V3DLONG)b_xy.bottom(), (V3DLONG)(sz1-1))), sz1-1);
+        epos_z = qBound(V3DLONG(0), V3DLONG(qMin((V3DLONG)(sz2-1), (V3DLONG)b_zx.bottom())), sz2-1);
+    }
+    else if(vxy && vyz && !vzx)
+    {
+        bpos_x = qBound(V3DLONG(0), V3DLONG(qMax(b_xy.left(), 0)), sz0-1);
+        bpos_y = qBound(V3DLONG(0), V3DLONG(qMax(b_xy.top(),  b_yz.top())), sz1-1);
+        bpos_z = qBound(V3DLONG(0), V3DLONG(qMax(b_yz.left(), 0)), sz2-1);
+
+        epos_x = qBound(V3DLONG(0), V3DLONG(qMin((V3DLONG)b_xy.right(), (V3DLONG)(sz0-1))), sz0-1);
+        epos_y = qBound(V3DLONG(0), V3DLONG(qMin(b_xy.bottom(), b_yz.bottom())), sz1-1);
+        epos_z = qBound(V3DLONG(0), V3DLONG(qMin((V3DLONG)b_yz.right(), (V3DLONG)(sz2-1))), sz2-1);
+    }
+    else if(vxy && !vyz && !vzx) // only 1 of 3
+    {
+        bpos_x = qBound(V3DLONG(0), V3DLONG(qMax(b_xy.left(), 0)), sz0-1);
+        bpos_y = qBound(V3DLONG(0), V3DLONG(qMax(b_xy.top(),  0)), sz1-1);
+        bpos_z = 0;
+
+        epos_x = qBound(V3DLONG(0), V3DLONG(qMin((V3DLONG)b_xy.right(), (V3DLONG)(sz0-1))), sz0-1);
+        epos_y = qBound(V3DLONG(0), V3DLONG(qMin((V3DLONG)b_xy.bottom(), (V3DLONG)(sz1-1))), sz1-1);
+        epos_z = sz2-1;
+    }
+    else if(!vxy && vyz && !vzx)
+    {
+        bpos_x = 0;
+        bpos_y = qBound(V3DLONG(0), V3DLONG(qMax(0,  b_yz.top())), sz1-1);
+        bpos_z = qBound(V3DLONG(0), V3DLONG(qMax(b_yz.left(), 0)), sz2-1);
+
+        epos_x = sz0-1;
+        epos_y = qBound(V3DLONG(0), V3DLONG(qMin((V3DLONG)(sz1-1), (V3DLONG)b_yz.bottom())), sz1-1);
+        epos_z = qBound(V3DLONG(0), V3DLONG(qMin((V3DLONG)b_yz.right(), (V3DLONG)(sz2-1))), sz2-1);
+    }
+    else if(!vxy && !vyz && vzx)
+    {
+        bpos_x = qBound(V3DLONG(0), V3DLONG(qMax(0, b_zx.left())), sz0-1);
+        bpos_y = 0;
+        bpos_z = qBound(V3DLONG(0), V3DLONG(qMax(0, b_zx.top())), sz2-1);
+
+        epos_x = qBound(V3DLONG(0), V3DLONG(qMin((V3DLONG)(sz0-1), (V3DLONG)b_zx.right())), sz0-1);
+        epos_y = sz1-1;
+        epos_z = qBound(V3DLONG(0), V3DLONG(qMin((V3DLONG)(sz2-1), (V3DLONG)b_zx.bottom())), sz2-1);
+    }
+    else // 0
+    {
+        bpos_x = 0;
+        bpos_y = 0;
+        bpos_z = 0;
+
+        epos_x = sz0-1;
+        epos_y = sz1-1;
+        epos_z = sz2-1;
+    }
+
+    //qDebug("x %d y %d z %d x %d y %d z %d ",bpos_x,bpos_y,bpos_z,epos_x,epos_y,epos_z);
+
+    //ROI extraction
+    V3DLONG sx = (epos_x-bpos_x)+1;
+    V3DLONG sy = (epos_y-bpos_y)+1;
+    V3DLONG sz = (epos_z-bpos_z)+1;
+    V3DLONG sc = sz3; // 0,1,2
+
+    //choose the channel stack
+    V3DLONG pagesz = sx*sy*sz;
+
+    double meanv=0, stdv=0;
+
+    //------------------------------------------------------------------------------------------------------------------------------------
+
+    unsigned char *data1d = NULL;
+
+    try
+    {
+        data1d = new unsigned char [pagesz];
+
+        unsigned char *pSubject = (unsigned char *)pSub + offset_sub;
+
+        for(V3DLONG k=bpos_z; k<=epos_z; k++)
+        {
+            V3DLONG offset_z = k*sz0*sz1;
+            V3DLONG offset_crop_z = (k-bpos_z)*sx*sy;
+            for(V3DLONG j=bpos_y; j<=epos_y; j++)
+            {
+                V3DLONG offset_y = j*sz0 + offset_z;
+                V3DLONG offset_crop_y = (j-bpos_y)*sx + offset_crop_z;
+                for(V3DLONG i=bpos_x; i<=epos_x; i++)
+                {
+                    data1d[(i-bpos_x) + offset_crop_y] = pSubject[i+offset_y];
+
+                    meanv += data1d[(i-bpos_x) + offset_crop_y];
+                }
+            }
+        }
+
+    }
+    catch(...)
+    {
+        printf("Fail to allocate memory.\n");
+        return false;
+    }
+
+
+    meanv /= pagesz;
+
+    for(V3DLONG i=0; i<pagesz; i++)
+        stdv += ((double)data1d[i] - meanv)*((double)data1d[i] - meanv);
+
+    stdv /= (pagesz-1);
+    stdv = sqrt(stdv);
+
+    //qDebug() << "meanv ..." << meanv << "stdv ..." << stdv;
+
+    //----------------------------------------------------------------------------------------------------------------------------------
+    // bw
+    unsigned char *bw = new unsigned char [pagesz];
+
+    if(th_idx == 0)
+    {
+        threshold = meanv;
+    }
+    else if(th_idx == 1)
+    {
+        threshold = meanv + stdv;
+    }
+
+    for(V3DLONG i=0; i<pagesz; i++)
+        bw[i] = ((double)data1d[i]>threshold)?255:0;
+
+
+    //
+    V3DLONG offset_y, offset_z;
+
+    offset_y=sx;
+    offset_z=sx*sy;
+
+    V3DLONG neighbors = 26;
+    V3DLONG neighborhood_26[26] = {-1, 1, -offset_y, offset_y, -offset_z, offset_z,
+        -offset_y-1, -offset_y+1, -offset_y-offset_z, -offset_y+offset_z,
+        offset_y-1, offset_y+1, offset_y-offset_z, offset_y+offset_z,
+        offset_z-1, offset_z+1, -offset_z-1, -offset_z+1,
+        -1-offset_y-offset_z, -1-offset_y+offset_z, -1+offset_y-offset_z, -1+offset_y+offset_z,
+        1-offset_y-offset_z, 1-offset_y+offset_z, 1+offset_y-offset_z, 1+offset_y+offset_z};
+
+    // eliminate volume with only one single voxel
+    for(V3DLONG k = 0; k < sz; k++)
+    {
+        V3DLONG idxk = k*offset_z;
+        for(V3DLONG j = 0;  j < sy; j++)
+        {
+            V3DLONG idxj = idxk + j*offset_y;
+            for(V3DLONG i = 0, idx = idxj; i < sx;  i++, idx++)
+            {
+                if(i==0 || i==sx-1 || j==0 || j==sy-1 || k==0 || k==sz-1)
+                    continue;
+
+                if(bw[idx])
+                {
+                    bool one_point = true;
+                    for(int ineighbor=0; ineighbor<neighbors; ineighbor++)
+                    {
+                        V3DLONG n_idx = idx + neighborhood_26[ineighbor];
+
+                        if(bw[n_idx])
+                        {
+                            one_point = false;
+                            break;
+                        }
+
+                    }
+                    if(one_point==true)
+                        bw[idx] = 0;
+                }
+
+            }
+        }
+    }
+
+//    // display BW image
+//    Image4DSimple p4Dbw;
+//    p4Dbw.setData((unsigned char*)bw, sx, sy, sz, 1, V3D_UINT8);
+
+//    v3dhandle newwinbw = callback.newImageWindow();
+//    callback.setImage(newwinbw, &p4Dbw);
+//    callback.setImageName(newwinbw, "black-white image after thresholding");
+//    callback.updateImageWindow(newwinbw);
+
+    // 3D region growing
+    //----------------------------------------------------------------------------------------------------------------------------------
+
+    //declaration
+    V3DLONG totalpxlnum=pagesz;
+
+    RgnGrow3dClass * pRgnGrow = new RgnGrow3dClass;
+    if (!pRgnGrow)
+    {
+        printf("Fail to allocate memory for RgnGrow3dClass().");
+    }
+
+    pRgnGrow->ImgDep = sz;
+    pRgnGrow->ImgHei = sy;
+    pRgnGrow->ImgWid = sx;
+
+    newIntImage3dPairMatlabProtocol(pRgnGrow->quantImg3d,pRgnGrow->quantImg1d,pRgnGrow->ImgDep,pRgnGrow->ImgHei,pRgnGrow->ImgWid);
+
+    int nstate;
+    UBYTE minlevel,maxlevel;
+
+    copyvecdata((unsigned char *)bw,totalpxlnum,pRgnGrow->quantImg1d,nstate,minlevel,maxlevel);
+
+    //don't count lowest level (background here = 0)
+    minlevel = minlevel+1;
+    if (minlevel>maxlevel)
+        minlevel = maxlevel; //at least do one level
+
+    //begin computation
+    phcDebugPosNum = 0;
+    phcDebugRgnNum = 0;
+
+    newIntImage3dPairMatlabProtocol(pRgnGrow->PHCLABELSTACK3d,pRgnGrow->PHCLABELSTACK1d,1,3,totalpxlnum);
+    pRgnGrow->PHCLABELSTACKPOS = 0;
+
+    pRgnGrow->PHCURGN = new RGN;
+    if (!pRgnGrow->PHCURGN)
+    {
+        printf("Unable to do:pRgnGrow->PHCURGN = new RGN;  -->current phcDebugRgnNum=%i.\n",phcDebugRgnNum);
+    }
+    pRgnGrow->PHCURGN_head = pRgnGrow->PHCURGN;
+    pRgnGrow->TOTALRGNnum = 1;
+
+    deleteIntImage3dPairMatlabProtocol(pRgnGrow->PHCDONEIMG3d,pRgnGrow->PHCDONEIMG1d);
+    newIntImage3dPairMatlabProtocol(pRgnGrow->PHCDONEIMG3d,pRgnGrow->PHCDONEIMG1d,pRgnGrow->ImgDep,pRgnGrow->ImgHei,pRgnGrow->ImgWid);
+
+    for(int j=minlevel;j<=maxlevel;j++)
+    {
+        int depk, colj, rowi;
+
+        BYTE * PHCDONEIMG1d = pRgnGrow->PHCDONEIMG1d;
+        UBYTE * quantImg1d = pRgnGrow->quantImg1d;
+        BYTE *** flagImg = pRgnGrow->PHCDONEIMG3d;
+        for (V3DLONG tmpi=0; tmpi<totalpxlnum; tmpi++)
+        {
+            PHCDONEIMG1d[tmpi] = (quantImg1d[tmpi]==(UBYTE)j)?1:0;
+        }
+
+        pRgnGrow->PHCURLABEL = 0;
+
+        for(depk=0; depk<pRgnGrow->ImgDep; depk++)
+            for(colj=0; colj<pRgnGrow->ImgHei; colj++)
+                for(rowi=0; rowi<pRgnGrow->ImgWid; rowi++)
+                {
+                    if (flagImg[depk][colj][rowi]==1)
+                    {
+                        pRgnGrow->IFINCREASELABEL = 1;
+
+                        pRgnGrow->PHCURLABEL++;
+
+                        pRgnGrow->PHCLABELSTACKPOS = 0;
+
+                        pRgnGrow->PHCLABELSTACK3d[0][0][pRgnGrow->PHCLABELSTACKPOS] = depk;
+                        pRgnGrow->PHCLABELSTACK3d[0][1][pRgnGrow->PHCLABELSTACKPOS] = colj;
+                        pRgnGrow->PHCLABELSTACK3d[0][2][pRgnGrow->PHCLABELSTACKPOS] = rowi;
+
+                        //create pos memory
+                        pRgnGrow->PHCURGNPOS = new POS;
+                        if (pRgnGrow->PHCURGNPOS==0)
+                        {
+                            printf("Fail to allocate memory! -->cur phcDebugPosNum=%i.\n",phcDebugPosNum);
+                        }
+                        pRgnGrow->PHCURGNPOS_head = pRgnGrow->PHCURGNPOS;
+                        pRgnGrow->TOTALPOSnum = 1;
+
+                        while(1)
+                        {
+                            pRgnGrow->IFINCREASELABEL = 1;
+                            V3DLONG posbeg = pRgnGrow->PHCLABELSTACKPOS;
+                            V3DLONG mypos = posbeg;
+
+                            while (mypos>=0)
+                            {
+                                pRgnGrow->STACKCNT = 0;
+                                int curdep = pRgnGrow->PHCLABELSTACK3d[0][0][mypos];
+                                int curcol = pRgnGrow->PHCLABELSTACK3d[0][1][mypos];
+                                int currow = pRgnGrow->PHCLABELSTACK3d[0][2][mypos];
+
+                                if (flagImg[curdep][curcol][currow]==1)
+                                {
+                                    rgnfindsub(currow,curcol,curdep,0,1,pRgnGrow);
+                                }
+                                else if(flagImg[curdep][curcol][currow]==-1)
+                                {
+                                    rgnfindsub(currow,curcol,curdep,0,0,pRgnGrow);
+                                }
+
+                                V3DLONG posend = pRgnGrow->PHCLABELSTACKPOS;
+
+                                if (posend>posbeg)
+                                {mypos = pRgnGrow->PHCLABELSTACKPOS;}
+                                else
+                                {mypos = mypos-1;}
+                                posbeg = posend;
+                            }
+
+                            if (pRgnGrow->IFINCREASELABEL==1)
+                                break;
+                        }
+
+                        //set pos as member of current RGN
+                        pRgnGrow->PHCURGN->layer = j;
+                        pRgnGrow->PHCURGN->no = pRgnGrow->PHCURLABEL;
+                        pRgnGrow->PHCURGN->poslist = pRgnGrow->PHCURGNPOS_head;
+                        pRgnGrow->PHCURGN->poslistlen = pRgnGrow->TOTALPOSnum;
+
+                        pRgnGrow->TOTALPOSnum = 0;
+
+                        pRgnGrow->PHCURGN->next = new RGN;
+                        if(pRgnGrow->PHCURGN->next==0)
+                        {printf("fail to do --> pRgnGrow->PHCURGN->next = new RGN;\n");}
+                        pRgnGrow->PHCURGN = pRgnGrow->PHCURGN->next;
+                        pRgnGrow->TOTALRGNnum++;
+                    }
+                }
+    }
+    //de-alloc
+    if(data1d) {delete []data1d; data1d = NULL;}
+
+    //
+    int end_t = clock();
+    //qDebug() << "label objects via region growing time elapse ..." << end_t-start_t;
+
+    //find the second big area in labeling
+    STCL *staRegion = new STCL;
+    STCL *staRegion_begin = staRegion;
+    RGN *curRgn = pRgnGrow->PHCURGN_head;
+    V3DLONG nrgncopied = 0; //num of rgn output
+
+    std::vector<STCL> stclList;
+
+    while(curRgn && curRgn->next)
+    {
+        //qDebug() << "num of rgn ..." << nrgncopied << curRgn->no << curRgn->next->no;
+
+        staRegion->no = curRgn->no;
+        staRegion->count = 0;
+
+        POS * curPos = curRgn->poslist;
+
+        V3DLONG count = 0;
+        staRegion->desposlist = new V3DLONG [curRgn->poslistlen-1];
+        while(curPos && curPos->next)
+        {
+            staRegion->desposlist[count++] = curPos->pos;
+            curPos = curPos->next;
+        }
+        staRegion->count = count;
+
+        //qDebug() << "pixels ..." << count;
+
+        if(count<volsz) { nrgncopied++; curRgn = curRgn->next; continue; } // filter out the small components
+
+        //
+        stclList.push_back(*staRegion);
+
+        //
+        curRgn = curRgn->next;
+        staRegion->next = new STCL;
+        staRegion = staRegion->next;
+
+        nrgncopied++;
+
+    }
+
+    // result pointer
+    V3DLONG length;
+
+    V3DLONG n_rgn = stclList.size(); // qMin(5, nrgncopied);
+
+    //qDebug() << "display "<< n_rgn<<" rgns from "<< nrgncopied;
+
+    //Image4DSimple p4DImage;
+    if(n_rgn>65534)
+    {
+        float *pRGCL = NULL;
+        try
+        {
+            pRGCL = new float [pagesz];
+
+            memset(pRGCL, 0, sizeof(float)*pagesz);
+        }
+        catch (...)
+        {
+            printf("Fail to allocate memory.\n");
+            return false;
+        }
+
+        for(int ii=0; ii<n_rgn; ii++)
+        {
+            length = stclList.at(ii).count; //a[ii];
+
+            //qDebug() << "region ..." << ii << length;
+
+            // find idx
+            V3DLONG *cutposlist = stclList.at(ii).desposlist;
+
+            float scx=0,scy=0,scz=0,si=0;
+
+            for(int i=0; i<length; i++)
+            {
+                //qDebug() << "idx ..." << i << cutposlist[i] << pagesz;
+
+                pRGCL[ cutposlist[i] ] = (float)ii + 1.0;
+
+                float cv = pSub[ cutposlist[i] ];
+
+                V3DLONG idx = cutposlist[i];
+
+                V3DLONG k1 = idx/(sx*sy);
+                V3DLONG j1 = (idx - k1*sx*sy)/sx;
+                V3DLONG i1 = idx - k1*sx*sy - j1*sx;
+
+                scz += k1*cv;
+                scy += j1*cv;
+                scx += i1*cv;
+                si += cv;
+            }
+
+            if (si>0)
+            {
+                V3DLONG ncx = scx/si + 0.5 +1;
+                V3DLONG ncy = scy/si + 0.5 +1;
+                V3DLONG ncz = scz/si + 0.5 +1;
+
+                LocationSimple pp(ncx, ncy, ncz);
+                cmList.push_back(pp);
+                int vol = (int)length;
+                volList.push_back(vol);
+
+            }
+
+        }
+
+//        // display
+        regionMap.setData((unsigned char*)pRGCL, sx, sy, sz, 1, V3D_FLOAT32);
+
+//        v3dhandle newwin = callback.newImageWindow();
+//        callback.setImage(newwin, &regionMap);
+//        callback.setImageName(newwin, "labeled_objects");
+//        callback.setLandmark(newwin, cmList); // center of mass
+//        callback.updateImageWindow(newwin);
+
+    }
+    else if(n_rgn>254)
+    {
+        unsigned short *pRGCL = NULL;
+        try
+        {
+            pRGCL = new unsigned short [pagesz];
+
+            memset(pRGCL, 0, sizeof(unsigned short)*pagesz);
+        }
+        catch (...)
+        {
+            printf("Fail to allocate memory.\n");
+            return false;
+        }
+
+        for(int ii=0; ii<n_rgn; ii++)
+        {
+            length = stclList.at(ii).count; //a[ii];
+
+            //qDebug() << "region ..." << ii << length;
+
+            // find idx
+            V3DLONG *cutposlist = stclList.at(ii).desposlist;
+
+            float scx=0,scy=0,scz=0,si=0;
+
+            for(int i=0; i<length; i++)
+            {
+                //qDebug() << "idx ..." << i << cutposlist[i] << pagesz;
+
+                pRGCL[ cutposlist[i] ] = (unsigned short)ii + 1;
+
+                float cv = pSub[ cutposlist[i] ];
+
+                V3DLONG idx = cutposlist[i];
+
+                V3DLONG k1 = idx/(sx*sy);
+                V3DLONG j1 = (idx - k1*sx*sy)/sx;
+                V3DLONG i1 = idx - k1*sx*sy - j1*sx;
+
+                scz += k1*cv;
+                scy += j1*cv;
+                scx += i1*cv;
+                si += cv;
+            }
+
+            if (si>0)
+            {
+                V3DLONG ncx = scx/si + 0.5 +1;
+                V3DLONG ncy = scy/si + 0.5 +1;
+                V3DLONG ncz = scz/si + 0.5 +1;
+
+                LocationSimple pp(ncx, ncy, ncz);
+                cmList.push_back(pp);
+                int vol = (int)length;
+                volList.push_back(vol);
+
+            }
+
+        }
+
+//        // display
+        regionMap.setData((unsigned char*)pRGCL, sx, sy, sz, 1, V3D_UINT16);
+
+//        v3dhandle newwin = callback.newImageWindow();
+//        callback.setImage(newwin, &regionMap);
+//        callback.setImageName(newwin, "labeled_objects");
+//        callback.setLandmark(newwin, cmList); // center of mass
+//        callback.updateImageWindow(newwin);
+    }
+    else
+    {
+        unsigned char *pRGCL = NULL;
+        try
+        {
+            pRGCL = new unsigned char [pagesz];
+
+            memset(pRGCL, 0, pagesz);
+        }
+        catch (...)
+        {
+            printf("Fail to allocate memory.\n");
+            return false;
+        }
+
+        for(int ii=0; ii<n_rgn; ii++)
+        {
+            length = stclList.at(ii).count; //a[ii];
+
+            //qDebug() << "region ..." << ii << length;
+
+            // find idx
+            V3DLONG *cutposlist = stclList.at(ii).desposlist;
+
+            float scx=0,scy=0,scz=0,si=0;
+
+            for(int i=0; i<length; i++)
+            {
+                //qDebug() << "idx ..." << i << cutposlist[i] << pagesz;
+
+                pRGCL[ cutposlist[i] ] = (unsigned char)ii + 1;
+
+                float cv = pSub[ cutposlist[i] ];
+
+                V3DLONG idx = cutposlist[i];
+
+                V3DLONG k1 = idx/(sx*sy);
+                V3DLONG j1 = (idx - k1*sx*sy)/sx;
+                V3DLONG i1 = idx - k1*sx*sy - j1*sx;
+
+                scz += k1*cv;
+                scy += j1*cv;
+                scx += i1*cv;
+                si += cv;
+            }
+
+            if (si>0)
+            {
+                V3DLONG ncx = scx/si + 0.5 +1;
+                V3DLONG ncy = scy/si + 0.5 +1;
+                V3DLONG ncz = scz/si + 0.5 +1;
+
+                LocationSimple pp(ncx, ncy, ncz);
+                cmList.push_back(pp);
+                int vol = (int)length;
+                volList.push_back(vol);
+
+            }
+
+        }
+
+//        // display
+        regionMap.setData((unsigned char*)pRGCL, sx, sy, sz, 1, V3D_UINT8);
+
+        v3dhandle newwin = callback.newImageWindow();
+        callback.setImage(newwin, &regionMap);
+        callback.setImageName(newwin, "labeled_objects");
+        callback.setLandmark(newwin, cmList); // center of mass
+        callback.updateImageWindow(newwin);
+
+        unsigned char* test = regionMap.getRawData(); //this keeps spitting out nothing
+        if (!test) v3d_msg("test has no data");
+    }
+
+    //
+    int end_t_t = clock();
+
+    //qDebug() << "time elapse ..." << end_t_t - end_t;
+
+    return true;
+
+}
+
+
+
+void regiongrow_filter()
+{
+}
+
+
+template <class T> bool segment_regions(T* data1d, V3DLONG *dimNum,
+                                        LandmarkList originalList, LandmarkList &newList,
+                                        LandmarkList regionList, vector<int> regionVol,
+                                        double cellAve, double cellStDev,
+                                        double PointAve, double PointStDev,
+                                        double radAve, double radStDev,
+                                        int c, int cat, double thresh,
+                                        Image4DSimple &regionMap)
+{
+    V3DLONG N = dimNum[0];
+    V3DLONG M = dimNum[1];
+    V3DLONG P = dimNum[2];
+
+    Image4DProxy<Image4DSimple> rgnImg(&regionMap);
+    unsigned char* rgn_data = regionMap.getRawData();
+    if (!rgn_data) {v3d_msg("no data"); return false;} //dunno why this is happening
+
+    //set up mask
+    unsigned char *maskData = 0;
+    maskData = new unsigned char [N*M*P];
+    for (V3DLONG tmpi=0;tmpi<N*M*P;++tmpi) maskData[tmpi] = 0; //preset to be all 0
+    Image4DSimple maskImage;
+    maskImage.setData((unsigned char*)maskData, N, M, P, 1, V3D_UINT8);
+    Image4DProxy<Image4DSimple> maskImg(&maskImage);
+
+    cout<<"starting count"<<endl;
+
+    //set regions with 1 cell into newList and mask
+    int n_rgn = regionList.size();
+    if (n_rgn>254) {v3d_msg("too many regions"); return false;} //THIS NEEDS SEPARATE CASE
+    vector<int> rgn_cellcount;
+    double VolAve = (4/3)*PI*pow(radAve,3.0);
+    for (int i=0; i<n_rgn; i++)
+    {
+        double vol = regionVol.at(i)/VolAve + 0.5;
+        int volcheck = (int) vol;
+        if (volcheck<=1)
+        {
+            LocationSimple tmp(0,0,0);
+            int xc,yc,zc;
+            tmp = regionList.at(i);
+            tmp.getCoord(xc,yc,zc);
+            newList.append(regionList.at(i));
+            rgn_cellcount.push_back(0);
+        }
+        else rgn_cellcount.push_back(volcheck);
+    }
+    cout<<"regions appended"<<endl;
+
+    //set original markers into newList and mask
+    if (!originalList.empty())
+    {
+        for (int i=0; i<originalList.size(); i++)
+        {
+            LocationSimple tmp(0,0,0);
+            int xc,yc,zc;
+            tmp = originalList.at(i);
+            tmp.getCoord(xc,yc,zc);
+            cout<<xc<<" "<<yc<<" "<<zc<<endl;
+            //int rgnInd = *rgnImg.at(xc,yc,zc,0); //returning very weird numbers
+            int rgnInd = pixelVal(rgn_data,dimNum,xc,yc,zc,c);
+            cout<<rgnInd<<endl;
+            if (rgnInd<=0) continue;
+            cout<<rgnInd<<endl;
+            if (rgn_cellcount.at(rgnInd-1)!=0)
+            {
+                newList.append(originalList.at(i));
+                apply_mask(data1d,dimNum,xc,yc,zc,c,thresh,maskImg);
+                cout<<rgn_cellcount.at(rgnInd)<<" vs ";
+                rgn_cellcount.at(rgnInd) = rgn_cellcount.at(rgnInd)-1;
+                cout<<rgn_cellcount.at(rgnInd)<<endl;
+            }
+        }
+    }
+    cout<<"original list appended"<<endl;
+
+    //segment remaining regions
+    LocationSimple tmpLocation(0,0,0);
+    double seg;
+    seg = radAve/4;
+    //v3d_msg(QString("init %1").arg(init));
+    for (double i=0; i<n_rgn; i++) //region at i has value i+1
+    {
+        if (rgn_cellcount.at(i)==0) {continue;}
+        double range = regionVol.at(i);
+        int x,y,z;
+        tmpLocation = regionList.at(i);
+        tmpLocation.getCoord(x,y,z);
+        //define limits around region, would prefer to have eigenvalues to better determine range
+        int xLow = x-range; if (xLow<0) xLow=0;
+        int xHigh = x+range; if (xHigh>N-1) xHigh=N-1;
+        int yLow = y-range; if (yLow<0) yLow=0;
+        int yHigh = y+range; if (yHigh>M-1) yHigh=M-1;
+        int zLow = z-range; if (zLow<0) zLow=0;
+        int zHigh = z+range; if (zHigh>P-1) zHigh=P-1;
+        for (int ix=xLow; ix<=xHigh; x++)
+        {
+            for (int iy=yLow; iy<=yHigh; y++)
+            {
+                for (int iz=zLow; iz<=zHigh; z++)
+                {
+                    if (*maskImg.at(ix,iy,iz,0) != 0 || *rgnImg.at(ix,iy,iz,0)!=i+1) {continue;}
+
+                    double TempPointVal = pixelVal(data1d,dimNum,ix,iy,iz,c);
+                    if ((TempPointVal>=PointAve-PointStDev) && (TempPointVal<=PointAve+PointStDev))
+                    {
+                        int x,y,z;
+                        x=ix; y=iy; z=iz; //mass_center_Coords will rewrite x,y,z so need to keep ix,iy,iz untouched
+                        mass_center_Coords(data1d,dimNum,x,y,z,radAve+radStDev,c,thresh);
+                        if (*maskImg.at(x,y,z,0) != 0 || *rgnImg.at(x,y,z,0)!=i+1) continue;
+                        double TempDataAve = compute_ave_cell_val(data1d,dimNum,x,y,z,c,i);
+                        if ( (TempDataAve>=cellAve-cellStDev) && (TempDataAve<=cellAve+cellStDev))
+                        {
+                            //cout<<"found a marker "<<TempDataAve<<" with rad "<<i<<" at coords "<<ix<<" "<<iy<<" "<<iz<<endl;
+
+                            tmpLocation.x = x;
+                            tmpLocation.y = y;
+                            tmpLocation.z = z;
+                            tmpLocation.category = cat;
+                            stringstream catStr;
+                            catStr << cat;
+                            tmpLocation.comments = catStr.str();
+                            newList.append(tmpLocation);
+
+                            apply_mask(data1d,dimNum,x,y,z,c,thresh,maskImg);
+                            rgn_cellcount.at(i) = rgn_cellcount.at(i)-1;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    cout<<"done"<<endl;
+    return true;
 }
