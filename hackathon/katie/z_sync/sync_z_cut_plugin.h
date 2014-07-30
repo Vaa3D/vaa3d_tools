@@ -182,6 +182,7 @@ public:
     //QAbstractSlider *zSminSlider, *zSmaxSlider;
 
     QAbstractButton *zcLock;
+    QPushButton *updateSurf;
 
     //V3dR_GLWidget * glWidget;
 
@@ -218,6 +219,7 @@ private slots:
 
     //void setZCutLockIcon(bool);
     void setZCutLock(bool);
+    void update_traces();
     //void showZCutLock();
     //void change_zed_min(); //obviously does more than that now
     //void SWC_min_and_max();
@@ -275,6 +277,7 @@ zcminSlider = 0;
 zcmaxSlider = 0;
 lockZ = 0;
 zcLock = 0;
+updateSurf = 0;
 X = 0;
 Y = 0;
 dzCut = 0;
