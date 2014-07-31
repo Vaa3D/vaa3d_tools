@@ -1,7 +1,7 @@
 /****************************************************************************
 ** Meta object code from reading C++ file 'typeset_plugin.h'
 **
-** Created: Thu Jul 24 12:22:05 2014
+** Created: Thu Jul 31 11:12:57 2014
 **      by: The Qt Meta Object Compiler version 62 (Qt 4.7.4)
 **
 ** WARNING! All changes made in this file will be lost!
@@ -135,7 +135,7 @@ static const uint qt_meta_data_controlPanel[] = {
        5,       // revision
        0,       // classname
        0,    0, // classinfo
-       5,   14, // methods
+       7,   14, // methods
        0,    0, // properties
        0,    0, // enums/sets
        0,    0, // constructors
@@ -145,16 +145,20 @@ static const uint qt_meta_data_controlPanel[] = {
  // slots: signature, parameters, type, tag, flags
       14,   13,   13,   13, 0x08,
       27,   13,   13,   13, 0x08,
-      43,   13,   13,   13, 0x08,
-      58,   13,   13,   13, 0x08,
-      71,   13,   13,   13, 0x08,
+      47,   13,   13,   13, 0x08,
+      70,   13,   13,   13, 0x08,
+      86,   13,   13,   13, 0x08,
+      99,   13,   13,   13, 0x08,
+     119,   13,  112,   13, 0x08,
 
        0        // eod
 };
 
 static const char qt_meta_stringdata_controlPanel[] = {
-    "controlPanel\0\0_slot_sort()\0_slot_refresh()\0"
-    "_slot_delete()\0_slot_show()\0_slot_save()\0"
+    "controlPanel\0\0_slot_sort()\0"
+    "_slot_typeset_all()\0_slot_typeset_marker()\0"
+    "_slot_refresh()\0_slot_show()\0_slot_save()\0"
+    "double\0get_type()\0"
 };
 
 const QMetaObject controlPanel::staticMetaObject = {
@@ -187,13 +191,16 @@ int controlPanel::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
     if (_c == QMetaObject::InvokeMetaMethod) {
         switch (_id) {
         case 0: _slot_sort(); break;
-        case 1: _slot_refresh(); break;
-        case 2: _slot_delete(); break;
-        case 3: _slot_show(); break;
-        case 4: _slot_save(); break;
+        case 1: _slot_typeset_all(); break;
+        case 2: _slot_typeset_marker(); break;
+        case 3: _slot_refresh(); break;
+        case 4: _slot_show(); break;
+        case 5: _slot_save(); break;
+        case 6: { double _r = get_type();
+            if (_a[0]) *reinterpret_cast< double*>(_a[0]) = _r; }  break;
         default: ;
         }
-        _id -= 5;
+        _id -= 7;
     }
     return _id;
 }

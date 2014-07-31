@@ -7,7 +7,6 @@
 #include "v3d_message.h"
 #include "my_surf_objs.h"
 #include "openSWCDialog.h"
-#include "sort_func.h"
 #include "typeset.h"
 #include "typeset_func.h"
 #include "typeset_plugin.h"
@@ -17,6 +16,8 @@
 //using namespace std;
 
 //const QString title = QObject::tr("typeset Neuron");
+
+static LandmarkList current_3Dview_markers;
 
 bool export_list2file_v2(QList<NeuronSWC> & lN, QString fileSaveName, QString FileSWCOpenName)
 {
@@ -34,92 +35,80 @@ bool export_list2file_v2(QList<NeuronSWC> & lN, QString fileSaveName, QString Fi
     return true;
 }
 
-int typeset_swc_func(V3DPluginCallback2 &callback)//, QWidget *parent)
+static int file_count = 0;
+
+int typeset_swc_func(V3DPluginCallback2 &callback, double settype)
 {
+    v3d_msg("Be sure to open the correct the sorted swc file");
 
-    sort_menu(callback); //sort first, then typeset
 
-    v3d_msg("Be sure to open the correct (filename)_sort swc file");
+    //if an swc file is open already, then use that, if more than one or zero open, call following
 
+    //v3dhandleList open_files = callback.getImageWindowList();
+    //int open_files_num = open_files.size();
     QString FileSWCOpenName;
-    FileSWCOpenName = QFileDialog::getOpenFileName(0, QObject::tr("Open SWC File"),
-            "",
-            QObject::tr("Supported file (*.swc *.eswc)"
-                ";;Neuron structure	(*.swc)"
-                ";;Extended neuron structure (*.eswc)"
-                ));
-
     NeuronTree nt;
 
-    if (FileSWCOpenName.toUpper().endsWith(".SWC") || FileSWCOpenName.toUpper().endsWith(".ESWC"))
-    {
-        bool ok;
 
-        nt = readSWC_file(FileSWCOpenName);
-        if (!ok)
+//    if (open_files_num == 1)
+//    {
+//        v3dhandle current_3Dview = callback.currentImageWindow();
+//        FileSWCOpenName = callback.getImageName(current_3Dview);
+//        nt = callback.getSWC(current_3Dview);
+
+//    }
+//    else if (open_files_num == 0 || open_files_num > 1)
+//    {
+
+        OpenSWCDialog * openDlg = new OpenSWCDialog(0, &callback);
+        if (!openDlg->exec())
             return 0;
-    }
+
+        FileSWCOpenName = openDlg->file_name;
+
+        nt = openDlg->nt;
+//    }
+
+//    QList<NeuronSWC> neuron = nt.listNeuron;
+
+//    QString FileSWCOpenName;
+//    FileSWCOpenName = QFileDialog::getOpenFileName(0, QObject::tr("Open Sorted SWC File"),
+//            "",
+//            QObject::tr("Supported file (*.swc *.eswc)"
+//                ";;Neuron structure	(*.swc)"
+//                ";;Extended neuron structure (*.eswc)"
+//                ));
+
+//    NeuronTree nt;
+
+//    if (FileSWCOpenName.toUpper().endsWith(".SWC") || FileSWCOpenName.toUpper().endsWith(".ESWC"))
+//    {
+//        bool ok;
+
+//        nt = readSWC_file(FileSWCOpenName);
+//        if (!ok)
+//            return 0;
+//    }
 
     QList<ImageMarker> tmp_list;
     NeuronTree result = nt;
 
-
-
-    double marker_readlocation = 0;
-    //marker_readlocation = QInputDialog::getDouble(parent, "Please set child branch type","Type: \n"
-    marker_readlocation = QInputDialog::getDouble(0, "Please set child branch type","Type: \n"
-
-                                                         "1 - read from 3D window \n"
-                                                         "2 - read from marker file ",0,0,2,1);
-
-    if (marker_readlocation == 0 || marker_readlocation == 1)
-    {
-        v3dhandle current_3Dview = callback.currentImageWindow(); //get's current image window (3D that's open)
-        LandmarkList current_3Dview_markers = callback.getLandmark(current_3Dview); //gives list of markers drawn
-
-        for (int i=0;i<current_3Dview_markers.size();i++)//translate marker info from landmark list to tmp_list
-        {
-            LocationSimple t = current_3Dview_markers.at(i);
-
-            ImageMarker pt;
-            pt.x = t.x;
-            pt.y = t.y;
-            pt.z = t.z;
-            tmp_list.push_back(pt);
-        }
-    }
-    if (tmp_list.size() < 1 || marker_readlocation == 2) //if no markers were in view
-    {
-        QString FileMarkerOpenName;
-        FileMarkerOpenName = QFileDialog::getOpenFileName(0, QObject::tr("Open Marker File"),
-                "",
-                QObject::tr("Supported file (*.marker)"));
-
-        if(FileSWCOpenName.isEmpty() )// || FileMarkerOpenName.isEmpty())
-            return 0;
-
-        if (FileMarkerOpenName.toUpper().endsWith(".MARKER"))
-        {
-            //bool ok;
-            tmp_list = readMarker_file(FileMarkerOpenName);
-            //if (!ok)
-            //    return 0;
-        }
-    }
+    tmp_list = get_markers(callback);
 
     if (tmp_list.size() < 1)
     {
         v3d_msg("no markers in 3D window; plugin not run");
+        return 0;
     }
     else
     {
-        double settype;
+        //double settype; //get settype from private void in plugin.cpp
         //settype = QInputDialog::getDouble(parent, "Please set child branch type","Type:",0,0,4,1);
-        settype = QInputDialog::getDouble(0, "Please set child branch type","Type:",0,0,4,1);
+        //settype = QInputDialog::getDouble(0, "Please set child branch type","Type:",0,0,4,1);
 
         result = typeset_marker(nt, tmp_list, settype);
 
-        QString fileDefaultName = FileSWCOpenName+QString("_typeset.swc");
+        QString fileDefaultName = FileSWCOpenName+QString("_%1_typeset.swc").arg(file_count);
         //write new SWC to file
         QString fileSaveName = QFileDialog::getSaveFileName(0, QObject::tr("Save File"),
                 fileDefaultName,
@@ -131,14 +120,73 @@ int typeset_swc_func(V3DPluginCallback2 &callback)//, QWidget *parent)
             v3d_msg("fail to write the output swc file.");
             return 0;
         }
-
-
         return 1;
     }
+    file_count++;
+}
 
+QList<ImageMarker> get_markers(V3DPluginCallback2 &callback)
+{
+    v3dhandle current_3Dview = callback.currentImageWindow(); //get's current image window (3D that's open)
+    current_3Dview_markers = callback.getLandmark(current_3Dview); //gives list of markers drawn
+
+    QList<ImageMarker> tmp_list;
+
+    for (V3DLONG i=0;i<current_3Dview_markers.size();i++)//translate marker info from landmark list to tmp_list
+    {
+        LocationSimple t = current_3Dview_markers.at(i);
+
+        ImageMarker pt;
+        pt.n = i+1; //marker number
+        pt.x = t.x;
+        pt.y = t.y;
+        pt.z = t.z;
+        tmp_list.push_back(pt);
+    }
+
+    return tmp_list;
+}
+
+
+
+//QList<ImageMarker> delete_markers(V3DPluginCallback2 &callback, ImageMarker coordinate)
+//{
+
+//    v3dhandle current_3Dview = callback.currentImageWindow();
+//    current_3Dview_markers = callback.getLandmark(current_3Dview);
+
+//   // i guess i'll need this eventually (or something along these lines): callback.update_3DViewer(current_3Dview);
+
+//    QList<LocationSimple> markers_3Dview_update;
+
+//    for (V3DLONG i=0;i<current_3Dview_markers.size();i++)//translate marker info from landmark list to tmp_list
+//    {
+//        LocationSimple t = current_3Dview_markers.at(i);
+
+//        LocationSimple pt;
+//        pt.n = i+1; //marker number
+//        pt.x = t.x;
+//        pt.y = t.y;
+//        pt.z = t.z;
+//        markers_3Dview_update.push_back(pt);
 //    }
 
-}
+
+
+//    QList<ImageMarker> tmp_list = get_markers(callback);
+//    QList<ImageMarker> tmp_list_new;
+
+//    for (V3DLONG i=0; i<tmp_list.size(); i++)
+//    {
+//        if(coordinate.x != tmp_list.x && coordinate.y != tmp_list.y && coordinate.z != tmp_list.z)
+//        {
+//            tmp_list_new.push_back(tmp_list.at(i)); //if the coordinates don't match, then it adds it to the new list and reloads it. i guess. so kind of like the refresh button.
+//        }
+//    }
+
+
+//    //blarp
+//}
 
 bool typeset_swc(const V3DPluginArgList & input, V3DPluginArgList & output)
 {
@@ -166,7 +214,7 @@ bool typeset_swc(const V3DPluginArgList & input, V3DPluginArgList & output)
     if (output.size()==0)
     {
         printf("No outputfile specified.\n");
-        fileSaveName = FileSWCOpenName + "_typesetd.swc";
+        fileSaveName = FileSWCOpenName + "_typeset.swc";
     }
     else if (output.size()==1)
     {

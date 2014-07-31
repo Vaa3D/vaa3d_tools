@@ -7,6 +7,7 @@
 #include <v3d_interface.h>
 #include "my_surf_objs.h"
 #include "openSWCDialog.h"
+#include "sort_func.h"
 #include "typeset_func.h"
 #include "typeset_plugin.h"
 
@@ -125,25 +126,6 @@ void TypesetWindow(V3DPluginCallback2 &v3d, QWidget *parent)
             panel->activateWindow();
         }
     }
-//    if (controlPanel::panel)
-//    {
-//        controlPanel::panel->show();
-//        return;
-//    }
-//    else
-//    {
-//        controlPanel* p = new controlPanel(v3d, parent);
-//        //controlPanel* p = new controlPanel(v3d, parent);
-//        if (p)
-//        {
-//     //       panel->setAttribute(Qt::WA_QuitOnClose);
-//      //      panel->setAttribute(Qt::WA_DeleteOnClose);
-//            p->show();
-//            p->raise();
-//            p->move(50,50);
-//            p->activateWindow();
-//        }
-//    }
 }
 
 void MyComboBox::enterEvent(QEvent *e)
@@ -214,9 +196,10 @@ controlPanel::controlPanel(V3DPluginCallback2 &_v3d, QWidget *parent) :
     QDialog(parent), m_v3d(_v3d)
 {
     QPushButton* btn_Refresh = new QPushButton("Refresh Marker List");
-    QPushButton* btn_Typeset = new QPushButton("Typeset");
+    QPushButton* btn_TypesetAll = new QPushButton("Typeset All");
+    QPushButton* btn_TypesetMarker = new QPushButton("Typeset Marker");
     QPushButton* btn_Show = new QPushButton("Highlight Selected Marker Point");
-    QPushButton* btn_Delete = new QPushButton("Delete Selected Marker Point");
+    //QPushButton* btn_Delete = new QPushButton("Delete Selected Marker Point");
     QPushButton* btn_Save = new QPushButton("Save SWC File");
     //QPushButton* btn_Load = new QPushButton("Load Marker File");
     QPushButton* btn_Up = new QPushButton("Move Up");
@@ -224,14 +207,18 @@ controlPanel::controlPanel(V3DPluginCallback2 &_v3d, QWidget *parent) :
     QPushButton* btn_Sort = new QPushButton("Sort Loaded SWC File");
 
     box_Typeset = new QSpinBox(); //need to revise this for 1-4
-    QLabel* MarkerTitle = new QLabel(QObject::tr("Markers read from window:"));
+    QLabel* MarkerTitle = new QLabel(QObject::tr("Markers read from window: \n"
+                                                 "Marker number: [ x , y, z ]"));
     QLabel* TypeName = new QLabel(QObject::tr("Set Type:"));
     QLabel* TypeKey = new QLabel(QObject::tr("Typeset Key: \n"
+                                             "0 -  undefined \n"
                                              "1 -  soma \n"
                                              "2 -  axon \n"
                                              "3 - dendrite \n"
-                                             "4 - i don't remember' \n"
-                                             "0 - other \n"));
+                                             "4 - apical dendrite \n"
+                                             "5 -  fork point \n"
+                                             "6 -  end point \n"
+                                             "7 - custom \n"));
 
     //potential bugs for the following two sentences
     //list_triview = m_v3d.getImageWindowList();
@@ -246,9 +233,10 @@ controlPanel::controlPanel(V3DPluginCallback2 &_v3d, QWidget *parent) :
     gridLayout->addWidget(btn_Refresh, 8,0,1,2);
     gridLayout->addWidget(btn_Up, 8,2,1,1);
     gridLayout->addWidget(btn_Down, 8,4,1,1);
-    gridLayout->addWidget(btn_Typeset,6,6,1,3);
+    gridLayout->addWidget(btn_TypesetAll,6,6,1,3);
+    gridLayout->addWidget(btn_TypesetMarker, 7,6,1,3);
     gridLayout->addWidget(btn_Show,10,0,1,2);
-    gridLayout->addWidget(btn_Delete,9,0,1,2);
+    //gridLayout->addWidget(btn_Delete,9,0,1,2);
     gridLayout->addWidget(btn_Save,9,2,1,3);
     //gridLayout->addWidget(btn_Load,10,2,1,3);
     //gridLayout->addWidget(btn_Upload,11,0,1,5);
@@ -256,9 +244,9 @@ controlPanel::controlPanel(V3DPluginCallback2 &_v3d, QWidget *parent) :
     gridLayout->addWidget(TypeKey, 4,6,1,3);
     gridLayout->addWidget(box_Typeset, 5,7,1,2);
 
-    box_Typeset->setMaximum(4);
+    box_Typeset->setMaximum(7);
     box_Typeset->setMinimum(0);
-    box_Typeset->setValue(2);
+    box_Typeset->setValue(3);
 
     list_markers = new QListWidget();
     gridLayout->addWidget(list_markers,3,0,5,5);
@@ -267,19 +255,17 @@ controlPanel::controlPanel(V3DPluginCallback2 &_v3d, QWidget *parent) :
     setWindowTitle(QString("Typeset"));
 
     connect(btn_Sort, SIGNAL(clicked()), this, SLOT(_slot_sort())); //deleted the underscore
-    connect(btn_Typeset, SIGNAL(clicked()), this, SLOT(_slot_typeset()));
-//    connect(btn_Sort, SIGNAL(clicked()), this, SLOT(_slot_sort(v3d, parent))); //deleted the underscore
-  //  connect(btn_Typeset, SIGNAL(clicked()), this, SLOT(_slot_typeset(_v3d, parent)));
-    //connect(btn_Typeset, SIGNAL(clicked()), this, SLOT(typeset_swc_func(v3d, parent)));
-
+    connect(btn_TypesetAll, SIGNAL(clicked()), this, SLOT(_slot_typeset_all()));
+    connect(btn_TypesetMarker, SIGNAL(clicked()), this, SLOT(_slot_typeset_marker()));
     connect(btn_Refresh, SIGNAL(clicked()), this, SLOT(_slot_refresh()));
-    connect(btn_Delete, SIGNAL(clicked()), this, SLOT(_slot_delete()));
+    //connect(btn_Delete, SIGNAL(clicked()), this, SLOT(_slot_delete()));
     connect(btn_Show, SIGNAL(clicked()), this, SLOT(_slot_show()));
     connect(btn_Save, SIGNAL(clicked()), this, SLOT(_slot_save()));
     connect(btn_Up, SIGNAL(clicked()), this, SLOT(_slot_up()));
     connect(btn_Down, SIGNAL(clicked()), this, SLOT(_slot_down()));
 //    connect(box_Typeset, SIGNAL(valueChanged(double)), this, SLOT(update()));
-    connect(box_Typeset, SIGNAL(valueChanged(double)), this, SLOT(update_function()));
+    connect(box_Typeset, SIGNAL(valueChanged(double)), this, SLOT(get_type())); //need to somewhoe get valueChanged number
+//    connect(list_markers, SIGNAL(itemDoubleClicked(QListWidgetItem *)), this, SLOT(_slot_show_item(QListWidgetItem *)));
     connect(list_markers, SIGNAL(itemDoubleClicked(QListWidgetItem *)), this, SLOT(_slot_show_item(QListWidgetItem *)));
 
 
@@ -298,75 +284,102 @@ controlPanel::~controlPanel()
 
 void controlPanel::_slot_sort()//V3DPluginCallback2 &_v3d, QWidget *parent)
 {
-    //sort_menu(_v3d,parent); //sort first, then typeset
-    //insert sort function
-    //insert v3d_msg("file sorted");
-    v3d_msg("sort function to be implimented");
-
+    sort_menu(m_v3d); //sort first, then typeset
+    //v3d_msg("sort function run");
 }
 
-void controlPanel::_slot_typeset()
+void controlPanel::_slot_typeset_all()
 {
-    //create typeset_grab to get the values of v3d and parent from where you defined the window? lemme try smthng 1st
-
-    typeset_swc_func(m_v3d);
+    double settype = get_type();
+    typeset_swc_func(m_v3d, settype); //do i need to have a location simple? or is this enough
     v3d_msg("typeset function was run");
 }
 
+void controlPanel::_slot_typeset_marker()
+{
+
+    // list_markers->selectedItems();
+    //typeset_swc_func(m_v3d);
+
+
+    //LocationSimple current_marker;
+
+    if (list_markers->isItemSelected(list_markers->currentItem()))
+    {
+        QString current_marker = list_markers->currentItem()->text();
+
+
+        v3d_msg(current_marker); //need to convert this to location simple. somehow.
+    }
+    else
+    {
+        v3d_msg("select a marker first");
+        return;
+    }
+
+//    double settype = get_type();
+//    //typeset_swc_func(m_v3d, settype);
+
+//    v3d_msg("typeset_marker function finished. ideally.");
+}
 
 void controlPanel::_slot_refresh()
 {
-    v3d_msg("marker refresh button to be implemented");
 
-//    CHECK_WINDOWS;
-//    view->absoluteRotPose();
-//    MYFLOAT xRot = view->xRot();
-//    MYFLOAT yRot = view->yRot();
-//    MYFLOAT zRot = view->zRot();
-//    MYFLOAT xShift = view->xShift();
-//    MYFLOAT yShift = view->yShift();
-//    MYFLOAT zShift = view->zShift();
-//    MYFLOAT zoom = view->zoom();
-//    MYFLOAT xCut0 = view->xCut0();
-//    MYFLOAT xCut1 = view->xCut1();
-//    MYFLOAT yCut0 = view->yCut0();
-//    MYFLOAT yCut1 = view->yCut1();
-//    MYFLOAT zCut0 = view->zCut0();
-//    MYFLOAT zCut1 = view->zCut1();
-//    MYFLOAT frontCut = view->frontCut();
-//    bool  channelB = view->channelB();
-//    bool  channelR = view->channelR();
-//    bool  channelG = view->channelG();
-//    int   showSurf = view->isShowSurfObjects();
-//    int xClip0 = view->xClip0();
-//    int xClip1 = view->xClip1();
-//    int yClip0 = view->yClip0();
-//    int yClip1 = view->yClip1();
-//    int zClip0 = view->zClip0();
-//    int zClip1 = view->zClip1();
-//    int timePoint = view->volumeTimePoint();
+    QList<ImageMarker> tmp_list = get_markers(m_v3d);
+    list_markers->clear();
+    //list_markers->addItem(QString("Marker number: [ x , y, z ]"));
 
-//    QString curstr = QString("%1,%2,%3,%4,%5,%6,%7,%8,%9,%10,%11,%12,%13,%14,%15,%16,%17,%18,%19,%20,%21,%22,%23,%24,%25").arg(xRot).arg(yRot).arg(zRot).arg(xShift).arg(yShift).arg(zShift).arg(zoom).arg(xCut0).arg(xCut1).arg(yCut0).arg(yCut1).arg(zCut0).arg(zCut1).arg(channelR).arg(channelG).arg(channelB).arg(showSurf).arg(xClip0).arg(xClip1).arg(yClip0).arg(yClip1).arg(zClip0).arg(zClip1).arg(frontCut).arg(timePoint);
-//    curstr = curstr.prepend(QString("").setNum(list_markers->count()+1) + ": [ ");
-//    curstr = curstr.append(" ]");
-//    list_markers->addItem(new QListWidgetItem(curstr));
+
+    if (tmp_list.size() < 1)
+    {
+        list_markers->addItem("no markers loaded");
+    }
+    else
+    {
+        for (V3DLONG i=0; i<tmp_list.size();i++)
+        {
+            //MYFLOAT tmp_list_n = tmp_list.at(i).n;
+            MYFLOAT tmp_list_x = tmp_list.at(i).x;
+            MYFLOAT tmp_list_y = tmp_list.at(i).y;
+            MYFLOAT tmp_list_z = tmp_list.at(i).z;
+
+            //v3d_msg(QString("x = %13").arg(tmp_list.at(i).x));
+
+            QString curstr = QString(" %1 , %2 , %3 ").arg(tmp_list_x).arg(tmp_list_y).arg(tmp_list_z);
+            curstr = curstr.prepend(QString("").setNum(list_markers->count()) + ": [ ");
+            curstr = curstr.append(" ]");
+            list_markers->addItem(new QListWidgetItem(curstr));
+        }
+    }
+    //v3d_msg("marker list refreshed!");
+
 }
 
-void controlPanel::_slot_delete()
-{
-    v3d_msg("delete button to be implimented");
-//    CHECK_WINDOWS;
+//void controlPanel::_slot_delete()
+//{
+
+    //CHECK_WINDOWS;
+//    QList<ImageMarker> tmp_list_new;
 
 //    if(list_markers->currentRow()==-1)
 //    {
-//        v3d_msg("Please select a valid archor point.");
+//        v3d_msg("Please select a valid marker point.");
 //        return;
 //    }
+//    else
+//    {
+//        ImageMarker coordinate = list_markers->takeItem(list_markers->currentRow());
+//        tmp_list_new = delete_markers(coordinate);
+//    }
 
-//    list_markers->takeItem(list_markers->currentRow());
+
+//    v3d_msg("delete button hopefully works");
+
+//
 
 //    UPDATE_LIST_INDEX
-}
+//}
 
 //void controlPanel::_slot_show_item(QListWidgetItem *item)
 //{
@@ -403,6 +416,27 @@ void controlPanel::_slot_show()
 //    else
 //        return;
 }
+
+void controlPanel::_slot_save()
+{
+    v3d_msg("save button function to be implemented");
+
+//    QString fileName = QFileDialog::getSaveFileName(this, tr("Save Anchor Point File"),
+//                                                    "",
+//                                                    tr("Anchor Point File (*.apftxt *.txt *.apf)"));
+
+//    if (!(fileName.isEmpty()))
+//        saveAnchorFile(fileName);
+}
+
+double controlPanel::get_type()
+{
+    double settype = box_Typeset->value();
+    return settype;
+    v3d_msg("type was got =P");
+}
+
+
 
 //void controlPanel::_slot_upload()
 //{
@@ -480,17 +514,6 @@ void controlPanel::_slot_show()
 //    return _saveAnchorFile(filename, paraLists, false);
 //}
 
-void controlPanel::_slot_save()
-{
-    v3d_msg("save button function to be implemented");
-
-//    QString fileName = QFileDialog::getSaveFileName(this, tr("Save Anchor Point File"),
-//                                                    "",
-//                                                    tr("Anchor Point File (*.apftxt *.txt *.apf)"));
-
-//    if (!(fileName.isEmpty()))
-//        saveAnchorFile(fileName);
-}
 
 //void controlPanel::_slot_load()
 //{
@@ -582,10 +605,6 @@ void controlPanel::_slot_save()
 
 //}
 
-void update_function()
-{
-    v3d_msg("something something");
-}
 
 
 //void angles_to_quaternions(MYFLOAT q[], MYFLOAT xRot, MYFLOAT yRot,MYFLOAT zRot)
