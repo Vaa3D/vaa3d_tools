@@ -54,6 +54,8 @@ QStringList eliminate_swc::menulist() const
         <<tr("combine_swc_pair")
         <<tr("prun_swc")
         <<tr("z_section to tiles")
+        <<tr("generate qsub list")
+        <<tr("3D images to tiles")
 		<<tr("about");
 }
 
@@ -70,6 +72,9 @@ void combineSWC_tc(V3DPluginCallback2 &callback, QWidget *parent);
 void combineSWC_pair(V3DPluginCallback2 &callback, QWidget *parent);
 void prunSWC(V3DPluginCallback2 &callback, QWidget *parent);
 void zsectionsTotiles(V3DPluginCallback2 &callback, QWidget *parent);
+void qsublist(V3DPluginCallback2 &callback, QWidget *parent);
+void threeDimageTotiles(V3DPluginCallback2 &callback, QWidget *parent);
+
 
 
 struct Point;
@@ -161,6 +166,14 @@ void eliminate_swc::domenu(const QString &menu_name, V3DPluginCallback2 &callbac
     else if(menu_name == tr("z_section to tiles"))
     {
         zsectionsTotiles(callback,parent);
+    }
+    else if(menu_name == tr("generate qsub list"))
+    {
+        qsublist(callback,parent);
+    }
+    else if(menu_name == tr("3D images to tiles"))
+    {
+        threeDimageTotiles(callback,parent);
     }
     else
 	{
@@ -735,6 +748,7 @@ void zsectionsTotiles(V3DPluginCallback2 &callback, QWidget *parent)
 
     int NTILES  = vim.tilesList.size();
 
+
     unsigned char * data1d = 0;
     V3DLONG in_sz[4];
     int datatype;
@@ -779,7 +793,7 @@ void zsectionsTotiles(V3DPluginCallback2 &callback, QWidget *parent)
 
             for(V3DLONG i = 0; i < pagesz; i++)
             {
-                sub_image[j] = data1d[i];
+                sub_image[j] = 255 - data1d[i];
                 j++;
             }
             if(data1d) {delete []data1d; data1d=0;}
@@ -926,10 +940,194 @@ void zsectionsTotiles(V3DPluginCallback2 &callback, QWidget *parent)
 
 }
 
+void qsublist(V3DPluginCallback2 &callback, QWidget *parent)
+{
+    QString m_InputfolderName = QFileDialog::getExistingDirectory(parent, QObject::tr("Choose the directory including all images "),
+                                                                   QDir::currentPath(),
+                                                                   QFileDialog::ShowDirsOnly);
+
+    QString m_OutputfolderName = QFileDialog::getExistingDirectory(parent, QObject::tr("Choose the directory to save all tiles "),
+                                                                   QDir::currentPath(),
+                                                                   QFileDialog::ShowDirsOnly);
+
+    QStringList imgList = importSeriesFileList_addnumbersort(m_InputfolderName);
+
+    Y_VIM<REAL, V3DLONG, indexed_t<V3DLONG, REAL>, LUT<V3DLONG> > vim;
+
+    V3DLONG count=0;
+    foreach (QString img_str, imgList)
+    {
+        V3DLONG offset[3];
+        offset[0]=0; offset[1]=0; offset[2]=0;
+
+        indexed_t<V3DLONG, REAL> idx_t(offset);
+
+        idx_t.n = count;
+        idx_t.ref_n = 0; // init with default values
+        idx_t.fn_image = img_str.toStdString();
+        idx_t.score = 0;
+
+        vim.tilesList.push_back(idx_t);
+        count++;
+    }
+
+    int NTILES  = vim.tilesList.size();
+
+    for(int ii = 0; ii < NTILES; ii++)
+    {
+        ofstream myfile;
+        QString filename(const_cast<char *>(vim.tilesList.at(ii).fn_image.c_str()));
+        filename.append(".qsub");
+        myfile.open (filename.toStdString().c_str(),ios::out | ios::app );
+        myfile << "## There are several queues available.  Please check with \!ITsupport to verify which queue you should use \n";
+        myfile << "#PBS -q mindscope \n";
+        myfile << "# declare that your job will use no more than 4gb of memory _at_peak_ \n";
+        myfile << "#PBS -l vmem=20g\n";
+        myfile << "# Allow up to 36hr of walltime.  Default is 12 hours\n";
+        myfile << "#PBS -l walltime=12:00:00\n";
+        myfile << "# request just one core on the host\n";
+        myfile << "#PBS -l ncpus=1\n";
+        myfile << "# Give your job a descriptive name. This is visible in qstat and other job reports.  Also serves as the default basename for log files\n";
+        myfile << "#PBS -N a" << ii <<"\n";
+        myfile << "# should torque automatically re-run the job on error?\n";
+        myfile << "#PBS -r n\n";
+        myfile << "# merge STDOUT into STDERR\n";
+        myfile << "#PBS -j oe\n";
+        myfile << "# location for stderr/stdout log files _after_ job completion\n";
+        myfile << "#PBS -o /data/mat/zhi/a" << ii << ".out\n";
+        myfile << "#PBS -o /data/mat/zhi/a" << ii << "_error.out\n\n\n";
+        myfile << "# send email on job error\n";
+        myfile << "#PBS -m a\n";
+        myfile << "export DISPLAY=:$RANDOM\n";
+        myfile << "Xvfb $DISPLAY -auth /dev/null &\n";
+        myfile << "export LD_PRELOAD=/usr/lib64/libstdc++.so.6\n";
+        myfile << "cd /data/mat/zhi/VAA3D/vaa3d_redhat_fedora_ubuntu_64bit_v2.868/\n";
+        myfile << "./start_vaa3d.sh -x multiscaleEnhancement -f adaptive_auto -i " << vim.tilesList.at(ii).fn_image.c_str() << " -o " << vim.tilesList.at(ii).fn_image.c_str() <<"_enhanced.raw -p 2 1 1 0 0 \n";
+        myfile << "kill %1\n";
+
+
+        myfile.close();
+
+
+      }
+}
 
 
 
+void threeDimageTotiles(V3DPluginCallback2 &callback, QWidget *parent)
+{
 
+    v3dhandle curwin = callback.currentImageWindow();
+    if (!curwin)
+    {
+        v3d_msg("You don't have any image open in the main window.");
+        return;
+    }
+
+    Image4DSimple* p4DImage = callback.getImage(curwin);
+
+    if (!p4DImage)
+    {
+        v3d_msg("The image pointer is invalid. Ensure your data is valid and try again!");
+        return;
+    }
+
+
+    QString m_OutputfolderName = QFileDialog::getExistingDirectory(parent, QObject::tr("Choose the directory to save all tiles "),
+                                                                   QDir::currentPath(),
+                                                                   QFileDialog::ShowDirsOnly);
+
+    unsigned char* data1d = p4DImage->getRawData();
+    V3DLONG pagesz = p4DImage->getTotalUnitNumberPerChannel();
+
+    V3DLONG N = p4DImage->getXDim();
+    V3DLONG M = p4DImage->getYDim();
+    V3DLONG P = p4DImage->getZDim();
+    V3DLONG sc = p4DImage->getCDim();
+    ImagePixelType pixeltype = p4DImage->getDatatype();
+
+    int Ws = 1024;
+
+
+    V3DLONG in_sz[4];
+    in_sz[0] = N; in_sz[1] = M; in_sz[2] = P; in_sz[3] = 1;
+
+    V3DLONG tilenum = (floor(N/(0.9*Ws))+1.0)*(floor(M/(0.9*Ws))+1.0);
+
+    QString tc_name = m_OutputfolderName;
+    tc_name.append("/stitched_image.tc");
+
+    ofstream myfile;
+    myfile.open (tc_name.toStdString().c_str(),ios::out | ios::app );
+    myfile << "# thumbnail file \n";
+    myfile << "NULL \n\n";
+    myfile << "# tiles \n";
+    myfile << tilenum << " \n\n";
+    myfile << "# dimensions (XYZC) \n";
+    myfile << N << " " << M << " " << P << " " << 1 << " ";
+    myfile << "\n\n";
+    myfile << "# origin (XYZ) \n";
+    myfile << "0.000000 0.000000 0.000000 \n\n";
+    myfile << "# resolution (XYZ) \n";
+    myfile << "1.000000 1.000000 1.000000 \n\n";
+    myfile << "# image coordinates look up table \n";
+    myfile.close();
+
+    for(V3DLONG iy = 0; iy < M; iy = iy+Ws-Ws/10)
+    {
+        V3DLONG yb = iy;
+        V3DLONG ye = iy+Ws-1; if(ye>=M-1) ye = M-1;
+
+        for(V3DLONG ix = 0; ix < N; ix = ix+Ws-Ws/10)
+        {
+            V3DLONG xb = ix;
+            V3DLONG xe = ix+Ws-1; if(xe>=N-1) xe = N-1;
+
+            unsigned char *blockarea=0;
+            V3DLONG blockpagesz = (xe-xb+1)*(ye-yb+1)*P;
+            blockarea = new unsigned char [blockpagesz];
+            int i = 0;
+            for(V3DLONG iz = 0; iz < P; iz++)
+            {
+                V3DLONG offsetk = iz*M*N;
+                for(V3DLONG iy = yb; iy < ye+1; iy++)
+                {
+                    V3DLONG offsetj = iy*N;
+                    for(V3DLONG ix = xb; ix < xe+1; ix++)
+                    {
+
+                        blockarea[i] = data1d[offsetk + offsetj + ix];
+                        i++;
+                    }
+                }
+            }
+
+            V3DLONG block_sz[4];
+            block_sz[0] = xe-xb+1; block_sz[1] = ye-yb+1; block_sz[2] = P; block_sz[3] = 1;
+
+            QString outputTile = m_OutputfolderName;
+            outputTile.append(QString("/x_%1_%2_y_%3_%4.raw").arg(xb).arg(xe).arg(yb).arg(ye));
+            simple_saveimage_wrapper(callback, outputTile.toStdString().c_str(), (unsigned char *)blockarea, block_sz, 1);
+
+            myfile.open (tc_name.toStdString().c_str(),ios::out | ios::app );
+            QString outputilefull;
+            outputilefull.append(QString("x_%1_%2_y_%3_%4.raw").arg(xb).arg(xe).arg(yb).arg(ye));
+            outputilefull.append(QString("   ( %1, %2, 0) ( %3, %4, %5)").arg(xb).arg(yb).arg(xe).arg(ye).arg(P-1));
+            myfile << outputilefull.toStdString();
+            myfile << "\n";
+            myfile.close();
+            if(blockarea) {delete []blockarea; blockarea =0;}
+        }
+
+    }
+    myfile.open (tc_name.toStdString().c_str(),ios::out | ios::app );
+    myfile << "\n# MST LUT\n";
+    myfile.close();
+
+    v3d_msg("done!");
+    return;
+
+}
 
 
 
