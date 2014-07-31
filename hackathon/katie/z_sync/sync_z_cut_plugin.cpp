@@ -471,10 +471,17 @@ void lookPanel::change_z_min(){
                    // view->absoluteRotPose(); //didn't do a whole lot
                     //if(!lockZ){
                     X = zcminSlider->sliderPosition();
+                    Y = zcmaxSlider->sliderPosition(); //NEW
                     view->setZCut0(X); //this is clearly working...
+
+                      if (X>=Y){
+                          zcmaxSlider->setSliderPosition(X);
+                      }
 
 
                     if(sz2<256){
+
+
                         dist_MIN = fabs((min_num-((float)X)));
 
                         if ((float)X>min_num){
@@ -599,9 +606,13 @@ void lookPanel::change_z_max(){
                     //view->absoluteRotPose();
 
                    // if(!lockZ){ //!lockZ
+                    X = zcminSlider->sliderPosition();
                     Y = zcmaxSlider->sliderPosition();
                     view->setZCut1(Y);
 
+                    if (Y<=X){
+                        zcminSlider->setSliderPosition(Y);
+                    }
 
              if(sz2<256){
                  dist_MAX = fabs((float)Y-max_num);
