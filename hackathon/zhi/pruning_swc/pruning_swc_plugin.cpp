@@ -63,6 +63,7 @@ QStringList pruning_swc::menulist() const
 {
 	return QStringList() 
         <<tr("pruning")
+        <<tr("aligning")
 		<<tr("about");
 }
 
@@ -190,7 +191,73 @@ void pruning_swc::domenu(const QString &menu_name, V3DPluginCallback2 &callback,
 
 
 	}
-	else
+    else if(menu_name == tr("aligning"))
+    {
+        QString fileOpenName;
+        fileOpenName = QFileDialog::getOpenFileName(0, QObject::tr("Open File"),
+                "",
+                QObject::tr("Supported file (*.swc *.eswc)"
+                    ";;Neuron structure	(*.swc)"
+                    ";;Extended neuron structure (*.eswc)"
+                    ));
+        if(fileOpenName.isEmpty())
+            return;
+        NeuronTree nt;
+        if (fileOpenName.toUpper().endsWith(".SWC") || fileOpenName.toUpper().endsWith(".ESWC"))
+        {
+             nt = readSWC_file(fileOpenName);
+        }
+        double a11 = 0.8839097281748078;
+        double a12 = 0.17960487872544997;
+        double a21 = -0.17960487872544997;
+        double a22 = 0.8839097281748078;
+        double xshift = -43.50700117587189;
+        double yshift = -2751.430115265474;
+
+        NeuronTree nt_aligned;
+        QList <NeuronSWC> listNeuron;
+        QHash <int, int>  hashNeuron;
+        listNeuron.clear();
+        hashNeuron.clear();
+
+        QList<NeuronSWC> list = nt.listNeuron;
+        NeuronSWC S;
+        for (int i=0;i<list.size();i++)
+        {
+            NeuronSWC curr = list.at(i);
+            float x_old = curr.x;
+            float y_old = curr.y;
+            S.x = x_old*a11 + y_old*a21 + xshift;
+            S.y = x_old*a12 + y_old*a22 + yshift;
+            S.n 	= curr.n;
+            S.type 	= 4;
+            S.z 	= curr.z;
+            S.r 	= curr.r;
+            S.pn 	= curr.pn;
+            listNeuron.append(S);
+            hashNeuron.insert(S.n, listNeuron.size()-1);
+        }
+
+        nt_aligned.n = -1;
+        nt_aligned.on = true;
+        nt_aligned.listNeuron = listNeuron;
+        nt_aligned.hashNeuron = hashNeuron;
+
+
+        QString fileDefaultName = fileOpenName+QString("_aligned.swc");
+        //write new SWC to file
+        QString fileSaveName = QFileDialog::getSaveFileName(0, QObject::tr("Save File"),
+                fileDefaultName,
+                QObject::tr("Supported file (*.swc)"
+                    ";;Neuron structure	(*.swc)"
+                    ));
+        if (!export_list2file(nt_aligned.listNeuron,fileSaveName,fileOpenName))
+        {
+            v3d_msg("fail to write the output swc file.");
+            return;
+        }
+    }
+    else
 	{
         v3d_msg(tr("This is a plugin to prun the swc file. "
 			"Developed by Zhi Zhou, 2014-05-02"));
