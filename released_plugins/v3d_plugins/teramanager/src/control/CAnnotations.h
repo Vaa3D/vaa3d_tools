@@ -278,6 +278,15 @@ class teramanager::CAnnotations
         **********************************************************************************/
         static void convertVtk2APO(std::string vtkPath, std::string apoPath) throw (itm::RuntimeException);
 
+        /*********************************************************************************
+        * Diff between two APO files
+        **********************************************************************************/
+        static void diffAPO(std::string apo1Path,   // first apo file path
+                            std::string apo2Path,   // second apo file path
+                            int x0=0, int x1=-1,    // VOI [x0, x1) in the global reference sys
+                            int y0=0, int y1=-1,    // VOI [y0, y1) in the global reference sys
+                            int z0=0, int z1=-1)    // VOI [z0, z1) in the global reference sys
+        throw (itm::RuntimeException);
 
 
         static inline bool isMarkerOutOfRendererBounds(const LocationSimple& marker){

@@ -119,6 +119,7 @@ class teramanager::PMain : public QWidget
 
         QMenu* utilityMenu;
         QAction* convertVtk2APO;
+        QAction* diffAPO;
 
         QMenu* helpMenu;                //"Help" menu
         QAction* aboutAction;           //"About" menu action
@@ -498,6 +499,7 @@ class teramanager::PMain : public QWidget
         void markersSizeSpinBoxChanged(int value);
 
         void showDialogVtk2APO();
+        void showDialogDiffAPO();
 
 
     signals:

@@ -393,6 +393,10 @@ PMain::PMain(V3DPluginCallback2 *callback, QWidget *parent) : QWidget(parent)
     convertVtk2APO = new QAction("Convert .vtk to .apo (cells only)", this);
     connect(convertVtk2APO, SIGNAL(triggered()), this, SLOT(showDialogVtk2APO()));
     utilityMenu->addAction(convertVtk2APO);
+    diffAPO = new QAction("Diff .apo", this);
+    connect(diffAPO, SIGNAL(triggered()), this, SLOT(showDialogDiffAPO()));
+    utilityMenu->addAction(diffAPO);
+
 
     helpMenu = menuBar->addMenu("Help");
     aboutAction = new QAction("About", this);
@@ -2242,11 +2246,13 @@ void PMain::debugAction1Triggered()
 {
     /**/itm::debug(itm::NO_DEBUG, 0, __itm__current__function__);
 
-    QMessageBox::information(0, "The number of annotations is...", QString::number(CAnnotations::getInstance()->count()));
+    printf("PMain is: %s\n", PMain::getInstance() ? "not null" : "NULL");
 
-    CAnnotations::getInstance()->prune();
+//    QMessageBox::information(0, "The number of annotations is...", QString::number(CAnnotations::getInstance()->count()));
 
-    QMessageBox::information(0, "after pruning, the number of annotations is...", QString::number(CAnnotations::getInstance()->count()));
+//    CAnnotations::getInstance()->prune();
+
+//    QMessageBox::information(0, "after pruning, the number of annotations is...", QString::number(CAnnotations::getInstance()->count()));
 
 }
 
@@ -2633,6 +2639,30 @@ void PMain::showDialogVtk2APO()
             QString apoFilePath = QFileDialog::getSaveFileName(this, tr("Save to"), 0,tr("APO files (*.apo)"));
             if(!apoFilePath.isEmpty())
                 itm::CAnnotations::convertVtk2APO(vtkFilePath.toStdString(), apoFilePath.toStdString());
+        }
+    }
+    catch(itm::RuntimeException &ex)
+    {
+        QMessageBox::critical(this,QObject::tr("Error"), QObject::tr(ex.what()),QObject::tr("Ok"));
+    }
+}
+
+void PMain::showDialogDiffAPO()
+{
+    /**/itm::debug(itm::LEV2, 0, __itm__current__function__);
+
+    try
+    {
+        QString apo1FilePath = QFileDialog::getOpenFileName(this, tr("Select first APO file (assumed as TRUTH)"), 0,tr("APO files (*.apo)"));
+        if(!apo1FilePath.isEmpty())
+        {
+            QString apo2FilePath = QFileDialog::getOpenFileName(this, tr("Select second APO file"), 0,tr("APO files (*.apo)"));
+            if(!apo2FilePath.isEmpty())
+            {
+                itm::CAnnotations::diffAPO(apo1FilePath.toStdString(), apo2FilePath.toStdString(), H0_sbox->value(), H1_sbox->value(),
+                                           V0_sbox->value(), V1_sbox->value(), D0_sbox->value(), D1_sbox->value());
+            }
+
         }
     }
     catch(itm::RuntimeException &ex)

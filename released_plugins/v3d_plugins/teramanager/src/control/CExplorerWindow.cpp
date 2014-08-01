@@ -658,7 +658,6 @@ bool CExplorerWindow::eventFilter(QObject *object, QEvent *event)
         ***************************************************************************/
         else if(object == window3D && (event->type() == QEvent::Move || event->type() == QEvent::Resize))
         {
-           printf("\nWindow3D moved\n");
            alignToLeft(PMain::getInstance());
            PAnoToolBar::instance()->alignToLeft(window3D->glWidgetArea);
            return true;

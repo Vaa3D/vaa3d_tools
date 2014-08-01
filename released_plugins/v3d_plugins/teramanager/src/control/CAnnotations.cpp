@@ -1274,3 +1274,102 @@ void CAnnotations::convertVtk2APO(std::string vtkPath, std::string apoPath) thro
     // save to APO file
     writeAPO_file(apoPath.c_str(), cells);
 }
+
+/*********************************************************************************
+* Diff between two APO files
+**********************************************************************************/
+void CAnnotations::diffAPO( std::string apo1Path,               // first apo file path (assumed as truth)
+                            std::string apo2Path,               // second apo file path
+                            int x0 /*=0*/, int x1 /*=-1*/,      // VOI [x0, x1) in the global reference sys
+                            int y0 /*=0*/, int y1 /*=-1*/,      // VOI [y0, y1) in the global reference sys
+                            int z0 /*=0*/, int z1 /*=-1*/)      // VOI [z0, z1) in the global reference sys
+throw (itm::RuntimeException)
+{
+    /**/itm::debug(itm::LEV1, strprintf("apo1Path = \"%s\", apo2Path = \"%s\", x0 = %d, x1 =%d, y0 = %d, y1 = %d, z0 = %d, z1 = %d",
+                                        apo1Path.c_str(), apo2Path.c_str(), x0, x1, y0, y1, z0, z1).c_str(), __itm__current__function__);
+
+    // parse default parameters
+    x1 = x1 > 0 ? x1 : std::numeric_limits<int>::max();
+    y1 = y1 > 0 ? y1 : std::numeric_limits<int>::max();
+    z1 = z1 > 0 ? z1 : std::numeric_limits<int>::max();
+
+    // read cells
+    QList<CellAPO> cells1 = readAPO_file(apo1Path.c_str());
+    QList<CellAPO> cells2 = readAPO_file(apo2Path.c_str());
+
+    // insert cells into the same octree. In this way, it is much faster to compute TPs, FPs and FNs
+    Octree* diff_octree = new Octree(std::numeric_limits<uint32>::max(), std::numeric_limits<uint32>::max(), std::numeric_limits<uint32>::max());
+    std::vector<annotation*> ano1, ano2;
+    itm::uint64 cell1count = 0;
+    for(int i=0; i<cells1.size(); i++)
+    {
+        if( cells1[i].x >= x0 && cells1[i].x < x1 &&    //
+            cells1[i].y >= y0 && cells1[i].y < y1 &&    // cell is within selected VOI
+            cells1[i].z >= z0 && cells1[i].z < z1)      //
+        {
+
+            annotation* cell = new annotation;
+            cell->type = 0;
+            cell->subtype = 0;
+            cell->x = cells1[i].x;
+            cell->y = cells1[i].y;
+            cell->z = cells1[i].z;
+            ano1.push_back(cell);
+            diff_octree->insert(*cell);
+            cell1count++;
+        }
+    }
+    itm::uint64 cell2count = 0;
+    for(int i=0; i<cells2.size(); i++)
+    {
+        if( cells2[i].x >= x0 && cells2[i].x < x1 &&    //
+            cells2[i].y >= y0 && cells2[i].y < y1 &&    // cell is within selected VOI
+            cells2[i].z >= z0 && cells2[i].z < z1)      //
+        {
+            annotation* cell = new annotation;
+            cell->type = 0;
+            cell->subtype = 0;
+            cell->x = cells2[i].x;
+            cell->y = cells2[i].y;
+            cell->z = cells2[i].z;
+            ano2.push_back(cell);
+            diff_octree->insert(*cell);
+            cell2count++;
+        }
+    }
+
+    // count false positives, true positives, and false negatives
+    itm::uint64 FPs = 0;
+    itm::uint64 TPs = 0;
+    itm::uint64 FNs = 0;
+    for(int i=0; i<ano2.size(); i++)
+        if( static_cast<CAnnotations::Octree::octant*>(ano2[i]->container)->annotations.size() == 1)
+            FPs++;
+        else
+            TPs++;
+    for(int i=0; i<ano1.size(); i++)
+        if( static_cast<CAnnotations::Octree::octant*>(ano1[i]->container)->annotations.size() == 1)
+            FNs++;
+
+    // release memory for octree
+    delete diff_octree;
+
+    // display result
+    std::string message = itm::strprintf(   "VOI = X[%d,%d), Y[%d,%d), Z[%d,%d)\n"
+                                            "#Cells (from truth): %d\n"
+                                            "#Cells (from .apo) : %d\n"
+                                            "#TPs: %lld\n"
+                                            "#FPs: %lld\n"
+                                            "#FNs: %lld\n"
+                                            "TPR: %.3f\n"
+                                            "FPR: %.3f\n",
+                                            x0, x1, y0, y1, z0, z1,
+                                            cell1count,
+                                            cell2count,
+                                            TPs,
+                                            FPs,
+                                            FNs,
+                                            (TPs+0.1f)/(TPs+FNs),
+                                            (FPs+0.1f)/(cell2count));
+    QMessageBox::information(0, "Result", message.c_str());
+}
