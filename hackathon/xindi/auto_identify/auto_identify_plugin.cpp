@@ -3009,6 +3009,9 @@ template <class T> LandmarkList median_filter (T* data1d, T* rgnData, V3DLONG *d
     if (seg>4) {seg=4, segNum=64;}
     int shift = (2*range+1)/seg;
 
+    cout<<"check ranges "<<xLow<<" to "<<xHigh<<". "<<yLow<<" to "<<yHigh<<". "<<zLow<<" to "<<zHigh<<". "<<endl;
+    cout<<"check seg info. cellcount "<<cellcount<<". seg "<<seg<<". shift"<<shift<<endl;
+
     vector<double> segVal;
     LandmarkList segList;
     int shiftx=0,shifty=0,shiftz=0;
@@ -3017,13 +3020,11 @@ template <class T> LandmarkList median_filter (T* data1d, T* rgnData, V3DLONG *d
         int pValTot=0,runs=0;
         for (int i=xLow+shiftx*shift; i<xLow+shiftx*shift+shift; i++)
         {
-            if (i>N-1) break;
             for (int j=yLow+shifty*shift; j<yLow+shifty*shift+shift; j++)
             {
-                if (j>M-1) break;
                 for (int k=zLow+shiftz*shift; k<zLow+shiftz*shift+shift; k++)
                 {
-                    if (k>P-1) break;
+                    if (i>N-1 || j>M-1 || k>P-1) continue;
                     if (*rgnImg.at(i,j,k,0)!=rgn) continue;
                     int pVal = pixelVal(data1d,dimNum,i,j,k,c);
                     pValTot += pVal;
@@ -3037,6 +3038,7 @@ template <class T> LandmarkList median_filter (T* data1d, T* rgnData, V3DLONG *d
         midX=xLow+shiftx*shift+shift/2; if (midX>N-1) midX=N-1;
         midY=yLow+shifty*shift+shift/2; if (midY>M-1) midY=M-1;
         midZ=zLow+shiftz*shift+shift/2; if (midZ>P-1) midZ=P-1;
+        cout<<"mids "<<midX<<" "<<midY<<" "<<midZ<<endl;
         LocationSimple tmp(midX,midY,midZ);
         segList.append(tmp);
         if (shiftx<seg-1) shiftx++;
