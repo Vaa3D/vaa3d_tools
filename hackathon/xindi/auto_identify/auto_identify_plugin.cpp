@@ -491,9 +491,9 @@ template <class T> bool segment_regions(T* data1d, V3DLONG *dimNum,
 template <class T> LandmarkList median_filter (T* data1d, T* rgnData, V3DLONG *dimNum,
                                                LocationSimple cellLocation, int c,
                                                double range, int cellcount, int rgn);
-template <class T> LandmarkList seg_by_mask (T* rgnData, T* maskData, V3DLONG *dimNum,
-                                              LocationSimple cellLocation, int radAve,
-                                              double range, int cellcount, int rgn);
+template <class T> LandmarkList seg_by_mask (T* data1d, T* rgnData, T* maskData, V3DLONG *dimNum,
+                                             LocationSimple cellLocation, int radAve,
+                                             double range, int cellcount, int rgn, int c, int thresh);
  
 QStringList AutoIdentifyPlugin::menulist() const
 {
@@ -2867,7 +2867,7 @@ template <class T> bool segment_regions(T* data1d, V3DLONG *dimNum,
         double range = pow(regionVol.at(i),0.33)*1.5;
         LocationSimple tmpLocation = regionList.at(i);
         //LandmarkList cells = median_filter(data1d,regionData,dimNum,tmpLocation,c,range,count,i+1); //problem is this might return markers on same cell
-        LandmarkList cells = seg_by_mask (regionData,maskData,dimNum,tmpLocation,radAve,range,count,i+1);
+        LandmarkList cells = seg_by_mask (data1d,regionData,maskData,dimNum,tmpLocation,radAve,range,count,i+1,c,thresh);
         for (int j=0; j<cells.size(); j++)
         {
             int x,y,z;
@@ -2985,9 +2985,9 @@ template <class T> bool segment_regions(T* data1d, V3DLONG *dimNum,
     return true;
 }
 
-template <class T> LandmarkList seg_by_mask (T* rgnData, T* maskData, V3DLONG *dimNum,
+template <class T> LandmarkList seg_by_mask (T* data1d, T* rgnData, T* maskData, V3DLONG *dimNum,
                                               LocationSimple cellLocation, int radAve,
-                                              double range, int cellcount, int rgn)
+                                              double range, int cellcount, int rgn, int c, int thresh)
 {
     V3DLONG N = dimNum[0];
     V3DLONG M = dimNum[1];
@@ -3046,6 +3046,7 @@ template <class T> LandmarkList seg_by_mask (T* rgnData, T* maskData, V3DLONG *d
         int xm,ym,zm;
         maxPos.getCoord(xm,ym,zm);
         cout<<"marker found at "<<xm<<" "<<ym<<" "<<zm<<endl;
+        mass_center_Coords(data1d,dimNum,xm,ym,zm,radAve,c,thresh);
         for (int x=xm-radAve; x<xm+radAve; x++)
         {
             for (int y=ym-radAve; y<ym+radAve; y++)
