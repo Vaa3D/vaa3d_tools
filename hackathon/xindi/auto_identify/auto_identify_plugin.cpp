@@ -1334,17 +1334,11 @@ template <class T> int pixelVal(T* data1d, V3DLONG *dimNum,
     V3DLONG N = dimNum[0];
     V3DLONG M = dimNum[1];
     V3DLONG P = dimNum[2];
-    V3DLONG S = dimNum[3];
-    if (xc<=0) xc=1; if (xc>N) xc=N;
-    if (yc<=0) yc=1; if (yc>M) yc=M;
-    if (zc<=0) zc=1; if (zc>P) zc=P;
-    int pixelVal = data1d[ (V3DLONG)(c-1)*P*M*N + (V3DLONG)(zc-1)*M*N + (V3DLONG)(yc-1)*N + (V3DLONG)(xc-1) ];
-    if (pixelVal<0) pixelVal=0;
-    if (pixelVal>255) pixelVal=255;
-//    Image4DSimple Image;
-//    Image.setData((unsigned char*)data1d, N, M, P, S, V3D_UINT8);
-//    Image4DProxy<Image4DSimple> Img(&Image);
-//    int pixelVal = *Img.at(xc,yc,zc,c);
+    if (xc<0) xc=0; if (xc>N-1) xc=N-1;
+    if (yc<0) yc=0; if (yc>M-1) yc=M-1;
+    if (zc<0) zc=0; if (zc>P-1) zc=P-1;
+    int pixelVal = data1d[ (V3DLONG)(c-1)*P*M*N + (V3DLONG)zc*M*N + (V3DLONG)yc*N + (V3DLONG)xc ];
+
     return pixelVal;
 }
 
@@ -2865,20 +2859,15 @@ template <class T> bool segment_regions(T* data1d, V3DLONG *dimNum,
         cout<<"working on region "<<i+1<<" with remaining count "<<count<<endl;
         double range = pow(regionVol.at(i),0.33)*1.5;
         LocationSimple tmpLocation = regionList.at(i);
-        //median_filter only works for first iteration. if I change i to start with a different region it will run it fine
-        //but it will only run one iteration, so there is no issue with the region data, the issue is something else
-        //that causes the function to break after one use.
-        //Isolated the crash inside the function to an inability to calculate *rgnImg.at(x,y,z,c)
         LandmarkList cells = median_filter(data1d,regionData,dimNum,tmpLocation,c,range,count,i+1); //problem is this might return markers on same cell
-        cout<<"got list of size "<<cells.size()<<endl;
         for (int j=0; j<cells.size(); j++)
         {
             int x,y,z;
             LocationSimple tmpCell = cells.at(j);
             tmpCell.getCoord(x,y,z);
-            cout<<"old "<<x<<" "<<y<<" "<<z<<endl;
+            //cout<<"old "<<x<<" "<<y<<" "<<z<<endl;
             mass_center_Coords(data1d,dimNum,x,y,z,radAve,c,-1);
-            cout<<"new "<<x<<" "<<y<<" "<<z<<endl;
+            //cout<<"new "<<x<<" "<<y<<" "<<z<<endl;
             tmpCell.x=x;
             tmpCell.y=y;
             tmpCell.z=z;
@@ -2992,15 +2981,11 @@ template <class T> LandmarkList median_filter (T* data1d, T* rgnData, V3DLONG *d
                                                LocationSimple cellLocation, int c,
                                                double range, int cellcount, int rgn)
 {
-    cout<<"ready to median filter"<<endl;
+    //cout<<"ready to median filter"<<endl;
 
     V3DLONG N = dimNum[0];
     V3DLONG M = dimNum[1];
     V3DLONG P = dimNum[2];
-
-    Image4DSimple regionImage;
-    regionImage.setData((unsigned char*)rgnData, N, M, P, 1, V3D_UINT8);
-    Image4DProxy<Image4DSimple> rgnImg(&regionImage);
 
     int xc,yc,zc;
     cellLocation.getCoord(xc,yc,zc);
@@ -3017,8 +3002,8 @@ template <class T> LandmarkList median_filter (T* data1d, T* rgnData, V3DLONG *d
     if (seg>4) {seg=4, segNum=64;}
     int shift = (2*range+1)/seg;
 
-    cout<<"check ranges "<<xLow<<" to "<<xHigh<<". "<<yLow<<" to "<<yHigh<<". "<<zLow<<" to "<<zHigh<<". "<<endl;
-    cout<<"check seg info. cellcount "<<cellcount<<". seg "<<seg<<". shift"<<shift<<endl;
+    //cout<<"check ranges "<<xLow<<" to "<<xHigh<<". "<<yLow<<" to "<<yHigh<<". "<<zLow<<" to "<<zHigh<<". "<<endl;
+    //cout<<"check seg info. cellcount "<<cellcount<<". seg "<<seg<<". shift"<<shift<<endl;
 
     vector<double> segVal;
     LandmarkList segList;
@@ -3033,33 +3018,28 @@ template <class T> LandmarkList median_filter (T* data1d, T* rgnData, V3DLONG *d
                 for (int k=zLow+shiftz*shift; k<zLow+shiftz*shift+shift; k++)
                 {
                     if (i>N-1 || j>M-1 || k>P-1) continue;
-                    //int check = *rgnImg.at(i,j,k,0);
-                    //cout<<i<<" "<<j<<" "<<k<<" "<<check<<endl;
-                    if (*rgnImg.at(i,j,k,0)!=rgn) continue;
-                    //int check = pixelVal(rgnData,dimNum,i,j,k,0);
-                    //cout<<i<<" "<<j<<" "<<k<<" "<<check<<endl;
-                    //if (pixelVal(rgnData,dimNum,i,j,k,0)!=rgn) continue;
+                    if (pixelVal(rgnData,dimNum,i,j,k,1) != rgn) continue;
                     int pVal = pixelVal(data1d,dimNum,i,j,k,c);
                     pValTot += pVal;
                     runs++;
                 }
             }
         }
-        cout<<"one seg loop done"<<endl;
+        //cout<<"one seg loop done"<<endl;
         if (runs>0) segVal.push_back(pValTot/runs);
         else segVal.push_back(0);
         int midX,midY,midZ;
         midX=xLow+shiftx*shift+shift/2; if (midX>N-1) midX=N-1;
         midY=yLow+shifty*shift+shift/2; if (midY>M-1) midY=M-1;
         midZ=zLow+shiftz*shift+shift/2; if (midZ>P-1) midZ=P-1;
-        cout<<"mids "<<midX<<" "<<midY<<" "<<midZ<<endl;
+        //cout<<"mids "<<midX<<" "<<midY<<" "<<midZ<<endl;
         LocationSimple tmp(midX,midY,midZ);
         segList.append(tmp);
         if (shiftx<seg-1) shiftx++;
         else if (shifty<seg-1) {shiftx=0; shifty++;}
         else if (shiftz<seg-1) {shiftx=0; shifty=0; shiftz++;}
     }
-    cout<<"all seg loops done"<<endl;
+    //cout<<"all seg loops done"<<endl;
 
     //still need to work on making sure this doesn't return multiple cells close together
     int max=0;
@@ -3073,7 +3053,7 @@ template <class T> LandmarkList median_filter (T* data1d, T* rgnData, V3DLONG *d
             maxInd[cellcount-1]=i;
         }
     }
-    cout<<"indexing done"<<endl;
+    //cout<<"indexing done"<<endl;
 
     LandmarkList outputList;
     for (int i=0; i<maxInd.size(); i++)
