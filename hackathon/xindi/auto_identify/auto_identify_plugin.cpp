@@ -1338,6 +1338,7 @@ template <class T> int pixelVal(T* data1d, V3DLONG *dimNum,
     V3DLONG N = dimNum[0];
     V3DLONG M = dimNum[1];
     V3DLONG P = dimNum[2];
+    xc+=0.5; yc+=0.5; zc+=0.5; //for rounding
     if (xc<0) xc=0; if (xc>N-1) xc=N-1;
     if (yc<0) yc=0; if (yc>M-1) yc=M-1;
     if (zc<0) zc=0; if (zc>P-1) zc=P-1;
@@ -1348,10 +1349,9 @@ template <class T> int pixelVal(T* data1d, V3DLONG *dimNum,
 
 
 //returns recentered LandmarkList
-template <class T> bool mass_center_Lists(T* data1d,
-                                    V3DLONG *dimNum,
-                                    LandmarkList & originalList, LandmarkList & newList,
-                                    double radius, int c, double thresh)
+template <class T> bool mass_center_Lists(T* data1d, V3DLONG *dimNum,
+                                          LandmarkList & originalList, LandmarkList & newList,
+                                          double radius, int c, double thresh)
 {
     V3DLONG N = dimNum[0];
     V3DLONG M = dimNum[1];
@@ -1374,7 +1374,8 @@ template <class T> bool mass_center_Lists(T* data1d,
         do
         {
             //cout<<"loop "<<runs<<" using coords "<<xc<<" "<<yc<<" "<<zc<<endl;
-            pVal = pixelVal(data1d,dimNum,xc,yc,zc,c);
+            //pVal = pixelVal(data1d,dimNum,xc,yc,zc,c);
+            pVal = data1d[(c-1)*P*M*N+(V3DLONG)zc*M*N+(V3DLONG)yc*N+(V3DLONG)xc];
             newX=xc*pVal, newY=yc*pVal, newZ=zc*pVal, norm=pVal;
             for (double r=rad/5; r<=rad; r+=rad/5)
             {
@@ -1383,13 +1384,14 @@ template <class T> bool mass_center_Lists(T* data1d,
                     for (double phi=0; phi<pi; phi+=(pi/8))
                     {
                         //cout<<r<<" "<<theta<<" "<<phi<<endl;
-                        x = xc+r*cos(theta)*sin(phi);
+                        x = xc+r*cos(theta)*sin(phi) + 0.5;
                         if (x>N-1) x=N-1; if (x<0) x=0;
-                        y = yc+r*sin(theta)*sin(phi);
+                        y = yc+r*sin(theta)*sin(phi) + 0.5;
                         if (y>M-1) y=M-1; if (y<0) y=0;
-                        z = zc+r*cos(phi);
+                        z = zc+r*cos(phi) + 0.5;
                         if (z>P-1) z=P-1; if (z<0) z=0;
-                        pVal = pixelVal(data1d,dimNum,x,y,z,c);
+                        //pVal = pixelVal(data1d,dimNum,x,y,z,c);
+                        pVal = data1d[(c-1)*P*M*N+(V3DLONG)z*M*N+(V3DLONG)y*N+(V3DLONG)x];
                         if (pVal>=thresh)
                         {
                             newX += pVal*x;
@@ -1401,9 +1403,9 @@ template <class T> bool mass_center_Lists(T* data1d,
                     }
                 }
             }
-            newX /= norm;
-            newY /= norm;
-            newZ /= norm;
+            newX /= norm; newX+=0.5;
+            newY /= norm; newY+=0.5;
+            newZ /= norm; newZ+=0.5;
             //cout<<"new "<<newX<<" "<<newY<<" "<<newZ<<endl;
             //v3d_msg(QString("run %1").arg(runs));
 
@@ -1413,8 +1415,8 @@ template <class T> bool mass_center_Lists(T* data1d,
             //cout<<xc<<" "<<yc<<" "<<zc<<endl;
 
             //if marker has been placed in background, restart loop with some changes
-            //Appear to be bugs tho
-            pVal = pixelVal(data1d,dimNum,newX,newY,newZ,c);
+            //pVal = pixelVal(data1d,dimNum,newX,newY,newZ,c);
+            pVal = data1d[(c-1)*P*M*N+(V3DLONG)newZ*M*N+(V3DLONG)newY*N+(V3DLONG)newX];
             if (pVal<=thresh)
             {
                 //cout<<"hit check number "<<check<<" in marker "<<i<<endl;
@@ -1446,12 +1448,9 @@ template <class T> bool mass_center_Lists(T* data1d,
             }
             runs++;
         } while (converge==false && runs<10); //if not converged in 10 runs, likely stuck in rounding loop
-        if (newX<0) newX=0;
-        if (newY<0) newY=0;
-        if (newZ<0) newZ=0;
-        if (newX>N-1) newX=N-1;
-        if (newY>M-1) newY=M-1;
-        if (newZ>P-1) newZ=P-1;
+        if (newX<0) newX=0; if (newX>N-1) newX=N-1;
+        if (newY<0) newY=0; if (newY>M-1) newY=M-1;
+        if (newZ<0) newZ=0; if (newZ>P-1) newZ=P-1;
 
         LocationSimple newMark(newX,newY,newZ);
         newList.append(newMark);
@@ -1460,10 +1459,9 @@ template <class T> bool mass_center_Lists(T* data1d,
 }
 
 //returns recentered coords x,y,z
-template <class T> bool mass_center_Coords(T* data1d,
-                                    V3DLONG *dimNum,
-                                    int &x, int &y, int &z,
-                                    double radius, int c, double thresh)
+template <class T> bool mass_center_Coords(T* data1d, V3DLONG *dimNum,
+                                           int &x, int &y, int &z,
+                                           double radius, int c, double thresh)
 {
     LandmarkList tmpList,recenteredList;
     LocationSimple tmp(x,y,z),recentered(0,0,0);
@@ -2794,8 +2792,7 @@ template <class T> void regiongrowing(V3DPluginCallback2 &callback, int c, doubl
 
     }
 
-    //
-    int end_t_t = clock();
+    //int end_t_t = clock();
 
     //qDebug() << "time elapse ..." << end_t_t - end_t;
 
@@ -2840,7 +2837,7 @@ template <class T> bool segment_regions(T* data1d, V3DLONG *dimNum,
 
     //set regions with 1 cell into newList and mask
     int n_rgn = regionList.size();
-    if (n_rgn>254) {v3d_msg("too many regions"); return false;} //THIS NEEDS SEPARATE CASE
+    if (n_rgn>254) {v3d_msg("too many regions"); return false;}
     vector<int> rgn_cellcount;
     double VolAve = (4/3)*PI*pow(radAve,3.0);
     double VolMax = (4/3)*PI*pow((radAve+radStDev),3.0);
@@ -3055,8 +3052,8 @@ template <class T> LandmarkList seg_by_mask (T* data1d, T* rgnData, T* maskData,
         }
         int xm,ym,zm;
         maxPos.getCoord(xm,ym,zm);
-        //cout<<"marker found at "<<xm<<" "<<ym<<" "<<zm<<endl;
         mass_center_Coords(data1d,dimNum,xm,ym,zm,radAve,c,thresh);
+        //mass_center_Coords(rgnData,dimNum,xm,ym,zm,radAve/2,1,rgn-1);
         if (maskData[zm*M*N+ym*N+xm]==0) {maxPos.x=xm;maxPos.y=ym;maxPos.z=zm; outputList.append(maxPos);} //update and append
         for (int x=xm-radAve; x<xm+radAve; x++)
         {
