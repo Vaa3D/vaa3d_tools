@@ -1324,6 +1324,7 @@ template <class T> bool identify_cells(V3DPluginCallback2 &callback, T* data1d, 
     val = PixVal;
 
     cout<<"Cell count "<<outputlist.count()<<endl<<endl;
+    v3d_msg(QString("Final Cell Count: %1").arg(outputlist.count()));
     return true;
 }
 
@@ -1582,7 +1583,7 @@ template <class T> bool compute_cell_values_rad(T* data1d,
 }
 
 
-//returns average pixel value of shell of radius rad on channel c around a given marker
+//returns average pixel value of sphere of radius rad on channel c around a given marker
 template <class T> double compute_ave_cell_val(T* data1d, V3DLONG *dimNum,
                                                double xc, double yc, double zc, int c, double rad)
 {
@@ -1592,25 +1593,29 @@ template <class T> double compute_ave_cell_val(T* data1d, V3DLONG *dimNum,
 
     double x,y,z,datatotal=0,pi=3.14;
     int runs=0;
-    double r=rad;
+    //double r=rad;
 
-    for (double theta=0; theta<2*pi; theta+=(pi/4))
+    for (double r=rad/5; r<=rad; r+=rad/5)
     {
-        for (double phi=0; phi<pi; phi+=(pi/4))
+        for (double theta=0; theta<2*pi; theta+=(pi/4))
         {
-            //cout<<"pixel iteration "<<runs<<endl;
-            //cout<<r<<" "<<theta<<" "<<phi<<endl;
-            x = xc+r*cos(theta)*sin(phi);
-            if (x>N-1) x=N-1; if (x<0) x=0;
-            y = yc+r*sin(theta)*sin(phi);
-            if (y>M-1) y=M-1; if (y<0) y=0;
-            z = zc+r*cos(phi);
-            if (z>P-1) z=P-1; if (z<0) z=0;
-            double dataval = pixelVal(data1d,dimNum,x,y,z,c);
-            datatotal += dataval;
-            runs++;
-            //cout<<dataval<<" "<<datatotal<<" "<<runs<<endl;
-            //cout<<x<<" "<<y<<" "<<z<<" "<<endl<<endl;
+            for (double phi=0; phi<pi; phi+=(pi/4))
+            {
+                //cout<<"pixel iteration "<<runs<<endl;
+                //cout<<r<<" "<<theta<<" "<<phi<<endl;
+                x = xc+r*cos(theta)*sin(phi);
+                if (x>N-1) x=N-1; if (x<0) x=0;
+                y = yc+r*sin(theta)*sin(phi);
+                if (y>M-1) y=M-1; if (y<0) y=0;
+                z = zc+r*cos(phi);
+                if (z>P-1) z=P-1; if (z<0) z=0;
+                //double dataval = pixelVal(data1d,dimNum,x,y,z,c);
+                int dataval = data1d[(c-1)*P*M*N+(int)z*M*N+(int)y*N+(int)x];
+                datatotal += dataval;
+                runs++;
+                //cout<<dataval<<" "<<datatotal<<" "<<runs<<endl;
+                //cout<<x<<" "<<y<<" "<<z<<" "<<endl<<endl;
+            }
         }
     }
     //cout<<"done with loop"<<endl;
@@ -1687,7 +1692,7 @@ template <class T> LandmarkList scan_and_count(T* data1d, V3DLONG *dimNum,
                             x=ix; y=iy; z=iz; //mass_center_Coords will rewrite x,y,z so need to keep ix,iy,iz untouched
                             mass_center_Coords(data1d,dimNum,x,y,z,radAve+radStDev,c,thresh);
                             if (*maskImg.at(x,y,z,0)!=0) continue;
-                            double TempDataAve = compute_ave_cell_val(data1d,dimNum,x,y,z,c,i);
+                            double TempDataAve = compute_ave_cell_val(data1d,dimNum,x,y,z,c,i); //this algorithm has been changed from shell to volume, no longer accurate for this usage
                             if ( (TempDataAve>=cellAve-cellStDev) && (TempDataAve<=cellAve+cellStDev))
                             {
                                 //cout<<"found a marker "<<TempDataAve<<" with rad "<<i<<" at coords "<<ix<<" "<<iy<<" "<<iz<<endl;
@@ -2838,15 +2843,19 @@ template <class T> bool segment_regions(T* data1d, V3DLONG *dimNum,
     if (n_rgn>254) {v3d_msg("too many regions"); return false;} //THIS NEEDS SEPARATE CASE
     vector<int> rgn_cellcount;
     double VolAve = (4/3)*PI*pow(radAve,3.0);
+    double VolMax = (4/3)*PI*pow((radAve+radStDev),3.0);
     for (int i=0; i<n_rgn; i++)
     {
         double vol = regionVol.at(i)/VolAve + 0.5;
+        double vol2 = regionVol.at(i)/VolMax + 0.5;
         int volcheck = (int) vol;
+        int volcheck2 = (int) vol2;
         LocationSimple tmp(0,0,0);
         int xc,yc,zc;
         tmp = regionList.at(i);
         tmp.getCoord(xc,yc,zc);
-        int pValcheck = pixelVal(data1d,dimNum,xc,yc,zc,c);
+        //int pValcheck = pixelVal(data1d,dimNum,xc,yc,zc,c);
+        if (volcheck==2 && volcheck2==1 && compute_ave_cell_val(regionData,dimNum,xc,yc,zc,c,radAve)==(0.9*(i+1))) volcheck=1;
         if (volcheck<=1)
         {
             //if (pValcheck<=PointAve+PointStDev && pValcheck>=PointAve-PointStDev)
@@ -2857,7 +2866,7 @@ template <class T> bool segment_regions(T* data1d, V3DLONG *dimNum,
         }
         else rgn_cellcount.push_back(volcheck);
     }
-    cout<<"regions appended, size"<<newList.size()<<endl;
+    //cout<<"regions appended, size"<<newList.size()<<endl;
 
     for (double i=0; i<n_rgn; i++) //region at i has value i+1
     {
@@ -2996,7 +3005,7 @@ template <class T> LandmarkList seg_by_mask (T* data1d, T* rgnData, T* maskData,
     int xc,yc,zc;
     cellLocation.getCoord(xc,yc,zc);
     int vol = (4/3)*PI*pow(radAve,3.0);
-    cout<<"region "<<rgn<<" with cellcount "<<cellcount<<" and coords "<<xc<<" "<<yc<<" "<<zc<<endl;
+    //cout<<"region "<<rgn<<" with cellcount "<<cellcount<<" and coords "<<xc<<" "<<yc<<" "<<zc<<endl;
 
     //define limits around region, would prefer to have eigenvalues to better determine range
     int xLow = xc-range; if (xLow<0) xLow=0;
@@ -3009,7 +3018,7 @@ template <class T> LandmarkList seg_by_mask (T* data1d, T* rgnData, T* maskData,
     LandmarkList outputList;
     for (int s=0; s<cellcount; s++)
     {
-        cout<<"looking for cell "<<s+1<<endl;
+        //cout<<"looking for cell "<<s+1<<endl;
         int min=10000, total=0;
         LocationSimple maxPos(0,0,0);
         for (int i=xLow; i<=xHigh; i+=2)
@@ -3018,6 +3027,7 @@ template <class T> LandmarkList seg_by_mask (T* data1d, T* rgnData, T* maskData,
             {
                 for (int k=zLow; k<=zHigh; k+=2)
                 {
+                    if (maskData[k*M*N+j*N+i]!=0) continue;
                     //Analyze cube of length 2*radAve with center (i,j,k)
                     //cout<<i<<" "<<j<<" "<<k<<endl;
                     total=0;
@@ -3028,7 +3038,7 @@ template <class T> LandmarkList seg_by_mask (T* data1d, T* rgnData, T* maskData,
                             for (int z=k-radAve; z<k+radAve; z++)
                             {
                                 if (x<0 || x>N-1 || y<0 || y>M-1 || z<0 || z>P-1) continue;
-                                if (maskData[z*M*N+y*N+x]!=0) continue;
+                                if (maskData[z*M*N+y*N+x]!=0) goto loopcont;
                                 //cout<<x<<" "<<y<<" "<<z<<endl;
                                 else if (rgnData[z*M*N+y*N+x]==rgn) total++;
                             }
@@ -3039,14 +3049,15 @@ template <class T> LandmarkList seg_by_mask (T* data1d, T* rgnData, T* maskData,
                         min=abs(vol-total);
                         maxPos.x=i; maxPos.y=j; maxPos.z=k;
                     }
+                    loopcont:;
                 }
             }
         }
-        outputList.append(maxPos);
         int xm,ym,zm;
         maxPos.getCoord(xm,ym,zm);
-        cout<<"marker found at "<<xm<<" "<<ym<<" "<<zm<<endl;
+        //cout<<"marker found at "<<xm<<" "<<ym<<" "<<zm<<endl;
         mass_center_Coords(data1d,dimNum,xm,ym,zm,radAve,c,thresh);
+        if (maskData[zm*M*N+ym*N+xm]==0) {maxPos.x=xm;maxPos.y=ym;maxPos.z=zm; outputList.append(maxPos);} //update and append
         for (int x=xm-radAve; x<xm+radAve; x++)
         {
             for (int y=ym-radAve; y<ym+radAve; y++)
@@ -3059,8 +3070,33 @@ template <class T> LandmarkList seg_by_mask (T* data1d, T* rgnData, T* maskData,
                 }
             }
         }
-        maxPos.x=0;maxPos.y=0;maxPos.z=0; //resetting
+        maxPos.x=0;maxPos.y=0;maxPos.z=0; //reset
     }
+
+    //remove overlapping markers
+//    if (outputList.size()>1)
+//    {
+//        LocationSimple point1(0,0,0), point2(0,0,0);
+//        LocationSimple zero(0,0,0);
+//        LocationSimple& zer = zero;
+//        for (int i=0; i<outputList.size()-1; i++)
+//        {
+//            for (int j=i+1; j<outputList.size(); j++)
+//            {
+//                int x1,y1,z1,x2,y2,z2,dist;
+//                point1 = outputList.at(i);
+//                if (point1==zer) continue;
+//                point1.getCoord(x1,y1,z1);
+//                point2 = outputList.at(j);
+//                if (point2==zer) continue;
+//                point2.getCoord(x2,y2,z2);
+
+//                dist = sqrt((double)(x1-x2)*(x1-x2)+(y1-y2)*(y1-y2)+(z1-z2)*(z1-z2)) + 0.5;
+//                if (dist<(radAve/3)) { outputList.replace(i,zer); continue; } //replace one marker if they are on top of each other
+//            }
+//            outputList.removeAll(zer);
+//        }
+//    }
     return outputList;
 }
 
