@@ -481,16 +481,12 @@ template <class T> bool apply_mask(unsigned char* data1d, V3DLONG *dimNum,
                                    int xc, int yc, int zc, int c, double threshold, T & maskImg);
 bool open_testSWC(QString &fileOpenName, NeuronTree & openTree);
 template <class T> bool segment_regions(T* data1d, V3DLONG *dimNum,
-                                        LandmarkList originalList, LandmarkList &newList,
-                                        LandmarkList regionList, vector<int> regionVol,
-                                        double cellAve, double cellStDev,
-                                        double PointAve, double PointStDev,
+                                        LandmarkList &newList,
+                                        LandmarkList regionList,
+                                        vector<int> regionVol,
                                         double radAve, double radStDev,
                                         int c, int cat, double thresh,
                                         unsigned char* regionData);
-template <class T> LandmarkList median_filter (T* data1d, T* rgnData, V3DLONG *dimNum,
-                                               LocationSimple cellLocation, int c,
-                                               double range, int cellcount, int rgn);
 template <class T> LandmarkList seg_by_mask (T* data1d, T* rgnData, T* maskData, V3DLONG *dimNum,
                                              LocationSimple cellLocation, int radAve,
                                              double range, int cellcount, int rgn, int c, int thresh);
@@ -780,15 +776,13 @@ void identify_neurons(V3DPluginCallback2 &callback, QWidget *parent)
  * mass center should be smarter now
  * fixed apply_mask, broke mass_center...again
  * implemented new UI
+ * implemented new algorithm based on region growing
+ * mass_center actually fixed now
  *
  * [current goals/issues]
- * still several undetected cells
- * scan_and_count is slow
- * because of variable cell radius, mass_center does not work equally well across all cells
- *      optimizing to center larger cells would cause clustered cells to be treated as one
- *      keeping small radius to keep clustered cells separate prevents detection of true center of larger cells
- *
- * NEW ALGORITHM WANTED, SEE COMMENTS AROUND LINE 1190
+ * need to test if code works for images with >254 regions
+ * determining cell count per region based on test data could be improved
+ * segmentation of multi-celled regions can still be improved (seg_by_mask)
  *
  * [future goals]
  *
@@ -849,37 +843,6 @@ void count_cells(V3DPluginCallback2 &callback, QWidget *parent)
     if (Marknum != 0 && SWCcount ==0 ) { option = 1; }
     else if (Marknum == 0 && SWCcount != 0) { option = 2; }
     else {option == 0;}
-//    {
-//        QString qtitle = QObject::tr("Choose Test Data Input Type");
-//        bool ok;
-//        QStringList items;
-//        items << "Markers" << "SWCs" << "Markers and SWCs";
-//        QString item = QInputDialog::getItem(0, qtitle,
-//                                            QObject::tr("Which type of testing data are you using"), items, 0, false, &ok);
-//        if (! ok) return;
-//        int input_type = items.indexOf(item);
-//        if (input_type==0) { option = 1; }
-//        else if (input_type==1){ option = 2; }
-//        else { option = 3; }
-//    }
-
-//    bool ok;
-
-//    //input channel
-//    unsigned int c=1;
-//    if (sc==1)
-//        c=1; //if only using 1 channel
-//    else
-//        c = QInputDialog::getInteger(parent, "Channel", "Enter Channel Number", 1, 1, sc, 1,&ok);
-
-
-//    //input sort method
-//    QString qtitle = QObject::tr("Choose Sorting Method");
-//    QStringList items;
-//    items << "Default (binary color threshold)" << "By Type";
-//    QString item = QInputDialog::getItem(0, qtitle,
-//                                         QObject::tr("How should the test data be sorted?"), items, 0, false, &ok);
-//    if (! ok) return;
 
     Dialog_cells dialog(callback, parent,sc,option);
     if (dialog.exec()!=QDialog::Accepted)
@@ -1197,27 +1160,8 @@ template <class T> bool identify_cells(V3DPluginCallback2 &callback, T* data1d, 
 
     LandmarkList regionList;
     vector<int> regionVol;
-    Image4DSimple regionMap;
     void* regionData = 0;
     regiongrowing(callback,c,thresh,regionList,regionVol,(unsigned char* &)regionData);
-    /*##############################################################
-     * regionList and regionVol should be same size
-     * regionVol contains volumes in pixels of each region
-     * radAve can be converted into a rough volume estimate for each test marker
-     * scan_and_count can be redone to check each region for volume and estimate number of cells in region
-     *      via comparison of that region's volume with radAve volume
-     * need to come up with new segmentation method for regions with more than one cell
-     *      might be able to use Spatial Anisotropy values
-     *      Spatial Anisotropy values good for say...two cells touching at one edge because region will be elongated
-     *          however will be relatively useless for large clusters of cells that end up combining in a round region
-     * regions with on cell keep that regionList marker
-     * regions with more than one cell need new markers placed instead
-     * type/cat sort may need to add intensity to detection criteria
-     * should eliminate need for remove_duplicates
-     *
-     * might want to call in the "labeled objects" image from regiongrowing for clearer boundaries
-     *      note objects in that image may have low intensity, set thresh to 1
-     * ##############################################################*/
 
     //recalibrates marker list by mean shift
     LandmarkList CenteredList;
@@ -1302,7 +1246,7 @@ template <class T> bool identify_cells(V3DPluginCallback2 &callback, T* data1d, 
     //mass_center_Lists(data1d,dimNum,scannedList,RecenterList,radAve+radStDev,c,thresh);
     //outputlist = remove_duplicates(data1d,RecenterList,dimNum,PixVal,radAve-radStDev,c);
 
-    if (!segment_regions(data1d,dimNum,MarkList,outputlist,regionList,regionVol,ValAve,ValStDev,PixVal,PixStDev,radAve,radStDev,c,cat,thresh,(unsigned char *)regionData)) {return false;}
+    if (!segment_regions(data1d,dimNum,outputlist,regionList,regionVol,radAve,radStDev,c,cat,thresh,(unsigned char *)regionData)) {return false;}
 
     if (catsorting==true) //set same category and color
     {
@@ -2636,9 +2580,7 @@ template <class T> void regiongrowing(V3DPluginCallback2 &callback, int c, doubl
             }
 
         }
-
-//        // display
-        regionMap.setData((unsigned char*)pRGCL, sx, sy, sz, 1, V3D_FLOAT32);
+        //regionMap.setData((unsigned char*)pRGCL, sx, sy, sz, 1, V3D_FLOAT32);
         outimg = (unsigned char*)pRGCL;
 
 //        v3dhandle newwin = callback.newImageWindow();
@@ -2708,9 +2650,7 @@ template <class T> void regiongrowing(V3DPluginCallback2 &callback, int c, doubl
             }
 
         }
-
-//        // display
-        regionMap.setData((unsigned char*)pRGCL, sx, sy, sz, 1, V3D_UINT16);
+        //regionMap.setData((unsigned char*)pRGCL, sx, sy, sz, 1, V3D_UINT16);
         outimg = (unsigned char*)pRGCL;
 
 //        v3dhandle newwin = callback.newImageWindow();
@@ -2779,16 +2719,14 @@ template <class T> void regiongrowing(V3DPluginCallback2 &callback, int c, doubl
             }
 
         }
-
-//        // display
-        regionMap.setData((unsigned char*)pRGCL, sx, sy, sz, 1, V3D_UINT8);
+        //regionMap.setData((unsigned char*)pRGCL, sx, sy, sz, 1, V3D_UINT8);
         outimg = (unsigned char*)pRGCL;
 
-        v3dhandle newwin = callback.newImageWindow();
-        callback.setImage(newwin, &regionMap);
-        callback.setImageName(newwin, "labeled_objects");
-        callback.setLandmark(newwin, cmList); // center of mass
-        callback.updateImageWindow(newwin);
+//        v3dhandle newwin = callback.newImageWindow();
+//        callback.setImage(newwin, &regionMap);
+//        callback.setImageName(newwin, "labeled_objects");
+//        callback.setLandmark(newwin, cmList); // center of mass
+//        callback.updateImageWindow(newwin);
 
     }
 
@@ -2808,10 +2746,9 @@ void regiongrow_filter()
 
 
 template <class T> bool segment_regions(T* data1d, V3DLONG *dimNum,
-                                        LandmarkList originalList, LandmarkList &newList,
-                                        LandmarkList regionList, vector<int> regionVol,
-                                        double cellAve, double cellStDev,
-                                        double PointAve, double PointStDev,
+                                        LandmarkList &newList,
+                                        LandmarkList regionList,
+                                        vector<int> regionVol,
                                         double radAve, double radStDev,
                                         int c, int cat, double thresh,
                                         unsigned char* regionData)
@@ -2820,24 +2757,16 @@ template <class T> bool segment_regions(T* data1d, V3DLONG *dimNum,
     V3DLONG M = dimNum[1];
     V3DLONG P = dimNum[2];
 
-//    Image4DSimple regionImage;
-//    regionImage.setData((unsigned char*)regionData, N, M, P, 1, V3D_UINT8);
-//    Image4DProxy<Image4DSimple> rgnImg(&regionImage);
-
-//    //set up mask
+    //set up mask
     unsigned char *maskData = 0;
     maskData = new unsigned char [N*M*P];
     for (V3DLONG tmpi=0;tmpi<N*M*P;++tmpi) maskData[tmpi] = 0; //preset to be all 0
-//    Image4DSimple maskImage;
-//    maskImage.setData((unsigned char*)maskData, N, M, P, 1, V3D_UINT8);
-//    Image4DProxy<Image4DSimple> maskImg(&maskImage);
-
 
     cout<<"starting count"<<endl;
 
     //set regions with 1 cell into newList and mask
     int n_rgn = regionList.size();
-    if (n_rgn>254) {v3d_msg("too many regions"); return false;}
+    //if (n_rgn>254) {v3d_msg("too many regions"); return false;}
     vector<int> rgn_cellcount;
     double VolAve = (4/3)*PI*pow(radAve,3.0);
     double VolMax = (4/3)*PI*pow((radAve+radStDev),3.0);
@@ -2855,10 +2784,7 @@ template <class T> bool segment_regions(T* data1d, V3DLONG *dimNum,
         if (volcheck==2 && volcheck2==1 && compute_ave_cell_val(regionData,dimNum,xc,yc,zc,c,radAve)==(0.9*(i+1))) volcheck=1;
         if (volcheck<=1)
         {
-            //if (pValcheck<=PointAve+PointStDev && pValcheck>=PointAve-PointStDev)
-            //{
-                newList.append(regionList.at(i));
-            //}
+            newList.append(regionList.at(i));
             rgn_cellcount.push_back(0);
         }
         else rgn_cellcount.push_back(volcheck);
@@ -2893,100 +2819,6 @@ template <class T> bool segment_regions(T* data1d, V3DLONG *dimNum,
         }
     }
 
-
-
-
-
-
-//    //set original markers into newList and mask
-//    if (!originalList.empty())
-//    {
-//        for (int i=0; i<originalList.size(); i++)
-//        {
-//            LocationSimple tmp(0,0,0);
-//            int xc,yc,zc;
-//            tmp = originalList.at(i);
-//            tmp.getCoord(xc,yc,zc);
-//            //cout<<xc<<" "<<yc<<" "<<zc<<endl;
-//            int rgnInd = *rgnImg.at(xc,yc,zc,0);
-//            //cout<<rgnInd<<endl;
-//            if (rgnInd<=0) continue;
-//            if (rgn_cellcount.at(rgnInd-1)>0)
-//            {
-//                newList.append(originalList.at(i));
-//                apply_mask(data1d,dimNum,xc,yc,zc,c,thresh,maskImg);
-//                //cout<<rgn_cellcount.at(rgnInd-1)<<" vs ";
-//                rgn_cellcount.at(rgnInd-1) = rgn_cellcount.at(rgnInd-1)-1;
-//                //cout<<rgn_cellcount.at(rgnInd-1)<<endl;
-//            }
-//        }
-//    }
-//    cout<<"original list appended"<<endl;
-//
-//    //segment remaining regions
-//    LocationSimple tmpLocation(0,0,0);
-//    bool done;
-//    for (double i=0; i<n_rgn; i++) //region at i has value i+1
-//    {
-//        int count=rgn_cellcount.at(i);
-//        if (count<=0) {continue;}
-//        cout<<"working on region "<<i+1<<" with remaining count "<<count<<endl;
-//        double range = pow(regionVol.at(i),0.33)*1.5;
-//        int x0,y0,z0;
-//        tmpLocation = regionList.at(i);
-//        tmpLocation.getCoord(x0,y0,z0);
-//        v3d_msg(QString("region %1 with coords %2 %3 %4").arg(i+1).arg(x0).arg(y0).arg(z0));
-//        //define limits around region, would prefer to have eigenvalues to better determine range
-//        int xLow = x0-range; if (xLow<0) xLow=0;
-//        int xHigh = x0+range; if (xHigh>N-1) xHigh=N-1;
-//        int yLow = y0-range; if (yLow<0) yLow=0;
-//        int yHigh = y0+range; if (yHigh>M-1) yHigh=M-1;
-//        int zLow = z0-range; if (zLow<0) zLow=0;
-//        int zHigh = z0+range; if (zHigh>P-1) zHigh=P-1;
-//        cout<<"limits defined, range "<<range<<endl;
-//        done=false;
-//        for (int ix=xLow; ix<=xHigh; ix++)
-//        {
-//            for (int iy=yLow; iy<=yHigh; iy++)
-//            {
-//                for (int iz=zLow; iz<=zHigh; iz++)
-//                {
-//                    if (*maskImg.at(ix,iy,iz,0) == 0 && *rgnImg.at(ix,iy,iz,0) == i+1)
-//                    {
-//                        cout<<"ck 1, coords "<<ix<<" "<<iy<<" "<<iz<<endl;
-//                        int x,y,z;
-//                        x=ix; y=iy; z=iz; //mass_center_Coords will rewrite x,y,z so need to keep ix,iy,iz untouched
-//                        if (mass_center_Masks(data1d,maskImg,rgnImg,dimNum,radAve,x,y,z,c,i+1)==false) continue;
-//                        cout<<"ck 2, coords "<<x<<" "<<y<<" "<<z<<endl;
-//                        if (*maskImg.at(x,y,z,0) != 0 || *rgnImg.at(x,y,z,0)!=i+1) continue;
-//                        double TempDataAve = compute_ave_cell_val(data1d,dimNum,x,y,z,c,radAve);
-//                        if ( (TempDataAve>=cellAve-cellStDev) && (TempDataAve<=cellAve+cellStDev))
-//                        {
-//                            tmpLocation.x = x;
-//                            tmpLocation.y = y;
-//                            tmpLocation.z = z;
-//                            tmpLocation.category = cat;
-//                            stringstream catStr;
-//                            catStr << cat;
-//                            tmpLocation.comments = catStr.str();
-//                            newList.append(tmpLocation);
-//                            apply_mask(data1d,dimNum,x,y,z,c,thresh,maskImg);
-//                            count -= 1;
-//                            rgn_cellcount.at(i)=count;
-//                            v3d_msg(QString("found marker, region cellcount now %1").arg(count));
-//                            if (count==0) {done=true;}
-//                            if (ix==xHigh && iy==yHigh && iz==zHigh) done=true;
-//                            if (done==true) break;
-//                        }
-//                        if (done==true) break;
-//                    }
-//                    if (done==true) break;
-//                }
-//                if (done==true) break;
-//            }
-//            if (done==true) break;
-//        }
-//    }
     cout<<"done"<<endl;
     return true;
 }
@@ -3015,7 +2847,6 @@ template <class T> LandmarkList seg_by_mask (T* data1d, T* rgnData, T* maskData,
     LandmarkList outputList;
     for (int s=0; s<cellcount; s++)
     {
-        //cout<<"looking for cell "<<s+1<<endl;
         int min=10000, total=0;
         LocationSimple maxPos(0,0,0);
         for (int i=xLow; i<=xHigh; i+=2)
@@ -3052,8 +2883,8 @@ template <class T> LandmarkList seg_by_mask (T* data1d, T* rgnData, T* maskData,
         }
         int xm,ym,zm;
         maxPos.getCoord(xm,ym,zm);
+        //mass_center_Coords(rgnData,dimNum,xm,ym,zm,radAve,1,rgn-1);
         mass_center_Coords(data1d,dimNum,xm,ym,zm,radAve,c,thresh);
-        //mass_center_Coords(rgnData,dimNum,xm,ym,zm,radAve/2,1,rgn-1);
         if (maskData[zm*M*N+ym*N+xm]==0) {maxPos.x=xm;maxPos.y=ym;maxPos.z=zm; outputList.append(maxPos);} //update and append
         for (int x=xm-radAve; x<xm+radAve; x++)
         {
@@ -3069,122 +2900,5 @@ template <class T> LandmarkList seg_by_mask (T* data1d, T* rgnData, T* maskData,
         }
         maxPos.x=0;maxPos.y=0;maxPos.z=0; //reset
     }
-
-    //remove overlapping markers
-//    if (outputList.size()>1)
-//    {
-//        LocationSimple point1(0,0,0), point2(0,0,0);
-//        LocationSimple zero(0,0,0);
-//        LocationSimple& zer = zero;
-//        for (int i=0; i<outputList.size()-1; i++)
-//        {
-//            for (int j=i+1; j<outputList.size(); j++)
-//            {
-//                int x1,y1,z1,x2,y2,z2,dist;
-//                point1 = outputList.at(i);
-//                if (point1==zer) continue;
-//                point1.getCoord(x1,y1,z1);
-//                point2 = outputList.at(j);
-//                if (point2==zer) continue;
-//                point2.getCoord(x2,y2,z2);
-
-//                dist = sqrt((double)(x1-x2)*(x1-x2)+(y1-y2)*(y1-y2)+(z1-z2)*(z1-z2)) + 0.5;
-//                if (dist<(radAve/3)) { outputList.replace(i,zer); continue; } //replace one marker if they are on top of each other
-//            }
-//            outputList.removeAll(zer);
-//        }
-//    }
-    return outputList;
-}
-
-template <class T> LandmarkList median_filter (T* data1d, T* rgnData, V3DLONG *dimNum,
-                                               LocationSimple cellLocation, int c,
-                                               double range, int cellcount, int rgn)
-{
-    //cout<<"ready to median filter"<<endl;
-
-    V3DLONG N = dimNum[0];
-    V3DLONG M = dimNum[1];
-    V3DLONG P = dimNum[2];
-
-    int xc,yc,zc;
-    cellLocation.getCoord(xc,yc,zc);
-
-    //define limits around region, would prefer to have eigenvalues to better determine range
-    int xLow = xc-range; if (xLow<0) xLow=0;
-    int xHigh = xc+range; if (xHigh>N-1) xHigh=N-1;
-    int yLow = yc-range; if (yLow<0) yLow=0;
-    int yHigh = yc+range; if (yHigh>M-1) yHigh=M-1;
-    int zLow = zc-range; if (zLow<0) zLow=0;
-    int zHigh = zc+range; if (zHigh>P-1) zHigh=P-1;
-
-    int seg=cellcount, segNum=pow(seg,3.0);
-    if (seg>4) {seg=4, segNum=64;}
-    int shift = (2*range+1)/seg;
-
-    //cout<<"check ranges "<<xLow<<" to "<<xHigh<<". "<<yLow<<" to "<<yHigh<<". "<<zLow<<" to "<<zHigh<<". "<<endl;
-    //cout<<"check seg info. cellcount "<<cellcount<<". seg "<<seg<<". shift"<<shift<<endl;
-
-    vector<double> segVal;
-    LandmarkList segList;
-    int shiftx=0,shifty=0,shiftz=0;
-    for (int s=0; s<segNum; s++)
-    {
-        int pValTot=0,runs=0;
-        for (int i=xLow+shiftx*shift; i<xLow+shiftx*shift+shift; i++)
-        {
-            for (int j=yLow+shifty*shift; j<yLow+shifty*shift+shift; j++)
-            {
-                for (int k=zLow+shiftz*shift; k<zLow+shiftz*shift+shift; k++)
-                {
-                    if (i>N-1 || j>M-1 || k>P-1) continue;
-                    if (pixelVal(rgnData,dimNum,i,j,k,1) != rgn) continue;
-                    int pVal = pixelVal(data1d,dimNum,i,j,k,c);
-                    pValTot += pVal;
-                    runs++;
-                }
-            }
-        }
-        //cout<<"one seg loop done"<<endl;
-        if (runs>0) segVal.push_back(pValTot/runs);
-        else segVal.push_back(0);
-        int midX,midY,midZ;
-        midX=xLow+shiftx*shift+shift/2; if (midX>N-1) midX=N-1;
-        midY=yLow+shifty*shift+shift/2; if (midY>M-1) midY=M-1;
-        midZ=zLow+shiftz*shift+shift/2; if (midZ>P-1) midZ=P-1;
-        //cout<<"mids "<<midX<<" "<<midY<<" "<<midZ<<endl;
-        LocationSimple tmp(midX,midY,midZ);
-        segList.append(tmp);
-        if (shiftx<seg-1) shiftx++;
-        else if (shifty<seg-1) {shiftx=0; shifty++;}
-        else if (shiftz<seg-1) {shiftx=0; shifty=0; shiftz++;}
-    }
-    //cout<<"all seg loops done"<<endl;
-
-    //still need to work on making sure this doesn't return multiple cells close together
-    int max=0;
-    vector<int> maxInd(cellcount,0);
-    for (int i=0; i<segVal.size(); i++)
-    {
-        if (segVal.at(i)>max)
-        {
-            max=segVal.at(i);
-            for (int j=0; j<cellcount-1; j++) { maxInd[j]=maxInd[j+1]; }
-            maxInd[cellcount-1]=i;
-        }
-    }
-    //cout<<"indexing done"<<endl;
-
-    LandmarkList outputList;
-    for (int i=0; i<maxInd.size(); i++)
-    {
-        int ind = maxInd[i];
-        outputList.append(segList.at(ind));
-//        int x,y,z;
-//        LocationSimple temp = segList.at(ind);
-//        temp.getCoord(x,y,z);
-//        cout<<x<<" "<<y<<" "<<z<<endl;
-    }
-
     return outputList;
 }
