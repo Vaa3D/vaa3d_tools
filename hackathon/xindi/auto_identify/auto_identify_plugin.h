@@ -198,6 +198,11 @@ public:
         combo_channelno = new QComboBox(); combo_channelno->addItems(ch_items);
         QLabel* ch_label_type = new QLabel(QObject::tr("Channel: "));
 
+        QStringList thresh_items;
+        thresh_items << "Calculate from Markers" << "User Input";
+        combo_thresh_type = new QComboBox(); combo_thresh_type->addItems(thresh_items);
+        QLabel* thresh_label_type = new QLabel(QObject::tr("Threshold: "));
+
         QStringList input_items;
         input_items << "Markers only";
         input_items << "SWCs only";
@@ -229,6 +234,18 @@ public:
         inputLayout->addWidget(combo_input_type, 2,2,1,2);
         input_panel->setLayout(inputLayout);
 
+        QGroupBox *thresh_panel = new QGroupBox("Threshold");
+        thresh_panel->setStyle(new QWindowsStyle());
+        QGridLayout *threshLayout = new QGridLayout();
+        thresh_panel->setStyle(new QWindowsStyle());
+        threshLayout->addWidget(thresh_label_type, 2,1);
+        threshLayout->addWidget(combo_thresh_type, 2,2);
+        spin_th = new QDoubleSpinBox();
+        threshLayout->addWidget(spin_th, 2,3);
+        spin_th->setEnabled(false);
+        spin_th->setMaximum(65535); spin_th->setMinimum(-65535);
+        thresh_panel->setLayout(threshLayout);
+
         QWidget* container = new QWidget();
         QGridLayout* bottomBar = new QGridLayout();
         bottomBar->addWidget(pPushButton_start,1,1);
@@ -238,6 +255,7 @@ public:
         QGridLayout *pGridLayout = new QGridLayout();
         if (p==0) {pGridLayout->addWidget(input_panel);}
         pGridLayout->addWidget(sort_panel);
+        pGridLayout->addWidget(thresh_panel);
         pGridLayout->addWidget(channel_panel);
         pGridLayout->addWidget(container);
 
@@ -248,6 +266,9 @@ public:
 
         connect(pPushButton_start, SIGNAL(clicked()), this, SLOT(_slot_start()));
         connect(pPushButton_close, SIGNAL(clicked()), this, SLOT(reject()));
+        connect(combo_thresh_type, SIGNAL(currentIndexChanged(int)), this, SLOT(update()));
+
+        update();
     }
 
     ~Dialog_cells(){}
@@ -256,12 +277,29 @@ public:
     QComboBox* combo_sort_type;
     QComboBox* combo_channelno;
     QComboBox* combo_input_type;
+    QComboBox* combo_thresh_type;
+    QDoubleSpinBox* spin_th;
    // static controlPanel_SWC *m_pLookPanel_SWC;
     int sort_type;
     int channel;
     int input_type;
+    int thresh_type;
+    double thresh;
 
 public slots:
+    void update()
+    {
+        thresh_type = combo_thresh_type->currentIndex();
+
+        if(thresh_type == 1)
+        {
+            spin_th->setEnabled(true);
+        }
+        else
+        {
+            spin_th->setEnabled(false);
+        }
+    }
     void _slot_start()
     {
         sort_type = combo_sort_type->currentIndex();
@@ -277,6 +315,12 @@ public slots:
             input_type = inpInt+1;
             //1 for mark, 2 for swc, 3 for both
         }
+
+        if (spin_th->isEnabled())
+        {
+            thresh = spin_th->text().toDouble();
+        }
+        else thresh = -1;
 
         accept();
     }
