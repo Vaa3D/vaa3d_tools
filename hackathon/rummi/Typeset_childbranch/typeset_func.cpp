@@ -102,6 +102,7 @@ int typeset_swc_func(V3DPluginCallback2 &callback, double settype, QList<ImageMa
             return 0;
         }
         file_count++;
+        reload_SWC(callback);
         return 1;
     }
 }

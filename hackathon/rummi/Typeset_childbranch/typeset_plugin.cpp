@@ -288,7 +288,6 @@ void controlPanel::_slot_typeset_all()
     double settype = get_type();
     QList<ImageMarker> markers; //empty variable. essentially a place-holder
     typeset_swc_func(m_v3d, settype, markers);
-    reload_SWC(m_v3d);
     v3d_msg("typeset function was run");
 }
 
@@ -319,7 +318,6 @@ void controlPanel::_slot_typeset_marker()
 
             double settype = get_type();
             typeset_swc_func(m_v3d, settype, markers);
-            reload_SWC(m_v3d);
 
             v3d_msg("typeset_marker function run");
         }
