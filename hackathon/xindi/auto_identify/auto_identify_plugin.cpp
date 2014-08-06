@@ -818,6 +818,21 @@ void count_cells(V3DPluginCallback2 &callback, QWidget *parent)
 
     LandmarkList Marklist = callback.getLandmark(curwin);
     int Marknum = Marklist.count();
+    if (Marknum>0)
+        {
+            //default marker cat as 1 for type sorting
+            for (int i=0; i<Marklist.count(); i++)
+            {
+                LocationSimple tmp = Marklist.at(i);
+                if (tmp.comments.empty()==true) tmp.category=1;
+                else
+                {
+                    istringstream cat(tmp.comments);
+                    cat>>tmp.category;
+                }
+                Marklist.replace(i,tmp);
+            }
+        }
 
     QList<NeuronTree> * mTreeList=0;
     mTreeList = callback.getHandleNeuronTrees_3DGlobalViewer(curwin);
@@ -884,6 +899,7 @@ void count_cells(V3DPluginCallback2 &callback, QWidget *parent)
         double rad,val;
         if (identify_cells(callback,data1d,dimNum,c,mlist,bglist,outputList,maskImage,cat,rad,val,thresh))
         {
+            v3d_msg(QString("Final Cell Count: %1").arg(outputList.count()));
             callback.setLandmark(curwin,outputList);
 
             //v3dhandle newwin = callback.newImageWindow("mask");
@@ -919,6 +935,7 @@ void count_cells(V3DPluginCallback2 &callback, QWidget *parent)
                 }
             }
         }
+        if (catNum<=1) {v3d_msg("Not enough categories. Do nothing."); return;}
 
 //v3d_msg(QString("final catNum %1").arg(catNum));
 
@@ -973,6 +990,7 @@ void count_cells(V3DPluginCallback2 &callback, QWidget *parent)
             Image4DSimple maskImage;
             int cat;
             double rad,val;
+            cout<<endl<<"counting cells of category "<<i+1<<endl;
             if (identify_cells(callback,data1d,dimNum,c,*marks,*bgs,tempList,maskImage,cat,rad,val,thresh))
                 catSortList.append(tempList);
             catArr2.push_back(cat);
@@ -981,8 +999,9 @@ void count_cells(V3DPluginCallback2 &callback, QWidget *parent)
 //v3d_msg(QString("catSortList append category %1").arg(tempList.at(0).category));
 //            marksL.clear();
         }
-        type_duplicates(data1d,catSortList,dimNum,c,catArr2,radArr,valArr);
+        if (catNum>2) type_duplicates(data1d,catSortList,dimNum,c,catArr2,radArr,valArr);
 
+        v3d_msg(QString("Final Cell Count: %1").arg(catSortList.count()));
         callback.setLandmark(curwin,catSortList);
 
     }
@@ -1124,7 +1143,7 @@ template <class T> bool identify_cells(V3DPluginCallback2 &callback, T* data1d, 
             }
         }
 
-        cout<<"threshold value "<<thresh<<endl<<endl;
+        cout<<"threshold value "<<thresh<<endl;
 
         PixVal=0, BGVal=0;
         for (int i=0; i<marknum; i++)
@@ -1144,12 +1163,14 @@ template <class T> bool identify_cells(V3DPluginCallback2 &callback, T* data1d, 
         catsorting=true;
         MarkList = markerlist;
         PixVal=0, BGVal=0;
+        double markmin=255, bgmax=0;
         for (int i=0; i<MarkList.count(); i++)
         {
             tmpLocation = MarkList.at(i);
             tmpLocation.getCoord(xc,yc,zc);
             int pix = pixelVal(data1d,dimNum,xc,yc,zc,c);
             PixVal += pix;
+            if (pix<markmin) markmin=pix;
         }
         BGList = bglist;
         for (int i=0; i<BGList.count(); i++)
@@ -1158,11 +1179,17 @@ template <class T> bool identify_cells(V3DPluginCallback2 &callback, T* data1d, 
             tmpLocation.getCoord(xc,yc,zc);
             int pix = pixelVal(data1d,dimNum,xc,yc,zc,c);
             BGVal += pix;
+            if (pix>bgmax) bgmax=pix;
         }
 
         PixVal = PixVal/MarkList.count();   //PixVal now stores average pixel value of all cell markers
         BGVal = BGVal/BGList.count();       //BGVal now stores average pixel value of all background markers
-        if (thresh<0) thresh = (PixVal+BGVal)/2;
+        if (thresh<0)
+        {
+            if (bgmax<markmin) thresh = (int)((markmin+bgmax)/2 + 0.5);
+            else thresh = (int)((PixVal+BGVal)/2 + 0.5);
+        }
+        cout<<"threshold value "<<thresh<<endl;
     }
 
     marks = MarkList.count();
@@ -1179,6 +1206,7 @@ template <class T> bool identify_cells(V3DPluginCallback2 &callback, T* data1d, 
 
 //v3d_msg(QString("marks = %1, bgcount = %2. Marks all sorted").arg(marks).arg(BGList.count()));
 
+    cout<<"attempting regiongrow for object detection"<<endl;
     //pulls region list from regiongrow plugin
     LandmarkList regionList;
     vector<int> regionVol;
@@ -1299,8 +1327,7 @@ template <class T> bool identify_cells(V3DPluginCallback2 &callback, T* data1d, 
     rad = radAve;
     val = PixVal;
 
-    cout<<"Final Cell Count "<<outputlist.count()<<endl<<endl;
-    v3d_msg(QString("Final Cell Count: %1").arg(outputlist.count()));
+    cout<<"success, cell count "<<outputlist.count()<<endl<<endl;
     return true;
 }
 
@@ -1344,7 +1371,7 @@ template <class T> bool mass_center_Lists(T* data1d, V3DLONG *dimNum,
         tmp.getCoord(xc,yc,zc);
         int xo=xc,yo=yc,zo=zc;
         int check=0,runs=0;
-        bool converge=false;
+        bool converge=false,bad_data=false;
         //cout<<endl<<"looping for marker "<<xo<<" "<<yo<<" "<<zo<<endl;
         //v3d_msg("starting with marker");
         do
@@ -1379,6 +1406,7 @@ template <class T> bool mass_center_Lists(T* data1d, V3DLONG *dimNum,
                     }
                 }
             }
+            if (norm<=0) {bad_data=true; goto stop;}
             newX /= norm; newX+=0.5;
             newY /= norm; newY+=0.5;
             newZ /= norm; newZ+=0.5;
@@ -1390,40 +1418,12 @@ template <class T> bool mass_center_Lists(T* data1d, V3DLONG *dimNum,
             xc=newX; yc=newY; zc=newZ;
             //cout<<xc<<" "<<yc<<" "<<zc<<endl;
 
-//            //if marker has been placed in background, restart loop with some changes
-//            //pVal = pixelVal(data1d,dimNum,newX,newY,newZ,c);
-//            pVal = data1d[(c-1)*P*M*N+(V3DLONG)newZ*M*N+(V3DLONG)newY*N+(V3DLONG)newX];
-//            if (pVal<=thresh)
-//            {
-//                //cout<<"hit check number "<<check<<" in marker "<<i<<endl;
-//                if (check==0) //first check just reset loop with smaller radius
-//                {
-//                    xc=xo; yc=yo; zc=zo;
-//                    rad/=2;
-//                    converge=false;
-//                }
-//                else if (check==1) //second check shift the original coords
-//                {
-//                    double shiftX,shiftY,shiftZ;
-//                    shiftX = (newX-xo)/2;
-//                    shiftY = (newY-yo)/2;
-//                    shiftZ = (newZ-zo)/2;
-//                    xc=xo-shiftX; yc=yo-shiftY; zc=zo-shiftZ;
-//                    if (xc<0) xc=0; if (xc>N-1) xc=N-1;
-//                    if (yc<0) yc=0; if (yc>M-1) yc=M-1;
-//                    if (zc<0) zc=0; if (zc>P-1) zc=P-1;
-//                    converge=false;
-//                }
-//                else if (check>1) //if still hasn't fixed idk
-//                {
-//                    newX=xo; newY=yo; newZ=zo;
-//                    converge=true;
-//                }
-//                runs=0;
-//                check++;
-//            }
             runs++;
         } while (converge==false && runs<10); //if not converged in 10 runs, likely stuck in rounding loop
+        stop:;
+
+        if (bad_data==true) {newX=xo; newY=yo; newZ=zo;}
+
         if (newX<0) newX=0; if (newX>N-1) newX=N-1;
         if (newY<0) newY=0; if (newY>M-1) newY=M-1;
         if (newZ<0) newZ=0; if (newZ>P-1) newZ=P-1;
@@ -2752,7 +2752,7 @@ template <class T> void regiongrowing(V3DPluginCallback2 &callback, int c, doubl
 
     //qDebug() << "time elapse ..." << end_t_t - end_t;
 
-    cout<<"region count "<<cmList.count()<<endl;
+    cout<<"success, region count "<<cmList.count()<<endl;
     return;
 
 }
@@ -2782,7 +2782,7 @@ template <class T> bool segment_regions(T* data1d, V3DLONG *dimNum,
     maskData = new unsigned char [N*M*P];
     for (V3DLONG tmpi=0;tmpi<N*M*P;++tmpi) maskData[tmpi] = 0; //preset to be all 0
 
-    cout<<"starting count"<<endl;
+    cout<<"attempting to refine cell count"<<endl;
     //cout<<"Radius "<<radAve<<endl;
 
     //set regions with 1 cell into newList and mask
