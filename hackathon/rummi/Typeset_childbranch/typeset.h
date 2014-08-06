@@ -100,6 +100,7 @@ NeuronTree typeset_marker(NeuronTree input, QList<ImageMarker> input1, double se
 
     Tree tree;
     Markerpts coords;
+    int check = 0;
 
     for (V3DLONG i=0;i<siz;i++) //gets swc file input
     {
@@ -118,7 +119,7 @@ NeuronTree typeset_marker(NeuronTree input, QList<ImageMarker> input1, double se
 
     double xnow,ynow,znow,dx,dy,dz,distance,min;
     double window=20;
-    int min_place,check;
+    int min_place;
     vector<int> min_place_list;
     vector<int> skipped_marker_list;
 
@@ -152,7 +153,7 @@ NeuronTree typeset_marker(NeuronTree input, QList<ImageMarker> input1, double se
             tree.at(min_place)->type = -333;
             //v3d_msg("marker "+QString("%3").arg(j+1)+" set swc node "+QString("%4").arg(min_place+1)+" to -333");
         }
-        if (min == window)
+        if (min >= window)
         {
             //v3d_msg("marker "+QString("%5").arg(j+1)+" does not fall within range of swc node, and was skipped");
             skipped_marker_list.push_back(j); //place on list, NOT marker number
@@ -186,39 +187,39 @@ NeuronTree typeset_marker(NeuronTree input, QList<ImageMarker> input1, double se
 }
 
 
-NeuronTree typeset_branch(NeuronTree input, QWidget *parent)
-{
-    NeuronTree result;
-    V3DLONG siz = input.listNeuron.size();
+//NeuronTree typeset_branch(NeuronTree input, QWidget *parent)
+//{
+//    NeuronTree result;
+//    V3DLONG siz = input.listNeuron.size();
 
-    Tree tree;
+//    Tree tree;
 
-    for (V3DLONG i=0;i<siz;i++) //gets swc file input
-    {
-        NeuronSWC s = input.listNeuron[i];
-        Point* pt = new Point;
-        pt->n = s.n;
-        pt->x = s.x;
-        pt->y = s.y;
-        pt->z = s.z;
-        pt->r = s.r;
-        pt ->type = s.type;
-        pt->p = s.parent;
-        pt->childNum = 0;
-        tree.push_back(pt);
-    }
-    for (V3DLONG i=0;i<siz;i++)
-    {
-        if (tree.at(i)->p == 1) //id's parent = soma
-        {
-            tree.at(i)->type = -333;
-        }
-    }
-    typeset_children_branch(tree, parent);
+//    for (V3DLONG i=0;i<siz;i++) //gets swc file input
+//    {
+//        NeuronSWC s = input.listNeuron[i];
+//        Point* pt = new Point;
+//        pt->n = s.n;
+//        pt->x = s.x;
+//        pt->y = s.y;
+//        pt->z = s.z;
+//        pt->r = s.r;
+//        pt ->type = s.type;
+//        pt->p = s.parent;
+//        pt->childNum = 0;
+//        tree.push_back(pt);
+//    }
+//    for (V3DLONG i=0;i<siz;i++)
+//    {
+//        if (tree.at(i)->p == 1) //id's parent = soma
+//        {
+//            tree.at(i)->type = -333;
+//        }
+//    }
+//    typeset_children_branch(tree, parent);
 
-    v3d_msg("typeset_branch done.");
+//    v3d_msg("typeset_branch done.");
 
-}
+//}
 
 
 #endif // TYPESET_H

@@ -4,8 +4,10 @@
 #include <v3d_interface.h>
 
 //bool export_list2file(QList<NeuronSWC> & lN, QString fileSaveName, QString FileSWCOpenName);
-int typeset_swc_func(V3DPluginCallback2 &callback, double settype);
+int typeset_swc_func(V3DPluginCallback2 &callback, double settype, QList<ImageMarker> tmp_list_in);
 QList<ImageMarker> get_markers(V3DPluginCallback2 &callback);
+void final_typeset_save();
+void reload_SWC(V3DPluginCallback2 &callback); //to be implimented
 bool typeset_swc(const V3DPluginArgList & input, V3DPluginArgList & output);
 bool typeset_swc_toolbox(const V3DPluginArgList & input);
 

@@ -15,6 +15,8 @@ HEADERS += sort_func.h
 HEADERS += openSWCDialog.h
 HEADERS += sort_swc.h
 
+HEADERS += $$VAA3DPATH/v3d_main/basic_c_fun/v3d_interface.h
+
 SOURCES	= typeset_plugin.cpp
 SOURCES	+= typeset_func.cpp
 SOURCES += sort_func.cpp

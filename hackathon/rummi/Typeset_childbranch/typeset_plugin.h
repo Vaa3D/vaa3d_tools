@@ -75,7 +75,6 @@ private slots:
     void _slot_typeset_marker();
     void _slot_refresh();
     //void _slot_delete();
-    void _slot_show();
     void _slot_save();
     double get_type();
 
@@ -84,6 +83,7 @@ private slots:
 
 
 //    void _slot_preview();
+//    void _slot_show();
 //    void _slot_show_item(QListWidgetItem *item);
 //    void _slot_upload();
 //    void _slot_load();

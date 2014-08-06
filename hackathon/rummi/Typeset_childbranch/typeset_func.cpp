@@ -36,29 +36,16 @@ bool export_list2file_v2(QList<NeuronSWC> & lN, QString fileSaveName, QString Fi
 }
 
 static int file_count = 0;
+static QString last_save_name;
+static QString FileSWCOpenName;
+static QList <NeuronSWC> nt_list_tosave;
 
-int typeset_swc_func(V3DPluginCallback2 &callback, double settype)
+int typeset_swc_func(V3DPluginCallback2 &callback, double settype, QList<ImageMarker> tmp_list_in)
 {
     v3d_msg("Be sure to open the correct the sorted swc file");
 
-
-    //if an swc file is open already, then use that, if more than one or zero open, call following
-
-    //v3dhandleList open_files = callback.getImageWindowList();
-    //int open_files_num = open_files.size();
-    QString FileSWCOpenName;
+    //QString FileSWCOpenName;
     NeuronTree nt;
-
-
-//    if (open_files_num == 1)
-//    {
-//        v3dhandle current_3Dview = callback.currentImageWindow();
-//        FileSWCOpenName = callback.getImageName(current_3Dview);
-//        nt = callback.getSWC(current_3Dview);
-
-//    }
-//    else if (open_files_num == 0 || open_files_num > 1)
-//    {
 
         OpenSWCDialog * openDlg = new OpenSWCDialog(0, &callback);
         if (!openDlg->exec())
@@ -67,33 +54,18 @@ int typeset_swc_func(V3DPluginCallback2 &callback, double settype)
         FileSWCOpenName = openDlg->file_name;
 
         nt = openDlg->nt;
-//    }
-
-//    QList<NeuronSWC> neuron = nt.listNeuron;
-
-//    QString FileSWCOpenName;
-//    FileSWCOpenName = QFileDialog::getOpenFileName(0, QObject::tr("Open Sorted SWC File"),
-//            "",
-//            QObject::tr("Supported file (*.swc *.eswc)"
-//                ";;Neuron structure	(*.swc)"
-//                ";;Extended neuron structure (*.eswc)"
-//                ));
-
-//    NeuronTree nt;
-
-//    if (FileSWCOpenName.toUpper().endsWith(".SWC") || FileSWCOpenName.toUpper().endsWith(".ESWC"))
-//    {
-//        bool ok;
-
-//        nt = readSWC_file(FileSWCOpenName);
-//        if (!ok)
-//            return 0;
-//    }
 
     QList<ImageMarker> tmp_list;
     NeuronTree result = nt;
 
-    tmp_list = get_markers(callback);
+    if (tmp_list_in.size() != 1)
+    {
+        tmp_list = get_markers(callback);
+    }
+    else
+    {
+        tmp_list = tmp_list_in;
+    }
 
     if (tmp_list.size() < 1)
     {
@@ -102,91 +74,117 @@ int typeset_swc_func(V3DPluginCallback2 &callback, double settype)
     }
     else
     {
-        //double settype; //get settype from private void in plugin.cpp
-        //settype = QInputDialog::getDouble(parent, "Please set child branch type","Type:",0,0,4,1);
-        //settype = QInputDialog::getDouble(0, "Please set child branch type","Type:",0,0,4,1);
-
         result = typeset_marker(nt, tmp_list, settype);
+        //nt_shared = result;
 
-        QString fileDefaultName = FileSWCOpenName+QString("_%1_typeset.swc").arg(file_count);
+        QString fileDefaultName;
+        if (file_count==0)
+        {
+            FileSWCOpenName.chop(4);
+            fileDefaultName = FileSWCOpenName+QString("_%1_typeset.swc").arg(file_count);
+        }
+        if (file_count>0)
+        {
+            FileSWCOpenName.chop(18);
+            fileDefaultName = FileSWCOpenName+QString("_%1_typeset.swc").arg(file_count);
+        }
         //write new SWC to file
         QString fileSaveName = QFileDialog::getSaveFileName(0, QObject::tr("Save File"),
                 fileDefaultName,
                 QObject::tr("Supported file (*.swc)"
                     ";;Neuron structure	(*.swc)"
                     ));
-        if (!export_list2file_v2(result.listNeuron,fileSaveName,FileSWCOpenName))
+        last_save_name = fileSaveName;
+        nt_list_tosave = result.listNeuron;
+        if (!export_list2file_v2(nt_list_tosave,fileSaveName,FileSWCOpenName))
         {
             v3d_msg("fail to write the output swc file.");
             return 0;
         }
+        file_count++;
         return 1;
     }
-    file_count++;
+}
+
+void final_typeset_save()
+{
+    QString final_save_name = last_save_name+QString("_finaltypeset.swc");
+    QString fileSaveName = QFileDialog::getSaveFileName(0, QObject::tr("Save File"),
+            final_save_name,
+            QObject::tr("Supported file (*.swc)"
+                ";;Neuron structure	(*.swc)"
+                ));
+    if (!export_list2file_v2(nt_list_tosave,fileSaveName,FileSWCOpenName))
+    {
+        v3d_msg("fail to write the output swc file.");
+        return;
+    }
+    return;
+}
+
+void reload_SWC(V3DPluginCallback2 &callback)
+{
+    //v3dhandleList image_windows_open = callback.getImageWindowList();
+
+    //clear all traced neurons on image
+    //load last saved swc
+
+    v3dhandle current_window = callback.currentImageWindow();
+
+    NeuronTree nt = readSWC_file(last_save_name);
+    callback.setSWC(current_window, nt);
+
+    //callback.setSWC(current_window, nt_shared);
+    callback.updateImageWindow(current_window);
+
+    //callback.setListLabelSurf_Any3DViewer(current_)
+
+    v3d_msg("hopefully this worked");
 }
 
 QList<ImageMarker> get_markers(V3DPluginCallback2 &callback)
 {
-    v3dhandle current_3Dview = callback.currentImageWindow(); //get's current image window (3D that's open)
-    current_3Dview_markers = callback.getLandmark(current_3Dview); //gives list of markers drawn
 
     QList<ImageMarker> tmp_list;
 
-    for (V3DLONG i=0;i<current_3Dview_markers.size();i++)//translate marker info from landmark list to tmp_list
+    v3dhandleList list_windows = callback.getImageWindowList();
+
+    if (list_windows.size() < 1)
     {
-        LocationSimple t = current_3Dview_markers.at(i);
+        v3d_msg("No image open. Must load marker file.");
 
-        ImageMarker pt;
-        pt.n = i+1; //marker number
-        pt.x = t.x;
-        pt.y = t.y;
-        pt.z = t.z;
-        tmp_list.push_back(pt);
+        QString FileMarkerOpenName;
+        FileMarkerOpenName = QFileDialog::getOpenFileName(0, QObject::tr("Open Marker File"),
+                "",
+                    QObject::tr("Supported file (*.marker)"));
+        if (FileMarkerOpenName.isEmpty())
+            return tmp_list;
+        else if (FileMarkerOpenName.toUpper().endsWith(".MARKER"))
+        {
+            tmp_list = readMarker_file(FileMarkerOpenName);
+        }
     }
+    else
+    {
+        v3dhandle current_window = callback.currentImageWindow();
+        current_3Dview_markers = callback.getLandmark(current_window); //gives list of markers drawn
 
+
+        for (V3DLONG i=0;i<current_3Dview_markers.size();i++)//translate marker info from landmark list to tmp_list
+        {
+            LocationSimple t = current_3Dview_markers.at(i);
+
+            ImageMarker pt;
+            pt.n = i+1; //marker number
+            pt.x = t.x;
+            pt.y = t.y;
+            pt.z = t.z;
+            tmp_list.push_back(pt);
+        }
+    }
     return tmp_list;
+
 }
-
-
-
-//QList<ImageMarker> delete_markers(V3DPluginCallback2 &callback, ImageMarker coordinate)
-//{
-
-//    v3dhandle current_3Dview = callback.currentImageWindow();
-//    current_3Dview_markers = callback.getLandmark(current_3Dview);
-
-//   // i guess i'll need this eventually (or something along these lines): callback.update_3DViewer(current_3Dview);
-
-//    QList<LocationSimple> markers_3Dview_update;
-
-//    for (V3DLONG i=0;i<current_3Dview_markers.size();i++)//translate marker info from landmark list to tmp_list
-//    {
-//        LocationSimple t = current_3Dview_markers.at(i);
-
-//        LocationSimple pt;
-//        pt.n = i+1; //marker number
-//        pt.x = t.x;
-//        pt.y = t.y;
-//        pt.z = t.z;
-//        markers_3Dview_update.push_back(pt);
-//    }
-
-
-
-//    QList<ImageMarker> tmp_list = get_markers(callback);
-//    QList<ImageMarker> tmp_list_new;
-
-//    for (V3DLONG i=0; i<tmp_list.size(); i++)
-//    {
-//        if(coordinate.x != tmp_list.x && coordinate.y != tmp_list.y && coordinate.z != tmp_list.z)
-//        {
-//            tmp_list_new.push_back(tmp_list.at(i)); //if the coordinates don't match, then it adds it to the new list and reloads it. i guess. so kind of like the refresh button.
-//        }
-//    }
-
-
-//    //blarp
-//}
 
 bool typeset_swc(const V3DPluginArgList & input, V3DPluginArgList & output)
 {
