@@ -1299,7 +1299,7 @@ template <class T> bool identify_cells(V3DPluginCallback2 &callback, T* data1d, 
     rad = radAve;
     val = PixVal;
 
-    cout<<"Cell count "<<outputlist.count()<<endl<<endl;
+    cout<<"Final Cell Count "<<outputlist.count()<<endl<<endl;
     v3d_msg(QString("Final Cell Count: %1").arg(outputlist.count()));
     return true;
 }
