@@ -421,8 +421,9 @@ void rgnfindsub(int rowi,int colj, int depk, int direction,int stackinc, RgnGrow
     return;
 }
 
-template <class T> void regiongrowing(V3DPluginCallback2 &callback, int c, double thresh,
-                                      LandmarkList &cmList, vector<int> &volList, T* &outimg);
+void regiongrowing(V3DPluginCallback2 &callback, int c, double thresh,
+                   LandmarkList &cmList, vector<int> &volList,
+                   unsigned char* &outimg8, unsigned short* &outimg16, float* &outimg32);
 //end cut
 //----------------------------------------------------------------------------------------------
 
@@ -480,14 +481,14 @@ bool export_list2file(QList<NeuronTree> & N2, QString fileSaveName, QString file
 template <class T> bool apply_mask(unsigned char* data1d, V3DLONG *dimNum,
                                    int xc, int yc, int zc, int c, double threshold, T & maskImg);
 bool open_testSWC(QString &fileOpenName, NeuronTree & openTree);
-template <class T> bool segment_regions(T* data1d, V3DLONG *dimNum,
+template <class T> bool segment_regions(unsigned char* data1d, V3DLONG *dimNum,
                                         LandmarkList inputList,
                                         LandmarkList &newList,
                                         LandmarkList regionList,
                                         vector<int> regionVol,
                                         double radAve, double radStDev,
                                         int c, int cat, double thresh,
-                                        unsigned char* regionData);
+                                        T* regionData);
 template <class T> LandmarkList seg_by_mask (T* data1d, T* rgnData, T* maskData, V3DLONG *dimNum,
                                              LocationSimple cellLocation, int radAve,
                                              double range, int cellcount, int rgn, int c, int thresh);
@@ -1019,6 +1020,7 @@ template <class T> bool identify_cells(V3DPluginCallback2 &callback, T* data1d, 
     V3DLONG N = dimNum[0];
     V3DLONG M = dimNum[1];
     V3DLONG P = dimNum[2];
+    cout<<N<<" "<<M<<" "<<P<<endl;
 
     LandmarkList mlist, MarkList, BGList;
     LocationSimple tmpLocation(0,0,0);
@@ -1032,11 +1034,11 @@ template <class T> bool identify_cells(V3DPluginCallback2 &callback, T* data1d, 
 
         //add corner pixels to list to use as additional bg markers
         mlist = markerlist;
-        for (int i=0; i<=N; i+=N)
+        for (int i=0; i<=N-1; i+=N-1)
         {
-            for (int j=0; j<=M; j+=M)
+            for (int j=0; j<=M-1; j+=M-1)
             {
-                for (int k=0; k<=P; k+=P)
+                for (int k=0; k<=P-1; k+=P-1)
                 {
                     if (data1d[(c-1)*P*M*N+k*M*N+j*N+i]>50) continue;
                     //int dat = data1d[(c-1)*P*M*N+k*M*N+j*N+i];
@@ -1061,7 +1063,7 @@ template <class T> bool identify_cells(V3DPluginCallback2 &callback, T* data1d, 
             tmpLocation.getCoord(xc,yc,zc);
             pix = pixelVal(data1d,dimNum,xc,yc,zc,c);
             //cout<<"value "<<pix<<" at coords "<<xc<<" "<<yc<<" "<<zc<<endl;
-            if (pix<0 || pix>255) {v3d_msg("pix is wrong"); return false;}
+            //if (pix<0 || pix>255) {v3d_msg("pix is wrong"); return false;}
             //      v3d_msg(QString("pix value %1 %2").arg(pix).arg(pix1));
             PixValArr[i] = pix;
             //cout<<pix<<endl;
@@ -1210,8 +1212,11 @@ template <class T> bool identify_cells(V3DPluginCallback2 &callback, T* data1d, 
     //pulls region list from regiongrow plugin
     LandmarkList regionList;
     vector<int> regionVol;
-    void* regionData = 0;
-    regiongrowing(callback,c,thresh,regionList,regionVol,(unsigned char* &)regionData);
+    //void* regionData = 0;
+    unsigned char* rgn8 = 0;
+    unsigned short* rgn16 = 0;
+    float* rgn32 = 0;
+    regiongrowing(callback,c,thresh,regionList,regionVol,(unsigned char* &)rgn8,(unsigned short* &)rgn16,(float* &)rgn32);
 
     //recalibrates input marker list by mean shift
     LandmarkList CenteredList;
@@ -1219,12 +1224,15 @@ template <class T> bool identify_cells(V3DPluginCallback2 &callback, T* data1d, 
     int x,y,z;
     for (int i=0; i<marks; i++)
     {
+        //cout<<"marker "<<i<<endl;
         double blah,checkrad=0;
-        compute_cell_values_rad(data1d,dimNum,xc,yc,zc,c,thresh,blah,checkrad);
-        if (checkrad<5) {checkrad=5;}
         tmpcent = MarkList.at(i);
         tmpcent.getCoord(x,y,z);
+        compute_cell_values_rad(data1d,dimNum,x,y,z,c,thresh,blah,checkrad);
+        //cout<<"rad "<<checkrad<<endl;
+        if (checkrad<5) {checkrad=5;}
         mass_center_Coords(data1d,dimNum,x,y,z,checkrad*1.5,c,thresh);
+        //cout<<"centered"<<endl;
         tmpcent.x=x; tmpcent.y=y; tmpcent.z=z;
         CenteredList.append(tmpcent);
     }
@@ -1306,7 +1314,9 @@ template <class T> bool identify_cells(V3DPluginCallback2 &callback, T* data1d, 
     //mass_center_Lists(data1d,dimNum,scannedList,RecenterList,radAve+radStDev,c,thresh);
     //outputlist = remove_duplicates(data1d,RecenterList,dimNum,PixVal,radAve-radStDev,c);
 
-    if (!segment_regions(data1d,dimNum,MarkList,outputlist,regionList,regionVol,radAve,radStDev,c,cat,thresh,(unsigned char *)regionData)) {return false;}
+    if (regionList.size()>65534) segment_regions(data1d,dimNum,MarkList,outputlist,regionList,regionVol,radAve,radStDev,c,cat,thresh,rgn32);
+    else if (regionList.size()>254) segment_regions(data1d,dimNum,MarkList,outputlist,regionList,regionVol,radAve,radStDev,c,cat,thresh,rgn16);
+    else segment_regions(data1d,dimNum,MarkList,outputlist,regionList,regionVol,radAve,radStDev,c,cat,thresh,rgn8);
 
     if (catsorting==true) //set same category and color
     {
@@ -2094,8 +2104,9 @@ QString getAppPath()
 
 //below taken from regiongrow plugin
 
-template <class T> void regiongrowing(V3DPluginCallback2 &callback, int c, double thresh,
-                                      LandmarkList &cmList, vector<int> &volList, T* &outimg)
+void regiongrowing(V3DPluginCallback2 &callback, int c, double thresh,
+                   LandmarkList &cmList, vector<int> &volList,
+                   unsigned char* &outimg8, unsigned short* &outimg16, float* &outimg32)
 {
     Image4DSimple* subject = callback.getImage(callback.currentImageWindow());
     if (!subject)
@@ -2614,7 +2625,7 @@ template <class T> void regiongrowing(V3DPluginCallback2 &callback, int c, doubl
 
         }
         //regionMap.setData((unsigned char*)pRGCL, sx, sy, sz, 1, V3D_FLOAT32);
-        outimg = (unsigned char*)pRGCL;
+        outimg32 = (float*)pRGCL;
     }
     else if(n_rgn>254)
     {
@@ -2678,7 +2689,7 @@ template <class T> void regiongrowing(V3DPluginCallback2 &callback, int c, doubl
         }
         //regionMap.setData((unsigned char*)pRGCL, sx, sy, sz, 1, V3D_UINT16);
 
-        outimg = (unsigned char*)pRGCL;
+        outimg16 = (unsigned short*)pRGCL;
     }
     else
     {
@@ -2741,7 +2752,7 @@ template <class T> void regiongrowing(V3DPluginCallback2 &callback, int c, doubl
 
         }
         //regionMap.setData((unsigned char*)pRGCL, sx, sy, sz, 1, V3D_UINT8);
-        outimg = (unsigned char*)pRGCL;
+        outimg8 = (unsigned char*)pRGCL;
     }
 
 //    v3dhandle newwin = callback.newImageWindow();
@@ -2766,14 +2777,14 @@ void regiongrow_filter()
 }
 
 
-template <class T> bool segment_regions(T* data1d, V3DLONG *dimNum,
+template <class T> bool segment_regions(unsigned char* data1d, V3DLONG *dimNum,
                                         LandmarkList inputList,
                                         LandmarkList &newList,
                                         LandmarkList regionList,
                                         vector<int> regionVol,
                                         double radAve, double radStDev,
                                         int c, int cat, double thresh,
-                                        unsigned char* regionData)
+                                        T* regionData)
 {
     V3DLONG N = dimNum[0];
     V3DLONG M = dimNum[1];
@@ -2849,18 +2860,18 @@ template <class T> bool segment_regions(T* data1d, V3DLONG *dimNum,
     }
     //cout<<"original marker list appended, size "<<newList.size()<<endl;
 
-//    //debug
-//    for (int i=0; i<n_rgn; i++)
-//    {
-//        int x,y,z;
-//        LocationSimple t = regionList.at(i);
-//        t.getCoord(x,y,z);
-//        int region = regionData[z*M*N+y*N+x]; //no longer works, not so simple translating from 16byte to 8byte image data
-//        int est = 255*(i+1)/n_rgn;
-//        cout<<i+1<<" "<<region<<" "<<est<<endl;
-//    }
-//    system("pause");
 
+    //    //debug
+    //    for (int i=0; i<n_rgn; i++)
+    //    {
+    //        int x,y,z;
+    //        LocationSimple t = regionList.at(i);
+    //        t.getCoord(x,y,z);
+    //        int region = regionData[z*M*N+y*N+x];
+    //        int est = 255*(i+1)/n_rgn;
+    //        cout<<i+1<<" "<<region<<" "<<est<<endl;
+    //    }
+    //    system("pause");
     for (double i=0; i<n_rgn; i++) //region at i has value i+1
     {
         int count=rgn_cellcount.at(i);
@@ -2893,7 +2904,7 @@ template <class T> bool segment_regions(T* data1d, V3DLONG *dimNum,
     return true;
 }
 
-template <class T> LandmarkList seg_by_mask (T* data1d, T* rgnData, T* maskData, V3DLONG *dimNum,
+template <class T> LandmarkList seg_by_mask (unsigned char* data1d, T* rgnData, unsigned char* maskData, V3DLONG *dimNum,
                                               LocationSimple cellLocation, int radAve,
                                               double range, int cellcount, int rgn, int c, int thresh, int n_rgn)
 {
@@ -2927,7 +2938,7 @@ template <class T> LandmarkList seg_by_mask (T* data1d, T* rgnData, T* maskData,
             {
                 for (int k=zLow; k<=zHigh; k++)
                 {
-                    if (maskData[k*M*N+j*N+i]!=0) continue;
+                    if (maskData[k*M*N+j*N+i]!=0 || rgnData[k*M*N+j*N+i]!=rgn) continue;
                     //int check = rgnData[k*M*N+j*N+i];
                     //if (check!=0) cout<<"checking "<<rgn<<" "<<check<<endl;
                     //Analyze cube of length 2*radAve with center (i,j,k)
@@ -2959,7 +2970,7 @@ template <class T> LandmarkList seg_by_mask (T* data1d, T* rgnData, T* maskData,
         int xm,ym,zm;
         maxPos.getCoord(xm,ym,zm);
         if (xm==0 && ym==0 && zm==0) continue;
-        mass_center_Coords(rgnData,dimNum,xm,ym,zm,radAve,1,rgn-1);
+        //mass_center_Coords(rgnData,dimNum,xm,ym,zm,radAve,1,rgn-1);
         mass_center_Coords(data1d,dimNum,xm,ym,zm,radAve/2,c,thresh);
         if (maskData[zm*M*N+ym*N+xm]==0) {maxPos.x=xm;maxPos.y=ym;maxPos.z=zm; outputList.append(maxPos);} //update and append
         for (int x=xm-radAve; x<xm+radAve; x++)
@@ -2977,6 +2988,6 @@ template <class T> LandmarkList seg_by_mask (T* data1d, T* rgnData, T* maskData,
         maxPos.x=0;maxPos.y=0;maxPos.z=0; //reset
     }
     //cout<<"done with region"<<endl;
-    cout<<rgn<<" "<<outputList.count()<<endl;
+    //cout<<rgn<<" "<<outputList.count()<<endl;
     return outputList;
 }
