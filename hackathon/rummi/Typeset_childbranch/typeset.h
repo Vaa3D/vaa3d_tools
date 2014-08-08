@@ -39,11 +39,19 @@ void typeset_children_marker(Tree tree, double settype) //sets children as -333,
 
         if (tree.at(i)->p != -1) //as long as parent id is not -1
         {
-            int parent_loc = tree.at(i)->p - 1; //parent location = parent id - 1
+            int parent_loc;// = tree.at(i)->p - 1; //parent location = parent id - 1 //THIS IS NOT RIGHT
+            int parent_id = tree.at(i)->p;
 
-            if (tree.at(parent_loc)->type == -333) //checking type of parent by subtracting 1 from pid to get location
+            for (V3DLONG i=0;i<tree.size(); i++)
+            {
+                if(tree.at(i)->n == parent_id)
+                    parent_loc = i;
+            }
+            if (tree.at(parent_loc)->type == -333) //checking type of parent
             {
                 tree.at(i)->type = -333; //sets current node as -333
+                //tree.at(i)->parent
+                //v3d_msg(QString("set location %33 as -333").arg(i));
             }
         }
     }
@@ -55,41 +63,10 @@ void typeset_children_marker(Tree tree, double settype) //sets children as -333,
         {
             tree.at(i)->type = settype; //sets type to settype as previously defined
         }
-//        else if (tree.at(i)->type == -1)
-//        {
-//            tree.at(i)->type = 1; //soma = 1?
-//        }
-//        else
-//        {
-//            tree.at(i)->type = 20; //20 would indicate if type is unset. can add section that asks if user wants this.
-//        }
     }
 
     v3d_msg("typeset_children_marker done!");
 
-}
-
-void typeset_children_branch(Tree tree, QWidget *parent) //sets branch as type set by user individually
-{
-    for (V3DLONG i=0;i<tree.size(); i++) //go through tree list
-    {
-        if (tree.at(i)->p != -1) //if node is not soma
-        {
-            int parent_loc = tree.at(i)->p - 1; //parent location = parent id - 1
-
-            if (tree.at(parent_loc)->type == -333)
-            {
-                double current_settype;
-                if (tree.at(parent_loc)->p == 1)
-                {
-                current_settype = QInputDialog::getDouble(parent, "Please set branch type starting at node coordinate: \n"
-                                                  +QString("%1, %2,%3").arg(tree.at(i)->x).arg(tree.at(i)->y).arg(tree.at(i)->z),"Type:",0,0,4,1);
-                }
-                tree.at(parent_loc)->type = current_settype; //set's parent type to settype
-                tree.at(i)->type = -333; //makes it easier to find
-            }
-        }
-    }
 }
 
 NeuronTree typeset_marker(NeuronTree input, QList<ImageMarker> input1, double settype)
@@ -120,7 +97,7 @@ NeuronTree typeset_marker(NeuronTree input, QList<ImageMarker> input1, double se
     double xnow,ynow,znow,dx,dy,dz,distance,min;
     double window=20;
     int min_place;
-    vector<int> min_place_list;
+    //vector<int> min_place_list;
     vector<int> skipped_marker_list;
 
     for (V3DLONG j=0;j<siz1;j++) //sets each marker point node location as -333
@@ -143,7 +120,7 @@ NeuronTree typeset_marker(NeuronTree input, QList<ImageMarker> input1, double se
             {
                 min = distance;
                 min_place = i;
-                min_place_list.push_back(min_place); //place on list, NOT node id
+                //min_place_list.push_back(min_place); //place on list, NOT node id
                 check = 1;
             }
         } //if (check == 1){v3d_msg("found min value!");}
@@ -151,7 +128,7 @@ NeuronTree typeset_marker(NeuronTree input, QList<ImageMarker> input1, double se
         if (check == 1)
         {
             tree.at(min_place)->type = -333;
-            //v3d_msg("marker "+QString("%3").arg(j+1)+" set swc node "+QString("%4").arg(min_place+1)+" to -333");
+            v3d_msg("marker "+QString("%3").arg(j+1)+" set swc node "+QString("%4").arg(min_place+1)+" to "+QString("%6").arg(tree.at(min_place)->type));
         }
         if (min >= window)
         {
@@ -168,7 +145,7 @@ NeuronTree typeset_marker(NeuronTree input, QList<ImageMarker> input1, double se
         {
             NeuronSWC s_new;
             Point* p3 = tree[i];
-            s_new.n = i+1;
+            s_new.n = p3->n; //i+1;
             s_new.pn = p3->p;
             //if (p3->p==NULL) s_new.pn = -1;
             //else

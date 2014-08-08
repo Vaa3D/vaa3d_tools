@@ -67,7 +67,7 @@ int typeset_swc_func(V3DPluginCallback2 &callback, double settype, QList<ImageMa
         tmp_list = tmp_list_in;
     }
 
-    if (tmp_list.size() < 1)
+    if (tmp_list.size() < 1)//this probably won't happen...
     {
         v3d_msg("no markers in 3D window; plugin not run");
         return 0;
