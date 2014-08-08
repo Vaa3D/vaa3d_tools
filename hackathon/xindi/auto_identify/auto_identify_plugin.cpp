@@ -489,7 +489,8 @@ template <class T> bool segment_regions(unsigned char* data1d, V3DLONG *dimNum,
                                         double radAve, double radStDev,
                                         int c, int cat, double thresh,
                                         T* regionData);
-template <class T> LandmarkList seg_by_mask (T* data1d, T* rgnData, T* maskData, V3DLONG *dimNum,
+template <class T> LandmarkList seg_by_mask (T* data1d, T* rgnData, T* maskData,
+                                             vector<int> cell_template, V3DLONG *dimNum,
                                              LocationSimple cellLocation, int radAve,
                                              double range, int cellcount, int rgn, int c, int thresh);
  
@@ -772,7 +773,7 @@ void identify_neurons(V3DPluginCallback2 &callback, QWidget *parent)
 /*  ##################################
  * [completed tasks]
  * all main algorithms are functional, may not be optimized
- * added in use of corner voxels as negative examplers
+ * added in use of corner voxels as negative exemplars
  * improved threshold algorithm
  * significantly reduced duplicate detection of cells
  * mass center algorithm inaccuracy fixed
@@ -781,10 +782,11 @@ void identify_neurons(V3DPluginCallback2 &callback, QWidget *parent)
  * implemented new UI
  * implemented new algorithm based on region growing
  * mass_center actually fixed now
+ * added exemplar cell_template for template matching in seg_by_mask
  *
  * [current goals/issues]
- * determining cell count per region based on test data could be improved
- * segmentation of multi-celled regions can still be improved (seg_by_mask)
+ * radius detection assumes perfect sphere, inaccurate for elipsoid or flat cells,
+ *      seg_by_mask uses this imperfect radius to mask, causes duplicate marking in non-spherical cells
  *
  * [future goals]
  *
@@ -916,7 +918,7 @@ void count_cells(V3DPluginCallback2 &callback, QWidget *parent)
         {
             tempInd = mlist.at(i);
             catList[i] = tempInd.category;
-//v3d_msg((QString("hi %1, cat %2").arg(i).arg(catList[i])));
+//v3d_msg((QString("hi %1, cat %2").arg(i+1).arg(catList[i])));
         }
 
         //counts number of categories
@@ -1034,7 +1036,7 @@ template <class T> bool identify_cells(V3DPluginCallback2 &callback, T* data1d, 
     V3DLONG N = dimNum[0];
     V3DLONG M = dimNum[1];
     V3DLONG P = dimNum[2];
-    cout<<N<<" "<<M<<" "<<P<<endl;
+    //cout<<N<<" "<<M<<" "<<P<<endl;
 
     LandmarkList mlist, MarkList, BGList;
     LocationSimple tmpLocation(0,0,0);
@@ -1187,6 +1189,7 @@ template <class T> bool identify_cells(V3DPluginCallback2 &callback, T* data1d, 
             int pix = pixelVal(data1d,dimNum,xc,yc,zc,c);
             PixVal += pix;
             if (pix<markmin) markmin=pix;
+            //cout<<"mark "<<pix<<endl;
         }
         BGList = bglist;
         for (int i=0; i<BGList.count(); i++)
@@ -1196,6 +1199,7 @@ template <class T> bool identify_cells(V3DPluginCallback2 &callback, T* data1d, 
             int pix = pixelVal(data1d,dimNum,xc,yc,zc,c);
             BGVal += pix;
             if (pix>bgmax) bgmax=pix;
+            //cout<<"bg "<<pix<<endl;
         }
 
         PixVal = PixVal/MarkList.count();   //PixVal now stores average pixel value of all cell markers
@@ -1204,6 +1208,7 @@ template <class T> bool identify_cells(V3DPluginCallback2 &callback, T* data1d, 
         {
             if (bgmax<markmin) thresh = (int)((markmin+bgmax)/2 + 0.5);
             else thresh = (int)((PixVal+BGVal)/2 + 0.5);
+            //cout<<bgmax<<" "<<markmin<<endl;
         }
         cout<<"threshold value "<<thresh<<endl;
     }
@@ -1321,16 +1326,18 @@ template <class T> bool identify_cells(V3DPluginCallback2 &callback, T* data1d, 
 
 //v3d_msg(QString("markers have been scanned. Pixval %1 and stdev %2. radVal %3 and stdev %4. segVal %5 and stdev %6").arg(PixVal).arg(PixStDev).arg(radAve).arg(radStDev).arg(ValAve).arg(ValStDev));
 
-
     //scans image and generates new set of markers based on testing data
     //LandmarkList scannedList = scan_and_count(data1d,dimNum,ValAve,ValStDev,PixVal,PixStDev,radAve,radStDev,c,cat,thresh,MarkList,maskImage);
     //LandmarkList RecenterList;
     //mass_center_Lists(data1d,dimNum,scannedList,RecenterList,radAve+radStDev,c,thresh);
     //outputlist = remove_duplicates(data1d,RecenterList,dimNum,PixVal,radAve-radStDev,c);
 
-    if (regionList.size()>65534) segment_regions(data1d,dimNum,MarkList,outputlist,regionList,regionVol,radAve,radStDev,c,cat,thresh,rgn32);
-    else if (regionList.size()>254) segment_regions(data1d,dimNum,MarkList,outputlist,regionList,regionVol,radAve,radStDev,c,cat,thresh,rgn16);
-    else segment_regions(data1d,dimNum,MarkList,outputlist,regionList,regionVol,radAve,radStDev,c,cat,thresh,rgn8);
+    if (regionList.size()>65534)
+        segment_regions(data1d,dimNum,MarkList,outputlist,regionList,regionVol,radAve,radStDev,c,cat,thresh,rgn32);
+    else if (regionList.size()>254)
+        segment_regions(data1d,dimNum,MarkList,outputlist,regionList,regionVol,radAve,radStDev,c,cat,thresh,rgn16);
+    else
+        segment_regions(data1d,dimNum,MarkList,outputlist,regionList,regionVol,radAve,radStDev,c,cat,thresh,rgn8);
 
     if (catsorting==true) //set same category and color
     {
@@ -2874,6 +2881,43 @@ template <class T> bool segment_regions(unsigned char* data1d, V3DLONG *dimNum,
     }
     //cout<<"original marker list appended, size "<<newList.size()<<endl;
 
+    //create cell template
+    double t = (int)radAve*2+1;
+    int length = pow(t,3);
+    //v3d_msg(QString("%1 %2").arg(length).arg(radAve));
+    vector<int> cell_template(length,0);
+    int template_count=0;
+    for (int i=0; i<inputList.count(); i++)
+    {
+        LocationSimple tmp = inputList.at(i);
+        int xc,yc,zc,ind=-1;
+        tmp.getCoord(xc,yc,zc);
+        if (xc-radAve<0 || xc+radAve>N-1 || yc-radAve<0 || yc+radAve>M-1 || zc-radAve<0 || zc+radAve>P-1) continue;
+        for (int x=xc-(int)radAve; x<=xc+(int)radAve; x++)
+        {
+            for (int y=yc-(int)radAve; y<=yc+(int)radAve; y++)
+            {
+                for (int z=zc-(int)radAve; z<=zc+(int)radAve; z++)
+                {
+                    ind++;
+                    //cout<<ind<<" ";
+                    cell_template[ind]=data1d[(c-1)*P*M*N+z*M*N+y*N+x];
+                    //cout<<cell_template[ind]<<endl;
+                }
+            }
+        }
+        template_count++;
+    }
+    if (template_count>0)
+    {
+        for (int i=0; i<length; i++)
+        {
+            cell_template[i] /= template_count;
+        }
+    }
+    //cout<<"cell template made"<<endl;
+
+    //count cells in remaining regions
     for (double i=0; i<n_rgn; i++) //region at i has value i+1
     {
         int count=rgn_cellcount.at(i);
@@ -2882,7 +2926,7 @@ template <class T> bool segment_regions(unsigned char* data1d, V3DLONG *dimNum,
         double range = pow(regionVol.at(i),0.33)*1.5;
         LocationSimple tmpLocation = regionList.at(i);
         //LandmarkList cells = median_filter(data1d,regionData,dimNum,tmpLocation,c,range,count,i+1); //problem is this might return markers on same cell
-        LandmarkList cells = seg_by_mask (data1d,regionData,maskData,dimNum,tmpLocation,radAve,range,count,i+1,c,thresh,n_rgn);
+        LandmarkList cells = seg_by_mask (data1d,regionData,maskData,cell_template,dimNum,tmpLocation,radAve,range,count,i+1,c,thresh,n_rgn);
         for (int j=0; j<cells.size(); j++)
         {
             int x,y,z;
@@ -2903,7 +2947,8 @@ template <class T> bool segment_regions(unsigned char* data1d, V3DLONG *dimNum,
     return true;
 }
 
-template <class T> LandmarkList seg_by_mask (unsigned char* data1d, T* rgnData, unsigned char* maskData, V3DLONG *dimNum,
+template <class T> LandmarkList seg_by_mask (unsigned char* data1d, T* rgnData, unsigned char* maskData,
+                                             vector<int> cell_template, V3DLONG *dimNum,
                                               LocationSimple cellLocation, int radAve,
                                               double range, int cellcount, int rgn, int c, int thresh, int n_rgn)
 {
@@ -2927,7 +2972,7 @@ template <class T> LandmarkList seg_by_mask (unsigned char* data1d, T* rgnData, 
     LandmarkList outputList;
     for (int s=0; s<cellcount; s++)
     {
-        int min=vol, total=0;
+        int min_vol=vol, min_diff=1000000; //might want to define lower thresholds for rejection
         LocationSimple maxPos(0,0,0);
         for (int i=xLow; i<=xHigh; i++)
         {
@@ -2940,23 +2985,26 @@ template <class T> LandmarkList seg_by_mask (unsigned char* data1d, T* rgnData, 
                     //if (check!=0) cout<<"checking "<<rgn<<" "<<check<<endl;
                     //Analyze cube of length 2*radAve with center (i,j,k)
                     //cout<<i<<" "<<j<<" "<<k<<endl;
-                    total=0;
+                    int total_vol=0, template_diff=0, ind=-1;
                     for (int x=i-radAve; x<=i+radAve; x++)
                     {
                         for (int y=j-radAve; y<=j+radAve; y++)
                         {
                             for (int z=k-radAve; z<=k+radAve; z++)
                             {
+                                ind++;
                                 if (x<0 || x>N-1 || y<0 || y>M-1 || z<0 || z>P-1) continue;
                                 if (maskData[z*M*N+y*N+x]!=0) goto loopcont;
                                 //cout<<x<<" "<<y<<" "<<z<<endl;
-                                if (rgnData[z*M*N+y*N+x]==rgn) total++;
+                                if (rgnData[z*M*N+y*N+x]==rgn) total_vol++;
+                                template_diff += abs( data1d[(c-1)*P*M*N+z*M*N+y*N+x] - cell_template[ind] );
                             }
                         }
                     }
-                    if (abs(vol-total)<min)
+                    if (abs(vol-total_vol)<min_vol && template_diff<min_diff)
                     {
-                        min=abs(vol-total);
+                        min_vol=abs(vol-total_vol);
+                        min_diff=template_diff;
                         maxPos.x=i; maxPos.y=j; maxPos.z=k;
                     }
                     loopcont:;
@@ -2968,13 +3016,15 @@ template <class T> LandmarkList seg_by_mask (unsigned char* data1d, T* rgnData, 
         maxPos.getCoord(xm,ym,zm);
         if (xm==0 && ym==0 && zm==0) continue;
         //mass_center_Coords(rgnData,dimNum,xm,ym,zm,radAve,1,rgn-1);
-        mass_center_Coords(data1d,dimNum,xm,ym,zm,radAve/2,c,thresh);
+        mass_center_Coords(data1d,dimNum,xm,ym,zm,radAve,c,thresh);
+        double outAve,outRad;
+        compute_cell_values_rad(data1d,dimNum,xm,ym,zm,c,thresh,outAve,outRad);
         if (maskData[zm*M*N+ym*N+xm]==0) {maxPos.x=xm;maxPos.y=ym;maxPos.z=zm; outputList.append(maxPos);} //update and append
-        for (int x=xm-radAve; x<xm+radAve; x++)
+        for (int x=xm-outRad; x<xm+outRad; x++)
         {
-            for (int y=ym-radAve; y<ym+radAve; y++)
+            for (int y=ym-outRad; y<ym+outRad; y++)
             {
-                for (int z=zm-radAve; z<zm+radAve; z++)
+                for (int z=zm-outRad; z<zm+outRad; z++)
                 {
                     if (x<0 || x>N-1 || y<0 || y>M-1 || z<0 || z>P-1) continue;
                     maskData[z*M*N+y*N+x]=255;
