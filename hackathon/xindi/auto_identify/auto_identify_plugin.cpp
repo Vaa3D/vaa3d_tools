@@ -783,7 +783,6 @@ void identify_neurons(V3DPluginCallback2 &callback, QWidget *parent)
  * mass_center actually fixed now
  *
  * [current goals/issues]
- * need to test if code works for images with >254 regions
  * determining cell count per region based on test data could be improved
  * segmentation of multi-celled regions can still be improved (seg_by_mask)
  *
@@ -909,12 +908,9 @@ void count_cells(V3DPluginCallback2 &callback, QWidget *parent)
     }
     else if (sort_type==1) //type sort
     {
-        //int catNum = QInputDialog::getInt(0,"Number of Categories","Enter number of categories (background category included), if unsure enter 0",0,0,100,1,&ok);
-        //Can't think of reason having user inputed cat number would be better than auto counting
-
         int * catList;
         catList = new int[mlist.count()];
-        if (mlist.count()<=0)    {v3d_msg("There are no neuron traces in the current image"); return;}
+        if (mlist.count()<=0)    {v3d_msg("There are no neuron traces or markers in the current image"); return;}
         LocationSimple tempInd;
         for (int i=0; i<mlist.count(); i++)
         {
@@ -974,6 +970,24 @@ void count_cells(V3DPluginCallback2 &callback, QWidget *parent)
         LandmarkList catSortList;
         LandmarkList * marks;
         LandmarkList * bgs = &catArr[0]; //working with assumption that bg has category value 0;
+        if (bgs->isEmpty()) //if background category not specified by user, use corner voxels as bg
+        {
+            for (int i=0; i<=N-1; i+=N-1)
+            {
+                for (int j=0; j<=M-1; j+=M-1)
+                {
+                    for (int k=0; k<=P-1; k+=P-1)
+                    {
+                        if (data1d[(c-1)*P*M*N+k*M*N+j*N+i]>50) continue;
+                        //int dat = data1d[(c-1)*P*M*N+k*M*N+j*N+i];
+                        //cout<<dat<<endl;
+                        LocationSimple extraBG(i,j,k);
+                        extraBG.category = 0;
+                        bgs->append(extraBG);
+                    }
+                }
+            }
+        }
         vector<double> catArr2,radArr,valArr;
 
         for (int i=0; i<catNum-1; i++)
@@ -2860,18 +2874,6 @@ template <class T> bool segment_regions(unsigned char* data1d, V3DLONG *dimNum,
     }
     //cout<<"original marker list appended, size "<<newList.size()<<endl;
 
-
-    //    //debug
-    //    for (int i=0; i<n_rgn; i++)
-    //    {
-    //        int x,y,z;
-    //        LocationSimple t = regionList.at(i);
-    //        t.getCoord(x,y,z);
-    //        int region = regionData[z*M*N+y*N+x];
-    //        int est = 255*(i+1)/n_rgn;
-    //        cout<<i+1<<" "<<region<<" "<<est<<endl;
-    //    }
-    //    system("pause");
     for (double i=0; i<n_rgn; i++) //region at i has value i+1
     {
         int count=rgn_cellcount.at(i);
@@ -2886,9 +2888,6 @@ template <class T> bool segment_regions(unsigned char* data1d, V3DLONG *dimNum,
             int x,y,z;
             LocationSimple tmpCell = cells.at(j);
             tmpCell.getCoord(x,y,z);
-            //cout<<"old "<<x<<" "<<y<<" "<<z<<endl;
-            //mass_center_Coords(data1d,dimNum,x,y,z,radAve,c,-1);
-            //cout<<"new "<<x<<" "<<y<<" "<<z<<endl;
             tmpCell.x=x;
             tmpCell.y=y;
             tmpCell.z=z;
@@ -2911,8 +2910,6 @@ template <class T> LandmarkList seg_by_mask (unsigned char* data1d, T* rgnData, 
     V3DLONG N = dimNum[0];
     V3DLONG M = dimNum[1];
     V3DLONG P = dimNum[2];
-
-    //if (n_rgn>254) rgn = (int)(255*rgn/n_rgn +0.5);
 
     int xc,yc,zc;
     cellLocation.getCoord(xc,yc,zc);
@@ -2953,7 +2950,7 @@ template <class T> LandmarkList seg_by_mask (unsigned char* data1d, T* rgnData, 
                                 if (x<0 || x>N-1 || y<0 || y>M-1 || z<0 || z>P-1) continue;
                                 if (maskData[z*M*N+y*N+x]!=0) goto loopcont;
                                 //cout<<x<<" "<<y<<" "<<z<<endl;
-                                else if (rgnData[z*M*N+y*N+x]==rgn) total++;
+                                if (rgnData[z*M*N+y*N+x]==rgn) total++;
                             }
                         }
                     }
@@ -2980,8 +2977,7 @@ template <class T> LandmarkList seg_by_mask (unsigned char* data1d, T* rgnData, 
                 for (int z=zm-radAve; z<zm+radAve; z++)
                 {
                     if (x<0 || x>N-1 || y<0 || y>M-1 || z<0 || z>P-1) continue;
-                    //if (rgnData[z*M*N+y*N+x]==rgn)
-                        maskData[z*M*N+y*N+x]=255;
+                    maskData[z*M*N+y*N+x]=255;
                 }
             }
         }
