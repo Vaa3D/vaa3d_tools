@@ -457,9 +457,10 @@ template <class T> bool mass_center_Masks(unsigned char* data1d, T maskImg, T rg
 template <class T> double compute_ave_cell_val(T* data1d, V3DLONG *dimNum,
                                         double xc,double yc,double zc,int c,double rad);
 template <class T> bool compute_cell_values_rad(T* data1d,
-                                        V3DLONG *dimNum,
-                                        double xc, double yc, double zc,
-                                        int c, double threshold, double & dataAve, double & rad);
+                                                V3DLONG *dimNum,
+                                                double xc, double yc, double zc,
+                                                int c, double threshold, double & outputdataAve,
+                                                double & outputrad, double & outputZrad);
 template <class T> LandmarkList scan_and_count(T* data1d, V3DLONG *dimNum,
                                                double cellAve, double cellStDev,
                                                double PointAve, double PointStDev,
@@ -486,12 +487,12 @@ template <class T> bool segment_regions(unsigned char* data1d, V3DLONG *dimNum,
                                         LandmarkList &newList,
                                         LandmarkList regionList,
                                         vector<int> regionVol,
-                                        double radAve, double radStDev,
+                                        double radAve, double radStDev, double radZ,
                                         int c, int cat, double thresh,
                                         T* regionData);
-template <class T> LandmarkList seg_by_mask (T* data1d, T* rgnData, T* maskData,
+template <class T> LandmarkList seg_by_mask (unsigned char* data1d, T* rgnData, unsigned char* maskData,
                                              vector<int> cell_template, V3DLONG *dimNum,
-                                             LocationSimple cellLocation, int radAve,
+                                             LocationSimple cellLocation, int radAve, int radZ,
                                              double range, int cellcount, int rgn, int c, int thresh);
  
 QStringList AutoIdentifyPlugin::menulist() const
@@ -783,10 +784,11 @@ void identify_neurons(V3DPluginCallback2 &callback, QWidget *parent)
  * implemented new algorithm based on region growing
  * mass_center actually fixed now
  * added exemplar cell_template for template matching in seg_by_mask
+ * added separate radius detection for flatter images
  *
  * [current goals/issues]
- * radius detection assumes perfect sphere, inaccurate for elipsoid or flat cells,
- *      seg_by_mask uses this imperfect radius to mask, causes duplicate marking in non-spherical cells
+ * histogram threshold algorithm has trouble with high-intensity or large-volume noise
+ * type sorting threshold is having issues with accurate voxel value detection
  *
  * [future goals]
  *
@@ -1189,7 +1191,7 @@ template <class T> bool identify_cells(V3DPluginCallback2 &callback, T* data1d, 
             int pix = pixelVal(data1d,dimNum,xc,yc,zc,c);
             PixVal += pix;
             if (pix<markmin) markmin=pix;
-            //cout<<"mark "<<pix<<endl;
+            //cout<<"mark "<<xc<<" "<<yc<<" "<<zc<<" "<<pix<<endl;
         }
         BGList = bglist;
         for (int i=0; i<BGList.count(); i++)
@@ -1199,14 +1201,14 @@ template <class T> bool identify_cells(V3DPluginCallback2 &callback, T* data1d, 
             int pix = pixelVal(data1d,dimNum,xc,yc,zc,c);
             BGVal += pix;
             if (pix>bgmax) bgmax=pix;
-            //cout<<"bg "<<pix<<endl;
+            //cout<<"bg "<<xc<<" "<<yc<<" "<<zc<<" "<<pix<<endl;
         }
 
         PixVal = PixVal/MarkList.count();   //PixVal now stores average pixel value of all cell markers
         BGVal = BGVal/BGList.count();       //BGVal now stores average pixel value of all background markers
         if (thresh<0)
         {
-            if (bgmax<markmin) thresh = (int)((markmin+bgmax)/2 + 0.5);
+            if (bgmax<=markmin) thresh = (int)((markmin+bgmax)/2 + 0.5);
             else thresh = (int)((PixVal+BGVal)/2 + 0.5);
             //cout<<bgmax<<" "<<markmin<<endl;
         }
@@ -1244,10 +1246,10 @@ template <class T> bool identify_cells(V3DPluginCallback2 &callback, T* data1d, 
     for (int i=0; i<marks; i++)
     {
         //cout<<"marker "<<i<<endl;
-        double blah,checkrad=0;
+        double blah,checkrad=0,checkZrad=0;
         tmpcent = MarkList.at(i);
         tmpcent.getCoord(x,y,z);
-        compute_cell_values_rad(data1d,dimNum,x,y,z,c,thresh,blah,checkrad);
+        compute_cell_values_rad(data1d,dimNum,x,y,z,c,thresh,blah,checkrad,checkZrad);
         //cout<<"rad "<<checkrad<<endl;
         if (checkrad<5) {checkrad=5;}
         mass_center_Coords(data1d,dimNum,x,y,z,checkrad*1.5,c,thresh);
@@ -1262,11 +1264,11 @@ template <class T> bool identify_cells(V3DPluginCallback2 &callback, T* data1d, 
 
     //scan list of cell markers for ValAve, radAve
 
-    int * ValAveArr; int * radAveArr;
-    ValAveArr = new int[marks]; radAveArr = new int[marks];
+    int * ValAveArr; int * radAveArr; int * radZAveArr;
+    ValAveArr = new int[marks]; radAveArr = new int[marks]; radZAveArr = new int[marks];
     LocationSimple tempLocation(0,0,0);
-    double ValAve=0,radAve=0,count=0;
-    double tmpDataAve,tmpRad,tmpDataAveImg,tmpDataAveRgn,tmpRadImg,tmpRadRgn;
+    double ValAve=0,radAve=0,radZAve=0,count=0;
+    double tmpDataAve,tmpRad,tmpZRad,tmpDataAveImg,tmpDataAveRgn,tmpRadImg,tmpRadRgn;
 
     for (int i=0; i<marks; i++)
     {
@@ -1280,17 +1282,17 @@ template <class T> bool identify_cells(V3DPluginCallback2 &callback, T* data1d, 
 //        if (abs(tmpRadImg-tmpRadRgn)<=5) {tmpDataAve=tmpDataAveImg; tmpRad=tmpRadImg;}
 //        else {compute_cell_values_rad(data1d,dimNum,xc,yc,zc,c,thresh*(4/3)+1,tmpDataAve,tmpRad);}
 
-        if(compute_cell_values_rad(data1d,dimNum,xc,yc,zc,c,thresh,tmpDataAve,tmpRad))
+        if(compute_cell_values_rad(data1d,dimNum,xc,yc,zc,c,thresh,tmpDataAve,tmpRad,tmpZRad))
         {
             ValAveArr[i] = tmpDataAve;
             radAveArr[i] = tmpRad;
+            radZAveArr[i] = tmpZRad;
             //cout<<tmpRad<<endl;
             ValAve += ValAveArr[i];
-            radAve += radAveArr[i];
+            radAve += radAveArr[i];            
+            radZAve += radZAveArr[i];
             count++;
         }
-
-
 //v3d_msg(QString("ValAve %1, radAve %2").arg(ValAve).arg(radAve));
     }
 
@@ -1299,6 +1301,7 @@ template <class T> bool identify_cells(V3DPluginCallback2 &callback, T* data1d, 
 
     ValAve /= count;  //average pixel value of each cell
     radAve /= count;  //average radius of cell
+    radZAve /= count; //average z-thickness for flat image cells
 
 //v3d_msg(QString("FINAL ValAve %1, radAve %2").arg(ValAve).arg(radAve));
 
@@ -1333,11 +1336,11 @@ template <class T> bool identify_cells(V3DPluginCallback2 &callback, T* data1d, 
     //outputlist = remove_duplicates(data1d,RecenterList,dimNum,PixVal,radAve-radStDev,c);
 
     if (regionList.size()>65534)
-        segment_regions(data1d,dimNum,MarkList,outputlist,regionList,regionVol,radAve,radStDev,c,cat,thresh,rgn32);
+        segment_regions(data1d,dimNum,MarkList,outputlist,regionList,regionVol,radAve,radStDev,radZAve,c,cat,thresh,rgn32);
     else if (regionList.size()>254)
-        segment_regions(data1d,dimNum,MarkList,outputlist,regionList,regionVol,radAve,radStDev,c,cat,thresh,rgn16);
+        segment_regions(data1d,dimNum,MarkList,outputlist,regionList,regionVol,radAve,radStDev,radZAve,c,cat,thresh,rgn16);
     else
-        segment_regions(data1d,dimNum,MarkList,outputlist,regionList,regionVol,radAve,radStDev,c,cat,thresh,rgn8);
+        segment_regions(data1d,dimNum,MarkList,outputlist,regionList,regionVol,radAve,radStDev,radZAve,c,cat,thresh,rgn8);
 
     if (catsorting==true) //set same category and color
     {
@@ -1547,43 +1550,93 @@ template <class T> bool mass_center_Masks(unsigned char* data1d, T maskImg, T rg
 
 //returns average pixel value of shell of computed radius around a marker
 template <class T> bool compute_cell_values_rad(T* data1d,
-                                        V3DLONG *dimNum,
-                                        double xc, double yc, double zc,
-                                        int c, double threshold, double & outputdataAve, double & outputrad)
+                                                V3DLONG *dimNum,
+                                                double xc, double yc, double zc,
+                                                int c, double threshold, double & outputdataAve,
+                                                double & outputrad, double & outputZrad)
 {
     V3DLONG N = dimNum[0];
     V3DLONG M = dimNum[1];
     V3DLONG P = dimNum[2];
-    outputrad=0;
+    outputrad=0; outputZrad=0;
 
-    do
+    if (P/N <= 0.05 && P/M <= 0.05) //if image is flat, calculate 2D circle radius and estimate z-thickness
     {
-        outputrad+=0.5;
-        double x,y,z;
-        int runs=0,datatotal=0;
-        for (double theta=0; theta<2*PI; theta+=(PI/8))
+        do
         {
-            for (double phi=0; phi<PI; phi+=(PI/8))
+            outputrad+=0.5;
+            double x,y,z=zc;
+            int runs=0,datatotal=0;
+            for (double theta=0; theta<2*PI; theta+=(PI/8))
             {
                 //cout<<"pixel iteration "<<runs<<endl;
                 //cout<<r<<" "<<theta<<" "<<phi<<endl<<endl;
-                x = xc+outputrad*cos(theta)*sin(phi) +0.5;
+                x = xc+outputrad*cos(theta) +0.5;
                 if (x>N) x=N; if (x<0) x=0;
-                y = yc+outputrad*sin(theta)*sin(phi) +0.5;
+                y = yc+outputrad*sin(theta) +0.5;
                 if (y>M) y=M; if (y<0) y=0;
-                z = zc+outputrad*cos(phi) +0.5;
-                if (z>P) z=P; if (z<0) z=0;
                 int dataval = data1d[(c-1)*P*M*N+(V3DLONG)z*M*N+(V3DLONG)y*N+(V3DLONG)x];
                 datatotal += dataval;
                 //cout<<dataval<<" "<<datatotal<<endl;
                 runs++;
                 //cout<<x<<" "<<y<<" "<<z<<" "<<endl;
             }
-        }
+            runs++;
+            outputdataAve = datatotal/runs;
+        } while ( outputdataAve > threshold*2/3 );
+        //cout<<"rad "<<outputrad<<endl;
 
-        runs++;
-        outputdataAve = datatotal/runs;
-    } while ( outputdataAve > threshold*3/4 );
+        double zmin_C,zmax_C,minDist=0,maxDist=0;
+        int zmin_V,zmax_V;
+        do
+        {
+            minDist+=0.5;
+            if (zc-minDist<0) {minDist=zc; break;}
+            zmin_C = zc-minDist;
+            zmin_V = data1d[(c-1)*P*M*N+(V3DLONG)zmin_C*M*N+(V3DLONG)yc*N+(V3DLONG)xc];
+        } while ( zmin_V > threshold );
+        //cout<<"z min "<<minDist<<" ";
+        do
+        {
+            maxDist+=0.5;
+            if (zc+maxDist>P) {maxDist=P-zc; break;}
+            zmax_C = zc+maxDist;
+            zmax_V = data1d[(c-1)*P*M*N+(V3DLONG)zmax_C*M*N+(V3DLONG)yc*N+(V3DLONG)xc];
+        } while ( zmax_V > threshold );
+        //cout<<"z max "<<maxDist<<endl;
+        outputZrad = (minDist+maxDist)/2;
+        //cout<<"Z rad "<<outputZrad<<endl;
+    }
+    else //if image is not flat, calculate 3D sphere radius
+    {
+        do
+        {
+            outputrad+=0.5;
+            double x,y,z;
+            int runs=0,datatotal=0;
+            for (double theta=0; theta<2*PI; theta+=(PI/8))
+            {
+                for (double phi=0; phi<PI; phi+=(PI/8))
+                {
+                    //cout<<"pixel iteration "<<runs<<endl;
+                    //cout<<r<<" "<<theta<<" "<<phi<<endl<<endl;
+                    x = xc+outputrad*cos(theta)*sin(phi) +0.5;
+                    if (x>N) x=N; if (x<0) x=0;
+                    y = yc+outputrad*sin(theta)*sin(phi) +0.5;
+                    if (y>M) y=M; if (y<0) y=0;
+                    z = zc+outputrad*cos(phi) +0.5;
+                    if (z>P) z=P; if (z<0) z=0;
+                    int dataval = data1d[(c-1)*P*M*N+(V3DLONG)z*M*N+(V3DLONG)y*N+(V3DLONG)x];
+                    datatotal += dataval;
+                    //cout<<dataval<<" "<<datatotal<<endl;
+                    runs++;
+                    //cout<<x<<" "<<y<<" "<<z<<" "<<endl;
+                }
+            }
+            runs++;
+            outputdataAve = datatotal/runs;
+        } while ( outputdataAve > threshold*3/4 );
+    }
 
     return true;
 }
@@ -1790,8 +1843,8 @@ template <class T> bool type_duplicates(T* data1d, LandmarkList &mList,
             if (point1==zer) continue;
             point1.getCoord(x1,y1,z1);
             int pix1 = pixelVal(data1d,dimNum,x1,y1,z1,c);
-            double blah1,rad1;
-            compute_cell_values_rad(data1d,dimNum,x1,y1,z1,c,pix1/2,blah1,rad1);
+            double blah1,rad1,radZ1;
+            compute_cell_values_rad(data1d,dimNum,x1,y1,z1,c,pix1/2,blah1,rad1,radZ1);
             string catStr1 = point1.comments;
             stringstream convert1(catStr1);
             int cat1,pos1;
@@ -1805,8 +1858,8 @@ template <class T> bool type_duplicates(T* data1d, LandmarkList &mList,
             if (point2==zer) continue;
             point2.getCoord(x2,y2,z2);
             int pix2 = pixelVal(data1d,dimNum,x2,y2,z2,c);
-            double blah2,rad2;
-            compute_cell_values_rad(data1d,dimNum,x2,y2,z2,c,pix1/2,blah2,rad2);
+            double blah2,rad2,radZ2;
+            compute_cell_values_rad(data1d,dimNum,x2,y2,z2,c,pix1/2,blah2,rad2,radZ2);
             string catStr2 = point2.comments;
             stringstream convert2(catStr2);
             int cat2,pos2;
@@ -2045,9 +2098,9 @@ template <class T> bool apply_mask(unsigned char* data1d, V3DLONG *dimNum,
     V3DLONG M = dimNum[1];
     V3DLONG P = dimNum[2];
     int x,y,z;
-    double pi=3.14,rad,dataAve;
+    double pi=3.14,rad,radZ,dataAve;
 
-    compute_cell_values_rad(data1d,dimNum,xc,yc,zc,c,threshold,dataAve,rad);
+    compute_cell_values_rad(data1d,dimNum,xc,yc,zc,c,threshold,dataAve,rad,radZ);
     //cout<<"rad "<<rad<<endl;
 
     //cout<<"applying mask"<<endl;
@@ -2803,7 +2856,7 @@ template <class T> bool segment_regions(unsigned char* data1d, V3DLONG *dimNum,
                                         LandmarkList &newList,
                                         LandmarkList regionList,
                                         vector<int> regionVol,
-                                        double radAve, double radStDev,
+                                        double radAve, double radStDev, double radZ,
                                         int c, int cat, double thresh,
                                         T* regionData)
 {
@@ -2817,13 +2870,23 @@ template <class T> bool segment_regions(unsigned char* data1d, V3DLONG *dimNum,
     for (V3DLONG tmpi=0;tmpi<N*M*P;++tmpi) maskData[tmpi] = 0; //preset to be all 0
 
     cout<<"attempting to refine cell count"<<endl;
-    //cout<<"Radius "<<radAve<<endl;
+    cout<<"Radius "<<radAve<<" and radZ "<<radZ<<endl;
 
     //set regions with 1 cell into newList and mask
     int n_rgn = regionList.size();
     vector<int> rgn_cellcount;
-    double VolAve = (4/3)*PI*pow(radAve,3.0);
-    double VolMax = (4/3)*PI*pow((radAve+radStDev),3.0);
+    double VolAve;
+    double VolMax;
+    if (radZ<=0) //if radius was calculated spherically
+    {
+        VolAve = (4/3)*PI*pow(radAve,3.0);
+        VolMax = (4/3)*PI*pow((radAve+radStDev),3.0);
+    }
+    else //if radius was calculated with 2D circle
+    {
+        VolAve = (4/3)*PI*pow(radAve,2.0)*radZ;
+        VolMax = (4/3)*PI*pow((radAve+radStDev),2.0)*radZ;
+    }
     for (int i=0; i<n_rgn; i++)
     {
         double vol = regionVol.at(i)/VolAve + 0.5;
@@ -2887,6 +2950,8 @@ template <class T> bool segment_regions(unsigned char* data1d, V3DLONG *dimNum,
     //v3d_msg(QString("%1 %2").arg(length).arg(radAve));
     vector<int> cell_template(length,0);
     int template_count=0;
+    int rad_z = radZ;
+    if (rad_z<=0) rad_z = (int)radAve;
     for (int i=0; i<inputList.count(); i++)
     {
         LocationSimple tmp = inputList.at(i);
@@ -2897,7 +2962,7 @@ template <class T> bool segment_regions(unsigned char* data1d, V3DLONG *dimNum,
         {
             for (int y=yc-(int)radAve; y<=yc+(int)radAve; y++)
             {
-                for (int z=zc-(int)radAve; z<=zc+(int)radAve; z++)
+                for (int z=zc-rad_z; z<=zc+rad_z; z++)
                 {
                     ind++;
                     //cout<<ind<<" ";
@@ -2926,7 +2991,7 @@ template <class T> bool segment_regions(unsigned char* data1d, V3DLONG *dimNum,
         double range = pow(regionVol.at(i),0.33)*1.5;
         LocationSimple tmpLocation = regionList.at(i);
         //LandmarkList cells = median_filter(data1d,regionData,dimNum,tmpLocation,c,range,count,i+1); //problem is this might return markers on same cell
-        LandmarkList cells = seg_by_mask (data1d,regionData,maskData,cell_template,dimNum,tmpLocation,radAve,range,count,i+1,c,thresh,n_rgn);
+        LandmarkList cells = seg_by_mask (data1d,regionData,maskData,cell_template,dimNum,tmpLocation,radAve,radZ,range,count,i+1,c,thresh);
         for (int j=0; j<cells.size(); j++)
         {
             int x,y,z;
@@ -2949,12 +3014,14 @@ template <class T> bool segment_regions(unsigned char* data1d, V3DLONG *dimNum,
 
 template <class T> LandmarkList seg_by_mask (unsigned char* data1d, T* rgnData, unsigned char* maskData,
                                              vector<int> cell_template, V3DLONG *dimNum,
-                                              LocationSimple cellLocation, int radAve,
-                                              double range, int cellcount, int rgn, int c, int thresh, int n_rgn)
+                                             LocationSimple cellLocation, int radAve, int radZ,
+                                             double range, int cellcount, int rgn, int c, int thresh)
 {
     V3DLONG N = dimNum[0];
     V3DLONG M = dimNum[1];
     V3DLONG P = dimNum[2];
+
+    if (radZ<=0) radZ=radAve;
 
     int xc,yc,zc;
     cellLocation.getCoord(xc,yc,zc);
@@ -2990,7 +3057,7 @@ template <class T> LandmarkList seg_by_mask (unsigned char* data1d, T* rgnData, 
                     {
                         for (int y=j-radAve; y<=j+radAve; y++)
                         {
-                            for (int z=k-radAve; z<=k+radAve; z++)
+                            for (int z=k-radZ; z<=k+radZ; z++)
                             {
                                 ind++;
                                 if (x<0 || x>N-1 || y<0 || y>M-1 || z<0 || z>P-1) continue;
@@ -3017,14 +3084,15 @@ template <class T> LandmarkList seg_by_mask (unsigned char* data1d, T* rgnData, 
         if (xm==0 && ym==0 && zm==0) continue;
         //mass_center_Coords(rgnData,dimNum,xm,ym,zm,radAve,1,rgn-1);
         mass_center_Coords(data1d,dimNum,xm,ym,zm,radAve,c,thresh);
-        double outAve,outRad;
-        compute_cell_values_rad(data1d,dimNum,xm,ym,zm,c,thresh,outAve,outRad);
+        double outAve,outRad,outZRad;
+        compute_cell_values_rad(data1d,dimNum,xm,ym,zm,c,thresh,outAve,outRad,outZRad);
+        if (outZRad<=0) outZRad=outRad;
         if (maskData[zm*M*N+ym*N+xm]==0) {maxPos.x=xm;maxPos.y=ym;maxPos.z=zm; outputList.append(maxPos);} //update and append
         for (int x=xm-outRad; x<xm+outRad; x++)
         {
             for (int y=ym-outRad; y<ym+outRad; y++)
             {
-                for (int z=zm-outRad; z<zm+outRad; z++)
+                for (int z=zm-outZRad; z<zm+outZRad; z++)
                 {
                     if (x<0 || x>N-1 || y<0 || y>M-1 || z<0 || z>P-1) continue;
                     maskData[z*M*N+y*N+x]=255;
