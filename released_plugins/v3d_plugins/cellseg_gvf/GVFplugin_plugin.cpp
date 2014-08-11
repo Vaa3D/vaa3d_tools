@@ -190,7 +190,7 @@ void GVFplugin::domenu(const QString &menu_name, V3DPluginCallback2 &callback, Q
 	else
 	{
         v3d_msg(tr("A plugin for cell segmentation using Gradient Vector Flow. "
-            "Developed by Brian Long, using the source code developed by Fuhui Long, Tianming Liu, and Hanchuan Peng (2010-2014)"));
+            "Developed based on the source code developed by Tianming Liu, Fuhui Long, and Hanchuan Peng (2010-2014)"));
 	}
 }
 
