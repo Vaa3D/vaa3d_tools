@@ -149,6 +149,7 @@ public:
     View3DControl *view;
     v3dhandle curwin;
 
+    //BoundingBox boundingBox;
 
     QString Cut_altTip(int dim_i, int v, int minv, int maxv, int offset);
     /**
@@ -183,7 +184,9 @@ public:
 
     QAbstractButton *zcLock;
     QPushButton *updateSurf;
-
+    QPushButton *sliderUpdate;
+    QPushButton *testString;
+    QPushButton *test_zdim;
     //V3dR_GLWidget * glWidget;
 
     //QString Cut_altTip(int dim_i, int v, int minv, int maxv, int offset);
@@ -220,6 +223,11 @@ private slots:
     //void setZCutLockIcon(bool);
     void setZCutLock(bool);
     void update_traces();
+    void string_tester();
+    void update_sliders();
+
+    //void get_slider_size();
+    //int get_slider_size();
     //void showZCutLock();
     //void change_zed_min(); //obviously does more than that now
     //void SWC_min_and_max();
@@ -243,6 +251,9 @@ public:
 //int dzCut, lockZ, lockSurfZ; //added the last one
 //int _zClip0, _zClip1;
 
+float _zCut0;
+float _zCut1;
+float dimz;
 int zCut0;
 int zCut1;
 int zClip0;
@@ -263,6 +274,7 @@ V3DLONG sz2;
 float sz22;
 float X_rescaled;
 float Y_rescaled;
+int zdim_float;
 //NeuronTree nt1;
 //NeuronTree nt2;
 //int m;
@@ -270,6 +282,7 @@ float Y_rescaled;
 
 void init_members()
 {
+    zdim_float = 0;
 //_zCut0 = _zCut1 = dzCut = lockZ = lockSurfZ = _zClip0 = _zClip1 = 0; //added lockSurfZ
 zCut0 = zCut1 = 0;
 zClip0 = zClip1 = 0;
@@ -287,6 +300,9 @@ save_z_max = 0;
 sz2 = 0;
 X_rescaled = 0;
 Y_rescaled = 0;
+dimz = 0;
+_zCut0 = 0;
+zCut1 = 0;
 //m = 0;
 //m2 = 0;
 //nt1 = 0;

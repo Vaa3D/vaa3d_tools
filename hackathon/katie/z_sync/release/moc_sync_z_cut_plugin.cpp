@@ -1,7 +1,7 @@
 /****************************************************************************
 ** Meta object code from reading C++ file 'sync_z_cut_plugin.h'
 **
-** Created: Wed Jul 30 11:15:16 2014
+** Created: Mon Aug 11 11:14:02 2014
 **      by: The Qt Meta Object Compiler version 62 (Qt 4.7.4)
 **
 ** WARNING! All changes made in this file will be lost!
@@ -135,7 +135,7 @@ static const uint qt_meta_data_lookPanel[] = {
        5,       // revision
        0,       // classname
        0,    0, // classinfo
-       6,   14, // methods
+       8,   14, // methods
        0,    0, // properties
        0,    0, // enums/sets
        0,    0, // constructors
@@ -149,6 +149,8 @@ static const uint qt_meta_data_lookPanel[] = {
       50,   10,   10,   10, 0x08,
       72,   10,   10,   10, 0x08,
       90,   10,   10,   10, 0x08,
+     106,   10,   10,   10, 0x08,
+     122,   10,   10,   10, 0x08,
 
        0        // eod
 };
@@ -157,6 +159,7 @@ static const char qt_meta_stringdata_lookPanel[] = {
     "lookPanel\0\0reject()\0change_z_min()\0"
     "change_z_max()\0setZCutLockIcon(bool)\0"
     "setZCutLock(bool)\0update_traces()\0"
+    "string_tester()\0update_sliders()\0"
 };
 
 const QMetaObject lookPanel::staticMetaObject = {
@@ -194,9 +197,11 @@ int lookPanel::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
         case 3: setZCutLockIcon((*reinterpret_cast< bool(*)>(_a[1]))); break;
         case 4: setZCutLock((*reinterpret_cast< bool(*)>(_a[1]))); break;
         case 5: update_traces(); break;
+        case 6: string_tester(); break;
+        case 7: update_sliders(); break;
         default: ;
         }
-        _id -= 6;
+        _id -= 8;
     }
     return _id;
 }
