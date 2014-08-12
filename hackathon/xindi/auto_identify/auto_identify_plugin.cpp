@@ -1583,7 +1583,7 @@ template <class T> bool compute_cell_values_rad(T* data1d,
             }
             runs++;
             outputdataAve = datatotal/runs;
-        } while ( outputdataAve > threshold*2/3 );
+        } while ( outputdataAve > threshold*3/4 );
         //cout<<"rad "<<outputrad<<endl;
 
         double zmin_C,zmax_C,minDist=0,maxDist=0;
@@ -2193,8 +2193,7 @@ void regiongrowing(V3DPluginCallback2 &callback, int c, double thresh,
 
     V3DLONG volsz = 100;
 
-    //
-    int start_t = clock(); // record time point
+    //int start_t = clock(); // record time point
 
     ImagePixelType datatype_subject = subject->getDatatype();
 
@@ -2875,38 +2874,41 @@ template <class T> bool segment_regions(unsigned char* data1d, V3DLONG *dimNum,
     //set regions with 1 cell into newList and mask
     int n_rgn = regionList.size();
     vector<int> rgn_cellcount;
-    double VolAve;
-    double VolMax;
+    double VolAve,VolMax,VolMin;
     if (radZ<=0) //if radius was calculated spherically
     {
         VolAve = (4/3)*PI*pow(radAve,3.0);
-        VolMax = (4/3)*PI*pow((radAve+radStDev),3.0);
+        VolMax = (4/3)*PI*pow((radAve+radStDev),3.0);        
+        VolMin = (4/3)*PI*pow((radAve-radStDev),3.0);
     }
     else //if radius was calculated with 2D circle
     {
         VolAve = (4/3)*PI*pow(radAve,2.0)*radZ;
         VolMax = (4/3)*PI*pow((radAve+radStDev),2.0)*radZ;
+        VolMin = (4/3)*PI*pow((radAve-radStDev),2.0)*radZ;
     }
     for (int i=0; i<n_rgn; i++)
     {
         double vol = regionVol.at(i)/VolAve + 0.5;
         double vol2 = regionVol.at(i)/VolMax + 0.5;
+        double vol3 = regionVol.at(i)/VolMin;
         int volcheck = (int) vol;
         int volcheck2 = (int) vol2;
         LocationSimple tmp(0,0,0);
         int xc,yc,zc;
         tmp = regionList.at(i);
         tmp.getCoord(xc,yc,zc);
+        //cout<<volcheck<<endl;
         //int pValcheck = data1d[zc*M*N+yc*N+xc];
         //if (volcheck==2 && volcheck2==1 && compute_ave_cell_val(regionData,dimNum,xc,yc,zc,c,radAve)==(0.9*(i+1))) volcheck=1;
-        if (volcheck<=1)
+        if (vol3<0.8 || volcheck2>5) //if region is too small or too big, compare with input marker list to see if it is cell cluster or noise
+        {
+            rgn_cellcount.push_back(-5);
+        }
+        else if (volcheck<=1)
         {
             newList.append(regionList.at(i));
             rgn_cellcount.push_back(0);
-        }
-        else if (volcheck2>5) //if region is too big, compare with input marker list to see if it is cell cluster or noise
-        {
-            rgn_cellcount.push_back(-1);
         }
         else rgn_cellcount.push_back(volcheck);
     }
@@ -2925,7 +2927,7 @@ template <class T> bool segment_regions(unsigned char* data1d, V3DLONG *dimNum,
         //cout<<"region "<<regNum<<endl;
         //if this region only has one cell, it will have already been accounted for
         if (rgn_cellcount.at(regNum-1)==0) continue;
-        if (rgn_cellcount.at(regNum-1)==-1) rgn_cellcount.at(regNum-1)= (int)(regionVol.at(i)/VolAve + 0.5);
+        if (rgn_cellcount.at(regNum-1)==-5) rgn_cellcount.at(regNum-1)= (int)(regionVol.at(i)/VolAve + 0.5);
         //if this region has multiple cells, add input marker to newList, mask around input marker, update rgn_cellcount
         newList.append(tmp);
         for (int x=xc-radAve; x<xc+radAve; x++)
