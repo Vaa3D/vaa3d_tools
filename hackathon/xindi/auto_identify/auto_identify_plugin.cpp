@@ -421,7 +421,7 @@ void rgnfindsub(int rowi,int colj, int depk, int direction,int stackinc, RgnGrow
     return;
 }
 
-void regiongrowing(V3DPluginCallback2 &callback, int c, double thresh,
+bool regiongrowing(V3DPluginCallback2 &callback, int c, double thresh,
                    LandmarkList &cmList, vector<int> &volList,
                    unsigned char* &outimg8, unsigned short* &outimg16, float* &outimg32);
 //end cut
@@ -493,7 +493,8 @@ template <class T> bool segment_regions(unsigned char* data1d, V3DLONG *dimNum,
 template <class T> LandmarkList seg_by_mask (unsigned char* data1d, T* rgnData, unsigned char* maskData,
                                              vector<int> cell_template, V3DLONG *dimNum,
                                              LocationSimple cellLocation, int radAve, int radZ,
-                                             double range, int cellcount, int rgn, int c, int thresh);
+                                             double range, int cellcount, int rgn, int c, int thresh,
+                                             double Xmean, double Sx);
  
 QStringList AutoIdentifyPlugin::menulist() const
 {
@@ -891,11 +892,13 @@ void count_cells(V3DPluginCallback2 &callback, QWidget *parent)
     int c = dialog.channel;
     int sort_type = dialog.sort_type;
     double thresh = dialog.thresh;
+    if (thresh==0) {v3d_msg("Please input a valid threshold"); return;}
 
     if (sort_type==0) //binary sort
     {
         if (mlist.count()<=0)    {v3d_msg("There are no markers in the current image"); return;}
 
+        int start_t = clock();
         LandmarkList bglist; //sending in empty bglist to trigger binary sort
         LandmarkList outputList;
         Image4DSimple maskImage;
@@ -903,6 +906,8 @@ void count_cells(V3DPluginCallback2 &callback, QWidget *parent)
         double rad,val;
         if (identify_cells(callback,data1d,dimNum,c,mlist,bglist,outputList,maskImage,cat,rad,val,thresh))
         {
+            int end_t = clock();
+            cout<<"time elapse ..."<<end_t-start_t<<endl;
             v3d_msg(QString("Final Cell Count: %1").arg(outputList.count()));
             callback.setLandmark(curwin,outputList);
 
@@ -915,6 +920,7 @@ void count_cells(V3DPluginCallback2 &callback, QWidget *parent)
         int * catList;
         catList = new int[mlist.count()];
         if (mlist.count()<=0)    {v3d_msg("There are no neuron traces or markers in the current image"); return;}
+        int start_t = clock();
         LocationSimple tempInd;
         for (int i=0; i<mlist.count(); i++)
         {
@@ -1020,6 +1026,8 @@ void count_cells(V3DPluginCallback2 &callback, QWidget *parent)
         }
         if (catNum>2) type_duplicates(data1d,catSortList,dimNum,c,catArr2,radArr,valArr);
 
+        int end_t = clock();
+        cout<<"time elapse ..."<<end_t-start_t<<endl;
         v3d_msg(QString("Final Cell Count: %1").arg(catSortList.count()));
         callback.setLandmark(curwin,catSortList);
 
@@ -1145,7 +1153,7 @@ template <class T> bool identify_cells(V3DPluginCallback2 &callback, T* data1d, 
             for (int i=0; i<localMaxs.size()-1; i++)
             {
                 diff = localMaxs[i+1]-localMaxs[i];
-                if (diff>max) {valleyPos=i; break;}
+                if (diff>max) {valleyPos=i;}
             }
             //v3d_msg("valleyPos found");
             valleyPos *= 2;
@@ -1237,7 +1245,7 @@ template <class T> bool identify_cells(V3DPluginCallback2 &callback, T* data1d, 
     unsigned char* rgn8 = 0;
     unsigned short* rgn16 = 0;
     float* rgn32 = 0;
-    regiongrowing(callback,c,thresh,regionList,regionVol,(unsigned char* &)rgn8,(unsigned short* &)rgn16,(float* &)rgn32);
+    if (!regiongrowing(callback,c,thresh,regionList,regionVol,(unsigned char* &)rgn8,(unsigned short* &)rgn16,(float* &)rgn32)) return false;
 
     //recalibrates input marker list by mean shift
     LandmarkList CenteredList;
@@ -2178,13 +2186,13 @@ QString getAppPath()
 
 //below taken from regiongrow plugin
 
-void regiongrowing(V3DPluginCallback2 &callback, int c, double thresh,
+bool regiongrowing(V3DPluginCallback2 &callback, int c, double thresh,
                    LandmarkList &cmList, vector<int> &volList,
                    unsigned char* &outimg8, unsigned short* &outimg16, float* &outimg32)
 {
     Image4DSimple* subject = callback.getImage(callback.currentImageWindow());
     if (!subject)
-        return;
+        return false;
     ROIList pRoiList = callback.getROI(callback.currentImageWindow());
 
     V3DLONG ch_rgb = c;
@@ -2200,7 +2208,7 @@ void regiongrowing(V3DPluginCallback2 &callback, int c, double thresh,
     if(datatype_subject != V3D_UINT8)
     {
         v3d_msg("Currently this program only support 8-bit data.");
-        return;
+        return false;
     }
 
     unsigned char* pSub = subject->getRawData();
@@ -2356,7 +2364,7 @@ void regiongrowing(V3DPluginCallback2 &callback, int c, double thresh,
     catch(...)
     {
         printf("Fail to allocate memory.\n");
-        return;
+        return false;
     }
 
 
@@ -2460,7 +2468,7 @@ void regiongrowing(V3DPluginCallback2 &callback, int c, double thresh,
     pRgnGrow->ImgHei = sy;
     pRgnGrow->ImgWid = sx;
 
-    newIntImage3dPairMatlabProtocol(pRgnGrow->quantImg3d,pRgnGrow->quantImg1d,pRgnGrow->ImgDep,pRgnGrow->ImgHei,pRgnGrow->ImgWid);
+    if (newIntImage3dPairMatlabProtocol(pRgnGrow->quantImg3d,pRgnGrow->quantImg1d,pRgnGrow->ImgDep,pRgnGrow->ImgHei,pRgnGrow->ImgWid)==0) return false;
 
     int nstate;
     UBYTE minlevel,maxlevel;
@@ -2476,7 +2484,7 @@ void regiongrowing(V3DPluginCallback2 &callback, int c, double thresh,
     phcDebugPosNum = 0;
     phcDebugRgnNum = 0;
 
-    newIntImage3dPairMatlabProtocol(pRgnGrow->PHCLABELSTACK3d,pRgnGrow->PHCLABELSTACK1d,1,3,totalpxlnum);
+    if (newIntImage3dPairMatlabProtocol(pRgnGrow->PHCLABELSTACK3d,pRgnGrow->PHCLABELSTACK1d,1,3,totalpxlnum)==0) return false;
     pRgnGrow->PHCLABELSTACKPOS = 0;
 
     pRgnGrow->PHCURGN = new RGN;
@@ -2488,7 +2496,7 @@ void regiongrowing(V3DPluginCallback2 &callback, int c, double thresh,
     pRgnGrow->TOTALRGNnum = 1;
 
     deleteIntImage3dPairMatlabProtocol(pRgnGrow->PHCDONEIMG3d,pRgnGrow->PHCDONEIMG1d);
-    newIntImage3dPairMatlabProtocol(pRgnGrow->PHCDONEIMG3d,pRgnGrow->PHCDONEIMG1d,pRgnGrow->ImgDep,pRgnGrow->ImgHei,pRgnGrow->ImgWid);
+    if (newIntImage3dPairMatlabProtocol(pRgnGrow->PHCDONEIMG3d,pRgnGrow->PHCDONEIMG1d,pRgnGrow->ImgDep,pRgnGrow->ImgHei,pRgnGrow->ImgWid)==0) return false;
 
     for(int j=minlevel;j<=maxlevel;j++)
     {
@@ -2584,7 +2592,7 @@ void regiongrowing(V3DPluginCallback2 &callback, int c, double thresh,
     if(data1d) {delete []data1d; data1d = NULL;}
 
     //
-    int end_t = clock();
+    //int end_t = clock();
     //qDebug() << "label objects via region growing time elapse ..." << end_t-start_t;
 
     //find the second big area in labeling
@@ -2649,7 +2657,7 @@ void regiongrowing(V3DPluginCallback2 &callback, int c, double thresh,
         catch (...)
         {
             printf("Fail to allocate memory.\n");
-            return;
+            return false;
         }
 
         for(int ii=0; ii<n_rgn; ii++)
@@ -2712,7 +2720,7 @@ void regiongrowing(V3DPluginCallback2 &callback, int c, double thresh,
         catch (...)
         {
             printf("Fail to allocate memory.\n");
-            return;
+            return false;
         }
 
         for(int ii=0; ii<n_rgn; ii++)
@@ -2776,7 +2784,7 @@ void regiongrowing(V3DPluginCallback2 &callback, int c, double thresh,
         catch (...)
         {
             printf("Fail to allocate memory.\n");
-            return;
+            return false;
         }
 
         for(int ii=0; ii<n_rgn; ii++)
@@ -2839,7 +2847,7 @@ void regiongrowing(V3DPluginCallback2 &callback, int c, double thresh,
     //qDebug() << "time elapse ..." << end_t_t - end_t;
 
     cout<<"success, region count "<<cmList.count()<<endl;
-    return;
+    return true;
 
 }
 
@@ -2869,7 +2877,7 @@ template <class T> bool segment_regions(unsigned char* data1d, V3DLONG *dimNum,
     for (V3DLONG tmpi=0;tmpi<N*M*P;++tmpi) maskData[tmpi] = 0; //preset to be all 0
 
     cout<<"attempting to refine cell count"<<endl;
-    cout<<"Radius "<<radAve<<" and radZ "<<radZ<<endl;
+    //cout<<"Radius "<<radAve<<" and radZ "<<radZ<<endl;
 
     //set regions with 1 cell into newList and mask
     int n_rgn = regionList.size();
@@ -2916,6 +2924,8 @@ template <class T> bool segment_regions(unsigned char* data1d, V3DLONG *dimNum,
 
     //add inputList into newList
     //cout<<"marker count "<<inputList.count()<<endl;
+    int rad_z = radZ;
+    if (rad_z<=0) rad_z = (int)radAve;
     for (int i=0; i<inputList.count(); i++)
     {
         LocationSimple tmp(0,0,0);
@@ -2927,14 +2937,14 @@ template <class T> bool segment_regions(unsigned char* data1d, V3DLONG *dimNum,
         //cout<<"region "<<regNum<<endl;
         //if this region only has one cell, it will have already been accounted for
         if (rgn_cellcount.at(regNum-1)==0) continue;
-        if (rgn_cellcount.at(regNum-1)==-5) rgn_cellcount.at(regNum-1)= (int)(regionVol.at(i)/VolAve + 0.5);
+        if (rgn_cellcount.at(regNum-1)==-5) rgn_cellcount.at(regNum-1)= (int)(regionVol.at(regNum-1)/VolAve + 0.5);
         //if this region has multiple cells, add input marker to newList, mask around input marker, update rgn_cellcount
         newList.append(tmp);
         for (int x=xc-radAve; x<xc+radAve; x++)
         {
             for (int y=yc-radAve; y<yc+radAve; y++)
             {
-                for (int z=zc-radAve; z<zc+radAve; z++)
+                for (int z=zc-rad_z; z<zc+rad_z; z++)
                 {
                     if (x<0 || x>N-1 || y<0 || y>M-1 || z<0 || z>P-1) continue;
                     if (regionData[z*M*N+y*N+x]==regNum)
@@ -2948,40 +2958,50 @@ template <class T> bool segment_regions(unsigned char* data1d, V3DLONG *dimNum,
 
     //create cell template
     double t = (int)radAve*2+1;
-    int length = pow(t,3);
+    int length;
+    if (radZ<=0) length = pow(t,3);
+    else length = pow(t,2)*((int)radZ*2+1);
     //v3d_msg(QString("%1 %2").arg(length).arg(radAve));
     vector<int> cell_template(length,0);
     int template_count=0;
-    int rad_z = radZ;
-    if (rad_z<=0) rad_z = (int)radAve;
     for (int i=0; i<inputList.count(); i++)
     {
         LocationSimple tmp = inputList.at(i);
         int xc,yc,zc,ind=-1;
         tmp.getCoord(xc,yc,zc);
-        if (xc-radAve<0 || xc+radAve>N-1 || yc-radAve<0 || yc+radAve>M-1 || zc-radAve<0 || zc+radAve>P-1) continue;
+        if (xc-radAve<0 || xc+radAve>N-1 || yc-radAve<0 || yc+radAve>M-1 || zc-radZ<0 || zc+radZ>P-1) continue;
         for (int x=xc-(int)radAve; x<=xc+(int)radAve; x++)
         {
             for (int y=yc-(int)radAve; y<=yc+(int)radAve; y++)
             {
-                for (int z=zc-rad_z; z<=zc+rad_z; z++)
+                for (int z=zc-(int)rad_z; z<=zc+(int)rad_z; z++)
                 {
                     ind++;
                     //cout<<ind<<" ";
-                    cell_template[ind]=data1d[(c-1)*P*M*N+z*M*N+y*N+x];
+                    cell_template[ind]+=data1d[(c-1)*P*M*N+z*M*N+y*N+x];
                     //cout<<cell_template[ind]<<endl;
                 }
             }
         }
         template_count++;
     }
+    //cout<<"t count "<<template_count<<endl;
+    double Xmean=0, Sx=0;
     if (template_count>0)
     {
         for (int i=0; i<length; i++)
         {
             cell_template[i] /= template_count;
+            Xmean+=cell_template[i];
         }
+        Xmean /= length;
+        for (int i=0; i<length; i++)
+        {
+            Sx+=pow(cell_template[i]-Xmean,2.0);
+        }
+        Sx = pow(Sx,0.5);
     }
+
     //cout<<"cell template made"<<endl;
 
     //count cells in remaining regions
@@ -2993,7 +3013,7 @@ template <class T> bool segment_regions(unsigned char* data1d, V3DLONG *dimNum,
         double range = pow(regionVol.at(i),0.33)*1.5;
         LocationSimple tmpLocation = regionList.at(i);
         //LandmarkList cells = median_filter(data1d,regionData,dimNum,tmpLocation,c,range,count,i+1); //problem is this might return markers on same cell
-        LandmarkList cells = seg_by_mask (data1d,regionData,maskData,cell_template,dimNum,tmpLocation,radAve,radZ,range,count,i+1,c,thresh);
+        LandmarkList cells = seg_by_mask (data1d,regionData,maskData,cell_template,dimNum,tmpLocation,radAve,radZ,range,count,i+1,c,thresh,Xmean,Sx);
         for (int j=0; j<cells.size(); j++)
         {
             int x,y,z;
@@ -3017,7 +3037,8 @@ template <class T> bool segment_regions(unsigned char* data1d, V3DLONG *dimNum,
 template <class T> LandmarkList seg_by_mask (unsigned char* data1d, T* rgnData, unsigned char* maskData,
                                              vector<int> cell_template, V3DLONG *dimNum,
                                              LocationSimple cellLocation, int radAve, int radZ,
-                                             double range, int cellcount, int rgn, int c, int thresh)
+                                             double range, int cellcount, int rgn, int c, int thresh,
+                                             double Xmean, double Sx)
 {
     V3DLONG N = dimNum[0];
     V3DLONG M = dimNum[1];
@@ -3041,7 +3062,7 @@ template <class T> LandmarkList seg_by_mask (unsigned char* data1d, T* rgnData, 
     LandmarkList outputList;
     for (int s=0; s<cellcount; s++)
     {
-        int min_vol=vol, min_diff=1000000; //might want to define lower thresholds for rejection
+        int min_vol=vol, min_diff=1000000, corrMax=-1; //might want to define lower thresholds for rejection
         LocationSimple maxPos(0,0,0);
         for (int i=xLow; i<=xHigh; i++)
         {
@@ -3054,6 +3075,9 @@ template <class T> LandmarkList seg_by_mask (unsigned char* data1d, T* rgnData, 
                     //if (check!=0) cout<<"checking "<<rgn<<" "<<check<<endl;
                     //Analyze cube of length 2*radAve with center (i,j,k)
                     //cout<<i<<" "<<j<<" "<<k<<endl;
+                    double t = radAve*2+1;
+                    int length = pow(t,2)*(radZ*2+1);
+                    vector<int> scoop_template(length,0);
                     int total_vol=0, template_diff=0, ind=-1;
                     for (int x=i-radAve; x<=i+radAve; x++)
                     {
@@ -3062,24 +3086,50 @@ template <class T> LandmarkList seg_by_mask (unsigned char* data1d, T* rgnData, 
                             for (int z=k-radZ; z<=k+radZ; z++)
                             {
                                 ind++;
-                                if (x<0 || x>N-1 || y<0 || y>M-1 || z<0 || z>P-1) continue;
+                                if (x<0 || x>N-1 || y<0 || y>M-1 || z<0 || z>P-1) {scoop_template[ind]=0; continue;}
                                 if (maskData[z*M*N+y*N+x]!=0) goto loopcont;
                                 //cout<<x<<" "<<y<<" "<<z<<endl;
                                 if (rgnData[z*M*N+y*N+x]==rgn) total_vol++;
-                                template_diff += abs( data1d[(c-1)*P*M*N+z*M*N+y*N+x] - cell_template[ind] );
+                                //template_diff += abs( data1d[(c-1)*P*M*N+z*M*N+y*N+x] - cell_template[ind] );
+                                scoop_template[ind] = data1d[(c-1)*P*M*N+z*M*N+y*N+x];
                             }
                         }
                     }
-                    if (abs(vol-total_vol)<min_vol && template_diff<min_diff)
+                    //cout<<"scoop_temp is go"<<endl;
+                    //cout<<"Xmean "<<Xmean<<" and Sx "<<Sx<<endl;
+                    double Ymean=0, Sy=0, PCC=0;
+                    for (int i=0; i<length; i++)
+                    {
+                        Ymean+=scoop_template[i];
+                    }
+                    Ymean /= length;
+                    //cout<<"Ymean "<<Ymean<<endl;
+                    for (int i=0; i<length; i++)
+                    {
+                        Sy+=pow(scoop_template[i]-Ymean,2.0);
+                    }
+                    Sy = pow(Sy,0.5);
+                    //cout<<"Sy "<<Sy<<endl;
+                    for (int i=0; i<length; i++)
+                    {
+                        PCC += ((cell_template[i]-Xmean)*(scoop_template[i]-Ymean));
+                    }
+                    if (Sx*Sy==0) PCC=0;
+                    else PCC /= (Sx*Sy);
+                    //cout<<"PCC "<<PCC<<endl;
+                    if (abs(vol-total_vol)<min_vol && PCC>corrMax/* && template_diff<min_diff*/)
                     {
                         min_vol=abs(vol-total_vol);
-                        min_diff=template_diff;
+                        //min_diff=template_diff;
+                        corrMax=PCC;
                         maxPos.x=i; maxPos.y=j; maxPos.z=k;
+                        if (corrMax==1) goto loopend;
                     }
                     loopcont:;
                 }
             }
         }
+        loopend:;
         //cout<<"found a cell"<<endl;
         int xm,ym,zm;
         maxPos.getCoord(xm,ym,zm);
@@ -3089,7 +3139,7 @@ template <class T> LandmarkList seg_by_mask (unsigned char* data1d, T* rgnData, 
         double outAve,outRad,outZRad;
         compute_cell_values_rad(data1d,dimNum,xm,ym,zm,c,thresh,outAve,outRad,outZRad);
         if (outZRad<=0) outZRad=outRad;
-        if (maskData[zm*M*N+ym*N+xm]==0) {maxPos.x=xm;maxPos.y=ym;maxPos.z=zm; outputList.append(maxPos);} //update and append
+        if (maskData[zm*M*N+ym*N+xm]==0 && corrMax>=0) {maxPos.x=xm;maxPos.y=ym;maxPos.z=zm; outputList.append(maxPos);} //update and append
         for (int x=xm-outRad; x<xm+outRad; x++)
         {
             for (int y=ym-outRad; y<ym+outRad; y++)
