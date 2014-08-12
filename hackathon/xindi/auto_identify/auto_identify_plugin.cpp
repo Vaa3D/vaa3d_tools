@@ -160,6 +160,7 @@ template <class T> int newIntImage3dPairMatlabProtocol(T *** & img3d,T * & img1d
         if (img1d) {delete img1d;img1d=0;}
         if (img3d) {delete img3d;img3d=0;}
         printf("Fail to allocate mem in newIntImage2dPairMatlabProtocal()!");
+        v3d_msg("Failed to allocate memory");
         return 0; //fail
     }
 
@@ -2836,6 +2837,8 @@ bool regiongrowing(V3DPluginCallback2 &callback, int c, double thresh,
         outimg8 = (unsigned char*)pRGCL;
     }
 
+    deleteIntImage3dPairMatlabProtocol(pRgnGrow->PHCDONEIMG3d,pRgnGrow->PHCDONEIMG1d);
+
 //    v3dhandle newwin = callback.newImageWindow();
 //    callback.setImage(newwin, &regionMap);
 //    callback.setImageName(newwin, "labeled_objects");
@@ -3062,7 +3065,8 @@ template <class T> LandmarkList seg_by_mask (unsigned char* data1d, T* rgnData, 
     LandmarkList outputList;
     for (int s=0; s<cellcount; s++)
     {
-        int min_vol=vol, min_diff=1000000, corrMax=-1; //might want to define lower thresholds for rejection
+        int min_vol=vol, min_diff=1000000;
+        double corrMax=-1; //might want to define lower thresholds for rejection
         LocationSimple maxPos(0,0,0);
         for (int i=xLow; i<=xHigh; i++)
         {
@@ -3131,6 +3135,7 @@ template <class T> LandmarkList seg_by_mask (unsigned char* data1d, T* rgnData, 
         }
         loopend:;
         //cout<<"found a cell"<<endl;
+        //cout<<corrMax<<" ";
         int xm,ym,zm;
         maxPos.getCoord(xm,ym,zm);
         if (xm==0 && ym==0 && zm==0) continue;
@@ -3139,7 +3144,7 @@ template <class T> LandmarkList seg_by_mask (unsigned char* data1d, T* rgnData, 
         double outAve,outRad,outZRad;
         compute_cell_values_rad(data1d,dimNum,xm,ym,zm,c,thresh,outAve,outRad,outZRad);
         if (outZRad<=0) outZRad=outRad;
-        if (maskData[zm*M*N+ym*N+xm]==0 && corrMax>=0) {maxPos.x=xm;maxPos.y=ym;maxPos.z=zm; outputList.append(maxPos);} //update and append
+        if (maskData[zm*M*N+ym*N+xm]==0 && corrMax>0) {maxPos.x=xm;maxPos.y=ym;maxPos.z=zm; outputList.append(maxPos);} //update and append
         for (int x=xm-outRad; x<xm+outRad; x++)
         {
             for (int y=ym-outRad; y<ym+outRad; y++)
