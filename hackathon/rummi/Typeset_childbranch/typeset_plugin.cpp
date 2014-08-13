@@ -10,27 +10,15 @@
 #include "sort_func.h"
 #include "typeset_func.h"
 #include "typeset_plugin.h"
-
-
-//#include <vector>
-//#include <stdio.h>
-//#include <stdlib.h>
-//#include <QAbstractSlider>
-//#include <iostream>
-//#include <sstream>
 #include <QObject>
 
 //using namespace std;
 
 Q_EXPORT_PLUGIN2(typeset, TypesetPlugin)
 
-//controlPanel* controlPanel::panel = 0;
-
 static controlPanel *panel = 0;
 
 void TypesetWindow(V3DPluginCallback2 &v3d, QWidget *parent);
-
-//static V3DPluginCallback2 v3d_type;
 
 #define MYFLOAT double
 
@@ -47,7 +35,6 @@ QStringList TypesetPlugin::menulist() const
 {
     return QStringList()
         <<tr("typeset")
-        //<<tr("directions")
         <<tr("about");
 }
 
@@ -62,48 +49,34 @@ void TypesetPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &callbac
 {
     if (menu_name == tr("typeset"))
     {
-        //static controlPanel *
         panel = new controlPanel(callback,parent);
-     //   v3d_type = callback;
         TypesetWindow(callback,parent);
-
-        //typeset_swc(callback,parent); //this is now happens when you press the typeset button in the window
     }
-//    else if (menu_name == tr("directions"))
-//    {
-//        v3d_msg(tr("1. Trace neuron. \n"
-//                   "2. Create marker files. Each marker file will set each branch type.\n"
-//                   "3. Run plugin and follow directions in opening swc and marker files. "));
-//    }
     else
     {
         v3d_msg(tr("This plugin sets branch type of traced neuron \n"
-            "Developed by Surobhi Ganguly, 7/2014"));
+            "Developed by Surobhi Ganguly, 8/10/2014"));
     }
 }
 
 bool TypesetPlugin::dofunc(const QString & func_name, const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback,  QWidget * parent)
 {
+    vector<char*> infiles, inparas, outfiles;
+    if(input.size() >= 1) infiles = *((vector<char*> *)input.at(0).p);
+    if(input.size() >= 2) inparas = *((vector<char*> *)input.at(1).p);
+    if(output.size() >= 1) outfiles = *((vector<char*> *)output.at(0).p);
+
     if (func_name == tr("typeset_swc"))
     {
-        return typeset_swc(input, output);
+        v3d_msg("To be implemented.");
     }
-    else if (func_name == tr("TOOLBOXtypeset"))
+    else if (func_name == tr("help"))
     {
-        typeset_swc_toolbox(input);
-        return true;
+        v3d_msg("To be implemented.");
     }
-    if (func_name == tr("help"))
-    {
-        printf("\n\n(version 1.0) typeset points in a swc file indicate beginning of branch of type to be set. Developed by Surobhi Ganguly 2014-07-14\n");
-        printf("usage:\n");
-        printf("\t-f <function_name>:     typeset_swc\n");
-        printf("\t-i <input_file_name>:   input .swc\n");
-        printf("\t-o <output_file_name>:  (not required) typesetd swc file. DEFAULT: 'inputName_typesetd.swc'\n");
-        printf("\t-p <step_length>:       step length for resampling.\n");
-        printf("Demo: v3d -x typeset_swc -f typeset_swc -i test.swc -o test_typesetd.swc -p 1\n\n");
-    }
-    return false;
+    else return false;
+
+    return true;
 }
 
 
@@ -139,7 +112,6 @@ void MyComboBox::updateList()
     if (!m_v3d)
         return;
 
-    //need to add a few more lines to get the current highligh file and then always highlight it unless literally changed
     QString lastDisplayfile = currentText();
 
     // now re-check the currently opened windows
@@ -199,16 +171,12 @@ controlPanel::controlPanel(V3DPluginCallback2 &_v3d, QWidget *parent) :
     QPushButton* btn_TypesetAll = new QPushButton("Typeset All");
     QPushButton* btn_TypesetMarker = new QPushButton("Typeset Marker");
     QPushButton* btn_Show = new QPushButton("Highlight Selected Marker Point");
-    //QPushButton* btn_Delete = new QPushButton("Delete Selected Marker Point");
     QPushButton* btn_Save = new QPushButton("Save SWC File");
-    //QPushButton* btn_Load = new QPushButton("Load Marker File");
-    //QPushButton* btn_Up = new QPushButton("Move Up");
-    //QPushButton* btn_Down = new QPushButton("Move Down");
     QPushButton* btn_Sort = new QPushButton("Sort Loaded SWC File");
 
     box_Typeset = new QSpinBox(); //need to revise this for 1-4
     QLabel* MarkerTitle = new QLabel(QObject::tr("Markers read from window: \n"
-                                                 "Marker number: [ x , y, z ]"));
+                                                 "Marker number: [ x , y , z ]"));
     QLabel* TypeName = new QLabel(QObject::tr("Set Type:"));
     QLabel* TypeKey = new QLabel(QObject::tr("Typeset Key: \n"
                                              "0 -  undefined \n"
@@ -217,14 +185,6 @@ controlPanel::controlPanel(V3DPluginCallback2 &_v3d, QWidget *parent) :
                                              "3 - dendrite \n"
                                              "4 - apical dendrite \n"
                                              "5 - custom \n"));
-
-    //potential bugs for the following two sentences
-    //list_triview = m_v3d.getImageWindowList();
-    //list_3dviewer = m_v3d.getListAll3DViewers();
-
-    //combo_surface = new MyComboBox(&m_v3d);
-    //combo_surface->updateList();
-
     gridLayout = new QGridLayout();
     gridLayout->addWidget(MarkerTitle, 2,0,1,5);
     gridLayout->addWidget(btn_Sort, 1,0,1,5);
@@ -236,12 +196,6 @@ controlPanel::controlPanel(V3DPluginCallback2 &_v3d, QWidget *parent) :
     gridLayout->addWidget(TypeKey, 3,6,1,3);
     gridLayout->addWidget(box_Typeset, 4,7,1,2);
 
-    //gridLayout->addWidget(btn_Load,10,2,1,3);
-    //gridLayout->addWidget(btn_Upload,11,0,1,5);
-    //gridLayout->addWidget(btn_Show,10,0,1,2);
-    //gridLayout->addWidget(btn_Delete,9,0,1,2);
-    //gridLayout->addWidget(btn_Up, 8,2,1,1);
-    //gridLayout->addWidget(btn_Down, 8,4,1,1);
 
     box_Typeset->setMaximum(5);
     box_Typeset->setMinimum(0);
@@ -288,7 +242,7 @@ void controlPanel::_slot_typeset_all()
     double settype = get_type();
     QList<ImageMarker> markers; //empty variable. essentially a place-holder
     typeset_swc_func(m_v3d, settype, markers);
-    v3d_msg("typeset function was run");
+    //v3d_msg("typeset function was run");
 }
 
 void controlPanel::_slot_typeset_marker()
@@ -308,7 +262,7 @@ void controlPanel::_slot_typeset_marker()
             QRegExp rx("(\\ |\\,)");
             QStringList markersplit = current_marker.split(rx);
 
-            v3d_msg(QString("%1, %2, %3").arg(markersplit.at(3).toFloat()).arg(markersplit.at(6).toFloat()).arg(markersplit.at(9).toFloat()));
+            //v3d_msg(QString("%1, %2, %3").arg(markersplit.at(3).toFloat()).arg(markersplit.at(6).toFloat()).arg(markersplit.at(9).toFloat()));
 
             ImageMarker marker_now;
             marker_now.x = markersplit.at(3).toFloat();
@@ -319,7 +273,7 @@ void controlPanel::_slot_typeset_marker()
             double settype = get_type();
             typeset_swc_func(m_v3d, settype, markers);
 
-            v3d_msg("typeset_marker function run");
+            //v3d_msg("typeset_marker function run");
         }
     }
     else
@@ -418,14 +372,14 @@ void controlPanel::_slot_refresh()
 void controlPanel::_slot_save()
 {
     final_typeset_save();
-    v3d_msg("save button function implemented yaaaayyyy");
+    //v3d_msg("save button function implemented yaaaayyyy");
 }
 
 double controlPanel::get_type()
 {
     double settype = box_Typeset->value();
     return settype;
-    v3d_msg("type was got =P");
+    //v3d_msg("type was got =P");
 }
 
 

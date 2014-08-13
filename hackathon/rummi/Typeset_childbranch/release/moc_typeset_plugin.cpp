@@ -1,7 +1,7 @@
 /****************************************************************************
 ** Meta object code from reading C++ file 'typeset_plugin.h'
 **
-** Created: Mon Aug 4 14:08:40 2014
+** Created: Tue Aug 12 17:07:20 2014
 **      by: The Qt Meta Object Compiler version 62 (Qt 4.7.4)
 **
 ** WARNING! All changes made in this file will be lost!

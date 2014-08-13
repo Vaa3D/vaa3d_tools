@@ -4,7 +4,6 @@
 
 
 #include "basic_surf_objs.h"
-//#include "<QObject>"
 #include <vector>
 #include <math.h>
 #include <v3d_interface.h>
@@ -65,7 +64,7 @@ void typeset_children_marker(Tree tree, double settype) //sets children as -333,
         }
     }
 
-    v3d_msg("typeset_children_marker done!");
+    //v3d_msg("typeset_children_marker done!");
 
 }
 
@@ -128,7 +127,7 @@ NeuronTree typeset_marker(NeuronTree input, QList<ImageMarker> input1, double se
         if (check == 1)
         {
             tree.at(min_place)->type = -333;
-            v3d_msg("marker "+QString("%3").arg(j+1)+" set swc node "+QString("%4").arg(min_place+1)+" to "+QString("%6").arg(tree.at(min_place)->type));
+            //v3d_msg("marker "+QString("%3").arg(j+1)+" set swc node "+QString("%4").arg(min_place+1)+" to "+QString("%6").arg(tree.at(min_place)->type));
         }
         if (min >= window)
         {
@@ -139,7 +138,7 @@ NeuronTree typeset_marker(NeuronTree input, QList<ImageMarker> input1, double se
 
     typeset_children_marker(tree,settype);
 
-    v3d_msg("typeset_marker done.");
+    //v3d_msg("typeset_marker done.");
 
     for (V3DLONG i=0;i<tree.size();i++) // NEED THIS FOR LOOP EVENTUALLY
         {

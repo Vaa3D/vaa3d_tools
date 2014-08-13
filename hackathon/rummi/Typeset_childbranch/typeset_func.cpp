@@ -80,12 +80,12 @@ int typeset_swc_func(V3DPluginCallback2 &callback, double settype, QList<ImageMa
         QString fileDefaultName;
         if (file_count==0)
         {
-            FileSWCOpenName.chop(4);
+            //FileSWCOpenName.chop(4);
             fileDefaultName = FileSWCOpenName+QString("_%1_typeset.swc").arg(file_count);
         }
         if (file_count>0)
         {
-            FileSWCOpenName.chop(18);
+            FileSWCOpenName.chop(14);
             fileDefaultName = FileSWCOpenName+QString("_%1_typeset.swc").arg(file_count);
         }
         //write new SWC to file
@@ -123,24 +123,15 @@ void final_typeset_save()
     return;
 }
 
-void reload_SWC(V3DPluginCallback2 &callback)
+void reload_SWC(V3DPluginCallback2 &callback) //pushes most recent swc file onto image if image is open
 {
-    //v3dhandleList image_windows_open = callback.getImageWindowList();
-
-    //clear all traced neurons on image
-    //load last saved swc
-
     v3dhandle current_window = callback.currentImageWindow();
 
     NeuronTree nt = readSWC_file(last_save_name);
     callback.setSWC(current_window, nt);
 
-    //callback.setSWC(current_window, nt_shared);
     callback.updateImageWindow(current_window);
-
-    //callback.setListLabelSurf_Any3DViewer(current_)
-
-    v3d_msg("hopefully this worked");
+    //v3d_msg("reloaded");
 }
 
 QList<ImageMarker> get_markers(V3DPluginCallback2 &callback)
@@ -187,71 +178,71 @@ QList<ImageMarker> get_markers(V3DPluginCallback2 &callback)
 
 }
 
-bool typeset_swc(const V3DPluginArgList & input, V3DPluginArgList & output)
-{
-    cout<<"Welcome to typeset_swc"<<endl;
-    vector<char*>* inlist = (vector<char*>*)(input.at(0).p);
-    vector<char*>* outlist = NULL;
-    vector<char*>* paralist = NULL;
+//bool typeset_swc(const V3DPluginArgList & input, V3DPluginArgList & output)
+//{
+//    cout<<"Welcome to typeset_swc"<<endl;
+//    vector<char*>* inlist = (vector<char*>*)(input.at(0).p);
+//    vector<char*>* outlist = NULL;
+//    vector<char*>* paralist = NULL;
 
-    if(input.size() != 2)
-    {
-        printf("Please specify both input file and segment type.\n");
-        return false;
-    }
-    paralist = (vector<char*>*)(input.at(1).p);
-    if (paralist->size()!=1)
-    {
-        printf("Please specify only one parameter - the resampling step length.\n");
-        return false;
-    }
+//    if(input.size() != 2)
+//    {
+//        printf("Please specify both input file and segment type.\n");
+//        return false;
+//    }
+//    paralist = (vector<char*>*)(input.at(1).p);
+//    if (paralist->size()!=1)
+//    {
+//        printf("Please specify only one parameter - the resampling step length.\n");
+//        return false;
+//    }
 
-    QString FileSWCOpenName = QString(inlist->at(0));
-    QString FileMarkerOpenName;
-    QString fileSaveName;
+//    QString FileSWCOpenName = QString(inlist->at(0));
+//    QString FileMarkerOpenName;
+//    QString fileSaveName;
 
-    if (output.size()==0)
-    {
-        printf("No outputfile specified.\n");
-        fileSaveName = FileSWCOpenName + "_typeset.swc";
-    }
-    else if (output.size()==1)
-    {
-        outlist = (vector<char*>*)(output.at(0).p);
-        fileSaveName = QString(outlist->at(0));
-    }
-    else
-    {
-        printf("You have specified more than 1 output file.\n");
-        return false;
-    }
+//    if (output.size()==0)
+//    {
+//        printf("No outputfile specified.\n");
+//        fileSaveName = FileSWCOpenName + "_typeset.swc";
+//    }
+//    else if (output.size()==1)
+//    {
+//        outlist = (vector<char*>*)(output.at(0).p);
+//        fileSaveName = QString(outlist->at(0));
+//    }
+//    else
+//    {
+//        printf("You have specified more than 1 output file.\n");
+//        return false;
+//    }
 
-    NeuronTree nt;
-    QList<ImageMarker> tmp_list;
+//    NeuronTree nt;
+//    QList<ImageMarker> tmp_list;
 
-    if (FileSWCOpenName.toUpper().endsWith(".SWC") || FileSWCOpenName.toUpper().endsWith(".ESWC"))
-        nt = readSWC_file(FileSWCOpenName);
+//    if (FileSWCOpenName.toUpper().endsWith(".SWC") || FileSWCOpenName.toUpper().endsWith(".ESWC"))
+//        nt = readSWC_file(FileSWCOpenName);
 
-    double settype = 0;
+//    double settype = 0;
 
-    if (FileMarkerOpenName.toUpper().endsWith(".marker"))
-    {
-        bool ok;
-        tmp_list = readMarker_file(FileMarkerOpenName);
-        if (!ok)
-            return 0;
-    }
+//    if (FileMarkerOpenName.toUpper().endsWith(".marker"))
+//    {
+//        bool ok;
+//        tmp_list = readMarker_file(FileMarkerOpenName);
+//        if (!ok)
+//            return 0;
+//    }
 
-    NeuronTree result = typeset_marker(nt,tmp_list,settype);
+//    NeuronTree result = typeset_marker(nt,tmp_list,settype);
 
-    if (!export_list2file_v2(result.listNeuron, fileSaveName, FileSWCOpenName))
-    {
-        printf("fail to write the output swc file.\n");
-        return false;
-    }
+//    if (!export_list2file_v2(result.listNeuron, fileSaveName, FileSWCOpenName))
+//    {
+//        printf("fail to write the output swc file.\n");
+//        return false;
+//    }
 
-    return true;
-}
+//    return true;
+//}
 
 bool typeset_swc_toolbox(const V3DPluginArgList & input)
 {

@@ -51,7 +51,6 @@ public:
     v3dhandle curwin;
     V3dR_MainWindow *surface_win;
     View3DControl *view;
-    //static controlPanel *panel;
 
 
     QList <V3dR_MainWindow *> list_3dviewer;
