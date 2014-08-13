@@ -2836,7 +2836,9 @@ bool regiongrowing(V3DPluginCallback2 &callback, int c, double thresh,
         //regionMap.setData((unsigned char*)pRGCL, sx, sy, sz, 1, V3D_UINT8);
         outimg8 = (unsigned char*)pRGCL;
     }
-
+    //de-alloc
+    deleteIntImage3dPairMatlabProtocol(pRgnGrow->quantImg3d,pRgnGrow->quantImg1d);
+    deleteIntImage3dPairMatlabProtocol(pRgnGrow->PHCLABELSTACK3d,pRgnGrow->PHCLABELSTACK1d);
     deleteIntImage3dPairMatlabProtocol(pRgnGrow->PHCDONEIMG3d,pRgnGrow->PHCDONEIMG1d);
 
 //    v3dhandle newwin = callback.newImageWindow();
