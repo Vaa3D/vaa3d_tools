@@ -422,7 +422,7 @@ void rgnfindsub(int rowi,int colj, int depk, int direction,int stackinc, RgnGrow
     return;
 }
 
-bool regiongrowing(V3DPluginCallback2 &callback, int c, double thresh,
+bool regiongrowing(V3DPluginCallback2 &callback, int c, double thresh, double rad,
                    LandmarkList &cmList, vector<int> &volList,
                    unsigned char* &outimg8, unsigned short* &outimg16, float* &outimg32);
 //end cut
@@ -1238,16 +1238,6 @@ template <class T> bool identify_cells(V3DPluginCallback2 &callback, T* data1d, 
 
 //v3d_msg(QString("marks = %1, bgcount = %2. Marks all sorted").arg(marks).arg(BGList.count()));
 
-    cout<<"attempting regiongrow for object detection"<<endl;
-    //pulls region list from regiongrow plugin
-    LandmarkList regionList;
-    vector<int> regionVol;
-    //void* regionData = 0;
-    unsigned char* rgn8 = 0;
-    unsigned short* rgn16 = 0;
-    float* rgn32 = 0;
-    if (!regiongrowing(callback,c,thresh,regionList,regionVol,(unsigned char* &)rgn8,(unsigned short* &)rgn16,(float* &)rgn32)) return false;
-
     //recalibrates input marker list by mean shift
     LandmarkList CenteredList;
     LocationSimple tmpcent(0,0,0);
@@ -1335,6 +1325,15 @@ template <class T> bool identify_cells(V3DPluginCallback2 &callback, T* data1d, 
     double radStDev = sqrt(stR/marks);
     double PixStDev = sqrt(stP/marks);
 
+    cout<<"attempting regiongrow for object detection"<<endl;
+    //pulls region list from regiongrow plugin
+    LandmarkList regionList;
+    vector<int> regionVol;
+    //void* regionData = 0;
+    unsigned char* rgn8 = 0;
+    unsigned short* rgn16 = 0;
+    float* rgn32 = 0;
+    if (!regiongrowing(callback,c,thresh,radAve,regionList,regionVol,(unsigned char* &)rgn8,(unsigned short* &)rgn16,(float* &)rgn32)) return false;
 
 //v3d_msg(QString("markers have been scanned. Pixval %1 and stdev %2. radVal %3 and stdev %4. segVal %5 and stdev %6").arg(PixVal).arg(PixStDev).arg(radAve).arg(radStDev).arg(ValAve).arg(ValStDev));
 
@@ -2161,7 +2160,7 @@ bool open_testSWC(QString &fileOpenName, NeuronTree & openTree)
 }
 
 
-//below edited from movieConverter plugin
+//from movieConverter plugin
 QString getAppPath()
 {
     QDir testPluginsDir = QDir(qApp->applicationDirPath());
@@ -2187,9 +2186,8 @@ QString getAppPath()
 }
 
 
-//below taken from regiongrow plugin
-
-bool regiongrowing(V3DPluginCallback2 &callback, int c, double thresh,
+//from regiongrow plugin
+bool regiongrowing(V3DPluginCallback2 &callback, int c, double thresh, double rad,
                    LandmarkList &cmList, vector<int> &volList,
                    unsigned char* &outimg8, unsigned short* &outimg16, float* &outimg32)
 {
@@ -2202,7 +2200,8 @@ bool regiongrowing(V3DPluginCallback2 &callback, int c, double thresh,
     V3DLONG th_idx = 5;
     double threshold = thresh;
 
-    V3DLONG volsz = 100;
+    V3DLONG volsz = 50;
+    if (pow(rad,3.0)<50) volsz=pow(rad,3.0);
 
     //int start_t = clock(); // record time point
 
@@ -2917,7 +2916,7 @@ template <class T> bool segment_regions(unsigned char* data1d, V3DLONG *dimNum,
         //cout<<volcheck<<endl;
         //int pValcheck = data1d[zc*M*N+yc*N+xc];
         //if (volcheck==2 && volcheck2==1 && compute_ave_cell_val(regionData,dimNum,xc,yc,zc,c,radAve)==(0.9*(i+1))) volcheck=1;
-        if (vol3<0.8 || volcheck2>5) //if region is too small or too big, compare with input marker list to see if it is cell cluster or noise
+        if (vol3<1 || volcheck2>5) //if region is too small or too big, compare with input marker list to see if it is cell cluster or noise
         {
             rgn_cellcount.push_back(-5);
         }
@@ -3150,7 +3149,7 @@ template <class T> LandmarkList seg_by_mask (unsigned char* data1d, T* rgnData, 
         compute_cell_values_rad(data1d,dimNum,xm,ym,zm,c,thresh,outAve,outRad,outZRad);
         if (outZRad<=0) outZRad=outRad;
         else outZRad*=1.5;
-        if (maskData[zm*M*N+ym*N+xm]==0 && corrMax>0) {maxPos.x=xm;maxPos.y=ym;maxPos.z=zm; outputList.append(maxPos);} //update and append
+        if (maskData[zm*M*N+ym*N+xm]==0 && corrMax>0.3) {maxPos.x=xm;maxPos.y=ym;maxPos.z=zm; outputList.append(maxPos);} //update and append
         for (int x=xm-outRad; x<xm+outRad; x++)
         {
             for (int y=ym-outRad; y<ym+outRad; y++)
