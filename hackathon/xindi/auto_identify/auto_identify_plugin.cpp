@@ -1370,7 +1370,7 @@ template <class T> bool identify_cells(V3DPluginCallback2 &callback, T* data1d, 
     rad = radAve;
     val = PixVal;
 
-    cout<<"success, cell count "<<outputlist.count()<<endl<<endl;
+    cout<<"success, cell count "<<outputlist.count()<<" based on "<<marks<<" exemplar cells"<<endl<<endl;
     return true;
 }
 
@@ -1581,9 +1581,9 @@ template <class T> bool compute_cell_values_rad(T* data1d,
                 //cout<<"pixel iteration "<<runs<<endl;
                 //cout<<r<<" "<<theta<<" "<<phi<<endl<<endl;
                 x = xc+outputrad*cos(theta) +0.5;
-                if (x>N) x=N; if (x<0) x=0;
+                if (x>N-1) x=N-1; if (x<0) x=0;
                 y = yc+outputrad*sin(theta) +0.5;
-                if (y>M) y=M; if (y<0) y=0;
+                if (y>M-1) y=M-1; if (y<0) y=0;
                 int dataval = data1d[(c-1)*P*M*N+(V3DLONG)z*M*N+(V3DLONG)y*N+(V3DLONG)x];
                 datatotal += dataval;
                 //cout<<dataval<<" "<<datatotal<<endl;
@@ -1608,10 +1608,12 @@ template <class T> bool compute_cell_values_rad(T* data1d,
         do
         {
             maxDist+=0.5;
-            if (zc+maxDist>P) {maxDist=P-zc; break;}
+            if (zc+maxDist>P-1) {maxDist=P-zc-1; break;}
             zmax_C = zc+maxDist;
             zmax_V = data1d[(c-1)*P*M*N+(V3DLONG)zmax_C*M*N+(V3DLONG)yc*N+(V3DLONG)xc];
         } while ( zmax_V > threshold );
+        if (minDist<0) minDist=0;
+        if (maxDist<0) maxDist=0;
         //cout<<"z max "<<maxDist<<endl;
         outputZrad = (minDist+maxDist)/2;
         //cout<<"Z rad "<<outputZrad<<endl;
@@ -1630,11 +1632,11 @@ template <class T> bool compute_cell_values_rad(T* data1d,
                     //cout<<"pixel iteration "<<runs<<endl;
                     //cout<<r<<" "<<theta<<" "<<phi<<endl<<endl;
                     x = xc+outputrad*cos(theta)*sin(phi) +0.5;
-                    if (x>N) x=N; if (x<0) x=0;
+                    if (x>N-1) x=N-1; if (x<0) x=0;
                     y = yc+outputrad*sin(theta)*sin(phi) +0.5;
-                    if (y>M) y=M; if (y<0) y=0;
+                    if (y>M-1) y=M-1; if (y<0) y=0;
                     z = zc+outputrad*cos(phi) +0.5;
-                    if (z>P) z=P; if (z<0) z=0;
+                    if (z>P-1) z=P-1; if (z<0) z=0;
                     int dataval = data1d[(c-1)*P*M*N+(V3DLONG)z*M*N+(V3DLONG)y*N+(V3DLONG)x];
                     datatotal += dataval;
                     //cout<<dataval<<" "<<datatotal<<endl;
@@ -2864,6 +2866,7 @@ void regiongrow_filter()
 
 
 template <class T> bool segment_regions(unsigned char* data1d, V3DLONG *dimNum,
+
                                         LandmarkList inputList,
                                         LandmarkList &newList,
                                         LandmarkList regionList,
@@ -3146,6 +3149,7 @@ template <class T> LandmarkList seg_by_mask (unsigned char* data1d, T* rgnData, 
         double outAve,outRad,outZRad;
         compute_cell_values_rad(data1d,dimNum,xm,ym,zm,c,thresh,outAve,outRad,outZRad);
         if (outZRad<=0) outZRad=outRad;
+        else outZRad*=1.5;
         if (maskData[zm*M*N+ym*N+xm]==0 && corrMax>0) {maxPos.x=xm;maxPos.y=ym;maxPos.z=zm; outputList.append(maxPos);} //update and append
         for (int x=xm-outRad; x<xm+outRad; x++)
         {
