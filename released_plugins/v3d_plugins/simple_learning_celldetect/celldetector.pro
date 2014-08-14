@@ -12,5 +12,4 @@ SOURCES	+= $$VAA3DPATH/basic_c_fun/v3d_message.cpp
 SOURCES += $$VAA3DPATH/basic_c_fun/basic_surf_objs.cpp
 
 TARGET	= $$qtLibraryTarget(auto_identify)
-DESTDIR	= $$VAA3DPATH/../bin/plugins/auto_identify
-#DESTDIR = C:\Users\xindia\Downloads\vaa3d_bin_msvc_64bit_v2868\vaa3d_bin_msvc_64bit_v2868/plugins/auto_identify/
+DESTDIR	= $$VAA3DPATH/../bin/plugins/cell_counting/auto_identify
