@@ -441,13 +441,13 @@ int _zCut00 = view->zCut0();
 int _zCut11 = view->zCut1();
 
 //BoundingBox bb;
-
+/*
 //get bb
 bb =
 
 bb.z0;
 bb.z1;
-
+*/
 
 //float box_min = BoundingBox().z0;
 float box_min = BoundingBox().z0;
