@@ -3086,7 +3086,8 @@ template <class T> LandmarkList seg_by_mask (unsigned char* data1d, T* rgnData, 
                     double t = radAve*2+1;
                     int length = pow(t,2)*(radZ*2+1);
                     vector<int> scoop_template(length,0);
-                    int total_vol=0, template_diff=0, ind=-1;
+                    int total_vol=0, template_diff=0, ind=-1;                    
+                    double Ymean=0, Sy=0, PCC=0;
                     for (int x=i-radAve; x<=i+radAve; x++)
                     {
                         for (int y=j-radAve; y<=j+radAve; y++)
@@ -3105,7 +3106,6 @@ template <class T> LandmarkList seg_by_mask (unsigned char* data1d, T* rgnData, 
                     }
                     //cout<<"scoop_temp is go"<<endl;
                     //cout<<"Xmean "<<Xmean<<" and Sx "<<Sx<<endl;
-                    double Ymean=0, Sy=0, PCC=0;
                     for (int i=0; i<length; i++)
                     {
                         Ymean+=scoop_template[i];
