@@ -14,6 +14,11 @@
 #include "stackutil.h"
 #include <boost/lexical_cast.hpp>
 #include "../../../v3d_main/jba/c++/convert_type2uint8.h"
+#include "../istitch/y_imglib.h"
+
+
+#include "my_surf_objs.h"
+
 
 #define WANT_STREAM       // include iostream and iomanipulators
 #include "../../../v3d_main/jba/newmat11/newmatap.h"
@@ -32,6 +37,7 @@ void processImage_detect_soma(V3DPluginCallback2 &callback, QWidget *parent);
 bool processImage_adaptive_auto(const V3DPluginArgList & input, V3DPluginArgList & output,V3DPluginCallback2 &callback);
 bool processImage_adaptive_auto_blocks(const V3DPluginArgList & input, V3DPluginArgList & output,V3DPluginCallback2 &callback);
 bool processImage_adaptive_auto_blocks_indv(const V3DPluginArgList & input, V3DPluginArgList & output,V3DPluginCallback2 &callback);
+bool processImage_detect_soma(const V3DPluginArgList & input, V3DPluginArgList & output,V3DPluginCallback2 &callback);
 
 
 template <class T> void selectiveEnhancement(const T* data1d,
@@ -215,6 +221,10 @@ bool selectiveEnhancement::dofunc(const QString & func_name, const V3DPluginArgL
     else if (func_name == tr("adaptive_auto_block_indv"))
     {
         return processImage_adaptive_auto_blocks_indv(input, output,callback);
+    }
+    else if (func_name == tr("soma_detection"))
+    {
+        return processImage_detect_soma(input, output,callback);
     }
     else if (func_name == tr("help"))
     {
@@ -1956,6 +1966,153 @@ bool processImage_adaptive_auto_blocks_indv(const V3DPluginArgList & input, V3DP
     myfile.close();
 
     if (data1d) {delete []data1d; data1d=0;}
+    return true;
+}
+
+bool processImage_detect_soma(const V3DPluginArgList & input, V3DPluginArgList & output,V3DPluginCallback2 &callback)
+{
+
+    cout<<"Welcome to soma detection"<<endl;
+    vector<char*> * pinfiles = (input.size() >= 1) ? (vector<char*> *) input[0].p : 0;
+    vector<char*> * pparas = (input.size() >= 2) ? (vector<char*> *) input[1].p : 0;
+    vector<char*> infiles = (pinfiles != 0) ? * pinfiles : vector<char*>();
+    vector<char*> paras = (pparas != 0) ? * pparas : vector<char*>();
+
+    if(infiles.empty())
+    {
+        cerr<<"Need input image"<<endl;
+        return false;
+    }
+
+    QString  inimg_file =  infiles[0];
+    int k=0;
+
+    QString inmarker_file = paras.empty() ? "" : paras[k]; if(inmarker_file == "NULL") inmarker_file = ""; k++;
+    if(inmarker_file.isEmpty())
+    {
+        cerr<<"Need a marker file"<<endl;
+        return false;
+    }
+
+    QString tcfilename  =  paras.empty() ? "" : paras[k]; if(tcfilename == "NULL") tcfilename = "";
+    if(tcfilename.isEmpty())
+    {
+        cerr<<"Need a tc file"<<endl;
+        return false;
+    }
+
+
+    cout<<"inimg_file = "<<inimg_file.toStdString().c_str()<<endl;
+    cout<<"inmarker_file = "<<inmarker_file.toStdString().c_str()<<endl;
+    cout<<"tcfilename = "<<tcfilename.toStdString().c_str()<<endl;
+
+    vector<MyMarker> file_inmarkers;
+    file_inmarkers = readMarker_file(string(qPrintable(inmarker_file)));
+    int soma_x = file_inmarkers[0].x;
+    int soma_y = file_inmarkers[0].y;
+
+    Y_VIM<REAL, V3DLONG, indexed_t<V3DLONG, REAL>, LUT<V3DLONG> > vim;
+
+    if( !vim.y_load(tcfilename.toStdString()) )
+    {
+        printf("Wrong stitching configuration file to be load!\n");
+        return false;
+    }
+
+    unsigned char * data1d_enhanced = 0;
+    V3DLONG *sz_enhanced = 0;
+    int datatype_enhanced = 0;
+
+    QString curFilePath = QFileInfo(tcfilename).path();
+    curFilePath.append("/");
+    string fn;
+
+    V3DLONG index_tile = -1;
+    for(V3DLONG ii=0; ii<vim.number_tiles; ii++)
+    {
+        if(soma_x > vim.lut[ii].start_pos[0] && soma_y > vim.lut[ii].start_pos[1] && soma_x < vim.lut[ii].end_pos[0] && soma_y < vim.lut[ii].end_pos[1])
+        {
+            cout << "satisfied image: "<< vim.lut[ii].fn_img << endl;
+            fn = curFilePath.append( QString(vim.lut[ii].fn_img.c_str()) ).toStdString();
+
+            if (loadImage(const_cast<char *>(fn.c_str()), data1d_enhanced, sz_enhanced, datatype_enhanced)!=true)
+            {
+                fprintf (stderr, "Error happens in reading the subject file [%s]. Exit. \n",vim.tilesList.at(ii).fn_image.c_str());
+                return false;
+            }
+
+            index_tile = ii;
+            break;
+
+         }
+    }
+
+    unsigned char * data1d_original = 0;
+    int datatype;
+    V3DLONG in_zz[4];
+
+    if(!simple_loadimage_wrapper(callback,inimg_file.toStdString().c_str(), data1d_original, in_zz, datatype))
+    {
+        cerr<<"load image "<<inimg_file.toStdString().c_str()<<" error!"<<endl;
+        return false;
+    }
+
+    V3DLONG N = in_zz[0];
+    V3DLONG M = in_zz[1];
+    V3DLONG P = in_zz[2];
+
+    unsigned char * data1d_region = 0;
+    V3DLONG blockpagesz = (vim.lut[index_tile].end_pos[1] - vim.lut[index_tile].start_pos[1] + 1) * (vim.lut[index_tile].end_pos[0] - vim.lut[index_tile].start_pos[0] + 1) * P;
+    try {data1d_region = new unsigned char [blockpagesz];}
+    catch(...)  {v3d_msg("cannot allocate memory for data1d_region."); return false;}
+
+    V3DLONG i = 0;
+    for(V3DLONG iz = 0; iz < P; iz++)
+    {
+        V3DLONG offsetk = iz*M*N;
+        for(V3DLONG iy = vim.lut[index_tile].start_pos[1]; iy <= vim.lut[index_tile].end_pos[1]; iy++)
+        {
+            V3DLONG offsetj = iy*N;
+            for(V3DLONG ix = vim.lut[index_tile].start_pos[0]; ix <= vim.lut[index_tile].end_pos[0]; ix++)
+            {
+
+                data1d_region[i] = data1d_original[offsetk + offsetj + ix];
+                i++;
+            }
+        }
+    }
+
+    if(data1d_original) {delete  []data1d_original; data1d_original = 0;}
+
+    temp_raw = inimg_file + "_temp.v3draw";
+    temp_gf = inimg_file + "_gf.v3draw";
+    temp_gsdt = inimg_file + "_gsdt.v3draw";
+    temp_gsdt_v2 = inimg_file + "_gsdt_v2.v3draw";
+    temp_wogf = inimg_file + "_woGf.v3draw";
+
+
+    temp_soma = inimg_file + "_soma.v3draw";
+    temp_gsdtsoma  = inimg_file + "_gsdtsoma.v3draw";
+    temp_ds = inimg_file + "_ds.v3draw";
+    temp_gsdtds = inimg_file + "_gsdtds.v3draw";
+
+    unsigned char* Enhancement_soma = 0;
+    enhancementWithsoma(callback,(unsigned char *)data1d_region,(unsigned char*)data1d_enhanced,sz_enhanced,1,(unsigned char *&)Enhancement_soma);
+    simple_saveimage_wrapper(callback,fn.c_str(), (unsigned char *)Enhancement_soma, sz_enhanced, 1);
+
+    ImageMarker S;
+    QList <ImageMarker> marklist;
+    S.x = file_inmarkers[0].x - vim.lut[index_tile].start_pos[0] + 1;
+    S.y = file_inmarkers[0].y - vim.lut[index_tile].start_pos[1] + 1;
+    S.z = file_inmarkers[0].z;
+
+    marklist.append(S);
+    string markerpath = fn +(".marker");
+    writeMarker_file(markerpath.c_str(),marklist);
+
+    if(Enhancement_soma) {delete Enhancement_soma; Enhancement_soma = 0;}
+    if(data1d_region) {delete data1d_region; data1d_region = 0;}
+
     return true;
 }
 
