@@ -44,14 +44,42 @@ QStringList importSeriesFileList_addnumbersort(const QString & curFilePath)
     return myList;
 }
 
+QStringList importSWCFileList_addnumbersort(const QString & curFilePath)
+{
+    QStringList myList;
+    myList.clear();
+
+    // get the image files namelist in the directory
+    QStringList imgSuffix;
+    imgSuffix<<"*.swc"<<"*.eswc"<<"*.SWC"<<"*.ESWC";
+
+    QDir dir(curFilePath);
+    if (!dir.exists())
+    {
+        qWarning("Cannot find the directory");
+        return myList;
+    }
+
+    foreach (QString file, dir.entryList(imgSuffix, QDir::Files, QDir::Name))
+    {
+        myList += QFileInfo(dir, file).absoluteFilePath();
+    }
+
+    // print filenames
+    foreach (QString qs, myList)  qDebug() << qs;
+
+    return myList;
+}
+
 Q_EXPORT_PLUGIN2(eliminate_swc, eliminate_swc);
  
 QStringList eliminate_swc::menulist() const
 {
 	return QStringList() 
         <<tr("eliminate_swc")
-        <<tr("combine_swc_tc")
+        <<tr("combine_swc_group")
         <<tr("combine_swc_pair")
+        <<tr("align_swc")
         <<tr("prun_swc")
         <<tr("z_section to tiles")
         <<tr("generate qsub list")
@@ -68,7 +96,7 @@ QStringList eliminate_swc::funclist() const
 
 NeuronTree eliminate(NeuronTree input, double length);
 NeuronTree eliminate_overlap(NeuronTree target, NeuronTree subject, double length);
-void combineSWC_tc(V3DPluginCallback2 &callback, QWidget *parent);
+void combineSWC_group(V3DPluginCallback2 &callback, QWidget *parent);
 void combineSWC_pair(V3DPluginCallback2 &callback, QWidget *parent);
 void prunSWC(V3DPluginCallback2 &callback, QWidget *parent);
 void zsectionsTotiles(V3DPluginCallback2 &callback, QWidget *parent);
@@ -149,9 +177,9 @@ void eliminate_swc::domenu(const QString &menu_name, V3DPluginCallback2 &callbac
 
 
 	}
-    else if(menu_name == tr("combine_swc_tc"))
+    else if(menu_name == tr("combine_swc_group"))
     {
-         combineSWC_tc(callback, parent);
+         combineSWC_group(callback, parent);
     }
     else if(menu_name == tr("combine_swc_pair"))
     {
@@ -174,6 +202,145 @@ void eliminate_swc::domenu(const QString &menu_name, V3DPluginCallback2 &callbac
     else if(menu_name == tr("3D images to tiles"))
     {
         threeDimageTotiles(callback,parent);
+    }
+    else if(menu_name == tr("align_swc"))
+    {
+        QString m_InputfolderName = QFileDialog::getExistingDirectory(parent, QObject::tr("Choose the directory including all swc files "),
+                                              QDir::currentPath(),
+                                              QFileDialog::ShowDirsOnly);
+
+        QStringList swcList = importSWCFileList_addnumbersort(m_InputfolderName);
+
+        double xoriginal = 5491;
+        double yoriginal = 4004;
+        double a11, a12, a21,a22,xshift,yshift;
+
+        for(int i = 0; i < swcList.size(); i++)
+        {
+            QString fileOpenName = swcList.at(i);
+            NeuronTree nt = readSWC_file(fileOpenName);
+
+            switch (i)
+            {
+            case 0: a11 = 0.9999952915847761; a12 = 0.0030686818471570704; a21 = -0.0030686818471570704; a22 = 0.9999952915847761; xshift = 6578.724150979881 - xoriginal,yshift = 5362.7962652663955 - yoriginal; break;
+            case 1: a11 = 0.9790086109325223; a12 = 0.20381888950726068; a21 = -0.20381888950726068; a22 = 0.9790086109325223; xshift = 6309.3258765566325 - xoriginal,yshift = 4675.223343270161- yoriginal; break;
+            case 2: a11 = 0.9649529336213126; a12 = 0.003885379629013957; a21 = -0.09399915877564446; a22 = 1.109311066828655; xshift = 4451.467218976793 - xoriginal,yshift = 3804.754954241117- yoriginal; break;
+
+            case 3: a11 = 0.9859499304449573; a12 = 0.04889885789093282; a21 = -0.04889885789093282; a22 = 0.9859499304449573; xshift = 3718.445925741472 - xoriginal,yshift = 3279.9928877437733 - yoriginal; break;
+            case 4: a11 = 1; a12 = 0; a21 = 0; a22 = 1; xshift = 0; yshift = 0; break;
+            case 5: a11 = 0.9724946496210681; a12 = -0.026761134311933332; a21 = 0.026761134311933332; a22 = 0.9724946496210681; xshift = 4193.867823188051 - xoriginal,yshift = 3977.3267690186876- yoriginal; break;
+
+            case 6: a11 = 0.8814191692822646; a12 = 0.1811983087815262; a21 = -0.1811983087815262; a22 = 0.8814191692822646; xshift = 5344.504252853956 - xoriginal,yshift = 2992.4001083908097 - yoriginal; break;
+            case 7: a11 = 0.8628208649528964; a12 = 0.2021634804999314; a21 = -0.2021634804999314; a22 = 0.8628208649528964; xshift = 5070.6793466577665 - xoriginal,yshift = 1937.7105765264987- yoriginal; break;
+            case 8: a11 = 0.976153679914872; a12 = 0.026526366354767836; a21 = -0.026526366354767836; a22 = 0.976153679914872; xshift = 4103.317414401224 - xoriginal,yshift = 2894.090843709928- yoriginal; break;
+
+            case 9: a11 = 0.9967365324737809; a12 = 0.1106109044593533; a21 = -0.1106109044593533; a22 = 0.9967365324737809; xshift = 4248.728949552501 - xoriginal,yshift = 835.6503035816423 - yoriginal; break;
+            case 10: a11 = 0.9832831621170044; a12 = 0.17077744007110596; a21 = -0.17077744007110596; a22 = 0.9832831621170044; xshift = 4687.046610951424 - xoriginal,yshift = 702.4094506502151- yoriginal; break;
+
+            }
+
+            NeuronTree nt_aligned;
+            if(i !=4)
+            {
+                QList <NeuronSWC> listNeuron;
+                QHash <int, int>  hashNeuron;
+                listNeuron.clear();
+                hashNeuron.clear();
+
+                QList<NeuronSWC> list = nt.listNeuron;
+                NeuronSWC S;
+                for (int i=0;i<list.size();i++)
+                {
+                    NeuronSWC curr = list.at(i);
+                    float x_old = curr.x;
+                    float y_old = curr.y;
+                    S.x = x_old*a11 + y_old*a21 + xshift;
+                    S.y = x_old*a12 + y_old*a22 + yshift;
+                    S.z = curr.z;
+                    S.n 	= curr.n;
+                    S.type 	= curr.type;
+                    S.r 	= curr.r;
+                    S.pn 	= curr.pn;
+                    listNeuron.append(S);
+                    hashNeuron.insert(S.n, listNeuron.size()-1);
+                }
+
+                nt_aligned.n = -1;
+                nt_aligned.on = true;
+                nt_aligned.listNeuron = listNeuron;
+                nt_aligned.hashNeuron = hashNeuron;
+            }
+            else
+            {
+                nt_aligned = nt;
+            }
+
+
+            float min = 2000000;
+            float max = -2000000;
+            float offsecZ;
+            switch (i)
+            {
+                case 0: offsecZ = -1144; break;
+                case 1: offsecZ = -858; break;
+                case 2: offsecZ = -572; break;
+                case 3: offsecZ = -286; break;
+                case 4: offsecZ = 0; break;
+                case 5: offsecZ = 286; break;
+                case 6: offsecZ = 572; break;
+                case 7: offsecZ = 858; break;
+                case 8: offsecZ = 1144; break;
+                case 9: offsecZ = 1430; break;
+                case 10: offsecZ = 1686; break;
+
+            }
+
+
+            NeuronTree nt_norm;
+            QList <NeuronSWC> listNeuron;
+            QHash <int, int>  hashNeuron;
+            listNeuron.clear();
+            hashNeuron.clear();
+
+            QList<NeuronSWC> list = nt_aligned.listNeuron;
+
+            for (int i=0;i<list.size();i++)
+            {
+                NeuronSWC curr = list.at(i);
+                if(curr.z > max ) max = curr.z;
+                if(curr.z < min ) min = curr.z;
+            }
+
+            NeuronSWC S;
+            for (int i=0;i<list.size();i++)
+            {
+                NeuronSWC curr = list.at(i);
+                S.x = curr.x;
+                S.y = curr.y;
+                S.z = offsecZ + (285 * (curr.z - min) /(max - min));
+                S.n 	= curr.n;
+                S.type 	= curr.type;
+                S.r 	= curr.r;
+                S.pn 	= curr.pn;
+                listNeuron.append(S);
+                hashNeuron.insert(S.n, listNeuron.size()-1);
+            }
+
+
+            nt_norm.n = -1;
+            nt_norm.on = true;
+            nt_norm.listNeuron = listNeuron;
+            nt_norm.hashNeuron = hashNeuron;
+
+            //write new SWC to file
+            QString fileSaveName =  fileOpenName+QString("_aligned.swc");
+
+            if (!export_list2file(nt_norm.listNeuron,fileSaveName,fileOpenName))
+            {
+                v3d_msg("fail to write the output swc file.");
+                return;
+            }
+        }
     }
     else
 	{
@@ -321,74 +488,31 @@ void extend_path(Segment * seg)
     *seg = seg_r;
 }
 
-void combineSWC_tc(V3DPluginCallback2 &callback, QWidget *parent)
+void combineSWC_group(V3DPluginCallback2 &callback, QWidget *parent)
 {
 
-    QString foldername = QFileDialog::getExistingDirectory(parent, "Open Directory",
-                                      QDir::currentPath(),
-                                      QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks);
+    QString m_InputfolderName = QFileDialog::getExistingDirectory(parent, QObject::tr("Choose the directory including all swc files "),
+                                          QDir::currentPath(),
+                                          QFileDialog::ShowDirsOnly);
 
-    QDir myDir(foldername);
-    QStringList list = myDir.entryList(QStringList("*.tc"));
+    QStringList swcList = importSWCFileList_addnumbersort(m_InputfolderName);
 
-    if(list.size()!=1)
-    {
-        printf("Must have only one stitching configuration file!\n");
-        return;
-    }
-
-    // load config
-    Y_VIM<REAL, V3DLONG, indexed_t<V3DLONG, REAL>, LUT<V3DLONG> > vim;
-
-    QString tcfile = QString(foldername).append("/").append(list.at(0));
-
-    if( !vim.y_load(tcfile.toStdString()) )
-    {
-        printf("Wrong stitching configuration file to be load!\n");
-        return;
-    }
 
     vector<MyMarker*> outswc;
-    for(V3DLONG ii=0; ii<vim.number_tiles; ii++)
+    for(int i = 0; i < swcList.size(); i++)
     {
-        try
-        {
-        QString curPath = QFileInfo(tcfile).path();;
-        QString curPathSWC = curPath.append("/").append(QString(vim.lut[ii].fn_img.c_str())).append("_neutube.swc");
 
-        V3DLONG jx_s, jy_s, jz_s, jx_e, jy_e, jz_e;
-        jx_s = vim.lut[ii].start_pos[0];
-        jy_s = vim.lut[ii].start_pos[1];
-        jz_s = vim.lut[ii].start_pos[2];
-
-        jx_e = vim.lut[ii].end_pos[0];
-        jy_e = vim.lut[ii].end_pos[1];
-        jz_e = vim.lut[ii].end_pos[2];
+        QString curPathSWC = swcList.at(i);
         vector<MyMarker*> inputswc = readSWC_file(curPathSWC.toStdString());;
 
         for(V3DLONG d = 0; d < inputswc.size(); d++)
         {
-            inputswc[d]->x =  inputswc[d]->x + jx_s;
-            inputswc[d]->y =  inputswc[d]->y + jy_s;
-
             outswc.push_back(inputswc[d]);
         }
-        }
-        catch (...)
-        {
-
-        };
-
-
-       // break;
 
     }
-    saveSWC_file("/opt/zhi/Desktop/test.swc", outswc);
-
-
-
-
-
+    QString swc_combined = m_InputfolderName + "/combined.swc";
+    saveSWC_file(swc_combined.toStdString().c_str(), outswc);
 }
 
 void combineSWC_pair(V3DPluginCallback2 &callback, QWidget *parent)
