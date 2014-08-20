@@ -211,8 +211,8 @@ void eliminate_swc::domenu(const QString &menu_name, V3DPluginCallback2 &callbac
 
         QStringList swcList = importSWCFileList_addnumbersort(m_InputfolderName);
 
-        double xoriginal = 5491;
-        double yoriginal = 4004;
+        double xoriginal = 0;
+        double yoriginal = 0;
         double a11, a12, a21,a22,xshift,yshift;
 
         for(int i = 0; i < swcList.size(); i++)
@@ -222,59 +222,56 @@ void eliminate_swc::domenu(const QString &menu_name, V3DPluginCallback2 &callbac
 
             switch (i)
             {
-            case 0: a11 = 0.9999952915847761; a12 = 0.0030686818471570704; a21 = -0.0030686818471570704; a22 = 0.9999952915847761; xshift = 6578.724150979881 - xoriginal,yshift = 5362.7962652663955 - yoriginal; break;
-            case 1: a11 = 0.9790086109325223; a12 = 0.20381888950726068; a21 = -0.20381888950726068; a22 = 0.9790086109325223; xshift = 6309.3258765566325 - xoriginal,yshift = 4675.223343270161- yoriginal; break;
-            case 2: a11 = 0.9649529336213126; a12 = 0.003885379629013957; a21 = -0.09399915877564446; a22 = 1.109311066828655; xshift = 4451.467218976793 - xoriginal,yshift = 3804.754954241117- yoriginal; break;
+            case 0: a11 = 1; a12 = 0; a21 = 0; a22 = 1; xshift = 2238 - xoriginal,yshift = 1226 - yoriginal; break;
+            case 1: a11 = 0.9969223686848976; a12 = -0.07839509433435808; a21 = 0.07839509433435808; a22 = 0.9969223686848976; xshift = -511.4940779028416 - xoriginal,yshift = 241.60709307748505- yoriginal; break;
+            case 2: a11 = 0.9992834654465653; a12 = 0.03784911736232148; a21 = -0.03784911736232148; a22 = 0.9992834654465653; xshift = 3625.9847459171847 - xoriginal,yshift = 1801.3516938690236- yoriginal; break;
 
-            case 3: a11 = 0.9859499304449573; a12 = 0.04889885789093282; a21 = -0.04889885789093282; a22 = 0.9859499304449573; xshift = 3718.445925741472 - xoriginal,yshift = 3279.9928877437733 - yoriginal; break;
-            case 4: a11 = 1; a12 = 0; a21 = 0; a22 = 1; xshift = 0; yshift = 0; break;
-            case 5: a11 = 0.9724946496210681; a12 = -0.026761134311933332; a21 = 0.026761134311933332; a22 = 0.9724946496210681; xshift = 4193.867823188051 - xoriginal,yshift = 3977.3267690186876- yoriginal; break;
+            case 3: a11 = 1; a12 = 0; a21 = 0; a22 = 1; xshift = 3712 - xoriginal,yshift = 1184 - yoriginal; break;
+            case 4: a11 = 1; a12 = 0; a21 = 0; a22 = 1; xshift = 3917; yshift = 692; break;
 
-            case 6: a11 = 0.8814191692822646; a12 = 0.1811983087815262; a21 = -0.1811983087815262; a22 = 0.8814191692822646; xshift = 5344.504252853956 - xoriginal,yshift = 2992.4001083908097 - yoriginal; break;
-            case 7: a11 = 0.8628208649528964; a12 = 0.2021634804999314; a21 = -0.2021634804999314; a22 = 0.8628208649528964; xshift = 5070.6793466577665 - xoriginal,yshift = 1937.7105765264987- yoriginal; break;
-            case 8: a11 = 0.976153679914872; a12 = 0.026526366354767836; a21 = -0.026526366354767836; a22 = 0.976153679914872; xshift = 4103.317414401224 - xoriginal,yshift = 2894.090843709928- yoriginal; break;
+            case 5: a11 = 0.9997030084369902; a12 = 0.024369959417943652; a21 = -0.024369959417943652; a22 = 0.9997030084369902; xshift = 8011.313822690522; yshift = 998.8719300918069; break;
+            case 6: a11 = 1; a12 = 0; a21 = 0; a22 = 1; xshift = 13612 - xoriginal,yshift = 2084 - yoriginal; break;
+            case 7: a11 = 1; a12 = 0; a21 = 0; a22 = 1; xshift = 8916 - xoriginal,yshift = 1025 - yoriginal; break;
+            case 8: a11 = 1; a12 = 0; a21 = 0; a22 = 1; xshift = 12708 - xoriginal,yshift = 162 - yoriginal; break;
+            case 9: a11 = 1; a12 = 0; a21 = 0; a22 = 1; xshift = 13638 - xoriginal,yshift = 162 - yoriginal; break;
 
-            case 9: a11 = 0.9967365324737809; a12 = 0.1106109044593533; a21 = -0.1106109044593533; a22 = 0.9967365324737809; xshift = 4248.728949552501 - xoriginal,yshift = 835.6503035816423 - yoriginal; break;
-            case 10: a11 = 0.9832831621170044; a12 = 0.17077744007110596; a21 = -0.17077744007110596; a22 = 0.9832831621170044; xshift = 4687.046610951424 - xoriginal,yshift = 702.4094506502151- yoriginal; break;
+            case 10: a11 = 0.999966760546087; a12 = -0.00815339211405012; a21 = 0.00815339211405012; a22 = 0.999966760546087; xshift = 3473.58427039758; yshift = 3087.6355858839374; break;
+            case 11: a11 = 1; a12 = 0; a21 = 0; a22 = 1; xshift = 8386 - xoriginal,yshift = 2229 - yoriginal; break;
+
+            case 12: a11 = 1; a12 = 0; a21 = 0; a22 = 1; xshift = 11752; yshift = 2048; break;
+            case 13: a11 = 1; a12 = 0; a21 = 0; a22 = 1; xshift = 1086 - xoriginal,yshift = 912 - yoriginal; break;
 
             }
 
             NeuronTree nt_aligned;
-            if(i !=4)
-            {
-                QList <NeuronSWC> listNeuron;
-                QHash <int, int>  hashNeuron;
-                listNeuron.clear();
-                hashNeuron.clear();
 
-                QList<NeuronSWC> list = nt.listNeuron;
-                NeuronSWC S;
-                for (int i=0;i<list.size();i++)
-                {
-                    NeuronSWC curr = list.at(i);
-                    float x_old = curr.x;
-                    float y_old = curr.y;
-                    S.x = x_old*a11 + y_old*a21 + xshift;
-                    S.y = x_old*a12 + y_old*a22 + yshift;
-                    S.z = curr.z;
-                    S.n 	= curr.n;
-                    S.type 	= curr.type;
-                    S.r 	= curr.r;
-                    S.pn 	= curr.pn;
-                    listNeuron.append(S);
-                    hashNeuron.insert(S.n, listNeuron.size()-1);
-                }
+            QList <NeuronSWC> listNeuron;
+            QHash <int, int>  hashNeuron;
+            listNeuron.clear();
+            hashNeuron.clear();
 
-                nt_aligned.n = -1;
-                nt_aligned.on = true;
-                nt_aligned.listNeuron = listNeuron;
-                nt_aligned.hashNeuron = hashNeuron;
-            }
-            else
+            QList<NeuronSWC> list = nt.listNeuron;
+            NeuronSWC S;
+            for (int i=0;i<list.size();i++)
             {
-                nt_aligned = nt;
+                NeuronSWC curr = list.at(i);
+                float x_old = curr.x;
+                float y_old = curr.y;
+                S.x = x_old*a11 + y_old*a21 + xshift;
+                S.y = x_old*a12 + y_old*a22 + yshift;
+                S.z = curr.z;
+                S.n 	= curr.n;
+                S.type 	= curr.type;
+                S.r 	= curr.r;
+                S.pn 	= curr.pn;
+                listNeuron.append(S);
+                hashNeuron.insert(S.n, listNeuron.size()-1);
             }
 
+            nt_aligned.n = -1;
+            nt_aligned.on = true;
+            nt_aligned.listNeuron = listNeuron;
+            nt_aligned.hashNeuron = hashNeuron;
 
             float min = 2000000;
             float max = -2000000;
@@ -283,26 +280,27 @@ void eliminate_swc::domenu(const QString &menu_name, V3DPluginCallback2 &callbac
             {
                 case 0: offsecZ = -1144; break;
                 case 1: offsecZ = -858; break;
-                case 2: offsecZ = -572; break;
-                case 3: offsecZ = -286; break;
-                case 4: offsecZ = 0; break;
-                case 5: offsecZ = 286; break;
+                case 2: offsecZ = -286; break;
+                case 3: offsecZ = 0; break;
+                case 4: offsecZ = 286; break;
+                case 5: offsecZ = 572; break;
                 case 6: offsecZ = 572; break;
-                case 7: offsecZ = 858; break;
-                case 8: offsecZ = 1144; break;
-                case 9: offsecZ = 1430; break;
-                case 10: offsecZ = 1686; break;
+                case 7: offsecZ = 572; break;
+                case 8: offsecZ = 572; break;
+                case 9: offsecZ = 572; break;
+                case 10: offsecZ = 858; break;
+                case 11: offsecZ = 858; break;
+                case 12: offsecZ = 858; break;
+                case 13: offsecZ = 1144; break;
 
             }
 
 
             NeuronTree nt_norm;
-            QList <NeuronSWC> listNeuron;
-            QHash <int, int>  hashNeuron;
             listNeuron.clear();
             hashNeuron.clear();
 
-            QList<NeuronSWC> list = nt_aligned.listNeuron;
+            list = nt_aligned.listNeuron;
 
             for (int i=0;i<list.size();i++)
             {
@@ -311,7 +309,7 @@ void eliminate_swc::domenu(const QString &menu_name, V3DPluginCallback2 &callbac
                 if(curr.z < min ) min = curr.z;
             }
 
-            NeuronSWC S;
+           // NeuronSWC S;
             for (int i=0;i<list.size();i++)
             {
                 NeuronSWC curr = list.at(i);
