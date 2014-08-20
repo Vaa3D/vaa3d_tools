@@ -245,7 +245,17 @@ bool selectiveEnhancement::dofunc(const QString & func_name, const V3DPluginArgL
         cout<<"ratio       the window size calibration ratio, default 1"<<endl;
         cout<<"soma        soma detection, 1: detect, 0: not detect, default 0"<<endl;
         cout<<endl;
-        cout<<endl;;
+        cout<<endl;
+
+        cout<<"Usage : v3d -x dllname -f soma_detection -i <inimg_file> -p <marker_file> <tc_file>" <<endl;
+        cout<<endl;
+        cout<<"inimg_file  the original 3D image"<<endl;
+        cout<<"marker_file the marker file indicates the soma location in the original 3D image"<<endl;
+        cout<<"tc_file     the tc file includes all enhanced 3D tiles"<<endl;
+        cout<<"output      it will automatically generate the enhance 3D tile with soma detection, and the marker file which indicates the soma location in this tile."<<endl;
+        cout<<endl;
+        cout<<endl;
+
     }
     else return false;
 
