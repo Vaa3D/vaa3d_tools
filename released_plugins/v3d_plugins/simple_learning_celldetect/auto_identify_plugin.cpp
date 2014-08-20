@@ -1088,7 +1088,7 @@ template <class T> bool identify_cells(V3DPluginCallback2 &callback, T* data1d, 
         {
             tmpLocation = mlist.at(i);
             tmpLocation.getCoord(xc,yc,zc);
-            pix = pixelVal(data1d,dimNum,xc,yc,zc,c);
+            pix=data1d[(c-1)*P*M*N+(zc-1)*M*N+(yc-1)*N+(xc-1)];
             //cout<<"value "<<pix<<" at coords "<<xc<<" "<<yc<<" "<<zc<<endl;
             //if (pix<0 || pix>255) {v3d_msg("pix is wrong"); return false;}
             //      v3d_msg(QString("pix value %1 %2").arg(pix).arg(pix1));
