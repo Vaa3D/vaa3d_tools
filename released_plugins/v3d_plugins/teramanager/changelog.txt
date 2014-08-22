@@ -11,6 +11,15 @@ ties names are:
 - Rem: a feature no longer available
 
 ============================================================================================
+Version 0.9.997
+August 22th, 2014
+--------------------------------------------------------------------------------------------
+- Dev: added diff APO saving code into "diff APO" function in order to save false positives
+       false negatives in a .apo file after proofreading.      
+- Dev: updated ImageManager module.
+--------------------------------------------------------------------------------------------
+
+
 Version 0.9.996
 July 31st, 2014
 --------------------------------------------------------------------------------------------

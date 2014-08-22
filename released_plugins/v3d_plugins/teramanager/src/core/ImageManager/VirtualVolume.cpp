@@ -433,6 +433,7 @@ void VirtualVolume::saveImage_from_UINT8_to_Vaa3DRaw (int slice, std::string img
  //       sprintf(buffer,"in saveImage_from_UINT8(..., img_depth=%d, ...): unsupported bit depth for multi-channel images\n",img_depth);
  //       throw MyException(buffer);
  //   }
+
 	if(img_depth != 8 && img_depth != 16 && n_chans == 1)
 	{
 		sprintf(buffer,"in saveImage_from_UINT8(..., img_depth=%d, ...): unsupported bit depth\n",img_depth);
@@ -565,7 +566,6 @@ void VirtualVolume::saveImage_from_UINT8_to_Tiff3D (int slice, std::string img_p
 
 	char *err_tiff_fmt;
 	if ( (err_tiff_fmt = appendSlice2Tiff3DFile(buffer,slice,(unsigned char *)imageData,(int)img_height,(int)img_width)) != 0 ) {
-	//if ( (err_rawfmt = writeSlice2RawFile (buffer,slice,(unsigned char *)imageData,(int)img_height,(int)img_width)) != 0 ) {
 		char err_msg[STATIC_STRINGS_SIZE];
 		sprintf(err_msg,"VirtualVolume::saveImage_from_UINT8_to_Tiff3D: error in saving slice %d (%lld x %lld) in file %s (appendSlice2Tiff3DFile: %s)", slice,img_height,img_width,buffer,err_tiff_fmt);
         throw IOException(err_msg);

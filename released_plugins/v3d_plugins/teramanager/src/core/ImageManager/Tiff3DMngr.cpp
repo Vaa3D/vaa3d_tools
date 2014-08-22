@@ -114,6 +114,11 @@ char *initTiff3DFile ( char *filename, unsigned int sz0, unsigned int sz1, unsig
 	uint16 Npages = sz2;
 	uint16 spp    = sz3;
 
+	uint16 bpp=8 * datatype;
+	unsigned char *fakeData=new unsigned char[XSIZE * YSIZE];
+	
+	int check;
+
 	if ( sz3 == 1 )
 		spp = sz3; 
 	else if ( sz3 < 4 )
@@ -127,27 +132,74 @@ char *initTiff3DFile ( char *filename, unsigned int sz0, unsigned int sz1, unsig
 	strcat(completeFilename,TIFF3D_SUFFIX);
 
 	TIFF *output;
-	output=TIFFOpen(completeFilename,"w");
-	uint16 bpp=8 * datatype;
-	unsigned char *fakeData=new unsigned char[XSIZE * YSIZE];
-	
+	output = TIFFOpen(completeFilename,"w");
+	if (!output) {
+		return ((char *) "Cannot open the file.");
+    }
 
-	TIFFSetField(output, TIFFTAG_IMAGEWIDTH, XSIZE);
-	TIFFSetField(output, TIFFTAG_IMAGELENGTH, YSIZE);
-	TIFFSetField(output, TIFFTAG_BITSPERSAMPLE, bpp); 
-	TIFFSetField(output, TIFFTAG_SAMPLESPERPIXEL, spp);
-	TIFFSetField(output, TIFFTAG_ROWSPERSTRIP, YSIZE); // one page per strip
-	TIFFSetField(output, TIFFTAG_COMPRESSION, COMPRESSION_LZW);
-	TIFFSetField(output, TIFFTAG_PLANARCONFIG,PLANARCONFIG_CONTIG);
-	TIFFSetField(output, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_MINISBLACK);	
+	check = TIFFSetField(output, TIFFTAG_IMAGEWIDTH, XSIZE);
+	if (!check) {
+		return ((char *) "Cannot set the image width.");
+    }
+
+	check = TIFFSetField(output, TIFFTAG_IMAGELENGTH, YSIZE);
+	if (!check) {
+		return ((char *) "Cannot set the image width.");
+    }
+
+	check = TIFFSetField(output, TIFFTAG_BITSPERSAMPLE, bpp); 
+	if (!check) {
+		return ((char *) "Cannot set the image width.");
+    }
+
+	check = TIFFSetField(output, TIFFTAG_SAMPLESPERPIXEL, spp);
+	if (!check) {
+		return ((char *) "Cannot set the image width.");
+    }
+
+	check = TIFFSetField(output, TIFFTAG_ROWSPERSTRIP, YSIZE); // one page per strip
+	if (!check) {
+		return ((char *) "Cannot set the image height.");
+    }
+
+	check = TIFFSetField(output, TIFFTAG_COMPRESSION, COMPRESSION_LZW);
+	if (!check) {
+		return ((char *) "Cannot set the compression tag.");
+    }
+
+	check = TIFFSetField(output, TIFFTAG_PLANARCONFIG,PLANARCONFIG_CONTIG);
+	if (!check) {
+		return ((char *) "Cannot set the planarconfig tag.");
+    }
+
+	check = TIFFSetField(output, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_MINISBLACK);	
+	if (!check) {
+		return ((char *) "Cannot set the photometric tag.");
+    }
+
 	/* We are writing single page of the multipage file */
-	TIFFSetField(output, TIFFTAG_SUBFILETYPE, FILETYPE_PAGE);
-	TIFFSetField(output, TIFFTAG_PAGENUMBER, 0, Npages); 
+	check = TIFFSetField(output, TIFFTAG_SUBFILETYPE, FILETYPE_PAGE);
+	if (!check) {
+		return ((char *) "Cannot set the subfiletype tag.");
+    }
 
-	TIFFWriteEncodedStrip(output, 0, fakeData, XSIZE * YSIZE);
+	check = TIFFSetField(output, TIFFTAG_PAGENUMBER, 0, Npages); 
+	if (!check) {
+		return ((char *) "Cannot set the page number.");
+    }
+
+
+	check = TIFFWriteEncodedStrip(output, 0, fakeData, XSIZE * YSIZE);
+	if (!check) {
+		return ((char *) "Cannot write encoded strip to file.");
+    }
+
 	delete[] fakeData;
 
-	TIFFWriteDirectory(output);
+	check = TIFFWriteDirectory(output);
+	if (!check) {
+		return ((char *) "Cannot write a new directory.");
+    }
 
 	TIFFClose(output);
 

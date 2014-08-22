@@ -549,12 +549,13 @@ void TiledVolume::init()
         throw IOException(msg);
 	}
 
+	// GI_140628: this adjustment should not be performed by the converter since it operates on volumes already adjusted
 	//some little adjustments of the origin
-	if(VXL_V < 0)
-		ORG_V -= (BLOCKS[0][0]->getHEIGHT()-1)* VXL_V/1000.0f;
+	//if(VXL_V < 0)
+	//	ORG_V -= (BLOCKS[0][0]->getHEIGHT()-1)* VXL_V/1000.0f;
 
-	if(VXL_H < 0)
-		ORG_H -= (BLOCKS[0][0]->getWIDTH() -1)* VXL_H/1000.0f;
+	//if(VXL_H < 0)
+	//	ORG_H -= (BLOCKS[0][0]->getWIDTH() -1)* VXL_H/1000.0f;
 
 	/******************** 3) COMPUTING VOLUME DIMENSIONS ********************  
 	*************************************************************************/

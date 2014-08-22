@@ -285,7 +285,8 @@ class teramanager::CAnnotations
                             std::string apo2Path,   // second apo file path
                             int x0=0, int x1=-1,    // VOI [x0, x1) in the global reference sys
                             int y0=0, int y1=-1,    // VOI [y0, y1) in the global reference sys
-                            int z0=0, int z1=-1)    // VOI [z0, z1) in the global reference sys
+                            int z0=0, int z1=-1,    // VOI [z0, z1) in the global reference sys
+                            std::string diffPath="")// path where the difference apo file (containing only FPs and FNs) has to be stored (optional)
         throw (itm::RuntimeException);
 
 

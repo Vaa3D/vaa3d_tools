@@ -1282,7 +1282,8 @@ void CAnnotations::diffAPO( std::string apo1Path,               // first apo fil
                             std::string apo2Path,               // second apo file path
                             int x0 /*=0*/, int x1 /*=-1*/,      // VOI [x0, x1) in the global reference sys
                             int y0 /*=0*/, int y1 /*=-1*/,      // VOI [y0, y1) in the global reference sys
-                            int z0 /*=0*/, int z1 /*=-1*/)      // VOI [z0, z1) in the global reference sys
+                            int z0 /*=0*/, int z1 /*=-1*/,      // VOI [z0, z1) in the global reference sys
+                            std::string diffPath)               // path where the difference apo file (containing only FPs and FNs) has to be stored (optional)
 throw (itm::RuntimeException)
 {
     /**/itm::debug(itm::LEV1, strprintf("apo1Path = \"%s\", apo2Path = \"%s\", x0 = %d, x1 =%d, y0 = %d, y1 = %d, z0 = %d, z1 = %d",
@@ -1338,21 +1339,55 @@ throw (itm::RuntimeException)
         }
     }
 
-    // count false positives, true positives, and false negatives
+    // count false positives, true positives, and false negatives    
+    QList<CellAPO> diff_cells;
     itm::uint64 FPs = 0;
     itm::uint64 TPs = 0;
     itm::uint64 FNs = 0;
     for(int i=0; i<ano2.size(); i++)
         if( static_cast<CAnnotations::Octree::octant*>(ano2[i]->container)->annotations.size() == 1)
+        {
+            CellAPO cell;
+            cell.n = ano2[i]->ID;
+            cell.name = ano2[i]->name.c_str();
+            cell.comment = ano2[i]->comment.c_str();
+            cell.x = ano2[i]->x;
+            cell.y = ano2[i]->y;
+            cell.z = ano2[i]->z;
+            cell.volsize = ano2[i]->r*ano2[i]->r*4*teramanager::pi;
+            cell.color.r = 255;
+            cell.color.g = 0;
+            cell.color.b = 0;
+            diff_cells.push_back(cell);
             FPs++;
+        }
         else
             TPs++;
     for(int i=0; i<ano1.size(); i++)
         if( static_cast<CAnnotations::Octree::octant*>(ano1[i]->container)->annotations.size() == 1)
+        {
+            CellAPO cell;
+            cell.n = ano2[i]->ID;
+            cell.name = ano2[i]->name.c_str();
+            cell.comment = ano2[i]->comment.c_str();
+            cell.x = ano2[i]->x;
+            cell.y = ano2[i]->y;
+            cell.z = ano2[i]->z;
+            cell.volsize = ano2[i]->r*ano2[i]->r*4*teramanager::pi;
+            cell.color.r = 0;
+            cell.color.g = 0;
+            cell.color.b = 255;
+            diff_cells.push_back(cell);
             FNs++;
+        }
 
     // release memory for octree
     delete diff_octree;
+
+    // save diff apo (point cloud) file
+//    diffPath = "C:/diff.apo";
+    if(!diffPath.empty())
+        writeAPO_file(diffPath.c_str(), diff_cells);
 
     // display result
     std::string message = itm::strprintf(   "VOI = X[%d,%d), Y[%d,%d), Z[%d,%d)\n"
