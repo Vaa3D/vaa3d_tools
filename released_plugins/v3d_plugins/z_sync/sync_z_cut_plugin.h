@@ -15,11 +15,6 @@
 #include <QtGui>
 #include <v3d_interface.h>
 
-//#include "v3dr_common.h"
-
-//#include "qtr_widget.h"
-
-//class V3dR_GLWidget;
 
 class SyncZ : public QObject, public V3DPluginInterface2_1
 {
@@ -36,10 +31,6 @@ public:
     {return false;}
 
     float getPluginVersion() const {return 1.1f;}
-
-    //virtual void setZCutLock(bool b)=0;
-
-    //virtual QList <NeuronTree> * getHandleNeuronTrees_Any3DViewer(V3dR_MainWindow *w) = 0;
 
 };
 
@@ -113,7 +104,6 @@ protected:
     }
 };
 
-// /**
 class MyComboBox : public QComboBox
 {
     Q_OBJECT
@@ -123,12 +113,12 @@ public:
     MyComboBox(V3DPluginCallback2 * ini_v3d) {m_v3d = ini_v3d;}
 
     void enterEvent(QEvent * event);
-// /**
+
 public slots:
     void updateList();
-    //**/
+
 };
-// **/
+
 
 class lookPanel: public QDialog
 {
@@ -149,30 +139,17 @@ public:
     View3DControl *view;
     v3dhandle curwin;
 
-    //BoundingBox boundingBox;
-
     QString Cut_altTip(int dim_i, int v, int minv, int maxv, int offset);
-    /**
-    void initVolumeCutRange();  // called by initControlValue
-    void initSurfaceCutRange();
-    **/
 
-    //QSpinBox* box_ZCut_Min;
-    //QSpinBox* box_ZCut_Max;
-    //QListWidget *list_anchors;
-    //QListWidget *list_min_max;
-    QComboBox* combo_master; //a usable drop down menu
-    //QComboBox* new_combo_master;
+    QComboBox* combo_master;
     QLabel* label_master;
     QLabel* label_display;
-    //QCheckBox* check_zed; //take this out later; unnecessary
     QGridLayout *gridLayout;
     v3dhandleList win_list;
     v3dhandleList win_list_past;
     V3DPluginCallback2 & m_v3d;
     QTimer *m_pTimer;
 
-   // View3DControl *view_master;
     QList<NeuronTree> *nt_list;
 
     v3dhandleList threeD_list;
@@ -180,77 +157,22 @@ public:
     bool b_autoON;
 
     QAbstractSlider *zcminSlider, *zcmaxSlider;
-    //QAbstractSlider *zSminSlider, *zSmaxSlider;
 
     QAbstractButton *zcLock;
     QPushButton *updateSurf;
     QPushButton *sliderUpdate;
     QPushButton *testString;
     QPushButton *test_zdim;
-    //V3dR_GLWidget * glWidget;
-
-    //QString Cut_altTip(int dim_i, int v, int minv, int maxv, int offset);
-
-/**
-virtual int zCut0() const {return _zCut0; }
-virtual int zCut1() const { return _zCut1; }
-virtual int zClip0() const { return _zClip0; }
-virtual int zClip1() const { return _zClip1; }
-**/
-
-public slots:
-
-//virtual void setZClip00(int s);
-/**
-virtual void setZCut0(int s);
-virtual void setZCut1(int s);
-virtual void setZClip0(int s);
-virtual void setZClip1(int s);
-virtual void setZCutLock(bool); //only for image
-virtual void setZSurfCutLock(bool); //for the surface
-virtual void enableZSlice(bool); //only for image
-**/
-    //void setZCut0(float s);
-    //void setZCut1(float s);
 
 private slots:
-    //void _slot_sync_onetime();
     void reject();
     void change_z_min();
     void change_z_max();
     void setZCutLockIcon(bool);
-
-    //void setZCutLockIcon(bool);
     void setZCutLock(bool);
     void update_traces();
-    void string_tester();
-    void update_sliders();
-
-    //void get_slider_size();
-    //int get_slider_size();
-    //void showZCutLock();
-    //void change_zed_min(); //obviously does more than that now
-    //void SWC_min_and_max();
-    //void showSWC_min_and_max();
-
-    //void initVolumeCutRange();
-    //void change_zed_max();
-
-/**
-signals:
-void changeEnableCut0Slider(bool);
-void changeEnableCut1Slider(bool);
-void changeZCut0(int s);
-void changeZCut1(int s);
-void changeZClip0(int s);
-void changeZClip1(int s);
-**/
 
 public:
-//int _zCut0, _zCut1;
-//int dzCut, lockZ, lockSurfZ; //added the last one
-//int _zClip0, _zClip1;
-
 float _zCut0;
 float _zCut1;
 float dimz;
@@ -260,8 +182,6 @@ int zClip0;
 int zClip1;
 float min_num;
 float max_num;
-//int zcutmin;
-//int zcutmax;
 float dist_MIN;
 float dist_MAX;
 int lockZ;
@@ -275,15 +195,10 @@ float sz22;
 float X_rescaled;
 float Y_rescaled;
 int zdim_float;
-//NeuronTree nt1;
-//NeuronTree nt2;
-//int m;
-//int m2;
 
 void init_members()
 {
-    zdim_float = 0;
-//_zCut0 = _zCut1 = dzCut = lockZ = lockSurfZ = _zClip0 = _zClip1 = 0; //added lockSurfZ
+zdim_float = 0;
 zCut0 = zCut1 = 0;
 zClip0 = zClip1 = 0;
 zcminSlider = 0;
@@ -303,12 +218,7 @@ Y_rescaled = 0;
 dimz = 0;
 _zCut0 = 0;
 zCut1 = 0;
-//m = 0;
-//m2 = 0;
-//nt1 = 0;
 
-//zcmaxSlider = zSminSlider = zSmaxSlider = 0;
-//glWidget = 0;
 }
 
 };
