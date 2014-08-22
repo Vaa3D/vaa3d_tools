@@ -8,7 +8,6 @@
 
 #include <QtGui>
 #include <v3d_interface.h>
-//#include <QObject>
 
 class TypesetPlugin : public QObject, public V3DPluginInterface2_1
 {
@@ -65,33 +64,17 @@ public:
     MyComboBox* combo_surface;
     QLabel* label_surface;
 
-    //bool saveAnchorFile(QString filename);
-
 
 private slots:
     void _slot_sort();
     void _slot_typeset_all();
     void _slot_typeset_marker();
     void _slot_refresh();
-    //void _slot_delete();
     void _slot_save();
     double get_type();
 
 
-
-
-
-//    void _slot_preview();
-//    void _slot_show();
-//    void _slot_show_item(QListWidgetItem *item);
-//    void _slot_upload();
-//    void _slot_load();
-//    void _slot_up();
-//    void _slot_down();
-
 };
-
-//bool _saveAnchorFile(QString filename, QStringList ParaLists, bool b_append);
 
 
 #endif
