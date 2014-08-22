@@ -983,13 +983,13 @@ void count_cells(V3DPluginCallback2 &callback, QWidget *parent)
         LandmarkList * bgs = &catArr[0]; //working with assumption that bg has category value 0;
         if (bgs->isEmpty()) //if background category not specified by user, use corner voxels as bg
         {
-            for (int i=0; i<=N-1; i+=N-1)
+            for (int i=1; i<=N; i+=N-1)
             {
-                for (int j=0; j<=M-1; j+=M-1)
+                for (int j=1; j<=M; j+=M-1)
                 {
-                    for (int k=0; k<=P-1; k+=P-1)
+                    for (int k=1; k<=P; k+=P-1)
                     {
-                        if (data1d[(c-1)*P*M*N+k*M*N+j*N+i]>50) continue;
+                        if (data1d[(c-1)*P*M*N+(k-1)*M*N+(j-1)*N+(i-1)]>50) continue;
                         //int dat = data1d[(c-1)*P*M*N+k*M*N+j*N+i];
                         //cout<<dat<<endl;
                         LocationSimple extraBG(i,j,k);
@@ -1061,13 +1061,13 @@ template <class T> bool identify_cells(V3DPluginCallback2 &callback, T* data1d, 
 
         //add corner pixels to list to use as additional bg markers
         mlist = markerlist;
-        for (int i=0; i<=N-1; i+=N-1)
+        for (int i=1; i<=N; i+=N-1)
         {
-            for (int j=0; j<=M-1; j+=M-1)
+            for (int j=1; j<=M; j+=M-1)
             {
-                for (int k=0; k<=P-1; k+=P-1)
+                for (int k=1; k<=P; k+=P-1)
                 {
-                    if (data1d[(c-1)*P*M*N+k*M*N+j*N+i]>50) continue;
+                    if (data1d[(c-1)*P*M*N+(k-1)*M*N+(j-1)*N+(i-1)]>50) continue;
                     //int dat = data1d[(c-1)*P*M*N+k*M*N+j*N+i];
                     //cout<<dat<<endl;
                     LocationSimple extraBG(i,j,k);
@@ -1383,11 +1383,11 @@ template <class T> int pixelVal(T* data1d, V3DLONG *dimNum,
     V3DLONG N = dimNum[0];
     V3DLONG M = dimNum[1];
     V3DLONG P = dimNum[2];
-    xc+=0.5; yc+=0.5; zc+=0.5; //for rounding
-    if (xc<0) xc=0; if (xc>N-1) xc=N-1;
-    if (yc<0) yc=0; if (yc>M-1) yc=M-1;
-    if (zc<0) zc=0; if (zc>P-1) zc=P-1;
-    int pixelVal = data1d[ (V3DLONG)(c-1)*P*M*N + (V3DLONG)zc*M*N + (V3DLONG)yc*N + (V3DLONG)xc ];
+//    xc+=0.5; yc+=0.5; zc+=0.5; //for rounding
+//    if (xc<0) xc=0; if (xc>N-1) xc=N-1;
+//    if (yc<0) yc=0; if (yc>M-1) yc=M-1;
+//    if (zc<0) zc=0; if (zc>P-1) zc=P-1;
+    int pixelVal = data1d[ (V3DLONG)(c-1)*P*M*N + (V3DLONG)(zc-1)*M*N + (V3DLONG)(yc-1)*N + (V3DLONG)(xc-1) ];
 
     return pixelVal;
 }
@@ -1420,7 +1420,7 @@ template <class T> bool mass_center_Lists(T* data1d, V3DLONG *dimNum,
         {
             //cout<<"loop "<<runs<<" using coords "<<xc<<" "<<yc<<" "<<zc<<endl;
             //pVal = pixelVal(data1d,dimNum,xc,yc,zc,c);
-            pVal = data1d[(c-1)*P*M*N+(V3DLONG)zc*M*N+(V3DLONG)yc*N+(V3DLONG)xc];
+            pVal = data1d[(c-1)*P*M*N+(V3DLONG)(zc-1)*M*N+(V3DLONG)(yc-1)*N+(V3DLONG)(xc-1)];
             newX=xc*pVal, newY=yc*pVal, newZ=zc*pVal, norm=pVal;
             for (double r=rad/5; r<=rad; r+=rad/5)
             {
@@ -1435,9 +1435,9 @@ template <class T> bool mass_center_Lists(T* data1d, V3DLONG *dimNum,
                         //if (y>M-1) y=M-1; if (y<0) y=0;
                         z = zc+r*cos(phi) + 0.5;
                         //if (z>P-1) z=P-1; if (z<0) z=0;
+                        if (x<1 || x>N || y<1 || y>M || z<1 || z>P) continue;
                         //pVal = pixelVal(data1d,dimNum,x,y,z,c);
-                        if (x<0 || x>N-1 || y<0 || y>M-1 || z<0 || z>P-1) continue;
-                        pVal = data1d[(c-1)*P*M*N+(V3DLONG)z*M*N+(V3DLONG)y*N+(V3DLONG)x];
+                        pVal = data1d[(c-1)*P*M*N+(V3DLONG)(z-1)*M*N+(V3DLONG)(y-1)*N+(V3DLONG)(x-1)];
                         if (pVal>=thresh)
                         {
                             newX += pVal*x;
@@ -1580,10 +1580,10 @@ template <class T> bool compute_cell_values_rad(T* data1d,
                 //cout<<"pixel iteration "<<runs<<endl;
                 //cout<<r<<" "<<theta<<" "<<phi<<endl<<endl;
                 x = xc+outputrad*cos(theta) +0.5;
-                if (x>N-1) x=N-1; if (x<0) x=0;
+                if (x>N) x=N; if (x<1) x=1;
                 y = yc+outputrad*sin(theta) +0.5;
-                if (y>M-1) y=M-1; if (y<0) y=0;
-                int dataval = data1d[(c-1)*P*M*N+(V3DLONG)z*M*N+(V3DLONG)y*N+(V3DLONG)x];
+                if (y>M) y=M; if (y<1) y=1;
+                int dataval = data1d[(c-1)*P*M*N+(V3DLONG)(z-1)*M*N+(V3DLONG)(y-1)*N+(V3DLONG)(x-1)];
                 datatotal += dataval;
                 //cout<<dataval<<" "<<datatotal<<endl;
                 runs++;
@@ -1601,7 +1601,8 @@ template <class T> bool compute_cell_values_rad(T* data1d,
             minDist+=0.5;
             if (zc-minDist<0) {minDist=zc; break;}
             zmin_C = zc-minDist;
-            zmin_V = data1d[(c-1)*P*M*N+(V3DLONG)zmin_C*M*N+(V3DLONG)yc*N+(V3DLONG)xc];
+            //zmin_V = data1d[(c-1)*P*M*N+(V3DLONG)zmin_C*M*N+(V3DLONG)yc*N+(V3DLONG)xc];
+            zmin_V = pixelVal(data1d,dimNum,xc,yc,zmin_C,c);
         } while ( zmin_V > threshold );
         //cout<<"z min "<<minDist<<" ";
         do
@@ -1609,7 +1610,8 @@ template <class T> bool compute_cell_values_rad(T* data1d,
             maxDist+=0.5;
             if (zc+maxDist>P-1) {maxDist=P-zc-1; break;}
             zmax_C = zc+maxDist;
-            zmax_V = data1d[(c-1)*P*M*N+(V3DLONG)zmax_C*M*N+(V3DLONG)yc*N+(V3DLONG)xc];
+            //zmax_V = data1d[(c-1)*P*M*N+(V3DLONG)zmax_C*M*N+(V3DLONG)yc*N+(V3DLONG)xc];
+            zmax_V = pixelVal(data1d,dimNum,xc,yc,zmax_C,c);
         } while ( zmax_V > threshold );
         if (minDist<0) minDist=0;
         if (maxDist<0) maxDist=0;
@@ -1631,12 +1633,12 @@ template <class T> bool compute_cell_values_rad(T* data1d,
                     //cout<<"pixel iteration "<<runs<<endl;
                     //cout<<r<<" "<<theta<<" "<<phi<<endl<<endl;
                     x = xc+outputrad*cos(theta)*sin(phi) +0.5;
-                    if (x>N-1) x=N-1; if (x<0) x=0;
+                    if (x>N) x=N; if (x<1) x=1;
                     y = yc+outputrad*sin(theta)*sin(phi) +0.5;
-                    if (y>M-1) y=M-1; if (y<0) y=0;
+                    if (y>M) y=M; if (y<1) y=1;
                     z = zc+outputrad*cos(phi) +0.5;
-                    if (z>P-1) z=P-1; if (z<0) z=0;
-                    int dataval = data1d[(c-1)*P*M*N+(V3DLONG)z*M*N+(V3DLONG)y*N+(V3DLONG)x];
+                    if (z>P) z=P; if (z<1) z=1;
+                    int dataval = data1d[(c-1)*P*M*N+(V3DLONG)(z-1)*M*N+(V3DLONG)(y-1)*N+(V3DLONG)(x-1)];
                     datatotal += dataval;
                     //cout<<dataval<<" "<<datatotal<<endl;
                     runs++;
@@ -1673,13 +1675,13 @@ template <class T> double compute_ave_cell_val(T* data1d, V3DLONG *dimNum,
                 //cout<<"pixel iteration "<<runs<<endl;
                 //cout<<r<<" "<<theta<<" "<<phi<<endl;
                 x = xc+r*cos(theta)*sin(phi);
-                if (x>N-1) x=N-1; if (x<0) x=0;
+                if (x>N) x=N; if (x<1) x=1;
                 y = yc+r*sin(theta)*sin(phi);
-                if (y>M-1) y=M-1; if (y<0) y=0;
+                if (y>M) y=M; if (y<1) y=1;
                 z = zc+r*cos(phi);
-                if (z>P-1) z=P-1; if (z<0) z=0;
+                if (z>P) z=P; if (z<1) z=1;
                 //double dataval = pixelVal(data1d,dimNum,x,y,z,c);
-                int dataval = data1d[(c-1)*P*M*N+(int)z*M*N+(int)y*N+(int)x];
+                int dataval = data1d[(c-1)*P*M*N+(int)(z-1)*M*N+(int)(y-1)*N+(int)(x-1)];
                 datatotal += dataval;
                 runs++;
                 //cout<<dataval<<" "<<datatotal<<" "<<runs<<endl;
@@ -2953,9 +2955,9 @@ template <class T> bool segment_regions(unsigned char* data1d, V3DLONG *dimNum,
             {
                 for (int z=zc-rad_z; z<zc+rad_z; z++)
                 {
-                    if (x<0 || x>N-1 || y<0 || y>M-1 || z<0 || z>P-1) continue;
-                    if (regionData[z*M*N+y*N+x]==regNum)
-                        maskData[z*M*N+y*N+x]=255;
+                    if (x<1 || x>N || y<1 || y>M || z<1 || z>P) continue;
+                    if (regionData[(z-1)*M*N+(y-1)*N+(x-1)]==regNum)
+                        maskData[(z-1)*M*N+(y-1)*N+(x-1)]=255;
                 }
             }
         }
@@ -2976,7 +2978,7 @@ template <class T> bool segment_regions(unsigned char* data1d, V3DLONG *dimNum,
         LocationSimple tmp = inputList.at(i);
         int xc,yc,zc,ind=-1;
         tmp.getCoord(xc,yc,zc);
-        if (xc-radAve<0 || xc+radAve>N-1 || yc-radAve<0 || yc+radAve>M-1 || zc-radZ<0 || zc+radZ>P-1) continue;
+        if (xc-radAve<1 || xc+radAve>N || yc-radAve<1 || yc+radAve>M || zc-radZ<1 || zc+radZ>P) continue;
         for (int x=xc-(int)radAve; x<=xc+(int)radAve; x++)
         {
             for (int y=yc-(int)radAve; y<=yc+(int)radAve; y++)
@@ -2985,7 +2987,7 @@ template <class T> bool segment_regions(unsigned char* data1d, V3DLONG *dimNum,
                 {
                     ind++;
                     //cout<<ind<<" ";
-                    cell_template[ind]+=data1d[(c-1)*P*M*N+z*M*N+y*N+x];
+                    cell_template[ind]+=data1d[(c-1)*P*M*N+(z-1)*M*N+(y-1)*N+(x-1)];
                     //cout<<cell_template[ind]<<endl;
                 }
             }
@@ -3059,12 +3061,12 @@ template <class T> LandmarkList seg_by_mask (unsigned char* data1d, T* rgnData, 
     //cout<<"region "<<rgn<<" with cellcount "<<cellcount<<" and coords "<<xc<<" "<<yc<<" "<<zc<<endl;
 
     //define limits around region, would prefer to have eigenvalues to better determine range
-    int xLow = xc-range; if (xLow<0) xLow=0;
-    int xHigh = xc+range; if (xHigh>N-1) xHigh=N-1;
-    int yLow = yc-range; if (yLow<0) yLow=0;
-    int yHigh = yc+range; if (yHigh>M-1) yHigh=M-1;
-    int zLow = zc-range; if (zLow<0) zLow=0;
-    int zHigh = zc+range; if (zHigh>P-1) zHigh=P-1;
+    int xLow = xc-range; if (xLow<1) xLow=1;
+    int xHigh = xc+range; if (xHigh>N) xHigh=N;
+    int yLow = yc-range; if (yLow<1) yLow=1;
+    int yHigh = yc+range; if (yHigh>M) yHigh=M;
+    int zLow = zc-range; if (zLow<1) zLow=1;
+    int zHigh = zc+range; if (zHigh>P) zHigh=P;
 
     LandmarkList outputList;
     for (int s=0; s<cellcount; s++)
@@ -3078,7 +3080,7 @@ template <class T> LandmarkList seg_by_mask (unsigned char* data1d, T* rgnData, 
             {
                 for (int k=zLow; k<=zHigh; k++)
                 {
-                    if (maskData[k*M*N+j*N+i]!=0 || rgnData[k*M*N+j*N+i]!=rgn) continue;
+                    if (maskData[(k-1)*M*N+(j-1)*N+(i-1)]!=0 || rgnData[(k-1)*M*N+(j-1)*N+(i-1)]!=rgn) continue;
                     //int check = rgnData[k*M*N+j*N+i];
                     //if (check!=0) cout<<"checking "<<rgn<<" "<<check<<endl;
                     //Analyze cube of length 2*radAve with center (i,j,k)
@@ -3095,12 +3097,12 @@ template <class T> LandmarkList seg_by_mask (unsigned char* data1d, T* rgnData, 
                             for (int z=k-radZ; z<=k+radZ; z++)
                             {
                                 ind++;
-                                if (x<0 || x>N-1 || y<0 || y>M-1 || z<0 || z>P-1) {scoop_template[ind]=0; continue;}
-                                if (maskData[z*M*N+y*N+x]!=0) goto loopcont;
+                                if (x<1 || x>N || y<1 || y>M || z<1 || z>P) {scoop_template[ind]=0; continue;}
+                                if (maskData[(z-1)*M*N+(y-1)*N+(x-1)]!=0) goto loopcont;
                                 //cout<<x<<" "<<y<<" "<<z<<endl;
                                 if (rgnData[z*M*N+y*N+x]==rgn) total_vol++;
                                 //template_diff += abs( data1d[(c-1)*P*M*N+z*M*N+y*N+x] - cell_template[ind] );
-                                scoop_template[ind] = data1d[(c-1)*P*M*N+z*M*N+y*N+x];
+                                scoop_template[ind] = data1d[(c-1)*P*M*N+(z-1)*M*N+(y-1)*N+(x-1)];
                             }
                         }
                     }
@@ -3149,15 +3151,15 @@ template <class T> LandmarkList seg_by_mask (unsigned char* data1d, T* rgnData, 
         compute_cell_values_rad(data1d,dimNum,xm,ym,zm,c,thresh,outAve,outRad,outZRad);
         if (outZRad<=0) outZRad=outRad;
         else outZRad*=1.5;
-        if (maskData[zm*M*N+ym*N+xm]==0 && corrMax>0.3) {maxPos.x=xm;maxPos.y=ym;maxPos.z=zm; outputList.append(maxPos);} //update and append
+        if (maskData[(zm-1)*M*N+(ym-1)*N+(xm-1)]==0 && corrMax>0.3) {maxPos.x=xm;maxPos.y=ym;maxPos.z=zm; outputList.append(maxPos);} //update and append
         for (int x=xm-outRad; x<xm+outRad; x++)
         {
             for (int y=ym-outRad; y<ym+outRad; y++)
             {
                 for (int z=zm-outZRad; z<zm+outZRad; z++)
                 {
-                    if (x<0 || x>N-1 || y<0 || y>M-1 || z<0 || z>P-1) continue;
-                    maskData[z*M*N+y*N+x]=255;
+                    if (x<1 || x>N || y<1 || y>M || z<1 || z>P) continue;
+                    maskData[(z-1)*M*N+(y-1)*N+(x-1)]=255;
                 }
             }
         }
