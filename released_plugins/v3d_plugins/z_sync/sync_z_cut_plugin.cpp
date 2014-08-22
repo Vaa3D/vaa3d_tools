@@ -12,6 +12,8 @@
 #include <iostream>
 #include <sstream>
 
+
+
 using namespace std;
 
 Q_EXPORT_PLUGIN2(sync_z_cut, SyncZ)
