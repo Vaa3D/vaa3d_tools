@@ -13,7 +13,13 @@
 
 using namespace std;
 
+#define b_VERBOSE_PRINT 0
 #define getParent(n,nt) ((nt).listNeuron.at(n).pn<0)?(1000000000):((nt).hashNeuron.value((nt).listNeuron.at(n).pn))
+#define DEFINE_NBYTE2G \
+  V3DLONG nBytes2G = (V3DLONG(1024)*V3DLONG(1024)*V3DLONG(1024)-1)*V3DLONG(2);
+
+typedef int BIT32_UNIT;
+
 
 // Open a series of inputs
 QStringList importSeriesFileList_addnumbersort(const QString & curFilePath)
@@ -103,6 +109,9 @@ void zsectionsTotiles(V3DPluginCallback2 &callback, QWidget *parent);
 void qsublist(V3DPluginCallback2 &callback, QWidget *parent);
 void threeDimageTotiles(V3DPluginCallback2 &callback, QWidget *parent);
 
+char checkMachineEndian();
+void swap2bytes(void *targetp);
+void swap4bytes(void *targetp);
 
 
 struct Point;
@@ -135,6 +144,7 @@ bool export_list2file(QList<NeuronSWC> & lN, QString fileSaveName, QString fileO
     return true;
 };
 
+int loadRaw2Stack_2byte(char * filename, unsigned char * & img, V3DLONG * & sz, int & datatype);
 
 void eliminate_swc::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
 {
@@ -1139,7 +1149,35 @@ void qsublist(V3DPluginCallback2 &callback, QWidget *parent)
 void threeDimageTotiles(V3DPluginCallback2 &callback, QWidget *parent)
 {
 
-    v3dhandle curwin = callback.currentImageWindow();
+    QString fileOpenName;
+    fileOpenName = QFileDialog::getOpenFileName(0, QObject::tr("Open File"),
+            "",
+            QObject::tr("Supported file (*.raw *.RAW *.V3DRAW *.v3draw)"
+                ));
+    if(fileOpenName.isEmpty())
+        return;
+
+    unsigned char * datald = 0;
+    V3DLONG *in_zz = 0;
+
+    int datatype;
+
+    if (!loadRaw2Stack_2byte(const_cast<char *>(fileOpenName.toStdString().c_str()), datald, in_zz, datatype))
+    {
+        return;
+    }
+    printf("%d %d %d\n\n",in_zz[0],in_zz[1],in_zz[2]);
+
+    Image4DSimple * new4DImage = new Image4DSimple();
+    new4DImage->setData((unsigned char *)datald, 50, 50, in_zz[2], 1, V3D_UINT8);
+    v3dhandle newwin = callback.newImageWindow();
+    callback.setImage(newwin, new4DImage);
+    callback.setImageName(newwin, "Cropped image");
+    callback.updateImageWindow(newwin);
+
+
+
+    /*v3dhandle curwin = callback.currentImageWindow();
     if (!curwin)
     {
         v3d_msg("You don't have any image open in the main window.");
@@ -1246,14 +1284,235 @@ void threeDimageTotiles(V3DPluginCallback2 &callback, QWidget *parent)
     myfile << "\n# MST LUT\n";
     myfile.close();
 
-    v3d_msg("done!");
+    v3d_msg("done!");*/
     return;
+}
+
+int loadRaw2Stack_2byte(char * filename, unsigned char * & img, V3DLONG * & sz, int & datatype)
+{
+    FILE * fid = fopen(filename, "rb");
+    if (!fid)
+    {
+        return 0;
+    }
+
+    fseek (fid, 0, SEEK_END);
+    V3DLONG fileSize = ftell(fid);
+    rewind(fid);
+/*
+#endif
+*/
+    /* Read header */
+
+    char formatkey[] = "raw_image_stack_by_hpeng";
+    V3DLONG lenkey = strlen(formatkey);
+    char * keyread = new char [lenkey+1];
+    if (!keyread)
+        return 0;
+
+    V3DLONG nread = fread(keyread, 1, lenkey, fid);
+    if (nread!=lenkey) {
+        if (keyread) {delete []keyread; keyread=0;}
+        return 0;
+    }
+
+    keyread[lenkey] = '\0';
+
+    V3DLONG i;
+    if (strcmp(formatkey, keyread)) /* is non-zero then the two strings are different */
+    {
+        if (keyread) {delete []keyread; keyread=0;}
+        return 0;
+    }
+
+    char endianCodeData;
+    int dummy = fread(&endianCodeData, 1, 1, fid);
+    printf("The data endian code is [%c]\n", endianCodeData);
+    if (endianCodeData!='B' && endianCodeData!='L')
+    {
+        if (keyread) {delete []keyread; keyread=0;}
+        return 0;    }
+
+    char endianCodeMachine;
+    endianCodeMachine = checkMachineEndian();
+    printf("The machine endian code is [%c]\n", endianCodeMachine);
+    if (endianCodeMachine!='B' && endianCodeMachine!='L')
+    {
+        if (keyread) {delete []keyread; keyread=0;}
+        return 0;
+       }
+
+    int b_swap = (endianCodeMachine==endianCodeData)?0:1;
+
+    short int dcode = 0;
+    dummy = fread(&dcode, 2, 1, fid); /* because I have already checked the file size to be bigger than the header, no need to check the number of actual bytes read. */
+    if (b_swap)
+        swap2bytes((void *)&dcode);
+
+    switch (dcode)
+    {
+        case 1:
+            datatype = 1; /* temporarily I use the same number, which indicates the number of bytes for each data point (pixel). This can be extended in the future. */
+            break;
+
+        case 2:
+            datatype = 2;
+            break;
+
+        case 4:
+            datatype = 4;
+            break;
+
+        default:
+            if (keyread) {delete []keyread; keyread=0;}
+            return  0;
+    }
+
+    V3DLONG unitSize = datatype; // temporarily I use the same number, which indicates the number of bytes for each data point (pixel). This can be extended in the future.
+
+    BIT32_UNIT mysz[4];
+    mysz[0]=mysz[1]=mysz[2]=mysz[3]=0;
+    int tmpn=(int)fread(mysz, 4, 4, fid); // because I have already checked the file size to be bigger than the header, no need to check the number of actual bytes read.
+    if (tmpn!=4) {
+        if (keyread) {delete []keyread; keyread=0;}
+        return 0;
+    }
+
+    if (b_swap)
+    {
+        for (i=0;i<4;i++)
+        {
+            //swap2bytes((void *)(mysz+i));
+            if (b_VERBOSE_PRINT)
+                printf("mysz raw read unit[%ld]: [%d] ", i, mysz[i]);
+            swap4bytes((void *)(mysz+i));
+            if (b_VERBOSE_PRINT)
+                printf("swap unit: [%d][%0x] \n", mysz[i], mysz[i]);
+        }
+    }
+    if (sz) {delete []sz; sz=0;}
+    sz = new V3DLONG [4]; // reallocate the memory if the input parameter is non-null. Note that this requests the input is also an NULL point, the same to img.
+    if (!sz)
+    {
+        if (keyread) {delete []keyread; keyread=0;}
+        return 0;
+    }
+
+    V3DLONG totalUnit = 1;
+
+    for (i=0;i<4;i++)
+    {
+        sz[i] = (V3DLONG)mysz[i];
+        totalUnit *= sz[i];
+    }
+
+    V3DLONG endx = 50, endy = 50, endz = sz[2];
+    V3DLONG startx = 0, starty = 0, startz = 0;
+
+    V3DLONG tmpw = endx - startx;
+    V3DLONG tmph = endy - starty;
+    V3DLONG tmpz = endz - startz;
+
+    V3DLONG head = 4*4+2+1+lenkey; // header_len ?
+    V3DLONG pgsz1=sz[2]*sz[1]*sz[0], pgsz2=sz[1]*sz[0], pgsz3=sz[0];
+    V3DLONG cn = tmpw*tmph*tmpz;
+    V3DLONG kn = tmpw*tmph;
+    V3DLONG total = tmpw*tmph*tmpz*sz[3];
+
+    if (img) {delete []img; img=0;}
+    V3DLONG totalBytes = V3DLONG(unitSize)*V3DLONG(total);
+    try
+    {
+        img = new unsigned char [totalBytes];
+    }
+    catch (...)
+    {
+        if (keyread) {delete []keyread; keyread=0;}
+        if (sz) {delete []sz; sz=0;}
+        return 0;
+    }
+
+    //V3DLONG count=0; // unused
+    V3DLONG c,j,k;
+    for (c = 0; c < sz[3]; c++)
+    {
+        for (k = startz; k < endz; k++)
+        {
+            for (j = starty; j< endy; j++)
+            {
+                rewind(fid);
+                fseek(fid, (long)(head+(c*pgsz1 + k*pgsz2 + j*pgsz3 + startx)*unitSize), SEEK_SET);
+                int dummy = ftell(fid);
+                dummy = fread(img+(c*cn+(k-startz)*kn + (j-starty)*tmpw)*unitSize,unitSize,tmpw,fid);
+            }
+        }
+    }
+    // swap the data bytes if necessary
+
+    if (b_swap==1)
+    {
+        if (unitSize==2)
+        {
+            for (i=0;i<total; i++)
+            {
+                swap2bytes((void *)(img+i*unitSize));
+            }
+        }
+        else if (unitSize==4)
+        {
+            for (i=0;i<total; i++)
+            {
+                swap4bytes((void *)(img+i*unitSize));
+            }
+        }
+    }
+
+    // clean and return
+
+    if (keyread) {delete [] keyread; keyread = 0;}
+    fclose(fid); //bug fix on 060412
+
 
 }
 
 
+char checkMachineEndian()
+{
+    char e='N'; //for unknown endianness
 
+    V3DLONG int a=0x44332211;
+    unsigned char * p = (unsigned char *)&a;
+    if ((*p==0x11) && (*(p+1)==0x22) && (*(p+2)==0x33) && (*(p+3)==0x44))
+        e = 'L';
+    else if ((*p==0x44) && (*(p+1)==0x33) && (*(p+2)==0x22) && (*(p+3)==0x11))
+        e = 'B';
+    else if ((*p==0x22) && (*(p+1)==0x11) && (*(p+2)==0x44) && (*(p+3)==0x33))
+        e = 'M';
+    else
+        e = 'N';
 
+    //printf("[%c] \n", e);
+    return e;
+}
+
+void swap2bytes(void *targetp)
+{
+    unsigned char * tp = (unsigned char *)targetp;
+    unsigned char a = *tp;
+    *tp = *(tp+1);
+    *(tp+1) = a;
+}
+
+void swap4bytes(void *targetp)
+{
+    unsigned char * tp = (unsigned char *)targetp;
+    unsigned char a = *tp;
+    *tp = *(tp+3);
+    *(tp+3) = a;
+    a = *(tp+1);
+    *(tp+1) = *(tp+2);
+    *(tp+2) = a;
+}
 
 
 
