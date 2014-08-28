@@ -906,6 +906,7 @@ bool  autotrace_largeScale_raw(V3DPluginCallback2 &callback, QWidget *parent,APP
     {
         return false;
     }
+    if(datald) {delete []datald; datald = 0;}
 
     V3DLONG start[3], end[3];
 
@@ -979,9 +980,11 @@ bool  autotrace_largeScale_raw(V3DPluginCallback2 &callback, QWidget *parent,APP
             if (!loadRawRegion(const_cast<char *>(P.inimg_file.toStdString().c_str()), datald, in_zz, in_sz,datatype,walker->start[0],walker->start[1],walker->start[2],walker->end[0],walker->end[1],walker->end[2]))
             {
                 printf("can not load the region");
+                if(datald) {delete []datald; datald = 0;}
                 return false;
             }
             simple_saveimage_wrapper(callback, walker->tilename.toStdString().c_str(),  (unsigned char *)datald, in_sz, V3D_UINT8);
+            if(datald) {delete []datald; datald = 0;}
         }
 
         QString eachtileswcfilename = walker->tilename + ".swc";
