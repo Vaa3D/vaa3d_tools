@@ -7,6 +7,7 @@
 #include <vector>
 #include <iostream>
 #include "basic_surf_objs.h"
+#include "stackutil.h"
 
 
 
@@ -16,9 +17,9 @@
 
 typedef int BIT32_UNIT;
 
-char checkMachineEndian();
-void swap2bytes(void *targetp);
-void swap4bytes(void *targetp);
+//char checkMachineEndian();
+//void swap2bytes(void *targetp);
+//void swap4bytes(void *targetp);
 
 
 int loadRawRegion(char * filename, unsigned char * & img, V3DLONG * & sz, V3DLONG * & region_sz,int & datatype,
@@ -243,7 +244,7 @@ int loadRawRegion(char * filename, unsigned char * & img, V3DLONG * & sz, V3DLON
 }
 
 
-char checkMachineEndian()
+/*char checkMachineEndian()
 {
     char e='N'; //for unknown endianness
 
@@ -279,6 +280,6 @@ void swap4bytes(void *targetp)
     a = *(tp+1);
     *(tp+1) = *(tp+2);
     *(tp+2) = a;
-}
+}*/
 
 #endif

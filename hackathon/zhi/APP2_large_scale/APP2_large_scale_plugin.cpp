@@ -243,13 +243,6 @@ bool APP2_large_scale::dofunc(const QString & func_name, const V3DPluginArgList 
         vector<char*> infiles = (pinfiles != 0) ? * pinfiles : vector<char*>();
         vector<char*> paras = (pparas != 0) ? * pparas : vector<char*>();
 
-        if(infiles.empty())
-        {
-            cerr<<"Need input image"<<endl;
-            return false;
-        }
-
-        P.inimg_file = infiles[0];
         int k=0;
         QString inmarker_file = paras.empty() ? "" : paras[k]; if(inmarker_file == "NULL") inmarker_file = ""; k++;
         if(inmarker_file.isEmpty())
@@ -257,17 +250,49 @@ bool APP2_large_scale::dofunc(const QString & func_name, const V3DPluginArgList 
             cerr<<"Need a marker file"<<endl;
             return false;
         }
-        else
+        P.tcfilename  = paras.empty() ? "" : paras[k]; k++;
+
+
+        if(infiles.empty())
         {
             vector<MyMarker> file_inmarkers;
             file_inmarkers = readMarker_file(string(qPrintable(inmarker_file)));
-            P.root_1st[0] = file_inmarkers[0].x;
-            P.root_1st[1] = file_inmarkers[0].y;
-            P.root_1st[2] = file_inmarkers[0].z;
+            int soma_x = file_inmarkers[0].x;
+            int soma_y = file_inmarkers[0].y;
+
+            Y_VIM<REAL, V3DLONG, indexed_t<V3DLONG, REAL>, LUT<V3DLONG> > vim;
+
+            if( !vim.y_load( P.tcfilename.toStdString()) )
+            {
+                printf("Wrong stitching configuration file to be load!\n");
+                return false;
+            }
+
+            QString curFilePath = QFileInfo( P.tcfilename).path();
+            curFilePath.append("/");
+            for(V3DLONG ii=0; ii<vim.number_tiles; ii++)
+            {
+                if(soma_x > vim.lut[ii].start_pos[0] && soma_y > vim.lut[ii].start_pos[1] && soma_x < vim.lut[ii].end_pos[0] && soma_y < vim.lut[ii].end_pos[1])
+                {
+                    P.inimg_file = curFilePath + QString(vim.lut[ii].fn_img.c_str());
+                    v3d_msg(P.inimg_file,0);
+                    inmarker_file =  P.inimg_file + ".marker";
+                    break;
+                }
+
+            }
+        }
+        else
+        {
+
+            P.inimg_file = infiles[0];
         }
 
-
-        P.tcfilename  = paras.empty() ? "" : paras[k]; k++;
+        vector<MyMarker> file_inmarkers;
+        file_inmarkers = readMarker_file(string(qPrintable(inmarker_file)));
+        P.root_1st[0] = file_inmarkers[0].x;
+        P.root_1st[1] = file_inmarkers[0].y;
+        P.root_1st[2] = file_inmarkers[0].z;
 
          //try to use as much as the default value in the PARA_APP2 constructor as possible
         P.channel = (paras.size() >= k+1) ? atoi(paras[k]) : 1;  k++;
