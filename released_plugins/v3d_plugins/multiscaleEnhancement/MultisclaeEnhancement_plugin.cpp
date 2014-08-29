@@ -76,7 +76,8 @@ template <class T> void somalocation(V3DPluginCallback2 &callback,
                                      V3DLONG *in_sz,
                                      unsigned int c,
                                      int &soma_x,
-                                     int &soma_y);
+                                     int &soma_y,
+                                     int &soma_z);
 
 template <class T> void soma_detection(T* data1d,
                                        V3DLONG *in_sz,
@@ -2833,16 +2834,18 @@ template <class T> void enhancementWithsoma(V3DPluginCallback2 &callback,
 
     int soma_x = 0;
     int soma_y = 0;
+    int soma_z = 0;
+
     v3dhandle curwin = callback.currentImageWindow();
     LandmarkList listLandmarks = callback.getLandmark(curwin);
     if(listLandmarks.count() ==0)
-        somalocation(callback,data1d,in_sz,1,soma_x,soma_y);
+        somalocation(callback,data1d,in_sz,1,soma_x,soma_y,soma_z);
     else
     {
         soma_x = listLandmarks.at(0).x;
         soma_y = listLandmarks.at(0).y;
     }
-    printf("\n soma location is (%d, %d)\n\n", soma_x,soma_y);
+    printf("\n soma location is (%d, %d, %d)\n\n", soma_x,soma_y,soma_z);
 
     V3DLONG N = in_sz[0];
     V3DLONG M = in_sz[1];
@@ -2850,14 +2853,15 @@ template <class T> void enhancementWithsoma(V3DPluginCallback2 &callback,
     V3DLONG pagesz = N*M*P;
     V3DLONG offsetc = (c-1)*pagesz;
 
-    double th_soma = 0;
+    double th_soma =  data1d[offsetc + soma_z*M*N + soma_y*N + soma_x] - 20;
+
     V3DLONG xb = soma_x-200; if(xb<0) xb = 0;
     V3DLONG xe = soma_x+200; if(xe>=N-1) xe = N-1;
     V3DLONG yb = soma_y-200; if(yb<0) yb = 0;
     V3DLONG ye = soma_y+200; if(ye>=M-1) ye = M-1;
     V3DLONG somasz = (xe-xb)*(ye-yb)*P;
 
-    for(V3DLONG iz = 0; iz < P; iz++)
+  /*  for(V3DLONG iz = 0; iz < P; iz++)
     {
         double PixelSum = 0;
         V3DLONG offsetk = iz*M*N;
@@ -2873,10 +2877,11 @@ template <class T> void enhancementWithsoma(V3DPluginCallback2 &callback,
             }
         }
         th_soma = th_soma + PixelSum/((xe-xb)*(ye-yb)*P);
-    }
+    }*/
 
     void* somaarea = 0;
     soma_detection((unsigned char*)data1d, in_sz, c,soma_x,soma_y,somasz,(unsigned char* &)somaarea);
+
 
     V3DLONG soma_sz[4];
     soma_sz[0] = xe-xb; soma_sz[1] = ye-yb; soma_sz[2] = P; soma_sz[3] = 1;
@@ -2892,7 +2897,7 @@ template <class T> void enhancementWithsoma(V3DPluginCallback2 &callback,
     arg.type = "random";std::vector<char*> args;
     char channel = '0' + (c-1);
     string threshold = boost::lexical_cast<string>(th_soma); char* threshold2 =  new char[threshold.length() + 1]; strcpy(threshold2, threshold.c_str());
-    args.push_back("245");args.push_back("1");args.push_back(&channel);args.push_back("1"); arg.p = (void *) & args; input << arg;
+    args.push_back(threshold2);args.push_back("1");args.push_back(&channel);args.push_back("1"); arg.p = (void *) & args; input << arg;
     char* char_temp_gsdtsoma=  new char[temp_gsdtsoma.length() + 1];strcpy(char_temp_gsdtsoma, temp_gsdtsoma.toStdString().c_str());
     arg.type = "random";std::vector<char*> args2;args2.push_back(char_temp_gsdtsoma); arg.p = (void *) & args2; output<< arg;
 
@@ -2915,7 +2920,7 @@ template <class T> void enhancementWithsoma(V3DPluginCallback2 &callback,
     remove(temp_soma.toStdString().c_str());
     remove(temp_gsdtsoma.toStdString().c_str());
 
-    int Th_gsdt = 50;
+    int Th_gsdt = 50; //was 50
 
     T *pSoma = new T [pagesz];
     if (!pSoma)
@@ -2996,7 +3001,8 @@ template <class T> void somalocation(V3DPluginCallback2 &callback,
                                      V3DLONG *in_sz,
                                      unsigned int c,
                                      int &soma_x,
-                                     int &soma_y)
+                                     int &soma_y,
+                                     int &soma_z)
 {
 
 
@@ -3116,6 +3122,7 @@ template <class T> void somalocation(V3DPluginCallback2 &callback,
                     maxdl = dsValue;
                     soma_x = dsix*4;
                     soma_y = dsiy*4;
+                    soma_z = dsiz*4;
 
                 }
             }
