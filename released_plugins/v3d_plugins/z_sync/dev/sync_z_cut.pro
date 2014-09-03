@@ -11,4 +11,5 @@ SOURCES	+= sync_z_cut_plugin.cpp
 SOURCES	+= $$VAA3DPATH/v3d_main/basic_c_fun/v3d_message.cpp
 
 TARGET	= $$qtLibraryTarget(sync_z_cut)
-DESTDIR	= D:\VAA3D_STUFF\vaa3d_win7_32bit_v2.707\plugins\sync_z_cut
+DESTDIR = $$VAA3DPATH/bin/plugins/sync_z_cut
+#DESTDIR	= D:\VAA3D_STUFF\vaa3d_win7_32bit_v2.707\plugins\sync_z_cut
