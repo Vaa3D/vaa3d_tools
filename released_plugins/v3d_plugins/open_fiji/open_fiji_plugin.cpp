@@ -107,7 +107,7 @@ void call_open_using_imagej(bool ismenu, QString inputfile, QString savefile,V3D
                  QString fijiPath = imagej_binary_file.append("/Contents/MacOS/ImageJ-macosx");
         #elif defined(Q_OS_LINUX)
         // linux
-                 QString fijiPath = imagej_binary_file.append("/ImageJ-linux64";
+                 QString fijiPath = imagej_binary_file.append("/ImageJ-linux64");
         #elif defined(Q_OS_WIN32)
                //32 bit windows
                  QString fijiPath = imagej_binary_file.append("/ImageJ-win32.exe");
