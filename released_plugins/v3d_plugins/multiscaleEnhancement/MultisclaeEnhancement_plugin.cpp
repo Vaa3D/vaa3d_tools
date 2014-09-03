@@ -2109,6 +2109,8 @@ bool processImage_detect_soma(const V3DPluginArgList & input, V3DPluginArgList &
 
     unsigned char* Enhancement_soma = 0;
     enhancementWithsoma(callback,(unsigned char *)data1d_region,(unsigned char*)data1d_enhanced,sz_enhanced,1,(unsigned char *&)Enhancement_soma);
+    string image_nosoma = fn +("_nosoma.raw");
+    rename(fn.c_str(),image_nosoma.c_str());
     simple_saveimage_wrapper(callback,fn.c_str(), (unsigned char *)Enhancement_soma, sz_enhanced, 1);
 
     ImageMarker S;
@@ -2844,6 +2846,8 @@ template <class T> void enhancementWithsoma(V3DPluginCallback2 &callback,
     {
         soma_x = listLandmarks.at(0).x;
         soma_y = listLandmarks.at(0).y;
+        soma_z = listLandmarks.at(0).z;
+
     }
     printf("\n soma location is (%d, %d, %d)\n\n", soma_x,soma_y,soma_z);
 
@@ -2853,7 +2857,7 @@ template <class T> void enhancementWithsoma(V3DPluginCallback2 &callback,
     V3DLONG pagesz = N*M*P;
     V3DLONG offsetc = (c-1)*pagesz;
 
-    double th_soma =  data1d[offsetc + soma_z*M*N + soma_y*N + soma_x] - 20;
+    double th_soma =  data1d[offsetc + soma_z*M*N + soma_y*N + soma_x] - 5;
 
     V3DLONG xb = soma_x-200; if(xb<0) xb = 0;
     V3DLONG xe = soma_x+200; if(xe>=N-1) xe = N-1;
