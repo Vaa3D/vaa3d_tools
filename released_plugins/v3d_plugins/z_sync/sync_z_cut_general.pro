@@ -10,4 +10,4 @@ SOURCES	+= sync_z_cut_plugin.cpp
 SOURCES	+= $$VAA3DPATH/basic_c_fun/v3d_message.cpp
 
 TARGET	= $$qtLibraryTarget(sync_z_cut)
-DESTDIR	= $$VAA3DPATH/../bin/plugins/sync_z_cut
+DESTDIR	= $$VAA3DPATH/../bin/plugins/Sync_Views/sync_z_cut
