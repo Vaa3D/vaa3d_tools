@@ -17,7 +17,7 @@
 #include "../istitch/y_imglib.h"
 
 
-#include "my_surf_objs.h"
+#include "../neurontracing_vn2/app2/my_surf_objs.h"
 
 
 #define WANT_STREAM       // include iostream and iomanipulators
