@@ -2921,8 +2921,8 @@ template <class T> void enhancementWithsoma(V3DPluginCallback2 &callback,
         return;
     }
 
-    remove(temp_soma.toStdString().c_str());
-    remove(temp_gsdtsoma.toStdString().c_str());
+   // remove(temp_soma.toStdString().c_str());
+   // remove(temp_gsdtsoma.toStdString().c_str());
 
     int Th_gsdt = 50; //was 50
 
