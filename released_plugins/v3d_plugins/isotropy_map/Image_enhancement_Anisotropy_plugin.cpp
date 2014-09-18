@@ -292,10 +292,12 @@ void processImage(V3DPluginCallback2 &callback, QWidget *parent, int flag)
         {
             c = QInputDialog::getInteger(parent, "Channel",
                                          "Enter channel NO:",
-                                         1, 1, sc, 1, &ok1);
+                                         1, 1, sc, 1, &ok2);
         }
     }
 
+    if(!ok2)
+        return;
     c = c-1;
 
     V3DLONG offsetc = (c)*pagesz;
