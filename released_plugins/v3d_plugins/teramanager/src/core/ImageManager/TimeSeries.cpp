@@ -26,7 +26,7 @@ TimeSeries::TimeSeries(const char *rootDir, std::string frames_format /* = "" */
         std::list<std::string> entries;
         if (!(cur_dir=opendir(root_dir)))
             throw iim::IOException(iim::strprintf("in TimeSeries::TimeSeries(): cannot open folder \"%s\"", root_dir).c_str());
-        std::string pattern = iim::TIME_FRAME_PREFIX + "\%d";
+        std::string pattern = iim::TIME_FRAME_PREFIX + "%d";
         while ((entry=readdir(cur_dir)))
         {
             int number = 0;
@@ -128,8 +128,8 @@ TimeSeries::TimeSeries(const char *rootDir, std::string frames_format /* = "" */
     initChannels();
 
     t0 = 0;
-    t1 = frames.size()-1;
-    DIM_T = frames.size();
+    t1 = (int)(frames.size()-1);
+    DIM_T = (int)(frames.size());
 }
 
 TimeSeries::~TimeSeries(void) throw (iim::IOException)

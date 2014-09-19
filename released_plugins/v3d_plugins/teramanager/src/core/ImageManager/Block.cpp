@@ -445,7 +445,7 @@ Rect_t* Block::Intersects(const Rect_t& area)
 
 Segm_t* Block::Intersects(int D0, int D1) {
 
-	if ( D0 >= BLOCK_ABS_D[N_BLOCKS-1]+BLOCK_SIZE[N_BLOCKS-1] || D1 < 0 )
+	if ( D0 >= BLOCK_ABS_D[N_BLOCKS-1]+(int)(BLOCK_SIZE[N_BLOCKS-1]) || D1 < 0 )
 		// there is no intersection
 		return NULL;
 

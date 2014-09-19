@@ -861,7 +861,7 @@ real32* TiledVolume::loadSubvolume(int V0,int V1, int H0, int H1, int D0, int D1
 
 	iim::uint8 *data = loadSubvolume_to_UINT8(V0,V1,H0,H1,D0,D1,&channels,BYTESxCHAN*8);
 
-	//conversion from unsigned char to real_t
+	//conversion from unsigned char to iom::real_t
 
 	if (DIM_C == 2 || DIM_C > 3) // only monocromatic or RGB images are supported
 	{
@@ -1066,7 +1066,7 @@ iim::uint8* TiledVolume::loadSubvolume_to_UINT8(int V0,int V1, int H0, int H1, i
 								slice_fullpath,
 								sV0,sV1,sH0,sH1,sD0,sD1,
 								(unsigned char *)subvol,
-								sbv_bytes_chan, // this is native rtype, it has substituted sizeof(iim::uint8)
+								(int)sbv_bytes_chan, // this is native rtype, it has substituted sizeof(iim::uint8)
 								bH0+bV0*sbv_width+bD0*sbv_width*sbv_height,
 								sbv_width,
 								sbv_width*sbv_height,

@@ -90,8 +90,8 @@ void iim::imProgressBar::update(float new_progress_value, const char* new_progre
 
     if(new_progress_value!=0)
     {
-        minutes_remaining = (proctime + TIME(0))*(100.0-progress_value)/(progress_value*60.0);
-        seconds_remaining = (proctime + TIME(0))*(100.0-progress_value)/(progress_value);
+        minutes_remaining = (int)((proctime + TIME(0))*(100.0-progress_value)/(progress_value*60.0));
+        seconds_remaining = (int)((proctime + TIME(0))*(100.0-progress_value)/(progress_value));
     }
 }
 
@@ -118,7 +118,7 @@ void iim::imProgressBar::show(bool toConverter /* = true */)
     printf("%d%%\t",(int)(progress_value));
     for(int i=1; i<=progress_value; i++)
             printf("*");
-    for(int i=progress_value; i<100; i++)
+    for(int i=(int)progress_value; i<100; i++)
             printf(":");
     printf("\n\n");
     #endif

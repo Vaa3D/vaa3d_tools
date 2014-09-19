@@ -129,16 +129,16 @@ char *Tiff3DFmtMngr::load2SubStack ( void *fhandle, unsigned char *img, sint64 *
 							 int datatype, int b_swap, int header_len ) {
 	char *err_msg;
 	unsigned char *img_t = new unsigned char[sz[0] * sz[1] * (endz - startz + 1) * sz[3] * datatype];
-	if ( (err_msg = readTiff3DFile2Buffer(fhandle,img_t,sz[0],sz[1],startz,endz)) != 0 ) {
+	if ( (err_msg = readTiff3DFile2Buffer(fhandle,img_t,(uint32)sz[0],(uint32)sz[1],(uint32)startz,(uint32)endz)) != 0 ) {
 		delete [] img_t;
 		return err_msg;      
 	}
 	
 	sint64 s_stridej = sz[0];
 	sint64 s_strideij = sz[0] * sz[1];
-	int dimi = endy - starty + 1;
-	int dimj = endx - startx + 1;
-	int dimk = endz - startz + 1;
+	int dimi = (int)(endy - starty + 1);
+	int dimj = (int)(endx - startx + 1);
+	int dimk = (int)(endz - startz + 1);
 	
 	if ( sz[3] == 1 ) { // single channel Tiff
 		VirtualFmtMngr::copyBlock2SubBuf(

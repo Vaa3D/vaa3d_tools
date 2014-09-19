@@ -189,7 +189,7 @@ char *initTiff3DFile ( char *filename, unsigned int sz0, unsigned int sz1, unsig
     }
 
 
-	check = TIFFWriteEncodedStrip(output, 0, fakeData, XSIZE * YSIZE);
+	check = (int)TIFFWriteEncodedStrip(output, 0, fakeData, XSIZE * YSIZE);
 	if (!check) {
 		return ((char *) "Cannot write encoded strip to file.");
     }
@@ -245,10 +245,8 @@ char *appendSlice2Tiff3DFile ( char *filename, int slice, unsigned char *img, un
 }
 
 char *readTiff3DFile2Buffer ( char *filename, unsigned char *img, unsigned int img_width, unsigned int img_height, unsigned int first, unsigned int last ) {
-	uint32 rps;
-    uint16 spp, bpp, photo, comp, planar_config;
+
     TIFF *input;
-    int check, StripsPerImage,LastStripSize;
 
 	input=TIFFOpen(filename,"r");
 	if (!input)
@@ -344,11 +342,11 @@ char *readTiff3DFile2Buffer ( void *fhandler, unsigned char *img, unsigned int i
 
 		page++;
 	
-	}while ( page < (last-first+1) && TIFFReadDirectory(input));//while (TIFFReadDirectory(input));
+	}while ( page < static_cast<int>(last-first+1) && TIFFReadDirectory(input));//while (TIFFReadDirectory(input));
 
 	//TIFFClose(input);
 
-	if ( page < (last-first+1) ){
+	if ( page < static_cast<int>(last-first+1) ){
 		return ((char *) "Cannot read all the pages.");
 	}
 

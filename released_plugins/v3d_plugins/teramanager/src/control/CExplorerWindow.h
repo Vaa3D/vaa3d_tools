@@ -60,6 +60,7 @@ class teramanager::CExplorerWindow : public QWidget
         bool toBeClosed;                //true when the current window is marked as going to be closed
         bool isActive;                  //false when the current window is set as not active (e.g. when after zooming-in/out)
         bool isReady;                   //true when current window is ready for receiving user inputs (i.e. all image data have been loaded)
+        bool has_double_clicked;        //true when a double click event has been just catched (will be set to false when the double click is managed)
         int zoomHistory[ZOOM_HISTORY_SIZE];//last 4 zoom values
         int V0_sbox_min, V0_sbox_val;   //to save the state of subvolume spinboxes when the current window is hidden
         int V1_sbox_max, V1_sbox_val;   //to save the state of subvolume spinboxes when the current window is hidden

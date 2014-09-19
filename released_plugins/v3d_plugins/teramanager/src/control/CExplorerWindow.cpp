@@ -323,6 +323,7 @@ CExplorerWindow::CExplorerWindow(V3DPluginCallback2 *_V3D_env, int _resIndex, it
     this->imgData = _imgData;
     this->isReady = false;
     this->waitingFor5D = false;
+    this->has_double_clicked = false;
     this->scribbling = false;
     char ctitle[1024];
     sprintf(ctitle, "ID(%d), Res(%d x %d x %d),Volume X=[%d,%d], Y=[%d,%d], Z=[%d,%d], T=[%d,%d], %d channels", ID, CImport::instance()->getVolume(volResIndex)->getDIM_H(),
@@ -599,6 +600,9 @@ bool CExplorerWindow::eventFilter(QObject *object, QEvent *event)
                                          "Please terminate the \"Proofreading\" mode and try again.");
                 return true;
             }
+
+            // set double click flag
+            has_double_clicked = true;
 
             QMouseEvent* mouseEvt = (QMouseEvent*)event;
 
@@ -1968,9 +1972,12 @@ void CExplorerWindow::invokedFromVaa3D(v3d_imaging_paras* params /* = 0 */)
         if(forceZoomIn)
             forceZoomIn = false;
 
-        if(volResIndex != CImport::instance()->getResolutions()-1 &&   //do nothing if highest resolution has been reached
-           isZoomDerivativePos())                                      //accepting zoom-in only when zoom factor derivative is positive
+        if(volResIndex != CImport::instance()->getResolutions()-1 &&   // do nothing if highest resolution has been reached
+           ( isZoomDerivativePos() || has_double_clicked))             // accept zoom-in only when zoom factor derivative is positive or user has double clicked
         {
+            // reset double click status
+            has_double_clicked = false;
+
             //trying caching if next view exists
             if(next)
             {

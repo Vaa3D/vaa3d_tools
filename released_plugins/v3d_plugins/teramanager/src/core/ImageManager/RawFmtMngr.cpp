@@ -397,7 +397,7 @@ char *loadRaw2Metadata ( char * filename, V3DLONG * &sz, int &datatype, int &b_s
 	}
 
 	char endianCodeData;
-	int dummy = fread(&endianCodeData, 1, 1, fid);
+	int dummy = (int)fread(&endianCodeData, 1, 1, fid);
 	if (endianCodeData!='B' && endianCodeData!='L')
 	{
 		fclose(fid);
@@ -417,7 +417,7 @@ char *loadRaw2Metadata ( char * filename, V3DLONG * &sz, int &datatype, int &b_s
 	b_swap = (endianCodeMachine==endianCodeData)?0:1;
 
 	short int dcode = 0;
-	dummy = fread(&dcode, 2, 1, fid); /* because I have already checked the file size to be bigger than the header, no need to check the number of actual bytes read. */
+	dummy = (int)fread(&dcode, 2, 1, fid); /* because I have already checked the file size to be bigger than the header, no need to check the number of actual bytes read. */
 	if (b_swap)
 		swap2bytes((void *)&dcode);
 
@@ -570,8 +570,8 @@ char *loadRaw2SubStack ( void *fhandle, unsigned char *img, V3DLONG *sz,
 			{
 				rewind(fid);
 				fseek(fid, (long)(head+(c*pgsz1 + k*pgsz2 + j*pgsz3 + startx)*unitSize), SEEK_SET);
-				int dummy = ftell(fid);	
-				dummy = fread(img+(c*cn+(k-startz)*kn + (j-starty)*tmpw)*unitSize,unitSize,tmpw,fid);
+				int dummy = (int)ftell(fid);	
+				dummy = (int)fread(img+(c*cn+(k-startz)*kn + (j-starty)*tmpw)*unitSize,unitSize,tmpw,fid);
 			}
 		}
 	}
@@ -686,7 +686,7 @@ char *loadRaw2WholeStack ( char * filename, unsigned char * & img, V3DLONG * & s
 	}
 
 	char endianCodeData;
-	int dummy = fread(&endianCodeData, 1, 1, fid);
+	int dummy = (int)fread(&endianCodeData, 1, 1, fid);
 	printf("The data endian code is [%c]\n", endianCodeData);
 	if (endianCodeData!='B' && endianCodeData!='L')
 	{
@@ -711,7 +711,7 @@ char *loadRaw2WholeStack ( char * filename, unsigned char * & img, V3DLONG * & s
 
 
 	short int dcode = 0;
-	dummy = fread(&dcode, 2, 1, fid); /* because I have already checked the file size to be bigger than the header, no need to check the number of actual bytes read. */
+	dummy = (int)fread(&dcode, 2, 1, fid); /* because I have already checked the file size to be bigger than the header, no need to check the number of actual bytes read. */
 	if (b_swap)
 		swap2bytes((void *)&dcode);
 
@@ -1153,8 +1153,8 @@ char *copyRawFileBlock2Buffer ( char *filename, int sV0, int sV1, int sH0, int s
 				{
 					rewind(fid);
 					fseek(fid, (long)(head+(c*pgsz1 + k*pgsz2 + j*pgsz3 + startx)*unitSize), SEEK_SET);
-					int dummy = ftell(fid);	
-					dummy = fread(buftmp_j,unitSize,tmpw,fid);
+					int dummy = (int)ftell(fid);	
+					dummy = (int)fread(buftmp_j,unitSize,tmpw,fid);
 
 					// swap the bytes: this code has not be checked yey
 					if (unitSize==2)
@@ -1184,8 +1184,8 @@ char *copyRawFileBlock2Buffer ( char *filename, int sV0, int sV1, int sH0, int s
 				{
 					rewind(fid);
 					fseek(fid, (long)(head+(c*pgsz1 + k*pgsz2 + j*pgsz3 + startx)*unitSize), SEEK_SET);
-					int dummy = ftell(fid);	
-					dummy = fread(buftmp_j,unitSize,tmpw,fid);
+					int dummy = (int)ftell(fid);	
+					dummy = (int)fread(buftmp_j,unitSize,tmpw,fid);
 				}
 			}
 		}
@@ -1287,8 +1287,8 @@ char *streamer_dostep ( Streamer_Descr_t *streamer, unsigned char *buffer2 ) {
 				// copy one stripe
 				rewind(fid);
 				fseek(fid,(long)postmp,SEEK_SET);
-				int dummy = ftell(fid);	
-				dummy = fread(buftmp,unitSize,streamer->bDescr[i].width,fid);
+				int dummy = (int)ftell(fid);	
+				dummy = (int)fread(buftmp,unitSize,streamer->bDescr[i].width,fid);
 
 				// WARNING: code for testing
 				if ( buffer2 ) { 
