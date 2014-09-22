@@ -27,12 +27,12 @@ use_static_libs{
         INCLUDEPATH += ../teramanager/include/opencv
         INCLUDEPATH += ../teramanager/include
     mac{
-        LIBS += -L../teramanager/lib/opencv/mac_x86_64
-        LIBS += -L../teramanager/lib/opencv/mac_x86_64/3rdparty
+        LIBS += -L"$$_PRO_FILE_PWD_/../teramanager/lib/opencv/mac_x86_64"
+        LIBS += -L"$$_PRO_FILE_PWD_/../teramanager/lib/opencv/mac_x86_64/3rdparty"
     }
     unix:!mac{
-        LIBS += -L../teramanager/lib/opencv/unix_x86_64
-        LIBS += -L../teramanager/lib/opencv/unix_x86_64/3rdparty
+        LIBS += -L"$$_PRO_FILE_PWD_/../teramanager/lib/opencv/unix_x86_64"
+        LIBS += -L"$$_PRO_FILE_PWD_/../teramanager/lib/opencv/unix_x86_64/3rdparty"
     }
     win32{
         #WARNING! These precompiled libraries must match with your VC (vc9, vc10 or vc11) compiler!
@@ -238,7 +238,7 @@ SOURCES += ./src/presentation/QPrefixSuffixLineEdit.cpp
 
 #set up target
 TARGET	= $$qtLibraryTarget(terastitcherplugin)
-DESTDIR	= ../../../bin/plugins/image_stitching/terastitcher
+DESTDIR	= "$$_PRO_FILE_PWD_/../../../bin/plugins/image_stitching/terastitcher"
 #DESTDIR	= $$V3DBUILDPATH/../v3d/Windows_MSVC_64/plugins/image_stitching/terastitcher
 
 
