@@ -160,6 +160,7 @@ PTabImport::PTabImport(QMyTabWidget* _container, int _tab_index) : QWidget(), co
         vol_format_cbox->setItemData(i, Qt::AlignCenter, Qt::TextAlignmentRole);
 //    vol_format_cbox->setVisible(false);
     sparsedata_checkbox = new QCheckBox("Sparse data");
+    sparsedata_checkbox->setFont(QFont("", 8));
 //    sparsedata_checkbox->setVisible(false);
 
     //info panel widgets
@@ -251,13 +252,15 @@ PTabImport::PTabImport(QMyTabWidget* _container, int _tab_index) : QWidget(), co
     QHBoxLayout* import_row_1 = new QHBoxLayout();
     path_field->setFixedWidth(430);
     import_row_1->addWidget(path_field);
-    import_row_1->addWidget(voldir_button, 1);
+    voldir_button->setFixedWidth(170);
+    import_row_1->addWidget(voldir_button);
     import_row_1->addWidget(projfile_button, 1);
     // import form: row 2
     QHBoxLayout* import_row_2 = new QHBoxLayout();
     regex_field->setFixedWidth(430);
     import_row_2->addWidget(regex_field);
-    import_row_2->addWidget(imin_plugin_cbox, 1);
+    imin_plugin_cbox->setFixedWidth(170);
+    import_row_2->addWidget(imin_plugin_cbox);
     import_row_2->addWidget(rescan_checkbox, 1);
     // import form - reimport panel
     QWidget* reimport_panel = new QWidget();
@@ -274,7 +277,8 @@ PTabImport::PTabImport(QMyTabWidget* _container, int _tab_index) : QWidget(), co
     axes_row->setLayout(axes_layout);
     axes_row->setFixedWidth(430);
     reimport_panel_layout_row1->addWidget(axes_row);
-    reimport_panel_layout_row1->addWidget(vol_format_cbox, 1);
+    vol_format_cbox->setFixedWidth(170);
+    reimport_panel_layout_row1->addWidget(vol_format_cbox);
     reimport_panel_layout_row1->addWidget(sparsedata_checkbox, 1);
     reimport_panel_layout->addLayout(reimport_panel_layout_row1);
     // import form - reimport panel - row 2
