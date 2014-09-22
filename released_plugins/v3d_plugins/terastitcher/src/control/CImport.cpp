@@ -29,8 +29,8 @@
 #include "CImport.h"
 #include "src/presentation/PTabImport.h"
 #include "src/presentation/PMain.h"
-#include "../core/VolumeManager/vmBlockVolume.h"
-#include "../core/VolumeManager/vmStackedVolume.h"
+#include "../core/volumemanager/vmBlockVolume.h"
+#include "../core/volumemanager/vmStackedVolume.h"
 #include "IM_config.h"
 
 using namespace terastitcher;
