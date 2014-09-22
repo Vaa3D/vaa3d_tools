@@ -33,7 +33,7 @@
 
 #include <QtGui>
 #include <v3d_interface.h>
-#include "MyException.h"
+#include "iomanager.config.h"
 
 //defining TeraStitcher plugin interface
 namespace terastitcher

@@ -80,7 +80,7 @@
 #define S_RESTORE_Z_DIRECTION 3			// ''
 #define S_DEFAULT_RESTORE_DIRECTION 1	//enabled restoring direction
 //#define S_RESTORE_VZ					//if defined, restoring along Z will be performed contextually to vertical direction
-#define S_MIN_PROF_VAL ((real_t) 1e-5)	// minimum profile value (to be used when profile is null)
+#define S_MIN_PROF_VAL ((iom::real_t) 1e-5)	// minimum profile value (to be used when profile is null)
 #define S_DESC_FILE_NAME "stk_descs.dsc"//file name of illumination maps to load/save from/to disc
 
 #endif

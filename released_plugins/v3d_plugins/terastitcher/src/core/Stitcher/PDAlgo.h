@@ -29,7 +29,7 @@
 #define PAIRWISE_DISPLACEMENT_ALGORITHM_H
 
 #include "Displacement.h"
-#include "IOManager_defs.h"
+#include "iomanager.config.h"
 
 class PDAlgo
 {
@@ -55,10 +55,10 @@ class PDAlgo
 		* <overlap>				: expected overlap between the given stacks along the given direction.  This value can
 		*						  be used to determine the region of interest where the overlapping occurs.
 		**************************************************************************************************************/
-		virtual Displacement* execute(real_t *stk_A, uint32 A_dim_V, uint32 A_dim_H, uint32 A_dim_D,
-									  real_t *stk_B, uint32 B_dim_V, uint32 B_dim_H, uint32 B_dim_D,
-									  uint32 displ_max_V, uint32 displ_max_H, uint32 displ_max_D,
-									  direction overlap_direction, uint32 overlap) throw (MyException) = 0;
+		virtual Displacement* execute(iom::real_t *stk_A, iom::uint32 A_dim_V, iom::uint32 A_dim_H, iom::uint32 A_dim_D,
+									  iom::real_t *stk_B, iom::uint32 B_dim_V, iom::uint32 B_dim_H, iom::uint32 B_dim_D,
+									  iom::uint32 displ_max_V, iom::uint32 displ_max_H, iom::uint32 displ_max_D,
+									  direction overlap_direction, iom::uint32 overlap) throw (iom::exception) = 0;
 
 		//static method which is responsible to instance and return the algorithm of the given type
 		static PDAlgo* instanceAlgorithm(int _type);

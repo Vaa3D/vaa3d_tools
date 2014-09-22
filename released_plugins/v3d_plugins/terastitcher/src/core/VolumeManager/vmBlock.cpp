@@ -25,6 +25,24 @@
 *       specific prior written permission.
 ********************************************************************************************************************************************************************************************/
 
+/******************
+*    CHANGELOG    *
+*******************
+* 2014-09-09. Alessandro. @FIXED 'getXML()' method to deal with empty stacks.
+* 2014-09-09. Alessandro. @BUG in 'loadImageStack()'. 'first_file' and 'last_file' are set to '-1' by default. But here, they are never checked nor corrected. 
+* 2014-09-09. Alessandro. @FIXED 'loadImageStack()' method to deal with empty tiles.
+* 2014-09-09. Alessandro. @TODO add support for sparse tiles.
+* 2014-09-09. Alessandro. @FIXED 'init()' method to deal with empty tiles.
+* 2014-09-05. Alessandro. @ADDED 'z_end' parameter in 'loadXML()' method to support sparse data feature.
+* 2014-09-05. Alessandro & Iannello. @MODIFIED 'init()' and 'loadImageStack()' methods to deal with IO plugins
+* 2014-08-30. Alessandro. @ADDED regular expression based filenames matching in 'init()' method.
+* 2014-08-30. Alessandro. @FIXED all error messages starting with 'Stack...' and corrected to 'Block...'.
+* 2014-08-30. Alessandro. @FIXED error messages in the 'init()' method (see checks of N_BYTESxCHAN and N_CHANS).
+* 2014-08-25. Alessandro. @ADDED missing 'throw (iom::iom::exception)' statement in the 'loadImageStack()' method's signature.
+* 2014-08-25. Alessandro. @REMOVED unused 'entry_k' variable declared in 'init()'.
+*/
+
+
 #include "vmBlock.h"
 #include "vmBlockVolume.h"
 #include "StackStitcher.h"
@@ -37,33 +55,32 @@
 #else
 	#include <dirent.h>
 #endif
-#include "tiffio.h"
+#include "IOPluginAPI.h"
+#include <boost/xpressive/xpressive.hpp>
+
 
 using namespace std;
+using namespace iom;
 
 //CONSTRUCTOR WITH ARGUMENTS
 Block::Block(BlockVolume* _CONTAINER, int _ROW_INDEX, int _COL_INDEX, const char* _DIR_NAME)
 	: VirtualStack()
 {
 	#if VM_VERBOSE > 3
-	printf("\t\t\t\tin Stack::Stack(StackedVolume* _CONTAINER, int _ROW_INDEX=%d, int _COL_INDEX=%d, char* _DIR_NAME=%s)\n",
+    printf("\t\t\t\tin Block::Stack(StackedVolume* _CONTAINER, int _ROW_INDEX=%d, int _COL_INDEX=%d, char* _DIR_NAME=%s)\n",
 		_ROW_INDEX, _COL_INDEX, _DIR_NAME);
 	#endif
 
-	this->CONTAINER = _CONTAINER;
-	this->DIR_NAME = new char[strlen(_DIR_NAME)+1];
-	strcpy(this->DIR_NAME, _DIR_NAME);
-	this->ROW_INDEX = _ROW_INDEX;
-	this->COL_INDEX = _COL_INDEX;
-	STACKED_IMAGE = NULL;
-	FILENAMES = NULL;
-	HEIGHT = WIDTH = DEPTH = -1;
-	ABS_V = ABS_H = ABS_D = -1;
-	stitchable = false;
+    CONTAINER = _CONTAINER;
+    DIR_NAME = new char[strlen(_DIR_NAME)+1];
+    strcpy(DIR_NAME, _DIR_NAME);
+    ROW_INDEX = _ROW_INDEX;
+    COL_INDEX = _COL_INDEX;
+
 
 	N_BLOCKS = -1;
-	BLOCK_SIZE = NULL;
-	BLOCK_ABS_D = NULL;
+    BLOCK_SIZE = 0;
+    BLOCK_ABS_D = 0;
 	N_CHANS = 1;                 
 	N_BYTESxCHAN = 1;      
 
@@ -74,7 +91,7 @@ Block::Block(BlockVolume* _CONTAINER, int _ROW_INDEX, int _COL_INDEX, FILE* bin_
 	: VirtualStack()
 {
 	#if VM_VERBOSE > 3
-	printf("\t\t\t\tin Stack::Stack(StackedVolume* _CONTAINER, int _ROW_INDEX=%d, int _COL_INDEX=%d, FILE* bin_file)\n",
+    printf("\t\t\t\tin Block::Stack(StackedVolume* _CONTAINER, int _ROW_INDEX=%d, int _COL_INDEX=%d, FILE* bin_file)\n",
 		_ROW_INDEX, _COL_INDEX);
 	#endif
 
@@ -82,16 +99,9 @@ Block::Block(BlockVolume* _CONTAINER, int _ROW_INDEX, int _COL_INDEX, FILE* bin_
 	ROW_INDEX = _ROW_INDEX;
 	COL_INDEX = _COL_INDEX;
 
-	DIR_NAME = NULL;
-	STACKED_IMAGE = NULL;
-	FILENAMES = NULL;
-	HEIGHT = WIDTH = DEPTH = -1;
-	ABS_V = ABS_H = ABS_D = -1;
-	stitchable = false;
-
 	N_BLOCKS = -1;
-	BLOCK_SIZE = NULL;
-	BLOCK_ABS_D = NULL;
+    BLOCK_SIZE = 0;
+    BLOCK_ABS_D = 0;
 	N_CHANS = 1;                 
 	N_BYTESxCHAN = 1;      
 
@@ -109,10 +119,8 @@ Block::~Block(void)
 	if (BLOCK_ABS_D)
 		delete[] BLOCK_ABS_D;
 
-	for(uint32 z=0; z<N_BLOCKS; z++)
+	for(int z=0; z<N_BLOCKS; z++)
 	{
-	//	if(STACKED_IMAGE[z])
-	//		cvReleaseMat(&STACKED_IMAGE[z]);
 		if(FILENAMES[z])
 			delete[] FILENAMES[z];
 	}
@@ -133,17 +141,15 @@ Block::~Block(void)
 void Block::init()
 {
 	#if VM_VERBOSE > 3
-	printf("\t\t\t\tin Stack[%d,%d]::init()\n",ROW_INDEX, COL_INDEX);
+    printf("\t\t\t\tin Block[%d,%d]::init()\n",ROW_INDEX, COL_INDEX);
 	#endif
 
 	//LOCAL variables
 	string tmp;
 	DIR *cur_dir_lev3;
 	dirent *entry_lev3;
-	list<string> entries_lev3;
-	list<string>::iterator entry_k;
+    list<string> entries_lev3;
 	string entry;
-	TIFF *input;
 
 	//opening stack directory
 	char abs_path[S_STATIC_STRINGS_SIZE];
@@ -152,16 +158,26 @@ void Block::init()
 	if (!cur_dir_lev3)
 	{
 		char errMsg[S_STATIC_STRINGS_SIZE];
-		sprintf(errMsg, "in Stack::init(): can't open directory \"%s\"", abs_path);
-		throw MyException(errMsg);
+        sprintf(errMsg, "in Block::init(): can't open directory \"%s\"", abs_path);
+		throw iom::exception(errMsg);
 	}
 
 	//scanning third level of hierarchy which entries need to be ordered alphabetically. This is done using STL.
 	while ((entry_lev3=readdir(cur_dir_lev3)))
 	{
 		tmp = entry_lev3->d_name;
-		if(tmp.compare(".") != 0 && tmp.compare("..") != 0 && tmp.find(".") != string::npos)
-			entries_lev3.push_back(tmp);
+        if(vm::IMG_FILTER_REGEX.empty())
+        {
+            if(tmp.compare(".") != 0 && tmp.compare("..") != 0 && tmp.find(".") != string::npos)
+                entries_lev3.push_back(tmp);
+        }
+        else
+        {
+            boost::xpressive::sregex rex = boost::xpressive::sregex::compile(vm::IMG_FILTER_REGEX.c_str());
+            boost::xpressive::smatch what;
+            if(boost::xpressive::regex_match(tmp, what, rex))
+               entries_lev3.push_back(tmp);
+        }
 	}
 	entries_lev3.sort();
 	N_BLOCKS = (int)entries_lev3.size();
@@ -169,12 +185,16 @@ void Block::init()
 	//closing dir
 	closedir(cur_dir_lev3);
 
-	//checking if current stack is not empty
+	// 2014-09-09. Alessandro. @FIXED to deal with empty tiles.
+	// if stack is empty...
 	if(N_BLOCKS == 0)
 	{
-		char msg[1000];
-		sprintf(msg,"in Stack[%d,%d]::init(): stack is empty", ROW_INDEX, COL_INDEX);
-		throw MyException(msg);
+		// ...and SPARSE_DATA option is active, then exit
+		if(vm::SPARSE_DATA)
+			return;
+		// ...otherwise throw an exception
+		else
+			throw iom::exception(vm::strprintf("in Block[%s]::init(): stack is empty", DIR_NAME).c_str());
 	}
 
 	//converting filenames_list (STL list of <string> objects) into FILENAMES (1-D array of C-strings)
@@ -188,98 +208,27 @@ void Block::init()
 	}
 	entries_lev3.clear();
 
-	//extracting HEIGHT and WIDTH attributes from first slice
-	char slice_fullpath[S_STATIC_STRINGS_SIZE];
-	sprintf(slice_fullpath, "%s/%s/%s", CONTAINER->getSTACKS_DIR(), DIR_NAME, FILENAMES[0]);
-
-
-	input=TIFFOpen(slice_fullpath,"r");
-	if (!input)
-    {
-		char msg[S_STATIC_STRINGS_SIZE];
-		sprintf(msg,"in Block[%d,%d]::init(): unable to open image \"%s\". Possible unsupported format or it isn't an image.\nSupported format is 3DTIFF", 
-			ROW_INDEX, COL_INDEX, slice_fullpath);
-		throw MyException(msg);
-    }
-
-	//TIFFGetField(input, TIFFTAG_IMAGEWIDTH, &WIDTH);
-	if (!TIFFGetField(input, TIFFTAG_IMAGEWIDTH, &WIDTH))
-    {
-		char msg[S_STATIC_STRINGS_SIZE];
-		sprintf(msg,"in Block[%d,%d]::init(): unable to determine WIDTH of image \"%s\".", ROW_INDEX, COL_INDEX, slice_fullpath);
-		throw MyException(msg);
-    }
-
-	//TIFFGetField(input, TIFFTAG_IMAGELENGTH, &HEIGHT);
-	if (!TIFFGetField(input, TIFFTAG_IMAGELENGTH, &HEIGHT))
-    {
-		char msg[S_STATIC_STRINGS_SIZE];
-		sprintf(msg,"in Block[%d,%d]::init(): unable to determine HEIGHT of image \"%s\".", ROW_INDEX, COL_INDEX, slice_fullpath);
-		throw MyException(msg);
-    }
-
-	if (!TIFFGetField(input, TIFFTAG_BITSPERSAMPLE, &N_BYTESxCHAN))
-	{
-		char msg[S_STATIC_STRINGS_SIZE];
-		sprintf(msg,"in Block[%d,%d]::init(): unable to determine HEIGHT of image \"%s\".", ROW_INDEX, COL_INDEX, slice_fullpath);
-		throw MyException(msg);
-	}
-	N_BYTESxCHAN /= 8;
-
-	if (!TIFFGetField(input, TIFFTAG_SAMPLESPERPIXEL, &N_CHANS)) 
-	{
-		char msg[S_STATIC_STRINGS_SIZE];
-		sprintf(msg,"in Block[%d,%d]::init(): unable to determine HEIGHT of image \"%s\".", ROW_INDEX, COL_INDEX, slice_fullpath);
-		throw MyException(msg);
-	}
-
-	//extracting DEPTH and other attributes from all blocks
+	// allocate memory
 	BLOCK_SIZE = new int[N_BLOCKS];
 	BLOCK_ABS_D = new int[N_BLOCKS];
 
-	BLOCK_ABS_D[0] = 0;
-
-	//Compute the number of slices of the first block as the number of pages in 3DTiff file
-	
-	BLOCK_SIZE[0]=0;
-	do {
-		BLOCK_SIZE[0]++;
-	} while (TIFFReadDirectory(input));
-	TIFFClose(input);//close first block
-
-	DEPTH=BLOCK_SIZE[0];
-	for ( int ib=1; ib<(int)N_BLOCKS; ib++ ) {
-		sprintf(slice_fullpath, "%s/%s/%s", CONTAINER->getSTACKS_DIR(), DIR_NAME, FILENAMES[ib]);
-		input=TIFFOpen(slice_fullpath,"r");
-		if (!input)
-		{
-			char msg[S_STATIC_STRINGS_SIZE];
-			sprintf(msg,"in Block[%d,%d]::init(): unable to open image \"%s\". Possible unsupported format or it isn't an image.\nSupported format is 3DTIFF", 
-				ROW_INDEX, COL_INDEX, slice_fullpath);
-			throw MyException(msg);
-		}
-		BLOCK_SIZE[ib]=0;
-		do {
-			BLOCK_SIZE[ib]++;
-		} while (TIFFReadDirectory(input));
-		TIFFClose(input);//close ib-th block
-
-		BLOCK_ABS_D[ib] = DEPTH;
+	// get blocks dimensions and compute DEPTH
+	// 2014-09-05. Alessandro & Iannello. @MODIFIED to deal with IO plugins
+	DEPTH=0;
+	for ( int ib=0; ib<(int)N_BLOCKS; ib++ ) 
+	{
+		iom::IOPluginFactory::getPlugin3D(iom::IMIN_PLUGIN)->readMetadata(
+			iom::strprintf("%s/%s/%s", CONTAINER->getSTACKS_DIR(), DIR_NAME, FILENAMES[ib]), 
+			WIDTH, HEIGHT, BLOCK_SIZE[ib], N_BYTESxCHAN, N_CHANS);
+        BLOCK_ABS_D[ib] = DEPTH; 
 		DEPTH += BLOCK_SIZE[ib];
 	}
 
-
-	//IplImage *img_tmp = cvLoadImage(slice_fullpath);
-	//if(!img_tmp)
-	//{
-	//	char msg[S_STATIC_STRINGS_SIZE];
-	//	sprintf(msg,"in Stack[%d,%d]::init(): unable to open image \"%s\". Possible unsupported format or it isn't an image.\nSupported formats are BMP, DIB, JPEG, JPG, JPE, PNG, PBM, PGM, PPM, SR, RAS, TIFF, TIF", 
-	//		ROW_INDEX, COL_INDEX, slice_fullpath);
-	//	throw MyException(msg);
-	//}
-	//HEIGHT = img_tmp->height;
-	//WIDTH  = img_tmp->width;
-	//cvReleaseImage(&img_tmp);
+	// 2014-09-09. Alessandro. @FIXED to deal with empty tiles.
+	// add to 'z_ranges' the full range
+	// @TODO: support sparsity along Z.
+	z_ranges.clear();
+	z_ranges.push_back(vm::interval<int>(0, DEPTH));
 }
 
 
@@ -288,7 +237,7 @@ void Block::init()
 void Block::binarizeInto(FILE* file)
 {
 	#if VM_VERBOSE > 3
-	printf("\t\t\t\tin Stack[%d,%d]::binarizeInto(...)\n",ROW_INDEX, COL_INDEX);
+    printf("\t\t\t\tin Block[%d,%d]::binarizeInto(...)\n",ROW_INDEX, COL_INDEX);
 	#endif
 
 	//LOCAL VARIABLES
@@ -319,10 +268,10 @@ void Block::binarizeInto(FILE* file)
 	fwrite(&N_BYTESxCHAN, sizeof(int), 1, file);
 }
 
-void Block::unBinarizeFrom(FILE* file) throw (MyException)
+void Block::unBinarizeFrom(FILE* file) throw (iom::exception)
 {
 	#if VM_VERBOSE > 3
-	printf("\t\t\t\tin Stack[%d,%d]::unBinarizeFrom(...)\n",ROW_INDEX, COL_INDEX);
+    printf("\t\t\t\tin Block[%d,%d]::unBinarizeFrom(...)\n",ROW_INDEX, COL_INDEX);
 	#endif
 
 	//LOCAL VARIABLES
@@ -333,50 +282,50 @@ void Block::unBinarizeFrom(FILE* file) throw (MyException)
 	fread_return_val = fread(&HEIGHT, sizeof(int), 1, file);
 	if(fread_return_val != 1) {
 		fclose(file);
-		throw MyException("in Stack::unBinarizeFrom(...): error while reading binary metadata file");
+        throw iom::exception("in Block::unBinarizeFrom(...): error while reading binary metadata file");
 	}
 	fread_return_val = fread(&WIDTH, sizeof(int), 1, file);
 	if(fread_return_val != 1) {
 		fclose(file);
-		throw MyException("in Stack::unBinarizeFrom(...): error while reading binary metadata file");
+        throw iom::exception("in Block::unBinarizeFrom(...): error while reading binary metadata file");
 	}
 	fread_return_val = fread(&DEPTH, sizeof(int), 1, file);
 	if(fread_return_val != 1) {
 		fclose(file);
-		throw MyException("in Stack::unBinarizeFrom(...): error while reading binary metadata file");
+        throw iom::exception("in Block::unBinarizeFrom(...): error while reading binary metadata file");
 	}
 	fread_return_val = fread(&ABS_V, sizeof(int), 1, file);
 	if(fread_return_val != 1) {
 		fclose(file);
-		throw MyException("in Stack::unBinarizeFrom(...): error while reading binary metadata file");
+        throw iom::exception("in Block::unBinarizeFrom(...): error while reading binary metadata file");
 	}
 	fread_return_val = fread(&ABS_H, sizeof(int), 1, file);
 	if(fread_return_val != 1) {
 		fclose(file);
-		throw MyException("in Stack::unBinarizeFrom(...): error while reading binary metadata file");
+        throw iom::exception("in Block::unBinarizeFrom(...): error while reading binary metadata file");
 	}
 	fread_return_val = fread(&ABS_D, sizeof(int), 1, file);
 	if(fread_return_val != 1) {
 		fclose(file);
-		throw MyException("in Stack::unBinarizeFrom(...): error while reading binary metadata file");
+        throw iom::exception("in Block::unBinarizeFrom(...): error while reading binary metadata file");
 	}
 
 	fread_return_val = fread(&str_size, sizeof(uint16), 1, file);
 	if(fread_return_val != 1) {
 		fclose(file);
-		throw MyException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
+		throw iom::exception("in Block::unBinarizeFrom(...): error while reading binary metadata file");
 	}
 	DIR_NAME = new char[str_size];
 	fread_return_val = fread(DIR_NAME, str_size, 1, file);
 	if(fread_return_val != 1) {
 		fclose(file);
-		throw MyException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
+		throw iom::exception("in Block::unBinarizeFrom(...): error while reading binary metadata file");
 	}
 
 	fread_return_val = fread(&N_BLOCKS, sizeof(int), 1, file);
 	if(fread_return_val != 1) {
 		fclose(file);
-		throw MyException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
+		throw iom::exception("in Block::unBinarizeFrom(...): error while reading binary metadata file");
 	}
 	FILENAMES = new char*[N_BLOCKS];
 	BLOCK_SIZE = new int[N_BLOCKS];
@@ -386,71 +335,94 @@ void Block::unBinarizeFrom(FILE* file) throw (MyException)
 		fread_return_val = fread(&str_size, sizeof(uint16), 1, file);
 		if(fread_return_val != 1) {
 			fclose(file);
-			throw MyException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
+			throw iom::exception("in Block::unBinarizeFrom(...): error while reading binary metadata file");
 		}
 		FILENAMES[i] = new char[str_size];
 		fread_return_val = fread(FILENAMES[i], str_size, 1, file);
 		if(fread_return_val != 1) {
 			fclose(file);
-			throw MyException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
+			throw iom::exception("in Block::unBinarizeFrom(...): error while reading binary metadata file");
 		}
 	
 		fread_return_val = fread(BLOCK_SIZE+i, sizeof(int), 1, file);
 		if(fread_return_val != 1) {
 			fclose(file);
-			throw MyException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
+			throw iom::exception("in Block::unBinarizeFrom(...): error while reading binary metadata file");
 		}
 
 		fread_return_val = fread(BLOCK_ABS_D+i, sizeof(int), 1, file);
 		if(fread_return_val != 1) {
 			fclose(file);
-			throw MyException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
+			throw iom::exception("in Block::unBinarizeFrom(...): error while reading binary metadata file");
 		}
 	}
 
 	fread_return_val = fread(&N_CHANS, sizeof(int), 1, file);
 	if(fread_return_val != 1) {
 		fclose(file);
-		throw MyException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
+		throw iom::exception("in Block::unBinarizeFrom(...): error while reading binary metadata file");
 	}
 
 	fread_return_val = fread(&N_BYTESxCHAN, sizeof(int), 1, file);
 	if(fread_return_val != 1) {
 		fclose(file);
-		throw MyException("in Block::unBinarizeFrom(...): error while reading binary metadata file");
+		throw iom::exception("in Block::unBinarizeFrom(...): error while reading binary metadata file");
 	}
 }
 
 
 //loads image stack from <first_file> to <last_file> extremes included, if not specified loads entire Stack
-real_t* Block::loadImageStack(int first_file, int last_file)
+iom::real_t* Block::loadImageStack(int first_file, int last_file) throw (iom::exception)
 {
 	#if VM_VERBOSE > 3
-	printf("\t\t\t\tin Stack[%d,%d]::loadImageStack(first_file = %d, last_file = %d)\n",ROW_INDEX, COL_INDEX, first_file, last_file);
+    printf("\t\t\t\tin Block[%d,%d]::loadImageStack(first_file = %d, last_file = %d)\n",ROW_INDEX, COL_INDEX, first_file, last_file);
 	#endif
-	int first, last, result;
+	int first, last;
 	float scale_factor;
 	char slice_fullpath[2000];
+
+	// 2014-09-09. Alessandro. @BUG. 'first_file' and 'last_file' are set to '-1' by default. But here, they are never checked nor corrected. 
+	// I added a very simple (but not complete) check here.
+	// Be careful if you want to adjust 'last_file' to 'DEPTH' when 'last_file == -1'. 'DEPTH' could be 0 if stack is empty.
+	if(first_file < 0 || last_file < 0 || first_file > last_file)
+		throw iom::exception(vm::strprintf("in Block[%s]::loadImageStack(): invalid file selection [%d,%d]", DIR_NAME, first_file, last_file).c_str());
+
+
+	// 2014-09-09. Alessandro. @FIXED 'loadImageStack()' method to deal with empty tiles.
+	// if stack is empty in the given range, just return a black image
+	if(isEmpty(first_file, last_file))
+	{
+		// allocate and initialize a black stack
+		uint64 image_size = static_cast<uint64>(WIDTH) * static_cast<uint64>(HEIGHT) * static_cast<uint64>(last_file-first_file+1);
+		STACKED_IMAGE = new iom::real_t[image_size];
+		for(uint64 k=0; k<image_size; k++)
+			STACKED_IMAGE[k] = 0;
+
+		return STACKED_IMAGE;
+	}
 
 	Segm_t *intersect_segm = Intersects(first_file, last_file);
 	unsigned char *data = new unsigned char[HEIGHT * WIDTH * (last_file-first_file+1) * N_BYTESxCHAN * N_CHANS];
 	unsigned char *temp = data;
 
-	for(int i = intersect_segm->ind0; i <= intersect_segm->ind1; i++){
+	for(int i = intersect_segm->ind0; i <= intersect_segm->ind1; i++)
+	{
 		first = (first_file > BLOCK_ABS_D[i]) ? first_file-BLOCK_ABS_D[i] : 0 ;
 		last = (last_file < BLOCK_ABS_D[i]+BLOCK_SIZE[i]-1) ?  last_file-BLOCK_ABS_D[i] : BLOCK_SIZE[i]-1 ;
 		sprintf(slice_fullpath, "%s/%s/%s", CONTAINER->getSTACKS_DIR(), DIR_NAME, FILENAMES[i]);
-		result=iom::IOManager::readTiffMultipage (slice_fullpath, WIDTH, HEIGHT, temp, first, last);
+
+		// 2014-09-05. Alessandro & Iannello. @MODIFIED to deal with IO plugins
+		iom::IOPluginFactory::getPlugin3D(iom::IMIN_PLUGIN)->readData(slice_fullpath, WIDTH, HEIGHT, temp, first, last);
+
 		temp +=  HEIGHT * WIDTH * (last-first+1) * N_BYTESxCHAN * N_CHANS;
 	}
 
-	//conversion from unsigned char to real_t
-
+	//conversion from unsigned char to iom::real_t
 	if (N_CHANS == 2 || N_CHANS > 3) // only monocromatic or RGB images are supported
 	{
 		char errMsg[2000];
 		sprintf(errMsg, "in Block[%d,%d]::loadImageStack(...): %d channels are not supported.", ROW_INDEX, COL_INDEX, N_CHANS);
-		throw MyException(errMsg);
+		throw iom::exception(errMsg);
 	}
 
 	if ( N_BYTESxCHAN == 1)
@@ -461,39 +433,39 @@ real_t* Block::loadImageStack(int first_file, int last_file)
 	{
 		char errMsg[2000];
 		sprintf(errMsg, "in Block[%d,%d]::loadImageStack(...): Too many bytes per channel (%d).", ROW_INDEX, COL_INDEX, N_BYTESxCHAN);
-		throw MyException(errMsg);
+		throw iom::exception(errMsg);
 	}
 
-	STACKED_IMAGE = new real_t[HEIGHT * WIDTH * (last_file-first_file+1)]; // this image is an intensity image (only one channel)
+	STACKED_IMAGE = new iom::real_t[HEIGHT * WIDTH * (last_file-first_file+1)]; // this image is an intensity image (only one channel)
 
 	int offset;
 
 	if ( N_CHANS == 1 ) {
 		for(int i = 0; i <HEIGHT * WIDTH * (last_file-first_file+1); i++)
-			STACKED_IMAGE[i] = (real_t) data[i]/scale_factor;
+			STACKED_IMAGE[i] = (iom::real_t) data[i]/scale_factor;
 	}
 	else { // conversion to an intensity image
-		if ( iom::CHANNEL_SELECTION == iom::ALL ) {
+		if ( iom::CHANS == iom::ALL ) {
 			char errMsg[2000];
 			sprintf(errMsg, "in Block[%d,%d]::loadImageStack(...): conversion from multi-channel to intensity images not supported.", ROW_INDEX, COL_INDEX);
-			throw MyException(errMsg);
+			throw iom::exception(errMsg);
 		}
-		else if ( iom::CHANNEL_SELECTION == iom::R ) {
+		else if ( iom::CHANS == iom::R ) {
 			offset = 0;
 		}
-		else if ( iom::CHANNEL_SELECTION == iom::G ) {
+		else if ( iom::CHANS == iom::G ) {
 			offset = 1;
 		}
-		else if ( iom::CHANNEL_SELECTION == iom::B ) {
+		else if ( iom::CHANS == iom::B ) {
 			offset = 2;
 		}
 		else {
 			char errMsg[2000];
 			sprintf(errMsg, "in Block[%d,%d]::loadImageStack(...): wrong value for parameter iom::CHANNEL_SELECTION.", ROW_INDEX, COL_INDEX);
-			throw MyException(errMsg);
+			throw iom::exception(errMsg);
 		}
 		for(int i = 0; i <HEIGHT * WIDTH * (last_file-first_file+1); i++)
-			STACKED_IMAGE[i] = (real_t) data[3*i + offset]/scale_factor;
+			STACKED_IMAGE[i] = (iom::real_t) data[3*i + offset]/scale_factor;
 	}
 
 	delete [] data;
@@ -503,19 +475,6 @@ real_t* Block::loadImageStack(int first_file, int last_file)
 
 	return STACKED_IMAGE;
 }
-
-//loads image stack from <first_file> to <last_file> extremes included, if not specified loads entire Stack
-//real_t* Block::loadImageStack(int first_file, int last_file)
-//{
-//	#if VM_VERBOSE > 3
-//	printf("\t\t\t\tin Stack[%d,%d]::loadImageStack(first_file = %d, last_file = %d)\n",ROW_INDEX, COL_INDEX, first_file, last_file);
-//	#endif
-//
-//	char base_path[2000];
-//	sprintf(base_path, "%s/%s", CONTAINER->getSTACKS_DIR(), DIR_NAME);
-//	STACKED_IMAGE=IOManager::loadImageStack(FILENAMES, depth, base_path,first_file, last_file,BLOCK_);
-//	return STACKED_IMAGE;
-//}
 
 //deallocates memory used by STACKED_IMAGE
 void Block::releaseImageStack()
@@ -530,7 +489,7 @@ void Block::releaseImageStack()
 TiXmlElement* Block::getXML()
 {
 	#if VM_VERBOSE > 3
-	printf("......in Stack[%d,%d]::getXML()\n",ROW_INDEX, COL_INDEX);
+    printf("......in Block[%d,%d]::getXML()\n",ROW_INDEX, COL_INDEX);
 	#endif
 
 	string blockSizes, blocksAbsD;
@@ -538,16 +497,20 @@ TiXmlElement* Block::getXML()
 
 	xml_representation->SetAttribute("N_BLOCKS",N_BLOCKS);
 
-#if __cplusplus == 201103L // C++11 compliant compiler
-	blockSizes.append(to_string(BLOCK_SIZE[0]));
-	blocksAbsD.append(to_string(BLOCK_ABS_D[0]));
-#else
+	// 2014-09-09. Alessandro. @FIXED 'getXML()' method to deal with empty stacks.
 	char str_buf[1000];
-	sprintf(str_buf,"%i",BLOCK_SIZE[0]);
-	blockSizes.append(str_buf);
-	sprintf(str_buf,"%i",BLOCK_ABS_D[0]);
-	blocksAbsD.append(str_buf);
-#endif
+	if(N_BLOCKS)
+	{
+		#if __cplusplus == 201103L // C++11 compliant compiler
+			blockSizes.append(to_string(BLOCK_SIZE[0]));
+			blocksAbsD.append(to_string(BLOCK_ABS_D[0]));
+		#else
+			sprintf(str_buf,"%i",BLOCK_SIZE[0]);
+			blockSizes.append(str_buf);
+			sprintf(str_buf,"%i",BLOCK_ABS_D[0]);
+			blocksAbsD.append(str_buf);
+		#endif
+	}
 
 	for(int j =1;j<N_BLOCKS;j++){
 		blockSizes.append(",");
@@ -600,10 +563,14 @@ TiXmlElement* Block::getXML()
 	return xml_representation;
 }
 
-void Block::loadXML(TiXmlElement *stack_node) throw (MyException)
+void Block::loadXML(
+	TiXmlElement *stack_node,
+	int z_end)					// 2014-09-05. Alessandro. @ADDED 'z_end' parameter to support sparse data feature
+								//			   Here 'z_end' identifies the range [0, z_end) that slices can span
+throw (iom::exception)
 {
 	#if VM_VERBOSE > 3
-	printf("\t\t\t\tin Stack[%d,%d]::loadXML(TiXmlElement *stack_node)\n",ROW_INDEX, COL_INDEX);
+    printf("\t\t\t\tin Block[%d,%d]::loadXML(TiXmlElement *stack_node)\n",ROW_INDEX, COL_INDEX);
 	#endif
 
 	stack_node->QueryIntAttribute("N_BLOCKS",&N_BLOCKS);
@@ -641,8 +608,8 @@ void Block::loadXML(TiXmlElement *stack_node) throw (MyException)
 	if(strcmp(stack_node->Attribute("DIR_NAME"), DIR_NAME) != 0)
 	{
 		char errMsg[2000];
-		sprintf(errMsg, "in Stack[%d,%d]::loadXML(...): Mismatch between xml file and %s in <DIR_NAME> field.", ROW_INDEX, COL_INDEX, VM_BIN_METADATA_FILE_NAME);
-		throw MyException(errMsg);
+        sprintf(errMsg, "in Block[%d,%d]::loadXML(...): Mismatch between xml file and %s in <DIR_NAME> field.", ROW_INDEX, COL_INDEX, vm::BINARY_METADATA_FILENAME.c_str());
+		throw iom::exception(errMsg);
 	}
 	TiXmlElement *NORTH_displacements = stack_node->FirstChildElement("NORTH_displacements");
 	for(TiXmlElement *displ_node = NORTH_displacements->FirstChildElement("Displacement"); displ_node; displ_node = displ_node->NextSiblingElement())
@@ -657,6 +624,14 @@ void Block::loadXML(TiXmlElement *stack_node) throw (MyException)
 	for(TiXmlElement *displ_node = WEST_displacements->FirstChildElement("Displacement"); displ_node; displ_node = displ_node->NextSiblingElement())
 		WEST.push_back(Displacement::getDisplacementFromXML(displ_node));
 
+	// 2014-09-09. Alessandro. @FIXED to deal with empty tiles.
+	// if tile is not empty, add to 'z_ranges' the full range
+	// @TODO: support sparsity along Z.
+	if(N_BLOCKS > 0)
+	{
+		z_ranges.clear();
+		z_ranges.push_back(vm::interval<int>(0, z_end));
+	}
 }
 
 Segm_t* Block::Intersects(int D0, int D1) {

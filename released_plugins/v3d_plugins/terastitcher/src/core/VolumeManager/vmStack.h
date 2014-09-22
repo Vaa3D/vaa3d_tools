@@ -25,11 +25,18 @@
 *       specific prior written permission.
 ********************************************************************************************************************************************************************************************/
 
+/******************
+*    CHANGELOG    *
+*******************
+* 2014-09-05. Alessandro. @ADDED 'z_end' parameter in 'loadXML()' method to support sparse data feature.
+* 2014-09-01. Alessandro. @ADDED 'compute_z_ranges()' method to compute z-ranges on sparse data given the complete set of z-coordinates.
+*/
+
 #ifndef _VM_STACK_H_
 #define _VM_STACK_H_
 
-#include "VM_config.h"
-#include "IOManager.h"
+#include "volumemanager.config.h"
+#include "iomanager.config.h"
 #include "tinyxml.h"
 #include "vmVirtualStack.h" 
 
@@ -43,28 +50,22 @@ class Stack : public VirtualStack
 
 		//*********** OBJECT ATTRIBUTES ***********
 		StackedVolume*	CONTAINER;				//pointer to <StackedVolume> object that contains the current object
-		//Onofri char**			FILENAMES;				//1D dynamic array of <char>  pointers to images filenames
-		//Onofri int				HEIGHT, WIDTH, DEPTH;	//VHD (Vertical, Horizontal, Depth) dimensions of current stack
-		//Onofri int				ROW_INDEX,  COL_INDEX;	//row and col index relative to stack matrix
-		//Onofri char*			DIR_NAME;				//string containing current stack directory
-		//Onofri bool			stitchable;				//true if current Stack is stitchable with adjacent ones		
-		//Onofri int ABS_V, ABS_H, ABS_D;				//absolute VHD voxel coordinates of current stack
-		//Onofri real_t* STACKED_IMAGE;					//pointer to 1-D array of REAL_T that stores Stack image data
-		//Onofri std::vector<Displacement*> NORTH;		//vector of displacements along D direction between this and northern Stack
-		//Onofri std::vector<Displacement*> EAST;		//vector of displacements along D direction between this and eastern  Stack
-		//Onofri std::vector<Displacement*> SOUTH;		//vector of displacements along D direction between this and southern Stack
-		//Onofri std::vector<Displacement*> WEST;		//vector of displacements along D direction between this and western  Stack
-	
 		
 		//******** OBJECT PRIVATE METHODS *********
 		Stack(void){}
 
 		//Initializes all object's members
-        void init() throw (MyException);
+        void init() throw (iom::exception);
 				
 		//binarizing-unbinarizing methods
-		void binarizeInto(FILE* file) throw (MyException);
-		void unBinarizeFrom(FILE* file) throw (MyException);
+		void binarizeInto(FILE* file) throw (iom::exception);
+		void unBinarizeFrom(FILE* file) throw (iom::exception);
+
+		// compute 'z_ranges'
+		void 
+			compute_z_ranges(
+			std::set<std::string> const * z_coords = 0)		// set of z-coordinates where at least one slice (of a certain stack) is available
+		throw (iom::exception);								// if null, 'z_ranges' will be compute based on 'FILENAMES' vector
 
 		//******** FRIEND CLASS DECLARATION *********
 		//StackedVolume can access Stack private members and methods
@@ -73,26 +74,24 @@ class Stack : public VirtualStack
 	public:
 
 		//CONSTRUCTORS
-		Stack(StackedVolume* _CONTAINER, int _ROW_INDEX, int _COL_INDEX, const char* _DIR_NAME) throw (MyException);
-        Stack(StackedVolume* _CONTAINER, int _ROW_INDEX, int _COL_INDEX, FILE* bin_file) throw (MyException);
+		Stack(StackedVolume* _CONTAINER, int _ROW_INDEX, int _COL_INDEX, const char* _DIR_NAME) throw (iom::exception);
+        Stack(StackedVolume* _CONTAINER, int _ROW_INDEX, int _COL_INDEX, FILE* bin_file) throw (iom::exception);
 		~Stack(void);
 
 		//GET methods
-		void *getCONTAINER() {return CONTAINER;};
-
-
+        void *getCONTAINER() {return CONTAINER;}
 
 		//LOAD and RELEASE methods
-		real_t* loadImageStack(int first_file=-1, int last_file=-1) throw (MyException);
+		iom::real_t* loadImageStack(int first_file=-1, int last_file=-1) throw (iom::exception);
 		void releaseImageStack();
 
 		//XML methods
 		TiXmlElement* getXML();
-		void loadXML(TiXmlElement *stack_node) throw (MyException);
-
-		//PRINT and SHOW methods
-		void print();
-		void show(int D_index, int window_HEIGHT=0, int window_WIDTH=0);
+		void loadXML(
+			TiXmlElement *stack_node, 
+			int z_end)					// 2014-09-05. Alessandro. @ADDED 'z_end' parameter to support sparse data feature
+										//						   Here 'z_end' identifies the range [0, z_end) that slices can span
+		throw (iom::exception);
 };
 
 #endif /* STACK_H_ */

@@ -27,7 +27,7 @@
 ********************************************************************************************************************************************************************************************/
 
 #include "PTabImport.h"
-#include "MyException.h"
+#include "iomanager.config.h"
 #include "vmStackedVolume.h"
 #include "PMain.h"
 #include "src/control/CImport.h"
@@ -37,7 +37,8 @@
 #include "PTabDisplThresh.h"
 #include "PTabMergeTiles.h"
 #include "PTabPlaceTiles.h"
-#include "IOManager_defs.h"
+#include "IOPluginAPI.h"
+#include "vmBlockVolume.h"
 
 using namespace terastitcher;
 
@@ -63,16 +64,31 @@ PTabImport::PTabImport(QMyTabWidget* _container, int _tab_index) : QWidget(), co
 
     //import form widgets
     import_form = new QGroupBox("Import form");
-    path_field    = new QLineEdit();
-    voldir_button       = new QPushButton("Browse for dir...");
-    projfile_button     = new QPushButton("Browse for XML...");
-    reimport_checkbox = new QCheckBox("Re-import (check this to re-scan all acquisition files)");
-    reimport_checkbox->setFont(QFont("", 8));
-    axes_label = new QLabel("Axes (1st, 2nd, 3rd):");
-    axes_label->setFont(QFont("", 8));
-    voxels_dims_label = new QLabel(QString("Voxel's dims (").append(QChar(0x03BC)).append("m):"));
-    voxels_dims_label->setFont(QFont("", 8));
+    path_field    = new QPrefixSuffixLineEdit("Volume/XML path: ");
+    path_field->setFont(QFont("", 8));
+    path_field->setTextMargins(5,0,0,0);
+    voldir_button       = new QPushButton("Import from dir...");
+    projfile_button     = new QPushButton("Open XML...");
+    regex_field = new QPrefixSuffixLineEdit(  "Image name regex: ");
+    regex_field->setFont(QFont("", 8));
+    regex_field->setTextMargins(5,0,0,0);
+    connect(regex_field, SIGNAL(textChanged(QString)), this, SLOT(regexFieldChanged()));
+    regex_field->installEventFilter(this);
+    rescan_checkbox = new QCheckBox("(Re-)scan all files");
+    rescan_checkbox->setFont(QFont("", 8));
+    imin_plugin_cbox = new QComboBox();
+    imin_plugin_cbox->setFont(QFont("", 8));
+    std::vector<std::string> ioplugins = iom::IOPluginFactory::registeredPluginsList();
+    imin_plugin_cbox->addItem("--- I/O plugin: ---");
+    for(int i=0; i<ioplugins.size(); i++)
+        imin_plugin_cbox->addItem(ioplugins[i].c_str());
+    imin_plugin_cbox->setEditable(true);
+    imin_plugin_cbox->lineEdit()->setReadOnly(true);
+    imin_plugin_cbox->lineEdit()->setAlignment(Qt::AlignCenter);
+    for(int i = 0; i < imin_plugin_cbox->count(); i++)
+        imin_plugin_cbox->setItemData(i, Qt::AlignCenter, Qt::TextAlignmentRole);
     axs1_field = new QComboBox();
+    axs1_field->addItem("--- first axis ---");
     axs1_field->addItem("X");
     axs1_field->addItem("-X");
     axs1_field->addItem("Y");
@@ -86,6 +102,7 @@ PTabImport::PTabImport(QMyTabWidget* _container, int _tab_index) : QWidget(), co
         axs1_field->setItemData(i, Qt::AlignCenter, Qt::TextAlignmentRole);
     axs1_field->setFont(QFont("", 8));
     axs2_field = new QComboBox();
+    axs2_field->addItem("--- second axis ---");
     axs2_field->addItem("X");
     axs2_field->addItem("-X");
     axs2_field->addItem("Y");
@@ -100,6 +117,7 @@ PTabImport::PTabImport(QMyTabWidget* _container, int _tab_index) : QWidget(), co
     axs2_field->setFont(QFont("", 8));
     axs3_field = new QComboBox();
     axs3_field->setFont(QFont("", 8));
+    axs3_field->addItem("--- third axis ---");
     axs3_field->addItem("X");
     axs3_field->addItem("-X");
     axs3_field->addItem("Y");
@@ -113,41 +131,36 @@ PTabImport::PTabImport(QMyTabWidget* _container, int _tab_index) : QWidget(), co
         axs3_field->setItemData(i, Qt::AlignCenter, Qt::TextAlignmentRole);
     vxl1_field = new QDoubleSpinBox();
     vxl1_field->setAlignment(Qt::AlignCenter);
+    vxl1_field->setPrefix(QString("voxel (").append(QChar(0x03BC)).append("m): "));
     vxl1_field->setFont(QFont("", 8));
     vxl2_field = new QDoubleSpinBox();
+    vxl2_field->setPrefix(QString("voxel (").append(QChar(0x03BC)).append("m): "));
     vxl2_field->setAlignment(Qt::AlignCenter);
     vxl2_field->setFont(QFont("", 8));
     vxl3_field = new QDoubleSpinBox();
+    vxl3_field->setPrefix(QString("voxel (").append(QChar(0x03BC)).append("m): "));
     vxl3_field->setAlignment(Qt::AlignCenter);
     vxl3_field->setFont(QFont("", 8));
-    axes_label->setVisible(false);
     axs1_field->setVisible(false);
     axs2_field->setVisible(false);
     axs3_field->setVisible(false);
-    voxels_dims_label->setVisible(false);
     vxl1_field->setVisible(false);
     vxl2_field->setVisible(false);
     vxl3_field->setVisible(false);
-    image_format_label = new QLabel("Image file format:");
-    image_format_label->setFont(QFont("", 8));
-    image_format_cbox = new QComboBox();
-    image_format_cbox->setFont(QFont("", 8));
-    image_format_cbox->addItem(IMAGE_FORMAT_TILED_2D_ANY.c_str());
-    image_format_cbox->addItem(IMAGE_FORMAT_TILED_3D_TIFF.c_str());
-    image_format_cbox->setEditable(true);
-    image_format_cbox->lineEdit()->setReadOnly(true);
-    image_format_cbox->lineEdit()->setAlignment(Qt::AlignCenter);
-    for(int i = 0; i < image_format_cbox->count(); i++)
-        image_format_cbox->setItemData(i, Qt::AlignCenter, Qt::TextAlignmentRole);
-    image_format_cbox->setVisible(false);
-    image_format_label->setVisible(false);
-    regex_label = new QLabel("Image file name regex:");
-    regex_field = new QLineEdit();
-    regex_field->setVisible(false);
-    regex_label->setVisible(false);
-    regex_label->setFont(QFont("", 8));
-    regex_field->setFont(QFont("", 8));
-    connect(regex_field, SIGNAL(textChanged(QString)), this, SLOT(regexFieldChanged()));
+    vol_format_cbox = new QComboBox();
+    vol_format_cbox->setFont(QFont("", 8));
+    vol_format_cbox->setEditable(true);
+    vol_format_cbox->lineEdit()->setReadOnly(true);
+    vol_format_cbox->lineEdit()->setAlignment(Qt::AlignCenter);
+    vol_format_cbox->addItem("--- Volume format ---");
+    std::vector <std::string> volformats = vm::VirtualVolumeFactory::registeredPluginsList();
+    for(int i=0; i<volformats.size(); i++)
+        vol_format_cbox->addItem(volformats[i].c_str());
+    for(int i = 0; i < vol_format_cbox->count(); i++)
+        vol_format_cbox->setItemData(i, Qt::AlignCenter, Qt::TextAlignmentRole);
+//    vol_format_cbox->setVisible(false);
+    sparsedata_checkbox = new QCheckBox("Sparse data");
+//    sparsedata_checkbox->setVisible(false);
 
     //info panel widgets
     info_panel = new QGroupBox("Volume's informations");
@@ -156,7 +169,7 @@ PTabImport::PTabImport(QMyTabWidget* _container, int _tab_index) : QWidget(), co
     volumedir_field = new QLineEdit();
     volumedir_field->setReadOnly(true);
     volumedir_field->setAlignment(Qt::AlignVCenter | Qt::AlignLeft);
-    volume_dims_label = new QLabel("Number of stacks:");
+    volume_dims_label = new QLabel("Number of tiles:");
     by_label_1 = new QLabel(QChar(0x00D7));
     by_label_1->setAlignment(Qt::AlignCenter);
     nrows_field = new QLineEdit();
@@ -165,7 +178,7 @@ PTabImport::PTabImport(QMyTabWidget* _container, int _tab_index) : QWidget(), co
     ncols_field = new QLineEdit();
     ncols_field->setReadOnly(true);
     ncols_field->setAlignment(Qt::AlignCenter);
-    stacks_dims_label = new QLabel("Stacks dimensions (voxels):");
+    stacks_dims_label = new QLabel("Tile dimensions (voxels):");
     by_label_2 = new QLabel(QChar(0x00D7));
     by_label_3 = new QLabel(QChar(0x00D7));
     by_label_2->setAlignment(Qt::AlignCenter);
@@ -203,7 +216,7 @@ PTabImport::PTabImport(QMyTabWidget* _container, int _tab_index) : QWidget(), co
     org_Z_field = new QLineEdit();
     org_Z_field->setReadOnly(true);
     org_Z_field->setAlignment(Qt::AlignCenter);
-    stacks_overlap_label = new QLabel("Stacks overlap (voxels):");
+    stacks_overlap_label = new QLabel("Tile overlap (voxels):");
     ovp_Y_field = new QLineEdit();
     ovp_Y_field->setReadOnly(true);
     ovp_Y_field->setAlignment(Qt::AlignCenter);
@@ -233,61 +246,56 @@ PTabImport::PTabImport(QMyTabWidget* _container, int _tab_index) : QWidget(), co
     preview_button->setText("Preview");
 
     /*** LAYOUT SECTIONS ***/
-    //import form
-    QWidget* container_tmp = new QWidget();
-    QHBoxLayout* container_tmp_layout = new QHBoxLayout();
-    path_field->setFixedWidth(450);
-    container_tmp_layout->addWidget(path_field);
-    container_tmp_layout->addWidget(voldir_button, 1);
-    container_tmp_layout->addWidget(projfile_button, 1);
-    container_tmp_layout->setContentsMargins(0,0,0,0);
-    container_tmp->setLayout(container_tmp_layout);
+    // import form
+    // import form: row 1
+    QHBoxLayout* import_row_1 = new QHBoxLayout();
+    path_field->setFixedWidth(430);
+    import_row_1->addWidget(path_field);
+    import_row_1->addWidget(voldir_button, 1);
+    import_row_1->addWidget(projfile_button, 1);
+    // import form: row 2
+    QHBoxLayout* import_row_2 = new QHBoxLayout();
+    regex_field->setFixedWidth(430);
+    import_row_2->addWidget(regex_field);
+    import_row_2->addWidget(imin_plugin_cbox, 1);
+    import_row_2->addWidget(rescan_checkbox, 1);
+    // import form - reimport panel
     QWidget* reimport_panel = new QWidget();
     QVBoxLayout* reimport_panel_layout = new QVBoxLayout();
+    reimport_panel_layout->setContentsMargins(0,10,0,0);
+    // import form - reimport panel - row 1
     QHBoxLayout* reimport_panel_layout_row1 = new QHBoxLayout();
-    axs1_field->setFixedWidth(70);
-    axs2_field->setFixedWidth(70);
-    axs3_field->setFixedWidth(70);
-    axes_label->setFixedWidth(120);
-    reimport_panel_layout_row1->addWidget(axes_label);
-    reimport_panel_layout_row1->addSpacing(10);
-    reimport_panel_layout_row1->addWidget(axs1_field);
-    reimport_panel_layout_row1->addWidget(axs2_field);
-    reimport_panel_layout_row1->addWidget(axs3_field);
-    reimport_panel_layout_row1->addStretch(1);
-    voxels_dims_label->setFixedWidth(140);
-    reimport_panel_layout_row1->addWidget(voxels_dims_label);
-    vxl1_field->setFixedWidth(80);
-    vxl2_field->setFixedWidth(80);
-    vxl3_field->setFixedWidth(80);
-    reimport_panel_layout_row1->addWidget(vxl1_field);
-    reimport_panel_layout_row1->addWidget(vxl2_field);
-    reimport_panel_layout_row1->addWidget(vxl3_field);
-    reimport_panel_layout_row1->setContentsMargins(0,0,0,0);
-
-
-    QHBoxLayout* reimport_panel_layout_row2 = new QHBoxLayout();
-    image_format_label->setFixedWidth(120);
-    image_format_cbox->setFixedWidth(210);
-    reimport_panel_layout_row2->addWidget(image_format_label);
-    reimport_panel_layout_row2->addSpacing(10);
-    reimport_panel_layout_row2->addWidget(image_format_cbox);
-    reimport_panel_layout_row2->addStretch(1);
-    regex_label->setFixedWidth(140);
-    reimport_panel_layout_row2->addWidget(regex_label);
-    regex_field->setFixedWidth(240);
-    reimport_panel_layout_row2->addWidget(regex_field);
-    reimport_panel_layout_row2->setContentsMargins(0,0,0,0);
-
+    QWidget* axes_row = new QWidget();
+    QHBoxLayout* axes_layout = new QHBoxLayout();
+    axes_layout->setContentsMargins(0,0,0,0);
+    axes_layout->addWidget(axs1_field, 1);
+    axes_layout->addWidget(axs2_field, 1);
+    axes_layout->addWidget(axs3_field, 1);
+    axes_row->setLayout(axes_layout);
+    axes_row->setFixedWidth(430);
+    reimport_panel_layout_row1->addWidget(axes_row);
+    reimport_panel_layout_row1->addWidget(vol_format_cbox, 1);
+    reimport_panel_layout_row1->addWidget(sparsedata_checkbox, 1);
     reimport_panel_layout->addLayout(reimport_panel_layout_row1);
+    // import form - reimport panel - row 2
+    QHBoxLayout* reimport_panel_layout_row2 = new QHBoxLayout();
+    QWidget* voxel_row = new QWidget();
+    QHBoxLayout* voxel_layout = new QHBoxLayout();
+    voxel_layout->setContentsMargins(0,0,0,0);
+    voxel_layout->addWidget(vxl1_field, 1);
+    voxel_layout->addWidget(vxl2_field, 1);
+    voxel_layout->addWidget(vxl3_field, 1);
+    voxel_row->setLayout(voxel_layout);
+    voxel_row->setFixedWidth(430);
+    reimport_panel_layout_row2->addWidget(voxel_row);
+    reimport_panel_layout_row2->addStretch(1);
     reimport_panel_layout->addLayout(reimport_panel_layout_row2);
-    reimport_panel_layout->setContentsMargins(0,0,0,0);
-    reimport_panel_layout->setSpacing(0);
-
+    // import form - reimport panel - finalize
     reimport_panel->setLayout(reimport_panel_layout);
+    // import form - finalize
     QVBoxLayout* import_form_layout = new QVBoxLayout();
-    import_form_layout->addWidget(container_tmp);
-    import_form_layout->addWidget(reimport_checkbox);
+    import_form_layout->addLayout(import_row_1);
+    import_form_layout->addLayout(import_row_2);
     import_form_layout->addWidget(reimport_panel,1);
     import_form->setLayout(import_form_layout);
     import_form->setStyle(new QWindowsStyle());
@@ -337,7 +345,7 @@ PTabImport::PTabImport(QMyTabWidget* _container, int _tab_index) : QWidget(), co
     layout->addWidget(import_form);
     layout->addWidget(info_panel);
     layout->addStretch(1);
-    layout->setContentsMargins(10,0,10,5);
+//    layout->setContentsMargins(10,0,10,5);
     setLayout(layout);
 
     //wait animated GIF tab icon
@@ -349,10 +357,13 @@ PTabImport::PTabImport(QMyTabWidget* _container, int _tab_index) : QWidget(), co
     connect(voldir_button, SIGNAL(clicked()), this, SLOT(voldir_button_clicked()));
     connect(projfile_button, SIGNAL(clicked()), this, SLOT(projfile_button_clicked()));
     connect(preview_button, SIGNAL(clicked()), this, SLOT(preview_button_clicked()));
-    connect(CImport::instance(), SIGNAL(sendOperationOutcome(MyException*)), this, SLOT(import_done(MyException*)), Qt::QueuedConnection);
-    connect(CPreview::instance(), SIGNAL(sendOperationOutcome(MyException*,Image4DSimple*)), this, SLOT(preview_done(MyException*,Image4DSimple*)), Qt::QueuedConnection);
+    connect(CImport::instance(), SIGNAL(sendOperationOutcome(iom::exception*)), this, SLOT(import_done(iom::exception*)), Qt::QueuedConnection);
+    connect(CPreview::instance(), SIGNAL(sendOperationOutcome(iom::exception*,Image4DSimple*)), this, SLOT(preview_done(iom::exception*,Image4DSimple*)), Qt::QueuedConnection);
     connect(path_field, SIGNAL(textChanged(QString)), this, SLOT(volumePathChanged(QString)));
-    connect(reimport_checkbox, SIGNAL(stateChanged(int)), this, SLOT(reimportCheckboxChanged(int)));
+    connect(rescan_checkbox, SIGNAL(stateChanged(int)), this, SLOT(rescanCheckboxChanged(int)));
+    connect(imin_plugin_cbox, SIGNAL(currentIndexChanged(QString)), this, SLOT(iopluginChanged(QString)));
+    connect(vol_format_cbox, SIGNAL(currentIndexChanged(QString)), this, SLOT(volformatChanged(QString)));
+    connect(sparsedata_checkbox, SIGNAL(stateChanged(int)), this, SLOT(sparsedataCheckboxChanged(int)));
 
     reset();
 }
@@ -374,11 +385,18 @@ void PTabImport::reset()
 
     //import form panel
     import_form->setEnabled(true);
-    path_field->setText("Enter the volume's directory or a valid XML project file");
-    reimport_checkbox->setChecked(false);
+    path_field->setText("");
+    rescan_checkbox->setChecked(false);
     axs1_field->setCurrentIndex(0);
-    axs2_field->setCurrentIndex(2);
-    axs3_field->setCurrentIndex(4);
+    PMain::setEnabledComboBoxItem(axs1_field, 0, false);
+    axs2_field->setCurrentIndex(0);
+    PMain::setEnabledComboBoxItem(axs2_field, 0, false);
+    axs3_field->setCurrentIndex(0);
+    PMain::setEnabledComboBoxItem(axs3_field, 0, false);
+    imin_plugin_cbox->setCurrentIndex(0);
+    PMain::setEnabledComboBoxItem(imin_plugin_cbox, 0, false);
+    vol_format_cbox->setCurrentIndex(0);
+    PMain::setEnabledComboBoxItem(vol_format_cbox, 0, false);
     vxl1_field->setMinimum(0.1);
     vxl1_field->setMaximum(1000.0);
     vxl1_field->setSingleStep(0.1);
@@ -391,6 +409,9 @@ void PTabImport::reset()
     vxl3_field->setMaximum(1000.0);
     vxl3_field->setSingleStep(0.1);
     vxl3_field->setValue(1.0);
+    sparsedata_checkbox->setChecked(false);
+
+    regex_field->setStyleSheet("QLineEdit{background: white;}");
 
     //info panel
     info_panel->setEnabled(false);
@@ -413,6 +434,16 @@ void PTabImport::reset()
     slice_spinbox->setMaximum(0);
     slice_spinbox->setValue(0);
     slice_spinbox->setSuffix("/0");
+}
+
+// qt event filter
+bool PTabImport::eventFilter(QObject *watched, QEvent *e)
+{
+//    if(watched == regex_field && e->type() == QEvent::FocusIn && regex_field->text().compare("(optional) Enter a regular expression to filter image filenames") == 0)
+//    {
+//        regex_field->setText("");
+//    }
+    return QWidget::eventFilter(watched, e);
 }
 
 /**********************************************************************************
@@ -499,39 +530,38 @@ void PTabImport::start()
 
     try
     {
-        //first checking that no volume has imported yet
+        // check no volume has been imported yet
         if(CImport::instance()->getVolume())
-            throw MyException("A volume has been already imported! Please restart the plugin to import another volume.");
+            throw iom::exception("A volume has been already imported! Please restart the plugin to import another volume.");
 
-        //checking that the inserted path exists
+        // check the inserted path exists
         string import_path = path_field->text().toStdString();
         if(!StackedVolume::fileExists(import_path.c_str()))
-            throw MyException("The inserted path does not exist!");
+            throw iom::exception("The inserted path does not exist!");
 
-        //if volume's directory has been selected, one should check if additional informations are required
-        if(import_path.find(".xml")==std::string::npos && import_path.find(".XML")==std::string::npos)
-        {
-            string mdata_fpath = import_path;
-            mdata_fpath.append("/");
-            mdata_fpath.append(VM_BIN_METADATA_FILE_NAME);
+        // check user input
+        if(imin_plugin_cbox->currentIndex() == 0)
+            throw iom::exception("Please select an image I/O plugin from the combolist");
+        if(axs1_field->isVisible() && axs1_field->currentIndex() == 0)
+            throw iom::exception("Please select the first axis of the reference system from the combolist");
+        if(axs2_field->isVisible() && axs2_field->currentIndex() == 0)
+            throw iom::exception("Please select the second axis of the reference system from the combolist");
+        if(axs3_field->isVisible() && axs3_field->currentIndex() == 0)
+            throw iom::exception("Please select the third axis of the reference system from the combolist");
+        if(vol_format_cbox->isVisible() && vol_format_cbox->currentIndex() == 0)
+            throw iom::exception("Please select the volume format from the combolist");
 
-            //if this is the first time the volume is going to be imported (metadata binary file doesn't exist)
-            //or "Re-import" checkbox is selected, further informations are required
-            if(!StackedVolume::fileExists(mdata_fpath.c_str()) || reimport_checkbox->isChecked())
-            {
-                CImport::instance()->setAxes(axs1_field->currentText().toStdString(),
-                                             axs2_field->currentText().toStdString(),
-                                             axs3_field->currentText().toStdString());
-                CImport::instance()->setVoxels(static_cast<float>(vxl1_field->value()),
-                                               static_cast<float>(vxl2_field->value()),
-                                               static_cast<float>(vxl3_field->value()));
-                CImport::instance()->setReimport(reimport_checkbox->isChecked());
-            }
-        }
+        // propagate user's input to CImport
+        CImport::instance()->setAxes(axs1_field->currentText().toStdString(),
+                                     axs2_field->currentText().toStdString(),
+                                     axs3_field->currentText().toStdString());
+        CImport::instance()->setVoxels(static_cast<float>(vxl1_field->value()),
+                                       static_cast<float>(vxl2_field->value()),
+                                       static_cast<float>(vxl3_field->value()));
+        CImport::instance()->setReimport(rescan_checkbox->isChecked());
         CImport::instance()->setPath(import_path);
-        CImport::instance()->setFormat(image_format_cbox->currentText().toStdString());
 
-        //disabling import form and enabling progress bar animation and tab wait animation
+        // disable import form and enable progress bar animation and tab wait animation
         import_form->setEnabled(false);
         PMain::instance()->getProgressBar()->setEnabled(true);
         PMain::instance()->getProgressBar()->setMinimum(0);
@@ -540,10 +570,10 @@ void PTabImport::start()
         wait_movie->start();
         container->getTabBar()->setTabButton(tab_index, QTabBar::LeftSide, wait_label);
 
-        //starting
+        // start
         CImport::instance()->start();
     }
-    catch(MyException &ex)
+    catch(iom::exception &ex)
     {
         QMessageBox::critical(this,QObject::tr("Error"), QObject::tr(ex.what()),QObject::tr("Ok"));
         PMain::instance()->setToReady();
@@ -563,7 +593,7 @@ void PTabImport::stop()
         CImport::instance()->wait();
         CImport::instance()->reset();
     }
-    catch(MyException &ex) {QMessageBox::critical(this,QObject::tr("Error"), QObject::tr(ex.what()),QObject::tr("Ok"));}
+    catch(iom::exception &ex) {QMessageBox::critical(this,QObject::tr("Error"), QObject::tr(ex.what()),QObject::tr("Ok"));}
     catch(...) {QMessageBox::critical(this,QObject::tr("Error"), QObject::tr("Unable to determine error's type"),QObject::tr("Ok"));}
 
     //re-enabling import form and disabling progress bar and wait animations
@@ -579,7 +609,7 @@ void PTabImport::stop()
 * aged in the current thread (ex != 0). Otherwise, volume information are imported
 * in the GUI by the <StackedVolume> handle of <CImport>.
 **********************************************************************************/
-void PTabImport::import_done(MyException *ex)
+void PTabImport::import_done(iom::exception *ex)
 {
     /**/tsp::debug(tsp::LEV1, strprintf("ex = \"%s\"", ex ? ex->what() : "none").c_str(), __tsp__current__function__);
 
@@ -641,7 +671,7 @@ void PTabImport::import_done(MyException *ex)
 * aged in the current thread (ex != 0). Otherwise, the preview which was saved back
 * onto the disk is loaded and shown in Vaa3D.
 ***********************************************************************************/
-void PTabImport::preview_done(MyException *ex, Image4DSimple* img)
+void PTabImport::preview_done(iom::exception *ex, Image4DSimple* img)
 {
     /**/tsp::debug(tsp::LEV1, strprintf("ex = \"%s\"", ex ? ex->what() : "none").c_str(), __tsp__current__function__);
 
@@ -675,29 +705,110 @@ void PTabImport::volumePathChanged(QString path)
     printf("TeraStitcher plugin [thread %d] >> PTabImport volumePathChanged(path)\n", this->thread()->currentThreadId());
     #endif
 
-    //checking if further informations are required
-    bool furtherInfoRequired = reimport_checkbox->isChecked() || (QDir(path_field->text()).exists() &&
-                               !QFile::exists(path_field->text().toStdString().append("/").append(VM_BIN_METADATA_FILE_NAME).c_str()));
-    axes_label->setVisible(furtherInfoRequired);
-    axs1_field->setVisible(furtherInfoRequired);
-    axs2_field->setVisible(furtherInfoRequired);
-    axs3_field->setVisible(furtherInfoRequired);
-    voxels_dims_label->setVisible(furtherInfoRequired);
-    vxl1_field->setVisible(furtherInfoRequired);
-    vxl2_field->setVisible(furtherInfoRequired);
-    vxl3_field->setVisible(furtherInfoRequired);
-    regex_field->setVisible(furtherInfoRequired);
-    regex_label->setVisible(furtherInfoRequired);
-    image_format_cbox->setVisible(furtherInfoRequired);
-    image_format_label->setVisible(furtherInfoRequired);
+    // try to automatically locate the xml_import.xml from the directory
+    if(!path_field->text().endsWith("xml", Qt::CaseInsensitive))
+    {
+        if(QDir(path_field->text()).exists())
+        {
+            if(QFile(path_field->text() + "/xml_import.xml").exists())
+            {
+                path_field->setText(path_field->text() + "/xml_import.xml");
+                return;
+            }
+        }
+    }
+
+    // determine if current path is an xml file
+    bool isXML = path_field->text().endsWith("xml", Qt::CaseInsensitive);
+
+    // if path is an xml
+    if (isXML)
+    {
+        // try to read and automatically select the volume format...
+        try
+        {
+            std::string vformat = vm::VirtualVolume::getVolumeFormat(path_field->text().toStdString());
+            int index = vol_format_cbox->findText(vformat.c_str());
+            if ( index != -1 ) { // -1 for not found
+               vol_format_cbox->setCurrentIndex(index);
+//               vol_format_cbox->setVisible(false);
+            }
+//            else
+//                vol_format_cbox->setVisible(true);
+
+            // ...and suggest an i/o plugin
+            if(vformat.compare(StackedVolume::id) == 0)
+            {
+                index = imin_plugin_cbox->findText("opencv2D");
+                if ( index != -1 ) { // -1 for not found
+                   imin_plugin_cbox->setCurrentIndex(index);
+                }
+            }
+            else if(vformat.compare(BlockVolume::id) == 0)
+            {
+                index = imin_plugin_cbox->findText("tiff3D");
+                if ( index != -1 ) { // -1 for not found
+                   imin_plugin_cbox->setCurrentIndex(index);
+                }
+            }
+
+            rescan_checkbox->setChecked(false);
+            axs1_field->setVisible(false);
+            axs2_field->setVisible(false);
+            axs3_field->setVisible(false);
+            vxl1_field->setVisible(false);
+            vxl2_field->setVisible(false);
+            vxl3_field->setVisible(false);
+        }
+        catch(...)
+        {
+            // if fails, volume format has to be inputted for XML files too
+//            vol_format_cbox->setVisible(true);
+        }
+    }
+    else
+    {
+        rescan_checkbox->setChecked(true);
+//        vol_format_cbox->setVisible(true);
+        axs1_field->setVisible(true);
+        axs2_field->setVisible(true);
+        axs3_field->setVisible(true);
+        vxl1_field->setVisible(true);
+        vxl2_field->setVisible(true);
+        vxl3_field->setVisible(true);
+    }
 }
 
 /**********************************************************************************
 * Called when "reimport_chheckbox" state has changed.
 ***********************************************************************************/
-void PTabImport::reimportCheckboxChanged(int)
+void PTabImport::rescanCheckboxChanged(int checked)
 {
-    volumePathChanged(path_field->text());
+    // force rescan when image regex is provided
+    if(rescan_checkbox->isChecked() == false && !regex_field->text().isEmpty())
+    {
+        QMessageBox::warning(this, "Warning", "Re-scan of files is mandatory when an image regex is provided. If you uncheck this your image regex will be ignored");
+        regex_field->setStyleSheet("QLineEdit{background: rgb(250,188,191);}");
+        return;
+    }
+    else if(rescan_checkbox->isChecked() && !regex_field->text().isEmpty())
+    {
+        regex_field->setStyleSheet("QLineEdit{background: rgb(255,251,179);}");
+    }
+
+    // determine if current path is an xml file
+    bool isXML = path_field->text().endsWith("xml", Qt::CaseInsensitive);
+
+    // show axes and voxel fields if rescan is checked and input path is not an XML file (such info is stored in the XML file)
+    axs1_field->setVisible(checked && !isXML);
+    axs2_field->setVisible(checked && !isXML);
+    axs3_field->setVisible(checked && !isXML);
+    vxl1_field->setVisible(checked && !isXML);
+    vxl2_field->setVisible(checked && !isXML);
+    vxl3_field->setVisible(checked && !isXML);
+
+    // volume format is a special case: it should be visibile also if re-scan is not checked, when the XML does not contain such info
+//    vol_format_cbox->setVisible(checked || (isXML && vol_format_cbox->currentIndex() == 0));
 }
 
 /**********************************************************************************
@@ -705,7 +816,7 @@ void PTabImport::reimportCheckboxChanged(int)
 ***********************************************************************************/
 void PTabImport::channelSelectedChanged(int c)
 {
-    iom::CHANNEL_SELECTION = c;
+    iom::CHANS = iom::channel(c);
 }
 
 /**********************************************************************************
@@ -713,5 +824,38 @@ void PTabImport::channelSelectedChanged(int c)
 ***********************************************************************************/
 void PTabImport::regexFieldChanged()
 {
-    volumemanager::IMG_FILTER_REGEX = regex_field->text().toStdString();
+    if(regex_field->text().isEmpty())
+    {
+        regex_field->setStyleSheet("QLineEdit{background: white;}");
+    }
+    else
+    {
+        regex_field->setStyleSheet("QLineEdit{background: rgb(255,251,179);}");
+        volumemanager::IMG_FILTER_REGEX = regex_field->text().toStdString();
+        rescan_checkbox->setChecked(true);
+    }
+}
+
+/**********************************************************************************
+* Called when "inputImageIOPlugin" state has changed.
+***********************************************************************************/
+void PTabImport::iopluginChanged(QString str)
+{
+    iom::IMIN_PLUGIN = str.toStdString();
+}
+
+/**********************************************************************************
+* Called when "volformat_cbox" state has changed.
+***********************************************************************************/
+void PTabImport::volformatChanged(QString str)
+{
+    vm::VOLUME_INPUT_FORMAT_PLUGIN = str.toStdString();
+}
+
+/**********************************************************************************
+* Called when "sparse_data_checkbox" state has changed.
+***********************************************************************************/
+void PTabImport::sparsedataCheckboxChanged(int)
+{
+    vm::SPARSE_DATA = true;
 }

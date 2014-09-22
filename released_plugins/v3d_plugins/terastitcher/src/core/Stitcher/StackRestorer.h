@@ -37,11 +37,11 @@ class StackRestorer
 		public:
 
 			VirtualStack* stk_p;								//pointer to VirtualStack object
-			real_t max_val;								//maximum value of current volume
-			real_t mean_val;							//mean value of current volume
+			iom::real_t max_val;								//maximum value of current volume
+			iom::real_t mean_val;							//mean value of current volume
 			int V_dim, H_dim, D_dim;					//VHD dimensions of current volume
-			real_t *V_profile, *H_profile, *D_profile;	//lighting map for current volume
-			real_t *V_MIP, *H_MIP, *D_MIP;				//maximum intensity projections of current volume along VHD axes
+			iom::real_t *V_profile, *H_profile, *D_profile;	//lighting map for current volume
+			iom::real_t *V_MIP, *H_MIP, *D_MIP;				//maximum intensity projections of current volume along VHD axes
 			bool is_subvol_descriptor;					//true if the current object contains descriptors of a subvolume
 			bool is_finalized;							//true if descriptors have been successfully computed
 
@@ -49,8 +49,8 @@ class StackRestorer
 			~vol_descr_t();
 
 			void init(VirtualStack *new_stk_p, bool is_subvol_desc, int new_V_dim, int new_H_dim, int new_D_dim);
-			void computeSubvolDescriptors(real_t *subvol)  throw (MyException);
-			void computeStackDescriptors(vol_descr_t *subvol_desc, int D_subvols)  throw (MyException);
+			void computeSubvolDescriptors(iom::real_t *subvol)  throw (iom::exception);
+			void computeStackDescriptors(vol_descr_t *subvol_desc, int D_subvols)  throw (iom::exception);
 			bool isFinalized() {return is_finalized;}
 			bool isSubvolDescriptor() {return is_subvol_descriptor;}
 			void print();
@@ -73,17 +73,17 @@ class StackRestorer
 		StackRestorer(volumemanager::VirtualVolume* stk_org, char* file_path);
 		~StackRestorer(void);
 
-		void computeSubvolDescriptors(real_t* data, VirtualStack* stk_p, int subvol_idx, int subvol_D_dim)  throw (MyException);
-		void computeStackDescriptors(VirtualStack* stk_p)  throw (MyException);
+		void computeSubvolDescriptors(iom::real_t* data, VirtualStack* stk_p, int subvol_idx, int subvol_D_dim)  throw (iom::exception);
+		void computeStackDescriptors(VirtualStack* stk_p)  throw (iom::exception);
 		void finalizeAllDescriptors();
 
-		void repairSlice(real_t* data, int slice_idx, VirtualStack* stk_p, int direction)  throw (MyException);
-		void repairStack(real_t* data, VirtualStack* stk_p, int direction)  throw (MyException);
+		void repairSlice(iom::real_t* data, int slice_idx, VirtualStack* stk_p, int direction)  throw (iom::exception);
+		void repairStack(iom::real_t* data, VirtualStack* stk_p, int direction)  throw (iom::exception);
 
 		void printSubvolDescriptors(VirtualStack* stk_p, int subvol_idx);
 		void printVolDescriptors(VirtualStack* stk_p);
-		void save(char* file_path) throw (MyException);
-		void load(char* file_path)  throw (MyException);
+		void save(char* file_path) throw (iom::exception);
+		void load(char* file_path)  throw (iom::exception);
 };
 
 #endif

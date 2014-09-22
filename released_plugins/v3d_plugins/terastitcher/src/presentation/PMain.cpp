@@ -268,7 +268,7 @@ void PMain::setToReady()
 //called when startButton has been clicked
 void PMain::startButtonClicked()
 {
-    tabs->setEnabled(false);
+    //tabs->setEnabled(false); // DANGEROUS
     progressBar->setEnabled(true);
     startButton->setEnabled(false);
     stopButton->setEnabled(true);

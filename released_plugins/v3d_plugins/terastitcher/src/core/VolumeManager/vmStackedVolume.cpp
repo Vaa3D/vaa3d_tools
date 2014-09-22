@@ -25,8 +25,28 @@
 *       specific prior written permission.
 ********************************************************************************************************************************************************************************************/
 
+/******************
+*    CHANGELOG    *
+*******************
+* 2014-09-20. Alessandro. @ADDED overwrite_mdata flag to the XML-based constructor.
+* 2014-09-10. Alessandro. @ADDED 'volume_format' attribute to <TeraStitcher> XML node.
+* 2014-09-10. Alessandro. @ADDED plugin creation/registration functions to make 'StackedVolume' a volume format plugin.
+* 2014-09-09. Alessandro. @FIXED. Added default reference system if volume is imported from xml.
+* 2014-09-05. Alessandro. @ADDED 'normalize_stacks_attributes()' method to normalize stacks attributes (width, height, etc.)
+* 2014-09-05. Alessandro. @FIXED 'StackedVolume(...)' constructors to support sparse data.
+* 2014-09-04. Alessandro. @FIXED 'loadBinaryMetadata()' and 'saveBinaryMetadata()'. Added new fields in mdata.bin to avoid misinterpretation of the bytes:
+*                         - <module's signature>: to avoid confusion between different modules producing the mdata.bin file (e.g. volumemanager, imagemanager)
+*                         - <metadata file version>: to avoid misinterpretation of the bytes when the structure of the file is modified.
+*                         - <class' signature>: to avoid confusione between different classes producing the mdata.bin file (e.g. StackedVolume, BlockVolume)
+* 2014-09-03. Alessandro. @FIXED 'init()' method: check that all the stacks have the same WIDTH and HEIGHT and also correct empty stacks.
+* 2014-09-02. Alessandro. @FIXED both 'loadBinaryMetadata()' and 'saveBinaryMetadata()' as 'N_SLICES' changed from 'uint16' to 'int' type. See vmVirtualVolume.h.
+* 2014-09-01. Alessandro. @FIXED 'applyReferenceSystem()' method to deal with sparse tiles.
+* 2014-09-01. Alessandro. @ADDED sparse data support in the 'init()' method.
+*/
+
+
 #include <iostream>
-//#include <string>
+#include <typeinfo>
 #include "vmStackedVolume.h"
 #include "S_config.h"
 #include "tinyxml.h"
@@ -39,6 +59,7 @@
 #endif
 #include <limits>
 #include <list>
+#include <set>
 #include "vmStack.h"
 #include "Displacement.h"
 
@@ -51,54 +72,59 @@
 #endif
 
 using namespace std;
+using namespace iom;
 
-StackedVolume::StackedVolume(const char* _stacks_dir, ref_sys _reference_system, float VXL_1, float VXL_2, float VXL_3, bool overwrite_mdata, bool make_n_slices_equal /*= false*/) throw (MyException)
-	: VirtualVolume(VXL_1, VXL_2, VXL_3)
+// 2014-09-10. Alessandro. @ADDED plugin creation/registration functions to make 'StackedVolume' a volume format plugin.
+const std::string StackedVolume::id = "TiledXY|2Dseries";
+const std::string StackedVolume::creator_id1 = volumemanager::VirtualVolumeFactory::registerPluginCreatorXML(&createFromXML, StackedVolume::id);
+const std::string StackedVolume::creator_id2 = volumemanager::VirtualVolumeFactory::registerPluginCreatorData(&createFromData, StackedVolume::id);
+
+StackedVolume::StackedVolume(const char* _stacks_dir, vm::ref_sys _reference_system, float VXL_1, float VXL_2, float VXL_3, bool overwrite_mdata) throw (iom::exception)
+	: VirtualVolume(_stacks_dir, _reference_system, VXL_1, VXL_2, VXL_3)
 {
 	#if VM_VERBOSE > 3
 	printf("\t\t\t\tin StackedVolume::StackedVolume(_stacks_dir=%s, reference_system = {%d,%d,%d}, VXL_1 = %.2f, VXL_2 = %.2f, VXL_3 = %.2f)\n", 
 		  _stacks_dir,reference_system.first, reference_system.second, reference_system.third, VXL_1, VXL_2, VXL_3);
 	#endif
 
-	this->stacks_dir = new char[strlen(_stacks_dir)+1];
-	strcpy(this->stacks_dir, _stacks_dir);
-
 	//trying to unserialize an already existing metadata file, if it doesn't exist the full initialization procedure is performed and metadata is saved
     char mdata_filepath[VM_STATIC_STRINGS_SIZE];
-    sprintf(mdata_filepath, "%s/%s", stacks_dir, VM_BIN_METADATA_FILE_NAME);
+    sprintf(mdata_filepath, "%s/%s", stacks_dir, vm::BINARY_METADATA_FILENAME.c_str());
     if(fileExists(mdata_filepath) && !overwrite_mdata)
-            loadBinaryMetadata(mdata_filepath);
+        loadBinaryMetadata(mdata_filepath);
     else
 	{
 		if(_reference_system.first == axis_invalid ||  _reference_system.second == axis_invalid ||
 			_reference_system.third == axis_invalid || VXL_1 == 0 || VXL_2 == 0 || VXL_3 == 0)
-			throw MyException("in StackedVolume::StackedVolume(...): invalid importing parameters");
-		reference_system = _reference_system; // GI_140501: stores the refrence system to generate the mdata.bin file for the output volumes
+			throw iom::exception("in StackedVolume::StackedVolume(...): invalid importing parameters");
+		reference_system = _reference_system; // GI_140501: stores the reference system to generate the mdata.bin file for the output volumes
 		init();
 		applyReferenceSystem(reference_system, VXL_1, VXL_2, VXL_3);
 		saveBinaryMetadata(mdata_filepath);
 	}
 	
 	// check all stacks have the same number of slices (@ADDED by Alessandro on 2014-03-06)
-	for(int i=0; i<N_ROWS; i++)
-		for(int j=0; j<N_COLS; j++)
-		{
-			if(STACKS[i][j]->getDEPTH() != N_SLICES)
+	// 2014-09-05. Alessandro. @FIXED to support sparse data.
+	if(!vm::SPARSE_DATA)
+	{
+		for(int i=0; i<N_ROWS; i++)
+			for(int j=0; j<N_COLS; j++)
 			{
-				if(make_n_slices_equal)
-                    N_SLICES = std::min(N_SLICES, static_cast<uint16>(STACKS[i][j]->getDEPTH()));
-				else
-					throw MyException(strprintf("in StackedVolume::StackedVolume(): unequal number of slices detected. Stack \"%s\" has %d, stack \"%s\" has %d",
-				                      STACKS[0][0]->getDIR_NAME(), STACKS[0][0]->getDEPTH(), STACKS[i][j]->getDIR_NAME(), STACKS[i][j]->getDEPTH()).c_str());
+				if(STACKS[i][j]->getDEPTH() != N_SLICES)
+				{
+					throw iom::exception(iom::strprintf("in StackedVolume::StackedVolume(): unequal number of slices detected. Stack \"%s\" has %d, stack \"%s\" has %d. "
+						"Please activate the sparse data option if stacks are not complete",
+						STACKS[0][0]->getDIR_NAME(), STACKS[0][0]->getDEPTH(), STACKS[i][j]->getDIR_NAME(), STACKS[i][j]->getDEPTH()).c_str());
+				}
 			}
-		}
+	}
 }
 
-StackedVolume::StackedVolume(const char *xml_filepath, bool make_n_slices_equal /*= false*/) throw (MyException)
-	: VirtualVolume()
+StackedVolume::StackedVolume(const char *xml_filepath, bool overwrite_mdata) throw (iom::exception)
+	: VirtualVolume(xml_filepath)
 {
-	#if VM_VERBOSE > 3
-	printf("\t\t\t\tin StackedVolume::StackedVolume(xml_filepath=%s)\n", xml_filepath);
+    #if VM_VERBOSE > 3
+    printf("\t\t\t\tin StackedVolume::StackedVolume(xml_filepath=%s, overwrite_mdata = %s)\n", xml_filepath, overwrite_mdata ? "true" : "false");
 	#endif
 
     //extracting <stacks_dir> field from XML
@@ -107,7 +133,7 @@ StackedVolume::StackedVolume(const char *xml_filepath, bool make_n_slices_equal 
     {
         char errMsg[2000];
         sprintf(errMsg,"in StackedVolume::StackedVolume(xml_filepath = \"%s\") : unable to load xml", xml_filepath);
-        throw MyException(errMsg);
+        throw iom::exception(errMsg);
     }
     TiXmlHandle hRoot(xml.FirstChildElement("TeraStitcher"));
     TiXmlElement * pelem = hRoot.FirstChildElement("stacks_dir").Element();
@@ -117,8 +143,10 @@ StackedVolume::StackedVolume(const char *xml_filepath, bool make_n_slices_equal 
 
 	//trying to unserialize an already existing metadata file, if it doesn't exist the full initialization procedure is performed and metadata is saved
 	char mdata_filepath[2000];
-	sprintf(mdata_filepath, "%s/%s", stacks_dir, VM_BIN_METADATA_FILE_NAME);
-	if(fileExists(mdata_filepath))
+	sprintf(mdata_filepath, "%s/%s", stacks_dir, vm::BINARY_METADATA_FILENAME.c_str());
+
+    // 2014-09-20. Alessandro. @ADDED overwrite_mdata flag
+    if(fileExists(mdata_filepath) && !overwrite_mdata)
 	{
 		// load mdata.bin content and xml content, also perform consistency check between mdata.bin and xml content
 		loadBinaryMetadata(mdata_filepath);
@@ -132,18 +160,20 @@ StackedVolume::StackedVolume(const char *xml_filepath, bool make_n_slices_equal 
 	}
 
 	// check all stacks have the same number of slices (@ADDED by Alessandro on 2014-03-06)
-	for(int i=0; i<N_ROWS; i++)
-		for(int j=0; j<N_COLS; j++)
-		{
-			if(STACKS[i][j]->getDEPTH() != N_SLICES)
+	// 2014-09-05. Alessandro. @FIXED to support sparse data.
+	if(!vm::SPARSE_DATA)
+	{
+		for(int i=0; i<N_ROWS; i++)
+			for(int j=0; j<N_COLS; j++)
 			{
-				if(make_n_slices_equal)
-                    N_SLICES = std::min(N_SLICES, static_cast<uint16>(STACKS[i][j]->getDEPTH()));
-				else
-					throw MyException(strprintf("in StackedVolume::StackedVolume(): unequal number of slices detected. N_SLICES = %d, but stack \"%s\" has %d",
-				                      N_SLICES, STACKS[i][j]->getDIR_NAME(), STACKS[i][j]->getDEPTH()).c_str());
+				if(STACKS[i][j]->getDEPTH() != N_SLICES)
+				{
+					throw iom::exception(iom::strprintf("in StackedVolume::StackedVolume(): unequal number of slices detected. N_SLICES = %d, but stack \"%s\" has %d"
+						"Please activate the sparse data option if stacks are not complete",
+						N_SLICES, STACKS[i][j]->getDIR_NAME(), STACKS[i][j]->getDEPTH()).c_str());
+				}
 			}
-		}
+	}
 }
 
 StackedVolume::~StackedVolume()
@@ -192,7 +222,7 @@ VirtualStack***StackedVolume::getSTACKS()					{return (VirtualStack***)this->STA
 //int		StackedVolume::getDEFAULT_DISPLACEMENT_H()	{return (int)(fabs(MEC_H/VXL_H));}
 //int		StackedVolume::getDEFAULT_DISPLACEMENT_D()	{return 0;}
 
-void StackedVolume::init() throw (MyException)
+void StackedVolume::init() throw (iom::exception)
 {
 	#if VM_VERBOSE > 3
 	printf("\t\t\t\tin StackedVolume::init()\n");
@@ -200,8 +230,7 @@ void StackedVolume::init() throw (MyException)
 
 	//LOCAL VARIABLES
 	string tmp_path;				//string that contains temp paths during computation
-	string tmp;					    //string that contains temp data during computation
-	string tmp2;				    //string that contains temp data during computation
+    string tmp;					    //string that contains temp data during computation
 	DIR *cur_dir_lev1;				//pointer to DIR, the data structure that represents a DIRECTORY (level 1 of hierarchical structure)
 	DIR *cur_dir_lev2;				//pointer to DIR, the data structure that represents a DIRECTORY (level 2 of hierarchical structure)
 	dirent *entry_lev1;				//pointer to DIRENT, the data structure that represents a DIRECTORY ENTRY inside a directory (level 1)
@@ -219,7 +248,7 @@ void StackedVolume::init() throw (MyException)
 	{
 		char msg[S_STATIC_STRINGS_SIZE];
 		sprintf(msg,"in StackedVolume::init(...): Unable to open directory \"%s\"", stacks_dir);
-		throw MyException(msg);
+		throw iom::exception(msg);
 	}
 
 	//scanning first level of hierarchy which entries need to be ordered alphabetically. This is done using STL.
@@ -234,7 +263,7 @@ void StackedVolume::init() throw (MyException)
 	N_ROWS = (uint16) entries_lev1.size();
 	N_COLS = 0;
         if(N_ROWS == 0)
-                throw MyException("in StackedVolume::init(...): Unable to find stacks in the given directory");
+            throw iom::exception("in StackedVolume::init(...): Unable to find stacks in the given directory");
 
 
 	//for each entry of first level, scanning second level
@@ -246,7 +275,7 @@ void StackedVolume::init() throw (MyException)
 		tmp_path.append(*entry_i);
 		cur_dir_lev2 = opendir(tmp_path.c_str());
 		if (!cur_dir_lev2)
-			throw MyException("in StackedVolume::init(...): A problem occurred during scanning of subdirectories");
+			throw iom::exception("in StackedVolume::init(...): A problem occurred during scanning of subdirectories");
 
 		//scanning second level of hierarchy which entries need to be ordered alphabetically. This is done using STL.
 		while ((entry_lev2=readdir(cur_dir_lev2)))
@@ -270,13 +299,33 @@ void StackedVolume::init() throw (MyException)
 		if(N_COLS == 0)
 			N_COLS = j;
 		else if(j != N_COLS)
-			throw MyException("in StackedVolume::init(...): Number of second-level directories is not the same for all first-level directories!");
+			throw iom::exception("in StackedVolume::init(...): Number of second-level directories is not the same for all first-level directories!");
 	}
 	entries_lev1.clear();
 
-	//intermediate check
+	// intermediate check
 	if(N_ROWS == 0 || N_COLS == 0)
-		throw MyException("in StackedVolume::init(...): Unable to find stacks in the given directory");
+		throw iom::exception("in StackedVolume::init(...): Unable to find stacks in the given directory");
+
+	// 2014-09-01. Alessandro. @ADDED sparse data support
+	// precondition: files must be named according to one of the two formats supported (see 'name2coordZ()')
+	if(SPARSE_DATA)
+	{
+		// compute N_SLICES as the cardinality of the set of all Z-coordinates extracted from the filenames of the entire volume
+		std::set<std::string> z_coords;
+		for(list<Stack*>::iterator i = stacks_list.begin(); i != stacks_list.end(); i++)
+			for(int k=0; k< (*i)->DEPTH; k++)
+				z_coords.insert(name2coordZ((*i)->FILENAMES[k]));
+		N_SLICES = (int)(z_coords.size());
+
+		// check non-zero N_SLICES
+		if(N_SLICES == 0)
+			throw iom::exception("in StackedVolume::init(...): Unable to find image files in the given directory");
+
+		// for each tile, compute the range of available slices
+		for(list<Stack*>::iterator i = stacks_list.begin(); i != stacks_list.end(); i++)
+			(*i)->compute_z_ranges(&z_coords);
+	}
 
 	//converting stacks_list (STL list of Stack*) into STACKS (2-D array of Stack*)
 	STACKS = new Stack**[N_ROWS];
@@ -284,9 +333,12 @@ void StackedVolume::init() throw (MyException)
 		STACKS[row] = new Stack*[N_COLS];
 	for(list<Stack*>::iterator i = stacks_list.begin(); i != stacks_list.end(); i++)
 		STACKS[(*i)->getROW_INDEX()][(*i)->getCOL_INDEX()] = (*i);
+
+	// check stacks have the same width and height
+	normalize_stacks_attributes();
 }
 
-void StackedVolume::applyReferenceSystem(ref_sys reference_system, float VXL_1, float VXL_2, float VXL_3) throw (MyException)
+void StackedVolume::applyReferenceSystem(vm::ref_sys reference_system, float VXL_1, float VXL_2, float VXL_3) throw (iom::exception)
 {
 	#if VM_VERBOSE > 3
 	printf("\t\t\t\tin StackedVolume::applyReferenceSystem(reference_system = {%d,%d,%d}, VXL_1 = %.2f, VXL_2 = %.2f, VXL_3 = %.2f)\n", 
@@ -311,14 +363,19 @@ void StackedVolume::applyReferenceSystem(ref_sys reference_system, float VXL_1, 
 	if      (abs(reference_system.first)==2 && abs(reference_system.second)==1  && reference_system.third==3)
 	{
 		this->rotate(90);
-		this->mirror(axis(2));	
+		this->mirror(vm::axis(2));	
 
 		if(reference_system.first == -2)
-			this->mirror(axis(2));
+			this->mirror(vm::axis(2));
 		if(reference_system.second == -1)
-			this->mirror(axis(1));
+			this->mirror(vm::axis(1));
 
 		int computed_ORG_1, computed_ORG_2, computed_ORG_3;
+
+		// 2014-09-01. Alessandro. @FIXED: check that this tile has a slice at z=0. Otherwise it's not possible to compute the origin.
+		if(STACKS[0][0]->isComplete(0,0) == false)
+			throw iom::exception(vm::strprintf("in StackedVolume::applyReferenceSystem(): cannot compute origin. Tile (0,0) [%s] has no slice at z=0", STACKS[0][0]->getDIR_NAME()).c_str());
+
 		extractCoordinates(STACKS[0][0], 0, &computed_ORG_1, &computed_ORG_2, &computed_ORG_3);
 		ORG_V = computed_ORG_2/10000.0F;
 		ORG_H = computed_ORG_1/10000.0F;
@@ -326,18 +383,18 @@ void StackedVolume::applyReferenceSystem(ref_sys reference_system, float VXL_1, 
 		VXL_V = VXL_2 ;
 		VXL_H = VXL_1 ; 
 		VXL_D = VXL_3 ;
-		int tmp_coord_1, tmp_coord_2, tmp_coord_3, tmp_coord_4, tmp_coord_5, tmp_coord_6;
-        extractCoordinates(STACKS[0][0], 0, &tmp_coord_1, &tmp_coord_2, &tmp_coord_3);
+		int tmp_coord_1, tmp_coord_2, tmp_coord_4, tmp_coord_5;
+        extractCoordinates(STACKS[0][0], 0, &tmp_coord_1, &tmp_coord_2);
 		if(N_ROWS > 1)
 		{
-            extractCoordinates(STACKS[1][0], 0, &tmp_coord_4, &tmp_coord_5, &tmp_coord_6);
+            extractCoordinates(STACKS[1][0], 0, &tmp_coord_4, &tmp_coord_5);
 			this->MEC_V = (tmp_coord_5 - tmp_coord_2)/10.0F;
 		}
 		else
 			this->MEC_V = getStacksHeight()*VXL_V;		
 		if(N_COLS > 1)
 		{
-            extractCoordinates(STACKS[0][1], 0, &tmp_coord_4, &tmp_coord_5, &tmp_coord_6);
+            extractCoordinates(STACKS[0][1], 0, &tmp_coord_4, &tmp_coord_5);
 			this->MEC_H = (tmp_coord_4 - tmp_coord_1)/10.0F;
 		}
 		else
@@ -348,11 +405,16 @@ void StackedVolume::applyReferenceSystem(ref_sys reference_system, float VXL_1, 
 	else if (abs(reference_system.first)==1 && abs(reference_system.second)==2 && reference_system.third==3)
 	{		
 		if(reference_system.first == -1)
-			this->mirror(axis(1));
+			this->mirror(vm::axis(1));
 		if(reference_system.second == -2)
-			this->mirror(axis(2));
+			this->mirror(vm::axis(2));
 
 		int computed_ORG_1, computed_ORG_2, computed_ORG_3;
+
+		// 2014-09-01. Alessandro. @FIXED: check that this tile has a slice at z=0. Otherwise it's not possible to compute the origin.
+		if(STACKS[0][0]->isComplete(0,0) == false)
+			throw iom::exception(vm::strprintf("in StackedVolume::applyReferenceSystem(): cannot compute origin. Tile (0,0) [%s] has no slice at z=0", STACKS[0][0]->getDIR_NAME()).c_str());
+
 		extractCoordinates(STACKS[0][0], 0, &computed_ORG_1, &computed_ORG_2, &computed_ORG_3);
 		ORG_V = computed_ORG_1/10000.0F;
 		ORG_H = computed_ORG_2/10000.0F;
@@ -360,19 +422,19 @@ void StackedVolume::applyReferenceSystem(ref_sys reference_system, float VXL_1, 
 		VXL_V = VXL_1;
 		VXL_H = VXL_2;
 		VXL_D = VXL_3;
-		int tmp_coord_1, tmp_coord_2, tmp_coord_3, tmp_coord_4, tmp_coord_5, tmp_coord_6;
-        extractCoordinates(STACKS[0][0], 0, &tmp_coord_1, &tmp_coord_2, &tmp_coord_3);
+		int tmp_coord_1, tmp_coord_2, tmp_coord_4, tmp_coord_5;
+        extractCoordinates(STACKS[0][0], 0, &tmp_coord_1, &tmp_coord_2);
 		
 		if(N_ROWS > 1)
 		{
-            extractCoordinates(STACKS[1][0], 0, &tmp_coord_4, &tmp_coord_5, &tmp_coord_6);
+            extractCoordinates(STACKS[1][0], 0, &tmp_coord_4, &tmp_coord_5);
 			this->MEC_V = (tmp_coord_4 - tmp_coord_1)/10.0F;		
 		}
 		else
 			this->MEC_V = getStacksHeight()*VXL_V;		
 		if(N_COLS > 1)
 		{
-            extractCoordinates(STACKS[0][1], 0, &tmp_coord_4, &tmp_coord_5, &tmp_coord_6);
+            extractCoordinates(STACKS[0][1], 0, &tmp_coord_4, &tmp_coord_5);
 			this->MEC_H = (tmp_coord_5 - tmp_coord_2)/10.0F;
 		}
 		else
@@ -384,7 +446,7 @@ void StackedVolume::applyReferenceSystem(ref_sys reference_system, float VXL_1, 
 		char msg[500];
 		sprintf(msg, "in StackedVolume::init(...): the reference system {%d,%d,%d} is not supported.", 
 			reference_system.first, reference_system.second, reference_system.third);
-		throw MyException(msg);
+		throw iom::exception(msg);
 	}
 
 	//some little adjustments of the origin
@@ -410,7 +472,7 @@ void StackedVolume::applyReferenceSystem(ref_sys reference_system, float VXL_1, 
 		}
 }
 
-void StackedVolume::loadXML(const char *xml_filepath) throw (MyException)
+void StackedVolume::loadXML(const char *xml_filepath) throw (iom::exception)
 {
 	#if VM_VERBOSE > 3
 	printf("\t\t\t\tin StackedVolume::loadXML(char *xml_filepath = %s)\n", xml_filepath);
@@ -421,16 +483,21 @@ void StackedVolume::loadXML(const char *xml_filepath) throw (MyException)
 	{
 		char errMsg[2000];
 		sprintf(errMsg,"in StackedVolume::loadXML(xml_filepath = \"%s\") : unable to load xml", xml_filepath);
-		throw MyException(errMsg);
+		throw iom::exception(errMsg);
 	}
 
 	//setting ROOT element (that is the first child, i.e. <TeraStitcher> node)
 	TiXmlHandle hRoot(xml.FirstChildElement("TeraStitcher"));
 
+	// 2014-09-10. Alessandro. @ADDED 'volume_format' attribute to <TeraStitcher> XML node
+	const char *volformat = hRoot.ToElement()->Attribute("volume_format");
+	if(volformat && strcmp(volformat, id.c_str()) != 0)
+		throw iom::exception(vm::strprintf("in StackedVolume::initFromXML(): unsupported volume_format = \"%s\" (current format is \"%s\")", volformat, id.c_str()).c_str());
+
 	//reading fields and checking coherence with metadata previously read from VM_BIN_METADATA_FILE_NAME
 	TiXmlElement * pelem = hRoot.FirstChildElement("stacks_dir").Element();
 	if(strcmp(pelem->Attribute("value"), stacks_dir) != 0)
-		throw MyException(strprintf("in StackedVolume::loadXML(...): Mismatch in <stacks_dir> field between xml file (=\"%s\") and %s (=\"%s\").", pelem->Attribute("value"), VM_BIN_METADATA_FILE_NAME, stacks_dir).c_str());
+		throw iom::exception(iom::strprintf("in StackedVolume::loadXML(...): Mismatch in <stacks_dir> field between xml file (=\"%s\") and %s (=\"%s\").", pelem->Attribute("value"), vm::BINARY_METADATA_FILENAME.c_str(), stacks_dir).c_str());
 	pelem = hRoot.FirstChildElement("voxel_dims").Element();
 	float VXL_V_read=0.0f, VXL_H_read=0.0f, VXL_D_read=0.0f;
 	pelem->QueryFloatAttribute("V", &VXL_V_read);
@@ -439,8 +506,8 @@ void StackedVolume::loadXML(const char *xml_filepath) throw (MyException)
 	if(VXL_V_read != VXL_V || VXL_H_read != VXL_H || VXL_D_read != VXL_D)
 	{
 		char errMsg[2000];
-		sprintf(errMsg, "in StackedVolume::loadXML(...): Mismatch in <voxel_dims> field between xml file (= %.2f x %.2f x %.2f ) and %s (= %.2f x %.2f x %.2f ).", VXL_V_read, VXL_H_read, VXL_D_read, VM_BIN_METADATA_FILE_NAME, VXL_V, VXL_H, VXL_D);
-		throw MyException(errMsg);
+		sprintf(errMsg, "in StackedVolume::loadXML(...): Mismatch in <voxel_dims> field between xml file (= %.2f x %.2f x %.2f ) and %s (= %.2f x %.2f x %.2f ).", VXL_V_read, VXL_H_read, VXL_D_read, vm::BINARY_METADATA_FILENAME.c_str(), VXL_V, VXL_H, VXL_D);
+		throw iom::exception(errMsg);
 	}
 	pelem = hRoot.FirstChildElement("origin").Element();
 	float ORG_V_read=0.0f, ORG_H_read=0.0f, ORG_D_read=0.0f;
@@ -451,7 +518,7 @@ void StackedVolume::loadXML(const char *xml_filepath) throw (MyException)
 	{
 		char errMsg[2000];
 		sprintf(errMsg, "in StackedVolume::loadXML(...): Mismatch in <origin> field between xml file (= {%.7f, %.7f, %.7f} ) and %s (= {%.7f, %.7f, %.7f} ).", ORG_V_read, ORG_H_read, ORG_D_read, VM_BIN_METADATA_FILE_NAME, ORG_V, ORG_H, ORG_D);
-		throw MyException(errMsg);
+		throw iom::iom::exception(errMsg);
 	} @TODO: bug with float precision causes often mismatch */ 
 	pelem = hRoot.FirstChildElement("mechanical_displacements").Element();
 	float MEC_V_read=0.0f, MEC_H_read=0.0f;
@@ -460,8 +527,8 @@ void StackedVolume::loadXML(const char *xml_filepath) throw (MyException)
 	if(MEC_V_read != MEC_V || MEC_H_read != MEC_H)
 	{
 		char errMsg[2000];
-		sprintf(errMsg, "in StackedVolume::loadXML(...): Mismatch in <mechanical_displacements> field between xml file (= %.1f x %.1f ) and %s (= %.1f x %.1f ).", MEC_V_read, MEC_H_read, VM_BIN_METADATA_FILE_NAME, MEC_V, MEC_H);
-		throw MyException(errMsg);
+		sprintf(errMsg, "in StackedVolume::loadXML(...): Mismatch in <mechanical_displacements> field between xml file (= %.1f x %.1f ) and %s (= %.1f x %.1f ).", MEC_V_read, MEC_H_read, vm::BINARY_METADATA_FILENAME.c_str(), MEC_V, MEC_H);
+		throw iom::exception(errMsg);
 	}
 	pelem = hRoot.FirstChildElement("dimensions").Element();
 	int N_ROWS_read, N_COLS_read, N_SLICES_read;
@@ -471,20 +538,20 @@ void StackedVolume::loadXML(const char *xml_filepath) throw (MyException)
 	if(N_ROWS_read != N_ROWS || N_COLS_read != N_COLS || N_SLICES_read != N_SLICES)
 	{
 		char errMsg[2000];
-		sprintf(errMsg, "in StackedVolume::loadXML(...): Mismatch between in <dimensions> field xml file (= %d x %d x %d), %s (= %d x %d x %d).", N_ROWS_read, N_COLS_read, N_SLICES_read, VM_BIN_METADATA_FILE_NAME, N_ROWS, N_COLS, N_SLICES);
-		throw MyException(errMsg);
+		sprintf(errMsg, "in StackedVolume::loadXML(...): Mismatch between in <dimensions> field xml file (= %d x %d x %d), %s (= %d x %d x %d).", N_ROWS_read, N_COLS_read, N_SLICES_read, vm::BINARY_METADATA_FILENAME.c_str(), N_ROWS, N_COLS, N_SLICES);
+		throw iom::exception(errMsg);
 	}
 
 	pelem = hRoot.FirstChildElement("STACKS").Element()->FirstChildElement();
 	int i,j;
 	for(i=0; i<N_ROWS; i++)
 		for(j=0; j<N_COLS; j++, pelem = pelem->NextSiblingElement())
-			STACKS[i][j]->loadXML(pelem);
+			STACKS[i][j]->loadXML(pelem, N_SLICES);
 }
 
-void StackedVolume::initFromXML(const char *xml_filepath) throw (MyException)
+void StackedVolume::initFromXML(const char *xml_filepath) throw (iom::exception)
 {
-	#if VM_VERBOSE > 3
+    #if VM_VERBOSE > 3
     printf("\t\t\t\tin StackedVolume::initFromXML(char *xml_filename = %s)\n", xml_filepath);
 	#endif
 
@@ -493,11 +560,16 @@ void StackedVolume::initFromXML(const char *xml_filepath) throw (MyException)
 	{
 		char errMsg[2000];
 		sprintf(errMsg,"in StackedVolume::initFromXML(xml_filepath = \"%s\") : unable to load xml", xml_filepath);
-		throw MyException(errMsg);
+		throw iom::exception(errMsg);
 	}
 
 	//setting ROOT element (that is the first child, i.e. <TeraStitcher> node)
 	TiXmlHandle hRoot(xml.FirstChildElement("TeraStitcher"));
+
+	// 2014-09-10. Alessandro. @ADDED 'volume_format' attribute to <TeraStitcher> XML node
+	const char *volformat = hRoot.ToElement()->Attribute("volume_format");
+	if(volformat && strcmp(volformat, id.c_str()) != 0)
+		throw iom::exception(vm::strprintf("in StackedVolume::initFromXML(): unsupported volume_format = \"%s\" (current format is \"%s\")", volformat, id.c_str()).c_str());
 
 	//reading fields
 	TiXmlElement * pelem = hRoot.FirstChildElement("stacks_dir").Element();
@@ -529,12 +601,18 @@ void StackedVolume::initFromXML(const char *xml_filepath) throw (MyException)
 		for(int j = 0; j < N_COLS; j++, pelem = pelem->NextSiblingElement())
 		{
 			STACKS[i][j] = new Stack(this, i, j, pelem->Attribute("DIR_NAME"));
-			STACKS[i][j]->loadXML(pelem);
+			STACKS[i][j]->loadXML(pelem, N_SLICES);
 		}
 	}
+
+	// check stacks have the same width and height
+	normalize_stacks_attributes();
+
+	// 2014-09-09. Alessandro. @FIXED. Added default reference system if volume is imported from xml.
+	reference_system = vm::ref_sys(vertical,horizontal,depth);
 }
 
-void StackedVolume::saveXML(const char *xml_filename, const char *xml_filepath) throw (MyException)
+void StackedVolume::saveXML(const char *xml_filename, const char *xml_filepath) throw (iom::exception)
 {
 	#if VM_VERBOSE > 3
 	printf("\t\t\t\tin StackedVolume::saveXML(char *xml_filename = %s)\n", xml_filename);
@@ -547,16 +625,16 @@ void StackedVolume::saveXML(const char *xml_filename, const char *xml_filepath) 
 	TiXmlElement * pelem;
 	int i,j;
 
-        //obtaining XML absolute path
-        if(xml_filename)
-            sprintf(xml_abs_path, "%s/%s.xml", stacks_dir, xml_filename);
-        else if(xml_filepath)
-            strcpy(xml_abs_path, xml_filepath);
-        else
-            throw MyException("in StackedVolume::saveXML(...): no xml path provided");
+    //obtaining XML absolute path
+    if(xml_filename)
+        sprintf(xml_abs_path, "%s/%s.xml", stacks_dir, xml_filename);
+    else if(xml_filepath)
+        strcpy(xml_abs_path, xml_filepath);
+    else
+        throw iom::exception("in StackedVolume::saveXML(...): no xml path provided");
 
 	//initializing XML file with DTD declaration
-        fstream XML_FILE(xml_abs_path, ios::out);
+    fstream XML_FILE(xml_abs_path, ios::out);
 	XML_FILE<<"<?xml version=\"1.0\" encoding=\"UTF-8\"?>"<<endl;
 	XML_FILE<<"<!DOCTYPE TeraStitcher SYSTEM \"TeraStitcher.DTD\">"<<endl;
 	XML_FILE.close();
@@ -565,12 +643,16 @@ void StackedVolume::saveXML(const char *xml_filename, const char *xml_filepath) 
         if(!xml.LoadFile(xml_abs_path))
 	{
 		char errMsg[5000];
-                sprintf(errMsg, "in StackedVolume::saveToXML(...) : unable to load xml file at \"%s\"", xml_abs_path);
-		throw MyException(errMsg);
+        sprintf(errMsg, "in StackedVolume::saveToXML(...) : unable to load xml file at \"%s\"", xml_abs_path);
+		throw iom::exception(errMsg);
 	}
 
 	//inserting root node <TeraStitcher> and children nodes
 	root = new TiXmlElement("TeraStitcher");  
+
+	// 2014-09-10. Alessandro. @ADDED 'volume_format' attribute to <TeraStitcher> XML node
+	root->SetAttribute("volume_format", id.c_str());
+
 	xml.LinkEndChild( root );  
 	pelem = new TiXmlElement("stacks_dir");
 	pelem->SetAttribute("value", stacks_dir);
@@ -605,7 +687,7 @@ void StackedVolume::saveXML(const char *xml_filename, const char *xml_filepath) 
 	xml.SaveFile();
 }
 
-void StackedVolume::saveBinaryMetadata(char *metadata_filepath) throw (MyException)
+void StackedVolume::saveBinaryMetadata(char *metadata_filepath) throw (iom::exception)
 {
 	#if VM_VERBOSE > 3
 	printf("\t\t\t\tin StackedVolume::saveBinaryMetadata(char *metadata_filepath = %s)\n", metadata_filepath);
@@ -617,13 +699,29 @@ void StackedVolume::saveBinaryMetadata(char *metadata_filepath) throw (MyExcepti
 	int i,j;
 
 	if(!(file = fopen(metadata_filepath, "wb")))
-		throw MyException("in StackedVolume::saveBinaryMetadata(...): unable to save binary metadata file");
+		throw iom::exception("in StackedVolume::saveBinaryMetadata(...): unable to save binary metadata file");
+
+
+	// 2014-09-03. Alessandro. @FIXED: added unified header to retrieve module's signature, metadata file version, and class name
+	// ----- module's signature: to avoid confusion between different modules (e.g. volumemanager and imagemanager)
+	str_size = (uint16) strlen(vm::MODULE_ID.c_str()) + 1; 
+	fwrite(&str_size, sizeof(uint16), 1, file);
+	fwrite(vm::MODULE_ID.c_str(), str_size, 1, file);
+	// ----- metadata file version: to avoid misinterpretation of mdata.bin bytes when its structure is changed
+	fwrite(&vm::BINARY_METADATA_VERSION, sizeof(float), 1, file);
+	// ----- class signature: to avoid confusion between different mdata.bin files produced by different classes (e.g. StackedVolume and BlockVolume)
+	const char* class_signature = typeid(StackedVolume).name();
+	str_size = (uint16) strlen(class_signature) + 1; 
+	fwrite(&str_size, sizeof(uint16), 1, file);
+	fwrite(class_signature, str_size, 1, file);
+	// -------------------------------------------------------------
+
 	str_size = (uint16) strlen(stacks_dir) + 1;
 	fwrite(&str_size, sizeof(uint16), 1, file);
 	fwrite(stacks_dir, str_size, 1, file);
-    fwrite(&reference_system.first, sizeof(axis), 1, file);  // GI_140501
-    fwrite(&reference_system.second, sizeof(axis), 1, file); // GI_140501
-    fwrite(&reference_system.third, sizeof(axis), 1, file);  // GI_140501
+    fwrite(&reference_system.first, sizeof(vm::axis), 1, file);  // GI_140501
+    fwrite(&reference_system.second, sizeof(vm::axis), 1, file); // GI_140501
+    fwrite(&reference_system.third, sizeof(vm::axis), 1, file);  // GI_140501
 	fwrite(&VXL_V, sizeof(float), 1, file);
 	fwrite(&VXL_H, sizeof(float), 1, file);
 	fwrite(&VXL_D, sizeof(float), 1, file);
@@ -634,7 +732,9 @@ void StackedVolume::saveBinaryMetadata(char *metadata_filepath) throw (MyExcepti
 	fwrite(&MEC_H, sizeof(float), 1, file);
 	fwrite(&N_ROWS, sizeof(uint16), 1, file);
 	fwrite(&N_COLS, sizeof(uint16), 1, file);
-	fwrite(&N_SLICES, sizeof(uint16), 1, file);
+
+	// 2014-09-02. Alessandro. @FIXED as 'N_SLICES' changed from 'uint16' to 'int' type. See vmVirtualVolume.h.
+	fwrite(&N_SLICES, sizeof(int), 1, file);
 
 	for(i = 0; i < N_ROWS; i++)
 		for(j = 0; j < N_COLS; j++)
@@ -643,7 +743,7 @@ void StackedVolume::saveBinaryMetadata(char *metadata_filepath) throw (MyExcepti
 	fclose(file);
 }
 
-void StackedVolume::loadBinaryMetadata(char *metadata_filepath) throw (MyException)
+void StackedVolume::loadBinaryMetadata(char *metadata_filepath) throw (iom::exception)
 {
 	#if VM_VERBOSE > 3
 	printf("\t\t\t\tin StackedVolume::loadBinaryMetadata(char *metadata_filepath = %s)\n", metadata_filepath);
@@ -652,110 +752,171 @@ void StackedVolume::loadBinaryMetadata(char *metadata_filepath) throw (MyExcepti
 	//LOCAL VARIABLES
 	uint16 str_size;
 	char *temp; // GI_140425
+	bool regen = false;
 	FILE *file;
 	int i,j;
 	size_t fread_return_val;
+	char buffer[VM_STATIC_STRINGS_SIZE];
+	float tmp=0;
 
+	// open file
 	if(!(file = fopen(metadata_filepath, "rb")))
-		throw MyException("in StackedVolume::loadBinaryMetadata(...): unable to load binary metadata file");
-	// str_size = (uint16) strlen(stacks_dir) + 1; // GI_140425 remodev because has with no effect
+		throw iom::exception("in StackedVolume::loadBinaryMetadata(...): unable to load binary metadata file");
+
+
+	// 2014-09-03. Alessandro. @FIXED: added unified header to retrieve module's signature, metadata file version, and class name
+	// ----- module's signature: to avoid confusion between different modules (e.g. volumemanager and imagemanager)
+	if( fread(&str_size, sizeof(uint16), 1, file) != 1)
+	{
+		fclose(file);
+		throw iom::exception("in StackedVolume::loadBinaryMetadata(...) error while reading binary metadata file");
+	}
+	if( fread(buffer, str_size, 1, file) != 1)
+	{
+		fclose(file);
+		throw iom::exception("in StackedVolume::loadBinaryMetadata(...) error while reading binary metadata file");
+	}
+	if(vm::MODULE_ID.compare(buffer) != 0)
+	{
+		fclose(file);
+		throw iom::exception(vm::strprintf("in StackedVolume::loadBinaryMetadata(). Wrong module's signature: expected \"%s\", found \"%s\"."
+										"Possible obsolete mdata.bin file. Please delete it and try again.", vm::MODULE_ID.c_str(), buffer).c_str());
+	}
+	// ----- metadata file version: to avoid misinterpretation of mdata.bin bytes when its structure is changed
+	if( fread(&tmp, sizeof(float), 1, file) != 1)
+	{
+		fclose(file);
+		throw iom::exception("in StackedVolume::loadBinaryMetadata(...) error while reading binary metadata file");
+	}
+	if(vm::BINARY_METADATA_VERSION != tmp)
+	{
+		fclose(file);
+		throw iom::exception(vm::strprintf("in StackedVolume::loadBinaryMetadata(). Binary metadata file version (%.1f) is out-of-date (required: %.1f): please delete the mdata.bin file and try again", tmp, vm::BINARY_METADATA_VERSION).c_str());
+	}
+	// ----- class signature: to avoid confusion between different mdata.bin files produced by different classes (e.g. StackedVolume and BlockVolume)
+	if( fread(&str_size, sizeof(uint16), 1, file) != 1)
+	{
+		fclose(file);
+		throw iom::exception("in StackedVolume::loadBinaryMetadata(...) error while reading binary metadata file");
+	}
+	if( fread(buffer, str_size, 1, file) != 1)
+	{
+		fclose(file);
+		throw iom::exception("in StackedVolume::loadBinaryMetadata(...) error while reading binary metadata file");
+	}
+	if(strcmp(buffer, typeid(StackedVolume).name()) != 0)
+	{
+		fclose(file);
+		throw iom::exception(vm::strprintf("in StackedVolume::loadBinaryMetadata(). Wrong class signature: expected \"%s\", found \"%s\".", typeid(StackedVolume).name(), buffer).c_str());
+	}
+	// -------------------------------------------------------------
+
+
 	fread_return_val = fread(&str_size, sizeof(uint16), 1, file);
 	if(fread_return_val != 1) {
 		fclose(file);
-		throw MyException("in StackedVolume::loadBinaryMetadata(...) error while reading binary metadata file");
+		throw iom::exception("in StackedVolume::loadBinaryMetadata(...) error while reading binary metadata file");
 	}
 	// GI_140425 a check has been introduced to avoid that an out-of-date mdata.bin contains a wrong rood directory
 	temp = new char[str_size];
 	fread_return_val = fread(temp, str_size, 1, file);
 	if(fread_return_val != 1) {
+		delete []temp;
 		fclose(file);
-		throw MyException("in BlockVolume::loadBinaryMetadata(...) error while reading binary metadata file");
+		throw iom::exception("in StackedVolume::loadBinaryMetadata(...) error while reading binary metadata file");
 	}
 	if ( !strcmp(temp,stacks_dir) ) // the two strings are equal
 		delete []temp;
-	else {
-		fclose(file);
-		throw MyException("in BlockVolume::loadBinaryMetadata(...): binary metadata file is out-of-date");
+	else { // GI_140626: allow moving mdata.bin to other machine
+		delete []temp;
+		regen = true;
+		//fclose(file);
+		//throw iom::iom::exception("in StackedVolume::loadBinaryMetadata(...): binary metadata file is out-of-date");
+		#if VM_VERBOSE > 3
+		printf("\t\t\t\tin StackedVolume::loadBinaryMetadata(...): binary metadata file is out-of-date and it has been regenerated\n");
+		#endif
 	}
 
 	// GI_140501
-    fread_return_val = fread(&reference_system.first, sizeof(axis), 1, file);
+    fread_return_val = fread(&reference_system.first, sizeof(vm::axis), 1, file);
     if(fread_return_val != 1)
     {
         fclose(file);
-        throw MyException("in StackedVolume::unBinarizeFrom(...): error while reading binary metadata file");
+        throw iom::exception("in StackedVolume::unBinarizeFrom(...): error while reading binary metadata file");
     }
 
 	// GI_140501
-    fread_return_val = fread(&reference_system.second, sizeof(axis), 1, file);
+    fread_return_val = fread(&reference_system.second, sizeof(vm::axis), 1, file);
     if(fread_return_val != 1)
     {
         fclose(file);
-        throw MyException("in StackedVolume::unBinarizeFrom(...): error while reading binary metadata file");
+        throw iom::exception("in StackedVolume::unBinarizeFrom(...): error while reading binary metadata file");
     }
 
  	// GI_140501
-   fread_return_val = fread(&reference_system.third, sizeof(axis), 1, file);
+    fread_return_val = fread(&reference_system.third, sizeof(vm::axis), 1, file);
     if(fread_return_val != 1)
     {
         fclose(file);
-        throw MyException("in StackedVolume::unBinarizeFrom(...): error while reading binary metadata file");
+        throw iom::exception("in StackedVolume::unBinarizeFrom(...): error while reading binary metadata file");
     }
 
 	fread_return_val = fread(&VXL_V, sizeof(float), 1, file);
 	if(fread_return_val != 1) {
 		fclose(file);
-		throw MyException("in StackedVolume::loadBinaryMetadata(...) error while reading binary metadata file");
+		throw iom::exception("in StackedVolume::loadBinaryMetadata(...) error while reading binary metadata file");
 	}
 	fread_return_val = fread(&VXL_H, sizeof(float), 1, file);
 	if(fread_return_val != 1) {
 		fclose(file); 
-		throw MyException("in StackedVolume::loadBinaryMetadata(...) error while reading binary metadata file");
+		throw iom::exception("in StackedVolume::loadBinaryMetadata(...) error while reading binary metadata file");
 	}
 	fread_return_val = fread(&VXL_D, sizeof(float), 1, file);
 	if(fread_return_val != 1) {
 		fclose(file);
-		throw MyException("in StackedVolume::loadBinaryMetadata(...) error while reading binary metadata file");
+		throw iom::exception("in StackedVolume::loadBinaryMetadata(...) error while reading binary metadata file");
 	}
 	fread_return_val = fread(&ORG_V, sizeof(float), 1, file);
 	if(fread_return_val != 1) {
 		fclose(file);
-		throw MyException("in StackedVolume::loadBinaryMetadata(...) error while reading binary metadata file");
+		throw iom::exception("in StackedVolume::loadBinaryMetadata(...) error while reading binary metadata file");
 	}
 	fread_return_val = fread(&ORG_H, sizeof(float), 1, file);
 	if(fread_return_val != 1) {
 		fclose(file);
-		throw MyException("in StackedVolume::loadBinaryMetadata(...) error while reading binary metadata file");
+		throw iom::exception("in StackedVolume::loadBinaryMetadata(...) error while reading binary metadata file");
 	}
 	fread_return_val = fread(&ORG_D, sizeof(float), 1, file);
 	if(fread_return_val != 1) {
 		fclose(file);
-		throw MyException("in StackedVolume::loadBinaryMetadata(...) error while reading binary metadata file");
+		throw iom::exception("in StackedVolume::loadBinaryMetadata(...) error while reading binary metadata file");
 	}
 	fread_return_val = fread(&MEC_V, sizeof(float), 1, file);
 	if(fread_return_val != 1) {
 		fclose(file);
-		throw MyException("in StackedVolume::loadBinaryMetadata(...) error while reading binary metadata file");
+		throw iom::exception("in StackedVolume::loadBinaryMetadata(...) error while reading binary metadata file");
 	}
 	fread_return_val = fread(&MEC_H, sizeof(float), 1, file);
 	if(fread_return_val != 1) {
 		fclose(file);
-		throw MyException("in StackedVolume::loadBinaryMetadata(...) error while reading binary metadata file");
+		throw iom::exception("in StackedVolume::loadBinaryMetadata(...) error while reading binary metadata file");
 	}
 	fread_return_val = fread(&N_ROWS, sizeof(uint16), 1, file);
 	if(fread_return_val != 1) {
 		fclose(file);
-		throw MyException("in StackedVolume::loadBinaryMetadata(...) error while reading binary metadata file");
+		throw iom::exception("in StackedVolume::loadBinaryMetadata(...) error while reading binary metadata file");
 	}
 	fread_return_val = fread(&N_COLS, sizeof(uint16), 1, file);
 	if(fread_return_val != 1) {
 		fclose(file);
-		throw MyException("in StackedVolume::loadBinaryMetadata(...) error while reading binary metadata file");
+		throw iom::exception("in StackedVolume::loadBinaryMetadata(...) error while reading binary metadata file");
 	}
-	fread_return_val = fread(&N_SLICES, sizeof(uint16), 1, file);
+
+	// 2014-09-02. Alessandro. @FIXED as 'N_SLICES' changed from 'uint16' to 'int' type. See vmVirtualVolume.h.
+	fread_return_val = fread(&N_SLICES, sizeof(int), 1, file);
 	if(fread_return_val != 1) {
 		fclose(file);
-		throw MyException("in StackedVolume::loadBinaryMetadata(...) error while reading binary metadata file");
+		throw iom::exception("in StackedVolume::loadBinaryMetadata(...) error while reading binary metadata file");
 	}
 
 	STACKS = new Stack **[N_ROWS];
@@ -767,9 +928,13 @@ void StackedVolume::loadBinaryMetadata(char *metadata_filepath) throw (MyExcepti
 	}
 
 	fclose(file);
+
+	if ( regen ) { // GI_140626: directory name is changed, mdata.bin must be regenerated
+		saveBinaryMetadata(metadata_filepath);
+	}
 }
 
-//rotate stacks matrix around D axis (accepted values are theta=0,90,180,270)
+//rotate stacks matrix around D vm::axis (accepted values are theta=0,90,180,270)
 void StackedVolume::rotate(int theta)
 {
 	#if VM_VERBOSE > 3
@@ -853,7 +1018,7 @@ void StackedVolume::rotate(int theta)
 }
 
 //mirror stacks matrix along mrr_axis (accepted values are mrr_axis=1,2,3)
-void StackedVolume::mirror(axis mrr_axis) throw (MyException)
+void StackedVolume::mirror(vm::axis mrr_axis) throw (iom::exception)
 {
 	#if VM_VERBOSE > 3
 	printf("\t\t\t\tin StackedVolume::mirror(mrr_axis = %d)\n", mrr_axis);
@@ -862,8 +1027,8 @@ void StackedVolume::mirror(axis mrr_axis) throw (MyException)
 	if(mrr_axis!= 1 && mrr_axis != 2)
 	{
 		char msg[1000];
-		sprintf(msg,"in StackedVolume::mirror(axis mrr_axis=%d): unsupported axis mirroring", mrr_axis);
-		throw MyException(msg);
+		sprintf(msg,"in StackedVolume::mirror(vm::axis mrr_axis=%d): unsupported vm::axis mirroring", mrr_axis);
+		throw iom::exception(msg);
 	}
 
 	Stack*** new_STACK_2D_ARRAY;
@@ -912,26 +1077,6 @@ void StackedVolume::mirror(axis mrr_axis) throw (MyException)
 
 	STACKS = new_STACK_2D_ARRAY;
 }
-
-
-//print all informations contained in this data structure
-void StackedVolume::print()
-{
-	printf("*** Begin printing StakedVolume object...\n\n");
-	printf("\tDirectory:\t\t\t%s\n", stacks_dir);
-	printf("\tDimensions of single stack:\t%d(V) x %d(H) x %d(D)\n", this->getStacksHeight(), this->getStacksWidth(), N_SLICES);
-	printf("\tVoxels:\t\t\t\t%.4f(V) x %.4f(H) x %.4f(D)\n", VXL_V, VXL_H, VXL_D);
-	printf("\tOrigin:\t\t\t\t%.4f(V) x %.4f(H) x %.4f(D)\n", ORG_V, ORG_H, ORG_D);
-	printf("\tMechanical displacements:\t%.4f(V) x %.4f(H)\n", MEC_V, MEC_H);
-	printf("\tStacks matrix:\t\t\t%d(V) x %d(H)\n", N_ROWS, N_COLS);
-	printf("\t |\n");
-	for(int row=0; row<N_ROWS; row++)
-		for(int col=0; col<N_COLS; col++)
-			STACKS[row][col]->print();
-	printf("\n*** END printing StakedVolume object...\n\n");
-}
-
-
 
 //counts the total number of displacements and the number of displacements per stack
 void StackedVolume::countDisplacements(int& total, float& per_stack_pair)
@@ -1009,115 +1154,192 @@ int StackedVolume::countStitchableStacks(float threshold)
 }
 
 // print mdata.bin content to stdout
-void StackedVolume::dumpMData(const char* volumePath) throw (MyException)
+void StackedVolume::dumpMData(const char* volumePath) throw (iom::exception)
 {
 	char mdata_filepath[VM_STATIC_STRINGS_SIZE];
-	sprintf(mdata_filepath, "%s/%s", volumePath, VM_BIN_METADATA_FILE_NAME);
-	
+	sprintf(mdata_filepath, "%s/%s", volumePath, vm::BINARY_METADATA_FILENAME.c_str());
+	uint16 str_size = 0;
+	char buffer[VM_STATIC_STRINGS_SIZE];
+	float tmp = 0;
+
+	// file open
 	FILE* f = fopen(mdata_filepath, "rb");
 	if(!f)
-		throw MyException(strprintf("in StackedVolume::dumpMData(): cannot open metadata binary file at \"%s\"", mdata_filepath).c_str());
+		throw iom::exception(iom::strprintf("in StackedVolume::dumpMData(): cannot open metadata binary file at \"%s\"", mdata_filepath).c_str());
 
 	// <str_size> field
-	uint16 str_size = 0;
+	if( fread(&str_size, sizeof(uint16), 1, f) != 1)
+	{
+		fclose(f);
+		throw iom::exception("in StackedVolume::dumpMData(...): cannot read field <str_size>");
+	}
+	printf("<str_size> = %d\n", str_size);
+
+
+
+	// <module's signature> field
+	if( fread(buffer, str_size, 1, f) != 1)
+	{
+		fclose(f);
+		throw iom::exception("in StackedVolume::dumpMData(...): cannot read field <module's signature>");
+	}
+	if(vm::MODULE_ID.compare(buffer) != 0)
+	{
+		fclose(f);
+		throw iom::exception(vm::strprintf("in StackedVolume::dumpMData(). Wrong module's signature: expected \"%s\", found \"%s\"."
+			"Possible obsolete mdata.bin file. Please delete it and try again.", vm::MODULE_ID.c_str(), buffer).c_str());
+	}
+	printf("<module's signature> = %s\n", buffer);
+
+	// <metadata file version> field
+	if( fread(&tmp, sizeof(float), 1, f) != 1)
+	{
+		fclose(f);
+		throw iom::exception("in StackedVolume::dumpMData(...): cannot read field <metadata file version>");
+	}
+	if(vm::BINARY_METADATA_VERSION != tmp)
+	{
+		fclose(f);
+		throw iom::exception(vm::strprintf("in StackedVolume::dumpMData(). Binary metadata file version (%.1f) is out-of-date (required: %.1f): please delete the mdata.bin file and try again", tmp, vm::BINARY_METADATA_VERSION).c_str());
+	}
+	printf("<metadata file version> = %.1f\n", tmp);
+
+	// <str_size> field
+	if( fread(&str_size, sizeof(uint16), 1, f) != 1)
+	{
+		fclose(f);
+		throw iom::exception("in StackedVolume::dumpMData(...): cannot read field <str_size>");
+	}	
+	printf("<str_size> = %d\n", str_size);
+
+	// <class signature> field
+	if( fread(buffer, str_size, 1, f) != 1)
+	{
+		fclose(f);
+		throw iom::exception("in StackedVolume::dumpMData(...): cannot read field <class signature>");
+	}
+	if(strcmp(buffer, typeid(StackedVolume).name()) != 0)
+	{
+		fclose(f);
+		throw iom::exception(vm::strprintf("in StackedVolume::dumpMData(). Wrong class signature: expected \"%s\", found \"%s\".", typeid(StackedVolume).name(), buffer).c_str());
+	}
+	printf("<class signature> = %s\n", buffer);
+	// -------------------------------------------------------------
+
+	// <str_size> field
 	if(fread(&str_size, sizeof(uint16), 1, f) != 1)
 	{
 		fclose(f);
-		throw MyException("in StackedVolume::dumpMData(...): cannot read field <str_size>");
+		throw iom::exception("in StackedVolume::dumpMData(...): cannot read field <str_size>");
 	}
-	else
-		printf("<str_size> = %d\n", str_size);
+	printf("<str_size> = %d\n", str_size);
 
 	// <stacks_dir>
-	char buffer[VM_STATIC_STRINGS_SIZE];
 	if(fread(buffer, str_size, 1, f) != 1)
 	{
 		fclose(f);
-		throw MyException("in StackedVolume::dumpMData(...): cannot read field <stacks_dir>");
+		throw iom::exception("in StackedVolume::dumpMData(...): cannot read field <stacks_dir>");
 	}
-	else
-		printf("<stacks_dir> = %s\n", buffer);
+	printf("<stacks_dir> = %s\n", buffer);
+
+
+	// <reference_system.first>
+	vm::ref_sys reference_system;
+	if( fread(&reference_system.first, sizeof(vm::axis), 1, f) != 1)
+	{
+		fclose(f);
+		throw iom::exception("in StackedVolume::dumpMData(...): cannot read field <reference_system.first>");
+	}
+	printf("<reference_system.first> = %d\n", reference_system.first);
+
+	// <reference_system.second>
+	if( fread(&reference_system.second, sizeof(vm::axis), 1, f) != 1)
+	{
+		fclose(f);
+		throw iom::exception("in StackedVolume::dumpMData(...): cannot read field <reference_system.second>");
+	}
+	printf("<reference_system.second> = %d\n", reference_system.second);
+
+	// <reference_system.third>
+	if( fread(&reference_system.third, sizeof(vm::axis), 1, f) != 1)
+	{
+		fclose(f);
+		throw iom::exception("in StackedVolume::dumpMData(...): cannot read field <reference_system.third>");
+	}
+	printf("<reference_system.third> = %d\n", reference_system.third);
+
 
 	// <VXL_V>
 	float fn = 0.0f;
 	if(fread(&fn, sizeof(float), 1, f) != 1)
 	{
 		fclose(f);
-		throw MyException("in StackedVolume::dumpMData(...): cannot read field <VXL_V>");
+		throw iom::exception("in StackedVolume::dumpMData(...): cannot read field <VXL_V>");
 	}
-	else
-		printf("<VXL_V> = %.4f\n", fn);
+	printf("<VXL_V> = %.4f\n", fn);
 
 
 	// <VXL_H>
 	if(fread(&fn, sizeof(float), 1, f) != 1)
 	{
 		fclose(f);
-		throw MyException("in StackedVolume::dumpMData(...): cannot read field <VXL_H>");
+		throw iom::exception("in StackedVolume::dumpMData(...): cannot read field <VXL_H>");
 	}
-	else
-		printf("<VXL_H> = %.4f\n", fn);
+	printf("<VXL_H> = %.4f\n", fn);
 
 
 	// <VXL_D>
 	if(fread(&fn, sizeof(float), 1, f) != 1)
 	{
 		fclose(f);
-		throw MyException("in StackedVolume::dumpMData(...): cannot read field <VXL_D>");
+		throw iom::exception("in StackedVolume::dumpMData(...): cannot read field <VXL_D>");
 	}
-	else
-		printf("<VXL_D> = %.4f\n", fn);
+	printf("<VXL_D> = %.4f\n", fn);
 
 
 	// <ORG_V>
 	if(fread(&fn, sizeof(float), 1, f) != 1)
 	{
 		fclose(f);
-		throw MyException("in StackedVolume::dumpMData(...): cannot read field <ORG_V>");
+		throw iom::exception("in StackedVolume::dumpMData(...): cannot read field <ORG_V>");
 	}
-	else
-		printf("<ORG_V> = %.6f\n", fn);
+	printf("<ORG_V> = %.6f\n", fn);
 
 
 	// <ORG_H>
 	if(fread(&fn, sizeof(float), 1, f) != 1)
 	{
 		fclose(f);
-		throw MyException("in StackedVolume::dumpMData(...): cannot read field <ORG_H>");
+		throw iom::exception("in StackedVolume::dumpMData(...): cannot read field <ORG_H>");
 	}
-	else
-		printf("<ORG_H> = %.6f\n", fn);
+	printf("<ORG_H> = %.6f\n", fn);
 
 
 	// <ORG_D>
 	if(fread(&fn, sizeof(float), 1, f) != 1)
 	{
 		fclose(f);
-		throw MyException("in StackedVolume::dumpMData(...): cannot read field <ORG_D>");
+		throw iom::exception("in StackedVolume::dumpMData(...): cannot read field <ORG_D>");
 	}
-	else
-		printf("<ORG_D> = %.6f\n", fn);
+	printf("<ORG_D> = %.6f\n", fn);
 
 
 	// <MEC_V>
 	if(fread(&fn, sizeof(float), 1, f) != 1)
 	{
 		fclose(f);
-		throw MyException("in StackedVolume::dumpMData(...): cannot read field <MEC_V>");
+		throw iom::exception("in StackedVolume::dumpMData(...): cannot read field <MEC_V>");
 	}
-	else
-		printf("<MEC_V> = %.6f\n", fn);
+	printf("<MEC_V> = %.6f\n", fn);
 
 
 	// <MEC_H>
 	if(fread(&fn, sizeof(float), 1, f) != 1)
 	{
 		fclose(f);
-		throw MyException("in StackedVolume::dumpMData(...): cannot read field <MEC_H>");
+		throw iom::exception("in StackedVolume::dumpMData(...): cannot read field <MEC_H>");
 	}
-	else
-		printf("<MEC_H> = %.6f\n", fn);
-
+	printf("<MEC_H> = %.6f\n", fn);
 
 
 	// <N_ROWS>
@@ -1125,10 +1347,9 @@ void StackedVolume::dumpMData(const char* volumePath) throw (MyException)
 	if(fread(&nrows, sizeof(uint16), 1, f) != 1)
 	{
 		fclose(f);
-		throw MyException("in StackedVolume::dumpMData(...): cannot read field <N_ROWS>");
+		throw iom::exception("in StackedVolume::dumpMData(...): cannot read field <N_ROWS>");
 	}
-	else
-		printf("<N_ROWS> = %d\n", nrows);
+	printf("<N_ROWS> = %d\n", nrows);
 
 
 	// <N_COLS>
@@ -1136,21 +1357,19 @@ void StackedVolume::dumpMData(const char* volumePath) throw (MyException)
 	if(fread(&ncols, sizeof(uint16), 1, f) != 1)
 	{
 		fclose(f);
-		throw MyException("in StackedVolume::dumpMData(...): cannot read field <N_COLS>");
+		throw iom::exception("in StackedVolume::dumpMData(...): cannot read field <N_COLS>");
 	}
-	else
-		printf("<N_COLS> = %d\n", ncols);
+	printf("<N_COLS> = %d\n", ncols);
 
 
 	// <N_SLICES>
-	uint16 nslices = 0;
-	if(fread(&nslices, sizeof(uint16), 1, f) != 1)
+	int nslices = 0;
+	if(fread(&nslices, sizeof(int), 1, f) != 1)
 	{
 		fclose(f);
-		throw MyException("in StackedVolume::dumpMData(...): cannot read field <N_SLICES>");
+		throw iom::exception("in StackedVolume::dumpMData(...): cannot read field <N_SLICES>");
 	}
-	else
-		printf("<N_SLICES> = %d\n", nslices);
+	printf("<N_SLICES> = %d\n", nslices);
 
 
 	// read stack fields
@@ -1166,75 +1385,67 @@ void StackedVolume::dumpMData(const char* volumePath) throw (MyException)
 			if(fread(&intn, sizeof(int), 1, f) != 1)
 			{
 				fclose(f);
-				throw MyException("in StackedVolume::dumpMData(...): cannot read field <HEIGHT>");
+				throw iom::exception("in StackedVolume::dumpMData(...): cannot read field <HEIGHT>");
 			}
-			else
-				printf("\t<HEIGHT> = %d\n", intn);
+			printf("\t<HEIGHT> = %d\n", intn);
 
 			// <WIDTH>
 			if(fread(&intn, sizeof(int), 1, f) != 1)
 			{
 				fclose(f);
-				throw MyException("in StackedVolume::dumpMData(...): cannot read field <WIDTH>");
+				throw iom::exception("in StackedVolume::dumpMData(...): cannot read field <WIDTH>");
 			}
-			else
-				printf("\t<WIDTH> = %d\n", intn);
+			printf("\t<WIDTH> = %d\n", intn);
 
 			// <DEPTH>
 			int depth = 0;
 			if(fread(&depth, sizeof(int), 1, f) != 1)
 			{
 				fclose(f);
-				throw MyException("in StackedVolume::dumpMData(...): cannot read field <DEPTH>");
+				throw iom::exception("in StackedVolume::dumpMData(...): cannot read field <DEPTH>");
 			}
-			else
-				printf("\t<DEPTH> = %d\n", depth);
+			printf("\t<DEPTH> = %d\n", depth);
 
 			// <ABS_V>
 			if(fread(&intn, sizeof(int), 1, f) != 1)
 			{
 				fclose(f);
-				throw MyException("in StackedVolume::dumpMData(...): cannot read field <ABS_V>");
+				throw iom::exception("in StackedVolume::dumpMData(...): cannot read field <ABS_V>");
 			}
-			else
-				printf("\t<ABS_V> = %d\n", intn);
+			printf("\t<ABS_V> = %d\n", intn);
 
 			// <ABS_H>
 			if(fread(&intn, sizeof(int), 1, f) != 1)
 			{
 				fclose(f);
-				throw MyException("in StackedVolume::dumpMData(...): cannot read field <ABS_H>");
+				throw iom::exception("in StackedVolume::dumpMData(...): cannot read field <ABS_H>");
 			}
-			else
-				printf("\t<ABS_H> = %d\n", intn);
+			printf("\t<ABS_H> = %d\n", intn);
 
 			// <ABS_D>
 			if(fread(&intn, sizeof(int), 1, f) != 1)
 			{
 				fclose(f);
-				throw MyException("in StackedVolume::dumpMData(...): cannot read field <ABS_D>");
+				throw iom::exception("in StackedVolume::dumpMData(...): cannot read field <ABS_D>");
 			}
-			else
-				printf("\t<ABS_D> = %d\n", intn);
+			printf("\t<ABS_D> = %d\n", intn);
 
 
 			// <str_size> field
 			if(fread(&str_size, sizeof(uint16), 1, f) != 1)
 			{
 				fclose(f);
-				throw MyException("in StackedVolume::dumpMData(...): cannot read field <str_size>");
+				throw iom::exception("in StackedVolume::dumpMData(...): cannot read field <str_size>");
 			}
-			else
-				printf("\t<str_size> = %d\n", str_size);
+			printf("\t<str_size> = %d\n", str_size);
 
 			// <DIR_NAME>
 			if(fread(buffer, str_size, 1, f) != 1)
 			{
 				fclose(f);
-				throw MyException("in StackedVolume::dumpMData(...): cannot read field <DIR_NAME>");
+				throw iom::exception("in StackedVolume::dumpMData(...): cannot read field <DIR_NAME>");
 			}
-			else
-				printf("\t<DIR_NAME> = %s\n\n", buffer);
+			printf("\t<DIR_NAME> = %s\n\n", buffer);
 
 
 			for(int k = 0; k < depth; k++)
@@ -1245,19 +1456,22 @@ void StackedVolume::dumpMData(const char* volumePath) throw (MyException)
 				if(fread(&str_size, sizeof(uint16), 1, f) != 1)
 				{
 					fclose(f);
-					throw MyException("in StackedVolume::dumpMData(...): cannot read field <str_size>");
+					throw iom::exception("in StackedVolume::dumpMData(...): cannot read field <str_size>");
 				}
-				else
-					printf("\t\t<str_size> = %d\n", str_size);
+				printf("\t\t<str_size> = %d\n", str_size);
 
 				// <FILENAME>
-				if(fread(buffer, str_size, 1, f) != 1)
+				if(str_size > 0)
 				{
-					fclose(f);
-					throw MyException("in StackedVolume::dumpMData(...): cannot read field <FILENAME>");
+					if(fread(buffer, str_size, 1, f) != 1)
+					{
+						fclose(f);
+						throw iom::exception("in StackedVolume::dumpMData(...): cannot read field <FILENAME>");
+					}
+					printf("\t\t<FILENAME> = %s\n", buffer);
 				}
 				else
-					printf("\t\t<FILENAME> = %s\n", buffer);
+					printf("\t\t<FILENAME> = <empty>\n");
 
 				printf("\n");
 			}
@@ -1269,4 +1483,33 @@ void StackedVolume::dumpMData(const char* volumePath) throw (MyException)
 
 	fclose(f);
 
+}
+
+// 2014-09-05. Alessandro. @ADDED 'check_stacks_same_dims()' method to check that stacks have same width and height
+void StackedVolume::normalize_stacks_attributes() throw (iom::exception)
+{
+	std::set<int> heights, widths;
+	for(int i=0; i<N_ROWS; i++)
+		for(int j=0; j<N_COLS; j++)
+	{
+		// exclude empty stacks (that are expected to have invalid WIDTH and HEIGHT)
+		if(STACKS[i][j]->isEmpty())
+			continue;
+
+		heights.insert(STACKS[i][j]->HEIGHT);
+		widths.insert(STACKS[i][j]->WIDTH);
+	}
+
+	// make the check
+	if(heights.size() != 1 || widths.size() != 1)
+		throw iom::exception("in StackedVolume::normalize_stacks_attributes(...): Stacks have unequal X,Y dimensions. This feature is not supported yet.");
+	
+	// make empty stacks having the same width and height of other stacks
+	for(int i=0; i<N_ROWS; i++)
+		for(int j=0; j<N_COLS; j++)
+			if(STACKS[i][j]->isEmpty())
+			{
+				STACKS[i][j]->HEIGHT = *(heights.begin());
+				STACKS[i][j]->WIDTH = *(widths.begin());
+			}
 }

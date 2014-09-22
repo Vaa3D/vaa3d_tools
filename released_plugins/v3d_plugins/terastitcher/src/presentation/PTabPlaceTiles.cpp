@@ -27,7 +27,7 @@
 ********************************************************************************************************************************************************************************************/
 
 #include "PTabPlaceTiles.h"
-#include "MyException.h"
+#include "iomanager.config.h"
 #include "vmStackedVolume.h"
 #include "PMain.h"
 #include "src/control/CImport.h"
@@ -138,7 +138,7 @@ void PTabPlaceTiles::start()
     {
         //first checking that a volume has been properly imported
         if(!CImport::instance()->getVolume())
-            throw MyException("A volume must be properly imported first. Please perform the Import step.");
+            throw iom::exception("A volume must be properly imported first. Please perform the Import step.");
 
         //asking confirmation to continue when overwriting existing XML file
         if( StackedVolume::fileExists(saveproj_field->text().toStdString().c_str()) &&
@@ -151,7 +151,7 @@ void PTabPlaceTiles::start()
 
         //checking that one and only one displacement exist for each pair od adjacent stacks
         if(per_stack_displ_number_field->text().toFloat() != 1.0f)
-            throw MyException("One and only one displacement must exist for each pair of adjacent stacks. "
+            throw iom::exception("One and only one displacement must exist for each pair of adjacent stacks. "
                               "\nTo this aim, the Displacement Projection step has to be performed first.");
 
         //disabling import form and enabling progress bar animation and tab wait animation
@@ -177,7 +177,7 @@ void PTabPlaceTiles::start()
         //enabling (and updating) other tabs
         PTabMergeTiles::getInstance()->setEnabled(true);
     }
-    catch(MyException &ex)
+    catch(iom::exception &ex)
     {
         QMessageBox::critical(this,QObject::tr("Error"), QObject::tr(ex.what()),QObject::tr("Ok"));
         stop();

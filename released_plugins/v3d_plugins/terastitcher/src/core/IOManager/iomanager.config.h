@@ -25,6 +25,13 @@
 *       specific prior written permission.
 ********************************************************************************************************************************************************************************************/
 
+/******************
+*    CHANGELOG    *
+*******************
+* 2014-09-02. Alessandro. @ADDED 'uint64' type.
+*/
+
+
 #ifndef _IO_MANAGER_DEFS_H
 #define _IO_MANAGER_DEFS_H
 
@@ -32,32 +39,38 @@
 #include <cstdarg>
 #include <vector>
 #include <sstream>
+#include <algorithm>
 #include <stdlib.h>
 #include <stdio.h>
-
-/*******************
-*    TYPES         *
-********************
----------------------------------------------------------------------------------------------------------------------------*/
-typedef float          real_t;			// real type definition (float for single precision, double for double precision)
-typedef unsigned char  uint8;			// 8-bit  unsigned integer data type
-typedef unsigned short uint16;			// 16-bit unsigned integer data type
-typedef unsigned int   uint32;			// 32-bit unsigned integer data type
-typedef int			   sint32;			// 32-bit signed integer data type
-typedef long long	   sint64;			// 64-bit signed integer data type
-/*-------------------------------------------------------------------------------------------------------------------------*/
-
 
 /******************************************************************************************************************************
  *   Interfaces, constants, enums, parameters, and cross-platform utility functions	                                          *
  ******************************************************************************************************************************/
 namespace iomanager
 {
+	/*******************
+	*    TYPES         *
+	********************
+	---------------------------------------------------------------------------------------------------------------------------*/
+	typedef float				real_t;			// real type definition (float for single precision, double for double precision)
+	typedef unsigned char		uint8;			// 8-bit  unsigned integer data type
+	typedef unsigned short		uint16;			// 16-bit unsigned integer data type
+	typedef unsigned int		uint32;			// 32-bit unsigned integer data type
+	typedef int					sint32;			// 32-bit signed integer data type
+	typedef long long			sint64;			// 64-bit signed integer data type
+	typedef unsigned long long	uint64;			// 64-bit unsigned integer data type
+	/*-------------------------------------------------------------------------------------------------------------------------*/
+
+
     /*******************
     *    INTERFACES    *
     ********************
     ---------------------------------------------------------------------------------------------------------------------------*/
-    class IOManager;                        // contains I/O static methods
+	class IOPlugin;
+	class IOPlugin2D;
+	class IOPlugin3D;
+	class IOPluginFactory;
+	class exception;
     /*-------------------------------------------------------------------------------------------------------------------------*/
 
 
@@ -65,9 +78,8 @@ namespace iomanager
     *    CONSTANTS     *
     ********************
     ---------------------------------------------------------------------------------------------------------------------------*/
-    const std::string VERSION = "1.0.0";        // version of current module
     const std::string DEF_IMG_FORMAT = "tif";   // default image format
-    const int DEF_IMG_DEPTH = 8;                // default image depth
+    const int DEF_BPP = 8;                 // default image depth
     /*-------------------------------------------------------------------------------------------------------------------------*/
 
 
@@ -86,7 +98,11 @@ namespace iomanager
     ---------------------------------------------------------------------------------------------------------------------------*/
     extern int DEBUG;                       // debug level of current module
     extern bool TIME_CALC;                  // whether to enable time measurements
-    extern int CHANNEL_SELECTION;           // channel to be loaded (default is ALL)
+    extern channel CHANS;					// channel to be loaded (default is ALL)
+	extern std::string IMIN_PLUGIN;			// plugin to manage input image format
+	extern std::string IMIN_PLUGIN_PARAMS;	// additional parameters <param1=val,param2=val,...> to the plugin for image input 
+	extern std::string IMOUT_PLUGIN;		// plugin to manage output image format
+	extern std::string IMOUT_PLUGIN_PARAMS;	// additional parameters <param1=val,param2=val,...> to the plugin for image output 
     /*-------------------------------------------------------------------------------------------------------------------------*/
 
 
@@ -117,6 +133,46 @@ namespace iomanager
         return str;
     }
 
+	// tokenizer
+	inline void	split(const std::string & theString, std::string delim, std::vector<std::string>& tokens)
+	{
+		size_t  start = 0, end = 0;
+		while ( end != std::string::npos)
+		{
+			end = theString.find( delim, start);
+
+			// If at end, use length=maxLength.  Else use length=end-start.
+			tokens.push_back( theString.substr( start,
+				(end == std::string::npos) ? std::string::npos : end - start));
+
+			// If at end, use start=maxSize.  Else use start=end+delimiter.
+			start = (   ( end > (std::string::npos - delim.size()) )
+				?  std::string::npos  :  end + delim.size());
+		}
+	}
+
+	// removes all tab, space and newline characters from the given string
+	inline std::string cls(std::string string){
+		string.erase(std::remove(string.begin(), string.end(), '\t'), string.end());
+		string.erase(std::remove(string.begin(), string.end(), ' '),  string.end());
+		string.erase(std::remove(string.begin(), string.end(), '\n'), string.end());
+		return string;
+	}
+
+	//number to string conversion function and vice versa
+	template <typename T>
+	std::string num2str ( T Number ){
+		std::stringstream ss;
+		ss << Number;
+		return ss.str();
+	}
+	template <typename T>
+	T str2num ( const std::string &Text ){                              
+		std::stringstream ss(Text);
+		T result;
+		return ss >> result ? result : 0;
+	}
+
     //cross-platform current function macros (@WARNING: as they are macros, they are NOT namespaced)
     #if defined(__GNUC__) || (defined(__MWERKS__) && (__MWERKS__ >= 0x3000)) || (defined(__ICC) && (__ICC >= 600))
     # define __iom__current__function__ __PRETTY_FUNCTION__
@@ -141,19 +197,11 @@ namespace iomanager
         #define TIME( arg ) (time( arg ))
     #endif
 
-	//pause/clear macros (@WARNING: as they are macros, they are NOT namespaced)
+	//clear macros (@WARNING: as they are macros, they are NOT namespaced)
 	#ifdef _WIN32
-	#define system_PAUSE() 		\
-		system("PAUSE"); 		\
-		cout<<endl;
 	#define system_CLEAR() system("cls");
 	#else
 	#define system_CLEAR() system("clear");
-	#define system_PAUSE()									\
-		cout<<"\n\nPress RETURN key to continue..."<<endl<<endl;	\
-		cin.clear();										\
-		cin.ignore();										\
-		cin.get();
 	#endif
 
 
@@ -183,6 +231,24 @@ namespace iomanager
                printf("\n----------------------- iomanager module: DEBUG (level %d) ----: in \"%s\"\n", dbg_level, source);
         }
     }
+
+	class exception  : public std::exception
+	{
+		private:
+
+			std::string message;
+
+		public:
+
+			exception(const std::string & new_message, std::string source = ""){
+				if(source.empty())
+					message = new_message;
+				else
+					message = std::string("in ") + source + ": " + new_message;
+			}
+			virtual ~exception() throw (){}
+			virtual const char* what() const throw (){return message.c_str();}
+	};
 
 
 

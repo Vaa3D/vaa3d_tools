@@ -60,7 +60,7 @@ class terastitcher::CDisplComp : public QThread
 
         //members
         std::string saveproj_path;
-        int algo, subvol_dim, row0, row1, col0, col1, Vrad, Hrad, Drad, Voverlap, Hoverlap;
+        int algo, subvol_dim, row0, row1, col0, col1, z0, z1, Vrad, Hrad, Drad, Voverlap, Hoverlap;
         bool restoreSPIM;
 
     public:
@@ -82,7 +82,7 @@ class terastitcher::CDisplComp : public QThread
         void setProjPath(string new_path){saveproj_path = new_path;}
         void setAlgorithm(int _algo){algo = _algo;}
         void setSubvolDim(int new_subvoldim){subvol_dim = new_subvoldim;}
-        void setStacksIntervals(int _row0, int _row1, int _col0, int _col1){row0=_row0; row1=_row1; col0=_col0; col1=_col1;}
+        void setDataSelection(int _row0, int _row1, int _col0, int _col1, int _z0, int _z1){row0=_row0; row1=_row1; col0=_col0; col1=_col1; z0=_z0; z1=_z1;}
         void setSearchRadius(int _Vrad, int _Hrad, int _Drad){Vrad = _Vrad; Hrad = _Hrad; Drad = _Drad;}
         void setOverlap(int _Voverlap, int _Hoverlap){Voverlap = _Voverlap; Hoverlap = _Hoverlap;}
         void setRestoreSPIM(bool _restoreSPIM){restoreSPIM = _restoreSPIM;}
@@ -92,7 +92,7 @@ class terastitcher::CDisplComp : public QThread
         {
             algo = -1;
             subvol_dim = S_SUBVOL_DIM_D_DEFAULT;
-            row0 = row1 = col0 = col1 = -1;
+            row0 = row1 = col0 = col1 = z0 = z1 = -1;
             Vrad = Hrad = Drad = S_DISPL_SEARCH_RADIUS_DEF;
             Voverlap = Hoverlap = -1;
             restoreSPIM = false;
@@ -103,7 +103,7 @@ class terastitcher::CDisplComp : public QThread
         /*********************************************************************************
         * Carries the outcome of the operation associated to this thread.
         **********************************************************************************/
-        void sendOperationOutcome(MyException* ex);
+        void sendOperationOutcome(iom::exception* ex);
 
 };
 

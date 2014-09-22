@@ -43,6 +43,6 @@ PDAlgo* PDAlgo::instanceAlgorithm(int _type)
 	{
 		char err_msg[200];
 		sprintf(err_msg, "in PDAlgo::instanceAlgorithm(....): unsupported algorithm type (\"%d\")", _type);
-		throw MyException(err_msg);
+		throw iom::exception(err_msg);
 	}
 }

@@ -40,7 +40,7 @@ Displacement::Displacement(void)
 	VHD_def_coords[0] = VHD_def_coords[1] = VHD_def_coords [2] = std::numeric_limits<int>::max();
 }
 
-Displacement* Displacement::getDisplacementFromXML(TiXmlElement *displ_node) throw (MyException)
+Displacement* Displacement::getDisplacementFromXML(TiXmlElement *displ_node) throw (iom::exception)
 {
 	#if S_VERBOSE>5
 	printf("..........in Displacement::getDisplacementFromXML(int displ_type=%d, TiXmlElement *displ_node)\n",displ_type);
@@ -53,12 +53,12 @@ Displacement* Displacement::getDisplacementFromXML(TiXmlElement *displ_node) thr
 	{
 		char err_msg[200];
 		sprintf(err_msg, "in Displacement::getDisplacementFromXML(....): unsupported displacement type (\"%s\")", displ_type);
-		throw MyException(err_msg);
+		throw iom::exception(err_msg);
 	}
 }
 
 //instances a displacement which is a deep copy of the given displacement
-Displacement* Displacement::instance(Displacement* displacement)  throw (MyException)
+Displacement* Displacement::instance(Displacement* displacement)  throw (iom::exception)
 {
 	#if S_VERBOSE>5
 	printf("..........in Displacement::instance(displacement)\n");
@@ -73,7 +73,7 @@ Displacement* Displacement::instance(Displacement* displacement)  throw (MyExcep
 	{
 		char err_msg[200];
 		sprintf(err_msg, "in Displacement::instance(displacement): unsupported displacement type (\"%d\")", displacement->TYPE);
-		throw MyException(err_msg);
+		throw iom::exception(err_msg);
 	}
 }
 
@@ -81,14 +81,14 @@ Displacement* Displacement::instance(Displacement* displacement)  throw (MyExcep
 * The given vector of redundant displacements along D is projected into the displacement which embeds the most
 * reliable parameters. After this operation, the given vector will contain only the projected displacement.
 **************************************************************************************************************/
-void Displacement::projectDisplacements(std::vector<Displacement*> &displacements) throw (MyException)
+void Displacement::projectDisplacements(std::vector<Displacement*> &displacements) throw (iom::exception)
 {
 	#if S_VERBOSE>2
 	printf("....in Displacement::projectDisplacements(displacements[size=%d])\n",displacements.size());
 	#endif
 
 	if(displacements.size() <= 0)
-		throw MyException("in Displacement::projectDisplacements(...): the given vector of displacements is EMPTY. Nothing to project.");
+		throw iom::exception("in Displacement::projectDisplacements(...): the given vector of displacements is EMPTY. Nothing to project.");
 
 	//performing projection pairwise. At the end of this process, the last
 	//displacement will contain the displacement resulting from projection.

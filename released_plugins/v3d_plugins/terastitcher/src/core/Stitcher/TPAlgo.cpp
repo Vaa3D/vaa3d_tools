@@ -51,6 +51,6 @@ TPAlgo* TPAlgo::instanceAlgorithm(int _type, VirtualVolume * _volume)
 	{
                 char err_msg[S_STATIC_STRINGS_SIZE];
 		sprintf(err_msg, "in TPAlgo::instanceAlgorithm(....): unsupported algorithm type (\"%d\")", _type);
-		throw MyException(err_msg);
+		throw iom::exception(err_msg);
 	}
 }

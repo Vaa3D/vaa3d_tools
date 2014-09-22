@@ -29,7 +29,7 @@
 #include "PTabDisplComp.h"
 #include "PTabDisplProj.h"
 #include "PTabDisplThresh.h"
-#include "MyException.h"
+#include "iomanager.config.h"
 #include "vmStackedVolume.h"
 #include "PMain.h"
 #include "src/control/CImport.h"
@@ -97,20 +97,26 @@ PTabDisplComp::PTabDisplComp(QMyTabWidget* _container, int _tab_index) : QWidget
 
     //creating Advanced panel widgets
     advanced_panel = new QWidget();
-    stackrowstbp_label = new QLabel("Stacks rows to process:");
+    stackrowstbp_label = new QLabel("Data subset selection (rows):");
     startrow_sbox = new QSpinBox();
     startrow_sbox->setAlignment(Qt::AlignCenter);
     to_label_1 = new QLabel("to");
     to_label_1->setAlignment(Qt::AlignCenter);
     endrow_sbox = new QSpinBox();
     endrow_sbox->setAlignment(Qt::AlignCenter);
-    stackcolstbp_label = new QLabel("Stacks columns to process:");
+    stackcolstbp_label = new QLabel("Data subset selection (columns):");
     startcol_sbox = new QSpinBox();
     startcol_sbox->setAlignment(Qt::AlignCenter);
     to_label_2 = new QLabel("to");
     to_label_2->setAlignment(Qt::AlignCenter);
     endcol_sbox = new QSpinBox();
     endcol_sbox->setAlignment(Qt::AlignCenter);
+
+    startslice_sbox = new QSpinBox();
+    startslice_sbox->setAlignment(Qt::AlignCenter);
+    endslice_sbox = new QSpinBox();
+    endslice_sbox->setAlignment(Qt::AlignCenter);
+
     searchregion_label = new QLabel("Search Region (voxels):");
     Ysearch_sbox = new QSpinBox();
     Ysearch_sbox->setAlignment(Qt::AlignCenter);
@@ -190,20 +196,26 @@ PTabDisplComp::PTabDisplComp(QMyTabWidget* _container, int _tab_index) : QWidget
     advancedpanel_layout->addWidget(startcol_sbox,          1,1,1,3);
     advancedpanel_layout->addWidget(to_label_2,             1,4,1,1);
     advancedpanel_layout->addWidget(endcol_sbox,            1,5,1,3);
-    advancedpanel_layout->addWidget(searchregion_label,     2,0,1,1);
-    advancedpanel_layout->addWidget(Xsearch_sbox,           2,1,1,3);
-    advancedpanel_layout->addWidget(for_label_1,            2,4,1,1);
-    advancedpanel_layout->addWidget(Ysearch_sbox,           2,5,1,3);
-    advancedpanel_layout->addWidget(for_label_2,            2,8,1,1);
-    advancedpanel_layout->addWidget(Zsearch_sbox,           2,9,1,3);
-    advancedpanel_layout->addWidget(overlap_label,          3,0,1,1);
-    advancedpanel_layout->addWidget(Xoverlap_sbox,          3,1,1,3);
+    advancedpanel_layout->addWidget(new QLabel("Data subset selection (slices):"),     2,0,1,1);
+    advancedpanel_layout->addWidget(startslice_sbox,        2,1,1,3);
+    QLabel *toLabel = new QLabel("to");
+    toLabel->setAlignment(Qt::AlignCenter);
+    advancedpanel_layout->addWidget(toLabel ,               2,4,1,1);
+    advancedpanel_layout->addWidget(endslice_sbox,          2,5,1,3);
+    advancedpanel_layout->addWidget(searchregion_label,     3,0,1,1);
+    advancedpanel_layout->addWidget(Xsearch_sbox,           3,1,1,3);
+    advancedpanel_layout->addWidget(for_label_1,            3,4,1,1);
+    advancedpanel_layout->addWidget(Ysearch_sbox,           3,5,1,3);
+    advancedpanel_layout->addWidget(for_label_2,            3,8,1,1);
+    advancedpanel_layout->addWidget(Zsearch_sbox,           3,9,1,3);
+    advancedpanel_layout->addWidget(overlap_label,          4,0,1,1);
+    advancedpanel_layout->addWidget(Xoverlap_sbox,          4,1,1,3);
     QLabel* for_label_4 = new QLabel(QChar(0x00D7));
     for_label_4->setAlignment(Qt::AlignCenter);
-    advancedpanel_layout->addWidget(for_label_4,            3,4,1,1);
-    advancedpanel_layout->addWidget(Yoverlap_sbox,          3,5,1,3);
-    advancedpanel_layout->addWidget(restoreSPIM_label,      4,0,1,1);
-    advancedpanel_layout->addWidget(restoreSPIM_cbox,       4,1,1,11);
+    advancedpanel_layout->addWidget(for_label_4,            4,4,1,1);
+    advancedpanel_layout->addWidget(Yoverlap_sbox,          4,5,1,3);
+    advancedpanel_layout->addWidget(restoreSPIM_label,      5,0,1,1);
+    advancedpanel_layout->addWidget(restoreSPIM_cbox,       5,1,1,11);
     advancedpanel_layout->setVerticalSpacing(2);
     advanced_panel->setLayout(advancedpanel_layout);
     advanced_panel->setContentsMargins(0,0,0,0);
@@ -231,7 +243,7 @@ PTabDisplComp::PTabDisplComp(QMyTabWidget* _container, int _tab_index) : QWidget
     connect(startcol_sbox, SIGNAL(valueChanged(int)), this, SLOT(updateMemoryOccupancy(int)));
     connect(endcol_sbox, SIGNAL(valueChanged(int)), this, SLOT(updateMemoryOccupancy(int)));
     connect(browse_button, SIGNAL(clicked()), this, SLOT(browse_button_clicked()));
-    connect(CDisplComp::instance(), SIGNAL(sendOperationOutcome(MyException*)), this, SLOT(displcomp_done(MyException*)), Qt::QueuedConnection);
+    connect(CDisplComp::instance(), SIGNAL(sendOperationOutcome(iom::exception*)), this, SLOT(displcomp_done(iom::exception*)), Qt::QueuedConnection);
     connect(showAdvancedButton, SIGNAL(toggled(bool)), this, SLOT(showAdvancedChanged(bool)));
 
     reset();
@@ -270,6 +282,12 @@ void PTabDisplComp::reset()
     endcol_sbox->setMinimum(0);
     endcol_sbox->setMaximum(0);
     endcol_sbox->setValue(0);
+    startslice_sbox->setMinimum(0);
+    startslice_sbox->setMaximum(0);
+    startslice_sbox->setValue(0);
+    endslice_sbox->setMinimum(0);
+    endslice_sbox->setMaximum(0);
+    endslice_sbox->setValue(0);
     saveproj_field->setText("");
     restoreSPIM_cbox->setChecked(false);
     subvoldims_sbox->setValue(100);
@@ -295,7 +313,7 @@ void PTabDisplComp::start()
     {
         //first checking that a volume has been properly imported
         if(!CImport::instance()->getVolume())
-            throw MyException("A volume must be properly imported first. Please perform the Import step.");
+            throw iom::exception("A volume must be properly imported first. Please perform the Import step.");
 
         //asking confirmation to continue when overwriting existing XML file
         if( StackedVolume::fileExists(saveproj_field->text().toStdString().c_str()) &&
@@ -319,13 +337,13 @@ void PTabDisplComp::start()
         CDisplComp::instance()->setProjPath(saveproj_field->text().toStdString());
         CDisplComp::instance()->setAlgorithm(algorithm_cbox->currentIndex());
         CDisplComp::instance()->setSubvolDim(subvoldims_sbox->value());
-        CDisplComp::instance()->setStacksIntervals(startrow_sbox->value(), endrow_sbox->value(), startcol_sbox->value(), endcol_sbox->value());
+        CDisplComp::instance()->setDataSelection(startrow_sbox->value(), endrow_sbox->value(), startcol_sbox->value(), endcol_sbox->value(), startslice_sbox->value(), endslice_sbox->value());
         CDisplComp::instance()->setSearchRadius(Ysearch_sbox->value(), Xsearch_sbox->value(), Zsearch_sbox->value());
         CDisplComp::instance()->setOverlap(Yoverlap_sbox->value(), Xoverlap_sbox->value());
         CDisplComp::instance()->setRestoreSPIM(restoreSPIM_cbox->isChecked());
         CDisplComp::instance()->start();
     }
-    catch(MyException &ex)
+    catch(iom::exception &ex)
     {
         QMessageBox::critical(this,QObject::tr("Error"), QObject::tr(ex.what()),QObject::tr("Ok"));
         PMain::instance()->setToReady();
@@ -345,7 +363,7 @@ void PTabDisplComp::stop()
         CDisplComp::instance()->wait();
         CDisplComp::instance()->reset();
     }
-    catch(MyException &ex) {QMessageBox::critical(this,QObject::tr("Error"), QObject::tr(ex.what()),QObject::tr("Ok"));}
+    catch(iom::exception &ex) {QMessageBox::critical(this,QObject::tr("Error"), QObject::tr(ex.what()),QObject::tr("Ok"));}
     catch(...) {QMessageBox::critical(this,QObject::tr("Error"), QObject::tr("Unable to determine error's type"),QObject::tr("Ok"));}
 
     //disabling progress bar and wait animations
@@ -390,6 +408,12 @@ void PTabDisplComp::setEnabled(bool enabled)
         endcol_sbox->setMinimum(0);
         endcol_sbox->setMaximum(CImport::instance()->getVolume()->getN_COLS()-1);
         endcol_sbox->setValue(CImport::instance()->getVolume()->getN_COLS()-1);
+        startslice_sbox->setMinimum(0);
+        startslice_sbox->setMaximum(CImport::instance()->getVolume()->getN_SLICES()-1);
+        startslice_sbox->setValue(0);
+        endslice_sbox->setMinimum(0);
+        endslice_sbox->setMaximum(CImport::instance()->getVolume()->getN_SLICES()-1);
+        endslice_sbox->setValue(CImport::instance()->getVolume()->getN_SLICES()-1);
         QString saveproj_path = CImport::instance()->getVolume()->getSTACKS_DIR();
         saveproj_path.append("/xml_displcomp.xml");
         saveproj_field->setText(saveproj_path);
@@ -442,7 +466,7 @@ void PTabDisplComp::browse_button_clicked()
 * If an exception has occurred in the <CDisplComp> thread,it is propagated and man-
 * aged in the current thread (ex != 0). Otherwise, the other tabs are updated.
 ***********************************************************************************/
-void PTabDisplComp::displcomp_done(MyException *ex)
+void PTabDisplComp::displcomp_done(iom::exception *ex)
 {
     #ifdef TSP_DEBUG
     printf("TeraStitcher plugin [thread %d] >> PTabDisplComp displcomp_done(%s) launched\n", this->thread()->currentThreadId(), (ex? "ex" : "NULL"));
@@ -497,5 +521,5 @@ void PTabDisplComp::showAdvancedChanged(bool status)
 ***********************************************************************************/
 void PTabDisplComp::channelSelectedChanged(int c)
 {
-    iom::CHANNEL_SELECTION = c;
+    iom::CHANS = iom::channel(c);
 }

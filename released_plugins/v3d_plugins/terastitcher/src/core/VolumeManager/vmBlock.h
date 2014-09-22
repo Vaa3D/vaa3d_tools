@@ -22,10 +22,17 @@
 *       specific prior written permission.
 ********************************************************************************************************************************************************************************************/
 
+/******************
+*    CHANGELOG    *
+*******************
+* 2014-09-05. Alessandro. @ADDED 'z_end' parameter in 'loadXML()' method to support sparse data feature.
+* 2014-08-25. Alessandro. @ADDED missing 'throw (iom::iom::exception)' statement in the 'loadImageStack()' method's signature
+*/
+
 #ifndef _VM_BLOCK_H
 #define _VM_BLOCK_H
 
-#include "IOManager.h"
+#include "iomanager.config.h"
 #include "tinyxml.h"
 #include "vmVirtualStack.h" 
 
@@ -40,23 +47,23 @@ typedef struct {int D0, D1, ind0, ind1;} Segm_t;
 class Block : public VirtualStack
 {
 	private:
+
 		BlockVolume* CONTAINER;					//pointer to <VirtualVolume> object that contains the current object
 		int          N_BLOCKS;                   //number of blocks along z
 		int         *BLOCK_SIZE;                 //dimensions of blocks along z
 		int         *BLOCK_ABS_D;                //absolute D voxel coordinates of blocks
-
 		int          N_CHANS;                    //number of channels
 		int          N_BYTESxCHAN;               //number of bytes per channel
 
 		//******** OBJECT PRIVATE METHODS *********
-		Block(void){};
+        Block(void){}
 
 		//Initializes all object's members given DIR_NAME
 		void init();
 
 	    //binarizing-unbinarizing methods
 		void binarizeInto(FILE* file);
-		void unBinarizeFrom(FILE* file) throw (MyException);
+		void unBinarizeFrom(FILE* file) throw (iom::exception);
 
 		//returns a pointer to a substack descriptor
 		Segm_t* Intersects(int D0, int D1);
@@ -79,15 +86,19 @@ class Block : public VirtualStack
 		int  *getBLOCK_SIZE()   {return BLOCK_SIZE;}
 		int  *getBLOCK_ABS_D()  {return BLOCK_ABS_D;}
 		
-		void *getCONTAINER()    {return CONTAINER;};
+        void *getCONTAINER()    {return CONTAINER;}
 
 		//LOAD and RELEASE methods
-		real_t* loadImageStack(int first_file=-1, int last_file=-1);
+        iom::real_t* loadImageStack(int first_file=-1, int last_file=-1) throw (iom::exception);
 		void releaseImageStack();
 
 		//XML methods
 		TiXmlElement* getXML();
-		void		  loadXML(TiXmlElement *stack_node) throw (MyException);
+		void loadXML(
+			TiXmlElement *stack_node,
+			int z_end)					// 2014-09-05. Alessandro. @ADDED 'z_end' parameter to support sparse data feature
+										//			   Here 'z_end' identifies the range [0, z_end) that slices can span
+		throw (iom::exception);
 };
 
 #endif //_BLOCK_H

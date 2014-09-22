@@ -25,6 +25,14 @@
 *       specific prior written permission.
 ********************************************************************************************************************************************************************************************/
 
+/******************
+*    CHANGELOG    *
+*******************
+* 2014-09-10. Alessandro. @FIXED 'mergeTilesVaa3DRaw' method: set 'imagemanager' module to silent mode.
+* 2014-09-10. Alessandro. @CHANGED 'saved_img_format' interpretation in 'mergeTilesVaa3DRaw()' method.
+* 2014-09-09. Alessandro. @FIXED missing buffer initialization and reset in 'mergeTiles()' method.
+*/
+
 # include "StackStitcher.h"
 
 #include <iostream>
@@ -34,16 +42,18 @@
 #include <list>
 #include <ctime>
 #include "vmVirtualStack.h"
-#include "ProgressBar.h"
 #include "S_config.h"
 #include "StackRestorer.h"
-#include "VM_config.h"
+#include "volumemanager.config.h"
 
 #include "RawFmtMngr.h"
 #include "Tiff3DMngr.h"
-#include "../ImageManager/IM_config.h"
-#include "../ImageManager/VirtualVolume.h"
-#include "../ImageManager/TiledVolume.h"
+#include "../imagemanager/IM_config.h"
+#include "../imagemanager/VirtualVolume.h"
+#include "../imagemanager/TiledVolume.h"
+
+
+#include "../iomanager/ProgressBar.h"
 
 using namespace iomanager;
 using namespace volumemanager;
@@ -61,24 +71,22 @@ void StackStitcher::mergeTilesVaa3DRaw(std::string output_path, int block_height
 							   bool exclude_nonstitchable_stacks, int _ROW_START, int _ROW_END, int _COL_START,
 							   int _COL_END, int _D0, int _D1, bool restoreSPIM, int restore_direction,
 							   int blending_algo, bool test_mode, bool show_progress_bar, 
-                               const char* saved_img_format, int saved_img_depth)			throw (MyException)
+                               const char* saved_img_format, int saved_img_depth)			throw (iom::exception)
 {
-	FILE *tmp_file; // TEMP
-
-        #if S_VERBOSE > 2
-        printf("......in StackStitcher::mergeTiles(output_path=\"%s\", block_height=%d, block_width=%d, block_depth=%d, exclude_nonstitchable_stacks = %s, "
-               "_ROW_START=%d, _ROW_END=%d, _COL_START=%d, _COL_END=%d, _D0=%d, _D1=%d, restoreSPIM = %s, restore_direction = %d, test_mode = %s, resolutions = { ",
-                output_path.c_str(), slice_height, slice_width, slice_depth, (exclude_nonstitchable_stacks ? "true" : "false"), _ROW_START, _ROW_END,
-                _COL_START, _COL_END, _D0, _D1, (restoreSPIM ? "ENABLED" : "disabled"), restore_direction, (test_mode ? "ENABLED" : "disabled"));
-		for(int i=0; i<S_MAX_MULTIRES && resolutions; i++)
-            printf("%d ", resolutions[i]);
-        printf("}\n");
-        #endif
+#if S_VERBOSE > 2
+	printf("......in StackStitcher::mergeTiles(output_path=\"%s\", block_height=%d, block_width=%d, block_depth=%d, exclude_nonstitchable_stacks = %s, "
+		"_ROW_START=%d, _ROW_END=%d, _COL_START=%d, _COL_END=%d, _D0=%d, _D1=%d, restoreSPIM = %s, restore_direction = %d, test_mode = %s, resolutions = { ",
+		output_path.c_str(), slice_height, slice_width, slice_depth, (exclude_nonstitchable_stacks ? "true" : "false"), _ROW_START, _ROW_END,
+		_COL_START, _COL_END, _D0, _D1, (restoreSPIM ? "ENABLED" : "disabled"), restore_direction, (test_mode ? "ENABLED" : "disabled"));
+	for(int i=0; i<S_MAX_MULTIRES && resolutions; i++)
+		printf("%d ", resolutions[i]);
+	printf("}\n");
+#endif
 
 	//LOCAL VARIABLES
         sint64 height, width, depth;                                            //height, width and depth of the whole volume that covers all stacks
-	real_t* buffer;								//buffer temporary image data are stored
-        real_t* stripe_up=NULL, *stripe_down;                                   //will contain up-stripe and down-stripe computed by calling 'getStripe' method
+	iom::real_t* buffer;								//buffer temporary image data are stored
+        iom::real_t* stripe_up=NULL, *stripe_down;                                   //will contain up-stripe and down-stripe computed by calling 'getStripe' method
 	double angle;								//angle between 0 and PI used to sample overlapping zone in [0,PI]
 	double delta_angle;							//angle step
 	int z_ratio, z_max_res;
@@ -98,8 +106,8 @@ void StackStitcher::mergeTilesVaa3DRaw(std::string output_path, int block_height
 	stripe_2Dcorners *stripesCorners;
 	int resolutions_size = 0;
 	StackRestorer *stk_rst = NULL;
-	real_t *buffer_ptr, *ustripe_ptr, *dstripe_ptr;	
-	real_t (*blending)(double& angle, real_t& pixel1, real_t& pixel2);
+	iom::real_t *buffer_ptr, *ustripe_ptr, *dstripe_ptr;	
+	iom::real_t (*blending)(double& angle, iom::real_t& pixel1, iom::real_t& pixel2);
 
 	std::stringstream file_path[S_MAX_MULTIRES];
 
@@ -135,16 +143,15 @@ void StackStitcher::mergeTilesVaa3DRaw(std::string output_path, int block_height
 	else if(blending_algo == S_SHOW_STACK_MARGIN)
             blending = stack_margin;
 	else
-            throw MyException("in StackStitcher::getStripe(...): unrecognized blending function");
+            throw iom::exception("in StackStitcher::getStripe(...): unrecognized blending function");
 
 	//initializing the progress bar
 	char progressBarMsg[200];
-        ProgressBar::instance();
 	if(show_progress_bar)
 	{
-            ProgressBar::getInstance()->start("Multiresolution tile merging");
-            ProgressBar::getInstance()->update(0,"Initializing...");
-            ProgressBar::getInstance()->show();
+		ProgressBar::instance()->start("Multiresolution tile merging");
+		ProgressBar::instance()->update(0,"Initializing...");
+		ProgressBar::instance()->show();
 	}
 
 	//initializing <StackRestorer> object if restoring is enabled
@@ -172,7 +179,7 @@ void StackStitcher::mergeTilesVaa3DRaw(std::string output_path, int block_height
     {
         char err_msg[5000];
         sprintf(err_msg,"The minimum dimension for block width, height and depth is %d", S_MIN_SLICE_DIM);
-        throw MyException(err_msg);
+        throw iom::exception(err_msg);
     }
 	if(resolutions == NULL)
 	{
@@ -188,9 +195,9 @@ void StackStitcher::mergeTilesVaa3DRaw(std::string output_path, int block_height
 	//computing tiles dimensions at each resolution and initializing volume directories
 	for(int res_i=0; res_i< resolutions_size; res_i++)
 	{
-        n_stacks_V[res_i] = ceil ( (height/POW_INT(2,res_i)) / (float) block_height );
-        n_stacks_H[res_i] = ceil ( (width/POW_INT(2,res_i))  / (float) block_width  );
-        n_stacks_D[res_i] = ceil ( (depth/POW_INT(2,res_i))  / (float) block_depth  );
+        n_stacks_V[res_i] = static_cast<int>(ceil ( (height/POW_INT(2,res_i)) / (float) block_height ));
+        n_stacks_H[res_i] = static_cast<int>(ceil ( (width/POW_INT(2,res_i))  / (float) block_width  ));
+        n_stacks_D[res_i] = static_cast<int>(ceil ( (depth/POW_INT(2,res_i))  / (float) block_depth  ));
         stacks_height[res_i] = new int **[n_stacks_V[res_i]];
         stacks_width[res_i]  = new int **[n_stacks_V[res_i]];
         stacks_depth[res_i]  = new int **[n_stacks_V[res_i]];
@@ -224,7 +231,7 @@ void StackStitcher::mergeTilesVaa3DRaw(std::string output_path, int block_height
             {
                 char err_msg[S_STATIC_STRINGS_SIZE];
                 sprintf(err_msg, "in mergeTiles(...): unable to create DIR = \"%s\"\n", file_path[res_i].str().c_str());
-                throw MyException(err_msg);
+                throw iom::exception(err_msg);
             }
 
 			//Alessandro - 23/03/2013: saving original volume XML descriptor into each folder
@@ -305,13 +312,14 @@ void StackStitcher::mergeTilesVaa3DRaw(std::string output_path, int block_height
 	}
 
 	z_max_res = POW_INT(2,resolutions_size-1);
-	z_ratio=depth/z_max_res;
-	buffer = new real_t[height*width*z_max_res];
+	z_ratio= static_cast<int>(depth/z_max_res);
+	buffer = new iom::real_t[height*width*z_max_res];
 
 	//slice_start and slice_end of current block depend on the resolution
 	for(int res_i=0; res_i< resolutions_size; res_i++) {
 		stack_block[res_i] = 0;
-		slice_start[res_i] = this->D0; 
+		//slice_start[res_i] = this->D0; 
+		slice_start[res_i] = 0; // indices must start from 0 because they should have relative meaning 
 		slice_end[res_i] = slice_start[res_i] + stacks_depth[res_i][0][0][0] - 1;
 	}
 
@@ -319,16 +327,21 @@ void StackStitcher::mergeTilesVaa3DRaw(std::string output_path, int block_height
 	double proc_time;
 	#endif
 
+	// z must begin from D0 (absolute index into the volume) since it is used to compute tha file names (containing the absolute position along D)
 	for(sint64 z = this->D0, z_parts = 1; z < this->D1; z += z_max_res, z_parts++)
 	{
+		// 2014-09-09. Alessandro. @FIXED missing buffer initialization and reset in 'mergeTiles()' method.
+		for(int i=0; i<height*width*z_max_res; i++)
+			buffer[i]=0;
+
 		for(sint64 k = 0; k < ( z_parts <= z_ratio ? z_max_res : depth%z_max_res ); k++)
 		{
 			//updating the progress bar
 			if(show_progress_bar)
 			{	
 				sprintf(progressBarMsg, "Merging slice %d of %d",((uint32)(z-D0+k+1)),(uint32)depth);
-                                ProgressBar::getInstance()->update(((float)(z-D0+k+1)*100/(float)depth), progressBarMsg);
-                                ProgressBar::getInstance()->show();
+                                ProgressBar::instance()->update(((float)(z-D0+k+1)*100/(float)depth), progressBarMsg);
+                                ProgressBar::instance()->show();
 			}
 
 			//looping on all stripes
@@ -339,7 +352,7 @@ void StackStitcher::mergeTilesVaa3DRaw(std::string output_path, int block_height
 				if ( z+k == 250 ) {
 					int a = 0;
 				}
-				stripe_down = this->getStripe(row_index,z+k, restore_direction, stk_rst, blending_algo);
+				stripe_down = this->getStripe(row_index,(int)(z+k), restore_direction, stk_rst, blending_algo);
 
 				#ifdef S_TIME_CALC
 				proc_time = -TIME(0);
@@ -445,12 +458,13 @@ void StackStitcher::mergeTilesVaa3DRaw(std::string output_path, int block_height
 			if(show_progress_bar)
 			{
 				sprintf(progressBarMsg, "Generating resolution %d of %d",i+1,ISR_MAX(resolutions_size, resolutions_size));
-                                ProgressBar::getInstance()->updateInfo(progressBarMsg);
-                                ProgressBar::getInstance()->show();
+                                ProgressBar::instance()->updateInfo(progressBarMsg);
+                                ProgressBar::instance()->show();
 			}
 
 			// check if current block is changed
-            if ( (z / POW_INT(2,i)) > slice_end[i] ) {
+			// D0 must be subtracted because z is an absolute index in volume while slice index should be computed on a relative basis (i.e. starting form 0)
+            if ( ((z - this->D0) / POW_INT(2,i)) > slice_end[i] ) {
 				stack_block[i]++;
 				slice_start[i] = slice_end[i] + 1;
 				slice_end[i] += stacks_depth[i][0][0][stack_block[i]];
@@ -461,7 +475,7 @@ void StackStitcher::mergeTilesVaa3DRaw(std::string output_path, int block_height
 			abs_pos_z.width(6);
 			abs_pos_z.fill('0');
 			abs_pos_z << (int)(this->getMultiresABS_D(i,0) + // all stacks start at the same D position
-								- D0 * volume->getVXL_D() * 10 + // WARNING: D0 is counted twice,both in getMultiresABS_D and in slice_start
+								//- D0 * volume->getVXL_D() * 10 + // WARNING: D0 is counted twice,both in getMultiresABS_D and in slice_start
                                 (POW_INT(2,i)*slice_start[i]) * volume->getVXL_D() * 10);
 
 			//compute the number of slice of previous groups at resolution i
@@ -473,7 +487,7 @@ void StackStitcher::mergeTilesVaa3DRaw(std::string output_path, int block_height
 
 			//halvesampling resolution if current resolution is not the deepest one
 			if(i!=0)	
-				StackStitcher::halveSample(buffer,height/(POW_INT(2,i-1)),width/(POW_INT(2,i-1)),z_size/(POW_INT(2,i-1)));
+				StackStitcher::halveSample(buffer,(int)(height/(POW_INT(2,i-1))),(int)(width/(POW_INT(2,i-1))),(int)(z_size/(POW_INT(2,i-1))));
 
 			//saving at current resolution if it has been selected and iff buffer is at least 1 voxel (Z) deep
 			if(resolutions[i] && (z_size/(POW_INT(2,i))) > 0)
@@ -481,8 +495,8 @@ void StackStitcher::mergeTilesVaa3DRaw(std::string output_path, int block_height
 				if(show_progress_bar)
 				{
 					sprintf(progressBarMsg, "Saving to disc resolution %d",i+1);
-                                        ProgressBar::getInstance()->updateInfo(progressBarMsg);
-                                        ProgressBar::getInstance()->show();
+                                        ProgressBar::instance()->updateInfo(progressBarMsg);
+                                        ProgressBar::instance()->show();
 				}
 
 				//storing in 'base_path' the absolute path of the directory that will contain all stacks
@@ -503,7 +517,7 @@ void StackStitcher::mergeTilesVaa3DRaw(std::string output_path, int block_height
 					{
 						char err_msg[S_STATIC_STRINGS_SIZE];
 						sprintf(err_msg, "in mergeTiles(...): unable to create V_DIR = \"%s\"\n", V_DIR_path.str().c_str());
-						throw MyException(err_msg);
+						throw iom::exception(err_msg);
 					}
 
 					for(int stack_column = 0, start_width=0, end_width=0; stack_column < n_stacks_H[i]; stack_column++)
@@ -518,7 +532,7 @@ void StackStitcher::mergeTilesVaa3DRaw(std::string output_path, int block_height
 							{
 								char err_msg[S_STATIC_STRINGS_SIZE];
 								sprintf(err_msg, "in mergeTiles(...): unable to create H_DIR = \"%s\"\n", H_DIR_path.str().c_str());
-								throw MyException(err_msg);
+								throw iom::exception(err_msg);
 							}
 							else { // the directory has been created for the first time
 								   // initialize block files
@@ -537,7 +551,7 @@ void StackStitcher::mergeTilesVaa3DRaw(std::string output_path, int block_height
 								else {
 									char err_msg[S_STATIC_STRINGS_SIZE];
 									sprintf(err_msg, "in mergeTilesVaa3DRaw(...): unknown image depth (%d)", saved_img_depth);
-									throw MyException(err_msg);
+									throw iom::exception(err_msg);
 								}
 
 								int slice_start_temp = 0;
@@ -548,7 +562,7 @@ void StackStitcher::mergeTilesVaa3DRaw(std::string output_path, int block_height
 									abs_pos_z_temp.width(6);
 									abs_pos_z_temp.fill('0');
 									abs_pos_z_temp << (int)(this->getMultiresABS_D(i,0) + // all stacks start at the same D position
-                                        (POW_INT(2,i)*(slice_start_temp)) * volume->getVXL_D() * 10);
+                                       (POW_INT(2,i)*(slice_start_temp)) * volume->getVXL_D() * 10);
 
 									std::stringstream img_path_temp;
 									img_path_temp << H_DIR_path.str() << "/" 
@@ -556,13 +570,23 @@ void StackStitcher::mergeTilesVaa3DRaw(std::string output_path, int block_height
 												  << this->getMultiresABS_H_string(i,start_width) << "_"
 												  << abs_pos_z_temp.str();
 
-									if ( ( !strcmp(saved_img_format,"Tiff3D") ? // format can be only "Tiff3D" or "Vaa3DRaw"
-												( (err_rawfmt = initTiff3DFile((char *)img_path_temp.str().c_str(),sz[0],sz[1],sz[2],sz[3],datatype)) != 0 ) : 
-												( (err_rawfmt = initRawFile((char *)img_path_temp.str().c_str(),sz,datatype)) != 0 ) ) ) {
-										char err_msg[S_STATIC_STRINGS_SIZE];
-										sprintf(err_msg,"VolumeConverter::generateTilesVaa3DRaw: error in initializing block file - %s", err_rawfmt);
-                                        throw MyException(err_msg);
-									};
+									// 2014-09-10. Alessandro. @CHANGED 'saved_img_format' interpretation in 'mergeTilesVaa3DRaw()' method.
+									if( strcmp(saved_img_format, "tif") == 0 || strcmp(saved_img_format, "tiff") == 0 || strcmp(saved_img_format, "TIF") == 0 || strcmp(saved_img_format, "TIFF") == 0)
+										err_rawfmt = initTiff3DFile((char *)img_path_temp.str().c_str(),(uint32)sz[0],(uint32)sz[1],(uint32)sz[2],(uint32)sz[3],datatype);
+									else if(strcmp(saved_img_format, "v3draw") == 0 || strcmp(saved_img_format, "raw") == 0)
+										err_rawfmt = initRawFile((char *)img_path_temp.str().c_str(),sz,datatype);
+									else
+										throw iom::exception(vm::strprintf("in StackStitcher::mergeTilesVaa3DRaw(): unsupported image format \"%s\"", saved_img_format));
+									if(err_rawfmt != 0)
+										throw iom::exception(vm::strprintf("in StackStitcher::mergeTilesVaa3DRaw(): error in initializing block file (%s)", err_rawfmt));
+								
+									//if ( ( !strcmp(saved_img_format,"Tiff3D") ? // format can be only "Tiff3D" or "Vaa3DRaw"
+									//			( (err_rawfmt = initTiff3DFile((char *)img_path_temp.str().c_str(),(uint32)sz[0],(uint32)sz[1],(uint32)sz[2],(uint32)sz[3],datatype)) != 0 ) : 
+									//			( (err_rawfmt = initRawFile((char *)img_path_temp.str().c_str(),sz,datatype)) != 0 ) ) ) {
+									//	char err_msg[S_STATIC_STRINGS_SIZE];
+									//	sprintf(err_msg,"VolumeConverter::generateTilesVaa3DRaw: error in initializing block file - %s", err_rawfmt);
+									//          throw iom::exception(err_msg);
+									//};
 									//fclose(tmp_file); // TEMP
 
 									slice_start_temp += (int)sz[2];
@@ -578,9 +602,9 @@ void StackStitcher::mergeTilesVaa3DRaw(std::string output_path, int block_height
 							std::stringstream img_path;
  							std::stringstream abs_pos_z_next;
 
-							int rel_pos_z = POW_INT(2,i)*buffer_z+z-D0;		// Alessandro, 23/03/2013 - see below. This is the relative Z pixel coordinate in the 
-																			// highest resolution image space. '-D0' is necessary to make it relative, since
-																			// getMultiresABS_D_string(...) accepts relative coordinates only.
+							int rel_pos_z = (int)(POW_INT(2,i)*buffer_z+z-D0);		// Alessandro, 23/03/2013 - see below. This is the relative Z pixel coordinate in the 
+																					// highest resolution image space. '-D0' is necessary to make it relative, since
+																					// getMultiresABS_D_string(...) accepts relative coordinates only.
 
 							/*std::stringstream abs_pos_z;
 							abs_pos_z.width(6);
@@ -591,7 +615,8 @@ void StackStitcher::mergeTilesVaa3DRaw(std::string output_path, int block_height
 										<< this->getMultiresABS_V_string(i,start_height) << "_" 
 										<< this->getMultiresABS_H_string(i,start_width)  << "_";
 										
-		                    if ( (z/POW_INT(2,i)+buffer_z) > slice_end[i] ) { // start a new block along z !!! GI_140427 THIS HAS NOT BE CHECKED YET
+							// D0 must be subtracted because z is an absolute index in volume while slice index should be computed on a relative basis (i.e. starting form 0)
+		                    if ( ((z - this->D0) / POW_INT(2,i)+buffer_z) > slice_end[i] ) { // start a new block along z !!! GI_140427 THIS HAS NOT BE CHECKED YET
 								abs_pos_z_next.width(6);
 								abs_pos_z_next.fill('0');
 								//abs_pos_z_next << (int)(this->getMultiresABS_D(i) + // all stacks start at the same D position
@@ -618,6 +643,19 @@ void StackStitcher::mergeTilesVaa3DRaw(std::string output_path, int block_height
                             // @FIXED by Alessandro on 2014-06-25: iim::IOException objects must be caught here
                             try
                             {
+								// 2014-09-10. Alessandro. @CHANGED 'saved_img_format' interpretation in 'mergeTilesVaa3DRaw()' method.
+								std::string iim_format;
+								if( strcmp(saved_img_format, "tif") == 0 || strcmp(saved_img_format, "tiff") == 0 || strcmp(saved_img_format, "TIF") == 0 || strcmp(saved_img_format, "TIFF") == 0)
+									iim_format  = "Tiff3D";
+								else if(strcmp(saved_img_format, "v3draw") == 0 || strcmp(saved_img_format, "raw") == 0)
+									iim_format = "Vaa3DRaw";
+								else
+									throw iom::exception(vm::strprintf("in StackStitcher::mergeTilesVaa3DRaw(): unsupported image format \"%s\"", saved_img_format));
+
+								// 2014-09-10. Alessandro. @FIXED 'mergeTilesVaa3DRaw' method: set 'imagemanager' module to silent mode.
+								iim::DEBUG = iim::NO_DEBUG;
+
+								// 2014-09-10. Alessandro. @CHANGED 'saved_img_format' interpretation in 'mergeTilesVaa3DRaw()' method.
                                 iim::VirtualVolume::saveImage_to_Vaa3DRaw(
                                     slice_ind,
                                     img_path.str(),
@@ -625,12 +663,12 @@ void StackStitcher::mergeTilesVaa3DRaw(std::string output_path, int block_height
                                     (int)height/(POW_INT(2,i)),
                                     (int)width/(POW_INT(2,i)),
                                     start_height,end_height,start_width,end_width,
-                                    saved_img_format, saved_img_depth
+                                    iim_format.c_str(), saved_img_depth
                                 );
                             }
                             catch( iim::IOException& exception)
                             {
-                                throw MyException(exception.what());
+                                throw iom::exception(exception.what());
                             }
 						}
 						start_width  += stacks_width [i][stack_row][stack_column][0];
@@ -655,7 +693,9 @@ void StackStitcher::mergeTilesVaa3DRaw(std::string output_path, int block_height
 				//one when dealing with CLSM data. The right reference system is stored in the <StackedVolume> object. A possible solution to implement
 				//is to check whether <volume> is a pointer to a <StackedVolume> object, then specialize it to <StackedVolume*> and get its reference
 				//system.
-				try {
+				try 
+				{
+					iim::DEBUG = iim::NO_DEBUG;
 					TiledVolume temp_vol(file_path[res_i].str().c_str(),reference,
 							volume->getVXL_V()*pow(2.0f,res_i), volume->getVXL_H()*pow(2.0f,res_i),volume->getVXL_D()*pow(2.0f,res_i));
 				}
@@ -701,7 +741,7 @@ void StackStitcher::mergeTilesVaa3DRaw(std::string output_path, int block_height
 	if ( n_err ) { // errors in mdat.bin creation
 		char err_msg[2000];
 		sprintf(err_msg,"VolumeConverter::generateTilesVaa3DRaw: %d errors in creating mdata.bin files", n_err);
-        throw MyException(err_msg);
+        throw iom::exception(err_msg);
 	}
 }
 

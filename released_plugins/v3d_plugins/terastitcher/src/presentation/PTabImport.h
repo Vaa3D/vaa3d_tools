@@ -56,22 +56,20 @@ class terastitcher::PTabImport : public QWidget
         QGroupBox* import_form;         //import form containing input fields
         QLabel* import_form_desc_1;     //contains text describing import form usage
         QLabel* import_form_desc_2;     //contains text describing import form usage
-        QLineEdit *path_field;          //field for either volume's dir or project XML path
+        QPrefixSuffixLineEdit *path_field;      //field for either volume's dir or project XML path
         QPushButton *voldir_button;     //browse for volume's directory button
         QPushButton *projfile_button;   //browse for volume's XML project file button
-        QCheckBox *reimport_checkbox;   //checkbox to be used to reimport a volume already imported
-        QLabel* axes_label;             //label "Axes"
-        QComboBox *axs1_field;          //field for first direction axis
-        QComboBox *axs2_field;          //field for second direction axis
-        QComboBox *axs3_field;          //field for third direction axis
-        QLabel* voxels_dims_label;      //label "Voxel dimensions"
+        QCheckBox *rescan_checkbox;     //checkbox to be used to reimport a volume already imported
+        QCheckBox *sparsedata_checkbox; //activate sparse data option
+        QComboBox *imin_plugin_cbox;  //combobox to choose inpute image i/o plugin
+        QComboBox *axs1_field;          //field for first direction vm::axis
+        QComboBox *axs2_field;          //field for second direction vm::axis
+        QComboBox *axs3_field;          //field for third direction vm::axis
         QDoubleSpinBox *vxl1_field;     //field for voxel dimension along first direction
         QDoubleSpinBox *vxl2_field;     //field for voxel dimension along second direction
         QDoubleSpinBox *vxl3_field;     //field for voxel dimension along third direction
-        QLabel* image_format_label;
-        QComboBox* image_format_cbox;
-        QLineEdit *regex_field;         //field for image filter regex
-        QLabel *regex_label;
+        QComboBox* vol_format_cbox;
+        QPrefixSuffixLineEdit *regex_field;         //field for image filter regex
 
         //info panel widgets, contain informations of the loaded volume
         QGroupBox* info_panel;
@@ -137,6 +135,9 @@ class terastitcher::PTabImport : public QWidget
         //gives PMain instances public access to this class members
         friend class PMain;
 
+        // qt event filter
+        bool eventFilter(QObject *, QEvent *);
+
     public slots:
 
         /**********************************************************************************
@@ -164,7 +165,7 @@ class terastitcher::PTabImport : public QWidget
         * aged in the current thread (ex != 0). Otherwise, volume information are imported
         * in the GUI by the <StackedVolume> handle of <CImport>.
         ***********************************************************************************/
-        void import_done(MyException *ex);
+        void import_done(iom::exception *ex);
 
         /**********************************************************************************
         * Called by <CPreview> when the associated operation has been performed.
@@ -172,7 +173,7 @@ class terastitcher::PTabImport : public QWidget
         * aged in the current thread (ex != 0). Otherwise, the preview which was saved back
         * onto the disk is loaded and shown in Vaa3D.
         ***********************************************************************************/
-        void preview_done(MyException *ex, Image4DSimple* img);
+        void preview_done(iom::exception *ex, Image4DSimple* img);
 
         /**********************************************************************************
         * Called when "path_field" value has changed.
@@ -182,7 +183,7 @@ class terastitcher::PTabImport : public QWidget
         /**********************************************************************************
         * Called when "reimport_chheckbox" state has changed.
         ***********************************************************************************/
-        void reimportCheckboxChanged(int);
+        void rescanCheckboxChanged(int);
 
         /**********************************************************************************
         * Called when "channel_selection" state has changed.
@@ -193,6 +194,21 @@ class terastitcher::PTabImport : public QWidget
         * Called when "regex_field" state has changed.
         ***********************************************************************************/
         void regexFieldChanged();
+
+        /**********************************************************************************
+        * Called when "inputImageIOPlugin" state has changed.
+        ***********************************************************************************/
+        void iopluginChanged(QString);
+
+        /**********************************************************************************
+        * Called when "volformat_cbox" state has changed.
+        ***********************************************************************************/
+        void volformatChanged(QString);
+
+        /**********************************************************************************
+        * Called when "sparse_data_checkbox" state has changed.
+        ***********************************************************************************/
+        void sparsedataCheckboxChanged(int);
 
 };
 

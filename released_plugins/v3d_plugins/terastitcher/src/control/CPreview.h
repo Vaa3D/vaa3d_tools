@@ -85,7 +85,7 @@ class terastitcher::CPreview : public QThread
         /*********************************************************************************
         * Carries the outcome of the operation associated to this thread.
         **********************************************************************************/
-        void sendOperationOutcome(MyException* ex, Image4DSimple* img);
+        void sendOperationOutcome(iom::exception* ex, Image4DSimple* img);
 
 
     public slots:

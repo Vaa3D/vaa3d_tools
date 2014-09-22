@@ -47,7 +47,7 @@ class TPAlgo
 		* Abstract method that all derived classes must implement.
 		* Finds the optimal tile placement on the <volume> object member
 		**************************************************************************************************************/
-		virtual void execute()																   throw (MyException) = 0;
+		virtual void execute()																   throw (iom::exception) = 0;
 
 		//static method which is responsible to instance and return the algorithm of the given type
 		static TPAlgo* instanceAlgorithm(int _type, volumemanager::VirtualVolume * _volume);											

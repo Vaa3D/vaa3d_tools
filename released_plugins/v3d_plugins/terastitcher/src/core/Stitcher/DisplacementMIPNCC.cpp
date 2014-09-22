@@ -118,7 +118,7 @@ DisplacementMIPNCC::DisplacementMIPNCC(TiXmlElement *displ_node) : Displacement(
 
 //evaluates displacement reliability possibly along the given direction. The result(s) should be stored
 //in one or more object members, so that they have to be computed once and then accessed by GET methods
-float DisplacementMIPNCC::evalReliability(direction _direction) throw (MyException)
+float DisplacementMIPNCC::evalReliability(direction _direction) throw (iom::exception)
 {
 	#if S_VERBOSE>4
 	printf("........in DisplacementMIPNCC::evalReliability(direction _direction = %d)\n", _direction);
@@ -127,55 +127,55 @@ float DisplacementMIPNCC::evalReliability(direction _direction) throw (MyExcepti
 	if(_direction == 0 || _direction == 1 || _direction == 2)
 	{
         float NCC_width_normalized = (100.0F - (NCC_widths[_direction] * 100.0F / invWidths[_direction]))/100.0F;
-		rel_factors[_direction] = sqrt( S_NCC_WIDTH_WEIGHT*NCC_width_normalized*NCC_width_normalized + S_NCC_PEAK_WEIGHT*NCC_maxs[_direction]*NCC_maxs[_direction]);
+		rel_factors[_direction] = (float) sqrt( S_NCC_WIDTH_WEIGHT*NCC_width_normalized*NCC_width_normalized + S_NCC_PEAK_WEIGHT*NCC_maxs[_direction]*NCC_maxs[_direction]);
 	}
 	else if(_direction == -1)
-		throw MyException("in DisplacementMIPNCC::evalReliability(void): feature not yet supported");
+		throw iom::exception("in DisplacementMIPNCC::evalReliability(void): feature not yet supported");
 	else
-		throw MyException("in DisplacementMIPNCC::evalReliability(...): wrong direction value");
+		throw iom::exception("in DisplacementMIPNCC::evalReliability(...): wrong direction value");
 
 	return rel_factors[_direction];
 }
 
 //returns the reliability possibly along the given direction. An exception is thrown if the reliability
 //index(es) are not computed yet.
-float DisplacementMIPNCC::getReliability(direction _direction)  throw (MyException)
+float DisplacementMIPNCC::getReliability(direction _direction)  throw (iom::exception)
 {
 	#if S_VERBOSE>4
 	printf("........in DisplacementMIPNCC::getReliability(direction _direction = %d)\n", _direction);
 	#endif
 
 	if( (_direction == 0 || _direction == 1 || _direction == 2) && rel_factors[_direction] == -1.0F)
-		throw MyException("in DisplacementMIPNCC::evalReliability(direction _direction): reliability factor not yet computed");
+		throw iom::exception("in DisplacementMIPNCC::evalReliability(direction _direction): reliability factor not yet computed");
 	else if(_direction == -1)
-		throw MyException("in DisplacementMIPNCC::evalReliability(void): feature not yet supported");
+		throw iom::exception("in DisplacementMIPNCC::evalReliability(void): feature not yet supported");
 	else if( !(_direction == 0 || _direction == 1 || _direction == 2) )
 	{
 		char errMsg[1000];
 		sprintf(errMsg, "in DisplacementMIPNCC::evalReliability(...): wrong direction value ( = %d )", _direction);
-		throw MyException(errMsg);
+		throw iom::exception(errMsg);
 	}
 
 	return rel_factors[_direction];
 }
 
 //returns the displacement along the given direction
-int	DisplacementMIPNCC::getDisplacement(direction _direction) throw (MyException)
+int	DisplacementMIPNCC::getDisplacement(direction _direction) throw (iom::exception)
 {
 	#if S_VERBOSE>4
 	printf("\t\t\t\t\tin DisplacementMIPNCC::getDisplacement(direction _direction = %d)\n", _direction);
 	#endif
 
 	if( _direction != 0 && _direction != 1 && _direction != 2)
-		throw MyException("in DisplacementMIPNCC::getDisplacement(...): wrong direction value");
+		throw iom::exception("in DisplacementMIPNCC::getDisplacement(...): wrong direction value");
 	else if(VHD_coords[_direction] == std::numeric_limits<int>::max())
-		throw MyException("in DisplacementMIPNCC::getDisplacement(...): displacement not computed yet");
+		throw iom::exception("in DisplacementMIPNCC::getDisplacement(...): displacement not computed yet");
 
 	return VHD_coords[_direction];
 }
 
 //sets to default values the displacements with a reliability factor above the given threshold
-void DisplacementMIPNCC::threshold(float rel_threshold) throw (MyException)
+void DisplacementMIPNCC::threshold(float rel_threshold) throw (iom::exception)
 {
 	#if S_VERBOSE>4
 	printf("........in DisplacementMIPNCC::threshold(rel_threshold = %.4f)\n", rel_threshold);
@@ -196,7 +196,7 @@ void DisplacementMIPNCC::threshold(float rel_threshold) throw (MyException)
 }
 
 //returns the displacement mirrored along the given direction.
-Displacement* DisplacementMIPNCC::getMirrored(direction _direction) throw (MyException)
+Displacement* DisplacementMIPNCC::getMirrored(direction _direction) throw (iom::exception)
 {
 	#if S_VERBOSE>4
 	printf("........in DisplacementMIPNCC::getMirrored(direction _direction = %d)\n", _direction);
@@ -232,7 +232,7 @@ Displacement* DisplacementMIPNCC::getMirrored(direction _direction) throw (MyExc
 		mirrored->VHD_def_coords[2] = -VHD_def_coords[2];
 	}
 	else
-		throw MyException("in DisplacementMIPNCC::getMirrored(...): unsupported or wrong given mirroring direction");
+		throw iom::exception("in DisplacementMIPNCC::getMirrored(...): unsupported or wrong given mirroring direction");
 
 	mirrored->TYPE = TYPE;
 	mirrored->NCC_maxs[0] = NCC_maxs[0];
@@ -258,7 +258,7 @@ Displacement* DisplacementMIPNCC::getMirrored(direction _direction) throw (MyExc
 
 //combines the parameters of the current and the given displacement so that after this operation
 //the two displacements are more reliable (and are EQUAL).
-void DisplacementMIPNCC::combine(Displacement& displ) throw (MyException)
+void DisplacementMIPNCC::combine(Displacement& displ) throw (iom::exception)
 {
 	#if S_VERBOSE>3
 	printf("......in DisplacementMIPNCC::combine(Displacement& displ)\n");
@@ -296,7 +296,7 @@ void DisplacementMIPNCC::combine(Displacement& displ) throw (MyException)
 }
 
 //XML methods: convert/load displacement object into/from XML schema
-TiXmlElement* DisplacementMIPNCC::getXML() throw (MyException)
+TiXmlElement* DisplacementMIPNCC::getXML() throw (iom::exception)
 {
 	#if S_VERBOSE>5
 	printf("\t\t\t\t\tin DisplacementMIPNCC::getXML()\n");
@@ -330,7 +330,7 @@ TiXmlElement* DisplacementMIPNCC::getXML() throw (MyException)
 
 	return xml_representation;
 }
-void DisplacementMIPNCC::loadXML(TiXmlElement *displ_node) throw (MyException)
+void DisplacementMIPNCC::loadXML(TiXmlElement *displ_node) throw (iom::exception)
 {
 	#if S_VERBOSE>5
 	printf("\t\t\t\t\tin DisplacementMIPNCC::loadXML(displ_node)\n");

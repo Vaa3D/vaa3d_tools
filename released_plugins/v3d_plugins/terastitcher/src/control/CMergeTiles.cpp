@@ -35,6 +35,7 @@
 #include "StackStitcher.h"
 #include "ProgressBar.h"
 #include "IM_config.h"
+#include "vmBlockVolume.h"
 
 using namespace terastitcher;
 
@@ -71,15 +72,15 @@ void CMergeTiles::run()
         //checking that a volume has been imported first
         vm::VirtualVolume* volume = CImport::instance()->getVolume();
         if(!volume)
-            throw MyException("Unable to start this step. A volume must be properly imported first.");
+            throw iom::exception("Unable to start this step. A volume must be properly imported first.");
 
         if(pMergeTiles != 0)
         {
-            //merging
+            // retrieve user's input
             StackStitcher stitcher(volume);
-            int sliceheight = pMergeTiles->volumeformat_cbox->currentIndex() != 0 ? pMergeTiles->block_height_field->value() : -1;
-            int slicewidth = pMergeTiles->volumeformat_cbox->currentIndex() != 0  ? pMergeTiles->block_width_field->value() : -1;
-            int slicedepth = pMergeTiles->volumeformat_cbox->currentIndex() == 2 ? pMergeTiles->block_depth_field->value() : -1;
+            int sliceheight =  pMergeTiles->block_height_field->value();
+            int slicewidth = pMergeTiles->block_width_field->value();
+            int slicedepth =pMergeTiles->block_depth_field->value();
             bool restoreSPIM = pMergeTiles->restoreSPIM_cbox->currentIndex() != 0;
             std::string volumedir = pMergeTiles->savedir_field->text().toStdString();
             bool excludenonstitchables = pMergeTiles->excludenonstitchables_cbox->isChecked();
@@ -91,32 +92,28 @@ void CMergeTiles::run()
             int slice1 = pMergeTiles->slice1_field->value();
             int restore_direction = pMergeTiles->restoreSPIM_cbox->currentIndex();
             int blending_algo = pMergeTiles->blendingalbo_cbox->currentIndex();
-            std::string img_format = pMergeTiles->imgformat_cbox->currentText().toStdString().c_str();
-            int img_depth = pMergeTiles->imgdepth_cbox->currentText().toInt();
+            std::string img_format = pMergeTiles->img_format_cbox->currentText().toStdString().c_str();
+            int img_depth = pMergeTiles->imgdepth_cbox->currentText().section(" ", 0, 0).toInt();
 
-            if(pMergeTiles->volumeformat_cbox->currentText().toStdString().compare(tsp::IMAGE_FORMAT_TILED_3D_ANY) == 0)
-            {
-                // @FIXED by Alessandro on 2014-06-25: mergeTilesVaa3DRaw needs the generic format instead of file extension
-                if(img_format.compare("tif") == 0 || img_format.compare("tiff") == 0)
-                    img_format = "Tiff3D";
-                else if(img_format.compare("v3draw") == 0)
-                    img_format = "Vaa3DRaw";
+            // launch merging
+            if ( vm::VOLUME_OUTPUT_FORMAT_PLUGIN.compare(BlockVolume::id)==0 )
                 stitcher.mergeTilesVaa3DRaw(volumedir, sliceheight, slicewidth, slicedepth, resolutions,excludenonstitchables, row0, row1, col0, col1,
                                     slice0, slice1,restoreSPIM,restore_direction, blending_algo, false, true, img_format.c_str(), img_depth );
-            }
-            else
+            else if ( vm::VOLUME_OUTPUT_FORMAT_PLUGIN.compare(StackedVolume::id)==0 )
                 stitcher.mergeTiles(volumedir, sliceheight, slicewidth, resolutions,excludenonstitchables, row0, row1, col0, col1,
                                     slice0, slice1,restoreSPIM,restore_direction, blending_algo, false, true, img_format.c_str(), img_depth );
+            else
+                throw iom::exception(vm::strprintf("Unsupported output volume format plugin \"%s\"", vm::VOLUME_OUTPUT_FORMAT_PLUGIN.c_str()).c_str());
 
-            //checking that a volume with non-zero dimensions has been produced
+            // check that a volume with non-zero dimensions has been produced
             if(stitcher.getV1()-stitcher.getV0() <= 0 || stitcher.getH1()-stitcher.getH0() <= 0 || stitcher.getD1()-stitcher.getD0() <= 0)
-                throw MyException("Empty volume selected");
+                throw iom::exception("Empty volume selected");
 
             //if a resolution has be selected to be shown in Vaa3D, it is necessary to load each slice and to create a new Image4DSimple object
             if(resolution_index_vaa3D != -1)
             {
                 //updating progress bar message
-                ProgressBar::getInstance()->start("Loading volume into Vaa3D...");
+                ProgressBar::instance()->start("Loading volume into Vaa3D...");
 
                 //retrieving the directory path where the selected volume is stored
                 QString volpath = pMergeTiles->savedir_field->text();
@@ -137,7 +134,7 @@ void CMergeTiles::run()
                 //allocation of image data
                 img = new Image4DSimple();
                 img->setFileName(voldir.path().toStdString().c_str());
-                uint8* img_data = new uint8[width*height*depth];    //images with any depth are loaded in 8 bit mode with OpenCV
+                iom::uint8* img_data = new iom::uint8[width*height*depth];    //images with any depth are loaded in 8 bit mode with OpenCV
 
                 //loading slices and storing them into img_data
                 for (int k = 0; k < slices_list.size(); ++k)
@@ -145,14 +142,14 @@ void CMergeTiles::run()
                     const char* slice_path = QString(voldir.path().append("/").append(slices_list.at(k).toLocal8Bit().constData())).toStdString().c_str();
                     IplImage* slice_img = cvLoadImage(slice_path, CV_LOAD_IMAGE_GRAYSCALE);
                     if(!slice_img)
-                        throw MyException(QString("Unable to load slice \"").append(slice_path).append("\" to be shown into Vaa3D").toStdString().c_str());
+                        throw iom::exception(QString("Unable to load slice \"").append(slice_path).append("\" to be shown into Vaa3D").toStdString().c_str());
                     if(slice_img->height != height || slice_img->width != width)
-                        throw MyException("An error occurred when loading slices to be shown into Vaa3D");
+                        throw iom::exception("An error occurred when loading slices to be shown into Vaa3D");
 
                     int slice_img_step = slice_img->widthStep/sizeof(uchar);
                     for(int i=0; i<height; i++)
                     {
-                        uint8* slice_img_data = ((uint8*)slice_img->imageData)+i*slice_img_step;
+                        iom::uint8* slice_img_data = ((iom::uint8*)slice_img->imageData)+i*slice_img_step;
                         for(int j=0; j<width; j++)
                             img_data[k*height*width + i*width +j] = slice_img_data[j];
                     }
@@ -176,27 +173,27 @@ void CMergeTiles::run()
     catch( iim::IOException& exception)
     {
         /**/tsp::warning(strprintf("exception thrown in CMergeTiles::run(): \"%s\"", exception.what()).c_str());
-        emit sendOperationOutcome(new MyException(exception.what()), 0);
+        emit sendOperationOutcome(new iom::exception(exception.what()), 0);
     }
-    catch( MyException& exception)
+    catch( iom::exception& exception)
     {
         /**/tsp::warning(strprintf("exception thrown in CMergeTiles::run(): \"%s\"", exception.what()).c_str());
-        emit sendOperationOutcome(new MyException(exception.what()), 0);
+        emit sendOperationOutcome(new iom::exception(exception.what()), 0);
     }
     catch(const char* error)
     {
         /**/tsp::warning(strprintf("exception thrown in CMergeTiles::run(): \"%s\"", error).c_str());
-        emit sendOperationOutcome(new MyException(error), 0);
+        emit sendOperationOutcome(new iom::exception(error), 0);
     }
     catch(std::bad_alloc& ba)
     {
         /**/tsp::warning(strprintf("exception thrown in CMergeTiles::run(): \"%s\"", ba.what()).c_str());
-        emit sendOperationOutcome(new MyException(ba.what()), 0);
+        emit sendOperationOutcome(new iom::exception(ba.what()), 0);
     }
     catch(...)
     {
         /**/tsp::warning(strprintf("exception thrown in CMergeTiles::run(): \"%s\"", "Generic error").c_str());
-        emit sendOperationOutcome(new MyException("Unable to determine error's type"), 0);
+        emit sendOperationOutcome(new iom::exception("Unable to determine error's type"), 0);
     }
 }
 

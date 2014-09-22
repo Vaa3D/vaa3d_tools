@@ -62,11 +62,11 @@ void CDisplComp::run()
         //checking that a volume has been imported first
         vm::VirtualVolume* volume = CImport::instance()->getVolume();
         if(!volume)
-            throw MyException("Unable to start this step. A volume must be properly imported first.");
+            throw iom::exception("Unable to start this step. A volume must be properly imported first.");
 
         //launching pairwise displacements computation
         StackStitcher stitcher(volume);
-        stitcher.computeDisplacements(algo, row0, col0, row1, col1, Voverlap, Hoverlap, Vrad, Hrad, Drad, subvol_dim, restoreSPIM, 1, 1);
+        stitcher.computeDisplacements(algo, row0, col0, row1, col1, Voverlap, Hoverlap, Vrad, Hrad, Drad, subvol_dim, restoreSPIM, 1, 1, z0, z1);
 
         //saving into XML project file
         volume->saveXML(0,saveproj_path.c_str());
@@ -77,22 +77,22 @@ void CDisplComp::run()
     catch( iim::IOException& exception)
     {
         /**/tsp::warning(strprintf("exception thrown in CMergeTiles::run(): \"%s\"", exception.what()).c_str());
-        emit sendOperationOutcome(new MyException(exception.what()));
+        emit sendOperationOutcome(new iom::exception(exception.what()));
     }
-    catch( MyException& exception)
+    catch( iom::exception& exception)
     {
         /**/tsp::warning(strprintf("exception thrown in CDisplComp::run(): \"%s\"", exception.what()).c_str());
-        emit sendOperationOutcome(new MyException(exception.what()));
+        emit sendOperationOutcome(new iom::exception(exception.what()));
     }
     catch(const char* error)
     {
         /**/tsp::warning(strprintf("exception thrown in CDisplComp::run(): \"%s\"", error).c_str());
-        emit sendOperationOutcome(new MyException(error));
+        emit sendOperationOutcome(new iom::exception(error));
     }
     catch(...)
     {
         /**/tsp::warning(strprintf("exception thrown in CDisplComp::run(): \"%s\"", "Generic error").c_str());
-        emit sendOperationOutcome(new MyException("Unable to determine error's type"));
+        emit sendOperationOutcome(new iom::exception("Unable to determine error's type"));
     }
 }
 

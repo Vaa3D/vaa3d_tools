@@ -37,20 +37,6 @@ using namespace std;
 #include "../../presentation/PMain.h"
 #endif
 
-
-/**********************************************************************************
-* Singleton design pattern: this class can have one instance only,  which must be
-* instantiated by calling static method "istance(...)"
-***********************************************************************************/
-ProgressBar* ProgressBar::uniqueInstance = NULL;
-ProgressBar* ProgressBar::instance()
-{
-    if (uniqueInstance == NULL)
-        uniqueInstance = new ProgressBar();
-    uniqueInstance = new ProgressBar();
-    return uniqueInstance;
-}
-
 ProgressBar::ProgressBar()
 {
     strcpy(this->operation_desc, "none");
@@ -79,14 +65,14 @@ void ProgressBar::start(const char *new_operation_desc)
 
 void ProgressBar::update(float new_progress_value, const char* new_progress_info)
 {
-        progress_value=new_progress_value;
+    progress_value=new_progress_value;
 	strcpy(progress_info,new_progress_info);
 
-        if(new_progress_value!=0)
+    if(new_progress_value!=0)
 	{
-		minutes_remaining = (proctime + TIME(0))*(100.0-progress_value)/(progress_value*60.0);
-		seconds_remaining = (proctime + TIME(0))*(100.0-progress_value)/(progress_value);
-        }
+		minutes_remaining = (int)((proctime + TIME(0))*(100.0-progress_value)/(progress_value*60.0));
+		seconds_remaining = (int)((proctime + TIME(0))*(100.0-progress_value)/(progress_value));
+    }
 }
 
 
@@ -110,7 +96,7 @@ void ProgressBar::show()
     printf("%d%%\t",(int)(progress_value));
     for(int i=1; i<=progress_value; i++)
             printf("*");
-    for(int i=progress_value; i<100; i++)
+    for(int i=(int)progress_value; i<100; i++)
             printf(":");
     printf("\n\n");
 #endif

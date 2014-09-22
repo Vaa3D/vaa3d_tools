@@ -45,12 +45,12 @@
 # define WEST_EAST     1
 
 # include "my_defs.h"
-# include "MyException.h"	//Alessandro - 23/03/2013 - needed to throw exceptions
+#include "../iomanager/iomanager.config.h"
 
 /***************************************** RESULT STRUCTURE ********************************************/
 typedef struct {
 	int coord[3];       // alignment as offset of the second stack with respect to the first one
-	real_t NCC_maxs[3]; // reliability of alignment (-1=unreliable, 1=highly reliable)
+	iom::real_t NCC_maxs[3]; // reliability of alignment (-1=unreliable, 1=highly reliable)
 	int NCC_widths[3];  // estimate of potential error in pixels
 } NCC_descr_t;
 
@@ -58,24 +58,24 @@ typedef struct {
 typedef struct {
 	bool enhance;     // boolean flag that enabled an enhancement step before performing NCC
 	int maxIter;
-	real_t maxThr;    // threshold for NCC maximum (below this threshold the NCC is considered unreliable)
-	real_t widthThr;  // fraction of maximum used to evaluate the maximum width (belongs to [0,1])
+	iom::real_t maxThr;    // threshold for NCC maximum (below this threshold the NCC is considered unreliable)
+	iom::real_t widthThr;  // fraction of maximum used to evaluate the maximum width (belongs to [0,1])
 	int wRangeThr;    // range used to evaluate maximum width (when maximum width is greater or equal to 
 	                  // this value, width is set to INF_W
-	real_t UNR_NCC;   // unreliable NCC peak value
+	iom::real_t UNR_NCC;   // unreliable NCC peak value
 	int INF_W;        // infinite NCC peak width
 	int INV_COORD;    // invalid alignment
 	int n_transforms; // used only if enhance=true; number of scaled linear transformations used to enhance the MIPs 
-	real_t *percents; // used only if enhance=true; list of fractions of pixels; percents[i] is the fraction of pixels 
+	iom::real_t *percents; // used only if enhance=true; list of fractions of pixels; percents[i] is the fraction of pixels 
 	                  // to be transformed with i-th transformation; percents[n_transforms-1] must be 1.00
-	real_t *c;        // used only if enhance=true; list of values; the i-th transformations map pixels from value 
+	iom::real_t *c;        // used only if enhance=true; list of values; the i-th transformations map pixels from value 
 					  // c[i-1] to value c[i] 
 } NCC_parms_t;
 
 /***************************************** MAIN FUNCTION ***********************************************/
-NCC_descr_t *norm_cross_corr_mips ( real_t *A, real_t *B, 
+NCC_descr_t *norm_cross_corr_mips ( iom::real_t *A, iom::real_t *B, 
 						    int dimk, int dimi, int dimj, int nk, int ni, int nj, 
-							int delayk, int delayi, int delayj, int side, NCC_parms_t *NCC_params = 0 ) throw (MyException); //Alessandro - 23/03/2013 - exceptions are thrown if preconditions do not hold
+							int delayk, int delayi, int delayj, int side, NCC_parms_t *NCC_params = 0 ) throw (iom::exception); //Alessandro - 23/03/2013 - exceptions are thrown if preconditions do not hold
 /*
  * returns an alignment between volume A and B; the two volumes are assumed to have the same dimensions
  * INPUT PARAMETERS:

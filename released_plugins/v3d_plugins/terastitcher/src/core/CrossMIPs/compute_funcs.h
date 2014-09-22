@@ -47,20 +47,20 @@
 # define GRAY_LEVELS    65536
 
 
-void compute_3_MIPs ( real_t *A, real_t *B,
-					  real_t *MIP_xy1, real_t *MIP_xz1, real_t *MIP_yz1, 
-					  real_t *MIP_xy2, real_t *MIP_xz2, real_t *MIP_yz2, 
+void compute_3_MIPs ( iom::real_t *A, iom::real_t *B,
+					  iom::real_t *MIP_xy1, iom::real_t *MIP_xz1, iom::real_t *MIP_yz1, 
+					  iom::real_t *MIP_xy2, iom::real_t *MIP_xz2, iom::real_t *MIP_yz2, 
 					  int dimi_v, int dimj_v, int dimk_v, int stridei, int stridek );
 
-void compute_NCC_map ( real_t *NCC_map, real_t *MIP_1, real_t *MIP_2, 
+void compute_NCC_map ( iom::real_t *NCC_map, iom::real_t *MIP_1, iom::real_t *MIP_2, 
 					       int dimu, int dimv, int delayu, int delayv );
 
-real_t compute_NCC ( real_t *im1, real_t *im2, int dimi, int dimj, int stride );
+iom::real_t compute_NCC ( iom::real_t *im1, iom::real_t *im2, int dimi, int dimj, int stride );
 
-int compute_MAX_ind ( real_t *vect, int len );
+int compute_MAX_ind ( iom::real_t *vect, int len );
 
-void compute_Neighborhood ( NCC_parms_t *NCC_params, real_t *NCC, int delayu, int delayv, int ind, 
-						    real_t *MIP_1, real_t *MIP_2, int dimu, int dimv, real_t *NCCnew, int &du, int &dv, bool &failed)  throw (MyException);
+void compute_Neighborhood ( NCC_parms_t *NCC_params, iom::real_t *NCC, int delayu, int delayv, int ind, 
+						    iom::real_t *MIP_1, iom::real_t *MIP_2, int dimu, int dimv, iom::real_t *NCCnew, int &du, int &dv, bool &failed)  throw (iom::exception);
 /* given an NCC map with dimensions delayu x delayv around the initial alignment, the index ind of its maximum
  * and an empty NCC map NCCnew with dimensions NCC_params->wRangeThr x NCC_params->wRangeThr,
  * returns in NCCnew the NCC map with center in the NCC maximum of MIPs MIP_1 and MIP_2, with dimensions dimu x dimv;
@@ -69,14 +69,14 @@ void compute_Neighborhood ( NCC_parms_t *NCC_params, real_t *NCC, int delayu, in
 
 //void compute_Alignment( NCC_parms_t *NCC_params, REAL_T *NCC_xy, REAL_T *NCC_xz, REAL_T *NCC_yz, 
 //					    int dimi, int dimj, int dimk, int ind_xy, int ind_xz, int ind_yz, NCC_descr_t *result);
-void compute_Alignment( NCC_parms_t *NCC_params, real_t *NCC_xy, real_t *NCC_xz, real_t *NCC_yz,
+void compute_Alignment( NCC_parms_t *NCC_params, iom::real_t *NCC_xy, iom::real_t *NCC_xz, iom::real_t *NCC_yz,
 					    int dimi, int dimj, int dimk, int dx1, int dx2, int dy1, int dy2, int dz1, int dz2,  bool failed_xy, bool failed_xz, bool failed_yz, NCC_descr_t *result);
 /* given the three NCCs, the corresponding indicex of NCC maxima and their displacements with respect to the 
  * initial alignment, returns in the parameter result the three alignments and the corresponding reliability indices;
  * alignments represent offsets of the second stack with respect to the first one
  */
 
-void enhance ( real_t *im, int imLen, int graylevels, NCC_parms_t *NCC_params );
+void enhance ( iom::real_t *im, int imLen, int graylevels, NCC_parms_t *NCC_params );
 /* enhance contrast of an image
  * INPUT parameters:
  *    im is a pointer to actual pixels, represented as a linear sequence of length imLen
@@ -86,8 +86,8 @@ void enhance ( real_t *im, int imLen, int graylevels, NCC_parms_t *NCC_params );
  *    CrossMIPs.h for details)
  */
 
-void stack_percentiles ( real_t *im, int imLen, int graylevels, 
-						 real_t *percentiles, real_t *thresholds, int n_percentiles );
+void stack_percentiles ( iom::real_t *im, int imLen, int graylevels, 
+						 iom::real_t *percentiles, iom::real_t *thresholds, int n_percentiles );
 /* returns thresholds on pixel values to implement an arbitrary grayscale transformation
  * INPUT parameters:
  *    im is a pointer to actual pixels represented as a linear sequence of length imLen

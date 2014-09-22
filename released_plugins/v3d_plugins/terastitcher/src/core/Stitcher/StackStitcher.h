@@ -25,15 +25,25 @@
 *       specific prior written permission.
 ********************************************************************************************************************************************************************************************/
 
+/******************
+*    CHANGELOG    *
+*******************
+* 2014-09-12. Alessandro. @ADDED [z0, z1] subdata selection along Z in the 'computeDisplacements()' method.
+* 2014-09-09. Alessandro. @CHANGED. Black pixels (=0) are ignored in 'sinusoidal_blending()' function (especially useful in 'sparse data' mode).
+* 2014-09-02. Alessandro. @FIXED major bug in 'getStripe()' method. Argument 2 ('d_index') has 'short' type, but it should have at least 'int'.
+*/
+
 #ifndef STACK_STITCHER_H
 #define STACK_STITCHER_H
 
 #include <math.h>
 #include "S_config.h"
-//#include "../VolumeManager/VM_config.h"
-#include "IOManager_defs.h"
-#include "MyException.h"
+//#include "../VolumeManager/volumemanager.config.h"
+#include "iomanager.config.h"
 
+#ifdef max
+#undef max
+#endif
 
 class StackRestorer;
 
@@ -44,22 +54,22 @@ class StackRestorer;
 // class VirtualStack;
 // #endif
 
-#include "../VolumeManager/vmVirtualStack.h"
-#include "../VolumeManager/vmVirtualVolume.h"
+#include "../volumemanager/vmVirtualStack.h"
+#include "../volumemanager/vmVirtualVolume.h"
 
 class StackStitcher
 {
 	private:
 
 		/******OBJECT MEMBERS******/
-                //StackedVolume *volume;					//pointer to the <StackedVolume> object to be stitched
-				volumemanager::VirtualVolume *volume;					//pointer to the <VirtualVolume> object to be stitched
-                int V0, V1, H0, H1, D0, D1;				//voxel intervals that identify the final stitched volume
-                int ROW_START, COL_START, ROW_END, COL_END;             //stack indexes that identify the stacks involved in stitching
+        //StackedVolume *volume;					//pointer to the <StackedVolume> object to be stitched
+		volumemanager::VirtualVolume *volume;		//pointer to the <VirtualVolume> object to be stitched
+        int V0, V1, H0, H1, D0, D1;					//voxel intervals that identify the final stitched volume
+        int ROW_START, COL_START, ROW_END, COL_END; //stack indexes that identify the stacks involved in stitching
 
 		/******CLASS MEMBERS******/
 		static double time_displ_comp;				//time employed for pairwise displacements computation
-                static double time_merging;				//time employed to merge stacks
+        static double time_merging;					//time employed to merge stacks
 		static double time_stack_desc;				//time employed to compute stacks descriptions
 		static double time_stack_restore;			//time employed to restore stacks
 		static double time_multiresolution;			//time employed to obtain stitched volume at different resolutions
@@ -77,8 +87,8 @@ class StackStitcher
 		* selected by the [blending_algo] parameter. If a  <StackRestorer>  object has been passed,  each slice is re-
 		* stored before it is combined into the final stripe.
 		**************************************************************************************************************/
-		real_t* getStripe(short row_index, short d_index, int restore_direction=-1, StackRestorer* stk_rst=NULL,
-						  int blending_algo=S_SINUSOIDAL_BLENDING)    							   throw (MyException);
+		iom::real_t* getStripe(int row_index, int d_index, int restore_direction=-1, StackRestorer* stk_rst=NULL,
+						  int blending_algo=S_SINUSOIDAL_BLENDING)    							   throw (iom::exception);
 
 		/*************************************************************************************************************
 		* Returns the (up = true -> TOP, up = false -> BOTTOM) V coordinate of the virtual stripe at <row_index> row. 
@@ -95,77 +105,74 @@ class StackStitcher
 		* overlapping zone. IMPORTANT: due to efficiency reasons, it is better to handle  different  types of blending 
 		* functions with function pointers instead of using polymorphism of OOP.
 		**************************************************************************************************************/
-		static inline real_t sinusoidal_blending(double& angle, real_t& pixel1, real_t& pixel2){
-			return (real_t)(  ((cos(angle)+1.0F)*0.5F)*pixel1 + ( 1.0F - ((cos(angle)+1.0F)*0.5F))*pixel2  );
+		static inline iom::real_t sinusoidal_blending(double& angle, iom::real_t& pixel1, iom::real_t& pixel2){
+
+			// 2014-09-09. Alessandro. @CHANGED. Black pixels (=0) are ignored in 'sinusoidal_blending()' function.
+			if(!pixel1 || !pixel2)
+				return std::max(pixel1, pixel2);
+
+			return (iom::real_t)(  ((cos(angle)+1.0F)*0.5F)*pixel1 + ( 1.0F - ((cos(angle)+1.0F)*0.5F))*pixel2  );
 		}
 
-		static inline real_t no_blending(double& angle, real_t& pixel1, real_t& pixel2){
+		static inline iom::real_t no_blending(double& angle, iom::real_t& pixel1, iom::real_t& pixel2){
 			return (angle <= S_PI/2 ? pixel1 : pixel2);		
 		}
 
-                /*************************************************************************************************************
-                * This is a special blending function (together with the necessary static variables) which draws blank lines
-                * along stacks borders without performing any blending. This enables easy checking of motorized stages coordi-
-                * nates precision.
-                **************************************************************************************************************/
-                static double stack_marging_old_val;
-                static bool blank_line_drawn;
-                static inline real_t stack_margin(double& angle, real_t& pixel1, real_t& pixel2)
-                {
-                    if(angle == stack_marging_old_val && blank_line_drawn){
-                        stack_marging_old_val = angle;
-                        return 1;
-                    }
-                    else if(angle > S_PI/2.0 && stack_marging_old_val < S_PI/2.0){
-                        stack_marging_old_val = angle;
-                        blank_line_drawn = true;
-                        return 1;
-                    }
-                    else{
-                        stack_marging_old_val = angle;
-                        blank_line_drawn = false;
-                        return ( angle <= S_PI/2 ? pixel1 : pixel2);
-                    }
+        /*************************************************************************************************************
+        * This is a special blending function (together with the necessary static variables) which draws blank lines
+        * along stacks borders without performing any blending. This enables easy checking of motorized stages coordi-
+        * nates precision.
+        **************************************************************************************************************/
+        static double stack_marging_old_val;
+        static bool blank_line_drawn;
+        static inline iom::real_t stack_margin(double& angle, iom::real_t& pixel1, iom::real_t& pixel2)
+        {
+            if(angle == stack_marging_old_val && blank_line_drawn){
+                stack_marging_old_val = angle;
+                return 1;
+            }
+            else if(angle > S_PI/2.0 && stack_marging_old_val < S_PI/2.0){
+                stack_marging_old_val = angle;
+                blank_line_drawn = true;
+                return 1;
+            }
+            else{
+                stack_marging_old_val = angle;
+                blank_line_drawn = false;
+                return ( angle <= S_PI/2 ? pixel1 : pixel2);
+            }
 		}
 		
 		/*************************************************************************************************************
 		* Performs downsampling at a halved frequency on the given 3D image.  The given image is overwritten in order
 		* to store its halvesampled version without allocating any additional resources.
 		**************************************************************************************************************/
-		static void halveSample(real_t* img, int height, int width, int depth);
+		static void halveSample(iom::real_t* img, int height, int width, int depth);
 
 	public:
 
-                StackStitcher(volumemanager::VirtualVolume* _volume);
+        StackStitcher(volumemanager::VirtualVolume* _volume);
 
-		/*************************************************************************************************************
-		* Method to be called for displacement computation. <> parameters are mandatory, while [] are optional.
-		* <algorithm_type>		: ID of the pairwise displacement algorithm to be used.
-		* [start/end_...]		: rows/columns intervals that possible identify the portion of volume to be processed.
-		*						  If not given, all stacks will be processed.
-		* [overlap_...]			: expected overlaps between the given stacks along V and H directions.These values can
-		*   					  be used to determine the region of interest where the overlapping occurs. If not gi-
-		*   					  ven,  default  values  are  assigned  by  computing the expected  overlaps using the 
-		*   					  <MEC_...> members of the <StackedVolume> object.
-		* [displ_max_...]		: maximum displacements along VHD between two  adjacent stacks  taking the given over-
-		*						  lap as reference. These parameters, together with <overlap_...>,can be used to iden-
-		*						  tify the region of interest where the correspondence between the given stacks has to
-		*						  be found. When used, these parameters have to be tuned with respect to the precision 
-		*						  of the motorized stages. If not given, value S_DISPL_SEARCH_RADIUS_DEF is assigned.
-		* [subvol_DIM_D]		: desired subvolumes dimensions along D axis.  Each pair  of stacks is split into sub-
-		*						  volumes along D axis in order to use memory efficiently.   Hence, multiple displace-
-		*						  ments for each pair of adjacent stacks are computed. 
-		*						  If not given, value S_SUBVOL_DIM_D_DEFAULT is assigned.
-		* [restoreSPIM]			: enables SPIM artifacts removal (zebrated patterns) along the given direction.
-		* [restore_direction]	: direction of SPIM zebrated patterns to be removed.
-		* [show_progress_bar]	: enables/disables progress bar with estimated time remaining.
-		**************************************************************************************************************/
-		void computeDisplacements(int algorithm_type, int start_row = -1, int start_col = -1, int end_row = -1, 
-								  int end_col = -1, int overlap_V = -1, int overlap_H =-1, 
-								  int displ_max_V=S_DISPL_SEARCH_RADIUS_DEF, int displ_max_H=S_DISPL_SEARCH_RADIUS_DEF, 
-								  int displ_max_D=S_DISPL_SEARCH_RADIUS_DEF, int subvol_DIM_D = S_SUBVOL_DIM_D_DEFAULT, 
-								  bool restoreSPIM=false, int restore_direction=-1, bool show_progress_bar=true)
-																								   throw (MyException);
+		// compute pairwise displacements
+		// 2014-09-12. Alessandro. @ADDED [z0, z1] subdata selection along Z in the 'computeDisplacements()' method.
+		void computeDisplacements(
+			int algorithm_type,							// ID of the pairwise displacement algorithm to be used.
+			int row0 = -1,								// subdata selection along X: [row0, row1] rows will be processed only
+			int col0 = -1,								// subdata selection along Y: [col0, col1] cols will be processed only
+			int row1 = -1,								// subdata selection along X: [row0, row1] rows will be processed only
+			int col1 = -1,								// subdata selection along Y: [col0, col1] cols will be processed only
+			int overlap_V = -1,							// overlaps along V and H directions. If not given, default values are ...
+			int overlap_H =-1,							// ... computed using the <MEC_...> members of the <StackedVolume> object.			
+			int displ_max_V=S_DISPL_SEARCH_RADIUS_DEF,  // maximum displacements along VHD between two  adjacent stacks. ...
+			int displ_max_H=S_DISPL_SEARCH_RADIUS_DEF,  // ... If not given, value S_DISPL_SEARCH_RADIUS_DEF is assigned.
+			int displ_max_D=S_DISPL_SEARCH_RADIUS_DEF, 
+			int subvol_DIM_D = S_SUBVOL_DIM_D_DEFAULT,	// dimension of layers obtained by dividing the volume along D.
+			bool restoreSPIM=false,						// enable SPIM artifacts removal (zebrated patterns) ...
+			int restore_direction=-1,					// ... along the given direction.
+			bool show_progress_bar=true,				// enable/disable progress bar with estimated time remaining
+			int z0=-1,									// subdata selection along Z: [z0, z1] slices will be processed only
+			int z1=-1)									// subdata selection along Z: [z0, z1] slices will be processed only
+		throw (iom::exception);
 
 
 		/*************************************************************************************************************
@@ -174,7 +181,7 @@ class StackStitcher
                 * ment. Where for a pair of adjacent stacks no displacement is available,  a displacement  is generated using
                 * nominal stage coordinates.
 		**************************************************************************************************************/
-		void projectDisplacements()																  throw (MyException);
+		void projectDisplacements()																  throw (iom::exception);
 
 		/*************************************************************************************************************
 		* Assuming that for each pair of adjacent stacks  exists one  and only one displacement,  this displacement is 
@@ -183,13 +190,13 @@ class StackStitcher
 		* Moreover, stacks which do not have any reliable single-direction displacements with all 4 neighbors are mar-
 		* ked as NON STITCHABLE.
 		**************************************************************************************************************/
-		void thresholdDisplacements(float reliability_threshold)								  throw (MyException);
+		void thresholdDisplacements(float reliability_threshold)								  throw (iom::exception);
 
 
 		/*************************************************************************************************************
 		* Executes the compute tiles placement algorithm associated to the given ID <algorithm_type>
 		**************************************************************************************************************/
-		void computeTilesPlacement(int algorithm_type)											  throw (MyException);
+		void computeTilesPlacement(int algorithm_type)											  throw (iom::exception);
 
 
                 /*************************************************************************************************************
@@ -199,7 +206,7 @@ class StackStitcher
                 * or columns with no stitchable stacks
                 **************************************************************************************************************/
                 void computeVolumeDims(bool exclude_nonstitchable_stacks = true, int _ROW_START = -1,	   int _ROW_END = -1,
-                                                           int _COL_START = -1, int _COL_END = -1, int _D0 = -1, int _D1 = -1) throw (MyException);
+                                                           int _COL_START = -1, int _COL_END = -1, int _D0 = -1, int _D1 = -1) throw (iom::exception);
 
 		/*************************************************************************************************************
 		* Method to be called for tile merging. <> parameters are mandatory, while [] are optional.
@@ -231,14 +238,13 @@ class StackStitcher
 						bool exclude_nonstitchable_stacks =true, int _ROW_START=-1, int _ROW_END=-1, int _COL_START=-1,
 						int _COL_END=-1, int _D0=-1, int _D1=-1,	bool restoreSPIM=false,	  int restore_direction=-1,
 						int blending_algo=S_SINUSOIDAL_BLENDING,	bool test_mode=false, bool show_progress_bar= true,
-						const char* saved_img_format=iom::DEF_IMG_FORMAT.c_str(), int saved_img_depth=iom::DEF_IMG_DEPTH) throw (MyException);
+						const char* saved_img_format=iom::DEF_IMG_FORMAT.c_str(), int saved_img_depth=iom::DEF_BPP) throw (iom::exception);
 		
 
 		/*************************************************************************************************************
 		* Functions used to save single phase time performances
 		**************************************************************************************************************/
 		static void saveComputationTimes(const char *filename, volumemanager::VirtualVolume &stk_org, double total_time=-1);
-		static void resetComputationTimes();
 
                 /*************************************************************************************************************
                 * Get methods
@@ -295,7 +301,7 @@ void mergeTilesVaa3DRaw(std::string output_path, int block_height = -1, int bloc
 						bool exclude_nonstitchable_stacks =true, int _ROW_START=-1, int _ROW_END=-1, int _COL_START=-1,
 						int _COL_END=-1, int _D0=-1, int _D1=-1,	bool restoreSPIM=false,	  int restore_direction=-1,
 						int blending_algo=S_SINUSOIDAL_BLENDING,	bool test_mode=false, bool show_progress_bar= true,
-                        const char* saved_img_format=iom::DEF_IMG_FORMAT.c_str(), int saved_img_depth=iom::DEF_IMG_DEPTH) throw (MyException);
+                        const char* saved_img_format=iom::DEF_IMG_FORMAT.c_str(), int saved_img_depth=iom::DEF_BPP) throw (iom::exception);
 
 
 };

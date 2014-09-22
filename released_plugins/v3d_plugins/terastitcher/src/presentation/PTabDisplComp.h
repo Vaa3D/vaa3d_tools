@@ -75,6 +75,8 @@ class terastitcher::PTabDisplComp : public QWidget
         QSpinBox* startcol_sbox;
         QLabel* to_label_2;
         QSpinBox* endcol_sbox;
+        QSpinBox* startslice_sbox;
+        QSpinBox* endslice_sbox;
         QLabel* searchregion_label;
         QSpinBox* Ysearch_sbox;
         QSpinBox* Xsearch_sbox;
@@ -148,7 +150,7 @@ class terastitcher::PTabDisplComp : public QWidget
         * If an exception has occurred in the <CDisplComp> thread,it is propagated and man-
         * aged in the current thread (ex != 0). Otherwise, the other tabs are updated.
         ***********************************************************************************/
-        void displcomp_done(MyException *ex);
+        void displcomp_done(iom::exception *ex);
 
         /**********************************************************************************
         * Called when <showAdvancedButton> status changed

@@ -7,8 +7,8 @@
 #include <QValidator>
 
 namespace terastitcher {
-	static QChar separator1() { return QChar('\02'); }
-	static QChar separator2() { return QChar('\03'); }
+    static QChar separator1() { return QChar('\02'); }
+    static QChar separator2() { return QChar('\03'); }
 }
 
 /// The AMPrefixSuffixLineEdit is a tenacious hack whereby we use non-printing characters within the line edit to separate the user's actual text from the fixed prefix and suffix. We also implement a validator on the line edit so that these suffix and prefix regions cannot be deleted or edited. This class implements that validator.

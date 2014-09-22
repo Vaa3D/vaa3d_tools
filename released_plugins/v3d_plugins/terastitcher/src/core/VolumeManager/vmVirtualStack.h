@@ -25,66 +25,84 @@
 *       specific prior written permission.
 ********************************************************************************************************************************************************************************************/
 
+/******************
+*    CHANGELOG    *
+*******************
+* 2014-09-10. Alessandro. @ADDED 'isEmpty(z0,z1)' method.
+* 2014-09-05. Alessandro. @ADDED 'z_end' parameter in 'loadXML()' method to support sparse data feature.
+* 2014-09-03. Alessandro. @ADDED 'isEmpty()' and 'isSparse()' get methods.
+* 2014-09-01. Alessandro. @ADDED 'z_ranges' attribute to manage sparse data along Z.
+* 2014-08-30. Alessandro. @REMOVED 'show()' method (obsolete).
+* 2014-08-30. Alessandro. @MOVED 'VirtualStack()' default constructor to .cpp source file.
+* 2014-08-29. Alessandro. @ADDED 'isComplete()' concrete virtual method.
+* 2014-08-25. Alessandro. @ADDED missing 'throw (iom::iom::exception)' statement in the 'loadImageStack()' method's signature.
+*/
 
 #ifndef _VM_VIRTUAL_STACK_H
 #define _VM_VIRTUAL_STACK_H
 
-#include "MyException.h"
-#include "IOManager.h"
+#include <vector>
+#include "iomanager.config.h"
 #include "tinyxml.h"
-#include "../Stitcher/Displacement.h"
+#include "volumemanager.config.h"
+#include "../stitcher/Displacement.h"
 
 //class Displacement;
 
-class VirtualStack {
+class VirtualStack
+{
+    protected:
 
-protected:
+        char** FILENAMES;							//1D dynamic array of <char>  pointers to images filenames
+        int	   HEIGHT, WIDTH, DEPTH;				//VHD (Vertical, Horizontal, Depth) dimensions of current stack
+        int	   ROW_INDEX,  COL_INDEX;				//row and col index relative to stack matrix
+        char*  DIR_NAME;							//string containing current stack directory
+        bool   stitchable;							//true if current Stack is stitchable with adjacent ones
+        int    ABS_V, ABS_H, ABS_D;					//absolute VHD voxel coordinates of current stack
+        iom::real_t* STACKED_IMAGE;					//pointer to 1-D array of REAL_T that stores Stack image data
+        std::vector<Displacement*> NORTH;			//vector of displacements along D direction between this and northern Stack
+        std::vector<Displacement*> EAST;			//vector of displacements along D direction between this and eastern  Stack
+        std::vector<Displacement*> SOUTH;			//vector of displacements along D direction between this and southern Stack
+        std::vector<Displacement*> WEST;			//vector of displacements along D direction between this and western  Stack
 
-	char** FILENAMES;				//1D dynamic array of <char>  pointers to images filenames
-	int	   HEIGHT, WIDTH, DEPTH;	//VHD (Vertical, Horizontal, Depth) dimensions of current stack
-	int	   ROW_INDEX,  COL_INDEX;	//row and col index relative to stack matrix
-	char*  DIR_NAME;				//string containing current stack directory
-	bool   stitchable;				//true if current Stack is stitchable with adjacent ones		
-	int    ABS_V, ABS_H, ABS_D;				//absolute VHD voxel coordinates of current stack
-	real_t* STACKED_IMAGE;					//pointer to 1-D array of REAL_T that stores Stack image data
-	std::vector<Displacement*> NORTH;		//vector of displacements along D direction between this and northern Stack
-	std::vector<Displacement*> EAST;		//vector of displacements along D direction between this and eastern  Stack
-	std::vector<Displacement*> SOUTH;		//vector of displacements along D direction between this and southern Stack
-	std::vector<Displacement*> WEST;		//vector of displacements along D direction between this and western  Stack
+        // 2014-09-01. Alessandro. @ADDED support for sparse data.
+        std::vector< vm::interval<int> > z_ranges;	//vector of Z-ranges containing valid data (each range is of type [start, end) )
+													//*** WARNING ***: if vector is empty, the stack is assumed as empty
 
-public:
-	VirtualStack(){}
-	~VirtualStack(void){}
+    public:
+
+        VirtualStack();
+        ~VirtualStack(void){}
 
 
 		//GET methods
 		char* getDIR_NAME()			{return DIR_NAME;}
 		int getROW_INDEX()			{return ROW_INDEX;}
 		int getCOL_INDEX()			{return COL_INDEX;}
-		int getHEIGHT()			{return HEIGHT;}//Onofri: type changed
-		int getWIDTH()			{return WIDTH;}//Onofri: type changed
-		int getDEPTH()			{return DEPTH;}//Onofri: type changed
+		int getHEIGHT()				{return HEIGHT;}//Onofri: type changed
+		int getWIDTH()				{return WIDTH;}	//Onofri: type changed
+		int getDEPTH()				{return DEPTH;}	//Onofri: type changed
 		char** getFILENAMES()		{return FILENAMES;}		
 		int getABS_V()				{return ABS_V;}
 		int getABS_H()				{return ABS_H;}
 		int getABS_D()				{return ABS_D;}
-		int getABS(int direction) throw (MyException)
+		int getABS(int direction) throw (iom::exception)
 		{
 			#if VM_VERBOSE > 4
 			printf("........in Stack[%d,%d]::getABS(direction = %d)\n",ROW_INDEX, COL_INDEX, direction);
 			#endif
 
-			if	   (direction == dir_vertical)
+			if (direction == dir_vertical)
 				return getABS_V();
 			else if(direction == dir_horizontal)
 				return getABS_H();
 			else if(direction == dir_depth)
 				return getABS_D();
 			else
-				throw MyException("in Stack::setABS(int _ABS, int direction): wrong direction inserted");
+				throw iom::exception("in Stack::setABS(int _ABS, int direction): wrong direction inserted");
 		}
 
-		real_t* getSTACKED_IMAGE()	{return STACKED_IMAGE;}
+		iom::real_t* getSTACKED_IMAGE()	{return STACKED_IMAGE;}
 		virtual void *getCONTAINER() =0;
 
 		std::vector<Displacement*>& getNORTH(){return NORTH;}
@@ -92,30 +110,34 @@ public:
 		std::vector<Displacement*>& getSOUTH(){return SOUTH;}
 		std::vector<Displacement*>& getWEST(){return  WEST;}
 
-        bool isStitchable(){/*printf("\n[%d,%d] %s stitchable\n", ROW_INDEX, COL_INDEX, stitchable ? "is" : "IS NOT");*/ return this->stitchable;}
+        bool isStitchable(){return this->stitchable;}
 
-		Displacement* getDisplacement(VirtualStack* neighbour) throw (MyException)
+		// 2014-09-03. Alessandro. @ADDED 'isEmpty()' and 'isSparse()' get methods
+		bool isEmpty(){return z_ranges.empty();}
+		bool isSparse(){return !isEmpty() && !isComplete(0, DEPTH-1);}
+
+		Displacement* getDisplacement(VirtualStack* neighbour) throw (iom::exception)
 		{
 			#if VM_VERBOSE > 4
 			printf("........in Stack[%d,%d]::getDisplacement(Stack* neighbour[%d,%d])\n",ROW_INDEX, COL_INDEX, neighbour->ROW_INDEX, neighbour->COL_INDEX);
 			#endif
 
 			if(neighbour == NULL)
-				throw MyException("...in Stack::getDisplacement(Stack* neighbour = NULL): invalid neighbour stack");
+				throw iom::exception("...in Stack::getDisplacement(Stack* neighbour = NULL): invalid neighbour stack");
 			else if(neighbour->getROW_INDEX() == (ROW_INDEX -1) && neighbour->getCOL_INDEX() == COL_INDEX)
 				if(NORTH.size() == 1) return NORTH[0];
-				else throw MyException("...in Stack::getDisplacement(Stack* neighbour): stack MUST contain one displacement only at NORTH");
+				else throw iom::exception("...in Stack::getDisplacement(Stack* neighbour): stack MUST contain one displacement only at NORTH");
 			else if(neighbour->getROW_INDEX() == ROW_INDEX    && neighbour->getCOL_INDEX() == COL_INDEX -1)
 				if(WEST.size() == 1) return WEST[0];
-				else throw MyException("...in Stack::getDisplacement(Stack* neighbour): stack MUST contain one displacement only at WEST");
+				else throw iom::exception("...in Stack::getDisplacement(Stack* neighbour): stack MUST contain one displacement only at WEST");
 			else if(neighbour->getROW_INDEX() == ROW_INDEX +1 && neighbour->getCOL_INDEX() == COL_INDEX)
 				if(SOUTH.size() == 1) return SOUTH[0];
-				else throw MyException("...in Stack::getDisplacement(Stack* neighbour): stack MUST contain one displacement only at SOUTH");
+				else throw iom::exception("...in Stack::getDisplacement(Stack* neighbour): stack MUST contain one displacement only at SOUTH");
 			else if(neighbour->getROW_INDEX() == ROW_INDEX    && neighbour->getCOL_INDEX() == COL_INDEX +1)
 				if(EAST.size() == 1) return EAST[0];
-				else throw MyException("...in Stack::getDisplacement(Stack* neighbour): stack MUST contain one displacement only at EAST");
+				else throw iom::exception("...in Stack::getDisplacement(Stack* neighbour): stack MUST contain one displacement only at EAST");
 			else
-				throw MyException("...in Stack::getDisplacement(Stack* neighbour): neighbour is not a neighbour!!!");
+				throw iom::exception("...in Stack::getDisplacement(Stack* neighbour): neighbour is not a neighbour!!!");
 		}
 
 		//SET methods
@@ -124,7 +146,7 @@ public:
 		void setABS_V    (int _ABS_V)    {ABS_V     = _ABS_V;    }
 		void setABS_H    (int _ABS_H)    {ABS_H     = _ABS_H;    }
 		void setABS_D    (int _ABS_D)    {ABS_D     = _ABS_D;    }
-		void setABS		 (int _ABS, int direction)  throw (MyException)
+		void setABS		 (int _ABS, int direction)  throw (iom::exception)
 		{
 			#if VM_VERBOSE > 4
 			printf("........in Stack[%d,%d]::setABS(_ABS = %d, direction = %d)\n",ROW_INDEX, COL_INDEX, _ABS, direction);
@@ -137,21 +159,27 @@ public:
 			else if(direction == dir_depth)
 				setABS_D(_ABS);
 			else
-				throw MyException("in Stack::setABS(int _ABS, int direction): wrong direction inserted");
+				throw iom::exception("in Stack::setABS(int _ABS, int direction): wrong direction inserted");
 		}
 		void setStitchable(bool _stitchable){this->stitchable = _stitchable;}
 
 		//LOAD and RELEASE methods
-		virtual real_t* loadImageStack(int first_file=-1, int last_file=-1)= 0;
+        virtual iom::real_t* loadImageStack(int first_file=-1, int last_file=-1) throw (iom::exception) = 0;
 		virtual void releaseImageStack()= 0;
+
+        // return true if the given range [z0,z1] does not contain missing slices/blocks
+        virtual bool isComplete(int z0, int z1);
+
+		// return true if the given range [z0,z1] does not contain any slice/block
+		virtual bool isEmpty(int z0, int z1);
 
 		//XML methods
 		virtual TiXmlElement* getXML()= 0;
-		virtual void		  loadXML(TiXmlElement *stack_node) throw (MyException)= 0;
-
-		//PRINT and SHOW methods
-		void print();
-		void show(int D_index, int window_HEIGHT=0, int window_WIDTH=0);
+		virtual void loadXML(
+			TiXmlElement *stack_node,
+			int z_end)					// 2014-09-05. Alessandro. @ADDED 'z_end' parameter to support sparse data feature
+										//			   Here 'z_end' identifies the range [0, z_end) that slices can span
+		throw (iom::exception)= 0;
 };
 
 #endif

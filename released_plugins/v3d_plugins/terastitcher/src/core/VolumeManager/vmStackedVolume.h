@@ -25,14 +25,21 @@
 *       specific prior written permission.
 ********************************************************************************************************************************************************************************************/
 
+/******************
+*    CHANGELOG    *
+*******************
+* 2014-09-20. Alessandro. @ADDED overwrite_mdata flag to the XML-based constructor.
+* 2014-09-10. Alessandro. @ADDED plugin creation/registration functions to make 'StackedVolume' a volume format plugin.
+* 2014-09-05. Alessandro. @ADDED 'normalize_stacks_attributes()' method to normalize stacks attributes (width, height, etc.)
+*/
+
 #ifndef _VM_STACKED_VOLUME_H
 #define _VM_STACKED_VOLUME_H
 
 #include <string>
-#include "VM_config.h"
+#include "volumemanager.config.h"
 #include <sstream>
-#include "MyException.h"
-#include "IOManager.h"
+#include "iomanager.config.h"
 #include "vmVirtualVolume.h" 
 #include <cstdarg>
 #include <vector>
@@ -41,50 +48,51 @@
 #include <cstring>
 
 //FORWARD-DECLARATIONS
-//struct VHD_triple;
-//struct interval_t;
-//enum axis {vertical=1, inv_vertical=-1, horizontal=2, inv_horizontal=-2, depth=3, inv_depth=-3, axis_invalid=0};
-//struct ref_sys;
 class VirtualStack;
 class Stack;
-//class Displacement;
-//const char* axis_to_str(axis ax);
+
 
 class StackedVolume : public volumemanager::VirtualVolume
 {
-
 	private:
 
+		// 2014-09-10. Alessandro. @ADDED plugin creation/registration functions to make 'StackedVolume' a volume format plugin.
+		static const std::string creator_id1, creator_id2;							
+        static VirtualVolume* createFromXML(const char* xml_path, bool ow_mdata) { return new StackedVolume(xml_path, ow_mdata); }
+		static VirtualVolume* createFromData(const char* data_path, vm::ref_sys ref, float vxl1, float vxl2, float vxl3, bool ow_mdata) { 
+			return new StackedVolume(data_path, ref, vxl1, vxl2, vxl3, ow_mdata); 
+		}
+
+
 		//******OBJECT ATTRIBUTES******
-		//char* stacks_dir;					//C-string that contains the directory path of stacks matrix
-		//float  VXL_V, VXL_H, VXL_D;			//[microns]: voxel dimensions (in microns) along V(Vertical), H(horizontal) and D(Depth) axes
-		//float  ORG_V, ORG_H, ORG_D;			//[millimeters]: origin spatial coordinates (in millimeters) along VHD axes
-		//float  MEC_V, MEC_H;				//[microns]: mechanical displacements of the microscope between two adjacent stacks
-		//uint16 N_ROWS, N_COLS, N_SLICES;	//dimensions (in stacks) of stacks matrix along VH axes
 		Stack ***STACKS;					//2-D array of <Stack*>	
 
-		//***OBJECT PRIVATE METHODS****
-        StackedVolume(void){}
-
 		//initialization methods
-		void init() throw (MyException);
-		void applyReferenceSystem(ref_sys reference_system, float VXL_1, float VXL_2, float VXL_3) throw (MyException);
+		void init() throw (iom::exception);
+		void applyReferenceSystem(vm::ref_sys reference_system, float VXL_1, float VXL_2, float VXL_3) throw (iom::exception);
 
 		//binary metadata load/save methods
-		void saveBinaryMetadata(char *metadata_filepath) throw (MyException);
-		void loadBinaryMetadata(char *metadata_filepath) throw (MyException);
+		void saveBinaryMetadata(char *metadata_filepath) throw (iom::exception);
+		void loadBinaryMetadata(char *metadata_filepath) throw (iom::exception);
 
-		//rotates stacks matrix around D axis (accepted values are theta=0,90,180,270)
+		//rotates stacks matrix around D vm::axis (accepted values are theta=0,90,180,270)
 		void rotate(int theta);
 
 		//mirrors stacks matrix along mrr_axis (accepted values are mrr_axis=1,2,3)
-		void mirror(axis mrr_axis) throw (MyException);
+		void mirror(vm::axis mrr_axis) throw (iom::exception);
+
+		// 2014-09-05. Alessandro. @ADDED 'normalize_stacks_attributes()' method to normalize stacks attributes (width, height, etc.)
+		void normalize_stacks_attributes() throw (iom::exception);
 
 	public:
 
+		// 2014-09-10. Alessandro. @ADDED plugin creation/registration functions to make 'StackedVolume' a volume format plugin.
+		static const std::string id;	
+
 		//CONSTRUCTORS-DECONSTRUCTOR
-        StackedVolume(const char* _stacks_dir, ref_sys reference_system, float VXL_1=0, float VXL_2=0, float VXL_3=0, bool overwrite_mdata=false, bool make_n_slices_equal = false) throw (MyException);
-		StackedVolume(const char *xml_filepath, bool make_n_slices_equal = false) throw (MyException);
+		StackedVolume() : VirtualVolume(){}
+        StackedVolume(const char* _stacks_dir, vm::ref_sys reference_system, float VXL_1=0, float VXL_2=0, float VXL_3=0, bool overwrite_mdata=false) throw (iom::exception);
+        StackedVolume(const char *xml_filepath, bool overwrite_mdata=false) throw (iom::exception);
 		~StackedVolume();
 
 		// ******GET METHODS******
@@ -92,14 +100,10 @@ class StackedVolume : public volumemanager::VirtualVolume
 		int		 getStacksWidth();
 		VirtualStack*** getSTACKS();
 
-		
-		//print all informations contained in this data structure
-		void print();
-
 		//loads/saves metadata from/in the given xml filename
-		void loadXML(const char *xml_filename) throw (MyException);
-		void initFromXML(const char *xml_filename) throw (MyException);
-        void saveXML(const char *xml_filename=0, const char *xml_filepath=0) throw (MyException);
+		void loadXML(const char *xml_filename) throw (iom::exception);
+		void initFromXML(const char *xml_filename) throw (iom::exception);
+        void saveXML(const char *xml_filename=0, const char *xml_filepath=0) throw (iom::exception);
 
 
         /**********************************************************************************
@@ -116,48 +120,12 @@ class StackedVolume : public volumemanager::VirtualVolume
         int countStitchableStacks(float threshold);
 
 		// print mdata.bin content to stdout
-		static void dumpMData(const char* volumePath) throw (MyException);
-
-		// utility functions
-		// string-based sprintf function
-		inline static std::string strprintf(const std::string fmt, ...){
-			int size = 100;
-			std::string str;
-			va_list ap;
-			while (1) {
-				str.resize(size);
-				va_start(ap, fmt);
-				int n = vsnprintf((char *)str.c_str(), size, fmt.c_str(), ap);
-				va_end(ap);
-				if (n > -1 && n < size) {
-					str.resize(n);
-					return str;
-				}
-				if (n > -1)
-					size = n + 1;
-				else
-					size *= 2;
-			}
-			return str;
-		}
+		static void dumpMData(const char* volumePath) throw (iom::exception);
 };
 
-//******* ABSTRACT TYPES DEFINITIONS *******
-//struct VHD_triple{int V, H, D;};
-//struct interval_t
-//{
-//	int start, end;
-//        interval_t(void) :				   start(-1),	  end(-1)  {}
-//        interval_t(int _start, int _end) : start(_start), end(_end){}
-//};
-//
-//struct ref_sys 
-//{
-//	axis first, second, third; 
-//	ref_sys(axis _first, axis _second, axis _third) : first(_first), second(_second), third(_third){}
-//	ref_sys(): first(axis_invalid), second(axis_invalid), third(axis_invalid){}
-//};
-
+namespace{																
+	const StackedVolume* objectStackedVolume = new StackedVolume();
+} 
 
 
 #endif /* STACKED_VOLUME_H */

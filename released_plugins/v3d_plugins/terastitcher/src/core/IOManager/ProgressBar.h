@@ -29,39 +29,32 @@
 #define _PROGRESS_BAR_H
 
 #include <iostream>
-#include "IOManager_defs.h"
+#include "iomanager.config.h"
 #include <string.h>
 
 class ProgressBar
 {
 	private:
 
-                /*********************************************************************************
-                * Singleton design pattern: this class can have one instance only,  which must be
-                * instantiated by calling static method "istance(...)"
-                **********************************************************************************/
-                static ProgressBar* uniqueInstance;
-                ProgressBar();
+        ProgressBar();
 
 		char operation_desc[500];
 		float progress_value;
 		char progress_info[500];
 		double proctime;
 		int minutes_remaining;
-                int seconds_remaining;
+        int seconds_remaining;
 
 	public:
 
-                /**********************************************************************************
-                * Singleton design pattern: this class can have one instance only,  which must be
-                * instantiated by calling static method "istance(...)"
-                ***********************************************************************************/
-                static ProgressBar* instance();
-                static ProgressBar* getInstance(){return uniqueInstance;}
-                ~ProgressBar(){}
+		// singleton
+        static ProgressBar* instance(){
+			static ProgressBar* uniqueInstance = new ProgressBar();
+			return uniqueInstance;
+		};
 
 
-                void start(const char* new_operation_desc);
+        void start(const char* new_operation_desc);
 		void update(float new_progress_value, const char* new_progress_info);
 		void updateInfo(const char* new_progress_info);
 		void show();

@@ -54,7 +54,7 @@
  * applied to value x
  */
 static
-void binary_search ( real_t *a, int n, real_t x, bool &found, int &pos ) {
+void binary_search ( iom::real_t *a, int n, iom::real_t x, bool &found, int &pos ) {
 	int f = 0;
 	int l = n-1;
 	int m;
@@ -82,10 +82,10 @@ void binary_search ( real_t *a, int n, real_t x, bool &found, int &pos ) {
  * maximum itself)
  */
 static
-void compute_NCC_width ( NCC_parms_t *NCC_params, real_t *NCC, int dimj, int ind, bool failed, int &width1, int &width2 ) {
+void compute_NCC_width ( NCC_parms_t *NCC_params, iom::real_t *NCC, int dimj, int ind, bool failed, int &width1, int &width2 ) {
 	bool found;
 
-	real_t thr = NCC_params->widthThr * NCC[ind];
+	iom::real_t thr = NCC_params->widthThr * NCC[ind];
 
 	if(failed)
 	{
@@ -139,7 +139,7 @@ void compute_NCC_width ( NCC_parms_t *NCC_params, real_t *NCC, int dimj, int ind
  */
 static
 void compute_NCC_alignment ( NCC_parms_t *NCC_params, NCC_descr_t *result, int i,
-							int d1, real_t peak_val1, int width1, int d2, real_t peak_val2, int width2 ) {
+							int d1, iom::real_t peak_val1, int width1, int d2, iom::real_t peak_val2, int width2 ) {
 
 	// check how many values contribute to final alignment
 	if ( peak_val1 >= NCC_params->maxThr && width1 < NCC_params->INF_W ) // first value may be considered
@@ -202,8 +202,8 @@ void init_configuration ( ) {
 
 typedef struct{
 	// input parametres
-	real_t *A;
-	real_t *B;
+	iom::real_t *A;
+	iom::real_t *B;
 	int dimi_v;
 	int dimj_v;
 	int dimk_v;
@@ -212,31 +212,31 @@ typedef struct{
 	int stridek;
 	// input/ouput parameters
 	// output parametres
-	real_t *MIP_xy1;
-	real_t *MIP_xz1;
-	real_t *MIP_yz1;
-	real_t *MIP_xy2;
-	real_t *MIP_xz2;
-	real_t *MIP_yz2;
+	iom::real_t *MIP_xy1;
+	iom::real_t *MIP_xz1;
+	iom::real_t *MIP_yz1;
+	iom::real_t *MIP_xy2;
+	iom::real_t *MIP_xz2;
+	iom::real_t *MIP_yz2;
 } compute_3_MIPs_params_t;
 
 DWORD WINAPI compute_3_MIPs_worker ( LPVOID lpParam ) {
-	real_t *A       = ((compute_3_MIPs_params_t *) lpParam)->A;
-	real_t *B       = ((compute_3_MIPs_params_t *) lpParam)->B;
+	iom::real_t *A       = ((compute_3_MIPs_params_t *) lpParam)->A;
+	iom::real_t *B       = ((compute_3_MIPs_params_t *) lpParam)->B;
 	int dimi_v      = ((compute_3_MIPs_params_t *) lpParam)->dimi_v;
 	int dimj_v      = ((compute_3_MIPs_params_t *) lpParam)->dimj_v;
 	int dimk_v      = ((compute_3_MIPs_params_t *) lpParam)->dimk_v;
 	int stridei     = ((compute_3_MIPs_params_t *) lpParam)->stridei;
 	int stridek     = ((compute_3_MIPs_params_t *) lpParam)->stridek;
 	int MIP_stridek = ((compute_3_MIPs_params_t *) lpParam)->MIP_stridek;
-	real_t *MIP_xy1 = ((compute_3_MIPs_params_t *) lpParam)->MIP_xy1;
-	real_t *MIP_xz1 = ((compute_3_MIPs_params_t *) lpParam)->MIP_xz1;
-	real_t *MIP_yz1 = ((compute_3_MIPs_params_t *) lpParam)->MIP_yz1;
-	real_t *MIP_xy2 = ((compute_3_MIPs_params_t *) lpParam)->MIP_xy2;
-	real_t *MIP_xz2 = ((compute_3_MIPs_params_t *) lpParam)->MIP_xz2;
-	real_t *MIP_yz2 = ((compute_3_MIPs_params_t *) lpParam)->MIP_yz2;
+	iom::real_t *MIP_xy1 = ((compute_3_MIPs_params_t *) lpParam)->MIP_xy1;
+	iom::real_t *MIP_xz1 = ((compute_3_MIPs_params_t *) lpParam)->MIP_xz1;
+	iom::real_t *MIP_yz1 = ((compute_3_MIPs_params_t *) lpParam)->MIP_yz1;
+	iom::real_t *MIP_xy2 = ((compute_3_MIPs_params_t *) lpParam)->MIP_xy2;
+	iom::real_t *MIP_xz2 = ((compute_3_MIPs_params_t *) lpParam)->MIP_xz2;
+	iom::real_t *MIP_yz2 = ((compute_3_MIPs_params_t *) lpParam)->MIP_yz2;
 
-	real_t *vol1, *vol2;
+	iom::real_t *vol1, *vol2;
 	int i, j, k;
 
 	// calcola MIP su xy, xz, yz scandendo una sola volta i due volumi
@@ -258,8 +258,8 @@ DWORD WINAPI compute_3_MIPs_worker ( LPVOID lpParam ) {
 
 typedef struct{
 	// input parametres
-	real_t *MIP_1; 
-	real_t *MIP_2; 
+	iom::real_t *MIP_1; 
+	iom::real_t *MIP_2; 
 	int dimu; 
 	int dimv; 
 	int delayu; 
@@ -270,12 +270,12 @@ typedef struct{
 	int v_end;	
 	// input/ouput parameters
 	// output parametres
-	real_t *NCC_map; 
+	iom::real_t *NCC_map; 
 } compute_NCC_map_params_t;
 
 DWORD WINAPI compute_NCC_map_worker ( LPVOID lpParam ) {
-	real_t *MIP_1    = ((compute_NCC_map_params_t *) lpParam)->MIP_1;
-	real_t *MIP_2    = ((compute_NCC_map_params_t *) lpParam)->MIP_2;
+	iom::real_t *MIP_1    = ((compute_NCC_map_params_t *) lpParam)->MIP_1;
+	iom::real_t *MIP_2    = ((compute_NCC_map_params_t *) lpParam)->MIP_2;
 	int dimu         = ((compute_NCC_map_params_t *) lpParam)->dimu;
 	int dimv         = ((compute_NCC_map_params_t *) lpParam)->dimv;
 	int delayu       = ((compute_NCC_map_params_t *) lpParam)->delayu;
@@ -284,9 +284,9 @@ DWORD WINAPI compute_NCC_map_worker ( LPVOID lpParam ) {
 	int v_start      = ((compute_NCC_map_params_t *) lpParam)->v_start;
 	int u_end        = ((compute_NCC_map_params_t *) lpParam)->u_end;
 	int v_end        = ((compute_NCC_map_params_t *) lpParam)->v_end;
-	real_t *NCC_map  = ((compute_NCC_map_params_t *) lpParam)->NCC_map;
+	iom::real_t *NCC_map  = ((compute_NCC_map_params_t *) lpParam)->NCC_map;
 
-	real_t *im1, *im2;
+	iom::real_t *im1, *im2;
 	int u, v;
 
 	// nel seguito u=0 rappresenta il massimo scostamento negativo del secondo MIP rispetto al primo
@@ -307,13 +307,13 @@ DWORD WINAPI compute_NCC_map_worker ( LPVOID lpParam ) {
 
 /************ OPERATIONS IMPLEMENTATION *************/
 
-void compute_3_MIPs ( real_t *A, real_t *B,
-					  real_t *MIP_xy1, real_t *MIP_xz1, real_t *MIP_yz1, 
-					  real_t *MIP_xy2, real_t *MIP_xz2, real_t *MIP_yz2, 
+void compute_3_MIPs ( iom::real_t *A, iom::real_t *B,
+					  iom::real_t *MIP_xy1, iom::real_t *MIP_xz1, iom::real_t *MIP_yz1, 
+					  iom::real_t *MIP_xy2, iom::real_t *MIP_xz2, iom::real_t *MIP_yz2, 
 					  int dimi_v, int dimj_v, int dimk_v, int stridei, int stridek ) {
 # ifndef _PAR_VERSION
 
-	real_t *vol1, *vol2;
+	iom::real_t *vol1, *vol2;
 	int i, j, k;
 
 	// calcola MIP su xy, xz, yz scandendo una sola volta i due volumi
@@ -349,14 +349,14 @@ void compute_3_MIPs ( real_t *A, real_t *B,
 		compute_3_MIPs_params[t].dimk_v = n1;
 
 	// allocate and initialize memory for partial MIP computation
-	real_t **MIP_xy1_lst = new real_t *[par_degree];
-	real_t **MIP_xy2_lst = new real_t *[par_degree];
+	iom::real_t **MIP_xy1_lst = new iom::real_t *[par_degree];
+	iom::real_t **MIP_xy2_lst = new iom::real_t *[par_degree];
 	// first partial MIPs are stored in MIP_xy1 and MIP_xy2
 	MIP_xy1_lst[0] = MIP_xy1; 
 	MIP_xy2_lst[0] = MIP_xy2;
 	for ( t=1; t<par_degree; t++ ) {
-		MIP_xy1_lst[t] = new real_t[dimi_v*dimj_v];
-		MIP_xy2_lst[t] = new real_t[dimi_v*dimj_v];
+		MIP_xy1_lst[t] = new iom::real_t[dimi_v*dimj_v];
+		MIP_xy2_lst[t] = new iom::real_t[dimi_v*dimj_v];
 	}
 
 	int slice_dim = dimi_v*(dimj_v+stridei)+stridek;
@@ -425,11 +425,11 @@ void compute_3_MIPs ( real_t *A, real_t *B,
 }
 
 
-void compute_NCC_map ( real_t *NCC_map, real_t *MIP_1, real_t *MIP_2, 
+void compute_NCC_map ( iom::real_t *NCC_map, iom::real_t *MIP_1, iom::real_t *MIP_2, 
 					       int dimu, int dimv, int delayu, int delayv ) {
 # ifndef _PAR_VERSION
 
-	real_t *im1, *im2;
+	iom::real_t *im1, *im2;
 	int u, v;
 
 	// nel seguito u=0 rappresenta il massimo scostamento negativo del secondo MIP rispetto al primo
@@ -506,10 +506,10 @@ void compute_NCC_map ( real_t *NCC_map, real_t *MIP_1, real_t *MIP_2,
 }
 
 
-real_t compute_NCC ( real_t *im1, real_t *im2, int dimi, int dimj, int stride ) {
+iom::real_t compute_NCC ( iom::real_t *im1, iom::real_t *im2, int dimi, int dimj, int stride ) {
 // parallelization of compute_NCC_map makes parallelization of this operation pointless
-	real_t f_mean, t_mean, f_prime, t_prime, numerator, factor1, factor2;
-	real_t *pxl1, *pxl2;
+	iom::real_t f_mean, t_mean, f_prime, t_prime, numerator, factor1, factor2;
+	iom::real_t *pxl1, *pxl2;
 	int i, j;
 
 	// computes means
@@ -539,10 +539,10 @@ real_t compute_NCC ( real_t *im1, real_t *im2, int dimi, int dimj, int stride ) 
 }
 
 
-int compute_MAX_ind ( real_t *vect, int len ) {
+int compute_MAX_ind ( iom::real_t *vect, int len ) {
 // actual len values are too small to deserve parallelization 
 	int i;
-	real_t val_max = vect[0];
+	iom::real_t val_max = vect[0];
 	int ind_max = 0;
 	for ( i=0; i<len; i++ )
 		if ( vect[i] > val_max ) {
@@ -553,8 +553,8 @@ int compute_MAX_ind ( real_t *vect, int len ) {
 }
 
 
-void compute_Neighborhood ( NCC_parms_t *NCC_params, real_t *NCC, int delayu, int delayv, int ind_max, 
-						   real_t *MIP_1, real_t *MIP_2, int dimu, int dimv, real_t *NCCnew, int &du, int &dv, bool &failed) throw (MyException){
+void compute_Neighborhood ( NCC_parms_t *NCC_params, iom::real_t *NCC, int delayu, int delayv, int ind_max, 
+						   iom::real_t *MIP_1, iom::real_t *MIP_2, int dimu, int dimv, iom::real_t *NCCnew, int &du, int &dv, bool &failed) throw (iom::exception){
 
 	// suffixes u and v denote the vertical and the horizontal dimensions, respectively
 	// suffix i denotes linear indices
@@ -588,7 +588,7 @@ void compute_Neighborhood ( NCC_parms_t *NCC_params, real_t *NCC, int delayu, in
 	int *missu = new int[(2*newu+1)*(2*newv+1)]; // list of vertical indices of NCC to be computed to fill NCCnew
 	int *missv = new int[(2*newu+1)*(2*newv+1)]; // list of vertical indices of NCC to be computed to fill NCCnew
 
-	real_t *im1, *im2;
+	iom::real_t *im1, *im2;
 
 	// INITIALIZATION
 
@@ -597,7 +597,7 @@ void compute_Neighborhood ( NCC_parms_t *NCC_params, real_t *NCC, int delayu, in
 	initv = MIN(MAX(0,ind_max%(2*delayv+1) - newv),2*(delayv - newv));
 	initi = initu * (2*delayv+1) + initv;
 	if(initi < 0)
-		throw MyException("CrossMIPs: negative index detected (initi)"); // Alessandro - 23/03/2013 - throw exception if initi is negative
+		throw iom::exception("CrossMIPs: negative index detected (initi)"); // Alessandro - 23/03/2013 - throw exception if initi is negative
 	for ( u=0, i=0, d=0; u<(2*newu+1); u++, d+=2*(delayv-newv) ) // when row changes 2*(delayv-newv) values have to be skipped
 		for ( v=0; v<(2*newv+1); v++ , i++)
 			NCCnew[i] = NCC[i + initi + d];
@@ -669,7 +669,7 @@ void compute_Neighborhood ( NCC_parms_t *NCC_params, real_t *NCC, int delayu, in
 		}
 		// CHECK, MUST BE: n_miss == ((2*newu+1)*(2*newv+1) - ((2*newu+1)-abs(deltau))*((2*newv+1)-abs(deltav)))
 		if ( n_miss != ((2*newu+1)*(2*newv+1) - ((2*newu+1)-abs(deltau))*((2*newv+1)-abs(deltav))) )
-			throw MyException("CrossMIPs: incomplete NCC map in compute_Neighborhood");
+			throw iom::exception("CrossMIPs: incomplete NCC map in compute_Neighborhood");
 
 		// compute missing NCCs
 		for ( i=0; i<n_miss; i++ ) {
@@ -707,7 +707,7 @@ void compute_Neighborhood ( NCC_parms_t *NCC_params, real_t *NCC, int delayu, in
 
 //void compute_Alignment( NCC_parms_t *NCC_params, REAL_T *NCC_xy, REAL_T *NCC_xz, REAL_T *NCC_yz,
 //					    int dimi, int dimj, int dimk, int ind_xy, int ind_xz, int ind_yz, NCC_descr_t *result) {
-void compute_Alignment( NCC_parms_t *NCC_params, real_t *NCC_xy, real_t *NCC_xz, real_t *NCC_yz,
+void compute_Alignment( NCC_parms_t *NCC_params, iom::real_t *NCC_xy, iom::real_t *NCC_xz, iom::real_t *NCC_yz,
 					    int dimi, int dimj, int dimk, int dx1, int dx2, int dy1, int dy2, int dz1, int dz2, bool failed_xy, bool failed_xz, bool failed_yz, NCC_descr_t *result) {
 
 	int w1x, w2x, w1y, w2y, w1z, w2z;
@@ -722,7 +722,7 @@ void compute_Alignment( NCC_parms_t *NCC_params, real_t *NCC_xy, real_t *NCC_xz,
 }
 
 
-void enhance ( real_t *im, int imLen, int graylevels, NCC_parms_t *NCC_params ) {
+void enhance ( iom::real_t *im, int imLen, int graylevels, NCC_parms_t *NCC_params ) {
 /*
  * the enhancement transformation is a multi-linear curve with n_transforms rescaled linear
  * tranformations
@@ -733,15 +733,15 @@ void enhance ( real_t *im, int imLen, int graylevels, NCC_parms_t *NCC_params ) 
  */
 
 	int n_transforms = NCC_params->n_transforms;
-	real_t *percentiles = NCC_params->percents;
-	real_t *c = NCC_params->c; // tranformed values of thresholds
-	real_t *thresholds = new real_t[n_transforms+1];
-	real_t *a = new real_t[n_transforms+1];
-	real_t *b = new real_t[n_transforms+1];
+	iom::real_t *percentiles = NCC_params->percents;
+	iom::real_t *c = NCC_params->c; // tranformed values of thresholds
+	iom::real_t *thresholds = new iom::real_t[n_transforms+1];
+	iom::real_t *a = new iom::real_t[n_transforms+1];
+	iom::real_t *b = new iom::real_t[n_transforms+1];
 	int i, j;
 	bool found;
 
-	thresholds[0] = (real_t)0.00;
+	thresholds[0] = (iom::real_t)0.00;
 
 	stack_percentiles(im,imLen,graylevels,percentiles,thresholds,n_transforms);
 
@@ -761,11 +761,11 @@ void enhance ( real_t *im, int imLen, int graylevels, NCC_parms_t *NCC_params ) 
 }
 
 
-void stack_percentiles ( real_t *im, int imLen, int graylevels, 
-						 real_t *percentiles, real_t *thresholds, int n_percentiles ) {
+void stack_percentiles ( iom::real_t *im, int imLen, int graylevels, 
+						 iom::real_t *percentiles, iom::real_t *thresholds, int n_percentiles ) {
 
-	real_t d = (real_t)1.0 / (real_t)graylevels;
-	real_t *cumsum = new real_t[graylevels];
+	iom::real_t d = (iom::real_t)1.0 / (iom::real_t)graylevels;
+	iom::real_t *cumsum = new iom::real_t[graylevels];
 	int i, j;
 
 	for ( i=0; i<graylevels; i++ )
@@ -795,7 +795,7 @@ void stack_percentiles ( real_t *im, int imLen, int graylevels,
 		else
 			i++;
 	}
-	thresholds[n_percentiles] = (real_t)1; // to avoid round off errors
+	thresholds[n_percentiles] = (iom::real_t)1; // to avoid round off errors
 
 	delete cumsum;
 }

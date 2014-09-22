@@ -22,55 +22,71 @@
 *       specific prior written permission.
 ********************************************************************************************************************************************************************************************/
 
+/******************
+*    CHANGELOG    *
+*******************
+* 2014-09-20. Alessandro. @ADDED overwrite_mdata flag to the XML-based constructor.
+* 2014-09-10. Alessandro. @ADDED plugin creation/registration functions to make 'StackedVolume' a volume format plugin.
+* 2014-09-05. Alessandro. @ADDED 'normalize_stacks_attributes()' method to normalize stacks attributes (width, height, etc.)
+*/
+
 #ifndef _VM_BLOCK_VOLUME_H
 #define _VM_BLOCK_VOLUME_H
 
 #include <string>
-#include "VM_config.h"
 #include <sstream>
-#include "MyException.h"
-#include "IOManager.h"
+#include "volumemanager.config.h"
+#include "iomanager.config.h"
 #include "vmVirtualVolume.h" 
 #include "vmBlock.h"
-//#include "StackedVolume.h" 
 
 //FORWARD-DECLARATIONS
-//struct VHD_triple;
-//struct interval_t;
-//enum axis {vertical=1, inv_vertical=-1, horizontal=2, inv_horizontal=-2, depth=3, inv_depth=-3, axis_invalid=0};
-//struct ref_sys;
 class VirtualStack;
 class Block;
-//class Displacement;
-//const char* axis_to_str(axis ax);
 
 class BlockVolume : public volumemanager::VirtualVolume
 {
 	private:
+
+		// 2014-09-10. Alessandro. @ADDED plugin creation/registration functions to make 'StackedVolume' a volume format plugin.
+		static const std::string creator_id1, creator_id2;							
+        static VirtualVolume* createFromXML(const char* xml_path, bool ow_mdata) { return new BlockVolume(xml_path, ow_mdata); }
+		static VirtualVolume* createFromData(const char* data_path, vm::ref_sys ref, float vxl1, float vxl2, float vxl3, bool ow_mdata) { 
+			return new BlockVolume(data_path, ref, vxl1, vxl2, vxl3, ow_mdata); 
+		}
+
 		Block ***BLOCKS;			    //2-D array of <Block*>
 
 		//Given the reference system, initializes all object's members using stack's directories hierarchy
-        void init() throw (MyException);
+        void init() throw (iom::exception);
 
-		void applyReferenceSystem(ref_sys reference_system, float VXL_1, float VXL_2, float VXL_3) throw (MyException);
+		void applyReferenceSystem(vm::ref_sys reference_system, float VXL_1, float VXL_2, float VXL_3) throw (iom::exception);
 
 		//binary metadata load/save methods
-		void saveBinaryMetadata(char *metadata_filepath) throw (MyException);
-		void loadBinaryMetadata(char *metadata_filepath) throw (MyException);
+		void saveBinaryMetadata(char *metadata_filepath) throw (iom::exception);
+		void loadBinaryMetadata(char *metadata_filepath) throw (iom::exception);
 
-		//rotate stacks matrix around D axis (accepted values are theta=0,90,180,270)
+		//rotate stacks matrix around D vm::axis (accepted values are theta=0,90,180,270)
 		void rotate(int theta);
 
 		//mirror stacks matrix along mrr_axis (accepted values are mrr_axis=1,2,3)
-		void mirror(axis mrr_axis);
+		void mirror(vm::axis mrr_axis);
 
 		// iannello returns the number of channels of images composing the volume
-		//void initChannels ( ) throw (MyException);
+		//void initChannels ( ) throw (iom::iom::exception);
+
+		// 2014-09-05. Alessandro. @ADDED 'normalize_stacks_attributes()' method to normalize stacks attributes (width, height, etc.)
+		void normalize_stacks_attributes() throw (iom::exception);
 
 	public:
+
+		// 2014-09-10. Alessandro. @ADDED plugin creation/registration functions to make 'StackedVolume' a volume format plugin.
+		static const std::string id;		
+
 		//CONSTRUCTORS-DECONSTRUCTOR
-        BlockVolume(const char* _stacks_dir, ref_sys reference_system, float VXL_1=0, float VXL_2=0, float VXL_3=0, bool overwrite_mdata=false) throw (MyException);
-		BlockVolume(const char *xml_filepath) throw (MyException);
+		BlockVolume() : VirtualVolume(){}
+        BlockVolume(const char* _stacks_dir, vm::ref_sys reference_system, float VXL_1=0, float VXL_2=0, float VXL_3=0, bool overwrite_mdata=false) throw (iom::exception);
+        BlockVolume(const char *xml_filepath, bool overwrite_mdata=false) throw (iom::exception);
 		~BlockVolume();
 
 		// ******GET METHODS******
@@ -78,13 +94,10 @@ class BlockVolume : public volumemanager::VirtualVolume
 		int		 getStacksWidth()    {return BLOCKS[0][0]->getWIDTH();}
 		VirtualStack*** getSTACKS()  {return (VirtualStack***)this->BLOCKS;}
 
-		//print all informations contained in this data structure
-		void print();
-
 		//loads/saves metadata from/in the given xml filename
 		void loadXML(const char *xml_filename);
 		void initFromXML(const char *xml_filename);
-        void saveXML(const char *xml_filename=0, const char *xml_filepath=0) throw (MyException);
+        void saveXML(const char *xml_filename=0, const char *xml_filepath=0) throw (iom::exception);
 
 
         /**********************************************************************************
@@ -99,9 +112,11 @@ class BlockVolume : public volumemanager::VirtualVolume
 
         //counts the number of stitchable stacks given the reliability threshold
         int countStitchableStacks(float threshold);
-
-
 };
+
+namespace{																
+	const BlockVolume* objectBlockVolume = new BlockVolume();
+} 
 
 
 #endif /* BLOCK_VOLUME_H */

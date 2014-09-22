@@ -13,7 +13,8 @@
 *       g.iannello@unicampus.it for further details.
 *    2. You agree to appropriately cite this work in your related studies and publications.
 *
-*       Bria, A., Iannello, G., "TeraStitcher - A Tool for Fast 3D Automatic Stitching of Teravoxel-sized Microscopy Images", (2012) BMC Bioinformatics, 13 (1), art. no. 316.
+*       Bria, A., et al., (2012) "Stitching Terabyte-sized 3D Images Acquired in Confocal Ultramicroscopy", Proceedings of the 9th IEEE International Symposium on Biomedical Imaging.
+*       Bria, A., Iannello, G., "TeraStitcher - A Tool for Fast 3D Automatic Stitching of Teravoxel-sized Microscopy Images", submitted for publication, 2012.
 *
 *    3. This material is provided by  the copyright holders (Alessandro Bria  and  Giulio Iannello),  University Campus Bio-Medico and contributors "as is" and any express or implied war-
 *       ranties, including, but  not limited to,  any implied warranties  of merchantability,  non-infringement, or fitness for a particular purpose are  disclaimed. In no event shall the
@@ -25,22 +26,26 @@
 *       specific prior written permission.
 ********************************************************************************************************************************************************************************************/
 
-#ifndef MYEXCEPTION_H
-#define MYEXCEPTION_H
+/******************
+*    CHANGELOG    *
+*******************
+* 2014-08-25. Alessandro. @ADDED SPARSE_DATA parameter to turn on/off sparse data support.
+*/
 
-#include <string.h>
+#include "volumemanager.config.h"
+#include "vmStackedVolume.h"
+#include "vmBlockVolume.h"
 
-class MyException
+// assign default values to namespace parameters
+namespace volumemanager
 {
-	private:
-
-        char message[5000];
-
-	public:
-        MyException(void){}
-		MyException(const char* new_message){strcpy(message, new_message);}
-        ~MyException(void){}
-		const char* what() const{return message;}
-};
-
-#endif
+    /*******************
+    *    PARAMETERS    *
+    ********************
+    ---------------------------------------------------------------------------------------------------------------------------*/
+	std::string VOLUME_INPUT_FORMAT_PLUGIN = "TiledXY|2Dseries";		// plugin to manage the input volume format
+	std::string VOLUME_OUTPUT_FORMAT_PLUGIN = "TiledXY|2Dseries";	// plugin to manage the output volume format
+    std::string IMG_FILTER_REGEX = "";				// regular expression used to filter image filenames when the volume is imported
+    bool SPARSE_DATA = false;						// flag to turn on/off sparse data support
+    /*-------------------------------------------------------------------------------------------------------------------------*/
+}

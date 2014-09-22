@@ -22,6 +22,19 @@
 *       specific prior written permission.
 ********************************************************************************************************************************************************************************************/
 
+/******************
+*    CHANGELOG    *
+*******************
+* 2014-09-20. Alessandro. @ADDED overwrite_mdata flag to the XML-based constructor.
+* 2014-09-10. Alessandro. @ADDED 'volume_format' attribute to <TeraStitcher> XML node
+* 2014-09-10. Alessandro. @ADDED plugin creation/registration functions to make 'StackedVolume' a volume format plugin.
+* 2014-09-09. Alessandro. @FIXED. Added default reference system if volume is imported from xml.
+* 2014-09-09. Alessandro. @FIXED both 'init()' and 'initFromXML()' methods to deal with empty stacks. Added call of 'normalize_stacks_attributes()' method.
+* 2014-09-05. Alessandro. @ADDED 'normalize_stacks_attributes()' method to normalize stacks attributes (width, height, etc.)
+* 2014-09-02. Alessandro. @FIXED both 'loadBinaryMetadata()' and 'saveBinaryMetadata()' as 'N_SLICES' changed from 'uint16' to 'int' type. See vmVirtualVolume.h.
+*/
+
+ 
 #include "vmBlockVolume.h"
 #include "S_config.h"
 //#include <string>
@@ -33,46 +46,34 @@
 #include <list>
 #include <fstream>
 #include <sstream>
+#include <set>
 
-#include "tiffio.h"
+// 2014-09-10. Alessandro. @ADDED plugin creation/registration functions to make 'StackedVolume' a volume format plugin.
+const std::string BlockVolume::id = "TiledXY|3Dseries";
+const std::string BlockVolume::creator_id1 = volumemanager::VirtualVolumeFactory::registerPluginCreatorXML(&createFromXML, BlockVolume::id);
+const std::string BlockVolume::creator_id2 = volumemanager::VirtualVolumeFactory::registerPluginCreatorData(&createFromData, BlockVolume::id);
 
 using namespace std;
+using namespace iom;
 
-//const char* axis_to_str(axis ax)
-//{
-//    if(ax==axis_invalid)         return "axis_invalid";
-//    else if(ax==vertical)        return "vertical";
-//    else if(ax==inv_vertical)    return "inv_vertical";
-//    else if(ax==horizontal)      return "horizontal";
-//    else if(ax==inv_horizontal)  return "inv_horizontal";
-//    else if(ax==depth)           return "depth";
-//    else if(ax==inv_depth)       return "inv_depth";
-//    else                         return "unknown";
-//}
-
-BlockVolume::BlockVolume(const char* _stacks_dir, ref_sys _reference_system, float VXL_1, float VXL_2, float VXL_3, bool overwrite_mdata) throw (MyException)
-	: VirtualVolume(VXL_1, VXL_2, VXL_3)
+BlockVolume::BlockVolume(const char* _stacks_dir, vm::ref_sys _reference_system, float VXL_1, float VXL_2, float VXL_3, bool overwrite_mdata) throw (iom::exception)
+	: VirtualVolume(_stacks_dir, _reference_system, VXL_1, VXL_2, VXL_3)
 {
 	#if VM_VERBOSE > 3
 	printf("\t\t\t\tin BlockVolume::BlockVolume(_stacks_dir=%s, reference_system = {%d,%d,%d}, VXL_1 = %.2f, VXL_2 = %.2f, VXL_3 = %.2f)\n", 
 		  _stacks_dir,reference_system.first, reference_system.second, reference_system.third, VXL_1, VXL_2, VXL_3);
 	#endif
 
-	TIFFSetWarningHandler(0); //disable warning handler to avoid messages on unrecognized tags
-
-	this->stacks_dir = new char[strlen(_stacks_dir)+1];
-	strcpy(this->stacks_dir, _stacks_dir);
-
 	//trying to unserialize an already existing metadata file, if it doesn't exist the full initialization procedure is performed and metadata is saved
     char mdata_filepath[VM_STATIC_STRINGS_SIZE];
-    sprintf(mdata_filepath, "%s/%s", stacks_dir, VM_BIN_METADATA_FILE_NAME);
+    sprintf(mdata_filepath, "%s/%s", stacks_dir, vm::BINARY_METADATA_FILENAME.c_str());
     if(fileExists(mdata_filepath) && !overwrite_mdata)
             loadBinaryMetadata(mdata_filepath);
     else
 	{
-		if(_reference_system.first == axis_invalid ||  _reference_system.second == axis_invalid ||
-			_reference_system.third == axis_invalid || VXL_1 == 0 || VXL_2 == 0 || VXL_3 == 0)
-			throw MyException("in BlockVolume::BlockVolume(...): invalid importing parameters");
+		if(_reference_system.first == vm::axis_invalid ||  _reference_system.second == vm::axis_invalid ||
+			_reference_system.third == vm::axis_invalid || VXL_1 == 0 || VXL_2 == 0 || VXL_3 == 0)
+			throw iom::exception("in BlockVolume::BlockVolume(...): invalid importing parameters");
 		reference_system = _reference_system; // GI_140501: stores the refrence system to generate the mdata.bin file for the output volumes
 		init();
 		applyReferenceSystem(reference_system, VXL_1, VXL_2, VXL_3);
@@ -80,14 +81,12 @@ BlockVolume::BlockVolume(const char* _stacks_dir, ref_sys _reference_system, flo
 	}
 }
 
-BlockVolume::BlockVolume(const char *xml_filepath) throw (MyException)
-	: VirtualVolume()
+BlockVolume::BlockVolume(const char *xml_filepath, bool overwrite_mdata) throw (iom::exception)
+	: VirtualVolume(xml_filepath)
 {
 	#if VM_VERBOSE > 3
 	printf("\t\t\t\tin BlockVolume::BlockVolume(xml_filepath=%s)\n", xml_filepath);
 	#endif
-
-	TIFFSetWarningHandler(0); //disable warning handler to avoid messages on unrecognized tags
 
     //extracting <stacks_dir> field from XML
     TiXmlDocument xml;
@@ -95,7 +94,7 @@ BlockVolume::BlockVolume(const char *xml_filepath) throw (MyException)
     {
         char errMsg[2000];
         sprintf(errMsg,"in BlockVolume::BlockVolume(xml_filepath = \"%s\") : unable to load xml", xml_filepath);
-        throw MyException(errMsg);
+        throw iom::exception(errMsg);
     }
     TiXmlHandle hRoot(xml.FirstChildElement("TeraStitcher"));
     TiXmlElement * pelem = hRoot.FirstChildElement("stacks_dir").Element();
@@ -104,8 +103,10 @@ BlockVolume::BlockVolume(const char *xml_filepath) throw (MyException)
 
 	//trying to unserialize an already existing metadata file, if it doesn't exist the full initialization procedure is performed and metadata is saved
 	char mdata_filepath[2000];
-	sprintf(mdata_filepath, "%s/%s", stacks_dir, VM_BIN_METADATA_FILE_NAME);
-	if(fileExists(mdata_filepath))
+	sprintf(mdata_filepath, "%s/%s", stacks_dir, vm::BINARY_METADATA_FILENAME.c_str());
+
+    // 2014-09-20. Alessandro. @ADDED overwrite_mdata flag
+    if(fileExists(mdata_filepath) && !overwrite_mdata)
 	{
 		// load mdata.bin content and xml content, also perform consistency check between mdata.bin and xml content
 		loadBinaryMetadata(mdata_filepath);
@@ -142,7 +143,7 @@ BlockVolume::~BlockVolume()
 
 
 
-void BlockVolume::init() throw (MyException)
+void BlockVolume::init() throw (iom::exception)
 {
 	#if VM_VERBOSE > 3
 	printf("\t\t\t\tin BlockVolume::init()\n");
@@ -169,7 +170,7 @@ void BlockVolume::init() throw (MyException)
 	{
 		char msg[S_STATIC_STRINGS_SIZE];
 		sprintf(msg,"in BlockVolume::init(...): Unable to open directory \"%s\"", stacks_dir);
-		throw MyException(msg);
+		throw iom::exception(msg);
 	}
 
 	//scanning first level of hierarchy which entries need to be ordered alphabetically. This is done using STL.
@@ -183,8 +184,8 @@ void BlockVolume::init() throw (MyException)
 	entries_lev1.sort();
 	N_ROWS = (uint16) entries_lev1.size();
 	N_COLS = 0;
-        if(N_ROWS == 0)
-                throw MyException("in BlockVolume::init(...): Unable to find stacks in the given directory");
+	if(N_ROWS == 0)
+         throw iom::exception("in BlockVolume::init(...): Unable to find stacks in the given directory");
 
 
 	//for each entry of first level, scanning second level
@@ -196,7 +197,7 @@ void BlockVolume::init() throw (MyException)
 		tmp_path.append(*entry_i);
 		cur_dir_lev2 = opendir(tmp_path.c_str());
 		if (!cur_dir_lev2)
-			throw MyException("in BlockVolume::init(...): A problem occurred during scanning of subdirectories");
+			throw iom::exception("in BlockVolume::init(...): A problem occurred during scanning of subdirectories");
 
 		//scanning second level of hierarchy which entries need to be ordered alphabetically. This is done using STL.
 		while ((entry_lev2=readdir(cur_dir_lev2)))
@@ -220,13 +221,13 @@ void BlockVolume::init() throw (MyException)
 		if(N_COLS == 0)
 			N_COLS = j;
 		else if(j != N_COLS)
-			throw MyException("in BlockVolume::init(...): Number of second-level directories is not the same for all first-level directories!");
+			throw iom::exception("in BlockVolume::init(...): Number of second-level directories is not the same for all first-level directories!");
 	}
 	entries_lev1.clear();
 
 	//intermediate check
 	if(N_ROWS == 0 || N_COLS == 0)
-		throw MyException("in BlockVolume::init(...): Unable to find stacks in the given directory");
+		throw iom::exception("in BlockVolume::init(...): Unable to find stacks in the given directory");
 
 	//converting stacks_list (STL list of Stack*) into STACKS (2-D array of Stack*)
 	BLOCKS = new Block**[N_ROWS];
@@ -234,9 +235,13 @@ void BlockVolume::init() throw (MyException)
 		BLOCKS[row] = new Block*[N_COLS];
 	for(list<Block*>::iterator i = stacks_list.begin(); i != stacks_list.end(); i++)
 		BLOCKS[(*i)->getROW_INDEX()][(*i)->getCOL_INDEX()] = (*i);
+
+	// 2014-09-09. Alessandro. @FIXED both 'init()' and 'initFromXML()' methods to deal with empty stacks. Added call of 'normalize_stacks_attributes()' method.
+	// make stacks have the same attributes
+	normalize_stacks_attributes();
 }
 
-void BlockVolume::applyReferenceSystem(ref_sys reference_system, float VXL_1, float VXL_2, float VXL_3) throw (MyException)
+void BlockVolume::applyReferenceSystem(vm::ref_sys reference_system, float VXL_1, float VXL_2, float VXL_3) throw (iom::exception)
 {
 	#if VM_VERBOSE > 3
 	printf("\t\t\t\tin BlockVolume::applyReferenceSystem(reference_system = {%d,%d,%d}, VXL_1 = %.2f, VXL_2 = %.2f, VXL_3 = %.2f)\n", 
@@ -261,12 +266,12 @@ void BlockVolume::applyReferenceSystem(ref_sys reference_system, float VXL_1, fl
 	if      (abs(reference_system.first)==2 && abs(reference_system.second)==1  && reference_system.third==3)
 	{
 		this->rotate(90);
-		this->mirror(axis(2));	
+		this->mirror(vm::axis(2));	
 
 		if(reference_system.first == -2)
-			this->mirror(axis(2));
+			this->mirror(vm::axis(2));
 		if(reference_system.second == -1)
-			this->mirror(axis(1));
+			this->mirror(vm::axis(1));
 
 		int computed_ORG_1, computed_ORG_2, computed_ORG_3;
 		extractCoordinates(BLOCKS[0][0], 0, &computed_ORG_1, &computed_ORG_2, &computed_ORG_3);
@@ -276,18 +281,18 @@ void BlockVolume::applyReferenceSystem(ref_sys reference_system, float VXL_1, fl
 		VXL_V = VXL_2 ;
 		VXL_H = VXL_1 ; 
 		VXL_D = VXL_3 ;
-		int tmp_coord_1, tmp_coord_2, tmp_coord_3, tmp_coord_4, tmp_coord_5, tmp_coord_6;
-        extractCoordinates(BLOCKS[0][0], 0, &tmp_coord_1, &tmp_coord_2, &tmp_coord_3);
+		int tmp_coord_1, tmp_coord_2, tmp_coord_4, tmp_coord_5;
+        extractCoordinates(BLOCKS[0][0], 0, &tmp_coord_1, &tmp_coord_2);
 		if(N_ROWS > 1)
 		{
-            extractCoordinates(BLOCKS[1][0], 0, &tmp_coord_4, &tmp_coord_5, &tmp_coord_6);
+            extractCoordinates(BLOCKS[1][0], 0, &tmp_coord_4, &tmp_coord_5);
 			this->MEC_V = (tmp_coord_5 - tmp_coord_2)/10.0F;
 		}
 		else
 			this->MEC_V = getStacksHeight()*VXL_V;		
 		if(N_COLS > 1)
 		{
-            extractCoordinates(BLOCKS[0][1], 0, &tmp_coord_4, &tmp_coord_5, &tmp_coord_6);
+            extractCoordinates(BLOCKS[0][1], 0, &tmp_coord_4, &tmp_coord_5);
 			this->MEC_H = (tmp_coord_4 - tmp_coord_1)/10.0F;
 		}
 		else
@@ -298,9 +303,9 @@ void BlockVolume::applyReferenceSystem(ref_sys reference_system, float VXL_1, fl
 	else if (abs(reference_system.first)==1 && abs(reference_system.second)==2 && reference_system.third==3)
 	{		
 		if(reference_system.first == -1)
-			this->mirror(axis(1));
+			this->mirror(vm::axis(1));
 		if(reference_system.second == -2)
-			this->mirror(axis(2));
+			this->mirror(vm::axis(2));
 
 		int computed_ORG_1, computed_ORG_2, computed_ORG_3;
 		extractCoordinates(BLOCKS[0][0], 0, &computed_ORG_1, &computed_ORG_2, &computed_ORG_3);
@@ -310,19 +315,19 @@ void BlockVolume::applyReferenceSystem(ref_sys reference_system, float VXL_1, fl
 		VXL_V = VXL_1;
 		VXL_H = VXL_2;
 		VXL_D = VXL_3;
-		int tmp_coord_1, tmp_coord_2, tmp_coord_3, tmp_coord_4, tmp_coord_5, tmp_coord_6;
-        extractCoordinates(BLOCKS[0][0], 0, &tmp_coord_1, &tmp_coord_2, &tmp_coord_3);
+		int tmp_coord_1, tmp_coord_2, tmp_coord_4, tmp_coord_5;
+        extractCoordinates(BLOCKS[0][0], 0, &tmp_coord_1, &tmp_coord_2);
 		
 		if(N_ROWS > 1)
 		{
-            extractCoordinates(BLOCKS[1][0], 0, &tmp_coord_4, &tmp_coord_5, &tmp_coord_6);
+            extractCoordinates(BLOCKS[1][0], 0, &tmp_coord_4, &tmp_coord_5);
 			this->MEC_V = (tmp_coord_4 - tmp_coord_1)/10.0F;		
 		}
 		else
 			this->MEC_V = getStacksHeight()*VXL_V;		
 		if(N_COLS > 1)
 		{
-            extractCoordinates(BLOCKS[0][1], 0, &tmp_coord_4, &tmp_coord_5, &tmp_coord_6);
+            extractCoordinates(BLOCKS[0][1], 0, &tmp_coord_4, &tmp_coord_5);
 			this->MEC_H = (tmp_coord_5 - tmp_coord_2)/10.0F;
 		}
 		else
@@ -334,7 +339,7 @@ void BlockVolume::applyReferenceSystem(ref_sys reference_system, float VXL_1, fl
 		char msg[500];
 		sprintf(msg, "in BlockVolume::init(...): the reference system {%d,%d,%d} is not supported.", 
 			reference_system.first, reference_system.second, reference_system.third);
-		throw MyException(msg);
+		throw iom::exception(msg);
 	}
 
 	//some little adjustments of the origin
@@ -360,7 +365,7 @@ void BlockVolume::applyReferenceSystem(ref_sys reference_system, float VXL_1, fl
 		}
 }
 
-void BlockVolume::saveBinaryMetadata(char *metadata_filepath) throw (MyException)
+void BlockVolume::saveBinaryMetadata(char *metadata_filepath) throw (iom::exception)
 {
 	#if VM_VERBOSE > 3
 	printf("\t\t\t\tin BlockVolume::saveBinaryMetadata(char *metadata_filepath = %s)\n", metadata_filepath);
@@ -372,13 +377,13 @@ void BlockVolume::saveBinaryMetadata(char *metadata_filepath) throw (MyException
 	int i,j;
 
 	if(!(file = fopen(metadata_filepath, "wb")))
-		throw MyException("in BlockVolume::saveBinaryMetadata(...): unable to save binary metadata file");
+		throw iom::exception("in BlockVolume::saveBinaryMetadata(...): unable to save binary metadata file");
 	str_size = (uint16) strlen(stacks_dir) + 1;
 	fwrite(&str_size, sizeof(uint16), 1, file);
 	fwrite(stacks_dir, str_size, 1, file);
-    fwrite(&reference_system.first, sizeof(axis), 1, file);  // GI_140501
-    fwrite(&reference_system.second, sizeof(axis), 1, file); // GI_140501
-    fwrite(&reference_system.third, sizeof(axis), 1, file);  // GI_140501
+    fwrite(&reference_system.first, sizeof(vm::axis), 1, file);  // GI_140501
+    fwrite(&reference_system.second, sizeof(vm::axis), 1, file); // GI_140501
+    fwrite(&reference_system.third, sizeof(vm::axis), 1, file);  // GI_140501
 	fwrite(&VXL_V, sizeof(float), 1, file);
 	fwrite(&VXL_H, sizeof(float), 1, file);
 	fwrite(&VXL_D, sizeof(float), 1, file);
@@ -389,7 +394,9 @@ void BlockVolume::saveBinaryMetadata(char *metadata_filepath) throw (MyException
 	fwrite(&MEC_H, sizeof(float), 1, file);
 	fwrite(&N_ROWS, sizeof(uint16), 1, file);
 	fwrite(&N_COLS, sizeof(uint16), 1, file);
-	fwrite(&N_SLICES, sizeof(uint16), 1, file);
+
+	// 2014-09-02. Alessandro. @FIXED as 'N_SLICES' changed from 'uint16' to 'int' type. See vmVirtualVolume.h.
+	fwrite(&N_SLICES, sizeof(int), 1, file);
 
 	for(i = 0; i < N_ROWS; i++)
 		for(j = 0; j < N_COLS; j++)
@@ -398,7 +405,7 @@ void BlockVolume::saveBinaryMetadata(char *metadata_filepath) throw (MyException
 	fclose(file);
 }
 
-void BlockVolume::loadBinaryMetadata(char *metadata_filepath) throw (MyException)
+void BlockVolume::loadBinaryMetadata(char *metadata_filepath) throw (iom::exception)
 {
 	#if VM_VERBOSE > 3
 	printf("\t\t\t\tin BlockVolume::loadBinaryMetadata(char *metadata_filepath = %s)\n", metadata_filepath);
@@ -407,110 +414,118 @@ void BlockVolume::loadBinaryMetadata(char *metadata_filepath) throw (MyException
 	//LOCAL VARIABLES
 	uint16 str_size;
 	char *temp; // GI_140425
+	bool regen = false;
 	FILE *file;
 	int i,j;
 	size_t fread_return_val;
 
 	if(!(file = fopen(metadata_filepath, "rb")))
-		throw MyException("in BlockVolume::loadBinaryMetadata(...): unable to load binary metadata file");
+		throw iom::exception("in BlockVolume::loadBinaryMetadata(...): unable to load binary metadata file");
 	// str_size = (uint16) strlen(stacks_dir) + 1;  // GI_140425 remodev because has with no effect 
 	fread_return_val = fread(&str_size, sizeof(uint16), 1, file);
 	if(fread_return_val != 1) {
 		fclose(file);
-		throw MyException("in BlockVolume::loadBinaryMetadata(...) error while reading binary metadata file");
+		throw iom::exception("in BlockVolume::loadBinaryMetadata(...) error while reading binary metadata file");
 	}
 	// GI_140425 a check has been introduced to avoid that an out-of-date mdata.bin contains a wrong rood directory
 	temp = new char[str_size];
 	fread_return_val = fread(temp, str_size, 1, file);
 	if(fread_return_val != 1) {
 		fclose(file);
-		throw MyException("in BlockVolume::loadBinaryMetadata(...) error while reading binary metadata file");
+		throw iom::exception("in BlockVolume::loadBinaryMetadata(...) error while reading binary metadata file");
 	}
 	if ( !strcmp(temp,stacks_dir) ) // the two strings are equal
 		delete []temp;
-	else { 
-		fclose(file);
-		throw MyException("in BlockVolume::loadBinaryMetadata(...): binary metadata file is out-of-date");
+	else { // GI_140626: allow moving mdata.bin to other machine
+		delete []temp;
+		regen = true;
+		//fclose(file);
+		//throw iom::iom::exception("in BlockVolume::loadBinaryMetadata(...): binary metadata file is out-of-date");
+		#if VM_VERBOSE > 3
+		printf("\t\t\t\tin BlockVolume::loadBinaryMetadata(...): binary metadata file is out-of-date\n");
+		#endif
 	}
 
 	// GI_140501
-    fread_return_val = fread(&reference_system.first, sizeof(axis), 1, file);
+    fread_return_val = fread(&reference_system.first, sizeof(vm::axis), 1, file);
     if(fread_return_val != 1)
     {
         fclose(file);
-        throw MyException("in StackedVolume::unBinarizeFrom(...): error while reading binary metadata file");
+        throw iom::exception("in BlockVolume::unBinarizeFrom(...): error while reading binary metadata file");
     }
 
 	// GI_140501
-    fread_return_val = fread(&reference_system.second, sizeof(axis), 1, file);
+    fread_return_val = fread(&reference_system.second, sizeof(vm::axis), 1, file);
     if(fread_return_val != 1)
     {
         fclose(file);
-        throw MyException("in StackedVolume::unBinarizeFrom(...): error while reading binary metadata file");
+        throw iom::exception("in BlockVolume::unBinarizeFrom(...): error while reading binary metadata file");
     }
 
  	// GI_140501
-   fread_return_val = fread(&reference_system.third, sizeof(axis), 1, file);
+   fread_return_val = fread(&reference_system.third, sizeof(vm::axis), 1, file);
     if(fread_return_val != 1)
     {
         fclose(file);
-        throw MyException("in StackedVolume::unBinarizeFrom(...): error while reading binary metadata file");
+        throw iom::exception("in BlockVolume::unBinarizeFrom(...): error while reading binary metadata file");
     }
 
 	fread_return_val = fread(&VXL_V, sizeof(float), 1, file);
 	if(fread_return_val != 1) {
 		fclose(file);
-		throw MyException("in BlockVolume::loadBinaryMetadata(...) error while reading binary metadata file");
+		throw iom::exception("in BlockVolume::loadBinaryMetadata(...) error while reading binary metadata file");
 	}
 	fread_return_val = fread(&VXL_H, sizeof(float), 1, file);
 	if(fread_return_val != 1) {
 		fclose(file);
-		throw MyException("in BlockVolume::loadBinaryMetadata(...) error while reading binary metadata file");
+		throw iom::exception("in BlockVolume::loadBinaryMetadata(...) error while reading binary metadata file");
 	}
 	fread_return_val = fread(&VXL_D, sizeof(float), 1, file);
 	if(fread_return_val != 1) {
 		fclose(file);
-		throw MyException("in BlockVolume::loadBinaryMetadata(...) error while reading binary metadata file");
+		throw iom::exception("in BlockVolume::loadBinaryMetadata(...) error while reading binary metadata file");
 	}
 	fread_return_val = fread(&ORG_V, sizeof(float), 1, file);
 	if(fread_return_val != 1) {
 		fclose(file);
-		throw MyException("in BlockVolume::loadBinaryMetadata(...) error while reading binary metadata file");
+		throw iom::exception("in BlockVolume::loadBinaryMetadata(...) error while reading binary metadata file");
 	}
 	fread_return_val = fread(&ORG_H, sizeof(float), 1, file);
 	if(fread_return_val != 1) {
 		fclose(file);
-		throw MyException("in BlockVolume::loadBinaryMetadata(...) error while reading binary metadata file");
+		throw iom::exception("in BlockVolume::loadBinaryMetadata(...) error while reading binary metadata file");
 	}
 	fread_return_val = fread(&ORG_D, sizeof(float), 1, file);
 	if(fread_return_val != 1) {
 		fclose(file);
-		throw MyException("in BlockVolume::loadBinaryMetadata(...) error while reading binary metadata file");
+		throw iom::exception("in BlockVolume::loadBinaryMetadata(...) error while reading binary metadata file");
 	}
 	fread_return_val = fread(&MEC_V, sizeof(float), 1, file);
 	if(fread_return_val != 1) {
 		fclose(file);
-		throw MyException("in BlockVolume::loadBinaryMetadata(...) error while reading binary metadata file");
+		throw iom::exception("in BlockVolume::loadBinaryMetadata(...) error while reading binary metadata file");
 	}
 	fread_return_val = fread(&MEC_H, sizeof(float), 1, file);
 	if(fread_return_val != 1) {
 		fclose(file);
-		throw MyException("in BlockVolume::loadBinaryMetadata(...) error while reading binary metadata file");
+		throw iom::exception("in BlockVolume::loadBinaryMetadata(...) error while reading binary metadata file");
 	}
 	fread_return_val = fread(&N_ROWS, sizeof(uint16), 1, file);
 	if(fread_return_val != 1) {
 		fclose(file);
-		throw MyException("in BlockVolume::loadBinaryMetadata(...) error while reading binary metadata file");
+		throw iom::exception("in BlockVolume::loadBinaryMetadata(...) error while reading binary metadata file");
 	}
 	fread_return_val = fread(&N_COLS, sizeof(uint16), 1, file);
 	if(fread_return_val != 1) {
 		fclose(file);
-		throw MyException("in BlockVolume::loadBinaryMetadata(...) error while reading binary metadata file");
+		throw iom::exception("in BlockVolume::loadBinaryMetadata(...) error while reading binary metadata file");
 	}
-	fread_return_val = fread(&N_SLICES, sizeof(uint16), 1, file);
+
+	// 2014-09-02. Alessandro. @FIXED as 'N_SLICES' changed from 'uint16' to 'int' type. See vmVirtualVolume.h.
+	fread_return_val = fread(&N_SLICES, sizeof(int), 1, file);
 	if(fread_return_val != 1) {
 		fclose(file);
-		throw MyException("in BlockVolume::loadBinaryMetadata(...) error while reading binary metadata file");
+		throw iom::exception("in BlockVolume::loadBinaryMetadata(...) error while reading binary metadata file");
 	}
 	BLOCKS = new Block **[N_ROWS];
 	for(i = 0; i < N_ROWS; i++)
@@ -521,9 +536,13 @@ void BlockVolume::loadBinaryMetadata(char *metadata_filepath) throw (MyException
 	}
 
 	fclose(file);
+
+	if ( regen ) { // GI_140626: directory name is changed, mdata.bin must be regenerated
+		saveBinaryMetadata(metadata_filepath);
+	}
 }
 
-//rotate stacks matrix around D axis (accepted values are theta=0,90,180,270)
+//rotate stacks matrix around D vm::axis (accepted values are theta=0,90,180,270)
 void BlockVolume::rotate(int theta)
 {
 	#if VM_VERBOSE > 3
@@ -607,7 +626,7 @@ void BlockVolume::rotate(int theta)
 }
 
 //mirror stacks matrix along mrr_axis (accepted values are mrr_axis=1,2,3)
-void BlockVolume::mirror(axis mrr_axis)
+void BlockVolume::mirror(vm::axis mrr_axis)
 {
 	#if VM_VERBOSE > 3
 	printf("\t\t\t\tin BlockVolume::mirror(mrr_axis = %d)\n", mrr_axis);
@@ -616,8 +635,8 @@ void BlockVolume::mirror(axis mrr_axis)
 	if(mrr_axis!= 1 && mrr_axis != 2)
 	{
 		char msg[1000];
-		sprintf(msg,"in BlockVolume::mirror(axis mrr_axis=%d): unsupported axis mirroring", mrr_axis);
-		throw MyException(msg);
+		sprintf(msg,"in BlockVolume::mirror(vm::axis mrr_axis=%d): unsupported vm::axis mirroring", mrr_axis);
+		throw iom::exception(msg);
 	}
 
 	Block*** new_STACK_2D_ARRAY;
@@ -678,19 +697,24 @@ void BlockVolume::loadXML(const char *xml_filepath)
 	{
 		char errMsg[2000];
 		sprintf(errMsg,"in BlockVolume::loadXML(xml_filepath = \"%s\") : unable to load xml", xml_filepath);
-		throw MyException(errMsg);
+		throw iom::exception(errMsg);
 	}
 
 	//setting ROOT element (that is the first child, i.e. <TeraStitcher> node)
 	TiXmlHandle hRoot(xml.FirstChildElement("TeraStitcher"));
+
+	// 2014-09-10. Alessandro. @ADDED 'volume_format' attribute to <TeraStitcher> XML node
+	const char *volformat = hRoot.ToElement()->Attribute("volume_format");
+	if(volformat && strcmp(volformat, id.c_str()) != 0)
+		throw iom::exception(vm::strprintf("in StackedVolume::initFromXML(): unsupported volume_format = \"%s\" (current format is \"%s\")", volformat, id.c_str()).c_str());
 
 	//reading fields and checking coherence with metadata previously read from VM_BIN_METADATA_FILE_NAME
 	TiXmlElement * pelem = hRoot.FirstChildElement("stacks_dir").Element();
 	if(strcmp(pelem->Attribute("value"), stacks_dir) != 0)
 	{
 		char errMsg[2000];
-		sprintf(errMsg, "in BlockVolume::loadXML(...): Mismatch in <stacks_dir> field between xml file (=\"%s\") and %s (=\"%s\").", pelem->Attribute("value"), VM_BIN_METADATA_FILE_NAME, stacks_dir);
-		throw MyException(errMsg);
+		sprintf(errMsg, "in BlockVolume::loadXML(...): Mismatch in <stacks_dir> field between xml file (=\"%s\") and %s (=\"%s\").", pelem->Attribute("value"), vm::BINARY_METADATA_FILENAME.c_str(), stacks_dir);
+		throw iom::exception(errMsg);
 	}
 	pelem = hRoot.FirstChildElement("voxel_dims").Element();
 	float VXL_V_read=0.0f, VXL_H_read=0.0f, VXL_D_read=0.0f;
@@ -700,8 +724,8 @@ void BlockVolume::loadXML(const char *xml_filepath)
 	if(VXL_V_read != VXL_V || VXL_H_read != VXL_H || VXL_D_read != VXL_D)
 	{
 		char errMsg[2000];
-		sprintf(errMsg, "in BlockVolume::loadXML(...): Mismatch in <voxel_dims> field between xml file (= %.2f x %.2f x %.2f ) and %s (= %.2f x %.2f x %.2f ).", VXL_V_read, VXL_H_read, VXL_D_read, VM_BIN_METADATA_FILE_NAME, VXL_V, VXL_H, VXL_D);
-		throw MyException(errMsg);
+		sprintf(errMsg, "in BlockVolume::loadXML(...): Mismatch in <voxel_dims> field between xml file (= %.2f x %.2f x %.2f ) and %s (= %.2f x %.2f x %.2f ).", VXL_V_read, VXL_H_read, VXL_D_read, vm::BINARY_METADATA_FILENAME.c_str(), VXL_V, VXL_H, VXL_D);
+		throw iom::exception(errMsg);
 	}
 	pelem = hRoot.FirstChildElement("origin").Element();
 	float ORG_V_read=0.0f, ORG_H_read=0.0f, ORG_D_read=0.0f;
@@ -712,7 +736,7 @@ void BlockVolume::loadXML(const char *xml_filepath)
 	{
 		char errMsg[2000];
 		sprintf(errMsg, "in BlockVolume::loadXML(...): Mismatch in <origin> field between xml file (= {%.7f, %.7f, %.7f} ) and %s (= {%.7f, %.7f, %.7f} ).", ORG_V_read, ORG_H_read, ORG_D_read, VM_BIN_METADATA_FILE_NAME, ORG_V, ORG_H, ORG_D);
-		throw MyException(errMsg);
+		throw iom::iom::exception(errMsg);
 	} @TODO: bug with float precision causes often mismatch */ 
 	pelem = hRoot.FirstChildElement("mechanical_displacements").Element();
 	float MEC_V_read=0.0f, MEC_H_read=0.0f;
@@ -721,8 +745,8 @@ void BlockVolume::loadXML(const char *xml_filepath)
 	if(MEC_V_read != MEC_V || MEC_H_read != MEC_H)
 	{
 		char errMsg[2000];
-		sprintf(errMsg, "in BlockVolume::loadXML(...): Mismatch in <mechanical_displacements> field between xml file (= %.1f x %.1f ) and %s (= %.1f x %.1f ).", MEC_V_read, MEC_H_read, VM_BIN_METADATA_FILE_NAME, MEC_V, MEC_H);
-		throw MyException(errMsg);
+		sprintf(errMsg, "in BlockVolume::loadXML(...): Mismatch in <mechanical_displacements> field between xml file (= %.1f x %.1f ) and %s (= %.1f x %.1f ).", MEC_V_read, MEC_H_read, vm::BINARY_METADATA_FILENAME.c_str(), MEC_V, MEC_H);
+		throw iom::exception(errMsg);
 	}
 	pelem = hRoot.FirstChildElement("dimensions").Element();
 	int N_ROWS_read, N_COLS_read, N_SLICES_read;
@@ -732,15 +756,15 @@ void BlockVolume::loadXML(const char *xml_filepath)
 	if(N_ROWS_read != N_ROWS || N_COLS_read != N_COLS || N_SLICES_read != N_SLICES)
 	{
 		char errMsg[2000];
-		sprintf(errMsg, "in BlockVolume::loadXML(...): Mismatch between in <dimensions> field xml file (= %d x %d ) and %s (= %d x %d ).", N_ROWS_read, N_COLS_read, VM_BIN_METADATA_FILE_NAME, N_ROWS, N_COLS);
-		throw MyException(errMsg);
+		sprintf(errMsg, "in BlockVolume::loadXML(...): Mismatch between in <dimensions> field xml file (= %d x %d ) and %s (= %d x %d ).", N_ROWS_read, N_COLS_read, vm::BINARY_METADATA_FILENAME.c_str(), N_ROWS, N_COLS);
+		throw iom::exception(errMsg);
 	}
 
 	pelem = hRoot.FirstChildElement("STACKS").Element()->FirstChildElement();
 	int i,j;
 	for(i=0; i<N_ROWS; i++)
 		for(j=0; j<N_COLS; j++, pelem = pelem->NextSiblingElement())
-			BLOCKS[i][j]->loadXML(pelem);
+			BLOCKS[i][j]->loadXML(pelem, N_SLICES);
 }
 
 void BlockVolume::initFromXML(const char *xml_filepath)
@@ -754,11 +778,16 @@ void BlockVolume::initFromXML(const char *xml_filepath)
 	{
 		char errMsg[2000];
 		sprintf(errMsg,"in BlockVolume::initFromXML(xml_filepath = \"%s\") : unable to load xml", xml_filepath);
-		throw MyException(errMsg);
+		throw iom::exception(errMsg);
 	}
 
 	//setting ROOT element (that is the first child, i.e. <TeraStitcher> node)
 	TiXmlHandle hRoot(xml.FirstChildElement("TeraStitcher"));
+
+	// 2014-09-10. Alessandro. @ADDED 'volume_format' attribute to <TeraStitcher> XML node
+	const char *volformat = hRoot.ToElement()->Attribute("volume_format");
+	if(volformat && strcmp(volformat, id.c_str()) != 0)
+		throw iom::exception(vm::strprintf("in StackedVolume::initFromXML(): unsupported volume_format = \"%s\" (current format is \"%s\")", volformat, id.c_str()).c_str());
 
 	//reading fields
 	TiXmlElement * pelem = hRoot.FirstChildElement("stacks_dir").Element();
@@ -790,12 +819,19 @@ void BlockVolume::initFromXML(const char *xml_filepath)
 		for(int j = 0; j < N_COLS; j++, pelem = pelem->NextSiblingElement())
 		{
 			BLOCKS[i][j] = new Block(this, i, j, pelem->Attribute("DIR_NAME"));
-			BLOCKS[i][j]->loadXML(pelem);
+			BLOCKS[i][j]->loadXML(pelem, N_SLICES);
 		}
 	}
+
+	// 2014-09-09. Alessandro. @FIXED both 'init()' and 'initFromXML()' methods to deal with empty stacks. Added call of 'normalize_stacks_attributes()' method.
+	// make stacks have the same attributes
+	normalize_stacks_attributes();
+
+	// 2014-09-09. Alessandro. @FIXED. Added default reference system if volume is imported from xml.
+	reference_system = vm::ref_sys(vm::vertical,vm::horizontal,vm::depth);
 }
 
-void BlockVolume::saveXML(const char *xml_filename, const char *xml_filepath) throw (MyException)
+void BlockVolume::saveXML(const char *xml_filename, const char *xml_filepath) throw (iom::exception)
 {
 	#if VM_VERBOSE > 3
 	printf("\t\t\t\tin BlockVolume::saveXML(char *xml_filename = %s)\n", xml_filename);
@@ -808,13 +844,13 @@ void BlockVolume::saveXML(const char *xml_filename, const char *xml_filepath) th
 	TiXmlElement * pelem;
 	int i,j;
 
-        //obtaining XML absolute path
-        if(xml_filename)
-            sprintf(xml_abs_path, "%s/%s.xml", stacks_dir, xml_filename);
-        else if(xml_filepath)
-            strcpy(xml_abs_path, xml_filepath);
-        else
-            throw MyException("in BlockVolume::saveXML(...): no xml path provided");
+    //obtaining XML absolute path
+    if(xml_filename)
+        sprintf(xml_abs_path, "%s/%s.xml", stacks_dir, xml_filename);
+    else if(xml_filepath)
+        strcpy(xml_abs_path, xml_filepath);
+    else
+        throw iom::exception("in BlockVolume::saveXML(...): no xml path provided");
 
 	//initializing XML file with DTD declaration
         fstream XML_FILE(xml_abs_path, ios::out);
@@ -823,16 +859,20 @@ void BlockVolume::saveXML(const char *xml_filename, const char *xml_filepath) th
 	XML_FILE.close();
 
 	//loading previously initialized XML file 
-        if(!xml.LoadFile(xml_abs_path))
+    if(!xml.LoadFile(xml_abs_path))
 	{
 		char errMsg[5000];
                 sprintf(errMsg, "in BlockVolume::saveToXML(...) : unable to load xml file at \"%s\"", xml_abs_path);
-		throw MyException(errMsg);
+		throw iom::exception(errMsg);
 	}
 
 	//inserting root node <TeraStitcher> and children nodes
 	root = new TiXmlElement("TeraStitcher");  
 	xml.LinkEndChild( root );  
+
+	// 2014-09-10. Alessandro. @ADDED 'volume_format' attribute to <TeraStitcher> XML node
+	root->SetAttribute("volume_format", id.c_str());
+
 	pelem = new TiXmlElement("stacks_dir");
 	pelem->SetAttribute("value", stacks_dir);
 	root->LinkEndChild(pelem);
@@ -864,23 +904,6 @@ void BlockVolume::saveXML(const char *xml_filename, const char *xml_filepath) th
 	root->LinkEndChild(pelem);
 	//saving the file
 	xml.SaveFile();
-}
-
-//print all informations contained in this data structure
-void BlockVolume::print()
-{
-	printf("*** Begin printing BlockVolume object...\n\n");
-	printf("\tDirectory:\t\t\t%s\n", stacks_dir);
-	printf("\tDimensions of single stack:\t%d(V) x %d(H) x %d(D)\n", this->getStacksHeight(), this->getStacksWidth(), N_SLICES);
-	printf("\tVoxels:\t\t\t\t%.4f(V) x %.4f(H) x %.4f(D)\n", VXL_V, VXL_H, VXL_D);
-	printf("\tOrigin:\t\t\t\t%.4f(V) x %.4f(H) x %.4f(D)\n", ORG_V, ORG_H, ORG_D);
-	printf("\tMechanical displacements:\t%.4f(V) x %.4f(H)\n", MEC_V, MEC_H);
-	printf("\tBlocks matrix:\t\t\t%d(V) x %d(H)\n", N_ROWS, N_COLS);
-	printf("\t |\n");
-	for(int row=0; row<N_ROWS; row++)
-		for(int col=0; col<N_COLS; col++)
-			BLOCKS[row][col]->print();
-	printf("\n*** END printing BlockVolume object...\n\n");
 }
 
 //counts the total number of displacements and the number of displacements per stack
@@ -956,4 +979,44 @@ int BlockVolume::countStitchableStacks(float threshold)
             stitchables += stitchable;
         }
     return stitchables;
+}
+
+// 2014-09-05. Alessandro. @ADDED 'normalize_stacks_attributes()' method to normalize stacks attributes (width, height, etc.)
+void BlockVolume::normalize_stacks_attributes() throw (iom::exception)
+{
+	std::set<int> heights, widths, nbytes, nchans;
+	for(int i=0; i<N_ROWS; i++)
+		for(int j=0; j<N_COLS; j++)
+		{
+			// exclude empty stacks (that are expected to have invalid WIDTH and HEIGHT)
+			if(BLOCKS[i][j]->isEmpty())
+				continue;
+
+			heights.insert(BLOCKS[i][j]->HEIGHT);
+			widths.insert(BLOCKS[i][j]->WIDTH);
+			nbytes.insert(BLOCKS[i][j]->N_BYTESxCHAN);
+			nchans.insert(BLOCKS[i][j]->N_CHANS);
+
+		}
+
+	// make the checks
+	if(heights.size() != 1)
+		throw iom::exception("in BlockVolume::check_stacks_same_dims(...): Stacks have unequal 'HEIGHT' attribute. This feature is not supported yet.");
+	if(widths.size() != 1)
+		throw iom::exception("in BlockVolume::check_stacks_same_dims(...): Stacks have unequal 'WIDTH' attribute. This feature is not supported yet.");
+	if(nbytes.size() != 1)
+		throw iom::exception("in BlockVolume::check_stacks_same_dims(...): Stacks have unequal 'N_BYTESxCHAN' attribute. This feature is not supported yet.");
+	if(nchans.size() != 1)
+		throw iom::exception("in BlockVolume::check_stacks_same_dims(...): Stacks have unequal 'N_CHANS' attribute. This feature is not supported yet.");
+
+	// make empty stacks having the same attributes of other stacks
+	for(int i=0; i<N_ROWS; i++)
+		for(int j=0; j<N_COLS; j++)
+			if(BLOCKS[i][j]->isEmpty())
+			{
+				BLOCKS[i][j]->HEIGHT = *(heights.begin());
+				BLOCKS[i][j]->WIDTH = *(widths.begin());
+				BLOCKS[i][j]->N_CHANS = *(nchans.begin());
+				BLOCKS[i][j]->N_BYTESxCHAN = *(nbytes.begin());
+			}
 }

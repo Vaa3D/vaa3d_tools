@@ -22,6 +22,16 @@
 *       specific prior written permission.
 ********************************************************************************************************************************************************************************************/
 
+/******************
+*    CHANGELOG    *
+*******************
+* 2014-09-10. Alessandro. @ADDED 'getVolumeFormat' method to be applied on xml file.
+* 2014-09-01. Alessandro. @FIXED 'extractCoordinates()' method to deal with sparse tiles w/o causing crashes.
+* 2014-09-01. Alessandro. @ADDED 'name2coordZ()' utility method to extract the z-coordinate substring from a given filename.
+* 2014-08-30. Alessandro. @REMOVED 'extractPathFromFilePath()' method (obsolete).
+* 2014-08-30. Alessandro. @REMOVED 'print()' method from abstract class and all concrete classes (obsolete).
+*/
+
 #include <string>
 #include "vmVirtualVolume.h"
 #include "vmVirtualStack.h"
@@ -37,19 +47,6 @@ using namespace std;
 using namespace vm;
 
 class VirtualStack;
-
-const char* axis_to_str(axis ax)
-{
-    if(ax==axis_invalid)         return "axis_invalid";
-    else if(ax==vertical)        return "vertical";
-    else if(ax==inv_vertical)    return "inv_vertical";
-    else if(ax==horizontal)      return "horizontal";
-    else if(ax==inv_horizontal)  return "inv_horizontal";
-    else if(ax==depth)           return "depth";
-    else if(ax==inv_depth)       return "inv_depth";
-    else                         return "unknown";
-}
-
 
 float	VirtualVolume::getORG_V()					{return ORG_V;}
 float	VirtualVolume::getORG_H()					{return ORG_H;}
@@ -72,8 +69,25 @@ int		VirtualVolume::getDEFAULT_DISPLACEMENT_V()	{return (int)(fabs(MEC_V/VXL_V))
 int		VirtualVolume::getDEFAULT_DISPLACEMENT_H()	{return (int)(fabs(MEC_H/VXL_H));}
 int		VirtualVolume::getDEFAULT_DISPLACEMENT_D()	{return 0;}
 
+void VirtualVolume::init() throw (iom::exception)
+{
+	stacks_dir = 0;
+
+	reference_system.first = reference_system.second = reference_system.third = axis_invalid;
+
+	VXL_V = 0;
+	VXL_H = 0;
+	VXL_D = 0;
+
+	ORG_V = ORG_H = ORG_D = (float) 0.0;
+	MEC_V = MEC_H = 0;
+
+	N_ROWS = N_COLS = 0;
+	N_SLICES = 0;
+}
+
 //returns true if file exists at the given filepath
-bool VirtualVolume::fileExists(const char *filepath)  throw (MyException)
+bool VirtualVolume::fileExists(const char *filepath)  throw (iom::exception)
 {
 	//LOCAL VARIABLES
 	string file_path_string =filepath;
@@ -99,7 +113,7 @@ bool VirtualVolume::fileExists(const char *filepath)  throw (MyException)
 	{
 		char msg[1000];
 		sprintf(msg,"in fileExists(filepath=%s): Unable to open directory \"%s\"", filepath, &dir_path[0]);
-		throw MyException(msg);
+		throw iom::exception(msg);
 	}
 
 	//scanning for given file
@@ -114,11 +128,28 @@ bool VirtualVolume::fileExists(const char *filepath)  throw (MyException)
 	return file_exists;
 }
 
+// returns the Z-coordinate string extracted from the given filename. Supported filenames formats are
+// [0-9]+_[0-9]+_[0-9]+.*   and
+// [0-9]+.*
+std::string VirtualVolume::name2coordZ(const std::string & filename) throw (iom::exception)
+{
+	// split string using "_" token (also works if "_" is not present)
+	std::vector<std::string> tokens;
+	vm::split(filename, "_", tokens);
+
+	// check
+	if(tokens.empty())
+		throw iom::exception(vm::strprintf("in VirtualVolume::name2coordZ(): error when parsing filename %s", filename.c_str()).c_str());
+
+	// remove file extension and return
+	return tokens[tokens.size()-1].substr(0, tokens[tokens.size()-1].find_last_of("."));
+}
+
 //extract spatial coordinates (in millimeters) of given Stack object
 void VirtualVolume::extractCoordinates(VirtualStack* stk, int z, int* crd_1, int* crd_2, int* crd_3)
 {
     #if VM_VERBOSE > 3
-    printf("\t\t\t\tin StackedVolume::extractCoordinates(stk=\"%s\", z = %d)\n", stk->getDIR_NAME(), z);
+    printf("\t\t\t\tin VirtualVolume::extractCoordinates(stk=\"%s\", z = %d)\n", stk->getDIR_NAME(), z);
     #endif
 
 	bool found_ABS_X=false;
@@ -150,15 +181,16 @@ void VirtualVolume::extractCoordinates(VirtualStack* stk, int z, int* crd_1, int
 	}
 
 	if(!found_ABS_X || !found_ABS_Y)
-	{
-		char msg[200];
-		sprintf(msg,"in StackedVolume::extractCoordinates(directory_name=\"%s\"): format 000000_000000 or X_000000_X_000000 not found", stk->getDIR_NAME());
-        throw MyException(msg);
-	}
+		throw iom::exception(vm::strprintf("in VirtualVolume::extractCoordinates(directory_name=\"%s\"): format 000000_000000 or X_000000_X_000000 not found", stk->getDIR_NAME()).c_str());
 
 	//loading estimation for absolute Z stack position
 	if(crd_3!= NULL)
 	{
+		// check for existing slice at z
+		// 2014-09-01. Alessandro. @FIXED 'extractCoordinates()' method to deal with sparse tiles w/o causing crashes.
+		if(!stk->isComplete(z,z))
+			throw iom::exception(vm::strprintf("in VirtualVolume::extractCoordinates(directory_name=\"%s\"): no slice found at z=%d", stk->getDIR_NAME(), z).c_str());
+
 		char* first_file_name = stk->getFILENAMES()[z];
 
 		char * pch;
@@ -177,16 +209,12 @@ void VirtualVolume::extractCoordinates(VirtualStack* stk, int z, int* crd_1, int
 		strcpy(lastTokenized,pch);
 
 		if(sscanf(lastTokenized, "%d", crd_3) != 1)
-		{
-			char msg[200];
-			sprintf(msg,"in StackedVolume::extractCoordinates(...): unable to extract Z position from filename %s", first_file_name);
-            throw MyException(msg);
-		}
+			throw iom::exception(vm::strprintf("in VirtualVolume::extractCoordinates(...): unable to extract Z position from filename %s", first_file_name).c_str());
 	}
 }
 
 //inserts the given displacements in the given stacks
-void VirtualVolume::insertDisplacement(VirtualStack *stk_A, VirtualStack *stk_B, Displacement *displacement)  throw (MyException)
+void VirtualVolume::insertDisplacement(VirtualStack *stk_A, VirtualStack *stk_B, Displacement *displacement)  throw (iom::exception)
 {
 	int stk_A_row = stk_A->getROW_INDEX();
 	int stk_A_col = stk_A->getCOL_INDEX();
@@ -214,40 +242,27 @@ void VirtualVolume::insertDisplacement(VirtualStack *stk_A, VirtualStack *stk_B,
 	else
 	{
 		char errMsg[1000];
-		sprintf(errMsg, "in StackedVolume::insertDisplacement(stk_A[%d,%d], stk_B[%d,%d], displacement): stacks are not adjacent", 
+		sprintf(errMsg, "in VirtualVolume::insertDisplacement(stk_A[%d,%d], stk_B[%d,%d], displacement): stacks are not adjacent", 
 			    stk_A->getROW_INDEX(), stk_A->getCOL_INDEX(), stk_B->getROW_INDEX(), stk_B->getCOL_INDEX());
-		throw MyException(errMsg);
+		throw iom::exception(errMsg);
 	}
 }
 
-//extract absolute path from file path(i.e. "C:/Users/Alex/Desktop/" from "C:/Users/Alex/Desktop/text.xml")
-std::string VirtualVolume::extractPathFromFilePath(const char* file_path)
+// return 'volume_format' attribute of <TeraStitcher> node from the given xml. 
+std::string VirtualVolume::getVolumeFormat(const std::string& xml_path) throw (iom::exception)
 {
-	//PRECONDITIONS: file_path contains an absolute file path (i.e. "C:/Users/Alex/Desktop/text.xml") with both separators "/" OR "\"
-	//POSTCONDITIONS: the path of the directory that contains the file is returned (i.e. "C:/Users/Alex/Desktop/" from "C:/Users/Alex/Desktop/text.xml")
+	// open xml
+	TiXmlDocument xml;
+	if(!xml.LoadFile(xml_path.c_str()))
+		throw iom::exception(vm::strprintf("in VirtualVolume::getVolumeFormat(): cannot open xml file at \"%s\"", xml_path.c_str()));
 
+	// get root node
+	TiXmlHandle hRoot(xml.FirstChildElement("TeraStitcher"));
 
-	//LOCAL VARIABLES
-	string file_path_string =file_path;
-	string file_name;
-	string ris;
+	// get 'volume_format' attribute
+	const char *volformat = hRoot.ToElement()->Attribute("volume_format");
+	if(!volformat)
+		throw iom::exception(vm::strprintf("in VirtualVolume::getVolumeFormat(): cannot find 'volume_format' <TeraStitcher> attribute in xml file at \"%s\". Too old xml, please regenerate it.", xml_path.c_str()).c_str());
 
-	//loading file name from 'file_path_string' into 'file_name' by strtoking with "/" OR "\" character
-	char * tmp;
-	tmp = strtok (&file_path_string[0],"/\\");
-	while (tmp != NULL)
-	{
-		file_name = tmp;
-		tmp = strtok (NULL, "/\\");
-	}
-
-	//restoring content of file_path_string due to possible alterations done by strtok
-	file_path_string =file_path;
-
-	//loading file name substring index in 'file_path_string'
-	int index_of_filename= (int) file_path_string.find(file_name);
-
-	//extract substring that contains absolute path but the filename
-	ris=file_path_string.substr(0,index_of_filename);
-	return ris;
+	return volformat;
 }

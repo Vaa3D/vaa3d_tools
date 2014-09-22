@@ -29,6 +29,8 @@
 #include "CrossMIPs.h"
 #include "DisplacementMIPNCC.h"
 
+using namespace iom;
+
 /*************************************************************************************************************
 * Implements abstract method declared in superclass
 * <stk_[]>				: image stacks stored in row-wise in a monodimensional array
@@ -42,10 +44,10 @@
 * <overlap>				: expected overlap between the given stacks along the given direction.  This value can
 *						  be used to determine the region of interest where the overlapping occurs.
 **************************************************************************************************************/
-Displacement* PDAlgoMIPNCC::execute(real_t *stk_A, uint32 A_dim_V, uint32 A_dim_H, uint32 A_dim_D,
-	real_t *stk_B, uint32 B_dim_V, uint32 B_dim_H, uint32 B_dim_D,
+Displacement* PDAlgoMIPNCC::execute(iom::real_t *stk_A, uint32 A_dim_V, uint32 A_dim_H, uint32 A_dim_D,
+	iom::real_t *stk_B, uint32 B_dim_V, uint32 B_dim_H, uint32 B_dim_D,
 	uint32 displ_max_V, uint32 displ_max_H, uint32 displ_max_D,
-	direction overlap_direction, uint32 overlap) throw (MyException)
+	direction overlap_direction, uint32 overlap) throw (iom::exception)
 {
 	#if S_VERBOSE>3
 	printf("\t\t\t\tin PDAlgoMIPNCC::execute(..., A_dim_V = %d, A_dim_H = %d, A_dim_D = %d, B_dim_V = %d, B_dim_H = %d, B_dim_D = %d, displ_max_V = %d, displ_max_H = %d, displ_max_D = %d, overlap_direction = %d, overlap = %d)\n",
@@ -54,9 +56,9 @@ Displacement* PDAlgoMIPNCC::execute(real_t *stk_A, uint32 A_dim_V, uint32 A_dim_
 
 	//some checks
 	if(A_dim_V != B_dim_V || A_dim_H != B_dim_H || A_dim_D != B_dim_D)
-		throw MyException("in PDAlgoMIPNCC::execute(...): stacks A and B don't have the same dimensions");
+		throw iom::exception("in PDAlgoMIPNCC::execute(...): stacks A and B don't have the same dimensions");
 	if(overlap_direction != dir_horizontal && overlap_direction != dir_vertical)
-		throw MyException("in PDAlgoMIPNCC::execute(...): unsupported overlapping direction");
+		throw iom::exception("in PDAlgoMIPNCC::execute(...): unsupported overlapping direction");
 
     // Alessandro & Giulio - 21/08/2013 - to handle 2D stitching
     // (the more general case of thinner stacks is not managed since the CrossMIPs library has not been tested when the delay parameters are different)

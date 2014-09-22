@@ -31,7 +31,7 @@
 #include "PTabMergeTiles.h"
 #include "PTabPlaceTiles.h"
 #include "src/control/CImport.h"
-#include "MyException.h"
+#include "iomanager.config.h"
 #include "vmStackedVolume.h"
 #include "PMain.h"
 #include "StackStitcher.h"
@@ -142,7 +142,7 @@ void PTabDisplProj::start()
     {
         //first checking that a volume has been properly imported
         if(!CImport::instance()->getVolume())
-            throw MyException("A volume must be properly imported first. Please perform the Import step.");
+            throw iom::exception("A volume must be properly imported first. Please perform the Import step.");
 
         //asking confirmation to continue if no displacements were found
         if(total_displ_number_field->text().toInt() == 0 &&
@@ -171,7 +171,7 @@ void PTabDisplProj::start()
         //performing operation
         vm::VirtualVolume* volume = CImport::instance()->getVolume();
         if(!volume)
-            throw MyException("Unable to start this step. A volume must be properly imported first.");
+            throw iom::exception("Unable to start this step. A volume must be properly imported first.");
         StackStitcher stitcher(volume);
         stitcher.projectDisplacements();
         volume->saveXML(0, saveproj_field->text().toStdString().c_str());
@@ -188,7 +188,7 @@ void PTabDisplProj::start()
 
         stop();
     }
-    catch(MyException &ex)
+    catch(iom::exception &ex)
     {
         QMessageBox::critical(this,QObject::tr("Error"), QObject::tr(ex.what()),QObject::tr("Ok"));
         PMain::instance()->setToReady();

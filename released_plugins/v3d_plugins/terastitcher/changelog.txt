@@ -11,6 +11,31 @@ ties names are:
 - Rem: a feature no longer available
 
 ============================================================================================
+Vaa3D-TeraStitcher version 1.6.7
+September 22nd, 2014
+--------------------------------------------------------------------------------------------
+- Fix: minor bug fixed and improvements.
+- New: syncronized with TeraStitcher-standalone v1.6.7.
+--------------------------------------------------------------------------------------------
+
+Vaa3D-TeraStitcher version 1.6.0
+September 13th, 2014
+--------------------------------------------------------------------------------------------
+- Dev: re-designed cmake build process with interactive plugins/library selection.
+- New: added subdata selection along Z in the displacecement computation step (--displcomp).
+- New: added volume format plugin selection (--volin_plugin and --volout_plugin).
+- New: added IO plugin selection (--imin_plugin and --imout_plugin).
+- New: added IO plugin architecture to easily include at compilation time your own I/O plug-
+       in w/o the need of modifying any portion of code within  TeraStitcher. Just copy your
+	   folder with headers and sources and it will be automatically  discovered and included
+       in the cmake build process.
+- New: added  sparse data support  to deal with  empty and/or incomplete tiles. Depending on
+       the amount of sparseness, both aligning and merging steps are speeded up considerably
+	   up to 2x if 50% of the tiles are empty or incomplete.
+- Fix: minor bug fixes and improvements.
+--------------------------------------------------------------------------------------------
+
+
 Vaa3D-TeraStitcher version 1.502
 June 26th, 2014
 --------------------------------------------------------------------------------------------

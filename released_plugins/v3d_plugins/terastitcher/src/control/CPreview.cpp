@@ -64,7 +64,7 @@ void CPreview::run()
     {
         // check precondition #1: valid volume handle
         if(!volume)
-            throw MyException("Invalid volume handle");
+            throw iom::exception("Invalid volume handle");
 
         // initialize stitcher
         /**/tsp::debug(tsp::LEV_MAX, "Initialize stitcher", __tsp__current__function__);
@@ -85,20 +85,20 @@ void CPreview::run()
         sprintf(path, "%s/test_middle_slice.tif", CImport::instance()->getVolume()->getSTACKS_DIR());
         IplImage* slice_img = cvLoadImage(path, CV_LOAD_IMAGE_GRAYSCALE);
         if(!slice_img)
-            throw MyException(QString("Unable to load slice \"").append(path).append("\" to be shown into Vaa3D").toStdString().c_str());
+            throw iom::exception(QString("Unable to load slice \"").append(path).append("\" to be shown into Vaa3D").toStdString().c_str());
         int width = slice_img->width;
         int height = slice_img->height;
 
         // allocate Vaa3D image data
         /**/tsp::debug(tsp::LEV_MAX, "allocate Vaa3D image data", __tsp__current__function__);
-        uint8* img_data = new uint8[width*height];
+        iom::uint8* img_data = new iom::uint8[width*height];
 
         // copy data into Vaa3D image
         /**/tsp::debug(tsp::LEV_MAX, "copy data into Vaa3D image", __tsp__current__function__);
         int slice_img_step = slice_img->widthStep/sizeof(uchar);
         for(int i=0; i<height; i++)
         {
-            uint8* slice_img_data = ((uint8*)slice_img->imageData)+i*slice_img_step;
+            iom::uint8* slice_img_data = ((iom::uint8*)slice_img->imageData)+i*slice_img_step;
             for(int j=0; j<width; j++)
                 img_data[i*width +j] = slice_img_data[j];
         }
@@ -118,21 +118,21 @@ void CPreview::run()
     catch( iim::IOException& exception)
     {
         /**/tsp::warning(strprintf("exception thrown in CMergeTiles::run(): \"%s\"", exception.what()).c_str());
-        emit sendOperationOutcome(new MyException(exception.what()), 0);
+        emit sendOperationOutcome(new iom::exception(exception.what()), 0);
     }
-    catch(MyException& exception)
+    catch(iom::exception& exception)
     {
         /**/tsp::warning(strprintf("exception thrown in CPreview::run(): \"%s\"", exception.what()).c_str());
-        emit sendOperationOutcome(new MyException(exception.what()), 0);
+        emit sendOperationOutcome(new iom::exception(exception.what()), 0);
     }
     catch(const char* error)
     {
         /**/tsp::warning(strprintf("exception thrown in CPreview::run(): \"%s\"", error).c_str());
-        emit sendOperationOutcome(new MyException(std::string(error).c_str()), 0);
+        emit sendOperationOutcome(new iom::exception(std::string(error).c_str()), 0);
     }
     catch(...)
     {
         /**/tsp::warning(strprintf("exception thrown in CPreview::run(): \"%s\"", "generic error").c_str());
-        emit sendOperationOutcome(new MyException("Generic error occurred"), 0);
+        emit sendOperationOutcome(new iom::exception("Generic error occurred"), 0);
     }
 }

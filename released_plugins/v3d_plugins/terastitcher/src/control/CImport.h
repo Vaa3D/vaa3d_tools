@@ -46,7 +46,7 @@ class terastitcher::CImport : public QThread
         * instantiated by calling static method "istance(...)"
         **********************************************************************************/
         static CImport* uniqueInstance;
-        CImport() : QThread(), path(""), format(""), volume(0), AXS_1(axis(0)), AXS_2(axis(0)), AXS_3(axis(0)), VXL_1(0), VXL_2(0), VXL_3(0), reimport(false)
+        CImport() : QThread(), path(""), volume(0), AXS_1(vm::axis(0)), AXS_2(vm::axis(0)), AXS_3(vm::axis(0)), VXL_1(0), VXL_2(0), VXL_3(0), reimport(false)
         {
             #ifdef TSP_DEBUG
             printf("TeraStitcher plugin [thread %d] >> CImport created\n", this->thread()->currentThreadId());
@@ -58,8 +58,7 @@ class terastitcher::CImport : public QThread
 
         //members
         std::string path;
-        std::string format;
-        axis AXS_1, AXS_2, AXS_3;
+        vm::axis AXS_1, AXS_2, AXS_3;
         float VXL_1, VXL_2, VXL_3;
         bool reimport;
         vm::VirtualVolume *volume;
@@ -85,14 +84,12 @@ class terastitcher::CImport : public QThread
         void setAxes(string axs1, string axs2, string axs3);
         void setVoxels(float vxl1, float vxl2, float vxl3);
         void setReimport(bool _reimport){reimport = _reimport;}
-        void setFormat(std::string _format){format = _format;}
 
         //reset method
         void reset()
         {
             path="";
-            format="";
-            AXS_1=AXS_2=AXS_3=axis_invalid;
+            AXS_1=AXS_2=AXS_3=vm::axis_invalid;
             VXL_1=VXL_2=VXL_3=0;
             reimport=false;
             if(volume)
@@ -105,7 +102,7 @@ class terastitcher::CImport : public QThread
         /*********************************************************************************
         * Carries the outcome of the operation associated to this thread.
         **********************************************************************************/
-        void sendOperationOutcome(MyException* ex);
+        void sendOperationOutcome(iom::exception* ex);
 
 
     public slots:

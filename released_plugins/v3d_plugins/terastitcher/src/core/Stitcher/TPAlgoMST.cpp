@@ -28,12 +28,13 @@
 #include <limits>
 #include "TPAlgoMST.h"
 #include "S_config.h"
-#include "VM_config.h"
+#include "volumemanager.config.h"
 #include "vmStackedVolume.h"
 #include "vmVirtualStack.h"
 #include "Displacement.h"
 
 using namespace volumemanager;
+using namespace iomanager;
 
 //triplet data type definition
 typedef struct 							
@@ -62,7 +63,7 @@ TPAlgoMST::TPAlgoMST(VirtualVolume * _volume) : TPAlgo(S_FATPM_SP_TREE, _volume)
 *       ent is quite reliable, with a very little reliability gain.  This implies possible bad absolute  posi-
 *       tions estimations when the path is too long.
 **************************************************************************************************************/
-void TPAlgoMST::execute() throw (MyException)
+void TPAlgoMST::execute() throw (iom::exception)
 {
 	#if S_VERBOSE > 2
 	printf("....in TPAlgoMST::execute()");
@@ -73,7 +74,7 @@ void TPAlgoMST::execute() throw (MyException)
 	int src_row=0, src_col=0;						//source vertex
 
 	//0) fixing the source as the stitchable VirtualStack nearest to the top-left corner
-	int min_distance = std::numeric_limits<int>::max();
+	float min_distance = std::numeric_limits<float>::infinity();
 	for(int row=0; row<volume->getN_ROWS(); row++)
 		for(int col=0; col<volume->getN_COLS(); col++)
 			if(volume->getSTACKS()[row][col]->isStitchable() && sqrt((float)(row*row+col*col)) < min_distance )
@@ -209,10 +210,10 @@ void TPAlgoMST::execute() throw (MyException)
 						uint16 u_row, u_col;
 						u_row = predecessors[v->getROW_INDEX()][v->getCOL_INDEX()].first[k];
 						if(u_row>= volume->getN_ROWS() || u_row < 0)
-							throw MyException("...in TPAlgoMST::execute(): error in the predecessor matrix");
+							throw iom::exception("...in TPAlgoMST::execute(): error in the predecessor matrix");
 						u_col = (int) predecessors[v->getROW_INDEX()][v->getCOL_INDEX()].second[k];
 						if(u_col>= volume->getN_COLS() || u_col < 0)
-							throw MyException("...in TPAlgoMST::execute(): error in the predecessor matrix");
+							throw iom::exception("...in TPAlgoMST::execute(): error in the predecessor matrix");
 						u = volume->getSTACKS()[u_row][u_col ];
 
 						#if S_VERBOSE > 4

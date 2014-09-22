@@ -29,7 +29,7 @@
 #define DISPLACEMENT_MIP_NCC_H
 
 #include "Displacement.h"
-//#include "VM_config.h"
+//#include "volumemanager.config.h"
 #include "CrossMIPs.h"
 #include <math.h>
 
@@ -63,28 +63,28 @@ class DisplacementMIPNCC : Displacement
 
 		//evaluates displacement reliability possibly along the given direction. The result(s) should be stored
 		//in one or more object members, so that they have to be computed once and then accessed by GET methods
-		float			 evalReliability(direction _direction=invalid)	throw (MyException);
+		float			 evalReliability(direction _direction=invalid)	throw (iom::exception);
 
 		//returns the reliability possibly along the given direction. An exception is thrown if the reliability
 		//index(es) are not computed yet.
-		float			 getReliability(direction _direction=invalid)	throw (MyException);
+		float			 getReliability(direction _direction=invalid)	throw (iom::exception);
 
 		//returns the displacement along the given direction
-		int				 getDisplacement(direction _direction)			throw (MyException);
+		int				 getDisplacement(direction _direction)			throw (iom::exception);
 
 		//sets to default values the displacements with a reliability factor above the given threshold
-		void			 threshold(float rel_threshold)					throw (MyException);
+		void			 threshold(float rel_threshold)					throw (iom::exception);
 
 		//returns the displacement mirrored along the given direction.
-		Displacement*	 getMirrored(direction _direction)				throw (MyException);
+		Displacement*	 getMirrored(direction _direction)				throw (iom::exception);
 
 		//XML methods: convert/load displacement object into/from XML schema
-		TiXmlElement*	 getXML() 								throw (MyException);
-		void			 loadXML(TiXmlElement *displ_node)				throw (MyException);
+		TiXmlElement*	 getXML() 								throw (iom::exception);
+		void			 loadXML(TiXmlElement *displ_node)				throw (iom::exception);
 
 		//combines the parameters of the current and the given displacement so that after this operation
 		//the two displacements are more reliable (and are EQUAL).
-		void			 combine(Displacement& displ)					throw (MyException);
+		void			 combine(Displacement& displ)					throw (iom::exception);
 
 		friend class PDAlgoMIPNCC;
 };

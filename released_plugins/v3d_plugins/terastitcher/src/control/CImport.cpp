@@ -63,44 +63,9 @@ void CImport::setAxes(string axs1, string axs2, string axs3)
     printf("TeraStitcher plugin [thread %d] >> CImport setAxes(%s, %s, %s) launched\n", this->thread()->currentThreadId(), axs1.c_str(), axs2.c_str(), axs3.c_str());
     #endif
 
-    if(     axs1.compare("Y")==0)
-        AXS_1 = axis(1);
-    else if(axs1.compare("-Y")==0)
-        AXS_1 = axis(-1);
-    else if(axs1.compare("X")==0)
-        AXS_1 = axis(2);
-    else if(axs1.compare("-X")==0)
-        AXS_1 = axis(-2);
-    else if(axs1.compare("Z")==0)
-        AXS_1 = axis(3);
-    else if(axs1.compare("-Z")==0)
-        AXS_1 = axis(-3);
-
-    if(     axs2.compare("Y")==0)
-        AXS_2 = axis(1);
-    else if(axs2.compare("-Y")==0)
-        AXS_2 = axis(-1);
-    else if(axs2.compare("X")==0)
-        AXS_2 = axis(2);
-    else if(axs2.compare("-X")==0)
-        AXS_2 = axis(-2);
-    else if(axs2.compare("Z")==0)
-        AXS_2 = axis(3);
-    else if(axs2.compare("-Z")==0)
-        AXS_2 = axis(-3);
-
-    if(     axs3.compare("Y")==0)
-        AXS_3 = axis(1);
-    else if(axs3.compare("-Y")==0)
-        AXS_3 = axis(-1);
-    else if(axs3.compare("X")==0)
-        AXS_3 = axis(2);
-    else if(axs3.compare("-X")==0)
-        AXS_3 = axis(-2);
-    else if(axs3.compare("Z")==0)
-        AXS_3 = axis(3);
-    else if(axs3.compare("-Z")==0)
-        AXS_3 = axis(-3);
+    AXS_1 = vm::str2axis(axs1);
+    AXS_2 = vm::str2axis(axs2);
+    AXS_3 = vm::str2axis(axs3);
 }
 void CImport::setVoxels(float vxl1, float vxl2, float vxl3)
 {
@@ -122,71 +87,36 @@ void CImport::run()
 
     try
     {
-        // check for supported input formats
-        if(format.compare(tsp::IMAGE_FORMAT_TILED_2D_ANY) != 0 &&
-           format.compare(tsp::IMAGE_FORMAT_TILED_3D_TIFF)   != 0)
-            throw MyException(tsp::strprintf("in CImport::run(): unsupported input format \"%s\"", format.c_str()).c_str());
-
-
-        //if a volume's directory path has been provided, searching for metadata file
-        if(path.find(".xml")==std::string::npos && path.find(".XML")==std::string::npos)
-        {
-            string mdata_fpath = path;
-            mdata_fpath.append("/");
-            mdata_fpath.append(VM_BIN_METADATA_FILE_NAME);
-
-             //if metadata binary file doesn't exist or the volume has to be re-imported, further informations must be provided to the constructor
-            if(!StackedVolume::fileExists(mdata_fpath.c_str()) || reimport)
-            {
-                //checking current members validity
-                if(AXS_1 != axis_invalid && AXS_2 != axis_invalid && AXS_3 != axis_invalid && VXL_1 != 0 && VXL_2 != 0 && VXL_3 != 0)
-                {
-                    if(format.compare(tsp::IMAGE_FORMAT_TILED_2D_ANY)==0)
-                        volume = new StackedVolume(path.c_str(), ref_sys(AXS_1,AXS_2,AXS_3),VXL_1,VXL_2,VXL_3, reimport);
-                    else
-                        volume = new BlockVolume(path.c_str(), ref_sys(AXS_1,AXS_2,AXS_3),VXL_1,VXL_2,VXL_3, reimport);
-                }
-                else
-                    throw MyException(tsp::strprintf("in CImport::run(): invalid parameters AXS_1(%s), AXS_2(%s), AXS_3(%s), VXL_1(%.4f), VXL_2(%.4f), VXL_3(%.4f)",
-                                                     axis_to_str(AXS_1), axis_to_str(AXS_2), axis_to_str(AXS_3), VXL_1, VXL_2, VXL_3).c_str());
-            }
-            else
-            {
-                if(format.compare(tsp::IMAGE_FORMAT_TILED_2D_ANY)==0)
-                    volume = new StackedVolume(path.c_str(), ref_sys(axis_invalid,axis_invalid,axis_invalid),0,0,0);
-                else
-                    volume = new BlockVolume(path.c_str(), ref_sys(axis_invalid,axis_invalid,axis_invalid),0,0,0);
-            }
-        }
+        // import volume
+        if(QString(path.c_str()).endsWith(".xml", Qt::CaseInsensitive))
+            volume = vm::VirtualVolumeFactory::createFromXML(vm::VOLUME_INPUT_FORMAT_PLUGIN, path.c_str(), reimport);
         else
-        {
-            if(format.compare(tsp::IMAGE_FORMAT_TILED_2D_ANY)==0)
-                volume = new StackedVolume(path.c_str());
-            else
-                volume = new BlockVolume(path.c_str());
-        }
+            volume = vm::VirtualVolumeFactory::createFromData(vm::VOLUME_INPUT_FORMAT_PLUGIN, path.c_str(), vm::ref_sys(AXS_1,AXS_2,AXS_3),VXL_1,VXL_2,VXL_3, reimport);
 
-        //everything went OK
+        // save updated descriptor
+        volume->saveXML("xml_import");
+
+        // everything went OK
         emit sendOperationOutcome(0);
     }
     catch( iim::IOException& exception)
     {
         /**/tsp::warning(strprintf("exception thrown in CMergeTiles::run(): \"%s\"", exception.what()).c_str());
-        emit sendOperationOutcome(new MyException(exception.what()));
+        emit sendOperationOutcome(new iom::exception(exception.what()));
     }
-    catch( MyException& exception)
+    catch( iom::exception& exception)
     {
         /**/tsp::warning(strprintf("exception thrown in CImport::run(): \"%s\"", exception.what()).c_str());
-        emit sendOperationOutcome(new MyException(exception.what()));
+        emit sendOperationOutcome(new iom::exception(exception.what()));
     }
     catch(const char* error)
     {
         /**/tsp::warning(strprintf("exception thrown in CImport::run(): \"%s\"", error).c_str());
-        emit sendOperationOutcome(new MyException(error));
+        emit sendOperationOutcome(new iom::exception(error));
     }
     catch(...)
     {
         /**/tsp::warning(strprintf("exception thrown in CImport::run(): \"%s\"", "Generic error").c_str());
-        emit sendOperationOutcome(new MyException("Unable to determine error's type"));
+        emit sendOperationOutcome(new iom::exception("Unable to determine error's type"));
     }
 }

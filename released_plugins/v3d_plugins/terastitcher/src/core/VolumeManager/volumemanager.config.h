@@ -26,6 +26,13 @@
 *       specific prior written permission.
 ********************************************************************************************************************************************************************************************/
 
+/******************
+*    CHANGELOG    *
+*******************
+* 2014-09-01. Alessandro. @ADDED template class 'interval'.
+* 2014-08-25. Alessandro. @ADDED SPARSE_DATA parameter to turn on/off sparse data support.
+*/
+
 #ifndef VM_CONFIG_H
 #define VM_CONFIG_H
 
@@ -35,6 +42,7 @@
 #include <sstream>
 #include <limits>
 #include <cstring>
+#include <algorithm>
 #include <math.h>
 #include <sys/stat.h>
 #ifdef _WIN32
@@ -56,6 +64,7 @@ namespace volumemanager
     ********************
     ---------------------------------------------------------------------------------------------------------------------------*/
     class VirtualVolume;
+	class VirtualVolumeFactory;
     /*-------------------------------------------------------------------------------------------------------------------------*/
 
 
@@ -63,7 +72,10 @@ namespace volumemanager
     *    CONSTANTS     *
     ********************
     ---------------------------------------------------------------------------------------------------------------------------*/
+	const std::string MODULE_ID = "terastitcher::volumemanager";
     const double PI = 3.14159265;
+	const std::string BINARY_METADATA_FILENAME =  "mdata.bin";	// binary metadata file name
+	const float BINARY_METADATA_VERSION = 1.5;					// version of binary metadata file (used to check compatibility)
     /*-------------------------------------------------------------------------------------------------------------------------*/
 
 
@@ -72,8 +84,7 @@ namespace volumemanager
     ********************
     @warning: macros are not namespaced
     ---------------------------------------------------------------------------------------------------------------------------*/
-    #define VM_VERBOSE 0					//verbosity level of current module
-    #define VM_BIN_METADATA_FILE_NAME "mdata.bin"
+    #define VM_VERBOSE 0					//verbosity level of current module    
     #define VM_STATIC_STRINGS_SIZE 5000
     #define S_TIME_CALC						//if enabled, single-phase processing time will be computed
 
@@ -82,9 +93,63 @@ namespace volumemanager
     *    PARAMETERS    *
     ********************
     ---------------------------------------------------------------------------------------------------------------------------*/
+	extern std::string VOLUME_INPUT_FORMAT_PLUGIN;	// plugin to manage the input volume format
+	extern std::string VOLUME_OUTPUT_FORMAT_PLUGIN;	// plugin to manage the output volume format
     extern std::string IMG_FILTER_REGEX;    // regular expression used to filter image filenames when the volume is imported
+    extern bool SPARSE_DATA;                // flag to turn on/off sparse data support
     /*-------------------------------------------------------------------------------------------------------------------------*/
 
+
+    /*******************
+    * BASIC STRUCTURES *
+    ********************
+    ---------------------------------------------------------------------------------------------------------------------------*/
+	// 1D templated interval
+    template <class T> struct interval{
+        T start, end;
+		interval() : start(-1), end(-1) {}
+		interval(T _start, T _end) : start(_start), end(_end) {}
+    };
+
+	// axis
+	enum axis {vertical=1, inv_vertical=-1, horizontal=2, inv_horizontal=-2, depth=3, inv_depth=-3, axis_invalid=0};	
+	inline const char* axis_to_str(axis ax)
+	{
+		if(ax==axis_invalid)         return "axis_invalid";
+		else if(ax==vertical)        return "vertical";
+		else if(ax==inv_vertical)    return "inv_vertical";
+		else if(ax==horizontal)      return "horizontal";
+		else if(ax==inv_horizontal)  return "inv_horizontal";
+		else if(ax==depth)           return "depth";
+		else if(ax==inv_depth)       return "inv_depth";
+		else                         return "unknown";
+	}
+	inline axis str2axis(const std::string & str)
+	{
+		if(str.compare("vertical") == 0				|| str.compare("1") == 0	|| str.compare("v") == 0	|| str.compare("V") == 0	|| str.compare("Y")== 0		|| str.compare("y")== 0)
+			return vertical;
+		else if(str.compare("inv_vertical") == 0	|| str.compare("-1") == 0	|| str.compare("-v") == 0	|| str.compare("-V") == 0	|| str.compare("-Y")== 0		|| str.compare("-y")== 0)
+			return inv_vertical;
+		else if(str.compare("horizontal") == 0		|| str.compare("2") == 0	|| str.compare("h") == 0	|| str.compare("H") == 0	|| str.compare("X")== 0		|| str.compare("x")== 0)
+			return horizontal;
+		else if(str.compare("inv_horizontal") == 0	|| str.compare("-2") == 0	|| str.compare("-h") == 0	|| str.compare("-H") == 0	|| str.compare("-X")== 0		|| str.compare("-x")== 0)
+			return inv_horizontal;
+		else if(str.compare("depth") == 0			|| str.compare("3") == 0	|| str.compare("d") == 0	|| str.compare("D") == 0	|| str.compare("Z")== 0		|| str.compare("z")== 0)
+			return depth;
+		else if(str.compare("inv_depth") == 0		|| str.compare("-3") == 0	|| str.compare("-d") == 0	|| str.compare("-D") == 0	|| str.compare("-Z")== 0		|| str.compare("-z")== 0)
+			return inv_depth;
+		else
+			return axis_invalid;
+	}
+
+	// reference system	
+	struct ref_sys 
+	{
+		axis first, second, third; 
+		ref_sys(axis _first, axis _second, axis _third) : first(_first), second(_second), third(_third){}
+		ref_sys(): first(axis_invalid), second(axis_invalid), third(axis_invalid){}
+	};
+    /*-------------------------------------------------------------------------------------------------------------------------*/
 
     /********************************************
      * Cross-platform UTILITY inline functions	*
@@ -111,6 +176,14 @@ namespace volumemanager
         }
         return str;
     }
+
+	// removes all tab, space and newline characters from the given string
+	inline std::string cls(std::string& string){
+		string.erase(std::remove(string.begin(), string.end(), '\t'), string.end());
+		string.erase(std::remove(string.begin(), string.end(), ' '),  string.end());
+		string.erase(std::remove(string.begin(), string.end(), '\n'), string.end());
+		return string;
+	}
 
     //returns true if the given path is a directory
     inline bool isDirectory(std::string path){
@@ -139,6 +212,38 @@ namespace volumemanager
         }
         else return false;
     }
+
+	// tokenizer
+	inline void	split(const std::string & theString, std::string delim, std::vector<std::string>& tokens)
+	{
+		size_t  start = 0, end = 0;
+		while ( end != std::string::npos)
+		{
+			end = theString.find( delim, start);
+
+			// If at end, use length=maxLength.  Else use length=end-start.
+			tokens.push_back( theString.substr( start,
+				(end == std::string::npos) ? std::string::npos : end - start));
+
+			// If at end, use start=maxSize.  Else use start=end+delimiter.
+			start = (   ( end > (std::string::npos - delim.size()) )
+				?  std::string::npos  :  end + delim.size());
+		}
+	}
+
+	//number to string conversion function and vice versa
+	template <typename T>
+	std::string num2str ( T Number ){
+		std::stringstream ss;
+		ss << Number;
+		return ss.str();
+	}
+	template <typename T>
+	T str2num ( const std::string &Text ){                              
+		std::stringstream ss(Text);
+		T result;
+		return ss >> result ? result : 0;
+	}
 
     //make dir
     #ifdef _WIN32

@@ -25,61 +25,61 @@
 *       specific prior written permission.
 ********************************************************************************************************************************************************************************************/
 
+/******************
+*    CHANGELOG    *
+*******************
+* 2014-09-10. Alessandro. @ADDED 'isEmpty(z0,z1)' method.
+* 2014-08-30. Alessandro. @REMOVED 'show()' method (obsolete).
+* 2014-08-30. Alessandro. @ADDED 'VirtualStack()' default constructor definition with member initialization.
+* 2014-08-29. Alessandro. @ADDED 'isComplete()' implementation.
+* 2014-08-25. Alessandro. @ADDED SPARSE_DATA parameter definition. Default is false.
+*/
+
 #include "vmVirtualStack.h"
-#include <highgui.h>
-#include <cv.h>
 
-
-void VirtualStack::print()
+VirtualStack::VirtualStack()
 {
-	printf("\t |\t[%d,%d]\n", ROW_INDEX, COL_INDEX);
-	printf("\t |\tDirectory:\t\t%s\n", DIR_NAME);
-	printf("\t |\tDimensions:\t\t%d(V) x %d(H) x %d(D)\n", HEIGHT, WIDTH, DEPTH);
-	printf("\t |\tAbsolute position:\t%d(V) , %d(H) , %d(D)\n", ABS_V, ABS_H, ABS_D);
-	printf("\t |\n");
+    FILENAMES = 0;
+    HEIGHT = WIDTH = DEPTH = -1;
+    ROW_INDEX = COL_INDEX = -1;
+    DIR_NAME = 0;
+    stitchable = false;
+    ABS_V = ABS_H = ABS_D = -1;
+    STACKED_IMAGE = 0;
 }
 
-//show the selected slice with a simple GUI
-void VirtualStack::show(int D_index, int window_HEIGHT, int window_WIDTH)
+// return true if the given range [z0,z1] does not contain missing slices/blocks
+bool VirtualStack::isComplete(int z0, int z1)
 {
-	#if VM_VERBOSE > 2
-	printf("\t\t\tin Stack::show(D_index=%d, win_height=%d, win_width=%d)\n", D_index, window_HEIGHT, window_WIDTH);
-	#endif
+	// precondition 1 (unchecked)
+	// z_ranges should contain consecutive but not contiguous intervals [a_1,b_1), [a_2,b_2), ... such that a_n > b_(n-1)
+	
+	// precondition 2 and 3: nonempty tile, and valid range.
+	if(isEmpty() || z0 > z1)
+		return false;
 
-	//converting selected slice of vol (1-D array of REAL_T) into a CvMat
-	CvMat *slice = cvCreateMat(HEIGHT, WIDTH, CV_32FC1);
-	for(int i=0; i<slice->rows; i++)
-	{
-		float *row_ptr = (float*)(slice->data.ptr+slice->step*i);
-		for(int j=0; j<slice->cols; j++)
-			row_ptr[j] = STACKED_IMAGE[D_index*HEIGHT*WIDTH + i*WIDTH +j];
-	}
+	// search for one z-range that contains [z0,z1]
+	bool is_contained = false;
+	for(int k=0; k<z_ranges.size() && !is_contained; k++)
+		is_contained = z0 >= z_ranges[k].start && z1 < z_ranges[k].end;
 
-	//showing slice
-	CvSize window_dims;
-	window_dims.height = window_HEIGHT ? window_HEIGHT : HEIGHT;
-	window_dims.width  = window_WIDTH  ? window_WIDTH  : WIDTH;
-	char buffer[200];
-	CvMat* mat_rescaled = cvCreateMat(HEIGHT, WIDTH, CV_16UC1);
-	IplImage* image_resized = cvCreateImage(window_dims, IPL_DEPTH_16U, 1);
-	IplImage* img_buffer = cvCreateImageHeader(window_dims, IPL_DEPTH_16U, 1);
+	return is_contained;
+}
 
-	cvConvertScale(slice,mat_rescaled, 65535);
-	cvResize(cvGetImage(mat_rescaled,img_buffer), image_resized, CV_INTER_CUBIC);
+// return true if the given range [z0,z1] does not contain any slice/block
+bool VirtualStack::isEmpty(int z0, int z1)
+{
+	// precondition 1 (unchecked)
+	// z_ranges should contain consecutive but not contiguous intervals [a_1,b_1), [a_2,b_2), ... such that a_n > b_(n-1)
+	
+	// precondition 2 and 3: nonempty tile, and valid range.
+	if(isEmpty() || z0 > z1)
+		return true;
 
-	sprintf(buffer,"SLICE %d of volume %d x %d",D_index, HEIGHT, WIDTH);
-	cvNamedWindow(buffer,1);
-	cvShowImage(buffer,image_resized);
-	cvMoveWindow(buffer, 10,10);
-	while(1)
-	{
-		if(cvWaitKey(100)==27) break;
-	}
+	// search for one z-range that intersects with [z0,z1]
+	bool intersects = false;
+	for(int k=0; k<z_ranges.size() && !intersects; k++)
+		intersects = z1 >= z_ranges[k].start && z_ranges[k].end > z0;
 
-	cvDestroyWindow(buffer);
-
-	cvReleaseMat(&slice);
-	cvReleaseMat(&mat_rescaled);
-	cvReleaseImage(&image_resized);
-	cvReleaseImageHeader(&img_buffer);
+	return !intersects;
 }

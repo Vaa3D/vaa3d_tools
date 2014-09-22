@@ -67,7 +67,7 @@ class terastitcher::PTabMergeTiles : public QWidget
     QCheckBox* resolutions_view_cboxs[S_MAX_MULTIRES];
     QButtonGroup* volumeformat_selection;
     QLabel* volumeformat_label;
-    QComboBox* volumeformat_cbox;
+    QComboBox* vol_format_cbox;
     QSpinBox* block_height_field;
     QSpinBox* block_width_field;
     QSpinBox* block_depth_field;
@@ -85,8 +85,8 @@ class terastitcher::PTabMergeTiles : public QWidget
     QLabel* restoreSPIM_label;
     QComboBox* restoreSPIM_cbox;
     QLabel* imgformat_label;
-    QComboBox* imgformat_cbox;
-    QLabel* imgdepth_label;
+    QComboBox* img_format_cbox;
+    QComboBox* imout_plugin_cbox;
     QComboBox* imgdepth_cbox;
     QComboBox* channel_selection;
 
@@ -157,7 +157,12 @@ public slots:
     /**********************************************************************************
     * Called when <multistack_cbox> or <multistack_cbox> state changed.
     ***********************************************************************************/
-    void volumeformat_changed(int i);
+    void volumeformat_changed(QString);
+
+    /**********************************************************************************
+    * Called when <imout_plugin_cbox> state changed
+    ***********************************************************************************/
+    void imout_plugin_changed(QString);
 
     /**********************************************************************************
     * Called when <resolutions_view_cboxs[i]> changed
@@ -196,7 +201,7 @@ public slots:
     * aged in the current thread (ex != 0). Otherwise, if a valid  3D image  is passed,
     * it is shown in Vaa3D.
     ***********************************************************************************/
-    void merging_done(MyException *ex, Image4DSimple* img);
+    void merging_done(iom::exception *ex, Image4DSimple* img);
 
     /**********************************************************************************
     * Called when "channel_selection" state has changed.
