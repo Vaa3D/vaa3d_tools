@@ -56,15 +56,6 @@ namespace terastitcher
     class QPrefixSuffixLineEdit;
     enum  debug_level { NO_DEBUG, LEV1, LEV2, LEV3, LEV_MAX };  //debug levels
 
-    /*******************
-    *    CONSTANTS     *
-    ********************
-    ---------------------------------------------------------------------------------------------------------------------------*/
-    const std::string IMAGE_FORMAT_SERIES           = "Series of 2D images";
-    const std::string IMAGE_FORMAT_TILED_2D_ANY     = "Tiles of 2D image stacks";
-    const std::string IMAGE_FORMAT_TILED_3D_ANY     = "Tiles of 3D image stacks";
-    const std::string IMAGE_FORMAT_TILED_3D_TIFF    = "Tiles of multipage TIFF stacks";
-    /*-------------------------------------------------------------------------------------------------------------------------*/
 
     /*******************
     *    PARAMETERS    *
