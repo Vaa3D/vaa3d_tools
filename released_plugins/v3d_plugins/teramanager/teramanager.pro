@@ -33,12 +33,12 @@ use_static_libs{
     INCLUDEPATH += ./include/opencv
     INCLUDEPATH += ./include
     mac{
-        LIBS += -L./lib/opencv/mac_x86_64
-        LIBS += -L./lib/opencv/mac_x86_64/3rdparty
+        LIBS += -L"$$_PRO_FILE_PWD_/lib/opencv/mac_x86_64"
+        LIBS += -L"$$_PRO_FILE_PWD_/lib/opencv/mac_x86_64/3rdparty"
     }
     unix:!mac{
-        LIBS += -L./lib/opencv/unix_x86_64
-        LIBS += -L./lib/opencv/unix_x86_64/3rdparty
+        LIBS += -L"$$_PRO_FILE_PWD_/lib/opencv/unix_x86_64"
+        LIBS += -L"$$_PRO_FILE_PWD_/lib/opencv/unix_x86_64/3rdparty"
     }
     win32{
         #WARNING! These precompiled libraries must match with your VC (vc9, vc10 or vc11) compiler!
@@ -245,4 +245,4 @@ SOURCES += ./src/control/QUndoMarkerDeleteROI.cpp
 #set up your own target
 TARGET	= $$qtLibraryTarget(teramanagerplugin)
 #DESTDIR = $$V3DBUILDPATH/../v3d/Windows_MSVC_64/plugins/teramanager
-DESTDIR	= ../../../bin/plugins/teramanager
+DESTDIR	= "$$_PRO_FILE_PWD_/../../../bin/plugins/teramanager
