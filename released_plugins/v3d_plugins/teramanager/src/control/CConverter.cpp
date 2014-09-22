@@ -28,11 +28,11 @@
 
 #include "CConverter.h"
 #include "CPlugin.h"
-#include "../core/ImageManager/RawVolume.h"
-#include "../core/ImageManager/SimpleVolume.h"
-#include "../core/ImageManager/SimpleVolumeRaw.h"
-#include "../core/ImageManager/TiledVolume.h"
-#include "../core/ImageManager/TiledMCVolume.h"
+#include "../core/imagemanager/RawVolume.h"
+#include "../core/imagemanager/SimpleVolume.h"
+#include "../core/imagemanager/SimpleVolumeRaw.h"
+#include "../core/imagemanager/TiledVolume.h"
+#include "../core/imagemanager/TiledMCVolume.h"
 #include "../core/VolumeConverter/VolumeConverter.h"
 
 using namespace teramanager;

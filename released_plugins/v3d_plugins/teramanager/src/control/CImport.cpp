@@ -34,9 +34,9 @@
 #include <sstream>
 #include <limits>
 #include <algorithm>
-#include "../core/ImageManager/StackedVolume.h"
-#include "../core/ImageManager/TiledVolume.h"
-#include "../core/ImageManager/TiledMCVolume.h"
+#include "../core/imagemanager/StackedVolume.h"
+#include "../core/imagemanager/TiledVolume.h"
+#include "../core/imagemanager/TiledMCVolume.h"
 
 using namespace teramanager;
 using namespace iim;

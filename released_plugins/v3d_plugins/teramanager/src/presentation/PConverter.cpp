@@ -28,7 +28,7 @@
 
 #include "PConverter.h"
 #include "PMain.h"
-#include "../core/ImageManager/ProgressBar.h"
+#include "../core/imagemanager/ProgressBar.h"
 #include "../control/CConverter.h"
 #include "../control/CSettings.h"
 

@@ -30,8 +30,8 @@
 #include "CVolume.h"
 #include "CImport.h"
 #include "../presentation/PLog.h"
-#include "../core/ImageManager/TiledVolume.h"
-#include "../core/ImageManager/TiledMCVolume.h"
+#include "../core/imagemanager/TiledVolume.h"
+#include "../core/imagemanager/TiledMCVolume.h"
 
 using namespace teramanager;
 using namespace iim;
