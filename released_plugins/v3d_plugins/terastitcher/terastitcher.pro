@@ -114,7 +114,6 @@ INCLUDEPATH += ../teramanager/src/core/imagemanager
 HEADERS += ./src/core/tinyxml/tinyxml.h
 HEADERS += ./src/core/tinyxml/tinystr.h
 HEADERS += ./src/core/iomanager/iomanager.config.h
-HEADERS += ./src/core/iomanager/iomanager.h
 HEADERS += ./src/core/iomanager/ioplugins.h
 HEADERS += ./src/core/iomanager/IOPluginAPI.h
 HEADERS += ./src/core/iomanager/ProgressBar.h
@@ -238,7 +237,7 @@ SOURCES += ./src/presentation/QPrefixSuffixLineEdit.cpp
 
 #set up target
 TARGET	= $$qtLibraryTarget(terastitcherplugin)
-DESTDIR	= "$$_PRO_FILE_PWD_/../../../bin/plugins/image_stitching/terastitcher"
+DESTDIR	= ../../../bin/plugins/image_stitching/terastitcher
 #DESTDIR	= $$V3DBUILDPATH/../v3d/Windows_MSVC_64/plugins/image_stitching/terastitcher
 
 
