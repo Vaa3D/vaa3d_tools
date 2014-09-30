@@ -14,14 +14,14 @@ TARGET	= $$qtLibraryTarget(movie_format_convert)
 DESTDIR	= $$V3DMAINPATH/../bin/plugins/movies/Movie_Converter
 
 macx{
-    QMAKE_POST_LINK = cp ./bin/mac_ffmpeg ../../v3d/.
+    QMAKE_POST_LINK = cp ./bin/mac_ffmpeg $$V3DMAINPATH/../bin/.
 }
 
 unix:!macx {
-    QMAKE_POST_LINK = cp ./bin/linux_ffmpeg ../../v3d/.
+    QMAKE_POST_LINK = cp ./bin/linux_ffmpeg $$V3DMAINPATH/../bin/.
 }
 
 win32{
-    QMAKE_POST_LINK = copy .\\bin\\windows_ffmpeg.exe ..\\..\\v3d\\.
+    QMAKE_POST_LINK = copy .\\bin\\windows_ffmpeg.exe $$V3DMAINPATH\\..\\bin\\.
 }
 
