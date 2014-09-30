@@ -33,6 +33,7 @@ use_static_libs{
     unix:!mac{
         LIBS += -L"$$_PRO_FILE_PWD_/../teramanager/lib/opencv/unix_x86_64"
         LIBS += -L"$$_PRO_FILE_PWD_/../teramanager/lib/opencv/unix_x86_64/3rdparty"
+        LIBS += -lgobject-2.0
     }
     win32{
         #WARNING! These precompiled libraries must match with your VC (vc9, vc10 or vc11) compiler!
