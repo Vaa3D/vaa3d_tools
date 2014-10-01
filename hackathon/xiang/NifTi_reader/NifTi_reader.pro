@@ -5,9 +5,9 @@ VAA3DPATH = ../../../../v3d_external
 INCLUDEPATH	+= $$VAA3DPATH/v3d_main/basic_c_fun
 INCLUDEPATH	+= ./include
 macx{
-    LIBS += ./lib/libnifticdf.a
-    LIBS += ./lib/libniftiio.a
-    LIBS += ./lib/libznz.a
+    LIBS += ./lib/nifticdf.a
+    LIBS += ./lib/niftiio.a
+    LIBS += ./lib/znz.a
 }
 
 win32{
