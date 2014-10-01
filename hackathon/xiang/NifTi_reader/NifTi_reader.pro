@@ -4,9 +4,22 @@ CONFIG	+= qt plugin warn_off
 VAA3DPATH = ../../../../v3d_external
 INCLUDEPATH	+= $$VAA3DPATH/v3d_main/basic_c_fun
 INCLUDEPATH	+= ./include
-LIBS += ./lib/nifticdf.lib
-LIBS += ./lib/niftiio.lib
-LIBS += ./lib/znz.lib
+macx{
+    LIBS += ./lib/libnifticdf.a
+    LIBS += ./lib/libniftiio.a
+    LIBS += ./lib/libznz.a
+}
+
+win32{
+    LIBS += ./lib/nifticdf.lib
+	LIBS += ./lib/niftiio.lib
+	LIBS += ./lib/znz.lib
+}
+
+unix:!macx {
+
+}
+
 
 HEADERS	+= NifTi_reader_plugin.h
 SOURCES	+= NifTi_reader_plugin.cpp

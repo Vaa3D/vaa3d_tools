@@ -57,7 +57,7 @@ void NifTi_reader::domenu(const QString &menu_name, V3DPluginCallback2 &callback
 		}
 		else
 		{
-			v3d_msg("File opened correctly!");
+			//v3d_msg("File opened correctly!");
 			nifti_image_load(nimage_Input);
 		}
 		
@@ -83,35 +83,46 @@ void NifTi_reader::domenu(const QString &menu_name, V3DPluginCallback2 &callback
 
 		//Get datatype of the imported NIFTI file (important!);
 		int dataType = nimage_Input->datatype;
-		/* For debugging only
+		/* For debugging only */
 		ss <<"Datatype: "<<nifti_datatype_string(dataType)<<";";
 		v3d_msg(ss.str().c_str());
 		ss.str(std::string());
-		*/
+		/* */
 
-		//Use simple solution for different datatypes in NIFTI data by converting them to FLOAT;
-		int* vct_data = (int *)calloc(1,ntot);
-		vct_data = (int *)nimage_Input->data;
-		/* For future improvements
-		if (dataType == DT_INT32)
+		
+		if (dataType == DT_INT16)
 		{
-			memcpy(&temp, &nimage_Input->data, ntot);
+			int* vct_data = (int *)calloc(1,ntot);
+			vct_data = (int *)nimage_Input->data;
+			Image4DSimple Image4D_Main;
+			Image4D_Main.setData((unsigned char*)vct_data, nX, nY, nZ, 1, V3D_UINT16);
+			v3dhandle newwin = callback.newImageWindow();
+			callback.setImage(newwin, &Image4D_Main);
+			callback.updateImageWindow(newwin);
 		}
 		else if (dataType == DT_DOUBLE)
 		{
-			memcpy(&temp, &nimage_Input->data, ntot);
+			double* vct_data = (double *)calloc(1,ntot);
+			vct_data = (double *)nimage_Input->data;
+			Image4DSimple Image4D_Main;
+			Image4D_Main.setData((unsigned char*)vct_data, nX, nY, nZ, 1, V3D_FLOAT32);
+			v3dhandle newwin = callback.newImageWindow();
+			callback.setImage(newwin, &Image4D_Main);
+			callback.updateImageWindow(newwin);
 		}
 		else
 		{
-			temp = (float *)nimage_Input->data;
+			float* vct_data = (float *)calloc(1,ntot);
+			vct_data = (float *)nimage_Input->data;
+			Image4DSimple Image4D_Main;
+			Image4D_Main.setData((unsigned char*)vct_data, nX, nY, nZ, 1, V3D_FLOAT32);
+			v3dhandle newwin = callback.newImageWindow();
+			callback.setImage(newwin, &Image4D_Main);
+			callback.updateImageWindow(newwin);
 		}
-		*/
 		
-		Image4DSimple Image4D_Main;
-		Image4D_Main.setData((unsigned char*)vct_data, nX, nY, nZ, 1, V3D_UINT16);
-		v3dhandle newwin = callback.newImageWindow();
-        callback.setImage(newwin, &Image4D_Main);
-        callback.updateImageWindow(newwin);
+		
+
 
 		//nifti_image_unload(nimage_Input);
 		//nifti_image_free(nimage_Input);	
