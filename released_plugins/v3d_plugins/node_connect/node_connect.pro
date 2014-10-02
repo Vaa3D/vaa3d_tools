@@ -24,5 +24,5 @@ SOURCES	+= $$VAA3DPATH/v3d_main/basic_c_fun/basic_surf_objs.cpp
 
 
 TARGET	= $$qtLibraryTarget(node_connect)
-DESTDIR        = $$VAA3DPATH/bin/plugins/tmp/node_connect
+DESTDIR        = $$VAA3DPATH/bin/plugins/neuron_utilities/node_connect
 #DESTDIR	= C:\Users\rummig\Desktop\Vaa3d_allfiles\vaa3d_win7_32bit_v2.707\plugins\node_connect
