@@ -21,9 +21,9 @@ win32{
 unix:!macx {
     LIBS += ./lib/unix/libz.a
     LIBS += ./lib/unix/libfslio.a
-    LIBS += ./lib/unix/libniftiio.so.2.0.0
-    LIBS += ./lib/unix/libznz.so.2.0.0
-    LIBS += ./lib/unix/libnifticdf.so.2.0.0
+    LIBS += ./lib/unix/libniftiio.so.2
+    LIBS += ./lib/unix/libznz.so.2
+    LIBS += ./lib/unix/libnifticdf.so.2
 }
 
 
