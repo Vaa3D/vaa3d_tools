@@ -1,4 +1,3 @@
-
 TEMPLATE	= lib
 CONFIG	+= qt plugin warn_off
 VAA3DPATH = ../../../../v3d_external
