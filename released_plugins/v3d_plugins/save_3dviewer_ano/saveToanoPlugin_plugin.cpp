@@ -271,7 +271,7 @@ void controlPanel::_slot_saveano_content()
         for(V3DLONG i = 0; i < SWC_list.count(); i++)
         {
             NeuronTree mTree = mTreeList->at(i);
-            QString newSWCname = fileName + "_" + QFileInfo(SWC_list.at(i)).fileName() + "_shifted.swc";
+            QString newSWCname = fileName + "_" + QFileInfo(SWC_list.at(i)).fileName();
             writeSWC_file(newSWCname,mTree);
             anofile << "SWCFILE=" << newSWCname.toStdString().c_str() << endl;
         }
@@ -280,7 +280,7 @@ void controlPanel::_slot_saveano_content()
 
     if(APO_list.count()>0)
     {
-            QString newAPOname = fileName + "_" + QFileInfo(APO_list.at(0)).baseName() + "_shifted.apo";
+            QString newAPOname = fileName + "_" + QFileInfo(APO_list.at(0)).fileName();
             writeAPO_file(newAPOname,mAPOList_v2);
             anofile << "APOFILE=" << newAPOname.toStdString().c_str() << endl;
     }
