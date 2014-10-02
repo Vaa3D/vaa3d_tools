@@ -52,11 +52,11 @@ void NifTi_reader::domenu(const QString &menu_name, V3DPluginCallback2 &callback
 		QByteArray QByteA = m_FileName.toLocal8Bit();
 		char* string_fileName = QByteA.data();
 
-		char string_drive[_MAX_DRIVE];
-		char string_dir[_MAX_DIR];
-		char string_extName[_MAX_EXT];
-		char string_mainName[_MAX_FNAME];
-		_splitpath_s(string_fileName, string_drive, _MAX_DRIVE, string_dir, _MAX_DIR, string_mainName, _MAX_FNAME, string_extName, _MAX_EXT);
+		char string_drive[100];
+		char string_dir[100];
+		char string_extName[100];
+		char string_mainName[100];
+		_splitpath_s(string_fileName, string_drive, 100, string_dir, 100, string_mainName, 100, string_extName,100);
 		if (strcmp(string_extName, ".hdr")==0)
 		{
 			//Check whether the .img file exists for the header;
