@@ -7,6 +7,7 @@
 #include <vector>
 #include "cropped3DImageSeries_plugin.h"
 #include "../../../released_plugins/v3d_plugins/istitch/y_imglib.h"
+#include "../../../hackathon/zhi/APP2_large_scale/readRawfile_func.h"
 
 using namespace std;
 
@@ -38,12 +39,17 @@ QStringList importSeriesFileList_addnumbersort(const QString & curFilePath)
     return myList;
 }
 
+template <class T> bool extract_a_channel(T* data1d, V3DLONG *sz, V3DLONG c, void * &outimg);
+
+
 Q_EXPORT_PLUGIN2(cropped3DImageSeries, cropped3DImageSeries);
+
  
 QStringList cropped3DImageSeries::menulist() const
 {
 	return QStringList() 
         <<tr("crop a 3D stack from image series")
+        <<tr("crop a 3D stack from a 3D image(v3draw/raw format)")
 		<<tr("about");
 }
 
@@ -187,7 +193,75 @@ void cropped3DImageSeries::domenu(const QString &menu_name, V3DPluginCallback2 &
         callback.updateImageWindow(newwin);
 
 	}
-	else
+    else if (menu_name == tr("crop a 3D stack from a 3D image(v3draw/raw format)"))
+    {
+        QString m_InputfolderName =  QFileDialog::getOpenFileName(0, QObject::tr("Open Raw File"),
+                                                                  "",
+                                                                  QObject::tr("Supported file (*.raw *.RAW *.V3DRAW *.v3draw)"));
+        unsigned char * datald = 0;
+        V3DLONG *in_zz = 0;
+        V3DLONG *in_sz = 0;
+
+        int datatype;
+
+        if (!loadRawRegion(const_cast<char *>(m_InputfolderName.toStdString().c_str()), datald, in_zz, in_sz,datatype,0,0,0,1,1,1))
+        {
+            return;
+        }
+
+        if(datald) {delete []datald; datald = 0;}
+        CropRegionNavigateDialog dialog(parent, in_zz);
+        if (dialog.exec()!=QDialog::Accepted)
+            return;
+        dialog.update();
+
+        unsigned char * cropped_image = 0;
+
+        if (!loadRawRegion(const_cast<char *>(m_InputfolderName.toStdString().c_str()), cropped_image, in_zz, in_sz,datatype,dialog.xs,dialog.ys,dialog.zs,dialog.xe,dialog.ye,dialog.ze))
+        {
+            return;
+        }
+
+        ImagePixelType pixeltype;
+        switch (datatype)
+        {
+            case 1: pixeltype = V3D_UINT8; break;
+            case 2: pixeltype = V3D_UINT16; break;
+            case 4: pixeltype = V3D_FLOAT32;break;
+            default: v3d_msg("Invalid data type. Do nothing."); return;
+        }
+
+        Image4DSimple * new4DImage = new Image4DSimple();
+
+        void* cropped_image_1channel = 0;
+        if(dialog.c !=-1 && in_sz[3] > 1)
+        {
+            switch(datatype)
+            {
+                case 1: extract_a_channel(cropped_image, in_sz, dialog.c, cropped_image_1channel); break;
+                case 2: extract_a_channel((unsigned short int *)cropped_image, in_sz, dialog.c, cropped_image_1channel); break;
+                case 4: extract_a_channel((float *)cropped_image, in_sz, dialog.c, cropped_image_1channel); break;
+                default:
+                v3d_msg("Right now this plugin supports only UINT8/UINT16/FLOAT32 data. Do nothing."); return;
+            }
+            new4DImage->createImage(in_sz[0], in_sz[1], in_sz[2], 1, pixeltype);
+            memcpy(new4DImage->getRawData(), (unsigned char *)cropped_image_1channel, new4DImage->getTotalBytes());
+        }
+        else
+        {
+            new4DImage->createImage(in_sz[0], in_sz[1], in_sz[2], in_sz[3], pixeltype);
+            memcpy(new4DImage->getRawData(), (unsigned char *)cropped_image, new4DImage->getTotalBytes());
+        }
+
+        v3dhandle newwin = callback.newImageWindow();
+        callback.setImage(newwin, new4DImage);
+        callback.setImageName(newwin, "Cropped 3D image");
+        callback.updateImageWindow(newwin);
+
+
+        return;
+    }
+    else
 	{
         v3d_msg(tr("This is plugin to generate 3D stack from image series,"
 			"Developed by Zhi Zhou, 2014-06-30"));
@@ -359,5 +433,19 @@ bool cropped3DImageSeries::dofunc(const QString & func_name, const V3DPluginArgL
         return false;
 
 	return true;
+}
+
+template <class T> bool extract_a_channel(T* data1d, V3DLONG *sz, V3DLONG c, void* &outimg)
+{
+    if (!data1d || !sz || c<0 || c>=sz[3])
+    {
+        printf("problem: c=[%ld] sz=[%p] szc=[%ld], data1d=[%p]\n",c, sz, sz[3], data1d);
+        return false;
+    }
+
+    outimg = (void *) (data1d + c*sz[0]*sz[1]*sz[2]);
+
+//    printf("ok c=[%ld]\n",c);
+    return true;
 }
 
