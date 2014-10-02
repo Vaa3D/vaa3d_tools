@@ -271,7 +271,7 @@ void controlPanel::_slot_saveano_content()
         for(V3DLONG i = 0; i < SWC_list.count(); i++)
         {
             NeuronTree mTree = mTreeList->at(i);
-            QString newSWCname = fileName + "_" + QFileInfo(SWC_list.at(i)).baseName() + "_shifted.swc";
+            QString newSWCname = fileName + "_" + QFileInfo(SWC_list.at(i)).fileName() + "_shifted.swc";
             writeSWC_file(newSWCname,mTree);
             anofile << "SWCFILE=" << newSWCname.toStdString().c_str() << endl;
         }
