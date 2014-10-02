@@ -9,6 +9,8 @@
 #include <iostream>
 #include <sstream>
 #include <string>
+#include <stdlib.h>
+#include <sys/stat.h>
 #include <nifti1_io.h>
 using namespace std;
 Q_EXPORT_PLUGIN2(NifTi_reader, NifTi_reader);
@@ -17,7 +19,7 @@ Q_EXPORT_PLUGIN2(NifTi_reader, NifTi_reader);
 QStringList NifTi_reader::menulist() const
 {
 	return QStringList() 
-		<<tr("Import .nii file...")
+		<<tr("Import ANALYZE image files (.nii, .nii.gz, .hdr+.img...")
 		<<tr("about");
 }
 
@@ -31,28 +33,54 @@ QStringList NifTi_reader::funclist() const
 
 void NifTi_reader::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
 {
-	if (menu_name == tr("Import .nii file..."))
+	stringstream ss; //stringstream used to do the conversion from any type to string;
+
+	if (menu_name == tr("Import ANALYZE image files (.nii, .nii.gz, .hdr+.img..."))
 	{
 		//Show open file dialog;
-        QString m_FileName = QFileDialog::getOpenFileName(parent, QObject::tr("Choose .nii file to import"),
+        QString m_FileName = QFileDialog::getOpenFileName(parent, QObject::tr("Choose ANALYZE image file to import..."),
                                                           QDir::currentPath(),
-                                                          QObject::tr("NIFTI File (*.*)"));
+                                                          QObject::tr("ANALYZE image files (*.*)"));
+
+		        
+
         if(m_FileName.isEmpty())
         {
              return;
         }
 
-
 		QByteArray QByteA = m_FileName.toLocal8Bit();
-		char* string_FileName = QByteA.data();
+		char* string_fileName = QByteA.data();
+
+		char string_drive[_MAX_DRIVE];
+		char string_dir[_MAX_DIR];
+		char string_extName[_MAX_EXT];
+		char string_mainName[_MAX_FNAME];
+		_splitpath_s(string_fileName, string_drive, _MAX_DRIVE, string_dir, _MAX_DIR, string_mainName, _MAX_FNAME, string_extName, _MAX_EXT);
+		if (strcmp(string_extName, ".hdr")==0)
+		{
+			//Check whether the .img file exists for the header;
+			ss<<string_drive<<string_dir<<string_mainName<<".img";
+			struct stat stat_tempBuffer; //Not used at all, only for providing a memory block for stat() function;
+			if (stat(ss.str().c_str(), &stat_tempBuffer) == -1)
+			{
+				v3d_msg("Cannot find corresponding .img file!");
+				return;
+			}
+			else
+			{
+				ss.str(std::string());
+			}
+		}
+
 
 		/* Open the file and read it in, but do not load the data;  */
-		nifti_image *nimage_Input = nifti_image_read(string_FileName, 0);	
-
+		nifti_image *nimage_Input = nifti_image_read(string_fileName, 0);	
+		
 		/* Check whether the file is valid; */
 		if( ((nimage_Input) == NULL) || ((nimage_Input)->iname == NULL) || ((nimage_Input)->nbyper <= 0) || ((nimage_Input)->nvox <= 0))
 		{
-			v3d_msg("Cannot locate the desired file or Bad header info!");
+			v3d_msg("Cannot find header info!");
 			return;
 		}
 		else
@@ -61,7 +89,14 @@ void NifTi_reader::domenu(const QString &menu_name, V3DPluginCallback2 &callback
 			nifti_image_load(nimage_Input);
 		}
 		
-		stringstream ss; //stringstream used to do the conversion from any type to string;
+		//Get datatype of the imported NIFTI file (important!);
+		int int_dataType = nimage_Input->datatype;
+		string string_dataType = nifti_datatype_string(int_dataType);
+		/* For debugging purpose only;
+		ss <<"Datatype: "<<string_dataType<<";";
+		v3d_msg(ss.str().c_str());
+		ss.str(std::string());
+		*/
 
 		//Get total bytes;
 		int ntot=(int)(nimage_Input->nbyper)*(int)(nimage_Input->nvox);
@@ -81,16 +116,7 @@ void NifTi_reader::domenu(const QString &menu_name, V3DPluginCallback2 &callback
 		ss.str(std::string());
 		*/
 
-		//Get datatype of the imported NIFTI file (important!);
-		int dataType = nimage_Input->datatype;
-		/* For debugging only */
-		ss <<"Datatype: "<<nifti_datatype_string(dataType)<<";";
-		v3d_msg(ss.str().c_str());
-		ss.str(std::string());
-		/* */
-
-		
-		if (dataType == DT_INT16)
+		if (int_dataType == DT_INT16)
 		{
 			int* vct_data = (int *)calloc(1,ntot);
 			vct_data = (int *)nimage_Input->data;
@@ -100,7 +126,7 @@ void NifTi_reader::domenu(const QString &menu_name, V3DPluginCallback2 &callback
 			callback.setImage(newwin, &Image4D_Main);
 			callback.updateImageWindow(newwin);
 		}
-		else if (dataType == DT_DOUBLE)
+		else if (int_dataType == DT_DOUBLE)
 		{
 			double* vct_data = (double *)calloc(1,ntot);
 			vct_data = (double *)nimage_Input->data;
@@ -116,6 +142,7 @@ void NifTi_reader::domenu(const QString &menu_name, V3DPluginCallback2 &callback
 			vct_data = (float *)nimage_Input->data;
 			Image4DSimple Image4D_Main;
 			Image4D_Main.setData((unsigned char*)vct_data, nX, nY, nZ, 1, V3D_FLOAT32);
+			
 			v3dhandle newwin = callback.newImageWindow();
 			callback.setImage(newwin, &Image4D_Main);
 			callback.updateImageWindow(newwin);
