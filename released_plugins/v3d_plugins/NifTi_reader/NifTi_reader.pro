@@ -30,4 +30,4 @@ SOURCES	+= NifTi_reader_plugin.cpp
 SOURCES	+= $$VAA3DPATH/v3d_main/basic_c_fun/v3d_message.cpp
 
 TARGET	= $$qtLibraryTarget(NifTi_reader)
-DESTDIR	= ./release
+DESTDIR	= $$VAA3DPATH/bin/plugins/data_IO/NIFTI_file_reader
