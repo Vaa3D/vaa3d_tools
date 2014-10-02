@@ -38,29 +38,36 @@ void NifTi_reader::domenu(const QString &menu_name, V3DPluginCallback2 &callback
 	if (menu_name == tr("Import ANALYZE image files (.nii, .nii.gz, .hdr+.img..."))
 	{
 		//Show open file dialog;
-        QString m_FileName = QFileDialog::getOpenFileName(parent, QObject::tr("Choose ANALYZE image file to import..."),
+        QString QString_fileName = QFileDialog::getOpenFileName(parent, QObject::tr("Choose ANALYZE image file to import..."),
                                                           QDir::currentPath(),
                                                           QObject::tr("ANALYZE image files (*.*)"));
 
 		        
 
-        if(m_FileName.isEmpty())
+        if(QString_fileName.isEmpty())
         {
              return;
         }
 
-		QByteArray QByteA = m_FileName.toLocal8Bit();
+		QByteArray QByteA = QString_fileName.toLocal8Bit();
 		char* string_fileName = QByteA.data();
 
-		char string_drive[100];
-		char string_dir[100];
-		char string_extName[100];
-		char string_mainName[100];
-		_splitpath_s(string_fileName, string_drive, 100, string_dir, 100, string_mainName, 100, string_extName,100);
+		//Split the string into main and ext part, using QString
+		QString QString_dot = ".";
+		int int_lastIndexOfDot = QString_fileName.lastIndexOf(QString_dot);
+		QString QString_extName = QString_fileName.mid(int_lastIndexOfDot);
+		QByteA = QString_extName.toLocal8Bit();
+		char* string_extName = QByteA.data();
+		QString QString_mainName = QString_fileName.mid(0, int_lastIndexOfDot);
+		QByteA = QString_mainName.toLocal8Bit();
+		char* string_mainName = QByteA.data();
+		//v3d_msg(string_mainName);
+		//v3d_msg(string_extName);
+
 		if (strcmp(string_extName, ".hdr")==0)
 		{
 			//Check whether the .img file exists for the header;
-			ss<<string_drive<<string_dir<<string_mainName<<".img";
+			ss<<string_mainName<<".img";
 			struct stat stat_tempBuffer; //Not used at all, only for providing a memory block for stat() function;
 			if (stat(ss.str().c_str(), &stat_tempBuffer) == -1)
 			{
