@@ -8,6 +8,8 @@
 #include "saveToanoPlugin_plugin.h"
 #include <iostream>
 #include <fstream>
+#include "basic_surf_objs.h"
+
 
 
 
@@ -168,6 +170,11 @@ void controlPanel::_slot_saveano()
     QString curwinname = combo_surface->currentText().remove("3D View [").remove("]");
     DataLists_in_3dviewer listItem = m_v3d.fetch_3dviewer_datafilelist(curwinname);
 
+    list_3dviewer = m_v3d.getListAll3DViewers();
+    surface_win = list_3dviewer[combo_surface->currentIndex()];
+    QList<NeuronTree> * mTreeList;
+    mTreeList = m_v3d.getHandleNeuronTrees_Any3DViewer(surface_win);
+
     QStringList SWC_list = listItem.swc_file_list;
     QString imgname = listItem.imgfile;
     QString labelfieldname = listItem.labelfield_file;
@@ -181,7 +188,10 @@ void controlPanel::_slot_saveano()
     {
         for(V3DLONG i = 0; i < SWC_list.count(); i++)
         {
-            anofile << "SWCFILE=" << SWC_list.at(i).toStdString().c_str() << endl;
+            NeuronTree mTree = mTreeList->at(i);
+            QString newSWCname = fileName + "_" + QFileInfo(SWC_list.at(i)).baseName() + "_shifted.swc";
+            writeSWC_file(newSWCname,mTree);
+            anofile << "SWCFILE=" << newSWCname.toStdString().c_str() << endl;
         }
 
     }
