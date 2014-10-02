@@ -5,7 +5,6 @@ INCLUDEPATH	+= $$VAA3DPATH/v3d_main/basic_c_fun
 INCLUDEPATH	+= ./include
 macx{
     LIBS += ./lib/mac/libz.a    
-    LIBS += ./lib/mac/libfslio.a
     LIBS += ./lib/mac/libniftiio.a
     LIBS += ./lib/mac/libznz.a
     LIBS += ./lib/mac/libnifticdf.a
@@ -20,10 +19,9 @@ win32{
 
 unix:!macx {
     LIBS += ./lib/unix/libz.a
-    LIBS += ./lib/unix/libfslio.a
-    LIBS += ./lib/unix/libniftiio.so.2
-    LIBS += ./lib/unix/libznz.so.2
-    LIBS += ./lib/unix/libnifticdf.so.2
+    LIBS += ./lib/unix/libniftiio.a
+    LIBS += ./lib/unix/libznz.a
+    LIBS += ./lib/unix/libnifticdf.a
 }
 
 
