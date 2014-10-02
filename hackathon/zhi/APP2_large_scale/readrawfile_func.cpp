@@ -163,9 +163,9 @@ int loadRawRegion(char * filename, unsigned char * & img, V3DLONG * & sz, V3DLON
         totalUnit *= sz[i];
     }
 
-    V3DLONG tmpw = endx - startx;
-    V3DLONG tmph = endy - starty;
-    V3DLONG tmpz = endz - startz;
+    V3DLONG tmpw = endx - startx + 1;
+    V3DLONG tmph = endy - starty + 1;
+    V3DLONG tmpz = endz - startz + 1;
 
     V3DLONG head = 4*4+2+1+lenkey; // header_len ?
     V3DLONG pgsz1=sz[2]*sz[1]*sz[0], pgsz2=sz[1]*sz[0], pgsz3=sz[0];
