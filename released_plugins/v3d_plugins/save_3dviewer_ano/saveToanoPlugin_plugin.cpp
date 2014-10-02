@@ -17,6 +17,7 @@ using namespace std;
 Q_EXPORT_PLUGIN2(save3dviewer2linker, saveToanoPlugin);
 
 void generatorAno43Dviewer(V3DPluginCallback2 &callback, QWidget *parent);
+
 controlPanel* controlPanel::panel = 0;
 
  
@@ -134,7 +135,9 @@ void MyComboBox::updateList()
 controlPanel::controlPanel(V3DPluginCallback2 &_v3d, QWidget *parent) :
     QDialog(parent), m_v3d(_v3d)
 {
-    QPushButton* btn_saveano = new QPushButton("Save a linker file of all displayed content in a 3D viewer");
+    QPushButton* btn_saveano = new QPushButton("Save a linker file of all displayed content in a 3D viewer(without saving content)");
+    QPushButton* btn_saveano_content = new QPushButton("Save a linker file of all displayed content in a 3D viewer(with saving content)");
+
     m_pLineEdit_filename = new QLineEdit();
     list_3dviewer = m_v3d.getListAll3DViewers();
 
@@ -147,11 +150,15 @@ controlPanel::controlPanel(V3DPluginCallback2 &_v3d, QWidget *parent) :
     gridLayout->addWidget(label_surface, 1,0,1,5);
     gridLayout->addWidget(combo_surface, 2,0,1,5);
     gridLayout->addWidget(btn_saveano, 3,0,1,1);
+    gridLayout->addWidget(btn_saveano_content, 4,0,1,1);
+
 
     setLayout(gridLayout);
     setWindowTitle(QString("Save a linker file"));
 
     connect(btn_saveano, SIGNAL(clicked()), this, SLOT(_slot_saveano()));
+    connect(btn_saveano_content, SIGNAL(clicked()), this, SLOT(_slot_saveano_content()));
+
 }
 
 controlPanel::~controlPanel()
@@ -162,10 +169,18 @@ controlPanel::~controlPanel()
 
 void controlPanel::_slot_saveano()
 {
+    if(combo_surface->currentIndex() <0)
+    {
+        v3d_msg("Please open a 3D viewer window");
+        return;
+    }
     QString fileName;
     fileName = QFileDialog::getSaveFileName(this, "Save Linker File",
             "linker_file.ano",
             "Linker File (*.ano)");
+
+    if(fileName.length() == 0)
+        return;
 
     QString curwinname = combo_surface->currentText().remove("3D View [").remove("]");
     DataLists_in_3dviewer listItem = m_v3d.fetch_3dviewer_datafilelist(curwinname);
@@ -174,6 +189,73 @@ void controlPanel::_slot_saveano()
     surface_win = list_3dviewer[combo_surface->currentIndex()];
     QList<NeuronTree> * mTreeList;
     mTreeList = m_v3d.getHandleNeuronTrees_Any3DViewer(surface_win);
+
+    QStringList SWC_list = listItem.swc_file_list;
+    QString imgname = listItem.imgfile;
+    QString labelfieldname = listItem.labelfield_file;
+    QString surfacename = listItem.surface_file;
+    QStringList APO_list = listItem.pointcloud_file_list;
+
+    ofstream anofile;
+    anofile.open (fileName.toStdString().c_str(),ios::out | ios::app );
+
+    if(SWC_list.count()>0)
+    {
+        for(V3DLONG i = 0; i < SWC_list.count(); i++)
+        {
+            anofile << "SWCFILE=" << SWC_list.at(i).toStdString().c_str() << endl;
+        }
+
+    }
+
+    if(APO_list.count()>0)
+    {
+        for(V3DLONG i = 0; i < APO_list.count(); i++)
+        {
+            anofile << "APOFILE=" << APO_list.at(i).toStdString().c_str() << endl;
+        }
+
+    }
+
+    if(imgname.size()>0) anofile << "RAWIMG=" << imgname.toStdString().c_str() << endl;
+    if(surfacename.size()>0) anofile << "SURFILE=" << surfacename.toStdString().c_str() << endl;
+    if(labelfieldname.size()>0) anofile << "SURFILE=" << labelfieldname.toStdString().c_str() << endl;
+
+    anofile.close();
+
+    v3d_msg(QString("The APO file is save in:[%1]").arg(fileName.toStdString().c_str()));
+    return;
+}
+
+void controlPanel::_slot_saveano_content()
+{
+    if(combo_surface->currentIndex() <0)
+    {
+        v3d_msg("Please open a 3D viewer window");
+        return;
+    }
+
+    QString fileName;
+    fileName = QFileDialog::getSaveFileName(this, "Save Linker File",
+            "linker_file.ano",
+            "Linker File (*.ano)");
+
+    if(fileName.length() == 0)
+        return;
+    QString curwinname = combo_surface->currentText().remove("3D View [").remove("]");
+    DataLists_in_3dviewer listItem = m_v3d.fetch_3dviewer_datafilelist(curwinname);
+
+    list_3dviewer = m_v3d.getListAll3DViewers();
+    surface_win = list_3dviewer[combo_surface->currentIndex()];
+    QList<NeuronTree> * mTreeList;
+    mTreeList = m_v3d.getHandleNeuronTrees_Any3DViewer(surface_win);
+
+    QList<CellAPO> * mAPOList;
+    mAPOList = m_v3d.getHandleAPOCellList_Any3DViewer(surface_win);
+
+    QList<CellAPO> mAPOList_v2;
+    for (int i = 0; i < mAPOList->size();i++)
+            mAPOList_v2.push_back(mAPOList->at(i));
 
     QStringList SWC_list = listItem.swc_file_list;
     QString imgname = listItem.imgfile;
@@ -198,11 +280,9 @@ void controlPanel::_slot_saveano()
 
     if(APO_list.count()>0)
     {
-        for(V3DLONG i = 0; i < APO_list.count(); i++)
-        {
-            anofile << "APOFILE=" << APO_list.at(i).toStdString().c_str() << endl;
-        }
-
+            QString newAPOname = fileName + "_" + QFileInfo(APO_list.at(0)).baseName() + "_shifted.apo";
+            writeAPO_file(newAPOname,mAPOList_v2);
+            anofile << "APOFILE=" << newAPOname.toStdString().c_str() << endl;
     }
 
     if(imgname.size()>0) anofile << "RAWIMG=" << imgname.toStdString().c_str() << endl;
@@ -214,5 +294,4 @@ void controlPanel::_slot_saveano()
     v3d_msg(QString("The APO file is save in:[%1]").arg(fileName.toStdString().c_str()));
     return;
 }
-
 
