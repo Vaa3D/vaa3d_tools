@@ -26,5 +26,5 @@ SOURCES	+= $$VAA3DPATH/v3d_main/basic_c_fun/v3d_message.cpp
 SOURCES	+= $$VAA3DPATH/v3d_main/basic_c_fun/basic_surf_objs.cpp
 
 TARGET	= $$qtLibraryTarget(typeset)
-DESTDIR = C:\Users\rummig\Desktop\Vaa3d_allfiles\vaa3d_win7_32bit_v2.707\plugins\typeset_childbranch #to test
-#DESTDIR	= $$VAA3DPATH/bin/plugins/neuron_utilities/typeset_childbranch
+#DESTDIR = C:\Users\rummig\Desktop\Vaa3d_allfiles\vaa3d_win7_32bit_v2.707\plugins\typeset_childbranch #to test
+DESTDIR	= $$VAA3DPATH/bin/plugins/neuron_utilities/typeset_childbranch
