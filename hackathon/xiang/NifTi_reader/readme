@@ -1,0 +1,27 @@
+"NifTi_reader" is a plug-in for the image visualization and analysis system named "Vaa3D" (http://home.penglab.com/proj/vaa3d/Vaa3D/About_Vaa3D.html);
+
+The function of this plug-in is to provide an interface for Vaa3D to read various ANALYZE data formats, including: .nii, .nii.gz, .img+.hdr;
+
+To use the plug-in, simply select from the menu, then select the target file, it would be then pushed to the main visualization window of Vaa3D;
+
+To build the plug-in from source code, first please notice that it is depended on two libraries: the zlib (http://www.zlib.net/) and the nifticlib (http://niftilib.sourceforge.net/). Those two libraries have been built as static libraries for three different types of platforms:
+
+	For LINUX, the libraries include:
+	lib/unix/libz.a (from zlib);
+	lib/unix/libznz.a (from nifticlib, "Low level i/o interface to compressed and noncompressed files");
+	lib/unix/libniftiio.a (from nifticlib, "Main collection of nifti1 i/o routines");
+	lib/unix/libnifticdf.a (from nifticlib, "Functions to compute cumulative distributions");
+
+	For mac, the libraries include:
+	lib/mac/libz.a (from zlib);
+	lib/mac/libznz.a (from nifticlib, "Low level i/o interface to compressed and noncompressed files");
+	lib/mac/libniftiio.a (from nifticlib, "Main collection of nifti1 i/o routines");
+	lib/mac/libnifticdf.a (from nifticlib, "Functions to compute cumulative distributions");
+
+	For windows, the libraries include:
+	lib/win32/zlib.lib (from zlib);
+	lib/win32/znz.lib (from nifticlib, "Low level i/o interface to compressed and noncompressed files");
+	lib/win32/niftiio.lib (from nifticlib, "Main collection of nifti1 i/o routines");
+	lib/win32/nifticdf.lib (from nifticlib, "Functions to compute cumulative distributions");
+
+Important to notice if you want to build those dependcy libraries yourself: Remember to add a -fPIC flag to during all compilings!
