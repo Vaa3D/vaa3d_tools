@@ -144,7 +144,7 @@ void NifTi_reader::domenu(const QString &menu_name, V3DPluginCallback2 &callback
 		}
 		v3dhandle newwin = callback.newImageWindow();
 		callback.setImage(newwin, &Image4D_Main);
-		callback.setImageName(newwin, QString_mainName);
+		callback.setImageName(newwin, QString_mainName); //Use the filename as window title
 		callback.updateImageWindow(newwin);
 		
 
