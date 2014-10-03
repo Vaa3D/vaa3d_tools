@@ -166,7 +166,8 @@ int resample_swc_adaptive(V3DPluginCallback2 &callback, QWidget *parent)
 				));
 	if(fileOpenName.isEmpty()) 
 		return 0;
-	double angleT = 0, radiusT = 0;
+    double angleT = 0, radiusT = 0, step = 1;
+    bool stepc = false;
 	NeuronTree nt;
 	if (fileOpenName.toUpper().endsWith(".SWC") || fileOpenName.toUpper().endsWith(".ESWC"))
 	{
@@ -178,13 +179,20 @@ int resample_swc_adaptive(V3DPluginCallback2 &callback, QWidget *parent)
         dialog.update();
         angleT=cos(M_PI/180*dialog.angleT);
         radiusT=dialog.radiusT;
+        step=dialog.step;
+        stepc=dialog.stepCheck;
         //angleT = QInputDialog::getDouble(parent, "Please specify the curveness threshold","curveness threshold (0~1, 1: least down sample, 0: most down sample):",0.95,0,1,4,&ok);
         //radiusT = QInputDialog::getDouble(parent, "Please specify the radius change threshold","radius change threshold (0~1, 1: radius change not allowed, 0: ignore radius change):",0.5,0,1,4,&ok);
         //if (!ok)
         //	return 0;
 	}
-	
-	NeuronTree result = resample_adaptive(nt, angleT, radiusT);
+    NeuronTree result;
+    if(stepc){
+        NeuronTree nttmp = resample(nt, step);
+        result = resample_adaptive(nttmp, angleT, radiusT);
+    }else{
+        result = resample_adaptive(nt, angleT, radiusT);
+    }
 	
 	QString fileDefaultName = fileOpenName+QString("_resampled.swc");
 	//write new SWC to file

@@ -29,27 +29,36 @@ public:
         //create a dialog
         gridLayout = new QGridLayout();
 
+        step_spinBox = new QDoubleSpinBox();
+        step_spinBox->setMinimum(0);
+        step_spinBox->setDecimals(2);
+        step_spinBox->setValue(5);
+        step_checkBox = new QCheckBox();
         angleT_spinBox = new QDoubleSpinBox();
         angleT_spinBox->setRange(0,180);
         angleT_spinBox->setDecimals(2);
         angleT_spinBox->setValue(10);
         radiusT_spinBox = new QDoubleSpinBox();
-        radiusT_spinBox->setRange(0,1);
+        radiusT_spinBox->setMinimum(1);
         radiusT_spinBox->setDecimals(2);
-        radiusT_spinBox->setValue(0.5);
+        radiusT_spinBox->setValue(2);
         radiusT_checkBox = new QCheckBox();
 
-        gridLayout->addWidget(new QLabel("Angle Treshold:"),0,0);
-        gridLayout->addWidget(angleT_spinBox, 0,1,1,5);
-        gridLayout->addWidget(new QLabel("Consider Radius Change:"),1,0);
-        gridLayout->addWidget(radiusT_checkBox, 1,1,1,5);
-        gridLayout->addWidget(new QLabel("Radius Threshold"),2,0);
-        gridLayout->addWidget(radiusT_spinBox, 2,1,1,5);
+        gridLayout->addWidget(new QLabel("Peform resample to uniform segtion length:"),0,0);
+        gridLayout->addWidget(step_checkBox, 0,1,1,5);
+        gridLayout->addWidget(new QLabel("Step length:"),0,2);
+        gridLayout->addWidget(step_spinBox, 0,3,1,5);
+        gridLayout->addWidget(new QLabel("Angle Treshold:"),1,0);
+        gridLayout->addWidget(angleT_spinBox, 1,1,1,5);
+        gridLayout->addWidget(new QLabel("Consider Radius Change:"),2,0);
+        gridLayout->addWidget(radiusT_checkBox, 2,1,1,5);
+        gridLayout->addWidget(new QLabel("Radius Change Threshold"),2,2);
+        gridLayout->addWidget(radiusT_spinBox, 2,3,1,5);
 
         ok     = new QPushButton("OK");
         cancel = new QPushButton("Cancel");
-        gridLayout->addWidget(cancel, 3,0);
-        gridLayout->addWidget(ok,     3,1,1,5);;
+        gridLayout->addWidget(cancel, 3,1);
+        gridLayout->addWidget(ok,     3,2,1,5);;
 
         setLayout(gridLayout);
         setWindowTitle(QString("Adaptive Threshold"));
@@ -66,20 +75,26 @@ public:
     void update()
     {
         angleT = angleT_spinBox->text().toDouble();
+        stepCheck=step_checkBox->isChecked();
+        step=step_spinBox->text().toDouble();
         if(radiusT_checkBox->isChecked())
-            radiusT = radiusT_spinBox->text().toDouble();
+            radiusT = 1/radiusT_spinBox->text().toDouble();
         else
             radiusT = 0;
+
     }
 
 public:
-    double angleT,radiusT;
+    double angleT,radiusT,step;
+    bool stepCheck;
     QGridLayout *gridLayout;
     QPushButton* ok;
     QPushButton* cancel;
     QDoubleSpinBox * angleT_spinBox;
     QDoubleSpinBox * radiusT_spinBox;
     QCheckBox * radiusT_checkBox;
+    QDoubleSpinBox * step_spinBox;
+    QCheckBox * step_checkBox;
 };
 #endif
 
