@@ -7,6 +7,7 @@
 #include "v3d_message.h"
 #include "resample_swc_func.h"
 #include "resampling.h"
+#include "math.h"
 #include "customary_structs/vaa3d_neurontoolbox_para.h"
 #include <vector>
 #include <iostream>
@@ -169,12 +170,18 @@ int resample_swc_adaptive(V3DPluginCallback2 &callback, QWidget *parent)
 	NeuronTree nt;
 	if (fileOpenName.toUpper().endsWith(".SWC") || fileOpenName.toUpper().endsWith(".ESWC"))
 	{
-		bool ok;
+        //bool ok;
 		nt = readSWC_file(fileOpenName);
-		angleT = QInputDialog::getDouble(parent, "Please specify the curveness threshold","curveness threshold (0~1, 1: least down sample, 0: most down sample):",0.95,0,1,4,&ok);
-		radiusT = QInputDialog::getDouble(parent, "Please specify the radius change threshold","radius change threshold (0~1, 1: radius change not allowed, 0: ignore radius change):",0.5,0,1,4,&ok);
-		if (!ok)
-			return 0;
+        AdaptiveSampleDialog dialog(callback, parent);
+        if (dialog.exec()!=QDialog::Accepted)
+            return 0;
+        dialog.update();
+        angleT=cos(M_PI/180*dialog.angleT);
+        radiusT=dialog.radiusT;
+        //angleT = QInputDialog::getDouble(parent, "Please specify the curveness threshold","curveness threshold (0~1, 1: least down sample, 0: most down sample):",0.95,0,1,4,&ok);
+        //radiusT = QInputDialog::getDouble(parent, "Please specify the radius change threshold","radius change threshold (0~1, 1: radius change not allowed, 0: ignore radius change):",0.5,0,1,4,&ok);
+        //if (!ok)
+        //	return 0;
 	}
 	
 	NeuronTree result = resample_adaptive(nt, angleT, radiusT);

@@ -2,8 +2,10 @@
 TEMPLATE	= lib
 CONFIG	+= qt plugin warn_off
 #CONFIG	+= x86_64
+#VAA3DPATH = D:/vaa3D/v3d_external
 VAA3DPATH = ../../..
 INCLUDEPATH	+= $$VAA3DPATH/v3d_main/basic_c_fun
+INCLUDEPATH += $$V3DMAINPATH/common_lib/include
 
 HEADERS	+= resample_swc_func.h
 HEADERS	+= resample_swc_plugin.h

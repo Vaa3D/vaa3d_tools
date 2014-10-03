@@ -9,7 +9,8 @@
 using namespace std;
 
 #define DISTP(a,b) sqrt(((a)->x-(b)->x)*((a)->x-(b)->x)+((a)->y-(b)->y)*((a)->y-(b)->y)+((a)->z-(b)->z)*((a)->z-(b)->z))
-#define RRATE(a,b) (((a)->r)<=((b)->r)?((a)->r):((b)->r))/(((a)->r)>=((b)->r)?((a)->r):((b)->r))
+#define RRATE(a,b) ((((a)->r)<=((b)->r)?((a)->r):((b)->r))/(((a)->r)>=((b)->r)?((a)->r):((b)->r)))
+#define DOTP(a,b,c) (((b)->x-(a)->x)*((c)->x-(b)->x)+((b)->y-(a)->y)*((c)->y-(b)->y)+((b)->z-(a)->z)*((c)->z-(b)->z))
 
 struct Point;
 struct Point
@@ -157,26 +158,26 @@ void resample_path_adaptive(Segment * seg, double angleT, double radiusT)
 		//do nothing if there is only one point in the segments
 	}
 	else
-	{
-		char c;
+    {
 		Segment seg_r;
-		double length1 = 0, length2=0, end_dis = 0, radius_rate1=1, radius_rate2=1;
+        double length1 = 0, length2=0, cosAng = 0, end_dis = 0, radius_rate1=1, radius_rate2=1;
 		Point* end = seg->at(0);
 		Point* start = end->p;
 		Point* seg_par = seg->back()->p;
 		V3DLONG iter_old = 1;
-		seg_r.push_back(end);
-		length2 = DISTP(end, start);
+        seg_r.push_back(end);
 		while (iter_old < seg->size() && start && start->p)
 		{
-			length1 = DISTP(start,start->p);
-			end_dis = DISTP(start->p,end);
+            length1 = DISTP(start,start->p);
+            length2 = DISTP(end,start);
+            cosAng=DOTP(end,start,start->p)/(length1*length2);
+            //end_dis = DISTP(start->p,end);
 			radius_rate1 = RRATE(start,start->p);
-			radius_rate2 = RRATE(start,end);
-			if (end_dis/(length1+length2)>=angleT && radius_rate1>=radiusT && radius_rate2>=radiusT)
+            radius_rate2 = RRATE(start,end);
+            if (cosAng>=angleT && radius_rate1>=radiusT && radius_rate2>=radiusT)
 			{
 				//move on
-				end=start;
+                //end=start;
 				start = start->p;
 				iter_old++;
 			}
@@ -189,8 +190,7 @@ void resample_path_adaptive(Segment * seg, double angleT, double radiusT)
 				end=start;
 				start=start->p;
 				iter_old++;
-			}
-			length2=length1;
+            }
 		}
 		seg_r.back()->p = seg_par;
 
