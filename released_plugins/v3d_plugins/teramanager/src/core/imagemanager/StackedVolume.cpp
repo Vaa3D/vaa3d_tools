@@ -571,7 +571,7 @@ void StackedVolume::initChannels ( ) throw (IOException)
     char slice_fullpath[STATIC_STRINGS_SIZE];
 
 	sprintf(slice_fullpath, "%s/%s/%s", root_dir, STACKS[0][0]->getDIR_NAME(), STACKS[0][0]->getFILENAMES()[0]);
-	IplImage* slice = cvLoadImage(slice_fullpath, CV_LOAD_IMAGE_ANYDEPTH | CV_LOAD_IMAGE_ANYCOLOR);  //without CV_LOAD_IMAGE_ANYDEPTH, image is converted to 8-bits if needed
+    IplImage* slice = cvLoadImage(slice_fullpath, CV_LOAD_IMAGE_ANYCOLOR);  // 2014-10-03. Alessandro. @FIXED: eliminated CV_LOAD_IMAGE_ANYDEPTH flag since we want 16 bit images to be automatically converted to 8 bit.
 	if(!slice)
         throw IOException(std::string("Unable to load slice at \"").append(slice_fullpath).append("\"").c_str());
     DIM_C = slice->nChannels;
@@ -964,7 +964,7 @@ uint8* StackedVolume::loadSubvolume_to_UINT8(int V0,int V1, int H0, int H1, int 
                 {
                     //loading slice
                     sprintf(slice_fullpath, "%s/%s/%s", root_dir, STACKS[row][col]->getDIR_NAME(), STACKS[row][col]->getFILENAMES()[D0+k]);
-                    IplImage* slice = cvLoadImage(slice_fullpath, CV_LOAD_IMAGE_ANYDEPTH | CV_LOAD_IMAGE_ANYCOLOR);  //without CV_LOAD_IMAGE_ANYDEPTH, image is converted to 8-bits if needed
+                    IplImage* slice = cvLoadImage(slice_fullpath, CV_LOAD_IMAGE_ANYCOLOR);  // 2014-10-03. Alessandro. @FIXED: eliminated CV_LOAD_IMAGE_ANYDEPTH flag since we want 16 bit images to be automatically converted to 8 bit.
                     if(!slice)
                         throw IOException(std::string("Unable to load slice at \"").append(slice_fullpath).append("\"").c_str());
 
