@@ -123,38 +123,29 @@ void NifTi_reader::domenu(const QString &menu_name, V3DPluginCallback2 &callback
 		ss.str(std::string());
 		*/
 
+		Image4DSimple Image4D_Main;
 		if (int_dataType == DT_INT16)
 		{
 			int* vct_data = (int *)calloc(1,ntot);
 			vct_data = (int *)nimage_Input->data;
-			Image4DSimple Image4D_Main;
 			Image4D_Main.setData((unsigned char*)vct_data, nX, nY, nZ, 1, V3D_UINT16);
-			v3dhandle newwin = callback.newImageWindow();
-			callback.setImage(newwin, &Image4D_Main);
-			callback.updateImageWindow(newwin);
 		}
 		else if (int_dataType == DT_DOUBLE)
 		{
 			double* vct_data = (double *)calloc(1,ntot);
 			vct_data = (double *)nimage_Input->data;
-			Image4DSimple Image4D_Main;
 			Image4D_Main.setData((unsigned char*)vct_data, nX, nY, nZ, 1, V3D_FLOAT32);
-			v3dhandle newwin = callback.newImageWindow();
-			callback.setImage(newwin, &Image4D_Main);
-			callback.updateImageWindow(newwin);
 		}
 		else
 		{
 			float* vct_data = (float *)calloc(1,ntot);
 			vct_data = (float *)nimage_Input->data;
-			Image4DSimple Image4D_Main;
 			Image4D_Main.setData((unsigned char*)vct_data, nX, nY, nZ, 1, V3D_FLOAT32);
-			
-			v3dhandle newwin = callback.newImageWindow();
-			callback.setImage(newwin, &Image4D_Main);
-			callback.updateImageWindow(newwin);
 		}
-		
+		v3dhandle newwin = callback.newImageWindow();
+		callback.setImage(newwin, &Image4D_Main);
+		callback.setImageName(newwin, QString_mainName);
+		callback.updateImageWindow(newwin);
 		
 
 
