@@ -44,24 +44,32 @@ public:
         radiusT_spinBox->setValue(2);
         radiusT_checkBox = new QCheckBox();
 
-        gridLayout->addWidget(new QLabel("Peform resample to uniform segtion length:"),0,0);
-        gridLayout->addWidget(step_checkBox, 0,1,1,5);
-        gridLayout->addWidget(new QLabel("Step length:"),0,2);
-        gridLayout->addWidget(step_spinBox, 0,3,1,5);
-        gridLayout->addWidget(new QLabel("Angle Treshold:"),1,0);
-        gridLayout->addWidget(angleT_spinBox, 1,1,1,5);
-        gridLayout->addWidget(new QLabel("Consider Radius Change:"),2,0);
-        gridLayout->addWidget(radiusT_checkBox, 2,1,1,5);
-        gridLayout->addWidget(new QLabel("Radius Change Threshold"),2,2);
-        gridLayout->addWidget(radiusT_spinBox, 2,3,1,5);
+        gridLayout->addWidget(new QLabel("Peform resample before downsample:"),0,0,Qt::AlignRight);
+        QHBoxLayout * hbox1 = new QHBoxLayout();
+        hbox1->addWidget(step_checkBox);
+        hbox1->addWidget(new QLabel("Step length:"));
+        hbox1->addWidget(step_spinBox);
+        gridLayout->addLayout(hbox1,0,1);
+        gridLayout->addWidget(new QLabel("Maximum turning angle allowed:"),1,0,Qt::AlignRight);
+        gridLayout->addWidget(angleT_spinBox, 1,1);
+        gridLayout->addWidget(new QLabel("Skip when radius changes sharply:"),2,0,Qt::AlignRight);
+        QHBoxLayout * hbox2 = new QHBoxLayout();
+        hbox2->addWidget(radiusT_checkBox);
+        hbox2->addWidget(new QLabel("Change rate:"));
+        hbox2->addWidget(radiusT_spinBox);
+        gridLayout->addLayout(hbox2,2,1);
 
+        QHBoxLayout * hbox3 = new QHBoxLayout();
         ok     = new QPushButton("OK");
         cancel = new QPushButton("Cancel");
-        gridLayout->addWidget(cancel, 3,1);
-        gridLayout->addWidget(ok,     3,2,1,5);;
+        ok->setMaximumWidth(50);
+        cancel->setMaximumWidth(65);
+        hbox3->addWidget(cancel);
+        hbox3->addWidget(ok);
+        gridLayout->addLayout(hbox3,3,1);
 
         setLayout(gridLayout);
-        setWindowTitle(QString("Adaptive Threshold"));
+        setWindowTitle(QString("SWC Adaptive Sampling"));
 
         //slot interface
         connect(ok,     SIGNAL(clicked()), this, SLOT(accept()));
