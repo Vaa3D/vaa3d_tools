@@ -44,7 +44,7 @@ public:
         radiusT_spinBox->setValue(2);
         radiusT_checkBox = new QCheckBox();
 
-        gridLayout->addWidget(new QLabel("Peform resample before downsample:"),0,0,Qt::AlignRight);
+        gridLayout->addWidget(new QLabel("Perform resampling before downsampling:"),0,0,Qt::AlignRight);
         QHBoxLayout * hbox1 = new QHBoxLayout();
         hbox1->addWidget(step_checkBox);
         hbox1->addWidget(new QLabel("Step length:"));
@@ -69,7 +69,7 @@ public:
         gridLayout->addLayout(hbox3,3,1);
 
         setLayout(gridLayout);
-        setWindowTitle(QString("SWC Adaptive Sampling"));
+        setWindowTitle(QString("SWC Adaptive Resampling"));
 
         //slot interface
         connect(ok,     SIGNAL(clicked()), this, SLOT(accept()));

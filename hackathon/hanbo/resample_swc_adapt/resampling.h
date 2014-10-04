@@ -62,7 +62,7 @@ void resample_path(Segment * seg, double step)
 	for (V3DLONG i=0;i<seg->size();i++)
 		if (!seg->at(i)) {delete seg->at(i); seg->at(i) = NULL;}
 	*seg = seg_r;
-};
+}
 
 NeuronTree resample(NeuronTree input, double step)
 {
@@ -90,22 +90,22 @@ NeuronTree resample(NeuronTree input, double step)
 		tree[pid]->childNum++;
 	}
 //	printf("tree constructed.\n");
-	vector<Segment*> seg_list;
-	for (V3DLONG i=0;i<siz;i++)
-	{
-		if (tree[i]->childNum!=1)//tip or branch point
-		{
-			Segment* seg = new Segment;
-			Point* cur = tree[i];
-			do
-			{
-				seg->push_back(cur);
-				cur = cur->p;
-			}
-			while(cur && cur->childNum==1);
-			seg_list.push_back(seg);
-		}
-	}
+    vector<Segment*> seg_list;
+    for (V3DLONG i=0;i<siz;i++)
+    {
+        if (tree[i]->childNum!=1 || tree[i]->p == NULL)//tip or branch point or root
+        {
+            Segment* seg = new Segment;
+            Point* cur = tree[i];
+            do
+            {
+                seg->push_back(cur);
+                cur = cur->p;
+            }
+            while(cur && cur->childNum==1 && cur->p != NULL);
+            seg_list.push_back(seg);
+        }
+    }
 //	printf("segment list constructed.\n");
 	for (V3DLONG i=0;i<seg_list.size();i++)
 	{
@@ -242,6 +242,9 @@ NeuronTree resample_adaptive(NeuronTree input, double angleT, double radiusT)
 			seg_list.push_back(seg);
 		}
 	}
+
+    printf("cojoc: %d\n",seg_list.size());
+
 
 //	printf("segment list constructed.\n");
 	for (V3DLONG i=0;i<seg_list.size();i++)
