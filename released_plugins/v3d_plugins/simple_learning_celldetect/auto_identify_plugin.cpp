@@ -1,8 +1,9 @@
 /* auto_identify_plugin.cpp
- * This is a test plugin, you can use it as a demo.
- * 2012-01-01 : by YourName
+ * 2012-01-01 : by XindiAi
+ * 2014-10-03 : by Xiang Li (lindbergh.li@gmail.com)
  */
- 
+
+#pragma region "headers"
 #include "v3d_message.h"
 #include <vector>
 #include <math.h>
@@ -17,6 +18,10 @@
 #include <cstdlib>
 #include <typeinfo>
 
+const int const_int_cornerThreshold = 50;
+#pragma endregion
+
+#pragma region "region grow"
 //----------------------------------------------------------------------------------------------------------
 //cut from regiongrow.ccp
 
@@ -431,9 +436,6 @@ bool regiongrowing(V3DPluginCallback2 &callback, int c, double thresh, double ra
 Q_EXPORT_PLUGIN2(auto_identify, AutoIdentifyPlugin);
 
 #define V_NeuronSWC_list vector<V_NeuronSWC>
-
-//controlPanel_SWC* controlPanel_SWC::m_pLookPanel_SWC = 0;
-
 void count_cells(V3DPluginCallback2 &callback, QWidget *parent);
 void identify_neurons(V3DPluginCallback2 &callback, QWidget *parent);
 
@@ -442,7 +444,7 @@ template <class T> bool identify_cells(V3DPluginCallback2 &callback, T* data1d, 
                                        LandmarkList & outputlist, Image4DSimple &maskImage,
                                        int &cat, double &rad, double &val, double thresh);
 
-bool neuron_2_mark(const NeuronTree & p, LandmarkList & neuronMarkList);
+bool neuron_2_mark(const NeuronTree & p, LandmarkList & LandmarkList_Neurons);
 template <class T> int pixelVal(T* data1d, V3DLONG *dimNum,
                                 double xc, double yc, double zc, int c);
 template <class T> bool mass_center_Lists(T* data1d,
@@ -527,7 +529,8 @@ void AutoIdentifyPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &ca
 	else
 	{
         v3d_msg(tr("Uses current image's landmarks to find similar objects in image."
-            "Work-in-process by Xindi, 2014 Summer"));
+            "Work-in-process by Xindi, 2014 Summer."
+			"Updated by Xiang Li, 2014 Fall;"));
 	}
 }
 
@@ -555,7 +558,9 @@ bool AutoIdentifyPlugin::dofunc(const QString & func_name, const V3DPluginArgLis
 
 	return true;
 }
+#pragma endregion
 
+#pragma region "identify neurons"
 /*  ##################################
  * [completed tasks]
  * test neuron SWC needs to be its own structure marked with the comment "test"
@@ -577,95 +582,85 @@ bool AutoIdentifyPlugin::dofunc(const QString & func_name, const V3DPluginArgLis
 */
 void identify_neurons(V3DPluginCallback2 &callback, QWidget *parent)
 {
-    v3dhandle curwin = callback.currentImageWindow();
-
-    //cancels if no image
-    if (!curwin)
+	v3dhandle v3dhandle_currentWindow = callback.currentImageWindow();
+    //Cancel if no image loaded;
+    if (!v3dhandle_currentWindow)
     {
-        v3d_msg("You don't have any image open in the main window.");
+        v3d_msg("You don't have any image opened in the main window;");
         return;
     }
-
-    //if image, pulls the data
-    Image4DSimple* p4DImage = callback.getImage(curwin); //the data of the image is in 4D (channel + 3D)
-
-    unsigned char* data1d = p4DImage->getRawData(); //sets data into 1D array
-
-    QString curfilename = callback.getImageName(curwin);
-
-    //defining the dimensions
-    V3DLONG N = p4DImage->getXDim();
-    V3DLONG M = p4DImage->getYDim();
-    V3DLONG P = p4DImage->getZDim();
-    V3DLONG sc = p4DImage->getCDim();
-
-    //storing the dimensions
-    V3DLONG dimNum[4];
-    dimNum[0]=N; dimNum[1]=M; dimNum[2]=P; dimNum[3]=sc;
-
-    //input channel
-    //int c=0;
-    //bool ok;
-    //if (sc==1)
-    //    c=1; //if only using 1 channel
-    //else
-    //    c = QInputDialog::getInteger(parent, "Channel", "Enter Channel Number", 1, 1, sc, 1,&ok);
-
-    QList<NeuronTree> * mTreeList;
-    mTreeList = callback.getHandleNeuronTrees_3DGlobalViewer(curwin);
-    NeuronTree mTree;
-    if (mTreeList->isEmpty()) { v3d_msg("There are no neuron traces in the current window."); return; }
+    //If image loaded, pulls the data into one Image4DSimple instance ("Image4DSimple_currentWindow");
+    Image4DSimple* Image4DSimple_currentWindow = callback.getImage(v3dhandle_currentWindow); //Data of the image is in 4D (channel + 3D);
+    unsigned char* Image1D_currentWindow = Image4DSimple_currentWindow->getRawData(); //Sets data into 1D array;
+    QString QString_currentFileName = callback.getImageName(v3dhandle_currentWindow);
+	//Defining dimensions;
+    V3DLONG int_XDim = Image4DSimple_currentWindow->getXDim();
+    V3DLONG int_YDim = Image4DSimple_currentWindow->getYDim();
+    V3DLONG int_ZDim = Image4DSimple_currentWindow->getZDim();
+    V3DLONG int_colorDim = Image4DSimple_currentWindow->getCDim();
+    //Storing dimensions into vct_Dim;
+    V3DLONG vct_Dim[4];
+    vct_Dim[0]=int_XDim; vct_Dim[1]=int_YDim; vct_Dim[2]=int_ZDim; vct_Dim[3]=int_colorDim;
+    //Get and analyze NeuronTree;
+    QList<NeuronTree> * neuronTreeList_Main = callback.getHandleNeuronTrees_3DGlobalViewer(v3dhandle_currentWindow);
+    NeuronTree neuronTree_Temp;
+	if (!neuronTreeList_Main) //Added this check to avoid crush caused by NULL neuronTreeList_Main
+	{
+		v3d_msg("There are no neuron traces in the current window;");
+		return;
+	}
+	if (neuronTreeList_Main->isEmpty())
+	{ 
+		v3d_msg("There are no neuron traces in the current window;");
+		return; 
+	}
     else
     {
-        vector<int> segCatArr(10);
-        vector<double> segRadArr(10);
-        vector<double> segIntensArr(10);
-        vector<double> segRadStDevArr(10);
-
-        //take user inputs
-        Dialog_SWC dialog(callback, parent, sc);
-        if (dialog.exec()!=QDialog::Accepted)
+		vector<int> vct_segCategory(10);
+        vector<double> vct_segRadius(10);
+        vector<double> vct_segIntensity(10);
+        vector<double> vct_segRadiusStdev(10);
+        //Take user inputs for SWC file defining neuron traces;
+        Dialog_SWC Dialog_SWC_openFile(callback, parent, int_colorDim);
+        if (Dialog_SWC_openFile.exec()!=QDialog::Accepted)
         {
             return;
         }
-
-        int c = dialog.channel;
-
-        QString infileName = dialog.infileName;
-
-        NeuronTree openTree;
-        if (open_testSWC(infileName,openTree))
+        int int_channel = Dialog_SWC_openFile.channel;
+		QString QString_inputFileName = Dialog_SWC_openFile.infileName;
+        NeuronTree neuronTree_inputFile;
+        if (open_testSWC(QString_inputFileName, neuronTree_inputFile))
         {
-            openTree.comment = "test";
-            mTreeList->append(openTree);
+            neuronTree_inputFile.comment = "test";
+            neuronTreeList_Main->append(neuronTree_inputFile);
         }
-        int structNum = mTreeList->count();
+        int structNum = neuronTreeList_Main->count();
 
         //get examples from test data
         int check = 0;
         for (int i=0; i<structNum; i++)
         {
-            mTree = mTreeList->at(i);
+            neuronTree_Temp = neuronTreeList_Main->at(i);
 
-            if (mTree.comment != "test") //defining the testing set by comments
+            if (neuronTree_Temp.comment != "test") //defining the testing set by comments
             {
                 check++;
                 continue;
             }
             //v3d_msg("test data");
 
-            V_NeuronSWC_list seg_list = get_neuron_segments(&mTree);
+            V_NeuronSWC_list seg_list = get_neuron_segments(&neuronTree_Temp);
             //syntax: list.at(i) is segment, segment.row is vector of units, vector.at(i) is unit, unit.type is category
             int segNum = seg_list.size();
             //v3d_msg(QString("read in test tree with %1 segments").arg(segNum));
             for (int j=0; j<segNum; j++)
             {
-                //segCatArr.push_back(seg_list.at(j).row.at(0).type);
+                //vct_segCategory.push_back(seg_list.at(j).row.at(0).type);
                 int segCat = seg_list.at(j).row.at(0).type;
                 //cout<<segCat<<endl;
-                segCatArr[segCat] += 1;
+                vct_segCategory[segCat] += 1;
                 double radAve,radStDev;
-                compute_swc_radius(data1d,dimNum,seg_list.at(j).row,c,radAve,radStDev);
+                compute_swc_radius(Image1D_currentWindow,vct_Dim,seg_list.at(j).row,int_channel,radAve,radStDev);
                 //v3d_msg("got rad");
                 double x,y,z,intensity=0;
                 for (int k=0; k<seg_list.at(j).row.size(); k++)
@@ -673,23 +668,23 @@ void identify_neurons(V3DPluginCallback2 &callback, QWidget *parent)
                     x=seg_list.at(j).row.at(k).x;
                     y=seg_list.at(j).row.at(k).y;
                     z=seg_list.at(j).row.at(k).z;
-                    intensity += pixelVal(data1d,dimNum,x,y,z,c);
+                    intensity += pixelVal(Image1D_currentWindow,vct_Dim,x,y,z,int_channel);
                 }
                 double intensAve = intensity/seg_list.at(j).row.size();
-                //segRadArr.push_back(radAve);
-                //segIntensArr.push_back(intensAve);
-                //segRadStDevArr.push_back(radStDev);
-                segRadArr[segCat] += radAve;
-                segIntensArr[segCat] += intensAve;
-                segRadStDevArr[segCat] += radStDev;
+                //vct_segRadius.push_back(radAve);
+                //vct_segIntensity.push_back(intensAve);
+                //vct_segRadiusStdev.push_back(radStDev);
+                vct_segRadius[segCat] += radAve;
+                vct_segIntensity[segCat] += intensAve;
+                vct_segRadiusStdev[segCat] += radStDev;
                 //v3d_msg(QString("cat %1 rad %2").arg(seg_list.at(j).row.at(0).type).arg(radAve));
             }
-            for (int k=0; k<segCatArr.size(); k++)
+            for (int k=0; k<vct_segCategory.size(); k++)
             {
-                if (segCatArr[k]==0) continue;
-                segRadArr[k] /= segCatArr[k];
-                segIntensArr[k] /= segCatArr[k];
-                segRadStDevArr[k] /= segCatArr[k];
+                if (vct_segCategory[k]==0) continue;
+                vct_segRadius[k] /= vct_segCategory[k];
+                vct_segIntensity[k] /= vct_segCategory[k];
+                vct_segRadiusStdev[k] /= vct_segCategory[k];
             }
         }
         if (check==structNum)
@@ -697,19 +692,19 @@ void identify_neurons(V3DPluginCallback2 &callback, QWidget *parent)
             v3d_msg("No exampler data found, please specify a set of example data and try again.");
             return;
         }
-//        v3d_msg(QString("%1 %2 %3 %4").arg(segCatArr.size()).arg(segCatArr.at(0)).arg(segRadArr.size()).arg(segRadArr.at(0)));
+//        v3d_msg(QString("%1 %2 %3 %4").arg(vct_segCategory.size()).arg(vct_segCategory.at(0)).arg(vct_segRadius.size()).arg(vct_segRadius.at(0)));
 
         //label remaining neurons using test data
         NeuronTree newTree;
         QList<NeuronTree> newTreeList;
         for (int i=0; i<structNum; i++) //loops through neuron structures as numbered in object manager
         {
-            mTree = mTreeList->at(i);
+            neuronTree_Temp = neuronTreeList_Main->at(i);
 
-            if (mTree.comment == "test") continue; //defining the testing set by comments
+            if (neuronTree_Temp.comment == "test") continue; //defining the testing set by comments
             //v3d_msg("labeling data");
 
-            V_NeuronSWC_list seg_list = get_neuron_segments(&mTree);
+            V_NeuronSWC_list seg_list = get_neuron_segments(&neuronTree_Temp);
             //syntax: list.at(i) is segment, segment.row is vector of units, vector.at(i) is unit, unit.type is category
             int segNum = seg_list.size();
             int id=1;
@@ -717,27 +712,27 @@ void identify_neurons(V3DPluginCallback2 &callback, QWidget *parent)
             for (int j=0; j<segNum; j++) //loops through segments within one structure
             {
                 double radAve,radStDev;
-                compute_swc_radius(data1d,dimNum,seg_list.at(j).row,c,radAve,radStDev);
+                compute_swc_radius(Image1D_currentWindow,vct_Dim,seg_list.at(j).row,int_channel,radAve,radStDev);
                 double x,y,z,intensity=0;
                 for (int k=0; k<seg_list.at(j).row.size(); k++)
                 {
                     x=seg_list.at(j).row.at(k).x;
                     y=seg_list.at(j).row.at(k).y;
                     z=seg_list.at(j).row.at(k).z;
-                    intensity += pixelVal(data1d,dimNum,x,y,z,c);
+                    intensity += pixelVal(Image1D_currentWindow,vct_Dim,x,y,z,int_channel);
                 }
                 double intensAve = intensity/seg_list.at(j).row.size();
                 //v3d_msg(QString("radius %1").arg(radAve));
                 double diffRad,diffInt,diffRadStD,diff,diff_min=255;
                 int cur_type=3;
-                for (int k=0; k<segCatArr.size(); k++)
+                for (int k=0; k<vct_segCategory.size(); k++)
                 {
-                    if (segCatArr.at(k)==0) continue;
-                    diffRad = abs(radAve-segRadArr.at(k));
-                    diffInt = abs(intensAve-segIntensArr.at(k));
-                    diffRadStD = abs(radStDev-segRadStDevArr.at(k));
+                    if (vct_segCategory.at(k)==0) continue;
+                    diffRad = abs(radAve-vct_segRadius.at(k));
+                    diffInt = abs(intensAve-vct_segIntensity.at(k));
+                    diffRadStD = abs(radStDev-vct_segRadiusStdev.at(k));
                     diff = (2*diffRad+diffInt+3*diffRadStD)/6; //depending on further testing, may end up weighing this average differently
-                    //v3d_msg(QString("diff %3 between calculated %1 and test %2").arg(radAve).arg(segRadArr.at(k)).arg(diff));
+                    //v3d_msg(QString("diff %3 between calculated %1 and test %2").arg(radAve).arg(vct_segRadius.at(k)).arg(diff));
                     if (diff<diff_min)
                     {
                         cur_type=k;
@@ -756,23 +751,24 @@ void identify_neurons(V3DPluginCallback2 &callback, QWidget *parent)
             }
 
         }
-        //QString outfilename = curfilename+"_Labeled_SWC.swc";
-        QString outfilename = dialog.outfileName;
-        string SaveName = curfilename.toStdString();
+        //QString outfilename = QString_currentFileName+"_Labeled_SWC.swc";
+        QString outfilename = Dialog_SWC_openFile.outfileName;
+        string SaveName = QString_currentFileName.toStdString();
         unsigned int a = SaveName.rfind('.');
         unsigned int b = SaveName.rfind('/');
         SaveName = SaveName.substr(b+1,a-b-1);
         SaveName.append("_Labeled_SWC.swc");
         outfilename.append("/" + QString::fromStdString(SaveName));
-        export_list2file(newTreeList,outfilename,curfilename);
+        export_list2file(newTreeList,outfilename,QString_currentFileName);
         NeuronTree nt = readSWC_file(outfilename);
-        callback.setSWC(curwin, nt);
-        callback.updateImageWindow(curwin);
+        callback.setSWC(v3dhandle_currentWindow, nt);
+        callback.updateImageWindow(v3dhandle_currentWindow);
     }
     return;
 }
+#pragma endregion
 
-
+#pragma region "count cells interface"
 /*  ##################################
  * [completed tasks]
  * all main algorithms are functional, may not be optimized
@@ -796,145 +792,161 @@ void identify_neurons(V3DPluginCallback2 &callback, QWidget *parent)
  *
  *  ##################################
 */
-void count_cells(V3DPluginCallback2 &callback, QWidget *parent)
+void count_cells(V3DPluginCallback2 &V3DPluginCallback2_Main, QWidget *QWidget_parent)
 {
-    v3dhandle curwin = callback.currentImageWindow();
-
-    //cancels if no image
-    if (!curwin)
+    v3dhandle v3dhandle_currentWindow = V3DPluginCallback2_Main.currentImageWindow();
+    //Cancels if no image loaded;
+    if (!v3dhandle_currentWindow)
     {
-        v3d_msg("You don't have any image open in the main window.");
+        v3d_msg("You don't have any image open in the main window;");
         return;
     }
-
-    //if image, pulls the data
-    Image4DSimple* p4DImage = callback.getImage(curwin); //the data of the image is in 4D (channel + 3D)
-
-    unsigned char* data1d = p4DImage->getRawData(); //sets data into 1D array
-
-    //defining the dimensions
-    V3DLONG N = p4DImage->getXDim();
-    V3DLONG M = p4DImage->getYDim();
-    V3DLONG P = p4DImage->getZDim();
-    V3DLONG sc = p4DImage->getCDim();
-
-    //storing the dimensions
-    V3DLONG dimNum[4];
-    dimNum[0]=N; dimNum[1]=M; dimNum[2]=P; dimNum[3]=sc;
-
-    LandmarkList Marklist = callback.getLandmark(curwin);
-    int Marknum = Marklist.count();
-    if (Marknum>0)
+    //If image loaded, pulls the data into one Image4DSimple instance ("Image4DSimple_currentWindow");
+    Image4DSimple* Image4DSimple_currentWindow = V3DPluginCallback2_Main.getImage(v3dhandle_currentWindow); //Data of the image is in 4D (channel + 3D);
+    unsigned char* Image1D_currentWindow = Image4DSimple_currentWindow->getRawData(); //Sets data into 1D array;
+	//Defining dimensions;
+    V3DLONG int_XDim = Image4DSimple_currentWindow->getXDim();
+    V3DLONG int_YDim = Image4DSimple_currentWindow->getYDim();
+    V3DLONG int_ZDim = Image4DSimple_currentWindow->getZDim();
+    V3DLONG int_colorDim = Image4DSimple_currentWindow->getCDim();
+    //Storing dimensions into vct_Dim;
+    V3DLONG vct_Dim[4];
+    vct_Dim[0]=int_XDim; vct_Dim[1]=int_YDim; vct_Dim[2]=int_ZDim; vct_Dim[3]=int_colorDim;
+	//Get landmarks (i.e. marker) list;
+    LandmarkList LandmarkList_Main = V3DPluginCallback2_Main.getLandmark(v3dhandle_currentWindow);
+    int int_numMarkers = LandmarkList_Main.count();
+	printf("Number of markers defined: %d \n", int_numMarkers);
+    if (int_numMarkers>0)
+	{
+        //Default marker category as 1 for type sorting;
+        for (int i=0; i<LandmarkList_Main.count(); i++)
         {
-            //default marker cat as 1 for type sorting
-            for (int i=0; i<Marklist.count(); i++)
+            LocationSimple LocationSimple_Temp = LandmarkList_Main.at(i);
+            if (LocationSimple_Temp.comments.empty()==true)
+			{
+				LocationSimple_Temp.category=1;
+			}
+            else //Use comments as category;
             {
-                LocationSimple tmp = Marklist.at(i);
-                if (tmp.comments.empty()==true) tmp.category=1;
-                else
-                {
-                    istringstream cat(tmp.comments);
-                    cat>>tmp.category;
-                }
-                Marklist.replace(i,tmp);
+                istringstream istringstream_category(LocationSimple_Temp.comments);
+                istringstream_category>>LocationSimple_Temp.category;
             }
+            LandmarkList_Main.replace(i, LocationSimple_Temp);
         }
-
-    QList<NeuronTree> * mTreeList=0;
-    mTreeList = callback.getHandleNeuronTrees_3DGlobalViewer(curwin);
-
-    //check data availability
-    if (Marknum<=0 && !mTreeList)
+	}
+    QList<NeuronTree> * neuronTreeList_Main = V3DPluginCallback2_Main.getHandleNeuronTrees_3DGlobalViewer(v3dhandle_currentWindow);
+    //Check data (marker OR neuronTree) availability;
+    if (int_numMarkers<1 && !neuronTreeList_Main)
     {
-        v3d_msg("you have not specified any marker or swc structure to run this program.");
+        v3d_msg("You have not specified any marker or swc structure to run this program;");
         return;
     }
-
-    int SWCcount;
-    NeuronTree mTree;
-    if (mTreeList->isEmpty()) { SWCcount = 0; }
+    int int_countSWC = -1;
+    NeuronTree neuronTree_Temp;
+    if (neuronTreeList_Main->isEmpty()) 
+	{ 
+		int_countSWC = 0;
+	}
     else
     {
-        mTree = mTreeList->first();
-        SWCcount = mTree.listNeuron.count();
+        neuronTree_Temp = neuronTreeList_Main->first();
+        int_countSWC = neuronTree_Temp.listNeuron.count();
     }
-    //NeuronTree mTree = callback.getSWC(curwin);
-    //int SWCcount = mTree.listNeuron.count();
-
-    //input test data type
-    int option;
-    if (Marknum != 0 && SWCcount ==0 ) { option = 1; }
-    else if (Marknum == 0 && SWCcount != 0) { option = 2; }
-    else {option == 0;}
-
-    Dialog_cells dialog(callback, parent,sc,option);
-    if (dialog.exec()!=QDialog::Accepted)
+	//Get input test data type;
+    int int_Option = 0;
+    if (int_numMarkers != 0 && int_countSWC ==0 )
+	{ 
+		int_Option = 1; //Use markers;
+	}
+    else if (int_numMarkers == 0 && int_countSWC != 0)
+	{ 
+		int_Option = 2; //Use neuronTree;
+	}
+    else
+	{
+		int_Option = 0; //Input is both markers and SWC;
+	}
+	//Open int_Option dialog window;
+    Dialog_cells Dialog_SWC_openFile(V3DPluginCallback2_Main, QWidget_parent, int_colorDim, int_Option);
+    if (Dialog_SWC_openFile.exec()!=QDialog::Accepted)
     {
         return;
     }
-
-    option = dialog.input_type;
-    LandmarkList mlist, neuronMarkList;
-    if (option == 1) //input is markers
+    int_Option = Dialog_SWC_openFile.input_type;
+	//Check again for the landmarks/SWC configuration, get parameters from dialog;
+    LandmarkList LandmarkList_Markers;
+	LandmarkList LandmarkList_Neurons;
+    if (int_Option == 1) //Input is markers;
     {
-        mlist = Marklist;
+        LandmarkList_Markers = LandmarkList_Main;
     }
-    else if (option == 2 ) //input is SWC
+    else if (int_Option == 2 ) //Input is SWC;
     {
-        neuron_2_mark(mTree,neuronMarkList);
-        mlist = neuronMarkList;
+        neuron_2_mark(neuronTree_Temp, LandmarkList_Neurons);
+        LandmarkList_Markers = LandmarkList_Neurons;
     }
-    else    //input is both markers and SWC
+    else //Input is both markers and SWC;
     {
-        neuron_2_mark(mTree,neuronMarkList);
-        mlist = Marklist;
-        mlist.append(neuronMarkList);
+        neuron_2_mark(neuronTree_Temp, LandmarkList_Neurons);
+        LandmarkList_Markers = LandmarkList_Main;
+        LandmarkList_Markers.append(LandmarkList_Neurons);
     }
-    int c = dialog.channel;
-    int sort_type = dialog.sort_type;
-    double thresh = dialog.thresh;
-    if (thresh==0) {v3d_msg("Please input a valid threshold"); return;}
-
-    if (sort_type==0) //binary sort
+    int int_channel = Dialog_SWC_openFile.channel;
+	int int_sortType = Dialog_SWC_openFile.sort_type;
+	double double_threshold = Dialog_SWC_openFile.thresh;
+    if (double_threshold==0)
+	{
+		v3d_msg("Please provide a valid threshold;"); 
+		return;
+	}
+    if (int_sortType==0) //Binary sort;
     {
-        if (mlist.count()<=0)    {v3d_msg("There are no markers in the current image"); return;}
-
-        int start_t = clock();
-        LandmarkList bglist; //sending in empty bglist to trigger binary sort
-        LandmarkList outputList;
-        Image4DSimple maskImage;
-        int cat;
-        double rad,val;
-        if (identify_cells(callback,data1d,dimNum,c,mlist,bglist,outputList,maskImage,cat,rad,val,thresh))
+		if (LandmarkList_Markers.count()<1)
+		{
+			v3d_msg("There are no markers in the current image"); 
+			return;
+		}
+        int int_startTime = clock();
+        LandmarkList LandmarkList_beginList; //sending in empty LandmarkList_beginList to trigger binary sort
+        LandmarkList LandmarkList_outputList;
+        Image4DSimple Image4DSimple_maskImage;
+        int int_category;
+        double double_radius;
+		double double_value;
+		if (identify_cells(V3DPluginCallback2_Main,Image1D_currentWindow,vct_Dim,int_channel,
+								LandmarkList_Markers,LandmarkList_beginList,LandmarkList_outputList,Image4DSimple_maskImage,
+								int_category,double_radius,double_value,double_threshold))
         {
-            int end_t = clock();
-            cout<<"time elapse ..."<<end_t-start_t<<endl;
-            v3d_msg(QString("Final Cell Count: %1").arg(outputList.count()));
-            callback.setLandmark(curwin,outputList);
-
-            //v3dhandle newwin = callback.newImageWindow("mask");
-            //callback.setImage(newwin,&maskImage);
-        }
+            int int_endTime = clock();
+            cout<<"Time elapsed ..."<<int_endTime-int_startTime<<endl;
+            v3d_msg(QString("Final Cell Count: %1").arg(LandmarkList_outputList.count()));
+            V3DPluginCallback2_Main.setLandmark(v3dhandle_currentWindow,LandmarkList_outputList);        
+		}
     }
-    else if (sort_type==1) //type sort
+
+
+
+
+
+    else if (int_sortType==1) //type sort
     {
         int * catList;
-        catList = new int[mlist.count()];
-        if (mlist.count()<=0)    {v3d_msg("There are no neuron traces or markers in the current image"); return;}
-        int start_t = clock();
+        catList = new int[LandmarkList_Markers.count()];
+        if (LandmarkList_Markers.count()<=0)    {v3d_msg("There are no neuron traces or markers in the current image"); return;}
+        int int_startTime = clock();
         LocationSimple tempInd;
-        for (int i=0; i<mlist.count(); i++)
+        for (int i=0; i<LandmarkList_Markers.count(); i++)
         {
-            tempInd = mlist.at(i);
+            tempInd = LandmarkList_Markers.at(i);
             catList[i] = tempInd.category;
-//v3d_msg((QString("hi %1, cat %2").arg(i+1).arg(catList[i])));
+//v3d_msg((QString("hi %1, int_category %2").arg(i+1).arg(catList[i])));
         }
 
         //counts number of categories
         int catNum=0;
-        for (int i=0; i<mlist.count(); i++)
+        for (int i=0; i<LandmarkList_Markers.count(); i++)
         {
-            for (int j=0; j<mlist.count(); j++)
+            for (int j=0; j<LandmarkList_Markers.count(); j++)
             {
                 if (catList[j]==i)
                 {
@@ -955,12 +967,12 @@ void count_cells(V3DPluginCallback2 &callback, QWidget *parent)
         for (int catval=0; catval<10; catval++) //loop through category values
         {
             int x=0;
-            for (int index=0; index<mlist.count(); index++) //loop through markers
+            for (int index=0; index<LandmarkList_Markers.count(); index++) //loop through markers
             {
                 if (catList[index]==catval)
                 {
                     x++;
-                    temp.append(mlist.at(index));
+                    temp.append(LandmarkList_Markers.at(index));
                 }
             }
 //v3d_msg(QString("found %1 values for catVal %2").arg(x).arg(catval));
@@ -969,7 +981,7 @@ void count_cells(V3DPluginCallback2 &callback, QWidget *parent)
             else
             {
                 catArr.insert(make_pair(row,temp));
-//v3d_msg(QString("row %1 cat %2").arg(row).arg(temp.at(0).category));
+//v3d_msg(QString("row %1 int_category %2").arg(row).arg(temp.at(0).category));
                 row++;
                 temp.clear();
             }
@@ -983,14 +995,14 @@ void count_cells(V3DPluginCallback2 &callback, QWidget *parent)
         LandmarkList * bgs = &catArr[0]; //working with assumption that bg has category value 0;
         if (bgs->isEmpty()) //if background category not specified by user, use corner voxels as bg
         {
-            for (int i=1; i<=N; i+=N-1)
+            for (int i=1; i<=int_XDim; i+=int_XDim-1)
             {
-                for (int j=1; j<=M; j+=M-1)
+                for (int j=1; j<=int_YDim; j+=int_YDim-1)
                 {
-                    for (int k=1; k<=P; k+=P-1)
+                    for (int k=1; k<=int_ZDim; k+=int_ZDim-1)
                     {
-                        if (data1d[(c-1)*P*M*N+(k-1)*M*N+(j-1)*N+(i-1)]>50) continue;
-                        //int dat = data1d[(c-1)*P*M*N+k*M*N+j*N+i];
+                        if (Image1D_currentWindow[(int_channel-1)*int_ZDim*int_YDim*int_XDim+(k-1)*int_YDim*int_XDim+(j-1)*int_XDim+(i-1)]>50) continue;
+                        //int dat = Image1D_currentWindow[(int_channel-1)*int_ZDim*int_YDim*int_XDim+k*int_YDim*int_XDim+j*int_XDim+i];
                         //cout<<dat<<endl;
                         LocationSimple extraBG(i,j,k);
                         extraBG.category = 0;
@@ -1007,115 +1019,128 @@ void count_cells(V3DPluginCallback2 &callback, QWidget *parent)
             /*LandmarkList marksL;
             for (int j=0; i<catInd[i+1]; j++)
             {
-                marksL.append(mlist.at(catArr[i+1][j]));
+                marksL.append(LandmarkList_Markers.at(catArr[i+1][j]));
             }
             marks = &marksL;*/
             marks = &catArr[i+1];
 //v3d_msg(QString("marks %1").arg(marks->count()));
             LandmarkList tempList;
-            Image4DSimple maskImage;
-            int cat;
-            double rad,val;
+            Image4DSimple Image4DSimple_maskImage;
+            int int_category;
+            double double_radius,double_value;
             cout<<endl<<"counting cells of category "<<i+1<<endl;
-            if (identify_cells(callback,data1d,dimNum,c,*marks,*bgs,tempList,maskImage,cat,rad,val,thresh))
+            if (identify_cells(V3DPluginCallback2_Main,Image1D_currentWindow,vct_Dim,int_channel,*marks,*bgs,tempList,Image4DSimple_maskImage,int_category,double_radius,double_value,double_threshold))
                 catSortList.append(tempList);
-            catArr2.push_back(cat);
-            radArr.push_back(rad);
-            valArr.push_back(val);
+            catArr2.push_back(int_category);
+            radArr.push_back(double_radius);
+            valArr.push_back(double_value);
 //v3d_msg(QString("catSortList append category %1").arg(tempList.at(0).category));
 //            marksL.clear();
         }
-        if (catNum>2) type_duplicates(data1d,catSortList,dimNum,c,catArr2,radArr,valArr);
+        if (catNum>2) type_duplicates(Image1D_currentWindow,catSortList,vct_Dim,int_channel,catArr2,radArr,valArr);
 
-        int end_t = clock();
-        cout<<"time elapse ..."<<end_t-start_t<<endl;
+        int int_endTime = clock();
+        cout<<"time elapse ..."<<int_endTime-int_startTime<<endl;
         v3d_msg(QString("Final Cell Count: %1").arg(catSortList.count()));
-        callback.setLandmark(curwin,catSortList);
+        V3DPluginCallback2_Main.setLandmark(v3dhandle_currentWindow,catSortList);
 
     }
     return;
 }
+#pragma endregion
 
-template <class T> bool identify_cells(V3DPluginCallback2 &callback, T* data1d, V3DLONG *dimNum, int c,
-                                       const LandmarkList & markerlist, LandmarkList & bglist,
-                                       LandmarkList & outputlist, Image4DSimple &maskImage,
-                                       int &cat, double &rad, double &val, double thresh)
+int sub_calculate1DIndex(int x, int y, int z, int int_XDim, int int_YDim, int int_ZDim, int int_channel)
 {
-    if (!data1d || !dimNum)
+	return (int_channel-1)*int_ZDim*int_YDim*int_XDim+(z-1)*int_YDim*int_XDim+(y-1)*int_XDim+(x-1);
+}
+
+#pragma region "count cells main"
+template <class T> bool identify_cells(V3DPluginCallback2 &callback, T* Image1D_currentWindow, V3DLONG *vct_Dim, int int_channel,
+                                       const LandmarkList & LandmarkList_markerList, LandmarkList & LandmarkList_backgroundList,
+                                       LandmarkList & outputlist, Image4DSimple &maskImage,
+                                       int &int_category, double &double_rad, double &double_val, double double_threshold)
+{
+	
+    if (!Image1D_currentWindow || !vct_Dim)
+	{
         return false;
+	}
+    V3DLONG int_XDim = vct_Dim[0];
+    V3DLONG int_YDim = vct_Dim[1];
+    V3DLONG int_ZDim = vct_Dim[2];
+	cout<<"Dimensions: "<<int_XDim<<" "<<int_YDim<<" "<<int_ZDim<<endl;
+    LandmarkList LandmarkList_markerListCurrent, LandmarkList_cellMarkers;
+	LandmarkList LandmarkList_backgroundListCurrent ;
+    LocationSimple LocationSimple_Temp(0,0,0);
+    int xc,yc,zc, int_numOfMarkers;
+    double double_pixelValue;
+	double double_backgroundValue = 0;
+    bool bool_sortingByCategory=false;
 
-    V3DLONG N = dimNum[0];
-    V3DLONG M = dimNum[1];
-    V3DLONG P = dimNum[2];
-    //cout<<N<<" "<<M<<" "<<P<<endl;
 
-    LandmarkList mlist, MarkList, BGList;
-    LocationSimple tmpLocation(0,0,0);
-    int xc,yc,zc, marks;
-    double PixVal,BGVal;
-    bool catsorting=false;
-    if (bglist.isEmpty()) //binary sorting
+
+	#pragma region "Binary Sorting"
+    if (LandmarkList_backgroundList.isEmpty()) //Binary sorting;
     {
-        catsorting=false;
-        //sort markers by background/foreground
-
-        //add corner pixels to list to use as additional bg markers
-        mlist = markerlist;
-        for (int i=1; i<=N; i+=N-1)
+        bool_sortingByCategory=false; //Sort markers by background/foreground;
+        //Add corner pixels to list to use as additional beginning markers;
+        LandmarkList_markerListCurrent = LandmarkList_markerList; //From the argument passed in;
+        for (int x=1; x<=int_XDim; x+=int_XDim-1)
         {
-            for (int j=1; j<=M; j+=M-1)
+            for (int y=1; y<=int_YDim; y+=int_YDim-1)
             {
-                for (int k=1; k<=P; k+=P-1)
+                for (int z=1; z<=int_ZDim; z+=int_ZDim-1)
                 {
-                    if (data1d[(c-1)*P*M*N+(k-1)*M*N+(j-1)*N+(i-1)]>50) continue;
-                    //int dat = data1d[(c-1)*P*M*N+k*M*N+j*N+i];
-                    //cout<<dat<<endl;
-                    LocationSimple extraBG(i,j,k);
-                    extraBG.category = 0;
-                    mlist.append(extraBG);
+					double double_intensity = Image1D_currentWindow[sub_calculate1DIndex(x, y, z, int_XDim, int_YDim, int_ZDim, int_channel)];
+					cout<<"Intensity: "<<double_intensity<<endl;
+					
+                    
+                    if (double_intensity>const_int_cornerThreshold)
+					{
+						continue; //Ignore voxel with high value, but Why?
+					}
+                    LocationSimple LcoationSimple_extraBeginning(x, y, z);
+                    LcoationSimple_extraBeginning.category = 0;
+                    LandmarkList_markerListCurrent.append(LcoationSimple_extraBeginning);
                 }
             }
         }
-
-//v3d_msg("presort ckpt");
-
-        int pix,num;
-        int marknum = mlist.count();
-        int * PixValArr=0;
-        PixValArr = new int[marknum];
-//v3d_msg("sort ckpt 1");
-        for (int i=0; i<marknum; i++)
+		//Sort;
+        int pix;
+		int num;
+        int int_numOfMarkers = LandmarkList_markerListCurrent.count();
+        int * vct_pixelValueArray = new int[int_numOfMarkers];
+        for (int i=0; i<int_numOfMarkers; i++)
         {
-            tmpLocation = mlist.at(i);
-            tmpLocation.getCoord(xc,yc,zc);
-            pix=data1d[(c-1)*P*M*N+(zc-1)*M*N+(yc-1)*N+(xc-1)];
+            LocationSimple_Temp = LandmarkList_markerListCurrent.at(i);
+            LocationSimple_Temp.getCoord(xc,yc,zc);
+            pix=Image1D_currentWindow[(int_channel-1)*int_ZDim*int_YDim*int_XDim+(zc-1)*int_YDim*int_XDim+(yc-1)*int_XDim+(xc-1)];
             //cout<<"value "<<pix<<" at coords "<<xc<<" "<<yc<<" "<<zc<<endl;
             //if (pix<0 || pix>255) {v3d_msg("pix is wrong"); return false;}
             //      v3d_msg(QString("pix value %1 %2").arg(pix).arg(pix1));
-            PixValArr[i] = pix;
+            vct_pixelValueArray[i] = pix;
             //cout<<pix<<endl;
         }
 
         /*int max=0,min=255;
-        for (int i=0; i<marknum; i++)
+        for (int i=0; i<int_numOfMarkers; i++)
         {
-            num=PixValArr[i];
+            num=vct_pixelValueArray[i];
             if (num>max) { max=num; }
             if (num<min) { min=num; }
         }
-        int thresh = (max+min)/2; //this definitely should be changed!!! commented by PHC*/
-
-        if (thresh < 0)
+        int double_threshold = (max+min)/2; //this definitely should be changed!!! commented by PHC*/
+		if (double_threshold < 0)
         {
-//v3d_msg("starting thresh calc");
+			//v3d_msg("starting double_threshold calc");
             //threshold calculation based on histogram of marker+bg voxel intensities
             vector<int> pValHist(52,0); //precise histogram for getting threshold value
             vector<int> pValHist_smooth(26,0); //smoothed histogram for finding valley
-            pValHist[0]=5; pValHist_smooth[0]=5; //initalize background values for thresh calc
-            for (int i=0; i<=marknum; i++)
+            pValHist[0]=5; pValHist_smooth[0]=5; //initalize background values for double_threshold calc
+            for (int i=0; i<=int_numOfMarkers; i++)
             {
-                int histInd = PixValArr[i]/5;
-                int smoothHistInd = PixValArr[i]/10;
+                int histInd = vct_pixelValueArray[i]/5;
+                int smoothHistInd = vct_pixelValueArray[i]/10;
                 if (histInd<0) histInd=0;
                 if (histInd>51) histInd=51;
                 if (smoothHistInd<0) smoothHistInd=0;
@@ -1150,7 +1175,7 @@ template <class T> bool identify_cells(V3DPluginCallback2 &callback, T* data1d, 
             }
             if (pValHist_smooth[25]>pValHist_smooth[24]) localMaxs.push_back(25);
             //v3d_msg("localMaxs made");
-            int max=2,valleyPos=0,diff=0;
+			int max=2,valleyPos=0,diff=0;
             for (int i=0; i<localMaxs.size()-1; i++)
             {
                 diff = localMaxs[i+1]-localMaxs[i];
@@ -1160,7 +1185,7 @@ template <class T> bool identify_cells(V3DPluginCallback2 &callback, T* data1d, 
             valleyPos *= 2;
             if (valleyPos<=0) valleyPos=1;
             if (valleyPos>=51) valleyPos=50;
-            if (pValHist[valleyPos-1]==pValHist[valleyPos]==pValHist[valleyPos+1]) thresh=valleyPos*5;
+            if (pValHist[valleyPos-1]==pValHist[valleyPos]==pValHist[valleyPos+1]) double_threshold=valleyPos*5;
             int end=valleyPos+diff*2;
             if (end>50) end=50;
             for (int i=valleyPos; i<=end; i++)
@@ -1168,120 +1193,136 @@ template <class T> bool identify_cells(V3DPluginCallback2 &callback, T* data1d, 
                 num0=pValHist[i-1];
                 num1=pValHist[i];
                 num2=pValHist[i+1];
-                if (num1<=num0 && num1<=num2) {thresh=i*5;}
+                if (num1<=num0 && num1<=num2) {double_threshold=i*5;}
             }
         }
+		cout<<"threshold value "<<double_threshold<<endl;
 
-        cout<<"threshold value "<<thresh<<endl;
-
-        PixVal=0, BGVal=0;
-        for (int i=0; i<marknum; i++)
+        double_pixelValue=0;
+		double_backgroundValue=0;
+        for (int i=0; i<int_numOfMarkers; i++)
         {
-            num=PixValArr[i];
-            tmpLocation = mlist.at(i);
-            if (num<thresh) { BGList.append(tmpLocation); BGVal += num; }    //BGList holds bg markers
-            if (num>thresh) { MarkList.append(tmpLocation); PixVal += num; }  //MarkList holds cell markers
+            num=vct_pixelValueArray[i];
+            LocationSimple_Temp = LandmarkList_markerListCurrent.at(i);
+            if (num<double_threshold) { LandmarkList_backgroundListCurrent.append(LocationSimple_Temp); double_backgroundValue += num; }    //LandmarkList_backgroundListCurrent holds bg markers
+            if (num>double_threshold) { LandmarkList_cellMarkers.append(LocationSimple_Temp); double_pixelValue += num; }  //LandmarkList_cellMarkers holds cell markers
         }
-
-        PixVal = PixVal/MarkList.count();   //PixVal now stores average pixel value of all cell markers
-        if (!BGList.isEmpty()) BGVal = BGVal/BGList.count();
-        else BGVal = 0;                     //BGVal now stores average pixel value of all background markers
+		double_pixelValue = double_pixelValue/LandmarkList_cellMarkers.count();   //double_pixelValue now stores average pixel value of all cell markers
+		cout<<"Pixel value: "<<double_pixelValue<<endl;
+		cout<<"Landmarks in background list: "<<LandmarkList_backgroundListCurrent.count()<<endl;
+		cout<<"double_backgroundValue: "<<double_backgroundValue<<endl;
+		if (LandmarkList_backgroundListCurrent.count() < 1)
+		{
+			double_backgroundValue = 0;
+		}
+		else
+		{	
+			double_backgroundValue = double_backgroundValue/LandmarkList_backgroundListCurrent.count();
+		}
     }
+	#pragma endregion
+
+	#pragma region "Comment Sorting"
     else    //comment sorting
     {
-        catsorting=true;
-        MarkList = markerlist;
-        PixVal=0, BGVal=0;
+		v3d_msg("6.5");
+        bool_sortingByCategory=true;
+        LandmarkList_cellMarkers = LandmarkList_markerList;
+        double_pixelValue=0, double_backgroundValue=0;
         double markmin=255, bgmax=0;
-        for (int i=0; i<MarkList.count(); i++)
+        for (int i=0; i<LandmarkList_cellMarkers.count(); i++)
         {
-            tmpLocation = MarkList.at(i);
-            tmpLocation.getCoord(xc,yc,zc);
-            int pix = pixelVal(data1d,dimNum,xc,yc,zc,c);
-            PixVal += pix;
+            LocationSimple_Temp = LandmarkList_cellMarkers.at(i);
+            LocationSimple_Temp.getCoord(xc,yc,zc);
+            int pix = pixelVal(Image1D_currentWindow,vct_Dim,xc,yc,zc,int_channel);
+            double_pixelValue += pix;
             if (pix<markmin) markmin=pix;
             //cout<<"mark "<<xc<<" "<<yc<<" "<<zc<<" "<<pix<<endl;
         }
-        BGList = bglist;
-        for (int i=0; i<BGList.count(); i++)
+        LandmarkList_backgroundListCurrent = LandmarkList_backgroundList;
+        for (int i=0; i<LandmarkList_backgroundListCurrent.count(); i++)
         {
-            tmpLocation = BGList.at(i);
-            tmpLocation.getCoord(xc,yc,zc);
-            int pix = pixelVal(data1d,dimNum,xc,yc,zc,c);
-            BGVal += pix;
+            LocationSimple_Temp = LandmarkList_backgroundListCurrent.at(i);
+            LocationSimple_Temp.getCoord(xc,yc,zc);
+            int pix = pixelVal(Image1D_currentWindow,vct_Dim,xc,yc,zc,int_channel);
+            double_backgroundValue += pix;
             if (pix>bgmax) bgmax=pix;
             //cout<<"bg "<<xc<<" "<<yc<<" "<<zc<<" "<<pix<<endl;
         }
 
-        PixVal = PixVal/MarkList.count();   //PixVal now stores average pixel value of all cell markers
-        BGVal = BGVal/BGList.count();       //BGVal now stores average pixel value of all background markers
-        if (thresh<0)
+        double_pixelValue = double_pixelValue/LandmarkList_cellMarkers.count();   //double_pixelValue now stores average pixel value of all cell markers
+        double_backgroundValue = double_backgroundValue/LandmarkList_backgroundListCurrent.count();       //double_backgroundValue now stores average pixel value of all background markers
+        if (double_threshold<0)
         {
-            if (bgmax<=markmin) thresh = (int)((markmin+bgmax)/2 + 0.5);
-            else thresh = (int)((PixVal+BGVal)/2 + 0.5);
+            if (bgmax<=markmin) double_threshold = (int)((markmin+bgmax)/2 + 0.5);
+            else double_threshold = (int)((double_pixelValue+double_backgroundValue)/2 + 0.5);
             //cout<<bgmax<<" "<<markmin<<endl;
         }
-        cout<<"threshold value "<<thresh<<endl;
+        cout<<"threshold value "<<double_threshold<<endl;
     }
+	#pragma endregion
 
-    marks = MarkList.count();
-
-    if (MarkList.count()<=0)
+	v3d_msg("0");
+	int_numOfMarkers = LandmarkList_cellMarkers.count();
+    if (int_numOfMarkers<1)
     {
         v3d_msg("Marker list is empty. Quit.");
         return false;
     }
+    int_category = LandmarkList_cellMarkers.at(0).category; //Generally we don't care about "category" in binary sorting;
 
-    cat = MarkList.at(0).category;
-//v3d_msg(QString("PixVal %1, pixCount %2, BGVal %3, BGCount %4").arg(PixVal).arg(marks).arg(BGVal).arg(BGList.count()));
-
-
-//v3d_msg(QString("marks = %1, bgcount = %2. Marks all sorted").arg(marks).arg(BGList.count()));
-
-    //recalibrates input marker list by mean shift
-    LandmarkList CenteredList;
-    LocationSimple tmpcent(0,0,0);
-    int x,y,z;
-    for (int i=0; i<marks; i++)
+	v3d_msg("5");
+    //Recalibrates input marker list by mean shift;
+    LandmarkList LandmarkList_centeredList;
+    LocationSimple LocationSimple_tempCenter(0,0,0);
+    int x = 0;
+	int y = 0;
+	int z = 0;
+    for (int i=0; i<int_numOfMarkers; i++)
     {
         //cout<<"marker "<<i<<endl;
-        double blah,checkrad=0,checkZrad=0;
-        tmpcent = MarkList.at(i);
-        tmpcent.getCoord(x,y,z);
-        compute_cell_values_rad(data1d,dimNum,x,y,z,c,thresh,blah,checkrad,checkZrad);
-        //cout<<"rad "<<checkrad<<endl;
-        if (checkrad<5) {checkrad=5;}
-        mass_center_Coords(data1d,dimNum,x,y,z,checkrad*1.5,c,thresh);
+        double blah=0;
+		double checkrad=0;
+		double checkZrad=0;
+        LocationSimple_tempCenter = LandmarkList_cellMarkers.at(i);
+        LocationSimple_tempCenter.getCoord(x,y,z);
+		cout<<"x "<<x<<" y "<<y<<" z "<<z<<endl;
+        compute_cell_values_rad(Image1D_currentWindow,vct_Dim,x,y,z,int_channel,double_threshold,blah,checkrad,checkZrad);
+		//cout<<"rad "<<checkrad<<endl;
+        if (checkrad<5)
+		{
+			checkrad=5;
+		}
+        mass_center_Coords(Image1D_currentWindow,vct_Dim,x,y,z,checkrad*1.5,int_channel,double_threshold);
         //cout<<"centered"<<endl;
-        tmpcent.x=x; tmpcent.y=y; tmpcent.z=z;
-        CenteredList.append(tmpcent);
+        LocationSimple_tempCenter.x=x;
+		LocationSimple_tempCenter.y=y;
+		LocationSimple_tempCenter.z=z;
+        LandmarkList_centeredList.append(LocationSimple_tempCenter);
     }
-    //mass_center_Lists(data1d,dimNum,MarkList,CenteredList,15,c,thresh);
-    MarkList = CenteredList;
-    //outputlist = CenteredList; return true;
-//v3d_msg("mean shifted");
+	LandmarkList_cellMarkers = LandmarkList_centeredList;
+    
 
-    //scan list of cell markers for ValAve, radAve
-
+    //Scan list of cell markers for ValAve, radAve
+	v3d_msg("6");
     int * ValAveArr; int * radAveArr; int * radZAveArr;
-    ValAveArr = new int[marks]; radAveArr = new int[marks]; radZAveArr = new int[marks];
+    ValAveArr = new int[int_numOfMarkers]; radAveArr = new int[int_numOfMarkers]; radZAveArr = new int[int_numOfMarkers];
     LocationSimple tempLocation(0,0,0);
     double ValAve=0,radAve=0,radZAve=0,count=0;
     double tmpDataAve,tmpRad,tmpZRad,tmpDataAveImg,tmpDataAveRgn,tmpRadImg,tmpRadRgn;
-
-    for (int i=0; i<marks; i++)
+	for (int i=0; i<int_numOfMarkers; i++)
     {
-        tempLocation = MarkList.at(i);
+        tempLocation = LandmarkList_cellMarkers.at(i);
         tempLocation.getCoord(xc,yc,zc);
-        //int Pix = pixelVal(data1d,dimNum,xc,yc,zc,c);
+        //int Pix = pixelVal(Image1D_currentWindow,vct_Dim,xc,yc,zc,int_channel);
 
-//        compute_cell_values_rad((unsigned char* &)regionData,dimNum,xc,yc,zc,c,2,tmpDataAveRgn,tmpRadRgn);
-//        compute_cell_values_rad(data1d,dimNum,xc,yc,zc,c,thresh,tmpDataAveImg,tmpRadImg);
+//        compute_cell_values_rad((unsigned char* &)regionData,vct_Dim,xc,yc,zc,int_channel,2,tmpDataAveRgn,tmpRadRgn);
+//        compute_cell_values_rad(Image1D_currentWindow,vct_Dim,xc,yc,zc,int_channel,double_threshold,tmpDataAveImg,tmpRadImg);
 //        cout<<tmpRadRgn<<" vs "<<tmpRadImg<<endl;
 //        if (abs(tmpRadImg-tmpRadRgn)<=5) {tmpDataAve=tmpDataAveImg; tmpRad=tmpRadImg;}
-//        else {compute_cell_values_rad(data1d,dimNum,xc,yc,zc,c,thresh*(4/3)+1,tmpDataAve,tmpRad);}
+//        else {compute_cell_values_rad(Image1D_currentWindow,vct_Dim,xc,yc,zc,int_channel,double_threshold*(4/3)+1,tmpDataAve,tmpRad);}
 
-        if(compute_cell_values_rad(data1d,dimNum,xc,yc,zc,c,thresh,tmpDataAve,tmpRad,tmpZRad))
+        if(compute_cell_values_rad(Image1D_currentWindow,vct_Dim,xc,yc,zc,int_channel,double_threshold,tmpDataAve,tmpRad,tmpZRad))
         {
             ValAveArr[i] = tmpDataAve;
             radAveArr[i] = tmpRad;
@@ -1294,8 +1335,7 @@ template <class T> bool identify_cells(V3DPluginCallback2 &callback, T* data1d, 
         }
 //v3d_msg(QString("ValAve %1, radAve %2").arg(ValAve).arg(radAve));
     }
-
-
+	v3d_msg("7");
 //v3d_msg("scan checkpoint");
 
     ValAve /= count;  //average pixel value of each cell
@@ -1305,7 +1345,7 @@ template <class T> bool identify_cells(V3DPluginCallback2 &callback, T* data1d, 
 //v3d_msg(QString("FINAL ValAve %1, radAve %2").arg(ValAve).arg(radAve));
 
     double stV=0, stR=0, stP=0;
-    for (int i=0; i<marks; i++)
+    for (int i=0; i<int_numOfMarkers; i++)
     {
         double s = (ValAveArr[i]-ValAve)*(ValAveArr[i]-ValAve);
         stV += s;
@@ -1313,18 +1353,20 @@ template <class T> bool identify_cells(V3DPluginCallback2 &callback, T* data1d, 
         double t = (radAveArr[i]-radAve)*(radAveArr[i]-radAve);
         stR += t;
 
-        tempLocation = MarkList.at(i);
+        tempLocation = LandmarkList_cellMarkers.at(i);
         tempLocation.getCoord(xc,yc,zc);
-        int Pix = pixelVal(data1d,dimNum,xc,yc,zc,c);
-//        v3d_msg(QString("Pix %1 and PixVal %2").arg(Pix).arg(PixVal));
-        double u = (Pix-PixVal)*(Pix-PixVal);
+        int Pix = pixelVal(Image1D_currentWindow,vct_Dim,xc,yc,zc,int_channel);
+//        v3d_msg(QString("Pix %1 and double_pixelValue %2").arg(Pix).arg(double_pixelValue));
+        double u = (Pix-double_pixelValue)*(Pix-double_pixelValue);
         stP += u;
-//v3d_msg(QString("pixel value %1, diff %2, stP %3").arg(Pix).arg(Pix-PixVal).arg(stP));
+//v3d_msg(QString("pixel value %1, diff %2, stP %3").arg(Pix).arg(Pix-double_pixelValue).arg(stP));
     }
-    double ValStDev = sqrt(stV/marks);
-    double radStDev = sqrt(stR/marks);
-    double PixStDev = sqrt(stP/marks);
 
+	double ValStDev = sqrt(stV/int_numOfMarkers);
+    double radStDev = sqrt(stR/int_numOfMarkers);
+    double PixStDev = sqrt(stP/int_numOfMarkers);
+
+	v3d_msg("10");
     cout<<"attempting regiongrow for object detection"<<endl;
     //pulls region list from regiongrow plugin
     LandmarkList regionList;
@@ -1333,24 +1375,33 @@ template <class T> bool identify_cells(V3DPluginCallback2 &callback, T* data1d, 
     unsigned char* rgn8 = 0;
     unsigned short* rgn16 = 0;
     float* rgn32 = 0;
-    if (!regiongrowing(callback,c,thresh,radAve,regionList,regionVol,(unsigned char* &)rgn8,(unsigned short* &)rgn16,(float* &)rgn32)) return false;
-
-//v3d_msg(QString("markers have been scanned. Pixval %1 and stdev %2. radVal %3 and stdev %4. segVal %5 and stdev %6").arg(PixVal).arg(PixStDev).arg(radAve).arg(radStDev).arg(ValAve).arg(ValStDev));
-
-    //scans image and generates new set of markers based on testing data
-    //LandmarkList scannedList = scan_and_count(data1d,dimNum,ValAve,ValStDev,PixVal,PixStDev,radAve,radStDev,c,cat,thresh,MarkList,maskImage);
-    //LandmarkList RecenterList;
-    //mass_center_Lists(data1d,dimNum,scannedList,RecenterList,radAve+radStDev,c,thresh);
-    //outputlist = remove_duplicates(data1d,RecenterList,dimNum,PixVal,radAve-radStDev,c);
+    if (!regiongrowing(callback,int_channel,double_threshold,radAve,regionList,regionVol,(unsigned char* &)rgn8,(unsigned short* &)rgn16,(float* &)rgn32))
+	{
+		return false;
+	}
+	v3d_msg("11");
 
     if (regionList.size()>65534)
-        segment_regions(data1d,dimNum,MarkList,outputlist,regionList,regionVol,radAve,radStDev,radZAve,c,cat,thresh,rgn32);
+	{
+		v3d_msg("11.1-");
+        segment_regions(Image1D_currentWindow,vct_Dim,LandmarkList_cellMarkers,outputlist,regionList,regionVol,radAve,radStDev,radZAve,int_channel,int_category,double_threshold,rgn32);
+		v3d_msg("11.1+");
+	}
     else if (regionList.size()>254)
-        segment_regions(data1d,dimNum,MarkList,outputlist,regionList,regionVol,radAve,radStDev,radZAve,c,cat,thresh,rgn16);
+	{
+		v3d_msg("11.2-");
+        segment_regions(Image1D_currentWindow,vct_Dim,LandmarkList_cellMarkers,outputlist,regionList,regionVol,radAve,radStDev,radZAve,int_channel,int_category,double_threshold,rgn16);
+		v3d_msg("11.2+");
+	}
     else
-        segment_regions(data1d,dimNum,MarkList,outputlist,regionList,regionVol,radAve,radStDev,radZAve,c,cat,thresh,rgn8);
+	{
+		v3d_msg("11.3-");
+        segment_regions(Image1D_currentWindow,vct_Dim,LandmarkList_cellMarkers,outputlist,regionList,regionVol,radAve,radStDev,radZAve,int_channel,int_category,double_threshold,rgn8);
+		v3d_msg("11.3+");
+	}
+	v3d_msg("12");
 
-    if (catsorting==true) //set same category and color
+    if (bool_sortingByCategory==true) //set same category and color
     {
         srand(clock()); //time(NULL));
         RGBA8 col = random_rgba8(255);
@@ -1358,18 +1409,18 @@ template <class T> bool identify_cells(V3DPluginCallback2 &callback, T* data1d, 
         {
             LocationSimple tmp(0,0,0);
             tmp = outputlist.at(i);
-            tmp.category = cat;
+            tmp.category = int_category;
             tmp.color = col;
             stringstream catStr;
-            catStr << cat;
+            catStr << int_category;
             tmp.comments = catStr.str();
             outputlist.replace(i,tmp);
         }
     }
-    rad = radAve;
-    val = PixVal;
+    double_rad = radAve;
+    double_val = double_pixelValue;
 
-    cout<<"success, cell count "<<outputlist.count()<<" based on "<<marks<<" exemplar cells"<<endl<<endl;
+    cout<<"success, cell count "<<outputlist.count()<<" based on "<<int_numOfMarkers<<" exemplar cells"<<endl<<endl;
     return true;
 }
 
@@ -1738,7 +1789,7 @@ template <class T> LandmarkList scan_and_count(T* data1d, V3DLONG *dimNum,
     }
     //cout<<"original list appended, listsize currently "<<newList.size()<<endl;
 
-    LocationSimple tmpLocation(0,0,0);
+    LocationSimple LocationSimple_Temp(0,0,0);
     double seg;
     seg = radAve/4;
     double init=radAve+radStDev;
@@ -1768,14 +1819,14 @@ template <class T> LandmarkList scan_and_count(T* data1d, V3DLONG *dimNum,
                             {
                                 //cout<<"found a marker "<<TempDataAve<<" with rad "<<i<<" at coords "<<ix<<" "<<iy<<" "<<iz<<endl;
 
-                                tmpLocation.x = x;
-                                tmpLocation.y = y;
-                                tmpLocation.z = z;
-                                tmpLocation.category = cat;
+                                LocationSimple_Temp.x = x;
+                                LocationSimple_Temp.y = y;
+                                LocationSimple_Temp.z = z;
+                                LocationSimple_Temp.category = cat;
                                 stringstream catStr;
                                 catStr << cat;
-                                tmpLocation.comments = catStr.str();
-                                newList.append(tmpLocation);
+                                LocationSimple_Temp.comments = catStr.str();
+                                newList.append(LocationSimple_Temp);
 
                                 apply_mask(data1d,dimNum,x,y,z,c,thresh,maskImg);
                             }
@@ -1903,7 +1954,7 @@ template <class T> bool type_duplicates(T* data1d, LandmarkList &mList,
     return true;
 }
 
-bool neuron_2_mark(const NeuronTree & p, LandmarkList & neuronMarkList)
+bool neuron_2_mark(const NeuronTree & p, LandmarkList & LandmarkList_Neurons)
 {
     LocationSimple tmpMark(0,0,0);
     for (int i=0;i<p.listNeuron.size();i++)
@@ -1912,7 +1963,7 @@ bool neuron_2_mark(const NeuronTree & p, LandmarkList & neuronMarkList)
         tmpMark.y = p.listNeuron.at(i).y;
         tmpMark.z = p.listNeuron.at(i).z;
         tmpMark.category = p.listNeuron.at(i).type;
-        neuronMarkList.append(tmpMark);
+        LandmarkList_Neurons.append(tmpMark);
     }
     return true;
 }
@@ -2142,21 +2193,16 @@ template <class T> bool apply_mask(unsigned char* data1d, V3DLONG *dimNum,
     return true;
 }
 
-bool open_testSWC(QString &fileOpenName, NeuronTree & openTree)
+bool open_testSWC(QString &QString_openFileName, NeuronTree & neuronTree_openFile)
 {
-//    QString fileOpenName;
-//    fileOpenName = QFileDialog::getOpenFileName(0, QObject::tr("Open Example SWC File"),
-//            "",
-//            QObject::tr("Supported file (*.swc)"));
-
-    if (!fileOpenName.isEmpty() && fileOpenName.toUpper().endsWith(".SWC"))
+    if (!QString_openFileName.isEmpty() && QString_openFileName.toUpper().endsWith(".SWC"))
     {
-        openTree = readSWC_file(fileOpenName);
+        neuronTree_openFile = readSWC_file(QString_openFileName);
         return true;
     }
     else
     {
-        v3d_msg("You did not choose a valid file type, or the file you chose is empty. Will attempt to find exampler set in window.");
+        v3d_msg("You did not choose a valid file type, or the file you chose is empty. Will attempt to find exampler set in window;");
         return false;
     }
 }
@@ -3020,9 +3066,9 @@ template <class T> bool segment_regions(unsigned char* data1d, V3DLONG *dimNum,
         if (count<=0) {continue;}
         //cout<<"working on region "<<i+1<<" with remaining count "<<count<<endl;
         double range = pow(regionVol.at(i),0.33)*1.5;
-        LocationSimple tmpLocation = regionList.at(i);
-        //LandmarkList cells = median_filter(data1d,regionData,dimNum,tmpLocation,c,range,count,i+1); //problem is this might return markers on same cell
-        LandmarkList cells = seg_by_mask (data1d,regionData,maskData,cell_template,dimNum,tmpLocation,radAve,radZ,range,count,i+1,c,thresh,Xmean,Sx);
+        LocationSimple LocationSimple_Temp = regionList.at(i);
+        //LandmarkList cells = median_filter(data1d,regionData,dimNum,LocationSimple_Temp,c,range,count,i+1); //problem is this might return markers on same cell
+        LandmarkList cells = seg_by_mask (data1d,regionData,maskData,cell_template,dimNum,LocationSimple_Temp,radAve,radZ,range,count,i+1,c,thresh,Xmean,Sx);
         for (int j=0; j<cells.size(); j++)
         {
             int x,y,z;
