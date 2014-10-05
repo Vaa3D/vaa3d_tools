@@ -14,13 +14,13 @@ SOURCES       = iBioformatIO.cpp
 SOURCES      += $$V3DMAINDIR/basic_c_fun/v3d_message.cpp
 
 TARGET        = $$qtLibraryTarget(imageIO_Bioformat)
-DESTDIR       = ../../v3d/plugins/data_IO/load_image_using_Bioformats
+DESTDIR       = $$V3DMAINDIR/../bin/plugins/data_IO/load_image_using_Bioformats
 
 win32 {
         QMAKE_POST_LINK = copy loci_tools.jar ..\\..\\v3d\\plugins\\data_IO\\load_image_using_Bioformats\\.
 }
 else {
-        QMAKE_POST_LINK = cp loci_tools.jar ../../v3d/plugins/data_IO/load_image_using_Bioformats/.
+        QMAKE_POST_LINK = cp loci_tools.jar $$V3DMAINDIR/../bin/plugins/data_IO/load_image_using_Bioformats/.
 }
 
 

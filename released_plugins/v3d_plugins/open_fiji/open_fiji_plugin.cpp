@@ -55,10 +55,8 @@ QStringList open_fiji::funclist() const
 
 void call_open_using_imagej(bool ismenu, QString inputfile, QString savefile,V3DPluginCallback2 &callback)
 {
-
-
     QSettings setting("Vaa3D_tools", "open_imagej");
-    QString imagej_binary_file = setting.value("imagej_binary_path").toByteArray();
+    QString imagej_binary_file = "non-existing"; //setting.value("imagej_binary_path").toByteArray();
 
     v3d_msg(QString("The default path of imagej is [%1]").arg(imagej_binary_file), 0);
    // v3d_msg(QString("The default temporary location for saving intermediate conversion files is [%1]").arg(tmp_conversion_folder), 0);
@@ -67,6 +65,7 @@ void call_open_using_imagej(bool ismenu, QString inputfile, QString savefile,V3D
     if (!f_imagej_binary_file.exists())
     {
 
+        v3d_msg("Cannot find the specified default ImageJ location.");
 #if defined(Q_OS_MAC)
          imagej_binary_file = getAppPath().append("/Fiji.app/Contents/MacOS/ImageJ-macosx");
 #elif defined(Q_OS_LINUX)
@@ -80,6 +79,7 @@ void call_open_using_imagej(bool ismenu, QString inputfile, QString savefile,V3D
         return;
 #endif
 
+        v3d_msg(QString("Now set the new imagej path to [%1]").arg(imagej_binary_file), 0);
         f_imagej_binary_file.setFileName(imagej_binary_file);
     }
 
@@ -134,7 +134,12 @@ void call_open_using_imagej(bool ismenu, QString inputfile, QString savefile,V3D
 
 
     QString cmd_Fiji = QString("%1  --headless -batch  %2/brl_FijiConvert.js %3:%4").arg(imagej_binary_file.toStdString().c_str()).arg(v3dAppPath.toStdString().c_str()).arg(inputfile.toStdString().c_str()).arg(savefile.toStdString().c_str());
-   // v3d_msg(cmd_Fiji);
+    v3d_msg(cmd_Fiji, 0);
+
+    //the folowing direct call work nicely: //20141004, PHC
+    //  /Users/pengh/work/v3d_external/bin/Fiji.app/Contents/MacOS/ImageJ-macosx  --headless -batch  /Users/pengh/work/v3d_external/bin/brl_FijiConvert.js /workdata/v3d_demo_data/single_neuron/Twin-Spot_GH146_lAL_39-2.lsm:/Users/pengh/Downloads/44/11.avi
+    //
+    //Thus it seems the problem is "Unrecognized command: "raw writer""
 
     system(qPrintable(cmd_Fiji));
 

@@ -89,6 +89,7 @@ void IBioformatIOPlugin::domenu(const QString &menu_name, V3DPluginCallback2 &ca
         }
 
         QString cmd_loci = QString("java -cp %1 loci.formats.tools.ImageConverter \"%2\" \"%3\"").arg(lociDir.toStdString().c_str()).arg(m_FileName.toStdString().c_str()).arg(tmpfile.toStdString().c_str());
+        v3d_msg(cmd_loci, 0);
 
         system(qPrintable(cmd_loci));
 
@@ -206,6 +207,7 @@ bool IBioformatIOPlugin::dofunc(const QString & func_name, const V3DPluginArgLis
           }
 
           QString cmd_loci = QString("java -cp %1 loci.formats.tools.ImageConverter \"%2\" \"%3\"").arg(lociDir.toStdString().c_str()).arg(m_FileName.toStdString().c_str()).arg(tmpfile.toStdString().c_str());
+          v3d_msg(cmd_loci, 0);
 
           system(qPrintable(cmd_loci));
 
