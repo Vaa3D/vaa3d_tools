@@ -207,7 +207,7 @@ void TPAlgoMST::execute() throw (iom::exception)
 					#endif
 					while (v != source)
 					{
-						uint16 u_row, u_col;
+						int u_row, u_col;
 						u_row = predecessors[v->getROW_INDEX()][v->getCOL_INDEX()].first[k];
 						if(u_row>= volume->getN_ROWS() || u_row < 0)
 							throw iom::exception("...in TPAlgoMST::execute(): error in the predecessor matrix");

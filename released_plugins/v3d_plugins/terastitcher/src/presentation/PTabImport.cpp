@@ -854,6 +854,23 @@ void PTabImport::iopluginChanged(QString str)
 void PTabImport::volformatChanged(QString str)
 {
     vm::VOLUME_INPUT_FORMAT_PLUGIN = str.toStdString();
+
+    // suggest image plugin
+    int index = 0;
+    if(vm::VOLUME_INPUT_FORMAT_PLUGIN.compare(StackedVolume::id) == 0)
+    {
+        index = imin_plugin_cbox->findText("opencv2D");
+        if ( index != -1 ) { // -1 for not found
+           imin_plugin_cbox->setCurrentIndex(index);
+        }
+    }
+    else if(vm::VOLUME_INPUT_FORMAT_PLUGIN.compare(BlockVolume::id) == 0)
+    {
+        index = imin_plugin_cbox->findText("tiff3D");
+        if ( index != -1 ) { // -1 for not found
+           imin_plugin_cbox->setCurrentIndex(index);
+        }
+    }
 }
 
 /**********************************************************************************

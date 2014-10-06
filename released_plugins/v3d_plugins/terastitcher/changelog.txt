@@ -11,10 +11,18 @@ ties names are:
 - Rem: a feature no longer available
 
 ============================================================================================
+Vaa3D-TeraStitcher version 1.6.10
+October 6th, 2014
+--------------------------------------------------------------------------------------------
+- Fix: minor bug fixes and improvements.
+- New: syncronized with TeraStitcher-standalone v1.6.10.
+--------------------------------------------------------------------------------------------
+
+
 Vaa3D-TeraStitcher version 1.6.7
 September 22nd, 2014
 --------------------------------------------------------------------------------------------
-- Fix: minor bug fixed and improvements.
+- Fix: minor bug fixes and improvements.
 - New: syncronized with TeraStitcher-standalone v1.6.7.
 --------------------------------------------------------------------------------------------
 

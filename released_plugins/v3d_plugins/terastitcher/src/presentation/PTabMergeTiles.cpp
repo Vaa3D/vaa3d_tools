@@ -469,13 +469,15 @@ void PTabMergeTiles::reset()
         resolutions_view_cboxs[i]->setChecked(false);
     }
 
-    int index = vol_format_cbox->findText(BlockVolume::id.c_str());
-    if ( index != -1 )
-       vol_format_cbox->setCurrentIndex(index);
+    vol_format_cbox->setCurrentIndex(0);
+    imout_plugin_cbox->setCurrentIndex(0);
+//    int index = vol_format_cbox->findText(BlockVolume::id.c_str());
+//    if ( index != -1 )
+//       vol_format_cbox->setCurrentIndex(index);
 
-    index = imout_plugin_cbox->findText("tiff3D");
-        if ( index != -1 )
-           imout_plugin_cbox->setCurrentIndex(index);
+//    index = imout_plugin_cbox->findText("tiff3D");
+//        if ( index != -1 )
+//           imout_plugin_cbox->setCurrentIndex(index);
 
     block_height_field->setMinimum(-1);
     block_height_field->setMaximum(4096);
