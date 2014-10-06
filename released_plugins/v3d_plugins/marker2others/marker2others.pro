@@ -12,4 +12,4 @@ SOURCES	+= $$V3DMAINPATH/basic_c_fun/v3d_message.cpp
 SOURCES += $$V3DMAINPATH/basic_c_fun/basic_surf_objs.cpp
 
 TARGET	= $$qtLibraryTarget(marker2others)
-DESTDIR	= ../../v3d/plugins/marker_utilities/marker2others/
+DESTDIR	= $$V3DMAINPATH/../bin/plugins/marker_utilities/marker2others/

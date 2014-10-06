@@ -17,5 +17,4 @@ SOURCES += $$VAA3DPATH/basic_c_fun/basic_4dimage_create.cpp
 SOURCES += $$VAA3DPATH/basic_c_fun/basic_memory.cpp
 
 TARGET	= $$qtLibraryTarget(mipZSlices)
-#DESTDIR = ../../v3d/plugins/image_projection/maximum_intensity_projection_Z_Slices/
 DESTDIR       =  $$VAA3DPATH/../bin/plugins/image_projection/maximum_intensity_projection_Z_Slices/

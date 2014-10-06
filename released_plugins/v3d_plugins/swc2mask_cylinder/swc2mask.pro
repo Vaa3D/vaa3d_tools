@@ -20,4 +20,4 @@ SOURCES += $$VAA3D_DIR/basic_c_fun/basic_surf_objs.cpp
 SOURCES	+= $$VAA3D_DIR/basic_c_fun/v3d_message.cpp
 
 TARGET	= $$qtLibraryTarget(swc2mask)
-DESTDIR	= ../../v3d/plugins/neuron_utilities/swc_to_maskimage_cylinder_unit/
+DESTDIR	= $$VAA3D_DIR/../bin/plugins/neuron_utilities/swc_to_maskimage_cylinder_unit/

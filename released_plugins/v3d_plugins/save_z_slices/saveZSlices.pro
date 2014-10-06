@@ -13,6 +13,5 @@ SOURCES += $$VAA3DPATH/basic_c_fun/v3d_message.cpp
 SOURCES += $$VAA3DPATH/basic_c_fun/basic_4dimage_create.cpp
 
 TARGET	= $$qtLibraryTarget(saveZSlices)
-#DESTDIR	= $$VAA3DPATH/bin/plugins/data_IO/save_Z_Slices/
-DESTDIR = ../../v3d/plugins/data_IO/save_Z_Slices/
+DESTDIR	= $$VAA3DPATH/../bin/plugins/data_IO/save_Z_Slices/
 

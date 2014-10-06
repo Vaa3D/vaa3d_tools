@@ -14,4 +14,4 @@ SOURCES	+= mouse_monitor_func.cpp
 SOURCES	+= ../../../v3d_main/basic_c_fun/v3d_message.cpp
 
 TARGET	= $$qtLibraryTarget(mouse_monitor)
-DESTDIR = ../../v3d/plugins/Vaa3D_PluginInterface_Demos/mouse_event_monitor
+DESTDIR = ../../../../v3d_external/bin/plugins/Vaa3D_PluginInterface_Demos/mouse_event_monitor

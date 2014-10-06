@@ -17,4 +17,4 @@ SOURCES  = canvas_eraser.cpp
 SOURCES += $$V3DMAINPATH/basic_c_fun/v3d_message.cpp
 
 TARGET        = $$qtLibraryTarget(canvas_eraser)   #this should be the project name, i.e. the name of the .pro file
-DESTDIR       = ../../v3d/plugins/pixel_intensity/Canvas_Eraser #better set a subdirectory here so that the plugin will be arranged nicely 
+DESTDIR       = $$V3DMAINPATH/../bin/plugins/pixel_intensity/Canvas_Eraser #better set a subdirectory here so that the plugin will be arranged nicely 

@@ -13,4 +13,4 @@ SOURCES  = ada_threshold.cpp
 SOURCES	+= $$V3DMAINPATH/basic_c_fun/v3d_message.cpp
 
 TARGET        = $$qtLibraryTarget(ada_threshold)
-DESTDIR       = ../../v3d/plugins/image_thresholding/Simple_Adaptive_Thresholding
+DESTDIR       = $$V3DMAINPATH/../bin/plugins/image_thresholding/Simple_Adaptive_Thresholding

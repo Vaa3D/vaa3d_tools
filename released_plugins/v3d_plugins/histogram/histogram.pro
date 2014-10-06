@@ -17,5 +17,4 @@ SOURCES	+= histogram_gui.cpp
 SOURCES	+= $$VAA3DPATH/basic_c_fun/v3d_message.cpp
 
 TARGET	= $$qtLibraryTarget(histogram)
-DESTDIR	= ../../v3d/plugins/histogram/
-#DESTDIR	= $$VAA3DPATH/../bin/plugins/histogram/
+DESTDIR	= $$VAA3DPATH/../bin/plugins/histogram/

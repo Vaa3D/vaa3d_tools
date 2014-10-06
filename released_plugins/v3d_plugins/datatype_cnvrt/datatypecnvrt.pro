@@ -14,5 +14,4 @@ SOURCES  = datatypecnvrt.cpp
 SOURCES	+= $$V3DMAINPATH/basic_c_fun/v3d_message.cpp
 
 TARGET        = $$qtLibraryTarget(datatypeconvert)
-#DESTDIR       = ../../v3d/plugins/data_type/Convert_8_16_32_bits_data
 DESTDIR       = $$V3DMAINPATH/../bin/plugins/data_type/Convert_8_16_32_bits_data

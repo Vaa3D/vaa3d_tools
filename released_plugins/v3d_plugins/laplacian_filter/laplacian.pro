@@ -13,5 +13,5 @@ SOURCES       = laplacianfilterplugin.cpp
 SOURCES	+= $$V3DMAINPATH/basic_c_fun/v3d_message.cpp
 
 TARGET        = $$qtLibraryTarget(laplacianfilter)
-DESTDIR       = ../../v3d/plugins/image_filters/Laplacian_Filter
+DESTDIR       = $$V3DMAINPATH/../bin/plugins/image_filters/Laplacian_Filter
 

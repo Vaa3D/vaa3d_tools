@@ -14,5 +14,5 @@ SOURCES       += ../../../v3d_main/basic_c_fun/v3d_message.cpp
 
 TARGET        = $$qtLibraryTarget(linker_file_generator)   #this should be the project name, i.e. the name of the .pro file
 
-DESTDIR       = ../../v3d/plugins/linker_file/Linker_File_Generator  
+DESTDIR       = ../../../../v3d_external/bin/plugins/linker_file/Linker_File_Generator  
 

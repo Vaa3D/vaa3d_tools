@@ -17,4 +17,4 @@ SOURCES      += Nfmain.cpp
 SOURCES      += compute.cpp
 
 TARGET        = $$qtLibraryTarget(global_neuron_feature)
-DESTDIR       = ../../v3d/plugins/neuron_utilities/global_neuron_feature
+DESTDIR       = $$V3DMAINPATH/../bin/plugins/neuron_utilities/global_neuron_feature

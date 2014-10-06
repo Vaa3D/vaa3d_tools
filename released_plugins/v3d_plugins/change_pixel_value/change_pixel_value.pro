@@ -14,5 +14,5 @@ SOURCES  = updatepxlvalplugin.cpp
 SOURCES += $$V3DMAINPATH/basic_c_fun/v3d_message.cpp
 
 TARGET        = $$qtLibraryTarget(updatepxlval)
-DESTDIR       = ../../v3d/plugins/pixel_intensity/Change_single_pixel_value
+DESTDIR       = $$V3DMAINPATH/../bin/plugins/pixel_intensity/Change_single_pixel_value
 

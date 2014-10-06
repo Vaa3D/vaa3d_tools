@@ -11,4 +11,4 @@ SOURCES  = regiongrow.cpp
 SOURCES	+= $$V3DMAINPATH/basic_c_fun/v3d_message.cpp
 
 TARGET        = $$qtLibraryTarget(regiongrow)
-DESTDIR       = ../../v3d/plugins/image_segmentation/Label_Objects
+DESTDIR       = $$V3DMAINPATH/../bin/plugins/image_segmentation/Label_Objects

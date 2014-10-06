@@ -22,4 +22,4 @@ SOURCES	+= Image_enhancement_Anisotropy_plugin.cpp
 SOURCES	+= $$V3DMAINPATH/basic_c_fun/v3d_message.cpp
 
 TARGET	= $$qtLibraryTarget(image_anisotropy_map)
-DESTDIR	= ../../v3d/plugins/image_anisotropy_map/
+DESTDIR	= $$V3DMAINPATH/../bin/plugins/image_anisotropy_map/

@@ -43,5 +43,5 @@ SOURCES      += plugin_atlasguided_stranno.cpp
 TARGET        = $$qtLibraryTarget(plugin_atlasguided_stranno)
 
 
-DESTDIR       = ../../v3d_main/v3d/plugins/atlasguided_stranno/ #win32 qmake couldn't handle space in path
+DESTDIR       = ../../../../v3d_external/bin/plugins/atlasguided_stranno/ #win32 qmake couldn't handle space in path
 

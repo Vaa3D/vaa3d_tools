@@ -50,6 +50,6 @@ SOURCES      += plugin_celegans_straighten.cpp
 
 TARGET        = $$qtLibraryTarget(celegans_straighten)
 
-DESTDIR       = ../../v3d/plugins/celegans/celegans_straighten/ #win32 qmake couldn't handle space in path
+DESTDIR       = $$V3DMAINDIR/../bin/plugins/celegans/celegans_straighten/ #win32 qmake couldn't handle space in path
 
 

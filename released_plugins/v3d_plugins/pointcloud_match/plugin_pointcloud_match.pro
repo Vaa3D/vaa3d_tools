@@ -31,7 +31,6 @@ SOURCES      += src/plugin_pointcloud_match.cpp
 
 TARGET        = $$qtLibraryTarget(plugin_pointcloud_match)
 
-DESTDIR       = ../../v3d/plugins/image_registration/pointcloud_matcher/ 
-
-#DESTDIR       = ../../v3d_main/v3d/plugins/unfinished/pointcloud_matcher/ #win32 qmake couldn't handle space in path
+DESTDIR       = $$V3DMAINPATH/../bin/plugins/image_registration/pointcloud_matcher/ 
+#win32 qmake couldn't handle space in path
 

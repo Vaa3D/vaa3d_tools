@@ -14,5 +14,5 @@ SOURCES       = convert_img_to_atlasview.cpp
 SOURCES      += $$V3DMAINDIR/basic_c_fun/v3d_message.cpp
 
 TARGET        = $$qtLibraryTarget(convert_img_to_atlasview)
-DESTDIR       = ../../v3d/plugins/data_type/Convert_Image_to_AtlasViewMode
+DESTDIR       = $$V3DMAINDIR/../bin/plugins/data_type/Convert_Image_to_AtlasViewMode
 

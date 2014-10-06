@@ -13,5 +13,5 @@ SOURCES	+= $$V3DMAINPATH/basic_c_fun/v3d_message.cpp
 SOURCES	+= $$V3DMAINPATH/basic_c_fun/basic_4dimage_create.cpp
 
 TARGET        = $$qtLibraryTarget(rescale)
-DESTDIR       = ../../v3d/plugins/data_type/intensity_rescale
+DESTDIR       = $$V3DMAINPATH/../bin/plugins/data_type/intensity_rescale
 

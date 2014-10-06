@@ -19,4 +19,4 @@ SOURCES	+= $$VAA3DPATH/neuron_editing/neuron_sim_scores.cpp
 SOURCES	+= $$VAA3DPATH/neuron_editing/v_neuronswc.cpp
 
 TARGET	= $$qtLibraryTarget(neuron_dist)
-DESTDIR	= ../../v3d/plugins/neuron_utilities/neuron_distance
+DESTDIR	= $$VAA3DPATH/../bin/plugins/neuron_utilities/neuron_distance

@@ -12,5 +12,4 @@ SOURCES	+= Medianfilter_plugin.cpp
 SOURCES	+= $$V3DMAINPATH/basic_c_fun/v3d_message.cpp
 
 TARGET	= $$qtLibraryTarget(medianfilter)
-DESTDIR	= ../../v3d/plugins/image_filters/median_filter/
-#DESTDIR	= $$V3DMAINPATH/../bin/plugins/image_filters/median_filter/
+DESTDIR	= $$V3DMAINPATH/../bin/plugins/image_filters/median_filter/

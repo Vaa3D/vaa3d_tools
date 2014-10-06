@@ -27,4 +27,4 @@ SOURCES	+= ting1_plugin.cpp \
 SOURCES	+= $$VAA3DPATH/basic_c_fun/v3d_message.cpp
 
 TARGET	= $$qtLibraryTarget(neutube)
-DESTDIR	= ../../../v3d/plugins/neuron_tracing/tracing_tubes
+DESTDIR	= $$VAA3DPATH/../bin/plugins/neuron_tracing/tracing_tubes

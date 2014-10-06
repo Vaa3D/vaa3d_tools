@@ -16,5 +16,5 @@ SOURCES += $$V3DMAINPATH/basic_c_fun/v3d_message.cpp
 SOURCES += $$V3DMAINPATH/basic_c_fun/basic_memory.cpp
 
 TARGET        = $$qtLibraryTarget(gaussianfilter)
-DESTDIR       = ../../v3d/plugins/image_filters/Gaussian_Filter
+DESTDIR       = $$V3DMAINPATH/../bin/plugins/image_filters/Gaussian_Filter
 

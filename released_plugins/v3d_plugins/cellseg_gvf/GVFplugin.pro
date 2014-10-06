@@ -19,4 +19,4 @@ SOURCES += $$PLUGINPATH/FL_gvfCellSeg.cpp
 FORMS += src/FL_watershedSegPara.ui
 
 TARGET	= $$qtLibraryTarget(gvf_cellseg)
-DESTDIR	= ../../v3d/plugins/image_segmentation/Cell_Segmentation_GVF/
+DESTDIR	= $$VAA3DPATH/../bin/plugins/image_segmentation/Cell_Segmentation_GVF/

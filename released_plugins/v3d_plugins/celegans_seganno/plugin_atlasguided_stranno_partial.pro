@@ -52,7 +52,5 @@ SOURCES      += main_src/q_paradialog_stranno.cpp
 SOURCES      += main_src/plugin_atlasguided_stranno_partial.cpp
 
 TARGET        = $$qtLibraryTarget(plugin_atlasguided_stranno_partial)
-
-#DESTDIR       = ../../v3d/plugins/celegans/atlasguided_seganno/
 DESTDIR       = $$V3DMAINDIR/../bin/plugins/celegans/atlasguided_seganno/
 

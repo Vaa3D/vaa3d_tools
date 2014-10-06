@@ -18,4 +18,4 @@ SOURCES	+= $$V3DMAINPATH/basic_c_fun/v3d_message.cpp
 #SOURCES += $$V3DMAINPATH/basic_c_fun/basic_memory.cpp
 
 TARGET        = $$qtLibraryTarget(rotateimg90)   #this should be the project name, i.e. the name of the .pro file
-DESTDIR       = ../../v3d/plugins/image_geometry/Rotate_Image #better set a subdirectory here so that the plugin will be arranged nicely 
+DESTDIR       = $$V3DMAINPATH/../bin/plugins/image_geometry/Rotate_Image #better set a subdirectory here so that the plugin will be arranged nicely 

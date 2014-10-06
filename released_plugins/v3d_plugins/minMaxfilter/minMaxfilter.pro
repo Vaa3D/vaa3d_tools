@@ -11,5 +11,5 @@ SOURCES  = minMaxfilterplugin.cpp
 SOURCES	+= $$V3DMAINPATH/basic_c_fun/v3d_message.cpp
 
 TARGET        = $$qtLibraryTarget(minMaxfilter)
-DESTDIR       = ../../v3d/plugins/image_filters/min_Max_Filter
+DESTDIR       = $$V3DMAINPATH/../bin/plugins/image_filters/min_Max_Filter
 

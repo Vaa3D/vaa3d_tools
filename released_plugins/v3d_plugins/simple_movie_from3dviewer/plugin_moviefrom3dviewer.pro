@@ -12,6 +12,5 @@ SOURCES       = plugin_moviefrom3dviewer.cpp
 SOURCES      += ../../../v3d_main/basic_c_fun/v3d_message.cpp
 TARGET        = $$qtLibraryTarget(moviefrom3dviewer)
 
-DESTDIR       = ../../v3d/plugins/movies/Simple_Movie_Maker
-#DESTDIR       = ../../../v3d_main/v3d/plugins/Simple_Movie_Maker
+DESTDIR       = ../../../../v3d_external/bin/plugins/movies/Simple_Movie_Maker
 

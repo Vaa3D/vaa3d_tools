@@ -17,5 +17,5 @@ SOURCES += $$VAA3DPATH/basic_c_fun/basic_4dimage_create.cpp
 SOURCES += $$VAA3DPATH/basic_c_fun/basic_memory.cpp
 
 TARGET	= $$qtLibraryTarget(extractZSlices)
-DESTDIR = ../../v3d/plugins/image_geometry/extract_Z_Slices/
+DESTDIR = $$VAA3DPATH/../bin/plugins/image_geometry/extract_Z_Slices/
 

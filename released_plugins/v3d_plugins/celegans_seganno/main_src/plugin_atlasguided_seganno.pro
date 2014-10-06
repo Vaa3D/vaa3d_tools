@@ -34,5 +34,5 @@ SOURCES      += plugin_atlasguided_seganno.cpp
 TARGET        = $$qtLibraryTarget(plugin_atlasguided_seganno)
 
 
-DESTDIR       = ../../v3d_main/v3d/plugins/atlasguided_seganno/ #win32 qmake couldn't handle space in path
+DESTDIR       = ../../../../v3d_external/bin/plugins/atlasguided_seganno/ #win32 qmake couldn't handle space in path
 

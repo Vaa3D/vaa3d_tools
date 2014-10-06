@@ -34,5 +34,5 @@ LIBS	    += -L$$V3DMAINDIR/common_lib/lib -lv3dtiff
         += -L$$QTDIR/demos/shared/
 #LIBS += -framework CoreServices
 TARGET        = $$qtLibraryTarget(mapviewer)
-DESTDIR       = ../../v3d/plugins/image_stitching/Map_View
+DESTDIR       = $$V3DMAINDIR/../bin/plugins/image_stitching/Map_View
 

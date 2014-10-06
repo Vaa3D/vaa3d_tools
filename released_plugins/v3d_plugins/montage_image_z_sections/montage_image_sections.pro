@@ -11,4 +11,4 @@ SOURCES  = montage_image_sections.cpp
 SOURCES	+= $$V3DMAINPATH/basic_c_fun/v3d_message.cpp
 
 TARGET        = $$qtLibraryTarget(montage_image_sections)
-DESTDIR       = ../../v3d/plugins/image_geometry/Montage_All_Z_Sections
+DESTDIR       = $$V3DMAINPATH/../bin/plugins/image_geometry/Montage_All_Z_Sections
