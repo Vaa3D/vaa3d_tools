@@ -84,6 +84,15 @@ int highlight_adjpoint(const NeuronTree& nt1, const NeuronTree& nt2, float dis)
     return count;
 }
 
+void change_neuron_type(const NeuronTree& nt, int type)
+{
+    NeuronSWC * tp;
+    for(int j=0; j<nt.listNeuron.size(); j++){
+        tp=(NeuronSWC *)(&nt.listNeuron[j]);
+        tp->type = type;
+    }
+}
+
 void backupNeuron(const NeuronTree & source, const NeuronTree & backup)
 {
     NeuronTree *np = (NeuronTree *)(&backup);
@@ -122,6 +131,18 @@ void copyProperty(const NeuronTree & source, const NeuronTree & target)
         pt_tmp = (NeuronSWC *)(&(target.listNeuron.at(i)));
         pt_tmp->type = ps_tmp->type;
         pt_tmp->color = ps_tmp->color;
+    }
+}
+
+void copyType(QList<int> source, const NeuronTree & target)
+{
+    if (source.size()!=target.listNeuron.size()) return;
+
+    NeuronSWC *pt_tmp;
+    for (V3DLONG i=0;i<source.size();i++)
+    {
+        pt_tmp = (NeuronSWC *)(&(target.listNeuron.at(i)));
+        pt_tmp->type = source[i];
     }
 }
 

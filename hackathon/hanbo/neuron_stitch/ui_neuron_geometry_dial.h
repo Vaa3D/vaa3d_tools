@@ -86,6 +86,7 @@ public:
     QComboBox *comboBox_ant;
     QPushButton *pushButton_quickmove;
     QPushButton *pushButton_updatebox;
+    QPushButton *pushButton_neurontype;
 
 
 
@@ -98,11 +99,11 @@ public:
         NeuronGeometryDialog->setMaximumSize(QSize(514,700));
         label_11 = new QLabel(NeuronGeometryDialog);
         label_11->setObjectName(QString::fromUtf8("label_11"));
-        label_11->setGeometry(QRect(24, 468, 469, 53));
+        label_11->setGeometry(QRect(24, 448, 469, 53));
         label_11->setAlignment(Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter);
         widget = new QWidget(NeuronGeometryDialog);
         widget->setObjectName(QString::fromUtf8("widget"));
-        widget->setGeometry(QRect(19, 14, 478, 425));
+        widget->setGeometry(QRect(19, 14, 478, 415));
         verticalLayout = new QVBoxLayout(widget);
         verticalLayout->setObjectName(QString::fromUtf8("verticalLayout"));
         verticalLayout->setContentsMargins(0, 0, 0, 0);
@@ -165,6 +166,11 @@ public:
         comboBox_ant = new QComboBox(widget);
         comboBox_ant->setObjectName(QString::fromUtf8("comboBox_ant"));
         hboxLayout_t2->addWidget(comboBox_ant);
+
+        pushButton_neurontype = new QPushButton(widget);
+        pushButton_neurontype->setObjectName(QString::fromUtf8("pushButton_neurontype"));
+        pushButton_neurontype->setAutoDefault(false);
+        hboxLayout_t2->addWidget(pushButton_neurontype);
 
         verticalLayout->addLayout(hboxLayout_t2);
 
@@ -428,6 +434,8 @@ public:
         label_sd->setText(QApplication::translate("NeuronGeometryDialog", "Direction of Stacks", 0, QApplication::UnicodeUTF8));
         pushButton_quickmove->setText(QApplication::translate("NeuronGeometryDialog", "Stick Neuron in Stack Direction", 0, QApplication::UnicodeUTF8));
         pushButton_updatebox->setText(QApplication::translate("NeuronGeometryDialog", "Update Bounding Box", 0, QApplication::UnicodeUTF8));
+        pushButton_neurontype->setText(QApplication::translate("NeuronGeometryDialog", "Change Color", 0, QApplication::UnicodeUTF8));
+
     } // retranslateUi
 
 };

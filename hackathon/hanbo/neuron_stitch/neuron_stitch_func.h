@@ -15,6 +15,10 @@ int highlight_edgepoint(const QList<NeuronTree> *ntList, float dis, int directio
 
 int highlight_adjpoint(const NeuronTree& nt1, const NeuronTree& nt2, float dis);
 
+void change_neuron_type(const NeuronTree& nt, int type);
+
+void copyType(QList<int> source, const NeuronTree & target);
+
 void backupNeuron(const NeuronTree & source, const NeuronTree & backup);
 
 void copyProperty(const NeuronTree & source, const NeuronTree & target);

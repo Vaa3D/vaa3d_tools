@@ -11,7 +11,7 @@
 using namespace std;
 
 Q_EXPORT_PLUGIN2(neuron_stitch, neuron_stitch);
- 
+
 QStringList neuron_stitch::menulist() const
 {
 	return QStringList() 
@@ -64,7 +64,7 @@ bool neuron_stitch::dofunc(const QString & func_name, const V3DPluginArgList & i
 	return true;
 }
 
-void doadjust(V3DPluginCallback2 &callback, QWidget *parent)
+void neuron_stitch::doadjust(V3DPluginCallback2 &callback, QWidget *parent)
 {
     //select the window to operate
     QList <V3dR_MainWindow *> allWindowList = callback.getListAll3DViewers();
@@ -90,6 +90,19 @@ void doadjust(V3DPluginCallback2 &callback, QWidget *parent)
     }
 
     //call dialog
-    NeuronGeometryDialog myDialog(&callback, v3dwin);
-    int res=myDialog.exec();
+    //NeuronGeometryDialog myDialog(&callback, v3dwin);
+    //int res=myDialog.exec();
+    NeuronGeometryDialog * myDialog = 0;
+//    for(int i=0; i<dialogList.size(); i++){
+//        if(dialogList[i]->v3dwin == v3dwin){
+//            myDialog = dialogList[i];
+//            break;
+//        }
+//    }
+    if(myDialog == 0)
+    {
+        myDialog = new NeuronGeometryDialog(&callback, v3dwin);
+//        dialogList.append(myDialog);
+    }
+    myDialog->show();
 }
