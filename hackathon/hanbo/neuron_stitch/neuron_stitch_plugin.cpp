@@ -6,14 +6,16 @@
 #include "v3d_message.h"
 #include <vector>
 #include "neuron_stitch_plugin.h"
+#include "neuron_stitch_func.h"
+
 using namespace std;
+
 Q_EXPORT_PLUGIN2(neuron_stitch, neuron_stitch);
  
 QStringList neuron_stitch::menulist() const
 {
 	return QStringList() 
-		<<tr("arrange_stacks")
-		<<tr("auto_landmarks")
+        <<tr("adjust_neurons")
 		<<tr("about");
 }
 
@@ -27,14 +29,10 @@ QStringList neuron_stitch::funclist() const
 
 void neuron_stitch::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
 {
-	if (menu_name == tr("arrange_stacks"))
-	{
-		v3d_msg("To be implemented.");
-	}
-	else if (menu_name == tr("auto_landmarks"))
-	{
-		v3d_msg("To be implemented.");
-	}
+    if (menu_name == tr("adjust_neurons"))
+    {
+        doadjust(callback, parent);
+    }
 	else
 	{
 		v3d_msg(tr("This plugin is for link neuron segments across stacks.. "
@@ -66,3 +64,32 @@ bool neuron_stitch::dofunc(const QString & func_name, const V3DPluginArgList & i
 	return true;
 }
 
+void doadjust(V3DPluginCallback2 &callback, QWidget *parent)
+{
+    //select the window to operate
+    QList <V3dR_MainWindow *> allWindowList = callback.getListAll3DViewers();
+    QList <V3dR_MainWindow *> selectWindowList;
+    V3dR_MainWindow * v3dwin;
+    QList<NeuronTree> * ntTreeList;
+    qDebug("search for 3D windows");
+    for (V3DLONG i=0;i<allWindowList.size();i++)
+    {
+        ntTreeList = callback.getHandleNeuronTrees_Any3DViewer(allWindowList[i]);
+        if(ntTreeList->size()==2)
+            selectWindowList.append(allWindowList[i]);
+    }
+    qDebug("match and select 3D windows");
+    if(selectWindowList.size()<1){
+        v3d_msg("Cannot find 3D view with only 2 SWC file. Please load the two SWC file you want to stitch in the same 3D view");
+        return;
+    }else if(selectWindowList.size()>1){
+        //to-do: pop up a window to select
+        v3dwin = selectWindowList[0];
+    }else{
+        v3dwin = selectWindowList[0];
+    }
+
+    //call dialog
+    NeuronGeometryDialog myDialog(&callback, v3dwin);
+    int res=myDialog.exec();
+}

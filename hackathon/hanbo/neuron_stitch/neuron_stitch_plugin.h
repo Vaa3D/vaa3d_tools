@@ -8,6 +8,12 @@
 
 #include <QtGui>
 #include <v3d_interface.h>
+#include "basic_surf_objs.h"
+#include "neuron_geometry_dialog.h"
+
+void doarrange(V3DPluginCallback2 &v3d, QWidget *parent);
+void dohighlight(V3DPluginCallback2 &v3d, QWidget *parent);
+void doadjust(V3DPluginCallback2 &callback, QWidget *parent);
 
 class neuron_stitch : public QObject, public V3DPluginInterface2_1
 {
@@ -22,6 +28,8 @@ public:
 
 	QStringList funclist() const ;
 	bool dofunc(const QString &func_name, const V3DPluginArgList &input, V3DPluginArgList &output, V3DPluginCallback2 &callback, QWidget *parent);
+
+
 };
 
 #endif
