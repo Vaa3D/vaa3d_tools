@@ -19,6 +19,8 @@ void change_neuron_type(const NeuronTree& nt, int type);
 
 void copyType(QList<int> source, const NeuronTree & target);
 
+void copyType(const NeuronTree & source, QList<int> & target);
+
 void backupNeuron(const NeuronTree & source, const NeuronTree & backup);
 
 void copyProperty(const NeuronTree & source, const NeuronTree & target);

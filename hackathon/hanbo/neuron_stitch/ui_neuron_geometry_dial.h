@@ -103,7 +103,7 @@ public:
         label_11->setAlignment(Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter);
         widget = new QWidget(NeuronGeometryDialog);
         widget->setObjectName(QString::fromUtf8("widget"));
-        widget->setGeometry(QRect(19, 14, 478, 415));
+        widget->setGeometry(QRect(19, 14, 478, 425));
         verticalLayout = new QVBoxLayout(widget);
         verticalLayout->setObjectName(QString::fromUtf8("verticalLayout"));
         verticalLayout->setContentsMargins(0, 0, 0, 0);

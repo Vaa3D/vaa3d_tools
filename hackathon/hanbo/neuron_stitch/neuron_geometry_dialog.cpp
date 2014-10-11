@@ -271,7 +271,7 @@ void NeuronGeometryDialog::change_stackdir(int dir)
         pushButton_quickmove->setDisabled(true);
     }
 
-    highlight_points();
+    highlight_points(false);
 }
 
 
@@ -343,9 +343,10 @@ void NeuronGeometryDialog::highlight_matchpoint(double s)
     callback->update_3DViewer(v3dwin);
 }
 
-void NeuronGeometryDialog::highlight_points()
+void NeuronGeometryDialog::highlight_points(bool force)
 {
-    if((checkBox_highlight_boundpoint->isChecked()) || (checkBox_highlight_matchpoint->isChecked())){
+    if(force || checkBox_highlight_boundpoint->isChecked() || checkBox_highlight_matchpoint->isChecked())
+    {
         float span=0;
 
         //copy back the property
@@ -364,8 +365,10 @@ void NeuronGeometryDialog::highlight_points()
         if(checkBox_highlight_matchpoint->isChecked())
         {
             span = (float) doubleSpinBox_highlight_matchpoint->value();
-            for(int i=0; i<ntList->size(); i++){
-                for(int j=i+1; j<ntList->size(); j++){
+            for(int i=0; i<ntList->size(); i++)
+            {
+                for(int j=i+1; j<ntList->size(); j++)
+                {
                     highlight_adjpoint(ntList->at(i), ntList->at(j),span);
                 }
             }
@@ -379,19 +382,19 @@ void NeuronGeometryDialog::highlight_matchpoint_check(int c)
 {
     doubleSpinBox_highlight_matchpoint->setDisabled(c == Qt::Unchecked);
 
-    highlight_points();
+    highlight_points(true);
 }
 
 void NeuronGeometryDialog::highlight_boundpoint_check(int c)
 {
     doubleSpinBox_highlight_boundpoint->setDisabled(c == Qt::Unchecked);
 
-    highlight_points();
+    highlight_points(true);
 }
 
 void NeuronGeometryDialog::change_neurontype()
 {
-    bool ok;
+    bool ok = false;
     int type = QInputDialog::getInt(this, ntList->at(ant).name, "pick up a value (0~6)", 0, 0, 100, 1, &ok);
 
     if(ok)
@@ -400,7 +403,9 @@ void NeuronGeometryDialog::change_neurontype()
             type_bk[ant][i] = type;
         }
 
-        highlight_points();
+        copyType(type_bk[ant], ntList->at(ant));
+
+        highlight_points(false);
     }
 }
 
@@ -432,9 +437,10 @@ void NeuronGeometryDialog::reset()
 
     ntpList[ant]->copyGeometry(nt_bkList[ant]);
     copyProperty(nt_bkList.at(ant),ntList->at(ant));
+    copyType(nt_bkList.at(ant),type_bk[ant]);
 
     callback->update_NeuronBoundingBox(v3dwin);
-    highlight_points();
+    highlight_points(false);
 }
 
 void NeuronGeometryDialog::quickmove()
@@ -486,7 +492,7 @@ void NeuronGeometryDialog::quickmove()
     }
 
     callback->update_NeuronBoundingBox(v3dwin);
-    highlight_points();
+    highlight_points(false);
 }
 
 
@@ -517,7 +523,7 @@ void NeuronGeometryDialog::shift_x(double s)
     cur_cx[ant] += s-cur_shift_x[ant];
     cur_shift_x[ant] = s;
 
-    highlight_points();
+    highlight_points(false);
 }
 
 
@@ -527,7 +533,7 @@ void NeuronGeometryDialog::shift_y(double s)
     cur_cy[ant] += s-cur_shift_y[ant];
     cur_shift_y[ant] = s;
 
-    highlight_points();
+    highlight_points(false);
 }
 void NeuronGeometryDialog::shift_z(double s)
 {
@@ -535,7 +541,7 @@ void NeuronGeometryDialog::shift_z(double s)
     cur_cz[ant] += s-cur_shift_z[ant];
     cur_shift_z[ant] = s;
 
-    highlight_points();
+    highlight_points(false);
 }
 
 void NeuronGeometryDialog::scale_x(double s)
@@ -543,7 +549,7 @@ void NeuronGeometryDialog::scale_x(double s)
     proc_neuron_multiply_factor(ntpList[ant], s/(cur_scale_x[ant]*1000), 1, 1);
     cur_scale_x[ant] = s/1000.0;
 
-    highlight_points();
+    highlight_points(false);
 }
 
 void NeuronGeometryDialog::scale_y(double s)
@@ -551,7 +557,7 @@ void NeuronGeometryDialog::scale_y(double s)
     proc_neuron_multiply_factor(ntpList[ant], 1, s/(cur_scale_y[ant]*1000), 1);
     cur_scale_y[ant] = s/1000.0;
 
-    highlight_points();
+    highlight_points(false);
 }
 
 void NeuronGeometryDialog::scale_z(double s)
@@ -559,7 +565,7 @@ void NeuronGeometryDialog::scale_z(double s)
     proc_neuron_multiply_factor(ntpList[ant], 1, 1, s/(cur_scale_z[ant]*1000));
     cur_scale_z[ant] = s/1000.0;
 
-    highlight_points();
+    highlight_points(false);
 }
 void NeuronGeometryDialog::gscale_x(double s)
 {
@@ -571,7 +577,7 @@ void NeuronGeometryDialog::gscale_x(double s)
     proc_neuron_gmultiply_factor(ntpList[ant], s/(cur_gscale_x[ant]*1000), 1, 1);
     cur_gscale_x[ant] = s/1000.0;
 
-    highlight_points();
+    highlight_points(false);
 }
 
 void NeuronGeometryDialog::gscale_y(double s)
@@ -584,7 +590,7 @@ void NeuronGeometryDialog::gscale_y(double s)
     proc_neuron_gmultiply_factor(ntpList[ant], 1, s/(cur_gscale_y[ant]*1000), 1);
     cur_gscale_y[ant] = s/1000.0;
 
-    highlight_points();
+    highlight_points(false);
 }
 
 void NeuronGeometryDialog::gscale_z(double s)
@@ -597,7 +603,7 @@ void NeuronGeometryDialog::gscale_z(double s)
     proc_neuron_gmultiply_factor(ntpList[ant], 1, 1, s/(cur_gscale_z[ant]*1000));
     cur_gscale_z[ant] = s/1000.0;
 
-    highlight_points();
+    highlight_points(false);
 }
 
 void NeuronGeometryDialog::scale_r(double s)
@@ -605,7 +611,7 @@ void NeuronGeometryDialog::scale_r(double s)
     proc_neuron_multiply_factor_radius(ntpList[ant], s/(cur_scale_r[ant]*1000));
     cur_scale_r[ant] = s/1000.0;
 
-    highlight_points();
+    highlight_points(false);
 }
 
 void NeuronGeometryDialog::rotate_around_x(int v)
@@ -617,7 +623,7 @@ void NeuronGeometryDialog::rotate_around_x(int v)
     proc_neuron_affine_around_center(ntpList[ant], afmatrix, cur_cx[ant], cur_cy[ant], cur_cz[ant]);
     cur_rotate_x[ant] = v;
 
-    highlight_points();
+    highlight_points(false);
 }
 
 void NeuronGeometryDialog::rotate_around_y(int v)
@@ -629,7 +635,7 @@ void NeuronGeometryDialog::rotate_around_y(int v)
     proc_neuron_affine_around_center(ntpList[ant], afmatrix, cur_cx[ant], cur_cy[ant], cur_cz[ant]);
     cur_rotate_y[ant] = v;
 
-    highlight_points();
+    highlight_points(false);
 }
 
 void NeuronGeometryDialog::rotate_around_z(int v)
@@ -641,7 +647,7 @@ void NeuronGeometryDialog::rotate_around_z(int v)
     proc_neuron_affine_around_center(ntpList[ant], afmatrix, cur_cx[ant], cur_cy[ant], cur_cz[ant]);
     cur_rotate_z[ant] = v;
 
-    highlight_points();
+    highlight_points(false);
 }
 
 void NeuronGeometryDialog::flip_x(int v)
@@ -649,7 +655,7 @@ void NeuronGeometryDialog::flip_x(int v)
     proc_neuron_mirror(ntpList[ant], true, false, false);
     cur_flip_x[ant] = checkBox_flip_x->isChecked();
 
-    highlight_points();
+    highlight_points(false);
 }
 
 void NeuronGeometryDialog::flip_y(int v)
@@ -657,7 +663,7 @@ void NeuronGeometryDialog::flip_y(int v)
     proc_neuron_mirror(ntpList[ant], false, true, false);
     cur_flip_y[ant] = checkBox_flip_y->isChecked();
 
-    highlight_points();
+    highlight_points(false);
 }
 
 void NeuronGeometryDialog::flip_z(int v)
@@ -665,7 +671,7 @@ void NeuronGeometryDialog::flip_z(int v)
     proc_neuron_mirror(ntpList[ant], false, false, true);
     cur_flip_z[ant] = checkBox_flip_z->isChecked();
 
-    highlight_points();
+    highlight_points(false);
 }
 
 

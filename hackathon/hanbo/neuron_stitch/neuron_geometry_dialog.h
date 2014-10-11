@@ -82,7 +82,7 @@ public slots:
     void flip_z(int v);
 
 public:
-    void highlight_points();
+    void highlight_points(bool force);
 };
 
 void highlight_dial(QDial *d);

@@ -146,6 +146,16 @@ void copyType(QList<int> source, const NeuronTree & target)
     }
 }
 
+void copyType(const NeuronTree & source, QList<int> & target)
+{
+    if (target.size()!=source.listNeuron.size()) return;
+
+    for (V3DLONG i=0;i<target.size();i++)
+    {
+        target[i]=source.listNeuron[i].type;
+    }
+}
+
 float quickMoveNeuron(QList<NeuronTree> * ntTreeList, int ant, int stackdir, int idx_firstnt)
 {
     if(stackdir<0 || stackdir>2)
