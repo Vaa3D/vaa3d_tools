@@ -94,7 +94,7 @@ public:
     {
         if (NeuronGeometryDialog->objectName().isEmpty())
             NeuronGeometryDialog->setObjectName(QString::fromUtf8("NeuronGeometryDialog"));
-        NeuronGeometryDialog->resize(514,500);
+        NeuronGeometryDialog->resize(514,560);
         NeuronGeometryDialog->setMinimumSize(QSize(514,480));
         NeuronGeometryDialog->setMaximumSize(QSize(514,700));
         label_11 = new QLabel(NeuronGeometryDialog);
@@ -104,10 +104,12 @@ public:
         widget = new QWidget(NeuronGeometryDialog);
         widget->setObjectName(QString::fromUtf8("widget"));
         //widget->setGeometry(QRect(19, 14, 478, 425));
+        widget->setMinimumWidth(514);
+        widget->setMaximumWidth(514);
         verticalLayout = new QVBoxLayout(widget);
         verticalLayout->setObjectName(QString::fromUtf8("verticalLayout"));
         verticalLayout->setContentsMargins(0, 0, 0, 0);
-        verticalLayout->setMargin(15);
+        verticalLayout->setMargin(19);
 
         hboxLayout_t1 = new QHBoxLayout();
         hboxLayout_t1->setObjectName(QString::fromUtf8("hboxLayout_t1"));
