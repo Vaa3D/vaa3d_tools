@@ -110,6 +110,8 @@ public:
 
         hboxLayout_t1 = new QHBoxLayout();
         hboxLayout_t1->setObjectName(QString::fromUtf8("hboxLayout_t1"));
+        hboxLayout_t1->setContentsMargins(0, 0, 0, 0);
+        hboxLayout_t1->setMargin(0);
 
         checkBox_hide = new QCheckBox(widget);
         checkBox_hide->setObjectName(QString::fromUtf8("checkBox_hide"));
@@ -123,6 +125,9 @@ public:
         verticalLayout->addLayout(hboxLayout_t1);
 
         hboxLayout_t1a = new QHBoxLayout();
+        hboxLayout_t1a->setObjectName(QString::fromUtf8("hboxLayout_t1a"));
+        hboxLayout_t1a->setContentsMargins(0, 0, 0, 0);
+        hboxLayout_t1a->setMargin(0);
 
         checkBox_highlight_matchpoint = new QCheckBox(widget);
         checkBox_highlight_matchpoint->setObjectName(QString::fromUtf8("checkBox_highlight_matchpoint"));
@@ -136,6 +141,9 @@ public:
         verticalLayout->addLayout(hboxLayout_t1a);
 
         hboxLayout_t1b = new QHBoxLayout();
+        hboxLayout_t1b->setObjectName(QString::fromUtf8("hboxLayout_t1b"));
+        hboxLayout_t1b->setContentsMargins(0, 0, 0, 0);
+        hboxLayout_t1b->setMargin(0);
 
         checkBox_highlight_boundpoint = new QCheckBox(widget);
         checkBox_highlight_boundpoint->setObjectName(QString::fromUtf8("checkBox_highlight_boundpoint"));
@@ -157,6 +165,8 @@ public:
 
         hboxLayout_t2 = new QHBoxLayout();
         hboxLayout_t2->setObjectName(QString::fromUtf8("hboxLayout_t2"));
+        hboxLayout_t2->setContentsMargins(0, 0, 0, 0);
+        hboxLayout_t2->setMargin(0);
 
         label_ant = new QLabel(widget);
         label_ant->setObjectName(QString::fromUtf8("label_ant"));
@@ -176,6 +186,8 @@ public:
 
         hboxLayout_t3 = new QHBoxLayout();
         hboxLayout_t3->setObjectName(QString::fromUtf8("hboxLayout_t3"));
+        hboxLayout_t3->setContentsMargins(0, 0, 0, 0);
+        hboxLayout_t3->setMargin(0);
 
         label_sd = new QLabel(widget);
         label_sd->setObjectName(QString::fromUtf8("label_sd"));
