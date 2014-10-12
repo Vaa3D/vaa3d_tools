@@ -94,9 +94,9 @@ public:
     {
         if (NeuronGeometryDialog->objectName().isEmpty())
             NeuronGeometryDialog->setObjectName(QString::fromUtf8("NeuronGeometryDialog"));
-        NeuronGeometryDialog->resize(514,560);
+        NeuronGeometryDialog->resize(514,620);
         NeuronGeometryDialog->setMinimumSize(QSize(514,480));
-        NeuronGeometryDialog->setMaximumSize(QSize(514,700));
+        NeuronGeometryDialog->setMaximumSize(QSize(514,720));
         label_11 = new QLabel(NeuronGeometryDialog);
         label_11->setObjectName(QString::fromUtf8("label_11"));
         //label_11->setGeometry(QRect(24, 448, 469, 53));
