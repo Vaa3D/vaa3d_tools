@@ -99,14 +99,15 @@ public:
         NeuronGeometryDialog->setMaximumSize(QSize(514,700));
         label_11 = new QLabel(NeuronGeometryDialog);
         label_11->setObjectName(QString::fromUtf8("label_11"));
-        label_11->setGeometry(QRect(24, 448, 469, 53));
+        //label_11->setGeometry(QRect(24, 448, 469, 53));
         label_11->setAlignment(Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter);
         widget = new QWidget(NeuronGeometryDialog);
         widget->setObjectName(QString::fromUtf8("widget"));
-        widget->setGeometry(QRect(19, 14, 478, 425));
+        //widget->setGeometry(QRect(19, 14, 478, 425));
         verticalLayout = new QVBoxLayout(widget);
         verticalLayout->setObjectName(QString::fromUtf8("verticalLayout"));
         verticalLayout->setContentsMargins(0, 0, 0, 0);
+        verticalLayout->setMargin(15);
 
         hboxLayout_t1 = new QHBoxLayout();
         hboxLayout_t1->setObjectName(QString::fromUtf8("hboxLayout_t1"));
@@ -408,6 +409,8 @@ public:
 
 
         verticalLayout->addLayout(hboxLayout1);
+
+        verticalLayout->addWidget(label_11);
 
 
         retranslateUi(NeuronGeometryDialog);
