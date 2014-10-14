@@ -54,6 +54,9 @@ public:
     QDial *dial_x;
     QDial *dial_y;
     QDial *dial_z;
+    QDoubleSpinBox *doubleSpinBox_rotate_x;
+    QDoubleSpinBox *doubleSpinBox_rotate_y;
+    QDoubleSpinBox *doubleSpinBox_rotate_z;
     QLabel *label_10;
     QDoubleSpinBox *doubleSpinBox_gscale_x;
     QDoubleSpinBox *doubleSpinBox_gscale_y;
@@ -332,29 +335,47 @@ public:
 
         gridLayout->addWidget(dial_z, 4, 3, 1, 1);
 
+        doubleSpinBox_rotate_x = new QDoubleSpinBox(widget);
+        doubleSpinBox_rotate_x->setObjectName(QString::fromUtf8("doubleSpinBox_rotate_x"));
+        doubleSpinBox_rotate_x->setDecimals(2);
+
+        gridLayout->addWidget(doubleSpinBox_rotate_x, 5, 1, 1, 1);
+
+        doubleSpinBox_rotate_y = new QDoubleSpinBox(widget);
+        doubleSpinBox_rotate_y->setObjectName(QString::fromUtf8("doubleSpinBox_rotate_y"));
+        doubleSpinBox_rotate_y->setDecimals(2);
+
+        gridLayout->addWidget(doubleSpinBox_rotate_y, 5, 2, 1, 1);
+
+        doubleSpinBox_rotate_z = new QDoubleSpinBox(widget);
+        doubleSpinBox_rotate_z->setObjectName(QString::fromUtf8("doubleSpinBox_rotate_z"));
+        doubleSpinBox_rotate_z->setDecimals(2);
+
+        gridLayout->addWidget(doubleSpinBox_rotate_z, 5, 3, 1, 1);
+
         label_10 = new QLabel(widget);
         label_10->setObjectName(QString::fromUtf8("label_10"));
         label_10->setAlignment(Qt::AlignCenter);
 
-        gridLayout->addWidget(label_10, 5, 0, 1, 1);
+        gridLayout->addWidget(label_10, 6, 0, 1, 1);
 
         doubleSpinBox_gscale_x = new QDoubleSpinBox(widget);
         doubleSpinBox_gscale_x->setObjectName(QString::fromUtf8("doubleSpinBox_gscale_x"));
         doubleSpinBox_gscale_x->setDecimals(4);
 
-        gridLayout->addWidget(doubleSpinBox_gscale_x, 5, 1, 1, 1);
+        gridLayout->addWidget(doubleSpinBox_gscale_x, 6, 1, 1, 1);
 
         doubleSpinBox_gscale_y = new QDoubleSpinBox(widget);
         doubleSpinBox_gscale_y->setObjectName(QString::fromUtf8("doubleSpinBox_gscale_y"));
         doubleSpinBox_gscale_y->setDecimals(4);
 
-        gridLayout->addWidget(doubleSpinBox_gscale_y, 5, 2, 1, 1);
+        gridLayout->addWidget(doubleSpinBox_gscale_y, 6, 2, 1, 1);
 
         doubleSpinBox_gscale_z = new QDoubleSpinBox(widget);
         doubleSpinBox_gscale_z->setObjectName(QString::fromUtf8("doubleSpinBox_gscale_z"));
         doubleSpinBox_gscale_z->setDecimals(4);
 
-        gridLayout->addWidget(doubleSpinBox_gscale_z, 5, 3, 1, 1);
+        gridLayout->addWidget(doubleSpinBox_gscale_z, 6, 3, 1, 1);
 
 
         verticalLayout->addLayout(gridLayout);

@@ -13,7 +13,6 @@
 
 #include "ui_neuron_geometry_dial.h"
 #include <v3d_interface.h>
-//#include "../../../v3d_main/3drenderer/v3dr_mainwindow.h"
 
 class NeuronGeometryDialog: public QDialog, private Ui_NeuronGeometryDialog
 {
@@ -84,9 +83,12 @@ public slots:
     void gscale_y(double s);
     void gscale_z(double s);
     void scale_r(double s);
-    void rotate_around_x(int v);
-    void rotate_around_y(int v);
-    void rotate_around_z(int v);
+    void rotate_around_x_dial(int v);
+    void rotate_around_y_dial(int v);
+    void rotate_around_z_dial(int v);
+    void rotate_around_x_spin(double s);
+    void rotate_around_y_spin(double s);
+    void rotate_around_z_spin(double s);
     void flip_x(int v);
     void flip_y(int v);
     void flip_z(int v);
