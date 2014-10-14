@@ -297,7 +297,7 @@ void NeuronGeometryDialog::reject()
 
     show_branch();
     v3dcontrol->enableClipBoundingBox(true);
-    QDialog::reject();
+    QDialog::hide();
 }
 
 void NeuronGeometryDialog::accept()
@@ -314,7 +314,7 @@ void NeuronGeometryDialog::accept()
 
     show_branch();
     v3dcontrol->enableClipBoundingBox(true);
-    QDialog::accept();
+    QDialog::hide();
 }
 
 void NeuronGeometryDialog::change_stackdir(int dir)
