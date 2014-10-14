@@ -7,15 +7,19 @@
 #include <vector>
 #include "neuron_stitch_plugin.h"
 #include "neuron_stitch_func.h"
+#include "../../../v3d_main/neuron_editing/neuron_xforms.h"
 
 using namespace std;
 
 Q_EXPORT_PLUGIN2(neuron_stitch, neuron_stitch);
 
+QList<NeuronGeometryDialog* > dialogList;
+
 QStringList neuron_stitch::menulist() const
 {
 	return QStringList() 
         <<tr("adjust_neurons")
+        <<tr("affine_transform_neurons_by_matrix")
 		<<tr("about");
 }
 
@@ -32,6 +36,10 @@ void neuron_stitch::domenu(const QString &menu_name, V3DPluginCallback2 &callbac
     if (menu_name == tr("adjust_neurons"))
     {
         doadjust(callback, parent);
+    }
+    else if (menu_name == tr("affine_transform_neurons_by_matrix"))
+    {
+        dotransform_swc(callback, parent);
     }
 	else
 	{
@@ -71,6 +79,7 @@ void neuron_stitch::doadjust(V3DPluginCallback2 &callback, QWidget *parent)
     QList <V3dR_MainWindow *> selectWindowList;
     V3dR_MainWindow * v3dwin;
     QList<NeuronTree> * ntTreeList;
+    int winid;
     qDebug("search for 3D windows");
     for (V3DLONG i=0;i<allWindowList.size();i++)
     {
@@ -83,26 +92,88 @@ void neuron_stitch::doadjust(V3DPluginCallback2 &callback, QWidget *parent)
         v3d_msg("Cannot find 3D view with only 2 SWC file. Please load the two SWC file you want to stitch in the same 3D view");
         return;
     }else if(selectWindowList.size()>1){
-        //to-do: pop up a window to select
-        v3dwin = selectWindowList[0];
+        //pop up a window to select
+
+        QStringList items;
+        for(int i=0; i<selectWindowList.size(); i++){
+            items.append(callback.getImageName(selectWindowList[i]));
+        }
+        bool ok;
+        QString selectitem = QInputDialog::getItem(parent, QString::fromUtf8("Neuron Stitcher"), QString::fromUtf8("Select A Window to Operate"), items, 0, false, &ok);
+        if(!ok) return;
+        for(int i=0; i<selectWindowList.size(); i++){
+            if(selectitem==callback.getImageName(selectWindowList[i]))
+            {
+                winid=i;
+                break;
+            }
+        }
     }else{
-        v3dwin = selectWindowList[0];
+        winid=0;
     }
+    v3dwin = selectWindowList[winid];
 
     //call dialog
     //NeuronGeometryDialog myDialog(&callback, v3dwin);
     //int res=myDialog.exec();
-    NeuronGeometryDialog * myDialog = 0;
-//    for(int i=0; i<dialogList.size(); i++){
-//        if(dialogList[i]->v3dwin == v3dwin){
-//            myDialog = dialogList[i];
-//            break;
-//        }
-//    }
-    if(myDialog == 0)
+    NeuronGeometryDialog * myDialog = NULL;
+    qDebug("dialog size %d",dialogList.size());
+    for(int i=0; i<dialogList.size(); i++){
+        if(callback.getImageName(dialogList[i]->v3dwin) == callback.getImageName(v3dwin)){
+            myDialog = dialogList[i];
+            break;
+        }
+    }
+    if(myDialog == NULL)
     {
         myDialog = new NeuronGeometryDialog(&callback, v3dwin);
-//        dialogList.append(myDialog);
+        dialogList.append(myDialog);
+        qDebug("did not find dialog, create new one. %d %d",dialogList.size(),myDialog);
     }
     myDialog->show();
+}
+
+int neuron_stitch::dotransform_swc(V3DPluginCallback2 &callback, QWidget *parent)
+{
+    //input file name
+    QString fileOpenName;
+    fileOpenName = QFileDialog::getOpenFileName(0, QObject::tr("Open SWC File"),
+            "",
+            QObject::tr("Supported file (*.swc *.eswc)"
+                ";;Neuron structure	(*.swc)"
+                ";;Extended neuron structure (*.eswc)"
+                ));
+    if(fileOpenName.isEmpty())
+        return 0;
+    NeuronTree nt;
+    if (fileOpenName.toUpper().endsWith(".SWC") || fileOpenName.toUpper().endsWith(".ESWC"))
+    {
+        nt = readSWC_file(fileOpenName);
+    }
+
+    QString fileMatName = QFileDialog::getOpenFileName(0, QObject::tr("Open Affine Matrix File"),
+            "",
+            QObject::tr("Supported file (*.txt)"
+                ";;Affine Matrix    (*.txt)"
+                ));
+
+    double amat[16]={0};
+    if (!readAmat(fileMatName.toStdString().c_str(),amat));
+
+    proc_neuron_affine(&nt, amat);
+
+    QString fileDefaultName = fileOpenName+QString("_affine.swc");
+    //write new SWC to file
+    QString fileSaveName = QFileDialog::getSaveFileName(0, QObject::tr("Save File"),
+            fileDefaultName,
+            QObject::tr("Supported file (*.swc)"
+                ";;Neuron structure	(*.swc)"
+                ));
+    if (!export_list2file(nt.listNeuron,fileSaveName,fileOpenName))
+    {
+        v3d_msg("fail to write the output swc file.");
+        return 0;
+    }
+
+    return 1;
 }

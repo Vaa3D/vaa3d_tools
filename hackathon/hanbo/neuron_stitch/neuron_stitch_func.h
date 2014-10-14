@@ -11,6 +11,11 @@
 
 void getNeuronTreeBound(const NeuronTree& nt, float * bound, int direction);
 
+
+void getNeuronTreeBound(const NeuronTree& nt, double &minx, double &miny, double &minz,
+                        double &maxx, double &maxy, double &maxz,
+                        double &mmx, double &mmy, double &mmz);
+
 int highlight_edgepoint(const QList<NeuronTree> *ntList, float dis, int direction);
 
 int highlight_adjpoint(const NeuronTree& nt1, const NeuronTree& nt2, float dis);
@@ -26,4 +31,12 @@ void backupNeuron(const NeuronTree & source, const NeuronTree & backup);
 void copyProperty(const NeuronTree & source, const NeuronTree & target);
 
 float quickMoveNeuron(QList<NeuronTree> * ntTreeList, int ant, int stackdir, int first_nt);
+
+void multiplyAmat(double* front, double* back);
+void multiplyAmat_centerRotate(double* rotate, double* tmat, double cx, double cy, double cz);
+
+bool writeAmat(const char* fname, double* amat);
+bool readAmat(const char* fname, double* amat);
+
+bool export_list2file(QList<NeuronSWC> & lN, QString fileSaveName, QString fileOpenName);
 #endif // NEURON_STITCH_FUNC_H

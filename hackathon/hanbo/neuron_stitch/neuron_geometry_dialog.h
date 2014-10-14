@@ -13,7 +13,7 @@
 
 #include "ui_neuron_geometry_dial.h"
 #include <v3d_interface.h>
-
+//#include "../../../v3d_main/3drenderer/v3dr_mainwindow.h"
 
 class NeuronGeometryDialog: public QDialog, private Ui_NeuronGeometryDialog
 {
@@ -21,11 +21,14 @@ class NeuronGeometryDialog: public QDialog, private Ui_NeuronGeometryDialog
 
 public:
     NeuronGeometryDialog(V3DPluginCallback2 * callback, V3dR_MainWindow* v3dwin);
+    void enterEvent(QEvent * event);
 
 public:
     //handles
+    static NeuronGeometryDialog *dialog;
     V3dR_MainWindow * v3dwin;
     V3DPluginCallback2 * callback;
+    View3DControl * v3dcontrol;
 
 protected:
     //changes
@@ -36,6 +39,10 @@ protected:
            cur_rotate_x[2], cur_rotate_y[2], cur_rotate_z[2];
     double cur_cx[2], cur_cy[2], cur_cz[2]; //center of the current object, which should NOT affected by a rotation, but should be updated if a shift happen
     bool cur_flip_x[2], cur_flip_y[2], cur_flip_z[2];
+
+    double cur_maxx[2],cur_maxy[2],cur_maxz[2],cur_minx[2],cur_miny[2],cur_minz[2],cur_mmx[2],cur_mmy[2],cur_mmz[2];
+
+    double cur_tmat[2][16]; //storage of transformation matrix
 
     //neurons
     QList<NeuronTree> * ntList;
@@ -59,10 +66,13 @@ public slots:
     void highlight_boundpoint(double s);//multiple neuron compatible
     void highlight_matchpoint_check(int c);//multiple neuron compatible
     void highlight_boundpoint_check(int c);//multiple neuron compatible
+    void hide_branch(double s);//only 2 neuron
+    void hide_branch_check(int c);//only 2 neuron
     void change_neurontype();
-    void resetreject();
-    void resetaccept();
+    void reject();
+    void accept();
     void reset();
+    void save_affine_mat();
     void quickmove();
     void shift_x(double s);
     void shift_y(double s);
@@ -83,6 +93,8 @@ public slots:
 
 public:
     void highlight_points(bool force);
+    void show_branch();//only 2 neuron
+    void hide_branch();//only 2 neuron
 };
 
 void highlight_dial(QDial *d);

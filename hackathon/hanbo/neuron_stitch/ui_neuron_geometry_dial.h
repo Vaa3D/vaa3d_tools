@@ -67,6 +67,7 @@ public:
     QSpacerItem *spacerItem;
     QPushButton *pushButton_cancel;
     QPushButton *pushButton_ok;
+    QPushButton *pushButton_save;
 
     QHBoxLayout *hboxLayout_t1;
     QCheckBox *checkBox_hide;
@@ -87,8 +88,6 @@ public:
     QPushButton *pushButton_quickmove;
     QPushButton *pushButton_updatebox;
     QPushButton *pushButton_neurontype;
-
-
 
     void setupUi(QDialog *NeuronGeometryDialog)
     {
@@ -393,6 +392,12 @@ public:
 
         hboxLayout1->addWidget(pushButton_reset);
 
+        pushButton_save = new QPushButton(widget);
+        pushButton_save->setObjectName(QString::fromUtf8("pushButton_save"));
+        pushButton_save->setAutoDefault(false);
+
+        hboxLayout1->addWidget(pushButton_save);
+
         spacerItem = new QSpacerItem(40, 20, QSizePolicy::Expanding, QSizePolicy::Minimum);
 
         hboxLayout1->addItem(spacerItem);
@@ -408,7 +413,6 @@ public:
         pushButton_ok->setAutoDefault(false);
 
         hboxLayout1->addWidget(pushButton_ok);
-
 
         verticalLayout->addLayout(hboxLayout1);
 
@@ -443,6 +447,7 @@ public:
         pushButton_reset->setText(QApplication::translate("NeuronGeometryDialog", "Reset", 0, QApplication::UnicodeUTF8));
         pushButton_cancel->setText(QApplication::translate("NeuronGeometryDialog", "Cancel", 0, QApplication::UnicodeUTF8));
         pushButton_ok->setText(QApplication::translate("NeuronGeometryDialog", "OK", 0, QApplication::UnicodeUTF8));
+        pushButton_save->setText(QApplication::translate("NeuronGeometryDialog", "Save Affine Mat", 0, QApplication::UnicodeUTF8));
 
         checkBox_hide->setText(QApplication::translate("NeuronGeometryDialog", "Hide branches, span:", 0, QApplication::UnicodeUTF8));
         checkBox_highlight_matchpoint->setText(QApplication::translate("NeuronGeometryDialog", "Highlight Matching Points, span:", 0, QApplication::UnicodeUTF8));
