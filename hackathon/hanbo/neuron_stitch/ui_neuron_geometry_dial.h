@@ -96,9 +96,9 @@ public:
     {
         if (NeuronGeometryDialog->objectName().isEmpty())
             NeuronGeometryDialog->setObjectName(QString::fromUtf8("NeuronGeometryDialog"));
-        NeuronGeometryDialog->resize(514,620);
-        NeuronGeometryDialog->setMinimumSize(QSize(514,480));
-        NeuronGeometryDialog->setMaximumSize(QSize(514,720));
+        NeuronGeometryDialog->resize(550,650);
+        NeuronGeometryDialog->setMinimumSize(QSize(550,480));
+        NeuronGeometryDialog->setMaximumSize(QSize(550,720));
         label_11 = new QLabel(NeuronGeometryDialog);
         label_11->setObjectName(QString::fromUtf8("label_11"));
         //label_11->setGeometry(QRect(24, 448, 469, 53));
@@ -106,8 +106,8 @@ public:
         widget = new QWidget(NeuronGeometryDialog);
         widget->setObjectName(QString::fromUtf8("widget"));
         //widget->setGeometry(QRect(19, 14, 478, 425));
-        widget->setMinimumWidth(514);
-        widget->setMaximumWidth(514);
+        widget->setMinimumWidth(550);
+        widget->setMaximumWidth(550);
         verticalLayout = new QVBoxLayout(widget);
         verticalLayout->setObjectName(QString::fromUtf8("verticalLayout"));
         verticalLayout->setContentsMargins(0, 0, 0, 0);
@@ -175,7 +175,7 @@ public:
 
         label_ant = new QLabel(widget);
         label_ant->setObjectName(QString::fromUtf8("label_ant"));
-        label_ant->setAlignment(Qt::AlignRight);
+        label_ant->setAlignment(Qt::AlignRight|Qt::AlignVCenter);
         hboxLayout_t2->addWidget(label_ant);
 
         comboBox_ant = new QComboBox(widget);
@@ -196,7 +196,7 @@ public:
 
         label_sd = new QLabel(widget);
         label_sd->setObjectName(QString::fromUtf8("label_sd"));
-        label_sd->setAlignment(Qt::AlignRight);
+        label_sd->setAlignment(Qt::AlignRight|Qt::AlignVCenter);
         hboxLayout_t3->addWidget(label_sd);
 
         comboBox_sd = new QComboBox(widget);
