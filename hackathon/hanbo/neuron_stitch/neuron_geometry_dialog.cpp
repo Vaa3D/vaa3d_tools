@@ -10,7 +10,7 @@
 #include "neuron_stitch_func.h"
 #include "../../../v3d_main/neuron_editing/neuron_xforms.h"
 
-#define MY_ANGLE_TICK 16
+#define MY_ANGLE_TICK 1
 #define B_USE_NEGATIVE_SCALING	1
 #define MY_PI 3.141592635
 
@@ -182,6 +182,10 @@ void NeuronGeometryDialog::create()
     connect(dial_y, SIGNAL(valueChanged(int)), this, SLOT(rotate_around_y_dial(int)));
     connect(dial_z, SIGNAL(valueChanged(int)), this, SLOT(rotate_around_z_dial(int)));
 
+    connect(this, SIGNAL(xRotationChanged(double)), doubleSpinBox_rotate_x, SLOT(setValue(double)));
+    connect(this, SIGNAL(yRotationChanged(double)), doubleSpinBox_rotate_y, SLOT(setValue(double)));
+    connect(this, SIGNAL(zRotationChanged(double)), doubleSpinBox_rotate_z, SLOT(setValue(double)));
+
     dial_x->setDisabled(true);
     dial_y->setDisabled(true);
 
@@ -192,6 +196,10 @@ void NeuronGeometryDialog::create()
     connect(doubleSpinBox_rotate_x, SIGNAL(valueChanged(double)), this, SLOT(rotate_around_x_spin(double)));
     connect(doubleSpinBox_rotate_y, SIGNAL(valueChanged(double)), this, SLOT(rotate_around_y_spin(double)));
     connect(doubleSpinBox_rotate_z, SIGNAL(valueChanged(double)), this, SLOT(rotate_around_z_spin(double)));
+
+    connect(this, SIGNAL(xRotationChanged(int)), dial_x, SLOT(setValue(int)));
+    connect(this, SIGNAL(yRotationChanged(int)), dial_y, SLOT(setValue(int)));
+    connect(this, SIGNAL(zRotationChanged(int)), dial_z, SLOT(setValue(int)));
 
     doubleSpinBox_rotate_x->setDisabled(true);
     doubleSpinBox_rotate_y->setDisabled(true);
@@ -326,6 +334,11 @@ void NeuronGeometryDialog::change_stackdir(int dir)
         dial_x->setDisabled(false);
         dial_y->setDisabled(true);
         dial_z->setDisabled(true);
+
+        doubleSpinBox_rotate_x->setDisabled(false);
+        doubleSpinBox_rotate_y->setDisabled(true);
+        doubleSpinBox_rotate_z->setDisabled(true);
+
         pushButton_quickmove->setDisabled(false);
         checkBox_hide->setEnabled(true);
         break;
@@ -333,6 +346,11 @@ void NeuronGeometryDialog::change_stackdir(int dir)
         dial_x->setDisabled(true);
         dial_y->setDisabled(false);
         dial_z->setDisabled(true);
+
+        doubleSpinBox_rotate_x->setDisabled(true);
+        doubleSpinBox_rotate_y->setDisabled(false);
+        doubleSpinBox_rotate_z->setDisabled(true);
+
         pushButton_quickmove->setDisabled(false);
         checkBox_hide->setEnabled(true);
         break;
@@ -340,6 +358,11 @@ void NeuronGeometryDialog::change_stackdir(int dir)
         dial_x->setDisabled(true);
         dial_y->setDisabled(true);
         dial_z->setDisabled(false);
+
+        doubleSpinBox_rotate_x->setDisabled(true);
+        doubleSpinBox_rotate_y->setDisabled(true);
+        doubleSpinBox_rotate_z->setDisabled(false);
+
         pushButton_quickmove->setDisabled(false);
         checkBox_hide->setEnabled(true);
         break;
@@ -347,6 +370,11 @@ void NeuronGeometryDialog::change_stackdir(int dir)
         dial_x->setDisabled(false);
         dial_y->setDisabled(false);
         dial_z->setDisabled(false);
+
+        doubleSpinBox_rotate_x->setDisabled(false);
+        doubleSpinBox_rotate_y->setDisabled(false);
+        doubleSpinBox_rotate_z->setDisabled(false);
+
         pushButton_quickmove->setDisabled(true);
         show_branch();
         checkBox_hide->setChecked(false);
@@ -870,50 +898,53 @@ void NeuronGeometryDialog::scale_r(double s)
 
 void NeuronGeometryDialog::rotate_around_x_dial(int v)
 {
-    double afmatrix[16] = {1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1};
-    double dialval=((double)v)/MY_ANGLE_TICK;
-    double a = NORMALIZE_ROTATION_Angle( dialval-cur_rotate_x[ant] ) / 180.0 * MY_PI;
-    afmatrix[5] = cos(a); afmatrix[6] = -sin(a);
-    afmatrix[9] = -afmatrix[6]; afmatrix[10] = afmatrix[5];
-    proc_neuron_affine_around_center(ntpList[ant], afmatrix, cur_cx[ant], cur_cy[ant], cur_cz[ant]);
-    multiplyAmat_centerRotate(afmatrix, cur_tmat[ant], cur_cx[ant], cur_cy[ant], cur_cz[ant]);
-    getNeuronTreeBound(ntList->at(ant), cur_minx[ant], cur_miny[ant], cur_minz[ant], cur_maxx[ant], cur_maxy[ant], cur_maxz[ant], cur_mmx[ant], cur_mmy[ant], cur_mmz[ant]);
-    cur_rotate_x[ant] = dialval;
-    doubleSpinBox_rotate_x->setValue(dialval);
+    double angleval=((double)v)/MY_ANGLE_TICK;
 
-    highlight_points(false);
+//    double afmatrix[16] = {1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1};
+//    double a = NORMALIZE_ROTATION_Angle( angleval-cur_rotate_x[ant] ) / 180.0 * MY_PI;
+//    afmatrix[5] = cos(a); afmatrix[6] = -sin(a);
+//    afmatrix[9] = -afmatrix[6]; afmatrix[10] = afmatrix[5];
+//    proc_neuron_affine_around_center(ntpList[ant], afmatrix, cur_cx[ant], cur_cy[ant], cur_cz[ant]);
+//    multiplyAmat_centerRotate(afmatrix, cur_tmat[ant], cur_cx[ant], cur_cy[ant], cur_cz[ant]);
+//    getNeuronTreeBound(ntList->at(ant), cur_minx[ant], cur_miny[ant], cur_minz[ant], cur_maxx[ant], cur_maxy[ant], cur_maxz[ant], cur_mmx[ant], cur_mmy[ant], cur_mmz[ant]);
+//    cur_rotate_x[ant] = angleval;
+//    highlight_points(false);
+
+    emit xRotationChanged(angleval);
 }
 
 void NeuronGeometryDialog::rotate_around_y_dial(int v)
 {
-    double afmatrix[16] = {1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1};
-    double dialval=((double)v)/MY_ANGLE_TICK;
-    double a = NORMALIZE_ROTATION_Angle( dialval-cur_rotate_y[ant] ) / 180.0 * MY_PI;
-    afmatrix[0] = cos(a); afmatrix[2] = sin(a);
-    afmatrix[8] = -afmatrix[2]; afmatrix[10] = afmatrix[0];
-    proc_neuron_affine_around_center(ntpList[ant], afmatrix, cur_cx[ant], cur_cy[ant], cur_cz[ant]);
-    multiplyAmat_centerRotate(afmatrix,cur_tmat[ant], cur_cx[ant], cur_cy[ant], cur_cz[ant]);
-    getNeuronTreeBound(ntList->at(ant), cur_minx[ant], cur_miny[ant], cur_minz[ant], cur_maxx[ant], cur_maxy[ant], cur_maxz[ant], cur_mmx[ant], cur_mmy[ant], cur_mmz[ant]);
-    cur_rotate_y[ant] = dialval;
-    doubleSpinBox_rotate_y->setValue(dialval);
+    double angleval=((double)v)/MY_ANGLE_TICK;
 
-    highlight_points(false);
+//    double afmatrix[16] = {1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1};
+//    double a = NORMALIZE_ROTATION_Angle( angleval-cur_rotate_y[ant] ) / 180.0 * MY_PI;
+//    afmatrix[0] = cos(a); afmatrix[2] = sin(a);
+//    afmatrix[8] = -afmatrix[2]; afmatrix[10] = afmatrix[0];
+//    proc_neuron_affine_around_center(ntpList[ant], afmatrix, cur_cx[ant], cur_cy[ant], cur_cz[ant]);
+//    multiplyAmat_centerRotate(afmatrix,cur_tmat[ant], cur_cx[ant], cur_cy[ant], cur_cz[ant]);
+//    getNeuronTreeBound(ntList->at(ant), cur_minx[ant], cur_miny[ant], cur_minz[ant], cur_maxx[ant], cur_maxy[ant], cur_maxz[ant], cur_mmx[ant], cur_mmy[ant], cur_mmz[ant]);
+//    cur_rotate_y[ant] = angleval;
+//    highlight_points(false);
+
+    emit yRotationChanged(angleval);
 }
 
 void NeuronGeometryDialog::rotate_around_z_dial(int v)
 {
-    double afmatrix[16] = {1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1};
-    double dialval=((double)v)/MY_ANGLE_TICK;
-    double a = NORMALIZE_ROTATION_Angle( dialval-cur_rotate_z[ant] ) / 180.0 * MY_PI;
-    afmatrix[0] = cos(a); afmatrix[1] = -sin(a);
-    afmatrix[4] = -afmatrix[1]; afmatrix[5] = afmatrix[0];
-    proc_neuron_affine_around_center(ntpList[ant], afmatrix, cur_cx[ant], cur_cy[ant], cur_cz[ant]);
-    multiplyAmat_centerRotate(afmatrix,cur_tmat[ant], cur_cx[ant], cur_cy[ant], cur_cz[ant]);
-    getNeuronTreeBound(ntList->at(ant), cur_minx[ant], cur_miny[ant], cur_minz[ant], cur_maxx[ant], cur_maxy[ant], cur_maxz[ant], cur_mmx[ant], cur_mmy[ant], cur_mmz[ant]);
-    cur_rotate_z[ant] = dialval;
-    doubleSpinBox_rotate_z->setValue(dialval);
+    double angleval=((double)v)/MY_ANGLE_TICK;
 
-    highlight_points(false);
+//    double afmatrix[16] = {1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1};
+//    double a = NORMALIZE_ROTATION_Angle( angleval-cur_rotate_z[ant] ) / 180.0 * MY_PI;
+//    afmatrix[0] = cos(a); afmatrix[1] = -sin(a);
+//    afmatrix[4] = -afmatrix[1]; afmatrix[5] = afmatrix[0];
+//    proc_neuron_affine_around_center(ntpList[ant], afmatrix, cur_cx[ant], cur_cy[ant], cur_cz[ant]);
+//    multiplyAmat_centerRotate(afmatrix,cur_tmat[ant], cur_cx[ant], cur_cy[ant], cur_cz[ant]);
+//    getNeuronTreeBound(ntList->at(ant), cur_minx[ant], cur_miny[ant], cur_minz[ant], cur_maxx[ant], cur_maxy[ant], cur_maxz[ant], cur_mmx[ant], cur_mmy[ant], cur_mmz[ant]);
+//    cur_rotate_z[ant] = angleval;
+//    highlight_points(false);
+
+    emit zRotationChanged(angleval);
 }
 
 void NeuronGeometryDialog::rotate_around_x_spin(double s)
@@ -927,7 +958,7 @@ void NeuronGeometryDialog::rotate_around_x_spin(double s)
     getNeuronTreeBound(ntList->at(ant), cur_minx[ant], cur_miny[ant], cur_minz[ant], cur_maxx[ant], cur_maxy[ant], cur_maxz[ant], cur_mmx[ant], cur_mmy[ant], cur_mmz[ant]);
     cur_rotate_x[ant] = s;
     int dialval = (int) s*MY_ANGLE_TICK;
-    dial_x->setValue(dialval);
+    emit xRotationChanged(dialval);
 
     highlight_points(false);
 }
@@ -943,7 +974,7 @@ void NeuronGeometryDialog::rotate_around_y_spin(double s)
     getNeuronTreeBound(ntList->at(ant), cur_minx[ant], cur_miny[ant], cur_minz[ant], cur_maxx[ant], cur_maxy[ant], cur_maxz[ant], cur_mmx[ant], cur_mmy[ant], cur_mmz[ant]);
     cur_rotate_y[ant] = s;
     int dialval = (int) s*MY_ANGLE_TICK;
-    dial_y->setValue(dialval);
+    emit yRotationChanged(dialval);
 
     highlight_points(false);
 }
@@ -959,7 +990,7 @@ void NeuronGeometryDialog::rotate_around_z_spin(double s)
     getNeuronTreeBound(ntList->at(ant), cur_minx[ant], cur_miny[ant], cur_minz[ant], cur_maxx[ant], cur_maxy[ant], cur_maxz[ant], cur_mmx[ant], cur_mmy[ant], cur_mmz[ant]);
     cur_rotate_z[ant] = s;
     int dialval = (int) s*MY_ANGLE_TICK;
-    dial_z->setValue(dialval);
+    emit zRotationChanged(dialval);
 
     highlight_points(false);
 }

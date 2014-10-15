@@ -93,6 +93,14 @@ public slots:
     void flip_y(int v);
     void flip_z(int v);
 
+signals:
+    void xRotationChanged(int);
+    void yRotationChanged(int);
+    void zRotationChanged(int);
+    void xRotationChanged(double);
+    void yRotationChanged(double);
+    void zRotationChanged(double);
+
 public:
     void highlight_points(bool force);
     void show_branch();//only 2 neuron
