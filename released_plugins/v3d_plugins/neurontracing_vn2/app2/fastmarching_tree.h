@@ -624,16 +624,41 @@ template<class T> bool fastmarching_tree_old(MyMarker root, T * inimg1d, vector<
  * 4. the cnn_type is default 3
  * *****************************************************************************/
 
-template<class T> bool fastmarching_tree(MyMarker root, vector<MyMarker> &target, T * inimg1d, vector<MyMarker*> &outtree, int sz0, int sz1, int sz2, int cnn_type = 3)
+template<class T> bool fastmarching_tree(MyMarker root, vector<MyMarker> &target, T * inimg1d, vector<MyMarker*> &outtree, long sz0, long sz1, long sz2, int cnn_type = 3)
 {
 	enum{ALIVE = -1, TRIAL = 0, FAR = 1};
 
 	long tol_sz = sz0 * sz1 * sz2;
 	long sz01 = sz0 * sz1;
-	//int cnn_type = 3;  // ?
+    //int cnn_type = 3;  // ?
 
-	float * phi = new float[tol_sz]; for(long i = 0; i < tol_sz; i++){phi[i] = INF;}
-	long * parent = new long[tol_sz]; for(long i = 0; i < tol_sz; i++) parent[i] = i;  // each pixel point to itself at the beginning
+    //float * phi = new float[tol_sz]; for(long i = 0; i < tol_sz; i++){phi[i] = INF;}
+    //long * parent = new long[tol_sz]; for(long i = 0; i < tol_sz; i++) parent[i] = i;  // each pixel point to itself at the beginning
+
+    long i;
+    float * phi = 0;
+    long * parent = 0;
+    char * state = 0;
+    try
+    {
+        phi = new float[tol_sz];
+        parent = new long[tol_sz];
+        state = new char[tol_sz];
+        for(i = 0; i < tol_sz; i++)
+        {
+            phi[i] = INF;
+            parent[i] = i;  // each pixel point to itself at the         statements beginning
+            state[i] = FAR;
+        }
+    }
+    catch (...)
+    {
+        cout << "********* Fail to allocate memory. quit fastmarching_tree()." << endl;
+        if (phi) {delete []phi; phi=0;}
+        if (parent) {delete []parent; parent=0;}
+        if (state) {delete []state; state=0;}
+        return false;
+    }
 
 	// GI parameter min_int, max_int, li
 	double max_int = 0; // maximum intensity, used in GI
@@ -647,8 +672,8 @@ template<class T> bool fastmarching_tree(MyMarker root, vector<MyMarker> &target
 	double li = 10;
 	
 	// initialization
-	char * state = new char[tol_sz];
-	for(long i = 0; i < tol_sz; i++) state[i] = FAR;
+    //char * state = new char[tol_sz];
+    //for(long i = 0; i < tol_sz; i++) state[i] = FAR;
 
 	// init state and phi for root
 	int rootx = root.x + 0.5;
@@ -665,9 +690,9 @@ template<class T> bool fastmarching_tree(MyMarker root, vector<MyMarker> &target
 		int j = target[t].y + 0.5;
 		int k = target[t].z + 0.5;
 		long ind = k*sz01 + j*sz0 + i;
-		target_inds.push_back(ind);
+        target_inds.push_back(ind);
 		//if(ind == root_ind) {cerr<<"please remove root marker from target markers"<<endl; exit(0);}
-	}
+    }
 
 	BasicHeap<HeapElemX> heap;
 	map<long, HeapElemX*> elems;
