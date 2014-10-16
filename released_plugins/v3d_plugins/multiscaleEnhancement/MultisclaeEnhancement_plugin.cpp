@@ -16,6 +16,7 @@
 #include "../../../v3d_main/jba/c++/convert_type2uint8.h"
 #include "../istitch/y_imglib.h"
 
+#include <omp.h>
 
 #include "../neurontracing_vn2/app2/my_surf_objs.h"
 
@@ -24,7 +25,8 @@
 #include "../../../v3d_main/jba/newmat11/newmatap.h"
 #include "../../../v3d_main/jba/newmat11/newmatio.h"
 
-QString temp_raw,temp_gf,temp_gsdt,temp_gsdt_v2,temp_wogf,temp_soma,temp_gsdtsoma,temp_ds,temp_gsdtds;
+//QString temp_raw,temp_gf,temp_gsdt,temp_gsdt_v2,temp_wogf,temp_soma,temp_gsdtsoma,temp_ds,temp_gsdtds; // FL comment out, for multithreading purpose
+
 using namespace std;
 Q_EXPORT_PLUGIN2(MultisclaeEnhancement, selectiveEnhancement);
 void processImage_selective(V3DPluginCallback2 &callback, QWidget *parent);
@@ -37,6 +39,7 @@ void processImage_detect_soma(V3DPluginCallback2 &callback, QWidget *parent);
 bool processImage_adaptive_auto(const V3DPluginArgList & input, V3DPluginArgList & output,V3DPluginCallback2 &callback);
 bool processImage_adaptive_auto_blocks(const V3DPluginArgList & input, V3DPluginArgList & output,V3DPluginCallback2 &callback);
 bool processImage_adaptive_auto_blocks_indv(const V3DPluginArgList & input, V3DPluginArgList & output,V3DPluginCallback2 &callback);
+bool processImage_adaptive_auto_blocks_indv_multithread(const V3DPluginArgList & input, V3DPluginArgList & output,V3DPluginCallback2 &callback);
 bool processImage_detect_soma(const V3DPluginArgList & input, V3DPluginArgList & output,V3DPluginCallback2 &callback);
 
 
@@ -50,7 +53,9 @@ template <class T> void callGaussianPlugin(V3DPluginCallback2 &callback,
                                            V3DLONG pagesz,
                                            double sigma,
                                            unsigned int c,
-                                           T* &outimg);
+                                           T* &outimg,
+                                           QString temp_raw,
+                                           QString temp_gf);
 
 template <class T> void AdpThresholding_adpwindow(const T* data1d,
                                                   V3DLONG *in_sz,
@@ -62,14 +67,20 @@ template <class T> void callgsdtPlugin(V3DPluginCallback2 &callback,const T* dat
                                        V3DLONG *in_sz,
                                        unsigned int c,
                                        double th_global,
-                                       T* &outimg);
+                                       T* &outimg,
+									   QString temp_gf,
+  									   QString temp_gsdt);
 
 template <class T> void enhancementWithsoma(V3DPluginCallback2 &callback,
                                             const T* data1d,
                                             T* data1d_enhanced,
                                             V3DLONG *in_sz,
                                             unsigned int c,
-                                            T* &outimg);
+                                            T* &outimg,
+                                            QString temp_soma,
+                                            QString temp_gsdtsoma,
+                                            QString temp_ds,
+                                            QString temp_gsdtds);
 
 template <class T> void somalocation(V3DPluginCallback2 &callback,
                                      const T* data1d,
@@ -77,7 +88,9 @@ template <class T> void somalocation(V3DPluginCallback2 &callback,
                                      unsigned int c,
                                      int &soma_x,
                                      int &soma_y,
-                                     int &soma_z);
+                                     int &soma_z,
+                                     QString temp_ds,
+                                     QString temp_gsdtds);
 
 template <class T> void soma_detection(T* data1d,
                                        V3DLONG *in_sz,
@@ -86,6 +99,7 @@ template <class T> void soma_detection(T* data1d,
                                        int y,
                                        V3DLONG somasize,
                                        T* &outimg);
+
 
 template <class T> void median_filter(T* data1d,
                                       V3DLONG *in_sz,
@@ -149,6 +163,9 @@ template <class T> bool swapthree(T& dummya, T& dummyb, T& dummyc)
     return true;
 }
 template <class SDATATYPE> int pwi_fusing(SDATATYPE *data1d, SDATATYPE *subject1d, V3DLONG *sz_subject, SDATATYPE *target1d, V3DLONG *sz_target, V3DLONG *offset, V3DLONG new_sz0, V3DLONG new_sz1, V3DLONG new_sz2);
+
+
+template <class T> void fusing(T *data1d, T *block1d, V3DLONG xb, V3DLONG xe, V3DLONG yb, V3DLONG ye, V3DLONG *sz_data1d, unsigned int ws, bool tag_leftmost_block);
 
 
 QStringList selectiveEnhancement::menulist() const
@@ -223,6 +240,10 @@ bool selectiveEnhancement::dofunc(const QString & func_name, const V3DPluginArgL
     {
         return processImage_adaptive_auto_blocks_indv(input, output,callback);
     }
+    else if (func_name == tr("adaptive_auto_block_indv_multithread"))
+    {
+    	return processImage_adaptive_auto_blocks_indv_multithread(input, output,callback);
+    }
     else if (func_name == tr("soma_detection"))
     {
         return processImage_detect_soma(input, output,callback);
@@ -245,6 +266,24 @@ bool selectiveEnhancement::dofunc(const QString & func_name, const V3DPluginArgL
         cout<<"ch          the input channel value, start from 1, default 1"<<endl;
         cout<<"ratio       the window size calibration ratio, default 1"<<endl;
         cout<<"soma        soma detection, 1: detect, 0: not detect, default 0"<<endl;
+        cout<<endl;
+        cout<<endl;
+
+        cout<<"Usage : v3d -x dllname -f adaptive_auto_block_indv -i <inimg_file> -o <outimg_folder> -p <ws> <ch> <ratio>" <<endl;
+        cout<<endl;
+        cout<<"ws          block window size (pixel #), default 1000"<<endl;
+        cout<<"ch          the input channel value, start from 1, default 1"<<endl;
+        cout<<"ratio       the window size calibration ratio, default 1"<<endl;
+        cout<<endl;
+        cout<<endl;
+
+        cout<<"Usage : v3d -x dllname -f adaptive_auto_block_indv_multithread -i <inimg_file> -o <outimg_folder> -p <ws> <ch> <ratio> <threads> <2Dsections>" <<endl;
+        cout<<endl;
+        cout<<"ws          block window size (pixel #), default 1000"<<endl;
+        cout<<"ch          the input channel value, start from 1, default 1"<<endl;
+        cout<<"ratio       the window size calibration ratio, default 1"<<endl;
+        cout<<"threads     number of threads, default 8"<<endl;
+        cout<<"2Dsections  save 2D enhanced section, 1: save, 0: not save, default 1"<<endl;
         cout<<endl;
         cout<<endl;
 
@@ -309,17 +348,17 @@ void processImage_selective(V3DPluginCallback2 &callback, QWidget *parent)
     in_sz[2] = p4DImage->getZDim();
     in_sz[3] = 1;
 
-    temp_raw = QString(p4DImage->getFileName()) + "_temp.v3draw";
-    temp_gf = QString(p4DImage->getFileName()) + "_gf.v3draw";
-    temp_gsdt = QString(p4DImage->getFileName()) + "_gsdt.v3draw";
-    temp_gsdt_v2 = QString(p4DImage->getFileName()) + "_gsdt_v2.v3draw";
-    temp_wogf = QString(p4DImage->getFileName()) + "_woGf.v3draw";
-
-
-    temp_soma = QString(p4DImage->getFileName()) + "_soma.v3draw";
-    temp_gsdtsoma  = QString(p4DImage->getFileName()) + "_gsdtsoma.v3draw";
-    temp_ds = QString(p4DImage->getFileName()) + "_ds.v3draw";
-    temp_gsdtds = QString(p4DImage->getFileName()) + "_gsdtds.v3draw";
+    QString temp_raw = QString(p4DImage->getFileName()) + "_temp.v3draw";
+    QString temp_gf = QString(p4DImage->getFileName()) + "_gf.v3draw";
+//    QString temp_gsdt = QString(p4DImage->getFileName()) + "_gsdt.v3draw";
+//    QString temp_gsdt_v2 = QString(p4DImage->getFileName()) + "_gsdt_v2.v3draw";
+//    QString temp_wogf = QString(p4DImage->getFileName()) + "_woGf.v3draw";
+//
+//
+//    QString temp_soma = QString(p4DImage->getFileName()) + "_soma.v3draw";
+//    QString temp_gsdtsoma  = QString(p4DImage->getFileName()) + "_gsdtsoma.v3draw";
+//    QString temp_ds = QString(p4DImage->getFileName()) + "_ds.v3draw";
+//    QString temp_gsdtds = QString(p4DImage->getFileName()) + "_gsdtds.v3draw";
 
     simple_saveimage_wrapper(callback, temp_raw.toStdString().c_str(),  (unsigned char *)p4DImage->getRawDataAtChannel(c-1), in_sz, pixeltype);
     int count = 0;
@@ -336,7 +375,7 @@ void processImage_selective(V3DPluginCallback2 &callback, QWidget *parent)
         switch (pixeltype)
         {
         case V3D_UINT8:
-            callGaussianPlugin(callback,pagesz,sigma,c,(unsigned char* &)data1d_gf);
+            callGaussianPlugin(callback,pagesz,sigma,c,(unsigned char* &)data1d_gf, temp_raw, temp_gf);
             selectiveEnhancement((unsigned char *)data1d_gf, in_sz, c,sigma,(unsigned char* &)EnahancedImage);
             break;
             default: v3d_msg("Invalid data type. Do nothing."); return;
@@ -424,17 +463,17 @@ void processImage_adaptive(V3DPluginCallback2 &callback, QWidget *parent)
     in_sz[2] = p4DImage->getZDim();
     in_sz[3] = 1;
 
-    temp_raw = QString(p4DImage->getFileName()) + "_temp.v3draw";
-    temp_gf = QString(p4DImage->getFileName()) + "_gf.v3draw";
-    temp_gsdt = QString(p4DImage->getFileName()) + "_gsdt.v3draw";
-    temp_gsdt_v2 = QString(p4DImage->getFileName()) + "_gsdt_v2.v3draw";
-    temp_wogf = QString(p4DImage->getFileName()) + "_woGf.v3draw";
-
-
-    temp_soma = QString(p4DImage->getFileName()) + "_soma.v3draw";
-    temp_gsdtsoma  = QString(p4DImage->getFileName()) + "_gsdtsoma.v3draw";
-    temp_ds = QString(p4DImage->getFileName()) + "_ds.v3draw";
-    temp_gsdtds = QString(p4DImage->getFileName()) + "_gsdtds.v3draw";
+    QString temp_raw = QString(p4DImage->getFileName()) + "_temp.v3draw";
+    QString temp_gf = QString(p4DImage->getFileName()) + "_gf.v3draw";
+    QString temp_gsdt = QString(p4DImage->getFileName()) + "_gsdt.v3draw";
+//    QString temp_gsdt_v2 = QString(p4DImage->getFileName()) + "_gsdt_v2.v3draw";
+//    QString temp_wogf = QString(p4DImage->getFileName()) + "_woGf.v3draw";
+//
+//
+//    QString temp_soma = QString(p4DImage->getFileName()) + "_soma.v3draw";
+//    QString temp_gsdtsoma  = QString(p4DImage->getFileName()) + "_gsdtsoma.v3draw";
+//    QString temp_ds = QString(p4DImage->getFileName()) + "_ds.v3draw";
+//    QString temp_gsdtds = QString(p4DImage->getFileName()) + "_gsdtds.v3draw";
 
     simple_saveimage_wrapper(callback, temp_raw.toStdString().c_str(), (unsigned char *)p4DImage->getRawDataAtChannel(c-1), in_sz, pixeltype);
     int count = 0;
@@ -450,8 +489,8 @@ void processImage_adaptive(V3DPluginCallback2 &callback, QWidget *parent)
         switch (pixeltype)
         {
         case V3D_UINT8:
-            callGaussianPlugin(callback,pagesz,2.3,c,(unsigned char* &)gsdtld);
-            callgsdtPlugin(callback,(unsigned char *)data1d_gf, in_sz, 1,0,(unsigned char* &)gsdtld);
+            callGaussianPlugin(callback,pagesz,2.3,c,(unsigned char* &)gsdtld, temp_raw, temp_gf);
+            callgsdtPlugin(callback,(unsigned char *)data1d_gf, in_sz, 1,0,(unsigned char* &)gsdtld, temp_gf, temp_gsdt);
             AdpThresholding_adpwindow((unsigned char *)data1d_gf, in_sz, 1,sigma,(unsigned char* &)EnahancedImage, gsdtld,3,ratio); break;
         default: v3d_msg("Invalid data type. Do nothing."); return;
         }
@@ -559,17 +598,16 @@ void processImage_adaptive_auto(V3DPluginCallback2 &callback, QWidget *parent)
     if(QMessageBox::Yes == QMessageBox::question (0, "", QString("Gaussian blur after enhancement?"), QMessageBox::Yes, QMessageBox::No))    q = 1;
 
 
-    temp_raw = QString(p4DImage->getFileName()) + "_temp.v3draw";
-    temp_gf = QString(p4DImage->getFileName()) + "_gf.v3draw";
-    temp_gsdt = QString(p4DImage->getFileName()) + "_gsdt.v3draw";
-    temp_gsdt_v2 = QString(p4DImage->getFileName()) + "_gsdt_v2.v3draw";
-    temp_wogf = QString(p4DImage->getFileName()) + "_woGf.v3draw";
+    QString temp_raw = QString(p4DImage->getFileName()) + "_temp.v3draw";
+    QString temp_gf = QString(p4DImage->getFileName()) + "_gf.v3draw";
+    QString temp_gsdt = QString(p4DImage->getFileName()) + "_gsdt.v3draw";
+    QString temp_gsdt_v2 = QString(p4DImage->getFileName()) + "_gsdt_v2.v3draw";
+    QString temp_wogf = QString(p4DImage->getFileName()) + "_woGf.v3draw";
 
-
-    temp_soma = QString(p4DImage->getFileName()) + "_soma.v3draw";
-    temp_gsdtsoma  = QString(p4DImage->getFileName()) + "_gsdtsoma.v3draw";
-    temp_ds = QString(p4DImage->getFileName()) + "_ds.v3draw";
-    temp_gsdtds = QString(p4DImage->getFileName()) + "_gsdtds.v3draw";
+    QString temp_soma = QString(p4DImage->getFileName()) + "_soma.v3draw";
+    QString temp_gsdtsoma  = QString(p4DImage->getFileName()) + "_gsdtsoma.v3draw";
+    QString temp_ds = QString(p4DImage->getFileName()) + "_ds.v3draw";
+    QString temp_gsdtds = QString(p4DImage->getFileName()) + "_gsdtds.v3draw";
 
     double sigma = 0.3;
     V3DLONG in_sz[4];
@@ -605,9 +643,9 @@ void processImage_adaptive_auto(V3DPluginCallback2 &callback, QWidget *parent)
                     data1d_gf[i] = data1d[offsetc+i];
             }
             else
-                callGaussianPlugin(callback,pagesz,sigma,c,(unsigned char* &)data1d_gf);
+                callGaussianPlugin(callback,pagesz,sigma,c,(unsigned char* &)data1d_gf, temp_raw, temp_gf);
 
-            callgsdtPlugin(callback,(unsigned char *)data1d_gf, in_sz, 1,0,(unsigned char* &)gsdtld);
+            callgsdtPlugin(callback,(unsigned char *)data1d_gf, in_sz, 1,0,(unsigned char* &)gsdtld, temp_gf, temp_gsdt);
             //callGaussianPlugin(callback,pagesz,2.3,c,(unsigned char* &)gsdtld);
             AdpThresholding_adpwindow((unsigned char *)data1d_gf, in_sz, 1,sigma,(unsigned char* &)EnahancedImage, gsdtld,3,ratio);
             break;
@@ -635,7 +673,7 @@ void processImage_adaptive_auto(V3DPluginCallback2 &callback, QWidget *parent)
     unsigned char* Enhancement_soma = 0;
     if(p==1)
     {
-        enhancementWithsoma(callback,(unsigned char *)p4DImage->getRawDataAtChannel(c-1),(unsigned char*)EnahancedImage_final,in_sz,1,(unsigned char *&)Enhancement_soma);
+        enhancementWithsoma(callback,(unsigned char *)p4DImage->getRawDataAtChannel(c-1),(unsigned char*)EnahancedImage_final,in_sz,1,(unsigned char *&)Enhancement_soma, temp_soma, temp_gsdtsoma, temp_ds, temp_gsdtds);
     }
     else
     {
@@ -771,17 +809,17 @@ void processImage_adaptive_auto_2D(V3DPluginCallback2 &callback, QWidget *parent
     try {EnahancedImage_final_3D = new unsigned char [pagesz_3d];}
     catch(...)  {v3d_msg("cannot allocate memory for EnahancedImage_final_3D."); return;}
 
-    temp_raw = QString(p4DImage->getFileName()) + "_temp.v3draw";
-    temp_gf = QString(p4DImage->getFileName()) + "_gf.v3draw";
-    temp_gsdt = QString(p4DImage->getFileName()) + "_gsdt.v3draw";
-    temp_gsdt_v2 = QString(p4DImage->getFileName()) + "_gsdt_v2.v3draw";
-    temp_wogf = QString(p4DImage->getFileName()) + "_woGf.v3draw";
-
-
-    temp_soma = QString(p4DImage->getFileName()) + "_soma.v3draw";
-    temp_gsdtsoma  = QString(p4DImage->getFileName()) + "_gsdtsoma.v3draw";
-    temp_ds = QString(p4DImage->getFileName()) + "_ds.v3draw";
-    temp_gsdtds = QString(p4DImage->getFileName()) + "_gsdtds.v3draw";
+    QString temp_raw = QString(p4DImage->getFileName()) + "_temp.v3draw";
+    QString temp_gf = QString(p4DImage->getFileName()) + "_gf.v3draw";
+    QString temp_gsdt = QString(p4DImage->getFileName()) + "_gsdt.v3draw";
+//    QString temp_gsdt_v2 = QString(p4DImage->getFileName()) + "_gsdt_v2.v3draw";
+//    QString temp_wogf = QString(p4DImage->getFileName()) + "_woGf.v3draw";
+//
+//
+//    QString temp_soma = QString(p4DImage->getFileName()) + "_soma.v3draw";
+//    QString temp_gsdtsoma  = QString(p4DImage->getFileName()) + "_gsdtsoma.v3draw";
+//    QString temp_ds = QString(p4DImage->getFileName()) + "_ds.v3draw";
+//    QString temp_gsdtds = QString(p4DImage->getFileName()) + "_gsdtds.v3draw";
 
     V3DLONG pagesz  = N*M;
     for(V3DLONG iz = 0; iz < P; iz++)
@@ -813,8 +851,13 @@ void processImage_adaptive_auto_2D(V3DPluginCallback2 &callback, QWidget *parent
             switch (pixeltype)
             {
             case V3D_UINT8:
-                     callGaussianPlugin(callback,pagesz,sigma,c,(unsigned char* &)data1d_gf);
-                     callgsdtPlugin(callback,(unsigned char *)data1d_gf, in_sz, 1,0,(unsigned char* &)gsdtld);
+            	
+//					callGaussianPlugin(callback,pagesz,sigma,c,(unsigned char* &)data1d_gf);
+//					callgsdtPlugin(callback,(unsigned char *)data1d_gf, in_sz, 1,0,(unsigned char* &)gsdtld);
+            	
+            		// FL for multithreading purpose
+                     callGaussianPlugin(callback,pagesz,sigma,c,(unsigned char* &)data1d_gf, temp_raw, temp_gf);
+                     callgsdtPlugin(callback,(unsigned char *)data1d_gf, in_sz, 1,0,(unsigned char* &)gsdtld, temp_gf, temp_gsdt);
                      AdpThresholding_adpwindow((unsigned char *)data1d_gf, in_sz, 1,sigma,(unsigned char* &)EnahancedImage, gsdtld,2,ratio); break;
             default: v3d_msg("Invalid data type. Do nothing."); return;
             }
@@ -933,17 +976,17 @@ void processImage_adaptive_auto_blocks(V3DPluginCallback2 &callback, QWidget *pa
     if(QMessageBox::Yes == QMessageBox::question (0, "", QString("Include soma detection?"), QMessageBox::Yes, QMessageBox::No))    p = 1;
 
 
-    temp_raw = QString(p4DImage->getFileName()) + "_temp.v3draw";
-    temp_gf = QString(p4DImage->getFileName()) + "_gf.v3draw";
-    temp_gsdt = QString(p4DImage->getFileName()) + "_gsdt.v3draw";
-    temp_gsdt_v2 = QString(p4DImage->getFileName()) + "_gsdt_v2.v3draw";
-    temp_wogf = QString(p4DImage->getFileName()) + "_woGf.v3draw";
+    QString temp_raw = QString(p4DImage->getFileName()) + "_temp.v3draw";
+    QString temp_gf = QString(p4DImage->getFileName()) + "_gf.v3draw";
+    QString temp_gsdt = QString(p4DImage->getFileName()) + "_gsdt.v3draw";
+    QString temp_gsdt_v2 = QString(p4DImage->getFileName()) + "_gsdt_v2.v3draw";
+    QString temp_wogf = QString(p4DImage->getFileName()) + "_woGf.v3draw";
 
 
-    temp_soma = QString(p4DImage->getFileName()) + "_soma.v3draw";
-    temp_gsdtsoma  = QString(p4DImage->getFileName()) + "_gsdtsoma.v3draw";
-    temp_ds = QString(p4DImage->getFileName()) + "_ds.v3draw";
-    temp_gsdtds = QString(p4DImage->getFileName()) + "_gsdtds.v3draw";
+    QString temp_soma = QString(p4DImage->getFileName()) + "_soma.v3draw";
+    QString temp_gsdtsoma  = QString(p4DImage->getFileName()) + "_gsdtsoma.v3draw";
+    QString temp_ds = QString(p4DImage->getFileName()) + "_ds.v3draw";
+    QString temp_gsdtds = QString(p4DImage->getFileName()) + "_gsdtds.v3draw";
 
 
     V3DLONG offsetc = (c-1)*pagesz;
@@ -995,9 +1038,9 @@ void processImage_adaptive_auto_blocks(V3DPluginCallback2 &callback, QWidget *pa
             V3DLONG block_sz[4];
             block_sz[0] = xe-xb+1; block_sz[1] = ye-yb+1; block_sz[2] = P; block_sz[3] = 1;
 
-            temp_raw = QString(p4DImage->getFileName()) + "_temp.v3draw";
-            temp_gf = QString(p4DImage->getFileName()) + "_gf.v3draw";
-            temp_gsdt = QString(p4DImage->getFileName()) + "_gsdt.v3draw";
+//            temp_raw = QString(p4DImage->getFileName()) + "_temp.v3draw";
+//            temp_gf = QString(p4DImage->getFileName()) + "_gf.v3draw";
+//            temp_gsdt = QString(p4DImage->getFileName()) + "_gsdt.v3draw";
 
             simple_saveimage_wrapper(callback, temp_raw.toStdString().c_str(), (unsigned char *)blockarea, block_sz, 1);
             unsigned char *localEnahancedArea=0;
@@ -1023,10 +1066,15 @@ void processImage_adaptive_auto_blocks(V3DPluginCallback2 &callback, QWidget *pa
                     else
                     {
                         sigma = 1.2;
-                        callGaussianPlugin(callback,blockpagesz,sigma,c,(unsigned char* &)data1d_gf);
+//                        callGaussianPlugin(callback,blockpagesz,sigma,c,(unsigned char* &)data1d_gf);
+                        
+                        callGaussianPlugin(callback,blockpagesz,sigma,c,(unsigned char* &)data1d_gf, temp_raw, temp_gf);
                     }
 
-                    callgsdtPlugin(callback,(unsigned char *)data1d_gf, block_sz, 1,th_global,(unsigned char* &)gsdtld);
+//                    callgsdtPlugin(callback,(unsigned char *)data1d_gf, block_sz, 1,th_global,(unsigned char* &)gsdtld);
+                    
+                    callgsdtPlugin(callback,(unsigned char *)data1d_gf, block_sz, 1,th_global,(unsigned char* &)gsdtld, temp_gf, temp_gsdt);
+                    
                     AdpThresholding_adpwindow((unsigned char *)data1d_gf, block_sz, 1,sigma,(unsigned char* &)EnahancedImage, gsdtld,3,ratio);
                     break;
                 default: v3d_msg("Invalid data type. Do nothing."); return;
@@ -1123,7 +1171,6 @@ void processImage_adaptive_auto_blocks(V3DPluginCallback2 &callback, QWidget *pa
             szSub_y[0] = new_sz0; szSub_y[1] = new_sz1; szSub_y[2] = P; szSub_y[3] = 1;
             if(target1d) {delete []target1d; target1d =0;}
 
-
             V3DLONG *offset = new V3DLONG [3];
             offset[0] = 0;
             offset[1] = yb;
@@ -1155,7 +1202,7 @@ void processImage_adaptive_auto_blocks(V3DPluginCallback2 &callback, QWidget *pa
     unsigned char* Enhancement_soma = 0;
     if(p==1)
     {
-        enhancementWithsoma(callback,(unsigned char *)data1d,(unsigned char*)target1d_y,in_sz,1,(unsigned char *&)Enhancement_soma);
+        enhancementWithsoma(callback,(unsigned char *)data1d,(unsigned char*)target1d_y,in_sz,1,(unsigned char *&)Enhancement_soma, temp_soma, temp_gsdtsoma, temp_ds, temp_gsdtds);
     }
     else
     {
@@ -1268,20 +1315,20 @@ void processImage_detect_soma(V3DPluginCallback2 &callback, QWidget *parent)
         return;
 
     }
-    temp_raw = QString(p4DImage->getFileName()) + "_temp.v3draw";
-    temp_gf = QString(p4DImage->getFileName()) + "_gf.v3draw";
-    temp_gsdt = QString(p4DImage->getFileName()) + "_gsdt.v3draw";
-    temp_gsdt_v2 = QString(p4DImage->getFileName()) + "_gsdt_v2.v3draw";
-    temp_wogf = QString(p4DImage->getFileName()) + "_woGf.v3draw";
+//    QString temp_raw = QString(p4DImage->getFileName()) + "_temp.v3draw";
+//    QString temp_gf = QString(p4DImage->getFileName()) + "_gf.v3draw";
+//    QString temp_gsdt = QString(p4DImage->getFileName()) + "_gsdt.v3draw";
+//    QString temp_gsdt_v2 = QString(p4DImage->getFileName()) + "_gsdt_v2.v3draw";
+//    QString temp_wogf = QString(p4DImage->getFileName()) + "_woGf.v3draw";
 
 
-    temp_soma = QString(p4DImage->getFileName()) + "_soma.v3draw";
-    temp_gsdtsoma  = QString(p4DImage->getFileName()) + "_gsdtsoma.v3draw";
-    temp_ds = QString(p4DImage->getFileName()) + "_ds.v3draw";
-    temp_gsdtds = QString(p4DImage->getFileName()) + "_gsdtds.v3draw";
+    QString temp_soma = QString(p4DImage->getFileName()) + "_soma.v3draw";
+    QString temp_gsdtsoma  = QString(p4DImage->getFileName()) + "_gsdtsoma.v3draw";
+    QString temp_ds = QString(p4DImage->getFileName()) + "_ds.v3draw";
+    QString temp_gsdtds = QString(p4DImage->getFileName()) + "_gsdtds.v3draw";
 
     unsigned char* Enhancement_soma = 0;
-    enhancementWithsoma(callback,(unsigned char *)data1d_original,(unsigned char*)data1d_enhanced,in_sz,1,(unsigned char *&)Enhancement_soma);
+    enhancementWithsoma(callback,(unsigned char *)data1d_original,(unsigned char*)data1d_enhanced,in_sz,1,(unsigned char *&)Enhancement_soma, temp_soma, temp_gsdtsoma, temp_ds, temp_gsdtds);
     simple_saveimage_wrapper(callback,p4DImage_name.toStdString().c_str(), (unsigned char *)Enhancement_soma, in_sz, 1);
     if(Enhancement_soma) {delete Enhancement_soma; Enhancement_soma = 0;}
     if(data1d_original) {delete data1d_original; data1d_original = 0;}
@@ -1337,17 +1384,17 @@ bool processImage_adaptive_auto(const V3DPluginArgList & input, V3DPluginArgList
 
     int datatype = subject->getDatatype();
 
-    temp_raw = QString(inimg_file) + "_temp.v3draw";
-    temp_gf = QString(inimg_file) + "_gf.v3draw";
-    temp_gsdt = QString(inimg_file) + "_gsdt.v3draw";
-    temp_gsdt_v2 = QString(inimg_file) + "_gsdt_v2.v3draw";
-    temp_wogf = QString(inimg_file) + "_woGf.v3draw";
+    QString temp_raw = QString(inimg_file) + "_temp.v3draw";
+    QString temp_gf = QString(inimg_file) + "_gf.v3draw";
+    QString temp_gsdt = QString(inimg_file) + "_gsdt.v3draw";
+    QString temp_gsdt_v2 = QString(inimg_file) + "_gsdt_v2.v3draw";
+    QString temp_wogf = QString(inimg_file) + "_woGf.v3draw";
 
 
-    temp_soma = QString(inimg_file) + "_soma.v3draw";
-    temp_gsdtsoma  = QString(inimg_file) + "_gsdtsoma.v3draw";
-    temp_ds = QString(inimg_file) + "_ds.v3draw";
-    temp_gsdtds = QString(inimg_file) + "_gsdtds.v3draw";
+    QString temp_soma = QString(inimg_file) + "_soma.v3draw";
+    QString temp_gsdtsoma  = QString(inimg_file) + "_gsdtsoma.v3draw";
+    QString temp_ds = QString(inimg_file) + "_ds.v3draw";
+    QString temp_gsdtds = QString(inimg_file) + "_gsdtds.v3draw";
 
     simple_saveimage_wrapper(callback, temp_raw.toStdString().c_str(), (unsigned char *)subject->getRawDataAtChannel(c-1), in_sz, datatype);
 
@@ -1378,9 +1425,14 @@ bool processImage_adaptive_auto(const V3DPluginArgList & input, V3DPluginArgList
             else
             {
                 sigma = 1.2;
-                callGaussianPlugin(callback,pagesz,sigma,c,(unsigned char* &)data1d_gf);
+//                callGaussianPlugin(callback,pagesz,sigma,c,(unsigned char* &)data1d_gf);
+                
+                callGaussianPlugin(callback,pagesz,sigma,c,(unsigned char* &)data1d_gf, temp_raw, temp_gf);
+                
             }
-            callgsdtPlugin(callback,(unsigned char *)data1d_gf, in_sz, 1,0,(unsigned char* &)gsdtld);
+//            callgsdtPlugin(callback,(unsigned char *)data1d_gf, in_sz, 1,0,(unsigned char* &)gsdtld);
+            
+            callgsdtPlugin(callback,(unsigned char *)data1d_gf, in_sz, 1,0,(unsigned char* &)gsdtld, temp_gf, temp_gsdt);
             AdpThresholding_adpwindow((unsigned char *)data1d_gf, in_sz, 1,sigma,(unsigned char* &)EnahancedImage, gsdtld,3,ratio);
             break;
         default: v3d_msg("Invalid data type. Do nothing."); return false;
@@ -1407,7 +1459,7 @@ bool processImage_adaptive_auto(const V3DPluginArgList & input, V3DPluginArgList
     unsigned char* Enhancement_soma = 0;
     if(p==1)
     {
-        enhancementWithsoma(callback,(unsigned char *)subject->getRawDataAtChannel(c-1),(unsigned char*)EnahancedImage_final,in_sz,1,(unsigned char *&)Enhancement_soma);
+        enhancementWithsoma(callback,(unsigned char *)subject->getRawDataAtChannel(c-1),(unsigned char*)EnahancedImage_final,in_sz,1,(unsigned char *&)Enhancement_soma, temp_soma, temp_gsdtsoma, temp_ds, temp_gsdtds);
     }
     else
     {
@@ -1501,17 +1553,17 @@ bool processImage_adaptive_auto_blocks(const V3DPluginArgList & input, V3DPlugin
     cout<<"outimg_file = "<<outimg_file<<endl;
 
 
-    temp_raw = QString(inimg_file) + "_temp.v3draw";
-    temp_gf = QString(inimg_file) + "_gf.v3draw";
-    temp_gsdt = QString(inimg_file) + "_gsdt.v3draw";
-    temp_gsdt_v2 = QString(inimg_file) + "_gsdt_v2.v3draw";
-    temp_wogf = QString(inimg_file) + "_woGf.v3draw";
+    QString temp_raw = QString(inimg_file) + "_temp.v3draw";
+    QString temp_gf = QString(inimg_file) + "_gf.v3draw";
+    QString temp_gsdt = QString(inimg_file) + "_gsdt.v3draw";
+    QString temp_gsdt_v2 = QString(inimg_file) + "_gsdt_v2.v3draw";
+    QString temp_wogf = QString(inimg_file) + "_woGf.v3draw";
 
 
-    temp_soma = QString(inimg_file) + "_soma.v3draw";
-    temp_gsdtsoma  = QString(inimg_file) + "_gsdtsoma.v3draw";
-    temp_ds = QString(inimg_file) + "_ds.v3draw";
-    temp_gsdtds = QString(inimg_file) + "_gsdtds.v3draw";
+    QString temp_soma = QString(inimg_file) + "_soma.v3draw";
+    QString temp_gsdtsoma  = QString(inimg_file) + "_gsdtsoma.v3draw";
+    QString temp_ds = QString(inimg_file) + "_ds.v3draw";
+    QString temp_gsdtds = QString(inimg_file) + "_gsdtds.v3draw";
 
     unsigned char * data1d = 0;
     V3DLONG in_sz[4];
@@ -1597,10 +1649,14 @@ bool processImage_adaptive_auto_blocks(const V3DPluginArgList & input, V3DPlugin
                     else
                     {
                         sigma = 1.2;
-                        callGaussianPlugin(callback,blockpagesz,sigma,c,(unsigned char* &)data1d_gf);
+//                        callGaussianPlugin(callback,blockpagesz,sigma,c,(unsigned char* &)data1d_gf);
+                        
+                        callGaussianPlugin(callback,blockpagesz,sigma,c,(unsigned char* &)data1d_gf, temp_raw, temp_gf);                        
                     }
 
-                    callgsdtPlugin(callback,(unsigned char *)data1d_gf, block_sz, 1,th_global,(unsigned char* &)gsdtld);
+//                    callgsdtPlugin(callback,(unsigned char *)data1d_gf, block_sz, 1,th_global,(unsigned char* &)gsdtld);
+                    callgsdtPlugin(callback,(unsigned char *)data1d_gf, block_sz, 1,th_global,(unsigned char* &)gsdtld, temp_gf, temp_gsdt);
+                    
                     AdpThresholding_adpwindow((unsigned char *)data1d_gf, block_sz, 1,sigma,(unsigned char* &)EnahancedImage, gsdtld,3,ratio);
                     break;
                     default: v3d_msg("Invalid data type. Do nothing."); return false;
@@ -1718,7 +1774,7 @@ bool processImage_adaptive_auto_blocks(const V3DPluginArgList & input, V3DPlugin
     unsigned char* Enhancement_soma = 0;
     if(p==1)
     {
-        enhancementWithsoma(callback,(unsigned char *)data1d,(unsigned char*)target1d_y,in_sz,1,(unsigned char *&)Enhancement_soma);
+        enhancementWithsoma(callback,(unsigned char *)data1d,(unsigned char*)target1d_y,in_sz,1,(unsigned char *&)Enhancement_soma, temp_soma, temp_gsdtsoma, temp_ds, temp_gsdtds);
     }
     else
     {
@@ -1773,6 +1829,7 @@ bool processImage_adaptive_auto_blocks(const V3DPluginArgList & input, V3DPlugin
     return true;
 }
 
+// single thread enhancement
 bool processImage_adaptive_auto_blocks_indv(const V3DPluginArgList & input, V3DPluginArgList & output,V3DPluginCallback2 &callback)
 {
     cout<<"Welcome to adaptive enhancement filter with individual blocks"<<endl;
@@ -1801,6 +1858,7 @@ bool processImage_adaptive_auto_blocks_indv(const V3DPluginArgList & input, V3DP
 
     unsigned char * data1d = 0;
     V3DLONG in_sz[4];
+    
     int datatype;
     if(!simple_loadimage_wrapper(callback, inimg_file, data1d, in_sz, datatype))
     {
@@ -1808,17 +1866,17 @@ bool processImage_adaptive_auto_blocks_indv(const V3DPluginArgList & input, V3DP
         return false;
     }
 
-    temp_raw = QString(inimg_file) + "_temp.v3draw";
-    temp_gf = QString(inimg_file) + "_gf.v3draw";
-    temp_gsdt = QString(inimg_file) + "_gsdt.v3draw";
-    temp_gsdt_v2 = QString(inimg_file) + "_gsdt_v2.v3draw";
-    temp_wogf = QString(inimg_file) + "_woGf.v3draw";
-
-
-    temp_soma = QString(inimg_file) + "_soma.v3draw";
-    temp_gsdtsoma  = QString(inimg_file) + "_gsdtsoma.v3draw";
-    temp_ds = QString(inimg_file) + "_ds.v3draw";
-    temp_gsdtds = QString(inimg_file) + "_gsdtds.v3draw";
+    QString temp_raw = QString(inimg_file) + "_temp.v3draw";
+    QString temp_gf = QString(inimg_file) + "_gf.v3draw";
+    QString temp_gsdt = QString(inimg_file) + "_gsdt.v3draw";
+    
+//    QString temp_gsdt_v2 = QString(inimg_file) + "_gsdt_v2.v3draw";
+//    QString temp_wogf = QString(inimg_file) + "_woGf.v3draw";
+//
+//    QString temp_soma = QString(inimg_file) + "_soma.v3draw";
+//    QString temp_gsdtsoma  = QString(inimg_file) + "_gsdtsoma.v3draw";
+//    QString temp_ds = QString(inimg_file) + "_ds.v3draw";
+//    QString temp_gsdtds = QString(inimg_file) + "_gsdtds.v3draw";
 
     V3DLONG N = in_sz[0];
     V3DLONG M = in_sz[1];
@@ -1826,6 +1884,264 @@ bool processImage_adaptive_auto_blocks_indv(const V3DPluginArgList & input, V3DP
     V3DLONG pagesz = N*M*P;
     V3DLONG offsetc = (c-1)*pagesz;
 
+    
+    V3DLONG tilenum = (floor(N/(0.9*Ws))+1.0)*(floor(M/(0.9*Ws))+1.0);
+    int count = 2;
+    ifstream ifile(outimg_file);
+    if (!ifile)
+    {
+       printf("Can not find the output folder");
+       return false;
+    }
+    
+ 
+    QString tc_name(outimg_file);
+    tc_name.append("/stitched_image.tc");
+
+    ofstream myfile;
+    
+    // FL added, if the file exist, delete it first
+    myfile.open(tc_name.toStdString().c_str(), ios::in);
+    
+    if (myfile.is_open()==true)
+    {
+    	myfile.close();
+       	remove(tc_name.toStdString().c_str());    	
+    }
+    // end of FL added
+    
+    myfile.open (tc_name.toStdString().c_str(),ios::out | ios::app );
+     myfile << "# thumbnail file \n";
+    myfile << "NULL \n\n";
+    myfile << "# tiles \n";
+    myfile << tilenum << " \n\n";
+    myfile << "# dimensions (XYZC) \n";
+    myfile << N << " " << M << " " << P << " " << 1 << " ";
+    myfile << "\n\n";
+    myfile << "# origin (XYZ) \n";
+    myfile << "0.000000 0.000000 0.000000 \n\n";
+    myfile << "# resolution (XYZ) \n";
+    myfile << "1.000000 1.000000 1.000000 \n\n";
+    myfile << "# image coordinates look up table \n";
+    myfile.close(); 
+    
+	for(V3DLONG iy = 0; iy < M; iy = iy+Ws-Ws/10)
+	{
+		V3DLONG yb = iy;
+		V3DLONG ye = iy+Ws-1; if(ye>=M-1) ye = M-1;
+
+		for(V3DLONG ix = 0; ix < N; ix = ix+Ws-Ws/10)
+		
+		{	
+			
+			V3DLONG xb = ix;
+			V3DLONG xe = ix+Ws-1; if(xe>=N-1) xe = N-1;
+
+			// crop block
+			unsigned char *blockarea=0;
+			V3DLONG blockpagesz = (xe-xb+1)*(ye-yb+1)*P;
+			blockarea = new unsigned char [blockpagesz];
+			double th_global = 0;
+			int i = 0;
+			
+			for(V3DLONG iz = 0; iz < P; iz++)
+			{
+				V3DLONG offsetk = iz*M*N;
+				
+				
+				for(V3DLONG iy = yb; iy < ye+1; iy++)
+				{
+					V3DLONG offsetj = iy*N;
+					for(V3DLONG ix = xb; ix < xe+1; ix++)
+					{
+
+						blockarea[i] = data1d[offsetc+offsetk + offsetj + ix];
+						i++;
+					}
+				}
+			}
+
+			V3DLONG block_sz[4];
+			block_sz[0] = xe-xb+1; block_sz[1] = ye-yb+1; block_sz[2] = P; block_sz[3] = 1;
+		   /* unsigned char *blockarea_median=0;
+			int ws = 2;
+			//apply median filter
+			switch (datatype)
+			{
+			case V3D_UINT8: median_filter(blockarea, block_sz, ws, ws, ws, c,(unsigned char* &)blockarea_median);
+				 break;
+				 default: v3d_msg("Invalid data type. Do nothing."); return false;
+			}
+
+			if(blockarea) {delete []blockarea; blockarea =0;}*/
+
+			simple_saveimage_wrapper(callback, temp_raw.toStdString().c_str(), (unsigned char *)blockarea, block_sz, 1);
+
+			unsigned char *localEnahancedArea=0;
+			try {localEnahancedArea = new unsigned char [blockpagesz];}
+            catch(...)  {v3d_msg("cannot allocate memory for localEnahancedArea."); return false;} 
+
+	
+			double sigma = 1;
+			for(int scale = 0; scale < count; scale++)
+			{
+				unsigned char * data1d_gf = 0;
+				unsigned char * gsdtld = 0;
+				unsigned char* EnahancedImage = 0;
+				switch (datatype)
+				{
+				case V3D_UINT8:
+					if (scale==0) //do not filter for the scale 0
+					{
+
+						if(count ==2)
+							sigma = 0.3;
+
+						data1d_gf = new unsigned char [blockpagesz];
+						memcpy(data1d_gf, blockarea, blockpagesz);
+					}
+					else
+					{
+						sigma = 1.2;
+//							callGaussianPlugin(callback,blockpagesz,sigma,c,(unsigned char* &)data1d_gf);
+						
+						callGaussianPlugin(callback,blockpagesz,sigma,c,(unsigned char* &)data1d_gf, temp_raw, temp_gf); //FL, change for multithreading
+						
+					}
+
+//						callgsdtPlugin(callback,(unsigned char *)data1d_gf, block_sz, 1,th_global,(unsigned char* &)gsdtld);
+					callgsdtPlugin(callback,(unsigned char *)data1d_gf, block_sz, 1,th_global,(unsigned char* &)gsdtld, temp_gf, temp_gsdt); // FL, change for multithreading
+					
+					AdpThresholding_adpwindow((unsigned char *)data1d_gf, block_sz, 1,sigma,(unsigned char* &)EnahancedImage, gsdtld,3,ratio);
+					
+					break;
+					default: v3d_msg("Invalid data type. Do nothing."); return false; //FL comment out, openMP does not allow exit from blocked structure
+
+				}
+
+		
+				if (scale==0)
+				{
+					memcpy(localEnahancedArea, EnahancedImage, blockpagesz);
+				}
+				else
+				{
+				   for(V3DLONG i = 0; i<blockpagesz; i++)
+				   {
+					  if (localEnahancedArea[i] < EnahancedImage[i])
+						  localEnahancedArea[i] = EnahancedImage[i];
+					  else
+						  localEnahancedArea[i] =  localEnahancedArea[i];
+				   }
+				   remove(temp_raw.toStdString().c_str());
+				}
+
+				if(data1d_gf) {delete []data1d_gf; data1d_gf =0;}
+				if(gsdtld) {delete []gsdtld; gsdtld =0;}
+				if(EnahancedImage) {delete []EnahancedImage; EnahancedImage =0;}
+				if(blockarea) {delete []blockarea; blockarea =0;}
+			  //  if(blockarea_median) {delete []blockarea_median; blockarea_median =0;}
+				
+			} // for scale end
+	   
+			QString outputTile(outimg_file);
+			outputTile.append(QString("/x_%1_%2_y_%3_%4.raw").arg(xb).arg(xe).arg(yb).arg(ye));
+			simple_saveimage_wrapper(callback, outputTile.toStdString().c_str(), (unsigned char *)localEnahancedArea, block_sz, 1); //write individual enhanced block images
+				
+			// write the block location file
+			myfile.open (tc_name.toStdString().c_str(),ios::out | ios::app ); 						
+			QString outputilefull;
+			outputilefull.append(QString("x_%1_%2_y_%3_%4.raw").arg(xb).arg(xe).arg(yb).arg(ye));
+			outputilefull.append(QString("   ( %1, %2, 0) ( %3, %4, %5)").arg(xb).arg(yb).arg(xe).arg(ye).arg(P-1));
+			myfile << outputilefull.toStdString();
+			myfile << "\n";
+			myfile.close(); 
+			
+			if(localEnahancedArea) {delete []localEnahancedArea; localEnahancedArea =0;}
+
+		} //for ix end
+	
+	} //for iy end
+
+
+	if (data1d) {delete []data1d; data1d=0;}
+	
+
+	myfile.open (tc_name.toStdString().c_str(),ios::out | ios::app );
+	myfile << "\n# MST LUT\n";
+	myfile.close();
+
+	return true;
+ 
+}
+
+
+// FL, for multithread enhancement
+bool processImage_adaptive_auto_blocks_indv_multithread(const V3DPluginArgList & input, V3DPluginArgList & output,V3DPluginCallback2 &callback)
+{
+    cout<<"Welcome to adaptive enhancement filter with individual blocks"<<endl;
+    if (output.size() != 1) return false;
+    unsigned int Ws = 1000, c=1;
+    float ratio = 1.0;
+
+    unsigned int numOfThreads = 8; // default value for number of theads
+    unsigned int saveEnhanced2DSections = 1; // default value for saving enhanced 2D section images, 1: save; 0: not save
+    
+    if (input.size()>=2)
+    {
+
+        vector<char*> paras = (*(vector<char*> *)(input.at(1).p));
+        cout<<paras.size()<<endl;
+        if(paras.size() >= 1) Ws = atoi(paras.at(0));
+        if(paras.size() >= 2) c = atoi(paras.at(1));
+        if(paras.size() >= 3) ratio = atof(paras.at(2));
+        if(paras.size() >= 4) numOfThreads = atoi(paras.at(3));
+        if(paras.size() >= 5) saveEnhanced2DSections = atoi(paras.at(4));
+        
+    }
+
+    char * inimg_file = ((vector<char*> *)(input.at(0).p))->at(0);
+    char * outimg_file = ((vector<char*> *)(output.at(0).p))->at(0);
+
+    cout<<"Ws = "<<Ws<<endl;
+    cout<<"c = "<<c<<endl;
+    cout<<"ratio = "<<ratio<<endl;
+    cout<<"numOfThreads = "<<numOfThreads<<endl;
+    cout<<"saveEnhanced2DSections = "<<saveEnhanced2DSections<<endl;
+    
+    cout<<"inimg_file = "<<inimg_file<<endl;
+    cout<<"outimg_folder = "<<outimg_file<<endl;
+
+
+    unsigned char * data1d = 0;
+    V3DLONG in_sz[4];
+    int datatype;
+    if(!simple_loadimage_wrapper(callback, inimg_file, data1d, in_sz, datatype))
+    {
+        cerr<<"load image "<<inimg_file<<" error!"<<endl;
+        return false;
+    }
+
+//    temp_raw = QString(inimg_file) + "_temp.v3draw";
+//    temp_gf = QString(inimg_file) + "_gf.v3draw";
+//    temp_gsdt = QString(inimg_file) + "_gsdt.v3draw";
+//    temp_gsdt_v2 = QString(inimg_file) + "_gsdt_v2.v3draw";
+//    temp_wogf = QString(inimg_file) + "_woGf.v3draw";
+//
+//
+//    temp_soma = QString(inimg_file) + "_soma.v3draw";
+//    temp_gsdtsoma  = QString(inimg_file) + "_gsdtsoma.v3draw";
+//    temp_ds = QString(inimg_file) + "_ds.v3draw";
+//    temp_gsdtds = QString(inimg_file) + "_gsdtds.v3draw";
+
+    V3DLONG N = in_sz[0];
+    V3DLONG M = in_sz[1];
+    V3DLONG P = in_sz[2];
+    V3DLONG pagesz = N*M*P;
+    V3DLONG offsetc = (c-1)*pagesz;
+
+    V3DLONG sz2d = N*M;
+    
     V3DLONG tilenum = (floor(N/(0.9*Ws))+1.0)*(floor(M/(0.9*Ws))+1.0);
     int count = 2;
     ifstream ifile(outimg_file);
@@ -1839,6 +2155,18 @@ bool processImage_adaptive_auto_blocks_indv(const V3DPluginArgList & input, V3DP
     tc_name.append("/stitched_image.tc");
 
     ofstream myfile;
+    
+    // FL added, if the file exist, delete it first
+    myfile.open(tc_name.toStdString().c_str(), ios::in);
+    
+    if (myfile.is_open()==true)
+    {
+    	myfile.close();
+       	remove(tc_name.toStdString().c_str());    	
+    }
+    // end of FL added
+    
+    
     myfile.open (tc_name.toStdString().c_str(),ios::out | ios::app );
     myfile << "# thumbnail file \n";
     myfile << "NULL \n\n";
@@ -1852,132 +2180,268 @@ bool processImage_adaptive_auto_blocks_indv(const V3DPluginArgList & input, V3DP
     myfile << "# resolution (XYZ) \n";
     myfile << "1.000000 1.000000 1.000000 \n\n";
     myfile << "# image coordinates look up table \n";
-    myfile.close();
+    myfile.close(); // FL revise for multithreading
+
+    
+    
+    unsigned char* EnhancedStack = 0;
+    
+    if (saveEnhanced2DSections==1)
+    	EnhancedStack = new unsigned char [N*M*P]; // for saving enhanced 2D section purpose
+    
+    bool falsetag = true; //FL add, openMP does not allow exit from blocked structure, it can be set by any thread competitively
+    
+    omp_set_num_threads(numOfThreads);
+    
+    #pragma omp parallel for  // FL add parallelizing
+    
+	for(V3DLONG iy = 0; iy < M; iy = iy+Ws-Ws/10)
+	{
+		V3DLONG yb = iy;
+		V3DLONG ye = iy+Ws-1; if(ye>=M-1) ye = M-1;
+
+		printf("number of threads for iy = %d\n", omp_get_num_threads());
+		
+		#pragma omp parllel for //FL add for parallelizing
+
+		for(V3DLONG ix = 0; ix < N; ix = ix+Ws-Ws/10)
+		
+		{	
+			
+//			printf("number of threads for ix and iy = %d\n", omp_get_num_threads());
+//			
+//			printf("ix=%d, iy=%d\n", ix, iy);
+			
+			V3DLONG xb = ix;
+			V3DLONG xe = ix+Ws-1; if(xe>=N-1) xe = N-1;
+
+			//set file names for calling plugin 
+			QString temp_raw = QString(inimg_file).append(QString("_x_%1_%2_y_%3_%4.raw").arg(xb).arg(xe).arg(yb).arg(ye)) + "_temp.v3draw";
+			QString temp_gf = QString(inimg_file).append(QString("_x_%1_%2_y_%3_%4.raw").arg(xb).arg(xe).arg(yb).arg(ye)) + "_gf.v3draw";
+			QString temp_gsdt = QString(inimg_file).append(QString("_x_%1_%2_y_%3_%4.raw").arg(xb).arg(xe).arg(yb).arg(ye)) + "_gsdt.v3draw";
+//			QString temp_gsdt_v2 = QString(inimg_file).append(QString("_x_%1_%2_y_%3_%4.raw").arg(xb).arg(xe).arg(yb).arg(ye)) + "_gsdt_v2.v3draw";
+//			QString temp_wogf = QString(inimg_file).append(QString("_x_%1_%2_y_%3_%4.raw").arg(xb).arg(xe).arg(yb).arg(ye)) + "_woGf.v3draw";
+//		
+//			QString temp_soma = QString(inimg_file).append(QString("_x_%1_%2_y_%3_%4.raw").arg(xb).arg(xe).arg(yb).arg(ye)) + "_soma.v3draw";
+//			QString temp_gsdtsoma  = QString(inimg_file).append(QString("_x_%1_%2_y_%3_%4.raw").arg(xb).arg(xe).arg(yb).arg(ye)) + "_gsdtsoma.v3draw";
+//			QString temp_ds = QString(inimg_file).append(QString("_x_%1_%2_y_%3_%4.raw").arg(xb).arg(xe).arg(yb).arg(ye)) + "_ds.v3draw";
+//			QString temp_gsdtds = QString(inimg_file).append(QString("_x_%1_%2_y_%3_%4.raw").arg(xb).arg(xe).arg(yb).arg(ye)) + "_gsdtds.v3draw";
+			
+			// crop block
+			unsigned char *blockarea=0;
+			V3DLONG blockpagesz = (xe-xb+1)*(ye-yb+1)*P;
+			blockarea = new unsigned char [blockpagesz];
+			double th_global = 0;
+			int i = 0;
+			
+			for(V3DLONG iz = 0; iz < P; iz++)
+			{
+				V3DLONG offsetk = iz*M*N;
+				
+				
+				for(V3DLONG iy = yb; iy < ye+1; iy++)
+				{
+					V3DLONG offsetj = iy*N;
+					for(V3DLONG ix = xb; ix < xe+1; ix++)
+					{
+
+						blockarea[i] = data1d[offsetc+offsetk + offsetj + ix];
+						i++;
+					}
+				}
+			}
+
+			V3DLONG block_sz[4];
+			block_sz[0] = xe-xb+1; block_sz[1] = ye-yb+1; block_sz[2] = P; block_sz[3] = 1;
+		   /* unsigned char *blockarea_median=0;
+			int ws = 2;
+			//apply median filter
+			switch (datatype)
+			{
+			case V3D_UINT8: median_filter(blockarea, block_sz, ws, ws, ws, c,(unsigned char* &)blockarea_median);
+				 break;
+				 default: v3d_msg("Invalid data type. Do nothing."); return false;
+			}
+
+			if(blockarea) {delete []blockarea; blockarea =0;}*/
+
+			simple_saveimage_wrapper(callback, temp_raw.toStdString().c_str(), (unsigned char *)blockarea, block_sz, 1);
+
+			unsigned char *localEnahancedArea=0;
+			try {localEnahancedArea = new unsigned char [blockpagesz];}
+//            catch(...)  {v3d_msg("cannot allocate memory for localEnahancedArea."); return false;} // FL comment out, openMP does not allow exit from blocked structure
+
+            catch(...)  {v3d_msg("cannot allocate memory for localEnahancedArea."); falsetag = false;} //FL
+		
+			if (falsetag == true) //FL
+			{
+	
+				double sigma = 1;
+				for(int scale = 0; scale < count; scale++)
+				{
+					unsigned char * data1d_gf = 0;
+					unsigned char * gsdtld = 0;
+					unsigned char* EnahancedImage = 0;
+					switch (datatype)
+					{
+					case V3D_UINT8:
+						if (scale==0) //do not filter for the scale 0
+						{
+	
+							if(count ==2)
+								sigma = 0.3;
+	
+							data1d_gf = new unsigned char [blockpagesz];
+							memcpy(data1d_gf, blockarea, blockpagesz);
+						}
+						else
+						{
+							sigma = 1.2;
+//							callGaussianPlugin(callback,blockpagesz,sigma,c,(unsigned char* &)data1d_gf);
+							
+							callGaussianPlugin(callback,blockpagesz,sigma,c,(unsigned char* &)data1d_gf, temp_raw, temp_gf); //FL, change for multithreading
+							
+						}
+	
+//						callgsdtPlugin(callback,(unsigned char *)data1d_gf, block_sz, 1,th_global,(unsigned char* &)gsdtld);
+						callgsdtPlugin(callback,(unsigned char *)data1d_gf, block_sz, 1,th_global,(unsigned char* &)gsdtld, temp_gf, temp_gsdt); // FL, change for multithreading
+						
+						AdpThresholding_adpwindow((unsigned char *)data1d_gf, block_sz, 1,sigma,(unsigned char* &)EnahancedImage, gsdtld,3,ratio);
+						
+						break;
+	 //                   default: v3d_msg("Invalid data type. Do nothing."); return false; //FL comment out, openMP does not allow exit from blocked structure
+						default: v3d_msg("Invalid data type. Do nothing."); falsetag = false; //FL
+	
+					}
+
+					if (falsetag == true)
+					{
+			
+							if (scale==0)
+							{
+								memcpy(localEnahancedArea, EnahancedImage, blockpagesz);
+							}
+							else
+							{
+							   for(V3DLONG i = 0; i<blockpagesz; i++)
+							   {
+								  if (localEnahancedArea[i] < EnahancedImage[i])
+									  localEnahancedArea[i] = EnahancedImage[i];
+								  else
+									  localEnahancedArea[i] =  localEnahancedArea[i];
+							   }
+							   remove(temp_raw.toStdString().c_str());
+							}
+			
+							if(data1d_gf) {delete []data1d_gf; data1d_gf =0;}
+							if(gsdtld) {delete []gsdtld; gsdtld =0;}
+							if(EnahancedImage) {delete []EnahancedImage; EnahancedImage =0;}
+							if(blockarea) {delete []blockarea; blockarea =0;}
+						  //  if(blockarea_median) {delete []blockarea_median; blockarea_median =0;}
+					}
+					else scale = count; // FL, for exiting the for scale loop
+				} // for scale end
+		   
+				
+				if (falsetag == true)
+				{
+					QString outputTile(outimg_file);
+					outputTile.append(QString("/x_%1_%2_y_%3_%4.raw").arg(xb).arg(xe).arg(yb).arg(ye));
+					simple_saveimage_wrapper(callback, outputTile.toStdString().c_str(), (unsigned char *)localEnahancedArea, block_sz, 1); //write individual enhanced block images
+		
+					#pragma omp critical  // FL, does not allow multiple thread write at the same time
+					{
+						
+						// write the block location file
+						myfile.open (tc_name.toStdString().c_str(),ios::out | ios::app ); //FL revise for multithreading						
+						QString outputilefull;
+						outputilefull.append(QString("x_%1_%2_y_%3_%4.raw").arg(xb).arg(xe).arg(yb).arg(ye));
+						outputilefull.append(QString("   ( %1, %2, 0) ( %3, %4, %5)").arg(xb).arg(yb).arg(xe).arg(ye).arg(P-1));
+						myfile << outputilefull.toStdString();
+						myfile << "\n";
+						myfile.close(); //FL revise for multithreading
+						
+						// stcitch blocks back to the 3D enhanced stack
+						if (saveEnhanced2DSections==1)
+						{
+							bool tag_leftmost_block;
+							if (ix==0)
+								tag_leftmost_block = true;
+							else 
+								tag_leftmost_block = false;
+							
+							fusing(EnhancedStack, localEnahancedArea, xb, xe, yb, ye, in_sz, Ws, tag_leftmost_block);
+						}
+						
+					}
+					
+					if(localEnahancedArea) {delete []localEnahancedArea; localEnahancedArea =0;}
+					
+			
+				}
+				else ix = N; // FL, for exiting the for ix loop
+				
+			} //if (falsetag == true) end
+			else ix = N; // FL, for exiting the for ix loop
+		} //for ix end
+	
+		if (falsetag == false) iy = M; // FL, for exiting the iy loop
+
+	} //for iy end
+
+  //  myfile.close(); //FL revise for multithreading
 
 
-    for(V3DLONG iy = 0; iy < M; iy = iy+Ws-Ws/10)
+	
+	if (data1d) {delete []data1d; data1d=0;}
+	
+    if (falsetag == false)
     {
-        V3DLONG yb = iy;
-        V3DLONG ye = iy+Ws-1; if(ye>=M-1) ye = M-1;
-
-        for(V3DLONG ix = 0; ix < N; ix = ix+Ws-Ws/10)
-        {
-            V3DLONG xb = ix;
-            V3DLONG xe = ix+Ws-1; if(xe>=N-1) xe = N-1;
-
-            unsigned char *blockarea=0;
-            V3DLONG blockpagesz = (xe-xb+1)*(ye-yb+1)*P;
-            blockarea = new unsigned char [blockpagesz];
-            double th_global = 0;
-            int i = 0;
-            for(V3DLONG iz = 0; iz < P; iz++)
-            {
-                V3DLONG offsetk = iz*M*N;
-                for(V3DLONG iy = yb; iy < ye+1; iy++)
-                {
-                    V3DLONG offsetj = iy*N;
-                    for(V3DLONG ix = xb; ix < xe+1; ix++)
-                    {
-
-                        blockarea[i] = data1d[offsetc+offsetk + offsetj + ix];
-                        i++;
-                    }
-                }
-            }
-
-            V3DLONG block_sz[4];
-            block_sz[0] = xe-xb+1; block_sz[1] = ye-yb+1; block_sz[2] = P; block_sz[3] = 1;
-           /* unsigned char *blockarea_median=0;
-            int ws = 2;
-            //apply median filter
-            switch (datatype)
-            {
-            case V3D_UINT8: median_filter(blockarea, block_sz, ws, ws, ws, c,(unsigned char* &)blockarea_median);
-                 break;
-                 default: v3d_msg("Invalid data type. Do nothing."); return false;
-            }
-
-            if(blockarea) {delete []blockarea; blockarea =0;}*/
-
-            simple_saveimage_wrapper(callback, temp_raw.toStdString().c_str(), (unsigned char *)blockarea, block_sz, 1);
-
-
-            unsigned char *localEnahancedArea=0;
-            try {localEnahancedArea = new unsigned char [blockpagesz];}
-            catch(...)  {v3d_msg("cannot allocate memory for localEnahancedArea."); return false;}
-            double sigma = 1;
-            for(int scale = 0; scale < count; scale++)
-            {
-                unsigned char * data1d_gf = 0;
-                unsigned char * gsdtld = 0;
-                unsigned char* EnahancedImage = 0;
-                switch (datatype)
-                {
-                case V3D_UINT8:
-                    if (scale==0) //do not filter for the scale 0
-                    {
-
-                        if(count ==2)
-                            sigma = 0.3;
-
-                        data1d_gf = new unsigned char [blockpagesz];
-                        memcpy(data1d_gf, blockarea, blockpagesz);
-                    }
-                    else
-                    {
-                        sigma = 1.2;
-                        callGaussianPlugin(callback,blockpagesz,sigma,c,(unsigned char* &)data1d_gf);
-                    }
-
-                    callgsdtPlugin(callback,(unsigned char *)data1d_gf, block_sz, 1,th_global,(unsigned char* &)gsdtld);
-                    AdpThresholding_adpwindow((unsigned char *)data1d_gf, block_sz, 1,sigma,(unsigned char* &)EnahancedImage, gsdtld,3,ratio);
-                    break;
-                    default: v3d_msg("Invalid data type. Do nothing."); return false;
-                }
-
-                if (scale==0)
-                {
-                    memcpy(localEnahancedArea, EnahancedImage, blockpagesz);
-                }
-                else
-                {
-                   for(V3DLONG i = 0; i<blockpagesz; i++)
-                   {
-                      if (localEnahancedArea[i] < EnahancedImage[i])
-                          localEnahancedArea[i] = EnahancedImage[i];
-                      else
-                          localEnahancedArea[i] =  localEnahancedArea[i];
-                   }
-                   remove(temp_raw.toStdString().c_str());
-                }
-
-                if(data1d_gf) {delete []data1d_gf; data1d_gf =0;}
-                if(gsdtld) {delete []gsdtld; gsdtld =0;}
-                if(EnahancedImage) {delete []EnahancedImage; EnahancedImage =0;}
-                 if(blockarea) {delete []blockarea; blockarea =0;}
-              //  if(blockarea_median) {delete []blockarea_median; blockarea_median =0;}
-           }
-               QString outputTile(outimg_file);
-               outputTile.append(QString("/x_%1_%2_y_%3_%4.raw").arg(xb).arg(xe).arg(yb).arg(ye));
-               simple_saveimage_wrapper(callback, outputTile.toStdString().c_str(), (unsigned char *)localEnahancedArea, block_sz, 1);
-
-               myfile.open (tc_name.toStdString().c_str(),ios::out | ios::app );
-               QString outputilefull;
-               outputilefull.append(QString("x_%1_%2_y_%3_%4.raw").arg(xb).arg(xe).arg(yb).arg(ye));
-               outputilefull.append(QString("   ( %1, %2, 0) ( %3, %4, %5)").arg(xb).arg(yb).arg(xe).arg(ye).arg(P-1));
-               myfile << outputilefull.toStdString();
-               myfile << "\n";
-               myfile.close();
-              if(localEnahancedArea) {delete []localEnahancedArea; localEnahancedArea =0;}
-        }
-
+    	if (EnhancedStack) {delete []EnhancedStack; EnhancedStack=0;}
+    	return false;
     }
-    myfile.open (tc_name.toStdString().c_str(),ios::out | ios::app );
-    myfile << "\n# MST LUT\n";
-    myfile.close();
+    else
+    {
+		myfile.open (tc_name.toStdString().c_str(),ios::out | ios::app );
+		myfile << "\n# MST LUT\n";
+		myfile.close();
+		
+		// write 2D enhanced sections
 
-    if (data1d) {delete []data1d; data1d=0;}
-    return true;
+		if (saveEnhanced2DSections==1)
+		{
+
+			unsigned char *EnhancedSectionImage = new unsigned char [sz2d];
+			V3DLONG sz_enhanced2d[4];
+			sz_enhanced2d[0]=in_sz[0]; 
+			sz_enhanced2d[1]=in_sz[1]; 
+			sz_enhanced2d[2]=1;
+			sz_enhanced2d[3]=1;
+			
+					
+			for (long k=0; k<in_sz[2]; k++)
+			{
+				long cnt = 0;
+				
+				long m;
+				
+				for (m=k*sz2d; m<(k+1)*sz2d; m++)
+				{
+					EnhancedSectionImage[cnt] = EnhancedStack[m];
+					cnt++;
+				}
+				
+				QString filename = QString(outimg_file).append(QString("z%1.tif").arg(k));
+				saveImage(filename.toStdString().c_str(), EnhancedSectionImage, sz_enhanced2d, 1);
+			}
+			
+			if (EnhancedSectionImage) {delete []EnhancedSectionImage; EnhancedSectionImage = 0;} 
+		}
+		
+    	if (EnhancedStack) {delete []EnhancedStack; EnhancedStack=0;}
+
+		return true;
+    }
 }
 
 bool processImage_detect_soma(const V3DPluginArgList & input, V3DPluginArgList & output,V3DPluginCallback2 &callback)
@@ -2095,20 +2559,20 @@ bool processImage_detect_soma(const V3DPluginArgList & input, V3DPluginArgList &
 
     if(data1d_original) {delete  []data1d_original; data1d_original = 0;}
 
-    temp_raw = inimg_file + "_temp.v3draw";
-    temp_gf = inimg_file + "_gf.v3draw";
-    temp_gsdt = inimg_file + "_gsdt.v3draw";
-    temp_gsdt_v2 = inimg_file + "_gsdt_v2.v3draw";
-    temp_wogf = inimg_file + "_woGf.v3draw";
+//    QString temp_raw = inimg_file + "_temp.v3draw";
+//    QString temp_gf = inimg_file + "_gf.v3draw";
+//    QString temp_gsdt = inimg_file + "_gsdt.v3draw";
+//    QString temp_gsdt_v2 = inimg_file + "_gsdt_v2.v3draw";
+//    QString temp_wogf = inimg_file + "_woGf.v3draw";
 
 
-    temp_soma = inimg_file + "_soma.v3draw";
-    temp_gsdtsoma  = inimg_file + "_gsdtsoma.v3draw";
-    temp_ds = inimg_file + "_ds.v3draw";
-    temp_gsdtds = inimg_file + "_gsdtds.v3draw";
+    QString temp_soma = inimg_file + "_soma.v3draw";
+    QString temp_gsdtsoma  = inimg_file + "_gsdtsoma.v3draw";
+    QString temp_ds = inimg_file + "_ds.v3draw";
+    QString temp_gsdtds = inimg_file + "_gsdtds.v3draw";
 
     unsigned char* Enhancement_soma = 0;
-    enhancementWithsoma(callback,(unsigned char *)data1d_region,(unsigned char*)data1d_enhanced,sz_enhanced,1,(unsigned char *&)Enhancement_soma);
+    enhancementWithsoma(callback,(unsigned char *)data1d_region,(unsigned char*)data1d_enhanced,sz_enhanced,1,(unsigned char *&)Enhancement_soma, temp_soma, temp_gsdtsoma, temp_ds, temp_gsdtds);
     string image_nosoma = fn +("_nosoma.raw");
     rename(fn.c_str(),image_nosoma.c_str());
     simple_saveimage_wrapper(callback,fn.c_str(), (unsigned char *)Enhancement_soma, sz_enhanced, 1);
@@ -2229,7 +2693,9 @@ template <class T> void callGaussianPlugin(V3DPluginCallback2 &callback,
                                            V3DLONG pagesz,
                                            double sigma,
                                            unsigned int c,
-                                           T* &outimg)
+                                           T* &outimg,
+                                           QString temp_raw,
+                                           QString temp_gf)
 {
     if (outimg)
     {
@@ -2244,17 +2710,39 @@ template <class T> void callGaussianPlugin(V3DPluginCallback2 &callback,
     V3DPluginArgList input;
     V3DPluginArgList output;
 
-    arg.type = "random";std::vector<char*> args1;
-    char* char_temp_raw =  new char[temp_raw.length() + 1];strcpy(char_temp_raw, temp_raw.toStdString().c_str());
-    args1.push_back(char_temp_raw); arg.p = (void *) & args1; input<< arg;
-    arg.type = "random";std::vector<char*> args;
+    arg.type = "random";
+    std::vector<char*> args1;
+    char* char_temp_raw =  new char[temp_raw.length() + 1];
+    strcpy(char_temp_raw, temp_raw.toStdString().c_str());
+    args1.push_back(char_temp_raw); 
+    arg.p = (void *) & args1; 
+    input<< arg;
+    
+    arg.type = "random";
+    std::vector<char*> args;
     char channel = '0' + c;
-    string winx2 = boost::lexical_cast<string>(ws); char* winx =  new char[winx2.length() + 1]; strcpy(winx, winx2.c_str());
-    string sig2 = boost::lexical_cast<string>(sigma); char* sig =  new char[sig2.length() + 1]; strcpy(sig, sig2.c_str());
+    string winx2 = boost::lexical_cast<string>(ws); 
+    char* winx =  new char[winx2.length() + 1]; 
+    strcpy(winx, winx2.c_str());
+    string sig2 = boost::lexical_cast<string>(sigma); 
+    char* sig =  new char[sig2.length() + 1]; 
+    strcpy(sig, sig2.c_str());
 
-    args.push_back(winx);args.push_back(winx);args.push_back(winx);args.push_back(&channel); args.push_back(sig); arg.p = (void *) & args; input << arg;
-    char* char_temp_gf =  new char[temp_gf.length() + 1];strcpy(char_temp_gf, temp_gf.toStdString().c_str());
-    arg.type = "random";std::vector<char*> args2;args2.push_back(char_temp_gf); arg.p = (void *) & args2; output<< arg;
+    args.push_back(winx);
+    args.push_back(winx);
+    args.push_back(winx);
+    args.push_back(&channel); 
+    args.push_back(sig); 
+    arg.p = (void *) & args; 
+    input << arg;
+    
+    char* char_temp_gf =  new char[temp_gf.length() + 1];
+    strcpy(char_temp_gf, temp_gf.toStdString().c_str());
+    arg.type = "random";
+    std::vector<char*> args2;
+    args2.push_back(char_temp_gf); 
+    arg.p = (void *) & args2; 
+    output<< arg;
 
     QString full_plugin_name = "gaussian";
     QString func_name = "gf";
@@ -2267,7 +2755,9 @@ template <class T> void callGaussianPlugin(V3DPluginCallback2 &callback,
 
     char * outimg_file = ((vector<char*> *)(output.at(0).p))->at(0);
     simple_loadimage_wrapper(callback, outimg_file, data1d_Gf, in_zz, datatype);
+    
     remove(temp_gf.toStdString().c_str());
+    
     unsigned char* data1d = 0;
     data1d = new unsigned char [pagesz];
 
@@ -2298,7 +2788,10 @@ template <class T> void AdpThresholding_adpwindow(const T* data1d,
                                                   V3DLONG *in_sz,
                                                   unsigned int c,
                                                   double sigma,
-                                                  T* &outimg, const T* gsdtdatald,unsigned int dim,double ratio)
+                                                  T* &outimg, 
+                                                  const T* gsdtdatald,
+                                                  unsigned int dim,
+                                                  double ratio)
 {
     if (!in_sz)
     {
@@ -2494,7 +2987,9 @@ template <class T> void callgsdtPlugin(V3DPluginCallback2 &callback,const T* dat
                                        V3DLONG *in_sz,
                                        unsigned int c,
                                        double th_global,
-                                       T* &outimg)
+                                       T* &outimg,
+                                       QString temp_gf,
+                                       QString temp_gsdt)
 {
     if (!in_sz)
     {
@@ -2802,9 +3297,63 @@ int pwi_fusing(SDATATYPE *data1d, SDATATYPE *subject1d, V3DLONG *sz_subject, SDA
         }
     }
 
-
-
     return true;
+}
+
+
+// stitch blocks to generate a stack, FL added
+template <class T> void fusing(T *data1d, T *block1d, V3DLONG xb, V3DLONG xe, V3DLONG yb, V3DLONG ye, V3DLONG *sz_data1d, unsigned int ws, bool tag_leftmost_block)
+{
+    
+	long cnt = 0;
+	long tmp, tmp1, tmp2;
+	long sz_data1d_xy = sz_data1d[0]*sz_data1d[1];
+	
+	long xo = xb+ws/10-1; //overlap area width
+	
+	for (int k=0; k<sz_data1d[2]; k++)
+	{
+		tmp = k*sz_data1d_xy;
+		
+		for (int i=yb; i<=ye; i++)
+		{
+			tmp1 = tmp + i*sz_data1d[0];
+			                                    
+			if (tag_leftmost_block == true) // leftmost block do not do averaging between overlapping area
+			{
+			
+				for (int j=xb; j<=xe; j++)
+				{
+					tmp2 = tmp1+j;
+					data1d[tmp2] = block1d[cnt];
+					cnt++;
+				}			
+			}
+			else
+			{
+				for (int j=xb; j<=xo; j++)
+				{
+					tmp2 = tmp1 + j;
+					data1d[tmp2] = (T)(((double)data1d[tmp2] + (double)block1d[cnt])/2);
+					cnt++;
+				}
+				
+				// for overlapping area
+				for (int j=xo+1; j<=xe; j++)
+				{
+					tmp2 = tmp1 + j;
+					data1d[tmp2] = block1d[cnt];
+					cnt++;
+				}
+				
+			}
+			
+		}
+				
+	}
+
+	return;
+  
 }
 
 template <class T> void enhancementWithsoma(V3DPluginCallback2 &callback,
@@ -2812,7 +3361,11 @@ template <class T> void enhancementWithsoma(V3DPluginCallback2 &callback,
                                             T* data1d_enhanced,
                                             V3DLONG *in_sz,
                                             unsigned int c,
-                                            T* &outimg)
+                                            T* &outimg,
+                                            QString temp_soma,
+                                            QString temp_gsdtsoma,
+                                            QString temp_ds,
+                                            QString temp_gsdtds)
 
 {
     if (!in_sz)
@@ -2841,7 +3394,7 @@ template <class T> void enhancementWithsoma(V3DPluginCallback2 &callback,
     v3dhandle curwin = callback.currentImageWindow();
     LandmarkList listLandmarks = callback.getLandmark(curwin);
     if(listLandmarks.count() ==0)
-        somalocation(callback,data1d,in_sz,1,soma_x,soma_y,soma_z);
+        somalocation(callback,data1d,in_sz,1,soma_x,soma_y,soma_z, temp_ds, temp_gsdtds);
     else
     {
         soma_x = listLandmarks.at(0).x;
@@ -2896,14 +3449,28 @@ template <class T> void enhancementWithsoma(V3DPluginCallback2 &callback,
 
 
     arg.type = "random";std::vector<char*> args1;
-    char* char_temp_soma=  new char[temp_soma.length() + 1];strcpy(char_temp_soma, temp_soma.toStdString().c_str());
-    args1.push_back(char_temp_soma); arg.p = (void *) & args1; input<< arg;
-    arg.type = "random";std::vector<char*> args;
+    char* char_temp_soma=  new char[temp_soma.length() + 1];
+    strcpy(char_temp_soma, temp_soma.toStdString().c_str());
+    args1.push_back(char_temp_soma); 
+    arg.p = (void *) & args1; 
+    input<< arg;
+    
+    arg.type = "random";
+    std::vector<char*> args;
     char channel = '0' + (c-1);
-    string threshold = boost::lexical_cast<string>(th_soma); char* threshold2 =  new char[threshold.length() + 1]; strcpy(threshold2, threshold.c_str());
-    args.push_back(threshold2);args.push_back("1");args.push_back(&channel);args.push_back("1"); arg.p = (void *) & args; input << arg;
-    char* char_temp_gsdtsoma=  new char[temp_gsdtsoma.length() + 1];strcpy(char_temp_gsdtsoma, temp_gsdtsoma.toStdString().c_str());
-    arg.type = "random";std::vector<char*> args2;args2.push_back(char_temp_gsdtsoma); arg.p = (void *) & args2; output<< arg;
+    string threshold = boost::lexical_cast<string>(th_soma); 
+    char* threshold2 =  new char[threshold.length() + 1]; 
+    strcpy(threshold2, threshold.c_str());
+    args.push_back(threshold2);args.push_back("1");
+    args.push_back(&channel);args.push_back("1"); 
+    arg.p = (void *) & args; 
+    input << arg;
+    char* char_temp_gsdtsoma=  new char[temp_gsdtsoma.length() + 1];
+    strcpy(char_temp_gsdtsoma, temp_gsdtsoma.toStdString().c_str());
+    arg.type = "random";std::vector<char*> args2;
+    args2.push_back(char_temp_gsdtsoma); 
+    arg.p = (void *) & args2; 
+    output<< arg;
 
     QString full_plugin_name = "gsdt";
     QString func_name = "gsdt";
@@ -3006,7 +3573,9 @@ template <class T> void somalocation(V3DPluginCallback2 &callback,
                                      unsigned int c,
                                      int &soma_x,
                                      int &soma_y,
-                                     int &soma_z)
+                                     int &soma_z,
+                                     QString temp_ds,
+                                     QString temp_gsdtds)
 {
 
 

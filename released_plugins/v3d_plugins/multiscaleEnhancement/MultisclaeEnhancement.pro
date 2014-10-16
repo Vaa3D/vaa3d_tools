@@ -1,3 +1,5 @@
+QMAKE_CXXFLAGS += -fopenmp
+LIBS += -fopenmp
 
 TEMPLATE	= lib
 CONFIG	+= qt plugin warn_off
@@ -44,4 +46,4 @@ SOURCES += ../neurontracing_vn2/app2/my_surf_objs.cpp
 
 
 TARGET	= $$qtLibraryTarget(multiscaleEnhancement)
-DESTDIR	= $$V3DMAINPATH/../bin/plugins/multiscaleEnhancement
+DESTDIR	= ../../../bin/plugins/multiscaleEnhancement
