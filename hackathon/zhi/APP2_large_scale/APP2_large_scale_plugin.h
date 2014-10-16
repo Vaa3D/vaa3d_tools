@@ -80,7 +80,7 @@ class APP2largeScaleDialog : public QDialog
             b_radius2Dchecker->setChecked(true);
 
             block_spinbox = new QSpinBox();
-            block_spinbox->setRange(1,1536);
+            block_spinbox->setRange(1,2048);
             block_spinbox->setValue(1024);
 
             tc_filepath = new QLineEdit();
@@ -253,7 +253,7 @@ class APP2largeScaleDialog_raw : public QDialog
             b_radius2Dchecker->setChecked(true);
 
             block_spinbox = new QSpinBox();
-            block_spinbox->setRange(1,1536);
+            block_spinbox->setRange(1,2048);
             block_spinbox->setValue(1024);
 
             raw_filepath = new QLineEdit();

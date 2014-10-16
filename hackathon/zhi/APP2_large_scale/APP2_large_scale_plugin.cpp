@@ -154,9 +154,9 @@ void APP2_large_scale::domenu(const QString &menu_name, V3DPluginCallback2 &call
         if(dialog.listLandmarks.count() ==0)
             return;
 
-        LocationSimple tmpLocation(0,0,0);
-        tmpLocation = dialog.listLandmarks.at(0);
-        tmpLocation.getCoord(P.root_1st[0],P.root_1st[1],P.root_1st[2]);
+     //   LocationSimple tmpLocation(0,0,0);
+      //  tmpLocation = dialog.listLandmarks.at(0);
+     //   tmpLocation.getCoord(P.root_1st[0],P.root_1st[1],P.root_1st[2]);
 
         if (dialog.exec()!=QDialog::Accepted)
             return;
@@ -180,7 +180,18 @@ void APP2_large_scale::domenu(const QString &menu_name, V3DPluginCallback2 &call
         P.b_RadiusFrom2D = dialog.b_RadiusFrom2D;
         P.block_size = dialog.block_size;
 
-        autotrace_largeScale(callback,parent,P,bmenu);
+        for(int i = 0; i < dialog.listLandmarks.size();i++)
+        {
+            LocationSimple tmpLocation(0,0,0);
+            tmpLocation = dialog.listLandmarks.at(i);
+            tmpLocation.getCoord(P.root_1st[0],P.root_1st[1],P.root_1st[2]);
+            autotrace_largeScale(callback,parent,P,false);
+        }
+
+        v3d_msg(QString("done!"));
+
+
+       // autotrace_largeScale(callback,parent,P,bmenu);
     }
     else if (menu_name == tr("trace_raw"))
     {
@@ -206,9 +217,6 @@ void APP2_large_scale::domenu(const QString &menu_name, V3DPluginCallback2 &call
 
         vector<MyMarker> file_inmarkers;
         file_inmarkers = readMarker_file(string(qPrintable(dialog.markerfilename)));
-        P.root_1st[0] = file_inmarkers[0].x;
-        P.root_1st[1] = file_inmarkers[0].y;
-        P.root_1st[2] = file_inmarkers[0].z;
         P.inimg_file = dialog.rawfilename;
         P.is_gsdt = dialog.is_gsdt;
         P.is_break_accept = dialog.is_break_accept;
@@ -220,7 +228,14 @@ void APP2_large_scale::domenu(const QString &menu_name, V3DPluginCallback2 &call
         P.b_256cube = dialog.b_256cube;
         P.b_RadiusFrom2D = dialog.b_RadiusFrom2D;
         P.block_size = dialog.block_size;
-        autotrace_largeScale_raw(callback,parent,P,bmenu);
+        for(int i = 0; i < file_inmarkers.size();i++)
+        {
+            P.root_1st[0] = file_inmarkers[i].x;
+            P.root_1st[1] = file_inmarkers[i].y;
+            P.root_1st[2] = file_inmarkers[i].z;
+            autotrace_largeScale_raw(callback,parent,P,bmenu);
+        }
+        v3d_msg(QString("done!"));
 
     }
     else
@@ -478,7 +493,12 @@ bool  autotrace_largeScale(V3DPluginCallback2 &callback, QWidget *parent,APP2_LS
     head->next = NULL;
     walker = head;
 
-    QString finalswcfilename = QFileInfo(tcfile).path().append("/").append("APP2_largescale.swc");
+    QString rootposstr="", tmps2;
+    tmps2.setNum(int(P.root_1st[0]+0.5)).prepend("_x"); rootposstr += tmps2;
+    tmps2.setNum(int(P.root_1st[1]+0.5)).prepend("_y"); rootposstr += tmps2;
+    tmps2.setNum(int(P.root_1st[2]+0.5)).prepend("_z"); rootposstr += tmps2;
+
+    QString finalswcfilename = fileOpenName + rootposstr + "_NeuronCrawler.swc";
     QString tmpfolder = QFileInfo(tcfile).path()+("/tmp");
     system(qPrintable(QString("mkdir %1").arg(tmpfolder.toStdString().c_str())));
     if(tmpfolder.isEmpty())
@@ -970,7 +990,12 @@ bool  autotrace_largeScale_raw(V3DPluginCallback2 &callback, QWidget *parent,APP
     head->next = NULL;
     walker = head;
 
-    QString finalswcfilename = QFileInfo(fileOpenName).path().append("/").append("APP2_largescale.swc");
+    QString rootposstr="", tmps2;
+    tmps2.setNum(int(P.root_1st[0]+0.5)).prepend("_x"); rootposstr += tmps2;
+    tmps2.setNum(int(P.root_1st[1]+0.5)).prepend("_y"); rootposstr += tmps2;
+    tmps2.setNum(int(P.root_1st[2]+0.5)).prepend("_z"); rootposstr += tmps2;
+
+    QString finalswcfilename = fileOpenName + rootposstr + "_NeuronCrawler.swc";
     QString tmpfolder = QFileInfo(fileOpenName).path()+("/tmp");
     system(qPrintable(QString("mkdir %1").arg(tmpfolder.toStdString().c_str())));
     if(tmpfolder.isEmpty())
@@ -1197,10 +1222,6 @@ bool  autotrace_largeScale_raw(V3DPluginCallback2 &callback, QWidget *parent,APP
             if(curr.x < 0.05* P.block_size)
             {
 
-                newNode->root_x =  P.block_size * 0.9 + curr.x;
-                newNode->root_y = curr.y;
-                newNode->root_z = curr.z;
-
                 newNode->start[0] = walker->start[0] - P.block_size * 0.9;
                 newNode->start[1] = walker->start[1];
                 newNode->start[2] = walker->start[2];
@@ -1208,10 +1229,16 @@ bool  autotrace_largeScale_raw(V3DPluginCallback2 &callback, QWidget *parent,APP
                 newNode->end[1] = walker->end[1];
                 newNode->end[2] = walker->end[2];
 
+                if( newNode->start[0] < 0)  newNode->start[0] = 0;
                 QString startingpos="", tmps;
                 tmps.setNum(newNode->start[0]).prepend("x"); startingpos += tmps;
                 tmps.setNum(newNode->start[1]).prepend("_y"); startingpos += tmps;
                 QString region_name = startingpos + ".raw";
+
+
+                newNode->root_x =  walker->start[0]  - newNode->start[0] + curr.x;
+                newNode->root_y = curr.y;
+                newNode->root_z = curr.z;
 
                 newNode->tilename = QFileInfo(fileOpenName).path().append("/tmp/").append(QString(region_name));
                 newNode->ref_index = walker->tc_index;
@@ -1222,17 +1249,21 @@ bool  autotrace_largeScale_raw(V3DPluginCallback2 &callback, QWidget *parent,APP
             }
             else if(curr.x > 0.95 * P.block_size)
             {
+                newNode->start[0] = walker->start[0] + P.block_size * 0.9 + 1;
+                newNode->start[1] = walker->start[1];
+                newNode->start[2] = walker->start[2];
+
+                newNode->end[0] = newNode->start[0] + P.block_size - 1;
+                newNode->end[1] = walker->end[1];
+                newNode->end[2] = walker->end[2];
+
+
                 newNode->root_x =  curr.x - P.block_size * 0.9;
                 newNode->root_y = curr.y;
                 newNode->root_z = curr.z;
 
-                newNode->start[0] = walker->start[0] + P.block_size * 0.9 + 1;
-                newNode->start[1] = walker->start[1];
-                newNode->start[2] = walker->start[2];
-                newNode->end[0] = newNode->start[0] + P.block_size - 1;;
-                newNode->end[1] = walker->end[1];
-                newNode->end[2] = walker->end[2];
 
+                if( newNode->end[0] > in_zz[0] - 1)  newNode->end[0] = in_zz[0] - 1;
                 QString startingpos="", tmps;
                 tmps.setNum(newNode->start[0]).prepend("x"); startingpos += tmps;
                 tmps.setNum(newNode->start[1]).prepend("_y"); startingpos += tmps;
@@ -1248,16 +1279,18 @@ bool  autotrace_largeScale_raw(V3DPluginCallback2 &callback, QWidget *parent,APP
             else if(curr.y < 0.05* P.block_size)
             {
 
-                newNode->root_x = curr.x;
-                newNode->root_y = P.block_size * 0.9 + curr.y;
-                newNode->root_z = curr.z;
-
                 newNode->start[0] = walker->start[0];
                 newNode->start[1] = walker->start[1] - P.block_size * 0.9;
                 newNode->start[2] = walker->start[2];
                 newNode->end[0] = walker->end[0];
                 newNode->end[1] = newNode->start[1]+ P.block_size - 1;
                 newNode->end[2] = walker->end[2];
+
+                if(newNode->start[1] < 0) newNode->start[1] = 0;
+                newNode->root_x = curr.x;
+                newNode->root_y = walker->start[1] - newNode->start[1] + curr.y;
+                newNode->root_z = curr.z;
+
 
                 QString startingpos="", tmps;
                 tmps.setNum(newNode->start[0]).prepend("x"); startingpos += tmps;
@@ -1273,9 +1306,6 @@ bool  autotrace_largeScale_raw(V3DPluginCallback2 &callback, QWidget *parent,APP
             }
             else if(curr.y > 0.95 * P.block_size)
             {
-                newNode->root_x =  curr.x;
-                newNode->root_y = curr.y - P.block_size * 0.9;
-                newNode->root_z = curr.z;
 
                 newNode->start[0] = walker->start[0];
                 newNode->start[1] = walker->start[1]  + P.block_size * 0.9 + 1;
@@ -1283,6 +1313,12 @@ bool  autotrace_largeScale_raw(V3DPluginCallback2 &callback, QWidget *parent,APP
                 newNode->end[0] = walker->end[0];
                 newNode->end[1] = newNode->start[1] + P.block_size - 1;
                 newNode->end[2] = walker->end[2];
+
+
+                if( newNode->end[1] > in_zz[1] - 1)  newNode->end[1] = in_zz[1] - 1;
+                newNode->root_x =  curr.x;
+                newNode->root_y = curr.y - P.block_size * 0.9;
+                newNode->root_z = curr.z;
 
                 QString startingpos="", tmps;
                 tmps.setNum(newNode->start[0]).prepend("x"); startingpos += tmps;
@@ -1373,9 +1409,10 @@ bool  autotrace_largeScale_raw(V3DPluginCallback2 &callback, QWidget *parent,APP
         swc_type++;
     }
 
-     system(qPrintable(QString("rm -r %1").arg(tmpfolder.toStdString().c_str())));
+  //   system(qPrintable(QString("rm -r %1").arg(tmpfolder.toStdString().c_str())));
 
-
+     if (!QFile(finalswcfilename).exists())
+        return false;
     //post-processing
 
      qint64 etime1 = timer1.elapsed();
@@ -1413,9 +1450,10 @@ bool  autotrace_largeScale_raw(V3DPluginCallback2 &callback, QWidget *parent,APP
      NeuronTree nt_sort = readSWC_file(finalswcfilename);
      NeuronTree nt_pruned = swc_pruning(nt_sort,20.0);
 
+
      export_list2file(nt_pruned.listNeuron, finalswcfilename, infostring);
 
-     v3d_msg(QString("The tracing uses %1 ms. Now you can drag and drop the generated swc fle [%2] into Vaa3D.").arg(etime1).arg(finalswcfilename),bmenu);
+   //  v3d_msg(QString("The tracing uses %1 ms. Now you can drag and drop the generated swc fle [%2] into Vaa3D.").arg(etime1).arg(finalswcfilename),bmenu);
 
     return true;
 }
@@ -1609,6 +1647,7 @@ NeuronTree swc_pruning(NeuronTree nt, double length)
         childs[nt.hashNeuron.value(par)].push_back(i);
     }
 
+
     QList<NeuronSWC> list = nt.listNeuron;
     for (int i=0;i<list.size();i++)
     {
@@ -1616,12 +1655,15 @@ NeuronTree swc_pruning(NeuronTree nt, double length)
         {
             int index_tip = 0;
             int parent_tip = getParent(i,nt);
-            while(childs[parent_tip].size()<2)
+            while(childs[parent_tip].size()<2 && parent_tip > 0)
             {
 
                 parent_tip = getParent(parent_tip,nt);
                 index_tip++;
             }
+
+            if(parent_tip == 0)
+                continue;
             if(index_tip < length && nt.listNeuron[i].type !=  nt.listNeuron[parent_tip].type)
             {
                 flag[i] = -1;
@@ -1637,6 +1679,7 @@ NeuronTree swc_pruning(NeuronTree nt, double length)
         }
 
     }
+
 
    //NeutronTree structure
    NeuronTree nt_prunned;
