@@ -9,10 +9,14 @@
 #include "neuron_geometry_dialog.h"
 #include "neuron_stitch_func.h"
 #include "../../../v3d_main/neuron_editing/neuron_xforms.h"
+#include "marker_match_dialog.h"
 
 #define MY_ANGLE_TICK 1
 #define B_USE_NEGATIVE_SCALING	1
 #define MY_PI 3.141592635
+#define MY_MATCH_DIS 100 //this is squared distance, when real distance is smaller than sqrt(DIS), the point will be matched
+
+using namespace std;
 
 NeuronGeometryDialog::NeuronGeometryDialog(V3DPluginCallback2 * cb, V3dR_MainWindow* inwin)
 {
@@ -46,11 +50,20 @@ NeuronGeometryDialog::NeuronGeometryDialog(V3DPluginCallback2 * cb, V3dR_MainWin
             typeList.append(ntList->at(i).listNeuron[j].type);
         }
         type_bk.append(typeList);
+
+        ntpList[i]->color.r = ntpList[i]->color.g = ntpList[i]->color.b = ntpList[i]->color.a = NULL;
     }
+
+    //get marker handle
+    mList = cb->getHandleImageMarkerList_Any3DViewer(v3dwin);
 
     resetInternalStates();
     updateContent();
     v3dcontrol->enableClipBoundingBox(false);
+
+    if(v3dwin){
+        callback->update_3DViewer(v3dwin);
+    }
     //v3dcontrol->enableShowBoundingBox(false);
 }
 
@@ -94,8 +107,6 @@ void NeuronGeometryDialog::resetInternalStates()
         cur_scale_r[i] = 1;
         cur_rotate_x[i] = cur_rotate_y[i] = cur_rotate_z[i] = 0;
 
-        cur_cx[i]=cur_cy[i]=cur_cz[i]=0;
-        getNeuronTreeCenter(ntpList[i], cur_cx[i], cur_cy[i], cur_cz[i]);
         getNeuronTreeBound(ntList->at(i), cur_minx[i], cur_miny[i],cur_minz[i],cur_maxx[i],
                            cur_maxy[i],cur_maxz[i],cur_mmx[i],cur_mmy[i],cur_mmz[i]);
 
@@ -117,8 +128,6 @@ void NeuronGeometryDialog::resetInternalStates(int i)
     cur_scale_r[i] = 1;
     cur_rotate_x[i] = cur_rotate_y[i] = cur_rotate_z[i] = 0;
 
-    cur_cx[i]=cur_cy[i]=cur_cz[i]=0;
-    getNeuronTreeCenter(ntpList[i], cur_cx[i], cur_cy[i], cur_cz[i]);
     getNeuronTreeBound(ntList->at(i), cur_minx[i], cur_miny[i],cur_minz[i],cur_maxx[i],
                        cur_maxy[i],cur_maxz[i],cur_mmx[i],cur_mmy[i],cur_mmz[i]);
 
@@ -132,6 +141,14 @@ void NeuronGeometryDialog::create()
 {
     setupUi(this);
 
+    //marker operations
+    pushButton_generateMarker->setEnabled(false);
+
+    connect(pushButton_linkMarkerNeuron, SIGNAL(clicked()), this, SLOT(link_marker_neuron()));
+    connect(pushButton_linkMatchingMarker, SIGNAL(clicked()), this, SLOT(link_markers()));
+    connect(pushButton_affineByMarkers, SIGNAL(clicked()), this, SLOT(affine_markers()));
+
+    //basic operations
     connect(pushButton_ok, SIGNAL(clicked()), this, SLOT(accept()));
     connect(pushButton_cancel, SIGNAL(clicked()), this, SLOT(reject()));
     connect(pushButton_reset, SIGNAL(clicked()), this, SLOT(reset()));
@@ -204,6 +221,17 @@ void NeuronGeometryDialog::create()
     doubleSpinBox_rotate_x->setDisabled(true);
     doubleSpinBox_rotate_y->setDisabled(true);
 
+    connect(pushButton_refresh_rcent,SIGNAL(clicked()), this, SLOT(refresh_rcent()));
+
+    doubleSpinBox_rcent_x->setValue(cur_mmx[ant]);
+    doubleSpinBox_rcent_y->setValue(cur_mmy[ant]);
+    doubleSpinBox_rcent_z->setValue(cur_mmz[ant]);
+
+//    pushButton_refresh_rcent->setEnabled(false);
+//    doubleSpinBox_rcent_x->setEnabled(false);
+//    doubleSpinBox_rcent_y->setEnabled(false);
+//    doubleSpinBox_rcent_z->setEnabled(false);
+
     checkBox_flip_x->setChecked(cur_flip_x[ant]);
     checkBox_flip_y->setChecked(cur_flip_y[ant]);
     checkBox_flip_z->setChecked(cur_flip_z[ant]);
@@ -271,6 +299,10 @@ void NeuronGeometryDialog::change_ant(int idx)
     doubleSpinBox_gscale_x->setValue(cur_gscale_x[ant]*1000);
     doubleSpinBox_gscale_y->setValue(cur_gscale_y[ant]*1000);
     doubleSpinBox_gscale_z->setValue(cur_gscale_z[ant]*1000);
+
+    doubleSpinBox_rcent_x->setValue(cur_mmx[ant]);
+    doubleSpinBox_rcent_y->setValue(cur_mmy[ant]);
+    doubleSpinBox_rcent_z->setValue(cur_mmz[ant]);
 }
 
 void NeuronGeometryDialog::save_affine_mat()
@@ -297,6 +329,8 @@ void NeuronGeometryDialog::reject()
         ntpList[i]->copyGeometry(nt_bkList.at(i));
         copyProperty(nt_bkList[i],ntList->at(i));
     }
+
+    update_markers();
 
     if(v3dwin){
         callback->update_NeuronBoundingBox(v3dwin);
@@ -574,6 +608,8 @@ void NeuronGeometryDialog::highlight_points(bool force)
         }
     }
 
+    update_markers();
+
     if(v3dwin){
         callback->update_3DViewer(v3dwin);
     }
@@ -610,6 +646,169 @@ void NeuronGeometryDialog::change_neurontype()
     }
 }
 
+//marker tools
+void NeuronGeometryDialog::link_markers()
+{
+    marker_match_dialog dialog(callback, mList);
+    dialog.exec();
+}
+
+void NeuronGeometryDialog::link_marker_neuron()
+{
+    if(mList->size()<=0){
+        v3d_msg("Cannot find markers. Please define some markers first");
+        return;
+    }
+
+    ImageMarker *p;
+    double dis;
+    int info[3];
+    vector<int> count(ntList->size(),0);
+
+    for(int i=0; i<mList->size(); i++){
+        if(get_marker_info(mList->at(i),info)){
+            continue;
+        }
+        double mdis=MY_MATCH_DIS;
+        int nid=-1;
+        int pid=0;
+        qDebug()<<mList->at(i).x<<":"<<mList->at(i).y<<":"<<mList->at(i).z<<endl;
+        for(int j=0; j<ntList->size(); j++){
+            for(int k=0; k<ntList->at(j).listNeuron.size(); k++){
+                dis=NTDIS(ntList->at(j).listNeuron[k],mList->at(i));
+                if(dis<mdis){
+                    mdis=dis;
+                    nid=j;
+                    pid=k;
+                }
+            }
+        }
+        if(nid>=0){
+            p = (ImageMarker *)&(mList->at(i));
+            p->comment=QString::number(nid) + " " + QString::number(pid) + " -1";
+            count[nid]++;
+        }
+    }
+
+    update_markers();
+
+    v3d_msg(QString::number(mList->size())+QString::fromUtf8(" makers found\n")+
+            QString::number(count[0])+QString::fromUtf8(" new markers are aligned to neuron 0\n")+
+            QString::number(count[1])+QString::fromUtf8(" new markers are aligned to neuron 1"));
+}
+
+void NeuronGeometryDialog::update_markers()
+{
+    if(mList->size()<=0){
+        return;
+    }
+    int info[3];
+    ImageMarker *p;
+    //get info of each marker
+    for(int i=0; i<mList->size(); i++){
+        if(get_marker_info(mList->at(i),info))
+        {
+            if(info[0]>-1&&info[0]<ntList->size()){
+                if(info[1]>-1&&info[1]<ntList->at(info[0]).listNeuron.size())
+                {
+                    p = (ImageMarker *)&(mList->at(i));
+                    p->x=ntList->at(info[0]).listNeuron.at(info[1]).x;
+                    p->y=ntList->at(info[0]).listNeuron.at(info[1]).y;
+                    p->z=ntList->at(info[0]).listNeuron.at(info[1]).z;
+//                    p->type=ntList->at(info[0]).listNeuron.at(info[1]).type;
+//                    p->color.r=ntList->at(info[0]).listNeuron.at(info[1]).color.r;
+//                    p->color.g=ntList->at(info[0]).listNeuron.at(info[1]).color.g;
+//                    p->color.b=ntList->at(info[0]).listNeuron.at(info[1]).color.b;
+//                    p->color.a=ntList->at(info[0]).listNeuron.at(info[1]).color.a;
+                }
+            }
+        }
+    }
+}
+
+void NeuronGeometryDialog::affine_markers()
+{
+    //get markers informations
+    int info[3];
+    QList<int> nidList;
+    QList<int> pidList;
+    QList<int> midList;
+    for(int i=0; i<mList->size(); i++){
+        if(get_marker_info(mList->at(i),info)){
+            nidList.append(info[0]);
+            pidList.append(info[1]);
+            midList.append(info[2]);
+        }else{
+            nidList.append(-1);
+            pidList.append(-1);
+            midList.append(-1);
+        }
+    }
+    if(nidList.size()!=mList->size()){ //should not happen
+        qDebug("unexpected error in acquring marker informations");
+        return;
+    }
+
+    //get matched coordinates
+    QList<XYZ> c0;
+    QList<XYZ> c1;
+    for(int i=0; i<nidList.size(); i++)
+    {
+        if(nidList[i]==0){ //do have info and is the first neuron (only match once)
+            int mid0=midList[i];
+            if(mid0>-1 && mid0<midList.size()){ //do have eligable match
+                if(i==midList[mid0]){ //check cross match
+                    if(nidList[mid0]==1){ //make sure from different neurons
+                        int pid0=pidList[i];
+                        int pid1=pidList[mid0];
+                        if(pid0>-1 && pid0<ntList->at(0).listNeuron.size() &&
+                                pid1>-1 && pid1<ntList->at(1).listNeuron.size()){ //check neuron point eligibility
+                            XYZ tmp0(XYZ(ntList->at(0).listNeuron[pid0]));
+                            XYZ tmp1(XYZ(ntList->at(1).listNeuron[pid1]));
+                            c0.append(tmp0);
+                            c1.append(tmp1);
+                        }
+                    }
+                }
+            }
+        }
+    }
+    qDebug()<<"identified "<<c0.size()<<" pairs of matching point";
+
+    //calculate transformation - align 1 to 0
+    double shift_x,shift_y,shift_z,angle_r,cent_x,cent_y,cent_z;
+    if(ant=0){
+        compute_affine_4dof(c1,c0,shift_x,shift_y,shift_z,angle_r,cent_x,cent_y,cent_z,stack_dir);
+    }else if(ant=1){
+        compute_affine_4dof(c0,c1,shift_x,shift_y,shift_z,angle_r,cent_x,cent_y,cent_z,stack_dir);
+    }
+
+    //apply transformation matrix
+    //shift
+    doubleSpinBox_shift_x->setValue(cur_shift_x[ant]+shift_x);
+    doubleSpinBox_shift_y->setValue(cur_shift_y[ant]+shift_y);
+    doubleSpinBox_shift_z->setValue(cur_shift_z[ant]+shift_z);
+    //rotation
+    if(angle_r!=0){
+        doubleSpinBox_rcent_x->setValue(cent_x);
+        doubleSpinBox_rcent_y->setValue(cent_y);
+        doubleSpinBox_rcent_z->setValue(cent_z);
+        switch(stack_dir)
+        {
+        case 0:
+            doubleSpinBox_rotate_x->setValue(cur_rotate_x[ant]+angle_r);
+            break;
+        case 1:
+            doubleSpinBox_rotate_y->setValue(cur_rotate_y[ant]+angle_r);
+            break;
+        case 2:
+            doubleSpinBox_rotate_z->setValue(cur_rotate_z[ant]+angle_r);
+            break;
+    }
+    }
+    qDebug()<<"done matching"<<endl;
+}
+
 //geometry changing tools
 void NeuronGeometryDialog::reset()
 {
@@ -639,6 +838,10 @@ void NeuronGeometryDialog::reset()
     doubleSpinBox_gscale_x->setValue(cur_gscale_x[ant]*1000);
     doubleSpinBox_gscale_y->setValue(cur_gscale_y[ant]*1000);
     doubleSpinBox_gscale_z->setValue(cur_gscale_z[ant]*1000);
+
+    doubleSpinBox_rcent_x->setValue(cur_mmx[ant]);
+    doubleSpinBox_rcent_y->setValue(cur_mmy[ant]);
+    doubleSpinBox_rcent_z->setValue(cur_mmz[ant]);
 
     if(v3dwin){
         callback->update_NeuronBoundingBox(v3dwin);
@@ -679,28 +882,28 @@ void NeuronGeometryDialog::quickmove()
     double delta = quickMoveNeuron(ntList,ant,stack_dir,first_nt);
     switch(stack_dir){
     case 0:
-        cur_cx[ant]+=delta;
         cur_minx[ant]+=delta;
         cur_maxx[ant]+=delta;
         cur_mmx[ant]+=delta;
+        doubleSpinBox_rcent_x->setValue(cur_mmx[ant]);
         cur_shift_x[ant]+=delta;
         cur_tmat[ant][3]+=delta;
         doubleSpinBox_shift_x->setValue(cur_shift_x[ant]);
         break;
     case 1:
-        cur_cy[ant]+=delta;
         cur_miny[ant]+=delta;
         cur_maxy[ant]+=delta;
         cur_mmy[ant]+=delta;
+        doubleSpinBox_rcent_y->setValue(cur_mmy[ant]);
         cur_shift_y[ant]+=delta;
         cur_tmat[ant][7]+=delta;
         doubleSpinBox_shift_y->setValue(cur_shift_y[ant]);
         break;
     case 2:
-        cur_cz[ant]+=delta;
         cur_minz[ant]+=delta;
         cur_maxz[ant]+=delta;
         cur_mmz[ant]+=delta;
+        doubleSpinBox_rcent_z->setValue(cur_mmz[ant]);
         cur_shift_z[ant]+=delta;
         cur_tmat[ant][11]+=delta;
         doubleSpinBox_shift_z->setValue(cur_shift_z[ant]);
@@ -736,10 +939,9 @@ double NORMALIZE_ROTATION_Angle( double angle )
 void NeuronGeometryDialog::shift_x(double s)
 {
     proc_neuron_add_offset(ntpList[ant], s-cur_shift_x[ant], 0, 0);
-    cur_cx[ant] += s-cur_shift_x[ant];
     cur_minx[ant]+=s-cur_shift_x[ant];
     cur_maxx[ant]+=s-cur_shift_x[ant];
-    cur_mmx[ant]+=s-cur_shift_x[ant];
+    cur_mmx[ant]+=s-cur_shift_x[ant]; doubleSpinBox_rcent_x->setValue(cur_mmx[ant]);
     cur_tmat[ant][3] += s-cur_shift_x[ant];
     cur_shift_x[ant] = s;
 
@@ -753,10 +955,9 @@ void NeuronGeometryDialog::shift_x(double s)
 void NeuronGeometryDialog::shift_y(double s)
 {
     proc_neuron_add_offset(ntpList[ant], 0, s-cur_shift_y[ant], 0);
-    cur_cy[ant] += s-cur_shift_y[ant];
     cur_miny[ant]+=s-cur_shift_y[ant];
     cur_maxy[ant]+=s-cur_shift_y[ant];
-    cur_mmy[ant]+=s-cur_shift_y[ant];
+    cur_mmy[ant]+=s-cur_shift_y[ant]; doubleSpinBox_rcent_y->setValue(cur_mmy[ant]);
     cur_tmat[ant][7] += s-cur_shift_y[ant];
     cur_shift_y[ant] = s;
 
@@ -768,10 +969,9 @@ void NeuronGeometryDialog::shift_y(double s)
 void NeuronGeometryDialog::shift_z(double s)
 {
     proc_neuron_add_offset(ntpList[ant], 0, 0, s-cur_shift_z[ant]);
-    cur_cz[ant] += s-cur_shift_z[ant];
     cur_minz[ant]+=s-cur_shift_z[ant];
     cur_maxz[ant]+=s-cur_shift_z[ant];
-    cur_mmz[ant]+=s-cur_shift_z[ant];
+    cur_mmz[ant]+=s-cur_shift_z[ant]; doubleSpinBox_rcent_z->setValue(cur_mmz[ant]);
     cur_tmat[ant][11] += s-cur_shift_z[ant];
     cur_shift_z[ant] = s;
 
@@ -834,10 +1034,9 @@ void NeuronGeometryDialog::gscale_x(double s)
 
     proc_neuron_gmultiply_factor(ntpList[ant], s/(cur_gscale_x[ant]*1000), 1, 1);
     cur_tmat[ant][0] *= s/(cur_gscale_x[ant]*1000);
-    cur_cx[ant] *= s/(cur_gscale_x[ant]*1000);
     cur_minx[ant] *= s/(cur_gscale_x[ant]*1000);
     cur_maxx[ant] *= s/(cur_gscale_x[ant]*1000);
-    cur_mmx[ant] *= s/(cur_gscale_x[ant]*1000);
+    cur_mmx[ant] *= s/(cur_gscale_x[ant]*1000);  doubleSpinBox_rcent_x->setValue(cur_mmx[ant]);
     cur_gscale_x[ant] = s/1000.0;
 
     if(stack_dir==0){
@@ -855,10 +1054,9 @@ void NeuronGeometryDialog::gscale_y(double s)
 
     proc_neuron_gmultiply_factor(ntpList[ant], 1, s/(cur_gscale_y[ant]*1000), 1);
     cur_tmat[ant][5] *= s/(cur_gscale_y[ant]*1000);
-    cur_cy[ant] *= s/(cur_gscale_y[ant]*1000);
     cur_miny[ant] *= s/(cur_gscale_y[ant]*1000);
     cur_maxy[ant] *= s/(cur_gscale_y[ant]*1000);
-    cur_mmy[ant] *= s/(cur_gscale_y[ant]*1000);
+    cur_mmy[ant] *= s/(cur_gscale_y[ant]*1000); doubleSpinBox_rcent_y->setValue(cur_mmy[ant]);
     cur_gscale_y[ant] = s/1000.0;
 
     if(stack_dir==1){
@@ -876,10 +1074,9 @@ void NeuronGeometryDialog::gscale_z(double s)
 
     proc_neuron_gmultiply_factor(ntpList[ant], 1, 1, s/(cur_gscale_z[ant]*1000));
     cur_tmat[ant][10] *= s/(cur_gscale_z[ant]*1000);
-    cur_cz[ant] *= s/(cur_gscale_z[ant]*1000);
     cur_minz[ant] *= s/(cur_gscale_z[ant]*1000);
     cur_maxz[ant] *= s/(cur_gscale_z[ant]*1000);
-    cur_mmz[ant] *= s/(cur_gscale_z[ant]*1000);
+    cur_mmz[ant] *= s/(cur_gscale_z[ant]*1000); doubleSpinBox_rcent_z->setValue(cur_mmz[ant]);
     cur_gscale_z[ant] = s/1000.0;
 
     if(stack_dir==2){
@@ -900,32 +1097,12 @@ void NeuronGeometryDialog::rotate_around_x_dial(int v)
 {
     double angleval=((double)v)/MY_ANGLE_TICK;
 
-//    double afmatrix[16] = {1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1};
-//    double a = NORMALIZE_ROTATION_Angle( angleval-cur_rotate_x[ant] ) / 180.0 * MY_PI;
-//    afmatrix[5] = cos(a); afmatrix[6] = -sin(a);
-//    afmatrix[9] = -afmatrix[6]; afmatrix[10] = afmatrix[5];
-//    proc_neuron_affine_around_center(ntpList[ant], afmatrix, cur_cx[ant], cur_cy[ant], cur_cz[ant]);
-//    multiplyAmat_centerRotate(afmatrix, cur_tmat[ant], cur_cx[ant], cur_cy[ant], cur_cz[ant]);
-//    getNeuronTreeBound(ntList->at(ant), cur_minx[ant], cur_miny[ant], cur_minz[ant], cur_maxx[ant], cur_maxy[ant], cur_maxz[ant], cur_mmx[ant], cur_mmy[ant], cur_mmz[ant]);
-//    cur_rotate_x[ant] = angleval;
-//    highlight_points(false);
-
     emit xRotationChanged(angleval);
 }
 
 void NeuronGeometryDialog::rotate_around_y_dial(int v)
 {
     double angleval=((double)v)/MY_ANGLE_TICK;
-
-//    double afmatrix[16] = {1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1};
-//    double a = NORMALIZE_ROTATION_Angle( angleval-cur_rotate_y[ant] ) / 180.0 * MY_PI;
-//    afmatrix[0] = cos(a); afmatrix[2] = sin(a);
-//    afmatrix[8] = -afmatrix[2]; afmatrix[10] = afmatrix[0];
-//    proc_neuron_affine_around_center(ntpList[ant], afmatrix, cur_cx[ant], cur_cy[ant], cur_cz[ant]);
-//    multiplyAmat_centerRotate(afmatrix,cur_tmat[ant], cur_cx[ant], cur_cy[ant], cur_cz[ant]);
-//    getNeuronTreeBound(ntList->at(ant), cur_minx[ant], cur_miny[ant], cur_minz[ant], cur_maxx[ant], cur_maxy[ant], cur_maxz[ant], cur_mmx[ant], cur_mmy[ant], cur_mmz[ant]);
-//    cur_rotate_y[ant] = angleval;
-//    highlight_points(false);
 
     emit yRotationChanged(angleval);
 }
@@ -934,16 +1111,6 @@ void NeuronGeometryDialog::rotate_around_z_dial(int v)
 {
     double angleval=((double)v)/MY_ANGLE_TICK;
 
-//    double afmatrix[16] = {1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1};
-//    double a = NORMALIZE_ROTATION_Angle( angleval-cur_rotate_z[ant] ) / 180.0 * MY_PI;
-//    afmatrix[0] = cos(a); afmatrix[1] = -sin(a);
-//    afmatrix[4] = -afmatrix[1]; afmatrix[5] = afmatrix[0];
-//    proc_neuron_affine_around_center(ntpList[ant], afmatrix, cur_cx[ant], cur_cy[ant], cur_cz[ant]);
-//    multiplyAmat_centerRotate(afmatrix,cur_tmat[ant], cur_cx[ant], cur_cy[ant], cur_cz[ant]);
-//    getNeuronTreeBound(ntList->at(ant), cur_minx[ant], cur_miny[ant], cur_minz[ant], cur_maxx[ant], cur_maxy[ant], cur_maxz[ant], cur_mmx[ant], cur_mmy[ant], cur_mmz[ant]);
-//    cur_rotate_z[ant] = angleval;
-//    highlight_points(false);
-
     emit zRotationChanged(angleval);
 }
 
@@ -951,48 +1118,64 @@ void NeuronGeometryDialog::rotate_around_x_spin(double s)
 {
     double afmatrix[16] = {1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1};
     double a = NORMALIZE_ROTATION_Angle( s-cur_rotate_x[ant] ) / 180.0 * MY_PI;
-    afmatrix[5] = cos(a); afmatrix[6] = -sin(a);
-    afmatrix[9] = -afmatrix[6]; afmatrix[10] = afmatrix[5];
-    proc_neuron_affine_around_center(ntpList[ant], afmatrix, cur_cx[ant], cur_cy[ant], cur_cz[ant]);
-    multiplyAmat_centerRotate(afmatrix, cur_tmat[ant], cur_cx[ant], cur_cy[ant], cur_cz[ant]);
-    getNeuronTreeBound(ntList->at(ant), cur_minx[ant], cur_miny[ant], cur_minz[ant], cur_maxx[ant], cur_maxy[ant], cur_maxz[ant], cur_mmx[ant], cur_mmy[ant], cur_mmz[ant]);
-    cur_rotate_x[ant] = s;
-    int dialval = (int) s*MY_ANGLE_TICK;
-    emit xRotationChanged(dialval);
+    if(fabs(a)>1e-5)
+    {
+        afmatrix[5] = cos(a); afmatrix[6] = -sin(a);
+        afmatrix[9] = -afmatrix[6]; afmatrix[10] = afmatrix[5];
+        proc_neuron_affine_around_center(ntpList[ant], afmatrix, doubleSpinBox_rcent_x->value(), doubleSpinBox_rcent_y->value(), doubleSpinBox_rcent_z->value());
+        multiplyAmat_centerRotate(afmatrix,cur_tmat[ant], doubleSpinBox_rcent_x->value(), doubleSpinBox_rcent_y->value(), doubleSpinBox_rcent_z->value());
+        getNeuronTreeBound(ntList->at(ant), cur_minx[ant], cur_miny[ant], cur_minz[ant], cur_maxx[ant], cur_maxy[ant], cur_maxz[ant], cur_mmx[ant], cur_mmy[ant], cur_mmz[ant]);
+        cur_rotate_x[ant] = s;
+        int dialval = (int) s*MY_ANGLE_TICK;
+        emit xRotationChanged(dialval);
 
-    highlight_points(false);
+        highlight_points(false);
+    }
 }
 
 void NeuronGeometryDialog::rotate_around_y_spin(double s)
 {
     double afmatrix[16] = {1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1};
     double a = NORMALIZE_ROTATION_Angle( s-cur_rotate_y[ant] ) / 180.0 * MY_PI;
-    afmatrix[0] = cos(a); afmatrix[2] = sin(a);
-    afmatrix[8] = -afmatrix[2]; afmatrix[10] = afmatrix[0];
-    proc_neuron_affine_around_center(ntpList[ant], afmatrix, cur_cx[ant], cur_cy[ant], cur_cz[ant]);
-    multiplyAmat_centerRotate(afmatrix,cur_tmat[ant], cur_cx[ant], cur_cy[ant], cur_cz[ant]);
-    getNeuronTreeBound(ntList->at(ant), cur_minx[ant], cur_miny[ant], cur_minz[ant], cur_maxx[ant], cur_maxy[ant], cur_maxz[ant], cur_mmx[ant], cur_mmy[ant], cur_mmz[ant]);
-    cur_rotate_y[ant] = s;
-    int dialval = (int) s*MY_ANGLE_TICK;
-    emit yRotationChanged(dialval);
+    if(fabs(a)>1e-5)
+    {
+        afmatrix[0] = cos(a); afmatrix[2] = sin(a);
+        afmatrix[8] = -afmatrix[2]; afmatrix[10] = afmatrix[0];
+        proc_neuron_affine_around_center(ntpList[ant], afmatrix, doubleSpinBox_rcent_x->value(), doubleSpinBox_rcent_y->value(), doubleSpinBox_rcent_z->value());
+        multiplyAmat_centerRotate(afmatrix,cur_tmat[ant], doubleSpinBox_rcent_x->value(), doubleSpinBox_rcent_y->value(), doubleSpinBox_rcent_z->value());
+        getNeuronTreeBound(ntList->at(ant), cur_minx[ant], cur_miny[ant], cur_minz[ant], cur_maxx[ant], cur_maxy[ant], cur_maxz[ant], cur_mmx[ant], cur_mmy[ant], cur_mmz[ant]);
+        cur_rotate_y[ant] = s;
+        int dialval = (int) s*MY_ANGLE_TICK;
+        emit yRotationChanged(dialval);
 
-    highlight_points(false);
+        highlight_points(false);
+    }
 }
 
 void NeuronGeometryDialog::rotate_around_z_spin(double s)
 {
     double afmatrix[16] = {1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1};
     double a = NORMALIZE_ROTATION_Angle( s-cur_rotate_z[ant] ) / 180.0 * MY_PI;
-    afmatrix[0] = cos(a); afmatrix[1] = -sin(a);
-    afmatrix[4] = -afmatrix[1]; afmatrix[5] = afmatrix[0];
-    proc_neuron_affine_around_center(ntpList[ant], afmatrix, cur_cx[ant], cur_cy[ant], cur_cz[ant]);
-    multiplyAmat_centerRotate(afmatrix,cur_tmat[ant], cur_cx[ant], cur_cy[ant], cur_cz[ant]);
-    getNeuronTreeBound(ntList->at(ant), cur_minx[ant], cur_miny[ant], cur_minz[ant], cur_maxx[ant], cur_maxy[ant], cur_maxz[ant], cur_mmx[ant], cur_mmy[ant], cur_mmz[ant]);
-    cur_rotate_z[ant] = s;
-    int dialval = (int) s*MY_ANGLE_TICK;
-    emit zRotationChanged(dialval);
+    if(fabs(a)>1e-5)
+    {
+        afmatrix[0] = cos(a); afmatrix[1] = -sin(a);
+        afmatrix[4] = -afmatrix[1]; afmatrix[5] = afmatrix[0];
+        proc_neuron_affine_around_center(ntpList[ant], afmatrix, doubleSpinBox_rcent_x->value(), doubleSpinBox_rcent_y->value(), doubleSpinBox_rcent_z->value());
+        multiplyAmat_centerRotate(afmatrix,cur_tmat[ant], doubleSpinBox_rcent_x->value(), doubleSpinBox_rcent_y->value(), doubleSpinBox_rcent_z->value());
+        getNeuronTreeBound(ntList->at(ant), cur_minx[ant], cur_miny[ant], cur_minz[ant], cur_maxx[ant], cur_maxy[ant], cur_maxz[ant], cur_mmx[ant], cur_mmy[ant], cur_mmz[ant]);
+        cur_rotate_z[ant] = s;
+        int dialval = (int) s*MY_ANGLE_TICK;
+        emit zRotationChanged(dialval);
 
-    highlight_points(false);
+        highlight_points(false);
+    }
+}
+
+void NeuronGeometryDialog::refresh_rcent()
+{
+    doubleSpinBox_rcent_x->setValue(cur_mmx[ant]);
+    doubleSpinBox_rcent_y->setValue(cur_mmy[ant]);
+    doubleSpinBox_rcent_z->setValue(cur_mmz[ant]);
 }
 
 void NeuronGeometryDialog::flip_x(int v)

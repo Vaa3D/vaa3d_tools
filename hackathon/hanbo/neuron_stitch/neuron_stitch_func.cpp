@@ -6,8 +6,160 @@
 #include <QDialog>
 #include <fstream>
 #include <iostream>
+#include <vector>
+#include "math.h"
 
 using namespace std;
+
+double distance_XYZList(QList<XYZ> c0, QList<XYZ> c1)
+{
+    if(c0.size()!=c1.size()){
+        return -1;
+    }
+    double dis = 0;
+    for(int i=0; i<c0.size(); i++){
+        dis+=sqrt(NTDIS(c0[i],c1[i]));
+    }
+    return dis;
+}
+
+void rotation_XYZList(QList<XYZ> in, QList<XYZ>& out, double angle, int axis) //angle is 0-360  based
+{
+    if(in.size()!=out.size()){
+        out.clear();
+        for(int i=0; i<in.size(); i++){
+            out.append(XYZ(in[i]));
+        }
+    }
+    double a = angle/180*M_PI;
+    double afmatrix[12] = {1,0,0,0, 0,1,0,0, 0,0,1,0};
+
+    if(axis ==0){
+        afmatrix[5] = cos(a); afmatrix[6] = -sin(a);
+        afmatrix[9] = -afmatrix[6]; afmatrix[10] = afmatrix[5];
+    }
+    else if(axis ==1){
+        afmatrix[0] = cos(a); afmatrix[2] = sin(a);
+        afmatrix[8] = -afmatrix[2]; afmatrix[10] = afmatrix[0];
+    }
+    else if(axis ==2){
+        afmatrix[0] = cos(a); afmatrix[1] = -sin(a);
+        afmatrix[4] = -afmatrix[1]; afmatrix[5] = afmatrix[0];
+    }
+
+    for(int i=0; i<in.size();i++){
+        out[i].x = afmatrix[0]*in[i].x+afmatrix[1]*in[i].y+afmatrix[2]*in[i].z;
+        out[i].y = afmatrix[4]*in[i].x+afmatrix[5]*in[i].y+afmatrix[6]*in[i].z;
+        out[i].z = afmatrix[8]*in[i].x+afmatrix[9]*in[i].y+afmatrix[10]*in[i].z;
+    }
+}
+
+bool compute_affine_4dof(QList<XYZ> c0, QList<XYZ> c1, double& shift_x, double& shift_y, double & shift_z, double & angle_r, double& cent_x,double& cent_y,double& cent_z, int dir)
+{
+    //check
+    if(c0.size() != c1.size()){
+        qDebug()<<"error: the number of points for affine does not match";
+        shift_x = shift_y = shift_z = angle_r = 0;
+        cent_x=cent_y=cent_z = 0;
+        return false;
+    }
+    //get center
+    double cent0[3] = {0};
+    double cent1[3] = {0};
+    for(int i=0; i<c0.size(); i++){
+        cent0[0]+=c0[i].x;
+        cent0[1]+=c0[i].y;
+        cent0[2]+=c0[i].z;
+        cent1[0]+=c1[i].x;
+        cent1[1]+=c1[i].y;
+        cent1[2]+=c1[i].z;
+    }
+    cent0[0]/=c0.size(); cent0[1]/=c0.size(); cent0[2]/=c0.size();
+    cent1[0]/=c0.size(); cent1[1]/=c0.size(); cent1[2]/=c0.size();
+
+    //align by center first
+    shift_x=cent0[0]-cent1[0];
+    shift_y=cent0[1]-cent1[1];
+    shift_z=cent0[2]-cent1[2];
+    for(int i=0; i<c0.size(); i++){
+        c0[i].x -= cent0[0];
+        c0[i].y -= cent0[1];
+        c0[i].z -= cent0[2];
+        c1[i].x -= cent1[0];
+        c1[i].y -= cent1[1];
+        c1[i].z -= cent1[2];
+    }
+
+    //3 steps rotation
+    cent_x=cent0[0];cent_y=cent0[1];cent_z=cent0[2];
+    if(c0.size()<2){
+        angle_r=0;
+        return true;
+    }
+    QList<XYZ> c1bk; c1bk.clear();
+    for(int i=0; i<c0.size(); i++){
+        c1bk.append(XYZ(c1[i]));
+    }
+    //step 1
+    double mdis=distance_XYZList(c0,c1);
+    double mang=0;
+    for(double ang=10; ang<360; ang+=10){
+        rotation_XYZList(c1,c1bk,ang,dir);
+        double dis = distance_XYZList(c0, c1bk);
+        if(dis<mdis){
+            mdis=dis;
+            mang=ang;
+        }
+    }
+    qDebug()<<"rotation 0: "<<mang<<":"<<mdis;
+    //step 2
+    for(double ang=mang-10; ang<mang+10; ang++){
+        rotation_XYZList(c1,c1bk,ang,dir);
+        double dis = distance_XYZList(c0, c1bk);
+        if(dis<mdis){
+            mdis=dis;
+            mang=ang;
+        }
+    }
+    qDebug()<<"rotation 1: "<<mang<<":"<<mdis;
+    //step 3
+    for(double ang=mang-1; ang<mang+1; ang+=0.1){
+        rotation_XYZList(c1,c1bk,ang,dir);
+        double dis = distance_XYZList(c0, c1bk);
+        if(dis<mdis){
+            mdis=dis;
+            mang=ang;
+        }
+    }
+    qDebug()<<"rotation 2: "<<mang<<":"<<mdis;
+    angle_r=mang;
+    qDebug()<<"calculated affine: "<<shift_x<<":"<<shift_y<<":"<<shift_z<<":"<<angle_r<<":"<<mdis;
+    return true;
+}
+
+void update_marker_info(const ImageMarker& mk, int* info) //info[0]=neuron id, info[1]=point id, info[2]=matching marker
+{
+    ImageMarker *p;
+    p = (ImageMarker *)&mk;
+    p->comment=QString::number(info[0]) + " " + QString::number(info[1]) + " " + QString::number(info[2]);
+}
+
+bool get_marker_info(const ImageMarker& mk, int* info) //info[0]=neuron id, info[1]=point id, info[2]=matching marker
+{
+    info[0]=info[1]=info[2]=-1;
+    QStringList items = mk.comment.split(" ", QString::SkipEmptyParts);
+    if(items.size()!=3)
+        return false;
+    for(int i=0; i<3; i++){
+        bool check=false;
+        int val=items[i].toInt(&check, 10);
+        if(!check)
+            return false;
+        else
+            info[i]=val;
+    }
+    return true;
+}
 
 bool export_list2file(QList<NeuronSWC> & lN, QString fileSaveName, QString fileOpenName)
 {
@@ -198,7 +350,8 @@ void change_neuron_type(const NeuronTree& nt, int type)
 void backupNeuron(const NeuronTree & source, const NeuronTree & backup)
 {
     NeuronTree *np = (NeuronTree *)(&backup);
-    np->n=source.n; np->color=source.color; np->on=source.on; np->selected=source.selected; np->name=source.name; np->comment=source.comment;
+    np->n=source.n; np->on=source.on; np->selected=source.selected; np->name=source.name; np->comment=source.comment;
+    np->color.r=source.color.r; np->color.g=source.color.g; np->color.b=source.color.b; np->color.a=source.color.a;
     np->listNeuron.clear();
     for(V3DLONG i=0; i<source.listNeuron.size(); i++)
     {
@@ -232,8 +385,12 @@ void copyProperty(const NeuronTree & source, const NeuronTree & target)
         ps_tmp = (NeuronSWC *)(&(source.listNeuron.at(i)));
         pt_tmp = (NeuronSWC *)(&(target.listNeuron.at(i)));
         pt_tmp->type = ps_tmp->type;
-        pt_tmp->color = ps_tmp->color;
     }
+    NeuronTree *np = (NeuronTree *)(&target);
+    np->color.r = source.color.r;
+    np->color.g = source.color.g;
+    np->color.b = source.color.b;
+    np->color.a = source.color.a;
 }
 
 void copyType(QList<int> source, const NeuronTree & target)

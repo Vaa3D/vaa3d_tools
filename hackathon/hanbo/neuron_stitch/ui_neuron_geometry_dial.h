@@ -57,6 +57,11 @@ public:
     QDoubleSpinBox *doubleSpinBox_rotate_x;
     QDoubleSpinBox *doubleSpinBox_rotate_y;
     QDoubleSpinBox *doubleSpinBox_rotate_z;
+    QPushButton *pushButton_refresh_rcent;
+    QLabel *label_12;
+    QDoubleSpinBox *doubleSpinBox_rcent_x;
+    QDoubleSpinBox *doubleSpinBox_rcent_y;
+    QDoubleSpinBox *doubleSpinBox_rcent_z;
     QLabel *label_10;
     QDoubleSpinBox *doubleSpinBox_gscale_x;
     QDoubleSpinBox *doubleSpinBox_gscale_y;
@@ -91,6 +96,13 @@ public:
     QPushButton *pushButton_quickmove;
     QPushButton *pushButton_updatebox;
     QPushButton *pushButton_neurontype;
+
+    QFrame *line_4;
+    QHBoxLayout *hboxLayout_t4;
+    QPushButton *pushButton_generateMarker;
+    QPushButton *pushButton_linkMarkerNeuron;
+    QPushButton *pushButton_linkMatchingMarker;
+    QPushButton *pushButton_affineByMarkers;
 
     void setupUi(QDialog *NeuronGeometryDialog)
     {
@@ -214,6 +226,40 @@ public:
         hboxLayout_t3->addWidget(pushButton_updatebox);
 
         verticalLayout->addLayout(hboxLayout_t3);
+
+        hboxLayout_t4 = new QHBoxLayout();
+        hboxLayout_t4->setObjectName(QString::fromUtf8("hboxLayout_t4"));
+        hboxLayout_t4->setContentsMargins(0, 0, 0, 0);
+        hboxLayout_t4->setMargin(0);
+
+        pushButton_generateMarker = new QPushButton(widget);
+        pushButton_generateMarker->setObjectName(QString::fromUtf8("pushButton_generateMarker"));
+        pushButton_generateMarker->setAutoDefault(false);
+        hboxLayout_t4->addWidget(pushButton_generateMarker);
+
+        pushButton_linkMarkerNeuron = new QPushButton(widget);
+        pushButton_linkMarkerNeuron->setObjectName(QString::fromUtf8("pushButton_linkMarkerNeuron"));
+        pushButton_linkMarkerNeuron->setAutoDefault(false);
+        hboxLayout_t4->addWidget(pushButton_linkMarkerNeuron);
+
+        pushButton_linkMatchingMarker = new QPushButton(widget);
+        pushButton_linkMatchingMarker->setObjectName(QString::fromUtf8("pushButton_linkMatchingMarker"));
+        pushButton_linkMatchingMarker->setAutoDefault(false);
+        hboxLayout_t4->addWidget(pushButton_linkMatchingMarker);
+
+        pushButton_affineByMarkers = new QPushButton(widget);
+        pushButton_affineByMarkers->setObjectName(QString::fromUtf8("pushButton_affineByMarkers"));
+        pushButton_affineByMarkers->setAutoDefault(false);
+        hboxLayout_t4->addWidget(pushButton_affineByMarkers);
+
+        verticalLayout->addLayout(hboxLayout_t4);
+
+        line_4 = new QFrame(widget);
+        line_4->setObjectName(QString::fromUtf8("line_4"));
+        line_4->setFrameShape(QFrame::HLine);
+        line_4->setFrameShadow(QFrame::Sunken);
+
+        verticalLayout->addWidget(line_4);
 
         gridLayout = new QGridLayout();
         gridLayout->setObjectName(QString::fromUtf8("gridLayout"));
@@ -349,33 +395,71 @@ public:
 
         doubleSpinBox_rotate_z = new QDoubleSpinBox(widget);
         doubleSpinBox_rotate_z->setObjectName(QString::fromUtf8("doubleSpinBox_rotate_z"));
-        doubleSpinBox_rotate_z->setDecimals(2);
+        doubleSpinBox_rotate_z->setDecimals(4);
 
         gridLayout->addWidget(doubleSpinBox_rotate_z, 5, 3, 1, 1);
+
+        QVBoxLayout* vLayout_rotation = new QVBoxLayout(widget);
+
+        label_12 = new QLabel(widget);
+        label_12->setObjectName(QString::fromUtf8("label_12"));
+        label_12->setAlignment(Qt::AlignCenter);
+
+        vLayout_rotation->addWidget(label_12);
+
+        pushButton_refresh_rcent = new QPushButton(widget);
+        pushButton_refresh_rcent->setObjectName(QString::fromUtf8("pushButton_refresh_rcent"));
+        pushButton_refresh_rcent->setAutoDefault(false);
+
+        vLayout_rotation->addWidget(pushButton_refresh_rcent);
+
+        gridLayout->addLayout(vLayout_rotation, 6, 0, 1, 1);
+
+        doubleSpinBox_rcent_x = new QDoubleSpinBox(widget);
+        doubleSpinBox_rcent_x->setObjectName(QString::fromUtf8("doubleSpinBox_rcent_x"));
+        doubleSpinBox_rcent_x->setDecimals(4);
+        doubleSpinBox_rcent_x->setRange(-1e16,1e16);
+
+        gridLayout->addWidget(doubleSpinBox_rcent_x, 6, 1, 1, 1);
+
+        doubleSpinBox_rcent_y = new QDoubleSpinBox(widget);
+        doubleSpinBox_rcent_y->setObjectName(QString::fromUtf8("doubleSpinBox_rcent_y"));
+        doubleSpinBox_rcent_y->setDecimals(4);
+        doubleSpinBox_rcent_y->setRange(-1e16,1e16);
+
+        gridLayout->addWidget(doubleSpinBox_rcent_y, 6, 2, 1, 1);
+
+        doubleSpinBox_rcent_z = new QDoubleSpinBox(widget);
+        doubleSpinBox_rcent_z->setObjectName(QString::fromUtf8("doubleSpinBox_rcent_z"));
+        doubleSpinBox_rcent_z->setDecimals(4);
+        doubleSpinBox_rcent_z->setRange(-1e16,1e16);
+
+        gridLayout->addWidget(doubleSpinBox_rcent_z, 6, 3, 1, 1);
+
 
         label_10 = new QLabel(widget);
         label_10->setObjectName(QString::fromUtf8("label_10"));
         label_10->setAlignment(Qt::AlignCenter);
 
-        gridLayout->addWidget(label_10, 6, 0, 1, 1);
+        gridLayout->addWidget(label_10, 7, 0, 1, 1);
 
         doubleSpinBox_gscale_x = new QDoubleSpinBox(widget);
         doubleSpinBox_gscale_x->setObjectName(QString::fromUtf8("doubleSpinBox_gscale_x"));
         doubleSpinBox_gscale_x->setDecimals(4);
 
-        gridLayout->addWidget(doubleSpinBox_gscale_x, 6, 1, 1, 1);
+        gridLayout->addWidget(doubleSpinBox_gscale_x, 7, 1, 1, 1);
 
         doubleSpinBox_gscale_y = new QDoubleSpinBox(widget);
         doubleSpinBox_gscale_y->setObjectName(QString::fromUtf8("doubleSpinBox_gscale_y"));
         doubleSpinBox_gscale_y->setDecimals(4);
 
-        gridLayout->addWidget(doubleSpinBox_gscale_y, 6, 2, 1, 1);
+        gridLayout->addWidget(doubleSpinBox_gscale_y, 7, 2, 1, 1);
 
         doubleSpinBox_gscale_z = new QDoubleSpinBox(widget);
         doubleSpinBox_gscale_z->setObjectName(QString::fromUtf8("doubleSpinBox_gscale_z"));
         doubleSpinBox_gscale_z->setDecimals(4);
 
-        gridLayout->addWidget(doubleSpinBox_gscale_z, 6, 3, 1, 1);
+        gridLayout->addWidget(doubleSpinBox_gscale_z, 7, 3, 1, 1);
 
 
         verticalLayout->addLayout(gridLayout);
@@ -463,6 +547,8 @@ public:
         checkBox_flip_z->setText(QApplication::translate("NeuronGeometryDialog", "flip Z", 0, QApplication::UnicodeUTF8));
         label_6->setText(QApplication::translate("NeuronGeometryDialog", "rotation \n"
 "(around the axis)", 0, QApplication::UnicodeUTF8));
+        pushButton_refresh_rcent->setText(QApplication::translate("NeuronGeometryDialog", "Fetch Object Center", 0, QApplication::UnicodeUTF8));
+        label_12->setText(QApplication::translate("NeuronGeometryDialog", "Rotation Center", 0, QApplication::UnicodeUTF8));
         label_10->setText(QApplication::translate("NeuronGeometryDialog", "G-scaling * 1000", 0, QApplication::UnicodeUTF8));
         label_9->setText(QApplication::translate("NeuronGeometryDialog", "radius scaling * 1000", 0, QApplication::UnicodeUTF8));
         pushButton_reset->setText(QApplication::translate("NeuronGeometryDialog", "Reset", 0, QApplication::UnicodeUTF8));
@@ -479,6 +565,10 @@ public:
         pushButton_updatebox->setText(QApplication::translate("NeuronGeometryDialog", "Update Bounding Box", 0, QApplication::UnicodeUTF8));
         pushButton_neurontype->setText(QApplication::translate("NeuronGeometryDialog", "Change Color", 0, QApplication::UnicodeUTF8));
 
+        pushButton_generateMarker->setText(QApplication::translate("NeuronGeometryDialog", "Auto Markers", 0, QApplication::UnicodeUTF8));
+        pushButton_linkMarkerNeuron->setText(QApplication::translate("NeuronGeometryDialog", "Link Marker-Neuron", 0, QApplication::UnicodeUTF8));
+        pushButton_linkMatchingMarker->setText(QApplication::translate("NeuronGeometryDialog", "Pair Markers", 0, QApplication::UnicodeUTF8));
+        pushButton_affineByMarkers->setText(QApplication::translate("NeuronGeometryDialog", "Affine by Markers", 0, QApplication::UnicodeUTF8));
     } // retranslateUi
 
 };

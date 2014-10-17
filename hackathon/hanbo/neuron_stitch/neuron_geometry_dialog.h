@@ -36,7 +36,6 @@ protected:
            cur_gscale_x[2], cur_gscale_y[2], cur_gscale_z[2],
            cur_scale_r[2],
            cur_rotate_x[2], cur_rotate_y[2], cur_rotate_z[2];
-    double cur_cx[2], cur_cy[2], cur_cz[2]; //center of the current object, which should NOT affected by a rotation, but should be updated if a shift happen
     bool cur_flip_x[2], cur_flip_y[2], cur_flip_z[2];
 
     double cur_maxx[2],cur_maxy[2],cur_maxz[2],cur_minx[2],cur_miny[2],cur_minz[2],cur_mmx[2],cur_mmy[2],cur_mmz[2];
@@ -51,6 +50,9 @@ protected:
     int ant; // 0 or 1, the id of the neuron tree that is under operation
     int stack_dir; // 0/1/2/3=x/y/z/free
 
+    //Markers
+    QList<ImageMarker> * mList;
+
 private:
     void resetInternalStates();
     void resetInternalStates(int i);
@@ -58,6 +60,9 @@ private:
     void updateContent();
 
 public slots:
+    void link_marker_neuron();
+    void link_markers();
+    void affine_markers();
     void change_ant(int idx);
     void change_stackdir(int dir);
     void update_boundingbox();
@@ -89,6 +94,7 @@ public slots:
     void rotate_around_x_spin(double s);
     void rotate_around_y_spin(double s);
     void rotate_around_z_spin(double s);
+    void refresh_rcent();
     void flip_x(int v);
     void flip_y(int v);
     void flip_z(int v);
@@ -105,6 +111,7 @@ public:
     void highlight_points(bool force);
     void show_branch();//only 2 neuron
     void hide_branch();//only 2 neuron
+    void update_markers();
 };
 
 void highlight_dial(QDial *d);

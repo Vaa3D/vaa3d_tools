@@ -6,8 +6,16 @@
 #define NEURON_STITCH_FUNC_H
 
 #include <basic_surf_objs.h>
+#include <basic_landmark.h>
 
 #define NTDIS(a,b) (((a).x-(b).x)*((a).x-(b).x)+((a).y-(b).y)*((a).y-(b).y)+((a).z-(b).z)*((a).z-(b).z))
+
+double distance_XYZList(QList<XYZ> c0, QList<XYZ> c1);
+void rotation_XYZList(QList<XYZ> in, QList<XYZ>& out, double angle, int axis); //angle is 0-360  based
+bool compute_affine_4dof(QList<XYZ> reference, QList<XYZ> tomove, double& shift_x, double& shift_y, double & shift_z, double & angle_r, double & cent_x,double & cent_y,double & cent_z,int dir);
+
+void update_marker_info(const ImageMarker& mk, int* info); //info[0]=neuron id, info[1]=point id, info[2]=matching marker
+bool get_marker_info(const ImageMarker& mk, int* info);
 
 void getNeuronTreeBound(const NeuronTree& nt, float * bound, int direction);
 
