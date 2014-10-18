@@ -54,12 +54,14 @@ NeuronGeometryDialog::NeuronGeometryDialog(V3DPluginCallback2 * cb, V3dR_MainWin
         ntpList[i]->color.r = ntpList[i]->color.g = ntpList[i]->color.b = ntpList[i]->color.a = NULL;
     }
 
-    //get marker handle
-    mList = cb->getHandleImageMarkerList_Any3DViewer(v3dwin);
-
     resetInternalStates();
     updateContent();
     v3dcontrol->enableClipBoundingBox(false);
+
+    //get marker handle and link them to neuron
+    mList = cb->getHandleImageMarkerList_Any3DViewer(v3dwin);
+    cur_marker_num = mList->size();
+    link_marker_neuron_force();
 
     if(v3dwin){
         callback->update_3DViewer(v3dwin);
@@ -88,7 +90,26 @@ void NeuronGeometryDialog::enterEvent(QEvent *e)
     //close the window
     if(isclosed){
         this->hide();
+        QDialog::enterEvent(e);
+        return;
     }
+
+    //update marker link when there is new markers
+    if(cur_marker_num != mList->size()){
+        if(cur_marker_num < mList->size()){ //link the last added one
+            //link_new_marker_neuron();
+            pushButton_affineByMarkers->setEnabled(false);
+            pushButton_linkMatchingMarker->setEnabled(false);
+            pushButton_linkMarkerNeuron->setDefault(true);
+            cur_marker_num = mList->size();
+        }else{ //adjust the order
+//            update_markers_delete();
+            pushButton_affineByMarkers->setEnabled(false);
+            pushButton_linkMatchingMarker->setDefault(true);
+            cur_marker_num = mList->size();
+        }
+    }
+
     QDialog::enterEvent(e);
 }
 
@@ -143,8 +164,10 @@ void NeuronGeometryDialog::create()
 
     //marker operations
     pushButton_generateMarker->setEnabled(false);
+    pushButton_linkMatchingMarker->setEnabled(false);
+    pushButton_affineByMarkers->setEnabled(false);
 
-    connect(pushButton_linkMarkerNeuron, SIGNAL(clicked()), this, SLOT(link_marker_neuron()));
+    connect(pushButton_linkMarkerNeuron, SIGNAL(clicked()), this, SLOT(link_marker_neuron_force()));
     connect(pushButton_linkMatchingMarker, SIGNAL(clicked()), this, SLOT(link_markers()));
     connect(pushButton_affineByMarkers, SIGNAL(clicked()), this, SLOT(affine_markers()));
 
@@ -651,28 +674,35 @@ void NeuronGeometryDialog::link_markers()
 {
     marker_match_dialog dialog(callback, mList);
     dialog.exec();
+
+    for(int i=0; i<mList->size(); i++){
+        mInfoList[i]=mList->at(i).comment;
+    }
+
+    pushButton_linkMatchingMarker->setDefault(false);
+    pushButton_affineByMarkers->setEnabled(true);
+    pushButton_affineByMarkers->setDefault(true);
 }
 
-void NeuronGeometryDialog::link_marker_neuron()
+void NeuronGeometryDialog::link_marker_neuron_force()
 {
     if(mList->size()<=0){
-        v3d_msg("Cannot find markers. Please define some markers first");
+//        v3d_msg("Cannot find markers. Please define some markers first");
+//        qDebug("Cannot find markers. Please define some markers first");
         return;
     }
 
     ImageMarker *p;
     double dis;
-    int info[3];
+    int info[4];
     vector<int> count(ntList->size(),0);
+    mInfoList.clear();
 
     for(int i=0; i<mList->size(); i++){
-        if(get_marker_info(mList->at(i),info)){
-            continue;
-        }
         double mdis=MY_MATCH_DIS;
         int nid=-1;
         int pid=0;
-        qDebug()<<mList->at(i).x<<":"<<mList->at(i).y<<":"<<mList->at(i).z<<endl;
+        //qDebug()<<mList->at(i).x<<":"<<mList->at(i).y<<":"<<mList->at(i).z<<endl;
         for(int j=0; j<ntList->size(); j++){
             for(int k=0; k<ntList->at(j).listNeuron.size(); k++){
                 dis=NTDIS(ntList->at(j).listNeuron[k],mList->at(i));
@@ -683,18 +713,104 @@ void NeuronGeometryDialog::link_marker_neuron()
                 }
             }
         }
+        p = (ImageMarker *)&(mList->at(i));
+        p->name=QString::number(i);
         if(nid>=0){
-            p = (ImageMarker *)&(mList->at(i));
             p->comment=QString::number(nid) + " " + QString::number(pid) + " -1";
+            mInfoList.append(QString::number(nid) + " " + QString::number(pid) + " -1");
             count[nid]++;
+        }else{
+            mInfoList.append(QString::number(-1));
         }
     }
 
+    cur_marker_num = mList->size();
+
     update_markers();
 
-    v3d_msg(QString::number(mList->size())+QString::fromUtf8(" makers found\n")+
-            QString::number(count[0])+QString::fromUtf8(" new markers are aligned to neuron 0\n")+
-            QString::number(count[1])+QString::fromUtf8(" new markers are aligned to neuron 1"));
+    pushButton_linkMatchingMarker->setEnabled(true);
+    pushButton_affineByMarkers->setEnabled(false);
+    pushButton_linkMarkerNeuron->setDefault(false);
+    pushButton_linkMatchingMarker->setDefault(true);
+
+    if(mList->size()>=0)
+        v3d_msg(QString::number(mList->size())+QString::fromUtf8(" makers found\n")+
+                QString::number(count[0])+QString::fromUtf8(" markers are aligned to neuron 0\n")+
+                QString::number(count[1])+QString::fromUtf8(" markers are aligned to neuron 1"));
+}
+
+void NeuronGeometryDialog::link_new_marker_neuron()
+{
+    if(mList->size()<=0 || cur_marker_num>=mList->size()){
+        return;
+    }
+
+    if(mList->size()!=cur_marker_num+1){ //should not happen
+        v3d_msg("error: unexpected thing happens when linking new marker to neuron. Please check and click relink button if necessary.");
+        return;
+    }
+
+    ImageMarker *p = (ImageMarker *)&(mList->last());
+    double dis;
+    int info[4];
+    double mdis=MY_MATCH_DIS;
+    int nid=-1;
+    int pid=0;
+    //qDebug()<<mList->at(i).x<<":"<<mList->at(i).y<<":"<<mList->at(i).z<<endl;
+    for(int j=0; j<ntList->size(); j++){
+        for(int k=0; k<ntList->at(j).listNeuron.size(); k++){
+            dis=NTDIS(ntList->at(j).listNeuron[k],mList->last());
+            if(dis<mdis){
+                mdis=dis;
+                nid=j;
+                pid=k;
+            }
+        }
+    }
+    p->name=QString::number(mList->size()-1);
+    if(nid>=0){
+        p->comment=QString::number(nid) + " " + QString::number(pid) + " -1";
+        mInfoList.append(QString::number(nid) + " " + QString::number(pid) + " -1");
+    }else{
+        mInfoList.append(QString::number(-1));
+    }
+
+    for(int i=0; i<mList->size()-1; i++){
+         p = (ImageMarker *)&(mList->at(i));
+         p->comment = mInfoList[i];
+         p->name = QString::number(i);
+    }
+
+    update_markers();
+}
+
+void NeuronGeometryDialog::update_markers_delete()
+{
+    //find the one that is deleted first
+    int dmid=-1;    //the id of deleted neuron
+    for(int i=0; i<mList->size();i++){
+        if(mList->at(i).name != QString::number(i)){
+            dmid=i;
+            break;
+        }
+    }
+    //update the information of the rest
+    mInfoList.removeAt(dmid);
+    int info[4];
+    for(int i=0; i<mList->size();i++){
+        get_marker_info(mList->at(i),info);
+        if(info[2]==i) info[2]=-1;
+        if(info[2]>i) info[2]--;
+        if(info[3]!=i){
+            if(info[3]-1!=i){ //should not happen
+                v3d_msg("error: unexpected things happend for marker info, please check marker: "+QString::number(i));
+            }else{
+                info[3]--;
+            }
+        }
+        update_marker_info(mList->at(i),info);
+        mInfoList[i] = mList->at(i).comment;
+    }
 }
 
 void NeuronGeometryDialog::update_markers()
@@ -702,7 +818,7 @@ void NeuronGeometryDialog::update_markers()
     if(mList->size()<=0){
         return;
     }
-    int info[3];
+    int info[4];
     ImageMarker *p;
     //get info of each marker
     for(int i=0; i<mList->size(); i++){
@@ -728,8 +844,10 @@ void NeuronGeometryDialog::update_markers()
 
 void NeuronGeometryDialog::affine_markers()
 {
+    pushButton_affineByMarkers->setDefault(false);
+
     //get markers informations
-    int info[3];
+    int info[4];
     QList<int> nidList;
     QList<int> pidList;
     QList<int> midList;
@@ -815,6 +933,7 @@ void NeuronGeometryDialog::reset()
     ntpList[ant]->copyGeometry(nt_bkList[ant]);
     copyProperty(nt_bkList.at(ant),ntList->at(ant));
     copyType(nt_bkList.at(ant),type_bk[ant]);
+    update_markers();
 
     resetInternalStates(ant);
 

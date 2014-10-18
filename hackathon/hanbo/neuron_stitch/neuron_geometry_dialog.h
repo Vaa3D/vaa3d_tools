@@ -42,6 +42,8 @@ protected:
 
     double cur_tmat[2][16]; //storage of transformation matrix
 
+    int cur_marker_num;
+
     //neurons
     QList<NeuronTree> * ntList;
     QList<NeuronTree *> ntpList;
@@ -52,6 +54,7 @@ protected:
 
     //Markers
     QList<ImageMarker> * mList;
+    QStringList mInfoList;
 
 private:
     void resetInternalStates();
@@ -60,7 +63,7 @@ private:
     void updateContent();
 
 public slots:
-    void link_marker_neuron();
+    void link_marker_neuron_force();
     void link_markers();
     void affine_markers();
     void change_ant(int idx);
@@ -112,6 +115,8 @@ public:
     void show_branch();//only 2 neuron
     void hide_branch();//only 2 neuron
     void update_markers();
+    void update_markers_delete(); //update markers when there is one deleted
+    void link_new_marker_neuron();
 };
 
 void highlight_dial(QDial *d);

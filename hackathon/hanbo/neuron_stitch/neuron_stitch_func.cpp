@@ -137,27 +137,35 @@ bool compute_affine_4dof(QList<XYZ> c0, QList<XYZ> c1, double& shift_x, double& 
     return true;
 }
 
-void update_marker_info(const ImageMarker& mk, int* info) //info[0]=neuron id, info[1]=point id, info[2]=matching marker
+void update_marker_info(const ImageMarker& mk, int* info) //info[0]=neuron id, info[1]=point id, info[2]=matching marker, info[3]=marker name/id
 {
     ImageMarker *p;
     p = (ImageMarker *)&mk;
     p->comment=QString::number(info[0]) + " " + QString::number(info[1]) + " " + QString::number(info[2]);
+    p->name=QString::number(info[3]);
 }
 
-bool get_marker_info(const ImageMarker& mk, int* info) //info[0]=neuron id, info[1]=point id, info[2]=matching marker
+bool get_marker_info(const ImageMarker& mk, int* info) //info[0]=neuron id, info[1]=point id, info[2]=matching marker, info[3]=marker name
 {
-    info[0]=info[1]=info[2]=-1;
+    info[0]=info[1]=info[2]=info[3]=-1;
     QStringList items = mk.comment.split(" ", QString::SkipEmptyParts);
+    int val;
+    bool check;
     if(items.size()!=3)
         return false;
     for(int i=0; i<3; i++){
-        bool check=false;
-        int val=items[i].toInt(&check, 10);
+        check=false;
+        val=items[i].toInt(&check, 10);
         if(!check)
             return false;
         else
             info[i]=val;
     }
+    val=mk.name.toInt(&check, 10);
+    if(!check)
+        return false;
+    else
+        info[3]=val;
     return true;
 }
 
