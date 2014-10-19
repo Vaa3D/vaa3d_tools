@@ -47,9 +47,9 @@ const int const_int_tinyFragmentCriteria = 8; //2*2*2, when a region is consider
 #pragma region "UI-related functions and function defination"
 Q_EXPORT_PLUGIN2(cellSegmentation, cellSegmentation);
 
-bool func_interface_Segmentation(V3DPluginCallback2 &V3DPluginCallback2_currentCallback, QWidget *QWidget_parent);
-bool subFunc_NeuronTree2LandmarkList(const NeuronTree & NeuronTree_input, LandmarkList & LandmarkList_output);
-void func_Image1DVisualization(unsigned char* Image1D_input, V3DLONG dim_X, V3DLONG dim_Y, V3DLONG dim_Z, int int_channelDim, V3DPluginCallback2 &V3DPluginCallback2_currentCallback);
+bool segmentationInterface(V3DPluginCallback2 &V3DPluginCallback2_currentCallback, QWidget *QWidget_parent);
+void visualizationImage1D(unsigned char* Image1D_input, V3DLONG dim_X, V3DLONG dim_Y, V3DLONG dim_Z, int int_channelDim, V3DPluginCallback2 &V3DPluginCallback2_currentCallback, QString string_windowName);
+
 
 QStringList cellSegmentation::menulist() const
 {
@@ -69,7 +69,7 @@ void cellSegmentation::domenu(const QString &menu_name, V3DPluginCallback2 &V3DP
 {
     if (menu_name == tr("Cell segmentation"))
 	{
-        func_interface_Segmentation(V3DPluginCallback2_currentCallback,QWidget_parent);
+        segmentationInterface(V3DPluginCallback2_currentCallback,QWidget_parent);
     }
 	else
 	{
@@ -129,6 +129,8 @@ class class_segmentationMain
 		//Exemplar;
 		LandmarkList LandmarkList_exemplar;
 		vector<V3DLONG> vct_exemplarIndex;
+		V3DLONG int_boundaryRegionCriteria; //max number of "black" voxels around the boundary;
+		V3DLONG int_boundaryRegionCriteriaEstimation; 
 		unsigned char *Image1D_exemplarRegion;
 		vector<vector<V3DLONG> > vctList_exemplarRegionIndex;
 		//vector<vector<V3DLONG> > vctList_exemplarRegionCentralizedIndex;
@@ -154,6 +156,8 @@ class class_segmentationMain
 			this->offset_channel = (idx_channel-1)*count_totalPageSize;
 			this->offset_Z = dim_X*dim_Y;
 			this->offset_Y = dim_X;
+			this->int_boundaryRegionCriteria = -1; //it will be later updated in regonGrowOnExemplar();
+			this->int_boundaryRegionCriteriaEstimation = 0;
 			this->int_regionVolumeLowerBound = const_int_tinyFragmentCriteria; //prevent ultra-small exemplar region growing;
 			this->int_regionVolumeUpperBound = INF;
 			this->createNeighborVector();
@@ -171,14 +175,15 @@ class class_segmentationMain
 			ofstream ofstream_log;
 			if (this->flag_debug) {	ofstream_log.open ("log_class_segmentationMain.txt");}
 			vct_exemplarIndex = landMarkList2IndexList(LandmarkList_exemplar);
-			if (this->flag_debug) {	ofstream_log<<"estimateThreshold started!"<<endl;} //1st step;
+			if (this->flag_debug) {	ofstream_log<<"estimateThreshold started!"<<endl;}
 			this->estimateThreshold(); //store to this->double_threshold;
+			this->removeSingleVoxel(this->Image1D_page, this->count_totalPageSize);
 			if (this->flag_debug) {	ofstream_log<<"estimateThreshold succeed!"<<endl;}
 			if (this->flag_debug) {	ofstream_log<<"categorizeVoxelsByValue started!"<<endl;}
-			categorizeVoxelsByValue(this->histo_main, this->Image1D_page, this->count_totalPageSize); //2nd step; Store to this->vctList_potentialSeedListIndex; Although currently doesn't matter, this step is recommended to be before thresholding on Image1D_page;
+			categorizeVoxelsByValue(this->histo_main, this->Image1D_page, this->count_totalPageSize); //store to this->vctList_potentialSeedListIndex; Although currently doesn't matter, this step is recommended to be before thresholding on Image1D_page;
 			if (this->flag_debug) {	ofstream_log<<"categorizeVoxelsByValue succeed!"<<endl;}
 			if (this->flag_debug) {	ofstream_log<<"regonGrowOnExemplar started!"<<endl;}
-			//3rd step; Note: as it needs to update and check Image1D_mask for scooping, thresholding on Image1D_page needs to perform AFTER it! Otherwise Image1D_mask would be messed!
+			//note: as it needs to update and check Image1D_mask for scooping, thresholding on Image1D_page needs to perform AFTER it! Otherwise Image1D_mask would be messed!
 			if (!this->regonGrowOnExemplar())
 			{
 				if (this->flag_debug) {	ofstream_log.close();}
@@ -186,10 +191,10 @@ class class_segmentationMain
 			}
 			if (this->flag_debug) {	ofstream_log<<"regonGrowOnExemplar succeed!"<<endl;}
 			if (this->flag_debug) {	ofstream_log<<"thresholdForExemplarRegion started!"<<endl;}
-			this->thresholdForExemplarRegion(); //4th step; Only after thresholding it is reasonable to analyze the geometry property of exemplar regions; 
+			this->thresholdForExemplarRegion(); //only after thresholding it is reasonable to analyze the geometry property of exemplar regions; 
 			if (this->flag_debug) {	ofstream_log<<"thresholdForExemplarRegion succeed!"<<endl;}
 			if (this->flag_debug) {	ofstream_log<<"analyzeExemplarRegionVolume started!"<<endl;}
-			//5th step, it should be right after thresholdForExemplarRegion() (acutally I pulled this function out from it);
+			//it should be right after thresholdForExemplarRegion() (acutally I pulled this function out from it);
 			if (!this->analyzeExemplarRegionVolume())
 			{
 				if (this->flag_debug) {ofstream_log.close();}
@@ -204,7 +209,7 @@ class class_segmentationMain
 			*/
 			
 			if (this->flag_debug) {	ofstream_log<<"thresholdForCurrentPage started!"<<endl;}
-			this->thresholdForCurrentPage(); // final step; Preparing for fragment remove in regionGrowing;
+			this->thresholdForCurrentPage(); // inal step; Preparing for fragment remove in regionGrowing;
 			if (this->flag_debug) {	ofstream_log<<"thresholdForCurrentPage succeed!"<<endl;}
 			this->int_regionVolumeUpperBound =this->int_maxRegionVolumeByExemplar*const_double_regionVolumeUpperBoundLoosenBy; //Preparing for region growing boundary in regionGrowing;
 			this->int_regionVolumeLowerBound =this->int_minRegionVolumeByExemplar*const_double_regionVolumeLowerBoundLoosenBy; //Preparing for fragment remove in regionGrowing;
@@ -265,11 +270,14 @@ class class_segmentationMain
 		//assuming [0-const_double_maxVoxelIntensity] integer Image1D_page, should also work on binary image (not tested yet);
 		{
 			ofstream ofstream_log;
-			if (this->flag_debug) {ofstream_log.open ("log_regionGrowOnSeed.txt");}
 			vector<V3DLONG> vct_result;
 			vector<V3DLONG> vct_empty (0, 0);
 			vector<V3DLONG> vct_temp;
 			V3DLONG idx_current;
+			V3DLONG count_boundaryBlack = 0;
+			V3DLONG count_boundary = 0;
+			V3DLONG count_boundaryBlackSum = 0;
+			int count_neighbors = 0;
 			V3DLONG idx_neighbor;
 			double double_neightborValue;
 			double double_currentValue;
@@ -280,7 +288,6 @@ class class_segmentationMain
 				if (this->flag_debug) {ofstream_log.close();}
 				return vct_empty;
 			}
-			if (this->flag_debug) {	ofstream_log<<"idx_seed: "<<idx_seed<<endl;}
 			double double_seedValue = Image1D_input[idx_seed];
 			V3DLONG count_totalVolume = 0;
 			if (double_seedValue>this->double_threshold)
@@ -300,18 +307,35 @@ class class_segmentationMain
 						}
 						else
 						{
+							if (this->int_boundaryRegionCriteria<0) {this->int_boundaryRegionCriteriaEstimation=(int)(count_boundaryBlackSum/count_boundary);} //if this->int_boundaryRegionCriteria not udpated yet, store the result;
 							return vct_result;
 						}
 					}
 					idx_current = vct_temp.back();
 					vct_temp.pop_back();
-					if (this->flag_debug) {	ofstream_log<<"idx_current: "<<idx_current<<endl;}
 					double_currentValue = Image1D_input[idx_current];
-					if (this->flag_debug) {ofstream_log<<"double_currentValue: "<<double_currentValue<<endl;}
+					
+					count_boundaryBlack = 0;
 					for (V3DLONG j=0;j<const_int_count_neighbors;j++)
 					{
 						idx_neighbor = idx_current+vct_neighbors[j];
-						if (this->flag_debug) {	ofstream_log<<"idx_neighbor: "<<idx_neighbor<<endl;}
+						if ((idx_neighbor>=0)&&(idx_neighbor<count_imageSizeInput)) //prevent it from going out of bounds;
+						{
+							double_neightborValue = Image1D_input[idx_neighbor];
+							if (double_neightborValue<this->double_threshold) {count_boundaryBlack++;}; //it is black and count it;
+						}
+					}
+					if (this->int_boundaryRegionCriteria>0) //only if this->int_boundaryRegionCriteria has been udpated (i.e. >0, during whole image growing stage);
+					{
+						if (count_boundaryBlack>this->int_boundaryRegionCriteria)
+						{
+							continue; //boundary voxel detected, do not proceed;
+						}
+					}
+					if (this->int_boundaryRegionCriteria<0) {count_neighbors = 0;}
+					for (int j=0;j<const_int_count_neighbors;j++)
+					{
+						idx_neighbor = idx_current+vct_neighbors[j];
 						if ((idx_neighbor>=0)&&(idx_neighbor<count_imageSizeInput)) //prevent it from going out of bounds;
 						{
 							if (this->Image1D_mask[idx_neighbor]>0) //available only; Note: make sure Image1D_mask has been set to the correct value!
@@ -325,29 +349,39 @@ class class_segmentationMain
 									double_sumValue = double_sumValue+double_neightborValue;
 									count_totalVolume++;
 									double_meanValue = double_sumValue/count_totalVolume;
-									if (this->flag_debug) {	ofstream_log<<"count_totalVolume: "<<count_totalVolume<<endl;}
+									if (this->int_boundaryRegionCriteria<0) {count_neighbors++;}
 								}
 							}
 						}
 					}
+					//if no neighbors added, it is a boundary voxel;
+					//only if this->int_boundaryRegionCriteria has not been udpated (i.e. <0, during whole exemplar growing stage);
+					if (this->int_boundaryRegionCriteria<0) 
+					{
+						if (count_neighbors==0)
+						{
+							count_boundaryBlackSum += count_boundaryBlack;
+							count_boundary ++;
+						}
+					}
+					
 					if (count_totalVolume>int_regionVolumeUpperBound)
 					//during exemplar region growing stage, int_regionVolumeUpperBound shall be INF;
 					//during page image region growing stage (i.e. segmentation), int_regionVolumeUpperBound shall be the value estimated from exemplar regions;
-					{
-						if (this->flag_debug) {ofstream_log.close();}
+					{	
+						if (this->int_boundaryRegionCriteria<0) {this->int_boundaryRegionCriteriaEstimation=(int)(count_boundaryBlackSum/count_boundary);} //if this->int_boundaryRegionCriteria not udpated yet, store the result;
 						return vct_result;
 					}
 				}
 				//iterations over const_int_maximumGrowingLength;
-				if (this->flag_debug) {ofstream_log.close();} 
 				v3d_msg("Warning: maximum iterations reached, results may become unstable!");
-				if (this->flag_debug) {ofstream_log.close();}
 				if(count_totalVolume<int_regionVolumeLowerBound)
 				{
 					return vct_empty;
 				}
 				else
 				{
+					if (this->int_boundaryRegionCriteria<0) {this->int_boundaryRegionCriteriaEstimation=(int)(count_boundaryBlackSum/count_boundary);} //if this->int_boundaryRegionCriteria not udpated yet, store the result;
 					return vct_result;
 				}
 			}
@@ -461,6 +495,7 @@ class class_segmentationMain
 		{
 			ofstream ofstream_log;
 			if (this->flag_debug) {	ofstream_log.open ("log_regonGrowOnExemplar.txt");}
+			this->int_boundaryRegionCriteriaEstimation = 0;
 			vector<V3DLONG> vct_temp;
 			V3DLONG idx_exemplar;
 			if (this->flag_debug) {ofstream_log<<"vct_exemplarIndex.size(): "<<vct_exemplarIndex.size()<<endl;}
@@ -472,6 +507,7 @@ class class_segmentationMain
 				if (!vct_temp.empty())
 				{
 					this->vctList_exemplarRegionIndex.push_back(vct_temp);
+					if ((this->int_boundaryRegionCriteriaEstimation)>this->int_boundaryRegionCriteria) {this->int_boundaryRegionCriteria=this->int_boundaryRegionCriteriaEstimation;} //update int_boundaryRegionCriteria to the max black voxel count;
 				}
 			}
 			V3DLONG count_region = this->vctList_exemplarRegionIndex.size();
@@ -575,7 +611,7 @@ class class_segmentationMain
 		#pragma endregion
 		
 		#pragma region "locate voxels in image with top voxel value (i.e. intensity)"
-		void categorizeVoxelsByValue(vector<int> vct_histoInput, unsigned char* Image1D_input, V3DLONG count_vectorLengthInput)
+		void categorizeVoxelsByValue(vector<int> vct_histoInput, unsigned char* Image1D_input, V3DLONG count_imageSize)
 		//will only consider voxels with value higher than threshold;
 		{
 			this->vctList_potentialSeedListIndex.clear();
@@ -587,7 +623,7 @@ class class_segmentationMain
 			}
 			int int_valueOffset=0;
 			int int_valueTmp=0;
-			for (int i=0;i<count_vectorLengthInput;i++)
+			for (int i=0;i<count_imageSize;i++)
 			{
 				int_valueTmp = (int)Image1D_input[i];
 				int_valueOffset = const_double_maxVoxelIntensity-int_valueTmp;
@@ -760,6 +796,40 @@ class class_segmentationMain
 		#pragma endregion
 
 		#pragma region "utility functions"
+		void removeSingleVoxel(unsigned char* Image1D_input, V3DLONG count_imageSize)
+		{
+			bool flag_remove = true;
+			double double_currentValue = 0;
+			double double_neightborValue = 0;
+			V3DLONG idx_neighbor = 0;
+			for (int i=0;i<count_imageSize;i++)
+			{
+				double_currentValue = Image1D_input[i];
+				if (double_currentValue>this->double_threshold) //valid voxel;
+				{
+					flag_remove = true;
+					for (int j=0;j<const_int_count_neighbors;j++)
+					{
+						idx_neighbor = i+vct_neighbors[j];
+						double_neightborValue = Image1D_input[idx_neighbor];
+						if ((idx_neighbor>=0)&&(idx_neighbor<count_imageSize)) //prevent it from going out of bounds;
+						{
+							double_neightborValue = Image1D_input[idx_neighbor];
+							if (double_neightborValue>this->double_threshold)
+							{
+								flag_remove = false; //it has neighbor;
+								break;
+							}
+						}
+					}
+					if (flag_remove)
+					{
+						Image1D_input[i] = 0; //remove it;
+					}
+				}
+			}
+		}
+
 		vector<V3DLONG> landMarkList2IndexList(LandmarkList LandmarkList_input)
 		{
 			vector<V3DLONG> vct_result;
@@ -824,10 +894,10 @@ class class_segmentationMain
 			}
 		}
 
-		static unsigned char* vctList2Image1D(vector<vector<V3DLONG> > vctList_input, V3DLONG count_vectorLengthInput)
+		static unsigned char* vctList2Image1D(vector<vector<V3DLONG> > vctList_input, V3DLONG count_imageSize)
 		{
-			unsigned char* Image1D_result = new unsigned char[count_vectorLengthInput];
-			memset(Image1D_result, 0, count_vectorLengthInput);
+			unsigned char* Image1D_result = new unsigned char[count_imageSize];
+			memset(Image1D_result, 0, count_imageSize);
 			for (int i=0;i<vctList_input.size();i++)
 			{
 				for (int j=0;j<vctList_input[i].size();j++)
@@ -837,27 +907,24 @@ class class_segmentationMain
 			}
 			return Image1D_result;
 		}
+
+		static void neuronTree2LandmarkList(const NeuronTree & NeuronTree_input, LandmarkList & LandmarkList_output)
+		{
+			LocationSimple LocationSimple_temp(0,0,0);
+			for (V3DLONG i=0;i<NeuronTree_input.listNeuron.size();i++)
+			{
+				LocationSimple_temp.x = NeuronTree_input.listNeuron.at(i).x;
+				LocationSimple_temp.y = NeuronTree_input.listNeuron.at(i).y;
+				LocationSimple_temp.z = NeuronTree_input.listNeuron.at(i).z;
+				LandmarkList_output.append(LocationSimple_temp);
+			}
+		}
 		#pragma endregion
 };
 #pragma endregion
 
-#pragma region "function: func_Image1DVisualization"
-void func_Image1DVisualization(unsigned char* Image1D_input, V3DLONG dim_X, V3DLONG dim_Y, V3DLONG dim_Z, int int_channelDim, V3DPluginCallback2 &V3DPluginCallback2_currentCallback, QString string_windowName)
-{
-	Image4DSimple Image4DSimple_temp;
-	//V3DLONG count_totalPageSize = dim_X*dim_Z*dim_Z;
-	Image4DSimple_temp.setData((unsigned char*)Image1D_input, dim_X, dim_Y, dim_Z, int_channelDim, V3D_UINT8);
-	v3dhandle v3dhandle_main = V3DPluginCallback2_currentCallback.newImageWindow();
-	V3DPluginCallback2_currentCallback.setImage(v3dhandle_main, &Image4DSimple_temp);
-	V3DPluginCallback2_currentCallback.setImageName(v3dhandle_main, string_windowName);
-	V3DPluginCallback2_currentCallback.updateImageWindow(v3dhandle_main);
-}
-
-
-#pragma endregion
-
 #pragma region "Segmentation interface"
-bool func_interface_Segmentation(V3DPluginCallback2 &V3DPluginCallback2_currentCallback, QWidget *QWidget_parent)
+bool segmentationInterface(V3DPluginCallback2 &V3DPluginCallback2_currentCallback, QWidget *QWidget_parent)
 {
 	ofstream ofstream_log;
 	ofstream_log.open ("log_func_interface_Segmentation.txt");
@@ -928,13 +995,13 @@ bool func_interface_Segmentation(V3DPluginCallback2 &V3DPluginCallback2_currentC
 	else if ((count_SWCList>0) && (count_userDefinedLandmarkList>0)) //Both of the lists are not empty;
 	{
 		LandmarkList_current = LandmarkList_userDefined;
-		subFunc_NeuronTree2LandmarkList(SWCList_current->first(), LandmarkList_current);
+		class_segmentationMain::neuronTree2LandmarkList(SWCList_current->first(), LandmarkList_current);
 		count_currentLandmarkList = LandmarkList_current.count();
 		ofstream_log<<"User-defined landmarks count: "<<count_currentLandmarkList<<endl;
 	}
 	else if ((count_SWCList>0) && (count_userDefinedLandmarkList<1)) //Only SWCList_current is not empty;
 	{
-		subFunc_NeuronTree2LandmarkList(SWCList_current->first(), LandmarkList_current);
+		class_segmentationMain::neuronTree2LandmarkList(SWCList_current->first(), LandmarkList_current);
 		count_currentLandmarkList = LandmarkList_current.count();
 		ofstream_log<<"User-defined landmarks count: "<<count_currentLandmarkList<<endl;
 	}
@@ -983,8 +1050,8 @@ bool func_interface_Segmentation(V3DPluginCallback2 &V3DPluginCallback2_currentC
 	ofstream_log<<"int_meanRegionVolumeByExemplar: "<<segmentationMain1.int_meanRegionVolumeByExemplar<<endl;;
 	ofstream_log<<"int_regionVolumeLowerBound: "<<segmentationMain1.int_regionVolumeLowerBound<<endl;
 	ofstream_log<<"int_regionVolumeUpperBound: "<<segmentationMain1.int_regionVolumeUpperBound<<endl;
-	func_Image1DVisualization(segmentationMain1.Image1D_page,segmentationMain1.dim_X,segmentationMain1.dim_Y,segmentationMain1.dim_Z,1,V3DPluginCallback2_currentCallback, "After Thresholding");
-	func_Image1DVisualization(segmentationMain1.Image1D_exemplarRegion,segmentationMain1.dim_X,segmentationMain1.dim_Y,segmentationMain1.dim_Z,1,V3DPluginCallback2_currentCallback, "Exemplar Regions");
+	visualizationImage1D(segmentationMain1.Image1D_page,segmentationMain1.dim_X,segmentationMain1.dim_Y,segmentationMain1.dim_Z,1,V3DPluginCallback2_currentCallback, "After Thresholding");
+	visualizationImage1D(segmentationMain1.Image1D_exemplarRegion,segmentationMain1.dim_X,segmentationMain1.dim_Y,segmentationMain1.dim_Z,1,V3DPluginCallback2_currentCallback, "Exemplar Regions");
 	
 	if (!segmentationMain1.flag_success)
 	{
@@ -997,47 +1064,20 @@ bool func_interface_Segmentation(V3DPluginCallback2 &V3DPluginCallback2_currentC
 	ofstream_log<<"segmentationMain1.regonGrowOnCurrentPage() succeed!"<<endl;
 	ofstream_log<<"total regions grown: "<<segmentationMain1.vctList_grownRegionIndex.size()<<"!"<<endl;
 	v3d_msg(QString("Segmentation succeed! Totally %1 segments!").arg(segmentationMain1.vctList_grownRegionIndex.size()));
-	func_Image1DVisualization(segmentationMain1.Image1D_segmentation,segmentationMain1.dim_X,segmentationMain1.dim_Y,segmentationMain1.dim_Z,1,V3DPluginCallback2_currentCallback, "Segmentation Result");
-	func_Image1DVisualization(segmentationMain1.Image1D_mask,segmentationMain1.dim_X,segmentationMain1.dim_Y,segmentationMain1.dim_Z,1,V3DPluginCallback2_currentCallback, "Mask");
+	visualizationImage1D(segmentationMain1.Image1D_segmentation,segmentationMain1.dim_X,segmentationMain1.dim_Y,segmentationMain1.dim_Z,1,V3DPluginCallback2_currentCallback, "Segmentation Result");
+	visualizationImage1D(segmentationMain1.Image1D_mask,segmentationMain1.dim_X,segmentationMain1.dim_Y,segmentationMain1.dim_Z,1,V3DPluginCallback2_currentCallback, "Mask");
 
 	ofstream_log.close();
     return true;
 }
-#pragma endregion
 
-#pragma region "Utility funcions"
-bool subFunc_NeuronTree2LandmarkList(const NeuronTree & NeuronTree_input, LandmarkList & LandmarkList_output)
+void visualizationImage1D(unsigned char* Image1D_input, V3DLONG dim_X, V3DLONG dim_Y, V3DLONG dim_Z, int int_channelDim, V3DPluginCallback2 &V3DPluginCallback2_currentCallback, QString string_windowName)
 {
-    LocationSimple LocationSimple_temp(0,0,0);
-    for (V3DLONG i=0;i<NeuronTree_input.listNeuron.size();i++)
-    {
-        LocationSimple_temp.x = NeuronTree_input.listNeuron.at(i).x;
-        LocationSimple_temp.y = NeuronTree_input.listNeuron.at(i).y;
-        LocationSimple_temp.z = NeuronTree_input.listNeuron.at(i).z;
-        LandmarkList_output.append(LocationSimple_temp);
-    }
-    return true;
-}
-
-unsigned char* subFunc_Image1DTypeConversion(unsigned short *Image1D_input, V3DLONG count_total)
-{
-	unsigned char* Image1D_Output = new unsigned char [count_total];
-	for (V3DLONG i=0;i<count_total;i++)
-	{
-		unsigned short int_temp = Image1D_input[i];
-		Image1D_Output[i] = int_temp;
-	}
-	return Image1D_Output;
-}
-
-unsigned char* subFunc_Image1DTypeConversion(float *Image1D_input, V3DLONG count_total)
-{
-	unsigned char* Image1D_Output = new unsigned char [count_total];
-	for (V3DLONG i=0;i<count_total;i++)
-	{
-		float int_temp = Image1D_input[i];
-		Image1D_Output[i] = int_temp;
-	}
-	return Image1D_Output;
+	Image4DSimple Image4DSimple_temp;
+	Image4DSimple_temp.setData((unsigned char*)Image1D_input, dim_X, dim_Y, dim_Z, int_channelDim, V3D_UINT8);
+	v3dhandle v3dhandle_main = V3DPluginCallback2_currentCallback.newImageWindow();
+	V3DPluginCallback2_currentCallback.setImage(v3dhandle_main, &Image4DSimple_temp);
+	V3DPluginCallback2_currentCallback.setImageName(v3dhandle_main, string_windowName);
+	V3DPluginCallback2_currentCallback.updateImageWindow(v3dhandle_main);
 }
 #pragma endregion
