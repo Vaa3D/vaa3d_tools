@@ -53,8 +53,7 @@ protected:
     int stack_dir; // 0/1/2/3=x/y/z/free
 
     //Markers
-    QList<ImageMarker> * mList;
-    QStringList mInfoList;
+    LandmarkList * mList;
 
 private:
     void resetInternalStates();
@@ -66,6 +65,7 @@ public slots:
     void link_marker_neuron_force();
     void link_markers();
     void affine_markers();
+    void update_markers();
     void change_ant(int idx);
     void change_stackdir(int dir);
     void update_boundingbox();
@@ -114,9 +114,9 @@ public:
     void highlight_points(bool force);
     void show_branch();//only 2 neuron
     void hide_branch();//only 2 neuron
-    void update_markers();
     void update_markers_delete(); //update markers when there is one deleted
     void link_new_marker_neuron();
+    void link_marker_neuron();
 };
 
 void highlight_dial(QDial *d);

@@ -77,21 +77,44 @@ bool compute_affine_4dof(QList<XYZ> c0, QList<XYZ> c1, double& shift_x, double& 
     cent0[0]/=c0.size(); cent0[1]/=c0.size(); cent0[2]/=c0.size();
     cent1[0]/=c0.size(); cent1[1]/=c0.size(); cent1[2]/=c0.size();
 
-    //align by center first
-    shift_x=cent0[0]-cent1[0];
-    shift_y=cent0[1]-cent1[1];
-    shift_z=cent0[2]-cent1[2];
+    //align by center first, if shift_* is not 0, then shift will not be taken in this direction
     for(int i=0; i<c0.size(); i++){
-        c0[i].x -= cent0[0];
-        c0[i].y -= cent0[1];
-        c0[i].z -= cent0[2];
-        c1[i].x -= cent1[0];
-        c1[i].y -= cent1[1];
-        c1[i].z -= cent1[2];
+        if(shift_x==0){
+            c0[i].x -= cent0[0];
+            c1[i].x -= cent1[0];
+        }
+        if(shift_y==0){
+            c0[i].y -= cent0[1];
+            c1[i].y -= cent1[1];
+        }
+        if(shift_z==0){
+            c0[i].z -= cent0[2];
+            c1[i].z -= cent1[2];
+        }
+    }
+    if(shift_x==0){
+        shift_x=cent0[0]-cent1[0];
+        cent_x=cent0[0];
+    }else{
+        shift_x=0;
+        cent_x=(cent0[0]+cent1[0])/2;
+    }
+    if(shift_y==0){
+        shift_y=cent0[1]-cent1[1];
+        cent_y=cent0[1];
+    }else{
+        shift_y=0;
+        cent_y=(cent0[1]+cent1[1])/2;
+    }
+    if(shift_z==0){
+        shift_z=cent0[2]-cent1[2];
+        cent_z=cent0[2];
+    }else{
+        shift_z=0;
+        cent_z=(cent0[2]+cent1[2])/2;
     }
 
     //3 steps rotation
-    cent_x=cent0[0];cent_y=cent0[1];cent_z=cent0[2];
     if(c0.size()<2){
         angle_r=0;
         return true;
@@ -137,18 +160,22 @@ bool compute_affine_4dof(QList<XYZ> c0, QList<XYZ> c1, double& shift_x, double& 
     return true;
 }
 
-void update_marker_info(const ImageMarker& mk, int* info) //info[0]=neuron id, info[1]=point id, info[2]=matching marker, info[3]=marker name/id
+void update_marker_info(const LocationSimple& mk, int* info) //info[0]=neuron id, info[1]=point id, info[2]=matching marker, info[3]=marker name/id
 {
-    ImageMarker *p;
-    p = (ImageMarker *)&mk;
-    p->comment=QString::number(info[0]) + " " + QString::number(info[1]) + " " + QString::number(info[2]);
-    p->name=QString::number(info[3]);
+    LocationSimple *p;
+    p = (LocationSimple *)&mk;
+    QString tmp;
+    tmp=QString::number(info[0]) + " " + QString::number(info[1]) + " " + QString::number(info[2]);
+    p->comments=tmp.toStdString();
+    p->name=QString::number(info[3]).toStdString();
 }
 
-bool get_marker_info(const ImageMarker& mk, int* info) //info[0]=neuron id, info[1]=point id, info[2]=matching marker, info[3]=marker name
+bool get_marker_info(const LocationSimple& mk, int* info) //info[0]=neuron id, info[1]=point id, info[2]=matching marker, info[3]=marker name
 {
     info[0]=info[1]=info[2]=info[3]=-1;
-    QStringList items = mk.comment.split(" ", QString::SkipEmptyParts);
+    QString tmp;
+    tmp=QString::fromStdString(mk.comments);
+    QStringList items = tmp.split(" ", QString::SkipEmptyParts);
     int val;
     bool check;
     if(items.size()!=3)
@@ -161,7 +188,8 @@ bool get_marker_info(const ImageMarker& mk, int* info) //info[0]=neuron id, info
         else
             info[i]=val;
     }
-    val=mk.name.toInt(&check, 10);
+    tmp=QString::fromStdString(mk.name);
+    val=tmp.toInt(&check, 10);
     if(!check)
         return false;
     else

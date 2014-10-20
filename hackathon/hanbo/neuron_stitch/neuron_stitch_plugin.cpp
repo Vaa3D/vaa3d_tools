@@ -114,9 +114,9 @@ void neuron_stitch::doadjust(V3DPluginCallback2 &callback, QWidget *parent)
     v3dwin = selectWindowList[winid];
 
     //call dialog
-    //NeuronGeometryDialog myDialog(&callback, v3dwin);
+//    NeuronGeometryDialog myDialog(&callback, v3dwin);
     //int res=myDialog.exec();
-    //myDialog.show();
+//    myDialog.show();
     NeuronGeometryDialog * myDialog = NULL;
 //    qDebug("dialog size %d",dialogList.size());
 //    for(int i=0; i<dialogList.size(); i++){

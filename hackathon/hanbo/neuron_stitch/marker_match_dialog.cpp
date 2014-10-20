@@ -8,7 +8,7 @@
 #include "marker_match_dialog.h"
 
 //can only handle two neurons
-marker_match_dialog::marker_match_dialog(V3DPluginCallback2 * cb, QList<ImageMarker> * mList_in)
+marker_match_dialog::marker_match_dialog(V3DPluginCallback2 * cb, LandmarkList * mList_in)
 {
     combobox_n0 = new QComboBox();
     combobox_n1 = new QComboBox();
@@ -93,7 +93,7 @@ void marker_match_dialog::add()
     int idx1 = m1[i1];
 
     //update neuron info
-    ImageMarker * p;
+    LocationSimple * p;
     int info[3];
     get_marker_info(mList->at(idx0),info);
     info[2] = idx1;
@@ -125,7 +125,7 @@ void marker_match_dialog::free()
     int idx1 = mm1[id];
 
     //update neuron info
-    ImageMarker * p;
+    LocationSimple * p;
     int info[3];
     get_marker_info(mList->at(idx0),info);
     info[2] = -1;

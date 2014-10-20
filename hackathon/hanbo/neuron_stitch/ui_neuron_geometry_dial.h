@@ -565,7 +565,7 @@ public:
         pushButton_updatebox->setText(QApplication::translate("NeuronGeometryDialog", "Update Bounding Box", 0, QApplication::UnicodeUTF8));
         pushButton_neurontype->setText(QApplication::translate("NeuronGeometryDialog", "Change Color", 0, QApplication::UnicodeUTF8));
 
-        pushButton_generateMarker->setText(QApplication::translate("NeuronGeometryDialog", "Auto Markers", 0, QApplication::UnicodeUTF8));
+        pushButton_generateMarker->setText(QApplication::translate("NeuronGeometryDialog", "Update Markers", 0, QApplication::UnicodeUTF8));
         pushButton_linkMarkerNeuron->setText(QApplication::translate("NeuronGeometryDialog", "Link Marker-Neuron", 0, QApplication::UnicodeUTF8));
         pushButton_linkMatchingMarker->setText(QApplication::translate("NeuronGeometryDialog", "Pair Markers", 0, QApplication::UnicodeUTF8));
         pushButton_affineByMarkers->setText(QApplication::translate("NeuronGeometryDialog", "Affine by Markers", 0, QApplication::UnicodeUTF8));

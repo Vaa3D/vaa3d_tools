@@ -10,10 +10,10 @@ class marker_match_dialog: public QDialog
     Q_OBJECT
 
 public:
-    marker_match_dialog(V3DPluginCallback2 * cb, QList<ImageMarker> * mList);
+    marker_match_dialog(V3DPluginCallback2 * cb, LandmarkList * mList);
 
 private:
-    QList<ImageMarker> * mList;
+    LandmarkList * mList;
     QList<int> m0, m1;
     QList<int> mm0, mm1;
 
