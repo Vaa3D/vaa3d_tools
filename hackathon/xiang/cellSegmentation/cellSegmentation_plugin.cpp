@@ -1092,7 +1092,7 @@ bool segmentationInterface(V3DPluginCallback2 &V3DPluginCallback2_currentCallbac
 	ofstream_log<<"int_meanRegionVolumeByExemplar: "<<segmentationMain1.int_meanRegionVolumeByExemplar<<endl;;
 	ofstream_log<<"int_regionVolumeLowerBound: "<<segmentationMain1.int_regionVolumeLowerBound<<endl;
 	ofstream_log<<"int_regionVolumeUpperBound: "<<segmentationMain1.int_regionVolumeUpperBound<<endl;
-	visualizationImage1D(segmentationMain1.Image1D_page,segmentationMain1.dim_X,segmentationMain1.dim_Y,segmentationMain1.dim_Z,1,V3DPluginCallback2_currentCallback, "After Thresholding");
+	//visualizationImage1D(segmentationMain1.Image1D_page,segmentationMain1.dim_X,segmentationMain1.dim_Y,segmentationMain1.dim_Z,1,V3DPluginCallback2_currentCallback, "After Thresholding");
 	visualizationImage1D(segmentationMain1.Image1D_exemplarRegion,segmentationMain1.dim_X,segmentationMain1.dim_Y,segmentationMain1.dim_Z,1,V3DPluginCallback2_currentCallback, "Exemplar Regions");
 	
 	if (!segmentationMain1.flag_success)
@@ -1104,11 +1104,12 @@ bool segmentationInterface(V3DPluginCallback2 &V3DPluginCallback2_currentCallbac
 	ofstream_log<<"segmentationMain1.regonGrowOnCurrentPage() start!"<<endl;
 	segmentationMain1.regonGrowOnCurrentPage();
 	V3DPluginCallback2_currentCallback.setLandmark(v3dhandle_currentWindow, segmentationMain1.LandmarkList_segmentation);
+	V3DPluginCallback2_currentCallback.updateImageWindow(v3dhandle_currentWindow);
 	ofstream_log<<"segmentationMain1.regonGrowOnCurrentPage() succeed!"<<endl;
 	ofstream_log<<"total regions grown: "<<segmentationMain1.vctList_grownRegionIndex.size()<<"!"<<endl;
 	v3d_msg(QString("Segmentation succeed! Totally %1 segments!").arg(segmentationMain1.vctList_grownRegionIndex.size()));
 	visualizationImage1D(segmentationMain1.Image1D_segmentation,segmentationMain1.dim_X,segmentationMain1.dim_Y,segmentationMain1.dim_Z,1,V3DPluginCallback2_currentCallback, "Segmentation Result");
-	visualizationImage1D(segmentationMain1.Image1D_mask,segmentationMain1.dim_X,segmentationMain1.dim_Y,segmentationMain1.dim_Z,1,V3DPluginCallback2_currentCallback, "Mask");
+	//visualizationImage1D(segmentationMain1.Image1D_mask,segmentationMain1.dim_X,segmentationMain1.dim_Y,segmentationMain1.dim_Z,1,V3DPluginCallback2_currentCallback, "Mask");
 
 	ofstream_log.close();
     return true;
