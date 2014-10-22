@@ -16,30 +16,28 @@
 #include <cstdlib>
 #include <typeinfo>
 #include <fstream>
+#include <algorithm>
 #include <stdlib.h>
 #include <ctime>
 #include <basic_landmark.h>
 using namespace std;
-
+const bool const_flag_debugMode = false;
 const int const_int_histogramLength = 256;
 const double const_double_maxVoxelIntensity = 255;
 const int const_int_count_neighbors = 26; //27 directions -1;
-//const int const_int_maximumGrowingLength = 1E9;
-const int const_int_minimumIntensityConsideredAsNonZero = 2; //as voxel with value of "1" is unreasonable to be considered as foreground;
 const double const_double_defaultThreshold = 15; //a small enough value for the last resort;
-const double const_double_valueChangeThreshold = 0.8; //how much the value can change (relative to the mean value of current region) between current voxel and its neighbor, during seed-based region growing;
-const double const_double_exemplarRegionThresholdLoosenBy = 0.4; //this value times the mean value of current region is the threshold used during seed-based region growing;
-const double const_double_fragmentRatioToPageSizeWarning = 0.05; //if a region with volume larger than this #% of the whole image, a warning would be given;
-const double const_double_regionFittingTolerateLevel = 0.90; //percentage of the region fit to be considered as "fit";
-const double const_double_regionVolumeLowerBoundLoosenBy = 0.25;  //it would be a user-specified value in the future !!!;
-const double const_double_regionVolumeUpperBoundLoosenBy = 1.25;  //it would be a user-specified value in the future !!!;
+const double const_double_valueChangeRatioThresholdDefault = 0.5; //how much the value can change (relative to the mean value of current region) between current voxel and its neighbor, during seed-based region growing;
+const double const_double_exemplarRegionToPageSizeRatioMax = 0.5; //if a region with any its dimension larger than this #% of the image, an error would be given;
+const double const_double_regionVolumeLowerBoundLoosenBy = 0.001;  //it would be a user-specified value in the future !!!;
 const double const_double_earlyStopCriteria = 0.95;  //it would be a user-specified value in the future !!!;
 const int const_int_tinyFragmentCriteria = 8; //2*2*2, when a region is considered as non-acceptable small;
-
+const int const_int_sphereParts = 12;
+const int const_int_maxPreGenerateSphereRadius = 25;
+const double const_double_bandWidthRatio = 0.8;
+const double const_double_defaultSphereGrowTolerateRatio = 0.01;
 #define INF 1E9
 #define NINF -1E9
 #define PI 3.14159265
-
 #define UBYTE unsigned char
 #define BYTE signed char
 #pragma endregion
@@ -108,7 +106,7 @@ class class_segmentationMain
 	public:
 		//constant
 		V3DLONG vct_neighbors[const_int_count_neighbors];
-
+		
 		//Input or directly derived;
 		bool flag_debug;
 		double double_threshold;
@@ -125,28 +123,28 @@ class class_segmentationMain
 		int idx_channel;
 		vector<int> histo_main;
 		bool flag_success;
+		V3DLONG count_totalWhiteVoxel;
 		
-		//Exemplar;
+		//Exemplar (or learn from it);
 		LandmarkList LandmarkList_exemplar;
-		vector<V3DLONG> vct_exemplarIndex;
-		V3DLONG int_boundaryRegionCriteria; //max number of "black" voxels around the boundary;
-		V3DLONG int_boundaryRegionCriteriaEstimation; 
+		vector<V3DLONG> vct_exemplar;
 		unsigned char *Image1D_exemplarRegion;
-		vector<vector<V3DLONG> > vctList_exemplarRegionIndex;
-		//vector<vector<V3DLONG> > vctList_exemplarRegionCentralizedIndex;
-		V3DLONG int_maxRegionVolumeByExemplar;
-		V3DLONG int_minRegionVolumeByExemplar;
-		V3DLONG int_meanRegionVolumeByExemplar;
+		vector<vector<V3DLONG> > vctList_exemplarRegion;
+		double double_exemplarRegionVolumeMax;
+		double double_exemplarRegionVolumeMin;
+		vector<vector<V3DLONG> > vctList_exemplarRegionBoudingBox;
+		double double_valueChangeRatioThreshold;
+		double double_sphereToRegionVolumeRatio;
 		
 		//regonGrow;
-		V3DLONG int_regionVolumeLowerBound;
-		V3DLONG int_regionVolumeUpperBound;
-		vector<vector<V3DLONG> > vctList_grownRegionIndex;
-		vector<vector<V3DLONG> > vctList_potentialSeedListIndex;
-		vector<V3DLONG> vct_grownRegionCenterIndex;
-		unsigned char* Image1D_segmentation;
-		LandmarkList LandmarkList_segmentation;
-		
+		double double_regionVolumeLowerBound;
+		vector<vector<V3DLONG> > vctList_segmentationResult;
+		vector<vector<V3DLONG> > vctList_potentialSeedList;
+		vector<vector<V3DLONG> > vctList_preGeneratedSphere;
+		unsigned char* Image1D_segmentationResult;
+		LandmarkList LandmarkList_segmentationResult;
+		vector<V3DLONG> vct_segmentationResultCenter;
+
 		class_segmentationMain(double double_thresholdInput, unsigned char* Image1D_input, V3DLONG int_xDimInput, V3DLONG int_yDimInput, V3DLONG int_zDimInput , int int_channelInput, LandmarkList LandmarkList_input, bool flag_debugInput)
 		{
 			this->flag_success = false;
@@ -158,475 +156,555 @@ class class_segmentationMain
 			this->offset_channel = (idx_channel-1)*count_totalPageSize;
 			this->offset_Z = dim_X*dim_Y;
 			this->offset_Y = dim_X;
-			this->int_boundaryRegionCriteria = -1; //it will be later updated in regonGrowOnExemplar();
-			this->int_boundaryRegionCriteriaEstimation = 0;
-			this->int_regionVolumeLowerBound = const_int_tinyFragmentCriteria; //prevent ultra-small exemplar region growing;
-			this->int_regionVolumeUpperBound = INF;
+			this->double_regionVolumeLowerBound = const_int_tinyFragmentCriteria; //prevent ultra-small exemplar region growing;
+			this->double_valueChangeRatioThreshold = const_double_valueChangeRatioThresholdDefault;
 			this->createNeighborVector();
+			this->createSphereTemplate();
 			this->Image1D_page = new unsigned char [this->count_totalPageSize];
 			this->Image1D_mask = new unsigned char [this->count_totalPageSize];
 			this->Image1D_exemplarRegion = new unsigned char [this->count_totalPageSize];
-			this->Image1D_segmentation =  new unsigned char [this->count_totalPageSize];
+			this->Image1D_segmentationResult =  new unsigned char [this->count_totalPageSize];
 			for (V3DLONG i=0;i<count_totalPageSize;i++)
 			{	
 				this->Image1D_page[i] = Image1D_original[i+offset_channel];
 				this->Image1D_mask[i] = const_double_maxVoxelIntensity; //all available;
 				this->Image1D_exemplarRegion[i] = 0;
-				this->Image1D_segmentation[i] = 0;
+				this->Image1D_segmentationResult[i] = 0;
 			}
 			ofstream ofstream_log;
-			if (this->flag_debug) {	ofstream_log.open ("log_class_segmentationMain.txt");}
-			vct_exemplarIndex = landMarkList2IndexList(LandmarkList_exemplar);
-			if (this->flag_debug) {	ofstream_log<<"estimateThreshold started!"<<endl;}
+			ofstream_log.open ("log_class_segmentationMain.txt");
+			this->vct_exemplar = landMarkList2IndexList(this->LandmarkList_exemplar);
+			ofstream_log<<"estimateThreshold started!"<<endl;
 			this->estimateThreshold(); //store to this->double_threshold;
+			ofstream_log<<"estimateThreshold succeed!"<<endl;
+			ofstream_log<<"thresholdForCurrentPage started!"<<endl;
+			this->count_totalWhiteVoxel = this->thresholdForCurrentPage();
+			ofstream_log<<"thresholdForCurrentPage succeed!"<<endl;
+			ofstream_log<<"removeSingleVoxel started!"<<endl;
 			this->removeSingleVoxel(this->Image1D_page, this->count_totalPageSize);
-			if (this->flag_debug) {	ofstream_log<<"estimateThreshold succeed!"<<endl;}
-			if (this->flag_debug) {	ofstream_log<<"categorizeVoxelsByValue started!"<<endl;}
-			categorizeVoxelsByValue(this->histo_main, this->Image1D_page, this->count_totalPageSize); //store to this->vctList_potentialSeedListIndex; Although currently doesn't matter, this step is recommended to be before thresholding on Image1D_page;
-			if (this->flag_debug) {	ofstream_log<<"categorizeVoxelsByValue succeed!"<<endl;}
-			if (this->flag_debug) {	ofstream_log<<"regonGrowOnExemplar started!"<<endl;}
-			//note: as it needs to update and check Image1D_mask for scooping, thresholding on Image1D_page needs to perform AFTER it! Otherwise Image1D_mask would be messed!
-			if (!this->regonGrowOnExemplar())
+			ofstream_log<<"removeSingleVoxel succeed!"<<endl;
+			ofstream_log<<"categorizeVoxelsByValue started!"<<endl;
+			this->categorizeVoxelsByValue(this->histo_main, this->Image1D_page, this->count_totalPageSize); //store to this->vctList_potentialSeedList; providing seeds for regionGrowing;
+			ofstream_log<<"categorizeVoxelsByValue succeed!"<<endl;
+			ofstream_log<<"regonGrow for exemplar started!"<<endl;
+			this->vctList_exemplarRegion = this->regionGrowOnVector(this->vct_exemplar);
+			if (this->vctList_exemplarRegion.size()<1)
 			{
-				if (this->flag_debug) {	ofstream_log.close();}
+				v3d_msg("Warning: no exemplar regions grown. Program will terminate, please re-select the exemplar(s)!");
+				ofstream_log<<"regonGrow for exemplar failed!"<<endl; ofstream_log.close();
+				return;
+			}
+			vctList2Image1D(this->Image1D_exemplarRegion, this->vctList_exemplarRegion);
+			ofstream_log<<"regonGrow for exemplar succeed!"<<endl;
+			ofstream_log<<"analyzeExemplarRegion started!"<<endl;
+			if (!this->analyzeExemplarRegion())
+			{
+				if (this->flag_debug) {ofstream_log<<"analyzeExemplarRegion failed!"<<endl; ofstream_log.close();}
 				return; //failed;
 			}
-			if (this->flag_debug) {	ofstream_log<<"regonGrowOnExemplar succeed!"<<endl;}
-			if (this->flag_debug) {	ofstream_log<<"thresholdForExemplarRegion started!"<<endl;}
-			this->thresholdForExemplarRegion(); //only after thresholding it is reasonable to analyze the geometry property of exemplar regions; 
-			if (this->flag_debug) {	ofstream_log<<"thresholdForExemplarRegion succeed!"<<endl;}
-			if (this->flag_debug) {	ofstream_log<<"analyzeExemplarRegionVolume started!"<<endl;}
-			//it should be right after thresholdForExemplarRegion() (acutally I pulled this function out from it);
-			if (!this->analyzeExemplarRegionVolume())
-			{
-				if (this->flag_debug) {ofstream_log.close();}
-				return; //failed;
-			}
-			if (this->flag_debug) {	ofstream_log<<"analyzeExemplarRegionVolume succeed!"<<endl;}
-			
-			/* Not used in current setting;
-			if (this->flag_debug) {	ofstream_log<<"centralizeRegion started!"<<endl;}
-			this->vctList_exemplarRegionCentralizedIndex=this->centralizeRegion(this->Image1D_page, this->count_totalPageSize, this->vctList_exemplarRegionIndex);
-			if (this->flag_debug) {ofstream_log<<"centralizeRegion succeed!"<<endl;}
-			*/
-			
-			if (this->flag_debug) {	ofstream_log<<"thresholdForCurrentPage started!"<<endl;}
-			this->thresholdForCurrentPage(); // inal step; Preparing for fragment remove in regionGrowing;
-			if (this->flag_debug) {	ofstream_log<<"thresholdForCurrentPage succeed!"<<endl;}
-			this->int_regionVolumeUpperBound =this->int_maxRegionVolumeByExemplar*const_double_regionVolumeUpperBoundLoosenBy; //Preparing for region growing boundary in regionGrowing;
-			this->int_regionVolumeLowerBound =this->int_minRegionVolumeByExemplar*const_double_regionVolumeLowerBoundLoosenBy; //Preparing for fragment remove in regionGrowing;
-			flag_success = true;
-			if (this->flag_debug) {	ofstream_log.close();}
+			ofstream_log<<"analyzeExemplarRegion succeed!"<<endl;
+			ofstream_log<<"regonGrow for whole image started!"<<endl;
+			this->vctList_segmentationResult = this->regionGrowOnVectorList(this->vctList_potentialSeedList);
+			ofstream_log<<"regonGrow for whole image succeed!"<<endl;
+			ofstream_log<<"postAnalysis for whole image started!"<<endl;
+			this->vctList_segmentationResult = postAnalysis(this->vctList_segmentationResult);
+			ofstream_log<<"postAnalysis for whole image succeed!"<<endl;
+			ofstream_log<<"merge results started!"<<endl;
+			this->vctList_segmentationResult = mergeVectorList(this->vctList_segmentationResult, this->vctList_exemplarRegion);
+			ofstream_log<<"merge results succeed!"<<endl;
+			this->visualizeRegionGrow();
+			this->flag_success = true;
+			ofstream_log<<"all succeed!"<<endl; ofstream_log.close();
+			return;
 		}
 
 		#pragma region "regionGrow"
-		void regonGrowOnCurrentPage()
+		vector<vector<V3DLONG> > postAnalysis(vector<vector<V3DLONG> > vctList_input)
 		{
 			ofstream ofstream_log;
-			if (this->flag_debug) {ofstream_log.open ("log_regonGrowOnCurrentPage.txt");}
-			memset(this->Image1D_segmentation, 0, this->count_totalPageSize);
+			if (this->flag_debug) {ofstream_log.open ("log_postAnalysis.txt");}
+			V3DLONG idx_region = 0;
 			V3DLONG idx_tmp;
-			V3DLONG count_potentialSeedList = this->vctList_potentialSeedListIndex.size();
-			vctList_grownRegionIndex.clear();
-			vct_grownRegionCenterIndex.clear();
-			if (this->flag_debug) {ofstream_log<<"count_potentialSeedList: "<<count_potentialSeedList<<endl;}
-			vector<V3DLONG> vct_tmp;
-			V3DLONG count_totalCoveredVoxel = 0;
-			V3DLONG count_potentialSeed = 0;
-			for (V3DLONG idx_potentialSeedList=0;idx_potentialSeedList<count_potentialSeedList;idx_potentialSeedList++) //start from the highest intensity seeds;
-			{
-				count_potentialSeed = this->vctList_potentialSeedListIndex[idx_potentialSeedList].size();
-				for (V3DLONG idx_potentialSeed=0;idx_potentialSeed<count_potentialSeed;idx_potentialSeed++)
-				{
-					idx_tmp = this->vctList_potentialSeedListIndex[idx_potentialSeedList][idx_potentialSeed];
-					vct_tmp = this->regionGrowOnSeed(this->Image1D_page, this->count_totalPageSize, idx_tmp); //Image1D_mask is updating in this function;
-					if (this->flag_debug) {	ofstream_log<<"at idx_potentialSeed==: "<<idx_potentialSeed<<", vct_tmp.size(): "<<vct_tmp.size()<<endl;}
-					if (!vct_tmp.empty())	{this->vctList_grownRegionIndex.push_back(vct_tmp);}
-					count_totalCoveredVoxel += vct_tmp.size();
-				}
-				if (count_totalCoveredVoxel>this->count_totalPageSize*const_double_earlyStopCriteria)
-				{
-					return;
-				}
-			}
-			//Update Image1D_segmentation and LandmarkList_segmentation;
-			V3DLONG count_region = this->vctList_grownRegionIndex.size();
-			if (this->flag_debug) {ofstream_log<<"count_region: "<<count_region<<endl;}
+			V3DLONG idx_voxel = 0;
+			V3DLONG count_region = vctList_input.size();
 			V3DLONG count_voxel = 0;
-			vector<V3DLONG> vct_massCenter;
+			vector<V3DLONG> vct_tmp;
+			vector<vector<V3DLONG> > vctList_result;
+			vector<V3DLONG> vct_boundBox;
+			vector<V3DLONG> vct_clusterCenterTmp;
+			V3DLONG idx_clusterCenterTmp;
+			V3DLONG count_clusterCenterTmp;
+			vector<V3DLONG> vct_growSphereTmp;
+			V3DLONG idx_center;
+			double double_volume;
 			for (V3DLONG idx_region=0;idx_region<count_region;idx_region++)
-			{	 
-				count_voxel = this->vctList_grownRegionIndex[idx_region].size();
-				if (this->flag_debug) {ofstream_log<<"at idx_region: "<<idx_region<<"count_voxel: "<<count_voxel<<endl;}
-				vct_massCenter = this->getMassCenter(this->Image1D_page, this->count_totalPageSize, this->vctList_grownRegionIndex[idx_region]);
-				this->vct_grownRegionCenterIndex.push_back(this->coordinate2Index(vct_massCenter[0], vct_massCenter[1], vct_massCenter[2]));
-				for (V3DLONG idx_voxel=0;idx_voxel<count_voxel;idx_voxel++)
+			{	
+				vct_tmp = vctList_input[idx_region];
+				vct_boundBox = this->getBoundBox(vct_tmp);
+				double_volume = (vct_boundBox[1]-vct_boundBox[0])*(vct_boundBox[3]-vct_boundBox[2])*(vct_boundBox[5]-vct_boundBox[4]);
+				if (double_volume<this->double_regionVolumeLowerBound)
 				{
-					idx_tmp = this->vctList_grownRegionIndex[idx_region][idx_voxel];
-					if (this->flag_debug) {ofstream_log<<"at idx_voxel: "<<idx_voxel<<" idx_tmp: "<<idx_tmp<<endl;}
-					if ((idx_tmp>=0)&&(idx_tmp<this->count_totalPageSize))
-					{
-						this->Image1D_segmentation[idx_tmp] = (idx_region+1);
-					}
+					//too small, removed;
+					break;
 				}
-			}
-			this->LandmarkList_segmentation = indexList2LandMarkList(vct_grownRegionCenterIndex);
-		}
-
-		vector<V3DLONG> regionGrowOnSeed(unsigned char* Image1D_input, V3DLONG count_imageSizeInput, V3DLONG idx_seed)
-		//assuming [0-const_double_maxVoxelIntensity] integer Image1D_page, should also work on binary image (not tested yet);
-		{
-			ofstream ofstream_log;
-			vector<V3DLONG> vct_result;
-			vector<V3DLONG> vct_empty (0, 0);
-			vector<V3DLONG> vct_temp;
-			V3DLONG idx_current;
-			V3DLONG count_boundaryBlack = 0;
-			V3DLONG count_boundary = 0;
-			V3DLONG count_boundaryBlackSum = 0;
-			int count_neighbors = 0;
-			V3DLONG idx_neighbor;
-			double double_neightborValue;
-			double double_currentValue;
-			double double_meanValue = 0;
-			double double_sumValue = 0;
-			if ((idx_seed<0)||(idx_seed>=count_imageSizeInput)) //unlikely, but just in case;
-			{
-				if (this->flag_debug) {ofstream_log.close();}
-				return vct_empty;
-			}
-			double double_seedValue = Image1D_input[idx_seed];
-			V3DLONG count_totalVolume = 0;
-			if (double_seedValue>this->double_threshold)
-			{
-				vct_temp.push_back(idx_seed);
-				vct_result.push_back(idx_seed);
-				double_sumValue = double_seedValue;
-				double_meanValue = double_seedValue;
-				while (true)
+				count_voxel = vct_tmp.size();
+				if (this->flag_debug) {ofstream_log<<"count_voxel: "<<count_voxel<<endl;}
+				idx_center = this->getCenter(vct_tmp);
+				vct_growSphereTmp = this->sphereGrowOnSeed(idx_center);
+				if (((double)vct_growSphereTmp.size()/(double)count_voxel)>this->double_sphereToRegionVolumeRatio)
 				{
-					if (vct_temp.empty()) //growing complete;
+					//passed, need not further segmentation;
+					vctList_result.push_back(vct_tmp);
+					this->vct_segmentationResultCenter.push_back(idx_center);
+				}
+				else
+				{
+					vct_clusterCenterTmp = menashiftClustering(vct_tmp, const_double_bandWidthRatio);
+					count_clusterCenterTmp = vct_clusterCenterTmp.size();
+					if (this->flag_debug) {ofstream_log<<"count_clusterCenterTmp:"<<count_clusterCenterTmp<<endl;}
+					if (count_clusterCenterTmp<1)
 					{
-						if (this->flag_debug) {ofstream_log.close();}
-						if(count_totalVolume<int_regionVolumeLowerBound)
-						{
-							return vct_empty;
-						}
-						else
-						{
-							if (this->int_boundaryRegionCriteria<0) {this->int_boundaryRegionCriteriaEstimation=(int)(count_boundaryBlackSum/count_boundary);} //if this->int_boundaryRegionCriteria not udpated yet, store the result;
-							return vct_result;
-						}
+						//error?
+						vctList_result.push_back(vct_tmp);
+						this->vct_segmentationResultCenter.push_back(idx_center);
 					}
-					idx_current = vct_temp.back();
-					vct_temp.pop_back();
-					double_currentValue = Image1D_input[idx_current];
-					
-					count_boundaryBlack = 0;
-					for (V3DLONG j=0;j<const_int_count_neighbors;j++)
+					else
 					{
-						idx_neighbor = idx_current+vct_neighbors[j];
-						if ((idx_neighbor>=0)&&(idx_neighbor<count_imageSizeInput)) //prevent it from going out of bounds;
+						//reset mask;
+						vct2Image1D(this->Image1D_mask, vct_tmp, const_double_maxVoxelIntensity);
+						for (int i=0;i<count_clusterCenterTmp;i++)
 						{
-							double_neightborValue = Image1D_input[idx_neighbor];
-							if (double_neightborValue<this->double_threshold) {count_boundaryBlack++;}; //it is black and count it;
-						}
-					}
-					if (this->int_boundaryRegionCriteria>0) //only if this->int_boundaryRegionCriteria has been udpated (i.e. >0, during whole image growing stage);
-					{
-						if (count_boundaryBlack>this->int_boundaryRegionCriteria)
-						{
-							continue; //boundary voxel detected, do not proceed;
-						}
-					}
-					if (this->int_boundaryRegionCriteria<0) {count_neighbors = 0;}
-					for (int j=0;j<const_int_count_neighbors;j++)
-					{
-						idx_neighbor = idx_current+vct_neighbors[j];
-						if ((idx_neighbor>=0)&&(idx_neighbor<count_imageSizeInput)) //prevent it from going out of bounds;
-						{
-							if (this->Image1D_mask[idx_neighbor]>0) //available only; Note: make sure Image1D_mask has been set to the correct value!
+							idx_clusterCenterTmp = vct_clusterCenterTmp[i];
+							vct_growSphereTmp = this->sphereGrowOnSeed(idx_clusterCenterTmp);
+							if (!vct_growSphereTmp.empty())
 							{
-								double_neightborValue = Image1D_input[idx_neighbor];
-								if ((double_neightborValue>this->double_threshold)&&((abs(double_neightborValue-double_currentValue))<double_meanValue*const_double_valueChangeThreshold))
-								{
-									this->Image1D_mask[idx_neighbor] = 0; //scooped;
-									vct_temp.push_back(idx_neighbor);
-									vct_result.push_back(idx_neighbor);
-									double_sumValue = double_sumValue+double_neightborValue;
-									count_totalVolume++;
-									double_meanValue = double_sumValue/count_totalVolume;
-									if (this->int_boundaryRegionCriteria<0) {count_neighbors++;}
-								}
+								vctList_result.push_back(vct_growSphereTmp);
+								this->vct_segmentationResultCenter.push_back(idx_clusterCenterTmp);
 							}
 						}
 					}
-					//if no neighbors added, it is a boundary voxel;
-					//only if this->int_boundaryRegionCriteria has not been udpated (i.e. <0, during whole exemplar growing stage);
-					if (this->int_boundaryRegionCriteria<0) 
-					{
-						if (count_neighbors==0)
-						{
-							count_boundaryBlackSum += count_boundaryBlack;
-							count_boundary ++;
-						}
-					}
-					
-					if (count_totalVolume>int_regionVolumeUpperBound)
-					//during exemplar region growing stage, int_regionVolumeUpperBound shall be INF;
-					//during page image region growing stage (i.e. segmentation), int_regionVolumeUpperBound shall be the value estimated from exemplar regions;
-					{	
-						if (this->int_boundaryRegionCriteria<0) {this->int_boundaryRegionCriteriaEstimation=(int)(count_boundaryBlackSum/count_boundary);} //if this->int_boundaryRegionCriteria not udpated yet, store the result;
-						return vct_result;
-					}
 				}
-				////iterations over const_int_maximumGrowingLength;
-				//v3d_msg("Warning: maximum iterations reached, results may become unstable!");
-				//if(count_totalVolume<int_regionVolumeLowerBound)
-				//{
-				//	return vct_empty;
-				//}
-				//else
-				//{
-				//	if (this->int_boundaryRegionCriteria<0) {this->int_boundaryRegionCriteriaEstimation=(int)(count_boundaryBlackSum/count_boundary);} //if this->int_boundaryRegionCriteria not udpated yet, store the result;
-				//	return vct_result;
-				//}
+
+				
 			}
-			else
+			return vctList_result;
+		}
+
+		vector<vector<V3DLONG> > regionGrowOnVectorList(vector<vector<V3DLONG>> vctList_seed)
+		{
+			V3DLONG idx_tmp;
+			vector<vector<V3DLONG>> vctList_result;
+			vector<vector<V3DLONG>> vctList_tmp;
+			V3DLONG count_seedList = vctList_seed.size();
+			vector<V3DLONG> vct_tmp;
+			V3DLONG count_totalCoveredVoxel = 0;
+			V3DLONG count_seed = 0;
+			for (V3DLONG idx_region=0;idx_region<count_seedList;idx_region++)
+			{
+				vctList_tmp = regionGrowOnVector(vctList_seed[idx_region]);
+				for (int i=0;i<vctList_tmp.size();i++)
+				{
+					vct_tmp = vctList_tmp[i];
+					if (!vct_tmp.empty()) {vctList_result.push_back(vct_tmp); count_totalCoveredVoxel+=vct_tmp.size();}
+				}
+				if (count_totalCoveredVoxel>this->count_totalWhiteVoxel*const_double_earlyStopCriteria)
+				{
+					break;
+				}
+			}
+			return vctList_result;
+		}
+
+		vector<vector<V3DLONG> > regionGrowOnVector(vector<V3DLONG> vct_seed)
+		{
+			V3DLONG idx_tmp;
+			vector<vector<V3DLONG>> vctList_result;
+			vector<V3DLONG> vct_tmp;
+			V3DLONG count_seed = vct_seed.size();
+			for (V3DLONG idx_seed=0;idx_seed<count_seed;idx_seed++)
+			{
+				idx_tmp = vct_seed[idx_seed];
+				if (this->Image1D_mask[idx_tmp]>0)
+				{
+					vct_tmp = this->regionGrowOnSeed(idx_tmp); //Image1D_mask is updating in this function;
+					if (!vct_tmp.empty())	{vctList_result.push_back(vct_tmp);}
+				}
+			}
+			return vctList_result;
+		}
+
+		vector<V3DLONG> regionGrowOnSeed(V3DLONG idx_seed)
+			//assuming [0-const_double_maxVoxelIntensity] integer Image1D_page, should also work on binary image (not tested yet);
+		{
+			vector<V3DLONG> vct_empty (0, 0);
+			if (!this->checkValidity(idx_seed)) //unlikely, but just in case;
 			{
 				return vct_empty;
 			}
+			if (this->Image1D_mask[idx_seed]<1) //very likely;
+			{
+				return vct_empty;
+			}
+			ofstream ofstream_log;
+			vector<V3DLONG> vct_result;
+			
+			vector<V3DLONG> vct_temp;
+			V3DLONG idx_current;
+			V3DLONG idx_neighbor;
+			double double_neightborValue;
+			double double_currentValue;
+			V3DLONG count_totalVolume = 1;
+			double double_seedValue = this->Image1D_page[idx_seed];
+			double double_meanValue = double_seedValue;
+			double double_sumValue = double_seedValue;
+			double_meanValue = double_seedValue;
+			vct_temp.push_back(idx_seed);
+			vct_result.push_back(idx_seed);
+			this->Image1D_mask[idx_seed] = 0; //scooped;
+			while (true)
+			{
+				if (vct_temp.empty()) //growing complete;
+				{
+					if (this->flag_debug) {ofstream_log.close();}
+					return vct_result;
+				}
+				idx_current = vct_temp.back();
+				vct_temp.pop_back();
+				double_currentValue = this->Image1D_page[idx_current];
+				for (int j=0;j<const_int_count_neighbors;j++)
+				{
+					idx_neighbor = idx_current+vct_neighbors[j];
+					if (this->checkValidity(idx_neighbor)) //prevent it from going out of bounds;
+					{
+						if (this->Image1D_mask[idx_neighbor]>0) //available only;
+						{
+							double_neightborValue = this->Image1D_page[idx_neighbor];
+							if ((abs(double_neightborValue-double_currentValue))<(double_meanValue*this->double_valueChangeRatioThreshold))
+							{
+								this->Image1D_mask[idx_neighbor] = 0; //scooped;
+								vct_temp.push_back(idx_neighbor);
+								vct_result.push_back(idx_neighbor);
+								double_sumValue += double_neightborValue;
+								count_totalVolume++;
+								double_meanValue = double_sumValue/count_totalVolume;
+							}
+						}
+					}
+				}
+			}
 		}
+
+		vector<vector<V3DLONG> > sphereGrowOnVectorList(vector<vector<V3DLONG>> vctList_seed)
+		{
+			V3DLONG idx_tmp;
+			vector<vector<V3DLONG>> vctList_result;
+			vector<vector<V3DLONG>> vctList_tmp;
+			V3DLONG count_seedList = vctList_seed.size();
+			vector<V3DLONG> vct_tmp;
+			V3DLONG count_totalCoveredVoxel = 0;
+			V3DLONG count_seed = 0;
+			for (V3DLONG idx_seedList=0;idx_seedList<count_seedList;idx_seedList++)
+			{
+				vctList_tmp = this->sphereGrowOnVector(vctList_seed[idx_seedList]);
+				for (int i=0;i<vctList_tmp.size();i++)
+				{
+					vct_tmp = vctList_tmp[i];
+					if (!vct_tmp.empty())	{vctList_result.push_back(vct_tmp);}
+					count_totalCoveredVoxel += vct_tmp.size();
+				}
+				if (count_totalCoveredVoxel>this->count_totalWhiteVoxel*const_double_earlyStopCriteria)
+				{
+					break;
+				}
+			}
+			return vctList_result;
+		}
+
+		vector<vector<V3DLONG> > sphereGrowOnVector(vector<V3DLONG> vct_seed)
+		{
+			V3DLONG idx_tmp;
+			vector<vector<V3DLONG> > vctList_result;
+			vector<V3DLONG> vct_tmp;
+			V3DLONG count_totalCoveredVoxel = 0;
+			V3DLONG count_seed = vct_seed.size();
+			for (V3DLONG idx_seed=0;idx_seed<count_seed;idx_seed++)
+			{
+				idx_tmp = vct_seed[idx_seed];
+				//locate a better position for idx_tmp;
+				//idx_tmp = getLocalCenter(idx_tmp);
+				if (checkValidity(idx_tmp))
+				{
+					if (this->Image1D_mask[idx_tmp]>0)
+					{
+						vct_tmp = this->sphereGrowOnSeed(idx_tmp); //Image1D_mask is updating in this function;
+						if (!vct_tmp.empty())	{vctList_result.push_back(vct_tmp);}
+						count_totalCoveredVoxel += vct_tmp.size();
+					}
+				}
+			}
+			return vctList_result;
+		}
+
+		V3DLONG getLocalCenter(V3DLONG idx_input)
+		{
+			V3DLONG idx_result = idx_input;
+			
+			return idx_result;
+		}
+
+		vector<V3DLONG> sphereGrowOnSeed(V3DLONG idx_seed)
+		{
+			ofstream ofstream_log;
+			if (this->flag_debug) {ofstream_log.open ("log_sphereGrowOnSeed.txt");}
+			vector<V3DLONG> vct_result;
+			vector<V3DLONG> vct_empty (0, 0);
+			V3DLONG idx_tmp;
+			if (!this->checkValidity(idx_seed)) //unlikely, but just in case;
+			{
+				return vct_empty;
+			}
+			if (this->Image1D_mask[idx_seed]<1) //very likely;
+			{
+				return vct_empty;
+			}
+			//grow a sphere around it;
+			V3DLONG idx_radius = 0;
+			vector<V3DLONG> vct_sphere;
+			V3DLONG count_missed = 0;
+			V3DLONG count_total = 0;
+			double double_missedRatio = 0;
+			while (true)
+			{
+				count_missed = 0;
+				count_total = 0;
+				if (idx_radius>(const_int_maxPreGenerateSphereRadius))
+				{
+					break;
+				}
+				vct_sphere = this->vctList_preGeneratedSphere[idx_radius];
+				for (int i=0;i<vct_sphere.size();i++)
+				{
+					idx_tmp = idx_seed + vct_sphere[i];
+					if (checkValidity(idx_tmp))
+					{
+						if (this->Image1D_mask[idx_tmp]<1)
+						{
+							count_missed++;
+						}
+						count_total++;
+					}
+					double_missedRatio = double(count_missed)/(double)count_total;
+				}
+				if (double_missedRatio>const_double_defaultSphereGrowTolerateRatio)
+				{
+					break;
+				}
+				idx_radius++;
+			}
+			if (this->flag_debug) {ofstream_log<<"idx_radius: "<<idx_radius<<endl;}
+			vct_sphere = this->vctList_preGeneratedSphere[idx_radius];
+			if (this->flag_debug) {ofstream_log<<"vct_sphere.size(): "<<vct_sphere.size()<<endl;}
+			for (int i=0;i<vct_sphere.size();i++)
+			{
+				idx_tmp = idx_seed + vct_sphere[i];
+				if (checkValidity(idx_tmp))
+				{
+					if (this->Image1D_mask[idx_tmp]>0)
+					{
+						vct_result.push_back(idx_tmp);
+						this->Image1D_mask[idx_tmp]=0; //scooped
+					}
+				}
+			}
+			return vct_result;
+		}
+
+		void visualizeRegionGrow()
+		{
+			V3DLONG count_region = this->vctList_segmentationResult.size();
+			V3DLONG count_voxel = 0;
+			V3DLONG idx_tmp;
+			V3DLONG idx_center;
+			this->vct_segmentationResultCenter.clear();
+			for (V3DLONG idx_region=0;idx_region<count_region;idx_region++)
+			{	 
+				count_voxel = this->vctList_segmentationResult[idx_region].size();
+				idx_center = this->getCenter(this->vctList_segmentationResult[idx_region]);
+				this->vct_segmentationResultCenter.push_back(idx_center);
+				for (V3DLONG idx_voxel=0;idx_voxel<count_voxel;idx_voxel++)
+				{
+					idx_tmp = this->vctList_segmentationResult[idx_region][idx_voxel];
+					if (this->checkValidity(idx_tmp))
+					{
+						this->Image1D_segmentationResult[idx_tmp] = (idx_region+1);
+					}
+				}
+			}
+			this->LandmarkList_segmentationResult = indexList2LandMarkList(this->vct_segmentationResultCenter);
+		}
+		
 		#pragma endregion		
 
 		#pragma region "exemplar" 
-		vector<vector<V3DLONG> > centralizeRegionNoWeight(vector<vector<V3DLONG> > vctList_input)
+		bool analyzeExemplarRegion()
 		{
-			vector<vector<V3DLONG> > vctList_ouput = vctList_input;
-			V3DLONG idx_tmp = 0;
-			vector<V3DLONG> vct_xyz (0, 0);
+			this->double_exemplarRegionVolumeMax = -INF;
+			this->double_exemplarRegionVolumeMin = INF;
+			this->vctList_exemplarRegionBoudingBox.clear();
 			V3DLONG x = 0;
 			V3DLONG y = 0;
 			V3DLONG z = 0;
-			V3DLONG centerX = 0;
-			V3DLONG centerY = 0;
-			V3DLONG centerZ = 0;
-			V3DLONG count_region = vctList_input.size();
+			V3DLONG xMax = -INF;
+			V3DLONG yMax = -INF;
+			V3DLONG zMax = -INF;
+			V3DLONG xMin = INF;
+			V3DLONG yMin = INF;
+			V3DLONG zMin = INF;
+			V3DLONG idx_tmp = 0;
+			vector<V3DLONG> vct_xyz;
+			vector<V3DLONG> vct_boundingBox (6, 0);
+			vector<V3DLONG> vct_tmp;
+			double double_volumeTmp = 0; 
+			V3DLONG count_region = this->vctList_exemplarRegion.size();
 			V3DLONG count_voxel = 0;
+			double mean_neighborValueChangeTmp = 0;
+			V3DLONG idx_neighborTmp = 0;
+			double value_tmp=0;
+			this->double_valueChangeRatioThreshold = -INF;
+			this->double_sphereToRegionVolumeRatio = INF;
+			V3DLONG count_neighborTmp;
+			double mean_regionValue;
 			for (V3DLONG idx_region=0;idx_region<count_region;idx_region++)
 			{
-				count_voxel = vctList_input[idx_region].size();
+				xMax = -INF;
+				yMax = -INF;
+				zMax = -INF;
+				xMin = INF;
+				yMin = INF;
+				zMin = INF;
+				vct_tmp = this->vctList_exemplarRegion[idx_region];
+				count_voxel = vct_tmp.size();
+				mean_regionValue=0;
 				for (V3DLONG idx_voxel=0;idx_voxel<count_voxel;idx_voxel++)
 				{
-					idx_tmp = vctList_input[idx_region][idx_voxel];
-					{
-						vct_xyz = index2Coordinate(idx_tmp);
-						x = vct_xyz[0];
-						y = vct_xyz[1];
-						z = vct_xyz[2];
-						centerX += x;
-						centerY += y;
-						centerZ += z;
-					}
-				}
-				centerX = centerX/count_voxel;
-				centerY = centerY/count_voxel;
-				centerZ = centerZ/count_voxel;
-				for (V3DLONG idx_voxel=0;idx_voxel<count_voxel;idx_voxel++)
-				{
-					idx_tmp = vctList_ouput[idx_region][idx_voxel];
+					idx_tmp = vct_tmp[idx_voxel];
+					value_tmp = this->Image1D_page[idx_tmp];
+					mean_regionValue += value_tmp;
 					vct_xyz = this->index2Coordinate(idx_tmp);
-					x = vct_xyz[0] - centerX;
-					y = vct_xyz[1] - centerY;
-					z = vct_xyz[2] - centerZ;
-					vctList_ouput[idx_region][idx_voxel] = this->coordinate2Index(x, y, z);
-				}
-			}
-			return vctList_ouput;
-		}
-
-		vector<vector<V3DLONG> > centralizeRegion(unsigned char* Image1D_input, V3DLONG count_imageSizeInput, vector<vector<V3DLONG> > vctList_input)
-		{
-			vector<vector<V3DLONG> > vctList_ouput = vctList_input;
-			V3DLONG idx_tmp = 0;
-			vector<V3DLONG> vct_xyz (0, 0);
-			V3DLONG x = 0;
-			V3DLONG y = 0;
-			V3DLONG z = 0;
-			V3DLONG count_region = vctList_input.size();
-			V3DLONG count_voxel = 0;
-			vector<V3DLONG> vector_massCenter;
-			for (V3DLONG idx_region=0;idx_region<count_region;idx_region++)
-			{
-				count_voxel = vctList_input[idx_region].size();
-				vector_massCenter = getMassCenter(Image1D_input, count_imageSizeInput, vctList_ouput[idx_region]);
-				for (V3DLONG idx_voxel=0;idx_voxel<count_voxel;idx_voxel++)
-				{
-					idx_tmp = vctList_ouput[idx_region][idx_voxel];
-					vct_xyz = this->index2Coordinate(idx_tmp);
-					x = vct_xyz[0] - vector_massCenter[0];
-					y = vct_xyz[1] - vector_massCenter[1];
-					z = vct_xyz[2] - vector_massCenter[3];
-					vctList_ouput[idx_region][idx_voxel] = this->coordinate2Index(x, y, z);
-				}
-			}
-		}
-
-		vector<V3DLONG> getMassCenter(unsigned char* Image1D_input, V3DLONG count_imageSizeInput, vector<V3DLONG> vct_input)
-		{
-			V3DLONG idx_tmp = 0;
-			double double_centerX = 0;
-			double double_centerY = 0;
-			double double_centerZ = 0;
-			double double_massSum = 0;
-			V3DLONG x = 0;
-			V3DLONG y = 0;
-			V3DLONG z = 0;
-			V3DLONG count_voxel = vct_input.size();
-			double double_valueTmp = 0;
-			vector<V3DLONG> vct_xyzResult (3, 0);
-			vector<V3DLONG> vct_xyz (3, 0);
-			for (V3DLONG idx_voxel=0;idx_voxel<count_voxel;idx_voxel++)
-			{
-				idx_tmp = vct_input[idx_voxel];
-				if ((idx_tmp>0)&&(idx_tmp<count_imageSizeInput))
-				{
-					double_valueTmp = (double) Image1D_input[idx_tmp];
-					vct_xyz = index2Coordinate(idx_tmp);
 					x = vct_xyz[0];
 					y = vct_xyz[1];
 					z = vct_xyz[2];
-					double_centerX += x*double_valueTmp;
-					double_centerY += y*double_valueTmp;
-					double_centerZ += z*double_valueTmp;
-					double_massSum += double_valueTmp;
+					if (x>xMax) {xMax=x;}
+					if (y>yMax) {yMax=y;}
+					if (z>zMax) {zMax=z;}
+					if (x<xMin) {xMin=x;}
+					if (y<yMin) {yMin=y;}
+					if (z<zMin) {zMin=z;}
 				}
-			}
-			double_centerX = double_centerX/double_massSum;
-			double_centerY = double_centerY/double_massSum;
-			double_centerZ = double_centerZ/double_massSum;
-			vct_xyzResult[0] = (V3DLONG)double_centerX;
-			vct_xyzResult[1] = (V3DLONG)double_centerY;
-			vct_xyzResult[2] = (V3DLONG)double_centerZ;
-			return vct_xyzResult;
-		}
-
-		bool regonGrowOnExemplar()
-		{
-			ofstream ofstream_log;
-			if (this->flag_debug) {	ofstream_log.open ("log_regonGrowOnExemplar.txt");}
-			this->int_boundaryRegionCriteriaEstimation = 0;
-			vector<V3DLONG> vct_temp;
-			V3DLONG idx_exemplar;
-			if (this->flag_debug) {ofstream_log<<"vct_exemplarIndex.size(): "<<vct_exemplarIndex.size()<<endl;}
-			for (V3DLONG i=0;i<this->vct_exemplarIndex.size();i++)
-			{
-				idx_exemplar = this->vct_exemplarIndex[i];
-				vct_temp = this->regionGrowOnSeed(this->Image1D_page, this->count_totalPageSize, idx_exemplar);
-				if (this->flag_debug) {ofstream_log<<"at i==: "<<i<<"vct_temp.size(): "<<vct_temp.size()<<endl;}
-				if (!vct_temp.empty())
-				{
-					this->vctList_exemplarRegionIndex.push_back(vct_temp);
-					if ((this->int_boundaryRegionCriteriaEstimation)>this->int_boundaryRegionCriteria) {this->int_boundaryRegionCriteria=this->int_boundaryRegionCriteriaEstimation;} //update int_boundaryRegionCriteria to the max black voxel count;
-				}
-			}
-			V3DLONG count_region = this->vctList_exemplarRegionIndex.size();
-			if (this->flag_debug) {ofstream_log<<"count_region: "<<count_region<<endl;}
-			V3DLONG count_voxel = 0;
-			V3DLONG idx_tmp = 0;
-			for (V3DLONG idx_region=0;idx_region<count_region;idx_region++)
-			{
-				count_voxel = this->vctList_exemplarRegionIndex[idx_region].size();
-				if (this->flag_debug) {ofstream_log<<"at idx_region: "<<idx_region<<"count_voxel: "<<count_voxel<<endl;}
+				mean_regionValue = mean_regionValue/count_voxel;
 				for (V3DLONG idx_voxel=0;idx_voxel<count_voxel;idx_voxel++)
 				{
-					idx_tmp = this->vctList_exemplarRegionIndex[idx_region][idx_voxel];
-					if (this->flag_debug) {ofstream_log<<"at idx_voxel: "<<idx_voxel<<" idx_tmp: "<<idx_tmp<<endl;}
-					if ((idx_tmp>=0)&&(idx_tmp<this->count_totalPageSize))
+					idx_tmp = vct_tmp[idx_voxel];
+					value_tmp = this->Image1D_page[idx_tmp];
+					mean_neighborValueChangeTmp = 0;
+					count_neighborTmp = 0;
+					for (int i=0;i<const_int_count_neighbors;i++)
 					{
-						this->Image1D_exemplarRegion[idx_tmp] = this->Image1D_page[idx_tmp];
+						idx_neighborTmp = idx_tmp + this->vct_neighbors[i];
+						if (checkValidity(idx_neighborTmp))
+						{
+							if (vctContains(vct_tmp, idx_neighborTmp)>-1)
+							{
+								mean_neighborValueChangeTmp += abs(value_tmp-this->Image1D_page[idx_neighborTmp]);
+								count_neighborTmp++;
+							}
+						}
+					}
+					if (count_neighborTmp>0)
+					{
+						mean_neighborValueChangeTmp = mean_neighborValueChangeTmp / count_neighborTmp;
+						if (this->double_valueChangeRatioThreshold<(mean_neighborValueChangeTmp/mean_regionValue))
+						{
+							this->double_valueChangeRatioThreshold = mean_neighborValueChangeTmp/mean_regionValue;
+						}
 					}
 				}
-			}
-			if (count_region<1)
-			{
-				v3d_msg("Warning: no exemplar regions grown. Program will terminate, please re-select the exemplar(s)!");
-				return false;
-			}
-			else
-			{
-				return true;
-			}
-		}
-
-		bool analyzeExemplarRegionVolume()
-		{
-			this->int_maxRegionVolumeByExemplar = -INF;
-			this->int_minRegionVolumeByExemplar = INF;
-			V3DLONG count_region = this->vctList_exemplarRegionIndex.size();
-			double double_meanVolume = 0;
-			V3DLONG count_voxel = 0;
-			for (V3DLONG idx_region=0;idx_region<count_region;idx_region++)
-			{
-				count_voxel = this->vctList_exemplarRegionIndex[idx_region].size();
-				if (count_voxel>(const_double_fragmentRatioToPageSizeWarning*this->count_totalPageSize))
+				if (((xMax-xMin)>const_double_exemplarRegionToPageSizeRatioMax*this->dim_X) || ((yMax-yMin)>const_double_exemplarRegionToPageSizeRatioMax*this->dim_Y) || ((zMax-zMin)>const_double_exemplarRegionToPageSizeRatioMax*this->dim_Z))
 				{
 					v3d_msg("Warning: abnormal large exemplar region detected, program will terminate. Please re-select the exemplar(s)!");
 					return false;
 				}
-				double_meanVolume += count_voxel;
-				if (count_voxel>this->int_maxRegionVolumeByExemplar)	{this->int_maxRegionVolumeByExemplar=count_voxel;}
-				if (count_voxel<this->int_minRegionVolumeByExemplar)	{this->int_minRegionVolumeByExemplar=count_voxel;}
-			}
-			double_meanVolume = double_meanVolume/(count_region+1);
-			this->int_meanRegionVolumeByExemplar = double_meanVolume;
-			return true;
-		}
-
-		void thresholdForExemplarRegion() //it's special because we want to update vctList_exemplarRegionIndex accordingly;
-		{
-			double double_valueTmp;
-			V3DLONG idx_tmp;
-			vector<V3DLONG> vct_empty (0,0);
-			V3DLONG count_voxel = 0;
-			V3DLONG count_region = vctList_exemplarRegionIndex.size();
-			vector<vector<V3DLONG> > vctList_exemplarRegionIndexCopy = this->vctList_exemplarRegionIndex;
-			this->vctList_exemplarRegionIndex.clear();
-			bool flag_addRegion = true;
-			V3DLONG idx_addRegion = 0;
-
-			for (V3DLONG idx_region=0;idx_region<count_region;idx_region++)
-			{
-				count_voxel = vctList_exemplarRegionIndexCopy[idx_region].size();
-				flag_addRegion = true;
-				for (V3DLONG idx_voxel=0;idx_voxel<count_voxel;idx_voxel++)
+				vct_boundingBox[0]=xMin;
+				vct_boundingBox[1]=xMax;
+				vct_boundingBox[2]=yMin;
+				vct_boundingBox[3]=yMax;
+				vct_boundingBox[4]=zMin;
+				vct_boundingBox[5]=zMax;
+				this->vctList_exemplarRegionBoudingBox.push_back(vct_boundingBox);
+				double_volumeTmp = (xMax-xMin)*(yMax-yMin)*(zMax-zMin);
+				if (double_volumeTmp>this->double_exemplarRegionVolumeMax) {this->double_exemplarRegionVolumeMax=double_volumeTmp;}
+				if (double_volumeTmp<this->double_exemplarRegionVolumeMin) {this->double_exemplarRegionVolumeMin=double_volumeTmp;}
+				
+				//sphere property;
+				V3DLONG idx_center = this->getCenter(vct_tmp);
+				V3DLONG idx_radius = 0;
+				V3DLONG count_missed = 0;
+				V3DLONG count_total = 0;
+				V3DLONG count_hit = 0;
+				double double_missedRatio = 0;
+				V3DLONG idx_position = 0;
+				vector<bool> flag_visited (count_voxel, false);
+				vector<V3DLONG> vct_sphere;
+				while (true)
 				{
-					idx_tmp = vctList_exemplarRegionIndexCopy[idx_region][idx_voxel];
-					if ((idx_tmp>=this->count_totalPageSize)||(idx_tmp < 0))
+					count_missed = 0;
+					count_total = 0;
+					count_hit = 0;
+					vct_sphere = this->vctList_preGeneratedSphere[idx_radius];
+					fill(flag_visited.begin(), flag_visited.end(), false);
+					for (int i=0;i<vct_sphere.size();i++)
 					{
-						//somthing wrong happened, remove it;
-					}
-					else
-					{	
-						double_valueTmp = this->Image1D_exemplarRegion[idx_tmp];
-						if (double_valueTmp > this->double_threshold)
+						idx_tmp = idx_center + vct_sphere[i];
+						if (checkValidity(idx_tmp))
 						{
-							// Do nothing to Image1D_exemplarRegion;
-							if (flag_addRegion == true)
+							idx_position = this->vctContains(vct_tmp, idx_tmp);
+							if (idx_position>-1)
 							{
-								this->vctList_exemplarRegionIndex.push_back(vct_empty);
-								flag_addRegion = false;
-								idx_addRegion++;
+								if (!flag_visited[idx_position])
+								{
+									flag_visited[idx_position]=true;
+									count_hit++;
+								}
 							}
-							this->vctList_exemplarRegionIndex[idx_addRegion-1].push_back(idx_tmp);
+							else
+							{
+								count_missed++;
+							}
+							count_total++;
 						}
-						else
-						{	
-							Image1D_exemplarRegion[idx_tmp] = 0;
-						}
+						double_missedRatio = double(count_missed)/(double)count_total;
 					}
+					if ((count_hit >= count_voxel)||(double_missedRatio>const_double_defaultSphereGrowTolerateRatio))
+					{
+						break;
+					}
+					idx_radius++;
+					if (idx_radius>=const_int_maxPreGenerateSphereRadius) break;
+				}
+				//this->double_sphereGrowingTolerateLevel += double_missedRatio;
+				vct_sphere = this->vctList_preGeneratedSphere[idx_radius];
+				if (this->double_sphereToRegionVolumeRatio>((double)vct_sphere.size()/(double)count_voxel))
+				{
+					this->double_sphereToRegionVolumeRatio = ((double)vct_sphere.size()/(double)count_voxel);
 				}
 			}
+			//this->double_sphereGrowingTolerateLevel = this->double_sphereGrowingTolerateLevel/count_region;
+			this->double_regionVolumeLowerBound =this->double_exemplarRegionVolumeMin*const_double_regionVolumeLowerBoundLoosenBy;
+			if (this->double_regionVolumeLowerBound < const_int_tinyFragmentCriteria)
+			{
+				this->double_regionVolumeLowerBound = const_int_tinyFragmentCriteria;
+			}
+			return true;
 		}
 		#pragma endregion
 		
@@ -634,12 +712,12 @@ class class_segmentationMain
 		void categorizeVoxelsByValue(vector<int> vct_histoInput, unsigned char* Image1D_input, V3DLONG count_imageSize)
 		//will only consider voxels with value higher than threshold;
 		{
-			this->vctList_potentialSeedListIndex.clear();
+			this->vctList_potentialSeedList.clear();
 			vector<V3DLONG> vct_empty (0,0);
 			int int_threshold = (int)this->double_threshold;
 			for (int i=(int_threshold+1);i<const_int_histogramLength;i++)
 			{
-				this->vctList_potentialSeedListIndex.push_back(vct_empty);
+				this->vctList_potentialSeedList.push_back(vct_empty);
 			}
 			int int_valueOffset=0;
 			int int_valueTmp=0;
@@ -649,7 +727,7 @@ class class_segmentationMain
 				int_valueOffset = const_double_maxVoxelIntensity-int_valueTmp;
 				if (int_valueTmp>int_threshold)
 				{
-					vctList_potentialSeedListIndex[int_valueOffset].push_back(i);
+					vctList_potentialSeedList[int_valueOffset].push_back(i);
 				}
 			}
 		}
@@ -661,83 +739,12 @@ class class_segmentationMain
 			this->histo_main = class_segmentationMain::getHistogramFromImage1D(this->Image1D_page, this->count_totalPageSize);
 
 			this->double_threshold = class_segmentationMain::estimateThresholdYen(histo_main);
-			if (this->double_threshold < const_int_minimumIntensityConsideredAsNonZero)
+			if (this->double_threshold < const_double_defaultThreshold)
 			{
 				v3d_msg("Warning: threshold estimation failed, will use default threshold (15) instead!");
 				this->double_threshold = const_double_defaultThreshold;
 			}
 		}
-
-		//Removed, replace by better strategies;
-		/*
-		double estimateThresholdFromExemplarRegion()
-		{
-			ofstream ofstream_log;
-			if (this->flag_debug)
-			{
-				ofstream_log.open ("log_estimateThresholdFromExemplarRegion.txt");
-			}
-			V3DLONG count_region = this->vctList_exemplarRegionIndex.size();
-			if (this->flag_debug)
-			{
-				ofstream_log<<"count_region: "<<count_region<<endl;
-			}
-			if (count_region<1)
-			{
-				v3d_msg("Warning: exemplar region grow has not been performed, wrong function call to estimateThresholdFromExemplarRegion()!");
-				return 0;
-			}
-			V3DLONG count_voxel = 0;
-			double double_mean = 0;
-			double double_sum = 0;
-			double double_meanSum = 0;
-			double double_stdev = 0;
-			double double_tmp = 0;
-			double * vct_threshold = new double[count_region];
-			for (V3DLONG idx_region=0;idx_region<count_region;idx_region++)
-			{
-				if (this->flag_debug)
-				{
-					ofstream_log<<"idx_region: "<<idx_region<<endl;
-				}
-				count_voxel = this->vctList_exemplarRegionIndex[idx_region].size();
-				if (this->flag_debug)
-				{
-					ofstream_log<<"count_voxel: "<<count_voxel<<endl;
-				}
-				double_sum = 0;
-				double_stdev = 0;
-				for (V3DLONG idx_voxel=0;idx_voxel<count_voxel;idx_voxel++)
-				{
-					double_tmp = (double) this->Image1D_page[vctList_exemplarRegionIndex[idx_region][idx_voxel]];
-					double_sum += double_tmp;
-				}
-				double_mean = double_sum/count_voxel;
-				if (this->flag_debug)
-				{
-					ofstream_log<<"double_mean: "<<double_mean<<endl;
-					ofstream_log<<"double_sum: "<<double_sum<<endl;
-				}
-				for (V3DLONG idx_voxel=0;idx_voxel<count_voxel;idx_voxel++)
-				{
-					double_tmp = (double) this->Image1D_page[vctList_exemplarRegionIndex[idx_region][idx_voxel]];
-					double_stdev += pow((double_tmp-double_mean), 2);
-				}
-				double_stdev = double_stdev/count_voxel;
-				double_stdev = pow(count_voxel, 0.5);
-				if (this->flag_debug)
-				{
-					ofstream_log<<"double_stdev: "<<double_stdev<<endl;
-				}
-				double_meanSum += (double_mean-double_stdev*const_double_distributionStdevMultiplier);
-			}
-			if (this->flag_debug)
-			{
-				ofstream_log.close();
-			}
-			return (double_meanSum / count_region);
-		}
-		*/
 
 		static int estimateThresholdYen(vector<int> histo_input)
 		{
@@ -815,7 +822,142 @@ class class_segmentationMain
 		}
 		#pragma endregion
 
+		#pragma region "sphere"
+		void createSphereTemplate()
+		{
+			vector<V3DLONG> vct_tmp;
+			for (int r=0;r<=const_int_maxPreGenerateSphereRadius;r++)
+			{
+				vector<V3DLONG> vct_tmp = this->generateCentralizedSphere(r);
+				this->vctList_preGeneratedSphere.push_back(vct_tmp);
+			}
+		}
+
+		vector<V3DLONG> generateCentralizedSphere(V3DLONG int_radius)
+		{
+			V3DLONG x;
+			V3DLONG y;
+			V3DLONG z;
+			vector<V3DLONG> vct_result;
+			vector<V3DLONG> vct_tmp;
+			double theta;
+			double phi;
+			V3DLONG count_loop;
+			for (V3DLONG r=1; r<=int_radius; r++)
+			{
+				count_loop = r*const_int_sphereParts;
+				for (V3DLONG i=0; i<count_loop; i++)
+				{
+					theta = (2*PI*i)/count_loop;
+					for (V3DLONG j=0; j<count_loop; j++)
+					{
+						phi = (PI*j)/count_loop;
+						x = r*cos(theta)*sin(phi);
+						y = r*sin(theta)*sin(phi);
+						z = r*cos(phi);
+						vct_tmp.push_back(this->coordinate2Index(x, y, z));
+					}
+				}
+			}
+			//sort the result and remove duplicate voxels;
+			sort (vct_tmp.begin(), vct_tmp.end());
+			for (int i=1;i<vct_tmp.size();i++)
+			{
+				if(vct_tmp[i]!=vct_tmp[i-1])
+				{
+					vct_result.push_back(vct_tmp[i]);
+				}
+			}
+			return vct_result;
+		}
+		#pragma endregion
+
 		#pragma region "utility functions"
+		V3DLONG getCenter(vector<V3DLONG> vct_input)
+		{
+			vector<V3DLONG> vct_xyz;
+			V3DLONG x;
+			V3DLONG y;
+			V3DLONG z;
+			double xSum=0;
+			double ySum=0;
+			double zSum=0;
+			V3DLONG count_voxel = vct_input.size();
+			for (int i=0;i<count_voxel;i++)
+			{
+				vct_xyz = this->index2Coordinate(vct_input[i]);
+				x=vct_xyz[0];
+				y=vct_xyz[1];
+				z=vct_xyz[2];
+				xSum += x;
+				ySum += y;
+				zSum += z;
+			}
+			return this->coordinate2Index((V3DLONG)xSum/count_voxel, (V3DLONG)ySum/count_voxel,(V3DLONG) zSum/count_voxel);
+		}
+		vector<V3DLONG> getBoundBox(vector<V3DLONG> vct_input) //output: xMin, xMax, yMin, yMax, zMin, zMax;
+		{
+			V3DLONG x = 0;
+			V3DLONG y = 0;
+			V3DLONG z = 0;
+			V3DLONG xMax = -INF;
+			V3DLONG yMax = -INF;
+			V3DLONG zMax = -INF;
+			V3DLONG xMin = INF;
+			V3DLONG yMin = INF;
+			V3DLONG zMin = INF;
+			V3DLONG count_voxel = vct_input.size();
+			vector<V3DLONG> vct_xyz (3, 0);
+			vector<V3DLONG> vct_result (6, 0);
+			V3DLONG idx_tmp;
+			for (V3DLONG idx_voxel=0;idx_voxel<count_voxel;idx_voxel++)
+			{
+				idx_tmp = vct_input[idx_voxel];
+				vct_xyz = this->index2Coordinate(idx_tmp);
+				x = vct_xyz[0];
+				y = vct_xyz[1];
+				z = vct_xyz[2];
+				if (x>xMax) {xMax=x;}
+				if (y>yMax) {yMax=y;}
+				if (z>zMax) {zMax=z;}
+				if (x<xMin) {xMin=x;}
+				if (y<yMin) {yMin=y;}
+				if (z<zMin) {zMin=z;}
+			}
+			vct_result[0]=xMin;
+			vct_result[1]=xMax;
+			vct_result[2]=yMin;
+			vct_result[3]=yMax;
+			vct_result[4]=zMin;
+			vct_result[5]=zMax;
+			return vct_result;
+		}
+
+		bool checkValidity(V3DLONG idx_input)
+		{
+			if ((idx_input>=0)&&(idx_input<this->count_totalPageSize))
+			{
+				return true;
+			}
+			else
+			{
+				return false;
+			}
+		}
+
+		vector<vector<V3DLONG> > mergeVectorList(vector<vector<V3DLONG> > vctList_input1, vector<vector<V3DLONG> > vctList_input2) //vctList_input2 will be appended to vctList_input1;
+		{
+			vector<vector<V3DLONG> > vctList_result = vctList_input1;
+			vector<V3DLONG> vct_tmp;
+			V3DLONG count_region2 = vctList_input2.size();
+			for (int i=0;i<count_region2;i++)
+			{
+				vct_tmp = vctList_input2[i];
+				vctList_result.push_back(vct_tmp);
+			}
+			return vctList_result;
+		}
+
 		void removeSingleVoxel(unsigned char* Image1D_input, V3DLONG count_imageSize)
 		{
 			bool flag_remove = true;
@@ -832,7 +974,7 @@ class class_segmentationMain
 					{
 						idx_neighbor = i+vct_neighbors[j];
 						double_neightborValue = Image1D_input[idx_neighbor];
-						if ((idx_neighbor>=0)&&(idx_neighbor<count_imageSize)) //prevent it from going out of bounds;
+						if(this->checkValidity(idx_neighbor)) //prevent it from going out of bounds;
 						{
 							double_neightborValue = Image1D_input[idx_neighbor];
 							if (double_neightborValue>this->double_threshold)
@@ -894,12 +1036,9 @@ class class_segmentationMain
 		vector<V3DLONG> index2Coordinate(V3DLONG idx)
 		{
 			vector<V3DLONG> vct_result (3, -1);
-			if (idx > -1)
-			{
-				vct_result[2] = floor((double)idx/(double)offset_Z);
-				vct_result[1] = floor((double)(idx-vct_result[2]*offset_Z)/(double)offset_Y);
-				vct_result[0] = idx- vct_result[2]*offset_Z-vct_result[1]*offset_Y;
-			}
+			vct_result[2] = floor((double)idx/(double)offset_Z);
+			vct_result[1] = floor((double)(idx-vct_result[2]*offset_Z)/(double)offset_Y);
+			vct_result[0] = idx- vct_result[2]*offset_Z-vct_result[1]*offset_Y;
 			return vct_result;
 		}
 
@@ -936,18 +1075,28 @@ class class_segmentationMain
 			}
 		}
 
-		static unsigned char* vctList2Image1D(vector<vector<V3DLONG> > vctList_input, V3DLONG count_imageSize)
+		void vctList2Image1D(unsigned char* Image1D_input, vector<vector<V3DLONG> > vctList_input)
 		{
-			unsigned char* Image1D_result = new unsigned char[count_imageSize];
-			memset(Image1D_result, 0, count_imageSize);
+			memset(Image1D_input, 0, this->count_totalPageSize);
 			for (int i=0;i<vctList_input.size();i++)
 			{
 				for (int j=0;j<vctList_input[i].size();j++)
 				{
-					Image1D_result[vctList_input[i][j]] = i+1;
+					Image1D_input[vctList_input[i][j]] = this->Image1D_page[vctList_input[i][j]];
 				}
 			}
-			return Image1D_result;
+		}
+
+		void vct2Image1D(unsigned char* Image1D_input, vector<V3DLONG> vct_input, V3DLONG int_value)
+		{
+			for (int i=0;i<vct_input.size();i++)
+			{
+				if (this->checkValidity(vct_input[i]))
+				{
+					Image1D_input[vct_input[i]] = int_value;
+				}
+				
+			}
 		}
 
 		static void neuronTree2LandmarkList(const NeuronTree & NeuronTree_input, LandmarkList & LandmarkList_output)
@@ -960,6 +1109,179 @@ class class_segmentationMain
 				LocationSimple_temp.z = NeuronTree_input.listNeuron.at(i).z;
 				LandmarkList_output.append(LocationSimple_temp);
 			}
+		}
+
+		V3DLONG vctContains(vector<V3DLONG> vct_input, V3DLONG idx_input)
+		{
+			for (int i=0;i<vct_input.size();i++)
+			{
+				if (vct_input[i] == idx_input)
+				{
+					return i;
+				}
+			}
+			return -1;
+		}
+		#pragma endregion
+
+		#pragma region "math"
+		double getCovariance(vector<double> vct_input1, vector<double> vct_input2)
+		{
+			double xmean = getMean(vct_input1);
+			double ymean = getMean(vct_input1);
+			double total = 0;
+			for(int i = 0; i < vct_input1.size(); i++)
+			{
+				total += (vct_input1[i] - xmean) * (vct_input2[i] - ymean);
+			}
+			return total/vct_input1.size();
+		}
+
+		double getStdev(vector<double> vct_input)
+		{
+			double mean = getMean(vct_input);
+			double temp = 0;
+			for(int i = 0; i < vct_input.size(); i++)
+			{
+				temp += (vct_input[i] - mean)*(vct_input[i] - mean) ;
+			}
+			return sqrt(temp/(vct_input.size()-1));
+		}
+
+		double getMean(vector<double> vct_input)
+		{
+			double sum = 0;
+			for(int i=0;i<vct_input.size();i++)
+			{
+				sum += vct_input[i];
+			}
+			return (sum/vct_input.size());
+		}
+
+		double getCorrelation(vector<double> vct_input1, vector<double> vct_input2)
+		{
+			double double_covariance = getCovariance(vct_input1, vct_input2);
+			return double_covariance/((getStdev(vct_input1))*(getStdev(vct_input2)));
+		}
+
+		double getEuclideanDistance(V3DLONG idx_input1, V3DLONG idx_input2)
+		{
+			double result = 0;
+			vector<V3DLONG> vct_xyz1 = this->index2Coordinate(idx_input1);
+			vector<V3DLONG> vct_xyz2 = this->index2Coordinate(idx_input2);
+			result+=(vct_xyz1[0]-vct_xyz2[0])*(vct_xyz1[0]-vct_xyz2[0]);
+			result+=(vct_xyz1[1]-vct_xyz2[1])*(vct_xyz1[1]-vct_xyz2[1]);
+			result+=(vct_xyz1[2]-vct_xyz2[2])*(vct_xyz1[2]-vct_xyz2[2]);
+			result = sqrt(result);
+			return result;
+		}
+		#pragma endregion
+
+		#pragma region "meanshiftClustering"
+		vector<V3DLONG> menashiftClustering(const vector<V3DLONG> vct_input, const double double_bandwidthRatio)
+		{
+			ofstream ofstream_log;
+			if (this->flag_debug) {ofstream_log.open ("log_meanshiftClustering.txt");}
+			V3DLONG count_voxel = vct_input.size();
+			vector<V3DLONG> vct_boundingBox = this->getBoundBox(vct_input);
+			double double_boxDiagonalLength = pow(double(vct_boundingBox[1]-vct_boundingBox[0])/2, 2)+pow(double(vct_boundingBox[3]-vct_boundingBox[2])/2, 2)+pow(double(vct_boundingBox[5]-vct_boundingBox[4])/2, 2);
+			double_boxDiagonalLength = sqrt(double_boxDiagonalLength);
+			double double_bandwidth = double_bandwidthRatio*double_boxDiagonalLength;
+			if (this->flag_debug) {ofstream_log<<"total voxel:"<<count_voxel<<endl;}
+			if (this->flag_debug) {ofstream_log<<"boxDiagonalLength:"<<double_boxDiagonalLength<<endl;}
+			double double_stopThresh = 1e-3*double_bandwidth; //convergence;
+			vector<V3DLONG> vct_clusterCenter;
+			vector<bool> vct_visited (count_voxel, false);
+			V3DLONG idx_mean;
+			vector<V3DLONG> vct_xyz1;
+			vector<V3DLONG> vct_xyz2;
+			V3DLONG idx_meanOld;
+			vector<double> vct_distTmp (count_voxel, 0);
+			vector<V3DLONG> vct_includeTmp;
+			vector<V3DLONG> vct_seed = vct_input;
+			V3DLONG idx_merge = 0;
+			V3DLONG count_cluster = 0;
+			V3DLONG idx_rand = 0;
+			if (this->flag_debug) {ofstream_log<<"initialization passed!"<<endl;}
+			while (!vct_seed.empty())
+			{
+				if (this->flag_debug) {ofstream_log<<"calculation started!"<<endl;}
+				idx_rand = rand()%vct_seed.size();
+				if (this->flag_debug) {ofstream_log<<"idx_rand:"<<idx_rand<<endl;}
+				idx_mean = vct_seed[idx_rand];
+				if (this->flag_debug) {ofstream_log<<"idx_mean:"<<idx_mean<<endl;}
+				vct_includeTmp.clear();
+				if (this->flag_debug) {ofstream_log<<"fill passed!"<<endl;}
+				while (true)
+				{
+					for (V3DLONG i=0;i<count_voxel;i++)
+					{
+						vct_distTmp[i] = this->getEuclideanDistance(idx_mean, vct_input[i]);
+					}
+					if (this->flag_debug) {ofstream_log<<"getEuclideanDistance passed!"<<endl;}
+					for (V3DLONG i=0;i<count_voxel;i++)
+					{
+						if (vct_distTmp[i]<double_bandwidth)
+						{
+							vct_includeTmp.push_back(vct_input[i]);
+							vct_visited[i] = true;
+						}
+					}
+					if (this->flag_debug) {ofstream_log<<"get vote passed!"<<endl;}
+					if (vct_includeTmp.size()<1)
+					{
+						break;
+					}
+					if (this->flag_debug) {ofstream_log<<"vct_includeTmp.size():"<<vct_includeTmp.size()<<endl;}
+					idx_meanOld = idx_mean;
+					idx_mean = this->getCenter(vct_includeTmp);
+					if (this->flag_debug) {ofstream_log<<"idx_mean(new):"<<idx_mean<<endl;}
+					if (this->getEuclideanDistance(idx_mean, idx_meanOld)<double_stopThresh)
+					{
+						if (this->flag_debug) {ofstream_log<<"converged!"<<endl;}
+						//possible merge;
+						idx_merge = -1;
+						for (int j=0;j<count_cluster;j++)
+						{
+							if (this->getEuclideanDistance(vct_clusterCenter[j], idx_mean)<(double_bandwidth/2))
+							{
+								idx_merge = j;
+								break;
+							}
+						}
+						if (idx_merge > 0)
+						{
+							if (this->flag_debug) {ofstream_log<<"merging start!"<<endl;}
+							vct_xyz1 = this->index2Coordinate(vct_clusterCenter[idx_merge]);
+							vct_xyz2 = this->index2Coordinate(idx_mean);
+							vct_xyz1[0] = 0.5*(vct_xyz1[0]+vct_xyz2[0]);
+							vct_xyz1[1] = 0.5*(vct_xyz1[1]+vct_xyz2[1]);
+							vct_xyz1[2] = 0.5*(vct_xyz1[2]+vct_xyz2[2]);
+							vct_clusterCenter[idx_merge] = this->coordinate2Index(vct_xyz1[0], vct_xyz1[1], vct_xyz1[2]);
+							if (this->flag_debug) {ofstream_log<<"merging succeed!"<<endl;}
+						}
+						else
+						{
+							if (this->flag_debug) {ofstream_log<<"creating start!"<<endl;}
+							vct_clusterCenter.push_back(idx_mean);
+							if (this->flag_debug) {ofstream_log<<"creating succeed"<<endl;}
+						}
+						count_cluster = vct_clusterCenter.size();
+						break;
+					}
+				}
+				vct_seed.clear();
+				for (int i=0;i<count_voxel;i++)
+				{
+					if (!vct_visited[i])
+					{
+						vct_seed.push_back(vct_input[i]);
+					}
+				}
+				if (this->flag_debug) {ofstream_log<<"vct_seed.size():"<<vct_seed.size()<<endl;}
+			}
+			if (this->flag_debug) {ofstream_log<<"succeed!"<<endl;}
+			return vct_clusterCenter;
 		}
 		#pragma endregion
 };
@@ -1039,19 +1361,19 @@ bool segmentationInterface(V3DPluginCallback2 &V3DPluginCallback2_currentCallbac
 		LandmarkList_current = LandmarkList_userDefined;
 		class_segmentationMain::neuronTree2LandmarkList(SWCList_current->first(), LandmarkList_current);
 		count_currentLandmarkList = LandmarkList_current.count();
-		ofstream_log<<"User-defined landmarks count: "<<count_currentLandmarkList<<endl;
+		ofstream_log<<"User-defined landmarks count:"<<count_currentLandmarkList<<endl;
 	}
 	else if ((count_SWCList>0) && (count_userDefinedLandmarkList<1)) //Only SWCList_current is not empty;
 	{
 		class_segmentationMain::neuronTree2LandmarkList(SWCList_current->first(), LandmarkList_current);
 		count_currentLandmarkList = LandmarkList_current.count();
-		ofstream_log<<"User-defined landmarks count: "<<count_currentLandmarkList<<endl;
+		ofstream_log<<"User-defined landmarks count:"<<count_currentLandmarkList<<endl;
 	}
 	if (count_userDefinedLandmarkList>0) //Only LandmarkList_userDefined is not empty;
 	{
 		LandmarkList_current = LandmarkList_userDefined;
 		count_currentLandmarkList = LandmarkList_current.count();
-		ofstream_log<<"User-defined landmarks count: "<<count_currentLandmarkList<<endl;
+		ofstream_log<<"User-defined landmarks count:"<<count_currentLandmarkList<<endl;
 	}
 	//open dialogMain1 window, get paramters;
     dialogMain dialogMain1(V3DPluginCallback2_currentCallback, QWidget_parent, int_channelDim);
@@ -1068,49 +1390,50 @@ bool segmentationInterface(V3DPluginCallback2 &V3DPluginCallback2_currentCallbac
 		ofstream_log.close();
 		return false;
 	}
-	ofstream_log<<"Initialization of class_segmentationMain start!"<<endl;
-	class_segmentationMain segmentationMain1(double_threshold, Image1D_current, dim_X, dim_Y, dim_Z, idx_channel, LandmarkList_current, false);
-	ofstream_log<<"Initialization of class_segmentationMain succeed!"<<endl;
-	ofstream_log<<"Current dimension: dim_X: "<<segmentationMain1.dim_X<<", dim_Y: "<<segmentationMain1.dim_Y<<", dim_Z: "<<segmentationMain1.dim_Z<<endl;
-	ofstream_log<<"Current dimension: count_totalPageSize: "<<segmentationMain1.count_totalPageSize<<endl;
-	ofstream_log<<"Current channel: "<<segmentationMain1.idx_channel<<endl;
-	ofstream_log<<"Threshold: "<<segmentationMain1.double_threshold<<endl;
-	if (segmentationMain1.vct_exemplarIndex.empty())
-	{
-		ofstream_log<<"No exemplar grown!"<<endl;
-	}
-	else
-	{
-		ofstream_log<<"Exemplar region sizes: "<<endl;
-		for (int i=0;i<segmentationMain1.vctList_exemplarRegionIndex.size();i++)
-		{
-			ofstream_log<<"	  region "<<(i+1)<<": "<<segmentationMain1.vctList_exemplarRegionIndex[i].size()<<endl;
-		}
-	}
-	ofstream_log<<"int_maxRegionVolumeByExemplar: "<<segmentationMain1.int_maxRegionVolumeByExemplar<<endl;
-	ofstream_log<<"int_minRegionVolumeByExemplar: "<<segmentationMain1.int_minRegionVolumeByExemplar<<endl;
-	ofstream_log<<"int_meanRegionVolumeByExemplar: "<<segmentationMain1.int_meanRegionVolumeByExemplar<<endl;;
-	ofstream_log<<"int_regionVolumeLowerBound: "<<segmentationMain1.int_regionVolumeLowerBound<<endl;
-	ofstream_log<<"int_regionVolumeUpperBound: "<<segmentationMain1.int_regionVolumeUpperBound<<endl;
-	//visualizationImage1D(segmentationMain1.Image1D_page,segmentationMain1.dim_X,segmentationMain1.dim_Y,segmentationMain1.dim_Z,1,V3DPluginCallback2_currentCallback, "After Thresholding");
-	visualizationImage1D(segmentationMain1.Image1D_exemplarRegion,segmentationMain1.dim_X,segmentationMain1.dim_Y,segmentationMain1.dim_Z,1,V3DPluginCallback2_currentCallback, "Exemplar Regions");
-	
+	ofstream_log<<"initialization of segmentationMain start!"<<endl;
+	class_segmentationMain segmentationMain1(double_threshold, Image1D_current, dim_X, dim_Y, dim_Z, idx_channel, LandmarkList_current, const_flag_debugMode);
 	if (!segmentationMain1.flag_success)
 	{
-		v3d_msg("Warning: segmentationMain initialization failed, program will terminate!");
+		v3d_msg("warning:initialization of segmentationMain failed, program will terminate!");
+		ofstream_log<<"segmentation failed!"<<endl;
 		ofstream_log.close();
 		return false;
 	}
-	ofstream_log<<"segmentationMain1.regonGrowOnCurrentPage() start!"<<endl;
-	segmentationMain1.regonGrowOnCurrentPage();
-	V3DPluginCallback2_currentCallback.setLandmark(v3dhandle_currentWindow, segmentationMain1.LandmarkList_segmentation);
+	ofstream_log<<"initialization of segmentationMain succeed!"<<endl;
+	ofstream_log<<"dim_X:"<<segmentationMain1.dim_X<<", dim_Y:"<<segmentationMain1.dim_Y<<", dim_Z:"<<segmentationMain1.dim_Z<<"!"<<endl;
+	ofstream_log<<"count_totalPageSize:"<<segmentationMain1.count_totalPageSize<<"!"<<endl;
+	ofstream_log<<"current channel:"<<segmentationMain1.idx_channel<<"!"<<endl;
+	ofstream_log<<"estimated threshold:"<<segmentationMain1.double_threshold<<"!"<<endl;
+	ofstream_log<<"double_sphereToRegionVolumeRatio:"<<segmentationMain1.double_sphereToRegionVolumeRatio<<"!"<<endl;
+	if (segmentationMain1.vct_exemplar.empty())
+	{
+		ofstream_log<<"no exemplar grown!"<<endl;
+	}
+	else
+	{
+		ofstream_log<<"exemplar region sizes:"<<endl;
+		for (int i=0;i<segmentationMain1.vctList_exemplarRegion.size();i++)
+		{
+			ofstream_log<<"	region "<<(i+1)<<":"<<segmentationMain1.vctList_exemplarRegion[i].size()<<"!"<<endl;
+		}
+		ofstream_log<<"double_exemplarRegionVolumeMax:"<<segmentationMain1.double_exemplarRegionVolumeMax<<"!"<<endl;
+		ofstream_log<<"double_exemplarRegionVolumeMin:"<<segmentationMain1.double_exemplarRegionVolumeMin<<"!"<<endl;
+		ofstream_log<<"double_regionVolumeLowerBound:"<<segmentationMain1.double_regionVolumeLowerBound<<"!"<<endl;
+		ofstream_log<<"exemplar shape profile:"<<endl;
+		for (int i=0;i<segmentationMain1.vctList_exemplarRegionBoudingBox.size();i++)
+		{
+			ofstream_log<<"	region "<<(i+1)<<":"<<segmentationMain1.vctList_exemplarRegion[i].size()<<endl;
+			ofstream_log<<"xMin:"<<segmentationMain1.vctList_exemplarRegionBoudingBox[i][0]<<", xMax:"<<segmentationMain1.vctList_exemplarRegionBoudingBox[i][1]<<"!"<<endl;
+			ofstream_log<<"yMin:"<<segmentationMain1.vctList_exemplarRegionBoudingBox[i][2]<<", yMax:"<<segmentationMain1.vctList_exemplarRegionBoudingBox[i][3]<<"!"<<endl;
+			ofstream_log<<"zMin:"<<segmentationMain1.vctList_exemplarRegionBoudingBox[i][4]<<", zMax:"<<segmentationMain1.vctList_exemplarRegionBoudingBox[i][5]<<"!"<<endl;
+		}
+	}
+	ofstream_log<<"total regions grown:"<<segmentationMain1.vctList_segmentationResult.size()<<"!"<<endl;
+	visualizationImage1D(segmentationMain1.Image1D_exemplarRegion,segmentationMain1.dim_X,segmentationMain1.dim_Y,segmentationMain1.dim_Z,1,V3DPluginCallback2_currentCallback, "Exemplar Regions");
+	visualizationImage1D(segmentationMain1.Image1D_segmentationResult,segmentationMain1.dim_X,segmentationMain1.dim_Y,segmentationMain1.dim_Z,1,V3DPluginCallback2_currentCallback, "Segmentation Result");
+	V3DPluginCallback2_currentCallback.setLandmark(v3dhandle_currentWindow, segmentationMain1.LandmarkList_segmentationResult);
 	V3DPluginCallback2_currentCallback.updateImageWindow(v3dhandle_currentWindow);
-	ofstream_log<<"segmentationMain1.regonGrowOnCurrentPage() succeed!"<<endl;
-	ofstream_log<<"total regions grown: "<<segmentationMain1.vctList_grownRegionIndex.size()<<"!"<<endl;
-	v3d_msg(QString("Segmentation succeed! Totally %1 segments!").arg(segmentationMain1.vctList_grownRegionIndex.size()));
-	visualizationImage1D(segmentationMain1.Image1D_segmentation,segmentationMain1.dim_X,segmentationMain1.dim_Y,segmentationMain1.dim_Z,1,V3DPluginCallback2_currentCallback, "Segmentation Result");
-	//visualizationImage1D(segmentationMain1.Image1D_mask,segmentationMain1.dim_X,segmentationMain1.dim_Y,segmentationMain1.dim_Z,1,V3DPluginCallback2_currentCallback, "Mask");
-
+	v3d_msg(QString("Segmentation succeed! Totally %1 segments!").arg(segmentationMain1.vctList_segmentationResult.size()));
 	ofstream_log.close();
     return true;
 }
