@@ -293,8 +293,8 @@ class class_segmentationMain
 		vector<vector<V3DLONG> > regionGrowOnVectorList(vector<vector<V3DLONG>> vctList_seed)
 		{
 			V3DLONG idx_tmp;
-			vector<vector<V3DLONG>> vctList_result;
-			vector<vector<V3DLONG>> vctList_tmp;
+			vector<vector<V3DLONG> > vctList_result;
+			vector<vector<V3DLONG> > vctList_tmp;
 			V3DLONG count_seedList = vctList_seed.size();
 			vector<V3DLONG> vct_tmp;
 			V3DLONG count_totalCoveredVoxel = 0;
@@ -318,7 +318,7 @@ class class_segmentationMain
 		vector<vector<V3DLONG> > regionGrowOnVector(vector<V3DLONG> vct_seed)
 		{
 			V3DLONG idx_tmp;
-			vector<vector<V3DLONG>> vctList_result;
+			vector<vector<V3DLONG> > vctList_result;
 			vector<V3DLONG> vct_tmp;
 			V3DLONG count_seed = vct_seed.size();
 			for (V3DLONG idx_seed=0;idx_seed<count_seed;idx_seed++)
@@ -394,11 +394,11 @@ class class_segmentationMain
 			}
 		}
 
-		vector<vector<V3DLONG> > sphereGrowOnVectorList(vector<vector<V3DLONG>> vctList_seed)
+		vector<vector<V3DLONG> > sphereGrowOnVectorList(vector<vector<V3DLONG> > vctList_seed)
 		{
 			V3DLONG idx_tmp;
-			vector<vector<V3DLONG>> vctList_result;
-			vector<vector<V3DLONG>> vctList_tmp;
+			vector<vector<V3DLONG> > vctList_result;
+			vector<vector<V3DLONG> > vctList_tmp;
 			V3DLONG count_seedList = vctList_seed.size();
 			vector<V3DLONG> vct_tmp;
 			V3DLONG count_totalCoveredVoxel = 0;
