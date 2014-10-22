@@ -114,7 +114,7 @@ class dialogMain: public QDialog
     QDoubleSpinBox* QDoubleSpinBox_threshold;
     V3DLONG int_channel;
     int int_thresholdType;
-    double double_threshold;
+    double threshold;
 
 	public slots:
     void update()
@@ -133,14 +133,14 @@ class dialogMain: public QDialog
     void _slot_start()
     {
         int_channel = QComboBox_channel->currentIndex() + 1;
-        double_threshold = -1;
+        threshold = -1;
         if (QDoubleSpinBox_threshold->isEnabled())
         {
-            double_threshold = QDoubleSpinBox_threshold->text().toDouble();
+            threshold = QDoubleSpinBox_threshold->text().toDouble();
         }
         else
 		{
-			double_threshold = -1; //calculate automatically;
+			threshold = -1; //calculate automatically;
 		}
 
         accept();
