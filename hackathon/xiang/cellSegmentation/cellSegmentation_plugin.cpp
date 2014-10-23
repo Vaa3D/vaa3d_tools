@@ -23,12 +23,12 @@ const int const_count_neighbors = 26; //27 directions -1;
 const double const_threshold_default = 15; //a small enough value for the last resort;
 const double const_max_valueRatioChange_default = 0.5; //how much the value can change (relative to the mean value of current region) between current voxel and its neighbor, during seed-based region growing;
 const double const_max_regionDimensionToPageDimension = 0.5; //if a region with any its dimension larger than this #% of the image, an error would be given;
-const double const_multiplier_regionVolumeLowerBound = 0.001;  //it would be a user-specified value in the future !!!;
+const double const_multiplier_regionVolumeLowerBound = 0.06;  //it would be a user-specified value in the future !!!;
 const double const_multiplier_earlyStop = 0.95;  //it would be a user-specified value in the future !!!;
 const int const_min_regionSize = 8; //2*2*2, when a region is considered as non-acceptable small;
 const int const_count_sphereSection = 12;
 const int const_max_preGenerateSphereRadius = 30;
-const double const_multiplier_bandWidthToDiagnal = 0.8;
+const double const_multiplier_bandWidthToDiagnal = 0.65;
 const double const_max_sphereGrowMissToTotalRatio = 0.1;
 #define INF 1E9
 #define NINF -1E9
@@ -224,10 +224,9 @@ class class_segmentationMain
 			vector<V3DLONG> vct_voxelTmp;
 			vector<vector<V3DLONG> > vctList_regionResult;
 			vector<V3DLONG> vct_boundBoxTmp;
-			vector<V3DLONG> vct_clusterCenterTmp;
-			V3DLONG idx_clusterCenterTmp;
-			V3DLONG count_clusterCenterTmp;
-			vector<V3DLONG> vct_growSphereTmp;
+			vector<vector<V3DLONG> > vctList_tmp;
+			vector<V3DLONG> vct_tmp;
+			
 			V3DLONG idx_center;
 			double double_volume;
 			for (V3DLONG idx_region=0;idx_region<count_region;idx_region++)
@@ -245,44 +244,43 @@ class class_segmentationMain
 				idx_center = this->getCenter(vct_voxelTmp);
 				//reset mask;
 				vct2Image1D(this->Image1D_mask, vct_voxelTmp, const_max_voxeValue);
-				vct_growSphereTmp = this->sphereGrowOnSeed(idx_center);
-				cout<<(double)vct_growSphereTmp.size()/double_volume<<endl;
+				vct_tmp = this->sphereGrowOnSeed(idx_center);
+				cout<<(double)vct_tmp.size()/double_volume<<endl;
 				//set mask;
 				vct2Image1D(this->Image1D_mask, vct_voxelTmp, 0);
 				
-				if (((double)vct_growSphereTmp.size()/double_volume)>this->lowerBound_sphereToRegionVolumeRatio)
+				if (((double)vct_tmp.size()/double_volume)>this->lowerBound_sphereToRegionVolumeRatio)
+				//if (true)
+				//if (false)
 				{
-					cout<<"passed!"<<endl;
 					//passed, need not further segmentation;
+					if (this->is_debugging) {ofstream_log<<"sphere test passed on idx_region:"<<idx_region<<endl;}
 					vctList_regionResult.push_back(vct_voxelTmp);
-					this->vct_segmentationResultCenter.push_back(idx_center);
+					//this->vct_segmentationResultCenter.push_back(idx_center);
 				}
 				else
 				{
-					vct_clusterCenterTmp = menashiftClustering(vct_voxelTmp, const_multiplier_bandWidthToDiagnal);
-					count_clusterCenterTmp = vct_clusterCenterTmp.size();
-					if (this->is_debugging) {ofstream_log<<"count_clusterCenterTmp:"<<count_clusterCenterTmp<<endl;}
-					cout<<"count_clusterCenterTmp:"<<count_clusterCenterTmp<<endl;
-					if (count_clusterCenterTmp<1)
+					//no sphere-growing;
+					if (this->is_debugging) {ofstream_log<<"sphere test failed on idx_region:"<<idx_region<<endl;}
+					vctList_tmp.clear();
+					vctList_tmp = menashiftClustering(vct_voxelTmp, const_multiplier_bandWidthToDiagnal);
+					if (this->is_debugging) {ofstream_log<<"vctList_tmp.size():"<<vctList_tmp.size()<<endl;}
+					if (!vctList_tmp.empty())
 					{
-						//error?
-						vctList_regionResult.push_back(vct_voxelTmp);
-						this->vct_segmentationResultCenter.push_back(idx_center);
-					}
-					else
-					{
-						//reset mask;
-						vct2Image1D(this->Image1D_mask, vct_voxelTmp, const_max_voxeValue);
-						for (int i=0;i<count_clusterCenterTmp;i++)
+						for (int i=0;i<vctList_tmp.size();i++)
 						{
-							idx_clusterCenterTmp = vct_clusterCenterTmp[i];
-							
-							vct_growSphereTmp = this->sphereGrowOnSeed(idx_clusterCenterTmp);
-							
-							if (!vct_growSphereTmp.empty())
+							vct_tmp = vctList_tmp[i];
+							if (!vct_tmp.empty())
 							{
-								vctList_regionResult.push_back(vct_growSphereTmp);
-								this->vct_segmentationResultCenter.push_back(idx_clusterCenterTmp);
+								vct_boundBoxTmp = this->getBoundBox(vct_tmp);
+								double_volume = (vct_boundBoxTmp[1]-vct_boundBoxTmp[0])*(vct_boundBoxTmp[3]-vct_boundBoxTmp[2])*(vct_boundBoxTmp[5]-vct_boundBoxTmp[4]);
+								if (this->is_debugging) {ofstream_log<<"double_volume:"<<double_volume<<endl;}
+								if (double_volume>=this->lowerBound_regionVolume)
+								{
+									vctList_regionResult.push_back(vct_tmp);
+									//this->vct_segmentationResultCenter.push_back(this->getCenter(vctList_tmp[i]));
+									//if (this->is_debugging) {ofstream_log<<"this->vct_segmentationResultCenter.back():"<<this->vct_segmentationResultCenter.back()<<endl;}
+								}
 							}
 						}
 					}
@@ -880,6 +878,7 @@ class class_segmentationMain
 			V3DLONG x;
 			V3DLONG y;
 			V3DLONG z;
+			V3DLONG idx_result;
 			double xSum=0;
 			double ySum=0;
 			double zSum=0;
@@ -894,7 +893,26 @@ class class_segmentationMain
 				ySum += y;
 				zSum += z;
 			}
-			return this->coordinate2Index((V3DLONG)xSum/count_voxel, (V3DLONG)ySum/count_voxel,(V3DLONG) zSum/count_voxel);
+			idx_result = this->coordinate2Index((V3DLONG)xSum/count_voxel, (V3DLONG)ySum/count_voxel,(V3DLONG) zSum/count_voxel);
+			return this->getNearestVoxel(vct_input, idx_result);
+		}
+
+		V3DLONG getNearestVoxel(vector<V3DLONG> vct_input, V3DLONG idx_input)
+		{
+			double min_distance = INF;
+			double tmp_distance = 0;
+			V3DLONG idx_result = -1;
+			V3DLONG count_voxel = vct_input.size();
+			for (int i=0;i<count_voxel;i++)
+			{
+				tmp_distance = this->getEuclideanDistance(idx_input, vct_input[i]);
+				if (tmp_distance<min_distance)
+				{
+					min_distance = tmp_distance;
+					idx_result = vct_input[i];
+				}
+			}
+			return idx_result;
 		}
 
 		V3DLONG getMassCenter(vector<V3DLONG> vct_input)
@@ -1191,6 +1209,7 @@ class class_segmentationMain
 		double getEuclideanDistance(V3DLONG idx_input1, V3DLONG idx_input2)
 		{
 			double result = 0;
+			if((idx_input1==INF)||(idx_input2==INF)) {return INF;}
 			vector<V3DLONG> vct_xyz1 = this->index2Coordinate(idx_input1);
 			vector<V3DLONG> vct_xyz2 = this->index2Coordinate(idx_input2);
 			result+=(vct_xyz1[0]-vct_xyz2[0])*(vct_xyz1[0]-vct_xyz2[0]);
@@ -1202,7 +1221,7 @@ class class_segmentationMain
 		#pragma endregion
 
 		#pragma region "meanshiftClustering"
-		vector<V3DLONG> menashiftClustering(const vector<V3DLONG> vct_input, const double double_bandwidthRatio)
+		vector<vector<V3DLONG> > menashiftClustering(const vector<V3DLONG> vct_input, const double double_bandwidthRatio)
 		{
 			ofstream ofstream_log;
 			if (this->is_debugging) {ofstream_log.open ("log_meanshiftClustering.txt");}
@@ -1214,18 +1233,25 @@ class class_segmentationMain
 			if (this->is_debugging) {ofstream_log<<"total voxel:"<<count_voxel<<endl;}
 			if (this->is_debugging) {ofstream_log<<"boxDiagonalLength:"<<double_boxDiagonalLength<<endl;}
 			double double_stopThresh = 1e-3*double_bandwidth; //convergence;
-			vector<V3DLONG> vct_clusterCenter;
-			vector<bool> vct_visited (count_voxel, false);
 			V3DLONG idx_mean;
 			vector<V3DLONG> vct_xyz1;
 			vector<V3DLONG> vct_xyz2;
 			V3DLONG idx_meanOld;
 			vector<double> vct_distTmp (count_voxel, 0);
-			vector<V3DLONG> vct_includeTmp;
+			vector<vector<V3DLONG> > vctList_cluster;
+			vector<vector<V3DLONG> > vctList_result;
+			vector<V3DLONG> vct_tmp;
+			vector<bool> vct_visited (count_voxel, false);
+			vector<int> vct_voteTmp (count_voxel, 0);
+			vector<vector<int> > vctList_vote;
 			vector<V3DLONG> vct_seed = vct_input;
+			vector<V3DLONG> vct_clusterCenter;
+			vector<V3DLONG> vct_empty(0, 0);
 			V3DLONG idx_merge = 0;
 			V3DLONG count_cluster = 0;
 			V3DLONG idx_rand = 0;
+			double double_volumeTmp1 = 0;
+			double double_volumeTmp2 = 0;
 			if (this->is_debugging) {ofstream_log<<"initialization passed!"<<endl;}
 			while (!vct_seed.empty())
 			{
@@ -1234,8 +1260,9 @@ class class_segmentationMain
 				if (this->is_debugging) {ofstream_log<<"idx_rand:"<<idx_rand<<endl;}
 				idx_mean = vct_seed[idx_rand];
 				if (this->is_debugging) {ofstream_log<<"idx_mean:"<<idx_mean<<endl;}
-				vct_includeTmp.clear();
 				if (this->is_debugging) {ofstream_log<<"fill passed!"<<endl;}
+				fill(vct_voteTmp.begin(), vct_voteTmp.end(), 0);
+				vct_tmp.clear();
 				while (true)
 				{
 					for (V3DLONG i=0;i<count_voxel;i++)
@@ -1247,18 +1274,19 @@ class class_segmentationMain
 					{
 						if (vct_distTmp[i]<double_bandwidth)
 						{
-							vct_includeTmp.push_back(vct_input[i]);
+							if (vct_voteTmp[i]<1)
+							{vct_tmp.push_back(vct_input[i]);}
 							vct_visited[i] = true;
+							vct_voteTmp[i] = vct_voteTmp[i] + 1;
 						}
 					}
-					if (this->is_debugging) {ofstream_log<<"get vote passed!"<<endl;}
-					if (vct_includeTmp.size()<1)
+					if (vct_tmp.empty())
 					{
 						break;
 					}
-					if (this->is_debugging) {ofstream_log<<"vct_includeTmp.size():"<<vct_includeTmp.size()<<endl;}
+					if (this->is_debugging) {ofstream_log<<"vct_tmp.size():"<<vct_tmp.size()<<endl;}
 					idx_meanOld = idx_mean;
-					idx_mean = this->getCenter(vct_includeTmp);
+					idx_mean = this->getCenter(vct_tmp);
 					if (this->is_debugging) {ofstream_log<<"idx_mean(new):"<<idx_mean<<endl;}
 					if (this->getEuclideanDistance(idx_mean, idx_meanOld)<double_stopThresh)
 					{
@@ -1276,21 +1304,29 @@ class class_segmentationMain
 						if (idx_merge > 0)
 						{
 							if (this->is_debugging) {ofstream_log<<"merging start!"<<endl;}
-							vct_xyz1 = this->index2Coordinate(vct_clusterCenter[idx_merge]);
-							vct_xyz2 = this->index2Coordinate(idx_mean);
-							vct_xyz1[0] = 0.5*(vct_xyz1[0]+vct_xyz2[0]);
-							vct_xyz1[1] = 0.5*(vct_xyz1[1]+vct_xyz2[1]);
-							vct_xyz1[2] = 0.5*(vct_xyz1[2]+vct_xyz2[2]);
-							vct_clusterCenter[idx_merge] = this->coordinate2Index(vct_xyz1[0], vct_xyz1[1], vct_xyz1[2]);
+							for (int k=0;k<vct_tmp.size();k++)
+							{
+								if (vctContains(vctList_cluster[idx_merge], vct_tmp[k])<0)
+								{
+									vctList_cluster[idx_merge].push_back(vct_tmp[k]);
+								}
+							}
+							vct_clusterCenter[idx_merge] = this->getCenter(vctList_cluster[idx_merge]) ;
+							for (int k=0;k<count_voxel;k++)
+							{
+								vctList_vote[idx_merge][k] = vctList_vote[idx_merge][k] + vct_voteTmp[k];
+							}
 							if (this->is_debugging) {ofstream_log<<"merging succeed!"<<endl;}
 						}
 						else
 						{
 							if (this->is_debugging) {ofstream_log<<"creating start!"<<endl;}
+							vctList_cluster.push_back(vct_tmp);
 							vct_clusterCenter.push_back(idx_mean);
+							vctList_vote.push_back(vct_voteTmp);
+							count_cluster++;
 							if (this->is_debugging) {ofstream_log<<"creating succeed"<<endl;}
 						}
-						count_cluster = vct_clusterCenter.size();
 						break;
 					}
 				}
@@ -1304,8 +1340,58 @@ class class_segmentationMain
 				}
 				if (this->is_debugging) {ofstream_log<<"vct_seed.size():"<<vct_seed.size()<<endl;}
 			}
+			//final merging;
+			for (int i=0;i<count_cluster;i++)
+			{
+				for (int j=0;j<count_cluster;j++)
+				{
+					if (i!=j)
+					{
+						if (this->getEuclideanDistance(vct_clusterCenter[i], vct_clusterCenter[j])<(double_bandwidth/4))
+						{
+							//merge them;
+							for (int k=0;k<vctList_cluster[j].size();k++)
+							{
+								if (vctContains(vctList_cluster[i], vctList_cluster[j][k])<0)
+								{
+									vctList_cluster[i].push_back(vctList_cluster[j][k]);
+								}
+							}
+							vct_clusterCenter[i] = this->getCenter(vctList_cluster[i]) ;
+							for (int k=0;k<count_voxel;k++)
+							{
+								vctList_vote[i][k] = vctList_vote[i][k] + vctList_vote[j][k];
+							}
+							//destroy j-th cluster;
+							vct_clusterCenter[j] = INF;
+							fill(vctList_vote[j].begin(),vctList_vote[j].end(),0);
+						}
+					}
+					
+				}
+			}
+			for (int i=0;i<count_cluster;i++)
+			{
+				vctList_result.push_back(vct_empty);
+			}
+			int max_vote;
+			int idx_vote;
+			if (this->is_debugging) {ofstream_log<<"summary vote succeed!"<<endl;}
+			for (int i=0;i<count_voxel;i++)
+			{
+				max_vote = -INF;
+				for (int j=0;j<count_cluster;j++)
+				{
+					if (vctList_vote[j][i]>max_vote)
+					{
+						max_vote = vctList_vote[j][i];
+						idx_vote = j;
+					}
+				}
+				vctList_result[idx_vote].push_back(vct_input[i]);
+			}
 			if (this->is_debugging) {ofstream_log<<"succeed!"<<endl;}
-			return vct_clusterCenter;
+			return vctList_result;
 		}
 		#pragma endregion
 };
