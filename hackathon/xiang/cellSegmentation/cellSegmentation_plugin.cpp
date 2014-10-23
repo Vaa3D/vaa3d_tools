@@ -102,6 +102,7 @@ class class_segmentationMain
 		
 		//Input or directly derived;
 		bool is_debugging;
+		bool is_sphereGrowing;
 		double threshold;
 		unsigned char* Image1D_original;
 		unsigned char *Image1D_page;
@@ -141,6 +142,7 @@ class class_segmentationMain
 		class_segmentationMain(double double_thresholdInput, unsigned char* Image1D_input, V3DLONG int_xDimInput, V3DLONG int_yDimInput, V3DLONG int_zDimInput , int int_channelInput, LandmarkList LandmarkList_input, bool flag_debugInput)
 		{
 			this->is_success = false;
+			this->is_sphereGrowing = false;
 			this->is_debugging = flag_debugInput;
 			this->Image1D_original = Image1D_input;
 			this->dim_X = int_xDimInput; this->dim_Y = int_yDimInput; this->dim_Z = int_zDimInput; this->idx_channel = int_channelInput;
@@ -260,26 +262,44 @@ class class_segmentationMain
 				}
 				else
 				{
-					//no sphere-growing;
 					if (this->is_debugging) {ofstream_log<<"sphere test failed on idx_region:"<<idx_region<<endl;}
 					vctList_tmp.clear();
 					vctList_tmp = menashiftClustering(vct_voxelTmp, const_multiplier_bandWidthToDiagnal);
 					if (this->is_debugging) {ofstream_log<<"vctList_tmp.size():"<<vctList_tmp.size()<<endl;}
 					if (!vctList_tmp.empty())
 					{
-						for (int i=0;i<vctList_tmp.size();i++)
+						if (this->is_sphereGrowing)
 						{
-							vct_tmp = vctList_tmp[i];
-							if (!vct_tmp.empty())
+							//reset mask;
+							vct2Image1D(this->Image1D_mask, vct_voxelTmp, const_max_voxeValue);
+							for (int i=0;i<vctList_tmp.size();i++)
 							{
-								vct_boundBoxTmp = this->getBoundBox(vct_tmp);
-								double_volume = (vct_boundBoxTmp[1]-vct_boundBoxTmp[0])*(vct_boundBoxTmp[3]-vct_boundBoxTmp[2])*(vct_boundBoxTmp[5]-vct_boundBoxTmp[4]);
-								if (this->is_debugging) {ofstream_log<<"double_volume:"<<double_volume<<endl;}
-								if (double_volume>=this->lowerBound_regionVolume)
+								vct_tmp = vctList_tmp[i];
+								if (!vct_tmp.empty())
 								{
-									vctList_regionResult.push_back(vct_tmp);
-									//this->vct_segmentationResultCenter.push_back(this->getCenter(vctList_tmp[i]));
-									//if (this->is_debugging) {ofstream_log<<"this->vct_segmentationResultCenter.back():"<<this->vct_segmentationResultCenter.back()<<endl;}
+									vector<V3DLONG> vct_growSphereTmp = this->sphereGrowOnSeed(this->getCenter(vct_tmp));
+									//if (vct_growSphereTmp.size()>this->lowerBound_regionVolume)
+									{
+										vctList_regionResult.push_back(vct_growSphereTmp);
+									}
+								}
+							}
+							//set mask;
+							vct2Image1D(this->Image1D_mask, vct_voxelTmp, 0);
+						}
+						else
+						{
+							for (int i=0;i<vctList_tmp.size();i++)
+							{
+								vct_tmp = vctList_tmp[i];
+								if (!vct_tmp.empty())
+								{
+									vct_boundBoxTmp = this->getBoundBox(vct_tmp);
+									double_volume = (vct_boundBoxTmp[1]-vct_boundBoxTmp[0])*(vct_boundBoxTmp[3]-vct_boundBoxTmp[2])*(vct_boundBoxTmp[5]-vct_boundBoxTmp[4]);
+									if (double_volume>=this->lowerBound_regionVolume)
+									{
+										vctList_regionResult.push_back(vct_tmp);
+									}
 								}
 							}
 						}
