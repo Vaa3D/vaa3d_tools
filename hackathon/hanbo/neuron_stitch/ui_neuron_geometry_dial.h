@@ -103,14 +103,16 @@ public:
     QPushButton *pushButton_linkMarkerNeuron;
     QPushButton *pushButton_linkMatchingMarker;
     QPushButton *pushButton_affineByMarkers;
+    QPushButton *pushButton_autoAffine;
+    QLabel *label_marker;
 
     void setupUi(QDialog *NeuronGeometryDialog)
     {
         if (NeuronGeometryDialog->objectName().isEmpty())
             NeuronGeometryDialog->setObjectName(QString::fromUtf8("NeuronGeometryDialog"));
-        NeuronGeometryDialog->resize(550,650);
-        NeuronGeometryDialog->setMinimumSize(QSize(550,480));
-        NeuronGeometryDialog->setMaximumSize(QSize(550,720));
+        NeuronGeometryDialog->resize(600,700);
+        NeuronGeometryDialog->setMinimumSize(QSize(600,480));
+        NeuronGeometryDialog->setMaximumSize(QSize(600,800));
         label_11 = new QLabel(NeuronGeometryDialog);
         label_11->setObjectName(QString::fromUtf8("label_11"));
         //label_11->setGeometry(QRect(24, 448, 469, 53));
@@ -118,8 +120,8 @@ public:
         widget = new QWidget(NeuronGeometryDialog);
         widget->setObjectName(QString::fromUtf8("widget"));
         //widget->setGeometry(QRect(19, 14, 478, 425));
-        widget->setMinimumWidth(550);
-        widget->setMaximumWidth(550);
+        widget->setMinimumWidth(600);
+        widget->setMaximumWidth(600);
         verticalLayout = new QVBoxLayout(widget);
         verticalLayout->setObjectName(QString::fromUtf8("verticalLayout"));
         verticalLayout->setContentsMargins(0, 0, 0, 0);
@@ -197,6 +199,7 @@ public:
         pushButton_neurontype = new QPushButton(widget);
         pushButton_neurontype->setObjectName(QString::fromUtf8("pushButton_neurontype"));
         pushButton_neurontype->setAutoDefault(false);
+        //pushButton_neurontype->setFlat(true);
         hboxLayout_t2->addWidget(pushButton_neurontype);
 
         verticalLayout->addLayout(hboxLayout_t2);
@@ -218,11 +221,13 @@ public:
         pushButton_quickmove = new QPushButton(widget);
         pushButton_quickmove->setObjectName(QString::fromUtf8("pushButton_quickmove"));
         pushButton_quickmove->setAutoDefault(false);
+        //pushButton_quickmove->setFlat(true);
         hboxLayout_t3->addWidget(pushButton_quickmove);
 
         pushButton_updatebox = new QPushButton(widget);
         pushButton_updatebox->setObjectName(QString::fromUtf8("pushButton_updatebox"));
         pushButton_updatebox->setAutoDefault(false);
+        //pushButton_updatebox->setFlat(true);
         hboxLayout_t3->addWidget(pushButton_updatebox);
 
         verticalLayout->addLayout(hboxLayout_t3);
@@ -232,24 +237,39 @@ public:
         hboxLayout_t4->setContentsMargins(0, 0, 0, 0);
         hboxLayout_t4->setMargin(0);
 
+        label_marker = new QLabel(widget);
+        label_marker->setObjectName(QString::fromUtf8("label_marker"));
+        label_marker->setAlignment(Qt::AlignRight|Qt::AlignVCenter);
+        hboxLayout_t4->addWidget(label_marker);
+
+        pushButton_autoAffine = new QPushButton(widget);
+        pushButton_autoAffine->setObjectName(QString::fromUtf8("pushButton_autoAffine"));
+        pushButton_autoAffine->setAutoDefault(false);
+        //pushButton_autoAffine->setFlat(true);
+        hboxLayout_t4->addWidget(pushButton_autoAffine);
+
         pushButton_generateMarker = new QPushButton(widget);
         pushButton_generateMarker->setObjectName(QString::fromUtf8("pushButton_generateMarker"));
         pushButton_generateMarker->setAutoDefault(false);
+        //pushButton_generateMarker->setFlat(true);
         hboxLayout_t4->addWidget(pushButton_generateMarker);
 
         pushButton_linkMarkerNeuron = new QPushButton(widget);
         pushButton_linkMarkerNeuron->setObjectName(QString::fromUtf8("pushButton_linkMarkerNeuron"));
         pushButton_linkMarkerNeuron->setAutoDefault(false);
+        //pushButton_linkMarkerNeuron->setFlat(true);
         hboxLayout_t4->addWidget(pushButton_linkMarkerNeuron);
 
         pushButton_linkMatchingMarker = new QPushButton(widget);
         pushButton_linkMatchingMarker->setObjectName(QString::fromUtf8("pushButton_linkMatchingMarker"));
         pushButton_linkMatchingMarker->setAutoDefault(false);
+        //pushButton_linkMatchingMarker->setFlat(true);
         hboxLayout_t4->addWidget(pushButton_linkMatchingMarker);
 
         pushButton_affineByMarkers = new QPushButton(widget);
         pushButton_affineByMarkers->setObjectName(QString::fromUtf8("pushButton_affineByMarkers"));
         pushButton_affineByMarkers->setAutoDefault(false);
+        //pushButton_affineByMarkers->setFlat(true);
         hboxLayout_t4->addWidget(pushButton_affineByMarkers);
 
         verticalLayout->addLayout(hboxLayout_t4);
@@ -410,6 +430,7 @@ public:
         pushButton_refresh_rcent = new QPushButton(widget);
         pushButton_refresh_rcent->setObjectName(QString::fromUtf8("pushButton_refresh_rcent"));
         pushButton_refresh_rcent->setAutoDefault(false);
+        //pushButton_refresh_rcent->setFlat(true);
 
         vLayout_rotation->addWidget(pushButton_refresh_rcent);
 
@@ -494,12 +515,14 @@ public:
         pushButton_reset = new QPushButton(widget);
         pushButton_reset->setObjectName(QString::fromUtf8("pushButton_reset"));
         pushButton_reset->setAutoDefault(false);
+        //pushButton_reset->setFlat(true);
 
         hboxLayout1->addWidget(pushButton_reset);
 
         pushButton_save = new QPushButton(widget);
         pushButton_save->setObjectName(QString::fromUtf8("pushButton_save"));
         pushButton_save->setAutoDefault(false);
+        //pushButton_save->setFlat(true);
 
         hboxLayout1->addWidget(pushButton_save);
 
@@ -510,12 +533,14 @@ public:
         pushButton_cancel = new QPushButton(widget);
         pushButton_cancel->setObjectName(QString::fromUtf8("pushButton_cancel"));
         pushButton_cancel->setAutoDefault(false);
+        //pushButton_cancel->setFlat(true);
 
         hboxLayout1->addWidget(pushButton_cancel);
 
         pushButton_ok = new QPushButton(widget);
         pushButton_ok->setObjectName(QString::fromUtf8("pushButton_ok"));
         pushButton_ok->setAutoDefault(false);
+        //pushButton_ok->setFlat(true);
 
         hboxLayout1->addWidget(pushButton_ok);
 
@@ -565,10 +590,12 @@ public:
         pushButton_updatebox->setText(QApplication::translate("NeuronGeometryDialog", "Update Bounding Box", 0, QApplication::UnicodeUTF8));
         pushButton_neurontype->setText(QApplication::translate("NeuronGeometryDialog", "Change Color", 0, QApplication::UnicodeUTF8));
 
-        pushButton_generateMarker->setText(QApplication::translate("NeuronGeometryDialog", "Update Markers", 0, QApplication::UnicodeUTF8));
-        pushButton_linkMarkerNeuron->setText(QApplication::translate("NeuronGeometryDialog", "Link Marker-Neuron", 0, QApplication::UnicodeUTF8));
+        label_marker->setText(QApplication::translate("NeuronGeometryDialog", "Affine by Markers", 0, QApplication::UnicodeUTF8));
+        pushButton_autoAffine->setText(QApplication::translate("NeuronGeometryDialog", "Auto", 0, QApplication::UnicodeUTF8));
+        pushButton_generateMarker->setText(QApplication::translate("NeuronGeometryDialog", "Update", 0, QApplication::UnicodeUTF8));
+        pushButton_linkMarkerNeuron->setText(QApplication::translate("NeuronGeometryDialog", "Relink Neuron", 0, QApplication::UnicodeUTF8));
         pushButton_linkMatchingMarker->setText(QApplication::translate("NeuronGeometryDialog", "Pair Markers", 0, QApplication::UnicodeUTF8));
-        pushButton_affineByMarkers->setText(QApplication::translate("NeuronGeometryDialog", "Affine by Markers", 0, QApplication::UnicodeUTF8));
+        pushButton_affineByMarkers->setText(QApplication::translate("NeuronGeometryDialog", "Pair Affine", 0, QApplication::UnicodeUTF8));
     } // retranslateUi
 
 };

@@ -30,6 +30,8 @@ public:
     View3DControl * v3dcontrol;
 
 protected:
+    bool run_status;
+
     //changes
     double cur_shift_x[2], cur_shift_y[2], cur_shift_z[2],
            cur_scale_x[2], cur_scale_y[2], cur_scale_z[2],
@@ -62,6 +64,7 @@ private:
     void updateContent();
 
 public slots:
+    void auto_affine();
     void link_marker_neuron_force();
     void link_markers();
     void affine_markers();

@@ -10,11 +10,27 @@
 
 #define NTDIS(a,b) (((a).x-(b).x)*((a).x-(b).x)+((a).y-(b).y)*((a).y-(b).y)+((a).z-(b).z)*((a).z-(b).z))
 
+struct Clique3{
+    int v[3]; //vertex, v[0]~v[1]=e[0], v[1]~v[2]=e[1]
+    double e[3]; //e[0]<=e[1]<=e[2]
+    double idx[3]; //the id of vertices in XYZList
+    QList<XYZ> c; //coordinate of vertices, will remove later
+};
+
+void getCliques(const NeuronTree& nt, QList<int> list,  QList<Clique3> & cqlist, double minDis);
+void getMatchingCandidates(const NeuronTree& nt, QList<int>& cand, float min, float max, int direction);
+bool matchCandidates(QList<NeuronTree> * ntList, QList<int> * cand, double span, int direction, QList<int> MatchMarkers[2]); //from cand[1] to cand[0]
+bool matchCandidates_speed(QList<NeuronTree> * ntList, QList<int> * cand, double span, int direction, QList<int> MatchMarkers[2]); //from cand[1] to cand[0]
+
+void getMatchPairs_XYZList(const QList<XYZ>& c0, const QList<XYZ>& c1, QList<int> * MatchMarkers, double span);
 double distance_XYZList(QList<XYZ> c0, QList<XYZ> c1);
 void rotation_XYZList(QList<XYZ> in, QList<XYZ>& out, double angle, int axis); //angle is 0-360  based
+void affine_XYZList(const QList<XYZ>& in, QList<XYZ>& out, double shift_x, double shift_y, double shift_z, double angle, double cent_x, double cent_y, double cent_z, int axis); //angle is 0-360  based
 bool compute_affine_4dof(QList<XYZ> reference, QList<XYZ> tomove, double& shift_x, double& shift_y, double & shift_z, double & angle_r, double & cent_x,double & cent_y,double & cent_z,int dir);
+bool compute_rotation(QList<XYZ> reference, QList<XYZ> tomove, double& ang,int dir); //reference and tomove should all be 0 centered.
 
 void update_marker_info(const LocationSimple& mk, int* info); //info[0]=neuron id, info[1]=point id, info[2]=matching marker
+void update_marker_info(const LocationSimple& mk, int* info, int* color);
 bool get_marker_info(const LocationSimple& mk, int* info);
 
 void getNeuronTreeBound(const NeuronTree& nt, float * bound, int direction);

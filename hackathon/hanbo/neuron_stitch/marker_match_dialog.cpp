@@ -94,13 +94,15 @@ void marker_match_dialog::add()
 
     //update neuron info
     LocationSimple * p;
-    int info[3];
+    int info[3],color[3];
     get_marker_info(mList->at(idx0),info);
     info[2] = idx1;
-    update_marker_info(mList->at(idx0),info);
+    color[0]=255;color[1]=0;color[2]=0;
+    update_marker_info(mList->at(idx0),info,color);
     get_marker_info(mList->at(idx1),info);
     info[2] = idx0;
-    update_marker_info(mList->at(idx1),info);
+    color[0]=0;color[1]=255;color[2]=0;
+    update_marker_info(mList->at(idx1),info,color);
 
     //update dialog
     m0.removeAt(i0);

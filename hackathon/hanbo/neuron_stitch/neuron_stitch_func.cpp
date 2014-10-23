@@ -4,12 +4,444 @@
 #include "neuron_stitch_func.h"
 
 #include <QDialog>
+#include <QProgressDialog>
 #include <fstream>
 #include <iostream>
 #include <vector>
 #include "math.h"
 
 using namespace std;
+
+bool matchCandidates(QList<NeuronTree> * ntList, QList<int> * cand, double span, int direction, QList<int> MatchMarkers[2]) //from cand[1] to cand[0]
+{
+    double shift_x = 0, shift_y = 0, shift_z = 0, cent_x = 0, cent_y = 0, cent_z = 0, angle = 0;
+    MatchMarkers[0].clear();
+    MatchMarkers[1].clear();
+
+    //construct clique
+    QList<Clique3> clique0;
+    getCliques(ntList->at(0), cand[0], clique0, span);
+    if(clique0.size()<0)
+        return false;
+    QList<Clique3> clique1;
+    getCliques(ntList->at(1), cand[1], clique1, span);
+    if(clique1.size()<0)
+        return false;
+
+    //perform matching based on cliques
+    int cmatchcount = 0, changecount = 0;
+    int bestMatch = 0;
+    double cmatchThr = span;
+    QList<int> matchPoint[2];
+    matchPoint[0] = QList<int>(); matchPoint[0].clear();
+    matchPoint[1] = QList<int>(); matchPoint[1].clear();
+    QList<XYZ> candcoord0;
+    QList<XYZ> candcoord1;
+    QList<XYZ> tmpcoord;
+    candcoord0.clear();
+    for(int i=0; i<cand[0].size(); i++){
+        candcoord0.append(XYZ(ntList->at(0).listNeuron.at(cand[0].at(i))));
+        if(direction == 0) candcoord0[i].x = 0;
+        if(direction == 1) candcoord0[i].y = 0;
+        if(direction == 2) candcoord0[i].z = 0;
+    }
+    candcoord1.clear();
+    for(int i=0; i<cand[1].size(); i++){
+        candcoord1.append(XYZ(ntList->at(1).listNeuron.at(cand[1].at(i))));
+        if(direction == 0) candcoord1[i].x = 0;
+        if(direction == 1) candcoord1[i].y = 0;
+        if(direction == 2) candcoord1[i].z = 0;
+    }
+    QList<int> tmpMatchMarkers[2];
+    tmpMatchMarkers[0]=QList<int>();
+    tmpMatchMarkers[1]=QList<int>();
+    QProgressDialog progressDial("Performing Global Search... Skipping search may generate wrong result.","Skipping Search",0,clique0.size(),0);
+    progressDial.setWindowModality(Qt::WindowModal);
+    for(int i=0; i<clique0.size(); i++){
+        progressDial.setValue(i);
+        for(int j=0; j<clique1.size(); j++){
+            //find matching clique
+            double cdis = fabs(clique0[i].e[0]-clique1[j].e[0]) + fabs(clique0[i].e[1]-clique1[j].e[1]) + fabs(clique0[i].e[2]-clique1[j].e[2]);
+            if(cdis>cmatchThr)
+                continue;
+            cmatchcount++;
+            //get affinement between cliques
+            shift_x = 0; shift_y = 0; shift_z = 0; cent_x = 0; cent_y = 0; cent_z = 0; angle = 0;
+            if(direction == 0) shift_x = -1;
+            if(direction == 1) shift_y = -1;
+            if(direction == 2) shift_z = -1;
+
+            if(!compute_affine_4dof(clique0[i].c,clique1[j].c,shift_x,shift_y,shift_z,angle,cent_x,cent_y,cent_z,direction))
+                continue;
+            //find the matched point by clique
+            affine_XYZList(candcoord1, tmpcoord, shift_x, shift_y, shift_z, angle, cent_x, cent_y, cent_z, direction);
+            getMatchPairs_XYZList(candcoord0, tmpcoord, tmpMatchMarkers, span);
+            if(tmpMatchMarkers[0].size()>bestMatch){
+                changecount++;
+                bestMatch = tmpMatchMarkers[0].size();
+                matchPoint[0] = tmpMatchMarkers[0];
+                matchPoint[1] = tmpMatchMarkers[1];
+                qDebug()<<"affine: "<<shift_x<<":"<<shift_y<<":"<<shift_z<<":"<<angle<<":"<<cent_x<<":"<<cent_y<<":"<<cent_z;
+                progressDial.setLabelText("Performing Global Search... Can skip when there are sufficient matched points.\n Identified "+
+                                          QString::number(matchPoint[0].size()) + " matched point out of " + QString::number(cand[0].size()) + ":" + QString::number(cand[1].size()));
+            }
+        }
+        if(progressDial.wasCanceled()) break;
+    }
+    progressDial.setValue(clique0.size());
+
+    qDebug()<<"match and search: "<<matchPoint[0].size()<<" matched point, "<<cmatchcount<<" similar cliques found in the first searching round";
+
+    if(matchPoint[0].size()<0){
+        return false;
+    }
+
+    //affine by all matched points and try to find more
+    QList<XYZ> matchcoord0, matchcoord1;
+    do{
+        qDebug()<<"new search round, match point number: "<<matchPoint[0].size();
+        matchcoord0.clear();
+        matchcoord1.clear();
+        for(int i=0; i<matchPoint[0].size(); i++){
+            matchcoord0.append(XYZ(ntList->at(0).listNeuron.at(cand[0].at(matchPoint[0].at(i)))));
+            matchcoord1.append(XYZ(ntList->at(1).listNeuron.at(cand[1].at(matchPoint[1].at(i)))));
+        }
+        shift_x = 0; shift_y = 0; shift_z = 0; cent_x = 0; cent_y = 0; cent_z = 0; angle = 0;
+        if(direction == 0) shift_x = -1;
+        if(direction == 1) shift_y = -1;
+        if(direction == 2) shift_z = -1;
+        if(!compute_affine_4dof(matchcoord0,matchcoord1,shift_x,shift_y,shift_z,angle,cent_x,cent_y,cent_z,direction)){
+            qDebug("section affine process failed, please check the code");
+            return false;
+        }
+        qDebug()<<"affine: "<<shift_x<<":"<<shift_y<<":"<<shift_z<<":"<<angle<<":"<<cent_x<<":"<<cent_y<<":"<<cent_z;
+        affine_XYZList(candcoord1, tmpcoord, shift_x,shift_y,shift_z,angle,cent_x,cent_y,cent_z, direction);
+        getMatchPairs_XYZList(candcoord0, tmpcoord, tmpMatchMarkers, span);
+        if(matchPoint[0].size() == tmpMatchMarkers[0].size()){
+            matchPoint[0] = tmpMatchMarkers[0];
+            matchPoint[1] = tmpMatchMarkers[1];
+            break;
+        }else if(matchPoint[0].size() > tmpMatchMarkers[0].size()){
+            qDebug("matching point number reduced, quit second round optimization");
+            break;
+        }else{
+            matchPoint[0] = tmpMatchMarkers[0];
+            matchPoint[1] = tmpMatchMarkers[1];
+        }
+    }while(1);
+    qDebug()<<"match and search: "<<matchPoint[0].size()<<" matched point found in the second searching round";
+
+    //populate MatchMarkers
+    for(int i=0; i<matchPoint[0].size(); i++){
+        MatchMarkers[0].append(cand[0].at(matchPoint[0].at(i)));
+        MatchMarkers[1].append(cand[1].at(matchPoint[1].at(i)));
+    }
+    return true;
+}
+
+bool matchCandidates_speed(QList<NeuronTree> * ntList, QList<int> * cand, double span, int direction, QList<int> MatchMarkers[2]) //from cand[1] to cand[0]
+{
+    MatchMarkers[0].clear();
+    MatchMarkers[1].clear();
+
+    //construct clique
+    QList<Clique3> clique0;
+    getCliques(ntList->at(0), cand[0], clique0, span);
+    if(clique0.size()<0)
+        return false;
+    QList<Clique3> clique1;
+    getCliques(ntList->at(1), cand[1], clique1, span);
+    if(clique1.size()<0)
+        return false;
+
+    //perform matching based on cliques
+    //initialize
+    int cmatchcount = 0, pmatchcount = 0, changecount = 0;
+    int bestMatch = 0;
+    double cmatchThr = span;
+    double shift_x = 0, shift_y = 0, shift_z = 0, cent_x = 0, cent_y = 0, cent_z = 0, angle = 0;
+    //cooridnates of candidates
+    QList<XYZ> candcoord0;
+    QList<XYZ> candcoord1;
+    QList<XYZ> tmpcoord;
+    candcoord0.clear();
+    for(int i=0; i<cand[0].size(); i++){
+        candcoord0.append(XYZ(ntList->at(0).listNeuron.at(cand[0].at(i))));
+//        if(direction == 0) candcoord0[i].x = 0;
+//        if(direction == 1) candcoord0[i].y = 0;
+//        if(direction == 2) candcoord0[i].z = 0;
+    }
+    candcoord1.clear();
+    for(int i=0; i<cand[1].size(); i++){
+        candcoord1.append(XYZ(ntList->at(1).listNeuron.at(cand[1].at(i))));
+//        if(direction == 0) candcoord1[i].x = 0;
+//        if(direction == 1) candcoord1[i].y = 0;
+//        if(direction == 2) candcoord1[i].z = 0;
+    }
+    //pairs of points matched
+    QList<int> matchPoint[2];
+    matchPoint[0] = QList<int>(); matchPoint[0].clear();
+    matchPoint[1] = QList<int>(); matchPoint[1].clear();
+    QList<int> tmpMatchMarkers[2],tmpMatchMarkers1[2];
+    tmpMatchMarkers[0]=QList<int>();
+    tmpMatchMarkers[1]=QList<int>();
+    tmpMatchMarkers1[0]=QList<int>();
+    tmpMatchMarkers1[1]=QList<int>();
+    //record the points that has already been matched to current one
+    QVector<QList<int> > MatchRecord0;
+    MatchRecord0.resize(cand[0].size());
+    //progress bar
+    QProgressDialog progressDial("Performing Global Search... Skipping now may generate wrong result.","Skipping Search",0,clique0.size(),0);
+    progressDial.setWindowModality(Qt::WindowModal);
+
+    //start global search
+    for(int i=0; i<clique0.size(); i++){
+        progressDial.setValue(i);
+        for(int j=0; j<clique1.size(); j++){
+            //find matching clique
+            double cdis = fabs(clique0[i].e[0]-clique1[j].e[0]) + fabs(clique0[i].e[1]-clique1[j].e[1]) + fabs(clique0[i].e[2]-clique1[j].e[2]);
+            if(cdis>cmatchThr)
+                continue;
+            //to-do check clique direction for matching
+
+            cmatchcount++;
+
+            //continue if the clique has already been matched before
+            if(MatchRecord0[clique0[i].idx[0]].indexOf(clique1[j].idx[0])>=0 &&
+                    MatchRecord0[clique0[i].idx[1]].indexOf(clique1[j].idx[1])>=0 &&
+                    MatchRecord0[clique0[i].idx[2]].indexOf(clique1[j].idx[2])>=0)
+                continue;
+
+            pmatchcount++;
+
+            //get affinement between cliques
+            shift_x = 0; shift_y = 0; shift_z = 0; cent_x = 0; cent_y = 0; cent_z = 0; angle = 0;
+            if(direction == 0) shift_x = -1;
+            if(direction == 1) shift_y = -1;
+            if(direction == 2) shift_z = -1;
+
+            QList<XYZ> c0,c1;
+            c0.clear();
+            c0.append(XYZ(candcoord0[clique0[i].idx[0]]));
+            c0.append(XYZ(candcoord0[clique0[i].idx[1]]));
+            c0.append(XYZ(candcoord0[clique0[i].idx[2]]));
+            c1.clear();
+            c1.append(XYZ(candcoord1[clique1[j].idx[0]]));
+            c1.append(XYZ(candcoord1[clique1[j].idx[1]]));
+            c1.append(XYZ(candcoord1[clique1[j].idx[2]]));
+            if(!compute_affine_4dof(c0,c1,shift_x,shift_y,shift_z,angle,cent_x,cent_y,cent_z,direction))
+                continue;
+            //find the matched point by clique
+            affine_XYZList(candcoord1, tmpcoord, shift_x, shift_y, shift_z, angle, cent_x, cent_y, cent_z, direction);
+            getMatchPairs_XYZList(candcoord0, tmpcoord, tmpMatchMarkers, span);
+
+            if(tmpMatchMarkers[0].size()<=matchPoint[0].size()/2)
+                continue;
+            //iterative optimization for current matched points
+            do{
+                c0.clear();
+                c1.clear();
+                for(int i=0; i<tmpMatchMarkers[0].size(); i++){
+                    c0.append(XYZ(candcoord0[tmpMatchMarkers[0].at(i)]));
+                    c1.append(XYZ(candcoord1[tmpMatchMarkers[1].at(i)]));
+                }
+                shift_x = 0; shift_y = 0; shift_z = 0; cent_x = 0; cent_y = 0; cent_z = 0; angle = 0;
+                if(direction == 0) shift_x = -1;
+                if(direction == 1) shift_y = -1;
+                if(direction == 2) shift_z = -1;
+                if(!compute_affine_4dof(c0,c1,shift_x,shift_y,shift_z,angle,cent_x,cent_y,cent_z,direction)){
+                    qDebug("section affine process failed, please check the code");
+                    return false;
+                }
+                qDebug()<<"new inner search round: "<<tmpMatchMarkers[0].size()<<":"<<cmatchcount<<":"<<pmatchcount<<":"<<changecount<<"; affine: "<<shift_x<<":"<<shift_y<<":"<<shift_z<<":"<<angle<<":"<<cent_x<<":"<<cent_y<<":"<<cent_z;
+                affine_XYZList(candcoord1, tmpcoord, shift_x,shift_y,shift_z,angle,cent_x,cent_y,cent_z, direction);
+                getMatchPairs_XYZList(candcoord0, tmpcoord, tmpMatchMarkers1, span);
+                if(tmpMatchMarkers1[0].size() == tmpMatchMarkers[0].size()){
+                    tmpMatchMarkers[0] = tmpMatchMarkers1[0];
+                    tmpMatchMarkers[1] = tmpMatchMarkers1[1];
+                    qDebug("no further optimization, quit inner round optimization");
+                    break;
+                }else if(tmpMatchMarkers1[0].size() < tmpMatchMarkers[0].size()){
+                    qDebug("matching point number reduced, quit inner round optimization");
+                    break;
+                }else{
+                    tmpMatchMarkers[0] = tmpMatchMarkers1[0];
+                    tmpMatchMarkers[1] = tmpMatchMarkers1[1];
+                }
+            }while(1);
+            if(tmpMatchMarkers[0].size()>bestMatch){
+                bestMatch = tmpMatchMarkers[0].size();
+                matchPoint[0] = tmpMatchMarkers[0];
+                matchPoint[1] = tmpMatchMarkers[1];
+                qDebug()<<"matched: "<<cmatchcount<<":"<<pmatchcount<<"; affine: "<<shift_x<<":"<<shift_y<<":"<<shift_z<<":"<<angle<<":"<<cent_x<<":"<<cent_y<<":"<<cent_z;
+                progressDial.setLabelText("Performing Global Search... Can skip when there are sufficient matched points.\n Identified "+
+                                          QString::number(matchPoint[0].size()) + " matched point out of " + QString::number(cand[0].size()) + ":" + QString::number(cand[1].size()));
+            }
+            //take record for already matched point
+            for(int k=0; k<tmpMatchMarkers[0].size(); k++){
+                if(MatchRecord0[tmpMatchMarkers[0].at(k)].indexOf(tmpMatchMarkers[1].at(k))<0){
+                    MatchRecord0[tmpMatchMarkers[0].at(k)].append(tmpMatchMarkers[1].at(k));
+                    changecount++;
+                }
+            }
+        }
+        if(progressDial.wasCanceled()) break;
+    }
+    progressDial.setValue(clique0.size());
+    qDebug()<<"match and search: "<<matchPoint[0].size()<<" matched point, "<<cmatchcount<<" similar cliques found in the first searching round";
+
+    if(matchPoint[0].size()<0){
+        return false;
+    }
+
+    //populate MatchMarkers
+    for(int i=0; i<matchPoint[0].size(); i++){
+        MatchMarkers[0].append(cand[0].at(matchPoint[0].at(i)));
+        MatchMarkers[1].append(cand[1].at(matchPoint[1].at(i)));
+    }
+    return true;
+}
+
+void getCliques(const NeuronTree& nt, QList<int> list, QList<Clique3> & cqlist, double minDis)
+{
+    cqlist.clear();
+    minDis=minDis*minDis;
+    double maxDis=minDis*10000;
+    cqlist.clear();
+    for(int i=0; i<list.size(); i++){
+        for(int j=i+1; j<list.size(); j++){
+            double dis_ij = NTDIS(nt.listNeuron.at(list[i]),nt.listNeuron.at(list[j]));
+            if(dis_ij<minDis || dis_ij>maxDis)
+                continue;
+            for(int k=j+1; k<list.size(); k++){
+                double dis_ik = NTDIS(nt.listNeuron.at(list[i]),nt.listNeuron.at(list[k]));
+                if(dis_ik<minDis || dis_ij>maxDis)
+                    continue;
+                double dis_jk = NTDIS(nt.listNeuron.at(list[j]),nt.listNeuron.at(list[k]));
+                if(dis_jk<minDis || dis_ij>maxDis)
+                    continue;
+                Clique3 C;
+                if(dis_ij <= dis_jk && dis_jk <= dis_ik){
+                    C.v[0]=list[i]; C.idx[0]=i;
+                    C.v[1]=list[j]; C.idx[1]=j;
+                    C.v[2]=list[k]; C.idx[2]=k;
+                    C.e[0]=sqrt(dis_ij);
+                    C.e[1]=sqrt(dis_jk);
+                    C.e[2]=sqrt(dis_ik);
+                }else if(dis_ij <= dis_ik && dis_ik <= dis_jk){
+                    C.v[0]=list[j]; C.idx[0]=j;
+                    C.v[1]=list[i]; C.idx[1]=i;
+                    C.v[2]=list[k]; C.idx[2]=k;
+                    C.e[0]=sqrt(dis_ij);
+                    C.e[1]=sqrt(dis_ik);
+                    C.e[2]=sqrt(dis_jk);
+                }else if(dis_jk <= dis_ij && dis_ij <= dis_ik){
+                    C.v[0]=list[k]; C.idx[0]=k;
+                    C.v[1]=list[j]; C.idx[1]=j;
+                    C.v[2]=list[i]; C.idx[2]=i;
+                    C.e[0]=sqrt(dis_jk);
+                    C.e[1]=sqrt(dis_ij);
+                    C.e[2]=sqrt(dis_ik);
+                }else if(dis_jk <= dis_ik && dis_ik <= dis_ij){
+                    C.v[0]=list[j]; C.idx[0]=j;
+                    C.v[1]=list[k]; C.idx[1]=k;
+                    C.v[2]=list[i]; C.idx[2]=i;
+                    C.e[0]=sqrt(dis_jk);
+                    C.e[1]=sqrt(dis_ik);
+                    C.e[2]=sqrt(dis_ij);
+                }else if(dis_ik <= dis_ij && dis_ij <= dis_jk){
+                    C.v[0]=list[k]; C.idx[0]=k;
+                    C.v[1]=list[i]; C.idx[1]=i;
+                    C.v[2]=list[j]; C.idx[2]=j;
+                    C.e[0]=sqrt(dis_ik);
+                    C.e[1]=sqrt(dis_ij);
+                    C.e[2]=sqrt(dis_jk);
+                }else if(dis_ik <= dis_jk && dis_jk <= dis_ij){
+                    C.v[0]=list[i]; C.idx[0]=i;
+                    C.v[1]=list[k]; C.idx[1]=k;
+                    C.v[2]=list[j]; C.idx[2]=j;
+                    C.e[0]=sqrt(dis_ik);
+                    C.e[1]=sqrt(dis_jk);
+                    C.e[2]=sqrt(dis_ij);
+                }else{
+                    printf("error in construction clique, unexpected situation happened! Check the code!\n");
+                    continue;
+                }
+                C.c.clear();
+                C.c.append(XYZ(nt.listNeuron.at(C.v[0])));
+                C.c.append(XYZ(nt.listNeuron.at(C.v[1])));
+                C.c.append(XYZ(nt.listNeuron.at(C.v[2])));
+                cqlist.append(C);
+            }
+        }
+    }
+}
+
+void getMatchingCandidates(const NeuronTree& nt, QList<int>& cand, float min, float max, int direction)
+{
+    cand.clear();
+    QVector<int> childNum(nt.listNeuron.size(), 0);
+    for(int i=0; i<nt.listNeuron.size(); i++){
+        if(nt.listNeuron.at(i).pn<0){
+            childNum[i]--; //root that only have 1 clide will also be a dead end
+        }
+        else{
+            int pid = nt.hashNeuron.value(nt.listNeuron.at(i).pn);
+            childNum[pid]++;
+        }
+    }
+    for(int i=0; i<childNum.size(); i++){
+        if(childNum[i]<=0){
+            if(direction==0){//x
+                if(nt.listNeuron.at(i).x>min && nt.listNeuron.at(i).x<max){
+                    cand.append(i);
+                }
+            }else if(direction==1){//y
+                if(nt.listNeuron.at(i).y>min && nt.listNeuron.at(i).y<max){
+                    cand.append(i);
+                }
+            }else if(direction==2){//z
+                if(nt.listNeuron.at(i).z>min && nt.listNeuron.at(i).z<max){
+                    cand.append(i);
+                }
+            }else{//all tips
+                cand.append(i);
+            }
+        }
+    }
+}
+
+void getMatchPairs_XYZList(const QList<XYZ>& c0, const QList<XYZ>& c1, QList<int> * MatchMarkers, double span)
+{
+    double thr = span*span;
+    QMap<double, QList<int> > MatchPoints;
+    MatchMarkers[0].clear();
+    MatchMarkers[1].clear();
+
+    for(int i=0; i<c0.size(); i++){
+        for(int j=0; j<c1.size(); j++){
+            double dis = NTDIS(c0[i],c1[j]);
+            if(dis>thr) continue;
+            while(MatchPoints.find(dis) != MatchPoints.end()){
+                dis+=1e-10;
+            }
+            QList<int> tmp = QList<int>()<<i<<j;
+            MatchPoints.insert(dis, tmp);
+        }
+    }
+    QVector<int> mask0(c0.size(),0);
+    QVector<int> mask1(c1.size(),0);
+    for(QMap<double, QList<int> >::Iterator iter = MatchPoints.begin(); iter!=MatchPoints.end(); iter++){
+        int a = iter.value().at(0);
+        int b = iter.value().at(1);
+        if(mask0[a]+mask1[b]>0)
+            continue;
+        mask0[a]++;
+        mask1[b]++;
+        MatchMarkers[0].append(a);
+        MatchMarkers[1].append(b);
+    }
+}
 
 double distance_XYZList(QList<XYZ> c0, QList<XYZ> c1)
 {
@@ -54,7 +486,46 @@ void rotation_XYZList(QList<XYZ> in, QList<XYZ>& out, double angle, int axis) //
     }
 }
 
-bool compute_affine_4dof(QList<XYZ> c0, QList<XYZ> c1, double& shift_x, double& shift_y, double & shift_z, double & angle_r, double& cent_x,double& cent_y,double& cent_z, int dir)
+void affine_XYZList(const QList<XYZ>& in, QList<XYZ>& out, double shift_x, double shift_y, double shift_z, double angle, double cent_x, double cent_y, double cent_z, int axis) //angle is 0-360  based
+{
+    QList<XYZ> tmp;
+    if(in.size()!=out.size()){
+        out.clear();
+        for(int i=0; i<in.size(); i++){
+            out.append(XYZ(in[i]));
+        }
+    }
+
+    //shift and adjust center
+    for(int i=0; i<in.size(); i++){
+        tmp.append(XYZ(in[i].x+shift_x-cent_x, in[i].y+shift_y-cent_y, in[i].z+shift_z-cent_z));
+    }
+
+    //rotation
+    double a = angle/180*M_PI;
+    double afmatrix[12] = {1,0,0,0, 0,1,0,0, 0,0,1,0};
+
+    if(axis ==0){
+        afmatrix[5] = cos(a); afmatrix[6] = -sin(a);
+        afmatrix[9] = -afmatrix[6]; afmatrix[10] = afmatrix[5];
+    }
+    else if(axis ==1){
+        afmatrix[0] = cos(a); afmatrix[2] = sin(a);
+        afmatrix[8] = -afmatrix[2]; afmatrix[10] = afmatrix[0];
+    }
+    else if(axis ==2){
+        afmatrix[0] = cos(a); afmatrix[1] = -sin(a);
+        afmatrix[4] = -afmatrix[1]; afmatrix[5] = afmatrix[0];
+    }
+
+    for(int i=0; i<in.size();i++){
+        out[i].x = afmatrix[0]*tmp[i].x+afmatrix[1]*tmp[i].y+afmatrix[2]*tmp[i].z + cent_x;
+        out[i].y = afmatrix[4]*tmp[i].x+afmatrix[5]*tmp[i].y+afmatrix[6]*tmp[i].z + cent_y;
+        out[i].z = afmatrix[8]*tmp[i].x+afmatrix[9]*tmp[i].y+afmatrix[10]*tmp[i].z + cent_z;
+    }
+}
+
+bool compute_affine_4dof(QList<XYZ> c0, QList<XYZ> c1, double& shift_x, double& shift_y, double & shift_z, double & angle_r, double& cent_x,double& cent_y,double& cent_z, int dir) //angle_r is 180 based
 {
     //check
     if(c0.size() != c1.size()){
@@ -134,6 +605,70 @@ bool compute_affine_4dof(QList<XYZ> c0, QList<XYZ> c1, double& shift_x, double& 
             mang=ang;
         }
     }
+    //qDebug()<<"rotation 0: "<<mang<<":"<<mdis;
+    //step 2
+    for(double ang=mang-10; ang<mang+10; ang++){
+        rotation_XYZList(c1,c1bk,ang,dir);
+        double dis = distance_XYZList(c0, c1bk);
+        if(dis<mdis){
+            mdis=dis;
+            mang=ang;
+        }
+    }
+    //qDebug()<<"rotation 1: "<<mang<<":"<<mdis;
+    //step 3
+    for(double ang=mang-1; ang<mang+1; ang+=0.1){
+        rotation_XYZList(c1,c1bk,ang,dir);
+        double dis = distance_XYZList(c0, c1bk);
+        if(dis<mdis){
+            mdis=dis;
+            mang=ang;
+        }
+    }
+    //qDebug()<<"rotation 2: "<<mang<<":"<<mdis;
+    //step 4
+    for(double ang=mang-0.1; ang<mang+0.1; ang+=0.01){
+        rotation_XYZList(c1,c1bk,ang,dir);
+        double dis = distance_XYZList(c0, c1bk);
+        if(dis<mdis){
+            mdis=dis;
+            mang=ang;
+        }
+    }
+    angle_r=mang;
+    //qDebug()<<"calculated affine: "<<shift_x<<":"<<shift_y<<":"<<shift_z<<":"<<angle_r<<":"<<mdis;
+    return true;
+}
+
+bool compute_rotation(QList<XYZ> c0, QList<XYZ> c1, double & angle_r, int dir)
+{
+    //check
+    if(c0.size() != c1.size()){
+        qDebug()<<"error: the number of points for affine does not match";
+        angle_r = 0;
+        return false;
+    }
+
+    //3 steps rotation
+    if(c0.size()<2){
+        angle_r=0;
+        return true;
+    }
+    QList<XYZ> c1bk; c1bk.clear();
+    for(int i=0; i<c0.size(); i++){
+        c1bk.append(XYZ(c1[i]));
+    }
+    //step 1
+    double mdis=distance_XYZList(c0,c1);
+    double mang=0;
+    for(double ang=10; ang<360; ang+=10){
+        rotation_XYZList(c1,c1bk,ang,dir);
+        double dis = distance_XYZList(c0, c1bk);
+        if(dis<mdis){
+            mdis=dis;
+            mang=ang;
+        }
+    }
     qDebug()<<"rotation 0: "<<mang<<":"<<mdis;
     //step 2
     for(double ang=mang-10; ang<mang+10; ang++){
@@ -156,7 +691,6 @@ bool compute_affine_4dof(QList<XYZ> c0, QList<XYZ> c1, double& shift_x, double& 
     }
     qDebug()<<"rotation 2: "<<mang<<":"<<mdis;
     angle_r=mang;
-    qDebug()<<"calculated affine: "<<shift_x<<":"<<shift_y<<":"<<shift_z<<":"<<angle_r<<":"<<mdis;
     return true;
 }
 
@@ -168,6 +702,19 @@ void update_marker_info(const LocationSimple& mk, int* info) //info[0]=neuron id
     tmp=QString::number(info[0]) + " " + QString::number(info[1]) + " " + QString::number(info[2]);
     p->comments=tmp.toStdString();
     p->name=QString::number(info[3]).toStdString();
+}
+
+void update_marker_info(const LocationSimple& mk, int* info, int* color) //info[0]=neuron id, info[1]=point id, info[2]=matching marker, info[3]=marker name/id
+{
+    LocationSimple *p;
+    p = (LocationSimple *)&mk;
+    QString tmp;
+    tmp=QString::number(info[0]) + " " + QString::number(info[1]) + " " + QString::number(info[2]);
+    p->comments=tmp.toStdString();
+    p->name=QString::number(info[3]).toStdString();
+    p->color.r = color[0];
+    p->color.g = color[1];
+    p->color.b = color[2];
 }
 
 bool get_marker_info(const LocationSimple& mk, int* info) //info[0]=neuron id, info[1]=point id, info[2]=matching marker, info[3]=marker name

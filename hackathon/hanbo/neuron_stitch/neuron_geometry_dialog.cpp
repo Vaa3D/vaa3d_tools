@@ -20,6 +20,8 @@ using namespace std;
 
 NeuronGeometryDialog::NeuronGeometryDialog(V3DPluginCallback2 * cb, V3dR_MainWindow* inwin)
 {
+    run_status = true;
+
     if(!inwin)
         return;
     v3dwin=inwin;
@@ -66,8 +68,11 @@ NeuronGeometryDialog::NeuronGeometryDialog(V3DPluginCallback2 * cb, V3dR_MainWin
     if(v3dwin){
         callback->update_3DViewer(v3dwin);
     }
+
     //v3dcontrol->enableShowBoundingBox(false);
     if(MY_NT_DEBUG) qDebug("neuron stitch: create dialog");
+
+    run_status = false;
 }
 
 
@@ -96,18 +101,20 @@ void NeuronGeometryDialog::enterEvent(QEvent *e)
     }
 
     //update marker link when there is new markers
-    if(cur_marker_num != mList->size()){
-        if(cur_marker_num < mList->size()){ //link the last added one
-            link_new_marker_neuron();
-//            pushButton_linkMatchingMarker->setDefault(true);
-//            pushButton_linkMarkerNeuron->setDefault(true);
-//            cur_marker_num = mList->size();
-        }else{ //adjust the order
-            update_markers_delete();
-//            pushButton_linkMatchingMarker->setDefault(true);
-//            pushButton_linkMatchingMarker->setEnabled(false);
-//            pushButton_linkMarkerNeuron->setDefault(true);
-//            cur_marker_num = mList->size();
+    if(!run_status){
+        if(cur_marker_num != mList->size()){
+            if(cur_marker_num < mList->size()){ //link the last added one
+                link_new_marker_neuron();
+    //            pushButton_linkMatchingMarker->setDefault(true);
+    //            pushButton_linkMarkerNeuron->setDefault(true);
+    //            cur_marker_num = mList->size();
+            }else{ //adjust the order
+                update_markers_delete();
+    //            pushButton_linkMatchingMarker->setDefault(true);
+    //            pushButton_linkMatchingMarker->setEnabled(false);
+    //            pushButton_linkMarkerNeuron->setDefault(true);
+    //            cur_marker_num = mList->size();
+            }
         }
     }
 
@@ -166,7 +173,7 @@ void NeuronGeometryDialog::create()
     setupUi(this);
 
     //marker operations
-
+    connect(pushButton_autoAffine, SIGNAL(clicked()), this, SLOT(auto_affine()));
     connect(pushButton_linkMarkerNeuron, SIGNAL(clicked()), this, SLOT(link_marker_neuron_force()));
     connect(pushButton_linkMatchingMarker, SIGNAL(clicked()), this, SLOT(link_markers()));
     connect(pushButton_affineByMarkers, SIGNAL(clicked()), this, SLOT(affine_markers()));
@@ -303,6 +310,9 @@ void NeuronGeometryDialog::create()
 
 void NeuronGeometryDialog::change_ant(int idx)
 {
+    bool instatus = run_status;
+    run_status = true;
+
     ant=idx;
 
     doubleSpinBox_shift_x->setValue(cur_shift_x[ant]);
@@ -331,10 +341,15 @@ void NeuronGeometryDialog::change_ant(int idx)
     doubleSpinBox_rcent_z->setValue(cur_mmz[ant]);
 
     if(MY_NT_DEBUG)qDebug("neuron stitch: change ant");
+
+    run_status = instatus;
 }
 
 void NeuronGeometryDialog::save_affine_mat()
 {
+    bool instatus = run_status;
+    run_status = true;
+
     //input file name
     QString fileDefaultName = ntList->at(ant).name+QString("_amat.txt");
     //write new SWC to file
@@ -350,10 +365,15 @@ void NeuronGeometryDialog::save_affine_mat()
     }
 
     if(MY_NT_DEBUG)qDebug("neuron stitch: save affine matrix");
+
+    run_status = instatus;
 }
 
 void NeuronGeometryDialog::reject()
 {
+    bool instatus = run_status;
+    run_status = true;
+
     for(int i=0; i<ntList->size(); i++)
     {
         ntpList[i]->copyGeometry(nt_bkList.at(i));
@@ -372,10 +392,15 @@ void NeuronGeometryDialog::reject()
     QDialog::hide();
 
     if(MY_NT_DEBUG)qDebug("neuron stitch: reject");
+
+    run_status = instatus;
 }
 
 void NeuronGeometryDialog::accept()
 {
+    bool instatus = run_status;
+    run_status = true;
+
     for(int i=0; i<ntList->size(); i++)
     {
         copyProperty(nt_bkList[i],ntList->at(i));
@@ -391,10 +416,16 @@ void NeuronGeometryDialog::accept()
     QDialog::hide();
 
     if(MY_NT_DEBUG)qDebug("neuron stitch:accept ");
+
+    run_status = instatus;
 }
 
 void NeuronGeometryDialog::change_stackdir(int dir)
 {
+    bool instatus = run_status;
+    run_status = true;
+
+
     stack_dir=dir;
     switch(stack_dir)
     {
@@ -453,18 +484,25 @@ void NeuronGeometryDialog::change_stackdir(int dir)
     highlight_points(false);
 
     if(MY_NT_DEBUG)qDebug("neuron stitch: change stack direction");
+
+    run_status = instatus;
 }
 
 
 //visualization tools
 void NeuronGeometryDialog::update_boundingbox()
 {
+    bool instatus = run_status;
+    run_status = true;
+
     if(v3dwin){
         callback->update_NeuronBoundingBox(v3dwin);
         callback->update_3DViewer(v3dwin);
     }
 
     if(MY_NT_DEBUG)qDebug("neuron stitch: update bounding box");
+
+    run_status = instatus;
 }
 
 void NeuronGeometryDialog::hide_branch(double s)
@@ -472,6 +510,9 @@ void NeuronGeometryDialog::hide_branch(double s)
     if(!checkBox_hide->isChecked()){
         return;
     }
+
+    bool instatus = run_status;
+    run_status = true;
 
     v3dcontrol->enableClipBoundingBox(true);
 
@@ -514,6 +555,8 @@ void NeuronGeometryDialog::hide_branch(double s)
     }
 
     if(MY_NT_DEBUG)qDebug("neuron stitch:hide branch slot");
+
+    run_status = instatus;
 }
 
 void NeuronGeometryDialog::hide_branch()
@@ -521,11 +564,15 @@ void NeuronGeometryDialog::hide_branch()
     if(!checkBox_hide->isChecked()){
         return;
     }
+    bool instatus = run_status;
+    run_status = true;
 
     double s=doubleSpinBox_hide->value();
     hide_branch(s);
 
     if(MY_NT_DEBUG)qDebug("neuron stitch:hide branch auto");
+
+    run_status = instatus;
 }
 
 void NeuronGeometryDialog::show_branch()
@@ -545,6 +592,9 @@ void NeuronGeometryDialog::show_branch()
 
 void NeuronGeometryDialog::hide_branch_check(int c)
 {
+    bool instatus = run_status;
+    run_status = true;
+
     doubleSpinBox_hide->setDisabled(c == Qt::Unchecked);
 
     if(c == Qt::Unchecked){
@@ -553,6 +603,8 @@ void NeuronGeometryDialog::hide_branch_check(int c)
         hide_branch(doubleSpinBox_hide->value());
     }
     if(MY_NT_DEBUG)qDebug("neuron stitch:hide branch check");
+
+    run_status = instatus;
 }
 
 
@@ -561,6 +613,9 @@ void NeuronGeometryDialog::highlight_boundpoint(double s)
     if(!checkBox_highlight_boundpoint->isChecked()){
         return;
     }
+
+    bool instatus = run_status;
+    run_status = true;
 
     //copy back the property
     for(int i=0; i<ntList->size(); i++)
@@ -588,6 +643,8 @@ void NeuronGeometryDialog::highlight_boundpoint(double s)
     }
 
     if(MY_NT_DEBUG)qDebug("neuron stitch:highlight boundary point");
+
+    run_status = instatus;
 }
 
 void NeuronGeometryDialog::highlight_matchpoint(double s)
@@ -595,6 +652,9 @@ void NeuronGeometryDialog::highlight_matchpoint(double s)
     if(!checkBox_highlight_matchpoint->isChecked()){
         return;
     }
+
+    bool instatus = run_status;
+    run_status = true;
 
     float span=0;
 
@@ -623,10 +683,15 @@ void NeuronGeometryDialog::highlight_matchpoint(double s)
     }
 
     if(MY_NT_DEBUG)qDebug("neuron stitch:highlight matching point");
+
+    run_status = instatus;
 }
 
 void NeuronGeometryDialog::highlight_points(bool force)
 {
+    bool instatus = run_status;
+    run_status = true;
+
     if(force || checkBox_highlight_boundpoint->isChecked() || checkBox_highlight_matchpoint->isChecked())
     {
         float span=0;
@@ -664,28 +729,43 @@ void NeuronGeometryDialog::highlight_points(bool force)
     }
 
     if(MY_NT_DEBUG)qDebug("neuron stitch: update views");
+
+    run_status = instatus;
 }
 
 void NeuronGeometryDialog::highlight_matchpoint_check(int c)
 {
+    bool instatus = run_status;
+    run_status = true;
+
     doubleSpinBox_highlight_matchpoint->setDisabled(c == Qt::Unchecked);
 
     highlight_points(true);
 
     if(MY_NT_DEBUG)qDebug("neuron stitch: highlight matching point check");
+
+    run_status = instatus;
 }
 
 void NeuronGeometryDialog::highlight_boundpoint_check(int c)
 {
+    bool instatus = run_status;
+    run_status = true;
+
     doubleSpinBox_highlight_boundpoint->setDisabled(c == Qt::Unchecked);
 
     highlight_points(true);
 
     if(MY_NT_DEBUG)qDebug("neuron stitch: highlight boundary point check");
+
+    run_status = instatus;
 }
 
 void NeuronGeometryDialog::change_neurontype()
 {
+    bool instatus = run_status;
+    run_status = true;
+
     bool ok = false;
     int type = QInputDialog::getInt(this, ntList->at(ant).name, "pick up a value (0~6)", 0, 0, 100, 1, &ok);
 
@@ -701,11 +781,16 @@ void NeuronGeometryDialog::change_neurontype()
     }
 
     if(MY_NT_DEBUG)qDebug("neuron stitch: change color");
+
+    run_status = instatus;
 }
 
 //marker tools
 void NeuronGeometryDialog::link_markers()
 {
+    bool instatus = run_status;
+    run_status = true;
+
     link_new_marker_neuron();
 
     marker_match_dialog dialog(callback, mList);
@@ -716,6 +801,8 @@ void NeuronGeometryDialog::link_markers()
     update_markers();
 
     if(MY_NT_DEBUG)qDebug("neuron stitch: link markers");
+
+    run_status = instatus;
 }
 
 void NeuronGeometryDialog::link_marker_neuron_force()
@@ -725,6 +812,9 @@ void NeuronGeometryDialog::link_marker_neuron_force()
 //        qDebug("Cannot find markers. Please define some markers first");
         return;
     }
+
+    bool instatus = run_status;
+    run_status = true;
 
     LocationSimple *p;
     double dis;
@@ -766,6 +856,8 @@ void NeuronGeometryDialog::link_marker_neuron_force()
                 QString::number(count[1])+QString::fromUtf8(" markers are aligned to neuron 1"));
 
     if(MY_NT_DEBUG)qDebug("neuron stitch: relink markers to neurons");
+
+    run_status = instatus;
 }
 
 void NeuronGeometryDialog::link_marker_neuron()
@@ -775,6 +867,9 @@ void NeuronGeometryDialog::link_marker_neuron()
 //        qDebug("Cannot find markers. Please define some markers first");
         return;
     }
+
+    bool instatus = run_status;
+    run_status = true;
 
     LocationSimple *p;
     double dis;
@@ -814,6 +909,8 @@ void NeuronGeometryDialog::link_marker_neuron()
 //    pushButton_linkMatchingMarker->setDefault(true);
 
     if(MY_NT_DEBUG)qDebug("neuron stitch: link unlinked markers to neurons");
+
+    run_status = instatus;
 }
 
 void NeuronGeometryDialog::link_new_marker_neuron() //force relink those marker with id larger than cur_marker_num
@@ -821,6 +918,9 @@ void NeuronGeometryDialog::link_new_marker_neuron() //force relink those marker 
     if(mList->size()<=0 || cur_marker_num>=mList->size()){
         return;
     }
+
+    bool instatus = run_status;
+    run_status = true;
 
     LocationSimple *p = (LocationSimple *)&(mList->last());
     double dis;
@@ -854,10 +954,15 @@ void NeuronGeometryDialog::link_new_marker_neuron() //force relink those marker 
     //pushButton_linkMatchingMarker->setDefault(true);
 
     if(MY_NT_DEBUG)qDebug("neuron stitch: link newly added markers to neurons");
+
+    run_status = instatus;
 }
 
 void NeuronGeometryDialog::update_markers_delete()
 {
+    bool instatus = run_status;
+    run_status = true;
+
     //find the one that is deleted first
     int dmid=-1;    //the id of deleted neuron
     for(int i=0; i<mList->size();i++){
@@ -887,6 +992,8 @@ void NeuronGeometryDialog::update_markers_delete()
     update_markers();
 
     if(MY_NT_DEBUG)qDebug("neuron stitch: update markers after delete");
+
+    run_status = instatus;
 }
 
 void NeuronGeometryDialog::update_markers()
@@ -894,6 +1001,10 @@ void NeuronGeometryDialog::update_markers()
     if(mList->size()<=0){
         return;
     }
+
+    bool instatus = run_status;
+    run_status = true;
+
     if(MY_NT_DEBUG)qDebug("neuron stitch: start update and sync markers");
 
     int info[4];
@@ -921,10 +1032,15 @@ void NeuronGeometryDialog::update_markers()
     v3dcontrol->updateLandmark();
 
     if(MY_NT_DEBUG)qDebug("neuron stitch: finish update and sync markers");
+
+    run_status = instatus;
 }
 
 void NeuronGeometryDialog::affine_markers()
 {
+    bool instatus = run_status;
+    run_status = true;
+
 //    pushButton_affineByMarkers->setDefault(false);
     link_new_marker_neuron();
 
@@ -1007,16 +1123,146 @@ void NeuronGeometryDialog::affine_markers()
         case 2:
             doubleSpinBox_rotate_z->setValue(cur_rotate_z[ant]+angle_r);
             break;
+        }
     }
+    if(v3dwin){
+        callback->update_NeuronBoundingBox(v3dwin);
     }
     v3d_msg("Affine transformation is performed based on "+QString::number(c0.size())+" pairs of matching markers.");
 
     if(MY_NT_DEBUG)qDebug("neuron stitch: affine by markers");
+
+    run_status = instatus;
+}
+
+void NeuronGeometryDialog::auto_affine()
+{
+    this->setEnabled(false);
+    bool instatus = run_status;
+    run_status = true;
+
+    quickmove();
+
+    //get the plan in the middle
+    double span=40;
+    bool ok;
+    span = QInputDialog::getDouble(this, "auto stitch", "searching span for matching point", 50, 0.1, 1e10, 1, &ok);
+    if(!ok){
+        v3d_msg("Please set a proper searching span.");
+        this->setEnabled(true);
+        run_status = instatus;
+        return;
+    }
+    double midplan = 0;
+    if(stack_dir==0) //x
+    {
+        if(cur_mmx[0]>cur_mmx[1]){
+            midplan=(cur_minx[0]+cur_maxx[1])/2;
+        }else{
+            midplan=(cur_minx[1]+cur_maxx[0])/2;
+        }
+    }
+    else if(stack_dir==1) //y
+    {
+        if(cur_mmy[0]>cur_mmy[1]){
+            midplan=(cur_miny[0]+cur_maxy[1])/2;
+        }else{
+            midplan=(cur_miny[1]+cur_maxy[0])/2;
+        }
+    }
+    else if(stack_dir==2) //z
+    {
+        if(cur_mmz[0]>cur_mmz[1]){
+            midplan=(cur_minz[0]+cur_maxz[1])/2;
+        }else{
+            midplan=(cur_minz[1]+cur_maxz[0])/2;
+        }
+    }
+
+    //get the candidate for matching
+    QList<int> cand[2];
+    cand[0]=QList<int>(); cand[0].clear();
+    cand[1]=QList<int>(); cand[1].clear();
+    getMatchingCandidates(ntList->at(0),cand[0],midplan-span,midplan+span,stack_dir);
+    getMatchingCandidates(ntList->at(1),cand[1],midplan-span,midplan+span,stack_dir);
+    qDebug()<<QString::number(cand[0].size())<<" candidates for neuron 1;\n"<<QString::number(cand[1].size())<<" candidates for neuron 2";
+
+    //for test
+//    mList->clear();
+//    for(int i=0; i<cand[0].size(); i++){
+//        LocationSimple S = LocationSimple(ntList->at(0).listNeuron.at(cand[0].at(i)).x,
+//                ntList->at(0).listNeuron.at(cand[0].at(i)).y,
+//                ntList->at(0).listNeuron.at(cand[0].at(i)).z);
+//        S.color.r=255; S.color.g=0; S.color.b=0;
+//        S.name = QString::number(mList->size()-1).toStdString();
+//        QString tmp = "0 " + QString::number(cand[0].at(i)) + " -1";
+//        S.comments = tmp.toStdString();
+//        mList->append(S);
+//    }
+//    for(int i=0; i<cand[1].size(); i++){
+//        LocationSimple S = LocationSimple(ntList->at(1).listNeuron.at(cand[1].at(i)).x,
+//                ntList->at(1).listNeuron.at(cand[1].at(i)).y,
+//                ntList->at(1).listNeuron.at(cand[1].at(i)).z);
+//        S.color.r=0; S.color.g=255; S.color.b=0;
+//        S.name = QString::number(mList->size()-1).toStdString();
+//        QString tmp = "0 " + QString::number(cand[1].at(i)) + " -1";
+//        S.comments = tmp.toStdString();
+//        mList->append(S);
+//    }
+//    v3dcontrol->updateLandmark();
+
+    //perform matching
+    QList<int> MatchMarkers[2];
+    if(matchCandidates_speed(ntList, cand, span, stack_dir, MatchMarkers)){
+        mList->clear();
+        cur_marker_num = 0;
+        for(int i=0; i<MatchMarkers[0].size(); i++){
+            LocationSimple S = LocationSimple(ntList->at(0).listNeuron.at(MatchMarkers[0].at(i)).x,
+                    ntList->at(0).listNeuron.at(MatchMarkers[0].at(i)).y,
+                    ntList->at(0).listNeuron.at(MatchMarkers[0].at(i)).z);
+            S.color.r=255; S.color.g=0; S.color.b=0;
+            S.name = QString::number(mList->size()).toStdString();
+            QString tmp = "0 " + QString::number(MatchMarkers[0].at(i)) + " " + QString::number(mList->size()+1);
+            S.comments = tmp.toStdString();
+            mList->append(S);
+            cur_marker_num++;
+
+            LocationSimple S1 = LocationSimple(ntList->at(1).listNeuron.at(MatchMarkers[1].at(i)).x,
+                    ntList->at(1).listNeuron.at(MatchMarkers[1].at(i)).y,
+                    ntList->at(1).listNeuron.at(MatchMarkers[1].at(i)).z);
+            S1.color.r=0; S1.color.g=255; S1.color.b=0;
+            S1.name = QString::number(mList->size()).toStdString();
+            tmp = "1 " + QString::number(MatchMarkers[1].at(i)) + " " + QString::number(mList->size()-1);
+            S1.comments = tmp.toStdString();
+            mList->append(S1);
+            cur_marker_num++;
+        }
+        v3dcontrol->updateLandmark();
+
+        qDebug()<<QString::number(MatchMarkers[0].size())<<" pairs of markers has been found matched.\n"
+                <<"candidates: neuron 0:"<<QString::number(cand[0].size())<<"; neuron 1:"<<QString::number(cand[1].size());
+
+        //affine neurons by markers
+        affine_markers();
+
+    }else if(MatchMarkers[0].size() == 0){
+        v3d_msg("Cannot find matching pairs. Please set larger searching span and make sure stacks are sticked in stacking direction.");
+    }else{
+        v3d_msg("Auto sticking failed unexpectedly, please check the code.");
+    }
+
+
+    this->setEnabled(true);
+
+    run_status = instatus;
 }
 
 //geometry changing tools
 void NeuronGeometryDialog::reset()
 {
+    bool instatus = run_status;
+    run_status = true;
+
     //reset marker neuron links first
     link_marker_neuron_force();
 
@@ -1059,10 +1305,15 @@ void NeuronGeometryDialog::reset()
     highlight_points(false);
 
     if(MY_NT_DEBUG)qDebug("neuron stitch: reset all");
+
+    run_status = false;
 }
 
 void NeuronGeometryDialog::quickmove()
 {
+    bool instatus = run_status;
+    run_status = true;
+
     if(stack_dir==3)
         return;
 
@@ -1127,6 +1378,8 @@ void NeuronGeometryDialog::quickmove()
     highlight_points(false);
 
     if(MY_NT_DEBUG)qDebug("neuron stitch: quick move");
+
+    run_status = instatus;
 }
 
 
@@ -1152,6 +1405,9 @@ double NORMALIZE_ROTATION_Angle( double angle )
 
 void NeuronGeometryDialog::shift_x(double s)
 {
+    bool instatus = run_status;
+    run_status = true;
+
     proc_neuron_add_offset(ntpList[ant], s-cur_shift_x[ant], 0, 0);
     cur_minx[ant]+=s-cur_shift_x[ant];
     cur_maxx[ant]+=s-cur_shift_x[ant];
@@ -1165,11 +1421,16 @@ void NeuronGeometryDialog::shift_x(double s)
     highlight_points(false);
 
     if(MY_NT_DEBUG)qDebug("neuron stitch: shift x");
+
+    run_status = instatus;
 }
 
 
 void NeuronGeometryDialog::shift_y(double s)
 {
+    bool instatus = run_status;
+    run_status = true;
+
     proc_neuron_add_offset(ntpList[ant], 0, s-cur_shift_y[ant], 0);
     cur_miny[ant]+=s-cur_shift_y[ant];
     cur_maxy[ant]+=s-cur_shift_y[ant];
@@ -1183,9 +1444,15 @@ void NeuronGeometryDialog::shift_y(double s)
     highlight_points(false);
 
     if(MY_NT_DEBUG)qDebug("neuron stitch: shift y");
+
+    run_status = instatus;
 }
+
 void NeuronGeometryDialog::shift_z(double s)
 {
+    bool instatus = run_status;
+    run_status = true;
+
     proc_neuron_add_offset(ntpList[ant], 0, 0, s-cur_shift_z[ant]);
     cur_minz[ant]+=s-cur_shift_z[ant];
     cur_maxz[ant]+=s-cur_shift_z[ant];
@@ -1199,10 +1466,15 @@ void NeuronGeometryDialog::shift_z(double s)
     highlight_points(false);
 
     if(MY_NT_DEBUG)qDebug("neuron stitch: shift z");
+
+    run_status = instatus;
 }
 
 void NeuronGeometryDialog::scale_x(double s)
 {
+    bool instatus = run_status;
+    run_status = true;
+
     proc_neuron_multiply_factor(ntpList[ant], s/(cur_scale_x[ant]*1000), 1, 1);
     cur_tmat[ant][0] *= s/(cur_scale_x[ant]*1000);
     cur_tmat[ant][3] += (1-s/(cur_scale_x[ant]*1000))*cur_mmx[ant];
@@ -1216,10 +1488,15 @@ void NeuronGeometryDialog::scale_x(double s)
     highlight_points(false);
 
     if(MY_NT_DEBUG)qDebug("neuron stitch: scale x");
+
+    run_status = instatus;
 }
 
 void NeuronGeometryDialog::scale_y(double s)
 {
+    bool instatus = run_status;
+    run_status = true;
+
     proc_neuron_multiply_factor(ntpList[ant], 1, s/(cur_scale_y[ant]*1000), 1);
     cur_tmat[ant][5] *= s/(cur_scale_y[ant]*1000);
     cur_tmat[ant][7] += (1-s/(cur_scale_y[ant]*1000))*cur_mmy[ant];
@@ -1233,10 +1510,15 @@ void NeuronGeometryDialog::scale_y(double s)
     highlight_points(false);
 
     if(MY_NT_DEBUG)qDebug("neuron stitch: scale y");
+
+    run_status = instatus;
 }
 
 void NeuronGeometryDialog::scale_z(double s)
 {
+    bool instatus = run_status;
+    run_status = true;
+
     proc_neuron_multiply_factor(ntpList[ant], 1, 1, s/(cur_scale_z[ant]*1000));
     cur_tmat[ant][10] *= s/(cur_scale_z[ant]*1000);
     cur_tmat[ant][11] += (1-s/(cur_scale_z[ant]*1000))*cur_mmz[ant];
@@ -1250,9 +1532,15 @@ void NeuronGeometryDialog::scale_z(double s)
     highlight_points(false);
 
     if(MY_NT_DEBUG)qDebug("neuron stitch: scale z");
+
+    run_status = instatus;
 }
+
 void NeuronGeometryDialog::gscale_x(double s)
 {
+    bool instatus = run_status;
+    run_status = true;
+
 #ifdef B_USE_NEGATIVE_SCALING
     if (s<0.0001 && s>=0) {s=0.0001; QMessageBox::warning(0, "invalid value input", "You have entered a very small value which is not allowed. V3D will just use 0.0001 to replace it.");}
     else if (s<0 && s>-0.0001) {s=-0.0001; QMessageBox::warning(0, "invalid value input", "You have entered a very small value which is not allowed. V3D will just use -0.0001 to replace it.");}
@@ -1271,10 +1559,15 @@ void NeuronGeometryDialog::gscale_x(double s)
     highlight_points(false);
 
     if(MY_NT_DEBUG)qDebug("neuron stitch: global scale x");
+
+    run_status = instatus;
 }
 
 void NeuronGeometryDialog::gscale_y(double s)
 {
+    bool instatus = run_status;
+    run_status = true;
+
 #ifdef B_USE_NEGATIVE_SCALING
     if (s<0.0001 && s>=0) {s=0.0001; QMessageBox::warning(0, "invalid value input", "You have entered a very small value which is not allowed. V3D will just use 0.0001 to replace it.");}
     else if (s<0 && s>-0.0001) {s=-0.0001; QMessageBox::warning(0, "invalid value input", "You have entered a very small value which is not allowed. V3D will just use -0.0001 to replace it.");}
@@ -1293,10 +1586,15 @@ void NeuronGeometryDialog::gscale_y(double s)
     highlight_points(false);
 
     if(MY_NT_DEBUG)qDebug("neuron stitch: global scale y");
+
+    run_status = instatus;
 }
 
 void NeuronGeometryDialog::gscale_z(double s)
 {
+    bool instatus = run_status;
+    run_status = true;
+
 #ifdef B_USE_NEGATIVE_SCALING
     if (s<0.0001 && s>=0) {s=0.0001; QMessageBox::warning(0, "invalid value input", "You have entered a very small value which is not allowed. V3D will just use 0.0001 to replace it.");}
     else if (s<0 && s>-0.0001) {s=-0.0001; QMessageBox::warning(0, "invalid value input", "You have entered a very small value which is not allowed. V3D will just use -0.0001 to replace it.");}
@@ -1315,41 +1613,66 @@ void NeuronGeometryDialog::gscale_z(double s)
     highlight_points(false);
 
     if(MY_NT_DEBUG)qDebug("neuron stitch: global scale z");
+
+    run_status = instatus;
 }
 
 void NeuronGeometryDialog::scale_r(double s)
 {
+    bool instatus = run_status;
+    run_status = true;
+
     proc_neuron_multiply_factor_radius(ntpList[ant], s/(cur_scale_r[ant]*1000));
     cur_scale_r[ant] = s/1000.0;
 
     highlight_points(false);
 
     if(MY_NT_DEBUG)qDebug("neuron stitch: scale radius");
+
+    run_status = instatus;
 }
 
 void NeuronGeometryDialog::rotate_around_x_dial(int v)
 {
+    bool instatus = run_status;
+    run_status = true;
+
     double angleval=((double)v)/MY_ANGLE_TICK;
 
     emit xRotationChanged(angleval);
+
+    run_status = instatus;
 }
 
 void NeuronGeometryDialog::rotate_around_y_dial(int v)
 {
+    bool instatus = run_status;
+    run_status = true;
+
     double angleval=((double)v)/MY_ANGLE_TICK;
 
     emit yRotationChanged(angleval);
+
+    run_status = instatus;
 }
 
 void NeuronGeometryDialog::rotate_around_z_dial(int v)
 {
+    bool instatus = run_status;
+    run_status = true;
+
     double angleval=((double)v)/MY_ANGLE_TICK;
 
     emit zRotationChanged(angleval);
+
+    run_status = instatus;
 }
 
 void NeuronGeometryDialog::rotate_around_x_spin(double s)
 {
+    bool instatus = run_status;
+    run_status = true;
+
     double afmatrix[16] = {1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1};
     double a = NORMALIZE_ROTATION_Angle( s-cur_rotate_x[ant] ) / 180.0 * MY_PI;
     if(fabs(a)>1e-5)
@@ -1367,10 +1690,15 @@ void NeuronGeometryDialog::rotate_around_x_spin(double s)
     }
 
     if(MY_NT_DEBUG)qDebug("neuron stitch: rotation x");
+
+    run_status = instatus;
 }
 
 void NeuronGeometryDialog::rotate_around_y_spin(double s)
 {
+    bool instatus = run_status;
+    run_status = true;
+
     double afmatrix[16] = {1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1};
     double a = NORMALIZE_ROTATION_Angle( s-cur_rotate_y[ant] ) / 180.0 * MY_PI;
     if(fabs(a)>1e-5)
@@ -1388,10 +1716,15 @@ void NeuronGeometryDialog::rotate_around_y_spin(double s)
     }
 
     if(MY_NT_DEBUG)qDebug("neuron stitch: rotation y");
+
+    run_status = instatus;
 }
 
 void NeuronGeometryDialog::rotate_around_z_spin(double s)
 {
+    bool instatus = run_status;
+    run_status = true;
+
     double afmatrix[16] = {1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1};
     double a = NORMALIZE_ROTATION_Angle( s-cur_rotate_z[ant] ) / 180.0 * MY_PI;
     if(fabs(a)>1e-5)
@@ -1409,19 +1742,29 @@ void NeuronGeometryDialog::rotate_around_z_spin(double s)
     }
 
     if(MY_NT_DEBUG)qDebug("neuron stitch: rotation z");
+
+    run_status = instatus;
 }
 
 void NeuronGeometryDialog::refresh_rcent()
 {
+    bool instatus = run_status;
+    run_status = true;
+
     doubleSpinBox_rcent_x->setValue(cur_mmx[ant]);
     doubleSpinBox_rcent_y->setValue(cur_mmy[ant]);
     doubleSpinBox_rcent_z->setValue(cur_mmz[ant]);
 
     if(MY_NT_DEBUG)qDebug("neuron stitch: refresh rotation center");
+
+    run_status = instatus;
 }
 
 void NeuronGeometryDialog::flip_x(int v)
 {
+    bool instatus = run_status;
+    run_status = true;
+
     proc_neuron_mirror(ntpList[ant], true, false, false);
     cur_flip_x[ant] = checkBox_flip_x->isChecked();
     cur_tmat[ant][0] *= -1;
@@ -1431,10 +1774,15 @@ void NeuronGeometryDialog::flip_x(int v)
     highlight_points(false);
 
     if(MY_NT_DEBUG)qDebug("neuron stitch: flip x");
+
+    run_status = instatus;
 }
 
 void NeuronGeometryDialog::flip_y(int v)
 {
+    bool instatus = run_status;
+    run_status = true;
+
     proc_neuron_mirror(ntpList[ant], false, true, false);
     cur_flip_y[ant] = checkBox_flip_y->isChecked();
     cur_tmat[ant][5] *= -1;
@@ -1444,10 +1792,15 @@ void NeuronGeometryDialog::flip_y(int v)
     highlight_points(false);
 
     if(MY_NT_DEBUG)qDebug("neuron stitch: flip y");
+
+    run_status = instatus;
 }
 
 void NeuronGeometryDialog::flip_z(int v)
 {
+    bool instatus = run_status;
+    run_status = true;
+
     proc_neuron_mirror(ntpList[ant], false, false, true);
     cur_flip_z[ant] = checkBox_flip_z->isChecked();
     cur_tmat[ant][10] *= -1;
@@ -1457,6 +1810,8 @@ void NeuronGeometryDialog::flip_z(int v)
     highlight_points(false);
 
     if(MY_NT_DEBUG)qDebug("neuron stitch: flip z");
+
+    run_status = instatus;
 }
 
 
