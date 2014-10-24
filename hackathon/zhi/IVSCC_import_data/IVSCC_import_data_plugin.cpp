@@ -140,6 +140,17 @@ bool IVSCC_import_data::dofunc(const QString & func_name, const V3DPluginArgList
                 fprintf (stderr, "Error happens in reading the subject file [%0]. Exit. \n",vim.tilesList.at(ii).fn_image.c_str());
                 return false;
             }
+
+            V3DLONG hsz1=floor((double)(in_sz[1]-1)/2.0); if (hsz1*2<in_sz[1]-1) hsz1+=1;
+
+            for (int j=0;j<hsz1;j++)
+                for (int i=0;i<in_sz[0];i++)
+                {
+                    unsigned char tmpv = data1d[(in_sz[1]-j-1)*in_sz[0] + i];
+                    data1d[(in_sz[1]-j-1)*in_sz[0] + i] = data1d[j*in_sz[0] + i];
+                    data1d[j*in_sz[0] + i] = tmpv;
+                }
+
             for(V3DLONG j = 0; j < pagesz_one; j++)
             {
                  im_imported[i] = 255 - data1d[j];

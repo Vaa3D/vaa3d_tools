@@ -12,4 +12,4 @@ SOURCES	+= IVSCC_import_data_plugin.cpp
 SOURCES	+= $$VAA3DPATH/basic_c_fun/v3d_message.cpp
 
 TARGET	= $$qtLibraryTarget(IVSCC_import_data)
-DESTDIR	= $$VAA3DPATH/../bin/plugins/IVSCC_import_data/
+DESTDIR	= $$VAA3DPATH/../bin/plugins/IVSCC/IVSCC_import_data/
