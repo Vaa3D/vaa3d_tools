@@ -15,6 +15,7 @@
 #include <boost/lexical_cast.hpp>
 #include "../../../v3d_main/jba/c++/convert_type2uint8.h"
 #include "../istitch/y_imglib.h"
+#include "../../../hackathon/zhi/APP2_large_scale/readRawfile_func.h"
 
 #include <omp.h>
 
@@ -1856,7 +1857,7 @@ bool processImage_adaptive_auto_blocks_indv(const V3DPluginArgList & input, V3DP
     cout<<"outimg_folder = "<<outimg_file<<endl;
 
 
-    unsigned char * data1d = 0;
+  /*  unsigned char * data1d = 0;
     V3DLONG in_sz[4];
     
     int datatype;
@@ -1864,7 +1865,21 @@ bool processImage_adaptive_auto_blocks_indv(const V3DPluginArgList & input, V3DP
     {
         cerr<<"load image "<<inimg_file<<" error!"<<endl;
         return false;
+    }*/
+
+    unsigned char * data1d = 0;
+    V3DLONG *in_zz = 0;
+    V3DLONG *in_sz = 0;
+
+    int datatype;
+
+    if (!loadRawRegion(inimg_file, data1d, in_sz, in_zz,datatype,0,0,0,1,1,1))
+    {
+        cerr<<"load image "<<inimg_file<<" error!"<<endl;
+        return false;
     }
+    if(data1d) {delete []data1d; data1d = 0;}
+
 
     QString temp_raw = QString(inimg_file) + "_temp.v3draw";
     QString temp_gf = QString(inimg_file) + "_gf.v3draw";
@@ -1882,7 +1897,7 @@ bool processImage_adaptive_auto_blocks_indv(const V3DPluginArgList & input, V3DP
     V3DLONG M = in_sz[1];
     V3DLONG P = in_sz[2];
     V3DLONG pagesz = N*M*P;
-    V3DLONG offsetc = (c-1)*pagesz;
+   // V3DLONG offsetc = (c-1)*pagesz;
 
     
     V3DLONG tilenum = (floor(N/(0.9*Ws))+1.0)*(floor(M/(0.9*Ws))+1.0);
@@ -1939,10 +1954,10 @@ bool processImage_adaptive_auto_blocks_indv(const V3DPluginArgList & input, V3DP
 
 			// crop block
 			unsigned char *blockarea=0;
-			V3DLONG blockpagesz = (xe-xb+1)*(ye-yb+1)*P;
-			blockarea = new unsigned char [blockpagesz];
+            V3DLONG blockpagesz = (xe-xb+1)*(ye-yb+1)*P;
+        //	blockarea = new unsigned char [blockpagesz];
 			double th_global = 0;
-			int i = 0;
+            /*int i = 0;
 			
 			for(V3DLONG iz = 0; iz < P; iz++)
 			{
@@ -1959,10 +1974,17 @@ bool processImage_adaptive_auto_blocks_indv(const V3DPluginArgList & input, V3DP
 						i++;
 					}
 				}
-			}
+            }*/
 
-			V3DLONG block_sz[4];
-			block_sz[0] = xe-xb+1; block_sz[1] = ye-yb+1; block_sz[2] = P; block_sz[3] = 1;
+            if (!loadRawRegion(inimg_file, blockarea, in_sz, in_zz,datatype,xb,yb,0,xe+1,ye+1,P))
+            {
+              return false;
+            }
+
+
+            V3DLONG block_sz[4];
+            block_sz[0] = xe-xb+1; block_sz[1] = ye-yb+1; block_sz[2] = P; block_sz[3] = 1;
+
 		   /* unsigned char *blockarea_median=0;
 			int ws = 2;
 			//apply median filter
@@ -2064,7 +2086,7 @@ bool processImage_adaptive_auto_blocks_indv(const V3DPluginArgList & input, V3DP
 	} //for iy end
 
 
-	if (data1d) {delete []data1d; data1d=0;}
+    //if (data1d) {delete []data1d; data1d=0;}
 	
 
 	myfile.open (tc_name.toStdString().c_str(),ios::out | ios::app );
@@ -2113,14 +2135,28 @@ bool processImage_adaptive_auto_blocks_indv_multithread(const V3DPluginArgList &
     cout<<"outimg_folder = "<<outimg_file<<endl;
 
 
-    unsigned char * data1d = 0;
+   /* unsigned char * data1d = 0;
     V3DLONG in_sz[4];
     int datatype;
     if(!simple_loadimage_wrapper(callback, inimg_file, data1d, in_sz, datatype))
     {
         cerr<<"load image "<<inimg_file<<" error!"<<endl;
         return false;
+    }*/
+
+    unsigned char * data1d = 0;
+    V3DLONG *in_zz = 0;
+    V3DLONG *in_sz = 0;
+
+    int datatype;
+
+    if (!loadRawRegion(inimg_file, data1d, in_sz, in_zz,datatype,0,0,0,1,1,1))
+    {
+        cerr<<"load image "<<inimg_file<<" error!"<<endl;
+        return false;
     }
+    if(data1d) {delete []data1d; data1d = 0;}
+
 
 //    temp_raw = QString(inimg_file) + "_temp.v3draw";
 //    temp_gf = QString(inimg_file) + "_gf.v3draw";
@@ -2230,8 +2266,9 @@ bool processImage_adaptive_auto_blocks_indv_multithread(const V3DPluginArgList &
 			// crop block
 			unsigned char *blockarea=0;
 			V3DLONG blockpagesz = (xe-xb+1)*(ye-yb+1)*P;
-			blockarea = new unsigned char [blockpagesz];
-			double th_global = 0;
+            double th_global = 0;
+
+            /*blockarea = new unsigned char [blockpagesz];
 			int i = 0;
 			
 			for(V3DLONG iz = 0; iz < P; iz++)
@@ -2249,7 +2286,9 @@ bool processImage_adaptive_auto_blocks_indv_multithread(const V3DPluginArgList &
 						i++;
 					}
 				}
-			}
+            }*/
+
+            loadRawRegion(inimg_file, blockarea, in_sz, in_zz,datatype,xb,yb,0,xe+1,ye+1,P);
 
 			V3DLONG block_sz[4];
 			block_sz[0] = xe-xb+1; block_sz[1] = ye-yb+1; block_sz[2] = P; block_sz[3] = 1;

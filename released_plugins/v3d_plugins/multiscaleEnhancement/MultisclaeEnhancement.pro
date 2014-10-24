@@ -40,6 +40,7 @@ SOURCES += $$V3DMAINPATH/basic_c_fun/mg_utilities.cpp
 SOURCES += $$V3DMAINPATH/basic_c_fun/mg_image_lib.cpp
 SOURCES += $$V3DMAINPATH/basic_c_fun/stackutil.cpp
 SOURCES += $$V3DMAINPATH/basic_c_fun/basic_surf_objs.cpp
+SOURCES	+=  ../../../hackathon/zhi/APP2_large_scale/readrawfile_func.cpp
 
 
 SOURCES += ../neurontracing_vn2/app2/my_surf_objs.cpp
