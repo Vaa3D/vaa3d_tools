@@ -1404,7 +1404,6 @@ bool  autotrace_largeScale_raw(V3DPluginCallback2 &callback, QWidget *parent,APP
 
          remove(swcfilename.toStdString().c_str());
          remove(walker->tilename.append("_ini.swc").toStdString().c_str());
-
         walker = walker->next;
         swc_type++;
     }
