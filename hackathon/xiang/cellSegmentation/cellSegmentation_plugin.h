@@ -91,8 +91,10 @@ class dialogMain: public QDialog
 
 		QRadioButton_algorithm_regionGrowing = new QRadioButton("regionGrowing", QWidget_parent);
 		QRadioButton_algorithm_regionGrowing->setChecked(false);
+		QRadioButton_algorithm_regionGrowing->setEnabled(false);
 		QRadioButton_algorithm_regionGrowingMeanShift = new QRadioButton("regionGrowing+meanShift", QWidget_parent);
 		QRadioButton_algorithm_regionGrowingMeanShift->setChecked(false);
+		QRadioButton_algorithm_regionGrowingMeanShift->setEnabled(false);
 		QRadioButton_algorithm_GVF = new QRadioButton("GVF", QWidget_parent);
 		QRadioButton_algorithm_GVF->setChecked(false);
 		QRadioButton_algorithm_GVF->setEnabled(false);
