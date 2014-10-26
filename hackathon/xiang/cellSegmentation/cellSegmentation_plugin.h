@@ -98,7 +98,7 @@ class dialogMain: public QDialog
 		QRadioButton_algorithm_GVF = new QRadioButton("GVF", QWidget_parent);
 		QRadioButton_algorithm_GVF->setChecked(false);
 		QRadioButton_algorithm_GVF->setEnabled(false);
-		QRadioButton_algorithm_fusing = new QRadioButton("Fusing (of the two)", QWidget_parent);
+		QRadioButton_algorithm_fusing = new QRadioButton("regionGrowing+GVF", QWidget_parent);
 		QRadioButton_algorithm_fusing->setChecked(true);
 		QCheckBox_algorithm_debug = new QCheckBox("Debugging Mode", QWidget_parent);
 		QCheckBox_algorithm_debug->setChecked(false);
