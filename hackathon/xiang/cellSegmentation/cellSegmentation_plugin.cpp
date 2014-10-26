@@ -28,14 +28,7 @@ const int const_count_sphereSection = 12;
 const int const_max_preGenerateSphereRadius = 50;
 const double const_multiplier_bandWidthToDiagnal = 0.75;
 const double const_max_sphereGrowMissToTotalRatio = 0.001;
-const int const_max_GVF_iteration = 5;
 const double const_infinitesimal = 0.000000001;
-const int const_int_GVF_majorFilterIteration = 3;
-const double const_threshold_GVF_fution = 3;
-const double const_threshold_GVF_sigma = 0.1;
-const double const_threshold_GVF_lambda = 0.2;
-const double const_threshold_GVF_mu = 0.1;
-const double const_threshold_GVF_omega = 1.0;
 #define INF 1E9
 #define NINF -1E9
 #define PI 3.14159265
@@ -157,12 +150,16 @@ class class_segmentationMain
 		unsigned char* Image1D_segmentationResult;
 		LandmarkList LandmarkList_segmentationResult;
 		vector<V3DLONG> vct_segmentationResultCenter;
+
+		//GVF
+		vector<double> vct_GVFparamters;
 		#pragma endregion
 
 		#pragma region "constructor function"
-		class_segmentationMain(double double_thresholdInput, unsigned char* Image1D_input, V3DLONG int_xDimInput, V3DLONG int_yDimInput, V3DLONG int_zDimInput , int int_channelInput, LandmarkList LandmarkList_input, bool flag_debugInput, int idx_algorithmInput)
+		class_segmentationMain(double double_thresholdInput, unsigned char* Image1D_input, V3DLONG int_xDimInput, V3DLONG int_yDimInput, V3DLONG int_zDimInput , int int_channelInput, LandmarkList LandmarkList_input, bool flag_debugInput, int idx_algorithmInput, vector<double> vct_GVFparamtersInput)
 		{
 			this->is_success = false;
+			this->vct_GVFparamters = vct_GVFparamtersInput;
 			this->idx_algorithm = idx_algorithmInput;
 			this->is_debugging = flag_debugInput;
 			this->Image1D_original = Image1D_input;
@@ -251,7 +248,7 @@ class class_segmentationMain
 				Image3D_page = class_segmentationMain::memory_allocate_double3D(this->dim_X, this->dim_Y, this->dim_Z);
 				Image1D2Image3D(this->Image1D_page, Image3D_page, this->dim_X, this->dim_Y, this->dim_Z);
 				ofstream_log<<"GVF variable preparation succeed!"<<endl;
-				this->vctList_segmentationResult = class_segmentationMain::GVF_cellSegmentation(Image3D_page, this->dim_X, this->dim_Y, this->dim_Z);
+				//this->vctList_segmentationResult = class_segmentationMain::GVF_cellSegmentation(Image3D_page, this->dim_X, this->dim_Y, this->dim_Z);
 				ofstream_log<<"GVF result conversion succeed!"<<endl;
 				this->is_success = true;
 				ofstream_log.close();
@@ -329,7 +326,7 @@ class class_segmentationMain
 						//double3D_ImageTmp = memory_allocate_double3D(size_X+8, size_Y+8, size_Z+8);
 						double3D_ImageTmp = memory_allocate_double3D(size_X, size_Y, size_Z);
 						centralizeRegion(vct_voxelTmp, double3D_ImageTmp, vct_boundBoxTmp);
-						vctList_GVF = class_segmentationMain::GVF_cellSegmentation(double3D_ImageTmp, size_X, size_Y, size_Z, this->is_debugging);
+						vctList_GVF = class_segmentationMain::GVF_cellSegmentation(double3D_ImageTmp, size_X, size_Y, size_Z, this->is_debugging, this->vct_GVFparamters);
 						if (this->is_debugging) {ofstream_log<<"GVF segmented the region into "<<vctList_GVF.size()<<" sub-regions;"<<endl;}
 						for (int i=0;i<vctList_GVF.size();i++)
 						{
@@ -619,7 +616,7 @@ class class_segmentationMain
 			this->vctList_potentialSeedList.clear();
 			vector<V3DLONG> vct_empty (0,0);
 			int int_threshold = (int)this->threshold;
-			for (int i=(int_threshold+1);i<const_length_histogram;i++)
+			for (int i=int_threshold;i<const_length_histogram;i++)
 			{
 				this->vctList_potentialSeedList.push_back(vct_empty);
 			}
@@ -1765,15 +1762,16 @@ class class_segmentationMain
 		#pragma endregion
 
 		#pragma region "GVF"
-		vector<vector<V3DLONG> >  GVF_cellSegmentation(double *** Image3D_input, const int dim_X, const int dim_Y, const int dim_Z, bool is_debugging)
+		vector<vector<V3DLONG> >  GVF_cellSegmentation(double *** Image3D_input, const int dim_X, const int dim_Y, const int dim_Z, bool is_debugging, vector<double> vct_GVFparamters)
 		{
 			ofstream ofstream_log;
 			if (is_debugging) {ofstream_log.open ("log_GVF.txt");}
-			int para_fusionThreshold = const_threshold_GVF_fution;
-			double para_sigma = const_threshold_GVF_sigma;
-			double para_lambda = const_threshold_GVF_lambda;
-			double para_mu=const_threshold_GVF_mu;
-			double para_omega=const_threshold_GVF_omega;
+			int para_maxIteration = vct_GVFparamters[0];
+			int para_fusionThreshold = vct_GVFparamters[1];
+			double para_sigma = vct_GVFparamters[2];
+			double para_lambda = vct_GVFparamters[3];
+			double para_mu = vct_GVFparamters[4];
+			double para_omega = vct_GVFparamters[5];
 			double3D ***Image3D3_u;
 			double3D ***Image3D3_u_normalized;
 			double3D ***Image3D3_f;
@@ -1796,7 +1794,7 @@ class class_segmentationMain
 			GVF_initialize(Image3D3_gradient, Image3D3_f, Image3D3_u, dim_X, dim_Y, dim_Z);
 			if (is_debugging) {ofstream_log<<"f/u initialization passed!"<<endl;}
 			memory_free_double3D3(Image3D3_gradient,dim_Z,dim_X);
-			GVF_warp(const_max_GVF_iteration, para_mu, Image3D3_u, Image3D3_f, dim_X, dim_Y, dim_Z);
+			GVF_warp(para_maxIteration, para_mu, Image3D3_u, Image3D3_f, dim_X, dim_Y, dim_Z);
 			if (is_debugging) {ofstream_log<<"warp passed!"<<endl;}
 			memory_free_double3D3(Image3D3_f,dim_Z,dim_X);
 			Image3D3_u_normalized = memory_allocate_double3D3(dim_X,dim_Y,dim_Z);
@@ -1823,68 +1821,6 @@ class class_segmentationMain
 			vector<vector<V3DLONG> > vctList_result = Image3D2vctList(Image3D_label, dim_X, dim_Y, dim_Z);
 			memory_free_int3D(Image3D_label,dim_Z,dim_X);
 			if (is_debugging) {ofstream_log<<"all succeed!"<<endl;}
-			return vctList_result;
-		}
-
-		vector<vector<V3DLONG> >  GVF_cellSegmentation(double *** Image3D_input, const int dim_X, const int dim_Y, const int dim_Z)
-		{
-			ofstream ofstream_log;
-			ofstream_log.open ("log_GVF.txt");
-			int para_fusionThreshold = 3;
-			double para_sigma = 0.1;
-			double para_lambda = 0.2;
-			double para_mu=0.1;
-			double para_omega=1.0;
-			double para_globalCoefficient = 0.9;
-			double3D ***Image3D3_u;
-			double3D ***Image3D3_u_normalized;
-			double3D ***Image3D3_f;
-			double3D ***Image3D3_gradient;
-			int *** Image3D_result;
-			Image3D_result = memory_allocate_int3D(dim_X,dim_Y,dim_Z);
-			Image3D3_gradient = memory_allocate_double3D3(dim_X, dim_Y, dim_Z);
-			int3D ***Image3D3_mode;
-			int ***Image3D_visited;
-			int count_page = dim_X*dim_Y*dim_Z;
-			unsigned char ***Image3D_edge;
-			int smoothIteration = (int)(3*para_omega + 0.5);
-			ofstream_log<<"initialization passed!"<<endl;
-			smooth_GVFkernal(Image3D_input, smoothIteration, dim_X, dim_Y, dim_Z);
-			ofstream_log<<"smoothing passed!"<<endl;
-			GVF_getGradient(Image3D_input, Image3D3_gradient, dim_X, dim_Y, dim_Z);
-			ofstream_log<<"get gradient passed!"<<endl;
-			Image3D3_f = memory_allocate_double3D3(dim_X,dim_Y,dim_Z);
-			Image3D3_u = memory_allocate_double3D3(dim_X,dim_Y,dim_Z);
-			GVF_initialize(Image3D3_gradient, Image3D3_f, Image3D3_u, dim_X, dim_Y, dim_Z);
-			ofstream_log<<"f/u initialization passed!"<<endl;
-			memory_free_double3D3(Image3D3_gradient,dim_Z,dim_X);
-			GVF_warp(const_max_GVF_iteration, para_mu, Image3D3_u, Image3D3_f, dim_X, dim_Y, dim_Z);
-			ofstream_log<<"warp passed!"<<endl;
-			memory_free_double3D3(Image3D3_f,dim_Z,dim_X);
-			Image3D3_u_normalized = memory_allocate_double3D3(dim_X,dim_Y,dim_Z);
-			GVF_normalize(Image3D3_u, Image3D3_u_normalized, dim_X, dim_Y, dim_Z);
-			ofstream_log<<"normalization passed!"<<endl;
-			memory_free_double3D3(Image3D3_u,dim_Z,dim_X);
-			Image3D3_mode = memory_allocate_int3D3(dim_X,dim_Y,dim_Z);
-			GVF_findMode(Image3D3_u_normalized, Image3D3_mode, dim_X, dim_Y, dim_Z);
-			ofstream_log<<"findMode passed!"<<endl;
-			memory_free_double3D3(Image3D3_u_normalized, dim_Z, dim_X);
-			Image3D_visited = memory_allocate_int3D(dim_X, dim_Y, dim_Z);
-			GVF_fuseMode( Image3D3_mode, Image3D_visited, para_fusionThreshold, dim_X, dim_Y, dim_Z);
-			ofstream_log<<"fuseMode passed!"<<endl;
-			memory_free_int3D3(Image3D3_mode,dim_Z,dim_X);
-			Image3D_edge = memory_allocate_uchar3D(dim_X,dim_Y,dim_Z);
-			//GVF_majorFilter(Image3D_visited, const_int_GVF_majorFilterIteration, dim_X, dim_Y, dim_Z);
-			//ofstream_log<<"major fitler1 passed!"<<endl;
-			//GVF_findEdge(Image3D_visited, Image3D_edge, dim_X, dim_Y, dim_Z);
-			//ofstream_log<<"find edge passed!"<<endl;
-			//GVF_localThresholding(Image3D_input, Image3D_visited, Image3D_result, dim_X, dim_Y, dim_Z);
-			//ofstream_log<<"local thresholding passed!"<<endl;
-			//GVF_majorFilter(Image3D_result, const_int_GVF_majorFilterIteration, dim_X, dim_Y, dim_Z);
-			//ofstream_log<<"major fitler2 passed!"<<endl;
-			vector<vector<V3DLONG> > vctList_result = Image3D2vctList(Image3D_result, dim_X, dim_Y, dim_Z);
-			memory_free_int3D(Image3D_visited,dim_Z,dim_X);
-			ofstream_log<<"all succeed!"<<endl;
 			return vctList_result;
 		}
 
@@ -2380,12 +2316,19 @@ bool segmentationInterface(V3DPluginCallback2 &V3DPluginCallback2_currentCallbac
         return false;
     }
     V3DLONG idx_channel = dialogMain1.int_channel;
-    if (dialogMain1.threshold>const_max_voxeValue)
+    if (dialogMain1.double_threshold>const_max_voxeValue)
 	{
 		v3d_msg("Please provide a valid threshold, program canceled!"); 
 		return false;
 	}
-	class_segmentationMain segmentationMain1(dialogMain1.threshold, Image1D_current, dim_X, dim_Y, dim_Z, idx_channel, LandmarkList_current, dialogMain1.flag_debug, dialogMain1.idx_algorithm);
+	vector<double> vct_GVFparamters (6, 0);
+	vct_GVFparamters[0] = dialogMain1.double_GVF_maxIteration;
+	vct_GVFparamters[1] = dialogMain1.double_GVF_fusionThreshold;
+	vct_GVFparamters[2] = dialogMain1.double_GVF_sigma;
+	vct_GVFparamters[3] = dialogMain1.double_GVF_lambda;
+	vct_GVFparamters[4] = dialogMain1.double_GVF_mu;
+	vct_GVFparamters[5] = dialogMain1.double_GVF_omega;
+	class_segmentationMain segmentationMain1(dialogMain1.double_threshold, Image1D_current, dim_X, dim_Y, dim_Z, idx_channel, LandmarkList_current, dialogMain1.flag_debug, dialogMain1.idx_algorithm, vct_GVFparamters);
 	if (!segmentationMain1.is_success)
 	{
 		v3d_msg("warning:initialization of segmentationMain failed, program will terminate!");
