@@ -56,6 +56,7 @@ class dialogMain: public QDialog
         }
         QComboBox_channel = new QComboBox();
 		QComboBox_channel->addItems(QStringList_channelItems);
+		QComboBox_channel->setCurrentIndex(1);
         QLabel* QLabel_channel = new QLabel(QObject::tr("Channel: "));
 
         QStringList QStringList_thresholdItems;
@@ -63,6 +64,18 @@ class dialogMain: public QDialog
         QComboBox_thresholdType = new QComboBox();
 		QComboBox_thresholdType->addItems(QStringList_thresholdItems);
         QLabel* QLabel_thresholdType = new QLabel(QObject::tr("Threshold: "));
+
+		QRadioButton_regionGrowing = new QRadioButton("regionGrowing", QWidget_parent);
+		QRadioButton_regionGrowing->setChecked(false);
+		QRadioButton_regionGrowingMeanShift = new QRadioButton("regionGrowing+meanShift", QWidget_parent);
+		QRadioButton_regionGrowingMeanShift->setChecked(false);
+		QRadioButton_GFV = new QRadioButton("GFV", QWidget_parent);
+		QRadioButton_GFV->setChecked(false);
+		QRadioButton_GFV->setEnabled(false);
+		QRadioButton_fusing = new QRadioButton("Fusing (of the two)", QWidget_parent);
+		QRadioButton_fusing->setChecked(true);
+		QCheckBox_debug = new QCheckBox("Debugging Mode", QWidget_parent);
+		QCheckBox_debug->setChecked(false);
 
         QGroupBox *QGroupBox_channel = new QGroupBox("Channel");
         QGroupBox_channel->setStyle(new QWindowsStyle());
@@ -85,6 +98,16 @@ class dialogMain: public QDialog
 		QDoubleSpinBox_threshold->setMinimum(-65535);
         QGroupBox_threshold->setLayout(QGridLayout_threshold);
 
+		QGroupBox *QGroupBox_algorithm = new QGroupBox("Algorithm");
+		QGroupBox_algorithm->setStyle(new QWindowsStyle());
+		QGridLayout *QGridLayout_algorithm = new QGridLayout();
+		QGridLayout_algorithm->addWidget(QRadioButton_regionGrowing, 1, 1);
+		QGridLayout_algorithm->addWidget(QRadioButton_regionGrowingMeanShift, 1, 2);
+		QGridLayout_algorithm->addWidget(QRadioButton_GFV, 2, 1);
+		QGridLayout_algorithm->addWidget(QRadioButton_fusing, 2, 2);
+		QGridLayout_algorithm->addWidget(QCheckBox_debug, 3, 1);
+		QGroupBox_algorithm->setLayout(QGridLayout_algorithm);
+	
         QWidget* QWidget_bottomBar = new QWidget();
         QGridLayout* QGridLayout_bottomBar = new QGridLayout();
         QGridLayout_bottomBar->addWidget(QPushButton_start,1,1);
@@ -94,7 +117,9 @@ class dialogMain: public QDialog
         QGridLayout *QGridLayout_main = new QGridLayout();
         QGridLayout_main->addWidget(QGroupBox_threshold);
         QGridLayout_main->addWidget(QGroupBox_channel);
-        QGridLayout_main->addWidget(QWidget_bottomBar);
+        QGridLayout_main->addWidget(QGroupBox_algorithm);
+		QGridLayout_main->addWidget(QWidget_bottomBar);
+
 
         setLayout(QGridLayout_main);
         setWindowTitle(QString("Cell Segmentation"));
@@ -112,9 +137,16 @@ class dialogMain: public QDialog
     QComboBox* QComboBox_channel;
     QComboBox* QComboBox_thresholdType;
     QDoubleSpinBox* QDoubleSpinBox_threshold;
+	QCheckBox* QCheckBox_debug;
+	QRadioButton* QRadioButton_regionGrowing;
+	QRadioButton* QRadioButton_regionGrowingMeanShift;
+	QRadioButton* QRadioButton_GFV;
+	QRadioButton* QRadioButton_fusing;
     V3DLONG int_channel;
     int int_thresholdType;
     double threshold;
+	int idx_algorithm;
+	bool flag_debug;
 
 	public slots:
     void update()
@@ -142,6 +174,28 @@ class dialogMain: public QDialog
 		{
 			threshold = -1; //calculate automatically;
 		}
+		this->flag_debug = QCheckBox_debug->isChecked();
+		if (this->QRadioButton_regionGrowing->isChecked())
+		{
+			this->idx_algorithm = 1;
+		}
+		if (this->QRadioButton_regionGrowingMeanShift->isChecked())
+		{
+			this->idx_algorithm = 2;
+		}
+		else if (this->QRadioButton_GFV->isChecked())
+		{
+			this->idx_algorithm = 3;
+		}
+		else if (this->QRadioButton_fusing->isChecked())
+		{
+			this->idx_algorithm = 4;
+		}
+		else
+		{
+			this->idx_algorithm = 1;
+		}
+		
 
         accept();
     }
