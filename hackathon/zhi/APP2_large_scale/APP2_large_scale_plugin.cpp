@@ -498,7 +498,8 @@ bool  autotrace_largeScale(V3DPluginCallback2 &callback, QWidget *parent,APP2_LS
     tmps2.setNum(int(P.root_1st[1]+0.5)).prepend("_y"); rootposstr += tmps2;
     tmps2.setNum(int(P.root_1st[2]+0.5)).prepend("_z"); rootposstr += tmps2;
 
-    QString finalswcfilename = fileOpenName + rootposstr + "_NeuronCrawler.swc";
+   // QString finalswcfilename = fileOpenName + rootposstr + "_NeuronCrawler.swc";
+    QString finalswcfilename = QFileInfo(tcfile).path()+("/APP2_largescale.swc");
     QString tmpfolder = QFileInfo(tcfile).path()+("/tmp");
     system(qPrintable(QString("mkdir %1").arg(tmpfolder.toStdString().c_str())));
     if(tmpfolder.isEmpty())
