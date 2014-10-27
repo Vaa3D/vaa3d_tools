@@ -118,6 +118,7 @@ class class_segmentationMain
 		int idx_algorithm;
 		bool is_debugging;
 		double threshold;
+		int idx_shape;
 		unsigned char* Image1D_original;
 		unsigned char *Image1D_page;
 		unsigned char *Image1D_mask;
@@ -136,18 +137,22 @@ class class_segmentationMain
 		//Exemplar (or learn from it);
 		LandmarkList LandmarkList_exemplar;
 		vector<V3DLONG> vct_exemplar;
-		vector<V3DLONG> vc_exemplarSphereSize;
+		vector<V3DLONG> vc_exemplarShapeSize;
 		unsigned char *Image1D_exemplarRegion;
 		vector<vector<V3DLONG> > vctList_exemplarRegion;
 		double upperBound_valueRatioChange;
-		double lowerBound_sphereToSizeRatio;
+		double lowerBound_shapeToSizeRatio;
 		double lowerBound_regionSize;
 		
 		//segmentation;
-		vector<vector<V3DLONG> > vctList_segmentationResult;
+		vector<vector<V3DLONG> > vctList_segmentationResultOriginal;
+		vector<vector<V3DLONG> > vctList_segmentationResultPassed;
+		vector<vector<V3DLONG> > vctList_segmentationResultSplitted;
+		vector<vector<V3DLONG> > vctList_segmentationResultFinal;
 		vector<vector<V3DLONG> > vctList_potentialSeedList;
 		vector<vector<V3DLONG> > vctList_preGeneratedSphere;
-		unsigned char* Image1D_segmentationResult;
+		unsigned char* Image1D_segmentationResultPassed;
+		unsigned char* Image1D_segmentationResultSplitted;
 		LandmarkList LandmarkList_segmentationResult;
 		vector<V3DLONG> vct_segmentationResultCenter;
 
@@ -156,11 +161,12 @@ class class_segmentationMain
 		#pragma endregion
 
 		#pragma region "constructor function"
-		class_segmentationMain(double double_thresholdInput, unsigned char* Image1D_input, V3DLONG int_xDimInput, V3DLONG int_yDimInput, V3DLONG int_zDimInput , int int_channelInput, LandmarkList LandmarkList_input, bool flag_debugInput, int idx_algorithmInput, vector<double> vct_GVFparamtersInput)
+		class_segmentationMain(double double_thresholdInput, unsigned char* Image1D_input, V3DLONG int_xDimInput, V3DLONG int_yDimInput, V3DLONG int_zDimInput , int int_channelInput, LandmarkList LandmarkList_input, bool flag_debugInput, int idx_algorithmInput, vector<double> vct_GVFparamtersInput, int idx_shapeInput)
 		{
 			this->is_success = false;
 			this->vct_GVFparamters = vct_GVFparamtersInput;
 			this->idx_algorithm = idx_algorithmInput;
+			this->idx_shape = idx_shapeInput;
 			this->is_debugging = flag_debugInput;
 			this->Image1D_original = Image1D_input;
 			this->dim_X = int_xDimInput; this->dim_Y = int_yDimInput; this->dim_Z = int_zDimInput; this->idx_channel = int_channelInput;
@@ -176,35 +182,24 @@ class class_segmentationMain
 			this->Image1D_page = new unsigned char [this->size_page];
 			this->Image1D_mask = new unsigned char [this->size_page];
 			this->Image1D_exemplarRegion = new unsigned char [this->size_page];
-			this->Image1D_segmentationResult =  new unsigned char [this->size_page];
+			this->Image1D_segmentationResultPassed =  new unsigned char [this->size_page];
+			this->Image1D_segmentationResultSplitted =  new unsigned char [this->size_page];
 			for (V3DLONG i=0;i<size_page;i++)
 			{	
 				this->Image1D_page[i] = Image1D_original[i+offset_channel];
 				this->Image1D_mask[i] = const_max_voxeValue; //all available;
 				this->Image1D_exemplarRegion[i] = 0;
-				this->Image1D_segmentationResult[i] = 0;
+				this->Image1D_segmentationResultPassed[i] = 0;
+				this->Image1D_segmentationResultSplitted[i] = 0;
 			}
 			ofstream ofstream_log;
 			ofstream_log.open ("log_class_segmentationMain.txt");
 			ofstream_log<<"dim_X:"<<this->dim_X<<", dim_Y:"<<this->dim_Y<<", dim_Z:"<<this->dim_Z<<";"<<endl;
 			ofstream_log<<"size_page:"<<this->size_page<<";"<<endl;
 			ofstream_log<<"current channel:"<<this->idx_channel<<";"<<endl;
-			if (this->idx_algorithm == 1)
+			if (this->idx_algorithm == 1 || this->idx_algorithm == 2 || this->idx_algorithm == 4)
 			{
-				#pragma region "regionGrow only"
-				this->estimateThreshold(); //store to this->threshold;
-				this->count_totalWhiteVoxel = this->thresholdForCurrentPage();
-				this->removeSingleVoxel(this->Image1D_page, this->size_page);
-				this->categorizeVoxelsByValue(this->histo_main, this->Image1D_page, this->size_page); //store to this->vctList_potentialSeedList; providing seeds for regionGrowing;
-				this->vctList_segmentationResult = this->regionGrowOnVectorList(this->vctList_potentialSeedList);
-				this->is_success = true;
-				this->visualizeRegionGrow();
-				ofstream_log.close();
-				#pragma endregion
-			}
-			else if (this->idx_algorithm == 2 || this->idx_algorithm == 4)
-			{
-				#pragma region "regionGrow+meanShift"
+				#pragma region "regionGrowing-based methods"
 				this->vct_exemplar = landMarkList2IndexList(this->LandmarkList_exemplar);
 				this->estimateThreshold(); //store to this->threshold;
 				ofstream_log<<"estimateThreshold succeed, global threshold value: "<<this->threshold<<";"<<endl;
@@ -219,23 +214,24 @@ class class_segmentationMain
 					v3d_msg("Warning: no exemplar regions grown. Program will terminate, please re-select the exemplar(s)!");
 					ofstream_log<<"regonGrow for exemplar failed!"<<endl; ofstream_log.close(); return;
 				}
-				this->vctList2Image1D(this->Image1D_exemplarRegion, this->vctList_exemplarRegion);
 				if (!this->analyzeExemplarRegion())
 				{
 					ofstream_log<<"analyzeExemplarRegion failed!"<<endl; ofstream_log.close(); return; //failed;
 				}
-				ofstream_log<<"lowerBound_sphereToSizeRatio: "<<this->lowerBound_sphereToSizeRatio<<";"<<endl;
+				ofstream_log<<"lowerBound_shapeToSizeRatio: "<<this->lowerBound_shapeToSizeRatio<<";"<<endl;
 				ofstream_log<<"upperBound_valueRatioChange: "<<this->upperBound_valueRatioChange<<";"<<endl;
 				ofstream_log<<"lowerBound_regionSize: "<<this->lowerBound_regionSize<<";"<<endl;
 				for (int i=0;i<this->vctList_exemplarRegion.size();i++)
 				{
 					ofstream_log<<" exemplar region"<<(i+1)<<", voxel count: "<<this->vctList_exemplarRegion[i].size()<<endl;
-					ofstream_log<<" exemplar region"<<(i+1)<<", sphere size: "<<this->vc_exemplarSphereSize[i]<<endl;
+					ofstream_log<<" exemplar region"<<(i+1)<<", shape size: "<<this->vc_exemplarShapeSize[i]<<endl;
 				}
-				this->vctList_segmentationResult = this->regionGrowOnVectorList(this->vctList_potentialSeedList);
-				this->vctList_segmentationResult = postAnalysis(this->vctList_segmentationResult);
-				this->vctList_segmentationResult = mergeVectorList(this->vctList_segmentationResult, this->vctList_exemplarRegion);
-				ofstream_log<<"segmentation succeed, totally "<<this->vctList_segmentationResult.size()<<" regions;"<<endl;
+				this->vctList_segmentationResultOriginal = this->regionGrowOnVectorList(this->vctList_potentialSeedList);
+				postAnalysis();
+
+				this->vctList_segmentationResultPassed = mergeVectorList(this->vctList_exemplarRegion, this->vctList_segmentationResultPassed);
+				this->vctList_segmentationResultFinal = mergeVectorList(this->vctList_segmentationResultPassed, this->vctList_segmentationResultSplitted);
+				ofstream_log<<"segmentation succeed, totally "<<this->vctList_segmentationResultFinal.size()<<" regions;"<<endl;
 				this->visualizeRegionGrow();
 				this->is_success = true;
 				ofstream_log.close();
@@ -248,84 +244,85 @@ class class_segmentationMain
 				Image3D_page = class_segmentationMain::memory_allocate_double3D(this->dim_X, this->dim_Y, this->dim_Z);
 				Image1D2Image3D(this->Image1D_page, Image3D_page, this->dim_X, this->dim_Y, this->dim_Z);
 				ofstream_log<<"GVF variable preparation succeed!"<<endl;
-				//this->vctList_segmentationResult = class_segmentationMain::GVF_cellSegmentation(Image3D_page, this->dim_X, this->dim_Y, this->dim_Z);
+				//this->vctList_segmentationResultOriginal = class_segmentationMain::GVF_cellSegmentation(Image3D_page, this->dim_X, this->dim_Y, this->dim_Z);
 				ofstream_log<<"GVF result conversion succeed!"<<endl;
 				this->is_success = true;
 				ofstream_log.close();
 				#pragma endregion
 			}
-			v3d_msg(QString("Segmentation succeed! Totally %1 segments!").arg(this->vctList_segmentationResult.size()));
+			v3d_msg(QString("Segmentation succeed! Totally %1 segments!").arg(this->vctList_segmentationResultOriginal.size()));
 			return;
 		}
 		#pragma endregion
 
 		#pragma region "regionGrow"
-		vector<vector<V3DLONG> > postAnalysis(vector<vector<V3DLONG> > vctList_regionInput)
+		void postAnalysis()
 		{
 			ofstream ofstream_log;
 			if (this->is_debugging) {ofstream_log.open ("log_postAnalysis.txt");}
 			V3DLONG idx_region = 0;
-			V3DLONG idx_page;
 			V3DLONG idx_voxel = 0;
-			V3DLONG count_region = vctList_regionInput.size();
+			V3DLONG count_region = this->vctList_segmentationResultOriginal.size();
 			V3DLONG count_voxel = 0;
-			vector<V3DLONG> vct_voxelTmp;
-			vector<vector<V3DLONG> > vctList_regionResult;
-			vector<V3DLONG> vct_boundBoxTmp;
-			vector<vector<V3DLONG> > vctList_tmp;
+			vector<V3DLONG> tmp_region;
+			vector<V3DLONG> tmp_boundBox;
 			vector<vector<V3DLONG> > vctList_meanShift;
 			vector<vector<V3DLONG> > vctList_GVF;
-			vector<V3DLONG> vct_sphereGrowResult;
-			vector<V3DLONG> vct_tmp;
+			vector<V3DLONG> region_sphereGrow;
+			vector<V3DLONG> tmp_splittedRegion;
 			V3DLONG count_sphereVoxel = 0;
 			V3DLONG idx_center;
+			this->vctList_segmentationResultSplitted.clear();
+			this->vctList_segmentationResultPassed.clear();
 			double*** double3D_ImageTmp;
 			if (this->is_debugging) {ofstream_log<<"total regions: "<<count_region<<";"<<endl;}
 			for (V3DLONG idx_region=0;idx_region<count_region;idx_region++)
 			{	
-				vct_voxelTmp = vctList_regionInput[idx_region];
-				count_voxel = vct_voxelTmp.size();
+				tmp_region = this->vctList_segmentationResultOriginal[idx_region];
+				count_voxel = tmp_region.size();
 				if (count_voxel<const_min_regionSize)
 				{
 					break; //too small, removed;
 				}
 				if (this->is_debugging) {ofstream_log<<"idx_region: "<<idx_region<<", count_voxel: "<<count_voxel<<endl;}
-				idx_center = this->getCenterByMedian(vct_voxelTmp);
-				vct2Image1D(this->Image1D_mask, vct_voxelTmp, const_max_voxeValue); //reset mask;
-				vct_sphereGrowResult = this->sphereGrowOnSeed(idx_center);
-				count_sphereVoxel = vct_sphereGrowResult[0];
-				vct2Image1D(this->Image1D_mask, vct_voxelTmp, 0); //set mask;
-				if (((double)count_sphereVoxel/count_voxel)>this->lowerBound_sphereToSizeRatio)
+				idx_center = this->getCenterByMedian(tmp_region);
+				vct2Image1D(this->Image1D_mask, tmp_region, const_max_voxeValue); //reset mask;
+				region_sphereGrow = this->sphereGrowOnSeed(idx_center);
+				count_sphereVoxel = region_sphereGrow[0];
+				vct2Image1D(this->Image1D_mask, tmp_region, 0); //set mask;
+				if (((double)count_sphereVoxel/count_voxel)>this->lowerBound_shapeToSizeRatio)
 				{
-					vctList_regionResult.push_back(vct_voxelTmp);
+					this->vctList_segmentationResultPassed.push_back(tmp_region);
 					if (this->is_debugging) {ofstream_log<<"spheric test passed;"<<endl;}
 				}
 				else
 				{
 					if (this->is_debugging) {ofstream_log<<"spheric test failed;"<<endl;}
-					if (this->idx_algorithm == 2)
+					if (this->idx_algorithm == 1)
 					{
-						vctList_meanShift = menashiftClustering(vct_voxelTmp, const_multiplier_bandWidthToDiagnal);
+						this->vctList_segmentationResultPassed.push_back(tmp_region); //add it anyway;
+					}
+					else if (this->idx_algorithm == 2)
+					{
+						vctList_meanShift = menashiftClustering(tmp_region, const_multiplier_bandWidthToDiagnal);
 						for (int i=0;i<vctList_meanShift.size();i++)
 						{
-							vct_tmp = vctList_meanShift[i];
-							if (vct_tmp.size()>=this->lowerBound_regionSize)
+							tmp_splittedRegion = vctList_meanShift[i];
+							if (tmp_splittedRegion.size()>=this->lowerBound_regionSize)
 							{
-								vctList_regionResult.push_back(vct_tmp);
+								this->vctList_segmentationResultSplitted.push_back(tmp_splittedRegion);
 							}
 						}
 					}
 					else if (this->idx_algorithm == 4)
 					{
-						//vctList_meanShift = menashiftClustering(vct_voxelTmp, const_multiplier_bandWidthToDiagnal);
-						vct_boundBoxTmp = this->getBoundBox(vct_voxelTmp);
-						V3DLONG size_X = vct_boundBoxTmp[1]-vct_boundBoxTmp[0]+1;
-						V3DLONG size_Y = vct_boundBoxTmp[3]-vct_boundBoxTmp[2]+1;
-						V3DLONG size_Z = vct_boundBoxTmp[5]-vct_boundBoxTmp[4]+1;
+						tmp_boundBox = this->getBoundBox(tmp_region);
+						V3DLONG size_X = tmp_boundBox[1]-tmp_boundBox[0]+1;
+						V3DLONG size_Y = tmp_boundBox[3]-tmp_boundBox[2]+1;
+						V3DLONG size_Z = tmp_boundBox[5]-tmp_boundBox[4]+1;
 						if (this->is_debugging) {ofstream_log<<"region as input to GVF: size_X("<<size_X<<"), size_Y("<<size_Y<<"), size_Z("<<size_Z<<");"<<endl;}
-						//double3D_ImageTmp = memory_allocate_double3D(size_X+8, size_Y+8, size_Z+8);
 						double3D_ImageTmp = memory_allocate_double3D(size_X, size_Y, size_Z);
-						centralizeRegion(vct_voxelTmp, double3D_ImageTmp, vct_boundBoxTmp);
+						centralizeRegion(tmp_region, double3D_ImageTmp, tmp_boundBox);
 						vctList_GVF = class_segmentationMain::GVF_cellSegmentation(double3D_ImageTmp, size_X, size_Y, size_Z, this->is_debugging, this->vct_GVFparamters);
 						if (this->is_debugging) {ofstream_log<<"GVF segmented the region into "<<vctList_GVF.size()<<" sub-regions;"<<endl;}
 						for (int i=0;i<vctList_GVF.size();i++)
@@ -333,16 +330,15 @@ class class_segmentationMain
 							if (vctList_GVF[i].size()>this->lowerBound_regionSize)
 							{
 								if (this->is_debugging) {ofstream_log<<"sub-region ("<<i+1<<"), size: "<<vctList_GVF[i].size()<<endl;}
-								vct_tmp = deCentralizeRegion(vctList_GVF[i], vct_boundBoxTmp, this->dim_X, this->dim_Y);
-								vctList_regionResult.push_back(vct_tmp);
+								tmp_splittedRegion = deCentralizeRegion(vctList_GVF[i], tmp_boundBox, this->dim_X, this->dim_Y);
+								this->vctList_segmentationResultSplitted.push_back(tmp_splittedRegion);
 							}
 						}
-						if (this->is_debugging) {ofstream_log<<"sub-region(s) pushingback succeed;"<<endl;}
 						memory_free_double3D(double3D_ImageTmp, size_Z, size_X);
 					}
 				}
 			}
-			return vctList_regionResult;
+			return;
 		}
 
 		vector<vector<V3DLONG> > regionGrowOnVectorList(vector<vector<V3DLONG> > vctList_seed)
@@ -444,11 +440,54 @@ class class_segmentationMain
 			}
 		}
 
-		V3DLONG getLocalCenter(V3DLONG idx_input)
+		vector<V3DLONG> discGrowOnSeed(V3DLONG idx_seed)
 		{
-			V3DLONG idx_result = idx_input;
-			
-			return idx_result;
+			V3DLONG idx_radius = 0;
+			vector<V3DLONG> vct_sphere;
+			vector<V3DLONG> vct_result (2, 0);
+			V3DLONG count_missed = 0;
+			V3DLONG count_total = 0;
+			double double_missedRatio = 0;
+			ofstream ofstream_log;
+			V3DLONG idx_tmp;
+			if (!this->checkValidity(idx_seed)) //unlikely, but just in case;
+			{
+				return vct_result;
+			}
+			if (this->Image1D_mask[idx_seed]<1) //very likely;
+			{
+				return vct_result;
+			}
+			//grow a sphere around it;
+			while (true)
+			{
+				if (idx_radius>=(const_max_preGenerateSphereRadius))
+				{
+					break;
+				}
+				vct_sphere = this->vctList_preGeneratedSphere[idx_radius]; //note it's starting from radius of 1;
+				for (int i=0;i<vct_sphere.size();i++)
+				{
+					idx_tmp = idx_seed + vct_sphere[i];
+					if (checkValidity(idx_tmp))
+					{
+						if (this->Image1D_mask[idx_tmp]<1)
+						{
+							count_missed++;
+						}
+						count_total++;
+					}
+				}
+				double_missedRatio = double(count_missed)/(double)count_total;
+				if (double_missedRatio>const_max_sphereGrowMissToTotalRatio)
+				{
+					break;
+				}
+				idx_radius++;
+			}
+			vct_result[0] = count_total;
+			vct_result[1] = idx_radius;
+			return vct_result;
 		}
 
 		vector<V3DLONG> sphereGrowOnSeed(V3DLONG idx_seed)
@@ -503,22 +542,37 @@ class class_segmentationMain
 
 		void visualizeRegionGrow()
 		{
-			V3DLONG count_region = this->vctList_segmentationResult.size();
+			V3DLONG count_region = this->vctList_segmentationResultFinal.size();
 			V3DLONG count_voxel = 0;
 			V3DLONG idx_tmp;
 			V3DLONG idx_center;
 			this->vct_segmentationResultCenter.clear();
 			for (V3DLONG idx_region=0;idx_region<count_region;idx_region++)
 			{	 
-				count_voxel = this->vctList_segmentationResult[idx_region].size();
-				idx_center = this->getCenterByMedian(this->vctList_segmentationResult[idx_region]);
+				idx_center = this->getCenterByMedian(this->vctList_segmentationResultFinal[idx_region]);
 				this->vct_segmentationResultCenter.push_back(idx_center);
+			}
+			for (V3DLONG idx_region=0;idx_region<this->vctList_segmentationResultPassed.size();idx_region++)
+			{	 
+				count_voxel = this->vctList_segmentationResultPassed[idx_region].size();
 				for (V3DLONG idx_voxel=0;idx_voxel<count_voxel;idx_voxel++)
 				{
-					idx_tmp = this->vctList_segmentationResult[idx_region][idx_voxel];
+					idx_tmp = this->vctList_segmentationResultPassed[idx_region][idx_voxel];
 					if (this->checkValidity(idx_tmp))
 					{
-						this->Image1D_segmentationResult[idx_tmp] = (idx_region+1);
+						this->Image1D_segmentationResultPassed[idx_tmp] = (idx_region+1);
+					}
+				}
+			}
+			for (V3DLONG idx_region=0;idx_region<this->vctList_segmentationResultSplitted.size();idx_region++)
+			{	 
+				count_voxel = this->vctList_segmentationResultSplitted[idx_region].size();
+				for (V3DLONG idx_voxel=0;idx_voxel<count_voxel;idx_voxel++)
+				{
+					idx_tmp = this->vctList_segmentationResultSplitted[idx_region][idx_voxel];
+					if (this->checkValidity(idx_tmp))
+					{
+						this->Image1D_segmentationResultSplitted[idx_tmp] = (idx_region+1);
 					}
 				}
 			}
@@ -538,11 +592,11 @@ class class_segmentationMain
 			V3DLONG idx_neighborTmp = 0;
 			double value_tmp=0;
 			this->upperBound_valueRatioChange = -INF;
-			this->lowerBound_sphereToSizeRatio = INF;
+			this->lowerBound_shapeToSizeRatio = INF;
 			V3DLONG count_neighborTmp;
 			double mean_regionValue;
 			this->lowerBound_regionSize = INF;
-			vector<V3DLONG> vct_sphereGrowResult (2, 0);
+			vector<V3DLONG> vct_shapeGrowResult (2, 0);
 			for (V3DLONG idx_region=0;idx_region<count_region;idx_region++)
 			{
 				vct_tmp = this->vctList_exemplarRegion[idx_region];
@@ -592,16 +646,24 @@ class class_segmentationMain
 					}
 				}
 	
-				//sphere property;
+				//shape property;
 				V3DLONG idx_center = this->getCenterByMedian(vct_tmp);
 				vct2Image1D(this->Image1D_mask, vct_tmp, const_max_voxeValue); //reset mask;
-				vct_sphereGrowResult= this->sphereGrowOnSeed(idx_center);
-				vct2Image1D(this->Image1D_mask, vct_tmp, 0); //set mask;
-				V3DLONG count_total = vct_sphereGrowResult[0];
-				this->vc_exemplarSphereSize.push_back(vct_sphereGrowResult[1]);
-				if (this->lowerBound_sphereToSizeRatio>((double)count_total/count_voxel))
+				if (this->idx_shape == 1)
 				{
-					this->lowerBound_sphereToSizeRatio = ((double)count_total/count_voxel);
+					vct_shapeGrowResult= this->sphereGrowOnSeed(idx_center);
+				}
+				else if (this->idx_shape == 2)
+				{
+					//vct_shapeGrowResult= this->sphereGrowOnSeed(idx_center);
+					vct_shapeGrowResult= this->discGrowOnSeed(idx_center);
+				}
+				vct2Image1D(this->Image1D_mask, vct_tmp, 0); //set mask;
+				V3DLONG count_total = vct_shapeGrowResult[0];
+				this->vc_exemplarShapeSize.push_back(vct_shapeGrowResult[1]);
+				if (this->lowerBound_shapeToSizeRatio>((double)count_total/count_voxel))
+				{
+					this->lowerBound_shapeToSizeRatio = ((double)count_total/count_voxel);
 				}
 			}
 			lowerBound_regionSize = lowerBound_regionSize*const_multiplier_regionSizeLowerBound;
@@ -800,7 +862,7 @@ class class_segmentationMain
 		}
 		#pragma endregion
 
-		#pragma region "sphere"
+		#pragma region "shape"
 		void createSphereTemplate()
 		{
 			V3DLONG x;
@@ -867,7 +929,7 @@ class class_segmentationMain
 					for (int y=0;y<size_Y;y++)
 					{
 						tmp_value = (int)Image3D_input[z][x][y];
-						if (tmp_value>1)
+						if (tmp_value>0)
 						{
 							idx_valuePosition = vctContains(vct_valuesUsed, tmp_value);
 							tmp_idx = coordinate2Index(x, y, z, size_X, size_X*size_Y);
@@ -1769,21 +1831,16 @@ class class_segmentationMain
 			int para_maxIteration = vct_GVFparamters[0];
 			int para_fusionThreshold = vct_GVFparamters[1];
 			double para_sigma = vct_GVFparamters[2];
-			double para_lambda = vct_GVFparamters[3];
-			double para_mu = vct_GVFparamters[4];
-			double para_omega = vct_GVFparamters[5];
+			double para_mu = vct_GVFparamters[3];
 			double3D ***Image3D3_u;
 			double3D ***Image3D3_u_normalized;
 			double3D ***Image3D3_f;
 			double3D ***Image3D3_gradient;
-			//int *** Image3D_result;
-			//Image3D_result = memory_allocate_int3D(dim_X,dim_Y,dim_Z);
 			Image3D3_gradient = memory_allocate_double3D3(dim_X, dim_Y, dim_Z);
 			int3D ***Image3D3_mode;
 			int ***Image3D_label;
 			int count_page = dim_X*dim_Y*dim_Z;
-			//unsigned char ***Image3D_edge;
-			int smoothIteration = (int)(3*para_omega + 0.5);
+			int smoothIteration = (int)(3*para_sigma + 0.5);
 			if (is_debugging) {ofstream_log<<"initialization passed!"<<endl;}
 			smooth_GVFkernal(Image3D_input, smoothIteration, dim_X, dim_Y, dim_Z);
 			if (is_debugging) {ofstream_log<<"smoothing passed!"<<endl;}
@@ -1809,6 +1866,7 @@ class class_segmentationMain
 			GVF_fuseMode( Image3D3_mode, Image3D_label, para_fusionThreshold, dim_X, dim_Y, dim_Z);
 			if (is_debugging) {ofstream_log<<"fuseMode passed!"<<endl;}
 			memory_free_int3D3(Image3D3_mode,dim_Z,dim_X);
+			//unsigned char ***Image3D_edge;
 			//Image3D_edge = memory_allocate_uchar3D(dim_X,dim_Y,dim_Z);
 			//GVF_majorFilter(Image3D_label, const_int_GVF_majorFilterIteration, dim_X, dim_Y, dim_Z);
 			//if (is_debugging) {ofstream_log<<"major fitler1 passed!"<<endl;}
@@ -2182,15 +2240,35 @@ class class_segmentationMain
 			}
 			return;
 		}
-
 		void GVF_localThresholding(double ***Image3D_input, int ***Image3D_label, int dim_X, int dim_Y, int dim_Z)
 		{
 			int x, y, z;
 			int idx_label, i;
 			int threshold_global = 0;
+			int **vctList_histogram;
 			double *vct_histogram;
-			vct_histogram = (double *)malloc(sizeof(double)*256);
-			for(i=0;i<256;i++)
+			int *vct_threshold;
+			int count_label = 0;
+			int tmp_label = 0;
+			int tmp_value = 0;
+			for(z=0;z<dim_Z;z++)
+			{
+				for(x=0;x<dim_X;x++)
+				{
+					for(y=0;y<dim_Y;y++)
+					{
+						tmp_label = Image3D_label[z][x][y];
+						if(tmp_label>count_label)
+						{
+							count_label = tmp_label;
+						}
+					}
+				}
+			}
+			count_label = count_label + 1;
+			vctList_histogram = memory_allocate_int2D(count_label, const_length_histogram);
+			vct_histogram = (double *)malloc(sizeof(double)*const_length_histogram);
+			for(i=0;i<const_length_histogram;i++)
 			{
 				vct_histogram[i] = 0;
 			}
@@ -2200,23 +2278,36 @@ class class_segmentationMain
 				{
 					for(y=0;y<dim_Y;y++)
 					{
-						if(Image3D_label[z][x][y]>0)
-						{
-							vct_histogram[(int)Image3D_input[z][x][y]]++;
-						}
+						tmp_label = Image3D_label[z][x][y];
+						tmp_value = (int)Image3D_input[z][x][y];
+						vctList_histogram[tmp_label][tmp_value]++;
+						vct_histogram[tmp_value]++;
 					}
 				}
 			}
-			threshold_global = class_segmentationMain::estimateThresholdYen(vct_histogram);
+			threshold_global = estimateThresholdYen(vct_histogram);
+			vct_threshold = (int *)malloc(sizeof(int)*(count_label));
+			for(idx_label=0;idx_label<count_label;idx_label++)
+			{
+				for(i=0;i<const_length_histogram;i++)
+				{
+					vct_histogram[i] = (double)vctList_histogram[idx_label][i];
+				}
+				vct_threshold[idx_label] = estimateThresholdYen(vct_histogram);
+			}
+			free(vct_histogram);
+			
 			for(z=0;z<dim_Z;z++)
 			{
 				for(x=0;x<dim_X;x++)
 				{
 					for(y=0;y<dim_Y;y++)
 					{
-						if((Image3D_label[z][x][y]>=0) && (Image3D_input[z][x][y]>=threshold_global))
+						tmp_label = Image3D_label[z][x][y];
+						tmp_value = Image3D_input[z][x][y];
+						if((tmp_label>0) && (tmp_value>vct_threshold[tmp_label]) && (tmp_value>threshold_global))
 						{
-							Image3D_label[z][x][y] =  Image3D_label[z][x][y]+1;
+							Image3D_label[z][x][y] = tmp_label;
 						}
 						else
 						{
@@ -2225,6 +2316,8 @@ class class_segmentationMain
 					}
 				}
 			}
+			memory_free_int2D(vctList_histogram,count_label);
+			free(vct_threshold);
 			return;
 		}
 		#pragma endregion
@@ -2325,17 +2418,16 @@ bool segmentationInterface(V3DPluginCallback2 &V3DPluginCallback2_currentCallbac
 	vct_GVFparamters[0] = dialogMain1.double_GVF_maxIteration;
 	vct_GVFparamters[1] = dialogMain1.double_GVF_fusionThreshold;
 	vct_GVFparamters[2] = dialogMain1.double_GVF_sigma;
-	vct_GVFparamters[3] = dialogMain1.double_GVF_lambda;
-	vct_GVFparamters[4] = dialogMain1.double_GVF_mu;
-	vct_GVFparamters[5] = dialogMain1.double_GVF_omega;
-	class_segmentationMain segmentationMain1(dialogMain1.double_threshold, Image1D_current, dim_X, dim_Y, dim_Z, idx_channel, LandmarkList_current, dialogMain1.flag_debug, dialogMain1.idx_algorithm, vct_GVFparamters);
+	vct_GVFparamters[3] = dialogMain1.double_GVF_mu;
+	class_segmentationMain segmentationMain1(dialogMain1.double_threshold, Image1D_current, dim_X, dim_Y, dim_Z, idx_channel, LandmarkList_current, dialogMain1.flag_debug, dialogMain1.idx_algorithm, vct_GVFparamters, dialogMain1.idx_shape);
 	if (!segmentationMain1.is_success)
 	{
 		v3d_msg("warning:initialization of segmentationMain failed, program will terminate!");
 		return false;
 	}
 	//visualizationImage1D(segmentationMain1.Image1D_exemplarRegion,segmentationMain1.dim_X,segmentationMain1.dim_Y,segmentationMain1.dim_Z,1,V3DPluginCallback2_currentCallback, "Exemplar Regions");
-	visualizationImage1D(segmentationMain1.Image1D_segmentationResult,segmentationMain1.dim_X,segmentationMain1.dim_Y,segmentationMain1.dim_Z,1,V3DPluginCallback2_currentCallback, "Segmentation Result");
+	visualizationImage1D(segmentationMain1.Image1D_segmentationResultPassed,segmentationMain1.dim_X,segmentationMain1.dim_Y,segmentationMain1.dim_Z,1,V3DPluginCallback2_currentCallback, "Segmentation Result (sphere-like)");
+	visualizationImage1D(segmentationMain1.Image1D_segmentationResultSplitted,segmentationMain1.dim_X,segmentationMain1.dim_Y,segmentationMain1.dim_Z,1,V3DPluginCallback2_currentCallback, "Segmentation Result (splitted from irregular shapes)");
 	V3DPluginCallback2_currentCallback.setLandmark(v3dhandle_currentWindow, segmentationMain1.LandmarkList_segmentationResult);
 	V3DPluginCallback2_currentCallback.updateImageWindow(v3dhandle_currentWindow);
     return true;

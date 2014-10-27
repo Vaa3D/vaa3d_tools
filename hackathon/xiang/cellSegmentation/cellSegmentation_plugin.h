@@ -89,9 +89,21 @@ class dialogMain: public QDialog
 		QDoubleSpinBox_threshold->setMinimum(-65535);
         QGroupBox_threshold->setLayout(QGridLayout_threshold);
 
+
+		QRadioButton_shape_sphere = new QRadioButton("Sphere (isotropic image)", QWidget_parent);
+		QRadioButton_shape_sphere->setChecked(true);
+		QRadioButton_shape_disc = new QRadioButton("Disc (anisotropic image)", QWidget_parent);
+		QRadioButton_shape_disc->setChecked(false);
+		QGroupBox *QGroupBox_shape = new QGroupBox("Region Shape");
+		QGroupBox_shape->setStyle(new QWindowsStyle());
+		QGridLayout *QGridLayout_shape = new QGridLayout();
+		QGridLayout_shape->addWidget(QRadioButton_shape_sphere, 1, 1);
+		QGridLayout_shape->addWidget(QRadioButton_shape_disc, 1, 2);
+		QGroupBox_shape->setLayout(QGridLayout_shape);
+
 		QRadioButton_algorithm_regionGrowing = new QRadioButton("regionGrowing", QWidget_parent);
 		QRadioButton_algorithm_regionGrowing->setChecked(false);
-		QRadioButton_algorithm_regionGrowing->setEnabled(false);
+		QRadioButton_algorithm_regionGrowing->setEnabled(true);
 		QRadioButton_algorithm_regionGrowingMeanShift = new QRadioButton("regionGrowing+meanShift", QWidget_parent);
 		QRadioButton_algorithm_regionGrowingMeanShift->setChecked(false);
 		QRadioButton_algorithm_regionGrowingMeanShift->setEnabled(false);
@@ -101,18 +113,7 @@ class dialogMain: public QDialog
 		QRadioButton_algorithm_fusing = new QRadioButton("regionGrowing+GVF", QWidget_parent);
 		QRadioButton_algorithm_fusing->setChecked(true);
 		QCheckBox_algorithm_debug = new QCheckBox("Debugging Mode", QWidget_parent);
-		QCheckBox_algorithm_debug->setChecked(false);
-		QRadioButton_algorithm_regionGrowing = new QRadioButton("regionGrowing", QWidget_parent);
-		QRadioButton_algorithm_regionGrowing->setChecked(false);
-		QRadioButton_algorithm_regionGrowingMeanShift = new QRadioButton("regionGrowing+meanShift", QWidget_parent);
-		QRadioButton_algorithm_regionGrowingMeanShift->setChecked(false);
-		QRadioButton_algorithm_GVF = new QRadioButton("GFV", QWidget_parent);
-		QRadioButton_algorithm_GVF->setChecked(false);
-		QRadioButton_algorithm_GVF->setEnabled(false);
-		QRadioButton_algorithm_fusing = new QRadioButton("Fusing (of the two)", QWidget_parent);
-		QRadioButton_algorithm_fusing->setChecked(true);
-		QCheckBox_algorithm_debug = new QCheckBox("Debugging Mode", QWidget_parent);
-		QCheckBox_algorithm_debug->setChecked(false);
+		QCheckBox_algorithm_debug->setChecked(true);
 		QGroupBox *QGroupBox_algorithm = new QGroupBox("Algorithm");
 		QGroupBox_algorithm->setStyle(new QWindowsStyle());
 		QGridLayout *QGridLayout_algorithm = new QGridLayout();
@@ -124,17 +125,13 @@ class dialogMain: public QDialog
 		QGroupBox_algorithm->setLayout(QGridLayout_algorithm);
 	
 		QLabel* QLabel_GVF_matIteration = new QLabel(QObject::tr("Max iteration: "));
-		QLineEdit_GVF_maxIteration = new QLineEdit("5", QWidget_parent);
+		QLineEdit_GVF_maxIteration = new QLineEdit("25", QWidget_parent);
 		QLabel* QLabel_GVF_fusionThreshold = new QLabel(QObject::tr("Fusion double_threshold: "));
-		QLineEdit_GVF_fusionThreshold = new QLineEdit("3", QWidget_parent);
+		QLineEdit_GVF_fusionThreshold = new QLineEdit("2", QWidget_parent);
 		QLabel* QLabel_GVF_sigma = new QLabel(QObject::tr("sigma: "));
 		QLineEdit_GVF_sigma = new QLineEdit("0.1", QWidget_parent);
-		QLabel* QLabel_GVF_lambda = new QLabel(QObject::tr("lambda: "));
-		QLineEdit_GVF_lambda = new QLineEdit("0.2", QWidget_parent);
 		QLabel* QLabel_GVF_mu = new QLabel(QObject::tr("mu: "));
 		QLineEdit_GVF_mu = new QLineEdit("0.1", QWidget_parent);
-		QLabel* QLabel_GVF_omega = new QLabel(QObject::tr("omega: "));
-		QLineEdit_GVF_omega = new QLineEdit("1.0", QWidget_parent);
 		QGroupBox *QGroupBox_GVFparamter = new QGroupBox("GVF paramters");
 		QGroupBox_GVFparamter->setStyle(new QWindowsStyle());
 		QGridLayout *QGridLayout_GVFparamter = new QGridLayout();
@@ -144,12 +141,8 @@ class dialogMain: public QDialog
 		QGridLayout_GVFparamter->addWidget(QLineEdit_GVF_fusionThreshold, 1, 4);
 		QGridLayout_GVFparamter->addWidget(QLabel_GVF_sigma, 2, 1);
 		QGridLayout_GVFparamter->addWidget(QLineEdit_GVF_sigma, 2, 2);
-		QGridLayout_GVFparamter->addWidget(QLabel_GVF_lambda, 2, 3);
-		QGridLayout_GVFparamter->addWidget(QLineEdit_GVF_lambda, 2, 4);
-		QGridLayout_GVFparamter->addWidget(QLabel_GVF_mu, 3, 1);
-		QGridLayout_GVFparamter->addWidget(QLineEdit_GVF_mu, 3, 2);
-		QGridLayout_GVFparamter->addWidget(QLabel_GVF_omega, 3, 3);
-		QGridLayout_GVFparamter->addWidget(QLineEdit_GVF_omega, 3, 4);
+		QGridLayout_GVFparamter->addWidget(QLabel_GVF_mu, 2, 3);
+		QGridLayout_GVFparamter->addWidget(QLineEdit_GVF_mu, 2, 4);
 		QGroupBox_GVFparamter->setLayout(QGridLayout_GVFparamter);
 
         QWidget* QWidget_bottomBar = new QWidget();
@@ -161,6 +154,7 @@ class dialogMain: public QDialog
         QGridLayout *QGridLayout_main = new QGridLayout();
         QGridLayout_main->addWidget(QGroupBox_threshold);
         QGridLayout_main->addWidget(QGroupBox_channel);
+		QGridLayout_main->addWidget(QGroupBox_shape);
         QGridLayout_main->addWidget(QGroupBox_algorithm);
 		QGridLayout_main->addWidget(QGroupBox_GVFparamter);
 		QGridLayout_main->addWidget(QWidget_bottomBar);
@@ -187,13 +181,13 @@ class dialogMain: public QDialog
 	QRadioButton* QRadioButton_algorithm_regionGrowingMeanShift;
 	QRadioButton* QRadioButton_algorithm_GVF;
 	QRadioButton* QRadioButton_algorithm_fusing;
+	QRadioButton* QRadioButton_shape_sphere;
+	QRadioButton* QRadioButton_shape_disc;
 	QLineEdit* QLineEdit_GVF_maxIteration;
 	QLineEdit* QLineEdit_GVF_fusionThreshold;
 	QLineEdit* QLineEdit_GVF_sigma;
-	QLineEdit* QLineEdit_GVF_lambda;
 	QLineEdit* QLineEdit_GVF_mu;
-	QLineEdit* QLineEdit_GVF_omega;
-    V3DLONG int_channel;
+	V3DLONG int_channel;
     int int_thresholdType;
     double double_threshold;
 	int idx_algorithm;
@@ -201,10 +195,8 @@ class dialogMain: public QDialog
 	double double_GVF_maxIteration;
 	double double_GVF_fusionThreshold;
 	double double_GVF_sigma;
-	double double_GVF_lambda;
 	double double_GVF_mu;
-	double double_GVF_omega;
-
+	int idx_shape;
 
 	public slots:
     void update()
@@ -256,9 +248,15 @@ class dialogMain: public QDialog
 		double_GVF_maxIteration = this->QLineEdit_GVF_maxIteration->text().toDouble();
 		double_GVF_fusionThreshold = this->QLineEdit_GVF_fusionThreshold->text().toDouble();
 		double_GVF_sigma = this->QLineEdit_GVF_sigma->text().toDouble();
-		double_GVF_lambda = this->QLineEdit_GVF_lambda->text().toDouble();
 		double_GVF_mu = this->QLineEdit_GVF_mu->text().toDouble();
-		double_GVF_omega = this->QLineEdit_GVF_omega->text().toDouble();
+		if (this->QRadioButton_shape_sphere->isChecked())
+		{
+			this->idx_shape = 1;
+		}
+		else if (this->QRadioButton_shape_disc->isChecked())
+		{
+			this->idx_shape = 2;
+		}
         accept();
     }
 };
