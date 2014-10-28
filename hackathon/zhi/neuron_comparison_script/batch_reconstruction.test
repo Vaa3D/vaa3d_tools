@@ -1,5 +1,12 @@
 #!/bin/bash
-
+#THis is a shell progrem to batch reconstruct images using five different methods, including APP1, APP2, MOST, neuTube, and snake.
+#APP1,APP2 and MOST are built together with Vaa3D
+#To build neuTube, 1. go to /vaa3d_tools/released_plugins/v3d_plugins/neurontracing_neutube/src_neutube/, and run 
+#	                                     sh build.sh <qmake_path> <qmake_spec_path>
+#	              more detailed information can be found in /local1/work/vaa3d_tools/released_plugins/v3d_plugins/neurontracing_neutube/how_to_build
+#		   2. go to /local1/work/vaa3d_tools/hackathon/zhi/neuTube_zhi/, and run qmake & make
+#To build snake, please check the README file in /vaa3d_tools/hackathon/zhi/snake_tracing/README
+  
 if [ $# -ge 1 ]; then
 	if [ ! -f $1 ]; then
 		echo "Can not find file [$1]"
@@ -29,8 +36,10 @@ else
 	exit
 fi
 
-$1 -x Vaa3D_Neuron2 -f app2 -i $2 -o "$2_app2.swc" -p NULL 0 15 0 1 1 0 10   
-mv  "$2_app2.swc" $3
+$1 -x Vaa3D_Neuron2 -f app1 -i $2 -p NULL 0 25 0    
+mv  $2*_app1.swc $3
+$1 -x Vaa3D_Neuron2 -f app2 -i $2 -p NULL 0 15 0 1 1 0 10   
+mv  $2*_app2.swc $3
 rm  "$2_ini.swc"
 $1 -x MOST -f MOST_trace -i $2 -p 1 20   
 mv  "$2_MOST.swc" $3
