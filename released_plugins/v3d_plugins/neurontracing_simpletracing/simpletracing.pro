@@ -33,4 +33,4 @@ SOURCES      += Neuron_tracing.cpp
 SOURCES      += parser.cpp
 SOURCES      += $$V3DMAINDIR/basic_c_fun/v3d_message.cpp
 TARGET        = $$qtLibraryTarget(SimpleTracing)
-DESTDIR       = $$V3DMAINDIR/../bin/plugins/Neuron_Tracing/SimpleTracing
+DESTDIR       = $$V3DMAINDIR/../bin/plugins/neuron_tracing/SimpleTracing
