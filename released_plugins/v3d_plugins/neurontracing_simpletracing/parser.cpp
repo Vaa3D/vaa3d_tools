@@ -1,4 +1,6 @@
 #include "parser.h"
+#include <string.h>
+
 
 int split(const char *paras, char ** &args)
 {

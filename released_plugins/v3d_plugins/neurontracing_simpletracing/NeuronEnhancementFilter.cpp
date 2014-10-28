@@ -11,6 +11,8 @@
 #include "NeuronEnhancementFilter.h"
 #include <algorithm>
 #include <functional>
+#include <string.h>
+#include <stdio.h>
 
 
 #ifdef _DEBUG

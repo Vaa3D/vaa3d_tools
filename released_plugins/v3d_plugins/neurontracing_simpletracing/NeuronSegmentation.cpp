@@ -11,6 +11,7 @@
 #include <algorithm>
 #include <functional>
 #include <math.h>
+#include <string.h>
 
 #ifdef _DEBUG
 #undef THIS_FILE
