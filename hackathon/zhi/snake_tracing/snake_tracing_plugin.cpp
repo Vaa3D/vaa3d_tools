@@ -46,10 +46,6 @@ void snake_tracing::domenu(const QString &menu_name, V3DPluginCallback2 &callbac
 	{
         autotrace(callback,parent);
 	}
-	else if (menu_name == tr("menu2"))
-	{
-		v3d_msg("To be implemented.");
-	}
 	else
 	{
         v3d_msg(tr("Snake tracing plugin "
@@ -370,6 +366,7 @@ bool autotrace(const V3DPluginArgList & input, V3DPluginArgList & output,V3DPlug
         }
     }
 
+
     v3d_msg(QString("Now you can drag and drop the generated swc fle [%1] into Vaa3D.").arg(fileName),0);
     if (subject) {delete subject; subject=0;}
     return true;
@@ -511,6 +508,10 @@ void findBranch_Raw(int snake_label, int root_label, Point3D root_point, vnl_vec
     vnl_vector<int> snake_point_id(Tracer->SnakeList.Snakes[snake_label].Cu.GetSize());
     snake_point_id.fill(0);
     //write the points of current main branch to swc file
+    *out_txt<<"#name Snake_Tracing\n";
+    *out_txt<<"#comment\n";
+    *out_txt<<"##n,type,x,y,z,radius,parent\n";
+
     for( int i = 0; i < Tracer->SnakeList.Snakes[snake_label].Cu.GetSize(); i++ )
     {
         if( root_label == -1 )
