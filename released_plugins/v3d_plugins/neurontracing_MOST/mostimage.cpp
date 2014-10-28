@@ -738,6 +738,9 @@ NeuronTree MOSTImage::trace_seed_list(const LandmarkList &seedList, std::vector<
                }
 
                FILE * fp = fopen(swcfile.toAscii(), "wt");
+               fprintf(fp, "#name MOST_Tracing\n");
+               fprintf(fp, "#comment\n");
+               fprintf(fp, "##n,type,x,y,z,radius,parent\n");
                for (int i=0;i<merged_neuron.row.size(); i++)
                {
                     fprintf(fp, "%ld %ld %5.3f %5.3f %5.3f %5.3f %ld\n",
