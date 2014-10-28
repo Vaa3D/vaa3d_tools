@@ -470,6 +470,9 @@ void autotrace(V3DPluginCallback2 &callback, QWidget *parent)
     QString outswc_file = QString(p4DImage->getFileName()) + "_neutube.swc";
 
     FILE *tube_fp = fopen(outswc_file.toStdString().c_str(), "w");
+    fprintf(tube_fp, "#name NeuTube_Tracing\n");
+    fprintf(tube_fp, "#comment\n");
+    fprintf(tube_fp, "##n,type,x,y,z,radius,parent\n");
     int start_id = 1;
     for (i = 0; i < nchain; i++)
     {
@@ -486,6 +489,8 @@ void autotrace(V3DPluginCallback2 &callback, QWidget *parent)
 
     if(p)
     {
+            QString outswc_file_tmp = QString(p4DImage->getFileName()) + "_neutube_tmp.swc";
+
             Swc_Tree *tree =  Read_Swc_Tree(outswc_file.toStdString().c_str());
             if(tree != NULL)
             {
@@ -512,7 +517,22 @@ void autotrace(V3DPluginCallback2 &callback, QWidget *parent)
                 Swc_Tree_Resort_Id(tree);
 
                 Swc_Tree_Reconnect(tree, 1.0, 20.0);
-                Write_Swc_Tree(outswc_file.toStdString().c_str(),tree);
+                Write_Swc_Tree(outswc_file_tmp.toStdString().c_str(),tree);
+                std::ifstream file(outswc_file_tmp.toStdString().c_str());
+                std::string str;
+
+                FILE *fp_out = fopen(outswc_file.toStdString().c_str(),"w");
+
+                fprintf(fp_out, "#name NeuTube_Tracing\n");
+                fprintf(fp_out, "#comment\n");
+                fprintf(fp_out, "##n,type,x,y,z,radius,parent\n");
+                while (std::getline(file, str))
+                {
+                    fprintf(fp_out,str.c_str());
+                    fprintf(fp_out,"\n");
+                }
+                fclose(fp_out);
+                remove(outswc_file_tmp.toStdString().c_str());
                 Kill_Swc_Tree(tree);
 
             }
@@ -865,6 +885,9 @@ bool autotrace(const V3DPluginArgList & input, V3DPluginArgList & output,V3DPlug
     QString outswc_file = QString(inimg_file) + "_neutube.swc";
 
     FILE *tube_fp = fopen(outswc_file.toStdString().c_str(), "w");
+    fprintf(tube_fp, "#name NeuTube_Tracing\n");
+    fprintf(tube_fp, "#comment\n");
+    fprintf(tube_fp, "##n,type,x,y,z,radius,parent\n");
     int start_id = 1;
     for (i = 0; i < nchain; i++)
     {
@@ -881,6 +904,7 @@ bool autotrace(const V3DPluginArgList & input, V3DPluginArgList & output,V3DPlug
 
     if(p)
     {
+            QString outswc_file_tmp = QString(inimg_file) + "_neutube_tmp.swc";
             Swc_Tree *tree =  Read_Swc_Tree(outswc_file.toStdString().c_str());
             if(tree != NULL)
             {
@@ -907,7 +931,23 @@ bool autotrace(const V3DPluginArgList & input, V3DPluginArgList & output,V3DPlug
                 Swc_Tree_Resort_Id(tree);
 
                 Swc_Tree_Reconnect(tree, 1.0, 20.0);
-                Write_Swc_Tree(outswc_file.toStdString().c_str(),tree);
+                Write_Swc_Tree(outswc_file_tmp.toStdString().c_str(),tree);
+                std::ifstream file(outswc_file_tmp.toStdString().c_str());
+                std::string str;
+
+                FILE *fp_out = fopen(outswc_file.toStdString().c_str(),"w");
+
+                fprintf(fp_out, "#name NeuTube_Tracing\n");
+                fprintf(fp_out, "#comment\n");
+                fprintf(fp_out, "##n,type,x,y,z,radius,parent\n");
+                while (std::getline(file, str))
+                {
+                    fprintf(fp_out,str.c_str());
+                    fprintf(fp_out,"\n");
+                }
+                fclose(fp_out);
+                remove(outswc_file_tmp.toStdString().c_str());
+
                 Kill_Swc_Tree(tree);
 
             }
