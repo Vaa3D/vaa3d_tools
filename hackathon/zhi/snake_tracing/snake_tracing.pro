@@ -9,7 +9,6 @@ mac{
 else{
     ITKLIBPATH = ITKlibs_Linux
     SOURCES = ITK_include/itkLightProcessObject.cxx
-
 }
 
 VAA3DPATH = ../../../../v3d_external/v3d_main

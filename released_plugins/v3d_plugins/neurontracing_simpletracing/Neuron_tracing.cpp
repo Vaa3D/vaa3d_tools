@@ -402,12 +402,11 @@ void NeuronPlugin::NeuronTracing_Ray_cast(V3DPluginCallback &callback, QWidget *
 	V3DLONG x,y,z,index;
 	
 	V3DLONG imagesize = sy*sx;
-	unsigned char *apsInput;
+    unsigned char *apsInput=0;
 	try
 	{
 		apsInput = new unsigned char[sx*sy*sz];
-		memset(apsInput, 0, sx*sy*sz * sizeof(unsigned char));
-		
+		memset(apsInput, 0, sx*sy*sz * sizeof(unsigned char));		
 	}
 	catch (...)
 	{
@@ -416,12 +415,11 @@ void NeuronPlugin::NeuronTracing_Ray_cast(V3DPluginCallback &callback, QWidget *
 		return;
 	}
 	SpacePoint_t orgPoint;
-	SpacePoint_t centerpoint;
-	SpacePoint_t Ncentepoint;
 	orgPoint.m_x = -1;
 	orgPoint.m_y = -1;
 	orgPoint.m_z = -1;
 	
+    //?? what is the goal of this search?? a max-filter? But the code does not seem to be correct
 	for (V3DLONG k=0; k<sz; k++)
 	{
 		for (V3DLONG j=0; j<sy; j++)
@@ -439,16 +437,16 @@ void NeuronPlugin::NeuronTracing_Ray_cast(V3DPluginCallback &callback, QWidget *
 						x = i + nDx[n];
 						if (z < sz && y < sy && x<sx && x>0 && y>0 && z>0)
 						{
-							if(pData[ z * imagesize + y * sx + x] > max)
+                            if (pData[ z * imagesize + y * sx + x] > max)
 							{
 								max = pData[ z * sx*sy + y * sx + x];
-								m=3;
+                                //m=3;
 								//printf("max=%ld m=%ld\n",max,m);
 							}
-						}else
+                        }
+                        else
 						{
 							m = 3;
-							
 						}
 					}
 				}
@@ -479,11 +477,15 @@ void NeuronPlugin::NeuronTracing_Ray_cast(V3DPluginCallback &callback, QWidget *
 	
 	LandmarkList  Landmark;
 	Landmark = callback.getLandmark(curwin);
-	V3DLONG m_x= Landmark.at(0).x;
-	V3DLONG m_y= Landmark.at(0).y;
-	V3DLONG m_z= Landmark.at(0).z;
-	printf("x=%ld y=%ld z=%ld\n",m_x,m_y,m_z);
-	orgPoint.m_x = m_x;
+    V3DLONG m_x=0, m_y=0, m_z=0;
+    if (Landmark.size()>0)
+    {
+        m_x= Landmark.at(0).x;
+        m_y= Landmark.at(0).y;
+        m_z= Landmark.at(0).z;
+    }
+    printf("x=%ld y=%ld z=%ld\n",m_x,m_y,m_z);
+    orgPoint.m_x = m_x;
 	orgPoint.m_y = m_y;
 	orgPoint.m_z = m_z;
 	Set_Seed(orgPoint);
@@ -523,7 +525,7 @@ void NeuronPlugin::NeuronTracing_Ray_cast(V3DPluginCallback &callback, QWidget *
 	
 	PathMask(centerpath);
 	
-	SpacePoint_t direc_point ;
+    SpacePoint_t direc_point;
 	
 	SpacePoint_t swcpoint;
 	
@@ -646,12 +648,9 @@ void NeuronPlugin::NeuronTracing_Ray_D(V3DPluginCallback &callback, QWidget *par
 		return;
 	}
 	SpacePoint_t orgPoint;
-	SpacePoint_t centerpoint;
-	SpacePoint_t Ncentepoint;
 	orgPoint.m_x = -1;
 	orgPoint.m_y = -1;
-	orgPoint.m_z = -1;
-	
+	orgPoint.m_z = -1;	
 	
 	for (V3DLONG k=0; k<sz; k++)
 	{
@@ -709,6 +708,12 @@ void NeuronPlugin::NeuronTracing_Ray_D(V3DPluginCallback &callback, QWidget *par
 	//SetImageInfo1D(apsInput,sz,sx,sy); temp modify
 	LandmarkList  Landmark;
 	Landmark = callback.getLandmark(curwin);
+    if (Landmark.size()<1)
+    {
+        v3d_msg("Landmark has not been set in the image. Quit.");
+        return;
+    }
+
 	V3DLONG m_x= Landmark.at(0).x;
 	V3DLONG m_y= Landmark.at(0).y;
 	V3DLONG m_z= Landmark.at(0).z;
@@ -1133,8 +1138,7 @@ void NeuronPlugin::SetImageInfo1D(V3DLONG* data, V3DLONG count, V3DLONG width, V
 
 void NeuronPlugin::Set_Seed(SpacePoint_t seed)
 {
-	m_sptSeed = seed;
-	
+	m_sptSeed = seed;	
 }
 
 
