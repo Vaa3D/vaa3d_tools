@@ -245,6 +245,7 @@ void NeuronMatchDialog::run()
     //    matchfunc.output_markers_orgspace(QDir(folder_output).filePath(fname_output + ".marker"));
     matchfunc.output_affine(QDir(folder_output).filePath(fname_output),fname_nt0);
     matchfunc.output_matchedMarkers_orgspace(QDir(folder_output).filePath(name_nt0 + "_matched.marker"),QDir(folder_output).filePath(name_nt1 + "_matched.marker"));
+    matchfunc.output_parameter(QDir(folder_output).filePath(fname_output+"_param.txt"));
 
     gridLayout->setEnabled(true);
     v3d_msg("matching finished");
@@ -462,6 +463,29 @@ void neuron_match_clique::init()
 
     //find the matched cliques
     matchCliquesAndCands();
+}
+
+void neuron_match_clique::output_parameter(QString fname)
+{
+
+    QFile file(fname);
+    if (!file.open(QIODevice::WriteOnly|QIODevice::Text)){
+        v3d_msg("cannot open "+ fname +" for write");
+        return;
+    }
+    QTextStream myfile(&file);
+    myfile<<"stack_direction(0:x,1:y,2:z)= "<<direction<<endl;  //stack direction, 0x, 1y, 2z
+    myfile<<"candidate_search_plane= "<<midplane<<endl;    //coordinate of the plane in between
+    myfile<<"candidate_search_threshold_distance_to_plane= "<<spanCand<<endl;  //searching span from the stack plane for the candidate
+    myfile<<"candidate_search_threshold_angle_to_plane(cos(a))= "<<angThr_stack<<endl; //angular threshold for candidate in stack direction (-1 ~ 1), -1 means nothing will be thresholded
+    myfile<<"candidate_search_fragments_threshold= "<<segmentThr<<endl;  //threshold to filter out small segments when selecting candidates
+    myfile<<"point_match_threshold_distance= "<<pmatchThr<<endl;   //match threshold for points
+    myfile<<"point_match_threshold_angular(cos(a))= "<<angThr_match<<endl; //angular threshold for clique match (-1 ~ 1)=cos(theta), when angle is larger than theta (<cos(theta)), the point will not be matched
+    myfile<<"clique_match_threshold_distance= "<<cmatchThr<<endl;   //match threshold for length of cliques
+    myfile<<"stack_direction_rescale= "<<zscale<<endl;  //resacle stack direction
+    myfile<<"segment_length_for_calculate_direction= "<<dir_range<<endl;   //length of section used to calculate direction of dead end
+
+    file.close();
 }
 
 void neuron_match_clique::output_candMatchScore(QString fname)
