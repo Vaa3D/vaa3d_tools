@@ -17,7 +17,10 @@
 #include "../istitch/y_imglib.h"
 #include "../../../hackathon/zhi/APP2_large_scale/readRawfile_func.h"
 
-#include <omp.h>
+#if  defined(Q_OS_LINUX)
+    #include <omp.h>
+#endif
+
 
 #include "../neurontracing_vn2/app2/my_surf_objs.h"
 
@@ -243,7 +246,9 @@ bool selectiveEnhancement::dofunc(const QString & func_name, const V3DPluginArgL
     }
     else if (func_name == tr("adaptive_auto_block_indv_multithread"))
     {
+        #if  defined(Q_OS_LINUX)
     	return processImage_adaptive_auto_blocks_indv_multithread(input, output,callback);
+        #endif
     }
     else if (func_name == tr("soma_detection"))
     {
@@ -2097,7 +2102,7 @@ bool processImage_adaptive_auto_blocks_indv(const V3DPluginArgList & input, V3DP
  
 }
 
-
+#if  defined(Q_OS_LINUX)
 // FL, for multithread enhancement
 bool processImage_adaptive_auto_blocks_indv_multithread(const V3DPluginArgList & input, V3DPluginArgList & output,V3DPluginCallback2 &callback)
 {
@@ -2482,7 +2487,7 @@ bool processImage_adaptive_auto_blocks_indv_multithread(const V3DPluginArgList &
 		return true;
     }
 }
-
+#endif
 bool processImage_detect_soma(const V3DPluginArgList & input, V3DPluginArgList & output,V3DPluginCallback2 &callback)
 {
 

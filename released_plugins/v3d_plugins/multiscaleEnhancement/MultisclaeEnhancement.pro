@@ -1,5 +1,4 @@
-QMAKE_CXXFLAGS += -fopenmp
-LIBS += -fopenmp
+
 
 TEMPLATE	= lib
 CONFIG	+= qt plugin warn_off
@@ -23,6 +22,8 @@ win32{
 unix:!macx {
     LIBS += -L$$V3DMAINPATH/common_lib/lib -ltiff
     LIBS += -L$$V3DMAINPATH/jba/c++ -lv3dnewmat
+    QMAKE_CXXFLAGS += -fopenmp
+    LIBS += -fopenmp
 }
 
 
