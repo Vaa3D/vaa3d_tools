@@ -24,10 +24,8 @@ INCLUDEPATH += $$SRCNEUTUBEPATH/neurolabi/c/include $$SRCNEUTUBEPATH/neurolabi/g
 #    -framework OpenGL -framework ApplicationServices -framework CoreFoundation
 
 
-#LIBS += -L$$SRCNEUTUBEPATH/neurolabi/lib/fftw3/lib -lfftw3f
-#LIBS += -L$$SRCNEUTUBEPATH/neurolabi/lib/fftw3/lib -lfftw3
-#LIBS +=  -L$$V3DMAINPATH/common_lib/lib -lfftw3f
-LIBS +=  -L$$V3DMAINPATH/common_lib/lib -lfftw3
+LIBS += -L$$SRCNEUTUBEPATH/neurolabi/lib/fftw3/lib -lfftw3f
+LIBS += -L$$SRCNEUTUBEPATH/neurolabi/lib/fftw3/lib -lfftw3
 macx{
     LIBS += -L$$SRCNEUTUBEPATH/neurolabi/c/lib -lneurolabi
 
