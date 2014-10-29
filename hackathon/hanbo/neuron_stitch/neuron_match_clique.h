@@ -17,6 +17,7 @@ class NeuronMatchDialog : public QDialog
 public:
     //NeuronMatchDialog(V3DPluginCallback2 * callback, V3dR_MainWindow* v3dwin);
     NeuronMatchDialog();
+    //~NeuronMatchDialog();
 
 public:
     void creat();
@@ -26,6 +27,7 @@ public slots:
     bool load0();
     bool load1();
     bool output();
+    bool outputchange(QString text);
 
 private:
 //    V3DPluginCallback2 * callback;
@@ -44,9 +46,11 @@ public:
     QGridLayout *gridLayout;
     QPushButton *btn_load0, *btn_load1, *btn_output;
     QLabel *label_load0, *label_load1, *label_output;
+    QLineEdit *edit_load0, *edit_load1, *edit_output;
     QComboBox *cb_dir;
     QDoubleSpinBox *spin_zscale, *spin_ang, *spin_matchdis, *spin_searchspan, *spin_cmatchdis, *spin_segthr;
     QPushButton *btn_quit, *btn_run;
+    QCheckBox *check_stitch;
 };
 
 class neuron_match_clique
@@ -61,6 +65,8 @@ private:
     NeuronTree *nt1;
     NeuronTree *nt1_org;
     NeuronTree nt1_a;
+    NeuronTree nt0_stitch;
+    NeuronTree nt1_stitch;
     QList<int> components0, components1;
     QList<int> parent0, parent1;
 
@@ -102,6 +108,7 @@ public:
     neuron_match_clique(NeuronTree* botNeuron, NeuronTree* topNeuron);
     void init();
     void globalmatch();
+    void output_matchedMarkers(QString fname, const NeuronTree& nt, QList<int> points);
     void output_matchedMarkers_orgspace(QString fname_0, QString fname_1);
     void output_markers_orgspace(QString fname);
     void output_markers_candspace(QString fname);
@@ -110,6 +117,8 @@ public:
     void output_affine(QString fname_out, QString fname_nt0);
     void output_parameter(QString fname);
     void affine_nt1();
+    void output_stitch(QString fname_out);
+    void stitch(); //need to get match points and affine_nt1 first
 
 private:
     //orientation should be 1/-1 for smaller/larger stack in direction

@@ -12,6 +12,68 @@
 
 using namespace std;
 
+void stitchMatchedPoint(NeuronTree* nt0, NeuronTree* nt1, const QList<int>& parent0, const QList<int>& parent1, int pid0, int pid1)
+{
+    //get the list of points to move
+    QVector<int> idList0;
+    int id = pid0;
+    if(parent0.at(id)<0){ //single child root
+        while(id>=0){
+            if(parent0.count(id)>1) break; //have two children or more (branches)
+            idList0.append(id);
+            id = parent0.indexOf(id); //move to child
+        }
+    }else{ //tips
+        while(id>=0){
+            if(parent0.count(id)>1) break; //have two children or more (branches)
+            idList0.append(id);
+            id = parent0.at(id); //move to parent
+        }
+    }
+
+    QVector<int> idList1;
+    id = pid1;
+    if(parent1.at(id)<0){ //single child root
+        while(id>=0){
+            if(parent1.count(id)>1) break; //have two children or more (branches)
+            idList1.append(id);
+            id = parent1.indexOf(id); //move to child
+        }
+    }else{ //tips
+        while(id>=0){
+            if(parent1.count(id)>1) break; //have two children or more (branches)
+            idList1.append(id);
+            id = parent1.at(id); //move to parent
+        }
+    }
+
+    //calculate the place to go
+    XYZ goal;
+    goal.x=nt0->listNeuron.at(idList0.at(0)).x+(nt1->listNeuron.at(idList1.at(0)).x - nt0->listNeuron.at(idList0.at(0)).x)*idList0.size()/(idList0.size()+idList1.size());
+    goal.y=nt0->listNeuron.at(idList0.at(0)).y+(nt1->listNeuron.at(idList1.at(0)).y - nt0->listNeuron.at(idList0.at(0)).y)*idList0.size()/(idList0.size()+idList1.size());
+    goal.z=nt0->listNeuron.at(idList0.at(0)).z+(nt1->listNeuron.at(idList1.at(0)).z - nt0->listNeuron.at(idList0.at(0)).z)*idList0.size()/(idList0.size()+idList1.size());
+    XYZ vector0;
+    vector0.x=goal.x-nt0->listNeuron.at(idList0.at(0)).x;
+    vector0.y=goal.y-nt0->listNeuron.at(idList0.at(0)).y;
+    vector0.z=goal.z-nt0->listNeuron.at(idList0.at(0)).z;
+    for(int i=0; i<idList0.size(); i++){
+        NeuronSWC* p=(NeuronSWC*)&(nt0->listNeuron.at(idList0.at(i)));
+        p->x += vector0.x*(idList0.size()-i)/idList0.size();
+        p->y += vector0.y*(idList0.size()-i)/idList0.size();
+        p->z += vector0.z*(idList0.size()-i)/idList0.size();
+    }
+
+    vector0.x=goal.x-nt1->listNeuron.at(idList1.at(0)).x;
+    vector0.y=goal.y-nt1->listNeuron.at(idList1.at(0)).y;
+    vector0.z=goal.z-nt1->listNeuron.at(idList1.at(0)).z;
+    for(int i=0; i<idList1.size(); i++){
+        NeuronSWC* p=(NeuronSWC*)&(nt1->listNeuron.at(idList1.at(i)));
+        p->x += vector0.x*(idList1.size()-i)/idList1.size();
+        p->y += vector0.y*(idList1.size()-i)/idList1.size();
+        p->z += vector0.z*(idList1.size()-i)/idList1.size();
+    }
+}
+
 bool matchCandidates(QList<NeuronTree> * ntList, QList<int> * cand, double span, int direction, QList<int> MatchMarkers[2]) //from cand[1] to cand[0]
 {
     double shift_x = 0, shift_y = 0, shift_z = 0, cent_x = 0, cent_y = 0, cent_z = 0, angle = 0;
