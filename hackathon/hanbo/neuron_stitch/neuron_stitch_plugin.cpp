@@ -18,8 +18,9 @@ QList<NeuronGeometryDialog* > dialogList;
 QStringList neuron_stitch::menulist() const
 {
 	return QStringList() 
-        <<tr("adjust_neurons")
-        <<tr("affine_transform_neurons_by_matrix")
+        <<tr("auto_match_neurons")
+        <<tr("manualy_adjust_neurons")
+        <<tr("transform_neurons_by_affine_matrix")
 		<<tr("about");
 }
 
@@ -33,11 +34,15 @@ QStringList neuron_stitch::funclist() const
 
 void neuron_stitch::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
 {
-    if (menu_name == tr("adjust_neurons"))
+    if (menu_name == tr("auto_match_neurons"))
+    {
+        domatch(callback, parent);
+    }
+    else if (menu_name == tr("manualy_adjust_neurons"))
     {
         doadjust(callback, parent);
     }
-    else if (menu_name == tr("affine_transform_neurons_by_matrix"))
+    else if (menu_name == tr("transform_neurons_by_affine_matrix"))
     {
         dotransform_swc(callback, parent);
     }
@@ -70,6 +75,14 @@ bool neuron_stitch::dofunc(const QString & func_name, const V3DPluginArgList & i
 	else return false;
 
 	return true;
+}
+
+void neuron_stitch::domatch(V3DPluginCallback2 &callback, QWidget *parent)
+{
+    NeuronMatchDialog * myDialog = NULL;
+    //myDialog = new NeuronMatchDialog(&callback, v3dwin);
+    myDialog = new NeuronMatchDialog();
+    myDialog->exec();
 }
 
 void neuron_stitch::doadjust(V3DPluginCallback2 &callback, QWidget *parent)
@@ -113,23 +126,8 @@ void neuron_stitch::doadjust(V3DPluginCallback2 &callback, QWidget *parent)
     }
     v3dwin = selectWindowList[winid];
 
-    //call dialog
-//    NeuronGeometryDialog myDialog(&callback, v3dwin);
-    //int res=myDialog.exec();
-//    myDialog.show();
     NeuronGeometryDialog * myDialog = NULL;
-//    qDebug("dialog size %d",dialogList.size());
-//    for(int i=0; i<dialogList.size(); i++){
-//        if(callback.getImageName(dialogList[i]->v3dwin) == callback.getImageName(v3dwin)){
-//            myDialog = dialogList[i];
-//            break;
-//        }
-//    }
-//    if(myDialog == NULL)
-//    {
-        myDialog = new NeuronGeometryDialog(&callback, v3dwin);
-//        dialogList.append(myDialog);
-//    }
+    myDialog = new NeuronGeometryDialog(&callback, v3dwin);
     myDialog->show();
 }
 

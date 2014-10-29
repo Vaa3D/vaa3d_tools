@@ -10,6 +10,7 @@
 #include <v3d_interface.h>
 #include "basic_surf_objs.h"
 #include "neuron_geometry_dialog.h"
+#include "neuron_match_clique.h"
 
 
 class neuron_stitch : public QObject, public V3DPluginInterface2_1
@@ -28,6 +29,7 @@ public:
 
 
 private:
+    void domatch(V3DPluginCallback2 &callback, QWidget *parent);
     void doadjust(V3DPluginCallback2 &callback, QWidget *parent);
     int dotransform_swc(V3DPluginCallback2 &callback, QWidget *parent);
 };

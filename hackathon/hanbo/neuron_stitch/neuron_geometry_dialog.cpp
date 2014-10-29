@@ -1185,31 +1185,6 @@ void NeuronGeometryDialog::auto_affine()
     cand[1]=QList<int>(); cand[1].clear();
     getMatchingCandidates(ntList->at(0),cand[0],midplan-span,midplan+span,stack_dir);
     getMatchingCandidates(ntList->at(1),cand[1],midplan-span,midplan+span,stack_dir);
-    qDebug()<<QString::number(cand[0].size())<<" candidates for neuron 1;\n"<<QString::number(cand[1].size())<<" candidates for neuron 2";
-
-    //for test
-//    mList->clear();
-//    for(int i=0; i<cand[0].size(); i++){
-//        LocationSimple S = LocationSimple(ntList->at(0).listNeuron.at(cand[0].at(i)).x,
-//                ntList->at(0).listNeuron.at(cand[0].at(i)).y,
-//                ntList->at(0).listNeuron.at(cand[0].at(i)).z);
-//        S.color.r=255; S.color.g=0; S.color.b=0;
-//        S.name = QString::number(mList->size()-1).toStdString();
-//        QString tmp = "0 " + QString::number(cand[0].at(i)) + " -1";
-//        S.comments = tmp.toStdString();
-//        mList->append(S);
-//    }
-//    for(int i=0; i<cand[1].size(); i++){
-//        LocationSimple S = LocationSimple(ntList->at(1).listNeuron.at(cand[1].at(i)).x,
-//                ntList->at(1).listNeuron.at(cand[1].at(i)).y,
-//                ntList->at(1).listNeuron.at(cand[1].at(i)).z);
-//        S.color.r=0; S.color.g=255; S.color.b=0;
-//        S.name = QString::number(mList->size()-1).toStdString();
-//        QString tmp = "0 " + QString::number(cand[1].at(i)) + " -1";
-//        S.comments = tmp.toStdString();
-//        mList->append(S);
-//    }
-//    v3dcontrol->updateLandmark();
 
     //perform matching
     QList<int> MatchMarkers[2];

@@ -71,7 +71,16 @@ bool matchCandidates(QList<NeuronTree> * ntList, QList<int> * cand, double span,
             if(direction == 1) shift_y = -1;
             if(direction == 2) shift_z = -1;
 
-            if(!compute_affine_4dof(clique0[i].c,clique1[j].c,shift_x,shift_y,shift_z,angle,cent_x,cent_y,cent_z,direction))
+            QList<XYZ> c0,c1;
+            c0.clear();
+            c0.append(XYZ(candcoord0[clique0[i].idx[0]]));
+            c0.append(XYZ(candcoord0[clique0[i].idx[1]]));
+            c0.append(XYZ(candcoord0[clique0[i].idx[2]]));
+            c1.clear();
+            c1.append(XYZ(candcoord1[clique1[j].idx[0]]));
+            c1.append(XYZ(candcoord1[clique1[j].idx[1]]));
+            c1.append(XYZ(candcoord1[clique1[j].idx[2]]));
+            if(!compute_affine_4dof(c0,c1,shift_x,shift_y,shift_z,angle,cent_x,cent_y,cent_z,direction))
                 continue;
             //find the matched point by clique
             affine_XYZList(candcoord1, tmpcoord, shift_x, shift_y, shift_z, angle, cent_x, cent_y, cent_z, direction);
@@ -167,16 +176,10 @@ bool matchCandidates_speed(QList<NeuronTree> * ntList, QList<int> * cand, double
     candcoord0.clear();
     for(int i=0; i<cand[0].size(); i++){
         candcoord0.append(XYZ(ntList->at(0).listNeuron.at(cand[0].at(i))));
-//        if(direction == 0) candcoord0[i].x = 0;
-//        if(direction == 1) candcoord0[i].y = 0;
-//        if(direction == 2) candcoord0[i].z = 0;
     }
     candcoord1.clear();
     for(int i=0; i<cand[1].size(); i++){
         candcoord1.append(XYZ(ntList->at(1).listNeuron.at(cand[1].at(i))));
-//        if(direction == 0) candcoord1[i].x = 0;
-//        if(direction == 1) candcoord1[i].y = 0;
-//        if(direction == 2) candcoord1[i].z = 0;
     }
     //pairs of points matched
     QList<int> matchPoint[2];
@@ -290,7 +293,7 @@ bool matchCandidates_speed(QList<NeuronTree> * ntList, QList<int> * cand, double
     progressDial.setValue(clique0.size());
     qDebug()<<"match and search: "<<matchPoint[0].size()<<" matched point, "<<cmatchcount<<" similar cliques found in the first searching round";
 
-    if(matchPoint[0].size()<0){
+    if(matchPoint[0].size()<=0){
         return false;
     }
 
@@ -367,10 +370,114 @@ void getCliques(const NeuronTree& nt, QList<int> list, QList<Clique3> & cqlist, 
                     printf("error in construction clique, unexpected situation happened! Check the code!\n");
                     continue;
                 }
-                C.c.clear();
-                C.c.append(XYZ(nt.listNeuron.at(C.v[0])));
-                C.c.append(XYZ(nt.listNeuron.at(C.v[1])));
-                C.c.append(XYZ(nt.listNeuron.at(C.v[2])));
+//                C.c.clear();
+//                C.c.append(XYZ(nt.listNeuron.at(C.v[0])));
+//                C.c.append(XYZ(nt.listNeuron.at(C.v[1])));
+//                C.c.append(XYZ(nt.listNeuron.at(C.v[2])));
+                cqlist.append(C);
+            }
+        }
+    }
+}
+
+void getCliques(const QList<int>& list, const QList<XYZ>& coord, const QList<XYZ>& dir, QVector<Clique3> & cqlist, double minDis,int stackDir)
+{
+    cqlist.clear();
+    minDis=minDis*minDis;
+    double maxDis=1e16;
+    cqlist.clear();
+    for(int i=0; i<coord.size(); i++){
+        for(int j=i+1; j<coord.size(); j++){
+            double dis_ij = NTDIS(coord.at(i),coord.at(j));
+            if(dis_ij<minDis)// || dis_ij>maxDis)
+                continue;
+            for(int k=j+1; k<coord.size(); k++){
+                double dis_ik = NTDIS(coord.at(i),coord.at(k));
+                if(dis_ik<minDis)// || dis_ij>maxDis)
+                    continue;
+                double dis_jk = NTDIS(coord.at(j),coord.at(k));
+                if(dis_jk<minDis)// || dis_ij>maxDis)
+                    continue;
+                Clique3 C;
+                if(dis_ij <= dis_jk && dis_jk <= dis_ik){
+                    C.v[0]=list[i]; C.idx[0]=i;
+                    C.v[1]=list[j]; C.idx[1]=j;
+                    C.v[2]=list[k]; C.idx[2]=k;
+                    C.e[0]=sqrt(dis_ij);
+                    C.e[1]=sqrt(dis_jk);
+                    C.e[2]=sqrt(dis_ik);
+                }else if(dis_ij <= dis_ik && dis_ik <= dis_jk){
+                    C.v[0]=list[j]; C.idx[0]=j;
+                    C.v[1]=list[i]; C.idx[1]=i;
+                    C.v[2]=list[k]; C.idx[2]=k;
+                    C.e[0]=sqrt(dis_ij);
+                    C.e[1]=sqrt(dis_ik);
+                    C.e[2]=sqrt(dis_jk);
+                }else if(dis_jk <= dis_ij && dis_ij <= dis_ik){
+                    C.v[0]=list[k]; C.idx[0]=k;
+                    C.v[1]=list[j]; C.idx[1]=j;
+                    C.v[2]=list[i]; C.idx[2]=i;
+                    C.e[0]=sqrt(dis_jk);
+                    C.e[1]=sqrt(dis_ij);
+                    C.e[2]=sqrt(dis_ik);
+                }else if(dis_jk <= dis_ik && dis_ik <= dis_ij){
+                    C.v[0]=list[j]; C.idx[0]=j;
+                    C.v[1]=list[k]; C.idx[1]=k;
+                    C.v[2]=list[i]; C.idx[2]=i;
+                    C.e[0]=sqrt(dis_jk);
+                    C.e[1]=sqrt(dis_ik);
+                    C.e[2]=sqrt(dis_ij);
+                }else if(dis_ik <= dis_ij && dis_ij <= dis_jk){
+                    C.v[0]=list[k]; C.idx[0]=k;
+                    C.v[1]=list[i]; C.idx[1]=i;
+                    C.v[2]=list[j]; C.idx[2]=j;
+                    C.e[0]=sqrt(dis_ik);
+                    C.e[1]=sqrt(dis_ij);
+                    C.e[2]=sqrt(dis_jk);
+                }else if(dis_ik <= dis_jk && dis_jk <= dis_ij){
+                    C.v[0]=list[i]; C.idx[0]=i;
+                    C.v[1]=list[k]; C.idx[1]=k;
+                    C.v[2]=list[j]; C.idx[2]=j;
+                    C.e[0]=sqrt(dis_ik);
+                    C.e[1]=sqrt(dis_jk);
+                    C.e[2]=sqrt(dis_ij);
+                }else{ //this should not happen
+                    printf("error in construction clique, unexpected situation happened! Check the code!\n");
+                    continue;
+                }
+                XYZ center;
+                center.x+=(coord[i].x+coord[j].x+coord[k].x)/3;
+                center.y+=(coord[i].y+coord[j].y+coord[k].y)/3;
+                center.z+=(coord[i].z+coord[j].z+coord[k].z)/3;
+                for(int p=0; p<3; p++){
+                    int m=C.idx[p];
+                    if(stackDir == 0){//x plane
+                        double py=coord[m].y-center.y;
+                        double pz=coord[m].z-center.z;
+                        double plen=sqrt(pz*pz+py*py);
+                        C.dir[p].y=py/plen*dir[m].y-pz/plen*dir[m].z;
+                        C.dir[p].z=pz/plen*dir[m].y+py/plen*dir[m].z;
+                        C.dir[p].x=dir[m].x;
+                    }else if(stackDir == 1){//y plane
+                        double px=coord[m].x-center.x;
+                        double pz=coord[m].z-center.z;
+                        double plen=sqrt(pz*pz+px*px);
+                        C.dir[p].z=pz/plen*dir[m].z-px/plen*dir[m].x;
+                        C.dir[p].x=px/plen*dir[m].z+pz/plen*dir[m].x;
+                        C.dir[p].y=dir[m].y;
+                    }else if(stackDir ==2){//z plane
+                        double px=coord[m].x-center.x;
+                        double py=coord[m].y-center.y;
+                        double plen=sqrt(px*px+py*py);
+                        C.dir[p].x=px/plen*dir[m].x-py/plen*dir[m].y;
+                        C.dir[p].y=py/plen*dir[m].x+px/plen*dir[m].y;
+                        C.dir[p].z=dir[m].z;
+                    }else{ //to-do: taken clique plan as reference plan for calculation
+                        C.dir[p].x=0;
+                        C.dir[p].y=0;
+                        C.dir[p].z=0;
+                    }
+                }
                 cqlist.append(C);
             }
         }
@@ -410,6 +517,197 @@ void getMatchingCandidates(const NeuronTree& nt, QList<int>& cand, float min, fl
         }
     }
 }
+
+void getMatchingCandidates(const NeuronTree& nt, QList<int>& cand, float min, float max, int direction, float segThr)
+{
+    cand.clear();
+    QVector<int> childNum(nt.listNeuron.size(), 0);
+    QVector<int> connNum(nt.listNeuron.size(), 0);
+    QVector<double> sectionLength(nt.listNeuron.size(), 0);
+    QList<int> components;
+    QList<int> pList;
+    QVector<V3DLONG> componentSize;
+    QVector<V3DLONG> componentLength;
+    V3DLONG curid=0;
+    for(V3DLONG i=0; i<nt.listNeuron.size(); i++){
+        if(nt.listNeuron.at(i).pn<0){
+            connNum[i]--; //root that only have 1 clide will also be a dead end
+            components.append(curid); curid++;
+            pList.append(-1);
+        }
+        else{
+            int pid = nt.hashNeuron.value(nt.listNeuron.at(i).pn);
+            childNum[pid]++;
+            connNum[pid]++;
+            sectionLength[i]=sqrt(NTDIS(nt.listNeuron.at(i),nt.listNeuron.at(pid)));
+            components.append(-1);
+            pList.append(pid);
+        }
+    }
+    //connected component
+    for(V3DLONG cid=0; cid<curid; cid++){
+        QStack<int> pstack;
+        int chid, size = 0;
+        if(!components.contains(cid)) //should not happen, just in case
+            continue;
+        if(components.indexOf(cid)!=components.lastIndexOf(cid)) //should not happen
+            qDebug("unexpected multiple tree root, please check the code: neuron_stitch_func.cpp");
+        //recursively search for child and mark them as the same component
+        pstack.push(components.indexOf(cid));
+        size++;
+        while(!pstack.isEmpty()){
+            int pid=pstack.pop();
+            chid = pList.indexOf(pid);
+            while(chid>=0){
+                pList[chid]=-2;
+                pstack.push(chid);
+                components[chid]=cid;
+                chid=pList.indexOf(pid);
+                size++;
+            }
+        }
+        componentSize.append(size);
+    }
+    //component size
+    for(V3DLONG cid=0; cid<curid; cid++){
+        double length = 0;
+        int idx = -1;
+        for(V3DLONG i=0; i<componentSize[cid]; i++){
+            idx = components.indexOf(cid,idx+1);
+            length+=sectionLength[idx];
+        }
+        componentLength.append(length);
+    }
+
+
+    for(V3DLONG i=0; i<childNum.size(); i++){
+        if(connNum[i]<=0 && componentLength[components[i]]>=segThr){
+            if(direction==0){//x
+                if(nt.listNeuron.at(i).x>min && nt.listNeuron.at(i).x<max){
+                    cand.append(i);
+                }
+            }else if(direction==1){//y
+                if(nt.listNeuron.at(i).y>min && nt.listNeuron.at(i).y<max){
+                    cand.append(i);
+                }
+            }else if(direction==2){//z
+                if(nt.listNeuron.at(i).z>min && nt.listNeuron.at(i).z<max){
+                    cand.append(i);
+                }
+            }else{//all tips
+                cand.append(i);
+            }
+        }
+    }
+}
+
+bool minus_XYZList(QList<XYZ>& a, QList<XYZ>& b, QList<XYZ>& out)
+{
+    if(a.size()!=b.size()){
+        return false;
+    }
+    if(out.size()!=a.size()){
+        out.clear();
+        for(int i=0; i<a.size(); i++){
+            out.append(XYZ(a.at(i).x-b.at(i).x,a.at(i).y-b.at(i).y,a.at(i).z-b.at(i).z));
+        }
+    }else{
+        for(int i=0; i<a.size(); i++){
+            out[i].x=a.at(i).x-b.at(i).x;
+            out[i].y=a.at(i).y-b.at(i).y;
+            out[i].z=a.at(i).z-b.at(i).z;
+        }
+    }
+    return true;
+}
+
+void getMatchPairs_XYZList(const QList<XYZ>& c0, const QList<XYZ>& c1, const QList<XYZ>& c0_dir, const QList<XYZ>& c1_dir, const QList<int>& c0_conncomponent, const QList<int>& c1_conncomponent, QList<int> * MatchMarkers, double span, double cos_angle)
+{
+    double thr = span*span;
+    QMap<double, QList<int> > MatchPoints;
+    MatchMarkers[0].clear();
+    MatchMarkers[1].clear();
+
+    for(int i=0; i<c0.size(); i++){
+        for(int j=0; j<c1.size(); j++){
+            double dis = NTDIS(c0.at(i),c1.at(j));
+            if(dis>thr) continue;
+            double ang = NTDOT(c0_dir.at(i),c1_dir.at(j));
+            if(ang<cos_angle) continue;
+            QList<int> tmp = QList<int>()<<i<<j;
+            MatchPoints.insertMulti(dis, tmp);
+        }
+    }
+
+    //this is to avoid loop in matched point
+    QList<int> cctmp;
+    int ccmax=0;
+    int c0_size=c0.size();
+    for(int i=0; i<c0_conncomponent.size(); i++){
+        ccmax=ccmax>c0_conncomponent.at(i)?ccmax:c0_conncomponent.at(i);
+        cctmp.append(c0_conncomponent.at(i));
+    }
+    ccmax+=10;
+    for(int i=0; i<c1_conncomponent.size(); i++){
+        cctmp.append(c1_conncomponent.at(i)+ccmax);
+    }
+
+    QVector<int> mask0(c0.size(),0);
+    QVector<int> mask1(c1.size(),0);
+    for(QMap<double, QList<int> >::Iterator iter = MatchPoints.begin(); iter!=MatchPoints.end(); iter++){
+        int a = iter.value().at(0);
+        int b = iter.value().at(1);
+        if(mask0[a]+mask1[b]>0)
+            continue;
+        if(cctmp[b+c0_size]==cctmp[a])
+            continue;
+
+        mask0[a]++;
+        mask1[b]++;
+
+        int tmpccid=cctmp.at(b+c0_size);
+        int idx=cctmp.indexOf(tmpccid);
+        while(idx>=0){
+            cctmp[idx]=cctmp.at(a);
+            idx=cctmp.indexOf(tmpccid);
+        }
+
+        MatchMarkers[0].append(a);
+        MatchMarkers[1].append(b);
+    }
+}
+
+void getMatchPairs_XYZList(const QList<XYZ>& c0, const QList<XYZ>& c1, const QList<XYZ>& c0_dir, const QList<XYZ>& c1_dir, QList<int> * MatchMarkers, double span, double cos_angle)
+{
+    double thr = span*span;
+    QMap<double, QList<int> > MatchPoints;
+    MatchMarkers[0].clear();
+    MatchMarkers[1].clear();
+
+    for(int i=0; i<c0.size(); i++){
+        for(int j=0; j<c1.size(); j++){
+            double dis = NTDIS(c0.at(i),c1.at(j));
+            if(dis>thr) continue;
+            double ang = NTDOT(c0_dir.at(i),c1_dir.at(j));
+            if(ang<cos_angle) continue;
+            QList<int> tmp = QList<int>()<<i<<j;
+            MatchPoints.insertMulti(dis, tmp);
+        }
+    }
+    QVector<int> mask0(c0.size(),0);
+    QVector<int> mask1(c1.size(),0);
+    for(QMap<double, QList<int> >::Iterator iter = MatchPoints.begin(); iter!=MatchPoints.end(); iter++){
+        int a = iter.value().at(0);
+        int b = iter.value().at(1);
+        if(mask0[a]+mask1[b]>0)
+            continue;
+        mask0[a]++;
+        mask1[b]++;
+        MatchMarkers[0].append(a);
+        MatchMarkers[1].append(b);
+    }
+}
+
 
 void getMatchPairs_XYZList(const QList<XYZ>& c0, const QList<XYZ>& c1, QList<int> * MatchMarkers, double span)
 {
@@ -452,10 +750,10 @@ double distance_XYZList(QList<XYZ> c0, QList<XYZ> c1)
     for(int i=0; i<c0.size(); i++){
         dis+=sqrt(NTDIS(c0[i],c1[i]));
     }
-    return dis;
+    return dis/c0.size();
 }
 
-void rotation_XYZList(QList<XYZ> in, QList<XYZ>& out, double angle, int axis) //angle is 0-360  based
+void rotate_XYZList(QList<XYZ> in, QList<XYZ>& out, double angle, int axis) //angle is 0-360  based
 {
     if(in.size()!=out.size()){
         out.clear();
@@ -479,10 +777,12 @@ void rotation_XYZList(QList<XYZ> in, QList<XYZ>& out, double angle, int axis) //
         afmatrix[4] = -afmatrix[1]; afmatrix[5] = afmatrix[0];
     }
 
+    double x,y,z;
     for(int i=0; i<in.size();i++){
-        out[i].x = afmatrix[0]*in[i].x+afmatrix[1]*in[i].y+afmatrix[2]*in[i].z;
-        out[i].y = afmatrix[4]*in[i].x+afmatrix[5]*in[i].y+afmatrix[6]*in[i].z;
-        out[i].z = afmatrix[8]*in[i].x+afmatrix[9]*in[i].y+afmatrix[10]*in[i].z;
+        x=in[i].x; y=in[i].y; z=in[i].z;
+        out[i].x = afmatrix[0]*x+afmatrix[1]*y+afmatrix[2]*z;
+        out[i].y = afmatrix[4]*x+afmatrix[5]*y+afmatrix[6]*z;
+        out[i].z = afmatrix[8]*x+afmatrix[9]*y+afmatrix[10]*z;
     }
 }
 
@@ -598,7 +898,7 @@ bool compute_affine_4dof(QList<XYZ> c0, QList<XYZ> c1, double& shift_x, double& 
     double mdis=distance_XYZList(c0,c1);
     double mang=0;
     for(double ang=10; ang<360; ang+=10){
-        rotation_XYZList(c1,c1bk,ang,dir);
+        rotate_XYZList(c1,c1bk,ang,dir);
         double dis = distance_XYZList(c0, c1bk);
         if(dis<mdis){
             mdis=dis;
@@ -608,7 +908,7 @@ bool compute_affine_4dof(QList<XYZ> c0, QList<XYZ> c1, double& shift_x, double& 
     //qDebug()<<"rotation 0: "<<mang<<":"<<mdis;
     //step 2
     for(double ang=mang-10; ang<mang+10; ang++){
-        rotation_XYZList(c1,c1bk,ang,dir);
+        rotate_XYZList(c1,c1bk,ang,dir);
         double dis = distance_XYZList(c0, c1bk);
         if(dis<mdis){
             mdis=dis;
@@ -618,7 +918,7 @@ bool compute_affine_4dof(QList<XYZ> c0, QList<XYZ> c1, double& shift_x, double& 
     //qDebug()<<"rotation 1: "<<mang<<":"<<mdis;
     //step 3
     for(double ang=mang-1; ang<mang+1; ang+=0.1){
-        rotation_XYZList(c1,c1bk,ang,dir);
+        rotate_XYZList(c1,c1bk,ang,dir);
         double dis = distance_XYZList(c0, c1bk);
         if(dis<mdis){
             mdis=dis;
@@ -628,7 +928,7 @@ bool compute_affine_4dof(QList<XYZ> c0, QList<XYZ> c1, double& shift_x, double& 
     //qDebug()<<"rotation 2: "<<mang<<":"<<mdis;
     //step 4
     for(double ang=mang-0.1; ang<mang+0.1; ang+=0.01){
-        rotation_XYZList(c1,c1bk,ang,dir);
+        rotate_XYZList(c1,c1bk,ang,dir);
         double dis = distance_XYZList(c0, c1bk);
         if(dis<mdis){
             mdis=dis;
@@ -662,7 +962,7 @@ bool compute_rotation(QList<XYZ> c0, QList<XYZ> c1, double & angle_r, int dir)
     double mdis=distance_XYZList(c0,c1);
     double mang=0;
     for(double ang=10; ang<360; ang+=10){
-        rotation_XYZList(c1,c1bk,ang,dir);
+        rotate_XYZList(c1,c1bk,ang,dir);
         double dis = distance_XYZList(c0, c1bk);
         if(dis<mdis){
             mdis=dis;
@@ -672,7 +972,7 @@ bool compute_rotation(QList<XYZ> c0, QList<XYZ> c1, double & angle_r, int dir)
     qDebug()<<"rotation 0: "<<mang<<":"<<mdis;
     //step 2
     for(double ang=mang-10; ang<mang+10; ang++){
-        rotation_XYZList(c1,c1bk,ang,dir);
+        rotate_XYZList(c1,c1bk,ang,dir);
         double dis = distance_XYZList(c0, c1bk);
         if(dis<mdis){
             mdis=dis;
@@ -682,7 +982,7 @@ bool compute_rotation(QList<XYZ> c0, QList<XYZ> c1, double & angle_r, int dir)
     qDebug()<<"rotation 1: "<<mang<<":"<<mdis;
     //step 3
     for(double ang=mang-1; ang<mang+1; ang+=0.1){
-        rotation_XYZList(c1,c1bk,ang,dir);
+        rotate_XYZList(c1,c1bk,ang,dir);
         double dis = distance_XYZList(c0, c1bk);
         if(dis<mdis){
             mdis=dis;
@@ -725,7 +1025,7 @@ bool get_marker_info(const LocationSimple& mk, int* info) //info[0]=neuron id, i
     QStringList items = tmp.split(" ", QString::SkipEmptyParts);
     int val;
     bool check;
-    if(items.size()!=3)
+    if(items.size()<3)
         return false;
     for(int i=0; i<3; i++){
         check=false;
@@ -794,6 +1094,33 @@ bool readAmat(const char* fname, double* amat)
     return true;
 }
 
+void getAffineAmat(double amat[16], double& shift_x, double& shift_y, double & shift_z, double & angle_r, double & cent_x,double & cent_y,double & cent_z,int dir)
+{
+    for(int i=0; i<16; i++){
+        amat[i]=0;
+    }
+    amat[0]=amat[5]=amat[10]=amat[15]=1;
+    amat[3]=shift_x;
+    amat[7]=shift_y;
+    amat[11]=shift_z;
+
+    double afmatrix[16] = {1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1};
+    double a = angle_r / 180.0 * M_PI;
+    if(dir==0){
+        afmatrix[5] = cos(a); afmatrix[6] = -sin(a);
+        afmatrix[9] = -afmatrix[6]; afmatrix[10] = afmatrix[5];
+    }else if(dir==1){
+        afmatrix[0] = cos(a); afmatrix[2] = sin(a);
+        afmatrix[8] = -afmatrix[2]; afmatrix[10] = afmatrix[0];
+    }else if(dir==2){
+        afmatrix[0] = cos(a); afmatrix[1] = -sin(a);
+        afmatrix[4] = -afmatrix[1]; afmatrix[5] = afmatrix[0];
+    }
+
+    multiplyAmat_centerRotate(afmatrix,amat, cent_x, cent_y, cent_z);
+
+}
+
 void multiplyAmat_centerRotate(double* rotate, double* tmat, double cx, double cy, double cz)
 {
     double tmp[16]={1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1};
@@ -819,6 +1146,19 @@ void multiplyAmat(double* front, double* back)
     }
     for(int i=0; i<12; i++){
         back[i]=tmp[i];
+    }
+}
+
+double getNeuronTreeMidplane(const NeuronTree& nt0, const NeuronTree& nt1, int direction)
+{
+    float bound0[2], bound1[2];
+    getNeuronTreeBound(nt0, bound0, direction);
+    getNeuronTreeBound(nt1, bound1, direction);
+
+    if(bound0[0]+bound0[1]>bound1[0]+bound1[1]){
+        return (bound0[0]+bound1[1])/2;
+    }else{
+        return (bound0[1]+bound1[0])/2;
     }
 }
 
@@ -998,6 +1338,35 @@ void copyType(const NeuronTree & source, QList<int> & target)
     }
 }
 
+void affineNeuron(NeuronTree &nt_in, NeuronTree &nt_out, double shift_x, double shift_y, double shift_z, double angle, double cent_x, double cent_y, double cent_z, int axis) //angle is 0-360  based
+{
+    QList<XYZ> tmpcoord;
+    for(int i=0; i<nt_in.listNeuron.size(); i++){
+        XYZ tmp;
+        tmp.x = nt_in.listNeuron.at(i).x +shift_x-cent_x;
+        tmp.y = nt_in.listNeuron.at(i).y +shift_y-cent_y;
+        tmp.z = nt_in.listNeuron.at(i).z +shift_z-cent_z;
+        tmpcoord.append(tmp);
+    }
+    rotate_XYZList(tmpcoord, tmpcoord, angle, axis);
+    for(int i=0; i<nt_in.listNeuron.size(); i++){
+        tmpcoord[i].x += cent_x;
+        tmpcoord[i].y += cent_y;
+        tmpcoord[i].z += cent_z;
+    }
+
+
+    if(nt_out.listNeuron.size() != nt_in.listNeuron.size()){
+        backupNeuron(nt_in, nt_out);
+    }
+    for(int i=0; i<nt_out.listNeuron.size(); i++){
+        NeuronSWC * S = (NeuronSWC *)(&(nt_out.listNeuron.at(i)));
+        S->x = tmpcoord[i].x;
+        S->y = tmpcoord[i].y;
+        S->z = tmpcoord[i].z;
+    }
+}
+
 float quickMoveNeuron(QList<NeuronTree> * ntTreeList, int ant, int stackdir, int idx_firstnt)
 {
     if(stackdir<0 || stackdir>2)
@@ -1078,6 +1447,66 @@ float quickMoveNeuron(QList<NeuronTree> * ntTreeList, int ant, int stackdir, int
     }
 
     printf("%d %d %d %f\n",ant,idx_firstnt,idx_secondnt,delta);
+
+    return delta;
+}
+
+float quickMoveNeuron(NeuronTree * nt0, NeuronTree * nt1, int stackdir)
+{
+    if(stackdir<0 || stackdir>2)
+        return 0;
+    float gap=0; // the gap between two stacks
+    float delta=0;
+
+    //adjust the neuron tree
+    if(stackdir==0) //x direction move
+    {
+        NeuronSWC * tp;
+        float first_min=1e10, second_max=-1e10;
+        for(V3DLONG nid = 0; nid < nt1->listNeuron.size(); nid++){
+            first_min=first_min>nt1->listNeuron.at(nid).x?nt1->listNeuron.at(nid).x:first_min;
+        }
+        for(V3DLONG nid = 0; nid < nt0->listNeuron.size(); nid++){
+            second_max=second_max<nt0->listNeuron.at(nid).x?nt0->listNeuron.at(nid).x:second_max;
+        }
+        delta=second_max-first_min+gap;
+        for(V3DLONG nid = 0; nid < nt1->listNeuron.size(); nid++){
+            tp = (NeuronSWC *)(&(nt1->listNeuron.at(nid)));
+            tp->x+=delta;
+        }
+    }
+    else if(stackdir==1) //y direction move
+    {
+        NeuronSWC * tp;
+        float first_min=1e10, second_max=-1e10;
+        for(V3DLONG nid = 0; nid < nt1->listNeuron.size(); nid++){
+            first_min=first_min>nt1->listNeuron.at(nid).y?nt1->listNeuron.at(nid).y:first_min;
+        }
+        for(V3DLONG nid = 0; nid < nt0->listNeuron.size(); nid++){
+            second_max=second_max<nt0->listNeuron.at(nid).y?nt0->listNeuron.at(nid).y:second_max;
+        }
+        delta=second_max-first_min+gap;
+        for(V3DLONG nid = 0; nid < nt1->listNeuron.size(); nid++){
+            tp = (NeuronSWC *)(&(nt1->listNeuron.at(nid)));
+            tp->y+=delta;
+        }
+    }
+    else if(stackdir==2) //z direction move
+    {
+        NeuronSWC * tp;
+        float first_min=1e10, second_max=-1e10;
+        for(V3DLONG nid = 0; nid < nt1->listNeuron.size(); nid++){
+            first_min=first_min>nt1->listNeuron.at(nid).z?nt1->listNeuron.at(nid).z:first_min;
+        }
+        for(V3DLONG nid = 0; nid < nt0->listNeuron.size(); nid++){
+            second_max=second_max<nt0->listNeuron.at(nid).z?nt0->listNeuron.at(nid).z:second_max;
+        }
+        delta=second_max-first_min+gap;
+        for(V3DLONG nid = 0; nid < nt1->listNeuron.size(); nid++){
+            tp = (NeuronSWC *)(&(nt1->listNeuron.at(nid)));
+            tp->z+=delta;
+        }
+    }
 
     return delta;
 }
