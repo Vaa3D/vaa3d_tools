@@ -32,7 +32,7 @@
         return npruned; \
     } 
 
-#define TRACED_NAME "v3d_traced_neuron"
+#define TRACED_NAME "APP1_Tracing"
 #define TRACED_FILE "v3d_traced_neuron"
 
 
