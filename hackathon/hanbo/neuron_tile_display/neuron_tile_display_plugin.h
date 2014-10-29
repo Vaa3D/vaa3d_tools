@@ -32,24 +32,32 @@ class NeuronTileDisplayDialog : public QDialog
 
 public:
     NeuronTileDisplayDialog(V3DPluginCallback2 * callback, V3dR_MainWindow* v3dwin);
+    void enterEvent(QEvent *e);
 
 public slots:
     void tile();
     void tile(double dis);
-    void checktile(int tmp);
-    void reset();
+    void slot_reset();
     void reject();
 
+protected:
+    void reset();
+    void checkwindow();
+
 public:
-    QCheckBox *check_tile;
+//    QCheckBox *check_boundbox;
+//    QcheckBox *check_hide;
     QDoubleSpinBox *spin_x;
     QDoubleSpinBox *spin_y;
     QDoubleSpinBox *spin_z;
     QPushButton *btn_quit;
+    QPushButton *btn_tile;
+    QPushButton *btn_reset;
 
 private:
     QList<NeuronTree> * ntList;
     double cur_x, cur_y, cur_z;
+    int cur_num;
     V3dR_MainWindow * v3dwin;
     V3DPluginCallback2 * callback;
 };
