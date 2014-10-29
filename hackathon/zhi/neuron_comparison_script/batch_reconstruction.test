@@ -1,5 +1,5 @@
 #!/bin/bash
-#THis is a shell progrem to batch reconstruct images using five different methods, including APP1, APP2, MOST, neuTube, snake, and simpletracing.
+#THis is a shell progrem to batch reconstruct images using five different methods, including APP1, APP2, MOST, neuTube, snake, simpletracing, and TReMap.
 #APP1,APP2,MOST, and simpletracing are built together with Vaa3D
 #To build neuTube, 1. go to /vaa3d_tools/released_plugins/v3d_plugins/neurontracing_neutube/src_neutube/, and run 
 #	                                     sh build.sh <qmake_path> <qmake_spec_path>
@@ -28,7 +28,7 @@ else
 fi
 
 if [ $# -ge 3 ]; then
-	if [ ! -f $3 ]; then
+	if [ ! -d $3 ]; then
 		mkdir $3
 	fi
 else
@@ -50,6 +50,6 @@ mv  "$2_snake.swc" $3
 $1 -x SimpleTracing -f tracing -i $2 -o $2_simple.swc -p 1 
 mv  "$2_simple.swc" $3
 $1 -x TReMap -f trace_mip -i $2 -p 0 1 10 0 1 0 5
-mv  $2*_mip.swc $3
+mv  $2*_TreMap.swc $3
 $1 -x linker_file_generator -f linker -i $3 -o linkerfile.ano -p 1
 
