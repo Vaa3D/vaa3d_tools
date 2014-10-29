@@ -13,6 +13,40 @@
 
 #include "volimg_proc.h"
 
+bool saveSWC_file_app2(string swc_file, vector<MyMarker*> & outmarkers, list<string> & infostring)
+{
+    if(swc_file.find_last_of(".dot") == swc_file.size() - 1) return saveDot_file(swc_file, outmarkers);
+
+    cout<<"marker num = "<<outmarkers.size()<<", save swc file to "<<swc_file<<endl;
+    map<MyMarker*, int> ind;
+    ofstream ofs(swc_file.c_str());
+
+    if(ofs.fail())
+    {
+        cout<<"open swc file error"<<endl;
+        return false;
+    }
+    ofs<<"#name "<<"APP2_Tracing"<<endl;
+    ofs<<"#comment "<<endl;
+
+    list<string>::iterator it;
+    for (it=infostring.begin();it!=infostring.end(); it++)
+        ofs<< *it <<endl;
+
+    ofs<<"##n,type,x,y,z,radius,parent"<<endl;
+    for(int i = 0; i < outmarkers.size(); i++) ind[outmarkers[i]] = i+1;
+
+    for(int i = 0; i < outmarkers.size(); i++)
+    {
+        MyMarker * marker = outmarkers[i];
+        int parent_id;
+        if(marker->parent == 0) parent_id = -1;
+        else parent_id = ind[marker->parent];
+        ofs<<i+1<<" "<<marker->type<<" "<<marker->x<<" "<<marker->y<<" "<<marker->z<<" "<<marker->radius<<" "<<parent_id<<endl;
+    }
+    ofs.close();
+    return true;
+}
 
 bool proc_app2(V3DPluginCallback2 &callback, PARA_APP2 &p, const QString & versionStr)
 {
@@ -543,7 +577,7 @@ bool proc_app2(V3DPluginCallback2 &callback, PARA_APP2 &p, const QString & versi
             callback.callPluginFunc(full_plugin_name_sort,func_name_sort, input_sort,output);
 
             vector<MyMarker*> temp_out_swc = readSWC_file(outswc_file.toStdString());
-            saveSWC_file(outswc_file.toStdString(), temp_out_swc, infostring);
+            saveSWC_file_app2(outswc_file.toStdString(), temp_out_swc, infostring);
         }
         v3d_msg(QString("The tracing uses %1 ms (%2 ms for preprocessing and %3 for tracing). Now you can drag and drop the generated swc fle [%4] into Vaa3D."
                         ).arg(etime1+etime2).arg(etime1).arg(etime2).arg(outswc_file), b_menu);
