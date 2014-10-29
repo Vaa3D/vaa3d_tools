@@ -49,5 +49,7 @@ $1 -x snake -f snake_trace -i $2 -p 1
 mv  "$2_snake.swc" $3
 $1 -x SimpleTracing -f tracing -i $2 -o $2_simple.swc -p 1 
 mv  "$2_simple.swc" $3
+$1 -x TReMap -f trace_mip -i $2 -p 0 1 10 0 1 0 5
+mv  $2*_mip.swc $3
 $1 -x linker_file_generator -f linker -i $3 -o linkerfile.ano -p 1
 
