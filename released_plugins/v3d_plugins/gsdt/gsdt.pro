@@ -48,5 +48,5 @@ SOURCES += $$V3DMAINPATH/basic_c_fun/stackutil.cpp
 HEADERS += common_dialog.h
 
 TARGET	= $$qtLibraryTarget(gsdt)
-DESTDIR	= $$VAA3DPATH/../bin/plugins/image_filters/Grayscale_Image_Distance_Transform
+DESTDIR	= $$V3DMAINPATH/../bin/plugins/image_filters/Grayscale_Image_Distance_Transform
 
