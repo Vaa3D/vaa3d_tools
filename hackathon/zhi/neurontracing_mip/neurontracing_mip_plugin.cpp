@@ -8,6 +8,7 @@
 #include "neurontracing_mip_plugin.h"
 #include "my_surf_objs.h"
 #include "smooth_curve.h"
+#include "stackutil.h"
 
 
 #include "fastmarching_linker.h"
@@ -46,7 +47,7 @@ struct APP2_LS_PARA
 typedef vector<Point*> Segment;
 typedef vector<Point*> Tree;
 
-void autotrace_largeScale_mip(V3DPluginCallback2 &callback, QWidget *parent,APP2_LS_PARA &p);
+void autotrace_largeScale_mip(V3DPluginCallback2 &callback, QWidget *parent,APP2_LS_PARA &p,bool bmenu);
 QString getAppPath();
 
  
@@ -70,6 +71,7 @@ void neurontracing_mip::domenu(const QString &menu_name, V3DPluginCallback2 &cal
     if (menu_name == tr("trace_mip"))
 	{
         APP2_LS_PARA P;
+        bool bmenu = true;
         mipTracingeDialog dialog(callback, parent);
         if (!dialog.image)
             return;
@@ -95,7 +97,7 @@ void neurontracing_mip::domenu(const QString &menu_name, V3DPluginCallback2 &cal
         P.b_RadiusFrom2D = dialog.b_RadiusFrom2D;
         P.mip_plane = dialog.mip_plane;
 
-        autotrace_largeScale_mip(callback,parent,P);
+        autotrace_largeScale_mip(callback,parent,P,bmenu);
     }
 	else
 	{
@@ -106,39 +108,90 @@ void neurontracing_mip::domenu(const QString &menu_name, V3DPluginCallback2 &cal
 
 bool neurontracing_mip::dofunc(const QString & func_name, const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback,  QWidget * parent)
 {
-	vector<char*> infiles, inparas, outfiles;
-	if(input.size() >= 1) infiles = *((vector<char*> *)input.at(0).p);
-	if(input.size() >= 2) inparas = *((vector<char*> *)input.at(1).p);
-	if(output.size() >= 1) outfiles = *((vector<char*> *)output.at(0).p);
+    if (func_name == tr("trace_mip"))
+	{
+        APP2_LS_PARA P;
+        bool bmenu = false;
 
-	if (func_name == tr("func1"))
-	{
-		v3d_msg("To be implemented.");
-	}
-	else if (func_name == tr("func2"))
-	{
-		v3d_msg("To be implemented.");
+        vector<char*> * pinfiles = (input.size() >= 1) ? (vector<char*> *) input[0].p : 0;
+        vector<char*> * pparas = (input.size() >= 2) ? (vector<char*> *) input[1].p : 0;
+        vector<char*> infiles = (pinfiles != 0) ? * pinfiles : vector<char*>();
+        vector<char*> paras = (pparas != 0) ? * pparas : vector<char*>();
+
+        P.inimg_file = infiles[0];
+        int k=0;
+         //try to use as much as the default value in the PARA_APP2 constructor as possible
+        P.mip_plane = (paras.size() >= k+1) ? atoi(paras[k]) : 0;  k++;
+        P.channel = (paras.size() >= k+1) ? atoi(paras[k]) : 1;  k++;
+        P.bkg_thresh = (paras.size() >= k+1) ? atoi(paras[k]) : 10; k++;
+        P.b_256cube = (paras.size() >= k+1) ? atoi(paras[k]) : 0; k++;
+        P.is_gsdt = (paras.size() >= k+1) ? atoi(paras[k]) : 0; k++;
+        P.is_break_accept = (paras.size() >= k+1) ? atoi(paras[k]) : 0; k++;
+        P.length_thresh = (paras.size() >= k+1) ? atof(paras[k]) : 5; k++;
+
+        P.cnn_type = 2;
+        P.SR_ratio = 3.0/9.0;
+        P.b_RadiusFrom2D = 1;
+
+        autotrace_largeScale_mip(callback,parent,P,bmenu);
+
 	}
 	else if (func_name == tr("help"))
 	{
-		v3d_msg("To be implemented.");
+
+        printf("\n**** Usage of TReMAP tracing ****\n");
+        printf("vaa3d -x plugin_name -f trace_mip -i <inimg_file> -p <mip_plane> <channel> <bkg_thresh> <b_256cube> <is_gsdt> <is_gap> <length_thresh>\n");
+        printf("inimg_file       Should be 8/16/32bit image\n");
+        printf("mip_plane        Maximum projection plane, 0 for XY plane, 1 for XZ plane, 2 for YZ plane, Default 0\n");
+        printf("channel          Data channel for tracing. Start from 1 (default 1).\n");
+        printf("bkg_thresh       Default 10 (is specified as -1 then auto-thresolding)\n");
+
+        printf("b_256cube        If trace in a auto-downsampled volume (1 for yes, and 0 for no. Default 0.)\n");
+        printf("is_gsdt          If use gray-scale distance transform (1 for yes and 0 for no. Default 0.)\n");
+        printf("is_gap           If allow gap (1 for yes and 0 for no. Default 0.)\n");
+        printf("length_thresh    Default 5\n");
+
+        printf("outswc_file      Will be named automatically based on the input image file name, so you don't have to specify it.\n\n");
+
+
 	}
 	else return false;
 
 	return true;
 }
 
-void autotrace_largeScale_mip(V3DPluginCallback2 &callback, QWidget *parent,APP2_LS_PARA &Para)
+void autotrace_largeScale_mip(V3DPluginCallback2 &callback, QWidget *parent,APP2_LS_PARA &Para,bool bmenu)
 {
-    v3dhandle curwin = callback.currentImageWindow();
-    Image4DSimple* p4DImage = callback.getImage(curwin);
-    unsigned char* data1d = p4DImage->getRawData();
-    QString image_name = p4DImage->getFileName();
+    unsigned char* data1d = 0;
+    V3DLONG N,M,P,C;
+    QString image_name = Para.inimg_file;
 
-    V3DLONG N = p4DImage->getXDim();
-    V3DLONG M = p4DImage->getYDim();
-    V3DLONG P = p4DImage->getZDim();
-    V3DLONG C = p4DImage->getCDim();
+    if(bmenu)
+    {
+        v3dhandle curwin = callback.currentImageWindow();
+        Image4DSimple* p4DImage = callback.getImage(curwin);
+        data1d = p4DImage->getRawData();
+
+        N = p4DImage->getXDim();
+        M = p4DImage->getYDim();
+        P = p4DImage->getZDim();
+        C = p4DImage->getCDim();
+    }
+    else
+    {
+        V3DLONG *im_sz = 0;
+        int datatype = 0;
+        if (loadImage(const_cast<char *>(image_name.toStdString().c_str()), data1d, im_sz, datatype)!=true)
+        {
+            fprintf (stderr, "Error happens in reading the subject file [%s]. Exit. \n",image_name.toStdString().c_str());
+            return;
+        }
+        N = im_sz[0];
+        M = im_sz[1];
+        P = im_sz[2];
+        C = im_sz[3];
+
+    }
 
     int th = Para.bkg_thresh;
     QString tmpfolder = QFileInfo(image_name).path()+("/tmp");
@@ -647,7 +700,7 @@ void autotrace_largeScale_mip(V3DPluginCallback2 &callback, QWidget *parent,APP2
    saveSWC_file(final_swc.toStdString(), outswc_final);
 
    // system(qPrintable(QString("mv %1 %2").arg(APP2_swc.toStdString().c_str()).arg(swc_2D.toStdString().c_str())));
-  // system(qPrintable(QString("rm -r %1").arg(tmpfolder.toStdString().c_str())));
+   system(qPrintable(QString("rm -r %1").arg(tmpfolder.toStdString().c_str())));
 
    V3DPluginArgItem arg;
    V3DPluginArgList input_resample;
@@ -676,7 +729,7 @@ void autotrace_largeScale_mip(V3DPluginCallback2 &callback, QWidget *parent,APP2
    vector<MyMarker*> temp_out_swc = readSWC_file(final_swc.toStdString());
    saveSWC_file(final_swc.toStdString(), temp_out_swc);
 
-   v3d_msg(QString("Now you can drag and drop the generated swc fle [%1] into Vaa3D.").arg(final_swc.toStdString().c_str()));
+   v3d_msg(QString("Now you can drag and drop the generated swc fle [%1] into Vaa3D.").arg(final_swc.toStdString().c_str()),bmenu);
 
    return;
 }
