@@ -1180,7 +1180,7 @@ bool NeuronPlugin::Tracing_DistanceField_entry_func(const V3DPluginArgList & inp
 	} 
 	
 	if (sz) {delete []sz; sz=0;} //not delete sz[] maybe a bug of many Vaa3D code, by PHC, 2012-02-06
-	
+    nt.name = "Simple_Tracing";
 	if (!writeSWC_file(QString(outswcfile), nt))
 	{
 		cerr<<"unable to write swc"<<endl; 
