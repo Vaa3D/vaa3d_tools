@@ -66,6 +66,38 @@ QStringList neurontracing_mip::funclist() const
 		<<tr("help");
 }
 
+bool saveSWC_file_TreMap(string swc_file, vector<MyMarker*> & outmarkers)
+{
+    if(swc_file.find_last_of(".dot") == swc_file.size() - 1) return saveDot_file(swc_file, outmarkers);
+
+    cout<<"marker num = "<<outmarkers.size()<<", save swc file to "<<swc_file<<endl;
+    map<MyMarker*, int> ind;
+    ofstream ofs(swc_file.c_str());
+
+    if(ofs.fail())
+    {
+        cout<<"open swc file error"<<endl;
+        return false;
+    }
+    ofs<<"#name "<<"TreMap_Tracing"<<endl;
+    ofs<<"#comment "<<endl;
+
+    ofs<<"##n,type,x,y,z,radius,parent"<<endl;
+    for(int i = 0; i < outmarkers.size(); i++) ind[outmarkers[i]] = i+1;
+
+    for(int i = 0; i < outmarkers.size(); i++)
+    {
+        MyMarker * marker = outmarkers[i];
+        int parent_id;
+        if(marker->parent == 0) parent_id = -1;
+        else parent_id = ind[marker->parent];
+        if(parent_id == 0)  parent_id = -1;
+        ofs<<i+1<<" "<<marker->type<<" "<<marker->x<<" "<<marker->y<<" "<<marker->z<<" "<<marker->radius<<" "<<parent_id<<endl;
+    }
+    ofs.close();
+    return true;
+}
+
 void neurontracing_mip::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
 {
     if (menu_name == tr("trace_mip"))
@@ -690,9 +722,9 @@ void autotrace_largeScale_mip(V3DPluginCallback2 &callback, QWidget *parent,APP2
    QString swc_2D,final_swc;
    switch (Para.mip_plane)
    {
-       case 0: swc_2D = image_name + "_XY_2D_mip.swc"; final_swc = image_name + "_XY_3D_mip.swc"; break;
-       case 1: swc_2D = image_name + "_XZ_2D_mip.swc"; final_swc = image_name + "_XZ_3D_mip.swc"; break;
-       case 2: swc_2D = image_name + "_YZ_2D_mip.swc"; final_swc = image_name + "_YZ_3D_mip.swc"; break;
+       case 0: swc_2D = image_name + "_XY_2D_mip.swc"; final_swc = image_name + "_XY_3D_TreMap.swc"; break;
+       case 1: swc_2D = image_name + "_XZ_2D_mip.swc"; final_swc = image_name + "_XZ_3D_TreMap.swc"; break;
+       case 2: swc_2D = image_name + "_YZ_2D_mip.swc"; final_swc = image_name + "_YZ_3D_TreMap.swc"; break;
        default:
            return;
    }
@@ -727,7 +759,7 @@ void autotrace_largeScale_mip(V3DPluginCallback2 &callback, QWidget *parent,APP2
    callback.callPluginFunc(full_plugin_name_sort,func_name_sort, input_sort,output);
 
    vector<MyMarker*> temp_out_swc = readSWC_file(final_swc.toStdString());
-   saveSWC_file(final_swc.toStdString(), temp_out_swc);
+   saveSWC_file_TreMap(final_swc.toStdString(), temp_out_swc);
 
    v3d_msg(QString("Now you can drag and drop the generated swc fle [%1] into Vaa3D.").arg(final_swc.toStdString().c_str()),bmenu);
 
