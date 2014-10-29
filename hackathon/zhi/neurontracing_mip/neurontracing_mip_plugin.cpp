@@ -67,7 +67,7 @@ QStringList neurontracing_mip::funclist() const
 
 void neurontracing_mip::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
 {
-	if (menu_name == tr("trace"))
+    if (menu_name == tr("trace_mip"))
 	{
         APP2_LS_PARA P;
         mipTracingeDialog dialog(callback, parent);
@@ -184,7 +184,7 @@ void autotrace_largeScale_mip(V3DPluginCallback2 &callback, QWidget *parent,APP2
                         for(V3DLONG iz = 0; iz < P; iz++)
                         {
                             V3DLONG offsetk = iz*M*N;
-                            if(data1d[offsetk + offsetj + ix] > max_mip)
+                            if(data1d[offsetk + offsetj + ix] >= max_mip)
                             {
                                 image_mip[iy*N + ix] = data1d[offsetk + offsetj + ix];
                                 max_mip = data1d[offsetk + offsetj + ix];
@@ -203,7 +203,7 @@ void autotrace_largeScale_mip(V3DPluginCallback2 &callback, QWidget *parent,APP2
                         for(V3DLONG iy = 0; iy < M; iy++)
                         {
                             V3DLONG offsetj = iy*N;
-                            if(data1d[offsetk + offsetj + ix] > max_mip)
+                            if(data1d[offsetk + offsetj + ix] >= max_mip)
                             {
                                 image_mip[iz*N + ix] = data1d[offsetk + offsetj + ix];
                                 max_mip = data1d[offsetk + offsetj + ix];
@@ -222,7 +222,7 @@ void autotrace_largeScale_mip(V3DPluginCallback2 &callback, QWidget *parent,APP2
                         int max_mip = 0;
                         for(V3DLONG ix = 0; ix < N; ix++)
                         {
-                            if(data1d[offsetk + offsetj + ix] > max_mip)
+                            if(data1d[offsetk + offsetj + ix] >= max_mip)
                             {
                                 image_mip[iz*N + iy] = data1d[offsetk + offsetj + ix];
                                 max_mip = data1d[offsetk + offsetj + ix];
@@ -303,6 +303,7 @@ void autotrace_largeScale_mip(V3DPluginCallback2 &callback, QWidget *parent,APP2
             }
         }
     }
+
 
     if(image_binary) {delete []image_binary; image_binary = 0;}
     V3DLONG in_sz[4];
@@ -389,7 +390,7 @@ void autotrace_largeScale_mip(V3DPluginCallback2 &callback, QWidget *parent,APP2
    }
 
 
-   int groupmax = 5;
+   int groupmax = 15;
    if(groupNum <= groupmax) groupmax = groupNum;
    vector<MyMarker*> outswc_final;
 
@@ -454,13 +455,17 @@ void autotrace_largeScale_mip(V3DPluginCallback2 &callback, QWidget *parent,APP2
 
 
         #if  defined(Q_OS_LINUX)
-        QString cmd_APP2 = QString("%1/vaa3d -x Vaa3D_Neuron2 -f app2 -i %2 -o %3 -p NULL %4 %5 %6 %7 %8 %9 %10").arg(getAppPath().toStdString().c_str()).arg(APP2_image_name.toStdString().c_str()).arg(APP2_swc.toStdString().c_str())
+            QString cmd_APP2 = QString("%1/vaa3d -x Vaa3D_Neuron2 -f app2 -i %2 -o %3 -p NULL %4 %5 %6 %7 %8 %9 %10").arg(getAppPath().toStdString().c_str()).arg(APP2_image_name.toStdString().c_str()).arg(APP2_swc.toStdString().c_str())
                     .arg(Para.channel-1).arg(Para.bkg_thresh - 5).arg(Para.b_256cube).arg(Para.b_RadiusFrom2D).arg(Para.is_gsdt).arg(Para.is_break_accept).arg(Para.length_thresh);
             system(qPrintable(cmd_APP2));
+            QString cmd_resample = QString("%1/vaa3d -x resample_swc -f resample_swc -i %2 -o %3 -p 2").arg(getAppPath().toStdString().c_str()).arg(APP2_swc.toStdString().c_str()).arg(APP2_swc.toStdString().c_str());
+            system(qPrintable(cmd_resample));
         #elif defined(Q_OS_MAC)
             QString cmd_APP2 = QString("%1/vaa3d64.app/Contents/MacOS/vaa3d64 -x Vaa3D_Neuron2 -f app2 -i %2 -o %3 -p NULL %4 %5 %6 %7 %8 %9 %10").arg(getAppPath().toStdString().c_str()).arg(APP2_image_name.toStdString().c_str()).arg(APP2_swc.toStdString().c_str())
                     .arg(Para.channel-1).arg(Para.bkg_thresh - 5).arg(Para.b_256cube).arg(Para.b_RadiusFrom2D).arg(Para.is_gsdt).arg(Para.is_break_accept).arg(Para.length_thresh);
             system(qPrintable(cmd_APP2));
+            QString cmd_resample = QString("%1//vaa3d64.app/Contents/MacOS/vaa3d64 -x resample_swc -f resample_swc -i %2 -o %3 -p 2").arg(getAppPath().toStdString().c_str()).arg(APP2_swc.toStdString().c_str()).arg(APP2_swc.toStdString().c_str());
+            system(qPrintable(cmd_resample));
         #else
                  v3d_msg("The OS is not Linux or Mac. Do nothing.");
                  return;
@@ -642,7 +647,7 @@ void autotrace_largeScale_mip(V3DPluginCallback2 &callback, QWidget *parent,APP2
    saveSWC_file(final_swc.toStdString(), outswc_final);
 
    // system(qPrintable(QString("mv %1 %2").arg(APP2_swc.toStdString().c_str()).arg(swc_2D.toStdString().c_str())));
-   system(qPrintable(QString("rm -r %1").arg(tmpfolder.toStdString().c_str())));
+  // system(qPrintable(QString("rm -r %1").arg(tmpfolder.toStdString().c_str())));
 
    V3DPluginArgItem arg;
    V3DPluginArgList input_resample;
@@ -663,7 +668,7 @@ void autotrace_largeScale_mip(V3DPluginCallback2 &callback, QWidget *parent,APP2
    arg.type = "random";std::vector<char*> arg_input_sort;
    arg_input_sort.push_back(fileName_string);
    arg.p = (void *) & arg_input_sort; input_sort<< arg;
-   arg.type = "random";std::vector<char*> arg_sort_para; arg_sort_para.push_back("30");arg.p = (void *) & arg_sort_para; input_sort << arg;
+   arg.type = "random";std::vector<char*> arg_sort_para; arg_sort_para.push_back("10");arg.p = (void *) & arg_sort_para; input_sort << arg;
    QString full_plugin_name_sort = "sort_neuron_swc";
    QString func_name_sort = "sort_swc";
    callback.callPluginFunc(full_plugin_name_sort,func_name_sort, input_sort,output);
