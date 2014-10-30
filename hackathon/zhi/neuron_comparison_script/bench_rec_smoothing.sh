@@ -64,7 +64,9 @@ unzip $infile;
 originalImgFile=${infile%.$SUFF};
 inimgfileTracing="$originalImgFile"_g.v3draw;
 
-$1 -x gaussian -f gf -i $originalImgFile -o $inimgfileTracing -p 7 7 2 1 2
+$1 -x gaussian -f gf -i $originalImgFile -o $inimgfileTracing -p 7 7 2 1 2;
+$1 -x datatypeconvert -f dtc -i $inimgfileTracing -o $inimgfileTracing -p 1;
+
 
 #different tracing algorithms
 
@@ -74,21 +76,21 @@ if [ $DO_TRACING == "YES" ]; then
   $1 -x Vaa3D_Neuron2 -f app1 -i $inimgfileTracing -p NULL 0 40 0    
   mv  $inimgfileTracing*_app1.swc $3
 
-  $1 -x Vaa3D_Neuron2 -f app2 -i $inimgfileTracing -p NULL 0 40 0 1 1 0 5   
+  $1 -x Vaa3D_Neuron2 -f app2 -i $inimgfileTracing -p NULL 0 -1 0 1 1 0 5   
   mv  $inimgfileTracing*_app2.swc $3
-  rm  "$inimgfileTracing_ini.swc"
+  rm  $inimgfileTracing*_ini.swc
 
   $1 -x MOST -f MOST_trace -i $inimgfileTracing -p 1 40   
-  mv  "$inimgfileTracing_MOST.swc" $3
+  mv  $inimgfileTracing*_MOST.swc $3
 
   $1 -x neuTube -f neutube_trace -i $inimgfileTracing -p 1 1   
-  mv  "$inimgfileTracing_neutube.swc" $3
+  mv  $inimgfileTracing*_neutube.swc $3
 
   $1 -x snake -f snake_trace -i $inimgfileTracing -p 1 
-  mv  "$inimgfileTracing_snake.swc" $3
+  mv  $inimgfileTracing*_snake.swc $3
 
-  $1 -x SimpleTracing -f tracing -i $inimgfileTracing -o $2_simple.swc -p 1 
-  mv  "$inimgfileTracing_simple.swc" $3
+  $1 -x SimpleTracing -f tracing -i $inimgfileTracing -o ${inimgfileTracing}_simple.swc -p 1 
+  mv  $inimgfileTracing*_simple.swc $3
 
   $1 -x TReMap -f trace_mip -i $inimgfileTracing -p 0 1 10 0 1 0 5
   mv  $inimgfileTracing*_TreMap.swc $3
