@@ -63,8 +63,8 @@ mv  $2*_app2.swc $3
 rm  "$2_ini.swc"
 $1 -x MOST -f MOST_trace -i $2 -p 1 40   
 mv  "$2_MOST.swc" $3
-#$1 -x neuTube -f neutube_trace -i $2 -p 1 1   
-#mv  "$2_neutube.swc" $3
+$1 -x neuTube -f neutube_trace -i $2 -p 1 1   
+mv  "$2_neutube.swc" $3
 $1 -x snake -f snake_trace -i $2 -p 1 
 mv  "$2_snake.swc" $3
 $1 -x SimpleTracing -f tracing -i $2 -o $2_simple.swc -p 1 
