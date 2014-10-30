@@ -50,6 +50,7 @@ void getNeuronTreeBound(const NeuronTree& nt, double &minx, double &miny, double
                         double &maxx, double &maxy, double &maxz,
                         double &mmx, double &mmy, double &mmz);
 
+void highlight_planepoint(const NeuronTree& nt0, const NeuronTree& nt1, float dis, int direction);
 int highlight_edgepoint(const QList<NeuronTree> *ntList, float dis, int direction);
 
 int highlight_adjpoint(const NeuronTree& nt1, const NeuronTree& nt2, float dis);
@@ -63,6 +64,8 @@ void copyType(const NeuronTree & source, QList<int> & target);
 void backupNeuron(const NeuronTree & source, const NeuronTree & backup);
 
 void copyProperty(const NeuronTree & source, const NeuronTree & target);
+
+void copyCoordinate(const NeuronTree & source, const NeuronTree & target);
 
 float quickMoveNeuron(QList<NeuronTree> * ntTreeList, int ant, int stackdir, int first_nt);
 float quickMoveNeuron(NeuronTree *nt0, NeuronTree *nt1, int stackdir);

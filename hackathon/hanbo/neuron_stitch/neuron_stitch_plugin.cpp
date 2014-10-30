@@ -18,9 +18,10 @@ QList<NeuronGeometryDialog* > dialogList;
 QStringList neuron_stitch::menulist() const
 {
 	return QStringList() 
-        <<tr("auto_match_neurons")
-        <<tr("manualy_adjust_neurons")
-        <<tr("transform_neurons_by_affine_matrix")
+        <<tr("auto_stitch_neuron_SWC")
+        <<tr("realtime_stitch_neuron_SWC")
+        <<tr("manualy_affine_neuron_SWC")
+        <<tr("transform_neuron_SWC_by_affine_matrix")
 		<<tr("about");
 }
 
@@ -34,15 +35,19 @@ QStringList neuron_stitch::funclist() const
 
 void neuron_stitch::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
 {
-    if (menu_name == tr("auto_match_neurons"))
+    if (menu_name == tr("auto_stitch_neuron_SWC"))
     {
         domatch(callback, parent);
     }
-    else if (menu_name == tr("manualy_adjust_neurons"))
+    if (menu_name == tr("realtime_stitch_neuron_SWC"))
+    {
+        dostitch(callback, parent);
+    }
+    else if (menu_name == tr("manualy_affine_neuron_SWC"))
     {
         doadjust(callback, parent);
     }
-    else if (menu_name == tr("transform_neurons_by_affine_matrix"))
+    else if (menu_name == tr("transform_neuron_SWC_by_affine_matrix"))
     {
         dotransform_swc(callback, parent);
     }
@@ -83,6 +88,52 @@ void neuron_stitch::domatch(V3DPluginCallback2 &callback, QWidget *parent)
     //myDialog = new NeuronMatchDialog(&callback, v3dwin);
     myDialog = new NeuronMatchDialog();
     myDialog->exec();
+}
+
+void neuron_stitch::dostitch(V3DPluginCallback2 &callback, QWidget *parent)
+{
+    //select the window to operate
+    QList <V3dR_MainWindow *> allWindowList = callback.getListAll3DViewers();
+    QList <V3dR_MainWindow *> selectWindowList;
+    V3dR_MainWindow * v3dwin;
+    QList<NeuronTree> * ntTreeList;
+    int winid;
+    qDebug("search for 3D windows");
+    for (V3DLONG i=0;i<allWindowList.size();i++)
+    {
+        ntTreeList = callback.getHandleNeuronTrees_Any3DViewer(allWindowList[i]);
+        if(ntTreeList->size()==2)
+            selectWindowList.append(allWindowList[i]);
+    }
+    qDebug("match and select 3D windows");
+    if(selectWindowList.size()<1){
+        v3d_msg("Cannot find 3D view with only 2 SWC file. Please load the two SWC file you want to stitch in the same 3D view");
+        return;
+    }else if(selectWindowList.size()>1){
+        //pop up a window to select
+
+        QStringList items;
+        for(int i=0; i<selectWindowList.size(); i++){
+            items.append(callback.getImageName(selectWindowList[i]));
+        }
+        bool ok;
+        QString selectitem = QInputDialog::getItem(parent, QString::fromUtf8("Neuron Stitcher"), QString::fromUtf8("Select A Window to Operate"), items, 0, false, &ok);
+        if(!ok) return;
+        for(int i=0; i<selectWindowList.size(); i++){
+            if(selectitem==callback.getImageName(selectWindowList[i]))
+            {
+                winid=i;
+                break;
+            }
+        }
+    }else{
+        winid=0;
+    }
+    v3dwin = selectWindowList[winid];
+
+    NeuronLiveMatchDialog * myDialog = NULL;
+    myDialog = new NeuronLiveMatchDialog(&callback, v3dwin);
+    myDialog->show();
 }
 
 void neuron_stitch::doadjust(V3DPluginCallback2 &callback, QWidget *parent)

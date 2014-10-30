@@ -1270,6 +1270,86 @@ void getNeuronTreeBound(const NeuronTree& nt, double &minx, double &miny, double
 }
 
 
+void highlight_planepoint(const NeuronTree& nt0, const NeuronTree& nt1, float dis, int direction)
+{
+    if(direction < 0 || direction > 2)
+        return;
+
+    int count=0, type1=8, type2=9;
+    float val;
+    float bound0[2], bound1[2];
+    NeuronSWC * tp;
+    getNeuronTreeBound(nt0,bound0,direction);
+    getNeuronTreeBound(nt1,bound1,direction);
+    if(bound0[0]+bound0[1]>bound1[0]+bound1[1]){
+        for(int j=0; j<nt0.listNeuron.size(); j++){
+            switch(direction)
+            {
+            case 0:
+                val=nt0.listNeuron[j].x;
+                break;
+            case 1:
+                val=nt0.listNeuron[j].y;
+                break;
+            case 2:
+                val=nt0.listNeuron[j].z;
+            }
+            tp = (NeuronSWC *)(& nt0.listNeuron[j]);
+            if(val>bound0[0]-dis && val<bound0[0]+dis)
+                tp->type=4;
+        }
+        for(int j=0; j<nt1.listNeuron.size(); j++){
+            switch(direction)
+            {
+            case 0:
+                val=nt1.listNeuron[j].x;
+                break;
+            case 1:
+                val=nt1.listNeuron[j].y;
+                break;
+            case 2:
+                val=nt1.listNeuron[j].z;
+            }
+            tp = (NeuronSWC *)(& nt1.listNeuron[j]);
+            if(val>bound1[1]-dis && val<bound1[1]+dis)
+                tp->type=5;
+        }
+    }else{
+        for(int j=0; j<nt0.listNeuron.size(); j++){
+            switch(direction)
+            {
+            case 0:
+                val=nt0.listNeuron[j].x;
+                break;
+            case 1:
+                val=nt0.listNeuron[j].y;
+                break;
+            case 2:
+                val=nt0.listNeuron[j].z;
+            }
+            tp = (NeuronSWC *)(& nt0.listNeuron[j]);
+            if(val>bound0[1]-dis && val<bound0[1]+dis)
+                tp->type=4;
+        }
+        for(int j=0; j<nt1.listNeuron.size(); j++){
+            switch(direction)
+            {
+            case 0:
+                val=nt1.listNeuron[j].x;
+                break;
+            case 1:
+                val=nt1.listNeuron[j].y;
+                break;
+            case 2:
+                val=nt1.listNeuron[j].z;
+            }
+            tp = (NeuronSWC *)(& nt1.listNeuron[j]);
+            if(val>bound1[0]-dis && val<bound1[0]+dis)
+                tp->type=5;
+        }
+    }
+}
+
 int highlight_edgepoint(const QList<NeuronTree> *ntList, float dis, int direction)
 {
     if(direction < 0 || direction > 2)
@@ -1301,6 +1381,8 @@ int highlight_edgepoint(const QList<NeuronTree> *ntList, float dis, int directio
         }
         type1+=2; type2+=2;
     }
+
+    return count;
 }
 
 int highlight_adjpoint(const NeuronTree& nt1, const NeuronTree& nt2, float dis)
@@ -1357,6 +1439,27 @@ void backupNeuron(const NeuronTree & source, const NeuronTree & backup)
     np->file     = source.file;
     np->editable = source.editable;
     np->linemode = source.linemode;
+}
+
+void copyCoordinate(const NeuronTree & source, const NeuronTree & target)
+{
+    if (source.listNeuron.size()!=target.listNeuron.size()) return;
+
+    NeuronSWC *ps_tmp;
+    NeuronSWC *pt_tmp;
+    for (V3DLONG i=0;i<source.listNeuron.size();i++)
+    {
+        ps_tmp = (NeuronSWC *)(&(source.listNeuron.at(i)));
+        pt_tmp = (NeuronSWC *)(&(target.listNeuron.at(i)));
+        pt_tmp->x = ps_tmp->x;
+        pt_tmp->y = ps_tmp->y;
+        pt_tmp->z = ps_tmp->z;
+    }
+    NeuronTree *np = (NeuronTree *)(&target);
+    np->color.r = source.color.r;
+    np->color.g = source.color.g;
+    np->color.b = source.color.b;
+    np->color.a = source.color.a;
 }
 
 void copyProperty(const NeuronTree & source, const NeuronTree & target)

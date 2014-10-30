@@ -55,6 +55,17 @@ NeuronGeometryDialog::NeuronGeometryDialog(V3DPluginCallback2 * cb, V3dR_MainWin
 
         ntpList[i]->color.r = ntpList[i]->color.g = ntpList[i]->color.b = ntpList[i]->color.a = NULL;
     }
+    //change color
+    for(int i=0; i<ntList->at(0).listNeuron.size(); i++){
+        NeuronSWC *p = (NeuronSWC *)&(ntList->at(0).listNeuron.at(i));
+        p->type=2;
+        type_bk[0][i]=2;
+    }
+    for(int i=0; i<ntList->at(1).listNeuron.size(); i++){
+        NeuronSWC *p = (NeuronSWC *)&(ntList->at(1).listNeuron.at(i));
+        p->type=7;
+        type_bk[1][i]=7;
+    }
 
     resetInternalStates();
     updateContent();
@@ -625,7 +636,8 @@ void NeuronGeometryDialog::highlight_boundpoint(double s)
 
     //highlight bound point
     float span= (float) s;
-    highlight_edgepoint(ntList, span, stack_dir);
+    //highlight_edgepoint(ntList, span, stack_dir);
+    highlight_planepoint(ntList->at(0),ntList->at(1), span, stack_dir);
 
     //highlight match point if necessary
     if(checkBox_highlight_matchpoint->isChecked())
@@ -668,7 +680,8 @@ void NeuronGeometryDialog::highlight_matchpoint(double s)
     if(checkBox_highlight_boundpoint->isChecked())
     {
         span = (float) doubleSpinBox_highlight_boundpoint->value();
-        highlight_edgepoint(ntList, span, stack_dir);
+        //highlight_edgepoint(ntList, span, stack_dir);
+        highlight_planepoint(ntList->at(0),ntList->at(1), span, stack_dir);
     }
     //highlight match point
     span = (float) s;
@@ -706,7 +719,8 @@ void NeuronGeometryDialog::highlight_points(bool force)
         if(checkBox_highlight_boundpoint->isChecked())
         {
             span = (float) doubleSpinBox_highlight_boundpoint->value();
-            highlight_edgepoint(ntList, span, stack_dir);
+            //highlight_edgepoint(ntList, span, stack_dir);
+            highlight_planepoint(ntList->at(0),ntList->at(1), span, stack_dir);
         }
         //highlight match point if necessary
         if(checkBox_highlight_matchpoint->isChecked())

@@ -11,22 +11,231 @@
 
 #define CANDMS_ENTRY(a,b) (candMS[(a)+(b)*MS_x])
 
+NeuronLiveMatchDialog::NeuronLiveMatchDialog(V3DPluginCallback2 * cb, V3dR_MainWindow* inwin)
+{
+    if(!inwin)
+        return;
+    v3dwin=inwin;
+    callback = cb;
+    v3dcontrol = callback->getView3DControl_Any3DViewer(v3dwin);
 
-//NeuronMatchDialog::NeuronMatchDialog(V3DPluginCallback2 * cb, V3dR_MainWindow* inwin)
-//{
-//    if(!inwin)
-//        return;
-//    v3dwin=inwin;
-//    callback = cb;
+    ntList=cb->getHandleNeuronTrees_Any3DViewer(v3dwin);
+    if(ntList->size()!=2){ //this should not happen
+        v3d_msg("The number of neurons in the window is not 2");
+        return;
+    }
+    //reset the color of neuron list
+    NeuronTree* ntp = 0;
+    ntp = (NeuronTree*)&(ntList->at(0));
+    ntp->color.r=ntp->color.g=ntp->color.b=ntp->color.a=0;
+    for(int i=0; i<ntList->at(0).listNeuron.size(); i++){
+        NeuronSWC *p = (NeuronSWC *)&(ntList->at(0).listNeuron.at(i));
+        p->type=2;
+    }
+    ntp = (NeuronTree*)&(ntList->at(1));
+    ntp->color.r=ntp->color.g=ntp->color.b=ntp->color.a=0;
+    for(int i=0; i<ntList->at(1).listNeuron.size(); i++){
+        NeuronSWC *p = (NeuronSWC *)&(ntList->at(1).listNeuron.at(i));
+        p->type=7;
+    }
 
-//    ntList=cb->getHandleNeuronTrees_Any3DViewer(v3dwin);
-//    if(ntList->size()!=2){ //this should not happen
-//        v3d_msg("The number of neurons in the window is not 2");
-//        return;
-//    }
+    mList = cb->getHandleLandmarkList_Any3DViewer(v3dwin);
 
-//    creat();
-//}
+    creat();
+
+    matchfunc = new neuron_match_clique((NeuronTree*)(&ntList->at(0)),(NeuronTree*)(&ntList->at(1)));
+    matchfunc->initNeuronComponents();
+    matchfunc->update_matchedPoints_from_Markers(mList); //to-do,not implemented yet
+
+    updateview();
+}
+
+void NeuronLiveMatchDialog::enterEvent(QEvent *e)
+{
+    checkwindow();
+
+    QDialog::enterEvent(e);
+}
+
+
+void NeuronLiveMatchDialog::creat()
+{
+    gridLayout = new QGridLayout();
+
+    //matching zone
+    QLabel* label_a = new QLabel("Step 1: match and affine ");
+    gridLayout->addWidget(label_a,8,0,1,5);
+    btn_match = new QPushButton("Match"); btn_match->setAutoDefault(false);
+    connect(btn_match, SIGNAL(clicked()), this, SLOT(match()));
+    gridLayout->addWidget(btn_match,8,5,1,1);
+
+    cb_dir = new QComboBox(); cb_dir->addItem("x"); cb_dir->addItem("y"); cb_dir->addItem("z");
+    cb_dir->setCurrentIndex(2);
+    spin_zscale = new QDoubleSpinBox();
+    spin_zscale->setRange(0,100000); spin_zscale->setValue(1);
+    spin_ang = new QDoubleSpinBox();
+    spin_ang->setRange(0,180); spin_ang->setValue(60);
+    spin_matchdis = new QDoubleSpinBox();
+    spin_matchdis->setRange(0,100000); spin_matchdis->setValue(100);
+    spin_searchspan = new QDoubleSpinBox();
+    spin_searchspan->setRange(0,100000); spin_searchspan->setValue(20);
+    spin_cmatchdis = new QDoubleSpinBox();
+    spin_cmatchdis->setRange(0,100000); spin_cmatchdis->setValue(100);
+    spin_segthr = new QDoubleSpinBox();
+    spin_segthr->setRange(0,100000); spin_segthr->setValue(0);
+    QLabel* label_0 = new QLabel("stacking direction: ");
+    gridLayout->addWidget(label_0,9,0,1,2);
+    gridLayout->addWidget(cb_dir,9,2,1,1);
+    QLabel* label_1 = new QLabel("resacle stacking direction: ");
+    gridLayout->addWidget(label_1,9,3,1,2);
+    gridLayout->addWidget(spin_zscale,9,5,1,1);
+    QLabel* label_2 = new QLabel("Max angular to match points (0~180): ");
+    gridLayout->addWidget(label_2,10,0,1,2);
+    gridLayout->addWidget(spin_ang,10,2,1,1);
+    QLabel* label_3 = new QLabel("Max distance to match points: ");
+    gridLayout->addWidget(label_3,10,3,1,2);
+    gridLayout->addWidget(spin_matchdis,10,5,1,1);
+    QLabel* label_4 = new QLabel("match candidates searching span: ");
+    gridLayout->addWidget(label_4,11,0,1,2);
+    gridLayout->addWidget(spin_searchspan,11,2,1,1);
+    QLabel* label_5 = new QLabel("Max distance to match 3-clique: ");
+    gridLayout->addWidget(label_5,11,3,1,2);
+    gridLayout->addWidget(spin_cmatchdis,11,5,1,1);
+    QLabel* label_6 = new QLabel("small segment threshold (0=keep all): ");
+    gridLayout->addWidget(label_6,12,0,1,2);
+    gridLayout->addWidget(spin_segthr,12,2,1,1);
+
+    //stitching zone
+    QFrame *line_1 = new QFrame();
+    line_1->setFrameShape(QFrame::HLine);
+    line_1->setFrameShadow(QFrame::Sunken);
+    gridLayout->addWidget(line_1,13,0,1,6);
+    QLabel* label_b = new QLabel("Step 2: stitch paired points");
+    gridLayout->addWidget(label_b,14,0,1,5);
+    btn_manualmatch = new QPushButton("Manually Add"); btn_manualmatch->setAutoDefault(false);
+    connect(btn_manualmatch, SIGNAL(clicked()), this, SLOT(manualadd()));
+    gridLayout->addWidget(btn_manualmatch,15,2,1,1);
+    btn_skip = new QPushButton("Skip"); btn_skip->setAutoDefault(false);
+    connect(btn_skip, SIGNAL(clicked()), this, SLOT(skip()));
+    gridLayout->addWidget(btn_skip,15,3,1,1);
+    btn_stitch = new QPushButton("Stitch"); btn_stitch->setAutoDefault(false);
+    connect(btn_stitch, SIGNAL(clicked()), this, SLOT(stitch()));
+    gridLayout->addWidget(btn_stitch,15,4,1,1);
+    btn_stitchall = new QPushButton("Stitch All"); btn_stitchall->setAutoDefault(false);
+    connect(btn_stitchall, SIGNAL(clicked()), this, SLOT(stitchall()));
+    gridLayout->addWidget(btn_stitchall,15,5,1,1);
+
+    //operation zone
+    QFrame *line_2 = new QFrame();
+    line_2->setFrameShape(QFrame::HLine);
+    line_2->setFrameShadow(QFrame::Sunken);
+    gridLayout->addWidget(line_2,16,0,1,6);
+    btn_output = new QPushButton("Save"); btn_output->setAutoDefault(false);
+    gridLayout->addWidget(btn_output,17,4,1,1);
+    connect(btn_output,     SIGNAL(clicked()), this, SLOT(output()));
+    btn_quit = new QPushButton("Quit"); btn_quit->setAutoDefault(false);
+    connect(btn_quit,     SIGNAL(clicked()), this, SLOT(reject()));
+    gridLayout->addWidget(btn_quit,17,5,1,1);
+
+    setLayout(gridLayout);
+}
+
+void NeuronLiveMatchDialog::checkwindow()
+{
+    //check if current window is closed
+    if (!callback){
+        this->hide();
+        return;
+    }
+
+    bool isclosed = true;
+    //search to see if the window is still open
+    QList <V3dR_MainWindow *> allWindowList = callback->getListAll3DViewers();
+    for (V3DLONG i=0;i<allWindowList.size();i++)
+    {
+        if(allWindowList.at(i)==v3dwin){
+            isclosed = false;
+            break;
+        }
+    }
+
+    //close the window
+    if(isclosed){
+        this->hide();
+        return;
+    }
+}
+
+void NeuronLiveMatchDialog::updateview()
+{
+    checkwindow();
+
+    if(v3dwin){
+        callback->update_3DViewer(v3dwin);
+    }
+
+    if(v3dcontrol){
+        v3dcontrol->updateLandmark();
+    }
+}
+
+void NeuronLiveMatchDialog::match()
+{
+    checkwindow();
+
+    //parameters
+    matchfunc->direction=cb_dir->currentIndex();
+    matchfunc->zscale=spin_zscale->value();
+    matchfunc->angThr_match=cos(spin_ang->value()/180*M_PI);
+    matchfunc->pmatchThr = spin_matchdis->value();
+    matchfunc->spanCand = spin_searchspan->value();
+    matchfunc->cmatchThr = spin_cmatchdis->value();
+    matchfunc->segmentThr = spin_segthr->value();
+
+    //init clique and candidate
+    matchfunc->init();
+
+    //global match
+    qDebug()<<"start global search";
+    matchfunc->globalmatch();
+
+    //update markers
+    matchfunc->update_matchedPoints_to_Markers(mList);
+    qDebug()<<"update makers: "<<mList->size();
+
+    callback->update_NeuronBoundingBox(v3dwin);
+    updateview();
+}
+
+void NeuronLiveMatchDialog::manualadd()
+{
+    checkwindow();
+
+}
+
+void NeuronLiveMatchDialog::skip()
+{
+    checkwindow();
+
+}
+
+void NeuronLiveMatchDialog::stitch()
+{
+    checkwindow();
+
+}
+
+void NeuronLiveMatchDialog::stitchall()
+{
+    checkwindow();
+
+}
+
+void NeuronLiveMatchDialog::output()
+{
+    checkwindow();
+
+}
 
 NeuronMatchDialog::NeuronMatchDialog()
 {
@@ -51,7 +260,7 @@ void NeuronMatchDialog::creat()
     edit_load0 = new QLineEdit();
     edit_load0->setText(fname_nt0); edit_load0->setReadOnly(true);
     gridLayout->addWidget(edit_load0,1,0,1,5);
-    btn_load0 = new QPushButton("...");
+    btn_load0 = new QPushButton("Save");
     gridLayout->addWidget(btn_load0,1,5,1,1);
 
     label_load1 = new QLabel(QObject::tr("Second Neuron for stitch (larger in stacking direction):"));
@@ -171,6 +380,8 @@ bool NeuronMatchDialog::load0()
         btn_run->setEnabled(true);
         edit_output->setText(fname_output);
     }
+
+    return true;
 }
 
 bool NeuronMatchDialog::load1()
@@ -208,6 +419,8 @@ bool NeuronMatchDialog::load1()
         btn_run->setEnabled(true);
         edit_output->setText(fname_output);
     }
+
+    return true;
 }
 
 bool NeuronMatchDialog::output()
@@ -228,9 +441,11 @@ bool NeuronMatchDialog::output()
     if(fname_nt0.length() * fname_nt1.length() * folder_output.length() != 0){
         btn_run->setEnabled(true);
     }
+
+    return true;
 }
 
-bool NeuronMatchDialog::outputchange(QString text)
+void NeuronMatchDialog::outputchange(QString text)
 {
     fname_output=text;
 }
@@ -276,11 +491,20 @@ void NeuronMatchDialog::run()
 
 neuron_match_clique::neuron_match_clique(NeuronTree* botNeuron, NeuronTree* topNeuron)
 {
-    nt0_org=botNeuron;
-    nt1_org=topNeuron;
+    nt0_stitch=botNeuron;
+    nt1_stitch=topNeuron;
 
     nt0=new NeuronTree;
+    nt0_org=new NeuronTree;
     nt1=new NeuronTree;
+    nt1_org=new NeuronTree;
+    nt1_a=new NeuronTree;
+
+    backupNeuron(*nt0_stitch,*nt0);
+    backupNeuron(*nt1_stitch,*nt1);
+    backupNeuron(*nt0_stitch,*nt0_org);
+    backupNeuron(*nt1_stitch,*nt1_org);
+    backupNeuron(*nt1_stitch,*nt1_a);
 
     spanCand = 20;
     direction = 2;
@@ -441,9 +665,7 @@ void neuron_match_clique::globalmatch()
 void neuron_match_clique::init()
 {
     qDebug()<<"rescale in stacking direction";
-    //backup neurons
-    backupNeuron(*nt0_org, *nt0);
-    backupNeuron(*nt1_org, *nt1);
+    //rescale neurons for matching
     if(zscale!=1){
         if(direction == 0){
             proc_neuron_multiply_factor(nt0, zscale, 1, 1);
@@ -508,6 +730,65 @@ void neuron_match_clique::output_parameter(QString fname)
     myfile<<"segment_length_for_calculate_direction= "<<dir_range<<endl;   //length of section used to calculate direction of dead end
 
     file.close();
+}
+
+//update matched point from markers, to do later
+void neuron_match_clique::update_matchedPoints_from_Markers(LandmarkList * mList)
+{
+
+}
+
+void neuron_match_clique::update_matchedPoints_to_Markers(LandmarkList * mList)
+{
+    mList->clear();
+    int idx=0;
+    //matched candidates first
+    for(int i=0; i<pmatch0.size(); i++){
+        int a=pmatch0.at(i);
+        int aa=candmatch0.at(i);
+        LocationSimple S0 = LocationSimple(nt0_stitch->listNeuron[a].x,
+                                          nt0_stitch->listNeuron[a].y,
+                                          nt0_stitch->listNeuron[a].z);
+        S0.color.r = 255; S0.color.g = 0; S0.color.b = 0;
+        S0.name = QString::number(idx++).toStdString();
+        QString c0 = "0 "+QString::number(candID0.at(aa))+" "+QString::number(idx);
+        S0.comments = c0.toStdString();
+        mList->append(S0);
+
+        int b=pmatch1.at(i);
+        int bb=candmatch1.at(i);
+        LocationSimple S1 = LocationSimple(nt1_stitch->listNeuron[b].x,
+                                          nt1_stitch->listNeuron[b].y,
+                                          nt1_stitch->listNeuron[b].z);
+        S1.color.r = 0; S1.color.g = 255; S1.color.b = 0;
+        S1.name = QString::number(idx++).toStdString();
+        QString c1 = "1 "+QString::number(candID1.at(bb))+" "+QString::number(idx-1);
+        S1.comments = c1.toStdString();
+        mList->append(S1);
+    }
+    //then unmatched
+    for(int i=0; i<candID0.size(); i++){
+        if(candmatch0.contains(i)) continue;
+        LocationSimple S = LocationSimple(nt0_stitch->listNeuron[candID0.at(i)].x,
+                nt0_stitch->listNeuron[candID0.at(i)].y,
+                nt0_stitch->listNeuron[candID0.at(i)].z);
+        S.name = QString::number(idx++).toStdString();
+        QString ctmp = "0 "+QString::number(candID0.at(i))+" -1 "+canddir0[i].x+" "+canddir0[i].y+" "+canddir0[i].z;
+        S.comments = ctmp.toStdString();
+        S.color.r = 128; S.color.g = 0; S.color.b = 128;
+        mList->append(S);
+    }
+    for(int i=0; i<candID1.size(); i++){
+        if(candmatch1.contains(i)) continue;
+        LocationSimple S = LocationSimple(nt1_stitch->listNeuron[candID1.at(i)].x,
+                nt1_stitch->listNeuron[candID1.at(i)].y,
+                nt1_stitch->listNeuron[candID1.at(i)].z);
+        S.name = QString::number(idx++).toStdString();
+        QString ctmp = "1 "+QString::number(candID1.at(i))+" -1";
+        S.comments = ctmp.toStdString();
+        S.color.r = 0; S.color.g = 128; S.color.b = 128;
+        mList->append(S);
+    }
 }
 
 void neuron_match_clique::output_candMatchScore(QString fname)
@@ -708,7 +989,7 @@ void neuron_match_clique::output_markers_affinespace(QString fname)
 
         int b=pmatch1.at(i);
         int bb=candmatch1.at(i);
-        myfile<<nt1_a.listNeuron[b].x<<","<<nt1_a.listNeuron[b].y<<","<<nt1_a.listNeuron[b].z<<",0,1, "<<idx++<<","
+        myfile<<nt1_a->listNeuron[b].x<<","<<nt1_a->listNeuron[b].y<<","<<nt1_a->listNeuron[b].z<<",0,1, "<<idx++<<","
              <<"1 "<<candID1.at(bb)<<" "<<idx-1<<" "
              <<canddir1[bb].x<<" "<<canddir1[bb].y<<" "<<canddir1[bb].z<<", 0, 255, 0"<<endl;
     }
@@ -721,7 +1002,7 @@ void neuron_match_clique::output_markers_affinespace(QString fname)
     }
     for(int i=0; i<candID1.size(); i++){
         if(candmatch1.contains(i)) continue;
-        myfile<<nt1_a.listNeuron[candID1.at(i)].x<<","<<nt1_a.listNeuron[candID1.at(i)].y<<","<<nt1_a.listNeuron[candID1.at(i)].z<<",0,1, "<<idx++<<","
+        myfile<<nt1_a->listNeuron[candID1.at(i)].x<<","<<nt1_a->listNeuron[candID1.at(i)].y<<","<<nt1_a->listNeuron[candID1.at(i)].z<<",0,1, "<<idx++<<","
              <<"1 "<<candID1.at(i)<<" -1 "
              <<canddir1[i].x<<" "<<canddir1[i].y<<" "<<canddir1[i].z<<", 0, 128, 128"<<endl;
     }
@@ -732,14 +1013,14 @@ void neuron_match_clique::output_stitch(QString fname)
 {
     if(candmatch0.size()<=0)
         return;
-    if(nt0_stitch.listNeuron.size()<=0)
+    if(nt0_stitch->listNeuron.size()<=0)
         return;
-    if(nt1_stitch.listNeuron.size()<=0)
+    if(nt1_stitch->listNeuron.size()<=0)
         return;
 
     QString fname_neuron0 = fname+"_stithced_nt0.swc";
     //output neuron
-    if (!export_list2file(nt0_stitch.listNeuron,fname_neuron0,nt0_org->name))
+    if (!export_list2file(nt0_stitch->listNeuron,fname_neuron0,nt0_org->name))
     {
         v3d_msg("fail to write the output swc file:\n" + fname_neuron0);
         return;
@@ -747,7 +1028,7 @@ void neuron_match_clique::output_stitch(QString fname)
 
     QString fname_neuron1 = fname+"_stithced_nt1.swc";
     //output neuron
-    if (!export_list2file(nt1_stitch.listNeuron,fname_neuron1,nt1_org->name))
+    if (!export_list2file(nt1_stitch->listNeuron,fname_neuron1,nt1_org->name))
     {
         v3d_msg("fail to write the output swc file:\n" + fname_neuron1);
         return;
@@ -755,7 +1036,7 @@ void neuron_match_clique::output_stitch(QString fname)
 
     //output markers
     QString fname_marker = fname+"_stitched.marker";
-    output_matchedMarkers(fname_marker, nt0_stitch, pmatch0);
+    output_matchedMarkers(fname_marker, *nt0_stitch, pmatch0);
 
     //output ano
     QString fname_ano = fname+"_stitched.ano";
@@ -778,7 +1059,7 @@ void neuron_match_clique::output_affine(QString fname, QString fname_nt0)
 
     QString fname_neuron = fname+"_affine.swc";
     //output neuron
-    if (!export_list2file(nt1_a.listNeuron,fname_neuron,nt1_org->name))
+    if (!export_list2file(nt1_a->listNeuron,fname_neuron,nt1_org->name))
     {
         v3d_msg("fail to write the output swc file:\n" + fname_neuron);
         return;
@@ -815,14 +1096,13 @@ void neuron_match_clique::affine_nt1()
         return;
     }
 
-    backupNeuron(*nt1_org, nt1_a);
-
-    double shift_stack = quickMoveNeuron(nt0_org, &nt1_a, direction);
+    copyCoordinate(*nt1_org, *nt1_a);
+    double shift_stack = quickMoveNeuron(nt0_org, nt1_a, direction);
 
     QList<XYZ> c0, c1;
     for(int i=0; i<pmatch0.size(); i++){
         c0.append(XYZ(nt0_org->listNeuron.at(pmatch0.at(i))));
-        c1.append(XYZ(nt1_a.listNeuron.at(pmatch1.at(i))));
+        c1.append(XYZ(nt1_a->listNeuron.at(pmatch1.at(i))));
     }
 
     double tmp_shift_x=0,tmp_shift_y=0,tmp_shift_z=0,tmp_angle=0,tmp_cent_x=0,tmp_cent_y=0,tmp_cent_z=0;
@@ -833,7 +1113,8 @@ void neuron_match_clique::affine_nt1()
         return;
     }
 
-    affineNeuron(nt1_a,nt1_a,tmp_shift_x,tmp_shift_y,tmp_shift_z,tmp_angle,tmp_cent_x,tmp_cent_y,tmp_cent_z,direction);
+    affineNeuron(*nt1_a,*nt1_a,tmp_shift_x,tmp_shift_y,tmp_shift_z,tmp_angle,tmp_cent_x,tmp_cent_y,tmp_cent_z,direction);
+    copyCoordinate(*nt1_a,*nt1_stitch);
     if(direction==0) tmp_shift_x=shift_stack;
     if(direction==1) tmp_shift_y=shift_stack;
     if(direction==2) tmp_shift_z=shift_stack;
@@ -887,10 +1168,8 @@ void neuron_match_clique::matchCliquesAndCands()
 
 void neuron_match_clique::stitch()
 {
-    backupNeuron(*nt0_org, nt0_stitch);
-    backupNeuron(nt1_a, nt1_stitch);
     for(int pid=0; pid<pmatch0.size(); pid++){
-        stitchMatchedPoint(&nt0_stitch, &nt1_stitch, parent0, parent1, pmatch0.at(pid), pmatch1.at(pid));
+        stitchMatchedPoint(nt0_stitch, nt1_stitch, parent0, parent1, pmatch0.at(pid), pmatch1.at(pid));
     }
 }
 
@@ -1038,5 +1317,58 @@ void neuron_match_clique::initNeuronAndCandidate(NeuronTree& nt, QList<int>& can
         canddir.append(tmpdir);
         canddircoord.append(XYZ(candcoord.last().x+canddir.last().x,candcoord.last().y+canddir.last().y,candcoord.last().z+canddir.last().z));
         candcomponents.append(components.at(tmpcand[i]));
+    }
+}
+
+void neuron_match_clique::initNeuronComponents()
+{
+    initNeuronComponents(*nt0, components0, parent0);
+    initNeuronComponents(*nt1, components1, parent1);
+}
+
+void neuron_match_clique::initNeuronComponents(NeuronTree& nt, QList<int>& components, QList<int>& pList)
+{
+    QVector<int> childNum(nt.listNeuron.size(), 0);
+    QVector<int> connNum(nt.listNeuron.size(), 0);
+    //QList<int> components;
+    components.clear();
+    pList.clear();
+    V3DLONG curid=0;
+    for(V3DLONG i=0; i<nt.listNeuron.size(); i++){
+        if(nt.listNeuron.at(i).pn<0){
+            connNum[i]--; //root that only have 1 clide will also be a dead end
+            components.append(curid); curid++;
+            pList.append(-1);
+        }
+        else{
+            int pid = nt.hashNeuron.value(nt.listNeuron.at(i).pn);
+            childNum[pid]++;
+            connNum[pid]++;
+            components.append(-1);
+            pList.append(pid);
+        }
+    }
+    //connected component
+    for(V3DLONG cid=0; cid<curid; cid++){
+        QStack<int> pstack;
+        int chid, size = 0;
+        if(!components.contains(cid)) //should not happen, just in case
+            continue;
+        if(components.indexOf(cid)!=components.lastIndexOf(cid)) //should not happen
+            qDebug("unexpected multiple tree root, please check the code: neuron_stitch_func.cpp");
+        //recursively search for child and mark them as the same component
+        pstack.push(components.indexOf(cid));
+        size++;
+        while(!pstack.isEmpty()){
+            int pid=pstack.pop();
+            chid = -1;
+            chid = pList.indexOf(pid,chid+1);
+            while(chid>=0){
+                pstack.push(chid);
+                components[chid]=cid;
+                chid=pList.indexOf(pid,chid+1);
+                size++;
+            }
+        }
     }
 }
