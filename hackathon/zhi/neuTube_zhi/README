@@ -1,0 +1,39 @@
+This neutube tracing plugin can be built successfully on MAC OS X 10.9.2 and Linux CentOS 6.4. Please follow the instruction to build the plugin:
+
+1. go to /vaa3d_tools/released_plugins/v3d_plugins/neurontracing_neutube/src_neutube/, and run
+
+  sh build.sh <qmake_path> <qmake_spec_path>
+
+  <qmake_path> is the path of the qmake command and <qmake_spec_path> is the path to the qmake specification, which is usually under $QT_INSTALL/mkspecs.
+
+Examples:
+
+Build neuTube on Mac:
+  
+  sh build.sh /usr/local/Trolltech/Qt-4.7.1/bin/qmake /usr/local/Trolltech/Qt-4.7.1/mkspecs/macx-g++42
+
+Build neuTube on Linux:
+
+  sh build.sh /usr/local/Trolltech/Qt-4.7.1/bin/qmake /usr/local/Trolltech/Qt-4.7.1/mkspecs/linux-g++
+	
+
+2. If you have error in the first step, please ignore it. 
+
+3. For Mac, in this folder:
+   run qmake & make 
+
+4. For Linux, in this folder:
+   run ./update_library
+   run qmake & make	
+
+Plase note, you may need to copy some shared libraries to somewhere in the library path:
+
+Examples:
+
+/v3d_external/v3d_main/common_lib/lib/libneurolabi_debug.so
+/vaa3d_tools/released_plugins/v3d_plugins/neurontracing_neutube/src_neutube/neurolabi/lib/fftw3/lib/libfftw3f.so
+/vaa3d_tools/released_plugins/v3d_plugins/neurontracing_neutube/src_neutube/neurolabi/lib/fftw3/lib/libfftw3.so
+/vaa3d_tools/released_plugins/v3d_plugins/neurontracing_neutube/src_neutube/neurolabi/lib/xml/lib/libxml2.so
+
+   	
+note added by Zhi Zhou, 10/29/2014

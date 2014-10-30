@@ -1,0 +1,38 @@
+#!/bin/bash
+cd ../../../released_plugins/v3d_plugins/neurontracing_neutube/src_neutube/neurolabi/
+
+./update_library_64 --enable-shared
+
+cd  lib/
+libdir=`pwd`
+
+if [ ! -d fftw3 ]
+then
+   mkdir fftw3
+fi
+
+echo 'Building libfftw3 ...'
+tar -xvf fftw-3.3.2.tar.gz
+cd fftw-3.3.2
+./configure --enable-shared --prefix=${libdir}/fftw3 
+make
+make install
+
+./configure --enable-shared --enable-float --prefix=${libdir}/fftw3 
+make
+make install
+cd ..
+
+echo 'Building libxml ...'
+if [ ! -d xml ]
+then
+  mkdir xml
+fi
+tar -xvf libxml2-2.9.1.tar.gz
+cd libxml2-2.9.1
+./configure --without-iconv --without-zlib --enable-shared --prefix=${libdir}/xml
+make
+make install
+cd ..
+
+
