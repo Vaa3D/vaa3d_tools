@@ -76,7 +76,7 @@ if [ $DO_TRACING == "YES" ]; then
   $1 -x Vaa3D_Neuron2 -f app1 -i $inimgfileTracing -p NULL 0 40 0    
   mv  $inimgfileTracing*_app1.swc $3
 
-  $1 -x Vaa3D_Neuron2 -f app2 -i $inimgfileTracing -p NULL 0 -1 0 1 1 0 5   
+  $1 -x Vaa3D_Neuron2 -f app2 -i $inimgfileTracing -p NULL 0 10 0 1 1 0 5   
   mv  $inimgfileTracing*_app2.swc $3
   rm  $inimgfileTracing*_ini.swc
 
