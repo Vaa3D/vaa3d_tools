@@ -235,7 +235,7 @@ void autotrace_mst(V3DPluginCallback2 &callback, QWidget *parent)
         unsigned char *localarea=0;
         V3DLONG blockpagesz = (xe-xb+1)*(ye-yb+1)*(ze-zb+1);
         localarea = new unsigned char [blockpagesz];
-        int i = 0;
+        V3DLONG d = 0;
         for(V3DLONG iz = zb; iz < ze + 1; iz++)
         {
             V3DLONG offsetk = iz*M*N;
@@ -245,8 +245,8 @@ void autotrace_mst(V3DPluginCallback2 &callback, QWidget *parent)
                 for(V3DLONG ix = xb; ix < xe+1; ix++)
                 {
 
-                    localarea[i] = data1d[offsetc+offsetk + offsetj + ix];
-                    i++;
+                    localarea[d] = data1d[offsetc+offsetk + offsetj + ix];
+                    d++;
                 }
             }
         }
