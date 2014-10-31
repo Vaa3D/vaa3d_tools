@@ -339,8 +339,8 @@ V_NeuronSWC_list trace_one_pt_to_N_points_shortestdist(unsigned char ****p4d, V3
 	printf("find_shortest_path_graphimg <<< ");
 	if (s_error)
 	{
-		v3d_msg(s_error);
-		throw (const char*)s_error;
+        v3d_msg(s_error,0);
+      //  throw (const char*)s_error;
 		return tracedNeuron;
 	}
 	
