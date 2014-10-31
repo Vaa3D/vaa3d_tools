@@ -10,8 +10,11 @@
 #include "basic_surf_objs.h"
 #include "../../../released_plugins/v3d_plugins/neurontracing_vn2/app1/v3dneuron_gd_tracing.h"
 #include "../../../released_plugins/v3d_plugins/sort_neuron_swc/sort_swc.h""
+#include "../../../released_plugins/v3d_plugins/neurontracing_vn2/app2/my_surf_objs.h"
 
 using namespace std;
+#define getParent(n,nt) ((nt).listNeuron.at(n).pn<0)?(1000000000):((nt).hashNeuron.value((nt).listNeuron.at(n).pn))
+
 #define INF 1E9
 
 Q_EXPORT_PLUGIN2(neurontracing_mst, neurontracing_mst);
@@ -43,6 +46,9 @@ template <class T> T pow2(T a)
     return a*a;
 
 }
+QString getAppPath();
+NeuronTree post_process(NeuronTree nt);
+
 void neurontracing_mst::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
 {
     if (menu_name == tr("tracing"))
@@ -161,7 +167,7 @@ void autotrace_mst(V3DPluginCallback2 &callback, QWidget *parent)
     QList<NeuronSWC> nt_seed = seed_detection(data1d, in_sz, Ws, c, th);
     NeuronTree nt_tmp;
     nt_tmp.listNeuron = nt_seed;
-  //  writeSWC_file("mst.swc",nt_tmp);
+    writeSWC_file("mst.swc",nt_tmp);
    // return;
     LocationSimple p0;
     vector<LocationSimple> pp;
@@ -203,6 +209,7 @@ void autotrace_mst(V3DPluginCallback2 &callback, QWidget *parent)
     V3DLONG id = 1;
     for(V3DLONG i = 1; i <nt_seed.size(); i++)
     {
+       // v3d_msg(QString("mst_%1.swc").arg(i));
         NeuronSWC S = nt_seed.at(i);
         p0.x = nt_seed.at(S.pn-1).x;
         p0.y = nt_seed.at(S.pn-1).y;
@@ -273,6 +280,9 @@ void autotrace_mst(V3DPluginCallback2 &callback, QWidget *parent)
         if(p4d) {delete []p4d; p4d = 0;}
         if(localarea) {delete []localarea; localarea = 0;}
 
+        if(nt.listNeuron.size()<1)
+            continue;
+
         for(int j = nt.listNeuron.size()-1; j >=0;j--)
         {
             S_GD = nt.listNeuron.at(j);
@@ -287,7 +297,7 @@ void autotrace_mst(V3DPluginCallback2 &callback, QWidget *parent)
             hashNeuron.insert(S_GD.n, listNeuron.size()-1);
             id++;
          }
-   //     QString outfilename = QString("test/mst_%2.swc").arg(i);
+   //
    //     writeSWC_file(outfilename,nt);
     }
 
@@ -295,9 +305,74 @@ void autotrace_mst(V3DPluginCallback2 &callback, QWidget *parent)
     nt_final.on = true;
     nt_final.listNeuron = listNeuron;
     nt_final.hashNeuron = hashNeuron;
+
     QString swc_name = p4DImage->getFileName();
     swc_name.append("_MST_Tracing.swc");
     writeSWC_file(swc_name.toStdString().c_str(),nt_final);
+
+#if  defined(Q_OS_LINUX)
+    QString cmd_sort = QString("%1/vaa3d -x sort_neuron -f sort_swc -i %2 -o %3").arg(getAppPath().toStdString().c_str()).arg(swc_name.toStdString().c_str()).arg(swc_name.toStdString().c_str());
+    system(qPrintable(cmd_sort));
+#elif defined(Q_OS_MAC)
+    QString cmd_sort = QString("%1/vaa3d64.app/Contents/MacOS/vaa3d64 -x sort_neuron -f sort_swc -i %2 -o %3").arg(getAppPath().toStdString().c_str()).arg(swc_name.toStdString().c_str()).arg(swc_name.toStdString().c_str());
+    system(qPrintable(cmd_sort));
+#else
+         v3d_msg("The OS is not Linux or Mac. Do nothing.");
+         return;
+#endif
+
+    NeuronTree nt_sorted = readSWC_file(swc_name);
+    NeuronTree nt_sorted_prund = post_process(nt_sorted);
+    NeuronTree nt_sorted_prund_2nd = post_process(nt_sorted_prund);
+
+    p0.x = nt_sorted_prund_2nd.listNeuron.at(0).x;
+    p0.y = nt_sorted_prund_2nd.listNeuron.at(0).y;
+    p0.z = nt_sorted_prund_2nd.listNeuron.at(0).z;
+    pp.clear();
+
+    QVector<QVector<V3DLONG> > childs;
+
+    V3DLONG neuronNum = nt_sorted_prund_2nd.listNeuron.size();
+    childs = QVector< QVector<V3DLONG> >(neuronNum, QVector<V3DLONG>() );
+    for (V3DLONG i=0;i<neuronNum;i++)
+    {
+        V3DLONG par = nt_sorted_prund_2nd.listNeuron[i].pn;
+        if (par<0) continue;
+        childs[nt_sorted_prund_2nd.hashNeuron.value(par)].push_back(i);
+    }
+
+
+    QList<NeuronSWC> list = nt_sorted_prund_2nd.listNeuron;
+    for (int i=1;i<list.size();i++)
+    {
+        if (childs[i].size()==0)
+        {
+            LocationSimple tmpp;
+            tmpp.x = list.at(i).x;
+            tmpp.y = list.at(i).y;
+            tmpp.z = list.at(i).z;
+            pp.push_back(tmpp);
+        }
+    }
+
+    V3DLONG sz_tracing[4];
+    sz_tracing[0] = in_sz[0];
+    sz_tracing[1] = in_sz[1];
+    sz_tracing[2] = in_sz[2];
+    sz_tracing[3] = 1;
+
+    unsigned char ****p4d_entire = 0;
+    if (!new4dpointer(p4d_entire, sz_tracing[0], sz_tracing[1], sz_tracing[2], sz_tracing[3], data1d))
+    {
+        fprintf (stderr, "Fail to create a 4D pointer for the image data. Exit. \n");
+        return;
+    }
+
+    NeuronTree nt_2nd = v3dneuron_GD_tracing(p4d_entire, sz_tracing,
+                              p0, pp,
+                              trace_para, weight_xy_z);
+
+    writeSWC_file(swc_name.toStdString().c_str(),nt_2nd);
     bool bmenu = 1;
     v3d_msg(QString("Now you can drag and drop the generated swc fle [%1] into Vaa3D.").arg(swc_name.toStdString().c_str()),bmenu);
 
@@ -357,7 +432,7 @@ template <class T> QList<NeuronSWC> seed_detection(T* data1d,
                                 zm += w*k;
                                 s += w;
                                 n = n+1;
-                                if(w > 30)
+                                if(w > th + 30)
                                 {
                                     ImageMarker local_point;
                                     local_point.x = i;
@@ -371,7 +446,7 @@ template <class T> QList<NeuronSWC> seed_detection(T* data1d,
                 }
                 xm /= s; ym /=s; zm /=s;
                 V3DLONG seed_index = (int)zm*M*N + (int)ym*N +(int)xm;
-                if(s >0 && data1d[seed_index] <= 30 && loc_points_list.size()>1) //find medoid point
+                if(s >0 && data1d[seed_index] <= th + 30 && loc_points_list.size()>1) //find medoid point
                 {
                     double dist_min = INF;
                     V3DLONG medoid_index = -1;
@@ -392,12 +467,12 @@ template <class T> QList<NeuronSWC> seed_detection(T* data1d,
                     xm = loc_points_list.at(medoid_index).x;
                     ym = loc_points_list.at(medoid_index).y;
                     zm = loc_points_list.at(medoid_index).z;
-                    printf("\n(%d,%d,%d)",xm,ym,zm);
+                   // printf("\n(%.4f,%.4f,%.4f)",xm,ym,zm);
 
                 }
                 loc_points_list.clear();
 
-                if(s >0 && data1d[seed_index] > 30)
+                if(s >0 && data1d[seed_index] > th + 30)
                 {
                     ImageMarker MARKER;
                     MARKER.x = xm;
@@ -507,4 +582,111 @@ template <class T> QList<NeuronSWC> seed_detection(T* data1d,
     return marker_MST_sorted;
   //  outimg = pImage;
 
+}
+
+NeuronTree  post_process(NeuronTree nt)
+{
+
+    double length = 5.0;
+    QVector<QVector<V3DLONG> > childs;
+
+    V3DLONG neuronNum = nt.listNeuron.size();
+    childs = QVector< QVector<V3DLONG> >(neuronNum, QVector<V3DLONG>() );
+    V3DLONG *flag = new V3DLONG[neuronNum];
+
+    for (V3DLONG i=0;i<neuronNum;i++)
+    {
+        flag[i] = 1;
+
+        V3DLONG par = nt.listNeuron[i].pn;
+        if (par<0) continue;
+        childs[nt.hashNeuron.value(par)].push_back(i);
+    }
+
+    QList<NeuronSWC> list = nt.listNeuron;
+    for (int i=0;i<list.size();i++)
+    {
+        if (childs[i].size()==0)
+        {
+            int index_tip = 0;
+            int parent_tip = getParent(i,nt);
+            while(childs[parent_tip].size()<2)
+            {
+
+                parent_tip = getParent(parent_tip,nt);
+                index_tip++;
+            }
+            if(index_tip < length)
+            {
+                flag[i] = -1;
+
+                int parent_tip = getParent(i,nt);
+                while(childs[parent_tip].size()<2)
+                {
+                    flag[parent_tip] = -1;
+                    parent_tip = getParent(parent_tip,nt);
+                }
+            }
+
+        }
+
+    }
+
+   //NeutronTree structure
+   NeuronTree nt_prunned;
+   QList <NeuronSWC> listNeuron;
+   QHash <int, int>  hashNeuron;
+   listNeuron.clear();
+   hashNeuron.clear();
+
+   //set node
+   NeuronSWC S;
+   for (int i=0;i<list.size();i++)
+   {
+       if(flag[i] == 1)
+       {
+            NeuronSWC curr = list.at(i);
+            S.n 	= curr.n;
+            S.type = curr.type;
+            S.r 	= curr.r;
+            S.x 	= curr.x;
+            S.y 	= curr.y;
+            S.z 	= curr.z;
+            S.pn 	= curr.pn;
+            listNeuron.append(S);
+            hashNeuron.insert(S.n, listNeuron.size()-1);
+       }
+
+  }
+   nt_prunned.n = -1;
+   nt_prunned.on = true;
+   nt_prunned.listNeuron = listNeuron;
+   nt_prunned.hashNeuron = hashNeuron;
+
+   if(flag) {delete[] flag; flag = 0;}
+   return nt_prunned;
+
+}
+
+QString getAppPath()
+{
+    QString v3dAppPath("~/Work/v3d_external/v3d");
+    QDir testPluginsDir = QDir(qApp->applicationDirPath());
+
+#if defined(Q_OS_WIN)
+    if (testPluginsDir.dirName().toLower() == "debug" || testPluginsDir.dirName().toLower() == "release")
+        testPluginsDir.cdUp();
+#elif defined(Q_OS_MAC)
+    if (testPluginsDir.dirName() == "MacOS") {
+        QDir testUpperPluginsDir = testPluginsDir;
+        testUpperPluginsDir.cdUp();
+        testUpperPluginsDir.cdUp();
+        testUpperPluginsDir.cdUp(); // like foo/plugins next to foo/v3d.app
+        if (testUpperPluginsDir.cd("plugins")) testPluginsDir = testUpperPluginsDir;
+        testPluginsDir.cdUp();
+    }
+#endif
+
+    v3dAppPath = testPluginsDir.absolutePath();
+    return v3dAppPath;
 }
