@@ -8,6 +8,7 @@
 #include "neuron_match_clique.h"
 #include "../../../v3d_main/neuron_editing/neuron_xforms.h"
 #include <iostream>
+#include "marker_match_dialog.h"
 
 #define CANDMS_ENTRY(a,b) (candMS[(a)+(b)*MS_x])
 
@@ -112,6 +113,9 @@ void NeuronLiveMatchDialog::creat()
     gridLayout->addWidget(line_1,13,0,1,6);
     QLabel* label_b = new QLabel("Step 2: stitch paired points");
     gridLayout->addWidget(label_b,14,0,1,5);
+    cb_pair = new QComboBox();
+    gridLayout->addWidget(cb_pair,15,0,1,2);
+    connect(cb_pair, SIGNAL(currentIndexChanged(int)), this, SLOT(change_pair(int)));
     btn_manualmatch = new QPushButton("Manually Add"); btn_manualmatch->setAutoDefault(false);
     connect(btn_manualmatch, SIGNAL(clicked()), this, SLOT(manualadd()));
     gridLayout->addWidget(btn_manualmatch,15,2,1,1);
@@ -124,6 +128,10 @@ void NeuronLiveMatchDialog::creat()
     btn_stitchall = new QPushButton("Stitch All"); btn_stitchall->setAutoDefault(false);
     connect(btn_stitchall, SIGNAL(clicked()), this, SLOT(stitchall()));
     gridLayout->addWidget(btn_stitchall,15,5,1,1);
+
+    btn_stitch->setEnabled(false);
+    btn_stitchall->setEnabled(false);
+    btn_skip->setEnabled(false);
 
     //operation zone
     QFrame *line_2 = new QFrame();
@@ -205,36 +213,274 @@ void NeuronLiveMatchDialog::match()
 
     callback->update_NeuronBoundingBox(v3dwin);
     updateview();
+    updatematchlist();
+}
+
+void NeuronLiveMatchDialog::updatematchlist()
+{
+    QList<int> mm0, mm1;
+    pmatch0.clear();
+    pmatch1.clear();
+    mmatch0.clear();
+    mmatch1.clear();
+    stitchmask.clear();
+    cb_pair->clear();
+    int info[4];
+
+    for(int i=0; i<mList->size(); i++){
+        if(get_marker_info(mList->at(i),info)){
+            if(info[2]>=0){ //matched marker
+                if(info[2]>i && info[2]<mList->size()){
+                    if(info[0]==0){
+                        mm0.append(i);
+                        mm1.append(info[2]);
+                    }else{
+                        mm0.append(info[2]);
+                        mm1.append(i);
+                    }
+                }
+            }
+        }
+    }
+    for(int i=0; i<mm0.size(); i++){
+        //get the matched point on neuron
+        get_marker_info(mList->at(mm0[i]),info);
+        if(info[1]>=ntList->at(0).listNeuron.size()) continue;
+        int tmp=info[1];
+        get_marker_info(mList->at(mm1[i]),info);
+        if(info[1]>=ntList->at(1).listNeuron.size()) continue;
+        pmatch0.append(tmp);
+        pmatch1.append(info[1]);
+        mmatch0.append(mm0[i]);
+        mmatch1.append(mm1[i]);
+
+        //check loop
+        if(matchfunc->checkloop(pmatch0.last(), pmatch1.last()))
+            stitchmask.append(-1); //cannot stitch
+        else
+            stitchmask.append(0);
+
+        if(stitchmask.last()<0)
+            cb_pair->addItem("Marker: " + QString::number(mm0[i]+1) + " x Marker: " + QString::number(mm1[i]+1) +" = LOOP!");
+        else if(stitchmask.last()==0)
+            cb_pair->addItem("Marker: " + QString::number(mm0[i]+1) + " x Marker: " + QString::number(mm1[i]+1) );
+        else
+            cb_pair->addItem("Marker: " + QString::number(mm0[i]+1) + " x Marker: " + QString::number(mm1[i]+1) +" = stiched!");
+
+    }
+
+    if(pmatch0.size()>0){
+        int id=cb_pair->currentIndex();
+        btn_stitchall->setEnabled(true);
+        btn_skip->setEnabled(true);
+        btn_stitch->setEnabled(stitchmask.at(id)>=0);
+        cur_pair=id;
+    }
+}
+
+void NeuronLiveMatchDialog::highlight_pair()
+{
+    int info[4];
+
+    //reset cur_pair
+    LocationSimple * SP = 0;
+    SP=(LocationSimple*)&(mList->at(mmatch0[cur_pair]));
+    SP->color.r = 255; SP->color.g = 0; SP->color.b = 0;
+    //update location
+    get_marker_info(*SP, info);
+    SP->x = ntList->at(0).listNeuron.at(info[1]).x;
+    SP->y = ntList->at(0).listNeuron.at(info[1]).y;
+    SP->z = ntList->at(0).listNeuron.at(info[1]).z;
+
+    SP=(LocationSimple*)&(mList->at(mmatch1[cur_pair]));
+    SP->color.r = 0; SP->color.g = 255; SP->color.b = 0;
+    //update location
+    get_marker_info(*SP, info);
+    SP->x = ntList->at(1).listNeuron.at(info[1]).x;
+    SP->y = ntList->at(1).listNeuron.at(info[1]).y;
+    SP->z = ntList->at(1).listNeuron.at(info[1]).z;
+
+    if(stitchmask.at(cur_pair)>0)
+        matchfunc->highlight_nt1_seg(pmatch1[cur_pair],2);
+    else
+        matchfunc->highlight_nt1_seg(pmatch1[cur_pair],7);
+    matchfunc->highlight_nt0_seg(pmatch0[cur_pair],2);
+
+    cur_pair=cb_pair->currentIndex();
+
+    //highlight new pair
+    SP=(LocationSimple*)&(mList->at(mmatch0[cur_pair]));
+    SP->color.r = 255; SP->color.g = 255; SP->color.b = 128;
+    //update location
+    get_marker_info(*SP, info);
+    SP->x = ntList->at(0).listNeuron.at(info[1]).x;
+    SP->y = ntList->at(0).listNeuron.at(info[1]).y;
+    SP->z = ntList->at(0).listNeuron.at(info[1]).z;
+
+    SP=(LocationSimple*)&(mList->at(mmatch1[cur_pair]));
+    SP->color.r = 128; SP->color.g = 255; SP->color.b = 128;
+    //update location
+    get_marker_info(*SP, info);
+    SP->x = ntList->at(1).listNeuron.at(info[1]).x;
+    SP->y = ntList->at(1).listNeuron.at(info[1]).y;
+    SP->z = ntList->at(1).listNeuron.at(info[1]).z;
+
+    matchfunc->highlight_nt1_seg(pmatch1[cur_pair],6);
+    matchfunc->highlight_nt0_seg(pmatch0[cur_pair],6);
+
+    updateview();
+
+}
+
+void NeuronLiveMatchDialog::change_pair(int idx)
+{
+    checkwindow();
+
+    highlight_pair();
+
+    btn_stitch->setEnabled(stitchmask.at(idx)>=0);
 }
 
 void NeuronLiveMatchDialog::manualadd()
 {
-    checkwindow();
+    link_new_marker_neuron();
 
+    marker_match_dialog dialog(callback, mList);
+    dialog.exec();
+
+    updatematchlist();
+
+    checkwindow();
+}
+
+void NeuronLiveMatchDialog::link_new_marker_neuron()
+{
+    if(mList->size()<=0){
+        return;
+    }
+
+    LocationSimple *p = 0;
+    double dis;
+    for(int i=0; i<mList->size(); i++){
+        int info[4];
+        double mdis=1e10;
+        if(get_marker_info(mList->at(i),info))
+            continue;
+        int nid=-1;
+        int pid=0;
+
+        for(int j=0; j<2; j++){
+            for(int k=0; k<ntList->at(j).listNeuron.size(); k++){
+                dis=NTDIS(ntList->at(j).listNeuron[k],mList->at(i));
+                if(dis<mdis){
+                    mdis=dis;
+                    nid=j;
+                    pid=k;
+                }
+            }
+        }
+        p = (LocationSimple *)&(mList->at(i));
+        p->name=QString::number(i).toStdString();
+        if(nid>=0){
+            QString tmp = QString::number(nid) + " " + QString::number(pid) + " -1";
+            p->comments=tmp.toStdString();
+            if(nid==0){
+                p->color.r = 128;
+                p->color.g = 0;
+                p->color.b = 128;
+            }else{
+                p->color.r = 0;
+                p->color.g = 128;
+                p->color.b = 128;
+            }
+        }
+    }
+
+    updateview();
 }
 
 void NeuronLiveMatchDialog::skip()
 {
     checkwindow();
+    if(cb_pair->currentIndex() < cb_pair->count()-1)
+        cb_pair->setCurrentIndex(cb_pair->currentIndex()+1);
+    else{
+        v3d_msg("Reach the end. Restart from the beginnig.");
+        cb_pair->setCurrentIndex(0);
+    }
+//    int id=cb_pair->currentIndex();
 
+//    int info[4], color[3];
+//    get_marker_info(mList->at(mmatch0.at(id)),info);
+//    info[2]=-1; color[0]=128; color[1]=0; color[2]=128;
+//    update_marker_info(mList->at(mmatch0.at(id)), info, color);
+
+//    get_marker_info(mList->at(mmatch1.at(id)),info);
+//    info[2]=-1; color[0]=0; color[1]=128; color[2]=128;
+//    update_marker_info(mList->at(mmatch1.at(id)), info, color);
+
+//    updatematchlist();
 }
 
 void NeuronLiveMatchDialog::stitch()
 {
     checkwindow();
 
+    int idx=cb_pair->currentIndex();
+    if(matchfunc->stitch(pmatch0.at(idx),pmatch1.at(idx))){
+        stitchmask[idx]=1;
+        cb_pair->setItemText(idx, cb_pair->currentText() + " = stitched!");
+    }else{
+        stitchmask[idx]=-1;
+        cb_pair->setItemText(idx, cb_pair->currentText() + " = failed, LOOP!");
+    }
+
+    if(cb_pair->currentIndex() < cb_pair->count()-1)
+        cb_pair->setCurrentIndex(cb_pair->currentIndex()+1);
+    else{
+        v3d_msg("Reach the end. Restart from the beginnig.");
+        cb_pair->setCurrentIndex(0);
+    }
 }
 
 void NeuronLiveMatchDialog::stitchall()
 {
     checkwindow();
 
+    for(int idx=0; idx<stitchmask.size(); idx++){
+        if(stitchmask[idx] != 0)
+            continue;
+        if(matchfunc->stitch(pmatch0.at(idx),pmatch1.at(idx))){
+            stitchmask[idx]=1;
+            cb_pair->setItemText(idx, cb_pair->itemText(idx) + " = stitched!");
+        }else{
+            stitchmask[idx]=-1;
+            cb_pair->setItemText(idx, cb_pair->itemText(idx) + " = failed, LOOP!");
+        }
+        matchfunc->highlight_nt1_seg(pmatch1.at(idx),2);
+    }
+
+    updateview();
 }
 
 void NeuronLiveMatchDialog::output()
 {
     checkwindow();
 
+    QString folder_output = QFileDialog::getExistingDirectory(this, "Select Output Folder","");
+    if(folder_output.isEmpty())
+        return;
+    bool ok;
+    QString fname_base = QInputDialog::getText(this, "Output Prefix","Assign a prefix for all outputs",QLineEdit::Normal,"",&ok);
+    if(!ok)
+        return;
+    QString fname_output = QDir(folder_output).filePath(fname_base);
+
+    matchfunc->output_candMatchScore(fname_output + "_matchscore.txt");
+    matchfunc->output_affine(fname_output,ntList->at(0).name);
+    matchfunc->output_matchedMarkers_orgspace(QDir(folder_output).filePath(fname_base + "_nt0_matched.marker"),QDir(folder_output).filePath(fname_base + "_nt1_matched.marker"));
+    matchfunc->output_parameter(fname_output+"_param.txt");
+    matchfunc->output_stitch(fname_output);
 }
 
 NeuronMatchDialog::NeuronMatchDialog()
@@ -693,6 +939,18 @@ void neuron_match_clique::init()
     qDebug()<<"search candidates";
     initNeuronAndCandidate(*nt0,candID0,candcoord0,canddir0,canddircoord0,components0,candcomponents0,parent0,1);
     initNeuronAndCandidate(*nt1,candID1,candcoord1,canddir1,canddircoord1,components1,candcomponents1,parent1,-1);
+    //adjust component id of nt1
+    int ccmax=0;
+    for(int i=0; i<components0.size(); i++){
+        ccmax=ccmax>components0.at(i)?ccmax:components0.at(i);
+    }
+    ccmax+=10;
+    for(int i=0; i<components1.size(); i++){
+        components1[i]+=ccmax;
+    }
+    for(int i=0; i<candcomponents1.size(); i++){
+        candcomponents1[i]+=ccmax;
+    }
     qDebug()<<"init neuron 0: cand:"<<candID0.size();
     qDebug()<<"init neuron 1: cand:"<<candID1.size();
 
@@ -732,7 +990,7 @@ void neuron_match_clique::output_parameter(QString fname)
     file.close();
 }
 
-//update matched point from markers, to do later
+//update matched point from markers, not necessary need. to do later
 void neuron_match_clique::update_matchedPoints_from_Markers(LandmarkList * mList)
 {
 
@@ -1169,7 +1427,100 @@ void neuron_match_clique::matchCliquesAndCands()
 void neuron_match_clique::stitch()
 {
     for(int pid=0; pid<pmatch0.size(); pid++){
+        if(components0[pmatch0.at(pid)]==components1[pmatch1.at(pid)]) //loop
+            continue;
+
         stitchMatchedPoint(nt0_stitch, nt1_stitch, parent0, parent1, pmatch0.at(pid), pmatch1.at(pid));
+
+        //update cand components
+        int cid=components1[pmatch1.at(pid)];
+        int nid=components0[pmatch0.at(pid)];
+        int idx=components0.indexOf(cid);
+        while(idx>=0){
+            components0[idx]=nid;
+            idx=components0.indexOf(cid,idx+1);
+        }
+        idx=candcomponents0.indexOf(cid);
+        while(idx>=0){
+            candcomponents0[idx]=nid;
+            idx=candcomponents0.indexOf(cid, idx+1);
+        }
+        idx=components1.indexOf(cid);
+        while(idx>=0){
+            components1[idx]=nid;
+            idx=components1.indexOf(cid,idx+1);
+        }
+        idx=candcomponents1.indexOf(cid);
+        while(idx>=0){
+            candcomponents1[idx]=nid;
+            idx=candcomponents1.indexOf(cid, idx+1);
+        }
+    }
+}
+
+bool neuron_match_clique::stitch(int point0, int point1)
+{
+    if(components0.size()>0 && components1.size()>0)
+        if(checkloop(point0, point1))
+            return false;
+
+    //stitch
+    stitchMatchedPoint(nt0_stitch, nt1_stitch, parent0, parent1, point0, point1);
+
+    //update cand components
+    int cid=components1[point1];
+    int nid=components0[point0];
+    int idx=components0.indexOf(cid);
+    while(idx>=0){
+        components0[idx]=nid;
+        idx=components0.indexOf(cid,idx+1);
+    }
+    idx=candcomponents0.indexOf(cid);
+    while(idx>=0){
+        candcomponents0[idx]=nid;
+        idx=candcomponents0.indexOf(cid, idx+1);
+    }
+    idx=components1.indexOf(cid);
+    while(idx>=0){
+        components1[idx]=nid;
+        idx=components1.indexOf(cid,idx+1);
+    }
+    idx=candcomponents1.indexOf(cid);
+    while(idx>=0){
+        candcomponents1[idx]=nid;
+        idx=candcomponents1.indexOf(cid, idx+1);
+    }
+
+    return true;
+}
+
+bool neuron_match_clique::checkloop(int point0, int point1)
+{
+    if(components0.at(point0) == components1.at(point1)){
+        return true;
+    }
+    return false;
+}
+
+void neuron_match_clique::highlight_nt1_seg(int point1, int type)
+{
+    int cid=components1.at(point1);
+    int idx=components1.indexOf(cid);
+    while(idx>=0){
+        NeuronSWC* p = (NeuronSWC*)&(nt1_stitch->listNeuron.at(idx));
+        p->type=type;
+        idx=components1.indexOf(cid, idx+1);
+    }
+}
+
+void neuron_match_clique::highlight_nt0_seg(int point0, int type)
+{
+    int cid=components0.at(point0);
+    int idx=components0.indexOf(cid);
+    while(idx>=0){
+        NeuronSWC* p = (NeuronSWC*)&(nt0_stitch->listNeuron.at(idx));
+        p->type=type;
+        idx=components0.indexOf(cid, idx+1);
     }
 }
 
@@ -1324,6 +1675,15 @@ void neuron_match_clique::initNeuronComponents()
 {
     initNeuronComponents(*nt0, components0, parent0);
     initNeuronComponents(*nt1, components1, parent1);
+    //adjust component id of nt1
+    int ccmax=0;
+    for(int i=0; i<components0.size(); i++){
+        ccmax=ccmax>components0.at(i)?ccmax:components0.at(i);
+    }
+    ccmax+=10;
+    for(int i=0; i<components1.size(); i++){
+        components1[i]+=ccmax;
+    }
 }
 
 void neuron_match_clique::initNeuronComponents(NeuronTree& nt, QList<int>& components, QList<int>& pList)

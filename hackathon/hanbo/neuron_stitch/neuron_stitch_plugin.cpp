@@ -19,7 +19,7 @@ QStringList neuron_stitch::menulist() const
 {
 	return QStringList() 
         <<tr("auto_stitch_neuron_SWC")
-        <<tr("realtime_stitch_neuron_SWC")
+        <<tr("live_stitch_neuron_SWC")
         <<tr("manualy_affine_neuron_SWC")
         <<tr("transform_neuron_SWC_by_affine_matrix")
 		<<tr("about");
@@ -39,7 +39,7 @@ void neuron_stitch::domenu(const QString &menu_name, V3DPluginCallback2 &callbac
     {
         domatch(callback, parent);
     }
-    if (menu_name == tr("realtime_stitch_neuron_SWC"))
+    if (menu_name == tr("live_stitch_neuron_SWC"))
     {
         dostitch(callback, parent);
     }

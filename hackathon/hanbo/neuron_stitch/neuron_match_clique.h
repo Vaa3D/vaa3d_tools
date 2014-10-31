@@ -34,7 +34,6 @@ private:
     QList<XYZ> canddircoord0, canddircoord1, canddircoord1_adj; //this is for transformation
     QList<int> pmatch0, pmatch1; //matched candidate, the index of neuron tree point
     QList<int> candmatch0, candmatch1; //matched candidate, the index of candidate in List
-    QList<int> cand_um0, cand_um1; //unmatched candidates
     QList<int> candcomponents0, candcomponents1; //the connected components each cand belongs to
 
     //2d array for matching score between candidates
@@ -64,6 +63,7 @@ public:
 public:
     neuron_match_clique(NeuronTree* botNeuron, NeuronTree* topNeuron);
     void init();
+    void initNeuronComponents(); //this is contained in init()
     void globalmatch();
     void update_matchedPoints_to_Markers(LandmarkList * mList);
     void update_matchedPoints_from_Markers(LandmarkList * mList);
@@ -78,7 +78,10 @@ public:
     void affine_nt1();
     void output_stitch(QString fname_out);
     void stitch(); //need to get match points and affine_nt1 first
-    void initNeuronComponents();
+    bool stitch(int point0, int point1); //input is the match points, will search both direction for stiching.
+    bool checkloop(int point0, int point1); //check if connect point0 and point 1 will result in loop
+    void highlight_nt1_seg(int point1, int type); //highlight the component of nt1 linked to point1
+    void highlight_nt0_seg(int point0, int type); //highlight the component of nt1 linked to point1
 
 private:
     //orientation should be 1/-1 for smaller/larger stack in direction
@@ -96,10 +99,13 @@ public:
     NeuronLiveMatchDialog(V3DPluginCallback2 * callback, V3dR_MainWindow* v3dwin);
     void enterEvent(QEvent *e);
 
-public:
+private:
     void creat();
     void checkwindow();
     void updateview();
+    void updatematchlist();
+    void highlight_pair();
+    void link_new_marker_neuron();
 
 public slots:
     void match();
@@ -108,6 +114,7 @@ public slots:
     void stitch();
     void stitchall();
     void output();
+    void change_pair(int idx);
 
 private:
     V3DPluginCallback2 * callback;
@@ -117,9 +124,14 @@ private:
     LandmarkList * mList;
     View3DControl * v3dcontrol;
 
+    QList<int> pmatch0, pmatch1, mmatch0, mmatch1;
+    QList<int> stitchmask; //if loopmask[i] true, then connecct pmatch0[i] and pmatch1[i] will result in loop
+
+    int cur_pair,cur_type;
+
 public:
     QGridLayout *gridLayout;
-    QComboBox *cb_dir;
+    QComboBox *cb_dir,*cb_pair;
     QDoubleSpinBox *spin_zscale, *spin_ang, *spin_matchdis, *spin_searchspan, *spin_cmatchdis, *spin_segthr;
     QPushButton *btn_quit, *btn_match, *btn_manualmatch, *btn_skip, *btn_stitch, *btn_stitchall, *btn_output;
 };

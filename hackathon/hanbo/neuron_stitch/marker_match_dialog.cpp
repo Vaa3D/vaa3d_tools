@@ -16,7 +16,7 @@ marker_match_dialog::marker_match_dialog(V3DPluginCallback2 * cb, LandmarkList *
 
     //obtain markers
     mList=mList_in;
-    int info[3];
+    int info[4];
     m0.clear();
     m1.clear();
     mm0.clear();

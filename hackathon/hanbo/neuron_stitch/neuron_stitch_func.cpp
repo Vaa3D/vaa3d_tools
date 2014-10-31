@@ -23,12 +23,42 @@ void stitchMatchedPoint(NeuronTree* nt0, NeuronTree* nt1, const QList<int>& pare
             idList0.append(id);
             id = parent0.indexOf(id); //move to child
         }
-    }else{ //tips
+    }else if(!parent0.contains(id)){ //tips
         while(id>=0){
             if(parent0.count(id)>1) break; //have two children or more (branches)
             idList0.append(id);
             id = parent0.at(id); //move to parent
         }
+    }else{ //point in the middle, go both direction
+        idList0.append(id);
+       int idc=parent0.indexOf(id);
+       if(parent0.count(idc)>1){//have two children or more (branches)
+           idc=-1;
+       }
+       int idp=parent0.at(id);
+       if(parent0.count(idp)>1){//have two children or more (branches)
+           idp=-1;
+       }
+       while(idp>=0 || idc>=0){
+           if(idc>=0){
+               if(parent0.count(idc)>1){//have two children or more (branches)
+                   idc=-1;
+                   continue;
+               }else{
+                   idList0.append(idc);
+                   idc = parent0.indexOf(idc); //move to child
+               }
+           }
+           if(idp>=0){
+               if(parent0.count(idp)>1){//have two children or more (branches)
+                   idp=-1;
+                   continue;
+               }else{
+                   idList0.append(idp);
+                   idp = parent0.at(idp); //move to parent
+               }
+           }
+       }
     }
 
     QVector<int> idList1;
@@ -39,12 +69,42 @@ void stitchMatchedPoint(NeuronTree* nt0, NeuronTree* nt1, const QList<int>& pare
             idList1.append(id);
             id = parent1.indexOf(id); //move to child
         }
-    }else{ //tips
+    }else if(!parent0.contains(id)){ //tips
         while(id>=0){
             if(parent1.count(id)>1) break; //have two children or more (branches)
             idList1.append(id);
             id = parent1.at(id); //move to parent
         }
+    }else{ //point in the middle, go both direction
+        idList1.append(id);
+       int idc=parent1.indexOf(id);
+       if(parent1.count(idc)>1){//have two children or more (branches)
+           idc=-1;
+       }
+       int idp=parent1.at(id);
+       if(parent1.count(idp)>1){//have two children or more (branches)
+           idp=-1;
+       }
+       while(idp>=0 || idc>=0){
+           if(idc>=0){
+               if(parent1.count(idc)>1){//have two children or more (branches)
+                   idc=-1;
+                   continue;
+               }else{
+                   idList1.append(idc);
+                   idc = parent1.indexOf(idc); //move to child
+               }
+           }
+           if(idp>=0){
+               if(parent1.count(idp)>1){//have two children or more (branches)
+                   idp=-1;
+                   continue;
+               }else{
+                   idList1.append(idp);
+                   idp = parent1.at(idp); //move to parent
+               }
+           }
+       }
     }
 
     //calculate the place to go
