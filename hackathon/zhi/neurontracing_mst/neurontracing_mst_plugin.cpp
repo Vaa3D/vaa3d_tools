@@ -127,7 +127,7 @@ void autotrace_mst(V3DPluginCallback2 &callback, QWidget *parent)
     {
         Ws = QInputDialog::getInteger(parent, "Window size ",
                                       "Enter window size:",
-                                      1, 1, N, 1, &ok2);
+                                      30, 1, N, 1, &ok2);
     }
 
     if(!ok2)
@@ -157,8 +157,8 @@ void autotrace_mst(V3DPluginCallback2 &callback, QWidget *parent)
     QList<NeuronSWC> nt_seed = seed_detection(data1d, in_sz, Ws, c, th);
     NeuronTree nt_tmp;
     nt_tmp.listNeuron = nt_seed;
-    writeSWC_file("mst.swc",nt_tmp);
-
+   // writeSWC_file("mst.swc",nt_tmp);
+   // return;
     LocationSimple p0;
     vector<LocationSimple> pp;
     NeuronTree nt;
@@ -201,7 +201,14 @@ void autotrace_mst(V3DPluginCallback2 &callback, QWidget *parent)
     trace_para.b_post_trimming = b_postTrim;
     trace_para.b_pruneArtifactBranches = b_pruneArtifactBranches;
 
+    NeuronTree nt_final;
+    QList <NeuronSWC> listNeuron;
+    QHash <int, int>  hashNeuron;
+    listNeuron.clear();
+    hashNeuron.clear();
+    NeuronSWC S_GD;
 
+    V3DLONG id = 1;
     for(V3DLONG i = 1; i <nt_seed.size(); i++)
     {
         NeuronSWC S = nt_seed.at(i);
@@ -218,11 +225,28 @@ void autotrace_mst(V3DPluginCallback2 &callback, QWidget *parent)
         nt = v3dneuron_GD_tracing(p4d, sz_tracing,
                                   p0, pp,
                                   trace_para, weight_xy_z);
-
-        QString outfilename = QString("test/mst_%2.swc").arg(i);
-        writeSWC_file(outfilename,nt);
+        for(int j = nt.listNeuron.size()-1; j >=0;j--)
+        {
+            S_GD = nt.listNeuron.at(j);
+            S_GD.n = id;
+            if(S_GD.pn > 0) S_GD.pn = id -1;
+            listNeuron.append(S_GD);
+            hashNeuron.insert(S_GD.n, listNeuron.size()-1);
+            id++;
+         }
+   //     QString outfilename = QString("test/mst_%2.swc").arg(i);
+   //     writeSWC_file(outfilename,nt);
     }
-    //writeSWC_file("mst.swc",nt_seed);
+
+    nt_final.n = -1;
+    nt_final.on = true;
+    nt_final.listNeuron = listNeuron;
+    nt_final.hashNeuron = hashNeuron;
+    QString swc_name = p4DImage->getFileName();
+    swc_name.append("_MST_Tracing.swc");
+    writeSWC_file(swc_name.toStdString().c_str(),nt_final);
+    bool bmenu = 1;
+    v3d_msg(QString("Now you can drag and drop the generated swc fle [%1] into Vaa3D.").arg(swc_name.toStdString().c_str()),bmenu);
 
     return;
 
@@ -274,7 +298,7 @@ template <class T> QList<NeuronSWC> seed_detection(T* data1d,
                             double PixelVaule = w +th;
                             th_local+= PixelVaule;
                             i++;
-                            if (w > 50)
+                            if (w > 30)
                             {
                                 xm += w*i;
                                 ym += w*j;
@@ -288,7 +312,7 @@ template <class T> QList<NeuronSWC> seed_detection(T* data1d,
                 th_local = th_local/i;
                 xm /= s; ym /=s; zm /=s;
                 V3DLONG seed_index = (int)zm*M*N + (int)ym*N +(int)xm;
-                if(s >0 && data1d[seed_index] > th+20 && th_local>th+10)
+                if(s >0 && data1d[seed_index] > th+10 && th_local>th+10)
                 {
 
                    // V3DLONG seed_index = (int)zm*M*N + (int)ym*N +(int)xm;
