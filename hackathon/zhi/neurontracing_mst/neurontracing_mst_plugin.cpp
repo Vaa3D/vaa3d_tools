@@ -205,7 +205,6 @@ template <class T> void seed_detection(T* data1d,
     double w;
 
     QList <ImageMarker> seeds;
-    v3d_msg(QString("%1").arg(th));
     for(V3DLONG iz = 0; iz < P; iz = iz + Ws)
     {
       //  V3DLONG offsetk = iz*M*N;
@@ -274,7 +273,7 @@ template <class T> void seed_detection(T* data1d,
         z1 = seeds.at(i).z;
         for (int j=0;j<marknum;j++)
         {
-            markEdge[i][j] = sqrt(double(x1-seeds.at(i).x)*double(x1-seeds.at(i).x) + double(y1-seeds.at(i).y)*double(y1-seeds.at(i).y) + double(z1-seeds.at(i).z)*double(z1-seeds.at(i).z));
+            markEdge[i][j] = sqrt(double(x1-seeds.at(j).x)*double(x1-seeds.at(j).x) + double(y1-seeds.at(j).y)*double(y1-seeds.at(j).y) + double(z1-seeds.at(j).z)*double(z1-seeds.at(j).z));
         }
     }
 
