@@ -64,15 +64,23 @@ fi
 
 #generate the smoothed image
 
-SUFF=zip;
-infile=$2;
-unzip $infile;
-originalImgFile=${infile%.$SUFF};
-inimgfileTracing="$originalImgFile"_g.v3draw;
+DO_SMOOTH="NO";
+if [ $DO_SMOOTH == "YES" ]; then
 
-$1 -x gaussian -f gf -i $originalImgFile -o $inimgfileTracing -p 7 7 2 1 2;
-$1 -x datatypeconvert -f dtc -i $inimgfileTracing -o $inimgfileTracing -p 1;
+  SUFF=zip;
+  infile=$2;
+  unzip $infile;
+  originalImgFile=${infile%.$SUFF};
+  inimgfileTracing="$originalImgFile"_g.v3draw;
 
+  $1 -x gaussian -f gf -i $originalImgFile -o $inimgfileTracing -p 7 7 2 1 2;
+  $1 -x datatypeconvert -f dtc -i $inimgfileTracing -o $inimgfileTracing -p 1;  
+
+else
+
+  inimgfileTracing=$2;
+
+fi;
 
 #different tracing algorithms
 
@@ -85,7 +93,7 @@ if [ $DO_TRACING == "YES" ]; then
   fi;
 
   if [ $METHOD == "2" -o $METHOD == "-1" ]; then
-    $1 -x vn2 -f app2 -i $inimgfileTracing -p NULL 0 10 0 1 1 0 5   
+    $1 -x vn2 -f app2 -i $inimgfileTracing -p NULL 0 10 1 1 1 0 5   
     mv  $inimgfileTracing*_app2.swc $3
     rm  $inimgfileTracing*_ini.swc
   fi;
@@ -128,7 +136,7 @@ fi;
 
 #clean up for tmp files
 
-DO_CLEANUP="YES";
+DO_CLEANUP="NO";
 if [ $DO_CLEANUP == "YES" ]; then
 
   rm $originalImgFile;
