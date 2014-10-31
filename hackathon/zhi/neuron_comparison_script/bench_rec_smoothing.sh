@@ -14,6 +14,12 @@
 
 #handle the input and output
 
+if [ $# -ge 5 ]; then
+  METHOD=$5;
+else
+  METHOD="-1";
+fi
+
 if [ $# -ge 4 ]; then
         if [ ! -d $4 ]; then
                 echo "Can not find dll folder [$4]"
@@ -73,27 +79,41 @@ $1 -x datatypeconvert -f dtc -i $inimgfileTracing -o $inimgfileTracing -p 1;
 DO_TRACING="YES";
 if [ $DO_TRACING == "YES" ]; then
 
-  $1 -x Vaa3D_Neuron2 -f app1 -i $inimgfileTracing -p NULL 0 40 0    
-  mv  $inimgfileTracing*_app1.swc $3
+  if [ $METHOD == "1" -o $METHOD == "-1" ]; then
+    $1 -x vn2 -f app1 -i $inimgfileTracing -p NULL 0 40 0    
+    mv  $inimgfileTracing*_app1.swc $3
+  fi;
 
-  $1 -x Vaa3D_Neuron2 -f app2 -i $inimgfileTracing -p NULL 0 10 0 1 1 0 5   
-  mv  $inimgfileTracing*_app2.swc $3
-  rm  $inimgfileTracing*_ini.swc
+  if [ $METHOD == "2" -o $METHOD == "-1" ]; then
+    $1 -x vn2 -f app2 -i $inimgfileTracing -p NULL 0 10 0 1 1 0 5   
+    mv  $inimgfileTracing*_app2.swc $3
+    rm  $inimgfileTracing*_ini.swc
+  fi;
 
-  $1 -x MOST -f MOST_trace -i $inimgfileTracing -p 1 40   
-  mv  $inimgfileTracing*_MOST.swc $3
+  if [ $METHOD == "3" -o $METHOD == "-1" ]; then
+    $1 -x MOST -f MOST_trace -i $inimgfileTracing -p 1 40   
+    mv  $inimgfileTracing*_MOST.swc $3
+  fi;
 
-  $1 -x neuTube -f neutube_trace -i $inimgfileTracing -p 1 1   
-  mv  $inimgfileTracing*_neutube.swc $3
+  if [ $METHOD == "4" -o $METHOD == "-1" ]; then
+    $1 -x neuTube -f neutube_trace -i $inimgfileTracing -p 1 1   
+    mv  $inimgfileTracing*_neutube.swc $3
+  fi;
 
-  $1 -x snake -f snake_trace -i $inimgfileTracing -p 1 
-  mv  $inimgfileTracing*_snake.swc $3
+  if [ $METHOD == "5" -o $METHOD == "-1" ]; then
+    $1 -x snake -f snake_trace -i $inimgfileTracing -p 1 
+    mv  $inimgfileTracing*_snake.swc $3
+  fi;
 
-  $1 -x SimpleTracing -f tracing -i $inimgfileTracing -o ${inimgfileTracing}_simple.swc -p 1 
-  mv  $inimgfileTracing*_simple.swc $3
+  if [ $METHOD == "6" -o $METHOD == "-1" ]; then
+    $1 -x SimpleTracing -f tracing -i $inimgfileTracing -o ${inimgfileTracing}_simple.swc -p 1 
+    mv  $inimgfileTracing*_simple.swc $3
+  fi;
 
-  $1 -x TReMap -f trace_mip -i $inimgfileTracing -p 0 1 10 0 1 0 5
-  mv  $inimgfileTracing*_TreMap.swc $3
+  if [ $METHOD == "7" -o $METHOD == "-1" ]; then
+    $1 -x TReMap -f trace_mip -i $inimgfileTracing -p 0 1 10 0 1 0 5
+    mv  $inimgfileTracing*_TreMap.swc $3
+  fi;
 
 fi;
 
