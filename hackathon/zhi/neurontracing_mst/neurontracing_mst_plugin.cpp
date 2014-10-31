@@ -8,6 +8,8 @@
 #include "neurontracing_mst_plugin.h"
 
 #include "basic_surf_objs.h"
+#include "../../../released_plugins/v3d_plugins/neurontracing_vn2/app1/v3dneuron_gd_tracing.h"
+#include "../../../released_plugins/v3d_plugins/sort_neuron_swc/sort_swc.h""
 
 using namespace std;
 #define INF 1E9
@@ -30,12 +32,11 @@ QStringList neurontracing_mst::funclist() const
 }
 
 void autotrace_mst(V3DPluginCallback2 &callback, QWidget *parent);
-template <class T> void seed_detection(T* data1d,
+template <class T> QList<NeuronSWC> seed_detection(T* data1d,
                                       V3DLONG *in_sz,
                                       unsigned int Ws,
                                       unsigned int c,
-                                      double th,
-                                      T* &outimg);
+                                      double th);
 
 
 void neurontracing_mst::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
@@ -152,32 +153,86 @@ void autotrace_mst(V3DPluginCallback2 &callback, QWidget *parent)
         th += PixelSum/(M*N*P);
     }
 
-    void* outimg = 0;
-    ImagePixelType pixeltype = p4DImage->getDatatype();
 
-    switch (pixeltype)
+    QList<NeuronSWC> nt_seed = seed_detection(data1d, in_sz, Ws, c, th);
+    NeuronTree nt_tmp;
+    nt_tmp.listNeuron = nt_seed;
+    writeSWC_file("mst.swc",nt_tmp);
+
+    LocationSimple p0;
+    vector<LocationSimple> pp;
+    NeuronTree nt;
+    V3DLONG sz_tracing[4];
+    sz_tracing[0] = in_sz[0];
+    sz_tracing[1] = in_sz[1];
+    sz_tracing[2] = in_sz[2];
+    sz_tracing[3] = 1;
+
+    unsigned char ****p4d = 0;
+    if (!new4dpointer(p4d, sz_tracing[0], sz_tracing[1], sz_tracing[2], sz_tracing[3], data1d))
     {
-    case V3D_UINT8: seed_detection(data1d, in_sz, Ws, c, th, (unsigned char*&)outimg); break;
-    default: v3d_msg("Invalid data type. Do nothing."); return;
+        fprintf (stderr, "Fail to create a 4D pointer for the image data. Exit. \n");
+        return;
     }
 
-    // display
-    Image4DSimple * new4DImage = new Image4DSimple();
-    new4DImage->setData((unsigned char *)outimg,N, M, P, 1, V3D_UINT8);
-    v3dhandle newwin = callback.newImageWindow();
-    callback.setImage(newwin, new4DImage);
-    callback.setImageName(newwin, "Seed locations");
-    callback.updateImageWindow(newwin);
+    V3DLONG channelNo_subject=0;
+    V3DLONG *channelsToUse=0;
+    V3DLONG nChannelsToUse=0;
+    double weight_xy_z=1.0;
+    bool b_useEntireImg = false;
+    bool b_mergeCloseBranches = false;
+    bool b_usedshortestpathonly = false;
+    bool b_postTrim = true;
+    bool b_pruneArtifactBranches = true;
+    int ds_step = 2;
+    int medianf_rr = 0;
+    double th_global = 0;
+    int traceOnDTImg_method = 0; //default do NOT use DT image for tracing
+
+    bool b_produceProjectionPatterns = false;
+
+
+    CurveTracePara trace_para;
+    trace_para.channo = 0;
+    trace_para.sp_graph_resolution_step = ds_step;
+    trace_para.b_deformcurve = b_usedshortestpathonly;
+    trace_para.b_postMergeClosebyBranches = b_mergeCloseBranches;
+    trace_para.b_3dcurve_width_from_xyonly = true;
+    trace_para.b_post_trimming = b_postTrim;
+    trace_para.b_pruneArtifactBranches = b_pruneArtifactBranches;
+
+
+    for(V3DLONG i = 1; i <nt_seed.size(); i++)
+    {
+        NeuronSWC S = nt_seed.at(i);
+        p0.x = nt_seed.at(S.pn-1).x - 1;
+        p0.y = nt_seed.at(S.pn-1).y - 1;
+        p0.z = nt_seed.at(S.pn-1).z - 1;
+        pp.clear();
+        LocationSimple tmpp;
+        tmpp.x = S.x - 1;
+        tmpp.y = S.y - 1;
+        tmpp.z = S.z -1;
+        pp.push_back(tmpp);
+     //   v3d_msg(QString("%1,%2,%3,%4,%5,%6").arg(p0.x).arg(p0.y).arg(p0.z).arg(tmpp.x).arg(tmpp.y).arg(tmpp.z));
+        nt = v3dneuron_GD_tracing(p4d, sz_tracing,
+                                  p0, pp,
+                                  trace_para, weight_xy_z);
+
+        QString outfilename = QString("test/mst_%2.swc").arg(i);
+        writeSWC_file(outfilename,nt);
+    }
+    //writeSWC_file("mst.swc",nt_seed);
+
     return;
 
 }
 
-template <class T> void seed_detection(T* data1d,
+template <class T> QList<NeuronSWC> seed_detection(T* data1d,
                                       V3DLONG *in_sz,
                                       unsigned int Ws,
                                       unsigned int c,
-                                      double th,
-                                      T* &outimg)
+                                      double th)
 {
     V3DLONG N = in_sz[0];
     V3DLONG M = in_sz[1];
@@ -185,25 +240,9 @@ template <class T> void seed_detection(T* data1d,
     V3DLONG sc = in_sz[3];
     V3DLONG pagesz = N*M*P;
 
-    //filtering
     V3DLONG offsetc = (c-1)*pagesz;
 
-    //declare temporary pointer
-    T *pImage = new T [pagesz];
-    if (!pImage)
-    {
-        printf("Fail to allocate memory.\n");
-        return;
-    }
-    else
-    {
-        for(V3DLONG i=0; i<pagesz; i++)
-            pImage[i] = 0;
-    }
-
-    //Median Filtering
     double w;
-
     QList <ImageMarker> seeds;
     for(V3DLONG iz = 0; iz < P; iz = iz + Ws)
     {
@@ -220,7 +259,9 @@ template <class T> void seed_detection(T* data1d,
                 V3DLONG xb = ix;
                 V3DLONG xe = ix+Ws-1; if(xe>=N-1) xe = N-1;
                 //now get the center of mass
+                double th_local = 0;
                 double xm=0,ym=0,zm=0, s=0, n=0;
+                V3DLONG i = 0;
                 for(V3DLONG k=zb; k<=ze; k++)
                 {
                     V3DLONG offsetkl = k*M*N;
@@ -230,6 +271,9 @@ template <class T> void seed_detection(T* data1d,
                         for(V3DLONG i=xb; i<=xe; i++)
                         {
                             w = double(data1d[offsetc+offsetkl + offsetjl + i]) - th;
+                            double PixelVaule = w +th;
+                            th_local+= PixelVaule;
+                            i++;
                             if (w > 50)
                             {
                                 xm += w*i;
@@ -241,11 +285,14 @@ template <class T> void seed_detection(T* data1d,
                         }
                     }
                 }
-                if(s >0)
+                th_local = th_local/i;
+                xm /= s; ym /=s; zm /=s;
+                V3DLONG seed_index = (int)zm*M*N + (int)ym*N +(int)xm;
+                if(s >0 && data1d[seed_index] > th+20 && th_local>th+10)
                 {
-                    xm /= s; ym /=s; zm /=s;
-                    V3DLONG seed_index = (int)zm*M*N + (int)ym*N +(int)xm;
-                    pImage[seed_index] = 255;
+
+                   // V3DLONG seed_index = (int)zm*M*N + (int)ym*N +(int)xm;
+                   // pImage[seed_index] = 255;
                     ImageMarker MARKER;
                     MARKER.x = xm+1;
                     MARKER.y = ym+1;
@@ -347,7 +394,10 @@ template <class T> void seed_detection(T* data1d,
     marker_MST.hashNeuron = hashNeuron;
 
     if(markEdge) {delete []markEdge, markEdge = 0;}
-    writeSWC_file("mst.swc",marker_MST);
-    outimg = pImage;
+   // writeSWC_file("mst.swc",marker_MST);
+    QList<NeuronSWC> marker_MST_sorted;
+    if (SortSWC(marker_MST.listNeuron, marker_MST_sorted ,1, 0))
+    return marker_MST_sorted;
+  //  outimg = pImage;
 
 }
