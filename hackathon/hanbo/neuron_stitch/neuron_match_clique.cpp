@@ -281,30 +281,33 @@ void NeuronLiveMatchDialog::updatematchlist()
 void NeuronLiveMatchDialog::highlight_pair()
 {
     int info[4];
+    LocationSimple * SP = 0;
 
     //reset cur_pair
-    LocationSimple * SP = 0;
-    SP=(LocationSimple*)&(mList->at(mmatch0[cur_pair]));
-    SP->color.r = 255; SP->color.g = 0; SP->color.b = 0;
-    //update location
-    get_marker_info(*SP, info);
-    SP->x = ntList->at(0).listNeuron.at(info[1]).x;
-    SP->y = ntList->at(0).listNeuron.at(info[1]).y;
-    SP->z = ntList->at(0).listNeuron.at(info[1]).z;
+    if(cur_pair>=0 && cur_pair<=mmatch0.size()){
+        SP=(LocationSimple*)&(mList->at(mmatch0[cur_pair]));
+        SP->color.r = 255; SP->color.g = 0; SP->color.b = 0;
+        //update location
+        get_marker_info(*SP, info);
+        SP->x = ntList->at(0).listNeuron.at(info[1]).x;
+        SP->y = ntList->at(0).listNeuron.at(info[1]).y;
+        SP->z = ntList->at(0).listNeuron.at(info[1]).z;
 
-    SP=(LocationSimple*)&(mList->at(mmatch1[cur_pair]));
-    SP->color.r = 0; SP->color.g = 255; SP->color.b = 0;
-    //update location
-    get_marker_info(*SP, info);
-    SP->x = ntList->at(1).listNeuron.at(info[1]).x;
-    SP->y = ntList->at(1).listNeuron.at(info[1]).y;
-    SP->z = ntList->at(1).listNeuron.at(info[1]).z;
+        SP=(LocationSimple*)&(mList->at(mmatch1[cur_pair]));
+        SP->color.r = 0; SP->color.g = 255; SP->color.b = 0;
+        //update location
+        get_marker_info(*SP, info);
+        SP->x = ntList->at(1).listNeuron.at(info[1]).x;
+        SP->y = ntList->at(1).listNeuron.at(info[1]).y;
+        SP->z = ntList->at(1).listNeuron.at(info[1]).z;
 
-    if(stitchmask.at(cur_pair)>0)
-        matchfunc->highlight_nt1_seg(pmatch1[cur_pair],2);
-    else
-        matchfunc->highlight_nt1_seg(pmatch1[cur_pair],7);
-    matchfunc->highlight_nt0_seg(pmatch0[cur_pair],2);
+
+        if(stitchmask.at(cur_pair)>0)
+            matchfunc->highlight_nt1_seg(pmatch1[cur_pair],2);
+        else
+            matchfunc->highlight_nt1_seg(pmatch1[cur_pair],7);
+        matchfunc->highlight_nt0_seg(pmatch0[cur_pair],2);
+    }
 
     cur_pair=cb_pair->currentIndex();
 
