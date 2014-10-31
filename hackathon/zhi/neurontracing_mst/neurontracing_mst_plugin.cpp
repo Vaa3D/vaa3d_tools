@@ -38,7 +38,11 @@ template <class T> QList<NeuronSWC> seed_detection(T* data1d,
                                       unsigned int c,
                                       double th);
 
+template <class T> T pow2(T a)
+{
+    return a*a;
 
+}
 void neurontracing_mst::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
 {
     if (menu_name == tr("tracing"))
@@ -157,23 +161,11 @@ void autotrace_mst(V3DPluginCallback2 &callback, QWidget *parent)
     QList<NeuronSWC> nt_seed = seed_detection(data1d, in_sz, Ws, c, th);
     NeuronTree nt_tmp;
     nt_tmp.listNeuron = nt_seed;
-   // writeSWC_file("mst.swc",nt_tmp);
+  //  writeSWC_file("mst.swc",nt_tmp);
    // return;
     LocationSimple p0;
     vector<LocationSimple> pp;
     NeuronTree nt;
-    V3DLONG sz_tracing[4];
-    sz_tracing[0] = in_sz[0];
-    sz_tracing[1] = in_sz[1];
-    sz_tracing[2] = in_sz[2];
-    sz_tracing[3] = 1;
-
-    unsigned char ****p4d = 0;
-    if (!new4dpointer(p4d, sz_tracing[0], sz_tracing[1], sz_tracing[2], sz_tracing[3], data1d))
-    {
-        fprintf (stderr, "Fail to create a 4D pointer for the image data. Exit. \n");
-        return;
-    }
 
     V3DLONG channelNo_subject=0;
     V3DLONG *channelsToUse=0;
@@ -212,22 +204,83 @@ void autotrace_mst(V3DPluginCallback2 &callback, QWidget *parent)
     for(V3DLONG i = 1; i <nt_seed.size(); i++)
     {
         NeuronSWC S = nt_seed.at(i);
-        p0.x = nt_seed.at(S.pn-1).x - 1;
-        p0.y = nt_seed.at(S.pn-1).y - 1;
-        p0.z = nt_seed.at(S.pn-1).z - 1;
+        p0.x = nt_seed.at(S.pn-1).x;
+        p0.y = nt_seed.at(S.pn-1).y;
+        p0.z = nt_seed.at(S.pn-1).z;
         pp.clear();
         LocationSimple tmpp;
-        tmpp.x = S.x - 1;
-        tmpp.y = S.y - 1;
-        tmpp.z = S.z -1;
+        tmpp.x = S.x;
+        tmpp.y = S.y;
+        tmpp.z = S.z;
+       // pp.push_back(tmpp);
+
+        double cent_x =  0.5 * (p0.x + tmpp.x);
+        double cent_y =  0.5 * (p0.y + tmpp.y);
+        double cent_z =  0.5 * (p0.z + tmpp.z);
+
+        V3DLONG xb = cent_x - 2*Ws; if(xb < 0) xb = 0;
+        V3DLONG xe = cent_x +2*Ws-1; if(xe>N-1) xe = N-1;
+        V3DLONG yb = cent_y - 2*Ws; if(yb < 0) yb = 0;
+        V3DLONG ye = cent_y +2*Ws-1; if(ye>M-1) ye = M-1;
+        V3DLONG zb = cent_z - 2*Ws; if(zb < 0) zb = 0;
+        V3DLONG ze = cent_z +2*Ws-1; if(ze>P-1) ze = P-1;
+
+        unsigned char *localarea=0;
+        V3DLONG blockpagesz = (xe-xb+1)*(ye-yb+1)*(ze-zb+1);
+        localarea = new unsigned char [blockpagesz];
+        int i = 0;
+        for(V3DLONG iz = zb; iz < ze + 1; iz++)
+        {
+            V3DLONG offsetk = iz*M*N;
+            for(V3DLONG iy = yb; iy < ye+1; iy++)
+            {
+                V3DLONG offsetj = iy*N;
+                for(V3DLONG ix = xb; ix < xe+1; ix++)
+                {
+
+                    localarea[i] = data1d[offsetc+offsetk + offsetj + ix];
+                    i++;
+                }
+            }
+        }
+
+        V3DLONG sz_tracing[4];
+        sz_tracing[0] = xe-xb+1;
+        sz_tracing[1] = ye-yb+1;
+        sz_tracing[2] = ze-zb+1;
+        sz_tracing[3] = 1;
+
+        unsigned char ****p4d = 0;
+        if (!new4dpointer(p4d, sz_tracing[0], sz_tracing[1], sz_tracing[2], sz_tracing[3], localarea))
+        {
+            fprintf (stderr, "Fail to create a 4D pointer for the image data. Exit. \n");
+            return;
+        }
+
+
+        p0.x = p0.x - xb;
+        p0.y = p0.y - yb;
+        p0.z = p0.z - zb;
+        tmpp.x = S.x - xb;
+        tmpp.y = S.y - yb;
+        tmpp.z = S.z - zb;
         pp.push_back(tmpp);
-     //   v3d_msg(QString("%1,%2,%3,%4,%5,%6").arg(p0.x).arg(p0.y).arg(p0.z).arg(tmpp.x).arg(tmpp.y).arg(tmpp.z));
+
         nt = v3dneuron_GD_tracing(p4d, sz_tracing,
                                   p0, pp,
                                   trace_para, weight_xy_z);
+
+        if(p4d) {delete []p4d; p4d = 0;}
+        if(localarea) {delete []localarea; localarea = 0;}
+
         for(int j = nt.listNeuron.size()-1; j >=0;j--)
         {
             S_GD = nt.listNeuron.at(j);
+            S_GD.x = S_GD.x + xb;
+            S_GD.y = S_GD.y + yb;
+            S_GD.z = S_GD.z + zb;
+
+
             S_GD.n = id;
             if(S_GD.pn > 0) S_GD.pn = id -1;
             listNeuron.append(S_GD);
@@ -268,6 +321,8 @@ template <class T> QList<NeuronSWC> seed_detection(T* data1d,
 
     double w;
     QList <ImageMarker> seeds;
+    QList <ImageMarker> loc_points_list;
+
     for(V3DLONG iz = 0; iz < P; iz = iz + Ws)
     {
       //  V3DLONG offsetk = iz*M*N;
@@ -295,34 +350,62 @@ template <class T> QList<NeuronSWC> seed_detection(T* data1d,
                         for(V3DLONG i=xb; i<=xe; i++)
                         {
                             w = double(data1d[offsetc+offsetkl + offsetjl + i]) - th;
-                            double PixelVaule = w +th;
-                            th_local+= PixelVaule;
-                            i++;
-                            if (w > 30)
+                            if (w >0)  //30
                             {
                                 xm += w*i;
                                 ym += w*j;
                                 zm += w*k;
                                 s += w;
                                 n = n+1;
+                                if(w > 30)
+                                {
+                                    ImageMarker local_point;
+                                    local_point.x = i;
+                                    local_point.y = j;
+                                    local_point.z = k;
+                                    loc_points_list.append(local_point);
+                                }
                             }
                         }
                     }
                 }
-                th_local = th_local/i;
                 xm /= s; ym /=s; zm /=s;
                 V3DLONG seed_index = (int)zm*M*N + (int)ym*N +(int)xm;
-                if(s >0 && data1d[seed_index] > th+10 && th_local>th+10)
+                if(s >0 && data1d[seed_index] <= 30 && loc_points_list.size()>1) //find medoid point
                 {
+                    double dist_min = INF;
+                    V3DLONG medoid_index = -1;
+                    for(int io = 0; io < loc_points_list.size(); io++)
+                    {
+                        double dis = 0;
+                        for(int jo = 0; jo < loc_points_list.size(); jo++)
+                        {
+                            dis += sqrt(pow2(loc_points_list.at(io).x - loc_points_list.at(jo).x) + pow2(pow2(loc_points_list.at(io).y - loc_points_list.at(jo).y) + pow2(pow2(loc_points_list.at(io).z - loc_points_list.at(jo).z))));
+                        }
+                        if(dis < dist_min)
+                        {
+                            dist_min = dis;
+                            medoid_index = io;
+                        }
+                    }
+                    seed_index = (int)loc_points_list.at(medoid_index).z*M*N + (int)loc_points_list.at(medoid_index).y*N +(int)loc_points_list.at(medoid_index).x;
+                    xm = loc_points_list.at(medoid_index).x;
+                    ym = loc_points_list.at(medoid_index).y;
+                    zm = loc_points_list.at(medoid_index).z;
+                    printf("\n(%d,%d,%d)",xm,ym,zm);
 
-                   // V3DLONG seed_index = (int)zm*M*N + (int)ym*N +(int)xm;
-                   // pImage[seed_index] = 255;
+                }
+                loc_points_list.clear();
+
+                if(s >0 && data1d[seed_index] > 30)
+                {
                     ImageMarker MARKER;
-                    MARKER.x = xm+1;
-                    MARKER.y = ym+1;
-                    MARKER.z = zm+1;
+                    MARKER.x = xm;
+                    MARKER.y = ym;
+                    MARKER.z = zm;
                     seeds.append(MARKER);
                 }
+
             }
         }
     }
