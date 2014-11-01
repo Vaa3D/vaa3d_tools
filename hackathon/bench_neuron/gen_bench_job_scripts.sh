@@ -49,8 +49,8 @@ function write_vaa3d_job_config {
 #  echo "# send email on job error" >> $outputScript;
 #  echo "#PBS -m a" >> $outputScript;
 
-#  echo "export DISPLAY=:$RANDOM" >> $outputScript;
-#  echo "Xvfb $DISPLAY -auth /dev/null &" >> $outputScript;
+  echo "export DISPLAY=:$RANDOM" >> $outputScript;
+  echo "Xvfb $DISPLAY -auth /dev/null &" >> $outputScript;
   echo "export LD_PRELOAD=/usr/lib64/libstdc++.so.6" >> $outputScript;
 
   echo "export LD_LIBRARY_PATH=/home/hanchuanp/work/v3d_external/bin" >> $outputScript;
