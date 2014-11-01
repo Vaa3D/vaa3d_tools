@@ -90,6 +90,30 @@ private:
     void matchCliquesAndCands();
 };
 
+class NeuronMatchOnlyDialog : public QDialog
+{
+    Q_OBJECT
+
+public:
+    NeuronMatchOnlyDialog(NeuronTree *nt0, NeuronTree *nt1, LandmarkList *mList, double affineParam[7]);
+
+private:
+    void creat();
+
+public slots:
+    void match();
+
+private:
+    NeuronTree *nt0, *nt1;
+    LandmarkList * mList;
+    double *affine; //shiftx, shifty, shiftz, rotation_ang, rotation_cx, rotation_cy, rotation_cz
+
+public:
+    QGridLayout *gridLayout;
+    QComboBox *cb_dir,*cb_pair;
+    QDoubleSpinBox *spin_zscale, *spin_ang, *spin_matchdis, *spin_searchspan, *spin_cmatchdis, *spin_segthr;
+    QPushButton *btn_quit, *btn_match;
+};
 
 class NeuronLiveMatchDialog : public QDialog
 {

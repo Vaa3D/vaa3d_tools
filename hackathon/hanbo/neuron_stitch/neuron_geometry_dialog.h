@@ -12,6 +12,7 @@
 #include <QDialog>
 
 #include "ui_neuron_geometry_dial.h"
+#include "neuron_match_clique.h"
 #include <v3d_interface.h>
 
 class NeuronGeometryDialog: public QDialog, private Ui_NeuronGeometryDialog

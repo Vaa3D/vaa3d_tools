@@ -1155,90 +1155,190 @@ void NeuronGeometryDialog::auto_affine()
     bool instatus = run_status;
     run_status = true;
 
-    quickmove();
-
-    //get the plan in the middle
-    double span=40;
+    QString text;
+    int first_nt = ant, second_nt=0;
+    if(stack_dir == 0)
+        text = "Select the stack that has larger X coordinate (right)";
+    else if(stack_dir == 1)
+        text = "Select the stack that has larger Y coordinate (front)";
+    if(stack_dir == 2)
+        text = "Select the stack that has larger Z coordinate (top)";
+    QStringList items;
+    for(int i=0; i<ntList->size(); i++){
+        items.append(ntList->at(i).name);
+    }
     bool ok;
-    span = QInputDialog::getDouble(this, "auto stitch", "searching span for matching point", 50, 0.1, 1e10, 1, &ok);
+    QString firstitem = QInputDialog::getItem(this, QString::fromUtf8("Quick Stick Neuron"), text, items, ant, false, &ok);
     if(!ok){
-        v3d_msg("Please set a proper searching span.");
-        this->setEnabled(true);
         run_status = instatus;
+        this->setEnabled(true);
         return;
     }
-    double midplan = 0;
-    if(stack_dir==0) //x
-    {
-        if(cur_mmx[0]>cur_mmx[1]){
-            midplan=(cur_minx[0]+cur_maxx[1])/2;
-        }else{
-            midplan=(cur_minx[1]+cur_maxx[0])/2;
-        }
-    }
-    else if(stack_dir==1) //y
-    {
-        if(cur_mmy[0]>cur_mmy[1]){
-            midplan=(cur_miny[0]+cur_maxy[1])/2;
-        }else{
-            midplan=(cur_miny[1]+cur_maxy[0])/2;
-        }
-    }
-    else if(stack_dir==2) //z
-    {
-        if(cur_mmz[0]>cur_mmz[1]){
-            midplan=(cur_minz[0]+cur_maxz[1])/2;
-        }else{
-            midplan=(cur_minz[1]+cur_maxz[0])/2;
+    for(int i=0; i<ntList->size(); i++){
+        if(firstitem==ntList->at(i).name)
+        {
+            first_nt=i;
+            break;
         }
     }
 
-    //get the candidate for matching
-    QList<int> cand[2];
-    cand[0]=QList<int>(); cand[0].clear();
-    cand[1]=QList<int>(); cand[1].clear();
-    getMatchingCandidates(ntList->at(0),cand[0],midplan-span,midplan+span,stack_dir);
-    getMatchingCandidates(ntList->at(1),cand[1],midplan-span,midplan+span,stack_dir);
-
-    //perform matching
-    QList<int> MatchMarkers[2];
-    if(matchCandidates_speed(ntList, cand, span, stack_dir, MatchMarkers)){
-        mList->clear();
-        cur_marker_num = 0;
-        for(int i=0; i<MatchMarkers[0].size(); i++){
-            LocationSimple S = LocationSimple(ntList->at(0).listNeuron.at(MatchMarkers[0].at(i)).x,
-                    ntList->at(0).listNeuron.at(MatchMarkers[0].at(i)).y,
-                    ntList->at(0).listNeuron.at(MatchMarkers[0].at(i)).z);
-            S.color.r=255; S.color.g=0; S.color.b=0;
-            S.name = QString::number(mList->size()).toStdString();
-            QString tmp = "0 " + QString::number(MatchMarkers[0].at(i)) + " " + QString::number(mList->size()+1);
-            S.comments = tmp.toStdString();
-            mList->append(S);
-            cur_marker_num++;
-
-            LocationSimple S1 = LocationSimple(ntList->at(1).listNeuron.at(MatchMarkers[1].at(i)).x,
-                    ntList->at(1).listNeuron.at(MatchMarkers[1].at(i)).y,
-                    ntList->at(1).listNeuron.at(MatchMarkers[1].at(i)).z);
-            S1.color.r=0; S1.color.g=255; S1.color.b=0;
-            S1.name = QString::number(mList->size()).toStdString();
-            tmp = "1 " + QString::number(MatchMarkers[1].at(i)) + " " + QString::number(mList->size()-1);
-            S1.comments = tmp.toStdString();
-            mList->append(S1);
-            cur_marker_num++;
-        }
-        v3dcontrol->updateLandmark();
-
-        qDebug()<<QString::number(MatchMarkers[0].size())<<" pairs of markers has been found matched.\n"
-                <<"candidates: neuron 0:"<<QString::number(cand[0].size())<<"; neuron 1:"<<QString::number(cand[1].size());
-
-        //affine neurons by markers
-        affine_markers();
-
-    }else if(MatchMarkers[0].size() == 0){
-        v3d_msg("Cannot find matching pairs. Please set larger searching span and make sure stacks are sticked in stacking direction.");
-    }else{
-        v3d_msg("Auto sticking failed unexpectedly, please check the code.");
+    if(first_nt==0){
+        second_nt=1;
     }
+
+    double affineParam[7];
+    NeuronMatchOnlyDialog matchfunc(ntpList.at(second_nt),ntpList.at(first_nt),mList,affineParam);
+    matchfunc.exec();
+
+    //for test
+    qDebug()<<"cojoc:"<<affineParam[3];
+
+    if(ant!=first_nt){
+        affineParam[0]*=-1;
+        affineParam[1]*=-1;
+        affineParam[2]*=-1;
+        affineParam[3]=360-affineParam[3];
+        affineParam[4]+=affineParam[0];
+        affineParam[5]+=affineParam[1];
+        affineParam[6]+=affineParam[2];
+    }
+
+    //shift
+    doubleSpinBox_shift_x->setValue(cur_shift_x[ant]+affineParam[0]);
+    doubleSpinBox_shift_y->setValue(cur_shift_y[ant]+affineParam[1]);
+    doubleSpinBox_shift_z->setValue(cur_shift_z[ant]+affineParam[2]);
+    //rotation
+    if(affineParam[3]!=0){
+        doubleSpinBox_rcent_x->setValue(affineParam[4]);
+        doubleSpinBox_rcent_y->setValue(affineParam[5]);
+        doubleSpinBox_rcent_z->setValue(affineParam[6]);
+        switch(stack_dir)
+        {
+        case 0:
+            doubleSpinBox_rotate_x->setValue(cur_rotate_x[ant]+affineParam[3]);
+            break;
+        case 1:
+            doubleSpinBox_rotate_y->setValue(cur_rotate_y[ant]+affineParam[3]);
+            break;
+        case 2:
+            doubleSpinBox_rotate_z->setValue(cur_rotate_z[ant]+affineParam[3]);
+            break;
+        }
+    }
+    if(v3dwin){
+        callback->update_NeuronBoundingBox(v3dwin);
+    }
+
+    cur_marker_num=mList->size();
+    v3dcontrol->updateLandmark();
+    int info[4];
+    int color[3];
+    if(second_nt!=0){
+        for(int i=0; i<mList->size(); i++){
+            get_marker_info(mList->at(i),info);
+            if(info[0]==0){
+                info[0]=1;
+                if(info[2]>=0){
+                    color[0]=0; color[1]=255; color[2]=0;
+                }else{
+                    color[0]=0; color[1]=128; color[2]=128;
+                }
+            }else{
+                info[0]=0;
+                if(info[2]>=0){
+                    color[0]=255; color[1]=0; color[2]=0;
+                }else{
+                    color[0]=128; color[1]=0; color[2]=128;
+                }
+            }
+            update_marker_info(mList->at(i),info,color);
+        }
+    }
+    update_markers();
+//    quickmove();
+
+//    //get the plan in the middle
+//    double span=40;
+//    bool ok;
+//    span = QInputDialog::getDouble(this, "auto stitch", "searching span for matching point", 50, 0.1, 1e10, 1, &ok);
+//    if(!ok){
+//        v3d_msg("Please set a proper searching span.");
+//        this->setEnabled(true);
+//        run_status = instatus;
+//        return;
+//    }
+//    double midplan = 0;
+//    if(stack_dir==0) //x
+//    {
+//        if(cur_mmx[0]>cur_mmx[1]){
+//            midplan=(cur_minx[0]+cur_maxx[1])/2;
+//        }else{
+//            midplan=(cur_minx[1]+cur_maxx[0])/2;
+//        }
+//    }
+//    else if(stack_dir==1) //y
+//    {
+//        if(cur_mmy[0]>cur_mmy[1]){
+//            midplan=(cur_miny[0]+cur_maxy[1])/2;
+//        }else{
+//            midplan=(cur_miny[1]+cur_maxy[0])/2;
+//        }
+//    }
+//    else if(stack_dir==2) //z
+//    {
+//        if(cur_mmz[0]>cur_mmz[1]){
+//            midplan=(cur_minz[0]+cur_maxz[1])/2;
+//        }else{
+//            midplan=(cur_minz[1]+cur_maxz[0])/2;
+//        }
+//    }
+
+//    //get the candidate for matching
+//    QList<int> cand[2];
+//    cand[0]=QList<int>(); cand[0].clear();
+//    cand[1]=QList<int>(); cand[1].clear();
+//    getMatchingCandidates(ntList->at(0),cand[0],midplan-span,midplan+span,stack_dir);
+//    getMatchingCandidates(ntList->at(1),cand[1],midplan-span,midplan+span,stack_dir);
+
+//    //perform matching
+//    QList<int> MatchMarkers[2];
+//    if(matchCandidates_speed(ntList, cand, span, stack_dir, MatchMarkers)){
+//        mList->clear();
+//        cur_marker_num = 0;
+//        for(int i=0; i<MatchMarkers[0].size(); i++){
+//            LocationSimple S = LocationSimple(ntList->at(0).listNeuron.at(MatchMarkers[0].at(i)).x,
+//                    ntList->at(0).listNeuron.at(MatchMarkers[0].at(i)).y,
+//                    ntList->at(0).listNeuron.at(MatchMarkers[0].at(i)).z);
+//            S.color.r=255; S.color.g=0; S.color.b=0;
+//            S.name = QString::number(mList->size()).toStdString();
+//            QString tmp = "0 " + QString::number(MatchMarkers[0].at(i)) + " " + QString::number(mList->size()+1);
+//            S.comments = tmp.toStdString();
+//            mList->append(S);
+//            cur_marker_num++;
+
+//            LocationSimple S1 = LocationSimple(ntList->at(1).listNeuron.at(MatchMarkers[1].at(i)).x,
+//                    ntList->at(1).listNeuron.at(MatchMarkers[1].at(i)).y,
+//                    ntList->at(1).listNeuron.at(MatchMarkers[1].at(i)).z);
+//            S1.color.r=0; S1.color.g=255; S1.color.b=0;
+//            S1.name = QString::number(mList->size()).toStdString();
+//            tmp = "1 " + QString::number(MatchMarkers[1].at(i)) + " " + QString::number(mList->size()-1);
+//            S1.comments = tmp.toStdString();
+//            mList->append(S1);
+//            cur_marker_num++;
+//        }
+//        v3dcontrol->updateLandmark();
+
+//        qDebug()<<QString::number(MatchMarkers[0].size())<<" pairs of markers has been found matched.\n"
+//                <<"candidates: neuron 0:"<<QString::number(cand[0].size())<<"; neuron 1:"<<QString::number(cand[1].size());
+
+//        //affine neurons by markers
+//        affine_markers();
+
+//    }else if(MatchMarkers[0].size() == 0){
+//        v3d_msg("Cannot find matching pairs. Please set larger searching span and make sure stacks are sticked in stacking direction.");
+//    }else{
+//        v3d_msg("Auto sticking failed unexpectedly, please check the code.");
+//    }
 
 
     this->setEnabled(true);

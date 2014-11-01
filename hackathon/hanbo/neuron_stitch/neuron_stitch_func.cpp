@@ -1455,9 +1455,9 @@ int highlight_adjpoint(const NeuronTree& nt1, const NeuronTree& nt2, float dis)
             if(NTDIS(nt1.listNeuron[i],nt2.listNeuron[j])<dis){
                 count++;
                 tp = (NeuronSWC *)(&(nt1.listNeuron[i]));
-                tp->type=7;
+                tp->type=12;
                 tp = (NeuronSWC *)(&(nt2.listNeuron[j]));
-                tp->type=7;
+                tp->type=12;
             }
         }
     }
