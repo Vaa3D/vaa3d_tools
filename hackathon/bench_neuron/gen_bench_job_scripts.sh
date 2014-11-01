@@ -32,16 +32,16 @@ function write_vaa3d_job_config {
   echo "# Request just one core on the host" >> $outputScript;
   echo "#PBS -l ncpus=1" >> $outputScript;
   echo "# Give your job a descriptive name. This is visible in qstat and other job reports.  Also serves as the default basename for log files" >> $outputScript;
-  echo "#PBS -N $1.job" >> $outputScript;
+  echo "#PBS -N $outputScript.job" >> $outputScript;
   echo "# Should torque automatically re-run the job on error?" >> $outputScript;
   echo "#PBS -r n" >> $outputScript;
   echo "# Merge STDOUT into STDERR" >> $outputScript;
   echo "#PBS -j oe" >> $outputScript;
   echo "# location for stderr/stdout log files _after_ job completion" >> $outputScript;
-  echo "#PBS -o ${1}.err" >> $outputScript;
+  echo "#PBS -o ${outputScript}.err" >> $outputScript;
 
-  echo "# send email on job error" >> $outputScript;
-  echo "#PBS -m a" >> $outputScript;
+#  echo "# send email on job error" >> $outputScript;
+#  echo "#PBS -m a" >> $outputScript;
 
   echo "export DISPLAY=:$RANDOM" >> $outputScript;
   echo "Xvfb $DISPLAY -auth /dev/null &" >> $outputScript;
