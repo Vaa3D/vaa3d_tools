@@ -100,8 +100,10 @@ inputImgFile=$2
 finalfileFolder=$3
 vaa3dProgramPath=/home/hanchuanp/work/v3d_external/bin/start_vaa3d
 
-#generate the batch script configuration
 jobScriptFile=${inputImgFile}.sh
+
+#generate the batch script configuration
+rm $jobScriptFile
 
 write_vaa3d_job_config $jobScriptFile
 
