@@ -104,7 +104,9 @@ vaa3dProgramPath=/home/hanchuanp/work/v3d_external/bin/start_vaa3d
 jobScriptFile=${inputImgFile}_${tracingMethod}.sh
 
 #generate the batch script configuration
-rm $jobScriptFile
+if [ -f $jobScriptFile ]; then
+  rm $jobScriptFile;
+fi;
 
 write_vaa3d_job_config $jobScriptFile
 
