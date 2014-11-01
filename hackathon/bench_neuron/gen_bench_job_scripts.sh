@@ -23,6 +23,9 @@ function write_vaa3d_job_config {
   outputScript=$1;
 
   echo "#!/bin/bash" >> $outputScript;
+  echo "#" >> $outputScript;
+  echo "#" >> $outputScript;
+
   echo "## Check which queue you may use" >> $outputScript;
   echo "#PBS -q dque" >> $outputScript;
   echo "# Declare that your job will use no more than some amount of memory _at_peak_" >> $outputScript;
@@ -32,7 +35,7 @@ function write_vaa3d_job_config {
   echo "# Request just one core on the host" >> $outputScript;
   echo "#PBS -l ncpus=1" >> $outputScript;
   echo "# Give your job a descriptive name. This is visible in qstat and other job reports.  Also serves as the default basename for log files" >> $outputScript;
-  echo "#PBS -N $outputScript.job" >> $outputScript;
+  echo "#PBS -N ${outputScript}" >> $outputScript;
   echo "# Should torque automatically re-run the job on error?" >> $outputScript;
   echo "#PBS -r n" >> $outputScript;
   echo "# Merge STDOUT into STDERR" >> $outputScript;
@@ -40,11 +43,14 @@ function write_vaa3d_job_config {
   echo "# location for stderr/stdout log files _after_ job completion" >> $outputScript;
   echo "#PBS -o ${outputScript}.err" >> $outputScript;
 
+  echo "#" >> $outputScript;
+  echo "#" >> $outputScript;
+
 #  echo "# send email on job error" >> $outputScript;
 #  echo "#PBS -m a" >> $outputScript;
 
-  echo "export DISPLAY=:$RANDOM" >> $outputScript;
-  echo "Xvfb $DISPLAY -auth /dev/null &" >> $outputScript;
+#  echo "export DISPLAY=:$RANDOM" >> $outputScript;
+#  echo "Xvfb $DISPLAY -auth /dev/null &" >> $outputScript;
   echo "export LD_PRELOAD=/usr/lib64/libstdc++.so.6" >> $outputScript;
 
   echo "export LD_LIBRARY_PATH=/home/hanchuanp/work/v3d_external/bin" >> $outputScript;
