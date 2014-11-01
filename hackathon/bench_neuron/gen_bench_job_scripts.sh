@@ -15,9 +15,9 @@ function write_vaa3d_job_config {
 
   outputScript=$1;
 
-  echo "## Check which queue you may use" > $outputScript;
-  echo "#PBS -q mindscope" > $outputScript;
-  echo "# Declare that your job will use no more than some amount of memory _at_peak_" > $outputScript;
+  echo "\#\# Check which queue you may use" > $outputScript;
+  echo "\#PBS -q mindscope" > $outputScript;
+  echo "\# Declare that your job will use no more than some amount of memory _at_peak_" > $outputScript;
   echo "#PBS -l vmem=120g" > $outputScript;
   echo "# Allow up to 5hr of walltime.  Default is 12 hours" > $outputScript;
   echo "#PBS -l walltime=5:00:00" > $outputScript;
@@ -102,6 +102,7 @@ vaa3dProgramPath=/home/hanchuanp/work/v3d_external/bin/start_vaa3d
 
 #generate the batch script configuration
 jobScriptFile=${inputImgFile}.sh
+
 write_vaa3d_job_config $jobScriptFile
 
 #generate the actual tracing code
