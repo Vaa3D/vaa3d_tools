@@ -10,6 +10,13 @@
 #
 #To build FarSight Snake Tracing plugin, please check the README file in /vaa3d_tools/hackathon/zhi/snake_tracing/README
 #
+#
+# One example to call this script:
+#    for j in `seq 1 7`; do echo $j; for i in $(ls *g.v3draw); do echo $i; ~/work/vaa3d_tools/hackathon/bench_neuron/gen_bench_job_scripts.sh $j /local2/workdata/bench788/smoothed_8bit/$i /home/hanchuanp/tmp ; done; done;
+#
+# by Hanchuan Peng
+# 2014-Nov-1
+#
 
 function write_vaa3d_job_config {
 
