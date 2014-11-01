@@ -55,10 +55,6 @@ function write_vaa3d_job_config {
 
   echo "export LD_LIBRARY_PATH=/home/hanchuanp/work/v3d_external/bin" >> $outputScript;
 
-#  echo "cd /data/mat/zhi/VAA3D/vaa3d_redhat_fedora_ubuntu_64bit_v2.868/" >> $outputScript
-
-  echo "/home/hanchuanp/bench_program/bench_rec_smoothing.sh /work/v3d_external/bin/vaa3d $i ~/Desktop/res_788_bench_indi2/${i}_res ~/work/v3d_external/bin/2;" >> $outputScript;
-
 #  echo "kill %1" >> $outputScript
 }
 
@@ -112,7 +108,7 @@ function write_neuron_tracing_command {
 tracingMethod=$1
 inputImgFile=$2
 finalfileFolder=$3
-vaa3dProgramPath=/home/hanchuanp/work/v3d_external/bin/start_vaa3d
+vaa3dProgramPath=/home/hanchuanp/work/v3d_external/bin/start_vaa3d.sh
 
 jobScriptFile=${inputImgFile}_${tracingMethod}.sh
 
