@@ -38,7 +38,7 @@ function write_vaa3d_job_config {
   echo "# Merge STDOUT into STDERR" >> $outputScript;
   echo "#PBS -j oe" >> $outputScript;
   echo "# location for stderr/stdout log files _after_ job completion" >> $outputScript;
-  echo "#PBS -o /home/hanchuanp/tmp/${1}.err" >> $outputScript;
+  echo "#PBS -o ${1}.err" >> $outputScript;
 
   echo "# send email on job error" >> $outputScript;
   echo "#PBS -m a" >> $outputScript;
