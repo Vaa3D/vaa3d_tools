@@ -15,6 +15,7 @@ function write_vaa3d_job_config {
 
   outputScript=$1;
 
+  echo "#!/bin/bash" >> $outputScript;
   echo "## Check which queue you may use" >> $outputScript;
   echo "#PBS -q mindscope" >> $outputScript;
   echo "# Declare that your job will use no more than some amount of memory _at_peak_" >> $outputScript;
