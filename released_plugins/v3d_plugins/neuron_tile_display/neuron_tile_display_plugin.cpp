@@ -158,6 +158,12 @@ void NeuronTileDisplayDialog::enterEvent(QEvent *e)
 void NeuronTileDisplayDialog::reject()
 {
     reset();
+
+    if(v3dwin){
+        callback->update_NeuronBoundingBox(v3dwin);
+        callback->update_3DViewer(v3dwin);
+    }
+
     QDialog::reject();
 }
 
