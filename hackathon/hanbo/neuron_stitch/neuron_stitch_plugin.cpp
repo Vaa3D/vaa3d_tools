@@ -39,7 +39,7 @@ void neuron_stitch::domenu(const QString &menu_name, V3DPluginCallback2 &callbac
     {
         domatch(callback, parent);
     }
-    if (menu_name == tr("live_stitch_neuron_SWC"))
+    else if (menu_name == tr("live_stitch_neuron_SWC"))
     {
         dostitch(callback, parent);
     }

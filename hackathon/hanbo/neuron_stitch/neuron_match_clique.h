@@ -120,6 +120,7 @@ private:
     V3DPluginCallback2 * callback;
     V3dR_MainWindow* v3dwin;
     QList<NeuronTree> *ntList;
+    QList<NeuronTree> ntList_bk;
     neuron_match_clique * matchfunc;
     LandmarkList * mList;
     View3DControl * v3dcontrol;
@@ -127,7 +128,8 @@ private:
     QList<int> pmatch0, pmatch1, mmatch0, mmatch1;
     QList<int> stitchmask; //if loopmask[i] true, then connecct pmatch0[i] and pmatch1[i] will result in loop
 
-    int cur_pair,cur_type;
+    int cur_pair;
+//    double bound_min[3],bound_max[3];
 
 public:
     QGridLayout *gridLayout;

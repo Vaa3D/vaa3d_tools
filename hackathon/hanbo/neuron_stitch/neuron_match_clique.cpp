@@ -8,6 +8,7 @@
 #include "neuron_match_clique.h"
 #include "../../../v3d_main/neuron_editing/neuron_xforms.h"
 #include <iostream>
+#include <vector>
 #include "marker_match_dialog.h"
 
 #define CANDMS_ENTRY(a,b) (candMS[(a)+(b)*MS_x])
@@ -40,6 +41,13 @@ NeuronLiveMatchDialog::NeuronLiveMatchDialog(V3DPluginCallback2 * cb, V3dR_MainW
         p->type=7;
     }
 
+    //back up
+    for(int i=0; i<2; i++){
+        NeuronTree nt_tmp;
+        backupNeuron(ntList->at(i),nt_tmp);
+        ntList_bk.append(nt_tmp);
+    }
+
     mList = cb->getHandleLandmarkList_Any3DViewer(v3dwin);
 
     creat();
@@ -47,6 +55,17 @@ NeuronLiveMatchDialog::NeuronLiveMatchDialog(V3DPluginCallback2 * cb, V3dR_MainW
     matchfunc = new neuron_match_clique((NeuronTree*)(&ntList->at(0)),(NeuronTree*)(&ntList->at(1)));
     matchfunc->initNeuronComponents();
     matchfunc->update_matchedPoints_from_Markers(mList); //to-do,not implemented yet
+
+//    //boundary
+//    double tmp, tmp_min[3], tmp_max[3];
+//    getNeuronTreeBound(ntList->at(0),bound_min[0],bound_min[1],bound_min[2],bound_max[0],bound_max[1],bound_max[2],tmp,tmp,tmp);
+//    getNeuronTreeBound(ntList->at(1),tmp_min[0],tmp_min[1],tmp_min[2],tmp_max[0],tmp_max[1],tmp_max[2],tmp,tmp,tmp);
+//    bound_min[0]=bound_min[0]<tmp_min[0]?bound_min[0]:tmp_min[0];
+//    bound_min[1]=bound_min[1]<tmp_min[1]?bound_min[1]:tmp_min[1];
+//    bound_min[2]=bound_min[2]<tmp_min[2]?bound_min[2]:tmp_min[2];
+//    bound_max[0]=bound_max[0]>tmp_min[0]?bound_max[0]:tmp_max[0];
+//    bound_max[1]=bound_max[1]>tmp_min[1]?bound_max[1]:tmp_max[1];
+//    bound_max[2]=bound_max[2]>tmp_min[2]?bound_max[2]:tmp_max[2];
 
     updateview();
 }
@@ -191,6 +210,25 @@ void NeuronLiveMatchDialog::match()
 {
     checkwindow();
 
+    //clean up dialog storage:
+    pmatch0.clear();
+    pmatch1.clear();
+    mmatch0.clear();
+    mmatch1.clear();
+    stitchmask.clear();
+    mList->clear();
+    cur_pair=-1;
+
+    //retrive backup
+    for(int i=0; i<2; i++){
+        copyCoordinate(ntList_bk.at(i),ntList->at(i));
+        copyProperty(ntList_bk.at(i),ntList->at(i));
+    }
+
+    updateview();
+
+    matchfunc = new neuron_match_clique((NeuronTree*)(&ntList->at(0)),(NeuronTree*)(&ntList->at(1)));
+
     //parameters
     matchfunc->direction=cb_dir->currentIndex();
     matchfunc->zscale=spin_zscale->value();
@@ -211,9 +249,22 @@ void NeuronLiveMatchDialog::match()
     matchfunc->update_matchedPoints_to_Markers(mList);
     qDebug()<<"update makers: "<<mList->size();
 
+    cur_pair=0;
+
     callback->update_NeuronBoundingBox(v3dwin);
     updateview();
     updatematchlist();
+
+//    //update boundary
+//    double tmp, tmp_min[3], tmp_max[3];
+//    getNeuronTreeBound(ntList->at(0),bound_min[0],bound_min[1],bound_min[2],bound_max[0],bound_max[1],bound_max[2],tmp,tmp,tmp);
+//    getNeuronTreeBound(ntList->at(1),tmp_min[0],tmp_min[1],tmp_min[2],tmp_max[0],tmp_max[1],tmp_max[2],tmp,tmp,tmp);
+//    bound_min[0]=bound_min[0]<tmp_min[0]?bound_min[0]:tmp_min[0];
+//    bound_min[1]=bound_min[1]<tmp_min[1]?bound_min[1]:tmp_min[1];
+//    bound_min[2]=bound_min[2]<tmp_min[2]?bound_min[2]:tmp_min[2];
+//    bound_max[0]=bound_max[0]>tmp_min[0]?bound_max[0]:tmp_max[0];
+//    bound_max[1]=bound_max[1]>tmp_min[1]?bound_max[1]:tmp_max[1];
+//    bound_max[2]=bound_max[2]>tmp_min[2]?bound_max[2]:tmp_max[2];
 }
 
 void NeuronLiveMatchDialog::updatematchlist()
@@ -254,8 +305,12 @@ void NeuronLiveMatchDialog::updatematchlist()
         mmatch0.append(mm0[i]);
         mmatch1.append(mm1[i]);
 
-        //check loop
-        if(matchfunc->checkloop(pmatch0.last(), pmatch1.last()))
+        //check loop or sititched
+        if(ntList->at(0).listNeuron.at(pmatch0.last()).x==ntList->at(1).listNeuron.at(pmatch1.last()).x &&
+                ntList->at(0).listNeuron.at(pmatch0.last()).y==ntList->at(1).listNeuron.at(pmatch1.last()).y &&
+                ntList->at(0).listNeuron.at(pmatch0.last()).z==ntList->at(1).listNeuron.at(pmatch1.last()).z)
+            stitchmask.append(1);
+        else if(matchfunc->checkloop(pmatch0.last(), pmatch1.last()))
             stitchmask.append(-1); //cannot stitch
         else
             stitchmask.append(0);
@@ -280,58 +335,77 @@ void NeuronLiveMatchDialog::updatematchlist()
 
 void NeuronLiveMatchDialog::highlight_pair()
 {
-    int info[4];
-    LocationSimple * SP = 0;
+    if(cb_pair->count()>0){
+        int info[4];
+        LocationSimple * SP = 0;
+    //    float shift[3];
 
-    //reset cur_pair
-    if(cur_pair>=0 && cur_pair<=mmatch0.size()){
+        //reset cur_pair
+        if(cur_pair>=0 && cur_pair<mmatch0.size()){
+            SP=(LocationSimple*)&(mList->at(mmatch0[cur_pair]));
+            SP->color.r = 255; SP->color.g = 0; SP->color.b = 0;
+            //update location
+            get_marker_info(*SP, info);
+            SP->x = ntList->at(0).listNeuron.at(info[1]).x;
+            SP->y = ntList->at(0).listNeuron.at(info[1]).y;
+            SP->z = ntList->at(0).listNeuron.at(info[1]).z;
+
+            SP=(LocationSimple*)&(mList->at(mmatch1[cur_pair]));
+            SP->color.r = 0; SP->color.g = 255; SP->color.b = 0;
+            //update location
+            get_marker_info(*SP, info);
+            SP->x = ntList->at(1).listNeuron.at(info[1]).x;
+            SP->y = ntList->at(1).listNeuron.at(info[1]).y;
+            SP->z = ntList->at(1).listNeuron.at(info[1]).z;
+
+
+            if(stitchmask.at(cur_pair)>0)
+                matchfunc->highlight_nt1_seg(pmatch1[cur_pair],2);
+            else
+                matchfunc->highlight_nt1_seg(pmatch1[cur_pair],7);
+            matchfunc->highlight_nt0_seg(pmatch0[cur_pair],2);
+        }
+
+        cur_pair=cb_pair->currentIndex();
+
+        //highlight new pair
         SP=(LocationSimple*)&(mList->at(mmatch0[cur_pair]));
-        SP->color.r = 255; SP->color.g = 0; SP->color.b = 0;
+        SP->color.r = 255; SP->color.g = 255; SP->color.b = 128;
         //update location
         get_marker_info(*SP, info);
         SP->x = ntList->at(0).listNeuron.at(info[1]).x;
         SP->y = ntList->at(0).listNeuron.at(info[1]).y;
         SP->z = ntList->at(0).listNeuron.at(info[1]).z;
+    //    shift[0]=SP->x;
+    //    shift[1]=SP->y;
+    //    shift[2]=SP->z;
 
         SP=(LocationSimple*)&(mList->at(mmatch1[cur_pair]));
-        SP->color.r = 0; SP->color.g = 255; SP->color.b = 0;
+        SP->color.r = 255; SP->color.g = 255; SP->color.b = 128;
         //update location
         get_marker_info(*SP, info);
         SP->x = ntList->at(1).listNeuron.at(info[1]).x;
         SP->y = ntList->at(1).listNeuron.at(info[1]).y;
         SP->z = ntList->at(1).listNeuron.at(info[1]).z;
+    //    shift[0]+=SP->x;
+    //    shift[1]+=SP->y;
+    //    shift[2]+=SP->z;
 
+        matchfunc->highlight_nt1_seg(pmatch1[cur_pair],5);
+        matchfunc->highlight_nt0_seg(pmatch0[cur_pair],4);
 
-        if(stitchmask.at(cur_pair)>0)
-            matchfunc->highlight_nt1_seg(pmatch1[cur_pair],2);
-        else
-            matchfunc->highlight_nt1_seg(pmatch1[cur_pair],7);
-        matchfunc->highlight_nt0_seg(pmatch0[cur_pair],2);
+    //    //set view to highlight point
+    //    v3dcontrol->resetRotation();
+    //    shift[0]=(shift[0]/2-bound_min[0])/(bound_max[0]-bound_min[0])*142-71;
+    //    shift[1]=(shift[1]/2-bound_min[1])/(bound_max[1]-bound_min[1])*90-45;
+    ////    shift[2]=(shift[2]/2-bound_min[2])/(bound_max[2]-bound_min[2])*200-100;
+    //    v3dcontrol->setXShift(shift[0]);
+    //    v3dcontrol->setYShift(shift[1]);
+    ////    v3dcontrol->setZShift(shift[2]);
+    ////    produceZoomViewOf3DRoi();
+
+        updateview();
     }
-
-    cur_pair=cb_pair->currentIndex();
-
-    //highlight new pair
-    SP=(LocationSimple*)&(mList->at(mmatch0[cur_pair]));
-    SP->color.r = 255; SP->color.g = 255; SP->color.b = 128;
-    //update location
-    get_marker_info(*SP, info);
-    SP->x = ntList->at(0).listNeuron.at(info[1]).x;
-    SP->y = ntList->at(0).listNeuron.at(info[1]).y;
-    SP->z = ntList->at(0).listNeuron.at(info[1]).z;
-
-    SP=(LocationSimple*)&(mList->at(mmatch1[cur_pair]));
-    SP->color.r = 128; SP->color.g = 255; SP->color.b = 128;
-    //update location
-    get_marker_info(*SP, info);
-    SP->x = ntList->at(1).listNeuron.at(info[1]).x;
-    SP->y = ntList->at(1).listNeuron.at(info[1]).y;
-    SP->z = ntList->at(1).listNeuron.at(info[1]).z;
-
-    matchfunc->highlight_nt1_seg(pmatch1[cur_pair],6);
-    matchfunc->highlight_nt0_seg(pmatch0[cur_pair],6);
-
-    updateview();
 
 }
 
@@ -346,12 +420,47 @@ void NeuronLiveMatchDialog::change_pair(int idx)
 
 void NeuronLiveMatchDialog::manualadd()
 {
+    //recolor corrent one
+    if(cb_pair->count()>0){
+        int info[4];
+        LocationSimple * SP = 0;
+
+        //reset cur_pair
+        if(cur_pair>=0 && cur_pair<mmatch0.size()){
+            SP=(LocationSimple*)&(mList->at(mmatch0[cur_pair]));
+            SP->color.r = 255; SP->color.g = 0; SP->color.b = 0;
+            //update location
+            get_marker_info(*SP, info);
+            SP->x = ntList->at(0).listNeuron.at(info[1]).x;
+            SP->y = ntList->at(0).listNeuron.at(info[1]).y;
+            SP->z = ntList->at(0).listNeuron.at(info[1]).z;
+
+            SP=(LocationSimple*)&(mList->at(mmatch1[cur_pair]));
+            SP->color.r = 0; SP->color.g = 255; SP->color.b = 0;
+            //update location
+            get_marker_info(*SP, info);
+            SP->x = ntList->at(1).listNeuron.at(info[1]).x;
+            SP->y = ntList->at(1).listNeuron.at(info[1]).y;
+            SP->z = ntList->at(1).listNeuron.at(info[1]).z;
+
+
+            if(stitchmask.at(cur_pair)>0)
+                matchfunc->highlight_nt1_seg(pmatch1[cur_pair],2);
+            else
+                matchfunc->highlight_nt1_seg(pmatch1[cur_pair],7);
+            matchfunc->highlight_nt0_seg(pmatch0[cur_pair],2);
+        }
+    }
+
     link_new_marker_neuron();
 
     marker_match_dialog dialog(callback, mList);
     dialog.exec();
 
     updatematchlist();
+
+    if(cb_pair->count()>0)
+        cb_pair->setCurrentIndex(cb_pair->count()-1);
 
     checkwindow();
 }
