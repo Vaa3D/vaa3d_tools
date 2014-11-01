@@ -15,37 +15,37 @@ function write_vaa3d_job_config {
 
   outputScript=$1;
 
-  echo "\#\# Check which queue you may use" > $outputScript;
-  echo "\#PBS -q mindscope" > $outputScript;
-  echo "\# Declare that your job will use no more than some amount of memory _at_peak_" > $outputScript;
-  echo "#PBS -l vmem=120g" > $outputScript;
-  echo "# Allow up to 5hr of walltime.  Default is 12 hours" > $outputScript;
-  echo "#PBS -l walltime=5:00:00" > $outputScript;
-  echo "# Request just one core on the host" > $outputScript;
-  echo "#PBS -l ncpus=1" > $outputScript;
-  echo "# Give your job a descriptive name. This is visible in qstat and other job reports.  Also serves as the default basename for log files" > $outputScript;
-  echo "#PBS -N $1.job" > $outputScript;
-  echo "# Should torque automatically re-run the job on error?" > $outputScript;
-  echo "#PBS -r n" > $outputScript;
-  echo "# Merge STDOUT into STDERR" > $outputScript;
-  echo "#PBS -j oe" > $outputScript;
-  echo "# location for stderr/stdout log files _after_ job completion" > $outputScript;
-  echo "#PBS -o /home/hanchuanp/tmp/${1}.err" > $outputScript;
+  echo "## Check which queue you may use" >> $outputScript;
+  echo "#PBS -q mindscope" >> $outputScript;
+  echo "# Declare that your job will use no more than some amount of memory _at_peak_" >> $outputScript;
+  echo "#PBS -l vmem=120g" >> $outputScript;
+  echo "# Allow up to 5hr of walltime.  Default is 12 hours" >> $outputScript;
+  echo "#PBS -l walltime=5:00:00" >> $outputScript;
+  echo "# Request just one core on the host" >> $outputScript;
+  echo "#PBS -l ncpus=1" >> $outputScript;
+  echo "# Give your job a descriptive name. This is visible in qstat and other job reports.  Also serves as the default basename for log files" >> $outputScript;
+  echo "#PBS -N $1.job" >> $outputScript;
+  echo "# Should torque automatically re-run the job on error?" >> $outputScript;
+  echo "#PBS -r n" >> $outputScript;
+  echo "# Merge STDOUT into STDERR" >> $outputScript;
+  echo "#PBS -j oe" >> $outputScript;
+  echo "# location for stderr/stdout log files _after_ job completion" >> $outputScript;
+  echo "#PBS -o /home/hanchuanp/tmp/${1}.err" >> $outputScript;
 
-  echo "# send email on job error" > $outputScript;
-  echo "#PBS -m a" > $outputScript;
+  echo "# send email on job error" >> $outputScript;
+  echo "#PBS -m a" >> $outputScript;
 
-  echo "export DISPLAY=:$RANDOM" > $outputScript;
-  echo "Xvfb $DISPLAY -auth /dev/null &" > $outputScript;
-  echo "export LD_PRELOAD=/usr/lib64/libstdc++.so.6" > $outputScript;
+  echo "export DISPLAY=:$RANDOM" >> $outputScript;
+  echo "Xvfb $DISPLAY -auth /dev/null &" >> $outputScript;
+  echo "export LD_PRELOAD=/usr/lib64/libstdc++.so.6" >> $outputScript;
 
-  echo "export LD_LIBRARY_PATH=/home/hanchuanp/work/v3d_external/bin" > $outputScript;
+  echo "export LD_LIBRARY_PATH=/home/hanchuanp/work/v3d_external/bin" >> $outputScript;
 
-#  echo "cd /data/mat/zhi/VAA3D/vaa3d_redhat_fedora_ubuntu_64bit_v2.868/" > $outputScript
+#  echo "cd /data/mat/zhi/VAA3D/vaa3d_redhat_fedora_ubuntu_64bit_v2.868/" >> $outputScript
 
-  echo "/home/hanchuanp/bench_program/bench_rec_smoothing.sh /work/v3d_external/bin/vaa3d $i ~/Desktop/res_788_bench_indi2/${i}_res ~/work/v3d_external/bin/2;" > $outputScript;
+  echo "/home/hanchuanp/bench_program/bench_rec_smoothing.sh /work/v3d_external/bin/vaa3d $i ~/Desktop/res_788_bench_indi2/${i}_res ~/work/v3d_external/bin/2;" >> $outputScript;
 
-#  echo "kill %1" > $outputScript
+#  echo "kill %1" >> $outputScript
 }
 
 function write_neuron_tracing_command {
@@ -57,39 +57,39 @@ function write_neuron_tracing_command {
   finalfileFolder=$5;
 
   if [ $METHOD == "1" -o $METHOD == "-1" ]; then
-    echo "$vaa3dProgramPath -x vn2 -f app1 -i $inimgfileTracing -p NULL 0 40 0" > $outputScript;
-    echo "mv  $inimgfileTracing*_app1.swc $finalfileFolder" > $outputScript;
+    echo "$vaa3dProgramPath -x vn2 -f app1 -i $inimgfileTracing -p NULL 0 40 0" >> $outputScript;
+    echo "mv  $inimgfileTracing*_app1.swc $finalfileFolder" >> $outputScript;
   fi;
 
   if [ $METHOD == "2" -o $METHOD == "-1" ]; then
-    echo "$vaa3dProgramPath -x vn2 -f app2 -i $inimgfileTracing -p NULL 0 10 1 1 1 0 5" > $outputScript;
-    echo "mv  $inimgfileTracing*_app2.swc $finalfileFolder" > $outputScript;
-    echo "rm  $inimgfileTracing*_ini.swc" > $outputScript;
+    echo "$vaa3dProgramPath -x vn2 -f app2 -i $inimgfileTracing -p NULL 0 10 1 1 1 0 5" >> $outputScript;
+    echo "mv  $inimgfileTracing*_app2.swc $finalfileFolder" >> $outputScript;
+    echo "rm  $inimgfileTracing*_ini.swc" >> $outputScript;
   fi;
 
   if [ $METHOD == "3" -o $METHOD == "-1" ]; then
-    echo "$vaa3dProgramPath -x MOST -f MOST_trace -i $inimgfileTracing -p 1 40" > $outputScript;
-    echo "mv  $inimgfileTracing*_MOST.swc $finalfileFolder" > $outputScript;
+    echo "$vaa3dProgramPath -x MOST -f MOST_trace -i $inimgfileTracing -p 1 40" >> $outputScript;
+    echo "mv  $inimgfileTracing*_MOST.swc $finalfileFolder" >> $outputScript;
   fi;
 
   if [ $METHOD == "4" -o $METHOD == "-1" ]; then
-    echo "$vaa3dProgramPath -x neuTube -f neutube_trace -i $inimgfileTracing -p 1 1" > $outputScript;
-    echo "mv  $inimgfileTracing*_neutube.swc $finalfileFolder" > $outputScript;
+    echo "$vaa3dProgramPath -x neuTube -f neutube_trace -i $inimgfileTracing -p 1 1" >> $outputScript;
+    echo "mv  $inimgfileTracing*_neutube.swc $finalfileFolder" >> $outputScript;
   fi;
 
   if [ $METHOD == "5" -o $METHOD == "-1" ]; then
-    echo "$vaa3dProgramPath -x snake -f snake_trace -i $inimgfileTracing -p 1" > $outputScript;
-    echo "mv  $inimgfileTracing*_snake.swc $finalfileFolder" > $outputScript;
+    echo "$vaa3dProgramPath -x snake -f snake_trace -i $inimgfileTracing -p 1" >> $outputScript;
+    echo "mv  $inimgfileTracing*_snake.swc $finalfileFolder" >> $outputScript;
   fi;
 
   if [ $METHOD == "6" -o $METHOD == "-1" ]; then
-    echo "$vaa3dProgramPath -x SimpleTracing -f tracing -i $inimgfileTracing -o ${inimgfileTracing}_simple.swc -p 1" > $outputScript;
-    echo "mv  $inimgfileTracing*_simple.swc $finalfileFolder" > $outputScript;
+    echo "$vaa3dProgramPath -x SimpleTracing -f tracing -i $inimgfileTracing -o ${inimgfileTracing}_simple.swc -p 1" >> $outputScript;
+    echo "mv  $inimgfileTracing*_simple.swc $finalfileFolder" >> $outputScript;
   fi;
 
   if [ $METHOD == "7" -o $METHOD == "-1" ]; then
-    echo "$vaa3dProgramPath -x TReMap -f trace_mip -i $inimgfileTracing -p 0 1 10 0 1 0 5" > $outputScript;
-    echo "mv  $inimgfileTracing*_TreMap.swc $finalfileFolder" > $outputScript;
+    echo "$vaa3dProgramPath -x TReMap -f trace_mip -i $inimgfileTracing -p 0 1 10 0 1 0 5" >> $outputScript;
+    echo "mv  $inimgfileTracing*_TreMap.swc $finalfileFolder" >> $outputScript;
   fi;
 
 }
