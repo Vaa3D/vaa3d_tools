@@ -24,7 +24,7 @@ function write_vaa3d_job_config {
 
   echo "#!/bin/bash" >> $outputScript;
   echo "## Check which queue you may use" >> $outputScript;
-  echo "#PBS -q mindscope" >> $outputScript;
+  echo "#PBS -q dque" >> $outputScript;
   echo "# Declare that your job will use no more than some amount of memory _at_peak_" >> $outputScript;
   echo "#PBS -l vmem=120g" >> $outputScript;
   echo "# Allow up to 5hr of walltime.  Default is 12 hours" >> $outputScript;
