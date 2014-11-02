@@ -415,12 +415,15 @@ void autotrace_mst(V3DPluginCallback2 &callback, QWidget *parent, MST_PARA &PARA
     NeuronTree nt_2nd = v3dneuron_GD_tracing(p4d_entire, sz_tracing,
                               p0, pp,
                               trace_para, weight_xy_z);
+    if(p4d_entire) {delete []p4d_entire; p4d_entire = 0;}
+
     NeuronTree nt_2nd_sorted;
     if (SortSWC(nt_2nd.listNeuron, nt_2nd_sorted.listNeuron ,1, 5))
 
+    nt_2nd_sorted.name = "MST_Tracing";
     writeSWC_file(swc_name.toStdString().c_str(),nt_2nd_sorted);
     if(in_sz) {delete []in_sz; in_sz = 0;}
-    if(bmenu)
+    if(!bmenu)
     {
         if(data1d) {delete []data1d; data1d = 0;}
     }
@@ -449,6 +452,7 @@ template <class T> QList<NeuronSWC> seed_detection(T* data1d,
     QList <ImageMarker> seeds;
     QList <ImageMarker> loc_points_list;
 
+    printf("\nDetecting seed location ...\n");
     for(V3DLONG iz = 0; iz < P; iz = iz + Ws)
     {
       //  V3DLONG offsetk = iz*M*N;
@@ -535,6 +539,9 @@ template <class T> QList<NeuronSWC> seed_detection(T* data1d,
             }
         }
     }
+
+
+    printf("\nGenerating Minimum Spanning Tree (MST) for all seed locations ...\n");
 
     V3DLONG marknum = seeds.size();
 
