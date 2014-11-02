@@ -11,11 +11,20 @@
 #include "../../../released_plugins/v3d_plugins/neurontracing_vn2/app1/v3dneuron_gd_tracing.h"
 #include "../../../released_plugins/v3d_plugins/sort_neuron_swc/sort_swc.h""
 #include "../../../released_plugins/v3d_plugins/neurontracing_vn2/app2/my_surf_objs.h"
+#include "stackutil.h"
+
 
 using namespace std;
 #define getParent(n,nt) ((nt).listNeuron.at(n).pn<0)?(1000000000):((nt).hashNeuron.value((nt).listNeuron.at(n).pn))
 
 #define INF 1E9
+
+struct MST_PARA
+{
+    QString inimg_file;
+    V3DLONG channel;
+    V3DLONG Ws;
+};
 
 Q_EXPORT_PLUGIN2(neurontracing_mst, neurontracing_mst);
  
@@ -29,12 +38,11 @@ QStringList neurontracing_mst::menulist() const
 QStringList neurontracing_mst::funclist() const
 {
 	return QStringList()
-		<<tr("func1")
-		<<tr("func2")
+        <<tr("trace_mst")
 		<<tr("help");
 }
 
-void autotrace_mst(V3DPluginCallback2 &callback, QWidget *parent);
+void autotrace_mst(V3DPluginCallback2 &callback, QWidget *parent, MST_PARA &PARA, bool bmenu);
 template <class T> QList<NeuronSWC> seed_detection(T* data1d,
                                       V3DLONG *in_sz,
                                       unsigned int Ws,
@@ -52,8 +60,10 @@ NeuronTree post_process(NeuronTree nt);
 void neurontracing_mst::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
 {
     if (menu_name == tr("tracing"))
-	{
-        autotrace_mst(callback,parent);
+    {
+        bool bmenu = true;
+        MST_PARA PARA;
+        autotrace_mst(callback,parent,PARA,bmenu);
 	}
 	else
 	{
@@ -64,21 +74,25 @@ void neurontracing_mst::domenu(const QString &menu_name, V3DPluginCallback2 &cal
 
 bool neurontracing_mst::dofunc(const QString & func_name, const V3DPluginArgList & input, V3DPluginArgList & output, V3DPluginCallback2 & callback,  QWidget * parent)
 {
-	vector<char*> infiles, inparas, outfiles;
-	if(input.size() >= 1) infiles = *((vector<char*> *)input.at(0).p);
-	if(input.size() >= 2) inparas = *((vector<char*> *)input.at(1).p);
-	if(output.size() >= 1) outfiles = *((vector<char*> *)output.at(0).p);
 
-	if (func_name == tr("func1"))
+    if (func_name == tr("trace_mst"))
 	{
-		v3d_msg("To be implemented.");
+        bool bmenu = false;
+        MST_PARA PARA;
+
+        vector<char*> * pinfiles = (input.size() >= 1) ? (vector<char*> *) input[0].p : 0;
+        vector<char*> * pparas = (input.size() >= 2) ? (vector<char*> *) input[1].p : 0;
+        vector<char*> infiles = (pinfiles != 0) ? * pinfiles : vector<char*>();
+        vector<char*> paras = (pparas != 0) ? * pparas : vector<char*>();
+
+        PARA.inimg_file = infiles[0];
+        int k=0;
+        PARA.channel = (paras.size() >= k+1) ? atoi(paras[k]) : 1;  k++;
+        PARA.Ws = (paras.size() >= k+1) ? atoi(paras[k]) : 10;  k++;
+        autotrace_mst(callback,parent,PARA,bmenu);
 	}
-	else if (func_name == tr("func2"))
-	{
-		v3d_msg("To be implemented.");
-	}
-	else if (func_name == tr("help"))
-	{
+    else if (func_name == tr("help"))
+    {
 		v3d_msg("To be implemented.");
 	}
 	else return false;
@@ -86,63 +100,87 @@ bool neurontracing_mst::dofunc(const QString & func_name, const V3DPluginArgList
 	return true;
 }
 
-void autotrace_mst(V3DPluginCallback2 &callback, QWidget *parent)
+void autotrace_mst(V3DPluginCallback2 &callback, QWidget *parent, MST_PARA &PARA, bool bmenu)
 {
 
-    v3dhandle curwin = callback.currentImageWindow();
-    if (!curwin)
+    unsigned char* data1d = 0;
+    V3DLONG N,M,P,sc,c,Ws;
+    V3DLONG *in_sz = 0;
+    if(bmenu)
     {
-        QMessageBox::information(0, "", "You don't have any image open in the main window.");
-        return;
-    }
+        v3dhandle curwin = callback.currentImageWindow();
+        if (!curwin)
+        {
+            QMessageBox::information(0, "", "You don't have any image open in the main window.");
+            return;
+        }
 
-    Image4DSimple* p4DImage = callback.getImage(curwin);
+        Image4DSimple* p4DImage = callback.getImage(curwin);
 
-    if (!p4DImage)
-    {
-        QMessageBox::information(0, "", "The image pointer is invalid. Ensure your data is valid and try again!");
-        return;
-    }
+        if (!p4DImage)
+        {
+            QMessageBox::information(0, "", "The image pointer is invalid. Ensure your data is valid and try again!");
+            return;
+        }
 
 
-    unsigned char* data1d = p4DImage->getRawData();
-    V3DLONG N = p4DImage->getXDim();
-    V3DLONG M = p4DImage->getYDim();
-    V3DLONG P = p4DImage->getZDim();
-    V3DLONG sc = p4DImage->getCDim();
-    V3DLONG pagesz = N*M*P;
+        data1d = p4DImage->getRawData();
+        N = p4DImage->getXDim();
+        M = p4DImage->getYDim();
+        P = p4DImage->getZDim();
+        sc = p4DImage->getCDim();
 
-    V3DLONG in_sz[4];
-    in_sz[0] = N;
-    in_sz[1] = M;
-    in_sz[2] = P;
-    in_sz[3] = sc;
+        bool ok1,ok2;
 
-    bool ok1,ok2;
-    int c, Ws;
+        if(sc==1)
+        {
+            c=1;
+            ok1=true;
+        }
+        else
+        {
+            c = QInputDialog::getInteger(parent, "Channel",
+                                             "Enter channel NO:",
+                                             1, 1, sc, 1, &ok1);
+        }
 
-    if(sc==1)
-    {
-        c=1;
-        ok1=true;
+        if(ok1)
+        {
+            Ws = QInputDialog::getInteger(parent, "Window size ",
+                                          "Enter window size:",
+                                          10, 1, N, 1, &ok2);
+        }
+
+        if(!ok2)
+            return;
+
+        in_sz = new V3DLONG[4];
+        in_sz[0] = N;
+        in_sz[1] = M;
+        in_sz[2] = P;
+        in_sz[3] = sc;
+
+        PARA.inimg_file = p4DImage->getFileName();
     }
     else
     {
-        c = QInputDialog::getInteger(parent, "Channel",
-                                         "Enter channel NO:",
-                                         1, 1, sc, 1, &ok1);
+        int datatype = 0;
+        if (loadImage(const_cast<char *>(PARA.inimg_file.toStdString().c_str()), data1d, in_sz, datatype)!=true)
+        {
+            fprintf (stderr, "Error happens in reading the subject file [%s]. Exit. \n",PARA.inimg_file.toStdString().c_str());
+            return;
+        }
+
+        N = in_sz[0];
+        M = in_sz[1];
+        P = in_sz[2];
+        sc = in_sz[3];
+        c = PARA.channel;
+        Ws = PARA.Ws;
     }
 
-    if(ok1)
-    {
-        Ws = QInputDialog::getInteger(parent, "Window size ",
-                                      "Enter window size:",
-                                      30, 1, N, 1, &ok2);
-    }
 
-    if(!ok2)
-        return;
-
+    V3DLONG pagesz = N*M*P;
     double th = 0;
     V3DLONG offsetc = (c-1)*pagesz;
 
@@ -225,12 +263,12 @@ void autotrace_mst(V3DPluginCallback2 &callback, QWidget *parent)
         double cent_y =  0.5 * (p0.y + tmpp.y);
         double cent_z =  0.5 * (p0.z + tmpp.z);
 
-        V3DLONG xb = cent_x - 2*Ws; if(xb < 0) xb = 0;
-        V3DLONG xe = cent_x +2*Ws-1; if(xe>N-1) xe = N-1;
-        V3DLONG yb = cent_y - 2*Ws; if(yb < 0) yb = 0;
-        V3DLONG ye = cent_y +2*Ws-1; if(ye>M-1) ye = M-1;
-        V3DLONG zb = cent_z - 2*Ws; if(zb < 0) zb = 0;
-        V3DLONG ze = cent_z +2*Ws-1; if(ze>P-1) ze = P-1;
+        V3DLONG xb = cent_x - Ws; if(xb < 0) xb = 0;
+        V3DLONG xe = cent_x + Ws-1; if(xe>N-1) xe = N-1;
+        V3DLONG yb = cent_y - Ws; if(yb < 0) yb = 0;
+        V3DLONG ye = cent_y + Ws-1; if(ye>M-1) ye = M-1;
+        V3DLONG zb = cent_z - Ws; if(zb < 0) zb = 0;
+        V3DLONG ze = cent_z + Ws-1; if(ze>P-1) ze = P-1;
 
         unsigned char *localarea=0;
         V3DLONG blockpagesz = (xe-xb+1)*(ye-yb+1)*(ze-zb+1);
@@ -306,8 +344,7 @@ void autotrace_mst(V3DPluginCallback2 &callback, QWidget *parent)
     nt_final.listNeuron = listNeuron;
     nt_final.hashNeuron = hashNeuron;
 
-    QString swc_name = p4DImage->getFileName();
-    swc_name.append("_MST_Tracing.swc");
+    QString swc_name = PARA.inimg_file + "_MST_Tracing.swc";
     writeSWC_file(swc_name.toStdString().c_str(),nt_final);
 
 #if  defined(Q_OS_LINUX)
@@ -371,9 +408,16 @@ void autotrace_mst(V3DPluginCallback2 &callback, QWidget *parent)
     NeuronTree nt_2nd = v3dneuron_GD_tracing(p4d_entire, sz_tracing,
                               p0, pp,
                               trace_para, weight_xy_z);
+    NeuronTree nt_2nd_sorted;
+    if (SortSWC(nt_2nd.listNeuron, nt_2nd_sorted.listNeuron ,1, 5))
 
-    writeSWC_file(swc_name.toStdString().c_str(),nt_2nd);
-    bool bmenu = 1;
+    writeSWC_file(swc_name.toStdString().c_str(),nt_2nd_sorted);
+    if(in_sz) {delete []in_sz; in_sz = 0;}
+    if(bmenu)
+    {
+        if(data1d) {delete []data1d; data1d = 0;}
+    }
+
     v3d_msg(QString("Now you can drag and drop the generated swc fle [%1] into Vaa3D.").arg(swc_name.toStdString().c_str()),bmenu);
 
     return;
