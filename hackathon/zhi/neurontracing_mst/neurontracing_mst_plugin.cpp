@@ -93,7 +93,14 @@ bool neurontracing_mst::dofunc(const QString & func_name, const V3DPluginArgList
 	}
     else if (func_name == tr("help"))
     {
-		v3d_msg("To be implemented.");
+        printf("\n**** Usage of MST tracing ****\n");
+        printf("vaa3d -x plugin_name -f trace_mst -i <inimg_file> -p <channel> <window size>\n");
+        printf("inimg_file       Should be 8 bit image\n");
+        printf("channel          Data channel for tracing. Start from 1 (default 1).\n");
+        printf("window size      Window size for seed detection. Default 10\n");
+
+        printf("outswc_file      Will be named automatically based on the input image file name, so you don't have to specify it.\n\n");
+
 	}
 	else return false;
 
