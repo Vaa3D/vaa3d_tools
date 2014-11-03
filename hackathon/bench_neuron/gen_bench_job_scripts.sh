@@ -29,7 +29,7 @@ function write_vaa3d_job_config {
   echo "## Check which queue you may use" >> $outputScript;
   echo "#PBS -q dque" >> $outputScript;
   echo "# Declare that your job will use no more than some amount of memory _at_peak_" >> $outputScript;
-  echo "#PBS -l vmem=120g" >> $outputScript;
+  echo "#PBS -l vmem=16g" >> $outputScript;
   echo "# Allow up to 5hr of walltime.  Default is 12 hours" >> $outputScript;
   echo "#PBS -l walltime=5:00:00" >> $outputScript;
   echo "# Request just one core on the host" >> $outputScript;
@@ -41,7 +41,7 @@ function write_vaa3d_job_config {
   echo "# Merge STDOUT into STDERR" >> $outputScript;
   echo "#PBS -j oe" >> $outputScript;
   echo "# location for stderr/stdout log files _after_ job completion" >> $outputScript;
-  echo "#PBS -o ${outputScript}.err" >> $outputScript;
+  echo "#PBS -o ${outputScript}.out" >> $outputScript;
 
   echo "#" >> $outputScript;
   echo "#" >> $outputScript;
@@ -52,11 +52,10 @@ function write_vaa3d_job_config {
   DISPLAY1=:$RANDOM;
   echo "export DISPLAY=$DISPLAY1" >> $outputScript;
   echo "Xvfb $DISPLAY1 -auth /dev/null &" >> $outputScript;
-  echo "export LD_PRELOAD=/usr/lib64/libstdc++.so.6" >> $outputScript;
+#  echo "export LD_PRELOAD=/usr/lib64/libstdc++.so.6" >> $outputScript;
 
   echo "export LD_LIBRARY_PATH=/home/hanchuanp/work/v3d_external/bin" >> $outputScript;
 
-#  echo "kill %1" >> $outputScript
 }
 
 function write_neuron_tracing_command {
@@ -126,5 +125,9 @@ if [ ! -d $finalfileFolder ]; then
 fi
 
 write_neuron_tracing_command $jobScriptFile $tracingMethod $vaa3dProgramPath $inputImgFile $finalfileFolder
+
+# precisely kill the job
+
+echo "kill %jobScriptFile" >> $jobScriptFile;
 
 
