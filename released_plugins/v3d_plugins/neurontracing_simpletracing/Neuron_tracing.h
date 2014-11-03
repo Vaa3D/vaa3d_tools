@@ -83,7 +83,7 @@ public:
 		
 	void SearchEndPoints();
 	
-	NeuronTree NeuronTracing_Rollerball_SWC(unsigned char *apsInput, V3DLONG sx, V3DLONG sy, V3DLONG sz,V3DLONG mx ,V3DLONG my, V3DLONG mz);
+    NeuronTree NeuronTracing_Rollerball_SWC(unsigned char *apsInput, V3DLONG sx, V3DLONG sy, V3DLONG sz);
     NeuronTree NeuronTracing_Ray_SWC(unsigned char *apsInput, V3DLONG sx, V3DLONG sy, V3DLONG sz);
 	
 	void NeuronTracing_Ray_cast(V3DPluginCallback &callback, QWidget *parent);

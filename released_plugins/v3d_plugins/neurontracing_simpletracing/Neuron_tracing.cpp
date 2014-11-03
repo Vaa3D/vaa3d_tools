@@ -1142,29 +1142,31 @@ bool NeuronPlugin::Tracing_Ball_SWC(const V3DPluginArgList & input, V3DPluginArg
 {
 	cout<<"Welcome to Neurontracing_jinzhu1"<<endl;
 	//if(input.size() != 2 || output.size() != 1) return false;
-	char * paras = 0;
-	if(((vector<char*> *)(input.at(1).p))->empty()){paras = new char[1]; paras[0]='\0';}
-	else paras = (*(vector<char*> *)(input.at(1).p)).at(0);
+//	char * paras = 0;
+//	if(((vector<char*> *)(input.at(1).p))->empty()){paras = new char[1]; paras[0]='\0';}
+//	else paras = (*(vector<char*> *)(input.at(1).p)).at(0);
 	
-	for(int i = 0; i < strlen(paras); i++)
-	{
-		if(paras[i] == '#') paras[i] = '-';
-	}
-	string optstrings[] = {"-inimg:","-inmarker:", "-outswc:"};
-	ParaParser parser(string(paras), optstrings, sizeof(optstrings)/sizeof(string));
-	string inimgfile = parser.get_optarg("-inimg"); 
-	string inmarkerfile = parser.get_optarg("-inmarker");
-	string outswcfile = parser.get_optarg("-outswc");
-	cout<<"parser : -inimg "<<inimgfile<<" -inmarker "<<inmarkerfile<<" -outswc "<<outswcfile<<endl;
-	if(parser.error()) {parser.print_error(); return false;}
-	unsigned char * inimg1d = 0;
-	V3DLONG * sz = 0;
-	int datatype;
-	if(!loadImage((char*)inimgfile.c_str(), inimg1d, sz, datatype)){cerr<<"unable to load image"<<endl; return false;}
-	QList<ImageMarker> markerlist = readMarker_file(QString(inmarkerfile.c_str()));
-	ImageMarker first_marker = markerlist.at(0);
-	NeuronTree nt= NeuronTracing_Rollerball_SWC(inimg1d, sz[0], sz[1], sz[2], first_marker.x, first_marker.y, first_marker.z);
-	if(!writeSWC_file(QString(outswcfile.c_str()), nt)){cerr<<"unable to write swc"<<endl; return false;}
+//	for(int i = 0; i < strlen(paras); i++)
+//	{
+//		if(paras[i] == '#') paras[i] = '-';
+//	}
+//	string optstrings[] = {"-inimg:","-inmarker:", "-outswc:"};
+//	ParaParser parser(string(paras), optstrings, sizeof(optstrings)/sizeof(string));
+//	string inimgfile = parser.get_optarg("-inimg");
+//	string inmarkerfile = parser.get_optarg("-inmarker");
+//	string outswcfile = parser.get_optarg("-outswc");
+//	cout<<"parser : -inimg "<<inimgfile<<" -inmarker "<<inmarkerfile<<" -outswc "<<outswcfile<<endl;
+//	if(parser.error()) {parser.print_error(); return false;}
+
+    char * inimgfile = (*(vector<char*> *)(input.at(0).p)).at(0);
+    char * outswcfile = (*(vector<char*> *)(output.at(0).p)).at(0);
+
+    unsigned char * inimg1d = 0;
+    V3DLONG * sz = 0;
+    int datatype;
+    if(!loadImage(inimgfile, inimg1d, sz, datatype)){cerr<<"unable to load image"<<endl; return false;}
+    NeuronTree nt= NeuronTracing_Rollerball_SWC(inimg1d, sz[0], sz[1], sz[2]);
+    if(!writeSWC_file(outswcfile, nt)){cerr<<"unable to write swc"<<endl; return false;}
 	return true;
 }
 
@@ -1193,7 +1195,7 @@ bool NeuronPlugin::Neuron_Seg(const V3DPluginArgList & input, V3DPluginArgList &
 	if(!loadImage((char*)inimgfile.c_str(), inimg1d, sz, datatype)){cerr<<"unable to load image"<<endl; return false;}
 	QList<ImageMarker> markerlist = readMarker_file(QString(inmarkerfile.c_str()));
 	ImageMarker first_marker = markerlist.at(0);
-	NeuronTree nt= NeuronTracing_Rollerball_SWC(inimg1d, sz[0], sz[1], sz[2], first_marker.x, first_marker.y, first_marker.z);
+    NeuronTree nt= NeuronTracing_Rollerball_SWC(inimg1d, sz[0], sz[1], sz[2]);
 	if(!writeSWC_file(QString(outswcfile.c_str()), nt)){cerr<<"unable to write swc"<<endl; return false;}
 	return true;
 }
@@ -1785,46 +1787,138 @@ NeuronTree NeuronPlugin::NeuronTracing_Ray_SWC(unsigned char *inimg1d, V3DLONG s
 	return SS;
 		
 }
-NeuronTree NeuronPlugin::NeuronTracing_Rollerball_SWC(unsigned char *apsInput, V3DLONG sx, V3DLONG sy, V3DLONG sz,V3DLONG mx ,V3DLONG my, V3DLONG mz)
+NeuronTree NeuronPlugin::NeuronTracing_Rollerball_SWC(unsigned char *inimg1d, V3DLONG sx, V3DLONG sy, V3DLONG sz)
 {
 	
-	static int nDx[] = {-1,0,1,-1,0,1,-1,0,1};
-	static int nDy[] = {-1,-1,-1,0,0,0,1,1,1};
-	
+    V3DLONG pagesz_sub = sx*sy*sz;
+    m_OiImgWidth = sx;
+    m_OiImgHeight =sy;
 
-	SpacePoint_t orgPoint;
-	SpacePoint_t centerpoint;
-	SpacePoint_t Ncentepoint;
+    unsigned char * pData;
+    try
+    {
+        pData = new  unsigned char[pagesz_sub];
+    }
+    catch (...)
+    {
+        v3d_msg("Fail to allocate memory in Neuron_segment_entry_func().");
+        return SS;
+    }
+    int iVesCnt = 1;
+    bool b_binarization = true;
+    do_seg(inimg1d, pData, sx, sy, sz, iVesCnt, b_binarization);
 
-	
-	for (V3DLONG k=0; k<sz; k++)
-	{
-		for (V3DLONG j=0; j<sy; j++)
-		{
-			for (V3DLONG i=0; i<sx; i++)
-			{
-				if (apsInput[k*sx*sy+j*sx+i] == 255)
-				{
-					apsInput[k*sx*sy+j*sx+i] = 255;
-					
-				}
-				else 
-				{
-					apsInput[k*sx*sy+j*sx+i] = BACKGROUND;
-				}
-			}
-		}
-	}
-	//SetImageInfo1D(apsInput,sz,sx,sy); temp modify
-		
-//	if(apsInput[mz*sx*sy+my*sx+mx] == BACKGROUND)
-//	{
-//		return;
-//	}
-	
-	orgPoint.m_x = mx;
-	orgPoint.m_y = my;
-	orgPoint.m_z = mz;
+
+    static int nDx[] = {-1,0,1,-1,0,1,-1,0,1};
+    static int nDy[] = {-1,-1,-1,0,0,0,1,1,1};
+    static int nDz[] = {-1,0,1};
+
+    V3DLONG x,y,z,index;
+
+    V3DLONG imagesize = sy*sx;
+
+    V3DLONG *apsInput;
+    try
+    {
+        apsInput = new V3DLONG[sx*sy*sz];
+        memset(apsInput, 0, sx*sy*sz * sizeof(V3DLONG));
+
+    }
+    catch (...)
+    {
+        v3d_msg("Fail to allocate memory in Distance Transform.");
+        if (apsInput) {delete []apsInput; apsInput=0;}
+        return SS;
+    }
+    SpacePoint_t orgPoint;
+    orgPoint.m_x = -1;
+    orgPoint.m_y = -1;
+    orgPoint.m_z = -1;
+
+    for (V3DLONG k=0; k<sz; k++)
+    {
+        for (V3DLONG j=0; j<sy; j++)
+        {
+            for (V3DLONG i=0; i<sx; i++)
+            {
+                index = k * imagesize + j * sx + i;
+                int max =0;
+                for(int m = 0; m < 3; m++)
+                {
+                    for(int n = 0; n < 9; n++)
+                    {
+                        z = k + nDz[m];
+                        y = j + nDy[n];
+                        x = i + nDx[n];
+                        if (z < sz && y < sy && x<sx && x>0 && y>0 && z>0)
+                        {
+                            if(pData[ z * imagesize + y * sx + x] > max)
+                            {
+                                max = pData[ z * sx*sy + y * sx + x];
+                                m=3;
+                                //printf("max=%ld m=%ld\n",max,m);
+                            }
+                        }else
+                        {
+                            m = 3;
+
+                        }
+                    }
+                }
+                apsInput[index]=max;
+            }
+        }
+    }
+
+    if(pData) {delete []pData; pData = 0;}
+
+    bool flag = 1;
+    V3DLONG m_x,m_y,m_z;
+
+    for (V3DLONG k=0; k<sz; k++)
+    {
+        for (V3DLONG j=0; j<sy; j++)
+        {
+            for (V3DLONG i=0; i<sx; i++)
+            {
+                if (apsInput[k*sx*sy+j*sx+i] == 255)
+                {
+                    apsInput[k*sx*sy+j*sx+i] = 255;
+                    if(flag == 1)
+                    {
+                        m_x = i + 1;
+                        m_y = j + 1;
+                        m_z = k + 1;
+                        flag =0;
+                    }
+
+
+
+                }
+                else
+                {
+                    apsInput[k*sx*sy+j*sx+i] = BACKGROUND;
+                }
+            }
+        }
+    }
+
+
+    SetImageInfo1D(apsInput,sz,sx,sy); //temp modify
+
+    ImageMarker S;
+    S.x = m_x;
+    S.y = m_y;
+    S.z = m_z;
+    S.on = true;
+    listMarker.append(S);
+
+    printf("x=%ld y=%ld z=%ld\n",m_x,m_y,m_z);
+
+    orgPoint.m_x = m_x;
+    orgPoint.m_y = m_y;
+    orgPoint.m_z = m_z;
+
 	
 	Initialize1D();
 	
@@ -1873,14 +1967,14 @@ NeuronTree NeuronPlugin::NeuronTracing_Rollerball_SWC(unsigned char *apsInput, V
 	double r = 0;
 	
 	QString file;
-	
-	V3DLONG x,y,z;
 		
 	centerpathall.push_back(centerpath);
 	
 	PathMask(centerpath);
 	
 	NeuronSWC v;
+    listNeuron.clear();
+
 	
 	for(V3DLONG jj = 0; jj< centerpath.size(); jj++)
 	{
@@ -1919,7 +2013,7 @@ NeuronTree NeuronPlugin::NeuronTracing_Rollerball_SWC(unsigned char *apsInput, V
 	
 	SS.on = true;
 	SS.listNeuron = listNeuron;
-	SS.name = "neu_tracing_rollerball";
+    SS.name = "Rollerball_Tracing";
 	//QString filename = "/Users/yangj13/work/v3d_internal/v3d_2.0/yang_jinzhu/ray cast and distance/neu_tracing.swc";
 	//writeSWC_file(filename,SS);	
     return SS;
