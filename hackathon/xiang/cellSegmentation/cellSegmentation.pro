@@ -5,6 +5,7 @@ INCLUDEPATH += $$VAA3DPATH/v3d_main/basic_c_fun
 INCLUDEPATH += $$VAA3DPATH/v3d_main/v3d
 INCLUDEPATH += $$VAA3DPATH/v3d_main/jba/newmat11
 INCLUDEPATH += $$VAA3DPATH/v3d_main/jba/c++
+INCLUDEPATH += $$VAA3DPATH/v3d_main/common_lib/include
 
 HEADERS	+= cellSegmentation_plugin.h
 SOURCES	+= cellSegmentation_plugin.cpp

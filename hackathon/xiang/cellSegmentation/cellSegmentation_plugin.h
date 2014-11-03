@@ -1,6 +1,6 @@
 /* cellSegmentation.cpp
  * It aims to automatically segment cells;
- * 2014-10-12 : by Xiang Li (lindbergh.li@gmail.com);
+ * 2014-10-12 :by Xiang Li (lindbergh.li@gmail.com);
  */
  
 #ifndef __CELLSEGMENTATION_PLUGIN_H__
@@ -13,10 +13,10 @@
 #include <iostream>
 #include <string>
 
-enum enum_algorithm_t {regionGrowOnly, regionGrowGWDT, regionGrowGVF, regionGrowFusing};
+enum enum_algorithm_t {regionGrowOnly, GWDT, regionGrowGVF, regionGrowSRS, fusing};
 enum enum_shape_t {sphere, cube};
 
-class cellSegmentation : public QObject, public V3DPluginInterface2_1
+class cellSegmentation :public QObject, public V3DPluginInterface2_1
 {
 	Q_OBJECT
 	Q_INTERFACES(V3DPluginInterface2_1);
@@ -31,160 +31,223 @@ public:
 	bool dofunc(const QString &func_name, const V3DPluginArgList &input, V3DPluginArgList &output, V3DPluginCallback2 &callback, QWidget *parent);
 };
 
-class dialogMain: public QDialog
+class dialogMain:public QDialog
 {
     Q_OBJECT
 
 	public:
     dialogMain(V3DPluginCallback2 &V3DPluginCallback2_currentCallback, QWidget *QWidget_parent, int int_channelDim)
     {
-        QPushButton *QPushButton_start = new QPushButton(QObject::tr("start segmentation"));
-        QPushButton *QPushButton_close = new QPushButton(QObject::tr("close"));
-
-        QStringList QStringList_channel_items;
-        if (int_channelDim==1)
+        //channel;
+		QStringList QStringList_channel_items;
+		if (int_channelDim==1)
 		{
 			QStringList_channel_items << "1";
 		}
-        else if (int_channelDim==3)
-        {
-            QStringList_channel_items << "1 - red";
-            QStringList_channel_items << "2 - green";
-            QStringList_channel_items << "3 - blue";
-        }
-        else //for non-RGB int_channel setups;
-        {
-            for (int i=1; i<=int_channelDim; i++)
-            {
-                QStringList_channel_items << QString().setNum(i);
-            }
-        }
-        QComboBox_channel_selection = new QComboBox();
+		else if (int_channelDim==3)
+		{
+			QStringList_channel_items << "1 - red";
+			QStringList_channel_items << "2 - green";
+			QStringList_channel_items << "3 - blue";
+		}
+		else
+		{
+			for (int i=1; i<=int_channelDim; i++)
+			{
+				QStringList_channel_items << QString().setNum(i);
+			}
+		}
+		QComboBox_channel_selection = new QComboBox();
 		QComboBox_channel_selection->addItems(QStringList_channel_items);
 		if (QStringList_channel_items.size()>1)
 		{
 			QComboBox_channel_selection->setCurrentIndex(1);
 		}
-        QLabel* QLabel_channel_main = new QLabel(QObject::tr("Channel: "));
-        QGroupBox *QGroupBox_channel = new QGroupBox("Channel");
-        QGroupBox_channel->setStyle(new QWindowsStyle());
-        QGridLayout *QGridLayout_channel = new QGridLayout();
-        QGroupBox_channel->setStyle(new QWindowsStyle());
-        QGridLayout_channel->addWidget(QLabel_channel_main, 2,1,1,1);
-        QGridLayout_channel->addWidget(QComboBox_channel_selection, 2,2,1,2);
-        QGroupBox_channel->setLayout(QGridLayout_channel);
+		QLabel* QLabel_channel_main = new QLabel(QObject::tr("Channel:"));
+        QGroupBox *QGroupBox_channel_main = new QGroupBox("Color channel");
+        QGroupBox_channel_main->setStyle(new QWindowsStyle());
+        QGridLayout *QGridLayout_channel_main = new QGridLayout();
+        QGroupBox_channel_main->setStyle(new QWindowsStyle());
+        QGridLayout_channel_main->addWidget(QLabel_channel_main, 1,1,1,1);
+        QGridLayout_channel_main->addWidget(QComboBox_channel_selection, 1,2,1,3);
+        QGroupBox_channel_main->setLayout(QGridLayout_channel_main);
 
-		QStringList QStringList_threshold_items;
-		QStringList_threshold_items << "Calculate from Image" << "User Input";
-		QComboBox_threshold_type = new QComboBox();
-		QComboBox_threshold_type->addItems(QStringList_threshold_items);
-		QLabel* QLabel_thresholdType = new QLabel(QObject::tr("Threshold: "));
-		QGroupBox *QGroupBox_threshold = new QGroupBox("Threshold");
-        QGroupBox_threshold->setStyle(new QWindowsStyle());
-        QGridLayout *QGridLayout_threshold = new QGridLayout();
-        QGridLayout_threshold->addWidget(QLabel_thresholdType, 2,1);
-        QGridLayout_threshold->addWidget(QComboBox_threshold_type, 2,2);
-        QDoubleSpinBox_threshold = new QDoubleSpinBox();
-		QDoubleSpinBox_threshold->setEnabled(false);
-		QDoubleSpinBox_threshold->setMaximum(255);
-		QDoubleSpinBox_threshold->setMinimum(0);
-		QGridLayout_threshold->addWidget(QDoubleSpinBox_threshold, 2,3);
-		QLabel* QLabel_threshold_thresholdHistoSimilar = new QLabel(QObject::tr("Histogram similarity threshold: "));
-		QLineEdit_threshold_thresholdHistoSimilar = new QLineEdit ("0.0", QWidget_parent);
-		QGridLayout_threshold->addWidget(QLabel_threshold_thresholdHistoSimilar, 3, 1);
-		QGridLayout_threshold->addWidget(QLineEdit_threshold_thresholdHistoSimilar, 3, 2);
-        QGroupBox_threshold->setLayout(QGridLayout_threshold);
+		//intensity;
+		QStringList QStringList_intensity_thresholdType;
+		QStringList_intensity_thresholdType << "Calculate from Image" << "User Input";
+		QComboBox_intensity_thresholdType = new QComboBox();
+		QComboBox_intensity_thresholdType->addItems(QStringList_intensity_thresholdType);
+		QLabel* QLabel_intensity_thresholdType = new QLabel(QObject::tr("Threshold:"));
+		QGroupBox *QGroupBox_intensity_main = new QGroupBox("Image intensity");
+        QGroupBox_intensity_main->setStyle(new QWindowsStyle());
+        QGridLayout *QGridLayout_intensity_main = new QGridLayout();
+        QGridLayout_intensity_main->addWidget(QLabel_intensity_thresholdType, 1,1,1,2);
+        QGridLayout_intensity_main->addWidget(QComboBox_intensity_thresholdType, 1,2,1,1);
+        QDoubleSpinBox_intensity_value = new QDoubleSpinBox();
+		QDoubleSpinBox_intensity_value->setEnabled(false);
+		QDoubleSpinBox_intensity_value->setMaximum(255);
+		QDoubleSpinBox_intensity_value->setMinimum(0);
+		QGridLayout_intensity_main->addWidget(QDoubleSpinBox_intensity_value, 1,3,1,1);
+		QLabel* QLabel_intensity_histoCorrelation = new QLabel(QObject::tr("Histogram correlation:"));
+		QLineEdit_intensity_histoCorrelation = new QLineEdit ("0.0", QWidget_parent);
+		QGridLayout_intensity_main->addWidget(QLabel_intensity_histoCorrelation, 2, 1, 1, 1);
+		QGridLayout_intensity_main->addWidget(QLineEdit_intensity_histoCorrelation, 2, 2, 1, 1);
+		QLabel* QLabel_intensity_valueChangeRatio = new QLabel(QObject::tr("Max value change ratio:"));
+		QLineEdit_intenstiy_valueChangeRatio = new QLineEdit ("0.8", QWidget_parent);
+		QGridLayout_intensity_main->addWidget(QLabel_intensity_valueChangeRatio, 2, 3, 1, 1);
+		QGridLayout_intensity_main->addWidget(QLineEdit_intenstiy_valueChangeRatio, 2, 4, 1, 1);
+        QGroupBox_intensity_main->setLayout(QGridLayout_intensity_main);
 
-		QRadioButton_shape_sphere = new QRadioButton("sphere", QWidget_parent);
+		//shape;
+		QLabel* QLabel_shape_type = new QLabel(QObject::tr("Region shape:"));
+		QRadioButton_shape_sphere = new QRadioButton("sphere-like", QWidget_parent);
 		QRadioButton_shape_sphere->setChecked(true);
-		QRadioButton_shape_cube = new QRadioButton("cube", QWidget_parent);
+		QRadioButton_shape_cube = new QRadioButton("cube-like", QWidget_parent);
 		QRadioButton_shape_cube->setChecked(false);
-		QLabel* QLabel_Shape_delta = new QLabel(QObject::tr("delta for anisotropic threshold: "));
+		QLabel* QLabel_shape_delta = new QLabel(QObject::tr("max anisotropic\ndeviation:"));
 		QLineEdit_Shape_delta = new QLineEdit("1", QWidget_parent);
-		QGroupBox *QGroupBox_shape = new QGroupBox("shape");
+		QGroupBox *QGroupBox_shape = new QGroupBox("Geometry stat");
 		QGridLayout *QGridLayout_shape = new QGridLayout();
-		QGridLayout_shape->addWidget(QRadioButton_shape_sphere, 1, 1);
-		QGridLayout_shape->addWidget(QRadioButton_shape_cube, 1, 2);
-		QGridLayout_shape->addWidget(QLabel_Shape_delta, 1, 3);
-		QGridLayout_shape->addWidget(QLineEdit_Shape_delta, 1, 4);
+		QLabel* QLabel_shape_thresholdRegionSize = new QLabel(QObject::tr("Min region size\nvs. exemplar ratio:"));
+		QLineEdit_shape_thresholdRegionSize = new QLineEdit("0.05", QWidget_parent);
+		QLabel* QLabel_shape_uThresholdRegionSize = new QLabel(QObject::tr("Max region size\nvs. exemplar ratio:"));
+		QLineEdit_shape_uThresholdRegionSize = new QLineEdit("20", QWidget_parent);
+		QGridLayout_shape->addWidget(QLabel_shape_type, 1, 1, 1, 2);
+		QGridLayout_shape->addWidget(QRadioButton_shape_sphere, 1, 2, 1, 1);
+		QGridLayout_shape->addWidget(QRadioButton_shape_cube, 1, 3, 1, 1);
+		QGridLayout_shape->addWidget(QLabel_shape_delta, 2, 1, 1, 1);
+		QGridLayout_shape->addWidget(QLineEdit_Shape_delta, 2, 2, 1, 1);
+		QGridLayout_shape->addWidget(QLabel_shape_thresholdRegionSize, 3, 1, 1, 1);
+		QGridLayout_shape->addWidget(QLineEdit_shape_thresholdRegionSize, 3, 2, 1, 1);
+		QGridLayout_shape->addWidget(QLabel_shape_uThresholdRegionSize, 3, 3, 1, 1);
+		QGridLayout_shape->addWidget(QLineEdit_shape_uThresholdRegionSize, 3, 4, 1, 1);
 		QGroupBox_shape->setLayout(QGridLayout_shape);
 
-		QRadioButton_algorithm_regionGrowingOnly = new QRadioButton("regionGrowing only", QWidget_parent);
-		QRadioButton_algorithm_regionGrowingOnly->setChecked(false);
-		QRadioButton_algorithm_regionGrowingGWDT = new QRadioButton("GWDT+boundaryDetection", QWidget_parent);
-		QRadioButton_algorithm_regionGrowingGWDT->setChecked(false);
-		QRadioButton_algorithm_regionGrowingGVF = new QRadioButton("regionGrowing+GVF", QWidget_parent);
-		QRadioButton_algorithm_regionGrowingGVF->setChecked(true);
-		QRadioButton_algorithm_regionGrowFusing = new QRadioButton("fusing", QWidget_parent);
-		QRadioButton_algorithm_regionGrowFusing->setChecked(false);
-		QCheckBox_algorithm_debug = new QCheckBox("Debugging Mode", QWidget_parent);
+		//algorithm;
+		QRadioButton_algorithm_regionGrowOnly = new QRadioButton("regionGrow\nOnly", QWidget_parent);
+		QRadioButton_algorithm_regionGrowOnly->setChecked(false);
+		QRadioButton_algorithm_GWDT = new QRadioButton("GWDT\n+Boundary detection", QWidget_parent);
+		QRadioButton_algorithm_GWDT->setChecked(false);
+		QRadioButton_algorithm_regionGrowGVF = new QRadioButton("regionGrow\n+GVF", QWidget_parent);
+		QRadioButton_algorithm_regionGrowGVF->setChecked(false);
+		QRadioButton_algorithm_regionGrowSRS = new QRadioButton("regionGrow\n+SRS", QWidget_parent);
+		QRadioButton_algorithm_regionGrowSRS->setChecked(true);
+		QRadioButton_algorithm_fusing = new QRadioButton("Fusing", QWidget_parent);
+		QRadioButton_algorithm_fusing->setChecked(false);
+		QRadioButton_algorithm_fusing->setEnabled(false);
+		QCheckBox_algorithm_debug = new QCheckBox("Debugging", QWidget_parent);
 		QCheckBox_algorithm_debug->setChecked(true);
-		QGroupBox *QGroupBox_algorithm = new QGroupBox("Algorithm");
-		QGroupBox_algorithm->setStyle(new QWindowsStyle());
-		QGridLayout *QGridLayout_algorithm = new QGridLayout();
-		QGridLayout_algorithm->addWidget(QRadioButton_algorithm_regionGrowingOnly, 1, 1);
-		QGridLayout_algorithm->addWidget(QRadioButton_algorithm_regionGrowingGWDT, 1, 2);
-		QGridLayout_algorithm->addWidget(QRadioButton_algorithm_regionGrowingGVF, 2, 1);
-		QGridLayout_algorithm->addWidget(QRadioButton_algorithm_regionGrowFusing, 2, 2);
-		QGridLayout_algorithm->addWidget(QCheckBox_algorithm_debug, 3, 1);
-		QGroupBox_algorithm->setLayout(QGridLayout_algorithm);
+		QGroupBox *QGroupBox_algorithm_main = new QGroupBox("Algorithm selection");
+		QGroupBox_algorithm_main->setStyle(new QWindowsStyle());
+		QGridLayout *QGridLayout_algorithm_main = new QGridLayout();
+		QGridLayout_algorithm_main->addWidget(QRadioButton_algorithm_regionGrowOnly, 1, 1,1,1);
+		QGridLayout_algorithm_main->addWidget(QRadioButton_algorithm_GWDT, 1, 2,1,1);
+		QGridLayout_algorithm_main->addWidget(QRadioButton_algorithm_regionGrowGVF, 1, 3,1,1);
+		QGridLayout_algorithm_main->addWidget(QRadioButton_algorithm_regionGrowSRS, 1, 4,1,1);
+		QGridLayout_algorithm_main->addWidget(QRadioButton_algorithm_fusing, 2, 1, 1, 1);
+		QGridLayout_algorithm_main->addWidget(QCheckBox_algorithm_debug, 2, 3, 1, 1);
+		QGroupBox_algorithm_main->setLayout(QGridLayout_algorithm_main);
 	
-		QLabel* QLabel_GVF_matIteration = new QLabel(QObject::tr("Max iteration: "));
-		QLineEdit_GVF_maxIteration = new QLineEdit("15", QWidget_parent);
-		QLabel* QLabel_GVF_fusionThreshold = new QLabel(QObject::tr("Fusion double_threshold: "));
+		//GVF paramters;
+		QLabel* QLabel_GVF_maxIteration = new QLabel(QObject::tr("# of Iteration:"));
+		QLineEdit_GVF_maxIteration = new QLineEdit("10", QWidget_parent);
+		QLabel* QLabel_GVF_fusionThreshold = new QLabel(QObject::tr("merging threshold:"));
 		QLineEdit_GVF_fusionThreshold = new QLineEdit("2", QWidget_parent);
-		QLabel* QLabel_GVF_sigma = new QLabel(QObject::tr("sigma: "));
+		QLabel* QLabel_GVF_sigma = new QLabel(QObject::tr("sigma:"));
 		QLineEdit_GVF_sigma = new QLineEdit("0.1", QWidget_parent);
-		QLabel* QLabel_GVF_mu = new QLabel(QObject::tr("mu: "));
+		QLabel* QLabel_GVF_mu = new QLabel(QObject::tr("mu:"));
 		QLineEdit_GVF_mu = new QLineEdit("0.1", QWidget_parent);
-		QGroupBox *QGroupBox_GVFparamter = new QGroupBox("GVF paramters");
-		QGroupBox_GVFparamter->setStyle(new QWindowsStyle());
-		QGridLayout *QGridLayout_GVFparamter = new QGridLayout();
-		QGridLayout_GVFparamter->addWidget(QLabel_GVF_matIteration, 1, 1);
-		QGridLayout_GVFparamter->addWidget(QLineEdit_GVF_maxIteration, 1, 2);
-		QGridLayout_GVFparamter->addWidget(QLabel_GVF_fusionThreshold, 1, 3);
-		QGridLayout_GVFparamter->addWidget(QLineEdit_GVF_fusionThreshold, 1, 4);
-		QGridLayout_GVFparamter->addWidget(QLabel_GVF_sigma, 2, 1);
-		QGridLayout_GVFparamter->addWidget(QLineEdit_GVF_sigma, 2, 2);
-		QGridLayout_GVFparamter->addWidget(QLabel_GVF_mu, 2, 3);
-		QGridLayout_GVFparamter->addWidget(QLineEdit_GVF_mu, 2, 4);
-		QGroupBox_GVFparamter->setLayout(QGridLayout_GVFparamter);
+		QGroupBox *QGroupBox_GVF_main = new QGroupBox("GVF paramters");
+		QGroupBox_GVF_main->setStyle(new QWindowsStyle());
+		QGridLayout *QGridLayout_GVF_main = new QGridLayout();
+		QGridLayout_GVF_main->addWidget(QLabel_GVF_maxIteration, 1, 1,1,1);
+		QGridLayout_GVF_main->addWidget(QLineEdit_GVF_maxIteration, 1, 2,1,1);
+		QGridLayout_GVF_main->addWidget(QLabel_GVF_fusionThreshold, 1, 3,1,1);
+		QGridLayout_GVF_main->addWidget(QLineEdit_GVF_fusionThreshold, 1, 4,1,1);
+		QGridLayout_GVF_main->addWidget(QLabel_GVF_sigma, 2, 1,1,1);
+		QGridLayout_GVF_main->addWidget(QLineEdit_GVF_sigma, 2, 2,1,1);
+		QGridLayout_GVF_main->addWidget(QLabel_GVF_mu, 2, 3,1,1);
+		QGridLayout_GVF_main->addWidget(QLineEdit_GVF_mu, 2, 4,1,1);
+		QGroupBox_GVF_main->setLayout(QGridLayout_GVF_main);
 
-		QLabel* QLabel_GWDT_boundaryThin = new QLabel(QObject::tr("Boundary detection iteration: "));
+		//GWDT paramters;
+		QLabel* QLabel_GWDT_boundaryThin = new QLabel(QObject::tr("boundary detection\niteration:"));
 		QLineEdit_GWDT_boundaryThin = new QLineEdit("8", QWidget_parent);
-		QLabel* QLabel_GWDT_boundaryConditionLoosenBy = new QLabel(QObject::tr("Boundary detection criteria loosen by: "));
+		QLabel* QLabel_GWDT_boundaryConditionLoosenBy = new QLabel(QObject::tr("boundary detection\ncriteria:"));
 		QLineEdit_GWDT_boundaryConditionLoosenBy = new QLineEdit("1", QWidget_parent);
 		QGroupBox *QGroupBox_GWDTparameter = new QGroupBox("GWDT paramters");
 		QGroupBox_GWDTparameter->setStyle(new QWindowsStyle());
 		QGridLayout *QGridLayout_GWDTparameter = new QGridLayout();
-		QGridLayout_GWDTparameter->addWidget(QLabel_GWDT_boundaryThin, 1, 1);
-		QGridLayout_GWDTparameter->addWidget(QLineEdit_GWDT_boundaryThin, 1, 2);
-		QGridLayout_GWDTparameter->addWidget(QLabel_GWDT_boundaryConditionLoosenBy, 1, 3);
-		QGridLayout_GWDTparameter->addWidget(QLineEdit_GWDT_boundaryConditionLoosenBy, 1, 4);
+		QGridLayout_GWDTparameter->addWidget(QLabel_GWDT_boundaryThin, 1, 1,1,1);
+		QGridLayout_GWDTparameter->addWidget(QLineEdit_GWDT_boundaryThin, 1, 2,1,1);
+		QGridLayout_GWDTparameter->addWidget(QLabel_GWDT_boundaryConditionLoosenBy, 1, 3,1,1);
+		QGridLayout_GWDTparameter->addWidget(QLineEdit_GWDT_boundaryConditionLoosenBy, 1, 4,1,1);
 		QGroupBox_GWDTparameter->setLayout(QGridLayout_GWDTparameter);
 
-        QWidget* QWidget_bottomBar = new QWidget();
-        QGridLayout* QGridLayout_bottomBar = new QGridLayout();
-        QGridLayout_bottomBar->addWidget(QPushButton_start,1,1);
-        QGridLayout_bottomBar->addWidget(QPushButton_close,1,2);
-        QWidget_bottomBar->setLayout(QGridLayout_bottomBar);
+		//SRS paramters
+		QLabel* QLabel_SRS_countSeed = new QLabel(QObject::tr("# of seeds:"));
+		QLineEdit_SRS_countSeed = new QLineEdit("6", QWidget_parent);
+		QLabel* QLabel_SRS_initialT = new QLabel(QObject::tr("Initial T:"));
+		QLineEdit_SRS_initialT = new QLineEdit("1000", QWidget_parent);
+		QLabel* QLabel_SRS_minT = new QLabel(QObject::tr("min T:"));
+		QLineEdit_SRS_minT = new QLineEdit("0.1", QWidget_parent);
+		QLabel* QLabel_SRS_grateRatio = new QLabel(QObject::tr("Grate:"));
+		QLineEdit_SRS_grateRatio = new QLineEdit("0.8", QWidget_parent);
+		QLabel* QLabel_SRS_maxIteration = new QLabel(QObject::tr("# of iteration:"));
+		QLineEdit_SRS_maxIteration = new QLineEdit("30", QWidget_parent);
+		QLabel* QLabel_SRS_convergeCriteria = new QLabel(QObject::tr("Converge at:"));
+		QLineEdit_SRS_convergeCriteria = new QLineEdit("0.1", QWidget_parent);
+		QLabel* QLabel_SRS_initialLambda = new QLabel(QObject::tr("Initial lambda:"));
+		QLineEdit_SRS_initialLambda = new QLineEdit("100", QWidget_parent);
+		QGridLayout *QGridLayout_SRSparameter = new QGridLayout();
+		QLabel* QLabel_SRS_mergingCriteria = new QLabel(QObject::tr("Merging criteria:"));
+		QLineEdit_SRS_mergingCriteria = new QLineEdit("0.5", QWidget_parent);
+		QGridLayout_SRSparameter->addWidget(QLabel_SRS_initialT, 1, 1,1,1);
+		QGridLayout_SRSparameter->addWidget(QLineEdit_SRS_initialT, 1, 2,1,1);
+		QGridLayout_SRSparameter->addWidget(QLabel_SRS_minT, 1, 3,1,1);
+		QGridLayout_SRSparameter->addWidget(QLineEdit_SRS_minT, 1, 4,1,1);
+		QGridLayout_SRSparameter->addWidget(QLabel_SRS_grateRatio, 2, 1,1,1);
+		QGridLayout_SRSparameter->addWidget(QLineEdit_SRS_grateRatio, 2, 2,1,1);
+		QGridLayout_SRSparameter->addWidget(QLabel_SRS_maxIteration, 2, 3,1,1);
+		QGridLayout_SRSparameter->addWidget(QLineEdit_SRS_maxIteration, 2, 4,1,1);
+		QGridLayout_SRSparameter->addWidget(QLabel_SRS_convergeCriteria, 3, 1,1,1);
+		QGridLayout_SRSparameter->addWidget(QLineEdit_SRS_convergeCriteria, 3, 2,1,1);
+		QGridLayout_SRSparameter->addWidget(QLabel_SRS_initialLambda, 3, 3,1,1);
+		QGridLayout_SRSparameter->addWidget(QLineEdit_SRS_initialLambda, 3, 4,1,1);
+		QGridLayout_SRSparameter->addWidget(QLabel_SRS_mergingCriteria, 4, 1,1,1);
+		QGridLayout_SRSparameter->addWidget(QLineEdit_SRS_mergingCriteria, 4, 2,1,1);
+		QGridLayout_SRSparameter->addWidget(QLabel_SRS_countSeed, 4, 3,1,1);
+		QGridLayout_SRSparameter->addWidget(QLineEdit_SRS_countSeed, 4, 4,1,1);
+		QGroupBox *QGroupBox_SRSparameter = new QGroupBox("SRS Paramters");
+		QGroupBox_SRSparameter->setStyle(new QWindowsStyle());
+		QGroupBox_SRSparameter->setLayout(QGridLayout_SRSparameter);
 
-        QGridLayout *QGridLayout_main = new QGridLayout();
-        QGridLayout_main->addWidget(QGroupBox_threshold);
-        QGridLayout_main->addWidget(QGroupBox_channel);
+		//control;
+		QPushButton *QPushButton_control_start = new QPushButton(QObject::tr("Start Segmentation"));
+		QPushButton *QPushButton_control_close = new QPushButton(QObject::tr("Close"));
+		QWidget* QWidget_control_bar = new QWidget();
+        QGridLayout* QGridLayout_control_bar = new QGridLayout();
+        QGridLayout_control_bar->addWidget(QPushButton_control_start,1,1,1,2);
+        QGridLayout_control_bar->addWidget(QPushButton_control_close,1,3,1,2);
+        QWidget_control_bar->setLayout(QGridLayout_control_bar);
+
+        //main pandel;
+		QGridLayout *QGridLayout_main = new QGridLayout();
+        QGridLayout_main->addWidget(QGroupBox_intensity_main);
+        QGridLayout_main->addWidget(QGroupBox_channel_main);
 		QGridLayout_main->addWidget(QGroupBox_shape);
-        QGridLayout_main->addWidget(QGroupBox_algorithm);
-		QGridLayout_main->addWidget(QGroupBox_GVFparamter);
+        QGridLayout_main->addWidget(QGroupBox_algorithm_main);
+		QGridLayout_main->addWidget(QGroupBox_GVF_main);
 		QGridLayout_main->addWidget(QGroupBox_GWDTparameter);
-		QGridLayout_main->addWidget(QWidget_bottomBar);
-
-
+		QGridLayout_main->addWidget(QGroupBox_SRSparameter);
+		QGridLayout_main->addWidget(QWidget_control_bar);
         setLayout(QGridLayout_main);
         setWindowTitle(QString("Cell Segmentation"));
 
-        connect(QPushButton_start, SIGNAL(clicked()), this, SLOT(_slot_start()));
-        connect(QPushButton_close, SIGNAL(clicked()), this, SLOT(reject()));
-        connect(QComboBox_threshold_type, SIGNAL(currentIndexChanged(int)), this, SLOT(update()));
+		//event evoking;
+        connect(QPushButton_control_start, SIGNAL(clicked()), this, SLOT(_slot_start()));
+        connect(QPushButton_control_close, SIGNAL(clicked()), this, SLOT(reject()));
+        connect(QComboBox_intensity_thresholdType, SIGNAL(currentIndexChanged(int)), this, SLOT(update()));
 
         update();
     }
@@ -193,13 +256,14 @@ class dialogMain: public QDialog
 
 	public:
     QComboBox* QComboBox_channel_selection;
-    QComboBox* QComboBox_threshold_type;
-    QDoubleSpinBox* QDoubleSpinBox_threshold;
+    QComboBox* QComboBox_intensity_thresholdType;
+    QDoubleSpinBox* QDoubleSpinBox_intensity_value;
 	QCheckBox* QCheckBox_algorithm_debug;
-	QRadioButton* QRadioButton_algorithm_regionGrowingOnly;
-	QRadioButton* QRadioButton_algorithm_regionGrowingGWDT;
-	QRadioButton* QRadioButton_algorithm_regionGrowingGVF;
-	QRadioButton* QRadioButton_algorithm_regionGrowFusing;
+	QRadioButton* QRadioButton_algorithm_regionGrowOnly;
+	QRadioButton* QRadioButton_algorithm_GWDT;
+	QRadioButton* QRadioButton_algorithm_regionGrowGVF;
+	QRadioButton* QRadioButton_algorithm_fusing;
+	QRadioButton* QRadioButton_algorithm_regionGrowSRS;
 	QRadioButton* QRadioButton_shape_sphere;
 	QRadioButton* QRadioButton_shape_cube;
 	QLineEdit* QLineEdit_GVF_maxIteration;
@@ -207,87 +271,124 @@ class dialogMain: public QDialog
 	QLineEdit* QLineEdit_GVF_sigma;
 	QLineEdit* QLineEdit_GVF_mu;
 	QLineEdit* QLineEdit_Shape_delta;
-	QLineEdit* QLineEdit_threshold_thresholdHistoSimilar;
+	QLineEdit* QLineEdit_intensity_histoCorrelation;
 	QLineEdit* QLineEdit_GWDT_boundaryThin;
 	QLineEdit* QLineEdit_GWDT_boundaryConditionLoosenBy;
-	V3DLONG int_channel;
-    int int_thresholdType;
-    double double_threshold;
-	enum_algorithm_t type_algorithm;
-	enum_shape_t type_shape;
-	bool flag_debug;
-	double double_GVF_maxIteration;
-	double double_GVF_fusionThreshold;
-	double double_GVF_sigma;
-	double double_GVF_mu;
-	double value_Shape_delta;
-	double value_threshold_thresholdHistoSimilar;
-	int count_boundaryThinIteration;
-	double value_boudaryConditionLoosesBy;
+	QLineEdit* QLineEdit_shape_thresholdRegionSize;
+	QLineEdit* QLineEdit_shape_uThresholdRegionSize;
+	QLineEdit* QLineEdit_intenstiy_valueChangeRatio;
+	QLineEdit* QLineEdit_SRS_initialT;
+	QLineEdit* QLineEdit_SRS_minT;
+	QLineEdit* QLineEdit_SRS_grateRatio;
+	QLineEdit* QLineEdit_SRS_maxIteration;
+	QLineEdit* QLineEdit_SRS_convergeCriteria;
+	QLineEdit* QLineEdit_SRS_initialLambda;
+	QLineEdit* QLineEdit_SRS_mergingCriteria;
+	QLineEdit* QLineEdit_SRS_countSeed;
+	V3DLONG channel_idx_selection;
+    int intensity_threshold_type;
+	double intensity_threshold_histoCorr;
+    double intensity_threshold_global;
+	enum_algorithm_t algorithm_type_selection;
+	enum_shape_t shape_type_selection;
+	bool algorithm_is_debug;
+	double GVF_para_maxIteration;
+	double GVF_para_mergingThreshold;
+	double GVF_para_sigma;
+	double GVF_para_mu;
+	double shape_para_delta;
+	int GWDT_para_boundaryThinIteration;
+	double GWDT_para_boundaryCriteria;
+	double SRS_para_initialT;
+	double SRS_para_minT;
+	double SRS_para_grateRatio;
+	double SRS_para_maxIteration;
+	double SRS_para_convergeCriteria;
+	double SRS_para_initialLambda;
+	double SRS_para_mergingCriteria;
+	int SRS_para_countSeed;
+	double shape_multiplier_thresholdRegionSize;
+	double shape_multiplier_uThresholdRegionSize;
+	double intensity_threshold_valueChangeRatio;
 
 	public slots:
     void update()
     {
-        int_thresholdType = QComboBox_threshold_type->currentIndex();
+        intensity_threshold_type = QComboBox_intensity_thresholdType->currentIndex();
 
-        if(int_thresholdType == 1)
+        if(intensity_threshold_type == 1)
         {
-            QDoubleSpinBox_threshold->setEnabled(true);
+            QDoubleSpinBox_intensity_value->setEnabled(true);
         }
         else
         {
-            QDoubleSpinBox_threshold->setEnabled(false);
+            QDoubleSpinBox_intensity_value->setEnabled(false);
         }
     }
     void _slot_start()
     {
-        int_channel = QComboBox_channel_selection->currentIndex() + 1;
-        double_threshold = -1;
-        if (QDoubleSpinBox_threshold->isEnabled())
+        channel_idx_selection = QComboBox_channel_selection->currentIndex() + 1;
+        intensity_threshold_global = -1;
+        if (QDoubleSpinBox_intensity_value->isEnabled())
         {
-            double_threshold = QDoubleSpinBox_threshold->text().toDouble();
+            intensity_threshold_global = QDoubleSpinBox_intensity_value->text().toDouble();
         }
         else
 		{
-			double_threshold = -1; //calculate automatically;
+			intensity_threshold_global = -1; //calculate automatically;
 		}
-		this->flag_debug = QCheckBox_algorithm_debug->isChecked();
-		if (this->QRadioButton_algorithm_regionGrowingOnly->isChecked())
+		this->algorithm_is_debug = QCheckBox_algorithm_debug->isChecked();
+		if (this->QRadioButton_algorithm_regionGrowOnly->isChecked())
 		{
-			this->type_algorithm = regionGrowOnly;
+			this->algorithm_type_selection = regionGrowOnly;
 		}
-		if (this->QRadioButton_algorithm_regionGrowingGWDT->isChecked())
+		if (this->QRadioButton_algorithm_GWDT->isChecked())
 		{
-			this->type_algorithm = regionGrowGWDT;
+			this->algorithm_type_selection = GWDT;
 		}
-		else if (this->QRadioButton_algorithm_regionGrowingGVF->isChecked())
+		else if (this->QRadioButton_algorithm_regionGrowGVF->isChecked())
 		{
-			this->type_algorithm = regionGrowGVF;
+			this->algorithm_type_selection = regionGrowGVF;
 		}
-		else if (this->QRadioButton_algorithm_regionGrowFusing->isChecked())
+		else if (this->QRadioButton_algorithm_fusing->isChecked())
 		{
-			this->type_algorithm = regionGrowFusing;
+			this->algorithm_type_selection = fusing;
+		}
+		else if (this->QRadioButton_algorithm_regionGrowSRS->isChecked())
+		{
+			this->algorithm_type_selection = regionGrowSRS;
 		}
 		else
 		{
-			this->type_algorithm = regionGrowOnly;
+			this->algorithm_type_selection = regionGrowOnly;
 		}
-		double_GVF_maxIteration = this->QLineEdit_GVF_maxIteration->text().toDouble();
-		double_GVF_fusionThreshold = this->QLineEdit_GVF_fusionThreshold->text().toDouble();
-		double_GVF_sigma = this->QLineEdit_GVF_sigma->text().toDouble();
-		double_GVF_mu = this->QLineEdit_GVF_mu->text().toDouble();
-		value_Shape_delta = this->QLineEdit_Shape_delta->text().toDouble();
-		value_threshold_thresholdHistoSimilar = this->QLineEdit_threshold_thresholdHistoSimilar->text().toDouble();
+		GVF_para_maxIteration = this->QLineEdit_GVF_maxIteration->text().toDouble();
+		GVF_para_mergingThreshold = this->QLineEdit_GVF_fusionThreshold->text().toDouble();
+		GVF_para_sigma = this->QLineEdit_GVF_sigma->text().toDouble();
+		GVF_para_mu = this->QLineEdit_GVF_mu->text().toDouble();
+		shape_para_delta = this->QLineEdit_Shape_delta->text().toDouble();
+		intensity_threshold_histoCorr = this->QLineEdit_intensity_histoCorrelation->text().toDouble();
 		if (this->QRadioButton_shape_sphere->isChecked())
 		{
-			this->type_shape = sphere;
+			this->shape_type_selection = sphere;
 		}
 		else if (this->QRadioButton_shape_cube->isChecked())
 		{
-			this->type_shape = cube;
+			this->shape_type_selection = cube;
 		}
-		count_boundaryThinIteration = this->QLineEdit_GWDT_boundaryThin->text().toInt();
-		value_boudaryConditionLoosesBy = this->QLineEdit_GWDT_boundaryConditionLoosenBy->text().toDouble();
+		GWDT_para_boundaryThinIteration = this->QLineEdit_GWDT_boundaryThin->text().toInt();
+		GWDT_para_boundaryCriteria = this->QLineEdit_GWDT_boundaryConditionLoosenBy->text().toDouble();
+		shape_multiplier_thresholdRegionSize = this->QLineEdit_shape_thresholdRegionSize->text().toDouble();
+		shape_multiplier_uThresholdRegionSize = this->QLineEdit_shape_uThresholdRegionSize->text().toDouble();
+		intensity_threshold_valueChangeRatio = this->QLineEdit_intenstiy_valueChangeRatio->text().toDouble();
+		SRS_para_initialT = this->QLineEdit_SRS_initialT->text().toDouble();
+		SRS_para_minT = this->QLineEdit_SRS_minT->text().toDouble();
+		SRS_para_grateRatio = this->QLineEdit_SRS_grateRatio->text().toDouble();
+		SRS_para_maxIteration = this->QLineEdit_SRS_maxIteration->text().toDouble();
+		SRS_para_convergeCriteria = this->QLineEdit_SRS_convergeCriteria->text().toDouble();
+		SRS_para_initialLambda = this->QLineEdit_SRS_initialLambda->text().toDouble();
+		SRS_para_mergingCriteria = this->QLineEdit_SRS_mergingCriteria->text().toDouble();
+		SRS_para_countSeed = this->QLineEdit_SRS_countSeed->text().toInt();
         accept();
     }
 };
