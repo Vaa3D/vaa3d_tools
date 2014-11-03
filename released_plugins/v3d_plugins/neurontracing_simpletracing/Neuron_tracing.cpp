@@ -1263,7 +1263,7 @@ bool NeuronPlugin::Tracing_DistanceField_entry_func(const V3DPluginArgList & inp
 		cerr<<"unable to write swc"<<endl; 
 		return false;
 	}
-    Clear();
+    //Clear();
 	return true;
 }
 
