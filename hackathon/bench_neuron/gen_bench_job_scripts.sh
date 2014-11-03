@@ -128,6 +128,6 @@ write_neuron_tracing_command $jobScriptFile $tracingMethod $vaa3dProgramPath $in
 
 # precisely kill the job
 
-echo "kill %jobScriptFile" >> $jobScriptFile;
+echo "kill %1" >> $jobScriptFile;
 
 
