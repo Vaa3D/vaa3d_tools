@@ -374,7 +374,6 @@ void Neuron_segment_entry_func(V3DPluginCallback &callback, QWidget *parent)///s
 void NeuronPlugin::NeuronTracing_Ray_cast(V3DPluginCallback &callback, QWidget *parent)
 {
 	v3dhandle curwin = callback.currentImageWindow();
-	
 	int start_t = clock(); // record time point
 	
 	Image4DSimple* subject = callback.getImage(curwin);
@@ -385,16 +384,30 @@ void NeuronPlugin::NeuronTracing_Ray_cast(V3DPluginCallback &callback, QWidget *
 		QMessageBox::information(0, title, QObject::tr("No image is open."));
 		return;
 	}
-	Image4DProxy<Image4DSimple> pSub(subject);	
-	V3DLONG sx = subject->getXDim();
-	V3DLONG sy = subject->getYDim();
-	V3DLONG sz = subject->getZDim();
+
+    unsigned char * inimg1d = subject->getRawData();
+    V3DLONG sx = subject->getXDim();
+    V3DLONG sy = subject->getYDim();
+    V3DLONG sz = subject->getZDim();
 	V3DLONG pagesz_sub = sx*sy*sz;
+
 	m_OiImgWidth = sx;
 	m_OiImgHeight =sy;
 	
-	unsigned char * pData = pSub.begin();
-	
+    unsigned char * pData;
+    try
+    {
+        pData = new  unsigned char[pagesz_sub];
+    }
+    catch (...)
+    {
+        v3d_msg("Fail to allocate memory in Neuron_segment_entry_func().");
+        return;
+    }
+    int iVesCnt = 1;
+    bool b_binarization = true;
+    do_seg(inimg1d, pData, sx, sy, sz, iVesCnt, b_binarization);
+
 	static int nDx[] = {-1,0,1,-1,0,1,-1,0,1};
 	static int nDy[] = {-1,-1,-1,0,0,0,1,1,1};
 	static int nDz[] = {-1,0,1};
@@ -402,11 +415,11 @@ void NeuronPlugin::NeuronTracing_Ray_cast(V3DPluginCallback &callback, QWidget *
 	V3DLONG x,y,z,index;
 	
 	V3DLONG imagesize = sy*sx;
-    unsigned char *apsInput=0;
+    V3DLONG *apsInput=0;
 	try
 	{
-		apsInput = new unsigned char[sx*sy*sz];
-		memset(apsInput, 0, sx*sy*sz * sizeof(unsigned char));		
+        apsInput = new V3DLONG[sx*sy*sz];
+        memset(apsInput, 0, sx*sy*sz * sizeof(V3DLONG));
 	}
 	catch (...)
 	{
@@ -454,7 +467,10 @@ void NeuronPlugin::NeuronTracing_Ray_cast(V3DPluginCallback &callback, QWidget *
 			}
 		}
 	}
-	
+
+    if(pData) {delete []pData; pData = 0;}
+
+    bool flag = 1;
 	for (V3DLONG k=0; k<sz; k++)
 	{
 		for (V3DLONG j=0; j<sy; j++)
@@ -464,6 +480,14 @@ void NeuronPlugin::NeuronTracing_Ray_cast(V3DPluginCallback &callback, QWidget *
 				if (apsInput[k*sx*sy+j*sx+i] == 255)
 				{
 					apsInput[k*sx*sy+j*sx+i] = 255;
+                    if(flag == 1)
+                    {
+                        orgPoint.m_x = i + 1;
+                        orgPoint.m_y = j + 1;
+                        orgPoint.m_z = k + 1;
+                        flag =0;
+                    }
+
 
 				}
 				else 
@@ -473,26 +497,31 @@ void NeuronPlugin::NeuronTracing_Ray_cast(V3DPluginCallback &callback, QWidget *
 			}
 		}
 	}
-	//SetImageInfo1D(apsInput,sz,sx,sy); temp modify
-	
-	LandmarkList  Landmark;
-	Landmark = callback.getLandmark(curwin);
-    V3DLONG m_x=0, m_y=0, m_z=0;
-    if (Landmark.size()>0)
-    {
-        m_x= Landmark.at(0).x;
-        m_y= Landmark.at(0).y;
-        m_z= Landmark.at(0).z;
-    }
-    printf("x=%ld y=%ld z=%ld\n",m_x,m_y,m_z);
-    orgPoint.m_x = m_x;
-	orgPoint.m_y = m_y;
-	orgPoint.m_z = m_z;
+
+    SetImageInfo1D(apsInput,sz,sx,sy);
+
+    printf("x=%ld y=%ld z=%ld\n",orgPoint.m_x,orgPoint.m_y,orgPoint.m_z);
+
+
+//	LandmarkList  Landmark;
+//	Landmark = callback.getLandmark(curwin);
+//    V3DLONG m_x=0, m_y=0, m_z=0;
+//    if (Landmark.size()>0)
+//    {
+//        m_x= Landmark.at(0).x;
+//        m_y= Landmark.at(0).y;
+//        m_z= Landmark.at(0).z;
+//    }
+//    printf("x=%ld y=%ld z=%ld\n",m_x,m_y,m_z);
+//    orgPoint.m_x = m_x;
+//	orgPoint.m_y = m_y;
+//	orgPoint.m_z = m_z;
+
 	Set_Seed(orgPoint);
 	Initialize1D();
 	Set_local_DFB();
 	
-	try
+    try
 	{
 		m_ppsMaskData = new unsigned char [m_iImgWidth * m_iImgHeight*m_iImgCount]; 
 		
@@ -504,7 +533,7 @@ void NeuronPlugin::NeuronTracing_Ray_cast(V3DPluginCallback &callback, QWidget *
 		if (m_ppsMaskData) {delete []m_ppsMaskData; m_ppsMaskData=0;}
 		return;
 	}
-	unsigned char * m_OutImgData;
+    /*unsigned char * m_OutImgData;
 	try {
 		m_OutImgData = new  unsigned char[m_iImgCount * m_iImgWidth * m_iImgHeight];
 		
@@ -515,7 +544,8 @@ void NeuronPlugin::NeuronTracing_Ray_cast(V3DPluginCallback &callback, QWidget *
 		v3d_msg("Fail to allocate memory in Distance Transform.");
 		if (m_OutImgData) {delete []m_OutImgData; m_OutImgData=0;}
 		return;
-	}
+    }*/
+
 	/////first extract	
 	vector<SpacePoint_t> centerpath;
 	
@@ -538,6 +568,7 @@ void NeuronPlugin::NeuronTracing_Ray_cast(V3DPluginCallback &callback, QWidget *
 	Branchpoint = BranchDetect2(centerpath); 
 	
 	NeuronSWC v;
+    listNeuron.clear();
 	
 	for(V3DLONG jj = 0; jj< centerpath.size(); jj++)
 	{
@@ -586,11 +617,16 @@ void NeuronPlugin::NeuronTracing_Ray_cast(V3DPluginCallback &callback, QWidget *
 	SS.on = true;
 	SS.listNeuron = listNeuron;
 	SS.name = "neu_tracing_R";
-	QString filename = "neu_tracing_R.swc";
-	writeSWC_file(filename,SS);
-	
+    QString fileSaveName = QFileDialog::getSaveFileName(0, QObject::tr("Save File"),
+                                                        QFileInfo(callback.getImageName(curwin)).fileName() + "_R.swc",
+                                                            QObject::tr("Supported file (*.swc)"
+                                                                        ";;Neuron structure	(*.swc)"
+                                                                        ));
+
+    writeSWC_file(fileSaveName,SS);
+
 	/////////
-	Image4DSimple p4DImage;
+    /*Image4DSimple p4DImage;
 	p4DImage.setData(m_OutImgData, m_iImgWidth, m_iImgHeight, m_iImgCount-2, 1, V3D_UINT8);
 	v3dhandle newwin;
 	if(QMessageBox::Yes == QMessageBox::question (0, "", QString("Do you want to use the existing window?"), QMessageBox::Yes, QMessageBox::No))
@@ -600,7 +636,8 @@ void NeuronPlugin::NeuronTracing_Ray_cast(V3DPluginCallback &callback, QWidget *
 	callback.setImage(newwin, &p4DImage);		
 	callback.setImageName(newwin, QString("Neuron tracing_R"));
 	callback.updateImageWindow(newwin);
-	Clear();
+    Clear();*/
+    return;
 }
 void NeuronPlugin::NeuronTracing_Ray_D(V3DPluginCallback &callback, QWidget *parent)
 {
@@ -616,16 +653,29 @@ void NeuronPlugin::NeuronTracing_Ray_D(V3DPluginCallback &callback, QWidget *par
 		QMessageBox::information(0, title, QObject::tr("No image is open."));
 		return;
 	}
-	Image4DProxy<Image4DSimple> pSub(subject);	
-	V3DLONG sx = subject->getXDim();
+    unsigned char * inimg1d = subject->getRawData();
+    V3DLONG sx = subject->getXDim();
 	V3DLONG sy = subject->getYDim();
 	V3DLONG sz = subject->getZDim();
 	V3DLONG pagesz_sub = sx*sy*sz;
 	m_OiImgWidth = sx;
 	m_OiImgHeight =sy;
 	
-	unsigned char * pData = pSub.begin();
-	
+    unsigned char * pData;
+    try
+    {
+        pData = new  unsigned char[pagesz_sub];
+    }
+    catch (...)
+    {
+        v3d_msg("Fail to allocate memory in Neuron_segment_entry_func().");
+        return;
+    }
+    int iVesCnt = 1;
+    bool b_binarization = true;
+    do_seg(inimg1d, pData, sx, sy, sz, iVesCnt, b_binarization);
+
+
 	static int nDx[] = {-1,0,1,-1,0,1,-1,0,1};
 	static int nDy[] = {-1,-1,-1,0,0,0,1,1,1};
 	static int nDz[] = {-1,0,1};
@@ -634,11 +684,11 @@ void NeuronPlugin::NeuronTracing_Ray_D(V3DPluginCallback &callback, QWidget *par
 	
 	V3DLONG imagesize = sy*sx;
 	
-	unsigned char *apsInput;
+    V3DLONG *apsInput;
 	try
 	{
-		apsInput = new unsigned char[sx*sy*sz];
-		memset(apsInput, 0, sx*sy*sz * sizeof(unsigned char));
+        apsInput = new V3DLONG[sx*sy*sz];
+        memset(apsInput, 0, sx*sy*sz * sizeof(V3DLONG));
 		
 	}
 	catch (...)
@@ -685,8 +735,13 @@ void NeuronPlugin::NeuronTracing_Ray_D(V3DPluginCallback &callback, QWidget *par
 				apsInput[index]=max;
 			}
 		}
-	}
-	
+    }
+
+    if(pData) {delete []pData; pData = 0;}
+
+    bool flag = 1;
+    V3DLONG m_x,m_y,m_z;
+
 	for (V3DLONG k=0; k<sz; k++)
 	{
 		for (V3DLONG j=0; j<sy; j++)
@@ -695,7 +750,16 @@ void NeuronPlugin::NeuronTracing_Ray_D(V3DPluginCallback &callback, QWidget *par
 			{
 				if (apsInput[k*sx*sy+j*sx+i] == 255)
 				{
-					apsInput[k*sx*sy+j*sx+i] = 255;
+                    apsInput[k*sx*sy+j*sx+i] = 255;
+                    if(flag == 1)
+                    {
+                        m_x = i + 1;
+                        m_y = j + 1;
+                        m_z = k + 1;
+                        flag =0;
+                    }
+
+
 					
 				}
 				else 
@@ -704,36 +768,38 @@ void NeuronPlugin::NeuronTracing_Ray_D(V3DPluginCallback &callback, QWidget *par
 				}
 			}
 		}
-	}
-	//SetImageInfo1D(apsInput,sz,sx,sy); temp modify
-	LandmarkList  Landmark;
-	Landmark = callback.getLandmark(curwin);
+    }
+
+
+    SetImageInfo1D(apsInput,sz,sx,sy); //temp modify
+ /*   LandmarkList  Landmark;
+    Landmark = callback.getLandmark(curwin);
     if (Landmark.size()<1)
     {
         v3d_msg("Landmark has not been set in the image. Quit.");
         return;
     }
 
-	V3DLONG m_x= Landmark.at(0).x;
-	V3DLONG m_y= Landmark.at(0).y;
-	V3DLONG m_z= Landmark.at(0).z;
+    V3DLONG m_x= Landmark.at(0).x;
+    V3DLONG m_y= Landmark.at(0).y;
+    V3DLONG m_z= Landmark.at(0).z;*/
 	
-	ImageMarker S;
-	S.x = m_x;
-	S.y = m_y;
-	S.z = m_z;
-	S.on = true;
-	listMarker.append(S);
+    ImageMarker S;
+    S.x = m_x;
+    S.y = m_y;
+    S.z = m_z;
+    S.on = true;
+    listMarker.append(S);
 	
-	if(apsInput[m_z*sx*sy+m_y*sx+m_x] == BACKGROUND)
-	{
-		return;
-	}
-	printf("x=%ld y=%ld z=%ld\n",m_x,m_y,m_z);
+    if(apsInput[m_z*sx*sy+m_y*sx+m_x] == BACKGROUND)
+    {
+        return;
+    }
+    printf("x=%ld y=%ld z=%ld\n",m_x,m_y,m_z);
 	
-	orgPoint.m_x = m_x;
-	orgPoint.m_y = m_y;
-	orgPoint.m_z = m_z;
+    orgPoint.m_x = m_x;
+    orgPoint.m_y = m_y;
+    orgPoint.m_z = m_z;
 	
 	Initialize1D();
 	
@@ -757,7 +823,7 @@ void NeuronPlugin::NeuronTracing_Ray_D(V3DPluginCallback &callback, QWidget *par
 		if (m_ppsMaskData) {delete []m_ppsMaskData; m_ppsMaskData=0;}
 		return;
 	}
-	unsigned char * m_OutImgData;
+    /*unsigned char * m_OutImgData;
 	try {
 		m_OutImgData = new  unsigned char[m_iImgCount * m_iImgWidth * m_iImgHeight];
 		
@@ -768,7 +834,7 @@ void NeuronPlugin::NeuronTracing_Ray_D(V3DPluginCallback &callback, QWidget *par
 		v3d_msg("Fail to allocate memory in Distance Transform.");
 		if (m_OutImgData) {delete []m_OutImgData; m_OutImgData=0;}
 		return;
-	}
+    }*/
 	try
 	{
 		m_piMskDFS = new V3DLONG[m_ulVolumeSize]; 
@@ -823,7 +889,8 @@ void NeuronPlugin::NeuronTracing_Ray_D(V3DPluginCallback &callback, QWidget *par
 	PathMask(centerpath);
 	
 	NeuronSWC v;
-	
+    listNeuron.clear();
+
 	for(V3DLONG jj = 0; jj< centerpath.size(); jj++)
 	{
 		v.n	= jj+1;
@@ -855,7 +922,7 @@ void NeuronPlugin::NeuronTracing_Ray_D(V3DPluginCallback &callback, QWidget *par
 	     x = Branchpoint.at(jj).m_x;
          y = Branchpoint.at(jj).m_y;
          z = Branchpoint.at(jj).m_z;
-		m_OutImgData[z* m_iImgSize + y * m_iImgWidth + x]=255;
+    //	m_OutImgData[z* m_iImgSize + y * m_iImgWidth + x]=255;
 		m_Markerpoint.push_back(Branchpoint.at(jj));
 		NueronTree_Ray_D(Branchpoint.at(jj),(Branchpoint.at(jj).node_id));
 	}
@@ -863,73 +930,78 @@ void NeuronPlugin::NeuronTracing_Ray_D(V3DPluginCallback &callback, QWidget *par
 	SS.on = true;
 	SS.listNeuron = listNeuron;
 	SS.name = "neu_tracing_D";
-	QString filename = "neu_tracing_D.swc";
-	writeSWC_file(filename,SS);	
+  //  QString filename = "neu_tracing_D.swc";
+    QString filename = QFileDialog::getSaveFileName(0, QObject::tr("Save File"),
+                                                        QFileInfo(callback.getImageName(curwin)).fileName() + "_D.swc",
+                                                            QObject::tr("Supported file (*.swc)"
+                                                                        ";;Neuron structure	(*.swc)"
+                                                                        ));
+    writeSWC_file(filename,SS);
 	/////////////////////////////////////
-	centerpathall.push_back(centerpath);
-	for(V3DLONG jj = 0; jj< centerpathall.size(); jj++)
-	{
-		//		file.sprintf("%d",jj);
-		//		QString filepath = "/Users/yangj13/work/v3d_internal/v3d_2.0/yang_jinzhu/ray cast and distance/";
-		//		QString curImageName1 = filepath + file + ".swc";
-		//		SaveSwcfile(centerpathall.at(jj),curImageName1);
-		for(V3DLONG ii = 0; ii<centerpathall.at(jj).size(); ii++)
-		{
-			x = centerpathall.at(jj).at(ii).m_x;
-			y= centerpathall.at(jj).at(ii).m_y;
-			z = centerpathall.at(jj).at(ii).m_z;
-			m_OutImgData[z* m_iImgSize + y * m_iImgWidth + x]=255;
-			//printf("r=%lf ray=%ld\n",centerpathall.at(jj).at(ii).r,centerpathall.at(jj).at(ii).max_ray);
-		}
-	}
-	QHash <int, int>  hashNeuron;
-	//listNeuron.clear();
-	hashNeuron.clear();
-	V3DLONG tt =0;
-	for(V3DLONG i = 0; i < centerpathall.size(); i++)
-	{
+//    centerpathall.push_back(centerpath);
+//    for(V3DLONG jj = 0; jj< centerpathall.size(); jj++)
+//    {
+//        //		file.sprintf("%d",jj);
+//        //		QString filepath = "/Users/yangj13/work/v3d_internal/v3d_2.0/yang_jinzhu/ray cast and distance/";
+//        //		QString curImageName1 = filepath + file + ".swc";
+//        //		SaveSwcfile(centerpathall.at(jj),curImageName1);
+//        for(V3DLONG ii = 0; ii<centerpathall.at(jj).size(); ii++)
+//        {
+//            x = centerpathall.at(jj).at(ii).m_x;
+//            y= centerpathall.at(jj).at(ii).m_y;
+//            z = centerpathall.at(jj).at(ii).m_z;
+//            m_OutImgData[z* m_iImgSize + y * m_iImgWidth + x]=255;
+//            //printf("r=%lf ray=%ld\n",centerpathall.at(jj).at(ii).r,centerpathall.at(jj).at(ii).max_ray);
+//        }
+//    }
+//    QHash <int, int>  hashNeuron;
+//    //listNeuron.clear();
+//    hashNeuron.clear();
+//    V3DLONG tt =0;
+//    for(V3DLONG i = 0; i < centerpathall.size(); i++)
+//    {
 		
-		int size = centerpathall.at(i).size();
-		//printf("siz=%ld\n",size);
-		for(V3DLONG j = 0; j < size; j++)
-		{
-			tt++;
-			x = centerpathall.at(i).at(j).m_x;
-			y = centerpathall.at(i).at(j).m_y;
-			z = centerpathall.at(i).at(j).m_z;
-			double r = 0;
-			r = centerpathall.at(i).at(j).r;
-			//swcpath.push_back(tempoint);
-			if(j==0)
-			{
-				v.n	= tt;
-				v.type = 2;
-				v.x = x;
-				v.y = y;
-				v.z = z;
-				v.r = r;
-				v.pn  = -1;
-				//v.seg_id = centerpath.at(jj).seg_id;
-				//v.nodeinseg_id =jj;
-				listNeuron.append(v);
-				hashNeuron.insert(v.n, listNeuron.size()-1);
+//        int size = centerpathall.at(i).size();
+//        //printf("siz=%ld\n",size);
+//        for(V3DLONG j = 0; j < size; j++)
+//        {
+//            tt++;
+//            x = centerpathall.at(i).at(j).m_x;
+//            y = centerpathall.at(i).at(j).m_y;
+//            z = centerpathall.at(i).at(j).m_z;
+//            double r = 0;
+//            r = centerpathall.at(i).at(j).r;
+//            //swcpath.push_back(tempoint);
+//            if(j==0)
+//            {
+//                v.n	= tt;
+//                v.type = 2;
+//                v.x = x;
+//                v.y = y;
+//                v.z = z;
+//                v.r = r;
+//                v.pn  = -1;
+//                //v.seg_id = centerpath.at(jj).seg_id;
+//                //v.nodeinseg_id =jj;
+//                listNeuron.append(v);
+//                hashNeuron.insert(v.n, listNeuron.size()-1);
 				
-			}else 
-			{
-				v.n	= tt;
-				v.type = 2;
-				v.x = x;
-				v.y = y;
-				v.z = z;
-				v.r = r;
-				v.pn  = tt-1;
-				//v.seg_id = centerpath.at(jj).seg_id;
-				//v.nodeinseg_id =jj;
-				listNeuron.append(v);
-				hashNeuron.insert(v.n, listNeuron.size()-1);
-			}
-		}
-	}
+//            }else
+//            {
+//                v.n	= tt;
+//                v.type = 2;
+//                v.x = x;
+//                v.y = y;
+//                v.z = z;
+//                v.r = r;
+//                v.pn  = tt-1;
+//                //v.seg_id = centerpath.at(jj).seg_id;
+//                //v.nodeinseg_id =jj;
+//                listNeuron.append(v);
+//                hashNeuron.insert(v.n, listNeuron.size()-1);
+//            }
+//        }
+//    }
 	//	QString filename;
 	//	SS.on = true;
 	//	SS.listNeuron = listNeuron;
@@ -965,20 +1037,21 @@ void NeuronPlugin::NeuronTracing_Ray_D(V3DPluginCallback &callback, QWidget *par
 	//	}
 	//	
 	//
-	QString markfile = "markfile.marker";
-	writeMarker_file(markfile, listMarker);	
-	/////////
-	Image4DSimple p4DImage;
-	p4DImage.setData(m_ppsMaskData, m_iImgWidth, m_iImgHeight, m_iImgCount-2, 1, V3D_UINT8);
-	v3dhandle newwin;
-	if(QMessageBox::Yes == QMessageBox::question (0, "", QString("Do you want to use the existing window?"), QMessageBox::Yes, QMessageBox::No))
-		newwin = callback.currentImageWindow();
-	else
-		newwin = callback.newImageWindow();
-	callback.setImage(newwin, &p4DImage);		
-	callback.setImageName(newwin, QString("Neuron tracing_RD"));
-	callback.updateImageWindow(newwin);
+//    QString markfile = "markfile.marker";
+//    writeMarker_file(markfile, listMarker);
+//    /////////
+//    Image4DSimple p4DImage;
+//    p4DImage.setData(m_ppsMaskData, m_iImgWidth, m_iImgHeight, m_iImgCount-2, 1, V3D_UINT8);
+//    v3dhandle newwin;
+//    if(QMessageBox::Yes == QMessageBox::question (0, "", QString("Do you want to use the existing window?"), QMessageBox::Yes, QMessageBox::No))
+//        newwin = callback.currentImageWindow();
+//    else
+//        newwin = callback.newImageWindow();
+//    callback.setImage(newwin, &p4DImage);
+//    callback.setImageName(newwin, QString("Neuron tracing_RD"));
+//    callback.updateImageWindow(newwin);
 	//Clear();
+    return;
 }
 
 
@@ -1186,7 +1259,7 @@ bool NeuronPlugin::Tracing_DistanceField_entry_func(const V3DPluginArgList & inp
 		cerr<<"unable to write swc"<<endl; 
 		return false;
 	}
-	
+    Clear();
 	return true;
 }
 
@@ -1318,6 +1391,8 @@ template <class T> NeuronTree NeuronPlugin::NeuronTracing_Distance_SWC(T *apsInp
 	V3DLONG num=0;
 	V3DLONG blog = 0;
 	V3DLONG tt=0;
+    listNeuron.clear();
+
 	
 	for (i=0; i<iVesCnt; i++)
 	{

@@ -202,7 +202,7 @@ public:
 	
 	unsigned char *					      m_ppsMaskBranch;
 	
-	V3DLONG*			              m_ppsOriData1D;
+    V3DLONG*			              m_ppsOriData1D;
 	
 	V3DLONG*	                        m_psTemp;
 	
