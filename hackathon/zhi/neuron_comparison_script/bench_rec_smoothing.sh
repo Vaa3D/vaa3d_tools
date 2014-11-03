@@ -123,6 +123,21 @@ if [ $DO_TRACING == "YES" ]; then
     mv  $inimgfileTracing*_TreMap.swc $3
   fi;
 
+  if [ $METHOD == "8" -o $METHOD == "-1" ]; then
+    $1 -x MST_tracing -f trace_mst -i $inimgfileTracing -p 1 5
+    mv  $inimgfileTracing*_MST_Tracing.swc $3
+  fi;
+
+  if [ $METHOD == "9" -o $METHOD == "-1" ]; then
+    $1 -x SimpleTracing -f ray_shooting -i $inimgfileTracing -o ${inimgfileTracing}_Rayshooting.swc 
+    mv  $inimgfileTracing*_Rayshooting.swc $3
+  fi;
+
+  if [ $METHOD == "9" -o $METHOD == "-1" ]; then
+    $1 -x SimpleTracing -f dfs -i $inimgfileTracing -o ${inimgfileTracing}_Rollerball.swc 
+    mv  $inimgfileTracing*_Rollerball.swc $3
+  fi;
+
 fi;
 
 # generate the final linker file so make it easy to load many SWC files together into Vaa3D
