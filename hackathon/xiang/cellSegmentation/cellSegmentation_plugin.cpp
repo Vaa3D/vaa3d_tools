@@ -366,7 +366,7 @@ class class_segmentationMain
 			V3DLONG count_region = this->possVct_segmentationResultOriginal.size();
 			V3DLONG count_voxel = 0;
 			bool is_passedShapeStat = true;
-			bool is_passedHisto = true;
+			//bool is_passedHisto = true;
 			vector<V3DLONG> poss_region;
 			vector<V3DLONG> boundBox_region;
 			vector<vector<V3DLONG> > possVct_GWDT;
@@ -385,7 +385,7 @@ class class_segmentationMain
 			V3DLONG pos_voxel;
 			int value_voxel;
 			int count_label;
-			vector<double> histo_region (const_length_histogram, 0);
+			//vector<double> histo_region (const_length_histogram, 0);
 			vector<V3DLONG> poss_splittedRegion;
 			V3DLONG pos_center;
 			this->possVct_segmentationResultSplitted.clear();
@@ -403,20 +403,20 @@ class class_segmentationMain
 				poss_region = this->possVct_segmentationResultOriginal[idx_region];
 				pos_center = this->getCenterByMass(poss_region);
 				count_voxel = poss_region.size();
-				fill (histo_region.begin(), histo_region.end(), 0);
+				//fill (histo_region.begin(), histo_region.end(), 0);
 				for (int idx_voxel=0;idx_voxel<count_voxel;idx_voxel++)
 				{
 					pos_voxel = poss_region[idx_voxel];
 					value_voxel = this->Image1D_page[pos_voxel];
-					histo_region[value_voxel]++;
+					//histo_region[value_voxel]++;
 				}
 				if (this->is_debugging) {ofstream_log<<endl<<endl<<"idx_region("<<idx_region<<"), count_voxel: "<<count_voxel<<endl;}
-				for (int i=0;i<const_length_histogram;i++)
+				/*for (int i=0;i<const_length_histogram;i++)
 				{
 					histo_region[i] = histo_region[i] / count_voxel;
-				}
-				is_passedHisto = false;
-				for (int j=0; j<this->histoVct_exemplarRegion.size(); j++)
+				}*/
+				//is_passedHisto = false;
+				/*for (int j=0; j<this->histoVct_exemplarRegion.size(); j++)
 				{
 					if (compareHisto(histo_region, this->histoVct_exemplarRegion[j], this->threshold_histoSimilar))
 					{
@@ -428,7 +428,7 @@ class class_segmentationMain
 				{
 					if (this->is_debugging) {ofstream_log<<" histogram deviates too much from exemplar, removed;"<<endl;}
 					continue;
-				}
+				}*/
 				if (count_voxel<this->threshold_regionSize)
 				{
 					if (this->is_debugging) {ofstream_log<<" too small, removed;"<<endl;}
@@ -504,12 +504,12 @@ class class_segmentationMain
 				{
 					if (this->is_debugging) {ofstream_log<<" shape test failed;"<<endl;}
 					cout<<"   region["<<idx_region<<"] failed shape test;"<<endl;
-					if (count_voxel > this->uThreshold_regionSize)
-					{
-						//irregular and too big, removed;
-						cout<<"   region["<<idx_region<<"] too big, removed;"<<endl;
-					}
-					else
+					//if (count_voxel > this->uThreshold_regionSize)
+					//{
+					//	//irregular and too big, removed;
+					//	cout<<"   region["<<idx_region<<"] too big, removed;"<<endl;
+					//}
+					//else
 					{
 						if (this->type_algorithm == regionGrowOnly)
 						{
@@ -521,26 +521,37 @@ class class_segmentationMain
 							V3DLONG size_X = boundBox_region[1]-boundBox_region[0]+1;
 							V3DLONG size_Y = boundBox_region[3]-boundBox_region[2]+1;
 							V3DLONG size_Z = boundBox_region[5]-boundBox_region[4]+1;
+							V3DLONG min_X = boundBox_region[0];
+							V3DLONG min_Y = boundBox_region[2];
+							V3DLONG min_Z = boundBox_region[4];
 							if (this->is_debugging) {ofstream_log<<" region as input to GVF: size_X("<<size_X<<"), size_Y("<<size_Y<<"), size_Z("<<size_Z<<");"<<endl;}
-							double3D_GVF = memory_allocate_double3D(size_X, size_Y, size_Z);
-							this->centralizeRegion(poss_region, double3D_GVF, boundBox_region); //fill double3D_GVF with voxels of the given region;
-							possVct_GVF = class_segmentationMain::GVF_cellSegmentation(double3D_GVF, size_X, size_Y, size_Z, this->is_debugging, this->paras_GVF);
+							double*** double3D_GVF = memory_allocate_double3D(size_X, size_Y, size_Z);
+							int*** int3D_label = memory_allocate_int3D(size_X, size_Y, size_Z);
+							this->centralizeRegion(poss_region, size_X, size_Y, size_Z, min_X, min_Y, min_Z, double3D_GVF);
+							vector<V3DLONG> poss_centerGVF;
+							int count_label = class_segmentationMain::GVF_cellSegmentation(double3D_GVF, size_X, size_Y, size_Z, this->is_debugging, this->paras_GVF, int3D_label);
+							possVct_GVF = int3D2possVct(int3D_label, count_label, double3D_GVF, 
+								size_X, size_Y, size_Z, min_X, min_Y, min_Z, this->offset_Y, this->offset_Z, 
+								poss_centerGVF, this->threshold_regionSize);
 							if (this->is_debugging) {ofstream_log<<" GVF segmented the region into "<<possVct_GVF.size()<<" sub-regions;"<<endl;}
-							for (int i=0;i<possVct_GVF.size();i++)
+							if (possVct_GVF.size()>0)
 							{
-								if (possVct_GVF[i].size()>=this->threshold_regionSize)
+								for (int i=0;i<possVct_GVF.size();i++)
 								{
 									if (this->is_debugging) {ofstream_log<<" sub-region ("<<i+1<<"), size: "<<possVct_GVF[i].size()<<endl;}
-									poss_splittedRegion = deCentralizeRegion(possVct_GVF[i], boundBox_region, this->dim_X, this->dim_Y);
+									poss_splittedRegion = possVct_GVF[i];
 									this->possVct_segmentationResultSplitted.push_back(poss_splittedRegion);
 									this->poss_segmentationResultCenter.push_back(this->getCenterByMass(poss_splittedRegion));
 								}
-								else
-								{
-									if (this->is_debugging) {ofstream_log<<" too small, removed;"<<endl;}
-								}
+							}
+							else
+							{
+								this->possVct_segmentationResultSplitted.push_back(poss_region);
+								this->poss_segmentationResultCenter.push_back(pos_center);
 							}
 							memory_free_double3D(double3D_GVF, size_Z, size_X);
+							memory_free_int3D(int3D_label, size_Z, size_X);
+							possVct_GVF.clear();
 						}
 						else if (this->type_algorithm == regionGrowSRS)
 						{
@@ -553,7 +564,7 @@ class class_segmentationMain
 							if (this->is_debugging) {ofstream_log<<"memory_allocate_uchar1D for Image1D_SRS passed;"<<endl;}
 							this->centralizeRegion(poss_region, size_X, size_Y, size_Z, boundBox_region[0], boundBox_region[2], boundBox_region[4], Image1D_SRS); //fill Image1D_SRS with voxels of the given region;
 							if (this->is_debugging) {ofstream_log<<"centralizeRegion passed;"<<endl;}
-							unsigned char *Image1D_segmentationLabel = memory_allocate_uchar1D(size_region);
+							int *Image1D_segmentationLabel = memory_allocate_int1D(size_region);
 							count_label = this->paras_SRS[7];
 							for (int i=0;i<count_label;i++)
 							{
@@ -566,8 +577,8 @@ class class_segmentationMain
 							this->AGS_main(Image1D_SRS, size_X, size_Y, size_Z, points_randomSeed, this->paras_SRS, Image1D_segmentationLabel);
 							if (this->is_debugging) {ofstream_log<<"AGS_main passed;"<<endl;}
 							vector<V3DLONG> poss_centerSRS;
-							possVct_SRS = Image1D2possVct(Image1D_segmentationLabel, count_label,
-								Image1D_SRS, size_region, size_X, size_Y, size_Z, boundBox_region[0], boundBox_region[2], boundBox_region[4],
+							possVct_SRS = int1D2possVct(Image1D_segmentationLabel, count_label,
+								Image1D_SRS, size_X, size_Y, size_Z, boundBox_region[0], boundBox_region[2], boundBox_region[4],
 								this->offset_Y, this->offset_Z, paras_SRS[6]*size_radius, poss_centerSRS, threshold_regionSize);
 							if (this->is_debugging) {ofstream_log<<" SRS segmented the region into "<<possVct_SRS.size()<<" sub-regions;"<<endl;}
 							if (possVct_SRS.size()>0)
@@ -589,7 +600,7 @@ class class_segmentationMain
 							}
 							poss_centerSRS.clear();
 							points_randomSeed.clear();
-							memory_free_uchar1D(Image1D_segmentationLabel, size_region);
+							memory_free_int1D(Image1D_segmentationLabel, size_region);
 							memory_free_uchar1D(Image1D_SRS, size_region);
 						}
 					}
@@ -691,9 +702,9 @@ class class_segmentationMain
 				pos_current = poss_growing.back();
 				poss_growing.pop_back();
 				value_current = this->Image1D_page[pos_current];
+				xyz_current = this->index2Coordinate(pos_current);
 				for (int j=0;j<const_count_neighbors;j++)
 				{
-					xyz_current = this->index2Coordinate(pos_current);
 					if (((xyz_current[0]+point_neighborRelative[j].x)<0)||((xyz_current[0]+point_neighborRelative[j].x)>=this->dim_X)||((xyz_current[1]+point_neighborRelative[j].y)<0) || ((xyz_current[1]+point_neighborRelative[j].y)>=this->dim_Y)||((xyz_current[2]+point_neighborRelative[j].z)<0) || ((xyz_current[2]+point_neighborRelative[j].z)>=this->dim_Z))
 					{
 						//invalide anyway;
@@ -1122,191 +1133,6 @@ class class_segmentationMain
 		}
 		#pragma endregion
 
-		#pragma region "conversion"
-		static vector<vector<V3DLONG> > Image1D2possVct(unsigned char* Image1D_label, int count_label, unsigned char* Image1D_image, 
-			const V3DLONG size_input, const V3DLONG size_X, const V3DLONG size_Y, const V3DLONG size_Z, 
-			const V3DLONG min_X, const V3DLONG min_Y, const V3DLONG min_Z, const V3DLONG offset_Yglobal, const V3DLONG offset_Zglobal, 
-			const double min_centerDistance, vector<V3DLONG> &poss_center, const double threshold_regionSize)
-		{
-			int label_voxel = 0;
-			V3DLONG pos_voxel = 0;
-			double value_voxel = 0;
-			vector<V3DLONG> vct_empty(0, 0);
-			vector<vector<V3DLONG> > possVct_result;
-			vector<vector<V3DLONG> > possVct_resultWithEmpty;
-			for (int i=0;i<count_label;i++)
-			{
-				possVct_resultWithEmpty.push_back(vct_empty);
-			}
-			vector<V3DLONG> counts_label(count_label, 0);
-			double3D xyz_zero;
-			vector<double3D> mean_center;
-			for (int i=0;i<count_label;i++)
-			{
-				mean_center.push_back(xyz_zero);
-			}
-			vector<int> idxs_remap (count_label, 0);
-			V3DLONG label_remap = 0;
-			V3DLONG x=0; V3DLONG y=0; V3DLONG z=0;
-			V3DLONG offset_Y = size_X; V3DLONG offset_Z = size_X*size_Y;
-			vector<double> sums_mass (count_label, 0);
-			for (x=0;x<size_X;x++)
-			{
-				for (y=0;y<size_Y;y++)
-				{
-					for (z=0;z<size_Z;z++)
-					{
-						pos_voxel = class_segmentationMain::coordinate2Index(x, y, z, offset_Y, offset_Z);
-						label_voxel = Image1D_label[pos_voxel];
-						if (label_voxel > 0)
-						{
-							label_voxel = label_voxel-1;
-							value_voxel = Image1D_image[pos_voxel];
-							mean_center[label_voxel].x += value_voxel*x; mean_center[label_voxel].y += value_voxel*y; mean_center[label_voxel].z += value_voxel*z;
-							counts_label[label_voxel]++;
-							sums_mass[label_voxel] += value_voxel;
-						}
-					}
-				}
-			}
-			for (int i=0;i<count_label;i++)
-			{
-				idxs_remap[i] = i;
-				if (sums_mass[i]>0) {mean_center[i].x/=sums_mass[i]; mean_center[i].y/=sums_mass[i]; mean_center[i].z/=sums_mass[i];}
-			}
-			
-			for (int i=0;i<count_label;i++)
-			{
-				if (counts_label[i]>0)
-				{
-					for (int j=(i+1);j<count_label;j++)
-					{
-						if (counts_label[j]>0)
-						{
-							if (class_segmentationMain::getEuclideanDistance(mean_center[i], mean_center[j])<min_centerDistance)
-							{
-								if (idxs_remap[j] == j)
-								{
-									idxs_remap[j] = i;
-								}
-							}
-						}
-					}
-				}
-			}
-			mean_center.clear();
-			for (int i=0;i<count_label;i++)
-			{
-				mean_center.push_back(xyz_zero);
-			}
-			fill(sums_mass.begin(), sums_mass.end(), 0);
-			for (x=0;x<size_X;x++)
-			{
-				for (y=0;y<size_Y;y++)
-				{
-					for (z=0;z<size_Z;z++)
-					{
-						pos_voxel = class_segmentationMain::coordinate2Index(x, y, z, offset_Y, offset_Z);
-						label_voxel = Image1D_label[pos_voxel];
-						if (label_voxel > 0)
-						{
-							label_voxel = label_voxel-1;
-							value_voxel = Image1D_image[pos_voxel];
-							label_remap = idxs_remap[label_voxel];
-							mean_center[label_remap].x += value_voxel*x; mean_center[label_remap].y += value_voxel*y; mean_center[label_remap].z += value_voxel*z;
-							sums_mass[label_remap] += value_voxel;
-							pos_voxel = class_segmentationMain::coordinate2Index(x+min_X, y+min_Y, z+min_Z, offset_Yglobal, offset_Zglobal);
-							possVct_resultWithEmpty[label_remap].push_back(pos_voxel);
-						}
-					}
-				}
-			}
-			for (int i=0;i<count_label;i++)
-			{
-				if (sums_mass[i]>0) {mean_center[i].x/=sums_mass[i]; mean_center[i].y/=sums_mass[i]; mean_center[i].z/=sums_mass[i];}
-			}
-			for (int i=0;i<count_label;i++)
-			{
-				if ((sums_mass[i]>0) && ((possVct_resultWithEmpty[i].size()>threshold_regionSize)))
-				{
-					possVct_result.push_back(possVct_resultWithEmpty[i]);
-					poss_center.push_back(class_segmentationMain::coordinate2Index(mean_center[i].x+min_X, mean_center[i].y+min_Y, mean_center[i].z+min_Z, offset_Yglobal, offset_Zglobal));
-				}
-			}
-			return possVct_result;
-		}
-
-		static vector<vector<V3DLONG> > Image1DToIdxsVct(unsigned char* Image1D_input, const V3DLONG size_page)
-		{
-			V3DLONG value_voxel = 0;
-			V3DLONG pos_voxel = 0;
-			vector<V3DLONG> values_used (0, 0);
-			int idx_used;
-			vector<vector<V3DLONG> > idxsVct_result;
-			vector<V3DLONG> idxs_empty(0, 0);
-			int count_value = 0;
-			for (int i=0;i<size_page;i++)
-			{
-				pos_voxel = Image1D_input[i];
-				value_voxel = (int)Image1D_input[pos_voxel];
-				if (value_voxel>0)
-				{
-					idx_used = vctContains(values_used, value_voxel);
-					if (idx_used<0)
-					{
-						values_used.push_back(value_voxel);
-						idxsVct_result.push_back(idxs_empty);
-						idxsVct_result[count_value].push_back(pos_voxel);
-						count_value++;
-					}
-					else
-					{
-						idxsVct_result[idx_used].push_back(pos_voxel);
-					}
-				}
-			}
-			return idxsVct_result;
-		}
-
-		static vector<vector<V3DLONG> > Image3D2IdxsVct(int*** Image3D_input, const int size_X, const int size_Y, const int size_Z)
-		{
-			V3DLONG value_voxel = 0;
-			V3DLONG pos_voxel= 0;
-			vector<V3DLONG> values_used (0, 0);
-			int idx_used;
-			vector<vector<V3DLONG> > idxsVct_result;
-			vector<V3DLONG> idxs_empty(0, 0);
-			int count_value = 0;
-			for (int z=0;z<size_Z;z++)
-			{
-				for (int x=0;x<size_X;x++)
-				{
-					for (int y=0;y<size_Y;y++)
-					{
-						value_voxel = (int)Image3D_input[z][x][y];
-						if (value_voxel>0)
-						{
-							idx_used = vctContains(values_used, value_voxel);
-							pos_voxel= coordinate2Index(x, y, z, size_X, size_X*size_Y);
-							if (idx_used<0)
-							{
-								values_used.push_back(value_voxel);
-								idxsVct_result.push_back(idxs_empty);
-								idxsVct_result[count_value].push_back(pos_voxel);
-								count_value++;
-							}
-							else
-							{
-								idxsVct_result[idx_used].push_back(pos_voxel);
-							}
-						}
-					}
-				}
-			}
-			return idxsVct_result;
-		}
-		#pragma endregion
-
 		#pragma region "utility functions"
 		static void Image3D2Image1D(int*** Image3D_input, unsigned char* Image1D_output, const int size_X, const int size_Y, const int size_Z)
 		{
@@ -1574,7 +1400,7 @@ class class_segmentationMain
 		#pragma endregion
 
 		#pragma region "geometry property"
-		static vector<V3DLONG> getOffset(const V3DLONG dim_X, const V3DLONG dim_Y, const V3DLONG dim_Z) //
+		static vector<V3DLONG> getOffset(const V3DLONG dim_X, const V3DLONG dim_Y, const V3DLONG dim_Z)
 		{
 			vector<V3DLONG> size_result (2, 0);
 			size_result[0] = dim_X*dim_Y;
@@ -1605,7 +1431,7 @@ class class_segmentationMain
 			return result;
 		}
 
-		void centralizeRegion(const vector<V3DLONG> vct_input, const V3DLONG size_X, const V3DLONG size_Y, const V3DLONG size_Z, 
+		void centralizeRegion(const vector<V3DLONG> poss_input, const V3DLONG size_X, const V3DLONG size_Y, const V3DLONG size_Z, 
 			const V3DLONG min_X, const V3DLONG min_Y, const V3DLONG min_Z, unsigned char* Image1D_output)
 		{
 			V3DLONG pos_voxel = 0;
@@ -1614,7 +1440,7 @@ class class_segmentationMain
 			V3DLONG y = 0;
 			V3DLONG z = 0;
 			vector<V3DLONG> xyz_voxel (0, 0);
-			V3DLONG count_voxel = vct_input.size();
+			V3DLONG count_voxel = poss_input.size();
 			V3DLONG size_region = size_X*size_Y*size_Z;
 			for (int i=0;i<size_region;i++)
 			{
@@ -1622,7 +1448,7 @@ class class_segmentationMain
 			}
 			for (V3DLONG idx_voxel=0;idx_voxel<count_voxel;idx_voxel++)
 			{
-				pos_voxel = vct_input[idx_voxel];
+				pos_voxel = poss_input[idx_voxel];
 				xyz_voxel = this->index2Coordinate(pos_voxel);
 				x = xyz_voxel[0] - min_X;
 				y = xyz_voxel[1] - min_Y;
@@ -1633,180 +1459,35 @@ class class_segmentationMain
 			return;
 		}
 
-		void centralizeRegion(const vector<V3DLONG> vct_input, double*** double3D_output, const vector<V3DLONG> vct_boundBox)
+		void centralizeRegion(const vector<V3DLONG> poss_input, const V3DLONG size_X, const V3DLONG size_Y, const V3DLONG size_Z, 
+			const V3DLONG min_X, const V3DLONG min_Y, const V3DLONG min_Z, double*** Image3D_output)
 		{
-			V3DLONG idx_tmp = 0;
-			vector<V3DLONG> vct_coordinate (0, 0);
+			V3DLONG pos_voxel = 0;
+			vector<V3DLONG> xyz_voxel (0, 0);
 			V3DLONG x = 0;
 			V3DLONG y = 0;
 			V3DLONG z = 0;
-			V3DLONG count_voxel = vct_input.size();
-			V3DLONG min_X = vct_boundBox[0];
-			V3DLONG min_Y = vct_boundBox[2];
-			V3DLONG min_Z = vct_boundBox[4];
-			V3DLONG size_X = vct_boundBox[1] - vct_boundBox[0];
-			V3DLONG size_Y = vct_boundBox[3] - vct_boundBox[2];
-			V3DLONG size_Z = vct_boundBox[5] - vct_boundBox[4];
+			V3DLONG count_voxel = poss_input.size();
 			for (z=0;z<size_Z;z++)
 			{
 				for (y=0;y<size_Y;y++)
 				{
 					for (x=0;x<size_X;x++)
 					{
-						double3D_output[z][x][y] = 0;
+						Image3D_output[z][x][y] = 0;
 					}
 				}
 			}
 			for (V3DLONG idx_voxel=0;idx_voxel<count_voxel;idx_voxel++)
 			{
-				idx_tmp = vct_input[idx_voxel];
-				vct_coordinate = this->index2Coordinate(idx_tmp);
-				x = vct_coordinate[0] - min_X;
-				y = vct_coordinate[1] - min_Y;
-				z = vct_coordinate[2] - min_Z;
-				double3D_output[z][x][y] = (double) this->Image1D_page[idx_tmp];
+				pos_voxel = poss_input[idx_voxel];
+				xyz_voxel = this->index2Coordinate(pos_voxel);
+				x = xyz_voxel[0] - min_X;
+				y = xyz_voxel[1] - min_Y;
+				z = xyz_voxel[2] - min_Z;
+				Image3D_output[z][x][y] = (double) this->Image1D_page[pos_voxel];
 			}
 			return;
-		}
-
-		static vector<V3DLONG> deCentralizeRegion(vector<V3DLONG> vct_input, vector<V3DLONG> vct_boundBox, V3DLONG dim_X, V3DLONG dim_Y)
-		{
-			vector<V3DLONG> vct_result;
-			V3DLONG idx_tmp = 0;
-			vector<V3DLONG> vct_coordinate (0, 0);
-			V3DLONG x = 0;
-			V3DLONG y = 0;
-			V3DLONG z = 0;
-			V3DLONG count_voxel = vct_input.size();
-			V3DLONG min_X =  vct_boundBox[0];
-			V3DLONG min_Y =  vct_boundBox[2];
-			V3DLONG min_Z =  vct_boundBox[4];
-			V3DLONG size_X = vct_boundBox[1] - vct_boundBox[0] + 1;
-			V3DLONG size_Y = vct_boundBox[3] - vct_boundBox[2] + 1;
-			for (V3DLONG idx_voxel=0;idx_voxel<count_voxel;idx_voxel++)
-			{
-				idx_tmp = vct_input[idx_voxel];
-				vct_coordinate = class_segmentationMain::index2Coordinate(idx_tmp, size_X, size_X*size_Y);
-				x = vct_coordinate[0] + min_X;
-				y = vct_coordinate[1] + min_Y;
-				z = vct_coordinate[2] + min_Z;
-				vct_result.push_back(class_segmentationMain::coordinate2Index(x, y, z, dim_X, dim_X*dim_Y));
-			}
-			return vct_result;
-		}
-
-		static vector<V3DLONG> Image(vector<V3DLONG> vct_input, vector<V3DLONG> vct_boundBox, V3DLONG dim_X, V3DLONG dim_Y)
-		{
-			vector<V3DLONG> vct_result;
-			V3DLONG idx_tmp = 0;
-			vector<V3DLONG> vct_coordinate (0, 0);
-			V3DLONG x = 0;
-			V3DLONG y = 0;
-			V3DLONG z = 0;
-			V3DLONG count_voxel = vct_input.size();
-			V3DLONG min_X =  vct_boundBox[0];
-			V3DLONG min_Y =  vct_boundBox[2];
-			V3DLONG min_Z =  vct_boundBox[4];
-			V3DLONG size_X = vct_boundBox[1] - vct_boundBox[0] + 1;
-			V3DLONG size_Y = vct_boundBox[3] - vct_boundBox[2] + 1;
-			for (V3DLONG idx_voxel=0;idx_voxel<count_voxel;idx_voxel++)
-			{
-				idx_tmp = vct_input[idx_voxel];
-				vct_coordinate = class_segmentationMain::index2Coordinate(idx_tmp, size_X, size_X*size_Y);
-				x = vct_coordinate[0] + min_X;
-				y = vct_coordinate[1] + min_Y;
-				z = vct_coordinate[2] + min_Z;
-				vct_result.push_back(class_segmentationMain::coordinate2Index(x, y, z, dim_X, dim_X*dim_Y));
-			}
-			return vct_result;
-		}
-
-		V3DLONG getCenterByMean(V3DLONG pos_input1, V3DLONG pos_input2)
-		{
-			vector<V3DLONG> xyz_voxel1 = this->index2Coordinate(pos_input1);
-			vector<V3DLONG> xyz_voxe2 = this->index2Coordinate(pos_input2);
-			V3DLONG x1 = xyz_voxel1[0];
-			V3DLONG y1 = xyz_voxel1[1];
-			V3DLONG z1 = xyz_voxel1[2];
-			V3DLONG x2 = xyz_voxe2[0];
-			V3DLONG y2 = xyz_voxe2[1];
-			V3DLONG z2 = xyz_voxe2[2];
-			V3DLONG x3 = (x1+x2)/2;
-			V3DLONG y3 = (y1+y2)/2;
-			V3DLONG z3 = (z1+z2)/2;
-			return this->coordinate2Index(x3, y3, z3);
-		}
-
-		V3DLONG getCenterByMedian(vector<V3DLONG> vct_input)
-		{
-			vector<V3DLONG> vct_coordinate;
-			V3DLONG idx_result;
-			vector<V3DLONG> vct_x;
-			vector<V3DLONG> vct_y;
-			vector<V3DLONG> vct_z;
-			V3DLONG count_voxel = vct_input.size(); 
-			V3DLONG idx_median = count_voxel/2;
-			for (int i=0;i<count_voxel;i++)
-			{
-				vct_coordinate = this->index2Coordinate(vct_input[i]);
-				vct_x.push_back(vct_coordinate[0]);
-				vct_y.push_back(vct_coordinate[1]);
-				vct_z.push_back(vct_coordinate[2]);
-			}
-			sort(vct_x.begin(), vct_x.end());
-			sort(vct_y.begin(), vct_y.end());
-			sort(vct_z.begin(), vct_z.end());
-			idx_result = this->coordinate2Index(vct_x[idx_median], vct_y[idx_median], vct_z[idx_median]);
-			return this->getNearestVoxel(vct_input, idx_result);
-		}
-
-		V3DLONG getCenterByMean(V3DLONG sum_X, V3DLONG sum_Y, V3DLONG sum_Z)
-		{
-			V3DLONG pos_result = this->coordinate2Index(sum_X/2, sum_Y/2, sum_Z/2);
-			return pos_result;
-		}
-
-		V3DLONG getCenterByMean(vector<V3DLONG> poss_input)
-		{
-			vector<V3DLONG> xyz_voxel;
-			V3DLONG x;
-			V3DLONG y;
-			V3DLONG z;
-			double sum_X=0;
-			double sum_Y=0;
-			double sum_Z=0;
-			V3DLONG count_voxel = poss_input.size();
-			for (int i=0;i<count_voxel;i++)
-			{
-				xyz_voxel = this->index2Coordinate(poss_input[i]);
-				x=xyz_voxel[0];
-				y=xyz_voxel[1];
-				z=xyz_voxel[2];
-				sum_X += (double)x;
-				sum_Y += (double)y;
-				sum_Z += (double)z;
-			}
-			double result = this->coordinate2Index(sum_X/count_voxel, sum_Y/count_voxel, sum_Z/count_voxel);
-			return result;
-		}
-
-
-		V3DLONG getNearestVoxel(vector<V3DLONG> vct_input, V3DLONG idx_input)
-		{
-			double min_distance = INF;
-			double tmp_distance = 0;
-			V3DLONG idx_result = -1;
-			V3DLONG count_voxel = vct_input.size();
-			for (int i=0;i<count_voxel;i++)
-			{
-				tmp_distance = this->getEuclideanDistance(idx_input, vct_input[i]);
-				if (tmp_distance<min_distance)
-				{
-					min_distance = tmp_distance;
-					idx_result = vct_input[i];
-				}
-			}
-			return idx_result;
 		}
 
 		V3DLONG getCenterByMass(vector<V3DLONG> vct_input)
@@ -1884,6 +1565,285 @@ class class_segmentationMain
 			if (size_X < size_Z) {size_X=size_Z;}
 			return size_X;
 		}
+
+		static vector<vector<V3DLONG> > int1D2possVct(int* Image1D_label, int count_label, unsigned char* Image1D_image, 
+			const V3DLONG size_X, const V3DLONG size_Y, const V3DLONG size_Z, 
+			const V3DLONG min_X, const V3DLONG min_Y, const V3DLONG min_Z, const V3DLONG offset_Yglobal, const V3DLONG offset_Zglobal, 
+			const double min_centerDistance, vector<V3DLONG> &poss_center, const double threshold_regionSize)
+		{
+			int label_voxel = 0;
+			V3DLONG pos_voxel = 0;
+			double value_voxel = 0;
+			vector<V3DLONG> vct_empty(0, 0);
+			vector<vector<V3DLONG> > possVct_result;
+			vector<vector<V3DLONG> > possVct_resultWithEmpty;
+			for (int i=0;i<count_label;i++)
+			{
+				possVct_resultWithEmpty.push_back(vct_empty);
+			}
+			double3D xyz_zero;
+			vector<double3D> mean_center;
+			for (int i=0;i<count_label;i++)
+			{
+				mean_center.push_back(xyz_zero);
+			}
+			vector<int> idxs_remap (count_label, 0);
+			V3DLONG label_remap = 0;
+			V3DLONG x=0; V3DLONG y=0; V3DLONG z=0;
+			V3DLONG offset_Y = size_X; V3DLONG offset_Z = size_X*size_Y;
+			vector<double> sums_mass (count_label, 0);
+			for (x=0;x<size_X;x++)
+			{
+				for (y=0;y<size_Y;y++)
+				{
+					for (z=0;z<size_Z;z++)
+					{
+						pos_voxel = class_segmentationMain::coordinate2Index(x, y, z, offset_Y, offset_Z);
+						label_voxel = Image1D_label[pos_voxel];
+						if (label_voxel > 0)
+						{
+							label_voxel = label_voxel-1;
+							value_voxel = Image1D_image[pos_voxel];
+							mean_center[label_voxel].x += value_voxel*x; mean_center[label_voxel].y += value_voxel*y; mean_center[label_voxel].z += value_voxel*z;
+							sums_mass[label_voxel] += value_voxel;
+						}
+					}
+				}
+			}
+			for (int i=0;i<count_label;i++)
+			{
+				idxs_remap[i] = i;
+				if (sums_mass[i]>0) {mean_center[i].x/=sums_mass[i]; mean_center[i].y/=sums_mass[i]; mean_center[i].z/=sums_mass[i];}
+			}
+			for (int i=0;i<count_label;i++)
+			{
+				if (sums_mass[i]>0)
+				{
+					for (int j=(i+1);j<count_label;j++)
+					{
+						if (sums_mass[j]>0)
+						{
+							if (class_segmentationMain::getEuclideanDistance(mean_center[i], mean_center[j])<min_centerDistance)
+							{
+								if (idxs_remap[j] == j)
+								{
+									idxs_remap[j] = i;
+								}
+							}
+						}
+					}
+				}
+			}
+			mean_center.clear();
+			for (int i=0;i<count_label;i++)
+			{
+				mean_center.push_back(xyz_zero);
+			}
+			fill(sums_mass.begin(), sums_mass.end(), 0);
+			for (x=0;x<size_X;x++)
+			{
+				for (y=0;y<size_Y;y++)
+				{
+					for (z=0;z<size_Z;z++)
+					{
+						pos_voxel = class_segmentationMain::coordinate2Index(x, y, z, offset_Y, offset_Z);
+						label_voxel = Image1D_label[pos_voxel];
+						if (label_voxel > 0)
+						{
+							label_voxel = label_voxel-1;
+							value_voxel = Image1D_image[pos_voxel];
+							label_remap = idxs_remap[label_voxel];
+							mean_center[label_remap].x += value_voxel*x; mean_center[label_remap].y += value_voxel*y; mean_center[label_remap].z += value_voxel*z;
+							sums_mass[label_remap] += value_voxel;
+							pos_voxel = class_segmentationMain::coordinate2Index(x+min_X, y+min_Y, z+min_Z, offset_Yglobal, offset_Zglobal);
+							possVct_resultWithEmpty[label_remap].push_back(pos_voxel);
+						}
+					}
+				}
+			}
+			for (int i=0;i<count_label;i++)
+			{
+				if (sums_mass[i]>0) {mean_center[i].x/=sums_mass[i]; mean_center[i].y/=sums_mass[i]; mean_center[i].z/=sums_mass[i];}
+			}
+			for (int i=0;i<count_label;i++)
+			{
+				if ((sums_mass[i]>0) && ((possVct_resultWithEmpty[i].size()>threshold_regionSize)))
+				{
+					possVct_result.push_back(possVct_resultWithEmpty[i]);
+					poss_center.push_back(class_segmentationMain::coordinate2Index(mean_center[i].x+min_X, mean_center[i].y+min_Y, mean_center[i].z+min_Z, offset_Yglobal, offset_Zglobal));
+				}
+			}
+			return possVct_result;
+		}
+
+		/*static vector<vector<V3DLONG> > int3D2possVct(int*** int3D_label, int count_label, double*** Image3D_image, 
+			const V3DLONG size_X, const V3DLONG size_Y, const V3DLONG size_Z, 
+			const V3DLONG min_X, const V3DLONG min_Y, const V3DLONG min_Z, const V3DLONG offset_Yglobal, const V3DLONG offset_Zglobal, 
+			const double min_centerDistance, vector<V3DLONG> &poss_center, const double threshold_regionSize)
+		{
+			int label_voxel = 0;
+			V3DLONG pos_voxel = 0;
+			double value_voxel = 0;
+			vector<V3DLONG> vct_empty(0, 0);
+			vector<vector<V3DLONG> > possVct_result;
+			vector<vector<V3DLONG> > possVct_resultWithEmpty;
+			for (int i=0;i<count_label;i++)
+			{
+				possVct_resultWithEmpty.push_back(vct_empty);
+			}
+			double3D xyz_zero;
+			vector<double3D> mean_center;
+			for (int i=0;i<count_label;i++)
+			{
+				mean_center.push_back(xyz_zero);
+			}
+			vector<int> idxs_remap (count_label, 0);
+			V3DLONG label_remap = 0;
+			V3DLONG x=0; V3DLONG y=0; V3DLONG z=0;
+			V3DLONG offset_Y = size_X; V3DLONG offset_Z = size_X*size_Y;
+			vector<double> sums_mass (count_label, 0);
+			for (x=0;x<size_X;x++)
+			{
+				for (y=0;y<size_Y;y++)
+				{
+					for (z=0;z<size_Z;z++)
+					{
+						label_voxel = int3D_label[z][x][y];
+						if (label_voxel > 0)
+						{
+							label_voxel = label_voxel-1;
+							value_voxel = Image3D_image[z][x][y];
+							mean_center[label_voxel].x += value_voxel*x; mean_center[label_voxel].y += value_voxel*y; mean_center[label_voxel].z += value_voxel*z;
+							sums_mass[label_voxel] += value_voxel;
+						}
+					}
+				}
+			}
+			for (int i=0;i<count_label;i++)
+			{
+				idxs_remap[i] = i;
+				if (sums_mass[i]>0) {mean_center[i].x/=sums_mass[i]; mean_center[i].y/=sums_mass[i]; mean_center[i].z/=sums_mass[i];}
+			}
+			for (int i=0;i<count_label;i++)
+			{
+				if (sums_mass[i]>0)
+				{
+					for (int j=(i+1);j<count_label;j++)
+					{
+						if (sums_mass[j]>0)
+						{
+							if (class_segmentationMain::getEuclideanDistance(mean_center[i], mean_center[j])<min_centerDistance)
+							{
+								if (idxs_remap[j] == j)
+								{
+									idxs_remap[j] = i;
+								}
+							}
+						}
+					}
+				}
+			}
+			mean_center.clear();
+			for (int i=0;i<count_label;i++)
+			{
+				mean_center.push_back(xyz_zero);
+			}
+			fill(sums_mass.begin(), sums_mass.end(), 0);
+			for (x=0;x<size_X;x++)
+			{
+				for (y=0;y<size_Y;y++)
+				{
+					for (z=0;z<size_Z;z++)
+					{
+						pos_voxel = class_segmentationMain::coordinate2Index(x, y, z, offset_Y, offset_Z);
+						label_voxel = int3D_label[z][x][y];
+						if (label_voxel > 0)
+						{
+							label_voxel = label_voxel-1;
+							value_voxel = Image3D_image[z][x][y];
+							label_remap = idxs_remap[label_voxel];
+							mean_center[label_remap].x += value_voxel*x; mean_center[label_remap].y += value_voxel*y; mean_center[label_remap].z += value_voxel*z;
+							sums_mass[label_remap] += value_voxel;
+							pos_voxel = class_segmentationMain::coordinate2Index(x+min_X, y+min_Y, z+min_Z, offset_Yglobal, offset_Zglobal);
+							possVct_resultWithEmpty[label_remap].push_back(pos_voxel);
+						}
+					}
+				}
+			}
+			for (int i=0;i<count_label;i++)
+			{
+				if (sums_mass[i]>0) {mean_center[i].x/=sums_mass[i]; mean_center[i].y/=sums_mass[i]; mean_center[i].z/=sums_mass[i];}
+			}
+			for (int i=0;i<count_label;i++)
+			{
+				if ((sums_mass[i]>0) && ((possVct_resultWithEmpty[i].size()>threshold_regionSize)))
+				{
+					possVct_result.push_back(possVct_resultWithEmpty[i]);
+					poss_center.push_back(class_segmentationMain::coordinate2Index(mean_center[i].x+min_X, mean_center[i].y+min_Y, mean_center[i].z+min_Z, offset_Yglobal, offset_Zglobal));
+				}
+			}
+			return possVct_result;
+		}*/
+
+		static vector<vector<V3DLONG> > int3D2possVct(int*** int3D_label, int count_label, double*** Image3D_image, 
+			const V3DLONG size_X, const V3DLONG size_Y, const V3DLONG size_Z, 
+			const V3DLONG min_X, const V3DLONG min_Y, const V3DLONG min_Z, const V3DLONG offset_Yglobal, const V3DLONG offset_Zglobal, 
+			vector<V3DLONG> &poss_center, const double threshold_regionSize)
+		{
+			int label_voxel = 0;
+			V3DLONG pos_voxel = 0;
+			double value_voxel = 0;
+			vector<V3DLONG> vct_empty(0, 0);
+			vector<vector<V3DLONG> > possVct_result;
+			vector<vector<V3DLONG> > possVct_resultWithEmpty;
+			for (int i=0;i<count_label;i++)
+			{
+				possVct_resultWithEmpty.push_back(vct_empty);
+			}
+			double3D xyz_zero;
+			vector<double3D> mean_center;
+			for (int i=0;i<count_label;i++)
+			{
+				mean_center.push_back(xyz_zero);
+			}
+			V3DLONG x=0; V3DLONG y=0; V3DLONG z=0;
+			V3DLONG offset_Y = size_X; V3DLONG offset_Z = size_X*size_Y;
+			vector<double> sums_mass (count_label, 0);
+			for (x=0;x<size_X;x++)
+			{
+				for (y=0;y<size_Y;y++)
+				{
+					for (z=0;z<size_Z;z++)
+					{
+						label_voxel = int3D_label[z][x][y];
+						if (label_voxel > 0)
+						{
+							label_voxel = label_voxel-1;
+							value_voxel = Image3D_image[z][x][y];
+							pos_voxel = class_segmentationMain::coordinate2Index(x+min_X, y+min_Y, z+min_Z, offset_Yglobal, offset_Zglobal);
+							possVct_resultWithEmpty[label_voxel].push_back(pos_voxel);
+							mean_center[label_voxel].x += value_voxel*x; mean_center[label_voxel].y += value_voxel*y; mean_center[label_voxel].z += value_voxel*z;
+							sums_mass[label_voxel] += value_voxel;
+						}
+					}
+				}
+			}
+			for (int i=0;i<count_label;i++)
+			{
+				if (sums_mass[i]>0) {mean_center[i].x/=sums_mass[i]; mean_center[i].y/=sums_mass[i]; mean_center[i].z/=sums_mass[i];}
+			}
+			for (int i=0;i<count_label;i++)
+			{
+				if ((sums_mass[i]>0) && ((possVct_resultWithEmpty[i].size()>threshold_regionSize)))
+				{
+					possVct_result.push_back(possVct_resultWithEmpty[i]);
+					poss_center.push_back(class_segmentationMain::coordinate2Index(mean_center[i].x+min_X, mean_center[i].y+min_Y, mean_center[i].z+min_Z, offset_Yglobal, offset_Zglobal));
+				}
+			}
+			return possVct_result;
+		}
+
+		
 		#pragma endregion
 
 		#pragma region "math"
@@ -2093,6 +2053,39 @@ class class_segmentationMain
 			free(ptr_input);
 		}
 
+		static double **memory_allocate_double2D(const int i_size,const int j_size)
+		{
+			double **ptr_result;
+			int i;
+			ptr_result=(double **) calloc(i_size,sizeof(double *));
+			for(i=0;i<i_size;i++)
+			{
+				ptr_result[i]=(double *) calloc(j_size,sizeof(double ));
+			}
+			return(ptr_result);
+		}
+
+		static void memory_free_double2D(double **ptr_input, const int i_size)
+		{
+			int i;
+
+			for(i=0;i<i_size;i++)
+				free(ptr_input[i]);
+			free(ptr_input);
+		}
+
+		static int *memory_allocate_int1D(const int i_size)
+		{
+			int *ptr_result;
+			ptr_result = (int *) calloc(i_size, sizeof(int));
+			return(ptr_result);
+		}
+
+		static void memory_free_int1D(int *ptr_input, const int i_size)
+		{
+			free(ptr_input);
+		}
+
 		static unsigned char *memory_allocate_uchar1D(const int i_size)
 		{
 			unsigned char *ptr_result;
@@ -2199,7 +2192,8 @@ class class_segmentationMain
 		#pragma endregion
 
 		#pragma region "GVF"
-		vector<vector<V3DLONG> >  GVF_cellSegmentation(double *** Image3D_input, const int dim_X, const int dim_Y, const int dim_Z, bool is_debugging, vector<double> paras_GVF)
+		int GVF_cellSegmentation(double *** Image3D_input, const int size_X, const int size_Y, const int size_Z, bool is_debugging, vector<double> paras_GVF,
+			int*** Image3D_output)
 		{
 			ofstream ofstream_log;
 			if (is_debugging) {ofstream_log.open ("log_GVF.txt");}
@@ -2207,54 +2201,66 @@ class class_segmentationMain
 			int para_fusionThreshold = paras_GVF[1];
 			double para_sigma = paras_GVF[2];
 			double para_mu = paras_GVF[3];
+			int count_label = 0;
 			double3D ***Image3D3_u;
 			double3D ***Image3D3_u_normalized;
 			double3D ***Image3D3_f;
 			double3D ***Image3D3_gradient;
-			Image3D3_gradient = memory_allocate_double3D3(dim_X, dim_Y, dim_Z);
+			Image3D3_gradient = memory_allocate_double3D3(size_X, size_Y, size_Z);
 			long3D ***Image3D3_mode;
+			V3DLONG x, y, z;
 			int ***Image3D_label;
-			int count_page = dim_X*dim_Y*dim_Z;
+			Image3D_label = memory_allocate_int3D(size_X, size_Y, size_Z);
+			int count_page = size_X*size_Y*size_Z;
 			int smoothIteration = (int)(3*para_sigma + 0.5);
 			if (is_debugging) {ofstream_log<<"initialization passed!"<<endl;}
-			smooth_GVFkernal(Image3D_input, smoothIteration, dim_X, dim_Y, dim_Z);
+			smooth_GVFkernal(Image3D_input, smoothIteration, size_X, size_Y, size_Z);
 			if (is_debugging) {ofstream_log<<"smoothing passed!"<<endl;}
-			GVF_getGradient(Image3D_input, Image3D3_gradient, dim_X, dim_Y, dim_Z);
+			GVF_getGradient(Image3D_input, Image3D3_gradient, size_X, size_Y, size_Z);
 			if (is_debugging) {ofstream_log<<"get gradient passed!"<<endl;}
-			Image3D3_f = memory_allocate_double3D3(dim_X,dim_Y,dim_Z);
-			Image3D3_u = memory_allocate_double3D3(dim_X,dim_Y,dim_Z);
-			GVF_initialize(Image3D3_gradient, Image3D3_f, Image3D3_u, dim_X, dim_Y, dim_Z);
+			Image3D3_f = memory_allocate_double3D3(size_X,size_Y,size_Z);
+			Image3D3_u = memory_allocate_double3D3(size_X,size_Y,size_Z);
+			GVF_initialize(Image3D3_gradient, Image3D3_f, Image3D3_u, size_X, size_Y, size_Z);
 			if (is_debugging) {ofstream_log<<"f/u initialization passed!"<<endl;}
-			memory_free_double3D3(Image3D3_gradient,dim_Z,dim_X);
-			GVF_warp(para_maxIteration, para_mu, Image3D3_u, Image3D3_f, dim_X, dim_Y, dim_Z);
+			memory_free_double3D3(Image3D3_gradient,size_Z,size_X);
+			GVF_warp(para_maxIteration, para_mu, Image3D3_u, Image3D3_f, size_X, size_Y, size_Z);
 			if (is_debugging) {ofstream_log<<"warp passed!"<<endl;}
-			memory_free_double3D3(Image3D3_f,dim_Z,dim_X);
-			Image3D3_u_normalized = memory_allocate_double3D3(dim_X,dim_Y,dim_Z);
-			GVF_normalize(Image3D3_u, Image3D3_u_normalized, dim_X, dim_Y, dim_Z);
+			memory_free_double3D3(Image3D3_f,size_Z,size_X);
+			Image3D3_u_normalized = memory_allocate_double3D3(size_X,size_Y,size_Z);
+			GVF_normalize(Image3D3_u, Image3D3_u_normalized, size_X, size_Y, size_Z);
 			if (is_debugging) {ofstream_log<<"normalization passed!"<<endl;}
-			memory_free_double3D3(Image3D3_u,dim_Z,dim_X);
-			Image3D3_mode = memory_allocate_int3D3(dim_X,dim_Y,dim_Z);
-			GVF_findMode(Image3D3_u_normalized, Image3D3_mode, dim_X, dim_Y, dim_Z);
+			memory_free_double3D3(Image3D3_u,size_Z,size_X);
+			Image3D3_mode = memory_allocate_int3D3(size_X,size_Y,size_Z);
+			GVF_findMode(Image3D3_u_normalized, Image3D3_mode, size_X, size_Y, size_Z);
 			if (is_debugging) {ofstream_log<<"findMode passed!"<<endl;}
-			memory_free_double3D3(Image3D3_u_normalized, dim_Z, dim_X);
-			Image3D_label = memory_allocate_int3D(dim_X, dim_Y, dim_Z);
-			GVF_fuseMode( Image3D3_mode, Image3D_label, para_fusionThreshold, dim_X, dim_Y, dim_Z);
+			memory_free_double3D3(Image3D3_u_normalized, size_Z, size_X);
+			GVF_fuseMode( Image3D3_mode, Image3D_label, para_fusionThreshold, size_X, size_Y, size_Z);
 			if (is_debugging) {ofstream_log<<"fuseMode passed!"<<endl;}
-			memory_free_int3D3(Image3D3_mode,dim_Z,dim_X);
+			memory_free_int3D3(Image3D3_mode,size_Z,size_X);
 			//unsigned char ***Image3D_edge;
-			//Image3D_edge = memory_allocate_uchar3D(dim_X,dim_Y,dim_Z);
-			//GVF_majorFilter(Image3D_label, const_int_GVF_majorFilterIteration, dim_X, dim_Y, dim_Z);
+			//Image3D_edge = memory_allocate_uchar3D(size_X,size_Y,size_Z);
+			//GVF_majorFilter(Image3D_label, const_int_GVF_majorFilterIteration, size_X, size_Y, size_Z);
 			//if (is_debugging) {ofstream_log<<"major fitler1 passed!"<<endl;}
-			//GVF_findEdge(Image3D_label, Image3D_edge, dim_X, dim_Y, dim_Z);
+			//GVF_findEdge(Image3D_label, Image3D_edge, size_X, size_Y, size_Z);
 			//if (is_debugging) {ofstream_log<<"find edge passed!"<<endl;}
-			GVF_localThresholding(Image3D_input, Image3D_label, dim_X, dim_Y, dim_Z);
+			count_label = GVF_localThresholding(Image3D_input, Image3D_label, size_X, size_Y, size_Z);
 			if (is_debugging) {ofstream_log<<"local thresholding passed!"<<endl;}
-			//GVF_majorFilter(Image3D_result, const_int_GVF_majorFilterIteration, dim_X, dim_Y, dim_Z);
+			//GVF_majorFilter(Image3D_result, const_int_GVF_majorFilterIteration, size_X, size_Y, size_Z);
 			//if (is_debugging) {ofstream_log<<"major fitler2 passed!"<<endl;}
-			vector<vector<V3DLONG> > vctList_result = Image3D2IdxsVct(Image3D_label, dim_X, dim_Y, dim_Z);
-			memory_free_int3D(Image3D_label,dim_Z,dim_X);
+			V3DLONG pos_voxel = 0;
+			for (z=0;z<size_Z;z++)
+			{
+				for (x=0;x<size_X;x++)
+				{
+					for (y=0;y<size_Y;y++)
+					{
+						Image3D_output[z][x][y] = Image3D_label[z][x][y];
+					}
+				}
+			}
+			memory_free_int3D(Image3D_label,size_Z,size_X);
 			if (is_debugging) {ofstream_log<<"all succeed!"<<endl;}
-			return vctList_result;
+			return count_label;
 		}
 
 		static void GVF_getGradient(double ***Image1D_input, double3D ***Image3D_gradient, const int dim_X, const int dim_Y, const int dim_Z)
@@ -2616,110 +2622,85 @@ class class_segmentationMain
 			return;
 		}
 
-		void GVF_localThresholding(double ***Image3D_input, int ***Image3D_label, int dim_X, int dim_Y, int dim_Z)
-		{
-			V3DLONG x, y, z;
-			double threshold_global = 0;
-			double *histo_input;
-			int label_voxel = 0;
-			int value_voxel = 0;
-			histo_input = (double *)malloc(sizeof(double)*const_length_histogram);
-			for(int i=0;i<const_length_histogram;i++)
-			{
-				histo_input[i] = 0;
-			}
-			threshold_global = estimateThresholdYen(histo_input);
-			free(histo_input);
-			for(z=0;z<dim_Z;z++)
-			{
-				for(x=0;x<dim_X;x++)
-				{
-					for(y=0;y<dim_Y;y++)
-					{
-						label_voxel = Image3D_label[z][x][y];
-						value_voxel = Image3D_input[z][x][y];
-						if((label_voxel>0) && (value_voxel>threshold_global))
-						{
-							Image3D_label[z][x][y] = label_voxel;
-						}
-						else
-						{
-							Image3D_label[z][x][y] = 0;
-						}
-					}
-				}
-			}
-			return;
-		}
-
-		/*void GVF_localThresholding(double ***Image3D_input, int ***Image3D_label, int dim_X, int dim_Y, int dim_Z)
+		int GVF_localThresholding(double ***Image3D_input, int ***Image3D_label, int size_X, int size_Y, int size_Z)
 		{
 			int x, y, z;
 			int idx_label, i;
 			int threshold_global = 0;
-			int **vctList_histogram;
-			double *vct_histogram;
+			//double **histos_local;
+			double *histo_global;
 			int *vct_threshold;
+			int label_voxel = 0;
+			int value_voxel = 0;
 			int count_label = 0;
-			int tmp_label = 0;
-			int tmp_value = 0;
-			for(z=0;z<dim_Z;z++)
+			for(z=0;z<size_Z;z++)
 			{
-				for(x=0;x<dim_X;x++)
+				for(x=0;x<size_X;x++)
 				{
-					for(y=0;y<dim_Y;y++)
+					for(y=0;y<size_Y;y++)
 					{
-						tmp_label = Image3D_label[z][x][y];
-						if(tmp_label>count_label)
+						label_voxel = Image3D_label[z][x][y];
+						if(label_voxel>count_label) //we are assuming continuous labeling here;
 						{
-							count_label = tmp_label;
+							count_label = label_voxel;
 						}
 					}
 				}
 			}
 			count_label = count_label + 1;
-			vctList_histogram = memory_allocate_int2D(count_label, const_length_histogram);
-			vct_histogram = (double *)malloc(sizeof(double)*const_length_histogram);
+			//histos_local = memory_allocate_double2D(count_label, const_length_histogram);
+			histo_global = (double *)malloc(sizeof(double)*const_length_histogram);
 			for(i=0;i<const_length_histogram;i++)
 			{
-				vct_histogram[i] = 0;
+				histo_global[i] = 0;
 			}
-			for(z=0;z<dim_Z;z++)
+			for(z=0;z<size_Z;z++)
 			{
-				for(x=0;x<dim_X;x++)
+				for(x=0;x<size_X;x++)
 				{
-					for(y=0;y<dim_Y;y++)
+					for(y=0;y<size_Y;y++)
 					{
-						tmp_label = Image3D_label[z][x][y];
-						tmp_value = (int)Image3D_input[z][x][y];
-						vctList_histogram[tmp_label][tmp_value]++;
-						vct_histogram[tmp_value]++;
+						//label_voxel = Image3D_label[z][x][y];
+						value_voxel = (int)Image3D_input[z][x][y];
+						//histos_local[label_voxel][value_voxel]++;
+						histo_global[value_voxel]++;
 					}
 				}
 			}
-			threshold_global = estimateThresholdYen(vct_histogram);
-			vct_threshold = (int *)malloc(sizeof(int)*(count_label));
+			//threshold_global = estimateThresholdYen(histo_global)*0.5;
+			threshold_global = estimateThresholdYen(histo_global);
+			free(histo_global);
+			/*vct_threshold = (int *)malloc(sizeof(int)*(count_label));
 			for(idx_label=0;idx_label<count_label;idx_label++)
 			{
-				for(i=0;i<const_length_histogram;i++)
-				{
-					vct_histogram[i] = (double)vctList_histogram[idx_label][i];
-				}
-				vct_threshold[idx_label] = estimateThresholdYen(vct_histogram);
+				vct_threshold[idx_label] = estimateThresholdYen(histos_local[idx_label])*0.5;
 			}
-			free(vct_histogram);
-			
-			for(z=0;z<dim_Z;z++)
+			memory_free_double2D(histos_local, count_label);*/
+			vector<V3DLONG> labels_used (0, 0);
+			count_label = 0;
+			int idx_usedLabel = 0;
+			for(z=0;z<size_Z;z++)
 			{
-				for(x=0;x<dim_X;x++)
+				for(x=0;x<size_X;x++)
 				{
-					for(y=0;y<dim_Y;y++)
+					for(y=0;y<size_Y;y++)
 					{
-						tmp_label = Image3D_label[z][x][y];
-						tmp_value = Image3D_input[z][x][y];
-						if((tmp_label>0) && (tmp_value>vct_threshold[tmp_label]) && (tmp_value>threshold_global))
+						label_voxel = Image3D_label[z][x][y];
+						value_voxel = Image3D_input[z][x][y];
+						//if((label_voxel>0) && (value_voxel>vct_threshold[label_voxel]) && (value_voxel>threshold_global))
+						if((label_voxel>0) && (value_voxel>threshold_global))
 						{
-							Image3D_label[z][x][y] = tmp_label;
+							idx_usedLabel = vctContains(labels_used, label_voxel);
+							if (idx_usedLabel>0)
+							{
+								Image3D_label[z][x][y] = idx_usedLabel+1;
+							}
+							else
+							{
+								count_label++;
+								Image3D_label[z][x][y] = count_label;
+								labels_used.push_back(label_voxel);
+							}
 						}
 						else
 						{
@@ -2728,10 +2709,9 @@ class class_segmentationMain
 					}
 				}
 			}
-			memory_free_int2D(vctList_histogram,count_label);
 			free(vct_threshold);
-			return;
-		}*/
+			return count_label;
+		}
 		#pragma endregion
 
 		#pragma region "shapeStat"
@@ -3094,7 +3074,7 @@ class class_segmentationMain
 		#pragma  region "SRS"
 		bool AGS_main(const unsigned char* Image1D_input, const V3DLONG dim_XInput, const V3DLONG dim_YInput, const V3DLONG dim_ZInput,
 			const vector<double3D> points_centerInput, const vector<double> _paras, 
-			unsigned char *Image1D_segmentationLabel)
+			int *Image1D_segmentationLabel)
 		{
 			int count_label;
 			V3DLONG *sizes_region = new V3DLONG[3];
@@ -3557,10 +3537,12 @@ bool segmentationInterface(V3DPluginCallback2 &_V3DPluginCallback2_currentCallba
 	paras_GWDT[1] = dialogMain1.GWDT_para_boundaryCriteria;
 	//get GVF paramters;
 	vector<double> paras_GVF (4, 0);
+	//vector<double> paras_GVF (5, 0);
 	paras_GVF[0] = dialogMain1.GVF_para_maxIteration;
 	paras_GVF[1] = dialogMain1.GVF_para_mergingThreshold;
 	paras_GVF[2] = dialogMain1.GVF_para_sigma;
 	paras_GVF[3] = dialogMain1.GVF_para_mu;
+	//paras_GVF[4] = dialogMain1.GVF_para_mergingCriteria;
 	//get SRS paramters;
 	vector<double> paras_SRS (8, 0);
 	paras_SRS[0] = dialogMain1.SRS_para_initialT;

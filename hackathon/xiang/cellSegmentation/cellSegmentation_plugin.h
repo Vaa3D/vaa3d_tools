@@ -128,10 +128,11 @@ class dialogMain:public QDialog
 		QRadioButton_algorithm_regionGrowOnly->setChecked(false);
 		QRadioButton_algorithm_GWDT = new QRadioButton("GWDT\n+Boundary detection", QWidget_parent);
 		QRadioButton_algorithm_GWDT->setChecked(false);
+		QRadioButton_algorithm_GWDT->setEnabled(false);
 		QRadioButton_algorithm_regionGrowGVF = new QRadioButton("regionGrow\n+GVF", QWidget_parent);
-		QRadioButton_algorithm_regionGrowGVF->setChecked(false);
+		QRadioButton_algorithm_regionGrowGVF->setChecked(true);
 		QRadioButton_algorithm_regionGrowSRS = new QRadioButton("regionGrow\n+SRS", QWidget_parent);
-		QRadioButton_algorithm_regionGrowSRS->setChecked(true);
+		QRadioButton_algorithm_regionGrowSRS->setChecked(false);
 		QRadioButton_algorithm_fusing = new QRadioButton("Fusing", QWidget_parent);
 		QRadioButton_algorithm_fusing->setChecked(false);
 		QRadioButton_algorithm_fusing->setEnabled(false);
@@ -157,6 +158,8 @@ class dialogMain:public QDialog
 		QLineEdit_GVF_sigma = new QLineEdit("0.1", QWidget_parent);
 		QLabel* QLabel_GVF_mu = new QLabel(QObject::tr("mu:"));
 		QLineEdit_GVF_mu = new QLineEdit("0.1", QWidget_parent);
+		//QLabel* QLabel_GVF_mergingCriteria = new QLabel(QObject::tr("Merging criteria:"));
+		//QLineEdit_GVF_mergingCriteria = new QLineEdit("0.3", QWidget_parent);
 		QGroupBox *QGroupBox_GVF_main = new QGroupBox("GVF paramters");
 		QGroupBox_GVF_main->setStyle(new QWindowsStyle());
 		QGridLayout *QGridLayout_GVF_main = new QGridLayout();
@@ -168,12 +171,14 @@ class dialogMain:public QDialog
 		QGridLayout_GVF_main->addWidget(QLineEdit_GVF_sigma, 2, 2,1,1);
 		QGridLayout_GVF_main->addWidget(QLabel_GVF_mu, 2, 3,1,1);
 		QGridLayout_GVF_main->addWidget(QLineEdit_GVF_mu, 2, 4,1,1);
+		//QGridLayout_GVF_main->addWidget(QLabel_GVF_mergingCriteria, 3, 1,1,1);
+		//QGridLayout_GVF_main->addWidget(QLineEdit_GVF_mergingCriteria, 3, 2,1,1);
 		QGroupBox_GVF_main->setLayout(QGridLayout_GVF_main);
 
 		//GWDT paramters;
-		QLabel* QLabel_GWDT_boundaryThin = new QLabel(QObject::tr("boundary detection\niteration:"));
+		QLabel* QLabel_GWDT_boundaryThin = new QLabel(QObject::tr("# of erosion:"));
 		QLineEdit_GWDT_boundaryThin = new QLineEdit("8", QWidget_parent);
-		QLabel* QLabel_GWDT_boundaryConditionLoosenBy = new QLabel(QObject::tr("boundary detection\ncriteria:"));
+		QLabel* QLabel_GWDT_boundaryConditionLoosenBy = new QLabel(QObject::tr("erosion radius:"));
 		QLineEdit_GWDT_boundaryConditionLoosenBy = new QLineEdit("1", QWidget_parent);
 		QGroupBox *QGroupBox_GWDTparameter = new QGroupBox("GWDT paramters");
 		QGroupBox_GWDTparameter->setStyle(new QWindowsStyle());
@@ -270,6 +275,7 @@ class dialogMain:public QDialog
 	QLineEdit* QLineEdit_GVF_fusionThreshold;
 	QLineEdit* QLineEdit_GVF_sigma;
 	QLineEdit* QLineEdit_GVF_mu;
+	//QLineEdit* QLineEdit_GVF_mergingCriteria;
 	QLineEdit* QLineEdit_Shape_delta;
 	QLineEdit* QLineEdit_intensity_histoCorrelation;
 	QLineEdit* QLineEdit_GWDT_boundaryThin;
@@ -296,6 +302,7 @@ class dialogMain:public QDialog
 	double GVF_para_mergingThreshold;
 	double GVF_para_sigma;
 	double GVF_para_mu;
+	//double GVF_para_mergingCriteria;
 	double shape_para_delta;
 	int GWDT_para_boundaryThinIteration;
 	double GWDT_para_boundaryCriteria;
@@ -366,6 +373,7 @@ class dialogMain:public QDialog
 		GVF_para_mergingThreshold = this->QLineEdit_GVF_fusionThreshold->text().toDouble();
 		GVF_para_sigma = this->QLineEdit_GVF_sigma->text().toDouble();
 		GVF_para_mu = this->QLineEdit_GVF_mu->text().toDouble();
+		//GVF_para_mergingCriteria = this->QLineEdit_GVF_mergingCriteria->text().toDouble();
 		shape_para_delta = this->QLineEdit_Shape_delta->text().toDouble();
 		intensity_threshold_histoCorr = this->QLineEdit_intensity_histoCorrelation->text().toDouble();
 		if (this->QRadioButton_shape_sphere->isChecked())
