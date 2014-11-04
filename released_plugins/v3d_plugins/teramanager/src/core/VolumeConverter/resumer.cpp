@@ -22,6 +22,8 @@
 *       specific prior written permission.
 ********************************************************************************************************************************************************************************************/
 
+// 2014-10-29 Giulio. @ADDED stop & resume facility
+
 #include "resumer.h"
 
 #ifdef _WIN32
@@ -150,6 +152,7 @@ bool initResumer ( const char *out_fmt, const char *output_path, int resolutions
 			fwrite(&str_len,sizeof(size_t),1,fhandle);
 			fwrite(saved_img_format,sizeof(char),str_len,fhandle);
 			fwrite(&saved_img_depth,sizeof(int),1,fhandle);
+			fflush(fhandle);
 		}
 		return false;
 	}
@@ -185,6 +188,7 @@ void saveResumerState ( FILE *fhandle, int resolutions_size, int *stack_block, i
 	fwrite(slice_end,sizeof(int),resolutions_size,fhandle);
 	fwrite(&z,sizeof(sint64),1,fhandle);
 	fwrite(&z_parts,sizeof(sint64),1,fhandle);
+	fflush(fhandle);
 }
 
 void closeResumer ( FILE *fhandle, const char *output_path ) throw (IOException)

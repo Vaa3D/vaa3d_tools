@@ -11,6 +11,16 @@ ties names are:
 - Rem: a feature no longer available
 
 ============================================================================================
+Version 1.0.0
+November 4th, 2014
+--------------------------------------------------------------------------------------------
+- Fix: fixed bug in the "stop and resume" feature of TeraConverter.
+- Fix: fixed bug which caused incorret display for 16-bit tiffs.
+- Fix: fixed bug which caused loading error when loading annotation files with spaces in the
+       filename.
+--------------------------------------------------------------------------------------------
+
+
 Version 0.9.999
 September 19th, 2014
 --------------------------------------------------------------------------------------------

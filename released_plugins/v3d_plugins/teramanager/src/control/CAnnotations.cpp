@@ -6,6 +6,7 @@
 #include <set>
 #include <iostream>
 #include <algorithm>
+#include <fstream>
 #include "CAnnotations.h"
 #include "CSettings.h"
 #include "../presentation/PLog.h"
@@ -1130,32 +1131,24 @@ void CAnnotations::load(const char* filepath) throw (RuntimeException)
     //clearing annotations
     this->clear();
 
-    //opening ANO file in read mode
-    FILE* f = fopen(filepath, "r");
-    if(!f)
+    // open ANO file
+    std::ifstream f(filepath);
+    if(!f.is_open())
         throw RuntimeException(strprintf("in CAnnotations::save(): cannot load file \"%s\"", filepath));
 
-    //reading ANO file line by line
-    char lineBuf[FILE_LINE_BUFFER_SIZE];
-    while(fgets(lineBuf, FILE_LINE_BUFFER_SIZE, f))
+    // read line by line
+    for (std::string line; std::getline(f, line); )
     {
-        char tokenizer[STATIC_STRING_SIZE];
-        char filetype[STATIC_STRING_SIZE];
-        char filename[STATIC_STRING_SIZE];
-        if(sscanf(lineBuf, "%s", tokenizer) != 1)
-            throw RuntimeException(strprintf("in CAnnotations::load(const char* filepath = \"%s\"): expected line \"%s\", found \"%s\"",
-                                           filepath, "<filetype>=<filename>", lineBuf));
-        char * pch;
-        pch = strtok (tokenizer,"=");
-        strcpy(filetype, pch);
-        pch = strtok (0,"=");
-        strcpy(filename, pch);
+        std::vector < std::string > tokens;
+        teramanager::split(line, "=", tokens);
+        if(tokens.size() != 2)
+            throw RuntimeException(strprintf("in CAnnotations::load(const char* filepath = \"%s\"): cannot parse line \"%s\"",filepath,line.c_str()));
 
         QDir dir(filepath);
         dir.cdUp();
-        if(strcmp(filetype, "APOFILE") == 0)
+        if(tokens[0].compare("APOFILE") == 0)
         {
-            QList <CellAPO> cells = readAPO_file(dir.absolutePath().append("/").append(filename));
+            QList <CellAPO> cells = readAPO_file(dir.absolutePath().append("/").append(tokens[1].c_str()));
             for(QList <CellAPO>::iterator i = cells.begin(); i!= cells.end(); i++)
             {
                 annotation* ann = new annotation();
@@ -1171,9 +1164,9 @@ void CAnnotations::load(const char* filepath) throw (RuntimeException)
             }
             //printf("--------------------- teramanager plugin >> inserted %d markers\n", cells.size());
         }
-        else if(strcmp(filetype, "SWCFILE") == 0)
+        else if(tokens[0].compare("SWCFILE") == 0)
         {
-            NeuronTree nt = readSWC_file(dir.absolutePath().append("/").append(filename));
+            NeuronTree nt = readSWC_file(dir.absolutePath().append("/").append(tokens[1].c_str()));
 
             std::map<int, annotation*> annotationsMap;
             std::map<int, NeuronSWC*> swcMap;
@@ -1210,9 +1203,9 @@ void CAnnotations::load(const char* filepath) throw (RuntimeException)
             }
         }
         else
-            throw RuntimeException(strprintf("in CAnnotations::load(const char* filepath = \"%s\"): unable to recognize file type \"%s\"", filepath, filetype));
+            throw RuntimeException(strprintf("in CAnnotations::load(const char* filepath = \"%s\"): unable to recognize file type \"%s\"", filepath, tokens[0].c_str()));
     }
-    fclose(f);
+    f.close();
 
     PLog::getInstance()->appendIO(timer.elapsed(), "load annotations: read .ano from disk");
 }
