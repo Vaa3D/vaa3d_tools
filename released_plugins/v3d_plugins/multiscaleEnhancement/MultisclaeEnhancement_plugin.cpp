@@ -168,9 +168,40 @@ template <class T> bool swapthree(T& dummya, T& dummyb, T& dummyc)
 }
 template <class SDATATYPE> int pwi_fusing(SDATATYPE *data1d, SDATATYPE *subject1d, V3DLONG *sz_subject, SDATATYPE *target1d, V3DLONG *sz_target, V3DLONG *offset, V3DLONG new_sz0, V3DLONG new_sz1, V3DLONG new_sz2);
 
-
+//FL added
 template <class T> void fusing(T *data1d, T *block1d, V3DLONG xb, V3DLONG xe, V3DLONG yb, V3DLONG ye, V3DLONG *sz_data1d, unsigned int ws, bool tag_leftmost_block);
 
+//FL added
+template <class T> void fusing2D(unsigned int *data, unsigned char *counterImg, T *blockSection2D, V3DLONG xb, V3DLONG xe, V3DLONG yb, V3DLONG ye, V3DLONG *sz_enhanced2d);
+
+
+//FL added
+QStringList getSortedFileList(const QString & curFilePath, const char * suffix)
+{
+    QStringList myList;
+    myList.clear();
+
+    // get the image files namelist in the directory
+    QStringList imgSuffix;
+    imgSuffix<<"*.tif";
+
+    QDir dir(curFilePath);
+    if (!dir.exists())
+    {
+        qWarning("Cannot find the directory");
+        return myList;
+    }
+
+    foreach (QString file, dir.entryList(imgSuffix, QDir::Files, QDir::Name))
+    {
+        myList += QFileInfo(dir, file).absoluteFilePath();
+    }
+
+    // print filenames
+    foreach (QString qs, myList)  qDebug() << qs;
+
+    return myList;
+}
 
 QStringList selectiveEnhancement::menulist() const
 {
@@ -2111,8 +2142,10 @@ bool processImage_adaptive_auto_blocks_indv_multithread(const V3DPluginArgList &
     unsigned int Ws = 1000, c=1;
     float ratio = 1.0;
 
+    // FL added the following 3
     unsigned int numOfThreads = 8; // default value for number of theads
     unsigned int saveEnhanced2DSections = 1; // default value for saving enhanced 2D section images, 1: save; 0: not save
+    char *oriFileFolder;
     
     if (input.size()>=2)
     {
@@ -2124,7 +2157,8 @@ bool processImage_adaptive_auto_blocks_indv_multithread(const V3DPluginArgList &
         if(paras.size() >= 3) ratio = atof(paras.at(2));
         if(paras.size() >= 4) numOfThreads = atoi(paras.at(3));
         if(paras.size() >= 5) saveEnhanced2DSections = atoi(paras.at(4));
-        
+        if(paras.size() >= 6) oriFileFolder = paras.at(5);
+       
     }
 
     char * inimg_file = ((vector<char*> *)(input.at(0).p))->at(0);
@@ -2224,11 +2258,13 @@ bool processImage_adaptive_auto_blocks_indv_multithread(const V3DPluginArgList &
     myfile.close(); // FL revise for multithreading
 
     
+	std::vector<QString> EnhancedBlockFilelist;
     
-    unsigned char* EnhancedStack = 0;
+//    unsigned char* EnhancedStack = 0;
     
-    if (saveEnhanced2DSections==1)
-    	EnhancedStack = new unsigned char [N*M*P]; // for saving enhanced 2D section purpose
+//    if (saveEnhanced2DSections==1)
+//    	EnhancedStack = new unsigned char [N*M*P]; // for saving enhanced 2D section purpose
+	
     
     bool falsetag = true; //FL add, openMP does not allow exit from blocked structure, it can be set by any thread competitively
     
@@ -2399,23 +2435,36 @@ bool processImage_adaptive_auto_blocks_indv_multithread(const V3DPluginArgList &
 						// write the block location file
 						myfile.open (tc_name.toStdString().c_str(),ios::out | ios::app ); //FL revise for multithreading						
 						QString outputilefull;
-						outputilefull.append(QString("x_%1_%2_y_%3_%4.raw").arg(xb).arg(xe).arg(yb).arg(ye));
+						
+						QString fn = QString("x_%1_%2_y_%3_%4.raw").arg(xb).arg(xe).arg(yb).arg(ye);
+						outputilefull.append(fn);
 						outputilefull.append(QString("   ( %1, %2, 0) ( %3, %4, %5)").arg(xb).arg(yb).arg(xe).arg(ye).arg(P-1));
 						myfile << outputilefull.toStdString();
 						myfile << "\n";
 						myfile.close(); //FL revise for multithreading
 						
-						// stcitch blocks back to the 3D enhanced stack
+						
+//						// stcitch blocks back to the 3D enhanced stack
 						if (saveEnhanced2DSections==1)
 						{
-							bool tag_leftmost_block;
-							if (ix==0)
-								tag_leftmost_block = true;
-							else 
-								tag_leftmost_block = false;
+						
+							QString blockfn(outimg_file);
+							blockfn.append(fn);
 							
-							fusing(EnhancedStack, localEnahancedArea, xb, xe, yb, ye, in_sz, Ws, tag_leftmost_block);
+							cout << "blockfn=" << blockfn.toStdString().c_str() << endl;
+							
+							EnhancedBlockFilelist.push_back(blockfn);
+						
+//							bool tag_leftmost_block;
+//							if (ix==0)
+//								tag_leftmost_block = true;
+//							else 
+//								tag_leftmost_block = false;
+//							
+//							fusing(EnhancedStack, localEnahancedArea, xb, xe, yb, ye, in_sz, Ws, tag_leftmost_block);
 						}
+												
+												
 						
 					}
 					
@@ -2434,14 +2483,13 @@ bool processImage_adaptive_auto_blocks_indv_multithread(const V3DPluginArgList &
 	} //for iy end
 
   //  myfile.close(); //FL revise for multithreading
-
-
 	
 	if (data1d) {delete []data1d; data1d=0;}
+	printf("finished enhancement\n");
 	
     if (falsetag == false)
     {
-    	if (EnhancedStack) {delete []EnhancedStack; EnhancedStack=0;}
+//    	if (EnhancedStack) {delete []EnhancedStack; EnhancedStack=0;}
     	return false;
     }
     else
@@ -2455,39 +2503,155 @@ bool processImage_adaptive_auto_blocks_indv_multithread(const V3DPluginArgList &
 		if (saveEnhanced2DSections==1)
 		{
 
-			unsigned char *EnhancedSectionImage = new unsigned char [sz2d];
 			V3DLONG sz_enhanced2d[4];
 			sz_enhanced2d[0]=in_sz[0]; 
 			sz_enhanced2d[1]=in_sz[1]; 
 			sz_enhanced2d[2]=1;
 			sz_enhanced2d[3]=1;
+
+			long enhancedBlockNum = EnhancedBlockFilelist.size();
+			QString qstr_oriFileFolder(oriFileFolder);
+			QStringList oriFileList = getSortedFileList(qstr_oriFileFolder, ".tif");
 			
+			#pragma omp parallel for  // FL add parallelizing
 					
 			for (long k=0; k<in_sz[2]; k++)
 			{
 				long cnt = 0;
 				
 				long m;
+
 				
-				for (m=k*sz2d; m<(k+1)*sz2d; m++)
+				unsigned char *EnhancedSectionImage = new unsigned char [sz2d];
+				unsigned char *counterImg = new unsigned char [sz2d]; // compute how many times each pixel of EnhancedSectionImage is written by blocks
+
+				unsigned int *tmpImg = new unsigned int [sz2d]; // tmpImg is unsigned int type of EnhancedSectionImage to prevent overflowing when adding
+
+				// initialize tmpImg and counterImg
+				long cc=0;
+				for (long int i=0; i<in_sz[1]; i++)
+				for (long int j=0; j<in_sz[0]; j++)
 				{
-					EnhancedSectionImage[cnt] = EnhancedStack[m];
-					cnt++;
+					tmpImg[cc] = 0;
+					counterImg[cc] = 0;
+					cc++;
 				}
 				
-				QString filename = QString(outimg_file).append(QString("z%1.tif").arg(k));
-				saveImage(filename.toStdString().c_str(), EnhancedSectionImage, sz_enhanced2d, 1);
-			}
+				V3DLONG *sz_block3D = 0;
+				V3DLONG *sz_block_section2D = 0;
+				unsigned char *blockSection2D=0;
+				
+				
+				for (int n=0; n<enhancedBlockNum; n++)
+				{
+					QString blockFileName = EnhancedBlockFilelist.at(n);
+ 		            
+					// load section k of the current 3D block
+
+					char *bn = (char *)(blockFileName.toStdString().c_str());
+					
+					cout << "blockFileName=" << bn << endl;
+
+					
+					V3DLONG xb, xe, yb, ye;
+					
+					// get xb, xe, yb, ye values, this will be changed depending how block filenames are given
+					int ind0 = blockFileName.lastIndexOf("/");
+					int ind1 = blockFileName.indexOf("_", ind0+1);
+					int ind2 = blockFileName.indexOf("_", ind1+1);
+					int ind3 = blockFileName.indexOf("_", ind2+1);
+					int ind4 = blockFileName.indexOf("_", ind3+1);
+					int ind5 = blockFileName.indexOf("_", ind4+1);
+					int ind6 = blockFileName.lastIndexOf(".");
+					
+//					printf("%d, %d, %d, %d, %d, %d\n", ind1, ind2, ind3, ind4, ind5, ind6);
+					
+					xb = blockFileName.mid(ind1+1, ind2-(ind1+1)).toInt();
+					xe = blockFileName.mid(ind2+1, ind3-(ind2+1)).toInt();
+					yb = blockFileName.mid(ind4+1, ind5-(ind4+1)).toInt();
+					ye = blockFileName.mid(ind5+1, ind6-(ind5+1)).toInt();
+					
+//					printf("xb=%d, xe=%d, yb=%d, ye=%d\n", xb, xe, yb, ye);
+					
+
+					loadRawRegion(bn, blockSection2D, sz_block3D, sz_block_section2D, datatype,0,0,k,xe-xb+1,ye-yb+1,k+1);
+					
+//					printf("block file has been loaded!\n");
+					
+					
+					// fusing
+					fusing2D(tmpImg, counterImg, blockSection2D, xb, xe, yb, ye, sz_enhanced2d);
+					
+					if (blockSection2D) {delete []blockSection2D; blockSection2D=0;}
+					if (sz_block3D) {delete []sz_block3D; sz_block3D=0;}
+					if (sz_block_section2D) {delete []sz_block_section2D; sz_block_section2D=0;}
+					
+				} //for (int n=0; n<enhancedBlockNum; n++)
+
+				printf("Finish fusing section %d\n", k);
+				
+				// compute the final EnhancedSectionImage by averaging
+				
+				for (long i=0; i<sz_enhanced2d[1]; i++)
+				{
+					long tmp = i*sz_enhanced2d[0];
+					long tmp2 = tmp;
+					for (long j=0; j<sz_enhanced2d[0]; j++)
+					{
+						if (counterImg[tmp2]==0)
+							EnhancedSectionImage[tmp2] = 0;
+						else
+							EnhancedSectionImage[tmp2] = (unsigned char)(tmpImg[tmp2]/counterImg[tmp2]);
+						tmp2++;
+					}
+				}
+				
+				printf("Finish computing EnhancedSectionImage\n");
+				
+				
+//				for (m=k*sz2d; m<(k+1)*sz2d; m++)
+//				{
+//					EnhancedSectionImage[cnt] = EnhancedStack[m];
+//					cnt++;
+//				}
+				
+				QString filename;
+				int idx0, idx1;
+				
+				QString qstr_outimg_file = QString(outimg_file);
+				
+				
+				cout << oriFileList.at(k).toStdString().c_str() << endl;
+				
+				
+				idx0 = oriFileList.at(k).lastIndexOf('/');
+				idx1 = oriFileList.at(k).lastIndexOf('.');
 			
-			if (EnhancedSectionImage) {delete []EnhancedSectionImage; EnhancedSectionImage = 0;} 
-		}
+//				printf("idx0=%d, idx1=%d", idx0, idx1);
+				filename = qstr_outimg_file + oriFileList.at(k).mid(idx0+1, idx1-idx0-1) + "_tubularity.tif";
+				
+//				cout<< filename.toStdString().c_str() << endl;
+				
+				saveImage(filename.toStdString().c_str(), EnhancedSectionImage, sz_enhanced2d, 1);
+				
+				if (EnhancedSectionImage) {delete []EnhancedSectionImage; EnhancedSectionImage = 0;} 
+				if (tmpImg) {delete []tmpImg; tmpImg=0;}
+				if (counterImg) {delete []counterImg; counterImg=0;}
+				
+				
+			} //for (long k=0; k<in_sz[2]; k++)
+			
+//			if (EnhancedSectionImage) {delete []EnhancedSectionImage; EnhancedSectionImage = 0;} 
+		} //if (saveEnhanced2DSections==1)
 		
-    	if (EnhancedStack) {delete []EnhancedStack; EnhancedStack=0;}
+//    	if (EnhancedStack) {delete []EnhancedStack; EnhancedStack=0;}
 
 		return true;
     }
 }
 #endif
+
+
 bool processImage_detect_soma(const V3DPluginArgList & input, V3DPluginArgList & output,V3DPluginCallback2 &callback)
 {
 
@@ -3344,6 +3508,29 @@ int pwi_fusing(SDATATYPE *data1d, SDATATYPE *subject1d, V3DLONG *sz_subject, SDA
     return true;
 }
 
+// stitch 2D block sections to a bigger 2D section image
+template <class T> void fusing2D(unsigned int *data, unsigned char *counterImg, T *blockSection2D, V3DLONG xb, V3DLONG xe, V3DLONG yb, V3DLONG ye, V3DLONG *sz_enhanced2d)
+{
+	long tmp1, tmp2;
+
+	long cnt = 0;
+	
+	for (long int i=yb; i<=ye; i++)
+	{
+		tmp1 = i*sz_enhanced2d[0];
+											
+		for (long int j=xb; j<=xe; j++)
+		{
+			tmp2 = tmp1+j;
+			data[tmp2] = data[tmp2] + (unsigned int)blockSection2D[cnt];
+			counterImg[tmp2]++;
+			cnt++;
+		}			
+		
+	}
+				
+	return;
+}
 
 // stitch blocks to generate a stack, FL added
 template <class T> void fusing(T *data1d, T *block1d, V3DLONG xb, V3DLONG xe, V3DLONG yb, V3DLONG ye, V3DLONG *sz_data1d, unsigned int ws, bool tag_leftmost_block)
