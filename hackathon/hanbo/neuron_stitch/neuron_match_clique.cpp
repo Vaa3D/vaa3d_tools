@@ -489,8 +489,10 @@ void NeuronLiveMatchDialog::highlight_pair()
     //    shift[1]+=SP->y;
     //    shift[2]+=SP->z;
 
-        matchfunc->highlight_nt1_seg(pmatch1[cur_pair],5);
-        matchfunc->highlight_nt0_seg(pmatch0[cur_pair],4);
+        if(stitchmask.at(cur_pair)<=0){
+            matchfunc->highlight_nt1_seg(pmatch1[cur_pair],5);
+            matchfunc->highlight_nt0_seg(pmatch0[cur_pair],4);
+        }
 
     //    //set view to highlight point
     //    v3dcontrol->resetRotation();
@@ -1502,6 +1504,43 @@ void neuron_match_clique::output_stitch(QString fname)
     if (!export_list2file(nt1_stitch->listNeuron,fname_neuron1,nt1_org->name))
     {
         v3d_msg("fail to write the output swc file:\n" + fname_neuron1);
+        return;
+    }
+
+    //combine neurons and output
+    QList<NeuronSWC> combined;
+    int idmax=0;
+    for(int i=0; i<nt0_stitch->listNeuron.size(); i++){
+        NeuronSWC S;
+        S.x = nt0_stitch->listNeuron.at(i).x;
+        S.y = nt0_stitch->listNeuron.at(i).y;
+        S.z = nt0_stitch->listNeuron.at(i).z;
+        S.n = nt0_stitch->listNeuron.at(i).n;
+        S.pn = nt0_stitch->listNeuron.at(i).pn;
+        S.r = nt0_stitch->listNeuron.at(i).r;
+        S.type = 2;
+        combined.append(S);
+        idmax=idmax>S.n?idmax:S.n;
+        idmax=idmax>S.pn?idmax:S.pn;
+    }
+    for(int i=0; i<nt1_stitch->listNeuron.size(); i++){
+        NeuronSWC S;
+        S.x = nt1_stitch->listNeuron.at(i).x;
+        S.y = nt1_stitch->listNeuron.at(i).y;
+        S.z = nt1_stitch->listNeuron.at(i).z;
+        S.n = nt1_stitch->listNeuron.at(i).n+idmax+1;
+        S.r = nt1_stitch->listNeuron.at(i).r;
+        S.type = 2;
+        if(nt1_stitch->listNeuron.at(i).pn>=0)
+            S.pn = nt1_stitch->listNeuron.at(i).pn+idmax+1;
+        else
+            S.pn=-1;
+        combined.append(S);
+    }
+    QString fname_neuron = fname+"_stithced.swc";
+    if (!export_list2file(combined,fname_neuron,nt0_org->name))
+    {
+        v3d_msg("fail to write the output swc file:\n" + fname_neuron);
         return;
     }
 
