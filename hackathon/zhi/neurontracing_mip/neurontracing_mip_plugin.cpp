@@ -61,8 +61,7 @@ QStringList neurontracing_mip::menulist() const
 QStringList neurontracing_mip::funclist() const
 {
 	return QStringList()
-		<<tr("func1")
-		<<tr("func2")
+        <<tr("trace_mip")
 		<<tr("help");
 }
 
