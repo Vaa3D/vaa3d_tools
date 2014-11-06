@@ -8,6 +8,7 @@
 #include "neuron_stitch_plugin.h"
 #include "neuron_stitch_func.h"
 #include "../../../v3d_main/neuron_editing/neuron_xforms.h"
+#include <iostream>
 
 using namespace std;
 
@@ -28,8 +29,7 @@ QStringList neuron_stitch::menulist() const
 QStringList neuron_stitch::funclist() const
 {
 	return QStringList()
-		<<tr("func1")
-		<<tr("func2")
+        <<tr("neuron_stitch_auto")
 		<<tr("help");
 }
 
@@ -65,21 +65,117 @@ bool neuron_stitch::dofunc(const QString & func_name, const V3DPluginArgList & i
 	if(input.size() >= 2) inparas = *((vector<char*> *)input.at(1).p);
 	if(output.size() >= 1) outfiles = *((vector<char*> *)output.at(0).p);
 
-	if (func_name == tr("func1"))
+    if (func_name == tr("neuron_stitch_auto"))
 	{
-		v3d_msg("To be implemented.");
-	}
-	else if (func_name == tr("func2"))
-	{
-		v3d_msg("To be implemented.");
-	}
+        cout<<"==== neuron stack auto stitcher ===="<<endl;
+        if(infiles.size()!=2 || outfiles.size()!=1)
+        {
+            qDebug("ERROR: please set input and output!");
+            printHelp();
+            return false;
+        }
+
+        //load neurons
+        QString fname_nt0 = ((vector<char*> *)(input.at(0).p))->at(0);
+        QString fname_nt1 = ((vector<char*> *)(input.at(0).p))->at(1);
+        QString fname_output = ((vector<char*> *)(output.at(0).p))->at(0);
+        NeuronTree* nt0 = new NeuronTree();
+        if (fname_nt0.toUpper().endsWith(".SWC") || fname_nt0.toUpper().endsWith(".ESWC")){
+            *nt0 = readSWC_file(fname_nt0);
+        }
+        if(nt0->listNeuron.size()<=0){
+            qDebug()<<"failed to read SWC file: "<<fname_nt0;
+            return false;
+        }
+        NeuronTree* nt1 = new NeuronTree();
+        if (fname_nt1.toUpper().endsWith(".SWC") || fname_nt1.toUpper().endsWith(".ESWC")){
+            *nt1 = readSWC_file(fname_nt1);
+        }
+        if(nt1->listNeuron.size()<=0){
+            qDebug()<<"failed to read SWC file: "<<fname_nt1;
+            return false;
+        }
+
+        neuron_match_clique matchfunc(nt0, nt1);
+
+        //get parameters
+        vector<char*> paras = (*(vector<char*> *)(input.at(1).p));
+        if(paras.size()>0){
+            int tmp=atoi(paras.at(0));
+            if(tmp>=0 && tmp<=2)
+                matchfunc.direction=tmp;
+            else
+                cerr<<"error: wrong stack direction: "<<tmp<<"; use default value 2 (z direction)"<<endl;
+        }
+        if(paras.size()>1){
+            double tmp=atoi(paras.at(1));
+            if(tmp>1e-10)
+                matchfunc.zscale=tmp;
+            else
+                cerr<<"error: wrong rescale value: "<<tmp<<"; use default value 1"<<endl;
+        }
+        if(paras.size()>2){
+            double tmp=atoi(paras.at(2));
+            if(tmp>0&&tmp<180)
+                matchfunc.angThr_match=cos(tmp/180*M_PI);
+            else
+                cerr<<"error: wrong angular threshold: "<<tmp<<"; use default value 60"<<endl;
+        }
+        if(paras.size()>3){
+            double tmp=atoi(paras.at(3));
+            if(tmp>=0)
+                matchfunc.pmatchThr=tmp;
+            else
+                cerr<<"error: wrong match distance threshold: "<<tmp<<"; use default value 100"<<endl;
+        }
+        if(paras.size()>4){
+            double tmp=atoi(paras.at(4));
+            if(tmp>0)
+                matchfunc.spanCand=tmp;
+            else
+                cerr<<"error: wrong border tips seraching span: "<<tmp<<"; use default value 20"<<endl;
+        }
+        if(paras.size()>5){
+            double tmp=atoi(paras.at(5));
+            if(tmp>0)
+                matchfunc.cmatchThr=tmp;
+            else
+                cerr<<"error: wrong 3-clique match distance threshold: "<<tmp<<"; use default value 100"<<endl;
+        }
+
+        //do match
+        //init clique and candidate
+        matchfunc.init();
+        //global match
+        cout<<"start global search"<<endl;
+        matchfunc.globalmatch();
+        //stitch
+        cout<<"stitch matched points"<<endl;
+        matchfunc.stitch();
+
+        //save results
+        matchfunc.output_stitch(fname_output);
+        matchfunc.output_candMatchScore(fname_output + "_matchscore.txt");
+        matchfunc.output_affine(fname_output,fname_nt0);
+        matchfunc.output_matchedMarkers_orgspace(fname_output+"_nt0_matched.marker",fname_output+"_nt1_matched.marker");
+        matchfunc.output_parameter(fname_output+"_param.txt");
+
+        cout<<("matching finished")<<endl;
+    }
 	else if (func_name == tr("help"))
 	{
-		v3d_msg("To be implemented.");
-	}
+        printHelp();
+    }
 	else return false;
 
 	return true;
+}
+
+void neuron_stitch::printHelp()
+{
+    cout<<"\nUsage: v3d -x neuron_stitch -f neuron_stitch_auto -i <input_first.swc> <input_second.swc> -o <output_base> "
+          <<"-p <stack dir=2> <stack rescale=1> <angle thr=60> <distance thr=100> <candidate serch span=20> <3-clique thr=100>"<<endl;
+    cout<<"\n";
 }
 
 void neuron_stitch::domatch(V3DPluginCallback2 &callback, QWidget *parent)

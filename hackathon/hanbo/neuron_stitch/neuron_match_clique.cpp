@@ -436,7 +436,6 @@ void NeuronLiveMatchDialog::highlight_pair()
     if(cb_pair->count()>0){
         int info[4];
         LocationSimple * SP = 0;
-    //    float shift[3];
 
         //reset cur_pair
         if(cur_pair>=0 && cur_pair<mmatch0.size()){
@@ -474,9 +473,6 @@ void NeuronLiveMatchDialog::highlight_pair()
         SP->x = ntList->at(0).listNeuron.at(info[1]).x;
         SP->y = ntList->at(0).listNeuron.at(info[1]).y;
         SP->z = ntList->at(0).listNeuron.at(info[1]).z;
-    //    shift[0]=SP->x;
-    //    shift[1]=SP->y;
-    //    shift[2]=SP->z;
 
         SP=(LocationSimple*)&(mList->at(mmatch1[cur_pair]));
         SP->color.r = 255; SP->color.g = 255; SP->color.b = 128;
@@ -485,28 +481,16 @@ void NeuronLiveMatchDialog::highlight_pair()
         SP->x = ntList->at(1).listNeuron.at(info[1]).x;
         SP->y = ntList->at(1).listNeuron.at(info[1]).y;
         SP->z = ntList->at(1).listNeuron.at(info[1]).z;
-    //    shift[0]+=SP->x;
-    //    shift[1]+=SP->y;
-    //    shift[2]+=SP->z;
 
         if(stitchmask.at(cur_pair)<=0){
+            //for test
+            qDebug()<<"cojoc: "<<stitchmask.at(cur_pair)<<":"<<cur_pair;
             matchfunc->highlight_nt1_seg(pmatch1[cur_pair],5);
             matchfunc->highlight_nt0_seg(pmatch0[cur_pair],4);
         }
 
-    //    //set view to highlight point
-    //    v3dcontrol->resetRotation();
-    //    shift[0]=(shift[0]/2-bound_min[0])/(bound_max[0]-bound_min[0])*142-71;
-    //    shift[1]=(shift[1]/2-bound_min[1])/(bound_max[1]-bound_min[1])*90-45;
-    ////    shift[2]=(shift[2]/2-bound_min[2])/(bound_max[2]-bound_min[2])*200-100;
-    //    v3dcontrol->setXShift(shift[0]);
-    //    v3dcontrol->setYShift(shift[1]);
-    ////    v3dcontrol->setZShift(shift[2]);
-    ////    produceZoomViewOf3DRoi();
-
         updateview();
     }
-
 }
 
 void NeuronLiveMatchDialog::change_pair(int idx)
@@ -515,7 +499,7 @@ void NeuronLiveMatchDialog::change_pair(int idx)
 
     highlight_pair();
 
-    btn_stitch->setEnabled(stitchmask.at(idx)>=0);
+    btn_stitch->setEnabled(stitchmask.at(idx)==0);
 }
 
 void NeuronLiveMatchDialog::manualadd()
@@ -620,18 +604,6 @@ void NeuronLiveMatchDialog::skip()
         v3d_msg("Reach the end. Restart from the beginnig.");
         cb_pair->setCurrentIndex(0);
     }
-//    int id=cb_pair->currentIndex();
-
-//    int info[4], color[3];
-//    get_marker_info(mList->at(mmatch0.at(id)),info);
-//    info[2]=-1; color[0]=128; color[1]=0; color[2]=128;
-//    update_marker_info(mList->at(mmatch0.at(id)), info, color);
-
-//    get_marker_info(mList->at(mmatch1.at(id)),info);
-//    info[2]=-1; color[0]=0; color[1]=128; color[2]=128;
-//    update_marker_info(mList->at(mmatch1.at(id)), info, color);
-
-//    updatematchlist();
 }
 
 void NeuronLiveMatchDialog::stitch()
@@ -665,16 +637,37 @@ void NeuronLiveMatchDialog::stitchall()
         if(matchfunc->stitch(pmatch0.at(idx),pmatch1.at(idx))){
             stitchmask[idx]=1;
             cb_pair->setItemText(idx, cb_pair->itemText(idx) + " = stitched!");
+
+            //update the location of markers
+            LocationSimple* SP=(LocationSimple*)&(mList->at(mmatch0.at(idx)));
+            int info[4];
+            //neuron 0
+            get_marker_info(*SP, info);
+            SP->x = ntList->at(0).listNeuron.at(info[1]).x;
+            SP->y = ntList->at(0).listNeuron.at(info[1]).y;
+            SP->z = ntList->at(0).listNeuron.at(info[1]).z;
+
+            SP=(LocationSimple*)&(mList->at(mmatch1.at(idx)));
+            //neuron 1
+            get_marker_info(*SP, info);
+            SP->x = ntList->at(1).listNeuron.at(info[1]).x;
+            SP->y = ntList->at(1).listNeuron.at(info[1]).y;
+            SP->z = ntList->at(1).listNeuron.at(info[1]).z;
+
+            matchfunc->highlight_nt1_seg(pmatch1.at(idx),2);
         }else{
             stitchmask[idx]=-1;
             cb_pair->setItemText(idx, cb_pair->itemText(idx) + " = failed, LOOP!");
         }
-        matchfunc->highlight_nt1_seg(pmatch1.at(idx),2);
     }
 
-    if(cb_pair->count()>0)
-        cb_pair->setCurrentIndex(0);
-
+    if(cur_pair!=0){
+        if(cb_pair->count()>0)
+            cb_pair->setCurrentIndex(0);
+    }else{
+        btn_stitch->setEnabled(stitchmask[0] == 0);
+        highlight_pair();
+    }
     updateview();
 }
 
@@ -1491,7 +1484,7 @@ void neuron_match_clique::output_stitch(QString fname)
     if(nt1_stitch->listNeuron.size()<=0)
         return;
 
-    QString fname_neuron0 = fname+"_stithced_nt0.swc";
+    QString fname_neuron0 = fname+"_stitched_nt0.swc";
     //output neuron
     if (!export_list2file(nt0_stitch->listNeuron,fname_neuron0,nt0_org->name))
     {
@@ -1499,7 +1492,7 @@ void neuron_match_clique::output_stitch(QString fname)
         return;
     }
 
-    QString fname_neuron1 = fname+"_stithced_nt1.swc";
+    QString fname_neuron1 = fname+"_stitched_nt1.swc";
     //output neuron
     if (!export_list2file(nt1_stitch->listNeuron,fname_neuron1,nt1_org->name))
     {
@@ -1537,7 +1530,7 @@ void neuron_match_clique::output_stitch(QString fname)
             S.pn=-1;
         combined.append(S);
     }
-    QString fname_neuron = fname+"_stithced.swc";
+    QString fname_neuron = fname+"_stitched.swc";
     if (!export_list2file(combined,fname_neuron,nt0_org->name))
     {
         v3d_msg("fail to write the output swc file:\n" + fname_neuron);

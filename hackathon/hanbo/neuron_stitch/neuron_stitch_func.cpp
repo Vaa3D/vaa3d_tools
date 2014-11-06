@@ -118,9 +118,9 @@ void stitchMatchedPoint(NeuronTree* nt0, NeuronTree* nt1, const QList<int>& pare
     vector0.z=goal.z-nt0->listNeuron.at(idList0.at(0)).z;
     for(int i=0; i<idList0.size(); i++){
         NeuronSWC* p=(NeuronSWC*)&(nt0->listNeuron.at(idList0.at(i)));
-        p->x += vector0.x*(idList0.size()-i)/(idList0.size()+1);
-        p->y += vector0.y*(idList0.size()-i)/(idList0.size()+1);
-        p->z += vector0.z*(idList0.size()-i)/(idList0.size()+1);
+        p->x += vector0.x*(idList0.size()-i)/(idList0.size()+0);
+        p->y += vector0.y*(idList0.size()-i)/(idList0.size()+0);
+        p->z += vector0.z*(idList0.size()-i)/(idList0.size()+0);
     }
 
     vector0.x=goal.x-nt1->listNeuron.at(idList1.at(0)).x;
@@ -128,9 +128,9 @@ void stitchMatchedPoint(NeuronTree* nt0, NeuronTree* nt1, const QList<int>& pare
     vector0.z=goal.z-nt1->listNeuron.at(idList1.at(0)).z;
     for(int i=0; i<idList1.size(); i++){
         NeuronSWC* p=(NeuronSWC*)&(nt1->listNeuron.at(idList1.at(i)));
-        p->x += vector0.x*(idList1.size()-i)/(idList1.size()+1);
-        p->y += vector0.y*(idList1.size()-i)/(idList1.size()+1);
-        p->z += vector0.z*(idList1.size()-i)/(idList1.size()+1);
+        p->x += vector0.x*(idList1.size()-i)/(idList1.size()+0);
+        p->y += vector0.y*(idList1.size()-i)/(idList1.size()+0);
+        p->z += vector0.z*(idList1.size()-i)/(idList1.size()+0);
     }
 }
 

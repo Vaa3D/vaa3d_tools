@@ -33,6 +33,7 @@ private:
     void dostitch(V3DPluginCallback2 &callback, QWidget *parent);
     void doadjust(V3DPluginCallback2 &callback, QWidget *parent);
     int dotransform_swc(V3DPluginCallback2 &callback, QWidget *parent);
+    void printHelp();
 };
 
 #endif
