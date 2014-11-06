@@ -54,7 +54,6 @@ template <class T> T pow2(T a)
     return a*a;
 
 }
-QString getAppPath();
 NeuronTree post_process(NeuronTree nt);
 
 void neurontracing_mst::domenu(const QString &menu_name, V3DPluginCallback2 &callback, QWidget *parent)
@@ -352,20 +351,17 @@ void autotrace_mst(V3DPluginCallback2 &callback, QWidget *parent, MST_PARA &PARA
     nt_final.hashNeuron = hashNeuron;
 
     QString swc_name = PARA.inimg_file + "_MST_Tracing.swc";
-    writeSWC_file(swc_name.toStdString().c_str(),nt_final);
 
-#if  defined(Q_OS_LINUX)
-    QString cmd_sort = QString("%1/vaa3d -x sort_neuron -f sort_swc -i %2 -o %3").arg(getAppPath().toStdString().c_str()).arg(swc_name.toStdString().c_str()).arg(swc_name.toStdString().c_str());
-    system(qPrintable(cmd_sort));
-#elif defined(Q_OS_MAC)
-    QString cmd_sort = QString("%1/vaa3d64.app/Contents/MacOS/vaa3d64 -x sort_neuron -f sort_swc -i %2 -o %3").arg(getAppPath().toStdString().c_str()).arg(swc_name.toStdString().c_str()).arg(swc_name.toStdString().c_str());
-    system(qPrintable(cmd_sort));
-#else
-         v3d_msg("The OS is not Linux or Mac. Do nothing.");
-         return;
-#endif
+    NeuronTree nt_sorted;
+    hashNeuron.clear();
+    SortSWC(nt_final.listNeuron, nt_sorted.listNeuron ,1, INF);
+    for(V3DLONG i = 0; i<nt_sorted.listNeuron.size();i++)
+            hashNeuron.insert(nt_sorted.listNeuron.at(i).n,i);
+    nt_sorted.n = -1;
+    nt_sorted.on = true;
+    nt_sorted.hashNeuron = hashNeuron;
 
-    NeuronTree nt_sorted = readSWC_file(swc_name);
+//    writeSWC_file(swc_name.toStdString().c_str(),nt_sorted);
     NeuronTree nt_sorted_prund = post_process(nt_sorted);
     NeuronTree nt_sorted_prund_2nd = post_process(nt_sorted_prund);
 
@@ -412,13 +408,14 @@ void autotrace_mst(V3DPluginCallback2 &callback, QWidget *parent, MST_PARA &PARA
         return;
     }
 
+   // trace_para.b_postMergeClosebyBranches = true;
     NeuronTree nt_2nd = v3dneuron_GD_tracing(p4d_entire, sz_tracing,
                               p0, pp,
                               trace_para, weight_xy_z);
     if(p4d_entire) {delete []p4d_entire; p4d_entire = 0;}
 
     NeuronTree nt_2nd_sorted;
-    if (SortSWC(nt_2nd.listNeuron, nt_2nd_sorted.listNeuron ,1, 5))
+    SortSWC(nt_2nd.listNeuron, nt_2nd_sorted.listNeuron ,1, 5);
 
     nt_2nd_sorted.name = "MST_Tracing";
     writeSWC_file(swc_name.toStdString().c_str(),nt_2nd_sorted);
@@ -724,27 +721,4 @@ NeuronTree  post_process(NeuronTree nt)
    if(flag) {delete[] flag; flag = 0;}
    return nt_prunned;
 
-}
-
-QString getAppPath()
-{
-    QString v3dAppPath("~/Work/v3d_external/v3d");
-    QDir testPluginsDir = QDir(qApp->applicationDirPath());
-
-#if defined(Q_OS_WIN)
-    if (testPluginsDir.dirName().toLower() == "debug" || testPluginsDir.dirName().toLower() == "release")
-        testPluginsDir.cdUp();
-#elif defined(Q_OS_MAC)
-    if (testPluginsDir.dirName() == "MacOS") {
-        QDir testUpperPluginsDir = testPluginsDir;
-        testUpperPluginsDir.cdUp();
-        testUpperPluginsDir.cdUp();
-        testUpperPluginsDir.cdUp(); // like foo/plugins next to foo/v3d.app
-        if (testUpperPluginsDir.cd("plugins")) testPluginsDir = testUpperPluginsDir;
-        testPluginsDir.cdUp();
-    }
-#endif
-
-    v3dAppPath = testPluginsDir.absolutePath();
-    return v3dAppPath;
 }
