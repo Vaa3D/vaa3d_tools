@@ -66,6 +66,14 @@ function write_neuron_tracing_command {
   inimgfileTracing=$4;
   finalfileFolder=$5;
 
+  smooth_inimgfileTracing=${inimgfileTracing}.g.v3draw;
+
+  if [ $METHOD == "smooth" ]; then
+   echo "$vaa3dProgramPath -x gaussian -f gf -i $inimgfileTracing -o $smooth_inimgfileTracing -p 7 7 2 1 2" >> $outputScript;
+   echo "$vaa3dProgramPath -x datatypeconvert -f dtc -i $smooth_inimgfileTracing -o $smooth_inimgfileTracing -p 1" >> $outputScript;
+   echo "mv  $smooth_inimgfileTracing $finalfileFolder" >> $outputScript;
+  fi;
+
   if [ $METHOD == "1" -o $METHOD == "-1" ]; then
     echo "$vaa3dProgramPath -x vn2 -f app1 -i $inimgfileTracing -p NULL 0 40 0" >> $outputScript;
     echo "mv  $inimgfileTracing*_app1.swc $finalfileFolder" >> $outputScript;
