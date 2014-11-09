@@ -40,12 +40,12 @@ const double const_infinitesimal = 0.000000001;
 enum enum_shape_t {sphere, cube};
 #pragma endregion
 
-#pragma region "dialogInitialize" 
-class dialogInitialize:public QDialog
+#pragma region "dialogDefineExemplar" 
+class dialogDefineExemplar:public QDialog
 {
 	Q_OBJECT
 public:
-	dialogInitialize(V3DPluginCallback2 &V3DPluginCallback2_currentCallback, QWidget *QWidget_parent, int int_channelDim)
+	dialogDefineExemplar(V3DPluginCallback2 &V3DPluginCallback2_currentCallback, QWidget *QWidget_parent, int int_channelDim)
 	{
 		//channel;
 		QStringList QStringList_channel_items;
@@ -72,52 +72,12 @@ public:
 		{
 			QComboBox_channel_selection->setCurrentIndex(0);
 		}
-		QLabel* QLabel_channel_main = new QLabel(QObject::tr("Channel:"));
 		QGroupBox *QGroupBox_channel_main = new QGroupBox("Color channel");
 		QGroupBox_channel_main->setStyle(new QWindowsStyle());
 		QGridLayout *QGridLayout_channel_main = new QGridLayout();
 		QGroupBox_channel_main->setStyle(new QWindowsStyle());
-		QGridLayout_channel_main->addWidget(QLabel_channel_main, 1,1,1,1);
-		QGridLayout_channel_main->addWidget(QComboBox_channel_selection, 1,2,1,3);
+		QGridLayout_channel_main->addWidget(QComboBox_channel_selection, 1,1,1,1);
 		QGroupBox_channel_main->setLayout(QGridLayout_channel_main);
-		//control;
-		QPushButton *QPushButton_control_start = new QPushButton(QObject::tr("Initialize"));
-		QPushButton *QPushButton_control_close = new QPushButton(QObject::tr("Close"));
-		QWidget* QWidget_control_bar = new QWidget();
-		QGridLayout* QGridLayout_control_bar = new QGridLayout();
-		QGridLayout_control_bar->addWidget(QPushButton_control_start,1,1,1,2);
-		QGridLayout_control_bar->addWidget(QPushButton_control_close,1,3,1,2);
-		QWidget_control_bar->setLayout(QGridLayout_control_bar);
-		//main pandel;
-		QGridLayout *QGridLayout_main = new QGridLayout();
-		QGridLayout_main->addWidget(QGroupBox_channel_main);
-		QGridLayout_main->addWidget(QWidget_control_bar);
-		setLayout(QGridLayout_main);
-		setWindowTitle(QString("Initialization"));
-		//event evoking;
-		connect(QPushButton_control_start, SIGNAL(clicked()), this, SLOT(_slot_start()));
-		connect(QPushButton_control_close, SIGNAL(clicked()), this, SLOT(reject()));
-		update();
-	}
-	~dialogInitialize(){}
-	QComboBox* QComboBox_channel_selection;
-	V3DLONG channel_idx_selection;
-	public slots:
-		void _slot_start()
-		{
-			channel_idx_selection = QComboBox_channel_selection->currentIndex() + 1;
-			accept();
-		}
-};
-#pragma endregion
-
-#pragma region "dialogDefineExemplar" 
-class dialogDefineExemplar:public QDialog
-{
-	Q_OBJECT
-public:
-	dialogDefineExemplar(V3DPluginCallback2 &V3DPluginCallback2_currentCallback, QWidget *QWidget_parent)
-	{
 		//intensity;
 		QStringList QStringList_intensity_thresholdType;
 		QStringList_intensity_thresholdType << "Calculate from Image" << "User Input";
@@ -127,7 +87,7 @@ public:
 		QGroupBox *QGroupBox_intensity_main = new QGroupBox("Image intensity");
 		QGroupBox_intensity_main->setStyle(new QWindowsStyle());
 		QGridLayout *QGridLayout_intensity_main = new QGridLayout();
-		QGridLayout_intensity_main->addWidget(QLabel_intensity_thresholdType, 1,1,1,2);
+		QGridLayout_intensity_main->addWidget(QLabel_intensity_thresholdType, 1,1,1,1);
 		QGridLayout_intensity_main->addWidget(QComboBox_intensity_thresholdType, 1,2,1,1);
 		QDoubleSpinBox_intensity_value = new QDoubleSpinBox();
 		QDoubleSpinBox_intensity_value->setEnabled(false);
@@ -136,31 +96,21 @@ public:
 		QGridLayout_intensity_main->addWidget(QDoubleSpinBox_intensity_value, 1,3,1,1);
 		QLabel* QLabel_intensity_valueChangeRatio = new QLabel(QObject::tr("Max value change ratio:"));
 		QLineEdit_intenstiy_valueChangeRatio = new QLineEdit ("0.1", QWidget_parent);
-		QGridLayout_intensity_main->addWidget(QLabel_intensity_valueChangeRatio, 2, 3, 1, 1);
-		QGridLayout_intensity_main->addWidget(QLineEdit_intenstiy_valueChangeRatio, 2, 4, 1, 1);
+		QGridLayout_intensity_main->addWidget(QLabel_intensity_valueChangeRatio, 2, 1, 1, 1);
+		QGridLayout_intensity_main->addWidget(QLineEdit_intenstiy_valueChangeRatio, 2, 2, 1, 1);
 		QGroupBox_intensity_main->setLayout(QGridLayout_intensity_main);
-		//shape;
-		QGroupBox *QGroupBox_shape = new QGroupBox("General region shape");
-		QGridLayout *QGridLayout_shape = new QGridLayout();
-		QRadioButton_shape_sphere = new QRadioButton("sphere-like", QWidget_parent);
-		QRadioButton_shape_sphere->setChecked(true);
-		QRadioButton_shape_cube = new QRadioButton("cube-like", QWidget_parent);
-		QRadioButton_shape_cube->setChecked(false);
-		QGridLayout_shape->addWidget(QRadioButton_shape_sphere, 1, 1, 1, 1);
-		QGridLayout_shape->addWidget(QRadioButton_shape_cube, 1, 2, 1, 1);
-		QGroupBox_shape->setLayout(QGridLayout_shape);
 		//control;
 		QPushButton *QPushButton_control_start = new QPushButton(QObject::tr("Define exemplar"));
 		QPushButton *QPushButton_control_close = new QPushButton(QObject::tr("Close"));
 		QWidget* QWidget_control_bar = new QWidget();
 		QGridLayout* QGridLayout_control_bar = new QGridLayout();
-		QGridLayout_control_bar->addWidget(QPushButton_control_start,1,1,1,2);
-		QGridLayout_control_bar->addWidget(QPushButton_control_close,1,3,1,2);
+		QGridLayout_control_bar->addWidget(QPushButton_control_start,1,1,1,1);
+		QGridLayout_control_bar->addWidget(QPushButton_control_close,1,2,1,1);
 		QWidget_control_bar->setLayout(QGridLayout_control_bar);
 		//main pandel;
 		QGridLayout *QGridLayout_main = new QGridLayout();
+		QGridLayout_main->addWidget(QGroupBox_channel_main);
 		QGridLayout_main->addWidget(QGroupBox_intensity_main);
-		QGridLayout_main->addWidget(QGroupBox_shape);
 		QGridLayout_main->addWidget(QWidget_control_bar);
 		setLayout(QGridLayout_main);
 		setWindowTitle(QString("Exemplar Defination"));
@@ -173,12 +123,11 @@ public:
 	~dialogDefineExemplar(){}
 	QComboBox* QComboBox_intensity_thresholdType;
 	QDoubleSpinBox* QDoubleSpinBox_intensity_value;
-	QRadioButton* QRadioButton_shape_sphere;
-	QRadioButton* QRadioButton_shape_cube;
 	QLineEdit* QLineEdit_intenstiy_valueChangeRatio;
 	double intensity_threshold_global;
-	enum_shape_t shape_type_selection;
 	double intensity_threshold_valueChangeRatio;
+	QComboBox* QComboBox_channel_selection;
+	V3DLONG channel_idx_selection;
 	public slots:
 		void update()
 		{
@@ -193,6 +142,7 @@ public:
 		}
 		void _slot_start()
 		{
+			channel_idx_selection = QComboBox_channel_selection->currentIndex() + 1;
 			intensity_threshold_global = -1;
 			if (QDoubleSpinBox_intensity_value->isEnabled())
 			{
@@ -201,14 +151,6 @@ public:
 			else
 			{
 				intensity_threshold_global = -1; //calculate automatically;
-			}
-			if (this->QRadioButton_shape_sphere->isChecked())
-			{
-				this->shape_type_selection = sphere;
-			}
-			else if (this->QRadioButton_shape_cube->isChecked())
-			{
-				this->shape_type_selection = cube;
 			}
 			intensity_threshold_valueChangeRatio = this->QLineEdit_intenstiy_valueChangeRatio->text().toDouble();
 			accept();
@@ -233,14 +175,20 @@ public:
 		//shape;
 		QGroupBox *QGroupBox_shape = new QGroupBox("Geometry stat");
 		QGridLayout *QGridLayout_shape = new QGridLayout();
+		QRadioButton_shape_sphere = new QRadioButton("sphere-like", QWidget_parent);
+		QRadioButton_shape_sphere->setChecked(true);
+		QRadioButton_shape_cube = new QRadioButton("cube-like", QWidget_parent);
+		QRadioButton_shape_cube->setChecked(false);
+		QGridLayout_shape->addWidget(QRadioButton_shape_sphere, 1, 1, 1, 1);
+		QGridLayout_shape->addWidget(QRadioButton_shape_cube, 1, 2, 1, 1);
 		QLabel* QLabel_shape_delta = new QLabel(QObject::tr("max anisotropic\ndeviation:"));
 		QLineEdit_Shape_delta = new QLineEdit("2.5", QWidget_parent);
+		QGridLayout_shape->addWidget(QLabel_shape_delta, 1, 3, 1, 1);
+		QGridLayout_shape->addWidget(QLineEdit_Shape_delta, 1, 4, 1, 1);
 		QLabel* QLabel_shape_thresholdRegionSize = new QLabel(QObject::tr("Min region size\nvs. exemplar ratio:"));
 		QLineEdit_shape_thresholdRegionSize = new QLineEdit("0.1", QWidget_parent);
 		QLabel* QLabel_shape_uThresholdRegionSize = new QLabel(QObject::tr("Max region size\nvs. exemplar ratio:"));
 		QLineEdit_shape_uThresholdRegionSize = new QLineEdit("200000", QWidget_parent);
-		QGridLayout_shape->addWidget(QLabel_shape_delta, 1, 1, 1, 1);
-		QGridLayout_shape->addWidget(QLineEdit_Shape_delta, 1, 2, 1, 1);
 		QGridLayout_shape->addWidget(QLabel_shape_thresholdRegionSize, 2, 1, 1, 1);
 		QGridLayout_shape->addWidget(QLineEdit_shape_thresholdRegionSize, 2, 2, 1, 1);
 		QGridLayout_shape->addWidget(QLabel_shape_uThresholdRegionSize, 2, 3, 1, 1);
@@ -251,8 +199,8 @@ public:
 		QPushButton *QPushButton_control_close = new QPushButton(QObject::tr("Close"));
 		QWidget* QWidget_control_bar = new QWidget();
 		QGridLayout* QGridLayout_control_bar = new QGridLayout();
-		QGridLayout_control_bar->addWidget(QPushButton_control_start,1,1,1,2);
-		QGridLayout_control_bar->addWidget(QPushButton_control_close,1,3,1,2);
+		QGridLayout_control_bar->addWidget(QPushButton_control_start,1,1,1,1);
+		QGridLayout_control_bar->addWidget(QPushButton_control_close,1,2,1,1);
 		QWidget_control_bar->setLayout(QGridLayout_control_bar);
 		//main pandel;
 		QGridLayout *QGridLayout_main = new QGridLayout();
@@ -271,6 +219,9 @@ public:
 	QLineEdit* QLineEdit_intensity_histoCorrelation;
 	QLineEdit* QLineEdit_shape_thresholdRegionSize;
 	QLineEdit* QLineEdit_shape_uThresholdRegionSize;
+	QRadioButton* QRadioButton_shape_sphere;
+	QRadioButton* QRadioButton_shape_cube;
+	enum_shape_t shape_type_selection;
 	double intensity_threshold_histoCorr;
 	double shape_para_delta;
 	double shape_multiplier_thresholdRegionSize;
@@ -282,6 +233,14 @@ public:
 			intensity_threshold_histoCorr = this->QLineEdit_intensity_histoCorrelation->text().toDouble();
 			shape_multiplier_thresholdRegionSize = this->QLineEdit_shape_thresholdRegionSize->text().toDouble();
 			shape_multiplier_uThresholdRegionSize = this->QLineEdit_shape_uThresholdRegionSize->text().toDouble();
+			if (this->QRadioButton_shape_sphere->isChecked())
+			{
+				this->shape_type_selection = sphere;
+			}
+			else if (this->QRadioButton_shape_cube->isChecked())
+			{
+				this->shape_type_selection = cube;
+			}
 			accept();
 		}
 };
@@ -380,6 +339,7 @@ class cellSegmentation :public QObject, public V3DPluginInterface2_1
 			//constant
 			vector<V3DLONG> poss_neighborRelative;
 			vector<double3D> point_neighborRelative;
+			vector<vector<V3DLONG> > colors_simpleTable;
 			
 			//Input or directly derived;
 			unsigned char* Image1D_original;
@@ -403,7 +363,6 @@ class cellSegmentation :public QObject, public V3DPluginInterface2_1
 			//Exemplar (or learn from it);
 			vector<V3DLONG> poss_exemplar;
 			vector<vector<V3DLONG> > possVct_exemplarRegion;
-			vector<vector<V3DLONG> > boundBoxVct_exemplarRegion;
 			vector<vector<double> > histoVct_exemplarRegion;
 			vector<vector<vector<double> > > valueVctVct_exemplarShapeStat;
 			double threshold_deltaShapeStat;
@@ -439,6 +398,31 @@ class cellSegmentation :public QObject, public V3DPluginInterface2_1
 		#pragma region "control-intialize"
 		void control_initialize(unsigned char* _Image1D_original, V3DLONG _dim_X, V3DLONG _dim_Y, V3DLONG _dim_Z , int _idx_channel)
 		{
+			vector<V3DLONG> color_tmp(3, 0); color_tmp[0] = 255; color_tmp[1] = 0; color_tmp[2] = 0;
+			colors_simpleTable.push_back(color_tmp);
+			color_tmp[0] = 0; color_tmp[1] = 255; color_tmp[2] = 0;
+			colors_simpleTable.push_back(color_tmp);
+			color_tmp[0] = 0; color_tmp[1] = 0; color_tmp[2] = 255;
+			colors_simpleTable.push_back(color_tmp);
+			color_tmp[0] = 255; color_tmp[1] = 255; color_tmp[2] = 0;
+			colors_simpleTable.push_back(color_tmp);
+			color_tmp[0] = 0; color_tmp[1] = 255; color_tmp[2] = 255;
+			colors_simpleTable.push_back(color_tmp);
+			color_tmp[0] = 255; color_tmp[1] = 0; color_tmp[2] = 255;
+			colors_simpleTable.push_back(color_tmp);
+			color_tmp[0] = 255; color_tmp[1] = 128; color_tmp[2] = 0;
+			colors_simpleTable.push_back(color_tmp);
+			color_tmp[0] = 128; color_tmp[1] = 255; color_tmp[2] = 0;
+			colors_simpleTable.push_back(color_tmp);
+			color_tmp[0] = 0; color_tmp[1] = 128; color_tmp[2] = 255;
+			colors_simpleTable.push_back(color_tmp);
+			color_tmp[0] = 255; color_tmp[1] = 255; color_tmp[2] = 128;
+			colors_simpleTable.push_back(color_tmp);
+			color_tmp[0] = 128; color_tmp[1] = 255; color_tmp[2] = 255;
+			colors_simpleTable.push_back(color_tmp);
+			color_tmp[0] = 255; color_tmp[1] = 128; color_tmp[2] = 255;
+			colors_simpleTable.push_back(color_tmp);
+			
 			this->Image1D_original = _Image1D_original;
 			this->dim_X = _dim_X; this->dim_Y = _dim_Y; this->dim_Z = _dim_Z; this->idx_channel = _idx_channel;
 			this->size_page = dim_X*dim_Y*dim_Z;
@@ -462,19 +446,16 @@ class cellSegmentation :public QObject, public V3DPluginInterface2_1
 		#pragma  endregion
 
 		#pragma region "control-defineExemplar"
-		void control_defineExemplar(double _threshold_global, LandmarkList _LandmarkList_exemplar, int _idx_shape, double _uThreshold_valueChangeRatio)
+		void control_defineExemplar(double _threshold_global, LandmarkList _LandmarkList_exemplar, double _uThreshold_valueChangeRatio)
 		{
-			this->idx_shape = _idx_shape;
 			this->uThreshold_valueChangeRatio = _uThreshold_valueChangeRatio;
 			this->createNeighborVector();
-			this->Image1D_exemplar  = memory_allocate_uchar1D(this->size_page);
-			this->Image3D_page = memory_allocate_uchar3D(this->dim_Y, this->dim_X, this->dim_Z); //tricky!
-			vector<V3DLONG> xyz_i (3, 0);
+			this->Image1D_exemplar  = memory_allocate_uchar1D(this->size_page+this->size_page+this->size_page);
 			for (V3DLONG i=0;i<size_page;i++)
 			{	
 				this->Image1D_exemplar[i] = 0;
-				xyz_i = this->index2Coordinate(i);
-				this->Image3D_page[xyz_i[2]][xyz_i[1]][xyz_i[0]] = this->Image1D_page[i];
+				this->Image1D_exemplar[i+size_page] = 0;
+				this->Image1D_exemplar[i+size_page+size_page] = 0;
 			}
 			ofstream ofstream_log;
 			ofstream_log.open ("log_defineExemplar.txt");
@@ -487,14 +468,45 @@ class cellSegmentation :public QObject, public V3DPluginInterface2_1
 			ofstream_log<<"removeSingleVoxel succeed, "<<count_removedVoxel<<" single voxel removed;"<<endl;
 			ofstream_log<<"count_totalWhiteVoxel: "<<this->count_totalWhiteVoxel<<endl;
 			this->possVct_exemplarRegion = this->regionGrowOnPoss(this->poss_exemplar);
-			this->vctList2Image1D(possVct_exemplarRegion, Image1D_exemplar, 1);
+			this->possVct2Image1DC(this->possVct_exemplarRegion, this->Image1D_exemplar);
 			if (this->possVct_exemplarRegion.empty())
 			{
 				v3d_msg("Warning: no exemplar regions grown. Program will terminate, please re-select the exemplar(s)!");
 				ofstream_log<<"regonGrow for exemplar failed!"<<endl; ofstream_log.close(); return;
 			}
+			ofstream_log.close();
+			return;
+		}
+		#pragma  endregion
+
+		#pragma region "control-propagateExemplar"
+		void control_propagateExemplar(int _idx_shape, double _threshold_deltaShapeStat, double _threshold_histoSimilar, double _multiplier_thresholdRegionSize, double _multiplier_uThresholdRegionSize)
+		{
+			ofstream ofstream_log;
+			ofstream_log.open ("log_propagateExemplar.txt");
+			this->idx_shape = _idx_shape;
+			this->threshold_deltaShapeStat = _threshold_deltaShapeStat;
+			this->threshold_histoSimilar = _threshold_histoSimilar;
+			this->multiplier_thresholdRegionSize = _multiplier_thresholdRegionSize;
+			this->multiplier_uThresholdRegionSize = _multiplier_uThresholdRegionSize;
+			this->Image1D_segmentationResultPassed = memory_allocate_uchar1D(this->size_page+this->size_page+this->size_page);
+			this->Image1D_segmentationResultOriginal = memory_allocate_uchar1D(this->size_page+this->size_page+this->size_page);
+			this->Image3D_page = memory_allocate_uchar3D(this->dim_Y, this->dim_X, this->dim_Z); //tricky!
+			vector<V3DLONG> xyz_i (3, 0);
+			for (V3DLONG i=0;i<size_page;i++)
+			{	
+				this->Image1D_segmentationResultOriginal[i] = 0;
+				this->Image1D_segmentationResultOriginal[i+size_page] = 0;
+				this->Image1D_segmentationResultOriginal[i+size_page+size_page] = 0;
+				this->Image1D_segmentationResultPassed[i] = 0;
+				this->Image1D_segmentationResultPassed[i+size_page] = 0;
+				this->Image1D_segmentationResultPassed[i+size_page+size_page] = 0;
+				xyz_i = this->index2Coordinate(i);
+				this->Image3D_page[xyz_i[2]][xyz_i[1]][xyz_i[0]] = this->Image1D_page[i];
+			}
 			if (!this->analyzeExemplarRegion())
 			{
+				v3d_msg("Warning: analyzeExemplarRegion failed. Program will terminate, please re-select the exemplar(s)!");
 				ofstream_log<<"analyzeExemplarRegion failed!"<<endl; ofstream_log.close(); return;
 			}
 			ofstream_log<<"threshold_deltaShapeStat: "<<this->threshold_deltaShapeStat<<endl;
@@ -523,30 +535,9 @@ class cellSegmentation :public QObject, public V3DPluginInterface2_1
 				}
 				ofstream_log<<endl;
 			}
-			ofstream_log.close();
-			return;
-		}
-		#pragma  endregion
-
-		#pragma region "control-propagateExemplar"
-		void control_propagateExemplar(double _threshold_deltaShapeStat, double _threshold_histoSimilar, double _multiplier_thresholdRegionSize, double _multiplier_uThresholdRegionSize)
-		{
-			this->threshold_deltaShapeStat = _threshold_deltaShapeStat;
-			this->threshold_histoSimilar = _threshold_histoSimilar;
-			this->multiplier_thresholdRegionSize = _multiplier_thresholdRegionSize;
-			this->multiplier_uThresholdRegionSize = _multiplier_uThresholdRegionSize;
-			this->Image1D_segmentationResultPassed = memory_allocate_uchar1D(this->size_page);
-			this->Image1D_segmentationResultOriginal = memory_allocate_uchar1D(this->size_page);
-			for (V3DLONG i=0;i<size_page;i++)
-			{	
-				this->Image1D_segmentationResultPassed[i] = 0;
-				this->Image1D_segmentationResultOriginal[i] = 0;
-			}
 			this->categorizeVoxelsByValue(this->histo_page, this->Image1D_page, this->size_page);
 			this->possVct_segmentationResultOriginal = this->regionGrowOnPossVector(this->possVct_segmentationSeed);
-			this->vctList2Image1D(this->Image1D_segmentationResultOriginal, this->possVct_segmentationResultOriginal, 1);
-			ofstream ofstream_log;
-			ofstream_log.open ("log_propagateExemplar.txt");
+			this->possVct2Image1DC(this->possVct_segmentationResultOriginal, this->Image1D_segmentationResultOriginal);
 			V3DLONG count_region = this->possVct_segmentationResultOriginal.size();
 			V3DLONG count_voxel = 0;
 			bool is_passedShapeStat = true;
@@ -628,8 +619,6 @@ class cellSegmentation :public QObject, public V3DPluginInterface2_1
 					{
 						this->possVct_segmentationResultPassed.push_back(poss_region); //small but not small enough to be removed;
 						this->poss_segmentationResultCenterPassed.push_back(pos_center);
-						this->possVct_segmentationResultMerged.push_back(poss_region);
-						this->poss_segmentationResultCenterMerged.push_back(pos_center);
 						continue;
 					}
 				}
@@ -661,29 +650,28 @@ class cellSegmentation :public QObject, public V3DPluginInterface2_1
 				{
 					this->possVct_segmentationResultPassed.push_back(poss_region);
 					this->poss_segmentationResultCenterPassed.push_back(pos_center);
-					this->possVct_segmentationResultMerged.push_back(poss_region);
-					this->poss_segmentationResultCenterMerged.push_back(pos_center);
 					{ofstream_log<<" shape test passed;"<<endl;}
 					cout<<"   region["<<idx_region<<"] passed shape test;"<<endl;
 				}
 				else
 				{
-					{ofstream_log<<" shape test failed;"<<endl;}
+					ofstream_log<<" shape test failed;"<<endl;
 					cout<<"   region["<<idx_region<<"] failed shape test;"<<endl;
 					if (count_voxel > this->uThreshold_regionSize)
 					{
 						//irregular and too big, removed;
+						ofstream_log<<" too big, removed;"<<endl;
 						cout<<"   region["<<idx_region<<"] too big, removed;"<<endl;
 					}
 					else
 					{
+						ofstream_log<<" added to possVct_segmentationResultSplitted;"<<endl;
 						this->possVct_segmentationResultSplitted.push_back(poss_region);
 					}
 				}
 			}
-			this->vctList2Image1D(this->Image1D_segmentationResultPassed, this->possVct_segmentationResultPassed, 1);
+			this->possVct2Image1DC(this->possVct_segmentationResultPassed, this->Image1D_segmentationResultPassed);
 			this->LandmarkList_segmentationResultPassed = this->indexList2LandMarkList(this->poss_segmentationResultCenterPassed);
-
 			ofstream_log.close();
 			return;
 		}
@@ -693,12 +681,16 @@ class cellSegmentation :public QObject, public V3DPluginInterface2_1
 		void control_furtherSegmentation(vector<double> _paras_GVF)
 		{
 			this->paras_GVF = _paras_GVF;
-			this->Image1D_segmentationResultMerged = memory_allocate_uchar1D(this->size_page);
-			this->Image1D_segmentationResultGVF = memory_allocate_uchar1D(this->size_page);
+			this->Image1D_segmentationResultMerged = memory_allocate_uchar1D(this->size_page+this->size_page+this->size_page);
+			this->Image1D_segmentationResultGVF = memory_allocate_uchar1D(this->size_page+this->size_page+this->size_page);
 			for (V3DLONG i=0;i<size_page;i++)
 			{	
 				this->Image1D_segmentationResultGVF[i] = 0;
-				this->Image1D_segmentationResultMerged[i] = 0;
+				this->Image1D_segmentationResultGVF[i+size_page] = 0;
+				this->Image1D_segmentationResultGVF[i+size_page+size_page] = 0;
+				this->Image1D_segmentationResultMerged[i] = this->Image1D_original[i+offset_channel];
+				this->Image1D_segmentationResultMerged[i+size_page] = this->Image1D_original[i+offset_channel];
+				this->Image1D_segmentationResultMerged[i+size_page+size_page] = this->Image1D_original[i+offset_channel];
 			}
 			ofstream ofstream_log;
 			ofstream_log.open ("log_furtherSegmentation.txt");
@@ -717,6 +709,8 @@ class cellSegmentation :public QObject, public V3DPluginInterface2_1
 			V3DLONG pos_center;
 			this->possVct_segmentationResultGVF.clear();
 			this->possVct_segmentationResultMerged.clear();
+			this->poss_segmentationResultCenterGVF.clear();
+			this->poss_segmentationResultCenterMerged.clear();
 			vector<V3DLONG> xyz_center;
 			{ofstream_log<<"total regions for GVF segmentation: "<<count_region<<";"<<endl;}
 			cout<<"total regions for GVF segmentation: "<<count_region<<endl;
@@ -757,25 +751,26 @@ class cellSegmentation :public QObject, public V3DPluginInterface2_1
 						{
 							this->possVct_segmentationResultGVF.push_back(possVct_GVF[i]);
 							this->poss_segmentationResultCenterGVF.push_back(poss_centerGVF[i]);
-							this->possVct_segmentationResultMerged.push_back(possVct_GVF[i]);
-							this->poss_segmentationResultCenterMerged.push_back(poss_centerGVF[i]);
 						}
 					}
 				}
 				else
 				{
-					this->possVct_segmentationResultPassed.push_back(poss_region);
-					this->poss_segmentationResultCenterPassed.push_back(pos_center);
-					this->possVct_segmentationResultMerged.push_back(poss_region);
-					this->poss_segmentationResultCenterMerged.push_back(pos_center);
+					this->possVct_segmentationResultGVF.push_back(poss_region);
+					this->poss_segmentationResultCenterGVF.push_back(pos_center);
 				}
 				memory_free_double3D(double3D_GVF, size_Z, size_X);
 				memory_free_int3D(int3D_label, size_Z, size_X);
 				possVct_GVF.clear();
 			}
 			ofstream_log<<"post-processing done;"<<endl;
-			this->vctList2Image1D(this->Image1D_segmentationResultGVF, this->possVct_segmentationResultGVF, 1+possVct_segmentationResultPassed.size());
-			this->vctList2Image1D(this->Image1D_segmentationResultMerged, this->possVct_segmentationResultMerged, 1);
+			this->possVct_segmentationResultMerged = this->mergePossVector(this->possVct_exemplarRegion, this->possVct_segmentationResultPassed);
+			this->possVct_segmentationResultMerged = this->mergePossVector(this->possVct_segmentationResultMerged, this->possVct_segmentationResultGVF);
+			this->poss_segmentationResultCenterMerged = this->mergePoss(this->poss_exemplar, this->poss_segmentationResultCenterPassed);
+			this->poss_segmentationResultCenterMerged = this->mergePoss(this->poss_segmentationResultCenterMerged, this->poss_segmentationResultCenterGVF);
+			this->possVct2Image1DC(this->possVct_segmentationResultGVF, this->Image1D_segmentationResultGVF);
+			this->possVct2Image1DC(this->possVct_segmentationResultMerged, this->Image1D_segmentationResultMerged);
+			this->possVct2Image1DC(this->possVct_segmentationResultGVF, this->Image1D_segmentationResultOriginal);
 			this->LandmarkList_segmentationResultGVF = this->indexList2LandMarkList(this->poss_segmentationResultCenterGVF);
 			this->LandmarkList_segmentationResultMerged = this->indexList2LandMarkList(this->poss_segmentationResultCenterMerged);
 			ofstream_log.close();
@@ -1045,23 +1040,16 @@ class cellSegmentation :public QObject, public V3DPluginInterface2_1
 	
 				//shape property;
 				boundBox_region = this->getBoundBox(poss_region);
-				boundBoxVct_exemplarRegion.push_back(boundBox_region);
 				size_radius = getMinDimension(boundBox_region)/2;
 				V3DLONG pos_center = this->getCenterByMass(poss_region);
-				this->poss_segmentationResultCenterMerged.push_back(pos_center);
-				this->possVct_segmentationResultMerged.push_back(poss_region);
-				this->possVct_segmentationResultPassed.push_back(poss_region);
-				this->poss_segmentationResultCenterPassed.push_back(pos_center);
 				vector<V3DLONG> xyz_center = this->index2Coordinate(pos_center);
 				valuesVct_shapeStat = this->getShapeStat(xyz_center[0], xyz_center[1], xyz_center[2], size_radius);
 				this->valueVctVct_exemplarShapeStat.push_back(valuesVct_shapeStat);
 			}
-
 			if (this->threshold_regionSize<default_threshold_regionSize)
 			{
 				this->threshold_regionSize = default_threshold_regionSize;
 			}
-			this->uThreshold_valueChangeRatio=this->uThreshold_valueChangeRatio;
 			return true;
 		}
 		#pragma endregion
@@ -1369,6 +1357,17 @@ class cellSegmentation :public QObject, public V3DPluginInterface2_1
 			return vctList_result;
 		}
 
+		vector<V3DLONG> mergePoss(vector<V3DLONG> poss_input1, vector<V3DLONG> poss_input2) 
+		{
+			vector<V3DLONG> poss_result = poss_input1;
+			V3DLONG count_pos = poss_input2.size();
+			for (int i=0;i<count_pos;i++)
+			{
+				poss_result.push_back(poss_input2[i]);
+			}
+			return poss_result;
+		}
+
 		int removeSingleVoxel(unsigned char* Image1D_input, V3DLONG count_imageSize)
 		{
 			bool flag_remove = true;
@@ -1501,31 +1500,28 @@ class cellSegmentation :public QObject, public V3DPluginInterface2_1
 			}
 		}
 
-		void vctList2Image1D(unsigned char* Image1D_input, vector<vector<V3DLONG> > vctList_input, int value_base)
+		void possVct2Image1DC(vector<vector<V3DLONG> > possVct_input, unsigned char* Image1D_input)
 		{
-			memset(Image1D_input, 0, this->size_page);
-			for (int i=0;i<vctList_input.size();i++)
+			vector<V3DLONG> color_input (3, 0);
+			for (int i=0;i<possVct_input.size();i++)
 			{
-				vct2Image1D(Image1D_input, vctList_input[i], i+value_base);
+				int idx_color = i%12;
+				color_input[0] = colors_simpleTable[idx_color][0];
+				color_input[1] = colors_simpleTable[idx_color][1];
+				color_input[2] = colors_simpleTable[idx_color][2];
+				poss2Image1DC(Image1D_input, possVct_input[i], color_input);
 			}
 		}
 
-		void vctList2Image1D(vector<vector<V3DLONG> > vctList_input, unsigned char* Image1D_input, int value_fill)
+		void poss2Image1DC(unsigned char* Image1D_input, vector<V3DLONG> poss_input, vector<V3DLONG> color_input)
 		{
-			memset(Image1D_input, 0, this->size_page);
-			for (int i=0;i<vctList_input.size();i++)
+			for (int i=0;i<poss_input.size();i++)
 			{
-				vct2Image1D(Image1D_input, vctList_input[i], value_fill);
-			}
-		}
-
-		void vct2Image1D(unsigned char* Image1D_input, vector<V3DLONG> vct_input, V3DLONG int_value)
-		{
-			for (int i=0;i<vct_input.size();i++)
-			{
-				if (this->checkValidity(vct_input[i]))
+				if (this->checkValidity(poss_input[i]))
 				{
-					Image1D_input[vct_input[i]] = int_value;
+					Image1D_input[poss_input[i]] = color_input[0];
+					Image1D_input[poss_input[i]+this->size_page] = color_input[1];
+					Image1D_input[poss_input[i]+this->size_page+this->size_page] = color_input[2];
 				}
 			}
 		}
@@ -2942,7 +2938,7 @@ class cellSegmentation :public QObject, public V3DPluginInterface2_1
 	QStringList funclist() const ;
 	bool dofunc(const QString &func_name, const V3DPluginArgList &input, V3DPluginArgList &output, V3DPluginCallback2 &callback, QWidget *parent);
 
-	bool interface_initialization(V3DPluginCallback2 &_V3DPluginCallback2_currentCallback, QWidget *_QWidget_parent)
+	bool interface_exemplarDefination(V3DPluginCallback2 &_V3DPluginCallback2_currentCallback, QWidget *_QWidget_parent)
 	{
 		v3dhandle v3dhandle_currentWindow = _V3DPluginCallback2_currentCallback.currentImageWindow();
 		if (!v3dhandle_currentWindow) {v3d_msg("You have not loaded any image or the image is corrupted, program canceled!"); return false;}
@@ -2974,18 +2970,7 @@ class cellSegmentation :public QObject, public V3DPluginInterface2_1
 			class_segmentationMain::memory_free_uchar1D(Image1D_current, size_image);
 			Image1D_current = Image1D_convertedToUNIT8;
 		}
-		dialogInitialize dialogInitialize1(_V3DPluginCallback2_currentCallback, _QWidget_parent, dim_channel);
-		if (dialogInitialize1.exec()!=QDialog::Accepted) {return false;}
-		this->class_segmentationMain1.control_initialize(Image1D_current, dim_X, dim_Y, dim_Z, dialogInitialize1.channel_idx_selection);
-		return true;
-	}
-
-	bool interface_exemplarDefination(V3DPluginCallback2 &_V3DPluginCallback2_currentCallback, QWidget *_QWidget_parent)
-	{
-		v3dhandle v3dhandle_currentWindow = _V3DPluginCallback2_currentCallback.currentImageWindow();
-		if (!v3dhandle_currentWindow) {v3d_msg("You have not loaded any image or the image is corrupted, program canceled!"); return false;}
-		Image4DSimple* Image4DSimple_current = _V3DPluginCallback2_currentCallback.getImage(v3dhandle_currentWindow);
-		if (!Image4DSimple_current) {v3d_msg("You have not loaded any image or the image is corrupted, program canceled!"); return false;}
+		
 		LandmarkList LandmarkList_userDefined = _V3DPluginCallback2_currentCallback.getLandmark(v3dhandle_currentWindow);
 		V3DLONG count_userDefinedLandmarkList = LandmarkList_userDefined.count();
 		QList<NeuronTree> * SWCList_current = _V3DPluginCallback2_currentCallback.getHandleNeuronTrees_3DGlobalViewer(v3dhandle_currentWindow);
@@ -3010,14 +2995,11 @@ class cellSegmentation :public QObject, public V3DPluginInterface2_1
 			LandmarkList_current = LandmarkList_userDefined;
 			count_currentLandmarkList = LandmarkList_current.count();
 		}
-		dialogDefineExemplar dialogDefineExemplar1(_V3DPluginCallback2_currentCallback, _QWidget_parent);
+		dialogDefineExemplar dialogDefineExemplar1(_V3DPluginCallback2_currentCallback, _QWidget_parent, dim_channel);
 		if (dialogDefineExemplar1.exec()!=QDialog::Accepted) {return false;}
-		//get shape paramters;
-		int idx_shape;
-		if (dialogDefineExemplar1.shape_type_selection == sphere) {idx_shape = 1;}
-		else if (dialogDefineExemplar1.shape_type_selection == cube) {idx_shape = 0;}
-		this->class_segmentationMain1.control_defineExemplar(dialogDefineExemplar1.intensity_threshold_global, LandmarkList_current, idx_shape, dialogDefineExemplar1.intensity_threshold_valueChangeRatio);
-		visualizationImage1D(this->class_segmentationMain1.Image1D_exemplar, this->class_segmentationMain1.dim_X, this->class_segmentationMain1.dim_Y, this->class_segmentationMain1.dim_Z, 1, _V3DPluginCallback2_currentCallback, "Exemplar");
+		this->class_segmentationMain1.control_initialize(Image1D_current, dim_X, dim_Y, dim_Z, dialogDefineExemplar1.channel_idx_selection);
+		this->class_segmentationMain1.control_defineExemplar(dialogDefineExemplar1.intensity_threshold_global, LandmarkList_current, dialogDefineExemplar1.intensity_threshold_valueChangeRatio);
+		visualizationImage1D(this->class_segmentationMain1.Image1D_exemplar, this->class_segmentationMain1.dim_X, this->class_segmentationMain1.dim_Y, this->class_segmentationMain1.dim_Z, 3, _V3DPluginCallback2_currentCallback, "Exemplar");
 		return true;
 	}
 
@@ -3029,10 +3011,14 @@ class cellSegmentation :public QObject, public V3DPluginInterface2_1
 		if (!Image4DSimple_current) {v3d_msg("You have not loaded any image or the image is corrupted, program canceled!"); return false;}
 		dialogPropagateExemplar dialogPropagateExemplar1(_V3DPluginCallback2_currentCallback, _QWidget_parent);
 		if (dialogPropagateExemplar1.exec()!=QDialog::Accepted) {return false;}
-		this->class_segmentationMain1.control_propagateExemplar(dialogPropagateExemplar1.shape_para_delta, dialogPropagateExemplar1.intensity_threshold_histoCorr, 
+		//get shape paramters;
+		int idx_shape;
+		if (dialogPropagateExemplar1.shape_type_selection == sphere) {idx_shape = 1;}
+		else if (dialogPropagateExemplar1.shape_type_selection == cube) {idx_shape = 0;}
+		this->class_segmentationMain1.control_propagateExemplar(idx_shape, dialogPropagateExemplar1.shape_para_delta, dialogPropagateExemplar1.intensity_threshold_histoCorr, 
 			dialogPropagateExemplar1.shape_multiplier_thresholdRegionSize, dialogPropagateExemplar1.shape_multiplier_uThresholdRegionSize);
-		visualizationImage1D(this->class_segmentationMain1.Image1D_segmentationResultOriginal, this->class_segmentationMain1.dim_X, this->class_segmentationMain1.dim_Y, this->class_segmentationMain1.dim_Z, 1, _V3DPluginCallback2_currentCallback, "Segmentation Result (regionGrowing)");
-		visualizationImage1D(this->class_segmentationMain1.Image1D_segmentationResultPassed, this->class_segmentationMain1.dim_X, this->class_segmentationMain1.dim_Y, this->class_segmentationMain1.dim_Z, 1, _V3DPluginCallback2_currentCallback, "Segmentation Result (exemplar-like shape)");
+		visualizationImage1D(this->class_segmentationMain1.Image1D_segmentationResultOriginal, this->class_segmentationMain1.dim_X, this->class_segmentationMain1.dim_Y, this->class_segmentationMain1.dim_Z, 3, _V3DPluginCallback2_currentCallback, "Segmentation Result (regionGrowing)");
+		visualizationImage1D(this->class_segmentationMain1.Image1D_segmentationResultPassed, this->class_segmentationMain1.dim_X, this->class_segmentationMain1.dim_Y, this->class_segmentationMain1.dim_Z, 3, _V3DPluginCallback2_currentCallback, "Segmentation Result (exemplar-like shape)");
 		_V3DPluginCallback2_currentCallback.setLandmark(v3dhandle_currentWindow, this->class_segmentationMain1.LandmarkList_segmentationResultPassed);
 		_V3DPluginCallback2_currentCallback.updateImageWindow(v3dhandle_currentWindow);
 		return true;
@@ -3045,6 +3031,7 @@ class cellSegmentation :public QObject, public V3DPluginInterface2_1
 		Image4DSimple* Image4DSimple_current = _V3DPluginCallback2_currentCallback.getImage(v3dhandle_currentWindow);
 		if (!Image4DSimple_current) {v3d_msg("You have not loaded any image or the image is corrupted, program canceled!"); return false;}
 		dialogFurtherSegmentation dialogFurtherSegmentation1(_V3DPluginCallback2_currentCallback, _QWidget_parent);
+		if (dialogFurtherSegmentation1.exec()!=QDialog::Accepted) {return false;}
 		//get GVF paramters;
 		vector<double> paras_GVF (4, 0);
 		paras_GVF[0] = dialogFurtherSegmentation1.GVF_para_maxIteration;
@@ -3052,8 +3039,8 @@ class cellSegmentation :public QObject, public V3DPluginInterface2_1
 		paras_GVF[2] = dialogFurtherSegmentation1.GVF_para_sigma;
 		paras_GVF[3] = dialogFurtherSegmentation1.GVF_para_mu;
 		this->class_segmentationMain1.control_furtherSegmentation(paras_GVF);
-		visualizationImage1D(this->class_segmentationMain1.Image1D_segmentationResultGVF, this->class_segmentationMain1.dim_X, this->class_segmentationMain1.dim_Y, this->class_segmentationMain1.dim_Z, 1, _V3DPluginCallback2_currentCallback, "Segmentation Result (splitted from irregular shapes)");
-		visualizationImage1D(this->class_segmentationMain1.Image1D_segmentationResultMerged, this->class_segmentationMain1.dim_X, this->class_segmentationMain1.dim_Y, this->class_segmentationMain1.dim_Z, 1, _V3DPluginCallback2_currentCallback, "Segmentation Result (merged)");
+		visualizationImage1D(this->class_segmentationMain1.Image1D_segmentationResultGVF, this->class_segmentationMain1.dim_X, this->class_segmentationMain1.dim_Y, this->class_segmentationMain1.dim_Z, 3, _V3DPluginCallback2_currentCallback, "Segmentation Result (splitted from irregular shapes)");
+		visualizationImage1D(this->class_segmentationMain1.Image1D_segmentationResultMerged, this->class_segmentationMain1.dim_X, this->class_segmentationMain1.dim_Y, this->class_segmentationMain1.dim_Z, 3, _V3DPluginCallback2_currentCallback, "Segmentation Result (merged)");
 		_V3DPluginCallback2_currentCallback.setLandmark(v3dhandle_currentWindow, this->class_segmentationMain1.LandmarkList_segmentationResultMerged);
 		_V3DPluginCallback2_currentCallback.updateImageWindow(v3dhandle_currentWindow);
 		return true;
