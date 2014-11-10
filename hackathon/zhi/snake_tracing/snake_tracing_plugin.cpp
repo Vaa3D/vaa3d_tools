@@ -508,9 +508,12 @@ void findBranch_Raw(int snake_label, int root_label, Point3D root_point, vnl_vec
     vnl_vector<int> snake_point_id(Tracer->SnakeList.Snakes[snake_label].Cu.GetSize());
     snake_point_id.fill(0);
     //write the points of current main branch to swc file
-    *out_txt<<"#name Snake_Tracing\n";
-    *out_txt<<"#comment\n";
-    *out_txt<<"##n,type,x,y,z,radius,parent\n";
+    if(snake_label ==0)
+    {
+        *out_txt<<"#name Snake_Tracing\n";
+        *out_txt<<"#comment\n";
+        *out_txt<<"##n,type,x,y,z,radius,parent\n";
+    }
 
     for( int i = 0; i < Tracer->SnakeList.Snakes[snake_label].Cu.GetSize(); i++ )
     {
