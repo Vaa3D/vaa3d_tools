@@ -347,8 +347,14 @@ bool assembler_tc(V3DPluginCallback2 &callback, QWidget *parent,NA_PARA &P,bool 
 
         }
 
+        ifstream ifs_swc(swcfilename.toStdString().c_str());
+        if(!ifs_swc)
+        {
+            walker = walker->next;
+            continue;
+        }
+
         NeuronTree nt = readSWC_file(swcfilename);
-        //v3d_msg(swcfilename,0);
         if(nt.listNeuron.empty())
         {
             remove(swcfilename.toStdString().c_str());
